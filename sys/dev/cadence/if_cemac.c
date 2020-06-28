@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.22 2020/01/29 05:54:29 thorpej Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.23 2020/06/28 12:43:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.22 2020/01/29 05:54:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.23 2020/06/28 12:43:00 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -210,7 +210,7 @@ cemac_attach_common(device_t self, bus_space_tag_t iot,
 	if (enaddr != NULL) {
 		KASSERT(prop_object_type(enaddr) == PROP_TYPE_DATA);
 		KASSERT(prop_data_size(enaddr) == ETHER_ADDR_LEN);
-		memcpy(sc->sc_enaddr, prop_data_data_nocopy(enaddr),
+		memcpy(sc->sc_enaddr, prop_data_value(enaddr),
 		       ETHER_ADDR_LEN);
 	} else {
 		static const uint8_t hardcoded[ETHER_ADDR_LEN] = {
