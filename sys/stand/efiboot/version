@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.18 2020/06/26 03:23:04 thorpej Exp $
+$NetBSD: version,v 1.19 2020/06/28 11:39:50 jmcneill Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE EFI BOOTLOADER HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -22,3 +22,4 @@ is taken as the current.
 1.15:	Add module support.
 2.0:	Add boot.cfg support.
 2.1:	Remove efiboot.plist support; support dtoverlay in boot.cfg.
+2.2:	Remove support for storing settings in EFI env vars.
