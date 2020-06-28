@@ -1,4 +1,4 @@
-/*	$NetBSD: nameser_compat.h,v 1.6 2015/02/24 17:57:08 christos Exp $	*/
+/*	$NetBSD: nameser_compat.h,v 1.7 2020/06/28 02:16:19 gutteridge Exp $	*/
 
 /* Copyright (c) 1983, 1989
  *    The Regents of the University of California.  All rights reserved.
@@ -82,7 +82,7 @@
 	 * which will force your compiles to bomb until you fix
 	 * the above macros.
 	 */
-  error "Undefined or invalid BYTE_ORDER";
+#error "Undefined or invalid BYTE_ORDER"
 #endif
 
 /*%
