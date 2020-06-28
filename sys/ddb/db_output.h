@@ -1,4 +1,4 @@
-/*	$NetBSD: db_output.h,v 1.21 2012/03/15 02:02:22 joerg Exp $	*/
+/*	$NetBSD: db_output.h,v 1.22 2020/06/28 04:06:14 simonb Exp $	*/
 
 /*
  * Mach Operating System
@@ -29,6 +29,9 @@
  *	Date:	8/90
  */
 
+#ifndef _DDB_DB_OUTPUT_H_
+#define _DDB_DB_OUTPUT_H_
+
 #include <sys/stdarg.h>
 
 /*
@@ -51,3 +54,5 @@ extern int	db_tab_stop_width;
 
 #define	DB_NEXT_TAB(i) \
 	((((i) + db_tab_stop_width) / db_tab_stop_width) * db_tab_stop_width)
+
+#endif /* _DDB_DB_OUTPUT_H_ */
