@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_20.c,v 1.45 2020/01/17 20:08:06 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls_20.c,v 1.46 2020/06/28 14:37:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.45 2020/01/17 20:08:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.46 2020/06/28 14:37:53 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -153,7 +153,7 @@ compat_20_sys_getfsstat(struct lwp *l, const struct compat_20_sys_getfsstat_args
 	} */
 	return do_sys_getvfsstat(l, SCARG(uap, buf), SCARG(uap, bufsize),
 	    SCARG(uap, flags), statvfs_to_statfs12_copy,
-	    sizeof(struct statvfs90), retval);
+	    sizeof(struct statfs12), retval);
 }
 
 int
