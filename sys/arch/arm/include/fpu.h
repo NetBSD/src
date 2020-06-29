@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.1 2020/06/29 23:22:27 riastradh Exp $	*/
+/*	$NetBSD: fpu.h,v 1.1 2020/06/29 23:53:12 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -26,10 +26,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _AARCH64_FPU_H_
-#define _AARCH64_FPU_H_
+#ifndef	_SYS_ARCH_ARM_FPU_H
+#define	_SYS_ARCH_ARM_FPU_H
 
 void fpu_kern_enter(void);
 void fpu_kern_leave(void);
 
-#endif /* _AARCH64_FPU_H_ */
+#endif	/* _SYS_ARCH_ARM_FPU_H */
