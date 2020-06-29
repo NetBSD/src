@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1268 2020/06/07 09:45:19 maxv Exp $
+#	$NetBSD: files,v 1.1269 2020/06/29 23:27:52 riastradh Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -200,10 +200,10 @@ defflag	opt_machdep.h		MACHDEP
 # use it.
 
 # Individual crypto transforms
+include "crypto/aes/files.aes"
 include "crypto/des/files.des"
 include "crypto/blowfish/files.blowfish"
 include "crypto/cast128/files.cast128"
-include "crypto/rijndael/files.rijndael"
 include "crypto/skipjack/files.skipjack"
 include "crypto/camellia/files.camellia"
 # General-purpose crypto processing framework.
