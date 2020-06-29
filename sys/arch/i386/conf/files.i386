@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.403 2020/04/25 15:26:16 bouyer Exp $
+#	$NetBSD: files.i386,v 1.404 2020/06/29 23:32:24 riastradh Exp $
 #
 # new style config file for i386 architecture
 #
@@ -416,7 +416,7 @@ obsolete	defparam opt_vesafb.h	VESAFB_WIDTH VESAFB_HEIGHT VESAFB_DEPTH
 obsolete	defflag	opt_vesafb.h	VESAFB_PM
 
 # AMD Geode LX Security Block
-device	glxsb: opencrypto, rijndael
+device	glxsb: opencrypto
 attach	glxsb at pci
 file	arch/i386/pci/glxsb.c		glxsb
 
