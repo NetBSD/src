@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.193 2020/05/24 14:11:49 jdolecek Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.194 2020/06/29 23:33:46 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.193 2020/05/24 14:11:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.194 2020/06/29 23:33:46 riastradh Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.193 2020/05/24 14:11:49 jdolecek Exp 
 
 #include <miscfs/specfs/specdev.h>
 
-#include <crypto/rijndael/rijndael-api-fst.h>
+#include <crypto/aes/aes.h>
 
 /*
  * uvm_swap.c: manage configuration and i/o to swap space.
@@ -148,8 +148,8 @@ struct swapdev {
 	int			swd_active;	/* number of active buffers */
 
 	volatile uint32_t	*swd_encmap;	/* bitmap of encrypted slots */
-	keyInstance		swd_enckey;	/* AES key expanded for enc */
-	keyInstance		swd_deckey;	/* AES key expanded for dec */
+	struct aesenc		swd_enckey;	/* AES key expanded for enc */
+	struct aesdec		swd_deckey;	/* AES key expanded for dec */
 	bool			swd_encinit;	/* true if keys initialized */
 };
 
@@ -2073,8 +2073,8 @@ uvm_swap_genkey(struct swapdev *sdp)
 	KASSERT(!sdp->swd_encinit);
 
 	cprng_strong(kern_cprng, key, sizeof key, 0);
-	rijndael_makeKey(&sdp->swd_enckey, DIR_ENCRYPT, 256, key);
-	rijndael_makeKey(&sdp->swd_deckey, DIR_DECRYPT, 256, key);
+	aes_setenckey256(&sdp->swd_enckey, key);
+	aes_setdeckey256(&sdp->swd_deckey, key);
 	explicit_memset(key, 0, sizeof key);
 
 	sdp->swd_encinit = true;
@@ -2089,27 +2089,17 @@ uvm_swap_genkey(struct swapdev *sdp)
 static void
 uvm_swap_encryptpage(struct swapdev *sdp, void *kva, int slot)
 {
-	cipherInstance aes;
 	uint8_t preiv[16] = {0}, iv[16];
-	int ok __diagused, nbits __diagused;
 
 	/* iv := AES_k(le32enc(slot) || 0^96) */
 	le32enc(preiv, slot);
-	ok = rijndael_cipherInit(&aes, MODE_ECB, NULL);
-	KASSERT(ok);
-	nbits = rijndael_blockEncrypt(&aes, &sdp->swd_enckey, preiv,
-	    /*length in bits*/128, iv);
-	KASSERT(nbits == 128);
+	aes_enc(&sdp->swd_enckey, (const void *)preiv, iv, AES_256_NROUNDS);
 
 	/* *kva := AES-CBC_k(iv, *kva) */
-	ok = rijndael_cipherInit(&aes, MODE_CBC, iv);
-	KASSERT(ok);
-	nbits = rijndael_blockEncrypt(&aes, &sdp->swd_enckey, kva,
-	    /*length in bits*/PAGE_SIZE*NBBY, kva);
-	KASSERT(nbits == PAGE_SIZE*NBBY);
+	aes_cbc_enc(&sdp->swd_enckey, kva, kva, PAGE_SIZE, iv,
+	    AES_256_NROUNDS);
 
 	explicit_memset(&iv, 0, sizeof iv);
-	explicit_memset(&aes, 0, sizeof aes);
 }
 
 /*
@@ -2121,28 +2111,17 @@ uvm_swap_encryptpage(struct swapdev *sdp, void *kva, int slot)
 static void
 uvm_swap_decryptpage(struct swapdev *sdp, void *kva, int slot)
 {
-	cipherInstance aes;
 	uint8_t preiv[16] = {0}, iv[16];
-	int ok __diagused, nbits __diagused;
 
 	/* iv := AES_k(le32enc(slot) || 0^96) */
 	le32enc(preiv, slot);
-	ok = rijndael_cipherInit(&aes, MODE_ECB, NULL);
-	KASSERT(ok);
-	nbits = rijndael_blockEncrypt(&aes, &sdp->swd_enckey, preiv,
-	    /*length in bits*/128, iv);
-	KASSERTMSG(nbits == 128, "nbits=%d expected %d\n", nbits, 128);
+	aes_enc(&sdp->swd_enckey, (const void *)preiv, iv, AES_256_NROUNDS);
 
 	/* *kva := AES-CBC^{-1}_k(iv, *kva) */
-	ok = rijndael_cipherInit(&aes, MODE_CBC, iv);
-	KASSERT(ok);
-	nbits = rijndael_blockDecrypt(&aes, &sdp->swd_deckey, kva,
-	    /*length in bits*/PAGE_SIZE*NBBY, kva);
-	KASSERTMSG(nbits == PAGE_SIZE*NBBY,
-	    "nbits=%d expected %d\n", nbits, PAGE_SIZE*NBBY);
+	aes_cbc_dec(&sdp->swd_deckey, kva, kva, PAGE_SIZE, iv,
+	    AES_256_NROUNDS);
 
 	explicit_memset(&iv, 0, sizeof iv);
-	explicit_memset(&aes, 0, sizeof aes);
 }
 
 SYSCTL_SETUP(sysctl_uvmswap_setup, "sysctl uvmswap setup")
