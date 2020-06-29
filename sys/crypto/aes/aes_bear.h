@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_bear.h,v 1.1 2020/06/29 23:27:52 riastradh Exp $	*/
+/*	$NetBSD: aes_bear.h,v 1.2 2020/06/29 23:36:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -44,6 +44,12 @@ u_int	br_aes_ct_keysched(uint32_t *, const void *, size_t);
 void	br_aes_ct_skey_expand(uint32_t *, unsigned, const uint32_t *);
 void	br_aes_ct_bitslice_encrypt(unsigned, const uint32_t *, uint32_t *);
 void	br_aes_ct_bitslice_decrypt(unsigned, const uint32_t *, uint32_t *);
+
+/* NetBSD additions */
+
+void	br_aes_ct_inv_mix_columns(uint32_t *);
+u_int	br_aes_ct_keysched_stdenc(uint32_t *, const void *, size_t);
+u_int	br_aes_ct_keysched_stddec(uint32_t *, const void *, size_t);
 
 extern struct aes_impl	aes_bear_impl;
 
