@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.48 2020/06/29 23:22:27 riastradh Exp $ */
+/* $NetBSD: cpu.c,v 1.49 2020/06/29 23:31:41 riastradh Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.48 2020/06/29 23:22:27 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.49 2020/06/29 23:31:41 riastradh Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -43,6 +43,8 @@ __KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.48 2020/06/29 23:22:27 riastradh Exp $");
 #include <sys/rndsource.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
+
+#include <crypto/aes/arch/arm/aes_armv8.h>
 
 #include <aarch64/armreg.h>
 #include <aarch64/cpu.h>
@@ -70,6 +72,7 @@ static void cpu_init_counter(struct cpu_info *);
 static void cpu_setup_id(struct cpu_info *);
 static void cpu_setup_sysctl(device_t, struct cpu_info *);
 static void cpu_setup_rng(device_t, struct cpu_info *);
+static void cpu_setup_aes(device_t, struct cpu_info *);
 
 #ifdef MULTIPROCESSOR
 #define NCPUINFO	MAXCPUS
@@ -158,6 +161,7 @@ cpu_attach(device_t dv, cpuid_t id)
 
 	cpu_setup_sysctl(dv, ci);
 	cpu_setup_rng(dv, ci);
+	cpu_setup_aes(dv, ci);
 }
 
 struct cpuidtab {
@@ -587,6 +591,26 @@ cpu_setup_rng(device_t dv, struct cpu_info *ci)
 	rndsource_setcb(&rndrrs_source, rndrrs_get, NULL);
 	rnd_attach_source(&rndrrs_source, "rndrrs", RND_TYPE_RNG,
 	    RND_FLAG_DEFAULT|RND_FLAG_HASCB);
+}
+
+/*
+ * setup the AES implementation
+ */
+static void
+cpu_setup_aes(device_t dv, struct cpu_info *ci)
+{
+	struct aarch64_sysctl_cpu_id *id = &ci->ci_id;
+
+	/* Verify that it is supported.  */
+	switch (__SHIFTOUT(id->ac_aa64isar0, ID_AA64ISAR0_EL1_AES)) {
+	case ID_AA64ISAR0_EL1_AES_AES:
+	case ID_AA64ISAR0_EL1_AES_PMUL:
+		break;
+	default:
+		return;
+	}
+
+	aes_md_init(&aes_armv8_impl);
 }
 
 #ifdef MULTIPROCESSOR

@@ -1,0 +1,4 @@
+#	$NetBSD: files.aesarmv8,v 1.1 2020/06/29 23:31:41 riastradh Exp $
+
+file	crypto/aes/arch/arm/aes_armv8.c		aes
+file	crypto/aes/arch/arm/aes_armv8_64.S	aes
