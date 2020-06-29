@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft_xform.c,v 1.28 2019/10/12 00:49:30 christos Exp $ */
+/*	$NetBSD: cryptosoft_xform.c,v 1.29 2020/06/29 23:34:48 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,23 +40,24 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.28 2019/10/12 00:49:30 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.29 2020/06/29 23:34:48 riastradh Exp $");
 
-#include <crypto/blowfish/blowfish.h>
-#include <crypto/cast128/cast128.h>
-#include <crypto/des/des.h>
-#include <crypto/rijndael/rijndael.h>
-#include <crypto/skipjack/skipjack.h>
-#include <crypto/camellia/camellia.h>
-
-#include <opencrypto/deflate.h>
-
+#include <sys/cprng.h>
+#include <sys/kmem.h>
 #include <sys/md5.h>
 #include <sys/rmd160.h>
 #include <sys/sha1.h>
 #include <sys/sha2.h>
-#include <sys/cprng.h>
+
+#include <crypto/aes/aes.h>
+#include <crypto/blowfish/blowfish.h>
+#include <crypto/camellia/camellia.h>
+#include <crypto/cast128/cast128.h>
+#include <crypto/des/des.h>
+#include <crypto/skipjack/skipjack.h>
+
 #include <opencrypto/aesxcbcmac.h>
+#include <opencrypto/deflate.h>
 #include <opencrypto/gmac.h>
 
 struct swcr_auth_hash {
@@ -94,7 +95,7 @@ static	int des3_setkey(u_int8_t **, const u_int8_t *, int);
 static	int blf_setkey(u_int8_t **, const u_int8_t *, int);
 static	int cast5_setkey(u_int8_t **, const u_int8_t *, int);
 static  int skipjack_setkey(u_int8_t **, const u_int8_t *, int);
-static  int rijndael128_setkey(u_int8_t **, const u_int8_t *, int);
+static  int aes_setkey(u_int8_t **, const u_int8_t *, int);
 static  int cml_setkey(u_int8_t **, const u_int8_t *, int);
 static  int aes_ctr_setkey(u_int8_t **, const u_int8_t *, int);
 static	int aes_gmac_setkey(u_int8_t **, const u_int8_t *, int);
@@ -103,14 +104,14 @@ static	void des3_encrypt(void *, u_int8_t *);
 static	void blf_encrypt(void *, u_int8_t *);
 static	void cast5_encrypt(void *, u_int8_t *);
 static	void skipjack_encrypt(void *, u_int8_t *);
-static	void rijndael128_encrypt(void *, u_int8_t *);
+static	void aes_encrypt(void *, u_int8_t *);
 static  void cml_encrypt(void *, u_int8_t *);
 static	void des1_decrypt(void *, u_int8_t *);
 static	void des3_decrypt(void *, u_int8_t *);
 static	void blf_decrypt(void *, u_int8_t *);
 static	void cast5_decrypt(void *, u_int8_t *);
 static	void skipjack_decrypt(void *, u_int8_t *);
-static	void rijndael128_decrypt(void *, u_int8_t *);
+static	void aes_decrypt(void *, u_int8_t *);
 static  void cml_decrypt(void *, u_int8_t *);
 static  void aes_ctr_crypt(void *, u_int8_t *);
 static	void des1_zerokey(u_int8_t **);
@@ -118,7 +119,7 @@ static	void des3_zerokey(u_int8_t **);
 static	void blf_zerokey(u_int8_t **);
 static	void cast5_zerokey(u_int8_t **);
 static	void skipjack_zerokey(u_int8_t **);
-static	void rijndael128_zerokey(u_int8_t **);
+static	void aes_zerokey(u_int8_t **);
 static  void cml_zerokey(u_int8_t **);
 static  void aes_ctr_zerokey(u_int8_t **);
 static	void aes_gmac_zerokey(u_int8_t **);
@@ -204,12 +205,12 @@ static const struct swcr_enc_xform swcr_enc_xform_skipjack = {
 	NULL
 };
 
-static const struct swcr_enc_xform swcr_enc_xform_rijndael128 = {
+static const struct swcr_enc_xform swcr_enc_xform_aes = {
 	&enc_xform_rijndael128,
-	rijndael128_encrypt,
-	rijndael128_decrypt,
-	rijndael128_setkey,
-	rijndael128_zerokey,
+	aes_encrypt,
+	aes_decrypt,
+	aes_setkey,
+	aes_zerokey,
 	NULL
 };
 
@@ -599,38 +600,68 @@ skipjack_zerokey(u_int8_t **sched)
 	*sched = NULL;
 }
 
+struct aes_ctx {
+	struct aesenc	enc;
+	struct aesdec	dec;
+	uint32_t	nr;
+};
+
 static void
-rijndael128_encrypt(void *key, u_int8_t *blk)
+aes_encrypt(void *key, u_int8_t *blk)
 {
-	rijndael_encrypt((rijndael_ctx *) key, (u_char *) blk, (u_char *) blk);
+	struct aes_ctx *ctx = key;
+
+	aes_enc(&ctx->enc, blk, blk, ctx->nr);
 }
 
 static void
-rijndael128_decrypt(void *key, u_int8_t *blk)
+aes_decrypt(void *key, u_int8_t *blk)
 {
-	rijndael_decrypt((rijndael_ctx *) key, (u_char *) blk,
-	    (u_char *) blk);
+	struct aes_ctx *ctx = key;
+
+	aes_dec(&ctx->dec, blk, blk, ctx->nr);
 }
 
 static int
-rijndael128_setkey(u_int8_t **sched, const u_int8_t *key, int len)
+aes_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 {
+	struct aes_ctx *ctx;
 
 	if (len != 16 && len != 24 && len != 32)
 		return EINVAL;
-	*sched = malloc(sizeof(rijndael_ctx), M_CRYPTO_DATA,
-	    M_NOWAIT|M_ZERO);
-	if (*sched == NULL)
+	ctx = kmem_zalloc(sizeof(*ctx), KM_NOSLEEP);
+	if (ctx == NULL)
 		return ENOMEM;
-	rijndael_set_key((rijndael_ctx *) *sched, key, len * 8);
+
+	switch (len) {
+	case 16:
+		aes_setenckey128(&ctx->enc, key);
+		aes_setdeckey128(&ctx->dec, key);
+		ctx->nr = AES_128_NROUNDS;
+		break;
+	case 24:
+		aes_setenckey192(&ctx->enc, key);
+		aes_setdeckey192(&ctx->dec, key);
+		ctx->nr = AES_192_NROUNDS;
+		break;
+	case 32:
+		aes_setenckey256(&ctx->enc, key);
+		aes_setdeckey256(&ctx->dec, key);
+		ctx->nr = AES_256_NROUNDS;
+		break;
+	}
+
+	*sched = (void *)ctx;
 	return 0;
 }
 
 static void
-rijndael128_zerokey(u_int8_t **sched)
+aes_zerokey(u_int8_t **sched)
 {
-	memset(*sched, 0, sizeof(rijndael_ctx));
-	free(*sched, M_CRYPTO_DATA);
+	struct aes_ctx *ctx = (void *)*sched;
+
+	explicit_memset(ctx, 0, sizeof(*ctx));
+	kmem_free(ctx, sizeof(*ctx));
 	*sched = NULL;
 }
 
@@ -678,7 +709,7 @@ cml_zerokey(u_int8_t **sched)
 
 struct aes_ctr_ctx {
 	/* need only encryption half */
-	u_int32_t ac_ek[4*(RIJNDAEL_MAXNR + 1)];
+	struct aesenc ac_ek;
 	u_int8_t ac_block[AESCTR_BLOCKSIZE];
 	int ac_nr;
 	struct {
@@ -699,10 +730,10 @@ aes_ctr_crypt(void *key, u_int8_t *blk)
 	     i >= AESCTR_NONCESIZE + AESCTR_IVSIZE; i--)
 		if (++ctx->ac_block[i]) /* continue on overflow */
 			break;
-	rijndaelEncrypt(ctx->ac_ek, ctx->ac_nr, ctx->ac_block, keystream);
+	aes_enc(&ctx->ac_ek, ctx->ac_block, keystream, ctx->ac_nr);
 	for (i = 0; i < AESCTR_BLOCKSIZE; i++)
 		blk[i] ^= keystream[i];
-	memset(keystream, 0, sizeof(keystream));
+	explicit_memset(keystream, 0, sizeof(keystream));
 }
 
 int
@@ -713,13 +744,20 @@ aes_ctr_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 	if (len < AESCTR_NONCESIZE)
 		return EINVAL;
 
-	ctx = malloc(sizeof(struct aes_ctr_ctx), M_CRYPTO_DATA,
-		     M_NOWAIT|M_ZERO);
+	ctx = kmem_zalloc(sizeof(*ctx), KM_NOSLEEP);
 	if (!ctx)
 		return ENOMEM;
-	ctx->ac_nr = rijndaelKeySetupEnc(ctx->ac_ek, (const u_char *)key,
-			(len - AESCTR_NONCESIZE) * 8);
-	if (!ctx->ac_nr) { /* wrong key len */
+	switch (len) {
+	case 16 + AESCTR_NONCESIZE:
+		ctx->ac_nr = aes_setenckey128(&ctx->ac_ek, key);
+		break;
+	case 24 + AESCTR_NONCESIZE:
+		ctx->ac_nr = aes_setenckey192(&ctx->ac_ek, key);
+		break;
+	case 32 + AESCTR_NONCESIZE:
+		ctx->ac_nr = aes_setenckey256(&ctx->ac_ek, key);
+		break;
+	default:
 		aes_ctr_zerokey((u_int8_t **)&ctx);
 		return EINVAL;
 	}
@@ -733,9 +771,10 @@ aes_ctr_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 void
 aes_ctr_zerokey(u_int8_t **sched)
 {
+	struct aes_ctr_ctx *ctx = (void *)*sched;
 
-	memset(*sched, 0, sizeof(struct aes_ctr_ctx));
-	free(*sched, M_CRYPTO_DATA);
+	explicit_memset(ctx, 0, sizeof(*ctx));
+	kmem_free(ctx, sizeof(*ctx));
 	*sched = NULL;
 }
 
@@ -783,8 +822,7 @@ aes_gmac_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 {
 	struct aes_gmac_ctx *ctx;
 
-	ctx = malloc(sizeof(struct aes_gmac_ctx), M_CRYPTO_DATA,
-		     M_NOWAIT|M_ZERO);
+	ctx = kmem_zalloc(sizeof(*ctx), KM_NOSLEEP);
 	if (!ctx)
 		return ENOMEM;
 
@@ -797,8 +835,9 @@ aes_gmac_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 void
 aes_gmac_zerokey(u_int8_t **sched)
 {
+	struct aes_gmac_ctx *ctx = (void *)*sched;
 
-	free(*sched, M_CRYPTO_DATA);
+	kmem_free(ctx, sizeof(*ctx));
 	*sched = NULL;
 }
 

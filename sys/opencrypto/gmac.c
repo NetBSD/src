@@ -1,4 +1,4 @@
-/* $NetBSD: gmac.c,v 1.3 2011/06/09 14:47:42 drochner Exp $ */
+/* $NetBSD: gmac.c,v 1.4 2020/06/29 23:34:48 riastradh Exp $ */
 /* OpenBSD: gmac.c,v 1.3 2011/01/11 15:44:23 deraadt Exp */
 
 /*
@@ -26,7 +26,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <crypto/rijndael/rijndael.h>
+#include <crypto/aes/aes.h>
+
 #include <opencrypto/gmac.h>
 
 void	ghash_gfmul(const GMAC_INT *, const GMAC_INT *, GMAC_INT *);
@@ -114,13 +115,25 @@ AES_GMAC_Setkey(AES_GMAC_CTX *ctx, const uint8_t *key, uint16_t klen)
 {
 	int i;
 
-	ctx->rounds = rijndaelKeySetupEnc(ctx->K, (const u_char *)key,
-	    (klen - AESCTR_NONCESIZE) * 8);
+	switch (klen) {
+	case 16 + AESCTR_NONCESIZE:
+		ctx->rounds = aes_setenckey128(&ctx->K, key);
+		break;
+	case 24 + AESCTR_NONCESIZE:
+		ctx->rounds = aes_setenckey192(&ctx->K, key);
+		break;
+	case 32 + AESCTR_NONCESIZE:
+		ctx->rounds = aes_setenckey256(&ctx->K, key);
+		break;
+	default:
+		panic("invalid AES_GMAC_Setkey length in bytes: %u",
+		    (unsigned)klen);
+	}
 	/* copy out salt to the counter block */
 	memcpy(ctx->J, key + klen - AESCTR_NONCESIZE, AESCTR_NONCESIZE);
 	/* prepare a hash subkey */
-	rijndaelEncrypt(ctx->K, ctx->rounds, (void *)ctx->ghash.H,
-			(void *)ctx->ghash.H);
+	aes_enc(&ctx->K, (const void *)ctx->ghash.H, (void *)ctx->ghash.H,
+	    ctx->rounds);
 #if GMAC_INTLEN == 8
 	for (i = 0; i < 2; i++)
 		ctx->ghash.H[i] = be64toh(ctx->ghash.H[i]);
@@ -163,7 +176,7 @@ AES_GMAC_Final(uint8_t digest[GMAC_DIGEST_LEN], AES_GMAC_CTX *ctx)
 
 	/* do one round of GCTR */
 	ctx->J[GMAC_BLOCK_LEN - 1] = 1;
-	rijndaelEncrypt(ctx->K, ctx->rounds, ctx->J, keystream);
+	aes_enc(&ctx->K, ctx->J, keystream, ctx->rounds);
 	k = keystream;
 	d = digest;
 #if GMAC_INTLEN == 8
