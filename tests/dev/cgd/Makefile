@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2020/03/01 18:08:12 christos Exp $
+#	$NetBSD: Makefile,v 1.11 2020/06/29 23:44:01 riastradh Exp $
 #
 
 .include <bsd.own.mk>
@@ -10,7 +10,10 @@ FILESDIR=	${TESTSDIR}
 TESTS_SH=	t_cgd
 
 .if ${MKRUMP} != "no"
-TESTS_C=	t_cgd_3des t_cgd_aes t_cgd_blowfish
+TESTS_C+=	t_cgd_3des
+TESTS_C+=	t_cgd_adiantum
+TESTS_C+=	t_cgd_aes
+TESTS_C+=	t_cgd_blowfish
 
 WARNS=	4
 CPPFLAGS+=	-D_KERNTYPES
