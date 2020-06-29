@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_sse2_impl.h,v 1.1 2020/06/29 23:47:54 riastradh Exp $	*/
+/*	$NetBSD: aes_sse2_impl.h,v 1.2 2020/06/29 23:50:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #include <sys/types.h>
 
+#include <crypto/aes/aes.h>
+#include <crypto/aes/arch/x86/aes_sse2.h>
 #include <crypto/aes/arch/x86/immintrin.h>
 #include <crypto/aes/arch/x86/immintrin_ext.h>
 
