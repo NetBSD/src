@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.h,v 1.3 2019/05/02 16:55:51 scole Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.4 2020/06/29 01:37:27 scole Exp $	*/
 
 /*-
  * Copyright (c) 2000
@@ -86,6 +86,7 @@
 #define	J_SIGMASK	0x1d8
 #define	J_SIGSET	0x1e0
 
-#define	_JBLEN		0x200			/* Size in long XXX: Set to sizeof(mcontext_t)/sizeof(long) */
+/* XXX use FreeBSD value for now, set to sizeof(mcontext_t)/sizeof(long) ? */
+#define	_JBLEN		0x20			/* Size in long doubles */
 
 #endif /* !_MACHINE_SETJMP_H_ */
