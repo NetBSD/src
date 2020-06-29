@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_armv8.c,v 1.1 2020/06/29 23:31:41 riastradh Exp $	*/
+/*	$NetBSD: aes_armv8.c,v 1.2 2020/06/29 23:53:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_armv8.c,v 1.1 2020/06/29 23:31:41 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_armv8.c,v 1.2 2020/06/29 23:53:12 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/proc.h>
@@ -36,8 +36,9 @@ __KERNEL_RCSID(1, "$NetBSD: aes_armv8.c,v 1.1 2020/06/29 23:31:41 riastradh Exp 
 #include <crypto/aes/aes.h>
 #include <crypto/aes/arch/arm/aes_armv8.h>
 
+#include <arm/fpu.h>
+
 #include <aarch64/armreg.h>
-#include <aarch64/fpu.h>
 
 static void
 aesarmv8_setenckey(struct aesenc *enc, const uint8_t key[static 16],
