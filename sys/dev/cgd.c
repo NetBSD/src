@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.136 2020/06/29 23:35:26 riastradh Exp $ */
+/* $NetBSD: cgd.c,v 1.137 2020/06/29 23:36:06 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.136 2020/06/29 23:35:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.137 2020/06/29 23:36:06 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1587,7 +1587,7 @@ cgd_cipher(struct cgd_softc *sc, void *dstv, const void *srcv,
 	cfunc_cipher	*cipher = sc->sc_cfuncs->cf_cipher;
 	size_t		blocksize = sc->sc_cdata.cf_blocksize;
 	size_t		todo;
-	char		blkno_buf[CGD_MAXBLOCKSIZE];
+	char		blkno_buf[CGD_MAXBLOCKSIZE] __aligned(CGD_BLOCKALIGN);
 
 	DPRINTF_FOLLOW(("cgd_cipher() dir=%d\n", dir));
 

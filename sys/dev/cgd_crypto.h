@@ -1,4 +1,4 @@
-/* $NetBSD: cgd_crypto.h,v 1.12 2020/06/13 22:15:06 riastradh Exp $ */
+/* $NetBSD: cgd_crypto.h,v 1.13 2020/06/29 23:36:06 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,6 +38,8 @@
 #define CGD_AES_BLOCK_SIZE	16
 #define CGD_3DES_BLOCK_SIZE	8
 #define CGD_BF_BLOCK_SIZE	8
+
+#define	CGD_BLOCKALIGN		16
 
 typedef void *(cfunc_init)(size_t, const void *, size_t *);
 typedef void  (cfunc_destroy)(void *);
