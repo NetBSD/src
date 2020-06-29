@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.110 2020/03/29 09:06:38 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.111 2020/06/29 23:54:06 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -167,6 +167,8 @@ struct cpu_info {
 	volatile int	ci_astpending;	/* */
 	int		ci_want_resched;/* resched() was called */
 	int		ci_intr_depth;	/* */
+
+	int ci_kfpu_spl;
 
 	struct cpu_softc *
 			ci_softc;	/* platform softc */
