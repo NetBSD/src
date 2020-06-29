@@ -1,4 +1,4 @@
-/* $NetBSD: cgd_crypto.c,v 1.24 2020/06/29 23:33:05 riastradh Exp $ */
+/* $NetBSD: cgd_crypto.c,v 1.25 2020/06/29 23:36:06 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.24 2020/06/29 23:33:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.25 2020/06/29 23:36:06 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -167,7 +167,7 @@ cgd_cipher_aes_cbc(void *privdata, void *dst, const void *src, size_t nbytes,
     const void *blkno, int dir)
 {
 	struct aes_privdata	*apd = privdata;
-	uint8_t			 iv[CGD_AES_BLOCK_SIZE] = {0};
+	uint8_t iv[CGD_AES_BLOCK_SIZE] __aligned(CGD_AES_BLOCK_SIZE) = {0};
 
 	/* Compute the CBC IV as AES_k(blkno).  */
 	aes_enc(&apd->ap_enckey, blkno, iv, apd->ap_nrounds);
