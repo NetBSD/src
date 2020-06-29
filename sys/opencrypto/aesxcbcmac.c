@@ -1,4 +1,4 @@
-/* $NetBSD: aesxcbcmac.c,v 1.2 2016/09/26 14:50:54 christos Exp $ */
+/* $NetBSD: aesxcbcmac.c,v 1.3 2020/06/29 23:34:48 riastradh Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998 and 2003 WIDE Project.
@@ -30,11 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aesxcbcmac.c,v 1.2 2016/09/26 14:50:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aesxcbcmac.c,v 1.3 2020/06/29 23:34:48 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <crypto/rijndael/rijndael.h>
+
+#include <crypto/aes/aes.h>
 
 #include <opencrypto/aesxcbcmac.h>
 
@@ -47,24 +48,31 @@ aes_xcbc_mac_init(void *vctx, const uint8_t *key, u_int16_t keylen)
 	    { 2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2 };
 	static const uint8_t k3seed[AES_BLOCKSIZE] =
 	    { 3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 };
-	u_int32_t r_ks[(RIJNDAEL_MAXNR+1)*4];
+	struct aesenc r_ks;
 	aesxcbc_ctx *ctx;
 	uint8_t k1[AES_BLOCKSIZE];
 
 	ctx = vctx;
 	memset(ctx, 0, sizeof(*ctx));
 
-	if ((ctx->r_nr = rijndaelKeySetupEnc(r_ks, key, keylen * 8)) == 0)
-		return -1;
-	rijndaelEncrypt(r_ks, ctx->r_nr, k1seed, k1);
-	rijndaelEncrypt(r_ks, ctx->r_nr, k2seed, ctx->k2);
-	rijndaelEncrypt(r_ks, ctx->r_nr, k3seed, ctx->k3);
-	if (rijndaelKeySetupEnc(ctx->r_k1s, k1, AES_BLOCKSIZE * 8) == 0)
-		return -1;
-	if (rijndaelKeySetupEnc(ctx->r_k2s, ctx->k2, AES_BLOCKSIZE * 8) == 0)
-		return -1;
-	if (rijndaelKeySetupEnc(ctx->r_k3s, ctx->k3, AES_BLOCKSIZE * 8) == 0)
-		return -1;
+	switch (keylen) {
+	case 16:
+		ctx->r_nr = aes_setenckey128(&r_ks, key);
+		break;
+	case 24:
+		ctx->r_nr = aes_setenckey192(&r_ks, key);
+		break;
+	case 32:
+		ctx->r_nr = aes_setenckey256(&r_ks, key);
+		break;
+	}
+	aes_enc(&r_ks, k1seed, k1, ctx->r_nr);
+	aes_enc(&r_ks, k2seed, ctx->k2, ctx->r_nr);
+	aes_enc(&r_ks, k3seed, ctx->k3, ctx->r_nr);
+	aes_setenckey128(&ctx->r_k1s, k1);
+
+	explicit_memset(&r_ks, 0, sizeof(r_ks));
+	explicit_memset(k1, 0, sizeof(k1));
 
 	return 0;
 }
@@ -83,7 +91,7 @@ aes_xcbc_mac_loop(void *vctx, const uint8_t *addr, u_int16_t len)
 	if (ctx->buflen == sizeof(ctx->buf)) {
 		for (i = 0; i < sizeof(ctx->e); i++)
 			ctx->buf[i] ^= ctx->e[i];
-		rijndaelEncrypt(ctx->r_k1s, ctx->r_nr, ctx->buf, ctx->e);
+		aes_enc(&ctx->r_k1s, ctx->buf, ctx->e, ctx->r_nr);
 		ctx->buflen = 0;
 	}
 	if (ctx->buflen + len < sizeof(ctx->buf)) {
@@ -96,7 +104,7 @@ aes_xcbc_mac_loop(void *vctx, const uint8_t *addr, u_int16_t len)
 		    sizeof(ctx->buf) - ctx->buflen);
 		for (i = 0; i < sizeof(ctx->e); i++)
 			ctx->buf[i] ^= ctx->e[i];
-		rijndaelEncrypt(ctx->r_k1s, ctx->r_nr, ctx->buf, ctx->e);
+		aes_enc(&ctx->r_k1s, ctx->buf, ctx->e, ctx->r_nr);
 		addr += sizeof(ctx->buf) - ctx->buflen;
 		ctx->buflen = 0;
 	}
@@ -105,7 +113,7 @@ aes_xcbc_mac_loop(void *vctx, const uint8_t *addr, u_int16_t len)
 		memcpy(buf, addr, AES_BLOCKSIZE);
 		for (i = 0; i < sizeof(buf); i++)
 			buf[i] ^= ctx->e[i];
-		rijndaelEncrypt(ctx->r_k1s, ctx->r_nr, buf, ctx->e);
+		aes_enc(&ctx->r_k1s, buf, ctx->e, ctx->r_nr);
 		addr += AES_BLOCKSIZE;
 	}
 	if (addr < ep) {
@@ -129,7 +137,7 @@ aes_xcbc_mac_result(uint8_t *addr, void *vctx)
 			ctx->buf[i] ^= ctx->e[i];
 			ctx->buf[i] ^= ctx->k2[i];
 		}
-		rijndaelEncrypt(ctx->r_k1s, ctx->r_nr, ctx->buf, digest);
+		aes_enc(&ctx->r_k1s, ctx->buf, digest, ctx->r_nr);
 	} else {
 		for (i = ctx->buflen; i < sizeof(ctx->buf); i++)
 			ctx->buf[i] = (i == ctx->buflen) ? 0x80 : 0x00;
@@ -137,7 +145,7 @@ aes_xcbc_mac_result(uint8_t *addr, void *vctx)
 			ctx->buf[i] ^= ctx->e[i];
 			ctx->buf[i] ^= ctx->k3[i];
 		}
-		rijndaelEncrypt(ctx->r_k1s, ctx->r_nr, ctx->buf, digest);
+		aes_enc(&ctx->r_k1s, ctx->buf, digest, ctx->r_nr);
 	}
 
 	memcpy(addr, digest, sizeof(digest));

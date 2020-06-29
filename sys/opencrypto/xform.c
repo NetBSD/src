@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.c,v 1.29 2017/07/06 08:27:07 ozaki-r Exp $ */
+/*	$NetBSD: xform.c,v 1.30 2020/06/29 23:34:48 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.29 2017/07/06 08:27:07 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.30 2020/06/29 23:34:48 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -145,8 +145,8 @@ const struct enc_xform enc_xform_skipjack = {
 };
 
 const struct enc_xform enc_xform_rijndael128 = {
-	.type		= CRYPTO_RIJNDAEL128_CBC,
-	.name		= "Rijndael-128/AES",
+	.type		= CRYPTO_AES_CBC,
+	.name		= "AES",
 	.blocksize	= 16,
 	.ivsize		= 16,
 	.minkey		= 16,
