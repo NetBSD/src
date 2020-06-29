@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2020/06/27 16:00:34 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.9 2020/06/29 06:39:38 rin Exp $
 
 7XXX_SEQ=	aic7xxx.seq
 7XXX_SEQHDR=	aic7xxx_seq.h
@@ -17,7 +17,7 @@ SRCS=	aicasm.c aicasm_symbol.c aicasm_scan.l aicasm_macro_scan.l \
 
 YHEADER=1
 
-DPADD+= ${LIBL} ${LIBY}
+DPADD+= ${LIBY}
 LDADD+= -ly
 
 NOSHARE=# defined
