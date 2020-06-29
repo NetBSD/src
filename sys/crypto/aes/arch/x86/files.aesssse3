@@ -1,0 +1,8 @@
+#	$NetBSD: files.aesssse3,v 1.1 2020/06/29 23:51:35 riastradh Exp $
+
+makeoptions	aes	"COPTS.aes_ssse3.c"+="-msse -msse2 -msse3 -mssse3"
+makeoptions	aes	"COPTS.aes_ssse3_subr.c"+="-msse -msse2 -msse3 -mssse3"
+
+file	crypto/aes/arch/x86/aes_ssse3.c		aes
+file	crypto/aes/arch/x86/aes_ssse3_subr.c	aes
+file	crypto/aes/arch/x86/aes_ssse3_impl.c	aes
