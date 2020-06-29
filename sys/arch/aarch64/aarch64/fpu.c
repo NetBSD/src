@@ -1,4 +1,4 @@
-/* $NetBSD: fpu.c,v 1.3 2018/11/07 06:47:38 riastradh Exp $ */
+/* $NetBSD: fpu.c,v 1.4 2020/06/29 23:22:27 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,13 +31,15 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: fpu.c,v 1.3 2018/11/07 06:47:38 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: fpu.c,v 1.4 2020/06/29 23:22:27 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/lwp.h>
 #include <sys/evcnt.h>
 
+#include <aarch64/fpu.h>
+#include <aarch64/locore.h>
 #include <aarch64/reg.h>
 #include <aarch64/pcb.h>
 #include <aarch64/armreg.h>
@@ -171,4 +173,69 @@ fpu_state_release(lwp_t *l)
 	l->l_md.md_cpacr = CPACR_FPEN_NONE;
 	reg_cpacr_el1_write(CPACR_FPEN_NONE);
 	__asm __volatile ("isb");
+}
+
+void
+fpu_kern_enter(void)
+{
+	struct lwp *l = curlwp;
+	struct cpu_info *ci;
+	int s;
+
+	/*
+	 * Block all interrupts.  We must block preemption since -- if
+	 * this is a user thread -- there is nowhere to save the kernel
+	 * fpu state, and if we want this to be usable in interrupts,
+	 * we can't let interrupts interfere with the fpu state in use
+	 * since there's nowhere for them to save it.
+	 */
+	s = splhigh();
+	ci = curcpu();
+	KASSERT(ci->ci_kfpu_spl == -1);
+	ci->ci_kfpu_spl = s;
+
+	/*
+	 * If we are in a softint and have a pinned lwp, the fpu state
+	 * is that of the pinned lwp, so save it there.
+	 */
+	if ((l->l_pflag & LP_INTR) && (l->l_switchto != NULL))
+		l = l->l_switchto;
+	if (fpu_used_p(l))
+		fpu_save(l);
+
+	/*
+	 * Enable the fpu, and wait until it is enabled before
+	 * executing any further instructions.
+	 */
+	reg_cpacr_el1_write(CPACR_FPEN_ALL);
+	arm_isb();
+}
+
+void
+fpu_kern_leave(void)
+{
+	static const struct fpreg zero_fpreg;
+	struct cpu_info *ci = curcpu();
+	int s;
+
+	KASSERT(ci->ci_cpl == IPL_HIGH);
+	KASSERT(ci->ci_kfpu_spl != -1);
+
+	/*
+	 * Zero the fpu registers; otherwise we might leak secrets
+	 * through Spectre-class attacks to userland, even if there are
+	 * no bugs in fpu state management.
+	 */
+	load_fpregs(&zero_fpreg);
+
+	/*
+	 * Disable the fpu so that the kernel can't accidentally use
+	 * it again.
+	 */
+	reg_cpacr_el1_write(CPACR_FPEN_NONE);
+	arm_isb();
+
+	s = ci->ci_kfpu_spl;
+	ci->ci_kfpu_spl = -1;
+	splx(s);
 }

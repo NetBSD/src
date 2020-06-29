@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.11 2020/05/23 18:08:59 ryo Exp $	*/
+/*	$NetBSD: machdep.h,v 1.12 2020/06/29 23:22:27 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -142,7 +142,7 @@ void aarch64_setregs_ptrauth(struct lwp *, bool);
 /* fpu.c */
 void fpu_attach(struct cpu_info *);
 struct fpreg;
-void load_fpregs(struct fpreg *);
+void load_fpregs(const struct fpreg *);
 void save_fpregs(struct fpreg *);
 
 #ifdef TRAP_SIGDEBUG
