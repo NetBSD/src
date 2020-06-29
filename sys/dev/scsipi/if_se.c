@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.107 2020/06/22 17:38:27 jdc Exp $	*/
+/*	$NetBSD: if_se.c,v 1.108 2020/06/29 23:04:57 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.107 2020/06/22 17:38:27 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.108 2020/06/29 23:04:57 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -374,7 +374,7 @@ seattach(device_t parent, device_t self, void *aux)
 		sedetach(sc->sc_dev, 0);
 		return; /* Error */
 	}
-	
+
 	snprintf(wqname, sizeof(wqname), "%sRx", device_xname(sc->sc_dev));
 	rv = workqueue_create(&sc->sc_recv_wq, wqname, se_recv_worker, sc,
 	    PRI_SOFTNET, IPL_NET, WQ_MPSAFE);
