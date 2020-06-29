@@ -1,4 +1,4 @@
-/*	$NetBSD: aes.h,v 1.1 2020/06/29 23:27:52 riastradh Exp $	*/
+/*	$NetBSD: aes.h,v 1.2 2020/06/29 23:47:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -37,8 +37,9 @@
  *
  *	Expanded round keys.
  */
-struct aes {
+union aes {
 	uint32_t	aes_rk[60];
+	uint64_t	aes_rk64[30];
 } __aligned(16);
 
 #define	AES_128_NROUNDS	10
@@ -46,11 +47,11 @@ struct aes {
 #define	AES_256_NROUNDS	14
 
 struct aesenc {
-	struct aes	aese_aes;
+	union aes	aese_aes;
 };
 
 struct aesdec {
-	struct aes	aesd_aes;
+	union aes	aesd_aes;
 };
 
 struct aes_impl {
