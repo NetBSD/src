@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_ct_dec.c,v 1.1 2020/06/29 23:27:52 riastradh Exp $	*/
+/*	$NetBSD: aes_ct_dec.c,v 1.2 2020/06/29 23:36:59 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2016 Thomas Pornin <pornin@bolet.org>
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_ct_dec.c,v 1.1 2020/06/29 23:27:52 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_ct_dec.c,v 1.2 2020/06/29 23:36:59 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -174,4 +174,12 @@ br_aes_ct_bitslice_decrypt(unsigned num_rounds,
 	inv_shift_rows(q);
 	br_aes_ct_bitslice_invSbox(q);
 	add_round_key(q, skey);
+}
+
+/* NetBSD addition, for generating compatible decryption keys */
+void
+br_aes_ct_inv_mix_columns(uint32_t *q)
+{
+
+	inv_mix_columns(q);
 }
