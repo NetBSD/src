@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.10 2019/12/27 00:32:17 kamil Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.11 2020/06/29 01:37:27 scole Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <machine/_regset.h>
 
 /* XXX fix this, just get to compile for now */
-#define _NGREG	128 
+#define _NGREG	1
 
 #ifndef __ASSEMBLER__
 typedef unsigned long __greg_t;
