@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_sse2.h,v 1.1 2020/06/29 23:47:54 riastradh Exp $	*/
+/*	$NetBSD: aes_sse2.h,v 1.2 2020/06/29 23:50:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,6 +30,31 @@
 #define	_CRYPTO_AES_ARCH_X86_AES_SSE2_H
 
 #include <crypto/aes/aes.h>
+
+/*
+ * These functions MUST NOT use any vector registers for parameters or
+ * results -- the caller is compiled with -mno-sse &c. in the kernel,
+ * and dynamically turns on the vector unit just before calling them.
+ * Internal subroutines that use the vector unit for parameters are
+ * declared in aes_sse2_impl.h instead.
+ */
+
+void aes_sse2_setkey(uint64_t[static 30], const void *, uint32_t);
+
+void aes_sse2_enc(const struct aesenc *, const uint8_t in[static 16],
+    uint8_t[static 16], uint32_t);
+void aes_sse2_dec(const struct aesdec *, const uint8_t in[static 16],
+    uint8_t[static 16], uint32_t);
+void aes_sse2_cbc_enc(const struct aesenc *, const uint8_t[static 16],
+    uint8_t[static 16], size_t nbytes, uint8_t[static 16], uint32_t);
+void aes_sse2_cbc_dec(const struct aesdec *, const uint8_t[static 16],
+    uint8_t[static 16], size_t nbytes, uint8_t[static 16], uint32_t);
+void aes_sse2_xts_enc(const struct aesenc *, const uint8_t[static 16],
+    uint8_t[static 16], size_t nbytes, uint8_t[static 16], uint32_t);
+void aes_sse2_xts_dec(const struct aesdec *, const uint8_t[static 16],
+    uint8_t[static 16], size_t nbytes, uint8_t[static 16], uint32_t);
+
+int aes_sse2_selftest(void);
 
 extern struct aes_impl aes_sse2_impl;
 

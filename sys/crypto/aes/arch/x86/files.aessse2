@@ -1,11 +1,12 @@
-#	$NetBSD: files.aessse2,v 1.1 2020/06/29 23:47:54 riastradh Exp $
+#	$NetBSD: files.aessse2,v 1.2 2020/06/29 23:50:05 riastradh Exp $
 
-makeoptions	aes	"COPTS.aes_sse2.c"+="-msse2"
-makeoptions	aes	"COPTS.aes_sse2_dec.c"+="-msse2"
-makeoptions	aes	"COPTS.aes_sse2_enc.c"+="-msse2"
-makeoptions	aes	"COPTS.aes_sse2_impl.c"+="-msse2"
+makeoptions	aes	"COPTS.aes_sse2.c"+="-msse -msse2"
+makeoptions	aes	"COPTS.aes_sse2_dec.c"+="-msse -msse2"
+makeoptions	aes	"COPTS.aes_sse2_enc.c"+="-msse -msse2"
+makeoptions	aes	"COPTS.aes_sse2_subr.c"+="-msse -msse2"
 
 file	crypto/aes/arch/x86/aes_sse2.c		aes
 file	crypto/aes/arch/x86/aes_sse2_dec.c	aes
 file	crypto/aes/arch/x86/aes_sse2_enc.c	aes
 file	crypto/aes/arch/x86/aes_sse2_impl.c	aes
+file	crypto/aes/arch/x86/aes_sse2_subr.c	aes
