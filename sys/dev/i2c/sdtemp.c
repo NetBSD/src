@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.36 2019/10/01 18:00:08 chs Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.37 2020/06/29 06:01:30 msaitoh Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.36 2019/10/01 18:00:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.37 2020/06/29 06:01:30 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,7 +214,10 @@ sdtemp_match(device_t parent, cfdata_t cf, void *aux)
 	if ((ia->ia_addr & SDTEMP_ADDRMASK) != SDTEMP_ADDR)
 		return 0;
 
-	/* Verify that we can read the manufacturer ID, Device ID and the capability */
+	/*
+	 * Verify that we can read the manufacturer ID, Device ID and the
+	 * capability
+	 */
 	iic_acquire_bus(sc.sc_tag, 0);
 	error = sdtemp_read_16(&sc, SDTEMP_REG_MFG_ID,  &mfgid) |
 		sdtemp_read_16(&sc, SDTEMP_REG_DEV_REV, &devid) |
@@ -234,8 +237,8 @@ sdtemp_match(device_t parent, cfdata_t cf, void *aux)
 	}
 
 	/*
-	 * Check by SDTEMP_IS_TSE2004AV() might not be enough, so check the alarm
-	 * capability, too.
+	 * Check by SDTEMP_IS_TSE2004AV() might not be enough, so check the
+	 * alarm capability, too.
 	 */
 	if ((cap & SDTEMP_CAP_HAS_ALARM) == 0)
 		return 0;
@@ -593,7 +596,7 @@ sdtemp_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 }
 
 /*
- * power management functions
+ * Power management functions
  *
  * We go into "shutdown" mode at suspend time, and return to normal
  * mode upon resume.  This reduces power consumption by disabling
