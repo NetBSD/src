@@ -1,0 +1,6 @@
+#	$NetBSD: files.aesni,v 1.1 2020/06/29 23:29:40 riastradh Exp $
+
+ifdef amd64	# amd64-only for now; i386 left as exercise for reader
+file	crypto/aes/arch/x86/aes_ni.c		aes
+file	crypto/aes/arch/x86/aes_ni_64.S		aes
+endif
