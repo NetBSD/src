@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_sse2_impl.c,v 1.1 2020/06/29 23:47:54 riastradh Exp $	*/
+/*	$NetBSD: aes_sse2_impl.c,v 1.2 2020/06/29 23:50:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,11 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_sse2_impl.c,v 1.1 2020/06/29 23:47:54 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_sse2_impl.c,v 1.2 2020/06/29 23:50:05 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/endian.h>
-#include <sys/systm.h>
 
 #include <crypto/aes/aes.h>
 #include <crypto/aes/arch/x86/aes_sse2.h>
@@ -41,532 +40,99 @@ __KERNEL_RCSID(1, "$NetBSD: aes_sse2_impl.c,v 1.1 2020/06/29 23:47:54 riastradh 
 #include <x86/fpu.h>
 #include <x86/specialreg.h>
 
-#include "aes_sse2_impl.h"
-
 static void
-aes_sse2_setkey(uint64_t rk[static 30], const void *key, uint32_t nrounds)
+aes_sse2_setenckey_impl(struct aesenc *enc, const uint8_t *key,
+    uint32_t nrounds)
 {
-	size_t key_len;
-
-	switch (nrounds) {
-	case 10:
-		key_len = 16;
-		break;
-	case 12:
-		key_len = 24;
-		break;
-	case 14:
-		key_len = 32;
-		break;
-	default:
-		panic("invalid AES nrounds: %u", nrounds);
-	}
 
 	fpu_kern_enter();
-	aes_sse2_keysched(rk, key, key_len);
+	aes_sse2_setkey(enc->aese_aes.aes_rk64, key, nrounds);
 	fpu_kern_leave();
 }
 
 static void
-aes_sse2_setenckey(struct aesenc *enc, const uint8_t *key, uint32_t nrounds)
+aes_sse2_setdeckey_impl(struct aesdec *dec, const uint8_t *key,
+    uint32_t nrounds)
 {
 
-	aes_sse2_setkey(enc->aese_aes.aes_rk64, key, nrounds);
-}
-
-static void
-aes_sse2_setdeckey(struct aesdec *dec, const uint8_t *key, uint32_t nrounds)
-{
-
+	fpu_kern_enter();
 	/*
 	 * BearSSL computes InvMixColumns on the fly -- no need for
 	 * distinct decryption round keys.
 	 */
 	aes_sse2_setkey(dec->aesd_aes.aes_rk64, key, nrounds);
-}
-
-static void
-aes_sse2_enc(const struct aesenc *enc, const uint8_t in[static 16],
-    uint8_t out[static 16], uint32_t nrounds)
-{
-	uint64_t sk_exp[120];
-	__m128i q[4];
-
-	fpu_kern_enter();
-
-	/* Expand round keys for bitslicing.  */
-	aes_sse2_skey_expand(sk_exp, nrounds, enc->aese_aes.aes_rk64);
-
-	/* Load input block interleaved with garbage blocks.  */
-	q[0] = aes_sse2_interleave_in(_mm_loadu_epi8(in));
-	q[1] = q[2] = q[3] = _mm_setzero_si128();
-
-	/* Transform to bitslice, decrypt, transform from bitslice.  */
-	aes_sse2_ortho(q);
-	aes_sse2_bitslice_encrypt(nrounds, sk_exp, q);
-	aes_sse2_ortho(q);
-
-	/* Store output block.  */
-	_mm_storeu_epi8(out, aes_sse2_interleave_out(q[0]));
-
-	/* Paranoia: Zero temporary buffers.  */
-	explicit_memset(sk_exp, 0, sizeof sk_exp);
-	explicit_memset(q, 0, sizeof q);
-
 	fpu_kern_leave();
 }
 
 static void
-aes_sse2_dec(const struct aesdec *dec, const uint8_t in[static 16],
+aes_sse2_enc_impl(const struct aesenc *enc, const uint8_t in[static 16],
     uint8_t out[static 16], uint32_t nrounds)
 {
-	uint64_t sk_exp[120];
-	__m128i q[4];
 
 	fpu_kern_enter();
-
-	/* Expand round keys for bitslicing.  */
-	aes_sse2_skey_expand(sk_exp, nrounds, dec->aesd_aes.aes_rk64);
-
-	/* Load input block interleaved with garbage blocks.  */
-	q[0] = aes_sse2_interleave_in(_mm_loadu_epi8(in));
-	q[1] = q[2] = q[3] = _mm_setzero_si128();
-
-	/* Transform to bitslice, decrypt, transform from bitslice.  */
-	aes_sse2_ortho(q);
-	aes_sse2_bitslice_decrypt(nrounds, sk_exp, q);
-	aes_sse2_ortho(q);
-
-	/* Store output block.  */
-	_mm_storeu_epi8(out, aes_sse2_interleave_out(q[0]));
-
-	/* Paranoia: Zero temporary buffers.  */
-	explicit_memset(sk_exp, 0, sizeof sk_exp);
-	explicit_memset(q, 0, sizeof q);
-
+	aes_sse2_enc(enc, in, out, nrounds);
 	fpu_kern_leave();
 }
 
 static void
-aes_sse2_cbc_enc(const struct aesenc *enc, const uint8_t in[static 16],
+aes_sse2_dec_impl(const struct aesdec *dec, const uint8_t in[static 16],
+    uint8_t out[static 16], uint32_t nrounds)
+{
+
+	fpu_kern_enter();
+	aes_sse2_dec(dec, in, out, nrounds);
+	fpu_kern_leave();
+}
+
+static void
+aes_sse2_cbc_enc_impl(const struct aesenc *enc, const uint8_t in[static 16],
     uint8_t out[static 16], size_t nbytes, uint8_t iv[static 16],
     uint32_t nrounds)
 {
-	uint64_t sk_exp[120];
-	__m128i q[4];
-	__m128i cv;
 
-	KASSERT(nbytes % 16 == 0);
-
-	/* Skip if there's nothing to do.  */
 	if (nbytes == 0)
 		return;
-
 	fpu_kern_enter();
-
-	/* Expand round keys for bitslicing.  */
-	aes_sse2_skey_expand(sk_exp, nrounds, enc->aese_aes.aes_rk64);
-
-	/* Load the IV.  */
-	cv = _mm_loadu_epi8(iv);
-
-	for (; nbytes; nbytes -= 16, in += 16, out += 16) {
-		/* Load input block and apply CV.  */
-		q[0] = aes_sse2_interleave_in(cv ^ _mm_loadu_epi8(in));
-
-		/* Transform to bitslice, encrypt, transform from bitslice.  */
-		aes_sse2_ortho(q);
-		aes_sse2_bitslice_encrypt(nrounds, sk_exp, q);
-		aes_sse2_ortho(q);
-
-		/* Remember ciphertext as CV and store output block.  */
-		cv = aes_sse2_interleave_out(q[0]);
-		_mm_storeu_epi8(out, cv);
-	}
-
-	/* Store updated IV.  */
-	_mm_storeu_epi8(iv, cv);
-
-	/* Paranoia: Zero temporary buffers.  */
-	explicit_memset(sk_exp, 0, sizeof sk_exp);
-	explicit_memset(q, 0, sizeof q);
-
+	aes_sse2_cbc_enc(enc, in, out, nbytes, iv, nrounds);
 	fpu_kern_leave();
 }
 
 static void
-aes_sse2_cbc_dec(const struct aesdec *dec, const uint8_t in[static 16],
-    uint8_t out[static 16], size_t nbytes, uint8_t ivp[static 16],
+aes_sse2_cbc_dec_impl(const struct aesdec *dec, const uint8_t in[static 16],
+    uint8_t out[static 16], size_t nbytes, uint8_t iv[static 16],
     uint32_t nrounds)
 {
-	uint64_t sk_exp[120];
-	__m128i q[4];
-	__m128i cv, iv, w;
 
-	KASSERT(nbytes % 16 == 0);
-
-	/* Skip if there's nothing to do.  */
 	if (nbytes == 0)
 		return;
-
 	fpu_kern_enter();
-
-	/* Expand round keys for bitslicing.  */
-	aes_sse2_skey_expand(sk_exp, nrounds, dec->aesd_aes.aes_rk64);
-
-	/* Load the IV.  */
-	iv = _mm_loadu_epi8(ivp);
-
-	/* Load the last cipher block.  */
-	cv = _mm_loadu_epi8(in + nbytes - 16);
-
-	/* Store the updated IV.  */
-	_mm_storeu_epi8(ivp, cv);
-
-	/* Process the last blocks if not an even multiple of four.  */
-	if (nbytes % (4*16)) {
-		unsigned n = (nbytes/16) % 4;
-
-		KASSERT(n > 0);
-		KASSERT(n < 4);
-
-		q[1] = q[2] = q[3] = _mm_setzero_si128();
-		q[n - 1] = aes_sse2_interleave_in(cv);
-		switch (nbytes % 64) {
-		case 48:
-			w = _mm_loadu_epi8(in + nbytes - 32);
-			q[1] = aes_sse2_interleave_in(w);
-			/*FALLTHROUGH*/
-		case 32:
-			w = _mm_loadu_epi8(in + nbytes - 48);
-			q[0] = aes_sse2_interleave_in(w);
-			/*FALLTHROUGH*/
-		case 16:
-			break;
-		}
-
-		/* Decrypt.  */
-		aes_sse2_ortho(q);
-		aes_sse2_bitslice_decrypt(nrounds, sk_exp, q);
-		aes_sse2_ortho(q);
-
-		do {
-			n--;
-			w = aes_sse2_interleave_out(q[n]);
-			if ((nbytes -= 16) == 0)
-				goto out;
-			cv = _mm_loadu_epi8(in + nbytes - 16);
-			_mm_storeu_epi8(out + nbytes, w ^ cv);
-		} while (n);
-	}
-
-	for (;;) {
-		KASSERT(nbytes >= 64);
-		nbytes -= 64;
-
-		/*
-		 * 1. Set up upper cipher block from cv.
-		 * 2. Load lower cipher block into cv and set it up.
-		 * 3. Decrypt.
-		 */
-		q[3] = aes_sse2_interleave_in(cv);
-
-		w = _mm_loadu_epi8(in + nbytes + 4*8);
-		q[2] = aes_sse2_interleave_in(w);
-
-		w = _mm_loadu_epi8(in + nbytes + 4*4);
-		q[1] = aes_sse2_interleave_in(w);
-
-		w = _mm_loadu_epi8(in + nbytes + 4*0);
-		q[0] = aes_sse2_interleave_in(w);
-
-		aes_sse2_ortho(q);
-		aes_sse2_bitslice_decrypt(nrounds, sk_exp, q);
-		aes_sse2_ortho(q);
-
-		/* Store the upper output block.  */
-		w = aes_sse2_interleave_out(q[3]);
-		cv = _mm_loadu_epi8(in + nbytes + 4*8);
-		_mm_storeu_epi8(out + nbytes + 4*12, w ^ cv);
-
-		/* Store the middle output blocks.  */
-		w = aes_sse2_interleave_out(q[2]);
-		cv = _mm_loadu_epi8(in + nbytes + 4*4);
-		_mm_storeu_epi8(out + nbytes + 4*8, w ^ cv);
-
-		w = aes_sse2_interleave_out(q[1]);
-		cv = _mm_loadu_epi8(in + nbytes + 4*0);
-		_mm_storeu_epi8(out + nbytes + 4*4, w ^ cv);
-
-		/*
-		 * Get the first output block, but don't load the CV
-		 * yet -- it might be the previous ciphertext block, or
-		 * it might be the IV.
-		 */
-		w = aes_sse2_interleave_out(q[0]);
-
-		/* Stop if we've reached the first output block.  */
-		if (nbytes == 0)
-			goto out;
-
-		/*
-		 * Load the preceding cipher block, and apply it as the
-		 * chaining value to this one.
-		 */
-		cv = _mm_loadu_epi8(in + nbytes - 16);
-		_mm_storeu_epi8(out + nbytes, w ^ cv);
-	}
-
-out:	/* Store the first output block.  */
-	_mm_storeu_epi8(out, w ^ iv);
-
-	/* Paranoia: Zero temporary buffers.  */
-	explicit_memset(sk_exp, 0, sizeof sk_exp);
-	explicit_memset(q, 0, sizeof q);
-
+	aes_sse2_cbc_dec(dec, in, out, nbytes, iv, nrounds);
 	fpu_kern_leave();
 }
 
-static inline __m128i
-aes_sse2_xts_update(__m128i t)
-{
-	const __m128i one = _mm_set_epi64x(1, 1);
-	__m128i s, m, c;
-
-	s = _mm_srli_epi64(t, 63);	/* 1 if high bit set else 0 */
-	m = _mm_sub_epi64(s, one);	/* 0 if high bit set else -1 */
-	m = _mm_shuffle_epi32(m, 0x4e);	/* swap halves */
-	c = _mm_set_epi64x(1, 0x87);	/* carry */
-
-	return _mm_slli_epi64(t, 1) ^ (c & ~m);
-}
-
-static int
-aes_sse2_xts_update_selftest(void)
-{
-	static const struct {
-		uint32_t in[4], out[4];
-	} cases[] = {
-		[0] = { {1}, {2} },
-		[1] = { {0x80000000U,0,0,0}, {0,1,0,0} },
-		[2] = { {0,0x80000000U,0,0}, {0,0,1,0} },
-		[3] = { {0,0,0x80000000U,0}, {0,0,0,1} },
-		[4] = { {0,0,0,0x80000000U}, {0x87,0,0,0} },
-		[5] = { {0,0x80000000U,0,0x80000000U}, {0x87,0,1,0} },
-	};
-	unsigned i;
-	uint32_t t[4];
-	int result = 0;
-
-	for (i = 0; i < sizeof(cases)/sizeof(cases[0]); i++) {
-		t[0] = cases[i].in[0];
-		t[1] = cases[i].in[1];
-		t[2] = cases[i].in[2];
-		t[3] = cases[i].in[3];
-		_mm_storeu_epi8(t, aes_sse2_xts_update(_mm_loadu_epi8(t)));
-		if (t[0] != cases[i].out[0] ||
-		    t[1] != cases[i].out[1] ||
-		    t[2] != cases[i].out[2] ||
-		    t[3] != cases[i].out[3]) {
-			printf("%s %u:"
-			    " %"PRIx32" %"PRIx32" %"PRIx32" %"PRIx32"\n",
-			    __func__, i, t[0], t[1], t[2], t[3]);
-			result = -1;
-		}
-	}
-
-	return result;
-}
-
 static void
-aes_sse2_xts_enc(const struct aesenc *enc, const uint8_t in[static 16],
+aes_sse2_xts_enc_impl(const struct aesenc *enc, const uint8_t in[static 16],
     uint8_t out[static 16], size_t nbytes, uint8_t tweak[static 16],
     uint32_t nrounds)
 {
-	uint64_t sk_exp[120];
-	__m128i q[4];
-	__m128i w;
-	__m128i t[5];
-	unsigned i;
 
-	KASSERT(nbytes % 16 == 0);
-
-	/* Skip if there's nothing to do.  */
 	if (nbytes == 0)
 		return;
-
 	fpu_kern_enter();
-
-	/* Expand round keys for bitslicing.  */
-	aes_sse2_skey_expand(sk_exp, nrounds, enc->aese_aes.aes_rk64);
-
-	/* Load tweak.  */
-	t[0] = _mm_loadu_epi8(tweak);
-
-	/* Handle the first block separately if odd number.  */
-	if (nbytes % (4*16)) {
-		/* Load up the tweaked inputs.  */
-		for (i = 0; i < (nbytes/16) % 4; i++) {
-			w = _mm_loadu_epi8(in + 16*i) ^ t[i];
-			q[i] = aes_sse2_interleave_in(w);
-			t[i + 1] = aes_sse2_xts_update(t[i]);
-		}
-		for (; i < 4; i++)
-			q[i] = _mm_setzero_si128();
-
-		/* Encrypt up to four blocks.  */
-		aes_sse2_ortho(q);
-		aes_sse2_bitslice_encrypt(nrounds, sk_exp, q);
-		aes_sse2_ortho(q);
-
-		/* Store the tweaked outputs.  */
-		for (i = 0; i < (nbytes/16) % 4; i++) {
-			w = aes_sse2_interleave_out(q[i]);
-			_mm_storeu_epi8(out + 16*i, w ^ t[i]);
-		}
-
-		/* Advance to the next block.  */
-		t[0] = t[i];
-		in += nbytes % (4*16);
-		out += nbytes % (4*16);
-		nbytes -= nbytes % (4*16);
-		if (nbytes == 0)
-			goto out;
-	}
-
-	do {
-		KASSERT(nbytes % 64 == 0);
-		KASSERT(nbytes >= 64);
-
-		/* Load up the tweaked inputs.  */
-		for (i = 0; i < 4; i++) {
-			w = _mm_loadu_epi8(in + 16*i) ^ t[i];
-			q[i] = aes_sse2_interleave_in(w);
-			t[i + 1] = aes_sse2_xts_update(t[i]);
-		}
-
-		/* Encrypt four blocks.  */
-		aes_sse2_ortho(q);
-		aes_sse2_bitslice_encrypt(nrounds, sk_exp, q);
-		aes_sse2_ortho(q);
-
-		/* Store the tweaked outputs.  */
-		for (i = 0; i < 4; i++) {
-			w = aes_sse2_interleave_out(q[i]);
-			_mm_storeu_epi8(out + 16*i, w ^ t[i]);
-		}
-
-		/* Advance to the next block.  */
-		t[0] = t[4];
-		in += 64;
-		out += 64;
-		nbytes -= 64;
-	} while (nbytes);
-
-out:	/* Store the updated tweak.  */
-	_mm_storeu_epi8(tweak, t[0]);
-
-	/* Paranoia: Zero temporary buffers.  */
-	explicit_memset(sk_exp, 0, sizeof sk_exp);
-	explicit_memset(q, 0, sizeof q);
-	explicit_memset(t, 0, sizeof t);
-
+	aes_sse2_xts_enc(enc, in, out, nbytes, tweak, nrounds);
 	fpu_kern_leave();
 }
 
 static void
-aes_sse2_xts_dec(const struct aesdec *dec, const uint8_t in[static 16],
+aes_sse2_xts_dec_impl(const struct aesdec *dec, const uint8_t in[static 16],
     uint8_t out[static 16], size_t nbytes, uint8_t tweak[static 16],
     uint32_t nrounds)
 {
-	uint64_t sk_exp[120];
-	__m128i q[4];
-	__m128i w;
-	__m128i t[5];
-	unsigned i;
 
-	KASSERT(nbytes % 16 == 0);
-
-	/* Skip if there's nothing to do.  */
 	if (nbytes == 0)
 		return;
-
 	fpu_kern_enter();
-
-	/* Expand round keys for bitslicing.  */
-	aes_sse2_skey_expand(sk_exp, nrounds, dec->aesd_aes.aes_rk64);
-
-	/* Load tweak.  */
-	t[0] = _mm_loadu_epi8(tweak);
-
-	/* Handle the first block separately if odd number.  */
-	if (nbytes % (4*16)) {
-		/* Load up the tweaked inputs.  */
-		for (i = 0; i < (nbytes/16) % 4; i++) {
-			w = _mm_loadu_epi8(in + 16*i) ^ t[i];
-			q[i] = aes_sse2_interleave_in(w);
-			t[i + 1] = aes_sse2_xts_update(t[i]);
-		}
-		for (; i < 4; i++)
-			q[i] = _mm_setzero_si128();
-
-		/* Decrypt up to four blocks.  */
-		aes_sse2_ortho(q);
-		aes_sse2_bitslice_decrypt(nrounds, sk_exp, q);
-		aes_sse2_ortho(q);
-
-		/* Store the tweaked outputs.  */
-		for (i = 0; i < (nbytes/16) % 4; i++) {
-			w = aes_sse2_interleave_out(q[i]);
-			_mm_storeu_epi8(out + 16*i, w ^ t[i]);
-		}
-
-		/* Advance to the next block.  */
-		t[0] = t[i];
-		in += nbytes % (4*16);
-		out += nbytes % (4*16);
-		nbytes -= nbytes % (4*16);
-		if (nbytes == 0)
-			goto out;
-	}
-
-	do {
-		KASSERT(nbytes % 64 == 0);
-		KASSERT(nbytes >= 64);
-
-		/* Load up the tweaked inputs.  */
-		for (i = 0; i < 4; i++) {
-			w = _mm_loadu_epi8(in + 16*i) ^ t[i];
-			q[i] = aes_sse2_interleave_in(w);
-			t[i + 1] = aes_sse2_xts_update(t[i]);
-		}
-
-		/* Decrypt four blocks.  */
-		aes_sse2_ortho(q);
-		aes_sse2_bitslice_decrypt(nrounds, sk_exp, q);
-		aes_sse2_ortho(q);
-
-		/* Store the tweaked outputs.  */
-		for (i = 0; i < 4; i++) {
-			w = aes_sse2_interleave_out(q[i]);
-			_mm_storeu_epi8(out + 16*i, w ^ t[i]);
-		}
-
-		/* Advance to the next block.  */
-		t[0] = t[4];
-		in += 64;
-		out += 64;
-		nbytes -= 64;
-	} while (nbytes);
-
-out:	/* Store the updated tweak.  */
-	_mm_storeu_epi8(tweak, t[0]);
-
-	/* Paranoia: Zero temporary buffers.  */
-	explicit_memset(sk_exp, 0, sizeof sk_exp);
-	explicit_memset(q, 0, sizeof q);
-	explicit_memset(t, 0, sizeof t);
-
+	aes_sse2_xts_dec(dec, in, out, nbytes, tweak, nrounds);
 	fpu_kern_leave();
 }
 
@@ -582,17 +148,8 @@ aes_sse2_probe(void)
 		return -1;
 
 	fpu_kern_enter();
-
-	if (aes_sse2_xts_update_selftest())
-		result = -1;
-
+	result = aes_sse2_selftest();
 	fpu_kern_leave();
-
-	/* XXX test aes_sse2_bitslice_decrypt */
-	/* XXX test aes_sse2_bitslice_encrypt */
-	/* XXX test aes_sse2_keysched */
-	/* XXX test aes_sse2_ortho */
-	/* XXX test aes_sse2_skey_expand */
 
 	return result;
 }
@@ -600,12 +157,12 @@ aes_sse2_probe(void)
 struct aes_impl aes_sse2_impl = {
 	.ai_name = "Intel SSE2 bitsliced",
 	.ai_probe = aes_sse2_probe,
-	.ai_setenckey = aes_sse2_setenckey,
-	.ai_setdeckey = aes_sse2_setdeckey,
-	.ai_enc = aes_sse2_enc,
-	.ai_dec = aes_sse2_dec,
-	.ai_cbc_enc = aes_sse2_cbc_enc,
-	.ai_cbc_dec = aes_sse2_cbc_dec,
-	.ai_xts_enc = aes_sse2_xts_enc,
-	.ai_xts_dec = aes_sse2_xts_dec,
+	.ai_setenckey = aes_sse2_setenckey_impl,
+	.ai_setdeckey = aes_sse2_setdeckey_impl,
+	.ai_enc = aes_sse2_enc_impl,
+	.ai_dec = aes_sse2_dec_impl,
+	.ai_cbc_enc = aes_sse2_cbc_enc_impl,
+	.ai_cbc_dec = aes_sse2_cbc_dec_impl,
+	.ai_xts_enc = aes_sse2_xts_enc_impl,
+	.ai_xts_dec = aes_sse2_xts_dec_impl,
 };
