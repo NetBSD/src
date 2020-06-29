@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_via.c,v 1.1 2020/06/29 23:39:30 riastradh Exp $	*/
+/*	$NetBSD: aes_via.c,v 1.2 2020/06/29 23:41:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_via.c,v 1.1 2020/06/29 23:39:30 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_via.c,v 1.2 2020/06/29 23:41:35 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/evcnt.h>
@@ -119,8 +119,8 @@ aesvia_setdeckey(struct aesdec *dec, const uint8_t *key, uint32_t nrounds)
 }
 
 static inline void
-aesvia_enc1(const struct aesenc *enc, const uint8_t in[static 16],
-    uint8_t out[static 16], uint32_t cw0)
+aesvia_encN(const struct aesenc *enc, const uint8_t in[static 16],
+    uint8_t out[static 16], size_t nblocks, uint32_t cw0)
 {
 	const uint32_t cw[4] __aligned(16) = {
 		[0] = (cw0
@@ -128,7 +128,6 @@ aesvia_enc1(const struct aesenc *enc, const uint8_t in[static 16],
 		    | C3_CRYPT_CWLO_ENCRYPT
 		    | C3_CRYPT_CWLO_NORMAL),
 	};
-	size_t nblocks = 1;
 
 	KASSERT(((uintptr_t)enc & 0xf) == 0);
 	KASSERT(((uintptr_t)in & 0xf) == 0);
@@ -141,8 +140,8 @@ aesvia_enc1(const struct aesenc *enc, const uint8_t in[static 16],
 }
 
 static inline void
-aesvia_dec1(const struct aesdec *dec, const uint8_t in[static 16],
-    uint8_t out[static 16], uint32_t cw0)
+aesvia_decN(const struct aesdec *dec, const uint8_t in[static 16],
+    uint8_t out[static 16], size_t nblocks, uint32_t cw0)
 {
 	const uint32_t cw[4] __aligned(16) = {
 		[0] = (cw0
@@ -150,7 +149,6 @@ aesvia_dec1(const struct aesdec *dec, const uint8_t in[static 16],
 		    | C3_CRYPT_CWLO_DECRYPT
 		    | C3_CRYPT_CWLO_NORMAL),
 	};
-	size_t nblocks = 1;
 
 	KASSERT(((uintptr_t)dec & 0xf) == 0);
 	KASSERT(((uintptr_t)in & 0xf) == 0);
@@ -180,7 +178,7 @@ aesvia_enc(const struct aesenc *enc, const uint8_t in[static 16],
 	if ((((uintptr_t)in | (uintptr_t)out) & 0xf) == 0 &&
 	    ((uintptr_t)in & 0xff0) != 0xff0) {
 		enc_aligned_evcnt.ev_count++;
-		aesvia_enc1(enc, in, out, cw0);
+		aesvia_encN(enc, in, out, 1, cw0);
 	} else {
 		enc_unaligned_evcnt.ev_count++;
 		/*
@@ -194,7 +192,7 @@ aesvia_enc(const struct aesenc *enc, const uint8_t in[static 16],
 		uint8_t outbuf[16] __aligned(16);
 
 		memcpy(inbuf, in, 16);
-		aesvia_enc1(enc, inbuf, outbuf, cw0);
+		aesvia_encN(enc, inbuf, outbuf, 1, cw0);
 		memcpy(out, outbuf, 16);
 
 		explicit_memset(inbuf, 0, sizeof inbuf);
@@ -221,7 +219,7 @@ aesvia_dec(const struct aesdec *dec, const uint8_t in[static 16],
 	if ((((uintptr_t)in | (uintptr_t)out) & 0xf) == 0 &&
 	    ((uintptr_t)in & 0xff0) != 0xff0) {
 		dec_aligned_evcnt.ev_count++;
-		aesvia_dec1(dec, in, out, cw0);
+		aesvia_decN(dec, in, out, 1, cw0);
 	} else {
 		dec_unaligned_evcnt.ev_count++;
 		/*
@@ -235,7 +233,7 @@ aesvia_dec(const struct aesdec *dec, const uint8_t in[static 16],
 		uint8_t outbuf[16] __aligned(16);
 
 		memcpy(inbuf, in, 16);
-		aesvia_dec1(dec, inbuf, outbuf, cw0);
+		aesvia_decN(dec, inbuf, outbuf, 1, cw0);
 		memcpy(out, outbuf, 16);
 
 		explicit_memset(inbuf, 0, sizeof inbuf);
@@ -245,7 +243,7 @@ aesvia_dec(const struct aesdec *dec, const uint8_t in[static 16],
 }
 
 static inline void
-aesvia_cbc_enc1(const struct aesenc *enc, const uint8_t in[static 16],
+aesvia_cbc_encN(const struct aesenc *enc, const uint8_t in[static 16],
     uint8_t out[static 16], size_t nblocks, uint8_t **ivp, uint32_t cw0)
 {
 	const uint32_t cw[4] __aligned(16) = {
@@ -274,7 +272,7 @@ aesvia_cbc_enc1(const struct aesenc *enc, const uint8_t in[static 16],
 }
 
 static inline void
-aesvia_cbc_dec1(const struct aesdec *dec, const uint8_t in[static 16],
+aesvia_cbc_decN(const struct aesdec *dec, const uint8_t in[static 16],
     uint8_t out[static 16], size_t nblocks, uint8_t iv[static 16],
     uint32_t cw0)
 {
@@ -340,7 +338,7 @@ aesvia_cbc_enc(const struct aesenc *enc, const uint8_t in[static 16],
 	if ((((uintptr_t)in | (uintptr_t)out | (uintptr_t)iv) & 0xf) == 0) {
 		cbcenc_aligned_evcnt.ev_count++;
 		uint8_t *ivp = iv;
-		aesvia_cbc_enc1(enc, in, out, nbytes/16, &ivp, cw0);
+		aesvia_cbc_encN(enc, in, out, nbytes/16, &ivp, cw0);
 		memcpy(iv, ivp, 16);
 	} else {
 		cbcenc_unaligned_evcnt.ev_count++;
@@ -351,7 +349,7 @@ aesvia_cbc_enc(const struct aesenc *enc, const uint8_t in[static 16],
 		for (; nbytes; nbytes -= 16, in += 16, out += 16) {
 			memcpy(tmp, in, 16);
 			xor128(tmp, tmp, cv);
-			aesvia_enc1(enc, tmp, cv, cw0);
+			aesvia_encN(enc, tmp, cv, 1, cw0);
 			memcpy(out, cv, 16);
 		}
 		memcpy(iv, cv, 16);
@@ -381,7 +379,7 @@ aesvia_cbc_dec(const struct aesdec *dec, const uint8_t in[static 16],
 	aesvia_reload_keys();
 	if ((((uintptr_t)in | (uintptr_t)out | (uintptr_t)iv) & 0xf) == 0) {
 		cbcdec_aligned_evcnt.ev_count++;
-		aesvia_cbc_dec1(dec, in, out, nbytes/16, iv, cw0);
+		aesvia_cbc_decN(dec, in, out, nbytes/16, iv, cw0);
 	} else {
 		cbcdec_unaligned_evcnt.ev_count++;
 		uint8_t iv0[16] __aligned(16);
@@ -393,7 +391,7 @@ aesvia_cbc_dec(const struct aesdec *dec, const uint8_t in[static 16],
 		memcpy(iv, cv, 16);
 
 		for (;;) {
-			aesvia_dec1(dec, cv, tmp, cw0);
+			aesvia_decN(dec, cv, tmp, 1, cw0);
 			if ((nbytes -= 16) == 0)
 				break;
 			memcpy(cv, in + nbytes - 16, 16);
@@ -480,6 +478,7 @@ aesvia_xts_enc(const struct aesenc *enc, const uint8_t in[static 16],
 	if ((((uintptr_t)in | (uintptr_t)out) & 0xf) == 0) {
 		xtsenc_aligned_evcnt.ev_count++;
 		unsigned lastblock = 0;
+		uint32_t buf[8*4] __aligned(16);
 
 		/*
 		 * Make sure the last block is not the last block of a
@@ -491,20 +490,43 @@ aesvia_xts_enc(const struct aesenc *enc, const uint8_t in[static 16],
 		lastblock = 16*(((uintptr_t)(out + nbytes) & 0xfff) == 0);
 		nbytes -= lastblock;
 
-		for (; nbytes; nbytes -= 16, in += 16, out += 16) {
-			xor128(out, in, t);
-			aesvia_enc1(enc, out, out, cw0);
-			xor128(out, out, t);
-			aesvia_xts_update(&t[0], &t[1], &t[2], &t[3]);
+		/*
+		 * Handle an odd number of initial blocks so we can
+		 * process the rest in eight-block (128-byte) chunks.
+		 */
+		if (nbytes % 128) {
+			unsigned nbytes128 = nbytes % 128;
+
+			nbytes -= nbytes128;
+			for (; nbytes128; nbytes128 -= 16, in += 16, out += 16)
+			{
+				xor128(out, in, t);
+				aesvia_encN(enc, out, out, 1, cw0);
+				xor128(out, out, t);
+				aesvia_xts_update(&t[0], &t[1], &t[2], &t[3]);
+			}
+		}
+
+		/* Process eight blocks at a time.  */
+		for (; nbytes; nbytes -= 128, in += 128, out += 128) {
+			unsigned i;
+			for (i = 0; i < 8; i++) {
+				memcpy(buf + 4*i, t, 16);
+				xor128(out + 4*i, in + 4*i, t);
+				aesvia_xts_update(&t[0], &t[1], &t[2], &t[3]);
+			}
+			aesvia_encN(enc, out, out, 8, cw0);
+			for (i = 0; i < 8; i++)
+				xor128(out + 4*i, in + 4*i, buf + 4*i);
 		}
 
 		/* Handle the last block of a page, if necessary.  */
 		if (lastblock) {
-			uint8_t buf[16] __aligned(16);
 			xor128(buf, in, t);
-			aesvia_enc1(enc, buf, out, cw0);
-			explicit_memset(buf, 0, sizeof buf);
+			aesvia_encN(enc, (const void *)buf, out, 1, cw0);
 		}
+
+		explicit_memset(buf, 0, sizeof buf);
 	} else {
 		xtsenc_unaligned_evcnt.ev_count++;
 		uint8_t buf[16] __aligned(16);
@@ -512,7 +534,7 @@ aesvia_xts_enc(const struct aesenc *enc, const uint8_t in[static 16],
 		for (; nbytes; nbytes -= 16, in += 16, out += 16) {
 			memcpy(buf, in, 16);
 			xor128(buf, buf, t);
-			aesvia_enc1(enc, buf, buf, cw0);
+			aesvia_encN(enc, buf, buf, 1, cw0);
 			xor128(buf, buf, t);
 			memcpy(out, buf, 16);
 			aesvia_xts_update(&t[0], &t[1], &t[2], &t[3]);
@@ -550,6 +572,7 @@ aesvia_xts_dec(const struct aesdec *dec, const uint8_t in[static 16],
 	if ((((uintptr_t)in | (uintptr_t)out) & 0xf) == 0) {
 		xtsdec_aligned_evcnt.ev_count++;
 		unsigned lastblock = 0;
+		uint32_t buf[8*4] __aligned(16);
 
 		/*
 		 * Make sure the last block is not the last block of a
@@ -561,20 +584,43 @@ aesvia_xts_dec(const struct aesdec *dec, const uint8_t in[static 16],
 		lastblock = 16*(((uintptr_t)(out + nbytes) & 0xfff) == 0);
 		nbytes -= lastblock;
 
-		for (; nbytes; nbytes -= 16, in += 16, out += 16) {
-			xor128(out, in, t);
-			aesvia_dec1(dec, out, out, cw0);
-			xor128(out, out, t);
-			aesvia_xts_update(&t[0], &t[1], &t[2], &t[3]);
+		/*
+		 * Handle an odd number of initial blocks so we can
+		 * process the rest in eight-block (128-byte) chunks.
+		 */
+		if (nbytes % 128) {
+			unsigned nbytes128 = nbytes % 128;
+
+			nbytes -= nbytes128;
+			for (; nbytes128; nbytes128 -= 16, in += 16, out += 16)
+			{
+				xor128(out, in, t);
+				aesvia_decN(dec, out, out, 1, cw0);
+				xor128(out, out, t);
+				aesvia_xts_update(&t[0], &t[1], &t[2], &t[3]);
+			}
+		}
+
+		/* Process eight blocks at a time.  */
+		for (; nbytes; nbytes -= 128, in += 128, out += 128) {
+			unsigned i;
+			for (i = 0; i < 8; i++) {
+				memcpy(buf + 4*i, t, 16);
+				xor128(out + 4*i, in + 4*i, t);
+				aesvia_xts_update(&t[0], &t[1], &t[2], &t[3]);
+			}
+			aesvia_decN(dec, out, out, 8, cw0);
+			for (i = 0; i < 8; i++)
+				xor128(out + 4*i, in + 4*i, buf + 4*i);
 		}
 
 		/* Handle the last block of a page, if necessary.  */
 		if (lastblock) {
-			uint8_t buf[16] __aligned(16);
 			xor128(buf, in, t);
-			aesvia_dec1(dec, buf, out, cw0);
-			explicit_memset(buf, 0, sizeof buf);
+			aesvia_decN(dec, (const void *)buf, out, 1, cw0);
 		}
+
+		explicit_memset(buf, 0, sizeof buf);
 	} else {
 		xtsdec_unaligned_evcnt.ev_count++;
 		uint8_t buf[16] __aligned(16);
@@ -582,7 +628,7 @@ aesvia_xts_dec(const struct aesdec *dec, const uint8_t in[static 16],
 		for (; nbytes; nbytes -= 16, in += 16, out += 16) {
 			memcpy(buf, in, 16);
 			xor128(buf, buf, t);
-			aesvia_dec1(dec, buf, buf, cw0);
+			aesvia_decN(dec, buf, buf, 1, cw0);
 			xor128(buf, buf, t);
 			memcpy(out, buf, 16);
 			aesvia_xts_update(&t[0], &t[1], &t[2], &t[3]);
