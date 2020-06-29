@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_ct.c,v 1.1 2020/06/29 23:27:52 riastradh Exp $	*/
+/*	$NetBSD: aes_ct.c,v 1.2 2020/06/29 23:36:59 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2016 Thomas Pornin <pornin@bolet.org>
@@ -25,9 +25,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_ct.c,v 1.1 2020/06/29 23:27:52 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_ct.c,v 1.2 2020/06/29 23:36:59 riastradh Exp $");
 
 #include <sys/types.h>
+
+#include <lib/libkern/libkern.h>
 
 #include <crypto/aes/aes_bear.h>
 
@@ -332,4 +334,93 @@ br_aes_ct_skey_expand(uint32_t *skey,
 		y &= 0xAAAAAAAA;
 		skey[v + 1] = y | (y >> 1);
 	}
+}
+
+/* NetBSD additions, for computing the standard AES key schedule */
+
+unsigned
+br_aes_ct_keysched_stdenc(uint32_t *skey, const void *key, size_t key_len)
+{
+	unsigned num_rounds;
+	int i, j, k, nk, nkf;
+	uint32_t tmp;
+
+	switch (key_len) {
+	case 16:
+		num_rounds = 10;
+		break;
+	case 24:
+		num_rounds = 12;
+		break;
+	case 32:
+		num_rounds = 14;
+		break;
+	default:
+		/* abort(); */
+		return 0;
+	}
+	nk = (int)(key_len >> 2);
+	nkf = (int)((num_rounds + 1) << 2);
+	tmp = 0;
+	for (i = 0; i < nk; i ++) {
+		tmp = br_dec32le((const unsigned char *)key + (i << 2));
+		skey[i] = tmp;
+	}
+	for (i = nk, j = 0, k = 0; i < nkf; i ++) {
+		if (j == 0) {
+			tmp = (tmp << 24) | (tmp >> 8);
+			tmp = sub_word(tmp) ^ Rcon[k];
+		} else if (nk > 6 && j == 4) {
+			tmp = sub_word(tmp);
+		}
+		tmp ^= skey[i - nk];
+		skey[i] = tmp;
+		if (++ j == nk) {
+			j = 0;
+			k ++;
+		}
+	}
+	return num_rounds;
+}
+
+unsigned
+br_aes_ct_keysched_stddec(uint32_t *skey, const void *key, size_t key_len)
+{
+	uint32_t tkey[60];
+	uint32_t q[8];
+	unsigned num_rounds;
+	unsigned i;
+
+	num_rounds = br_aes_ct_keysched_stdenc(skey, key, key_len);
+	if (num_rounds == 0)
+		return 0;
+
+	tkey[0] = skey[4*num_rounds + 0];
+	tkey[1] = skey[4*num_rounds + 1];
+	tkey[2] = skey[4*num_rounds + 2];
+	tkey[3] = skey[4*num_rounds + 3];
+	for (i = 1; i < num_rounds; i++) {
+		q[2*0] = skey[4*i + 0];
+		q[2*1] = skey[4*i + 1];
+		q[2*2] = skey[4*i + 2];
+		q[2*3] = skey[4*i + 3];
+		q[1] = q[3] = q[5] = q[7] = 0;
+
+		br_aes_ct_ortho(q);
+		br_aes_ct_inv_mix_columns(q);
+		br_aes_ct_ortho(q);
+
+		tkey[4*(num_rounds - i) + 0] = q[2*0];
+		tkey[4*(num_rounds - i) + 1] = q[2*1];
+		tkey[4*(num_rounds - i) + 2] = q[2*2];
+		tkey[4*(num_rounds - i) + 3] = q[2*3];
+	}
+	tkey[4*num_rounds + 0] = skey[0];
+	tkey[4*num_rounds + 1] = skey[1];
+	tkey[4*num_rounds + 2] = skey[2];
+	tkey[4*num_rounds + 3] = skey[3];
+
+	memcpy(skey, tkey, 4*(num_rounds + 1)*sizeof(uint32_t));
+	explicit_memset(tkey, 0, 4*(num_rounds + 1)*sizeof(uint32_t));
+	return num_rounds;
 }
