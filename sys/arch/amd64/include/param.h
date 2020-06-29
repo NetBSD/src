@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.37 2020/03/17 17:18:49 maxv Exp $	*/
+/*	$NetBSD: param.h,v 1.38 2020/06/29 09:56:51 jdolecek Exp $	*/
 
 #ifdef __x86_64__
 
@@ -12,6 +12,7 @@
 #if defined(_KERNEL_OPT)
 #include "opt_kasan.h"
 #include "opt_kmsan.h"
+#include "opt_svs.h"
 #endif
 #endif
 
@@ -69,6 +70,8 @@
 
 #if defined(KASAN) || defined(KMSAN)
 #define	UPAGES		8
+#elif defined(SVS)
+#define	UPAGES		6		/* 1 page used internally by SVS */
 #else
 #define	UPAGES		5		/* pages of u-area (1 for redzone) */
 #endif
