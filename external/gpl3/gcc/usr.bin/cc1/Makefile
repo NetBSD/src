@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.17 2020/04/28 05:45:15 mrg Exp $
+#	$NetBSD: Makefile,v 1.18 2020/06/29 08:34:17 lukem Exp $
 
 PROG=		cc1
-SRCS=		${G_C_OBJS:S,c-family/,,:S,c/,,:Nlibcpp.a:.o=.c} main.c ${PROG}-checksum.c
+SRCS=		${G_C_OBJS:S,c-family/,,:S,c/,,:S,known-headers.o,known-headers.cc,:S,c-spellcheck.o,c-spellcheck.cc,:Nlibcpp.a:.o=.c}
+SRCS+=		main.c ${PROG}-checksum.c
 CPPFLAGS+=	-DPREFIX=\"/usr\"
 
 .include "../Makefile.backend"
