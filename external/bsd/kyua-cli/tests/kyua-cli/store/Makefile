@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2013/02/23 14:16:56 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2020/06/29 08:54:59 lukem Exp $
 
 KYUA_LIBS=	store engine utils
 
@@ -8,12 +8,17 @@ TESTSDIR=	${TESTSBASE}/kyua-cli/store
 
 .PATH:		${SRCDIR}/store
 
-TESTS_CXX=	backend_test \
+TESTS_CXX=
+.for test in	\
+		backend_test \
 		dbtypes_test \
 		exceptions_test \
 		metadata_test \
 		schema_inttest \
 		transaction_test
+TESTS_CXX+=	${test}
+SRCS.${test}=	${test}.cpp
+.endfor
 
 FILESDIR=	${TESTSDIR}
 FILESMODE=	444

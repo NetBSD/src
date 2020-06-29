@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2013/02/23 14:16:56 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2020/06/29 08:54:59 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -10,7 +10,9 @@ ATFFILE=	no
 
 .PATH:		${SRCDIR}/integration/helpers
 
-TESTS_CXX=	bogus_test_cases \
+TESTS_CXX=
+.for test in	\
+		bogus_test_cases \
 		config \
 		expect_all_pass \
 		expect_some_fail \
@@ -18,8 +20,12 @@ TESTS_CXX=	bogus_test_cases \
 		metadata \
 		simple_all_pass \
 		simple_some_fail
+TESTS_CXX+=	${test}
+SRCS.${test}=	${test}.cpp
+.endfor
 
 PROGS_CXX=			bad_test_program
+SRCS.bad_test_program=		bad_test_program.cpp
 BINDIR.bad_test_program=	${TESTSDIR}
 MAN.bad_test_program=		# none
 
