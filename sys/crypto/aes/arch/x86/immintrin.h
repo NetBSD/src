@@ -1,4 +1,4 @@
-/*	$NetBSD: immintrin.h,v 1.1 2020/06/29 23:47:54 riastradh Exp $	*/
+/*	$NetBSD: immintrin.h,v 1.2 2020/06/29 23:51:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@ typedef unsigned long long __v2du __attribute__((__vector_size__(16)));
 typedef int __v4si __attribute__((__vector_size__(16)));
 typedef float __v4sf __attribute__((__vector_size__(16)));
 typedef short __v8hi __attribute__((__vector_size__(16)));
+typedef char __v16qi __attribute__((__vector_size__(16)));
 
 #elif defined(__clang__)
 
@@ -66,6 +67,7 @@ typedef unsigned long long __v2du __attribute__((__vector_size__(16)));
 typedef int __v4si __attribute__((__vector_size__(16)));
 typedef float __v4sf __attribute__((__vector_size__(16)));
 typedef short __v8hi __attribute__((__vector_size__(16)));
+typedef char __v16qi __attribute__((__vector_size__(16)));
 
 #define	_INTRINSATTR							      \
 	__attribute__((__always_inline__, __nodebug__, __target__("sse2"),    \
@@ -77,6 +79,18 @@ typedef short __v8hi __attribute__((__vector_size__(16)));
 
 #error Please teach me how to do Intel intrinsics for your compiler!
 
+#endif
+
+#define	_SSSE3_ATTR	__attribute__((target("ssse3")))
+
+#if defined(__GNUC__) && !defined(__clang__)
+#define	_mm_alignr_epi8(hi,lo,bytes)					      \
+	(__m128i)__builtin_ia32_palignr128((__v2di)(__m128i)(hi),	      \
+	    (__v2di)(__m128i)(lo), 8*(int)(bytes))
+#elif defined(__clang__)
+#define	_mm_alignr_epi8(hi,lo,bytes)					      \
+	(__m128i)__builtin_ia32_palignr128((__v16qi)(__m128i)(hi),	      \
+	    (__v16qi)(__m128i)(lo), (int)(bytes))
 #endif
 
 _INTRINSATTR
@@ -93,6 +107,25 @@ _mm_loadu_si64(const void *__p)
 {
 	int64_t __v = ((const struct { int64_t __v; } _PACKALIAS *)__p)->__v;
 	return __extension__ (__m128i)(__v2di){ __v, 0 };
+}
+
+_INTRINSATTR
+static __inline __m128i
+_mm_load_si128(const __m128i *__p)
+{
+	return *__p;
+}
+
+_INTRINSATTR _SSSE3_ATTR
+static __inline __m128
+_mm_movehl_ps(__m128 __v0, __m128 __v1)
+{
+#if defined(__GNUC__) && !defined(__clang__)
+	return (__m128)__builtin_ia32_movhlps((__v4sf)__v0, (__v4sf)__v1);
+#elif defined(__clang__)
+	return __builtin_shufflevector((__v4sf)__v0, (__v4sf)__v1,
+	    6, 7, 2, 3);
+#endif
 }
 
 _INTRINSATTR
@@ -133,10 +166,25 @@ _mm_set_epi64x(int64_t __v1, int64_t __v0)
 }
 
 _INTRINSATTR
+static __inline __m128
+_mm_setzero_ps(void)
+{
+	return __extension__ (__m128){ 0, 0, 0, 0 };
+}
+
+_INTRINSATTR
 static __inline __m128i
 _mm_setzero_si128(void)
 {
 	return _mm_set1_epi64x(0);
+}
+
+_INTRINSATTR _SSSE3_ATTR
+static __inline __m128i
+_mm_shuffle_epi8(__m128i __vtbl, __m128i __vidx)
+{
+	return (__m128i)__builtin_ia32_pshufb128((__v16qi)__vtbl,
+	    (__v16qi)__vidx);
 }
 
 #define	_mm_shuffle_epi32(v,m)						      \
@@ -162,6 +210,13 @@ _mm_slli_epi64(__m128i __v, uint8_t __bits)
 	(__m128i)__builtin_ia32_pslldqi128_byteshift((__v2di)(__m128i)(v),    \
 	    (int)(bytes))
 #endif
+
+_INTRINSATTR
+static __inline __m128i
+_mm_srli_epi32(__m128i __v, uint8_t __bits)
+{
+	return (__m128i)__builtin_ia32_psrldi128((__v4si)__v, (int)__bits);
+}
 
 _INTRINSATTR
 static __inline __m128i
@@ -191,6 +246,13 @@ static __inline void
 _mm_storeu_si64(void *__p, __m128i __v)
 {
 	((struct { int64_t __v; } _PACKALIAS *)__p)->__v = ((__v2di)__v)[0];
+}
+
+_INTRINSATTR
+static __inline void
+_mm_store_si128(__m128i *__p, __m128i __v)
+{
+	*__p = __v;
 }
 
 _INTRINSATTR
