@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.22 2020/03/10 01:17:33 christos Exp $ */
+/* $NetBSD: cpu.h,v 1.23 2020/06/29 23:22:27 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -88,6 +88,8 @@ struct cpu_info {
 	volatile u_int ci_softints;
 	volatile u_int ci_astpending;
 	volatile u_int ci_intr_depth;
+
+	int ci_kfpu_spl;
 
 	/* event counters */
 	struct evcnt ci_vfp_use;
