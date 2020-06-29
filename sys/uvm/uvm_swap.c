@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.194 2020/06/29 23:33:46 riastradh Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.195 2020/06/29 23:40:28 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.194 2020/06/29 23:33:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.195 2020/06/29 23:40:28 riastradh Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -2089,7 +2089,7 @@ uvm_swap_genkey(struct swapdev *sdp)
 static void
 uvm_swap_encryptpage(struct swapdev *sdp, void *kva, int slot)
 {
-	uint8_t preiv[16] = {0}, iv[16];
+	uint8_t preiv[16] __aligned(16) = {0}, iv[16] __aligned(16);
 
 	/* iv := AES_k(le32enc(slot) || 0^96) */
 	le32enc(preiv, slot);
@@ -2111,7 +2111,7 @@ uvm_swap_encryptpage(struct swapdev *sdp, void *kva, int slot)
 static void
 uvm_swap_decryptpage(struct swapdev *sdp, void *kva, int slot)
 {
-	uint8_t preiv[16] = {0}, iv[16];
+	uint8_t preiv[16] __aligned(16) = {0}, iv[16] __aligned(16);
 
 	/* iv := AES_k(le32enc(slot) || 0^96) */
 	le32enc(preiv, slot);
