@@ -1,4 +1,4 @@
-/*	$NetBSD: cal.c,v 1.29 2015/06/16 22:54:10 christos Exp $	*/
+/*	$NetBSD: cal.c,v 1.30 2020/06/29 14:01:14 kim Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)cal.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: cal.c,v 1.29 2015/06/16 22:54:10 christos Exp $");
+__RCSID("$NetBSD: cal.c,v 1.30 2020/06/29 14:01:14 kim Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,8 +88,8 @@ static const char *month_names[12] = {
 	"July", "August", "September", "October", "November", "December",
 };
 
-static const char *day_headings = " S  M Tu  W Th  F  S";
-static const char *j_day_headings = "  S   M  Tu   W  Th   F   S";
+static const char *day_headings = "Su Mo Tu We Th Fr Sa";
+static const char *j_day_headings = " Su  Mo  Tu  We  Th  Fr  Sa";
 
 /* leap years according to the julian calendar */
 #define j_leap_year(y, m, d) \
