@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.65 2020/06/29 23:54:06 riastradh Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.66 2020/06/29 23:56:31 riastradh Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -32,7 +32,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.65 2020/06/29 23:54:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.66 2020/06/29 23:56:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -49,6 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.65 2020/06/29 23:54:06 riastradh Exp 
 #include <arm/fpu.h>
 
 #include <uvm/uvm_extern.h>		/* for pmap.h */
+
+#include <crypto/aes/aes.h>
+#include <crypto/aes/arch/arm/aes_neon.h>
 
 #ifdef FPU_VFP
 
@@ -402,8 +405,11 @@ vfp_attach(struct cpu_info *ci)
 		install_coproc_handler(VFP_COPROC, vfp_handler);
 		install_coproc_handler(VFP_COPROC2, vfp_handler);
 #ifdef CPU_CORTEX
-		if (cpu_neon_present)
-			install_coproc_handler(CORE_UNKNOWN_HANDLER, neon_handler);
+		if (cpu_neon_present) {
+			install_coproc_handler(CORE_UNKNOWN_HANDLER,
+			    neon_handler);
+			aes_md_init(&aes_neon_impl);
+		}
 #endif
 	}
 }

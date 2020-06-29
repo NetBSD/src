@@ -1,0 +1,13 @@
+#	$NetBSD: files.aesneon,v 1.1 2020/06/29 23:56:31 riastradh Exp $
+
+ifdef aarch64
+makeoptions	aes	"COPTS.aes_neon.c"+="-march=armv8-a"
+makeoptions	aes	"COPTS.aes_neon_subr.c"+="-march=armv8-a"
+else
+makeoptions	aes	"COPTS.aes_neon.c"+="-mfloat-abi=softfp -mfpu=neon"
+makeoptions	aes	"COPTS.aes_neon_subr.c"+="-mfloat-abi=softfp -mfpu=neon"
+endif
+
+file	crypto/aes/arch/arm/aes_neon.c		aes
+file	crypto/aes/arch/arm/aes_neon_impl.c	aes
+file	crypto/aes/arch/arm/aes_neon_subr.c	aes
