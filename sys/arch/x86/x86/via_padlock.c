@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD: via_padlock.c,v 1.29 2020/06/14 23:20:15 riastradh Exp $ */
+/*	$NetBSD: via_padlock.c,v 1.30 2020/06/29 23:38:02 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.29 2020/06/14 23:20:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.30 2020/06/29 23:38:02 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,10 +37,11 @@ __KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.29 2020/06/14 23:20:15 riastradh E
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
 
+#include <crypto/aes/aes_bear.h>
+
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/cryptosoft.h>
 #include <opencrypto/xform.h>
-#include <crypto/rijndael/rijndael.h>
 
 #include <opencrypto/cryptosoft_xform.c>
 
@@ -174,14 +175,29 @@ via_padlock_crypto_newsession(void *arg, uint32_t *sidp, struct cryptoini *cri)
 	for (c = cri; c != NULL; c = c->cri_next) {
 		switch (c->cri_alg) {
 		case CRYPTO_AES_CBC:
+			memset(ses->ses_ekey, 0, sizeof(ses->ses_ekey));
+			memset(ses->ses_dkey, 0, sizeof(ses->ses_dkey));
+
 			switch (c->cri_klen) {
 			case 128:
+				br_aes_ct_keysched_stdenc(ses->ses_ekey,
+				    c->cri_key, 16);
+				br_aes_ct_keysched_stddec(ses->ses_dkey,
+				    c->cri_key, 16);
 				cw0 = C3_CRYPT_CWLO_KEY128;
 				break;
 			case 192:
+				br_aes_ct_keysched_stdenc(ses->ses_ekey,
+				    c->cri_key, 24);
+				br_aes_ct_keysched_stddec(ses->ses_dkey,
+				    c->cri_key, 24);
 				cw0 = C3_CRYPT_CWLO_KEY192;
 				break;
 			case 256:
+				br_aes_ct_keysched_stdenc(ses->ses_ekey,
+				    c->cri_key, 32);
+				br_aes_ct_keysched_stddec(ses->ses_dkey,
+				    c->cri_key, 32);
 				cw0 = C3_CRYPT_CWLO_KEY256;
 				break;
 			default:
@@ -194,16 +210,11 @@ via_padlock_crypto_newsession(void *arg, uint32_t *sidp, struct cryptoini *cri)
 			ses->ses_klen = c->cri_klen;
 			ses->ses_cw0 = cw0;
 
-			/* Build expanded keys for both directions */
-			rijndaelKeySetupEnc(ses->ses_ekey, c->cri_key,
-			    c->cri_klen);
-			rijndaelKeySetupDec(ses->ses_dkey, c->cri_key,
-			    c->cri_klen);
-			for (i = 0; i < 4 * (RIJNDAEL_MAXNR + 1); i++) {
+			/* Convert words to host byte order (???) */
+			for (i = 0; i < 4*(AES_256_NROUNDS + 1); i++) {
 				ses->ses_ekey[i] = ntohl(ses->ses_ekey[i]);
 				ses->ses_dkey[i] = ntohl(ses->ses_dkey[i]);
 			}
-
 			break;
 
 		/* Use hashing implementations from the cryptosoft code. */

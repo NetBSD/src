@@ -1,4 +1,4 @@
-/*	$NetBSD: via_padlock.h,v 1.9 2016/02/27 00:54:59 tls Exp $	*/
+/*	$NetBSD: via_padlock.h,v 1.10 2020/06/29 23:38:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -25,7 +25,8 @@
 
 #include <sys/rndsource.h>
 #include <sys/callout.h>
-#include <crypto/rijndael/rijndael.h>
+
+#include <crypto/aes/aes.h>
 
 /* VIA C3 xcrypt-* instruction context control options */
 #define C3_CRYPT_CWLO_ROUND_M		0x0000000f
@@ -43,9 +44,8 @@
 #define C3_CRYPT_CWLO_KEY256		0x0000080e      /* 256bit, 15 rds */
 
 struct via_padlock_session {
-        uint32_t	ses_ekey[4 * (RIJNDAEL_MAXNR + 1) + 4];	/* 128 bit aligned */
-        uint32_t	ses_dkey[4 * (RIJNDAEL_MAXNR + 1) + 4];	/* 128 bit aligned */
-        uint8_t	ses_iv[16];				/* 128 bit aligned */
+        uint32_t	ses_ekey[4*(AES_256_NROUNDS + 1)];
+        uint32_t	ses_dkey[4*(AES_256_NROUNDS + 1)];
         uint32_t	ses_cw0;
         struct swcr_data	*swd;
         int	ses_klen;
