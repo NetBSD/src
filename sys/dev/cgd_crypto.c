@@ -1,4 +1,4 @@
-/* $NetBSD: cgd_crypto.c,v 1.25 2020/06/29 23:36:06 riastradh Exp $ */
+/* $NetBSD: cgd_crypto.c,v 1.26 2020/06/29 23:44:01 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.25 2020/06/29 23:36:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.26 2020/06/29 23:44:01 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.25 2020/06/29 23:36:06 riastradh Ex
 
 #include <dev/cgd_crypto.h>
 
+#include <crypto/adiantum/adiantum.h>
 #include <crypto/aes/aes.h>
 #include <crypto/blowfish/blowfish.h>
 #include <crypto/des/des.h>
@@ -72,6 +73,10 @@ static cfunc_init		cgd_cipher_bf_init;
 static cfunc_destroy		cgd_cipher_bf_destroy;
 static cfunc_cipher		cgd_cipher_bf_cbc;
 
+static cfunc_init		cgd_cipher_adiantum_init;
+static cfunc_destroy		cgd_cipher_adiantum_destroy;
+static cfunc_cipher		cgd_cipher_adiantum_crypt;
+
 static const struct cryptfuncs cf[] = {
 	{
 		.cf_name	= "aes-xts",
@@ -96,6 +101,12 @@ static const struct cryptfuncs cf[] = {
 		.cf_init	= cgd_cipher_bf_init,
 		.cf_destroy	= cgd_cipher_bf_destroy,
 		.cf_cipher	= cgd_cipher_bf_cbc,
+	},
+	{
+		.cf_name	= "adiantum",
+		.cf_init	= cgd_cipher_adiantum_init,
+		.cf_destroy	= cgd_cipher_adiantum_destroy,
+		.cf_cipher	= cgd_cipher_adiantum_crypt,
 	},
 };
 const struct cryptfuncs *
@@ -404,6 +415,64 @@ cgd_cipher_bf_cbc(void *privdata, void *dst, const void *src, size_t nbytes,
 	case CGD_CIPHER_DECRYPT:
 		BF_cbc_encrypt(src, dst, nbytes, &bp->bp_key, iv,
 		    /*encrypt*/0);
+		break;
+	default:
+		panic("%s: unrecognised direction %d", __func__, dir);
+	}
+}
+
+/*
+ * Adiantum
+ */
+
+static void *
+cgd_cipher_adiantum_init(size_t keylen, const void *key, size_t *blocksize)
+{
+	struct adiantum *A;
+
+	if (!blocksize)
+		return NULL;
+	if (keylen != 256)
+		return NULL;
+	if (*blocksize == (size_t)-1)
+		*blocksize = 128;
+	if (*blocksize != 128)
+		return NULL;
+
+	A = kmem_zalloc(sizeof(*A), KM_SLEEP);
+	adiantum_init(A, key);
+
+	return A;
+}
+
+static void
+cgd_cipher_adiantum_destroy(void *cookie)
+{
+	struct adiantum *A = cookie;
+
+	explicit_memset(A, 0, sizeof(*A));
+	kmem_free(A, sizeof(*A));
+}
+
+static void
+cgd_cipher_adiantum_crypt(void *cookie, void *dst, const void *src,
+    size_t nbytes, const void *blkno, int dir)
+{
+	/*
+	 * Treat the block number as a 128-bit block.  This is more
+	 * than twice as big as the largest number of reasonable
+	 * blocks, but it doesn't hurt (it would be rounded up to a
+	 * 128-bit input anyway).
+	 */
+	const unsigned tweaklen = 16;
+	struct adiantum *A = cookie;
+
+	switch (dir) {
+	case CGD_CIPHER_ENCRYPT:
+		adiantum_enc(dst, src, nbytes, blkno, tweaklen, A);
+		break;
+	case CGD_CIPHER_DECRYPT:
+		adiantum_dec(dst, src, nbytes, blkno, tweaklen, A);
 		break;
 	default:
 		panic("%s: unrecognised direction %d", __func__, dir);

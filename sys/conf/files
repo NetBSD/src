@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1270 2020/06/29 23:33:05 riastradh Exp $
+#	$NetBSD: files,v 1.1271 2020/06/29 23:44:01 riastradh Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -200,6 +200,7 @@ defflag	opt_machdep.h		MACHDEP
 # use it.
 
 # Individual crypto transforms
+include "crypto/adiantum/files.adiantum"
 include "crypto/aes/files.aes"
 include "crypto/des/files.des"
 include "crypto/blowfish/files.blowfish"
@@ -1395,7 +1396,7 @@ file	dev/ic/amdccp.c			amdccp
 defpseudodev vnd:	disk
 defflag opt_vnd.h	VND_COMPRESSION
 defpseudo ccd:		disk
-defpseudodev cgd:	disk, des, blowfish, cast128, aes
+defpseudodev cgd:	disk, des, blowfish, cast128, aes, adiantum
 defpseudodev md:	disk
 defpseudodev fss:	disk
 

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.862 2020/06/28 09:42:40 rillig Exp $
+# $NetBSD: mi,v 1.863 2020/06/29 23:44:01 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1407,6 +1407,7 @@
 ./usr/tests/dev/cgd/paramsfile			tests-fs-tests		compattestfile,atf
 ./usr/tests/dev/cgd/t_cgd			tests-fs-tests		compattestfile,atf
 ./usr/tests/dev/cgd/t_cgd_3des			tests-fs-tests		atf,compattestfile,rump
+./usr/tests/dev/cgd/t_cgd_adiantum		tests-fs-tests		atf,compattestfile,rump
 ./usr/tests/dev/cgd/t_cgd_aes			tests-fs-tests		atf,compattestfile,rump
 ./usr/tests/dev/cgd/t_cgd_blowfish		tests-fs-tests		atf,compattestfile,rump
 ./usr/tests/dev/clock_subr			tests-fs-tests		compattestfile,atf

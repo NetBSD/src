@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.7 2020/06/29 23:27:52 riastradh Exp $
+#	$NetBSD: Makefile,v 1.8 2020/06/29 23:44:01 riastradh Exp $
 #
 
-.PATH:	${.CURDIR}/../../../../crypto/aes				\
+.PATH:	${.CURDIR}/../../../../crypto/adiantum				\
+	${.CURDIR}/../../../../crypto/aes				\
 	${.CURDIR}/../../../../crypto/blowfish				\
 	${.CURDIR}/../../../../crypto/camellia				\
 	${.CURDIR}/../../../../crypto/cast128				\
@@ -10,6 +11,10 @@
 
 LIB=	rumpkern_crypto
 COMMENT=Cryptographic routines
+
+# Adiantum
+SRCS+=	adiantum.c
+SRCS+=	adiantum_selftest.c
 
 # blowfish
 SRCS+=	bf_ecb.c bf_enc.c bf_cbc.c bf_skey.c bf_module.c
