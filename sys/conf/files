@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1269 2020/06/29 23:27:52 riastradh Exp $
+#	$NetBSD: files,v 1.1270 2020/06/29 23:33:05 riastradh Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -1395,7 +1395,7 @@ file	dev/ic/amdccp.c			amdccp
 defpseudodev vnd:	disk
 defflag opt_vnd.h	VND_COMPRESSION
 defpseudo ccd:		disk
-defpseudodev cgd:	disk, des, blowfish, cast128, rijndael
+defpseudodev cgd:	disk, des, blowfish, cast128, aes
 defpseudodev md:	disk
 defpseudodev fss:	disk
 
