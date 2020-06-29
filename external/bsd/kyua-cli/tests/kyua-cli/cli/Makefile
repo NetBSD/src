@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2013/02/23 14:16:55 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2020/06/29 08:54:58 lukem Exp $
 
 KYUA_LIBS=	cli engine store engine utils
 
@@ -8,7 +8,9 @@ TESTSDIR=	${TESTSBASE}/kyua-cli/cli
 
 .PATH:		${SRCDIR}/cli
 
-TESTS_CXX=	cmd_about_test \
+TESTS_CXX=
+.for test in	\
+		cmd_about_test \
 		cmd_config_test \
 		cmd_db_exec_test \
 		cmd_db_migrate_test \
@@ -21,5 +23,8 @@ TESTS_CXX=	cmd_about_test \
 		common_test \
 		config_test \
 		main_test
+TESTS_CXX+=	${test}
+SRCS.${test}=	${test}.cpp
+.endfor
 
 .include <bsd.test.mk>
