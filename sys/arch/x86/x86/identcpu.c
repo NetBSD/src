@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.107 2020/04/25 15:26:18 bouyer Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.108 2020/06/29 23:29:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.107 2020/04/25 15:26:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.108 2020/06/29 23:29:39 riastradh Exp $");
 
 #include "opt_xen.h"
 
@@ -38,6 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.107 2020/04/25 15:26:18 bouyer Exp $"
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/cpu.h>
+
+#include <crypto/aes/arch/x86/aes_ni.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -994,6 +996,10 @@ cpu_probe(struct cpu_info *ci)
 #ifndef XENPV
 		/* Early patch of text segment. */
 		x86_patch(true);
+#endif
+#ifdef __x86_64__	/* not yet implemented on i386 */
+		if (cpu_feature[1] & CPUID2_AES)
+			aes_md_init(&aes_ni_impl);
 #endif
 	} else {
 		/*
