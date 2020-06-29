@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.88 2020/06/19 07:31:59 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.89 2020/06/29 06:51:32 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.88 2020/06/19 07:31:59 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.89 2020/06/29 06:51:32 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -123,14 +123,11 @@ static int pmap_bootstrap_done = 0;
 /* Event counters */
 struct evcnt tlbmiss_ev = EVCNT_INITIALIZER(EVCNT_TYPE_TRAP,
 	NULL, "cpu", "tlbmiss");
-struct evcnt tlbhit_ev = EVCNT_INITIALIZER(EVCNT_TYPE_TRAP,
-	NULL, "cpu", "tlbhit");
 struct evcnt tlbflush_ev = EVCNT_INITIALIZER(EVCNT_TYPE_TRAP,
 	NULL, "cpu", "tlbflush");
 struct evcnt tlbenter_ev = EVCNT_INITIALIZER(EVCNT_TYPE_TRAP,
 	NULL, "cpu", "tlbenter");
 EVCNT_ATTACH_STATIC(tlbmiss_ev);
-EVCNT_ATTACH_STATIC(tlbhit_ev);
 EVCNT_ATTACH_STATIC(tlbflush_ev);
 EVCNT_ATTACH_STATIC(tlbenter_ev);
 
@@ -1496,7 +1493,6 @@ pmap_tlbmiss(vaddr_t va, int ctx)
 		tte = TTE_PA(va) | TTE_ZONE(ZONE_PRIV) | TTE_SZ_16M | TTE_WR;
 #endif
 	}
-	tlbhit_ev.ev_count++;
 	ppc4xx_tlb_enter(ctx, va, tte);
 
 	return 0;
