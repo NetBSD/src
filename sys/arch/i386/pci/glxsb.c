@@ -1,4 +1,4 @@
-/*	$NetBSD: glxsb.c,v 1.15 2020/06/14 23:19:11 riastradh Exp $	*/
+/*	$NetBSD: glxsb.c,v 1.16 2020/06/29 23:32:24 riastradh Exp $	*/
 /* $OpenBSD: glxsb.c,v 1.7 2007/02/12 14:31:45 tom Exp $ */
 
 /*
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: glxsb.c,v 1.15 2020/06/14 23:19:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: glxsb.c,v 1.16 2020/06/29 23:32:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: glxsb.c,v 1.15 2020/06/14 23:19:11 riastradh Exp $")
 #include <dev/pci/pcidevs.h>
 
 #include <opencrypto/cryptodev.h>
-#include <crypto/rijndael/rijndael.h>
 
 #define SB_GLD_MSR_CAP		0x58002000	/* RO - Capabilities */
 #define SB_GLD_MSR_CONFIG	0x58002001	/* RW - Master Config */
