@@ -1,4 +1,4 @@
-/* $NetBSD: gmac.h,v 1.2 2011/06/09 14:47:42 drochner Exp $ */
+/* $NetBSD: gmac.h,v 1.3 2020/06/29 23:34:48 riastradh Exp $ */
 /* OpenBSD: gmac.h,v 1.1 2010/09/22 11:54:23 mikeb Exp */
 
 /*
@@ -20,7 +20,7 @@
 #ifndef _GMAC_H_
 #define _GMAC_H_
 
-#include <crypto/rijndael/rijndael.h>
+#include <crypto/aes/aes.h>
 
 #define GMAC_BLOCK_LEN		16
 #define GMAC_DIGEST_LEN		16
@@ -41,7 +41,7 @@ typedef struct _GHASH_CTX {
 
 typedef struct _AES_GMAC_CTX {
 	GHASH_CTX	ghash;
-	uint32_t	K[4*(RIJNDAEL_MAXNR + 1)];
+	struct aesenc	K;
 	uint8_t		J[GMAC_BLOCK_LEN];		/* counter block */
 	int		rounds;
 } AES_GMAC_CTX;
