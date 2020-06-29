@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.47 2020/06/14 16:10:18 riastradh Exp $ */
+/* $NetBSD: cpu.c,v 1.48 2020/06/29 23:22:27 riastradh Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.47 2020/06/14 16:10:18 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.48 2020/06/29 23:22:27 riastradh Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -132,6 +132,8 @@ cpu_attach(device_t dv, cpuid_t id)
 
 	ci->ci_dev = dv;
 	dv->dv_private = ci;
+
+	ci->ci_kfpu_spl = -1;
 
 	arm_cpu_do_topology(ci);
 	cpu_identify(ci->ci_dev, ci);
