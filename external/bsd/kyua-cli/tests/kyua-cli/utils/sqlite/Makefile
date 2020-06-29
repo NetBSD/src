@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2013/02/23 14:16:58 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2020/06/29 08:55:00 lukem Exp $
 
 KYUA_LIBS=	utils
 
@@ -8,10 +8,15 @@ TESTSDIR=	${TESTSBASE}/kyua-cli/utils/sqlite
 
 .PATH:		${SRCDIR}/utils/sqlite
 
-TESTS_CXX=	c_gate_test \
+TESTS_CXX=
+.for test in	\
+		c_gate_test \
 		database_test \
 		exceptions_test \
 		statement_test \
 		transaction_test
+TESTS_CXX+=	${test}
+SRCS.${test}=	${test}.cpp
+.endfor
 
 .include <bsd.test.mk>
