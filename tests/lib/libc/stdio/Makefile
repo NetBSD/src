@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2020/06/27 09:45:57 jruoho Exp $
+# $NetBSD: Makefile,v 1.14 2020/06/29 14:22:11 jruoho Exp $
 
 .include <bsd.own.mk>
 
@@ -14,7 +14,5 @@ TESTS_C+=	t_popen
 TESTS_C+=	t_printf
 TESTS_C+=	t_scanf
 COPTS.t_printf.c += -Wno-format-nonliteral
-
-LDADD.t_mktemp+=	-Wl,--no-fatal-warnings
 
 .include <bsd.test.mk>
