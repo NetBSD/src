@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD: via_padlock.c,v 1.30 2020/06/29 23:38:02 riastradh Exp $ */
+/*	$NetBSD: via_padlock.c,v 1.31 2020/06/29 23:58:44 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.30 2020/06/29 23:38:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.31 2020/06/29 23:58:44 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -351,7 +351,7 @@ via_padlock_cbc(void *cw, void *src, void *dst, void *key, int rep,
 	lcr0(cr0 & ~(CR0_EM|CR0_TS));
 
 	/* Do the deed */
-	__asm __volatile("pushfl; popfl");	/* force key reload */
+	__asm __volatile("pushf; popf");	/* force key reload */
 	__asm __volatile(".byte 0xf3, 0x0f, 0xa7, 0xd0" : /* rep xcrypt-cbc */
 			: "a" (iv), "b" (key), "c" (rep), "d" (cw), "S" (src), "D" (dst)
 			: "memory", "cc");
