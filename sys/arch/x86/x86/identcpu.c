@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.110 2020/06/29 23:47:54 riastradh Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.111 2020/06/29 23:51:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.110 2020/06/29 23:47:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.111 2020/06/29 23:51:35 riastradh Exp $");
 
 #include "opt_xen.h"
 
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.110 2020/06/29 23:47:54 riastradh Exp
 
 #include <crypto/aes/arch/x86/aes_ni.h>
 #include <crypto/aes/arch/x86/aes_sse2.h>
+#include <crypto/aes/arch/x86/aes_ssse3.h>
 #include <crypto/aes/arch/x86/aes_via.h>
 
 #include <uvm/uvm_extern.h>
@@ -1006,6 +1007,10 @@ cpu_probe(struct cpu_info *ci)
 #endif
 		if (cpu_feature[4] & CPUID_VIA_HAS_ACE)
 			aes_md_init(&aes_via_impl);
+		else if (i386_has_sse && i386_has_sse2 &&
+		    (cpu_feature[1] & CPUID2_SSE3) &&
+		    (cpu_feature[1] & CPUID2_SSSE3))
+			aes_md_init(&aes_ssse3_impl);
 		else if (i386_has_sse && i386_has_sse2)
 			aes_md_init(&aes_sse2_impl);
 	} else {
