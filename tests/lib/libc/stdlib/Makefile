@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.30 2020/06/27 10:14:10 jruoho Exp $
+# $NetBSD: Makefile,v 1.31 2020/06/29 14:22:11 jruoho Exp $
 
 .include <bsd.own.mk>
 
@@ -35,6 +35,7 @@ CPPFLAGS.t_strtod.c+=  -D__TEST_FENV
 LDADD.t_strtod=			-lm
 DPADD.t_strtod+=		${LIBM}
 
-LDADD.t_getenv_thread=		-lpthread
+LDADD.t_getenv_thread=	-lpthread
+LDADD.t_mktemp+=	-Wl,--no-fatal-warnings
 
 .include <bsd.test.mk>
