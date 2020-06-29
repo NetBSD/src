@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.15 2020/04/28 07:47:54 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2020/06/29 08:34:17 lukem Exp $
 
 MYOBJS=		${G_OBJC_OBJS} ${G_C_AND_OBJC_OBJS} 
 PROG=		cc1obj
-SRCS=		${MYOBJS:S,objc/,,:S,c-family/,,:S,c/,,:Nlibcpp.a:.o=.c} main.c ${PROG}-checksum.c
+SRCS=		${MYOBJS:S,objc/,,:S,c-family/,,:S,c/,,:S,known-headers.o,known-headers.cc,:S,c-spellcheck.o,c-spellcheck.cc,:Nlibcpp.a:.o=.c}
+SRCS+=		main.c ${PROG}-checksum.c
 
 CPPFLAGS+=	-I${DIST}/gcc/objc
 CPPFLAGS.prefix.c+=	-DPREFIX=\"/usr\"
