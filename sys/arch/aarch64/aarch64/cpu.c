@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.49 2020/06/29 23:31:41 riastradh Exp $ */
+/* $NetBSD: cpu.c,v 1.50 2020/06/29 23:56:30 riastradh Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.49 2020/06/29 23:31:41 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.50 2020/06/29 23:56:30 riastradh Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -45,6 +45,7 @@ __KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.49 2020/06/29 23:31:41 riastradh Exp $");
 #include <sys/systm.h>
 
 #include <crypto/aes/arch/arm/aes_armv8.h>
+#include <crypto/aes/arch/arm/aes_neon.h>
 
 #include <aarch64/armreg.h>
 #include <aarch64/cpu.h>
@@ -601,16 +602,24 @@ cpu_setup_aes(device_t dv, struct cpu_info *ci)
 {
 	struct aarch64_sysctl_cpu_id *id = &ci->ci_id;
 
-	/* Verify that it is supported.  */
+	/* Check for ARMv8.0-AES support.  */
 	switch (__SHIFTOUT(id->ac_aa64isar0, ID_AA64ISAR0_EL1_AES)) {
 	case ID_AA64ISAR0_EL1_AES_AES:
 	case ID_AA64ISAR0_EL1_AES_PMUL:
-		break;
-	default:
+		aes_md_init(&aes_armv8_impl);
 		return;
+	default:
+		break;
 	}
 
-	aes_md_init(&aes_armv8_impl);
+	/* Failing that, check for SIMD support.  */
+	switch (__SHIFTOUT(id->ac_aa64pfr0, ID_AA64PFR0_EL1_ADVSIMD)) {
+	case ID_AA64PFR0_EL1_ADV_SIMD_IMPL:
+		aes_md_init(&aes_neon_impl);
+		return;
+	default:
+		break;
+	}
 }
 
 #ifdef MULTIPROCESSOR
