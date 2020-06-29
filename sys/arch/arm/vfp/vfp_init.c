@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.64 2019/10/29 16:18:23 joerg Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.65 2020/06/29 23:54:06 riastradh Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -32,7 +32,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.64 2019/10/29 16:18:23 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.65 2020/06/29 23:54:06 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.64 2019/10/29 16:18:23 joerg Exp $");
 #include <arm/undefined.h>
 #include <arm/vfpreg.h>
 #include <arm/mcontext.h>
+#include <arm/fpu.h>
 
 #include <uvm/uvm_extern.h>		/* for pmap.h */
 
@@ -656,6 +657,74 @@ vfp_setcontext(struct lwp *l, const mcontext_t *mcp)
 	pcb->pcb_vfp.vfp_fpscr = mcp->__fpu.__vfpregs.__vfp_fpscr;
 	memcpy(pcb->pcb_vfp.vfp_regs, mcp->__fpu.__vfpregs.__vfp_fstmx,
 	    sizeof(mcp->__fpu.__vfpregs.__vfp_fstmx));
+}
+
+void
+fpu_kern_enter(void)
+{
+	struct lwp *l = curlwp;
+	struct cpu_info *ci;
+	uint32_t fpexc;
+	int s;
+
+	/*
+	 * Block all interrupts.  We must block preemption since -- if
+	 * this is a user thread -- there is nowhere to save the kernel
+	 * fpu state, and if we want this to be usable in interrupts,
+	 * we can't let interrupts interfere with the fpu state in use
+	 * since there's nowhere for them to save it.
+	 */
+	s = splhigh();
+	ci = curcpu();
+	KASSERT(ci->ci_kfpu_spl == -1);
+	ci->ci_kfpu_spl = s;
+
+	/*
+	 * If we are in a softint and have a pinned lwp, the fpu state
+	 * is that of the pinned lwp, so save it there.
+	 */
+	if ((l->l_pflag & LP_INTR) && (l->l_switchto != NULL))
+		l = l->l_switchto;
+	if (vfp_used_p(l))
+		vfp_savecontext(l);
+
+	/* Enable the fpu.  */
+	fpexc = armreg_fpexc_read();
+	fpexc |= VFP_FPEXC_EN;
+	fpexc &= ~VFP_FPEXC_EX;
+	armreg_fpexc_write(fpexc);
+}
+
+void
+fpu_kern_leave(void)
+{
+	static const struct vfpreg zero_vfpreg;
+	struct cpu_info *ci = curcpu();
+	int s;
+	uint32_t fpexc;
+
+	KASSERT(ci->ci_cpl == IPL_HIGH);
+	KASSERT(ci->ci_kfpu_spl != -1);
+
+	/*
+	 * Zero the fpu registers; otherwise we might leak secrets
+	 * through Spectre-class attacks to userland, even if there are
+	 * no bugs in fpu state management.
+	 */
+	load_vfpregs(&zero_vfpreg);
+
+	/*
+	 * Disable the fpu so that the kernel can't accidentally use
+	 * it again.
+	 */
+	fpexc = armreg_fpexc_read();
+	fpexc &= ~VFP_FPEXC_EN;
+	armreg_fpexc_write(fpexc);
+
+	/* Restore interrupts.  */
+	s = ci->ci_kfpu_spl;
+	ci->ci_kfpu_spl = -1;
+	splx(s);
 }
 
 #endif /* FPU_VFP */
