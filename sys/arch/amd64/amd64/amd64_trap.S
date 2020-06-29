@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.52 2020/06/21 16:57:18 bouyer Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.53 2020/06/29 23:04:56 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -452,7 +452,7 @@ IDTVEC(trap16)
 	/* traps are called with interrupts enabled, and we may have been
 	 * interrupted just before the CLI in the trap macro.
 	 * we have to check if a FPU reload is needed.
-	 */ 
+	 */
 	movq    CPUVAR(CURLWP),%r14
 	HANDLE_DEFERRED_FPU
 #endif /* XENPV */
