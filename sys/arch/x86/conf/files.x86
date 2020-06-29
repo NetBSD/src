@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.111 2020/05/06 19:45:12 bouyer Exp $
+#	$NetBSD: files.x86,v 1.112 2020/06/29 23:29:39 riastradh Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPDEBUG MPBIOS_SCANPCI
@@ -165,3 +165,6 @@ file	arch/x86/pci/pciide_machdep.c	pciide_common
 
 file	arch/x86/pci/pci_bus_fixup.c	pci_bus_fixup
 file	arch/x86/pci/pci_addr_fixup.c	pci_addr_fixup
+
+# AES-NI
+include "crypto/aes/arch/x86/files.aesni"
