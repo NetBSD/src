@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.127 2020/05/13 16:17:46 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.128 2020/06/29 21:45:50 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.127 2020/05/13 16:17:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.128 2020/06/29 21:45:50 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -832,6 +832,7 @@ again:
 		}
 
 		bp = xbdreq->req_bp;
+		xbdreq->req_bp = NULL;
 		KASSERT(bp != NULL && bp->b_data != NULL);
 		DPRINTF(("%s(%p): b_bcount = %ld\n", __func__,
 		    bp, (long)bp->b_bcount));
@@ -887,7 +888,7 @@ again:
 
 		if (__predict_false(bp->b_data != xbdreq->req_data))
 			xbd_unmap_align(sc, xbdreq, true);
-		xbdreq->req_bp = xbdreq->req_data = NULL;
+		xbdreq->req_data = NULL;
 
 		dk_done(&sc->sc_dksc, bp);
 
