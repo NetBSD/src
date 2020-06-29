@@ -1,4 +1,4 @@
-#	$NetBSD: files.aarch64,v 1.22 2020/04/18 11:00:37 skrll Exp $
+#	$NetBSD: files.aarch64,v 1.23 2020/06/29 23:31:41 riastradh Exp $
 
 defflag opt_cpuoptions.h	AARCH64_ALIGNMENT_CHECK
 defflag opt_cpuoptions.h	AARCH64_EL0_STACK_ALIGNMENT_CHECK
@@ -138,3 +138,6 @@ file	arch/aarch64/aarch64/netbsd32_syscall.c		compat_netbsd32
 
 # profiling support
 file	dev/tprof/tprof_armv8.c			tprof	needs-flag
+
+# ARMv8.0-AES
+include "crypto/aes/arch/arm/files.aesarmv8"
