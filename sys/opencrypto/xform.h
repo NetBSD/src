@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.h,v 1.20 2017/07/06 08:22:45 ozaki-r Exp $ */
+/*	$NetBSD: xform.h,v 1.21 2020/06/30 04:14:56 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.h,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.h,v 1.10 2002/04/22 23:10:09 deraadt Exp $	*/
 
@@ -63,7 +63,7 @@ extern const struct enc_xform enc_xform_3des;
 extern const struct enc_xform enc_xform_blf;
 extern const struct enc_xform enc_xform_cast5;
 extern const struct enc_xform enc_xform_skipjack;
-extern const struct enc_xform enc_xform_rijndael128;
+extern const struct enc_xform enc_xform_aes;
 extern const struct enc_xform enc_xform_arc4;
 extern const struct enc_xform enc_xform_camellia;
 extern const struct enc_xform enc_xform_aes_ctr;
