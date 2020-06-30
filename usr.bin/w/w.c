@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.84 2018/10/30 21:15:09 kre Exp $	*/
+/*	$NetBSD: w.c,v 1.85 2020/06/30 14:57:25 kim Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.84 2018/10/30 21:15:09 kre Exp $");
+__RCSID("$NetBSD: w.c,v 1.85 2020/06/30 14:57:25 kim Exp $");
 #endif
 #endif /* not lint */
 
@@ -203,6 +203,18 @@ main(int argc, char **argv)
 		if (sysctlbyname("security.curtain", &curtain, &len, 
 		    NULL, 0) == -1)
 			curtain = 0;
+	}
+
+	if (!nflag) {
+		int	rv;
+		char	*p;
+
+		rv = gethostname(domain, sizeof(domain));
+		domain[sizeof(domain) - 1] = '\0';
+		if (rv < 0 || (p = strchr(domain, '.')) == 0)
+			domain[0] = '\0';
+		else
+			memmove(domain, p, strlen(p) + 1);
 	}
 
 #ifdef SUPPORT_UTMPX
@@ -387,18 +399,6 @@ main(int argc, char **argv)
 		}
 	}
 #endif
-
-	if (!nflag) {
-		int	rv;
-		char	*p;
-
-		rv = gethostname(domain, sizeof(domain));
-		domain[sizeof(domain) - 1] = '\0';
-		if (rv < 0 || (p = strchr(domain, '.')) == 0)
-			domain[0] = '\0';
-		else
-			memmove(domain, p, strlen(p) + 1);
-	}
 
 	for (ep = ehead; ep != NULL; ep = ep->next) {
 		if (ep->tp != NULL)
