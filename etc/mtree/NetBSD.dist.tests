@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.169 2020/06/27 05:20:34 jruoho Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.170 2020/06/30 14:30:49 jruoho Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -446,7 +446,9 @@
 ./usr/tests/usr.bin/ztest
 ./usr/tests/usr.sbin
 ./usr/tests/usr.sbin/cpuctl
+./usr/tests/usr.sbin/execsnoop
 ./usr/tests/usr.sbin/mtree
+./usr/tests/usr.sbin/opensnoop
 ./usr/tests/usr.sbin/stdethers
 ./usr/tests/usr.sbin/stdhosts
 ./usr/tests/usr.sbin/tcpdump
