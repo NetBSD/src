@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_fault.c,v 1.1 2020/06/07 09:45:19 maxv Exp $	*/
+/*	$NetBSD: subr_fault.c,v 1.2 2020/06/30 16:28:17 maxv Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_fault.c,v 1.1 2020/06/07 09:45:19 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_fault.c,v 1.2 2020/06/30 16:28:17 maxv Exp $");
 
 #include <sys/module.h>
 #include <sys/param.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_fault.c,v 1.1 2020/06/07 09:45:19 maxv Exp $");
 
 typedef struct {
 	volatile bool enabled;
+	volatile bool oneshot;
 	volatile unsigned long nth;
 	volatile unsigned long cnt;
 	volatile unsigned long nfaults;
@@ -55,7 +56,8 @@ typedef struct {
 
 static fault_t fault_global __cacheline_aligned = {
 	.enabled = false,
-	.nth = 2,
+	.oneshot = false,
+	.nth = FAULT_NTH_MIN,
 	.cnt = 0,
 	.nfaults = 0
 };
@@ -81,6 +83,11 @@ fault_inject(void)
 		if (__predict_true(f == NULL))
 			return false;
 		if (__predict_false(!f->enabled))
+			return false;
+	}
+
+	if (atomic_load_relaxed(&f->oneshot)) {
+		if (__predict_true(atomic_load_relaxed(&f->nfaults) > 0))
 			return false;
 	}
 
@@ -112,9 +119,9 @@ fault_ioc_enable(struct fault_ioc_enable *args)
 {
 	fault_t *f;
 
-	if (args->mode != FAULT_MODE_NTH)
+	if (args->mode != FAULT_MODE_NTH_ONESHOT)
 		return EINVAL;
-	if (args->nth < 2)
+	if (args->nth < FAULT_NTH_MIN)
 		return EINVAL;
 
 	switch (args->scope) {
@@ -124,6 +131,7 @@ fault_ioc_enable(struct fault_ioc_enable *args)
 			mutex_exit(&fault_global_lock);
 			return EEXIST;
 		}
+		fault_global.oneshot = true;
 		atomic_store_relaxed(&fault_global.nth, args->nth);
 		fault_global.cnt = 0;
 		fault_global.nfaults = 0;
@@ -139,6 +147,7 @@ fault_ioc_enable(struct fault_ioc_enable *args)
 			f = kmem_zalloc(sizeof(*f), KM_SLEEP);
 			lwp_setspecific(fault_lwp_key, f);
 		}
+		f->oneshot = true;
 		atomic_store_relaxed(&f->nth, args->nth);
 		f->cnt = 0;
 		f->nfaults = 0;
