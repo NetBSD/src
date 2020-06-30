@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_armv8_64.S,v 1.1 2020/06/29 23:31:41 riastradh Exp $	*/
+/*	$NetBSD: aes_armv8_64.S,v 1.2 2020/06/30 21:41:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  *	secret.
  */
 	.section .rodata
-	.align	4
+	.p2align 2
 	.type	rcon,@object
 rcon:
 	.long	0x01
@@ -63,7 +63,7 @@ END(rcon)
  *	RotWord on word 1, and then copy it into all the other words.
  */
 	.section .rodata
-	.align	16
+	.p2align 4
 	.type	unshiftrows_rotword_1,@object
 unshiftrows_rotword_1:
 	.byte	0x01,0x0e,0x0b,0x04
@@ -79,7 +79,7 @@ END(unshiftrows_rotword_1)
  *	3 into all the other words.
  */
 	.section .rodata
-	.align	16
+	.p2align 4
 	.type	unshiftrows_3,@object
 unshiftrows_3:
 	.byte	0x0c,0x09,0x06,0x03
@@ -95,7 +95,7 @@ END(unshiftrows_3)
  *	RotWord on word 3, and then copy it into all the other words.
  */
 	.section .rodata
-	.align	16
+	.p2align 4
 	.type	unshiftrows_rotword_3,@object
 unshiftrows_rotword_3:
 	.byte	0x09,0x06,0x03,0x0c
@@ -846,7 +846,7 @@ aesarmv8_xts_mulx:
 END(aesarmv8_xts_mulx)
 
 	.section .rodata
-	.align	16
+	.p2align 4
 	.type	xtscarry,@object
 xtscarry:
 	.byte	0x87,0,0,0, 0,0,0,0,  1,0,0,0, 0,0,0,0
