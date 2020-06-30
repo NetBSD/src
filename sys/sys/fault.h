@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.h,v 1.1 2020/06/07 09:45:19 maxv Exp $	*/
+/*	$NetBSD: fault.h,v 1.2 2020/06/30 16:28:17 maxv Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -41,7 +41,9 @@
 #define FAULT_SCOPE_GLOBAL	0
 #define FAULT_SCOPE_LWP		1
 
-#define FAULT_MODE_NTH		0
+#define FAULT_MODE_NTH_ONESHOT	0
+
+#define FAULT_NTH_MIN		2
 
 struct fault_ioc_enable {
 	int scope;
