@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libkern,v 1.48 2020/04/30 03:28:19 riastradh Exp $
+#	$NetBSD: Makefile.libkern,v 1.49 2020/06/30 16:20:02 maxv Exp $
 
 #
 # Variable definitions for libkern.
@@ -59,6 +59,7 @@ SRCS+=	pmatch.c mcount.c crc32.c
 
 SRCS+=	ppath_kmem_alloc.c
 
+SRCS+=	copystr.c
 SRCS+=	strsep.c strstr.c
 SRCS+=	strlcpy.c strlcat.c
 

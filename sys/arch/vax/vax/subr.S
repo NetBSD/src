@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.37 2020/01/08 17:38:42 ad Exp $	   */
+/*	$NetBSD: subr.S,v 1.38 2020/06/30 16:20:02 maxv Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -477,7 +477,6 @@ ENTRY(copyoutstr, 0)
 	bgeq	8f		# no, continue
 	brb	6b		# yes, return EFAULT
 
-ENTRY(copystr,0)
 8:	movl	4(%ap),%r5	# from
 	movl	8(%ap),%r4	# to
 	movl	12(%ap),%r3	# len

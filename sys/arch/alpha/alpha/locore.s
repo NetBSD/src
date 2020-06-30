@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.124 2020/01/08 20:59:18 skrll Exp $ */
+/* $NetBSD: locore.s,v 1.125 2020/06/30 16:20:00 maxv Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2019 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.124 2020/01/08 20:59:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.125 2020/06/30 16:20:00 maxv Exp $");
 
 #include "assym.h"
 
@@ -744,12 +744,9 @@ LEAF_NOPROFILE(lwp_trampoline, 0)
 /**************************************************************************/
 
 /*
- * Copy a null-terminated string within the kernel's address space.
- * If lenp is not NULL, store the number of chars copied in *lenp
- *
- * int copystr(char *from, char *to, size_t len, size_t *lenp);
+ * XXX XXX XXX: Should be removed?
  */
-LEAF(copystr, 4)
+LEAF(alpha_copystr, 4)
 	LDGP(pv)
 
 	mov	a2, t0			/* t0 = i = len */
@@ -781,7 +778,7 @@ LEAF(copystr, 4)
 
 4:	mov	zero, v0		/* return 0. */
 	RET
-	END(copystr)
+	END(alpha_copystr)
 
 NESTED(copyinstr, 4, 16, ra, IM_RA|IM_S0, 0)
 	LDGP(pv)
@@ -800,7 +797,7 @@ NESTED(copyinstr, 4, 16, ra, IM_RA|IM_S0, 0)
 	ldq	at_reg, L_PCB(at_reg)
 	stq	v0, PCB_ONFAULT(at_reg)
 	.set at
-	CALL(copystr)				/* do the copy.		     */
+	CALL(alpha_copystr)			/* do the copy.		     */
 	.set noat
 	ldq	at_reg, 0(s0)			/* kill the fault handler.   */
 	ldq	at_reg, L_PCB(at_reg)
@@ -829,7 +826,7 @@ NESTED(copyoutstr, 4, 16, ra, IM_RA|IM_S0, 0)
 	ldq	at_reg, L_PCB(at_reg)
 	stq	v0, PCB_ONFAULT(at_reg)
 	.set at
-	CALL(copystr)				/* do the copy.		     */
+	CALL(alpha_copystr)			/* do the copy.		     */
 	.set noat
 	ldq	at_reg, 0(s0)			/* kill the fault handler.   */
 	ldq	at_reg, L_PCB(at_reg)
