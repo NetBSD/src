@@ -1,4 +1,4 @@
-/*	$NetBSD: line.c,v 1.11 2019/06/09 07:40:14 blymn Exp $	*/
+/*	$NetBSD: line.c,v 1.12 2020/06/30 21:02:24 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: line.c,v 1.11 2019/06/09 07:40:14 blymn Exp $");
+__RCSID("$NetBSD: line.c,v 1.12 2020/06/30 21:02:24 uwe Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -220,7 +220,7 @@ int whline_set(WINDOW *win, const cchar_t *wch, int n)
 #ifndef HAVE_WCHAR
 	return ERR;
 #else
-	int ocurx, wcn, i, cw;
+	int ocury, ocurx, wcn, i, cw;
 	cchar_t cc;
 
 	cw = wcwidth( wch->vals[ 0 ]);
@@ -232,6 +232,7 @@ int whline_set(WINDOW *win, const cchar_t *wch, int n)
 #ifdef DEBUG
 	__CTRACE(__CTRACE_LINE, "whline_set: line of %d\n", wcn);
 #endif /* DEBUG */
+	ocury = win->cury;
 	ocurx = win->curx;
 
 	memcpy( &cc, wch, sizeof( cchar_t ));
@@ -240,12 +241,12 @@ int whline_set(WINDOW *win, const cchar_t *wch, int n)
 	for (i = 0; i < wcn; i++ ) {
 #ifdef DEBUG
 		__CTRACE(__CTRACE_LINE, "whline_set: (%d,%d)\n",
-		   win->cury, ocurx + i * cw);
+		   ocury, ocurx + i * cw);
 #endif /* DEBUG */
-		mvwadd_wch(win, win->cury, ocurx + i * cw, &cc);
+		mvwadd_wch(win, ocury, ocurx + i * cw, &cc);
 	}
 
-	wmove(win, win->cury, ocurx);
+	wmove(win, ocury, ocurx);
 	__sync(win);
 	return OK;
 #endif /* HAVE_WCHAR */
