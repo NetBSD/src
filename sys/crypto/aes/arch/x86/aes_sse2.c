@@ -23,11 +23,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_sse2.c,v 1.1 2020/06/29 23:47:54 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_sse2.c,v 1.2 2020/06/30 20:32:11 riastradh Exp $");
 
 #include <sys/types.h>
 
+#ifdef _KERNEL
 #include <lib/libkern/libkern.h>
+#else
+#include <stdint.h>
+#include <string.h>
+#endif
 
 #include "aes_sse2_impl.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_ni.c,v 1.1 2020/06/29 23:29:40 riastradh Exp $	*/
+/*	$NetBSD: aes_ni.c,v 1.2 2020/06/30 20:32:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,17 +27,32 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_ni.c,v 1.1 2020/06/29 23:29:40 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_ni.c,v 1.2 2020/06/30 20:32:11 riastradh Exp $");
 
+#ifdef _KERNEL
 #include <sys/types.h>
 #include <sys/systm.h>
+#else
+#include <assert.h>
+#include <err.h>
+#include <stdint.h>
+#include <string.h>
+#define	KASSERT			assert
+#define	panic(fmt, args...)	err(1, fmt, args)
+#endif
 
 #include <crypto/aes/aes.h>
 #include <crypto/aes/arch/x86/aes_ni.h>
 
+#ifdef _KERNEL
 #include <x86/cpuvar.h>
 #include <x86/fpu.h>
 #include <x86/specialreg.h>
+#else
+#include <cpuid.h>
+#define	fpu_kern_enter()	((void)0)
+#define	fpu_kern_leave()	((void)0)
+#endif
 
 static void
 aesni_setenckey(struct aesenc *enc, const uint8_t key[static 16],
@@ -224,8 +239,16 @@ aesni_probe(void)
 	int result = 0;
 
 	/* Verify that the CPU supports AES-NI.  */
+#ifdef _KERNEL
 	if ((cpu_feature[1] & CPUID2_AES) == 0)
 		return -1;
+#else
+	unsigned eax, ebx, ecx, edx;
+	if (!__get_cpuid(1, &eax, &ebx, &ecx, &edx))
+		return -1;
+	if ((ecx & bit_AES) == 0)
+		return -1;
+#endif
 
 	fpu_kern_enter();
 

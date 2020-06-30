@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_selftest.c,v 1.1 2020/06/29 23:27:52 riastradh Exp $	*/
+/*	$NetBSD: aes_selftest.c,v 1.2 2020/06/30 20:32:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,12 +27,43 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_selftest.c,v 1.1 2020/06/29 23:27:52 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_selftest.c,v 1.2 2020/06/30 20:32:11 riastradh Exp $");
+
+#ifdef _KERNEL
 
 #include <sys/types.h>
 #include <sys/systm.h>
 
 #include <lib/libkern/libkern.h>
+
+#else  /* !_KERNEL */
+
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+
+static void
+hexdump(int (*prf)(const char *, ...) __printflike(1,2), const char *prefix,
+    const void *buf, size_t len)
+{
+	const uint8_t *p = buf;
+	size_t i;
+
+	(*prf)("%s (%zu bytes)\n", prefix, len);
+	for (i = 0; i < len; i++) {
+		if (i % 16 == 8)
+			(*prf)("  ");
+		else
+			(*prf)(" ");
+		(*prf)("%02hhx", p[i]);
+		if ((i + 1) % 16 == 0)
+			(*prf)("\n");
+	}
+	if (i % 16)
+		(*prf)("\n");
+}
+
+#endif	/* _KERNEL */
 
 #include <crypto/aes/aes.h>
 
