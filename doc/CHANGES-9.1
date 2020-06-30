@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.70 2020/06/21 10:41:59 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.71 2020/06/30 18:49:17 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -3068,4 +3068,57 @@ games/fortune/datfiles/netbsd-tips		1.7,1.8
 
 	Add various enries, fix some tips.
 	[sevan, ticket #969]
+
+external/cddl/osnet/dist/uts/common/fs/zfs/vdev_disk.c 1.17,1.18
+
+	Fix zfs on wedges on ld(4): use the correct device for
+	d_minphys().
+	[jmcneill, ticket #970]
+
+sys/arch/arm/dts/sun8i-h3-nanopi-m1.dts		1.3
+
+	Enable audio codec.
+	[jmcneill, ticket #971]
+
+distrib/atari/floppies/install/list		1.23
+
+	Provide wdboot as a link of sdboot for Milan in sysinst.
+	[tsutsui, ticket #972]
+
+sys/arch/x68k/x68k/disksubr.c			1.36
+
+	Use a sane default for size of partition a.
+	[tsutsui, ticket #973]
+
+etc/mtree/special				1.170
+
+	Fix /private/tmp mode to match etc/rc.d/perusertmp.
+	[kim, ticket #974]
+
+xsrc/external/mit/xf86-video-intel/dist/src/intel_module.c 1.2
+
+	PR 55198: use UXA (not SNA) by default on Intel Gen3/4/5 chipsets
+	(except 915).
+	[tsutsui, ticket #975]
+
+sys/arch/aarch64/aarch64/pmap.c			1.79
+
+	Fix incorrect range calculation when doing icache sync.
+	[ryo, ticket #976]
+
+usr.bin/cal/cal.c				1.30
+
+	Use two-letter weekday abbreviations in the heading.
+	[kim, ticket #977]
+
+sys/dev/acpi/acpi_display.c			1.18
+
+	If possible leave brightness as set by firmware to avoid
+	a black screen at boot time.
+	[sborrill, ticket #978]
+
+usr.bin/w/w.c					1.85,1.86
+
+	Fix domain stripping in host field output.
+	[kim, ticket #979]
 
