@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.85 2020/06/30 14:57:25 kim Exp $	*/
+/*	$NetBSD: w.c,v 1.86 2020/06/30 15:02:55 kim Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.85 2020/06/30 14:57:25 kim Exp $");
+__RCSID("$NetBSD: w.c,v 1.86 2020/06/30 15:02:55 kim Exp $");
 #endif
 #endif /* not lint */
 
@@ -652,23 +652,23 @@ fixhost(struct entry *ep)
 	int af = m ? AF_INET6 : AF_INET;
 	size_t alen = m ? sizeof(l.l6) : sizeof(l.l4);
 	if (!nflag && inet_pton(af, p, &l) &&
-	    (hp = gethostbyaddr((char *)&l, alen, af))) {
-		if (domain[0] != '\0') {
-			p = hp->h_name;
-			p += strlen(hp->h_name);
-			p -= strlen(domain);
-			if (p > hp->h_name &&
-			    strcasecmp(p, domain) == 0)
-				*p = '\0';
-		}
-		p = hp->h_name;
+	    (hp = gethostbyaddr((char *)&l, alen, af)))
+		strlcpy(host_buf, hp->h_name, sizeof(host_buf));
+
+	if (domain[0] != '\0') {
+		p = host_buf;
+		p += strlen(host_buf);
+		p -= strlen(domain);
+		if (p > host_buf &&
+		    strcasecmp(p, domain) == 0)
+			*p = '\0';
 	}
 
 	if (x)
-		(void)snprintf(ep->host, sizeof(ep->host), "%s:%s", p, x);
+		(void)snprintf(ep->host, sizeof(ep->host), "%s:%s", host_buf,
+		    x);
 	else
-
-		strlcpy(ep->host, p, sizeof(ep->host));
+		strlcpy(ep->host, host_buf, sizeof(ep->host));
 }
 
 static void
