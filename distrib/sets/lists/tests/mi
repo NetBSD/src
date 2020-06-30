@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.867 2020/06/30 20:32:10 riastradh Exp $
+# $NetBSD: mi,v 1.868 2020/06/30 23:51:47 lukem Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2446,6 +2446,7 @@
 ./usr/tests/lib/csu/t_ifunc_static		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/Atffile 		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libarchive/Kyuafile 		tests-lib-tests		compattestfile,atf,kyua
 ./usr/tests/lib/libarchive/h_libarchive		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/t_libarchive		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_acl_pax_nfs4.tar.uu 	tests-lib-tests	compattestfile,atf
@@ -2764,6 +2765,7 @@
 ./usr/tests/lib/libc/Kyuafile			tests-lib-tests		compattestfile,atf,kyua
 ./usr/tests/lib/libc/atomic			tests-lib-tests	compattestfile,atf
 ./usr/tests/lib/libc/atomic/Atffile		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/atomic/Kyuafile		tests-lib-tests		compattestfile,atf,kyua
 ./usr/tests/lib/libc/atomic/t___sync_add	tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/atomic/t___sync_and	tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/atomic/t___sync_compare_and_swap	tests-lib-tests	compattestfile,atf
@@ -3552,6 +3554,7 @@
 ./usr/tests/lib/libppath/t_ppath		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libproc				tests-lib-debug		compattestfile,atf
 ./usr/tests/lib/libproc/Atffile			tests-lib-debug		compattestfile,atf,dtrace
+./usr/tests/lib/libproc/Kyuafile		tests-lib-debug		compattestfile,atf,dtrace,kyua
 ./usr/tests/lib/libproc/proc_test		tests-lib-debug		compattestfile,atf,dtrace
 ./usr/tests/lib/libproc/target_prog		tests-lib-debug		compattestfile,atf,dtrace
 ./usr/tests/lib/libprop				tests-lib-tests		compattestfile,atf
@@ -3615,6 +3618,7 @@
 ./usr/tests/lib/libpthread_dbg/t_threads	tests-obsolete		obsolete
 ./usr/tests/lib/librefuse			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/librefuse/Atffile		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/librefuse/Kyuafile		tests-lib-tests		compattestfile,atf,kyua
 ./usr/tests/lib/librefuse/t_refuse_opt		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/librt				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/librt/Atffile			tests-lib-tests		compattestfile,atf
@@ -3692,6 +3696,7 @@
 ./usr/tests/lib/libtre/t_regex_att		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libusbhid			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libusbhid/Atffile		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libusbhid/Kyuafile		tests-lib-tests		compattestfile,atf,kyua
 ./usr/tests/lib/libusbhid/t_usbhid		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libusbhid/test_usb_hid_usages	tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libutil				tests-lib-tests		compattestfile,atf
@@ -3781,6 +3786,7 @@
 ./usr/tests/net/bpfjit/t_mbuf			tests-net-tests		atf,rump,sljit
 ./usr/tests/net/can				tests-net-tests		compattestfile,atf
 ./usr/tests/net/can/Atffile			tests-net-tests		atf,rump
+./usr/tests/net/can/Kyuafile			tests-net-tests		atf,rump,kyua
 ./usr/tests/net/can/t_can			tests-net-tests		atf,rump
 ./usr/tests/net/can/t_canfilter			tests-net-tests		atf,rump
 ./usr/tests/net/carp				tests-net-tests		compattestfile,atf
@@ -4285,6 +4291,7 @@
 ./usr/tests/usr.bin/config/t_config		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cpio			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cpio/Atffile 		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cpio/Kyuafile		tests-usr.bin-tests	compattestfile,atf,kyua
 ./usr/tests/usr.bin/cpio/h_cpio			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cpio/t_cpio			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cpio/test_extract.cpio.Z.uu 	tests-usr.bin-tests	compattestfile,atf
@@ -4583,6 +4590,7 @@
 ./usr/tests/usr.bin/make/unit-tests/varshell.mk	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/mixerctl			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/mixerctl/Atffile		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/mixerctl/Kyuafile		tests-usr.bin-tests	compattestfile,atf,kyua
 ./usr/tests/usr.bin/mixerctl/t_mixerctl		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/mkdep			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/mkdep/Atffile		tests-usr.bin-tests	compattestfile,atf
@@ -4677,6 +4685,7 @@
 ./usr/tests/usr.bin/sort/t_sort				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/tar					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/tar/Atffile 			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/tar/Kyuafile			tests-usr.bin-tests	compattestfile,atf,kyua
 ./usr/tests/usr.bin/tar/h_tar				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/tar/t_tar				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/tar/test_extract.tar.Z.uu 		tests-usr.bin-tests	compattestfile,atf
@@ -4714,6 +4723,7 @@
 ./usr/tests/usr.bin/unifdef/t_basic		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/uniq			tests-usr.bin-tests compattestfile,atf
 ./usr/tests/usr.bin/uniq/Atffile	tests-usr.bin-tests compattestfile,atf
+./usr/tests/usr.bin/uniq/Kyuafile		tests-usr.bin-tests	compattestfile,atf,kyua
 ./usr/tests/usr.bin/uniq/d_basic.in		tests-usr.bin-tests compattestfile,atf
 ./usr/tests/usr.bin/uniq/d_basic.out	tests-usr.bin-tests compattestfile,atf
 ./usr/tests/usr.bin/uniq/d_counts.out	tests-usr.bin-tests compattestfile,atf
