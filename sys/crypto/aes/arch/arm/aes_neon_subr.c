@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_neon_subr.c,v 1.1 2020/06/29 23:56:31 riastradh Exp $	*/
+/*	$NetBSD: aes_neon_subr.c,v 1.2 2020/06/30 20:32:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,11 +27,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_neon_subr.c,v 1.1 2020/06/29 23:56:31 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_neon_subr.c,v 1.2 2020/06/30 20:32:11 riastradh Exp $");
 
+#ifdef _KERNEL
 #include <sys/systm.h>
-
 #include <lib/libkern/libkern.h>
+#else
+#include <assert.h>
+#include <inttypes.h>
+#include <stdio.h>
+#define	KASSERT			assert
+#endif
 
 #include <crypto/aes/arch/arm/aes_neon.h>
 
