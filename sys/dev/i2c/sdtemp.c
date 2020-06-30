@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.38 2020/06/29 09:24:07 msaitoh Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.39 2020/06/30 19:02:42 msaitoh Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.38 2020/06/29 09:24:07 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.39 2020/06/30 19:02:42 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -578,8 +578,10 @@ sdtemp_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	int error;
 
 	error = iic_acquire_bus(sc->sc_tag, 0);
-	if (error)
+	if (error) {
+		edata->state = ENVSYS_SINVALID;
 		return;
+	}
 
 	error = sdtemp_read_16(sc, SDTEMP_REG_AMBIENT_TEMP, &val);
 	iic_release_bus(sc->sc_tag, 0);
