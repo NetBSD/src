@@ -1,4 +1,4 @@
-# $NetBSD: t_random_garbage.sh,v 1.1 2020/06/27 08:50:46 jruoho Exp $
+# $NetBSD: t_random_garbage.sh,v 1.2 2020/06/30 11:49:26 jruoho Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -46,14 +46,28 @@ random_garbage_head() {
 
 random_garbage_body() {
 
-	atf_skip "The test is not safe"
+	sysctl machdep.cpu_brand 2>/dev/null | grep "QEMU"
+
+	if [ $? -eq 1 ]; then
+		atf_skip "The test is not safe"
+	fi
 
 	while read line; do
 
 		var=$(echo $line | awk '{print $1}')
 
 		case $var in
+			hw.acpi.sleep.state)
+			echo "Skipping $var"
+			continue
+			;;
+
 			kern.securelevel*)
+			echo "Skipping $var"
+			continue
+			;;
+
+			kern.veriexec.strict)
 			echo "Skipping $var"
 			continue
 			;;
@@ -76,7 +90,11 @@ random_garbage_body() {
 
 random_garbage_cleanup() {
 
-	atf_skip "The test is not safe"
+	sysctl machdep.cpu_brand 2>/dev/null | grep "QEMU"
+
+	if [ $? -eq 1 ]; then
+		atf_skip "The test is not safe"
+	fi
 
 	while read line; do
 		var=$(echo $line | awk '{print $1}')
