@@ -1,4 +1,4 @@
-/*	$NetBSD: line.c,v 1.12 2020/06/30 21:02:24 uwe Exp $	*/
+/*	$NetBSD: line.c,v 1.13 2020/06/30 21:10:13 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: line.c,v 1.12 2020/06/30 21:02:24 uwe Exp $");
+__RCSID("$NetBSD: line.c,v 1.13 2020/06/30 21:10:13 uwe Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -87,17 +87,18 @@ int
 whline(WINDOW *win, chtype ch, int count)
 {
 #ifndef HAVE_WCHAR
-	int ocurx, n, i;
+	int ocury, ocurx, n, i;
 
 	n = min(count, win->maxx - win->curx);
+	ocury = win->curx;
 	ocurx = win->curx;
 
 	if (!(ch & __CHARTEXT))
 		ch |= ACS_HLINE;
 	for (i = 0; i < n; i++)
-		mvwaddch(win, win->cury, ocurx + i, ch);
+		mvwaddch(win, ocury, ocurx + i, ch);
 
-	wmove(win, win->cury, ocurx);
+	wmove(win, ocury, ocurx);
 	return OK;
 #else
 	cchar_t cch, *cchp;
