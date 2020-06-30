@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cgd_adiantum.c,v 1.2 2020/06/30 04:15:46 riastradh Exp $	*/
+/*	$NetBSD: t_cgd_adiantum.c,v 1.3 2020/06/30 04:17:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -348,7 +348,7 @@ ATF_TC_BODY(cgd_adiantum, tc)
 		RL(nwrit = rump_sys_pwrite(cgdfd, C[i].ptxt, C[i].secsize,
 			C[i].blkno * C[i].secsize));
 		RL(unconfigure_cgd(cgdfd));
-		if (nwrit != C[i].secsize) {
+		if ((size_t)nwrit != C[i].secsize) {
 			atf_tc_fail_nonfatal("truncated write: %zd != %u",
 			    nwrit, C[i].secsize);
 			continue;
