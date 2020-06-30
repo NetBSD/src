@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.126 2019/05/08 14:03:57 leot Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.127 2020/06/30 21:22:19 riastradh Exp $
 .\"
 .\" Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1693,6 +1693,23 @@ Multiple paths may be specified via multiple
 options, or via a single option whose argument contains multiple
 space-separated paths.
 .
+.It Fl c Ar compiler
+Select the compiler for the toolchain to build
+.Nx
+and for inclusion in the
+.Nx
+distribution.
+Supported choices:
+.Bl -inset -offset indent
+.It clang
+.It gcc
+[default]
+.El
+.Pp
+The compiler used to build the toolchain can be different; see
+.Sy HOST_CC
+and
+.Sy HOST_CXX .
 .It Fl D Ar dest
 Set the value of
 .Sy DESTDIR

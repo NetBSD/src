@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.341 2020/06/13 18:00:29 riastradh Exp $
+#	$NetBSD: build.sh,v 1.342 2020/06/30 21:22:19 riastradh Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1028,8 +1028,8 @@ usage()
 	cat <<_usage_
 
 Usage: ${progname} [-EhnoPRrUuxy] [-a arch] [-B buildid] [-C cdextras]
-                [-D dest] [-j njob] [-M obj] [-m mach] [-N noisy]
-                [-O obj] [-R release] [-S seed] [-T tools]
+                [-c compiler>] [-D dest] [-j njob] [-M obj] [-m mach]
+                [-N noisy] [-O obj] [-R release] [-S seed] [-T tools]
                 [-V var=[value]] [-w wrapper] [-X x11src] [-Y extsrcsrc]
                 [-Z var]
                 operation [...]
@@ -1081,6 +1081,10 @@ Usage: ${progname} [-EhnoPRrUuxy] [-a arch] [-B buildid] [-C cdextras]
     -a arch        Set MACHINE_ARCH to arch.  [Default: deduced from MACHINE]
     -B buildid     Set BUILDID to buildid.
     -C cdextras    Append cdextras to CDEXTRA variable for inclusion on CD-ROM.
+    -c compiler    Select compiler:
+                       clang
+                       gcc
+                   [Default: gcc]
     -D dest        Set DESTDIR to dest.  [Default: destdir.MACHINE]
     -E             Set "expert" mode; disables various safety checks.
                    Should not be used without expert knowledge of the build system.
@@ -1130,7 +1134,7 @@ _usage_
 
 parseoptions()
 {
-	opts='a:B:C:D:Ehj:M:m:N:nO:oPR:rS:T:UuV:w:X:xY:yZ:'
+	opts='a:B:C:c:D:Ehj:M:m:N:nO:oPR:rS:T:UuV:w:X:xY:yZ:'
 	opt_a=false
 	opt_m=false
 
@@ -1174,6 +1178,21 @@ parseoptions()
 		-C)
 			eval ${optargcmd}; resolvepaths OPTARG
 			CDEXTRA="${CDEXTRA}${CDEXTRA:+ }${OPTARG}"
+			;;
+
+		-c)
+			eval ${optargcmd}
+			case "${OPTARG}" in
+			gcc)	# default, no variables needed
+				;;
+			clang)	setmakeenv HAVE_LLVM yes
+				setmakeenv MKLLVM yes
+				setmakeenv MKGCC no
+				;;
+			#pcc)	...
+			#	;;
+			*)	bomb "Unknown compiler: ${OPTARG}"
+			esac
 			;;
 
 		-D)
@@ -1942,7 +1961,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.341 2020/06/13 18:00:29 riastradh Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.342 2020/06/30 21:22:19 riastradh Exp $
 # with these arguments: ${_args}
 #
 
