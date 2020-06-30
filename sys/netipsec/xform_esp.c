@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.99 2019/11/01 04:23:21 knakahara Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.100 2020/06/30 04:14:55 riastradh Exp $	*/
 /*	$FreeBSD: xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.99 2019/11/01 04:23:21 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.100 2020/06/30 04:14:55 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -112,7 +112,7 @@ esp_algorithm_lookup(int alg)
 	case SADB_EALG_3DESCBC:
 		return &enc_xform_3des;
 	case SADB_X_EALG_AES:
-		return &enc_xform_rijndael128;
+		return &enc_xform_aes;
 	case SADB_X_EALG_BLOWFISHCBC:
 		return &enc_xform_blf;
 	case SADB_X_EALG_CAST128CBC:
@@ -1061,7 +1061,7 @@ esp_attach(void)
 	esp_max_ivlen = 0;
 	MAXIV(enc_xform_des);		/* SADB_EALG_DESCBC */
 	MAXIV(enc_xform_3des);		/* SADB_EALG_3DESCBC */
-	MAXIV(enc_xform_rijndael128);	/* SADB_X_EALG_AES */
+	MAXIV(enc_xform_aes);		/* SADB_X_EALG_AES */
 	MAXIV(enc_xform_blf);		/* SADB_X_EALG_BLOWFISHCBC */
 	MAXIV(enc_xform_cast5);		/* SADB_X_EALG_CAST128CBC */
 	MAXIV(enc_xform_skipjack);	/* SADB_X_EALG_SKIPJACK */
