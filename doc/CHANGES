@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2705 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2706 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -224,3 +224,19 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	evbarm: Add support for loading modules with the bootloader.
 		[jmcneill 20200221]
 	evbarm: Added boot.cfg support to efiboot [jmcneill 20200211]
+	kernel: Remove all variable-time AES and replace it by constant-time
+		aes_ct from BearSSL or a CPU-dependent implementation,
+		selected at boot time according to CPU capabilities.
+		[riastradh 20200629]
+	amd64: Add support for AES-NI in kernel. [riastradh 20200629]
+	x86: Add support for bitsliced AES with SSE2 in kernel.
+		[riastradh 20200629]
+	x86: Add support for permutation-based AES (vpaes) with SSSE3 in
+		kernel. [riastradh 20200629]
+	x86: Add support for VIA ACE AES in kernel (not just via opencrypto).
+		[riastradh 20200629]
+	arm: Add support for ARMv8.0-AES in kernel. [riastradh 20200629]
+	arm: Add support for permutation-based AES (vpaes) with ARM NEON in
+		kernel. [riastradh 20200629]
+	cgd(4): Add support for Adiantum cipher, providing much better software
+		performance than AES-CBC or AES-XTS. [riastradh 20200629]
