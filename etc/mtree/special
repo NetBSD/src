@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.148.2.1 2015/03/26 10:54:36 martin Exp $
+#	$NetBSD: special,v 1.148.2.2 2020/06/30 15:10:54 martin Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -336,7 +336,7 @@
 ./etc/racoon/psk.txt		type=file mode=0600 optional tags=nodiff
 
 ./private			type=dir mode=0755 optional
-./private/tmp			type=dir mode=0111 optional ignore
+./private/tmp			type=dir mode=0555 optional ignore
 
 ./root				type=dir  mode=0755
 ./root/.cshrc			type=file mode=0644
