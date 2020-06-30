@@ -222,7 +222,7 @@ vdev_disk_open(vdev_t *vd, uint64_t *psize, uint64_t *max_psize,
 
 	pdk = NULL;
 	if (getdiskinfo(vp, &dkw) == 0)
-		pdk = disk_find(dkw.dkw_parent);
+		pdk = disk_find(dkw.dkw_devname);
 
 	/* XXXNETBSD Once tls-maxphys gets merged this block becomes:
 		dvd->vd_maxphys = (pdk ? disk_maxphys(pdk) : MACHINE_MAXPHYS);
