@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.31 2019/05/04 08:50:39 maxv Exp $	*/
+/*	$NetBSD: copy.S,v 1.32 2020/06/30 16:20:01 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2004, 2008 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.31 2019/05/04 08:50:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.32 2020/06/30 16:20:01 maxv Exp $");
 
 #include "assym.h"
 
@@ -454,50 +454,6 @@ copystr_return:
 	popl	%esi
 	ret
 END(copystr_fault)
-
-/*
- * int copystr(const void *from, void *to, size_t maxlen, size_t *lencopied);
- * Copy a NUL-terminated string, at most maxlen characters long.  Return the
- * number of characters copied (including the NUL) in *lencopied.  If the
- * string is too long, return ENAMETOOLONG; else return 0.
- * see copystr(9)
- */
-ENTRY(copystr)
-	pushl	%esi
-	pushl	%edi
-
-	movl	12(%esp),%esi		/* esi = from */
-	movl	16(%esp),%edi		/* edi = to */
-	movl	20(%esp),%edx		/* edx = maxlen */
-	incl	%edx
-
-1:	decl	%edx
-	jz	4f
-	lodsb
-	stosb
-	testb	%al,%al
-	jnz	1b
-
-	/* Success -- 0 byte reached. */
-	decl	%edx
-	xorl	%eax,%eax
-	jmp	6f
-
-4:	/* edx is zero -- return ENAMETOOLONG. */
-	movl	$ENAMETOOLONG,%eax
-
-6:	/* Set *lencopied and return %eax. */
-	movl	20(%esp),%ecx
-	subl	%edx,%ecx
-	movl	24(%esp),%edx
-	testl	%edx,%edx
-	jz	7f
-	movl	%ecx,(%edx)
-
-7:	popl	%edi
-	popl	%esi
-	ret
-END(copystr)
 
 /**************************************************************************/
 
