@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_display.c,v 1.17 2020/04/28 11:02:37 jmcneill Exp $	*/
+/*	$NetBSD: acpi_display.c,v 1.18 2020/06/30 13:14:21 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.17 2020/04/28 11:02:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.18 2020/06/30 13:14:21 sborrill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -647,8 +647,8 @@ acpidisp_out_attach(device_t parent, device_t self, void *aux)
 		 * Synchronize ACPI and driver brightness levels, and
 		 * check that brightness control is working.
 		 */
-		(void)acpidisp_get_brightness(osc, &bc->bc_current);
-		if (acpidisp_set_brightness(osc, bc->bc_current)) {
+		if (acpidisp_get_brightness(osc, &bc->bc_current) &&
+		    acpidisp_set_brightness(osc, bc->bc_current)) {
 			kmem_free(bc->bc_level,
 			    bc->bc_level_count * sizeof(*bc->bc_level));
 			kmem_free(bc, sizeof(*bc));
