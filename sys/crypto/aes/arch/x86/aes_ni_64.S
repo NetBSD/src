@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_ni_64.S,v 1.1 2020/06/29 23:29:40 riastradh Exp $	*/
+/*	$NetBSD: aes_ni_64.S,v 1.2 2020/06/30 21:41:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -930,7 +930,7 @@ aesni_xts_mulx:
 END(aesni_xts_mulx)
 
 	.section .rodata
-	.align 16
+	.p2align 4
 	.type	xtscarry,@object
 xtscarry:
 	.byte	0x87,0,0,0, 0,0,0,0,  1,0,0,0, 0,0,0,0
