@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_armv8_64.S,v 1.2 2020/06/30 21:41:03 riastradh Exp $	*/
+/*	$NetBSD: aes_armv8_64.S,v 1.3 2020/06/30 21:53:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <aarch64/asm.h>
 
-	.arch_extension	crypto
+	.arch_extension	aes
 
 /*
  * uint32_t rcon[10]
