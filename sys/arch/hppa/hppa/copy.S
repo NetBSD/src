@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.24 2019/04/15 20:45:08 skrll Exp $	*/
+/*	$NetBSD: copy.S,v 1.25 2020/06/30 16:20:01 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -256,9 +256,8 @@ EXIT(name)
 
 /*
  * int kcopy(const void *src, void *dst, size_t len);
- * int copystr(const void *src, void *dst, size_t size, size_t *lenp);
  */
-SPCOPY(kcopy, copystr,
+_SPCOPY(kcopy, CALL_SPCOPY,
 	SPACE_KERNEL(%arg0) ! SPACE_KERNEL(%arg2))
 
 /*

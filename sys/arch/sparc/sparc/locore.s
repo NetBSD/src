@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.277 2020/01/12 19:13:55 ad Exp $	*/
+/*	$NetBSD: locore.s,v 1.278 2020/06/30 16:20:02 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4735,41 +4735,6 @@ Lcsdone:				! done:
 3:
 	retl				! cpcb->pcb_onfault = 0;
 	 st	%g0, [%o4 + PCB_ONFAULT]! return (error);
-
-/*
- * copystr(fromaddr, toaddr, maxlength, &lencopied)
- *
- * Copy a null terminated string from one point to another in
- * the kernel address space.  (This is a leaf procedure, but
- * it does not seem that way to the C compiler.)
- */
-ENTRY(copystr)
-	mov	%o1, %o5		!	to0 = to;
-	tst	%o2			! if (maxlength == 0)
-	beq,a	2f			!
-	 mov	ENAMETOOLONG, %o0	!	ret = ENAMETOOLONG; goto done;
-
-0:					! loop:
-	ldsb	[%o0], %o4		!	c = *from;
-	tst	%o4
-	stb	%o4, [%o1]		!	*to++ = c;
-	be	1f			!	if (c == 0)
-	 inc	%o1			!		goto ok;
-	deccc	%o2			!	if (--len > 0) {
-	bgu,a	0b			!		from++;
-	 inc	%o0			!		goto loop;
-	b	2f			!	}
-	 mov	ENAMETOOLONG, %o0	!	ret = ENAMETOOLONG; goto done;
-1:					! ok:
-	clr	%o0			!	ret = 0;
-2:
-	sub	%o1, %o5, %o1		!	len = to - to0;
-	tst	%o3			!	if (lencopied)
-	bnz,a	3f
-	 st	%o1, [%o3]		!		*lencopied = len;
-3:
-	retl
-	 nop
 
 /*
  * Copyin(src, dst, len)
