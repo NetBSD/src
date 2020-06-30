@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.16 2020/06/30 17:42:57 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.17 2020/06/30 18:50:55 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -227,4 +227,9 @@ sys/dev/acpi/acpi_display.c			1.18
 	If possible leave brightness as set by firmware to avoid
 	a black screen at boot time.
 	[sborrill, ticket #1563]
+
+usr.bin/w/w.c					1.85,1.86
+
+	Fix domain stripping in host field output.
+	[kim, ticket #1564]
 
