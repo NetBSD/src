@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft_xform.c,v 1.29 2020/06/29 23:34:48 riastradh Exp $ */
+/*	$NetBSD: cryptosoft_xform.c,v 1.30 2020/06/30 04:14:55 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.29 2020/06/29 23:34:48 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.30 2020/06/30 04:14:55 riastradh Exp $");
 
 #include <sys/cprng.h>
 #include <sys/kmem.h>
@@ -206,7 +206,7 @@ static const struct swcr_enc_xform swcr_enc_xform_skipjack = {
 };
 
 static const struct swcr_enc_xform swcr_enc_xform_aes = {
-	&enc_xform_rijndael128,
+	&enc_xform_aes,
 	aes_encrypt,
 	aes_decrypt,
 	aes_setkey,
