@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_impl.c,v 1.2 2020/06/29 23:36:59 riastradh Exp $	*/
+/*	$NetBSD: aes_impl.c,v 1.3 2020/06/30 16:21:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,12 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_impl.c,v 1.2 2020/06/29 23:36:59 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_impl.c,v 1.3 2020/06/30 16:21:17 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/kernel.h>
 #include <sys/module.h>
 #include <sys/once.h>
+#include <sys/sysctl.h>
 #include <sys/systm.h>
 
 #include <crypto/aes/aes.h>
@@ -42,6 +43,30 @@ static int aes_selftest_stdkeysched(void);
 
 static const struct aes_impl	*aes_md_impl	__read_mostly;
 static const struct aes_impl	*aes_impl	__read_mostly;
+
+static int
+sysctl_hw_aes_impl(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+
+	KASSERTMSG(aes_impl != NULL,
+	    "sysctl ran before AES implementation was selected");
+
+	node = *rnode;
+	node.sysctl_data = __UNCONST(aes_impl->ai_name);
+	node.sysctl_size = strlen(aes_impl->ai_name) + 1;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+}
+
+SYSCTL_SETUP(sysctl_hw_aes_setup, "sysctl hw.aes_impl setup")
+{
+
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READONLY, CTLTYPE_STRING, "aes_impl",
+	    SYSCTL_DESCR("Selected AES implementation"),
+	    sysctl_hw_aes_impl, 0, NULL, 0,
+	    CTL_HW, CTL_CREATE, CTL_EOL);
+}
 
 /*
  * The timing of AES implementation selection is finicky:
