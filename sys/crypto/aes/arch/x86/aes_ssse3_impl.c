@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_ssse3_impl.c,v 1.1 2020/06/29 23:51:35 riastradh Exp $	*/
+/*	$NetBSD: aes_ssse3_impl.c,v 1.2 2020/06/30 20:32:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,15 +27,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_ssse3_impl.c,v 1.1 2020/06/29 23:51:35 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_ssse3_impl.c,v 1.2 2020/06/30 20:32:11 riastradh Exp $");
 
 #include <crypto/aes/aes.h>
 #include <crypto/aes/arch/x86/aes_ssse3.h>
 
+#ifdef _KERNEL
 #include <x86/cpu.h>
 #include <x86/cpuvar.h>
 #include <x86/fpu.h>
 #include <x86/specialreg.h>
+#else
+#include <cpuid.h>
+#define	fpu_kern_enter()	((void)0)
+#define	fpu_kern_leave()	((void)0)
+#endif
 
 static void
 aes_ssse3_setenckey_impl(struct aesenc *enc, const uint8_t *key,
@@ -135,6 +141,7 @@ aes_ssse3_probe(void)
 	int result = 0;
 
 	/* Verify that the CPU supports SSE, SSE2, SSE3, and SSSE3.  */
+#ifdef _KERNEL
 	if (!i386_has_sse)
 		return -1;
 	if (!i386_has_sse2)
@@ -143,6 +150,19 @@ aes_ssse3_probe(void)
 		return -1;
 	if (((cpu_feature[1]) & CPUID2_SSSE3) == 0)
 		return -1;
+#else
+	unsigned eax, ebx, ecx, edx;
+	if (!__get_cpuid(1, &eax, &ebx, &ecx, &edx))
+		return -1;
+	if ((edx & bit_SSE) == 0)
+		return -1;
+	if ((edx & bit_SSE2) == 0)
+		return -1;
+	if ((ecx & bit_SSE3) == 0)
+		return -1;
+	if ((ecx & bit_SSSE3) == 0)
+		return -1;
+#endif
 
 	fpu_kern_enter();
 	result = aes_ssse3_selftest();

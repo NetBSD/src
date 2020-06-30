@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_armv8.c,v 1.2 2020/06/29 23:53:12 riastradh Exp $	*/
+/*	$NetBSD: aes_armv8.c,v 1.3 2020/06/30 20:32:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,18 +27,34 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_armv8.c,v 1.2 2020/06/29 23:53:12 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_armv8.c,v 1.3 2020/06/30 20:32:11 riastradh Exp $");
 
+#ifdef _KERNEL
 #include <sys/types.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#else
+#include <assert.h>
+#include <err.h>
+#include <stdint.h>
+#include <string.h>
+#define	KASSERT			assert
+#define	panic(fmt, args...)	err(1, fmt, args)
+#endif
 
 #include <crypto/aes/aes.h>
 #include <crypto/aes/arch/arm/aes_armv8.h>
 
-#include <arm/fpu.h>
-
 #include <aarch64/armreg.h>
+
+#ifdef _KERNEL
+#include <arm/fpu.h>
+#else
+#include <sys/sysctl.h>
+#include <stddef.h>
+#define	fpu_kern_enter()	((void)0)
+#define	fpu_kern_leave()	((void)0)
+#endif
 
 static void
 aesarmv8_setenckey(struct aesenc *enc, const uint8_t key[static 16],
@@ -226,7 +242,18 @@ aesarmv8_probe(void)
 	int result = 0;
 
 	/* Verify that the CPU supports AES.  */
+#ifdef _KERNEL
 	id = &curcpu()->ci_id;
+#else
+	struct aarch64_sysctl_cpu_id ids;
+	size_t idlen;
+	id = &ids;
+	idlen = sizeof ids;
+	if (sysctlbyname("machdep.cpu0.cpu_id", id, &idlen, NULL, 0))
+		return -1;
+	if (idlen != sizeof ids)
+		return -1;
+#endif
 	switch (__SHIFTOUT(id->ac_aa64isar0, ID_AA64ISAR0_EL1_AES)) {
 	case ID_AA64ISAR0_EL1_AES_AES:
 	case ID_AA64ISAR0_EL1_AES_PMUL:
