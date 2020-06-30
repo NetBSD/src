@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_neon.c,v 1.2 2020/06/29 23:57:56 riastradh Exp $	*/
+/*	$NetBSD: aes_neon.c,v 1.3 2020/06/30 20:32:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -39,11 +39,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_neon.c,v 1.2 2020/06/29 23:57:56 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_neon.c,v 1.3 2020/06/30 20:32:11 riastradh Exp $");
 
 #include <sys/types.h>
 
+#ifdef _KERNEL
 #include <sys/systm.h>
+#else
+#include <err.h>
+#define	panic(fmt, args...)		err(1, fmt, ##args)
+#endif
 
 #include "aes_neon_impl.h"
 

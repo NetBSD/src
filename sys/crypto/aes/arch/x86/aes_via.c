@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_via.c,v 1.2 2020/06/29 23:41:35 riastradh Exp $	*/
+/*	$NetBSD: aes_via.c,v 1.3 2020/06/30 20:32:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,20 +27,51 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_via.c,v 1.2 2020/06/29 23:41:35 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_via.c,v 1.3 2020/06/30 20:32:11 riastradh Exp $");
 
+#ifdef _KERNEL
 #include <sys/types.h>
 #include <sys/evcnt.h>
 #include <sys/systm.h>
+#else
+#include <assert.h>
+#include <err.h>
+#include <stdint.h>
+#include <string.h>
+#define	KASSERT			assert
+#define	panic(fmt, args...)	err(1, fmt, args)
+struct evcnt { uint64_t ev_count; };
+#define	EVCNT_INITIALIZER(a,b,c,d) {0}
+#define	EVCNT_ATTACH_STATIC(name)	static char name##_attach __unused = 0
+#endif
 
 #include <crypto/aes/aes.h>
 #include <crypto/aes/aes_bear.h>
 
+#ifdef _KERNEL
 #include <x86/cpufunc.h>
 #include <x86/cpuvar.h>
 #include <x86/fpu.h>
 #include <x86/specialreg.h>
 #include <x86/via_padlock.h>
+#else
+#include <cpuid.h>
+#define	fpu_kern_enter()	((void)0)
+#define	fpu_kern_leave()	((void)0)
+#define C3_CRYPT_CWLO_ROUND_M		0x0000000f
+#define C3_CRYPT_CWLO_ALG_M		0x00000070
+#define C3_CRYPT_CWLO_ALG_AES		0x00000000
+#define C3_CRYPT_CWLO_KEYGEN_M		0x00000080
+#define C3_CRYPT_CWLO_KEYGEN_HW		0x00000000
+#define C3_CRYPT_CWLO_KEYGEN_SW		0x00000080
+#define C3_CRYPT_CWLO_NORMAL		0x00000000
+#define C3_CRYPT_CWLO_INTERMEDIATE	0x00000100
+#define C3_CRYPT_CWLO_ENCRYPT		0x00000000
+#define C3_CRYPT_CWLO_DECRYPT		0x00000200
+#define C3_CRYPT_CWLO_KEY128		0x0000000a      /* 128bit, 10 rds */
+#define C3_CRYPT_CWLO_KEY192		0x0000040c      /* 192bit, 12 rds */
+#define C3_CRYPT_CWLO_KEY256		0x0000080e      /* 256bit, 15 rds */
+#endif
 
 static void
 aesvia_reload_keys(void)
@@ -647,8 +678,34 @@ aesvia_probe(void)
 {
 
 	/* Verify that the CPU advertises VIA ACE support.  */
+#ifdef _KERNEL
 	if ((cpu_feature[4] & CPUID_VIA_HAS_ACE) == 0)
 		return -1;
+#else
+	/*
+	 * From the VIA PadLock Programming Guide:
+	 * http://linux.via.com.tw/support/beginDownload.action?eleid=181&fid=261
+	 */
+	unsigned eax, ebx, ecx, edx;
+	if (!__get_cpuid(0, &eax, &ebx, &ecx, &edx))
+		return -1;
+	if (ebx != signature_CENTAUR_ebx ||
+	    ecx != signature_CENTAUR_ecx ||
+	    edx != signature_CENTAUR_edx)
+		return -1;
+	if (eax < 0xc0000000)
+		return -1;
+	if (!__get_cpuid(0xc0000000, &eax, &ebx, &ecx, &edx))
+		return -1;
+	if (eax < 0xc0000001)
+		return -1;
+	if (!__get_cpuid(0xc0000001, &eax, &ebx, &ecx, &edx))
+		return -1;
+	/* Check whether ACE or ACE2 is both supported and enabled.  */
+	if ((edx & 0x000000c0) != 0x000000c0 ||
+	    (edx & 0x00000300) != 0x00000300)
+		return -1;
+#endif
 
 	/* Verify that our XTS tweak update logic works.  */
 	if (aesvia_xts_update_selftest())

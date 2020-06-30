@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_ct.c,v 1.2 2020/06/29 23:36:59 riastradh Exp $	*/
+/*	$NetBSD: aes_ct.c,v 1.3 2020/06/30 20:32:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2016 Thomas Pornin <pornin@bolet.org>
@@ -25,11 +25,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_ct.c,v 1.2 2020/06/29 23:36:59 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_ct.c,v 1.3 2020/06/30 20:32:11 riastradh Exp $");
 
 #include <sys/types.h>
 
+#ifdef _KERNEL
 #include <lib/libkern/libkern.h>
+#else
+#include <string.h>
+#endif
 
 #include <crypto/aes/aes_bear.h>
 
