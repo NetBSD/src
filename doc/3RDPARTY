@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1732 2020/06/30 05:19:19 sevan Exp $
+#	$NetBSD: 3RDPARTY,v 1.1733 2020/06/30 07:37:32 mbalmer Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -834,7 +834,7 @@ Package:	Lua
 Version:	Lua 5.3.5
 Current Vers:	Lua 5.4.0
 Maintainer:	PUC Rio
-Home Page:	http://www.lua.org/
+Home Page:	https://www.lua.org/
 Date:		2020-06-30
 Mailing List:
 Responsible:	mbalmer, lneto, salazar, alnsn
