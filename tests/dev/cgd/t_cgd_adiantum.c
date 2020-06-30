@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cgd_adiantum.c,v 1.1 2020/06/29 23:44:01 riastradh Exp $	*/
+/*	$NetBSD: t_cgd_adiantum.c,v 1.2 2020/06/30 04:15:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -357,7 +357,7 @@ ATF_TC_BODY(cgd_adiantum, tc)
 		/* read the ciphertext out from the underlying file */
 		RL(nread = pread(dkfd, buf, C[i].secsize,
 			C[i].blkno * C[i].secsize));
-		if (nread != C[i].secsize) {
+		if ((size_t)nread != C[i].secsize) {
 			atf_tc_fail_nonfatal("truncated read: %zd != %u",
 			    nread, C[i].secsize);
 			continue;
@@ -375,7 +375,7 @@ ATF_TC_BODY(cgd_adiantum, tc)
 		RL(nread = rump_sys_pread(cgdfd, buf, C[i].secsize,
 			C[i].blkno * C[i].secsize));
 		RL(unconfigure_cgd(cgdfd));
-		if (nread != C[i].secsize) {
+		if ((size_t)nread != C[i].secsize) {
 			atf_tc_fail_nonfatal("truncated read: %zd != %u",
 			    nread, C[i].secsize);
 			continue;
