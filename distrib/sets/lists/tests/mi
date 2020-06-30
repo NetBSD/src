@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.865 2020/06/30 14:30:49 jruoho Exp $
+# $NetBSD: mi,v 1.866 2020/06/30 16:09:40 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3075,7 +3075,7 @@
 ./usr/tests/lib/libc/stdlib/t_getenv_thread	tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/stdlib/t_getopt		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/stdlib/t_hsearch		tests-lib-tests		compattestfile,atf
-./usr/tests/lib/libc/stdlib/t_mbtowc		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/stdlib/t_mbtowc		tests-obsolete		obsolete
 ./usr/tests/lib/libc/stdlib/t_mi_vector_hash	tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/stdlib/t_mktemp		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/stdlib/t_posix_memalign	tests-lib-tests		compattestfile,atf

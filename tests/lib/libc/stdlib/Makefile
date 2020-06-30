@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.31 2020/06/29 14:22:11 jruoho Exp $
+# $NetBSD: Makefile,v 1.32 2020/06/30 16:09:40 jruoho Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,6 @@ TESTS_C+=	t_getenv
 TESTS_C+=	t_getenv_thread
 TESTS_C+=	t_exit
 TESTS_C+=	t_hsearch
-TESTS_C+=	t_mbtowc
 TESTS_C+=	t_mktemp
 TESTS_C+=	t_mi_vector_hash
 TESTS_C+=	t_posix_memalign
