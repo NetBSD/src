@@ -1,4 +1,4 @@
-/*	$NetBSD: support.S,v 1.9 2019/05/02 16:55:50 scole Exp $	*/
+/*	$NetBSD: support.S,v 1.10 2020/06/30 16:20:01 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -377,12 +377,9 @@ END(_ustore_64)
 /**************************************************************************/
 
 /*
- * Copy a null-terminated string within the kernel's address space.
- * If lenp is not NULL, store the number of chars copied in *lenp
- *
- * int copystr(char *from, char *to, size_t len, size_t *lenp);
+ * XXX XXX XXX: Should be removed?
  */
-ENTRY(copystr, 4)
+ENTRY(ia64_copystr, 4)
 	mov	r14=in2			// r14 = i = len
 	cmp.eq	p6,p0=r0,in2
 (p6)	br.cond.spnt.few 2f		// if (len == 0), bail out
@@ -412,7 +409,7 @@ ENTRY(copystr, 4)
 
 4:	mov	ret0=0			// return 0.
 	br.ret.sptk.few rp
-END(copystr)
+END(ia64_copystr)
 
 ENTRY(copyinstr, 4)
 	.prologue
@@ -446,7 +443,7 @@ ENTRY(copyinstr, 4)
 	mov	out2=in2
 	mov	out3=in3
 	;;
-	br.call.sptk.few rp=copystr		// do the copy.
+	br.call.sptk.few rp=ia64_copystr	// do the copy.
 	st8	[loc2]=r0			// kill the fault handler.
 	mov	ar.pfs=loc0			// restore ar.pfs
 	mov	rp=loc1				// restore ra.
@@ -485,7 +482,7 @@ ENTRY(copyoutstr, 4)
 	mov	out2=in2
 	mov	out3=in3
 	;;
-	br.call.sptk.few rp=copystr		// do the copy.
+	br.call.sptk.few rp=ia64_copystr	// do the copy.
 	st8	[loc2]=r0			// kill the fault handler.
 	mov	ar.pfs=loc0			// restore ar.pfs
 	mov	rp=loc1				// restore ra.

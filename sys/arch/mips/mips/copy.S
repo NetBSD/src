@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.17 2019/04/06 03:06:26 thorpej Exp $	*/
+/*	$NetBSD: copy.S,v 1.18 2020/06/30 16:20:01 maxv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,34 +60,6 @@
 #include "assym.h"
 
 	.set	noreorder
-/*
- * int copystr(void *kfaddr, void *kdaddr, size_t maxlen, size_t *lencopied)
- * Copy a NIL-terminated string, at most maxlen characters long.  Return the
- * number of characters copied (including the NIL) in *lencopied.  If the
- * string is too long, return ENAMETOOLONG; else return 0.
- */
-LEAF(copystr)
-	move	t0, a2
-	beq	a2, zero, 4f
-	 nop
-1:
-	lbu	v0, 0(a0)
-	PTR_SUBU a2, a2, 1
-	beq	v0, zero, 2f
-	 sb	v0, 0(a1)			# each byte until NIL
-	PTR_ADDU a0, a0, 1
-	bne	a2, zero, 1b			# less than maxlen
-	 PTR_ADDU a1, a1, 1
-4:
-	li	v0, ENAMETOOLONG		# run out of space
-2:
-	beq	a3, zero, 3f			# return num. of copied bytes
-	 PTR_SUBU a2, t0, a2			# if the 4th arg was non-NULL
-	PTR_S	a2, 0(a3)
-3:
-	j	ra				# v0 is 0 or ENAMETOOLONG
-	 nop
-END(copystr)
 
 /*
  * int copyinstr(void *uaddr, void *kaddr, size_t maxlen, size_t *lencopied)

@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.33 2019/05/04 08:50:39 maxv Exp $	*/
+/*	$NetBSD: copy.S,v 1.34 2020/06/30 16:20:00 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -354,36 +354,6 @@ copystr_return:
 	movq	%r8,(%r9)
 8:	ret
 END(copystr_fault)
-
-ENTRY(copystr)
-	xchgq	%rdi,%rsi
-	movq	%rdx,%r8
-
-	incq	%rdx
-
-1:	decq	%rdx
-	jz	4f
-	lodsb
-	stosb
-	testb	%al,%al
-	jnz	1b
-
-	/* Success -- 0 byte reached. */
-	decq	%rdx
-	xorl	%eax,%eax
-	jmp	6f
-
-4:	/* rdx is zero -- return ENAMETOOLONG. */
-	movl	$ENAMETOOLONG,%eax
-
-6:	/* Set *lencopied and return %eax. */
-	testq	%rcx,%rcx
-	jz	7f
-	subq	%rdx,%r8
-	movq	%r8,(%rcx)
-
-7:	ret
-END(copystr)
 
 /**************************************************************************/
 

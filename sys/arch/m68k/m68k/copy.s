@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.s,v 1.48 2019/04/12 03:29:24 thorpej Exp $	*/
+/*	$NetBSD: copy.s,v 1.49 2020/06/30 16:20:01 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2019 The NetBSD Foundation, Inc.
@@ -223,36 +223,6 @@ ENTRY(copyout)
 	rts
 .Lcofault:
 	jra	.Lcodone
-
-/*
- * copystr(void *from, void *to, size_t maxlen, size_t *lencopied);
- * Copy a NUL-terminated string, at most maxlen characters long.  Return the
- * number of characters copied (including the NUL) in *lencopied.  If the
- * string is too long, return ENAMETOOLONG; else return 0.
- */
-ENTRY(copystr)
-	movl	4(%sp),%a0		| a0 = fromaddr
-	movl	8(%sp),%a1		| a1 = toaddr
-	clrl	%d0
-	movl	12(%sp),%d1		| count
-	jeq	.Lcstoolong		| nothing to copy
-	subql	#1,%d1			| predecrement for dbeq
-.Lcsloop:
-	movb	(%a0)+,(%a1)+		| copy a byte
-	dbeq	%d1,.Lcsloop		| decrement low word of count
-	jeq	.Lcsdone		| copied null, exit
-	subil	#0x10000,%d1		| decrement high word of count
-	jcc	.Lcsloop		| more room, keep going
-.Lcstoolong:
-	moveq	#ENAMETOOLONG,%d0	| ran out of space
-.Lcsdone:
-	tstl	16(%sp)			| length desired?
-	jeq	.Lcsret
-	subl	4(%sp),%a0		| yes, calculate length copied
-	movl	16(%sp),%a1		| store at return location
-	movl	%a0,(%a1)
-.Lcsret:
-	rts
 
 /*
  * copyinstr(void *from, void *to, size_t maxlen, size_t *lencopied);

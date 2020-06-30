@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_msan.c,v 1.11 2020/05/15 07:47:53 maxv Exp $	*/
+/*	$NetBSD: subr_msan.c,v 1.12 2020/06/30 16:20:02 maxv Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_msan.c,v 1.11 2020/05/15 07:47:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_msan.c,v 1.12 2020/06/30 16:20:02 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -799,21 +799,18 @@ kmsan_strrchr(const char *s, int c)
 }
 
 #undef kcopy
-#undef copystr
 #undef copyin
 #undef copyout
 #undef copyinstr
 #undef copyoutstr
 
 int	kmsan_kcopy(const void *, void *, size_t);
-int	kmsan_copystr(const void *, void *, size_t, size_t *);
 int	kmsan_copyin(const void *, void *, size_t);
 int	kmsan_copyout(const void *, void *, size_t);
 int	kmsan_copyinstr(const void *, void *, size_t, size_t *);
 int	kmsan_copyoutstr(const void *, void *, size_t, size_t *);
 
 int	kcopy(const void *, void *, size_t);
-int	copystr(const void *, void *, size_t, size_t *);
 int	copyin(const void *, void *, size_t);
 int	copyout(const void *, void *, size_t);
 int	copyinstr(const void *, void *, size_t, size_t *);
@@ -829,26 +826,6 @@ kmsan_kcopy(const void *src, void *dst, size_t len)
 	}
 	kmsan_init_ret(sizeof(int));
 	return kcopy(src, dst, len);
-}
-
-int
-kmsan_copystr(const void *kfaddr, void *kdaddr, size_t len, size_t *done)
-{
-	size_t _done;
-	int ret;
-
-	kmsan_check_arg(sizeof(kfaddr) + sizeof(kdaddr) +
-	    sizeof(len) + sizeof(done), "copystr():args");
-	ret = copystr(kfaddr, kdaddr, len, &_done);
-	if (ret == 0)
-		kmsan_meta_copy(kdaddr, kfaddr, _done);
-	if (done != NULL) {
-		*done = _done;
-		kmsan_shadow_fill(done, KMSAN_STATE_INITED, sizeof(size_t));
-	}
-	kmsan_init_ret(sizeof(int));
-
-	return ret;
 }
 
 int

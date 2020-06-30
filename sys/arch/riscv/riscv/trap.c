@@ -32,7 +32,7 @@
 #define __PMAP_PRIVATE
 #define __UFETCHSTORE_PRIVATE
 
-__RCSID("$NetBSD: trap.c,v 1.6 2020/04/06 20:26:16 skrll Exp $");
+__RCSID("$NetBSD: trap.c,v 1.7 2020/06/30 16:20:02 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,22 +124,6 @@ kcopy(const void *kfaddr, void *kdaddr, size_t len)
 	if ((error = cpu_set_onfault(&fb, EFAULT)) == 0) {
 		memcpy(kdaddr, kfaddr, len);
 		cpu_unset_onfault();
-	}
-	return error;
-}
-
-int
-copystr(const void *kfaddr, void *kdaddr, size_t len, size_t *done)
-{
-	struct faultbuf fb;
-	int error;
-
-	if ((error = cpu_set_onfault(&fb, EFAULT)) == 0) {
-		len = strlcpy(kdaddr, kfaddr, len);
-		cpu_unset_onfault();
-		if (done != NULL) {
-			*done = len;
-		}
 	}
 	return error;
 }

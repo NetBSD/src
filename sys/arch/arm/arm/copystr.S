@@ -1,4 +1,4 @@
-/*	$NetBSD: copystr.S,v 1.12 2018/01/24 09:04:44 skrll Exp $	*/
+/*	$NetBSD: copystr.S,v 1.13 2020/06/30 16:20:00 maxv Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -47,44 +47,12 @@
 
 #include <arm/locore.h>
 
-RCSID("$NetBSD: copystr.S,v 1.12 2018/01/24 09:04:44 skrll Exp $")
+RCSID("$NetBSD: copystr.S,v 1.13 2020/06/30 16:20:00 maxv Exp $")
 
 #include <sys/errno.h>
 
 	.text
 	.align	0
-/*
- * r0 - from
- * r1 - to
- * r2 - maxlens
- * r3 - lencopied
- *
- * Copy string from r0 to r1
- */
-ENTRY(copystr)
-	push	{r4-r5}			/* stack is 8 byte aligned */
-	teq	r2, #0x00000000
-	mov	r5, #0x00000000
-	moveq	r0, #ENAMETOOLONG
-	beq	2f
-
-1:	ldrb	r4, [r0], #0x0001
-	add	r5, r5, #0x00000001
-	teq	r4, #0x00000000
-	strb	r4, [r1], #0x0001
-	teqne	r5, r2
-	bne	1b
-
-	teq	r4, #0x00000000
-	moveq	r0, #0x00000000
-	movne	r0, #ENAMETOOLONG
-
-2:	teq	r3, #0x00000000
-	strne	r5, [r3]
-
-	pop	{r4-r5}			/* stack is 8 byte aligned */
-	RET
-END(copystr)
 
 #define SAVE_REGS	push	{r3-r6}
 #define RESTORE_REGS	pop	{r3-r6}

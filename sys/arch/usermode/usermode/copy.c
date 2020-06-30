@@ -1,4 +1,4 @@
-/* $NetBSD: copy.c,v 1.11 2019/04/10 04:10:54 thorpej Exp $ */
+/* $NetBSD: copy.c,v 1.12 2020/06/30 16:20:02 maxv Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copy.c,v 1.11 2019/04/10 04:10:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copy.c,v 1.12 2020/06/30 16:20:02 maxv Exp $");
 
 #define	__UFETCHSTORE_PRIVATE
 #define	__UCAS_PRIVATE
@@ -70,16 +70,6 @@ copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 {
 	len = uimin(strnlen(kaddr, len), len) + 1;
 	strncpy(uaddr, kaddr, len);
-	if (done)
-		*done = len;
-	return 0;
-}
-
-int
-copystr(const void *kfaddr, void *kdaddr, size_t len, size_t *done)
-{
-	len = uimin(strnlen(kfaddr, len), len) + 1;
-	strncpy(kdaddr, kfaddr, len);
 	if (done)
 		*done = len;
 	return 0;

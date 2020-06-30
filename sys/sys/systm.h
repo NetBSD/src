@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.294 2020/04/04 19:50:54 christos Exp $	*/
+/*	$NetBSD: systm.h,v 1.295 2020/06/30 16:20:03 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -286,40 +286,34 @@ int	kcopy(const void *, void *, size_t);
 #define bcmp(a, b, len)		memcmp((a), (b), (len))
 #endif /* KERNEL */
 
+int	copystr(const void *, void *, size_t, size_t *);
 #if defined(_KERNEL) && defined(KASAN)
-int	kasan_copystr(const void *, void *, size_t, size_t *);
 int	kasan_copyinstr(const void *, void *, size_t, size_t *);
 int	kasan_copyoutstr(const void *, void *, size_t, size_t *);
 int	kasan_copyin(const void *, void *, size_t);
 int	copyout(const void *, void *, size_t);
-#define copystr		kasan_copystr
 #define copyinstr	kasan_copyinstr
 #define copyoutstr	kasan_copyoutstr
 #define copyin		kasan_copyin
 #elif defined(_KERNEL) && defined(KCSAN)
-int	kcsan_copystr(const void *, void *, size_t, size_t *);
 int	kcsan_copyinstr(const void *, void *, size_t, size_t *);
 int	kcsan_copyoutstr(const void *, void *, size_t, size_t *);
 int	kcsan_copyin(const void *, void *, size_t);
 int	kcsan_copyout(const void *, void *, size_t);
-#define copystr		kcsan_copystr
 #define copyinstr	kcsan_copyinstr
 #define copyoutstr	kcsan_copyoutstr
 #define copyin		kcsan_copyin
 #define copyout		kcsan_copyout
 #elif defined(_KERNEL) && defined(KMSAN)
-int	kmsan_copystr(const void *, void *, size_t, size_t *);
 int	kmsan_copyinstr(const void *, void *, size_t, size_t *);
 int	kmsan_copyoutstr(const void *, void *, size_t, size_t *);
 int	kmsan_copyin(const void *, void *, size_t);
 int	kmsan_copyout(const void *, void *, size_t);
-#define copystr		kmsan_copystr
 #define copyinstr	kmsan_copyinstr
 #define copyoutstr	kmsan_copyoutstr
 #define copyin		kmsan_copyin
 #define copyout		kmsan_copyout
 #else
-int	copystr(const void *, void *, size_t, size_t *);
 int	copyinstr(const void *, void *, size_t, size_t *);
 int	copyoutstr(const void *, void *, size_t, size_t *);
 int	copyin(const void *, void *, size_t);

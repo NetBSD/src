@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_c.c,v 1.31 2009/11/27 03:23:13 rmind Exp $	*/
+/*	$NetBSD: locore_c.c,v 1.32 2020/06/30 16:20:02 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002, 2007 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.31 2009/11/27 03:23:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.32 2020/06/30 16:20:02 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,31 +208,3 @@ sh4_switch_setup(struct lwp *l)
 }
 #endif /* SH4 */
 #endif /* !P1_STACK */
-
-
-/*
- * Copy a NUL-terminated string, at most maxlen characters long.
- * Return the number of characters copied (including the NUL) in
- * *lencopied.  If the string is too long, return ENAMETOOLONG,
- * else return 0.
- */
-int
-copystr(const void *kfaddr, void *kdaddr, size_t maxlen, size_t *lencopied)
-{
-	const char *from = kfaddr;
-	char *to = kdaddr;
-	int i;
-
-	for (i = 0; i < maxlen; i++) {
-		if ((*to++ = *from++) == '\0') {
-			if (lencopied)
-				*lencopied = i + 1;
-			return (0);
-		}
-	}
-
-	if (lencopied)
-		*lencopied = i;
-
-	return (ENAMETOOLONG);
-}
