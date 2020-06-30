@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_neon.h,v 1.1 2020/06/29 23:56:31 riastradh Exp $	*/
+/*	$NetBSD: arm_neon.h,v 1.2 2020/06/30 21:24:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -73,6 +73,8 @@ typedef __attribute__((neon_vector_type(4))) int32_t int32x4_t;
 typedef __attribute__((neon_vector_type(16))) uint8_t uint8x16_t;
 typedef __attribute__((neon_vector_type(2))) uint64_t uint64x2_t;
 typedef __attribute__((neon_vector_type(4))) uint32_t uint32x4_t;
+
+typedef __attribute__((neon_vector_type(8))) uint8_t uint8x8_t;
 typedef struct { uint8x8_t val[2]; } uint8x8x2_t;
 
 #ifdef __LITTLE_ENDIAN__
@@ -118,11 +120,11 @@ vdupq_n_u8(uint8_t __x)
 	};
 }
 
+#if defined(__GNUC__) && !defined(__clang__)
 _INTRINSATTR
 static __inline uint32x4_t
 vextq_u32(uint32x4_t __lo, uint32x4_t __hi, uint8_t __i)
 {
-#if defined(__GNUC__) && !defined(__clang__)
 #if defined(__AARCH64EB__) || defined(__ARM_BIG_ENDIAN)
 	return __builtin_shuffle(__hi, __lo,
 	    (uint32x4_t) { 4 - __i, 5 - __i, 6 - __i, 7 - __i });
@@ -130,25 +132,31 @@ vextq_u32(uint32x4_t __lo, uint32x4_t __hi, uint8_t __i)
 	return __builtin_shuffle(__lo, __hi,
 	    (uint32x4_t) { __i + 0, __i + 1, __i + 2, __i + 3 });
 #endif
+}
 #elif defined(__clang__)
 #ifdef __LITTLE_ENDIAN__
-	return __builtin_neon_vextq_v((int8x16_t)__lo, (int8x16_t)__hi, __i,
-	    50);
+#define	vextq_u32(__lo, __hi, __i)					      \
+	(uint32x4_t)__builtin_neon_vextq_v((int8x16_t)(__lo),		      \
+	    (int8x16_t)(__hi), (__i), 50)
 #else
-	uint32x4_t __lo_r = __builtin_shufflevector(__lo, __lo, 3, 2, 1, 0);
-	uint32x4_t __hi_r = __builtin_shufflevector(__hi, __hi, 3, 2, 1, 0);
-	uint32x4_t __r = __builtin_neon_vextq_v((int8x16_t)__lo_r,
-	    (int8x16_t)__hi_r, __i, 50);
-	return __builtin_shufflevector(__r, __r, 3, 2, 1, 0);
+#define	vextq_u32(__lo, __hi, __i) (					      \
+{									      \
+	uint32x4_t __tlo = (__lo);					      \
+	uint32x4_t __thi = (__hi);					      \
+	uint32x4_t __lo_r = __builtin_shufflevector(__tlo, __tlo, 3,2,1,0);   \
+	uint32x4_t __hi_r = __builtin_shufflevector(__thi, __thi, 3,2,1,0);   \
+	uint32x4_t __r = __builtin_neon_vextq_v((int8x16_t)__lo_r,	      \
+	    (int8x16_t)__hi_r, __i, 50);				      \
+	__builtin_shufflevector(__r, __r, 3,2,1,0);			      \
+})
+#endif	/* __LITTLE_ENDIAN__ */
 #endif
-#endif
-}
 
+#if defined(__GNUC__) && !defined(__clang__)
 _INTRINSATTR
 static __inline uint8x16_t
 vextq_u8(uint8x16_t __lo, uint8x16_t __hi, uint8_t __i)
 {
-#if defined(__GNUC__) && !defined(__clang__)
 #if defined(__AARCH64EB__) || defined(__ARM_BIG_ENDIAN)
 	return __builtin_shuffle(__hi, __lo,
 	    (uint8x16_t) {
@@ -166,38 +174,45 @@ vextq_u8(uint8x16_t __lo, uint8x16_t __hi, uint8_t __i)
 		__i + 12, __i + 13, __i + 14, __i + 15,
 	});
 #endif
+}
 #elif defined(__clang__)
 #ifdef __LITTLE_ENDIAN__
-	return __builtin_neon_vextq_v((int8x16_t)__lo, (int8x16_t)__hi, __i,
-	    48);
+#define	vextq_u8(__lo, __hi, __i)					      \
+	(uint8x16_t)__builtin_neon_vextq_v((int8x16_t)(__lo),		      \
+	    (int8x16_t)(__hi), (__i), 48)
 #else
-	uint32x4_t __lo_r = __builtin_shufflevector(__lo, __lo,
-	    15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);
-	uint32x4_t __hi_r = __builtin_shufflevector(__hi, __hi,
-	    15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);
-	uint32x4_t __r = __builtin_neon_vextq_v((int8x16_t)__lo_r,
-	    (int8x16_t)__hi_r, __i, 50);
-	return __builtin_shufflevector(__r, __r,
-	    15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);
+#define	vextq_u8(__lo, __hi, __i) (					      \
+{									      \
+	uint8x16_t __tlo = (__lo);					      \
+	uint8x16_t __thi = (__hi);					      \
+	uint8x16_t __lo_r = __builtin_shufflevector(__tlo, __tlo,	      \
+	    15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0);			      \
+	uint8x16_t __hi_r = __builtin_shufflevector(__thi, __thi,	      \
+	    15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0);			      \
+	uint8x16_t __r = __builtin_neon_vextq_v((int8x16_t)__lo_r,	      \
+	    (int8x16_t)__hi_r, (__i), 48);				      \
+	return __builtin_shufflevector(__r, __r,			      \
+	    15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0);			      \
+})
+#endif	/* __LITTLE_ENDIAN */
 #endif
-#endif
-}
 
+#if defined(__GNUC__) && !defined(__clang__)
 _INTRINSATTR
 static __inline uint32_t
 vgetq_lane_u32(uint32x4_t __v, uint8_t __i)
 {
-#if defined(__GNUC__) && !defined(__clang__)
 #ifdef __aarch64__
 	return __v[__i];
 #else
 	return (uint32_t)__builtin_neon_vget_laneuv4si((int32x4_t)__v, __i);
 #endif
-#elif defined(__clang__)
-	return (uint32_t)__builtin_neon_vgetq_lane_i32((int32x4_t)__v,
-	    __neon_lane_index(__v, __i));
-#endif
 }
+#elif defined(__clang__)
+#define	vgetq_lane_u32(__v, __i)					      \
+	(uint32_t)__builtin_neon_vgetq_lane_i32((int32x4_t)(__v),	      \
+	    __neon_lane_index(__v, __i))
+#endif
 
 _INTRINSATTR
 static __inline uint8x16_t
@@ -215,7 +230,7 @@ vld1q_u8(const uint8_t *__p8)
 	return (uint8x16_t)__builtin_neon_vld1v16qi(__p);
 #endif
 #elif defined(__clang__)
-	return (uint8x16_t)__builtin_neon_vld1q_v(__p, 48);
+	return (uint8x16_t)__builtin_neon_vld1q_v(__p8, 48);
 #endif
 }
 
@@ -260,13 +275,13 @@ vqtbl1q_u8(uint8x16_t __tab, uint8x16_t __idx)
 	    (int8x16_t)__idx, 48);
 #else
 	uint32x4_t __lo_r = __builtin_shufflevector(__lo, __lo,
-	    15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);
+	    15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0);
 	uint32x4_t __hi_r = __builtin_shufflevector(__hi, __hi,
-	    15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);
+	    15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0);
 	uint32x4_t __r = __builtin_neon_vqtbl1q_v((int8x16_t)__tab,
 	    (int8x16_t)__idx, __i, 48);
 	return __builtin_shufflevector(__r, __r,
-	    15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);
+	    15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0);
 #endif
 #endif
 }
@@ -313,71 +328,82 @@ vreinterpretq_u8_u64(uint64x2_t __v)
 	return (uint8x16_t)__v;
 }
 
+#if defined(__GNUC__) && !defined(__clang__)
 _INTRINSATTR
 static __inline uint32x4_t
 vsetq_lane_u32(uint32_t __x, uint32x4_t __v, uint8_t __i)
 {
-#if defined(__GNUC__) && !defined(__clang__)
 	__v[__neon_lane_index(__v, __i)] = __x;
 	return __v;
-#elif defined(__clang__)
-	return (uint32x4_t)__builtin_neon_vsetq_lane_i32(__x, (int32x4_t)__v,
-	    __neon_lane_index(__v, __i));
-#endif
 }
+#elif defined(__clang__)
+#define	vsetq_lane_u32(__x, __v, __i)					      \
+	(uint32x4_t)__builtin_neon_vsetq_lane_i32((__x), (int32x4_t)(__v),    \
+	    __neon_lane_index(__v, __i))
+#endif
 
+#if defined(__GNUC__) && !defined(__clang__)
 _INTRINSATTR
 static __inline uint64x2_t
 vsetq_lane_u64(uint64_t __x, uint64x2_t __v, uint8_t __i)
 {
-#if defined(__GNUC__) && !defined(__clang__)
 	__v[__neon_lane_index(__v, __i)] = __x;
 	return __v;
+}
 #elif defined(__clang__)
-	return (uint64x2_t)__builtin_neon_vsetq_lane_i32(__x, (int64x2_t)__v,
+#define	vsetq_lane_u64(__x, __v, __i)					      \
+	(uint64x2_t)__builtin_neon_vsetq_lane_i32((__x), (int64x2_t)(__v),    \
 	    __neon_lane_index(__v, __i));
 #endif
-}
 
+#if defined(__GNUC__) && !defined(__clang__)
 _INTRINSATTR
 static __inline uint8x16_t
 vshrq_n_u8(uint8x16_t __v, uint8_t __bits)
 {
-#if defined(__GNUC__) && !defined(__clang__)
 #ifdef __aarch64__
 	return (uint8x16_t)__builtin_aarch64_lshrv16qi((int8x16_t)__v, __bits);
 #else
 	return (uint8x16_t)__builtin_neon_vshru_nv16qi((int8x16_t)__v, __bits);
 #endif
-#elif defined(__clang__)
-	return __builtin_neon_vshrq_n_v((int8x16_t)__v, __bits, 48);
-#endif
 }
+#elif defined(__clang__)
+#define	vshrq_n_u8(__v, __bits)						      \
+	(uint8x16_t)__builtin_neon_vshrq_n_v((int8x16_t)(__v), (__bits), 48)
+#endif
 
+#if defined(__GNUC__) && !defined(__clang__)
 _INTRINSATTR
 static __inline int32x4_t
 vsliq_n_s32(int32x4_t __vins, int32x4_t __vsh, uint8_t __bits)
 {
-#if defined(__GNUC__) && !defined(__clang__)
 #ifdef __aarch64__
 	return (int32x4_t)__builtin_aarch64_ssli_nv4si(__vins, __vsh, __bits);
 #else
 	return (int32x4_t)__builtin_neon_vsli_nv4si(__vins, __vsh, __bits);
 #endif
+}
 #elif defined(__clang__)
 #ifdef __LITTLE_ENDIAN__
-	return __builtin_neon_vsliq_n_v(__vins_r, __vsh_r, __bits, 34);
+#define	vsliq_n_s32(__vins, __vsh, __bits)				      \
+	(int32x4_t)__builtin_neon_vsliq_n_v((int32x4_t)(__vins),	      \
+	    (int32x4_t)(__vsh), (__bits), 34)
 #else
-	int32x4_t __vins_r = __builtin_shufflevector(__vins_r, __vins_r,
-	    3, 2, 1, 0);
-	int32x4_t __vsh_r = __builtin_shufflevector(__vsh_r, __vsh_r,
-	    3, 2, 1, 0);
-	int32x4_t __r = __builtin_neon_vsliq_n_v(__vins_r, __vsh_r, __bits,
-	    34);
-	return __builtin_shufflevector(__r, __r, 3, 2, 1, 0);
+#define	vsliq_n_s32(__vins, __vsh, __bits) (				      \
+{									      \
+	int32x4_t __tvins = (__vins);					      \
+	int32x4_t __tvsh = (__vsh);					      \
+	uint8_t __tbits = (__bits);					      \
+	int32x4_t __vins_r = __builtin_shufflevector(__tvins, __tvins,	      \
+	    3,2,1,0);							      \
+	int32x4_t __vsh_r = __builtin_shufflevector(__tvsh, __tvsh,	      \
+	    3,2,1,0);							      \
+	int32x4_t __r = __builtin_neon_vsliq_n_v(__tvins, __tvsh, __tbits,    \
+	    34);							      \
+	__builtin_shufflevector(__r, __r, 3,2,1,0);			      \
+})
+#endif	/* __LITTLE_ENDIAN__ */
 #endif
-#endif
-}
 
 _INTRINSATTR
 static __inline void
@@ -398,7 +424,7 @@ vst1q_u8(uint8_t *__p8, uint8x16_t __v)
 	__v = __builtin_shufflevector(__v, __v,
 	    15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);
 #endif
-	__builtin_neon_vst1q_v(__p, __v);
+	__builtin_neon_vst1q_v(__p8, __v, 48);
 #endif
 }
 
