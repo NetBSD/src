@@ -1,8 +1,8 @@
-/*	$NetBSD: line.c,v 1.13 2020/06/30 21:10:13 uwe Exp $	*/
+/*	$NetBSD: line.c,v 1.14 2020/06/30 21:27:18 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
- *						 (blymn@baea.com.au, brett_lymn@yahoo.com.au)
+ *                         (blymn@baea.com.au, brett_lymn@yahoo.com.au)
  * All rights reserved.
  *
  * This code has been donated to The NetBSD Foundation by the Author.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: line.c,v 1.13 2020/06/30 21:10:13 uwe Exp $");
+__RCSID("$NetBSD: line.c,v 1.14 2020/06/30 21:27:18 uwe Exp $");
 #endif				/* not lint */
 
 #include <string.h>
