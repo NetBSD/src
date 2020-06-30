@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_neon_impl.c,v 1.1 2020/06/29 23:56:31 riastradh Exp $	*/
+/*	$NetBSD: aes_neon_impl.c,v 1.2 2020/06/30 20:32:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_neon_impl.c,v 1.1 2020/06/29 23:56:31 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_neon_impl.c,v 1.2 2020/06/30 20:32:11 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/proc.h>
@@ -35,12 +35,20 @@ __KERNEL_RCSID(1, "$NetBSD: aes_neon_impl.c,v 1.1 2020/06/29 23:56:31 riastradh 
 #include <crypto/aes/aes.h>
 #include <crypto/aes/arch/arm/aes_neon.h>
 
-#include <arm/fpu.h>
-
 #ifdef __aarch64__
 #include <aarch64/armreg.h>
-#else
+#endif
+
+#ifdef _KERNEL
+#ifndef __aarch64__
 #include <arm/locore.h>
+#endif
+#include <arm/fpu.h>
+#else
+#include <sys/sysctl.h>
+#include <stddef.h>
+#define	fpu_kern_enter()	((void)0)
+#define	fpu_kern_leave()	((void)0)
 #endif
 
 static void
@@ -145,7 +153,18 @@ aes_neon_probe(void)
 
 	/* Verify that the CPU supports NEON.  */
 #ifdef __aarch64__
+#ifdef _KERNEL
 	id = &curcpu()->ci_id;
+#else
+	struct aarch64_sysctl_cpu_id ids;
+	size_t idlen;
+	id = &ids;
+	idlen = sizeof ids;
+	if (sysctlbyname("machdep.cpu0.cpu_id", id, &idlen, NULL, 0))
+		return -1;
+	if (idlen != sizeof ids)
+		return -1;
+#endif
 	switch (__SHIFTOUT(id->ac_aa64pfr0, ID_AA64PFR0_EL1_ADVSIMD)) {
 	case ID_AA64PFR0_EL1_ADV_SIMD_IMPL:
 		break;
@@ -153,8 +172,17 @@ aes_neon_probe(void)
 		return -1;
 	}
 #else
+#ifdef _KERNEL
 	if (!cpu_neon_present)
 		return -1;
+#else
+	int neon;
+	size_t neonlen = sizeof neon;
+	if (0 && sysctlbyname("machdep.neon_present", &neon, &neonlen, NULL, 0))
+		return -1;
+	if (0 && !neon)
+		return -1;
+#endif
 #endif
 
 	fpu_kern_enter();

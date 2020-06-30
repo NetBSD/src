@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_bear.c,v 1.1 2020/06/29 23:27:52 riastradh Exp $	*/
+/*	$NetBSD: aes_bear.c,v 1.2 2020/06/30 20:32:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,11 +27,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_bear.c,v 1.1 2020/06/29 23:27:52 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_bear.c,v 1.2 2020/06/30 20:32:11 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/endian.h>
+
+#ifdef _KERNEL
 #include <sys/systm.h>
+#else
+#include <assert.h>
+#include <err.h>
+#include <string.h>
+#define	KASSERT			assert
+#define	panic(fmt, args...)	err(1, fmt, args)
+#endif
 
 #include <crypto/aes/aes.h>
 #include <crypto/aes/aes_bear.h>
