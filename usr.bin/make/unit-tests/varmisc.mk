@@ -1,9 +1,9 @@
-# $Id: varmisc.mk,v 1.8 2017/01/31 18:56:35 sjg Exp $
+# $Id: varmisc.mk,v 1.9 2020/07/01 18:02:26 sjg Exp $
 #
 # Miscellaneous variable tests.
 
 all: unmatched_var_paren D_true U_true D_false U_false Q_lhs Q_rhs NQ_none \
-	strftime cmpv
+	strftime cmpv manok
 
 unmatched_var_paren:
 	@echo ${foo::=foo-text}
@@ -60,3 +60,15 @@ cmpv:
 	@echo Version=${Version} == ${Version:${M_cmpv}}
 	@echo Literal=3.4.5 == ${3.4.5:L:${M_cmpv}}
 	@echo We have ${${.TARGET:T}.only}
+
+# catch misshandling of nested vars in .for loop
+MAN=
+MAN1= make.1
+.for s in 1 2
+.if defined(MAN$s) && !empty(MAN$s)
+MAN+= ${MAN$s}
+.endif
+.endfor
+
+manok:
+	@echo MAN=${MAN}
