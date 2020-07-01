@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.8 2019/09/26 08:03:59 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2020/07/01 08:25:44 lukem Exp $
 
 PROG=		cc1plus
-SRCS=		${G_CXX_OBJS:S,c-family/,,:S,cp/,,:Nlibcpp.a:.o=.c} main.c ${PROG}-checksum.c
+SRCS=		${G_CXX_OBJS:S,c-family/,,:S,cp/,,:S,constraint.o,constraint.cc,:S,logic.o,logic.cc,:Nlibcpp.a:.o=.c}
+SRCS+=		main.c ${PROG}-checksum.c
 
 # XXX
 NOMAN=	1
