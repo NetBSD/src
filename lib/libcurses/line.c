@@ -1,4 +1,4 @@
-/*	$NetBSD: line.c,v 1.14 2020/06/30 21:27:18 uwe Exp $	*/
+/*	$NetBSD: line.c,v 1.15 2020/07/01 02:14:41 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: line.c,v 1.14 2020/06/30 21:27:18 uwe Exp $");
+__RCSID("$NetBSD: line.c,v 1.15 2020/07/01 02:14:41 uwe Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -90,7 +90,7 @@ whline(WINDOW *win, chtype ch, int count)
 	int ocury, ocurx, n, i;
 
 	n = min(count, win->maxx - win->curx);
-	ocury = win->curx;
+	ocury = win->cury;
 	ocurx = win->curx;
 
 	if (!(ch & __CHARTEXT))
