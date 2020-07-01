@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.50 2020/06/29 23:56:30 riastradh Exp $ */
+/* $NetBSD: cpu.c,v 1.51 2020/07/01 07:59:16 ryo Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.50 2020/06/29 23:56:30 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.51 2020/07/01 07:59:16 ryo Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -239,7 +239,7 @@ cpu_identify(device_t self, struct cpu_info *ci)
 static void
 cpu_identify1(device_t self, struct cpu_info *ci)
 {
-	uint64_t ctr, sctlr;	/* for cache */
+	uint64_t ctr, clidr, sctlr;	/* for cache */
 
 	/* SCTLR - System Control Register */
 	sctlr = reg_sctlr_el1_read();
@@ -277,14 +277,21 @@ cpu_identify1(device_t self, struct cpu_info *ci)
 	 * CTR - Cache Type Register
 	 */
 	ctr = reg_ctr_el0_read();
+	clidr = reg_clidr_el1_read();
 	aprint_verbose_dev(self, "Cache Writeback Granule %" PRIu64 "B,"
 	    " Exclusives Reservation Granule %" PRIu64 "B\n",
 	    __SHIFTOUT(ctr, CTR_EL0_CWG_LINE) * 4,
 	    __SHIFTOUT(ctr, CTR_EL0_ERG_LINE) * 4);
 
-	aprint_verbose_dev(self, "Dcache line %ld, Icache line %ld\n",
+	aprint_verbose_dev(self, "Dcache line %ld, Icache line %ld"
+	    ", DIC=%lu, IDC=%lu, LoUU=%lu, LoC=%lu, LoUIS=%lu\n",
 	    sizeof(int) << __SHIFTOUT(ctr, CTR_EL0_DMIN_LINE),
-	    sizeof(int) << __SHIFTOUT(ctr, CTR_EL0_IMIN_LINE));
+	    sizeof(int) << __SHIFTOUT(ctr, CTR_EL0_IMIN_LINE),
+	    __SHIFTOUT(ctr, CTR_EL0_DIC),
+	    __SHIFTOUT(ctr, CTR_EL0_IDC),
+	    __SHIFTOUT(clidr, CLIDR_LOUU),
+	    __SHIFTOUT(clidr, CLIDR_LOC),
+	    __SHIFTOUT(clidr, CLIDR_LOUIS));
 }
 
 
