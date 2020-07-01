@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.27 2020/04/13 05:40:25 maxv Exp $ */
+/* $NetBSD: trap.c,v 1.28 2020/07/01 08:01:07 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.27 2020/04/13 05:40:25 maxv Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.28 2020/07/01 08:01:07 ryo Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -42,6 +42,7 @@ __KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.27 2020/04/13 05:40:25 maxv Exp $");
 #include <sys/types.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
+#include <sys/evcnt.h>
 #ifdef KDB
 #include <sys/kdb.h>
 #endif
@@ -50,6 +51,7 @@ __KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.27 2020/04/13 05:40:25 maxv Exp $");
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/siginfo.h>
+#include <sys/xcall.h>
 
 #ifdef ARM_INTR_IMPL
 #include ARM_INTR_IMPL
@@ -87,6 +89,12 @@ dtrace_doubletrap_func_t	dtrace_doubletrap_func = NULL;
 dtrace_trap_func_t		dtrace_trap_func = NULL;
 int (*dtrace_invop_jump_addr)(struct trapframe *);
 #endif
+
+enum emul_arm_result {
+	EMUL_ARM_SUCCESS = 0,
+	EMUL_ARM_UNKNOWN,
+	EMUL_ARM_FAULT,
+};
 
 const char * const trap_names[] = {
 	[ESR_EC_UNKNOWN]	= "Unknown Reason (Illegal Instruction)",
@@ -247,6 +255,142 @@ trap_el1h_sync(struct trapframe *tf)
 	}
 }
 
+/*
+ * There are some systems with different cache line sizes for each cpu.
+ * Userland programs can be preempted between CPUs at any time, so in such
+ * a system, the minimum cache line size must be visible to userland.
+ */
+#define CTR_EL0_USR_MASK	\
+	(CTR_EL0_DIC | CTR_EL0_IDC | CTR_EL0_DMIN_LINE | CTR_EL0_IMIN_LINE)
+uint64_t ctr_el0_usr __read_mostly;
+
+static xcfunc_t
+configure_cpu_traps0(void *arg1, void *arg2)
+{
+	struct cpu_info * const ci = curcpu();
+	uint64_t sctlr;
+	uint64_t ctr_el0_raw = reg_ctr_el0_read();
+
+#ifdef DEBUG_FORCE_TRAP_CTR_EL0
+	goto need_ctr_trap;
+#endif
+
+	if ((__SHIFTOUT(ctr_el0_raw, CTR_EL0_DMIN_LINE) >
+	     __SHIFTOUT(ctr_el0_usr, CTR_EL0_DMIN_LINE)) ||
+	    (__SHIFTOUT(ctr_el0_raw, CTR_EL0_IMIN_LINE) >
+	     __SHIFTOUT(ctr_el0_usr, CTR_EL0_IMIN_LINE)))
+		goto need_ctr_trap;
+
+	if ((__SHIFTOUT(ctr_el0_raw, CTR_EL0_DIC) == 1 &&
+	     __SHIFTOUT(ctr_el0_usr, CTR_EL0_DIC) == 0) ||
+	    (__SHIFTOUT(ctr_el0_raw, CTR_EL0_IDC) == 1 &&
+	     __SHIFTOUT(ctr_el0_usr, CTR_EL0_IDC) == 0))
+		goto need_ctr_trap;
+
+#if 0 /* XXX: To do or not to do */
+	/*
+	 * IDC==0, but (LoC==0 || LoUIS==LoUU==0)?
+	 * Would it be better to show IDC=1 to userland?
+	 */
+	if (__SHIFTOUT(ctr_el0_raw, CTR_EL0_IDC) == 0 &&
+	    __SHIFTOUT(ctr_el0_usr, CTR_EL0_IDC) == 1)
+		goto need_ctr_trap;
+#endif
+
+	return 0;
+
+ need_ctr_trap:
+	evcnt_attach_dynamic(&ci->ci_uct_trap, EVCNT_TYPE_MISC, NULL,
+	    ci->ci_cpuname, "ctr_el0 trap");
+
+	/* trap CTR_EL0 access from EL0 on this cpu */
+	sctlr = reg_sctlr_el1_read();
+	sctlr &= ~SCTLR_UCT;
+	reg_sctlr_el1_write(sctlr);
+
+	return 0;
+}
+
+void
+configure_cpu_traps(void)
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	uint64_t where;
+
+	/* remember minimum cache line size out of all CPUs */
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		uint64_t ctr_el0_cpu = ci->ci_id.ac_ctr;
+		uint64_t clidr = ci->ci_id.ac_clidr;
+
+		if (__SHIFTOUT(clidr, CLIDR_LOC) == 0 ||
+		    (__SHIFTOUT(clidr, CLIDR_LOUIS) == 0 &&
+		     __SHIFTOUT(clidr, CLIDR_LOUU) == 0)) {
+			/* this means the same as IDC=1 */
+			ctr_el0_cpu |= CTR_EL0_IDC;
+		}
+
+		/*
+		 * if DIC==1, there is no need to icache sync. however,
+		 * to calculate the minimum cacheline, in this case
+		 * ICacheLine is treated as the maximum.
+		 */
+		if (__SHIFTOUT(ctr_el0_cpu, CTR_EL0_DIC) == 1)
+			ctr_el0_cpu |= CTR_EL0_IMIN_LINE;
+
+		if (cii == 0) {
+			ctr_el0_usr = ctr_el0_cpu;
+			continue;
+		}
+
+		/* keep minimum cache line size, and worst DIC/IDC */
+		ctr_el0_usr &= (ctr_el0_cpu & CTR_EL0_DIC) | ~CTR_EL0_DIC;
+		ctr_el0_usr &= (ctr_el0_cpu & CTR_EL0_IDC) | ~CTR_EL0_IDC;
+		if (__SHIFTOUT(ctr_el0_cpu, CTR_EL0_DMIN_LINE) <
+		    __SHIFTOUT(ctr_el0_usr, CTR_EL0_DMIN_LINE)) {
+			ctr_el0_usr &= ~CTR_EL0_DMIN_LINE;
+			ctr_el0_usr |= ctr_el0_cpu & CTR_EL0_DMIN_LINE;
+		}
+		if ((ctr_el0_cpu & CTR_EL0_DIC) == 0 &&
+		    (__SHIFTOUT(ctr_el0_cpu, CTR_EL0_IMIN_LINE) <
+		    __SHIFTOUT(ctr_el0_usr, CTR_EL0_IMIN_LINE))) {
+			ctr_el0_usr &= ~CTR_EL0_IMIN_LINE;
+			ctr_el0_usr |= ctr_el0_cpu & CTR_EL0_IMIN_LINE;
+		}
+	}
+
+	where = xc_broadcast(0,
+	    (xcfunc_t)configure_cpu_traps0, NULL, NULL);
+	xc_wait(where);
+}
+
+static enum emul_arm_result
+emul_aarch64_insn(struct trapframe *tf)
+{
+	uint32_t insn;
+
+	if (ufetch_32((uint32_t *)tf->tf_pc, &insn))
+		return EMUL_ARM_FAULT;
+
+	if ((insn & 0xffffffe0) == 0xd53b0020) {
+		/* mrs x?,ctr_el0 */
+		unsigned int Xt = insn & 31;
+		if (Xt != 31) {	/* !xzr */
+			uint64_t ctr_el0 = reg_ctr_el0_read();
+			ctr_el0 &= ~CTR_EL0_USR_MASK;
+			ctr_el0 |= (ctr_el0_usr & CTR_EL0_USR_MASK);
+			tf->tf_reg[Xt] = ctr_el0;
+		}
+		curcpu()->ci_uct_trap.ev_count++;
+
+	} else {
+		return EMUL_ARM_UNKNOWN;
+	}
+
+	tf->tf_pc += 4;
+	return EMUL_ARM_SUCCESS;
+}
+
 void
 trap_el0_sync(struct trapframe *tf)
 {
@@ -300,8 +444,23 @@ trap_el0_sync(struct trapframe *tf)
 		userret(l);
 		break;
 
+	case ESR_EC_SYS_REG:
+		switch (emul_aarch64_insn(tf)) {
+		case EMUL_ARM_SUCCESS:
+			break;
+		case EMUL_ARM_UNKNOWN:
+			goto unknown;
+		case EMUL_ARM_FAULT:
+			do_trapsignal(l, SIGSEGV, SEGV_MAPERR,
+			    (void *)tf->tf_pc, esr);
+			break;
+		}
+		userret(l);
+		break;
+
 	default:
 	case ESR_EC_UNKNOWN:
+ unknown:
 #ifdef DDB
 		if (sigill_debug) {
 			/* show illegal instruction */
@@ -385,12 +544,6 @@ fetch_arm_insn(struct trapframe *tf, uint32_t *insn)
 
 	return 4;
 }
-
-enum emul_arm_result {
-	EMUL_ARM_SUCCESS = 0,
-	EMUL_ARM_UNKNOWN,
-	EMUL_ARM_FAULT,
-};
 
 static enum emul_arm_result
 emul_arm_insn(struct trapframe *tf)
