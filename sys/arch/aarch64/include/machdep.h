@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.12 2020/06/29 23:22:27 riastradh Exp $	*/
+/*	$NetBSD: machdep.h,v 1.13 2020/07/01 08:01:07 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -89,6 +89,7 @@ void data_abort_handler(struct trapframe *, uint32_t);
 
 /* trap.c */
 void lwp_trampoline(void);
+void configure_cpu_traps(void);
 void cpu_dosoftints(void);
 void cpu_switchto_softint(struct lwp *, int);
 void dosoftints(void);
