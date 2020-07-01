@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_armv8.S,v 1.5 2020/06/01 08:59:00 ryo Exp $	*/
+/*	$NetBSD: cpufunc_asm_armv8.S,v 1.6 2020/07/01 07:59:16 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2014 Robin Randhawa
@@ -133,6 +133,23 @@ ENTRY(aarch64_icache_sync_range)
 	cache_handle_range	dcop = cvau, icop = ivau
 	ret
 END(aarch64_icache_sync_range)
+
+/*
+ * void aarch64_icache_inv_range(vaddr_t, vsize_t)
+ */
+ENTRY(aarch64_icache_inv_range)
+	cache_handle_range	icop = ivau
+	ret
+END(aarch64_icache_inv_range)
+
+/*
+ * void aarch64_icache_barrier_range(vaddr_t, vsize_t)
+ */
+ENTRY(aarch64_icache_barrier_range)
+	dsb	ishst
+	isb
+	ret
+END(aarch64_icache_barrier_range)
 
 /*
  * void aarch64_icache_inv_all(void)

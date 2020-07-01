@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.23 2020/06/29 23:22:27 riastradh Exp $ */
+/* $NetBSD: cpu.h,v 1.24 2020/07/01 07:59:16 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@ struct clockframe {
 
 struct aarch64_cpufuncs {
 	void (*cf_set_ttbr0)(uint64_t);
+	void (*cf_icache_sync_range)(vaddr_t, vsize_t);
 };
 
 struct cpu_info {
