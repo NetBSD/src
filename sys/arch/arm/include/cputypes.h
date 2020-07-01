@@ -1,4 +1,4 @@
-/*	$NetBSD: cputypes.h,v 1.12 2020/01/27 12:56:44 skrll Exp $	*/
+/*	$NetBSD: cputypes.h,v 1.13 2020/07/01 08:02:13 ryo Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -197,6 +197,8 @@
 #define CPU_ID_CORTEX_A76_P(n)	((n & 0xff0ff0f0) == 0x410fd0b0)
 #define CPU_ID_CORTEX_A76AE_P(n) ((n & 0xff0ff0f0) == 0x410fd0e0)
 #define CPU_ID_CORTEX_A77_P(n)	((n & 0xff0ff0f0) == 0x410fd0f0)
+
+#define CPU_ID_NEOVERSEN1_P(n)	((n & 0xff0ffff0) == 0x410fd0c0)
 
 #define CPU_ID_THUNDERXRX	0x43000a10
 #define CPU_ID_THUNDERXP1d0	0x43000a10

@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.28 2020/07/01 08:01:07 ryo Exp $ */
+/* $NetBSD: trap.c,v 1.29 2020/07/01 08:02:13 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.28 2020/07/01 08:01:07 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.29 2020/07/01 08:02:13 ryo Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -337,6 +337,11 @@ configure_cpu_traps(void)
 		 */
 		if (__SHIFTOUT(ctr_el0_cpu, CTR_EL0_DIC) == 1)
 			ctr_el0_cpu |= CTR_EL0_IMIN_LINE;
+
+		/* Neoverse N1 erratum 1542419 */
+		if (CPU_ID_NEOVERSEN1_P(ci->ci_id.ac_midr) &&
+		    __SHIFTOUT(ctr_el0_cpu, CTR_EL0_DIC) == 1)
+			ctr_el0_cpu &= ~CTR_EL0_DIC;
 
 		if (cii == 0) {
 			ctr_el0_usr = ctr_el0_cpu;
