@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.869 2020/07/01 07:16:38 jruoho Exp $
+# $NetBSD: mi,v 1.870 2020/07/01 13:49:26 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2202,6 +2202,7 @@
 ./usr/tests/kernel/t_lockf			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_lwpctl			tests-obsolete		obsolete
 ./usr/tests/kernel/t_mkdir			tests-obsolete		obsolete
+./usr/tests/kernel/t_magic_symlinks		tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_mqueue			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_nointerpreter		tests-kernel-tests	atf
 ./usr/tests/kernel/t_origin			tests-kernel-tests	compattestfile,atf
