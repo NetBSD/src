@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.43 2020/06/21 17:25:03 jmcneill Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.44 2020/07/01 08:01:07 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.43 2020/06/21 17:25:03 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.44 2020/07/01 08:01:07 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -523,6 +523,8 @@ machdep_init(void)
 {
 	/* clear cpu reset hook for early boot */
 	cpu_reset_address0 = NULL;
+
+	configure_cpu_traps();
 }
 
 #ifdef MODULAR
