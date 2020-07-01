@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudioctl.c,v 1.4 2020/06/15 20:29:29 riastradh Exp $ */
+/* $NetBSD: hdaudioctl.c,v 1.5 2020/07/01 12:19:45 sborrill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -292,9 +292,9 @@ hdaudioctl_show(int fd, int argc, char *argv[])
 	array = prop_dictionary_get(response, "pin-config");
 	iter = prop_array_iterator(array);
 	prop_object_iterator_reset(iter);
-	printf("nid Data     As Seq Device         Conn  Jack    "
+	printf("nid  Data     As Seq Device         Conn  Jack    "
 	    "Location   Color   Misc\n");
-	printf("================================================="
+	printf("=================================================="
 	    "=======================\n");
 	while ((obj = prop_object_iterator_next(iter)) != NULL) {
 		dict = (prop_dictionary_t)obj;
@@ -305,7 +305,7 @@ hdaudioctl_show(int fd, int argc, char *argv[])
 		jack = pin_jacks[(config >> 16) & 0xf];
 		loc = pin_locations[(config >> 24) & 0x3f];
 		color = pin_colors[(config >> 12) & 0xf];
-		printf("%3d %08X %2d %3d %-14s %-5s %-7s %-10s %-7s %4X\n",
+		printf("0x%2X %08X %2d %3d %-14s %-5s %-7s %-10s %-7s %4X\n",
 		    nid, config, ((config >> 4U) & 0xf), (config & 0xf),
 		    device, conn, jack, loc, color, ((config >> 8U) & 0xf));
 	}
