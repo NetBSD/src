@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdide.c,v 1.43 2017/10/22 13:13:55 jdolecek Exp $	*/
+/*	$NetBSD: cmdide.c,v 1.44 2020/07/01 15:10:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.43 2017/10/22 13:13:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.44 2020/07/01 15:10:01 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,9 +238,15 @@ cmd_pci_intr(void *arg)
 	for (i = 0; i < sc->sc_wdcdev.sc_atac.atac_nchannels; i++) {
 		cp = &sc->pciide_channels[i];
 		wdc_cp = &cp->ata_channel;
+
 		/* If a compat channel skip. */
 		if (cp->compat)
 			continue;
+
+		/* if this channel not waiting for intr, skip */
+		if ((wdc_cp->ch_flags & ATACH_IRQ_WAIT) == 0)
+			continue;
+
 		if ((i == 0 && (priirq & CMD_CONF_DRV0_INTR)) ||
 		    (i == 1 && (secirq & CMD_ARTTIM23_IRQ))) {
 			crv = wdcintr(wdc_cp);
