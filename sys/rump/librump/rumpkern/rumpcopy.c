@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcopy.c,v 1.24 2020/04/05 15:16:11 kamil Exp $	*/
+/*	$NetBSD: rumpcopy.c,v 1.25 2020/07/01 00:42:13 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.24 2020/04/05 15:16:11 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.25 2020/07/01 00:42:13 riastradh Exp $");
 
 #define	__UFETCHSTORE_PRIVATE
 #define	__UCAS_PRIVATE
@@ -81,24 +81,6 @@ copyout(const void *kaddr, void *uaddr, size_t len)
 		    kaddr, uaddr, len);
 	}
 	return error;
-}
-
-int
-copystr(const void *kfaddr, void *kdaddr, size_t len, size_t *done)
-{
-	uint8_t *to = kdaddr;
-	const uint8_t *from = kfaddr;
-	size_t actlen = 0;
-
-	while (len-- > 0 && (*to++ = *from++) != 0)
-		actlen++;
-
-	if (len+1 == 0 && *(to-1) != 0)
-		return ENAMETOOLONG;
-
-	if (done)
-		*done = actlen+1; /* + '\0' */
-	return 0;
 }
 
 int
