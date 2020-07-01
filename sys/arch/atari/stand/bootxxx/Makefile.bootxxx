@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootxxx,v 1.8 2014/01/12 15:26:28 tsutsui Exp $
+#	$NetBSD: Makefile.bootxxx,v 1.9 2020/07/01 23:37:10 rin Exp $
 
 NOMAN=	# defined
 
@@ -39,7 +39,7 @@ LINKFLAGS=	-static -N -e start -Ttext ${LOADADDR3}
 #
 # Warning: start.S should be the first source!
 #
-SRCS=	start.S bootxxx.c aout.c bsdstart.s elf.c filesystem.c sysinfo.c
+SRCS=	start.S bootxxx.c aout.c bsdstart.S elf.c filesystem.c sysinfo.c
 
 LIBS=	${LIBSA} ${LIBKERN}
 
