@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2020/06/30 20:32:11 riastradh Exp $
+#	$NetBSD: Makefile,v 1.2 2020/07/01 09:58:29 riastradh Exp $
 
 .include <bsd.own.mk>
 
@@ -51,11 +51,16 @@ SRCS.t_aes+=	aes_sse2_dec.c
 SRCS.t_aes+=	aes_sse2_enc.c
 SRCS.t_aes+=	aes_sse2_impl.c
 SRCS.t_aes+=	aes_sse2_subr.c
+COPTS.aes_sse2.c+=	-msse -msse2
+COPTS.aes_sse2_dec.c+=	-msse -msse2
+COPTS.aes_sse2_enc.c+=	-msse -msse2
+COPTS.aes_sse2_subr.c+=	-msse -msse2
 
 SRCS.t_aes+=	aes_ssse3.c
 SRCS.t_aes+=	aes_ssse3_impl.c
 SRCS.t_aes+=	aes_ssse3_subr.c
-COPTS.aes_ssse3.c+=	-msse3 -mssse3
+COPTS.aes_ssse3.c+=		-msse -msse2 -msse3 -mssse3
+COPTS.aes_ssse3_subr.c+=	-msse -msse2 -msse3 -mssse3
 
 SRCS.t_aes+=	aes_via.c
 
