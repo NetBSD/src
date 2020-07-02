@@ -339,6 +339,7 @@ dhcpcd_daemonise(struct dhcpcd_ctx *ctx)
 	return 0;
 #else
 	int i;
+	unsigned int logopts = loggetopts();
 
 	if (ctx->options & DHCPCD_DAEMONISE &&
 	    !(ctx->options & (DHCPCD_DAEMONISED | DHCPCD_NOWAITIP)))
@@ -359,7 +360,7 @@ dhcpcd_daemonise(struct dhcpcd_ctx *ctx)
 		return;
 
 	/* Don't use loginfo because this makes no sense in a log. */
-	if (!(loggetopts() & LOGERR_QUIET))
+	if (!(logopts & LOGERR_QUIET))
 		(void)fprintf(stderr, "forked to background, child pid %d\n",
 		    getpid());
 	i = EXIT_SUCCESS;
@@ -369,16 +370,11 @@ dhcpcd_daemonise(struct dhcpcd_ctx *ctx)
 	eloop_event_delete(ctx->eloop, ctx->fork_fd);
 	close(ctx->fork_fd);
 	ctx->fork_fd = -1;
-#ifdef PRIVSEP
-	if (ctx->options & DHCPCD_PRIVSEP) {
-		/* Aside from Linux, we don't have access to /dev/null */
-		fclose(stdout);
-		fclose(stderr);
-	} else
-#endif
-	{
-		(void)freopen(_PATH_DEVNULL, "w", stdout);
-		(void)freopen(_PATH_DEVNULL, "w", stderr);
+
+	if (isatty(loggeterrfd())) {
+		logopts &= ~LOGERR_ERR;
+		logsetopts(logopts);
+		logseterrfd(-1);
 	}
 #endif
 }
@@ -867,7 +863,6 @@ dhcpcd_startinterface(void *arg)
 {
 	struct interface *ifp = arg;
 	struct if_options *ifo = ifp->options;
-	int carrier;
 
 	if (ifo->options & DHCPCD_LINK) {
 		switch (ifp->carrier) {
@@ -879,19 +874,8 @@ dhcpcd_startinterface(void *arg)
 		case LINK_UNKNOWN:
 			/* No media state available.
 			 * Loop until both IFF_UP and IFF_RUNNING are set */
-			carrier = if_carrier(ifp);
-			if (carrier == LINK_UNKNOWN) {
-				if (IF_UPANDRUNNING(ifp))
-					carrier = LINK_UP;
-				else {
-					eloop_timeout_add_msec(ifp->ctx->eloop,
-					    IF_POLL_UP * MSEC_PER_SEC,
-					    dhcpcd_startinterface, ifp);
-					return;
-				}
-			}
-			dhcpcd_handlecarrier(ifp->ctx, carrier,
-			    ifp->flags, ifp->name);
+			if (ifo->poll == 0)
+				if_pollinit(ifp);
 			return;
 		}
 	}
@@ -979,6 +963,7 @@ static void
 dhcpcd_prestartinterface(void *arg)
 {
 	struct interface *ifp = arg;
+	struct dhcpcd_ctx *ctx = ifp->ctx;
 	bool anondown;
 
 	if (ifp->carrier == LINK_DOWN &&
@@ -990,7 +975,7 @@ dhcpcd_prestartinterface(void *arg)
 	} else
 		anondown = false;
 
-	if ((!(ifp->ctx->options & DHCPCD_MASTER) ||
+	if ((!(ctx->options & DHCPCD_MASTER) ||
 	    ifp->options->options & DHCPCD_IF_UP || anondown) &&
 	    !(ifp->flags & IFF_UP))
 	{
@@ -1000,6 +985,9 @@ dhcpcd_prestartinterface(void *arg)
 		if (if_up(ifp) == -1)
 			logerr(__func__);
 	}
+
+	if (ifp->options->poll != 0)
+		if_pollinit(ifp);
 
 	dhcpcd_startinterface(ifp);
 }
@@ -1299,7 +1287,9 @@ reload_config(struct dhcpcd_ctx *ctx)
 	if ((ifo = read_config(ctx, NULL, NULL, NULL)) == NULL)
 		return;
 	add_options(ctx, NULL, ifo, ctx->argc, ctx->argv);
-	/* We need to preserve these two options. */
+	/* We need to preserve these options. */
+	if (ctx->options & DHCPCD_STARTED)
+		ifo->options |= DHCPCD_STARTED;
 	if (ctx->options & DHCPCD_MASTER)
 		ifo->options |= DHCPCD_MASTER;
 	if (ctx->options & DHCPCD_DAEMONISED)
@@ -1409,6 +1399,9 @@ dhcpcd_signal_cb(int sig, void *arg)
 	}
 
 	if (sig != SIGCHLD && ctx->options & DHCPCD_FORKED) {
+		if (sig == SIGHUP)
+			return;
+
 		pid_t pid = pidfile_read(ctx->pidfile);
 		if (pid == -1) {
 			if (errno != ENOENT)
@@ -1861,9 +1854,7 @@ main(int argc, char **argv)
 #endif
 #ifdef PRIVSEP
 	ctx.ps_root_fd = ctx.ps_data_fd = -1;
-#ifdef PRIVSEP_COMTROLLER
-	ctx.ps_ctl_fd = -1;
-#endif
+	ctx.ps_inet_fd = ctx.ps_control_fd = -1;
 	TAILQ_INIT(&ctx.ps_processes);
 #endif
 	rt_init(&ctx);
@@ -2210,7 +2201,9 @@ printpidfile:
 	}
 
 	loginfox(PACKAGE "-" VERSION " starting");
-	freopen(_PATH_DEVNULL, "r", stdin);
+	if (freopen(_PATH_DEVNULL, "r", stdin) == NULL)
+		logerr("%s: freopen stdin", __func__);
+
 
 #ifdef PRIVSEP
 	ps_init(&ctx);
@@ -2275,6 +2268,22 @@ printpidfile:
 		if_disable_rtadv();
 #endif
 
+	if (isatty(STDOUT_FILENO) &&
+	    freopen(_PATH_DEVNULL, "r", stdout) == NULL)
+		logerr("%s: freopen stdout", __func__);
+	if (isatty(STDERR_FILENO)) {
+		int fd = dup(STDERR_FILENO);
+
+		if (fd == -1)
+			logerr("%s: dup", __func__);
+		else if (logseterrfd(fd) == -1)
+			logerr("%s: logseterrfd", __func__);
+		else if (freopen(_PATH_DEVNULL, "r", stderr) == NULL) {
+			logseterrfd(-1);
+			logerr("%s: freopen stderr", __func__);
+		}
+	}
+
 	/* If we're not running in privsep, we need to create the DB
 	 * directory here. */
 	if (!(ctx.options & DHCPCD_PRIVSEP)) {
@@ -2328,7 +2337,7 @@ printpidfile:
 
 	/* Cache the default vendor option. */
 	if (dhcp_vendor(ctx.vendor, sizeof(ctx.vendor)) == -1)
-		logerrx("dhcp_vendor");
+		logerr("dhcp_vendor");
 
 	/* Start handling kernel messages for interfaces, addresses and
 	 * routes. */
