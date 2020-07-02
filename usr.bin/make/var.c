@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.230 2020/07/02 15:47:38 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.231 2020/07/02 16:14:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.230 2020/07/02 15:47:38 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.231 2020/07/02 16:14:50 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.230 2020/07/02 15:47:38 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.231 2020/07/02 16:14:50 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -196,20 +196,20 @@ GNode          *VAR_CMD;      /* variables defined on the command-line */
 #define FIND_ENV  	0x4   /* look in the environment also */
 
 typedef enum {
-	VAR_IN_USE	= 1,	/* Variable's value is currently being used.
+	VAR_IN_USE	= 0x01,	/* Variable's value is currently being used.
 				 * Used to avoid endless recursion */
-	VAR_FROM_ENV	= 2,	/* Variable comes from the environment */
-	VAR_JUNK	= 4,	/* Variable is a junk variable that
+	VAR_FROM_ENV	= 0x02,	/* Variable comes from the environment */
+	VAR_JUNK	= 0x04,	/* Variable is a junk variable that
 				 * should be destroyed when done with
 				 * it. Used by Var_Parse for undefined,
 				 * modified variables */
-	VAR_KEEP	= 8,	/* Variable is VAR_JUNK, but we found
+	VAR_KEEP	= 0x08,	/* Variable is VAR_JUNK, but we found
 				 * a use for it in some modifier and
 				 * the value is therefore valid */
-	VAR_EXPORTED	= 16,	/* Variable is exported */
-	VAR_REEXPORT	= 32,	/* Indicate if var needs re-export.
+	VAR_EXPORTED	= 0x10,	/* Variable is exported */
+	VAR_REEXPORT	= 0x20,	/* Indicate if var needs re-export.
 				 * This would be true if it contains $'s */
-	VAR_FROM_CMD	= 64	/* Variable came from command line */
+	VAR_FROM_CMD	= 0x40	/* Variable came from command line */
 } Var_Flags;
 
 typedef struct Var {
@@ -421,19 +421,19 @@ VarFind(const char *name, GNode *ctxt, int flags)
      */
     var = Hash_FindEntry(&ctxt->context, name);
 
-    if ((var == NULL) && (flags & FIND_CMD) && (ctxt != VAR_CMD)) {
+    if (var == NULL && (flags & FIND_CMD) && ctxt != VAR_CMD) {
 	var = Hash_FindEntry(&VAR_CMD->context, name);
     }
-    if (!checkEnvFirst && (var == NULL) && (flags & FIND_GLOBAL) &&
-	(ctxt != VAR_GLOBAL))
+    if (!checkEnvFirst && var == NULL && (flags & FIND_GLOBAL) &&
+	ctxt != VAR_GLOBAL)
     {
 	var = Hash_FindEntry(&VAR_GLOBAL->context, name);
-	if ((var == NULL) && (ctxt != VAR_INTERNAL)) {
+	if (var == NULL && ctxt != VAR_INTERNAL) {
 	    /* VAR_INTERNAL is subordinate to VAR_GLOBAL */
 	    var = Hash_FindEntry(&VAR_INTERNAL->context, name);
 	}
     }
-    if ((var == NULL) && (flags & FIND_ENV)) {
+    if (var == NULL && (flags & FIND_ENV)) {
 	char *env;
 
 	if ((env = getenv(name)) != NULL) {
@@ -448,18 +448,18 @@ VarFind(const char *name, GNode *ctxt, int flags)
 	    Buf_AddBytes(&v->val, len, env);
 
 	    v->flags = VAR_FROM_ENV;
-	    return (v);
+	    return v;
 	} else if (checkEnvFirst && (flags & FIND_GLOBAL) &&
-		   (ctxt != VAR_GLOBAL))
+		   ctxt != VAR_GLOBAL)
 	{
 	    var = Hash_FindEntry(&VAR_GLOBAL->context, name);
-	    if ((var == NULL) && (ctxt != VAR_INTERNAL)) {
+	    if (var == NULL && ctxt != VAR_INTERNAL) {
 		var = Hash_FindEntry(&VAR_INTERNAL->context, name);
 	    }
 	    if (var == NULL) {
 		return NULL;
 	    } else {
-		return ((Var *)Hash_GetValue(var));
+		return (Var *)Hash_GetValue(var);
 	    }
 	} else {
 	    return NULL;
@@ -467,7 +467,7 @@ VarFind(const char *name, GNode *ctxt, int flags)
     } else if (var == NULL) {
 	return NULL;
     } else {
-	return ((Var *)Hash_GetValue(var));
+	return (Var *)Hash_GetValue(var);
     }
 }
 
@@ -558,7 +558,7 @@ Var_Delete(const char *name, GNode *ctxt)
 {
     Hash_Entry 	  *ln;
     char *cp;
-    
+
     if (strchr(name, '$')) {
 	cp = Var_Subst(NULL, name, VAR_GLOBAL, VARF_WANTRES);
     } else {
@@ -1073,7 +1073,7 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 	name = expanded_name;
     }
 
-    v = VarFind(name, ctxt, (ctxt == VAR_GLOBAL) ? (FIND_CMD|FIND_ENV) : 0);
+    v = VarFind(name, ctxt, ctxt == VAR_GLOBAL ? (FIND_CMD|FIND_ENV) : 0);
 
     if (v == NULL) {
 	Var_Set(name, val, ctxt);
@@ -1130,11 +1130,11 @@ Var_Exists(const char *name, GNode *ctxt)
     v = VarFind(cp ? cp : name, ctxt, FIND_CMD|FIND_GLOBAL|FIND_ENV);
     free(cp);
     if (v == NULL) {
-	return(FALSE);
-    } else {
-	(void)VarFreeEnv(v, TRUE);
+	return FALSE;
     }
-    return(TRUE);
+
+    (void)VarFreeEnv(v, TRUE);
+    return TRUE;
 }
 
 /*-
@@ -1156,18 +1156,17 @@ Var_Exists(const char *name, GNode *ctxt)
 char *
 Var_Value(const char *name, GNode *ctxt, char **frp)
 {
-    Var            *v;
+    Var *v;
 
     v = VarFind(name, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
     *frp = NULL;
-    if (v != NULL) {
-	char *p = (Buf_GetAll(&v->val, NULL));
-	if (VarFreeEnv(v, FALSE))
-	    *frp = p;
-	return p;
-    } else {
+    if (v == NULL)
 	return NULL;
-    }
+
+    char *p = (Buf_GetAll(&v->val, NULL));
+    if (VarFreeEnv(v, FALSE))
+	*frp = p;
+    return p;
 }
 
 /*-
@@ -1206,7 +1205,7 @@ VarHead(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	*slash = '\0';
 	Buf_AddBytes(buf, strlen(word), word);
 	*slash = '/';
-	return (TRUE);
+	return TRUE;
     } else {
 	/*
 	 * If no directory part, give . (q.v. the POSIX standard)
@@ -1380,7 +1379,7 @@ VarMatch(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	addSpace = TRUE;
 	Buf_AddBytes(buf, strlen(word), word);
     }
-    return(addSpace);
+    return addSpace;
 }
 
 #ifdef SYSVVARSUB
@@ -1431,7 +1430,7 @@ VarSYSVMatch(GNode *ctx, Var_Parse_State *vpstate,
 	Buf_AddBytes(buf, strlen(word), word);
     }
 
-    return(addSpace);
+    return addSpace;
 }
 #endif
 
@@ -1470,7 +1469,7 @@ VarNoMatch(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	addSpace = TRUE;
 	Buf_AddBytes(buf, strlen(word), word);
     }
-    return(addSpace);
+    return addSpace;
 }
 
 
@@ -1639,14 +1638,14 @@ VarSubstitute(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	     */
 	    return ((Buf_Size(buf) != origSize) || addSpace);
 	}
-	return (addSpace);
+	return addSpace;
     }
  nosub:
     if (addSpace && vpstate->varSpace) {
 	Buf_AddByte(buf, vpstate->varSpace);
     }
     Buf_AddBytes(buf, wordLen, word);
-    return(TRUE);
+    return TRUE;
 }
 
 #ifndef NO_REGEX
@@ -1732,7 +1731,7 @@ VarRESubstitute(GNode *ctx MAKE_ATTR_UNUSED,
 	for (rp = pat->replace; *rp; rp++) {
 	    if ((*rp == '\\') && ((rp[1] == '&') || (rp[1] == '\\'))) {
 		MAYBE_ADD_SPACE();
-		Buf_AddByte(buf,rp[1]);
+		Buf_AddByte(buf, rp[1]);
 		rp++;
 	    }
 	    else if ((*rp == '&') ||
@@ -1800,11 +1799,11 @@ VarRESubstitute(GNode *ctx MAKE_ATTR_UNUSED,
     case REG_NOMATCH:
 	if (*wp) {
 	    MAYBE_ADD_SPACE();
-	    Buf_AddBytes(buf,strlen(wp),wp);
+	    Buf_AddBytes(buf, strlen(wp), wp);
 	}
 	break;
     }
-    return(addSpace||added);
+    return addSpace || added;
 }
 #endif
 
@@ -1959,7 +1958,7 @@ VarRealpath(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	struct stat st;
 	char rbuf[MAXPATHLEN];
 	char *rp;
-			    
+
 	if (addSpace && vpstate->varSpace) {
 	    Buf_AddByte(buf, vpstate->varSpace);
 	}
@@ -1967,9 +1966,9 @@ VarRealpath(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	rp = cached_realpath(word, rbuf);
 	if (rp && *rp == '/' && stat(rp, &st) == 0)
 		word = rp;
-	
+
 	Buf_AddBytes(buf, strlen(word), word);
-	return(addSpace);
+	return addSpace;
 }
 
 /*-
@@ -3720,7 +3719,7 @@ ApplyModifiers(char *nstr, const char *tstr,
     }
  out:
     *lengthPtr = tstr - start;
-    return (nstr);
+    return nstr;
 
  bad_modifier:
     /* "{(" */
@@ -3734,7 +3733,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	      v->name, delim);
     free(*freePtr);
     *freePtr = NULL;
-    return (var_Error);
+    return var_Error;
 }
 
 /*-
@@ -3896,7 +3895,7 @@ Var_Parse(const char *str, GNode *ctxt, Varf_Flags flags,
 	     */
 	    *lengthPtr = tstr - str;
 	    Buf_Destroy(&buf, TRUE);
-	    return (var_Error);
+	    return var_Error;
 	}
 	str = Buf_GetAll(&buf, &vlen);
 
@@ -3984,7 +3983,7 @@ Var_Parse(const char *str, GNode *ctxt, Varf_Flags flags,
 		    char *pstr = bmake_strndup(start, *lengthPtr);
 		    *freePtr = pstr;
 		    Buf_Destroy(&buf, TRUE);
-		    return(pstr);
+		    return pstr;
 		} else {
 		    Buf_Destroy(&buf, TRUE);
 		    return (flags & VARF_UNDEFERR) ? var_Error : varNoError;
@@ -4091,7 +4090,7 @@ Var_Parse(const char *str, GNode *ctxt, Varf_Flags flags,
 	free(v->name);
 	free(v);
     }
-    return (nstr);
+    return nstr;
 }
 
 /*-
@@ -4241,8 +4240,8 @@ Var_Subst(const char *var, const char *str, GNode *ctxt, Varf_Flags flags)
 		     * when the file is parsed.
 		     */
 		    if (!errorReported) {
-			Parse_Error(PARSE_FATAL,
-				     "Undefined variable \"%.*s\"",length,str);
+			Parse_Error(PARSE_FATAL, "Undefined variable \"%.*s\"",
+				    length, str);
 		    }
 		    str += length;
 		    errorReported = TRUE;
@@ -4275,55 +4274,6 @@ Var_Subst(const char *var, const char *str, GNode *ctxt, Varf_Flags flags)
 
 /*-
  *-----------------------------------------------------------------------
- * Var_GetTail --
- *	Return the tail from each of a list of words. Used to set the
- *	System V local variables.
- *
- * Input:
- *	file		Filename to modify
- *
- * Results:
- *	The resulting string.
- *
- * Side Effects:
- *	None.
- *
- *-----------------------------------------------------------------------
- */
-#if 0
-char *
-Var_GetTail(char *file)
-{
-    return(VarModify(file, VarTail, NULL));
-}
-
-/*-
- *-----------------------------------------------------------------------
- * Var_GetHead --
- *	Find the leading components of a (list of) filename(s).
- *	XXX: VarHead does not replace foo by ., as (sun) System V make
- *	does.
- *
- * Input:
- *	file		Filename to manipulate
- *
- * Results:
- *	The leading components.
- *
- * Side Effects:
- *	None.
- *
- *-----------------------------------------------------------------------
- */
-char *
-Var_GetHead(char *file)
-{
-    return(VarModify(file, VarHead, NULL));
-}
-#endif
-
-/*-
- *-----------------------------------------------------------------------
  * Var_Init --
  *	Initialize the module
  *
@@ -4340,7 +4290,6 @@ Var_Init(void)
     VAR_INTERNAL = Targ_NewGN("Internal");
     VAR_GLOBAL = Targ_NewGN("Global");
     VAR_CMD = Targ_NewGN("Command");
-
 }
 
 
