@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.225 2020/07/01 18:02:26 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.226 2020/07/02 12:34:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.225 2020/07/01 18:02:26 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.226 2020/07/02 12:34:30 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.225 2020/07/01 18:02:26 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.226 2020/07/02 12:34:30 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3860,16 +3860,11 @@ Var_Parse(const char *str, GNode *ctxt, int flags,
 	    }
 	    /*
 	     * A variable inside a variable, expand.
-	     * If we really started looking at a variable
-	     * (str[0] == '$'), then force VARF_WANTRES
-	     * since we need the nested variable expanded to
-	     * get the correct name to lookup.
 	     */
 	    if (*tstr == '$') {
 		int rlen;
 		void *freeIt;
-		char *rval = Var_Parse(tstr, ctxt,
-		    flags|((*str == '$') ? VARF_WANTRES : 0),  &rlen, &freeIt);
+		char *rval = Var_Parse(tstr, ctxt, flags, &rlen, &freeIt);
 		if (rval != NULL) {
 		    Buf_AddBytes(&buf, strlen(rval), rval);
 		}
@@ -4015,7 +4010,7 @@ Var_Parse(const char *str, GNode *ctxt, int flags,
      * return.
      */
     nstr = Buf_GetAll(&v->val, NULL);
-    if (strchr(nstr, '$') != NULL) {
+    if (strchr(nstr, '$') != NULL && (flags & VARF_WANTRES) != 0) {
 	nstr = Var_Subst(NULL, nstr, ctxt, flags);
 	*freePtr = nstr;
     }
