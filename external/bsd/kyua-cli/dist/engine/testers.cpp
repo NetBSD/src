@@ -247,7 +247,7 @@ engine::tester::list(const fs::path& program) const
     args.push_back(program.str());
 
     const fs::path tester_path = engine::tester_path(_interface);
-    std::auto_ptr< process::child > child = process::child::spawn_capture(
+    std::unique_ptr< process::child > child = process::child::spawn_capture(
         tester_path, args);
 
     const std::string output = utils::read_stream(child->output());
@@ -288,7 +288,7 @@ engine::tester::test(const fs::path& program, const std::string& test_case_name,
     args.push_back(result_file.str());
 
     const fs::path tester_path = engine::tester_path(_interface);
-    std::auto_ptr< process::child > child = process::child::spawn_files(
+    std::unique_ptr< process::child > child = process::child::spawn_files(
         tester_path, args, stdout_file, stderr_file);
     const process::status status = child->wait();
 
