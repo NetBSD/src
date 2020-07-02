@@ -97,6 +97,8 @@ void logsetopts(unsigned int);
 void logsettag(const char *);
 #endif
 
+int loggeterrfd(void);
+int logseterrfd(int);
 int logopen(const char *);
 void logclose(void);
 int logreopen(void);
