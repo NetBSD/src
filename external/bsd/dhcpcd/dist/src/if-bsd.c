@@ -358,6 +358,10 @@ if_carrier(struct interface *ifp)
 {
 	struct ifmediareq ifmr = { .ifm_status = 0 };
 
+	/* Not really needed, but the other OS update flags here also */
+	if (if_getflags(ifp) == -1)
+		return LINK_UNKNOWN;
+
 	strlcpy(ifmr.ifm_name, ifp->name, sizeof(ifmr.ifm_name));
 	if (ioctl(ifp->ctx->pf_inet_fd, SIOCGIFMEDIA, &ifmr) == -1 ||
 	    !(ifmr.ifm_status & IFM_AVALID))
@@ -1002,7 +1006,10 @@ if_address6(unsigned char cmd, const struct ipv6_addr *ia)
 	if (ia->addr_flags & IN6_IFF_TENTATIVE)
 		ifa.ifra_flags |= IN6_IFF_TENTATIVE;
 #endif
-#if !defined(IPV6CTL_ACCEPT_RTADV) && !defined(ND6_IFF_ACCEPT_RTADV)
+#if (defined(__NetBSD__) || defined(__OpenBSD__)) && \
+    (defined(IPV6CTL_ACCEPT_RTADV) || defined(ND6_IFF_ACCEPT_RTADV))
+	/* These kernels don't accept userland setting IN6_IFF_AUTOCONF */
+#else
 	if (ia->flags & IPV6_AF_AUTOCONF)
 		ifa.ifra_flags |= IN6_IFF_AUTOCONF;
 #endif
