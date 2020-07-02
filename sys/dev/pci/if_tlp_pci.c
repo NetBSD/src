@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.127 2019/11/10 21:16:36 chs Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.128 2020/07/02 09:07:10 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.127 2019/11/10 21:16:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.128 2020/07/02 09:07:10 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -647,7 +647,7 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 			KASSERT(prop_object_type(ea) == PROP_TYPE_DATA);
 			KASSERT(prop_data_size(ea) == ETHER_ADDR_LEN);
 
-			memcpy(enaddr, prop_data_data_nocopy(ea),
+			memcpy(enaddr, prop_data_value(ea),
 			       ETHER_ADDR_LEN);
 
 			sc->sc_srom_addrbits = 6;
@@ -935,7 +935,7 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 			if (eaddrprop != NULL
 			    && prop_data_size(eaddrprop) == ETHER_ADDR_LEN)
 				memcpy(enaddr,
-				    prop_data_data_nocopy(eaddrprop),
+				    prop_data_value(eaddrprop),
 				    ETHER_ADDR_LEN);
 			else
 				memcpy(enaddr, &sc->sc_srom[20],

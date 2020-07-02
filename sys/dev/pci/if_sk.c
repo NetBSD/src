@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.105 2020/02/24 12:20:30 rin Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.106 2020/07/02 09:07:10 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.105 2020/02/24 12:20:30 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.106 2020/07/02 09:07:10 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1247,7 +1247,7 @@ sk_attach(device_t parent, device_t self, void *aux)
 		 */
 		KASSERT(prop_object_type(data) == PROP_TYPE_DATA);
 		KASSERT(prop_data_size(data) == ETHER_ADDR_LEN);
-		memcpy(sc_if->sk_enaddr, prop_data_data_nocopy(data),
+		memcpy(sc_if->sk_enaddr, prop_data_value(data),
 		    ETHER_ADDR_LEN);
 	} else
 		for (i = 0; i < ETHER_ADDR_LEN; i++)
