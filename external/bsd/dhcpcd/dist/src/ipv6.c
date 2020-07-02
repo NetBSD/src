@@ -2130,6 +2130,7 @@ ipv6_regentempaddrs(void *arg)
 	/* Mark addresses for regen so we don't infinite loop. */
 	TAILQ_FOREACH(ia, &state->addrs, next) {
 		if (ia->flags & IPV6_AF_TEMPORARY &&
+		    ia->flags & IPV6_AF_ADDED &&
 		    !(ia->flags & IPV6_AF_STALE))
 			ia->flags |= IPV6_AF_REGEN;
 		else
