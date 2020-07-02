@@ -342,8 +342,13 @@ make_env(struct dhcpcd_ctx *ctx, const struct interface *ifp,
 	if (!is_stdin) {
 		if (efprintf(fp, "interface=%s", ifp->name) == -1)
 			goto eexit;
+		if (protocols[protocol] != NULL) {
+			if (efprintf(fp, "protocol=%s",
+			    protocols[protocol]) == -1)
+				goto eexit;
+		}
 	}
-	if (ifp->ctx->options & DHCPCD_DUMPLEASE)
+	if (ifp->ctx->options & DHCPCD_DUMPLEASE && protocol != PROTO_LINK)
 		goto dumplease;
 	if (efprintf(fp, "ifcarrier=%s",
 	    ifp->carrier == LINK_UNKNOWN ? "unknown" :
@@ -357,6 +362,22 @@ make_env(struct dhcpcd_ctx *ctx, const struct interface *ifp,
 		goto eexit;
 	if (efprintf(fp, "ifmtu=%d", if_getmtu(ifp)) == -1)
 		goto eexit;
+	if (ifp->wireless) {
+		char pssid[IF_SSIDLEN * 4];
+
+		if (print_string(pssid, sizeof(pssid), OT_ESCSTRING,
+		    ifp->ssid, ifp->ssid_len) != -1)
+		{
+			if (efprintf(fp, "ifssid=%s", pssid) == -1)
+				goto eexit;
+		}
+	}
+	if (*ifp->profile != '\0') {
+		if (efprintf(fp, "profile=%s", ifp->profile) == -1)
+			goto eexit;
+	}
+	if (ifp->ctx->options & DHCPCD_DUMPLEASE)
+		goto dumplease;
 
 	if (fprintf(fp, "interface_order=") == -1)
 		goto eexit;
@@ -412,10 +433,6 @@ make_env(struct dhcpcd_ctx *ctx, const struct interface *ifp,
 		if (efprintf(fp, "if_down=true") == -1)
 			goto eexit;
 	}
-	if (protocols[protocol] != NULL) {
-		if (efprintf(fp, "protocol=%s", protocols[protocol]) == -1)
-			goto eexit;
-	}
 	if ((af = dhcpcd_ifafwaiting(ifp)) != AF_MAX) {
 		if (efprintf(fp, "if_afwaiting=%d", af) == -1)
 			goto eexit;
@@ -433,20 +450,6 @@ make_env(struct dhcpcd_ctx *ctx, const struct interface *ifp,
 	if (ifo->options & DHCPCD_DEBUG) {
 		if (efprintf(fp, "syslog_debug=true") == -1)
 			goto eexit;
-	}
-	if (*ifp->profile != '\0') {
-		if (efprintf(fp, "profile=%s", ifp->profile) == -1)
-			goto eexit;
-	}
-	if (ifp->wireless) {
-		char pssid[IF_SSIDLEN * 4];
-
-		if (print_string(pssid, sizeof(pssid), OT_ESCSTRING,
-		    ifp->ssid, ifp->ssid_len) != -1)
-		{
-			if (efprintf(fp, "ifssid=%s", pssid) == -1)
-				goto eexit;
-		}
 	}
 #ifdef INET
 	if (protocol == PROTO_DHCP && state && state->old) {

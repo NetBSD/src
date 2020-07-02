@@ -31,6 +31,7 @@
 
 #include <sys/param.h>
 #include <sys/time.h>
+#include <sys/types.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -43,6 +44,7 @@
 #define	ELOOP_IPV6ND		6
 #define	ELOOP_IPV6RA_EXPIRE	7
 #define	ELOOP_DHCP6		8
+#define	ELOOP_IF		9
 
 #ifndef HOSTNAME_MAX_LEN
 #define HOSTNAME_MAX_LEN	250	/* 255 - 3 (FQDN) - 2 (DNS enc) */
