@@ -1,4 +1,4 @@
-# $NetBSD: cond-short.mk,v 1.3 2020/07/02 10:36:58 rillig Exp $
+# $NetBSD: cond-short.mk,v 1.4 2020/07/02 12:37:18 rillig Exp $
 #
 # Demonstrates that in conditions, the right-hand side of an && or ||
 # is only evaluated if it can actually influence the result.
@@ -27,8 +27,8 @@
 .if 1 && empty(${echo "expected and empty" 1>&2 :L:sh})
 .endif
 
-# FIXME: "VAR U11" must not be evaluated.
-# The whole !empty condition must only be parsed and then discarded.
+# "VAR U11" is not evaluated; it was evaluated before 2020-07-02.
+# The whole !empty condition is only parsed and then discarded.
 VAR=	${VAR${:U11${echo "unexpected VAR U11" 1>&2 :L:sh}}}
 VAR13=	${VAR${:U12${echo "unexpected VAR13" 1>&2 :L:sh}}}
 .if 0 && !empty(VAR${:U13${echo "unexpected U13 condition" 1>&2 :L:sh}})
@@ -37,6 +37,10 @@ VAR13=	${VAR${:U12${echo "unexpected VAR13" 1>&2 :L:sh}}}
 VAR=	${VAR${:U21${echo "unexpected VAR U21" 1>&2 :L:sh}}}
 VAR23=	${VAR${:U22${echo   "expected VAR23" 1>&2 :L:sh}}}
 .if 1 && !empty(VAR${:U23${echo   "expected U23 condition" 1>&2 :L:sh}})
+.endif
+
+# FIXME: The :M modifier must only be parsed, not evaluated.
+.if 0 && !empty(VAR:M${:U${echo "unexpected M pattern" 1>&2 :L:sh}})
 .endif
 
 # The || operator.
