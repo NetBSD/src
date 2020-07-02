@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.minirootkmod,v 1.4 2020/04/04 19:50:53 christos Exp $
+#	$NetBSD: Makefile.minirootkmod,v 1.5 2020/07/02 08:48:10 lukem Exp $
 #
 # Makefile snippet to build a miniroot kernel module (e.g. miniroot.kmod)
 #
@@ -24,6 +24,9 @@ RAMDISK?=	ramdisk
 
 MKMAN=		no
 PROG=		${MINIROOT}.kmod
+
+# Not a real PROG; doesn't actually have source
+SRCS.${PROG}=
 
 # SRCMOD is a skeleton version of miniroot.kmod, without an embedded ramdisk.
 # It should already have been created by "make install" in
