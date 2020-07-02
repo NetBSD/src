@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.51 2020/05/30 16:35:02 thorpej Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.52 2020/07/02 09:02:04 msaitoh Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.51 2020/05/30 16:35:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.52 2020/07/02 09:02:04 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,11 +235,11 @@ gem_pci_attach(device_t parent, device_t self, void *aux)
 
 	if ((data = prop_dictionary_get(device_properties(sc->sc_dev),
 	    "mac-address")) != NULL) {
-		memcpy(enaddr, prop_data_data_nocopy(data), ETHER_ADDR_LEN);
+		memcpy(enaddr, prop_data_value(data), ETHER_ADDR_LEN);
 		got_addr = 1;
 		if ((data = prop_dictionary_get(device_properties(sc->sc_dev),
 		    "shared-pins")) != NULL) {
-			memcpy(buf, prop_data_data_nocopy(data),
+			memcpy(buf, prop_data_value(data),
 			    prop_data_size(data));
 			if (isserdes(buf)) {
 				sc->sc_flags |= GEM_SERDES;
