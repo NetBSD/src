@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.71 2019/10/05 23:35:57 mrg Exp $	*/
+/*	$NetBSD: arch.c,v 1.72 2020/07/02 15:47:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.71 2019/10/05 23:35:57 mrg Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.72 2020/07/02 15:47:38 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.71 2019/10/05 23:35:57 mrg Exp $");
+__RCSID("$NetBSD: arch.c,v 1.72 2020/07/02 15:47:38 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1205,9 +1205,9 @@ Arch_FindLib(GNode *gn, Lst path)
     free(libName);
 
 #ifdef LIBRARIES
-    Var_Set(TARGET, gn->name, gn, 0);
+    Var_Set(TARGET, gn->name, gn);
 #else
-    Var_Set(TARGET, gn->path == NULL ? gn->name : gn->path, gn, 0);
+    Var_Set(TARGET, gn->path == NULL ? gn->name : gn->path, gn);
 #endif /* LIBRARIES */
 }
 

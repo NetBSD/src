@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.82 2020/06/25 15:45:37 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.83 2020/07/02 15:47:38 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -570,7 +570,7 @@ meta_init(void)
 {
 #ifdef USE_FILEMON
 	/* this allows makefiles to test if we have filemon support */
-	Var_Set(".MAKE.PATH_FILEMON", filemon_path(), VAR_GLOBAL, 0);
+	Var_Set(".MAKE.PATH_FILEMON", filemon_path(), VAR_GLOBAL);
 #endif
 }
 
@@ -616,7 +616,7 @@ meta_mode_init(const char *make_mode)
 	 * This works be cause :H will generate '.' if there is no /
 	 * and :tA will resolve that to cwd.
 	 */
-	Var_Set(MAKE_META_PREFIX, "Building ${.TARGET:H:tA}/${.TARGET:T}", VAR_GLOBAL, 0);
+	Var_Set(MAKE_META_PREFIX, "Building ${.TARGET:H:tA}/${.TARGET:T}", VAR_GLOBAL);
     }
     if (once)
 	return;
@@ -790,12 +790,12 @@ meta_job_error(Job *job, GNode *gn, int flags, int status)
 		"(ignored)" : "");
     }
     if (gn) {
-	Var_Set(".ERROR_TARGET", gn->path ? gn->path : gn->name, VAR_GLOBAL, 0);
+	Var_Set(".ERROR_TARGET", gn->path ? gn->path : gn->name, VAR_GLOBAL);
     }
     getcwd(cwd, sizeof(cwd));
-    Var_Set(".ERROR_CWD", cwd, VAR_GLOBAL, 0);
+    Var_Set(".ERROR_CWD", cwd, VAR_GLOBAL);
     if (pbm->meta_fname[0]) {
-	Var_Set(".ERROR_META_FILE", pbm->meta_fname, VAR_GLOBAL, 0);
+	Var_Set(".ERROR_META_FILE", pbm->meta_fname, VAR_GLOBAL);
     }
     meta_job_finish(job);
 }
@@ -1013,7 +1013,7 @@ meta_ignore(GNode *gn, const char *p)
     if (metaIgnorePatterns) {
 	char *pm;
 
-	Var_Set(".p.", p, gn, 0);
+	Var_Set(".p.", p, gn);
 	pm = Var_Subst(NULL,
 		       "${" MAKE_META_IGNORE_PATTERNS ":@m@${.p.:M$m}@}",
 		       gn, VARF_WANTRES);
@@ -1238,11 +1238,11 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    if (pid > 0 && pid != lastpid) {
 			char *ldir;
 			char *tp;
-		    
+
 			if (lastpid > 0) {
 			    /* We need to remember these. */
-			    Var_Set(lcwd_vname, lcwd, VAR_GLOBAL, 0);
-			    Var_Set(ldir_vname, latestdir, VAR_GLOBAL, 0);
+			    Var_Set(lcwd_vname, lcwd, VAR_GLOBAL);
+			    Var_Set(ldir_vname, latestdir, VAR_GLOBAL);
 			}
 			snprintf(lcwd_vname, sizeof(lcwd_vname), LCWD_VNAME_FMT, pid);
 			snprintf(ldir_vname, sizeof(ldir_vname), LDIR_VNAME_FMT, pid);
@@ -1288,9 +1288,9 @@ meta_oodate(GNode *gn, Boolean oodate)
 			child = atoi(p);
 			if (child > 0) {
 			    snprintf(cldir, sizeof(cldir), LCWD_VNAME_FMT, child);
-			    Var_Set(cldir, lcwd, VAR_GLOBAL, 0);
+			    Var_Set(cldir, lcwd, VAR_GLOBAL);
 			    snprintf(cldir, sizeof(cldir), LDIR_VNAME_FMT, child);
-			    Var_Set(cldir, latestdir, VAR_GLOBAL, 0);
+			    Var_Set(cldir, latestdir, VAR_GLOBAL);
 #ifdef DEBUG_META_MODE
 			    if (DEBUG(META))
 				    fprintf(debug_file, "%s: %d: %d: cwd=%s lcwd=%s ldir=%s\n",
@@ -1305,8 +1305,8 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    /* Update lcwd and latest directory. */
 		    strlcpy(latestdir, p, sizeof(latestdir));	
 		    strlcpy(lcwd, p, sizeof(lcwd));
-		    Var_Set(lcwd_vname, lcwd, VAR_GLOBAL, 0);
-		    Var_Set(ldir_vname, lcwd, VAR_GLOBAL, 0);
+		    Var_Set(lcwd_vname, lcwd, VAR_GLOBAL);
+		    Var_Set(ldir_vname, lcwd, VAR_GLOBAL);
 #ifdef DEBUG_META_MODE
 		    if (DEBUG(META))
 			fprintf(debug_file, "%s: %d: cwd=%s ldir=%s\n", fname, lineno, cwd, lcwd);
@@ -1633,7 +1633,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 	 * All we can sanely do is set it to .ALLSRC.
 	 */
 	Var_Delete(OODATE, gn);
-	Var_Set(OODATE, Var_Value(ALLSRC, gn, &cp), gn, 0);
+	Var_Set(OODATE, Var_Value(ALLSRC, gn, &cp), gn);
 	free(cp);
     }
 
