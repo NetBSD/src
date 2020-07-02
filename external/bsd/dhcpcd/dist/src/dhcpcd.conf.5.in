@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 12, 2020
+.Dd June 18, 2020
 .Dt DHCPCD.CONF 5
 .Os
 .Sh NAME
@@ -595,6 +595,12 @@ If
 detects an address added to a point to point interface (PPP, TUN, etc) then
 it will set the listed DHCP options to the destination address of the
 interface.
+.It Ic poll Op Ar time
+Polls the interface every
+.Ar time
+milliseconds (default of 100) to check flags and carrier status.
+This option should only be used if the driver does not report link state
+changes but can report the link state.
 .It Ic profile Ar name
 Subsequent options are only parsed for this profile
 .Ar name .

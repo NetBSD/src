@@ -66,10 +66,6 @@
 #define IF_DATA_DHCP6	6
 #define IF_DATA_MAX	7
 
-/* If the interface does not support carrier status (ie PPP),
- * dhcpcd can poll it for the relevant flags periodically */
-#define IF_POLL_UP	100	/* milliseconds */
-
 #ifdef __QNX__
 /* QNX carries defines for, but does not actually support PF_LINK */
 #undef IFLR_ACTIVE

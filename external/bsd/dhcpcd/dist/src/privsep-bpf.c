@@ -175,7 +175,10 @@ ps_bpf_signal_bpfcb(int sig, void *arg)
 {
 	struct dhcpcd_ctx *ctx = arg;
 
-	eloop_exit(ctx->eloop, sig == SIGTERM ? EXIT_SUCCESS : EXIT_FAILURE);
+	if (sig != SIGTERM)
+		return;
+
+	eloop_exit(ctx->eloop, EXIT_SUCCESS);
 }
 
 ssize_t

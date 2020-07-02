@@ -93,6 +93,14 @@
 #endif
 
 /*
+ * Allow a backlog of signals.
+ * If you use many eloops in the same process, they should all
+ * use the same signal handler or have the signal handler unset.
+ * Otherwise the signal might not behave as expected.
+ */
+#define ELOOP_NSIGNALS	5
+
+/*
  * time_t is a signed integer of an unspecified size.
  * To adjust for time_t wrapping, we need to work the maximum signed
  * value and use that as a maximum.
@@ -133,8 +141,6 @@ struct eloop {
 	TAILQ_HEAD (timeout_head, eloop_timeout) timeouts;
 	struct timeout_head free_timeouts;
 
-	void (*timeout0)(void *);
-	void *timeout0_arg;
 	const int *signals;
 	size_t signals_len;
 	void (*signal_cb)(int, void *);
@@ -517,17 +523,6 @@ eloop_q_timeout_add_msec(struct eloop *eloop, int queue, unsigned long when,
 		(unsigned int)seconds, (unsigned int)nseconds, callback, arg);
 }
 
-static int
-eloop_timeout_add_now(struct eloop *eloop,
-    void (*callback)(void *), void *arg)
-{
-
-	assert(eloop->timeout0 == NULL);
-	eloop->timeout0 = callback;
-	eloop->timeout0_arg = arg;
-	return 0;
-}
-
 int
 eloop_q_timeout_delete(struct eloop *eloop, int queue,
     void (*callback)(void *), void *arg)
@@ -582,32 +577,22 @@ eloop_signal_set_cb(struct eloop *eloop,
 	eloop->signal_cb_ctx = signal_cb_ctx;
 }
 
-struct eloop_siginfo {
-	int sig;
-	struct eloop *eloop;
-};
-static struct eloop_siginfo _eloop_siginfo;
-static struct eloop *_eloop;
-
-static void
-eloop_signal1(void *arg)
-{
-	struct eloop_siginfo *si = arg;
-
-	si->eloop->signal_cb(si->sig, si->eloop->signal_cb_ctx);
-}
+static volatile int _eloop_sig[ELOOP_NSIGNALS];
+static volatile size_t _eloop_nsig;
 
 static void
 eloop_signal3(int sig, __unused siginfo_t *siginfo, __unused void *arg)
 {
 
-	/* So that we can operate safely under a signal we instruct
-	 * eloop to pass a copy of the siginfo structure to handle_signal1
-	 * as the very first thing to do. */
-	_eloop_siginfo.eloop = _eloop;
-	_eloop_siginfo.sig = sig;
-	eloop_timeout_add_now(_eloop_siginfo.eloop,
-	    eloop_signal1, &_eloop_siginfo);
+	if (_eloop_nsig == __arraycount(_eloop_sig)) {
+#ifdef ELOOP_DEBUG
+		fprintf(stderr, "%s: signal storm, discarding signal %d\n",
+		    __func__, sig);
+#endif
+		return;
+	}
+
+	_eloop_sig[_eloop_nsig++] = sig;
 }
 
 int
@@ -628,7 +613,6 @@ eloop_signal_mask(struct eloop *eloop, sigset_t *oldset)
 	if (sigprocmask(SIG_SETMASK, &newset, oldset) == -1)
 		return -1;
 
-	_eloop = eloop;
 	sigemptyset(&sa.sa_mask);
 
 	for (i = 0; i < eloop->signals_len; i++) {
@@ -711,7 +695,6 @@ eloop_start(struct eloop *eloop, sigset_t *signals)
 	int n;
 	struct eloop_event *e;
 	struct eloop_timeout *t;
-	void (*t0)(void *);
 	struct timespec ts, *tsp;
 
 	assert(eloop != NULL);
@@ -720,11 +703,9 @@ eloop_start(struct eloop *eloop, sigset_t *signals)
 		if (eloop->exitnow)
 			break;
 
-		/* Run all timeouts first. */
-		if (eloop->timeout0) {
-			t0 = eloop->timeout0;
-			eloop->timeout0 = NULL;
-			t0(eloop->timeout0_arg);
+		if (_eloop_nsig != 0 && eloop->signal_cb != NULL) {
+			n = _eloop_sig[--_eloop_nsig];
+			eloop->signal_cb(n, eloop->signal_cb_ctx);
 			continue;
 		}
 

@@ -100,12 +100,11 @@ ps_ctl_signalcb(int sig, void *arg)
 {
 	struct dhcpcd_ctx *ctx = arg;
 
-	/* Ignore SIGINT, respect PS_STOP command or SIGTERM. */
-	if (sig == SIGINT)
+	if (sig != SIGTERM)
 		return;
 
 	shutdown(ctx->ps_control_fd, SHUT_RDWR);
-	eloop_exit(ctx->eloop, sig == SIGTERM ? EXIT_SUCCESS : EXIT_FAILURE);
+	eloop_exit(ctx->eloop, EXIT_SUCCESS);
 }
 
 ssize_t

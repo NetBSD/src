@@ -74,14 +74,6 @@ struct psr_ctx {
 };
 
 static void
-ps_root_readerrorsig(__unused int sig, void *arg)
-{
-	struct dhcpcd_ctx *ctx = arg;
-
-	eloop_exit(ctx->ps_eloop, EXIT_FAILURE);
-}
-
-static void
 ps_root_readerrorcb(void *arg)
 {
 	struct psr_ctx *psr_ctx = arg;
@@ -686,24 +678,18 @@ ps_root_signalcb(int sig, void *arg)
 {
 	struct dhcpcd_ctx *ctx = arg;
 
-	/* Ignore SIGINT, respect PS_STOP command or SIGTERM. */
-	if (sig == SIGINT)
-		return;
-
-	/* Reap children */
 	if (sig == SIGCHLD) {
 		while (waitpid(-1, NULL, WNOHANG) > 0)
 			;
 		return;
 	}
 
-	logerrx("process %d unexpectedly terminating on signal %d",
-	    getpid(), sig);
-	if (ctx->ps_root_pid == getpid()) {
-		shutdown(ctx->ps_root_fd, SHUT_RDWR);
-		shutdown(ctx->ps_data_fd, SHUT_RDWR);
-	}
-	eloop_exit(ctx->eloop, sig == SIGTERM ? EXIT_SUCCESS : EXIT_FAILURE);
+	if (sig != SIGTERM)
+		return;
+
+	shutdown(ctx->ps_root_fd, SHUT_RDWR);
+	shutdown(ctx->ps_data_fd, SHUT_RDWR);
+	eloop_exit(ctx->eloop, EXIT_SUCCESS);
 }
 
 int (*handle_interface)(void *, int, const char *);
@@ -807,7 +793,7 @@ ps_root_start(struct dhcpcd_ctx *ctx)
 
 	eloop_signal_set_cb(ctx->ps_eloop,
 	    dhcpcd_signals, dhcpcd_signals_len,
-	    ps_root_readerrorsig, ctx);
+	    ps_root_signalcb, ctx);
 
 	return pid;
 }
