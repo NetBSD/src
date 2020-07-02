@@ -1,3 +1,5 @@
+/*	$NetBSD: smuiic.c,v 1.5 2020/07/02 12:47:19 macallan Exp $ */
+
 /*-
  * Copyright (c) 2013 Phileas Fogg
  * All rights reserved.
