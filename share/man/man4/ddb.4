@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.189 2020/03/30 20:47:57 maya Exp $
+.\"	$NetBSD: ddb.4,v 1.190 2020/07/02 11:10:47 jmcneill Exp $
 .\"
 .\" Copyright (c) 1997 - 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd March 30, 2020
+.Dd July 2, 2020
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -1018,6 +1018,8 @@ Given a trap frame address, print out the trap frame.
 Print lwp information about the ``struct lwp''.
 .It Ic pte
 Print PTE information.
+.It Ic reset
+Reset the system.
 .It Ic sysreg
 Print system registers.
 .It Ic watch
@@ -1063,6 +1065,8 @@ Switch to another cpu.
 .Bl -tag -width "traptrace" -compact
 .It Ic frame
 Given a trap frame address, print out the trap frame.
+.It Ic reset
+Reset the system.
 .El
 .Ss HPPA
 .Bl -tag -width "traptrace" -compact
