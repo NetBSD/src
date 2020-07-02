@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.408 2020/06/21 13:29:05 lukem Exp $
+#	$NetBSD: bsd.README,v 1.409 2020/07/02 10:22:28 jmcneill Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1524,6 +1524,9 @@ MAKEOBJDIR	If set, this is the component name of the object
 OBJMACHINE	If this is set but MAKEOBJDIR is not set, creates
 		object directories or links named "obj.${MACHINE}";
 		otherwise, just creates ones named "obj".
+
+OBJMACHINE_ARCH	If set with OBJMACHINE, creates object directories or
+		links named "obj.${MACHINE}-${MACHINE_ARCH}".
 
 USR_OBJMACHINE  If set, and the current directory is a subdirectory of
 		${BSDSRCDIR}, create object directory in the
