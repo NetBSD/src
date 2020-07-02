@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.31 2020/06/20 07:10:36 skrll Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.32 2020/07/02 11:10:48 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.31 2020/06/20 07:10:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.32 2020/07/02 11:10:48 jmcneill Exp $");
 
 #include <sys/param.h>
 
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.31 2020/06/20 07:10:36 skrll Exp $"
 #include <sys/systm.h>
 
 #include <arm/arm32/db_machdep.h>
+#include <arm/arm32/machdep.h>
 #include <arm/cpufunc.h>
 
 #include <ddb/db_access.h>
@@ -131,6 +132,9 @@ const struct db_command db_machine_command_table[] = {
 			"[address]",
 			"   address:\taddress of trapfame to display")},
 #ifdef _KERNEL
+	{ DDB_ADD_CMD("reset",	db_reset_cmd,		0,
+			"Reset the system",
+			NULL,NULL) },
 #if defined(CPU_CORTEXA5) || defined(CPU_CORTEXA7)
 	{ DDB_ADD_CMD("tlb",	db_show_tlb_cmd,	0,
 			"Displays the TLB",
@@ -203,6 +207,17 @@ db_show_fault_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *m
 	db_printf("CONTEXTIDR=%#x TTBCR=%#x TTBR=%#x\n",
 	    armreg_contextidr_read(), armreg_ttbcr_read(),
 	    armreg_ttbr_read());
+}
+
+void
+db_reset_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
+{
+	if (cpu_reset_address == NULL) {
+		db_printf("cpu_reset_address is not set\n");
+		return;
+	}
+
+	cpu_reset_address();
 }
 
 #if defined(CPU_CORTEXA5) || defined(CPU_CORTEXA7)
