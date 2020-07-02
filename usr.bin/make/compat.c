@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.110 2020/01/19 19:42:32 riastradh Exp $	*/
+/*	$NetBSD: compat.c,v 1.111 2020/07/02 15:47:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.110 2020/01/19 19:42:32 riastradh Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.111 2020/07/02 15:47:38 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.110 2020/01/19 19:42:32 riastradh Exp $");
+__RCSID("$NetBSD: compat.c,v 1.111 2020/07/02 15:47:38 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -547,7 +547,7 @@ Compat_Make(void *gnp, void *pgnp)
 
 	if (Lst_Member(gn->iParents, pgn) != NULL) {
 	    char *p1;
-	    Var_Set(IMPSRC, Var_Value(TARGET, gn, &p1), pgn, 0);
+	    Var_Set(IMPSRC, Var_Value(TARGET, gn, &p1), pgn);
 	    free(p1);
 	}
 
@@ -651,7 +651,7 @@ Compat_Make(void *gnp, void *pgnp)
     } else {
 	if (Lst_Member(gn->iParents, pgn) != NULL) {
 	    char *p1;
-	    Var_Set(IMPSRC, Var_Value(TARGET, gn, &p1), pgn, 0);
+	    Var_Set(IMPSRC, Var_Value(TARGET, gn, &p1), pgn);
 	    free(p1);
 	}
 	switch(gn->made) {
