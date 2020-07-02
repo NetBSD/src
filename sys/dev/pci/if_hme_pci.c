@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_pci.c,v 1.38 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: if_hme_pci.c,v 1.39 2020/07/02 09:02:04 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.38 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.39 2020/07/02 09:02:04 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,7 +215,7 @@ hmeattach_pci(device_t parent, device_t self, void *aux)
 	eaddrprop = prop_dictionary_get(device_properties(self), "mac-address");
 
 	if (eaddrprop != NULL && prop_data_size(eaddrprop) == ETHER_ADDR_LEN) {
-		memcpy(&sc->sc_enaddr, prop_data_data_nocopy(eaddrprop),
+		memcpy(&sc->sc_enaddr, prop_data_value(eaddrprop),
 			    ETHER_ADDR_LEN);
 		goto got_eaddr;
 	}

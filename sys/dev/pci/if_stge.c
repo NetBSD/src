@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.86 2020/03/15 22:20:31 thorpej Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.87 2020/07/02 09:02:04 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.86 2020/03/15 22:20:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.87 2020/07/02 09:02:04 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -600,7 +600,7 @@ stge_attach(device_t parent, device_t self, void *aux)
 			 */
 			KASSERT(prop_object_type(data) == PROP_TYPE_DATA);
 			KASSERT(prop_data_size(data) == ETHER_ADDR_LEN);
-			(void)memcpy(enaddr, prop_data_data_nocopy(data),
+			(void)memcpy(enaddr, prop_data_value(data),
 			    ETHER_ADDR_LEN);
 		} else {
 			uint16_t myaddr[ETHER_ADDR_LEN / 2];

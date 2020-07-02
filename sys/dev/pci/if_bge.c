@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.345 2020/02/07 00:04:28 thorpej Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.346 2020/07/02 09:07:10 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.345 2020/02/07 00:04:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.346 2020/07/02 09:07:10 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -6359,7 +6359,7 @@ bge_get_eaddr_fw(struct bge_softc *sc, uint8_t ether_addr[])
 	if (ea != NULL) {
 		KASSERT(prop_object_type(ea) == PROP_TYPE_DATA);
 		KASSERT(prop_data_size(ea) == ETHER_ADDR_LEN);
-		memcpy(ether_addr, prop_data_data_nocopy(ea), ETHER_ADDR_LEN);
+		memcpy(ether_addr, prop_data_value(ea), ETHER_ADDR_LEN);
 		return 0;
 	}
 
