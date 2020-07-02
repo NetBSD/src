@@ -64,7 +64,9 @@
 #include <syslog.h>
 #include <unistd.h>
 
+#define ELOOP_QUEUE	ELOOP_IF
 #include "common.h"
+#include "eloop.h"
 #include "dev.h"
 #include "dhcp.h"
 #include "dhcp6.h"
@@ -384,6 +386,39 @@ if_valid_hwaddr(const uint8_t *hwaddr, size_t hwlen)
 	return false;
 }
 
+#if defined(AF_PACKET) && !defined(AF_LINK)
+static unsigned int
+if_check_arphrd(struct interface *ifp, unsigned int active, bool if_noconf)
+{
+
+	switch(ifp->hwtype) {
+	case ARPHRD_ETHER:	/* FALLTHROUGH */
+	case ARPHRD_IEEE1394:	/* FALLTHROUGH */
+	case ARPHRD_INFINIBAND:	/* FALLTHROUGH */
+	case ARPHRD_NONE:	/* FALLTHROUGH */
+		break;
+	case ARPHRD_LOOPBACK:
+	case ARPHRD_PPP:
+		if (if_noconf) {
+			logdebugx("%s: ignoring due to interface type and"
+			    " no config",
+			    ifp->name);
+			active = IF_INACTIVE;
+		}
+		break;
+	default:
+		if (if_noconf)
+			active = IF_INACTIVE;
+		if (active)
+			logwarnx("%s: unsupported interface type 0x%.2x",
+			    ifp->name, ifp->hwtype);
+		break;
+	}
+
+	return active;
+}
+#endif
+
 struct if_head *
 if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
     int argc, char * const *argv)
@@ -595,32 +630,27 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 			ifp->hwlen = sll->sll_halen;
 			if (ifp->hwlen != 0)
 				memcpy(ifp->hwaddr, sll->sll_addr, ifp->hwlen);
-
-			switch(ifp->hwtype) {
-			case ARPHRD_ETHER:	/* FALLTHROUGH */
-			case ARPHRD_IEEE1394:	/* FALLTHROUGH */
-			case ARPHRD_INFINIBAND:	/* FALLTHROUGH */
-			case ARPHRD_NONE:	/* FALLTHROUGH */
-				break;
-			case ARPHRD_LOOPBACK:
-			case ARPHRD_PPP:
-				if (if_noconf) {
-					logdebugx("%s: ignoring due to"
-					    " interface type and"
-					    " no config",
-					    ifp->name);
-					active = IF_INACTIVE;
-				}
-				break;
-			default:
-				if (active)
-					logwarnx("%s: unsupported"
-					    " interface type 0x%.2x",
-					    ifp->name, ifp->hwtype);
-				break;
-			}
+			active = if_check_arphrd(ifp, active, if_noconf);
 #endif
 		}
+#ifdef __linux__
+		else {
+			struct ifreq ifr = { .ifr_flags = 0 };
+
+			/* This is a huge bug in getifaddrs(3) as there
+			 * is no reason why this can't be returned in
+			 * ifa_addr. */
+			strlcpy(ifr.ifr_name, ifa->ifa_name,
+			    sizeof(ifr.ifr_name));
+			if (ioctl(ctx->pf_inet_fd, SIOCGIFHWADDR, &ifr) == -1)
+				logerr("%s: SIOCGIFHWADDR", ifa->ifa_name);
+			ifp->hwtype = ifr.ifr_hwaddr.sa_family;
+			if (ioctl(ctx->pf_inet_fd, SIOCGIFINDEX, &ifr) == -1)
+				logerr("%s: SIOCGIFINDEX", ifa->ifa_name);
+			ifp->index = (unsigned int)ifr.ifr_ifindex;
+			if_check_arphrd(ifp, active, if_noconf);
+		}
+#endif
 
 		if (!(ctx->options & (DHCPCD_DUMPLEASE | DHCPCD_TEST))) {
 			/* Handle any platform init for the interface */
@@ -659,6 +689,30 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 	}
 
 	return ifs;
+}
+
+static void
+if_poll(void *arg)
+{
+	struct interface *ifp = arg;
+	unsigned int flags = ifp->flags;
+	int carrier;
+
+	carrier = if_carrier(ifp); /* if_carrier will update ifp->flags */
+	if (ifp->carrier != carrier || ifp->flags != flags)
+		dhcpcd_handlecarrier(ifp->ctx, carrier, ifp->flags, ifp->name);
+
+	if (ifp->options->poll != 0 || ifp->carrier != LINK_UP)
+		if_pollinit(ifp);
+}
+
+int
+if_pollinit(struct interface *ifp)
+{
+	unsigned long msec;
+
+	msec = ifp->options->poll != 0 ? ifp->options->poll : IF_POLL_UP;
+	return eloop_timeout_add_msec(ifp->ctx->eloop, msec, if_poll, ifp);
 }
 
 /*
