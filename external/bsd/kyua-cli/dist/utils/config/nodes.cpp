@@ -223,7 +223,7 @@ config::detail::static_inner_node::static_inner_node(void) :
 config::detail::base_node*
 config::detail::static_inner_node::deep_copy(void) const
 {
-    std::auto_ptr< inner_node > new_node(new static_inner_node());
+    std::unique_ptr< inner_node > new_node(new static_inner_node());
     copy_into(new_node.get());
     return new_node.release();
 }
@@ -286,7 +286,7 @@ config::detail::dynamic_inner_node::dynamic_inner_node(void) :
 config::detail::base_node*
 config::detail::dynamic_inner_node::deep_copy(void) const
 {
-    std::auto_ptr< inner_node > new_node(new dynamic_inner_node());
+    std::unique_ptr< inner_node > new_node(new dynamic_inner_node());
     copy_into(new_node.get());
     return new_node.release();
 }
@@ -304,7 +304,7 @@ config::leaf_node::~leaf_node(void)
 config::detail::base_node*
 config::bool_node::deep_copy(void) const
 {
-    std::auto_ptr< bool_node > new_node(new bool_node());
+    std::unique_ptr< bool_node > new_node(new bool_node());
     new_node->_value = _value;
     return new_node.release();
 }
@@ -343,7 +343,7 @@ config::bool_node::set_lua(lutok::state& state, const int value_index)
 config::detail::base_node*
 config::int_node::deep_copy(void) const
 {
-    std::auto_ptr< int_node > new_node(new int_node());
+    std::unique_ptr< int_node > new_node(new int_node());
     new_node->_value = _value;
     return new_node.release();
 }
@@ -382,7 +382,7 @@ config::int_node::set_lua(lutok::state& state, const int value_index)
 config::detail::base_node*
 config::string_node::deep_copy(void) const
 {
-    std::auto_ptr< string_node > new_node(new string_node());
+    std::unique_ptr< string_node > new_node(new string_node());
     new_node->_value = _value;
     return new_node.release();
 }
@@ -421,7 +421,7 @@ config::string_node::set_lua(lutok::state& state, const int value_index)
 config::detail::base_node*
 config::strings_set_node::deep_copy(void) const
 {
-    std::auto_ptr< strings_set_node > new_node(new strings_set_node());
+    std::unique_ptr< strings_set_node > new_node(new strings_set_node());
     new_node->_value = _value;
     return new_node.release();
 }

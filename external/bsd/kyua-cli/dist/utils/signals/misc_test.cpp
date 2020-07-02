@@ -88,7 +88,7 @@ ATF_TEST_CASE_BODY(reset__ok)
 {
     // TODO(jmmv): We should have a child type that inherits both stdout and
     // stderr so that we do not have to specify files.
-    std::auto_ptr< process::child > child = process::child::fork_files(
+    std::unique_ptr< process::child > child = process::child::fork_files(
         program_reset_raise, fs::path("stdout.txt"), fs::path("stderr.txt"));
     process::status status = child->wait();
     ATF_REQUIRE(status.signaled());

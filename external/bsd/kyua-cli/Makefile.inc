@@ -1,12 +1,9 @@
-# $NetBSD: Makefile.inc,v 1.5 2020/06/21 14:26:16 lukem Exp $
+# $NetBSD: Makefile.inc,v 1.6 2020/07/02 14:04:00 lukem Exp $
 
 .include <bsd.own.mk>
 
 TOPDIR=		${NETBSDSRCDIR}/external/bsd/kyua-cli
 SRCDIR=		${TOPDIR}/dist
-
-# Kyua uses auto_ptr; g++ 8 complains about it
-CXXFLAGS+=	-Wno-deprecated-declarations
 
 # Name of the private libraries (without their lib prefix) to depend on.
 KYUA_LIBS?=

@@ -272,7 +272,7 @@ do_inherit_test(const char* fork_stdout, const char* fork_stderr,
             ::close(fd);
         }
 
-        std::auto_ptr< process::child > child = process::child::fork_files(
+        std::unique_ptr< process::child > child = process::child::fork_files(
             child_simple_function< 123, 'Z' >,
             fs::path(fork_stdout), fs::path(fork_stderr));
         const process::status status = child->wait();
@@ -303,7 +303,7 @@ child__fork_capture__ok(Hook hook)
 {
     std::cout << "This unflushed message should not propagate to the child";
     std::cerr << "This unflushed message should not propagate to the child";
-    std::auto_ptr< process::child > child = process::child::fork_capture(hook);
+    std::unique_ptr< process::child > child = process::child::fork_capture(hook);
     std::cout << std::endl;
     std::cerr << std::endl;
 
@@ -362,7 +362,7 @@ ATF_TEST_CASE_BODY(child__fork_capture__fork_cannot_exit)
     const pid_t parent_pid = ::getpid();
     atf::utils::create_file("to-not-be-deleted", "");
 
-    std::auto_ptr< process::child > child = process::child::fork_capture(
+    std::unique_ptr< process::child > child = process::child::fork_capture(
         child_return);
     if (::getpid() != parent_pid) {
         // If we enter this clause, it is because the hook returned.
@@ -382,7 +382,7 @@ ATF_TEST_CASE_BODY(child__fork_capture__fork_cannot_unwind)
     const pid_t parent_pid = ::getpid();
     atf::utils::create_file("to-not-be-deleted", "");
     try {
-        std::auto_ptr< process::child > child = process::child::fork_capture(
+        std::unique_ptr< process::child > child = process::child::fork_capture(
             child_raise_exception< int, 123 >);
         const process::status status = child->wait();
         ATF_REQUIRE(status.signaled());
@@ -418,7 +418,7 @@ ATF_TEST_CASE_BODY(child__fork_files__ok_function)
     const fs::path file1("file1.txt");
     const fs::path file2("file2.txt");
 
-    std::auto_ptr< process::child > child = process::child::fork_files(
+    std::unique_ptr< process::child > child = process::child::fork_files(
         child_simple_function< 15, 'Z' >, file1, file2);
     const process::status status = child->wait();
     ATF_REQUIRE(status.exited());
@@ -441,7 +441,7 @@ ATF_TEST_CASE_BODY(child__fork_files__ok_functor)
     atf::utils::create_file(filea.str(), "Initial stdout\n");
     atf::utils::create_file(fileb.str(), "Initial stderr\n");
 
-    std::auto_ptr< process::child > child = process::child::fork_files(
+    std::unique_ptr< process::child > child = process::child::fork_files(
         child_simple_functor(16, "a functor"), filea, fileb);
     const process::status status = child->wait();
     ATF_REQUIRE(status.exited());
@@ -481,7 +481,7 @@ ATF_TEST_CASE_BODY(child__fork_files__fork_cannot_exit)
     const pid_t parent_pid = ::getpid();
     atf::utils::create_file("to-not-be-deleted", "");
 
-    std::auto_ptr< process::child > child = process::child::fork_files(
+    std::unique_ptr< process::child > child = process::child::fork_files(
         child_return, fs::path("out"), fs::path("err"));
     if (::getpid() != parent_pid) {
         // If we enter this clause, it is because the hook returned.
@@ -501,7 +501,7 @@ ATF_TEST_CASE_BODY(child__fork_files__fork_cannot_unwind)
     const pid_t parent_pid = ::getpid();
     atf::utils::create_file("to-not-be-deleted", "");
     try {
-        std::auto_ptr< process::child > child = process::child::fork_files(
+        std::unique_ptr< process::child > child = process::child::fork_files(
             child_raise_exception< int, 123 >, fs::path("out"),
             fs::path("err"));
         const process::status status = child->wait();
@@ -539,7 +539,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(child__fork_files__create_stdout_fail);
 ATF_TEST_CASE_BODY(child__fork_files__create_stdout_fail)
 {
     process::detail::syscall_open = open_fail< ENOENT >;
-    std::auto_ptr< process::child > child = process::child::fork_files(
+    std::unique_ptr< process::child > child = process::child::fork_files(
         child_simple_function< 1, 'A' >, fs::path("raise-error"),
         fs::path("created"));
     const process::status status = child->wait();
@@ -554,7 +554,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(child__fork_files__create_stderr_fail);
 ATF_TEST_CASE_BODY(child__fork_files__create_stderr_fail)
 {
     process::detail::syscall_open = open_fail< ENOENT >;
-    std::auto_ptr< process::child > child = process::child::fork_files(
+    std::unique_ptr< process::child > child = process::child::fork_files(
         child_simple_function< 1, 'A' >, fs::path("created"),
         fs::path("raise-error"));
     const process::status status = child->wait();
@@ -574,7 +574,7 @@ ATF_TEST_CASE_BODY(child__spawn__absolute_path)
 
     const fs::path program = get_helpers(this);
     INV(program.is_absolute());
-    std::auto_ptr< process::child > child = process::child::spawn_files(
+    std::unique_ptr< process::child > child = process::child::spawn_files(
         program, args, fs::path("out"), fs::path("err"));
 
     const process::status status = child->wait();
@@ -593,7 +593,7 @@ ATF_TEST_CASE_BODY(child__spawn__relative_path)
     ATF_REQUIRE(::mkdir("root", 0755) != -1);
     ATF_REQUIRE(::symlink(get_helpers(this).c_str(), "root/helpers") != -1);
 
-    std::auto_ptr< process::child > child = process::child::spawn_files(
+    std::unique_ptr< process::child > child = process::child::spawn_files(
         fs::path("root/helpers"), args, fs::path("out"), fs::path("err"));
 
     const process::status status = child->wait();
@@ -611,7 +611,7 @@ ATF_TEST_CASE_BODY(child__spawn__basename_only)
 
     ATF_REQUIRE(::symlink(get_helpers(this).c_str(), "helpers") != -1);
 
-    std::auto_ptr< process::child > child = process::child::spawn_files(
+    std::unique_ptr< process::child > child = process::child::spawn_files(
         fs::path("helpers"), args, fs::path("out"), fs::path("err"));
 
     const process::status status = child->wait();
@@ -631,7 +631,7 @@ ATF_TEST_CASE_BODY(child__spawn__no_path)
 
     const fs::path helpers = get_helpers(this);
     utils::setenv("PATH", helpers.branch_path().c_str());
-    std::auto_ptr< process::child > child = process::child::spawn_capture(
+    std::unique_ptr< process::child > child = process::child::spawn_capture(
         fs::path(helpers.leaf_name()), args);
 
     std::string line;
@@ -649,7 +649,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(child__spawn__no_args);
 ATF_TEST_CASE_BODY(child__spawn__no_args)
 {
     std::vector< std::string > args;
-    std::auto_ptr< process::child > child = process::child::spawn_capture(
+    std::unique_ptr< process::child > child = process::child::spawn_capture(
         get_helpers(this), args);
 
     std::string line;
@@ -670,7 +670,7 @@ ATF_TEST_CASE_BODY(child__spawn__some_args)
     args.push_back("print-args");
     args.push_back("foo");
     args.push_back("   bar baz ");
-    std::auto_ptr< process::child > child = process::child::spawn_capture(
+    std::unique_ptr< process::child > child = process::child::spawn_capture(
         get_helpers(this), args);
 
     std::string line;
@@ -696,7 +696,7 @@ ATF_TEST_CASE_WITHOUT_HEAD(child__spawn__missing_program);
 ATF_TEST_CASE_BODY(child__spawn__missing_program)
 {
     std::vector< std::string > args;
-    std::auto_ptr< process::child > child = process::child::spawn_capture(
+    std::unique_ptr< process::child > child = process::child::spawn_capture(
         fs::path("a/b/c"), args);
 
     std::string line;
@@ -714,7 +714,7 @@ ATF_TEST_CASE_BODY(child__spawn__missing_program)
 ATF_TEST_CASE_WITHOUT_HEAD(child__pid);
 ATF_TEST_CASE_BODY(child__pid)
 {
-    std::auto_ptr< process::child > child = process::child::fork_capture(
+    std::unique_ptr< process::child > child = process::child::fork_capture(
         child_write_pid);
 
     const int pid = child->pid();

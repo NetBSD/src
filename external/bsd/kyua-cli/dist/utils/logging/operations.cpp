@@ -96,7 +96,7 @@ static std::vector< std::pair< logging::level, std::string > > backlog;
 
 
 /// Stream to the currently open log file.
-static std::auto_ptr< std::ofstream > logfile;
+static std::unique_ptr< std::ofstream > logfile;
 
 
 /// Constant string to strftime to format timestamps.

@@ -63,7 +63,7 @@ class file_writer : utils::noncopyable {
     const utils::fs::path _output_path;
 
     /// The output file, if not stdout nor stderr.
-    std::auto_ptr< std::ofstream > _output_file;
+    std::unique_ptr< std::ofstream > _output_file;
 
     /// Constant that represents the path to stdout.
     static const utils::fs::path _stdout_path;

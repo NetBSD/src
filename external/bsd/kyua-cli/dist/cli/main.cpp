@@ -171,7 +171,7 @@ safe_main(cmdline::ui* ui, int argc, const char* const argv[],
     commands.insert(new cli::cmd_report_html(), "Reporting");
 
     if (mock_command.get() != NULL)
-        commands.insert(mock_command);
+        commands.insert(std::move(mock_command));
 
     const cmdline::parsed_cmdline cmdline = cmdline::parse(argc, argv, options);
 
@@ -249,7 +249,7 @@ cli::main(cmdline::ui* ui, const int argc, const char* const* const argv,
           cli_command_ptr mock_command)
 {
     try {
-        const int exit_code = safe_main(ui, argc, argv, mock_command);
+        const int exit_code = safe_main(ui, argc, argv, std::move(mock_command));
 
         // Codes above 1 are reserved to report conditions captured as
         // exceptions below.
