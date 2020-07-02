@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2020/06/21 14:12:50 lukem Exp $
+# $NetBSD: Makefile,v 1.4 2020/07/02 13:56:10 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -9,9 +9,6 @@ SRCDIR=		${NETBSDSRCDIR}/external/bsd/lutok/dist
 
 CPPFLAGS+=	-DHAVE_CONFIG_H
 CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/liblutok
-
-# lutok uses auto_ptr; g++ 8 complains about it
-CXXFLAGS+=	-Wno-deprecated-declarations
 
 FILESDIR=	${TESTSDIR}
 
