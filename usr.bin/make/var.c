@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.227 2020/07/02 13:04:09 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.228 2020/07/02 15:14:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.227 2020/07/02 13:04:09 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.228 2020/07/02 15:14:38 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.227 2020/07/02 13:04:09 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.228 2020/07/02 15:14:38 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -195,25 +195,27 @@ GNode          *VAR_CMD;      /* variables defined on the command-line */
 #define FIND_GLOBAL	0x2   /* look in VAR_GLOBAL as well */
 #define FIND_ENV  	0x4   /* look in the environment also */
 
+typedef enum {
+	VAR_IN_USE	= 1,	/* Variable's value is currently being used.
+				 * Used to avoid endless recursion */
+	VAR_FROM_ENV	= 2,	/* Variable comes from the environment */
+	VAR_JUNK	= 4,	/* Variable is a junk variable that
+				 * should be destroyed when done with
+				 * it. Used by Var_Parse for undefined,
+				 * modified variables */
+	VAR_KEEP	= 8,	/* Variable is VAR_JUNK, but we found
+				 * a use for it in some modifier and
+				 * the value is therefore valid */
+	VAR_EXPORTED	= 16,	/* Variable is exported */
+	VAR_REEXPORT	= 32,	/* Indicate if var needs re-export.
+				 * This would be true if it contains $'s */
+	VAR_FROM_CMD	= 64	/* Variable came from command line */
+} Var_Flags;
+
 typedef struct Var {
     char          *name;	/* the variable's name */
     Buffer	  val;		/* its value */
-    int		  flags;    	/* miscellaneous status flags */
-#define VAR_IN_USE	1   	    /* Variable's value currently being used.
-				     * Used to avoid recursion */
-#define VAR_FROM_ENV	2   	    /* Variable comes from the environment */
-#define VAR_JUNK  	4   	    /* Variable is a junk variable that
-				     * should be destroyed when done with
-				     * it. Used by Var_Parse for undefined,
-				     * modified variables */
-#define VAR_KEEP	8	    /* Variable is VAR_JUNK, but we found
-				     * a use for it in some modifier and
-				     * the value is therefore valid */
-#define VAR_EXPORTED	16 	    /* Variable is exported */
-#define VAR_REEXPORT	32	    /* Indicate if var needs re-export.
-				     * This would be true if it contains $'s
-				     */
-#define VAR_FROM_CMD	64 	    /* Variable came from command line */
+    Var_Flags	  flags;    	/* miscellaneous status flags */
 }  Var;
 
 /*
@@ -3758,7 +3760,7 @@ ApplyModifiers(char *nstr, const char *tstr,
  */
 /* coverity[+alloc : arg-*4] */
 char *
-Var_Parse(const char *str, GNode *ctxt, int flags,
+Var_Parse(const char *str, GNode *ctxt, Varf_Flags flags,
 	  int *lengthPtr, void **freePtr)
 {
     const char	   *tstr;    	/* Pointer into str */
@@ -4107,7 +4109,7 @@ Var_Parse(const char *str, GNode *ctxt, int flags,
  *-----------------------------------------------------------------------
  */
 char *
-Var_Subst(const char *var, const char *str, GNode *ctxt, int flags)
+Var_Subst(const char *var, const char *str, GNode *ctxt, Varf_Flags flags)
 {
     Buffer  	  buf;		    /* Buffer for forming things */
     char    	  *val;		    /* Value to substitute for a variable */
