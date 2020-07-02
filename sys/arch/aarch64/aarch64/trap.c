@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.29 2020/07/01 08:02:13 ryo Exp $ */
+/* $NetBSD: trap.c,v 1.30 2020/07/02 13:04:46 rin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.29 2020/07/01 08:02:13 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.30 2020/07/02 13:04:46 rin Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -553,6 +553,7 @@ fetch_arm_insn(struct trapframe *tf, uint32_t *insn)
 static enum emul_arm_result
 emul_arm_insn(struct trapframe *tf)
 {
+	struct lwp * const l = curlwp;
 	uint32_t insn;
 	int insn_size;
 
@@ -562,10 +563,26 @@ emul_arm_insn(struct trapframe *tf)
 	case 2:
 		/* T32-16bit instruction */
 
+		/*
+		 * Breakpoint used by GDB.
+		 */
+		if (insn == 0xdefe)
+			goto trap;
+
 		/* XXX: some T32 IT instruction deprecated should be emulated */
 		break;
 	case 4:
 		/* T32-32bit instruction, or A32 instruction */
+
+		/*
+		 * Breakpoint used by GDB.
+		 */
+		if (insn == 0xe6000011 || insn == 0xe7ffdefe) {
+ trap:
+			do_trapsignal(l, SIGTRAP, TRAP_BRKPT,
+			    (void *)tf->tf_pc, 0);
+			return 0;
+		}
 
 		/*
 		 * Emulate ARMv6 instructions with cache operations
