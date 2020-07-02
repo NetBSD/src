@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.146 2020/06/29 23:54:05 riastradh Exp $	*/
+/*	$NetBSD: cpu.c,v 1.147 2020/07/02 11:49:48 martin Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.146 2020/06/29 23:54:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.147 2020/07/02 11:49:48 martin Exp $");
 
 #include <sys/param.h>
 
@@ -179,6 +179,8 @@ cpu_attach(device_t dv, cpuid_t id)
 	evcnt_attach_dynamic_nozero(&ci->ci_und_cp15_ev, EVCNT_TYPE_TRAP,
 	    NULL, xname, "undefined cp15 insn traps");
 
+	ci->ci_kfpu_spl = -1;
+
 #ifdef MULTIPROCESSOR
 	/*
 	 * and we are done if this is a secondary processor.
@@ -229,8 +231,6 @@ cpu_attach(device_t dv, cpuid_t id)
 #endif
 
 	vfp_attach(ci);		/* XXX SMP */
-
-	ci->ci_kfpu_spl = -1;
 }
 
 enum cpu_class {
