@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2017/04/09 22:50:02 christos Exp $	
+#	$NetBSD: Makefile,v 1.7 2020/07/02 09:07:24 lukem Exp $	
 
 S=	${.CURDIR}/../../../../..
 
@@ -8,6 +8,8 @@ PROGS=		loader.sym loader.efi
 
 MAN.loader.sym=		# no man
 MAN.loader.efi=		# no man
+
+SRCS.loader.efi=	# no SRCS
 
 CPPFLAGS+=	-I${IA64_STAND_DIR}/efi/libefi/
 CPPFLAGS+=	-I${IA64_STAND_DIR}/common/
