@@ -158,9 +158,9 @@ ATF_TEST_CASE_BODY(interrupts_handler__sigterm)
 ATF_TEST_CASE_WITHOUT_HEAD(interrupts_handler__kill_children);
 ATF_TEST_CASE_BODY(interrupts_handler__kill_children)
 {
-    std::auto_ptr< process::child > child1(process::child::fork_capture(
+    std::unique_ptr< process::child > child1(process::child::fork_capture(
          pause_child));
-    std::auto_ptr< process::child > child2(process::child::fork_capture(
+    std::unique_ptr< process::child > child2(process::child::fork_capture(
          pause_child));
 
     signals::interrupts_handler interrupts;
