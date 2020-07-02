@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.80 2020/06/27 00:46:37 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.81 2020/07/02 12:59:31 rin Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.80 2020/06/27 00:46:37 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.81 2020/07/02 12:59:31 rin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -448,10 +448,7 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLED(pmaphist);
 
-#if 0
-	/* uvmexp.ncolors = icachesize / icacheways / PAGE_SIZE; */
 	uvmexp.ncolors = aarch64_cache_vindexsize / PAGE_SIZE;
-#endif
 
 	/* devmap already uses last of va? */
 	if (virtual_devmap_addr != 0 && virtual_devmap_addr < vend)
