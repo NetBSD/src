@@ -117,16 +117,15 @@ logprintdate(FILE *stream)
 __printflike(3, 0) static int
 vlogprintf_r(struct logctx *ctx, FILE *stream, const char *fmt, va_list args)
 {
-	FILE *err;
 	int len = 0, e;
 	va_list a;
 #ifndef SMALL
+	FILE *err = ctx->log_err == NULL ? stderr : ctx->log_err;
 	bool log_pid;
 #ifdef LOGERR_TAG
 	bool log_tag;
 #endif
 
-	err = ctx->log_err == NULL ? stderr : ctx->log_err;
 	if ((stream == err && ctx->log_opts & LOGERR_ERR_DATE) ||
 	    (stream != err && ctx->log_opts & LOGERR_LOG_DATE))
 	{
