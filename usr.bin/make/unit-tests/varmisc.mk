@@ -1,4 +1,4 @@
-# $Id: varmisc.mk,v 1.9 2020/07/01 18:02:26 sjg Exp $
+# $Id: varmisc.mk,v 1.10 2020/07/02 09:44:51 rillig Exp $
 #
 # Miscellaneous variable tests.
 
@@ -72,3 +72,13 @@ MAN+= ${MAN$s}
 
 manok:
 	@echo MAN=${MAN}
+
+# This is an expanded variant of the above .for loop.
+# Between 2020-08-28 and 2020-07-02 this paragraph generated a wrong
+# error message "Variable VARNAME is recursive".
+# When evaluating the !empty expression, the ${:U1} was not expanded and
+# thus resulted in the seeming definition VARNAME=${VARNAME}, which is
+# obviously recursive.
+VARNAME=	${VARNAME${:U1}}
+.if defined(VARNAME${:U2}) && !empty(VARNAME${:U2})
+.endif
