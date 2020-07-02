@@ -120,16 +120,13 @@ static void readquote(void) {
 }
 
 static void encode(void) {
-   int used[26];
-   for (int i=0; i<26; i++) used[i] = 0;
-
    int key[26];
-   int keypos=0;
-   while (keypos < 26) {
-      int c = random()%26;
-      if (used[c]) continue;
-      key[keypos++] = c;
-      used[c] = 1;
+   for (int i=0; i<26; i++) key[i] = i;
+   for (int i=26; i>1; i--) {
+      int c = random() % i;
+      int t = key[i-1];
+      key[i-1] = key[c];
+      key[c] = t;
    }
 
    for (int y=0; y<lines.num; y++) {
@@ -244,9 +241,11 @@ static void loop(void) {
       int ch = getch();
       switch (ch) {
        case 1: /* ^A */
+       case KEY_BEG:
 	curx=0;
 	break;
        case 2: /* ^B */
+       case KEY_LEFT:
 	if (curx > 0) {
 	   curx--;
 	}
@@ -256,9 +255,11 @@ static void loop(void) {
 	}
 	break;
        case 5: /* ^E */
+       case KEY_END:
 	curx = strlen(lines.v[cury]);
 	break;
        case 6: /* ^F */
+       case KEY_RIGHT:
 	if (curx < strlen(lines.v[cury])) {
 	   curx++;
 	}
@@ -271,6 +272,7 @@ static void loop(void) {
 	clear();
 	break;
        case 14: /* ^N */
+       case KEY_DOWN:
 	if (cury < lines.num-1) {
 	   cury++;
 	}
@@ -282,6 +284,7 @@ static void loop(void) {
 	}
 	break;
        case 16: /* ^P */
+       case KEY_UP:
 	if (cury > 0) {
 	   cury--;
 	}
@@ -335,6 +338,7 @@ int main(void) {
    encode();
    opencurses();
 
+   keypad(stdscr, TRUE);
    loop();
 
    closecurses();
