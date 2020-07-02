@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.76 2020/07/02 15:14:38 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.77 2020/07/02 15:47:38 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -186,7 +186,7 @@ typedef enum {
 } Varf_Flags;
 
 void Var_Delete(const char *, GNode *);
-void Var_Set(const char *, const char *, GNode *, int);
+void Var_Set(const char *, const char *, GNode *);
 void Var_Append(const char *, const char *, GNode *);
 Boolean Var_Exists(const char *, GNode *);
 char *Var_Value(const char *, GNode *, char **);

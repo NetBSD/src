@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.229 2020/07/02 15:26:21 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.230 2020/07/02 15:47:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.229 2020/07/02 15:26:21 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.230 2020/07/02 15:47:38 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.229 2020/07/02 15:26:21 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.230 2020/07/02 15:47:38 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -244,8 +244,9 @@ typedef enum {
 	VAR_NOSUBST	= 0x20	/* don't expand vars in VarGetPattern */
 } VarPattern_Flags;
 
-/* Var_Set flags */
-#define VAR_NO_EXPORT	0x01	/* do not export */
+typedef enum {
+	VAR_NO_EXPORT	= 0x01	/* do not export */
+} VarSet_Flags;
 
 typedef struct {
     /*
@@ -884,7 +885,7 @@ Var_UnExport(char *str)
 			     "${" MAKE_EXPORTED ":N%s}", v->name);
 		if (n < (int)sizeof(tmp)) {
 		    cp = Var_Subst(NULL, tmp, VAR_GLOBAL, VARF_WANTRES);
-		    Var_Set(MAKE_EXPORTED, cp, VAR_GLOBAL, 0);
+		    Var_Set(MAKE_EXPORTED, cp, VAR_GLOBAL);
 		    free(cp);
 		}
 	    }
@@ -898,36 +899,8 @@ Var_UnExport(char *str)
     }
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Var_Set --
- *	Set the variable name to the value val in the given context.
- *
- * Input:
- *	name		name of variable to set
- *	val		value to give to the variable
- *	ctxt		context in which to set it
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	If the variable doesn't yet exist, a new record is created for it.
- *	Else the old value is freed and the new one stuck in its place
- *
- * Notes:
- *	The variable is searched for only in its context before being
- *	created in that context. I.e. if the context is VAR_GLOBAL,
- *	only VAR_GLOBAL->context is searched. Likewise if it is VAR_CMD, only
- *	VAR_CMD->context is searched. This is done to avoid the literally
- *	thousands of unnecessary strcmp's that used to be done to
- *	set, say, $(@) or $(<).
- *	If the context is VAR_GLOBAL though, we check if the variable
- *	was set in VAR_CMD from the command line and skip it if so.
- *-----------------------------------------------------------------------
- */
-void
-Var_Set(const char *name, const char *val, GNode *ctxt, int flags)
+static void
+Var_Set_Flags(const char *name, const char *val, GNode *ctxt, VarSet_Flags flags)
 {
     Var   *v;
     char *expanded_name = NULL;
@@ -1020,6 +993,40 @@ Var_Set(const char *name, const char *val, GNode *ctxt, int flags)
 
 /*-
  *-----------------------------------------------------------------------
+ * Var_Set --
+ *	Set the variable name to the value val in the given context.
+ *
+ * Input:
+ *	name		name of variable to set
+ *	val		value to give to the variable
+ *	ctxt		context in which to set it
+ *
+ * Results:
+ *	None.
+ *
+ * Side Effects:
+ *	If the variable doesn't yet exist, a new record is created for it.
+ *	Else the old value is freed and the new one stuck in its place
+ *
+ * Notes:
+ *	The variable is searched for only in its context before being
+ *	created in that context. I.e. if the context is VAR_GLOBAL,
+ *	only VAR_GLOBAL->context is searched. Likewise if it is VAR_CMD, only
+ *	VAR_CMD->context is searched. This is done to avoid the literally
+ *	thousands of unnecessary strcmp's that used to be done to
+ *	set, say, $(@) or $(<).
+ *	If the context is VAR_GLOBAL though, we check if the variable
+ *	was set in VAR_CMD from the command line and skip it if so.
+ *-----------------------------------------------------------------------
+ */
+void
+Var_Set(const char *name, const char *val, GNode *ctxt)
+{
+	Var_Set_Flags(name, val, ctxt, 0);
+}
+
+/*-
+ *-----------------------------------------------------------------------
  * Var_Append --
  *	The variable of the given name has the given value appended to it in
  *	the given context.
@@ -1069,7 +1076,7 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
     v = VarFind(name, ctxt, (ctxt == VAR_GLOBAL) ? (FIND_CMD|FIND_ENV) : 0);
 
     if (v == NULL) {
-	Var_Set(name, val, ctxt, 0);
+	Var_Set(name, val, ctxt);
     } else if (ctxt == VAR_CMD || !(v->flags & VAR_FROM_CMD)) {
 	Buf_AddByte(&v->val, ' ');
 	Buf_AddBytes(&v->val, strlen(val), val);
@@ -1836,7 +1843,7 @@ VarLoopExpand(GNode *ctx MAKE_ATTR_UNUSED,
     int slen;
 
     if (word && *word) {
-        Var_Set(loop->tvar, word, loop->ctxt, VAR_NO_EXPORT);
+        Var_Set_Flags(loop->tvar, word, loop->ctxt, VAR_NO_EXPORT);
         s = Var_Subst(NULL, loop->str, loop->ctxt, loop->errnum | VARF_WANTRES);
         if (s != NULL && *s != '\0') {
             if (addSpace && *s != '\n')
@@ -2713,7 +2720,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 			    if (emsg)
 				Error(emsg, nstr);
 			    else
-				Var_Set(v->name, newStr,  v_ctxt, 0);
+				Var_Set(v->name, newStr,  v_ctxt);
 			    free(newStr);
 			    break;
 			case '?':
@@ -2721,7 +2728,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 				break;
 			    /* FALLTHROUGH */
 			default:
-			    Var_Set(v->name, pattern.rhs, v_ctxt, 0);
+			    Var_Set(v->name, pattern.rhs, v_ctxt);
 			    break;
 			}
 		    }
@@ -2774,10 +2781,10 @@ ApplyModifiers(char *nstr, const char *tstr,
 		    np = bmake_strndup(cp, n+1);
 		    np[n] = '\0';
 		    cp = tstr + 2 + n;
-		    Var_Set(np, nstr, ctxt, 0);
+		    Var_Set(np, nstr, ctxt);
 		    free(np);
 		} else {
-		    Var_Set("_", nstr, ctxt, 0);
+		    Var_Set("_", nstr, ctxt);
 		}
 		newStr = nstr;
 		termc = *cp;
