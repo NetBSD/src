@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.228 2020/07/02 15:14:38 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.229 2020/07/02 15:26:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.228 2020/07/02 15:14:38 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.229 2020/07/02 15:26:21 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.228 2020/07/02 15:14:38 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.229 2020/07/02 15:26:21 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -235,13 +235,14 @@ static int var_exportedVars = VAR_EXPORTED_NONE;
  */
 #define VAR_EXPORT_LITERAL	2
 
-/* Var*Pattern flags */
-#define VAR_SUB_GLOBAL	0x01	/* Apply substitution globally */
-#define VAR_SUB_ONE	0x02	/* Apply substitution to one word */
-#define VAR_SUB_MATCHED	0x04	/* There was a match */
-#define VAR_MATCH_START	0x08	/* Match at start of word */
-#define VAR_MATCH_END	0x10	/* Match at end of word */
-#define VAR_NOSUBST	0x20	/* don't expand vars in VarGetPattern */
+typedef enum {
+	VAR_SUB_GLOBAL	= 0x01,	/* Apply substitution globally */
+	VAR_SUB_ONE	= 0x02,	/* Apply substitution to one word */
+	VAR_SUB_MATCHED	= 0x04,	/* There was a match */
+	VAR_MATCH_START	= 0x08,	/* Match at start of word */
+	VAR_MATCH_END	= 0x10,	/* Match at end of word */
+	VAR_NOSUBST	= 0x20	/* don't expand vars in VarGetPattern */
+} VarPattern_Flags;
 
 /* Var_Set flags */
 #define VAR_NO_EXPORT	0x01	/* do not export */
@@ -263,11 +264,11 @@ typedef struct {
 /* struct passed as 'void *' to VarSubstitute() for ":S/lhs/rhs/",
  * to VarSYSVMatch() for ":lhs=rhs". */
 typedef struct {
-    const char   *lhs;	    /* String to match */
-    int		  leftLen; /* Length of string */
-    const char   *rhs;	    /* Replacement string (w/ &'s removed) */
-    int		  rightLen; /* Length of replacement */
-    int		  flags;
+    const char   *lhs;		/* String to match */
+    int		  leftLen;	/* Length of string */
+    const char   *rhs;		/* Replacement string (w/ &'s removed) */
+    int		  rightLen;	/* Length of replacement */
+    VarPattern_Flags flags;
 } VarPattern;
 
 /* struct passed as 'void *' to VarLoopExpand() for ":@tvar@str@" */
@@ -325,8 +326,8 @@ static Boolean VarSubstitute(GNode *, Var_Parse_State *,
 static Boolean VarLoopExpand(GNode *, Var_Parse_State *,
 			char *, Boolean, Buffer *, void *);
 static char *VarGetPattern(GNode *, Var_Parse_State *,
-			   int, const char **, int, int *, int *,
-			   VarPattern *);
+			   VarPattern_Flags, const char **, int,
+			   VarPattern_Flags *, int *, VarPattern *);
 static char *VarQuote(char *, Boolean);
 static char *VarHash(char *);
 static char *VarModify(GNode *, Var_Parse_State *,
@@ -2225,8 +2226,8 @@ VarRange(const char *str, int ac)
  */
 static char *
 VarGetPattern(GNode *ctxt, Var_Parse_State *vpstate MAKE_ATTR_UNUSED,
-	      int flags, const char **tstr, int delim, int *vflags,
-	      int *length, VarPattern *pattern)
+	      VarPattern_Flags flags, const char **tstr, int delim,
+	      VarPattern_Flags *vflags, int *length, VarPattern *pattern)
 {
     const char *cp;
     char *rstr;
@@ -2650,7 +2651,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 		    char *sv_name;
 		    VarPattern	pattern;
 		    int	how;
-		    int vflags;
+		    VarPattern_Flags vflags;
 
 		    if (v->name[0] == 0)
 			goto bad_modifier;
@@ -2733,7 +2734,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	case '@':
 	    {
 		VarLoop_t	loop;
-		int vflags = VAR_NOSUBST;
+		VarPattern_Flags vflags = VAR_NOSUBST;
 
 		cp = ++tstr;
 		delim = '@';
@@ -3379,8 +3380,8 @@ ApplyModifiers(char *nstr, const char *tstr,
 		VarPattern 	pattern;
 		Boolean	value;
 		int cond_rc;
-		int lhs_flags, rhs_flags;
-		
+		VarPattern_Flags lhs_flags, rhs_flags;
+
 		/* find ':', and then substitute accordingly */
 		if (flags & VARF_WANTRES) {
 		    cond_rc = Cond_EvalExpression(NULL, v->name, &value, 0, FALSE);
