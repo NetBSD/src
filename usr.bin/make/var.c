@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.232 2020/07/02 16:46:57 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.233 2020/07/02 16:52:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.232 2020/07/02 16:46:57 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.233 2020/07/02 16:52:34 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.232 2020/07/02 16:46:57 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.233 2020/07/02 16:52:34 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -279,7 +279,7 @@ typedef struct {
     int		tvarLen;
     char	*str;		/* string to expand */
     int		strLen;
-    int		errnum;		/* errnum for not defined */
+    Varf_Flags	flags;
 } VarLoop_t;
 
 #ifndef NO_REGEX
@@ -1843,7 +1843,7 @@ VarLoopExpand(GNode *ctx MAKE_ATTR_UNUSED,
 
     if (word && *word) {
         Var_Set_Flags(loop->tvar, word, loop->ctxt, VAR_NO_EXPORT);
-        s = Var_Subst(NULL, loop->str, loop->ctxt, loop->errnum | VARF_WANTRES);
+        s = Var_Subst(NULL, loop->str, loop->ctxt, loop->flags);
         if (s != NULL && *s != '\0') {
             if (addSpace && *s != '\n')
                 Buf_AddByte(buf, ' ');
@@ -2759,7 +2759,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 		termc = *cp;
 		delim = '\0';
 
-		loop.errnum = flags & VARF_UNDEFERR;
+		loop.flags = flags & (VARF_UNDEFERR | VARF_WANTRES);
 		loop.ctxt = ctxt;
 		newStr = VarModify(ctxt, &parsestate, nstr, VarLoopExpand,
 				   &loop);
