@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.122 2019/08/10 01:24:17 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.123 2020/07/02 07:49:44 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.122 2019/08/10 01:24:17 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.123 2020/07/02 07:49:44 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_rasops.h"
@@ -1119,7 +1119,7 @@ rasops_do_cursor(struct rasops_info *ri)
 		}
 
 		for (cnt = full; cnt; cnt--) {
-			*dp = ~*(uint32_t *)dp;
+			*dp = ~*dp;
 			dp++;
 		}
 
