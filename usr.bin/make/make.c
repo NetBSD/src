@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.96 2016/11/10 23:41:58 sjg Exp $	*/
+/*	$NetBSD: make.c,v 1.97 2020/07/02 15:47:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.96 2016/11/10 23:41:58 sjg Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.97 2020/07/02 15:47:38 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.96 2016/11/10 23:41:58 sjg Exp $");
+__RCSID("$NetBSD: make.c,v 1.97 2020/07/02 15:47:38 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -831,9 +831,9 @@ Make_Update(GNode *cgn)
 	while ((ln = Lst_Next(cgn->iParents)) != NULL) {
 	    pgn = (GNode *)Lst_Datum(ln);
 	    if (pgn->flags & REMAKE) {
-		Var_Set(IMPSRC, cname, pgn, 0);
+		Var_Set(IMPSRC, cname, pgn);
 		if (cpref != NULL)
-		    Var_Set(PREFIX, cpref, pgn, 0);
+		    Var_Set(PREFIX, cpref, pgn);
 	    }
 	}
 	free(p1);
@@ -967,15 +967,15 @@ Make_DoAllVar(GNode *gn)
     Lst_ForEach(gn->children, MakeAddAllSrc, gn);
 
     if (!Var_Exists (OODATE, gn)) {
-	Var_Set(OODATE, "", gn, 0);
+	Var_Set(OODATE, "", gn);
     }
     if (!Var_Exists (ALLSRC, gn)) {
-	Var_Set(ALLSRC, "", gn, 0);
+	Var_Set(ALLSRC, "", gn);
     }
 
     if (gn->type & OP_JOIN) {
 	char *p1;
-	Var_Set(TARGET, Var_Value(ALLSRC, gn, &p1), gn, 0);
+	Var_Set(TARGET, Var_Value(ALLSRC, gn, &p1), gn);
 	free(p1);
     }
     gn->flags |= DONE_ALLSRC;
@@ -1324,14 +1324,14 @@ Make_ExpandUse(Lst targs)
 		continue;
 	    *eoa = '\0';
 	    *eon = '\0';
-	    Var_Set(MEMBER, eoa + 1, gn, 0);
-	    Var_Set(ARCHIVE, gn->name, gn, 0);
+	    Var_Set(MEMBER, eoa + 1, gn);
+	    Var_Set(ARCHIVE, gn->name, gn);
 	    *eoa = '(';
 	    *eon = ')';
 	}
 
 	(void)Dir_MTime(gn, 0);
-	Var_Set(TARGET, gn->path ? gn->path : gn->name, gn, 0);
+	Var_Set(TARGET, gn->path ? gn->path : gn->name, gn);
 	Lst_ForEach(gn->children, MakeUnmark, gn);
 	Lst_ForEach(gn->children, MakeHandleUse, gn);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.198 2020/06/19 21:17:48 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.199 2020/07/02 15:47:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.198 2020/06/19 21:17:48 sjg Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.199 2020/07/02 15:47:38 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.198 2020/06/19 21:17:48 sjg Exp $");
+__RCSID("$NetBSD: job.c,v 1.199 2020/07/02 15:47:38 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1257,7 +1257,7 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
 	     * .DEFAULT itself.
 	     */
 	    Make_HandleUse(DEFAULT, gn);
-	    Var_Set(IMPSRC, Var_Value(TARGET, gn, &p1), gn, 0);
+	    Var_Set(IMPSRC, Var_Value(TARGET, gn, &p1), gn);
 	    free(p1);
 	} else if (Dir_MTime(gn, 0) == 0 && (gn->type & OP_SPECIAL) == 0) {
 	    /*
@@ -2241,11 +2241,11 @@ Shell_GetNewline(void)
 void
 Job_SetPrefix(void)
 {
-    
+
     if (targPrefix) {
 	free(targPrefix);
     } else if (!Var_Exists(MAKE_JOB_PREFIX, VAR_GLOBAL)) {
-	Var_Set(MAKE_JOB_PREFIX, "---", VAR_GLOBAL, 0);
+	Var_Set(MAKE_JOB_PREFIX, "---", VAR_GLOBAL);
     }
 
     targPrefix = Var_Subst(NULL, "${" MAKE_JOB_PREFIX "}",
@@ -3059,7 +3059,7 @@ Job_RunTarget(const char *target, const char *fname) {
 	return FALSE;
 
     if (fname)
-	Var_Set(ALLSRC, fname, gn, 0);
+	Var_Set(ALLSRC, fname, gn);
 
     JobRun(gn);
     if (gn->made == ERROR) {

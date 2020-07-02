@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.276 2020/06/22 20:15:25 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.277 2020/07/02 15:47:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.276 2020/06/22 20:15:25 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.277 2020/07/02 15:47:38 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.276 2020/06/22 20:15:25 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.277 2020/07/02 15:47:38 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -462,7 +462,7 @@ rearg:
 		case 'B':
 			compatMake = TRUE;
 			Var_Append(MAKEFLAGS, "-B", VAR_GLOBAL);
-			Var_Set(MAKE_MODE, "compat", VAR_GLOBAL, 0);
+			Var_Set(MAKE_MODE, "compat", VAR_GLOBAL);
 			break;
 		case 'C':
 			if (chdir(argvalue) == -1) {
@@ -486,7 +486,7 @@ rearg:
 			break;
 		case 'D':
 			if (argvalue == NULL || argvalue[0] == 0) goto noarg;
-			Var_Set(argvalue, "1", VAR_GLOBAL, 0);
+			Var_Set(argvalue, "1", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, "-D", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
 			break;
@@ -585,7 +585,7 @@ rearg:
 			}
 			Var_Append(MAKEFLAGS, "-j", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
-			Var_Set(".MAKE.JOBS", argvalue, VAR_GLOBAL, 0);
+			Var_Set(".MAKE.JOBS", argvalue, VAR_GLOBAL);
 			maxJobTokens = maxJobs;
 			break;
 		case 'k':
@@ -745,7 +745,7 @@ Main_SetObjdir(const char *fmt, ...)
 				      path, strerror(errno));
 		} else {
 			strncpy(objdir, path, MAXPATHLEN);
-			Var_Set(".OBJDIR", objdir, VAR_GLOBAL, 0);
+			Var_Set(".OBJDIR", objdir, VAR_GLOBAL);
 			setenv("PWD", objdir, 1);
 			Dir_InitDot();
 			purge_cached_realpaths();
@@ -870,14 +870,14 @@ doPrintVars(void)
 		char *var = (char *)Lst_Datum(ln);
 		char *value;
 		char *p1;
-		
+
 		if (strchr(var, '$')) {
 			value = p1 = Var_Subst(NULL, var, VAR_GLOBAL,
 			    VARF_WANTRES);
 		} else if (expandVars) {
 			char tmp[128];
 			int len = snprintf(tmp, sizeof(tmp), "${%s}", var);
-							
+
 			if (len >= (int)sizeof(tmp))
 				Fatal("%s: variable name too big: %s",
 				    progname, var);
@@ -982,7 +982,7 @@ main(int argc, char **argv)
 	 */
 	gettimeofday(&rightnow, NULL);
 	srandom(rightnow.tv_sec + rightnow.tv_usec);
-	
+
 	if ((progname = strrchr(argv[0], '/')) != NULL)
 		progname++;
 	else
@@ -1032,7 +1032,7 @@ main(int argc, char **argv)
 	    static char machine_arch_buf[sizeof(utsname.machine)];
 	    const int mib[2] = { CTL_HW, HW_MACHINE_ARCH };
 	    size_t len = sizeof(machine_arch_buf);
-                
+
 	    if (sysctl(mib, __arraycount(mib), machine_arch_buf,
 		    &len, NULL, 0) < 0) {
 		(void)fprintf(stderr, "%s: sysctl failed (%s).\n", progname,
@@ -1061,13 +1061,13 @@ main(int argc, char **argv)
 	 */
 	Var_Init();		/* Initialize the lists of variables for
 				 * parsing arguments */
-	Var_Set(".MAKE.OS", utsname.sysname, VAR_GLOBAL, 0);
-	Var_Set("MACHINE", machine, VAR_GLOBAL, 0);
-	Var_Set("MACHINE_ARCH", machine_arch, VAR_GLOBAL, 0);
+	Var_Set(".MAKE.OS", utsname.sysname, VAR_GLOBAL);
+	Var_Set("MACHINE", machine, VAR_GLOBAL);
+	Var_Set("MACHINE_ARCH", machine_arch, VAR_GLOBAL);
 #ifdef MAKE_VERSION
-	Var_Set("MAKE_VERSION", MAKE_VERSION, VAR_GLOBAL, 0);
+	Var_Set("MAKE_VERSION", MAKE_VERSION, VAR_GLOBAL);
 #endif
-	Var_Set(".newline", "\n", VAR_GLOBAL, 0); /* handy for :@ loops */
+	Var_Set(".newline", "\n", VAR_GLOBAL); /* handy for :@ loops */
 	/*
 	 * This is the traditional preference for makefiles.
 	 */
@@ -1075,8 +1075,8 @@ main(int argc, char **argv)
 # define MAKEFILE_PREFERENCE_LIST "makefile Makefile"
 #endif
 	Var_Set(MAKEFILE_PREFERENCE, MAKEFILE_PREFERENCE_LIST,
-		VAR_GLOBAL, 0);
-	Var_Set(MAKE_DEPENDFILE, ".depend", VAR_GLOBAL, 0);
+		VAR_GLOBAL);
+	Var_Set(MAKE_DEPENDFILE, ".depend", VAR_GLOBAL);
 
 	create = Lst_Init(FALSE);
 	makefiles = Lst_Init(FALSE);
@@ -1130,14 +1130,14 @@ main(int argc, char **argv)
 		p1 = argv[0];		/* realpath failed */
 	    }
 	}
-	Var_Set("MAKE", p1, VAR_GLOBAL, 0);
-	Var_Set(".MAKE", p1, VAR_GLOBAL, 0);
-	Var_Set(MAKEFLAGS, "", VAR_GLOBAL, 0);
-	Var_Set(MAKEOVERRIDES, "", VAR_GLOBAL, 0);
-	Var_Set("MFLAGS", "", VAR_GLOBAL, 0);
-	Var_Set(".ALLTARGETS", "", VAR_GLOBAL, 0);
+	Var_Set("MAKE", p1, VAR_GLOBAL);
+	Var_Set(".MAKE", p1, VAR_GLOBAL);
+	Var_Set(MAKEFLAGS, "", VAR_GLOBAL);
+	Var_Set(MAKEOVERRIDES, "", VAR_GLOBAL);
+	Var_Set("MFLAGS", "", VAR_GLOBAL);
+	Var_Set(".ALLTARGETS", "", VAR_GLOBAL);
 	/* some makefiles need to know this */
-	Var_Set(MAKE_LEVEL ".ENV", MAKE_LEVEL_ENV, VAR_CMD, 0);
+	Var_Set(MAKE_LEVEL ".ENV", MAKE_LEVEL_ENV, VAR_CMD);
 
 	/*
 	 * Set some other useful macros
@@ -1149,11 +1149,11 @@ main(int argc, char **argv)
 	    if (makelevel < 0)
 		makelevel = 0;
 	    snprintf(tmp, sizeof(tmp), "%d", makelevel);
-	    Var_Set(MAKE_LEVEL, tmp, VAR_GLOBAL, 0);
+	    Var_Set(MAKE_LEVEL, tmp, VAR_GLOBAL);
 	    snprintf(tmp, sizeof(tmp), "%u", myPid);
-	    Var_Set(".MAKE.PID", tmp, VAR_GLOBAL, 0);
+	    Var_Set(".MAKE.PID", tmp, VAR_GLOBAL);
 	    snprintf(tmp, sizeof(tmp), "%u", getppid());
-	    Var_Set(".MAKE.PPID", tmp, VAR_GLOBAL, 0);
+	    Var_Set(".MAKE.PPID", tmp, VAR_GLOBAL);
 	}
 	if (makelevel > 0) {
 		char pn[1024];
@@ -1234,7 +1234,7 @@ main(int argc, char **argv)
 		free(ptmp2);
 	}
 #endif
-	Var_Set(".CURDIR", curdir, VAR_GLOBAL, 0);
+	Var_Set(".CURDIR", curdir, VAR_GLOBAL);
 
 	/*
 	 * Find the .OBJDIR.  If MAKEOBJDIRPREFIX, or failing that,
@@ -1284,7 +1284,7 @@ main(int argc, char **argv)
 			Var_Append(".TARGETS", name, VAR_GLOBAL);
 		}
 	} else
-		Var_Set(".TARGETS", "", VAR_GLOBAL, 0);
+		Var_Set(".TARGETS", "", VAR_GLOBAL);
 
 
 	/*
@@ -1518,7 +1518,7 @@ ReadMakefile(const void *p, const void *q MAKE_ATTR_UNUSED)
 
 	if (!strcmp(fname, "-")) {
 		Parse_File(NULL /*stdin*/, -1);
-		Var_Set("MAKEFILE", "", VAR_INTERNAL, 0);
+		Var_Set("MAKEFILE", "", VAR_INTERNAL);
 	} else {
 		/* if we've chdir'd, rebuild the path name */
 		if (strcmp(curdir, objdir) && *fname != '/') {
@@ -1566,7 +1566,7 @@ ReadMakefile(const void *p, const void *q MAKE_ATTR_UNUSED)
 		 */
 found:
 		if (!doing_depend)
-			Var_Set("MAKEFILE", fname, VAR_INTERNAL, 0);
+			Var_Set("MAKEFILE", fname, VAR_INTERNAL);
 		Parse_File(fname, fd);
 	}
 	free(path);
@@ -1987,7 +1987,7 @@ cached_realpath(const char *pathname, char *resolved)
 	strncpy(resolved, rp, MAXPATHLEN);
 	resolved[MAXPATHLEN - 1] = '\0';
     } else if ((rp = realpath(pathname, resolved)) != NULL) {
-	Var_Set(pathname, rp, cache, 0);
+	Var_Set(pathname, rp, cache);
     } /* else should we negative-cache? */
 
     free(cp);
@@ -2054,7 +2054,7 @@ PrintOnError(GNode *gn, const char *s)
 	/*
 	 * We can print this even if there is no .ERROR target.
 	 */
-	Var_Set(".ERROR_TARGET", gn->name, VAR_GLOBAL, 0);
+	Var_Set(".ERROR_TARGET", gn->name, VAR_GLOBAL);
 	Var_Delete(".ERROR_CMD", VAR_GLOBAL);
 	Lst_ForEach(gn->commands, addErrorCMD, gn);
     }

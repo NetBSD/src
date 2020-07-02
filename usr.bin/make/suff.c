@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.86 2017/04/16 20:38:18 riastradh Exp $	*/
+/*	$NetBSD: suff.c,v 1.87 2020/07/02 15:47:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.86 2017/04/16 20:38:18 riastradh Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.87 2020/07/02 15:47:38 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.86 2017/04/16 20:38:18 riastradh Exp $");
+__RCSID("$NetBSD: suff.c,v 1.87 2020/07/02 15:47:38 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1093,9 +1093,9 @@ Suff_DoPaths(void)
 	}
     }
 
-    Var_Set(".INCLUDES", ptr = Dir_MakeFlags("-I", inIncludes), VAR_GLOBAL, 0);
+    Var_Set(".INCLUDES", ptr = Dir_MakeFlags("-I", inIncludes), VAR_GLOBAL);
     free(ptr);
-    Var_Set(".LIBS", ptr = Dir_MakeFlags("-L", inLibs), VAR_GLOBAL, 0);
+    Var_Set(".LIBS", ptr = Dir_MakeFlags("-L", inLibs), VAR_GLOBAL);
     free(ptr);
 
     Lst_Destroy(inIncludes, Dir_Destroy);
@@ -1941,7 +1941,7 @@ SuffFindArchiveDeps(GNode *gn, Lst slst)
      */
     for (i = (sizeof(copy)/sizeof(copy[0]))-1; i >= 0; i--) {
 	char *p1;
-	Var_Set(copy[i], Var_Value(copy[i], mem, &p1), gn, 0);
+	Var_Set(copy[i], Var_Value(copy[i], mem, &p1), gn);
 	free(p1);
 
     }
@@ -1961,13 +1961,13 @@ SuffFindArchiveDeps(GNode *gn, Lst slst)
     /*
      * Set the other two local variables required for this target.
      */
-    Var_Set(MEMBER, name, gn, 0);
-    Var_Set(ARCHIVE, gn->name, gn, 0);
+    Var_Set(MEMBER, name, gn);
+    Var_Set(ARCHIVE, gn->name, gn);
 
     /*
      * Set $@ for compatibility with other makes
      */
-    Var_Set(TARGET, gn->name, gn, 0);
+    Var_Set(TARGET, gn->name, gn);
 
     /*
      * Now we've got the important local variables set, expand any sources
@@ -2213,10 +2213,10 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
 	}
     }
 
-    Var_Set(TARGET, gn->path ? gn->path : gn->name, gn, 0);
+    Var_Set(TARGET, gn->path ? gn->path : gn->name, gn);
 
     pref = (targ != NULL) ? targ->pref : gn->name;
-    Var_Set(PREFIX, pref, gn, 0);
+    Var_Set(PREFIX, pref, gn);
 
     /*
      * Now we've got the important local variables set, expand any sources
@@ -2246,7 +2246,7 @@ sfnd_abort:
 				     targ->suff->searchPath));
 	    if (gn->path != NULL) {
 		char *ptr;
-		Var_Set(TARGET, gn->path, gn, 0);
+		Var_Set(TARGET, gn->path, gn);
 
 		if (targ != NULL) {
 		    /*
@@ -2269,7 +2269,7 @@ sfnd_abort:
 		    else
 			ptr = gn->path;
 
-		    Var_Set(PREFIX, ptr, gn, 0);
+		    Var_Set(PREFIX, ptr, gn);
 
 		    gn->path[savep] = savec;
 		} else {
@@ -2286,7 +2286,7 @@ sfnd_abort:
 		    else
 			ptr = gn->path;
 
-		    Var_Set(PREFIX, ptr, gn, 0);
+		    Var_Set(PREFIX, ptr, gn);
 		}
 	    }
 	}
@@ -2373,9 +2373,9 @@ sfnd_abort:
 	     */
 	    targ->node->type |= OP_DEPS_FOUND;
 
-	    Var_Set(PREFIX, targ->pref, targ->node, 0);
+	    Var_Set(PREFIX, targ->pref, targ->node);
 
-	    Var_Set(TARGET, targ->node->name, targ->node, 0);
+	    Var_Set(TARGET, targ->node->name, targ->node);
 	}
     }
 
@@ -2458,8 +2458,8 @@ SuffFindDeps(GNode *gn, Lst slst)
     /*
      * Make sure we have these set, may get revised below.
      */
-    Var_Set(TARGET, gn->path ? gn->path : gn->name, gn, 0);
-    Var_Set(PREFIX, gn->name, gn, 0);
+    Var_Set(TARGET, gn->path ? gn->path : gn->name, gn);
+    Var_Set(PREFIX, gn->name, gn);
 
     if (DEBUG(SUFF)) {
 	fprintf(debug_file, "SuffFindDeps (%s)\n", gn->name);
@@ -2488,14 +2488,14 @@ SuffFindDeps(GNode *gn, Lst slst)
 	    Arch_FindLib(gn, s->searchPath);
 	} else {
 	    gn->suffix = NULL;
-	    Var_Set(TARGET, gn->name, gn, 0);
+	    Var_Set(TARGET, gn->name, gn);
 	}
 	/*
 	 * Because a library (-lfoo) target doesn't follow the standard
 	 * filesystem conventions, we don't set the regular variables for
 	 * the thing. .PREFIX is simply made empty...
 	 */
-	Var_Set(PREFIX, "", gn, 0);
+	Var_Set(PREFIX, "", gn);
     } else {
 	SuffFindNormalDeps(gn, slst);
     }
