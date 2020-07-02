@@ -1,4 +1,4 @@
-# $NetBSD: cond-short.mk,v 1.5 2020/07/02 13:04:09 rillig Exp $
+# $NetBSD: cond-short.mk,v 1.6 2020/07/02 16:37:56 rillig Exp $
 #
 # Demonstrates that in conditions, the right-hand side of an && or ||
 # is only evaluated if it can actually influence the result.
@@ -46,6 +46,24 @@ VAR=	# empty again, for the following tests
 .endif
 
 .if 1 && !empty(VAR:M${:U${echo   "expected M pattern" 1>&2 :L:sh}})
+.endif
+
+.if 0 && !empty(VAR:S,from,${:U${echo "unexpected S modifier" 1>&2 :L:sh}},)
+.endif
+
+.if 0 && !empty(VAR:C,from,${:U${echo "unexpected C modifier" 1>&2 :L:sh}},)
+.endif
+
+.if 0 && !empty("" == "" :? ${:U${echo "unexpected ? modifier" 1>&2 :L:sh}} :)
+.endif
+
+.if 0 && !empty(VAR:old=${:U${echo "unexpected = modifier" 1>&2 :L:sh}})
+.endif
+
+.if 0 && !empty(1 2 3:L:@var@${:U${echo "unexpected @ modifier" 1>&2 :L:sh}}@)
+.endif
+
+.if 0 && !empty(:U${:!echo "unexpected exclam modifier" 1>&2 !})
 .endif
 
 # The || operator.

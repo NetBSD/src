@@ -4,6 +4,12 @@ expected and empty
 expected U23 condition
 expected VAR23
 expected M pattern
+unexpected S modifier
+unexpected C modifier
+unexpected = modifier
+unexpected @ modifier
+unexpected @ modifier
+unexpected @ modifier
 expected or
 expected or exists
 expected or empty
