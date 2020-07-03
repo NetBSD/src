@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.278 2020/07/03 08:02:55 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.279 2020/07/03 08:13:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.278 2020/07/03 08:02:55 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.279 2020/07/03 08:13:23 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.278 2020/07/03 08:02:55 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.279 2020/07/03 08:13:23 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -232,7 +232,7 @@ explode(const char *flags)
     *nf = '\0';
     return st;
 }
-	    
+
 static void
 parse_debug_options(const char *argvalue)
 {
@@ -416,7 +416,7 @@ MainParseArgs(int argc, char **argv)
 /* Can't actually use getopt(3) because rescanning is not portable */
 
 	getopt_def = OPTFLAGS;
-rearg:	
+rearg:
 	inOption = FALSE;
 	optscan = NULL;
 	while(argc > 1) {
@@ -452,7 +452,7 @@ rearg:
 				arginc = 2;
 			}
 		} else {
-			argvalue = NULL; 
+			argvalue = NULL;
 		}
 		switch(c) {
 		case '\0':
@@ -1268,7 +1268,7 @@ main(int argc, char **argv)
 	(void)time(&now);
 
 	Trace_Log(MAKESTART, NULL);
-	
+
 	/*
 	 * Set up the .TARGETS variable to contain the list of targets to be
 	 * created. If none specified, make the variable empty -- the parser
@@ -1307,7 +1307,7 @@ main(int argc, char **argv)
 		if (strncmp(".../", start, 4) != 0) {
 			(void)Dir_AddDir(defIncPath, start);
 		} else {
-			if (Dir_FindHereOrAbove(curdir, start+4, 
+			if (Dir_FindHereOrAbove(curdir, start+4,
 			    found_path, sizeof(found_path))) {
 				(void)Dir_AddDir(defIncPath, found_path);
 			}
@@ -1342,7 +1342,7 @@ main(int argc, char **argv)
 
 		ln = Lst_Find(makefiles, NULL, ReadAllMakefiles);
 		if (ln != NULL)
-			Fatal("%s: cannot open %s.", progname, 
+			Fatal("%s: cannot open %s.", progname,
 			    (char *)Lst_Datum(ln));
 	} else {
 	    p1 = Var_Subst(NULL, "${" MAKEFILE_PREFERENCE "}",
@@ -1365,7 +1365,7 @@ main(int argc, char **argv)
 
 	if (enterFlagObj)
 		printf("%s: Entering directory `%s'\n", progname, objdir);
-	
+
 	MakeMode(NULL);
 
 	Var_Append("MFLAGS", Var_Value(MAKEFLAGS, VAR_GLOBAL, &p1), VAR_GLOBAL);
@@ -1409,7 +1409,7 @@ main(int argc, char **argv)
 
 	if (!printVars)
 	    Main_ExportMAKEFLAGS(TRUE);	/* initial export */
-	
+
 
 	/*
 	 * For compatibility, look at the directories in the VPATH variable
@@ -1525,14 +1525,14 @@ ReadMakefile(const void *p, const void *q MAKE_ATTR_UNUSED)
 			size_t plen = strlen(curdir) + strlen(fname) + 2;
 			if (len < plen)
 				path = bmake_realloc(path, len = 2 * plen);
-			
+
 			(void)snprintf(path, len, "%s/%s", curdir, fname);
 			fd = open(path, O_RDONLY);
 			if (fd != -1) {
 				fname = path;
 				goto found;
 			}
-			
+
 			/* If curdir failed, try objdir (ala .depend) */
 			plen = strlen(objdir) + strlen(fname) + 2;
 			if (len < plen)
@@ -2045,7 +2045,7 @@ PrintOnError(GNode *gn, const char *s)
 
     if (s)
 	printf("%s", s);
-	
+
     printf("\n%s: stopped in %s\n", progname, curdir);
 
     if (en)
@@ -2088,7 +2088,7 @@ Main_ExportMAKEFLAGS(Boolean first)
     if (once != first)
 	return;
     once = 0;
-    
+
     strncpy(tmp, "${.MAKEFLAGS} ${.MAKEOVERRIDES:O:u:@v@$v=${$v:Q}@}",
 	    sizeof(tmp));
     s = Var_Subst(NULL, tmp, VAR_CMD, VARF_WANTRES);
@@ -2134,7 +2134,7 @@ mkTempFile(const char *pattern, char **fnamep)
     static char *tmpdir = NULL;
     char tfile[MAXPATHLEN];
     int fd;
-    
+
     if (!pattern)
 	pattern = TMPPAT;
     if (!tmpdir)
