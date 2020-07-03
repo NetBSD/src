@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.42 2020/03/17 17:18:49 maxv Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.43 2020/07/03 16:17:24 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.42 2020/03/17 17:18:49 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.43 2020/07/03 16:17:24 maxv Exp $");
 
 #include "opt_mtrr.h"
 
@@ -349,29 +349,56 @@ vunmapbuf(struct buf *bp, vsize_t len)
 }
 
 #ifdef __HAVE_CPU_UAREA_ROUTINES
+/*
+ * Layout of the uarea:
+ *    Page[0]        = PCB
+ *    Page[1]        = RedZone
+ *    Page[2]        = Stack
+ *    Page[...]      = Stack
+ *    Page[UPAGES-1] = Stack
+ *    Page[UPAGES]   = RedZone
+ * There is a redzone at the beginning of the stack, and another one at the
+ * end. The former is to protect against deep recursions that could corrupt
+ * the PCB, the latter to protect against severe stack overflows.
+ */
 void *
 cpu_uarea_alloc(bool system)
 {
-	vaddr_t va;
+	vaddr_t base, va;
+	paddr_t pa;
 
-	va = uvm_km_alloc(kernel_map, USPACE, 0, UVM_KMF_WIRED|UVM_KMF_WAITVA);
-	if (va == 0)
-		return NULL;
+	base = uvm_km_alloc(kernel_map, USPACE + PAGE_SIZE, 0,
+	    UVM_KMF_WIRED|UVM_KMF_WAITVA);
 
-	/*
-	 * The second page is unmapped, and acts as a guard page between the
-	 * PCB (first page) and the stack (rest of the pages).
-	 */
-	pmap_kremove(va + PAGE_SIZE, PAGE_SIZE);
+	/* Page[1] = RedZone */
+	va = base + PAGE_SIZE;
+	if (!pmap_extract(pmap_kernel(), va, &pa)) {
+		panic("%s: impossible, Page[1] unmapped", __func__);
+	}
+	pmap_kremove(va, PAGE_SIZE);
+	uvm_pagefree(PHYS_TO_VM_PAGE(pa));
+
+	/* Page[UPAGES] = RedZone */
+	va = base + USPACE;
+	if (!pmap_extract(pmap_kernel(), va, &pa)) {
+		panic("%s: impossible, Page[UPAGES] unmapped", __func__);
+	}
+	pmap_kremove(va, PAGE_SIZE);
+	uvm_pagefree(PHYS_TO_VM_PAGE(pa));
+
 	pmap_update(pmap_kernel());
 
-	return (void *)va;
+	return (void *)base;
 }
 
 bool
 cpu_uarea_free(void *addr)
 {
-	uvm_km_free(kernel_map, (vaddr_t)addr, USPACE, UVM_KMF_WIRED);
+	vaddr_t base = (vaddr_t)addr;
+
+	KASSERT(!pmap_extract(pmap_kernel(), base + PAGE_SIZE, NULL));
+	KASSERT(!pmap_extract(pmap_kernel(), base + USPACE, NULL));
+	uvm_km_free(kernel_map, base, USPACE + PAGE_SIZE, UVM_KMF_WIRED);
 	return true;
 }
 #endif /* __HAVE_CPU_UAREA_ROUTINES */
