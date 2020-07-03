@@ -1,7 +1,7 @@
-/*	$NetBSD: t_syslog.c,v 1.2 2012/03/18 07:00:51 jruoho Exp $ */
+/*	$NetBSD: t_syslog.c,v 1.3 2020/07/03 03:13:10 jruoho Exp $ */
 
 /*-
- * Copyright (c) 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,6 @@
 ATF_TC(syslog_pthread);
 ATF_TC_HEAD(syslog_pthread, tc)
 {
-
 	atf_tc_set_md_var(tc, "descr", "Test that syslog(3) "
 	    "works when linked to pthread(3) (PR lib/44248)");
 	atf_tc_set_md_var(tc, "timeout", "2");
@@ -47,10 +46,23 @@ ATF_TC_BODY(syslog_pthread, tc)
 	syslog(LOG_DEBUG, "from tests/lib/libc/gen/t_syslog");
 }
 
+ATF_TC(syslog_invalid_priority);
+ATF_TC_HEAD(syslog_invalid_priority, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test that syslog(3) does "
+	    "not segfault from an invalid priority (PR lib/55041)");
+}
+
+ATF_TC_BODY(syslog_invalid_priority, tc)
+{
+	syslog(-1, "from tests/lib/libc/gen/t_syslog");
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, syslog_pthread);
+	ATF_TP_ADD_TC(tp, syslog_invalid_priority);
 
 	return atf_no_error();
 }
