@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.76 2020/06/28 11:06:26 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.77 2020/07/03 08:02:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.76 2020/06/28 11:06:26 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.77 2020/07/03 08:02:55 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.76 2020/06/28 11:06:26 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.77 2020/07/03 08:02:55 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -256,7 +256,7 @@ CondGetArg(Boolean doEval, char **linePtr, char **argPtr, const char *func)
 	 * the word 'make' or 'defined' at the beginning of a symbol...
 	 */
 	*argPtr = NULL;
-	return (0);
+	return 0;
     }
 
     while (*cp == ' ' || *cp == '\t') {
@@ -314,11 +314,11 @@ CondGetArg(Boolean doEval, char **linePtr, char **argPtr, const char *func)
     if (func != NULL && *cp++ != ')') {
 	Parse_Error(PARSE_WARNING, "Missing closing parenthesis for %s()",
 		     func);
-	return (0);
+	return 0;
     }
 
     *linePtr = cp;
-    return (argLen);
+    return argLen;
 }
 
 /*-
@@ -347,7 +347,7 @@ CondDoDefined(int argLen MAKE_ATTR_UNUSED, const char *arg)
     }
 
     free(p1);
-    return (result);
+    return result;
 }
 
 /*-
@@ -367,7 +367,7 @@ CondDoDefined(int argLen MAKE_ATTR_UNUSED, const char *arg)
 static int
 CondStrMatch(const void *string, const void *pattern)
 {
-    return(!Str_Match(string, pattern));
+    return !Str_Match(string, pattern);
 }
 
 /*-
@@ -419,7 +419,7 @@ CondDoExists(int argLen MAKE_ATTR_UNUSED, const char *arg)
     } else {
 	result = FALSE;
     }
-    return (result);
+    return result;
 }
 
 /*-
@@ -441,7 +441,7 @@ CondDoTarget(int argLen MAKE_ATTR_UNUSED, const char *arg)
     GNode   *gn;
 
     gn = Targ_FindNode(arg, TARG_NOCREATE);
-    return (gn != NULL) && !OP_NOP(gn->type);
+    return gn != NULL && !OP_NOP(gn->type);
 }
 
 /*-
@@ -465,7 +465,7 @@ CondDoCommands(int argLen MAKE_ATTR_UNUSED, const char *arg)
     GNode   *gn;
 
     gn = Targ_FindNode(arg, TARG_NOCREATE);
-    return (gn != NULL) && !OP_NOP(gn->type) && !Lst_IsEmpty(gn->commands);
+    return gn != NULL && !OP_NOP(gn->type) && !Lst_IsEmpty(gn->commands);
 }
 
 /*-
@@ -1038,7 +1038,7 @@ CondT(Boolean doEval)
 	    t = TOK_TRUE;
 	}
     }
-    return (t);
+    return t;
 }
 
 /*-
@@ -1084,7 +1084,7 @@ CondF(Boolean doEval)
 	    CondPushBack(o);
 	}
     }
-    return (l);
+    return l;
 }
 
 /*-
@@ -1131,7 +1131,7 @@ CondE(Boolean doEval)
 	    CondPushBack(o);
 	}
     }
-    return (l);
+    return l;
 }
 
 /*-

@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.199 2020/07/02 15:47:38 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.200 2020/07/03 08:02:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.199 2020/07/02 15:47:38 rillig Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.200 2020/07/03 08:02:55 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.199 2020/07/02 15:47:38 rillig Exp $");
+__RCSID("$NetBSD: job.c,v 1.200 2020/07/03 08:02:55 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -919,7 +919,7 @@ JobSaveCommand(void *cmd, void *gn)
 {
     cmd = Var_Subst(NULL, (char *)cmd, (GNode *)gn, VARF_WANTRES);
     (void)Lst_AtEnd(postCommands->commands, cmd);
-    return(0);
+    return 0;
 }
 
 
@@ -1749,7 +1749,7 @@ JobStart(GNode *gn, int flags)
     JobCreatePipe(job, 3);
 
     JobExec(job, argv);
-    return(JOB_RUNNING);
+    return JOB_RUNNING;
 }
 
 static char *
@@ -2391,7 +2391,7 @@ JobMatchShell(const char *name)
 
     for (sh = shells; sh->name != NULL; sh++) {
 	if (strcmp(name, sh->name) == 0)
-		return (sh);
+		return sh;
     }
     return NULL;
 }
@@ -2507,7 +2507,7 @@ Job_ParseShell(char *line)
 		    Parse_Error(PARSE_FATAL, "Unknown keyword \"%s\"",
 				*argv);
 		    free(words);
-		    return(FAILURE);
+		    return FAILURE;
 		}
 		fullSpec = TRUE;
 	    }
@@ -2523,13 +2523,13 @@ Job_ParseShell(char *line)
 	if (newShell.name == NULL) {
 	    Parse_Error(PARSE_FATAL, "Neither path nor name specified");
 	    free(words);
-	    return(FAILURE);
+	    return FAILURE;
 	} else {
 	    if ((sh = JobMatchShell(newShell.name)) == NULL) {
 		    Parse_Error(PARSE_WARNING, "%s: No matching shell",
 				newShell.name);
 		    free(words);
-		    return(FAILURE);
+		    return FAILURE;
 	    }
 	    commandShell = sh;
 	    shellName = newShell.name;
@@ -2565,7 +2565,7 @@ Job_ParseShell(char *line)
 		    Parse_Error(PARSE_WARNING, "%s: No matching shell",
 				shellName);
 		    free(words);
-		    return(FAILURE);
+		    return FAILURE;
 	    }
 	    commandShell = sh;
 	} else {
@@ -2682,7 +2682,7 @@ Job_Finish(void)
 	    JobRun(postCommands);
 	}
     }
-    return(errors);
+    return errors;
 }
 
 /*-
