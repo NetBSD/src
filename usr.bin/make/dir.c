@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.75 2020/07/03 08:02:55 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.76 2020/07/03 08:13:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.75 2020/07/03 08:02:55 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.76 2020/07/03 08:13:23 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.75 2020/07/03 08:02:55 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.76 2020/07/03 08:13:23 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -112,7 +112,7 @@ __RCSID("$NetBSD: dir.c,v 1.75 2020/07/03 08:02:55 rillig Exp $");
  *	Dir_FindHereOrAbove Search for a path in the current directory and
  *			    then all the directories above it in turn until
  *			    the path is found or we reach the root ("/").
- * 
+ *
  *	Dir_MTime 	    Return the modification time of a node. The file
  *	    	  	    is searched for along the default search path.
  *	    	  	    The path and mtime fields of the node are filled
@@ -377,7 +377,7 @@ void
 Dir_InitCur(const char *cdname)
 {
     Path *p;
-    
+
     if (cdname != NULL) {
 	/*
 	 * Our build directory is not the same as our source directory.
@@ -480,7 +480,7 @@ Dir_SetPATH(void)
     Boolean	  hasLastDot = FALSE;	/* true we should search dot last */
 
     Var_Delete(".PATH", VAR_GLOBAL);
-    
+
     if (Lst_Open(dirSearchPath) == SUCCESS) {
 	if ((ln = Lst_First(dirSearchPath)) != NULL) {
 	    p = (Path *)Lst_Datum(ln);
@@ -545,7 +545,7 @@ DirFindName(const void *p, const void *dname)
  * Dir_HasWildcards  --
  *	see if the given name has any wildcard characters in it
  *	be careful not to expand unmatching brackets or braces.
- *	XXX: This code is not 100% correct. ([^]] fails etc.) 
+ *	XXX: This code is not 100% correct. ([^]] fails etc.)
  *	I really don't think that make(1) should be expanding
  *	patterns, because then you have to set a mechanism for
  *	escaping the expansion!
@@ -947,7 +947,7 @@ Dir_Expand(const char *word, Lst path, Lst expansions)
  *-----------------------------------------------------------------------
  */
 static char *
-DirLookup(Path *p, const char *name MAKE_ATTR_UNUSED, const char *cp, 
+DirLookup(Path *p, const char *name MAKE_ATTR_UNUSED, const char *cp,
           Boolean hasSlash MAKE_ATTR_UNUSED)
 {
     char *file;		/* the current filename to check */
@@ -1185,7 +1185,7 @@ Dir_FindFile(const char *name, Lst path)
 	     * is found, we concatenate the directory name and the final
 	     * component and return the resulting string. If we don't find any
 	     * such thing, we go on to phase two...
-	     * 
+	     *
 	     * No matter what, we always look for the file in the current
 	     * directory before anywhere else (unless we found the magic
 	     * DOTLAST path, in which case we search it last) and we *do not*
@@ -1409,14 +1409,14 @@ Dir_FindFile(const char *name, Lst path)
 /*-
  *-----------------------------------------------------------------------
  * Dir_FindHereOrAbove  --
- *	search for a path starting at a given directory and then working 
+ *	search for a path starting at a given directory and then working
  *	our way up towards the root.
  *
  * Input:
  *	here		starting directory
  *	search_path	the path we are looking for
  *	result		the result of a successful search is placed here
- *	rlen		the length of the result buffer 
+ *	rlen		the length of the result buffer
  *			(typically MAXPATHLEN + 1)
  *
  * Results:
@@ -1426,7 +1426,7 @@ Dir_FindFile(const char *name, Lst path)
  * Side Effects:
  *-----------------------------------------------------------------------
  */
-int 
+int
 Dir_FindHereOrAbove(char *here, char *search_path, char *result, int rlen) {
 
 	struct stat st;
@@ -1451,7 +1451,7 @@ Dir_FindHereOrAbove(char *here, char *search_path, char *result, int rlen) {
 				try_end = try + strlen(try);
 				while (try_end > try && *try_end != '/')
 					try_end--;
-				if (try_end > try) 
+				if (try_end > try)
 					*try_end = 0;	/* chop! */
 			}
 
@@ -1462,7 +1462,7 @@ Dir_FindHereOrAbove(char *here, char *search_path, char *result, int rlen) {
 			return 1;
 		}
 
-		/* 
+		/*
 		 * nope, we didn't find it.  if we used up dirbase we've
 		 * reached the root and failed.
 		 */
@@ -1479,7 +1479,7 @@ Dir_FindHereOrAbove(char *here, char *search_path, char *result, int rlen) {
 	} /* while (1) */
 
 	/*
-	 * we failed... 
+	 * we failed...
 	 */
 	return 0;
 }
@@ -1529,7 +1529,7 @@ Dir_MTime(GNode *gn, Boolean recheck)
 		     * see if we can find it via the current .PATH
 		     */
 		    cp++;
-			
+
 		    fullName = Dir_FindFile(cp, Suff_FindPath(gn));
 		    if (fullName) {
 			/*
