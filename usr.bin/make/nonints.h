@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.77 2020/07/02 15:47:38 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.78 2020/07/03 07:40:13 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -137,7 +137,7 @@ Lst Parse_MainName(void);
 char *str_concat(const char *, const char *, int);
 char **brk_string(const char *, int *, Boolean, char **);
 char *Str_FindSubstring(const char *, const char *);
-int Str_Match(const char *, const char *);
+Boolean Str_Match(const char *, const char *);
 char *Str_SYSVMatch(const char *, const char *, size_t *, Boolean *);
 void Str_SYSVSubst(Buffer *, char *, char *, size_t, Boolean);
 
