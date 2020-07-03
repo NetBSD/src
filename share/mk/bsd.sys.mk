@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.301 2020/05/15 19:07:01 maxv Exp $
+#	$NetBSD: bsd.sys.mk,v 1.302 2020/07/03 16:12:16 maxv Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -237,7 +237,7 @@ CFLAGS+=	${CPUFLAGS}
 AFLAGS+=	${CPUFLAGS}
 
 .if ${KCOV:U0} > 0
-KCOVFLAGS=	-fsanitize-coverage=trace-pc
+KCOVFLAGS=	-fsanitize-coverage=trace-pc,trace-cmp
 .for f in subr_kcov.c subr_asan.c subr_csan.c subr_msan.c ubsan.c
 KCOVFLAGS.${f}=		# empty
 .endfor
