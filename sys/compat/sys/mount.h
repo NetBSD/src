@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.13 2020/06/27 15:49:30 christos Exp $	*/
+/*	$NetBSD: mount.h,v 1.14 2020/07/03 18:49:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -137,12 +137,12 @@ statvfs_to_statfs12(const struct statvfs *fs, struct statfs12 *s12)
 static __inline int
 statvfs_to_statfs12_copy(const void *vs, void *vs12, size_t l)
 {
-	struct statfs12 *s12 = STATVFSBUF_GET();
+	struct statfs12 *s12 = kmem_zalloc(sizeof(*s12), KM_SLEEP);
 	int error;
 
 	statvfs_to_statfs12(vs, s12);
 	error = copyout(s12, vs12, sizeof(*s12));
-	STATVFSBUF_PUT(s12);
+	kmem_free(s12, sizeof(*s12));
 
 	return error;
 }
