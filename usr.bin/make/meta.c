@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.83 2020/07/02 15:47:38 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.84 2020/07/03 08:02:55 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -304,7 +304,7 @@ meta_name(struct GNode *gn, char *mname, size_t mnamelen,
 	}
     }
     free(tp);
-    return (mname);
+    return mname;
 }
 
 /*
@@ -355,7 +355,7 @@ is_submake(void *cmdp, void *gnp)
 	}
     }
     free(mp);
-    return (rc);
+    return rc;
 }
 
 typedef struct meta_file_s {
@@ -545,7 +545,7 @@ meta_create(BuildMon *pbm, GNode *gn)
 	free(p[i]);
     }
 
-    return (mf.fp);
+    return mf.fp;
 }
 
 static Boolean
@@ -951,7 +951,7 @@ prefix_match(void *p, void *q)
     const char *path = q;
     size_t n = strlen(prefix);
 
-    return (0 == strncmp(path, prefix, n));
+    return strncmp(path, prefix, n) == 0;
 }
 
 /*

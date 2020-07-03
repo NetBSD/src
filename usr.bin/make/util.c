@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.55 2020/01/07 21:24:16 rillig Exp $	*/
+/*	$NetBSD: util.c,v 1.56 2020/07/03 08:02:55 rillig Exp $	*/
 
 /*
  * Missing stuff from OS's
@@ -8,11 +8,11 @@
 #endif
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: util.c,v 1.55 2020/01/07 21:24:16 rillig Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.56 2020/07/03 08:02:55 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.55 2020/01/07 21:24:16 rillig Exp $");
+__RCSID("$NetBSD: util.c,v 1.56 2020/07/03 08:02:55 rillig Exp $");
 #endif
 #endif
 
@@ -70,7 +70,7 @@ getenv(const char *name)
 {
     int offset;
 
-    return(findenv(name, &offset));
+    return findenv(name, &offset);
 }
 
 int
@@ -174,7 +174,7 @@ strrcpy(char *ptr, char *str)
     while (len)
 	*--ptr = str[--len];
 
-    return (ptr);
+    return ptr;
 } /* end strrcpy */
 
 char    *sys_siglist[] = {
@@ -276,7 +276,7 @@ getwd(char *pathname)
 	if (st_cur.st_ino == st_root.st_ino &&
 	    DEV_DEV_COMPARE(st_cur.st_dev, st_root.st_dev)) {
 	    (void)strcpy(pathname, *pathptr != '/' ? "/" : pathptr);
-	    return (pathname);
+	    return pathname;
 	}
 
 	/* open the parent directory */
@@ -386,7 +386,7 @@ vsnprintf(char *s, size_t n, const char *fmt, va_list args)
 	putc('\0', &fakebuf);
 	if (fakebuf._cnt<0)
 	    fakebuf._cnt = 0;
-	return (n-fakebuf._cnt-1);
+	return n-fakebuf._cnt-1;
 #else
 	(void)vsprintf(s, fmt, args);
 	return strlen(s);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.74 2020/06/05 18:03:59 sjg Exp $	*/
+/*	$NetBSD: dir.c,v 1.75 2020/07/03 08:02:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.74 2020/06/05 18:03:59 sjg Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.75 2020/07/03 08:02:55 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.74 2020/06/05 18:03:59 sjg Exp $");
+__RCSID("$NetBSD: dir.c,v 1.75 2020/07/03 08:02:55 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -537,7 +537,7 @@ Dir_SetPATH(void)
 static int
 DirFindName(const void *p, const void *dname)
 {
-    return (strcmp(((const Path *)p)->name, dname));
+    return strcmp(((const Path *)p)->name, dname);
 }
 
 /*-
@@ -644,7 +644,7 @@ DirMatchFiles(const char *pattern, Path *p, Lst expansions)
 					STR_ADDSLASH)));
 	}
     }
-    return (0);
+    return 0;
 }
 
 /*-
@@ -1004,7 +1004,7 @@ DirLookupSubdir(Path *p, const char *name)
 
     if (cached_stat(file, &stb) == 0) {
 	nearmisses += 1;
-	return (file);
+	return file;
     }
     free(file);
     return NULL;
@@ -1061,7 +1061,7 @@ DirLookupAbs(Path *p, const char *name, const char *cp)
 	if (DEBUG(DIR)) {
 		fprintf(debug_file, "   returning %s\n", name);
 	}
-	return (bmake_strdup(name));
+	return bmake_strdup(name);
 }
 
 /*-
@@ -1087,7 +1087,7 @@ DirFindDot(Boolean hasSlash MAKE_ATTR_UNUSED, const char *name, const char *cp)
 	    }
 	    hits += 1;
 	    dot->hits += 1;
-	    return (bmake_strdup(name));
+	    return bmake_strdup(name);
 	}
 	if (cur &&
 	    Hash_FindEntry(&cur->files, cp) != NULL) {
@@ -1384,7 +1384,7 @@ Dir_FindFile(const char *name, Lst path)
     }
 
     if (Hash_FindEntry(&p->files, cp) != NULL) {
-	return (bmake_strdup(name));
+	return bmake_strdup(name);
     } else {
 	return NULL;
     }
@@ -1395,7 +1395,7 @@ Dir_FindFile(const char *name, Lst path)
 
     bigmisses += 1;
     if (cached_stat(name, &stb) == 0) {
-	return (bmake_strdup(name));
+	return bmake_strdup(name);
     }
 
     if (DEBUG(DIR)) {
@@ -1459,7 +1459,7 @@ Dir_FindHereOrAbove(char *here, char *search_path, char *result, int rlen) {
 			 * done!
 			 */
 			snprintf(result, rlen, "%s", try);
-			return(1);
+			return 1;
 		}
 
 		/* 
@@ -1481,7 +1481,7 @@ Dir_FindHereOrAbove(char *here, char *search_path, char *result, int rlen) {
 	/*
 	 * we failed... 
 	 */
-	return(0);
+	return 0;
 }
 
 /*-
@@ -1572,7 +1572,7 @@ Dir_MTime(GNode *gn, Boolean recheck)
     }
 
     gn->mtime = stb.st_mtime;
-    return (gn->mtime);
+    return gn->mtime;
 }
 
 /*-
@@ -1677,7 +1677,7 @@ Dir_CopyDir(void *p)
 {
     ((Path *)p)->refCount += 1;
 
-    return (p);
+    return p;
 }
 
 /*-
@@ -1722,7 +1722,7 @@ Dir_MakeFlags(const char *flag, Lst path)
 	Lst_Close(path);
     }
 
-    return (str);
+    return str;
 }
 
 /*-
