@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.172 2020/07/03 03:59:18 jruoho Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.173 2020/07/03 04:25:28 jruoho Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -423,6 +423,7 @@
 ./usr/tests/usr.bin/infocmp
 ./usr/tests/usr.bin/jot
 ./usr/tests/usr.bin/ld
+./usr/tests/usr.bin/locale
 ./usr/tests/usr.bin/m4
 ./usr/tests/usr.bin/make
 ./usr/tests/usr.bin/make/unit-tests
