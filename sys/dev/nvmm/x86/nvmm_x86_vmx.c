@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.60 2020/06/18 16:31:15 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.61 2020/07/03 16:09:54 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.60 2020/06/18 16:31:15 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.61 2020/07/03 16:09:54 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3392,6 +3392,7 @@ vmx_capability(struct nvmm_capability *cap)
 }
 
 const struct nvmm_impl nvmm_x86_vmx = {
+	.name = "x86-vmx",
 	.ident = vmx_ident,
 	.init = vmx_init,
 	.fini = vmx_fini,
