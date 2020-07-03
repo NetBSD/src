@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.61 2020/07/03 06:22:48 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.62 2020/07/03 06:26:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -127,7 +127,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.61 2020/07/03 06:22:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.62 2020/07/03 06:26:41 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -476,7 +476,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	kernel_size += 0x10000;	/* slop */
 	if (!mapallmem_p) {
 		kernel_size += PAGE_SIZE
-		    * ((kernel_size + L2_S_SEGSIZE - 1) / L2_S_SEGSIZE);
+		    * howmany(kernel_size, L2_S_SEGSIZE);
 	}
 	kernel_size = round_page(kernel_size);
 
@@ -484,7 +484,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	 * Now we know how many L2 pages it will take.
 	 */
 	const size_t KERNEL_L2PT_KERNEL_NUM =
-	    round_page(kernel_size + L2_S_SEGSIZE - 1) / L2_S_SEGSIZE;
+	    howmany(kernel_size, L2_S_SEGSIZE);
 
 	VPRINTF("%s: %zu L2 pages are needed to map %#zx kernel bytes\n",
 	    __func__, KERNEL_L2PT_KERNEL_NUM, kernel_size);
