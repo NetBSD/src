@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.238 2020/07/03 15:24:31 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.239 2020/07/03 15:42:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.238 2020/07/03 15:24:31 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.239 2020/07/03 15:42:43 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.238 2020/07/03 15:24:31 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.239 2020/07/03 15:42:43 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1203,86 +1203,34 @@ VarTail(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
     return TRUE;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * VarSuffix --
- *	Place the suffix of the given word in the given buffer.
- *
- * Input:
- *	word		Word to trim
- *	addSpace	TRUE if need to add a space before placing the
- *			suffix in the buffer
- *	buf		Buffer in which to store it
- *
- * Results:
- *	TRUE if characters were added to the buffer (a space needs to be
- *	added to the buffer before the next word).
- *
- * Side Effects:
- *	The suffix from the word is placed in the buffer.
- *
- *-----------------------------------------------------------------------
- */
+/* Add the filename suffix of the given word to the buffer. */
 static Boolean
 VarSuffix(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	  char *word, Boolean addSpace, Buffer *buf,
 	  void *dummy MAKE_ATTR_UNUSED)
 {
-    char *dot;
+    const char *dot = strrchr(word, '.');
+    if (dot == NULL)
+	return FALSE;
 
-    dot = strrchr(word, '.');
-    if (dot != NULL) {
-	if (addSpace && vpstate->varSpace) {
-	    Buf_AddByte(buf, vpstate->varSpace);
-	}
-	*dot++ = '\0';
-	Buf_AddBytes(buf, strlen(dot), dot);
-	dot[-1] = '.';
-	addSpace = TRUE;
-    }
-    return addSpace;
+    if (addSpace && vpstate->varSpace)
+	Buf_AddByte(buf, vpstate->varSpace);
+    Buf_AddBytes(buf, strlen(dot + 1), dot + 1);
+    return TRUE;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * VarRoot --
- *	Remove the suffix of the given word and place the result in the
- *	buffer.
- *
- * Input:
- *	word		Word to trim
- *	addSpace	TRUE if need to add a space to the buffer
- *			before placing the root in it
- *	buf		Buffer in which to store it
- *
- * Results:
- *	TRUE if characters were added to the buffer (a space needs to be
- *	added to the buffer before the next word).
- *
- * Side Effects:
- *	The trimmed word is added to the buffer.
- *
- *-----------------------------------------------------------------------
- */
+/* Add the filename basename of the given word to the buffer. */
 static Boolean
 VarRoot(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	char *word, Boolean addSpace, Buffer *buf,
 	void *dummy MAKE_ATTR_UNUSED)
 {
-    char *dot;
+    char *dot = strrchr(word, '.');
+    size_t len = dot != NULL ? dot - word : strlen(word);
 
-    if (addSpace && vpstate->varSpace) {
+    if (addSpace && vpstate->varSpace)
 	Buf_AddByte(buf, vpstate->varSpace);
-    }
-
-    dot = strrchr(word, '.');
-    if (dot != NULL) {
-	*dot = '\0';
-	Buf_AddBytes(buf, strlen(word), word);
-	*dot = '.';
-    } else {
-	Buf_AddBytes(buf, strlen(word), word);
-    }
+    Buf_AddBytes(buf, len, word);
     return TRUE;
 }
 
