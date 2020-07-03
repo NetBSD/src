@@ -1,4 +1,4 @@
-/*$NetBSD: at91st.c,v 1.6 2012/11/12 18:00:36 skrll Exp $*/
+/*$NetBSD: at91st.c,v 1.7 2020/07/03 16:23:02 maxv Exp $*/
 
 /*
  * AT91RM9200 clock functions
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91st.c,v 1.6 2012/11/12 18:00:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91st.c,v 1.7 2020/07/03 16:23:02 maxv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -213,8 +213,8 @@ at91st_intr(void *arg)
         /* call the kernel timer handler */
         hardclock((struct clockframe*) arg);
 #if 0
-        if (hardclock_ticks % (HZ * 10) == 0)
-            printf("time %i sec\n", hardclock_ticks/HZ);
+        if (getticks() % (HZ * 10) == 0)
+            printf("time %i sec\n", getticks()/HZ);
 #endif
         return 1;
     }
@@ -333,18 +333,17 @@ microtime(register struct timeval *tvp)
 
 
 #if 0
-extern int hardclock_ticks;
 static void tdelay(unsigned int ticks)
 {
     uint32_t   start, end, current;
     
-    current = hardclock_ticks;
+    current = getticks();
     start = current;
     end = start + ticks;
     
     /* just loop for the specified number of ticks */
     while (current < end)
-        current = hardclock_ticks;
+        current = getticks();
 }
 #endif
 
