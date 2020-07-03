@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.244 2020/07/03 22:10:42 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.245 2020/07/03 22:34:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.244 2020/07/03 22:10:42 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.245 2020/07/03 22:34:22 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.244 2020/07/03 22:10:42 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.245 2020/07/03 22:34:22 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1975,7 +1975,8 @@ VarRange(const char *str, int ac)
 /*-
  *-----------------------------------------------------------------------
  * VarGetPattern --
- *	Pass through the tstr looking for 1) escaped delimiters,
+ *	During the parsing of a part of a modifier such as :S or :@,
+ *	pass through the tstr looking for 1) escaped delimiters,
  *	'$'s and backslashes (place the escaped character in
  *	uninterpreted) and 2) unescaped $'s that aren't before
  *	the delimiter (expand the variable substitution unless flags
@@ -3181,10 +3182,10 @@ ApplyModifier_SysV(ApplyModifiersState *st)
      * substitution command.
      */
     VarPattern      pattern;
-    Boolean         eqFound;
+    Boolean         eqFound = FALSE;
 
     pattern.flags = 0;
-    eqFound = FALSE;
+
     /*
      * First we make a pass through the string trying
      * to verify it is a SYSV-make-style translation:
@@ -3203,42 +3204,39 @@ ApplyModifier_SysV(ApplyModifiersState *st)
 	if (st->cnt)
 	    st->cp++;
     }
-    if (*st->cp == st->endc && eqFound) {
-
-	/*
-	 * Now we break this sucker into the lhs and
-	 * rhs. We must null terminate them of course.
-	 */
-	st->delim='=';
-	st->cp = st->tstr;
-	if ((pattern.lhs = VarGetPattern(st->ctxt, &st->parsestate,
-					 st->flags, &st->cp, st->delim, &pattern.flags,
-					 &pattern.leftLen, NULL)) == NULL)
-	    return 'c';
-	st->delim = st->endc;
-	if ((pattern.rhs = VarGetPattern(st->ctxt, &st->parsestate,
-					 st->flags, &st->cp, st->delim, NULL, &pattern.rightLen,
-					 &pattern)) == NULL)
-	    return 'c';
-
-	/*
-	 * SYSV modifications happen through the whole
-	 * string. Note the pattern is anchored at the end.
-	 */
-	st->termc = *--st->cp;
-	st->delim = '\0';
-	if (pattern.leftLen == 0 && *st->nstr == '\0') {
-	    st->newStr = st->nstr;	/* special case */
-	} else {
-	    st->newStr = VarModify(st->ctxt, &st->parsestate, st->nstr,
-			       VarSYSVMatch,
-			       &pattern);
-	}
-	free(UNCONST(pattern.lhs));
-	free(UNCONST(pattern.rhs));
-	return '=';
-    } else
+    if (*st->cp != st->endc || !eqFound)
 	return 0;
+
+    st->delim = '=';
+    st->cp = st->tstr;
+    pattern.lhs = VarGetPattern(
+	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
+	&pattern.flags, &pattern.leftLen, NULL);
+    if (pattern.lhs == NULL)
+	return 'c';
+
+    st->delim = st->endc;
+    pattern.rhs = VarGetPattern(
+	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
+	NULL, &pattern.rightLen, &pattern);
+    if (pattern.rhs == NULL)
+	return 'c';
+
+    /*
+     * SYSV modifications happen through the whole
+     * string. Note the pattern is anchored at the end.
+     */
+    st->termc = *--st->cp;
+    st->delim = '\0';
+    if (pattern.leftLen == 0 && *st->nstr == '\0') {
+	st->newStr = st->nstr;	/* special case */
+    } else {
+	st->newStr = VarModify(
+	    st->ctxt, &st->parsestate, st->nstr, VarSYSVMatch, &pattern);
+    }
+    free(UNCONST(pattern.lhs));
+    free(UNCONST(pattern.rhs));
+    return '=';
 }
 #endif
 
