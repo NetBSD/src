@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.234 2020/07/02 15:47:38 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.235 2020/07/03 08:02:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.234 2020/07/02 15:47:38 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.235 2020/07/03 08:02:55 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.234 2020/07/02 15:47:38 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.235 2020/07/03 08:02:55 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -642,14 +642,14 @@ ParseFindKeyword(const char *str)
 	diff = strcmp(str, parseKeywords[cur].name);
 
 	if (diff == 0) {
-	    return (cur);
+	    return cur;
 	} else if (diff < 0) {
 	    end = cur - 1;
 	} else {
 	    start = cur + 1;
 	}
     } while (start <= end);
-    return (-1);
+    return -1;
 }
 
 /*-
@@ -874,7 +874,7 @@ ParseLinkSrc(void *pgnp, void *cgnp)
 	Targ_PrintNode(pgn, 0);
 	Targ_PrintNode(cgn, 0);
     }
-    return (0);
+    return 0;
 }
 
 /*-
@@ -911,7 +911,7 @@ ParseDoOp(void *gnp, void *opp)
 	!OP_NOP(gn->type) && !OP_NOP(op))
     {
 	Parse_Error(PARSE_FATAL, "Inconsistent operator for %s", gn->name);
-	return (1);
+	return 1;
     }
 
     if ((op == OP_DOUBLEDEP) && ((gn->type & OP_OPMASK) == OP_DOUBLEDEP)) {
@@ -955,7 +955,7 @@ ParseDoOp(void *gnp, void *opp)
 	gn->type |= op;
     }
 
-    return (0);
+    return 0;
 }
 
 /*-
@@ -1131,7 +1131,7 @@ static int
 ParseAddDir(void *path, void *name)
 {
     (void)Dir_AddDir((Lst) path, (char *)name);
-    return(0);
+    return 0;
 }
 
 /*-
@@ -2100,7 +2100,7 @@ ParseAddCmd(void *gnp, void *cmd)
 			    gn->name);
 #endif
     }
-    return(0);
+    return 0;
 }
 
 /*-
@@ -2757,7 +2757,7 @@ ParseEOF(void)
 
     /* Restore the PARSEDIR/PARSEFILE variables */
     ParseSetParseFile(curFile->fname);
-    return (CONTINUE);
+    return CONTINUE;
 }
 
 #define PARSE_RAW 1
@@ -2994,7 +2994,7 @@ ParseReadLine(void)
 	    /* Read next line from for-loop buffer */
 	    continue;
 	}
-	return (line);
+	return line;
     }
 }
 
@@ -3335,7 +3335,7 @@ Parse_MainName(void)
     else
 	(void)Lst_AtEnd(mainList, mainNode);
     Var_Append(".TARGETS", mainNode->name, VAR_GLOBAL);
-    return (mainList);
+    return mainList;
 }
 
 /*-

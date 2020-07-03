@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.97 2020/07/02 15:47:38 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.98 2020/07/03 08:02:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.97 2020/07/02 15:47:38 rillig Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.98 2020/07/03 08:02:55 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.97 2020/07/02 15:47:38 rillig Exp $");
+__RCSID("$NetBSD: make.c,v 1.98 2020/07/03 08:02:55 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -175,7 +175,7 @@ Make_TimeStamp(GNode *pgn, GNode *cgn)
     if (pgn->cmgn == NULL || cgn->mtime > pgn->cmgn->mtime) {
 	pgn->cmgn = cgn;
     }
-    return (0);
+    return 0;
 }
 
 /*
@@ -348,7 +348,7 @@ Make_OODate(GNode *gn)
 	Lst_ForEach(gn->parents, MakeTimeStamp, gn);
     }
 
-    return (oodate);
+    return oodate;
 }
 
 /*-
@@ -380,7 +380,7 @@ MakeAddChild(void *gnp, void *lp)
 		gn->name, gn->cohort_num);
 	(void)Lst_EnQueue(l, gn);
     }
-    return (0);
+    return 0;
 }
 
 /*-
@@ -410,7 +410,7 @@ MakeFindChild(void *gnp, void *pgnp)
     Make_TimeStamp(pgn, gn);
     pgn->unmade--;
 
-    return (0);
+    return 0;
 }
 
 /*-
@@ -535,7 +535,7 @@ MakeHandleUse(void *cgnp, void *pgnp)
     cgn->type |= OP_MARK;
 
     if ((cgn->type & (OP_USE|OP_USEBEFORE)) == 0)
-	return (0);
+	return 0;
 
     if (unmarked)
 	Make_HandleUse(cgn, pgn);
@@ -551,7 +551,7 @@ MakeHandleUse(void *cgnp, void *pgnp)
 	Lst_Remove(pgn->children, ln);
 	pgn->unmade--;
     }
-    return (0);
+    return 0;
 }
 
 
@@ -869,7 +869,7 @@ MakeUnmark(void *cgnp, void *pgnp MAKE_ATTR_UNUSED)
     GNode	*cgn = (GNode *)cgnp;
 
     cgn->type &= ~OP_MARK;
-    return (0);
+    return 0;
 }
 
 /*
@@ -886,7 +886,7 @@ MakeAddAllSrc(void *cgnp, void *pgnp)
     GNode	*pgn = (GNode *)pgnp;
 
     if (cgn->type & OP_MARK)
-	return (0);
+	return 0;
     cgn->type |= OP_MARK;
 
     if ((cgn->type & (OP_EXEC|OP_USE|OP_USEBEFORE|OP_INVISIBLE)) == 0) {
@@ -932,7 +932,7 @@ MakeAddAllSrc(void *cgnp, void *pgnp)
 	}
 	free(p1);
     }
-    return (0);
+    return 0;
 }
 
 /*-
@@ -1119,7 +1119,7 @@ MakeStartJobs(void)
 		fprintf(debug_file, "out-of-date\n");
 	    }
 	    if (queryFlag) {
-		return (TRUE);
+		return TRUE;
 	    }
 	    Make_DoAllVar(gn);
 	    Job_Make(gn);
@@ -1145,7 +1145,7 @@ MakeStartJobs(void)
     if (have_token)
 	Job_TokenReturn();
 
-    return (FALSE);
+    return FALSE;
 }
 
 /*-
@@ -1509,7 +1509,7 @@ Make_Run(Lst targs)
 	 * next loop... (we won't actually start any, of course, this is just
 	 * to see if any of the targets was out of date)
 	 */
-	return (MakeStartJobs());
+	return MakeStartJobs();
     }
     /*
      * Initialization. At the moment, no jobs are running and until some
