@@ -1,4 +1,4 @@
-# $NetBSD: t_random_garbage.sh,v 1.2 2020/06/30 11:49:26 jruoho Exp $
+# $NetBSD: t_random_garbage.sh,v 1.3 2020/07/03 07:03:14 jruoho Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -41,16 +41,13 @@ atf_test_case random_garbage cleanup
 random_garbage_head() {
 	sysctl -a > $tmp
 	atf_set "require.user" "root"
-	atf_set "descr" "Test writing random garbage to sysctl nodes"
+	atf_set "descr" "Test writing random garbage " \
+		"to sysctl nodes (PR kern/55451)"
 }
 
 random_garbage_body() {
 
-	sysctl machdep.cpu_brand 2>/dev/null | grep "QEMU"
-
-	if [ $? -eq 1 ]; then
-		atf_skip "The test is not safe"
-	fi
+	atf_skip "The test is not safe (PR kern/55451)"
 
 	while read line; do
 
@@ -90,11 +87,7 @@ random_garbage_body() {
 
 random_garbage_cleanup() {
 
-	sysctl machdep.cpu_brand 2>/dev/null | grep "QEMU"
-
-	if [ $? -eq 1 ]; then
-		atf_skip "The test is not safe"
-	fi
+	atf_skip "The test is not safe (PR kern/55451)"
 
 	while read line; do
 		var=$(echo $line | awk '{print $1}')
