@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.240 2020/07/03 17:00:47 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.241 2020/07/03 17:03:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.240 2020/07/03 17:00:47 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.241 2020/07/03 17:03:09 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.240 2020/07/03 17:00:47 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.241 2020/07/03 17:03:09 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -338,7 +338,6 @@ static char *VarModify(GNode *, Var_Parse_State *,
 static char *VarOrder(const char *, const char);
 static char *VarUniq(const char *);
 static int VarWordCompare(const void *, const void *);
-static void VarPrintVar(void *);
 
 #define BROPEN	'{'
 #define BRCLOSE	'}'
@@ -673,6 +672,13 @@ Var_Export1(const char *name, int flags)
     return 1;
 }
 
+static void
+Var_ExportVars_callback(void *entry, void *unused MAKE_ATTR_UNUSED)
+{
+	Var *var = entry;
+	Var_Export1(var->name, 0);
+}
+
 /*
  * This gets called from our children.
  */
@@ -680,9 +686,6 @@ void
 Var_ExportVars(void)
 {
     char tmp[BUFSIZ];
-    Hash_Entry          *var;
-    Hash_Search         state;
-    Var *v;
     char *val;
     int n;
 
@@ -699,15 +702,8 @@ Var_ExportVars(void)
 	return;
 
     if (VAR_EXPORTED_ALL == var_exportedVars) {
-	/*
-	 * Ouch! This is crazy...
-	 */
-	for (var = Hash_EnumFirst(&VAR_GLOBAL->context, &state);
-	     var != NULL;
-	     var = Hash_EnumNext(&state)) {
-	    v = (Var *)Hash_GetValue(var);
-	    Var_Export1(v->name, 0);
-	}
+	/* Ouch! This is crazy... */
+	Hash_ForEach(&VAR_GLOBAL->context, Var_ExportVars_callback, NULL);
 	return;
     }
     /*
@@ -4291,7 +4287,7 @@ Var_End(void)
 
 /****************** PRINT DEBUGGING INFO *****************/
 static void
-VarPrintVar(void *vp)
+VarPrintVar(void *vp, void *data MAKE_ATTR_UNUSED)
 {
     Var    *v = (Var *)vp;
     fprintf(debug_file, "%-16s = %s\n", v->name, Buf_GetAll(&v->val, NULL));
@@ -4306,12 +4302,5 @@ VarPrintVar(void *vp)
 void
 Var_Dump(GNode *ctxt)
 {
-    Hash_Search search;
-    Hash_Entry *h;
-
-    for (h = Hash_EnumFirst(&ctxt->context, &search);
-	 h != NULL;
-	 h = Hash_EnumNext(&search)) {
-	VarPrintVar(Hash_GetValue(h));
-    }
+    Hash_ForEach(&ctxt->context, VarPrintVar, NULL);
 }
