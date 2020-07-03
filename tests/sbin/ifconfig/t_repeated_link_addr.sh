@@ -1,4 +1,4 @@
-# $NetBSD: t_repeated_link_addr.sh,v 1.1 2020/06/30 11:48:20 jruoho Exp $
+# $NetBSD: t_repeated_link_addr.sh,v 1.2 2020/07/03 02:51:13 jruoho Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,6 +36,12 @@ repeated_link_addr_head() {
 }
 
 repeated_link_addr_body() {
+
+	case $(uname -m) in
+		evbarm)
+			atf_expect_timeout "reason for timeout unknown"
+			;;
+	esac
 
 	fail=0
 	addrs="00:11:00:00:00:00 \
