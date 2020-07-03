@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.171 2020/06/30 20:32:11 riastradh Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.172 2020/07/03 03:59:18 jruoho Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -186,6 +186,7 @@
 ./usr/tests/bin
 ./usr/tests/bin/cat
 ./usr/tests/bin/cp
+./usr/tests/bin/date
 ./usr/tests/bin/dd
 ./usr/tests/bin/df
 ./usr/tests/bin/expr
