@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.2 2020/07/03 14:59:17 rillig Exp $
+# $Id: modmisc.mk,v 1.3 2020/07/03 15:22:35 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -38,7 +38,5 @@ modvarloop:
 	@echo "PATHS=${paths:tu}"
 
 modhead:
-	@echo "head of a/b/c is ${a/b/c:L:H}"
-	@echo "tail of a/b/c is ${a/b/c:L:T}"
-	@echo "head of abc is ${abc:L:H}"
-	@echo "tail of abc is ${abc:L:T}"
+	@echo "head of 'a/b/c def' is '${a/b/c def:L:H}'"
+	@echo "tail of 'a/b/c def' is '${a/b/c def:L:T}'"
