@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.56 2020/07/03 08:02:55 rillig Exp $	*/
+/*	$NetBSD: util.c,v 1.57 2020/07/03 08:13:23 rillig Exp $	*/
 
 /*
  * Missing stuff from OS's
@@ -8,11 +8,11 @@
 #endif
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: util.c,v 1.56 2020/07/03 08:02:55 rillig Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.57 2020/07/03 08:13:23 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.56 2020/07/03 08:02:55 rillig Exp $");
+__RCSID("$NetBSD: util.c,v 1.57 2020/07/03 08:13:23 rillig Exp $");
 #endif
 #endif
 
@@ -410,7 +410,7 @@ size_t
 strftime(char *buf, size_t len, const char *fmt, const struct tm *tm)
 {
 	static char months[][4] = {
-		"Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 	};
 

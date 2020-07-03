@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.200 2020/07/03 08:02:55 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.201 2020/07/03 08:13:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.200 2020/07/03 08:02:55 rillig Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.201 2020/07/03 08:13:23 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.200 2020/07/03 08:02:55 rillig Exp $");
+__RCSID("$NetBSD: job.c,v 1.201 2020/07/03 08:13:23 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -261,7 +261,7 @@ static Shell    shells[] = {
     "",
 },
     /*
-     * KSH description. 
+     * KSH description.
      */
 {
     "ksh",
@@ -431,7 +431,7 @@ JobCreatePipe(Job *job, int minfd)
 	   job->jobPipe[i] = fd;
        }
     }
-    
+
     /* Set close-on-exec flag for both */
     if (fcntl(job->jobPipe[0], F_SETFD, FD_CLOEXEC) == -1)
 	Punt("Cannot set close-on-exec: %s", strerror(errno));
@@ -441,7 +441,7 @@ JobCreatePipe(Job *job, int minfd)
     /*
      * We mark the input side of the pipe non-blocking; we poll(2) the
      * pipe when we're waiting for a job token, but we might lose the
-     * race for the token when a new one becomes available, so the read 
+     * race for the token when a new one becomes available, so the read
      * from the pipe should not block.
      */
     flags = fcntl(job->jobPipe[0], F_GETFL, 0);
@@ -764,7 +764,7 @@ JobPrintCommand(void *cmdp, void *jobp)
 
     /*
      * If the shell doesn't have error control the alternate echo'ing will
-     * be done (to avoid showing additional error checking code) 
+     * be done (to avoid showing additional error checking code)
      * and this will need the characters '$ ` \ "' escaped
      */
 
@@ -772,10 +772,10 @@ JobPrintCommand(void *cmdp, void *jobp)
 	/* Worst that could happen is every char needs escaping. */
 	escCmd = bmake_malloc((strlen(cmd) * 2) + 1);
 	for (i = 0, j= 0; cmd[i] != '\0'; i++, j++) {
-		if (cmd[i] == '$' || cmd[i] == '`' || cmd[i] == '\\' || 
+		if (cmd[i] == '$' || cmd[i] == '`' || cmd[i] == '\\' ||
 			cmd[i] == '"')
 			escCmd[j++] = '\\';
-		escCmd[j] = cmd[i];	
+		escCmd[j] = cmd[i];
 	}
 	escCmd[j] = 0;
     }
@@ -848,13 +848,13 @@ JobPrintCommand(void *cmdp, void *jobp)
 	}
     } else {
 
-	/* 
+	/*
 	 * If errors are being checked and the shell doesn't have error control
 	 * but does supply an errOut template, then setup commands to run
 	 * through it.
 	 */
 
-	if (!commandShell->hasErrCtl && commandShell->errOut && 
+	if (!commandShell->hasErrCtl && commandShell->errOut &&
 	    (*commandShell->errOut != '\0')) {
 		if (!(job->flags & JOB_SILENT) && !shutUp) {
 			if (commandShell->hasEchoCtl) {
@@ -878,7 +878,7 @@ JobPrintCommand(void *cmdp, void *jobp)
 	    DBPRINTF("set -%s\n", "x");
 	    job->flags |= JOB_TRACED;
     }
-    
+
     DBPRINTF(cmdTemplate, cmd);
     free(cmdStart);
     free(escCmd);
@@ -1086,7 +1086,7 @@ JobFinish(Job *job, int status)
 	}
     }
 #endif
-    
+
     return_job_token = FALSE;
 
     Trace_Log(JOBEND, job);
@@ -1402,7 +1402,7 @@ JobExec(Job *job, char **argv)
 		    _exit(1);
 		}
 	}
-	
+
 	/*
 	 * Set up the child's output to be routed through the pipe
 	 * we've created for it.
@@ -2921,7 +2921,7 @@ Job_ServerStart(int max_tokens, int jp_0, int jp_1)
 {
     int i;
     char jobarg[64];
-    
+
     if (jp_0 >= 0 && jp_1 >= 0) {
 	/* Pipe passed in from parent */
 	tokenWaitJob.inPipe = jp_0;
@@ -2937,12 +2937,12 @@ Job_ServerStart(int max_tokens, int jp_0, int jp_1)
 	    tokenWaitJob.inPipe, tokenWaitJob.outPipe);
 
     Var_Append(MAKEFLAGS, "-J", VAR_GLOBAL);
-    Var_Append(MAKEFLAGS, jobarg, VAR_GLOBAL);			
+    Var_Append(MAKEFLAGS, jobarg, VAR_GLOBAL);
 
     /*
      * Preload the job pipe with one token per job, save the one
      * "extra" token for the primary job.
-     * 
+     *
      * XXX should clip maxJobs against PIPE_BUF -- if max_tokens is
      * larger than the write buffer size of the pipe, we will
      * deadlock here.
@@ -3094,9 +3094,9 @@ emul_poll(struct pollfd *fd, int nfd, int timeout)
 	if (fd[i].fd > maxfd)
 	    maxfd = fd[i].fd;
     }
-    
+
     if (maxfd >= FD_SETSIZE) {
-	Punt("Ran out of fd_set slots; " 
+	Punt("Ran out of fd_set slots; "
 	     "recompile with a larger FD_SETSIZE.");
     }
 

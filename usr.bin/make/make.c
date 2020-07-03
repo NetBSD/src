@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.98 2020/07/03 08:02:55 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.99 2020/07/03 08:13:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.98 2020/07/03 08:02:55 rillig Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.99 2020/07/03 08:13:23 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.98 2020/07/03 08:02:55 rillig Exp $");
+__RCSID("$NetBSD: make.c,v 1.99 2020/07/03 08:13:23 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -264,7 +264,7 @@ Make_OODate(GNode *gn)
 	 * always out of date if no children and :: target
 	 * or non-existent.
 	 */
-	oodate = (gn->mtime == 0 || Arch_LibOODate(gn) || 
+	oodate = (gn->mtime == 0 || Arch_LibOODate(gn) ||
 		  (gn->cmgn == NULL && (gn->type & OP_DOUBLEDEP)));
     } else if (gn->type & OP_JOIN) {
 	/*
@@ -317,7 +317,7 @@ Make_OODate(GNode *gn)
 	}
 	oodate = TRUE;
     } else {
-	/* 
+	/*
 	 * When a non-existing child with no sources
 	 * (such as a typically used FORCE source) has been made and
 	 * the target of the child (usually a directory) has the same
@@ -962,7 +962,7 @@ Make_DoAllVar(GNode *gn)
 {
     if (gn->flags & DONE_ALLSRC)
 	return;
-    
+
     Lst_ForEach(gn->children, MakeUnmark, gn);
     Lst_ForEach(gn->children, MakeAddAllSrc, gn);
 
@@ -1293,7 +1293,7 @@ Make_ExpandUse(Lst targs)
      */
     while (!Lst_IsEmpty (examine)) {
 	gn = (GNode *)Lst_DeQueue(examine);
-    
+
 	if (gn->flags & REMAKE)
 	    /* We've looked at this one already */
 	    continue;
@@ -1429,7 +1429,7 @@ Make_ProcessWait(Lst targs)
 
     while (!Lst_IsEmpty (examine)) {
 	pgn = Lst_DeQueue(examine);
-   
+
 	/* We only want to process each child-list once */
 	if (pgn->flags & DONE_WAIT)
 	    continue;

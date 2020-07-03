@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.84 2020/07/03 08:02:55 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.85 2020/07/03 08:13:23 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -8,16 +8,16 @@
 /*
  * Copyright (c) 2009-2016, Juniper Networks, Inc.
  * Portions Copyright (c) 2009, John Birrell.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions 
- * are met: 
+ * modification, are permitted provided that the following conditions
+ * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.  
- * 
+ *    documentation and/or other materials provided with the distribution.
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -28,7 +28,7 @@
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #if defined(USE_META)
 
@@ -109,7 +109,7 @@ extern char    **environ;
  *
  * See meta_oodate below - we mainly care about 'E' and 'R'.
  *
- * We can still use meta mode without filemon, but 
+ * We can still use meta mode without filemon, but
  * the benefits are more limited.
  */
 #ifdef USE_FILEMON
@@ -214,7 +214,7 @@ eat_dots(char *buf, size_t bufsz, int dots)
     default:
 	return;
     }
-    
+
     do {
 	cp = strstr(buf, eat);
 	if (cp) {
@@ -403,7 +403,7 @@ meta_needed(GNode *gn, const char *dname, const char *tname,
 
     if (verbose)
 	verbose = DEBUG(META);
-    
+
     /* This may be a phony node which we don't want meta data for... */
     /* Skip .meta for .BEGIN, .END, .ERROR etc as well. */
     /* Or it may be explicitly flagged as .NOMETA */
@@ -454,7 +454,7 @@ meta_needed(GNode *gn, const char *dname, const char *tname,
     return TRUE;
 }
 
-    
+
 static FILE *
 meta_create(BuildMon *pbm, GNode *gn)
 {
@@ -804,7 +804,7 @@ void
 meta_job_output(Job *job, char *cp, const char *nl)
 {
     BuildMon *pbm;
-    
+
     if (job != NULL) {
 	pbm = &job->bm;
     } else {
@@ -900,7 +900,7 @@ meta_finish(void)
  * Fetch a full line from fp - growing bufp if needed
  * Return length in bufp.
  */
-static int 
+static int
 fgetLine(char **bufp, size_t *szp, int o, FILE *fp)
 {
     char *buf = *bufp;
@@ -926,7 +926,7 @@ fgetLine(char **bufp, size_t *szp, int o, FILE *fp)
 		newsz = ROUNDUP(fs.st_size, BUFSIZ);
 	    if (newsz <= bufsz)
 		return x;		/* truncated */
-	    if (DEBUG(META)) 
+	    if (DEBUG(META))
 		fprintf(debug_file, "growing buffer %zu -> %zu\n",
 			bufsz, newsz);
 	    p = bmake_realloc(buf, newsz);
@@ -1188,7 +1188,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    have_filemon = TRUE;
 		    continue;
 		}
-	    }		    
+	    }
 
 	    /* Delimit the record type. */
 	    p = buf;
@@ -1303,7 +1303,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 
 		case 'C':		/* Chdir */
 		    /* Update lcwd and latest directory. */
-		    strlcpy(latestdir, p, sizeof(latestdir));	
+		    strlcpy(latestdir, p, sizeof(latestdir));
 		    strlcpy(lcwd, p, sizeof(lcwd));
 		    Var_Set(lcwd_vname, lcwd, VAR_GLOBAL);
 		    Var_Set(ldir_vname, lcwd, VAR_GLOBAL);
@@ -1383,7 +1383,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    /*
 		     * If a file we generated within our bailiwick
 		     * but outside of .OBJDIR is missing,
-		     * we need to do it again. 
+		     * we need to do it again.
 		     */
 		    /* ignore non-absolute paths */
 		    if (*p != '/')
@@ -1432,7 +1432,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 		     */
 		    if (meta_ignore(gn, p))
 			break;
-		    
+
 		    /*
 		     * The rest of the record is the file name.
 		     * Check if it's not an absolute path.
@@ -1656,7 +1656,7 @@ meta_compat_start(void)
      * We need to re-open filemon for each cmd.
      */
     BuildMon *pbm = &Mybm;
-    
+
     if (pbm->mfp != NULL && useFilemon) {
 	meta_open_filemon(pbm);
     } else {

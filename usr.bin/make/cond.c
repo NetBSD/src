@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.77 2020/07/03 08:02:55 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.78 2020/07/03 08:13:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.77 2020/07/03 08:02:55 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.78 2020/07/03 08:13:23 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.77 2020/07/03 08:02:55 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.78 2020/07/03 08:13:23 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -186,7 +186,7 @@ static unsigned int	cond_min_depth = 0;  	/* depth at makefile open */
  * Indicate when we should be strict about lhs of comparisons.
  * TRUE when Cond_EvalExpression is called from Cond_Eval (.if etc)
  * FALSE when Cond_EvalExpression is called from var.c:ApplyModifiers
- * since lhs is already expanded and we cannot tell if 
+ * since lhs is already expanded and we cannot tell if
  * it was a variable reference or not.
  */
 static Boolean lhsStrict;
@@ -412,7 +412,7 @@ CondDoExists(int argLen MAKE_ATTR_UNUSED, const char *arg)
     if (DEBUG(COND)) {
 	fprintf(debug_file, "exists(%s) result is \"%s\"\n",
 	       arg, path ? path : "");
-    }    
+    }
     if (path != NULL) {
 	result = TRUE;
 	free(path);
@@ -666,7 +666,7 @@ compare_expression(Boolean doEval)
     rhs = NULL;
     lhsFree = rhsFree = FALSE;
     lhsQuoted = rhsQuoted = FALSE;
-    
+
     /*
      * Parse the variable spec and skip over it, saving its
      * value in lhs.
@@ -709,7 +709,7 @@ compare_expression(Boolean doEval)
 		goto done;
 	    }
 	    /* For .ifxxx <number> compare against zero */
-	    if (CondCvtArg(lhs, &left)) { 
+	    if (CondCvtArg(lhs, &left)) {
 		t = left != 0.0;
 		goto done;
 	    }
@@ -762,7 +762,7 @@ do_string_compare:
 	 * rhs is either a float or an integer. Convert both the
 	 * lhs and the rhs to a double and compare the two.
 	 */
-    
+
 	if (!CondCvtArg(lhs, &left) || !CondCvtArg(rhs, &right))
 	    goto do_string_compare;
 
