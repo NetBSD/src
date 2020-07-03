@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.26 2020/06/20 15:45:22 skrll Exp $	*/
+/*	$NetBSD: stubs.c,v 1.27 2020/07/03 15:31:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.26 2020/06/20 15:45:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.27 2020/07/03 15:31:25 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -273,7 +273,8 @@ dodumpsys(void)
 			error = (*bdev->d_dump)(dumpdev,
 			    blkno, (void *) dumpspace, PAGE_SIZE);
 
-			if (error) goto err;
+			if (error)
+				goto err;
 			blkno += btodb(PAGE_SIZE);
 			len += PAGE_SIZE;
 		}
