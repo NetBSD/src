@@ -1,4 +1,4 @@
-/*	$NetBSD: statvfs.h,v 1.2 2020/07/03 14:08:53 christos Exp $	 */
+/*	$NetBSD: statvfs.h,v 1.3 2020/07/03 19:00:01 christos Exp $	 */
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ statvfs_to_statvfs90_copy(const void *vs, void *vs90, size_t l)
 	int error;
 
 	statvfs_to_statvfs90(vs, s90);
-	error = copyout(s90, vs90, l);
+	error = copyout(s90, vs90, sizeof(*s90));
 	kmem_free(s90, sizeof(*s90));
 
 	return error;
