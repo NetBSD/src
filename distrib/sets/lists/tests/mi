@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.871 2020/07/03 03:59:18 jruoho Exp $
+# $NetBSD: mi,v 1.872 2020/07/03 04:25:28 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4462,6 +4462,10 @@
 ./usr/tests/usr.bin/ld/t_orphan			tests-obsolete	obsolete,atf
 ./usr/tests/usr.bin/ld/t_script			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/ld/t_section		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/locale			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/locale/Atffile		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/locale/Kyuafile		tests-usr.bin-tests	compattestfile,atf,kyua
+./usr/tests/usr.bin/locale/t_locale		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/m4				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/m4/Atffile			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/m4/Kyuafile			tests-usr.bin-tests	compattestfile,atf,kyua
