@@ -7,6 +7,7 @@ path_/usr/xbin=/opt/xbin/
 paths=/bin /tmp / /no/such/dir /opt/xbin
 PATHS=/BIN /TMP / /NO/SUCH/DIR /OPT/XBIN
 The answer is 42
-head of 'a/b/c def' is 'a/b .'
-tail of 'a/b/c def' is 'c def'
+head of 'a/b/c def archive.tar.gz conf.d/file' is 'a/b . . conf.d
+tail of 'a/b/c def archive.tar.gz conf.d/file' is 'c def archive.tar.gz file
+suffix of 'a/b/c def archive.tar.gz conf.d/file' is 'gz d/file
 exit status 0
