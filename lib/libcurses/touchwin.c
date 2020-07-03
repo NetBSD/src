@@ -1,4 +1,4 @@
-/*	$NetBSD: touchwin.c,v 1.31 2019/04/24 07:09:44 blymn Exp $	*/
+/*	$NetBSD: touchwin.c,v 1.32 2020/07/03 23:28:51 uwe Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)touchwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: touchwin.c,v 1.31 2019/04/24 07:09:44 blymn Exp $");
+__RCSID("$NetBSD: touchwin.c,v 1.32 2020/07/03 23:28:51 uwe Exp $");
 #endif
 #endif				/* not lint */
 
@@ -177,8 +177,13 @@ wtouchln(WINDOW *win, int line, int n, int changed)
 	__CTRACE(__CTRACE_LINE, "wtouchln: (%p) %d, %d, %d\n",
 	    win, line, n, changed);
 #endif
-	if (line + n > win->maxy)
-		line = win->maxy - n;
+	if (line < 0 || win->maxy <= line)
+		return ERR;
+	if (n < 0)
+		return ERR;
+	if (n > win->maxy - line)
+		n = win->maxy - line;
+
 	for (y = line; y < line + n; y++) {
 		if (changed == 1)
 			_cursesi_touchline_force(win, y, 0,
