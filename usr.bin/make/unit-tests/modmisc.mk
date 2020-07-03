@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.6 2020/07/03 18:41:50 rillig Exp $
+# $Id: modmisc.mk,v 1.7 2020/07/03 22:10:42 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -15,7 +15,7 @@ MOD_HOMES=S,/home/,/homes/,
 MOD_OPT=@d@$${exists($$d):?$$d:$${d:S,/usr,/opt,}}@
 MOD_SEP=S,:, ,g
 
-all:	modvar modvarloop modsysv mod-HTE
+all:	modvar modvarloop modsysv mod-HTE emptyvar undefvar
 
 modsysv:
 	@echo "The answer is ${libfoo.a:L:libfoo.a=42}"
@@ -43,3 +43,18 @@ mod-HTE:
 	@echo "basename of '"${PATHNAMES:Q}"' is '"${PATHNAMES:T:Q}"'"
 	@echo "suffix of '"${PATHNAMES:Q}"' is '"${PATHNAMES:E:Q}"'"
 	@echo "root of '"${PATHNAMES:Q}"' is '"${PATHNAMES:R:Q}"'"
+
+# When a modifier is applied to the "" variable, the result is discarded.
+emptyvar:
+	@echo S:${:S,^$,empty,}
+	@echo C:${:C,^$,empty,}
+	@echo @:${:@var@${var}@}
+
+# The :U modifier turns even the "" variable into something that has a value.
+# The resulting variable is empty, but is still considered to contain a
+# single empty word. This word can be accessed by the :S and :C modifiers,
+# but not by the :@ modifier since it explicitly skips empty words.
+undefvar:
+	@echo S:${:U:S,^$,empty,}
+	@echo C:${:U:C,^$,empty,}
+	@echo @:${:U:@var@empty@}
