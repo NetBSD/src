@@ -1,4 +1,4 @@
-# $Id: sysv.mk,v 1.4 2020/05/06 02:30:10 christos Exp $
+# $Id: sysv.mk,v 1.5 2020/07/03 19:29:25 rillig Exp $
 
 FOO ?=
 FOOBAR = ${FOO:=bar}
@@ -11,7 +11,7 @@ FUN = ${B}${S}fun
 SUN = the Sun
 
 # we expect nothing when FOO is empty
-all: foo fun sam bla
+all: foo fun sam bla words
 
 foo:
 	@echo FOOBAR = ${FOOBAR}
@@ -41,3 +41,8 @@ BLA=
 
 bla:
 	@echo $(BLA:%=foo/%x)
+
+# The :Q looks like a modifier but isn't.
+# It is part of the replacement string.
+words:
+	@echo a${a b c d e:L:%a=x:Q}b
