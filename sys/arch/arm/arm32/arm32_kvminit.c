@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.62 2020/07/03 06:26:41 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.63 2020/07/03 06:33:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -127,7 +127,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.62 2020/07/03 06:26:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.63 2020/07/03 06:33:39 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -648,12 +648,13 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 
 	if (map_vectors_p) {
 		/* Map the L2 pages tables in the L1 page table */
-		pmap_link_l2pt(l1pt_va, systempage.pv_va & -L2_S_SEGSIZE,
-		    &bmi->bmi_vector_l2pt);
-		VPRINTF("%s: adding L2 pt (VA %#lx, PA %#lx) "
-		    "for VA %#lx\n (vectors)",
+		const vaddr_t va = systempage.pv_va & -L2_S_SEGSIZE;
+
+		pmap_link_l2pt(l1pt_va, va,  &bmi->bmi_vector_l2pt);
+
+		VPRINTF("%s: adding L2 pt (VA %#lx, PA %#lx) for VA %#lx %s\n",
 		    __func__, bmi->bmi_vector_l2pt.pv_va,
-		    bmi->bmi_vector_l2pt.pv_pa, systempage.pv_va);
+		    bmi->bmi_vector_l2pt.pv_pa, systempage.pv_va, "(vectors)");
 	}
 
 	/*
@@ -667,28 +668,35 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	    kernel_base, KERNEL_L2PT_KERNEL_NUM);
 
 	for (size_t idx = 0; idx < KERNEL_L2PT_KERNEL_NUM; idx++) {
-		pmap_link_l2pt(l1pt_va, kernel_base + idx * L2_S_SEGSIZE,
-		    &kernel_l2pt[idx]);
-		VPRINTF("%s: adding L2 pt (VA %#lx, PA %#lx) for VA %#lx (kernel)\n",
-		    __func__, kernel_l2pt[idx].pv_va,
-		    kernel_l2pt[idx].pv_pa, kernel_base + idx * L2_S_SEGSIZE);
+		const vaddr_t va = kernel_base + idx * L2_S_SEGSIZE;
+
+		pmap_link_l2pt(l1pt_va, va, &kernel_l2pt[idx]);
+
+		VPRINTF("%s: adding L2 pt (VA %#lx, PA %#lx) for VA %#lx %s\n",
+		    __func__, kernel_l2pt[idx].pv_va, kernel_l2pt[idx].pv_pa,
+		    va, "(kernel)");
 	}
 
 	VPRINTF("%s: kernel_vm_base %lx KERNEL_L2PT_VMDATA_NUM %d\n", __func__,
 	    kernel_vm_base, KERNEL_L2PT_VMDATA_NUM);
 
 	for (size_t idx = 0; idx < KERNEL_L2PT_VMDATA_NUM; idx++) {
-		pmap_link_l2pt(l1pt_va, kernel_vm_base + idx * L2_S_SEGSIZE,
-		    &vmdata_l2pt[idx]);
-		VPRINTF("%s: adding L2 pt (VA %#lx, PA %#lx) for VA %#lx (vm)\n",
+		const vaddr_t va = kernel_vm_base + idx * L2_S_SEGSIZE;
+
+		pmap_link_l2pt(l1pt_va, va, &vmdata_l2pt[idx]);
+
+		VPRINTF("%s: adding L2 pt (VA %#lx, PA %#lx) for VA %#lx %s\n",
 		    __func__, vmdata_l2pt[idx].pv_va, vmdata_l2pt[idx].pv_pa,
-		    kernel_vm_base + idx * L2_S_SEGSIZE);
+		    va, "(vm)");
 	}
 	if (iovbase) {
-		pmap_link_l2pt(l1pt_va, iovbase & -L2_S_SEGSIZE, &bmi->bmi_io_l2pt);
-		VPRINTF("%s: adding L2 pt (VA %#lx, PA %#lx) for VA %#lx (io)\n",
+		const vaddr_t va = iovbase & -L2_S_SEGSIZE;
+
+		pmap_link_l2pt(l1pt_va, va, &bmi->bmi_io_l2pt);
+
+		VPRINTF("%s: adding L2 pt (VA %#lx, PA %#lx) for VA %#lx %s\n",
 		    __func__, bmi->bmi_io_l2pt.pv_va, bmi->bmi_io_l2pt.pv_pa,
-		    iovbase & -L2_S_SEGSIZE);
+		    va, "(io)");
 	}
 
 	/* update the top of the kernel VM */
