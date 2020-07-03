@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.89 2020/03/20 19:48:03 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.90 2020/07/03 17:22:14 skrll Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -37,12 +37,14 @@ include "opt_execfmt.h"
 endif
 
 include <sys/param.h>
-include <sys/systm.h>
+
+include <sys/device.h>
 include <sys/mbuf.h>
 include <sys/proc.h>
 include <sys/resourcevar.h>
-include <sys/device.h>
 include <sys/signal.h>
+include <sys/systm.h>
+
 include <netinet/in.h>
 include <netinet/in_systm.h>
 include <netinet/ip.h>
@@ -52,11 +54,12 @@ include <netinet/ip_var.h>
 include <uvm/uvm_extern.h>
 
 include <arm/fiq.h>
-include <arm/vfpreg.h>
 include <arm/locore.h>
+include <arm/vfpreg.h>
 include <arm/undefined.h>
 
 include <arm/arm32/pte.h>
+
 include <machine/pmap.h>
 include <machine/pcb.h>
 include <machine/vmparam.h>
