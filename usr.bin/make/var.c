@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.245 2020/07/03 22:34:22 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.246 2020/07/03 22:40:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.245 2020/07/03 22:34:22 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.246 2020/07/03 22:40:55 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.245 2020/07/03 22:34:22 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.246 2020/07/03 22:40:55 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2262,7 +2262,8 @@ typedef struct {
 #define STRMOD_MATCH(s, want, n) \
     (strncmp(s, want, n) == 0 && (s[n] == st->endc || s[n] == ':'))
 #define STRMOD_MATCHX(s, want, n) \
-    (strncmp(s, want, n) == 0 && (s[n] == st->endc || s[n] == ':' || s[n] == '='))
+    (strncmp(s, want, n) == 0 && \
+     (s[n] == st->endc || s[n] == ':' || s[n] == '='))
 #define CHARMOD_MATCH(c) (c == st->endc || c == ':')
 
 /* :@var@...${var}...@ */
@@ -2290,7 +2291,8 @@ ApplyModifier_At(ApplyModifiersState *st) {
 
     loop.flags = st->flags & (VARF_UNDEFERR | VARF_WANTRES);
     loop.ctxt = st->ctxt;
-    st->newStr = VarModify(st->ctxt, &st->parsestate, st->nstr, VarLoopExpand, &loop);
+    st->newStr = VarModify(
+	st->ctxt, &st->parsestate, st->nstr, VarLoopExpand, &loop);
     Var_Delete(loop.tvar, st->ctxt);
     free(loop.tvar);
     free(loop.str);
@@ -3384,7 +3386,8 @@ ApplyModifiers(char *nstr, const char *tstr,
 	    if (*st.tstr == ':')
 		st.tstr++;
 	    else if (!*st.tstr && st.endc) {
-		Error("Unclosed variable specification after complex modifier (expecting '%c') for %s", st.endc, st.v->name);
+		Error("Unclosed variable specification after complex "
+		    "modifier (expecting '%c') for %s", st.endc, st.v->name);
 		goto out;
 	    }
 	    continue;
@@ -3590,7 +3593,9 @@ ApplyModifiers(char *nstr, const char *tstr,
 	    }
 	}
 	if (st.termc == '\0' && st.endc != '\0') {
-	    Error("Unclosed variable specification (expecting '%c') for \"%s\" (value \"%s\") modifier %c", st.endc, st.v->name, st.nstr, st.modifier);
+	    Error("Unclosed variable specification (expecting '%c') "
+		"for \"%s\" (value \"%s\") modifier %c",
+		st.endc, st.v->name, st.nstr, st.modifier);
 	} else if (st.termc == ':') {
 	    st.cp++;
 	}
