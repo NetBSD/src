@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.21 2020/07/03 08:02:55 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.22 2020/07/03 17:03:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: hash.c,v 1.21 2020/07/03 08:02:55 rillig Exp $";
+static char rcsid[] = "$NetBSD: hash.c,v 1.22 2020/07/03 17:03:09 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)hash.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: hash.c,v 1.21 2020/07/03 08:02:55 rillig Exp $");
+__RCSID("$NetBSD: hash.c,v 1.22 2020/07/03 17:03:09 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -463,4 +463,15 @@ RebuildTable(Hash_Table *t)
 		}
 	}
 	free(oldhp);
+}
+
+void Hash_ForEach(Hash_Table *t, void (*action)(void *, void *), void *data)
+{
+	Hash_Search search;
+	Hash_Entry *e;
+
+	for (e = Hash_EnumFirst(t, &search);
+	     e != NULL;
+	     e = Hash_EnumNext(&search))
+		action(Hash_GetValue(e), data);
 }
