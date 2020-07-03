@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.57 2020/05/29 05:35:47 rin Exp $ */
+/*	$NetBSD: clock.c,v 1.58 2020/07/03 16:23:03 maxv Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.57 2020/05/29 05:35:47 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.58 2020/07/03 16:23:03 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -292,9 +292,9 @@ clk_getcounter(struct timecounter *tc)
 	u_int counter;
 
 	do {
-		cur_hardclock = hardclock_ticks;
+		cur_hardclock = getticks();
 		counter = clk_gettick();
-	} while (cur_hardclock != hardclock_ticks);
+	} while (cur_hardclock != getticks());
 
 	/*
 	 * Handle the situation of a wrapped interval counter, while

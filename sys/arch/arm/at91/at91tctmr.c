@@ -1,4 +1,4 @@
-/*$NetBSD: at91tctmr.c,v 1.8 2020/05/29 12:30:38 rin Exp $*/
+/*$NetBSD: at91tctmr.c,v 1.9 2020/07/03 16:23:02 maxv Exp $*/
 
 /*
  * AT91 Timer Counter (TC) based clock functions
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91tctmr.c,v 1.8 2020/05/29 12:30:38 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91tctmr.c,v 1.9 2020/07/03 16:23:02 maxv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -302,20 +302,20 @@ static void udelay(unsigned int usec)
     unsigned footick = (sc->sc_timerclock * 64ULL / 1000000UL);
 
     if (usec > 0) {
-      prev_ticks = hardclock_ticks;
+      prev_ticks = getticks();
       __insn_barrier();
       prev_cvr = READ_TC(sc, TC_CV);
-      ticks = hardclock_ticks;
+      ticks = getticks();
       __insn_barrier();
       if (ticks != prev_ticks) {
 	prev_cvr = READ_TC(sc, TC_CV);
 	prev_ticks = ticks;
       }
       for (;;) {
-	ticks = hardclock_ticks;
+	ticks = getticks();
 	__insn_barrier();
 	cvr = READ_TC(sc, TC_CV);
-	ticks2 = hardclock_ticks;
+	ticks2 = getticks();
 	__insn_barrier();
 	if (ticks2 != ticks) {
 	  cvr = READ_TC(sc, TC_CV);
