@@ -1,4 +1,4 @@
-# $NetBSD: t_random_garbage.sh,v 1.2 2020/06/27 14:04:17 jruoho Exp $
+# $NetBSD: t_random_garbage.sh,v 1.3 2020/07/03 07:03:14 jruoho Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -47,7 +47,8 @@ write_garbage() {
 atf_test_case random_garbage
 random_garbage_head() {
 	atf_set "require.user" "root"
-	atf_set "descr" "Test writing random garbage to ifconfig(8) options"
+	atf_set "descr" "Test writing random garbage to " \
+		"ifconfig(8) options (PR kern/55451)"
 }
 
 random_garbage_body() {
@@ -62,7 +63,7 @@ random_garbage_body() {
 	#
 	# Take care.
 	#
-	atf_skip "The test is not safe"
+	atf_skip "The test is not safe (PR kern/55451)"
 
 	opts="advbase advskew broadcast carpdev description \
 	      media mediaopt -mediaopt mode instance metric mtu \
