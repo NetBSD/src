@@ -1,4 +1,4 @@
-/*	$NetBSD: statvfs.h,v 1.1 2019/09/22 23:18:53 christos Exp $	 */
+/*	$NetBSD: statvfs.h,v 1.2 2020/07/03 14:08:53 christos Exp $	 */
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -112,12 +112,12 @@ statvfs_to_statvfs90(const struct statvfs *s, struct statvfs90 *s90)
 static __inline int
 statvfs_to_statvfs90_copy(const void *vs, void *vs90, size_t l)
 {
-	struct statvfs90 *s90 = STATVFSBUF_GET();
+	struct statvfs90 *s90 = kmem_zalloc(sizeof(*s90), KM_SLEEP);
 	int error;
 
 	statvfs_to_statvfs90(vs, s90);
 	error = copyout(s90, vs90, l);
-	STATVFSBUF_PUT(s90);
+	kmem_free(s90, sizeof(*s90));
 
 	return error;
 }
@@ -158,4 +158,4 @@ int	__getmntinfo90(struct statvfs **, int);
 
 __END_DECLS
 
-#endif /* !_SYS_STATVFS_H_ */
+#endif /* !_COMPAT_SYS_STATVFS_H_ */
