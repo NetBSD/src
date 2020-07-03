@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.5 2020/07/03 15:41:37 rillig Exp $
+# $Id: modmisc.mk,v 1.6 2020/07/03 18:41:50 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -37,9 +37,9 @@ modvarloop:
 	@echo "paths=${paths}"
 	@echo "PATHS=${paths:tu}"
 
-PATHNAMES=	a/b/c def archive.tar.gz conf.d/file
+PATHNAMES=	a/b/c def a.b.c a.b/c a a.a .gitignore a a.a
 mod-HTE:
-	@echo "head of '"${PATHNAMES:Q}"' is '"${PATHNAMES:H:Q}
-	@echo "tail of '"${PATHNAMES:Q}"' is '"${PATHNAMES:T:Q}
-	@echo "suffix of '"${PATHNAMES:Q}"' is '"${PATHNAMES:E:Q}
-	@echo "root of '"${PATHNAMES:Q}"' is '"${PATHNAMES:R:Q}
+	@echo "dirname of '"${PATHNAMES:Q}"' is '"${PATHNAMES:H:Q}"'"
+	@echo "basename of '"${PATHNAMES:Q}"' is '"${PATHNAMES:T:Q}"'"
+	@echo "suffix of '"${PATHNAMES:Q}"' is '"${PATHNAMES:E:Q}"'"
+	@echo "root of '"${PATHNAMES:Q}"' is '"${PATHNAMES:R:Q}"'"
