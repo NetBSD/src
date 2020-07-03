@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.277 2020/07/02 15:47:38 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.278 2020/07/03 08:02:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.277 2020/07/02 15:47:38 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.278 2020/07/03 08:02:55 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.277 2020/07/02 15:47:38 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.278 2020/07/03 08:02:55 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -791,7 +791,7 @@ Main_SetVarObjdir(const char *var, const char *suffix)
 static int
 ReadAllMakefiles(const void *p, const void *q)
 {
-	return (ReadMakefile(p, q) == 0);
+	return ReadMakefile(p, q) == 0;
 }
 
 int
@@ -807,7 +807,7 @@ str2Lst_Append(Lst lp, char *str, const char *sep)
 	(void)Lst_AtEnd(lp, cp);
 	n++;
     }
-    return (n);
+    return n;
 }
 
 #ifdef SIGINFO
@@ -1556,7 +1556,7 @@ ReadMakefile(const void *p, const void *q MAKE_ATTR_UNUSED)
 		if (!name || (fd = open(name, O_RDONLY)) == -1) {
 			free(name);
 			free(path);
-			return(-1);
+			return -1;
 		}
 		fname = name;
 		/*
@@ -1570,7 +1570,7 @@ found:
 		Parse_File(fname, fd);
 	}
 	free(path);
-	return(0);
+	return 0;
 }
 
 
@@ -2190,7 +2190,7 @@ s2Boolean(const char *s, Boolean bf)
 	    break;
 	}
     }
-    return (bf);
+    return bf;
 }
 
 /*
@@ -2214,5 +2214,5 @@ getBoolean(const char *name, Boolean bf)
 	    free(cp);
 	}
     }
-    return (bf);
+    return bf;
 }
