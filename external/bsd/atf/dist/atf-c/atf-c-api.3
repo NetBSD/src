@@ -276,15 +276,15 @@ In order to do so, a later registration is needed with the
 macro detailed in
 .Sx Program initialization .
 .Pp
-Later on, one must define the three parts of the body by means of three
+Later on, one must define the three parts of the test by means of three
 functions.
 Their headers are given by the
 .Fn ATF_TC_HEAD ,
-.Fn ATF_TC_BODY
+.Fn ATF_TC_BODY ,
 and
 .Fn ATF_TC_CLEANUP
 macros, all of which take the test case name provided to the
-.Fn ATF_TC
+.Fn ATF_TC ,
 .Fn ATF_TC_WITH_CLEANUP ,
 or
 .Fn ATF_TC_WITHOUT_HEAD
