@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.243 2020/07/03 18:41:50 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.244 2020/07/03 22:10:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.243 2020/07/03 18:41:50 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.244 2020/07/03 22:10:42 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.243 2020/07/03 18:41:50 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.244 2020/07/03 22:10:42 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1168,7 +1168,22 @@ Var_Value(const char *name, GNode *ctxt, char **frp)
     return p;
 }
 
-/* Add the dirname of the given word to the buffer. */
+
+/* This callback for VarModify gets a single word from an expression and
+ * typically adds a modification of this word to the buffer. It may also do
+ * nothing or add several words.
+ *
+ * If addSpaces is TRUE, it must add a space before adding anything else to
+ * the buffer.
+ *
+ * It returns the addSpace value for the next call of this callback. Typical
+ * return values are the current addSpaces or TRUE. */
+typedef Boolean (*VarModifyCallback)(GNode *ctxt, Var_Parse_State *vpstate,
+    char *word, Boolean addSpace, Buffer *buf, void *data);
+
+
+/* Callback function for VarModify to implement the :H modifier.
+ * Add the dirname of the given word to the buffer. */
 static Boolean
 VarHead(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	char *word, Boolean addSpace, Buffer *buf,
@@ -1186,7 +1201,8 @@ VarHead(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
     return TRUE;
 }
 
-/* Add the basename of the given word to the buffer. */
+/* Callback function for VarModify to implement the :T modifier.
+ * Add the basename of the given word to the buffer. */
 static Boolean
 VarTail(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	char *word, Boolean addSpace, Buffer *buf,
@@ -1198,11 +1214,11 @@ VarTail(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
     if (addSpace && vpstate->varSpace)
 	Buf_AddByte(buf, vpstate->varSpace);
     Buf_AddBytes(buf, strlen(base), base);
-
     return TRUE;
 }
 
-/* Add the filename suffix of the given word to the buffer, if it exists. */
+/* Callback function for VarModify to implement the :E modifier.
+ * Add the filename suffix of the given word to the buffer, if it exists. */
 static Boolean
 VarSuffix(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	  char *word, Boolean addSpace, Buffer *buf,
@@ -1218,7 +1234,8 @@ VarSuffix(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
     return TRUE;
 }
 
-/* Add the filename basename of the given word to the buffer. */
+/* Callback function for VarModify to implement the :R modifier.
+ * Add the filename basename of the given word to the buffer. */
 static Boolean
 VarRoot(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	char *word, Boolean addSpace, Buffer *buf,
@@ -1233,167 +1250,78 @@ VarRoot(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
     return TRUE;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * VarMatch --
- *	Place the word in the buffer if it matches the given pattern.
- *	Callback function for VarModify to implement the :M modifier.
- *
- * Input:
- *	word		Word to examine
- *	addSpace	TRUE if need to add a space to the buffer
- *			before adding the word, if it matches
- *	buf		Buffer in which to store it
- *	pattern		Pattern the word must match
- *
- * Results:
- *	TRUE if a space should be placed in the buffer before the next
- *	word.
- *
- * Side Effects:
- *	The word may be copied to the buffer.
- *
- *-----------------------------------------------------------------------
- */
+/* Callback function for VarModify to implement the :M modifier.
+ * Place the word in the buffer if it matches the given pattern. */
 static Boolean
 VarMatch(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	 char *word, Boolean addSpace, Buffer *buf,
-	 void *pattern)
+	 void *data)
 {
+    const char *pattern = data;
     if (DEBUG(VAR))
-	fprintf(debug_file, "VarMatch [%s] [%s]\n", word, (char *)pattern);
-    if (Str_Match(word, (char *)pattern)) {
-	if (addSpace && vpstate->varSpace) {
-	    Buf_AddByte(buf, vpstate->varSpace);
-	}
-	addSpace = TRUE;
-	Buf_AddBytes(buf, strlen(word), word);
-    }
-    return addSpace;
+	fprintf(debug_file, "VarMatch [%s] [%s]\n", word, pattern);
+    if (!Str_Match(word, pattern))
+	return addSpace;
+    if (addSpace && vpstate->varSpace)
+	Buf_AddByte(buf, vpstate->varSpace);
+    Buf_AddBytes(buf, strlen(word), word);
+    return TRUE;
 }
 
 #ifdef SYSVVARSUB
-/*-
- *-----------------------------------------------------------------------
- * VarSYSVMatch --
- *	Place the word in the buffer if it matches the given pattern.
- *	Callback function for VarModify to implement the System V %
- *	modifiers.
- *
- * Input:
- *	word		Word to examine
- *	addSpace	TRUE if need to add a space to the buffer
- *			before adding the word, if it matches
- *	buf		Buffer in which to store it
- *	patp		Pattern the word must match
- *
- * Results:
- *	TRUE if a space should be placed in the buffer before the next
- *	word.
- *
- * Side Effects:
- *	The word may be copied to the buffer.
- *
- *-----------------------------------------------------------------------
- */
+/* Callback function for VarModify to implement the :%.from=%.to modifier. */
 static Boolean
 VarSYSVMatch(GNode *ctx, Var_Parse_State *vpstate,
 	     char *word, Boolean addSpace, Buffer *buf,
-	     void *patp)
+	     void *data)
 {
     size_t len;
     char *ptr;
     Boolean hasPercent;
-    VarPattern 	  *pat = (VarPattern *)patp;
-    char *varexp;
+    VarPattern *pat = data;
 
     if (addSpace && vpstate->varSpace)
 	Buf_AddByte(buf, vpstate->varSpace);
 
-    addSpace = TRUE;
-
     if ((ptr = Str_SYSVMatch(word, pat->lhs, &len, &hasPercent)) != NULL) {
-	varexp = Var_Subst(NULL, pat->rhs, ctx, VARF_WANTRES);
+	char *varexp = Var_Subst(NULL, pat->rhs, ctx, VARF_WANTRES);
 	Str_SYSVSubst(buf, varexp, ptr, len, hasPercent);
 	free(varexp);
     } else {
 	Buf_AddBytes(buf, strlen(word), word);
     }
 
-    return addSpace;
+    return TRUE;
 }
 #endif
 
-
-/*-
- *-----------------------------------------------------------------------
- * VarNoMatch --
- *	Place the word in the buffer if it doesn't match the given pattern.
- *	Callback function for VarModify to implement the :N modifier.
- *
- * Input:
- *	word		Word to examine
- *	addSpace	TRUE if need to add a space to the buffer
- *			before adding the word, if it matches
- *	buf		Buffer in which to store it
- *	pattern		Pattern the word must match
- *
- * Results:
- *	TRUE if a space should be placed in the buffer before the next
- *	word.
- *
- * Side Effects:
- *	The word may be copied to the buffer.
- *
- *-----------------------------------------------------------------------
- */
+/* Callback function for VarModify to implement the :N modifier.
+ * Place the word in the buffer if it doesn't match the given pattern. */
 static Boolean
 VarNoMatch(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	   char *word, Boolean addSpace, Buffer *buf,
-	   void *pattern)
+	   void *data)
 {
-    if (!Str_Match(word, (char *)pattern)) {
-	if (addSpace && vpstate->varSpace) {
-	    Buf_AddByte(buf, vpstate->varSpace);
-	}
-	addSpace = TRUE;
-	Buf_AddBytes(buf, strlen(word), word);
-    }
-    return addSpace;
+    const char *pattern = data;
+    if (Str_Match(word, pattern))
+	return addSpace;
+    if (addSpace && vpstate->varSpace)
+	Buf_AddByte(buf, vpstate->varSpace);
+    Buf_AddBytes(buf, strlen(word), word);
+    return TRUE;
 }
 
-
-/*-
- *-----------------------------------------------------------------------
- * VarSubstitute --
- *	Perform a string-substitution on the given word, placing the
- *	result in the passed buffer.
- *
- * Input:
- *	word		Word to modify
- *	addSpace	True if space should be added before
- *			other characters
- *	buf		Buffer for result
- *	patternp	Pattern for substitution
- *
- * Results:
- *	TRUE if a space is needed before more characters are added.
- *
- * Side Effects:
- *	None.
- *
- *-----------------------------------------------------------------------
- */
+/* Callback function for VarModify to implement the :S,from,to, modifier.
+ * Perform a string substitution on the given word. */
 static Boolean
 VarSubstitute(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	      char *word, Boolean addSpace, Buffer *buf,
-	      void *patternp)
+	      void *data)
 {
-    int  	wordLen;    /* Length of word */
-    char 	*cp;	    /* General pointer */
-    VarPattern	*pattern = (VarPattern *)patternp;
+    int wordLen = strlen(word);
+    char *cp;			/* General pointer */
+    VarPattern *pattern = data;
 
-    wordLen = strlen(word);
     if ((pattern->flags & (VAR_SUB_ONE|VAR_SUB_MATCHED)) !=
 	(VAR_SUB_ONE|VAR_SUB_MATCHED)) {
 	/*
@@ -1565,42 +1493,25 @@ VarREError(int reerr, regex_t *pat, const char *str)
     free(errbuf);
 }
 
-
-/*-
- *-----------------------------------------------------------------------
- * VarRESubstitute --
- *	Perform a regex substitution on the given word, placing the
- *	result in the passed buffer.
- *
- * Results:
- *	TRUE if a space is needed before more characters are added.
- *
- * Side Effects:
- *	None.
- *
- *-----------------------------------------------------------------------
- */
+/* Callback function for VarModify to implement the :C/from/to/ modifier.
+ * Perform a regex substitution on the given word. */
 static Boolean
 VarRESubstitute(GNode *ctx MAKE_ATTR_UNUSED,
 		Var_Parse_State *vpstate MAKE_ATTR_UNUSED,
 		char *word, Boolean addSpace, Buffer *buf,
-		void *patternp)
+		void *data)
 {
-    VarREPattern *pat;
+    VarREPattern *pat = data;
     int xrv;
-    char *wp;
+    char *wp = word;
     char *rp;
-    int added;
+    int added = 0;
     int flags = 0;
 
 #define MAYBE_ADD_SPACE()		\
 	if (addSpace && !added)		\
 	    Buf_AddByte(buf, ' ');	\
 	added = 1
-
-    added = 0;
-    wp = word;
-    pat = patternp;
 
     if ((pat->flags & (VAR_SUB_ONE|VAR_SUB_MATCHED)) ==
 	(VAR_SUB_ONE|VAR_SUB_MATCHED))
@@ -1697,40 +1608,20 @@ VarRESubstitute(GNode *ctx MAKE_ATTR_UNUSED,
 #endif
 
 
-
-/*-
- *-----------------------------------------------------------------------
- * VarLoopExpand --
- *	Implements the :@<temp>@<string>@ modifier of ODE make.
- *	We set the temp variable named in pattern.lhs to word and expand
- *	pattern.rhs storing the result in the passed buffer.
- *
- * Input:
- *	word		Word to modify
- *	addSpace	True if space should be added before
- *			other characters
- *	buf		Buffer for result
- *	pattern		Datafor substitution
- *
- * Results:
- *	TRUE if a space is needed before more characters are added.
- *
- * Side Effects:
- *	None.
- *
- *-----------------------------------------------------------------------
- */
+/* Callback function for VarModify to implement the :@var@...@ modifier of
+ * ODE make. We set the temp variable named in pattern.lhs to word and
+ * expand pattern.rhs. */
 static Boolean
 VarLoopExpand(GNode *ctx MAKE_ATTR_UNUSED,
 	      Var_Parse_State *vpstate MAKE_ATTR_UNUSED,
 	      char *word, Boolean addSpace, Buffer *buf,
-	      void *loopp)
+	      void *data)
 {
-    VarLoop_t	*loop = (VarLoop_t *)loopp;
+    VarLoop_t *loop = data;
     char *s;
     int slen;
 
-    if (word && *word) {
+    if (*word) {
         Var_Set_with_flags(loop->tvar, word, loop->ctxt, VAR_NO_EXPORT);
         s = Var_Subst(NULL, loop->str, loop->ctxt, loop->flags);
         if (s != NULL && *s != '\0') {
@@ -1834,7 +1725,8 @@ VarSelectWords(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 }
 
 
-/* Replace each word with the result of realpath() if successful. */
+/* Callback function for VarModify to implement the :tA modifier.
+ * Replace each word with the result of realpath() if successful. */
 static Boolean
 VarRealpath(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	    char *word, Boolean addSpace, Buffer *buf,
@@ -1856,14 +1748,12 @@ VarRealpath(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 
 /*-
  *-----------------------------------------------------------------------
- * VarModify --
- *	Modify each of the words of the passed string using the given
- *	function. Used to implement all modifiers.
+ * Modify each of the words of the passed string using the given function.
  *
  * Input:
  *	str		String whose words should be trimmed
  *	modProc		Function to use to modify them
- *	datum		Datum to pass it
+ *	data		Custom data for the modProc
  *
  * Results:
  *	A string of all the words modified appropriately.
@@ -1875,10 +1765,7 @@ VarRealpath(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
  */
 static char *
 VarModify(GNode *ctx, Var_Parse_State *vpstate,
-    const char *str,
-    Boolean (*modProc)(GNode *, Var_Parse_State *, char *,
-		       Boolean, Buffer *, void *),
-    void *datum)
+    const char *str, VarModifyCallback modProc, void *datum)
 {
     Buffer buf;			/* Buffer for the new string */
     Boolean addSpace; 		/* TRUE if need to add a space to the
