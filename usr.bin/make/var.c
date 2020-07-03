@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.237 2020/07/03 14:59:17 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.238 2020/07/03 15:24:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.237 2020/07/03 14:59:17 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.238 2020/07/03 15:24:31 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.237 2020/07/03 14:59:17 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.238 2020/07/03 15:24:31 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1169,92 +1169,37 @@ Var_Value(const char *name, GNode *ctxt, char **frp)
     return p;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * VarHead --
- *	Remove the tail of the given word and place the result in the given
- *	buffer.
- *
- * Input:
- *	word		Word to trim
- *	addSpace	True if need to add a space to the buffer
- *			before sticking in the head
- *	buf		Buffer in which to store it
- *
- * Results:
- *	TRUE if characters were added to the buffer (a space needs to be
- *	added to the buffer before the next word).
- *
- * Side Effects:
- *	The trimmed word is added to the buffer.
- *
- *-----------------------------------------------------------------------
- */
+/* Add the dirname of the given word to the buffer. */
 static Boolean
 VarHead(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	char *word, Boolean addSpace, Buffer *buf,
 	void *dummy MAKE_ATTR_UNUSED)
 {
-    char *slash;
+    const char *slash = strrchr(word, '/');
 
-    slash = strrchr(word, '/');
-    if (slash != NULL) {
-	if (addSpace && vpstate->varSpace) {
-	    Buf_AddByte(buf, vpstate->varSpace);
-	}
+    if (addSpace && vpstate->varSpace)
+	Buf_AddByte(buf, vpstate->varSpace);
+    if (slash != NULL)
 	Buf_AddBytes(buf, slash - word, word);
-	return TRUE;
-    } else {
-	/*
-	 * If no directory part, give . (q.v. the POSIX standard)
-	 */
-	if (addSpace && vpstate->varSpace)
-	    Buf_AddByte(buf, vpstate->varSpace);
+    else
 	Buf_AddByte(buf, '.');
-    }
+
     return TRUE;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * VarTail --
- *	Remove the head of the given word and place the result in the given
- *	buffer.
- *
- * Input:
- *	word		Word to trim
- *	addSpace	True if need to add a space to the buffer
- *			before adding the tail
- *	buf		Buffer in which to store it
- *
- * Results:
- *	TRUE if characters were added to the buffer (a space needs to be
- *	added to the buffer before the next word).
- *
- * Side Effects:
- *	The trimmed word is added to the buffer.
- *
- *-----------------------------------------------------------------------
- */
+/* Add the basename of the given word to the buffer. */
 static Boolean
 VarTail(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	char *word, Boolean addSpace, Buffer *buf,
 	void *dummy MAKE_ATTR_UNUSED)
 {
-    char *slash;
+    const char *slash = strrchr(word, '/');
+    const char *base = slash != NULL ? slash + 1 : word;
 
-    if (addSpace && vpstate->varSpace) {
+    if (addSpace && vpstate->varSpace)
 	Buf_AddByte(buf, vpstate->varSpace);
-    }
+    Buf_AddBytes(buf, strlen(base), base);
 
-    slash = strrchr(word, '/');
-    if (slash != NULL) {
-	*slash++ = '\0';
-	Buf_AddBytes(buf, strlen(slash), slash);
-	slash[-1] = '/';
-    } else {
-	Buf_AddBytes(buf, strlen(word), word);
-    }
     return TRUE;
 }
 
