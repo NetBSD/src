@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kcov.c,v 1.15 2020/05/16 17:42:06 hannken Exp $	*/
+/*	$NetBSD: subr_kcov.c,v 1.16 2020/07/03 16:11:11 maxv Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 The NetBSD Foundation, Inc.
@@ -649,10 +649,16 @@ trace_cmp(uint64_t type, uint64_t arg1, uint64_t arg2, intptr_t pc)
 		return;
 	}
 
+	if (__predict_false(kd->silenced)) {
+		/* Silenced. */
+		return;
+	}
+
 	if (kd->mode != KCOV_MODE_TRACE_CMP) {
 		/* CMP tracing mode not enabled */
 		return;
 	}
+	KASSERT(kd->remote == NULL);
 
 	idx = kd->buf[0];
 	if ((idx * 4 + 4) <= kd->bufnent) {
