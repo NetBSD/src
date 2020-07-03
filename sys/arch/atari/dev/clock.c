@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.61 2020/05/29 12:30:39 rin Exp $	*/
+/*	$NetBSD: clock.c,v 1.62 2020/07/03 16:23:03 maxv Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.61 2020/05/29 12:30:39 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.62 2020/07/03 16:23:03 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -280,7 +280,7 @@ clk_getcounter(struct timecounter *tc)
 	static uint32_t lastcount;
 
 	s = splhigh();
-	cur_hardclock = hardclock_ticks;
+	cur_hardclock = getticks();
 	ipra = MFP->mf_ipra;
 	tadr = MFP->mf_tadr;
 	delta = divisor - tadr;

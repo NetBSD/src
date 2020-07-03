@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.14 2020/03/14 18:08:39 ad Exp $	*/
+/*	$NetBSD: sched.h,v 1.15 2020/07/03 16:23:02 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -74,10 +74,10 @@ schedule_timeout_uninterruptible(long timeout)
 		return 0;
 	}
 
-	start = hardclock_ticks;
+	start = getticks();
 	/* Caller is expected to loop anyway, so no harm in truncating.  */
 	(void)kpause("loonix", false /*!intr*/, MIN(timeout, INT_MAX), NULL);
-	end = hardclock_ticks;
+	end = getticks();
 
 	remain = timeout - (end - start);
 	return remain > 0 ? remain : 0;
