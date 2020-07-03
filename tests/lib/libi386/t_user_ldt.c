@@ -1,4 +1,4 @@
-/*	$NetBSD: t_user_ldt.c,v 1.3 2020/05/09 09:08:41 maxv Exp $	*/
+/*	$NetBSD: t_user_ldt.c,v 1.4 2020/07/03 16:07:52 maxv Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -92,6 +92,12 @@ build_desc(union descriptor *desc, void *basep, uint32_t limit, int type,
 }
 
 static void
+set_ds(unsigned int val)
+{
+	__asm volatile("mov %0,%%ds"::"r" ((unsigned short)val));
+}
+
+static void
 set_fs(unsigned int val)
 {
 	__asm volatile("mov %0,%%fs"::"r" ((unsigned short)val));
@@ -181,10 +187,98 @@ ATF_TC_BODY(filter_ops, tc)
 
 /* -------------------------------------------------------------------------- */
 
+static void
+iretq_gp__gp_handler(int signo, siginfo_t *sig, void *ctx)
+{
+	ATF_REQUIRE(sig->si_signo == SIGSEGV);
+	ATF_REQUIRE(sig->si_code == SEGV_ACCERR);
+	atf_tc_pass();
+	/* NOTREACHED */
+}
+
+ATF_TC(iretq_gp);
+ATF_TC_HEAD(iretq_gp, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Ensure that the kernel correctly handles iretq #GP faults");
+}
+ATF_TC_BODY(iretq_gp, tc)
+{
+	union descriptor desc;
+	struct sigaction act;
+
+	if (!user_ldt_supported) {
+		atf_tc_skip("USER_LDT disabled");
+	}
+
+	/* Build a desc, set %ds to it. */
+	build_desc(&desc, 0, 0xFFFFFUL, SDT_MEMRWA, SEL_UPL, 1, 1);
+	ATF_REQUIRE_EQ(i386_set_ldt(256, &desc, 1), 256);
+	set_ds(LSEL(256, SEL_UPL));
+
+	/* Register the fault handler. */
+	memset(&act, 0, sizeof(act));
+	act.sa_sigaction = iretq_gp__gp_handler;
+	act.sa_flags = SA_SIGINFO;
+	ATF_REQUIRE_EQ(sigaction(SIGSEGV, &act, NULL), 0);
+
+	/* Set NULL on %ds, iretq should fault. */
+	memset(&desc, 0, sizeof(desc));
+	ATF_REQUIRE_EQ(i386_set_ldt(256, &desc, 1), 256);
+
+	atf_tc_fail("test did not fault as expected");
+}
+
+/* -------------------------------------------------------------------------- */
+
+static void
+iretq_np__np_handler(int signo, siginfo_t *sig, void *ctx)
+{
+	ATF_REQUIRE(sig->si_signo == SIGBUS);
+	ATF_REQUIRE(sig->si_code == BUS_ADRERR);
+	atf_tc_pass();
+	/* NOTREACHED */
+}
+
+ATF_TC(iretq_np);
+ATF_TC_HEAD(iretq_np, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Ensure that the kernel correctly handles iretq #NP faults");
+}
+ATF_TC_BODY(iretq_np, tc)
+{
+	union descriptor desc;
+	struct sigaction act;
+
+	if (!user_ldt_supported) {
+		atf_tc_skip("USER_LDT disabled");
+	}
+
+	/* Build a desc, set %ds to it. */
+	build_desc(&desc, 0, 0xFFFFFFFFUL, SDT_MEMRWA, SEL_UPL, 1, 1);
+	ATF_REQUIRE_EQ(i386_set_ldt(256, &desc, 1), 256);
+	set_ds(LSEL(256, SEL_UPL));
+
+	/* Register the fault handler. */
+	memset(&act, 0, sizeof(act));
+	act.sa_sigaction = iretq_np__np_handler;
+	act.sa_flags = SA_SIGINFO;
+	ATF_REQUIRE_EQ(sigaction(SIGBUS, &act, NULL), 0);
+
+	/* Set non-present on %ds, iretq should fault. */
+	desc.sd.sd_p = 0;
+	ATF_REQUIRE_EQ(i386_set_ldt(256, &desc, 1), 256);
+
+	atf_tc_fail("test did not fault as expected");
+}
+
+/* -------------------------------------------------------------------------- */
+
 static volatile bool expect_crash;
 
 static void
-gp_handler(int signo, siginfo_t *sig, void *ctx)
+user_ldt__gp_handler(int signo, siginfo_t *sig, void *ctx)
 {
 	ucontext_t *uctx = ctx;
 	extern uint8_t fs_read_begin;
@@ -222,7 +316,7 @@ ATF_TC_BODY(user_ldt, tc)
 	}
 
 	memset(&act, 0, sizeof(act));
-	act.sa_sigaction = gp_handler;
+	act.sa_sigaction = user_ldt__gp_handler;
 	act.sa_flags = SA_SIGINFO;
 	ATF_REQUIRE_EQ(sigaction(SIGSEGV, &act, NULL), 0);
 
@@ -252,6 +346,8 @@ ATF_TP_ADD_TCS(tp)
 	init_ldt_base();
 
 	ATF_TP_ADD_TC(tp, filter_ops);
+	ATF_TP_ADD_TC(tp, iretq_gp);
+	ATF_TP_ADD_TC(tp, iretq_np);
 	ATF_TP_ADD_TC(tp, user_ldt);
 
 	return atf_no_error();
