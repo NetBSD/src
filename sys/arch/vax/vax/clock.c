@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.59 2020/05/29 12:30:41 rin Exp $	 */
+/*	$NetBSD: clock.c,v 1.60 2020/07/03 16:23:03 maxv Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.59 2020/05/29 12:30:41 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.60 2020/07/03 16:23:03 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,13 +66,13 @@ vax_diag_get_counter(struct timecounter *tc)
 	u_int counter;
 
 	do {
-		cur_hardclock = hardclock_ticks;
+		cur_hardclock = getticks();
 		counter = *(volatile u_int *)&ka46_cpu->vc_diagtimu;
-	} while (cur_hardclock != hardclock_ticks);
+	} while (cur_hardclock != getticks());
 
 	counter = (counter & 0x3ff) + (counter >> 16) * 1024;
 
-	return counter + hardclock_ticks * tick;
+	return counter + getticks() * tick;
 }
 #endif
 
@@ -84,13 +84,13 @@ vax_mfpr_get_counter(struct timecounter *tc)
 	static int prev_count, prev_hardclock;
 
 	do {
-		cur_hardclock = hardclock_ticks;
+		cur_hardclock = getticks();
 		counter = mfpr(PR_ICR) + tick;
-	} while (cur_hardclock != hardclock_ticks);
+	} while (cur_hardclock != getticks());
 
 	/*
 	 * Handle interval counter wrapping with interrupts blocked.
-	 * If the current hardclock_ticks is less than what we saw
+	 * If the current getticks() is less than what we saw
 	 *   previously, use the previous value.
 	 * If the interval counter is smaller, assume it has wrapped,
 	 *   and if the [adjusted] current hardclock ticks is the same

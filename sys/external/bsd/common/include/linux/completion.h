@@ -1,4 +1,4 @@
-/*	$NetBSD: completion.h,v 1.6 2017/01/11 11:42:09 skrll Exp $	*/
+/*	$NetBSD: completion.h,v 1.7 2020/07/03 16:23:02 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -191,7 +191,7 @@ wait_for_completion_interruptible_timeout(struct completion *completion,
     unsigned long ticks)
 {
 	/* XXX Arithmetic overflow...?  */
-	unsigned int start = hardclock_ticks, now;
+	unsigned int start = getticks(), now;
 	int error;
 
 	mutex_enter(&completion->c_lock);
@@ -202,7 +202,7 @@ wait_for_completion_interruptible_timeout(struct completion *completion,
 		    &completion->c_lock, ticks);
 		if (error)
 			goto out;
-		now = hardclock_ticks;
+		now = getticks();
 		if (ticks < (now - start)) {
 			error = EWOULDBLOCK;
 			goto out;
