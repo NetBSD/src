@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.98 2020/02/11 15:11:27 skrll Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.99 2020/07/03 06:35:05 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -78,15 +78,15 @@
  */
 
 #include "opt_armfpe.h"
-#include "opt_multiprocessor.h"
 #include "opt_cpuoptions.h"
 #include "opt_lockdebug.h"
+#include "opt_multiprocessor.h"
 
 #include "assym.h"
 #include <arm/asm.h>
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.98 2020/02/11 15:11:27 skrll Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.99 2020/07/03 06:35:05 skrll Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 
