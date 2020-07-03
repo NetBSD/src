@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_asan.c,v 1.22 2020/06/30 16:20:02 maxv Exp $	*/
+/*	$NetBSD: subr_asan.c,v 1.23 2020/07/03 08:19:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.22 2020/06/30 16:20:02 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.23 2020/07/03 08:19:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -122,9 +122,9 @@ kasan_shadow_map(void *addr, size_t size)
 static void
 kasan_ctors(void)
 {
-	extern uint64_t __CTOR_LIST__, __CTOR_END__;
+	extern Elf_Addr __CTOR_LIST__, __CTOR_END__;
 	size_t nentries, i;
-	uint64_t *ptr;
+	Elf_Addr *ptr;
 
 	nentries = ((size_t)&__CTOR_END__ - (size_t)&__CTOR_LIST__) /
 	    sizeof(uintptr_t);
