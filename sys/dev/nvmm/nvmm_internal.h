@@ -1,7 +1,7 @@
-/*	$NetBSD: nvmm_internal.h,v 1.15 2020/05/24 08:08:49 maxv Exp $	*/
+/*	$NetBSD: nvmm_internal.h,v 1.16 2020/07/03 16:09:54 maxv Exp $	*/
 
 /*
- * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -91,6 +91,7 @@ struct nvmm_machine {
 };
 
 struct nvmm_impl {
+	const char *name;
 	bool (*ident)(void);
 	void (*init)(void);
 	void (*fini)(void);

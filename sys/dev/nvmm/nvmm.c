@@ -1,7 +1,7 @@
-/*	$NetBSD: nvmm.c,v 1.31 2020/06/25 17:01:19 maxv Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.32 2020/07/03 16:09:54 maxv Exp $	*/
 
 /*
- * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.31 2020/06/25 17:01:19 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.32 2020/07/03 16:09:54 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1209,7 +1209,8 @@ nvmm_attach(device_t parent, device_t self, void *aux)
 	error = nvmm_init();
 	if (error)
 		panic("%s: impossible", __func__);
-	aprint_normal_dev(self, "attached\n");
+	aprint_normal_dev(self, "attached, using backend %s\n",
+	    nvmm_impl->name);
 }
 
 static int

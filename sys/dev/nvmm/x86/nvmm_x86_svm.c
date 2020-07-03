@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.62 2020/05/24 08:08:49 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.63 2020/07/03 16:09:54 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.62 2020/05/24 08:08:49 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.63 2020/07/03 16:09:54 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2430,6 +2430,7 @@ svm_capability(struct nvmm_capability *cap)
 }
 
 const struct nvmm_impl nvmm_x86_svm = {
+	.name = "x86-svm",
 	.ident = svm_ident,
 	.init = svm_init,
 	.fini = svm_fini,
