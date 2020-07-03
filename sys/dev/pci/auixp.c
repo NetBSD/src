@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.49 2020/02/29 06:34:30 isaki Exp $ */
+/* $NetBSD: auixp.c,v 1.50 2020/07/03 12:39:54 isaki Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.49 2020/02/29 06:34:30 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.50 2020/07/03 12:39:54 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -1116,7 +1116,7 @@ auixp_attach(device_t parent, device_t self, void *aux)
 
 	/* establish interrupt routine hookup at IPL_AUDIO level */
 	sc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_AUDIO, auixp_intr,
-	    self, device_xname(self));
+	    sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "can't establish interrupt");
 		if (intrstr != NULL)
