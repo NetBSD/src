@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.4 2020/07/03 15:33:01 rillig Exp $
+# $Id: modmisc.mk,v 1.5 2020/07/03 15:41:37 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -42,3 +42,4 @@ mod-HTE:
 	@echo "head of '"${PATHNAMES:Q}"' is '"${PATHNAMES:H:Q}
 	@echo "tail of '"${PATHNAMES:Q}"' is '"${PATHNAMES:T:Q}
 	@echo "suffix of '"${PATHNAMES:Q}"' is '"${PATHNAMES:E:Q}
+	@echo "root of '"${PATHNAMES:Q}"' is '"${PATHNAMES:R:Q}
