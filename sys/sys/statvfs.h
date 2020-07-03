@@ -1,4 +1,4 @@
-/*	$NetBSD: statvfs.h,v 1.20 2020/05/16 18:31:53 christos Exp $	 */
+/*	$NetBSD: statvfs.h,v 1.21 2020/07/03 19:37:27 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -150,7 +150,8 @@ void	copy_statvfs_info(struct statvfs *, const struct mount *);
 int	dostatvfs(struct mount *, struct statvfs *, struct lwp *, int, int);
 
 #include <sys/kmem.h>
-#define	STATVFSBUF_GET()	kmem_zalloc(sizeof(struct statvfs), KM_SLEEP)
+#define	STATVFSBUF_GET()	\
+	(struct statvfs *)kmem_zalloc(sizeof(struct statvfs), KM_SLEEP)
 #define	STATVFSBUF_PUT(sb)	kmem_free(sb, sizeof(struct statvfs))
 
 #else
