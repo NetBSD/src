@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.1 2014/08/21 13:44:51 apb Exp $
+# $Id: modmisc.mk,v 1.2 2020/07/03 14:59:17 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -15,7 +15,7 @@ MOD_HOMES=S,/home/,/homes/,
 MOD_OPT=@d@$${exists($$d):?$$d:$${d:S,/usr,/opt,}}@
 MOD_SEP=S,:, ,g
 
-all:	modvar modvarloop modsysv
+all:	modvar modvarloop modsysv modhead
 
 modsysv:
 	@echo "The answer is ${libfoo.a:L:libfoo.a=42}"
@@ -36,3 +36,9 @@ modvarloop:
 	@echo "path_/usr/xbin=${path_/usr/xbin}"
 	@echo "paths=${paths}"
 	@echo "PATHS=${paths:tu}"
+
+modhead:
+	@echo "head of a/b/c is ${a/b/c:L:H}"
+	@echo "tail of a/b/c is ${a/b/c:L:T}"
+	@echo "head of abc is ${abc:L:H}"
+	@echo "tail of abc is ${abc:L:T}"
