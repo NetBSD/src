@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.235 2020/07/03 08:02:55 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.236 2020/07/03 08:13:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.235 2020/07/03 08:02:55 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.236 2020/07/03 08:13:23 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.235 2020/07/03 08:02:55 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.236 2020/07/03 08:13:23 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2416,7 +2416,7 @@ ParseTrackInput(const char *name)
     char *ep;
     char *fp = NULL;
     size_t name_len = strlen(name);
-    
+
     old = Var_Value(MAKE_MAKEFILES, VAR_GLOBAL, &fp);
     if (old) {
 	ep = old + strlen(old) - name_len;
@@ -3104,7 +3104,7 @@ Parse_File(const char *name, int fd)
 			   strncmp(cp, "warning", 7) == 0) {
 		    if (ParseMessage(cp))
 			continue;
-		}		    
+		}
 	    }
 
 	    if (*line == '\t') {
