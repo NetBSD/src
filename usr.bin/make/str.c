@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.49 2020/07/03 06:25:23 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.50 2020/07/03 06:30:02 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: str.c,v 1.49 2020/07/03 06:25:23 rillig Exp $";
+static char rcsid[] = "$NetBSD: str.c,v 1.50 2020/07/03 06:30:02 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: str.c,v 1.49 2020/07/03 06:25:23 rillig Exp $");
+__RCSID("$NetBSD: str.c,v 1.50 2020/07/03 06:30:02 rillig Exp $");
 #endif
 #endif				/* not lint */
 #endif
@@ -343,7 +343,7 @@ Str_Match(const char *string, const char *pattern)
 		 * pattern but not at the end of the string, we failed.
 		 */
 		if (*pattern == 0)
-			return !*string;
+			return *string == 0;
 		if (*string == 0 && *pattern != '*')
 			return 0;
 		/*
@@ -386,7 +386,7 @@ Str_Match(const char *string, const char *pattern)
 			} else
 				nomatch = 0;
 			for (;;) {
-				if ((*pattern == ']') || (*pattern == 0)) {
+				if (*pattern == ']' || *pattern == 0) {
 					if (nomatch)
 						break;
 					return 0;
@@ -397,19 +397,19 @@ Str_Match(const char *string, const char *pattern)
 					c2 = pattern[2];
 					if (c2 == 0)
 						return nomatch;
-					if ((*pattern <= *string) &&
-					    (c2 >= *string))
+					if (*pattern <= *string &&
+					    c2 >= *string)
 						break;
-					if ((*pattern >= *string) &&
-					    (c2 <= *string))
+					if (*pattern >= *string &&
+					    c2 <= *string)
 						break;
 					pattern += 2;
 				}
 				++pattern;
 			}
-			if (nomatch && (*pattern != ']') && (*pattern != 0))
+			if (nomatch && *pattern != ']' && *pattern != 0)
 				return 0;
-			while ((*pattern != ']') && (*pattern != 0))
+			while (*pattern != ']' && *pattern != 0)
 				++pattern;
 			if (*pattern == 0)
 				--pattern;
