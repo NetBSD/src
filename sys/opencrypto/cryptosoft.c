@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.56 2020/06/29 23:34:48 riastradh Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.57 2020/07/04 18:07:31 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.56 2020/06/29 23:34:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.57 2020/07/04 18:07:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1096,7 +1096,7 @@ swcr_freesession(void *arg, u_int64_t tid)
 			}
 			if (swd->sw_octx) {
 				explicit_memset(swd->sw_octx, 0, swd->sw_klen);
-				kmem_free(swd->sw_octx, axf->ctxsize);
+				kmem_free(swd->sw_octx, swd->sw_klen);
 			}
 			break;
 
