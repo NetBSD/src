@@ -118,7 +118,7 @@ ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 obio0		at pci? dev ? function ?
 zsc*		at obio?
 zstty*		at zsc? channel ?
-#snapper* 	at obio?
+snapper* 	at obio?
 ki2c*		at obio?	# Keywest I2C
 iic*		at ki2c?
 
@@ -129,10 +129,10 @@ smusat* 	at iic?
 deq* 		at iic?
 
 # Audio support
-#audio*	at audiobus?
+audio*	at audiobus?
 
-#spkr*	at audio?		# PC speaker (synthesized)
-#wsbell* at spkr?
+spkr*	at audio?		# PC speaker (synthesized)
+wsbell* at spkr?
 
 bge*	at pci? dev ? function ?	# gmac ethernet
 brgphy*	at mii? phy ?			# Broadcom BCM5400 PHYs
