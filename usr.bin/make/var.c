@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.247 2020/07/04 03:08:20 lukem Exp $	*/
+/*	$NetBSD: var.c,v 1.248 2020/07/04 10:19:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.247 2020/07/04 03:08:20 lukem Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.248 2020/07/04 10:19:39 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.247 2020/07/04 03:08:20 lukem Exp $");
+__RCSID("$NetBSD: var.c,v 1.248 2020/07/04 10:19:39 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -299,33 +299,6 @@ typedef struct {
     int		end;		/* last word to select */
 } VarSelectWords_t;
 
-static Var *VarFind(const char *, GNode *, int);
-static void VarAdd(const char *, const char *, GNode *);
-static Boolean VarHead(GNode *, Var_Parse_State *,
-			char *, Boolean, Buffer *, void *);
-static Boolean VarTail(GNode *, Var_Parse_State *,
-			char *, Boolean, Buffer *, void *);
-static Boolean VarSuffix(GNode *, Var_Parse_State *,
-			char *, Boolean, Buffer *, void *);
-static Boolean VarRoot(GNode *, Var_Parse_State *,
-			char *, Boolean, Buffer *, void *);
-static Boolean VarMatch(GNode *, Var_Parse_State *,
-			char *, Boolean, Buffer *, void *);
-#ifdef SYSVVARSUB
-static Boolean VarSYSVMatch(GNode *, Var_Parse_State *,
-			char *, Boolean, Buffer *, void *);
-#endif
-static Boolean VarNoMatch(GNode *, Var_Parse_State *,
-			char *, Boolean, Buffer *, void *);
-#ifndef NO_REGEX
-static void VarREError(int, regex_t *, const char *);
-static Boolean VarRESubstitute(GNode *, Var_Parse_State *,
-			char *, Boolean, Buffer *, void *);
-#endif
-static Boolean VarSubstitute(GNode *, Var_Parse_State *,
-			char *, Boolean, Buffer *, void *);
-static Boolean VarLoopExpand(GNode *, Var_Parse_State *,
-			char *, Boolean, Buffer *, void *);
 static char *VarGetPattern(GNode *, Var_Parse_State *,
 			   VarPattern_Flags, const char **, int,
 			   VarPattern_Flags *, int *, VarPattern *);
