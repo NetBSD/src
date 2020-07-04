@@ -1,4 +1,4 @@
-/*	$NetBSD: vcprop_subr.c,v 1.5 2018/01/01 17:03:25 skrll Exp $	*/
+/*	$NetBSD: vcprop_subr.c,v 1.6 2020/07/04 15:14:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2014 Michael Lorenz
@@ -42,8 +42,6 @@
 #include <evbarm/rpi/vcio.h>
 #include <evbarm/rpi/vcpm.h>
 #include <evbarm/rpi/vcprop.h>
-
-#include <evbarm/rpi/rpi.h>
 
 #include <dev/wscons/wsconsio.h>
 
