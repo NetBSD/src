@@ -30,4 +30,5 @@ make: Unclosed substitution for  (, missing)
 :C,word,____,:Q}:
 :a c:
 :x__ 3 x__ 3:
+:+one+ +two+ +three+:
 exit status 0

@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.8 2020/07/04 09:21:30 rillig Exp $
+# $Id: modmisc.mk,v 1.9 2020/07/04 16:15:21 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -16,7 +16,7 @@ MOD_OPT=@d@$${exists($$d):?$$d:$${d:S,/usr,/opt,}}@
 MOD_SEP=S,:, ,g
 
 all:	modvar modvarloop modsysv mod-HTE emptyvar undefvar
-all:	mod-S mod-C
+all:	mod-S mod-C mod-at-varname
 
 modsysv:
 	@echo "The answer is ${libfoo.a:L:libfoo.a=42}"
@@ -74,3 +74,9 @@ mod-C:
 	@echo :${:Uword1 word2:C,****,____,g:C,word,____,:Q}:
 	@echo :${:Ua b b c:C,b,,g:Q}:
 	@echo :${:U1 2 3 1 2 3:C,1 2,___,Wg:C,_,x,:Q}:
+
+# In the :@ modifier, the name of the loop variable can even be generated
+# dynamically.  There's no practical use-case for this, and hopefully nobody
+# will ever depend on this, but technically it's possible.
+mod-at-varname:
+	@echo :${:Uone two three:@${:Ubar:S,b,v,}@+${var}+@:Q}:
