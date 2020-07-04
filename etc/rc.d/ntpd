@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ntpd,v 1.16 2015/11/23 19:56:47 christos Exp $
+# $NetBSD: ntpd,v 1.17 2020/07/04 06:24:53 skrll Exp $
 #
 
 # PROVIDE: ntpd
@@ -25,7 +25,7 @@ ntpd_precmd()
 	fi
 
 	# If running in a chroot cage, ensure that the appropriate files
-	# exist inside the cage, as well as helper symlinks into the cage 
+	# exist inside the cage, as well as helper symlinks into the cage
 	# from outside.
 	#
 	# As this is called after the is_running and required_dir checks

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: named,v 1.25 2014/07/13 22:06:56 tls Exp $
+# $NetBSD: named,v 1.26 2020/07/04 06:24:53 skrll Exp $
 #
 
 # PROVIDE: named
@@ -77,7 +77,7 @@ named_precmd()
 	fi
 
 	# If running in a chroot cage, ensure that the appropriate files
-	# exist inside the cage, as well as helper symlinks into the cage 
+	# exist inside the cage, as well as helper symlinks into the cage
 	# from outside.
 	#
 	# As this is called after the is_running and required_dir checks
@@ -104,7 +104,7 @@ named_precmd()
 	for i in null random urandom; do
 		if [ ! -c "${named_chrootdir}/dev/$i" ]; then
 			rm -f "${named_chrootdir}/dev/$i"
-			(cd /dev && 
+			(cd /dev &&
 			    /bin/pax -rw -pe "$i" "${named_chrootdir}/dev")
 		fi
 	done

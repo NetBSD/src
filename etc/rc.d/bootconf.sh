@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: bootconf.sh,v 1.15 2012/12/31 23:21:27 christos Exp $
+# $NetBSD: bootconf.sh,v 1.16 2020/07/04 06:24:53 skrll Exp $
 #
 
 # PROVIDE: bootconf
@@ -38,7 +38,7 @@ bootconf_start()
 		case $name in
 		current|default|\*)
 			continue
-			;;	
+			;;
 		*)
 			if [ "$name" = "$default" ]; then
 				echo -n "${spc}[${name}]"

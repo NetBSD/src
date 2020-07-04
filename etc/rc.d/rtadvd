@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: rtadvd,v 1.10 2016/11/19 01:14:58 kre Exp $
+# $NetBSD: rtadvd,v 1.11 2020/07/04 06:24:53 skrll Exp $
 #
 
 # PROVIDE: rtadvd
@@ -22,7 +22,7 @@ rtadvd_prereload()
 	local chdir="$(getent passwd _rtadvd | cut -d: -f6)"
 	local conf=/etc/rtadvd.conf myflags o confdir
 	local cflag=false
-	
+
 	[ -z "${chdir}" ] || [ "/${chdir}" = // ] && return 0
 
 	if [ -n "${flags}" ]; then
