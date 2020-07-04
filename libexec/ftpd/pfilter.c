@@ -1,3 +1,5 @@
+/*	$NetBSD: pfilter.c,v 1.4 2020/07/04 05:18:37 lukem Exp $	*/
+
 #include <stdio.h>
 #include <unistd.h>
 #include <blocklist.h>
