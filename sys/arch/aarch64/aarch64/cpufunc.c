@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.21 2020/07/01 07:59:16 ryo Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.22 2020/07/04 04:39:20 rin Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -30,12 +30,14 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.21 2020/07/01 07:59:16 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.22 2020/07/04 04:39:20 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/kmem.h>
 #include <sys/cpu.h>
+
+#include <uvm/uvm_page.h>
 
 #include <aarch64/cpufunc.h>
 
@@ -102,6 +104,7 @@ aarch64_getcacheinfo(int unit)
 {
 	struct cpu_info * const ci = curcpu();
 	uint32_t clidr, ctr;
+	u_int vindexsize;
 	int level, cachetype;
 	struct aarch64_cache_info *cinfo = NULL;
 
@@ -215,14 +218,20 @@ aarch64_getcacheinfo(int unit)
 	    ((cinfo[0].cacheable == CACHE_CACHEABLE_ICACHE) ||
 	     (cinfo[0].cacheable == CACHE_CACHEABLE_IDCACHE))) {
 
-		aarch64_cache_vindexsize =
+		vindexsize =
 		    cinfo[0].icache.cache_size /
 		    cinfo[0].icache.cache_ways;
 
-		KASSERT(aarch64_cache_vindexsize != 0);
-		aarch64_cache_prefer_mask = aarch64_cache_vindexsize - 1;
+		KASSERT(vindexsize != 0);
 	} else {
-		aarch64_cache_vindexsize = 0;
+		vindexsize = 0;
+	}
+
+	if (vindexsize > aarch64_cache_vindexsize) {
+		aarch64_cache_vindexsize = vindexsize;
+		aarch64_cache_prefer_mask = vindexsize - 1;
+		if (uvm.page_init_done)
+			uvm_page_recolor(vindexsize / PAGE_SIZE);
 	}
 }
 
