@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.63 2018/05/10 03:41:00 msaitoh Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.64 2020/07/04 14:49:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.63 2018/05/10 03:41:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.64 2020/07/04 14:49:24 jdolecek Exp $");
 
 #include "ehci.h"
 
@@ -91,7 +91,7 @@ uhci_pci_attach(device_t parent, device_t self, void *aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t tag = pa->pa_tag;
 	char const *intrstr;
-	pci_intr_handle_t ih;
+	pci_intr_handle_t *ih;
 	pcireg_t csr;
 	int s;
 	char intrbuf[PCI_INTRSTR_LEN];
@@ -126,12 +126,12 @@ uhci_pci_attach(device_t parent, device_t self, void *aux)
 		       csr | PCI_COMMAND_MASTER_ENABLE);
 
 	/* Map and establish the interrupt. */
-	if (pci_intr_map(pa, &ih)) {
+	if (pci_intr_alloc(pa, &ih, NULL, 0) != 0) {
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_USB, uhci_intr, sc,
+	intrstr = pci_intr_string(pc, ih[0], intrbuf, sizeof(intrbuf));
+	sc->sc_ih = pci_intr_establish_xname(pc, ih[0], IPL_USB, uhci_intr, sc,
 	    device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
