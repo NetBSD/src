@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.248 2020/07/04 10:19:39 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.249 2020/07/04 10:35:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.248 2020/07/04 10:19:39 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.249 2020/07/04 10:35:30 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.248 2020/07/04 10:19:39 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.249 2020/07/04 10:35:30 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -152,14 +152,14 @@ char **savedEnv = NULL;
  * to determine if there was an error in parsing -- easier than returning
  * a flag, as things outside this module don't give a hoot.
  */
-char 	var_Error[] = "";
+char var_Error[] = "";
 
 /*
  * Similar to var_Error, but returned when the 'VARF_UNDEFERR' flag for
  * Var_Parse is not set. Why not just use a constant? Well, gcc likes
  * to condense identical string instances...
  */
-static char	varNoError[] = "";
+static char varNoError[] = "";
 
 /*
  * Traditionally we consume $$ during := like any other expansion.
@@ -298,19 +298,6 @@ typedef struct {
     int		start;		/* first word to select */
     int		end;		/* last word to select */
 } VarSelectWords_t;
-
-static char *VarGetPattern(GNode *, Var_Parse_State *,
-			   VarPattern_Flags, const char **, int,
-			   VarPattern_Flags *, int *, VarPattern *);
-static char *VarQuote(char *, Boolean);
-static char *VarHash(char *);
-static char *VarModify(GNode *, Var_Parse_State *,
-    const char *,
-    Boolean (*)(GNode *, Var_Parse_State *, char *, Boolean, Buffer *, void *),
-    void *);
-static char *VarOrder(const char *, const char);
-static char *VarUniq(const char *);
-static int VarWordCompare(const void *, const void *);
 
 #define BROPEN	'{'
 #define BRCLOSE	'}'
@@ -874,7 +861,7 @@ static void
 Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
 		   VarSet_Flags flags)
 {
-    Var   *v;
+    Var *v;
     char *expanded_name = NULL;
 
     /*
@@ -1027,8 +1014,8 @@ Var_Set(const char *name, const char *val, GNode *ctxt)
 void
 Var_Append(const char *name, const char *val, GNode *ctxt)
 {
-    Var		   *v;
-    Hash_Entry	   *h;
+    Var *v;
+    Hash_Entry *h;
     char *expanded_name = NULL;
 
     if (strchr(name, '$') != NULL) {
@@ -1330,7 +1317,7 @@ VarSubstitute(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 		/*
 		 * Matches at start but need to copy in trailing characters
 		 */
-		if ((pattern->rightLen + wordLen - pattern->leftLen) != 0){
+		if ((pattern->rightLen + wordLen - pattern->leftLen) != 0) {
 		    if (addSpace && vpstate->varSpace) {
 			Buf_AddByte(buf, vpstate->varSpace);
 		    }
@@ -1397,7 +1384,7 @@ VarSubstitute(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	    while (!done) {
 		cp = Str_FindSubstring(word, pattern->lhs);
 		if (cp != NULL) {
-		    if (addSpace && (((cp - word) + pattern->rightLen) != 0)){
+		    if (addSpace && (((cp - word) + pattern->rightLen) != 0)) {
 			Buf_AddByte(buf, vpstate->varSpace);
 			addSpace = FALSE;
 		    }
@@ -1595,14 +1582,14 @@ VarLoopExpand(GNode *ctx MAKE_ATTR_UNUSED,
     int slen;
 
     if (*word) {
-        Var_Set_with_flags(loop->tvar, word, loop->ctxt, VAR_NO_EXPORT);
-        s = Var_Subst(NULL, loop->str, loop->ctxt, loop->flags);
-        if (s != NULL && *s != '\0') {
-            if (addSpace && *s != '\n')
-                Buf_AddByte(buf, ' ');
-            Buf_AddBytes(buf, (slen = strlen(s)), s);
-            addSpace = (slen > 0 && s[slen - 1] != '\n');
-        }
+	Var_Set_with_flags(loop->tvar, word, loop->ctxt, VAR_NO_EXPORT);
+	s = Var_Subst(NULL, loop->str, loop->ctxt, loop->flags);
+	if (s != NULL && *s != '\0') {
+	    if (addSpace && *s != '\n')
+		Buf_AddByte(buf, ' ');
+	    Buf_AddBytes(buf, (slen = strlen(s)), s);
+	    addSpace = (slen > 0 && s[slen - 1] != '\n');
+	}
 	free(s);
     }
     return addSpace;
@@ -2018,8 +2005,8 @@ VarGetPattern(GNode *ctxt, Var_Parse_State *vpstate MAKE_ATTR_UNUSED,
 		     * delimiter, assume it's a variable
 		     * substitution and recurse.
 		     */
-		    cp2 = Var_Parse(cp, ctxt, errnum |
-				    (flags & VARF_WANTRES), &len, &freeIt);
+		    cp2 = Var_Parse(cp, ctxt, errnum | (flags & VARF_WANTRES),
+				    &len, &freeIt);
 		    Buf_AddBytes(&buf, strlen(cp2), cp2);
 		    free(freeIt);
 		    cp += len - 1;
@@ -2184,9 +2171,9 @@ VarHash(char *str)
     for (len = 0; len < 8; ++len) {
 	Buf_AddByte(&buf, hexdigits[h & 15]);
 	h >>= 4;
-   }
+    }
 
-   return Buf_Destroy(&buf, FALSE);
+    return Buf_Destroy(&buf, FALSE);
 }
 
 static char *
@@ -3134,7 +3121,7 @@ ApplyModifier_Remember(ApplyModifiersState *st)
 
 	st->cp++;
 	n = strcspn(st->cp, ":)}");
-	np = bmake_strndup(st->cp, n+1);
+	np = bmake_strndup(st->cp, n + 1);
 	np[n] = '\0';
 	st->cp = st->tstr + 2 + n;
 	Var_Set(np, st->nstr, st->ctxt);
@@ -3706,8 +3693,7 @@ Var_Parse(const char *str, GNode *ctxt, Varf_Flags flags,
 	/*
 	 * Skip to the end character or a colon, whichever comes first.
 	 */
-	for (tstr = str + 2; *tstr != '\0'; tstr++)
-	{
+	for (tstr = str + 2; *tstr != '\0'; tstr++) {
 	    /* Track depth so we can spot parse errors. */
 	    if (*tstr == startc)
 		depth++;
@@ -3894,7 +3880,7 @@ Var_Parse(const char *str, GNode *ctxt, Varf_Flags flags,
     *lengthPtr = tstr - start + (*tstr ? 1 : 0);
 
     if (v->flags & VAR_FROM_ENV) {
-	Boolean	  destroy = FALSE;
+	Boolean destroy = FALSE;
 
 	if (nstr != Buf_GetAll(&v->val, NULL)) {
 	    destroy = TRUE;
@@ -3989,7 +3975,7 @@ Var_Subst(const char *var, const char *str, GNode *ctxt, Varf_Flags flags)
 	     * Skip as many characters as possible -- either to the end of
 	     * the string or to the next dollar sign (variable invocation).
 	     */
-	    const char  *cp;
+	    const char *cp;
 
 	    for (cp = str++; *str != '$' && *str != '\0'; str++)
 		continue;
@@ -4036,7 +4022,7 @@ Var_Subst(const char *var, const char *str, GNode *ctxt, Varf_Flags flags)
 			     * Not the variable we want to expand, scan
 			     * until the next variable
 			     */
-			    for (;*p != '$' && *p != '\0'; p++)
+			    for (; *p != '$' && *p != '\0'; p++)
 				continue;
 			    Buf_AddBytes(&buf, p - str, str);
 			    str = p;
