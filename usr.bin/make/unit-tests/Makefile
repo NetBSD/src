@@ -1,17 +1,27 @@
-# $NetBSD: Makefile,v 1.59 2020/06/28 09:42:40 rillig Exp $
+# $NetBSD: Makefile,v 1.60 2020/07/04 21:04:25 rillig Exp $
 #
 # Unit tests for make(1)
-# The main targets are:
-# 
-# all:	run all the tests
-# test:	run 'all', and compare to expected results
-# accept: move generated output to expected results
 #
-# Adding a test case.  
+# The main targets are:
+#
+# all:
+#	run all the tests
+# test:
+#	run 'all', and compare to expected results
+# accept:
+#	move generated output to expected results
+#
+#
+# Adding a test case
+#
 # Each feature should get its own set of tests in its own suitably
 # named makefile (*.mk), with its own set of expected results (*.exp),
 # and it should be added to the TESTNAMES list.
-# 
+#
+# Any added files must also be added to src/distrib/sets/lists/tests/mi.
+# Makefiles that are not added to TESTNAMES must be ignored in
+# src/tests/usr.bin/make/t_make.sh (example: include-sub).
+#
 
 .MAIN: all
 
