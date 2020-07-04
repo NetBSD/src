@@ -31,4 +31,5 @@ make: Unclosed substitution for  (, missing)
 :a c:
 :x__ 3 x__ 3:
 :+one+ +two+ +three+:
+mod-at-resolve:w1a2w w1b2w w1a2 1b${RES2}w:
 exit status 0
