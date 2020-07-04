@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.7 2020/07/03 22:10:42 rillig Exp $
+# $Id: modmisc.mk,v 1.8 2020/07/04 09:21:30 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -16,6 +16,7 @@ MOD_OPT=@d@$${exists($$d):?$$d:$${d:S,/usr,/opt,}}@
 MOD_SEP=S,:, ,g
 
 all:	modvar modvarloop modsysv mod-HTE emptyvar undefvar
+all:	mod-S mod-C
 
 modsysv:
 	@echo "The answer is ${libfoo.a:L:libfoo.a=42}"
@@ -58,3 +59,18 @@ undefvar:
 	@echo S:${:U:S,^$,empty,}
 	@echo C:${:U:C,^$,empty,}
 	@echo @:${:U:@var@empty@}
+
+mod-S:
+	@echo :${:Ua b b c:S,a b,,:Q}:
+	@echo :${:Ua b b c:S,a b,,1:Q}:
+	@echo :${:Ua b b c:S,a b,,W:Q}:
+	@echo :${:Ua b b c:S,b,,g:Q}:
+	@echo :${:U1 2 3 1 2 3:S,1 2,___,Wg:S,_,x,:Q}:
+
+mod-C:
+	@echo :${:Ua b b c:C,a b,,:Q}:
+	@echo :${:Ua b b c:C,a b,,1:Q}:
+	@echo :${:Ua b b c:C,a b,,W:Q}:
+	@echo :${:Uword1 word2:C,****,____,g:C,word,____,:Q}:
+	@echo :${:Ua b b c:C,b,,g:Q}:
+	@echo :${:U1 2 3 1 2 3:C,1 2,___,Wg:C,_,x,:Q}:
