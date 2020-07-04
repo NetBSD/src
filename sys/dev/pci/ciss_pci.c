@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss_pci.c,v 1.15 2018/12/09 11:14:01 jdolecek Exp $	*/
+/*	$NetBSD: ciss_pci.c,v 1.16 2020/07/04 14:49:24 jdolecek Exp $	*/
 /*	$OpenBSD: ciss_pci.c,v 1.9 2005/12/13 15:56:01 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.15 2018/12/09 11:14:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.16 2020/07/04 14:49:24 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,7 +263,7 @@ ciss_pci_attach(device_t parent, device_t self, void *aux)
 	struct ciss_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	bus_size_t size, cfgsz;
-	pci_intr_handle_t ih;
+	pci_intr_handle_t *ih;
 	const char *intrstr;
 	int cfg_bar, memtype;
 	pcireg_t reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
@@ -339,16 +339,16 @@ ciss_pci_attach(device_t parent, device_t self, void *aux)
 	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, CISS_IMR) | sc->iem);
 #endif
 
-	if (pci_intr_map(pa, &ih)) {
+	if (pci_intr_alloc(pa, &ih, NULL, 0) != 0) {
 		aprint_error_dev(self, "can't map interrupt\n");
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, size);
 		if (cfg_bar != CISS_BAR)
 			bus_space_unmap(sc->sc_iot, sc->cfg_ioh, cfgsz);
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish_xname(pa->pa_pc, ih, IPL_BIO, ciss_intr,
-	    sc, device_xname(self));
+	intrstr = pci_intr_string(pa->pa_pc, ih[0], intrbuf, sizeof(intrbuf));
+	sc->sc_ih = pci_intr_establish_xname(pa->pa_pc, ih[0], IPL_BIO,
+	    ciss_intr, sc, device_xname(self));
 	if (!sc->sc_ih) {
 		aprint_error_dev(sc->sc_dev, "can't establish interrupt");
 		if (intrstr)
