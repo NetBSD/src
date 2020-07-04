@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.42 2020/06/05 08:01:49 skrll Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.43 2020/07/04 08:07:02 ryoon Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.42 2020/06/05 08:01:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.43 2020/07/04 08:07:02 ryoon Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -95,6 +95,7 @@ static const struct ugensa_type ugensa_devs[] = {
 	{{ USB_VENDOR_NOVATEL, USB_PRODUCT_NOVATEL_FLEXPACKGPS }, 0 },
 	{{ USB_VENDOR_QUALCOMM_K, USB_PRODUCT_QUALCOMM_K_CDMA_MSM_K }, 0 },
 	{{ USB_VENDOR_ZTE, USB_PRODUCT_ZTE_AC8700 }, 0 },
+	{{ USB_VENDOR_LINUXFOUNDATION, USB_PRODUCT_LINUXFOUNDATION_USB3DEBUG}, 0 },
 
 	/*
 	 * The following devices are untested, but they are purported to
