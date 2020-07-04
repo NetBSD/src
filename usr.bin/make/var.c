@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.254 2020/07/04 17:10:33 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.255 2020/07/04 17:41:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.254 2020/07/04 17:10:33 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.255 2020/07/04 17:41:04 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.254 2020/07/04 17:10:33 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.255 2020/07/04 17:41:04 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1735,6 +1735,11 @@ VarModify(GNode *ctx, Var_Parse_State *vpstate,
 	av[1] = NULL;
     } else {
 	av = brk_string(str, &ac, FALSE, &as);
+    }
+
+    if (DEBUG(VAR)) {
+	fprintf(debug_file, "VarModify: split \"%s\" into %d words\n",
+		str, ac);
     }
 
     for (i = 0; i < ac; i++)

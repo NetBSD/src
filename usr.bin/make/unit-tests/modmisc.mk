@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.10 2020/07/04 17:10:33 rillig Exp $
+# $Id: modmisc.mk,v 1.11 2020/07/04 17:41:04 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -84,9 +84,12 @@ mod-at-varname:
 # The :@ modifier resolves the variables a little more often than expected.
 # In particular, it resolves _all_ variables from the context, and not only
 # the loop variable (in this case v).
+#
+# The d means direct reference, the i means indirect reference.
 RESOLVE=	${RES1} $${RES1}
-RES1=		1a${RES2} 1b$${RES2}
-RES2=		2
+RES1=		1d${RES2} 1i$${RES2}
+RES2=		2d${RES3} 2i$${RES3}
+RES3=		3
 
 mod-at-resolve:
 	@echo $@:${RESOLVE:@v@w${v}w@:Q}:
