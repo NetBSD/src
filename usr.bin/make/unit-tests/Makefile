@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.61 2020/07/04 22:01:10 rillig Exp $
+# $NetBSD: Makefile,v 1.62 2020/07/04 22:17:09 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -77,6 +77,7 @@ FLAGS.doterror=		# none
 FLAGS.order=		-j1
 
 # Some tests need extra post-processing.
+SED_CMDS.modmisc+=	-e 's,\(substitution error:\).*,\1 (details omitted),'
 SED_CMDS.varshell+=	-e 's,^[a-z]*sh: ,,'
 SED_CMDS.varshell+=	-e '/command/s,No such.*,not found,'
 
@@ -119,16 +120,17 @@ LANG=		C
 	  2>&1 ; echo $$? >${.TARGET:R}.status ; } > ${.TARGET}.tmp
 	@mv ${.TARGET}.tmp ${.TARGET}
 
+# Post-process the test output so that the results can be compared.
+#
+# always pretend .MAKE was called 'make'
 _SED_CMDS+=	-e 's,^${TEST_MAKE:T:S,.,\\.,g}[][0-9]*:,make:,'
 _SED_CMDS+=	-e 's,${TEST_MAKE:S,.,\\.,g},make,'
+# replace anything after 'stopped in' with unit-tests
 _SED_CMDS+=	-e '/stopped/s, /.*, unit-tests,'
+# strip ${.CURDIR}/ from the output
 _SED_CMDS+=	-e 's,${.CURDIR:S,.,\\.,g}/,,g'
 _SED_CMDS+=	-e 's,${UNIT_TESTS:S,.,\\.,g}/,,g'
 
-# We always pretend .MAKE was called 'make' 
-# and strip ${.CURDIR}/ from the output
-# and replace anything after 'stopped in' with unit-tests
-# so the results can be compared.
 .rawout.out:
 	@echo postprocess ${.TARGET}
 	@${TOOL_SED} ${_SED_CMDS} ${SED_CMDS.${.TARGET:R}} \
