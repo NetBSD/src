@@ -51,14 +51,17 @@ include 	"conf/compat_netbsd30.config"
 # File systems
 file-system 	FFS		# UFS
 file-system 	MFS		# memory file system
+file-system	TMPFS		# Efficient memory file-system
 file-system 	KERNFS		# /kern
 file-system 	PROCFS		# /proc
 file-system 	NFS		# Network File System client
+file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
+options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# ffs snapshots
@@ -68,6 +71,7 @@ file-system 	NFS		# Network File System client
 # Networking options
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
@@ -85,7 +89,8 @@ options 	FONT_GALLANT12x22
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
 #config		netbsd	root on gem0 type nfs
-#options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
+options 	NFS_BOOT_DHCP
+#options 	NFS_BOOT_BOOTPARAM
 
 #
 # Device configuration
