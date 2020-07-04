@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.249 2020/07/04 10:35:30 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.250 2020/07/04 10:46:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.249 2020/07/04 10:35:30 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.250 2020/07/04 10:46:31 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.249 2020/07/04 10:35:30 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.250 2020/07/04 10:46:31 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -102,11 +102,9 @@ __RCSID("$NetBSD: var.c,v 1.249 2020/07/04 10:35:30 rillig Exp $");
  *	Var_Value 	    Return the value of a variable in a context or
  *			    NULL if the variable is undefined.
  *
- *	Var_Subst 	    Substitute named variable, or all variables if
- *			    NULL in a string using
- *			    the given context as the top-most one. If the
- *			    third argument is non-zero, Parse_Error is
- *			    called if any variables are undefined.
+ *	Var_Subst 	    Substitute either a single variable or all
+ *			    variables in a string, using the given context as
+ *			    the top-most one.
  *
  *	Var_Parse 	    Parse a variable expansion from a string and
  *			    return the result and the number of characters
@@ -469,9 +467,6 @@ VarFreeEnv(Var *v, Boolean destroy)
  *	val		value to set it to
  *	ctxt		context in which to set it
  *
- * Results:
- *	None
- *
  * Side Effects:
  *	The new variable is placed at the front of the given context
  *	The name and val arguments are duplicated so they may
@@ -505,9 +500,6 @@ VarAdd(const char *name, const char *val, GNode *ctxt)
  *-----------------------------------------------------------------------
  * Var_Delete --
  *	Remove a variable from a context.
- *
- * Results:
- *	None.
  *
  * Side Effects:
  *	The Var structure is removed and freed.
@@ -960,9 +952,6 @@ out:
  *	val		value to give to the variable
  *	ctxt		context in which to set it
  *
- * Results:
- *	None.
- *
  * Side Effects:
  *	If the variable doesn't yet exist, a new record is created for it.
  *	Else the old value is freed and the new one stuck in its place
@@ -994,9 +983,6 @@ Var_Set(const char *name, const char *val, GNode *ctxt)
  *	name		name of variable to modify
  *	val		String to append to it
  *	ctxt		Context in which this should occur
- *
- * Results:
- *	None
  *
  * Side Effects:
  *	If the variable doesn't exist, it is created. Else the strings
@@ -1431,9 +1417,6 @@ nosub:
  *-----------------------------------------------------------------------
  * VarREError --
  *	Print the error caused by a regcomp or regexec call.
- *
- * Results:
- *	None.
  *
  * Side Effects:
  *	An error gets printed.
@@ -3921,7 +3904,7 @@ Var_Parse(const char *str, GNode *ctxt, Varf_Flags flags,
 /*-
  *-----------------------------------------------------------------------
  * Var_Subst  --
- *	Substitute for all variables in the given string in the given context
+ *	Substitute for all variables in the given string in the given context.
  *	If flags & VARF_UNDEFERR, Parse_Error will be called when an undefined
  *	variable is encountered.
  *
@@ -3937,7 +3920,7 @@ Var_Parse(const char *str, GNode *ctxt, Varf_Flags flags,
  *	The resulting string.
  *
  * Side Effects:
- *	None. The old string must be freed by the caller
+ *	None.
  *-----------------------------------------------------------------------
  */
 char *
@@ -4092,18 +4075,7 @@ Var_Subst(const char *var, const char *str, GNode *ctxt, Varf_Flags flags)
     return Buf_DestroyCompact(&buf);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Var_Init --
- *	Initialize the module
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	The VAR_CMD and VAR_GLOBAL contexts are created
- *-----------------------------------------------------------------------
- */
+/* Initialize the module. */
 void
 Var_Init(void)
 {
