@@ -217,6 +217,8 @@ smu_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	aprint_normal("\n");
+
 	smu_setup_fans(sc);
 	smu_setup_iicbus(sc);
 
@@ -227,7 +229,6 @@ smu_attach(device_t parent, device_t self, void *aux)
 
 	smu_setup_sme(sc);
 
-	printf("\n");
 	smu_setup_zones(sc);
 }
 
@@ -866,7 +867,8 @@ smu_setup_zones(struct smu_softc *sc)
 			z->nfans++;
 		}
 	}
-	printf("using %d fans for CPU zone\n", z->nfans);
+	aprint_normal_dev(sc->sc_dev,
+	    "using %d fans for CPU zone\n", z->nfans);
 	z->threshold = C_TO_uK(45);
 	z->duty = 150;
 	z->step = 3;	
@@ -881,7 +883,8 @@ smu_setup_zones(struct smu_softc *sc)
 			z->nfans++;
 		}
 	}
-	printf("using %d fans for drive bay zone\n", z->nfans);
+	aprint_normal_dev(sc->sc_dev,
+	    "using %d fans for drive bay zone\n", z->nfans);
 	z->threshold = C_TO_uK(40);
 	z->duty = 150;
 	z->step = 2;
@@ -897,7 +900,8 @@ smu_setup_zones(struct smu_softc *sc)
 			z->nfans++;
 		}
 	}
-	printf("using %d fans for expansion slots zone\n", z->nfans);
+	aprint_normal_dev(sc->sc_dev,
+	    "using %d fans for expansion slots zone\n", z->nfans);
 	z->threshold = C_TO_uK(40);
 	z->duty = 150;
 	z->step = 2;
