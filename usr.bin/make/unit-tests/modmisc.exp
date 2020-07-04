@@ -17,4 +17,17 @@ C:
 S:empty
 C:empty
 @:
+:a b b c:
+:a b b c:
+: b c:
+:a c:
+:x__ 3 x__ 3:
+:a b b c:
+:a b b c:
+: b c:
+make: RE substitution error: repetition-operator operand invalid
+make: Unclosed substitution for  (, missing)
+:C,word,____,:Q}:
+:a c:
+:x__ 3 x__ 3:
 exit status 0
