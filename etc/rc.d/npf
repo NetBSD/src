@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: npf,v 1.4 2019/04/19 18:36:25 leot Exp $
+# $NetBSD: npf,v 1.5 2020/07/04 06:24:53 skrll Exp $
 #
 # Public Domain.
 #
@@ -27,7 +27,7 @@ npf_cfg_check()
 {
 	if [ ! -f ${config} ]; then
 		warn "${config} is not readable; failed."
-		exit 1	
+		exit 1
 	fi
 }
 

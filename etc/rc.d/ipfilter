@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ipfilter,v 1.18 2009/03/23 18:52:02 hannken Exp $
+# $NetBSD: ipfilter,v 1.19 2020/07/04 06:24:53 skrll Exp $
 #
 
 # PROVIDE: ipfilter
@@ -84,7 +84,7 @@ ipfilter_reload()
 	if [ -f /etc/ipf6.conf ] && ! /sbin/ipf -I -6 -f /etc/ipf6.conf; then
 		err 1 "reload of ipf6.conf failed; not swapping to new ruleset."
 	fi
-		
+
 		# Swap in the new rules
 		#
 	/sbin/ipf -s
