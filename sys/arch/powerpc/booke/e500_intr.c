@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.40 2019/12/01 15:34:45 ad Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.41 2020/07/04 17:20:45 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.40 2019/12/01 15:34:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.41 2020/07/04 17:20:45 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -599,15 +599,16 @@ e500_splraise(int ipl)
 			msr = 0;
 #endif
 		wrtee(msr);
-	} else if (ipl == IPL_NONE) {
+	}
+#if 0
+	else if (ipl == IPL_NONE) {
 		panic("%s: %p: cpl=%u: attempt to splraise(IPL_NONE)",
 		    __func__, __builtin_return_address(0), old_ipl);
-#if 0
 	} else if (old_ipl > ipl) {
 		printf("%s: %p: cpl=%u: ignoring splraise(%u) to lower ipl\n",
 		    __func__, __builtin_return_address(0), old_ipl, ipl);
-#endif
 	}
+#endif
 
 	return old_ipl;
 }
