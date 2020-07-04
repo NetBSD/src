@@ -1,4 +1,4 @@
-sh: /bin/no/such/command: not found
+/bin/no/such/command: not found
 make: "varshell.mk" line 5: warning: "/bin/no/such/command" returned non-zero status
 make: "varshell.mk" line 6: warning: "kill -14 $$" exited on a signal
 make: "varshell.mk" line 7: warning: "false" returned non-zero status
