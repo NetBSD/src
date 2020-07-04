@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.783 2020/06/19 11:52:42 flxd Exp $
+$NetBSD: usbdevs,v 1.784 2020/07/04 08:05:26 ryoon Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2141,6 +2141,7 @@ product LINKSYS4 WUSB600NV2	0x0079	WUSB600N v2
 product LINUXFOUNDATION ROOT_HUB_11	0x0001	1.1 root hub
 product LINUXFOUNDATION ROOT_HUB_20	0x0002	2.0 root hub
 product LINUXFOUNDATION ROOT_HUB_30	0x0003	3.0 root hub
+product LINUXFOUNDATION USB3DEBUG	0x0010	USB 3.0 debug port
 
 /* Lite-On Technology */
 product LITEON AR9271		0x4605	AR9271
