@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.253 2020/07/04 16:30:47 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.254 2020/07/04 17:10:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.253 2020/07/04 16:30:47 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.254 2020/07/04 17:10:33 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.253 2020/07/04 16:30:47 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.254 2020/07/04 17:10:33 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1567,6 +1567,12 @@ VarLoopExpand(GNode *ctx MAKE_ATTR_UNUSED,
     if (*word) {
 	Var_Set_with_flags(loop->tvar, word, loop->ctxt, VAR_NO_EXPORT);
 	s = Var_Subst(NULL, loop->str, loop->ctxt, loop->flags);
+	if (DEBUG(VAR)) {
+	    fprintf(debug_file,
+		    "VarLoopExpand: in \"%s\", replace \"%s\" with \"%s\" "
+		    "to \"%s\"\n",
+		    word, loop->tvar, loop->str, s ? s : "(null)");
+	}
 	if (s != NULL && *s != '\0') {
 	    if (addSpace && *s != '\n')
 		Buf_AddByte(buf, ' ');
