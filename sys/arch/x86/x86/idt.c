@@ -1,4 +1,4 @@
-/*	$NetBSD: idt.c,v 1.11 2019/06/17 06:38:30 msaitoh Exp $	*/
+/*	$NetBSD: idt.c,v 1.12 2020/07/04 09:03:54 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2009 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idt.c,v 1.11 2019/06/17 06:38:30 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idt.c,v 1.12 2020/07/04 09:03:54 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ void
 unset_idtgate(struct trap_info *xen_idd)
 {
 #if defined(__x86_64__)
-	vaddr_t xen_idt_vaddr = ((vaddr_t) xen_idd) & PAGE_MASK;
+	vaddr_t xen_idt_vaddr = ((vaddr_t) xen_idd) & ~PAGE_MASK;
 
 	/* Make it writeable, so we can update the values. */
 	pmap_changeprot_local(xen_idt_vaddr, VM_PROT_READ | VM_PROT_WRITE);
