@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.246 2020/07/03 22:40:55 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.247 2020/07/04 03:08:20 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.246 2020/07/03 22:40:55 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.247 2020/07/04 03:08:20 lukem Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.246 2020/07/03 22:40:55 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.247 2020/07/04 03:08:20 lukem Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1242,7 +1242,7 @@ VarRoot(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	void *dummy MAKE_ATTR_UNUSED)
 {
     char *dot = strrchr(word, '.');
-    size_t len = dot != NULL ? dot - word : strlen(word);
+    size_t len = dot != NULL ? (size_t)(dot - word) : strlen(word);
 
     if (addSpace && vpstate->varSpace)
 	Buf_AddByte(buf, vpstate->varSpace);
