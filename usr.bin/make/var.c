@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.250 2020/07/04 10:46:31 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.251 2020/07/04 10:49:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.250 2020/07/04 10:46:31 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.251 2020/07/04 10:49:09 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.250 2020/07/04 10:46:31 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.251 2020/07/04 10:49:09 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -278,7 +278,7 @@ typedef struct {
     char	*str;		/* string to expand */
     int		strLen;
     Varf_Flags	flags;
-} VarLoop_t;
+} VarLoop;
 
 #ifndef NO_REGEX
 /* struct passed as 'void *' to VarRESubstitute() for ":C///" */
@@ -1560,7 +1560,7 @@ VarLoopExpand(GNode *ctx MAKE_ATTR_UNUSED,
 	      char *word, Boolean addSpace, Buffer *buf,
 	      void *data)
 {
-    VarLoop_t *loop = data;
+    VarLoop *loop = data;
     char *s;
     int slen;
 
@@ -2212,7 +2212,7 @@ typedef struct {
 /* :@var@...${var}...@ */
 static Boolean
 ApplyModifier_At(ApplyModifiersState *st) {
-    VarLoop_t loop;
+    VarLoop loop;
     VarPattern_Flags vflags = VAR_NOSUBST;
 
     st->cp = ++(st->tstr);
