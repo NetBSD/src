@@ -25,7 +25,7 @@ C:empty
 :a b b c:
 :a b b c:
 : b c:
-make: RE substitution error: repetition-operator operand invalid
+make: RE substitution error: (details omitted)
 make: Unclosed substitution for  (, missing)
 :C,word,____,:Q}:
 :a c:
