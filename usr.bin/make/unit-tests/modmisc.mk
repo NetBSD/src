@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.9 2020/07/04 16:15:21 rillig Exp $
+# $Id: modmisc.mk,v 1.10 2020/07/04 17:10:33 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -16,7 +16,7 @@ MOD_OPT=@d@$${exists($$d):?$$d:$${d:S,/usr,/opt,}}@
 MOD_SEP=S,:, ,g
 
 all:	modvar modvarloop modsysv mod-HTE emptyvar undefvar
-all:	mod-S mod-C mod-at-varname
+all:	mod-S mod-C mod-at-varname mod-at-resolve
 
 modsysv:
 	@echo "The answer is ${libfoo.a:L:libfoo.a=42}"
@@ -80,3 +80,13 @@ mod-C:
 # will ever depend on this, but technically it's possible.
 mod-at-varname:
 	@echo :${:Uone two three:@${:Ubar:S,b,v,}@+${var}+@:Q}:
+
+# The :@ modifier resolves the variables a little more often than expected.
+# In particular, it resolves _all_ variables from the context, and not only
+# the loop variable (in this case v).
+RESOLVE=	${RES1} $${RES1}
+RES1=		1a${RES2} 1b$${RES2}
+RES2=		2
+
+mod-at-resolve:
+	@echo $@:${RESOLVE:@v@w${v}w@:Q}:
