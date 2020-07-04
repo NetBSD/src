@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.251 2020/07/04 10:49:09 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.252 2020/07/04 15:44:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.251 2020/07/04 10:49:09 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.252 2020/07/04 15:44:07 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.251 2020/07/04 10:49:09 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.252 2020/07/04 15:44:07 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2104,12 +2104,12 @@ VarQuote(char *str, Boolean quoteDollar)
  *-----------------------------------------------------------------------
  */
 static char *
-VarHash(char *str)
+VarHash(const char *str)
 {
     static const char    hexdigits[16] = "0123456789abcdef";
     Buffer         buf;
     size_t         len, len2;
-    unsigned char  *ustr = (unsigned char *)str;
+    const unsigned char *ustr = (const unsigned char *)str;
     uint32_t       h, k, c1, c2;
 
     h  = 0x971e137bU;
@@ -2121,18 +2121,21 @@ VarHash(char *str)
 	k = 0;
 	switch (len) {
 	default:
-	    k = (ustr[3] << 24) | (ustr[2] << 16) | (ustr[1] << 8) | ustr[0];
+	    k = ((uint32_t)ustr[3] << 24) |
+		((uint32_t)ustr[2] << 16) |
+		((uint32_t)ustr[1] << 8) |
+		(uint32_t)ustr[0];
 	    len -= 4;
 	    ustr += 4;
 	    break;
 	case 3:
-	    k |= (ustr[2] << 16);
+	    k |= (uint32_t)ustr[2] << 16;
 	    /* FALLTHROUGH */
 	case 2:
-	    k |= (ustr[1] << 8);
+	    k |= (uint32_t)ustr[1] << 8;
 	    /* FALLTHROUGH */
 	case 1:
-	    k |= ustr[0];
+	    k |= (uint32_t)ustr[0];
 	    len = 0;
 	}
 	c1 = c1 * 5 + 0x7b7d159cU;
