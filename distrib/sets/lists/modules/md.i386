@@ -1,8 +1,5 @@
-# $NetBSD: md.i386,v 1.86 2020/02/29 18:46:12 skrll Exp $
+# $NetBSD: md.i386,v 1.87 2020/07/04 21:02:16 chs Exp $
 #
-# NOTE that there are two sets of files here: @MODULEDIR@ and i386pae-xen
-#
-
 ./@MODULEDIR@/acpiacad				modules-base-kernel	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/acpibat				modules-base-kernel	kmod

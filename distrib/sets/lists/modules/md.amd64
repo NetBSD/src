@@ -1,7 +1,4 @@
-# $NetBSD: md.amd64,v 1.86 2020/03/12 15:04:13 pgoyette Exp $
-#
-# NOTE that there are two sets of files here:
-# @MODULEDIR@ and amd64-xen
+# $NetBSD: md.amd64,v 1.87 2020/07/04 21:02:16 chs Exp $
 #
 ./@MODULEDIR@/acpiacad				modules-base-kernel	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		modules-base-kernel	kmod
