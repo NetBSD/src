@@ -1,4 +1,4 @@
-.\" $NetBSD: speaker.4,v 1.26 2020/07/04 23:24:10 uwe Exp $
+.\" $NetBSD: speaker.4,v 1.27 2020/07/05 00:33:18 uwe Exp $
 .\"
 .\" Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
 .\" All rights reserved.
@@ -301,6 +301,17 @@ hardware (neither of which was designed for precision), neither pitch accuracy
 nor timings will be mathematically exact.
 .Pp
 There is no volume control.
+.Pp
+The action of two or more sustain dots does not reflect standard musical
+notation, in which each dot adds half the value of the previous dot
+modifier, not half the value of the note as modified.
+Thus, a note dotted
+once is held for 3/2 of its undotted value; dotted twice, it is held 7/4,
+and three times would give 15/8.
+The multiply-by-3/2 interpretation,
+however, is specified in the
+.Tn IBM BASIC
+manual and has been retained for compatibility.
 .Pp
 In play strings which are very long (longer than your system's physical I/O
 blocks) note suffixes or numbers may occasionally be parsed incorrectly due
