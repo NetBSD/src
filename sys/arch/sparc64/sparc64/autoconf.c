@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.220 2020/07/05 09:27:11 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.221 2020/07/05 09:56:06 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.220 2020/07/05 09:27:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.221 2020/07/05 09:56:06 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1413,7 +1413,7 @@ noether:
 			prop_dictionary_set_uint64(sens, "cookie", 0);
 			prop_dictionary_set_string(sens, "name",
 			    "temperature-sensor");
-			data = prop_data_create_data(&name_lm[0],
+			data = prop_data_create_copy(&name_lm[0],
 			    sizeof(name_lm));
 			prop_dictionary_set(sens, "compatible", data);
 			prop_object_release(data);
