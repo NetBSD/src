@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.modules,v 1.21 2019/12/08 15:51:49 pgoyette Exp $ */
+/* $NetBSD: TODO.modules,v 1.22 2020/07/05 02:04:25 pgoyette Exp $ */
 
 Some notes on the limitations of our current (as of 7.99.35) module
 subsystem.  This list was triggered by an Email exchange between
@@ -233,6 +233,9 @@ christos and pgoyette.
     building xen-variant modules (on amd4, and likely i386).  In some
     cases, wrong headers are included (because a XEN-related #define
     is missing), but even if you add the definition some headers get
-    included in the wrong order.  On particular fallout from this is
+    included in the wrong order.  One particular fallout from this is
     the inability to have a compat version of x86_64 cpu-microcode
-    module.
+    module.  PR port-xen/53130
+
+    This is likely to be fixed by Chuck Silvers on 2020-07-04 which
+    removed the differences between the xen and non-xen module ABIs.
