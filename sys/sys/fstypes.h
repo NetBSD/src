@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.h,v 1.39 2020/05/16 18:31:53 christos Exp $	*/
+/*	$NetBSD: fstypes.h,v 1.40 2020/07/05 20:41:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -148,7 +148,7 @@ typedef struct fhandle	fhandle_t;
 	{ MNT_EXPORTED,		0,	"NFS exported" }, \
 	{ MNT_DEFEXPORTED,	1,	"exported to the world" }, \
 	{ MNT_EXPORTANON,	1,	"anon uid mapping" }, \
-	{ MNT_EXKERB,		1,	"kerberos uid mapping" }, \
+	{ MNT_EXKERB,		1,	"kerberos uid mapping/posix1e ACLS" }, \
 	{ MNT_EXNORESPORT,	0,	"non-reserved ports" }, \
 	{ MNT_EXPUBLIC,		0,	"WebNFS exports" },
 
