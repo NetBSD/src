@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.370 2020/05/18 08:28:44 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.371 2020/07/05 20:37:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.370 2020/05/18 08:28:44 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.371 2020/07/05 20:37:40 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -404,8 +404,8 @@ ffs_acls(struct mount *mp, int fs_flags)
 			printf("WARNING: %s: ACLs flag on fs conflicts with "
 			    "\"posix1eacls\" mount option; option ignored\n",
 			    mp->mnt_stat.f_mntonname);
-		mp->mnt_flag &= ~MNT_ACLS;
-		mp->mnt_flag |= MNT_POSIX1EACLS;
+		mp->mnt_flag &= ~MNT_POSIX1EACLS;
+		mp->mnt_flag |= MNT_ACLS;
 
 #else
 		printf("WARNING: %s: ACLs flag on fs but no ACLs support\n",
@@ -418,8 +418,8 @@ ffs_acls(struct mount *mp, int fs_flags)
 			printf("WARNING: %s: NFSv4 ACLs flag on fs conflicts "
 			    "with \"acls\" mount option; option ignored\n",
 			    mp->mnt_stat.f_mntonname);
-		mp->mnt_flag &= ~MNT_POSIX1EACLS;
-		mp->mnt_flag |= MNT_ACLS;
+		mp->mnt_flag &= ~MNT_ACLS;
+		mp->mnt_flag |= MNT_POSIX1EACLS;
 #else
 		printf("WARNING: %s: POSIX.1e ACLs flag on fs but no "
 		    "ACLs support\n", mp->mnt_stat.f_mntonname);
@@ -658,14 +658,13 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			fs->fs_fmod = 0;
 		}
 
+		ffs_acls(mp, fs->fs_flags);
 		if (mp->mnt_flag & MNT_RELOAD) {
 			error = ffs_reload(mp, l->l_cred, l);
 			if (error) {
 				DPRINTF("ffs_reload returned %d", error);
 				return error;
 			}
-		} else {
-			ffs_acls(mp, 0);
 		}
 
 		if (fs->fs_ronly && (mp->mnt_iflag & IMNT_WANTRDWR)) {
@@ -907,8 +906,6 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 			mp->mnt_iflag &= ~IMNT_DTYPE;
 	}
 	ffs_oldfscompat_read(fs, ump, sblockloc);
-
-	ffs_acls(mp, 0);
 
 	mutex_enter(&ump->um_lock);
 	ump->um_maxfilesize = fs->fs_maxfilesize;
