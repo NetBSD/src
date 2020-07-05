@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.203 2020/05/10 19:36:49 maya Exp $
+#	$NetBSD: Makefile.inc,v 1.204 2020/07/05 01:05:50 christos Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -97,7 +97,7 @@ MLINKS+=directory.3 closedir.3 directory.3 dirfd.3 directory.3 opendir.3 \
 	directory.3 fdopendir.3	
 MLINKS+=endutxent.3 getutxent.3 endutxent.3 getutxid.3 \
 	endutxent.3 getutxline.3 endutxent.3 pututxline.3 \
-	endutxent.3 setutxent.3
+	endutxent.3 setutxent.3 endutmpx.3 utmpxname.3
 MLINKS+=err.3 verr.3 err.3 errx.3 err.3 verrx.3 err.3 warn.3 err.3 vwarn.3 \
         err.3 warnx.3 err.3 vwarnx.3 err.3 errc.3 err.3 verrc.3 err.3 warnc.3 \
 	err.3 vwarnc.3
