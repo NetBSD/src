@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.10 2020/07/01 08:03:10 ryo Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.11 2020/07/05 19:40:27 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.10 2020/07/01 08:03:10 ryo Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.11 2020/07/05 19:40:27 riastradh Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -226,6 +226,75 @@ struct fieldinfo id_aa64isar0_fieldinfo[] = {
 			[0] = "No CRC32",
 			[1] = "CRC32B/CRC32H/CRC32W/CRC32X"
 			    "/CRC32CB/CRC32CH/CRC32CW/CRC32CX"
+		}
+	},
+	{
+		.bitpos = 20, .bitwidth = 4, .name = "Atomic",
+		.info = (const char *[16]) { /* 16=4bit */
+			[0] = "No Atomic",
+			[1] = "LDADD/LDCLR/LDEOR/LDSET/LDSMAX/LDSMIN"
+			    "/LDUMAX/LDUMIN/CAS/CASP/SWP",
+		}
+	},
+	{
+		.bitpos = 28, .bitwidth = 4, .name = "RDM",
+		.info = (const char *[16]) { /* 16=4bit */
+			[0] = "No RDMA",
+			[1] = "SQRDMLAH/SQRDMLSH",
+		}
+	},
+	{
+		.bitpos = 32, .bitwidth = 4, .name = "SHA3",
+		.info = (const char *[16]) { /* 16=4bit */
+			[0] = "No SHA3",
+			[1] = "EOR3/RAX1/XAR/BCAX",
+		}
+	},
+	{
+		.bitpos = 36, .bitwidth = 4, .name = "SM3",
+		.info = (const char *[16]) { /* 16=4bit */
+			[0] = "No SM3",
+			[1] = "SM3SS1/SM3TT1A/SM3TT1B/SM3TT2A/SM3TT2B"
+			    "/SM3PARTW1/SM3PARTW2",
+		}
+	},
+	{
+		.bitpos = 40, .bitwidth = 4, .name = "SM4",
+		.info = (const char *[16]) { /* 16=4bit */
+			[0] = "No SM4",
+			[1] = "SM4E/SM4EKEY",
+		}
+	},
+	{
+		.bitpos = 44, .bitwidth = 4, .name = "DP",
+		.info = (const char *[16]) { /* 16=4bit */
+			[0] = "No Dot Product",
+			[1] = "UDOT/SDOT",
+		}
+	},
+	{
+		.bitpos = 48, .bitwidth = 4, .name = "FHM",
+		.info = (const char *[16]) { /* 16=4bit */
+			[0] = "No FHM",
+			[1] = "FMLAL/FMLSL",
+		}
+	},
+	{
+		.bitpos = 52, .bitwidth = 4, .name = "TS",
+		.info = (const char *[16]) { /* 16=4bit */
+			[0] = "No TS",
+			[1] = "CFINV/RMIF/SETF16/SETF8",
+			[2] = "CFINV/RMIF/SETF16/SETF8/AXFLAG/XAFLAG",
+		}
+	},
+	{
+		.bitpos = 56, .bitwidth = 4, .name = "TLBI",
+		.info = (const char *[16]) { /* 16=4bit */
+			[0] = "No outer shareable and TLB range maintenance"
+			    " instructions",
+			[1] = "Outer shareable TLB maintenance instructions",
+			[2] = "Outer shareable and TLB range maintenance"
+			    " instructions",
 		}
 	},
 	{
