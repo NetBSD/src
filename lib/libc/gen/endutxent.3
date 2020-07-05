@@ -1,4 +1,4 @@
-.\"	$NetBSD: endutxent.3,v 1.5 2008/04/30 13:10:50 martin Exp $
+.\"	$NetBSD: endutxent.3,v 1.6 2020/07/05 01:05:50 christos Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 26, 2002
+.Dd July 4, 2020
 .Dt ENDUTXENT 3
 .Os
 .Sh NAME
@@ -36,7 +36,8 @@
 .Nm getutxid ,
 .Nm getutxline ,
 .Nm pututxline ,
-.Nm setutxent
+.Nm setutxent ,
+.Nm utxname
 .Nd user accounting database functions
 .Sh LIBRARY
 .Lb libc
@@ -47,13 +48,15 @@
 .Ft struct utmpx *
 .Fn getutxent void
 .Ft struct utmpx *
-.Fn getutxid "const struct utmpx *"
+.Fn getutxid "const struct utmpx *ut"
 .Ft struct utmpx *
-.Fn getutxline "const struct utmpx *"
+.Fn getutxline "const struct utmpx *ut"
 .Ft struct utmpx *
-.Fn pututxline "const struct utmpx *"
+.Fn pututxline "const struct utmpx *ut"
 .Ft void
 .Fn setutxent void
+.Ft void
+.Fn utmpxname "const char *fname"
 .Sh DESCRIPTION
 These functions provide access to the
 .Xr utmpx 5
@@ -91,6 +94,10 @@ adds the argument
 .Xr utmpx 5
 entry line to the accounting database, replacing a previous entry for
 the same user if it exists.
+.Pp
+.Fn utmpxname
+set sets the database file to
+.Fa fname .
 .Ss The utmpx structure
 The
 .Nm utmpx
@@ -155,6 +162,12 @@ if no match was found.
 .Fn pututxline
 returns the structure that was successfully written, or
 .Dv NULL .
+.Fn utmpxname
+returns
+.Dv 1
+on success and
+.Dv 0
+on failure.
 .Sh SEE ALSO
 .Xr logwtmpx 3 ,
 .Xr utmpx 5
@@ -166,10 +179,15 @@ The
 .Fn getutxline ,
 .Fn pututxline ,
 .Fn setutxent
-all conform to
+functions all conform to
 .St -p1003.1-2001
 (XSI extension), and previously to
 .St -xpg4.2 .
+The
+.Fn utxname 
+functions is a
+.Nx
+externsion.
 The fields
 .Fa ut_user ,
 .Fa ut_id ,
