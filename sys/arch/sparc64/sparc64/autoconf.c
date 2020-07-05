@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.219 2020/06/12 03:32:30 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.220 2020/07/05 09:27:11 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.219 2020/06/12 03:32:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.220 2020/07/05 09:27:11 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1050,7 +1050,7 @@ static void
 add_gpio_LED(prop_array_t pins, const char *name, int num, int act, int def)
 {
 	prop_dictionary_t pin = prop_dictionary_create();
-	prop_dictionary_set_cstring(pin, "name", name);
+	prop_dictionary_set_string(pin, "name", name);
 	prop_dictionary_set_uint32(pin, "type", 0);	/* 0 for LED, for now */
 	prop_dictionary_set_uint32(pin, "pin", num);
 	prop_dictionary_set_bool(pin, "active_high", act);
@@ -1106,7 +1106,7 @@ add_drivebay_props_v210(device_t dev, int ofnode, void *aux)
 		char name[16];
 
 		snprintf(name, sizeof(name), "bay%d", target);		
-		prop_dictionary_set_cstring(dict, "location", name);
+		prop_dictionary_set_string(dict, "location", name);
 	}
 }
 
@@ -1258,7 +1258,7 @@ device_register(device_t dev, void *aux)
 				if (!prom_get_node_ether(ofnode, eaddr))
 					goto noether;
 			}
-			blob = prop_data_create_data(eaddr, ETHER_ADDR_LEN);
+			blob = prop_data_create_copy(eaddr, ETHER_ADDR_LEN);
 			prop_dictionary_set(dict, "mac-address", blob);
 			prop_object_release(blob);
 			of_to_dataprop(dict, ofnode, "shared-pins",
@@ -1357,7 +1357,7 @@ noether:
 			for (i = 0x50; i <= 0x51; i++) {
 				prop_dictionary_t spd =
 				    prop_dictionary_create();
-				prop_dictionary_set_cstring(spd, "name",
+				prop_dictionary_set_string(spd, "name",
 				    "dimm-spd");
 				prop_dictionary_set_uint32(spd, "addr", i);
 				prop_dictionary_set_uint64(spd, "cookie", 0);
@@ -1398,9 +1398,9 @@ noether:
 			sens = prop_dictionary_create();
 			prop_dictionary_set_uint32(sens, "addr", 0x2e);
 			prop_dictionary_set_uint64(sens, "cookie", 0);
-			prop_dictionary_set_cstring(sens, "name",
+			prop_dictionary_set_string(sens, "name",
 			    "hardware-monitor");
-			data = prop_data_create_data(&name_adm[0],
+			data = prop_data_create_copy(&name_adm[0],
 			    sizeof(name_adm));
 			prop_dictionary_set(sens, "compatible", data);
 			prop_object_release(data);
@@ -1411,7 +1411,7 @@ noether:
 			sens = prop_dictionary_create();
 			prop_dictionary_set_uint32(sens, "addr", 0x4e);
 			prop_dictionary_set_uint64(sens, "cookie", 0);
-			prop_dictionary_set_cstring(sens, "name",
+			prop_dictionary_set_string(sens, "name",
 			    "temperature-sensor");
 			data = prop_data_create_data(&name_lm[0],
 			    sizeof(name_lm));
@@ -1669,7 +1669,7 @@ copyprops(device_t busdev, int node, prop_dictionary_t dict, int is_console)
 	pos = strstr(output_device, ":r");
 	if (pos == NULL)
 		return;
-	prop_dictionary_set_cstring(dict, "videomode", pos + 2);
+	prop_dictionary_set_string(dict, "videomode", pos + 2);
 }
 
 static void
