@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.64 2019/12/22 23:23:31 thorpej Exp $	*/
+/*	$NetBSD: ffb.c,v 1.65 2020/07/05 09:55:07 martin Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.64 2019/12/22 23:23:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.65 2020/07/05 09:55:07 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -306,7 +306,7 @@ ffb_attach(device_t self)
 		if (ffb_debug)
 			edid_print(&sc->sc_edid_info);
 
-		data = prop_data_create_data(sc->sc_edid_data, EDID_DATA_LEN);
+		data = prop_data_create_copy(sc->sc_edid_data, EDID_DATA_LEN);
 		prop_dictionary_set(device_properties(self), "EDID", data);
 		prop_object_release(data);
 
