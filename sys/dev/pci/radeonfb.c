@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.108 2020/06/11 07:51:26 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.109 2020/07/05 09:53:54 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.108 2020/06/11 07:51:26 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.109 2020/07/05 09:53:54 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1596,7 +1596,7 @@ radeonfb_getprop_num(struct radeonfb_softc *sc, const char *name,
 		return defval;
 	}
 	KASSERT(prop_object_type(pn) == PROP_TYPE_NUMBER);
-	return (prop_number_integer_value(pn));
+	return prop_number_unsigned_value(pn);
 }
 
 int
@@ -1978,7 +1978,7 @@ nobios:
 		      sc->sc_dev), "EDID")) != NULL) {
 
 			aprint_debug_dev(sc->sc_dev, "using static EDID\n");
-			memcpy(edid, prop_data_data_nocopy(edid_data), 128);
+			memcpy(edid, prop_data_value(edid_data), 128);
 			if (edid_parse(edid, eip) == 0) {
 
 				sc->sc_ports[i].rp_edid_valid = 1;
