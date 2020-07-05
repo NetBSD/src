@@ -1,4 +1,4 @@
-.\" $NetBSD: speaker.4,v 1.29 2020/07/05 01:05:01 uwe Exp $
+.\" $NetBSD: speaker.4,v 1.30 2020/07/05 03:44:13 uwe Exp $
 .\"
 .\" Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
 .\" All rights reserved.
@@ -45,8 +45,7 @@
 .Cd "spkr*	at pcppi?"
 .Cd "spkr*	at audio?"
 .Pp
-.In machine/spkr.h
-.Pa /dev/speaker
+.In dev/spkrio.h
 .Sh DESCRIPTION
 The speaker device driver allows applications to control the console
 speaker on machines with a PC-like 8253 timer implementation or a synthesized
