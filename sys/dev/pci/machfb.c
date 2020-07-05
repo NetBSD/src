@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.98 2019/12/07 01:00:40 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.99 2020/07/05 09:23:42 martin Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0,
-	"$NetBSD: machfb.c,v 1.98 2019/12/07 01:00:40 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.99 2020/07/05 09:23:42 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -517,7 +517,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 
 		sc->sc_edid_size = uimin(1024, prop_data_size(edid_data));
 		memset(sc->sc_edid_data, 0, sizeof(sc->sc_edid_data));
-		memcpy(sc->sc_edid_data, prop_data_data_nocopy(edid_data),
+		memcpy(sc->sc_edid_data, prop_data_value(edid_data),
 		    sc->sc_edid_size);
 
 		edid_parse(sc->sc_edid_data, &sc->sc_ei);
