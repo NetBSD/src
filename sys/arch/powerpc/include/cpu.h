@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.112 2020/07/06 10:50:32 rin Exp $	*/
+/*	$NetBSD: cpu.h,v 1.113 2020/07/06 13:20:55 rin Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -98,10 +98,11 @@ struct cpu_info {
 #define	CI_SAVEMMU	(3*CPUSAVE_LEN)
 #define	CI_SAVEMAX	(4*CPUSAVE_LEN)
 #define	CPUSAVE_LEN	8
-#if !defined(PPC_BOOKE) && !defined(MODULAR) && !defined(_MODULE)
-#define	CPUSAVE_SIZE	(CI_SAVEMAX*CPUSAVE_LEN)
-#else
+#if defined(PPC_BOOKE) && !defined(MODULAR) && !defined(_MODULE)
 #define	CPUSAVE_SIZE	128
+#else
+#define	CPUSAVE_SIZE	(CI_SAVEMAX*CPUSAVE_LEN)
+// XXX CTASSERT(CPUSAVE_SIZE >= 128);
 #endif
 #define	CPUSAVE_R28	0		/* where r28 gets saved */
 #define	CPUSAVE_R29	1		/* where r29 gets saved */
