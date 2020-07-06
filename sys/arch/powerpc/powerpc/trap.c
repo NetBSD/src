@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.159 2020/07/06 11:08:21 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.160 2020/07/06 11:23:59 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,7 +35,7 @@
 #define	__UCAS_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.159 2020/07/06 11:08:21 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.160 2020/07/06 11:23:59 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -160,7 +160,7 @@ trap(struct trapframe *tf)
 					    trunc_page(va), false)) {
 					return;
 				}
-#if defined(DIAGNOSTIC) && !defined(PPC_OEA64) && !defined (PPC_IBM4XX)
+#if defined(DIAGNOSTIC) && !defined(PPC_OEA64)
 			} else if ((va >> ADDR_SR_SHFT) == USER_SR) {
 				printf("trap: kernel %s DSI trap @ %#lx by %#lx"
 				    " (DSISR %#x): USER_SR unset\n",
