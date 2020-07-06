@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.51 2020/04/18 10:37:37 joerg Exp $	*/
+/*	$NetBSD: asm.h,v 1.52 2020/07/06 08:20:40 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -81,7 +81,7 @@
 #  define PIC_TOCSETUP(n, r)
 # endif /* __PIC__ */
 
-#endif /* __LP64__ */
+#endif /* _LP64 */
 
 #define	_C_LABEL(x)	x
 #define	_ASM_LABEL(x)	x
@@ -148,7 +148,7 @@ y:	.quad	.##y,.TOC.@tocbase,0;	\
 
 # define ENTRY_NOPROFILE(y) _ENTRY(_C_LABEL(y))
 # define ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
-#endif /* __LP64__ */
+#endif /* _LP64 */
 
 #define	GLOBAL(y)	_GLOBAL(_C_LABEL(y))
 
@@ -369,7 +369,7 @@ y:	.quad	.##y,.TOC.@tocbase,0;	\
 # define cmplongli	cmplwi
 # define cmpregli	cmplwi
 
-#else /* __LP64__ */
+#else /* _LP64 */
 
 # define ldlong		ld	/* load "C" long */
 # define ldlongu	ldu	/* load "C" long with update */
@@ -414,7 +414,7 @@ y:	.quad	.##y,.TOC.@tocbase,0;	\
 # define cmplongli	cmpldi
 # define cmpregli	cmpldi
 
-#endif /* __LP64__ */
+#endif /* _LP64 */
 
 #ifdef _LOCORE
 .macro	stmd	r,dst
@@ -435,7 +435,7 @@ y:	.quad	.##y,.TOC.@tocbase,0;	\
 #endif /* _LOCORE */
 
 #if defined(IBM405_ERRATA77) || \
-    ((defined(_MODULE) || !defined(_KERNEL)) && !defined(__LP64__))
+    ((defined(_MODULE) || !defined(_KERNEL)) && !defined(_LP64))
 /*
  * Workaround for IBM405 Errata 77 (CPU_210): interrupted stwcx. may
  * errantly write data to memory
