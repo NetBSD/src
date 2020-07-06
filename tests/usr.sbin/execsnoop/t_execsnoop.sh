@@ -1,4 +1,4 @@
-# $NetBSD: t_execsnoop.sh,v 1.1 2020/06/30 14:30:49 jruoho Exp $
+# $NetBSD: t_execsnoop.sh,v 1.2 2020/07/06 10:32:18 jruoho Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -47,7 +47,7 @@ basic_body() {
 		n=$(expr $n - 1)
 	done
 
-	sleep 1
+	sleep 3
 	pkill -9 execsnoop
 
 	if [ ! $(cat $tmp | grep "whoami" | wc -l) -eq 10 ]; then
