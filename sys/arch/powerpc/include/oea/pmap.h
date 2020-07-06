@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.30 2020/03/14 14:05:43 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.31 2020/07/06 09:10:02 rin Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -38,7 +38,7 @@
 #error use assym.h instead
 #endif
 
-#if defined(_LKM) || defined(_MODULE)
+#ifdef _MODULE
 #error this file should not be included by loadable kernel modules
 #endif
 
