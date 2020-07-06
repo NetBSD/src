@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.9 2008/02/05 18:10:47 garbled Exp $	*/
+/*	$NetBSD: pte.h,v 1.10 2020/07/06 08:17:01 rin Exp $	*/
 
 /*-
  * Copyright (C) 2003 Matt Thomas
@@ -46,7 +46,7 @@ struct pte {
 	register64_t pte_hi;
 	register64_t pte_lo;
 };
-#else	/* PPC_OEA || PPC_OEA64 */
+#else	/* PMAP_OEA */
 struct pte {
 	register_t pte_hi;
 	register_t pte_lo;
