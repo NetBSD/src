@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.23 2020/07/06 09:34:18 rin Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.24 2020/07/06 11:05:54 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,10 +36,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.23 2020/07/06 09:34:18 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.24 2020/07/06 11:05:54 rin Exp $");
 
 #ifdef _KERNEL_OPT
-#include "opt_ddb.h"
+#include "opt_ppcarch.h"
 #endif
 
 /*
