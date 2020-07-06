@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.h,v 1.19 2018/04/19 21:50:09 christos Exp $	*/
+/*	$NetBSD: nand.h,v 1.20 2020/07/06 10:22:07 rin Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -36,6 +36,10 @@
 
 #include <sys/param.h>
 #include <sys/cdefs.h>
+
+#ifdef _KERNEL_OPT
+#include "opt_nand.h"
+#endif
 
 #include <sys/bufq.h>
 #include <sys/buf.h>
