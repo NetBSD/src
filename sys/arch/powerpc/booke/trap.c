@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.28 2020/07/06 09:34:16 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.29 2020/07/06 10:13:02 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,9 +35,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.28 2020/07/06 09:34:16 rin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.29 2020/07/06 10:13:02 rin Exp $");
 
 #ifdef _KERNEL_OPT
+#include "opt_altivec.h"
 #include "opt_ddb.h"
 #endif
 
