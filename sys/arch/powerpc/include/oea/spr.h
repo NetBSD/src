@@ -1,16 +1,20 @@
-/*	$NetBSD: spr.h,v 1.6 2018/06/01 18:18:11 macallan Exp $	*/
+/*	$NetBSD: spr.h,v 1.7 2020/07/06 10:31:23 rin Exp $	*/
 
 #ifndef _POWERPC_OEA_SPR_H_
 #define	_POWERPC_OEA_SPR_H_
 
 #if !defined(_LOCORE) && defined(_KERNEL)
-#if defined(PPC_OEA64_BRIDGE) || defined (_ARCH_PPC64)
 
+#ifdef _KERNEL_OPT
+#include "opt_ppcarch.h"
+#endif
+
+#if defined(PPC_OEA64_BRIDGE) || defined (_ARCH_PPC64)
 #include <powerpc/psl.h>
 #include <powerpc/spr.h>
+#endif
 
-#endif
-#endif
+#endif /* !_LOCORE && _KERNEL */
 
 /*
  * Special Purpose Register declarations.

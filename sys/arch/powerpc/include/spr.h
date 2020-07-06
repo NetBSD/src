@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.52 2018/04/19 21:50:07 christos Exp $	*/
+/*	$NetBSD: spr.h,v 1.53 2020/07/06 10:31:23 rin Exp $	*/
 
 /*
  * Copyright (c) 2001, The NetBSD Foundation, Inc.
@@ -29,6 +29,10 @@
 #define	_POWERPC_SPR_H_
 
 #if !defined(_LOCORE) && defined(_KERNEL)
+
+#ifdef _KERNEL_OPT
+#include "opt_ppcarch.h"
+#endif
 
 #include <powerpc/oea/cpufeat.h>
 

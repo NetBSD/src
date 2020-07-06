@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.S,v 1.11 2019/11/15 23:43:12 macallan Exp $	*/
+/*	$NetBSD: ofw_subr.S,v 1.12 2020/07/06 10:31:23 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,6 +31,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef _KERNEL_OPT
+#include "opt_ppcarch.h"
+#endif
 
 	.local	firmstk
 	.globl	openfirmware_entry
