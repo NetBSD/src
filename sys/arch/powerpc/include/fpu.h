@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.23 2020/07/06 09:34:17 rin Exp $	*/
+/*	$NetBSD: fpu.h,v 1.24 2020/07/06 10:52:12 rin Exp $	*/
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -70,7 +70,6 @@
 #ifdef _KERNEL
 
 #ifdef _KERNEL_OPT
-#include "opt_multiprocessor.h"
 #include "opt_ppcarch.h"
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.32 2020/07/06 09:34:17 rin Exp $	*/
+/*	$NetBSD: altivec.c,v 1.33 2020/07/06 10:52:12 rin Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,11 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.32 2020/07/06 09:34:17 rin Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_multiprocessor.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.33 2020/07/06 10:52:12 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
