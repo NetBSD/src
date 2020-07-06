@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.43 2020/07/06 09:34:16 rin Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.44 2020/07/06 10:11:14 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,10 +37,9 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.43 2020/07/06 09:34:16 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.44 2020/07/06 10:11:14 rin Exp $");
 
 #ifdef _KERNEL_OPT
-#include "opt_ddb.h"
 #include "opt_mpc85xx.h"
 #include "opt_multiprocessor.h"
 #endif
