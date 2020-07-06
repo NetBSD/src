@@ -1,4 +1,4 @@
-/* $NetBSD: plb.c,v 1.21 2013/11/21 13:33:15 kiyohara Exp $ */
+/* $NetBSD: plb.c,v 1.22 2020/07/06 09:34:17 rin Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,10 +66,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.21 2013/11/21 13:33:15 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.22 2020/07/06 09:34:17 rin Exp $");
 
-#include "locators.h"
 #include "emac.h"
+#include "locators.h"
 
 #define _POWERPC_BUS_DMA_PRIVATE
 

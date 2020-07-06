@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.30 2015/07/06 05:55:37 matt Exp $	*/
+/*	$NetBSD: userret.h,v 1.31 2020/07/06 09:34:17 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,8 +31,10 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_ppcarch.h"
+#ifdef _KERNEL_OPT
 #include "opt_altivec.h"
+#include "opt_ppcarch.h"
+#endif
 
 #include <sys/userret.h>
 #include <sys/ras.h>

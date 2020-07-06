@@ -1,4 +1,4 @@
-/* $NetBSD: opb.c,v 1.26 2011/06/18 06:41:42 matt Exp $ */
+/* $NetBSD: opb.c,v 1.27 2020/07/06 09:34:17 rin Exp $ */
 
 /*
  * Copyright 2001,2002 Wasabi Systems, Inc.
@@ -66,10 +66,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opb.c,v 1.26 2011/06/18 06:41:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opb.c,v 1.27 2020/07/06 09:34:17 rin Exp $");
 
 #include "locators.h"
+
+#ifdef _KERNEL_OPT
 #include "opt_emac.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

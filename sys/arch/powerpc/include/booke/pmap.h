@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.21 2020/04/08 10:57:16 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.22 2020/07/06 09:34:17 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,6 +33,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #ifndef _POWERPC_BOOKE_PMAP_H_
 #define _POWERPC_BOOKE_PMAP_H_
 

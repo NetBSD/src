@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.7 2011/07/01 18:59:19 dyoung Exp $	*/
+/*	$NetBSD: pcib.c,v 1.8 2020/07/06 09:34:17 rin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.7 2011/07/01 18:59:19 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.8 2020/07/06 09:34:17 rin Exp $");
+
+#include "isa.h"
+#include "isadma.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,9 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.7 2011/07/01 18:59:19 dyoung Exp $");
 #include <dev/pci/pcireg.h>
 
 #include <dev/pci/pcidevs.h>
-
-#include "isa.h"
-#include "isadma.h"
 
 int	pcibmatch(device_t, cfdata_t, void *);
 void	pcibattach(device_t, device_t, void *);

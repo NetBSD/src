@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_subr.c,v 1.28 2018/05/11 22:23:33 macallan Exp $	*/
+/*	$NetBSD: pmap_subr.c,v 1.29 2020/07/06 09:34:18 rin Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,11 +29,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.28 2018/05/11 22:23:33 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.29 2020/07/06 09:34:18 rin Exp $");
 
-#include "opt_multiprocessor.h"
+#ifdef _KERNEL_OPT
 #include "opt_altivec.h"
+#include "opt_multiprocessor.h"
 #include "opt_pmap.h"
+#endif
+
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/sched.h>

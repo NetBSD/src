@@ -1,4 +1,4 @@
-/*	$NetBSD: bat.h,v 1.18 2014/07/06 08:06:03 mrg Exp $	*/
+/*	$NetBSD: bat.h,v 1.19 2020/07/06 09:34:17 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -64,6 +64,7 @@
 #define	_POWERPC_OEA_BAT_H_
 
 #if defined(_KERNEL) && !defined(_LOCORE)
+
 #include <powerpc/psl.h>
 
 struct bat {

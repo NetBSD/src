@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.52 2020/01/29 05:35:28 thorpej Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.53 2020/07/06 09:34:17 rin Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -52,9 +52,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.52 2020/01/29 05:35:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.53 2020/07/06 09:34:17 rin Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_emac.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

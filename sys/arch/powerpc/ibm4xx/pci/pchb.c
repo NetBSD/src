@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.12 2020/06/14 01:40:05 chs Exp $	*/
+/*	$NetBSD: pchb.c,v 1.13 2020/07/06 09:34:17 rin Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,11 +28,15 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.12 2020/06/14 01:40:05 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.13 2020/07/06 09:34:17 rin Exp $");
 
 #include "pci.h"
+
+#ifdef _KERNEL_OPT
 #include "opt_pci.h"
+#endif
 
 #include <sys/types.h>
 #include <sys/param.h>

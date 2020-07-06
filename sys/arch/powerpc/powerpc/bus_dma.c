@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.50 2020/02/20 05:10:02 rin Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.51 2020/07/06 09:34:18 rin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,8 +31,9 @@
  */
 
 #define _POWERPC_BUS_DMA_PRIVATE
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.50 2020/02/20 05:10:02 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.51 2020/07/06 09:34:18 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

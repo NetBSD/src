@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_consinit.c,v 1.18 2020/04/15 13:33:13 rin Exp $ */
+/* $NetBSD: ofw_consinit.c,v 1.19 2020/07/06 09:34:17 rin Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.18 2020/04/15 13:33:13 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.19 2020/07/06 09:34:17 rin Exp $");
+
+#include "adb.h"
+#include "adbkbd.h"
+#include "akbd.h"
+#include "isa.h"
+#include "ofb.h"
+#include "pckbc.h"
+#include "ukbd.h"
+#include "wsdisplay.h"
+#include "zsc.h"
+#include "zstty.h"
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -50,23 +61,14 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.18 2020/04/15 13:33:13 rin Exp $"
 #include <dev/wscons/wsksymvar.h>
 #include <dev/wscons/wscons_callbacks.h>
 
-#include "akbd.h"
-#include "adbkbd.h"
-#include "wsdisplay.h"
-#include "ofb.h"
-#include "isa.h"
-
-#include "zsc.h"
 #if NZSC > 0
 #include <machine/z8530var.h>
 #endif
 
-#include "adb.h"
 #if (NADB > 0)
 #include <macppc/dev/adbvar.h>
 #endif
 
-#include "ukbd.h"
 #if (NUKBD > 0)
 #include <dev/usb/ukbdvar.h>
 struct usb_kbd_ihandles {
@@ -75,13 +77,11 @@ struct usb_kbd_ihandles {
 };
 #endif
 
-#include "zstty.h"
 #if (NZSTTY > 0)
 #include <dev/ic/z8530reg.h>
 extern struct consdev consdev_zs;
 #endif
 
-#include "pckbc.h"
 #if (NPCKBC > 0)
 #include <dev/isa/isareg.h>
 #include <dev/ic/i8042reg.h>
