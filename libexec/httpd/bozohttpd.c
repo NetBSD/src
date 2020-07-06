@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.114 2020/06/07 23:33:02 fox Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.115 2020/07/06 23:31:36 jmcneill Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -2569,6 +2569,9 @@ bozo_setup(bozohttpd_t *httpd, bozoprefs_t *prefs, const char *vhost,
 	if ((cp = bozo_get_pref(prefs, "directory indexing")) != NULL &&
 	    strcmp(cp, "true") == 0) {
 		httpd->dir_indexing = 1;
+	}
+	if ((cp = bozo_get_pref(prefs, "directory index readme")) != NULL) {
+		httpd->dir_readme = bozostrdup(httpd, NULL, cp);
 	}
 	if ((cp = bozo_get_pref(prefs, "public_html")) != NULL) {
 		httpd->public_html = bozostrdup(httpd, NULL, cp);
