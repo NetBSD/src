@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.48 2020/07/06 09:34:17 rin Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.49 2020/07/06 10:59:37 rin Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,16 +30,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.48 2020/07/06 09:34:17 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.49 2020/07/06 10:59:37 rin Exp $");
 
 #include "ksyms.h"
 #include "wsdisplay.h"
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
-#include "opt_compat_netbsd.h"
 #include "opt_kgdb.h"
 #include "opt_modular.h"
+#include "opt_multiprocessor.h"
 #include "opt_oea.h"
 #include "opt_ofwoea.h"
 #include "opt_ppcarch.h"
