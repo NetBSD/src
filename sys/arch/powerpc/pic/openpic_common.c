@@ -1,4 +1,4 @@
-/*	$NetBSD: openpic_common.c,v 1.8 2020/07/06 09:34:18 rin Exp $ */
+/*	$NetBSD: openpic_common.c,v 1.9 2020/07/06 11:02:44 rin Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,10 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openpic_common.c,v 1.8 2020/07/06 09:34:18 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openpic_common.c,v 1.9 2020/07/06 11:02:44 rin Exp $");
 
 #ifdef _KERNEL_OPT
-#include "opt_interrupt.h"
 #include "opt_openpic.h"
 #endif
 
