@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.h,v 1.12 2018/02/16 18:04:06 macallan Exp $	*/
+/*	$NetBSD: hid.h,v 1.13 2020/07/06 10:31:23 rin Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -28,6 +28,10 @@
 
 #ifndef _POWERPC_OEA_HID_H_
 #define _POWERPC_OEA_HID_H_
+
+#ifdef _KERNEL_OPT
+#include "opt_ppcarch.h"
+#endif
 
 /* Hardware Implementation Dependent registers for the PowerPC */
 

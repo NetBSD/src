@@ -1,4 +1,4 @@
-/*	$NetBSD: pio_subr.S,v 1.17 2020/02/20 05:10:02 rin Exp $	*/
+/*	$NetBSD: pio_subr.S,v 1.18 2020/07/06 10:31:24 rin Exp $	*/
 
 /*
  * Copyright (c) 2003 Matt Thomas
@@ -27,6 +27,11 @@
  * SUCH DAMAGE.
  *
  */
+
+#ifdef _KERNEL_OPT
+#include "opt_ppcarch.h"
+#endif
+
 /*
  * Assembly note:
  *	We use rotlw instead of slw because rotlw ignores bit 26 and slw

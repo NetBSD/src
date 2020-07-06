@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.16 2014/03/18 20:11:08 macallan Exp $	*/
+/*	$NetBSD: clock.c,v 1.17 2020/07/06 10:31:24 rin Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -33,7 +33,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.16 2014/03/18 20:11:08 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.17 2020/07/06 10:31:24 rin Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_ppcarch.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/kernel.h>

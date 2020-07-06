@@ -1,4 +1,4 @@
-/*	$NetBSD: pio.h,v 1.8 2020/02/20 05:10:01 rin Exp $ */
+/*	$NetBSD: pio.h,v 1.9 2020/07/06 10:31:23 rin Exp $ */
 /*	$OpenBSD: pio.h,v 1.1 1997/10/13 10:53:47 pefo Exp $ */
 
 /*
@@ -35,6 +35,11 @@
 
 #ifndef _POWERPC_PIO_H_
 #define _POWERPC_PIO_H_
+
+#ifdef _KERNEL_OPT
+#include "opt_ppcarch.h"
+#endif
+
 /*
  * I/O macros.
  */
