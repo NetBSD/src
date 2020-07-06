@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_machdep.c,v 1.31 2020/07/06 09:34:16 rin Exp $	*/
+/*	$NetBSD: booke_machdep.c,v 1.32 2020/07/06 10:08:16 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,10 +38,14 @@
 #define	_POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.31 2020/07/06 09:34:16 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.32 2020/07/06 10:08:16 rin Exp $");
+
+#include "ksyms.h"
 
 #ifdef _KERNEL_OPT
+#include "opt_ddb.h"
 #include "opt_modular.h"
+#include "opt_multiprocessor.h"
 #endif
 
 #include <sys/param.h>
