@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.158 2020/07/06 09:34:18 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.159 2020/07/06 11:08:21 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,12 +35,12 @@
 #define	__UCAS_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.158 2020/07/06 09:34:18 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.159 2020/07/06 11:08:21 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
 #include "opt_ddb.h"
-#include "opt_multiprocessor.h"
+#include "opt_ppcarch.h"
 #endif
 
 #include <sys/param.h>
