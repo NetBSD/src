@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_speedctl.c,v 1.2 2020/07/06 09:34:17 rin Exp $ */
+/*	$NetBSD: cpu_speedctl.c,v 1.3 2020/07/06 10:58:06 rin Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,11 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_speedctl.c,v 1.2 2020/07/06 09:34:17 rin Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_ppcparam.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: cpu_speedctl.c,v 1.3 2020/07/06 10:58:06 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
