@@ -1,4 +1,4 @@
-/*	$NetBSD: e500var.h,v 1.7 2012/11/27 19:24:47 matt Exp $	*/
+/*	$NetBSD: e500var.h,v 1.8 2020/07/06 08:14:54 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -78,9 +78,7 @@ struct e500_truthtab {
 u_int	e500_truth_decode(u_int, uint32_t, const struct e500_truthtab *,
 	    size_t, u_int);
 uint16_t e500_get_svr(void);
-#ifdef _KERNEL_OPT
 int	e500_cpunode_submatch(device_t, cfdata_t, const char *, void *);
-#endif
 
 /*
  * Used by MP hatch code to fetch the TLB1 entries so they be setup on the
