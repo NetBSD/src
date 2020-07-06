@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.872 2020/07/03 04:25:28 jruoho Exp $
+# $NetBSD: mi,v 1.873 2020/07/06 18:47:02 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3910,6 +3910,7 @@
 ./usr/tests/net/net/t_ipaddress			tests-net-tests		atf,rump
 ./usr/tests/net/net/t_ipv6_lifetime		tests-net-tests		atf,rump
 ./usr/tests/net/net/t_ipv6address		tests-net-tests		atf,rump
+./usr/tests/net/net/t_mapped			tests-net-tests		atf
 ./usr/tests/net/net/t_mtudisc			tests-net-tests		atf,rump
 ./usr/tests/net/net/t_mtudisc6			tests-net-tests		atf,rump
 ./usr/tests/net/net/t_ping6_opts		tests-net-tests		atf,rump
