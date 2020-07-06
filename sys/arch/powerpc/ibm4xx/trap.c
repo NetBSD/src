@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.82 2020/07/06 09:34:16 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.83 2020/07/06 10:41:43 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,12 +69,12 @@
 #define	__UFETCHSTORE_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.82 2020/07/06 09:34:16 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.83 2020/07/06 10:41:43 rin Exp $");
 
 #ifdef _KERNEL_OPT
-#include "opt_altivec.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_ppcarch.h"
 #endif
 
 #include <sys/param.h>
