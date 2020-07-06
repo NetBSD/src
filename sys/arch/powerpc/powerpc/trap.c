@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.160 2020/07/06 11:23:59 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.161 2020/07/06 11:24:57 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,7 +35,7 @@
 #define	__UCAS_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.160 2020/07/06 11:23:59 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.161 2020/07/06 11:24:57 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -486,7 +486,7 @@ vm_signal:
 	default:
 		printf("trap type %x at %lx\n", type, tf->tf_srr0);
 brain_damage2:
-#ifdef DDBX
+#if defined(DDB) && 0 /* XXX */
 		if (kdb_trap(type, tf))
 			return;
 #endif
