@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3ddrc.c,v 1.1 2011/08/02 00:21:00 matt Exp $	*/
+/*	$NetBSD: pq3ddrc.c,v 1.2 2020/07/06 09:34:16 rin Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,11 +33,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #define	DDRC_PRIVATE
 
 #include <sys/cdefs.h>
-
-__KERNEL_RCSID(0, "$NetBSD: pq3ddrc.c,v 1.1 2011/08/02 00:21:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3ddrc.c,v 1.2 2020/07/06 09:34:16 rin Exp $");
 
 #include "ioconf.h"
 

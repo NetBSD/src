@@ -28,9 +28,10 @@
  */
 
 #include <machine/asm.h>
+
 #include "assym.h"
 
-RCSID("$NetBSD: spe_subr.S,v 1.4 2014/08/10 18:08:33 joerg Exp $")
+RCSID("$NetBSD: spe_subr.S,v 1.5 2020/07/06 09:34:16 rin Exp $")
 
 	.text
 #ifndef __clang__

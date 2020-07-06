@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.h,v 1.1 1996/09/30 16:34:33 ws Exp $	*/
+/*	$NetBSD: reloc.h,v 1.2 2020/07/06 09:34:17 rin Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,6 +30,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #ifndef	_MACH_RELOC_H_
 #define	_MACH_RELOC_H_
 

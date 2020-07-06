@@ -1,4 +1,4 @@
-/* $NetBSD: prep_machdep.c,v 1.11 2016/12/22 14:47:58 cherry Exp $ */
+/* $NetBSD: prep_machdep.c,v 1.12 2020/07/06 09:34:17 rin Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,9 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: prep_machdep.c,v 1.11 2016/12/22 14:47:58 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prep_machdep.c,v 1.12 2020/07/06 09:34:17 rin Exp $");
 
+#include "ksyms.h"
+
+#ifdef _KERNEL_OPT
+#include "opt_ddb.h"
 #include "opt_modular.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -53,13 +58,10 @@ __KERNEL_RCSID(0, "$NetBSD: prep_machdep.c,v 1.11 2016/12/22 14:47:58 cherry Exp
 #include <machine/pmap.h>
 #include <powerpc/oea/bat.h>
 
-#include "opt_ddb.h"
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
-
-#include "ksyms.h"
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 extern void *endsym, *startsym;

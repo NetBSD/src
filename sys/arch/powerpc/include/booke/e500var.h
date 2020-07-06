@@ -1,4 +1,4 @@
-/*	$NetBSD: e500var.h,v 1.8 2020/07/06 08:14:54 rin Exp $	*/
+/*	$NetBSD: e500var.h,v 1.9 2020/07/06 09:34:17 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,12 +39,10 @@
 
 #ifdef _KERNEL
 
+#include "locators.h"
+
 #include <sys/device.h>
 #include <sys/extent.h>
-
-#ifdef _KERNEL_OPT
-#include "locators.h"
-#endif
 
 #define	E500_CLOCK_TIMER	0	/* could be 0..3 */
 

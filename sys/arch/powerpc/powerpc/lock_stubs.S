@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.12 2020/03/01 23:23:36 rin Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.13 2020/07/06 09:34:18 rin Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -29,12 +29,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_multiprocessor.h"
-#include "opt_lockdebug.h"
-
 #include <machine/asm.h>
 
 #include "assym.h"
+
+#ifdef _KERNEL_OPT
+#include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
+#endif
 
 #if defined(MULTIPROCESSOR)
 #define	ISYNC	isync

@@ -1,4 +1,4 @@
-/*	$NetBSD: spe.c,v 1.10 2017/03/17 23:43:43 chs Exp $	*/
+/*	$NetBSD: spe.c,v 1.11 2020/07/06 09:34:16 rin Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,9 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spe.c,v 1.10 2017/03/17 23:43:43 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spe.c,v 1.11 2020/07/06 09:34:16 rin Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_altivec.h"
+#endif
 
 #ifdef PPC_HAVE_SPE
 

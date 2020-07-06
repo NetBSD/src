@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3diic.c,v 1.4 2018/09/03 16:29:26 riastradh Exp $	*/
+/*	$NetBSD: pq3diic.c,v 1.5 2020/07/06 09:34:16 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,15 +35,14 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pq3diic.c,v 1.5 2020/07/06 09:34:16 rin Exp $");
 
-__KERNEL_RCSID(0, "$NetBSD: pq3diic.c,v 1.4 2018/09/03 16:29:26 riastradh Exp $");
+#include "ioconf.h"
 
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/tty.h>
-
-#include "ioconf.h"
 
 #include <sys/intr.h>
 #include <sys/bus.h>

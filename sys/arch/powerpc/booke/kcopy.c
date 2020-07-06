@@ -1,4 +1,4 @@
-/*	$NetBSD: kcopy.c,v 1.2 2011/01/18 01:02:52 matt Exp $	*/
+/*	$NetBSD: kcopy.c,v 1.3 2020/07/06 09:34:16 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,8 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-
-__KERNEL_RCSID(0, "$NetBSD: kcopy.c,v 1.2 2011/01/18 01:02:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kcopy.c,v 1.3 2020/07/06 09:34:16 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>

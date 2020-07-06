@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.61 2020/03/01 23:23:36 rin Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.62 2020/07/06 09:34:18 rin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -73,11 +73,13 @@
  *	#include <powerpc/powerpc/locore_subr.S>
  */
 
-#include "opt_ppcarch.h"
-#include "opt_lockdebug.h"
-#include "opt_multiprocessor.h"
+#ifdef _KERNEL_OPT
 #include "opt_ddb.h"
+#include "opt_lockdebug.h"
 #include "opt_modular.h"
+#include "opt_multiprocessor.h"
+#include "opt_ppcarch.h"
+#endif
 
 #ifdef DDB
 #define	CFRAME_LRSAVE(t0)					\
