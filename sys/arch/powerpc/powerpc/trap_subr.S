@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.82 2020/07/06 09:34:18 rin Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.83 2020/07/06 11:09:15 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -40,6 +40,9 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
+#include "opt_ddb.h"
+#include "opt_kgdb.h"
+#include "opt_ppcarch.h"
 #endif
 
 /* LINTSTUB: include <sys/param.h> */
