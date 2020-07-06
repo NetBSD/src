@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.679 2020/06/27 13:32:00 jmcneill Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.680 2020/07/06 07:51:09 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.679 2020/06/27 13:32:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.680 2020/07/06 07:51:09 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -13582,6 +13582,13 @@ wm_nvm_read_invm(struct wm_softc *sc, int offset, int words, uint16_t *data)
 				rv = -1;
 			}
 			break;
+		case NVM_OFF_CFG1: /* == INVM_AUTOLOAD */
+			rv = wm_nvm_read_word_invm(sc, offset, data);
+			if (rv != 0) {
+				*data = INVM_DEFAULT_AL;
+				rv = 0;
+			}
+			break;
 		case NVM_OFF_CFG2:
 			rv = wm_nvm_read_word_invm(sc, offset, data);
 			if (rv != 0) {
@@ -16442,6 +16449,8 @@ wm_platform_pm_pch_lpt(struct wm_softc *sc, bool link)
 /*
  * I210 Errata 25 and I211 Errata 10
  * Slow System Clock.
+ *
+ * Note that this function is called on both FLASH and iNVM case on NetBSD.
  */
 static int
 wm_pll_workaround_i210(struct wm_softc *sc)
@@ -16467,8 +16476,13 @@ wm_pll_workaround_i210(struct wm_softc *sc)
 	reg = mdicnfg & ~MDICNFG_DEST;
 	CSR_WRITE(sc, WMREG_MDICNFG, reg);
 
-	if (wm_nvm_read(sc, INVM_AUTOLOAD, 1, &nvmword) != 0)
+	if (wm_nvm_read(sc, INVM_AUTOLOAD, 1, &nvmword) != 0) {
+		/*
+		 * The default value of the Initialization Control Word 1
+		 * is the same on both I210's FLASH_HW and I21[01]'s iNVM.
+		 */
 		nvmword = INVM_DEFAULT_AL;
+	}
 	tmp_nvmword = nvmword | INVM_PLL_WO_VAL;
 
 	for (i = 0; i < WM_MAX_PLL_TRIES; i++) {
