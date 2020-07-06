@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.10 2019/11/20 19:37:52 pgoyette Exp $	*/
+/*	$NetBSD: core_machdep.c,v 1.11 2020/07/06 11:05:05 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,11 +32,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.10 2019/11/20 19:37:52 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.11 2020/07/06 11:05:05 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
-#include "opt_ppcarch.h"
 #endif
 
 #include <sys/param.h>
