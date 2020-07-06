@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.31 2020/07/06 09:10:02 rin Exp $	*/
+/*	$NetBSD: pmap.h,v 1.32 2020/07/06 10:57:03 rin Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -44,6 +44,7 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
+#include "opt_modular.h"
 #endif
 #include <powerpc/oea/pte.h>
 
