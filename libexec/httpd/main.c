@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 2018/11/25 07:37:20 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.23 2020/07/06 23:31:36 jmcneill Exp $	*/
 
 /*	$eterna: main.c,v 1.6 2011/11/18 09:21:15 mrg Exp $	*/
 /* from: eterna: bozohttpd.c,v 1.159 2009/05/23 02:14:30 mrg Exp 	*/
@@ -160,7 +160,7 @@ main(int argc, char **argv)
 	 */
 
 	while ((c = getopt(argc, argv,
-	    "C:EGHI:L:M:P:S:T:U:VXZ:bc:defhi:np:st:uv:x:z:")) != -1) {
+	    "C:EGHI:L:M:P:R:S:T:U:VXZ:bc:defhi:np:st:uv:x:z:")) != -1) {
 		switch (c) {
 
 		case 'b':
@@ -297,6 +297,11 @@ main(int argc, char **argv)
 				bozoerr(&httpd, 1, "User support not enabled");
 
 			bozo_set_pref(&httpd, &prefs, "public_html", optarg);
+			break;
+
+		case 'R':
+			bozo_set_pref(&httpd, &prefs, "directory index readme",
+				      optarg);
 			break;
 
 		case 'S':
