@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_pmap.c,v 1.28 2020/07/06 09:34:16 rin Exp $	*/
+/*	$NetBSD: booke_pmap.c,v 1.29 2020/07/06 10:09:23 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,12 @@
 #define __PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.28 2020/07/06 09:34:16 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.29 2020/07/06 10:09:23 rin Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_multiprocessor.h"
+#include "opt_pmap.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/kcore.h>
