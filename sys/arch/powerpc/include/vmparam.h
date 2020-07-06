@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.23 2020/06/27 02:51:23 rin Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.24 2020/07/06 08:26:10 rin Exp $	*/
 
 #ifndef _POWERPC_VMPARAM_H_
 #define _POWERPC_VMPARAM_H_
@@ -77,7 +77,7 @@ extern const char __USRSTACK;		/* let the linker resolve it */
 
 #endif /* !_MODULE */
 
-#if defined(MODULAR) || defined(_MODULAR)
+#if defined(MODULAR) || defined(_MODULE)
 /*
  * If we are a module or support modules, we need to define a compatible
  * pmap_physseg since IBM4XX uses one.  This will waste a tiny of space
