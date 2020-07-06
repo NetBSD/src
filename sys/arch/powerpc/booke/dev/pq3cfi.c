@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3cfi.c,v 1.6 2020/07/06 09:34:16 rin Exp $	*/
+/*	$NetBSD: pq3cfi.c,v 1.7 2020/07/06 10:22:44 rin Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,13 +33,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3cfi.c,v 1.6 2020/07/06 09:34:16 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3cfi.c,v 1.7 2020/07/06 10:22:44 rin Exp $");
 
 #include "locators.h"
-
-#ifdef _KERNEL_OPT
-#include "opt_flash.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
