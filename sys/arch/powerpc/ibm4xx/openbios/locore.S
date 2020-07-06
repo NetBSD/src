@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.14 2020/07/06 10:44:38 rin Exp $	*/
+/*	$NetBSD: locore.S,v 1.15 2020/07/06 10:48:54 rin Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -67,7 +67,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#undef PPC_4XX_NOCACHE
+#ifdef PPC_4XX_NOCACHE
+#error "Fix me"
+#endif
 
 #include "assym.h"
 #include "ksyms.h"
