@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.111 2020/06/27 07:33:51 macallan Exp $	*/
+/*	$NetBSD: cpu.h,v 1.112 2020/07/06 10:50:32 rin Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -45,7 +45,6 @@ struct cache_info {
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 #if defined(_KERNEL_OPT)
-#include "opt_lockdebug.h"
 #include "opt_modular.h"
 #include "opt_multiprocessor.h"
 #include "opt_ppcarch.h"
