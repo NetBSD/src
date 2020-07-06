@@ -1,4 +1,4 @@
-/*	$NetBSD: spleen32x64.h,v 1.5 2020/06/21 15:48:17 fcambus Exp $ */
+/*	$NetBSD: spleen32x64.h,v 1.6 2020/07/06 20:19:14 fcambus Exp $ */
 /*	$OpenBSD: spleen32x64.h,v 1.2 2019/03/08 10:53:59 fcambus Exp $ */
 
 /*
@@ -30,16 +30,16 @@
 static u_char spleen32x64_data[];
 
 struct wsdisplay_font spleen32x64 = {
-	"Spleen 32x64",			/* typeface name */
-	' ',				/* firstchar */
-	256 - ' ',			/* numchars */
-	WSDISPLAY_FONTENC_ISO,		/* encoding */
-	32,				/* width */
-	64,				/* height */
-	4,				/* stride */
-	WSDISPLAY_FONTORDER_L2R,	/* bit order */
-	WSDISPLAY_FONTORDER_L2R,	/* byte order */
-	spleen32x64_data		/* data */
+	.name		= "Spleen 32x64",
+	.firstchar	= ' ',
+	.numchars	= 256 - ' ',
+	.encoding	= WSDISPLAY_FONTENC_ISO,
+	.fontwidth	= 32,
+	.fontheight	= 64,
+	.stride		= 4,
+	.bitorder	= WSDISPLAY_FONTORDER_L2R,
+	.byteorder	= WSDISPLAY_FONTORDER_L2R,
+	.data		= spleen32x64_data
 };
 
 static u_char spleen32x64_data[] = {
