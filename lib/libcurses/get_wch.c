@@ -1,4 +1,4 @@
-/*   $NetBSD: get_wch.c,v 1.23 2019/06/09 07:40:14 blymn Exp $ */
+/*   $NetBSD: get_wch.c,v 1.24 2020/07/06 23:33:38 uwe Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_wch.c,v 1.23 2019/06/09 07:40:14 blymn Exp $");
+__RCSID("$NetBSD: get_wch.c,v 1.24 2020/07/06 23:33:38 uwe Exp $");
 #endif						  /* not lint */
 
 #include <errno.h>
@@ -499,7 +499,7 @@ wget_wch(WINDOW *win, wint_t *ch)
 	    && __echoit)
 		return ERR;
 
-	if (is_wintouched(win))
+	if (!(win->flags & __ISPAD) && is_wintouched(win))
 		wrefresh(win);
 #ifdef DEBUG
 	__CTRACE(__CTRACE_INPUT, "wget_wch: __echoit = %d, "
