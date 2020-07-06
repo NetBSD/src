@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.89 2020/03/08 15:05:18 ad Exp $	*/
+/*	$NetBSD: lock.h,v 1.90 2020/07/06 22:32:22 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,6 +74,10 @@
 #include <machine/lock.h>
 
 #ifdef _KERNEL
+
+#ifdef _KERNEL_OPT
+#include "opt_lockdebug.h"
+#endif
 
 /*
  * From <machine/lock.h>.
