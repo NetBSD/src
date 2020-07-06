@@ -1,4 +1,4 @@
-/* $NetBSD: ipi.c,v 1.15 2020/07/06 09:34:18 rin Exp $ */
+/* $NetBSD: ipi.c,v 1.16 2020/07/06 11:01:24 rin Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,14 +29,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.15 2020/07/06 09:34:18 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.16 2020/07/06 11:01:24 rin Exp $");
 
 #ifdef _KERNEL_OPT
-#include "opt_altivec.h"
-#include "opt_interrupt.h"
-#include "opt_ipi.h"
 #include "opt_multiprocessor.h"
-#include "opt_pic.h"
 #endif
 
 #include <sys/param.h>
