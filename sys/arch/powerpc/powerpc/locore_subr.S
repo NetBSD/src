@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.62 2020/07/06 09:34:18 rin Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.63 2020/07/06 11:06:52 rin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -75,7 +75,6 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
-#include "opt_lockdebug.h"
 #include "opt_modular.h"
 #include "opt_multiprocessor.h"
 #include "opt_ppcarch.h"
