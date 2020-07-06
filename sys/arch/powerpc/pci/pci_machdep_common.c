@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_common.c,v 1.23 2018/03/02 19:36:19 macallan Exp $ */
+/* $NetBSD: pci_machdep_common.c,v 1.24 2020/07/06 09:34:17 rin Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,10 +36,10 @@
  * and call those instead where appropriate.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.23 2018/03/02 19:36:19 macallan Exp $");
-
 #define _POWERPC_BUS_DMA_PRIVATE
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.24 2020/07/06 09:34:17 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>

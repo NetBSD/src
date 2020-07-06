@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3obio.c,v 1.4 2020/06/25 14:52:00 jdolecek Exp $	*/
+/*	$NetBSD: pq3obio.c,v 1.5 2020/07/06 09:34:16 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,11 +36,10 @@
 
 #define	LBC_PRIVATE
 
-#include "locators.h"
-
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pq3obio.c,v 1.5 2020/07/06 09:34:16 rin Exp $");
 
-__KERNEL_RCSID(0, "$NetBSD: pq3obio.c,v 1.4 2020/06/25 14:52:00 jdolecek Exp $");
+#include "locators.h"
 
 #include <sys/param.h>
 #include <sys/device.h>

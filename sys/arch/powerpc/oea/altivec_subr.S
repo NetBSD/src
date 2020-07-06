@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec_subr.S,v 1.2 2011/01/18 01:02:55 matt Exp $	*/
+/*	$NetBSD: altivec_subr.S,v 1.3 2020/07/06 09:34:17 rin Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,9 +28,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_altivec.h"
+RCSID("$NetBSD: altivec_subr.S,v 1.3 2020/07/06 09:34:17 rin Exp $")
 
-RCSID("$NetBSD: altivec_subr.S,v 1.2 2011/01/18 01:02:55 matt Exp $")
+#ifdef _KERNEL_OPT
+#include "opt_altivec.h"
+#endif
 
 #ifdef ALTIVEC
 /*

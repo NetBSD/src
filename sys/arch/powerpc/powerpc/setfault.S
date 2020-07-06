@@ -1,4 +1,4 @@
-/*	$NetBSD: setfault.S,v 1.9 2011/06/17 05:07:17 matt Exp $	*/
+/*	$NetBSD: setfault.S,v 1.10 2020/07/06 09:34:18 rin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,8 +65,13 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "opt_ppcarch.h"
+
 #include "assym.h"
+
+#ifdef _KERNEL_OPT
+#include "opt_ppcarch.h"
+#endif
+
 #include <machine/asm.h>
 #include <machine/psl.h>
 

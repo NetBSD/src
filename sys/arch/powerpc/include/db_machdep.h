@@ -1,5 +1,5 @@
 /*	$OpenBSD: db_machdep.h,v 1.2 1997/03/21 00:48:48 niklas Exp $	*/
-/*	$NetBSD: db_machdep.h,v 1.27 2019/12/15 06:05:00 rin Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.28 2020/07/06 09:34:17 rin Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,13 +33,13 @@
 #ifndef	_PPC_DB_MACHDEP_H_
 #define	_PPC_DB_MACHDEP_H_
 
-#include <uvm/uvm_prot.h>
-#include <uvm/uvm_param.h>
-#include <machine/trap.h>
-
 #ifdef _KERNEL
 #include "opt_ppcarch.h"
 #endif
+
+#include <uvm/uvm_prot.h>
+#include <uvm/uvm_param.h>
+#include <machine/trap.h>
 
 #define	DB_ELF_SYMBOLS
 

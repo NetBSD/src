@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.39 2020/02/20 06:12:47 rin Exp $	*/
+/*	$NetBSD: fpu.c,v 1.40 2020/07/06 09:34:18 rin Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,9 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.39 2020/02/20 06:12:47 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.40 2020/07/06 09:34:18 rin Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/proc.h>

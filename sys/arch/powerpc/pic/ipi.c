@@ -1,4 +1,4 @@
-/* $NetBSD: ipi.c,v 1.14 2019/12/01 15:34:45 ad Exp $ */
+/* $NetBSD: ipi.c,v 1.15 2020/07/06 09:34:18 rin Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,12 +29,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.14 2019/12/01 15:34:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.15 2020/07/06 09:34:18 rin Exp $");
 
+#ifdef _KERNEL_OPT
+#include "opt_altivec.h"
+#include "opt_interrupt.h"
+#include "opt_ipi.h"
 #include "opt_multiprocessor.h"
 #include "opt_pic.h"
-#include "opt_interrupt.h"
-#include "opt_altivec.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -47,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.14 2019/12/01 15:34:45 ad Exp $");
 
 #include <powerpc/pic/picvar.h>
 #include <powerpc/pic/ipivar.h>
-#include "opt_ipi.h"
 
 #ifdef MULTIPROCESSOR
 

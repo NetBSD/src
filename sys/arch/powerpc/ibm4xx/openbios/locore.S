@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.12 2018/07/15 05:16:44 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.13 2020/07/06 09:34:17 rin Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -69,14 +69,17 @@
 
 #undef PPC_4XX_NOCACHE
 
+#include "assym.h"
+#include "ksyms.h"
+
+#ifdef _KERNEL_OPT
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
 #include "opt_modular.h"
 #include "opt_multiprocessor.h"
 #include "opt_ppcarch.h"
 #include "opt_ppcparam.h"
-#include "assym.h"
-#include "ksyms.h"
+#endif
 
 #include <sys/syscall.h>
 
