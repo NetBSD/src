@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_counter.h,v 1.8 2011/01/18 01:02:54 matt Exp $	*/
+/*	$NetBSD: cpu_counter.h,v 1.9 2020/07/06 10:31:23 rin Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -34,6 +34,10 @@
  */
 
 #ifdef _KERNEL
+
+#ifdef _KERNEL_OPT
+#include "opt_ppcarch.h"
+#endif
 
 #include <powerpc/spr.h>
 #ifdef PPC_OEA601
