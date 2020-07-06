@@ -1,4 +1,4 @@
-/*	$NetBSD: cpunode.c,v 1.5 2011/05/28 05:25:39 matt Exp $	*/
+/*	$NetBSD: cpunode.c,v 1.6 2020/07/06 09:34:16 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,14 +35,13 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpunode.c,v 1.6 2020/07/06 09:34:16 rin Exp $");
 
-__KERNEL_RCSID(0, "$NetBSD: cpunode.c,v 1.5 2011/05/28 05:25:39 matt Exp $");
+#include "ioconf.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/cpu.h>
-
-#include "ioconf.h"
 
 #include <powerpc/booke/cpuvar.h>
 

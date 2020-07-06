@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.20 2015/07/06 05:36:26 matt Exp $	*/
+/*	$NetBSD: psl.h,v 1.21 2020/07/06 09:34:17 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,6 +30,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #ifndef	_POWERPC_PSL_H_
 #define	_POWERPC_PSL_H_
 

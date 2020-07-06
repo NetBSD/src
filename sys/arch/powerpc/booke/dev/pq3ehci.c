@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3ehci.c,v 1.9 2019/08/21 04:17:41 msaitoh Exp $	*/
+/*	$NetBSD: pq3ehci.c,v 1.10 2020/07/06 09:34:16 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,9 +29,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3ehci.c,v 1.9 2019/08/21 04:17:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3ehci.c,v 1.10 2020/07/06 09:34:16 rin Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

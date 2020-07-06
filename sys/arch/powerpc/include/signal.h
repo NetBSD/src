@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.21 2017/11/29 17:36:16 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.22 2020/07/06 09:34:17 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,6 +30,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #ifndef	_POWERPC_SIGNAL_H_
 #define	_POWERPC_SIGNAL_H_
 

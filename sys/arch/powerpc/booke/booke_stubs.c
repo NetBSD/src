@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_stubs.c,v 1.10 2016/07/11 16:06:52 matt Exp $	*/
+/*	$NetBSD: booke_stubs.c,v 1.11 2020/07/06 09:34:16 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,8 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-
-__KERNEL_RCSID(0, "$NetBSD: booke_stubs.c,v 1.10 2016/07/11 16:06:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_stubs.c,v 1.11 2020/07/06 09:34:16 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>

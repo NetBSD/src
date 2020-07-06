@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.97 2020/07/02 10:28:11 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.98 2020/07/06 09:34:17 rin Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,14 +63,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.97 2020/07/02 10:28:11 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.98 2020/07/06 09:34:17 rin Exp $");
 
 #define	PMAP_NOOPNAMES
 
-#include "opt_ppcarch.h"
+#ifdef _KERNEL_OPT
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
 #include "opt_pmap.h"
+#include "opt_ppcarch.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/proc.h>

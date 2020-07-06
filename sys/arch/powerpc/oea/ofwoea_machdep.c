@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.47 2020/02/28 22:14:10 macallan Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.48 2020/07/06 09:34:17 rin Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,15 +30,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.47 2020/02/28 22:14:10 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.48 2020/07/06 09:34:17 rin Exp $");
 
-#include "opt_ppcarch.h"
-#include "opt_compat_netbsd.h"
+#include "ksyms.h"
+#include "wsdisplay.h"
+
+#ifdef _KERNEL_OPT
 #include "opt_ddb.h"
+#include "opt_compat_netbsd.h"
 #include "opt_kgdb.h"
 #include "opt_modular.h"
-
-#include "wsdisplay.h"
+#include "opt_oea.h"
+#include "opt_ofwoea.h"
+#include "opt_ppcarch.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -67,10 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.47 2020/02/28 22:14:10 macallan
 #include <powerpc/spr.h>
 #include <powerpc/pic/picvar.h>
 
-#include "opt_oea.h"
-
-#include "ksyms.h"
-
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
@@ -79,8 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.47 2020/02/28 22:14:10 macallan
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
-
-#include "opt_ofwoea.h"
 
 #ifdef ofppc
 extern struct model_data modeldata;

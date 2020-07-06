@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_uic.c,v 1.5 2020/03/05 11:33:14 rin Exp $	*/
+/*	$NetBSD: pic_uic.c,v 1.6 2020/07/06 09:34:16 rin Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_uic.c,v 1.5 2020/03/05 11:33:14 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_uic.c,v 1.6 2020/07/06 09:34:16 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: pic_uic.c,v 1.5 2020/03/05 11:33:14 rin Exp $");
 #include <powerpc/ibm4xx/cpu.h>
 
 #include <powerpc/pic/picvar.h>
-
 
 /*
  * Number of interrupts (hard + soft), irq number legality test,

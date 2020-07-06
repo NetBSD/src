@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_tlb.c,v 1.19 2018/09/03 16:29:26 riastradh Exp $	*/
+/*	$NetBSD: e500_tlb.c,v 1.20 2020/07/06 09:34:16 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,13 +34,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_ppcparam.h"
-
 #define	__PMAP_PRIVATE
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.20 2020/07/06 09:34:16 rin Exp $");
 
-__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.19 2018/09/03 16:29:26 riastradh Exp $");
+#ifdef _KERNEL_OPT
+#include "opt_ppcparam.h"
+#endif
 
 #include <sys/param.h>
 

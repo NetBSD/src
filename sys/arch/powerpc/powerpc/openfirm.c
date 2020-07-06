@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.30 2019/12/06 06:38:39 mrg Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.31 2020/07/06 09:34:18 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,10 +31,12 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_multiprocessor.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.30 2019/12/06 06:38:39 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.31 2020/07/06 09:34:18 rin Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_multiprocessor.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

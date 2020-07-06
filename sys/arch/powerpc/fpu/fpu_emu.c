@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.22 2020/06/27 04:31:06 rin Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.23 2020/07/06 09:34:16 rin Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,9 +76,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.22 2020/06/27 04:31:06 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.23 2020/07/06 09:34:16 rin Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_ddb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

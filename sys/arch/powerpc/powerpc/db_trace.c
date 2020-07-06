@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.59 2020/07/06 08:30:10 rin Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.60 2020/07/06 09:34:18 rin Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /*
@@ -28,9 +28,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.59 2020/07/06 08:30:10 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.60 2020/07/06 09:34:18 rin Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/proc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.28 2020/07/06 08:18:57 rin Exp $	*/
+/*	$NetBSD: frame.h,v 1.29 2020/07/06 09:34:17 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,15 +30,14 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #ifndef	_POWERPC_FRAME_H_
 #define	_POWERPC_FRAME_H_
 
 #include <machine/types.h>
 
-#ifdef _KERNEL
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
-#endif
 #endif
 
 /*

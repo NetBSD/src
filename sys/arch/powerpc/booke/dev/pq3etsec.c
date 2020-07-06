@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.49 2020/01/30 06:27:13 martin Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.50 2020/07/06 09:34:16 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,14 +34,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.50 2020/07/06 09:34:16 rin Exp $");
+
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_mpc85xx.h"
 #include "opt_multiprocessor.h"
 #include "opt_net_mpsafe.h"
-
-#include <sys/cdefs.h>
-
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.49 2020/01/30 06:27:13 martin Exp $");
+#endif
 
 #include <sys/param.h>
 #include <sys/cpu.h>

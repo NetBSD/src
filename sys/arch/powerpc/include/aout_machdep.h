@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_machdep.h,v 1.5 2002/12/10 17:14:17 thorpej Exp $	*/
+/*	$NetBSD: aout_machdep.h,v 1.6 2020/07/06 09:34:17 rin Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -30,6 +30,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #ifndef	_POWERPC_AOUT_MACHDEP_H_
 #define	_POWERPC_AOUT_MACHDEP_H_
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.9 2012/01/23 16:22:57 phx Exp $	*/
+/*	$NetBSD: pchb.c,v 1.10 2020/07/06 09:34:17 rin Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.9 2012/01/23 16:22:57 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.10 2020/07/06 09:34:17 rin Exp $");
+
+#include "agp.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,8 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.9 2012/01/23 16:22:57 phx Exp $");
 #include <dev/ic/mpc105reg.h>
 #include <dev/ic/mpc106reg.h>
 #include <dev/ic/ibm82660reg.h>
-
-#include "agp.h"
 
 int	pchbmatch(device_t, cfdata_t, void *);
 void	pchbattach(device_t, device_t, void *);

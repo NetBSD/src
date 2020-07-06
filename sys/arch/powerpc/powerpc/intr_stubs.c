@@ -37,8 +37,7 @@
 #define	__INTR_NOINLINE
 
 #include <sys/cdefs.h>
-
-__KERNEL_RCSID(0, "$NetBSD: intr_stubs.c,v 1.6 2020/07/06 08:10:57 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr_stubs.c,v 1.7 2020/07/06 09:34:18 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>

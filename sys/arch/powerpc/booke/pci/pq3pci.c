@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3pci.c,v 1.23 2017/06/01 02:45:07 chs Exp $	*/
+/*	$NetBSD: pq3pci.c,v 1.24 2020/07/06 09:34:16 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,13 +38,15 @@
 #define	GLOBAL_PRIVATE
 #define	__INTR_PRIVATE
 
-#include "opt_mpc85xx.h"
-#include "opt_pci.h"
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.24 2020/07/06 09:34:16 rin Exp $");
+
 #include "locators.h"
 
-#include <sys/cdefs.h>
-
-__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.23 2017/06/01 02:45:07 chs Exp $");
+#ifdef _KERNEL_OPT
+#include "opt_mpc85xx.h"
+#include "opt_pci.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: com_opb.c,v 1.23 2019/12/15 09:38:40 rin Exp $ */
+/* $NetBSD: com_opb.c,v 1.24 2020/07/06 09:34:17 rin Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -61,7 +61,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_opb.c,v 1.23 2019/12/15 09:38:40 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_opb.c,v 1.24 2020/07/06 09:34:17 rin Exp $");
+
+#include "com.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -76,7 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: com_opb.c,v 1.23 2019/12/15 09:38:40 rin Exp $");
 #include <powerpc/ibm4xx/dev/opbvar.h>
 #include <powerpc/ibm4xx/dev/comopbvar.h>
 
-#include "com.h"
 #if (NCOM > 0)
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: copyin.c,v 1.8 2020/03/02 03:34:28 rin Exp $	*/
+/*	$NetBSD: copyin.c,v 1.9 2020/07/06 09:34:16 rin Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -35,10 +35,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copyin.c,v 1.8 2020/03/02 03:34:28 rin Exp $");
-
 #define	__UFETCHSTORE_PRIVATE
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: copyin.c,v 1.9 2020/07/06 09:34:16 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>

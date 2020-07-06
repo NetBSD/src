@@ -1,4 +1,4 @@
-/* $NetBSD: rgmii.c,v 1.1 2010/03/18 13:47:04 kiyohara Exp $ */
+/* $NetBSD: rgmii.c,v 1.2 2020/07/06 09:34:17 rin Exp $ */
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -24,8 +24,9 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgmii.c,v 1.1 2010/03/18 13:47:04 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgmii.c,v 1.2 2020/07/06 09:34:17 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>

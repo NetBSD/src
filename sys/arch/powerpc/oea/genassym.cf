@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.27 2018/07/15 05:16:44 maxv Exp $
+#	$NetBSD: genassym.cf,v 1.28 2020/07/06 09:34:17 rin Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,7 +31,9 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+#ifdef _KERNEL_OPT
 include "opt_ppcarch.h"
+#endif
 
 include <sys/param.h>
 include <sys/time.h>

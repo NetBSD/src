@@ -1,4 +1,4 @@
-/* $NetBSD: ipi_openpic.c,v 1.8 2016/05/26 17:38:05 macallan Exp $ */
+/* $NetBSD: ipi_openpic.c,v 1.9 2020/07/06 09:34:18 rin Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,9 +29,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi_openpic.c,v 1.8 2016/05/26 17:38:05 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi_openpic.c,v 1.9 2020/07/06 09:34:18 rin Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
+#endif
+
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/atomic.h>

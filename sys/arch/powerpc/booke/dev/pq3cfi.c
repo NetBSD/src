@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3cfi.c,v 1.5 2012/07/18 19:01:50 matt Exp $	*/
+/*	$NetBSD: pq3cfi.c,v 1.6 2020/07/06 09:34:16 rin Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,11 +32,14 @@
  * NOR CFI driver support for booke
  */
 
-#include "opt_flash.h"
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pq3cfi.c,v 1.6 2020/07/06 09:34:16 rin Exp $");
+
 #include "locators.h"
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3cfi.c,v 1.5 2012/07/18 19:01:50 matt Exp $");
+#ifdef _KERNEL_OPT
+#include "opt_flash.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

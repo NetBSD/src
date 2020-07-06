@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.22 2010/03/02 21:53:20 matt Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.23 2020/07/06 09:34:18 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,9 +36,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.22 2010/03/02 21:53:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.23 2020/07/06 09:34:18 rin Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_ddb.h"
+#endif
 
 /*
  * Machine-dependent functions for remote KGDB.

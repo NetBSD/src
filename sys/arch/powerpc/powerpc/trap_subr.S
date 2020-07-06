@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.81 2020/03/01 23:23:36 rin Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.82 2020/07/06 09:34:18 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,7 +37,10 @@
  *
  *	#include <powerpc/powerpc/trap_subr.S>
  */
+
+#ifdef _KERNEL_OPT
 #include "opt_altivec.h"
+#endif
 
 /* LINTSTUB: include <sys/param.h> */
 /* LINTSTUB: include <powerpc/oea/bat.h> */
