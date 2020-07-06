@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.13 2020/07/06 09:34:17 rin Exp $	*/
+/*	$NetBSD: locore.S,v 1.14 2020/07/06 10:44:38 rin Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -74,10 +74,7 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
-#include "opt_lockdebug.h"
 #include "opt_modular.h"
-#include "opt_multiprocessor.h"
-#include "opt_ppcarch.h"
 #include "opt_ppcparam.h"
 #endif
 
