@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.66 2020/07/06 01:08:15 riastradh Exp $	*/
+/*	$NetBSD: fpu.c,v 1.67 2020/07/06 18:30:48 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.66 2020/07/06 01:08:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.67 2020/07/06 18:30:48 riastradh Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -417,6 +417,9 @@ void
 fpu_kern_leave(void)
 {
 	static const union savefpu zero_fpu __aligned(64);
+	const union savefpu *savefpu;
+	struct lwp *l = curlwp;
+	struct pcb *pcb;
 	struct cpu_info *ci = curcpu();
 	int s;
 
@@ -424,17 +427,18 @@ fpu_kern_leave(void)
 	KASSERT(ci->ci_kfpu_spl != -1);
 
 	/*
-	 * Zero the fpu registers; otherwise we might leak secrets
-	 * through Spectre-class attacks to userland, even if there are
-	 * no bugs in fpu state management.
+	 * Restore the FPU state immediately to avoid leaking any
+	 * kernel secrets, or zero it if this is a kthread.
 	 */
-	fpu_area_restore(&zero_fpu, x86_xsave_features);
-
-	/*
-	 * Set CR0_TS again so that the kernel can't accidentally use
-	 * the FPU.
-	 */
-	stts();
+	if ((l->l_pflag & LP_INTR) && (l->l_switchto != NULL))
+		l = l->l_switchto;
+	if (l->l_flag & LW_SYSTEM) {
+		savefpu = &zero_fpu;
+	} else {
+		pcb = lwp_getpcb(l);
+		savefpu = &pcb->pcb_savefpu;
+	}
+	fpu_area_restore(savefpu, x86_xsave_features);
 
 	s = ci->ci_kfpu_spl;
 	ci->ci_kfpu_spl = -1;
