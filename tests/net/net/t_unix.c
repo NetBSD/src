@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unix.c,v 1.18 2019/04/14 01:45:30 christos Exp $	*/
+/*	$NetBSD: t_unix.c,v 1.19 2020/07/06 16:24:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$Id: t_unix.c,v 1.18 2019/04/14 01:45:30 christos Exp $");
+__RCSID("$Id: t_unix.c,v 1.19 2020/07/06 16:24:06 christos Exp $");
 #else
 #define getprogname() argv[0]
 #endif
@@ -162,16 +162,12 @@ test(bool forkit, bool closeit, size_t len)
 	srvrpid = clntpid = getpid();
 	srvr = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (srvr == -1)
-		FAIL("socket(srvrer)");
+		FAIL("socket(server)");
 
 	slen = len + OF + 1;
 	
 	if ((sun = calloc(1, slen)) == NULL)
 		FAIL("calloc");
-
-	srvr = socket(AF_UNIX, SOCK_STREAM, 0);
-	if (srvr == -1)
-		FAIL("socket");
 
 	memset(sun->sun_path, 'a', len);
 	sun->sun_path[len] = '\0';
