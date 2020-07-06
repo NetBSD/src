@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.27 2016/01/24 19:49:35 christos Exp $	*/
+/*	$NetBSD: frame.h,v 1.28 2020/07/06 08:18:57 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -159,7 +159,7 @@ struct ktrapframe {
 	__register_t ktf_cframe_lr;	/* for DDB */
 };
 
-#if defined(_KERNEL) || defined(_LKM)
+#if defined(_KERNEL)
 #ifdef _LP64
 struct utrapframe32 {
 	__register32_t fixreg[32];
@@ -174,7 +174,7 @@ struct utrapframe32 {
 	int spare;
 };
 #endif
-#endif /* _KERNEL || _LKM */
+#endif /* _KERNEL */
 
 /*
  * This is to ensure alignment of the stackpointer
