@@ -30,11 +30,7 @@
 #define LBC_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3nandfcm.c,v 1.3 2020/07/06 09:34:16 rin Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_flash.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: pq3nandfcm.c,v 1.4 2020/07/06 10:22:44 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
