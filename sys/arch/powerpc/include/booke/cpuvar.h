@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.20 2019/04/07 05:25:55 thorpej Exp $	*/
+/*	$NetBSD: cpuvar.h,v 1.21 2020/07/06 10:54:56 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,6 +36,10 @@
 
 #ifndef _POWERPC_BOOKE_CPUVAR_H_
 #define _POWERPC_BOOKE_CPUVAR_H_
+
+#ifdef _KERNEL_OPT
+#include "opt_multiprocessor.h"
+#endif
 
 #include <sys/bus.h>
 #include <prop/proplib.h>
