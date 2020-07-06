@@ -1,4 +1,4 @@
-#	$NetBSD: files.explora,v 1.9 2011/06/20 17:44:33 matt Exp $
+#	$NetBSD: files.explora,v 1.10 2020/07/06 10:38:46 rin Exp $
 
 # maxpartitions must be first item in files.${ARCH}
 
@@ -16,6 +16,7 @@ file	arch/evbppc/explora/autoconf.c
 file	arch/evbppc/explora/consinit.c
 file	arch/evbppc/explora/machdep.c
 file	arch/powerpc/ibm4xx/ibm4xx_machdep.c
+defflag	opt_uic.h	MULTIUIC
 file	arch/powerpc/ibm4xx/pic_uic.c
 file	dev/md_root.c				memory_disk_hooks
 
