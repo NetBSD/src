@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.11 2015/10/02 05:22:51 msaitoh Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.12 2020/07/06 10:49:41 rin Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.11 2015/10/02 05:22:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12 2020/07/06 10:49:41 rin Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_pci.h"
+#endif
 
 #include <sys/types.h>
 #include <sys/param.h>
