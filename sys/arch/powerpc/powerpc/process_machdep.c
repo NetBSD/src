@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.38 2017/03/16 16:13:20 chs Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.39 2020/07/06 09:34:18 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,9 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.38 2017/03/16 16:13:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.39 2020/07/06 09:34:18 rin Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_altivec.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/cpu.h>

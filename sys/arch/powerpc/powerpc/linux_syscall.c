@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.5 2008/04/28 20:23:32 martin Exp $ */
+/*	$NetBSD: linux_syscall.c,v 1.6 2020/07/06 09:34:18 rin Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -29,10 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_compat_linux.h"
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.6 2020/07/06 09:34:18 rin Exp $");
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.5 2008/04/28 20:23:32 martin Exp $");
+#ifdef _KERNEL_OPT
+#include "opt_compat_linux.h"
+#endif
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: emacreg.h,v 1.3 2010/03/18 13:47:04 kiyohara Exp $	*/
+/*	$NetBSD: emacreg.h,v 1.4 2020/07/06 09:34:17 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -39,7 +39,6 @@
 #define	_IBM4XX_EMACREG_H_
 
 #define EMAC_MAX_MTU		9022
-
 
 /* Number of Ethernet MAC Registers */
 #define	EMAC_NREG		0x100

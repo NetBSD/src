@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3gpio.c,v 1.11 2014/12/27 16:19:33 nonaka Exp $	*/
+/*	$NetBSD: pq3gpio.c,v 1.12 2020/07/06 09:34:16 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,11 +37,12 @@
 #define	GLOBAL_PRIVATE
 #define	GPIO_PRIVATE
 
-#include "opt_mpc85xx.h"
-
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pq3gpio.c,v 1.12 2020/07/06 09:34:16 rin Exp $");
 
-__KERNEL_RCSID(0, "$NetBSD: pq3gpio.c,v 1.11 2014/12/27 16:19:33 nonaka Exp $");
+#ifdef _KERNEL_OPT
+#include "opt_mpc85xx.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/cpu.h>

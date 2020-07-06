@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwreal.S,v 1.14 2018/12/31 18:47:46 christos Exp $	*/
+/*	$NetBSD: ofwreal.S,v 1.15 2020/07/06 09:34:18 rin Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -42,6 +42,7 @@
  *
  * TODO: handle set-callback specially
  */
+
 #include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/asm.h>

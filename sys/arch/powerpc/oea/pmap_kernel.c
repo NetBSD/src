@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_kernel.c,v 1.10 2012/07/28 23:11:01 matt Exp $	*/
+/*	$NetBSD: pmap_kernel.c,v 1.11 2020/07/06 09:34:17 rin Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,11 +30,13 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: pmap_kernel.c,v 1.10 2012/07/28 23:11:01 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pmap_kernel.c,v 1.11 2020/07/06 09:34:17 rin Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_altivec.h"
 #include "opt_ddb.h"
 #include "opt_pmap.h"
+#endif
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>

@@ -1,15 +1,17 @@
-/*	$NetBSD: db_interface.c,v 1.53 2015/01/23 07:27:05 nonaka Exp $ */
+/*	$NetBSD: db_interface.c,v 1.54 2020/07/06 09:34:18 rin Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.53 2015/01/23 07:27:05 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.54 2020/07/06 09:34:18 rin Exp $");
 
 #define USERACC
 
+#ifdef _KERNEL_OPT
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
 #include "opt_ppcarch.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/proc.h>

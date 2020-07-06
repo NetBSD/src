@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.3 2019/09/23 16:17:57 skrll Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.4 2020/07/06 09:34:17 rin Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -97,12 +97,15 @@
 #ifndef _POWERPC_BUS_DEFS_H_
 #define _POWERPC_BUS_DEFS_H_
 
-#if defined(_KERNEL_OPT) && !defined(BUS_DMA_DONTCACHE)
+#ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
+#endif
+
+#ifndef BUS_DMA_DONTCACHE
 #if defined(PPC_IBM4XX) || defined(PPC_BOOKE)
 #define BUS_DMA_DONTCACHE (BUS_DMA_COHERENT|BUS_DMA_NOCACHE)
-#endif /* PPC_IBM4XX */
-#endif /* _KERNEL_OPT && !BUS_DMA_DONTCACHE */
+#endif
+#endif
 
 /*
  * Bus access types.

@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_intr.h,v 1.18 2011/06/17 23:37:38 matt Exp $	*/
+/*	$NetBSD: marvell_intr.h,v 1.19 2020/07/06 09:34:17 rin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,6 @@
 
 #ifndef _POWERPC_MARVELL_INTR_H_
 #define _POWERPC_MARVELL_INTR_H_
-
 
 #ifndef _LOCORE
 

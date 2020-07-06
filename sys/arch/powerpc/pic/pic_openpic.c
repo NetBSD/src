@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_openpic.c,v 1.15 2018/09/03 16:29:26 riastradh Exp $ */
+/*	$NetBSD: pic_openpic.c,v 1.16 2020/07/06 09:34:18 rin Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.15 2018/09/03 16:29:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.16 2020/07/06 09:34:18 rin Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_interrupt.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -39,8 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.15 2018/09/03 16:29:26 riastradh E
 #include <powerpc/openpic.h>
 
 #include <powerpc/pic/picvar.h>
-
-#include "opt_interrupt.h"
 
 static void opic_enable_irq(struct pic_ops *, int, int);
 static void opic_disable_irq(struct pic_ops *, int);

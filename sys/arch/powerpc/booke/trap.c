@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.27 2018/01/27 10:07:41 flxd Exp $	*/
+/*	$NetBSD: trap.c,v 1.28 2020/07/06 09:34:16 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,11 +34,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_ddb.h"
-
 #include <sys/cdefs.h>
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.28 2020/07/06 09:34:16 rin Exp $");
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.27 2018/01/27 10:07:41 flxd Exp $");
+#ifdef _KERNEL_OPT
+#include "opt_ddb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

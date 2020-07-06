@@ -1,4 +1,4 @@
-/* $NetBSD: pci_module.c,v 1.1 2011/06/22 18:20:59 matt Exp $ */
+/* $NetBSD: pci_module.c,v 1.2 2020/07/06 09:34:17 rin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -35,10 +35,10 @@
  * modules.  This keeps pci_chipset_tag_t opaque for modules.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_module.c,v 1.1 2011/06/22 18:20:59 matt Exp $");
-
 #define __PCI_NOINLINE
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pci_module.c,v 1.2 2020/07/06 09:34:17 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
