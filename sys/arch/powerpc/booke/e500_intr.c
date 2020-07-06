@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.41 2020/07/04 17:20:45 rin Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.42 2020/07/06 08:13:00 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.41 2020/07/04 17:20:45 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.42 2020/07/06 08:13:00 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -510,7 +510,9 @@ e500_splset(struct cpu_info *ci, int ipl)
 {
 	struct cpu_softc * const cpu = ci->ci_softc;
 
+#ifdef __HAVE_FAST_SOFTINTS /* XXX */
 	KASSERT((curlwp->l_pflag & LP_INTR) == 0 || ipl != IPL_NONE);
+#endif
 	const u_int ctpr = IPL2CTPR(ipl);
 	KASSERT(openpic_read(cpu, OPENPIC_CTPR) == IPL2CTPR(ci->ci_cpl));
 	openpic_write(cpu, OPENPIC_CTPR, ctpr);
