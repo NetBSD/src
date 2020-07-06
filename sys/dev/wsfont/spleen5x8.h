@@ -1,4 +1,4 @@
-/*	$NetBSD: spleen5x8.h,v 1.5 2020/06/29 09:45:35 fcambus Exp $ */
+/*	$NetBSD: spleen5x8.h,v 1.6 2020/07/06 20:19:14 fcambus Exp $ */
 /*	$OpenBSD: spleen5x8.h,v 1.2 2018/12/02 14:47:23 fcambus Exp $ */
 
 /*
@@ -30,16 +30,16 @@
 static u_char spleen5x8_data[];
 
 struct wsdisplay_font spleen5x8 = {
-	"Spleen 5x8",			/* typeface name */
-	' ',				/* firstchar */
-	128 - ' ',			/* numchars */
-	WSDISPLAY_FONTENC_ISO,		/* encoding */
-	5,				/* width */
-	8,				/* height */
-	1,				/* stride */
-	WSDISPLAY_FONTORDER_L2R,	/* bit order */
-	WSDISPLAY_FONTORDER_L2R,	/* byte order */
-	spleen5x8_data			/* data */
+	.name		= "Spleen 5x8",
+	.firstchar	= ' ',
+	.numchars	= 128 - ' ',
+	.encoding	= WSDISPLAY_FONTENC_ISO,
+	.fontwidth	= 5,
+	.fontheight	= 8,
+	.stride		= 1,
+	.bitorder	= WSDISPLAY_FONTORDER_L2R,
+	.byteorder	= WSDISPLAY_FONTORDER_L2R,
+	.data		= spleen5x8_data
 };
 
 static u_char spleen5x8_data[] = {
