@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.12 2015/01/26 04:47:53 nonaka Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.13 2020/07/06 10:16:12 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-RCSID("$NetBSD: trap_subr.S,v 1.12 2015/01/26 04:47:53 nonaka Exp $")
+RCSID("$NetBSD: trap_subr.S,v 1.13 2020/07/06 10:16:12 rin Exp $")
+
+#ifdef _KERNEL_OPT
+#include "opt_altivec.h"
+#include "opt_ddb.h"
+#include "opt_mpc85xx.h"
+#include "opt_multiprocessor.h"
+#endif
 
 	.globl	_C_LABEL(sctrapexit), _C_LABEL(trapexit), _C_LABEL(intrcall)
 
