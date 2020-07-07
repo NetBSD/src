@@ -1,4 +1,4 @@
-/*	$NetBSD: igphy.c,v 1.33 2020/03/15 23:04:50 thorpej Exp $	*/
+/*	$NetBSD: igphy.c,v 1.34 2020/07/07 08:44:12 msaitoh Exp $	*/
 
 /*
  * The Intel copyright applies to the analog register setup, and the
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.33 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.34 2020/07/07 08:44:12 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mii.h"
@@ -523,14 +523,14 @@ igphy_smartspeed_workaround(struct mii_softc *sc)
 					gtcr &= ~GTCR_MAN_MS;
 					PHY_WRITE(sc, MII_100T2CR, gtcr);
 				}
-				mii_phy_auto(sc, 0);
+				mii_phy_auto(sc);
 			}
 			break;
 		case IGPHY_TICK_DOWNSHIFT:
 			PHY_READ(sc, MII_100T2CR, &gtcr);
 			gtcr |= GTCR_MAN_MS;
 			PHY_WRITE(sc, MII_100T2CR, gtcr);
-			mii_phy_auto(sc, 0);
+			mii_phy_auto(sc);
 			break;
 		default:
 			break;
