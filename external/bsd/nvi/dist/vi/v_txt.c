@@ -1,4 +1,4 @@
-/*	$NetBSD: v_txt.c,v 1.6 2018/08/07 08:05:47 rin Exp $ */
+/*	$NetBSD: v_txt.c,v 1.7 2020/07/07 10:58:43 rin Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: v_txt.c,v 10.108 2003/07/18 21:27:42 skimo Exp  (Berkeley) Date: 2003/07/18 21:27:42 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: v_txt.c,v 1.6 2018/08/07 08:05:47 rin Exp $");
+__RCSID("$NetBSD: v_txt.c,v 1.7 2020/07/07 10:58:43 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1118,32 +1118,30 @@ leftmargin:		tp->lb[tp->cno - 1] = ' ';
 		 */
 		if (LF_ISSET(TXT_TTYWERASE))
 			while (tp->cno > max) {
+				if (ISBLANK((UCHAR_T)tp->lb[tp->cno - 1]))
+					break;
 				--tp->cno;
 				++tp->owrite;
 				if (FL_ISSET(is_flags, IS_RUNNING))
 					tp->lb[tp->cno] = ' ';
-				if (ISBLANK((UCHAR_T)tp->lb[tp->cno - 1]))
-					break;
 			}
 		else {
 			if (LF_ISSET(TXT_ALTWERASE)) {
-				--tp->cno;
+				--tp->cno; /* No worry for out of bounds. */
 				++tp->owrite;
 				if (FL_ISSET(is_flags, IS_RUNNING))
 					tp->lb[tp->cno] = ' ';
-				if (ISBLANK((UCHAR_T)tp->lb[tp->cno - 1]))
-					break;
 			}
 			if (tp->cno > max)
 				tmp = inword((UCHAR_T)tp->lb[tp->cno - 1]);
 			while (tp->cno > max) {
+				if (tmp != inword((UCHAR_T)tp->lb[tp->cno - 1])
+				    || ISBLANK((UCHAR_T)tp->lb[tp->cno - 1]))
+					break;
 				--tp->cno;
 				++tp->owrite;
 				if (FL_ISSET(is_flags, IS_RUNNING))
 					tp->lb[tp->cno] = ' ';
-				if (tmp != inword((UCHAR_T)tp->lb[tp->cno - 1])
-				    || ISBLANK((UCHAR_T)tp->lb[tp->cno - 1]))
-					break;
 			}
 		}
 
