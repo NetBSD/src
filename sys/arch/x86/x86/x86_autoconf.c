@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.82 2020/05/02 16:44:36 bouyer Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.83 2020/07/07 16:14:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.82 2020/05/02 16:44:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.83 2020/07/07 16:14:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -569,24 +569,24 @@ device_register(device_t dev, void *aux)
 	 */
 	if (device_is_a(dev, "iic") &&
 	    device_is_a(dev->dv_parent, "imcsmb")) {
-		static const char *imcsmb_device_whitelist[] = {
+		static const char *imcsmb_device_permitlist[] = {
 			"spdmem",
 			"sdtemp",
 			NULL,
 		};
-		prop_array_t whitelist = prop_array_create();
+		prop_array_t permitlist = prop_array_create();
 		prop_dictionary_t props = device_properties(dev);
 		int i;
 
-		for (i = 0; imcsmb_device_whitelist[i] != NULL; i++) {
+		for (i = 0; imcsmb_device_permitlist[i] != NULL; i++) {
 			prop_string_t pstr = prop_string_create_cstring_nocopy(
-			    imcsmb_device_whitelist[i]);
-			(void) prop_array_add(whitelist, pstr);
+			    imcsmb_device_permitlist[i]);
+			(void) prop_array_add(permitlist, pstr);
 			prop_object_release(pstr);
 		}
 		(void) prop_dictionary_set(props,
-					   I2C_PROP_INDIRECT_DEVICE_WHITELIST,
-					   whitelist);
+					   I2C_PROP_INDIRECT_DEVICE_PERMITLIST,
+					   permitlist);
 		(void) prop_dictionary_set_cstring_nocopy(props,
 					   I2C_PROP_INDIRECT_PROBE_STRATEGY,
 					   I2C_PROBE_STRATEGY_NONE);
