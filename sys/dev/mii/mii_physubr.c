@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.90 2020/03/15 23:04:50 thorpej Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.91 2020/07/07 08:44:12 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.90 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.91 2020/07/07 08:44:12 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -147,7 +147,7 @@ mii_phy_setmedia(struct mii_softc *sc)
 		PHY_READ(sc, MII_BMCR, &bmcr);
 		if ((bmcr & BMCR_AUTOEN) == 0 ||
 		    (sc->mii_flags & (MIIF_FORCEANEG | MIIF_DOPAUSE)))
-			(void) mii_phy_auto(sc, 1);
+			(void) mii_phy_auto(sc);
 		return;
 	}
 
@@ -193,15 +193,14 @@ mii_phy_setmedia(struct mii_softc *sc)
 	if (sc->mii_flags & MIIF_HAVE_GTCR)
 		PHY_WRITE(sc, MII_100T2CR, gtcr);
 	if (IFM_SUBTYPE(ife->ifm_media) == IFM_1000_T)
-		mii_phy_auto(sc, 0);
+		mii_phy_auto(sc);
 	else
 		PHY_WRITE(sc, MII_BMCR, bmcr);
 }
 
 int
-mii_phy_auto(struct mii_softc *sc, int waitfor)
+mii_phy_auto(struct mii_softc *sc)
 {
-	int i;
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 
@@ -266,24 +265,6 @@ mii_phy_auto(struct mii_softc *sc, int waitfor)
 		PHY_WRITE(sc, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
 	}
 
-	if (waitfor) {
-		/* Wait 500ms for it to complete. */
-		for (i = 0; i < 500; i++) {
-			uint16_t bmsr;
-
-			PHY_READ(sc, MII_BMSR, &bmsr);
-			if (bmsr & BMSR_ACOMP)
-				return 0;
-			delay(1000);
-		}
-
-		/*
-		 * Don't need to worry about clearing MIIF_DOINGAUTO. If that's
-		 * set, a timeout is pending, and it will clear the flag.
-		 */
-		return EIO;
-	}
-
 	/*
 	 * Just let it finish asynchronously.  This is for the benefit of
 	 * the tick handler driving autonegotiation.  Don't want 500ms
@@ -308,7 +289,7 @@ mii_phy_auto_timeout_locked(struct mii_softc *sc)
 
 	if (!device_is_active(sc->mii_dev))
 		return;
-	
+
 	sc->mii_flags &= ~MIIF_DOINGAUTO;
 
 	/* Update the media status. */
@@ -386,7 +367,7 @@ mii_phy_tick(struct mii_softc *sc)
 
 	PHY_RESET(sc);
 
-	if (mii_phy_auto(sc, 0) == EJUSTRETURN)
+	if (mii_phy_auto(sc) == EJUSTRETURN)
 		return EJUSTRETURN;
 
 	/*
