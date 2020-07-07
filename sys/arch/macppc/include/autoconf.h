@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.19 2019/01/08 07:46:10 mrg Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.20 2020/07/07 02:33:54 rin Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -82,6 +82,7 @@ int rascons_cnattach(void);
 
 extern int console_node;
 extern int console_instance;
+extern int ofw_quiesce;
 extern char model_name[64];
 
 #endif /* _MACHINE_AUTOCONF_H_ */
