@@ -1,4 +1,4 @@
-/*	$NetBSD: vmem_impl.h,v 1.4 2020/04/19 21:11:42 ad Exp $	*/
+/*	$NetBSD: vmem_impl.h,v 1.5 2020/07/07 03:23:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -37,6 +37,7 @@
 
 #if defined(_KERNEL)
 #define	QCACHE
+#include <sys/pool.h>
 #include <sys/vmem.h>
 
 #define	LOCK_DECL(name)		\
