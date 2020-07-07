@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.17.2.2 2020/07/07 10:29:05 martin Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.17.2.3 2020/07/07 12:02:29 martin Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.17.2.2 2020/07/07 10:29:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.17.2.3 2020/07/07 12:02:29 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -952,7 +952,7 @@ struct aq_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	bus_size_t sc_iosize;
-	bus_dma_tag_t sc_dmat;;
+	bus_dma_tag_t sc_dmat;
 
 	void *sc_ihs[AQ_NINTR_MAX];
 	pci_intr_handle_t *sc_intrs;
@@ -985,7 +985,7 @@ struct aq_softc {
 	kmutex_t sc_mutex;
 	kmutex_t sc_mpi_mutex;
 
-	struct aq_firmware_ops *sc_fw_ops;
+	const struct aq_firmware_ops *sc_fw_ops;
 	uint64_t sc_fw_caps;
 	enum aq_media_type sc_media_type;
 	aq_link_speed_t sc_available_rates;
@@ -1124,7 +1124,7 @@ static int fw2x_get_stats(struct aq_softc *, aq_hw_stats_s_t *);
 static int fw2x_get_temperature(struct aq_softc *, uint32_t *);
 #endif
 
-static struct aq_firmware_ops aq_fw1x_ops = {
+static const struct aq_firmware_ops aq_fw1x_ops = {
 	.reset = fw1x_reset,
 	.set_mode = fw1x_set_mode,
 	.get_mode = fw1x_get_mode,
@@ -1134,7 +1134,7 @@ static struct aq_firmware_ops aq_fw1x_ops = {
 #endif
 };
 
-static struct aq_firmware_ops aq_fw2x_ops = {
+static const struct aq_firmware_ops aq_fw2x_ops = {
 	.reset = fw2x_reset,
 	.set_mode = fw2x_set_mode,
 	.get_mode = fw2x_get_mode,
