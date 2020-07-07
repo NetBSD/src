@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.13 2020/06/14 01:40:04 chs Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.14 2020/07/07 03:38:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -37,7 +37,6 @@
 #include "isa.h"
 
 #include <sys/param.h>
-#include <sys/extent.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -71,6 +70,14 @@ int mainbus_found = 0;
 struct powerpc_isa_chipset genppc_ict;
 struct genppc_pci_chipset *genppc_pct;
 
+#define	PCI_IO_START	0x00008000
+#define	PCI_IO_END	0x0000ffff
+#define	PCI_IO_SIZE	((PCI_IO_END - PCI_IO_START) + 1)
+
+#define	PCI_MEM_START	0x00000000
+#define	PCI_MEM_END	0x0fffffff
+#define	PCI_MEM_SIZE	((PCI_MEM_END - PCI_MEM_START) + 1)
+
 /*
  * Probe for the mainbus; always succeeds.
  */
@@ -92,11 +99,6 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	struct mainbus_softc *sc = device_private(self);
 	union mainbus_attach_args mba;
 	struct confargs ca;
-#if NPCI > 0
-#ifdef PCI_NETBSD_CONFIGURE
-	struct extent *ioext, *memext;
-#endif
-#endif
 
 	mainbus_found = 1;
 
@@ -123,15 +125,16 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	ibmnws_pci_get_chipset_tag_indirect (genppc_pct);
 
 #ifdef PCI_NETBSD_CONFIGURE
-	ioext  = extent_create("pciio",  0x00008000, 0x0000ffff,
-	    NULL, 0, EX_WAITOK);
-	memext = extent_create("pcimem", 0x00000000, 0x0fffffff,
-	    NULL, 0, EX_WAITOK);
+	struct pciconf_resources *pcires = pciconf_resource_init();
 
-	pci_configure_bus(genppc_pct, ioext, memext, NULL, 0, CACHELINESIZE);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_IO,
+	    PCI_IO_START, PCI_IO_SIZE);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_MEM,
+	    PCI_MEM_START, PCI_MEM_SIZE);
 
-	extent_destroy(ioext);
-	extent_destroy(memext);
+	pci_configure_bus(genppc_pct, pcires, 0, CACHELINESIZE);
+
+	pciconf_resource_fini(pcires);
 #endif
 
 	memset(&mba, 0, sizeof(mba));

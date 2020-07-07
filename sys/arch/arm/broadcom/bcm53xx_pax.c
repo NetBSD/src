@@ -34,12 +34,11 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.18 2020/06/14 01:40:02 chs Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.19 2020/07/07 03:38:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
-#include <sys/extent.h>
 #include <sys/intr.h>
 #include <sys/kmem.h>
 #include <sys/systm.h>
@@ -346,13 +345,12 @@ bcmpax_ccb_attach(device_t parent, device_t self, void *aux)
 			bcmpax_write_4(sc, PCIE_OMAP_1_LOWER, base1 | 1);
 		}
 
-		struct extent *memext = extent_create("pcimem", base,
-		     base + size, NULL, 0, EX_WAITOK);
-
-		error = pci_configure_bus(&sc->sc_pc,
-		    NULL, memext, NULL, 0, arm_pcache.dcache_line_size);
-
-		extent_destroy(memext);
+		struct pciconf_resources *pcires = pciconf_resource_init();
+		pciconf_resource_add(pcires, PCICONF_RESOURCE_MEM,
+		    base, size);
+		error = pci_configure_bus(&sc->sc_pc, pcires,
+		    0, arm_pcache.dcache_line_size);
+		pciconf_resource_fini(pcires);
 
 		if (error) {
 			aprint_normal_dev(self, "configuration failed\n");

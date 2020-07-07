@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.11 2014/03/29 19:28:26 christos Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.12 2020/07/07 03:38:45 thorpej Exp $ */
 /* NetBSD: pci_machdep.h,v 1.3 1999/03/19 03:40:46 cgd Exp  */
 
 /*
@@ -70,9 +70,6 @@ struct arc_pci_chipset {
 			    int, int *);
 	int		(*pc_conf_hook)(pci_chipset_tag_t, int, int, int,
 			    pcireg_t);
-
-	struct extent	*pc_memext;
-	struct extent	*pc_ioext;
 };
 
 /*

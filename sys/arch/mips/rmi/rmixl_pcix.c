@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcix.c,v 1.14 2019/11/10 21:16:30 chs Exp $	*/
+/*	$NetBSD: rmixl_pcix.c,v 1.15 2020/07/07 03:38:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.14 2019/11/10 21:16:30 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.15 2020/07/07 03:38:47 thorpej Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -539,7 +539,7 @@ rmixl_pcix_init(rmixl_pcix_softc_t *sc)
 {
 	pci_chipset_tag_t pc = &sc->sc_pci_chipset;
 #if NPCI > 0 && defined(PCI_NETBSD_CONFIGURE)
-	struct extent *ioext, *memext;
+	struct pciconf_resources *pcires;
 #endif
 
 	pc->pc_conf_v = (void *)sc;
@@ -564,23 +564,19 @@ rmixl_pcix_init(rmixl_pcix_softc_t *sc)
 	 */
 	struct rmixl_config *rcp = &rmixl_configuration;
 
-	aprint_normal_dev(sc->sc_dev, "%s: configuring PCI bus\n");
+	aprint_normal_dev(sc->sc_dev, "configuring PCI bus\n");
 
-	ioext  = extent_create("pciio",
-		rcp->rc_pci_io_pbase,
-		rcp->rc_pci_io_pbase + rcp->rc_pci_io_size - 1,
-		M_DEVBUF, NULL, 0, EX_NOWAIT);
+	pcires = pciconf_resource_init();
 
-	memext = extent_create("pcimem",
-		rcp->rc_pci_mem_pbase,
-		rcp->rc_pci_mem_pbase + rcp->rc_pci_mem_size - 1,
-		M_DEVBUF, NULL, 0, EX_NOWAIT);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_IO,
+	    rcp->rc_pci_io_pbase, rcp->rc_pci_io_size);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_MEM,
+	    rcp->rc_pci_mem_pbase, rcp->rc_pci_mem_size);
 
-	pci_configure_bus(pc, ioext, memext, NULL, 0,
+	pci_configure_bus(pc, pcires, 0,
 	    mips_cache_info.mci_dcache_align);
 
-	extent_destroy(ioext);
-	extent_destroy(memext);
+	pciconf_resource_fini(pcires);
 #endif
 }
 

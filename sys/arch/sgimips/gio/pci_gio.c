@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_gio.c,v 1.16 2020/06/14 01:40:05 chs Exp $	*/
+/*	$NetBSD: pci_gio.c,v 1.17 2020/07/07 03:38:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.16 2020/06/14 01:40:05 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.17 2020/07/07 03:38:48 thorpej Exp $");
 
 /*
  * Glue for PCI devices that are connected to the GIO bus by various little
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.16 2020/06/14 01:40:05 chs Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/extent.h>
 
 #include <sys/bus.h>
 #include <machine/machtype.h>
@@ -220,10 +219,15 @@ giopci_attach(device_t parent, device_t self, void *aux)
 	printf(": %s\n", gio_product_string(sc->sc_gprid));
 
 #ifdef PCI_NETBSD_CONFIGURE
-	pc->pc_memext = extent_create("giopcimem", m_start, m_end,
-	    NULL, 0, EX_WAITOK);
-	pci_configure_bus(pc, NULL, pc->pc_memext, NULL, 0,
+	struct pciconf_resources *pcires = pciconf_resource_init();
+
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_MEM,
+	    m_start, (m_end - m_start) + 1);
+
+	pci_configure_bus(pc, pcires, 0,
 	    mips_cache_info.mci_dcache_align);
+
+	pciconf_resource_fini(pcires);
 #endif
 
 	memset(&pba, 0, sizeof(pba));

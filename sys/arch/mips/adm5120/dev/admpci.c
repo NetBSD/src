@@ -1,4 +1,4 @@
-/* $NetBSD: admpci.c,v 1.13 2015/10/02 05:22:51 msaitoh Exp $ */
+/* $NetBSD: admpci.c,v 1.14 2020/07/07 03:38:47 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 David Young.  All rights reserved.
@@ -61,7 +61,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: admpci.c,v 1.13 2015/10/02 05:22:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: admpci.c,v 1.14 2020/07/07 03:38:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -140,12 +140,6 @@ static void *admpci_intr_establish(void *, pci_intr_handle_t, int,
     int (*)(void *), void *);
 static void admpci_intr_disestablish(void *, void *);
 static int admpci_intr_map(const struct pci_attach_args *, pci_intr_handle_t *);
-
-#ifdef	PCI_NETBSD_CONFIGURE
-static struct extent	*io_ex = NULL;
-static struct extent	*mem_ex = NULL;
-#endif	/* PCI_NETBSD_CONFIGURE */
-
 #endif	/* NPCI > 0 */
 
 CFATTACH_DECL_NEW(admpci, sizeof(struct admpci_softc),
@@ -163,6 +157,15 @@ int admpci_found = 0;
 #endif
 #endif
 
+#define	PCI_IO_START	ADM5120_BASE_PCI_IO
+#define	PCI_IO_SIZE	(ADM5120_BASE_PCI_CONFADDR - ADM5120_BASE_PCI_IO)
+
+#define	PCI_MEM_START1	ADM5120_BASE_PCI_MEM
+#define	PCI_MEM_SIZE1	(ADM5120_BASE_PCI_IO - ADM5120_BASE_PCI_MEM)
+
+#define	PCI_MEM_START2	ADM5120_BOTTOM
+#define	PCI_MEM_SIZE2	(ADM5120_BASE_SRAM1 - ADM5120_BOTTOM)
+
 int
 admpcimatch(device_t parent, cfdata_t match, void *aux)
 {
@@ -178,7 +181,6 @@ admpciattach(device_t parent, device_t self, void *aux)
 	struct admpci_softc		*sc = device_private(self);
 	struct mainbus_attach_args	*ma = (struct mainbus_attach_args *)aux;
 #if NPCI > 0
-	u_long				result;
 	struct pcibus_attach_args	pba;
 #endif
 	
@@ -229,28 +231,21 @@ admpciattach(device_t parent, device_t self, void *aux)
 #endif
 
 #ifdef PCI_NETBSD_CONFIGURE
-	mem_ex = extent_create("pcimem",
-	    ADM5120_BOTTOM, ADM5120_TOP,
-	    NULL, 0, EX_WAITOK);
-	(void)extent_alloc_subregion(mem_ex,
-	    ADM5120_BASE_SRAM1, ADM5120_BASE_PCI_MEM - 1,
-	    ADM5120_BASE_PCI_MEM - ADM5120_BASE_SRAM1,
-	    ADM5120_BASE_PCI_MEM - ADM5120_BASE_SRAM1,
-	    0, EX_WAITOK, &result);
-	(void)extent_alloc_subregion(mem_ex,
-	    ADM5120_BASE_PCI_IO, ADM5120_TOP,
-	    ADM5120_TOP - ADM5120_BASE_PCI_IO + 1,
-	    ADM5120_TOP - ADM5120_BASE_PCI_IO + 1,
-	    0, EX_WAITOK, &result);
+	struct pciconf_resources *pcires = pciconf_resource_init();
 
-	io_ex = extent_create("pciio",
-	    ADM5120_BASE_PCI_IO, ADM5120_BASE_PCI_CONFADDR - 1,
-	    NULL, 0, EX_WAITOK);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_IO,
+	    PCI_IO_START, PCI_IO_SIZE);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_MEM,
+	    PCI_MEM_START1, PCI_MEM_SIZE1);
 
-	pci_configure_bus(&sc->sc_pc,
-	    io_ex, mem_ex, NULL, 0, mips_cache_info.mci_dcache_align);
-	extent_destroy(mem_ex);
-	extent_destroy(io_ex);
+	/* XXX Is this one really needed? */
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_MEM,
+	    PCI_MEM_START2, PCI_MEM_SIZE2);
+
+	pci_configure_bus(&sc->sc_pc, pcires,
+	    0, mips_cache_info.mci_dcache_align);
+
+	pciconf_resource_fini(pcires);
 #endif
 
 	pba.pba_iot = sc->sc_iot;
