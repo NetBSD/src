@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.5.2.4 2020/02/27 18:53:04 martin Exp $
+# $NetBSD: postinstall.in,v 1.5.2.5 2020/07/07 20:02:27 martin Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -287,7 +287,7 @@ check_ids()
 		do
 			${GREP} -E "^${1}:" ${_srcfile}
 			shift 2
-		done
+		done | sort -t: -k3n
 		msg "and adjust if necessary."
 		return 1
 	fi
