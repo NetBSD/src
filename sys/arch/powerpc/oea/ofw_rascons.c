@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_rascons.c,v 1.14 2020/03/16 22:02:37 macallan Exp $	*/
+/*	$NetBSD: ofw_rascons.c,v 1.15 2020/07/07 02:10:20 rin Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.14 2020/03/16 22:02:37 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.15 2020/07/07 02:10:20 rin Exp $");
 
 #include "wsdisplay.h"
 
@@ -87,6 +87,8 @@ rascons_cnattach(void)
 
 	/* get current cursor position */
 	OF_interpret("line#", 0, 1, &crow);
+	if (crow < 0)
+		crow = 0;
 
 	/* move (rom monitor) cursor to the lowest line - 1 */
 	/* XXXX - Why? */
@@ -165,7 +167,11 @@ rascons_finalize(void)
 	if (needs_finalize == 0) return;
 
 	/* get current cursor position */
-	if (romfont_loaded) OF_interpret("line#", 0, 1, &crow);
+	if (romfont_loaded) {
+		OF_interpret("line#", 0, 1, &crow);
+		if (crow < 0)
+			crow = 0;
+	}
 
 	ri->ri_ops.allocattr(ri, 0, 0, 0, &defattr);
 	wsdisplay_preattach(&rascons_stdscreen, ri, 0, uimax(0,
@@ -179,9 +185,16 @@ copy_rom_font(void)
 	int char_width, char_height, stride;
 	int chosen, mmu, m, e, size;
 
-	/* Get ROM FONT address. */
+	/*
+	 * Get ROM FONT address.
+	 *
+	 * For some machines like ``PowerMac11,2'', Open Firmware does not
+	 * initialize console-related variables when auto-boot? is true;
+	 * -1 is returned instead of correct value. Fall back to wsfont
+	 * embedded in kernel in this case.
+	 */
 	OF_interpret("font-adr", 0, 1, &romfont);
-	if (romfont == NULL)
+	if (romfont == NULL || romfont == (u_char *)-1)
 		return -1;
 
 	chosen = OF_finddevice("/chosen");
