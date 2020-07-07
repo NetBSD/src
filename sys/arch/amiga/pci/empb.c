@@ -1,4 +1,4 @@
-/*	$NetBSD: empb.c,v 1.12 2020/06/14 01:40:02 chs Exp $ */
+/*	$NetBSD: empb.c,v 1.13 2020/07/07 03:38:45 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -38,7 +38,6 @@
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/extent.h>
 #include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>
@@ -173,9 +172,6 @@ empb_callback(device_t self) {
 	struct empb_softc *sc;
 	pci_chipset_tag_t pc;
 	struct pcibus_attach_args pba;  
-#ifdef PCI_NETBSD_CONFIGURE
-	struct extent *ioext, *memext;
-#endif /* PCI_NETBSD_CONFIGURE */
 
 	sc = device_private(self);
 	pc = &sc->apc;
@@ -233,16 +229,16 @@ empb_callback(device_t self) {
 	sc->apc.cookie = sc;
 
 #ifdef PCI_NETBSD_CONFIGURE
-	ioext = extent_create("empbio", 0, EMPB_BRIDGE_SIZE, 
-	    NULL, 0, EX_WAITOK);
+	struct pciconf_resources *pcires = pciconf_resource_init();
 
-	memext = extent_create("empbmem", EMPB_MEM_BASE, EMPB_MEM_END,
-	    NULL, 0, EX_WAITOK);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_IO,
+	    0, EMPB_BRIDGE_SIZE);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_MEM,
+	    EMPB_MEM_BASE, EMPB_MEM_SIZE);
 
-	pci_configure_bus(pc, ioext, memext, NULL, 0, CACHELINE_SIZE);
+	pci_configure_bus(pc, pcires, 0, CACHELINE_SIZE);
 
-	extent_destroy(ioext);
-	extent_destroy(memext);
+	pciconf_resource_fini(pcires);
 
 #endif /* PCI_NETBSD_CONFIGURE */
 
