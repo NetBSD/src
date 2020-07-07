@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.72 2020/07/07 16:37:18 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.73 2020/07/07 20:04:37 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -3192,4 +3192,14 @@ lib/libcurses/getch.c				1.75
 
 	Pads are not to be automatically refreshed on input.
 	[uwe, ticket #987]
+
+external/bsd/nvi/dist/vi/v_txt.c		1.7
+
+	PR bin/55468: fix crash due to out-of-bounds access with Ctrl-W.
+	[rin, ticket #988]
+
+usr.sbin/postinstall/postinstall.in		1.31
+
+	Sort missing IDs (users and groups) by the numeric ID.
+	[simonb, ticket #989]
 
