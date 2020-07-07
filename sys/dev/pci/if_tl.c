@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.121 2020/06/11 02:39:30 thorpej Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.122 2020/07/07 06:27:37 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.121 2020/06/11 02:39:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.122 2020/07/07 06:27:37 msaitoh Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -645,7 +645,8 @@ tl_init(struct ifnet *ifp)
 	    "tl-dma-page-boundary");
 	if (prop_boundary != NULL) {
 		KASSERT(prop_object_type(prop_boundary) == PROP_TYPE_NUMBER);
-		boundary = (bus_size_t)prop_number_unsigned_value(prop_boundary);
+		boundary
+		    = (bus_size_t)prop_number_unsigned_value(prop_boundary);
 	} else {
 		boundary = 0;
 	}
