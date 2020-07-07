@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.74 2020/06/12 03:32:30 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.75 2020/07/07 16:14:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.74 2020/06/12 03:32:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.75 2020/07/07 16:14:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,29 +207,30 @@ iic_probe_smbus_receive_byte(struct iic_softc *sc,
 }
 
 static bool
-iic_indirect_driver_is_whitelisted(struct iic_softc *sc, cfdata_t cf)
+iic_indirect_driver_is_permitted(struct iic_softc *sc, cfdata_t cf)
 {
 	prop_object_iterator_t iter;
-	prop_array_t whitelist;
+	prop_array_t permitlist;
 	prop_string_t pstr;
 	prop_type_t ptype;
 	bool rv = false;
 
-	whitelist = prop_dictionary_get(device_properties(sc->sc_dev),
-					I2C_PROP_INDIRECT_DEVICE_WHITELIST);
-	if (whitelist == NULL) {
-		/* No whitelist -> everything allowed */
+	permitlist = prop_dictionary_get(device_properties(sc->sc_dev),
+					 I2C_PROP_INDIRECT_DEVICE_PERMITLIST);
+	if (permitlist == NULL) {
+		/* No permitlist -> everything allowed */
 		return (true);
 	}
 
-	if ((ptype = prop_object_type(whitelist)) != PROP_TYPE_ARRAY) {
+	if ((ptype = prop_object_type(permitlist)) != PROP_TYPE_ARRAY) {
 		aprint_error_dev(sc->sc_dev,
 		    "invalid property type (%d) for '%s'; must be array (%d)\n",
-		    ptype, I2C_PROP_INDIRECT_DEVICE_WHITELIST, PROP_TYPE_ARRAY);
+		    ptype, I2C_PROP_INDIRECT_DEVICE_PERMITLIST,
+		    PROP_TYPE_ARRAY);
 		return (false);
 	}
 
-	iter = prop_array_iterator(whitelist);
+	iter = prop_array_iterator(permitlist);
 	while ((pstr = prop_object_iterator_next(iter)) != NULL) {
 		if (prop_string_equals_string(pstr, cf->cf_name)) {
 			rv = true;
@@ -253,9 +254,9 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 
 	/*
 	 * Before we do any more work, consult the allowed-driver
-	 * white-list for this bus (if any).
+	 * permit-list for this bus (if any).
 	 */
-	if (iic_indirect_driver_is_whitelisted(sc, cf) == false)
+	if (iic_indirect_driver_is_permitted(sc, cf) == false)
 		return (0);
 
 	/* default to "quick write". */

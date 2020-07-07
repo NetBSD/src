@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cvar.h,v 1.19 2019/12/22 23:23:32 thorpej Exp $	*/
+/*	$NetBSD: i2cvar.h,v 1.20 2020/07/07 16:14:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -61,8 +61,8 @@
 #define	I2C_PROBE_STRATEGY_NONE			\
 				"none"
 
-#define	I2C_PROP_INDIRECT_DEVICE_WHITELIST	\
-				"i2c-indirect-device-whitelist"
+#define	I2C_PROP_INDIRECT_DEVICE_PERMITLIST	\
+				"i2c-indirect-device-permitlist"
 	/* value is a prop_array of prop_strings */
 
 struct ic_intr_list {
