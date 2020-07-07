@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_pci.c,v 1.18 2020/06/14 01:40:03 chs Exp $	*/
+/*	$NetBSD: i80312_pci.c,v 1.19 2020/07/07 03:38:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80312_pci.c,v 1.18 2020/06/14 01:40:03 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80312_pci.c,v 1.19 2020/07/07 03:38:46 thorpej Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: i80312_pci.c,v 1.18 2020/06/14 01:40:03 chs Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/extent.h>
 #include <sys/malloc.h>
 #include <sys/bus.h>
 
@@ -81,7 +80,7 @@ i80312_pci_init(pci_chipset_tag_t pc, void *cookie)
 {
 #if NPCI > 0 && defined(PCI_NETBSD_CONFIGURE)
 	struct i80312_softc *sc = cookie;
-	struct extent *ioext, *memext;
+	struct pciconf_resources *pcires;
 	pcireg_t binfo;
 	int sbus;
 #endif
@@ -110,18 +109,17 @@ i80312_pci_init(pci_chipset_tag_t pc, void *cookie)
 	/* pbus = PCI_BRIDGE_BUS_NUM_PRIMARY(binfo); */
 	sbus = PCI_BRIDGE_BUS_NUM_SECONDARY(binfo);
 
-	ioext  = extent_create("pciio", sc->sc_sioout_base,
-	    sc->sc_sioout_base + sc->sc_sioout_size - 1,
-	    NULL, 0, EX_WAITOK);
-	memext = extent_create("pcimem", sc->sc_smemout_base,
-	    sc->sc_smemout_base + sc->sc_smemout_size - 1,
-	    NULL, 0, EX_WAITOK);
+	pcires = pciconf_resource_init();
+
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_IO,
+	    sc->sc_sioout_base, sc->sc_sioout_size);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_MEM,
+	    sc->sc_smemout_base, sc->sc_smemout_size);
 
 	aprint_normal_dev(sc->sc_dev, "configuring Secondary PCI bus\n");
-	pci_configure_bus(pc, ioext, memext, NULL, sbus, arm_dcache_align);
+	pci_configure_bus(pc, pcires, sbus, arm_dcache_align);
 
-	extent_destroy(ioext);
-	extent_destroy(memext);
+	pciconf_resource_fini(pcires);
 #endif
 }
 

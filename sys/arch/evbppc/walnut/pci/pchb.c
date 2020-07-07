@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.14 2020/06/14 01:40:04 chs Exp $	*/
+/*	$NetBSD: pchb.c,v 1.15 2020/07/07 03:38:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.14 2020/06/14 01:40:04 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.15 2020/07/07 03:38:47 thorpej Exp $");
 
 #include "pci.h"
 #include "opt_pci.h"
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.14 2020/06/14 01:40:04 chs Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/extent.h>
 #include <sys/malloc.h>
 
 #define _IBM4XX_BUS_DMA_PRIVATE
@@ -78,6 +77,11 @@ static struct powerpc_bus_space pchb_mem_tag = {
 	MIN_PCI_MEMADDR_NOPREFETCH + 0x1fffffff,	/* extent limit */
 };
 
+#define	PCI_IO_START	MIN_PCI_PCI_IOADDR
+#define	PCI_IO_SIZE	0x10000
+
+#define	PCI_MEM_START	MIN_PCI_MEMADDR_NOPREFETCH
+#define	PCI_MEM_SIZE	0x20000000
 
 static int
 pchbmatch(device_t parent, cfdata_t cf, void *aux)
@@ -122,7 +126,6 @@ pchbattach(device_t parent, device_t self, void *aux)
 	struct pcibus_attach_args pba;
 	char devinfo[256];
 #ifdef PCI_NETBSD_CONFIGURE
-	struct extent *ioext, *memext;
 #ifdef PCI_CONFIGURE_VERBOSE
 	extern int pci_conf_debug;
 
@@ -163,14 +166,15 @@ pchbattach(device_t parent, device_t self, void *aux)
 		panic("pchbattach: can't init MEM tag");
 
 #ifdef PCI_NETBSD_CONFIGURE
-	memext = extent_create("pcimem", MIN_PCI_MEMADDR_NOPREFETCH,
-	    MIN_PCI_MEMADDR_NOPREFETCH + 0x1fffffff, M_DEVBUF, NULL, 0,
-	    EX_WAITOK);
-	ioext = extent_create("pciio", MIN_PCI_PCI_IOADDR,
-	    MIN_PCI_PCI_IOADDR + 0xffff, M_DEVBUF, NULL, 0, EX_WAITOK);
-	pci_configure_bus(0, ioext, memext, NULL, 0, 32);
-	extent_destroy(memext);
-	extent_destroy(ioext);
+	struct pciconf_resources *pcires = pciconf_resource_init();
+
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_IO,
+	    PCI_IO_START, PCI_IO_SIZE);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_MEM,
+	    PCI_MEM_START, PCI_MEM_SIZE);
+
+	pci_configure_bus(0, pcires, 0, 32);
+	pciconf_resource_fini(pcires);
 #endif /* PCI_NETBSD_CONFIGURE */
 
 #ifdef PCI_CONFIGURE_VERBOSE

@@ -1,4 +1,4 @@
-/*	$NetBSD: shpcic.c,v 1.19 2020/06/14 01:40:05 chs Exp $	*/
+/*	$NetBSD: shpcic.c,v 1.20 2020/07/07 03:38:48 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2005 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shpcic.c,v 1.19 2020/06/14 01:40:05 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shpcic.c,v 1.20 2020/07/07 03:38:48 thorpej Exp $");
 
 #include "opt_pci.h"
 
@@ -34,7 +34,6 @@ __KERNEL_RCSID(0, "$NetBSD: shpcic.c,v 1.19 2020/06/14 01:40:05 chs Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/extent.h>
 #include <sys/malloc.h>
 
 #include <dev/pci/pcireg.h>
@@ -127,9 +126,6 @@ static void
 shpcic_attach(device_t parent, device_t self, void *aux)
 {
 	struct pcibus_attach_args pba;
-#ifdef PCI_NETBSD_CONFIGURE
-	struct extent *ioext, *memext;
-#endif
 	pcireg_t id, class;
 	char devinfo[256];
 
@@ -226,17 +222,16 @@ shpcic_attach(device_t parent, device_t self, void *aux)
 
 	/* PCI bus */
 #ifdef PCI_NETBSD_CONFIGURE
-	ioext  = extent_create("pciio",
-	    SH4_PCIC_IO, SH4_PCIC_IO + SH4_PCIC_IO_SIZE - 1,
-	    NULL, 0, EX_WAITOK);
-	memext = extent_create("pcimem",
-	    SH4_PCIC_MEM, SH4_PCIC_MEM + SH4_PCIC_MEM_SIZE - 1,
-	    NULL, 0, EX_WAITOK);
+	struct pciconf_resources *pcires = pciconf_resource_init();
 
-	pci_configure_bus(NULL, ioext, memext, NULL, 0, sh_cache_line_size);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_IO,
+	    SH4_PCIC_IO, SH4_PCIC_IO_SIZE);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_MEM,
+	    SH4_PCIC_MEM, SH4_PCIC_MEM_SIZE);
 
-	extent_destroy(ioext);
-	extent_destroy(memext);
+	pci_configure_bus(NULL, pcires, 0, sh_cache_line_size);
+
+	pciconf_resource_fini(pcires);
 #endif
 
 	/* PCI bus */

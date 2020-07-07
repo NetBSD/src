@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga.c,v 1.27 2020/06/14 01:40:04 chs Exp $ */
+/*	$NetBSD: ifpga.c,v 1.28 2020/07/07 03:38:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -38,13 +38,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.27 2020/06/14 01:40:04 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.28 2020/07/07 03:38:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-#include <sys/extent.h>
 #include <sys/malloc.h>
 #include <sys/null.h>
 
@@ -158,7 +157,7 @@ ifpga_attach(device_t parent, device_t self, void *aux)
 	u_int id, sysclk;
 	extern struct bus_space ifpga_common_bs_tag;
 #if defined(PCI_NETBSD_CONFIGURE) && NPCI > 0
-	struct extent *ioext, *memext, *pmemext;
+	struct pciconf_resources *pcires;
 	struct ifpga_pci_softc *pci_sc;
 	struct pcibus_attach_args pci_pba;
 #endif
@@ -295,20 +294,19 @@ ifpga_attach(device_t parent, device_t self, void *aux)
 	}
 
 #if defined(PCI_NETBSD_CONFIGURE)
-	ioext = extent_create("pciio", 0x00000000,
-	    0x00000000 + IFPGA_PCI_IO_VSIZE, NULL, 0, EX_WAITOK);
-	memext = extent_create("pcimem", IFPGA_PCI_APP0_BASE,
-	    IFPGA_PCI_APP0_BASE + IFPGA_PCI_APP0_SIZE,
-	    NULL, 0, EX_WAITOK);
-	pmemext = extent_create("pcipmem", IFPGA_PCI_APP1_BASE,
-	    IFPGA_PCI_APP1_BASE + IFPGA_PCI_APP1_SIZE,
-	    NULL, 0, EX_WAITOK);
+	pcires = pciconf_resource_init();
+
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_IO,
+	    0x00000000, IFPGA_PCI_IO_VSIZE);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_MEM,
+	    IFPGA_PCI_APP0_BASE, IFPGA_PCI_APP0_SIZE);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_PREFETCHABLE_MEM,
+	    IFPGA_PCI_APP1_BASE, IFPGA_PCI_APP1_SIZE);
+
 	ifpga_pci_chipset.pc_conf_v = (void *)pci_sc;
-	pci_configure_bus(&ifpga_pci_chipset, ioext, memext, pmemext, 0,
+	pci_configure_bus(&ifpga_pci_chipset, pcires, 0,
 	    arm_dcache_align);
-	extent_destroy(pmemext);
-	extent_destroy(memext);
-	extent_destroy(ioext);
+	pciconf_resource_fini(pcires);
 
 	printf("pci_configure_bus done\n");
 #endif /* PCI_NETBSD_CONFIGURE */

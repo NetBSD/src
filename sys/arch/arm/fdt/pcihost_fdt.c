@@ -1,4 +1,4 @@
-/* $NetBSD: pcihost_fdt.c,v 1.16 2020/06/14 01:40:02 chs Exp $ */
+/* $NetBSD: pcihost_fdt.c,v 1.17 2020/07/07 03:38:45 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,13 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.16 2020/06/14 01:40:02 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.17 2020/07/07 03:38:45 thorpej Exp $");
 
 #include <sys/param.h>
 
 #include <sys/bus.h>
 #include <sys/device.h>
-#include <sys/extent.h>
 #include <sys/intr.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
@@ -224,10 +223,9 @@ pcihost_init(pci_chipset_tag_t pc, void *priv)
 static int
 pcihost_config(struct pcihost_softc *sc)
 {
-	struct extent *ioext = NULL, *memext = NULL, *pmemext = NULL;
 	const u_int *ranges;
 	u_int probe_only;
-	int error, len;
+	int error, len, type;
 	bool swap;
 
 	struct pcih_bus_space * const pibs = &sc->sc_io;
@@ -265,6 +263,8 @@ pcihost_config(struct pcihost_softc *sc)
 		swap = true;
 	}
 
+	struct pciconf_resources *pcires = pciconf_resource_init();
+
 	/*
 	 * Each entry in the ranges table contains:
 	 *  - bus address (3 cells)
@@ -276,9 +276,9 @@ pcihost_config(struct pcihost_softc *sc)
 #define	DECODE32(x,o)	(swap ? be32dec(&(x)[o]) : (x)[o])
 #define	DECODE64(x,o)	(swap ? be64dec(&(x)[o]) : (((uint64_t)((x)[(o)+0]) << 32) + (x)[(o)+1]))
 		const uint32_t phys_hi = DECODE32(ranges, 0);
-		const uint64_t bus_phys = DECODE64(ranges, 1);
+		      uint64_t bus_phys = DECODE64(ranges, 1);
 		const uint64_t cpu_phys = DECODE64(ranges, 3);
-		const uint64_t size = DECODE64(ranges, 5);
+		      uint64_t size = DECODE64(ranges, 5);
 #undef	DECODE32
 #undef	DECODE64
 
@@ -297,18 +297,21 @@ pcihost_config(struct pcihost_softc *sc)
 			pibs->ranges[pibs->nranges].bbus = cpu_phys;
 			pibs->ranges[pibs->nranges].size = size;
 			++pibs->nranges;
-			if (ioext != NULL) {
-				aprint_error_dev(sc->sc_dev, "ignoring duplicate IO space range\n");
-				continue;
-			}
-			ioext = extent_create("pciio", bus_phys, bus_phys + size - 1, NULL, 0, EX_WAITOK);
 			aprint_verbose_dev(sc->sc_dev,
 			    "IO: 0x%" PRIx64 "+0x%" PRIx64 "@0x%" PRIx64 "\n",
 			    bus_phys, size, cpu_phys);
-			/* reserve a PC-like legacy IO ports range, perhaps for access to VGA registers */
-			if (bus_phys == 0 && size >= 0x10000)
-				extent_alloc_region(ioext, 0, 0x1000, EX_WAITOK);
-			sc->sc_pci_flags |= PCI_FLAGS_IO_OKAY;
+			/*
+			 * Reserve a PC-like legacy IO ports range, perhaps
+			 * for access to VGA registers.
+			 */
+			if (bus_phys == 0 && size >= 0x10000) {
+				bus_phys += 0x1000;
+				size -= 0x1000;
+			}
+			error = pciconf_resource_add(pcires,
+			    PCICONF_RESOURCE_IO, bus_phys, size);
+			if (error == 0)
+				sc->sc_pci_flags |= PCI_FLAGS_IO_OKAY;
 			break;
 		case PHYS_HI_SPACE_MEM64:
 			/* FALLTHROUGH */
@@ -324,44 +327,30 @@ pcihost_config(struct pcihost_softc *sc)
 			++pmbs->nranges;
 			if ((phys_hi & PHYS_HI_PREFETCH) != 0 ||
 			    __SHIFTOUT(phys_hi, PHYS_HI_SPACE) == PHYS_HI_SPACE_MEM64) {
-				if (pmemext != NULL) {
-					aprint_error_dev(sc->sc_dev, "ignoring duplicate mem (prefetchable) range\n");
-					continue;
-				}
-				pmemext = extent_create("pcipmem", bus_phys, bus_phys + size - 1, NULL, 0, EX_WAITOK);
+				type = PCICONF_RESOURCE_PREFETCHABLE_MEM;
 				aprint_verbose_dev(sc->sc_dev,
 				    "MMIO (%d-bit prefetchable): 0x%" PRIx64 "+0x%" PRIx64 "@0x%" PRIx64 "\n",
 				    is64 ? 64 : 32, bus_phys, size, cpu_phys);
 			} else {
-				if (memext != NULL) {
-					aprint_error_dev(sc->sc_dev, "ignoring duplicate mem (non-prefetchable) range\n");
-					continue;
-				}
-				memext = extent_create("pcimem", bus_phys, bus_phys + size - 1, NULL, 0, EX_WAITOK);
+				type = PCICONF_RESOURCE_MEM;
 				aprint_verbose_dev(sc->sc_dev,
 				    "MMIO (%d-bit non-prefetchable): 0x%" PRIx64 "+0x%" PRIx64 "@0x%" PRIx64 "\n",
 				    is64 ? 64 : 32, bus_phys, size, cpu_phys);
 			}
-			sc->sc_pci_flags |= PCI_FLAGS_MEM_OKAY;
+			error = pciconf_resource_add(pcires, type, bus_phys,
+			    size);
+			if (error == 0)
+				sc->sc_pci_flags |= PCI_FLAGS_MEM_OKAY;
 			break;
 		default:
 			break;
 		}
 	}
 
-	if (memext == NULL && pmemext != NULL) {
-		memext = pmemext;
-		pmemext = NULL;
-	}
+	error = pci_configure_bus(&sc->sc_pc, pcires, sc->sc_bus_min,
+	    PCIHOST_CACHELINE_SIZE);
 
-	error = pci_configure_bus(&sc->sc_pc, ioext, memext, pmemext, sc->sc_bus_min, PCIHOST_CACHELINE_SIZE);
-
-	if (ioext)
-		extent_destroy(ioext);
-	if (memext)
-		extent_destroy(memext);
-	if (pmemext)
-		extent_destroy(pmemext);
+	pciconf_resource_fini(pcires);
 
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "configuration failed: %d\n", error);

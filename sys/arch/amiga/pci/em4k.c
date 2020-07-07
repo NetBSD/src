@@ -1,4 +1,4 @@
-/*	$NetBSD: em4k.c,v 1.5 2020/06/14 01:40:02 chs Exp $ */
+/*	$NetBSD: em4k.c,v 1.6 2020/07/07 03:38:45 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -38,7 +38,6 @@
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/extent.h>
 #include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>
@@ -243,24 +242,23 @@ em4k_callback(device_t self) {
 static void
 em4k_pci_configure(struct em4k_softc *sc)
 {
-	struct extent *ioext, *memext;
+	struct pciconf_resources *pcires;
+
+	pcires = pciconf_resource_init();
 
 	/* I/O addresses are relative to I/O space address. */
-	ioext = extent_create("em4kio", 0, EM4K_IO_SIZE, 
-	    NULL, 0, EX_WAITOK);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_IO, 0, EM4K_IO_SIZE);
 
 	/*
 	 * Memory space addresses are absolute (and keep in mind that
 	 * they are in a separate address space.
 	 */
-	memext = extent_create("em4kmem", kvtop((void*) sc->pci_mem_win.base),
-	    kvtop((void*) sc->pci_mem_win.base) + sc->pci_mem_win_size,
-	    NULL, 0, EX_WAITOK);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_MEM,
+	    kvtop((void*) sc->pci_mem_win.base), sc->pci_mem_win_size);
 
-	pci_configure_bus(&sc->apc, ioext, memext, NULL, 0, CACHELINE_SIZE);
+	pci_configure_bus(&sc->apc, pcires, 0, CACHELINE_SIZE);
 
-	extent_destroy(ioext);
-	extent_destroy(memext);
+	pciconf_resource_fini(pcires);
 }
 #endif /* PCI_NETBSD_CONFIGURE */
 

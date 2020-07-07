@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.27 2020/06/14 01:40:02 chs Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.28 2020/07/07 03:38:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.27 2020/06/14 01:40:02 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.28 2020/07/07 03:38:45 thorpej Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h"
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.27 2020/06/14 01:40:02 chs Exp $");
 #include <sys/bus.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/extent.h>
 #include <sys/malloc.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
@@ -98,6 +97,13 @@ struct mainbusdev mainbusdevs[] = {
 
 	{ NULL,			0,			0 },
 };
+
+/* Reserve the bottom 64K of the I/O space for ISA devices. */
+#define	PCI_IO_START	0x00010000
+#define	PCI_IO_END	0x000effff
+#define	PCI_MEM_START	0x01000000
+#define	PCI_MEM_END	0x07ffffff
+#define	PCI_CHIPSET	&p4032_configuration.ac_pc
 #endif /* ALGOR_P4032 */
 
 #if defined(ALGOR_P5064)
@@ -110,6 +116,19 @@ struct mainbusdev mainbusdevs[] = {
 
 	{ NULL,			0,			0 },
 };
+
+/*
+ * Reserve the bottom 512K of the I/O space for ISA devices.
+ * According to the PMON sources, this is a work-around for
+ * a bug in the ISA bridge.
+ */
+#define	PCI_IO_START	0x00080000
+#define	PCI_IO_END	0x00ffffff
+#define	PCI_MEM_START	0x01000000
+#define	PCI_MEM_END	0x07ffffff
+#define	PCI_IDE_DEV	2
+#define	PCI_IDE_FUNC	1
+#define	PCI_CHIPSET	&p5064_configuration.ac_pc
 #endif /* ALGOR_P5064 */
 
 #if defined(ALGOR_P6032)
@@ -122,7 +141,19 @@ struct mainbusdev mainbusdevs[] = {
 
 	{ NULL,			0,			0 },
 };
+
+/* Reserve the bottom 64K of the I/O space for ISA devices. */
+#define	PCI_IO_START	0x00010000
+#define	PCI_IO_END	0x000effff
+#define	PCI_MEM_START	0x01000000
+#define	PCI_MEM_END	0x0affffff
+#define	PCI_IDE_DEV	17
+#define	PCI_IDE_FUNC	1
+#define	PCI_CHIPSET	&p6032_configuration.ac_pc
 #endif /* ALGOR_P6032 */
+
+#define	PCI_IO_SIZE	((PCI_IO_END - PCI_IO_START) + 1)
+#define	PCI_MEM_SIZE	((PCI_MEM_END - PCI_MEM_START) + 1)
 
 int
 mainbus_match(device_t parent, cfdata_t cf, void *aux)
@@ -140,63 +171,22 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	struct mainbus_attach_args ma;
 	struct mainbusdev *md;
 	bus_space_tag_t st;
-#if defined(PCI_NETBSD_CONFIGURE)
-	struct extent *ioext, *memext;
-	pci_chipset_tag_t pc;
-#if defined(PCI_NETBSD_ENABLE_IDE)
-	pcitag_t idetag;
-	pcireg_t idetim;
-#endif
-#endif
 
 	mainbus_found = 1;
 
 	printf("\n");
 
 #if NPCI > 0 && defined(PCI_NETBSD_CONFIGURE)
-#if defined(ALGOR_P4032)
-	/*
-	 * Reserve the bottom 64K of the I/O space for ISA devices.
-	 */
-	ioext  = extent_create("pciio",  0x00010000, 0x000effff,
-	    NULL, 0, EX_WAITOK);
-	memext = extent_create("pcimem", 0x01000000, 0x07ffffff,
-	    NULL, 0, EX_WAITOK);
+	struct pciconf_resources *pcires = pciconf_resource_init();
 
-	pc = &p4032_configuration.ac_pc;
-#elif defined(ALGOR_P5064)
-	/*
-	 * Reserve the bottom 512K of the I/O space for ISA devices.
-	 * According to the PMON sources, this is a work-around for
-	 * a bug in the ISA bridge.
-	 */
-	ioext  = extent_create("pciio",  0x00080000, 0x00ffffff,
-	    NULL, 0, EX_WAITOK);
-	memext = extent_create("pcimem", 0x01000000, 0x07ffffff,
-	    NULL, 0, EX_WAITOK);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_IO,
+	    PCI_IO_START, PCI_IO_SIZE);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_MEM,
+	    PCI_MEM_START, PCI_MEM_SIZE);
 
-	pc = &p5064_configuration.ac_pc;
-#if defined(PCI_NETBSD_ENABLE_IDE)
-	idetag = pci_make_tag(pc, 0, 2, 1);
-#endif
-#elif defined(ALGOR_P6032)
-	/*
-	 * Reserve the bottom 64K of the I/O space for ISA devices.
-	 */
-	ioext  = extent_create("pciio",  0x00010000, 0x000effff,
-	    NULL, 0, EX_WAITOK);
-	memext = extent_create("pcimem", 0x01000000, 0x0affffff,
-	    NULL, 0, EX_WAITOK);
-
-	pc = &p6032_configuration.ac_pc;
-#if defined(PCI_NETBSD_ENABLE_IDE)
-	idetag = pci_make_tag(pc, 0, 17, 1);
-#endif
-#endif /* ALGOR_P4032 || ALGOR_P5064 || ALGOR_P6032 */
-
-	pci_configure_bus(pc, ioext, memext, NULL, 0, mips_cache_info.mci_dcache_align);
-	extent_destroy(ioext);
-	extent_destroy(memext);
+	pci_configure_bus(PCI_CHIPSET, pcires, 0,
+	    mips_cache_info.mci_dcache_align);
+	pciconf_resource_fini(pcires);
 
 #if defined(PCI_NETBSD_ENABLE_IDE)
 	/*
@@ -206,12 +196,14 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	 * except for the ENABLE bits -- the `pciide' driver will
 	 * properly configure it later.
 	 */
-	idetim = 0;
+	pcitag_t idetag = pci_make_tag(PCI_CHIPSET, 0, PCI_IDE_DEV,
+	    PCI_IDE_FUNC);
+	pcireg_t idetim = 0;
 	if (PCI_NETBSD_ENABLE_IDE & 0x01)
 		idetim = PIIX_IDETIM_SET(idetim, PIIX_IDETIM_IDE, 0);
 	if (PCI_NETBSD_ENABLE_IDE & 0x02)
 		idetim = PIIX_IDETIM_SET(idetim, PIIX_IDETIM_IDE, 1);
-	pci_conf_write(pc, idetag, PIIX_IDETIM, idetim);
+	pci_conf_write(PCI_CHIPSET, idetag, PIIX_IDETIM, idetim);
 #endif
 #endif /* NPCI > 0 && defined(PCI_NETBSD_CONFIGURE) */
 

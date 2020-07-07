@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.14 2014/07/29 21:21:44 skrll Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.15 2020/07/07 03:38:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -58,9 +58,6 @@ typedef int 		pci_intr_handle_t;
 struct cobalt_pci_chipset {
 	bus_space_tag_t pc_bst;		/* bus space tag for PCICFG regs */
 	bus_space_handle_t pc_bsh;	/* bus space handle for PCICFG regs */
-
-	struct extent *pc_memext;	/* PCI memory extent */
-	struct extent *pc_ioext;	/* PCI I/O extent */
 };
 
 /*

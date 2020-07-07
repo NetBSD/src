@@ -1,4 +1,4 @@
-/*	$NetBSD: p5pb.c,v 1.16 2020/06/14 01:40:02 chs Exp $ */
+/*	$NetBSD: p5pb.c,v 1.17 2020/07/07 03:38:45 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2011, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/kmem.h>
-#include <sys/extent.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -489,24 +488,23 @@ p5pb_cvppc_probe(struct p5pb_softc *sc)
 bool
 p5pb_bus_reconfigure(struct p5pb_softc *sc) 
 {
-	struct extent		*ioext, *memext; 
 	pci_chipset_tag_t	pc;
 
 	pc = &sc->apc;
 
-	ioext = extent_create("p5pbio", 0, P5BUS_PCI_IO_SIZE, NULL, 0,
-	    EX_WAITOK);
+	struct pciconf_resources *pcires = pciconf_resource_init();
 
-	memext = extent_create("p5pbmem", sc->pci_mem_lowest, 
-	     sc->pci_mem_highest - 1, NULL, 0, EX_WAITOK);
-	
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_IO,
+	    0, P5BUS_PCI_IO_SIZE);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_MEM,
+	    sc->pci_mem_lowest, sc->pci_mem_highest - sc->pci_mem_lowest);
+
 #ifdef P5PB_DEBUG 
 	aprint_normal("p5pb: reconfiguring the bus!\n");
 #endif /* P5PB_DEBUG */
-	pci_configure_bus(pc, ioext, memext, NULL, 0, CACHELINE_SIZE);
+	pci_configure_bus(pc, pcires, 0, CACHELINE_SIZE);
 
-	extent_destroy(ioext);
-	extent_destroy(memext);
+	pciconf_resource_fini(pcires);
 
 	return true; /* TODO: better error handling */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.h,v 1.13 2020/06/17 13:09:16 thorpej Exp $	*/
+/*	$NetBSD: pciconf.h,v 1.14 2020/07/07 03:38:49 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -35,15 +35,30 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/extent.h>
+#ifndef _DEV_PCI_PCICONF_H_
+#define	_DEV_PCI_PCICONF_H_
+
+#include <sys/vmem.h>
+
+struct pciconf_resources;
+
+#define	PCICONF_RESOURCE_IO			0
+#define	PCICONF_RESOURCE_MEM			1
+#define	PCICONF_RESOURCE_PREFETCHABLE_MEM	2
+
+struct pciconf_resources *
+	pciconf_resource_init(void);
+void	pciconf_resource_fini(struct pciconf_resources *);
+int	pciconf_resource_add(struct pciconf_resources *, int,
+	    bus_addr_t, bus_size_t);
 
 /*
- * args: pci_chipset_tag_t, io_extent, mem_extent, pmem_extent
- * where pmem_extent is "pre-fetchable" memory -- if NULL, mem_extent will
- * be used for both
+ * args: pci_chipset_tag_t, resources, firstbus, cacheline_size
+ * If no prefetchable memory resources are available, plain memory resources
+ * will be used for both.
  */
-int	pci_configure_bus(pci_chipset_tag_t, struct extent *,
-	    struct extent *, struct extent *, int, int);
+int	pci_configure_bus(pci_chipset_tag_t, struct pciconf_resources *,
+	    int, int);
 
 /* Defined in machdep code.  Returns the interrupt line to set */
 /* args: chipset_tag, bus, dev, ipin, swiz, ptr to interrupt line */
@@ -62,3 +77,5 @@ void	pci_conf_interrupt(pci_chipset_tag_t, int, int, int, int, int *);
 #define PCI_CONF_ENABLE_ROM	0x0100
 #define PCI_CONF_DEFAULT	0x00ff
 #define PCI_CONF_ALL		0x01ff
+
+#endif /* _DEV_PCI_PCICONF_H_ */

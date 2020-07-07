@@ -1,4 +1,4 @@
-/*	$NetBSD: empbreg.h,v 1.6 2013/01/29 00:49:43 rkujawa Exp $ */
+/*	$NetBSD: empbreg.h,v 1.7 2020/07/07 03:38:45 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2012, 2013 The NetBSD Foundation, Inc.
@@ -85,8 +85,9 @@
 #define EMPB_WINDOW_MASK_8M	0xFF80
 #define EMPB_WINDOW_MASK_4M	0xFFC0
 
-#define EMPB_MEM_BASE		0x80000000
-#define EMPB_MEM_END		0xA0000000
+#define EMPB_MEM_BASE		0x80000000U
+#define EMPB_MEM_END		0x9FFFFFFFU
+#define EMPB_MEM_SIZE		((EMPB_MEM_END - EMPB_MEM_BASE) + 1)
 
 #define EMPB_PM_OFF		0x40	/* power management register */
 #define EMPB_PM_PSU_SHUTDOWN	0x0

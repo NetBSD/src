@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_pci.c,v 1.13 2020/06/14 01:40:03 chs Exp $ */
+/*	$NetBSD: ixp425_pci.c,v 1.14 2020/07/07 03:38:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -28,12 +28,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_pci.c,v 1.13 2020/06/14 01:40:03 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_pci.c,v 1.14 2020/07/07 03:38:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/extent.h>
 #include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
@@ -69,7 +68,7 @@ ixp425_pci_init(struct ixp425_softc *sc)
 {
 	pci_chipset_tag_t pc = &sc->ia_pci_chipset;
 #if NPCI > 0 && defined(PCI_NETBSD_CONFIGURE)
-	struct extent *ioext, *memext;
+	struct pciconf_resources *pcires;
 #endif
 	/*
 	 * Initialise the PCI chipset tag
@@ -90,19 +89,20 @@ ixp425_pci_init(struct ixp425_softc *sc)
 	ixp425_mem_bs_init(&sc->sc_pci_memt, sc);
 
 #if NPCI > 0 && defined(PCI_NETBSD_CONFIGURE)
-	ioext  = extent_create("pciio", 0, IXP425_PCI_IO_SIZE - 1,
-				NULL, 0, EX_WAITOK);
+	pcires = pciconf_resource_init();
+
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_IO,
+	    0, IXP425_PCI_IO_SIZE);
+
 	/* PCI MEM space is mapped same address as real memory */
-	memext = extent_create("pcimem", IXP425_PCI_MEM_HWBASE,
-				IXP425_PCI_MEM_HWBASE +
-				IXP425_PCI_MEM_SIZE - 1,
-				NULL, 0, EX_WAITOK);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_MEM,
+	    IXP425_PCI_MEM_HWBASE, IXP425_PCI_MEM_SIZE);
+
 	aprint_normal_dev(sc->sc_dev, "configuring PCI bus\n");
-	pci_configure_bus(pc, ioext, memext, NULL, 0 /* XXX bus = 0 */,
+	pci_configure_bus(pc, pcires, 0 /* XXX bus = 0 */,
 			  arm_dcache_align);
 
-	extent_destroy(ioext);
-	extent_destroy(memext);
+	pciconf_resource_fini(pcires);
 #endif
 }
 

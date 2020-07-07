@@ -1,4 +1,4 @@
-/*	$NetBSD: cpc700.c,v 1.20 2020/06/14 01:40:06 chs Exp $	*/
+/*	$NetBSD: cpc700.c,v 1.21 2020/07/07 03:38:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -50,13 +50,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpc700.c,v 1.20 2020/06/14 01:40:06 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpc700.c,v 1.21 2020/07/07 03:38:49 thorpej Exp $");
 
 #include "pci.h"
 #include "opt_pci.h"
 
 #include <sys/param.h>
-#include <sys/extent.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
@@ -87,6 +86,14 @@ static bus_space_tag_t the_cpc_tag;
 static bus_space_handle_t the_cpc_handle;
 #define INL(a) bus_space_read_stream_4(the_cpc_tag, the_cpc_handle, (a))
 #define OUTL(a, d) bus_space_write_stream_4(the_cpc_tag, the_cpc_handle, (a), d)
+
+#define	PCI_IO_START	CPC_PCI_IO_START
+#define	PCI_IO_END	CPC_PCI_IO_END
+#define	PCI_IO_SIZE	((PCI_IO_END - PCI_IO_START) + 1)
+
+#define	PCI_MEM_START	CPC_PCI_MEM_BASE
+#define	PCI_MEM_END	CPC_PCI_MEM_END
+#define	PCI_MEM_SIZE	((PCI_MEM_END - PCI_MEM_START) + 1)
 
 static int
 cpc_print(void *aux, const char *pnp)
@@ -141,7 +148,6 @@ cpc_attach(device_t self, pci_chipset_tag_t pc, bus_space_tag_t mem,
 		{ NULL, 0 }
 	};
 #if NPCI > 0 && defined(PCI_NETBSD_CONFIGURE)
-	struct extent *ioext, *memext;
 #ifdef PCI_CONFIGURE_VERBOSE
 	extern int pci_conf_debug;
 
@@ -190,15 +196,14 @@ cpc_attach(device_t self, pci_chipset_tag_t pc, bus_space_tag_t mem,
 	pci_conf_write(pc, tag, CPC_BRIDGE_OPTIONS2, v);
 
 #if NPCI > 0 && defined(PCI_NETBSD_CONFIGURE)
-	ioext  = extent_create("pciio",  CPC_PCI_IO_START, CPC_PCI_IO_END,
-	    NULL, 0, EX_WAITOK);
-	memext = extent_create("pcimem", CPC_PCI_MEM_BASE, CPC_PCI_MEM_END,
-	    NULL, 0, EX_WAITOK);
+	struct pciconf_resources *pcires = pciconf_resource_init();
 
-	pci_configure_bus(0, ioext, memext, NULL, 0, 32);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_IO,
+	    PCI_IO_START, PCI_IO_SIZE);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_MEM,
+	    PCI_MEM_START, PCI_MEM_SIZE);
 
-	extent_destroy(ioext);
-	extent_destroy(memext);
+	pci_configure_bus(0, pcires, 0, 32);
 #endif
 
 	config_found_ia(self, "pcibus", &aa.pba, pcibusprint);

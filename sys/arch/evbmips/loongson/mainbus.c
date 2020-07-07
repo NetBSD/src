@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.3 2020/06/14 01:40:04 chs Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.4 2020/07/07 03:38:47 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3 2020/06/14 01:40:04 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4 2020/07/07 03:38:47 thorpej Exp $");
 
 #include "opt_pci.h"
 
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3 2020/06/14 01:40:04 chs Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #if defined(PCI_NETBSD_CONFIGURE)
-#include <sys/extent.h>
 #include <sys/malloc.h>
 #endif
 
@@ -85,6 +84,13 @@ const char * const mainbusdevs[] = {
 #endif
 };
 
+#define	PCI_IO_START	0x00001000
+#define	PCI_IO_END	0x00003fff
+#define	PCI_IO_SIZE	((PCI_IO_END - PCI_IO_START) + 1)
+
+#define	PCI_MEM_START	0
+#define	PCI_MEM_SIZE	BONITO_PCILO_SIZE
+
 static int
 mainbus_match(device_t parent, cfdata_t match, void *aux)
 {
@@ -103,16 +109,16 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 #if defined(PCI_NETBSD_CONFIGURE)
-	struct extent *ioext = extent_create("pciio",  0x00001000, 0x00003fff,
-	    NULL, 0, EX_WAITOK);
-	struct extent *memext = extent_create("pcimem", 0, BONITO_PCILO_SIZE,
-	    NULL, 0, EX_WAITOK);
 	struct mips_cache_info * const mci = &mips_cache_info;
+	struct pciconf_resources *pcires = pciconf_resource_init();
 
-	pci_configure_bus(&bonito_pc, ioext, memext,
-	    NULL, 0, mci->mci_dcache_align);
-	extent_destroy(ioext);
-	extent_destroy(memext);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_IO,
+	    PCI_IO_START, PCI_IO_SIZE);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_MEM,
+	    PCI_MEM_START, PCI_MEM_SIZE);
+
+	pci_configure_bus(&bonito_pc, pcires, 0, mci->mci_dcache_align);
+	pciconf_resource_fini(pcires);
 #endif /* PCI_NETBSD_CONFIGURE */
 
 	for (i = 0; i < __arraycount(mainbusdevs); i++) {

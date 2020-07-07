@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_pci.c,v 1.17 2020/06/14 01:40:03 chs Exp $	*/
+/*	$NetBSD: i80321_pci.c,v 1.18 2020/07/07 03:38:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_pci.c,v 1.17 2020/06/14 01:40:03 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_pci.c,v 1.18 2020/07/07 03:38:46 thorpej Exp $");
 
 #include "opt_pci.h"
 #include "opt_i80321.h"
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: i80321_pci.c,v 1.17 2020/06/14 01:40:03 chs Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/extent.h>
 #include <sys/malloc.h>
 #include <sys/bus.h>
 
@@ -82,7 +81,7 @@ i80321_pci_init(pci_chipset_tag_t pc, void *cookie)
 {
 #if NPCI > 0 && defined(PCI_NETBSD_CONFIGURE)
 	struct i80321_softc *sc = cookie;
-	struct extent *ioext, *memext;
+	struct pciconf_resources *pcires;
 	uint32_t busno;
 #endif
 
@@ -111,26 +110,25 @@ i80321_pci_init(pci_chipset_tag_t pc, void *cookie)
 	if (busno == 0xff)
 		busno = 0;
 
-	ioext  = extent_create("pciio",
+	pcires = pciconf_resource_init();
+
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_IO,
 	    sc->sc_ioout_xlate + sc->sc_ioout_xlate_offset,
-	    sc->sc_ioout_xlate + VERDE_OUT_XLATE_IO_WIN_SIZE - 1,
-	    NULL, 0, EX_WAITOK);
+	    VERDE_OUT_XLATE_IO_WIN_SIZE - sc->sc_ioout_xlate_offset);
 
 #ifdef I80321_USE_DIRECT_WIN
-	memext = extent_create("pcimem", VERDE_OUT_DIRECT_WIN_BASE + VERDE_OUT_DIRECT_WIN_SKIP,
-	    VERDE_OUT_DIRECT_WIN_BASE + VERDE_OUT_DIRECT_WIN_SIZE- 1,
-	    NULL, 0, EX_WAITOK);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_MEM,
+	    VERDE_OUT_DIRECT_WIN_BASE + VERDE_OUT_DIRECT_WIN_SKIP,
+	    VERDE_OUT_DIRECT_WIN_SIZE - VERDE_OUT_DIRECT_WIN_SKIP);
 #else
-	memext = extent_create("pcimem", sc->sc_owin[0].owin_xlate_lo,
-	    sc->sc_owin[0].owin_xlate_lo + VERDE_OUT_XLATE_MEM_WIN_SIZE - 1,
-	    NULL, 0, EX_WAITOK);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_MEM,
+	    sc->sc_owin[0].owin_xlate_lo, VERDE_OUT_XLATE_MEM_WIN_SIZE);
 #endif
 
 	aprint_normal_dev(sc->sc_dev, "configuring PCI bus\n");
-	pci_configure_bus(pc, ioext, memext, NULL, busno, arm_dcache_align);
+	pci_configure_bus(pc, pcires, busno, arm_dcache_align);
 
-	extent_destroy(ioext);
-	extent_destroy(memext);
+	pciconf_resource_fini(pcires);
 #endif
 }
 

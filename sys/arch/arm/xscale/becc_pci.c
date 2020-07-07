@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_pci.c,v 1.20 2020/06/14 01:40:03 chs Exp $	*/
+/*	$NetBSD: becc_pci.c,v 1.21 2020/07/07 03:38:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.20 2020/06/14 01:40:03 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.21 2020/07/07 03:38:46 thorpej Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.20 2020/06/14 01:40:03 chs Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/extent.h>
 #include <sys/malloc.h>
 #include <sys/bus.h>
 
@@ -97,7 +96,7 @@ becc_pci_init(pci_chipset_tag_t pc, void *cookie)
 {
 #if NPCI > 0 && defined(PCI_NETBSD_CONFIGURE)
 	struct becc_softc *sc = cookie;
-	struct extent *ioext, *memext;
+	struct pciconf_resources *pcires;
 #endif
 
 	pc->pc_conf_v = cookie;
@@ -127,19 +126,18 @@ becc_pci_init(pci_chipset_tag_t pc, void *cookie)
 	 * the Secondary bus.
 	 */
 
+	pcires = pciconf_resource_init();
+
 	/* Reserve the bottom 32K of the PCI address space. */
-	ioext  = extent_create("pciio", sc->sc_ioout_xlate + (32 * 1024),
-	    sc->sc_ioout_xlate + (64 * 1024) - 1,
-	    NULL, 0, EX_WAITOK);
-	memext = extent_create("pcimem", sc->sc_owin_xlate[0],
-	    sc->sc_owin_xlate[0] + BECC_PCI_MEM1_SIZE - 1,
-	    NULL, 0, EX_WAITOK);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_IO,
+	    sc->sc_ioout_xlate + (32 * 1024), (32 * 1024));
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_MEM,
+	    sc->sc_owin_xlate[0], BECC_PCI_MEM1_SIZE);
 
 	aprint_normal("%s: configuring PCI bus\n", device_xname(sc->sc_dev));
-	pci_configure_bus(pc, ioext, memext, NULL, 0, arm_dcache_align);
+	pci_configure_bus(pc, pcires, 0, arm_dcache_align);
 
-	extent_destroy(ioext);
-	extent_destroy(memext);
+	pciconf_resource_fini(pcires);
 #endif
 }
 
