@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.78 2020/07/06 09:34:18 rin Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.79 2020/07/07 01:39:23 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.78 2020/07/06 09:34:18 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.79 2020/07/07 01:39:23 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -285,6 +285,17 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_STRING, "booted_kernel", NULL,
 		       sysctl_machdep_booted_kernel, 0, NULL, 0,
 		       CTL_MACHDEP, CPU_BOOTED_KERNEL, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLTYPE_INT, "fpu_present", NULL,
+		       NULL,
+#if defined(PPC_HAVE_FPU)
+		       1,
+#else
+		       0,
+#endif
+		       NULL, 0,
+		       CTL_MACHDEP, CPU_FPU, CTL_EOL);
 }
 
 /*

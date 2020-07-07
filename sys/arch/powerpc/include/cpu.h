@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.113 2020/07/06 13:20:55 rin Exp $	*/
+/*	$NetBSD: cpu.h,v 1.114 2020/07/07 01:39:23 rin Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -489,5 +489,6 @@ void	__syncicache(void *, size_t);
 #define	CPU_BOOTED_DEVICE	9	/* string: device we booted from */
 #define	CPU_BOOTED_KERNEL	10	/* string: kernel we booted */
 #define	CPU_EXECPROT		11	/* bool: PROT_EXEC works */
+#define	CPU_FPU			12
 
 #endif	/* _POWERPC_CPU_H_ */
