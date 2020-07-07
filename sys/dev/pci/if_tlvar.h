@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlvar.h,v 1.17 2015/04/13 16:33:25 riastradh Exp $	*/
+/*	$NetBSD: if_tlvar.h,v 1.18 2020/07/07 06:27:37 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -35,7 +35,7 @@
 #include <dev/i2c/i2cvar.h>
 
 struct tl_product_desc {
-	u_int32_t tp_product;
+	uint32_t tp_product;
 	int tp_tlphymedia;
 	const char *tp_desc;
 };
@@ -50,7 +50,7 @@ struct tl_softc {
 	struct ethercom tl_ec;
 	struct callout tl_tick_ch;	/* tick callout */
 	struct callout tl_restart_ch;	/* restart callout */
-	u_int8_t tl_enaddr[ETHER_ADDR_LEN];	/* hardware address */
+	uint8_t tl_enaddr[ETHER_ADDR_LEN];	/* hardware address */
 	struct i2c_controller sc_i2c;	/* i2c controller info, for eeprom */
 	mii_data_t tl_mii;		/* mii bus */
 	bus_dma_segment_t ctrl_segs; /* bus-dma memory for control blocks */
@@ -82,8 +82,8 @@ struct tl_softc {
 #endif
 	krndsource_t rnd_source;
 };
-#define tl_if            tl_ec.ec_if
-#define tl_bpf   tl_if.if_bpf
+#define tl_if	tl_ec.ec_if
+#define tl_bpf	tl_if.if_bpf
 
 typedef struct tl_softc tl_softc_t;
 typedef u_long ioctl_cmd_t;
