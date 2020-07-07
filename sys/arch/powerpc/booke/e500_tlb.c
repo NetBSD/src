@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_tlb.c,v 1.21 2020/07/06 10:12:04 rin Exp $	*/
+/*	$NetBSD: e500_tlb.c,v 1.22 2020/07/07 00:28:30 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
 #define	__PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.21 2020/07/06 10:12:04 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.22 2020/07/07 00:28:30 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
@@ -536,6 +536,13 @@ e500_tlb_invalidate_addr(vaddr_t va, tlb_asid_t asid)
 static bool
 e500_tlb_update_addr(vaddr_t va, tlb_asid_t asid, pt_entry_t pte, bool insert)
 {
+
+	/*
+	 * In case where pmap_kenter_pa(9) is called for va with page offset.
+	 * Required for tmpfs.
+	 */
+	va &= ~PAGE_MASK;
+
 #if defined(MULTIPROCESSOR)
 	e500_tlb_invalidate_addr(va, asid);
 	return true;
