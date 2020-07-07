@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.414.2.1 2019/09/10 16:18:59 martin Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.414.2.2 2020/07/07 11:00:54 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.414.2.1 2019/09/10 16:18:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.414.2.2 2020/07/07 11:00:54 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1239,15 +1239,29 @@ tcp_input(struct mbuf *m, int off, int proto)
 	}
 
 	/*
+	 * Enforce alignment requirements that are violated in
+	 * some cases, see kern/50766 for details.
+	 */
+	if (TCP_HDR_ALIGNED_P(th) == 0) {
+		m = m_copyup(m, off + sizeof(struct tcphdr), 0);
+		if (m == NULL) {
+			TCP_STATINC(TCP_STAT_RCVSHORT);
+			return;
+		}
+		th = (struct tcphdr *)(mtod(m, char *) + off);
+	}
+	KASSERT(TCP_HDR_ALIGNED_P(th));
+
+	/*
 	 * Get IP and TCP header.
 	 * Note: IP leaves IP header in first mbuf.
 	 */
 	ip = mtod(m, struct ip *);
+#ifdef INET6
+	ip6 = mtod(m, struct ip6_hdr *);
+#endif
 	switch (ip->ip_v) {
 	case 4:
-#ifdef INET6
-		ip6 = NULL;
-#endif
 		af = AF_INET;
 		iphlen = sizeof(struct ip);
 
@@ -1262,10 +1276,8 @@ tcp_input(struct mbuf *m, int off, int proto)
 		break;
 #ifdef INET6
 	case 6:
-		ip = NULL;
 		iphlen = sizeof(struct ip6_hdr);
 		af = AF_INET6;
-		ip6 = mtod(m, struct ip6_hdr *);
 
 		/*
 		 * Be proactive about unspecified IPv6 address in source.
@@ -1300,23 +1312,6 @@ tcp_input(struct mbuf *m, int off, int proto)
 		return;
 	}
 
-	/*
-	 * Enforce alignment requirements that are violated in
-	 * some cases, see kern/50766 for details.
-	 */
-	if (TCP_HDR_ALIGNED_P(th) == 0) {
-		m = m_copyup(m, off + sizeof(struct tcphdr), 0);
-		if (m == NULL) {
-			TCP_STATINC(TCP_STAT_RCVSHORT);
-			return;
-		}
-		ip = mtod(m, struct ip *);
-#ifdef INET6
-		ip6 = mtod(m, struct ip6_hdr *);
-#endif
-		th = (struct tcphdr *)(mtod(m, char *) + off);
-	}
-	KASSERT(TCP_HDR_ALIGNED_P(th));
 
 	/*
 	 * Check that TCP offset makes sense, pull out TCP options and
@@ -1514,7 +1509,6 @@ findpcb:
 			m_freem(in6p->in6p_options);
 			in6p->in6p_options = NULL;
 		}
-		KASSERT(ip6 != NULL);
 		ip6_savecontrol(in6p, &in6p->in6p_options, ip6, m);
 	}
 #endif
