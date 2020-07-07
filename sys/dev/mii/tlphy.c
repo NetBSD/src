@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.70 2020/07/07 08:35:16 msaitoh Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.71 2020/07/07 08:44:12 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.70 2020/07/07 08:35:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.71 2020/07/07 08:44:12 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -367,15 +367,7 @@ tlphy_auto(struct tlphy_softc *tsc)
 	struct mii_softc *sc = &tsc->sc_mii;
 	int error;
 
-	switch ((error = mii_phy_auto(sc, 0))) {
-	case EIO:
-		/*
-		 * Just assume we're not in full-duplex mode.
-		 * XXX Check link and try AUI/BNC?
-		 */
-		PHY_WRITE(sc, MII_BMCR, 0);
-		break;
-
+	switch ((error = mii_phy_auto(sc))) {
 	case EJUSTRETURN:
 		/* Flag that we need to program when it completes. */
 		tsc->sc_need_acomp = 1;
