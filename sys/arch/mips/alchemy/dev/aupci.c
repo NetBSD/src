@@ -1,4 +1,4 @@
-/* $NetBSD: aupci.c,v 1.17 2015/10/02 05:22:51 msaitoh Exp $ */
+/* $NetBSD: aupci.c,v 1.18 2020/07/07 03:38:47 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -35,7 +35,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.17 2015/10/02 05:22:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.18 2020/07/07 03:38:47 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.17 2015/10/02 05:22:51 msaitoh Exp $");
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/extent.h>
 #include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
@@ -105,13 +104,15 @@ static void *aupci_intr_establish(void *, pci_intr_handle_t, int,
     int (*)(void *), void *);
 static void aupci_intr_disestablish(void *, void *);
 
-#ifdef	PCI_NETBSD_CONFIGURE
-static struct extent	*io_ex = NULL;
-static struct extent	*mem_ex = NULL;
-#endif	/* PCI_NETBSD_CONFIGURE */
-
 #define	PCI_CFG_READ	0
 #define	PCI_CFG_WRITE	1
+
+#define	PCI_IO_START	AUPCI_IO_START
+#define	PCI_IO_END	AUPCI_IO_END
+#define	PCI_IO_SIZE	((PCI_IO_END - PCI_IO_START) + 1)
+
+#define	PCI_MEM_END	0xffffffff
+#define	PCI_MEM_SIZE(m)	((PCI_MEM_END - (m)) + 1)
 
 #endif	/* NPCI > 0 */
 
@@ -258,16 +259,16 @@ aupciattach(device_t parent, device_t self, void *aux)
 	sc->sc_pc.pc_conf_interrupt = aupci_conf_interrupt;
 
 #ifdef PCI_NETBSD_CONFIGURE
-	mem_ex = extent_create("pcimem", mstart, 0xffffffff,
-	    NULL, 0, EX_WAITOK);
+	struct pciconf_resources *pcires = pciconf_resource_init();
 
-	io_ex = extent_create("pciio", AUPCI_IO_START, AUPCI_IO_END,
-	    NULL, 0, EX_WAITOK);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_IO,
+	    PCI_IO_START, PCI_IO_SIZE);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_MEM,
+	    mstart, PCI_MEM_SIZE(mstart));
 
-	pci_configure_bus(&sc->sc_pc,
-	    io_ex, mem_ex, NULL, 0, mips_cache_info.mci_dcache_align);
-	extent_destroy(mem_ex);
-	extent_destroy(io_ex);
+	pci_configure_bus(&sc->sc_pc, pcires, 0,
+	    mips_cache_info.mci_dcache_align);
+	pciconf_resource_fini(pcires);
 #endif
 
 	pba.pba_iot = sc->sc_iot;

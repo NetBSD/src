@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.31 2020/06/14 01:40:03 chs Exp $	*/
+/*	$NetBSD: gt.c,v 1.32 2020/07/07 03:38:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.31 2020/06/14 01:40:03 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.32 2020/07/07 03:38:46 thorpej Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -35,7 +35,6 @@ __KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.31 2020/06/14 01:40:03 chs Exp $");
 #include <sys/bus.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/extent.h>
 #include <sys/file.h>
 #include <sys/intr.h>
 #include <sys/ioctl.h>
@@ -83,6 +82,14 @@ struct mips_bus_space gt_memt;
 
 CFATTACH_DECL_NEW(gt, sizeof(struct gt_softc),
     gt_match, gt_attach, NULL, NULL);
+
+#define	PCI_IO_START	0x00001000
+#define	PCI_IO_END	0x01ffffff
+#define	PCI_IO_SIZE	((PCI_IO_END - PCI_IO_START) + 1)
+
+#define	PCI_MEM_START	0x12000000
+#define	PCI_MEM_END	0x13ffffff
+#define	PCI_MEM_SIZE	((PCI_MEM_END - PCI_MEM_START) + 1)
 
 static int
 gt_match(device_t parent, cfdata_t cf, void *aux)
@@ -132,12 +139,13 @@ gt_attach(device_t parent, device_t self, void *aux)
 	pc->pc_bsh = sc->sc_bsh;
 
 #ifdef PCI_NETBSD_CONFIGURE
-	pc->pc_ioext = extent_create("pciio", 0x00001000, 0x01ffffff,
-	    NULL, 0, EX_WAITOK);
-	pc->pc_memext = extent_create("pcimem", 0x12000000, 0x13ffffff,
-	    NULL, 0, EX_WAITOK);
-	pci_configure_bus(pc, pc->pc_ioext, pc->pc_memext, NULL, 0,
-	    mips_cache_info.mci_dcache_align);
+	struct pciconf_resources *pcires = pciconf_resource_init();
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_IO,
+	    PCI_IO_START, PCI_IO_SIZE);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_MEM,
+	    PCI_MEM_START, PCI_MEM_SIZE);
+	pci_configure_bus(pc, pcires, 0, mips_cache_info.mci_dcache_align);
+	pciconf_resource_fini(pcires);
 #endif
 	memset(&pba, 0, sizeof(pba));
 	pba.pba_memt = &gt_memt;

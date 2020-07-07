@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pcie.c,v 1.30 2020/06/14 01:40:03 chs Exp $ */
+/* $NetBSD: tegra_pcie.c,v 1.31 2020/07/07 03:38:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,13 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.30 2020/06/14 01:40:03 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.31 2020/07/07 03:38:46 thorpej Exp $");
 
 #include <sys/param.h>
 
 #include <sys/bus.h>
 #include <sys/device.h>
-#include <sys/extent.h>
 #include <sys/intr.h>
 #include <sys/kmem.h>
 #include <sys/kernel.h>
@@ -149,7 +148,7 @@ tegra_pcie_attach(device_t parent, device_t self, void *aux)
 {
 	struct tegra_pcie_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
-	struct extent *ioext, *memext, *pmemext;
+	struct pciconf_resources *pcires;
 	struct pcibus_attach_args pba;
 	bus_addr_t afi_addr, cs_addr, pads_addr;
 	bus_size_t afi_size, cs_size, pads_size;
@@ -228,22 +227,19 @@ tegra_pcie_attach(device_t parent, device_t self, void *aux)
 
 	tegra_pcie_init(&sc->sc_pc, sc);
 
-	ioext = extent_create("pciio", TEGRA_PCIE_IO_BASE,
-	    TEGRA_PCIE_IO_BASE + TEGRA_PCIE_IO_SIZE - 1,
-	    NULL, 0, EX_WAITOK);
-	memext = extent_create("pcimem", TEGRA_PCIE_MEM_BASE,
-	    TEGRA_PCIE_MEM_BASE + TEGRA_PCIE_MEM_SIZE - 1,
-	    NULL, 0, EX_WAITOK);
-	pmemext = extent_create("pcipmem", TEGRA_PCIE_PMEM_BASE,
-	    TEGRA_PCIE_PMEM_BASE + TEGRA_PCIE_PMEM_SIZE - 1,
-	    NULL, 0, EX_WAITOK);
+	pcires = pciconf_resource_init();
 
-	error = pci_configure_bus(&sc->sc_pc, ioext, memext, pmemext, 0,
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_IO,
+	    TEGRA_PCIE_IO_BASE, TEGRA_PCIE_IO_SIZE);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_MEM,
+	    TEGRA_PCIE_MEM_BASE, TEGRA_PCIE_MEM_SIZE);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_PREFETCHABLE_MEM,
+	    TEGRA_PCIE_PMEM_BASE, TEGRA_PCIE_PMEM_SIZE);
+
+	error = pci_configure_bus(&sc->sc_pc, pcires, 0,
 	    arm_dcache_align);
 
-	extent_destroy(ioext);
-	extent_destroy(memext);
-	extent_destroy(pmemext);
+	pciconf_resource_fini(pcires);
 
 	if (error) {
 		aprint_error_dev(self, "configuration failed (%d)\n",

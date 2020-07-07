@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.14 2020/06/14 01:40:04 chs Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.15 2020/07/07 03:38:47 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.14 2020/06/14 01:40:04 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.15 2020/07/07 03:38:47 thorpej Exp $");
 
 #include "opt_pci.h"
 
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.14 2020/06/14 01:40:04 chs Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #if defined(PCI_NETBSD_CONFIGURE)
-#include <sys/extent.h>
 #include <sys/malloc.h>
 #endif
 
@@ -93,6 +92,13 @@ const struct mainbusdev mainbusdevs[] = {
 	{ NULL,			0,			0 },
 };
 
+#define	PCI_IO_START	0x00001000
+#define	PCI_IO_END	0x0000efff
+#define	PCI_IO_SIZE	((PCI_IO_END - PCI_IO_START) + 1)
+
+#define	PCI_MEM_START	MALTA_PCIMEM1_BASE
+#define	PCI_MEM_SIZE	MALTA_PCIMEM1_SIZE
+
 static int
 mainbus_match(device_t parent, cfdata_t match, void *aux)
 {
@@ -112,26 +118,21 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	struct malta_config *mcp = &malta_configuration;
 	pci_chipset_tag_t pc = &mcp->mc_pc;
 #endif
-#if defined(PCI_NETBSD_ENABLE_IDE)
-	pcitag_t idetag;
-	pcireg_t idetim;
-#endif
 
 	mainbus_found = true;
 	printf("\n");
 
 #if defined(PCI_NETBSD_CONFIGURE)
 	struct mips_cache_info * const mci = &mips_cache_info;
+	struct pciconf_resources *pcires = pciconf_resource_init();
 
-	struct extent *ioext = extent_create("pciio", 0x00001000, 0x0000efff,
-	    NULL, 0, EX_WAITOK);
-	struct extent *memext = extent_create("pcimem", MALTA_PCIMEM1_BASE,
-	    MALTA_PCIMEM1_BASE + MALTA_PCIMEM1_SIZE,
-	    NULL, 0, EX_WAITOK);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_IO,
+	    PCI_IO_START, PCI_IO_SIZE);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_MEM,
+	    PCI_MEM_START, PCI_MEM_SIZE);
 
-	pci_configure_bus(pc, ioext, memext, NULL, 0, mci->mci_dcache_align);
-	extent_destroy(ioext);
-	extent_destroy(memext);
+	pci_configure_bus(pc, pcires, 0, mci->mci_dcache_align);
+	pciconf_resource_fini(pcires);
 #endif /* PCI_NETBSD_CONFIGURE */
 
 #if defined(PCI_NETBSD_ENABLE_IDE)
@@ -142,14 +143,14 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	 * except for the ENABLE bits -- the `pciide' driver will
 	 * properly configure it later.
 	 */
-	idetim = 0;
+	pcireg_t idetim = 0;
 	if (PCI_NETBSD_ENABLE_IDE & 0x01)
 		idetim = PIIX_IDETIM_SET(idetim, PIIX_IDETIM_IDE, 0);
 	if (PCI_NETBSD_ENABLE_IDE & 0x02)
 		idetim = PIIX_IDETIM_SET(idetim, PIIX_IDETIM_IDE, 1);
 
 	/* pciide0 is pci device 10, function 1 */
-	idetag = pci_make_tag(pc, 0, 10, 1);
+	pcitag_t idetag = pci_make_tag(pc, 0, 10, 1);
 	pci_conf_write(pc, idetag, PIIX_IDETIM, idetim);
 #endif
 	for (md = mainbusdevs; md->md_name != NULL; md++) {

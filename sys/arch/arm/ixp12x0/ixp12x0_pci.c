@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_pci.c,v 1.16 2020/06/14 01:40:03 chs Exp $ */
+/* $NetBSD: ixp12x0_pci.c,v 1.17 2020/07/07 03:38:46 thorpej Exp $ */
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_pci.c,v 1.16 2020/06/14 01:40:03 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_pci.c,v 1.17 2020/07/07 03:38:46 thorpej Exp $");
 
 /*
  * PCI configuration support for IXP12x0 Network Processor chip.
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: ixp12x0_pci.c,v 1.16 2020/06/14 01:40:03 chs Exp $")
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/extent.h>
 #include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
@@ -86,7 +85,6 @@ ixp12x0_pci_init(pci_chipset_tag_t pc, void *cookie)
 {
 #if NPCI > 0 && defined(PCI_NETBSD_CONFIGURE)
 	struct ixp12x0_softc *sc = cookie;
-	struct extent *ioext, *memext;
 #endif
 	pc->pc_conf_v = cookie;
 	pc->pc_attach_hook = ixp12x0_pci_attach_hook;
@@ -98,19 +96,20 @@ ixp12x0_pci_init(pci_chipset_tag_t pc, void *cookie)
 	pc->pc_conf_interrupt = ixp12x0_pci_conf_interrupt;
 
 #if NPCI > 0 && defined(PCI_NETBSD_CONFIGURE)
-	ioext  = extent_create("pciio", 0, IXP12X0_PCI_IO_SIZE - 1,
-				NULL, 0, EX_WAITOK);
+	struct pciconf_resources *pcires = pciconf_resource_init();
+
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_IO,
+	    0, IXP12X0_PCI_IO_SIZE);
+
 	/* PCI MEM space is mapped same address as real memory */
-	memext = extent_create("pcimem", IXP12X0_PCI_MEM_HWBASE,
-				IXP12X0_PCI_MEM_HWBASE +
-				IXP12X0_PCI_MEM_SIZE - 1,
-				NULL, 0, EX_WAITOK);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_MEM,
+	    IXP12X0_PCI_MEM_HWBASE, IXP12X0_PCI_MEM_SIZE);
+
 	aprint_normal_dev(sc->sc_dev, "configuring PCI bus\n");
-	pci_configure_bus(pc, ioext, memext, NULL, 0 /* XXX bus = 0 */,
+	pci_configure_bus(pc, pcires, 0 /* XXX bus = 0 */,
 			  arm_dcache_align);
 
-	extent_destroy(ioext);
-	extent_destroy(memext);
+	pciconf_resource_fini(pcires);
 #endif
 }
 
