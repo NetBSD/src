@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_pcie.c,v 1.16 2020/06/14 01:40:03 chs Exp $	*/
+/*	$NetBSD: imx6_pcie.c,v 1.17 2020/07/07 03:38:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2016  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.16 2020/06/14 01:40:03 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.17 2020/07/07 03:38:45 thorpej Exp $");
 
 #include "opt_pci.h"
 
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.16 2020/06/14 01:40:03 chs Exp $");
 #include <sys/systm.h>
 #include <sys/param.h>
 #include <sys/kernel.h>
-#include <sys/extent.h>
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/kmem.h>
@@ -189,21 +188,16 @@ imx6_pcie_configure(void *cookie)
 	struct imxpcie_softc *sc = &ipsc->sc_imxpcie;
 
 #ifdef PCI_NETBSD_CONFIGURE
-	struct extent *ioext, *memext;
-	int error;
+	struct pciconf_resources *pcires = pciconf_resource_init();
 
-	ioext = extent_create("pciio", IMX6_PCIE_IO_BASE,
-	    IMX6_PCIE_IO_BASE + IMX6_PCIE_IO_SIZE - 1,
-	    NULL, 0, EX_WAITOK);
-	memext = extent_create("pcimem", IMX6_PCIE_MEM_BASE,
-	    IMX6_PCIE_MEM_BASE + IMX6_PCIE_MEM_SIZE - 1,
-	    NULL, 0, EX_WAITOK);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_IO,
+	    IMX6_PCIE_IO_BASE, IMX6_PCIE_IO_SIZE);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_MEM,
+	    IMX6_PCIE_MEM_BASE, IMX6_PCIE_MEM_SIZE);
 
-	error = pci_configure_bus(&sc->sc_pc, ioext, memext, NULL, 0,
-	    arm_dcache_align);
+	int error = pci_configure_bus(&sc->sc_pc, pcires, 0, arm_dcache_align);
 
-	extent_destroy(ioext);
-	extent_destroy(memext);
+	pciconf_resource_fini(pcires);
 
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "configuration failed (%d)\n",

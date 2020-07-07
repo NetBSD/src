@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_mace.c,v 1.22 2020/06/14 01:40:05 chs Exp $	*/
+/*	$NetBSD: pci_mace.c,v 1.23 2020/07/07 03:38:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001,2003 Christopher Sekiya
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.22 2020/06/14 01:40:05 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.23 2020/07/07 03:38:48 thorpej Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.22 2020/06/14 01:40:05 chs Exp $");
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-#include <sys/extent.h>
 #include <sys/malloc.h>
 #include <dev/pci/pciconf.h>
 
@@ -95,6 +94,21 @@ static struct mips_bus_space	pcimem_mbst;
 static struct mips_bus_space	pciio_mbst;
 bus_space_tag_t	mace_pci_memt = NULL;
 bus_space_tag_t	mace_pci_iot = NULL;
+
+#define	PCI_IO_START	0x00001000
+#define	PCI_IO_END	0x01ffffff
+#define	PCI_IO_SIZE	((PCI_IO_END - PCI_IO_START) + 1)
+
+#ifdef USE_HIGH_PCI
+#define	PCI_MEM_START	0x80000000
+#define	PCI_MEM_END	0xffffffff
+#else /* ! USE_HIGH_PCI */
+/* XXX no idea why we limit ourselves to only half of the 32MB window */
+#define	PCI_MEM_START	0x80100000
+#define	PCI_MEM_END	0x81ffffff
+#endif /* USE_HIGH_PCI */
+
+#define	PCI_MEM_SIZE	((PCI_MEM_END - PCI_MEM_START) + 1)
 
 static int
 macepci_match(device_t parent, cfdata_t match, void *aux)
@@ -161,20 +175,18 @@ macepci_attach(device_t parent, device_t self, void *aux)
 	bus_space_write_4(pc->iot, pc->ioh, MACEPCI_CONTROL, control);
 
 #if NPCI > 0
-#ifdef USE_HIGH_PCI
-	pc->pc_ioext = extent_create("macepciio", 0x00001000, 0x01ffffff,
-	    NULL, 0, EX_WAITOK);
-	pc->pc_memext = extent_create("macepcimem", 0x80000000, 0xffffffff,
-	    NULL, 0, EX_WAITOK);
-#else
-	pc->pc_ioext = extent_create("macepciio", 0x00001000, 0x01ffffff,
-	    NULL, 0, EX_WAITOK);
-	/* XXX no idea why we limit ourselves to only half of the 32MB window */
-	pc->pc_memext = extent_create("macepcimem", 0x80100000, 0x81ffffff,
-	    NULL, 0, EX_WAITOK);
-#endif /* USE_HIGH_PCI */
-	pci_configure_bus(pc, pc->pc_ioext, pc->pc_memext, NULL, 0,
+	struct pciconf_resources *pcires = pciconf_resource_init();
+
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_IO,
+	    PCI_IO_START, PCI_IO_SIZE);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_MEM,
+	    PCI_MEM_START, PCI_MEM_SIZE);
+
+	pci_configure_bus(pc, pcires, 0,
 	    mips_cache_info.mci_dcache_align);
+
+	pciconf_resource_fini(pcires);
+
 	memset(&pba, 0, sizeof pba);
 	pba.pba_iot = mace_pci_iot;
 	pba.pba_memt = mace_pci_memt;

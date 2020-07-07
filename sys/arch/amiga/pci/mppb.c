@@ -1,4 +1,4 @@
-/*	$NetBSD: mppb.c,v 1.9 2020/06/14 01:40:02 chs Exp $ */
+/*	$NetBSD: mppb.c,v 1.10 2020/07/07 03:38:45 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -38,7 +38,6 @@
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/extent.h>
 #include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>
@@ -112,9 +111,6 @@ mppb_attach(device_t parent, device_t self, void *aux)
 	struct pcibus_attach_args pba;  
 	struct zbus_args *zap;
 	pci_chipset_tag_t pc;
-#ifdef PCI_NETBSD_CONFIGURE
-	struct extent *ioext, *memext;
-#endif /* PCI_NETBSD_CONFIGURE */
 
 	zap = aux;
 	sc = device_private(self);
@@ -166,18 +162,19 @@ mppb_attach(device_t parent, device_t self, void *aux)
 	sc->apc.pc_conf_interrupt = amiga_pci_conf_interrupt;
 
 #ifdef PCI_NETBSD_CONFIGURE
-	ioext = extent_create("mppbio",  MPPB_IO_BASE, 
-	    MPPB_IO_BASE + MPPB_IO_SIZE, NULL, 0, EX_WAITOK);
-	memext = extent_create("mppbmem",  MPPB_MEM_BASE, 
-	    MPPB_MEM_BASE + MPPB_MEM_SIZE, NULL, 0, EX_WAITOK);
+	struct pciconf_resources *pcires = pciconf_resource_init();
+
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_IO,
+	    MPPB_IO_BASE, MPPB_IO_SIZE);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_MEM,
+	    MPPB_MEM_BASE, MPPB_MEM_SIZE);
 
 #ifdef MPPB_DEBUG	
 	aprint_normal("mppb: reconfiguring the bus!\n");
 #endif /* MPPB_DEBUG */
-	pci_configure_bus(pc, ioext, memext, NULL, 0, CACHELINE_SIZE);
+	pci_configure_bus(pc, pcires, 0, CACHELINE_SIZE);
 
-	extent_destroy(ioext);
-	extent_destroy(memext);
+	pciconf_resource_fini(pcires);
 #endif /* PCI_NETBSD_CONFIGURE */
 
 	pba.pba_iot = &(sc->pci_io_area);
