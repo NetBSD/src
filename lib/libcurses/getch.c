@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.73 2019/06/09 07:40:14 blymn Exp $	*/
+/*	$NetBSD: getch.c,v 1.73.2.1 2020/07/07 12:51:18 martin Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.73 2019/06/09 07:40:14 blymn Exp $");
+__RCSID("$NetBSD: getch.c,v 1.73.2.1 2020/07/07 12:51:18 martin Exp $");
 #endif
 #endif					/* not lint */
 
@@ -818,11 +818,11 @@ wgetch(WINDOW *win)
 	    && __echoit)
 		return ERR;
 
-	if (is_wintouched(win))
-		wrefresh(win);
-	else {
-		if ((_cursesi_screen->curscr->cury != (win->begy + win->cury))
-		    || (_cursesi_screen->curscr->curx != (win->begx + win->curx))) {
+	if (!(win->flags & __ISPAD)) {
+		if (is_wintouched(win))
+			wrefresh(win);
+		else if ((_cursesi_screen->curscr->cury != (win->begy + win->cury))
+		         || (_cursesi_screen->curscr->curx != (win->begx + win->curx))) {
 #ifdef DEBUG
 			__CTRACE(__CTRACE_INPUT, "wgetch: curscr cury %d cury %d curscr curx %d curx %d\n",
 			_cursesi_screen->curscr->cury, win->begy + win->cury,
