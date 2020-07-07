@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.29 2020/07/06 10:13:02 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.30 2020/07/07 00:37:46 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.29 2020/07/06 10:13:02 rin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.30 2020/07/07 00:37:46 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -690,6 +690,7 @@ onfaulted(struct trapframe *tf, register_t rv)
 	tf->tf_fixreg[1] = fb->fb_sp;
 	tf->tf_fixreg[2] = fb->fb_r2;
 	tf->tf_fixreg[3] = rv;
+	memcpy(&tf->tf_fixreg[13], fb->fb_fixreg, sizeof(fb->fb_fixreg));
 	pcb->pcb_onfault = NULL;
 	return true;
 }
