@@ -26,6 +26,10 @@
 # include <sys/types.h>
 # include <sys/sysctl.h>
 #endif
+#if defined(__NetBSD__)
+# include <sys/param.h>
+# include <sys/sysctl.h>
+#endif
 #include <openssl/crypto.h>
 #include <openssl/bn.h>
 #include <internal/cryptlib.h>
@@ -365,6 +369,18 @@ void OPENSSL_cpuid_setup(void)
     sigaction(SIGILL, &ill_act, &ill_oact);
 
 #ifndef OSSL_IMPLEMENT_GETAUXVAL
+# ifdef __NetBSD__
+    int error, val;
+    size_t len = sizeof(val);
+
+    /*
+     * If machdep.fpu_present == 0, FPU is absent and emulated by software.
+     * Avoid using it as calculation results may not be correct in bit-to-bit
+     * precision.
+     */
+    error = sysctlbyname("machdep.fpu_present", &val, &len, NULL, 0);
+    if (error != 0 || (error == 0 && val != 0))
+# endif
     if (sigsetjmp(ill_jmp,1) == 0) {
         OPENSSL_fpu_probe();
         OPENSSL_ppccap_P |= PPC_FPU;
