@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_rascons.c,v 1.16 2020/07/07 02:33:54 rin Exp $	*/
+/*	$NetBSD: ofw_rascons.c,v 1.17 2020/07/07 13:57:20 rin Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.16 2020/07/07 02:33:54 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.17 2020/07/07 13:57:20 rin Exp $");
 
 #include "wsdisplay.h"
 
@@ -286,6 +286,7 @@ rascons_init_rasops(int node, struct rasops_info *ri)
 		    width / ri->ri_font->fontwidth);
 	}
 
+#ifdef macppc
 	if (depth == 8 && ofw_quiesce) {
 		/*
 		 * Open Firmware will be quiesced. This is last chance to
@@ -297,6 +298,7 @@ rascons_init_rasops(int node, struct rasops_info *ri)
 			    rasops_cmap[3 * i + 2], i);
 		}
 	}
+#endif
 
 	return true;
 }
