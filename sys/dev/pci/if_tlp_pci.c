@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.128 2020/07/02 09:07:10 msaitoh Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.129 2020/07/07 06:27:37 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.128 2020/07/02 09:07:10 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.129 2020/07/07 06:27:37 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -659,7 +659,8 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 				for (i = 0; i < TULIP_ROM_SIZE(6); i++) {
 					if ((i % 8) == 0)
 						aprint_normal("\n\t");
-					aprint_normal("0x%02x ", sc->sc_srom[i]);
+					aprint_normal("0x%02x ",
+					    sc->sc_srom[i]);
 				}
 				aprint_normal("\n");
 			}
@@ -1545,7 +1546,7 @@ tlp_pci_adaptec_quirks(struct tulip_pci_softc *psc, const uint8_t *enaddr)
 
 		case 0x13:
 			strcpy(psc->sc_tulip.sc_name, "Cogent ???");
- 			sc->sc_mediasw = &tlp_cogent_em1x0_mediasw;
+			sc->sc_mediasw = &tlp_cogent_em1x0_mediasw;
 			psc->sc_flags |= TULIP_PCI_SHAREDINTR |
 			    TULIP_PCI_SHAREDROM;
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlregs.h,v 1.11 2014/10/18 08:33:28 snj Exp $	*/
+/*	$NetBSD: if_tlregs.h,v 1.12 2020/07/07 06:27:37 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -147,14 +147,14 @@
 /* Linked lists for receive/transmit of datagrams */
 
 struct tl_data_seg {
-	u_int32_t data_count;
-	u_int32_t data_addr;
+	uint32_t data_count;
+	uint32_t data_addr;
 } __packed;
 
 /* Receive list (one_frag = 1) */
 struct tl_Rx_list {
-	u_int32_t fwd;
-	u_int32_t stat;
+	uint32_t fwd;
+	uint32_t stat;
 	struct tl_data_seg seg;
 }__packed;
 
@@ -166,8 +166,8 @@ struct tl_Rx_list {
 #define TL_NSEG 10
 #define TL_LAST_SEG 0x80000000
 struct tl_Tx_list {
-	u_int32_t fwd;
-	u_int32_t stat;
+	uint32_t fwd;
+	uint32_t stat;
 	struct tl_data_seg seg[TL_NSEG];
 }__packed;
 
