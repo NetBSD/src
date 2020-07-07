@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.76 2017/02/06 21:06:04 rin Exp $	*/
+/*	$NetBSD: ls.c,v 1.77 2020/07/07 14:29:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.76 2017/02/06 21:06:04 rin Exp $");
+__RCSID("$NetBSD: ls.c,v 1.77 2020/07/07 14:29:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -450,8 +450,10 @@ traverse(int argc, char *argv[], int options)
 			break;
 		case FTS_D:
 			if (p->fts_level != FTS_ROOTLEVEL &&
-			    p->fts_name[0] == '.' && !f_listdot)
+			    p->fts_name[0] == '.' && !f_listdot) {
+				(void)fts_set(ftsp, p, FTS_SKIP);
 				break;
+			}
 
 			/*
 			 * If already output something, put out a newline as
