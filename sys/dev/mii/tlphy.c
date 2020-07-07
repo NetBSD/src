@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.69 2020/07/07 06:59:22 msaitoh Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.70 2020/07/07 08:35:16 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.69 2020/07/07 06:59:22 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.70 2020/07/07 08:35:16 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ CFATTACH_DECL_NEW(tlphy, sizeof(struct tlphy_softc),
     tlphymatch, tlphyattach, mii_phy_detach, mii_phy_activate);
 
 static int	tlphy_service(struct mii_softc *, struct mii_data *, int);
-static int	tlphy_auto(struct tlphy_softc *, int);
+static int	tlphy_auto(struct tlphy_softc *);
 static void	tlphy_acomp(struct tlphy_softc *);
 static void	tlphy_status(struct mii_softc *);
 
@@ -239,12 +239,7 @@ tlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 		switch (IFM_SUBTYPE(ife->ifm_media)) {
 		case IFM_AUTO:
-			/*
-			 * The ThunderLAN PHY doesn't self-configure after
-			 * an autonegotiation cycle, so there's no such
-			 * thing as "already in auto mode".
-			 */
-			(void) tlphy_auto(tsc, 1);
+			(void) tlphy_auto(tsc);
 			break;
 		case IFM_10_2:
 		case IFM_10_5:
@@ -268,8 +263,37 @@ tlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * XXX WHAT ABOUT CHECKING LINK ON THE BNC/AUI?!
 		 */
 
-		if (mii_phy_tick(sc) == EJUSTRETURN)
-			return 0;
+		/* Only used for autonegotiation. */
+		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) {
+			sc->mii_ticks = 0;
+			break;
+		}
+
+		/*
+		 * Check for link.
+		 * Read the status register twice; BMSR_LINK is latch-low.
+		 */
+		PHY_READ(sc, MII_BMSR, &reg);
+		PHY_READ(sc, MII_BMSR, &reg);
+		if (reg & BMSR_LINK) {
+			sc->mii_ticks = 0;
+			break;
+		}
+
+		/*
+		 * mii_ticks == 0 means it's the first tick after changing the
+		 * media or the link became down since the last tick
+		 * (see above), so break to update the status.
+		 */
+		if (sc->mii_ticks++ == 0)
+			break;
+
+		/* Only retry autonegotiation every mii_anegticks seconds. */
+		KASSERT(sc->mii_anegticks != 0);
+		if (sc->mii_ticks <= sc->mii_anegticks)
+			break;
+
+		tlphy_auto(tsc);
 		break;
 
 	case MII_DOWN:
@@ -338,12 +362,12 @@ tlphy_status(struct mii_softc *sc)
 }
 
 static int
-tlphy_auto(struct tlphy_softc *tsc, int waitfor)
+tlphy_auto(struct tlphy_softc *tsc)
 {
 	struct mii_softc *sc = &tsc->sc_mii;
 	int error;
 
-	switch ((error = mii_phy_auto(sc, waitfor))) {
+	switch ((error = mii_phy_auto(sc, 0))) {
 	case EIO:
 		/*
 		 * Just assume we're not in full-duplex mode.
