@@ -1,5 +1,5 @@
 /*	$OpenBSD: main.c,v 1.77 2009/10/14 17:19:47 sthen Exp $	*/
-/*	$NetBSD: main.c,v 1.48 2019/03/26 16:41:06 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.48.2.1 2020/07/07 10:40:46 martin Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.48 2019/03/26 16:41:06 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.48.2.1 2020/07/07 10:40:46 martin Exp $");
 #include <assert.h>
 #include <signal.h>
 #include <getopt.h>
@@ -196,7 +196,7 @@ onintr(int signo)
 struct option longopts[] = {
 	{ "debug",		optional_argument,	0, 'd' },
 	{ "define",		required_argument,	0, 'D' },
-	{ "error-output",	required_argument,	0, 'e' },
+	{ "error-output",	required_argument,	0, 'o' }, /* sic */
 	{ "fatal-warnings",	no_argument,		0, 'E' },
 	{ "freeze-state",	required_argument,	0, 'F' },
 	{ "gnu",		no_argument,		0, 'g' },
@@ -227,8 +227,8 @@ main(int argc, char *argv[])
 {
 	int c;
 	int n;
+	int error;
 	char *p;
-	FILE *sfp;
 
 	setprogname(argv[0]);
 
@@ -246,7 +246,7 @@ main(int argc, char *argv[])
 	outfile = NULL;
 	resizedivs(MAXOUT);
 
-	while ((c = getopt_long(argc, argv, "D:d:e:EF:GgI:iL:o:PR:Qst:U:v",
+	while ((c = getopt_long(argc, argv, "D:d:EF:GgI:iL:o:PR:Qst:U:v",
 	    longopts, NULL)) != -1)
 		switch(c) {
 		case 'D':               /* define something..*/
@@ -262,18 +262,6 @@ main(int argc, char *argv[])
 			break;
 		case 'E':
 			fatal_warnings++;
-			break;
-		case 'e':
-			/*
-			 * Don't use freopen here because if it fails
-			 * we lose stderr, instead trash it.
-			 */
-			if ((sfp = fopen(optarg, "w+")) == NULL) {
-				warn("Can't redirect errors to `%s'", optarg);
-				break;
-			}
-			fclose(stderr);
-			memcpy(stderr, sfp, sizeof(*sfp));
 			break;
 		case 'F':
 			freeze = optarg;
@@ -299,7 +287,9 @@ main(int argc, char *argv[])
 			nesting_limit = atoi(optarg);
 			break;
 		case 'o':
-			trace_file(optarg);
+			error = trace_file(optarg);
+			if (error)
+				warn("%s", optarg);
                         break;
 		case 'P':
 			prefix_builtins = 1;

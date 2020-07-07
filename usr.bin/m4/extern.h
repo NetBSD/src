@@ -1,5 +1,5 @@
 /*	$OpenBSD: extern.h,v 1.49 2009/10/14 17:19:47 sthen Exp $	*/
-/*	$NetBSD: extern.h,v 1.19 2016/01/16 18:30:57 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.19.18.1 2020/07/07 10:40:46 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -146,7 +146,7 @@ extern char *endest;
 /* trace.c */
 extern unsigned int trace_flags;
 #define TRACE_ALL	512
-extern void trace_file(const char *);
+extern int trace_file(const char *);
 extern size_t trace(const char **, int, struct input_file *);
 extern void finish_trace(size_t);
 extern void set_trace_flags(const char *);
