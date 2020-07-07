@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.17 2020/06/30 18:50:55 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.18 2020/07/07 19:58:25 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -232,4 +232,30 @@ usr.bin/w/w.c					1.85,1.86
 
 	Fix domain stripping in host field output.
 	[kim, ticket #1564]
+
+usr.bin/w/w.c					1.87
+
+	w(1): Fix host field output.
+	[kim, ticket #1565]
+
+sys/netinet/tcp_input.c				1.418 (via patch)
+
+	- always set both ip and ip6, otherwise a kernel assertion
+	  can be triggered
+	- move alignment early so that we do less work
+	[christos, ticket #1566]
+
+lib/libcurses/ins_wch.c				1.15
+lib/libcurses/ins_wstr.c			1.15
+lib/libcurses/insch.c				1.26
+lib/libcurses/insstr.c				1.8
+
+	PR 55460: mvwins*(WINDOW *win, ...) functions - call wins* on win,
+	not stdscr.
+	[uwe, ticket #1567]
+
+external/bsd/nvi/dist/vi/v_txt.c		1.7
+
+	PR bin/55468: fix crash due to out-of-bounds access with Ctrl-W.
+	[rin, ticket #1569]
 
