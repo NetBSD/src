@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.303 2020/05/26 07:03:22 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.304 2020/07/07 10:02:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2016, 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.303 2020/05/26 07:03:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.304 2020/07/07 10:02:17 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1284,7 +1284,7 @@ uhci_add_bulk(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 {
 	uhci_soft_qh_t *eqh;
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
 	DPRINTFN(10, "sqh %#jx", (uintptr_t)sqh, 0, 0, 0);
@@ -1310,7 +1310,7 @@ uhci_remove_bulk(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 {
 	uhci_soft_qh_t *pqh;
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
 	DPRINTFN(10, "sqh %#jx", (uintptr_t)sqh, 0, 0, 0);
@@ -1615,10 +1615,9 @@ uhci_idone(struct uhci_xfer *ux, ux_completeq_t *cqp)
 	struct uhci_pipe *upipe = UHCI_PIPE2UPIPE(xfer->ux_pipe);
 	uhci_soft_td_t *std;
 	uint32_t status = 0, nstatus;
-	const bool polling __diagused = sc->sc_bus.ub_usepolling;
 	int actlen;
 
-	KASSERT(polling || mutex_owned(&sc->sc_lock));
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 
 	DPRINTFN(12, "ux=%#jx", (uintptr_t)ux, 0, 0, 0);
 
@@ -1753,7 +1752,7 @@ uhci_idone(struct uhci_xfer *ux, ux_completeq_t *cqp)
 	if (cqp)
 		TAILQ_INSERT_TAIL(cqp, ux, ux_list);
 
-	KASSERT(polling || mutex_owned(&sc->sc_lock));
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 	DPRINTFN(12, "ux=%#jx done", (uintptr_t)ux, 0, 0, 0);
 }
 
@@ -3207,6 +3206,7 @@ uhci_setup_isoc(struct usbd_pipe *pipe)
 void
 uhci_device_isoc_done(struct usbd_xfer *xfer)
 {
+	uhci_softc_t *sc __diagused = UHCI_XFER2SC(xfer);
 	struct uhci_pipe *upipe = UHCI_PIPE2UPIPE(xfer->ux_pipe);
 	struct uhci_xfer *ux = UHCI_XFER2UXFER(xfer);
 	int i, offs;
@@ -3215,6 +3215,8 @@ uhci_device_isoc_done(struct usbd_xfer *xfer)
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
 	DPRINTFN(4, "length=%jd, ux_state=0x%08jx",
 	    xfer->ux_actlen, xfer->ux_state, 0, 0);
+
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 
 #ifdef DIAGNOSTIC
 	if (ux->ux_stdend == NULL) {
@@ -3285,10 +3287,9 @@ uhci_device_ctrl_done(struct usbd_xfer *xfer)
 	int len = UGETW(xfer->ux_request.wLength);
 	int isread = (xfer->ux_request.bmRequestType & UT_READ);
 
-	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
-
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
 
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 	KASSERT(xfer->ux_rqflags & URQ_REQUEST);
 
 	/* XXXNH move to uhci_idone??? */
@@ -3321,7 +3322,7 @@ uhci_device_bulk_done(struct usbd_xfer *xfer)
 	DPRINTFN(5, "xfer=%#jx sc=%#jx upipe=%#jx", (uintptr_t)xfer,
 	    (uintptr_t)sc, (uintptr_t)upipe, 0);
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 
 	uhci_remove_bulk(sc, upipe->bulk.sqh);
 
