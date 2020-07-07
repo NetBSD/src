@@ -1,4 +1,4 @@
-/*   $NetBSD: ins_wch.c,v 1.11 2017/01/31 09:17:53 roy Exp $ */
+/*   $NetBSD: ins_wch.c,v 1.11.4.1 2020/07/07 12:48:42 martin Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ins_wch.c,v 1.11 2017/01/31 09:17:53 roy Exp $");
+__RCSID("$NetBSD: ins_wch.c,v 1.11.4.1 2020/07/07 12:48:42 martin Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -86,7 +86,7 @@ mvwins_wch(WINDOW *win, int y, int x, const cchar_t *wch)
 	if (wmove(win, y, x) == ERR)
 		return ERR;
 
-	return wins_wch(stdscr, wch);
+	return wins_wch(win, wch);
 #endif /* HAVE_WCHAR */
 }
 
