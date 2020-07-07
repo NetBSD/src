@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.49 2020/07/06 10:59:37 rin Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.50 2020/07/07 02:33:54 rin Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.49 2020/07/06 10:59:37 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.50 2020/07/07 02:33:54 rin Exp $");
 
 #include "ksyms.h"
 #include "wsdisplay.h"
@@ -126,6 +126,8 @@ u_int timebase_freq = TIMEBASE_FREQ;
 u_int timebase_freq = 0;
 #endif
 
+int ofw_quiesce;
+
 extern int ofwmsr;
 extern int chosen;
 extern uint32_t ticks_per_sec;
@@ -176,7 +178,7 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 
 	if (strncmp(model_name, "PowerMac11,2", 12) == 0 ||
 	    strncmp(model_name, "PowerMac12,1", 12) == 0)
-		OF_quiesce();
+		ofw_quiesce = 1;
 
 	/* switch CPUs to full speed */
 	if  (strncmp(model_name, "PowerMac7,", 10) == 0) {
@@ -190,6 +192,9 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 	ofwoea_bus_space_init();
 
 	ofwoea_consinit();
+
+	if (ofw_quiesce)
+		OF_quiesce();
 
 #if defined(MULTIPROCESSOR) && defined(ofppc)
 	for (i=1; i < CPU_MAXNUM; i++) {

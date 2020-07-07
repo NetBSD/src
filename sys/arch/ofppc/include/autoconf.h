@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.16 2019/01/08 07:46:10 mrg Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.17 2020/07/07 02:33:54 rin Exp $	*/
 
 #ifndef _OFPPC_AUTOCONF_H_
 #define _OFPPC_AUTOCONF_H_
@@ -32,6 +32,7 @@ struct model_data {
 };
 
 extern int console_node;
+extern int ofw_quiesce;		/* XXX not used at the moment */
 extern char model_name[64];
 
 #ifdef _KERNEL

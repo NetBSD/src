@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.169 2019/01/28 02:25:01 sevan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.170 2020/07/07 02:33:54 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.169 2019/01/28 02:25:01 sevan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.170 2020/07/07 02:33:54 rin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -277,11 +277,8 @@ copy_disp_props(device_t dev, int node, prop_dictionary_t dict)
 	uint32_t temp;
 	uint64_t cmap_cb, backlight_cb, brightness_cb;
 	int have_backlight = 0;
-#ifdef PMAC_G5
-	int have_palette = 0;
-#else
 	int have_palette = 1;
-#endif
+
 	if (node != console_node) {
 		/*
 		 * see if any child matches since OF attaches nodes for
@@ -349,6 +346,12 @@ copy_disp_props(device_t dev, int node, prop_dictionary_t dict)
 	if (temp != 0)
 		prop_dictionary_set_uint32(dict, "refclk", temp / 10);
 
+	if (have_palette && ofw_quiesce) {
+		aprint_debug(
+		    "OFW has been quiesced - disabling palette callback\n");
+		have_palette = 0;
+	}
+
 	if (have_palette) {
 		gfb_cb.gcc_cookie = (void *)console_instance;
 		gfb_cb.gcc_set_mapreg = of_set_palette;
@@ -364,6 +367,13 @@ copy_disp_props(device_t dev, int node, prop_dictionary_t dict)
 		    sizeof(temp)) == 4) {
 		have_backlight = 1;
 	}
+
+	if (have_backlight && ofw_quiesce) {
+		aprint_debug(
+		    "OFW has been quiesced - disabling backlight callbacks\n");
+		have_palette = 0;
+	}
+
 	if (have_backlight) {
 
 		gpc_backlight.gpc_cookie = (void *)console_instance;
