@@ -1,4 +1,4 @@
-.\"	$NetBSD: m4.1,v 1.27 2016/01/17 11:24:28 wiz Exp $
+.\"	$NetBSD: m4.1,v 1.27.18.1 2020/07/07 10:40:46 martin Exp $
 .\"	@(#) $OpenBSD: m4.1,v 1.56 2009/10/14 17:19:47 sthen Exp $
 .\"
 .\" Copyright (c) 1989, 1993
@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 16, 2015
+.Dd June 25, 2020
 .Dt M4 1
 .Os
 .Sh NAME
@@ -46,7 +46,6 @@
 .Sm on
 .Oc
 .Op Fl d Ar flags
-.Op Fl e Ar filename
 .Op Fl F Ar filename
 .Op Fl I Ar dirname
 .Op Fl L Ar number
@@ -138,8 +137,6 @@ By default, trace is set to
 Warnings make
 .Nm
 exit.
-.It Fl e , Fl Fl error-output Ar filename
-Redirect error output to filename.
 .It Fl F , Fl Fl freeze-state Ar filename
 Save the input state to
 .Ar filename .
@@ -166,7 +163,7 @@ Set unbuffered output, disable tty signals.
 .It Fl L , Fl Fl nesting-limit
 Set the nesting limit in macro expansions.
 This is unimplemented and unlimited.
-.It Fl o Ar filename
+.It Fl o , Fl Fl error-output Ar filename
 Send trace output to
 .Ar filename .
 .It Fl P , Fl Fl prefix-builtins
