@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.31 2020/07/07 00:41:32 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.32 2020/07/07 00:49:09 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.31 2020/07/07 00:41:32 rin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.32 2020/07/07 00:49:09 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -112,15 +112,13 @@ mchk_exception(struct trapframe *tf, ksiginfo_t *ksi)
 	struct cpu_info * const ci = curcpu();
 	int rv = EFAULT;
 
-	if (usertrap)
+	if (usertrap) {
 		ci->ci_ev_umchk.ev_count++;
-
-	if (rv != 0 && usertrap) {
 		KSI_INIT_TRAP(ksi);
-		ksi->ksi_signo = SIGSEGV;
-		ksi->ksi_trap = EXC_DSI;
-		ksi->ksi_code = SEGV_ACCERR;
+		ksi->ksi_signo = SIGBUS;
+		ksi->ksi_trap = EXC_MCHK;
 		ksi->ksi_addr = (void *)faultva;
+		ksi->ksi_code = BUS_OBJERR;
 	}
 
 	return rv;
@@ -169,8 +167,6 @@ pagefault(struct vm_map *map, vaddr_t va, vm_prot_t ftype, bool usertrap)
 		rv = uvm_fault(map, trunc_page(va), ftype);
 		if (rv == 0)
 			uvm_grow(l->l_proc, trunc_page(va));
-		if (rv == EACCES)
-			rv = EFAULT;
 	} else {
 		if (cpu_intr_p())
 			return EFAULT;
@@ -184,10 +180,31 @@ pagefault(struct vm_map *map, vaddr_t va, vm_prot_t ftype, bool usertrap)
 			if (rv == 0)
 				uvm_grow(l->l_proc, trunc_page(va));
 		}
-		if (rv == EACCES)
-			rv = EFAULT;
 	}
 	return rv;
+}
+
+static void
+vm_signal(int error, int trap, vaddr_t addr, ksiginfo_t *ksi)
+{
+
+	KSI_INIT_TRAP(ksi);
+	switch (error) {
+	case EINVAL:
+		ksi->ksi_signo = SIGBUS;
+		ksi->ksi_code = BUS_ADRERR;
+		break;
+	case EACCES:
+		ksi->ksi_signo = SIGSEGV;
+		ksi->ksi_code = SEGV_ACCERR;
+		break;
+	default:
+		ksi->ksi_signo = SIGSEGV;
+		ksi->ksi_code = SEGV_MAPERR;
+		break;
+	}
+	ksi->ksi_trap = trap;
+	ksi->ksi_addr = (void *)addr;
 }
 
 static int
@@ -236,16 +253,9 @@ dsi_exception(struct trapframe *tf, ksiginfo_t *ksi)
 
 	int rv = pagefault(faultmap, faultva, ftype, usertrap);
 
-	/*
-	 * We can't get a MAPERR here since that's a different exception.
-	 */
 	if (__predict_false(rv != 0 && usertrap)) {
 		ci->ci_ev_udsi_fatal.ev_count++;
-		KSI_INIT_TRAP(ksi);
-		ksi->ksi_signo = SIGSEGV;
-		ksi->ksi_trap = EXC_DSI;
-		ksi->ksi_code = SEGV_ACCERR;
-		ksi->ksi_addr = (void *)faultva;
+		vm_signal(rv, EXC_DSI, faultva, ksi);
 	}
 	return rv;
 }
@@ -313,16 +323,8 @@ isi_exception(struct trapframe *tf, ksiginfo_t *ksi)
 	    usertrap);
 
 	if (__predict_false(rv != 0 && usertrap)) {
-		/*
-		 * We can't get a MAPERR here since
-		 * that's a different exception.
-		 */
 		ci->ci_ev_isi_fatal.ev_count++;
-		KSI_INIT_TRAP(ksi);
-		ksi->ksi_signo = SIGSEGV;
-		ksi->ksi_trap = EXC_ISI;
-		ksi->ksi_code = SEGV_ACCERR;
-		ksi->ksi_addr = (void *)tf->tf_srr0; /* not truncated */
+		vm_signal(rv, EXC_ISI, tf->tf_srr0, ksi);
 	}
 	UVMHIST_LOG(pmapexechist, "<- %d", rv, 0,0,0);
 	return rv;
@@ -358,11 +360,7 @@ dtlb_exception(struct trapframe *tf, ksiginfo_t *ksi)
 
 	if (__predict_false(rv != 0 && usertrap)) {
 		ci->ci_ev_udsi_fatal.ev_count++;
-		KSI_INIT_TRAP(ksi);
-		ksi->ksi_signo = SIGSEGV;
-		ksi->ksi_trap = EXC_DSI;
-		ksi->ksi_code = (rv == EACCES ? SEGV_ACCERR : SEGV_MAPERR);
-		ksi->ksi_addr = (void *)faultva;
+		vm_signal(rv, EXC_DSI, faultva, ksi);
 	}
 	return rv;
 }
@@ -382,11 +380,7 @@ itlb_exception(struct trapframe *tf, ksiginfo_t *ksi)
 
 	if (__predict_false(rv != 0 && usertrap)) {
 		ci->ci_ev_isi_fatal.ev_count++;
-		KSI_INIT_TRAP(ksi);
-		ksi->ksi_signo = SIGSEGV;
-		ksi->ksi_trap = EXC_ISI;
-		ksi->ksi_code = (rv == EACCES ? SEGV_ACCERR : SEGV_MAPERR);
-		ksi->ksi_addr = (void *)tf->tf_srr0;
+		vm_signal(rv, EXC_ISI, tf->tf_srr0, ksi);
 	}
 	return rv;
 }
@@ -880,6 +874,7 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 			    p->p_pid, l->l_lid, p->p_comm,
 			    l->l_cred ?  kauth_cred_geteuid(l->l_cred) : -1);
 			ksi.ksi_signo = SIGKILL;
+			ksi.ksi_code = 0;
 		}
 		if (rv != 0) {
 			/*
