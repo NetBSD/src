@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.357.4.4 2020/07/07 11:56:57 martin Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.357.4.5 2020/07/08 13:48:36 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.357.4.4 2020/07/07 11:56:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.357.4.5 2020/07/08 13:48:36 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1272,6 +1272,12 @@ tcp_input(struct mbuf *m, ...)
 	}
 #endif
 
+	IP6_EXTHDR_GET(th, struct tcphdr *, m, toff, sizeof(struct tcphdr));
+	if (th == NULL) {
+		TCP_STATINC(TCP_STAT_RCVSHORT);
+		return;
+	}
+
 	/*
 	 * Enforce alignment requirements that are violated in
 	 * some cases, see kern/50766 for details.
@@ -1301,15 +1307,8 @@ tcp_input(struct mbuf *m, ...)
 	case 4:
 		af = AF_INET;
 		iphlen = sizeof(struct ip);
-		IP6_EXTHDR_GET(th, struct tcphdr *, m, toff,
-			sizeof(struct tcphdr));
-		if (th == NULL) {
-			TCP_STATINC(TCP_STAT_RCVSHORT);
-			return;
-		}
 		/* We do the checksum after PCB lookup... */
 		len = ntohs(ip->ip_len);
-		tlen = len - toff;
 		iptos = ip->ip_tos;
 		break;
 #endif
@@ -1317,13 +1316,6 @@ tcp_input(struct mbuf *m, ...)
 	case 6:
 		iphlen = sizeof(struct ip6_hdr);
 		af = AF_INET6;
-		IP6_EXTHDR_GET(th, struct tcphdr *, m, toff,
-			sizeof(struct tcphdr));
-		if (th == NULL) {
-			TCP_STATINC(TCP_STAT_RCVSHORT);
-			return;
-		}
-
 		/* Be proactive about malicious use of IPv4 mapped address */
 		if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
 		    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst)) {
@@ -1355,7 +1347,6 @@ tcp_input(struct mbuf *m, ...)
 
 		/* We do the checksum after PCB lookup... */
 		len = m->m_pkthdr.len;
-		tlen = len - toff;
 		iptos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
 		break;
 #endif
@@ -1363,6 +1354,8 @@ tcp_input(struct mbuf *m, ...)
 		m_freem(m);
 		return;
 	}
+
+	tlen = len - toff;
 
 	/*
 	 * Check that TCP offset makes sense,
