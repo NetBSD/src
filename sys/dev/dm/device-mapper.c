@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.60 2020/01/16 07:18:08 maya Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.61 2020/07/08 15:07:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -402,7 +402,7 @@ dm_cmd_to_fun(prop_dictionary_t dm_dict)
 		return EINVAL;
 
 	for (i = 0; cmd_fn[i].cmd != NULL; i++)
-		if (prop_string_equals_cstring(command, cmd_fn[i].cmd))
+		if (prop_string_equals_string(command, cmd_fn[i].cmd))
 			break;
 
 	if (!cmd_fn[i].allowed &&
