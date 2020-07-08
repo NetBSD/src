@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.195 2020/06/29 23:40:28 riastradh Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.196 2020/07/08 13:26:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.195 2020/06/29 23:40:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.196 2020/07/08 13:26:22 skrll Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -553,7 +553,7 @@ sys_swapctl(struct lwp *l, const struct sys_swapctl_args *uap, register_t *retva
 		    NULL, sizeof(struct swapent), retval);
 		UVMHIST_LOG(pdhist, "<- done SWAP_STATS", 0, 0, 0, 0);
 		goto out;
-	
+
 	case SWAP_GETDUMPDEV:
 		error = copyout(&dumpdev, SCARG(uap, arg), sizeof(dumpdev));
 		goto out;
