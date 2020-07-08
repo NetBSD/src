@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.13 2020/05/13 06:08:51 ryo Exp $	*/
+/*	$NetBSD: fault.c,v 1.14 2020/07/08 03:45:13 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.13 2020/05/13 06:08:51 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.14 2020/07/08 03:45:13 ryo Exp $");
 
 #include "opt_compat_netbsd32.h"
 #include "opt_ddb.h"
@@ -333,15 +333,14 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass)
 		/* fault address is pc. the causal instruction cannot be read */
 		len += snprintf(panicinfo + len, sizeof(panicinfo) - len,
 		    ": opcode unknown");
-	} else {
-		len += snprintf(panicinfo + len, sizeof(panicinfo) - len,
-		    ": opcode %08x", *(uint32_t *)tf->tf_pc);
+	}
 #ifdef DDB
+	else {
 		/* ...and disassemble the instruction */
 		len += snprintf(panicinfo + len, sizeof(panicinfo) - len,
-		    ": %s", strdisasm(tf->tf_pc));
-#endif
+		    ": %s", strdisasm(tf->tf_pc, tf->tf_spsr));
 	}
+#endif
 
 	if (user) {
 #if defined(DEBUG_DDB_ON_USERFAULT) && defined(DDB)
