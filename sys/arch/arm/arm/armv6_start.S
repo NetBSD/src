@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.17 2020/07/03 06:15:27 skrll Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.18 2020/07/08 10:17:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -230,6 +230,8 @@ generic_savevars:
 	 */
 	.section "_init_memory", "aw", %nobits
 	.p2align INIT_ARM_STACK_SHIFT
+	.global start_stacks_bottom
+	.global start_stacks_top
 start_stacks_bottom:
 	.space	INIT_ARM_STACK_SIZE * MAXCPUS
 start_stacks_top:

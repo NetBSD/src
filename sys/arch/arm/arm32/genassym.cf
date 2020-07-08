@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.92 2020/07/08 10:04:20 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.93 2020/07/08 10:18:00 skrll Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -31,7 +31,7 @@
 # SUCH DAMAGE.
 
 if defined(_KERNEL_OPT)
-include "opt_compat_netbsd.h"
+include "opt_arm_start.h"
 include "opt_execfmt.h"
 include "opt_multiprocessor.h"
 endif
@@ -71,6 +71,10 @@ endif
 
 ifdef __HAVE_FAST_SOFTINTS
 define	__HAVE_FAST_SOFTINTS	1
+endif
+
+ifdef __HAVE_GENERIC_START
+define	__HAVE_GENERIC_START	1
 endif
 
 ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
