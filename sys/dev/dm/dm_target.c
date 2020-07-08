@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.40 2020/01/21 16:27:53 tkusumi Exp $      */
+/*        $NetBSD: dm_target.c,v 1.41 2020/07/08 15:07:13 thorpej Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.40 2020/01/21 16:27:53 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.41 2020/07/08 15:07:13 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -285,7 +285,7 @@ dm_target_prop_list(void)
 
 		target_dict = prop_dictionary_create();
 		ver = prop_array_create();
-		prop_dictionary_set_cstring(target_dict, DM_TARGETS_NAME,
+		prop_dictionary_set_string(target_dict, DM_TARGETS_NAME,
 		    dm_target->name);
 
 		for (i = 0; i < 3; i++)

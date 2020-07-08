@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.49 2019/12/23 16:17:35 tkusumi Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.50 2020/07/08 15:07:13 thorpej Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.49 2019/12/23 16:17:35 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.50 2020/07/08 15:07:13 thorpej Exp $");
 
 /*
  * Locking is used to synchronise between ioctl calls and between dm_table's
@@ -202,8 +202,8 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 	uuid = NULL;
 
 	/* Get needed values from dictionary. */
-	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME, &name);
-	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_UUID, &uuid);
+	prop_dictionary_get_string(dm_dict, DM_IOCTL_NAME, &name);
+	prop_dictionary_get_string(dm_dict, DM_IOCTL_UUID, &uuid);
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
 
 	dm_dbg_print_flags(flags);
@@ -323,8 +323,8 @@ dm_dev_rename_ioctl(prop_dictionary_t dm_dict)
 	minor = 0;
 
 	/* Get needed values from dictionary. */
-	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME, &name);
-	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_UUID, &uuid);
+	prop_dictionary_get_string(dm_dict, DM_IOCTL_NAME, &name);
+	prop_dictionary_get_string(dm_dict, DM_IOCTL_UUID, &uuid);
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_MINOR, &minor);
 
@@ -332,7 +332,7 @@ dm_dev_rename_ioctl(prop_dictionary_t dm_dict)
 
 	cmd_array = prop_dictionary_get(dm_dict, DM_IOCTL_CMD_DATA);
 
-	prop_array_get_cstring_nocopy(cmd_array, 0, &n_name);
+	prop_array_get_string(cmd_array, 0, &n_name);
 
 	if (strlen(n_name) + 1 > DM_NAME_LEN)
 		return EINVAL;
@@ -351,7 +351,7 @@ dm_dev_rename_ioctl(prop_dictionary_t dm_dict)
 
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_OPEN, dmv->table_head.io_cnt);
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_MINOR, dmv->minor);
-	prop_dictionary_set_cstring(dm_dict, DM_IOCTL_UUID, dmv->uuid);
+	prop_dictionary_set_string(dm_dict, DM_IOCTL_UUID, dmv->uuid);
 
 	dm_dev_insert(dmv);
 
@@ -375,8 +375,8 @@ dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
 	uuid = NULL;
 
 	/* Get needed values from dictionary. */
-	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME, &name);
-	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_UUID, &uuid);
+	prop_dictionary_get_string(dm_dict, DM_IOCTL_NAME, &name);
+	prop_dictionary_get_string(dm_dict, DM_IOCTL_UUID, &uuid);
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_MINOR, &minor);
 
@@ -415,8 +415,8 @@ dm_dev_status_ioctl(prop_dictionary_t dm_dict)
 	uuid = NULL;
 	flags = 0;
 
-	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME, &name);
-	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_UUID, &uuid);
+	prop_dictionary_get_string(dm_dict, DM_IOCTL_NAME, &name);
+	prop_dictionary_get_string(dm_dict, DM_IOCTL_UUID, &uuid);
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_MINOR, &minor);
 
@@ -428,7 +428,7 @@ dm_dev_status_ioctl(prop_dictionary_t dm_dict)
 
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_OPEN, dmv->table_head.io_cnt);
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_MINOR, dmv->minor);
-	prop_dictionary_set_cstring(dm_dict, DM_IOCTL_UUID, dmv->uuid);
+	prop_dictionary_set_string(dm_dict, DM_IOCTL_UUID, dmv->uuid);
 
 	if (dmv->flags & DM_SUSPEND_FLAG)
 		DM_ADD_FLAG(flags, DM_SUSPEND_FLAG);
@@ -469,8 +469,8 @@ dm_dev_suspend_ioctl(prop_dictionary_t dm_dict)
 	uuid = NULL;
 	flags = 0;
 
-	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME, &name);
-	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_UUID, &uuid);
+	prop_dictionary_get_string(dm_dict, DM_IOCTL_NAME, &name);
+	prop_dictionary_get_string(dm_dict, DM_IOCTL_UUID, &uuid);
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_MINOR, &minor);
 
@@ -514,8 +514,8 @@ dm_dev_resume_ioctl(prop_dictionary_t dm_dict)
 	 * printf("%s\n",xml);
 	 */
 
-	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME, &name);
-	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_UUID, &uuid);
+	prop_dictionary_get_string(dm_dict, DM_IOCTL_NAME, &name);
+	prop_dictionary_get_string(dm_dict, DM_IOCTL_UUID, &uuid);
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_MINOR, &minor);
 
@@ -570,8 +570,8 @@ dm_table_clear_ioctl(prop_dictionary_t dm_dict)
 	flags = 0;
 	minor = 0;
 
-	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME, &name);
-	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_UUID, &uuid);
+	prop_dictionary_get_string(dm_dict, DM_IOCTL_NAME, &name);
+	prop_dictionary_get_string(dm_dict, DM_IOCTL_UUID, &uuid);
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_MINOR, &minor);
 
@@ -615,8 +615,8 @@ dm_table_deps_ioctl(prop_dictionary_t dm_dict)
 	uuid = NULL;
 	flags = 0;
 
-	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME, &name);
-	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_UUID, &uuid);
+	prop_dictionary_get_string(dm_dict, DM_IOCTL_NAME, &name);
+	prop_dictionary_get_string(dm_dict, DM_IOCTL_UUID, &uuid);
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_MINOR, &minor);
 
@@ -628,8 +628,8 @@ dm_table_deps_ioctl(prop_dictionary_t dm_dict)
 		return ENOENT;
 	}
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_MINOR, dmv->minor);
-	prop_dictionary_set_cstring(dm_dict, DM_IOCTL_NAME, dmv->name);
-	prop_dictionary_set_cstring(dm_dict, DM_IOCTL_UUID, dmv->uuid);
+	prop_dictionary_set_string(dm_dict, DM_IOCTL_NAME, dmv->name);
+	prop_dictionary_set_string(dm_dict, DM_IOCTL_UUID, dmv->uuid);
 
 	aprint_debug("Getting table deps for device: %s\n", dmv->name);
 
@@ -720,8 +720,8 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 	 * printf("%s\n",xml);
 	 */
 
-	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME, &name);
-	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_UUID, &uuid);
+	prop_dictionary_get_string(dm_dict, DM_IOCTL_NAME, &name);
+	prop_dictionary_get_string(dm_dict, DM_IOCTL_UUID, &uuid);
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_MINOR, &minor);
 
@@ -753,9 +753,11 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 
 	while ((target_dict = prop_object_iterator_next(iter)) != NULL) {
 		int ret;
-		char *str = NULL;
+		const char *cp;
+		char *str;
+		size_t strsz;
 
-		prop_dictionary_get_cstring_nocopy(target_dict,
+		prop_dictionary_get_string(target_dict,
 		    DM_TABLE_TYPE, &type);
 		/*
 		 * If we want to deny table with 2 or more different
@@ -786,8 +788,13 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 		 * null and therefore it should be checked before we try to
 		 * use it.
 		 */
-		prop_dictionary_get_cstring(target_dict,
-		    DM_TABLE_PARAMS, (char **) &str);
+		cp = NULL;
+		prop_dictionary_get_string(target_dict,
+		    DM_TABLE_PARAMS, &cp);
+		if (cp == NULL)
+			str = NULL;
+		else
+			str = kmem_strdupsize(cp, &strsz, KM_SLEEP);
 
 		if (SLIST_EMPTY(tbl) || last_table == NULL)
 			/* insert this table to head */
@@ -798,14 +805,17 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 		if ((ret = dm_table_init(target, table_en, str)) != 0) {
 			dm_table_release(&dmv->table_head, DM_TABLE_INACTIVE);
 			dm_table_destroy(&dmv->table_head, DM_TABLE_INACTIVE);
-			free(str, M_TEMP);
+
+			if (str != NULL)
+				kmem_free(str, strsz);
 
 			dm_dev_unbusy(dmv);
 			prop_object_iterator_release(iter);
 			return ret;
 		}
 		last_table = table_en;
-		free(str, M_TEMP);
+		if (str != NULL)
+			kmem_free(str, strsz);
 	}
 	prop_object_iterator_release(iter);
 
@@ -948,7 +958,7 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 		prop_dictionary_set_uint64(target_dict, DM_TABLE_LENGTH,
 		    table_en->length);
 
-		prop_dictionary_set_cstring(target_dict, DM_TABLE_TYPE,
+		prop_dictionary_set_string(target_dict, DM_TABLE_TYPE,
 		    table_en->target->name);
 
 		/* dm_table_get_cur_actv.table ?? */
@@ -959,7 +969,7 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 		 * Explicitly clear DM_TABLE_PARAMS to prevent dmsetup(8) from
 		 * printing junk when DM_TABLE_PARAMS was never initialized.
 		 */
-		prop_dictionary_set_cstring(target_dict, DM_TABLE_PARAMS, "");
+		prop_dictionary_set_string(target_dict, DM_TABLE_PARAMS, "");
 
 		is_table = (flags & DM_STATUS_TABLE_FLAG) ? 1 : 0;
 		if (is_table && table_en->target->table)
@@ -972,7 +982,7 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 			params = NULL;
 
 		if (params != NULL) {
-			prop_dictionary_set_cstring(target_dict,
+			prop_dictionary_set_string(target_dict,
 			    DM_TABLE_PARAMS, params);
 			kmem_free(params, DM_MAX_PARAMS_SIZE);
 		}
