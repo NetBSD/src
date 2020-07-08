@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_debug.c,v 1.7 2020/03/23 00:37:19 chs Exp $ */
+/* $NetBSD: acpi_debug.c,v 1.8 2020/07/08 13:41:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_debug.c,v 1.7 2020/03/23 00:37:19 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_debug.c,v 1.8 2020/07/08 13:41:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -250,9 +250,9 @@ acpi_debug_getkey(prop_dictionary_t dict, uint32_t arg)
 
 	while ((obj = prop_object_iterator_next(i)) != NULL) {
 
-		key = prop_dictionary_keysym_cstring_nocopy(obj);
+		key = prop_dictionary_keysym_value(obj);
 		val = prop_dictionary_get(dict, key);
-		num = prop_number_unsigned_integer_value(val);
+		num = prop_number_unsigned_value(val);
 
 		if (arg == num)
 			return key;
@@ -284,7 +284,7 @@ acpi_debug_sysctl_layer(SYSCTLFN_ARGS)
 	if (obj == NULL)
 		return EINVAL;
 
-	AcpiDbgLayer = prop_number_unsigned_integer_value(obj);
+	AcpiDbgLayer = prop_number_unsigned_value(obj);
 
 	(void)memcpy(rnode->sysctl_data, node.sysctl_data, ACPI_DEBUG_MAX);
 
@@ -314,7 +314,7 @@ acpi_debug_sysctl_level(SYSCTLFN_ARGS)
 	if (obj == NULL)
 		return EINVAL;
 
-	AcpiDbgLevel = prop_number_unsigned_integer_value(obj);
+	AcpiDbgLevel = prop_number_unsigned_value(obj);
 
 	(void)memcpy(rnode->sysctl_data, node.sysctl_data, ACPI_DEBUG_MAX);
 
