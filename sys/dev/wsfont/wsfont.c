@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.67 2020/03/05 18:20:38 fcambus Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.68 2020/07/08 12:14:19 fcambus Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.67 2020/03/05 18:20:38 fcambus Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.68 2020/07/08 12:14:19 fcambus Exp $");
 
 #include "opt_wsfont.h"
 
@@ -170,6 +170,11 @@ __KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.67 2020/03/05 18:20:38 fcambus Exp $");
 #include <dev/wsfont/spleen5x8.h>
 #endif
 
+#ifdef FONT_SPLEEN6x12
+#define HAVE_FONT 1
+#include <dev/wsfont/spleen6x12.h>
+#endif
+
 #ifdef FONT_SPLEEN8x16
 #define HAVE_FONT 1
 #include <dev/wsfont/spleen8x16.h>
@@ -289,6 +294,9 @@ static struct font builtin_fonts[] = {
 #endif
 #ifdef FONT_SPLEEN5x8
 	{ { NULL, NULL }, &spleen5x8, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_SPLEEN6x12
+	{ { NULL, NULL }, &spleen6x12, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 #ifdef FONT_SPLEEN8x16
 	{ { NULL, NULL }, &spleen8x16, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
