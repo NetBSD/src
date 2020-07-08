@@ -4,7 +4,7 @@ on most libraries.
 
 Its use is as follow:
 
-	[19:41:13] agc@netbsd-002 ...external/bsd/sys_info [4568] > ./sys_info -a
+	[19:41:13] agc@netbsd-002 ...external/bsd/sys_info [4568] > ./sys_info
 	awk-20121220
 	bind-9.10.3pl3
 	bzip2-1.0.6
@@ -34,9 +34,6 @@ Its use is as follow:
 	openssh-7.1
 	NetBSD-7.99.26
 	[19:41:38] agc@netbsd-002 ...external/bsd/sys_info [4571] >
-
-The -a option can be given to the script to print out the information
-on all known components.
 
 The sys_info script also works on libraries, returning their
 "versions" as given by the shared object version numbers.
