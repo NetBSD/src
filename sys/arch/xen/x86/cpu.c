@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.137 2020/06/27 09:54:08 jdolecek Exp $	*/
+/*	$NetBSD: cpu.c,v 1.138 2020/07/08 11:11:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.137 2020/06/27 09:54:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.138 2020/07/08 11:11:00 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -232,6 +232,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	ci->ci_cpuid = caa->cpu_number;
 	ci->ci_vcpu = NULL;
 	ci->ci_index = nphycpu++;
+	ci->ci_kfpu_spl = -1;
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -391,6 +392,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 	ci->ci_dev = self;
 	ci->ci_cpuid = cpunum;
 	ci->ci_vcpuid = cpunum;
+	ci->ci_kfpu_spl = -1;
 
 	KASSERT(HYPERVISOR_shared_info != NULL);
 	KASSERT(cpunum < XEN_LEGACY_MAX_VCPUS);
