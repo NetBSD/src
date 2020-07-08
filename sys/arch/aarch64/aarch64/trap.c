@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.30 2020/07/02 13:04:46 rin Exp $ */
+/* $NetBSD: trap.c,v 1.31 2020/07/08 03:45:13 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.30 2020/07/02 13:04:46 rin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.31 2020/07/08 03:45:13 ryo Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -474,7 +474,7 @@ trap_el0_sync(struct trapframe *tf)
 			    curlwp->l_proc->p_pid, curlwp->l_proc->p_comm,
 			    l->l_cred ? kauth_cred_geteuid(l->l_cred) : -1,
 			    eclass_trapname(eclass), tf->tf_esr, tf->tf_pc,
-			    strdisasm(tf->tf_pc));
+			    strdisasm(tf->tf_pc, tf->tf_spsr));
 		}
 #endif
 		/* illegal or not implemented instruction */
@@ -518,16 +518,16 @@ interrupt(struct trapframe *tf)
  */
 #define THUMB_32BIT(hi) (((hi) & 0xe000) == 0xe000 && ((hi) & 0x1800))
 
-static int
-fetch_arm_insn(struct trapframe *tf, uint32_t *insn)
+int
+fetch_arm_insn(uint64_t pc, uint64_t spsr, uint32_t *insn)
 {
 
 	/* THUMB? */
-	if (tf->tf_spsr & SPSR_A32_T) {
-		uint16_t *pc = (uint16_t *)(tf->tf_pc & ~1UL); /* XXX */
+	if (spsr & SPSR_A32_T) {
+		uint16_t *p = (uint16_t *)(pc & ~1UL); /* XXX */
 		uint16_t hi, lo;
 
-		if (ufetch_16(pc, &hi))
+		if (ufetch_16(p, &hi))
 			return -1;
 
 		if (!THUMB_32BIT(hi)) {
@@ -537,14 +537,14 @@ fetch_arm_insn(struct trapframe *tf, uint32_t *insn)
 		}
 
 		/* 32-bit Thumb instruction */
-		if (ufetch_16(pc + 1, &lo))
+		if (ufetch_16(p + 1, &lo))
 			return -1;
 
 		*insn = ((uint32_t)hi << 16) | lo;
 		return 4;
 	}
 
-	if (ufetch_32((uint32_t *)tf->tf_pc, insn))
+	if (ufetch_32((uint32_t *)pc, insn))
 		return -1;
 
 	return 4;
@@ -557,7 +557,7 @@ emul_arm_insn(struct trapframe *tf)
 	uint32_t insn;
 	int insn_size;
 
-	insn_size = fetch_arm_insn(tf, &insn);
+	insn_size = fetch_arm_insn(tf->tf_pc, tf->tf_spsr, &insn);
 
 	switch (insn_size) {
 	case 2:
@@ -707,7 +707,7 @@ unknown:
 			    curlwp->l_proc->p_pid, curlwp->l_proc->p_comm,
 			    l->l_cred ? kauth_cred_geteuid(l->l_cred) : -1,
 			    eclass_trapname(eclass), tf->tf_esr, tf->tf_pc,
-			    strdisasm_aarch32(tf->tf_pc));
+			    strdisasm(tf->tf_pc, tf->tf_spsr));
 		}
 #endif
 		/* illegal or not implemented instruction */
