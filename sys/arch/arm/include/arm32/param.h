@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.30 2020/02/13 07:40:24 skrll Exp $	*/
+/*	$NetBSD: param.h,v 1.31 2020/07/08 06:54:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -36,7 +36,7 @@
 #define	_ARM_ARM32_PARAM_H_
 
 #ifdef _KERNEL_OPT
-# include "opt_arm32_pmap.h"
+#include "opt_arm32_pmap.h"
 #endif
 
 /*
