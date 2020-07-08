@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.47 2020/07/07 03:38:49 thorpej Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.48 2020/07/08 13:12:35 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.47 2020/07/07 03:38:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.48 2020/07/08 13:12:35 thorpej Exp $");
 
 #include "opt_pci.h"
 
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.47 2020/07/07 03:38:49 thorpej Exp $")
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pccbbreg.h>
 
-int pci_conf_debug = 1;
+int pci_conf_debug = 0;
 
 #if !defined(MIN)
 #define	MIN(a,b) (((a)<(b))?(a):(b))
