@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.13 2020/07/01 08:01:07 ryo Exp $	*/
+/*	$NetBSD: machdep.h,v 1.14 2020/07/08 03:45:13 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -93,6 +93,7 @@ void configure_cpu_traps(void);
 void cpu_dosoftints(void);
 void cpu_switchto_softint(struct lwp *, int);
 void dosoftints(void);
+int fetch_arm_insn(uint64_t, uint64_t, uint32_t *);
 void trap_doast(struct trapframe *);
 
 void trap_el1t_sync(struct trapframe *);
