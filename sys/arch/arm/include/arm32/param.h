@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.31 2020/07/08 06:54:57 skrll Exp $	*/
+/*	$NetBSD: param.h,v 1.32 2020/07/08 06:58:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -54,8 +54,8 @@
 
 #define SSIZE		1		/* initial stack size/NBPG */
 #define SINCR		1		/* increment of stack/NBPG */
-#define USPACE		8192		/* total size of u-area */
-#define UPAGES		(USPACE / NBPG)	/* pages of u-area */
+#define UPAGES		2
+#define USPACE		(UPAGES * NBPG)	/* total size of u-area */
 
 #ifndef MSGBUFSIZE
 #define MSGBUFSIZE	16384	 	/* default message buffer size */
