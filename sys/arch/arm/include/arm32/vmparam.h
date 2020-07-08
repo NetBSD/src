@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.47 2020/01/13 20:36:44 christos Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.48 2020/07/08 07:59:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -88,11 +88,7 @@
  * Mach derived constants
  */
 #define	VM_MIN_ADDRESS		((vaddr_t) PAGE_SIZE)
-#ifdef ARM_MMU_EXTENDED
-#define	VM_MAXUSER_ADDRESS	((vaddr_t) 0x80000000 - PAGE_SIZE)
-#else
 #define	VM_MAXUSER_ADDRESS	((vaddr_t) KERNEL_BASE - PAGE_SIZE)
-#endif
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) KERNEL_BASE)
