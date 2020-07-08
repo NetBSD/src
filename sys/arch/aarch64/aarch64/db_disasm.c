@@ -1,4 +1,4 @@
-/* $NetBSD: db_disasm.c,v 1.7 2019/10/28 18:15:25 joerg Exp $ */
+/* $NetBSD: db_disasm.c,v 1.8 2020/07/08 03:44:10 ryo Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.7 2019/10/28 18:15:25 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.8 2020/07/08 03:44:10 ryo Exp $");
 
 #include <sys/param.h>
 #include <machine/db_machdep.h>
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.7 2019/10/28 18:15:25 joerg Exp $");
 #include <ddb/db_access.h>
 #include <ddb/db_user.h>
 
+#include <aarch64/cpufunc.h>
 #include <arch/aarch64/aarch64/disasm.h>
 
 static uint32_t
@@ -72,7 +73,24 @@ static char strdisasm_buf[256];
 static uint32_t
 strdisasm_readword(uintptr_t address)
 {
-	return *(uint32_t *)address;
+	/*
+	 * if it cannot be read due to a EFAULT etc.,
+	 * ignores the error and returns 0
+	 */
+	uint32_t word = 0;
+
+	switch (aarch64_addressspace((vaddr_t)address)) {
+	case AARCH64_ADDRSPACE_UPPER:
+		kcopy((void*)address, &word, sizeof(word));
+		break;
+	case AARCH64_ADDRSPACE_LOWER:
+		ufetch_32((uint32_t *)address, &word);
+		break;
+	default:
+		break;
+	}
+
+	return word;
 }
 
 static void __printflike(1, 2)
