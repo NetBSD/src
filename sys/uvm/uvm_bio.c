@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.118 2020/06/25 14:04:30 jdolecek Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.119 2020/07/08 13:26:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.118 2020/06/25 14:04:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.119 2020/07/08 13:26:22 skrll Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -747,12 +747,12 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo, int advice,
 	/*
 	 * during direct access pages need to be held busy to prevent them
 	 * changing identity, and therefore if we read or write an object
-	 * into a mapped view of same we could deadlock while faulting. 
+	 * into a mapped view of same we could deadlock while faulting.
 	 *
 	 * avoid the problem by disallowing direct access if the object
 	 * might be visible somewhere via mmap().
 	 *
-	 * XXX concurrent reads cause thundering herd issues with PG_BUSY. 
+	 * XXX concurrent reads cause thundering herd issues with PG_BUSY.
 	 * In the future enable by default for writes or if ncpu<=2, and
 	 * make the toggle override that.
 	 */
@@ -914,7 +914,7 @@ again:
 		 * dirty.
 		 */
 		if ((flags & UBC_WRITE) != 0) {
-			uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);	
+			uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
 		}
 	}
 	rw_exit(uobj->vmobjlock);
