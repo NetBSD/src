@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.11 2020/03/04 19:28:04 ryo Exp $ */
+/* $NetBSD: vmparam.h,v 1.12 2020/07/08 08:20:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -145,8 +145,7 @@
 
 /*
  * last 254MB of kernel vm area (0xfffffffff0000000-0xffffffffffe00000)
- * may be used for devmap. address must be aligned 2MB (L2_SIZE)
- * see also aarch64/pmap.c:pmap_devmap_*
+ * may be used for devmap.  see aarch64/pmap.c:pmap_devmap_*
  */
 #define VM_KERNEL_IO_ADDRESS	0xfffffffff0000000L
 #define VM_KERNEL_IO_SIZE	(VM_MAX_KERNEL_ADDRESS - VM_KERNEL_IO_ADDRESS)
