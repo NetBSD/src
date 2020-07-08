@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.40 2019/07/14 09:29:21 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.41 2020/07/08 10:18:00 skrll Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -43,7 +43,7 @@
 /* What size should this really be ? It is only used by init_arm() */
 #define INIT_ARM_STACK_SIZE	2048
 
-	RCSID("$NetBSD: locore.S,v 1.40 2019/07/14 09:29:21 skrll Exp $")
+	RCSID("$NetBSD: locore.S,v 1.41 2020/07/08 10:18:00 skrll Exp $")
 
 /*
  * This is for kvm_mkdb, and should be the address of the beginning
@@ -121,13 +121,18 @@ ASEND(uartputc)
 #else
 	.word	_C_LABEL(cpu_info_store)
 #endif
+#if !defined(__HAVE_GENERIC_START)
 	.word	svcstk_end
+#else
+	.word   start_stacks_top
+#endif
 
 .Lmainreturned:
 	.asciz	"main() returned"
 	.align	0
 ASEND(start)
 
+#if !defined(__HAVE_GENERIC_START)
 	.bss
 #ifdef __ARM_EABI__
 	.align	3
@@ -135,6 +140,7 @@ ASEND(start)
 svcstk:
 	.space	INIT_ARM_STACK_SIZE
 svcstk_end:
+#endif
 
 	.text
 	.align	0
