@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.126 2020/06/25 09:58:44 jdolecek Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.127 2020/07/08 13:26:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.126 2020/06/25 09:58:44 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.127 2020/07/08 13:26:22 skrll Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -195,7 +195,7 @@ uvm_pagermapin(struct vm_page **pps, int npages, int flags)
 		(uintptr_t)pps, npages, first_color, 0);
 
 #ifdef PMAP_DIRECT
-	/* 
+	/*
 	 * for a single page the direct mapped segment can be used.
 	 */
 
@@ -285,7 +285,7 @@ uvm_pagermapout(vaddr_t kva, int npages)
 	UVMHIST_LOG(maphist, " (kva=%#jx, npages=%jd)", kva, npages,0,0);
 
 #ifdef PMAP_DIRECT
-	/* 
+	/*
 	 * solitary pages are mapped directly.
 	 */
 

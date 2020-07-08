@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.147 2020/05/25 22:04:51 ad Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.148 2020/07/08 13:26:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.147 2020/05/25 22:04:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.148 2020/07/08 13:26:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -965,7 +965,7 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 		}
 
 		/*
- 		 * if swslot == 0, page hasn't existed before and is zeroed. 
+ 		 * if swslot == 0, page hasn't existed before and is zeroed.
  		 * otherwise we have a "fake/busy/clean" page that we just
  		 * allocated.  do the needed "i/o", reading from swap.
  		 */

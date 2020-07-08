@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.157 2020/03/14 20:23:51 ad Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.158 2020/07/08 13:26:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.157 2020/03/14 20:23:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.158 2020/07/08 13:26:22 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -819,7 +819,7 @@ again:
 
 #ifdef PMAP_GROWKERNEL
 	/*
-	 * These VA allocations happen independently of uvm_map 
+	 * These VA allocations happen independently of uvm_map
 	 * so this allocation must not extend beyond the current limit.
 	 */
 	KASSERTMSG(uvm_maxkaddr >= va + size,
