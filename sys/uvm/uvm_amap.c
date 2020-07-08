@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.120 2020/05/17 15:07:22 ad Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.121 2020/07/08 13:26:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.120 2020/05/17 15:07:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.121 2020/07/08 13:26:22 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -859,7 +859,7 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int flags,
 	}
 
 	/*
-	 * First check and see if we are the only map entry referencing 
+	 * First check and see if we are the only map entry referencing
 	 * he amap we currently have.  If so, then just take it over instead
 	 * of copying it.  Note that we are reading am_ref without lock held
 	 * as the value value can only be one if we have the only reference
@@ -1388,7 +1388,7 @@ amap_swap_off(int startslot, int endslot)
 		if (am) {
 			amap_unlock(am);
 		}
-		
+
 		mutex_enter(&amap_list_lock);
 		KASSERT(LIST_NEXT(&marker_prev, am_list) == &marker_next ||
 		    LIST_NEXT(LIST_NEXT(&marker_prev, am_list), am_list) ==
