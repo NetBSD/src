@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.3 2019/12/01 20:27:26 jmcneill Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.4 2020/07/08 03:45:13 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.3 2019/12/01 20:27:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.4 2020/07/08 03:45:13 ryo Exp $");
 
 #define ELFSIZE		ARCH_ELFSIZE
 
@@ -184,7 +184,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 	old = *where;
 #ifdef DDB
 	snprintf(disasmbuf, sizeof(disasmbuf), "%08x %s",
-	    *insn, strdisasm((vaddr_t)insn));
+	    *insn, strdisasm((vaddr_t)insn), 0);
 #endif
 #endif /* KOBJ_MACHDEP_DEBUG */
 
@@ -348,7 +348,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 #ifdef DDB
 	printf("%s:    insn %s\n", __func__, disasmbuf);
 	printf("%s:      -> %08x %s\n", __func__,
-	    *insn, strdisasm((vaddr_t)insn));
+	    *insn, strdisasm((vaddr_t)insn, 0));
 #endif
 	printf("\n");
 #endif /* KOBJ_MACHDEP_DEBUG */
