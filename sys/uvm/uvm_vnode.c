@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.114 2020/05/25 21:15:10 ad Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.115 2020/07/09 05:57:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.114 2020/05/25 21:15:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.115 2020/07/09 05:57:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -175,9 +175,8 @@ uvn_get(struct uvm_object *uobj, voff_t offset,
 	struct vnode *vp = (struct vnode *)uobj;
 	int error;
 
-	UVMHIST_FUNC("uvn_get"); UVMHIST_CALLED(ubchist);
-
-	UVMHIST_LOG(ubchist, "vp %#jx off 0x%jx", (uintptr_t)vp, (int)offset,
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(ubchist, "vp %#jx off 0x%jx", (uintptr_t)vp, offset,
 	    0, 0);
 
 	if (vp->v_type == VREG && (access_type & VM_PROT_WRITE) == 0
@@ -290,8 +289,8 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
     unsigned int flags, struct uvm_page_array *a, unsigned int nleft)
 {
 	struct vm_page *pg;
-	UVMHIST_FUNC("uvn_findpage"); UVMHIST_CALLED(ubchist);
-	UVMHIST_LOG(ubchist, "vp %#jx off 0x%jx", (uintptr_t)uobj, offset,
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(ubchist, "vp %#jx off 0x%jx", (uintptr_t)uobj, offset,
 	    0, 0);
 
 	/*
@@ -439,7 +438,7 @@ uvm_vnp_setsize(struct vnode *vp, voff_t newsize)
 	struct uvm_object *uobj = &vp->v_uobj;
 	voff_t pgend = round_page(newsize);
 	voff_t oldsize;
-	UVMHIST_FUNC("uvm_vnp_setsize"); UVMHIST_CALLED(ubchist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(ubchist);
 
 	rw_enter(uobj->vmobjlock, RW_WRITER);
 	UVMHIST_LOG(ubchist, "vp %#jx old 0x%jx new 0x%jx",
