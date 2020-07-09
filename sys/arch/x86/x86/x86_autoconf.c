@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.83 2020/07/07 16:14:23 thorpej Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.84 2020/07/09 22:45:54 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.83 2020/07/07 16:14:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.84 2020/07/09 22:45:54 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -579,7 +579,7 @@ device_register(device_t dev, void *aux)
 		int i;
 
 		for (i = 0; imcsmb_device_permitlist[i] != NULL; i++) {
-			prop_string_t pstr = prop_string_create_cstring_nocopy(
+			prop_string_t pstr = prop_string_create_nocopy(
 			    imcsmb_device_permitlist[i]);
 			(void) prop_array_add(permitlist, pstr);
 			prop_object_release(pstr);
@@ -587,7 +587,7 @@ device_register(device_t dev, void *aux)
 		(void) prop_dictionary_set(props,
 					   I2C_PROP_INDIRECT_DEVICE_PERMITLIST,
 					   permitlist);
-		(void) prop_dictionary_set_cstring_nocopy(props,
+		(void) prop_dictionary_set_string_nocopy(props,
 					   I2C_PROP_INDIRECT_PROBE_STRATEGY,
 					   I2C_PROBE_STRATEGY_NONE);
 	}
