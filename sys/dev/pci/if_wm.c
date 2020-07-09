@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.680 2020/07/06 07:51:09 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.681 2020/07/09 06:42:44 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.680 2020/07/06 07:51:09 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.681 2020/07/09 06:42:44 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2888,8 +2888,10 @@ alloc_retry:
 	/* Set device properties (macflags) */
 	prop_dictionary_set_uint32(dict, "macflags", sc->sc_flags);
 
-	snprintb(buf, sizeof(buf), WM_FLAGS, sc->sc_flags);
-	aprint_verbose_dev(sc->sc_dev, "%s\n", buf);
+	if (sc->sc_flags != 0) {
+		snprintb(buf, sizeof(buf), WM_FLAGS, sc->sc_flags);
+		aprint_verbose_dev(sc->sc_dev, "%s\n", buf);
+	}
 
 #ifdef WM_MPSAFE
 	sc->sc_core_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
