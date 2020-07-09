@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.148 2020/07/08 13:26:22 skrll Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.149 2020/07/09 05:57:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.148 2020/07/08 13:26:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.149 2020/07/09 05:57:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -290,8 +290,8 @@ uao_set_swslot(struct uvm_object *uobj, int pageidx, int slot)
 	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
 	struct uao_swhash_elt *elt;
 	int oldslot;
-	UVMHIST_FUNC("uao_set_swslot"); UVMHIST_CALLED(pdhist);
-	UVMHIST_LOG(pdhist, "aobj %#jx pageidx %jd slot %jd",
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(pdhist, "aobj %#jx pageidx %jd slot %jd",
 	    (uintptr_t)aobj, pageidx, slot, 0);
 
 	KASSERT(rw_write_held(uobj->vmobjlock) || uobj->uo_refs == 0);
@@ -583,7 +583,7 @@ uao_detach(struct uvm_object *uobj)
 	struct uvm_page_array a;
 	struct vm_page *pg;
 
-	UVMHIST_FUNC("uao_detach"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	/*
 	 * Detaching from kernel object is a NOP.
@@ -666,7 +666,7 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 	struct uvm_page_array a;
 	struct vm_page *pg;
 	voff_t curoff;
-	UVMHIST_FUNC("uao_put"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	KASSERT(UVM_OBJ_IS_AOBJ(uobj));
 	KASSERT(rw_write_held(uobj->vmobjlock));
@@ -801,11 +801,11 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 	voff_t current_offset;
 	struct vm_page *ptmp;
 	int lcv, gotpages, maxpages, swslot, pageidx;
-	UVMHIST_FUNC("uao_get"); UVMHIST_CALLED(pdhist);
 	bool overwrite = ((flags & PGO_OVERWRITE) != 0);
 	struct uvm_page_array a;
 
-	UVMHIST_LOG(pdhist, "aobj=%#jx offset=%jd, flags=%jd",
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(pdhist, "aobj=%#jx offset=%jd, flags=%jd",
 		    (uintptr_t)uobj, offset, flags,0);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.129 2020/06/11 22:21:05 ad Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.130 2020/07/09 05:57:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.129 2020/06/11 22:21:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.130 2020/07/09 05:57:15 skrll Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -207,7 +207,7 @@ uvmpd_tune(void)
 {
 	int val;
 
-	UVMHIST_FUNC("uvmpd_tune"); UVMHIST_CALLED(pdhist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pdhist);
 
 	/*
 	 * try to keep 0.5% of available RAM free, but limit to between
@@ -244,8 +244,8 @@ uvm_pageout(void *arg)
 	int npages = 0;
 	int extrapages = 0;
 	int fpages;
-	
-	UVMHIST_FUNC("uvm_pageout"); UVMHIST_CALLED(pdhist);
+
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pdhist);
 
 	UVMHIST_LOG(pdhist,"<starting uvm pagedaemon>", 0, 0, 0, 0);
 
@@ -634,7 +634,7 @@ uvmpd_scan_queue(void)
 #endif /* defined(VMSWAP) */
 	int dirtyreacts;
 	krwlock_t *slock;
-	UVMHIST_FUNC("uvmpd_scan_queue"); UVMHIST_CALLED(pdhist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pdhist);
 
 	/*
 	 * swslot is non-zero if we are building a swap cluster.  we want
@@ -883,7 +883,7 @@ static void
 uvmpd_scan(void)
 {
 	int swap_shortage, pages_freed, fpages;
-	UVMHIST_FUNC("uvmpd_scan"); UVMHIST_CALLED(pdhist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pdhist);
 
 	uvmexp.pdrevs++;
 
@@ -1043,7 +1043,7 @@ uvmpd_pool_drain_thread(void *arg)
 		mutex_exit(&bufcache_lock);
 
 		/*
-		 * drain a pool, and then re-enable the freelist cache. 
+		 * drain a pool, and then re-enable the freelist cache.
 		 */
 		(void)pool_drain(&curpool);
 		KASSERT(curpool != NULL);
