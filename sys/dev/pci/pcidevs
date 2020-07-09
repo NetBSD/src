@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1417 2020/06/24 03:35:07 thorpej Exp $
+$NetBSD: pcidevs,v 1.1418 2020/07/09 08:39:46 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -5489,7 +5489,6 @@ product INTEL 100SERIES_LP_I2C_5 0x9d65	100 Series I2C 5
 product INTEL 100SERIES_LP_UART_2 0x9d66 100 Series UART 2
 product INTEL 100SERIES_LP_HDA	0x9d70	100 Series HD Audio
 product INTEL 2HS_U_HDA		0x9d71	200 Series HD Audio
-product INTEL WIFI_LINK_9560_1	0x9df0	Dual Band Wireless AC 9560
 product INTEL 3HS_Y_P_LPC	0x9d83	300 Series Premiun-Y LPC
 product INTEL 3HS_U_P_LPC	0x9d84	300 Series Premium-U LPC
 product INTEL 3HS_U_M_LPC	0x9d84	300 Series Mainstream/Base U LPC
