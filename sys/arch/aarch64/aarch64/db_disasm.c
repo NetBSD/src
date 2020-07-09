@@ -1,4 +1,4 @@
-/* $NetBSD: db_disasm.c,v 1.9 2020/07/08 03:45:13 ryo Exp $ */
+/* $NetBSD: db_disasm.c,v 1.10 2020/07/09 23:43:41 ryo Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.9 2020/07/08 03:45:13 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.10 2020/07/09 23:43:41 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -78,6 +78,7 @@ static char strdisasm_buf[256];
 static uint32_t
 strdisasm_readword(uintptr_t address)
 {
+#ifdef _KERNEL
 	/*
 	 * if it cannot be read due to a EFAULT etc.,
 	 * ignores the error and returns 0
@@ -96,6 +97,9 @@ strdisasm_readword(uintptr_t address)
 	}
 
 	return word;
+#else
+	return *(uint32_t *)address;
+#endif
 }
 
 static void __printflike(1, 2)
