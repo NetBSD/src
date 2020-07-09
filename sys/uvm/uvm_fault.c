@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.227 2020/05/17 19:38:17 ad Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.228 2020/07/09 05:57:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.227 2020/05/17 19:38:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.228 2020/07/09 05:57:15 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -280,7 +280,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 	krw_t lock_type;
 	int error;
 
-	UVMHIST_FUNC("uvmfault_anonget"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 	KASSERT(rw_lock_held(anon->an_lock));
 	KASSERT(anon->an_lock == amap->am_lock);
 
@@ -859,9 +859,8 @@ uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
 	struct vm_page *pages_store[UVM_MAXRANGE], **pages;
 	int error;
 
-	UVMHIST_FUNC("uvm_fault"); UVMHIST_CALLED(maphist);
-
-	UVMHIST_LOG(maphist, "(map=%#jx, vaddr=%#jx, at=%jd, ff=%jd)",
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(maphist, "(map=%#jx, vaddr=%#jx, at=%jd, ff=%jd)",
 	      (uintptr_t)orig_map, vaddr, access_type, fault_flag);
 
 	/* Don't count anything until user interaction is possible */
@@ -979,7 +978,7 @@ uvm_fault_check(
 	struct uvm_object *uobj;
 	vm_prot_t check_prot;
 	int nback, nforw;
-	UVMHIST_FUNC("uvm_fault_check"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	/*
 	 * lookup and lock the maps
@@ -1291,7 +1290,7 @@ uvm_fault_upper_lookup(
 	vaddr_t currva;
 	bool shadowed __unused;
 	bool entered;
-	UVMHIST_FUNC("uvm_fault_upper_lookup"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	/* locked: maps(read), amap(if there) */
 	KASSERT(amap == NULL ||
@@ -1367,7 +1366,7 @@ uvm_fault_upper_neighbor(
 	struct uvm_faultinfo *ufi, const struct uvm_faultctx *flt,
 	vaddr_t currva, struct vm_page *pg, bool readonly)
 {
-	UVMHIST_FUNC("uvm_fault_upper_neighbor"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	/* locked: amap, anon */
 
@@ -1423,7 +1422,7 @@ uvm_fault_upper(
 	struct vm_anon * const anon = anons[flt->centeridx];
 	struct uvm_object *uobj;
 	int error;
-	UVMHIST_FUNC("uvm_fault_upper"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	/* locked: maps(read), amap, anon */
 	KASSERT(rw_lock_op(amap->am_lock) == flt->upper_lock_type);
@@ -1533,7 +1532,7 @@ uvm_fault_upper_loan(
 {
 	struct vm_amap * const amap = ufi->entry->aref.ar_amap;
 	int error = 0;
-	UVMHIST_FUNC("uvm_fault_upper_loan"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	if (!flt->cow_now) {
 
@@ -1599,7 +1598,7 @@ uvm_fault_upper_promote(
 	struct vm_anon * const oanon = anon;
 	struct vm_page *pg;
 	int error;
-	UVMHIST_FUNC("uvm_fault_upper_promote"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist, "  case 1B: COW fault",0,0,0,0);
 	cpu_count(CPU_COUNT_FLT_ACOW, 1);
@@ -1650,7 +1649,7 @@ uvm_fault_upper_direct(
 {
 	struct vm_anon * const oanon = anon;
 	struct vm_page *pg;
-	UVMHIST_FUNC("uvm_fault_upper_direct"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	cpu_count(CPU_COUNT_FLT_ANON, 1);
 	pg = anon->an_page;
@@ -1673,7 +1672,7 @@ uvm_fault_upper_enter(
 	struct pmap *pmap = ufi->orig_map->pmap;
 	vaddr_t va = ufi->orig_rvaddr;
 	struct vm_amap * const amap = ufi->entry->aref.ar_amap;
-	UVMHIST_FUNC("uvm_fault_upper_enter"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	/* locked: maps(read), amap, oanon, anon(if different from oanon) */
 	KASSERT(rw_lock_op(amap->am_lock) == flt->upper_lock_type);
@@ -1763,7 +1762,7 @@ uvm_fault_upper_done(
 {
 	const bool wire_paging = flt->wire_paging;
 
-	UVMHIST_FUNC("uvm_fault_upper_done"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	/*
 	 * ... update the page queues.
@@ -1857,7 +1856,7 @@ uvm_fault_lower(
 	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
 	struct vm_page *uobjpage;
 	int error;
-	UVMHIST_FUNC("uvm_fault_lower"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	/*
 	 * now, if the desired page is not shadowed by the amap and we have
@@ -1979,7 +1978,7 @@ uvm_fault_lower_lookup(
 	int lcv, gotpages;
 	vaddr_t currva;
 	bool entered;
-	UVMHIST_FUNC("uvm_fault_lower_lookup"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	rw_enter(uobj->vmobjlock, flt->lower_lock_type);
 
@@ -2122,7 +2121,7 @@ uvm_fault_lower_io(
 	voff_t uoff;
 	vm_prot_t access_type;
 	int advice;
-	UVMHIST_FUNC("uvm_fault_lower_io"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	/* update rusage counters */
 	curlwp->l_ru.ru_majflt++;
@@ -2266,7 +2265,7 @@ uvm_fault_lower_direct(
 	struct uvm_object *uobj, struct vm_page *uobjpage)
 {
 	struct vm_page *pg;
-	UVMHIST_FUNC("uvm_fault_lower_direct"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	/*
 	 * we are not promoting.   if the mapping is COW ensure that we
@@ -2315,7 +2314,7 @@ uvm_fault_lower_direct_loan(
 	struct vm_page *pg;
 	struct vm_page *uobjpage = *ruobjpage;
 	int error;
-	UVMHIST_FUNC("uvm_fault_lower_direct_loan"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	if (!flt->cow_now) {
 		/* read fault: cap the protection at readonly */
@@ -2378,7 +2377,7 @@ uvm_fault_lower_promote(
 	struct vm_anon *anon;
 	struct vm_page *pg;
 	int error;
-	UVMHIST_FUNC("uvm_fault_lower_promote"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	KASSERT(amap != NULL);
 
@@ -2459,7 +2458,7 @@ uvm_fault_lower_enter(
 	struct vm_amap * const amap = ufi->entry->aref.ar_amap;
 	const bool readonly = uvm_pagereadonly_p(pg);
 	int error;
-	UVMHIST_FUNC("uvm_fault_lower_enter"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	/*
 	 * Locked:
@@ -2559,7 +2558,7 @@ uvm_fault_lower_done(
 	struct uvm_object *uobj, struct vm_page *pg)
 {
 
-	UVMHIST_FUNC("uvm_fault_lower_done"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	if (flt->wire_paging) {
 		uvm_pagelock(pg);
