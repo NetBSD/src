@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.28 2015/09/30 14:18:54 phx Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.29 2020/07/09 05:12:09 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.28 2015/09/30 14:18:54 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.29 2020/07/09 05:12:09 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,7 @@ device_register(device_t dev, void *aux)
 		    && bi_net->cookie == tag) {
 			prop_data_t pd;
 
-			pd = prop_data_create_data_nocopy(bi_net->mac_address,
+			pd = prop_data_create_nocopy(bi_net->mac_address,
 			    ETHER_ADDR_LEN);
 			KASSERT(pd != NULL);
 			if (prop_dictionary_set(device_properties(dev),
@@ -201,7 +201,7 @@ add_i2c_child_devices(device_t self, const char *family)
 		    !(bi_model->flags & model_i2c_devs[i].model_mask))
 			continue;
 		pd = prop_dictionary_create();
-		prop_dictionary_set_cstring_nocopy(pd, "name",
+		prop_dictionary_set_string_nocopy(pd, "name",
 		    model_i2c_devs[i].name);
 		prop_dictionary_set_uint32(pd, "addr",
 		    model_i2c_devs[i].addr);
