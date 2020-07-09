@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.120 2020/07/09 05:57:15 skrll Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.121 2020/07/09 09:24:32 rin Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.120 2020/07/09 05:57:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.121 2020/07/09 09:24:32 rin Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -613,7 +613,8 @@ again_faultbusy:
 				rw_exit(uobj->vmobjlock);
 				pgs[i] = pg;
 			}
-			pmap_kenter_pa(va + slot_offset + (i << PAGE_SHIFT),
+			pmap_kenter_pa(
+			    va + trunc_page(slot_offset) + (i << PAGE_SHIFT),
 			    VM_PAGE_TO_PHYS(pg),
 			    VM_PROT_READ | VM_PROT_WRITE, 0);
 		}
