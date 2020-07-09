@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.62 2020/07/04 22:17:09 rillig Exp $
+# $NetBSD: Makefile,v 1.63 2020/07/09 22:40:14 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -39,14 +39,14 @@ TESTS+=		dollar
 TESTS+=		doterror
 TESTS+=		dotwait
 TESTS+=		error
-TESTS+=		# escape	# broken by referting POSIX changes
+TESTS+=		# escape	# broken by reverting POSIX changes
 TESTS+=		export
 TESTS+=		export-all
 TESTS+=		export-env
 TESTS+=		forloop
 TESTS+=		forsubst
 TESTS+=		hash
-TESTS+=		# impsrc	# broken by referting POSIX changes
+TESTS+=		# impsrc	# broken by reverting POSIX changes
 TESTS+=		include-main
 TESTS+=		misc
 TESTS+=		moderrs
@@ -56,11 +56,11 @@ TESTS+=		modorder
 TESTS+=		modts
 TESTS+=		modword
 TESTS+=		order
-TESTS+=		# phony-end	# broken by referting POSIX changes
+TESTS+=		# phony-end	# broken by reverting POSIX changes
 TESTS+=		posix
-TESTS+=		# posix1	# broken by referting POSIX changes
+TESTS+=		# posix1	# broken by reverting POSIX changes
 TESTS+=		qequals
-TESTS+=		# suffixes	# broken by referting POSIX changes
+TESTS+=		# suffixes	# broken by reverting POSIX changes
 TESTS+=		sunshcmd
 TESTS+=		sysv
 TESTS+=		ternary
