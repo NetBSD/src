@@ -1,11 +1,11 @@
-# $NetBSD: assym.mk,v 1.6 2020/07/08 19:39:22 uwe Exp $
+# $NetBSD: assym.mk,v 1.7 2020/07/09 02:13:58 christos Exp $
+
+GENASSYM_FLAGS=${CFLAGS:N-Wa,*:N-fstack-usage*} ${CPPFLAGS} ${GENASSYM_CPPFLAGS} 
 
 assym.h: ${GENASSYM_CONF} ${GENASSYM_EXTRAS} $S/conf/genassym.cf
 	${_MKTARGET_CREATE}
 	cat ${GENASSYM_CONF} ${GENASSYM_EXTRAS} $S/conf/genassym.cf | \
-	    ${GENASSYM} -- ${CC} ${CFLAGS:N-Wa,*:N-fstack-usage*} \
-	    ${CPPFLAGS} ${PROF} \
-	    ${GENASSYM_CPPFLAGS} > assym.h.tmp && \
+	    ${GENASSYM} -- ${CC} ${GENASSYM_FLAGS} ${PROF} > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 
 .if !defined(___USE_SUFFIX_RULES___)
@@ -19,8 +19,7 @@ ${SRCS:M*.[sS]:C|\.[Ss]|.d|}: assym.h
 assym.d: assym.h
 	${_MKTARGET_CREATE}
 	cat ${GENASSYM_CONF} ${GENASSYM_EXTRAS} | \
-	    ${GENASSYM} -- ${MKDEP} -f assym.dep -- \
-	    ${CFLAGS:N-Wa,*:N-fstack-usage*} ${CPPFLAGS} ${GENASSYM_CPPFLAGS}
+	    ${GENASSYM} -- ${MKDEP} -f assym.dep -- ${GENASSYM_FLAGS}
 	${TOOL_SED} -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >${.TARGET}
 	rm -f assym.dep
 
@@ -30,8 +29,6 @@ DEPS+=	assym.d
 .SUFFIXES: .genassym .assym.h
 .genassym.assym.h:
 	${_MKTARGET_CREATE}
-	${GENASSYM} -- ${CC} ${CFLAGS:N-Wa,*:N-fstack-usage*} \
-	    ${CPPFLAGS} ${PROF} \
-	    ${GENASSYM_CPPFLAGS} < $< > $@
+	${GENASSYM} -- ${CC} ${GENASSYM_FLAGS} ${PROF} < $< > $@
 	mv -f $@.tmp $@
 .endif # ___USE_SUFFIX_RULES___
