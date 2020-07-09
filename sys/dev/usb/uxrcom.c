@@ -1,4 +1,4 @@
-/*	$NetBSD: uxrcom.c,v 1.1 2020/04/12 01:10:54 simonb Exp $	*/
+/*	$NetBSD: uxrcom.c,v 1.2 2020/07/09 13:43:04 simonb Exp $	*/
 /*	$OpenBSD: uxrcom.c,v 1.1 2019/03/27 22:08:51 kettenis Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uxrcom.c,v 1.1 2020/04/12 01:10:54 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uxrcom.c,v 1.2 2020/07/09 13:43:04 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,9 +157,7 @@ uxrcom_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler");
 
-	if (umodem_common_attach(self, sc, uiaa, &ucaa))
-		return;
-	return;
+	umodem_common_attach(self, sc, uiaa, &ucaa);
 }
 
 static int
