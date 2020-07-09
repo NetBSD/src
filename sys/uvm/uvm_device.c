@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.70 2020/02/24 12:38:57 rin Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.71 2020/07/09 05:57:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.70 2020/02/24 12:38:57 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.71 2020/07/09 05:57:15 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -114,9 +114,8 @@ udv_attach(dev_t device, vm_prot_t accessprot,
 	const struct cdevsw *cdev;
 	dev_type_mmap((*mapfn));
 
-	UVMHIST_FUNC("udv_attach"); UVMHIST_CALLED(maphist);
-
-	UVMHIST_LOG(maphist, "(device=%#jx)", device,0,0,0);
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(maphist, "(device=%#jx)", device,0,0,0);
 
 	/*
 	 * before we do anything, ensure this device supports mmap
@@ -269,7 +268,7 @@ udv_attach(dev_t device, vm_prot_t accessprot,
 static void
 udv_reference(struct uvm_object *uobj)
 {
-	UVMHIST_FUNC("udv_reference"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	rw_enter(uobj->vmobjlock, RW_WRITER);
 	uobj->uo_refs++;
@@ -290,7 +289,7 @@ static void
 udv_detach(struct uvm_object *uobj)
 {
 	struct uvm_device *udv = (struct uvm_device *)uobj;
-	UVMHIST_FUNC("udv_detach"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	/*
 	 * loop until done
@@ -364,7 +363,7 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	int lcv, retval;
 	dev_t device;
 	vm_prot_t mapprot;
-	UVMHIST_FUNC("udv_fault"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"  flags=%jd", flags,0,0,0);
 
 	/*

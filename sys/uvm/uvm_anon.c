@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.78 2020/07/08 13:26:22 skrll Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.79 2020/07/09 05:57:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.78 2020/07/08 13:26:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.79 2020/07/09 05:57:15 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -106,8 +106,8 @@ uvm_anfree(struct vm_anon *anon)
 {
 	struct vm_page *pg = anon->an_page, *pg2 __diagused;
 
-	UVMHIST_FUNC("uvm_anon_dispose"); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist,"(anon=%#jx)", (uintptr_t)anon, 0,0,0);
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(maphist,"(anon=%#jx)", (uintptr_t)anon, 0,0,0);
 
 	KASSERT(anon->an_lock == NULL || rw_write_held(anon->an_lock));
 	KASSERT(anon->an_ref == 0);
@@ -336,7 +336,7 @@ uvm_anon_pagein(struct vm_amap *amap, struct vm_anon *anon)
 void
 uvm_anon_dropswap(struct vm_anon *anon)
 {
-	UVMHIST_FUNC("uvm_anon_dropswap"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	if (anon->an_swslot == 0)
 		return;

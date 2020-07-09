@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.119 2020/07/08 13:26:22 skrll Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.120 2020/07/09 05:57:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.119 2020/07/08 13:26:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.120 2020/07/09 05:57:15 skrll Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -311,7 +311,7 @@ ubc_fault(struct uvm_faultinfo *ufi, vaddr_t ign1, struct vm_page **ign2,
 	int i, error, npages;
 	vm_prot_t prot;
 
-	UVMHIST_FUNC("ubc_fault"); UVMHIST_CALLED(ubchist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(ubchist);
 
 	/*
 	 * no need to try with PGO_LOCKED...
@@ -482,9 +482,8 @@ ubc_alloc(struct uvm_object *uobj, voff_t offset, vsize_t *lenp, int advice,
 	struct ubc_map *umap;
 	voff_t umap_offset;
 	int error;
-	UVMHIST_FUNC("ubc_alloc"); UVMHIST_CALLED(ubchist);
-
-	UVMHIST_LOG(ubchist, "uobj %#jx offset 0x%jx len 0x%jx",
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(ubchist, "uobj %#jx offset 0x%jx len 0x%jx",
 	    (uintptr_t)uobj, offset, *lenp, 0);
 
 	KASSERT(*lenp > 0);
@@ -640,9 +639,9 @@ ubc_release(void *va, int flags, struct vm_page **pgs, int npages)
 	struct uvm_object *uobj;
 	vaddr_t umapva;
 	bool unmapped;
-	UVMHIST_FUNC("ubc_release"); UVMHIST_CALLED(ubchist);
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(ubchist, "va %#jx", (uintptr_t)va, 0, 0, 0);
 
-	UVMHIST_LOG(ubchist, "va %#jx", (uintptr_t)va, 0, 0, 0);
 	umap = &ubc_object.umap[((char *)va - ubc_object.kva) >> ubc_winshift];
 	umapva = UBC_UMAP_ADDR(umap);
 	uobj = umap->uobj;
@@ -844,7 +843,7 @@ ubc_alloc_direct(struct uvm_object *uobj, voff_t offset, vsize_t *lenp,
 	int error;
 	int gpflags = flags | PGO_NOTIMESTAMP | PGO_SYNCIO;
 	int access_type = VM_PROT_READ;
-	UVMHIST_FUNC("ubc_alloc_direct"); UVMHIST_CALLED(ubchist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(ubchist);
 
 	if (flags & UBC_WRITE) {
 		if (flags & UBC_FAULTBUSY)

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.243 2020/06/17 06:24:15 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.244 2020/07/09 05:57:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.243 2020/06/17 06:24:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.244 2020/07/09 05:57:15 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -1645,7 +1645,7 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 {
 	struct vm_page *pg;
 	int i;
-	UVMHIST_FUNC("uvm_page_unbusy"); UVMHIST_CALLED(ubchist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(ubchist);
 
 	for (i = 0; i < npgs; i++) {
 		pg = pgs[i];
@@ -1707,7 +1707,7 @@ uvm_pagewait(struct vm_page *pg, krwlock_t *lock, const char *wmesg)
 void
 uvm_pagewakeup(struct vm_page *pg)
 {
-	UVMHIST_FUNC("uvm_pagewakeup"); UVMHIST_CALLED(ubchist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(ubchist);
 
 	KASSERT(mutex_owned(&pg->interlock));
 

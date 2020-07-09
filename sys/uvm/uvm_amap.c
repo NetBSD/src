@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.121 2020/07/08 13:26:22 skrll Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.122 2020/07/09 05:57:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.121 2020/07/08 13:26:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.122 2020/07/09 05:57:15 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -235,7 +235,7 @@ amap_alloc(vaddr_t sz, vaddr_t padsz, int waitf)
 {
 	struct vm_amap *amap;
 	int slots, padslots;
-	UVMHIST_FUNC("amap_alloc"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	AMAP_B2SLOT(slots, sz);
 	AMAP_B2SLOT(padslots, padsz);
@@ -321,7 +321,7 @@ amap_free(struct vm_amap *amap)
 {
 	int slots;
 
-	UVMHIST_FUNC("amap_free"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	KASSERT(amap->am_ref == 0 && amap->am_nused == 0);
 	KASSERT((amap->am_flags & AMAP_SWAPOFF) == 0);
@@ -363,9 +363,8 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize, int flags)
 	const km_flag_t kmflags =
 	    (flags & AMAP_EXTEND_NOWAIT) ? KM_NOSLEEP : KM_SLEEP;
 
-	UVMHIST_FUNC("amap_extend"); UVMHIST_CALLED(maphist);
-
-	UVMHIST_LOG(maphist, "  (entry=%#jx, addsize=%#jx, flags=%#jx)",
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(maphist, "  (entry=%#jx, addsize=%#jx, flags=%#jx)",
 	    (uintptr_t)entry, addsize, flags, 0);
 
 	/*
@@ -725,8 +724,8 @@ amap_wipeout(struct vm_amap *amap)
 {
 	u_int lcv;
 
-	UVMHIST_FUNC("amap_wipeout"); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist,"(amap=%#jx)", (uintptr_t)amap, 0,0,0);
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(maphist,"(amap=%#jx)", (uintptr_t)amap, 0,0,0);
 
 	KASSERT(rw_write_held(amap->am_lock));
 	KASSERT(amap->am_ref == 0);
@@ -797,9 +796,9 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int flags,
 	krwlock_t *oldlock;
 	vsize_t len;
 
-	UVMHIST_FUNC("amap_copy"); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist, "  (map=%#j, entry=%#j, flags=%jd)",
-		    (uintptr_t)map, (uintptr_t)entry, flags, 0);
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(maphist, "  (map=%#j, entry=%#j, flags=%jd)",
+	    (uintptr_t)map, (uintptr_t)entry, flags, -2);
 
 	KASSERT(map != kernel_map);	/* we use nointr pool */
 
@@ -1416,7 +1415,7 @@ amap_lookup(struct vm_aref *aref, vaddr_t offset)
 	struct vm_anon *an;
 	u_int slot;
 
-	UVMHIST_FUNC("amap_lookup"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 	KASSERT(rw_lock_held(amap->am_lock));
 
 	AMAP_B2SLOT(slot, offset);
@@ -1445,7 +1444,7 @@ amap_lookups(struct vm_aref *aref, vaddr_t offset, struct vm_anon **anons,
 	struct vm_amap *amap = aref->ar_amap;
 	u_int slot;
 
-	UVMHIST_FUNC("amap_lookups"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 	KASSERT(rw_lock_held(amap->am_lock));
 
 	AMAP_B2SLOT(slot, offset);
@@ -1483,7 +1482,7 @@ amap_add(struct vm_aref *aref, vaddr_t offset, struct vm_anon *anon,
 	struct vm_amap *amap = aref->ar_amap;
 	u_int slot;
 
-	UVMHIST_FUNC("amap_add"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 	KASSERT(rw_write_held(amap->am_lock));
 	KASSERT(anon->an_lock == amap->am_lock);
 
@@ -1525,7 +1524,7 @@ amap_unadd(struct vm_aref *aref, vaddr_t offset)
 	struct vm_amap *amap = aref->ar_amap;
 	u_int slot, ptr, last;
 
-	UVMHIST_FUNC("amap_unadd"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 	KASSERT(rw_write_held(amap->am_lock));
 
 	AMAP_B2SLOT(slot, offset);
@@ -1593,7 +1592,7 @@ amap_adjref_anons(struct vm_amap *amap, vaddr_t offset, vsize_t len,
 void
 amap_ref(struct vm_amap *amap, vaddr_t offset, vsize_t len, int flags)
 {
-	UVMHIST_FUNC("amap_ref"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	amap_lock(amap, RW_WRITER);
 	if (flags & AMAP_SHARED) {
@@ -1614,7 +1613,7 @@ amap_ref(struct vm_amap *amap, vaddr_t offset, vsize_t len, int flags)
 void
 amap_unref(struct vm_amap *amap, vaddr_t offset, vsize_t len, bool all)
 {
-	UVMHIST_FUNC("amap_unref"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	amap_lock(amap, RW_WRITER);
 

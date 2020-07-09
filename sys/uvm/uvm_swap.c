@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.196 2020/07/08 13:26:22 skrll Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.197 2020/07/09 05:57:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.196 2020/07/08 13:26:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.197 2020/07/09 05:57:15 skrll Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -256,7 +256,7 @@ encmap_size(size_t npages)
 void
 uvm_swap_init(void)
 {
-	UVMHIST_FUNC("uvm_swap_init");
+	UVMHIST_FUNC(__func__);
 
 	UVMHIST_CALLED(pdhist);
 	/*
@@ -315,7 +315,7 @@ static void
 swaplist_insert(struct swapdev *sdp, struct swappri *newspp, int priority)
 {
 	struct swappri *spp, *pspp;
-	UVMHIST_FUNC("swaplist_insert"); UVMHIST_CALLED(pdhist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pdhist);
 
 	KASSERT(rw_write_held(&swap_syscall_lock));
 	KASSERT(mutex_owned(&uvm_swap_data_lock));
@@ -510,7 +510,7 @@ sys_swapctl(struct lwp *l, const struct sys_swapctl_args *uap, register_t *retva
 	size_t	len = 0;
 	int	error;
 	int	priority;
-	UVMHIST_FUNC("sys_swapctl"); UVMHIST_CALLED(pdhist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pdhist);
 
 	/*
 	 * we handle the non-priv NSWAP and STATS request first.
@@ -834,7 +834,7 @@ swap_on(struct lwp *l, struct swapdev *sdp)
 	vmem_addr_t result;
 	struct vattr va;
 	dev_t dev;
-	UVMHIST_FUNC("swap_on"); UVMHIST_CALLED(pdhist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pdhist);
 
 	/*
 	 * we want to enable swapping on sdp.   the swd_vp contains
@@ -1050,8 +1050,8 @@ swap_off(struct lwp *l, struct swapdev *sdp)
 	int npages = sdp->swd_npages;
 	int error = 0;
 
-	UVMHIST_FUNC("swap_off"); UVMHIST_CALLED(pdhist);
-	UVMHIST_LOG(pdhist, "  dev=%jx, npages=%jd", sdp->swd_dev,npages, 0, 0);
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(pdhist, "  dev=%jx, npages=%jd", sdp->swd_dev,npages, 0, 0);
 
 	KASSERT(rw_write_held(&swap_syscall_lock));
 	KASSERT(mutex_owned(&uvm_swap_data_lock));
@@ -1196,7 +1196,7 @@ swstrategy(struct buf *bp)
 	struct swapdev *sdp;
 	struct vnode *vp;
 	int pageno, bn;
-	UVMHIST_FUNC("swstrategy"); UVMHIST_CALLED(pdhist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pdhist);
 
 	/*
 	 * convert block number to swapdev.   note that swapdev can't
@@ -1284,9 +1284,9 @@ swstrategy(struct buf *bp)
 static int
 swread(dev_t dev, struct uio *uio, int ioflag)
 {
-	UVMHIST_FUNC("swread"); UVMHIST_CALLED(pdhist);
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(pdhist, "  dev=%jx offset=%jx", dev, uio->uio_offset, 0, 0);
 
-	UVMHIST_LOG(pdhist, "  dev=%jx offset=%jx", dev, uio->uio_offset, 0, 0);
 	return (physio(swstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
@@ -1297,9 +1297,9 @@ swread(dev_t dev, struct uio *uio, int ioflag)
 static int
 swwrite(dev_t dev, struct uio *uio, int ioflag)
 {
-	UVMHIST_FUNC("swwrite"); UVMHIST_CALLED(pdhist);
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(pdhist, "  dev=%jx offset=%jx", dev, uio->uio_offset, 0, 0);
 
-	UVMHIST_LOG(pdhist, "  dev=%jx offset=%jx", dev, uio->uio_offset, 0, 0);
 	return (physio(swstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
@@ -1341,7 +1341,7 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 	char 		*addr;
 	off_t		byteoff;
 	int		s, off, nra, error, sz, resid;
-	UVMHIST_FUNC("sw_reg_strategy"); UVMHIST_CALLED(pdhist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pdhist);
 
 	/*
 	 * allocate a vndxfer head for this transfer and point it to
@@ -1490,7 +1490,7 @@ sw_reg_start(struct swapdev *sdp)
 {
 	struct buf	*bp;
 	struct vnode	*vp;
-	UVMHIST_FUNC("sw_reg_start"); UVMHIST_CALLED(pdhist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pdhist);
 
 	/* recursion control */
 	if ((sdp->swd_flags & SWF_BUSY) != 0)
@@ -1543,9 +1543,8 @@ sw_reg_iodone(struct work *wk, void *dummy)
 	struct swapdev	*sdp = vnx->vx_sdp;
 	int s, resid, error;
 	KASSERT(&vbp->vb_buf.b_work == wk);
-	UVMHIST_FUNC("sw_reg_iodone"); UVMHIST_CALLED(pdhist);
-
-	UVMHIST_LOG(pdhist, "  vbp=%#jx vp=%#jx blkno=%jx addr=%#jx",
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(pdhist, "  vbp=%#jx vp=%#jx blkno=%jx addr=%#jx",
 	    (uintptr_t)vbp, (uintptr_t)vbp->vb_buf.b_vp, vbp->vb_buf.b_blkno,
 	    (uintptr_t)vbp->vb_buf.b_data);
 	UVMHIST_LOG(pdhist, "  cnt=%jx resid=%jx",
@@ -1619,7 +1618,7 @@ uvm_swap_alloc(int *nslots /* IN/OUT */, bool lessok)
 {
 	struct swapdev *sdp;
 	struct swappri *spp;
-	UVMHIST_FUNC("uvm_swap_alloc"); UVMHIST_CALLED(pdhist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pdhist);
 
 	/*
 	 * no swap devices configured yet?   definite failure.
@@ -1720,7 +1719,7 @@ void
 uvm_swap_markbad(int startslot, int nslots)
 {
 	struct swapdev *sdp;
-	UVMHIST_FUNC("uvm_swap_markbad"); UVMHIST_CALLED(pdhist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pdhist);
 
 	mutex_enter(&uvm_swap_data_lock);
 	sdp = swapdrum_getsdp(startslot);
@@ -1750,9 +1749,8 @@ void
 uvm_swap_free(int startslot, int nslots)
 {
 	struct swapdev *sdp;
-	UVMHIST_FUNC("uvm_swap_free"); UVMHIST_CALLED(pdhist);
-
-	UVMHIST_LOG(pdhist, "freeing %jd slots starting at %jd", nslots,
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(pdhist, "freeing %jd slots starting at %jd", nslots,
 	    startslot, 0, 0);
 
 	/*
@@ -1839,9 +1837,8 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	vaddr_t kva;
 	int	error, mapinflags;
 	bool write, async, swap_encrypt;
-	UVMHIST_FUNC("uvm_swap_io"); UVMHIST_CALLED(pdhist);
-
-	UVMHIST_LOG(pdhist, "<- called, startslot=%jd, npages=%jd, flags=%jd",
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(pdhist, "<- called, startslot=%jd, npages=%jd, flags=%jd",
 	    startslot, npages, flags, 0);
 
 	write = (flags & B_READ) == 0;
