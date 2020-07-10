@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.80 2020/06/10 17:57:50 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.81 2020/07/10 12:25:10 skrll Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -80,6 +80,14 @@ options 	MSGBUFSIZE=32768
 #options 	EARLYCONS=virt, CONSADDR=0x09000000
 
 #options 	EARLYCONS=zynq, CONSADDR=0xe0001000
+
+# Kernel Address Sanitizer (kASan). The quarantine is optional and can
+# help KASAN find more use-after-frees. Use KASAN_PANIC if you want panics
+# instead of warnings.
+#makeoptions 	KASAN=1		# mandatory
+#options 	KASAN		# mandatory
+#options 	POOL_QUARANTINE	# optional
+#options 	KASAN_PANIC	# optional
 
 makeoptions 	DEBUG="-g"	# compile full symbol table
 makeoptions 	COPY_SYMTAB=1

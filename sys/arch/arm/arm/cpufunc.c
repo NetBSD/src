@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.176 2020/02/05 07:37:35 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.177 2020/07/10 12:25:08 skrll Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.176 2020/02/05 07:37:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.177 2020/07/10 12:25:08 skrll Exp $");
 
 #include "opt_arm_start.h"
 #include "opt_compat_netbsd.h"
@@ -2372,7 +2372,7 @@ struct cpu_option {
 
 static u_int parse_cpu_options(char *, struct cpu_option *, u_int);
 
-static u_int
+static u_int __noasan
 parse_cpu_options(char *args, struct cpu_option *optlist, u_int cpuctrl)
 {
 	int integer;

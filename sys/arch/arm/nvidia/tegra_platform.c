@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_platform.c,v 1.21 2020/06/20 15:48:19 skrll Exp $ */
+/* $NetBSD: tegra_platform.c,v 1.22 2020/07/10 12:25:09 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.21 2020/06/20 15:48:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.22 2020/07/10 12:25:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.21 2020/06/20 15:48:19 skrll Ex
 
 void tegra_platform_early_putchar(char);
 
-void
+void __noasan
 tegra_platform_early_putchar(char c)
 {
 #ifdef CONSADDR

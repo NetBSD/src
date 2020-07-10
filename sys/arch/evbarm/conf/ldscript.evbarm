@@ -1,4 +1,4 @@
-/*	$NetBSD: ldscript.evbarm,v 1.13 2016/02/08 21:08:03 skrll Exp $	*/
+/*	$NetBSD: ldscript.evbarm,v 1.14 2020/07/10 12:25:10 skrll Exp $	*/
 
 ENTRY(KERNEL_BASE_phys)
 SECTIONS
@@ -16,11 +16,24 @@ SECTIONS
     *(.text.*)
     *(.stub)
     *(.glue_7t) *(.glue_7)
-    *(.rodata) *(.rodata.*)
   }
+
+  PROVIDE(__rodata_start = .);
+  .rodata :
+  {
+    *(.rodata)
+    *(.rodata.*)
+    . = ALIGN(64);
+    __CTOR_LIST__ = .;
+    *(.ctors)
+    *(.init_array)
+    __CTOR_END__ = .;
+  }
+
   PROVIDE (__etext = .);
   PROVIDE (_etext = .);
   PROVIDE (etext = .);
+
   /* Adjust the address for the data segment to start on the next large page
      boundary.  */
   . = ALIGN(0x10000);
