@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.52 2020/07/10 12:45:15 skrll Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.53 2020/07/10 15:12:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -138,10 +138,6 @@
 #define VM_KERNEL_VM_BASE	0xc0000000
 #else
 #define VM_KERNEL_VM_BASE	0x90000000
-#endif
-#else
-#ifdef KASAN
-#error KASAN is unsupported on pre-ARMv6
 #endif
 
 #define VM_KERNEL_VM_SIZE	(VM_KERNEL_VM_END - VM_KERNEL_VM_BASE)
