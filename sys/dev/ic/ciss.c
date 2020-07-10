@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.42 2020/05/15 19:28:10 maxv Exp $	*/
+/*	$NetBSD: ciss.c,v 1.43 2020/07/10 14:23:56 jdolecek Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.68 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.42 2020/05/15 19:28:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.43 2020/07/10 14:23:56 jdolecek Exp $");
 
 #include "bio.h"
 
@@ -247,8 +247,6 @@ ciss_attach(struct ciss_softc *sc)
 		return -1;
 	}
 
-	TAILQ_INIT(&sc->sc_ccbq);
-	TAILQ_INIT(&sc->sc_ccbdone);
 	TAILQ_INIT(&sc->sc_free_ccb);
 
 	maxfer = sc->maxsg * PAGE_SIZE;
@@ -594,9 +592,6 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 		    bus_space_read_4(sc->sc_iot, sc->sc_ioh, CISS_IMR) | sc->iem);
 #endif
 
-	mutex_enter(&sc->sc_mutex);
-	TAILQ_INSERT_TAIL(&sc->sc_ccbq, ccb, ccb_link);
-	mutex_exit(&sc->sc_mutex);
 	ccb->ccb_state = CISS_CCB_ONQ;
 	CISS_DPRINTF(CISS_D_CMD, ("submit=0x%x ", cmd->id));
 	if (sc->cfg.methods & (CISS_METH_FIFO64|CISS_METH_FIFO64_RRO)) {
@@ -660,9 +655,6 @@ ciss_done(struct ciss_ccb *ccb)
 	}
 
 	ccb->ccb_state = CISS_CCB_READY;
-	mutex_enter(&sc->sc_mutex);
-	TAILQ_REMOVE(&sc->sc_ccbq, ccb, ccb_link);
-	mutex_exit(&sc->sc_mutex);
 
 	if (ccb->ccb_cmd.id & CISS_CMD_ERR)
 		error = ciss_error(ccb);

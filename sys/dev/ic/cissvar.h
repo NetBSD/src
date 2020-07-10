@@ -1,4 +1,4 @@
-/*	$NetBSD: cissvar.h,v 1.7 2018/02/12 23:11:00 joerg Exp $	*/
+/*	$NetBSD: cissvar.h,v 1.8 2020/07/10 14:24:14 jdolecek Exp $	*/
 /*	$OpenBSD: cissvar.h,v 1.15 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
@@ -57,7 +57,7 @@ struct ciss_softc {
 
 	u_int	sc_flags;
 	int ccblen, maxcmd, maxsg, nbus, ndrives, maxunits;
-	ciss_queue_head	sc_free_ccb, sc_ccbq, sc_ccbdone;
+	ciss_queue_head		sc_free_ccb;
 	kcondvar_t		sc_condvar;
 
 	bus_dmamap_t		cmdmap;
