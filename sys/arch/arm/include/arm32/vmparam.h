@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.51 2020/07/10 12:25:09 skrll Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.52 2020/07/10 12:45:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -124,7 +124,7 @@
 
 #ifdef KASAN
 #define VM_KERNEL_KASAN_BASE	0xc0000000
-#define VM_KERNEL_KASAN_SIZE	(KERNEL_VM_SIZE >> KASAN_SHADOW_SCALE_SHIFT)
+#define VM_KERNEL_KASAN_SIZE	(VM_KERNEL_VM_SIZE >> KASAN_SHADOW_SCALE_SHIFT)
 #define VM_KERNEL_KASAN_END	(VM_KERNEL_KASAN_BASE + VM_KERNEL_KASAN_SIZE)
 #define VM_KERNEL_VM_END	VM_KERNEL_KASAN_BASE
 #else
