@@ -1,4 +1,4 @@
-/*	$NetBSD: filemon_dev.c,v 1.1 2020/01/19 19:49:37 riastradh Exp $	*/
+/*	$NetBSD: filemon_dev.c,v 1.2 2020/07/10 00:42:53 sjg Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@ filemon_open(void)
 			goto fail0;
 		}
 	}
+	(void)fcntl(F->fd, F_SETFD, FD_CLOEXEC);
 
 	/* Success!  */
 	return F;
