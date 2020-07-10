@@ -1,3 +1,5 @@
+/* $NetBSD: identcpu_subr.c,v 1.7 2020/07/10 06:15:23 msaitoh Exp $ */
+
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +35,7 @@
  * See src/usr.sbin/cpuctl/{Makefile, arch/i386.c}).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu_subr.c,v 1.6 2020/06/09 05:07:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu_subr.c,v 1.7 2020/07/10 06:15:23 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "lapic.h"
