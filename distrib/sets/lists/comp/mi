@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2338 2020/06/16 01:29:01 thorpej Exp $
+#	$NetBSD: mi,v 1.2339 2020/07/10 02:27:13 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -11801,6 +11801,9 @@
 ./usr/share/man/cat9/pci_set_powerstate.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_vpd_read.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_vpd_write.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pciconf_resource_add.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pciconf_resource_fini.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pciconf_resource_init.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pckbport.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/pckbport_attach.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pckbport_attach_slot.0	comp-sys-catman		.cat
@@ -19946,6 +19949,9 @@
 ./usr/share/man/html9/pci_set_powerstate.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pci_vpd_read.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pci_vpd_write.html	comp-sys-htmlman	html
+./usr/share/man/html9/pciconf_resource_add.html	comp-sys-htmlman	html
+./usr/share/man/html9/pciconf_resource_fini.html	comp-sys-htmlman	html
+./usr/share/man/html9/pciconf_resource_init.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pckbport.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pckbport_attach.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pckbport_attach_slot.html comp-sys-htmlman	html
@@ -28250,6 +28256,9 @@
 ./usr/share/man/man9/pci_set_powerstate.9	comp-sys-man		.man
 ./usr/share/man/man9/pci_vpd_read.9		comp-sys-man		.man
 ./usr/share/man/man9/pci_vpd_write.9		comp-sys-man		.man
+./usr/share/man/man9/pciconf_resource_add.9	comp-sys-man		.man
+./usr/share/man/man9/pciconf_resource_fini.9	comp-sys-man		.man
+./usr/share/man/man9/pciconf_resource_init.9	comp-sys-man		.man
 ./usr/share/man/man9/pckbport.9			comp-sys-man		.man
 ./usr/share/man/man9/pckbport_attach.9		comp-sys-man		.man
 ./usr/share/man/man9/pckbport_attach_slot.9	comp-sys-man		.man
