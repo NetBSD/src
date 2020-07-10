@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.73 2020/07/07 20:04:37 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.74 2020/07/10 11:59:10 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -3203,3 +3203,122 @@ usr.sbin/postinstall/postinstall.in		1.31
 	Sort missing IDs (users and groups) by the numeric ID.
 	[simonb, ticket #989]
 
+sys/dev/mii/miidevs				1.168
+sys/dev/mii/miidevs.h				(regen)
+sys/dev/mii/miidevs_data.h			(regen)
+
+	Add some Microsemi (Vitesse) devices.
+	[msaitoh, ticket #990]
+
+sys/dev/pci/pcidevs					1.1403-1.1407, 1.1409,
+							1.1412-1.1418 via patch
+sys/dev/pci/pcidevs.h					(regen)
+sys/dev/pci/pcidevs_data.h				(regen)
+
+	- Add NVIDIA Quadro NVS 295.
+	- Add more RDC products from Andrius V.
+	- Add some Intel UHD Graphics devices. Mainly taken from OpenBSD.
+	- Add Intel Comet Lake, Whiskey Lake U and Amber Lake Y devices.
+	- Modify description of Intel 0x591e from HD Graphics to UHD Graphics.
+	- Add Intel XMM 7360 LTE Modem.
+	- Add Western Digital WD Blue SN550 NVMe SSD.
+	- Add ATI Radeon R5/R6/R7 Graphics.
+	- Add IDs for Ampere eMAG PCIe Root Ports.
+	- Add RTL8192EE Wireless LAN 802.11n PCI-E NIC.
+	- Add ASIX AX99100 Multi I/O (Serial,Parallel,I2C,SPI,LocalBus,GPIO)
+	  Controller.
+	- Add a couple of additional device IDs for the AMD Cryptographic
+	  Coprocessor.
+	- Remove duplicated entries.
+	[msaitoh, ticket #991]
+
+sys/dev/i2c/sdtemp.c				1.37-1.39
+
+	Check the return value of iic_acquire_bus(). This function may fail.
+	If an error occurred in sme_refresh function, pass ENVSYS_SINVALID.
+	[msaitoh, ticket #992]
+
+sys/arch/x86/x86/procfs_machdep.c		1.37,1.38
+
+	Add AMD protected processor identification number (ppin).
+	[msaitoh, ticket #993]
+
+sys/dev/pci/if_wm.c				1.655-1.658, 1.660, 1.662,
+						1.664-1.668, 1.671-1.674,
+						1.678,1.680-1.681 via patch
+sys/dev/pci/if_wmreg.c				1.118-1.119
+sys/dev/pci/if_wmvar.c				1.45
+
+	- Add SFP support. Module insertion/removal is not supported yet.
+	  Currently, SFP detection is only done in the driver's attach phase.
+	- Detect the Media Auto Sense feature. Not supported yet.
+	- Fix SFF_SFP_ETH_FLAGS_100FX. It's not 0x10 but 0x20.
+	- Add extra delay in wm_serdes_power_up_link_82575().
+	- Add Intel I219 LM10-LM15 and V10-V14.
+	- wm(4) can use workqueue as deferred Rx/Tx handler.
+	  Set hw.wm*.txrx_workqueue=1 to use workqueue instead of softint.
+	  The default value of hw.wm*.txrx_workqueue is 0 which use softint
+	  as before.
+	- Unset RSS UDP flags like ixg(4) and other OSes. To handle IP
+	  fragmented UDP, first packet and second packet should be processed
+	  in the same Rx queue.
+	- It's useless to not to set PCI_PMCSR_PME_STS bit when writing because
+	  the bit is W1C. Instead, always write PCI_PMCSR_PME_STS bit to clear
+	  in case it's already set.
+	- Actually writing always the checksum offload context descriptor
+	  makes the HW do extra processing, avoid doing that if possible.
+	- Fix a bug that the WMREG_EEARBC_I210 register is incorrectly set if
+	  the system uses iNVM.
+	- "wmX: 0" on 82542 is difficult to understand, so don't print it.
+	- Rename some macros and function.
+	- KNF. Add comment.
+	[msaitoh, ticket #994]
+
+usr.sbin/cpuctl/Makefile			1.9 (patch)
+usr.sbin/cpuctl/arch/cpuctl_i386.h		1.5 (patch)
+usr.sbin/cpuctl/arch/i386.c			1.111-1.113 (patch)
+usr.sbin/cpuctl/cpuctl.c			1.31 (patch)
+usr.sbin/cpuctl/cpuctl.h			1.7 (patch)
+sys/arch/x86/x86/identcpu_subr.c		1.1-1.7 (patch)
+
+	- Get TSC frequency from CPUID 0x15 and/or x16 for newer Intel
+	  processors.
+	- Add 0xa5 and 0xa6 for Comet Lake.
+	- Rename ci_cpuid_level to ci_max_cpuid and ci_cpuid_extlevel to
+	  ci_max_ext_cpuid to match x86/include/cpu.h. No functional change.
+	- Sort some entries.
+	- Add comment.
+	[msaitoh, ticket #995]
+
+sys/dev/pci/ichsmb.c				1.62, 1.66-1.68
+
+	- Fix LOCKDEBUG panic on detach when attach failed.
+	- Add Comet Lake, Whiskey Lake U and Amber Lake Y support.
+	- Whitespace fix.
+	[msaitoh, ticket #996]
+
+sys/dev/pci/ixgbe/ix_txrx.c			1.62-1.63 via patch
+sys/dev/pci/ixgbe/ixgbe.c			1.225, 1.228-1.229,
+						1.232 via patch
+sys/dev/pci/ixgbe/ixgbe.h			1.64, 1.66
+sys/dev/pci/ixgbe/ixv.c				1.146, 1.148-1.150
+sys/dev/pci/ixgbe/ixgbe_common.c		1.27
+sys/dev/pci/ixgbe/ixgbe_vf.c			1.23
+sys/dev/pci/ixgbe/ixgbe_82598.c			1.15
+sys/dev/pci/ixgbe/ixgbe_x550.c			1.18
+sys/dev/pci/ixgbe/ixgbe_netbsd.c		1.14
+sys/dev/pci/ixgbe/ixgbe_phy.c			1.21
+sys/dev/pci/ixgbe/ixgbe_osdep.h			1.26
+
+	- Fix IXGBE_LE32_TO_CPUS() macro for big endian machine. This problem
+	  was only on X550*.
+	- Add debug printf()s.
+	- Use unsigned to avoid undefined behavior in
+	  ixgbe_fc_enable_generic().
+	- Modify a little to reduce diff between ixgbe.c and ixv.c.
+	  No functional change.
+	- Modify comment.
+	- Remove unused macros.
+	- Whitespace fix.
+	- Fix typos.
+	[msaitoh, ticket #997]
