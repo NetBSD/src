@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_asan.c,v 1.23 2020/07/03 08:19:20 skrll Exp $	*/
+/*	$NetBSD: subr_asan.c,v 1.24 2020/07/10 07:48:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.23 2020/07/03 08:19:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.24 2020/07/10 07:48:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.23 2020/07/03 08:19:20 skrll Exp $")
 #endif
 
 /* ASAN constants. Part of the compiler ABI. */
-#define KASAN_SHADOW_SCALE_SHIFT	3
 #define KASAN_SHADOW_SCALE_SIZE		(1UL << KASAN_SHADOW_SCALE_SHIFT)
 #define KASAN_SHADOW_MASK		(KASAN_SHADOW_SCALE_SIZE - 1)
 #define KASAN_ALLOCA_SCALE_SIZE		32
