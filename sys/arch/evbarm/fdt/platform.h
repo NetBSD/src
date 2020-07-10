@@ -1,4 +1,4 @@
-/* $NetBSD: platform.h,v 1.7 2020/07/10 07:31:33 skrll Exp $ */
+/* $NetBSD: platform.h,v 1.8 2020/07/10 12:14:58 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@ void fdt_add_reserved_memory_range(uint64_t, uint64_t);
 #endif
 
 #define KERNEL_IO_VBASE		VM_KERNEL_IO_ADDRESS
-#define KERNEL_IO_VSIZE		(KERNEL_IO_VBASE - VM_MAX_KERNEL_ADDRESS)
+#define KERNEL_IO_VSIZE		VM_KERNEL_IO_SIZE
 
 #ifdef __aarch64__
 
