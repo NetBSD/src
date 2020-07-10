@@ -1,4 +1,4 @@
-/* $NetBSD: virt_platform.c,v 1.9 2018/10/30 16:41:52 skrll Exp $ */
+/* $NetBSD: virt_platform.c,v 1.10 2020/07/10 12:25:10 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virt_platform.c,v 1.9 2018/10/30 16:41:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virt_platform.c,v 1.10 2020/07/10 12:25:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: virt_platform.c,v 1.9 2018/10/30 16:41:52 skrll Exp 
 
 void virt_platform_early_putchar(char);
 
-void
+void __noasan
 virt_platform_early_putchar(char c)
 {
 	volatile uint32_t *uartaddr = cpu_earlydevice_va_p() ?

@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.38 2019/11/24 10:27:37 jmcneill Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.39 2020/07/10 12:25:10 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.38 2019/11/24 10:27:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.39 2020/07/10 12:25:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -183,7 +183,7 @@ sunxi_platform_init_attach_args(struct fdt_attach_args *faa)
 
 void sunxi_platform_early_putchar(char);
 
-void
+void __noasan
 sunxi_platform_early_putchar(char c)
 {
 #ifdef CONSADDR

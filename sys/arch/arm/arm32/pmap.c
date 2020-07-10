@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.416 2020/07/03 17:14:23 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.417 2020/07/10 12:25:09 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -192,11 +192,12 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.416 2020/07/03 17:14:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.417 2020/07/10 12:25:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 
+#include <sys/asan.h>
 #include <sys/atomic.h>
 #include <sys/bus.h>
 #include <sys/cpu.h>
@@ -5945,11 +5946,13 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	 * whoops!   we need to add kernel PTPs
 	 */
 
+	vaddr_t pmap_maxkvaddr = pmap_curmaxkvaddr;
+
 	s = splvm();	/* to be safe */
 	mutex_enter(&kpm_lock);
 
 	/* Map 1MB at a time */
-	size_t l1slot = l1pte_index(pmap_curmaxkvaddr);
+	size_t l1slot = l1pte_index(pmap_maxkvaddr);
 #ifdef ARM_MMU_EXTENDED
 	pd_entry_t * const spdep = &kpm->pm_l1[l1slot];
 	pd_entry_t *pdep = spdep;
@@ -5993,6 +5996,9 @@ pmap_growkernel(vaddr_t maxkvaddr)
 
 	mutex_exit(&kpm_lock);
 	splx(s);
+
+	kasan_shadow_map((void *)pmap_maxkvaddr,
+	    (size_t)(pmap_curmaxkvaddr - pmap_maxkvaddr));
 
 out:
 	return pmap_curmaxkvaddr;
