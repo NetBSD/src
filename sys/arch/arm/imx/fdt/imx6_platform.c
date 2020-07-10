@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_platform.c,v 1.9 2020/05/24 08:47:19 skrll Exp $	*/
+/*	$NetBSD: imx6_platform.c,v 1.10 2020/07/10 12:25:09 skrll Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_platform.c,v 1.9 2020/05/24 08:47:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_platform.c,v 1.10 2020/07/10 12:25:09 skrll Exp $");
 
 #include "arml2cc.h"
 #include "opt_console.h"
@@ -97,7 +97,7 @@ imx_platform_init_attach_args(struct fdt_attach_args *faa)
 
 void imx_platform_early_putchar(char);
 
-void
+void __noasan
 imx_platform_early_putchar(char c)
 {
 #ifdef CONSADDR

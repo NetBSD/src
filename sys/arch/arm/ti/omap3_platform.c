@@ -1,4 +1,4 @@
-/* $NetBSD: omap3_platform.c,v 1.2 2019/10/30 22:21:06 jmcneill Exp $ */
+/* $NetBSD: omap3_platform.c,v 1.3 2020/07/10 12:25:10 skrll Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_platform.c,v 1.2 2019/10/30 22:21:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_platform.c,v 1.3 2020/07/10 12:25:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -130,7 +130,7 @@ omap3_platform_init_attach_args(struct fdt_attach_args *faa)
 
 void omap3_platform_early_putchar(char);
 
-void
+void __noasan
 omap3_platform_early_putchar(char c)
 {
 #ifdef CONSADDR

@@ -1,4 +1,4 @@
-/* $NetBSD: vexpress_platform.c,v 1.16 2020/02/15 08:16:12 skrll Exp $ */
+/* $NetBSD: vexpress_platform.c,v 1.17 2020/07/10 12:25:10 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vexpress_platform.c,v 1.16 2020/02/15 08:16:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vexpress_platform.c,v 1.17 2020/07/10 12:25:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -92,7 +92,7 @@ static bus_space_handle_t sysreg_bsh;
 
 void vexpress_platform_early_putchar(char);
 
-void
+void __noasan
 vexpress_platform_early_putchar(char c)
 {
 #ifdef CONSADDR

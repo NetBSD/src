@@ -1,9 +1,9 @@
-/* $NetBSD: am3_platform.c,v 1.1 2019/10/29 10:54:10 jmcneill Exp $ */
+/* $NetBSD: am3_platform.c,v 1.2 2020/07/10 12:25:10 skrll Exp $ */
 
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am3_platform.c,v 1.1 2019/10/29 10:54:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am3_platform.c,v 1.2 2020/07/10 12:25:10 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -14,6 +14,7 @@ __KERNEL_RCSID(0, "$NetBSD: am3_platform.c,v 1.1 2019/10/29 10:54:10 jmcneill Ex
 
 #include <dev/ic/comreg.h>
 
+#include <machine/vmparam.h>
 #include <arch/evbarm/fdt/platform.h>
 
 extern struct bus_space armv7_generic_bs_tag;
@@ -22,7 +23,7 @@ extern struct arm32_bus_dma_tag arm_generic_dma_tag;
 
 void am33xx_platform_early_putchar(char);
 
-void
+void __noasan
 am33xx_platform_early_putchar(char c)
 {
 #ifdef CONSADDR

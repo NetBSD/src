@@ -1,4 +1,4 @@
-.\"	$NetBSD: kernel_sanitizers.7,v 1.3 2020/06/30 16:22:55 maxv Exp $
+.\"	$NetBSD: kernel_sanitizers.7,v 1.4 2020/07/10 12:25:11 skrll Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 30, 2020
+.Dd July 10, 2020
 .Dt KERNEL_SANITIZERS 7
 .Os
 .Sh NAME
@@ -67,7 +67,7 @@ Heavy runtime checks, and ~12.5% increase in memory consumption.
 Shadow memory, compiler instrumentation, special kernel wrappers, and
 light MD infrastructure.
 .Ss Supported architectures
-aarch64 (gcc), amd64 (gcc, llvm).
+aarch64 (gcc), amd64 (gcc, llvm), arm (gcc).
 .Pp
 KASAN is made of six sub-features that perform memory validation:
 .Bd -literal
@@ -79,6 +79,8 @@ KASAN is made of six sub-features that perform memory validation:
 | amd64   | Yes  | Yes   | Yes     | Yes       | Yes     | Yes  |
 +---------+------+-------+---------+-----------+---------+------+
 | aarch64 | Yes  | Yes   | Yes     | No        | Yes     | Yes  |
++---------+------+-------+---------+-----------+---------+------+
+| arm     | Yes  | Yes   | Yes     | No        | Yes     | Yes  |
 +---------+------+-------+---------+-----------+---------+------+
 .Ed
 .Pp
@@ -151,3 +153,5 @@ Support for KUBSAN was developed by
 .An Kamil Rytarowski .
 Support for KASAN, KCSAN and KMSAN was developed by
 .An Maxime Villard .
+Support for KASAN on ARM was developed by
+.An Nick Hudson .

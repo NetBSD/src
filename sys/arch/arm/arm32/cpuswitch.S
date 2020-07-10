@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.100 2020/07/06 07:36:14 skrll Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.101 2020/07/10 12:25:09 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -79,6 +79,7 @@
 
 #include "opt_armfpe.h"
 #include "opt_cpuoptions.h"
+#include "opt_kasan.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 
@@ -86,7 +87,7 @@
 #include <arm/asm.h>
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.100 2020/07/06 07:36:14 skrll Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.101 2020/07/10 12:25:09 skrll Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 
@@ -387,6 +388,11 @@ ENTRY_NP(softint_switch)
 	mcr	p15, 0, r5, c13, c0, 4	/* save new lwp */
 #endif
 	str	r5, [r7, #(CI_CURLWP)]	/* save new lwp */
+
+#ifdef KASAN
+	mov	r0, r5
+	bl	_C_LABEL(kasan_softint)
+#endif
 
 	/*
 	 * Normally, we'd get {r8-r13} but since this is a softint lwp

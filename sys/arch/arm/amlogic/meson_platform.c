@@ -1,4 +1,4 @@
-/* $NetBSD: meson_platform.c,v 1.14 2020/06/20 15:48:19 skrll Exp $ */
+/* $NetBSD: meson_platform.c,v 1.15 2020/07/10 12:25:08 skrll Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "arml2cc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.14 2020/06/20 15:48:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.15 2020/07/10 12:25:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -156,7 +156,7 @@ meson_platform_init_attach_args(struct fdt_attach_args *faa)
 
 void meson_platform_early_putchar(char);
 
-void
+void __noasan
 meson_platform_early_putchar(char c)
 {
 #ifdef CONSADDR
