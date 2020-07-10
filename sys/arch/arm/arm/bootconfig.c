@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.c,v 1.11 2017/06/01 02:45:05 chs Exp $	*/
+/*	$NetBSD: bootconfig.c,v 1.12 2020/07/10 12:25:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bootconfig.c,v 1.11 2017/06/01 02:45:05 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bootconfig.c,v 1.12 2020/07/10 12:25:08 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/kmem.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: bootconfig.c,v 1.11 2017/06/01 02:45:05 chs Exp $");
  * will return ptr of "moo milk=1", *not* "moo"
  */
 
-int
+int __noasan
 get_bootconf_option(char *opts, const char *opt, int type, void *result)
 {
 	char *ptr;

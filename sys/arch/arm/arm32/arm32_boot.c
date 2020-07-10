@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_boot.c,v 1.38 2020/06/06 09:03:59 skrll Exp $	*/
+/*	$NetBSD: arm32_boot.c,v 1.39 2020/07/10 12:25:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.38 2020/06/06 09:03:59 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.39 2020/07/10 12:25:09 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cputypes.h"
@@ -132,6 +132,7 @@ __KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.38 2020/06/06 09:03:59 skrll Exp $"
 
 #include <sys/param.h>
 
+#include <sys/asan.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
@@ -295,6 +296,8 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	/* Boot strap pmap telling it where the managed kernel virtual memory is */
 	VPRINTF("pmap ");
 	pmap_bootstrap(kvm_base, kvm_base + kvm_size);
+
+	kasan_init();
 
 #ifdef __HAVE_MEMORY_DISK__
 	md_root_setconf(memory_disk, sizeof memory_disk);

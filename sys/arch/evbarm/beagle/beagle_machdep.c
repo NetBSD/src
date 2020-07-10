@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.82 2020/02/15 08:16:12 skrll Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.83 2020/07/10 12:25:10 skrll Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.82 2020/02/15 08:16:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.83 2020/07/10 12:25:10 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -532,7 +532,7 @@ beagle_db_trap(int where)
 
 void beagle_platform_early_putchar(char);
 
-void
+void __noasan
 beagle_platform_early_putchar(char c)
 {
 	volatile uint32_t *com0addr = cpu_earlydevice_va_p() ?

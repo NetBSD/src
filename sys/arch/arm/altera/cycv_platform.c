@@ -1,4 +1,4 @@
-/* $NetBSD: cycv_platform.c,v 1.12 2020/02/15 08:16:10 skrll Exp $ */
+/* $NetBSD: cycv_platform.c,v 1.13 2020/07/10 12:25:08 skrll Exp $ */
 
 /* This file is in the public domain. */
 
@@ -7,7 +7,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cycv_platform.c,v 1.12 2020/02/15 08:16:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cycv_platform.c,v 1.13 2020/07/10 12:25:08 skrll Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
@@ -34,7 +34,7 @@ __KERNEL_RCSID(0, "$NetBSD: cycv_platform.c,v 1.12 2020/02/15 08:16:10 skrll Exp
 
 void cycv_platform_early_putchar(char);
 
-void
+void __noasan
 cycv_platform_early_putchar(char c) {
 #ifdef CONSADDR
 #define CONSADDR_VA (CONSADDR - CYCV_PERIPHERAL_BASE + CYCV_PERIPHERAL_VBASE)

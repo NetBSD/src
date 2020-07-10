@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.19 2020/07/09 11:40:54 skrll Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.20 2020/07/10 12:25:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 #include "opt_cpuoptions.h"
 #include "opt_cputypes.h"
 #include "opt_fdt.h"
+#include "opt_kasan.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
@@ -466,6 +467,10 @@ generic_startv7:
 	b	armv7_mmuinit
 
 generic_vstartv7:
+#ifdef KASAN
+	ldr	r0, =start_stacks_bottom
+	bl	_C_LABEL(kasan_early_init)
+#endif
 
 	/* r0 = &cpu_info_store[0] */
 	movw	r0, #:lower16:cpu_info_store
@@ -513,6 +518,11 @@ generic_startv6:
 	b	armv6_mmuinit
 
 generic_vstartv6:
+#ifdef KASAN
+	ldr	r0, =start_stacks_bottom
+	bl	_C_LABEL(kasan_early_init)
+#endif
+
 	VPRINTF("go\n\r")
 
 	/*
