@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm,v 1.54 2020/02/05 07:37:36 skrll Exp $
+#	$NetBSD: Makefile.arm,v 1.55 2020/07/10 12:25:09 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -59,6 +59,25 @@ CPPFLAGS.cpufunc_asm_xscale.S+=	-mcpu=xscale
 OPT_DDB=	%DDB%
 .if !empty(OPT_DDB) && ${HAVE_GCC:U0} > 0
 CFLAGS+=	-mapcs-frame
+.endif
+
+# Note: -fasan-shadow-offset=
+#	KASAN_SHADOW_START - (__MD_KERNMEM_BASE >> KASAN_SHADOW_SCALE_SHIFT) =
+#       0xc000_0000 - (0x8000_0000 >> 3) = 0xb000_0000
+#
+
+.if ${KASAN:U0} > 0 && ${HAVE_GCC:U0} > 0
+KASANFLAGS=	\
+	-fsanitize=kernel-address \
+	--param asan-globals=1 \
+	--param asan-stack=1 \
+	--param asan-instrument-allocas=1 \
+	-fsanitize-address-use-after-scope \
+	-fasan-shadow-offset=0xb0000000
+.for f in subr_asan.c
+KASANFLAGS.${f}=	# empty
+.endfor
+CFLAGS+=	${KASANFLAGS.${.IMPSRC:T}:U${KASANFLAGS}}
 .endif
 
 ##

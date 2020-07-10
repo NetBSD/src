@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_platform.c,v 1.28 2020/03/19 08:33:04 skrll Exp $ */
+/* $NetBSD: exynos_platform.c,v 1.29 2020/07/10 12:25:09 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.28 2020/03/19 08:33:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.29 2020/07/10 12:25:09 skrll Exp $");
 
 
 /*
@@ -230,7 +230,7 @@ exynos_platform_init_attach_args(struct fdt_attach_args *faa)
 	faa->faa_dmat = &arm_generic_dma_tag;
 }
 
-void
+void __noasan
 exynos_platform_early_putchar(char c)
 {
 #ifdef CONSADDR

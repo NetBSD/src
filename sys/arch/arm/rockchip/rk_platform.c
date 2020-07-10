@@ -1,4 +1,4 @@
-/* $NetBSD: rk_platform.c,v 1.8 2018/10/30 16:41:52 skrll Exp $ */
+/* $NetBSD: rk_platform.c,v 1.9 2020/07/10 12:25:09 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_platform.c,v 1.8 2018/10/30 16:41:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_platform.c,v 1.9 2020/07/10 12:25:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -121,7 +121,7 @@ rk3328_platform_devmap(void)
 
 void rk3328_platform_early_putchar(char);
 
-void
+void __noasan
 rk3328_platform_early_putchar(char c)
 {
 #ifdef CONSADDR
