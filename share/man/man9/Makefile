@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.451 2020/06/16 01:29:00 thorpej Exp $
+#       $NetBSD: Makefile,v 1.452 2020/07/10 02:27:13 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -631,7 +631,10 @@ MLINKS+=pci_msi.9 pci_msix.9 \
 	pci_msi.9 pci_msix_establish.9 \
 	pci_msi.9 pci_msix_disestablish.9
 MLINKS+=pci_configure_bus.9 pci_conf_hook.9 \
-	pci_configure_bus.9 pci_conf_interrupt.9
+	pci_configure_bus.9 pci_conf_interrupt.9 \
+	pci_configure_bus.9 pciconf_resource_add.9 \
+	pci_configure_bus.9 pciconf_resource_fini.9 \
+	pci_configure_bus.9 pciconf_resource_init.9
 MLINKS+=pckbport.9 pckbport_attach.9 \
 	pckbport.9 pckbport_attach_slot.9 \
 	pckbport.9 pckbport_cnattach.9 \
