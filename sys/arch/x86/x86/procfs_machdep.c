@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.33.2.2 2020/04/14 17:15:02 martin Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.33.2.3 2020/07/10 10:36:56 martin Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.33.2.2 2020/04/14 17:15:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.33.2.3 2020/07/10 10:36:56 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,7 @@ static const char * const x86_features[][32] = {
 	{ /* (13) AMD 0x80000008 ebx */
 	"clzero", "irperf", "xsaveerptr", NULL, "rdpru", NULL, NULL, NULL,
 	NULL, "wbnoinvd", NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, "ppin",
 	NULL, "virt_ssbd", NULL, NULL, NULL, NULL, NULL, NULL},
 
 	{ /* (14) 0x00000006 eax */
