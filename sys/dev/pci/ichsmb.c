@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.60.4.1 2020/03/01 12:48:25 martin Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.60.4.2 2020/07/10 11:31:59 martin Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.60.4.1 2020/03/01 12:48:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.60.4.2 2020/07/10 11:31:59 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -125,8 +125,10 @@ ichsmb_match(device_t parent, cfdata_t match, void *aux)
 		case PCI_PRODUCT_INTEL_100SERIES_LP_SMB:
 		case PCI_PRODUCT_INTEL_2HS_SMB:
 		case PCI_PRODUCT_INTEL_3HS_SMB:
+		case PCI_PRODUCT_INTEL_3HS_U_SMB:
 		case PCI_PRODUCT_INTEL_CORE4G_M_SMB:
 		case PCI_PRODUCT_INTEL_CORE5G_M_SMB:
+		case PCI_PRODUCT_INTEL_CMTLK_SMB:
 		case PCI_PRODUCT_INTEL_BAYTRAIL_PCU_SMB:
 		case PCI_PRODUCT_INTEL_BSW_PCU_SMB:
 		case PCI_PRODUCT_INTEL_APL_SMB:
@@ -163,6 +165,7 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pc = pa->pa_pc;
 
 	pci_aprint_devinfo(pa, NULL);
+	mutex_init(&sc->sc_i2c_mutex, MUTEX_DEFAULT, IPL_NONE);
 
 	/* Read configuration */
 	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, LPCIB_SMB_HOSTC);
@@ -208,7 +211,6 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_i2c_device = NULL;
 	flags = 0;
-	mutex_init(&sc->sc_i2c_mutex, MUTEX_DEFAULT, IPL_NONE);
 	ichsmb_rescan(self, "i2cbus", &flags);
 
 out:	if (!pmf_device_register(self, NULL, NULL))
@@ -322,7 +324,7 @@ ichsmb_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	    LPCIB_SMB_HS_INTR | LPCIB_SMB_HS_DEVERR |
 	    LPCIB_SMB_HS_BUSERR | LPCIB_SMB_HS_FAILED);
 	bus_space_barrier(sc->sc_iot, sc->sc_ioh, LPCIB_SMB_HS, 1,
-	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);  
+	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
 
 	/* Wait for bus to be idle */
 	for (retries = 100; retries > 0; retries--) {
