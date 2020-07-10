@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_vf.c,v 1.18.2.1 2019/09/26 19:07:22 martin Exp $ */
+/* $NetBSD: ixgbe_vf.c,v 1.18.2.2 2020/07/10 11:35:51 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -475,7 +475,7 @@ s32 ixgbevf_update_xcast_mode(struct ixgbe_hw *hw, int xcast_mode)
 	 *  On linux's PF driver implementation, the PF replies VF's
 	 * XCAST_MODE_ALLMULTI message not with NACK but with ACK even if the
 	 * virtual function is NOT marked "trust" and act as
-	 * XCAST_MODE_"MULTI". If ixv(4) simply check the return vaule of
+	 * XCAST_MODE_"MULTI". If ixv(4) simply check the return value of
 	 * update_xcast_mode(XCAST_MODE_ALLMULTI), SIOCSADDMULTI success and
 	 * the user may have trouble with some addresses. Fortunately, the
 	 * Linux's PF driver's "ACK" message has not XCAST_MODE_"ALL"MULTI but
