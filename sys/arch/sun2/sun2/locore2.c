@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.27 2018/09/03 16:29:28 riastradh Exp $	*/
+/*	$NetBSD: locore2.c,v 1.28 2020/07/11 13:07:01 nia Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.27 2018/09/03 16:29:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.28 2020/07/11 13:07:01 nia Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -151,7 +151,7 @@ _save_symtab(void)
 
 /*
  * This function is called from _bootstrap() to initialize
- * pre-vm-sytem virtual memory.  All this really does is to
+ * pre-vm-system virtual memory.  All this really does is to
  * set virtual_avail to the first page following preloaded
  * data (i.e. the kernel and its symbol table) and special
  * things that may be needed very early (lwp0 upages).
