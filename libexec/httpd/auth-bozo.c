@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-bozo.c,v 1.24 2019/02/28 08:28:21 mrg Exp $	*/
+/*	$NetBSD: auth-bozo.c,v 1.25 2020/07/11 08:10:52 jruoho Exp $	*/
 
 /*	$eterna: auth-bozo.c,v 1.17 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -105,6 +105,11 @@ bozo_auth_check(bozo_httpreq_t *request, const char *file)
 					pass) != 0)
 				break;
 			fclose(fp);
+
+#ifndef NO_BLOCKLIST_SUPPORT
+			pfilter_notify(BLOCKLIST_AUTH_OK, 200);
+#endif /* !NO_BLOCKLIST_SUPPORT */
+
 			return 0;
 		}
 	}

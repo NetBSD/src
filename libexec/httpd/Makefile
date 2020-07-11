@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2019/01/17 07:39:00 mrg Exp $
+#	$NetBSD: Makefile,v 1.29 2020/07/11 08:10:52 jruoho Exp $
 #
 #	$eterna: Makefile,v 1.30 2010/07/11 00:34:27 mrg Exp $
 #
@@ -14,6 +14,7 @@
 #	NO_SSL_SUPPORT		/* don't support ssl (https) */
 #	DO_HTPASSWD		/* support .htpasswd files */
 #	NO_LUA_SUPPORT		/* don't support Lua for dynamic content */
+#	NO_BLOCKLIST_SUPPORT	/* don't support blocklist */
 #
 # other system specific defines:
 #	HAVE_NBUTIL_H		/* netbsd compat is in <nbutil.h>
@@ -32,8 +33,8 @@ SRCS=	bozohttpd.c ssl-bozo.c auth-bozo.c cgi-bozo.c daemon-bozo.c \
 	tilde-luzah-bozo.c dir-index-bozo.c content-bozo.c lua-bozo.c
 SRCS+=	main.c
 
-LDADD=	-lcrypt -llua -lm
-DPADD=	${LIBCRYPT} ${LIBLUA} ${LIBM}
+LDADD=	-lblocklist -lcrypt -llua -lm
+DPADD=	${LIBBLOCKLIST} ${LIBCRYPT} ${LIBLUA} ${LIBM}
 
 WARNS?=	4
 
