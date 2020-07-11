@@ -1,4 +1,4 @@
-/* $NetBSD: argpio.c,v 1.7 2016/09/15 21:45:37 jdolecek Exp $ */
+/* $NetBSD: argpio.c,v 1.8 2020/07/11 13:07:01 nia Exp $ */
 
 /*-
  * Copyright (c) 2006 Garrett D'Amore
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: argpio.c,v 1.7 2016/09/15 21:45:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: argpio.c,v 1.8 2020/07/11 13:07:01 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: argpio.c,v 1.7 2016/09/15 21:45:37 jdolecek Exp $");
  * General Plan:
  *
  * Register GPIOs for all pins that are _not_ associated with the reset
- * pin.  (Possibly also not the sytem LED.)
+ * pin.  (Possibly also not the system LED.)
  */
 
 struct argpio_softc {
