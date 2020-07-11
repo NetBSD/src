@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.115 2020/07/06 23:31:36 jmcneill Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.116 2020/07/11 08:10:52 jruoho Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -2133,6 +2133,7 @@ static struct errors_map {
 	const char *shortmsg;		/* short version of message */
 	const char *longmsg;		/* long version of message */
 } errors_map[] = {
+	{ 200,	"200 OK",		"The request was valid", },
 	{ 400,	"400 Bad Request",	"The request was not valid", },
 	{ 401,	"401 Unauthorized",	"No authorization", },
 	{ 403,	"403 Forbidden",	"Access to this item has been denied",},
@@ -2169,6 +2170,23 @@ http_errors_long(int code)
 			return (ep->longmsg);
 	return (help);
 }
+
+#ifndef NO_BLOCKLIST_SUPPORT
+static struct blocklist *blstate;
+
+void
+pfilter_notify(const int what, const int code)
+{
+
+	if (blstate == NULL)
+		blstate = blocklist_open();
+
+	if (blstate == NULL)
+		return;
+
+	(void)blocklist_r(blstate, what, 0, http_errors_short(code));
+}
+#endif /* !NO_BLOCKLIST_SUPPORT */
 
 /* the follow functions and variables are used in handling HTTP errors */
 /* ARGSUSED */
@@ -2271,6 +2289,20 @@ bozo_http_error(bozohttpd_t *httpd, int code, bozo_httpreq_t *request,
 	if (size && request && request->hr_method != HTTP_HEAD)
 		bozo_printf(httpd, "%s", httpd->errorbuf);
 	bozo_flush(httpd, stdout);
+
+#ifndef NO_BLOCKLIST_SUPPORT
+	switch(code) {
+
+	case 401:
+		pfilter_notify(BLOCKLIST_AUTH_FAIL, code);
+		break;
+
+	case 403: /* FALLTHROUGH */
+	case 500:
+		pfilter_notify(BLOCKLIST_ABUSIVE_BEHAVIOR, code);
+		break;
+	}
+#endif /* !NO_BLOCKLIST_SUPPORT */
 
 	return code;
 }
