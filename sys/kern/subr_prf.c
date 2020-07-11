@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.184 2020/05/23 23:42:43 ad Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.185 2020/07/11 07:14:53 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.184 2020/05/23 23:42:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.185 2020/07/11 07:14:53 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1373,20 +1373,21 @@ reswitch:	switch (ch) {
 			base = DEC;
 			goto number;
 		case 'n':
+			/* no %n support in the kernel, consume and skip */
 			if (flags & MAXINT)
-				*va_arg(ap, intmax_t *) = ret;
+				(void)va_arg(ap, intmax_t *);
 			else if (flags & PTRINT)
-				*va_arg(ap, intptr_t *) = ret;
+				(void)va_arg(ap, intptr_t *);
 			else if (flags & SIZEINT)
-				*va_arg(ap, ssize_t *) = ret;
+				(void)va_arg(ap, ssize_t *);
 			else if (flags & QUADINT)
-				*va_arg(ap, quad_t *) = ret;
+				(void)va_arg(ap, quad_t *);
 			else if (flags & LONGINT)
-				*va_arg(ap, long *) = ret;
+				(void)va_arg(ap, long *);
 			else if (flags & SHORTINT)
-				*va_arg(ap, short *) = ret;
+				(void)va_arg(ap, short *);
 			else
-				*va_arg(ap, int *) = ret;
+				(void)va_arg(ap, int *);
 			continue;	/* no output */
 		case 'O':
 			flags |= LONGINT;
