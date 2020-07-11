@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.231 2019/04/04 00:36:09 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.232 2020/07/11 00:29:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2015 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.231 2019/04/04 00:36:09 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.232 2020/07/11 00:29:38 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1295,7 +1295,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 
 	DPRINTF("%s: `%s' proxyenv `%s'\n", __func__, url, STRorNULL(penv));
 
-	oldquit = oldalrm = oldint = oldpipe = NULL;
+	oldquit = oldalrm = oldint = oldpipe = SIG_ERR;
 	closefunc = NULL;
 	fin = NULL;
 	fout = NULL;
@@ -1572,9 +1572,9 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 
 	bytes = 0;
 	hashbytes = mark;
-	if (oldalrm) {
+	if (oldalrm != SIG_ERR) {
 		(void)xsignal(SIGALRM, oldalrm);
-		oldalrm = NULL;
+		oldalrm = SIG_ERR;
 	}
 	progressmeter(-1);
 
@@ -1736,14 +1736,14 @@ chunkerror:
 	warnx("Improper response from `%s:%s'", ui.host, ui.port);
 
  cleanup_fetch_url:
-	if (oldint)
+	if (oldint != SIG_ERR)
 		(void)xsignal(SIGINT, oldint);
-	if (oldpipe)
+	if (oldpipe != SIG_ERR)
 		(void)xsignal(SIGPIPE, oldpipe);
-	if (oldalrm)
+	if (oldalrm != SIG_ERR)
 		(void)xsignal(SIGALRM, oldalrm);
-	if (oldquit)
-		(void)xsignal(SIGQUIT, oldpipe);
+	if (oldquit != SIG_ERR)
+		(void)xsignal(SIGQUIT, oldquit);
 	if (fin != NULL)
 		fetch_close(fin);
 	else if (s != -1)
