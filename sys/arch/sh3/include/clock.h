@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.h,v 1.4 2008/04/28 20:23:35 martin Exp $	*/
+/*	$NetBSD: clock.h,v 1.5 2020/07/11 03:53:32 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,14 +30,11 @@
  */
 
 /*
- * void sh_clock_init(int flags, struct rtc_ops *):
+ * void sh_clock_init(int flags):
  *   flags:
  *	SH_CLOCK_NORTC		... If SH RTC module is disabled, set this.
  *				    internal module don't use RTCCLK.
  *	SH_CLOCK_NOINITTODR	... Don't initialize RTC time.
- *   rtc_ops:
- *	Machine dependent RTC ops pointer. If NULL is specified, use SH
- *	internal RTC.
  *
  * void machine_clock_init(void):
  *	Implement machine specific part of clock routines.
