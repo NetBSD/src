@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.53 2020/07/10 15:12:33 skrll Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.54 2020/07/11 06:46:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -38,7 +38,9 @@
 #ifndef _ARM_ARM32_VMPARAM_H_
 #define	_ARM_ARM32_VMPARAM_H_
 
+#if defined(_KERNEL_OPT)
 #include "opt_kasan.h"
+#endif
 
 /*
  * Virtual Memory parameters common to all arm32 platforms.
@@ -96,6 +98,7 @@
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) KERNEL_BASE)
 #define	VM_MAX_KERNEL_ADDRESS	((vaddr_t) -(PAGE_SIZE+1))
 
+#if defined(_KERNEL)
 // AddressSanitizer dedicates 1/8 of kernel memory to its shadow memory (e.g.
 // 128MB to cover 1GB for ARM) and uses a special KVA range for the shadow
 // address corresponding to a kernel memory address.
@@ -144,5 +147,6 @@
 
 #define VM_KERNEL_IO_ADDRESS	0xf0000000
 #define VM_KERNEL_IO_SIZE	(VM_MAX_KERNEL_ADDRESS - VM_KERNEL_IO_ADDRESS)
+#endif
 
 #endif /* _ARM_ARM32_VMPARAM_H_ */
