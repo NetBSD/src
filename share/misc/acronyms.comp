@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.307 2020/06/11 23:19:53 sevan Exp $
+$NetBSD: acronyms.comp,v 1.308 2020/07/11 13:04:29 nia Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1747,7 +1747,7 @@ VROC	Virtual RAID On CPU
 VRRP	Virtual Router Redundancy Protocol
 VSTP	VLAN Spanning Tree Protocol
 VTP	VLAN Trunking Protocol
-VXFS	Veritas file sytem
+VXFS	Veritas file system
 VXVM	Veritas volume manager
 W	watt
 W3C	World Wide Web Consortium
