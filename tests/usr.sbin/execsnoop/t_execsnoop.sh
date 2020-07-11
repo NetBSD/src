@@ -1,4 +1,4 @@
-# $NetBSD: t_execsnoop.sh,v 1.2 2020/07/06 10:32:18 jruoho Exp $
+# $NetBSD: t_execsnoop.sh,v 1.3 2020/07/11 09:55:26 jruoho Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -47,8 +47,9 @@ basic_body() {
 		n=$(expr $n - 1)
 	done
 
-	sleep 3
+	sleep 5
 	pkill -9 execsnoop
+	sleep 1
 
 	if [ ! $(cat $tmp | grep "whoami" | wc -l) -eq 10 ]; then
 		atf_fail "execsnoop does not work"

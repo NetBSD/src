@@ -1,4 +1,4 @@
-# $NetBSD: t_opensnoop.sh,v 1.3 2020/07/11 09:35:22 jruoho Exp $
+# $NetBSD: t_opensnoop.sh,v 1.4 2020/07/11 09:55:26 jruoho Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -50,8 +50,9 @@ basic_body() {
 		n=$(expr $n - 1)
 	done
 
-	sleep 3
+	sleep 5
 	pkill -9 opensnoop
+	sleep 1
 
 	if [ ! $(cat $tmp | grep "/etc/spwd.db" | wc -l) -eq 10 ]; then
 		atf_fail "opensnoop does not work"
