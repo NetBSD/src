@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.39 2020/04/13 12:14:04 jmcneill Exp $	*/
+/*	$NetBSD: gic.c,v 1.40 2020/07/12 13:33:44 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.39 2020/04/13 12:14:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.40 2020/07/12 13:33:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -430,11 +430,11 @@ armgic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 		 * There are 16 irqs per CFG register.  10=EDGE 00=LEVEL
 		 */
 		uint32_t new_cfg = cfg;
-		uint32_t old_cfg = (cfg >> twopair_shift) & 3;
-		if (is->is_type == IST_LEVEL && (old_cfg & 2) != 0) {
-			new_cfg &= ~(3 << twopair_shift);
+		uint32_t old_cfg = (cfg >> twopair_shift) & __BITS(1, 0);
+		if (is->is_type == IST_LEVEL && (old_cfg & __BIT(1)) != 0) {
+			new_cfg &= ~(__BITS(1, 0) << twopair_shift);
 		} else if (is->is_type == IST_EDGE && (old_cfg & 2) == 0) {
-			new_cfg |= 2 << twopair_shift;
+			new_cfg |= __BIT(1) << twopair_shift;
 		}
 		if (new_cfg != cfg) {
 			gicd_write(sc, cfg_reg, new_cfg);
