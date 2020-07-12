@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.c,v 1.28 2020/07/12 01:35:59 nia Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.c,v 1.29 2020/07/12 01:44:24 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.28 2020/07/12 01:35:59 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.29 2020/07/12 01:44:24 nia Exp $");
 
 #include "opt_wskbdmap.h"
 #include <sys/types.h>
@@ -857,6 +857,7 @@ static const keysym_t pckbd_keydesc_br[] = {
 
 static const keysym_t pckbd_keydesc_br_nodead[] = {
 /*  pos      normal             shifted         altgr           shift-altgr */
+    KC(7),   KS_6,		KS_diaeresis,	KS_notsign,	KS_dead_diaeresis,
     KC(26),  KS_apostrophe,	KS_grave,	KS_dead_acute,	KS_dead_grave,
     KC(40),  KS_asciitilde,	KS_asciicircum,	KS_dead_tilde,	KS_dead_circumflex,
 };
