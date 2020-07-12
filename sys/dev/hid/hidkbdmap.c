@@ -1,4 +1,4 @@
-/*	$NetBSD: hidkbdmap.c,v 1.5 2020/07/12 01:44:24 nia Exp $	*/
+/*	$NetBSD: hidkbdmap.c,v 1.6 2020/07/12 12:13:05 nia Exp $	*/
 
 /*
  * Copyright (c) 1999,2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hidkbdmap.c,v 1.5 2020/07/12 01:44:24 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hidkbdmap.c,v 1.6 2020/07/12 12:13:05 nia Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -367,6 +367,22 @@ Static const keysym_t hidkbd_keydesc_sv_nodead[] = {
     KC(48),  KS_diaeresis,	KS_asciicircum,	KS_asciitilde,
 };
 
+Static const keysym_t hidkbd_keydesc_ee[] = {
+/*  pos      normal             shifted         altgr                   shift-altgr */
+    KC(22),  KS_s,		KS_S,		KS_scaron,		KS_Scaron,
+    KC(29),  KS_z,		KS_Z,		KS_zcaron,		KS_Zcaron,
+    KC(47),  KS_udiaeresis,	KS_Udiaeresis,	KS_dead_diaeresis,	KS_dead_abovering,
+    KC(48),  KS_otilde,		KS_Otilde,	KS_section,
+    KC(50),  KS_apostrophe,	KS_asterisk,	KS_onehalf,		KS_dead_breve,
+    KC(52),  KS_adiaeresis,	KS_Adiaeresis,	KS_asciicircum,		KS_dead_caron,
+    KC(53),  KS_dead_caron,	KS_dead_tilde,	KS_notsign,		KS_notsign,
+};
+
+Static const keysym_t hidkbd_keydesc_ee_nodead[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(53),  KS_asciicircum,	KS_asciitilde,	KS_notsign,	KS_notsign,
+};
+
 Static const keysym_t hidkbd_keydesc_no[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
     KC(46),  KS_backslash,	KS_dead_grave,	KS_dead_acute,
@@ -680,6 +696,8 @@ const struct wscons_keydesc hidkbd_keydesctab[] = {
 	KBD_MAP(KB_UK | KB_SWAPCTRLCAPS,KB_UK,	hidkbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_SV,			KB_DK,	hidkbd_keydesc_sv),
 	KBD_MAP(KB_SV | KB_NODEAD,	KB_SV,	hidkbd_keydesc_sv_nodead),
+	KBD_MAP(KB_EE,			KB_SV,	hidkbd_keydesc_ee),
+	KBD_MAP(KB_EE | KB_NODEAD,	KB_EE,	hidkbd_keydesc_ee_nodead),
 	KBD_MAP(KB_NO,			KB_DK,	hidkbd_keydesc_no),
 	KBD_MAP(KB_NO | KB_NODEAD,	KB_NO,	hidkbd_keydesc_no_nodead),
 	KBD_MAP(KB_ES ,			KB_US,	hidkbd_keydesc_es),

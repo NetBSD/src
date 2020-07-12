@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.c,v 1.29 2020/07/12 01:44:24 nia Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.c,v 1.30 2020/07/12 12:13:05 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.29 2020/07/12 01:44:24 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.30 2020/07/12 12:13:05 nia Exp $");
 
 #include "opt_wskbdmap.h"
 #include <sys/types.h>
@@ -369,6 +369,22 @@ static const keysym_t pckbd_keydesc_sv_nodead[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
     KC(13),  KS_apostrophe,	KS_grave,	KS_bar,
     KC(27),  KS_diaeresis,	KS_asciicircum,	KS_asciitilde,
+};
+
+static const keysym_t pckbd_keydesc_ee[] = {
+/*  pos      normal             shifted         altgr                   shift-altgr */
+    KC(26),  KS_udiaeresis,	KS_Udiaeresis,	KS_dead_diaeresis,	KS_dead_abovering,
+    KC(27),  KS_otilde,		KS_Otilde,	KS_section,
+    KC(31),  KS_s,		KS_S,		KS_scaron,		KS_Scaron,
+    KC(44),  KS_z,		KS_Z,		KS_zcaron,		KS_Zcaron,
+    KC(40),  KS_adiaeresis,	KS_Adiaeresis,	KS_asciicircum,		KS_dead_caron,
+    KC(41),  KS_dead_caron,	KS_dead_tilde,	KS_notsign,		KS_notsign,
+    KC(43),  KS_apostrophe,	KS_asterisk,	KS_onehalf,		KS_dead_breve,
+};
+
+static const keysym_t pckbd_keydesc_ee_nodead[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(41),  KS_asciicircum,	KS_asciitilde,	KS_notsign,	KS_notsign,
 };
 
 static const keysym_t pckbd_keydesc_no[] = {
@@ -889,6 +905,8 @@ const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_MAP(KB_JP,			KB_US,	pckbd_keydesc_jp),
 	KBD_MAP(KB_SV,			KB_DK,	pckbd_keydesc_sv),
 	KBD_MAP(KB_SV | KB_NODEAD,	KB_SV,	pckbd_keydesc_sv_nodead),
+	KBD_MAP(KB_EE,			KB_SV,	pckbd_keydesc_ee),
+	KBD_MAP(KB_EE | KB_NODEAD,	KB_EE,	pckbd_keydesc_ee_nodead),
 	KBD_MAP(KB_NO,			KB_DK,	pckbd_keydesc_no),
 	KBD_MAP(KB_NO | KB_NODEAD,	KB_NO,	pckbd_keydesc_no_nodead),
 	KBD_MAP(KB_US | KB_DECLK,	KB_US,	pckbd_keydesc_us_declk),
