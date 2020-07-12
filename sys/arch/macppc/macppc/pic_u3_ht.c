@@ -45,7 +45,7 @@
 #include <machine/autoconf.h>
 #include <arch/powerpc/pic/picvar.h>
 
-#ifdef U3_HT_PIC_DEPUG
+#ifdef U3_HT_PIC_DEBUG
 #define DPRINTF aprint_error
 #else
 #define DPRINTF if (0) printf
