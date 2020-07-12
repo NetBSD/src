@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.81 2020/07/10 12:25:10 skrll Exp $
+#	$NetBSD: GENERIC,v 1.82 2020/07/12 13:35:33 skrll Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -80,6 +80,11 @@ options 	MSGBUFSIZE=32768
 #options 	EARLYCONS=virt, CONSADDR=0x09000000
 
 #options 	EARLYCONS=zynq, CONSADDR=0xe0001000
+
+# Kernel Undefined Behavior Sanitizer (kUBSan). Use UBSAN_ALWAYS_FATAL
+# if you want panics instead of warnings.
+#options 	KUBSAN			# mandatory
+#options 	UBSAN_ALWAYS_FATAL	# optional
 
 # Kernel Address Sanitizer (kASan). The quarantine is optional and can
 # help KASAN find more use-after-frees. Use KASAN_PANIC if you want panics
