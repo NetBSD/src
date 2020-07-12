@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.54 2019/02/06 08:37:12 martin Exp $ */
+/*	$NetBSD: dbcool.c,v 1.55 2020/07/12 06:38:56 macallan Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.54 2019/02/06 08:37:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.55 2020/07/12 06:38:56 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -775,6 +775,7 @@ dbcool_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dc.dc_readreg = dbcool_readreg;
 	sc->sc_dc.dc_writereg = dbcool_writereg;
 	sc->sc_dev = self;
+	sc->sc_prop = args->ia_prop;
 
 	if (dbcool_chip_ident(&sc->sc_dc) < 0 || sc->sc_dc.dc_chip == NULL)
 		panic("could not identify chip at addr %d", args->ia_addr);
@@ -1689,10 +1690,18 @@ dbcool_attach_sensor(struct dbcool_softc *sc, int idx)
 {
 	int name_index;
 	int error = 0;
+	char name[8];
+	const char *desc;
 
 	name_index = sc->sc_dc.dc_chip->table[idx].name_index;
-	strlcpy(sc->sc_sensor[idx].desc, dbc_sensor_names[name_index],
-		sizeof(sc->sc_sensor[idx].desc));
+	snprintf(name, 7, "s%02x", sc->sc_dc.dc_chip->table[idx].reg.val_reg);
+	if (prop_dictionary_get_cstring_nocopy(sc->sc_prop, name, &desc)) {
+		 strlcpy(sc->sc_sensor[idx].desc, desc,
+			sizeof(sc->sc_sensor[idx].desc));
+	} else {
+		strlcpy(sc->sc_sensor[idx].desc, dbc_sensor_names[name_index],
+			sizeof(sc->sc_sensor[idx].desc));
+	}
 	sc->sc_regs[idx] = &sc->sc_dc.dc_chip->table[idx].reg;
 	sc->sc_nom_volt[idx] = sc->sc_dc.dc_chip->table[idx].nom_volt_index;
 
@@ -1721,9 +1730,12 @@ dbcool_attach_temp_control(struct dbcool_softc *sc, int idx,
 
 	/* create sysctl node for the sensor if not one already there */
 	if (sc->sc_sysctl_num[j] == -1) {
+		int name_index = sc->sc_dc.dc_chip->table[idx].name_index;
+		
 		ret = sysctl_createv(&sc->sc_sysctl_log, 0, NULL, &me2,
 				     CTLFLAG_READWRITE,
-				     CTLTYPE_NODE, sc->sc_sensor[j].desc, NULL,
+				     CTLTYPE_NODE, dbc_sensor_names[name_index],
+				     sc->sc_sensor[j].desc,
 				     NULL, 0, NULL, 0,
 				     CTL_HW, sc->sc_root_sysctl_num, CTL_CREATE,
 					CTL_EOL);
