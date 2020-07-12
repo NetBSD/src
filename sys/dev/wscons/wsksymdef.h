@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.67 2018/02/19 14:34:17 maya Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.68 2020/07/12 01:35:59 nia Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -655,6 +655,7 @@ action(KB_USER,	0,	0x0100,	"user",	,	"User-defined")	\
 action(KB_US,	0,	0x0200,	"us",	,	"US-English")	\
 action(KB_UK,	0,	0x0700,	"uk",	,	"UK-English")	\
 action(KB_BE,	0,	0x1300,	"be",	,	"Belgian")	\
+action(KB_BR,	0,	0x1800,	"br",	,	"Brazilian")	\
 action(KB_CZ,	0,	0x1500, "cz",	,	"Czech")	\
 action(KB_DK,	0,	0x0400,	"dk",	,	"Danish")	\
 action(KB_NL,	0,	0x1600,	"nl",	,	"Dutch") 	\
