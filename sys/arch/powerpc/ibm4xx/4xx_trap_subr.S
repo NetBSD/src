@@ -1,4 +1,4 @@
-/*	$NetBSD: 4xx_trap_subr.S,v 1.8 2020/03/01 23:23:36 rin Exp $	*/
+/*	$NetBSD: 4xx_trap_subr.S,v 1.9 2020/07/12 21:16:23 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 /* This file provides necessary handlers for 405GP CPU
- * It should be included in locore.S after powerpc/powerpc/trap_subr.S
+ * It should be included in locore.S after powerpc/ibm4xx/trap_subr.S
  */
 
 	.text
