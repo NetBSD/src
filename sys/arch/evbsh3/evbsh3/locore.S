@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.11 2006/10/07 01:21:47 tsutsui Exp $	*/
+/*	$NetBSD: locore.S,v 1.12 2020/07/12 01:52:22 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -223,7 +223,9 @@ ___etext:	.long	_C_LABEL(etext)
 ___end:		.long	_C_LABEL(end)
 XLtmpstk:	.long	INIT_STACK
 _KERNBASE:	.long	0x8c000000
+#ifdef ROMIMAGE
 _ROM_START:	.long	IOM_ROM_BEGIN
+#endif
 XLinitSH3:	.long	_C_LABEL(initSH3)
 XLmain:		.long	_C_LABEL(main)
 XLtoP2:		.long	0x20000000
