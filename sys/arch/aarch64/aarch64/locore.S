@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.64 2020/05/28 04:51:44 ryo Exp $	*/
+/*	$NetBSD: locore.S,v 1.65 2020/07/12 06:35:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.64 2020/05/28 04:51:44 ryo Exp $")
+RCSID("$NetBSD: locore.S,v 1.65 2020/07/12 06:35:58 skrll Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_STRONGLY_ORDERED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -368,7 +368,7 @@ printcpu:
 
 ENTRY_NP(cpu_mpstart)
 	mrs	x3, mpidr_el1
-	ldr	x0, =(MPIDR_AFF0|MPIDR_AFF1|MPIDR_AFF2|MPIDR_AFF3)
+	ldr	x0, =(MPIDR_AFF0 | MPIDR_AFF1 | MPIDR_AFF2 | MPIDR_AFF3)
 	and	x3, x3, x0
 
 	/*
@@ -807,8 +807,8 @@ init_mmutable:
 	mov	x7, x26				/* pr func */
 	adr	x6, bootpage_alloc		/* allocator */
 	mov	x5, xzr				/* flags = 0 */
-	mov	x4, #LX_BLKPAG_ATTR_DEVICE_MEM|LX_BLKPAG_AP_RW	/* attr */
-	orr	x4, x4, #LX_BLKPAG_UXN|LX_BLKPAG_PXN
+	mov	x4, #LX_BLKPAG_ATTR_DEVICE_MEM | LX_BLKPAG_AP_RW	/* attr */
+	orr	x4, x4, #LX_BLKPAG_UXN | LX_BLKPAG_PXN
 	mov	x3, #L2_SIZE			/* blocksize */
 	mov	x2, #L2_SIZE			/* size */
 	ldr	x1, =CONSADDR			/* pa */
@@ -821,8 +821,8 @@ init_mmutable:
 	mov	x7, x26				/* pr func */
 	adr	x6, bootpage_alloc		/* allocator */
 	mov	x5, xzr				/* flags = 0 */
-	mov	x4, #LX_BLKPAG_ATTR_DEVICE_MEM|LX_BLKPAG_AP_RW	/* attr */
-	orr	x4, x4, #LX_BLKPAG_UXN|LX_BLKPAG_PXN
+	mov	x4, #LX_BLKPAG_ATTR_DEVICE_MEM | LX_BLKPAG_AP_RW	/* attr */
+	orr	x4, x4, #LX_BLKPAG_UXN | LX_BLKPAG_PXN
 	mov	x3, #L2_SIZE			/* blocksize */
 	mov	x2, #(1024*1024*1024*4)		/* size */
 	mov	x1, xzr				/* pa */
@@ -836,7 +836,7 @@ init_mmutable:
 	mov	x7, x26				/* pr func */
 	adr	x6, bootpage_alloc		/* allocator */
 	mov	x5, xzr				/* flags = 0 */
-	mov	x4, #LX_BLKPAG_ATTR_NORMAL_NC|LX_BLKPAG_AP_RW	/* attr */
+	mov	x4, #LX_BLKPAG_ATTR_NORMAL_NC | LX_BLKPAG_AP_RW	/* attr */
 	mov	x3, #L2_SIZE			/* blocksize */
 	adr	x0, start			/* va = start */
 	adrl	x2, _end
@@ -854,8 +854,8 @@ init_mmutable:
 	mov	x7, x26				/* pr func */
 	adr	x6, bootpage_alloc		/* allocator */
 	mov	x5, xzr				/* flags = 0 */
-	mov	x4, #LX_BLKPAG_ATTR_NORMAL_NC|LX_BLKPAG_AP_RW	/* attr */
-	orr	x4, x4, #LX_BLKPAG_UXN|LX_BLKPAG_PXN
+	mov	x4, #LX_BLKPAG_ATTR_NORMAL_NC | LX_BLKPAG_AP_RW	/* attr */
+	orr	x4, x4, #LX_BLKPAG_UXN | LX_BLKPAG_PXN
 	mov	x3, #L2_SIZE			/* blocksize */
 	mov	x2, #L2_SIZE			/* size */
 	mov	x1, x8				/* pa */
@@ -868,7 +868,7 @@ init_mmutable:
 	mov	x7, x26				/* pr func */
 	adr	x6, bootpage_alloc		/* allocator */
 	mov	x5, xzr				/* flags = 0 */
-	mov	x4, #LX_BLKPAG_ATTR_NORMAL_WB|LX_BLKPAG_AP_RW	/* attr */
+	mov	x4, #LX_BLKPAG_ATTR_NORMAL_WB | LX_BLKPAG_AP_RW	/* attr */
 	orr	x4, x4, #LX_BLKPAG_UXN
 	mov	x3, #L2_SIZE			/* blocksize */
 	adr	x1, start			/* pa = start */
