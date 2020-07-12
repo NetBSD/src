@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.55 2020/07/12 06:38:56 macallan Exp $ */
+/*	$NetBSD: dbcool.c,v 1.56 2020/07/12 06:42:32 macallan Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.55 2020/07/12 06:38:56 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.56 2020/07/12 06:42:32 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1314,7 +1314,7 @@ sysctl_dbcool_behavior(SYSCTLFN_ARGS)
 			break;
 	if (i >= __arraycount(behavior))
 		return EINVAL;
-
+	newreg = i;
 	if (sc->sc_dc.dc_chip->flags & DBCFLAG_ADM1030) {
 		/*
 		 * ADM1030 splits fan controller behavior across two
