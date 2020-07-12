@@ -1,4 +1,4 @@
-.\"	$NetBSD: kernel_sanitizers.7,v 1.4 2020/07/10 12:25:11 skrll Exp $
+.\"	$NetBSD: kernel_sanitizers.7,v 1.5 2020/07/12 10:10:53 maxv Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 10, 2020
+.Dd July 12, 2020
 .Dt KERNEL_SANITIZERS 7
 .Os
 .Sh NAME
@@ -126,10 +126,10 @@ should introduce only one MD header file.
 .Sh KMSAN
 Kernel Memory Sanitizer, specializes in finding uninitialized memory.
 .Ss Runtime cost
-Heavy runtime checks, and ~100% increase in memory consumption.
+Heavy runtime checks, and ~200% increase in memory consumption.
 .Ss Used components
-Shadow memory, compiler instrumentation, special kernel wrappers, and heavy MD
-infrastructure.
+Double shadow memory, compiler instrumentation, special kernel wrappers, and
+heavy MD infrastructure.
 .Ss Supported architectures
 amd64 (llvm).
 .Ss Files
