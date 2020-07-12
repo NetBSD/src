@@ -1,4 +1,4 @@
-/*	$NetBSD: hidkbdmap.c,v 1.6 2020/07/12 12:13:05 nia Exp $	*/
+/*	$NetBSD: hidkbdmap.c,v 1.7 2020/07/12 13:12:17 nia Exp $	*/
 
 /*
  * Copyright (c) 1999,2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hidkbdmap.c,v 1.6 2020/07/12 12:13:05 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hidkbdmap.c,v 1.7 2020/07/12 13:12:17 nia Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -670,6 +670,43 @@ static const keysym_t hidkbd_keydesc_br_nodead[] = {
     KC(52),  KS_asciitilde,	KS_asciicircum,	KS_dead_tilde,	KS_dead_circumflex,
 };
 
+static const keysym_t hidkbd_keydesc_tr[] = {
+/*  pos      normal		shifted         altgr           shift-altgr */
+    KC(12),  KS_L5_idotless,	KS_I,
+    KC(20),  KS_q,		KS_Q,		KS_at,
+    KC(31),  KS_2,		KS_apostrophe,	KS_sterling,
+    KC(32),  KS_3,		KS_asciicircum,	KS_numbersign,
+    KC(33),  KS_4,		KS_plus,	KS_dollar,
+    KC(34),  KS_5,		KS_percent,	KS_onehalf,
+    KC(35),  KS_6,		KS_ampersand,
+    KC(36),  KS_7,		KS_slash,	KS_braceleft,
+    KC(37),  KS_8,		KS_parenleft,	KS_bracketleft,
+    KC(38),  KS_9,		KS_parenright,	KS_bracketright,
+    KC(39),  KS_0,		KS_equal,	KS_braceright,
+    KC(45),  KS_asterisk,	KS_question,	KS_backslash,
+    KC(46),  KS_minus,	KS_underscore,
+    KC(47),  KS_L5_gbreve,	KS_L5_Gbreve,	KS_dead_diaeresis,
+    KC(48),  KS_udiaeresis,	KS_Udiaeresis,	KS_asciitilde,
+    KC(49),  KS_comma,	KS_semicolon,	KS_dead_grave,
+    KC(50),  KS_comma,	KS_semicolon,	KS_dead_grave,
+    KC(51),  KS_L5_scedilla,	KS_L5_Scedilla,	KS_dead_acute,
+    KC(52),  KS_i,		KS_L5_Idotabove,
+    KC(53),  KS_quotedbl,	KS_eacute,
+    KC(54),  KS_odiaeresis,	KS_Odiaeresis,
+    KC(55),  KS_ccedilla,	KS_Ccedilla,
+    KC(56),  KS_period,	KS_colon,
+    KC(100), KS_less,	KS_greater,	KS_bar,
+    KC(230), KS_Mode_switch,	KS_Multi_key,
+};
+
+static const keysym_t hidkbd_keydesc_tr_nodead[] = {
+/*  pos      normal		shifted         altgr           shift-altgr */
+    KC(47),  KS_L5_gbreve,	KS_L5_Gbreve,
+    KC(49),  KS_comma,		KS_semicolon,	KS_grave,
+    KC(50),  KS_comma,		KS_semicolon,	KS_grave,
+    KC(51),  KS_L5_scedilla,	KS_L5_Scedilla,	KS_apostrophe,
+};
+
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
 
@@ -706,6 +743,8 @@ const struct wscons_keydesc hidkbd_keydesctab[] = {
 	KBD_MAP(KB_SG | KB_NODEAD,	KB_SG,	hidkbd_keydesc_sg_nodead),
 	KBD_MAP(KB_SF,			KB_SG,	hidkbd_keydesc_sf),
 	KBD_MAP(KB_SF | KB_NODEAD,	KB_SF,	hidkbd_keydesc_sg_nodead),
+	KBD_MAP(KB_TR,			KB_US,	hidkbd_keydesc_tr),
+	KBD_MAP(KB_TR | KB_NODEAD,	KB_TR,	hidkbd_keydesc_tr_nodead),
 	KBD_MAP(KB_HU,			KB_US,	hidkbd_keydesc_hu),
 	{0, 0, 0, 0}
 };
