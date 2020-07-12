@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.95 2020/05/18 05:47:54 msaitoh Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.96 2020/07/12 19:05:32 jdolecek Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.95 2020/05/18 05:47:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.96 2020/07/12 19:05:32 jdolecek Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -577,7 +577,6 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_t	dict;
 	struct pci_attach_args	*pa = aux;
 	pci_chipset_tag_t	pc = pa->pa_pc;
-	pci_intr_handle_t	ih;
 	const char		*intrstr = NULL;
 	uint32_t		command;
 	struct ifnet		*ifp;
@@ -626,11 +625,11 @@ bnx_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (pci_intr_map(pa, &ih)) {
+	if (pci_intr_alloc(pa, &sc->bnx_ih, NULL, 0)) {
 		aprint_error_dev(sc->bnx_dev, "couldn't map interrupt\n");
 		goto bnx_attach_fail;
 	}
-	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
+	intrstr = pci_intr_string(pc, sc->bnx_ih[0], intrbuf, sizeof(intrbuf));
 
 	/*
 	 * Configure byte swap and enable indirect register access.
@@ -915,8 +914,8 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	callout_setfunc(&sc->bnx_timeout, bnx_tick, sc);
 
 	/* Hookup IRQ last. */
-	sc->bnx_intrhand = pci_intr_establish_xname(pc, ih, IPL_NET, bnx_intr,
-	    sc, device_xname(self));
+	sc->bnx_intrhand = pci_intr_establish_xname(pc, sc->bnx_ih[0], IPL_NET,
+	    bnx_intr, sc, device_xname(self));
 	if (sc->bnx_intrhand == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
@@ -2712,6 +2711,9 @@ bnx_release_resources(struct bnx_softc *sc)
 
 	if (sc->bnx_intrhand != NULL)
 		pci_intr_disestablish(pa->pa_pc, sc->bnx_intrhand);
+
+	if (sc->bnx_ih != NULL)
+		pci_intr_release(pa->pa_pc, sc->bnx_ih, 1);
 
 	if (sc->bnx_size)
 		bus_space_unmap(sc->bnx_btag, sc->bnx_bhandle, sc->bnx_size);
