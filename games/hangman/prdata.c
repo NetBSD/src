@@ -1,4 +1,4 @@
-/*	$NetBSD: prdata.c,v 1.7 2012/10/13 21:03:09 dholland Exp $	*/
+/*	$NetBSD: prdata.c,v 1.8 2020/07/12 02:34:54 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)prdata.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: prdata.c,v 1.7 2012/10/13 21:03:09 dholland Exp $");
+__RCSID("$NetBSD: prdata.c,v 1.8 2020/07/12 02:34:54 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,9 +47,17 @@ __RCSID("$NetBSD: prdata.c,v 1.7 2012/10/13 21:03:09 dholland Exp $");
 void
 prdata(void)
 {
-	int i;
+	int i, n, l;
 
-	move(GUESSY, GUESSX + sizeof "Guessed: ");
+	for (i = n = 0; i < 26; i++)
+		if (Guessed[i])
+			n++;
+
+	move(GUESSY, GUESSX);
+	l = sizeof "Guessed: ";
+	if (GUESSX + l + n < COLS) {
+		addstr("Guessed: ");
+	}
 	for (i = 0; i < 26; i++)
 		if (Guessed[i])
 			addch(i + 'a');
