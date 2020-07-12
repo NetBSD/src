@@ -1,4 +1,4 @@
-/*	$NetBSD: hidkbdmap.c,v 1.4 2020/07/12 01:35:59 nia Exp $	*/
+/*	$NetBSD: hidkbdmap.c,v 1.5 2020/07/12 01:44:24 nia Exp $	*/
 
 /*
  * Copyright (c) 1999,2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hidkbdmap.c,v 1.4 2020/07/12 01:35:59 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hidkbdmap.c,v 1.5 2020/07/12 01:44:24 nia Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -649,6 +649,7 @@ static const keysym_t hidkbd_keydesc_br[] = {
 
 static const keysym_t hidkbd_keydesc_br_nodead[] = {
 /*  pos      normal             shifted         altgr           shift-altgr */
+    KC(35),  KS_6,		KS_diaeresis,	KS_notsign,	KS_dead_diaeresis,
     KC(47),  KS_apostrophe,	KS_grave,	KS_dead_acute,	KS_dead_grave,
     KC(52),  KS_asciitilde,	KS_asciicircum,	KS_dead_tilde,	KS_dead_circumflex,
 };
