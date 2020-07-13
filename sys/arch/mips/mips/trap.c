@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.254 2020/06/25 08:00:49 simonb Exp $	*/
+/*	$NetBSD: trap.c,v 1.255 2020/07/13 09:00:40 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.254 2020/06/25 08:00:49 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.255 2020/07/13 09:00:40 simonb Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -600,7 +600,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 	case T_RES_INST+T_USER:
 	case T_COP_UNUSABLE+T_USER:
 #if !defined(FPEMUL) && !defined(NOFPU)
-		if ((cause & MIPS_CR_COP_ERR) == 0x10000000) {
+		if (__SHIFTOUT(cause, MIPS_CR_COP_ERR) == MIPS_CR_COP_ERR_CU1) {
 			fpu_load();          	/* load FPA */
 		} else
 #endif
