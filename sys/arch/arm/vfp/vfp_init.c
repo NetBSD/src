@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.67 2020/07/13 16:53:06 riastradh Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.68 2020/07/13 16:54:03 riastradh Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -32,7 +32,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.67 2020/07/13 16:53:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.68 2020/07/13 16:54:03 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -668,7 +668,6 @@ vfp_setcontext(struct lwp *l, const mcontext_t *mcp)
 void
 fpu_kern_enter(void)
 {
-	struct lwp *l = curlwp;
 	struct cpu_info *ci;
 	uint32_t fpexc;
 	int s;
@@ -686,14 +685,8 @@ fpu_kern_enter(void)
 	KASSERT(ci->ci_kfpu_spl == -1);
 	ci->ci_kfpu_spl = s;
 
-	/*
-	 * If we are in a softint and have a pinned lwp, the fpu state
-	 * is that of the pinned lwp, so save it there.
-	 */
-	if ((l->l_pflag & LP_INTR) && (l->l_switchto != NULL))
-		l = l->l_switchto;
-	if (vfp_used_p(l))
-		vfp_savecontext(l);
+	/* Save any fpu state on the current CPU.  */
+	pcu_save_all_on_cpu();
 
 	/* Enable the fpu.  */
 	fpexc = armreg_fpexc_read();
