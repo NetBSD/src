@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.294 2020/06/28 13:33:06 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.295 2020/07/13 05:20:45 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.294 2020/06/28 13:33:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.295 2020/07/13 05:20:45 simonb Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -267,10 +267,12 @@ struct mips_options mips_options = {
 
 void *	msgbufaddr;
 
+/* the following is used by DDB to reset the system */
+void	(*cpu_reset_address)(void);
+
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-
 
 /*
  * Assumptions:

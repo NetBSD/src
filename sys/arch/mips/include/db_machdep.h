@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.30 2017/11/06 03:47:47 christos Exp $ */
+/* $NetBSD: db_machdep.h,v 1.31 2020/07/13 05:20:45 simonb Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -123,6 +123,8 @@ db_addr_t next_instr_address(db_addr_t pc, bool bd);
 bool ddb_running_on_this_cpu_p(void);
 bool ddb_running_on_any_cpu_p(void);
 void db_resume_others(void);
+
+extern void (*cpu_reset_address)(void);
 
 /*
  * We have machine-dependent commands.
