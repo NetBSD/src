@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.147 2020/06/13 20:18:00 ad Exp $
+.\"	$NetBSD: sysctl.7,v 1.148 2020/07/13 15:05:05 jruoho Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd November 14, 2019
+.Dd July 13, 2020
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -1542,7 +1542,9 @@ The available RFC 6056 port randomization algorithms.
 A bitmask of ports that will not be used during anonymous or privileged
 port selection.
 .It Li ip.anonportalgo.selected
-The currently selected RFC 6056 port randomization algorithm.
+The currently selected RFC 6056 port randomization algorithm; see
+.Xr rfc6056 7
+for details.
 .It Li ip.anonportmax
 The highest port number to use for TCP and UDP ephemeral port allocation.
 This cannot be set to less than 1024 or greater than 65535, and must
@@ -1859,7 +1861,9 @@ The available RFC 6056 port randomization algorithms.
 A bitmask of ports that will not be used during anonymous or privileged
 port selection.
 .It Li ip6.anonportalgo.selected
-The currently selected RFC 6056 port randomization algorithm.
+The currently selected RFC 6056 port randomization algorithm; see
+.Xr rfc6056 7
+for details.
 .It Li ip6.anonportmax
 The highest port number to use for TCP and UDP ephemeral port allocation.
 This cannot be set to less than 1024 or greater than 65535, and must
