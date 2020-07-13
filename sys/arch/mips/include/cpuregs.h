@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.99 2020/05/24 07:15:24 simonb Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.100 2020/07/13 09:00:40 simonb Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -188,6 +188,9 @@
  */
 #define	MIPS_CR_BR_DELAY	0x80000000
 #define	MIPS_CR_COP_ERR		0x30000000
+#define	 MIPS_CR_COP_ERR_CU1	  1
+#define	 MIPS_CR_COP_ERR_CU2	  2
+#define	 MIPS_CR_COP_ERR_CU3	  3
 #define	MIPS1_CR_EXC_CODE	0x0000003C	/* four bits */
 #define	MIPS3_CR_EXC_CODE	0x0000007C	/* five bits */
 #define	MIPS_CR_IP		0x0000FF00
