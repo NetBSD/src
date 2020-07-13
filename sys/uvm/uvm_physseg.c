@@ -1,4 +1,4 @@
-/* $NetBSD: uvm_physseg.c,v 1.15 2020/07/13 05:52:50 mrg Exp $ */
+/* $NetBSD: uvm_physseg.c,v 1.16 2020/07/13 10:46:10 mrg Exp $ */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1209,7 +1209,8 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 	if (free_list >= VM_NFREELIST || free_list < VM_FREELIST_DEFAULT)
 		panic("uvm_page_physload: bad free list %d", free_list);
 	if (start >= end)
-		panic("uvm_page_physload: start[%lx] >= en[%lx]d", start, end);
+		panic("uvm_page_physload: start[%llx] >= en[%llx]d",
+		    (unsigned long long)start, (unsigned long long)end);
 
 	if (uvm_physseg_plug(start, end - start, &upm) == false) {
 		panic("uvm_physseg_plug() failed at boot.");
