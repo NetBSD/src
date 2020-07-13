@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.67 2020/07/06 18:30:48 riastradh Exp $	*/
+/*	$NetBSD: fpu.c,v 1.68 2020/07/13 16:51:51 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.67 2020/07/06 18:30:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.68 2020/07/13 16:51:51 riastradh Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -370,11 +370,14 @@ fpu_lwp_abandon(struct lwp *l)
 /*
  * fpu_kern_enter()
  *
- *	Begin using the FPU.  Raises to splhigh, disabling all
+ *	Begin using the FPU.  Raises to splvm, disabling most
  *	interrupts and rendering the thread non-preemptible; caller
  *	should not use this for long periods of time, and must call
  *	fpu_kern_leave() afterward.  Non-recursive -- you cannot call
  *	fpu_kern_enter() again without calling fpu_kern_leave() first.
+ *
+ *	Must be used only at IPL_VM or below -- never in IPL_SCHED or
+ *	IPL_HIGH interrupt handlers.
  */
 void
 fpu_kern_enter(void)
@@ -383,9 +386,10 @@ fpu_kern_enter(void)
 	struct cpu_info *ci;
 	int s;
 
-	s = splhigh();
+	s = splvm();
 
 	ci = curcpu();
+	KASSERTMSG(ci->ci_ilevel <= IPL_VM, "ilevel=%d", ci->ci_ilevel);
 	KASSERT(ci->ci_kfpu_spl == -1);
 	ci->ci_kfpu_spl = s;
 
@@ -423,7 +427,7 @@ fpu_kern_leave(void)
 	struct cpu_info *ci = curcpu();
 	int s;
 
-	KASSERT(ci->ci_ilevel == IPL_HIGH);
+	KASSERT(ci->ci_ilevel == IPL_VM);
 	KASSERT(ci->ci_kfpu_spl != -1);
 
 	/*
