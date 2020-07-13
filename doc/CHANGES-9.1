@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.75 2020/07/12 11:44:35 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.76 2020/07/13 14:34:30 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -3323,3 +3323,55 @@ sys/dev/pci/ixgbe/ixgbe_osdep.h			1.26
 	- Whitespace fix.
 	- Fix typos.
 	[msaitoh, ticket #997]
+
+sys/arch/x86/include/specialreg.h		1.162-1.168
+
+	- AMD CPUID Fn8000_000a %edx bit 20 is "SPEC_CTRL".
+	- Add some bit definitions of AMD's CPUID Fn8000_001f Encrypted Memory
+	  features.
+	- Add AMD INVLPGB/TLBSYNC hypervisor enable in VMCB and TLBSYNC intercept bit.
+	- Add AMD MSR_DE_CFG's bit 1 as DE_CFG_LFENCE_SERIALIZE.
+	- Add some definitions for Intel:
+	  - Add CPUID leaf 6 %eax bit 19 for HW_FEEDBACK* and IA32_PACKAGE_TERM* MSRs.
+	  - Add CPUID leaf 7 %ecx bit 31 for Protection Keys.
+	  - Add definition of Load only TLB and Store only TLB.
+	  - Add IF_PSCHANGE_MC_NO bit of IA32_ARCH_CAPABILITIES
+	  - Fix HWP_IGNIDL.
+	- Add CPUID 7 %edx bit 9 "SRBDS_CTRL"
+	- Modify comment. Style and fix typo.
+	[msaitoh, ticket #998]
+
+external/bsd/dhcpcd/dist/hooks/01-test		(apply patch)
+
+	Fix dhcpcd test not to require /usr.
+	[roy, ticket #999]
+
+sys/dev/scsipi/scsiconf.c			1.288
+
+	Continue scanning a SCSI bus when a LUN is reported not present.
+	[kim, ticket #1000]
+
+sys/dev/pci/vioscsi.c				1.22
+
+	Fix off-by-one SCSI target reporting.
+	[kim, ticket #1001]
+
+etc/wscons.conf					1.20,1.21
+sbin/wsconsctl/wsconsctl.8			1.30
+share/man/man4/pckbd.4				1.23,1.25
+share/man/man4/wskbd.4				1.18,1.19
+sys/dev/hid/hidkbdmap.c				1.4-1.10
+sys/dev/pckbport/wskbdmap_mfii.c		1.28-1.33
+sys/dev/wscons/wsksymdef.h			1.68-1.73
+
+	Adds keyboard layouts for Brazilian Portugese, Canadian French,
+	Estonian, Icelandic, and Latin American Spanish to wscons, and
+	make the documentation of supported layouts less redundant. 
+	[nia, ticket #1002]
+
+sys/dev/usb/ualea.c				1.12
+
+	Set up the USB xfer for every transfer, not just once in the attach
+	function.
+	[simonb, ticket #1003]
+
