@@ -1,4 +1,4 @@
-.\" $NetBSD: wskbd.4,v 1.16 2012/05/27 12:05:40 wiz Exp $
+.\" $NetBSD: wskbd.4,v 1.16.34.1 2020/07/13 14:22:47 martin Exp $
 .\"
 .\" Copyright (c) 1999
 .\" 	Matthias Drochner.  All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 27, 2012
+.Dd July 13, 2020
 .Dt WSKBD 4
 .Os
 .Sh NAME
@@ -114,6 +114,88 @@ match if the device is in use as system console.
 (The console device selection in early system startup is not influenced.)
 This way, the console device can be connected to a known
 wskbd device instance.
+.Ss Keyboard encodings
+The following encodings are supported.
+Device drivers for legacy keyboard interfaces may only support a subset
+of these.
+However, generally, all encodings are supported by 
+.Xr pckbd 4 and
+.Xr ukbd 4 .
+.Bl -column " us.colemak" " KB_US|KB_COLEMAK" "language"
+.It Sy "wsconsctl" Ta Sy "define" Ta Sy "language"
+.It Li user Ta KB_USER Ta User-defined
+.It Li us Ta KB_US Ta English/US keyboard mapping (default)
+.It Li uk Ta KB_UK Ta English/UK keyboard mapping
+.It Li be Ta KB_BE Ta Belgian
+.It Li br Ta KB_BR Ta Brazilian with
+.Dq dead accents
+.It Li cf Ta KB_CF Ta Canadian French
+.It Li cz Ta KB_CZ Ta Czech (QWERTY)
+.It Li dk Ta KB_DK Ta Danish with
+.Dq dead accents
+.It Li nl Ta KB_NL Ta Dutch
+.It Li ee Ta KB_DK Ta Estonian with
+.Dq dead accents
+.It Li fi Ta KB_FI Ta Finnish
+.It Li fr Ta KB_FR Ta French
+.It Li de Ta KB_DE Ta German with
+.Dq dead accents
+.It Li gr Ta KB_GR Ta Greek
+.It Li hu Ta KB_HU Ta Hungarian
+.It Li is Ta KB_IS Ta Icelandic with
+.Dq dead accents
+.It Li it Ta KB_IT Ta Italian
+.It Li jp Ta KB_JP Ta Japanese
+.It Li la Ta KB_LA Ta Latin American Spanish
+.It Li no Ta KB_NO Ta Norwegian with
+.Dq dead accents
+.It Li pl Ta KB_PL Ta Polish
+.It Li pt Ta KB_PT Ta Portuguese
+.It Li ru Ta KB_RU Ta Russian
+.It Li es Ta KB_ES Ta Spanish
+.It Li sv Ta KB_SV Ta Swedish with
+.Dq dead accents
+.It Li sf Ta KB_SF Ta Swiss French
+.It Li sg Ta KB_SG Ta Swiss German
+.It Li tr Ta KB_TR Ta Turkish (QWERTY) with
+.Dq dead accents
+.It Li ua Ta KB_UA Ta Ukrainian
+.It Li \&us.declk Ta "KB_US|KB_DECLK" Ta English/US mapping for Tn DEC
+.It Ta Ta LK400-style keyboards with PC keyboard
+.It Ta Ta interface (e.g., LK461)
+.It Li us.dvorak Ta "KB_US|KB_DVORAK" Ta English/US keyboard with
+.It Ta Ta Do Dvorak Dc layout
+.It Li us.colemak Ta "KB_US|KB_COLEMAK" Ta English/US keyboard with
+.It Ta Ta Do Colemak Dc layout
+.El
+.Pp
+.Li KB_NODEAD (
+.Dq .nodead )
+can be applied to layouts with
+.Dq dead accents
+to switch them off.
+.Pp
+The
+.Li KB_US ,
+.Li KB_UK ,
+.Li KB_FR ,
+.Li KB_JP
+and
+.Li KB_US|KB_DVORAK
+mappings can be modified
+to swap the left CTRL and the CAPS LOCK keys by the
+.Li KB_SWAPCTRLCAPS
+variant bit or the
+.Dq .swapctrlcaps
+suffix.
+.Pp
+The
+.Li KB_METAESC (
+.Dq .metaesc )
+option can be applied to any layout.
+If set, keys pressed together
+with the ALT modifier are prefixed by an ESC character.
+(Standard behaviour is to add 128 to the ASCII value.)
 .Ss Ioctls
 The following
 .Xr ioctl 2
@@ -169,3 +251,6 @@ if (ioctl(fd, WSKBDIO_SETVERSION, &ver) == -1)
 .Xr wsmux 4 ,
 .Xr wsconsctl 8 ,
 .Xr wskbd 9
+.Sh BUGS
+The list of builtin mappings doesn't follow any logic.
+It grew as people submitted what they needed.

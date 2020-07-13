@@ -1,4 +1,4 @@
-.\" $NetBSD: pckbd.4,v 1.21.44.1 2020/01/21 15:39:02 martin Exp $
+.\" $NetBSD: pckbd.4,v 1.21.44.2 2020/07/13 14:22:47 martin Exp $
 .\"
 .\" Copyright (c) 1999
 .\" 	Matthias Drochner.  All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 11, 2020
+.Dd July 13, 2020
 .Dt PCKBD 4
 .Os
 .Sh NAME
@@ -56,78 +56,6 @@ at compile time or with the utility
 at runtime.
 Other mappings can be used if the whole keymap is replaced by means of
 .Xr wsconsctl 8 .
-The builtin mappings are at this time:
-.Bl -column " KB_US|KB_COLEMAK" "wsconsctl" "language"
-.It Sy "option" Ta Sy "wsconsctl" Ta Sy "language"
-.It Li KB_US Ta us Ta English/US keyboard mapping (default)
-.It Li KB_UK Ta uk Ta English/UK keyboard mapping
-.It Li KB_BE Ta be Ta Belgian
-.It Li KB_CZ Ta cz Ta Czech (QWERTY)
-.It Li KB_DK Ta dk Ta Danish with
-.Dq dead accents
-.It Li KB_NL Ta nl Ta Dutch
-.It Li KB_FI Ta fi Ta Finnish
-.It Li KB_FR Ta fr Ta French
-.It Li KB_DE Ta de Ta German with
-.Dq dead accents
-.It Li KB_GR Ta gr Ta Greek
-.It Li KB_HU Ta hu Ta Hungarian
-.It Li KB_IT Ta it Ta Italian
-.It Li KB_JP Ta jp Ta Japanese
-.It Li KB_NO Ta no Ta Norwegian with
-.Dq dead accents
-.It Li KB_PL Ta pl Ta Polish
-.It Li KB_PT Ta pt Ta Portuguese
-.It Li KB_RU Ta ru Ta Russian
-.It Li KB_ES Ta es Ta Spanish
-.It Li KB_SV Ta sv Ta Swedish with
-.Dq dead accents
-.It Li KB_SF Ta sf Ta Swiss French
-.It Li KB_SG Ta sg Ta Swiss German
-.It Li KB_UA Ta ua Ta Ukrainian
-.It Li "KB_US|KB_DECLK" Ta \&us.declk Ta English/US mapping for Tn DEC
-.It Ta Ta LK400-style keyboards with PC keyboard
-.It Ta Ta interface (e.g., LK461)
-.It Li "KB_US|KB_DVORAK" Ta us.dvorak Ta English/US keyboard with
-.It Ta Ta Do Dvorak Dc layout
-.It Li "KB_US|KB_COLEMAK" Ta us.colemak Ta English/US keyboard with
-.It Ta Ta Do Colemak Dc layout
-.El
-.Pp
-The
-.Li KB_DE ,
-.Li KB_DK ,
-.Li KB_NO
-and
-.Li KB_SV
-mappings can be used in the
-.Li KB_NODEAD (
-.Dq .nodead )
-variant.
-This switches off the
-.Dq dead accents .
-.Pp
-The
-.Li KB_US ,
-.Li KB_UK ,
-.Li KB_FR ,
-.Li KB_JP
-and
-.Li KB_US|KB_DVORAK
-mappings can be modified
-to swap the left CTRL and the CAPS LOCK keys by the
-.Li KB_SWAPCTRLCAPS
-variant bit or the
-.Dq .swapctrlcaps
-suffix.
-.Pp
-The
-.Li KB_METAESC (
-.Dq .metaesc )
-option can be applied to any layout.
-If set, keys pressed together
-with the ALT modifier are prefixed by an ESC character.
-(Standard behaviour is to add 128 to the ASCII value.)
 .Pp
 Because PC keyboard hardware doesn't contain a beeper, requests for
 .Dq keyboard beeps
@@ -153,6 +81,3 @@ to the kernel configuration file.
 .Xr pcppi 4 ,
 .Xr wskbd 4 ,
 .Xr wsconsctl 8
-.Sh BUGS
-The list of builtin mappings doesn't follow any logic.
-It grew as people submitted what they needed.
