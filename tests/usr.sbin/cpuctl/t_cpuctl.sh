@@ -1,4 +1,4 @@
-# $NetBSD: t_cpuctl.sh,v 1.3 2020/06/25 15:43:26 jruoho Exp $
+# $NetBSD: t_cpuctl.sh,v 1.4 2020/07/13 13:16:07 jruoho Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,9 +37,6 @@ setcpu() {
 		atf_pass
 	fi
 
-	# Skip the boot processor. Disabling interrupts
-	# on it will hang the system (PR kern/45117).
-	#
 	while [ $ncpu -gt 1 ]; do
 
 		cpuid=$(expr $ncpu - 1)
@@ -51,6 +48,15 @@ setcpu() {
 
 		ncpu=$(expr $ncpu - 1)
 	done
+
+	# Additional check that interrupts cannot be
+	# disabled for the primary CPU (PR kern/45117).
+	#
+	cpuctl nointr 0 >/dev/null 2>&1
+
+	if [ $? -eq 0 ]; then
+		$2 $3
+	fi
 }
 
 clean() {
