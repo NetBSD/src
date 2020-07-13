@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2710 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2711 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -243,5 +243,6 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	dhcpcd: Import version 9.1.4 [roy 20200703]
 	x86: Xen kernels now use the same kernel modules as native kernels.
 		[chs 20200704]
-	wskbd(4): Added Brazilian keyboard layout (KB_BR) to pckbd(4) and
-		ukbd(4). [nia 20200712]
+	wskbd(4): Added keyboard layouts for Brazilian Portugese,
+		Canadian French, Estonian, Icelandic, and Latin American
+		Spanish to pckbd(4) and ukbd(4). [nia 20200713]
