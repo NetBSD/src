@@ -1,4 +1,4 @@
-/*	$NetBSD: hidkbdmap.c,v 1.8 2020/07/12 14:31:49 nia Exp $	*/
+/*	$NetBSD: hidkbdmap.c,v 1.9 2020/07/13 08:45:12 nia Exp $	*/
 
 /*
  * Copyright (c) 1999,2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hidkbdmap.c,v 1.8 2020/07/12 14:31:49 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hidkbdmap.c,v 1.9 2020/07/13 08:45:12 nia Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -743,6 +743,33 @@ static const keysym_t hidkbd_keydesc_is_nodead[] = {
     KC(52),  KS_acute,	KS_diaeresis,	KS_asciicircum,
 };
 
+static const keysym_t hidkbd_keydesc_la[] = {
+/*  pos      normal		shifted			altgr			shift-altgr */
+    KC(20),  KS_q,		KS_Q,			KS_at,
+    KC(30),  KS_1,		KS_exclam,		KS_bar,
+    KC(31),  KS_2,		KS_quotedbl,		KS_at,
+    KC(32),  KS_3,		KS_numbersign,		KS_periodcentered,
+    KC(35),  KS_6,		KS_ampersand,		KS_notsign,
+    KC(36),  KS_7,		KS_slash,
+    KC(37),  KS_8,		KS_parenleft,
+    KC(38),  KS_9,		KS_parenright,
+    KC(39),  KS_0,		KS_equal,
+    KC(45),  KS_apostrophe,	KS_question,		KS_backslash,
+    KC(46),  KS_questiondown,	KS_exclamdown,		KS_dead_cedilla,	KS_dead_ogonek,
+    KC(47),  KS_dead_acute,	KS_dead_diaeresis,	KS_dead_diaeresis,	KS_dead_abovering,
+    KC(48),  KS_plus,		KS_asterisk,		KS_asciitilde,
+    KC(49),  KS_braceright,	KS_bracketright,	KS_dead_grave,
+    KC(50),  KS_braceright,	KS_bracketright,	KS_dead_grave,
+    KC(51),  KS_ntilde,		KS_Ntilde,		KS_asciitilde,
+    KC(52),  KS_braceleft,	KS_bracketleft,		KS_dead_circumflex,
+    KC(53),  KS_bar,		KS_degree,		KS_notsign,
+    KC(54),  KS_comma,		KS_semicolon,
+    KC(55),  KS_period,		KS_colon,
+    KC(56),  KS_minus,		KS_underscore,
+    KC(100), KS_less,		KS_greater,
+    KC(230), KS_Mode_switch,	KS_Multi_key,
+};
+
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
 
@@ -783,6 +810,7 @@ const struct wscons_keydesc hidkbd_keydesctab[] = {
 	KBD_MAP(KB_SF | KB_NODEAD,	KB_SF,	hidkbd_keydesc_sg_nodead),
 	KBD_MAP(KB_TR,			KB_US,	hidkbd_keydesc_tr),
 	KBD_MAP(KB_TR | KB_NODEAD,	KB_TR,	hidkbd_keydesc_tr_nodead),
+	KBD_MAP(KB_LA,			KB_US,	hidkbd_keydesc_la),
 	KBD_MAP(KB_HU,			KB_US,	hidkbd_keydesc_hu),
 	{0, 0, 0, 0}
 };
