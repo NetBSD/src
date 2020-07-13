@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.279.6.1 2017/06/21 18:18:55 snj Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.279.6.2 2020/07/13 14:10:25 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.279.6.1 2017/06/21 18:18:55 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.279.6.2 2020/07/13 14:10:25 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -869,6 +869,8 @@ scsi_probe_device(struct scsibus_softc *sc, int target, int lun)
 		break;
 
 	case SID_QUAL_LU_NOTPRESENT:
+		docontinue = 1;
+		/* FALLTHROUGH */
 	case SID_QUAL_reserved:
 	case SID_QUAL_LU_NOT_SUPP:
 		goto bad;
