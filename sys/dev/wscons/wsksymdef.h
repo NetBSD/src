@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.71 2020/07/13 08:45:12 nia Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.72 2020/07/13 09:44:48 nia Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -651,33 +651,34 @@
  * Sort (loosely) by country name.
  */
 #define KB_ENC_FUN(action) \
-action(KB_USER,	0,	0x0100,	"user",	,	"User-defined")	\
-action(KB_US,	0,	0x0200,	"us",	,	"US-English")	\
-action(KB_UK,	0,	0x0700,	"uk",	,	"UK-English")	\
-action(KB_BE,	0,	0x1300,	"be",	,	"Belgian")	\
-action(KB_BR,	0,	0x1800,	"br",	,	"Brazilian")	\
-action(KB_CZ,	0,	0x1500, "cz",	,	"Czech")	\
-action(KB_DK,	0,	0x0400,	"dk",	,	"Danish")	\
-action(KB_NL,	0,	0x1600,	"nl",	,	"Dutch") 	\
-action(KB_EE,	0,	0x1900,	"ee",	,	"Estonian") 	\
-action(KB_FI,	0,	0x0900,	"fi",	,	"Finnish")	\
-action(KB_FR,	0,	0x0600,	"fr",	,	"French")	\
-action(KB_DE, KB_NODEAD,0x0300,	"de",".nodead",	"German")	\
-action(KB_GR,	0,	0x1400,	"gr",	,	"Greek")	\
-action(KB_HU,	0,	0x0c00,	"hu",	,	"Hungarian")	\
-action(KB_IS,	0,	0x1a00,	"is",	,	"Icelandic")	\
-action(KB_IT,	0,	0x0500,	"it",	,	"Italian")	\
-action(KB_JP,	0,	0x0800,	"jp",	,	"Japanese")	\
-action(KB_LA,	0,	0x1b00,	"la",	,	"Latinamerican")\
-action(KB_NO,	0,	0x0a00,	"no",	,	"Norwegian")	\
-action(KB_PL,	0,	0x0d00,	"pl",	,	"Polish")	\
-action(KB_PT,	0,	0x1100,	"pt",	,	"Portuguese")	\
-action(KB_RU,	0,	0x0e00,	"ru",	,	"Russian")	\
-action(KB_ES,	0,	0x0b00,	"es",	,	"Spanish")	\
-action(KB_SV,	0,	0x0900,	"sv",	,	"Swedish")	\
-action(KB_SF,	0,	0x1000,	"sf",	,	"Swiss French")	\
-action(KB_SG,	0,	0x0f00,	"sg",	,	"Swiss German")	\
-action(KB_TR,	0,	0x1700,	"tr",	,	"Turkish")	\
+action(KB_USER,	0,	0x0100,	"user",	,	"User-defined")		\
+action(KB_US,	0,	0x0200,	"us",	,	"US-English")		\
+action(KB_UK,	0,	0x0700,	"uk",	,	"UK-English")		\
+action(KB_BE,	0,	0x1300,	"be",	,	"Belgian")		\
+action(KB_BR,	0,	0x1800,	"br",	,	"Brazilian")		\
+action(KB_CF,	0,	0x1c00,	"cf",	,	"Canadian French")	\
+action(KB_CZ,	0,	0x1500, "cz",	,	"Czech")		\
+action(KB_DK,	0,	0x0400,	"dk",	,	"Danish")		\
+action(KB_NL,	0,	0x1600,	"nl",	,	"Dutch") 		\
+action(KB_EE,	0,	0x1900,	"ee",	,	"Estonian") 		\
+action(KB_FI,	0,	0x0900,	"fi",	,	"Finnish")		\
+action(KB_FR,	0,	0x0600,	"fr",	,	"French")		\
+action(KB_DE, KB_NODEAD,0x0300,	"de",".nodead",	"German")		\
+action(KB_GR,	0,	0x1400,	"gr",	,	"Greek")		\
+action(KB_HU,	0,	0x0c00,	"hu",	,	"Hungarian")		\
+action(KB_IS,	0,	0x1a00,	"is",	,	"Icelandic")		\
+action(KB_IT,	0,	0x0500,	"it",	,	"Italian")		\
+action(KB_JP,	0,	0x0800,	"jp",	,	"Japanese")		\
+action(KB_LA,	0,	0x1b00,	"la",	,	"Latin American")	\
+action(KB_NO,	0,	0x0a00,	"no",	,	"Norwegian")		\
+action(KB_PL,	0,	0x0d00,	"pl",	,	"Polish")		\
+action(KB_PT,	0,	0x1100,	"pt",	,	"Portuguese")		\
+action(KB_RU,	0,	0x0e00,	"ru",	,	"Russian")		\
+action(KB_ES,	0,	0x0b00,	"es",	,	"Spanish")		\
+action(KB_SV,	0,	0x0900,	"sv",	,	"Swedish")		\
+action(KB_SF,	0,	0x1000,	"sf",	,	"Swiss French")		\
+action(KB_SG,	0,	0x0f00,	"sg",	,	"Swiss German")		\
+action(KB_TR,	0,	0x1700,	"tr",	,	"Turkish")		\
 action(KB_UA,	0,	0x1200,	"ua",	,	"Ukrainian")	
 #define KB_NONE 0x0000
 
