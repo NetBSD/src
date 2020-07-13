@@ -1,4 +1,4 @@
-/* $NetBSD: bwfm.c,v 1.25 2020/05/30 15:55:47 jdolecek Exp $ */
+/* $NetBSD: bwfm.c,v 1.26 2020/07/13 05:38:52 mrg Exp $ */
 /* $OpenBSD: bwfm.c,v 1.5 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -432,10 +432,6 @@ bwfm_attach(struct bwfm_softc *sc)
 	}
 		
 	ieee80211_ifattach(ic);
-	ifp->if_percpuq = if_percpuq_create(ifp);
-	if_deferred_start_init(ifp, NULL);
-	if_register(ifp);
-
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = bwfm_newstate;
 	ic->ic_newassoc = bwfm_newassoc;
@@ -443,6 +439,10 @@ bwfm_attach(struct bwfm_softc *sc)
 	ic->ic_recv_mgmt = bwfm_recv_mgmt;
 	ic->ic_crypto.cs_key_set = bwfm_key_set;
 	ic->ic_crypto.cs_key_delete = bwfm_key_delete;
+
+	ifp->if_percpuq = if_percpuq_create(ifp);
+	if_deferred_start_init(ifp, NULL);
+	if_register(ifp);
 	ieee80211_media_init(ic, bwfm_media_change, ieee80211_media_status);
 
 	ieee80211_announce(ic);
