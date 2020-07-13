@@ -1,4 +1,4 @@
-.\"	$NetBSD: bozohttpd.8,v 1.81 2020/07/11 08:10:52 jruoho Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.82 2020/07/13 09:38:57 jruoho Exp $
 .\"
 .\"	$eterna: bozohttpd.8,v 1.101 2011/11/18 01:25:11 mrg Exp $
 .\"
@@ -466,16 +466,14 @@ compilation option.
 .Pp
 Upon occurrence,
 .Nm
-reports three HTTP status codes to
+reports two HTTP status codes to
 .Xr blocklistd 8
 as failures:
 .Em 401
-(``Unauthorized'') ,
-.Em 403
-(``Forbidden'') ,
+(``Unauthorized'')
 and
-.Em 500
-(``Internal Server Error'') .
+.Em 403
+(``Forbidden'') .
 Of these,
 .Em 401
 is the one received upon authorization failure with the
