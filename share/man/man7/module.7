@@ -1,4 +1,4 @@
-.\" $NetBSD: module.7,v 1.7 2017/08/31 08:36:32 wiz Exp $
+.\" $NetBSD: module.7,v 1.8 2020/07/13 12:44:04 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 31, 2017
+.Dd July 13, 2020
 .Dt MODULE 7
 .Os
 .Sh NAME
@@ -131,10 +131,11 @@ make install
 .Pp
 Alternatively, the
 .Dq build.sh
-tool can be used to build only the modules.
+tool can be used to build only the modules:
 .Bd -literal -offset indent
 cd /usr/src
 \&./build.sh -O /usr/obj -T /usr/tools modules
+\&./build.sh -O /usr/obj -T /usr/tools installmodules=/
 .Ed
 .Sh SEE ALSO
 .Xr modctl 2 ,
