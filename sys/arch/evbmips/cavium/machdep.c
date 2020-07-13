@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 2020/06/20 02:27:55 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17 2020/07/13 05:20:45 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -114,7 +114,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2020/06/20 02:27:55 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2020/07/13 05:20:45 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,6 +195,8 @@ mach_init(uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3)
 
 	/* clear the BSS segment */
 	memset(edata, 0, end - edata);
+
+	cpu_reset_address = octeon_soft_reset;
 
 	KASSERT(MIPS_XKPHYS_P(arg3));
 	btinfo_paddr = mips3_ld(arg3 + OCTEON_BTINFO_PADDR_OFFSET);
