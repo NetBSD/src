@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.18 2020/07/07 19:58:25 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.19 2020/07/13 14:37:41 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -258,4 +258,25 @@ external/bsd/nvi/dist/vi/v_txt.c		1.7
 
 	PR bin/55468: fix crash due to out-of-bounds access with Ctrl-W.
 	[rin, ticket #1569]
+
+external/bsd/dhcpcd/dist/hooks/01-test		(apply patch)
+
+	Fix dhcpcd test not to require /usr.
+	[roy, ticket #1570]
+
+sys/dev/scsipi/scsiconf.c			1.288
+
+	Continue scanning a SCSI bus when a LUN is reported not present.
+	[kim, ticket #1571]
+
+sys/dev/pci/vioscsi.c				1.22
+
+	Fix off-by-one SCSI target reporting.
+	[kim, ticket #1572]
+
+sys/dev/usb/ualea.c				1.12
+
+	Set up the USB xfer for every transfer, not just once in the attach
+	function.
+	[simonb, ticket #1573]
 
