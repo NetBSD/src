@@ -1,4 +1,4 @@
-/*	$NetBSD: hidkbdmap.c,v 1.9 2020/07/13 08:45:12 nia Exp $	*/
+/*	$NetBSD: hidkbdmap.c,v 1.10 2020/07/13 09:44:48 nia Exp $	*/
 
 /*
  * Copyright (c) 1999,2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hidkbdmap.c,v 1.9 2020/07/13 08:45:12 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hidkbdmap.c,v 1.10 2020/07/13 09:44:48 nia Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -770,6 +770,38 @@ static const keysym_t hidkbd_keydesc_la[] = {
     KC(230), KS_Mode_switch,	KS_Multi_key,
 };
 
+static const keysym_t hidkbd_keydesc_cf[] = {
+/*  pos      normal		shifted			altgr		shift-altgr */
+    KC(16),  KS_m,		KS_M,			KS_mu,
+    KC(18),  KS_o,		KS_O,			KS_section,
+    KC(19),  KS_p,		KS_P,			KS_paragraph,
+    KC(30),  KS_1,		KS_exclam,		KS_plusminus,
+    KC(31),  KS_2,		KS_quotedbl,		KS_at,
+    KC(32),  KS_3,		KS_slash,		KS_sterling,
+    KC(33),  KS_4,		KS_dollar,		KS_cent,
+    KC(34),  KS_5,		KS_percent,		KS_currency,
+    KC(35),  KS_6,		KS_question,		KS_notsign,
+    KC(36),  KS_7,		KS_ampersand,		KS_brokenbar,
+    KC(37),  KS_8,		KS_asterisk,		KS_twosuperior,
+    KC(38),  KS_9,		KS_parenleft,		KS_threesuperior,
+    KC(39),  KS_0,		KS_parenright,		KS_onequarter,
+    KC(44),  KS_space,		KS_space,		KS_nobreakspace,
+    KC(45),  KS_minus,		KS_underscore,		KS_onehalf,
+    KC(46),  KS_equal,		KS_plus,		KS_threequarters,
+    KC(47),  KS_dead_circumflex,KS_dead_circumflex,	KS_bracketleft,
+    KC(48),  KS_dead_cedilla,	KS_dead_diaeresis,	KS_bracketright,
+    KC(49),  KS_less,		KS_greater,		KS_braceright,
+    KC(50),  KS_less,		KS_greater,		KS_braceright,
+    KC(51),  KS_semicolon,	KS_colon,		KS_asciitilde,
+    KC(52),  KS_dead_grave,	KS_dead_grave,		KS_braceleft,
+    KC(53),  KS_numbersign,	KS_bar,			KS_backslash,
+    KC(54),  KS_comma,		KS_apostrophe,		KS_macron,
+    KC(55),  KS_period,		KS_period,		KS_hyphen,
+    KC(56),  KS_eacute,		KS_Eacute,		KS_dead_acute,
+    KC(100), KS_guillemotleft,	KS_guillemotright,	KS_degree,
+    KC(230), KS_Mode_switch,	KS_Multi_key,
+};
+
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
 
@@ -811,6 +843,7 @@ const struct wscons_keydesc hidkbd_keydesctab[] = {
 	KBD_MAP(KB_TR,			KB_US,	hidkbd_keydesc_tr),
 	KBD_MAP(KB_TR | KB_NODEAD,	KB_TR,	hidkbd_keydesc_tr_nodead),
 	KBD_MAP(KB_LA,			KB_US,	hidkbd_keydesc_la),
+	KBD_MAP(KB_CF,			KB_US,	hidkbd_keydesc_cf),
 	KBD_MAP(KB_HU,			KB_US,	hidkbd_keydesc_hu),
 	{0, 0, 0, 0}
 };
