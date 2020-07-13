@@ -1,4 +1,4 @@
-/*	$NetBSD: ualea.c,v 1.11 2020/04/30 03:40:53 riastradh Exp $	*/
+/*	$NetBSD: ualea.c,v 1.12 2020/07/13 13:53:04 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ualea.c,v 1.11 2020/04/30 03:40:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ualea.c,v 1.12 2020/07/13 13:53:04 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -139,11 +139,6 @@ ualea_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	/* Setup the xfer to call ualea_xfer_done with sc.  */
-	usbd_setup_xfer(sc->sc_xfer, sc, usbd_get_buffer(sc->sc_xfer),
-	    sc->sc_maxpktsize, USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT,
-	    ualea_xfer_done);
-
 	/* Success!  We are ready to run.  */
 	sc->sc_attached = true;
 	rndsource_setcb(&sc->sc_rnd, ualea_get, sc);
@@ -187,6 +182,11 @@ ualea_xfer(struct ualea_softc *sc)
 	/* Do nothing if we need nothing.  */
 	if (sc->sc_needed == 0)
 		return;
+
+	/* Setup the xfer to call ualea_xfer_done with sc.  */
+	usbd_setup_xfer(sc->sc_xfer, sc, usbd_get_buffer(sc->sc_xfer),
+	    sc->sc_maxpktsize, USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT,
+	    ualea_xfer_done);
 
 	/* Issue xfer or complain if we can't.  */
 	status = usbd_transfer(sc->sc_xfer);
