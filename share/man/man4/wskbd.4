@@ -1,4 +1,4 @@
-.\" $NetBSD: wskbd.4,v 1.21 2020/07/13 11:59:37 nia Exp $
+.\" $NetBSD: wskbd.4,v 1.22 2020/07/13 14:11:16 uwe Exp $
 .\"
 .\" Copyright (c) 1999
 .\" 	Matthias Drochner.  All rights reserved.
@@ -47,6 +47,9 @@
 (keyboard of misc hpcmips handheld devices)
 .Cd "wskbd* at btkbd? console ? mux 1"
 (Bluetooth keyboard)
+.Pp
+.In dev/wscons/wsconsio.h
+.In dev/wscons/wsksymdef.h
 .Sh DESCRIPTION
 The
 .Nm
@@ -63,7 +66,7 @@ The common keyboard support consists of:
 .It
 Mapping from keycodes (defined by the specific keyboard driver) to
 keysyms (hardware independent, defined in
-.Pa /usr/include/dev/wscons/wsksymdef.h ) .
+.In dev/wscons/wsksymdef.h ) .
 .It
 Handling of
 .Dq compose
@@ -76,9 +79,9 @@ key is pressed or a
 character is used.
 .It
 Certain translations, like turning an
-.Dq ALT
+.Tn ALT
 modifier into an
-.Dq ESC
+.Tn ESC
 prefix.
 .It
 Automatic key repetition
@@ -97,16 +100,16 @@ The
 driver provides a number of ioctl functions to control key maps
 and other parameters.
 These functions are accessible though the associated
-.Dq wsdisplay
+.Xr wsdisplay 4
 device as well.
 A complete list is in
-.Pa /usr/include/dev/wscons/wsconsio.h .
+.In dev/wscons/wsconsio.h .
 The
 .Xr wsconsctl 8
 utility allows to access key maps and other variables.
 .Pp
 The
-.Em console
+.Cd console
 locator in the configuration line refers to the device's use as input
 part of the operating system console.
 A device specification containing a positive value here will only
@@ -122,81 +125,99 @@ However, generally, all encodings are supported by
 .Xr pckbd 4
 and
 .Xr ukbd 4 .
-.Bl -column " us.colemak" " KB_US|KB_COLEMAK" "language"
+.Bl -column ".Li us.colemak" ".Dv KB_US|KB_COLEMAK"
 .It Sy "wsconsctl" Ta Sy "define" Ta Sy "language"
-.It Li user Ta KB_USER Ta User-defined
-.It Li us Ta KB_US Ta English/US keyboard mapping (default)
-.It Li uk Ta KB_UK Ta English/UK keyboard mapping
-.It Li be Ta KB_BE Ta Belgian
-.It Li br Ta KB_BR Ta Brazilian with
+.It Li user Ta Dv KB_USER Ta User-defined
+.It Li us Ta Dv KB_US Ta English/US keyboard mapping (default)
+.It Li uk Ta Dv KB_UK Ta English/UK keyboard mapping
+.It Li be Ta Dv KB_BE Ta Belgian
+.It Li br Ta Dv KB_BR Ta Brazilian with
 .Dq dead accents
-.It Li cf Ta KB_CF Ta Canadian French
-.It Li cz Ta KB_CZ Ta Czech (QWERTY)
-.It Li dk Ta KB_DK Ta Danish with
+.It Li cf Ta Dv KB_CF Ta Canadian French
+.It Li cz Ta Dv KB_CZ Ta Czech (QWERTY)
+.It Li dk Ta Dv KB_DK Ta Danish with
 .Dq dead accents
-.It Li nl Ta KB_NL Ta Dutch
-.It Li ee Ta KB_EE Ta Estonian with
+.It Li nl Ta Dv KB_NL Ta Dutch
+.It Li ee Ta Dv KB_EE Ta Estonian with
 .Dq dead accents
-.It Li fi Ta KB_FI Ta Finnish
-.It Li fr Ta KB_FR Ta French
-.It Li de Ta KB_DE Ta German with
+.It Li fi Ta Dv KB_FI Ta Finnish
+.It Li fr Ta Dv KB_FR Ta French
+.It Li de Ta Dv KB_DE Ta German with
 .Dq dead accents
-.It Li gr Ta KB_GR Ta Greek
-.It Li hu Ta KB_HU Ta Hungarian
-.It Li is Ta KB_IS Ta Icelandic with
+.It Li gr Ta Dv KB_GR Ta Greek
+.It Li hu Ta Dv KB_HU Ta Hungarian
+.It Li is Ta Dv KB_IS Ta Icelandic with
 .Dq dead accents
-.It Li it Ta KB_IT Ta Italian
-.It Li jp Ta KB_JP Ta Japanese
-.It Li la Ta KB_LA Ta Latin American Spanish
-.It Li no Ta KB_NO Ta Norwegian with
+.It Li it Ta Dv KB_IT Ta Italian
+.It Li jp Ta Dv KB_JP Ta Japanese
+.It Li la Ta Dv KB_LA Ta Latin American Spanish
+.It Li no Ta Dv KB_NO Ta Norwegian with
 .Dq dead accents
-.It Li pl Ta KB_PL Ta Polish
-.It Li pt Ta KB_PT Ta Portuguese
-.It Li ru Ta KB_RU Ta Russian
-.It Li es Ta KB_ES Ta Spanish
-.It Li sv Ta KB_SV Ta Swedish with
+.It Li pl Ta Dv KB_PL Ta Polish
+.It Li pt Ta Dv KB_PT Ta Portuguese
+.It Li ru Ta Dv KB_RU Ta Russian
+.It Li es Ta Dv KB_ES Ta Spanish
+.It Li sv Ta Dv KB_SV Ta Swedish with
 .Dq dead accents
-.It Li sf Ta KB_SF Ta Swiss French
-.It Li sg Ta KB_SG Ta Swiss German
-.It Li tr Ta KB_TR Ta Turkish (QWERTY) with
+.It Li sf Ta Dv KB_SF Ta Swiss French
+.It Li sg Ta Dv KB_SG Ta Swiss German
+.It Li tr Ta Dv KB_TR Ta Turkish (QWERTY) with
 .Dq dead accents
-.It Li ua Ta KB_UA Ta Ukrainian
-.It Li \&us.declk Ta "KB_US|KB_DECLK" Ta English/US mapping for Tn DEC
-.It Ta Ta LK400-style keyboards with PC keyboard
-.It Ta Ta interface (e.g., LK461)
-.It Li us.dvorak Ta "KB_US|KB_DVORAK" Ta English/US keyboard with
-.It Ta Ta Do Dvorak Dc layout
-.It Li us.colemak Ta "KB_US|KB_COLEMAK" Ta English/US keyboard with
-.It Ta Ta Do Colemak Dc layout
+.It Li ua Ta Dv KB_UA Ta Ukrainian
+.It Li us.declk Ta Dv "KB_US|KB_DECLK" Ta English/US mapping for
+.Tn DEC LK400 Ns - Ns style
+keyboards with PC keyboard interface (e.g.,
+.Tn LK461 )
+.It Li us.dvorak Ta Dv "KB_US|KB_DVORAK" Ta English/US keyboard with
+.Dq Dvorak
+layout
+.It Li us.colemak Ta Dv "KB_US|KB_COLEMAK" Ta English/US keyboard with
+.Dq Colemak
+layout
 .El
 .Pp
-.Li KB_NODEAD (
-.Dq .nodead )
+The
+.Dq Li \&.nodead
+suffix 
+.Dv ( KB_NODEAD
+flag)
 can be applied to layouts with
 .Dq dead accents
 to switch them off.
 .Pp
 The
-.Li KB_US ,
-.Li KB_UK ,
-.Li KB_FR ,
-.Li KB_JP
+.Dv KB_US ,
+.Dv KB_UK ,
+.Dv KB_FR ,
+.Dv KB_JP
 and
-.Li KB_US|KB_DVORAK
+.Dv KB_US|KB_DVORAK
 mappings can be modified
-to swap the left CTRL and the CAPS LOCK keys by the
-.Li KB_SWAPCTRLCAPS
+to swap the left
+.Aq Ctrl
+and the
+.Aq CapsLock
+keys by the
+.Dv KB_SWAPCTRLCAPS
 variant bit or the
-.Dq .swapctrlcaps
+.Dq Li .swapctrlcaps
 suffix.
 .Pp
 The
-.Li KB_METAESC (
-.Dq .metaesc )
+.Dq Li .metaesc
+suffix
+.Dv ( KB_METAESC
+flag)
 option can be applied to any layout.
 If set, keys pressed together
-with the ALT modifier are prefixed by an ESC character.
-(Standard behaviour is to add 128 to the ASCII value.)
+with the
+.Tn ALT
+modifier are prefixed by an
+.Tn ESC
+character.
+(Standard behaviour is to add 128 to the
+.Tn ASCII
+value.)
 .Ss Ioctls
 The following
 .Xr ioctl 2
@@ -204,24 +225,26 @@ calls are provided by the
 .Nm
 driver or by devices which use it.
 Their definitions are found in
-.Pa dev/wscons/wsconsio.h .
+.In dev/wscons/wsconsio.h .
 .Bl -tag -width Dv
 .It Dv WSKBDIO_GTYPE
 Get the keyboard type.
-.It Dv WSKBDIO_COMPLEXBELL, WSKBDIO_SETBELL, WSKBDIO_GETBELL, WSKBDIO_SETDEFAULTBELL, WSKBDIO_GETDEFAULTBELL Pq Li "struct wsmouse_repeat"
+.It Dv WSKBDIO_COMPLEXBELL , WSKBDIO_SETBELL , WSKBDIO_GETBELL , WSKBDIO_SETDEFAULTBELL , WSKBDIO_GETDEFAULTBELL Pq Vt "struct wsmouse_repeat"
 Get and set keyboard bell settings.
-.It Dv WSKBDIO_SETKEYREPEAT, WSKBDIO_GETKEYREPEAT, WSKBDIO_SETDEFAULTKEYREPEAT, WSKBDIO_GETDEFAULTKEYREPEAT Pq Li "struct wskbd_keyrepeat_data"
+.It Dv WSKBDIO_SETKEYREPEAT , WSKBDIO_GETKEYREPEAT , WSKBDIO_SETDEFAULTKEYREPEAT , WSKBDIO_GETDEFAULTKEYREPEAT Pq Vt "struct wskbd_keyrepeat_data"
 Get and set keyboard autorepeat settings.
-.It Dv WSKBDIO_SETLEDS, WSKBDIO_GETLEDS Pq Li "int"
+.It Dv WSKBDIO_SETLEDS , WSKBDIO_GETLEDS Pq Vt "int"
 Get and set keyboard LED settings.
-.It Dv WSKBDIO_GETMAP, WSKBDIO_SETMAP Pq Li "struct wskbd_map_data"
+.It Dv WSKBDIO_GETMAP , WSKBDIO_SETMAP Pq Vt "struct wskbd_map_data"
 Get and set keyboard keymapping settings.
-.It Dv WSKBDIO_GETENCODING, WSKBDIO_SETENCODING Pq Li "kbd_t"
+.It Dv WSKBDIO_GETENCODING , WSKBDIO_SETENCODING Pq Vt "kbd_t"
 Get and set keyboard encoding settings.
-.It Dv WSKBDIO_GETKEYCLICK, WSKBDIO_SETKEYCLICK Pq Li "int"
+.It Dv WSKBDIO_GETKEYCLICK , WSKBDIO_SETKEYCLICK Pq Vt "int"
 Get and set keyboard keyclick settings.
-.It Dv WSKBDIO_SETVERSION Pq Li "int"
-Set the wscons_event protocol version.
+.It Dv WSKBDIO_SETVERSION Pq Vt "int"
+Set the
+.Vt wscons_event
+protocol version.
 The default is 0 for binary compatibility.
 The latest version is
 always available as
@@ -232,17 +255,13 @@ correct version is returned.
 .Bd -literal -offset indent
 int ver = WSKBDIO_EVENT_VERSION;
 if (ioctl(fd, WSKBDIO_SETVERSION, &ver) == -1)
-    err(EXIT_FAILURE, "cannot set version");
+	err(EXIT_FAILURE, "cannot set version");
 .Ed
 .El
 .Sh FILES
 .Bl -item
 .It
-.Pa /dev/wskbd*
-.It
-.Pa /usr/include/dev/wscons/wsksymdef.h
-.It
-.Pa /usr/include/dev/wscons/wsconsio.h .
+.Pa /dev/wskbd Ns Ar \&*
 .El
 .Sh SEE ALSO
 .Xr btkbd 4 ,
