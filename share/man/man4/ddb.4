@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.191 2020/07/13 05:20:45 simonb Exp $
+.\"	$NetBSD: ddb.4,v 1.192 2020/07/13 08:58:48 wiz Exp $
 .\"
 .\" Copyright (c) 1997 - 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1094,7 +1094,8 @@ Dump CP0 (coprocessor 0) register values.
 .It Ic kvtop
 Print the physical address for a given kernel virtual address.
 .It Ic reset
-Reset the system.  Not implemented for many CPUs and/or systems.
+Reset the system.
+Not implemented for many CPUs and/or systems.
 .It Ic tlb
 Print out the Translation Lookaside Buffer (TLB).
 Only works in
