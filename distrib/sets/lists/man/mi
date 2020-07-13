@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1694 2020/06/23 21:34:44 rin Exp $
+# $NetBSD: mi,v 1.1695 2020/07/13 09:10:34 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2127,6 +2127,7 @@
 ./usr/share/man/cat5/capfile.0			man-sys-catman		.cat
 ./usr/share/man/cat5/ccd.conf.0			man-sysutil-catman	.cat
 ./usr/share/man/cat5/cdb.0			man-sys-catman		.cat
+./usr/share/man/cat5/changelist.0		man-sys-catman		.cat
 ./usr/share/man/cat5/cidr_table.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/core.0			man-sys-catman		.cat
 ./usr/share/man/cat5/crontab.0			man-cron-catman		.cat
@@ -2257,6 +2258,7 @@
 ./usr/share/man/cat5/pim6sd.conf.0		man-obsolete		obsolete
 ./usr/share/man/cat5/pkg_install.conf.0		man-pkgutil-catman	.cat
 ./usr/share/man/cat5/pkg_summary.0		man-pkgutil-catman	.cat
+./usr/share/man/cat5/pkgpath.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/postconf.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/postfix-wrapper.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/primes.0			man-obsolete		obsolete
@@ -5252,6 +5254,7 @@
 ./usr/share/man/html5/capfile.html		man-sys-htmlman		html
 ./usr/share/man/html5/ccd.conf.html		man-sysutil-htmlman	html
 ./usr/share/man/html5/cdb.html			man-sys-htmlman		html
+./usr/share/man/html5/changelist.html		man-sys-htmlman		html
 ./usr/share/man/html5/cidr_table.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/core.html			man-sys-htmlman		html
 ./usr/share/man/html5/crontab.html		man-cron-htmlman	html
@@ -5371,6 +5374,7 @@
 ./usr/share/man/html5/phones.html		man-sys-man		html
 ./usr/share/man/html5/pkg_install.conf.html	man-pkgutil-htmlman	html
 ./usr/share/man/html5/pkg_summary.html		man-pkgutil-htmlman	html
+./usr/share/man/html5/pkgpath.conf.html		man-sys-man		html
 ./usr/share/man/html5/postconf.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/postfix-wrapper.html	man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/printcap.html		man-lpr-htmlman		html
@@ -8311,6 +8315,7 @@
 ./usr/share/man/man5/capfile.5			man-sys-man		.man
 ./usr/share/man/man5/ccd.conf.5			man-sysutil-man		.man
 ./usr/share/man/man5/cdb.5			man-sys-man		.man
+./usr/share/man/man5/changelist.5		man-sys-man		postfix,.man
 ./usr/share/man/man5/cidr_table.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/core.5			man-sys-man		.man
 ./usr/share/man/man5/crontab.5			man-cron-man		.man
@@ -8441,6 +8446,7 @@
 ./usr/share/man/man5/pim6sd.conf.5		man-obsolete		obsolete
 ./usr/share/man/man5/pkg_install.conf.5		man-pkgutil-man		.man
 ./usr/share/man/man5/pkg_summary.5		man-pkgutil-man		.man
+./usr/share/man/man5/pkgpath.conf.5		man-sys-man		.man
 ./usr/share/man/man5/postconf.5			man-postfix-man		postfix,.man
 ./usr/share/man/man5/postfix-wrapper.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/primes.5			man-obsolete		obsolete
