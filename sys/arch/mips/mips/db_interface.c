@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.84 2020/07/13 05:20:45 simonb Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.85 2020/07/13 12:56:58 simonb Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.84 2020/07/13 05:20:45 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.85 2020/07/13 12:56:58 simonb Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
@@ -766,6 +766,7 @@ db_mach_nmi_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	mips3_sd(MIPS_PHYS_TO_XKPHYS_UNCACHED(CIU_NMI), __BIT(ci->ci_cpuid));
 }
 #endif
+#endif
 
 static void
 db_mach_reset_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
@@ -780,7 +781,6 @@ db_mach_reset_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	cpu_reset_address();
 }
 
-#endif
 const struct db_command db_machine_command_table[] = {
 #ifdef MULTIPROCESSOR
 	{ DDB_ADD_CMD("cpu",	db_mach_cpu_cmd,	0,
