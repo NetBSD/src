@@ -1,4 +1,4 @@
-.\" $NetBSD: wskbd.4,v 1.19 2020/07/13 11:15:48 nia Exp $
+.\" $NetBSD: wskbd.4,v 1.20 2020/07/13 11:24:27 wiz Exp $
 .\"
 .\" Copyright (c) 1999
 .\" 	Matthias Drochner.  All rights reserved.
@@ -118,8 +118,9 @@ wskbd device instance.
 The following encodings are supported.
 Device drivers for legacy keyboard interfaces may only support a subset
 of these.
-However, generally, all encodings are supported by 
-.Xr pckbd 4 and
+However, generally, all encodings are supported by
+.Xr pckbd 4
+and
 .Xr ukbd 4 .
 .Bl -column " us.colemak" " KB_US|KB_COLEMAK" "language"
 .It Sy "wsconsctl" Ta Sy "define" Ta Sy "language"
