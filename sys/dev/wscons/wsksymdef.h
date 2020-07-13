@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.72 2020/07/13 09:44:48 nia Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.73 2020/07/13 09:50:12 nia Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -678,7 +678,7 @@ action(KB_ES,	0,	0x0b00,	"es",	,	"Spanish")		\
 action(KB_SV,	0,	0x0900,	"sv",	,	"Swedish")		\
 action(KB_SF,	0,	0x1000,	"sf",	,	"Swiss French")		\
 action(KB_SG,	0,	0x0f00,	"sg",	,	"Swiss German")		\
-action(KB_TR,	0,	0x1700,	"tr",	,	"Turkish")		\
+action(KB_TR,	0,	0x1700,	"tr",	,	"Turkish (Q-Layout)")	\
 action(KB_UA,	0,	0x1200,	"ua",	,	"Ukrainian")	
 #define KB_NONE 0x0000
 
