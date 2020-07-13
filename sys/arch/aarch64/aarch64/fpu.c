@@ -1,4 +1,4 @@
-/* $NetBSD: fpu.c,v 1.6 2020/07/13 16:52:23 riastradh Exp $ */
+/* $NetBSD: fpu.c,v 1.7 2020/07/13 16:54:03 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: fpu.c,v 1.6 2020/07/13 16:52:23 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: fpu.c,v 1.7 2020/07/13 16:54:03 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -179,7 +179,6 @@ fpu_state_release(lwp_t *l)
 void
 fpu_kern_enter(void)
 {
-	struct lwp *l = curlwp;
 	struct cpu_info *ci;
 	int s;
 
@@ -196,14 +195,8 @@ fpu_kern_enter(void)
 	KASSERT(ci->ci_kfpu_spl == -1);
 	ci->ci_kfpu_spl = s;
 
-	/*
-	 * If we are in a softint and have a pinned lwp, the fpu state
-	 * is that of the pinned lwp, so save it there.
-	 */
-	if ((l->l_pflag & LP_INTR) && (l->l_switchto != NULL))
-		l = l->l_switchto;
-	if (fpu_used_p(l))
-		fpu_save(l);
+	/* Save any fpu state on the current CPU.  */
+	pcu_save_all_on_cpu();
 
 	/*
 	 * Enable the fpu, and wait until it is enabled before
