@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.66 2020/06/29 23:56:31 riastradh Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.67 2020/07/13 16:53:06 riastradh Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -32,7 +32,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.66 2020/06/29 23:56:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.67 2020/07/13 16:53:06 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -674,14 +674,15 @@ fpu_kern_enter(void)
 	int s;
 
 	/*
-	 * Block all interrupts.  We must block preemption since -- if
-	 * this is a user thread -- there is nowhere to save the kernel
-	 * fpu state, and if we want this to be usable in interrupts,
-	 * we can't let interrupts interfere with the fpu state in use
-	 * since there's nowhere for them to save it.
+	 * Block interrupts up to IPL_VM.  We must block preemption
+	 * since -- if this is a user thread -- there is nowhere to
+	 * save the kernel fpu state, and if we want this to be usable
+	 * in interrupts, we can't let interrupts interfere with the
+	 * fpu state in use since there's nowhere for them to save it.
 	 */
-	s = splhigh();
+	s = splvm();
 	ci = curcpu();
+	KASSERTMSG(ci->ci_cpl <= IPL_VM, "cpl=%d", ci->ci_cpl);
 	KASSERT(ci->ci_kfpu_spl == -1);
 	ci->ci_kfpu_spl = s;
 
@@ -709,7 +710,7 @@ fpu_kern_leave(void)
 	int s;
 	uint32_t fpexc;
 
-	KASSERT(ci->ci_cpl == IPL_HIGH);
+	KASSERT(ci->ci_cpl == IPL_VM);
 	KASSERT(ci->ci_kfpu_spl != -1);
 
 	/*
