@@ -1,4 +1,4 @@
-/*	$NetBSD: vioscsi.c,v 1.21 2019/04/13 06:17:33 maxv Exp $	*/
+/*	$NetBSD: vioscsi.c,v 1.21.4.1 2020/07/13 14:11:55 martin Exp $	*/
 /*	$OpenBSD: vioscsi.c,v 1.3 2015/03/14 03:38:49 jsg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.21 2019/04/13 06:17:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.21.4.1 2020/07/13 14:11:55 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,7 +194,7 @@ vioscsi_attach(device_t parent, device_t self, void *aux)
 	chan->chan_channel = 0;
 	chan->chan_ntargets = MIN(max_target, 16);	/* cap reasonably */
 	chan->chan_nluns = MIN(max_lun, 1024);		/* cap reasonably */
-	chan->chan_id = 0;
+	chan->chan_id = max_target;
 	chan->chan_flags = SCSIPI_CHAN_NOSETTLE;
 
 	config_found(self, &sc->sc_channel, scsiprint);
@@ -318,7 +318,7 @@ vioscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t
 	}
 
 	req->lun[0] = 1;
-	req->lun[1] = periph->periph_target - 1;
+	req->lun[1] = periph->periph_target;
 	req->lun[2] = 0x40 | ((periph->periph_lun >> 8) & 0x3F);
 	req->lun[3] = periph->periph_lun & 0xFF;
 	memset(req->lun + 4, 0, 4);
