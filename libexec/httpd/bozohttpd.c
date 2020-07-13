@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.116 2020/07/11 08:10:52 jruoho Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.117 2020/07/13 09:38:57 jruoho Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -2297,8 +2297,7 @@ bozo_http_error(bozohttpd_t *httpd, int code, bozo_httpreq_t *request,
 		pfilter_notify(BLOCKLIST_AUTH_FAIL, code);
 		break;
 
-	case 403: /* FALLTHROUGH */
-	case 500:
+	case 403:
 		pfilter_notify(BLOCKLIST_ABUSIVE_BEHAVIOR, code);
 		break;
 	}
