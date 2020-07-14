@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.76 2020/07/13 14:34:30 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.77 2020/07/14 13:38:12 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -3374,4 +3374,9 @@ sys/dev/usb/ualea.c				1.12
 	Set up the USB xfer for every transfer, not just once in the attach
 	function.
 	[simonb, ticket #1003]
+
+lib/libcurses/newwin.c				1.58
+
+	PR 55484: newwin() - fix crash with negative ncols.
+	[uwe, ticket #1004]
 
