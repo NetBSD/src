@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: sys_info.sh,v 1.17 2017/09/28 18:08:04 agc Exp $
+# $NetBSD: sys_info.sh,v 1.18 2020/07/14 01:01:05 reed Exp $
 
 # Copyright (c) 2016 Alistair Crooks <agc@NetBSD.org>
 # All rights reserved.
@@ -26,7 +26,7 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-SYS_INFO_VERSION=20170928
+SYS_INFO_VERSION=20200714
 
 PATH=$(sysctl -n user.cs_path)
 export PATH
@@ -110,7 +110,7 @@ getversion() {
 		run "named -v | awk '{ gsub(\"-\", \"\", \$2); gsub(\"P\", \"pl\", \$2); print tolower(\$1) \"-\" \$2 }'"
 		$all || return 0 ;&
 	bozohttpd|httpd)
-		v=$(run "${destdir}/usr/libexec/httpd -G" 2>/dev/null)
+		v=$(run "${destdir}/usr/libexec/httpd -G")
 		case "${v}" in
 		"")
 			run  "strings -a ${destdir}/usr/libexec/httpd | awk -F/ '\$1 == \"bozohttpd\" && NF == 2 { print \$1 \"-\" \$2; exit }'"
@@ -124,7 +124,7 @@ getversion() {
 		run  "bzip2 --help 2>&1 | awk '{ sub(\",\", \"\", \$7); print \"bzip2-\" \$7; exit }'"
 		$all || return 0 ;&
 	calendar)
-		v=$(run "calendar -v" 2>/dev/null || true)
+		v=$(run "calendar -v" || true)
 		case "${v}" in
 		"")	printf '%s\n' "calendar-20150701" ;;
 		*)	printf '%s\n' "${v}" ;;
