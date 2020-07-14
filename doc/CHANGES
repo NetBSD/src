@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2712 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2713 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -249,3 +249,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	bnx(4): Enable support for MSI/MSI-X [jdolecek 20200714]
 	ciss(4): Add support for PERFORMANT mode, and enable MSI/MSI-X
 		for adapters supporting it [jdolecek 20200714]
+	ciss(4): Match new HP Smart Array adapters [jdolecek 20200714]
