@@ -1,4 +1,4 @@
-/*	$NetBSD: cissvar.h,v 1.9 2020/07/14 10:37:30 jdolecek Exp $	*/
+/*	$NetBSD: cissvar.h,v 1.10 2020/07/14 12:04:46 jdolecek Exp $	*/
 /*	$OpenBSD: cissvar.h,v 1.15 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
@@ -45,9 +45,6 @@ struct ciss_softc {
 	void			*sc_sh;		/* shutdown hook */
 	struct proc		*sc_thread;
 	int			sc_flush;
-#ifdef CISS_NO_INTERRUPT_HACK
-	struct callout		sc_interrupt_hack;
-#endif
 
 	struct scsipi_channel	sc_channel;
 	struct scsipi_channel	*sc_channel_raw;
