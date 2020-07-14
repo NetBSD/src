@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.170 2020/07/07 02:33:54 rin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.171 2020/07/14 08:55:07 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.170 2020/07/07 02:33:54 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.171 2020/07/14 08:55:07 martin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -417,14 +417,14 @@ add_model_specifics(prop_dictionary_t dict)
 	if (of_compatible(node, clamshell) != -1) {
 		prop_data_t edid;
 
-		edid = prop_data_create_data(edid_clamshell, sizeof(edid_clamshell));
+		edid = prop_data_create_nocopy(edid_clamshell, sizeof(edid_clamshell));
 		prop_dictionary_set(dict, "EDID", edid);
 		prop_object_release(edid);
 	}
 	if (of_compatible(node, pismo) != -1) {
 		prop_data_t edid;
 
-		edid = prop_data_create_data(edid_pismo, sizeof(edid_pismo));
+		edid = prop_data_create_nocopy(edid_pismo, sizeof(edid_pismo));
 		prop_dictionary_set(dict, "EDID", edid);
 		prop_object_release(edid);
 	}
