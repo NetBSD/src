@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.97 2020/07/14 10:26:34 jdolecek Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.98 2020/07/14 12:15:16 jdolecek Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.97 2020/07/14 10:26:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.98 2020/07/14 12:15:16 jdolecek Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -4169,9 +4169,6 @@ bnx_init_tx_chain(struct bnx_softc *sc)
 	int			i, rc = 0;
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Entering %s()\n", __func__);
-
-	/* Force an allocation of some dmamaps for tx up front */
-	bnx_alloc_pkts(NULL, sc);
 
 	/* Set the initial TX producer/consumer indices. */
 	sc->tx_prod = 0;
