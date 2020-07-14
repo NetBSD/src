@@ -1,4 +1,4 @@
-/*	$NetBSD: idt.c,v 1.13 2020/07/14 00:45:53 yamaguchi Exp $	*/
+/*	$NetBSD: idt.c,v 1.14 2020/07/14 15:59:21 para Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2009 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idt.c,v 1.13 2020/07/14 00:45:53 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idt.c,v 1.14 2020/07/14 15:59:21 para Exp $");
 
 #include "opt_pcpu_idt.h"
 
@@ -198,7 +198,7 @@ void
 idt_vec_set(struct idt_vec *iv, int vec, void (*function)(void))
 {
 	idt_descriptor_t *idt;
-	char *idt_allocmap = iv->iv_allocmap;
+	char *idt_allocmap __diagused = iv->iv_allocmap;
 
 	KASSERT(idt_allocmap[vec] == 1);
 	idt = iv->iv_idt;
