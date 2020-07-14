@@ -1,4 +1,4 @@
-/*	$NetBSD: cissreg.h,v 1.7 2020/07/14 11:39:02 jdolecek Exp $	*/
+/*	$NetBSD: cissreg.h,v 1.8 2020/07/14 11:44:52 jdolecek Exp $	*/
 /*	$OpenBSD: cissreg.h,v 1.11 2010/06/03 01:02:13 dlg Exp $	*/
 
 /*
@@ -517,7 +517,6 @@ struct ciss_error {
 
 struct ciss_ccb {
 	STAILQ_ENTRY(ciss_ccb)	ccb_link;
-	struct ciss_softc	*ccb_sc;
 	paddr_t			ccb_cmdpa;
 	enum {
 		CISS_CCB_FREE	= 0x01,
