@@ -1,4 +1,4 @@
-/*	$NetBSD: idt.c,v 1.12 2020/07/04 09:03:54 bouyer Exp $	*/
+/*	$NetBSD: idt.c,v 1.13 2020/07/14 00:45:53 yamaguchi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2009 The NetBSD Foundation, Inc.
@@ -65,7 +65,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idt.c,v 1.12 2020/07/04 09:03:54 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idt.c,v 1.13 2020/07/14 00:45:53 yamaguchi Exp $");
+
+#include "opt_pcpu_idt.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,9 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: idt.c,v 1.12 2020/07/04 09:03:54 bouyer Exp $");
  * XEN PV and native have a different idea of what idt entries should
  * look like.
  */
-idt_descriptor_t *idt;
-
-static char idt_allocmap[NIDT];
 
 /* Normalise across XEN PV and native */
 #if defined(XENPV)
@@ -164,9 +163,10 @@ unset_idtgate(struct gate_descriptor *idd)
  * cpu_lock will be held unless single threaded during early boot.
  */
 int
-idt_vec_alloc(int low, int high)
+idt_vec_alloc(struct idt_vec *iv, int low, int high)
 {
 	int vec;
+	char *idt_allocmap = iv->iv_allocmap;
 
 	KASSERT(mutex_owned(&cpu_lock) || !mp_online);
 
@@ -182,23 +182,26 @@ idt_vec_alloc(int low, int high)
 }
 
 void
-idt_vec_reserve(int vec)
+idt_vec_reserve(struct idt_vec *iv, int vec)
 {
 	int result;
 
 	KASSERT(mutex_owned(&cpu_lock) || !mp_online);
 
-	result = idt_vec_alloc(vec, vec);
+	result = idt_vec_alloc(iv, vec, vec);
 	if (result != vec) {
 		panic("%s: failed to reserve vec %d", __func__, vec);
 	}
 }
 
 void
-idt_vec_set(int vec, void (*function)(void))
+idt_vec_set(struct idt_vec *iv, int vec, void (*function)(void))
 {
+	idt_descriptor_t *idt;
+	char *idt_allocmap = iv->iv_allocmap;
 
 	KASSERT(idt_allocmap[vec] == 1);
+	idt = iv->iv_idt;
 	set_idtgate(&idt[vec], function, 0, SDT_SYS386IGT, SEL_KPL,
 	       GSEL(GCODE_SEL, SEL_KPL));
 }
@@ -207,10 +210,32 @@ idt_vec_set(int vec, void (*function)(void))
  * Free IDT vector.  No locking required as release is atomic.
  */
 void
-idt_vec_free(int vec)
+idt_vec_free(struct idt_vec *iv, int vec)
 {
+	idt_descriptor_t *idt;
+	char *idt_allocmap = iv->iv_allocmap;
 
+	idt = iv->iv_idt;
 	unset_idtgate(&idt[vec]);
 	idt_allocmap[vec] = 0;
 }
 
+bool
+idt_vec_is_pcpu(void)
+{
+
+#ifdef PCPU_IDT
+	return true;
+#else
+	return false;
+#endif
+}
+
+struct idt_vec *
+idt_vec_ref(struct idt_vec *iv)
+{
+	if (idt_vec_is_pcpu())
+		return iv;
+
+	return &(cpu_info_primary.ci_idtvec);
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.84 2019/02/14 07:12:40 cherry Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.85 2020/07/14 00:45:52 yamaguchi Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.84 2019/02/14 07:12:40 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.85 2020/07/14 00:45:52 yamaguchi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -114,12 +114,15 @@ db_machine_init(void)
 #ifdef MULTIPROCESSOR
 #ifndef XENPV
 	vector *handler = &Xintr_ddbipi;
+	struct idt_vec *iv;
+
+	iv = &(cpu_info_primary.ci_idtvec);
 #if NLAPIC > 0
 	if (lapic_is_x2apic())
 		handler = &Xintr_x2apic_ddbipi;
 #endif
-	ddb_vec = idt_vec_alloc(0xf0, 0xff);
-	idt_vec_set(ddb_vec, handler);
+	ddb_vec = idt_vec_alloc(iv, 0xf0, 0xff);
+	idt_vec_set(iv, ddb_vec, handler);
 #else
 	/* Initialised as part of xen_ipi_init() */
 #endif /* XENPV */
