@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperv.c,v 1.10 2020/06/15 09:09:24 msaitoh Exp $	*/
+/*	$NetBSD: hyperv.c,v 1.11 2020/07/14 00:45:53 yamaguchi Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012,2016-2017 Microsoft Corp.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifdef __KERNEL_RCSID
-__KERNEL_RCSID(0, "$NetBSD: hyperv.c,v 1.10 2020/06/15 09:09:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperv.c,v 1.11 2020/07/14 00:45:53 yamaguchi Exp $");
 #endif
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/sys/dev/hyperv/vmbus/hyperv.c 331757 2018-03-30 02:25:12Z emaste $");
@@ -95,6 +95,10 @@ struct hyperv_hypercall_ctx {
 	paddr_t		hc_paddr;
 };
 
+struct hyperv_percpu_data {
+	int	pd_idtvec;
+};
+
 static struct hyperv_hypercall_ctx hyperv_hypercall_ctx;
 
 static char hyperv_hypercall_page[PAGE_SIZE]
@@ -114,8 +118,6 @@ static char hyperv_version_str[64];
 static char hyperv_features_str[256];
 static char hyperv_pm_features_str[256];
 static char hyperv_features3_str[256];
-
-static int hyperv_idtvec;
 
 uint32_t hyperv_vcpuid[MAXCPUS];
 
@@ -756,36 +758,90 @@ void
 vmbus_init_interrupts_md(struct vmbus_softc *sc)
 {
 	extern void Xintr_hyperv_hypercall(void);
+	struct vmbus_percpu_data *pd;
+	struct hyperv_percpu_data *hv_pd;
+	struct idt_vec *iv = &(cpu_info_primary.ci_idtvec);
+	cpuid_t cid;
 
+	if (idt_vec_is_pcpu())
+		return;
 	/*
 	 * All Hyper-V ISR required resources are setup, now let's find a
 	 * free IDT vector for Hyper-V ISR and set it up.
 	 */
+	iv = &(cpu_info_primary.ci_idtvec);
+	cid = cpu_index(&cpu_info_primary);
+	pd = &sc->sc_percpu[cid];
+
+	hv_pd = kmem_zalloc(sizeof(*hv_pd), KM_SLEEP);
 	mutex_enter(&cpu_lock);
-	hyperv_idtvec = idt_vec_alloc(APIC_LEVEL(NIPL), IDT_INTR_HIGH);
+	hv_pd->pd_idtvec = idt_vec_alloc(iv,
+	    APIC_LEVEL(NIPL), IDT_INTR_HIGH);
 	mutex_exit(&cpu_lock);
-	KASSERT(hyperv_idtvec > 0);
-	idt_vec_set(hyperv_idtvec, Xintr_hyperv_hypercall);
+	KASSERT(hv_pd->pd_idtvec > 0);
+	idt_vec_set(iv, hv_pd->pd_idtvec, Xintr_hyperv_hypercall);
+	pd->md_cookie = (void *)hv_pd;
 }
 
 void
 vmbus_deinit_interrupts_md(struct vmbus_softc *sc)
 {
+	struct vmbus_percpu_data *pd;
+	struct hyperv_percpu_data *hv_pd;
+	struct idt_vec *iv;
+	cpuid_t cid;
 
-	if (hyperv_idtvec > 0) {
-		idt_vec_free(hyperv_idtvec);
-		hyperv_idtvec = 0;
-	}
+	if (idt_vec_is_pcpu())
+		return;
+
+	iv = &(cpu_info_primary.ci_idtvec);
+	cid = cpu_index(&cpu_info_primary);
+	pd = &sc->sc_percpu[cid];
+	hv_pd = pd->md_cookie;
+
+	if (hv_pd->pd_idtvec > 0)
+		idt_vec_free(iv, hv_pd->pd_idtvec);
+
+	pd->md_cookie = NULL;
+	kmem_free(hv_pd, sizeof(*hv_pd));
 }
 
 void
 vmbus_init_synic_md(struct vmbus_softc *sc, cpuid_t cpu)
 {
-	struct vmbus_percpu_data *pd;
+	extern void Xintr_hyperv_hypercall(void);
+	struct vmbus_percpu_data *pd, *pd0;
+	struct hyperv_percpu_data *hv_pd;
+	struct cpu_info *ci;
+	struct idt_vec *iv;
 	uint64_t val, orig;
 	uint32_t sint;
+	int hyperv_idtvec;
 
 	pd = &sc->sc_percpu[cpu];
+
+	hv_pd = kmem_alloc(sizeof(*hv_pd), KM_SLEEP);
+	pd->md_cookie = (void *)hv_pd;
+
+	/* Allocate IDT vector for ISR and set it up. */
+	if (idt_vec_is_pcpu()) {
+		ci = curcpu();
+		iv = &ci->ci_idtvec;
+
+		mutex_enter(&cpu_lock);
+		hyperv_idtvec = idt_vec_alloc(iv, APIC_LEVEL(NIPL), IDT_INTR_HIGH);
+		mutex_exit(&cpu_lock);
+		KASSERT(hyperv_idtvec > 0);
+		idt_vec_set(iv, hyperv_idtvec, Xintr_hyperv_hypercall);
+
+		hv_pd = kmem_alloc(sizeof(*hv_pd), KM_SLEEP);
+		hv_pd->pd_idtvec = hyperv_idtvec;
+		pd->md_cookie = hv_pd;
+	} else {
+		pd0 = &sc->sc_percpu[cpu_index(&cpu_info_primary)];
+		hv_pd = pd0->md_cookie;
+		hyperv_idtvec = hv_pd->pd_idtvec;
+	}
 
 	/*
 	 * Setup the SynIC message.
@@ -832,6 +888,10 @@ vmbus_init_synic_md(struct vmbus_softc *sc, cpuid_t cpu)
 void
 vmbus_deinit_synic_md(struct vmbus_softc *sc, cpuid_t cpu)
 {
+	struct vmbus_percpu_data *pd;
+	struct hyperv_percpu_data *hv_pd;
+	struct cpu_info *ci;
+	struct idt_vec *iv;
 	uint64_t orig;
 	uint32_t sint;
 
@@ -866,6 +926,22 @@ vmbus_deinit_synic_md(struct vmbus_softc *sc, cpuid_t cpu)
 	 */
 	orig = rdmsr(MSR_HV_SIEFP);
 	wrmsr(MSR_HV_SIEFP, (orig & MSR_HV_SIEFP_RSVD_MASK));
+
+	/*
+	 * Free IDT vector
+	 */
+	if (idt_vec_is_pcpu()) {
+		ci = curcpu();
+		iv = &ci->ci_idtvec;
+		pd = &sc->sc_percpu[cpu_index(ci)];
+		hv_pd = pd->md_cookie;
+
+		if (hv_pd->pd_idtvec > 0)
+			idt_vec_free(iv, hv_pd->pd_idtvec);
+
+		pd->md_cookie = NULL;
+		kmem_free(hv_pd, sizeof(*hv_pd));
+	}
 }
 
 static int

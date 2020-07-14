@@ -1,4 +1,4 @@
-/*	$NetBSD: vmbusvar.h,v 1.5 2020/05/26 16:08:55 nonaka Exp $	*/
+/*	$NetBSD: vmbusvar.h,v 1.6 2020/07/14 00:45:53 yamaguchi Exp $	*/
 /*	$OpenBSD: hypervvar.h,v 1.13 2017/06/23 19:05:42 mikeb Exp $	*/
 
 /*
@@ -159,6 +159,8 @@ struct vmbus_percpu_data {
 	/* Rarely used fields */
 	struct hyperv_dma	simp_dma;
 	struct hyperv_dma	siep_dma;
+
+	void			*md_cookie;
 } __aligned(CACHE_LINE_SIZE);
 
 struct vmbus_softc {
