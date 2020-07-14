@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.116 2020/06/29 23:51:35 riastradh Exp $
+#	$NetBSD: files.x86,v 1.117 2020/07/14 00:45:53 yamaguchi Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPDEBUG MPBIOS_SCANPCI
@@ -21,6 +21,8 @@ defflag	opt_xen.h		DO_NOT_DEFINE
 defflag opt_kaslr.h	NO_X86_ASLR
 
 defflag	SVS
+
+defflag	PCPU_IDT
 
 define  cpubus { [apid = -1] }
 define	cpufeaturebus {}

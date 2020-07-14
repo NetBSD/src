@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.399 2020/06/14 21:41:42 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.400 2020/07/14 00:45:53 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.399 2020/06/14 21:41:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.400 2020/07/14 00:45:53 yamaguchi Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1309,11 +1309,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	/*
 	 * Allocate space for the IDT, GDT and LDT.
 	 */
-#ifdef __HAVE_PCPU_AREA
-	idt_vaddr = (vaddr_t)&pcpuarea->idt;
-#else
 	idt_vaddr = pmap_bootstrap_valloc(1);
-#endif
 	idt_paddr = pmap_bootstrap_palloc(1);
 
 	gdt_vaddr = pmap_bootstrap_valloc(1);

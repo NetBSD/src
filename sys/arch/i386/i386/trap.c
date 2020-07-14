@@ -1,5 +1,5 @@
 
-/*	$NetBSD: trap.c,v 1.303 2019/11/21 19:24:00 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.304 2020/07/14 00:45:52 yamaguchi Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.303 2019/11/21 19:24:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.304 2020/07/14 00:45:52 yamaguchi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -245,10 +245,16 @@ int
 ss_shadow(struct trapframe *tf)
 {
 	struct gate_descriptor *gd;
+	struct cpu_info *ci;
+	struct idt_vec *iv;
+	idt_descriptor_t *idt;
 	uintptr_t eip, func;
 	size_t i;
 
 	eip = tf->tf_eip;
+	ci = curcpu();
+	iv = idt_vec_ref(&ci->ci_idtvec);
+	idt = iv->iv_idt;
 
 	for (i = 0; i < 256; i++) {
 		gd = &idt[i];

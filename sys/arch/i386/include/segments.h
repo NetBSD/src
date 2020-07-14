@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.68 2019/02/11 14:59:32 cherry Exp $	*/
+/*	$NetBSD: segments.h,v 1.69 2020/07/14 00:45:53 yamaguchi Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -196,7 +196,6 @@ typedef struct trap_info idt_descriptor_t;
 #else
 typedef struct gate_descriptor idt_descriptor_t; 
 #endif /* XENPV */
-extern idt_descriptor_t *idt;
 extern union descriptor *gdtstore, *ldtstore;
 
 void setgate(struct gate_descriptor *, void *, int, int, int, int);
@@ -206,15 +205,16 @@ void setregion(struct region_descriptor *, void *, size_t);
 void setsegment(struct segment_descriptor *, const void *, size_t, int, int,
     int, int);
 void unsetgate(struct gate_descriptor *);
-
-void cpu_init_idt(void);
 void update_descriptor(union descriptor *, union descriptor *);
 
-
-void idt_vec_reserve(int);
-int idt_vec_alloc(int, int);
-void idt_vec_set(int, void (*)(void));
-void idt_vec_free(int);
+struct idt_vec;
+void idt_vec_reserve(struct idt_vec *, int);
+int idt_vec_alloc(struct idt_vec *, int, int);
+void idt_vec_set(struct idt_vec *, int, void (*)(void));
+void idt_vec_free(struct idt_vec *, int);
+void idt_vec_init_cpu_md(struct idt_vec *, cpuid_t);
+bool idt_vec_is_pcpu(void);
+struct idt_vec* idt_vec_ref(struct idt_vec *);
 
 
 #endif /* _KERNEL */

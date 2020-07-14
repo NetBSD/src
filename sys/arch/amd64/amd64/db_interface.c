@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.37 2020/02/29 15:00:28 christos Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.38 2020/07/14 00:45:52 yamaguchi Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.37 2020/02/29 15:00:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.38 2020/07/14 00:45:52 yamaguchi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -111,12 +111,14 @@ db_machine_init(void)
 
 #ifdef MULTIPROCESSOR
 #ifndef XENPV
+	struct idt_vec *iv = &(cpu_info_primary.ci_idtvec);
 	vector *handler = &Xintr_ddbipi;
+	idt_descriptor_t *idt = iv->iv_idt;
 #if NLAPIC > 0
 	if (lapic_is_x2apic())
 		handler = &Xintr_x2apic_ddbipi;
 #endif
-	ddb_vec = idt_vec_alloc(0xf0, 0xff);
+	ddb_vec = idt_vec_alloc(iv, 0xf0, 0xff);
 	set_idtgate(&idt[ddb_vec], handler, 1, SDT_SYS386IGT, SEL_KPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
 #else

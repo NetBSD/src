@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.37 2020/05/27 19:40:29 ad Exp $	*/
+/*	$NetBSD: svs.c,v 1.38 2020/07/14 00:45:53 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.37 2020/05/27 19:40:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.38 2020/07/14 00:45:53 yamaguchi Exp $");
 
 #include "opt_svs.h"
 #include "opt_user_ldt.h"
@@ -519,6 +519,7 @@ cpu_svs_init(struct cpu_info *ci)
 {
 	extern char __text_user_start;
 	extern char __text_user_end;
+	extern vaddr_t idt_vaddr;
 	const cpuid_t cid = cpu_index(ci);
 	struct vm_page *pg;
 
@@ -543,7 +544,8 @@ cpu_svs_init(struct cpu_info *ci)
 
 	mutex_init(&ci->ci_svs_mtx, MUTEX_DEFAULT, IPL_VM);
 
-	svs_page_add(ci, (vaddr_t)&pcpuarea->idt, true);
+	if (cid == cpu_index(&cpu_info_primary) || !idt_vec_is_pcpu())
+		svs_page_add(ci, idt_vaddr, true);
 	svs_page_add(ci, (vaddr_t)&pcpuarea->ldt, true);
 	svs_range_add(ci, (vaddr_t)&pcpuarea->ent[cid],
 	    offsetof(struct pcpu_entry, rsp0), true);

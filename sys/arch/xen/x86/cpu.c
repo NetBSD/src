@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.138 2020/07/08 11:11:00 jdolecek Exp $	*/
+/*	$NetBSD: cpu.c,v 1.139 2020/07/14 00:45:53 yamaguchi Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.138 2020/07/08 11:11:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.139 2020/07/14 00:45:53 yamaguchi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -477,6 +477,9 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		/* interrupt handler stack */
 		cpu_intr_init(ci);
 
+		/* Setup per-cpu memory for idt */
+		idt_vec_init_cpu_md(&ci->ci_idtvec, cpu_index(ci));
+
 		/* Setup per-cpu memory for gdt */
 		gdt_alloc_cpu(ci);
 
@@ -700,7 +703,7 @@ cpu_hatch(void *v)
 
 	/* Setup TLS and kernel GS/FS */
 	cpu_init_msrs(ci, true);
-	cpu_init_idt();
+	cpu_init_idt(ci);
 	gdt_init_cpu(ci);
 
 	cpu_probe(ci);

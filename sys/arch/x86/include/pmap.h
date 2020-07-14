@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.123 2020/06/24 18:09:37 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.124 2020/07/14 00:45:53 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -198,6 +198,7 @@ extern struct slotspace slotspace;
 struct pcpu_entry {
 	uint8_t gdt[MAXGDTSIZ];
 	uint8_t ldt[MAX_USERLDT_SIZE];
+	uint8_t idt[PAGE_SIZE];
 	uint8_t tss[PAGE_SIZE];
 	uint8_t ist0[PAGE_SIZE];
 	uint8_t ist1[PAGE_SIZE];
@@ -210,7 +211,6 @@ struct pcpu_area {
 #ifdef SVS
 	uint8_t utls[PAGE_SIZE];
 #endif
-	uint8_t idt[PAGE_SIZE];
 	uint8_t ldt[PAGE_SIZE];
 	struct pcpu_entry ent[MAXCPUS];
 } __packed;

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.151 2020/04/25 15:26:18 bouyer Exp $	*/
+/*	$NetBSD: intr.c,v 1.152 2020/07/14 00:45:53 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.151 2020/04/25 15:26:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.152 2020/07/14 00:45:53 yamaguchi Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -252,12 +252,13 @@ static int intr_set_affinity(struct intrsource *, const kcpuset_t *);
 void
 intr_default_setup(void)
 {
+	struct idt_vec *iv = &(cpu_info_primary.ci_idtvec);
 	int i;
 
 	/* icu vectors */
 	for (i = 0; i < NUM_LEGACY_IRQS; i++) {
-		idt_vec_reserve(ICU_OFFSET + i);
-		idt_vec_set(ICU_OFFSET + i, legacy_stubs[i].ist_entry);
+		idt_vec_reserve(iv, ICU_OFFSET + i);
+		idt_vec_set(iv, ICU_OFFSET + i, legacy_stubs[i].ist_entry);
 	}
 
 	/*
@@ -503,6 +504,7 @@ intr_allocate_slot(struct pic *pic, int pin, int level,
 	struct cpu_info *ci, *lci;
 	struct intrsource *isp;
 	int slot = 0, idtvec, error;
+	struct idt_vec *iv;
 
 	KASSERT(mutex_owned(&cpu_lock));
 
@@ -600,7 +602,8 @@ intr_allocate_slot(struct pic *pic, int pin, int level,
 		 * are used by a device using MSI multiple vectors must be
 		 * continuous.
 		 */
-		idtvec = idt_vec_alloc(APIC_LEVEL(level), IDT_INTR_HIGH);
+		iv = idt_vec_ref(&ci->ci_idtvec);
+		idtvec = idt_vec_alloc(iv, APIC_LEVEL(level), IDT_INTR_HIGH);
 	}
 	if (idtvec == 0) {
 		evcnt_detach(&ci->ci_isources[slot]->is_evcnt);
@@ -619,14 +622,16 @@ static void
 intr_source_free(struct cpu_info *ci, int slot, struct pic *pic, int idtvec)
 {
 	struct intrsource *isp;
+	struct idt_vec *iv;
 
 	isp = ci->ci_isources[slot];
+	iv = idt_vec_ref(&ci->ci_idtvec);
 
 	if (isp->is_handlers != NULL)
 		return;
 	ci->ci_isources[slot] = NULL;
 	if (pic != &i8259_pic)
-		idt_vec_free(idtvec);
+		idt_vec_free(iv, idtvec);
 }
 
 #ifdef MULTIPROCESSOR
@@ -703,6 +708,7 @@ intr_hwunmask_xcall(void *arg1, void *arg2)
 static void
 intr_establish_xcall(void *arg1, void *arg2)
 {
+	struct idt_vec *iv;
 	struct intrsource *source;
 	struct intrstub *stubp;
 	struct intrhand *ih;
@@ -717,6 +723,7 @@ intr_establish_xcall(void *arg1, void *arg2)
 	ci = ih->ih_cpu;
 	source = ci->ci_isources[ih->ih_slot];
 	idt_vec = (int)(intptr_t)arg2;
+	iv = idt_vec_ref(&ci->ci_idtvec);
 
 	/* Disable interrupts locally. */
 	psl = x86_read_psl();
@@ -729,7 +736,7 @@ intr_establish_xcall(void *arg1, void *arg2)
 	/* Hook in new IDT vector and SPL state. */
 	if (source->is_resume == NULL || source->is_idtvec != idt_vec) {
 		if (source->is_idtvec != 0 && source->is_idtvec != idt_vec)
-			idt_vec_free(source->is_idtvec);
+			idt_vec_free(iv, source->is_idtvec);
 		source->is_idtvec = idt_vec;
 		if (source->is_type == IST_LEVEL) {
 			stubp = &source->is_pic->pic_level_stubs[ih->ih_slot];
@@ -738,7 +745,7 @@ intr_establish_xcall(void *arg1, void *arg2)
 		}
 		source->is_resume = stubp->ist_resume;
 		source->is_recurse = stubp->ist_recurse;
-		idt_vec_set(idt_vec, stubp->ist_entry);
+		idt_vec_set(iv, idt_vec, stubp->ist_entry);
 	}
 
 	/* Re-enable interrupts locally. */
@@ -1713,6 +1720,7 @@ intr_activate_xcall(void *arg1, void *arg2)
 	struct intrsource *source;
 	struct intrstub *stubp;
 	struct intrhand *ih;
+	struct idt_vec *iv;
 	u_long psl;
 	int idt_vec;
 	int slot;
@@ -1727,6 +1735,7 @@ intr_activate_xcall(void *arg1, void *arg2)
 	slot = ih->ih_slot;
 	source = ci->ci_isources[slot];
 	idt_vec = source->is_idtvec;
+	iv = idt_vec_ref(&ci->ci_idtvec);
 
 	psl = x86_read_psl();
 	x86_disable_intr();
@@ -1738,9 +1747,10 @@ intr_activate_xcall(void *arg1, void *arg2)
 	} else {
 		stubp = &source->is_pic->pic_edge_stubs[slot];
 	}
+
 	source->is_resume = stubp->ist_resume;
 	source->is_recurse = stubp->ist_recurse;
-	idt_vec_set(idt_vec, stubp->ist_entry);
+	idt_vec_set(iv, idt_vec, stubp->ist_entry);
 
 	x86_write_psl(psl);
 
@@ -1755,7 +1765,9 @@ intr_deactivate_xcall(void *arg1, void *arg2)
 {
 	struct cpu_info *ci;
 	struct intrhand *ih, *lih;
+	struct intrsource *isp;
 	u_long psl;
+	int idt_vec;
 	int slot;
 
 	ih = arg1;
@@ -1766,6 +1778,8 @@ intr_deactivate_xcall(void *arg1, void *arg2)
 
 	ci = ih->ih_cpu;
 	slot = ih->ih_slot;
+	isp = ci->ci_isources[slot];
+	idt_vec = isp->is_idtvec;
 
 	psl = x86_read_psl();
 	x86_disable_intr();
@@ -1778,10 +1792,14 @@ intr_deactivate_xcall(void *arg1, void *arg2)
 
 	x86_intr_calculatemasks(ci);
 
-	/*
-	 * Skip unsetgate(), because the same itd[] entry is overwritten in
-	 * intr_activate_xcall().
-	 */
+	if (idt_vec > 0 && idt_vec_is_pcpu()) {
+		idt_vec_free(&ci->ci_idtvec, idt_vec);
+	} else  {
+		/*
+		 * Skip unsetgate(), because the same idt[] entry is
+		 * overwritten in intr_activate_xcall().
+		 */
+	}
 
 	x86_write_psl(psl);
 
@@ -1820,7 +1838,7 @@ intr_set_affinity(struct intrsource *isp, const kcpuset_t *cpuset)
 	struct intrhand *ih, *lih;
 	struct pic *pic;
 	u_int cpu_idx;
-	int idt_vec;
+	int old_idtvec, new_idtvec;
 	int oldslot, newslot;
 	int err;
 	int pin;
@@ -1863,13 +1881,25 @@ intr_set_affinity(struct intrsource *isp, const kcpuset_t *cpuset)
 		return 0;
 
 	oldslot = ih->ih_slot;
-	idt_vec = isp->is_idtvec;
 
 	err = intr_find_unused_slot(newci, &newslot);
 	if (err) {
 		DPRINTF(("failed to allocate interrupt slot for PIC %s intrid "
 			"%s\n", isp->is_pic->pic_name, isp->is_intrid));
 		return err;
+	}
+
+	old_idtvec = isp->is_idtvec;
+
+	if (isp->is_idtvec > 0 && idt_vec_is_pcpu()) {
+		new_idtvec = idt_vec_alloc(&newci->ci_idtvec,
+		    APIC_LEVEL(ih->ih_level), IDT_INTR_HIGH);
+		if (new_idtvec == 0)
+			return EBUSY;
+		DPRINTF(("interrupt from cpu%d vec %d to cpu%d vec %d\n",
+		    cpu_index(oldci), old_idtvec, cpu_index(newci), new_idtvec));
+	} else {
+		new_idtvec = isp->is_idtvec;
 	}
 
 	/* Prevent intr_unmask() from reenabling the source at the hw. */
@@ -1893,9 +1923,10 @@ intr_set_affinity(struct intrsource *isp, const kcpuset_t *cpuset)
 		xc_wait(where);
 	}
 	intr_save_evcnt(isp, oldci->ci_cpuid);
-	(*pic->pic_delroute)(pic, oldci, pin, idt_vec, isp->is_type);
+	(*pic->pic_delroute)(pic, oldci, pin, old_idtvec, isp->is_type);
 
 	/* activate new interrupt setting */
+	isp->is_idtvec =  new_idtvec;
 	newci->ci_isources[newslot] = isp;
 	for (lih = ih; lih != NULL; lih = lih->ih_next) {
 		newci->ci_nintrhand++;
@@ -1912,7 +1943,7 @@ intr_set_affinity(struct intrsource *isp, const kcpuset_t *cpuset)
 	}
 	intr_restore_evcnt(isp, newci->ci_cpuid);
 	isp->is_active_cpu = newci->ci_cpuid;
-	(*pic->pic_addroute)(pic, newci, pin, idt_vec, isp->is_type);
+	(*pic->pic_addroute)(pic, newci, pin, new_idtvec, isp->is_type);
 
 	isp->is_distribute_pending = false;
 	if (newci == curcpu() || !mp_online) {

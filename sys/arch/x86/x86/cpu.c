@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.194 2020/06/15 09:09:24 msaitoh Exp $	*/
+/*	$NetBSD: cpu.c,v 1.195 2020/07/14 00:45:53 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2000-2020 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.194 2020/06/15 09:09:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.195 2020/07/14 00:45:53 yamaguchi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -493,6 +493,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		 * report on an AP
 		 */
 		cpu_intr_init(ci);
+		idt_vec_init_cpu_md(&ci->ci_idtvec, cpu_index(ci));
 		gdt_alloc_cpu(ci);
 #ifdef i386
 		cpu_set_tss_gates(ci);
@@ -978,7 +979,7 @@ cpu_hatch(void *v)
 	pcb = lwp_getpcb(ci->ci_data.cpu_idlelwp);
 	lcr0(pcb->pcb_cr0);
 
-	cpu_init_idt();
+	cpu_init_idt(ci);
 	gdt_init_cpu(ci);
 #if NLAPIC > 0
 	lapic_enable();

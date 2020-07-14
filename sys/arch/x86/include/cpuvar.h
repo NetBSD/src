@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.52 2020/04/25 15:26:18 bouyer Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.53 2020/07/14 00:45:53 yamaguchi Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -112,6 +112,7 @@ void identifycpu_cpuids(struct cpu_info *);
 void cpu_init(struct cpu_info *);
 void cpu_init_tss(struct cpu_info *);
 void cpu_init_first(void);
+void cpu_init_idt(struct cpu_info *);
 
 void x86_cpu_idle_init(void);
 void x86_cpu_idle_halt(void);

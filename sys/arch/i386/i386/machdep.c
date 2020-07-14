@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.830 2020/05/08 00:52:29 riastradh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.831 2020/07/14 00:45:52 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.830 2020/05/08 00:52:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.831 2020/07/14 00:45:52 yamaguchi Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -554,6 +554,7 @@ cpu_set_tss_gates(struct cpu_info *ci)
 {
 	struct segment_descriptor sd;
 	void *doubleflt_stack;
+	idt_descriptor_t *idt;
 
 	doubleflt_stack = (void *)uvm_km_alloc(kernel_map, USPACE, 0,
 	    UVM_KMF_WIRED);
@@ -563,6 +564,7 @@ cpu_set_tss_gates(struct cpu_info *ci)
 	    SDT_SYS386TSS, SEL_KPL, 0, 0);
 	ci->ci_gdt[GTRAPTSS_SEL].sd = sd;
 
+	idt = cpu_info_primary.ci_idtvec.iv_idt;
 	set_idtgate(&idt[8], NULL, 0, SDT_SYSTASKGT, SEL_KPL,
 	    GSEL(GTRAPTSS_SEL, SEL_KPL));
 
@@ -906,6 +908,7 @@ setgate(struct gate_descriptor *gd, void *func, int args, int type, int dpl,
 void
 unsetgate(struct gate_descriptor *gd)
 {
+
 	gd->gd_p = 0;
 	gd->gd_hioffset = 0;
 	gd->gd_looffset = 0;
@@ -949,10 +952,15 @@ extern union descriptor tmpgdt[];
 #endif
 
 void
-cpu_init_idt(void)
+cpu_init_idt(struct cpu_info *ci)
 {
 	struct region_descriptor region;
-	setregion(&region, pentium_idt, NIDT * sizeof(idt[0]) - 1);
+	struct idt_vec *iv;
+	idt_descriptor_t *idt;
+
+	iv = &ci->ci_idtvec;
+	idt = iv->iv_idt_pentium;
+	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
 	lidt(&region);
 }
 
@@ -1134,6 +1142,8 @@ init386(paddr_t first_avail)
 #endif
 #endif /* !XENPV */
 	struct pcb *pcb;
+	struct idt_vec *iv;
+	idt_descriptor_t *idt;
 
 	KASSERT(first_avail % PAGE_SIZE == 0);
 
@@ -1305,8 +1315,9 @@ init386(paddr_t first_avail)
 
 	pmap_kenter_pa(pentium_idt_vaddr, idt_paddr, VM_PROT_READ, 0);
 	pmap_update(pmap_kernel());
-	pentium_idt = (union descriptor *)pentium_idt_vaddr;
-	idt = (idt_descriptor_t *)idt_vaddr;
+	iv = &(cpu_info_primary.ci_idtvec);
+	idt_vec_init_cpu_md(iv, cpu_index(&cpu_info_primary));
+	idt = (idt_descriptor_t *)iv->iv_idt;
 
 #ifndef XENPV	
 	tgdt = gdtstore;
@@ -1340,7 +1351,7 @@ init386(paddr_t first_avail)
 		sel = SEL_KPL;
 #endif /* XENPV */
 
-		idt_vec_reserve(x);
+		idt_vec_reserve(iv, x);
 
  		switch (x) {
 #ifdef XENPV
@@ -1361,7 +1372,7 @@ init386(paddr_t first_avail)
 	}
 
 	/* new-style interrupt gate for syscalls */
-	idt_vec_reserve(128);
+	idt_vec_reserve(iv, 128);
 	set_idtgate(&idt[128], &IDTVEC(syscall), 0, SDT_SYS386IGT, SEL_UPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
 
@@ -1371,7 +1382,7 @@ init386(paddr_t first_avail)
 #endif
 	
 	lldt(GSEL(GLDT_SEL, SEL_KPL));
-	cpu_init_idt();
+	cpu_init_idt(&cpu_info_primary);
 
 #ifdef XENPV
 	xen_init_ksyms();
@@ -1441,7 +1452,9 @@ cpu_reset(void)
 	for (;;);
 #else /* XENPV */
 	struct region_descriptor region;
+	idt_descriptor_t *idt;
 
+	idt = (idt_descriptor_t *)cpu_info_primary.ci_idtvec.iv_idt;
 	x86_disable_intr();
 
 	/*
@@ -1698,3 +1711,50 @@ cpu_alloc_l3_page(struct cpu_info *ci)
 	pmap_update(pmap_kernel());
 }
 #endif /* PAE */
+
+static void
+idt_vec_copy(struct idt_vec *dst, struct idt_vec *src)
+{
+	idt_descriptor_t *idt_dst;
+
+	idt_dst = dst->iv_idt;
+	memcpy(idt_dst, src->iv_idt, PAGE_SIZE);
+	memcpy(dst->iv_allocmap, src->iv_allocmap, sizeof(dst->iv_allocmap));
+}
+
+void
+idt_vec_init_cpu_md(struct idt_vec *iv, cpuid_t cid)
+{
+	vaddr_t va_idt, va_pentium_idt;
+	struct vm_page *pg;
+
+	if (idt_vec_is_pcpu() &&
+	    cid != cpu_index(&cpu_info_primary)) {
+		va_idt = uvm_km_alloc(kernel_map, PAGE_SIZE,
+		    0, UVM_KMF_VAONLY);
+		pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);
+		if (pg == NULL) {
+			panic("failed to allocate pcpu idt PA");
+		}
+		pmap_kenter_pa(va_idt, VM_PAGE_TO_PHYS(pg),
+		    VM_PROT_READ|VM_PROT_WRITE, 0);
+		pmap_update(pmap_kernel());
+
+		memset((void *)va_idt, 0, PAGE_SIZE);
+
+		/* pentium f00f bug stuff */
+		va_pentium_idt = uvm_km_alloc(kernel_map, PAGE_SIZE,
+		    0, UVM_KMF_VAONLY);
+		pmap_kenter_pa(va_pentium_idt, VM_PAGE_TO_PHYS(pg),
+		    VM_PROT_READ, 0);
+		pmap_update(pmap_kernel());
+
+		iv->iv_idt = (void *)va_idt;
+		iv->iv_idt_pentium = (void *)va_pentium_idt;
+
+		idt_vec_copy(iv, &(cpu_info_primary.ci_idtvec));
+	} else {
+		iv->iv_idt = (void *)idt_vaddr;
+		iv->iv_idt_pentium = (void *)pentium_idt_vaddr;
+	}
+}
