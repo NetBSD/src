@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss_pci.c,v 1.19 2020/07/14 12:04:46 jdolecek Exp $	*/
+/*	$NetBSD: ciss_pci.c,v 1.20 2020/07/14 17:19:03 jdolecek Exp $	*/
 /*	$OpenBSD: ciss_pci.c,v 1.9 2005/12/13 15:56:01 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.19 2020/07/14 12:04:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.20 2020/07/14 17:19:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,181 +47,46 @@ void	ciss_pci_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(ciss_pci, sizeof(struct ciss_softc),
 	ciss_pci_match, ciss_pci_attach, NULL, NULL);
 
-const struct {
+
+static const struct {
 	int vendor;
 	int product;
 	const char *name;
 } ciss_pci_devices[] = {
-	{
-		PCI_VENDOR_COMPAQ,
-		PCI_PRODUCT_COMPAQ_CSA532,
-		"Compaq Smart Array 532"
-	},
-	{
-		PCI_VENDOR_COMPAQ,
-		PCI_PRODUCT_COMPAQ_CSA5300,
-		"Compaq Smart Array 5300 V1"
-	},
-	{
-		PCI_VENDOR_COMPAQ,
-		PCI_PRODUCT_COMPAQ_CSA5300_2,
-		"Compaq Smart Array 5300 V2"
-	},
-	{
-		PCI_VENDOR_COMPAQ,
-		PCI_PRODUCT_COMPAQ_CSA5312,
-		"Compaq Smart Array 5312"
-	},
-	{
-		PCI_VENDOR_COMPAQ,
-		PCI_PRODUCT_COMPAQ_CSA5i,
-		"Compaq Smart Array 5i"
-	},
-	{
-		PCI_VENDOR_COMPAQ,
-		PCI_PRODUCT_COMPAQ_CSA5i_2,
-		"Compaq Smart Array 5i V2"
-	},
-	{
-		PCI_VENDOR_COMPAQ,
-		PCI_PRODUCT_COMPAQ_CSA6i,
-		"Compaq Smart Array 6i"
-	},
-	{
-		PCI_VENDOR_COMPAQ,
-		PCI_PRODUCT_COMPAQ_CSA641,
-		"Compaq Smart Array 641"
-	},
-	{
-		PCI_VENDOR_COMPAQ,
-		PCI_PRODUCT_COMPAQ_CSA642,
-		"Compaq Smart Array 642"
-	},
-	{
-		PCI_VENDOR_COMPAQ,
-		PCI_PRODUCT_COMPAQ_CSA6400,
-		"Compaq Smart Array 6400"
-	},
-	{
-		PCI_VENDOR_COMPAQ,
-		PCI_PRODUCT_COMPAQ_CSA6400EM,
-		"Compaq Smart Array 6400EM"
-	},
-	{
-		PCI_VENDOR_COMPAQ,
-		PCI_PRODUCT_COMPAQ_CSA6422,
-		"Compaq Smart Array 6422"
-	},
-	{
-		PCI_VENDOR_COMPAQ,
-		PCI_PRODUCT_COMPAQ_CSA64XX,
-		"Compaq Smart Array 64XX"
-	},
-	{
-		PCI_VENDOR_HP,
-		PCI_PRODUCT_HP_HPSAE200,
-		"Smart Array E200"
-	},
-	{
-		PCI_VENDOR_HP,
-		PCI_PRODUCT_HP_HPSAE200I_1,
-		"HP Smart Array E200I-1"
-	},
-	{
-		PCI_VENDOR_HP,
-		PCI_PRODUCT_HP_HPSAE200I_2,
-		"HP Smart Array E200I-2"
-	},
-	{
-		PCI_VENDOR_HP,
-		PCI_PRODUCT_HP_HPSAE200I_3,
-		"HP Smart Array E200I-3"
-	},
-	{
-		PCI_VENDOR_HP,
-		PCI_PRODUCT_HP_HPSAP600,
-		"HP Smart Array P600"
-	},
-	{
-		PCI_VENDOR_HP,
-		PCI_PRODUCT_HP_HPSAP800,
-		"HP Smart Array P800"
-	},
-	{
-		PCI_VENDOR_HP,
-		PCI_PRODUCT_HP_HPSAV100,
-		"HP Smart Array V100"
-	},
-	{
-		PCI_VENDOR_HP,
-		PCI_PRODUCT_HP_HPSA_1,
-		"HP Smart Array 1"
-	},
-	{
-		PCI_VENDOR_HP,
-		PCI_PRODUCT_HP_HPSA_2,
-		"HP Smart Array 2"
-	},
-	{
-		PCI_VENDOR_HP,
-		PCI_PRODUCT_HP_HPSA_3,
-		"HP Smart Array 3"
-	},
-	{
-		PCI_VENDOR_HP,
-		PCI_PRODUCT_HP_HPSA_4,
-		"HP Smart Array 4"
-	},
-	{
-		PCI_VENDOR_HP,
-		PCI_PRODUCT_HP_HPSA_5,
-		"HP Smart Array 5"
-	},
-	{
-		PCI_VENDOR_HP,
-		PCI_PRODUCT_HP_HPSA_6,
-		"HP Smart Array 6"
-	},
-	{
-		PCI_VENDOR_HP,
-		PCI_PRODUCT_HP_HPSA_7,
-		"HP Smart Array 7"
-	},
-	{
-		PCI_VENDOR_HP,
-		PCI_PRODUCT_HP_HPSA_8,
-		"HP Smart Array 8"
-	},
-	{
-		PCI_VENDOR_HP,
-		PCI_PRODUCT_HP_HPSA_9,
-		"HP Smart Array 9"
-	},
-	{
-		PCI_VENDOR_HP,
-		PCI_PRODUCT_HP_HPSA_10,
-		"HP Smart Array 10"
-	},
-	{
-		PCI_VENDOR_HP,
-		PCI_PRODUCT_HP_HPSA_11,
-		"HP Smart Array 11"
-	},
-	{
-		PCI_VENDOR_HP,
-		PCI_PRODUCT_HP_HPSA_12,
-		"HP Smart Array 12"
-	},
-	{
-		PCI_VENDOR_HP,
-		PCI_PRODUCT_HP_HPSA_13,
-		"HP Smart Array 13"
-	},
-	{
-		0,
-		0,
-		NULL
-	}
+#define CISS_PCI_DEVICE(v, p, d) { PCI_VENDOR_##v, PCI_PRODUCT_##v##_##p, d }
+	CISS_PCI_DEVICE(COMPAQ, CSA532, "Compaq Smart Array 532"),
+	CISS_PCI_DEVICE(COMPAQ, CSA5300, "Compaq Smart Array 5300 V1"),
+	CISS_PCI_DEVICE(COMPAQ, CSA5300_2, "Compaq Smart Array 5300 V2"),
+	CISS_PCI_DEVICE(COMPAQ, CSA5312, "Compaq Smart Array 5312"),
+	CISS_PCI_DEVICE(COMPAQ, CSA5i, "Compaq Smart Array 5i"),
+	CISS_PCI_DEVICE(COMPAQ, CSA5i_2, "Compaq Smart Array 5i V2"),
+	CISS_PCI_DEVICE(COMPAQ, CSA6i, "Compaq Smart Array 6i"),
+	CISS_PCI_DEVICE(COMPAQ, CSA641, "Compaq Smart Array 641"),
+	CISS_PCI_DEVICE(COMPAQ, CSA642, "Compaq Smart Array 642"),
+	CISS_PCI_DEVICE(COMPAQ, CSA6400, "Compaq Smart Array 6400"),
+	CISS_PCI_DEVICE(COMPAQ, CSA6400EM, "Compaq Smart Array 6400EM"),
+	CISS_PCI_DEVICE(COMPAQ, CSA6422, "Compaq Smart Array 6422"),
+	CISS_PCI_DEVICE(COMPAQ, CSA64XX, "Compaq Smart Array 64XX"),
+	CISS_PCI_DEVICE(HP, HPSAE200, "Smart Array E200"),
+	CISS_PCI_DEVICE(HP, HPSAE200I_1, "HP Smart Array E200I-1"),
+	CISS_PCI_DEVICE(HP, HPSAE200I_2, "HP Smart Array E200I-2"),
+	CISS_PCI_DEVICE(HP, HPSAE200I_3, "HP Smart Array E200I-3"),
+	CISS_PCI_DEVICE(HP, HPSAP600, "HP Smart Array P600"),
+	CISS_PCI_DEVICE(HP, HPSAP800, "HP Smart Array P800"),
+	CISS_PCI_DEVICE(HP, HPSAV100, "HP Smart Array V100"),
+	CISS_PCI_DEVICE(HP, HPSA_1, "HP Smart Array 1"),
+	CISS_PCI_DEVICE(HP, HPSA_2, "HP Smart Array 2"),
+	CISS_PCI_DEVICE(HP, HPSA_3, "HP Smart Array 3"),
+	CISS_PCI_DEVICE(HP, HPSA_4, "HP Smart Array 4"),
+	CISS_PCI_DEVICE(HP, HPSA_5, "HP Smart Array 5"),
+	CISS_PCI_DEVICE(HP, HPSA_6, "HP Smart Array 6"),
+	CISS_PCI_DEVICE(HP, HPSA_7, "HP Smart Array 7"),
+	CISS_PCI_DEVICE(HP, HPSA_8, "HP Smart Array 8"),
+	CISS_PCI_DEVICE(HP, HPSA_9, "HP Smart Array 9"),
+	CISS_PCI_DEVICE(HP, HPSA_10, "HP Smart Array 10"),
+	CISS_PCI_DEVICE(HP, HPSA_11, "HP Smart Array 11"),
+	CISS_PCI_DEVICE(HP, HPSA_12, "HP Smart Array 12"),
+	CISS_PCI_DEVICE(HP, HPSA_13, "HP Smart Array 13"),
 };
 
 int
@@ -231,7 +96,7 @@ ciss_pci_match(device_t parent, cfdata_t match, void *aux)
 	pcireg_t reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 	int i;
 
-	for (i = 0; ciss_pci_devices[i].vendor; i++)
+	for (i = 0; i < __arraycount(ciss_pci_devices); i++)
 	{
 		if ((PCI_VENDOR(pa->pa_id) == ciss_pci_devices[i].vendor &&
 		     PCI_PRODUCT(pa->pa_id) == ciss_pci_devices[i].product) ||
@@ -260,7 +125,7 @@ ciss_pci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 
 	aprint_naive("\n");
-	for (i = 0; ciss_pci_devices[i].vendor; i++)
+	for (i = 0; i < __arraycount(ciss_pci_devices[i]); i++)
 	{
 		if ((PCI_VENDOR(pa->pa_id) == ciss_pci_devices[i].vendor &&
 		     PCI_PRODUCT(pa->pa_id) == ciss_pci_devices[i].product) ||
