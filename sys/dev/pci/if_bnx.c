@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.98 2020/07/14 12:15:16 jdolecek Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.99 2020/07/14 15:37:40 jdolecek Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.98 2020/07/14 12:15:16 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.99 2020/07/14 15:37:40 jdolecek Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -5118,7 +5118,6 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m)
 #endif
 	uint32_t		addr, prod_bseq;
 	int			i, error;
-	static struct work	bnx_wk; /* Dummy work. Statically allocated. */
 	bool			remap = true;
 
 	mutex_enter(&sc->tx_pkt_mtx);
@@ -5131,7 +5130,7 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m)
 
 		if (sc->tx_pkt_count <= TOTAL_TX_BD &&
 		    !ISSET(sc->bnx_flags, BNX_ALLOC_PKTS_FLAG)) {
-			workqueue_enqueue(sc->bnx_wq, &bnx_wk, NULL);
+			workqueue_enqueue(sc->bnx_wq, &sc->bnx_wk, NULL);
 			SET(sc->bnx_flags, BNX_ALLOC_PKTS_FLAG);
 		}
 

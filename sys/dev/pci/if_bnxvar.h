@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnxvar.h,v 1.13 2020/07/12 19:05:32 jdolecek Exp $	*/
+/*	$NetBSD: if_bnxvar.h,v 1.14 2020/07/14 15:37:40 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -129,6 +129,7 @@ struct bnx_softc
 
 	/* packet allocation workqueue */
 	struct workqueue	*bnx_wq;
+	struct work		bnx_wk;
 
 	/* ASIC Chip ID. */
 	uint32_t		bnx_chipid;
