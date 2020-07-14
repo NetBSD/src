@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.33 2019/12/22 23:23:30 thorpej Exp $ */
+/*	$NetBSD: pmu.c,v 1.34 2020/07/14 08:58:03 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.33 2019/12/22 23:23:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.34 2020/07/14 08:58:03 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -365,8 +365,8 @@ pmu_attach(device_t parent, device_t self, void *aux)
 				addr = (addr & 0xff) >> 1;
 				DPRINTF("-> %s@%x\n", name, addr);
 				dev = prop_dictionary_create();
-				prop_dictionary_set_cstring(dev, "name", name);
-				data = prop_data_create_data(compat, strlen(compat)+1);
+				prop_dictionary_set_string(dev, "name", name);
+				data = prop_data_create_copy(compat, strlen(compat)+1);
 				prop_dictionary_set(dev, "compatible", data);
 				prop_object_release(data);
 				prop_dictionary_set_uint32(dev, "addr", addr);
