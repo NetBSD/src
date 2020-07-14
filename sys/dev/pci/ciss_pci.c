@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss_pci.c,v 1.20 2020/07/14 17:19:03 jdolecek Exp $	*/
+/*	$NetBSD: ciss_pci.c,v 1.21 2020/07/14 17:23:27 jdolecek Exp $	*/
 /*	$OpenBSD: ciss_pci.c,v 1.9 2005/12/13 15:56:01 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.20 2020/07/14 17:19:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.21 2020/07/14 17:23:27 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ ciss_pci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 
 	aprint_naive("\n");
-	for (i = 0; i < __arraycount(ciss_pci_devices[i]); i++)
+	for (i = 0; i < __arraycount(ciss_pci_devices); i++)
 	{
 		if ((PCI_VENDOR(pa->pa_id) == ciss_pci_devices[i].vendor &&
 		     PCI_PRODUCT(pa->pa_id) == ciss_pci_devices[i].product) ||
