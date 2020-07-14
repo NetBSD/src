@@ -1,4 +1,4 @@
-/*	$NetBSD: cissreg.h,v 1.5 2016/06/17 17:05:04 christos Exp $	*/
+/*	$NetBSD: cissreg.h,v 1.6 2020/07/14 10:37:30 jdolecek Exp $	*/
 /*	$OpenBSD: cissreg.h,v 1.11 2010/06/03 01:02:13 dlg Exp $	*/
 
 /*
@@ -30,6 +30,9 @@
 #define	CISS_INTR_MSI		(1<<0)
 #define	CISS_INQ	0x40
 #define	CISS_OUTQ	0x44
+#define CISS_OSR	0x9c    /* outbound status register */
+#define CISS_ODC	0xa0    /* outbound doorbell clear register */
+#define CISS_ODC_CLEAR		(0x1)
 #define	CISS_CFG_BAR	0xb4
 #define	CISS_CFG_OFF	0xb8
 
@@ -107,7 +110,41 @@ struct ciss_config {
 #define	CISS_DRV_DBRD	0x0100
 #define	CISS_DRV_PRF	0x0200
 	u_int32_t	maxsg;
+/*
+ * these fields appear in OpenCISS Spec 1.06
+ * http://cciss.sourceforge.net/#docs
+ */
+	u_int32_t	max_logical_supported;
+	u_int32_t	max_physical_supported;
+	u_int32_t	max_physical_per_logical;
+	u_int32_t	max_perfomant_mode_cmds;
+	u_int32_t	max_block_fetch_count;
 } __packed;
+
+/*
+ * Configuration table for the Performant transport.  Only 4 request queues
+ * are mentioned in this table, though apparently up to 256 can exist.
+ */
+struct ciss_perf_config {
+	uint32_t	fetch_count[8];
+#define CISS_SG_FETCH_MAX	0
+#define CISS_SG_FETCH_1		1
+#define CISS_SG_FETCH_2		2
+#define CISS_SG_FETCH_4		3
+#define CISS_SG_FETCH_8		4
+#define CISS_SG_FETCH_16	5
+#define CISS_SG_FETCH_32	6
+#define CISS_SG_FETCH_NONE	7
+	uint32_t	rq_size;
+	uint32_t	rq_count;
+	uint32_t	rq_bank_lo;
+	uint32_t	rq_bank_hi;
+	struct {
+		uint32_t	rq_addr_lo;
+		uint32_t	rq_addr_hi;
+	} __packed rq[4];
+} __packed;
+#define	CISS_CYCLE_MASK	0x00000001
 
 struct ciss_inquiry {
 	u_int8_t	numld;
@@ -411,6 +448,14 @@ struct ciss_evctrlstat { /* details pointer */
 	u_int8_t	prevfail;
 } __packed;
 
+struct ciss_sg_entry {
+	u_int32_t	addr_lo;
+	u_int32_t	addr_hi;
+	u_int32_t	len;
+	u_int32_t	flags;
+#define	CISS_SG_EXT	0x0001
+} __packed;
+
 struct ciss_cmd {
 	u_int8_t	resv0;	/* 00 */
 	u_int8_t	sgin;	/* 01: #sg in the cmd */
@@ -444,13 +489,7 @@ struct ciss_cmd {
 	u_int64_t	err_pa;	/* 28: pa(struct ciss_error *) */
 	u_int32_t	err_len;/* 30 */
 
-	struct {		/* 34 */
-		u_int32_t	addr_lo;
-		u_int32_t	addr_hi;
-		u_int32_t	len;
-		u_int32_t	flags;
-#define	CISS_SG_EXT	0x0001
-	} sgl[1];
+	struct ciss_sg_entry sgl[1];		/* 34 */
 } __packed;
 
 struct ciss_error {
@@ -494,9 +533,10 @@ struct ciss_ccb {
 	size_t			ccb_len;
 	void			*ccb_data;
 	bus_dmamap_t		ccb_dmamap;
+	uint8_t			ccb_sg_tag;
 
 	struct ciss_error	ccb_err;
-	struct ciss_cmd		ccb_cmd;	/* followed by sgl */
+	struct ciss_cmd		ccb_cmd __aligned(8);	/* followed by sgl */
 };
 
 typedef TAILQ_HEAD(ciss_queue_head, ciss_ccb)     ciss_queue_head;
