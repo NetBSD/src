@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss_pci.c,v 1.17 2020/07/05 19:28:37 jdolecek Exp $	*/
+/*	$NetBSD: ciss_pci.c,v 1.18 2020/07/14 10:37:30 jdolecek Exp $	*/
 /*	$OpenBSD: ciss_pci.c,v 1.9 2005/12/13 15:56:01 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.17 2020/07/05 19:28:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.18 2020/07/14 10:37:30 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,12 +263,13 @@ ciss_pci_attach(device_t parent, device_t self, void *aux)
 	struct ciss_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	bus_size_t size, cfgsz;
-	pci_intr_handle_t ih;
+	pci_intr_handle_t *ih;
 	const char *intrstr;
 	int cfg_bar, memtype;
 	pcireg_t reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 	int i;
 	char intrbuf[PCI_INTRSTR_LEN];
+	int (*intr_handler)(void *);
 
 #ifdef CISS_NO_INTERRUPT_HACK
 	callout_init(&sc->sc_interrupt_hack, 0);
@@ -333,35 +334,72 @@ ciss_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	/* Read the configuration */
+	bus_space_read_region_4(sc->sc_iot, sc->cfg_ioh, sc->cfgoff,
+	    (u_int32_t *)&sc->cfg, sizeof(sc->cfg) / 4);
+
 	/* disable interrupts until ready */
 #ifndef CISS_NO_INTERRUPT_HACK
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, CISS_IMR,
-	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, CISS_IMR) | sc->iem);
+	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, CISS_IMR) |
+		sc->iem | CISS_INTR_OPQ | CISS_INTR_MSI);
 #endif
 
-	if (pci_intr_map(pa, &ih)) {
+	int counts[PCI_INTR_TYPE_SIZE] = {
+		[PCI_INTR_TYPE_INTX] = 1,
+		[PCI_INTR_TYPE_MSI] = 0,
+		[PCI_INTR_TYPE_MSIX] = 0,
+	};
+	int max_type = PCI_INTR_TYPE_INTX;
+
+	/*
+	 * Allow MSI/MSI-X only if PERFORMANT method is supported, SIMPLE
+	 * doesn't seem to work with MSI.
+	 */
+	if (CISS_PERF_SUPPORTED(sc)) {
+#if 1
+		counts[PCI_INTR_TYPE_MSI] = counts[PCI_INTR_TYPE_MSIX] = 1;
+		max_type = PCI_INTR_TYPE_MSIX;
+#endif
+		sc->iem |= CISS_INTR_OPQ | CISS_INTR_MSI;
+	}
+
+	if (pci_intr_alloc(pa, &ih, counts, max_type)) {
 		aprint_error_dev(self, "can't map interrupt\n");
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, size);
 		if (cfg_bar != CISS_BAR)
 			bus_space_unmap(sc->sc_iot, sc->cfg_ioh, cfgsz);
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish_xname(pa->pa_pc, ih, IPL_BIO, ciss_intr,
-	    sc, device_xname(self));
+	intrstr = pci_intr_string(pa->pa_pc, ih[0], intrbuf, sizeof(intrbuf));
+
+	switch (pci_intr_type(pa->pa_pc, ih[0])) {
+	case PCI_INTR_TYPE_INTX:
+		intr_handler = CISS_PERF_SUPPORTED(sc)
+		    ? ciss_intr_perf_intx : ciss_intr_simple_intx;
+		break;
+	default:
+		KASSERT(CISS_PERF_SUPPORTED(sc));
+		intr_handler = ciss_intr_perf_msi;
+		break;
+	}
+
+	sc->sc_ih = pci_intr_establish_xname(pa->pa_pc, ih[0], IPL_BIO,
+	    intr_handler, sc, device_xname(self));
 	if (!sc->sc_ih) {
 		aprint_error_dev(sc->sc_dev, "can't establish interrupt");
 		if (intrstr)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
+		pci_intr_release(pa->pa_pc, ih, 1);
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, size);
 		if (cfg_bar != CISS_BAR)
 			bus_space_unmap(sc->sc_iot, sc->cfg_ioh, cfgsz);
+		return;
 	}
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
-	aprint_normal_dev(self, "interrupting at %s\n%s", intrstr,
-	       device_xname(sc->sc_dev));
-
+	aprint_normal("%s", device_xname(sc->sc_dev));
 	if (ciss_attach(sc)) {
 		pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
 		sc->sc_ih = NULL;
