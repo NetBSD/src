@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.86 2020/05/26 10:37:25 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.87 2020/07/14 00:45:53 yamaguchi Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.86 2020/05/26 10:37:25 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.87 2020/07/14 00:45:53 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,6 +295,8 @@ xen_check_hypervisordev(void)
 static int
 xen_hvm_init_late(void)
 {
+	struct idt_vec *iv = &(cpu_info_primary.ci_idtvec);
+
 	if (HYPERVISOR_xen_version(XENVER_version, NULL) < 0) {
 		aprint_error("Xen HVM: hypercall page not working\n");
 		return 0;
@@ -350,8 +352,8 @@ xen_hvm_init_late(void)
 	 * prepare vector.
 	 * We don't really care where it is, as long as it's free
 	 */
-	xen_hvm_vec = idt_vec_alloc(129, 255);
-	idt_vec_set(xen_hvm_vec, &IDTVEC(hypervisor_pvhvm_callback));
+	xen_hvm_vec = idt_vec_alloc(iv, 129, 255);
+	idt_vec_set(iv, xen_hvm_vec, &IDTVEC(hypervisor_pvhvm_callback));
 
 	events_default_setup();
 	return 1;
