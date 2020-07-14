@@ -1,4 +1,4 @@
-/*	$NetBSD: cissvar.h,v 1.8 2020/07/10 14:24:14 jdolecek Exp $	*/
+/*	$NetBSD: cissvar.h,v 1.9 2020/07/14 10:37:30 jdolecek Exp $	*/
 /*	$OpenBSD: cissvar.h,v 1.15 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
@@ -68,8 +68,16 @@ struct ciss_softc {
 
 	bus_space_handle_t	cfg_ioh;
 
+	struct ciss_perf_config	perfcfg;
+	bus_dmamap_t		replymap;
+	bus_dma_segment_t	replyseg[1];
+	uint64_t		*perf_reply;
+	int			perf_rqidx, perf_cycle;
+#define	CISS_IS_PERF(sc)	((sc)->perf_reply != NULL)
+
 	int fibrillation;
 	struct ciss_config cfg;
+#define CISS_PERF_SUPPORTED(sc)	((sc)->cfg.methods & CISS_METH_PERF)
 	int cfgoff;
 	u_int32_t iem;
 	u_int32_t heartbeat;
@@ -88,4 +96,6 @@ struct ciss_rawsoftc {
 };
 
 int	ciss_attach(struct ciss_softc *sc);
-int	ciss_intr(void *v);
+int	ciss_intr_simple_intx(void *v);
+int	ciss_intr_perf_intx(void *v);
+int	ciss_intr_perf_msi(void *v);
