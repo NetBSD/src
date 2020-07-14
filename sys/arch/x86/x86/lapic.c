@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.83 2020/05/29 12:30:41 rin Exp $	*/
+/*	$NetBSD: lapic.c,v 1.84 2020/07/14 00:45:53 yamaguchi Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008, 2020 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.83 2020/05/29 12:30:41 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.84 2020/07/14 00:45:53 yamaguchi Exp $");
 
 #include "acpica.h"
 #include "ioapic.h"
@@ -338,6 +338,8 @@ lapic_setup_bsp(paddr_t lapic_base)
 #endif
 #if defined(DDB) && defined(MULTIPROCESSOR)
 #ifdef __x86_64__
+		struct idt_vec *iv = &(cpu_info_primary.ci_idtvec);
+		idt_descriptor_t *idt = iv->iv_idt;
 		set_idtgate(&idt[ddb_vec], &Xintr_x2apic_ddbipi, 1,
 		    SDT_SYS386IGT, SEL_KPL, GSEL(GCODE_SEL, SEL_KPL));
 #else
@@ -475,23 +477,24 @@ lapic_set_lvt(void)
 void
 lapic_boot_init(paddr_t lapic_base)
 {
+	struct idt_vec *iv = &(cpu_info_primary.ci_idtvec);
 
 	lapic_setup_bsp(lapic_base);
 
 #ifdef MULTIPROCESSOR
-	idt_vec_reserve(LAPIC_IPI_VECTOR);
-	idt_vec_set(LAPIC_IPI_VECTOR,
+	idt_vec_reserve(iv, LAPIC_IPI_VECTOR);
+	idt_vec_set(iv, LAPIC_IPI_VECTOR,
 	    x2apic_mode ? Xintr_x2apic_ipi : Xintr_lapic_ipi);
 
-	idt_vec_reserve(LAPIC_TLB_VECTOR);
-	idt_vec_set(LAPIC_TLB_VECTOR,
+	idt_vec_reserve(iv, LAPIC_TLB_VECTOR);
+	idt_vec_set(iv, LAPIC_TLB_VECTOR,
 	    x2apic_mode ? Xintr_x2apic_tlb : Xintr_lapic_tlb);
 #endif
-	idt_vec_reserve(LAPIC_SPURIOUS_VECTOR);
-	idt_vec_set(LAPIC_SPURIOUS_VECTOR, Xintrspurious);
+	idt_vec_reserve(iv, LAPIC_SPURIOUS_VECTOR);
+	idt_vec_set(iv, LAPIC_SPURIOUS_VECTOR, Xintrspurious);
 
-	idt_vec_reserve(LAPIC_TIMER_VECTOR);
-	idt_vec_set(LAPIC_TIMER_VECTOR,
+	idt_vec_reserve(iv, LAPIC_TIMER_VECTOR);
+	idt_vec_set(iv, LAPIC_TIMER_VECTOR,
 	    x2apic_mode ? Xintr_x2apic_ltimer : Xintr_lapic_ltimer);
 }
 
