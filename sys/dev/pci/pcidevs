@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1418 2020/07/09 08:39:46 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1419 2020/07/14 16:56:35 jdolecek Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2934,6 +2934,46 @@ product HP HPSA_10		0x3239	Smart Array
 product HP HPSA_11		0x323a	Smart Array
 product HP HPSA_12		0x323b	Smart Array
 product HP HPSA_13		0x323c	Smart Array
+product HP HPSA_P700M		0x323d	Smart Array P700m
+product HP HPSA_P212		0x3241	Smart Array P212
+product HP HPSA_P410		0x3243	Smart Array P410
+product HP HPSA_P410I		0x3245	Smart Array P410i
+product HP HPSA_P411		0x3247	Smart Array P411
+product HP HPSA_P812		0x3249	Smart Array P822
+product HP HPSA_P712M		0x324a	Smart Array P712m
+product HP HPSA_14		0x324b	Smart Array
+product HP HPSA_P222		0x3350	Smart Array P222
+product HP HPSA_P420		0x3351	Smart Array P420
+product HP HPSA_P421		0x3352	Smart Array P421
+product HP HPSA_P822		0x3353	Smart Array P822
+product HP HPSA_P420I		0x3354	Smart Array P420i
+product HP HPSA_P220I		0x3355	Smart Array P220i
+product HP HPSA_P721I		0x3356	Smart Array P721i
+product HP HPSA_P430I		0x1920	Smart Array P430i
+product HP HPSA_P830I		0x1921	Smart Array P830i
+product HP HPSA_P430		0x1922	Smart Array P430
+product HP HPSA_P431		0x1923	Smart Array P431
+product HP HPSA_P830		0x1924	Smart Array P830
+product HP HPSA_P731M		0x1926	Smart Array P731m
+product HP HPSA_P230I		0x1928	Smart Array P230i
+product HP HPSA_P530		0x1929	Smart Array P530
+product HP HPSA_P531		0x192A	Smart Array P531
+product HP HPSA_P244BR		0x21bd	Smart Array P244br
+product HP HPSA_P741M		0x21be	Smart Array P741m
+product HP HPSA_H240AR		0x21bf	Smart Array H240ar
+product HP HPSA_P440AR		0x21c0	Smart Array H440ar
+product HP HPSA_P840AR		0x21c1	Smart Array P840ar
+product HP HPSA_P440		0x21c2	Smart Array P440
+product HP HPSA_P441		0x21c3	Smart Array P441
+product HP HPSA_P841		0x21c5	Smart Array P841
+product HP HPSA_H244BR		0x21c6	Smart Array H244br
+product HP HPSA_H240		0x21c7	Smart Array H240
+product HP HPSA_H241		0x21c8	Smart Array H241
+product HP HPSA_P246BR		0x21ca	Smart Array P246br
+product HP HPSA_P840		0x21cb	Smart Array P840
+product HP HPSA_P542D		0x21cc	Smart Array P542d
+product HP HPSA_P240NR		0x21cd	Smart Array P240nr
+product HP HPSA_H240NR		0x21ce	Smart Array H240nr
 product HP USB			0x3300	iLO3 Virtual USB
 product HP IPMI			0x3302	IPMI
 product HP ILO3_SLAVE		0x3306	iLO3 Slave
