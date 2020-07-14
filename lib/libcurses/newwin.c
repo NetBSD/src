@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.50.6.3 2018/10/09 10:01:38 martin Exp $	*/
+/*	$NetBSD: newwin.c,v 1.50.6.4 2020/07/14 13:39:09 martin Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.50.6.3 2018/10/09 10:01:38 martin Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.50.6.4 2020/07/14 13:39:09 martin Exp $");
 #endif
 #endif				/* not lint */
 
@@ -174,7 +174,7 @@ __newwin(SCREEN *screen, int nlines, int ncols, int by, int bx, int ispad,
 #endif /* HAVE_WCHAR */
 		}
 		lp->hash = __hash((char *)(void *)lp->line,
-				  (size_t)(ncols * __LDATASIZE));
+				  (size_t)(maxx * __LDATASIZE));
 	}
 	return (win);
 }
