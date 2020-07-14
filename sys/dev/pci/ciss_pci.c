@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss_pci.c,v 1.18 2020/07/14 10:37:30 jdolecek Exp $	*/
+/*	$NetBSD: ciss_pci.c,v 1.19 2020/07/14 12:04:46 jdolecek Exp $	*/
 /*	$OpenBSD: ciss_pci.c,v 1.9 2005/12/13 15:56:01 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.18 2020/07/14 10:37:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.19 2020/07/14 12:04:46 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,20 +243,6 @@ ciss_pci_match(device_t parent, cfdata_t match, void *aux)
 	return 0;
 }
 
-#ifdef CISS_NO_INTERRUPT_HACK
-static void
-ciss_intr_wrapper(void *sc_)
-{
-	struct ciss_softc *sc = sc_;
-	int s;
-
-	s = splbio();
-	ciss_intr(sc);
-	splx(s);
-	callout_schedule(&sc->sc_interrupt_hack, 1);
-}
-#endif
-
 void
 ciss_pci_attach(device_t parent, device_t self, void *aux)
 {
@@ -271,10 +257,6 @@ ciss_pci_attach(device_t parent, device_t self, void *aux)
 	char intrbuf[PCI_INTRSTR_LEN];
 	int (*intr_handler)(void *);
 
-#ifdef CISS_NO_INTERRUPT_HACK
-	callout_init(&sc->sc_interrupt_hack, 0);
-	callout_setfunc(&sc->sc_interrupt_hack, ciss_intr_wrapper, sc);
-#endif
 	sc->sc_dev = self;
 
 	aprint_naive("\n");
@@ -339,11 +321,9 @@ ciss_pci_attach(device_t parent, device_t self, void *aux)
 	    (u_int32_t *)&sc->cfg, sizeof(sc->cfg) / 4);
 
 	/* disable interrupts until ready */
-#ifndef CISS_NO_INTERRUPT_HACK
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, CISS_IMR,
 	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, CISS_IMR) |
 		sc->iem | CISS_INTR_OPQ | CISS_INTR_MSI);
-#endif
 
 	int counts[PCI_INTR_TYPE_SIZE] = {
 		[PCI_INTR_TYPE_INTX] = 1,
@@ -409,11 +389,7 @@ ciss_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-#ifndef CISS_NO_INTERRUPT_HACK
 	/* enable interrupts now */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, CISS_IMR,
 	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, CISS_IMR) & ~sc->iem);
-#else
-	callout_schedule(&sc->sc_interrupt_hack, 1);
-#endif
 }

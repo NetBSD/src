@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.48 2020/07/14 11:44:52 jdolecek Exp $	*/
+/*	$NetBSD: ciss.c,v 1.49 2020/07/14 12:04:46 jdolecek Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.68 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.48 2020/07/14 11:44:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.49 2020/07/14 12:04:46 jdolecek Exp $");
 
 #include "bio.h"
 
@@ -73,11 +73,6 @@ static void	ciss_scsi_cmd(struct scsipi_channel *chan,
 static int	ciss_scsi_ioctl(struct scsipi_channel *chan, u_long cmd,
 	    void *addr, int flag, struct proc *p);
 static void	cissminphys(struct buf *bp);
-
-#if 0
-static void	ciss_scsi_raw_cmd(struct scsipi_channel *chan,
-			scsipi_adapter_req_t req, void *arg);
-#endif
 
 static int	ciss_sync(struct ciss_softc *sc);
 static void	ciss_heartbeat(void *v);
@@ -753,11 +748,9 @@ ciss_cmd(struct ciss_softc *sc, struct ciss_ccb *ccb, int flags, int wait)
 	bus_dmamap_sync(sc->sc_dmat, sc->cmdmap, 0, sc->cmdmap->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
-#ifndef CISS_NO_INTERRUPT_HACK
 	if ((wait & (XS_CTL_POLL|XS_CTL_NOSLEEP)) == (XS_CTL_POLL|XS_CTL_NOSLEEP))
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, CISS_IMR,
 		    bus_space_read_4(sc->sc_iot, sc->sc_ioh, CISS_IMR) | sc->iem);
-#endif
 
 	if (!pollsleep)
 		ccb->ccb_state = CISS_CCB_ONQ;
@@ -810,11 +803,9 @@ ciss_cmd(struct ciss_softc *sc, struct ciss_ccb *ccb, int flags, int wait)
 		    ccb->ccb_err.cmd_stat, ccb->ccb_err.scsi_stat));
 	}
 
-#ifndef CISS_NO_INTERRUPT_HACK
 	if ((wait & (XS_CTL_POLL|XS_CTL_NOSLEEP)) == (XS_CTL_POLL|XS_CTL_NOSLEEP))
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, CISS_IMR,
 		    bus_space_read_4(sc->sc_iot, sc->sc_ioh, CISS_IMR) & ~sc->iem);
-#endif
 
 	return (error);
 }
