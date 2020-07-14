@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.24 2019/12/22 23:23:30 thorpej Exp $ */
+/*	$NetBSD: cuda.c,v 1.25 2020/07/14 08:52:00 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.24 2019/12/22 23:23:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.25 2020/07/14 08:52:00 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,7 +268,7 @@ cuda_attach(device_t parent, device_t self, void *aux)
 	node = OF_finddevice("/perch");
 	if (node != -1) {
 		dev = prop_dictionary_create();
-		prop_dictionary_set_cstring(dev, "name", "sgsmix");
+		prop_dictionary_set_string(dev, "name", "sgsmix");
 		prop_dictionary_set_uint32(dev, "addr", 0x8a);
 		prop_array_add(cfg, dev);
 		prop_object_release(dev);
