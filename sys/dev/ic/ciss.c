@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.45 2020/07/14 10:38:06 jdolecek Exp $	*/
+/*	$NetBSD: ciss.c,v 1.46 2020/07/14 10:44:34 jdolecek Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.68 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.45 2020/07/14 10:38:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.46 2020/07/14 10:44:34 jdolecek Exp $");
 
 #include "bio.h"
 
@@ -1225,8 +1225,7 @@ ciss_scsi_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		else if (xs->xs_control & XS_CTL_DATA_OUT)
 			cmd->flags |= CISS_CDB_OUT;
 		cmd->tmo = htole16(xs->timeout < 1000? 1 : xs->timeout / 1000);
-		memset(&cmd->cdb[0], 0, sizeof(cmd->cdb));
-		memcpy(&cmd->cdb[0], xs->cmd, CISS_MAX_CDB);
+		memcpy(&cmd->cdb[0], xs->cmd, xs->cmdlen);
 		CISS_DPRINTF(CISS_D_CMD, ("cmd=%02x %02x %02x %02x %02x %02x ",
 			     cmd->cdb[0], cmd->cdb[1], cmd->cdb[2],
 			     cmd->cdb[3], cmd->cdb[4], cmd->cdb[5]));
