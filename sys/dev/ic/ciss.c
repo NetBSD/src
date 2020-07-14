@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.44 2020/07/14 10:37:30 jdolecek Exp $	*/
+/*	$NetBSD: ciss.c,v 1.45 2020/07/14 10:38:06 jdolecek Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.68 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.44 2020/07/14 10:37:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.45 2020/07/14 10:38:06 jdolecek Exp $");
 
 #include "bio.h"
 
@@ -1177,83 +1177,6 @@ ciss_pdscan(struct ciss_softc *sc, int ld)
 	memcpy(ldp->tgts, buf, k);
 	return ldp;
 }
-
-#if 0
-static void
-ciss_scsi_raw_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req,
-	void *arg)				/* TODO */
-{
-	struct scsipi_xfer *xs = (struct scsipi_xfer *) arg;
-	struct ciss_rawsoftc *rsc = device_private(
-	    chan->chan_adapter->adapt_dev);
-	struct ciss_softc *sc = rsc->sc_softc;
-	struct ciss_ccb *ccb;
-	struct ciss_cmd *cmd;
-	int error;
-
-	CISS_DPRINTF(CISS_D_CMD, ("ciss_scsi_raw_cmd "));
-
-	switch (req)
-	{
-	case ADAPTER_REQ_RUN_XFER:
-		if (xs->cmdlen > CISS_MAX_CDB) {
-			CISS_DPRINTF(CISS_D_CMD, ("CDB too big %p ", xs));
-			memset(&xs->sense, 0, sizeof(xs->sense));
-			printf("ciss driver stuffup in %s:%d: %s()\n",
-			       __FILE__, __LINE__, __func__);
-			xs->error = XS_DRIVER_STUFFUP;
-			scsipi_done(xs);
-			break;
-		}
-
-		error = 0;
-		xs->error = XS_NOERROR;
-
-		/* TODO check this target has not yet employed w/ any volume */
-
-		ccb = ciss_get_ccb(sc);
-		cmd = &ccb->ccb_cmd;
-		ccb->ccb_len = xs->datalen;
-		ccb->ccb_data = xs->data;
-		ccb->ccb_xs = xs;
-
-		cmd->cdblen = xs->cmdlen;
-		cmd->flags = CISS_CDB_CMD | CISS_CDB_SIMPL;
-		if (xs->xs_control & XS_CTL_DATA_IN)
-			cmd->flags |= CISS_CDB_IN;
-		else if (xs->xs_control & XS_CTL_DATA_OUT)
-			cmd->flags |= CISS_CDB_OUT;
-		cmd->tmo = xs->timeout < 1000? 1 : xs->timeout / 1000;
-		memset(&cmd->cdb[0], 0, sizeof(cmd->cdb));
-		memcpy(&cmd->cdb[0], xs->cmd, CISS_MAX_CDB);
-
-		if (ciss_cmd(ccb, BUS_DMA_WAITOK,
-		    xs->xs_control & (XS_CTL_POLL|XS_CTL_NOSLEEP))) {
-			printf("ciss driver stuffup in %s:%d: %s()\n",
-			       __FILE__, __LINE__, __func__);
-			xs->error = XS_DRIVER_STUFFUP;
-			scsipi_done(xs);
-			break;
-		}
-
-		break;
-
-	case ADAPTER_REQ_GROW_RESOURCES:
-		/*
-		 * Not supported.
-		 */
-		break;
-
-	case ADAPTER_REQ_SET_XFER_MODE:
-		/*
-		 * We can't change the transfer mode, but at least let
-		 * scsipi know what the adapter has negociated.
-		 */
-		 /* Get xfer mode and return it */
-		break;
-	}
-}
-#endif
 
 static void
 ciss_scsi_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req,
