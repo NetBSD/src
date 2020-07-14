@@ -1,4 +1,4 @@
-/*	$NetBSD: cissreg.h,v 1.6 2020/07/14 10:37:30 jdolecek Exp $	*/
+/*	$NetBSD: cissreg.h,v 1.7 2020/07/14 11:39:02 jdolecek Exp $	*/
 /*	$OpenBSD: cissreg.h,v 1.11 2010/06/03 01:02:13 dlg Exp $	*/
 
 /*
@@ -516,7 +516,7 @@ struct ciss_error {
 } __packed;
 
 struct ciss_ccb {
-	TAILQ_ENTRY(ciss_ccb)	ccb_link;
+	STAILQ_ENTRY(ciss_ccb)	ccb_link;
 	struct ciss_softc	*ccb_sc;
 	paddr_t			ccb_cmdpa;
 	enum {
@@ -539,5 +539,5 @@ struct ciss_ccb {
 	struct ciss_cmd		ccb_cmd __aligned(8);	/* followed by sgl */
 };
 
-typedef TAILQ_HEAD(ciss_queue_head, ciss_ccb)     ciss_queue_head;
+typedef STAILQ_HEAD(ciss_queue_head, ciss_ccb)     ciss_queue_head;
 
