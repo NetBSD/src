@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.96 2020/07/12 19:05:32 jdolecek Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.97 2020/07/14 10:26:34 jdolecek Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.96 2020/07/12 19:05:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.97 2020/07/14 10:26:34 jdolecek Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -2375,7 +2375,14 @@ bnx_dma_free(struct bnx_softc *sc)
 	}
 
 	/* Destroy the TX dmamaps. */
-	/* This isn't necessary since we dont allocate them up front */
+	struct bnx_pkt *pkt;
+	while ((pkt = TAILQ_FIRST(&sc->tx_free_pkts)) != NULL) {
+		TAILQ_REMOVE(&sc->tx_free_pkts, pkt, pkt_entry);
+		sc->tx_pkt_count--;
+
+		bus_dmamap_destroy(sc->bnx_dmatag, pkt->pkt_dmamap);
+		pool_put(bnx_tx_pool, pkt);
+	}
 
 	/* Free, unmap and destroy all RX buffer descriptor chain pages. */
 	for (i = 0; i < RX_PAGES; i++ ) {
@@ -4245,21 +4252,7 @@ bnx_free_tx_chain(struct bnx_softc *sc)
 		mutex_enter(&sc->tx_pkt_mtx);
 		TAILQ_INSERT_TAIL(&sc->tx_free_pkts, pkt, pkt_entry);
 	}
-
-	/* Destroy all the dmamaps we allocated for TX */
-	while ((pkt = TAILQ_FIRST(&sc->tx_free_pkts)) != NULL) {
-		TAILQ_REMOVE(&sc->tx_free_pkts, pkt, pkt_entry);
-		sc->tx_pkt_count--;
-		mutex_exit(&sc->tx_pkt_mtx);
-
-		bus_dmamap_destroy(sc->bnx_dmatag, pkt->pkt_dmamap);
-		pool_put(bnx_tx_pool, pkt);
-
-		mutex_enter(&sc->tx_pkt_mtx);
-	}
 	mutex_exit(&sc->tx_pkt_mtx);
-
-
 
 	/* Clear each TX chain page. */
 	for (i = 0; i < TX_PAGES; i++) {
