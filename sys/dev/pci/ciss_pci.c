@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss_pci.c,v 1.21 2020/07/14 17:23:27 jdolecek Exp $	*/
+/*	$NetBSD: ciss_pci.c,v 1.22 2020/07/14 17:23:58 jdolecek Exp $	*/
 /*	$OpenBSD: ciss_pci.c,v 1.9 2005/12/13 15:56:01 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.21 2020/07/14 17:23:27 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.22 2020/07/14 17:23:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +87,46 @@ static const struct {
 	CISS_PCI_DEVICE(HP, HPSA_11, "HP Smart Array 11"),
 	CISS_PCI_DEVICE(HP, HPSA_12, "HP Smart Array 12"),
 	CISS_PCI_DEVICE(HP, HPSA_13, "HP Smart Array 13"),
+	CISS_PCI_DEVICE(HP, HPSA_P700M, "Smart Array P700m"),
+	CISS_PCI_DEVICE(HP, HPSA_P212, "Smart Array P212"),
+	CISS_PCI_DEVICE(HP, HPSA_P410, "Smart Array P410"),
+	CISS_PCI_DEVICE(HP, HPSA_P410I, "Smart Array P410i"),
+	CISS_PCI_DEVICE(HP, HPSA_P411, "Smart Array P411"),
+	CISS_PCI_DEVICE(HP, HPSA_P812, "Smart Array P822"),
+	CISS_PCI_DEVICE(HP, HPSA_P712M, "Smart Array P712m"),
+	CISS_PCI_DEVICE(HP, HPSA_14, "Smart Array 14"),
+	CISS_PCI_DEVICE(HP, HPSA_P222, "Smart Array P222"),
+	CISS_PCI_DEVICE(HP, HPSA_P420, "Smart Array P420"),
+	CISS_PCI_DEVICE(HP, HPSA_P421, "Smart Array P421"),
+	CISS_PCI_DEVICE(HP, HPSA_P822, "Smart Array P822"),
+	CISS_PCI_DEVICE(HP, HPSA_P420I, "Smart Array P420i"),
+	CISS_PCI_DEVICE(HP, HPSA_P220I, "Smart Array P220i"),
+	CISS_PCI_DEVICE(HP, HPSA_P721I, "Smart Array P721i"),
+	CISS_PCI_DEVICE(HP, HPSA_P430I, "Smart Array P430i"),
+	CISS_PCI_DEVICE(HP, HPSA_P830I, "Smart Array P830i"),
+	CISS_PCI_DEVICE(HP, HPSA_P430, "Smart Array P430"),
+	CISS_PCI_DEVICE(HP, HPSA_P431, "Smart Array P431"),
+	CISS_PCI_DEVICE(HP, HPSA_P830, "Smart Array P830"),
+	CISS_PCI_DEVICE(HP, HPSA_P731M, "Smart Array P731m"),
+	CISS_PCI_DEVICE(HP, HPSA_P230I, "Smart Array P230i"),
+	CISS_PCI_DEVICE(HP, HPSA_P530, "Smart Array P530"),
+	CISS_PCI_DEVICE(HP, HPSA_P531, "Smart Array P531"),
+	CISS_PCI_DEVICE(HP, HPSA_P244BR, "Smart Array P244br"),
+	CISS_PCI_DEVICE(HP, HPSA_P741M, "Smart Array P741m"),
+	CISS_PCI_DEVICE(HP, HPSA_H240AR, "Smart Array H240ar"),
+	CISS_PCI_DEVICE(HP, HPSA_P440AR, "Smart Array H440ar"),
+	CISS_PCI_DEVICE(HP, HPSA_P840AR, "Smart Array P840ar"),
+	CISS_PCI_DEVICE(HP, HPSA_P440, "Smart Array P440"),
+	CISS_PCI_DEVICE(HP, HPSA_P441, "Smart Array P441"),
+	CISS_PCI_DEVICE(HP, HPSA_P841, "Smart Array P841"),
+	CISS_PCI_DEVICE(HP, HPSA_H244BR, "Smart Array H244br"),
+	CISS_PCI_DEVICE(HP, HPSA_H240, "Smart Array H240"),
+	CISS_PCI_DEVICE(HP, HPSA_H241, "Smart Array H241"),
+	CISS_PCI_DEVICE(HP, HPSA_P246BR, "Smart Array P246br"),
+	CISS_PCI_DEVICE(HP, HPSA_P840, "Smart Array P840"),
+	CISS_PCI_DEVICE(HP, HPSA_P542D, "Smart Array P542d"),
+	CISS_PCI_DEVICE(HP, HPSA_P240NR, "Smart Array P240nr"),
+	CISS_PCI_DEVICE(HP, HPSA_H240NR, "Smart Array H240nr"),
 };
 
 int
