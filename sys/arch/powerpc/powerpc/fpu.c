@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.41 2020/07/06 10:52:12 rin Exp $	*/
+/*	$NetBSD: fpu.c,v 1.42 2020/07/15 09:19:49 rin Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.41 2020/07/06 10:52:12 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.42 2020/07/15 09:19:49 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -124,7 +124,6 @@ fpu_state_release(lwp_t *l)
 #endif
 }
 
-#ifdef PPC_HAVE_FPU
 #define	STICKYBITS	(FPSCR_VX|FPSCR_OX|FPSCR_UX|FPSCR_ZX|FPSCR_XX)
 #define	STICKYSHIFT	25
 #define	MASKBITS	(FPSCR_VE|FPSCR_OE|FPSCR_UE|FPSCR_ZE|FPSCR_XE)
@@ -139,6 +138,7 @@ fpu_get_fault_code(void)
 	uint32_t fpscr, ofpscr;
 	int code;
 
+#ifdef PPC_HAVE_FPU
 	kpreempt_disable();
 
 	struct cpu_info * const ci = curcpu();
@@ -182,6 +182,10 @@ fpu_get_fault_code(void)
 	}
 
 	kpreempt_enable();
+#else /* !PPC_HAVE_FPU */
+	fpscr64 = *(uint64_t *)&pcb->pcb_fpu.fpscr;
+	((uint32_t *)&pcb->pcb_fpu.fpscr)[_QUAD_LOWWORD] &= ~MASKBITS;
+#endif
 
 	/*
 	 * Now determine the fault type.  First we test to see if any of sticky
@@ -207,7 +211,6 @@ fpu_get_fault_code(void)
 	else				code = 0;
 	return code;
 }
-#endif /* PPC_HAVE_FPU */
 
 bool
 fpu_save_to_mcontext(lwp_t *l, mcontext_t *mcp, unsigned int *flagp)
