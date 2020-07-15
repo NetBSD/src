@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.32 2020/07/15 09:36:35 rin Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.33 2020/07/15 09:42:43 rin Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.32 2020/07/15 09:36:35 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.33 2020/07/15 09:42:43 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -605,6 +605,15 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 				fe->fe_cx = mask & a[1];
 				fe->fe_fpscr = (fe->fe_fpscr&~mask) | 
 					(fe->fe_cx);
+				/*
+				 * XXX
+				 * Forbidden to set FEX and VX, also for
+				 * mcrfs, mtfsfi, and mtfsb[01].
+				 *
+				 * XXX
+				 * Handle invalid operation differently,
+				 * depending on VE.
+				 */
 /* XXX weird stuff about OX, FX, FEX, and VX should be handled */
 				break;
 			case	OPC63_FCTID:
