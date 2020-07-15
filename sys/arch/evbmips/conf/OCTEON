@@ -1,11 +1,11 @@
-#	$NetBSD: ERLITE,v 1.27 2020/06/23 05:18:02 simonb Exp $
+#	$NetBSD: OCTEON,v 1.1 2020/07/15 12:15:30 simonb Exp $
 
 include 	"arch/mips/conf/std.octeon"
 include 	"arch/evbmips/conf/files.octeon"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ERLITE-$Revision: 1.27 $"
+#ident 		"ERLITE-$Revision: 1.1 $"
 
 maxusers	32
 
@@ -177,4 +177,4 @@ pseudo-device	drvctl				# driver control
 
 include "dev/veriexec.config"
 
-cinclude 	"arch/evbmips/conf/ERLITE.local"
+cinclude 	"arch/evbmips/conf/OCTEON.local"
