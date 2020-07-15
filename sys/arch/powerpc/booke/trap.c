@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.32 2020/07/07 00:49:09 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.33 2020/07/15 07:44:34 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.32 2020/07/07 00:49:09 rin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.33 2020/07/15 07:44:34 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -477,10 +477,12 @@ pgm_exception(struct trapframe *tf, ksiginfo_t *ksi)
 	}
 
 	if (tf->tf_esr & ESR_PIL) {
-		struct pcb * const pcb = lwp_getpcb(curlwp);
-		if (__predict_false(!fpu_used_p(curlwp))) {
+		struct lwp * const l = curlwp;
+		struct pcb * const pcb = lwp_getpcb(l);
+
+		if (__predict_false(!fpu_used_p(l))) {
 			memset(&pcb->pcb_fpu, 0, sizeof(pcb->pcb_fpu));
-			fpu_mark_used(curlwp);
+			fpu_mark_used(l);
 		}
 		if (fpu_emulate(tf, &pcb->pcb_fpu, ksi)) {
 			if (ksi->ksi_signo == 0) {
