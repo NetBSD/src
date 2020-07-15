@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.78 2020/07/15 15:52:24 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.79 2020/07/15 17:27:25 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -3424,3 +3424,24 @@ sys/arch/i386/stand/boot/boot2.c		1.74
 	PR 55490: let the consdev command also set speed.
 	[kim, ticket #1013]
 
+sys/dev/pci/if_ti.c				1.116-1.120 via patch
+sys/dev/pci/if_tireg.h				1.26
+
+	- Don't clear CFI and priority bit to pass them to the upper layer.
+	- Add support for Farallon PN9000SX from FreeBSD.
+	- Fix typo in comment.
+	- Style fix.
+	[msaitoh, ticket #1014]
+
+sys/arch/x86/conf/files.x86			1.108 (via patch)
+sys/arch/x86/include/apicvar.h			1.7 (via patch)
+sys/arch/x86/include/cpu.h			1.121 (via patch)
+sys/arch/x86/x86/cpu.c				1.185 (via patch)
+sys/arch/x86/x86/hyperv.c			1.7 (via patch)
+sys/arch/x86/x86/tsc.c				1.41 (via patch)
+sys/arch/xen/conf/files.xen			1.181 (via patch)
+
+	Get TSC frequency from CPUID 0x15 and/or x16 if it's available.
+	This change fixes a problem that newer Intel processors' timer
+	counts very slowly.
+	[msaitoh, ticket #1015]
