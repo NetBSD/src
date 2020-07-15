@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2713 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2714 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -135,6 +135,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	de(4): Removed from the tree. [thorpej 20200119]
 	token ring and tr(4): Removed from the tree. [thorpej 20200119]
 	fddi, fpa(4), fta(4), fea(4): Removed from the tree. [thorpej 20200120]
+	wm(4): Add Intel I219 LM10-LM15 and V10-V14. [msaitoh 20200121]
 	OpenSSL: Imported 1.1.1d. [christos 20200122]
 	dhcpcd(8): Import dhcpcd-8.1.6 [roy 20200127]
 	openresolv(8): Import openresolv-3.10.0 [roy 20200127]
