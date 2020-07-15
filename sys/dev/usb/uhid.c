@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.108.2.1 2020/01/02 09:42:06 martin Exp $	*/
+/*	$NetBSD: uhid.c,v 1.108.2.2 2020/07/15 14:09:04 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.108.2.1 2020/01/02 09:42:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.108.2.2 2020/07/15 14:09:04 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -104,6 +104,7 @@ struct uhid_softc {
 #define UHID_IMMED	0x02	/* return read data immediately */
 
 	int sc_refcnt;
+	int sc_raw;
 	u_char sc_dying;
 };
 
@@ -184,6 +185,8 @@ uhid_attach(device_t parent, device_t self, void *aux)
 	sc->sc_isize = hid_report_size(desc, size, hid_input,   repid);
 	sc->sc_osize = hid_report_size(desc, size, hid_output,  repid);
 	sc->sc_fsize = hid_report_size(desc, size, hid_feature, repid);
+	sc->sc_raw =  hid_is_collection(desc, size, uha->reportid,
+	    HID_USAGE2(HUP_FIDO, HUF_U2FHID));
 
 	aprint_naive("\n");
 	aprint_normal(": input=%d, output=%d, feature=%d\n",
@@ -482,15 +485,32 @@ uhid_do_write(struct uhid_softc *sc, struct uio *uio, int flag)
 		return EIO;
 
 	size = sc->sc_osize;
-	error = 0;
 	if (uio->uio_resid != size || size == 0)
 		return EINVAL;
 	error = uiomove(sc->sc_obuf, size, uio);
+#ifdef UHID_DEBUG
+	if (uhiddebug > 5) {
+		uint32_t i;
+
+		DPRINTF(("%s: outdata[%d] =", device_xname(sc->sc_hdev.sc_dev),
+		    error));
+		for (i = 0; i < size; i++)
+			DPRINTF((" %02x", sc->sc_obuf[i]));
+		DPRINTF(("\n"));
+	}
+#endif
 	if (!error) {
-		err = uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT,
-					sc->sc_obuf, size);
-		if (err)
+		if (sc->sc_raw)
+			err = uhidev_write(sc->sc_hdev.sc_parent, sc->sc_obuf,
+			    size);
+		else
+			err = uhidev_set_report(&sc->sc_hdev,
+			    UHID_OUTPUT_REPORT, sc->sc_obuf, size);
+		if (err) {
+			DPRINTF(("%s: err = %d\n",
+			    device_xname(sc->sc_hdev.sc_dev), err));
 			error = EIO;
+		}
 	}
 
 	return error;
@@ -580,6 +600,14 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, void *addr,
 			return EPERM;
 		}
 		mutex_exit(proc_lock);
+		break;
+
+	case USB_HID_GET_RAW:
+		*(int *)addr = sc->sc_raw;
+		break;
+
+	case USB_HID_SET_RAW:
+		sc->sc_raw = *(int *)addr;
 		break;
 
 	case USB_GET_REPORT_DESC:
