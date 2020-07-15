@@ -1,3 +1,4 @@
+/*	$NetBSD: pic_u3_ht.c,v 1.9 2020/07/15 09:58:34 rin Exp $	*/
 /*-
  * Copyright (c) 2013 Phileas Fogg
  * All rights reserved.
@@ -25,6 +26,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pic_u3_ht.c,v 1.9 2020/07/15 09:58:34 rin Exp $");
 
 #include "opt_openpic.h"
 #include "opt_interrupt.h"
