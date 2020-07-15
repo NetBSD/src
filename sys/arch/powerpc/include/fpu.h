@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.24 2020/07/06 10:52:12 rin Exp $	*/
+/*	$NetBSD: fpu.h,v 1.25 2020/07/15 09:19:49 rin Exp $	*/
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -83,6 +83,8 @@ void	fpu_mark_used(struct lwp *);
 void	fpu_restore_from_mcontext(struct lwp *, const mcontext_t *);
 bool	fpu_save_to_mcontext(struct lwp *, mcontext_t *, unsigned int *);
 
+int	fpu_get_fault_code(void);
+
 extern const pcu_ops_t fpu_ops;
 
 /* List of PowerPC architectures that support FPUs. */
@@ -111,8 +113,6 @@ fpu_discard(lwp_t *l)
 
 void	fpu_load_from_fpreg(const struct fpreg *);
 void	fpu_unload_to_fpreg(struct fpreg *);
-
-int	fpu_get_fault_code(void);
 
 #endif /* PPC_HAVE_FPU */
 #endif /* _KERNEL */
