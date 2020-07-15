@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.79 2020/07/07 01:39:23 rin Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.80 2020/07/15 08:58:52 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.79 2020/07/07 01:39:23 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.80 2020/07/15 08:58:52 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -737,6 +737,82 @@ cpu_debug_dump(void)
 }
 #endif	/* DDB */
 #endif /* MULTIPROCESSOR */
+
+int
+emulate_mxmsr(struct lwp *l, struct trapframe *tf, uint32_t opcode)
+{
+
+#define	OPC_MFMSR_CODE		0x7c0000a6
+#define	OPC_MFMSR_MASK		0xfc1fffff
+#define	OPC_MFMSR_P(o)		(((o) & OPC_MFMSR_MASK) == OPC_MFMSR_CODE)
+
+#define	OPC_MTMSR_CODE		0x7c000124
+#define	OPC_MTMSR_MASK		0xfc1fffff
+#define	OPC_MTMSR_P(o)		(((o) & OPC_MTMSR_MASK) == OPC_MTMSR_CODE)
+
+#define	OPC_MXMSR_REG(o)	(((o) >> 21) & 0x1f)
+
+	if (OPC_MFMSR_P(opcode)) {
+		struct pcb * const pcb = lwp_getpcb(l);
+		register_t msr = tf->tf_srr1 & PSL_USERSRR1;
+
+		if (fpu_used_p(l))
+			msr |= PSL_FP;
+#ifdef ALTIVEC
+		if (vec_used_p(l))
+			msr |= PSL_VEC;
+#endif
+
+		msr |= (pcb->pcb_flags & PSL_FE_PREC);
+		tf->tf_fixreg[OPC_MXMSR_REG(opcode)] = msr;
+		return 1;
+	}
+
+	if (OPC_MTMSR_P(opcode)) {
+		struct pcb * const pcb = lwp_getpcb(l);
+		register_t msr = tf->tf_fixreg[OPC_MXMSR_REG(opcode)];
+
+		/*
+		 * Ignore the FP enable bit in the requested MSR.
+		 * It might be set in the thread's actual MSR but the
+		 * user code isn't allowed to change it.
+		 */
+		msr &= ~PSL_FP;
+#ifdef ALTIVEC
+		msr &= ~PSL_VEC;
+#endif
+
+		/*
+		 * Don't let the user muck with bits he's not allowed to.
+		 */
+#ifdef PPC_HAVE_FPU
+		if (!PSL_USEROK_P(msr))
+#else
+		if (!PSL_USEROK_P(msr & ~PSL_FE_PREC))
+#endif
+			return 0;
+
+		/*
+		 * For now, only update the FP exception mode.
+		 */
+		pcb->pcb_flags &= ~PSL_FE_PREC;
+		pcb->pcb_flags |= msr & PSL_FE_PREC;
+
+#ifdef PPC_HAVE_FPU
+		/*
+		 * If we think we have the FPU, update SRR1 too.  If we're
+		 * wrong userret() will take care of it.
+		 */
+		if (tf->tf_srr1 & PSL_FP) {
+			tf->tf_srr1 &= ~(PSL_FE0|PSL_FE1);
+			tf->tf_srr1 |= msr & (PSL_FE0|PSL_FE1);
+		}
+#endif
+		return 1;
+	}
+
+	return 0;
+}
 
 #ifdef MODULAR
 /*
