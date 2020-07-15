@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.27 2020/07/15 07:54:25 rin Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.28 2020/07/15 08:10:41 rin Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.27 2020/07/15 07:54:25 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.28 2020/07/15 08:10:41 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -586,7 +586,7 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 						if (rt & (1<<ra))
 							mask |= (0xf<<(4*ra));
 				}
-				a = (int *)&fs->fpreg[rt];
+				a = (int *)&fs->fpreg[rb];
 				fe->fe_cx = mask & a[1];
 				fe->fe_fpscr = (fe->fe_fpscr&~mask) | 
 					(fe->fe_cx);
