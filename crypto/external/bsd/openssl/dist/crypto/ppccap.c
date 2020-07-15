@@ -375,8 +375,7 @@ void OPENSSL_cpuid_setup(void)
 
     /*
      * If machdep.fpu_present == 0, FPU is absent and emulated by software.
-     * Avoid using it as calculation results may not be correct in bit-to-bit
-     * precision.
+     * Avoid using it for better performance.
      */
     error = sysctlbyname("machdep.fpu_present", &val, &len, NULL, 0);
     if (error != 0 || (error == 0 && val != 0))
