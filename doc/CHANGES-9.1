@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.77 2020/07/14 13:38:12 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.78 2020/07/15 15:52:24 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -3379,4 +3379,48 @@ lib/libcurses/newwin.c				1.58
 
 	PR 55484: newwin() - fix crash with negative ncols.
 	[uwe, ticket #1004]
+
+sys/kern/subr_percpu.c				1.20
+
+	Fix assertion.
+	[riastradh, ticket #1005]
+
+sbin/rndctl/rndctl.c				1.32,1.33
+
+	Accept both byte orders for random seed in `rndctl -L'.
+	[riastradh, ticket #1006]
+
+share/man/man9/rnd.9				1.26,1.27
+
+	Update rnd(9) man page to reflect reality since netbsd-7.
+	[riastradh, ticket #1007]
+
+sys/dev/usb/ualea.c				1.10
+
+	Turn XXX comment into KASSERT.
+	[riastradh, ticket #1008]
+
+sys/arch/x86/x86/coretemp.c			1.37
+
+	Add special handling for model 0x0f stepping >=2 or mode 0x0e to get
+	Tjmax.
+	[msaitoh, ticket #1009]
+
+sys/dev/hid/hid.h				1.4,1.5
+sys/dev/usb/uhid.c				1.112,1.113
+sys/dev/usb/usbhid.h				1.19
+
+	Add support for USB HID raw mode for U2F/FIDO2 security keys.
+	[riastradh, ticket #1010]
+
+share/man/man4/wskbd.4				1.20,1.21
+
+	Various fixes.
+	[nia, ticket #1012]
+
+share/man/man8/man8.x86/boot.8			1.21
+sys/arch/i386/stand/boot/boot2.c		1.74
+
+	PR 55490: let the consdev command also set speed.
+	[kim, ticket #1013]
 
