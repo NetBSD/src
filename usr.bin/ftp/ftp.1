@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.139 2020/07/15 16:41:16 pgoyette Exp $
+.\" 	$NetBSD: ftp.1,v 1.140 2020/07/15 17:36:38 uwe Exp $
 .\"
 .\" Copyright (c) 1996-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -138,12 +138,11 @@
 .Oc
 .Sm on
 .Ek
-.Op Ar \&.\&.\&.
+.Ar \&...
 .Nm
 .Bk -words
-.Fl u Ar url Ar file
+.Fl u Ar url Ar
 .Ek
-.Op Ar \&.\&.\&.
 .Sh DESCRIPTION
 .Nm
 is the user interface to the Internet standard File Transfer Protocol.
@@ -283,7 +282,7 @@ bytes/second.
 Refer to
 .Ic rate
 for more information.
-.It Fl u Ar url file Op \&.\&.\&.
+.It Fl u Ar url Ar
 Upload files on the command line to
 .Ar url
 where
