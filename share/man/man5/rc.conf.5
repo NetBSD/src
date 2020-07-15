@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.183 2020/07/15 16:46:11 jruoho Exp $
+.\"	$NetBSD: rc.conf.5,v 1.184 2020/07/15 16:52:48 jruoho Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -698,12 +698,14 @@ with the
 .Fl l
 flag and suppresses warnings about interfaces in this list that
 do not have an ifconfig file or variable.
-.It Sy blacklistd
+.It Sy blocklistd
 Boolean value.
 Runs
-.Xr blacklistd 8
+.Xr blocklistd 8
 to dynamically block hosts on a DoS according to configuration set in
-.Xr blacklistd.conf 5
+.Xr blocklistd.conf 5
+Passes
+.Sy blocklistd_flags .
 .It Sy dhcpcd
 Boolean value.
 Set true to configure some or all network interfaces using dhcpcd.
