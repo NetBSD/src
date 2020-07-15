@@ -1,4 +1,4 @@
-/*	$NetBSD: cissvar.h,v 1.10 2020/07/14 12:04:46 jdolecek Exp $	*/
+/*	$NetBSD: cissvar.h,v 1.11 2020/07/15 14:33:58 jdolecek Exp $	*/
 /*	$OpenBSD: cissvar.h,v 1.15 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
@@ -47,9 +47,7 @@ struct ciss_softc {
 	int			sc_flush;
 
 	struct scsipi_channel	sc_channel;
-	struct scsipi_channel	*sc_channel_raw;
 	struct scsipi_adapter	sc_adapter;
-	struct scsipi_adapter	*sc_adapter_raw;
 	struct callout		sc_hb;
 
 	u_int	sc_flags;
