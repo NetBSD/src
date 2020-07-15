@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.29 2020/07/15 08:29:07 rin Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.30 2020/07/15 09:16:35 rin Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.29 2020/07/15 08:29:07 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.30 2020/07/15 09:16:35 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -92,6 +92,8 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.29 2020/07/15 08:29:07 rin Exp $");
 #include <sys/syslog.h>
 
 #include <powerpc/instr.h>
+#include <powerpc/psl.h>
+
 #include <machine/fpu.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
@@ -191,6 +193,7 @@ fpu_dumpfpn(struct fpn *fp)
 bool
 fpu_emulate(struct trapframe *tf, struct fpreg *fpf, ksiginfo_t *ksi)
 {
+	struct pcb *pcb;
 	union instr insn;
 	struct fpemu fe;
 
@@ -229,11 +232,15 @@ fpu_emulate(struct trapframe *tf, struct fpreg *fpf, ksiginfo_t *ksi)
 	}
 	switch (fpu_execute(tf, &fe, &insn)) {
 	case 0:
+success:
 		DPRINTF(FPE_EX, ("fpu_emulate: success\n"));
 		tf->tf_srr0 += 4;
 		return true;
 
 	case FPE:
+		pcb = lwp_getpcb(curlwp);
+		if ((pcb->pcb_flags & PSL_FE_PREC) == 0)
+			goto success;
 		DPRINTF(FPE_EX, ("fpu_emulate: SIGFPE\n"));
 		ksi->ksi_signo = SIGFPE;
 		ksi->ksi_trap = EXC_PGM;
