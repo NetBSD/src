@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.184 2020/07/15 16:52:48 jruoho Exp $
+.\"	$NetBSD: rc.conf.5,v 1.185 2020/07/15 17:55:34 leot Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -1184,6 +1184,19 @@ only one machine running both should have the
 .Fl M
 flag given to
 .Xr timed 8 .
+.It Sy unbound
+Boolean value.
+Runs
+.Xr unbound 8 .
+.It Sy unbound_chrootdir
+A string.
+If non-blank and
+.Sy unbound
+is true, run
+.Xr unbound 8
+.Xr chroot 2 Ns ed
+to
+.Sy unbound_chrootdir .
 .El
 .Ss Routing daemons
 .Bl -tag -width net_interfaces
