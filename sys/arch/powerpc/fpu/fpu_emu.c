@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.30 2020/07/15 09:16:35 rin Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.31 2020/07/15 09:22:26 rin Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.30 2020/07/15 09:16:35 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.31 2020/07/15 09:22:26 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -244,6 +244,7 @@ success:
 		DPRINTF(FPE_EX, ("fpu_emulate: SIGFPE\n"));
 		ksi->ksi_signo = SIGFPE;
 		ksi->ksi_trap = EXC_PGM;
+		ksi->ksi_code = fpu_get_fault_code();
 		return true;
 
 	case FAULT:
