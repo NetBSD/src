@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.112 2019/07/09 08:46:59 msaitoh Exp $ */
+/* $NetBSD: if_ti.c,v 1.112.2.1 2020/07/15 17:16:59 martin Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.112 2019/07/09 08:46:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.112.2.1 2020/07/15 17:16:59 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -140,6 +140,8 @@ static const struct ti_type ti_devs[] = {
 		"Netgear GA620 1000BASE-T Ethernet" },
 	{ PCI_VENDOR_SGI, PCI_PRODUCT_SGI_TIGON,
 		"Silicon Graphics Gigabit Ethernet" },
+	{ PCI_VENDOR_DEC, PCI_PRODUCT_DEC_PN9000SX,
+		"Farallon PN9000SX Gigabit Ethernet" },
 	{ 0, 0, NULL }
 };
 
@@ -216,7 +218,7 @@ ti_eeprom_putbyte(struct ti_softc *sc, int byte)
 	TI_SETBIT(sc, TI_MISC_LOCAL_CTL, TI_MLC_EE_TXEN);
 
 	/*
-	 * Feed in each bit and stobe the clock.
+	 * Feed in each bit and strobe the clock.
 	 */
 	for (i = 0x80; i; i >>= 1) {
 		if (byte & i) {
@@ -762,7 +764,7 @@ ti_newbuf_std(struct ti_softc *sc, int i, struct mbuf *m, bus_dmamap_t dmamap)
 }
 
 /*
- * Intialize a mini receive ring descriptor. This only applies to
+ * Initialize a mini receive ring descriptor. This only applies to
  * the Tigon 2.
  */
 static int
@@ -903,7 +905,7 @@ ti_init_rx_ring_std(struct ti_softc *sc)
 	for (i = 0; i < TI_SSLOTS; i++) {
 		if (ti_newbuf_std(sc, i, NULL, 0) == ENOBUFS)
 			return (ENOBUFS);
-	};
+	}
 
 	TI_UPDATE_STDPROD(sc, i - 1);
 	sc->ti_std = i - 1;
@@ -941,7 +943,7 @@ ti_init_rx_ring_jumbo(struct ti_softc *sc)
 	for (i = 0; i < TI_JUMBO_RX_RING_CNT; i++) {
 		if (ti_newbuf_jumbo(sc, i, NULL) == ENOBUFS)
 			return (ENOBUFS);
-	};
+	}
 
 	TI_UPDATE_JUMBOPROD(sc, i - 1);
 	sc->ti_jumbo = i - 1;
@@ -974,7 +976,7 @@ ti_init_rx_ring_mini(struct ti_softc *sc)
 	for (i = 0; i < TI_MSLOTS; i++) {
 		if (ti_newbuf_mini(sc, i, NULL, 0) == ENOBUFS)
 			return (ENOBUFS);
-	};
+	}
 
 	TI_UPDATE_MINIPROD(sc, i - 1);
 	sc->ti_mini = i - 1;
@@ -2026,10 +2028,8 @@ ti_rxeof(struct ti_softc *sc)
 			break;
 		}
 
-		if (cur_rx->ti_flags & TI_BDFLAG_VLAN_TAG) {
-			/* ti_vlan_tag also has the priority, trim it */
-			vlan_set_tag(m, cur_rx->ti_vlan_tag & 0x0fff);
-		}
+		if (cur_rx->ti_flags & TI_BDFLAG_VLAN_TAG)
+			vlan_set_tag(m, cur_rx->ti_vlan_tag);
 
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
@@ -2205,7 +2205,7 @@ ti_stats_update(struct ti_softc *sc)
 }
 
 /*
- * Encapsulate an mbuf chain in the tx ring  by coupling the mbuf data
+ * Encapsulate an mbuf chain in the tx ring by coupling the mbuf data
  * pointers to descriptors.
  */
 static int
@@ -2684,7 +2684,7 @@ ti_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 static int
 ti_ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	struct ifaddr *ifa = (struct ifaddr *) data;
+	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ti_softc *sc = ifp->if_softc;
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
@@ -2717,7 +2717,7 @@ static int
 ti_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct ti_softc		*sc = ifp->if_softc;
-	struct ifreq		*ifr = (struct ifreq *) data;
+	struct ifreq		*ifr = (struct ifreq *)data;
 	int			s, error = 0;
 	struct ti_cmd_desc	cmd;
 
