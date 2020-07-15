@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.20 2020/07/14 13:40:37 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.21 2020/07/15 15:55:49 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -284,4 +284,10 @@ lib/libcurses/newwin.c				1.58
 
 	PR 55484: newwin() - fix crash with negative ncols.
 	[uwe, ticket #1574]
+
+share/man/man8/man8.x86/boot.8			1.21
+sys/arch/i386/stand/boot/boot2.c		1.74
+
+	PR 55490: let the consdev command also set speed.
+	[kim, ticket #1575]
 
