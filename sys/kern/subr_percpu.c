@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_percpu.c,v 1.18 2017/05/31 23:54:17 chs Exp $	*/
+/*	$NetBSD: subr_percpu.c,v 1.18.14.1 2020/07/15 13:30:20 martin Exp $	*/
 
 /*-
  * Copyright (c)2007,2008 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.18 2017/05/31 23:54:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.18.14.1 2020/07/15 13:30:20 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -149,7 +149,7 @@ percpu_cpu_enlarge(size_t size)
 			where = xc_unicast(0, percpu_cpu_swap, ci, &pcc, ci);
 			xc_wait(where);
 		}
-		KASSERT(pcc.pcc_size < size);
+		KASSERT(pcc.pcc_size <= size);
 		if (pcc.pcc_data != NULL) {
 			kmem_free(pcc.pcc_data, pcc.pcc_size);
 		}
