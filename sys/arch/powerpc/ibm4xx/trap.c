@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.84 2020/07/15 08:48:40 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.85 2020/07/15 09:10:14 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
 #define	__UFETCHSTORE_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.84 2020/07/15 08:48:40 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.85 2020/07/15 09:10:14 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -287,6 +287,7 @@ vm_signal:
 		if (rv == 0) {
 			break;
 		}
+isi:
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_trap = EXC_ISI;
 		ksi.ksi_addr = (void *)tf->tf_srr0;
@@ -324,6 +325,20 @@ sigtrap:
 			}
 			ksi.ksi_code = TRAP_BRKPT;
 			ksi.ksi_signo = SIGTRAP;
+		} else if (tf->tf_esr & ESR_PPR) {
+			uint32_t opcode;
+
+			rv = copyin((void *)tf->tf_srr0, &opcode,
+			    sizeof(opcode));
+			if (rv)
+				goto isi;
+			if (emulate_mxmsr(l, tf, opcode)) {
+				tf->tf_srr0 += 4;
+				break;
+			}
+
+			ksi.ksi_code = ILL_PRVOPC;
+			ksi.ksi_signo = SIGILL;
 		} else {
 			pcb = lwp_getpcb(l);
 
