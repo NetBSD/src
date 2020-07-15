@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.182 2020/06/24 10:30:43 jruoho Exp $
+.\"	$NetBSD: rc.conf.5,v 1.183 2020/07/15 16:46:11 jruoho Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -55,7 +55,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 24, 2020
+.Dd July 15, 2020
 .Dt RC.CONF 5
 .Os
 .Sh NAME
@@ -338,6 +338,10 @@ assumes yes as the answer to all operator questions during file system checks.
 This might be important with hosts where the administrator does not have
 access to the console and an unsuccessful shutdown must not make the host
 unbootable even if the file system checks would fail in preen mode.
+.It Sy modules
+Boolean value.
+If true, loads the modules specified in
+.Xr modules.conf 5 .
 .It Sy no_swap
 Boolean value.
 Should be true if you have deliberately configured your system with no swap.
