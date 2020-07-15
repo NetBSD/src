@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.22 2017/08/15 10:11:31 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.23 2020/07/15 12:15:30 simonb Exp $
 #
 #	etc.evbmips/Makefile.inc -- evbmips-specific etc Makefile targets
 #
@@ -26,8 +26,8 @@ KERNEL_SETS+=		LOONGSON
 BUILD_KERNELS+=		INSTALL_LOONGSON
 KERNEL_SETS+=		GDIUM64
 . else
-KERNEL_SETS+=		ERLITE
-BUILD_KERNELS+=		INSTALL_ERLITE
+KERNEL_SETS+=		OCTEON
+BUILD_KERNELS+=		INSTALL_OCTEON
 . endif
 .else
 KERNEL_SETS=		ALCHEMY DB120 DBAU1500 DBAU1550 MALTA RB433UAH
