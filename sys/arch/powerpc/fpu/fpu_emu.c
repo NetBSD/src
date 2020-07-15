@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.31 2020/07/15 09:22:26 rin Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.32 2020/07/15 09:36:35 rin Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.31 2020/07/15 09:22:26 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.32 2020/07/15 09:36:35 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -147,7 +147,9 @@ FPU_EMU_EVCNT_DECL(fnmadd);
 			FPSCR_VXZDZ|FPSCR_VXIMZ|FPSCR_VXVC|FPSCR_VXSOFT|\
 			FPSCR_VXSQRT|FPSCR_VXCVI)
 #define	FPSR_EX		(FPSCR_VE|FPSCR_OE|FPSCR_UE|FPSCR_ZE|FPSCR_XE)
-#define	FPSR_EXOP	(FPSR_EX_MSK&(~FPSR_EX))
+#define	FPSR_INV	(FPSCR_VXSNAN|FPSCR_VXISI|FPSCR_VXIDI|		\
+			FPSCR_VXZDZ|FPSCR_VXIMZ|FPSCR_VXVC|FPSCR_VXSOFT|\
+			FPSCR_VXSQRT|FPSCR_VXCVI)
 
 
 int fpe_debug = 0;
@@ -287,6 +289,7 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 	int ra, rb, rc, rt, type, mask, fsr, cx, bf, setcr;
 	unsigned int cond;
 	struct fpreg *fs;
+	int mtfsf = 0;
 
 	/* Setup work. */
 	fp = NULL;
@@ -550,6 +553,7 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 					sizeof(double));
 				break;
 			case	OPC63_MTFSFI:
+				mtfsf = 1;
 				FPU_EMU_EVCNT_INCR(mtfsfi);
 				DPRINTF(FPE_INSN, ("fpu_execute: MTFSFI\n"));
 				rb >>= 1;
@@ -585,6 +589,7 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 					sizeof(fs->fpscr));
 				break;
 			case	OPC63_MTFSF:
+				mtfsf = 1;
 				FPU_EMU_EVCNT_INCR(mtfsf);
 				DPRINTF(FPE_INSN, ("fpu_execute: MTFSF\n"));
 				if ((rt = instr.i_xfl.i_flm) == -1)
@@ -769,11 +774,10 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 	if (fp)
 		fpu_implode(fe, fp, type, (u_int *)&fs->fpreg[rt]);
 	cx = fe->fe_cx;
-	fsr = fe->fe_fpscr;
+	fsr = fe->fe_fpscr & ~(FPSCR_FEX|FPSCR_VX);
 	if (cx != 0) {
-		fsr &= ~FPSCR_FX;
-		if ((cx^fsr)&FPSR_EX_MSK)
-			fsr |= FPSCR_FX;
+		if (cx & FPSR_INV)
+			cx |= FPSCR_VX;
 		mask = fsr & FPSR_EX;
 		mask <<= (25-3);
 		if (cx & mask) 
@@ -782,11 +786,13 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 			/* Need to replace CC */
 			fsr &= ~FPSCR_FPRF;
 		}
-		if (cx & (FPSR_EXOP))
-			fsr |= FPSCR_VX;
 		fsr |= cx;
 		DPRINTF(FPE_INSN, ("fpu_execute: cx %x, fsr %x\n", cx, fsr));
 	}
+	if (fsr & FPSR_INV)
+		fsr |= FPSCR_VX;
+	if (mtfsf == 0 && ((fsr ^ fe->fe_fpscr) & FPSR_EX_MSK))
+		fsr |= FPSCR_FX;
 
 	if (cond) {
 		cond = fsr & 0xf0000000;
