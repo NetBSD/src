@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2015/05/09 02:12:29 matt Exp $
+#	$NetBSD: Makefile,v 1.7 2020/07/15 12:15:30 simonb Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -20,7 +20,7 @@ MDSETTARGETS+=		INSTALL_XLSATX64	${RAMDISK}	-
 .if ${MACHINE_ARCH} == "mips64el"
 MDSETTARGETS+=		INSTALL_LOONGSON	${RAMDISK}	-
 .else
-MDSETTARGETS+=		INSTALL_ERLITE		${RAMDISK}	-
+MDSETTARGETS+=		INSTALL_OCTEON		${RAMDISK}	-
 .endif
 
 .else
