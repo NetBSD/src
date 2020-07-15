@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_div.c,v 1.5 2020/06/27 03:07:57 rin Exp $ */
+/*	$NetBSD: fpu_div.c,v 1.6 2020/07/15 07:47:27 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_div.c,v 1.5 2020/06/27 03:07:57 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_div.c,v 1.6 2020/07/15 07:47:27 rin Exp $");
 
 #include <sys/types.h>
 #if defined(DIAGNOSTIC)||defined(DEBUG)
@@ -200,7 +200,6 @@ fpu_div(struct fpemu *fe)
 		return (x);
 	}
 	if (ISZERO(x)) {
-		fe->fe_cx |= FPSCR_ZX;
 		if (x->fp_class == y->fp_class) {
 			fe->fe_cx |= FPSCR_VXZDZ;
 			return (fpu_newnan(fe));
