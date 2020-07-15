@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.30.18.1 2019/12/17 12:45:30 martin Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.30.18.2 2020/07/15 13:44:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -28,29 +28,28 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#include <sys/cdefs.h>
-#include <sys/types.h>
-#include <sha1.h>
 
+#include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rndctl.c,v 1.30.18.1 2019/12/17 12:45:30 martin Exp $");
+__RCSID("$NetBSD: rndctl.c,v 1.30.18.2 2020/07/15 13:44:08 martin Exp $");
 #endif
 
-
-#include <sys/types.h>
-#include <sys/ioctl.h>
 #include <sys/param.h>
+#include <sys/types.h>
+#include <sys/endian.h>
+#include <sys/ioctl.h>
 #include <sys/rndio.h>
 #include <sys/sha3.h>
 
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <paths.h>
+#include <sha1.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <err.h>
-#include <paths.h>
 #include <string.h>
+#include <unistd.h>
 
 typedef struct {
 	const char *a_name;
@@ -192,9 +191,8 @@ do_save(const char *filename, const void *extra, size_t nextra,
 	    MIN(sizeof(rs.data), UINT32_MAX/NBBY)*NBBY);
 
 	/*
-	 * Compute the checksum on the 32-bit entropy count, in host
-	 * byte order (XXX this means it is not portable across
-	 * different-endian platforms!), followed by the seed data.
+	 * Compute the checksum on the 32-bit entropy count, followed
+	 * by the seed data.
 	 */
 	SHA1Init(&s);
 	SHA1Update(&s, (const uint8_t *)&rs.entropy, sizeof(rs.entropy));
@@ -307,6 +305,17 @@ do_load(const char *filename)
 		 */
 		warnx("bad checksum");
 		rs.entropy = 0;
+	}
+
+	/*
+	 * If the entropy is insensibly large, try byte-swapping.
+	 * Otherwise assume the file is corrupted and act as though it
+	 * has zero entropy.
+	 */
+	if (howmany(rs.entropy, NBBY) > sizeof(rs.data)) {
+		rs.entropy = bswap32(rs.entropy);
+		if (howmany(rs.entropy, NBBY) > sizeof(rs.data))
+			rs.entropy = 0;
 	}
 
 	/* Format the ioctl request.  */
