@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.26 2020/07/15 07:52:58 rin Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.27 2020/07/15 07:54:25 rin Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.26 2020/07/15 07:52:58 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.27 2020/07/15 07:54:25 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -224,7 +224,7 @@ fpu_emulate(struct trapframe *tf, struct fpreg *fpf, ksiginfo_t *ksi)
 		DPRINTF(FPE_EX, ("fpu_emulate: SIGTRAP\n"));
 		ksi->ksi_signo = SIGTRAP;
 		ksi->ksi_trap = EXC_PGM;
-		ksi->ksi_code = TRAP_TRACE;
+		ksi->ksi_code = TRAP_BRKPT;
 		return true;
 	}
 	switch (fpu_execute(tf, &fe, &insn)) {
