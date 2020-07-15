@@ -1,4 +1,4 @@
-/* $NetBSD: efifile.c,v 1.4 2020/06/27 17:23:08 jmcneill Exp $ */
+/* $NetBSD: efifile.c,v 1.5 2020/07/15 00:51:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -67,9 +67,9 @@ efi_file_system_probe(void)
 int
 efi_file_open(struct open_file *f, ...)
 {
-	EFI_DEVICE_PATH *dp;
-	SIMPLE_READ_FILE srf;
-	EFI_HANDLE device, file;
+	EFI_DEVICE_PATH *file_dp, *dp;
+	SIMPLE_READ_FILE *srf;
+	EFI_HANDLE device;
 	EFI_STATUS status;
 	UINTN vol;
 	const char *fname, *path;
@@ -86,30 +86,37 @@ efi_file_open(struct open_file *f, ...)
 	if (rv != 0)
 		return rv;
 
-	device = efi_vol[vol];
-
 	upath = NULL;
 	rv = utf8_to_ucs2(path, &upath, &len);
 	if (rv != 0)
 		return rv;
 
-	dp = FileDevicePath(device, upath);
+	file_dp = FileDevicePath(efi_vol[vol], upath);
 	FreePool(upath);
-	if (dp == NULL)
+	if (file_dp == NULL)
 		return EINVAL;
 
-	status = OpenSimpleReadFile(TRUE, NULL, 0, &dp, &file, &srf);
-	FreePool(dp);
-	if (EFI_ERROR(status))
+	srf = AllocatePool(sizeof(*srf));
+	if (srf == NULL)
+		return ENOMEM;
+
+	dp = file_dp;
+	status = OpenSimpleReadFile(FALSE, NULL, 0, &dp, &device, srf);
+	FreePool(file_dp);
+	if (EFI_ERROR(status)) {
+		FreePool(srf);
 		return status == EFI_NOT_FOUND ? ENOENT : EIO;
+	}
 
 	for (n = 0; n < ndevs; n++)
 		if (strcmp(DEV_NAME(&devsw[n]), "efifile") == 0) {
 			f->f_dev = &devsw[n];
 			break;
 		}
-	if (n == ndevs)
+	if (n == ndevs) {
+		FreePool(srf);
 		return ENXIO;
+	}
 	f->f_devdata = f;
 	f->f_fsdata = srf;
 	f->f_flags = F_NODEV | F_READ;
@@ -120,9 +127,10 @@ efi_file_open(struct open_file *f, ...)
 int
 efi_file_close(struct open_file *f)
 {
-	SIMPLE_READ_FILE srf = f->f_fsdata;
+	SIMPLE_READ_FILE *srf = f->f_fsdata;
 
-	CloseSimpleReadFile(srf);
+	CloseSimpleReadFile(*srf);
+	FreePool(srf);
 
 	return 0;
 }
@@ -131,7 +139,7 @@ int
 efi_file_strategy(void *devdata, int rw, daddr_t dblk, size_t size, void *buf, size_t *rsize)
 {
 	struct open_file *f = devdata;
-	SIMPLE_READ_FILE srf = f->f_fsdata;
+	SIMPLE_READ_FILE *srf = f->f_fsdata;
 	EFI_STATUS status;
 	UINTN len;
 
@@ -139,7 +147,7 @@ efi_file_strategy(void *devdata, int rw, daddr_t dblk, size_t size, void *buf, s
 		return EROFS;
 
 	len = size;
-	status = ReadSimpleReadFile(srf, f->f_offset, &len, buf);
+	status = ReadSimpleReadFile(*srf, f->f_offset, &len, buf);
 	if (EFI_ERROR(status))
 		return EIO;
 	*rsize = len;
@@ -153,7 +161,9 @@ efi_file_path(EFI_DEVICE_PATH *dp, const char *fname, char *buf, size_t buflen)
 	UINTN vol;
 	int depth;
 
-	depth = efi_device_path_depth(dp, END_DEVICE_PATH_TYPE);
+	depth = efi_device_path_count(dp);
+	if (depth == 0)
+		return ENODEV;
 
 	for (vol = 0; vol < efi_nvol; vol++) {
 		if (efi_device_path_ncmp(dp, DevicePathFromHandle(efi_vol[vol]), depth) == 0)

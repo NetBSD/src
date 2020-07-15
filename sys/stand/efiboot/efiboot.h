@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.h,v 1.12 2020/06/26 03:23:04 thorpej Exp $	*/
+/*	$NetBSD: efiboot.h,v 1.13 2020/07/15 00:51:40 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -82,7 +82,8 @@ int ucs2_to_utf8(const CHAR16 *, char **);
 int utf8_to_ucs2(const char *, CHAR16 **, size_t *);
 
 /* efidev.c */
-int efi_device_path_depth(EFI_DEVICE_PATH *dp, int);
+int efi_device_path_depth(EFI_DEVICE_PATH *, int);
+int efi_device_path_count(EFI_DEVICE_PATH *);
 int efi_device_path_ncmp(EFI_DEVICE_PATH *, EFI_DEVICE_PATH *, int);
 
 /* efinet.c */

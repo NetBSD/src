@@ -1,4 +1,4 @@
-/*	$NetBSD: efidev.c,v 1.1 2018/08/26 21:28:18 jmcneill Exp $	*/
+/*	$NetBSD: efidev.c,v 1.2 2020/07/15 00:51:40 jmcneill Exp $	*/
 /*	$OpenBSD: efiboot.c,v 1.28 2017/11/25 19:02:07 patrick Exp $	*/
 
 /*
@@ -34,6 +34,19 @@ efi_device_path_depth(EFI_DEVICE_PATH *dp, int dptype)
 	}
 
 	return (-1);
+}
+
+int
+efi_device_path_count(EFI_DEVICE_PATH *dp)
+{
+	int	count;
+
+	for (count = 0; ; dp = NextDevicePathNode(dp), count++) {
+		if (IsDevicePathEnd(dp))
+			break;
+	}
+
+	return (count);
 }
 
 int
