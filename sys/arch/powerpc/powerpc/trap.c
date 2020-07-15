@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.161 2020/07/06 11:24:57 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.162 2020/07/15 07:58:26 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,7 +35,7 @@
 #define	__UCAS_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.161 2020/07/06 11:24:57 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.162 2020/07/15 07:58:26 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.161 2020/07/06 11:24:57 rin Exp $");
 #include <powerpc/spr.h>
 #include <powerpc/oea/spr.h>
 
-static int emulated_opcode(struct lwp *, struct trapframe *);
+static int emulate_privileged(struct lwp *, struct trapframe *);
 static int fix_unaligned(struct lwp *, struct trapframe *);
 static inline vaddr_t setusr(vaddr_t, size_t *);
 static inline void unsetusr(void);
@@ -435,7 +435,7 @@ vm_signal:
 				ksi.ksi_signo = SIGFPE;
 				ksi.ksi_code = fpu_get_fault_code();
 			} else if (tf->tf_srr1 & 0x40000) {
-				if (emulated_opcode(l, tf)) {
+				if (emulate_privileged(l, tf)) {
 					tf->tf_srr0 += 4;
 					break;
 				}
@@ -1076,8 +1076,8 @@ fix_unaligned(struct lwp *l, struct trapframe *tf)
 	return -1;
 }
 
-int
-emulated_opcode(struct lwp *l, struct trapframe *tf)
+static int
+emulate_privileged(struct lwp *l, struct trapframe *tf)
 {
 	uint32_t opcode;
 
