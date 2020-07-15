@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.11.4.4 2019/09/18 17:30:05 martin Exp $
+.\"	$NetBSD: boot.8,v 1.11.4.5 2020/07/15 15:54:50 martin Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)boot_i386.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd September 13, 2019
+.Dd July 15, 2020
 .Dt BOOT 8 x86
 .Os
 .Sh NAME
@@ -363,7 +363,7 @@ flag in
 .Va boothowto .
 Boot the system in silent mode.
 .El
-.It Ic consdev Va dev
+.It Ic consdev Va dev Ns Oo Ns , Ns Va speed Oc
 Immediately switch the console to the specified device
 .Va dev
 and reprint the banner.
@@ -379,6 +379,17 @@ See
 .Sx Console Selection Policy
 in
 .Xr x86/boot_console 8 .
+.Pp
+A
+.Va speed
+for the serial port is optional and defaults to 9600.
+If a value of zero is specified, then the current baud rate (set by the
+BIOS) will be used.
+Setting the
+.Va speed
+with the
+.Ar pc
+device is not possible.
 .It Ic dev Op Va device
 Set the default drive and partition for subsequent file system
 operations.
