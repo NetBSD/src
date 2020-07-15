@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.24 2020/07/06 10:31:23 rin Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.25 2020/07/15 07:37:25 rin Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,11 +76,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.24 2020/07/06 10:31:23 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.25 2020/07/15 07:37:25 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
-#include "opt_ppcarch.h"
 #endif
 
 #include <sys/param.h>
@@ -260,17 +259,6 @@ fpu_emulate(struct trapframe *tf, struct fpreg *fpf, ksiginfo_t *ksi)
 			opc_disasm((vaddr_t)(tf->tf_srr0), insn.i_int);
 		}
 #endif
-#if defined(PPC_IBM4XX) && defined(DDB) && defined(DEBUG)
-		/*
-		* XXXX retry an illegal insn once due to cache issues.
-		*/
-		static int lastill = 0;
-		if (lastill == tf->tf_srr0) {
-			if (fpe_debug & FPE_EX)
-				Debugger();
-		}
-		lastill = tf->tf_srr0;
-#endif /* PPC_IBM4XX && DDB && DEBUG */
 		return false;
 	}
 }
