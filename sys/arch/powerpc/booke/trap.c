@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.33 2020/07/15 07:44:34 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.34 2020/07/15 09:10:14 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.33 2020/07/15 07:44:34 rin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.34 2020/07/15 09:10:14 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -437,10 +437,7 @@ emulate_opcode(struct trapframe *tf, ksiginfo_t *ksi)
 		return true;
 	}
 
-	/*
-	 * If we bothered to emulate FP, we would try to do so here.
-	 */
-	return false;
+	return emulate_mxmsr(curlwp, tf, opcode);
 }
 
 static int
