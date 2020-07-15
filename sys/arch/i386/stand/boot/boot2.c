@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.70.8.1 2019/09/13 07:00:13 martin Exp $	*/
+/*	$NetBSD: boot2.c,v 1.70.8.2 2020/07/15 15:51:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -443,7 +443,7 @@ command_help(char *arg)
 	       "ls [dev:][path]\n"
 #endif
 	       "dev [dev:]\n"
-	       "consdev {pc|com[0123]|com[0123]kbd|auto}\n"
+	       "consdev {pc|{com[0123]|com[0123]kbd|auto}[,{speed}]}\n"
 	       "vesa {modenum|on|off|enabled|disabled|list}\n"
 #ifndef SMALL
 	       "menu (reenters boot menu, if defined in boot.cfg)\n"
@@ -575,14 +575,32 @@ void
 command_consdev(char *arg)
 {
 	const struct cons_devs *cdp;
+	char *sep;
+	int speed;
+
+	sep = strchr(arg, ',');
+	if (sep != NULL)
+		*sep++ = '\0';
 
 	for (cdp = cons_devs; cdp->name; cdp++) {
-		if (strcmp(arg, cdp->name) == 0) {
-			initio(cdp->tag);
-			print_banner();
-			return;
+		if (strcmp(arg, cdp->name) != 0)
+			continue;
+
+		if (sep != NULL) {
+			if (cdp->tag == CONSDEV_PC)
+				goto error;
+
+			speed = atoi(sep);
+			if (speed < 0)
+				goto error;
+			boot_params.bp_conspeed = speed;
 		}
+
+		initio(cdp->tag);
+		print_banner();
+		return;
 	}
+error:
 	printf("invalid console device.\n");
 }
 
