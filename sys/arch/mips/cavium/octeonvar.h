@@ -1,4 +1,4 @@
-/*	$NetBSD: octeonvar.h,v 1.13 2020/06/23 05:15:33 simonb Exp $	*/
+/*	$NetBSD: octeonvar.h,v 1.14 2020/07/16 21:33:50 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ struct octeon_config {
 	int	mc_mallocsafe;
 };
 
-#define NIRQS	64
+#define NIRQS	128
 
 struct cpu_softc {
 	struct cpu_info *cpu_ci;
@@ -85,6 +85,8 @@ struct cpu_softc {
 	uint64_t cpu_int0_sum0;
 	uint64_t cpu_int1_sum0;
 	uint64_t cpu_int2_sum0;
+
+	uint64_t cpu_int_sum1;
 
 	uint64_t cpu_int0_en0;
 	uint64_t cpu_int1_en0;
@@ -101,6 +103,10 @@ struct cpu_softc {
 	uint64_t cpu_int0_enable0;
 	uint64_t cpu_int1_enable0;
 	uint64_t cpu_int2_enable0;
+
+	uint64_t cpu_int0_enable1;
+	uint64_t cpu_int1_enable1;
+	uint64_t cpu_int2_enable1;
 
 	void *cpu_wdog_sih;		// wdog softint handler
 	uint64_t cpu_wdog;
