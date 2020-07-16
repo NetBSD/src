@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.279 2019/03/29 05:23:12 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.279.4.1 2020/07/16 12:34:49 martin Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.279 2019/03/29 05:23:12 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.279.4.1 2020/07/16 12:34:49 martin Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -2421,21 +2421,28 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 	const vaddr_t v = (vaddr_t)ptr;
 
 #ifdef _LP64
-	if (v < MIPS_XKPHYS_START) {
+	extern char end[];
+
+	/* For any address < XKPHYS cached address 0, fault */
+	if (v < MIPS_PHYS_TO_XKPHYS_CACHED(0)) {
 		return EFAULT;
 	}
-	if (MIPS_XKPHYS_P(v) && v > MIPS_PHYS_TO_XKPHYS_CACHED(pmap_limits.avail_end +
+
+	/* If address < XKPHY(end of message buffer), good! */
+	if (v < MIPS_PHYS_TO_XKPHYS_CACHED(pmap_limits.avail_end +
 	    mips_round_page(MSGBUFSIZE))) {
-		return EFAULT;
-	}
-	if (MIPS_KSEG0_P(v) ||
-	    (MIPS_XKSEG_P(v) && v < MIPS_KSEG0_START)) {
+		/* XXX holes in RAM (eg, EdgeRouter 4) */
 		*handled = true;
 		return 0;
 	}
-	if (MIPS_KSEG1_P(v) || MIPS_KSEG2_P(v)) {
-		return EFAULT;
+
+	/* If address in KSEG0 and is before end of kernel, good! */
+	if (MIPS_KSEG0_P(v) && v < (vaddr_t)end) {
+		*handled = true;
+		return 0;
 	}
+
+	/* Otherwise, fall back to the uvm_kernacc() check. */
 #else
 	if (v < MIPS_KSEG0_START) {
 		return EFAULT;
