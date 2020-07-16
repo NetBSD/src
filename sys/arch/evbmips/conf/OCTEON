@@ -1,13 +1,15 @@
-#	$NetBSD: OCTEON,v 1.1 2020/07/15 12:15:30 simonb Exp $
+#	$NetBSD: OCTEON,v 1.2 2020/07/16 11:49:37 jmcneill Exp $
 
 include 	"arch/mips/conf/std.octeon"
 include 	"arch/evbmips/conf/files.octeon"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ERLITE-$Revision: 1.1 $"
+#ident 		"ERLITE-$Revision: 1.2 $"
 
 maxusers	32
+
+options 	FDT
 
 # Options for necessary to use MD
 #options 	MEMORY_DISK_HOOKS
@@ -113,11 +115,17 @@ wdog0		at cpunode0 flags 0		# flags 1 will enable it on boot
 
 iobus0		at mainbus?
 bootbus0	at mainbus?
+simplebus*	at fdt? pass 0
+
+octintc*	at fdt? pass 1
 
 com*		at iobus?
+com*		at fdt?
 
 octsmi*		at iobus?		# MDIO controller
+octsmi*		at fdt? pass 2
 octpip*		at iobus?		# PIP packet processing controller
+octpip*		at fdt? pass 3
 
 octgmx*		at octpip?
 cnmac*		at octgmx?

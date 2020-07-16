@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_smi.c,v 1.5 2020/06/23 05:18:02 simonb Exp $	*/
+/*	$NetBSD: octeon_smi.c,v 1.6 2020/07/16 11:49:37 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_smi.c,v 1.5 2020/06/23 05:18:02 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_smi.c,v 1.6 2020/07/16 11:49:37 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,6 +35,8 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_smi.c,v 1.5 2020/06/23 05:18:02 simonb Exp $"
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
+#include <sys/queue.h>
+#include <sys/kmem.h>
 
 #include <mips/locore.h>
 #include <mips/cavium/octeonvar.h>
@@ -44,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_smi.c,v 1.5 2020/06/23 05:18:02 simonb Exp $"
 #include <mips/cavium/dev/octeon_smireg.h>
 #include <mips/cavium/dev/octeon_smivar.h>
 #include <mips/cavium/include/iobusvar.h>
+
+#include <dev/fdt/fdtvar.h>
 
 /*
  * System Management Interface
@@ -67,21 +71,41 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_smi.c,v 1.5 2020/06/23 05:18:02 simonb Exp $"
  * CNF75XX - 2 SMI interfaces
  */
 
-static int	octsmi_match(device_t, struct cfdata *, void *);
-static void	octsmi_attach(device_t, device_t, void *);
+static int	octsmi_iobus_match(device_t, struct cfdata *, void *);
+static void	octsmi_iobus_attach(device_t, device_t, void *);
 
-struct octsmi_softc *smi_list;	/* XXX up to 4 SMIs on CN68XX,CN78XX */
+static int	octsmi_fdt_match(device_t, struct cfdata *, void *);
+static void	octsmi_fdt_attach(device_t, device_t, void *);
+
+static void	octsmi_attach_common(struct octsmi_softc *, int);
+
+struct octsmi_instance {
+	struct octsmi_softc *	sc;
+	int			phandle;
+	TAILQ_ENTRY(octsmi_instance) next;
+};
+
+static TAILQ_HEAD(, octsmi_instance) octsmi_instances =
+    TAILQ_HEAD_INITIALIZER(octsmi_instances);
 
 #define	_SMI_RD8(sc, off) \
 	bus_space_read_8((sc)->sc_regt, (sc)->sc_regh, (off))
 #define	_SMI_WR8(sc, off, v) \
 	bus_space_write_8((sc)->sc_regt, (sc)->sc_regh, (off), (v))
 
-CFATTACH_DECL_NEW(octsmi, sizeof(struct octsmi_softc),
-    octsmi_match, octsmi_attach, NULL, NULL);
+CFATTACH_DECL_NEW(octsmi_iobus, sizeof(struct octsmi_softc),
+    octsmi_iobus_match, octsmi_iobus_attach, NULL, NULL);
+
+CFATTACH_DECL_NEW(octsmi_fdt, sizeof(struct octsmi_softc),
+    octsmi_fdt_match, octsmi_fdt_attach, NULL, NULL);
+
+static const char * compatible[] = {
+	"cavium,octeon-3860-mdio",
+	NULL
+};
 
 static int
-octsmi_match(device_t parent, struct cfdata *cf, void *aux)
+octsmi_iobus_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct iobus_attach_args *aa = aux;
 
@@ -94,7 +118,7 @@ octsmi_match(device_t parent, struct cfdata *cf, void *aux)
 }
 
 static void
-octsmi_attach(device_t parent, device_t self, void *aux)
+octsmi_iobus_attach(device_t parent, device_t self, void *aux)
 {
 	struct octsmi_softc *sc = device_private(self);
 	struct iobus_attach_args *aa = aux;
@@ -112,7 +136,53 @@ octsmi_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	smi_list = sc;
+	octsmi_attach_common(sc, 0);
+}
+
+static int
+octsmi_fdt_match(device_t parent, struct cfdata *cf, void *aux)
+{
+	struct fdt_attach_args * const faa = aux;
+
+	return of_match_compatible(faa->faa_phandle, compatible);
+}
+
+static void
+octsmi_fdt_attach(device_t parent, device_t self, void *aux)
+{
+	struct octsmi_softc *sc = device_private(self);
+	struct fdt_attach_args * const faa = aux;
+	const int phandle = faa->faa_phandle;
+	bus_addr_t addr;
+	bus_size_t size;
+
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
+		aprint_error(": couldn't get registers\n");
+		return;
+	}
+
+	sc->sc_dev = self;
+	sc->sc_regt = faa->faa_bst;
+
+	if (bus_space_map(sc->sc_regt, addr, size, 0, &sc->sc_regh) != 0) {
+		aprint_error(": couldn't map registers\n");
+		return;
+	}
+
+	aprint_normal("\n");
+
+	octsmi_attach_common(sc, phandle);
+}
+
+static void
+octsmi_attach_common(struct octsmi_softc *sc, int phandle)
+{
+	struct octsmi_instance *oi;
+
+	oi = kmem_alloc(sizeof(*oi), KM_SLEEP);
+	oi->sc = sc;
+	oi->phandle = phandle;
+	TAILQ_INSERT_TAIL(&octsmi_instances, oi, next);
 
 	const uint64_t magic_value =
 	    SMI_CLK_PREAMBLE |
@@ -186,10 +256,17 @@ octsmi_write(struct octsmi_softc *sc, int phy_addr, int reg, uint16_t value)
 struct octsmi_softc *
 octsmi_lookup(int phandle, int port)
 {
-	struct octsmi_softc *smi;
+	struct octsmi_instance *oi;
 
-	/* XXX deal with more than one SMI ... */
-	smi = smi_list;
+#if notyet
+	TAILQ_FOREACH(oi, &octsmi_instances, list) {
+		if (oi->phandle == phandle)
+			return oi->sc;
+	}
 
-	return smi;
+	return NULL;
+#else
+	oi = TAILQ_FIRST(&octsmi_instances);
+	return oi == NULL ? NULL : oi->sc;
+#endif
 }
