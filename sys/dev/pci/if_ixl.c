@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.67 2020/06/11 02:39:30 thorpej Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.68 2020/07/16 01:20:38 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.67 2020/06/11 02:39:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.68 2020/07/16 01:20:38 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -764,7 +764,8 @@ static unsigned int	 ixl_param_tx_ndescs = 1024;
 static unsigned int	 ixl_param_rx_ndescs = 1024;
 
 static enum i40e_mac_type
-    ixl_mactype(pci_product_id_t);
+	    ixl_mactype(pci_product_id_t);
+static void	ixl_pci_csr_setup(pci_chipset_tag_t, pcitag_t);
 static void	ixl_clear_hw(struct ixl_softc *);
 static int	ixl_pf_reset(struct ixl_softc *);
 
@@ -1106,6 +1107,8 @@ ixl_attach(device_t parent, device_t self, void *aux)
 	sc->sc_aq_regs = &ixl_pf_aq_regs;
 
 	sc->sc_mac_type = ixl_mactype(PCI_PRODUCT(pa->pa_id));
+
+	ixl_pci_csr_setup(pa->pa_pc, pa->pa_tag);
 
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, IXL_PCIREG);
 	if (pci_mapreg_map(pa, IXL_PCIREG, memtype, 0,
@@ -1941,6 +1944,17 @@ ixl_mactype(pci_product_id_t id)
 	}
 
 	return I40E_MAC_GENERIC;
+}
+
+static void
+ixl_pci_csr_setup(pci_chipset_tag_t pc, pcitag_t tag)
+{
+	pcireg_t csr;
+
+	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	csr |= (PCI_COMMAND_MASTER_ENABLE |
+	    PCI_COMMAND_MEM_ENABLE);
+	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
 }
 
 static inline void *
