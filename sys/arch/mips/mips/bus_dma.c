@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.41 2020/06/14 14:02:39 tsutsui Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.42 2020/07/16 13:32:05 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001, 2020 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.41 2020/06/14 14:02:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.42 2020/07/16 13:32:05 simonb Exp $");
 
 #define _MIPS_BUS_DMA_PRIVATE
 
@@ -859,10 +859,10 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		minlen = ulmin(len, seg->ds_len - offset);
 
 #ifdef BUS_DMA_DEBUG
-		printf("bus_dmamap_sync(op=%d: flushing segment %p "
+		printf("bus_dmamap_sync(ops=%d: flushing segment %p "
 		    "(0x%"PRIxREGISTER"+%"PRIxBUSADDR
 		    ", 0x%"PRIxREGISTER"+0x%"PRIxBUSADDR
-		    ") (olen = %"PRIxBUSADDR")...", op, seg,
+		    ") (olen = %"PRIxBUSADDR")...", ops, seg,
 		    vaddr - offset, offset,
 		    vaddr - offset, offset + minlen - 1, len);
 #endif
