@@ -1,4 +1,4 @@
-/* $NetBSD: ns8250_uart.c,v 1.1 2020/07/16 11:42:53 jmcneill Exp $ */
+/* $NetBSD: ns8250_uart.c,v 1.2 2020/07/16 16:38:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017-2020 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: ns8250_uart.c,v 1.1 2020/07/16 11:42:53 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ns8250_uart.c,v 1.2 2020/07/16 16:38:40 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -187,9 +187,12 @@ static void
 ns8250_uart_console_consinit(struct fdt_attach_args *faa, u_int uart_freq)
 {
 	const int phandle = faa->faa_phandle;
-	bus_space_tag_t bst = faa->faa_a4x_bst;
+	bus_space_tag_t bst = faa->faa_bst;
+	bus_space_handle_t dummy_bsh;
+	struct com_regs regs;
 	bus_addr_t addr;
 	tcflag_t flags;
+	u_int reg_shift;
 	int speed;
 
 	const struct ns8250_config *config =
@@ -201,7 +204,15 @@ ns8250_uart_console_consinit(struct fdt_attach_args *faa, u_int uart_freq)
 		speed = 115200;	/* default */
 	flags = fdtbus_get_stdout_flags();
 
-	if (comcnattach(bst, addr, speed, uart_freq, config->type, flags))
+	if (of_getprop_uint32(phandle, "reg-shift", &reg_shift)) {
+		/* missing or bad reg-shift property, assume 0 */
+		reg_shift = 0;
+	}
+
+	memset(&dummy_bsh, 0, sizeof(dummy_bsh));
+	com_init_regs_stride(&regs, bst, dummy_bsh, addr, reg_shift);
+
+	if (comcnattach1(&regs, speed, uart_freq, config->type, flags))
 		panic("Cannot initialize ns8250 console");
 }
 
