@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.79 2020/07/15 17:27:25 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.80 2020/07/16 12:41:35 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -3445,3 +3445,26 @@ sys/arch/xen/conf/files.xen			1.181 (via patch)
 	This change fixes a problem that newer Intel processors' timer
 	counts very slowly.
 	[msaitoh, ticket #1015]
+
+sys/arch/mips/mips/mips_machdep.c		1.294
+
+	mips: fix pmap(1) and other kmem grovellers for 64bit kernels.
+	[simonb, ticket #1016]
+
+sys/dev/pci/piixpm.c				1.57-1.59, 1.61-1.63 via patch
+sys/dev/pci/piixpmreg.h				1.9-1.12
+
+	- Fix number of port for Hudson rev. 0x1f and newer.
+	- Read SB800_SMB_HOSTC correctly. This register is not in the PCI
+	  config space but in the I/O space.
+	- The bit 0 of SB800_SMB_HOSTC is 0 on SMI or 1 on IRQ, so invert the
+	  check.
+	- Don't force using SMBUS0SEL register.
+	- Acquire/release host semaphore to share SMBus between the host and
+	  the embedded controller (IMC). Without this change, "shutdown -r"
+	  does power off and not boot on some machines.
+	- Save/restore port number before selecting port.
+	- Modify comment.
+	- Whitespace fix.
+	[msaitoh, ticket #1017]
+
