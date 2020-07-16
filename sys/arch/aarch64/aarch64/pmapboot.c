@@ -1,4 +1,4 @@
-/*	$NetBSD: pmapboot.c,v 1.7 2020/04/13 05:40:25 maxv Exp $	*/
+/*	$NetBSD: pmapboot.c,v 1.8 2020/07/16 11:36:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.7 2020/04/13 05:40:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.8 2020/07/16 11:36:35 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.7 2020/04/13 05:40:25 maxv Exp $");
 
 #include <aarch64/armreg.h>
 #include <aarch64/cpufunc.h>
+#include <aarch64/machdep.h>
 #include <aarch64/pmap.h>
 #include <aarch64/pte.h>
 
@@ -194,14 +195,12 @@ tlb_contiguous_p(vaddr_t addr, vaddr_t start, vaddr_t end, vsize_t blocksize)
  */
 int
 pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
-    pt_entry_t attr, uint64_t flags, pd_entry_t *(*physpage_allocator)(void),
-    void (*pr)(const char *, ...) __printflike(1, 2))
+    pt_entry_t attr, void (*pr)(const char *, ...) __printflike(1, 2))
 {
 	int level, idx0, idx1, idx2, idx3, nskip = 0;
 	int ttbr __unused;
 	vaddr_t va_end;
 	pd_entry_t *l0, *l1, *l2, *l3, pte;
-	bool noblock, nooverwrite;
 #ifdef OPTIMIZE_TLB_CONTIG
 	vaddr_t va_start;
 	pd_entry_t *ll;
@@ -222,17 +221,13 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 		return -1;
 	}
 
-	noblock = flags & PMAPBOOT_ENTER_NOBLOCK;
-	nooverwrite = flags & PMAPBOOT_ENTER_NOOVERWRITE;
-
 	VPRINTF("pmapboot_enter: va=0x%lx, pa=0x%lx, size=0x%lx, "
-	    "blocksize=0x%lx, attr=0x%016lx, "
-	    "noblock=%d, nooverwrite=%d\n",
-	    va, pa, size, blocksize, attr, noblock, nooverwrite);
+	    "blocksize=0x%lx, attr=0x%016lx\n",
+	    va, pa, size, blocksize, attr);
 
-	va_end = (va + size - 1) & ~(blocksize - 1);
 	pa &= ~(blocksize - 1);
 	va &= ~(blocksize - 1);
+	va_end = (va + size + blocksize- 1) & ~(blocksize - 1);
 #ifdef OPTIMIZE_TLB_CONTIG
 	va_start = va;
 #endif
@@ -254,7 +249,7 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 		return -1;
 	}
 
-	while (va <= va_end) {
+	while (va < va_end) {
 #ifdef OPTIMIZE_TLB_CONTIG
 		ll = NULL;
 		llidx = -1;
@@ -262,7 +257,7 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 
 		idx0 = l0pde_index(va);
 		if (l0[idx0] == 0) {
-			l1 = physpage_allocator();
+			l1 = pmapboot_pagealloc();
 			if (l1 == NULL) {
 				VPRINTF("pmapboot_enter: cannot allocate L1 page\n");
 				return -1;
@@ -278,13 +273,6 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 
 		idx1 = l1pde_index(va);
 		if (level == 1) {
-			if (noblock)
-				goto nextblk;
-			if (nooverwrite && l1pde_valid(l1[idx1])) {
-				nskip++;
-				goto nextblk;
-			}
-
 			pte = pa |
 			    L1_BLOCK |
 			    LX_BLKPAG_AF |
@@ -298,6 +286,12 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 			ll = l1;
 			llidx = idx1;
 #endif
+
+			if (l1pde_valid(l1[idx1]) && l1[idx1] != pte) {
+				nskip++;
+				goto nextblk;
+			}
+
 			l1[idx1] = pte;
 			VPRINTF("TTBR%d[%d][%d]\t= %016lx:", ttbr,
 			    idx0, idx1, pte);
@@ -306,7 +300,7 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 		}
 
 		if (!l1pde_valid(l1[idx1])) {
-			l2 = physpage_allocator();
+			l2 = pmapboot_pagealloc();
 			if (l2 == NULL) {
 				VPRINTF("pmapboot_enter: cannot allocate L2 page\n");
 				return -1;
@@ -323,13 +317,6 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 
 		idx2 = l2pde_index(va);
 		if (level == 2) {
-			if (noblock)
-				goto nextblk;
-			if (nooverwrite && l2pde_valid(l2[idx2])) {
-				nskip++;
-				goto nextblk;
-			}
-
 			pte = pa |
 			    L2_BLOCK |
 			    LX_BLKPAG_AF |
@@ -343,6 +330,11 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 			ll = l2;
 			llidx = idx2;
 #endif
+			if (l2pde_valid(l2[idx2]) && l2[idx2] != pte) {
+				nskip++;
+				goto nextblk;
+			}
+
 			l2[idx2] = pte;
 			VPRINTF("TTBR%d[%d][%d][%d]\t= %016lx:", ttbr,
 			    idx0, idx1, idx2, pte);
@@ -351,7 +343,7 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 		}
 
 		if (!l2pde_valid(l2[idx2])) {
-			l3 = physpage_allocator();
+			l3 = pmapboot_pagealloc();
 			if (l3 == NULL) {
 				VPRINTF("pmapboot_enter: cannot allocate L3 page\n");
 				return -1;
@@ -367,12 +359,6 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 		}
 
 		idx3 = l3pte_index(va);
-		if (noblock)
-			goto nextblk;
-		if (nooverwrite && l3pte_valid(l3[idx3])) {
-			nskip++;
-			goto nextblk;
-		}
 
 		pte = pa |
 		    L3_PAGE |
@@ -387,11 +373,15 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 		ll = l3;
 		llidx = idx3;
 #endif
+		if (l3pte_valid(l3[idx3]) && l3[idx3] != pte) {
+			nskip++;
+			goto nextblk;
+		}
+
 		l3[idx3] = pte;
 		VPRINTF("TTBR%d[%d][%d][%d][%d]\t= %lx:", ttbr,
 		    idx0, idx1, idx2, idx3, pte);
 		VPRINT_PTE(pte, 3);
-
  nextblk:
 #ifdef OPTIMIZE_TLB_CONTIG
 		/*
@@ -432,9 +422,30 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 	return nskip;
 }
 
+paddr_t pmapboot_pagebase __attribute__((__section__(".data")));
+
+pd_entry_t *
+pmapboot_pagealloc(void)
+{
+	extern long kernend_extra;
+
+	if (kernend_extra < 0)
+		return NULL;
+
+	paddr_t pa = pmapboot_pagebase + kernend_extra;
+	kernend_extra += PAGE_SIZE;
+
+	char *s = (char *)pa;
+	char *e = s + PAGE_SIZE;
+
+	while (s < e)
+	    *s++ = 0;
+
+	return (pd_entry_t *)pa;
+}
+
 int
 pmapboot_enter_range(vaddr_t va, paddr_t pa, psize_t size, pt_entry_t attr,
-    uint64_t flags, pd_entry_t *(*physpage_allocator)(void),
     void (*pr)(const char *, ...) __printflike(1, 2))
 {
 	vaddr_t vend;
@@ -452,8 +463,7 @@ pmapboot_enter_range(vaddr_t va, paddr_t pa, psize_t size, pt_entry_t attr,
 		mapsize = nblocks * L3_SIZE;
 		VPRINTF("Creating L3 tables: %016lx-%016lx : %016lx-%016lx\n",
 		    va, va + mapsize - 1, pa, pa + mapsize - 1);
-		nskip += pmapboot_enter(va, pa, mapsize, L3_SIZE, attr, flags,
-		    physpage_allocator, NULL);
+		nskip += pmapboot_enter(va, pa, mapsize, L3_SIZE, attr, pr);
 		va += mapsize;
 		pa += mapsize;
 		left -= mapsize;
@@ -466,8 +476,7 @@ pmapboot_enter_range(vaddr_t va, paddr_t pa, psize_t size, pt_entry_t attr,
 		mapsize = nblocks * L2_SIZE;
 		VPRINTF("Creating L2 tables: %016lx-%016lx : %016lx-%016lx\n",
 		    va, va + mapsize - 1, pa, pa + mapsize - 1);
-		nskip += pmapboot_enter(va, pa, mapsize, L2_SIZE, attr, flags,
-		    physpage_allocator, NULL);
+		nskip += pmapboot_enter(va, pa, mapsize, L2_SIZE, attr, pr);
 		va += mapsize;
 		pa += mapsize;
 		left -= mapsize;
@@ -478,8 +487,7 @@ pmapboot_enter_range(vaddr_t va, paddr_t pa, psize_t size, pt_entry_t attr,
 		mapsize = nblocks * L1_SIZE;
 		VPRINTF("Creating L1 tables: %016lx-%016lx : %016lx-%016lx\n",
 		    va, va + mapsize - 1, pa, pa + mapsize - 1);
-		nskip += pmapboot_enter(va, pa, mapsize, L1_SIZE, attr, flags,
-		    physpage_allocator, NULL);
+		nskip += pmapboot_enter(va, pa, mapsize, L1_SIZE, attr, pr);
 		va += mapsize;
 		pa += mapsize;
 		left -= mapsize;
@@ -490,8 +498,7 @@ pmapboot_enter_range(vaddr_t va, paddr_t pa, psize_t size, pt_entry_t attr,
 		mapsize = nblocks * L2_SIZE;
 		VPRINTF("Creating L2 tables: %016lx-%016lx : %016lx-%016lx\n",
 		    va, va + mapsize - 1, pa, pa + mapsize - 1);
-		nskip += pmapboot_enter(va, pa, mapsize, L2_SIZE, attr, flags,
-		    physpage_allocator, NULL);
+		nskip += pmapboot_enter(va, pa, mapsize, L2_SIZE, attr, pr);
 		va += mapsize;
 		pa += mapsize;
 		left -= mapsize;
@@ -502,8 +509,7 @@ pmapboot_enter_range(vaddr_t va, paddr_t pa, psize_t size, pt_entry_t attr,
 		mapsize = nblocks * L3_SIZE;
 		VPRINTF("Creating L3 tables: %016lx-%016lx : %016lx-%016lx\n",
 		    va, va + mapsize - 1, pa, pa + mapsize - 1);
-		nskip += pmapboot_enter(va, pa, mapsize, L3_SIZE, attr, flags,
-		    physpage_allocator, NULL);
+		nskip += pmapboot_enter(va, pa, mapsize, L3_SIZE, attr, pr);
 		va += mapsize;
 		pa += mapsize;
 		left -= mapsize;
