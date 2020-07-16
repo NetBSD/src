@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.100 2020/07/16 14:44:43 jdolecek Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.101 2020/07/16 14:57:59 jdolecek Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.100 2020/07/16 14:44:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.101 2020/07/16 14:57:59 jdolecek Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -4107,6 +4107,7 @@ bnx_alloc_pkts(struct work * unused, void * arg)
 
 	/* fire-up TX now that allocations have been done */
 	s = splnet();
+	CLR(ifp->if_flags, IFF_OACTIVE);
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		bnx_start(ifp);
 	splx(s);
