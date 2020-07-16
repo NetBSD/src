@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.38 2019/08/06 18:17:52 tnn Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.39 2020/07/16 21:32:44 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -116,6 +116,7 @@ const struct of_compat_data *
 int	of_decode_int(const unsigned char *);
 int	of_packagename(int, char *, int);
 int	of_find_firstchild_byname(int, const char *);
+int	of_find_bycompat(int, const char *);
 int	of_getnode_byname(int, const char *);
 boolean_t	of_to_uint32_prop(prop_dictionary_t, int, const char *,
     const char *);

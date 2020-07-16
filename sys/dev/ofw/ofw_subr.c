@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.39 2020/06/26 10:14:32 martin Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.40 2020/07/16 21:32:44 jmcneill Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.39 2020/06/26 10:14:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.40 2020/07/16 21:32:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,6 +333,26 @@ of_find_firstchild_byname(int node, const char *name)
 		if (strcmp(name, namex) == 0)
 			return nn;
 	}
+	return -1;
+}
+
+/*
+ * Find a child node that is compatible with str. Recurses, starting at node.
+ */
+int
+of_find_bycompat(int node, const char *str)
+{
+	const char * compatible[] = { str, NULL };
+	int child, ret;
+
+	for (child = OF_child(node); child; child = OF_peer(child)) {
+		if (of_match_compatible(child, compatible) != 0)
+			return child;
+		ret = of_find_bycompat(child, str);
+		if (ret != -1)
+			return ret;
+	}
+
 	return -1;
 }
 
