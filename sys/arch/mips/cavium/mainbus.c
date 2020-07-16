@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.2 2020/07/16 11:49:37 jmcneill Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.3 2020/07/16 16:40:28 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2007
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.2 2020/07/16 11:49:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3 2020/07/16 16:40:28 jmcneill Exp $");
 
 #define	_MIPS_BUS_DMA_PRIVATE
 
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.2 2020/07/16 11:49:37 jmcneill Exp $")
 #include <sys/bus.h>
 
 #include <mips/cavium/include/mainbusvar.h>
+#include <mips/cavium/octeonvar.h>
 
 #include <dev/fdt/fdtvar.h>
 
@@ -108,8 +109,10 @@ extern void octfpa_bootstrap(struct octeon_config *);
 static void
 mainbus_attach_devicetree(device_t self)
 {
+	const struct fdt_console *cons = fdtbus_get_console();
 	struct mainbus_attach_args aa;
 	struct fdt_attach_args faa;
+	u_int uart_freq;
 
 	aa.aa_name = "cpunode";
 	config_found_sm_loc(self, "mainbus", NULL, &aa, mainbus_print,
@@ -124,6 +127,21 @@ mainbus_attach_devicetree(device_t self)
 	faa.faa_a4x_bst = NULL;		/* XXX */
 	faa.faa_dmat = &simplebus_dma_tag;
 	faa.faa_name = "";
+
+	if (cons != NULL) {
+		faa.faa_phandle = fdtbus_get_stdout_phandle();
+
+		if (of_getprop_uint32(faa.faa_phandle, "clock-frequency",
+		    &uart_freq) != 0) {
+			uart_freq = octeon_ioclock_speed();
+		}
+
+		if (uart_freq > 0)
+			delay(640000000 / uart_freq);
+
+		cons->consinit(&faa, uart_freq);
+	}
+
 	faa.faa_phandle = OF_peer(0);
 	config_found(self, &faa, NULL);
 }
