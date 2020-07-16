@@ -1,4 +1,4 @@
-/* $NetBSD: efi_machdep.c,v 1.5 2019/12/16 00:03:50 jmcneill Exp $ */
+/* $NetBSD: efi_machdep.c,v 1.6 2020/07/16 11:36:35 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.5 2019/12/16 00:03:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.6 2020/07/16 11:36:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -70,7 +70,7 @@ arm_efirt_md_map_range(vaddr_t va, paddr_t pa, size_t sz, enum arm_efirt_mem_typ
 		panic("arm_efirt_md_map_range: unsupported type %d", type);
 	}
 
-	pmapboot_enter(va, pa, sz, L3_SIZE, attr, 0, bootpage_alloc, NULL);
+	pmapboot_enter(va, pa, sz, L3_SIZE, attr, NULL);
 	while (sz >= PAGE_SIZE) {
 		aarch64_tlbi_by_va(va);
 		va += PAGE_SIZE;

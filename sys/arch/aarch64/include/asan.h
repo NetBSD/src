@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.h,v 1.7 2020/06/23 17:21:55 maxv Exp $	*/
+/*	$NetBSD: asan.h,v 1.8 2020/07/16 11:36:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __md_palloc(void)
 	paddr_t pa;
 
 	if (__predict_false(__md_early))
-		pa = (paddr_t)bootpage_alloc();
+		pa = (paddr_t)pmapboot_pagealloc();
 	else
 		pa = pmap_alloc_pdp(pmap_kernel(), NULL, 0, false);
 

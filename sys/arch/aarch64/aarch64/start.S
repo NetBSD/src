@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.7 2020/01/19 16:12:56 skrll Exp $	*/
+/*	$NetBSD: start.S,v 1.8 2020/07/16 11:36:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -32,7 +32,7 @@
 
 #include <aarch64/asm.h>
 
-RCSID("$NetBSD: start.S,v 1.7 2020/01/19 16:12:56 skrll Exp $")
+RCSID("$NetBSD: start.S,v 1.8 2020/07/16 11:36:35 skrll Exp $")
 
 /*
  * Padding at start of kernel image to make room for 64-byte header
@@ -70,6 +70,11 @@ start:
 	 */
 	adrl	x8, fdt_addr_r
 	str	x0, [x8]
+
+	adrl	x8, pmapboot_pagebase
+	ldr	x9, =ARM_BOOTSTRAP_LxPT
+	sub	x9, x9, x10
+	str	x9, [x8]
 
 	b	aarch64_start		/* aarch64_start() @ aarch64/locore.S */
 
