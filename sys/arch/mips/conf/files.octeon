@@ -1,4 +1,4 @@
-#	$NetBSD: files.octeon,v 1.11 2020/07/16 18:39:19 jmcneill Exp $
+#	$NetBSD: files.octeon,v 1.12 2020/07/16 21:34:52 jmcneill Exp $
 
 file	arch/mips/mips/locore_octeon.S
 file	arch/mips/mips/bus_dma.c
@@ -35,6 +35,9 @@ file	arch/mips/cavium/dev/octeon_intc.c	octintc
 device	octcib
 attach	octcib at fdt
 file	arch/mips/cavium/dev/octeon_cib.c	octcib
+
+attach	xhci at fdt with octxhci
+file	arch/mips/cavium/dev/octeon_xhci.c	octxhci
 
 # I/O Bus
 
