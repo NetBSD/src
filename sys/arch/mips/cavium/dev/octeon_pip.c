@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_pip.c,v 1.8 2020/06/23 05:18:02 simonb Exp $	*/
+/*	$NetBSD: octeon_pip.c,v 1.9 2020/07/16 11:49:37 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_pip.c,v 1.8 2020/06/23 05:18:02 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_pip.c,v 1.9 2020/07/16 11:49:37 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,14 +44,32 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_pip.c,v 1.8 2020/06/23 05:18:02 simonb Exp $"
 #include <mips/cavium/dev/octeon_pipvar.h>
 #include <mips/cavium/include/iobusvar.h>
 
-static int	octpip_match(device_t, struct cfdata *, void *);
-static void	octpip_attach(device_t, device_t, void *);
+#include <dev/fdt/fdtvar.h>
 
-CFATTACH_DECL_NEW(octpip, sizeof(struct octpip_softc),
-    octpip_match, octpip_attach, NULL, NULL);
+static int	octpip_iobus_match(device_t, struct cfdata *, void *);
+static void	octpip_iobus_attach(device_t, device_t, void *);
+
+static int	octpip_fdt_match(device_t, struct cfdata *, void *);
+static void	octpip_fdt_attach(device_t, device_t, void *);
+
+CFATTACH_DECL_NEW(octpip_iobus, sizeof(struct octpip_softc),
+    octpip_iobus_match, octpip_iobus_attach, NULL, NULL);
+
+CFATTACH_DECL_NEW(octpip_fdt, sizeof(struct octpip_softc),
+    octpip_fdt_match, octpip_fdt_attach, NULL, NULL);
+
+static const char * compatible[] = {
+	"cavium,octeon-3860-pip",
+	NULL
+};
+
+static const char * pip_interface_compatible[] = {
+	"cavium,octeon-3860-pip-interface",
+	NULL
+};
 
 static int
-octpip_match(device_t parent, struct cfdata *cf, void *aux)
+octpip_iobus_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct iobus_attach_args *aa = aux;
 
@@ -61,7 +79,7 @@ octpip_match(device_t parent, struct cfdata *cf, void *aux)
 }
 
 static void
-octpip_attach(device_t parent, device_t self, void *aux)
+octpip_iobus_attach(device_t parent, device_t self, void *aux)
 {
 	struct octpip_softc *sc = device_private(self);
 	struct iobus_attach_args *aa = aux;
@@ -95,6 +113,60 @@ octpip_attach(device_t parent, device_t self, void *aux)
 			gmxiu.addr = GMX_BASE_PORT(i, 0);
 
 		config_found(self, &gmxaa, NULL);
+	}
+}
+
+static int
+octpip_fdt_match(device_t parent, struct cfdata *cf, void *aux)
+{
+	struct fdt_attach_args * const faa = aux;
+
+	return of_match_compatible(faa->faa_phandle, compatible);
+}
+
+static void
+octpip_fdt_attach(device_t parent, device_t self, void *aux)
+{
+	struct octpip_softc *sc = device_private(self);
+	struct fdt_attach_args * const faa = aux;
+	const int phandle = faa->faa_phandle;
+	struct iobus_attach_args gmxaa;
+	struct iobus_unit gmxiu;
+	bus_addr_t intno;
+	int child;
+
+	sc->sc_dev = self;
+
+	aprint_normal("\n");
+
+	for (child = OF_child(phandle); child; child = OF_peer(child)) {
+		if (!of_match_compatible(child, pip_interface_compatible))
+			continue;
+
+		if (fdtbus_get_reg(child, 0, &intno, NULL) != 0) {
+			aprint_error_dev(self, "couldn't get interface number for %s\n",
+			    fdtbus_get_string(child, "name"));
+			continue;
+		}
+
+		memset(&gmxaa, 0, sizeof(gmxaa));
+		memset(&gmxiu, 0, sizeof(gmxiu));
+
+		gmxaa.aa_name = "octgmx";
+		gmxaa.aa_unitno = (int)intno;
+		gmxaa.aa_unit = &gmxiu;
+		gmxaa.aa_bust = faa->faa_bst;
+		gmxaa.aa_dmat = faa->faa_dmat;
+
+		if (MIPS_PRID_IMPL(mips_options.mips_cpu_id) == MIPS_CN68XX)
+			gmxiu.addr = GMX_CN68XX_BASE_PORT(intno, 0);
+		else
+			gmxiu.addr = GMX_BASE_PORT(intno, 0);
+
+		config_found(self, &gmxaa, NULL);
+
+		/* XXX only one interface supported by octgmx */
+		return;
 	}
 }
 
