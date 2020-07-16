@@ -1,4 +1,4 @@
-#	$NetBSD: files.octeon,v 1.9 2020/06/24 12:43:40 simonb Exp $
+#	$NetBSD: files.octeon,v 1.10 2020/07/16 11:49:38 jmcneill Exp $
 
 file	arch/mips/mips/locore_octeon.S
 file	arch/mips/mips/bus_dma.c
@@ -9,7 +9,9 @@ file	arch/mips/cavium/octeon_dma.c
 file	arch/mips/cavium/octeon_intr.c
 file	arch/mips/cavium/octeon_misc.c
 
-device	mainbus {}
+file	arch/mips/fdt/fdt_dma_machdep.c
+
+device	mainbus {}: fdt
 attach	mainbus at root
 file	arch/mips/cavium/mainbus.c		mainbus
 file	arch/mips/cavium/mainbus_octeon1p.c	mainbus
@@ -24,6 +26,11 @@ device	wdog: sysmon_wdog
 attach	wdog at cpunode with wdog_cpunode
 
 file	arch/mips/cavium/octeon_cpunode.c	cpunode | cpu | wdog needs-flag
+
+# FDT
+device	octintc
+attach	octintc at fdt
+file	arch/mips/cavium/dev/octeon_intc.c	octintc
 
 # I/O Bus
 
@@ -70,12 +77,14 @@ attach	octciu at iobus
 file	arch/mips/cavium/dev/octeon_ciu.c	octciu
 
 device	octsmi {}
-attach	octsmi at iobus
-file	arch/mips/cavium/dev/octeon_smi.c	octsmi
+attach	octsmi at iobus with octsmi_iobus
+attach	octsmi at fdt with octsmi_fdt
+file	arch/mips/cavium/dev/octeon_smi.c	octsmi_iobus | octsmi_fdt
 
 device	octpip {}
-attach	octpip at iobus
-file	arch/mips/cavium/dev/octeon_pip.c	octpip
+attach	octpip at iobus with octpip_iobus
+attach	octpip at fdt with octpip_fdt
+file	arch/mips/cavium/dev/octeon_pip.c	octpip_iobus | octpip_fdt
 
 device	octgmx {}
 attach	octgmx at octpip
