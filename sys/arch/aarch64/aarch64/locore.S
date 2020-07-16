@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.66 2020/07/12 06:37:39 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.67 2020/07/16 11:36:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.66 2020/07/12 06:37:39 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.67 2020/07/16 11:36:35 skrll Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_STRONGLY_ORDERED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -54,9 +54,12 @@ RCSID("$NetBSD: locore.S,v 1.66 2020/07/12 06:37:39 skrll Exp $")
 #define LOCORE_EL2
 
 #define BOOT_AP_STACKSIZE	256	/* size of temporally stack for APs */
-#define BOOTPAGE_ALLOC_MAX	(1024 * 1024)	/* reserved size from _end[] */
+#define PMAPBOOT_PAGEALLOCMAX	(1024 * 1024)	/* reserved size from _end[] */
 
 #if (defined(VERBOSE_INIT_ARM) || defined(DEBUG_LOCORE)) && defined(EARLYCONS)
+#if !defined(CONSADDR)
+#error CONSADDR required with EARLYCONS
+#endif
 #define VERBOSE_LOCORE
 #endif
 
@@ -774,11 +777,11 @@ init_mmutable:
 	stp	x26, lr, [sp, #-16]!
 
 	/* first allocated page must be kernel l0pt = ARM_BOOTSTRAP_LxPT */
-	bl	bootpage_alloc
+	bl	pmapboot_pagealloc
 	cbz	x0, init_mmutable_error
 	msr	ttbr1_el1, x0
 
-	bl	bootpage_alloc
+	bl	pmapboot_pagealloc
 	cbz	x0, init_mmutable_error
 	msr	ttbr0_el1, x0
 
@@ -799,85 +802,62 @@ init_mmutable:
 	 *     x2: psize_t size,
 	 *     x3: psize_t blocksize,  // L[123]_SIZE
 	 *     x4: pt_entry_t attr,    // pte attributes. LX_BLKPAG_*
-	 *     x5: flags,
-	 *     x6: pd_entry_t *(*physpage_allocator)(void),
-	 *     x7: void (*pr)(const char *, ...)
+	 *     x5: void (*pr)(const char *, ...)
 	 *  );
 	 */
 
 #ifdef CONSADDR
-	VPRINT("Creating VA=PA tables for CONSADDR\n")
-	mov	x7, x26				/* pr func */
-	adr	x6, bootpage_alloc		/* allocator */
-	mov	x5, xzr				/* flags = 0 */
-	mov	x4, #LX_BLKPAG_ATTR_DEVICE_MEM | LX_BLKPAG_AP_RW	/* attr */
-	orr	x4, x4, #LX_BLKPAG_UXN | LX_BLKPAG_PXN
-	mov	x3, #L2_SIZE			/* blocksize */
+	VPRINT("Creating identity mapping for CONSADDR\n")
+	ldr	x0, =CONSADDR			/* va = CONADDR (physical) */
+	mov	x1, x0				/* pa = va */
 	mov	x2, #L2_SIZE			/* size */
-	ldr	x1, =CONSADDR			/* pa */
-	mov	x0, x1				/* va */
-	bl	pmapboot_enter
-	cbnz	x0, init_mmutable_error
-#elif defined(EARLYCONS)
-	/* CONSADDR is unknown, but need to map UART */
-	VPRINT("Creating VA=PA tables (0x00000000-0xffffffff)\n")
-	mov	x7, x26				/* pr func */
-	adr	x6, bootpage_alloc		/* allocator */
-	mov	x5, xzr				/* flags = 0 */
-	mov	x4, #LX_BLKPAG_ATTR_DEVICE_MEM | LX_BLKPAG_AP_RW	/* attr */
-	orr	x4, x4, #LX_BLKPAG_UXN | LX_BLKPAG_PXN
 	mov	x3, #L2_SIZE			/* blocksize */
-	mov	x2, #(1024*1024*1024*4)		/* size */
-	mov	x1, xzr				/* pa */
-	mov	x0, xzr				/* va */
+	mov	x4, #LX_BLKPAG_ATTR_DEVICE_MEM | LX_BLKPAG_AP_RW
+	orr	x4, x4, #LX_BLKPAG_UXN | LX_BLKPAG_PXN	/* attr */
+	mov	x5, x26				/* pr func */
 	bl	pmapboot_enter
 	cbnz	x0, init_mmutable_error
 #endif
 
 	/* identity mapping for kernel image */
-	VPRINT("Creating VA=PA tables for kernel image\n")
-	mov	x7, x26				/* pr func */
-	adr	x6, bootpage_alloc		/* allocator */
-	mov	x5, xzr				/* flags = 0 */
-	mov	x4, #LX_BLKPAG_ATTR_NORMAL_NC | LX_BLKPAG_AP_RW	/* attr */
-	mov	x3, #L2_SIZE			/* blocksize */
-	adr	x0, start			/* va = start */
+	VPRINT("Creating identity mapping for kernel image\n")
+	adrl	x0, start			/* va = start (physical) */
+
+	mov	x1, x0				/* pa = va */
 	adrl	x2, _end
-	sub	x2, x2, x0			/* size = _end - start */
-	add	x2, x2, #BOOTPAGE_ALLOC_MAX	/* for bootpage_alloc() */
-	mov	x1, x0				/* pa */
+	sub	x2, x2, x1			/* size = _end - start */
+	add	x2, x2, #PMAPBOOT_PAGEALLOCMAX	/* for pmapboot_pagealloc() */
+	mov	x3, #L2_SIZE			/* blocksize */
+	mov	x4, #LX_BLKPAG_ATTR_NORMAL_NC | LX_BLKPAG_AP_RW	/* attr */
+	mov	x5, x26				/* pr func */
 	bl	pmapboot_enter
 	cbnz	x0, init_mmutable_error
 
 #ifdef FDT
-	VPRINT("Creating VA=PA tables for FDT\n")
+	VPRINT("Creating identity mapping for FDT\n")
 	adrl	x8, _C_LABEL(fdt_addr_r)
 	ldr	x8, [x8]
 
-	mov	x7, x26				/* pr func */
-	adr	x6, bootpage_alloc		/* allocator */
-	mov	x5, xzr				/* flags = 0 */
-	mov	x4, #LX_BLKPAG_ATTR_NORMAL_NC | LX_BLKPAG_AP_RW	/* attr */
-	orr	x4, x4, #LX_BLKPAG_UXN | LX_BLKPAG_PXN
-	mov	x3, #L2_SIZE			/* blocksize */
-	mov	x2, #L2_SIZE			/* size */
-	mov	x1, x8				/* pa */
 	mov	x0, x8				/* va */
+	mov	x1, x8				/* pa */
+	mov	x2, #L2_SIZE			/* size */
+	mov	x3, #L2_SIZE			/* blocksize */
+	mov	x4, #LX_BLKPAG_ATTR_NORMAL_NC | LX_BLKPAG_AP_RW
+	orr	x4, x4, #LX_BLKPAG_UXN | LX_BLKPAG_PXN	/* attr */
+	mov	x5, x26				/* pr func */
 	bl	pmapboot_enter
 	cbnz	x0, init_mmutable_error
 #endif
 
 	VPRINT("Creating KVA=PA tables\n")
-	mov	x7, x26				/* pr func */
-	adr	x6, bootpage_alloc		/* allocator */
-	mov	x5, xzr				/* flags = 0 */
-	mov	x4, #LX_BLKPAG_ATTR_NORMAL_WB | LX_BLKPAG_AP_RW	/* attr */
-	orr	x4, x4, #LX_BLKPAG_UXN
-	mov	x3, #L2_SIZE			/* blocksize */
-	adr	x1, start			/* pa = start */
+	ldr	x0, =start			/* va */
+	adrl	x1, start			/* pa = start (physical) */
 	adrl	x2, _end
 	sub	x2, x2, x1			/* size = _end - start */
-	ldr	x0, =start			/* va */
+	mov	x3, #L2_SIZE			/* blocksize */
+	mov	x4, #LX_BLKPAG_ATTR_NORMAL_WB | LX_BLKPAG_AP_RW	/* attr */
+	orr	x4, x4, #LX_BLKPAG_UXN
+	mov	x5, x26				/* pr func */
 	bl	pmapboot_enter
 	cbnz	x0, init_mmutable_error
 
@@ -889,40 +869,6 @@ init_mmutable_error:
 init_mmutable_done:
 	ldp	x26, lr, [sp], #16
 	ret
-
-/* return PA of allocated page */
-ENTRY_NP(bootpage_alloc)
-	/* x2 = kernend_extra */
-	adrl	x3, kernend_extra
-	ldr	x2, [x3]
-	/* if (kernend_extra < 0) return NULL */
-	mov	x0, xzr
-	cmp	x2, xzr
-	bmi	bootpage_alloc_done
-
-	/* x0 = PA of _end[] */
-	adrl	x1, kern_vtopdiff
-	ldr	x1, [x1]
-	ldr	x0, =ARM_BOOTSTRAP_LxPT
-	sub	x0, x0, x1
-
-	/* x0 = ARM_BOOTSTRAP_LxPT + kernend_extra */
-	add	x0, x0, x2
-
-	/* kernend_extra += PAGE_SIZE; */
-	add	x2, x2, #PAGE_SIZE
-	str	x2, [x3]
-
-	/* clear allocated page */
-	mov	x1, x0
-	add	x2, x1, #PAGE_SIZE
-1:	stp	xzr, xzr, [x1], #16
-	cmp	x1, x2
-	bcc	1b
-bootpage_alloc_done:
-	ret
-END(bootpage_alloc)
-
 
 mmu_disable:
 	dsb	sy
