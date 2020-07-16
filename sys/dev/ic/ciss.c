@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.49 2020/07/14 12:04:46 jdolecek Exp $	*/
+/*	$NetBSD: ciss.c,v 1.50 2020/07/16 14:39:33 jdolecek Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.68 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.49 2020/07/14 12:04:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.50 2020/07/16 14:39:33 jdolecek Exp $");
 
 #include "bio.h"
 
@@ -104,8 +104,8 @@ ciss_get_ccb(struct ciss_softc *sc)
 	struct ciss_ccb *ccb;
 
 	mutex_enter(&sc->sc_mutex);
-	if ((ccb = STAILQ_FIRST(&sc->sc_free_ccb))) {
-		STAILQ_REMOVE_HEAD(&sc->sc_free_ccb, ccb_link);
+	if ((ccb = TAILQ_LAST(&sc->sc_free_ccb, ciss_queue_head))) {
+		TAILQ_REMOVE(&sc->sc_free_ccb, ccb, ccb_link);
 		ccb->ccb_state = CISS_CCB_READY;
 	}
 	mutex_exit(&sc->sc_mutex);
@@ -117,7 +117,7 @@ ciss_put_ccb(struct ciss_softc *sc, struct ciss_ccb *ccb)
 {
 	ccb->ccb_state = CISS_CCB_FREE;
 	mutex_enter(&sc->sc_mutex);
-	STAILQ_INSERT_HEAD(&sc->sc_free_ccb, ccb, ccb_link);
+	TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, ccb_link);
 	mutex_exit(&sc->sc_mutex);
 }
 
@@ -339,7 +339,7 @@ ciss_attach(struct ciss_softc *sc)
 		return -1;
 	}
 
-	STAILQ_INIT(&sc->sc_free_ccb);
+	TAILQ_INIT(&sc->sc_free_ccb);
 
 	maxfer = sc->maxsg * PAGE_SIZE;
 	for (i = 0; total > 0 && i < sc->maxcmd; i++, total -= sc->ccblen) {
@@ -363,7 +363,7 @@ ciss_attach(struct ciss_softc *sc)
 		    &ccb->ccb_dmamap)))
 			break;
 
-		STAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, ccb_link);
+		TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, ccb_link);
 	}
 
 	if (i < sc->maxcmd) {
@@ -536,7 +536,7 @@ ciss_enqueue(struct ciss_softc *sc, ciss_queue_head *q, uint32_t id)
 	ccb = (struct ciss_ccb *) ((char *)sc->ccbs + (id >> 2) * sc->ccblen);
 	ccb->ccb_cmd.id = htole32(id);
 	ccb->ccb_cmd.id_hi = htole32(0);
-	STAILQ_INSERT_TAIL(q, ccb, ccb_link);
+	TAILQ_INSERT_TAIL(q, ccb, ccb_link);
 }
 
 static void
@@ -606,7 +606,7 @@ ciss_poll(struct ciss_softc *sc, struct ciss_ccb *ccb, int ms)
 	ciss_queue_head q;
 	struct ciss_ccb *ccb1;
 
-	STAILQ_INIT(&q);
+	TAILQ_INIT(&q);
 	ms /= 10;
 
 	while (ms-- > 0) {
@@ -618,14 +618,14 @@ ciss_poll(struct ciss_softc *sc, struct ciss_ccb *ccb, int ms)
 			ciss_completed_simple(sc, &q);
 		mutex_exit(&sc->sc_mutex);
 
-		while (!STAILQ_EMPTY(&q)) {
-			ccb1 = STAILQ_FIRST(&q);
-			STAILQ_REMOVE_HEAD(&q, ccb_link);
+		while (!TAILQ_EMPTY(&q)) {
+			ccb1 = TAILQ_FIRST(&q);
+			TAILQ_REMOVE(&q, ccb1, ccb_link);
 
 			KASSERT(ccb1->ccb_state == CISS_CCB_ONQ);
 			ciss_done(sc, ccb1);
 			if (ccb1 == ccb) {
-				KASSERT(STAILQ_EMPTY(&q));
+				KASSERT(TAILQ_EMPTY(&q));
 				return 0;
 			}
 		}
@@ -1249,9 +1249,9 @@ ciss_completed_process(struct ciss_softc *sc, ciss_queue_head *q)
 {
 	struct ciss_ccb *ccb;
 
-	while (!STAILQ_EMPTY(q)) {
-		ccb = STAILQ_FIRST(q);
-		STAILQ_REMOVE_HEAD(q, ccb_link);
+	while (!TAILQ_EMPTY(q)) {
+		ccb = TAILQ_FIRST(q);
+		TAILQ_REMOVE(q, ccb, ccb_link);
 
 		if (ccb->ccb_state == CISS_CCB_POLL) {
 			ccb->ccb_state = CISS_CCB_ONQ;
@@ -1276,15 +1276,15 @@ ciss_intr_simple_intx(void *v)
 	if (!(bus_space_read_4(sc->sc_iot, sc->sc_ioh, CISS_ISR) & sc->iem))
 		return 0;
 
-	STAILQ_INIT(&q);
+	TAILQ_INIT(&q);
 	mutex_enter(&sc->sc_mutex);
 	ciss_completed_simple(sc, &q);
 	mutex_exit(&sc->sc_mutex);
 
-	hit = (!STAILQ_EMPTY(&q));
+	hit = (!TAILQ_EMPTY(&q));
 	ciss_completed_process(sc, &q);
 
-	KASSERT(STAILQ_EMPTY(&q));
+	KASSERT(TAILQ_EMPTY(&q));
 	CISS_DPRINTF(CISS_D_INTR, ("exit\n"));
 
 	return hit;
@@ -1314,14 +1314,14 @@ ciss_intr_perf_msi(void *v)
 
 	CISS_DPRINTF(CISS_D_INTR, ("intr "));
 
-	STAILQ_INIT(&q);
+	TAILQ_INIT(&q);
 	mutex_enter(&sc->sc_mutex);
 	ciss_completed_perf(sc, &q);
 	mutex_exit(&sc->sc_mutex);
 
 	ciss_completed_process(sc, &q);
 
-	KASSERT(STAILQ_EMPTY(&q));
+	KASSERT(TAILQ_EMPTY(&q));
 	CISS_DPRINTF(CISS_D_INTR, ("exit"));
 
 	return 1;
