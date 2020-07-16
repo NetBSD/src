@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.159 2020/05/18 21:19:35 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.160 2020/07/16 11:36:35 skrll Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -36,15 +36,15 @@ options 	INCLUDE_CONFIG_FILE
 #options 	UVMHIST_PRINT,KERNHIST_DELAY=0
 
 # EARLYCONS is required for early init messages from VERBOSE_INIT_ARM.
-#options 	EARLYCONS=bcm2837
-#options 	EARLYCONS=bcm2711
+#options 	EARLYCONS=bcm2837, CONSADDR=0x3f215040
+#options 	EARLYCONS=bcm2711, CONSADDR=0xfe215040
 #options 	EARLYCONS=meson, CONSADDR=0xc81004c0
 #options 	EARLYCONS=rk3328, CONSADDR=0xff130000
 #options 	EARLYCONS=rk3399, CONSADDR=0xff1a0000
 #options 	EARLYCONS=sunxi, CONSADDR=0x01c28000
 #options 	EARLYCONS=tegra, CONSADDR=0x70006000
 #options 	EARLYCONS=thunderx, CONSADDR=0x87e024000000
-#options 	EARLYCONS=virt
+#options 	EARLYCONS=virt, CONSADDR=0x09000000
 
 # Pointer Authentication (PAC).
 #makeoptions 	ARMV83_PAC=1
