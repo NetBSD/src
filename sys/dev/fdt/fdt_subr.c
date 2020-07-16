@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_subr.c,v 1.36 2020/03/08 08:26:54 skrll Exp $ */
+/* $NetBSD: fdt_subr.c,v 1.37 2020/07/16 11:42:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.36 2020/03/08 08:26:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.37 2020/07/16 11:42:17 jmcneill Exp $");
 
 #include "opt_fdt.h"
 
@@ -42,6 +42,7 @@ static const void *fdt_data;
 
 static struct fdt_conslist fdt_console_list =
     TAILQ_HEAD_INITIALIZER(fdt_console_list);
+FDT_CONSOLE(dummy_console, NULL);
 
 bool
 fdtbus_init(const void *data)
@@ -346,6 +347,8 @@ fdtbus_get_console(void)
 		int best_match = 0;
 
 		__link_set_foreach(info, fdt_consoles) {
+			if (info == NULL)
+				continue;
 			const int match = (*info)->ops->match(phandle);
 			if (match > best_match) {
 				best_match = match;
