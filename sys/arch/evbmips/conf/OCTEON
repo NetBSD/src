@@ -1,11 +1,11 @@
-#	$NetBSD: OCTEON,v 1.4 2020/07/16 18:39:18 jmcneill Exp $
+#	$NetBSD: OCTEON,v 1.5 2020/07/16 21:34:52 jmcneill Exp $
 
 include 	"arch/mips/conf/std.octeon"
 include 	"arch/evbmips/conf/files.octeon"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ERLITE-$Revision: 1.4 $"
+#ident 		"ERLITE-$Revision: 1.5 $"
 
 maxusers	32
 
@@ -135,8 +135,10 @@ cnmac*		at octgmx?
 octrnm*		at iobus?		# Random Number Memory (and generator)
 
 dwctwo*		at iobus?
+xhci*		at fdt?
 
 usb*		at dwctwo?
+usb*		at xhci?
 
 uhub*		at usb?
 
