@@ -1,9 +1,10 @@
-# $NetBSD: files.fdt,v 1.53 2020/07/16 11:42:53 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.54 2020/07/16 16:39:18 jmcneill Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
 defflag	opt_fdt.h				FDTBASE : libfdt, ofw_subr
 defflag	opt_fdt.h				FDT: FDTBASE
+defparam opt_fdt.h				FDT_DEFAULT_STDOUT_PATH
 
 define	fdt { [pass = 10] } : clk, pwm
 

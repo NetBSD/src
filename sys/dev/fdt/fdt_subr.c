@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_subr.c,v 1.37 2020/07/16 11:42:17 jmcneill Exp $ */
+/* $NetBSD: fdt_subr.c,v 1.38 2020/07/16 16:39:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.37 2020/07/16 11:42:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.38 2020/07/16 16:39:18 jmcneill Exp $");
 
 #include "opt_fdt.h"
 
@@ -38,11 +38,14 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.37 2020/07/16 11:42:17 jmcneill Exp $
 #include <dev/fdt/fdtvar.h>
 #include <dev/fdt/fdt_private.h>
 
+#ifndef FDT_DEFAULT_STDOUT_PATH
+#define	FDT_DEFAULT_STDOUT_PATH		"serial0:115200n8"
+#endif
+
 static const void *fdt_data;
 
 static struct fdt_conslist fdt_console_list =
     TAILQ_HEAD_INITIALIZER(fdt_console_list);
-FDT_CONSOLE(dummy_console, NULL);
 
 bool
 fdtbus_init(const void *data)
@@ -346,9 +349,12 @@ fdtbus_get_console(void)
 		const int phandle = fdtbus_get_stdout_phandle();
 		int best_match = 0;
 
+		if (phandle == -1) {
+			printf("WARNING: no console device\n");
+			return NULL;
+		}
+
 		__link_set_foreach(info, fdt_consoles) {
-			if (info == NULL)
-				continue;
 			const int match = (*info)->ops->match(phandle);
 			if (match > best_match) {
 				best_match = match;
@@ -369,15 +375,14 @@ fdtbus_get_stdout_path(void)
 	const char *prop;
 
 	const int off = fdt_path_offset(fdtbus_get_data(), "/chosen");
-	if (off < 0)
-		return NULL;
+	if (off >= 0) {
+		prop = fdt_getprop(fdtbus_get_data(), off, "stdout-path", NULL);
+		if (prop != NULL)
+			return prop;
+	}
 
-	prop = fdt_getprop(fdtbus_get_data(), off, "stdout-path", NULL);
-	if (prop != NULL)
-		return prop;
-
-	/* If the stdout-path property is not found, assume serial0 */
-	return "serial0:115200n8";
+	/* If the stdout-path property is not found, return the default */
+	return FDT_DEFAULT_STDOUT_PATH;
 }
 
 int
