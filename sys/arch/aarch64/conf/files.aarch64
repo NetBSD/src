@@ -1,4 +1,4 @@
-#	$NetBSD: files.aarch64,v 1.24 2020/06/29 23:56:30 riastradh Exp $
+#	$NetBSD: files.aarch64,v 1.25 2020/07/17 07:16:10 ryo Exp $
 
 defflag opt_cpuoptions.h	AARCH64_ALIGNMENT_CHECK
 defflag opt_cpuoptions.h	AARCH64_EL0_STACK_ALIGNMENT_CHECK
@@ -52,6 +52,7 @@ file	arch/arm/arm/efi_runtime.c		efi_runtime
 defflag opt_pmap.h		PMAPHIST : KERNHIST
 defflag opt_pmap.h		PMAPCOUNTERS PMAP_STEAL_MEMORY
 				PMAP_NEED_ALLOC_POOLPAGE
+defflag opt_pmapboot.h		PMAPBOOT_DEBUG
 
 # MI support
 file	dev/cons.c
