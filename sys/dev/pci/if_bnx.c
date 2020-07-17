@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.104 2020/07/17 10:08:04 jdolecek Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.105 2020/07/17 10:56:15 jdolecek Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.104 2020/07/17 10:08:04 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.105 2020/07/17 10:56:15 jdolecek Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -5174,8 +5174,10 @@ retry:
 	bus_dmamap_sync(sc->bnx_dmatag, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 	/* Make sure there's room in the chain */
-	if (map->dm_nsegs > (sc->max_tx_bd - sc->used_tx_bd))
+	if (map->dm_nsegs > (sc->max_tx_bd - sc->used_tx_bd)) {
+		error = ENOMEM;
 		goto nospace;
+	}
 
 	/* prod points to an empty tx_bd at this point. */
 	prod_bseq = sc->tx_prod_bseq;
@@ -5254,7 +5256,7 @@ maperr:
 	TAILQ_INSERT_TAIL(&sc->tx_free_pkts, pkt, pkt_entry);
 	mutex_exit(&sc->tx_pkt_mtx);
 
-	return ENOMEM;
+	return error;
 }
 
 /****************************************************************************/
@@ -5268,7 +5270,7 @@ bnx_start(struct ifnet *ifp)
 {
 	struct bnx_softc	*sc = ifp->if_softc;
 	struct mbuf		*m_head = NULL;
-	int			count = 0;
+	int			count = 0, error;
 #ifdef BNX_DEBUG
 	uint16_t		tx_chain_prod;
 #endif
@@ -5306,12 +5308,22 @@ bnx_start(struct ifnet *ifp)
 		 * don't have room, set the OACTIVE flag to wait
 		 * for the NIC to drain the chain.
 		 */
-		if (bnx_tx_encap(sc, m_head)) {
-			ifp->if_flags |= IFF_OACTIVE;
-			DBPRINT(sc, BNX_INFO_SEND, "TX chain is closed for "
-			    "business! Total tx_bd used = %d\n",
-			    sc->used_tx_bd);
-			break;
+		if ((error = bnx_tx_encap(sc, m_head))) {
+			if (error == ENOMEM) {
+				ifp->if_flags |= IFF_OACTIVE;
+				DBPRINT(sc, BNX_INFO_SEND,
+				    "TX chain is closed for "
+				    "business! Total tx_bd used = %d\n",
+				    sc->used_tx_bd);
+				break;
+			} else {
+				/* Permanent error for the mbuf, drop it */
+				IFQ_DEQUEUE(&ifp->if_snd, m_head);
+				m_freem(m_head);
+				DBPRINT(sc, BNX_INFO_SEND,
+				    "mbuf load error %d, dropped\n", error);
+				continue;
+			}
 		}
 
 		IFQ_DEQUEUE(&ifp->if_snd, m_head);
