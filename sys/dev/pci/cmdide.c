@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdide.c,v 1.45 2020/07/01 17:57:14 jdolecek Exp $	*/
+/*	$NetBSD: cmdide.c,v 1.46 2020/07/17 21:04:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.45 2020/07/01 17:57:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.46 2020/07/17 21:04:14 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,10 +245,9 @@ cmd_pci_intr(void *arg)
 		    (i == 1 && (secirq & CMD_ARTTIM23_IRQ))) {
 			crv = wdcintr(wdc_cp);
 			if (crv == 0) {
-				aprint_error("%s:%d: bogus intr\n",
+				aprint_verbose("%s:%d: bogus intr\n",
 				    device_xname(
 				      sc->sc_wdcdev.sc_atac.atac_dev), i);
-				sc->sc_wdcdev.irqack(wdc_cp);
 			} else
 				rv = 1;
 		}
