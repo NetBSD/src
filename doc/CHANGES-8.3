@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.21 2020/07/15 15:55:49 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.22 2020/07/17 15:29:12 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -290,4 +290,12 @@ sys/arch/i386/stand/boot/boot2.c		1.74
 
 	PR 55490: let the consdev command also set speed.
 	[kim, ticket #1575]
+
+sys/compat/common/uipc_syscalls_40.c		1.23
+sys/compat/linux/common/linux_socket.c		1.150
+sys/compat/linux32/common/linux32_socket.c	1.31
+sys/net/if.c					1.479
+
+	ioctl(SIOCGIFCONF): do not accept negative buffer length values.
+	[msaitoh, ticket #1576]
 
