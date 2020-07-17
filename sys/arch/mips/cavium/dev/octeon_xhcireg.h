@@ -59,6 +59,10 @@
 #define   XCTL_SHIM_CFG_DMA_BYTE_SWAP_SHIFT	8
 #define   XCTL_SHIM_CFG_CSR_BYTE_SWAP		0x0000000000000003ull
 #define   XCTL_SHIM_CFG_CSR_BYTE_SWAP_SHIFT	0
+#define	  XCTL_SHIM_ENDIAN_LITTLE		  0 /* A-B-C-D-E-F-G-H -> A-B-C-D-E-F-G-H */
+#define	  XCTL_SHIM_ENDIAN_BIG			  1 /* A-B-C-D-E-F-G-H -> H-G-F-E-D-C-B-A */
+#define	  XCTL_SHIM_ENDIAN_RSVD2		  2 /* A-B-C-D-E-F-G-H -> D-C-B-A-H-G-F-E */
+#define	  XCTL_SHIM_ENDIAN_RSVD3		  3 /* A-B-C-D-E-F-G-H -> E-F-G-H-A-B-C-D */
 
 /*
  * DWC3 core control registers.

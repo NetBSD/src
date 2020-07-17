@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_xhci.c,v 1.1 2020/07/16 21:34:52 jmcneill Exp $ */
+/*	$NetBSD: octeon_xhci.c,v 1.2 2020/07/17 08:06:02 simonb Exp $ */
 /*	$OpenBSD: octxhci.c,v 1.4 2019/09/29 04:32:23 visa Exp $	*/
 
 /*
@@ -151,7 +151,6 @@ octxhci_attach(device_t parent, device_t self, void *aux)
 	if (strcmp(clock_type_hs, "pll_ref_clk") == 0)
 		clock_sel |= 2;
 
-	if (0)
 	octxhci_uctl_init(osc, clock_freq, clock_sel);
 
 	if (octxhci_dwc3_init(sc) != 0) {
@@ -330,8 +329,8 @@ octxhci_uctl_init(struct octxhci_softc *sc, uint64_t clock_freq,
 	val = XCTL_RD_8(sc, XCTL_SHIM_CFG);
 	val &= ~XCTL_SHIM_CFG_CSR_BYTE_SWAP;
 	val &= ~XCTL_SHIM_CFG_DMA_BYTE_SWAP;
-	val |= 3ull << XCTL_SHIM_CFG_CSR_BYTE_SWAP_SHIFT;
-	val |= 1ull << XCTL_SHIM_CFG_DMA_BYTE_SWAP_SHIFT;
+	val |= __SHIFTIN(XCTL_SHIM_ENDIAN_BIG, XCTL_SHIM_CFG_DMA_BYTE_SWAP);
+	val |= __SHIFTIN(XCTL_SHIM_ENDIAN_BIG, XCTL_SHIM_CFG_CSR_BYTE_SWAP);
 	XCTL_WR_8(sc, XCTL_SHIM_CFG, val);
 	(void)XCTL_RD_8(sc, XCTL_SHIM_CFG);
 }
