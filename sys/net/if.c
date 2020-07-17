@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.457.2.3 2019/12/17 16:12:54 martin Exp $	*/
+/*	$NetBSD: if.c,v 1.457.2.4 2020/07/17 15:24:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.457.2.3 2019/12/17 16:12:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.457.2.4 2020/07/17 15:24:48 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3465,11 +3465,14 @@ ifconf(u_long cmd, void *data)
 	int bound;
 	struct psref psref;
 
-	memset(&ifr, 0, sizeof(ifr));
 	if (docopy) {
+		if (ifc->ifc_len < 0)
+			return EINVAL;
+
 		space = ifc->ifc_len;
 		ifrp = ifc->ifc_req;
 	}
+	memset(&ifr, 0, sizeof(ifr));
 
 	bound = curlwp_bind();
 	s = pserialize_read_enter();
