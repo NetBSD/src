@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.48 2020/06/14 06:50:31 simonb Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.49 2020/07/17 21:59:30 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.48 2020/06/14 06:50:31 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.49 2020/07/17 21:59:30 jmcneill Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -71,7 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.48 2020/06/14 06:50:31 simonb Exp $")
 #endif
 
 #ifdef MIPS64_OCTEON
-extern struct cpu_softc octeon_cpu0_softc;
+#include <mips/cavium/octeonvar.h>
+extern struct cpu_softc octeon_cpu_softc[];
 #endif
 
 struct cpu_info cpu_info_store
@@ -93,7 +94,7 @@ struct cpu_info cpu_info_store
 	.ci_flags = CPUF_PRIMARY|CPUF_PRESENT|CPUF_RUNNING,
 #endif
 #ifdef MIPS64_OCTEON
-	.ci_softc = &octeon_cpu0_softc,
+	.ci_softc = &octeon_cpu_softc[0],
 #endif
 };
 
