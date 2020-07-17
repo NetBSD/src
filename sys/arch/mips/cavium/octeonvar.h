@@ -1,4 +1,4 @@
-/*	$NetBSD: octeonvar.h,v 1.15 2020/07/17 17:57:16 jmcneill Exp $	*/
+/*	$NetBSD: octeonvar.h,v 1.16 2020/07/17 21:59:30 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #include <dev/pci/pcivar.h>
 
 #include <mips/cavium/octeonreg.h>
+#include <mips/cache_octeon.h>
 
 /* XXX elsewhere */
 #define	_ASM_PROLOGUE \
@@ -83,23 +84,21 @@ struct octeon_config {
 struct cpu_softc {
 	struct cpu_info *cpu_ci;
 
-	uint64_t cpu_int0_sum0;
-	uint64_t cpu_int1_sum0;
-	uint64_t cpu_int2_sum0;
+	uint64_t cpu_ip2_sum0;
+	uint64_t cpu_ip3_sum0;
+	uint64_t cpu_ip4_sum0;
 
 	uint64_t cpu_int_sum1;
 
-	uint64_t cpu_int0_en[NBANKS];
-	uint64_t cpu_int1_en[NBANKS];
-	uint64_t cpu_int2_en[NBANKS];
+	uint64_t cpu_ip2_en[NBANKS];
+	uint64_t cpu_ip3_en[NBANKS];
+	uint64_t cpu_ip4_en[NBANKS];
 
-	uint64_t cpu_int32_en;
+	uint64_t cpu_ip2_enable[NBANKS];
+	uint64_t cpu_ip3_enable[NBANKS];
+	uint64_t cpu_ip4_enable[NBANKS];
 
 	struct evcnt cpu_intr_evs[NIRQS];
-
-	uint64_t cpu_int0_enable[NBANKS];
-	uint64_t cpu_int1_enable[NBANKS];
-	uint64_t cpu_int2_enable[NBANKS];
 
 	void *cpu_wdog_sih;		// wdog softint handler
 	uint64_t cpu_wdog;
@@ -109,7 +108,7 @@ struct cpu_softc {
 	uint64_t cpu_mbox_set;
 	uint64_t cpu_mbox_clr;
 #endif
-};
+} __aligned(OCTEON_CACHELINE_SIZE);
 
 /*
  * FPA map
@@ -204,7 +203,6 @@ struct octfau_map {
 extern struct octeon_config	octeon_configuration;
 #ifdef MULTIPROCESSOR
 extern kcpuset_t		*cpus_booted;
-extern struct cpu_softc		octeon_cpu1_softc;
 #endif
 
 const char	*octeon_cpu_model(mips_prid_t);
