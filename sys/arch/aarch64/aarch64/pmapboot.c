@@ -1,4 +1,4 @@
-/*	$NetBSD: pmapboot.c,v 1.9 2020/07/17 07:16:10 ryo Exp $	*/
+/*	$NetBSD: pmapboot.c,v 1.10 2020/07/17 07:21:44 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.9 2020/07/17 07:16:10 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.10 2020/07/17 07:21:44 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -264,7 +264,8 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 		if (l0[idx0] == 0) {
 			l1 = pmapboot_pagealloc();
 			if (l1 == NULL) {
-				VPRINTF("pmapboot_enter: cannot allocate L1 page\n");
+				VPRINTF("pmapboot_enter: "
+				    "cannot allocate L1 page\n");
 				return -1;
 			}
 
@@ -308,7 +309,8 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 		if (!l1pde_valid(l1[idx1])) {
 			l2 = pmapboot_pagealloc();
 			if (l2 == NULL) {
-				VPRINTF("pmapboot_enter: cannot allocate L2 page\n");
+				VPRINTF("pmapboot_enter: "
+				    "cannot allocate L2 page\n");
 				return -1;
 			}
 
@@ -351,7 +353,8 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 		if (!l2pde_valid(l2[idx2])) {
 			l3 = pmapboot_pagealloc();
 			if (l3 == NULL) {
-				VPRINTF("pmapboot_enter: cannot allocate L3 page\n");
+				VPRINTF("pmapboot_enter: "
+				    "cannot allocate L3 page\n");
 				return -1;
 			}
 
@@ -403,7 +406,8 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 			}
 			if (va == va_end && (llidx & 15) != 15) {
 				/* clear CONTIG flag after this pte entry */
-				for (i = (llidx + 1); i < ((llidx + 16) & ~15); i++) {
+				for (i = (llidx + 1); i < ((llidx + 16) & ~15);
+				    i++) {
 					ll[i] &= ~LX_BLKPAG_CONTIG;
 				}
 			}
@@ -445,7 +449,7 @@ pmapboot_pagealloc(void)
 	char *e = s + PAGE_SIZE;
 
 	while (s < e)
-	    *s++ = 0;
+		*s++ = 0;
 
 	return (pd_entry_t *)pa;
 }
