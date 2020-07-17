@@ -1,4 +1,4 @@
-/*	$NetBSD: cninit.c,v 1.12 2020/07/17 02:05:44 uwe Exp $	*/
+/*	$NetBSD: cninit.c,v 1.13 2020/07/17 02:16:57 uwe Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cninit.c,v 1.12 2020/07/17 02:05:44 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cninit.c,v 1.13 2020/07/17 02:16:57 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -56,14 +56,16 @@ __KERNEL_RCSID(0, "$NetBSD: cninit.c,v 1.12 2020/07/17 02:05:44 uwe Exp $");
 void
 cninit(void)
 {
-	struct consdev *cp;
 	struct consdev *bestMatch;
+	struct consdev *cp;
 
-	bestMatch = cn_tab = NULL;
+	cn_tab = NULL;
+
 	/*
 	 * Collect information about all possible consoles
 	 * and find the one with highest priority
 	 */
+	bestMatch = NULL;
 	for (cp = constab; cp->cn_probe; cp++) {
 		(*cp->cn_probe)(cp);
 		if (cp->cn_pri > CN_DEAD &&
@@ -82,16 +84,19 @@ cninit(void)
 	 * Turn on console
 	 */
 	{
+		/* XXX: can this ever be non-NULL? */
 		struct consdev *old_cn_tab = cn_tab;
 
+		/* cn_init may set cn_tab to self */
  		(*bestMatch->cn_init)(bestMatch);
+
 		/*
 		 * Now let everyone know we have an active console they can
 		 * use for diagnostics. If we use cn_tab in the search loop
 		 * then interrupts from the ethernet at boot may cause system
 		 * hang.
 		 */
-		if (cn_tab == old_cn_tab)
+		if (cn_tab == old_cn_tab) /* if cn_init didn't, set it */
 			cn_tab = bestMatch;
 	}
 }
