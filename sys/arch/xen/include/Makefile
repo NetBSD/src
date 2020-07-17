@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 2020/04/25 15:26:17 bouyer Exp $
+#	$NetBSD: Makefile,v 1.5 2020/07/17 12:12:24 jdolecek Exp $
 
 
 INCSDIR= /usr/include/xen
 
-INCS=	intrdefs.h xenio.h xenio3.h
+INCS=	intrdefs.h
 
 .include <bsd.kinc.mk>
