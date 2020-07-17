@@ -1,4 +1,4 @@
-/*	$NetBSD: cninit.c,v 1.11 2011/02/08 20:20:26 rmind Exp $	*/
+/*	$NetBSD: cninit.c,v 1.12 2020/07/17 02:05:44 uwe Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cninit.c,v 1.11 2011/02/08 20:20:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cninit.c,v 1.12 2020/07/17 02:05:44 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -71,18 +71,20 @@ cninit(void)
 			bestMatch = cp;
 		}
 	}
+
 	/*
 	 * No console, we can handle it
 	 */
-	if ((cp = bestMatch) == NULL)
+	if (bestMatch == NULL)
 		return;
+
 	/*
 	 * Turn on console
 	 */
 	{
 		struct consdev *old_cn_tab = cn_tab;
 
- 		(*cp->cn_init)(cp);
+ 		(*bestMatch->cn_init)(bestMatch);
 		/*
 		 * Now let everyone know we have an active console they can
 		 * use for diagnostics. If we use cn_tab in the search loop
