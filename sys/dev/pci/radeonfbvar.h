@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfbvar.h,v 1.20 2014/11/05 19:39:17 macallan Exp $ */
+/* $NetBSD: radeonfbvar.h,v 1.20.26.1 2020/07/17 15:30:26 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -184,7 +184,7 @@ struct radeonfb_display {
 	int			rd_ncrtcs;
 	struct radeonfb_crtc	rd_crtcs[2];
 
-	struct radeonfb_cursor	rd_cursor;
+	struct radeonfb_cursor	rd_cursor, rd_tempcursor;
 	/* XXX: this should probaby be an array for CRTCs */
 	//struct videomode	rd_videomode;
 

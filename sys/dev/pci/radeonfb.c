@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.104.4.1 2019/08/18 09:58:49 martin Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.104.4.2 2020/07/17 15:30:26 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.104.4.1 2019/08/18 09:58:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.104.4.2 2020/07/17 15:30:26 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.104.4.1 2019/08/18 09:58:49 martin Ex
 #include <sys/kernel.h>
 #include <sys/lwp.h>
 #include <sys/kauth.h>
+#include <sys/kmem.h>
 
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
@@ -3691,12 +3692,12 @@ radeonfb_set_cursor(struct radeonfb_display *dp, struct wsdisplay_cursor *wc)
 	unsigned	index, count;
 	int		i, err;
 	int		pitch, size;
-	struct radeonfb_cursor	nc;
+	struct radeonfb_cursor	*nc = &dp->rd_tempcursor;
 
 	flags = wc->which;
 
 	/* copy old values */
-	nc = dp->rd_cursor;
+	memcpy(nc, &dp->rd_cursor, sizeof(struct radeonfb_cursor));
 
 	if (flags & WSDISPLAY_CURSOR_DOCMAP) {
 		index = wc->cmap.index;
@@ -3716,7 +3717,7 @@ radeonfb_set_cursor(struct radeonfb_display *dp, struct wsdisplay_cursor *wc)
 			return err;
 
 		for (i = index; i < index + count; i++) {
-			nc.rc_cmap[i] =
+			nc->rc_cmap[i] =
 			    (r[i] << 16) + (g[i] << 8) + (b[i] << 0);
 		}
 	}
@@ -3731,46 +3732,46 @@ radeonfb_set_cursor(struct radeonfb_display *dp, struct wsdisplay_cursor *wc)
 		size = pitch * wc->size.y;
 
 		/* clear the old cursor and mask */
-		memset(nc.rc_image, 0, 512);
-		memset(nc.rc_mask, 0, 512);
+		memset(nc->rc_image, 0, 512);
+		memset(nc->rc_mask, 0, 512);
 
-		nc.rc_size = wc->size;
+		nc->rc_size = wc->size;
 
-		if ((err = copyin(wc->image, nc.rc_image, size)) != 0)
+		if ((err = copyin(wc->image, nc->rc_image, size)) != 0)
 			return err;
 
-		if ((err = copyin(wc->mask, nc.rc_mask, size)) != 0)
+		if ((err = copyin(wc->mask, nc->rc_mask, size)) != 0)
 			return err;
 	}
 
 	if (flags & WSDISPLAY_CURSOR_DOHOT) {
-		nc.rc_hot = wc->hot;
-		if (nc.rc_hot.x >= nc.rc_size.x)
-			nc.rc_hot.x = nc.rc_size.x - 1;
-		if (nc.rc_hot.y >= nc.rc_size.y)
-			nc.rc_hot.y = nc.rc_size.y - 1;
+		nc->rc_hot = wc->hot;
+		if (nc->rc_hot.x >= nc->rc_size.x)
+			nc->rc_hot.x = nc->rc_size.x - 1;
+		if (nc->rc_hot.y >= nc->rc_size.y)
+			nc->rc_hot.y = nc->rc_size.y - 1;
 	}
 
 	if (flags & WSDISPLAY_CURSOR_DOPOS) {
-		nc.rc_pos = wc->pos;
-		if (nc.rc_pos.x >= dp->rd_virtx)
-			nc.rc_pos.x = dp->rd_virtx - 1;
+		nc->rc_pos = wc->pos;
+		if (nc->rc_pos.x >= dp->rd_virtx)
+			nc->rc_pos.x = dp->rd_virtx - 1;
 #if 0
-		if (nc.rc_pos.x < 0)
-			nc.rc_pos.x = 0;
+		if (nc->rc_pos.x < 0)
+			nc->rc_pos.x = 0;
 #endif
-		if (nc.rc_pos.y >= dp->rd_virty)
-			nc.rc_pos.y = dp->rd_virty - 1;
+		if (nc->rc_pos.y >= dp->rd_virty)
+			nc->rc_pos.y = dp->rd_virty - 1;
 #if 0
-		if (nc.rc_pos.y < 0)
-			nc.rc_pos.y = 0;
+		if (nc->rc_pos.y < 0)
+			nc->rc_pos.y = 0;
 #endif
 	}
 	if (flags & WSDISPLAY_CURSOR_DOCUR) {
-		nc.rc_visible = wc->enable;
+		nc->rc_visible = wc->enable;
 	}
 
-	dp->rd_cursor = nc;
+	memcpy(&dp->rd_cursor, nc, sizeof(struct radeonfb_cursor));
 	radeonfb_cursor_update(dp, wc->which);
 
 	return 0;
@@ -4171,9 +4172,13 @@ radeonfb_pickres(struct radeonfb_display *dp, uint16_t *x, uint16_t *y,
 		}
 
 	} else {
-		struct videomode	modes[64];
+		struct videomode	*modes;
+		size_t			smodes;
 		int			nmodes = 0;
 		int			valid = 0;
+
+		smodes = sizeof(struct videomode) * 64;
+		modes = kmem_alloc(smodes, KM_SLEEP);
 
 		for (i = 0; i < dp->rd_ncrtcs; i++) {
 			/*
@@ -4243,6 +4248,8 @@ radeonfb_pickres(struct radeonfb_display *dp, uint16_t *x, uint16_t *y,
 				*y = modes[i].vdisplay;
 			}
 		}
+		kmem_free(modes, smodes);
+
 	}
 
 	if ((*x == 0) || (*y == 0)) {
