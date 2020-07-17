@@ -1,11 +1,11 @@
-#	$NetBSD: OCTEON,v 1.5 2020/07/16 21:34:52 jmcneill Exp $
+#	$NetBSD: OCTEON,v 1.6 2020/07/17 14:56:47 jmcneill Exp $
 
 include 	"arch/mips/conf/std.octeon"
 include 	"arch/evbmips/conf/files.octeon"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ERLITE-$Revision: 1.5 $"
+#ident 		"ERLITE-$Revision: 1.6 $"
 
 maxusers	32
 
@@ -49,6 +49,10 @@ include         "conf/compat_netbsd50.config"
 
 #options 	EXEC_ECOFF	# exec ECOFF binaries
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix
+
+# Wedge support
+options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
+options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 
 # File systems
 file-system	FFS		# Berkeley Fast Filesystem
