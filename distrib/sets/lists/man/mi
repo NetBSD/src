@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1695 2020/07/13 09:10:34 jruoho Exp $
+# $NetBSD: mi,v 1.1696 2020/07/17 15:24:03 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8315,7 +8315,7 @@
 ./usr/share/man/man5/capfile.5			man-sys-man		.man
 ./usr/share/man/man5/ccd.conf.5			man-sysutil-man		.man
 ./usr/share/man/man5/cdb.5			man-sys-man		.man
-./usr/share/man/man5/changelist.5		man-sys-man		postfix,.man
+./usr/share/man/man5/changelist.5		man-sys-man		.man
 ./usr/share/man/man5/cidr_table.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/core.5			man-sys-man		.man
 ./usr/share/man/man5/crontab.5			man-cron-man		.man
