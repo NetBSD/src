@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.67 2020/07/16 11:36:35 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.68 2020/07/17 07:16:10 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.67 2020/07/16 11:36:35 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.68 2020/07/17 07:16:10 ryo Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_STRONGLY_ORDERED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -49,7 +49,6 @@ RCSID("$NetBSD: locore.S,v 1.67 2020/07/16 11:36:35 skrll Exp $")
 
 /*#define DEBUG_LOCORE			// debug print */
 /*#define DEBUG_LOCORE_PRINT_LOCK	// avoid mixing AP's output */
-/*#define DEBUG_MMU			// dump MMU table */
 
 #define LOCORE_EL2
 
@@ -659,7 +658,7 @@ print_x0:
 	ldp	x0, lr, [sp], #16
 	ret
 
-#ifdef DEBUG_MMU
+#ifdef VERBOSE_LOCORE
 /*
  * tinyprintf() supports only maximum 7 '%x', '%d' and '%s' formats.
  * width and any modifiers are ignored. '\n' will be replaced to '\r\n'.
@@ -753,7 +752,7 @@ tinyprintf_done:
 	ldp	x19, x20, [sp], #16
 	ldp	x0, lr, [sp], #16
 	ret
-#endif /* defined(DEBUG_LOCORE) || defined(DEBUG_MMU) */
+#endif /* VERBOSE_LOCORE */
 
 
 save_ttbrs:
@@ -788,7 +787,7 @@ init_mmutable:
 	DPRINTSREG("TTBR0            = ", ttbr0_el1)
 	DPRINTSREG("TTBR1            = ", ttbr1_el1)
 
-#ifdef DEBUG_MMU
+#ifdef VERBOSE_LOCORE
 	adr	x26, tinyprintf
 #else
 	mov	x26, xzr

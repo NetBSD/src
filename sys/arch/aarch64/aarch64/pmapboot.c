@@ -1,4 +1,4 @@
-/*	$NetBSD: pmapboot.c,v 1.8 2020/07/16 11:36:35 skrll Exp $	*/
+/*	$NetBSD: pmapboot.c,v 1.9 2020/07/17 07:16:10 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,12 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.8 2020/07/16 11:36:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.9 2020/07/17 07:16:10 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 #include "opt_pmap.h"
+#include "opt_pmapboot.h"
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -147,6 +148,13 @@ pmapboot_protect(vaddr_t sva, vaddr_t eva, vm_prot_t clrprot)
  */
 
 #ifdef VERBOSE_INIT_ARM
+#define VPRINTF(fmt, args...)	\
+	while (pr != NULL) { pr(fmt, ## args); break; }
+#else
+#define VPRINTF(fmt, args...)	__nothing
+#endif
+
+#ifdef PMAPBOOT_DEBUG
 static void
 pmapboot_pte_print(pt_entry_t pte, int level,
     void (*pr)(const char *, ...) __printflike(1, 2))
@@ -160,7 +168,15 @@ pmapboot_pte_print(pt_entry_t pte, int level,
 	    l0pde_pa(pte));
 #endif
 }
-#endif /* VERBOSE_INIT_ARM */
+#define PMAPBOOT_DPRINTF(fmt, args...)	\
+	while (pr != NULL) { pr(fmt, ## args); break; }
+#define PMAPBOOT_DPRINT_PTE(pte, l)	\
+	while (pr != NULL) { pmapboot_pte_print((pte), (l), pr); break; }
+#else /* PMAPBOOT_DEBUG */
+#define PMAPBOOT_DPRINTF(fmt, args...)	__nothing
+#define PMAPBOOT_DPRINT_PTE(pte, l)	__nothing
+#endif /* PMAPBOOT_DEBUG */
+
 
 #ifdef OPTIMIZE_TLB_CONTIG
 static inline bool
@@ -177,17 +193,6 @@ tlb_contiguous_p(vaddr_t addr, vaddr_t start, vaddr_t end, vsize_t blocksize)
 	return false;
 }
 #endif /* OPTIMIZE_TLB_CONTIG */
-
-
-#ifdef VERBOSE_INIT_ARM
-#define VPRINTF(fmt, args...)	\
-	while (pr != NULL) { pr(fmt, ## args); break; }
-#define VPRINT_PTE(pte, l)	\
-	while (pr != NULL) { pmapboot_pte_print((pte), (l), pr); break; }
-#else
-#define VPRINTF(fmt, args...)	__nothing
-#define VPRINT_PTE(pte, l)	__nothing
-#endif
 
 /*
  * pmapboot_enter() accesses pagetables by physical address.
@@ -265,8 +270,9 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 
 			pte = (uint64_t)l1 | L0_TABLE;
 			l0[idx0] = pte;
-			VPRINTF("TTBR%d[%d] (new)\t= %016lx:", ttbr, idx0, pte);
-			VPRINT_PTE(pte, 0);
+			PMAPBOOT_DPRINTF("TTBR%d[%d] (new)\t= %016lx:",
+			    ttbr, idx0, pte);
+			PMAPBOOT_DPRINT_PTE(pte, 0);
 		} else {
 			l1 = (uint64_t *)(l0[idx0] & LX_TBL_PA);
 		}
@@ -293,9 +299,9 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 			}
 
 			l1[idx1] = pte;
-			VPRINTF("TTBR%d[%d][%d]\t= %016lx:", ttbr,
+			PMAPBOOT_DPRINTF("TTBR%d[%d][%d]\t= %016lx:", ttbr,
 			    idx0, idx1, pte);
-			VPRINT_PTE(pte, 1);
+			PMAPBOOT_DPRINT_PTE(pte, 1);
 			goto nextblk;
 		}
 
@@ -308,9 +314,9 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 
 			pte = (uint64_t)l2 | L1_TABLE;
 			l1[idx1] = pte;
-			VPRINTF("TTBR%d[%d][%d] (new)\t= %016lx:", ttbr,
-			    idx0, idx1, pte);
-			VPRINT_PTE(pte, 1);
+			PMAPBOOT_DPRINTF("TTBR%d[%d][%d] (new)\t= %016lx:",
+			    ttbr, idx0, idx1, pte);
+			PMAPBOOT_DPRINT_PTE(pte, 1);
 		} else {
 			l2 = (uint64_t *)(l1[idx1] & LX_TBL_PA);
 		}
@@ -336,9 +342,9 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 			}
 
 			l2[idx2] = pte;
-			VPRINTF("TTBR%d[%d][%d][%d]\t= %016lx:", ttbr,
+			PMAPBOOT_DPRINTF("TTBR%d[%d][%d][%d]\t= %016lx:", ttbr,
 			    idx0, idx1, idx2, pte);
-			VPRINT_PTE(pte, 2);
+			PMAPBOOT_DPRINT_PTE(pte, 2);
 			goto nextblk;
 		}
 
@@ -351,9 +357,9 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 
 			pte = (uint64_t)l3 | L2_TABLE;
 			l2[idx2] = pte;
-			VPRINTF("TTBR%d[%d][%d][%d] (new)\t= %016lx:", ttbr,
-			    idx0, idx1, idx2, pte);
-			VPRINT_PTE(pte, 2);
+			PMAPBOOT_DPRINTF("TTBR%d[%d][%d][%d] (new)\t= %016lx:",
+			    ttbr, idx0, idx1, idx2, pte);
+			PMAPBOOT_DPRINT_PTE(pte, 2);
 		} else {
 			l3 = (uint64_t *)(l2[idx2] & LX_TBL_PA);
 		}
@@ -379,9 +385,9 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 		}
 
 		l3[idx3] = pte;
-		VPRINTF("TTBR%d[%d][%d][%d][%d]\t= %lx:", ttbr,
+		PMAPBOOT_DPRINTF("TTBR%d[%d][%d][%d][%d]\t= %lx:", ttbr,
 		    idx0, idx1, idx2, idx3, pte);
-		VPRINT_PTE(pte, 3);
+		PMAPBOOT_DPRINT_PTE(pte, 3);
  nextblk:
 #ifdef OPTIMIZE_TLB_CONTIG
 		/*
