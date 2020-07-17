@@ -1,4 +1,4 @@
-/*	$NetBSD: poll.h,v 1.15 2009/11/11 09:48:51 rmind Exp $	*/
+/*	$NetBSD: poll.h,v 1.16 2020/07/17 15:34:16 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,6 +92,8 @@ __BEGIN_DECLS
 int	pollts(struct pollfd * __restrict, nfds_t,
     const struct timespec * __restrict, const sigset_t * __restrict)
     __RENAME(__pollts50);
+int	ppoll(struct pollfd * __restrict, nfds_t,
+    const struct timespec * __restrict, const sigset_t * __restrict);
 #endif /* __LIBC12_SOURCE__ */
 __END_DECLS
 #endif /* _NETBSD_SOURCE */
