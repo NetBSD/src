@@ -249,7 +249,7 @@
 #define HAVE_OPENSSL_SSL_H 1
 
 /* Define to 1 if you have the `ppoll' function. */
-/* #undef HAVE_PPOLL */
+#define HAVE_PPOLL 1
 
 /* Define to 1 if you have the `pselect' function. */
 #define HAVE_PSELECT 1
