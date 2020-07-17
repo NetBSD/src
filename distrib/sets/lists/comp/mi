@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2339 2020/07/10 02:27:13 thorpej Exp $
+#	$NetBSD: mi,v 1.2340 2020/07/17 15:34:17 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -4529,6 +4529,7 @@
 ./usr/share/man/cat2/posix_fadvise.0		comp-c-catman		.cat
 ./usr/share/man/cat2/posix_fallocate.0		comp-c-catman		.cat
 ./usr/share/man/cat2/posix_madvise.0		comp-c-catman		.cat
+./usr/share/man/cat2/ppoll.0			comp-c-catman		.cat
 ./usr/share/man/cat2/pread.0			comp-c-catman		.cat
 ./usr/share/man/cat2/preadv.0			comp-c-catman		.cat
 ./usr/share/man/cat2/profil.0			comp-c-catman		.cat
@@ -12822,6 +12823,7 @@
 ./usr/share/man/html2/posix_fadvise.html	comp-c-htmlman		html
 ./usr/share/man/html2/posix_fallocate.html		comp-c-htmlman		html
 ./usr/share/man/html2/posix_madvise.html	comp-c-htmlman		html
+./usr/share/man/html2/ppoll.html		comp-c-htmlman		html
 ./usr/share/man/html2/pread.html		comp-c-htmlman		html
 ./usr/share/man/html2/preadv.html		comp-c-htmlman		html
 ./usr/share/man/html2/profil.html		comp-c-htmlman		html
@@ -20943,6 +20945,7 @@
 ./usr/share/man/man2/posix_fadvise.2		comp-c-man		.man
 ./usr/share/man/man2/posix_fallocate.2		comp-c-man		.man
 ./usr/share/man/man2/posix_madvise.2		comp-c-man		.man
+./usr/share/man/man2/ppoll.2			comp-c-man		.man
 ./usr/share/man/man2/pread.2			comp-c-man		.man
 ./usr/share/man/man2/preadv.2			comp-c-man		.man
 ./usr/share/man/man2/profil.2			comp-c-man		.man
