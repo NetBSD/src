@@ -1,11 +1,11 @@
-#	$NetBSD: OCTEON,v 1.6 2020/07/17 14:56:47 jmcneill Exp $
+#	$NetBSD: OCTEON,v 1.7 2020/07/17 14:57:54 jmcneill Exp $
 
 include 	"arch/mips/conf/std.octeon"
 include 	"arch/evbmips/conf/files.octeon"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ERLITE-$Revision: 1.6 $"
+#ident 		"OCTEON-$Revision: 1.7 $"
 
 maxusers	32
 
