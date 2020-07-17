@@ -29,7 +29,7 @@
 #define __INTR_PRIVATE
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: octeon_cpunode.c,v 1.13 2020/06/23 05:14:18 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_cpunode.c,v 1.14 2020/07/17 21:59:30 jmcneill Exp $");
 
 #include "locators.h"
 #include "cpunode.h"
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_cpunode.c,v 1.13 2020/06/23 05:14:18 simonb E
 #include <mips/cavium/octeonvar.h>
 #include <mips/cavium/dev/octeon_ciureg.h>
 #include <mips/cavium/dev/octeon_corereg.h>
+
+extern struct cpu_softc octeon_cpu_softc[];
 
 struct cpunode_attach_args {
 	const char *cnaa_name;
@@ -291,7 +293,6 @@ cpu_cpunode_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 #ifdef MULTIPROCESSOR
-	KASSERTMSG(cpunum == 1, "cpunum %d", cpunum);
 	if (!kcpuset_isset(cpus_booted, cpunum)) {
 		aprint_naive(" disabled\n");
 		aprint_normal(" disabled (unresponsive)\n");
@@ -299,7 +300,7 @@ cpu_cpunode_attach(device_t parent, device_t self, void *aux)
 	}
 	struct cpu_info * const ci = cpu_info_alloc(NULL, cpunum, 0, cpunum, 0);
 
-	ci->ci_softc = &octeon_cpu1_softc;
+	ci->ci_softc = &octeon_cpu_softc[cpunum];
 	ci->ci_softc->cpu_ci = ci;
 
 	cpu_cpunode_attach_common(self, ci);
