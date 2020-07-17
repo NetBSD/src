@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.103 2020/07/17 09:51:31 jdolecek Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.104 2020/07/17 10:08:04 jdolecek Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.103 2020/07/17 09:51:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.104 2020/07/17 10:08:04 jdolecek Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -4082,11 +4082,10 @@ bnx_alloc_pkts(struct work * unused, void * arg)
 		if (bus_dmamap_create(sc->bnx_dmatag,
 		    MCLBYTES * BNX_MAX_SEGMENTS, USABLE_TX_BD,
 		    MCLBYTES, 0, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
-		    &pkt->pkt_dmamap) != 0)
-			goto put;
-
-		if (!ISSET(ifp->if_flags, IFF_UP))
-			goto stopping;
+		    &pkt->pkt_dmamap) != 0) {
+			pool_put(bnx_tx_pool, pkt);
+			break;
+		}
 
 		mutex_enter(&sc->tx_pkt_mtx);
 		TAILQ_INSERT_TAIL(&sc->tx_free_pkts, pkt, pkt_entry);
@@ -4104,14 +4103,6 @@ bnx_alloc_pkts(struct work * unused, void * arg)
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		bnx_start(ifp);
 	splx(s);
-
-	return;
-
-stopping:
-	bus_dmamap_destroy(sc->bnx_dmatag, pkt->pkt_dmamap);
-put:
-	pool_put(bnx_tx_pool, pkt);
-	return;
 }
 
 /****************************************************************************/
