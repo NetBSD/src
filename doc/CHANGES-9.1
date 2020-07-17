@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.80 2020/07/16 12:41:35 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.81 2020/07/17 15:31:20 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -3467,4 +3467,18 @@ sys/dev/pci/piixpmreg.h				1.9-1.12
 	- Modify comment.
 	- Whitespace fix.
 	[msaitoh, ticket #1017]
+
+sys/compat/common/uipc_syscalls_40.c		1.23
+sys/compat/linux/common/linux_socket.c		1.150
+sys/compat/linux32/common/linux32_socket.c	1.31
+sys/net/if.c					1.479
+
+	ioctl(SIOCGIFCONF): do not accept negative buffer length values.
+	[msaitoh, ticket #1018]
+
+sys/dev/pci/radeonfb.c				1.107
+sys/dev/pci/radeonfbvar.h			1.21
+
+	Reduce stack usage in radeonfb_pickres() and radeonfb_set_cursor().
+	[macallan, ticket #1019]
 
