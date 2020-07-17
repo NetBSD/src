@@ -1,4 +1,4 @@
-/*	$NetBSD: octeonvar.h,v 1.14 2020/07/16 21:33:50 jmcneill Exp $	*/
+/*	$NetBSD: octeonvar.h,v 1.15 2020/07/17 17:57:16 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@ struct octeon_config {
 };
 
 #define NIRQS	128
+#define NBANKS	2
 
 struct cpu_softc {
 	struct cpu_info *cpu_ci;
@@ -88,25 +89,17 @@ struct cpu_softc {
 
 	uint64_t cpu_int_sum1;
 
-	uint64_t cpu_int0_en0;
-	uint64_t cpu_int1_en0;
-	uint64_t cpu_int2_en0;
-
-	uint64_t cpu_int0_en1;
-	uint64_t cpu_int1_en1;
-	uint64_t cpu_int2_en1;
+	uint64_t cpu_int0_en[NBANKS];
+	uint64_t cpu_int1_en[NBANKS];
+	uint64_t cpu_int2_en[NBANKS];
 
 	uint64_t cpu_int32_en;
 
 	struct evcnt cpu_intr_evs[NIRQS];
 
-	uint64_t cpu_int0_enable0;
-	uint64_t cpu_int1_enable0;
-	uint64_t cpu_int2_enable0;
-
-	uint64_t cpu_int0_enable1;
-	uint64_t cpu_int1_enable1;
-	uint64_t cpu_int2_enable1;
+	uint64_t cpu_int0_enable[NBANKS];
+	uint64_t cpu_int1_enable[NBANKS];
+	uint64_t cpu_int2_enable[NBANKS];
 
 	void *cpu_wdog_sih;		// wdog softint handler
 	uint64_t cpu_wdog;
