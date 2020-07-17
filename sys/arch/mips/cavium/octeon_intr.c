@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_intr.c,v 1.16 2020/07/17 17:57:16 jmcneill Exp $	*/
+/*	$NetBSD: octeon_intr.c,v 1.17 2020/07/17 19:40:47 jmcneill Exp $	*/
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.16 2020/07/17 17:57:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.17 2020/07/17 19:40:47 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -171,6 +171,22 @@ struct octeon_intrhand ipi_intrhands[2] = {
 		.ih_irq = CIU_INT_MBOX_31_16,
 		.ih_ipl = IPL_HIGH,
 	},
+};
+
+#define	OCTEON_IPI_SCHED(n)	__BIT((n) + 0)
+#define	OCTEON_IPI_HIGH(n)	__BIT((n) + 16)
+
+static uint64_t octeon_ipi_mask[NIPIS] = {
+	[IPI_NOP]		= OCTEON_IPI_SCHED(IPI_NOP),
+	[IPI_AST]		= OCTEON_IPI_SCHED(IPI_AST),
+	[IPI_SHOOTDOWN]		= OCTEON_IPI_SCHED(IPI_SHOOTDOWN),
+	[IPI_SYNCICACHE]	= OCTEON_IPI_SCHED(IPI_SYNCICACHE),
+	[IPI_KPREEMPT]		= OCTEON_IPI_SCHED(IPI_KPREEMPT),
+	[IPI_SUSPEND]		= OCTEON_IPI_HIGH(IPI_SUSPEND),
+	[IPI_HALT]		= OCTEON_IPI_HIGH(IPI_HALT),
+	[IPI_XCALL]		= OCTEON_IPI_HIGH(IPI_XCALL),
+	[IPI_GENERIC]		= OCTEON_IPI_HIGH(IPI_GENERIC),
+	[IPI_WDOG]		= OCTEON_IPI_HIGH(IPI_WDOG),
 };
 #endif
 
@@ -592,9 +608,6 @@ octeon_ipi_intr(void *arg)
 
 	mips3_sd(cpu->cpu_mbox_clr, ipi_mask);
 
-	ipi_mask |= (ipi_mask >> 16);
-	ipi_mask &= __BITS(15,0);
-
 	KASSERT(ipi_mask < __BIT(NIPIS));
 
 #if NWDOG > 0
@@ -641,14 +654,12 @@ octeon_send_ipi(struct cpu_info *ci, int req)
 		return -1;
 
 	struct cpu_softc * const cpu = ci->ci_softc;
-	uint64_t ipi_mask = __BIT(req);
+	const uint64_t ipi_mask = octeon_ipi_mask[req];
 
 	atomic_or_64(&ci->ci_request_ipis, ipi_mask);
-	if (req == IPI_SUSPEND || req == IPI_WDOG) {
-		ipi_mask <<= 16;
-	}
 
 	mips3_sd(cpu->cpu_mbox_set, ipi_mask);
+
 	return 0;
 }
 #endif	/* MULTIPROCESSOR */
