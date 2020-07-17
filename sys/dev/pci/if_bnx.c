@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.102 2020/07/17 09:48:21 jdolecek Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.103 2020/07/17 09:51:31 jdolecek Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.102 2020/07/17 09:48:21 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.103 2020/07/17 09:51:31 jdolecek Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -4085,6 +4085,9 @@ bnx_alloc_pkts(struct work * unused, void * arg)
 		    &pkt->pkt_dmamap) != 0)
 			goto put;
 
+		if (!ISSET(ifp->if_flags, IFF_UP))
+			goto stopping;
+
 		mutex_enter(&sc->tx_pkt_mtx);
 		TAILQ_INSERT_TAIL(&sc->tx_free_pkts, pkt, pkt_entry);
 		sc->tx_pkt_count++;
@@ -4104,6 +4107,8 @@ bnx_alloc_pkts(struct work * unused, void * arg)
 
 	return;
 
+stopping:
+	bus_dmamap_destroy(sc->bnx_dmatag, pkt->pkt_dmamap);
 put:
 	pool_put(bnx_tx_pool, pkt);
 	return;
@@ -5178,10 +5183,8 @@ retry:
 	bus_dmamap_sync(sc->bnx_dmatag, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 	/* Make sure there's room in the chain */
-	if (map->dm_nsegs > (sc->max_tx_bd - sc->used_tx_bd)) {
-		error = ENOMEM;
+	if (map->dm_nsegs > (sc->max_tx_bd - sc->used_tx_bd))
 		goto nospace;
-	}
 
 	/* prod points to an empty tx_bd at this point. */
 	prod_bseq = sc->tx_prod_bseq;
@@ -5260,7 +5263,7 @@ maperr:
 	TAILQ_INSERT_TAIL(&sc->tx_free_pkts, pkt, pkt_entry);
 	mutex_exit(&sc->tx_pkt_mtx);
 
-	return error;
+	return ENOMEM;
 }
 
 /****************************************************************************/
