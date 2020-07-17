@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.243 2020/05/16 18:31:47 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.244 2020/07/17 15:34:17 kamil Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -8,8 +8,8 @@
 SRCS+=	cpuset.c
 # glue to offer userland wrappers for some syscalls
 SRCS+=	accept4.c clock_getcpuclockid.c posix_fadvise.c posix_madvise.c \
-	sched.c sigqueue.c sigtimedwait.c sigwait.c sigwaitinfo.c statvfs.c \
-	swapon.c semctl.c vadvise.c
+	ppoll.c sched.c sigqueue.c sigtimedwait.c sigwait.c sigwaitinfo.c \
+	statvfs.c swapon.c semctl.c vadvise.c
 
 .if ${RUMPRUN} != "yes"
 # modules with non-default implementations on at least one architecture:
@@ -359,7 +359,7 @@ MLINKS+=mount.2 unmount.2
 MLINKS+=open.2 openat.2
 MLINKS+=ntp_adjtime.2 ntp_gettime.2
 MLINKS+=pathconf.2 fpathconf.2
-MLINKS+=poll.2 pollts.2
+MLINKS+=poll.2 pollts.2 poll.2 ppoll.2
 MLINKS+=read.2 readv.2 read.2 pread.2 read.2 preadv.2
 MLINKS+=readlink.2 readlinkat.2
 MLINKS+=recv.2 recvfrom.2 recv.2 recvmsg.2 recv.2 recvmmsg.2

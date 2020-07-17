@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.65 2020/06/17 22:07:21 rin Exp $
+# $NetBSD: Makefile,v 1.66 2020/07/17 15:34:16 kamil Exp $
 
 MKMAN=	no
 
@@ -53,7 +53,9 @@ TESTS_C+=		t_nanosleep
 TESTS_C+=		t_pipe
 TESTS_C+=		t_pipe2
 TESTS_C+=		t_poll
+TESTS_C+=		t_pollts
 TESTS_C+=		t_posix_fallocate
+TESTS_C+=		t_ppoll
 TESTS_C+=		t_ptrace
 TESTS_C+=		t_ptrace_sigchld
 TESTS_C+=		t_ptrace_wait

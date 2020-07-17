@@ -1,6 +1,6 @@
-.\"	$NetBSD: poll.2,v 1.30 2019/05/06 06:56:36 wiz Exp $
+.\"	$NetBSD: poll.2,v 1.31 2020/07/17 15:34:17 kamil Exp $
 .\"
-.\" Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1998, 2005, 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,11 +27,11 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 5, 2019
+.Dd May 25, 2020
 .Dt POLL 2
 .Os
 .Sh NAME
-.Nm poll, pollts
+.Nm poll, pollts, ppoll
 .Nd synchronous I/O multiplexing
 .Sh LIBRARY
 .Lb libc
@@ -44,10 +44,16 @@
 .In time.h
 .Ft int
 .Fn pollts "struct pollfd * restrict fds" "nfds_t nfds" "const struct timespec * restrict ts" "const sigset_t * restrict sigmask"
+.In poll.h
+.In signal.h
+.In time.h
+.Ft int
+.Fn ppoll "struct pollfd * restrict fds" "nfds_t nfds" "const struct timespec * restrict ts" "const sigset_t * restrict sigmask"
 .Sh DESCRIPTION
-.Fn poll
-and
+.Fn poll ,
 .Fn pollts
+and
+.Fn ppoll
 examine a set of file descriptors to see if some of them are ready for
 I/O.
 The
@@ -161,17 +167,23 @@ If
 .Fa ts
 is a null pointer,
 .Fn pollts
+and
+.Fn ppoll
 blocks indefinitely.
 If
 .Fa ts
 is a non-null pointer, referencing a zero-valued timespec structure, then
 .Fn pollts
+and
+.Fn ppoll
 will return without blocking.
 .Pp
 If
 .Fa sigmask
 is a non-null pointer, then the
 .Fn pollts
+and
+.Fn ppoll
 function shall replace the signal mask of the caller by the set of
 signals pointed to by
 .Fa sigmask
@@ -206,6 +218,12 @@ bitmask to the
 bitmask.
 Attempting to perform I/O on this descriptor will then return an error.
 This behaviour is believed to be more useful.
+.Pp
+The
+.Fn ppoll
+function is an wrapper for 
+.Fn pollts
+to provide compatiblity with the Linux implementation.
 .Sh ERRORS
 An error return from
 .Fn poll
@@ -239,6 +257,10 @@ The
 .Fn pollts
 function first appeared in
 .Nx 3.0 .
+The
+.Fn ppoll
+function first appeared in
+.Nx 10.0 .
 .Sh BUGS
 The distinction between some of the fields in the
 .Fa events
