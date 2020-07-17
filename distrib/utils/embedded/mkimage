@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.74 2020/05/24 18:43:39 jmcneill Exp $
+# $NetBSD: mkimage,v 1.75 2020/07/17 15:16:34 jmcneill Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -284,7 +284,7 @@ if $gpt; then
 
 	echo ${bar} Creating partitions ${bar}
 	${GPT} ${gpt_flags} ${image} create ${gpt_create_flags}
-	${GPT} ${gpt_flags} ${image} add -b ${initsecs} -s ${bootsecs} -l ${gpt_label_efi:-EFI} -t efi
+	${GPT} ${gpt_flags} ${image} add -b ${initsecs} -s ${bootsecs} -l ${gpt_label_boot:-EFI} -t ${gpt_boot_type:-efi}
 	${GPT} ${gpt_flags} ${image} set -a required -i 1
 	${GPT} ${gpt_flags} ${image} add -a 4m -b ${ffsstart} -l ${gpt_label_ffs:-netbsd-root} -t ffs
 	${GPT} ${gpt_flags} ${image} show
