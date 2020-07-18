@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.282 2020/06/06 20:28:42 wiz Exp $
+.\"	$NetBSD: make.1,v 1.283 2020/07/18 21:37:38 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd June 5, 2020
+.Dd July 18, 2020
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -166,6 +166,8 @@ Print the input graph after making everything, or before exiting
 on error.
 .It Ar "g3"
 Print the input graph before exiting on error.
+.It Ar h
+Print debugging information about hash table operations.
 .It Ar j
 Print debugging information about running multiple shells.
 .It Ar l
