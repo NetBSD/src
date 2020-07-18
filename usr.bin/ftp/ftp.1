@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.141 2020/07/15 19:23:44 uwe Exp $
+.\" 	$NetBSD: ftp.1,v 1.142 2020/07/18 03:00:37 lukem Exp $
 .\"
 .\" Copyright (c) 1996-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd July 15, 2020
+.Dd July 18, 2020
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -65,7 +65,7 @@
 .Nd Internet file transfer program
 .Sh SYNOPSIS
 .Nm
-.Op Fl 46AadefginpRtVv
+.Op Fl 46AadefginpRtVv?
 .Op Fl N Ar netrc
 .Op Fl o Ar output
 .Op Fl P Ar port
@@ -121,7 +121,7 @@
 .Ar host Oo Li \&: Ar port Oc
 .Li / Ar path
 .Op Li /
-.Op Li ;type= Ar X
+.Op Li ;type= Ar type
 .Oc
 .Sm on
 .Ek
@@ -130,6 +130,19 @@
 .Sm off
 .Oo
 .Li http://
+.Oo Ar user
+.Op Li \&: Ar password
+.Li \&@ Oc
+.Ar host Oo Li \&: Ar port Oc
+.Li / Ar path
+.Oc
+.Sm on
+.Ek
+.Bk -words
+.\" [https://[user[:password]@]host[:port]/path]
+.Sm off
+.Oo
+.Li https://
 .Oo Ar user
 .Op Li \&: Ar password
 .Li \&@ Oc
@@ -316,6 +329,8 @@ Set the size of the socket send and receive buffers to
 Refer to
 .Ic xferbuf
 for more information.
+.It Fl ?
+Display help to stdout, and exit.
 .El
 .Pp
 The client host with which
@@ -1581,10 +1596,10 @@ of
 in the current directory.
 Otherwise, the full remote name is used as the local name,
 relative to the local root directory.
-.\" ftp://[user[:password]@]host[:port]/path[/][;type=X]
+.\" ftp://[user[:password]@]host[:port]/path[/][;type=type]
 .It Li ftp:// Ns Oo Ar user Ns Oo Ns Li \&: Ns Ar password Oc Ns Li \&@ Oc \
 Ns Ar host Ns Oo Li \&: Ns Ar port Oc Ns Li / Ns Ar path Ns Oo Li / Oc \
-Ns Oo Li ;type= Ns Ar X Oc
+Ns Oo Li ;type= Ns Ar type Oc
 An
 .Tn FTP
 URL, retrieved using the
