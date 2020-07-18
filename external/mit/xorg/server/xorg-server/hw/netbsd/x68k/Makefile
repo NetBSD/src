@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2020/07/18 15:26:30 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.7 2020/07/18 16:07:15 tsutsui Exp $
 
 .include <bsd.own.mk>
 
@@ -63,7 +63,7 @@ LDADD+= ${LDADD.dix} \
 	${LDADD.miext/damage} \
 	${LDADD.miext/sync} \
 	${LDADD.Xi} \
-	-lXfont \
+	-lXfont2 \
 	-lpixman-1 \
 	-lXext \
 	-lX11 \
@@ -84,7 +84,7 @@ DPADD+= ${LDADD.dix} \
 	${DPADD.miext/damage} \
 	${DPADD.miext/sync} \
 	${DPADD.Xi} \
-	${LIBXFONT} \
+	${LIBXFONT2} \
 	${LIBPIXMAN-1} \
 	${LIBXEXT} \
 	${LIBX11} \
