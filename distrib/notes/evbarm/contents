@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.9 2020/07/18 16:41:14 nia Exp $
+.\"	$NetBSD: contents,v 1.10 2020/07/18 17:20:59 nia Exp $
 .\"
 .\" Copyright (c) 1999-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,6 +61,8 @@ operating system for a range of 64-bit devices (includes a GENERIC64 kernel).
 A gzipped writable image containing the complete 32-bit
 .Nx
 operating system for Raspberry Pi variants only (includes RPI kernels).
+.			It Pa *.dtb.gz
+Gzipped board-specific device trees.
 .		tag) \" binary/gzimg/
 .		It Pa kernel/
 .		(tag netbsd.gz -compact \" binary/kernel
@@ -91,9 +93,12 @@ see below.
 root file systems for expert usage.
 .
 .		It Pa misc/
-.
-Miscellaneous \*M installation utilities; see
-installation section below.
+.		(tag bootaa64.efi -compact \" misc/bootaa64.efi
+.			It Pa bootaa64.efi
+.			(tag bootaa64.efi -compact \" misc/bootaa64.efi
+AArch64 EFI bootloader
+.			tag) \" misc/bootaa64.efi
+.		tag) \" misc/bootaa64.efi
 .
 .	tag) \" installation/
 .
