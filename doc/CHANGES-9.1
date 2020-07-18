@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.81 2020/07/17 15:31:20 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.82 2020/07/18 15:10:21 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -3481,4 +3481,10 @@ sys/dev/pci/radeonfbvar.h			1.21
 
 	Reduce stack usage in radeonfb_pickres() and radeonfb_set_cursor().
 	[macallan, ticket #1019]
+
+sys/dev/usb/usbdi.c				1.203
+
+	Avoid a diagnostic assertion for inconsistent USB transfer
+	states.
+	[mrg, ticket #1020]
 
