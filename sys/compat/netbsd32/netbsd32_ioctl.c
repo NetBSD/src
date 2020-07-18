@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.112 2020/03/16 01:37:51 christos Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.113 2020/07/18 12:46:19 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.112 2020/03/16 01:37:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.113 2020/07/18 12:46:19 jmcneill Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -1425,6 +1425,8 @@ netbsd32_ioctl(struct lwp *l,
 
 	case BIOCSETF32:
 		IOCTL_STRUCT_CONV_TO(BIOCSETF, bpf_program);
+	case BIOCSETWF32:
+		IOCTL_STRUCT_CONV_TO(BIOCSETWF, bpf_program);
 	case BIOCSTCPF32:
 		IOCTL_STRUCT_CONV_TO(BIOCSTCPF, bpf_program);
 	case BIOCSUDPF32:
