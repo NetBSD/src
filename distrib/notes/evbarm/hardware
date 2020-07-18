@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.13 2020/07/18 18:09:42 nia Exp $
+.\"	$NetBSD: hardware,v 1.14 2020/07/18 18:11:46 nia Exp $
 .\"
 .\" Copyright (c) 2001-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 is also supported.
 .Bl -bullet -offset indent -compact
 .It
-Allwinner A10, A13, A20, A32, A80, A83T, H3 (Cubieboard, OLinuXino, LeMaker Banana Pi...)
+Allwinner A10, A13, A20, A32, A80, A83T, H3 (e.g. Cubieboard, OLinuXino, LeMaker Banana Pi...)
 .It
 Amlogic S805 (e.g. ODROID-C1)
 .It
