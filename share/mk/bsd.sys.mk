@@ -234,7 +234,11 @@ CPUFLAGS+=	-Wa,--fatal-warnings
 #CPUFLAGS+=	-mno-abicalls -fno-PIC
 #.endif
 CFLAGS+=	${CPUFLAGS}
+
+# GNU assembler doesn't like some m68k flags, esp. for kernel locore.s, etc.
+.if ${MACHINE_CPU} != "m68k"
 AFLAGS+=	${CPUFLAGS}
+.endif
 
 .if ${KCOV:U0} > 0
 KCOVFLAGS=	-fsanitize-coverage=trace-pc,trace-cmp

@@ -63,9 +63,6 @@ TOOLCHAIN_MISSING?=	no
 #
 # What GCC is used?
 #
-.if ${MACHINE_CPU} == "m68k"
-HAVE_GCC?=	7
-.endif
 HAVE_GCC?=	8
 
 #
@@ -163,7 +160,7 @@ EXTERNAL_GDB_SUBDIR=		/does/not/exist
     ${MACHINE_ARCH} == "powerpc64" || ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_CPU} == "aarch64" || ${MACHINE_CPU} == "arm" || \
     ${MACHINE_ARCH} == "hppa" || ${MACHINE_ARCH} == "sparc64" || \
-    ${MACHINE} == "sun2" || ${MACHINE} == "alpha"
+    ${MACHINE_CPU} == "m68k" || ${MACHINE} == "alpha"
 HAVE_BINUTILS?=	234
 .else
 HAVE_BINUTILS?=	231
