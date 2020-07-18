@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.182.4.4 2020/04/03 12:27:55 martin Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.182.4.5 2020/07/18 15:09:28 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.182.4.4 2020/04/03 12:27:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.182.4.5 2020/07/18 15:09:28 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -337,6 +337,9 @@ usbd_transfer(struct usbd_xfer *xfer)
 		USBHIST_LOG(usbdebug, "xfer failed: %s, reinserting",
 		    err, 0, 0, 0);
 		usbd_lock_pipe(pipe);
+#ifdef DIAGNOSTIC
+		xfer->ux_state = XFER_BUSY;
+#endif
 		SIMPLEQ_REMOVE_HEAD(&pipe->up_queue, ux_next);
 		if (pipe->up_serialise)
 			usbd_start_next(pipe);
@@ -892,6 +895,9 @@ usbd_ar_pipe(struct usbd_pipe *pipe)
 		    "(methods = %#jx)", (uintptr_t)pipe, (uintptr_t)xfer,
 		    (uintptr_t)pipe->up_methods, 0);
 		if (xfer->ux_status == USBD_NOT_STARTED) {
+#ifdef DIAGNOSTIC
+			xfer->ux_state = XFER_BUSY;
+#endif
 			SIMPLEQ_REMOVE_HEAD(&pipe->up_queue, ux_next);
 		} else {
 			/* Make the HC abort it (and invoke the callback). */
