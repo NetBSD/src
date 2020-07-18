@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.109 2020/07/02 15:14:38 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.110 2020/07/18 21:37:38 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -465,6 +465,7 @@ extern int debug;
 #define DEBUG_ERROR	0x01000
 #define DEBUG_LOUD	0x02000
 #define DEBUG_META	0x04000
+#define DEBUG_HASH	0x08000
 
 #define DEBUG_GRAPH3	0x10000
 #define DEBUG_SCRIPT	0x20000
