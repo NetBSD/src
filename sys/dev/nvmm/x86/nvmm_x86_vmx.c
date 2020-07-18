@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.62 2020/07/14 00:45:53 yamaguchi Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.63 2020/07/18 20:56:53 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.62 2020/07/14 00:45:53 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.63 2020/07/18 20:56:53 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1921,6 +1921,7 @@ vmx_vcpu_guest_misc_enter(struct nvmm_cpu *vcpu)
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
 
 	/* This gets restored automatically by the CPU. */
+	vmx_vmwrite(VMCS_HOST_IDTR_BASE, (uint64_t)curcpu()->ci_idtvec.iv_idt);
 	vmx_vmwrite(VMCS_HOST_FS_BASE, rdmsr(MSR_FSBASE));
 	vmx_vmwrite(VMCS_HOST_CR3, rcr3());
 	vmx_vmwrite(VMCS_HOST_CR4, rcr4());
@@ -2698,8 +2699,7 @@ vmx_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	struct vmcs *vmcs = cpudata->vmcs;
 	struct msr_entry *gmsr = cpudata->gmsr;
 	extern uint8_t vmx_resume_rip;
-	uint64_t rev, eptp, idt;
-	struct cpu_info *ci;
+	uint64_t rev, eptp;
 
 	rev = vmx_get_revision();
 
@@ -2766,9 +2766,6 @@ vmx_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	vmx_vmwrite(VMCS_CR4_MASK, CR4_VMXE);
 
 	/* Set the Host state for resuming. */
-	ci = curcpu();
-	idt = (uint64_t)ci->ci_idtvec.iv_idt;
-
 	vmx_vmwrite(VMCS_HOST_RIP, (uint64_t)&vmx_resume_rip);
 	vmx_vmwrite(VMCS_HOST_CS_SELECTOR, GSEL(GCODE_SEL, SEL_KPL));
 	vmx_vmwrite(VMCS_HOST_SS_SELECTOR, GSEL(GDATA_SEL, SEL_KPL));
@@ -2779,7 +2776,6 @@ vmx_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	vmx_vmwrite(VMCS_HOST_IA32_SYSENTER_CS, 0);
 	vmx_vmwrite(VMCS_HOST_IA32_SYSENTER_ESP, 0);
 	vmx_vmwrite(VMCS_HOST_IA32_SYSENTER_EIP, 0);
-	vmx_vmwrite(VMCS_HOST_IDTR_BASE, idt);
 	vmx_vmwrite(VMCS_HOST_IA32_PAT, rdmsr(MSR_CR_PAT));
 	vmx_vmwrite(VMCS_HOST_IA32_EFER, rdmsr(MSR_EFER));
 	vmx_vmwrite(VMCS_HOST_CR0, rcr0() & ~CR0_TS);
