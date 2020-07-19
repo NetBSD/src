@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.261 2020/07/19 13:21:56 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.262 2020/07/19 14:05:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.261 2020/07/19 13:21:56 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.262 2020/07/19 14:05:39 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.261 2020/07/19 13:21:56 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.262 2020/07/19 14:05:39 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2302,8 +2302,6 @@ typedef struct {
     const char *cp;		/* Secondary pointer into str (place marker
 				 * for tstr) */
     char termc;			/* Character which terminated scan */
-    int cnt;			/* Used to count brace pairs when variable in
-				 * in parens or braces */
     char delim;
     int modifier;		/* that we are processing */
     Var_Parse_State parsestate;	/* Flags passed to helper functions */
@@ -3244,16 +3242,16 @@ ApplyModifier_SysV(ApplyModifiersState *st)
      * it must be: <string1>=<string2>)
      */
     st->cp = st->tstr;
-    st->cnt = 1;
-    while (*st->cp != '\0' && st->cnt) {
+    int nest = 1;
+    while (*st->cp != '\0' && nest > 0) {
 	if (*st->cp == '=') {
 	    eqFound = TRUE;
 	    /* continue looking for st->endc */
 	} else if (*st->cp == st->endc)
-	    st->cnt--;
+	    nest--;
 	else if (*st->cp == st->startc)
-	    st->cnt++;
-	if (st->cnt)
+	    nest++;
+	if (nest > 0)
 	    st->cp++;
     }
     if (*st->cp != st->endc || !eqFound)
@@ -3388,7 +3386,7 @@ ApplyModifiers(char *nstr, const char *tstr,
     ApplyModifiersState st = {
 	startc, endc, v, ctxt, flags, lengthPtr, freePtr,
 	nstr, tstr, tstr, tstr,
-	'\0', 0, '\0', 0, {' ', FALSE}, NULL
+	'\0', '\0', 0, {' ', FALSE}, NULL
     };
 
     while (*st.tstr && *st.tstr != st.endc) {
