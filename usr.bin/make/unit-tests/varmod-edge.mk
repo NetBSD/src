@@ -1,4 +1,4 @@
-# $NetBSD: varmod-edge.mk,v 1.7 2020/04/27 14:07:22 christos Exp $
+# $NetBSD: varmod-edge.mk,v 1.8 2020/07/19 16:08:24 rillig Exp $
 #
 # Tests for edge cases in variable modifiers.
 #
@@ -143,8 +143,8 @@ INP.eq-bs=	file.c file.c=%.o
 MOD.eq-bs=	${INP.eq-bs:%.c\=%.o=%.ext}
 EXP.eq-bs=	file.c file.ext
 
-# Having only an escaped = results in a parse error.
-# The call to "pattern.lhs = VarGetPattern" fails.
+# Having only an escaped '=' results in a parse error.
+# The call to "pattern.lhs = ParseModifierPart" fails.
 TESTS+=		eq-esc
 INP.eq-esc=	file.c file...
 MOD.eq-esc=	${INP.eq-esc:a\=b}

@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.264 2020/07/19 15:51:51 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.265 2020/07/19 16:08:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.264 2020/07/19 15:51:51 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.265 2020/07/19 16:08:24 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.264 2020/07/19 15:51:51 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.265 2020/07/19 16:08:24 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -243,9 +243,9 @@ typedef enum {
     VARP_MATCH_START	= 0x08,	/* Match at start of word */
     VARP_MATCH_END	= 0x10,	/* Match at end of word */
 
-    /* FIXME: This constant doesn't belong here. It is not related to
-     * pattern matching, and VarGetPattern is badly named as well. */
-    VAR_NOSUBST	= 0x20		/* don't expand vars in VarGetPattern */
+    /* FIXME: This constant doesn't belong here.
+     * It is not related to pattern matching. */
+    VAR_NOSUBST	= 0x20		/* don't expand vars in ParseModifierPart */
 } VarPatternFlags;
 
 typedef enum {
@@ -2023,30 +2023,23 @@ VarRange(const char *str, int ac)
 
 
 /*-
- *-----------------------------------------------------------------------
- * VarGetPattern --
- *	During the parsing of a part of a modifier such as :S or :@,
- *	pass through the tstr looking for 1) escaped delimiters,
- *	'$'s and backslashes (place the escaped character in
- *	uninterpreted) and 2) unescaped $'s that aren't before
- *	the delimiter (expand the variable substitution unless flags
- *	has VAR_NOSUBST set).
- *	Return the expanded string or NULL if the delimiter was missing
- *	If pattern is specified, handle escaped ampersands, and replace
- *	unescaped ampersands with the lhs of the pattern.
+ * Parse a text part of a modifier such as the "from" and "to" in :S/from/to/
+ * or the :@ modifier. Nested variables in the text are expanded unless
+ * VAR_NOSUBST is set.
  *
- * Results:
- *	A string of all the words modified appropriately.
- *	If length is specified, return the string length of the buffer
- *	If flags is specified and the last character of the pattern is a
- *	$ set the VAR_MATCH_END bit of flags.
+ * The text part is parsed until the next delimiter.  To escape the delimiter,
+ * a backslash or a dollar, put a backslash before it.
  *
- * Side Effects:
- *	None.
- *-----------------------------------------------------------------------
+ * Return the expanded string or NULL if the delimiter was missing.
+ * If pattern is specified, handle escaped ampersands and replace unescaped
+ * ampersands with the lhs of the pattern (for the :S and :C modifiers).
+ *
+ * If length is specified, return the string length of the buffer.
+ * If mpflags is specified and the last character of the pattern is a $,
+ * set the VARP_MATCH_END bit of mpflags.
  */
 static char *
-VarGetPattern(GNode *ctxt, Var_Parse_State *vpstate MAKE_ATTR_UNUSED,
+ParseModifierPart(GNode *ctxt, Var_Parse_State *vpstate MAKE_ATTR_UNUSED,
 	      VarEvalFlags eflags, const char **tstr, int delim,
 	      VarPatternFlags *mpflags, int *length, VarPattern *pattern)
 {
@@ -2324,13 +2317,13 @@ ApplyModifier_At(ApplyModifiersState *st) {
 
     st->cp = ++st->tstr;
     st->delim = '@';
-    loop.tvar = VarGetPattern(
+    loop.tvar = ParseModifierPart(
 	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
 	&pflags, &loop.tvarLen, NULL);
     if (loop.tvar == NULL)
 	return FALSE;
 
-    loop.str = VarGetPattern(
+    loop.str = ParseModifierPart(
 	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
 	&pflags, &loop.strLen, NULL);
     if (loop.str == NULL)
@@ -2506,7 +2499,7 @@ ApplyModifier_Exclam(ApplyModifiersState *st)
     st->delim = '!';
     emsg = NULL;
     st->cp = ++st->tstr;
-    pattern.rhs = VarGetPattern(
+    pattern.rhs = ParseModifierPart(
 	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
 	NULL, &pattern.rightLen, NULL);
     if (pattern.rhs == NULL)
@@ -2658,13 +2651,13 @@ ApplyModifier_Subst(ApplyModifiersState *st)
     }
 
     st->cp = st->tstr;
-    pattern.lhs = VarGetPattern(
+    pattern.lhs = ParseModifierPart(
 	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
 	&pattern.pflags, &pattern.leftLen, NULL);
     if (pattern.lhs == NULL)
 	return FALSE;
 
-    pattern.rhs = VarGetPattern(
+    pattern.rhs = ParseModifierPart(
 	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
 	NULL, &pattern.rightLen, &pattern);
     if (pattern.rhs == NULL)
@@ -2718,13 +2711,13 @@ ApplyModifier_Regex(ApplyModifiersState *st)
 
     st->cp = st->tstr;
 
-    re = VarGetPattern(
+    re = ParseModifierPart(
 	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
 	NULL, NULL, NULL);
     if (re == NULL)
 	return FALSE;
 
-    pattern.replace = VarGetPattern(
+    pattern.replace = ParseModifierPart(
 	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
 	NULL, NULL, NULL);
     if (pattern.replace == NULL) {
@@ -2900,7 +2893,7 @@ ApplyModifier_Words(ApplyModifiersState *st)
 
     st->cp = st->tstr + 1;	/* point to char after '[' */
     st->delim = ']';		/* look for closing ']' */
-    estr = VarGetPattern(
+    estr = ParseModifierPart(
 	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
 	NULL, NULL, NULL);
     if (estr == NULL)
@@ -3063,7 +3056,7 @@ ApplyModifier_IfElse(ApplyModifiersState *st)
 
     st->cp = ++st->tstr;
     st->delim = ':';
-    char *then_expr = VarGetPattern(
+    char *then_expr = ParseModifierPart(
 	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
 	&then_flags, NULL, NULL);
     if (then_expr == NULL)
@@ -3071,7 +3064,7 @@ ApplyModifier_IfElse(ApplyModifiersState *st)
 
     /* BROPEN or PROPEN */
     st->delim = st->endc;
-    char *else_expr = VarGetPattern(
+    char *else_expr = ParseModifierPart(
 	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
 	&else_flags, NULL, NULL);
     if (else_expr == NULL)
@@ -3121,7 +3114,7 @@ ApplyModifier_Assign(ApplyModifiersState *st)
 	if (st->v->flags & VAR_JUNK) {
 	    /*
 	     * We need to bmake_strdup() it incase
-	     * VarGetPattern() recurses.
+	     * ParseModifierPart() recurses.
 	     */
 	    sv_name = st->v->name;
 	    st->v->name = bmake_strdup(st->v->name);
@@ -3147,7 +3140,7 @@ ApplyModifier_Assign(ApplyModifiersState *st)
 	pattern.pflags = 0;
 
 	pflags = (st->flags & VARE_WANTRES) ? 0 : VAR_NOSUBST;
-	pattern.rhs = VarGetPattern(
+	pattern.rhs = ParseModifierPart(
 	    st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
 	    &pflags, &pattern.rightLen, NULL);
 	if (st->v->flags & VAR_JUNK) {
@@ -3258,14 +3251,14 @@ ApplyModifier_SysV(ApplyModifiersState *st)
     /* FIXME: There's no point in having a single $ at the end of a
      * SysV substitution since that will not be interpreted as an
      * anchor anyway. */
-    pattern.lhs = VarGetPattern(
+    pattern.lhs = ParseModifierPart(
 	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
 	&pattern.pflags, &pattern.leftLen, NULL);
     if (pattern.lhs == NULL)
 	return 'c';
 
     st->delim = st->endc;
-    pattern.rhs = VarGetPattern(
+    pattern.rhs = ParseModifierPart(
 	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
 	NULL, &pattern.rightLen, &pattern);
     if (pattern.rhs == NULL)
