@@ -1,4 +1,4 @@
-.\"	$NetBSD: brconfig.8,v 1.19 2020/07/19 14:39:42 maxv Exp $
+.\"	$NetBSD: brconfig.8,v 1.20 2020/07/19 14:43:35 wiz Exp $
 .\"
 .\" Copyright 2001 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -84,7 +84,6 @@ All other operations require that a bridge be specified.
 If a bridge is specified with no sub-commands,
 the status of that bridge is displayed.
 The following sub-commands are available:
-.Pp
 .Bl -tag -width indent
 .It Cm up
 Start forwarding packets on the bridge.
@@ -256,8 +255,8 @@ create
 .Xr bridge 4 ,
 .Xr pf 4 ,
 .Xr ifconfig.if 5 ,
-.Xr ifconfig 8 ,
 .Xr npf 7 ,
+.Xr ifconfig 8 ,
 .Xr pfil 9
 .Sh HISTORY
 The
