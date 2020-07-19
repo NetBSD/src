@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.13 2020/07/19 15:16:22 rillig Exp $
+# $Id: modmisc.mk,v 1.14 2020/07/19 17:24:22 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -18,6 +18,7 @@ MOD_SEP=S,:, ,g
 all:	modvar modvarloop modsysv mod-HTE emptyvar undefvar
 all:	mod-S mod-C mod-at-varname mod-at-resolve mod-at-dollar
 all:	mod-subst-dollar mod-loop-dollar
+all:	mod-C-limits
 
 modsysv:
 	@echo "The answer is ${libfoo.a:L:libfoo.a=42}"
@@ -133,3 +134,11 @@ mod-loop-dollar:
 	@echo $@:${:U4:@word@$$$${word}$$$$@:Q}:
 	@echo $@:${:U5:@word@$$$$${word}$$$$$@:Q}:
 	@echo $@:${:U6:@word@$$$$$${word}$$$$$$@:Q}:
+
+mod-C-limits:
+	@echo $@:00-ok:${:U1 23 456:C,..,\0\0,:Q}
+	@echo $@:11-missing:${:U1 23 456:C,..,\1\1,:Q}
+	@echo $@:11-ok:${:U1 23 456:C,(.).,\1\1,:Q}
+	@echo $@:22-missing:${:U1 23 456:C,..,\2\2,:Q}
+	@echo $@:22-missing:${:U1 23 456:C,(.).,\2\2,:Q}
+	@echo $@:22-ok:${:U1 23 456:C,(.)(.),\2\2,:Q}
