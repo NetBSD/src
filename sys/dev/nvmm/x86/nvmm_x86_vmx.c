@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.63 2020/07/18 20:56:53 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.64 2020/07/19 06:36:37 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.63 2020/07/18 20:56:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.64 2020/07/19 06:36:37 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,6 +176,18 @@ vmx_vmclear(paddr_t *pa)
 		: [pa] "m" (*pa)
 		: "memory", "cc"
 	);
+}
+
+static inline void
+vmx_cli(void)
+{
+	asm volatile ("cli" ::: "memory");
+}
+
+static inline void
+vmx_sti(void)
+{
+	asm volatile ("sti" ::: "memory");
 }
 
 #define MSR_IA32_FEATURE_CONTROL	0x003A
@@ -2043,7 +2055,7 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	uint64_t exitcode;
 	uint64_t intstate;
 	uint64_t machgen;
-	int hcpu, s, ret;
+	int hcpu, ret;
 	bool launched;
 
 	vmx_vmcs_enter(vcpu);
@@ -2088,7 +2100,7 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 			cpudata->gtsc_want_update = false;
 		}
 
-		s = splhigh();
+		vmx_cli();
 		machgen = vmx_htlb_flush(machdata, cpudata);
 		lcr2(cpudata->gcr2);
 		if (launched) {
@@ -2098,7 +2110,7 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		}
 		cpudata->gcr2 = rcr2();
 		vmx_htlb_flush_ack(cpudata, machgen);
-		splx(s);
+		vmx_sti();
 
 		if (__predict_false(ret != 0)) {
 			vmx_exit_invalid(exit, -1);

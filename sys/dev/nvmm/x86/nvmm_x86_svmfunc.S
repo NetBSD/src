@@ -1,7 +1,7 @@
-/*	$NetBSD: nvmm_x86_svmfunc.S,v 1.3 2019/04/24 18:45:15 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svmfunc.S,v 1.4 2020/07/19 06:36:37 maxv Exp $	*/
 
 /*
- * Copyright (c) 2018 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -136,9 +136,6 @@ ENTRY(svm_vmrun)
 	/* Save the Host GPRs. */
 	HOST_SAVE_GPRS
 
-	/* Disable Host interrupts. */
-	clgi
-
 	/* Save the Host TR. */
 	HOST_SAVE_TR
 
@@ -188,9 +185,6 @@ ENTRY(svm_vmrun)
 
 	/* Restore the Host TR. */
 	HOST_RESTORE_TR
-
-	/* Enable Host interrupts. */
-	stgi
 
 	/* Restore the Host GPRs. */
 	HOST_RESTORE_GPRS
