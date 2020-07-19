@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.18 2017/08/12 07:21:57 maxv Exp $	*/
+/*	$NetBSD: linux_exec_machdep.c,v 1.19 2020/07/19 13:55:08 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,11 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.18 2017/08/12 07:21:57 maxv Exp $");
-
-#if defined(_KERNEL_OPT)
-#include "opt_user_ldt.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.19 2020/07/19 13:55:08 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

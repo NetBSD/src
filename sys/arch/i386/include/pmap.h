@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.125 2020/05/15 22:17:45 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.126 2020/07/19 13:55:09 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -64,7 +64,6 @@
 #define	_I386_PMAP_H_
 
 #if defined(_KERNEL_OPT)
-#include "opt_user_ldt.h"
 #include "opt_xen.h"
 #endif
 
