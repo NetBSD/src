@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.57 2020/05/15 07:42:58 jdolecek Exp $	*/
+/*	$NetBSD: intr.h,v 1.58 2020/07/19 14:27:07 jdolecek Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -72,6 +72,7 @@ int xen_intr_biglock_wrapper(void *);
 
 #if defined(DOM0OPS) || NPCI > 0
 int xen_pic_to_gsi(struct pic *, int);
+int xen_pci_msi_probe(struct pic *, int);
 #endif /* defined(DOM0OPS) || NPCI > 0 */
 
 #ifdef MULTIPROCESSOR

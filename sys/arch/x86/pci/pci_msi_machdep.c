@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_msi_machdep.c,v 1.13 2017/07/28 14:26:50 maxv Exp $	*/
+/*	$NetBSD: pci_msi_machdep.c,v 1.14 2020/07/19 14:27:07 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.13 2017/07/28 14:26:50 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.14 2020/07/19 14:27:07 jdolecek Exp $");
 
 #include "opt_intrdebug.h"
 #include "ioapic.h"
@@ -175,6 +175,14 @@ pci_msi_alloc_common(pci_intr_handle_t **ihps, int *count,
 		return EINVAL;
 	}
 
+#ifdef XENPV
+	if (xen_pci_msi_probe(msi_pic, *count)) {
+		DPRINTF(("xen_pci_msi_probe() failed\n"));
+		msipic_destruct_msi_pic(msi_pic);
+		return EINVAL;
+	}
+#endif
+
 	vectors = NULL;
 	while (*count > 0) {
 		vectors = pci_msi_alloc_vectors(msi_pic, NULL, count);
@@ -261,6 +269,14 @@ pci_msix_alloc_common(pci_intr_handle_t **ihps, u_int *table_indexes,
 	msix_pic = msipic_construct_msix_pic(pa);
 	if (msix_pic == NULL)
 		return EINVAL;
+
+#ifdef XENPV
+	if (xen_pci_msi_probe(msix_pic, *count)) {
+		DPRINTF(("xen_pci_msi_probe() failed\n"));
+		msipic_destruct_msix_pic(msix_pic);
+		return EINVAL;
+	}
+#endif
 
 	vectors = NULL;
 	while (*count > 0) {
