@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.63 2020/07/03 16:09:54 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.64 2020/07/19 06:36:37 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.63 2020/07/03 16:09:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.64 2020/07/19 06:36:37 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,18 @@ __KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.63 2020/07/03 16:09:54 maxv Exp $
 #include <dev/nvmm/x86/nvmm_x86.h>
 
 int svm_vmrun(paddr_t, uint64_t *);
+
+static inline void
+svm_clgi(void)
+{
+	asm volatile ("clgi" ::: "memory");
+}
+
+static inline void
+svm_stgi(void)
+{
+	asm volatile ("stgi" ::: "memory");
+}
 
 #define	MSR_VM_HSAVE_PA	0xC0010117
 
@@ -1347,7 +1359,7 @@ svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	struct svm_cpudata *cpudata = vcpu->cpudata;
 	struct vmcb *vmcb = cpudata->vmcb;
 	uint64_t machgen;
-	int hcpu, s;
+	int hcpu;
 
 	if (__predict_false(svm_vcpu_event_commit(vcpu) != 0)) {
 		return EINVAL;
@@ -1382,11 +1394,11 @@ svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 			svm_vmcb_cache_flush(vmcb, VMCB_CTRL_VMCB_CLEAN_I);
 		}
 
-		s = splhigh();
+		svm_clgi();
 		machgen = svm_htlb_flush(machdata, cpudata);
 		svm_vmrun(cpudata->vmcb_pa, cpudata->gprs);
 		svm_htlb_flush_ack(cpudata, machgen);
-		splx(s);
+		svm_stgi();
 
 		svm_vmcb_cache_default(vmcb);
 
