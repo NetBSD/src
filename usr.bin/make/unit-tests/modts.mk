@@ -56,5 +56,8 @@ mod-ts-space:
 	# Not all modifiers behave this way though.  Some of them always use
 	# a space as word separator instead of the :ts separator.
 	# This seems like an oversight during implementation.
-	@${PRINT} ':ts :S    => '${a ababa c:L:tsx:S,b, ,g:Q}
-	@${PRINT} ':ts :S :@ => '${a ababa c:L:tsx:S,b, ,g:@v@${v}@:Q}
+	@${PRINT} ':ts :S       => '${a ababa c:L:tsx:S,b, ,g:Q}
+	@${PRINT} ':ts :S :@    => '${a ababa c:L:tsx:S,b, ,g:@v@${v}@:Q}
+
+	# A final :M* modifier applies the :ts separator again, though.
+	@${PRINT} ':ts :S :@ :M => '${a ababa c:L:tsx:S,b, ,g:@v@${v}@:M*:Q}
