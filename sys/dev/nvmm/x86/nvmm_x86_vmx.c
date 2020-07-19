@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.64 2020/07/19 06:36:37 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.65 2020/07/19 06:56:09 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.64 2020/07/19 06:36:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.65 2020/07/19 06:56:09 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1875,7 +1875,7 @@ vmx_vcpu_guest_fpu_enter(struct nvmm_cpu *vcpu)
 {
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
 
-	fpu_save();
+	fpu_kern_enter();
 	fpu_area_restore(&cpudata->gfpu, vmx_xcr0_mask);
 
 	if (vmx_xcr0_mask != 0) {
@@ -1895,6 +1895,7 @@ vmx_vcpu_guest_fpu_leave(struct nvmm_cpu *vcpu)
 	}
 
 	fpu_area_save(&cpudata->gfpu, vmx_xcr0_mask);
+	fpu_kern_leave();
 }
 
 static void
