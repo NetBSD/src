@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.144 2020/07/04 21:02:16 chs Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.145 2020/07/19 14:31:31 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.144 2020/07/04 21:02:16 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.145 2020/07/19 14:31:31 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -94,6 +94,8 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.144 2020/07/04 21:02:16 chs Exp $"
 void (*x86_cpu_idle)(void);
 static bool x86_cpu_idle_ipi;
 static char x86_cpu_idle_text[16];
+
+static bool x86_user_ldt_enabled __read_mostly = false;
 
 #ifdef XEN
 
@@ -1178,9 +1180,14 @@ x86_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 
 	switch (action) {
 	case KAUTH_MACHDEP_IOPERM_GET:
+		result = KAUTH_RESULT_ALLOW;
+		break;
+
 	case KAUTH_MACHDEP_LDT_GET:
 	case KAUTH_MACHDEP_LDT_SET:
-		result = KAUTH_RESULT_ALLOW;
+		if (x86_user_ldt_enabled) {
+			result = KAUTH_RESULT_ALLOW;
+		}
 		break;
 
 	default:
@@ -1431,6 +1438,13 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       NULL, 0, &svs_pcid, 0,
 		       CTL_CREATE, CTL_EOL);
 #endif
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_READWRITE,
+		       CTLTYPE_BOOL, "user_ldt",
+		       SYSCTL_DESCR("Whether USER_LDT is enabled"),
+		       NULL, 0, &x86_user_ldt_enabled, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 
 #ifndef XENPV
 	void sysctl_speculation_init(struct sysctllog **);
