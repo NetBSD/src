@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.265 2020/07/19 16:08:24 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.266 2020/07/19 16:22:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.265 2020/07/19 16:08:24 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.266 2020/07/19 16:22:44 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.265 2020/07/19 16:08:24 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.266 2020/07/19 16:22:44 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2039,9 +2039,9 @@ VarRange(const char *str, int ac)
  * set the VARP_MATCH_END bit of mpflags.
  */
 static char *
-ParseModifierPart(GNode *ctxt, Var_Parse_State *vpstate MAKE_ATTR_UNUSED,
-	      VarEvalFlags eflags, const char **tstr, int delim,
-	      VarPatternFlags *mpflags, int *length, VarPattern *pattern)
+ParseModifierPart(GNode *ctxt, const char **tstr, int delim,
+		  VarEvalFlags eflags, VarPatternFlags *mpflags,
+		  int *length, VarPattern *pattern)
 {
     const char *cp;
     char *rstr;
@@ -2318,13 +2318,13 @@ ApplyModifier_At(ApplyModifiersState *st) {
     st->cp = ++st->tstr;
     st->delim = '@';
     loop.tvar = ParseModifierPart(
-	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
+	st->ctxt, &st->cp, st->delim, st->flags,
 	&pflags, &loop.tvarLen, NULL);
     if (loop.tvar == NULL)
 	return FALSE;
 
     loop.str = ParseModifierPart(
-	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
+	st->ctxt, &st->cp, st->delim, st->flags,
 	&pflags, &loop.strLen, NULL);
     if (loop.str == NULL)
 	return FALSE;
@@ -2500,7 +2500,7 @@ ApplyModifier_Exclam(ApplyModifiersState *st)
     emsg = NULL;
     st->cp = ++st->tstr;
     pattern.rhs = ParseModifierPart(
-	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
+	st->ctxt, &st->cp, st->delim, st->flags,
 	NULL, &pattern.rightLen, NULL);
     if (pattern.rhs == NULL)
 	return FALSE;
@@ -2652,13 +2652,13 @@ ApplyModifier_Subst(ApplyModifiersState *st)
 
     st->cp = st->tstr;
     pattern.lhs = ParseModifierPart(
-	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
+	st->ctxt, &st->cp, st->delim, st->flags,
 	&pattern.pflags, &pattern.leftLen, NULL);
     if (pattern.lhs == NULL)
 	return FALSE;
 
     pattern.rhs = ParseModifierPart(
-	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
+	st->ctxt, &st->cp, st->delim, st->flags,
 	NULL, &pattern.rightLen, &pattern);
     if (pattern.rhs == NULL)
 	return FALSE;
@@ -2711,15 +2711,13 @@ ApplyModifier_Regex(ApplyModifiersState *st)
 
     st->cp = st->tstr;
 
-    re = ParseModifierPart(
-	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
-	NULL, NULL, NULL);
+    re = ParseModifierPart(st->ctxt, &st->cp, st->delim, st->flags,
+			   NULL, NULL, NULL);
     if (re == NULL)
 	return FALSE;
 
-    pattern.replace = ParseModifierPart(
-	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
-	NULL, NULL, NULL);
+    pattern.replace = ParseModifierPart(st->ctxt, &st->cp, st->delim,
+					st->flags, NULL, NULL, NULL);
     if (pattern.replace == NULL) {
 	free(re);
 	return FALSE;
@@ -2882,20 +2880,10 @@ ApplyModifier_To(ApplyModifiersState *st)
 static int
 ApplyModifier_Words(ApplyModifiersState *st)
 {
-    /*
-     * Look for the closing ']', recursively
-     * expanding any embedded variables.
-     *
-     * estr is a pointer to the expanded result,
-     * which we must free().
-     */
-    char *estr;
-
     st->cp = st->tstr + 1;	/* point to char after '[' */
     st->delim = ']';		/* look for closing ']' */
-    estr = ParseModifierPart(
-	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
-	NULL, NULL, NULL);
+    char *estr = ParseModifierPart(st->ctxt, &st->cp, st->delim, st->flags,
+				   NULL, NULL, NULL);
     if (estr == NULL)
 	return 'c';		/* report missing ']' */
     /* now st->cp points just after the closing ']' */
@@ -3057,16 +3045,14 @@ ApplyModifier_IfElse(ApplyModifiersState *st)
     st->cp = ++st->tstr;
     st->delim = ':';
     char *then_expr = ParseModifierPart(
-	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
-	&then_flags, NULL, NULL);
+	st->ctxt, &st->cp, st->delim, st->flags, &then_flags, NULL, NULL);
     if (then_expr == NULL)
 	return FALSE;
 
     /* BROPEN or PROPEN */
     st->delim = st->endc;
     char *else_expr = ParseModifierPart(
-	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
-	&else_flags, NULL, NULL);
+	st->ctxt, &st->cp, st->delim, st->flags, &else_flags, NULL, NULL);
     if (else_expr == NULL)
 	return FALSE;
 
@@ -3141,7 +3127,7 @@ ApplyModifier_Assign(ApplyModifiersState *st)
 
 	pflags = (st->flags & VARE_WANTRES) ? 0 : VAR_NOSUBST;
 	pattern.rhs = ParseModifierPart(
-	    st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
+	    st->ctxt, &st->cp, st->delim, st->flags,
 	    &pflags, &pattern.rightLen, NULL);
 	if (st->v->flags & VAR_JUNK) {
 	    /* restore original name */
@@ -3252,14 +3238,14 @@ ApplyModifier_SysV(ApplyModifiersState *st)
      * SysV substitution since that will not be interpreted as an
      * anchor anyway. */
     pattern.lhs = ParseModifierPart(
-	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
+	st->ctxt, &st->cp, st->delim, st->flags,
 	&pattern.pflags, &pattern.leftLen, NULL);
     if (pattern.lhs == NULL)
 	return 'c';
 
     st->delim = st->endc;
     pattern.rhs = ParseModifierPart(
-	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
+	st->ctxt, &st->cp, st->delim, st->flags,
 	NULL, &pattern.rightLen, &pattern);
     if (pattern.rhs == NULL)
 	return 'c';
