@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.271 2020/07/19 19:27:08 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.275 2020/07/19 21:30:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.271 2020/07/19 19:27:08 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.275 2020/07/19 21:30:49 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.271 2020/07/19 19:27:08 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.275 2020/07/19 21:30:49 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2469,26 +2469,23 @@ ApplyModifier_Path(ApplyModifiersState *st)
 static Boolean
 ApplyModifier_Exclam(ApplyModifiersState *st)
 {
-    const char *emsg;
-    VarPattern pattern;
-
-    pattern.pflags = 0;
-
     st->delim = '!';
-    emsg = NULL;
     st->cp = ++st->tstr;
-    pattern.rhs = ParseModifierPart(
-	st->ctxt, &st->cp, st->delim, st->eflags,
-	NULL, &pattern.rightLen, NULL);
-    if (pattern.rhs == NULL)
+    char *cmd = ParseModifierPart(st->ctxt, &st->cp, st->delim, st->eflags,
+				  NULL, NULL, NULL);
+    if (cmd == NULL)
 	return FALSE;
+
+    const char *emsg = NULL;
     if (st->eflags & VARE_WANTRES)
-	st->newStr = Cmd_Exec(pattern.rhs, &emsg);
+	st->newStr = Cmd_Exec(cmd, &emsg);
     else
 	st->newStr = varNoError;
-    free(UNCONST(pattern.rhs));
+    free(cmd);
+
     if (emsg)
 	Error(emsg, st->nstr);
+
     st->termc = *st->cp;
     st->delim = '\0';
     if (st->v->flags & VAR_JUNK)
@@ -2739,6 +2736,17 @@ ApplyModifier_Regex(ApplyModifiersState *st)
 }
 #endif
 
+static Boolean
+VarModify_Copy(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
+	      const char *word, Boolean addSpace, Buffer *buf,
+	      void *data MAKE_ATTR_UNUSED)
+{
+    if (addSpace && vpstate->varSpace != '\0')
+	Buf_AddByte(buf, vpstate->varSpace);
+    Buf_AddBytes(buf, strlen(word), word);
+    return TRUE;
+}
+
 /* :tA, :tu, :tl, etc. */
 static Boolean
 ApplyModifier_To(ApplyModifiersState *st)
@@ -2747,7 +2755,6 @@ ApplyModifier_To(ApplyModifiersState *st)
     if (st->tstr[1] != st->endc && st->tstr[1] != ':') {
 	if (st->tstr[1] == 's') {
 	    /* Use the char (if any) at st->tstr[2] as the word separator. */
-	    VarPattern pattern;
 
 	    if (st->tstr[2] != st->endc &&
 		(st->tstr[3] == st->endc || st->tstr[3] == ':')) {
@@ -2799,18 +2806,8 @@ ApplyModifier_To(ApplyModifiersState *st)
 	    }
 
 	    st->termc = *st->cp;
-
-	    /*
-	     * We cannot be certain that VarModify will be used - even if there
-	     * is a subsequent modifier, so do a no-op VarSubstitute now to for
-	     * str to be re-expanded without the spaces.
-	     */
-	    pattern.pflags = VARP_SUB_ONE;
-	    pattern.lhs = pattern.rhs = "\032";
-	    pattern.leftLen = pattern.rightLen = 1;
-
-	    st->newStr = VarModify(
-		st->ctxt, &st->parsestate, st->nstr, VarSubstitute, &pattern);
+	    st->newStr = VarModify(st->ctxt, &st->parsestate, st->nstr,
+				   VarModify_Copy, NULL);
 	} else if (st->tstr[2] == st->endc || st->tstr[2] == ':') {
 	    /* Check for two-character options: ":tu", ":tl" */
 	    if (st->tstr[1] == 'A') {	/* absolute path */
@@ -3053,93 +3050,89 @@ ApplyModifier_IfElse(ApplyModifiersState *st)
 static int
 ApplyModifier_Assign(ApplyModifiersState *st)
 {
-    if (st->tstr[1] == '=' ||
-	(st->tstr[2] == '=' &&
-	 (st->tstr[1] == '!' || st->tstr[1] == '+' || st->tstr[1] == '?'))) {
-	GNode *v_ctxt;		/* context where v belongs */
-	const char *emsg;
-	char *sv_name;
-	VarPattern pattern;
-	int how;
-	VarPatternFlags pflags;
-	/* FIXME: Assign has nothing to do with VarPatternFlags */
+    const char *op = st->tstr + 1;
+    if (!(op[0] == '=' ||
+	(op[1] == '=' &&
+	 (op[0] == '!' || op[0] == '+' || op[0] == '?'))))
+	return 'd';		/* "::<unrecognised>" */
 
-	if (st->v->name[0] == 0)
-	    return 'b';
+    GNode *v_ctxt;		/* context where v belongs */
+    VarPatternFlags pflags;
+    /* FIXME: Assign has nothing to do with VarPatternFlags */
 
-	v_ctxt = st->ctxt;
-	sv_name = NULL;
-	++st->tstr;
-	if (st->v->flags & VAR_JUNK) {
-	    /*
-	     * We need to bmake_strdup() it incase
-	     * ParseModifierPart() recurses.
-	     */
-	    sv_name = st->v->name;
-	    st->v->name = bmake_strdup(st->v->name);
-	} else if (st->ctxt != VAR_GLOBAL) {
-	    Var *gv = VarFind(st->v->name, st->ctxt, 0);
-	    if (gv == NULL)
-		v_ctxt = VAR_GLOBAL;
-	    else
-		VarFreeEnv(gv, TRUE);
-	}
+    if (st->v->name[0] == 0)
+	return 'b';
 
-	switch ((how = *st->tstr)) {
-	case '+':
-	case '?':
-	case '!':
-	    st->cp = &st->tstr[2];
-	    break;
-	default:
-	    st->cp = ++st->tstr;
-	    break;
-	}
-	st->delim = st->startc == PROPEN ? PRCLOSE : BRCLOSE;
-	pattern.pflags = 0;
-
-	pflags = (st->eflags & VARE_WANTRES) ? 0 : VAR_NOSUBST;
-	pattern.rhs = ParseModifierPart(
-	    st->ctxt, &st->cp, st->delim, st->eflags,
-	    &pflags, &pattern.rightLen, NULL);
-	if (st->v->flags & VAR_JUNK) {
-	    /* restore original name */
-	    free(st->v->name);
-	    st->v->name = sv_name;
-	}
-	if (pattern.rhs == NULL)
-	    return 'c';
-
-	st->termc = *--st->cp;
-	st->delim = '\0';
-
-	if (st->eflags & VARE_WANTRES) {
-	    switch (how) {
-	    case '+':
-		Var_Append(st->v->name, pattern.rhs, v_ctxt);
-		break;
-	    case '!':
-		st->newStr = Cmd_Exec(pattern.rhs, &emsg);
-		if (emsg)
-		    Error(emsg, st->nstr);
-		else
-		    Var_Set(st->v->name, st->newStr, v_ctxt);
-		free(st->newStr);
-		break;
-	    case '?':
-		if ((st->v->flags & VAR_JUNK) == 0)
-		    break;
-		/* FALLTHROUGH */
-	    default:
-		Var_Set(st->v->name, pattern.rhs, v_ctxt);
-		break;
-	    }
-	}
-	free(UNCONST(pattern.rhs));
-	st->newStr = varNoError;
-	return 0;
+    v_ctxt = st->ctxt;
+    char *sv_name = NULL;
+    ++st->tstr;
+    if (st->v->flags & VAR_JUNK) {
+	/*
+	 * We need to bmake_strdup() it incase ParseModifierPart() recurses.
+	 */
+	sv_name = st->v->name;
+	st->v->name = bmake_strdup(st->v->name);
+    } else if (st->ctxt != VAR_GLOBAL) {
+	Var *gv = VarFind(st->v->name, st->ctxt, 0);
+	if (gv == NULL)
+	    v_ctxt = VAR_GLOBAL;
+	else
+	    VarFreeEnv(gv, TRUE);
     }
-    return 'd';			/* "::<unrecognised>" */
+
+    switch (op[0]) {
+    case '+':
+    case '?':
+    case '!':
+	st->cp = &st->tstr[2];
+	break;
+    default:
+	st->cp = ++st->tstr;
+	break;
+    }
+    st->delim = st->startc == PROPEN ? PRCLOSE : BRCLOSE;
+
+    pflags = (st->eflags & VARE_WANTRES) ? 0 : VAR_NOSUBST;
+    char *val = ParseModifierPart(st->ctxt, &st->cp, st->delim, st->eflags,
+				  &pflags, NULL, NULL);
+    if (st->v->flags & VAR_JUNK) {
+	/* restore original name */
+	free(st->v->name);
+	st->v->name = sv_name;
+    }
+    if (val == NULL)
+	return 'c';
+
+    st->termc = *--st->cp;
+    st->delim = '\0';
+
+    if (st->eflags & VARE_WANTRES) {
+	switch (op[0]) {
+	case '+':
+	    Var_Append(st->v->name, val, v_ctxt);
+	    break;
+	case '!': {
+	    const char *emsg;
+	    st->newStr = Cmd_Exec(val, &emsg);
+	    if (emsg)
+		Error(emsg, st->nstr);
+	    else
+		Var_Set(st->v->name, st->newStr, v_ctxt);
+	    free(st->newStr);
+	    break;
+	}
+	case '?':
+	    if ((st->v->flags & VAR_JUNK) == 0)
+		break;
+	    /* FALLTHROUGH */
+	default:
+	    Var_Set(st->v->name, val, v_ctxt);
+	    break;
+	}
+    }
+    free(val);
+    st->newStr = varNoError;
+    return 0;
 }
 
 /* remember current value */

@@ -1,4 +1,4 @@
-# $NetBSD: cond-short.mk,v 1.7 2020/07/09 22:34:09 sjg Exp $
+# $NetBSD: cond-short.mk,v 1.8 2020/07/19 21:03:55 rillig Exp $
 #
 # Demonstrates that in conditions, the right-hand side of an && or ||
 # is only evaluated if it can actually influence the result.
@@ -64,6 +64,19 @@ VAR=	# empty again, for the following tests
 .endif
 
 .if 0 && !empty(:U${:!echo "unexpected exclam modifier" 1>&2 !})
+.endif
+
+# Irrelevant assignment modifiers are skipped as well.
+.if 0 && ${1 2 3:L:@i@${FIRST::?=$i}@}
+.endif
+.if 0 && ${1 2 3:L:@i@${LAST::=$i}@}
+.endif
+.if 0 && ${1 2 3:L:@i@${APPENDED::+=$i}@}
+.endif
+.if 0 && ${echo.1 echo.2 echo.3:L:@i@${RAN::!=${i:C,.*,&; & 1>\&2,:S,., ,g}}@}
+.endif
+.if defined(FIRST) || defined(LAST) || defined(APPENDED) || defined(RAN)
+.warning first=${FIRST} last=${LAST} appended=${APPENDED} ran=${RAN}
 .endif
 
 # The || operator.
