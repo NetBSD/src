@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.49 2020/07/17 21:59:30 jmcneill Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.50 2020/07/19 09:30:08 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.49 2020/07/17 21:59:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.50 2020/07/19 09:30:08 simonb Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -122,6 +122,7 @@ struct cpu_info *
 cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_package_id,
 	cpuid_t cpu_core_id, cpuid_t cpu_smt_id)
 {
+
 	KASSERT(cpu_id < MAXCPUS);
 
 #ifdef MIPS64_OCTEON
@@ -207,6 +208,7 @@ cpu_hwrena_setup(void)
 {
 #if (MIPS32R2 + MIPS64R2) > 0
 	const int cp0flags = mips_options.mips_cpu->cpu_cp0flags;
+
 	if ((cp0flags & MIPS_CP0FL_USE) == 0)
 		return;
 
@@ -401,6 +403,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 int
 cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
 {
+
 	/* XXX:  Do we validate the addresses?? */
 	return 0;
 }
@@ -483,6 +486,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 void
 cpu_need_resched(struct cpu_info *ci, struct lwp *l, int flags)
 {
+
 	KASSERT(kpreempt_disabled());
 
 	if ((flags & RESCHED_KPREEMPT) != 0) {
@@ -507,12 +511,14 @@ cpu_need_resched(struct cpu_info *ci, struct lwp *l, int flags)
 uint32_t
 cpu_clkf_usermode_mask(void)
 {
+
 	return CPUISMIPS3 ? MIPS_SR_KSU_USER : MIPS_SR_KU_PREV;
 }
 
 void
 cpu_signotify(struct lwp *l)
 {
+
 	KASSERT(kpreempt_disabled());
 #ifdef __HAVE_FAST_SOFTINTS
 	KASSERT(lwp_locked(l, NULL));
@@ -530,6 +536,7 @@ cpu_signotify(struct lwp *l)
 void
 cpu_need_proftick(struct lwp *l)
 {
+
 	KASSERT(kpreempt_disabled());
 	KASSERT(l->l_cpu == curcpu());
 
@@ -541,6 +548,7 @@ cpu_need_proftick(struct lwp *l)
 bool
 cpu_kpreempt_enter(uintptr_t where, int s)
 {
+
 	KASSERT(kpreempt_disabled());
 
 #if 0
@@ -580,6 +588,7 @@ cpu_kpreempt_exit(uintptr_t where)
 bool
 cpu_kpreempt_disabled(void)
 {
+
 	/*
 	 * Any elevated IPL disables preemption.
 	 */
@@ -624,6 +633,7 @@ cpu_intr_p(void)
 void
 cpu_broadcast_ipi(int tag)
 {
+
 	// No reason to remove ourselves since multicast_ipi will do that for us
 	cpu_multicast_ipi(cpus_running, tag);
 }
@@ -769,6 +779,7 @@ void
 cpu_pause_others(void)
 {
 	struct cpu_info * const ci = curcpu();
+
 	if (cold || kcpuset_match(cpus_running, ci->ci_data.cpu_kcpuset))
 		return;
 
@@ -788,6 +799,7 @@ cpu_pause_others(void)
 void
 cpu_resume(cpuid_t cii)
 {
+
 	if (__predict_false(cold))
 		return;
 
@@ -807,6 +819,7 @@ cpu_resume(cpuid_t cii)
 void
 cpu_resume_others(void)
 {
+
 	if (__predict_false(cold))
 		return;
 
@@ -957,6 +970,7 @@ cpu_boot_secondary_processors(void)
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
+
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		if (CPU_IS_PRIMARY(ci))
 			continue;
@@ -990,6 +1004,7 @@ xc_send_ipi(struct cpu_info *ci)
 void
 cpu_ipi(struct cpu_info *ci)
 {
+
 	(*mips_locoresw.lsw_send_ipi)(ci, IPI_GENERIC);
 }
 
@@ -1011,6 +1026,7 @@ cpu_vmspace_exec(lwp_t *l, vaddr_t start, vaddr_t end)
 	 * well before setreg gets called.
 	 */
 	uint32_t sr = mips_cp0_status_read();
+
 	if (end != (uint32_t) end) {
 		mips_cp0_status_write(sr | MIPS3_SR_UX);
 	} else {
@@ -1022,6 +1038,7 @@ cpu_vmspace_exec(lwp_t *l, vaddr_t start, vaddr_t end)
 int
 cpu_lwp_setprivate(lwp_t *l, void *v)
 {
+
 #if (MIPS32R2 + MIPS64R2) > 0
 	if (l == curlwp && MIPS_HAS_USERLOCAL) {
 		mipsNN_cp0_userlocal_write(v);
@@ -1058,6 +1075,7 @@ cpuwatch_free(cpu_watchpoint_t *cwp)
 {
 #ifdef DIAGNOSTIC
 	struct cpu_info * const ci = curcpu();
+
 	KASSERT(cwp >= &ci->ci_cpuwatch_tab[0] &&
 		cwp <= &ci->ci_cpuwatch_tab[ci->ci_cpuwatch_count-1]);
 #endif
