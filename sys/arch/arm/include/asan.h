@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.h,v 1.2 2020/07/10 12:45:15 skrll Exp $	*/
+/*	$NetBSD: asan.h,v 1.3 2020/07/19 11:47:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@ kasan_md_unsupported(vaddr_t addr)
  * that VA = PA + KERNEL_BASE.
  */
 
-#define KASAN_NEARLYPAGES	2
+#define KASAN_NEARLYPAGES	3
 
 static bool __md_early __read_mostly;
 static size_t __md_nearlypages __attribute__((__section__(".data")));
@@ -165,7 +165,7 @@ kasan_md_shadow_map_page(vaddr_t va)
 /*
  * Map the init stacks of the BP and APs. We will map the rest in kasan_init.
  */
-#define INIT_ARM_STACK_SHIFT	9
+#define INIT_ARM_STACK_SHIFT	10
 #define INIT_ARM_STACK_SIZE	(1 << INIT_ARM_STACK_SHIFT)
 
 static void
