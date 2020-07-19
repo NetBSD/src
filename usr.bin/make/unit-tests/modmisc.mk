@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.12 2020/07/04 18:54:18 rillig Exp $
+# $Id: modmisc.mk,v 1.13 2020/07/19 15:16:22 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -16,7 +16,7 @@ MOD_OPT=@d@$${exists($$d):?$$d:$${d:S,/usr,/opt,}}@
 MOD_SEP=S,:, ,g
 
 all:	modvar modvarloop modsysv mod-HTE emptyvar undefvar
-all:	mod-S mod-C mod-at-varname mod-at-resolve
+all:	mod-S mod-C mod-at-varname mod-at-resolve mod-at-dollar
 all:	mod-subst-dollar mod-loop-dollar
 
 modsysv:
@@ -94,6 +94,14 @@ RES3=		3
 
 mod-at-resolve:
 	@echo $@:${RESOLVE:@v@w${v}w@:Q}:
+
+# As of 2020-07-19, the variable name of the :@ modifier may end with one
+# or two dollar signs, which are silently ignored.  There's no point in
+# allowing a dollar sign in that position.
+mod-at-dollar:
+	@echo $@:${1 2 3:L:@v$@($v)@:Q}.
+	@echo $@:${1 2 3:L:@v$$@($v)@:Q}.
+	@echo $@:${1 2 3:L:@v$$$@($v)@:Q}.
 
 # No matter how many dollar characters there are, they all get merged
 # into a single dollar by the :S modifier.
