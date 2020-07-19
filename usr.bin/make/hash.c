@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.23 2020/07/18 21:37:38 sjg Exp $	*/
+/*	$NetBSD: hash.c,v 1.24 2020/07/19 15:42:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: hash.c,v 1.23 2020/07/18 21:37:38 sjg Exp $";
+static char rcsid[] = "$NetBSD: hash.c,v 1.24 2020/07/19 15:42:25 riastradh Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)hash.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: hash.c,v 1.23 2020/07/18 21:37:38 sjg Exp $");
+__RCSID("$NetBSD: hash.c,v 1.24 2020/07/19 15:42:25 riastradh Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -242,7 +242,7 @@ Hash_FindEntry(Hash_Table *t, const char *key)
 	chainlen = 0;
 	for (e = t->bucketPtr[h & t->mask]; e != NULL; e = e->next) {
 		chainlen++;
-		if (e->namehash == h && strcmp(e->name, p) == 0) 
+		if (e->namehash == h && strcmp(e->name, p) == 0)
 			break;
 	}
 	if (chainlen > t->maxlen)
