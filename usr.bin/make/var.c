@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.266 2020/07/19 16:22:44 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.267 2020/07/19 16:48:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.266 2020/07/19 16:22:44 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.267 2020/07/19 16:48:48 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.266 2020/07/19 16:22:44 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.267 2020/07/19 16:48:48 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -278,12 +278,9 @@ typedef struct {
 
 /* struct passed as 'void *' to VarLoopExpand() for ":@tvar@str@" */
 typedef struct {
-    GNode	*ctxt;		/* variable context */
-    char	*tvar;		/* name of temp var */
-    int		tvarLen;
+    char	*tvar;		/* name of temporary variable */
     char	*str;		/* string to expand */
-    int		strLen;
-    VarEvalFlags flags;
+    VarEvalFlags eflags;
 } VarLoop;
 
 #ifndef NO_REGEX
@@ -1647,22 +1644,16 @@ VarRESubstitute(GNode *ctx MAKE_ATTR_UNUSED,
 #endif
 
 
-/* Callback function for VarModify to implement the :@var@...@ modifier of
- * ODE make. We set the temp variable named in pattern.lhs to word and
- * expand pattern.rhs. */
+/* Callback for VarModify to implement the :@var@...@ modifier of ODE make. */
 static Boolean
-VarLoopExpand(GNode *ctx MAKE_ATTR_UNUSED,
-	      Var_Parse_State *vpstate MAKE_ATTR_UNUSED,
-	      const char *word, Boolean addSpace, Buffer *buf,
-	      void *data)
+VarLoopExpand(GNode *ctx, Var_Parse_State *vpstate MAKE_ATTR_UNUSED,
+	      const char *word, Boolean addSpace, Buffer *buf, void *data)
 {
     VarLoop *loop = data;
-    char *s;
-    int slen;
 
     if (*word) {
-	Var_Set_with_flags(loop->tvar, word, loop->ctxt, VAR_NO_EXPORT);
-	s = Var_Subst(NULL, loop->str, loop->ctxt, loop->flags);
+	Var_Set_with_flags(loop->tvar, word, ctx, VAR_NO_EXPORT);
+	char *s = Var_Subst(NULL, loop->str, ctx, loop->eflags);
 	if (DEBUG(VAR)) {
 	    fprintf(debug_file,
 		    "VarLoopExpand: in \"%s\", replace \"%s\" with \"%s\" "
@@ -1672,7 +1663,8 @@ VarLoopExpand(GNode *ctx MAKE_ATTR_UNUSED,
 	if (s != NULL && *s != '\0') {
 	    if (addSpace && *s != '\n')
 		Buf_AddByte(buf, ' ');
-	    Buf_AddBytes(buf, (slen = strlen(s)), s);
+	    size_t slen = strlen(s);
+	    Buf_AddBytes(buf, slen, s);
 	    addSpace = (slen > 0 && s[slen - 1] != '\n');
 	}
 	free(s);
@@ -2278,7 +2270,7 @@ VarStrftime(const char *fmt, int zulu, time_t utc)
 
 typedef struct {
     /* const parameters */
-    int startc;
+    int startc;			/* '\0' or '{' or '(' */
     int endc;
     Var *v;
     GNode *ctxt;
@@ -2318,22 +2310,19 @@ ApplyModifier_At(ApplyModifiersState *st) {
     st->cp = ++st->tstr;
     st->delim = '@';
     loop.tvar = ParseModifierPart(
-	st->ctxt, &st->cp, st->delim, st->flags,
-	&pflags, &loop.tvarLen, NULL);
+	st->ctxt, &st->cp, st->delim, st->flags, &pflags, NULL, NULL);
     if (loop.tvar == NULL)
 	return FALSE;
 
     loop.str = ParseModifierPart(
-	st->ctxt, &st->cp, st->delim, st->flags,
-	&pflags, &loop.strLen, NULL);
+	st->ctxt, &st->cp, st->delim, st->flags, &pflags, NULL, NULL);
     if (loop.str == NULL)
 	return FALSE;
 
     st->termc = *st->cp;
     st->delim = '\0';
 
-    loop.flags = st->flags & (VARE_UNDEFERR | VARE_WANTRES);
-    loop.ctxt = st->ctxt;
+    loop.eflags = st->flags & (VARE_UNDEFERR | VARE_WANTRES);
     st->newStr = VarModify(
 	st->ctxt, &st->parsestate, st->nstr, VarLoopExpand, &loop);
     Var_Delete(loop.tvar, st->ctxt);
@@ -3049,8 +3038,7 @@ ApplyModifier_IfElse(ApplyModifiersState *st)
     if (then_expr == NULL)
 	return FALSE;
 
-    /* BROPEN or PROPEN */
-    st->delim = st->endc;
+    st->delim = st->endc;	/* BRCLOSE or PRCLOSE */
     char *else_expr = ParseModifierPart(
 	st->ctxt, &st->cp, st->delim, st->flags, &else_flags, NULL, NULL);
     if (else_expr == NULL)
