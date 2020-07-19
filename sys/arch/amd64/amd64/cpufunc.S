@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.63 2020/06/24 18:09:37 maxv Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.64 2020/07/19 07:35:08 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -446,10 +446,13 @@ ENTRY(outl)
 	ret
 END(outl)
 
-ENTRY(x86_movs)
+/*
+ * Used by SVS only, to make an atomic but fast copy. Doesn't have
+ * sanitizer instrumentation, but sanitizers disable SVS, so no problem.
+ */
+ENTRY(svs_quad_copy)
 	movq	%rdx,%rcx
-	KMSAN_REP_STOS(8)
 	rep
 	movsq
 	ret
-END(x86_movs)
+END(svs_quad_copy)
