@@ -39,6 +39,7 @@ B.${AAA:ts}="Baaa" == Baaa?
 :ts :S => aaxBbxaaxbbxaaxbb
 :ts :S space    => axa a axc
 :ts :S space :M => axaxaxaxc
-:ts :S    => axa a axc
-:ts :S :@ => axa a axc
+:ts :S       => axa a axc
+:ts :S :@    => axa a axc
+:ts :S :@ :M => axaxaxaxc
 exit status 0
