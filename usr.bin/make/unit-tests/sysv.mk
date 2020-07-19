@@ -1,4 +1,4 @@
-# $Id: sysv.mk,v 1.6 2020/07/19 14:23:02 rillig Exp $
+# $Id: sysv.mk,v 1.7 2020/07/19 22:04:27 rillig Exp $
 
 all: foo fun sam bla words ampersand
 
@@ -47,10 +47,10 @@ bla:
 words:
 	@echo a${a b c d e:L:%a=x:Q}b
 
-# As of 2020-07-19, an ampersand can be used in the replacement part
-# of a SysV substitution modifier.  This can either be an intentional
-# feature or an implementation mistake, as it is not mentioned in the
-# manual page.
+# Before 2020-07-19, an ampersand could be used in the replacement part
+# of a SysV substitution modifier.  This was probably a copy-and-paste
+# mistake since the SysV modifier code looked a lot like the code for the
+# :S and :C modifiers.  The ampersand is not mentioned in the manual page.
 ampersand:
 	@echo ${:U${a.bcd.e:L:a.%=%}:Q}
 	@echo ${:U${a.bcd.e:L:a.%=&}:Q}
