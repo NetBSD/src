@@ -1,4 +1,4 @@
-# $Id: varmisc.mk,v 1.10 2020/07/02 09:44:51 rillig Exp $
+# $Id: varmisc.mk,v 1.11 2020/07/19 20:37:57 rillig Exp $
 #
 # Miscellaneous variable tests.
 
@@ -74,7 +74,7 @@ manok:
 	@echo MAN=${MAN}
 
 # This is an expanded variant of the above .for loop.
-# Between 2020-08-28 and 2020-07-02 this paragraph generated a wrong
+# Between 2020-06-28 and 2020-07-02 this paragraph generated a wrong
 # error message "Variable VARNAME is recursive".
 # When evaluating the !empty expression, the ${:U1} was not expanded and
 # thus resulted in the seeming definition VARNAME=${VARNAME}, which is
