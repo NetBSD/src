@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.124 2020/07/14 00:45:53 yamaguchi Exp $	*/
+/*	$NetBSD: pmap.h,v 1.125 2020/07/19 07:35:08 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -612,7 +612,7 @@ extern vaddr_t pmap_direct_end;
 
 #endif /* __HAVE_DIRECT_MAP */
 
-void	x86_movs(void *, void *, long);
+void	svs_quad_copy(void *, void *, long);
 
 #endif /* _KERNEL */
 
