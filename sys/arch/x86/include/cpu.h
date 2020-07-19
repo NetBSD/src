@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.127 2020/07/14 00:45:53 yamaguchi Exp $	*/
+/*	$NetBSD: cpu.h,v 1.128 2020/07/19 13:55:09 maxv Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,9 +48,6 @@
 #if defined(_KERNEL_OPT)
 #include "opt_xen.h"
 #include "opt_svs.h"
-#ifdef i386
-#include "opt_user_ldt.h"
-#endif
 #endif
 
 /*
