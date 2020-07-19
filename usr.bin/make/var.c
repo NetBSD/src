@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.276 2020/07/19 22:04:27 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.277 2020/07/19 22:22:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.276 2020/07/19 22:04:27 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.277 2020/07/19 22:22:01 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.276 2020/07/19 22:04:27 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.277 2020/07/19 22:22:01 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1225,7 +1225,7 @@ VarMatch(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
  *
  *-----------------------------------------------------------------------
  */
-static char *
+static const char *
 Str_SYSVMatch(const char *word, const char *pattern, size_t *len,
     Boolean *hasPercent)
 {
@@ -1237,7 +1237,7 @@ Str_SYSVMatch(const char *word, const char *pattern, size_t *len,
     if (*p == '\0') {
 	/* Null pattern is the whole string */
 	*len = strlen(w);
-	return UNCONST(w);
+	return w;
     }
 
     if ((m = strchr(p, '%')) != NULL) {
@@ -1256,19 +1256,19 @@ Str_SYSVMatch(const char *word, const char *pattern, size_t *len,
 	if (*++p == '\0') {
 	    /* No more pattern, return the rest of the string */
 	    *len = strlen(w);
-	    return UNCONST(w);
+	    return w;
 	}
     }
 
     m = w;
 
     /* Find a matching tail */
-    do
+    do {
 	if (strcmp(p, w) == 0) {
 	    *len = w - m;
-	    return UNCONST(m);
+	    return m;
 	}
-    while (*w++ != '\0');
+    } while (*w++ != '\0');
 
     return NULL;
 }
