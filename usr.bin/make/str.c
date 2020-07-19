@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.51 2020/07/03 07:40:13 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.52 2020/07/19 09:26:18 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: str.c,v 1.51 2020/07/03 07:40:13 rillig Exp $";
+static char rcsid[] = "$NetBSD: str.c,v 1.52 2020/07/19 09:26:18 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: str.c,v 1.51 2020/07/03 07:40:13 rillig Exp $");
+__RCSID("$NetBSD: str.c,v 1.52 2020/07/19 09:26:18 rillig Exp $");
 #endif
 #endif				/* not lint */
 #endif
@@ -422,108 +422,4 @@ Str_Match(const char *str, const char *pat)
 		pat++;
 		str++;
 	}
-}
-
-/*-
- *-----------------------------------------------------------------------
- * Str_SYSVMatch --
- *	Check word against pattern for a match (% is wild),
- *
- * Input:
- *	word		Word to examine
- *	pattern		Pattern to examine against
- *	len		Number of characters to substitute
- *
- * Results:
- *	Returns the beginning position of a match or null. The number
- *	of characters matched is returned in len.
- *
- * Side Effects:
- *	None
- *
- *-----------------------------------------------------------------------
- */
-char *
-Str_SYSVMatch(const char *word, const char *pattern, size_t *len,
-    Boolean *hasPercent)
-{
-    const char *p = pattern;
-    const char *w = word;
-    const char *m;
-
-    *hasPercent = FALSE;
-    if (*p == '\0') {
-	/* Null pattern is the whole string */
-	*len = strlen(w);
-	return UNCONST(w);
-    }
-
-    if ((m = strchr(p, '%')) != NULL) {
-	*hasPercent = TRUE;
-	if (*w == '\0') {
-		/* empty word does not match pattern */
-		return NULL;
-	}
-	/* check that the prefix matches */
-	for (; p != m && *w && *w == *p; w++, p++)
-	     continue;
-
-	if (p != m)
-	    return NULL;	/* No match */
-
-	if (*++p == '\0') {
-	    /* No more pattern, return the rest of the string */
-	    *len = strlen(w);
-	    return UNCONST(w);
-	}
-    }
-
-    m = w;
-
-    /* Find a matching tail */
-    do
-	if (strcmp(p, w) == 0) {
-	    *len = w - m;
-	    return UNCONST(m);
-	}
-    while (*w++ != '\0');
-
-    return NULL;
-}
-
-
-/*-
- *-----------------------------------------------------------------------
- * Str_SYSVSubst --
- *	Substitute '%' on the pattern with len characters from src.
- *	If the pattern does not contain a '%' prepend len characters
- *	from src.
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	Places result on buf
- *
- *-----------------------------------------------------------------------
- */
-void
-Str_SYSVSubst(Buffer *buf, char *pat, char *src, size_t len,
-    Boolean lhsHasPercent)
-{
-    char *m;
-
-    if ((m = strchr(pat, '%')) != NULL && lhsHasPercent) {
-	/* Copy the prefix */
-	Buf_AddBytes(buf, m - pat, pat);
-	/* skip the % */
-	pat = m + 1;
-    }
-    if (m != NULL || !lhsHasPercent) {
-	/* Copy the pattern */
-	Buf_AddBytes(buf, len, src);
-    }
-
-    /* append the rest */
-    Buf_AddBytes(buf, strlen(pat), pat);
 }
