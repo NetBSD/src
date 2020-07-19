@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.271 2020/07/19 19:27:08 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.272 2020/07/19 20:56:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.271 2020/07/19 19:27:08 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.272 2020/07/19 20:56:34 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.271 2020/07/19 19:27:08 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.272 2020/07/19 20:56:34 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3053,93 +3053,93 @@ ApplyModifier_IfElse(ApplyModifiersState *st)
 static int
 ApplyModifier_Assign(ApplyModifiersState *st)
 {
-    if (st->tstr[1] == '=' ||
-	(st->tstr[2] == '=' &&
-	 (st->tstr[1] == '!' || st->tstr[1] == '+' || st->tstr[1] == '?'))) {
-	GNode *v_ctxt;		/* context where v belongs */
-	const char *emsg;
-	char *sv_name;
-	VarPattern pattern;
-	int how;
-	VarPatternFlags pflags;
-	/* FIXME: Assign has nothing to do with VarPatternFlags */
+    const char *op = st->tstr + 1;
+    if (!(op[0] == '=' ||
+	(op[1] == '=' &&
+	 (op[0] == '!' || op[0] == '+' || op[0] == '?'))))
+	return 'd';		/* "::<unrecognised>" */
 
-	if (st->v->name[0] == 0)
-	    return 'b';
+    GNode *v_ctxt;		/* context where v belongs */
+    const char *emsg;
+    char *sv_name;
+    VarPattern pattern;
+    int how;
+    VarPatternFlags pflags;
+    /* FIXME: Assign has nothing to do with VarPatternFlags */
 
-	v_ctxt = st->ctxt;
-	sv_name = NULL;
-	++st->tstr;
-	if (st->v->flags & VAR_JUNK) {
-	    /*
-	     * We need to bmake_strdup() it incase
-	     * ParseModifierPart() recurses.
-	     */
-	    sv_name = st->v->name;
-	    st->v->name = bmake_strdup(st->v->name);
-	} else if (st->ctxt != VAR_GLOBAL) {
-	    Var *gv = VarFind(st->v->name, st->ctxt, 0);
-	    if (gv == NULL)
-		v_ctxt = VAR_GLOBAL;
-	    else
-		VarFreeEnv(gv, TRUE);
-	}
+    if (st->v->name[0] == 0)
+	return 'b';
 
-	switch ((how = *st->tstr)) {
-	case '+':
-	case '?':
-	case '!':
-	    st->cp = &st->tstr[2];
-	    break;
-	default:
-	    st->cp = ++st->tstr;
-	    break;
-	}
-	st->delim = st->startc == PROPEN ? PRCLOSE : BRCLOSE;
-	pattern.pflags = 0;
-
-	pflags = (st->eflags & VARE_WANTRES) ? 0 : VAR_NOSUBST;
-	pattern.rhs = ParseModifierPart(
-	    st->ctxt, &st->cp, st->delim, st->eflags,
-	    &pflags, &pattern.rightLen, NULL);
-	if (st->v->flags & VAR_JUNK) {
-	    /* restore original name */
-	    free(st->v->name);
-	    st->v->name = sv_name;
-	}
-	if (pattern.rhs == NULL)
-	    return 'c';
-
-	st->termc = *--st->cp;
-	st->delim = '\0';
-
-	if (st->eflags & VARE_WANTRES) {
-	    switch (how) {
-	    case '+':
-		Var_Append(st->v->name, pattern.rhs, v_ctxt);
-		break;
-	    case '!':
-		st->newStr = Cmd_Exec(pattern.rhs, &emsg);
-		if (emsg)
-		    Error(emsg, st->nstr);
-		else
-		    Var_Set(st->v->name, st->newStr, v_ctxt);
-		free(st->newStr);
-		break;
-	    case '?':
-		if ((st->v->flags & VAR_JUNK) == 0)
-		    break;
-		/* FALLTHROUGH */
-	    default:
-		Var_Set(st->v->name, pattern.rhs, v_ctxt);
-		break;
-	    }
-	}
-	free(UNCONST(pattern.rhs));
-	st->newStr = varNoError;
-	return 0;
+    v_ctxt = st->ctxt;
+    sv_name = NULL;
+    ++st->tstr;
+    if (st->v->flags & VAR_JUNK) {
+	/*
+	 * We need to bmake_strdup() it incase ParseModifierPart() recurses.
+	 */
+	sv_name = st->v->name;
+	st->v->name = bmake_strdup(st->v->name);
+    } else if (st->ctxt != VAR_GLOBAL) {
+	Var *gv = VarFind(st->v->name, st->ctxt, 0);
+	if (gv == NULL)
+	    v_ctxt = VAR_GLOBAL;
+	else
+	    VarFreeEnv(gv, TRUE);
     }
-    return 'd';			/* "::<unrecognised>" */
+
+    switch ((how = *st->tstr)) {
+    case '+':
+    case '?':
+    case '!':
+	st->cp = &st->tstr[2];
+	break;
+    default:
+	st->cp = ++st->tstr;
+	break;
+    }
+    st->delim = st->startc == PROPEN ? PRCLOSE : BRCLOSE;
+    pattern.pflags = 0;
+
+    pflags = (st->eflags & VARE_WANTRES) ? 0 : VAR_NOSUBST;
+    pattern.rhs = ParseModifierPart(
+	st->ctxt, &st->cp, st->delim, st->eflags,
+	&pflags, &pattern.rightLen, NULL);
+    if (st->v->flags & VAR_JUNK) {
+	/* restore original name */
+	free(st->v->name);
+	st->v->name = sv_name;
+    }
+    if (pattern.rhs == NULL)
+	return 'c';
+
+    st->termc = *--st->cp;
+    st->delim = '\0';
+
+    if (st->eflags & VARE_WANTRES) {
+	switch (how) {
+	case '+':
+	    Var_Append(st->v->name, pattern.rhs, v_ctxt);
+	    break;
+	case '!':
+	    st->newStr = Cmd_Exec(pattern.rhs, &emsg);
+	    if (emsg)
+		Error(emsg, st->nstr);
+	    else
+		Var_Set(st->v->name, st->newStr, v_ctxt);
+	    free(st->newStr);
+	    break;
+	case '?':
+	    if ((st->v->flags & VAR_JUNK) == 0)
+		break;
+	    /* FALLTHROUGH */
+	default:
+	    Var_Set(st->v->name, pattern.rhs, v_ctxt);
+	    break;
+	}
+    }
+    free(UNCONST(pattern.rhs));
+    st->newStr = varNoError;
+    return 0;
 }
 
 /* remember current value */
