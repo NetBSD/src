@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.255 2020/07/04 17:41:04 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.264 2020/07/19 15:51:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.255 2020/07/04 17:41:04 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.264 2020/07/19 15:51:51 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.255 2020/07/04 17:41:04 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.264 2020/07/19 15:51:51 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -153,7 +153,7 @@ char **savedEnv = NULL;
 char var_Error[] = "";
 
 /*
- * Similar to var_Error, but returned when the 'VARF_UNDEFERR' flag for
+ * Similar to var_Error, but returned when the 'VARE_UNDEFERR' flag for
  * Var_Parse is not set. Why not just use a constant? Well, gcc likes
  * to condense identical string instances...
  */
@@ -189,9 +189,11 @@ GNode          *VAR_INTERNAL;	/* variables from make itself */
 GNode          *VAR_GLOBAL;	/* variables from the makefile */
 GNode          *VAR_CMD;	/* variables defined on the command-line */
 
-#define FIND_CMD	0x1	/* look in VAR_CMD when searching */
-#define FIND_GLOBAL	0x2	/* look in VAR_GLOBAL as well */
-#define FIND_ENV  	0x4	/* look in the environment also */
+typedef enum {
+    FIND_CMD		= 0x01,	/* look in VAR_CMD when searching */
+    FIND_GLOBAL		= 0x02,	/* look in VAR_GLOBAL as well */
+    FIND_ENV		= 0x04	/* look in the environment also */
+} VarFindFlags;
 
 typedef enum {
     VAR_IN_USE		= 0x01,	/* Variable's value is currently being used.
@@ -233,14 +235,18 @@ static int var_exportedVars = VAR_EXPORTED_NONE;
  */
 #define VAR_EXPORT_LITERAL	2
 
+/* Flags for pattern matching in the :S and :C modifiers */
 typedef enum {
-	VAR_SUB_GLOBAL	= 0x01,	/* Apply substitution globally */
-	VAR_SUB_ONE	= 0x02,	/* Apply substitution to one word */
-	VAR_SUB_MATCHED	= 0x04,	/* There was a match */
-	VAR_MATCH_START	= 0x08,	/* Match at start of word */
-	VAR_MATCH_END	= 0x10,	/* Match at end of word */
-	VAR_NOSUBST	= 0x20	/* don't expand vars in VarGetPattern */
-} VarPattern_Flags;
+    VARP_SUB_GLOBAL	= 0x01,	/* Apply substitution globally */
+    VARP_SUB_ONE	= 0x02,	/* Apply substitution to one word */
+    VARP_SUB_MATCHED	= 0x04,	/* There was a match */
+    VARP_MATCH_START	= 0x08,	/* Match at start of word */
+    VARP_MATCH_END	= 0x10,	/* Match at end of word */
+
+    /* FIXME: This constant doesn't belong here. It is not related to
+     * pattern matching, and VarGetPattern is badly named as well. */
+    VAR_NOSUBST	= 0x20		/* don't expand vars in VarGetPattern */
+} VarPatternFlags;
 
 typedef enum {
 	VAR_NO_EXPORT	= 0x01	/* do not export */
@@ -267,7 +273,7 @@ typedef struct {
     int		  leftLen;	/* Length of string */
     const char   *rhs;		/* Replacement string (w/ &'s removed) */
     int		  rightLen;	/* Length of replacement */
-    VarPattern_Flags flags;
+    VarPatternFlags pflags;
 } VarPattern;
 
 /* struct passed as 'void *' to VarLoopExpand() for ":@tvar@str@" */
@@ -277,7 +283,7 @@ typedef struct {
     int		tvarLen;
     char	*str;		/* string to expand */
     int		strLen;
-    Varf_Flags	flags;
+    VarEvalFlags flags;
 } VarLoop;
 
 #ifndef NO_REGEX
@@ -287,7 +293,7 @@ typedef struct {
     int		   nsub;
     regmatch_t 	  *matches;
     char 	  *replace;
-    int		   flags;
+    VarPatternFlags pflags;
 } VarREPattern;
 #endif
 
@@ -311,10 +317,9 @@ typedef struct {
  * Input:
  *	name		name to find
  *	ctxt		context in which to find it
- *	flags		FIND_GLOBAL set means to look in the
- *			VAR_GLOBAL context as well. FIND_CMD set means
- *			to look in the VAR_CMD context also. FIND_ENV
- *			set means to look in the environment
+ *	flags		FIND_GLOBAL	look in VAR_GLOBAL as well
+ *			FIND_CMD	look in VAR_CMD as well
+ *			FIND_ENV	look in the environment as well
  *
  * Results:
  *	A pointer to the structure describing the desired variable or
@@ -325,7 +330,7 @@ typedef struct {
  *-----------------------------------------------------------------------
  */
 static Var *
-VarFind(const char *name, GNode *ctxt, int flags)
+VarFind(const char *name, GNode *ctxt, VarFindFlags flags)
 {
     Hash_Entry         	*var;
     Var			*v;
@@ -339,29 +344,29 @@ VarFind(const char *name, GNode *ctxt, int flags)
     if (*name == '.' && isupper((unsigned char) name[1])) {
 	switch (name[1]) {
 	case 'A':
-	    if (!strcmp(name, ".ALLSRC"))
+	    if (strcmp(name, ".ALLSRC") == 0)
 		name = ALLSRC;
-	    if (!strcmp(name, ".ARCHIVE"))
+	    if (strcmp(name, ".ARCHIVE") == 0)
 		name = ARCHIVE;
 	    break;
 	case 'I':
-	    if (!strcmp(name, ".IMPSRC"))
+	    if (strcmp(name, ".IMPSRC") == 0)
 		name = IMPSRC;
 	    break;
 	case 'M':
-	    if (!strcmp(name, ".MEMBER"))
+	    if (strcmp(name, ".MEMBER") == 0)
 		name = MEMBER;
 	    break;
 	case 'O':
-	    if (!strcmp(name, ".OODATE"))
+	    if (strcmp(name, ".OODATE") == 0)
 		name = OODATE;
 	    break;
 	case 'P':
-	    if (!strcmp(name, ".PREFIX"))
+	    if (strcmp(name, ".PREFIX") == 0)
 		name = PREFIX;
 	    break;
 	case 'T':
-	    if (!strcmp(name, ".TARGET"))
+	    if (strcmp(name, ".TARGET") == 0)
 		name = TARGET;
 	    break;
 	}
@@ -396,7 +401,7 @@ VarFind(const char *name, GNode *ctxt, int flags)
 	char *env;
 
 	if ((env = getenv(name)) != NULL) {
-	    int		len;
+	    int len;
 
 	    v = bmake_malloc(sizeof(Var));
 	    v->name = bmake_strdup(name);
@@ -449,7 +454,7 @@ VarFind(const char *name, GNode *ctxt, int flags)
 static Boolean
 VarFreeEnv(Var *v, Boolean destroy)
 {
-    if ((v->flags & VAR_FROM_ENV) == 0)
+    if (!(v->flags & VAR_FROM_ENV))
 	return FALSE;
     free(v->name);
     Buf_Destroy(&v->val, destroy);
@@ -482,7 +487,7 @@ VarAdd(const char *name, const char *val, GNode *ctxt)
 
     v = bmake_malloc(sizeof(Var));
 
-    len = val ? strlen(val) : 0;
+    len = val != NULL ? strlen(val) : 0;
     Buf_Init(&v->val, len + 1);
     Buf_AddBytes(&v->val, len, val);
 
@@ -491,7 +496,7 @@ VarAdd(const char *name, const char *val, GNode *ctxt)
     h = Hash_CreateEntry(&ctxt->context, name, NULL);
     Hash_SetValue(h, v);
     v->name = h->name;
-    if (DEBUG(VAR) && (ctxt->flags & INTERNAL) == 0) {
+    if (DEBUG(VAR) && !(ctxt->flags & INTERNAL)) {
 	fprintf(debug_file, "%s:%s = %s\n", ctxt->name, name, val);
     }
 }
@@ -512,24 +517,21 @@ Var_Delete(const char *name, GNode *ctxt)
     Hash_Entry 	  *ln;
     char *cp;
 
-    if (strchr(name, '$')) {
-	cp = Var_Subst(NULL, name, VAR_GLOBAL, VARF_WANTRES);
+    if (strchr(name, '$') != NULL) {
+	cp = Var_Subst(NULL, name, VAR_GLOBAL, VARE_WANTRES);
     } else {
-	cp = (char *)name;
+	cp = UNCONST(name);
     }
     ln = Hash_FindEntry(&ctxt->context, cp);
     if (DEBUG(VAR)) {
 	fprintf(debug_file, "%s:delete %s%s\n",
 	    ctxt->name, cp, ln ? "" : " (not found)");
     }
-    if (cp != name) {
+    if (cp != name)
 	free(cp);
-    }
     if (ln != NULL) {
-	Var 	  *v;
-
-	v = (Var *)Hash_GetValue(ln);
-	if ((v->flags & VAR_EXPORTED)) {
+	Var *v = (Var *)Hash_GetValue(ln);
+	if (v->flags & VAR_EXPORTED) {
 	    unsetenv(v->name);
 	}
 	if (strcmp(MAKE_EXPORTED, v->name) == 0) {
@@ -578,9 +580,8 @@ Var_Export1(const char *name, int flags)
 	}
     }
     v = VarFind(name, VAR_GLOBAL, 0);
-    if (v == NULL) {
+    if (v == NULL)
 	return 0;
-    }
     if (!parent &&
 	(v->flags & (VAR_EXPORTED|VAR_REEXPORT)) == VAR_EXPORTED) {
 	return 0;			/* nothing to do */
@@ -605,7 +606,7 @@ Var_Export1(const char *name, int flags)
 	}
 	n = snprintf(tmp, sizeof(tmp), "${%s}", name);
 	if (n < (int)sizeof(tmp)) {
-	    val = Var_Subst(NULL, tmp, VAR_GLOBAL, VARF_WANTRES);
+	    val = Var_Subst(NULL, tmp, VAR_GLOBAL, VARE_WANTRES);
 	    setenv(name, val, 1);
 	    free(val);
 	}
@@ -670,12 +671,11 @@ Var_ExportVars(void)
 	int ac;
 	int i;
 
-	val = Var_Subst(NULL, tmp, VAR_GLOBAL, VARF_WANTRES);
+	val = Var_Subst(NULL, tmp, VAR_GLOBAL, VARE_WANTRES);
 	if (*val) {
 	    av = brk_string(val, &ac, FALSE, &as);
-	    for (i = 0; i < ac; i++) {
+	    for (i = 0; i < ac; i++)
 		Var_Export1(av[i], 0);
-	    }
 	    free(as);
 	    free(av);
 	}
@@ -713,7 +713,7 @@ Var_Export(char *str, int isExport)
     } else {
 	flags |= VAR_EXPORT_PARENT;
     }
-    val = Var_Subst(NULL, str, VAR_GLOBAL, VARF_WANTRES);
+    val = Var_Subst(NULL, str, VAR_GLOBAL, VARE_WANTRES);
     if (*val) {
 	av = brk_string(val, &ac, FALSE, &as);
 	for (i = 0; i < ac; i++) {
@@ -748,11 +748,11 @@ Var_Export(char *str, int isExport)
 }
 
 
+extern char **environ;
+
 /*
  * This is called when .unexport[-env] is seen.
  */
-extern char **environ;
-
 void
 Var_UnExport(char *str)
 {
@@ -762,9 +762,8 @@ Var_UnExport(char *str)
     Boolean unexport_env;
     int n;
 
-    if (!str || !str[0]) {
+    if (str == NULL || str[0] == '\0')
 	return;			/* assert? */
-    }
 
     vlist = NULL;
 
@@ -802,10 +801,8 @@ Var_UnExport(char *str)
 
     if (!vlist) {
 	/* Using .MAKE.EXPORTED */
-	n = snprintf(tmp, sizeof(tmp), "${" MAKE_EXPORTED ":O:u}");
-	if (n < (int)sizeof(tmp)) {
-	    vlist = Var_Subst(NULL, tmp, VAR_GLOBAL, VARF_WANTRES);
-	}
+	vlist = Var_Subst(NULL, "${" MAKE_EXPORTED ":O:u}", VAR_GLOBAL,
+			  VARE_WANTRES);
     }
     if (vlist) {
 	Var *v;
@@ -820,7 +817,8 @@ Var_UnExport(char *str)
 	    if (!v)
 		continue;
 	    if (!unexport_env &&
-		(v->flags & (VAR_EXPORTED|VAR_REEXPORT)) == VAR_EXPORTED) {
+		(v->flags & (VAR_EXPORTED|VAR_REEXPORT)) == VAR_EXPORTED)
+	    {
 		unsetenv(v->name);
 	    }
 	    v->flags &= ~(VAR_EXPORTED|VAR_REEXPORT);
@@ -834,7 +832,7 @@ Var_UnExport(char *str)
 		n = snprintf(tmp, sizeof(tmp),
 			     "${" MAKE_EXPORTED ":N%s}", v->name);
 		if (n < (int)sizeof(tmp)) {
-		    cp = Var_Subst(NULL, tmp, VAR_GLOBAL, VARF_WANTRES);
+		    cp = Var_Subst(NULL, tmp, VAR_GLOBAL, VARE_WANTRES);
 		    Var_Set(MAKE_EXPORTED, cp, VAR_GLOBAL);
 		    free(cp);
 		}
@@ -862,8 +860,8 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
      * point in searching them all just to save a bit of memory...
      */
     if (strchr(name, '$') != NULL) {
-	expanded_name = Var_Subst(NULL, name, ctxt, VARF_WANTRES);
-	if (expanded_name[0] == 0) {
+	expanded_name = Var_Subst(NULL, name, ctxt, VARE_WANTRES);
+	if (expanded_name[0] == '\0') {
 	    if (DEBUG(VAR)) {
 		fprintf(debug_file, "Var_Set(\"%s\", \"%s\", ...) "
 			"name expands to empty string - ignored\n",
@@ -1005,8 +1003,8 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
     char *expanded_name = NULL;
 
     if (strchr(name, '$') != NULL) {
-	expanded_name = Var_Subst(NULL, name, ctxt, VARF_WANTRES);
-	if (expanded_name[0] == 0) {
+	expanded_name = Var_Subst(NULL, name, ctxt, VARE_WANTRES);
+	if (expanded_name[0] == '\0') {
 	    if (DEBUG(VAR)) {
 		fprintf(debug_file, "Var_Append(\"%s\", \"%s\", ...) "
 			"name expands to empty string - ignored\n",
@@ -1018,7 +1016,7 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 	name = expanded_name;
     }
 
-    v = VarFind(name, ctxt, ctxt == VAR_GLOBAL ? (FIND_CMD|FIND_ENV) : 0);
+    v = VarFind(name, ctxt, ctxt == VAR_GLOBAL ? (FIND_CMD | FIND_ENV) : 0);
 
     if (v == NULL) {
 	Var_Set(name, val, ctxt);
@@ -1069,14 +1067,12 @@ Var_Exists(const char *name, GNode *ctxt)
     Var		  *v;
     char          *cp;
 
-    if ((cp = strchr(name, '$')) != NULL) {
-	cp = Var_Subst(NULL, name, ctxt, VARF_WANTRES);
-    }
-    v = VarFind(cp ? cp : name, ctxt, FIND_CMD|FIND_GLOBAL|FIND_ENV);
+    if ((cp = strchr(name, '$')) != NULL)
+	cp = Var_Subst(NULL, name, ctxt, VARE_WANTRES);
+    v = VarFind(cp ? cp : name, ctxt, FIND_CMD | FIND_GLOBAL | FIND_ENV);
     free(cp);
-    if (v == NULL) {
+    if (v == NULL)
 	return FALSE;
-    }
 
     (void)VarFreeEnv(v, TRUE);
     return TRUE;
@@ -1101,14 +1097,12 @@ Var_Exists(const char *name, GNode *ctxt)
 char *
 Var_Value(const char *name, GNode *ctxt, char **frp)
 {
-    Var *v;
-
-    v = VarFind(name, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
+    Var *v = VarFind(name, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
     *frp = NULL;
     if (v == NULL)
 	return NULL;
 
-    char *p = (Buf_GetAll(&v->val, NULL));
+    char *p = Buf_GetAll(&v->val, NULL);
     if (VarFreeEnv(v, FALSE))
 	*frp = p;
     return p;
@@ -1157,7 +1151,7 @@ VarTail(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
     const char *slash = strrchr(word, '/');
     const char *base = slash != NULL ? slash + 1 : word;
 
-    if (addSpace && vpstate->varSpace)
+    if (addSpace && vpstate->varSpace != '\0')
 	Buf_AddByte(buf, vpstate->varSpace);
     Buf_AddBytes(buf, strlen(base), base);
     return TRUE;
@@ -1174,7 +1168,7 @@ VarSuffix(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
     if (dot == NULL)
 	return addSpace;
 
-    if (addSpace && vpstate->varSpace)
+    if (addSpace && vpstate->varSpace != '\0')
 	Buf_AddByte(buf, vpstate->varSpace);
     Buf_AddBytes(buf, strlen(dot + 1), dot + 1);
     return TRUE;
@@ -1190,7 +1184,7 @@ VarRoot(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
     char *dot = strrchr(word, '.');
     size_t len = dot != NULL ? (size_t)(dot - word) : strlen(word);
 
-    if (addSpace && vpstate->varSpace)
+    if (addSpace && vpstate->varSpace != '\0')
 	Buf_AddByte(buf, vpstate->varSpace);
     Buf_AddBytes(buf, len, word);
     return TRUE;
@@ -1208,13 +1202,115 @@ VarMatch(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	fprintf(debug_file, "VarMatch [%s] [%s]\n", word, pattern);
     if (!Str_Match(word, pattern))
 	return addSpace;
-    if (addSpace && vpstate->varSpace)
+    if (addSpace && vpstate->varSpace != '\0')
 	Buf_AddByte(buf, vpstate->varSpace);
     Buf_AddBytes(buf, strlen(word), word);
     return TRUE;
 }
 
 #ifdef SYSVVARSUB
+/*-
+ *-----------------------------------------------------------------------
+ * Str_SYSVMatch --
+ *	Check word against pattern for a match (% is wild),
+ *
+ * Input:
+ *	word		Word to examine
+ *	pattern		Pattern to examine against
+ *	len		Number of characters to substitute
+ *
+ * Results:
+ *	Returns the beginning position of a match or null. The number
+ *	of characters matched is returned in len.
+ *
+ * Side Effects:
+ *	None
+ *
+ *-----------------------------------------------------------------------
+ */
+static char *
+Str_SYSVMatch(const char *word, const char *pattern, size_t *len,
+    Boolean *hasPercent)
+{
+    const char *p = pattern;
+    const char *w = word;
+    const char *m;
+
+    *hasPercent = FALSE;
+    if (*p == '\0') {
+	/* Null pattern is the whole string */
+	*len = strlen(w);
+	return UNCONST(w);
+    }
+
+    if ((m = strchr(p, '%')) != NULL) {
+	*hasPercent = TRUE;
+	if (*w == '\0') {
+		/* empty word does not match pattern */
+		return NULL;
+	}
+	/* check that the prefix matches */
+	for (; p != m && *w && *w == *p; w++, p++)
+	     continue;
+
+	if (p != m)
+	    return NULL;	/* No match */
+
+	if (*++p == '\0') {
+	    /* No more pattern, return the rest of the string */
+	    *len = strlen(w);
+	    return UNCONST(w);
+	}
+    }
+
+    m = w;
+
+    /* Find a matching tail */
+    do
+	if (strcmp(p, w) == 0) {
+	    *len = w - m;
+	    return UNCONST(m);
+	}
+    while (*w++ != '\0');
+
+    return NULL;
+}
+
+
+/*-
+ *-----------------------------------------------------------------------
+ * Str_SYSVSubst --
+ *	Substitute '%' on the pattern with len characters from src.
+ *	If the pattern does not contain a '%' prepend len characters
+ *	from src.
+ *
+ * Side Effects:
+ *	Places result on buf
+ *
+ *-----------------------------------------------------------------------
+ */
+static void
+Str_SYSVSubst(Buffer *buf, const char *pat, const char *src, size_t len,
+    Boolean lhsHasPercent)
+{
+    const char *m;
+
+    if ((m = strchr(pat, '%')) != NULL && lhsHasPercent) {
+	/* Copy the prefix */
+	Buf_AddBytes(buf, m - pat, pat);
+	/* skip the % */
+	pat = m + 1;
+    }
+    if (m != NULL || !lhsHasPercent) {
+	/* Copy the pattern */
+	Buf_AddBytes(buf, len, src);
+    }
+
+    /* append the rest */
+    Buf_AddBytes(buf, strlen(pat), pat);
+}
+
+
 /* Callback function for VarModify to implement the :%.from=%.to modifier. */
 static Boolean
 VarSYSVMatch(GNode *ctx, Var_Parse_State *vpstate,
@@ -1222,15 +1318,15 @@ VarSYSVMatch(GNode *ctx, Var_Parse_State *vpstate,
 	     void *data)
 {
     size_t len;
-    char *ptr;
+    const char *ptr;
     Boolean hasPercent;
     VarPattern *pat = data;
 
-    if (addSpace && vpstate->varSpace)
+    if (addSpace && vpstate->varSpace != '\0')
 	Buf_AddByte(buf, vpstate->varSpace);
 
     if ((ptr = Str_SYSVMatch(word, pat->lhs, &len, &hasPercent)) != NULL) {
-	char *varexp = Var_Subst(NULL, pat->rhs, ctx, VARF_WANTRES);
+	char *varexp = Var_Subst(NULL, pat->rhs, ctx, VARE_WANTRES);
 	Str_SYSVSubst(buf, varexp, ptr, len, hasPercent);
 	free(varexp);
     } else {
@@ -1251,7 +1347,7 @@ VarNoMatch(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
     const char *pattern = data;
     if (Str_Match(word, pattern))
 	return addSpace;
-    if (addSpace && vpstate->varSpace)
+    if (addSpace && vpstate->varSpace != '\0')
 	Buf_AddByte(buf, vpstate->varSpace);
     Buf_AddBytes(buf, strlen(word), word);
     return TRUE;
@@ -1268,18 +1364,18 @@ VarSubstitute(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
     const char *cp;		/* General pointer */
     VarPattern *pattern = data;
 
-    if ((pattern->flags & (VAR_SUB_ONE|VAR_SUB_MATCHED)) !=
-	(VAR_SUB_ONE|VAR_SUB_MATCHED)) {
+    if ((pattern->pflags & (VARP_SUB_ONE | VARP_SUB_MATCHED)) !=
+	(VARP_SUB_ONE | VARP_SUB_MATCHED)) {
 	/*
 	 * Still substituting -- break it down into simple anchored cases
 	 * and if none of them fits, perform the general substitution case.
 	 */
-	if ((pattern->flags & VAR_MATCH_START) &&
+	if ((pattern->pflags & VARP_MATCH_START) &&
 	    (strncmp(word, pattern->lhs, pattern->leftLen) == 0)) {
 	    /*
 	     * Anchored at start and beginning of word matches pattern
 	     */
-	    if ((pattern->flags & VAR_MATCH_END) &&
+	    if ((pattern->pflags & VARP_MATCH_END) &&
 	        (wordLen == pattern->leftLen)) {
 		/*
 		 * Also anchored at end and matches to the end (word
@@ -1287,14 +1383,14 @@ VarSubstitute(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 		 * if rhs is non-null.
 		 */
 		if (pattern->rightLen != 0) {
-		    if (addSpace && vpstate->varSpace) {
+		    if (addSpace && vpstate->varSpace != '\0') {
 			Buf_AddByte(buf, vpstate->varSpace);
 		    }
 		    addSpace = TRUE;
 		    Buf_AddBytes(buf, pattern->rightLen, pattern->rhs);
 		}
-		pattern->flags |= VAR_SUB_MATCHED;
-	    } else if (pattern->flags & VAR_MATCH_END) {
+		pattern->pflags |= VARP_SUB_MATCHED;
+	    } else if (pattern->pflags & VARP_MATCH_END) {
 		/*
 		 * Doesn't match to end -- copy word wholesale
 		 */
@@ -1304,7 +1400,7 @@ VarSubstitute(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 		 * Matches at start but need to copy in trailing characters
 		 */
 		if ((pattern->rightLen + wordLen - pattern->leftLen) != 0) {
-		    if (addSpace && vpstate->varSpace) {
+		    if (addSpace && vpstate->varSpace != '\0') {
 			Buf_AddByte(buf, vpstate->varSpace);
 		    }
 		    addSpace = TRUE;
@@ -1312,14 +1408,14 @@ VarSubstitute(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 		Buf_AddBytes(buf, pattern->rightLen, pattern->rhs);
 		Buf_AddBytes(buf, wordLen - pattern->leftLen,
 			     (word + pattern->leftLen));
-		pattern->flags |= VAR_SUB_MATCHED;
+		pattern->pflags |= VARP_SUB_MATCHED;
 	    }
-	} else if (pattern->flags & VAR_MATCH_START) {
+	} else if (pattern->pflags & VARP_MATCH_START) {
 	    /*
 	     * Had to match at start of word and didn't -- copy whole word.
 	     */
 	    goto nosub;
-	} else if (pattern->flags & VAR_MATCH_END) {
+	} else if (pattern->pflags & VARP_MATCH_END) {
 	    /*
 	     * Anchored at end, Find only place match could occur (leftLen
 	     * characters from the end of the word) and see if it does. Note
@@ -1336,14 +1432,14 @@ VarSubstitute(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 		 * by the right-hand-side.
 		 */
 		if (((cp - word) + pattern->rightLen) != 0) {
-		    if (addSpace && vpstate->varSpace) {
+		    if (addSpace && vpstate->varSpace != '\0') {
 			Buf_AddByte(buf, vpstate->varSpace);
 		    }
 		    addSpace = TRUE;
 		}
 		Buf_AddBytes(buf, cp - word, word);
 		Buf_AddBytes(buf, pattern->rightLen, pattern->rhs);
-		pattern->flags |= VAR_SUB_MATCHED;
+		pattern->pflags |= VARP_SUB_MATCHED;
 	    } else {
 		/*
 		 * Had to match at end and didn't. Copy entire word.
@@ -1381,16 +1477,16 @@ VarSubstitute(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 		    if (wordLen == 0) {
 			done = TRUE;
 		    }
-		    if ((pattern->flags & VAR_SUB_GLOBAL) == 0) {
+		    if ((pattern->pflags & VARP_SUB_GLOBAL) == 0) {
 			done = TRUE;
 		    }
-		    pattern->flags |= VAR_SUB_MATCHED;
+		    pattern->pflags |= VARP_SUB_MATCHED;
 		} else {
 		    done = TRUE;
 		}
 	    }
 	    if (wordLen != 0) {
-		if (addSpace && vpstate->varSpace) {
+		if (addSpace && vpstate->varSpace != '\0') {
 		    Buf_AddByte(buf, vpstate->varSpace);
 		}
 		Buf_AddBytes(buf, wordLen, word);
@@ -1405,7 +1501,7 @@ VarSubstitute(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	return addSpace;
     }
 nosub:
-    if (addSpace && vpstate->varSpace) {
+    if (addSpace && vpstate->varSpace != '\0') {
 	Buf_AddByte(buf, vpstate->varSpace);
     }
     Buf_AddBytes(buf, wordLen, word);
@@ -1456,8 +1552,8 @@ VarRESubstitute(GNode *ctx MAKE_ATTR_UNUSED,
 	    Buf_AddByte(buf, ' ');	\
 	added = 1
 
-    if ((pat->flags & (VAR_SUB_ONE|VAR_SUB_MATCHED)) ==
-	(VAR_SUB_ONE|VAR_SUB_MATCHED))
+    if ((pat->pflags & (VARP_SUB_ONE | VARP_SUB_MATCHED)) ==
+	(VARP_SUB_ONE | VARP_SUB_MATCHED))
 	xrv = REG_NOMATCH;
     else {
     tryagain:
@@ -1466,7 +1562,7 @@ VarRESubstitute(GNode *ctx MAKE_ATTR_UNUSED,
 
     switch (xrv) {
     case 0:
-	pat->flags |= VAR_SUB_MATCHED;
+	pat->pflags |= VARP_SUB_MATCHED;
 	if (pat->matches[0].rm_so > 0) {
 	    MAYBE_ADD_SPACE();
 	    Buf_AddBytes(buf, pat->matches[0].rm_so, wp);
@@ -1520,7 +1616,7 @@ VarRESubstitute(GNode *ctx MAKE_ATTR_UNUSED,
 	    }
 	}
 	wp += pat->matches[0].rm_eo;
-	if (pat->flags & VAR_SUB_GLOBAL) {
+	if (pat->pflags & VARP_SUB_GLOBAL) {
 	    flags |= REG_NOTBOL;
 	    if (pat->matches[0].rm_so == 0 && pat->matches[0].rm_eo == 0) {
 		MAYBE_ADD_SPACE();
@@ -1659,7 +1755,7 @@ VarSelectWords(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	 (step < 0 && i >= end) || (step > 0 && i < end);
 	 i += step) {
 	if (av[i] && *av[i]) {
-	    if (addSpace && vpstate->varSpace) {
+	    if (addSpace && vpstate->varSpace != '\0') {
 		Buf_AddByte(&buf, vpstate->varSpace);
 	    }
 	    Buf_AddBytes(&buf, strlen(av[i]), av[i]);
@@ -1685,10 +1781,10 @@ VarRealpath(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
     char rbuf[MAXPATHLEN];
     char *rp;
 
-    if (addSpace && vpstate->varSpace)
+    if (addSpace && vpstate->varSpace != '\0')
 	Buf_AddByte(buf, vpstate->varSpace);
     rp = cached_realpath(word, rbuf);
-    if (rp && *rp == '/' && stat(rp, &st) == 0)
+    if (rp != NULL && *rp == '/' && stat(rp, &st) == 0)
 	word = rp;
 
     Buf_AddBytes(buf, strlen(word), word);
@@ -1951,22 +2047,18 @@ VarRange(const char *str, int ac)
  */
 static char *
 VarGetPattern(GNode *ctxt, Var_Parse_State *vpstate MAKE_ATTR_UNUSED,
-	      VarPattern_Flags flags, const char **tstr, int delim,
-	      VarPattern_Flags *vflags, int *length, VarPattern *pattern)
+	      VarEvalFlags eflags, const char **tstr, int delim,
+	      VarPatternFlags *mpflags, int *length, VarPattern *pattern)
 {
     const char *cp;
     char *rstr;
     Buffer buf;
     int junk;
-    int errnum = flags & VARF_UNDEFERR;
+    VarEvalFlags errnum = eflags & VARE_UNDEFERR;
 
     Buf_Init(&buf, 0);
     if (length == NULL)
 	length = &junk;
-
-#define IS_A_MATCH(cp, delim) \
-    ((cp[0] == '\\') && ((cp[1] == delim) ||  \
-     (cp[1] == '\\') || (cp[1] == '$') || (pattern && (cp[1] == '&'))))
 
     /*
      * Skim through until the matching delimiter is found;
@@ -1975,21 +2067,24 @@ VarGetPattern(GNode *ctxt, Var_Parse_State *vpstate MAKE_ATTR_UNUSED,
      * touch other backslashes.
      */
     for (cp = *tstr; *cp && (*cp != delim); cp++) {
-	if (IS_A_MATCH(cp, delim)) {
+	Boolean is_escaped = cp[0] == '\\' && (cp[1] == delim ||
+	    cp[1] == '\\' || cp[1] == '$' || (pattern && cp[1] == '&'));
+	if (is_escaped) {
 	    Buf_AddByte(&buf, cp[1]);
 	    cp++;
 	} else if (*cp == '$') {
 	    if (cp[1] == delim) {
-		if (vflags == NULL)
+		if (mpflags == NULL)
 		    Buf_AddByte(&buf, *cp);
 		else
 		    /*
 		     * Unescaped $ at end of pattern => anchor
 		     * pattern at end.
 		     */
-		    *vflags |= VAR_MATCH_END;
+		    *mpflags |= VARP_MATCH_END;
 	    } else {
-		if (vflags == NULL || (*vflags & VAR_NOSUBST) == 0) {
+		/* FIXME: mismatch between mpflags and VAR_NOSUBST */
+		if (mpflags == NULL || !(*mpflags & VAR_NOSUBST)) {
 		    char   *cp2;
 		    int     len;
 		    void   *freeIt;
@@ -1999,7 +2094,7 @@ VarGetPattern(GNode *ctxt, Var_Parse_State *vpstate MAKE_ATTR_UNUSED,
 		     * delimiter, assume it's a variable
 		     * substitution and recurse.
 		     */
-		    cp2 = Var_Parse(cp, ctxt, errnum | (flags & VARF_WANTRES),
+		    cp2 = Var_Parse(cp, ctxt, errnum | (eflags & VARE_WANTRES),
 				    &len, &freeIt);
 		    Buf_AddBytes(&buf, strlen(cp2), cp2);
 		    free(freeIt);
@@ -2205,8 +2300,6 @@ typedef struct {
     const char *cp;		/* Secondary pointer into str (place marker
 				 * for tstr) */
     char termc;			/* Character which terminated scan */
-    int cnt;			/* Used to count brace pairs when variable in
-				 * in parens or braces */
     char delim;
     int modifier;		/* that we are processing */
     Var_Parse_State parsestate;	/* Flags passed to helper functions */
@@ -2227,26 +2320,26 @@ typedef struct {
 static Boolean
 ApplyModifier_At(ApplyModifiersState *st) {
     VarLoop loop;
-    VarPattern_Flags vflags = VAR_NOSUBST;
+    VarPatternFlags pflags = VAR_NOSUBST; /* FIXME: mismatch between pflags and VAR_NOSUBST */
 
-    st->cp = ++(st->tstr);
+    st->cp = ++st->tstr;
     st->delim = '@';
     loop.tvar = VarGetPattern(
 	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
-	&vflags, &loop.tvarLen, NULL);
+	&pflags, &loop.tvarLen, NULL);
     if (loop.tvar == NULL)
 	return FALSE;
 
     loop.str = VarGetPattern(
 	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
-	&vflags, &loop.strLen, NULL);
+	&pflags, &loop.strLen, NULL);
     if (loop.str == NULL)
 	return FALSE;
 
     st->termc = *st->cp;
     st->delim = '\0';
 
-    loop.flags = st->flags & (VARF_UNDEFERR | VARF_WANTRES);
+    loop.flags = st->flags & (VARE_UNDEFERR | VARE_WANTRES);
     loop.ctxt = st->ctxt;
     st->newStr = VarModify(
 	st->ctxt, &st->parsestate, st->nstr, VarLoopExpand, &loop);
@@ -2263,15 +2356,15 @@ ApplyModifier_Defined(ApplyModifiersState *st)
     Buffer buf;			/* Buffer for patterns */
     int nflags;
 
-    if (st->flags & VARF_WANTRES) {
+    if (st->flags & VARE_WANTRES) {
 	int wantres;
 	if (*st->tstr == 'U')
 	    wantres = ((st->v->flags & VAR_JUNK) != 0);
 	else
 	    wantres = ((st->v->flags & VAR_JUNK) == 0);
-	nflags = st->flags & ~VARF_WANTRES;
+	nflags = st->flags & ~VARE_WANTRES;
 	if (wantres)
-	    nflags |= VARF_WANTRES;
+	    nflags |= VARE_WANTRES;
     } else
 	nflags = st->flags;
 
@@ -2311,9 +2404,9 @@ ApplyModifier_Defined(ApplyModifiersState *st)
 
     st->termc = *st->cp;
 
-    if ((st->v->flags & VAR_JUNK) != 0)
+    if (st->v->flags & VAR_JUNK)
 	st->v->flags |= VAR_KEEP;
-    if (nflags & VARF_WANTRES) {
+    if (nflags & VARE_WANTRES) {
 	st->newStr = Buf_Destroy(&buf, FALSE);
     } else {
 	st->newStr = st->nstr;
@@ -2408,7 +2501,7 @@ ApplyModifier_Exclam(ApplyModifiersState *st)
     const char *emsg;
     VarPattern pattern;
 
-    pattern.flags = 0;
+    pattern.pflags = 0;
 
     st->delim = '!';
     emsg = NULL;
@@ -2418,7 +2511,7 @@ ApplyModifier_Exclam(ApplyModifiersState *st)
 	NULL, &pattern.rightLen, NULL);
     if (pattern.rhs == NULL)
 	return FALSE;
-    if (st->flags & VARF_WANTRES)
+    if (st->flags & VARE_WANTRES)
 	st->newStr = Cmd_Exec(pattern.rhs, &emsg);
     else
 	st->newStr = varNoError;
@@ -2550,7 +2643,7 @@ ApplyModifier_Subst(ApplyModifiersState *st)
     VarPattern 	    pattern;
     Var_Parse_State tmpparsestate;
 
-    pattern.flags = 0;
+    pattern.pflags = 0;
     tmpparsestate = st->parsestate;
     st->delim = st->tstr[1];
     st->tstr += 2;
@@ -2560,14 +2653,14 @@ ApplyModifier_Subst(ApplyModifiersState *st)
      * start of the word -- skip over it and flag pattern.
      */
     if (*st->tstr == '^') {
-	pattern.flags |= VAR_MATCH_START;
-	st->tstr += 1;
+	pattern.pflags |= VARP_MATCH_START;
+	st->tstr++;
     }
 
     st->cp = st->tstr;
     pattern.lhs = VarGetPattern(
 	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
-	&pattern.flags, &pattern.leftLen, NULL);
+	&pattern.pflags, &pattern.leftLen, NULL);
     if (pattern.lhs == NULL)
 	return FALSE;
 
@@ -2585,10 +2678,10 @@ ApplyModifier_Subst(ApplyModifiersState *st)
     for (;; st->cp++) {
 	switch (*st->cp) {
 	case 'g':
-	    pattern.flags |= VAR_SUB_GLOBAL;
+	    pattern.pflags |= VARP_SUB_GLOBAL;
 	    continue;
 	case '1':
-	    pattern.flags |= VAR_SUB_ONE;
+	    pattern.pflags |= VARP_SUB_ONE;
 	    continue;
 	case 'W':
 	    tmpparsestate.oneBigWord = TRUE;
@@ -2618,7 +2711,7 @@ ApplyModifier_Regex(ApplyModifiersState *st)
     int             error;
     Var_Parse_State tmpparsestate;
 
-    pattern.flags = 0;
+    pattern.pflags = 0;
     tmpparsestate = st->parsestate;
     st->delim = st->tstr[1];
     st->tstr += 2;
@@ -2642,10 +2735,10 @@ ApplyModifier_Regex(ApplyModifiersState *st)
     for (;; st->cp++) {
 	switch (*st->cp) {
 	case 'g':
-	    pattern.flags |= VAR_SUB_GLOBAL;
+	    pattern.pflags |= VARP_SUB_GLOBAL;
 	    continue;
 	case '1':
-	    pattern.flags |= VAR_SUB_ONE;
+	    pattern.pflags |= VARP_SUB_ONE;
 	    continue;
 	case 'W':
 	    tmpparsestate.oneBigWord = TRUE;
@@ -2747,7 +2840,7 @@ ApplyModifier_To(ApplyModifiersState *st)
 	     * is a subsequent modifier, so do a no-op VarSubstitute now to for
 	     * str to be re-expanded without the spaces.
 	     */
-	    pattern.flags = VAR_SUB_ONE;
+	    pattern.pflags = VARP_SUB_ONE;
 	    pattern.lhs = pattern.rhs = "\032";
 	    pattern.leftLen = pattern.rightLen = 1;
 
@@ -2952,60 +3045,52 @@ ApplyModifier_Order(ApplyModifiersState *st)
 static Boolean
 ApplyModifier_IfElse(ApplyModifiersState *st)
 {
-    VarPattern pattern;
     Boolean value;
     int cond_rc;
-    VarPattern_Flags lhs_flags, rhs_flags;
+    VarPatternFlags then_flags, else_flags;
+    /* FIXME: IfElse has nothing to do with VarPatternFlags */
 
     /* find ':', and then substitute accordingly */
-    if (st->flags & VARF_WANTRES) {
+    if (st->flags & VARE_WANTRES) {
 	cond_rc = Cond_EvalExpression(NULL, st->v->name, &value, 0, FALSE);
-	if (cond_rc == COND_INVALID) {
-	    lhs_flags = rhs_flags = VAR_NOSUBST;
-	} else if (value) {
-	    lhs_flags = 0;
-	    rhs_flags = VAR_NOSUBST;
-	} else {
-	    lhs_flags = VAR_NOSUBST;
-	    rhs_flags = 0;
-	}
+	then_flags = cond_rc != COND_INVALID && value ? 0 : VAR_NOSUBST;
+	else_flags = cond_rc != COND_INVALID && !value ? 0 : VAR_NOSUBST;
     } else {
 	/* we are just consuming and discarding */
 	cond_rc = value = 0;
-	lhs_flags = rhs_flags = VAR_NOSUBST;
+	then_flags = else_flags = VAR_NOSUBST;
     }
-    pattern.flags = 0;
 
     st->cp = ++st->tstr;
     st->delim = ':';
-    pattern.lhs = VarGetPattern(
+    char *then_expr = VarGetPattern(
 	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
-	&lhs_flags, &pattern.leftLen, NULL);
-    if (pattern.lhs == NULL)
+	&then_flags, NULL, NULL);
+    if (then_expr == NULL)
 	return FALSE;
 
     /* BROPEN or PROPEN */
     st->delim = st->endc;
-    pattern.rhs = VarGetPattern(
+    char *else_expr = VarGetPattern(
 	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
-	&rhs_flags, &pattern.rightLen, NULL);
-    if (pattern.rhs == NULL)
+	&else_flags, NULL, NULL);
+    if (else_expr == NULL)
 	return FALSE;
 
     st->termc = *--st->cp;
     st->delim = '\0';
     if (cond_rc == COND_INVALID) {
 	Error("Bad conditional expression `%s' in %s?%s:%s",
-	    st->v->name, st->v->name, pattern.lhs, pattern.rhs);
+	    st->v->name, st->v->name, then_expr, else_expr);
 	return FALSE;
     }
 
     if (value) {
-	st->newStr = UNCONST(pattern.lhs);
-	free(UNCONST(pattern.rhs));
+	st->newStr = then_expr;
+	free(else_expr);
     } else {
-	st->newStr = UNCONST(pattern.rhs);
-	free(UNCONST(pattern.lhs));
+	st->newStr = else_expr;
+	free(else_expr);
     }
     if (st->v->flags & VAR_JUNK)
 	st->v->flags |= VAR_KEEP;
@@ -3024,7 +3109,8 @@ ApplyModifier_Assign(ApplyModifiersState *st)
 	char *sv_name;
 	VarPattern pattern;
 	int how;
-	VarPattern_Flags vflags;
+	VarPatternFlags pflags;
+	/* FIXME: Assign has nothing to do with VarPatternFlags */
 
 	if (st->v->name[0] == 0)
 	    return 'b';
@@ -3058,12 +3144,12 @@ ApplyModifier_Assign(ApplyModifiersState *st)
 	    break;
 	}
 	st->delim = st->startc == PROPEN ? PRCLOSE : BRCLOSE;
-	pattern.flags = 0;
+	pattern.pflags = 0;
 
-	vflags = (st->flags & VARF_WANTRES) ? 0 : VAR_NOSUBST;
+	pflags = (st->flags & VARE_WANTRES) ? 0 : VAR_NOSUBST;
 	pattern.rhs = VarGetPattern(
 	    st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
-	    &vflags, &pattern.rightLen, NULL);
+	    &pflags, &pattern.rightLen, NULL);
 	if (st->v->flags & VAR_JUNK) {
 	    /* restore original name */
 	    free(st->v->name);
@@ -3075,7 +3161,7 @@ ApplyModifier_Assign(ApplyModifiersState *st)
 	st->termc = *--st->cp;
 	st->delim = '\0';
 
-	if (st->flags & VARF_WANTRES) {
+	if (st->flags & VARE_WANTRES) {
 	    switch (how) {
 	    case '+':
 		Var_Append(st->v->name, pattern.rhs, v_ctxt);
@@ -3141,9 +3227,10 @@ ApplyModifier_SysV(ApplyModifiersState *st)
      * substitution command.
      */
     VarPattern      pattern;
+    /* FIXME: SysV modifiers have nothing to do with :S or :C pattern matching */
     Boolean         eqFound = FALSE;
 
-    pattern.flags = 0;
+    pattern.pflags = 0;
 
     /*
      * First we make a pass through the string trying
@@ -3151,16 +3238,16 @@ ApplyModifier_SysV(ApplyModifiersState *st)
      * it must be: <string1>=<string2>)
      */
     st->cp = st->tstr;
-    st->cnt = 1;
-    while (*st->cp != '\0' && st->cnt) {
+    int nest = 1;
+    while (*st->cp != '\0' && nest > 0) {
 	if (*st->cp == '=') {
 	    eqFound = TRUE;
 	    /* continue looking for st->endc */
 	} else if (*st->cp == st->endc)
-	    st->cnt--;
+	    nest--;
 	else if (*st->cp == st->startc)
-	    st->cnt++;
-	if (st->cnt)
+	    nest++;
+	if (nest > 0)
 	    st->cp++;
     }
     if (*st->cp != st->endc || !eqFound)
@@ -3168,9 +3255,12 @@ ApplyModifier_SysV(ApplyModifiersState *st)
 
     st->delim = '=';
     st->cp = st->tstr;
+    /* FIXME: There's no point in having a single $ at the end of a
+     * SysV substitution since that will not be interpreted as an
+     * anchor anyway. */
     pattern.lhs = VarGetPattern(
 	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
-	&pattern.flags, &pattern.leftLen, NULL);
+	&pattern.pflags, &pattern.leftLen, NULL);
     if (pattern.lhs == NULL)
 	return 'c';
 
@@ -3292,7 +3382,7 @@ ApplyModifiers(char *nstr, const char *tstr,
     ApplyModifiersState st = {
 	startc, endc, v, ctxt, flags, lengthPtr, freePtr,
 	nstr, tstr, tstr, tstr,
-	'\0', 0, '\0', 0, {' ', FALSE}, NULL
+	'\0', '\0', 0, {' ', FALSE}, NULL
     };
 
     while (*st.tstr && *st.tstr != st.endc) {
@@ -3333,7 +3423,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 		st.nstr = ApplyModifiers(st.nstr, rval, 0, 0, st.v,
 				      st.ctxt, st.flags, &used, st.freePtr);
 		if (st.nstr == var_Error
-		    || (st.nstr == varNoError && (st.flags & VARF_UNDEFERR) == 0)
+		    || (st.nstr == varNoError && (st.flags & VARE_UNDEFERR) == 0)
 		    || strlen(rval) != (size_t) used) {
 		    free(freeIt);
 		    goto out;	/* error already reported */
@@ -3502,7 +3592,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	case 's':
 	    if (st.tstr[1] == 'h' && (st.tstr[2] == st.endc || st.tstr[2] == ':')) {
 		const char *emsg;
-		if (st.flags & VARF_WANTRES) {
+		if (st.flags & VARE_WANTRES) {
 		    st.newStr = Cmd_Exec(st.nstr, &emsg);
 		    if (emsg)
 			Error(emsg, st.nstr);
@@ -3587,9 +3677,9 @@ cleanup:
  * Input:
  *	str		The string to parse
  *	ctxt		The context for the variable
- *	flags		VARF_UNDEFERR	if undefineds are an error
- *			VARF_WANTRES	if we actually want the result
- *			VARF_ASSIGN	if we are in a := assignment
+ *	flags		VARE_UNDEFERR	if undefineds are an error
+ *			VARE_WANTRES	if we actually want the result
+ *			VARE_ASSIGN	if we are in a := assignment
  *	lengthPtr	OUT: The length of the specification
  *	freePtr		OUT: Non-NULL if caller should free *freePtr
  *
@@ -3608,7 +3698,7 @@ cleanup:
  */
 /* coverity[+alloc : arg-*4] */
 char *
-Var_Parse(const char *str, GNode *ctxt, Varf_Flags flags,
+Var_Parse(const char *str, GNode *ctxt, VarEvalFlags flags,
 	  int *lengthPtr, void **freePtr)
 {
     const char	*tstr;		/* Pointer into str */
@@ -3674,7 +3764,7 @@ Var_Parse(const char *str, GNode *ctxt, Varf_Flags flags,
 		    return UNCONST("$(.ARCHIVE)");
 		}
 	    }
-	    return (flags & VARF_UNDEFERR) ? var_Error : varNoError;
+	    return (flags & VARE_UNDEFERR) ? var_Error : varNoError;
 	} else {
 	    haveModifier = FALSE;
 	    tstr = &str[1];
@@ -3812,7 +3902,7 @@ Var_Parse(const char *str, GNode *ctxt, Varf_Flags flags,
 		    return pstr;
 		} else {
 		    Buf_Destroy(&buf, TRUE);
-		    return (flags & VARF_UNDEFERR) ? var_Error : varNoError;
+		    return (flags & VARE_UNDEFERR) ? var_Error : varNoError;
 		}
 	    } else {
 		/*
@@ -3845,7 +3935,7 @@ Var_Parse(const char *str, GNode *ctxt, Varf_Flags flags,
      * return.
      */
     nstr = Buf_GetAll(&v->val, NULL);
-    if (strchr(nstr, '$') != NULL && (flags & VARF_WANTRES) != 0) {
+    if (strchr(nstr, '$') != NULL && (flags & VARE_WANTRES) != 0) {
 	nstr = Var_Subst(NULL, nstr, ctxt, flags);
 	*freePtr = nstr;
     }
@@ -3904,7 +3994,7 @@ Var_Parse(const char *str, GNode *ctxt, Varf_Flags flags,
 		nstr = bmake_strndup(start, *lengthPtr);
 		*freePtr = nstr;
 	    } else {
-		nstr = (flags & VARF_UNDEFERR) ? var_Error : varNoError;
+		nstr = (flags & VARE_UNDEFERR) ? var_Error : varNoError;
 	    }
 	}
 	if (nstr != Buf_GetAll(&v->val, NULL))
@@ -3919,16 +4009,16 @@ Var_Parse(const char *str, GNode *ctxt, Varf_Flags flags,
  *-----------------------------------------------------------------------
  * Var_Subst  --
  *	Substitute for all variables in the given string in the given context.
- *	If flags & VARF_UNDEFERR, Parse_Error will be called when an undefined
+ *	If flags & VARE_UNDEFERR, Parse_Error will be called when an undefined
  *	variable is encountered.
  *
  * Input:
  *	var		Named variable || NULL for all
  *	str		the string which to substitute
  *	ctxt		the context wherein to find variables
- *	flags		VARF_UNDEFERR	if undefineds are an error
- *			VARF_WANTRES	if we actually want the result
- *			VARF_ASSIGN	if we are in a := assignment
+ *	flags		VARE_UNDEFERR	if undefineds are an error
+ *			VARE_WANTRES	if we actually want the result
+ *			VARE_ASSIGN	if we are in a := assignment
  *
  * Results:
  *	The resulting string.
@@ -3938,7 +4028,7 @@ Var_Parse(const char *str, GNode *ctxt, Varf_Flags flags,
  *-----------------------------------------------------------------------
  */
 char *
-Var_Subst(const char *var, const char *str, GNode *ctxt, Varf_Flags flags)
+Var_Subst(const char *var, const char *str, GNode *ctxt, VarEvalFlags flags)
 {
     Buffer	buf;		/* Buffer for forming things */
     char	*val;		/* Value to substitute for a variable */
@@ -3962,7 +4052,7 @@ Var_Subst(const char *var, const char *str, GNode *ctxt, Varf_Flags flags)
 	     * In such a case, we skip over the escape character and store the
 	     * dollar sign into the buffer directly.
 	     */
-	    if (save_dollars && (flags & VARF_ASSIGN))
+	    if (save_dollars && (flags & VARE_ASSIGN))
 		Buf_AddByte(&buf, *str);
 	    str++;
 	    Buf_AddByte(&buf, *str);
@@ -4050,7 +4140,7 @@ Var_Subst(const char *var, const char *str, GNode *ctxt, Varf_Flags flags)
 		 */
 		if (oldVars) {
 		    str += length;
-		} else if ((flags & VARF_UNDEFERR) || val == var_Error) {
+		} else if ((flags & VARE_UNDEFERR) || val == var_Error) {
 		    /*
 		     * If variable is undefined, complain and skip the
 		     * variable. The complaint will stop us from doing anything

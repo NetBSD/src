@@ -29,7 +29,7 @@
 #define __INTR_PRIVATE
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: octeon_cpunode.c,v 1.14 2020/07/17 21:59:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_cpunode.c,v 1.15 2020/07/19 08:58:35 simonb Exp $");
 
 #include "locators.h"
 #include "cpunode.h"
@@ -100,7 +100,7 @@ cpunode_mainbus_print(void *aux, const char *pnp)
 int
 cpunode_mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
-	
+
 	return 1;
 }
 
@@ -223,6 +223,7 @@ octeon_cpu_init(struct cpu_info *ci)
 static void
 octeon_cpu_run(struct cpu_info *ci)
 {
+
 	octeon_intr_init(ci);
 
 	mips3_initclocks();
@@ -402,12 +403,14 @@ static void
 wdog_cpunode_poke(void *arg)
 {
 	struct cpu_softc *cpu = arg;
+
 	mips3_sd(cpu->cpu_pp_poke, 0);
 }
 
 static int
 wdog_cpunode_tickle(struct sysmon_wdog *smw)
 {
+
 	wdog_cpunode_poke(curcpu()->ci_softc);
 #ifdef MULTIPROCESSOR
 	// We need to send IPIs to the other CPUs to poke their wdog.

@@ -374,8 +374,11 @@ void OPENSSL_cpuid_setup(void)
     size_t len = sizeof(val);
 
     /*
-     * If machdep.fpu_present == 0, FPU is absent and emulated by software.
-     * Avoid using it for better performance.
+     * If machdep.fpu_present == 0, FPU is absent and emulated by
+     * software.  In that case, using FPU instructions hurts rather
+     * than helps performance, and the software is unlikely to run in
+     * constant time so it would expose us to timing side channel
+     * attacks.  So don't do it!
      */
     error = sysctlbyname("machdep.fpu_present", &val, &len, NULL, 0);
     if (error != 0 || (error == 0 && val != 0))

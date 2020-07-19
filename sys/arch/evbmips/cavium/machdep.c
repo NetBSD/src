@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 2020/07/16 11:49:37 jmcneill Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20 2020/07/19 08:53:24 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -114,7 +114,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2020/07/16 11:49:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2020/07/19 08:53:24 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,6 +154,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2020/07/16 11:49:37 jmcneill Exp $"
 #include <evbmips/cavium/octeon_uboot.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_private.h>
 
 static void	mach_init_vector(void);
 static void	mach_init_bus_space(void);
@@ -370,8 +371,10 @@ mach_init_memory(void)
 	physmem = btoc(octeon_btinfo.obt_dram_size * 1024 * 1024);
 
 #ifdef MULTIPROCESSOR
-	const u_int cores = mipsNN_cp0_ebase_read() & MIPS_EBASE_CPUNUM;
-	mem_clusters[0].start = cores * 4096;
+	const uint64_t fuse = octeon_xkphys_read_8(CIU_FUSE);
+	const int cores = popcount64(fuse);
+	mem_clusters[0].start += cores * PAGE_SIZE;
+	mem_clusters[0].size  -= cores * PAGE_SIZE;
 #endif
 
 	/*
@@ -459,6 +462,8 @@ cpu_startup(void)
 	 * that memory allocation is now safe.
 	 */
 	octeon_configuration.mc_mallocsafe = 1;
+
+	fdtbus_intr_init();
 }
 
 void
