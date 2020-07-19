@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.263 2020/07/19 15:47:10 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.264 2020/07/19 15:51:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.263 2020/07/19 15:47:10 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.264 2020/07/19 15:51:51 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.263 2020/07/19 15:47:10 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.264 2020/07/19 15:51:51 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3063,19 +3063,17 @@ ApplyModifier_IfElse(ApplyModifiersState *st)
 
     st->cp = ++st->tstr;
     st->delim = ':';
-    int then_len;
     char *then_expr = VarGetPattern(
 	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
-	&then_flags, &then_len, NULL);
+	&then_flags, NULL, NULL);
     if (then_expr == NULL)
 	return FALSE;
 
     /* BROPEN or PROPEN */
     st->delim = st->endc;
-    int else_len;
     char *else_expr = VarGetPattern(
 	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
-	&else_flags, &else_len, NULL);
+	&else_flags, NULL, NULL);
     if (else_expr == NULL)
 	return FALSE;
 
