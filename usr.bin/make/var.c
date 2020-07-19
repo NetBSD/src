@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.262 2020/07/19 14:05:39 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.263 2020/07/19 15:47:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.262 2020/07/19 14:05:39 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.263 2020/07/19 15:47:10 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.262 2020/07/19 14:05:39 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.263 2020/07/19 15:47:10 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2060,10 +2060,6 @@ VarGetPattern(GNode *ctxt, Var_Parse_State *vpstate MAKE_ATTR_UNUSED,
     if (length == NULL)
 	length = &junk;
 
-#define IS_A_MATCH(cp, delim) \
-    ((cp[0] == '\\') && ((cp[1] == delim) ||  \
-     (cp[1] == '\\') || (cp[1] == '$') || (pattern && (cp[1] == '&'))))
-
     /*
      * Skim through until the matching delimiter is found;
      * pick up variable substitutions on the way. Also allow
@@ -2071,7 +2067,9 @@ VarGetPattern(GNode *ctxt, Var_Parse_State *vpstate MAKE_ATTR_UNUSED,
      * touch other backslashes.
      */
     for (cp = *tstr; *cp && (*cp != delim); cp++) {
-	if (IS_A_MATCH(cp, delim)) {
+	Boolean is_escaped = cp[0] == '\\' && (cp[1] == delim ||
+	    cp[1] == '\\' || cp[1] == '$' || (pattern && cp[1] == '&'));
+	if (is_escaped) {
 	    Buf_AddByte(&buf, cp[1]);
 	    cp++;
 	} else if (*cp == '$') {
