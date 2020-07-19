@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.257 2020/07/19 10:28:44 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.258 2020/07/19 10:38:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.257 2020/07/19 10:28:44 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.258 2020/07/19 10:38:02 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.257 2020/07/19 10:28:44 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.258 2020/07/19 10:38:02 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3043,60 +3043,53 @@ ApplyModifier_Order(ApplyModifiersState *st)
 static Boolean
 ApplyModifier_IfElse(ApplyModifiersState *st)
 {
-    VarPattern pattern;
     Boolean value;
     int cond_rc;
-    VarPattern_Flags lhs_flags, rhs_flags;
+    VarPattern_Flags then_flags, else_flags;
 
     /* find ':', and then substitute accordingly */
     if (st->flags & VARF_WANTRES) {
 	cond_rc = Cond_EvalExpression(NULL, st->v->name, &value, 0, FALSE);
-	if (cond_rc == COND_INVALID) {
-	    lhs_flags = rhs_flags = VAR_NOSUBST;
-	} else if (value) {
-	    lhs_flags = 0;
-	    rhs_flags = VAR_NOSUBST;
-	} else {
-	    lhs_flags = VAR_NOSUBST;
-	    rhs_flags = 0;
-	}
+	then_flags = cond_rc != COND_INVALID && value ? 0 : VAR_NOSUBST;
+	else_flags = cond_rc != COND_INVALID && !value ? 0 : VAR_NOSUBST;
     } else {
 	/* we are just consuming and discarding */
 	cond_rc = value = 0;
-	lhs_flags = rhs_flags = VAR_NOSUBST;
+	then_flags = else_flags = VAR_NOSUBST;
     }
-    pattern.flags = 0;
 
     st->cp = ++st->tstr;
     st->delim = ':';
-    pattern.lhs = VarGetPattern(
+    int then_len;
+    char *then_expr = VarGetPattern(
 	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
-	&lhs_flags, &pattern.leftLen, NULL);
-    if (pattern.lhs == NULL)
+	&then_flags, &then_len, NULL);
+    if (then_expr == NULL)
 	return FALSE;
 
     /* BROPEN or PROPEN */
     st->delim = st->endc;
-    pattern.rhs = VarGetPattern(
+    int else_len;
+    char *else_expr = VarGetPattern(
 	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
-	&rhs_flags, &pattern.rightLen, NULL);
-    if (pattern.rhs == NULL)
+	&else_flags, &else_len, NULL);
+    if (else_expr == NULL)
 	return FALSE;
 
     st->termc = *--st->cp;
     st->delim = '\0';
     if (cond_rc == COND_INVALID) {
 	Error("Bad conditional expression `%s' in %s?%s:%s",
-	    st->v->name, st->v->name, pattern.lhs, pattern.rhs);
+	    st->v->name, st->v->name, then_expr, else_expr);
 	return FALSE;
     }
 
     if (value) {
-	st->newStr = UNCONST(pattern.lhs);
-	free(UNCONST(pattern.rhs));
+	st->newStr = then_expr;
+	free(else_expr);
     } else {
-	st->newStr = UNCONST(pattern.rhs);
-	free(UNCONST(pattern.lhs));
+	st->newStr = else_expr;
+	free(else_expr);
     }
     if (st->v->flags & VAR_JUNK)
 	st->v->flags |= VAR_KEEP;
