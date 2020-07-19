@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.274 2020/07/19 21:14:56 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.275 2020/07/19 21:30:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.274 2020/07/19 21:14:56 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.275 2020/07/19 21:30:49 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.274 2020/07/19 21:14:56 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.275 2020/07/19 21:30:49 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2736,6 +2736,17 @@ ApplyModifier_Regex(ApplyModifiersState *st)
 }
 #endif
 
+static Boolean
+VarModify_Copy(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
+	      const char *word, Boolean addSpace, Buffer *buf,
+	      void *data MAKE_ATTR_UNUSED)
+{
+    if (addSpace && vpstate->varSpace != '\0')
+	Buf_AddByte(buf, vpstate->varSpace);
+    Buf_AddBytes(buf, strlen(word), word);
+    return TRUE;
+}
+
 /* :tA, :tu, :tl, etc. */
 static Boolean
 ApplyModifier_To(ApplyModifiersState *st)
@@ -2744,7 +2755,6 @@ ApplyModifier_To(ApplyModifiersState *st)
     if (st->tstr[1] != st->endc && st->tstr[1] != ':') {
 	if (st->tstr[1] == 's') {
 	    /* Use the char (if any) at st->tstr[2] as the word separator. */
-	    VarPattern pattern;
 
 	    if (st->tstr[2] != st->endc &&
 		(st->tstr[3] == st->endc || st->tstr[3] == ':')) {
@@ -2796,18 +2806,8 @@ ApplyModifier_To(ApplyModifiersState *st)
 	    }
 
 	    st->termc = *st->cp;
-
-	    /*
-	     * We cannot be certain that VarModify will be used - even if there
-	     * is a subsequent modifier, so do a no-op VarSubstitute now to for
-	     * str to be re-expanded without the spaces.
-	     */
-	    pattern.pflags = VARP_SUB_ONE;
-	    pattern.lhs = pattern.rhs = "\032";
-	    pattern.leftLen = pattern.rightLen = 1;
-
-	    st->newStr = VarModify(
-		st->ctxt, &st->parsestate, st->nstr, VarSubstitute, &pattern);
+	    st->newStr = VarModify(st->ctxt, &st->parsestate, st->nstr,
+				   VarModify_Copy, NULL);
 	} else if (st->tstr[2] == st->endc || st->tstr[2] == ':') {
 	    /* Check for two-character options: ":tu", ":tl" */
 	    if (st->tstr[1] == 'A') {	/* absolute path */
