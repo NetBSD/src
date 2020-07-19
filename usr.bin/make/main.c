@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.281 2020/07/19 12:26:17 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.282 2020/07/19 12:35:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.281 2020/07/19 12:26:17 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.282 2020/07/19 12:35:30 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.281 2020/07/19 12:26:17 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.282 2020/07/19 12:35:30 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2039,8 +2039,6 @@ void
 PrintOnError(GNode *gn, const char *s)
 {
     static GNode *en = NULL;
-    char tmp[64];
-    char *cp;
 
     /* we generally want to keep quiet if a sub-make died */
     if (dieQuietly(gn, -1))
@@ -2061,9 +2059,8 @@ PrintOnError(GNode *gn, const char *s)
 	Var_Delete(".ERROR_CMD", VAR_GLOBAL);
 	Lst_ForEach(gn->commands, addErrorCMD, gn);
     }
-    strncpy(tmp, "${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'\n@}",
-	    sizeof(tmp) - 1);
-    cp = Var_Subst(NULL, tmp, VAR_GLOBAL, VARE_WANTRES);
+    const char *expr = "${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'\n@}";
+    char *cp = Var_Subst(NULL, expr, VAR_GLOBAL, VARE_WANTRES);
     if (cp) {
 	if (*cp)
 	    printf("%s", cp);
@@ -2085,17 +2082,14 @@ void
 Main_ExportMAKEFLAGS(Boolean first)
 {
     static int once = 1;
-    char tmp[64];
-    char *s;
 
     if (once != first)
 	return;
     once = 0;
 
-    strncpy(tmp, "${.MAKEFLAGS} ${.MAKEOVERRIDES:O:u:@v@$v=${$v:Q}@}",
-	    sizeof(tmp));
-    s = Var_Subst(NULL, tmp, VAR_CMD, VARE_WANTRES);
-    if (s && *s) {
+    const char *expr = "${.MAKEFLAGS} ${.MAKEOVERRIDES:O:u:@v@$v=${$v:Q}@}";
+    char *s = Var_Subst(NULL, expr, VAR_CMD, VARE_WANTRES);
+    if (s != NULL && s[0] != '\0') {
 #ifdef POSIX
 	setenv("MAKEFLAGS", s, 1);
 #else
