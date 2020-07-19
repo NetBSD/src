@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.260 2020/07/19 12:51:06 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.261 2020/07/19 13:21:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.260 2020/07/19 12:51:06 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.261 2020/07/19 13:21:56 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.260 2020/07/19 12:51:06 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.261 2020/07/19 13:21:56 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -235,14 +235,18 @@ static int var_exportedVars = VAR_EXPORTED_NONE;
  */
 #define VAR_EXPORT_LITERAL	2
 
+/* Flags for pattern matching in the :S and :C modifiers */
 typedef enum {
-	VAR_SUB_GLOBAL	= 0x01,	/* Apply substitution globally */
-	VAR_SUB_ONE	= 0x02,	/* Apply substitution to one word */
-	VAR_SUB_MATCHED	= 0x04,	/* There was a match */
-	VAR_MATCH_START	= 0x08,	/* Match at start of word */
-	VAR_MATCH_END	= 0x10,	/* Match at end of word */
-	VAR_NOSUBST	= 0x20	/* don't expand vars in VarGetPattern */
-} VarPattern_Flags;
+    VARP_SUB_GLOBAL	= 0x01,	/* Apply substitution globally */
+    VARP_SUB_ONE	= 0x02,	/* Apply substitution to one word */
+    VARP_SUB_MATCHED	= 0x04,	/* There was a match */
+    VARP_MATCH_START	= 0x08,	/* Match at start of word */
+    VARP_MATCH_END	= 0x10,	/* Match at end of word */
+
+    /* FIXME: This constant doesn't belong here. It is not related to
+     * pattern matching, and VarGetPattern is badly named as well. */
+    VAR_NOSUBST	= 0x20		/* don't expand vars in VarGetPattern */
+} VarPatternFlags;
 
 typedef enum {
 	VAR_NO_EXPORT	= 0x01	/* do not export */
@@ -269,7 +273,7 @@ typedef struct {
     int		  leftLen;	/* Length of string */
     const char   *rhs;		/* Replacement string (w/ &'s removed) */
     int		  rightLen;	/* Length of replacement */
-    VarPattern_Flags flags;
+    VarPatternFlags pflags;
 } VarPattern;
 
 /* struct passed as 'void *' to VarLoopExpand() for ":@tvar@str@" */
@@ -289,7 +293,7 @@ typedef struct {
     int		   nsub;
     regmatch_t 	  *matches;
     char 	  *replace;
-    int		   flags;
+    VarPatternFlags pflags;
 } VarREPattern;
 #endif
 
@@ -1360,18 +1364,18 @@ VarSubstitute(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
     const char *cp;		/* General pointer */
     VarPattern *pattern = data;
 
-    if ((pattern->flags & (VAR_SUB_ONE|VAR_SUB_MATCHED)) !=
-	(VAR_SUB_ONE|VAR_SUB_MATCHED)) {
+    if ((pattern->pflags & (VARP_SUB_ONE | VARP_SUB_MATCHED)) !=
+	(VARP_SUB_ONE | VARP_SUB_MATCHED)) {
 	/*
 	 * Still substituting -- break it down into simple anchored cases
 	 * and if none of them fits, perform the general substitution case.
 	 */
-	if ((pattern->flags & VAR_MATCH_START) &&
+	if ((pattern->pflags & VARP_MATCH_START) &&
 	    (strncmp(word, pattern->lhs, pattern->leftLen) == 0)) {
 	    /*
 	     * Anchored at start and beginning of word matches pattern
 	     */
-	    if ((pattern->flags & VAR_MATCH_END) &&
+	    if ((pattern->pflags & VARP_MATCH_END) &&
 	        (wordLen == pattern->leftLen)) {
 		/*
 		 * Also anchored at end and matches to the end (word
@@ -1385,8 +1389,8 @@ VarSubstitute(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 		    addSpace = TRUE;
 		    Buf_AddBytes(buf, pattern->rightLen, pattern->rhs);
 		}
-		pattern->flags |= VAR_SUB_MATCHED;
-	    } else if (pattern->flags & VAR_MATCH_END) {
+		pattern->pflags |= VARP_SUB_MATCHED;
+	    } else if (pattern->pflags & VARP_MATCH_END) {
 		/*
 		 * Doesn't match to end -- copy word wholesale
 		 */
@@ -1404,14 +1408,14 @@ VarSubstitute(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 		Buf_AddBytes(buf, pattern->rightLen, pattern->rhs);
 		Buf_AddBytes(buf, wordLen - pattern->leftLen,
 			     (word + pattern->leftLen));
-		pattern->flags |= VAR_SUB_MATCHED;
+		pattern->pflags |= VARP_SUB_MATCHED;
 	    }
-	} else if (pattern->flags & VAR_MATCH_START) {
+	} else if (pattern->pflags & VARP_MATCH_START) {
 	    /*
 	     * Had to match at start of word and didn't -- copy whole word.
 	     */
 	    goto nosub;
-	} else if (pattern->flags & VAR_MATCH_END) {
+	} else if (pattern->pflags & VARP_MATCH_END) {
 	    /*
 	     * Anchored at end, Find only place match could occur (leftLen
 	     * characters from the end of the word) and see if it does. Note
@@ -1435,7 +1439,7 @@ VarSubstitute(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 		}
 		Buf_AddBytes(buf, cp - word, word);
 		Buf_AddBytes(buf, pattern->rightLen, pattern->rhs);
-		pattern->flags |= VAR_SUB_MATCHED;
+		pattern->pflags |= VARP_SUB_MATCHED;
 	    } else {
 		/*
 		 * Had to match at end and didn't. Copy entire word.
@@ -1473,10 +1477,10 @@ VarSubstitute(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 		    if (wordLen == 0) {
 			done = TRUE;
 		    }
-		    if ((pattern->flags & VAR_SUB_GLOBAL) == 0) {
+		    if ((pattern->pflags & VARP_SUB_GLOBAL) == 0) {
 			done = TRUE;
 		    }
-		    pattern->flags |= VAR_SUB_MATCHED;
+		    pattern->pflags |= VARP_SUB_MATCHED;
 		} else {
 		    done = TRUE;
 		}
@@ -1548,8 +1552,8 @@ VarRESubstitute(GNode *ctx MAKE_ATTR_UNUSED,
 	    Buf_AddByte(buf, ' ');	\
 	added = 1
 
-    if ((pat->flags & (VAR_SUB_ONE|VAR_SUB_MATCHED)) ==
-	(VAR_SUB_ONE|VAR_SUB_MATCHED))
+    if ((pat->pflags & (VARP_SUB_ONE | VARP_SUB_MATCHED)) ==
+	(VARP_SUB_ONE | VARP_SUB_MATCHED))
 	xrv = REG_NOMATCH;
     else {
     tryagain:
@@ -1558,7 +1562,7 @@ VarRESubstitute(GNode *ctx MAKE_ATTR_UNUSED,
 
     switch (xrv) {
     case 0:
-	pat->flags |= VAR_SUB_MATCHED;
+	pat->pflags |= VARP_SUB_MATCHED;
 	if (pat->matches[0].rm_so > 0) {
 	    MAYBE_ADD_SPACE();
 	    Buf_AddBytes(buf, pat->matches[0].rm_so, wp);
@@ -1612,7 +1616,7 @@ VarRESubstitute(GNode *ctx MAKE_ATTR_UNUSED,
 	    }
 	}
 	wp += pat->matches[0].rm_eo;
-	if (pat->flags & VAR_SUB_GLOBAL) {
+	if (pat->pflags & VARP_SUB_GLOBAL) {
 	    flags |= REG_NOTBOL;
 	    if (pat->matches[0].rm_so == 0 && pat->matches[0].rm_eo == 0) {
 		MAYBE_ADD_SPACE();
@@ -2043,14 +2047,14 @@ VarRange(const char *str, int ac)
  */
 static char *
 VarGetPattern(GNode *ctxt, Var_Parse_State *vpstate MAKE_ATTR_UNUSED,
-	      VarPattern_Flags flags, const char **tstr, int delim,
-	      VarPattern_Flags *vflags, int *length, VarPattern *pattern)
+	      VarEvalFlags eflags, const char **tstr, int delim,
+	      VarPatternFlags *mpflags, int *length, VarPattern *pattern)
 {
     const char *cp;
     char *rstr;
     Buffer buf;
     int junk;
-    int errnum = flags & VARE_UNDEFERR;
+    VarEvalFlags errnum = eflags & VARE_UNDEFERR;
 
     Buf_Init(&buf, 0);
     if (length == NULL)
@@ -2072,16 +2076,17 @@ VarGetPattern(GNode *ctxt, Var_Parse_State *vpstate MAKE_ATTR_UNUSED,
 	    cp++;
 	} else if (*cp == '$') {
 	    if (cp[1] == delim) {
-		if (vflags == NULL)
+		if (mpflags == NULL)
 		    Buf_AddByte(&buf, *cp);
 		else
 		    /*
 		     * Unescaped $ at end of pattern => anchor
 		     * pattern at end.
 		     */
-		    *vflags |= VAR_MATCH_END;
+		    *mpflags |= VARP_MATCH_END;
 	    } else {
-		if (vflags == NULL || (*vflags & VAR_NOSUBST) == 0) {
+		/* FIXME: mismatch between mpflags and VAR_NOSUBST */
+		if (mpflags == NULL || !(*mpflags & VAR_NOSUBST)) {
 		    char   *cp2;
 		    int     len;
 		    void   *freeIt;
@@ -2091,7 +2096,7 @@ VarGetPattern(GNode *ctxt, Var_Parse_State *vpstate MAKE_ATTR_UNUSED,
 		     * delimiter, assume it's a variable
 		     * substitution and recurse.
 		     */
-		    cp2 = Var_Parse(cp, ctxt, errnum | (flags & VARE_WANTRES),
+		    cp2 = Var_Parse(cp, ctxt, errnum | (eflags & VARE_WANTRES),
 				    &len, &freeIt);
 		    Buf_AddBytes(&buf, strlen(cp2), cp2);
 		    free(freeIt);
@@ -2319,19 +2324,19 @@ typedef struct {
 static Boolean
 ApplyModifier_At(ApplyModifiersState *st) {
     VarLoop loop;
-    VarPattern_Flags vflags = VAR_NOSUBST;
+    VarPatternFlags pflags = VAR_NOSUBST; /* FIXME: mismatch between pflags and VAR_NOSUBST */
 
-    st->cp = ++(st->tstr);
+    st->cp = ++st->tstr;
     st->delim = '@';
     loop.tvar = VarGetPattern(
 	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
-	&vflags, &loop.tvarLen, NULL);
+	&pflags, &loop.tvarLen, NULL);
     if (loop.tvar == NULL)
 	return FALSE;
 
     loop.str = VarGetPattern(
 	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
-	&vflags, &loop.strLen, NULL);
+	&pflags, &loop.strLen, NULL);
     if (loop.str == NULL)
 	return FALSE;
 
@@ -2500,7 +2505,7 @@ ApplyModifier_Exclam(ApplyModifiersState *st)
     const char *emsg;
     VarPattern pattern;
 
-    pattern.flags = 0;
+    pattern.pflags = 0;
 
     st->delim = '!';
     emsg = NULL;
@@ -2642,7 +2647,7 @@ ApplyModifier_Subst(ApplyModifiersState *st)
     VarPattern 	    pattern;
     Var_Parse_State tmpparsestate;
 
-    pattern.flags = 0;
+    pattern.pflags = 0;
     tmpparsestate = st->parsestate;
     st->delim = st->tstr[1];
     st->tstr += 2;
@@ -2652,14 +2657,14 @@ ApplyModifier_Subst(ApplyModifiersState *st)
      * start of the word -- skip over it and flag pattern.
      */
     if (*st->tstr == '^') {
-	pattern.flags |= VAR_MATCH_START;
-	st->tstr += 1;
+	pattern.pflags |= VARP_MATCH_START;
+	st->tstr++;
     }
 
     st->cp = st->tstr;
     pattern.lhs = VarGetPattern(
 	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
-	&pattern.flags, &pattern.leftLen, NULL);
+	&pattern.pflags, &pattern.leftLen, NULL);
     if (pattern.lhs == NULL)
 	return FALSE;
 
@@ -2677,10 +2682,10 @@ ApplyModifier_Subst(ApplyModifiersState *st)
     for (;; st->cp++) {
 	switch (*st->cp) {
 	case 'g':
-	    pattern.flags |= VAR_SUB_GLOBAL;
+	    pattern.pflags |= VARP_SUB_GLOBAL;
 	    continue;
 	case '1':
-	    pattern.flags |= VAR_SUB_ONE;
+	    pattern.pflags |= VARP_SUB_ONE;
 	    continue;
 	case 'W':
 	    tmpparsestate.oneBigWord = TRUE;
@@ -2710,7 +2715,7 @@ ApplyModifier_Regex(ApplyModifiersState *st)
     int             error;
     Var_Parse_State tmpparsestate;
 
-    pattern.flags = 0;
+    pattern.pflags = 0;
     tmpparsestate = st->parsestate;
     st->delim = st->tstr[1];
     st->tstr += 2;
@@ -2734,10 +2739,10 @@ ApplyModifier_Regex(ApplyModifiersState *st)
     for (;; st->cp++) {
 	switch (*st->cp) {
 	case 'g':
-	    pattern.flags |= VAR_SUB_GLOBAL;
+	    pattern.pflags |= VARP_SUB_GLOBAL;
 	    continue;
 	case '1':
-	    pattern.flags |= VAR_SUB_ONE;
+	    pattern.pflags |= VARP_SUB_ONE;
 	    continue;
 	case 'W':
 	    tmpparsestate.oneBigWord = TRUE;
@@ -2839,7 +2844,7 @@ ApplyModifier_To(ApplyModifiersState *st)
 	     * is a subsequent modifier, so do a no-op VarSubstitute now to for
 	     * str to be re-expanded without the spaces.
 	     */
-	    pattern.flags = VAR_SUB_ONE;
+	    pattern.pflags = VARP_SUB_ONE;
 	    pattern.lhs = pattern.rhs = "\032";
 	    pattern.leftLen = pattern.rightLen = 1;
 
@@ -3046,7 +3051,8 @@ ApplyModifier_IfElse(ApplyModifiersState *st)
 {
     Boolean value;
     int cond_rc;
-    VarPattern_Flags then_flags, else_flags;
+    VarPatternFlags then_flags, else_flags;
+    /* FIXME: IfElse has nothing to do with VarPatternFlags */
 
     /* find ':', and then substitute accordingly */
     if (st->flags & VARE_WANTRES) {
@@ -3109,7 +3115,8 @@ ApplyModifier_Assign(ApplyModifiersState *st)
 	char *sv_name;
 	VarPattern pattern;
 	int how;
-	VarPattern_Flags vflags;
+	VarPatternFlags pflags;
+	/* FIXME: Assign has nothing to do with VarPatternFlags */
 
 	if (st->v->name[0] == 0)
 	    return 'b';
@@ -3143,12 +3150,12 @@ ApplyModifier_Assign(ApplyModifiersState *st)
 	    break;
 	}
 	st->delim = st->startc == PROPEN ? PRCLOSE : BRCLOSE;
-	pattern.flags = 0;
+	pattern.pflags = 0;
 
-	vflags = (st->flags & VARE_WANTRES) ? 0 : VAR_NOSUBST;
+	pflags = (st->flags & VARE_WANTRES) ? 0 : VAR_NOSUBST;
 	pattern.rhs = VarGetPattern(
 	    st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
-	    &vflags, &pattern.rightLen, NULL);
+	    &pflags, &pattern.rightLen, NULL);
 	if (st->v->flags & VAR_JUNK) {
 	    /* restore original name */
 	    free(st->v->name);
@@ -3226,9 +3233,10 @@ ApplyModifier_SysV(ApplyModifiersState *st)
      * substitution command.
      */
     VarPattern      pattern;
+    /* FIXME: SysV modifiers have nothing to do with :S or :C pattern matching */
     Boolean         eqFound = FALSE;
 
-    pattern.flags = 0;
+    pattern.pflags = 0;
 
     /*
      * First we make a pass through the string trying
@@ -3253,9 +3261,12 @@ ApplyModifier_SysV(ApplyModifiersState *st)
 
     st->delim = '=';
     st->cp = st->tstr;
+    /* FIXME: There's no point in having a single $ at the end of a
+     * SysV substitution since that will not be interpreted as an
+     * anchor anyway. */
     pattern.lhs = VarGetPattern(
 	st->ctxt, &st->parsestate, st->flags, &st->cp, st->delim,
-	&pattern.flags, &pattern.leftLen, NULL);
+	&pattern.pflags, &pattern.leftLen, NULL);
     if (pattern.lhs == NULL)
 	return 'c';
 
