@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.268 2020/07/19 17:40:30 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.269 2020/07/19 17:43:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.268 2020/07/19 17:40:30 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.269 2020/07/19 17:43:36 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.268 2020/07/19 17:40:30 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.269 2020/07/19 17:43:36 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1455,32 +1455,21 @@ VarSubstitute(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	     * addSpace is set FALSE as soon as a space is added to the
 	     * buffer.
 	     */
-	    Boolean done;
-	    int origSize;
-
-	    done = FALSE;
-	    origSize = Buf_Size(buf);
-	    while (!done) {
-		cp = Str_FindSubstring(word, pattern->lhs);
-		if (cp != NULL) {
-		    if (addSpace && (((cp - word) + pattern->rightLen) != 0)) {
-			Buf_AddByte(buf, vpstate->varSpace);
-			addSpace = FALSE;
-		    }
-		    Buf_AddBytes(buf, cp - word, word);
-		    Buf_AddBytes(buf, pattern->rightLen, pattern->rhs);
-		    wordLen -= (cp - word) + pattern->leftLen;
-		    word = cp + pattern->leftLen;
-		    if (wordLen == 0) {
-			done = TRUE;
-		    }
-		    if ((pattern->pflags & VARP_SUB_GLOBAL) == 0) {
-			done = TRUE;
-		    }
-		    pattern->pflags |= VARP_SUB_MATCHED;
-		} else {
-		    done = TRUE;
+	    int origSize = Buf_Size(buf);
+	    while ((cp = Str_FindSubstring(word, pattern->lhs)) != NULL) {
+		if (addSpace && (((cp - word) + pattern->rightLen) != 0)) {
+		    Buf_AddByte(buf, vpstate->varSpace);
+		    addSpace = FALSE;
 		}
+		Buf_AddBytes(buf, cp - word, word);
+		Buf_AddBytes(buf, pattern->rightLen, pattern->rhs);
+		wordLen -= (cp - word) + pattern->leftLen;
+		word = cp + pattern->leftLen;
+		if (wordLen == 0)
+		    break;
+		if ((pattern->pflags & VARP_SUB_GLOBAL) == 0)
+		    break;
+		pattern->pflags |= VARP_SUB_MATCHED;
 	    }
 	    if (wordLen != 0) {
 		if (addSpace && vpstate->varSpace != '\0') {
