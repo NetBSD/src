@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.272 2020/07/19 20:56:34 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.273 2020/07/19 21:10:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.272 2020/07/19 20:56:34 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.273 2020/07/19 21:10:34 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.272 2020/07/19 20:56:34 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.273 2020/07/19 21:10:34 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3060,10 +3060,6 @@ ApplyModifier_Assign(ApplyModifiersState *st)
 	return 'd';		/* "::<unrecognised>" */
 
     GNode *v_ctxt;		/* context where v belongs */
-    const char *emsg;
-    char *sv_name;
-    VarPattern pattern;
-    int how;
     VarPatternFlags pflags;
     /* FIXME: Assign has nothing to do with VarPatternFlags */
 
@@ -3071,7 +3067,7 @@ ApplyModifier_Assign(ApplyModifiersState *st)
 	return 'b';
 
     v_ctxt = st->ctxt;
-    sv_name = NULL;
+    char *sv_name = NULL;
     ++st->tstr;
     if (st->v->flags & VAR_JUNK) {
 	/*
@@ -3087,7 +3083,7 @@ ApplyModifier_Assign(ApplyModifiersState *st)
 	    VarFreeEnv(gv, TRUE);
     }
 
-    switch ((how = *st->tstr)) {
+    switch (op[0]) {
     case '+':
     case '?':
     case '!':
@@ -3098,46 +3094,46 @@ ApplyModifier_Assign(ApplyModifiersState *st)
 	break;
     }
     st->delim = st->startc == PROPEN ? PRCLOSE : BRCLOSE;
-    pattern.pflags = 0;
 
     pflags = (st->eflags & VARE_WANTRES) ? 0 : VAR_NOSUBST;
-    pattern.rhs = ParseModifierPart(
-	st->ctxt, &st->cp, st->delim, st->eflags,
-	&pflags, &pattern.rightLen, NULL);
+    char *val = ParseModifierPart(st->ctxt, &st->cp, st->delim, st->eflags,
+				  &pflags, NULL, NULL);
     if (st->v->flags & VAR_JUNK) {
 	/* restore original name */
 	free(st->v->name);
 	st->v->name = sv_name;
     }
-    if (pattern.rhs == NULL)
+    if (val == NULL)
 	return 'c';
 
     st->termc = *--st->cp;
     st->delim = '\0';
 
     if (st->eflags & VARE_WANTRES) {
-	switch (how) {
+	switch (op[0]) {
 	case '+':
-	    Var_Append(st->v->name, pattern.rhs, v_ctxt);
+	    Var_Append(st->v->name, val, v_ctxt);
 	    break;
-	case '!':
-	    st->newStr = Cmd_Exec(pattern.rhs, &emsg);
+	case '!': {
+	    const char *emsg;
+	    st->newStr = Cmd_Exec(val, &emsg);
 	    if (emsg)
 		Error(emsg, st->nstr);
 	    else
 		Var_Set(st->v->name, st->newStr, v_ctxt);
 	    free(st->newStr);
 	    break;
+	}
 	case '?':
 	    if ((st->v->flags & VAR_JUNK) == 0)
 		break;
 	    /* FALLTHROUGH */
 	default:
-	    Var_Set(st->v->name, pattern.rhs, v_ctxt);
+	    Var_Set(st->v->name, val, v_ctxt);
 	    break;
 	}
     }
-    free(UNCONST(pattern.rhs));
+    free(val);
     st->newStr = varNoError;
     return 0;
 }
