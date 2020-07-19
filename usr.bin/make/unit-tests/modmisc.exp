@@ -32,6 +32,9 @@ make: Unclosed substitution for  (, missing)
 :x__ 3 x__ 3:
 :+one+ +two+ +three+:
 mod-at-resolve:w1d2d3w w2i3w w1i2d3 2i${RES3}w w1d2d3 2i${RES3} 1i${RES2}w:
+mod-at-dollar:(1) (2) (3).
+mod-at-dollar:(1) (2) (3).
+mod-at-dollar:() () ().
 mod-subst-dollar:$1:
 mod-subst-dollar:$2:
 mod-subst-dollar:$3:
