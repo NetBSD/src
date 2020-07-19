@@ -52,6 +52,10 @@ mod-loop-dollar:$${word}$:
 mod-loop-dollar:$$5$$:
 mod-loop-dollar:$$${word}$$:
 mod-C-limits:00-ok:1 2323 45456
+make: No subexpression \1
+make: No subexpression \1
+make: No subexpression \1
+make: No subexpression \1
 mod-C-limits:11-missing:1 6
 mod-C-limits:11-ok:1 22 446
 make: No subexpression \2
@@ -59,6 +63,10 @@ make: No subexpression \2
 make: No subexpression \2
 make: No subexpression \2
 mod-C-limits:22-missing:1 6
+make: No subexpression \2
+make: No subexpression \2
+make: No subexpression \2
+make: No subexpression \2
 mod-C-limits:22-missing:1 6
 mod-C-limits:22-ok:1 33 556
 exit status 0
