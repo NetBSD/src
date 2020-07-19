@@ -1,0 +1,23 @@
+# $NetBSD: std.nextvod,v 1.1 2020/07/19 23:44:36 uwe Exp $
+
+include "arch/evbsh3/conf/std.evbsh3.el"
+include "arch/evbsh3/conf/files.nextvod"
+
+options 	EVBSH3_BOARDTYPE="nextvod"
+makeoptions	BOARDTYPE="nextvod"
+makeoptions	BOARDMKFRAG="${THISSH3}/conf/mk.nextvod"
+
+# CPU support
+options 	SH4
+options 	SH7751R		# a white lie to get it to compile
+options 	DONT_INIT_BSC
+
+options 	IOM_RAM_BEGIN=0x00000000 	# NB: physical address
+#options 	IOM_RAM_SIZE=0x10000000		# 256MB
+options 	IOM_RAM_SIZE=0x08000000		# 128MB
+
+# override the value from std.evbsh3.el
+no makeoptions	DEFTEXTADDR
+#
+makeoptions	DEFLOADADDR="0x80000000"	# NB: P1 address
+makeoptions	DEFTEXTADDR="0x80000040"	# skip u-boot image header
