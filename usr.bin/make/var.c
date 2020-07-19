@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.267 2020/07/19 16:48:48 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.268 2020/07/19 17:40:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.267 2020/07/19 16:48:48 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.268 2020/07/19 17:40:30 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.267 2020/07/19 16:48:48 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.268 2020/07/19 17:40:30 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2274,7 +2274,7 @@ typedef struct {
     int endc;
     Var *v;
     GNode *ctxt;
-    int flags;
+    VarEvalFlags eflags;
     int *lengthPtr;
     void **freePtr;
 
@@ -2310,19 +2310,19 @@ ApplyModifier_At(ApplyModifiersState *st) {
     st->cp = ++st->tstr;
     st->delim = '@';
     loop.tvar = ParseModifierPart(
-	st->ctxt, &st->cp, st->delim, st->flags, &pflags, NULL, NULL);
+	st->ctxt, &st->cp, st->delim, st->eflags, &pflags, NULL, NULL);
     if (loop.tvar == NULL)
 	return FALSE;
 
     loop.str = ParseModifierPart(
-	st->ctxt, &st->cp, st->delim, st->flags, &pflags, NULL, NULL);
+	st->ctxt, &st->cp, st->delim, st->eflags, &pflags, NULL, NULL);
     if (loop.str == NULL)
 	return FALSE;
 
     st->termc = *st->cp;
     st->delim = '\0';
 
-    loop.eflags = st->flags & (VARE_UNDEFERR | VARE_WANTRES);
+    loop.eflags = st->eflags & (VARE_UNDEFERR | VARE_WANTRES);
     st->newStr = VarModify(
 	st->ctxt, &st->parsestate, st->nstr, VarLoopExpand, &loop);
     Var_Delete(loop.tvar, st->ctxt);
@@ -2336,19 +2336,19 @@ static void
 ApplyModifier_Defined(ApplyModifiersState *st)
 {
     Buffer buf;			/* Buffer for patterns */
-    int nflags;
+    VarEvalFlags neflags;
 
-    if (st->flags & VARE_WANTRES) {
-	int wantres;
+    if (st->eflags & VARE_WANTRES) {
+	Boolean wantres;
 	if (*st->tstr == 'U')
 	    wantres = ((st->v->flags & VAR_JUNK) != 0);
 	else
 	    wantres = ((st->v->flags & VAR_JUNK) == 0);
-	nflags = st->flags & ~VARE_WANTRES;
+	neflags = st->eflags & ~VARE_WANTRES;
 	if (wantres)
-	    nflags |= VARE_WANTRES;
+	    neflags |= VARE_WANTRES;
     } else
-	nflags = st->flags;
+	neflags = st->eflags;
 
     /*
      * Pass through tstr looking for 1) escaped delimiters,
@@ -2375,7 +2375,7 @@ ApplyModifier_Defined(ApplyModifiersState *st)
 	    int	    len;
 	    void    *freeIt;
 
-	    cp2 = Var_Parse(st->cp, st->ctxt, nflags, &len, &freeIt);
+	    cp2 = Var_Parse(st->cp, st->ctxt, neflags, &len, &freeIt);
 	    Buf_AddBytes(&buf, strlen(cp2), cp2);
 	    free(freeIt);
 	    st->cp += len - 1;
@@ -2388,7 +2388,7 @@ ApplyModifier_Defined(ApplyModifiersState *st)
 
     if (st->v->flags & VAR_JUNK)
 	st->v->flags |= VAR_KEEP;
-    if (nflags & VARE_WANTRES) {
+    if (neflags & VARE_WANTRES) {
 	st->newStr = Buf_Destroy(&buf, FALSE);
     } else {
 	st->newStr = st->nstr;
@@ -2489,11 +2489,11 @@ ApplyModifier_Exclam(ApplyModifiersState *st)
     emsg = NULL;
     st->cp = ++st->tstr;
     pattern.rhs = ParseModifierPart(
-	st->ctxt, &st->cp, st->delim, st->flags,
+	st->ctxt, &st->cp, st->delim, st->eflags,
 	NULL, &pattern.rightLen, NULL);
     if (pattern.rhs == NULL)
 	return FALSE;
-    if (st->flags & VARE_WANTRES)
+    if (st->eflags & VARE_WANTRES)
 	st->newStr = Cmd_Exec(pattern.rhs, &emsg);
     else
 	st->newStr = varNoError;
@@ -2602,19 +2602,15 @@ ApplyModifier_Match(ApplyModifiersState *st)
     if (needSubst) {
 	/* pattern contains embedded '$', so use Var_Subst to expand it. */
 	cp2 = pattern;
-	pattern = Var_Subst(NULL, cp2, st->ctxt, st->flags);
+	pattern = Var_Subst(NULL, cp2, st->ctxt, st->eflags);
 	free(cp2);
     }
     if (DEBUG(VAR))
 	fprintf(debug_file, "Pattern[%s] for [%s] is [%s]\n",
 	    st->v->name, st->nstr, pattern);
-    if (*st->tstr == 'M') {
-	st->newStr = VarModify(st->ctxt, &st->parsestate, st->nstr, VarMatch,
-			       pattern);
-    } else {
-	st->newStr = VarModify(st->ctxt, &st->parsestate, st->nstr, VarNoMatch,
-			       pattern);
-    }
+    VarModifyCallback callback = st->tstr[0] == 'M' ? VarMatch : VarNoMatch;
+    st->newStr = VarModify(st->ctxt, &st->parsestate, st->nstr, callback,
+			   pattern);
     free(pattern);
 }
 
@@ -2641,13 +2637,13 @@ ApplyModifier_Subst(ApplyModifiersState *st)
 
     st->cp = st->tstr;
     pattern.lhs = ParseModifierPart(
-	st->ctxt, &st->cp, st->delim, st->flags,
+	st->ctxt, &st->cp, st->delim, st->eflags,
 	&pattern.pflags, &pattern.leftLen, NULL);
     if (pattern.lhs == NULL)
 	return FALSE;
 
     pattern.rhs = ParseModifierPart(
-	st->ctxt, &st->cp, st->delim, st->flags,
+	st->ctxt, &st->cp, st->delim, st->eflags,
 	NULL, &pattern.rightLen, &pattern);
     if (pattern.rhs == NULL)
 	return FALSE;
@@ -2700,13 +2696,13 @@ ApplyModifier_Regex(ApplyModifiersState *st)
 
     st->cp = st->tstr;
 
-    re = ParseModifierPart(st->ctxt, &st->cp, st->delim, st->flags,
+    re = ParseModifierPart(st->ctxt, &st->cp, st->delim, st->eflags,
 			   NULL, NULL, NULL);
     if (re == NULL)
 	return FALSE;
 
     pattern.replace = ParseModifierPart(st->ctxt, &st->cp, st->delim,
-					st->flags, NULL, NULL, NULL);
+					st->eflags, NULL, NULL, NULL);
     if (pattern.replace == NULL) {
 	free(re);
 	return FALSE;
@@ -2871,7 +2867,7 @@ ApplyModifier_Words(ApplyModifiersState *st)
 {
     st->cp = st->tstr + 1;	/* point to char after '[' */
     st->delim = ']';		/* look for closing ']' */
-    char *estr = ParseModifierPart(st->ctxt, &st->cp, st->delim, st->flags,
+    char *estr = ParseModifierPart(st->ctxt, &st->cp, st->delim, st->eflags,
 				   NULL, NULL, NULL);
     if (estr == NULL)
 	return 'c';		/* report missing ']' */
@@ -3021,7 +3017,7 @@ ApplyModifier_IfElse(ApplyModifiersState *st)
     /* FIXME: IfElse has nothing to do with VarPatternFlags */
 
     /* find ':', and then substitute accordingly */
-    if (st->flags & VARE_WANTRES) {
+    if (st->eflags & VARE_WANTRES) {
 	cond_rc = Cond_EvalExpression(NULL, st->v->name, &value, 0, FALSE);
 	then_flags = cond_rc != COND_INVALID && value ? 0 : VAR_NOSUBST;
 	else_flags = cond_rc != COND_INVALID && !value ? 0 : VAR_NOSUBST;
@@ -3034,13 +3030,13 @@ ApplyModifier_IfElse(ApplyModifiersState *st)
     st->cp = ++st->tstr;
     st->delim = ':';
     char *then_expr = ParseModifierPart(
-	st->ctxt, &st->cp, st->delim, st->flags, &then_flags, NULL, NULL);
+	st->ctxt, &st->cp, st->delim, st->eflags, &then_flags, NULL, NULL);
     if (then_expr == NULL)
 	return FALSE;
 
     st->delim = st->endc;	/* BRCLOSE or PRCLOSE */
     char *else_expr = ParseModifierPart(
-	st->ctxt, &st->cp, st->delim, st->flags, &else_flags, NULL, NULL);
+	st->ctxt, &st->cp, st->delim, st->eflags, &else_flags, NULL, NULL);
     if (else_expr == NULL)
 	return FALSE;
 
@@ -3113,9 +3109,9 @@ ApplyModifier_Assign(ApplyModifiersState *st)
 	st->delim = st->startc == PROPEN ? PRCLOSE : BRCLOSE;
 	pattern.pflags = 0;
 
-	pflags = (st->flags & VARE_WANTRES) ? 0 : VAR_NOSUBST;
+	pflags = (st->eflags & VARE_WANTRES) ? 0 : VAR_NOSUBST;
 	pattern.rhs = ParseModifierPart(
-	    st->ctxt, &st->cp, st->delim, st->flags,
+	    st->ctxt, &st->cp, st->delim, st->eflags,
 	    &pflags, &pattern.rightLen, NULL);
 	if (st->v->flags & VAR_JUNK) {
 	    /* restore original name */
@@ -3128,7 +3124,7 @@ ApplyModifier_Assign(ApplyModifiersState *st)
 	st->termc = *--st->cp;
 	st->delim = '\0';
 
-	if (st->flags & VARE_WANTRES) {
+	if (st->eflags & VARE_WANTRES) {
 	    switch (how) {
 	    case '+':
 		Var_Append(st->v->name, pattern.rhs, v_ctxt);
@@ -3226,14 +3222,14 @@ ApplyModifier_SysV(ApplyModifiersState *st)
      * SysV substitution since that will not be interpreted as an
      * anchor anyway. */
     pattern.lhs = ParseModifierPart(
-	st->ctxt, &st->cp, st->delim, st->flags,
+	st->ctxt, &st->cp, st->delim, st->eflags,
 	&pattern.pflags, &pattern.leftLen, NULL);
     if (pattern.lhs == NULL)
 	return 'c';
 
     st->delim = st->endc;
     pattern.rhs = ParseModifierPart(
-	st->ctxt, &st->cp, st->delim, st->flags,
+	st->ctxt, &st->cp, st->delim, st->eflags,
 	NULL, &pattern.rightLen, &pattern);
     if (pattern.rhs == NULL)
 	return 'c';
@@ -3343,11 +3339,11 @@ ApplyModifier_SysV(ApplyModifiersState *st)
 static char *
 ApplyModifiers(char *nstr, const char *tstr,
 	       int const startc, int const endc,
-	       Var * const v, GNode * const ctxt, int const flags,
+	       Var * const v, GNode * const ctxt, VarEvalFlags const eflags,
 	       int * const lengthPtr, void ** const freePtr)
 {
     ApplyModifiersState st = {
-	startc, endc, v, ctxt, flags, lengthPtr, freePtr,
+	startc, endc, v, ctxt, eflags, lengthPtr, freePtr,
 	nstr, tstr, tstr, tstr,
 	'\0', '\0', 0, {' ', FALSE}, NULL
     };
@@ -3363,7 +3359,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	    int rlen;
 	    int c;
 
-	    rval = Var_Parse(st.tstr, st.ctxt, st.flags, &rlen, &freeIt);
+	    rval = Var_Parse(st.tstr, st.ctxt, st.eflags, &rlen, &freeIt);
 
 	    /*
 	     * If we have not parsed up to st.endc or ':',
@@ -3388,9 +3384,9 @@ ApplyModifiers(char *nstr, const char *tstr,
 		int used;
 
 		st.nstr = ApplyModifiers(st.nstr, rval, 0, 0, st.v,
-				      st.ctxt, st.flags, &used, st.freePtr);
+				      st.ctxt, st.eflags, &used, st.freePtr);
 		if (st.nstr == var_Error
-		    || (st.nstr == varNoError && (st.flags & VARE_UNDEFERR) == 0)
+		    || (st.nstr == varNoError && (st.eflags & VARE_UNDEFERR) == 0)
 		    || strlen(rval) != (size_t) used) {
 		    free(freeIt);
 		    goto out;	/* error already reported */
@@ -3559,7 +3555,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	case 's':
 	    if (st.tstr[1] == 'h' && (st.tstr[2] == st.endc || st.tstr[2] == ':')) {
 		const char *emsg;
-		if (st.flags & VARE_WANTRES) {
+		if (st.eflags & VARE_WANTRES) {
 		    st.newStr = Cmd_Exec(st.nstr, &emsg);
 		    if (emsg)
 			Error(emsg, st.nstr);
