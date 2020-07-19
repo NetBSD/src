@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.275 2020/07/19 21:30:49 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.276 2020/07/19 22:04:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.275 2020/07/19 21:30:49 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.276 2020/07/19 22:04:27 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.275 2020/07/19 21:30:49 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.276 2020/07/19 22:04:27 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1308,22 +1308,27 @@ Str_SYSVSubst(Buffer *buf, const char *pat, const char *src, size_t len,
 }
 
 
+typedef struct {
+    const char *lhs;
+    const char *rhs;
+} VarSYSVSubstArgs;
+
 /* Callback function for VarModify to implement the :%.from=%.to modifier. */
 static Boolean
-VarSYSVMatch(GNode *ctx, Var_Parse_State *vpstate,
+VarSYSVSubst(GNode *ctx, Var_Parse_State *vpstate,
 	     const char *word, Boolean addSpace, Buffer *buf,
 	     void *data)
 {
-    size_t len;
-    const char *ptr;
-    Boolean hasPercent;
-    VarPattern *pat = data;
+    const VarSYSVSubstArgs *args = data;
 
     if (addSpace && vpstate->varSpace != '\0')
 	Buf_AddByte(buf, vpstate->varSpace);
 
-    if ((ptr = Str_SYSVMatch(word, pat->lhs, &len, &hasPercent)) != NULL) {
-	char *varexp = Var_Subst(NULL, pat->rhs, ctx, VARE_WANTRES);
+    size_t len;
+    Boolean hasPercent;
+    const char *ptr = Str_SYSVMatch(word, args->lhs, &len, &hasPercent);
+    if (ptr != NULL) {
+	char *varexp = Var_Subst(NULL, args->rhs, ctx, VARE_WANTRES);
 	Str_SYSVSubst(buf, varexp, ptr, len, hasPercent);
 	free(varexp);
     } else {
@@ -3167,15 +3172,7 @@ ApplyModifier_Remember(ApplyModifiersState *st)
 static int
 ApplyModifier_SysV(ApplyModifiersState *st)
 {
-    /*
-     * This can either be a bogus modifier or a System-V
-     * substitution command.
-     */
-    VarPattern      pattern;
-    /* FIXME: SysV modifiers have nothing to do with :S or :C pattern matching */
-    Boolean         eqFound = FALSE;
-
-    pattern.pflags = 0;
+    Boolean eqFound = FALSE;
 
     /*
      * First we make a pass through the string trying
@@ -3200,20 +3197,19 @@ ApplyModifier_SysV(ApplyModifiersState *st)
 
     st->delim = '=';
     st->cp = st->tstr;
+    VarPatternFlags pflags = 0;
     /* FIXME: There's no point in having a single $ at the end of a
      * SysV substitution since that will not be interpreted as an
      * anchor anyway. */
-    pattern.lhs = ParseModifierPart(
-	st->ctxt, &st->cp, st->delim, st->eflags,
-	&pattern.pflags, &pattern.leftLen, NULL);
-    if (pattern.lhs == NULL)
+    char *lhs = ParseModifierPart(st->ctxt, &st->cp, st->delim, st->eflags,
+				  &pflags, NULL, NULL);
+    if (lhs == NULL)
 	return 'c';
 
     st->delim = st->endc;
-    pattern.rhs = ParseModifierPart(
-	st->ctxt, &st->cp, st->delim, st->eflags,
-	NULL, &pattern.rightLen, &pattern);
-    if (pattern.rhs == NULL)
+    char *rhs = ParseModifierPart(st->ctxt, &st->cp, st->delim, st->eflags,
+				  NULL, NULL, NULL);
+    if (rhs == NULL)
 	return 'c';
 
     /*
@@ -3222,14 +3218,15 @@ ApplyModifier_SysV(ApplyModifiersState *st)
      */
     st->termc = *--st->cp;
     st->delim = '\0';
-    if (pattern.leftLen == 0 && *st->nstr == '\0') {
+    if (lhs[0] == '\0' && *st->nstr == '\0') {
 	st->newStr = st->nstr;	/* special case */
     } else {
-	st->newStr = VarModify(
-	    st->ctxt, &st->parsestate, st->nstr, VarSYSVMatch, &pattern);
+	VarSYSVSubstArgs args = { lhs, rhs };
+	st->newStr = VarModify(st->ctxt, &st->parsestate, st->nstr,
+			       VarSYSVSubst, &args);
     }
-    free(UNCONST(pattern.lhs));
-    free(UNCONST(pattern.rhs));
+    free(lhs);
+    free(rhs);
     return '=';
 }
 #endif
