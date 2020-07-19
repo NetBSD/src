@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.15 2020/07/19 19:36:20 rillig Exp $
+# $Id: modmisc.mk,v 1.16 2020/07/19 20:49:44 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -19,6 +19,7 @@ all:	modvar modvarloop modsysv mod-HTE emptyvar undefvar
 all:	mod-S mod-C mod-at-varname mod-at-resolve mod-at-dollar
 all:	mod-subst-dollar mod-loop-dollar
 all:	mod-C-limits
+all:	mod-assign
 
 modsysv:
 	@echo "The answer is ${libfoo.a:L:libfoo.a=42}"
@@ -145,3 +146,13 @@ mod-C-limits:
 	# The :C modifier only handles single-digit capturing groups,
 	# which is more than enough for daily use.
 	@echo $@:capture:${:UabcdefghijABCDEFGHIJrest:C,(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.),\9\8\7\6\5\4\3\2\1\0\10\11\12,}
+
+# Just a bit of basic code coverage for the obscure ::= assignment modifiers.
+mod-assign:
+	@echo $@: ${1 2 3:L:@i@${FIRST::?=$i}@} first=${FIRST}.
+	@echo $@: ${1 2 3:L:@i@${LAST::=$i}@} last=${LAST}.
+	@echo $@: ${1 2 3:L:@i@${APPENDED::+=$i}@} appended=${APPENDED}.
+	@echo $@: ${echo.1 echo.2 echo.3:L:@i@${RAN::!=${i:C,.*,&; & 1>\&2,:S,., ,g}}@} ran:${RAN}.
+	# The assignments happen in the global scope and thus are
+	# preserved even after the shell command has been run.
+	@echo $@: global: ${FIRST:Q}, ${LAST:Q}, ${APPENDED:Q}, ${RAN:Q}.
