@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.273 2020/07/19 21:10:34 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.274 2020/07/19 21:14:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.273 2020/07/19 21:10:34 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.274 2020/07/19 21:14:56 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.273 2020/07/19 21:10:34 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.274 2020/07/19 21:14:56 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2469,26 +2469,23 @@ ApplyModifier_Path(ApplyModifiersState *st)
 static Boolean
 ApplyModifier_Exclam(ApplyModifiersState *st)
 {
-    const char *emsg;
-    VarPattern pattern;
-
-    pattern.pflags = 0;
-
     st->delim = '!';
-    emsg = NULL;
     st->cp = ++st->tstr;
-    pattern.rhs = ParseModifierPart(
-	st->ctxt, &st->cp, st->delim, st->eflags,
-	NULL, &pattern.rightLen, NULL);
-    if (pattern.rhs == NULL)
+    char *cmd = ParseModifierPart(st->ctxt, &st->cp, st->delim, st->eflags,
+				  NULL, NULL, NULL);
+    if (cmd == NULL)
 	return FALSE;
+
+    const char *emsg = NULL;
     if (st->eflags & VARE_WANTRES)
-	st->newStr = Cmd_Exec(pattern.rhs, &emsg);
+	st->newStr = Cmd_Exec(cmd, &emsg);
     else
 	st->newStr = varNoError;
-    free(UNCONST(pattern.rhs));
+    free(cmd);
+
     if (emsg)
 	Error(emsg, st->nstr);
+
     st->termc = *st->cp;
     st->delim = '\0';
     if (st->v->flags & VAR_JUNK)
