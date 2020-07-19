@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.14 2020/07/19 17:24:22 rillig Exp $
+# $Id: modmisc.mk,v 1.15 2020/07/19 19:36:20 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -142,3 +142,6 @@ mod-C-limits:
 	@echo $@:22-missing:${:U1 23 456:C,..,\2\2,:Q}
 	@echo $@:22-missing:${:U1 23 456:C,(.).,\2\2,:Q}
 	@echo $@:22-ok:${:U1 23 456:C,(.)(.),\2\2,:Q}
+	# The :C modifier only handles single-digit capturing groups,
+	# which is more than enough for daily use.
+	@echo $@:capture:${:UabcdefghijABCDEFGHIJrest:C,(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.),\9\8\7\6\5\4\3\2\1\0\10\11\12,}
