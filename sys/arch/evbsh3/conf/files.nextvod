@@ -1,0 +1,8 @@
+# $NetBSD: files.nextvod,v 1.1 2020/07/19 23:44:36 uwe Exp $
+
+file	arch/evbsh3/nextvod/nextvod.c
+file	arch/evbsh3/nextvod/clock_machdep.c
+
+device	stasc: tty
+attach	stasc at mainbus
+file	arch/evbsh3/nextvod/stasc.c	stasc needs-flag

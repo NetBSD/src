@@ -1,0 +1,178 @@
+# $NetBSD: NEXTVOD,v 1.1 2020/07/19 23:44:36 uwe Exp $
+
+# This config and related files are placeholders/boilerplate for work
+# in progress.  Not expected to compile.
+
+include "arch/evbsh3/conf/std.nextvod"
+
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+#ident 		"NEXTVOD-$Revision: 1.1 $"
+
+maxusers	32		# estimated number of users
+
+
+# Standard system options
+options 	INSECURE	# disable kernel security levels
+
+options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+options 	NTP		# NTP phase/frequency locked loop
+options 	KTRACE		# system call tracing via ktrace(1)
+
+options 	SYSVMSG		# System V message queues
+options 	SYSVSEM		# System V semaphores
+options 	SYSVSHM		# System V shared memory
+
+#options 	MODULAR		# new style module(7) framework
+#options 	MODULAR_DEFAULT_AUTOLOAD
+
+options 	USERCONF	# userconf(4) support
+#options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+
+
+# Diagnostic/debugging support options
+#options 	DIAGNOSTIC	# cheap kernel consistency checks
+#options 	DEBUG		# expensive debugging checks/support
+options 	DDB		# in-kernel debugger
+#options 	DDB_ONPANIC=0	# don't go into ddb on panic.
+options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
+#options 	DDB_COMMANDONENTER="bt"
+
+
+# File systems
+#file-system 	FFS		# UFS
+file-system 	MFS		# memory file system
+file-system 	NFS		# Network File System client
+file-system 	KERNFS		# /kern
+file-system 	PROCFS		# /proc
+file-system	PTYFS		# /dev/pts/N support
+
+# File system options
+#options 	WAPBL		# File system journaling support
+#options 	UFS_ACL		# UFS Access Control Lists
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	NFS_BOOT_DHCP	# Support DHCP NFS root
+
+
+# Networking options
+#options 	GATEWAY		# packet forwarding
+options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_DEBUG	# debug for IP security
+#options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
+#options 	NETATALK	# AppleTalk networking protocols
+#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+#options 	PPP_DEFLATE	# Deflate compression support for PPP
+#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+#options 	TCP_SIGNATURE	# Enable RFC-2385 TCP md5 signatures
+
+# These options enable verbose messages for several subsystems.
+# Warning, these may compile large string tables into the kernel!
+#options 	ACPIVERBOSE	# verbose ACPI configuration messages
+#options 	MIIVERBOSE	# verbose PHY autoconfig messages
+options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
+#options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
+options 	SCSIVERBOSE	# human readable SCSI error messages
+#options 	USBVERBOSE	# verbose USB device autoconfig messages
+#options 	HDAUDIOVERBOSE	# verbose HDAUDIO driver messages
+
+
+# Enable the hooks used for initializing the root memory-disk.
+#options 	MEMORY_DISK_HOOKS
+#options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
+#options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
+#options 	MEMORY_DISK_ROOT_SIZE=3074	# size of memory disk, in blocks
+#options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
+
+# Kernel root file system and dump configuration.
+config		netbsd	root on ? type ?
+
+
+#
+# Device configuration
+#
+mainbus0 at root
+
+shb* at mainbus?
+
+# serial (console)
+stasc0 at mainbus?
+
+
+# Pseudo-Devices
+
+pseudo-device	swcrypto		# software crypto implementation
+
+# disk/mass storage pseudo-devices
+#pseudo-device	bio			# RAID control device driver
+#pseudo-device	ccd			# concatenated/striped disk devices
+#pseudo-device	cgd			# cryptographic disk devices
+
+#pseudo-device	raid			# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+#Options to enable various other RAIDframe RAID types.
+#options 	RF_INCLUDE_EVENODD=1
+#options 	RF_INCLUDE_RAID5_RS=1
+#options 	RF_INCLUDE_PARITYLOGGING=1
+#options 	RF_INCLUDE_CHAINDECLUSTER=1
+#options 	RF_INCLUDE_INTERDECLUSTER=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+
+#pseudo-device	fss			# file system snapshot device
+
+pseudo-device	md			# memory disk device (ramdisk
+#options 	MEMORY_DISK_DYNAMIC	# loaded via kernel module(7)
+
+#pseudo-device	vnd			# disk-like interface to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
+
+# network pseudo-devices
+pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
+pseudo-device	loop			# network loopback
+#pseudo-device	mpls			# MPLS pseudo-interface
+#pseudo-device	ppp			# Point-to-Point Protocol
+#pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+#pseudo-device	sl			# Serial Line IP
+#pseudo-device	irframetty		# IrDA frame line discipline
+#pseudo-device	tun			# network tunneling over tty
+#pseudo-device	tap			# virtual Ethernet
+#pseudo-device	gre			# generic L3 over IP tunnel
+#pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	ipsecif			# tunnel interface for routing based ipsec
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	vlan			# IEEE 802.1q encapsulation
+#pseudo-device	bridge			# simple inter-network bridging
+#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#pseudo-device	agr			# IEEE 802.3ad link aggregation
+#pseudo-device	l2tp			# L2TPv3 interface
+#pseudo-device	npf			# NPF packet filter
+
+# miscellaneous pseudo-devices
+pseudo-device	pty			# pseudo-terminals
+pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
+#pseudo-device	lockstat		# lock profiling
+#pseudo-device	bcsp			# BlueCore Serial Protocol
+#pseudo-device	btuart			# Bluetooth HCI UART (H4)
+
+# wscons pseudo-devices
+#pseudo-device	wsmux			# mouse & keyboard multiplexor
+#pseudo-device	wsfont
+# Give us a choice of fonts based on monitor size
+#options 	FONT_BOLD8x16
+#options 	FONT_BOLD16x32
+
+# pseudo audio device driver
+#pseudo-device	pad
+
+# userland interface to drivers, including autoconf and properties retrieval
+pseudo-device	drvctl
+
+#include "dev/veriexec.config"
