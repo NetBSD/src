@@ -69,4 +69,5 @@ make: No subexpression \2
 make: No subexpression \2
 mod-C-limits:22-missing:1 6
 mod-C-limits:22-ok:1 33 556
+mod-C-limits:capture:ihgfedcbaabcdefghijABCDEFGHIJa0a1a2rest
 exit status 0
