@@ -1,0 +1,22 @@
+# $NetBSD: mk.nextvod,v 1.1 2020/07/19 23:44:36 uwe Exp $
+
+# tell locore where it is
+AFLAGS.locore.S = -DTEXTADDR=${TEXTADDR}
+
+_OSRELEASE!=		${HOST_SH} $S/conf/osrelease.sh
+
+LOADADDR ?= ${DEFLOADADDR}
+
+MKUBOOTIMAGEARGS=	-A sh -T kernel -O netbsd -C none
+MKUBOOTIMAGEARGS+=	-a ${LOADADDR} -e ${TEXTADDR}
+#MKUBOOTIMAGEARGS+=	-n "NetBSD/${BOARDTYPE:U${MACHINE_ARCH}} ${_OSRELEASE}"
+MKUBOOTIMAGEARGS+=	-n "Test $$(date +'%Y-%m-%d %H:%M')"
+
+SYSTEM_LD_TAIL_EXTRA+=; \
+	${_MKSHMSG} "  image " ${.CURDIR:T}/$@.img; \
+	${OBJCOPY} -S -O binary $@ $@.img; \
+	${_MKSHMSG} " u-boot " ${.CURDIR:T}/$@.ub; \
+	${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS} $@.img $@.ub
+
+EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.img@}
+EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.ub@}
