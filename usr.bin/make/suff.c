@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.88 2020/07/03 08:02:55 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.89 2020/07/19 12:26:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.88 2020/07/03 08:02:55 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.89 2020/07/19 12:26:17 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.88 2020/07/03 08:02:55 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.89 2020/07/19 12:26:17 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1557,7 +1557,7 @@ SuffExpandChildren(LstNode cln, GNode *pgn)
     if (DEBUG(SUFF)) {
 	fprintf(debug_file, "Expanding \"%s\"...", cgn->name);
     }
-    cp = Var_Subst(NULL, cgn->name, pgn, VARF_UNDEFERR|VARF_WANTRES);
+    cp = Var_Subst(NULL, cgn->name, pgn, VARE_UNDEFERR|VARE_WANTRES);
 
     if (cp != NULL) {
 	Lst	    members = Lst_Init(FALSE);
@@ -1610,7 +1610,7 @@ SuffExpandChildren(LstNode cln, GNode *pgn)
 		    int 	len;
 		    void	*freeIt;
 
-		    junk = Var_Parse(cp, pgn, VARF_UNDEFERR|VARF_WANTRES,
+		    junk = Var_Parse(cp, pgn, VARE_UNDEFERR|VARE_WANTRES,
 			&len, &freeIt);
 		    if (junk != var_Error) {
 			cp += len - 1;
