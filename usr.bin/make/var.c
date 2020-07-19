@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.259 2020/07/19 12:26:17 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.260 2020/07/19 12:51:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.259 2020/07/19 12:26:17 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.260 2020/07/19 12:51:06 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.259 2020/07/19 12:26:17 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.260 2020/07/19 12:51:06 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -189,9 +189,11 @@ GNode          *VAR_INTERNAL;	/* variables from make itself */
 GNode          *VAR_GLOBAL;	/* variables from the makefile */
 GNode          *VAR_CMD;	/* variables defined on the command-line */
 
-#define FIND_CMD	0x1	/* look in VAR_CMD when searching */
-#define FIND_GLOBAL	0x2	/* look in VAR_GLOBAL as well */
-#define FIND_ENV  	0x4	/* look in the environment also */
+typedef enum {
+    FIND_CMD		= 0x01,	/* look in VAR_CMD when searching */
+    FIND_GLOBAL		= 0x02,	/* look in VAR_GLOBAL as well */
+    FIND_ENV		= 0x04	/* look in the environment also */
+} VarFindFlags;
 
 typedef enum {
     VAR_IN_USE		= 0x01,	/* Variable's value is currently being used.
@@ -311,10 +313,9 @@ typedef struct {
  * Input:
  *	name		name to find
  *	ctxt		context in which to find it
- *	flags		FIND_GLOBAL set means to look in the
- *			VAR_GLOBAL context as well. FIND_CMD set means
- *			to look in the VAR_CMD context also. FIND_ENV
- *			set means to look in the environment
+ *	flags		FIND_GLOBAL	look in VAR_GLOBAL as well
+ *			FIND_CMD	look in VAR_CMD as well
+ *			FIND_ENV	look in the environment as well
  *
  * Results:
  *	A pointer to the structure describing the desired variable or
@@ -325,7 +326,7 @@ typedef struct {
  *-----------------------------------------------------------------------
  */
 static Var *
-VarFind(const char *name, GNode *ctxt, int flags)
+VarFind(const char *name, GNode *ctxt, VarFindFlags flags)
 {
     Hash_Entry         	*var;
     Var			*v;
@@ -1011,7 +1012,7 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 	name = expanded_name;
     }
 
-    v = VarFind(name, ctxt, ctxt == VAR_GLOBAL ? (FIND_CMD|FIND_ENV) : 0);
+    v = VarFind(name, ctxt, ctxt == VAR_GLOBAL ? (FIND_CMD | FIND_ENV) : 0);
 
     if (v == NULL) {
 	Var_Set(name, val, ctxt);
@@ -1064,7 +1065,7 @@ Var_Exists(const char *name, GNode *ctxt)
 
     if ((cp = strchr(name, '$')) != NULL)
 	cp = Var_Subst(NULL, name, ctxt, VARE_WANTRES);
-    v = VarFind(cp ? cp : name, ctxt, FIND_CMD|FIND_GLOBAL|FIND_ENV);
+    v = VarFind(cp ? cp : name, ctxt, FIND_CMD | FIND_GLOBAL | FIND_ENV);
     free(cp);
     if (v == NULL)
 	return FALSE;
