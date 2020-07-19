@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.51 2020/06/21 16:53:37 bouyer Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.52 2020/07/19 07:35:08 maxv Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -276,33 +276,11 @@
 	popq	%rdx			; \
 	popq	%rcx			; \
 	popq	%rax
-#define KMSAN_REP_STOS(scale)	\
-	pushq	%rax			; \
-	pushq	%rcx			; \
-	pushq	%rdx			; \
-	pushq	%rsi			; \
-	pushq	%rdi			; \
-	pushq	%r8			; \
-	pushq	%r9			; \
-	pushq	%r10			; \
-	pushq	%r11			; \
-	leaq	(,%rcx,scale),%rsi	; \
-	callq	_C_LABEL(__msan_instrument_asm_store); \
-	popq	%r11			; \
-	popq	%r10			; \
-	popq	%r9			; \
-	popq	%r8			; \
-	popq	%rdi			; \
-	popq	%rsi			; \
-	popq	%rdx			; \
-	popq	%rcx			; \
-	popq	%rax
 #else
 #define KMSAN_ENTER		/* nothing */
 #define KMSAN_LEAVE		/* nothing */
 #define KMSAN_INIT_ARG(sz)	/* nothing */
 #define KMSAN_INIT_RET(sz)	/* nothing */
-#define	KMSAN_REP_STOS(scale)	/* nothing */
 #endif
 
 #ifdef KCOV
