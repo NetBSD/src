@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.18 2020/07/19 14:27:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.19 2020/07/19 16:20:36 jdolecek Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -164,6 +164,7 @@ short irq2port[NR_EVENT_CHANNELS] = {0}; /* actually port + 1, so that 0 is inva
 
 #if defined(DOM0OPS) || NPCI > 0
 
+#ifdef __HAVE_PCI_MSI_MSIX
 static int
 xen_map_msi_pirq(struct pic *pic, int count, int *gsi)
 {
@@ -223,6 +224,7 @@ xen_pci_msi_probe(struct pic *pic, int count)
 
 	return ret;
 }
+#endif /* __HAVE_PCI_MSI_MSIX */
 
 /*
  * This function doesn't "allocate" anything. It merely translates our
