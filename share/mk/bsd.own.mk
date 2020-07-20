@@ -63,6 +63,9 @@ TOOLCHAIN_MISSING?=	no
 #
 # What GCC is used?
 #
+.if ${MACHINE_CPU} == "m68k"
+HAVE_GCC?=	7
+.endif
 HAVE_GCC?=	8
 
 #
