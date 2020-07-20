@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.51 2020/07/20 03:26:07 simonb Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.52 2020/07/20 10:53:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.51 2020/07/20 03:26:07 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.52 2020/07/20 10:53:47 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -122,17 +122,17 @@ struct cpu_info *
 cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_package_id,
 	cpuid_t cpu_core_id, cpuid_t cpu_smt_id)
 {
-	const int exc_step = 1 << MIPS_EBASE_EXC_BASE_SHIFT;
 
 	KASSERT(cpu_id < MAXCPUS);
 
 #ifdef MIPS64_OCTEON
+	const int exc_step = 1 << MIPS_EBASE_EXC_BASE_SHIFT;
 	vaddr_t exc_page = MIPS_UTLB_MISS_EXC_VEC + exc_step * cpu_id;
 	__CTASSERT(sizeof(struct cpu_info) + sizeof(struct pmap_tlb_info)
 	    <= exc_step - 0x280);
 
 	struct cpu_info * const ci = ((struct cpu_info *)(exc_page + exc_step)) - 1;
-	memset((void *)exc_page, 0, PAGE_SIZE);
+	memset((void *)exc_page, 0, exc_step);
 
 	if (ti == NULL) {
 		ti = ((struct pmap_tlb_info *)ci) - 1;
