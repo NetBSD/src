@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.288 2020/07/20 20:56:39 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.289 2020/07/20 21:33:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.288 2020/07/20 20:56:39 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.289 2020/07/20 21:33:13 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.288 2020/07/20 20:56:39 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.289 2020/07/20 21:33:13 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2599,101 +2599,101 @@ VarModify_Copy(GNode *ctx MAKE_ATTR_UNUSED, const char *word, SepBuf *buf,
     SepBuf_AddBytes(buf, word, strlen(word));
 }
 
-/* :tA, :tu, :tl, etc. */
+/* :ts<separator> */
+static Boolean
+ApplyModifier_ToSep(ApplyModifiersState *st)
+{
+    const char *sep = st->tstr + 2;
+
+    if (sep[0] != st->endc && (sep[1] == st->endc || sep[1] == ':')) {
+	/* ":ts<unrecognised><endc>" or ":ts<unrecognised>:" */
+	st->parsestate.varSpace = sep[0];
+	st->cp = sep + 1;
+    } else if (sep[0] == st->endc || sep[0] == ':') {
+	/* ":ts<endc>" or ":ts:" */
+	st->parsestate.varSpace = 0;	/* no separator */
+	st->cp = sep;
+    } else if (sep[0] == '\\') {
+	const char *xp = sep + 1;
+	int base = 8;		/* assume octal */
+
+	switch (sep[1]) {
+	case 'n':
+	    st->parsestate.varSpace = '\n';
+	    st->cp = sep + 2;
+	    break;
+	case 't':
+	    st->parsestate.varSpace = '\t';
+	    st->cp = sep + 2;
+	    break;
+	case 'x':
+	    base = 16;
+	    xp++;
+	    goto get_numeric;
+	case '0':
+	    base = 0;
+	    goto get_numeric;
+	default:
+	    if (!isdigit((unsigned char)sep[1]))
+		return FALSE;	/* ":ts<backslash><unrecognised>". */
+
+	    char *end;
+	get_numeric:
+	    st->parsestate.varSpace = strtoul(sep + 1 + (sep[1] == 'x'), &end, base);
+	    if (*end != ':' && *end != st->endc)
+	        return FALSE;
+	    st->cp = end;
+	    break;
+	}
+    } else {
+	return FALSE;		/* Found ":ts<unrecognised><unrecognised>". */
+    }
+
+    st->termc = *st->cp;
+    st->newStr = VarModify(st->ctxt, &st->parsestate, st->nstr,
+			   VarModify_Copy, NULL);
+    return TRUE;
+}
+
+/* :tA, :tu, :tl, :ts<separator>, etc. */
 static Boolean
 ApplyModifier_To(ApplyModifiersState *st)
 {
     st->cp = st->tstr + 1;	/* make sure it is set */
-    if (st->tstr[1] != st->endc && st->tstr[1] != ':') {
-	if (st->tstr[1] == 's') {
-	    /* Use the char (if any) at st->tstr[2] as the word separator. */
+    if (st->tstr[1] == st->endc || st->tstr[1] == ':')
+	return FALSE;		/* Found ":t<endc>" or ":t:". */
 
-	    if (st->tstr[2] != st->endc &&
-		(st->tstr[3] == st->endc || st->tstr[3] == ':')) {
-		/* ":ts<unrecognised><endc>" or
-		 * ":ts<unrecognised>:" */
-		st->parsestate.varSpace = st->tstr[2];
-		st->cp = st->tstr + 3;
-	    } else if (st->tstr[2] == st->endc || st->tstr[2] == ':') {
-		/* ":ts<endc>" or ":ts:" */
-		st->parsestate.varSpace = 0;	/* no separator */
-		st->cp = st->tstr + 2;
-	    } else if (st->tstr[2] == '\\') {
-		const char *xp = &st->tstr[3];
-		int base = 8;	/* assume octal */
+    if (st->tstr[1] == 's')
+	return ApplyModifier_ToSep(st);
 
-		switch (st->tstr[3]) {
-		case 'n':
-		    st->parsestate.varSpace = '\n';
-		    st->cp = st->tstr + 4;
-		    break;
-		case 't':
-		    st->parsestate.varSpace = '\t';
-		    st->cp = st->tstr + 4;
-		    break;
-		case 'x':
-		    base = 16;
-		    xp++;
-		    goto get_numeric;
-		case '0':
-		    base = 0;
-		    goto get_numeric;
-		default:
-		    if (isdigit((unsigned char)st->tstr[3])) {
-			char *ep;
-		    get_numeric:
-			st->parsestate.varSpace = strtoul(xp, &ep, base);
-			if (*ep != ':' && *ep != st->endc)
-			    return FALSE;
-			st->cp = ep;
-		    } else {
-			/* ":ts<backslash><unrecognised>". */
-			return FALSE;
-		    }
-		    break;
-		}
-	    } else {
-		/* Found ":ts<unrecognised><unrecognised>". */
-		return FALSE;
-	    }
+    if (st->tstr[2] != st->endc && st->tstr[2] != ':')
+	return FALSE;		/* Found ":t<unrecognised><unrecognised>". */
 
-	    st->termc = *st->cp;
-	    st->newStr = VarModify(st->ctxt, &st->parsestate, st->nstr,
-				   VarModify_Copy, NULL);
-	} else if (st->tstr[2] == st->endc || st->tstr[2] == ':') {
-	    /* Check for two-character options: ":tu", ":tl" */
-	    if (st->tstr[1] == 'A') {	/* absolute path */
-		st->newStr = VarModify(
-			st->ctxt, &st->parsestate, st->nstr, VarRealpath, NULL);
-		st->cp = st->tstr + 2;
-		st->termc = *st->cp;
-	    } else if (st->tstr[1] == 'u') {
-		char *dp = bmake_strdup(st->nstr);
-		for (st->newStr = dp; *dp; dp++)
-		    *dp = toupper((unsigned char)*dp);
-		st->cp = st->tstr + 2;
-		st->termc = *st->cp;
-	    } else if (st->tstr[1] == 'l') {
-		char *dp = bmake_strdup(st->nstr);
-		for (st->newStr = dp; *dp; dp++)
-		    *dp = tolower((unsigned char)*dp);
-		st->cp = st->tstr + 2;
-		st->termc = *st->cp;
-	    } else if (st->tstr[1] == 'W' || st->tstr[1] == 'w') {
-		st->parsestate.oneBigWord = (st->tstr[1] == 'W');
-		st->newStr = st->nstr;
-		st->cp = st->tstr + 2;
-		st->termc = *st->cp;
-	    } else {
-		/* Found ":t<unrecognised>:" or ":t<unrecognised><endc>". */
-		return FALSE;
-	    }
-	} else {
-	    /* Found ":t<unrecognised><unrecognised>". */
-	    return FALSE;
-	}
+    /* Check for two-character options: ":tu", ":tl" */
+    if (st->tstr[1] == 'A') {	/* absolute path */
+	st->newStr = VarModify(
+		st->ctxt, &st->parsestate, st->nstr, VarRealpath, NULL);
+	st->cp = st->tstr + 2;
+	st->termc = *st->cp;
+    } else if (st->tstr[1] == 'u') {
+	char *dp = bmake_strdup(st->nstr);
+	for (st->newStr = dp; *dp; dp++)
+	    *dp = toupper((unsigned char)*dp);
+	st->cp = st->tstr + 2;
+	st->termc = *st->cp;
+    } else if (st->tstr[1] == 'l') {
+	char *dp = bmake_strdup(st->nstr);
+	for (st->newStr = dp; *dp; dp++)
+	    *dp = tolower((unsigned char)*dp);
+	st->cp = st->tstr + 2;
+	st->termc = *st->cp;
+    } else if (st->tstr[1] == 'W' || st->tstr[1] == 'w') {
+	st->parsestate.oneBigWord = (st->tstr[1] == 'W');
+	st->newStr = st->nstr;
+	st->cp = st->tstr + 2;
+	st->termc = *st->cp;
     } else {
-	/* Found ":t<endc>" or ":t:". */
+	/* Found ":t<unrecognised>:" or ":t<unrecognised><endc>". */
 	return FALSE;
     }
     return TRUE;
