@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.222 2020/01/08 20:59:19 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.223 2020/07/20 03:23:42 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
 #include <mips/trap.h>
 #include <mips/locore.h>
 
-RCSID("$NetBSD: locore.S,v 1.222 2020/01/08 20:59:19 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.223 2020/07/20 03:23:42 simonb Exp $")
 
 #include "assym.h"
 
@@ -119,7 +119,7 @@ _C_LABEL(kernel_text):
 	//
 	mfc0	a0, MIPS_COP_0_EBASE		# EBASE
 	COP0_SYNC
-	ext	a1, a0, 0, 10			# get CPU number
+	andi    a1, a0, MIPS_EBASE_CPUNUM	# fetch cpunum
 	beqz	a1, 2f				# normal startup if 0
 	 nop
 #ifdef MULTIPROCESSOR
