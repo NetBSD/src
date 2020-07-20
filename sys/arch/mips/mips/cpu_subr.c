@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.53 2020/07/20 14:19:41 jmcneill Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.54 2020/07/20 14:38:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.53 2020/07/20 14:19:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.54 2020/07/20 14:38:38 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -75,8 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.53 2020/07/20 14:19:41 jmcneill Exp $
 extern struct cpu_softc octeon_cpu_softc[];
 #endif
 
-static kmutex_t cpu_hatch_lock;
-
 struct cpu_info cpu_info_store
 #if defined(MULTIPROCESSOR) && !defined(MIPS64_OCTEON)
 	__section(".data1")
@@ -108,6 +106,8 @@ const pcu_ops_t * const pcu_ops_md_defs[PCU_UNIT_COUNT] = {
 };
 
 #ifdef MULTIPROCESSOR
+static kmutex_t cpu_hatch_lock;
+
 struct cpu_info * cpuid_infos[MAXCPUS] = {
 	[0] = &cpu_info_store,
 };
