@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2017/05/21 15:28:40 riastradh Exp $
+#	$NetBSD: Makefile,v 1.4 2020/07/20 13:59:57 tsutsui Exp $
 
 .include <bsd.own.mk>
 
@@ -28,7 +28,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xnest \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${X11SRCDIR.xorg-server}/../include \
-		-I${X11INCS.DIX}
+		${X11INCS.DIX}
 
 CPPFLAGS+=	${X11FLAGS.OS_DEFINES} \
 		${X11FLAGS.EXTENSION} \
