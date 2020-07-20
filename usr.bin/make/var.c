@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.281 2020/07/20 15:44:12 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.282 2020/07/20 15:48:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.281 2020/07/20 15:44:12 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.282 2020/07/20 15:48:50 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.281 2020/07/20 15:44:12 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.282 2020/07/20 15:48:50 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1359,7 +1359,8 @@ VarSubstitute(GNode *ctx MAKE_ATTR_UNUSED, const char *word, SepBuf *buf,
 	goto nosub;
 
     if (args->pflags & VARP_MATCH_START) {
-	if (strncmp(word, args->lhs, args->lhsLen) != 0)
+	if (wordLen < args->lhsLen ||
+	    memcmp(word, args->lhs, args->lhsLen) != 0)
 	    goto nosub;
 
 	if (args->pflags & VARP_MATCH_END) {
