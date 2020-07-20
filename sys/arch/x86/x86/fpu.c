@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.71 2020/07/20 16:41:18 riastradh Exp $	*/
+/*	$NetBSD: fpu.c,v 1.72 2020/07/20 16:43:03 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.71 2020/07/20 16:41:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.72 2020/07/20 16:43:03 riastradh Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -380,11 +380,9 @@ fpu_kern_enter(void)
 	 * If we are in a softint and have a pinned lwp, the fpu state is that
 	 * of the pinned lwp, so save it there.
 	 */
-	if ((l->l_pflag & LP_INTR) && (l->l_switchto != NULL)) {
-		fpu_save_lwp(l->l_switchto);
-	} else {
-		fpu_save_lwp(l);
-	}
+	while ((l->l_pflag & LP_INTR) && (l->l_switchto != NULL))
+		l = l->l_switchto;
+	fpu_save_lwp(l);
 
 	/*
 	 * Clear CR0_TS, which fpu_save_lwp set if it saved anything --
