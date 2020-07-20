@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.69 2020/07/20 16:37:34 riastradh Exp $	*/
+/*	$NetBSD: fpu.c,v 1.70 2020/07/20 16:38:47 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.69 2020/07/20 16:37:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.70 2020/07/20 16:38:47 riastradh Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -125,8 +125,6 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.69 2020/07/20 16:37:34 riastradh Exp $");
 #define clts() HYPERVISOR_fpu_taskswitch(0)
 #define stts() HYPERVISOR_fpu_taskswitch(1)
 #endif
-
-static void fpu_area_do_save(void *, uint64_t);
 
 void fpu_handle_deferred(void);
 void fpu_switch(struct lwp *, struct lwp *);
@@ -157,24 +155,8 @@ fpu_save_lwp(struct lwp *l)
 	kpreempt_disable();
 	if (l->l_md.md_flags & MDL_FPU_IN_CPU) {
 		KASSERT((l->l_flag & LW_SYSTEM) == 0);
-
-		/*
-		 * Order is important, in case we are interrupted and
-		 * the interrupt calls fpu_kern_enter, triggering
-		 * reentry of fpu_save_lwp:
-		 *
-		 * 1. Save FPU state.
-		 * 2. Note FPU state has been saved.
-		 * 3. Disable FPU access so the kernel doesn't
-		 *    accidentally use it.
-		 *
-		 * Steps (1) and (2) are both idempotent until step
-		 * (3), after which point attempting to save the FPU
-		 * state will trigger #NM/fpudna fault.
-		 */
-		fpu_area_do_save(area, x86_xsave_features);
+		fpu_area_save(area, x86_xsave_features);
 		l->l_md.md_flags &= ~MDL_FPU_IN_CPU;
-		stts();
 	}
 	kpreempt_enable();
 }
@@ -263,8 +245,8 @@ fpu_errata_amd(void)
 	fldummy();
 }
 
-static void
-fpu_area_do_save(void *area, uint64_t xsave_features)
+void
+fpu_area_save(void *area, uint64_t xsave_features)
 {
 	switch (x86_fpu_save) {
 	case FPU_SAVE_FSAVE:
@@ -280,13 +262,7 @@ fpu_area_do_save(void *area, uint64_t xsave_features)
 		xsaveopt(area, xsave_features);
 		break;
 	}
-}
 
-void
-fpu_area_save(void *area, uint64_t xsave_features)
-{
-
-	fpu_area_do_save(area, xsave_features);
 	stts();
 }
 
