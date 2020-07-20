@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.54 2020/07/20 14:38:38 skrll Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.55 2020/07/20 14:59:57 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.54 2020/07/20 14:38:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.55 2020/07/20 14:59:57 jmcneill Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -106,8 +106,6 @@ const pcu_ops_t * const pcu_ops_md_defs[PCU_UNIT_COUNT] = {
 };
 
 #ifdef MULTIPROCESSOR
-static kmutex_t cpu_hatch_lock;
-
 struct cpu_info * cpuid_infos[MAXCPUS] = {
 	[0] = &cpu_info_store,
 };
@@ -951,9 +949,7 @@ cpu_hatch(struct cpu_info *ci)
 	 * Let this CPU do its own post-running initialization
 	 * (for things that have to be done on the local CPU).
 	 */
-	mutex_enter(&cpu_hatch_lock);
 	(*mips_locoresw.lsw_cpu_run)(ci);
-	mutex_exit(&cpu_hatch_lock);
 
 	/*
 	 * Now turn on interrupts (and verify they are on).
@@ -976,8 +972,6 @@ cpu_boot_secondary_processors(void)
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
-
-	mutex_init(&cpu_hatch_lock, MUTEX_DEFAULT, IPL_HIGH);
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		if (CPU_IS_PRIMARY(ci))
