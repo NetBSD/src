@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.12 2020/07/04 18:54:18 rillig Exp $
+# $Id: modmisc.mk,v 1.16 2020/07/19 20:49:44 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -16,8 +16,10 @@ MOD_OPT=@d@$${exists($$d):?$$d:$${d:S,/usr,/opt,}}@
 MOD_SEP=S,:, ,g
 
 all:	modvar modvarloop modsysv mod-HTE emptyvar undefvar
-all:	mod-S mod-C mod-at-varname mod-at-resolve
+all:	mod-S mod-C mod-at-varname mod-at-resolve mod-at-dollar
 all:	mod-subst-dollar mod-loop-dollar
+all:	mod-C-limits
+all:	mod-assign
 
 modsysv:
 	@echo "The answer is ${libfoo.a:L:libfoo.a=42}"
@@ -95,6 +97,14 @@ RES3=		3
 mod-at-resolve:
 	@echo $@:${RESOLVE:@v@w${v}w@:Q}:
 
+# As of 2020-07-19, the variable name of the :@ modifier may end with one
+# or two dollar signs, which are silently ignored.  There's no point in
+# allowing a dollar sign in that position.
+mod-at-dollar:
+	@echo $@:${1 2 3:L:@v$@($v)@:Q}.
+	@echo $@:${1 2 3:L:@v$$@($v)@:Q}.
+	@echo $@:${1 2 3:L:@v$$$@($v)@:Q}.
+
 # No matter how many dollar characters there are, they all get merged
 # into a single dollar by the :S modifier.
 mod-subst-dollar:
@@ -125,3 +135,24 @@ mod-loop-dollar:
 	@echo $@:${:U4:@word@$$$${word}$$$$@:Q}:
 	@echo $@:${:U5:@word@$$$$${word}$$$$$@:Q}:
 	@echo $@:${:U6:@word@$$$$$${word}$$$$$$@:Q}:
+
+mod-C-limits:
+	@echo $@:00-ok:${:U1 23 456:C,..,\0\0,:Q}
+	@echo $@:11-missing:${:U1 23 456:C,..,\1\1,:Q}
+	@echo $@:11-ok:${:U1 23 456:C,(.).,\1\1,:Q}
+	@echo $@:22-missing:${:U1 23 456:C,..,\2\2,:Q}
+	@echo $@:22-missing:${:U1 23 456:C,(.).,\2\2,:Q}
+	@echo $@:22-ok:${:U1 23 456:C,(.)(.),\2\2,:Q}
+	# The :C modifier only handles single-digit capturing groups,
+	# which is more than enough for daily use.
+	@echo $@:capture:${:UabcdefghijABCDEFGHIJrest:C,(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.),\9\8\7\6\5\4\3\2\1\0\10\11\12,}
+
+# Just a bit of basic code coverage for the obscure ::= assignment modifiers.
+mod-assign:
+	@echo $@: ${1 2 3:L:@i@${FIRST::?=$i}@} first=${FIRST}.
+	@echo $@: ${1 2 3:L:@i@${LAST::=$i}@} last=${LAST}.
+	@echo $@: ${1 2 3:L:@i@${APPENDED::+=$i}@} appended=${APPENDED}.
+	@echo $@: ${echo.1 echo.2 echo.3:L:@i@${RAN::!=${i:C,.*,&; & 1>\&2,:S,., ,g}}@} ran:${RAN}.
+	# The assignments happen in the global scope and thus are
+	# preserved even after the shell command has been run.
+	@echo $@: global: ${FIRST:Q}, ${LAST:Q}, ${APPENDED:Q}, ${RAN:Q}.

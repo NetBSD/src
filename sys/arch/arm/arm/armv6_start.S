@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.20 2020/07/10 12:25:08 skrll Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.21 2020/07/19 11:47:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <arm/armreg.h>
 #include "assym.h"
 
-#define INIT_ARM_STACK_SHIFT	9
+#define INIT_ARM_STACK_SHIFT	10
 #define INIT_ARM_STACK_SIZE	(1 << INIT_ARM_STACK_SHIFT)
 
 #if defined(CONSADDR) && defined(CONADDR)

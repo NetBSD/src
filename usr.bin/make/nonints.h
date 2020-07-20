@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.78 2020/07/03 07:40:13 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.80 2020/07/19 12:26:17 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -138,8 +138,6 @@ char *str_concat(const char *, const char *, int);
 char **brk_string(const char *, int *, Boolean, char **);
 char *Str_FindSubstring(const char *, const char *);
 Boolean Str_Match(const char *, const char *);
-char *Str_SYSVMatch(const char *, const char *, size_t *, Boolean *);
-void Str_SYSVSubst(Buffer *, char *, char *, size_t, Boolean);
 
 /* suff.c */
 void Suff_ClearSuffixes(void);
@@ -180,18 +178,18 @@ void Targ_Propagate_Wait(void);
 /* var.c */
 
 typedef enum {
-	VARF_UNDEFERR = 1,
-	VARF_WANTRES = 2,
-	VARF_ASSIGN = 4
-} Varf_Flags;
+	VARE_UNDEFERR = 1,
+	VARE_WANTRES = 2,
+	VARE_ASSIGN = 4
+} VarEvalFlags;
 
 void Var_Delete(const char *, GNode *);
 void Var_Set(const char *, const char *, GNode *);
 void Var_Append(const char *, const char *, GNode *);
 Boolean Var_Exists(const char *, GNode *);
 char *Var_Value(const char *, GNode *, char **);
-char *Var_Parse(const char *, GNode *, Varf_Flags, int *, void **);
-char *Var_Subst(const char *, const char *, GNode *, Varf_Flags);
+char *Var_Parse(const char *, GNode *, VarEvalFlags, int *, void **);
+char *Var_Subst(const char *, const char *, GNode *, VarEvalFlags);
 char *Var_GetTail(const char *);
 char *Var_GetHead(const char *);
 void Var_Init(void);

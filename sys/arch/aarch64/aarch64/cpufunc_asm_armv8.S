@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_armv8.S,v 1.6 2020/07/01 07:59:16 ryo Exp $	*/
+/*	$NetBSD: cpufunc_asm_armv8.S,v 1.7 2020/07/19 07:18:07 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2014 Robin Randhawa
@@ -43,18 +43,18 @@
  * Macro to handle the cache. This takes the start address in x0, length
  * in x1. It will corrupt x2-x5.
  */
-.macro cache_handle_range dcop = 0, icop = 0
+.macro cache_handle_range dcop = "", icop = ""
 	mrs	x3, ctr_el0
 	mov	x4, #4			/* size of word */
-.if \dcop != 0
+.ifnb \dcop
 	ubfx	x2, x3, #16, #4		/* x2 = D cache shift */
 	lsl	x2, x4, x2		/* x2 = D cache line size */
 .endif
-.if \icop != 0
+.ifnb \icop
 	and	x3, x3, #15		/* x3 = I cache shift */
 	lsl	x3, x4, x3		/* x3 = I cache line size */
 .endif
-.if \dcop != 0
+.ifnb \dcop
 	sub	x4, x2, #1		/* Get the address mask */
 	and	x4, x0, x4		/* Get the low bits of the address */
 	add	x5, x1, x4		/* Add these to the size */
@@ -66,7 +66,7 @@
 	b.hi	1b			/* Check if we are done */
 	dsb	ish
 .endif
-.if \icop != 0
+.ifnb \icop
 	sub	x4, x3, #1		/* Get the address mask */
 	and	x4, x0, x4		/* Get the low bits of the address */
 	add	x5, x1, x4		/* Add these to the size */

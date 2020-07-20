@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.38 2020/07/14 00:45:53 yamaguchi Exp $	*/
+/*	$NetBSD: svs.c,v 1.39 2020/07/19 07:35:08 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.38 2020/07/14 00:45:53 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.39 2020/07/19 07:35:08 maxv Exp $");
 
 #include "opt_svs.h"
 #include "opt_user_ldt.h"
@@ -704,7 +704,7 @@ svs_pdir_switch(struct pmap *pmap)
 
 	/* Copy user slots. */
 	mutex_enter(&ci->ci_svs_mtx);
-	x86_movs(ci->ci_svs_updir, pmap->pm_pdir, PDIR_SLOT_USERLIM);
+	svs_quad_copy(ci->ci_svs_updir, pmap->pm_pdir, PDIR_SLOT_USERLIM);
 	mutex_exit(&ci->ci_svs_mtx);
 
 	if (svs_pcid) {
