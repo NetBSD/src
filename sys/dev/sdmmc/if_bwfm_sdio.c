@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_sdio.c,v 1.19 2020/06/23 10:09:33 martin Exp $ */
+/* $NetBSD: if_bwfm_sdio.c,v 1.20 2020/07/20 06:44:55 mrg Exp $ */
 /* $OpenBSD: if_bwfm_sdio.c,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -505,9 +505,8 @@ bwfm_sdio_attachhook(device_t self)
 		goto err;
 	}
 
-//	bwfm_sdio_dev_write(sc, SDPCMD_HOSTINTMASK,
-//	    SDPCMD_INTSTATUS_HMB_SW_MASK | SDPCMD_INTSTATUS_CHIPACTIVE);
-	bwfm_sdio_dev_write(sc, SDPCMD_HOSTINTMASK, 0xffffffff);
+	bwfm_sdio_dev_write(sc, SDPCMD_HOSTINTMASK,
+	    SDPCMD_INTSTATUS_HMB_SW_MASK | SDPCMD_INTSTATUS_CHIPACTIVE);
 	bwfm_sdio_write_1(sc, BWFM_SDIO_WATERMARK, 8);
 
 	if (bwfm_chip_sr_capable(bwfm)) {
