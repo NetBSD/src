@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.283 2020/07/20 16:12:52 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.284 2020/07/20 16:32:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.283 2020/07/20 16:12:52 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.284 2020/07/20 16:32:14 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.283 2020/07/20 16:12:52 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.284 2020/07/20 16:32:14 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3080,12 +3080,8 @@ ApplyModifier_SysV(ApplyModifiersState *st)
 
     st->delim = '=';
     st->cp = st->tstr;
-    VarPatternFlags pflags = 0;
-    /* FIXME: There's no point in having a single $ at the end of a
-     * SysV substitution since that will not be interpreted as an
-     * anchor anyway. */
     char *lhs = ParseModifierPart(st->ctxt, &st->cp, st->delim, st->eflags,
-				  &pflags, NULL, NULL);
+				  NULL, NULL, NULL);
     if (lhs == NULL)
 	return 'c';
 
