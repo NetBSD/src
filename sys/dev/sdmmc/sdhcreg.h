@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcreg.h,v 1.19 2017/06/23 08:43:59 ryo Exp $	*/
+/*	$NetBSD: sdhcreg.h,v 1.19.12.1 2020/07/20 18:15:43 martin Exp $	*/
 /*	$OpenBSD: sdhcreg.h,v 1.4 2006/07/30 17:20:40 fgsch Exp $	*/
 
 /*
@@ -246,6 +246,8 @@
 #define SDHC_SPEC_VERS_200		0x01
 #define SDHC_SPEC_VERS_300		0x02
 #define SDHC_SPEC_VERS_400		0x03
+#define SDHC_SPEC_VERS_410		0x04
+#define SDHC_SPEC_VERS_420		0x05
 #define SDHC_SPEC_NOVERS		0xff	/* dummy */
 
 /* SDHC_CAPABILITIES decoding */
