@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.52 2020/07/20 10:53:47 skrll Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.53 2020/07/20 14:19:41 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.52 2020/07/20 10:53:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.53 2020/07/20 14:19:41 jmcneill Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -74,6 +74,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.52 2020/07/20 10:53:47 skrll Exp $");
 #include <mips/cavium/octeonvar.h>
 extern struct cpu_softc octeon_cpu_softc[];
 #endif
+
+static kmutex_t cpu_hatch_lock;
 
 struct cpu_info cpu_info_store
 #if defined(MULTIPROCESSOR) && !defined(MIPS64_OCTEON)
@@ -949,7 +951,9 @@ cpu_hatch(struct cpu_info *ci)
 	 * Let this CPU do its own post-running initialization
 	 * (for things that have to be done on the local CPU).
 	 */
+	mutex_enter(&cpu_hatch_lock);
 	(*mips_locoresw.lsw_cpu_run)(ci);
+	mutex_exit(&cpu_hatch_lock);
 
 	/*
 	 * Now turn on interrupts (and verify they are on).
@@ -973,6 +977,8 @@ cpu_boot_secondary_processors(void)
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
 
+	mutex_init(&cpu_hatch_lock, MUTEX_DEFAULT, IPL_HIGH);
+
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		if (CPU_IS_PRIMARY(ci))
 			continue;
@@ -988,8 +994,8 @@ cpu_boot_secondary_processors(void)
 		atomic_or_ulong(&ci->ci_flags, CPUF_RUNNING);
 		kcpuset_set(cpus_running, cpu_index(ci));
 		// Spin until the cpu calls idle_loop
-		for (u_int i = 0; i < 100; i++) {
-			if (kcpuset_isset(cpus_running, cpu_index(ci)))
+		for (u_int i = 0; i < 10000; i++) {
+			if (kcpuset_isset(kcpuset_running, cpu_index(ci)))
 				break;
 			delay(1000);
 		}
