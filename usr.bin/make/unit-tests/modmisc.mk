@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.16 2020/07/19 20:49:44 rillig Exp $
+# $Id: modmisc.mk,v 1.17 2020/07/20 16:12:02 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -20,6 +20,7 @@ all:	mod-S mod-C mod-at-varname mod-at-resolve mod-at-dollar
 all:	mod-subst-dollar mod-loop-dollar
 all:	mod-C-limits
 all:	mod-assign
+all:	mod-tu-space
 
 modsysv:
 	@echo "The answer is ${libfoo.a:L:libfoo.a=42}"
@@ -156,3 +157,9 @@ mod-assign:
 	# The assignments happen in the global scope and thus are
 	# preserved even after the shell command has been run.
 	@echo $@: global: ${FIRST:Q}, ${LAST:Q}, ${APPENDED:Q}, ${RAN:Q}.
+
+mod-tu-space:
+	# The :tu and :tl modifiers operate on the variable value
+	# as a single string, not as a list of words. Therefore,
+	# the adjacent spaces are preserved.
+	@echo $@: ${a   b:L:tu:Q}
