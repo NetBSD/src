@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.237 2020/07/19 12:26:17 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.238 2020/07/20 14:50:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.237 2020/07/19 12:26:17 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.238 2020/07/20 14:50:41 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.237 2020/07/19 12:26:17 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.238 2020/07/20 14:50:41 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1938,9 +1938,8 @@ Parse_DoVar(char *line, GNode *ctxt)
 	    break;
     }
 
-    while (isspace ((unsigned char)*cp)) {
+    while (isspace((unsigned char)*cp))
 	cp++;
-    }
 
     if (type == VAR_APPEND) {
 	Var_Append(line, cp, ctxt);
@@ -1980,7 +1979,7 @@ Parse_DoVar(char *line, GNode *ctxt)
 	    /*
 	     * There's a dollar sign in the command, so perform variable
 	     * expansion on the whole thing. The resulting string will need
-	     * freeing when we're done, so set freeCmd to TRUE.
+	     * freeing when we're done.
 	     */
 	    cp = Var_Subst(NULL, cp, VAR_CMD, VARE_UNDEFERR|VARE_WANTRES);
 	    freeCp = TRUE;
