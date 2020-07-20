@@ -1,6 +1,6 @@
-.\"	$NetBSD: contents,v 1.4.4.2 2019/11/25 05:50:20 msaitoh Exp $
+.\"	$NetBSD: contents,v 1.4.4.3 2020/07/20 18:32:55 martin Exp $
 .\"
-.\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -45,66 +45,81 @@ The
 file contains underlined text using the
 .Xr more 1
 conventions for indicating italic and bold display.
-.
-.\" MD binary and installation directories ---------------------------
-.
 .	It Pa binary/
-.
 .	(tag kernel/ -compact \" binary/
-.
+.		It Pa gzimg/
+.		(tag armv7.img.gz -compact \" binary/gzimg
+.			It Pa armv7.img.gz
+A gzipped writable image containing the complete
+.Nx
+operating system for a range of 32-bit devices (includes a GENERIC kernel).
+.			It Pa arm64.img.gz
+A gzipped writable image containing the complete
+.Nx
+operating system for a range of 64-bit devices (includes a GENERIC64 kernel).
+.			It Pa rpi.img.gz
+A gzipped writable image containing the complete 32-bit
+.Nx
+operating system for Raspberry Pi variants only (includes RPI kernels).
+.			It Pa *.dtb.gz
+Gzipped board-specific device trees.
+.		tag) \" binary/gzimg/
 .		It Pa kernel/
-.
 .		(tag netbsd.gz -compact \" binary/kernel
 .			It Pa netbsd-GENERIC.gz
-A gzipped
-.Nx
-kernel containing code for everything supported in this release.
-.
+A gzipped ARMv7 kernel which supports a range of 32-bit devices that
+do not need board-specific kernels.
+.			It Pa netbsd-GENERIC64.gz
+A gzipped AArch64 kernel which supports a range of 64-bit devices that
+do not need board-specific kernels.
+.			It Pa netbsd-RPI.gz
+A gzipped ARMv6 kernel which supports the Raspberry Pi 1 only.
+.			It Pa netbsd-RPI2.gz
+A gzipped ARMv6 kernel which supports the Raspberry Pi 2 only.
 .		tag) \" binary/kernel/
 .
 .		It Pa sets/
-.
 \*M binary distribution sets;
 see below.
 .
 .	tag) \" binary/
-.
 .	It Pa installation/
 .
 .	(tag miniroot/ -compact \" installation/
 .
-.		It Pa misc/
+.		It Pa miniroot/
 .
-Miscellaneous \*M installation utilities; see
-installation section below.
+\*M kernel modules providing memory disk
+root file systems for expert usage.
+.
+.		It Pa misc/
+.		(tag bootaa64.efi -compact \" misc/bootaa64.efi
+.			It Pa bootaa64.efi
+.			(tag bootaa64.efi -compact \" misc/bootaa64.efi
+AArch64 EFI bootloader
+.			tag) \" misc/bootaa64.efi
+.		tag) \" misc/bootaa64.efi
 .
 .	tag) \" installation/
 .
 .tag) \" top level
 .
-.\" ------------------------------------------------------------------
-.
 .
 .Ss2 Binary distribution sets
-.\"
-.\" ------------------------------------------------------------------
-.\" XXX: most sets except kern and xserver should be in notes/common
-.\"
 The
 .Nx
-\*M
-binary distribution sets contain the binaries which
-comprise the
-.Nx
-\*V release for \*M.
-The binary distribution sets can be found in the
+\*V release for \*M is comprised of the following binary sets, which
+can be found in the
 .Pa \*M/binary/sets
 subdirectory
 of the
 .Nx
 \*V
-distribution tree, and are as follows:
+distribution tree:
 .(tag xserver \" sets
+.\"
+.\" XXX: most sets except kern and xserver should be shared
+.\"
 .
 .It Sy base
 The
@@ -154,31 +169,18 @@ be used if you are upgrading.
 .It Sy games
 This set includes the games and their manual pages.
 .
-.\" MD kernel set(s) -------------------------------------------------
+.\" Kernel set(s)
 .
-.It Sy kern-INTEGRATOR
-(see below)
-.It Sy kern-IQ80310
-(see below)
-.It Sy kern-IQ80321
-(see below)
-.It Sy kern-TEAMASA_NPWR
-.Pp
-These sets contain a
+.It Sy kern-GENERIC
+This set contains a
 .Nx*M
 \*V
+.Li GENERIC
 kernel, named
 .Pa /netbsd .
-Some of these sets also contain a binary format kernel named
-.Pa /netbsd.bin
-and an S-record format kernel named
-.Pa /netbsd.srec
-that your firmware may need to boot.
 You
 .Em must
-install the kernel that matches your hardware.
-.
-.\" ------------------------------------------------------------------
+install this distribution set.
 .
 .It Sy man
 This set includes all of the manual pages for the
@@ -211,9 +213,7 @@ all related programs, and their manual pages.
 .tag) \" sets
 .
 .
-.\" X sets -----------------------------------------------------------
-.\" XXX: XOrg vs XFree
-.\" XXX: ports without xserver
+.\" ---------------------------- X SETS
 .Pp
 .Nx
 maintains its own set of sources for the X Window System in order to
@@ -248,22 +248,22 @@ Configuration files for X which could be locally modified.
 .
 .It Sy xserver
 The X server.
+This includes the modular X.Org server.
 .
 .tag) \" x sets
 .
 .
-.\" ------------------------------------------------------------------
-.
-.
+.\" ---------------------------- MI DISCUSSION OF BINARY SETS
+.\"
 .\" MI DISCUSSION OF BINARY SETS -------------------------------------
 .\" XXX: should be in notes/common
+.\"
 .
 .Pp
 The \*M binary distribution sets are distributed as gzipped tar files
 named with the extension
-.Sy .\*[setsuffix] ,
-e.g.
-.Pa base.\*[setsuffix] .
+.Sy .\*[setsuffix]
+.Pq e.g., Pa base.\*[setsuffix] .
 .
 .
 .Pp
@@ -272,7 +272,7 @@ well for the binary sets, but it is worth noting that if you use that
 method, the filenames stored in the sets are relative and therefore
 the files are extracted
 .Em below the current directory .
-Therefore, if you want to extract the binaries into your system, i.e.
+Therefore, if you want to extract the binaries into your system, i.e.,
 replace the system binaries with them, you have to run the
 .Ic "tar -xzpf"
 command from the root directory (
@@ -280,7 +280,6 @@ command from the root directory (
 ) of your system.
 .
 .
-.\" MD DISCUSSION ----------------------------------------------------
+.\" ---------------------------- MD DISCUSSION
 .
 .\" XXX: should be written
-.

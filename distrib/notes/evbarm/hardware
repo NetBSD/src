@@ -1,6 +1,6 @@
-.\"	$NetBSD: hardware,v 1.10 2008/04/30 13:10:48 martin Exp $
+.\"	$NetBSD: hardware,v 1.10.66.1 2020/07/20 18:32:55 martin Exp $
 .\"
-.\" Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2001-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -24,217 +24,39 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Nx \*V
-runs on the following ARM architecture evaluation boards:
-.(bullet -offset indent
-Technologic Systems TS-7200
+.Ss2 32-bit SoCs supported by GENERIC kernels (ARMv7-A)
+.Pp
+.Lk "https://wiki.netbsd.org/ports/evbarm/qemu_arm/" "QEMU"
+is also supported.
+.Bl -bullet -offset indent -compact
 .It
-ARM, Ltd. Integrator
+Allwinner A10, A13, A20, A32, A80, A83T, H3 (e.g. Cubieboard, OLinuXino, LeMaker Banana Pi...)
 .It
-Intel IQ80310
+Amlogic S805 (e.g. ODROID-C1)
 .It
-Intel IQ80321
+Broadcom BCM2836 (e.g. Raspberry Pi 2)
 .It
-Team ASA, Inc. Npwr
+Samsung Exynos 5422 (e.g. ODROID-XU3/XU-4)
 .It
-Intel IXM1200
+Texas Instruments OMAP3 (e.g. BeagleBoard, BeagleBone Black...)
 .It
-Samsung SMDK2800
+NVIDIA Tegra K1
+.El
+.Ss2 64-bit SoCs supported by GENERIC64 kernels
+.Pp
+Devices conforming to the Server Base System Architecture specification,
+and
+.Lk "https://wiki.netbsd.org/ports/evbarm/qemu_arm/" "QEMU"
+are also supported.
+.Bl -bullet -offset indent -compact
 .It
-ADI Engineering, Inc. BRH ("Big Red Head")
+Allwinner H5, H6, A64 (e.g. PINE64, Pinebook, NanoPi A64, OLinuXino...)
 .It
-Arcom Viper
-.bullet)
-.
-.Ss2 Supported devices (Technologic Systems TS-7200)
-For devices that have machine-independent drivers,
-this is not an exhaustive list, but merely reflects the
-devices that have been tested on this platform.
-.(bullet -offset indent
-.Te 2 "TS-5620 Real Time Clock"
+Amlogic S905 (e.g. ODROID-C2, Le Potato, NanoPi K2...)
 .It
-.Te 2 "Serial ports"
-.(bullet -compact
-On-chip EP9302 UARTs
+Broadcom BCM2837 (e.g. Raspberry Pi 3)
 .It
-TS-SER1, TS-SER2, TS-SER4 PC/104 serial adapters
+Rockchip RK3328, RK3328 (e.g. Pinebook Pro, RockPro64, Firefly...)
 .It
-TS-MODEM, TS-MODEM2 PC/104 land-line/cellular modems
-.bullet)
-.It
-.Te 2 "Ethernet adapters"
-.(bullet -compact
-On-chip EP9302 10/100 ethernet
-.It
-TS-ETH10 PC/104 expansion ethernet adapters
-.bullet)
-.It
-.Te 2 "Other on-board functions"
-.(bullet -compact
-CompactFlash socket
-.It
-USB OHCI host
-.It
-Text-mode HD44780 LCD display header
-.It
-Matrix keypad/GPIO header
-.It
-Board temperature sensor and watchdog timer
-.bullet)
-.bullet)
-.
-.Ss2 Supported devices (ARM, Ltd. Integrator)
-For devices that have machine-independent drivers,
-this is not an exhaustive list, but merely reflects the
-devices that have been tested on this platform.
-.(bullet -offset indent
-.Te 2 "PrimeCell PL030 Real Time Clock"
-.It
-.Te 2 "Serial ports"
-.(bullet -compact
-PrimeCell PL010 UART
-.bullet)
-.It
-.Te 2 "SCSI host adapters"
-.(bullet -compact
-Adaptec AHA-2910, 2915, 2920, and 2930C adapters.
-.It
-Adaptec AHA-2x4x[U][2][W] cards and onboard PCI designs using the AIC-7770,
-AIC-7850, AIC-7860, AIC-7870, AIC-7880 and AIC-789x chipsets.
-.It
-Adaptec AHA-394x[U][W] cards [b]
-.It
-Adaptec AHA-3950U2 cards
-.It
-Adaptec AHA-3960, 19160 and 29160 Ultra-160 adapters
-.bullet)
-.It
-.Te 2 "Ethernet adapters"
-.(bullet -compact
-Intel i82557, i82558, i82559, i82550
-.bullet)
-.bullet)
-.
-.Ss2 Supported devices (Intel IQ80310)
-For devices that have machine-independent drivers,
-this is not an exhaustive list, but merely reflects the
-devices that have been tested on this platform.
-.(bullet -offset indent
-.Te 2 "Serial ports"
-.(bullet -compact
-On-board ST16c550 UARTs
-.bullet)
-.It
-.Te 2 "Ethernet adapters"
-.(bullet -compact
-Intel i82557, i82558, i82559, i82550
-.bullet)
-.It
-.Te 2 "i80312 Companion I/O functions"
-.(bullet -compact
-General Purpose I/O unit
-.bullet)
-.bullet)
-.
-.Ss2 Supported devices (Intel IQ80321)
-For devices that have machine-independent drivers,
-this is not an exhaustive list, but merely reflects the
-devices that have been tested on this platform.
-.(bullet -offset indent
-.Te 2 "Serial ports"
-.(bullet -compact
-On-board TI 16550 UART
-.bullet)
-.It
-.Te 2 "Ethernet adapters"
-.(bullet -compact
-Intel i82542, i82543, i85244 Gigabit Ethernet
-.bullet)
-.It
-.Te 2 "i80321 I/O Processor functions"
-.(bullet -compact
-Application Accelerator Unit
-.It
-Watchdog timer
-.bullet)
-.bullet)
-.
-.Ss2 Supported devices (Team ASA Npwr)
-The Npwr is a storage appliance based on the Intel IOP310
-I/O processor chipset.  This is an exhaustive list of devices
-supported on the Npwr as the Npwr has no expansion capability.
-.(bullet
-.Te 2 "Serial ports"
-.(bullet -compact
-On-board TI 16550 UART
-.bullet)
-.It
-.Te 2 "SCSI host adapters"
-.(bullet
-On-board LSI Logic 53c1010 Ultra160 SCSI adapter
-.bullet)
-.It
-.Te 2 "Ethernet adapters"
-.(bullet
-On-board Intel i82544 Gigabit Ethernet
-.bullet)
-.bullet)
-.
-.Ss2 Supported devices (Intel IXM1200)
-For devices that have machine-independent drivers,
-this is not an exhaustive list, but merely reflects the
-devices that have been tested on this platform.
-.(bullet -offset indent
-.Te 2 "Serial ports"
-.(bullet -compact
-IXP1200 on-chip serial port
-.bullet)
-.It
-.Te 2 "Ethernet adapters"
-.(bullet -compact
-Intel i82557, i82558, i82559, i82550
-.bullet)
-.bullet)
-.
-.Ss2 Supported devices (Samsung SMDK2800)
-For devices that have machine-independent drivers,
-this is not an exhaustive list, but merely reflects the
-devices that have been tested on this platform.
-.(bullet -offset indent
-.Te 2 "Serial ports"
-.(bullet -compact
-S3C2800 on-chip serial ports
-.bullet)
-.bullet)
-.
-.Ss2 Supported devices (ADI BRH)
-For devices that have machine-independent drivers,
-this is not an exhaustive list, but merely reflects the
-devices that have been tested on this platform.
-.(bullet -offset indent
-.Te 2 "Serial ports"
-.(bullet -compact
-On-board TI 16752 DUART
-.bullet)
-.It
-.Te 2 "Ethernet adapters"
-.(bullet -compact
-Intel i82557, i82558, i82559, i82550
-.It
-Intel i82544, i82546 Gigabit Ethernet
-.bullet)
-.bullet)
-.
-.Ss2 Supported devices (Arcom Viper)
-Current this is an exhaustive list, since expansion ports such as
-PC/104 and USB are not yet supported.
-.(bullet -offset indent
-.Te 2 "Serial ports"
-.(bullet -compact
-On-chip PXA255 UARTs
-.bullet)
-.Te 2 "Ethernet adapters"
-.(bullet -compact
-On-board SMC91C111
-.bullet)
-.bullet)
+NVIDIA Tegra X1
+.El
