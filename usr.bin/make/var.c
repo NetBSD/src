@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.287 2020/07/20 19:53:40 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.288 2020/07/20 20:56:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.287 2020/07/20 19:53:40 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.288 2020/07/20 20:56:39 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.287 2020/07/20 19:53:40 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.288 2020/07/20 20:56:39 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -240,8 +240,8 @@ typedef enum {
     VARP_SUB_GLOBAL	= 0x01,	/* Apply substitution globally */
     VARP_SUB_ONE	= 0x02,	/* Apply substitution to one word */
     VARP_SUB_MATCHED	= 0x04,	/* There was a match */
-    VARP_MATCH_START	= 0x08,	/* Match at start of word */
-    VARP_MATCH_END	= 0x10	/* Match at end of word */
+    VARP_ANCHOR_START	= 0x08,	/* Match at start of word */
+    VARP_ANCHOR_END	= 0x10	/* Match at end of word */
 } VarPatternFlags;
 
 typedef enum {
@@ -1354,12 +1354,12 @@ VarSubstitute(GNode *ctx MAKE_ATTR_UNUSED, const char *word, SepBuf *buf,
 	(VARP_SUB_ONE | VARP_SUB_MATCHED))
 	goto nosub;
 
-    if (args->pflags & VARP_MATCH_START) {
+    if (args->pflags & VARP_ANCHOR_START) {
 	if (wordLen < args->lhsLen ||
 	    memcmp(word, args->lhs, args->lhsLen) != 0)
 	    goto nosub;
 
-	if (args->pflags & VARP_MATCH_END) {
+	if (args->pflags & VARP_ANCHOR_END) {
 	    if (wordLen != args->lhsLen)
 		goto nosub;
 
@@ -1373,7 +1373,7 @@ VarSubstitute(GNode *ctx MAKE_ATTR_UNUSED, const char *word, SepBuf *buf,
 	return;
     }
 
-    if (args->pflags & VARP_MATCH_END) {
+    if (args->pflags & VARP_ANCHOR_END) {
 	if (wordLen < args->lhsLen)
 	    goto nosub;
 	const char *start = word + (wordLen - args->lhsLen);
@@ -1886,7 +1886,7 @@ VarRange(const char *str, int ac)
  *
  * If length is specified, return the string length of the buffer.
  * If mpflags is specified and the last character of the pattern is a $,
- * set the VARP_MATCH_END bit of mpflags.
+ * set the VARP_ANCHOR_END bit of mpflags.
  */
 static char *
 ParseModifierPart(GNode *ctxt, const char **tstr, int delim,
@@ -1916,15 +1916,11 @@ ParseModifierPart(GNode *ctxt, const char **tstr, int delim,
 	    Buf_AddByte(&buf, cp[1]);
 	    cp++;
 	} else if (*cp == '$') {
-	    if (cp[1] == delim) {
+	    if (cp[1] == delim) {	/* Unescaped $ at end of pattern */
 		if (mpflags == NULL)
 		    Buf_AddByte(&buf, *cp);
 		else
-		    /*
-		     * Unescaped $ at end of pattern => anchor
-		     * pattern at end.
-		     */
-		    *mpflags |= VARP_MATCH_END;
+		    *mpflags |= VARP_ANCHOR_END;
 	    } else {
 		if (!(eflags & VARE_NOSUBST)) {
 		    char   *cp2;
@@ -2164,13 +2160,15 @@ ApplyModifier_At(ApplyModifiersState *st) {
 
     st->cp = ++st->tstr;
     st->delim = '@';
-    loop.tvar = ParseModifierPart(
-	st->ctxt, &st->cp, st->delim, st->eflags | VARE_NOSUBST, NULL, NULL, NULL);
+    loop.tvar = ParseModifierPart(st->ctxt, &st->cp, st->delim,
+				  st->eflags | VARE_NOSUBST,
+				  NULL, NULL, NULL);
     if (loop.tvar == NULL)
 	return FALSE;
 
-    loop.str = ParseModifierPart(
-	st->ctxt, &st->cp, st->delim, st->eflags | VARE_NOSUBST, NULL, NULL, NULL);
+    loop.str = ParseModifierPart(st->ctxt, &st->cp, st->delim,
+				 st->eflags | VARE_NOSUBST,
+				 NULL, NULL, NULL);
     if (loop.str == NULL)
 	return FALSE;
 
@@ -2389,22 +2387,14 @@ ApplyModifier_Range(ApplyModifiersState *st)
 static void
 ApplyModifier_Match(ApplyModifiersState *st)
 {
-    char    *pattern;
-    const char *endpat;		/* points just after end of pattern */
-    char    *cp2;
-    Boolean copy;		/* pattern should be, or has been, copied */
-    Boolean needSubst;
-    int nest;
-
-    copy = FALSE;
-    needSubst = FALSE;
-    nest = 1;
+    Boolean copy = FALSE;	/* pattern should be, or has been, copied */
+    Boolean needSubst = FALSE;
     /*
-     * In the loop below, ignore ':' unless we are at
-     * (or back to) the original brace level.
-     * XXX This will likely not work right if $() and ${}
-     * are intermixed.
+     * In the loop below, ignore ':' unless we are at (or back to) the
+     * original brace level.
+     * XXX This will likely not work right if $() and ${} are intermixed.
      */
+    int nest = 1;
     for (st->cp = st->tstr + 1;
 	 *st->cp != '\0' && !(*st->cp == ':' && nest == 1);
 	 st->cp++) {
@@ -2427,7 +2417,9 @@ ApplyModifier_Match(ApplyModifiersState *st)
 	}
     }
     st->termc = *st->cp;
-    endpat = st->cp;
+    const char *endpat = st->cp;
+
+    char *pattern = NULL;
     if (copy) {
 	/*
 	 * Need to compress the \:'s out of the pattern, so
@@ -2437,6 +2429,7 @@ ApplyModifier_Match(ApplyModifiersState *st)
 	 * compress the pattern into the space.
 	 */
 	pattern = bmake_malloc(st->cp - st->tstr);
+	char *cp2;
 	for (cp2 = pattern, st->cp = st->tstr + 1;
 	     st->cp < endpat;
 	     st->cp++, cp2++) {
@@ -2456,9 +2449,9 @@ ApplyModifier_Match(ApplyModifiersState *st)
     }
     if (needSubst) {
 	/* pattern contains embedded '$', so use Var_Subst to expand it. */
-	cp2 = pattern;
-	pattern = Var_Subst(NULL, cp2, st->ctxt, st->eflags);
-	free(cp2);
+	char *old_pattern = pattern;
+	pattern = Var_Subst(NULL, pattern, st->ctxt, st->eflags);
+	free(old_pattern);
     }
     if (DEBUG(VAR))
 	fprintf(debug_file, "Pattern[%s] for [%s] is [%s]\n",
@@ -2484,7 +2477,7 @@ ApplyModifier_Subst(ApplyModifiersState *st)
      */
     args.pflags = 0;
     if (*st->tstr == '^') {
-	args.pflags |= VARP_MATCH_START;
+	args.pflags |= VARP_ANCHOR_START;
 	st->tstr++;
     }
 
@@ -2536,20 +2529,17 @@ ApplyModifier_Subst(ApplyModifiersState *st)
 static Boolean
 ApplyModifier_Regex(ApplyModifiersState *st)
 {
-    VarREPattern    pattern;
-    char           *re;
-    int             error;
-    Var_Parse_State tmpparsestate;
+    VarREPattern pattern;
 
     pattern.pflags = 0;
-    tmpparsestate = st->parsestate;
+    Var_Parse_State tmpparsestate = st->parsestate;
     st->delim = st->tstr[1];
     st->tstr += 2;
 
     st->cp = st->tstr;
 
-    re = ParseModifierPart(st->ctxt, &st->cp, st->delim, st->eflags,
-			   NULL, NULL, NULL);
+    char *re = ParseModifierPart(st->ctxt, &st->cp, st->delim, st->eflags,
+				 NULL, NULL, NULL);
     if (re == NULL)
 	return FALSE;
 
@@ -2577,7 +2567,7 @@ ApplyModifier_Regex(ApplyModifiersState *st)
 
     st->termc = *st->cp;
 
-    error = regcomp(&pattern.re, re, REG_EXTENDED);
+    int error = regcomp(&pattern.re, re, REG_EXTENDED);
     free(re);
     if (error) {
 	*st->lengthPtr = st->cp - st->start + 1;
@@ -2718,28 +2708,22 @@ ApplyModifier_Words(ApplyModifiersState *st)
     char *estr = ParseModifierPart(st->ctxt, &st->cp, st->delim, st->eflags,
 				   NULL, NULL, NULL);
     if (estr == NULL)
-	return 'c';		/* report missing ']' */
+	return 'c';		/* missing ']' */
+
     /* now st->cp points just after the closing ']' */
     st->delim = '\0';
-    if (st->cp[0] != ':' && st->cp[0] != st->endc) {
-	/* Found junk after ']' */
-	free(estr);
-	return 'b';
-    }
-    if (estr[0] == '\0') {
-	/* Found empty square brackets in ":[]". */
-	free(estr);
-	return 'b';
-    } else if (estr[0] == '#' && estr[1] == '\0') {
-	/* Found ":[#]" */
+    if (st->cp[0] != ':' && st->cp[0] != st->endc)
+	goto bad_modifier;	/* Found junk after ']' */
 
+    if (estr[0] == '\0')
+	goto bad_modifier;	/* empty square brackets in ":[]". */
+
+    if (estr[0] == '#' && estr[1] == '\0') { /* Found ":[#]" */
 	/*
-	 * We will need enough space for the decimal
-	 * representation of an int.  We calculate the
-	 * space needed for the octal representation,
-	 * and add enough slop to cope with a '-' sign
-	 * (which should never be needed) and a '\0'
-	 * string terminator.
+	 * We will need enough space for the decimal representation of an int.
+	 * We calculate the space needed for the octal representation, and add
+	 * enough slop to cope with a '-' sign (which should never be needed)
+	 * and a '\0' string terminator.
 	 */
 	int newStrSize = (sizeof(int) * CHAR_BIT + 2) / 3 + 2;
 
@@ -2758,79 +2742,71 @@ ApplyModifier_Words(ApplyModifiersState *st)
 	    free(as);
 	    free(av);
 	}
-	st->termc = *st->cp;
-	free(estr);
-	return 0;
-    } else if (estr[0] == '*' && estr[1] == '\0') {
+	goto ok;
+    }
+
+    if (estr[0] == '*' && estr[1] == '\0') {
 	/* Found ":[*]" */
 	st->parsestate.oneBigWord = TRUE;
 	st->newStr = st->nstr;
-	st->termc = *st->cp;
-	free(estr);
-	return 0;
-    } else if (estr[0] == '@' && estr[1] == '\0') {
+	goto ok;
+    }
+
+    if (estr[0] == '@' && estr[1] == '\0') {
 	/* Found ":[@]" */
 	st->parsestate.oneBigWord = FALSE;
 	st->newStr = st->nstr;
-	st->termc = *st->cp;
-	free(estr);
-	return 0;
-    } else {
-	char *ep;
-	/*
-	 * We expect estr to contain a single
-	 * integer for :[N], or two integers
-	 * separated by ".." for :[start..end].
-	 */
-	VarSelectWords_t seldata = { 0, 0 };
-
-	seldata.start = strtol(estr, &ep, 0);
-	if (ep == estr) {
-	    /* Found junk instead of a number */
-	    free(estr);
-	    return 'b';
-	} else if (ep[0] == '\0') {
-	    /* Found only one integer in :[N] */
-	    seldata.end = seldata.start;
-	} else if (ep[0] == '.' && ep[1] == '.' && ep[2] != '\0') {
-	    /* Expecting another integer after ".." */
-	    ep += 2;
-	    seldata.end = strtol(ep, &ep, 0);
-	    if (ep[0] != '\0') {
-		/* Found junk after ".." */
-		free(estr);
-		return 'b';
-	    }
-	} else {
-	    /* Found junk instead of ".." */
-	    free(estr);
-	    return 'b';
-	}
-	/*
-	 * Now seldata is properly filled in,
-	 * but we still have to check for 0 as
-	 * a special case.
-	 */
-	if (seldata.start == 0 && seldata.end == 0) {
-	    /* ":[0]" or perhaps ":[0..0]" */
-	    st->parsestate.oneBigWord = TRUE;
-	    st->newStr = st->nstr;
-	    st->termc = *st->cp;
-	    free(estr);
-	    return 0;
-	} else if (seldata.start == 0 || seldata.end == 0) {
-	    /* ":[0..N]" or ":[N..0]" */
-	    free(estr);
-	    return 'b';
-	}
-	/* Normal case: select the words described by seldata. */
-	st->newStr = VarSelectWords(
-	    st->ctxt, &st->parsestate, st->nstr, &seldata);
-
-	st->termc = *st->cp;
-	free(estr);
-	return 0;
+	goto ok;
     }
+
+    /*
+     * We expect estr to contain a single integer for :[N], or two integers
+     * separated by ".." for :[start..end].
+     */
+    VarSelectWords_t seldata = { 0, 0 };
+
+    char *ep;
+    seldata.start = strtol(estr, &ep, 0);
+    if (ep == estr)		/* Found junk instead of a number */
+	goto bad_modifier;
+
+    if (ep[0] == '\0') {	/* Found only one integer in :[N] */
+	seldata.end = seldata.start;
+    } else if (ep[0] == '.' && ep[1] == '.' && ep[2] != '\0') {
+	/* Expecting another integer after ".." */
+	ep += 2;
+	seldata.end = strtol(ep, &ep, 0);
+	if (ep[0] != '\0')	/* Found junk after ".." */
+	    goto bad_modifier;
+    } else
+	goto bad_modifier;	/* Found junk instead of ".." */
+
+    /*
+     * Now seldata is properly filled in, but we still have to check for 0 as
+     * a special case.
+     */
+    if (seldata.start == 0 && seldata.end == 0) {
+	/* ":[0]" or perhaps ":[0..0]" */
+	st->parsestate.oneBigWord = TRUE;
+	st->newStr = st->nstr;
+	goto ok;
+    }
+
+    /* ":[0..N]" or ":[N..0]" */
+    if (seldata.start == 0 || seldata.end == 0)
+	goto bad_modifier;
+
+    /* Normal case: select the words described by seldata. */
+    st->newStr = VarSelectWords(st->ctxt, &st->parsestate, st->nstr, &seldata);
+
+ok:
+    st->termc = *st->cp;
+    free(estr);
+    return 0;
+
+bad_modifier:
+    free(estr);
+    return 'b';
 }
 
 /* :O or :Ox */
