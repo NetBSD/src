@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_sdio.c,v 1.20 2020/07/20 06:44:55 mrg Exp $ */
+/* $NetBSD: if_bwfm_sdio.c,v 1.21 2020/07/20 06:47:02 mrg Exp $ */
 /* $OpenBSD: if_bwfm_sdio.c,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -1466,7 +1466,6 @@ bwfm_sdio_task1(struct bwfm_sdio_softc *sc)
 
 	intstat = bwfm_sdio_dev_read(sc, BWFM_SDPCMD_INTSTATUS);
 	DPRINTF(("%s: intstat 0x%" PRIx32 "\n", DEVNAME(sc), intstat));
-	intstat &= (SDPCMD_INTSTATUS_HMB_SW_MASK|SDPCMD_INTSTATUS_CHIPACTIVE);
 	if (intstat)
 		bwfm_sdio_dev_write(sc, BWFM_SDPCMD_INTSTATUS, intstat);
 
