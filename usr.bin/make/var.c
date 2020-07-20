@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.277 2020/07/19 22:22:01 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.278 2020/07/20 14:50:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.277 2020/07/19 22:22:01 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.278 2020/07/20 14:50:41 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.277 2020/07/19 22:22:01 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.278 2020/07/20 14:50:41 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1106,103 +1106,110 @@ Var_Value(const char *name, GNode *ctxt, char **frp)
 }
 
 
+/* SepBuf is a string being built from "words", interleaved with separators. */
+typedef struct {
+    Buffer buf;
+    Boolean needSep;
+    char sep;
+} SepBuf;
+
+static void
+SepBuf_Init(SepBuf *buf, char sep)
+{
+    Buf_Init(&buf->buf, 32 /* bytes */);
+    buf->needSep = FALSE;
+    buf->sep = sep;
+}
+
+static void
+SepBuf_Sep(SepBuf *buf)
+{
+    buf->needSep = TRUE;
+}
+
+static void
+SepBuf_AddBytes(SepBuf *buf, const void *mem, size_t mem_size)
+{
+    if (mem_size == 0)
+	return;
+    if (buf->needSep && buf->sep != '\0') {
+	Buf_AddByte(&buf->buf, buf->sep);
+	buf->needSep = FALSE;
+    }
+    Buf_AddBytes(&buf->buf, mem_size, mem);
+}
+
+static char *
+SepBuf_Destroy(SepBuf *buf, Boolean free_buf)
+{
+    return Buf_Destroy(&buf->buf, free_buf);
+}
+
+
 /* This callback for VarModify gets a single word from an expression and
  * typically adds a modification of this word to the buffer. It may also do
- * nothing or add several words.
- *
- * If addSpaces is TRUE, it must add a space before adding anything else to
- * the buffer.
- *
- * It returns the addSpace value for the next call of this callback. Typical
- * return values are the current addSpaces or TRUE. */
-typedef Boolean (*VarModifyCallback)(GNode *ctxt, Var_Parse_State *vpstate,
-    const char *word, Boolean addSpace, Buffer *buf, void *data);
+ * nothing or add several words. */
+typedef void (*VarModifyCallback)(GNode *ctxt, const char *word, SepBuf *buf,
+				  void *data);
 
 
 /* Callback function for VarModify to implement the :H modifier.
  * Add the dirname of the given word to the buffer. */
-static Boolean
-VarHead(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
-	const char *word, Boolean addSpace, Buffer *buf,
+static void
+VarHead(GNode *ctx MAKE_ATTR_UNUSED, const char *word, SepBuf *buf,
 	void *dummy MAKE_ATTR_UNUSED)
 {
     const char *slash = strrchr(word, '/');
-
-    if (addSpace && vpstate->varSpace)
-	Buf_AddByte(buf, vpstate->varSpace);
     if (slash != NULL)
-	Buf_AddBytes(buf, slash - word, word);
+	SepBuf_AddBytes(buf, word, slash - word);
     else
-	Buf_AddByte(buf, '.');
-
-    return TRUE;
+	SepBuf_AddBytes(buf, ".", 1);
 }
 
 /* Callback function for VarModify to implement the :T modifier.
  * Add the basename of the given word to the buffer. */
-static Boolean
-VarTail(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
-	const char *word, Boolean addSpace, Buffer *buf,
+static void
+VarTail(GNode *ctx MAKE_ATTR_UNUSED, const char *word, SepBuf *buf,
 	void *dummy MAKE_ATTR_UNUSED)
 {
     const char *slash = strrchr(word, '/');
     const char *base = slash != NULL ? slash + 1 : word;
-
-    if (addSpace && vpstate->varSpace != '\0')
-	Buf_AddByte(buf, vpstate->varSpace);
-    Buf_AddBytes(buf, strlen(base), base);
-    return TRUE;
+    SepBuf_AddBytes(buf, base, strlen(base));
 }
 
 /* Callback function for VarModify to implement the :E modifier.
  * Add the filename suffix of the given word to the buffer, if it exists. */
-static Boolean
-VarSuffix(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
-	  const char *word, Boolean addSpace, Buffer *buf,
+static void
+VarSuffix(GNode *ctx MAKE_ATTR_UNUSED, const char *word, SepBuf *buf,
 	  void *dummy MAKE_ATTR_UNUSED)
 {
     const char *dot = strrchr(word, '.');
-    if (dot == NULL)
-	return addSpace;
-
-    if (addSpace && vpstate->varSpace != '\0')
-	Buf_AddByte(buf, vpstate->varSpace);
-    Buf_AddBytes(buf, strlen(dot + 1), dot + 1);
-    return TRUE;
+    if (dot != NULL)
+	SepBuf_AddBytes(buf, dot + 1, strlen(dot + 1));
 }
 
 /* Callback function for VarModify to implement the :R modifier.
  * Add the filename basename of the given word to the buffer. */
-static Boolean
-VarRoot(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
-	const char *word, Boolean addSpace, Buffer *buf,
+static void
+VarRoot(GNode *ctx MAKE_ATTR_UNUSED, const char *word, SepBuf *buf,
 	void *dummy MAKE_ATTR_UNUSED)
 {
     char *dot = strrchr(word, '.');
     size_t len = dot != NULL ? (size_t)(dot - word) : strlen(word);
-
-    if (addSpace && vpstate->varSpace != '\0')
-	Buf_AddByte(buf, vpstate->varSpace);
-    Buf_AddBytes(buf, len, word);
-    return TRUE;
+    SepBuf_AddBytes(buf, word, len);
 }
 
 /* Callback function for VarModify to implement the :M modifier.
  * Place the word in the buffer if it matches the given pattern. */
-static Boolean
-VarMatch(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
-	 const char *word, Boolean addSpace, Buffer *buf,
+static void
+VarMatch(GNode *ctx MAKE_ATTR_UNUSED, const char *word, SepBuf *buf,
 	 void *data)
 {
     const char *pattern = data;
     if (DEBUG(VAR))
 	fprintf(debug_file, "VarMatch [%s] [%s]\n", word, pattern);
-    if (!Str_Match(word, pattern))
-	return addSpace;
-    if (addSpace && vpstate->varSpace != '\0')
-	Buf_AddByte(buf, vpstate->varSpace);
-    Buf_AddBytes(buf, strlen(word), word);
-    return TRUE;
+    if (Str_Match(word, pattern))
+	SepBuf_AddBytes(buf, word, strlen(word));
 }
 
 #ifdef SYSVVARSUB
@@ -1219,10 +1226,6 @@ VarMatch(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
  * Results:
  *	Returns the beginning position of a match or null. The number
  *	of characters matched is returned in len.
- *
- * Side Effects:
- *	None
- *
  *-----------------------------------------------------------------------
  */
 static const char *
@@ -1283,28 +1286,27 @@ Str_SYSVMatch(const char *word, const char *pattern, size_t *len,
  *
  * Side Effects:
  *	Places result on buf
- *
  *-----------------------------------------------------------------------
  */
 static void
-Str_SYSVSubst(Buffer *buf, const char *pat, const char *src, size_t len,
-    Boolean lhsHasPercent)
+Str_SYSVSubst(SepBuf *buf, const char *pat, const char *src, size_t len,
+	      Boolean lhsHasPercent)
 {
     const char *m;
 
     if ((m = strchr(pat, '%')) != NULL && lhsHasPercent) {
 	/* Copy the prefix */
-	Buf_AddBytes(buf, m - pat, pat);
+	SepBuf_AddBytes(buf, pat, m - pat);
 	/* skip the % */
 	pat = m + 1;
     }
     if (m != NULL || !lhsHasPercent) {
 	/* Copy the pattern */
-	Buf_AddBytes(buf, len, src);
+	SepBuf_AddBytes(buf, src, len);
     }
 
     /* append the rest */
-    Buf_AddBytes(buf, strlen(pat), pat);
+    SepBuf_AddBytes(buf, pat, strlen(pat));
 }
 
 
@@ -1314,15 +1316,10 @@ typedef struct {
 } VarSYSVSubstArgs;
 
 /* Callback function for VarModify to implement the :%.from=%.to modifier. */
-static Boolean
-VarSYSVSubst(GNode *ctx, Var_Parse_State *vpstate,
-	     const char *word, Boolean addSpace, Buffer *buf,
-	     void *data)
+static void
+VarSYSVSubst(GNode *ctx, const char *word, SepBuf *buf, void *data)
 {
     const VarSYSVSubstArgs *args = data;
-
-    if (addSpace && vpstate->varSpace != '\0')
-	Buf_AddByte(buf, vpstate->varSpace);
 
     size_t len;
     Boolean hasPercent;
@@ -1332,34 +1329,26 @@ VarSYSVSubst(GNode *ctx, Var_Parse_State *vpstate,
 	Str_SYSVSubst(buf, varexp, ptr, len, hasPercent);
 	free(varexp);
     } else {
-	Buf_AddBytes(buf, strlen(word), word);
+	SepBuf_AddBytes(buf, word, strlen(word));
     }
-
-    return TRUE;
 }
 #endif
 
 /* Callback function for VarModify to implement the :N modifier.
  * Place the word in the buffer if it doesn't match the given pattern. */
-static Boolean
-VarNoMatch(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
-	   const char *word, Boolean addSpace, Buffer *buf,
+static void
+VarNoMatch(GNode *ctx MAKE_ATTR_UNUSED, const char *word, SepBuf *buf,
 	   void *data)
 {
     const char *pattern = data;
-    if (Str_Match(word, pattern))
-	return addSpace;
-    if (addSpace && vpstate->varSpace != '\0')
-	Buf_AddByte(buf, vpstate->varSpace);
-    Buf_AddBytes(buf, strlen(word), word);
-    return TRUE;
+    if (!Str_Match(word, pattern))
+	SepBuf_AddBytes(buf, word, strlen(word));
 }
 
 /* Callback function for VarModify to implement the :S,from,to, modifier.
  * Perform a string substitution on the given word. */
-static Boolean
-VarSubstitute(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
-	      const char *word, Boolean addSpace, Buffer *buf,
+static void
+VarSubstitute(GNode *ctx MAKE_ATTR_UNUSED, const char *word, SepBuf *buf,
 	      void *data)
 {
     int wordLen = strlen(word);
@@ -1381,16 +1370,9 @@ VarSubstitute(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	        (wordLen == pattern->leftLen)) {
 		/*
 		 * Also anchored at end and matches to the end (word
-		 * is same length as pattern) add space and rhs only
-		 * if rhs is non-null.
+		 * is same length as pattern).
 		 */
-		if (pattern->rightLen != 0) {
-		    if (addSpace && vpstate->varSpace != '\0') {
-			Buf_AddByte(buf, vpstate->varSpace);
-		    }
-		    addSpace = TRUE;
-		    Buf_AddBytes(buf, pattern->rightLen, pattern->rhs);
-		}
+		SepBuf_AddBytes(buf, pattern->rhs, pattern->rightLen);
 		pattern->pflags |= VARP_SUB_MATCHED;
 	    } else if (pattern->pflags & VARP_MATCH_END) {
 		/*
@@ -1401,15 +1383,9 @@ VarSubstitute(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 		/*
 		 * Matches at start but need to copy in trailing characters
 		 */
-		if ((pattern->rightLen + wordLen - pattern->leftLen) != 0) {
-		    if (addSpace && vpstate->varSpace != '\0') {
-			Buf_AddByte(buf, vpstate->varSpace);
-		    }
-		    addSpace = TRUE;
-		}
-		Buf_AddBytes(buf, pattern->rightLen, pattern->rhs);
-		Buf_AddBytes(buf, wordLen - pattern->leftLen,
-			     (word + pattern->leftLen));
+		SepBuf_AddBytes(buf, pattern->rhs, pattern->rightLen);
+		SepBuf_AddBytes(buf, word + pattern->leftLen,
+			        wordLen - pattern->leftLen);
 		pattern->pflags |= VARP_SUB_MATCHED;
 	    }
 	} else if (pattern->pflags & VARP_MATCH_START) {
@@ -1425,22 +1401,14 @@ VarSubstitute(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	     * to use strncmp.
 	     */
 	    cp = word + (wordLen - pattern->leftLen);
-	    if ((cp >= word) &&
-		(strncmp(cp, pattern->lhs, pattern->leftLen) == 0)) {
+	    if (cp >= word &&
+		strncmp(cp, pattern->lhs, pattern->leftLen) == 0) {
 		/*
-		 * Match found. If we will place characters in the buffer,
-		 * add a space before hand as indicated by addSpace, then
-		 * stuff in the initial, unmatched part of the word followed
-		 * by the right-hand-side.
+		 * Match found. Stuff in the initial, unmatched part of the
+		 * word followed by the right-hand-side.
 		 */
-		if (((cp - word) + pattern->rightLen) != 0) {
-		    if (addSpace && vpstate->varSpace != '\0') {
-			Buf_AddByte(buf, vpstate->varSpace);
-		    }
-		    addSpace = TRUE;
-		}
-		Buf_AddBytes(buf, cp - word, word);
-		Buf_AddBytes(buf, pattern->rightLen, pattern->rhs);
+		SepBuf_AddBytes(buf, word, cp - word);
+		SepBuf_AddBytes(buf, pattern->rhs, pattern->rightLen);
 		pattern->pflags |= VARP_SUB_MATCHED;
 	    } else {
 		/*
@@ -1457,17 +1425,10 @@ VarSubstitute(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	     * remaining part of the word (word and wordLen are adjusted
 	     * accordingly through the loop) is copied straight into the
 	     * buffer.
-	     * addSpace is set FALSE as soon as a space is added to the
-	     * buffer.
 	     */
-	    int origSize = Buf_Size(buf);
 	    while ((cp = Str_FindSubstring(word, pattern->lhs)) != NULL) {
-		if (addSpace && (((cp - word) + pattern->rightLen) != 0)) {
-		    Buf_AddByte(buf, vpstate->varSpace);
-		    addSpace = FALSE;
-		}
-		Buf_AddBytes(buf, cp - word, word);
-		Buf_AddBytes(buf, pattern->rightLen, pattern->rhs);
+		SepBuf_AddBytes(buf, word, cp - word);
+		SepBuf_AddBytes(buf, pattern->rhs, pattern->rightLen);
 		wordLen -= (cp - word) + pattern->leftLen;
 		word = cp + pattern->leftLen;
 		if (wordLen == 0)
@@ -1476,27 +1437,12 @@ VarSubstitute(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 		    break;
 		pattern->pflags |= VARP_SUB_MATCHED;
 	    }
-	    if (wordLen != 0) {
-		if (addSpace && vpstate->varSpace != '\0') {
-		    Buf_AddByte(buf, vpstate->varSpace);
-		}
-		Buf_AddBytes(buf, wordLen, word);
-	    }
-	    /*
-	     * If added characters to the buffer, need to add a space
-	     * before we add any more. If we didn't add any, just return
-	     * the previous value of addSpace.
-	     */
-	    return (Buf_Size(buf) != origSize) || addSpace;
+	    SepBuf_AddBytes(buf, word, wordLen);
 	}
-	return addSpace;
+	return;
     }
 nosub:
-    if (addSpace && vpstate->varSpace != '\0') {
-	Buf_AddByte(buf, vpstate->varSpace);
-    }
-    Buf_AddBytes(buf, wordLen, word);
-    return TRUE;
+    SepBuf_AddBytes(buf, word, wordLen);
 }
 
 #ifndef NO_REGEX
@@ -1525,23 +1471,15 @@ VarREError(int reerr, regex_t *pat, const char *str)
 
 /* Callback function for VarModify to implement the :C/from/to/ modifier.
  * Perform a regex substitution on the given word. */
-static Boolean
-VarRESubstitute(GNode *ctx MAKE_ATTR_UNUSED,
-		Var_Parse_State *vpstate MAKE_ATTR_UNUSED,
-		const char *word, Boolean addSpace, Buffer *buf,
+static void
+VarRESubstitute(GNode *ctx MAKE_ATTR_UNUSED, const char *word, SepBuf *buf,
 		void *data)
 {
     VarREPattern *pat = data;
     int xrv;
     const char *wp = word;
     char *rp;
-    int added = 0;
     int flags = 0;
-
-#define MAYBE_ADD_SPACE()		\
-	if (addSpace && !added)		\
-	    Buf_AddByte(buf, ' ');	\
-	added = 1
 
     if ((pat->pflags & (VARP_SUB_ONE | VARP_SUB_MATCHED)) ==
 	(VARP_SUB_ONE | VARP_SUB_MATCHED))
@@ -1554,18 +1492,14 @@ VarRESubstitute(GNode *ctx MAKE_ATTR_UNUSED,
     switch (xrv) {
     case 0:
 	pat->pflags |= VARP_SUB_MATCHED;
-	if (pat->matches[0].rm_so > 0) {
-	    MAYBE_ADD_SPACE();
-	    Buf_AddBytes(buf, pat->matches[0].rm_so, wp);
-	}
+	SepBuf_AddBytes(buf, wp, pat->matches[0].rm_so);
 
 	for (rp = pat->replace; *rp; rp++) {
-	    if ((*rp == '\\') && ((rp[1] == '&') || (rp[1] == '\\'))) {
-		MAYBE_ADD_SPACE();
-		Buf_AddByte(buf, rp[1]);
+	    if (*rp == '\\' && (rp[1] == '&' || rp[1] == '\\')) {
+		SepBuf_AddBytes(buf, rp + 1, 1);
 		rp++;
-	    } else if ((*rp == '&') ||
-		((*rp == '\\') && isdigit((unsigned char)rp[1]))) {
+	    } else if (*rp == '&' ||
+		(*rp == '\\' && isdigit((unsigned char)rp[1]))) {
 		int n;
 		const char *subbuf;
 		int sublen;
@@ -1597,73 +1531,60 @@ VarRESubstitute(GNode *ctx MAKE_ATTR_UNUSED,
 		    sublen = pat->matches[n].rm_eo - pat->matches[n].rm_so;
 		}
 
-		if (sublen > 0) {
-		    MAYBE_ADD_SPACE();
-		    Buf_AddBytes(buf, sublen, subbuf);
-		}
+		SepBuf_AddBytes(buf, subbuf, sublen);
 	    } else {
-		MAYBE_ADD_SPACE();
-		Buf_AddByte(buf, *rp);
+		SepBuf_AddBytes(buf, rp, 1);
 	    }
 	}
 	wp += pat->matches[0].rm_eo;
 	if (pat->pflags & VARP_SUB_GLOBAL) {
 	    flags |= REG_NOTBOL;
 	    if (pat->matches[0].rm_so == 0 && pat->matches[0].rm_eo == 0) {
-		MAYBE_ADD_SPACE();
-		Buf_AddByte(buf, *wp);
+		SepBuf_AddBytes(buf, wp, 1);
 		wp++;
-
 	    }
 	    if (*wp)
 		goto tryagain;
 	}
 	if (*wp) {
-	    MAYBE_ADD_SPACE();
-	    Buf_AddBytes(buf, strlen(wp), wp);
+	    SepBuf_AddBytes(buf, wp, strlen(wp));
 	}
 	break;
     default:
 	VarREError(xrv, &pat->re, "Unexpected regex error");
 	/* fall through */
     case REG_NOMATCH:
-	if (*wp) {
-	    MAYBE_ADD_SPACE();
-	    Buf_AddBytes(buf, strlen(wp), wp);
-	}
+	SepBuf_AddBytes(buf, wp, strlen(wp));
 	break;
     }
-    return addSpace || added;
 }
 #endif
 
 
 /* Callback for VarModify to implement the :@var@...@ modifier of ODE make. */
-static Boolean
-VarLoopExpand(GNode *ctx, Var_Parse_State *vpstate MAKE_ATTR_UNUSED,
-	      const char *word, Boolean addSpace, Buffer *buf, void *data)
+static void
+VarLoopExpand(GNode *ctx, const char *word, SepBuf *buf, void *data)
 {
-    VarLoop *loop = data;
+    if (word[0] == '\0')
+	return;
 
-    if (*word) {
-	Var_Set_with_flags(loop->tvar, word, ctx, VAR_NO_EXPORT);
-	char *s = Var_Subst(NULL, loop->str, ctx, loop->eflags);
-	if (DEBUG(VAR)) {
-	    fprintf(debug_file,
-		    "VarLoopExpand: in \"%s\", replace \"%s\" with \"%s\" "
-		    "to \"%s\"\n",
-		    word, loop->tvar, loop->str, s ? s : "(null)");
-	}
-	if (s != NULL && *s != '\0') {
-	    if (addSpace && *s != '\n')
-		Buf_AddByte(buf, ' ');
-	    size_t slen = strlen(s);
-	    Buf_AddBytes(buf, slen, s);
-	    addSpace = (slen > 0 && s[slen - 1] != '\n');
-	}
-	free(s);
+    const VarLoop *loop = data;
+    Var_Set_with_flags(loop->tvar, word, ctx, VAR_NO_EXPORT);
+    char *s = Var_Subst(NULL, loop->str, ctx, loop->eflags);
+    if (DEBUG(VAR)) {
+	fprintf(debug_file,
+		"VarLoopExpand: in \"%s\", replace \"%s\" with \"%s\" "
+		"to \"%s\"\n",
+		word, loop->tvar, loop->str, s ? s : "(null)");
     }
-    return addSpace;
+
+    if (s != NULL && s[0] != '\0') {
+	if (s[0] == '\n' || (buf->buf.count > 0 &&
+	    buf->buf.buffer[buf->buf.count - 1] == '\n'))
+	    buf->needSep = FALSE;
+	SepBuf_AddBytes(buf, s, strlen(s));
+    }
+    free(s);
 }
 
 
@@ -1690,17 +1611,13 @@ static char *
 VarSelectWords(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	       const char *str, VarSelectWords_t *seldata)
 {
-    Buffer buf;			/* Buffer for the new string */
-    Boolean addSpace;		/* TRUE if need to add a space to the
-				 * buffer before adding the trimmed
-				 * word */
+    SepBuf buf;
     char **av;			/* word list */
     char *as;			/* word list memory */
     int ac, i;
     int start, end, step;
 
-    Buf_Init(&buf, 0);
-    addSpace = FALSE;
+    SepBuf_Init(&buf, vpstate->varSpace);
 
     if (vpstate->oneBigWord) {
 	/* fake what brk_string() would do if there were only one word */
@@ -1740,41 +1657,33 @@ VarSelectWords(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
     for (i = start;
 	 (step < 0 && i >= end) || (step > 0 && i < end);
 	 i += step) {
-	if (av[i] && *av[i]) {
-	    if (addSpace && vpstate->varSpace != '\0') {
-		Buf_AddByte(&buf, vpstate->varSpace);
-	    }
-	    Buf_AddBytes(&buf, strlen(av[i]), av[i]);
-	    addSpace = TRUE;
+	if (av[i][0] != '\0') {
+	    SepBuf_AddBytes(&buf, av[i], strlen(av[i]));
+	    SepBuf_Sep(&buf);
 	}
     }
 
     free(as);
     free(av);
 
-    return Buf_Destroy(&buf, FALSE);
+    return SepBuf_Destroy(&buf, FALSE);
 }
 
 
 /* Callback function for VarModify to implement the :tA modifier.
  * Replace each word with the result of realpath() if successful. */
-static Boolean
-VarRealpath(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
-	    const char *word, Boolean addSpace, Buffer *buf,
+static void
+VarRealpath(GNode *ctx MAKE_ATTR_UNUSED, const char *word, SepBuf *buf,
 	    void *patternp MAKE_ATTR_UNUSED)
 {
     struct stat st;
     char rbuf[MAXPATHLEN];
-    char *rp;
 
-    if (addSpace && vpstate->varSpace != '\0')
-	Buf_AddByte(buf, vpstate->varSpace);
-    rp = cached_realpath(word, rbuf);
+    char *rp = cached_realpath(word, rbuf);
     if (rp != NULL && *rp == '/' && stat(rp, &st) == 0)
 	word = rp;
 
-    Buf_AddBytes(buf, strlen(word), word);
-    return TRUE;
+    SepBuf_AddBytes(buf, word, strlen(word));
 }
 
 /*-
@@ -1782,31 +1691,24 @@ VarRealpath(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
  * Modify each of the words of the passed string using the given function.
  *
  * Input:
- *	str		String whose words should be trimmed
- *	modProc		Function to use to modify them
+ *	str		String whose words should be modified
+ *	modProc		Function that modifies a single word
  *	data		Custom data for the modProc
  *
  * Results:
  *	A string of all the words modified appropriately.
- *
- * Side Effects:
- *	None.
- *
  *-----------------------------------------------------------------------
  */
 static char *
 VarModify(GNode *ctx, Var_Parse_State *vpstate,
-    const char *str, VarModifyCallback modProc, void *datum)
+    const char *str, VarModifyCallback modProc, void *data)
 {
-    Buffer buf;			/* Buffer for the new string */
-    Boolean addSpace; 		/* TRUE if need to add a space to the
-				 * buffer before adding the trimmed word */
+    SepBuf result;
     char **av;			/* word list */
     char *as;			/* word list memory */
     int ac, i;
 
-    Buf_Init(&buf, 0);
-    addSpace = FALSE;
+    SepBuf_Init(&result, vpstate->varSpace);
 
     if (vpstate->oneBigWord) {
 	/* fake what brk_string() would do if there were only one word */
@@ -1824,13 +1726,19 @@ VarModify(GNode *ctx, Var_Parse_State *vpstate,
 		str, ac);
     }
 
-    for (i = 0; i < ac; i++)
-	addSpace = modProc(ctx, vpstate, av[i], addSpace, &buf, datum);
+    for (i = 0; i < ac; i++) {
+	size_t orig_count = result.buf.count;
+	modProc(ctx, av[i], &result, data);
+	size_t count = result.buf.count;
+	if (count != orig_count)
+	    SepBuf_Sep(&result);
+    }
 
     free(as);
     free(av);
 
-    return Buf_Destroy(&buf, FALSE);
+    vpstate->varSpace = result.sep;
+    return SepBuf_Destroy(&result, FALSE);
 }
 
 
@@ -2045,7 +1953,7 @@ ParseModifierPart(GNode *ctxt, const char **tstr, int delim,
      * backslashes to quote the delimiter, $, and \, but don't
      * touch other backslashes.
      */
-    for (cp = *tstr; *cp && (*cp != delim); cp++) {
+    for (cp = *tstr; *cp != '\0' && *cp != delim; cp++) {
 	Boolean is_escaped = cp[0] == '\\' && (cp[1] == delim ||
 	    cp[1] == '\\' || cp[1] == '$' || (pattern && cp[1] == '&'));
 	if (is_escaped) {
@@ -2121,7 +2029,7 @@ ParseModifierPart(GNode *ctxt, const char **tstr, int delim,
     *length = Buf_Size(&buf);
     rstr = Buf_Destroy(&buf, FALSE);
     if (DEBUG(VAR))
-	fprintf(debug_file, "Modifier pattern: \"%s\"\n", rstr);
+	fprintf(debug_file, "Modifier part: \"%s\"\n", rstr);
     return rstr;
 }
 
@@ -2142,7 +2050,6 @@ ParseModifierPart(GNode *ctxt, const char **tstr, int delim,
 static char *
 VarQuote(char *str, Boolean quoteDollar)
 {
-
     Buffer  	  buf;
     const char	*newline;
     size_t nlen;
@@ -2317,8 +2224,11 @@ ApplyModifier_At(ApplyModifiersState *st) {
     st->delim = '\0';
 
     loop.eflags = st->eflags & (VARE_UNDEFERR | VARE_WANTRES);
+    int prev_sep = st->parsestate.varSpace;
+    st->parsestate.varSpace = ' ';
     st->newStr = VarModify(
 	st->ctxt, &st->parsestate, st->nstr, VarLoopExpand, &loop);
+    st->parsestate.varSpace = prev_sep;
     Var_Delete(loop.tvar, st->ctxt);
     free(loop.tvar);
     free(loop.str);
@@ -2741,15 +2651,11 @@ ApplyModifier_Regex(ApplyModifiersState *st)
 }
 #endif
 
-static Boolean
-VarModify_Copy(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
-	      const char *word, Boolean addSpace, Buffer *buf,
-	      void *data MAKE_ATTR_UNUSED)
+static void
+VarModify_Copy(GNode *ctx MAKE_ATTR_UNUSED, const char *word, SepBuf *buf,
+	       void *data MAKE_ATTR_UNUSED)
 {
-    if (addSpace && vpstate->varSpace != '\0')
-	Buf_AddByte(buf, vpstate->varSpace);
-    Buf_AddBytes(buf, strlen(word), word);
-    return TRUE;
+    SepBuf_AddBytes(buf, word, strlen(word));
 }
 
 /* :tA, :tu, :tl, etc. */
@@ -3481,7 +3387,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	case 'T':
 	    if (st.tstr[1] == st.endc || st.tstr[1] == ':') {
 		st.newStr = VarModify(st.ctxt, &st.parsestate, st.nstr, VarTail,
-				   NULL);
+				      NULL);
 		st.cp = st.tstr + 1;
 		st.termc = *st.cp;
 		break;
@@ -3490,7 +3396,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	case 'H':
 	    if (st.tstr[1] == st.endc || st.tstr[1] == ':') {
 		st.newStr = VarModify(st.ctxt, &st.parsestate, st.nstr, VarHead,
-				   NULL);
+				      NULL);
 		st.cp = st.tstr + 1;
 		st.termc = *st.cp;
 		break;
@@ -3499,7 +3405,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	case 'E':
 	    if (st.tstr[1] == st.endc || st.tstr[1] == ':') {
 		st.newStr = VarModify(st.ctxt, &st.parsestate, st.nstr, VarSuffix,
-				   NULL);
+				      NULL);
 		st.cp = st.tstr + 1;
 		st.termc = *st.cp;
 		break;
@@ -3508,7 +3414,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	case 'R':
 	    if (st.tstr[1] == st.endc || st.tstr[1] == ':') {
 		st.newStr = VarModify(st.ctxt, &st.parsestate, st.nstr, VarRoot,
-				   NULL);
+				      NULL);
 		st.cp = st.tstr + 1;
 		st.termc = *st.cp;
 		break;
