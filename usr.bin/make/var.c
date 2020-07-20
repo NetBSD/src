@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.284 2020/07/20 16:32:14 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.285 2020/07/20 16:55:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.284 2020/07/20 16:32:14 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.285 2020/07/20 16:55:10 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.284 2020/07/20 16:32:14 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.285 2020/07/20 16:55:10 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2865,32 +2865,29 @@ ApplyModifier_Order(ApplyModifiersState *st)
 static Boolean
 ApplyModifier_IfElse(ApplyModifiersState *st)
 {
-    Boolean value;
-    int cond_rc;
-    VarPatternFlags then_flags, else_flags;
-    /* FIXME: IfElse has nothing to do with VarPatternFlags */
+    Boolean value = FALSE;
+    int cond_rc = 0;
+    VarEvalFlags then_eflags = st->eflags & ~VARE_WANTRES;
+    VarEvalFlags else_eflags = st->eflags & ~VARE_WANTRES;
 
-    /* find ':', and then substitute accordingly */
     if (st->eflags & VARE_WANTRES) {
 	cond_rc = Cond_EvalExpression(NULL, st->v->name, &value, 0, FALSE);
-	then_flags = cond_rc != COND_INVALID && value ? 0 : VAR_NOSUBST;
-	else_flags = cond_rc != COND_INVALID && !value ? 0 : VAR_NOSUBST;
-    } else {
-	/* we are just consuming and discarding */
-	cond_rc = value = 0;
-	then_flags = else_flags = VAR_NOSUBST;
+	if (cond_rc != COND_INVALID && value)
+	    then_eflags |= VARE_WANTRES;
+	if (cond_rc != COND_INVALID && !value)
+	    else_eflags |= VARE_WANTRES;
     }
 
     st->cp = ++st->tstr;
     st->delim = ':';
     char *then_expr = ParseModifierPart(
-	st->ctxt, &st->cp, st->delim, st->eflags, &then_flags, NULL, NULL);
+	st->ctxt, &st->cp, st->delim, then_eflags, NULL, NULL, NULL);
     if (then_expr == NULL)
 	return FALSE;
 
     st->delim = st->endc;	/* BRCLOSE or PRCLOSE */
     char *else_expr = ParseModifierPart(
-	st->ctxt, &st->cp, st->delim, st->eflags, &else_flags, NULL, NULL);
+	st->ctxt, &st->cp, st->delim, else_eflags, NULL, NULL, NULL);
     if (else_expr == NULL)
 	return FALSE;
 
