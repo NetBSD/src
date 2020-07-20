@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.101 2020/07/20 01:10:38 simonb Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.102 2020/07/20 03:17:44 simonb Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -836,6 +836,7 @@
 #define	MIPS_EBASE_EXC_BASE_SHIFT	12
 #define	MIPS_EBASE_EXC_BASE		__BITS(29, MIPS_EBASE_EXC_BASE_SHIFT)
 #define	MIPS_EBASE_CPUNUM		__BITS(9, 0)
+#define	MIPS_EBASE_CPUNUM_WIDTH		10	/* used by asm code */
 
 /*
  * Hints for the prefetch instruction
