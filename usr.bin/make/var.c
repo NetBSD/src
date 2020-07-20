@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.278 2020/07/20 14:50:41 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.279 2020/07/20 15:10:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.278 2020/07/20 14:50:41 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.279 2020/07/20 15:10:35 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.278 2020/07/20 14:50:41 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.279 2020/07/20 15:10:35 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1351,95 +1351,54 @@ static void
 VarSubstitute(GNode *ctx MAKE_ATTR_UNUSED, const char *word, SepBuf *buf,
 	      void *data)
 {
-    int wordLen = strlen(word);
-    const char *cp;		/* General pointer */
+    size_t wordLen = strlen(word);
     VarPattern *pattern = data;
+    const VarPatternFlags pflags = pattern->pflags;
 
-    if ((pattern->pflags & (VARP_SUB_ONE | VARP_SUB_MATCHED)) !=
-	(VARP_SUB_ONE | VARP_SUB_MATCHED)) {
-	/*
-	 * Still substituting -- break it down into simple anchored cases
-	 * and if none of them fits, perform the general substitution case.
-	 */
-	if ((pattern->pflags & VARP_MATCH_START) &&
-	    (strncmp(word, pattern->lhs, pattern->leftLen) == 0)) {
-	    /*
-	     * Anchored at start and beginning of word matches pattern
-	     */
-	    if ((pattern->pflags & VARP_MATCH_END) &&
-	        (wordLen == pattern->leftLen)) {
-		/*
-		 * Also anchored at end and matches to the end (word
-		 * is same length as pattern).
-		 */
-		SepBuf_AddBytes(buf, pattern->rhs, pattern->rightLen);
-		pattern->pflags |= VARP_SUB_MATCHED;
-	    } else if (pattern->pflags & VARP_MATCH_END) {
-		/*
-		 * Doesn't match to end -- copy word wholesale
-		 */
-		goto nosub;
-	    } else {
-		/*
-		 * Matches at start but need to copy in trailing characters
-		 */
-		SepBuf_AddBytes(buf, pattern->rhs, pattern->rightLen);
-		SepBuf_AddBytes(buf, word + pattern->leftLen,
-			        wordLen - pattern->leftLen);
-		pattern->pflags |= VARP_SUB_MATCHED;
-	    }
-	} else if (pattern->pflags & VARP_MATCH_START) {
-	    /*
-	     * Had to match at start of word and didn't -- copy whole word.
-	     */
+    if ((pflags & (VARP_SUB_ONE | VARP_SUB_MATCHED)) ==
+	(VARP_SUB_ONE | VARP_SUB_MATCHED))
+	goto nosub;
+
+    if (pattern->pflags & VARP_MATCH_START) {
+	if (strncmp(word, pattern->lhs, pattern->leftLen) != 0)
 	    goto nosub;
-	} else if (pattern->pflags & VARP_MATCH_END) {
-	    /*
-	     * Anchored at end, Find only place match could occur (leftLen
-	     * characters from the end of the word) and see if it does. Note
-	     * that because the $ will be left at the end of the lhs, we have
-	     * to use strncmp.
-	     */
-	    cp = word + (wordLen - pattern->leftLen);
-	    if (cp >= word &&
-		strncmp(cp, pattern->lhs, pattern->leftLen) == 0) {
-		/*
-		 * Match found. Stuff in the initial, unmatched part of the
-		 * word followed by the right-hand-side.
-		 */
-		SepBuf_AddBytes(buf, word, cp - word);
-		SepBuf_AddBytes(buf, pattern->rhs, pattern->rightLen);
-		pattern->pflags |= VARP_SUB_MATCHED;
-	    } else {
-		/*
-		 * Had to match at end and didn't. Copy entire word.
-		 */
+
+	if (pattern->pflags & VARP_MATCH_END) {
+	    if (wordLen != (size_t)pattern->leftLen)
 		goto nosub;
-	    }
+
+	    SepBuf_AddBytes(buf, pattern->rhs, pattern->rightLen);
+	    pattern->pflags |= VARP_SUB_MATCHED;
 	} else {
-	    /*
-	     * Pattern is unanchored: search for the pattern in the word using
-	     * String_FindSubstring, copying unmatched portions and the
-	     * right-hand-side for each match found, handling non-global
-	     * substitutions correctly, etc. When the loop is done, any
-	     * remaining part of the word (word and wordLen are adjusted
-	     * accordingly through the loop) is copied straight into the
-	     * buffer.
-	     */
-	    while ((cp = Str_FindSubstring(word, pattern->lhs)) != NULL) {
-		SepBuf_AddBytes(buf, word, cp - word);
-		SepBuf_AddBytes(buf, pattern->rhs, pattern->rightLen);
-		wordLen -= (cp - word) + pattern->leftLen;
-		word = cp + pattern->leftLen;
-		if (wordLen == 0)
-		    break;
-		if ((pattern->pflags & VARP_SUB_GLOBAL) == 0)
-		    break;
-		pattern->pflags |= VARP_SUB_MATCHED;
-	    }
-	    SepBuf_AddBytes(buf, word, wordLen);
+	    SepBuf_AddBytes(buf, pattern->rhs, pattern->rightLen);
+	    SepBuf_AddBytes(buf, word + pattern->leftLen,
+			    wordLen - pattern->leftLen);
+	    pattern->pflags |= VARP_SUB_MATCHED;
 	}
 	return;
+    }
+
+    if (pattern->pflags & VARP_MATCH_END) {
+	const char *cp = word + (wordLen - pattern->leftLen);
+	if (cp < word || strncmp(cp, pattern->lhs, pattern->leftLen) != 0)
+	    goto nosub;
+
+	SepBuf_AddBytes(buf, word, cp - word);
+	SepBuf_AddBytes(buf, pattern->rhs, pattern->rightLen);
+	pattern->pflags |= VARP_SUB_MATCHED;
+	return;
+    }
+
+    /* unanchored */
+    const char *cp;
+    while ((cp = Str_FindSubstring(word, pattern->lhs)) != NULL) {
+	SepBuf_AddBytes(buf, word, cp - word);
+	SepBuf_AddBytes(buf, pattern->rhs, pattern->rightLen);
+	wordLen -= (cp - word) + pattern->leftLen;
+	word = cp + pattern->leftLen;
+	if (wordLen == 0 || !(pattern->pflags & VARP_SUB_GLOBAL))
+	    break;
+	pattern->pflags |= VARP_SUB_MATCHED;
     }
 nosub:
     SepBuf_AddBytes(buf, word, wordLen);
