@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_octeon.S,v 1.10 2016/07/27 09:32:35 skrll Exp $	*/
+/*	$NetBSD: locore_octeon.S,v 1.11 2020/07/20 03:24:59 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <mips/asm.h>
-RCSID("$NetBSD: locore_octeon.S,v 1.10 2016/07/27 09:32:35 skrll Exp $")
+RCSID("$NetBSD: locore_octeon.S,v 1.11 2020/07/20 03:24:59 simonb Exp $")
 
 #include "cpunode.h"			/* for NWDOG */
 #include "opt_cputype.h"
@@ -37,7 +37,7 @@ RCSID("$NetBSD: locore_octeon.S,v 1.10 2016/07/27 09:32:35 skrll Exp $")
 #include <mips/cpuregs.h>
 #include <arch/mips/cavium/dev/octeon_corereg.h>
 
-RCSID("$NetBSD: locore_octeon.S,v 1.10 2016/07/27 09:32:35 skrll Exp $")
+RCSID("$NetBSD: locore_octeon.S,v 1.11 2020/07/20 03:24:59 simonb Exp $")
 
 #include "assym.h"
 
@@ -122,27 +122,18 @@ NESTED_NOPROFILE(octeon_cpu_spinup, 0, ra)
 	// modified to refer to that CPU's cpu_info structure.
 	//
 	mfc0	s1, MIPS_COP_0_EBASE	# get EBASE
-	ext	s0, s1, 0, 10		# fetch cpunum (MIPSNNR2)
-	ins	s1, zero, 0, 10		# clear it (MIPSNNR2)
-	ins	s1, s0, 12, 10		# insert cpunum as exception address
+	andi	s0, s1, MIPS_EBASE_CPUNUM # fetch cpunum
+	# insert cpunum as exception address base:
+	ins	s1, s0, MIPS_EBASE_EXC_BASE_SHIFT, MIPS_EBASE_CPUNUM_WIDTH
 	ehb
 	mtc0	s1, MIPS_COP_0_EBASE	# set EBASE
 	COP0_SYNC
 
-	// we only can deal with 2 cores
-	li	v0, 1
-	beq	s0, v0, 2f
-	 nop
-	// spin if this isn't cpu 1
-1:	wait
-	b	1b
-	 nop
-
 	// Indicate this CPU was started by u-boot
-2:	PTR_LA	t0, _C_LABEL(cpus_booted) # get addr for kcpuset
-3:	sync
+	PTR_LA	t0, _C_LABEL(cpus_booted) # get addr for kcpuset
+1:	sync
 	PTR_L	a0, (t0)		# get kcpuset
-	beqz	a0, 3b			# loop until not NULL
+	beqz	a0, 1b			# loop until not NULL
 	 nop
 	jal	_C_LABEL(kcpuset_atomic_set)
 	 move	a1, s0			# pass it our cpu number
@@ -151,9 +142,9 @@ NESTED_NOPROFILE(octeon_cpu_spinup, 0, ra)
 	PTR_LA	a1, _C_LABEL(cpuid_infos)
 	dsll	v0, s0, PTR_SCALESHIFT	# cpunum -> array index
 	PTR_ADD	t0, a1, v0		# add to array start
-4:	sync
+1:	sync
 	PTR_L	a1, (t0)		# get cpu_info pointer
-	beqz	a1, 4b			# loop until non-NULL
+	beqz	a1, 1b			# loop until non-NULL
 	 nop
 
 	j	_C_LABEL(cpu_trampoline)
@@ -175,7 +166,7 @@ NESTED_NOPROFILE(octeon_reset_vector, 0, ra)
 	ehb				# hazard barrier
 #ifdef MULTIPROCESSOR
 	mfc0	k0, MIPS_COP_0_EBASE	# get EBASE
-	ext	k0, k0, 0, 10		# select cpunum
+	andi	k0, k0, MIPS_EBASE_CPUNUM # fetch cpunum
 	dsll	k0, k0, PTR_SCALESHIFT	# cpunum -> array index
 	PTR_LA	k1, _C_LABEL(cpuid_infos)
 	PTR_ADDU k1, k1, k0		# add to array start
