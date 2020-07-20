@@ -1,6 +1,6 @@
-# $Id: sysv.mk,v 1.7 2020/07/19 22:04:27 rillig Exp $
+# $Id: sysv.mk,v 1.8 2020/07/20 16:27:55 rillig Exp $
 
-all: foo fun sam bla words ampersand
+all: foo fun sam bla words ampersand anchor-dollar
 
 FOO ?=
 FOOBAR = ${FOO:=bar}
@@ -54,3 +54,10 @@ words:
 ampersand:
 	@echo ${:U${a.bcd.e:L:a.%=%}:Q}
 	@echo ${:U${a.bcd.e:L:a.%=&}:Q}
+
+# Before 2020-07-20, when a SysV modifier was parsed, a single dollar
+# before the '=' was interpreted as an anchor, which doesn't make sense
+# since the anchor was discarded immediately.
+anchor-dollar:
+	@echo $@: ${:U${value:L:e$=x}:Q}
+	@echo $@: ${:U${value:L:e=x}:Q}
