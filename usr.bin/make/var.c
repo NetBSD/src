@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.282 2020/07/20 15:48:50 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.283 2020/07/20 16:12:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.282 2020/07/20 15:48:50 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.283 2020/07/20 16:12:52 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.282 2020/07/20 15:48:50 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.283 2020/07/20 16:12:52 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2914,7 +2914,27 @@ ApplyModifier_IfElse(ApplyModifiersState *st)
     return TRUE;
 }
 
-/* "::=", "::!=", "::+=", or "::?=" */
+/*
+ * The ::= modifiers actually assign a value to the variable.
+ * Their main purpose is in supporting modifiers of .for loop
+ * iterators and other obscure uses.  They always expand to
+ * nothing.  In a target rule that would otherwise expand to an
+ * empty line they can be preceded with @: to keep make happy.
+ * Eg.
+ *
+ * foo:	.USE
+ * .for i in ${.TARGET} ${.TARGET:R}.gz
+ * 	@: ${t::=$i}
+ *	@echo blah ${t:T}
+ * .endfor
+ *
+ *	  ::=<str>	Assigns <str> as the new value of variable.
+ *	  ::?=<str>	Assigns <str> as value of variable if
+ *			it was not already set.
+ *	  ::+=<str>	Appends <str> to variable.
+ *	  ::!=<cmd>	Assigns output of <cmd> as the new value of
+ *			variable.
+ */
 static int
 ApplyModifier_Assign(ApplyModifiersState *st)
 {
@@ -3158,25 +3178,7 @@ ApplyModifier_SysV(ApplyModifiersState *st)
  *			the form '${x:P}'.
  *	  :!<cmd>!	Run cmd much the same as :sh run's the
  *			current value of the variable.
- * The ::= modifiers, actually assign a value to the variable.
- * Their main purpose is in supporting modifiers of .for loop
- * iterators and other obscure uses.  They always expand to
- * nothing.  In a target rule that would otherwise expand to an
- * empty line they can be preceded with @: to keep make happy.
- * Eg.
- *
- * foo:	.USE
- * .for i in ${.TARGET} ${.TARGET:R}.gz
- * 	@: ${t::=$i}
- *	@echo blah ${t:T}
- * .endfor
- *
- *	  ::=<str>	Assigns <str> as the new value of variable.
- *	  ::?=<str>	Assigns <str> as value of variable if
- *			it was not already set.
- *	  ::+=<str>	Appends <str> to variable.
- *	  ::!=<cmd>	Assigns output of <cmd> as the new value of
- *			variable.
+ * Assignment operators (see ApplyModifier_Assign).
  */
 static char *
 ApplyModifiers(char *nstr, const char *tstr,
