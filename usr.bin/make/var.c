@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.285 2020/07/20 16:55:10 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.286 2020/07/20 18:12:48 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.285 2020/07/20 16:55:10 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.286 2020/07/20 18:12:48 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.285 2020/07/20 16:55:10 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.286 2020/07/20 18:12:48 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3992,6 +3992,13 @@ Var_Init(void)
 void
 Var_End(void)
 {
+    Var_Stats();
+}
+
+void
+Var_Stats(void)
+{
+    Hash_DebugStats(&VAR_GLOBAL->context, "VAR_GLOBAL");
 }
 
 

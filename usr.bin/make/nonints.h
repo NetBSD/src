@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.80 2020/07/19 12:26:17 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.81 2020/07/20 18:12:48 sjg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -159,6 +159,7 @@ void Suff_PrintAll(void);
 /* targ.c */
 void Targ_Init(void);
 void Targ_End(void);
+void Targ_Stats(void);
 Lst Targ_List(void);
 GNode *Targ_NewGN(const char *);
 GNode *Targ_FindNode(const char *, int);
@@ -194,6 +195,7 @@ char *Var_GetTail(const char *);
 char *Var_GetHead(const char *);
 void Var_Init(void);
 void Var_End(void);
+void Var_Stats(void);
 void Var_Dump(GNode *);
 void Var_ExportVars(void);
 void Var_Export(char *, int);

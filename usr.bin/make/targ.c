@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.63 2020/07/03 08:02:55 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.64 2020/07/20 18:12:48 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.63 2020/07/03 08:02:55 rillig Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.64 2020/07/20 18:12:48 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.63 2020/07/03 08:02:55 rillig Exp $");
+__RCSID("$NetBSD: targ.c,v 1.64 2020/07/20 18:12:48 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -186,12 +186,19 @@ Targ_Init(void)
 void
 Targ_End(void)
 {
+    Targ_Stats();
 #ifdef CLEANUP
     Lst_Destroy(allTargets, NULL);
     if (allGNs)
 	Lst_Destroy(allGNs, TargFreeGN);
     Hash_DeleteTable(&targets);
 #endif
+}
+
+void
+Targ_Stats(void)
+{
+    Hash_DebugStats(&targets, "targets");
 }
 
 /*-
