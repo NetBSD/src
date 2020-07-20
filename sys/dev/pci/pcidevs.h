@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1281.2.17 2019/11/19 10:40:08 martin Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1281.2.18 2020/07/20 18:48:39 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1289.2.17 2019/11/19 10:36:47 martin Exp
+ *	NetBSD: pcidevs,v 1.1289.2.18 2020/07/20 18:47:16 martin Exp
  */
 
 /*
@@ -7022,13 +7022,28 @@
 #define	PCI_PRODUCT_RATOC_REXPCI31	0x0853		/* REX PCI-31/33 SCSI */
 
 /* RDC Semiconductor products */
-#define	PCI_PRODUCT_RDC_R1010_IDE	0x1010		/* R1010 IDE controller */
-#define	PCI_PRODUCT_RDC_R1011_IDE	0x1011		/* R1011 IDE controller */
-#define	PCI_PRODUCT_RDC_R1012_IDE	0x1012		/* R1012 IDE controller */
+#define	PCI_PRODUCT_RDC_R1010_IDE	0x1010		/* R1010 IDE Controller */
+#define	PCI_PRODUCT_RDC_R1011_IDE	0x1011		/* R1011 IDE Controller */
+#define	PCI_PRODUCT_RDC_R1012_IDE	0x1012		/* R1012 IDE Controller */
+#define	PCI_PRODUCT_RDC_R1031_PPB	0x1031		/* R1031 PCI-PCIE Bridge */
+#define	PCI_PRODUCT_RDC_R1060_USBD	0x1060		/* R1060 USB Device */
+#define	PCI_PRODUCT_RDC_R1061_USBD	0x1061		/* R1061 USB Device */
+#define	PCI_PRODUCT_RDC_R1070_CAN	0x1070		/* R1070 CANbus */
+#define	PCI_PRODUCT_RDC_R1331_MC	0x1331		/* R1331 Motion Control */
+#define	PCI_PRODUCT_RDC_R1710_SPI	0x1710		/* R1710 SPI */
+#define	PCI_PRODUCT_RDC_R1930_HBRD	0x1930		/* R1930 Hybrid Function Control Register */
+#define	PCI_PRODUCT_RDC_R2010_VGA	0x2010		/* R2010 VGA Controller */
+#define	PCI_PRODUCT_RDC_R2012_VGA	0x2012		/* R2012 VGA Controller */
+#define	PCI_PRODUCT_RDC_R2015_VGA	0x2015		/* R2015 VGA Controller */
+#define	PCI_PRODUCT_RDC_R6011_PCIB	0x6011		/* R6011 PCI-ISA bridge */
+#define	PCI_PRODUCT_RDC_R6013_PCIB	0x6013		/* R6013 PCI-ISA bridge */
 #define	PCI_PRODUCT_RDC_R6021_HB	0x6021		/* R6021 Host */
+#define	PCI_PRODUCT_RDC_R6023_HB	0x6023		/* R6023 Host */
 #define	PCI_PRODUCT_RDC_R6025_HB	0x6025		/* R6025 Host */
-#define	PCI_PRODUCT_RDC_R6031_ISA	0x6031		/* R6031 PCI-ISA bridge */
-#define	PCI_PRODUCT_RDC_PCIB	0x6036		/* R6036 PCI-ISA bridge */
+#define	PCI_PRODUCT_RDC_R6026_HB	0x6026		/* R6026 Host */
+#define	PCI_PRODUCT_RDC_R6031_PCIB	0x6031		/* R6031 PCI-ISA bridge */
+#define	PCI_PRODUCT_RDC_R6035_PCIB	0x6035		/* R6035 PCI-ISA bridge */
+#define	PCI_PRODUCT_RDC_R6036_PCIB	0x6036		/* R6036 PCI-ISA bridge */
 #define	PCI_PRODUCT_RDC_R6040	0x6040		/* R6040 10/100 Ethernet */
 #define	PCI_PRODUCT_RDC_R6060_OHCI	0x6060		/* R6060 USB OHCI */
 #define	PCI_PRODUCT_RDC_R6061_EHCI	0x6061		/* R6061 USB EHCI */
