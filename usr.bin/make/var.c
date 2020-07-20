@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.279 2020/07/20 15:10:35 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.280 2020/07/20 15:15:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.279 2020/07/20 15:10:35 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.280 2020/07/20 15:15:32 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.279 2020/07/20 15:10:35 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.280 2020/07/20 15:15:32 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1379,11 +1379,13 @@ VarSubstitute(GNode *ctx MAKE_ATTR_UNUSED, const char *word, SepBuf *buf,
     }
 
     if (pattern->pflags & VARP_MATCH_END) {
-	const char *cp = word + (wordLen - pattern->leftLen);
-	if (cp < word || strncmp(cp, pattern->lhs, pattern->leftLen) != 0)
+	if (wordLen < (size_t)pattern->leftLen)
+	    goto nosub;
+	const char *start = word + (wordLen - pattern->leftLen);
+	if (memcmp(start, pattern->lhs, pattern->leftLen) != 0)
 	    goto nosub;
 
-	SepBuf_AddBytes(buf, word, cp - word);
+	SepBuf_AddBytes(buf, word, start - word);
 	SepBuf_AddBytes(buf, pattern->rhs, pattern->rightLen);
 	pattern->pflags |= VARP_SUB_MATCHED;
 	return;
