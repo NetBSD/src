@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.282 2020/07/19 12:35:30 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.283 2020/07/20 18:12:48 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.282 2020/07/19 12:35:30 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.283 2020/07/20 18:12:48 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.282 2020/07/19 12:35:30 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.283 2020/07/20 18:12:48 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2039,6 +2039,11 @@ void
 PrintOnError(GNode *gn, const char *s)
 {
     static GNode *en = NULL;
+
+    if (DEBUG(HASH)) {
+	Targ_Stats();
+	Var_Stats();
+    }
 
     /* we generally want to keep quiet if a sub-make died */
     if (dieQuietly(gn, -1))
