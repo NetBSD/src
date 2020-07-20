@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.286 2020/07/20 18:12:48 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.287 2020/07/20 19:53:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.286 2020/07/20 18:12:48 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.287 2020/07/20 19:53:40 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.286 2020/07/20 18:12:48 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.287 2020/07/20 19:53:40 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -241,11 +241,7 @@ typedef enum {
     VARP_SUB_ONE	= 0x02,	/* Apply substitution to one word */
     VARP_SUB_MATCHED	= 0x04,	/* There was a match */
     VARP_MATCH_START	= 0x08,	/* Match at start of word */
-    VARP_MATCH_END	= 0x10,	/* Match at end of word */
-
-    /* FIXME: This constant doesn't belong here.
-     * It is not related to pattern matching. */
-    VAR_NOSUBST	= 0x20		/* don't expand vars in ParseModifierPart */
+    VARP_MATCH_END	= 0x10	/* Match at end of word */
 } VarPatternFlags;
 
 typedef enum {
@@ -1879,7 +1875,7 @@ VarRange(const char *str, int ac)
 /*-
  * Parse a text part of a modifier such as the "from" and "to" in :S/from/to/
  * or the :@ modifier. Nested variables in the text are expanded unless
- * VAR_NOSUBST is set.
+ * VARE_NOSUBST is set.
  *
  * The text part is parsed until the next delimiter.  To escape the delimiter,
  * a backslash or a dollar, put a backslash before it.
@@ -1930,8 +1926,7 @@ ParseModifierPart(GNode *ctxt, const char **tstr, int delim,
 		     */
 		    *mpflags |= VARP_MATCH_END;
 	    } else {
-		/* FIXME: mismatch between mpflags and VAR_NOSUBST */
-		if (mpflags == NULL || !(*mpflags & VAR_NOSUBST)) {
+		if (!(eflags & VARE_NOSUBST)) {
 		    char   *cp2;
 		    int     len;
 		    void   *freeIt;
@@ -2166,17 +2161,16 @@ typedef struct {
 static Boolean
 ApplyModifier_At(ApplyModifiersState *st) {
     VarLoop loop;
-    VarPatternFlags pflags = VAR_NOSUBST; /* FIXME: mismatch between pflags and VAR_NOSUBST */
 
     st->cp = ++st->tstr;
     st->delim = '@';
     loop.tvar = ParseModifierPart(
-	st->ctxt, &st->cp, st->delim, st->eflags, &pflags, NULL, NULL);
+	st->ctxt, &st->cp, st->delim, st->eflags | VARE_NOSUBST, NULL, NULL, NULL);
     if (loop.tvar == NULL)
 	return FALSE;
 
     loop.str = ParseModifierPart(
-	st->ctxt, &st->cp, st->delim, st->eflags, &pflags, NULL, NULL);
+	st->ctxt, &st->cp, st->delim, st->eflags | VARE_NOSUBST, NULL, NULL, NULL);
     if (loop.str == NULL)
 	return FALSE;
 
@@ -2942,8 +2936,6 @@ ApplyModifier_Assign(ApplyModifiersState *st)
 	return 'd';		/* "::<unrecognised>" */
 
     GNode *v_ctxt;		/* context where v belongs */
-    VarPatternFlags pflags;
-    /* FIXME: Assign has nothing to do with VarPatternFlags */
 
     if (st->v->name[0] == 0)
 	return 'b';
@@ -2977,9 +2969,9 @@ ApplyModifier_Assign(ApplyModifiersState *st)
     }
     st->delim = st->startc == PROPEN ? PRCLOSE : BRCLOSE;
 
-    pflags = (st->eflags & VARE_WANTRES) ? 0 : VAR_NOSUBST;
-    char *val = ParseModifierPart(st->ctxt, &st->cp, st->delim, st->eflags,
-				  &pflags, NULL, NULL);
+    VarEvalFlags eflags = (st->eflags & VARE_WANTRES) ? 0 : VARE_NOSUBST;
+    char *val = ParseModifierPart(st->ctxt, &st->cp, st->delim,
+				  st->eflags | eflags, NULL, NULL, NULL);
     if (st->v->flags & VAR_JUNK) {
 	/* restore original name */
 	free(st->v->name);
