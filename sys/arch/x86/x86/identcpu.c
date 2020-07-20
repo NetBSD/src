@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.112 2020/07/20 15:11:29 riastradh Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.113 2020/07/20 16:45:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.112 2020/07/20 15:11:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.113 2020/07/20 16:45:41 riastradh Exp $");
 
 #include "opt_xen.h"
 
@@ -1007,17 +1007,17 @@ cpu_probe(struct cpu_info *ci)
 		 * disabled temporarily while we diagnose the bug.
 		 */
 #ifdef __x86_64__	/* not yet implemented on i386 */
-		if (0 & cpu_feature[1] & CPUID2_AES)
+		if (cpu_feature[1] & CPUID2_AES)
 			aes_md_init(&aes_ni_impl);
 		else
 #endif
-		if (0 & cpu_feature[4] & CPUID_VIA_HAS_ACE)
+		if (cpu_feature[4] & CPUID_VIA_HAS_ACE)
 			aes_md_init(&aes_via_impl);
-		else if (0 & i386_has_sse && i386_has_sse2 &&
+		else if (i386_has_sse && i386_has_sse2 &&
 		    (cpu_feature[1] & CPUID2_SSE3) &&
 		    (cpu_feature[1] & CPUID2_SSSE3))
 			aes_md_init(&aes_ssse3_impl);
-		else if (0 & i386_has_sse && i386_has_sse2)
+		else if (i386_has_sse && i386_has_sse2)
 			aes_md_init(&aes_sse2_impl);
 	} else {
 		/*
