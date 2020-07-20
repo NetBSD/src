@@ -1,4 +1,4 @@
-/* $NetBSD: stasc.c,v 1.1 2020/07/19 23:44:36 uwe Exp $ */
+/* $NetBSD: stasc.c,v 1.2 2020/07/20 01:06:33 uwe Exp $ */
 /*
  * Copyright (c) 2020 Valery Ushakov
  * All rights reserved.
@@ -28,7 +28,7 @@
  * STMicroelectronics ST40 Asynchronous Serial Controller
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stasc.c,v 1.1 2020/07/19 23:44:36 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stasc.c,v 1.2 2020/07/20 01:06:33 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: stasc.c,v 1.1 2020/07/19 23:44:36 uwe Exp $");
 #define ASC_RETRIES_OFFSET	0x28
 
 #define ASC_TX_BUFF	(*(volatile uint32_t *)(STM_ASC_BASE + ASC_TX_BUFF_OFFSET))
+#define ASC_RX_BUFF	(*(volatile uint32_t *)(STM_ASC_BASE + ASC_RX_BUFF_OFFSET))
 #define ASC_INT_EN	(*(volatile uint32_t *)(STM_ASC_BASE + ASC_INT_EN_OFFSET))
 #define ASC_INT_STA	(*(volatile uint32_t *)(STM_ASC_BASE + ASC_INT_STA_OFFSET))
 
@@ -183,22 +184,39 @@ stasc_cninit(struct consdev *cp)
 int
 stasc_cngetc(dev_t dev)
 {
-	return -1;
+	int s = splserial();
+	uint32_t status;
+	int c;
+
+	/* don't block if Rx buffer is empty */
+	status = ASC_INT_STA;
+	if (!ISSET(status, ASC_INT_STA_RBF)) {
+		splx(s);
+		return -1;
+	}
+
+	/* can read the character now */
+	c = ASC_RX_BUFF;
+	splx(s);
+	return (unsigned char)c;
 }
 
 
 void
 stasc_cnputc(dev_t dev, int c)
 {
-	uint32_t status;
+	int s = splserial();
+	uint32_t timo, status;
 
-	/* wait for Tx FULL to become zero */
+	/* wait for Tx Full to become clear */
+	timo = 150000;
 	do {
 		status = ASC_INT_STA;
-	} while ((status & ASC_INT_STA_TF) != 0);
+	} while (ISSET(status, ASC_INT_STA_TF) && --timo);
 
 	/* can write the character now */
 	ASC_TX_BUFF = c;
+	splx(s);
 }
 
 
