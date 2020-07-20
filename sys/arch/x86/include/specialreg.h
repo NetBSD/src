@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.169 2020/07/19 16:17:00 jdolecek Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.170 2020/07/20 05:50:55 maxv Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -865,9 +865,6 @@
 #define 	APICBASE_PHYSADDR	0xfffff000	/* physical address */
 #define MSR_EBL_CR_POWERON	0x02a
 #define MSR_EBC_FREQUENCY_ID	0x02c	/* PIV only */
-#define MSR_IA32_FEATURE_CONTROL	0x03a
-#define 	IA32_FEATURE_CONTROL_ENABLE_VMXON_INSIDE_SMX	0x0002
-#define 	IA32_FEATURE_CONTROL_ENABLE_VMXON_OUTSIDE_SMX	0x0004
 #define MSR_IA32_SPEC_CTRL	0x048
 #define 	IA32_SPEC_CTRL_IBRS	0x01
 #define 	IA32_SPEC_CTRL_STIBP	0x02
