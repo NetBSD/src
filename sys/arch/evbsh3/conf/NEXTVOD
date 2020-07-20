@@ -1,4 +1,4 @@
-# $NetBSD: NEXTVOD,v 1.1 2020/07/19 23:44:36 uwe Exp $
+# $NetBSD: NEXTVOD,v 1.2 2020/07/20 02:04:43 uwe Exp $
 
 # This config and related files are placeholders/boilerplate for work
 # in progress.  Not expected to compile.
@@ -6,7 +6,7 @@
 include "arch/evbsh3/conf/std.nextvod"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
-#ident 		"NEXTVOD-$Revision: 1.1 $"
+#ident 		"NEXTVOD-$Revision: 1.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -87,6 +87,9 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 #options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 #options 	MEMORY_DISK_ROOT_SIZE=3074	# size of memory disk, in blocks
 #options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
+
+#makeoptions 	DEBUG="-g"	# compile full symbol table
+makeoptions	COPY_SYMTAB=1
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
