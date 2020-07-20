@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.70 2020/07/20 16:38:47 riastradh Exp $	*/
+/*	$NetBSD: fpu.c,v 1.71 2020/07/20 16:41:18 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.70 2020/07/20 16:38:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.71 2020/07/20 16:41:18 riastradh Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -151,14 +151,15 @@ fpu_save_lwp(struct lwp *l)
 {
 	struct pcb *pcb = lwp_getpcb(l);
 	union savefpu *area = &pcb->pcb_savefpu;
+	int s;
 
-	kpreempt_disable();
+	s = splvm();
 	if (l->l_md.md_flags & MDL_FPU_IN_CPU) {
 		KASSERT((l->l_flag & LW_SYSTEM) == 0);
 		fpu_area_save(area, x86_xsave_features);
 		l->l_md.md_flags &= ~MDL_FPU_IN_CPU;
 	}
-	kpreempt_enable();
+	splx(s);
 }
 
 /*
@@ -299,7 +300,11 @@ fpu_handle_deferred(void)
 void
 fpu_switch(struct lwp *oldlwp, struct lwp *newlwp)
 {
+	struct cpu_info *ci __diagused = curcpu();
 	struct pcb *pcb;
+
+	KASSERTMSG(ci->ci_ilevel >= IPL_SCHED, "cpu%d ilevel=%d",
+	    cpu_index(ci), ci->ci_ilevel);
 
 	if (oldlwp->l_md.md_flags & MDL_FPU_IN_CPU) {
 		KASSERT(!(oldlwp->l_flag & LW_SYSTEM));
@@ -334,11 +339,13 @@ fpu_lwp_fork(struct lwp *l1, struct lwp *l2)
 void
 fpu_lwp_abandon(struct lwp *l)
 {
+	int s;
+
 	KASSERT(l == curlwp);
-	kpreempt_disable();
+	s = splvm();
 	l->l_md.md_flags &= ~MDL_FPU_IN_CPU;
 	stts();
-	kpreempt_enable();
+	splx(s);
 }
 
 /* -------------------------------------------------------------------------- */
