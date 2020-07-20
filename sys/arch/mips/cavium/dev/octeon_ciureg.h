@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_ciureg.h,v 1.10 2020/07/17 21:59:30 jmcneill Exp $	*/
+/*	$NetBSD: octeon_ciureg.h,v 1.11 2020/07/20 17:56:13 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -85,7 +85,7 @@
 #define	CIU_PCI_INTA				UINT64_C(0x0001070000000750)
 #define	CIU_INT4_SUM0				UINT64_C(0x0001070000000c00)
 #define	CIU_INT4_SUM1				UINT64_C(0x0001070000000c08)
-#define	CIU_IP4_SUM0(n)				(CIU_INT4_SUM0 + 0x10 * (n))
+#define	CIU_IP4_SUM0(n)				(CIU_INT4_SUM0 + 0x8 * (n))
 #define	CIU_INT4_EN00				UINT64_C(0x0001070000000c80)
 #define	CIU_INT4_EN01				UINT64_C(0x0001070000000c88)
 #define	CIU_INT4_EN10				UINT64_C(0x0001070000000c90)
