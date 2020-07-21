@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.113 2020/07/18 12:46:19 jmcneill Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.114 2020/07/21 05:33:51 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.113 2020/07/18 12:46:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.114 2020/07/21 05:33:51 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -1043,6 +1043,54 @@ netbsd32_from_dkwedge_list(const struct dkwedge_list *p,
 	s32p->dkwl_ncopied = p->dkwl_ncopied;
 }
 
+static inline void
+netbsd32_to_lsenable(struct netbsd32_lsenable *le32, struct lsenable *le,
+    u_long cmd)
+{
+
+	le->le_csstart = le32->le_csstart;
+	le->le_csend = le32->le_csend;
+	le->le_lockstart = le32->le_lockstart;
+	le->le_lockend = le32->le_lockend;
+	le->le_nbufs = le32->le_nbufs;
+	le->le_flags = le32->le_flags;
+	le->le_mask = le32->le_mask;
+}
+
+static inline void
+netbsd32_from_lsenable(struct lsenable *le, struct netbsd32_lsenable *le32,
+    u_long cmd)
+{
+
+	le32->le_csstart = le->le_csstart;
+	le32->le_csend = le->le_csend;
+	le32->le_lockstart = le->le_lockstart;
+	le32->le_lockend = le->le_lockend;
+	le32->le_nbufs = le->le_nbufs;
+	le32->le_flags = le->le_flags;
+	le32->le_mask = le->le_mask;
+}
+
+static inline void
+netbsd32_to_lsdisable(struct netbsd32_lsdisable *ld32, struct lsdisable *ld,
+    u_long cmd)
+{
+
+	ld->ld_size = ld32->ld_size;
+	netbsd32_to_timespec(&ld32->ld_time, &ld->ld_time);
+	memcpy(&ld->ld_time, &ld32->ld_time, sizeof(ld->ld_time));
+}
+
+static inline void
+netbsd32_from_lsdisable(struct lsdisable *ld, struct netbsd32_lsdisable *ld32,
+    u_long cmd)
+{
+
+	ld->ld_size = ld32->ld_size;
+	netbsd32_from_timespec(&ld->ld_time, &ld32->ld_time);
+	memcpy(&ld->ld_time, &ld32->ld_time, sizeof(ld->ld_time));
+}
+
 #ifdef NTP
 static int
 netbsd32_do_clockctl_ntp_adjtime(struct file *fp,
@@ -1539,6 +1587,11 @@ netbsd32_ioctl(struct lwp *l,
 		IOCTL_STRUCT_CONV_TO(DIOCSSTRATEGY, disk_strategy);
 	case DIOCLWEDGES32:
 		IOCTL_STRUCT_CONV_TO(DIOCLWEDGES, dkwedge_list);
+
+	case IOC_LOCKSTAT_ENABLE32:
+		IOCTL_STRUCT_CONV_TO(IOC_LOCKSTAT_ENABLE, lsenable);
+	case IOC_LOCKSTAT_DISABLE32:
+		IOCTL_STRUCT_CONV_TO(IOC_LOCKSTAT_DISABLE, lsdisable);
 
 	default:
 #ifdef NETBSD32_DRMKMS

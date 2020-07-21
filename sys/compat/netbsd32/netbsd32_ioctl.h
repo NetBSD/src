@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.71 2020/07/18 12:46:19 jmcneill Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.72 2020/07/21 05:33:51 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -35,6 +35,7 @@
 #include <dev/dkvar.h>
 #include <dev/vndvar.h>
 
+#include <dev/lockstat.h>
 #include <dev/wscons/wsconsio.h>
 #include <net/route.h>
 #include <netinet/in.h>
@@ -628,5 +629,25 @@ struct netbsd32_disk_strategy {
 
 #define DIOCGSTRATEGY32		_IOR('d', 125, struct netbsd32_disk_strategy)
 #define DIOCSSTRATEGY32		_IOW('d', 126, struct netbsd32_disk_strategy)
+
+/* from <dev/lockstat.h> */
+struct netbsd32_lsenable {
+	netbsd32_uintptr_t	le_csstart;	/* callsite start */
+	netbsd32_uintptr_t	le_csend;	/* callsite end */
+	netbsd32_uintptr_t	le_lockstart;	/* lock address start */
+	netbsd32_uintptr_t	le_lockend;	/* lock address end */
+	netbsd32_uintptr_t	le_nbufs;	/* buffers to allocate, 0 = default */
+	u_int			le_flags;	/* request flags */
+	u_int			le_mask;	/* event mask (LB_*) */
+};
+
+struct netbsd32_lsdisable {
+	netbsd32_size_t		ld_size;	/* buffer space allocated */
+	struct netbsd32_timespec ld_time;	/* time spent enabled */
+	uint64_t		ld_freq[64];	/* counter HZ by CPU number */
+} __packed;
+
+#define	IOC_LOCKSTAT_ENABLE32	_IOW('L', 1, struct netbsd32_lsenable)
+#define	IOC_LOCKSTAT_DISABLE32	_IOR('L', 2, struct netbsd32_lsdisable)
 
 int	netbsd32_drm_ioctl(struct file *, unsigned long, void *, struct lwp *);
