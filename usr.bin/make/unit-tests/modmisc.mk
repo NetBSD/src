@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.19 2020/07/21 21:34:41 rillig Exp $
+# $Id: modmisc.mk,v 1.20 2020/07/21 23:19:46 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -67,13 +67,16 @@ undefvar:
 	@echo @:${:U:@var@empty@}
 
 mod-S:
+	@echo $@:
 	@echo :${:Ua b b c:S,a b,,:Q}:
 	@echo :${:Ua b b c:S,a b,,1:Q}:
 	@echo :${:Ua b b c:S,a b,,W:Q}:
 	@echo :${:Ua b b c:S,b,,g:Q}:
 	@echo :${:U1 2 3 1 2 3:S,1 2,___,Wg:S,_,x,:Q}:
+	@echo ${:U12345:S,,sep,g:Q}
 
 mod-C:
+	@echo $@:
 	@echo :${:Ua b b c:C,a b,,:Q}:
 	@echo :${:Ua b b c:C,a b,,1:Q}:
 	@echo :${:Ua b b c:C,a b,,W:Q}:

@@ -17,11 +17,14 @@ C:
 S:empty
 C:empty
 @:
+mod-S:
 :a b b c:
 :a b b c:
 : b c:
 :a c:
 :x__ 3 x__ 3:
+12345
+mod-C:
 :a b b c:
 :a b b c:
 : b c:
