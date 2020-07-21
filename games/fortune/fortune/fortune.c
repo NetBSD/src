@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.64 2012/06/19 05:46:08 dholland Exp $	*/
+/*	$NetBSD: fortune.c,v 1.65 2020/07/21 03:05:40 nia Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.64 2012/06/19 05:46:08 dholland Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.65 2020/07/21 03:05:40 nia Exp $");
 #endif
 #endif /* not lint */
 
@@ -190,7 +190,6 @@ static size_t maxlen_in_list(FILEDESC *);
 int
 main(int ac, char *av[])
 {
-	struct timeval tv;
 #ifdef OK_TO_WRITE_DISK
 	int fd;
 #endif /* OK_TO_WRITE_DISK */
@@ -203,12 +202,6 @@ main(int ac, char *av[])
 #endif
 
 	init_prob();
-	if (gettimeofday(&tv, NULL) != 0)
-		err(1, "gettimeofday()");
-	srandom(((unsigned long)tv.tv_sec)    *
-                ((unsigned long)tv.tv_usec+1) *
-	        ((unsigned long)getpid()+1)   *
-                ((unsigned long)getppid()+1));
 	do {
 		get_fort();
 	} while ((Short_only && fortlen() > SLEN) ||
@@ -933,7 +926,7 @@ get_fort(void)
 	if (File_list->next == NULL || File_list->percent == NO_PROB)
 		fp = File_list;
 	else {
-		choice = random() % 100;
+		choice = arc4random_uniform(100);
 		DPRINTF(1, (stderr, "choice = %d\n", choice));
 		for (fp = File_list; fp->percent != NO_PROB; fp = fp->next)
 			if (choice < fp->percent)
@@ -953,7 +946,7 @@ get_fort(void)
 	else {
 		if (fp->next != NULL) {
 			sum_noprobs(fp);
-			choice = random() % Noprob_tbl.str_numstr;
+			choice = arc4random_uniform(Noprob_tbl.str_numstr);
 			DPRINTF(1, (stderr, "choice = %d (of %d) \n", choice,
 				    Noprob_tbl.str_numstr));
 			while ((u_int32_t)choice >= fp->tbl.str_numstr) {
@@ -994,7 +987,7 @@ pick_child(FILEDESC *parent)
 	int  choice;
 
 	if (Equal_probs) {
-		choice = random() % parent->num_children;
+		choice = arc4random_uniform(parent->num_children);
 		DPRINTF(1, (stderr, "    choice = %d (of %d)\n",
 			    choice, parent->num_children));
 		for (fp = parent->child; choice--; fp = fp->next)
@@ -1004,7 +997,7 @@ pick_child(FILEDESC *parent)
 	}
 	else {
 		get_tbl(parent);
-		choice = random() % parent->tbl.str_numstr;
+		choice = arc4random_uniform(parent->tbl.str_numstr);
 		DPRINTF(1, (stderr, "    choice = %d (of %d)\n",
 			    choice, parent->tbl.str_numstr));
 		for (fp = parent->child; (u_int32_t)choice >= fp->tbl.str_numstr;
@@ -1084,13 +1077,13 @@ get_pos(FILEDESC *fp)
 #ifdef OK_TO_WRITE_DISK
 		if ((fd = open(fp->posfile, O_RDONLY)) < 0 ||
 		    read(fd, &fp->pos, sizeof fp->pos) != sizeof fp->pos)
-			fp->pos = random() % fp->tbl.str_numstr;
+			fp->pos = arc4random_uniform(fp->tbl.str_numstr);
 		else if (fp->pos >= fp->tbl.str_numstr)
 			fp->pos %= fp->tbl.str_numstr;
 		if (fd >= 0)
 			(void) close(fd);
 #else
-		fp->pos = random() % fp->tbl.str_numstr;
+		fp->pos = arc4random_uniform(fp->tbl.str_numstr);
 #endif /* OK_TO_WRITE_DISK */
 	}
 	if ((u_int64_t)++(fp->pos) >= fp->tbl.str_numstr)
