@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.290 2020/07/21 20:08:44 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.291 2020/07/21 20:56:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.290 2020/07/21 20:08:44 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.291 2020/07/21 20:56:56 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.290 2020/07/21 20:08:44 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.291 2020/07/21 20:56:56 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -261,33 +261,6 @@ typedef struct {
 				 * usual behaviour of treating it as
 				 * several space-separated words). */
 } Var_Parse_State;
-
-/* struct passed as 'void *' to VarSubstitute() for ":S/lhs/rhs/" */
-typedef struct {
-    const char	*lhs;
-    size_t	lhsLen;
-    const char	*rhs;
-    size_t	rhsLen;
-    VarPatternFlags pflags;
-} VarSubstituteArgs;
-
-/* struct passed as 'void *' to VarLoopExpand() for ":@tvar@str@" */
-typedef struct {
-    char	*tvar;		/* name of temporary variable */
-    char	*str;		/* string to expand */
-    VarEvalFlags eflags;
-} VarLoop;
-
-#ifndef NO_REGEX
-/* struct passed as 'void *' to VarRESubstitute() for ":C///" */
-typedef struct {
-    regex_t	   re;
-    int		   nsub;
-    regmatch_t 	  *matches;
-    char 	  *replace;
-    VarPatternFlags pflags;
-} VarREPattern;
-#endif
 
 #define BROPEN	'{'
 #define BRCLOSE	'}'
@@ -1135,18 +1108,18 @@ SepBuf_Destroy(SepBuf *buf, Boolean free_buf)
 }
 
 
-/* This callback for VarModify gets a single word from an expression and
+/* This callback for ModifyWords gets a single word from an expression and
  * typically adds a modification of this word to the buffer. It may also do
  * nothing or add several words. */
-typedef void (*VarModifyCallback)(GNode *ctxt, const char *word, SepBuf *buf,
-				  void *data);
+typedef void (*ModifyWordsCallback)(GNode *ctxt, const char *word,
+				    SepBuf *buf, void *data);
 
 
-/* Callback function for VarModify to implement the :H modifier.
+/* Callback for ModifyWords to implement the :H modifier.
  * Add the dirname of the given word to the buffer. */
 static void
-VarHead(GNode *ctx MAKE_ATTR_UNUSED, const char *word, SepBuf *buf,
-	void *dummy MAKE_ATTR_UNUSED)
+ModifyWord_Head(GNode *ctx MAKE_ATTR_UNUSED, const char *word,
+		SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 {
     const char *slash = strrchr(word, '/');
     if (slash != NULL)
@@ -1155,49 +1128,60 @@ VarHead(GNode *ctx MAKE_ATTR_UNUSED, const char *word, SepBuf *buf,
 	SepBuf_AddBytes(buf, ".", 1);
 }
 
-/* Callback function for VarModify to implement the :T modifier.
+/* Callback for ModifyWords to implement the :T modifier.
  * Add the basename of the given word to the buffer. */
 static void
-VarTail(GNode *ctx MAKE_ATTR_UNUSED, const char *word, SepBuf *buf,
-	void *dummy MAKE_ATTR_UNUSED)
+ModifyWord_Tail(GNode *ctx MAKE_ATTR_UNUSED, const char *word,
+		SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 {
     const char *slash = strrchr(word, '/');
     const char *base = slash != NULL ? slash + 1 : word;
     SepBuf_AddBytes(buf, base, strlen(base));
 }
 
-/* Callback function for VarModify to implement the :E modifier.
+/* Callback for ModifyWords to implement the :E modifier.
  * Add the filename suffix of the given word to the buffer, if it exists. */
 static void
-VarSuffix(GNode *ctx MAKE_ATTR_UNUSED, const char *word, SepBuf *buf,
-	  void *dummy MAKE_ATTR_UNUSED)
+ModifyWord_Suffix(GNode *ctx MAKE_ATTR_UNUSED, const char *word,
+		  SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 {
     const char *dot = strrchr(word, '.');
     if (dot != NULL)
 	SepBuf_AddBytes(buf, dot + 1, strlen(dot + 1));
 }
 
-/* Callback function for VarModify to implement the :R modifier.
- * Add the filename basename of the given word to the buffer. */
+/* Callback for ModifyWords to implement the :R modifier.
+ * Add the basename of the given word to the buffer. */
 static void
-VarRoot(GNode *ctx MAKE_ATTR_UNUSED, const char *word, SepBuf *buf,
-	void *dummy MAKE_ATTR_UNUSED)
+ModifyWord_Root(GNode *ctx MAKE_ATTR_UNUSED, const char *word,
+		SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 {
     char *dot = strrchr(word, '.');
     size_t len = dot != NULL ? (size_t)(dot - word) : strlen(word);
     SepBuf_AddBytes(buf, word, len);
 }
 
-/* Callback function for VarModify to implement the :M modifier.
+/* Callback for ModifyWords to implement the :M modifier.
  * Place the word in the buffer if it matches the given pattern. */
 static void
-VarMatch(GNode *ctx MAKE_ATTR_UNUSED, const char *word, SepBuf *buf,
-	 void *data)
+ModifyWord_Match(GNode *ctx MAKE_ATTR_UNUSED, const char *word,
+		 SepBuf *buf, void *data)
 {
     const char *pattern = data;
     if (DEBUG(VAR))
 	fprintf(debug_file, "VarMatch [%s] [%s]\n", word, pattern);
     if (Str_Match(word, pattern))
+	SepBuf_AddBytes(buf, word, strlen(word));
+}
+
+/* Callback for ModifyWords to implement the :N modifier.
+ * Place the word in the buffer if it doesn't match the given pattern. */
+static void
+ModifyWord_NoMatch(GNode *ctx MAKE_ATTR_UNUSED, const char *word,
+		   SepBuf *buf, void *data)
+{
+    const char *pattern = data;
+    if (!Str_Match(word, pattern))
 	SepBuf_AddBytes(buf, word, strlen(word));
 }
 
@@ -1302,13 +1286,13 @@ Str_SYSVSubst(SepBuf *buf, const char *pat, const char *src, size_t len,
 typedef struct {
     const char *lhs;
     const char *rhs;
-} VarSYSVSubstArgs;
+} ModifyWord_SYSVSubstArgs;
 
-/* Callback function for VarModify to implement the :%.from=%.to modifier. */
+/* Callback for ModifyWords to implement the :%.from=%.to modifier. */
 static void
-VarSYSVSubst(GNode *ctx, const char *word, SepBuf *buf, void *data)
+ModifyWord_SYSVSubst(GNode *ctx, const char *word, SepBuf *buf, void *data)
 {
-    const VarSYSVSubstArgs *args = data;
+    const ModifyWord_SYSVSubstArgs *args = data;
 
     size_t len;
     Boolean hasPercent;
@@ -1323,25 +1307,23 @@ VarSYSVSubst(GNode *ctx, const char *word, SepBuf *buf, void *data)
 }
 #endif
 
-/* Callback function for VarModify to implement the :N modifier.
- * Place the word in the buffer if it doesn't match the given pattern. */
-static void
-VarNoMatch(GNode *ctx MAKE_ATTR_UNUSED, const char *word, SepBuf *buf,
-	   void *data)
-{
-    const char *pattern = data;
-    if (!Str_Match(word, pattern))
-	SepBuf_AddBytes(buf, word, strlen(word));
-}
 
-/* Callback function for VarModify to implement the :S,from,to, modifier.
+typedef struct {
+    const char	*lhs;
+    size_t	lhsLen;
+    const char	*rhs;
+    size_t	rhsLen;
+    VarPatternFlags pflags;
+} ModifyWord_SubstArgs;
+
+/* Callback for ModifyWords to implement the :S,from,to, modifier.
  * Perform a string substitution on the given word. */
 static void
-VarSubstitute(GNode *ctx MAKE_ATTR_UNUSED, const char *word, SepBuf *buf,
-	      void *data)
+ModifyWord_Subst(GNode *ctx MAKE_ATTR_UNUSED, const char *word,
+		  SepBuf *buf, void *data)
 {
     size_t wordLen = strlen(word);
-    VarSubstituteArgs *args = data;
+    ModifyWord_SubstArgs *args = data;
     const VarPatternFlags pflags = args->pflags;
 
     if ((pflags & (VARP_SUB_ONE | VARP_SUB_MATCHED)) ==
@@ -1419,13 +1401,21 @@ VarREError(int reerr, regex_t *pat, const char *str)
     free(errbuf);
 }
 
-/* Callback function for VarModify to implement the :C/from/to/ modifier.
+typedef struct {
+    regex_t	   re;
+    int		   nsub;
+    regmatch_t 	  *matches;
+    char 	  *replace;
+    VarPatternFlags pflags;
+} ModifyWord_SubstRegexArgs;
+
+/* Callback for ModifyWords to implement the :C/from/to/ modifier.
  * Perform a regex substitution on the given word. */
 static void
-VarRESubstitute(GNode *ctx MAKE_ATTR_UNUSED, const char *word, SepBuf *buf,
-		void *data)
+ModifyWord_SubstRegex(GNode *ctx MAKE_ATTR_UNUSED, const char *word,
+		      SepBuf *buf, void *data)
 {
-    VarREPattern *pat = data;
+    ModifyWord_SubstRegexArgs *pat = data;
     int xrv;
     const char *wp = word;
     char *rp;
@@ -1511,19 +1501,25 @@ VarRESubstitute(GNode *ctx MAKE_ATTR_UNUSED, const char *word, SepBuf *buf,
 #endif
 
 
-/* Callback for VarModify to implement the :@var@...@ modifier of ODE make. */
+typedef struct {
+    char	*tvar;		/* name of temporary variable */
+    char	*str;		/* string to expand */
+    VarEvalFlags eflags;
+} ModifyWord_LoopArgs;
+
+/* Callback for ModifyWords to implement the :@var@...@ modifier of ODE make. */
 static void
-VarLoopExpand(GNode *ctx, const char *word, SepBuf *buf, void *data)
+ModifyWord_Loop(GNode *ctx, const char *word, SepBuf *buf, void *data)
 {
     if (word[0] == '\0')
 	return;
 
-    const VarLoop *loop = data;
+    const ModifyWord_LoopArgs *loop = data;
     Var_Set_with_flags(loop->tvar, word, ctx, VAR_NO_EXPORT);
     char *s = Var_Subst(NULL, loop->str, ctx, loop->eflags);
     if (DEBUG(VAR)) {
 	fprintf(debug_file,
-		"VarLoopExpand: in \"%s\", replace \"%s\" with \"%s\" "
+		"ModifyWord_Loop: in \"%s\", replace \"%s\" with \"%s\" "
 		"to \"%s\"\n",
 		word, loop->tvar, loop->str, s ? s : "(null)");
     }
@@ -1539,23 +1535,9 @@ VarLoopExpand(GNode *ctx, const char *word, SepBuf *buf, void *data)
 
 
 /*-
- *-----------------------------------------------------------------------
- * VarSelectWords --
- *	Implements the :[start..end] modifier.
- *	This is a special case of VarModify since we want to be able
- *	to scan the list backwards if start > end.
- *
- * Input:
- *	str		String whose words should be trimmed
- *	seldata		words to select
- *
- * Results:
- *	A string of all the words selected.
- *
- * Side Effects:
- *	None.
- *
- *-----------------------------------------------------------------------
+ * Implements the :[first..last] modifier.
+ * This is a special case of VarModify since we want to be able
+ * to scan the list backwards if first > last.
  */
 static char *
 VarSelectWords(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
@@ -1620,11 +1602,11 @@ VarSelectWords(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 }
 
 
-/* Callback function for VarModify to implement the :tA modifier.
+/* Callback for ModifyWords to implement the :tA modifier.
  * Replace each word with the result of realpath() if successful. */
 static void
-VarRealpath(GNode *ctx MAKE_ATTR_UNUSED, const char *word, SepBuf *buf,
-	    void *patternp MAKE_ATTR_UNUSED)
+ModifyWord_Realpath(GNode *ctx MAKE_ATTR_UNUSED, const char *word,
+		    SepBuf *buf, void *patternp MAKE_ATTR_UNUSED)
 {
     struct stat st;
     char rbuf[MAXPATHLEN];
@@ -1642,16 +1624,16 @@ VarRealpath(GNode *ctx MAKE_ATTR_UNUSED, const char *word, SepBuf *buf,
  *
  * Input:
  *	str		String whose words should be modified
- *	modProc		Function that modifies a single word
- *	data		Custom data for the modProc
+ *	modifyWord	Function that modifies a single word
+ *	data		Custom data for modifyWord
  *
  * Results:
  *	A string of all the words modified appropriately.
  *-----------------------------------------------------------------------
  */
 static char *
-VarModify(GNode *ctx, Var_Parse_State *vpstate,
-    const char *str, VarModifyCallback modProc, void *data)
+ModifyWords(GNode *ctx, Var_Parse_State *vpstate,
+	    const char *str, ModifyWordsCallback modifyWord, void *data)
 {
     SepBuf result;
     char **av;			/* word list */
@@ -1678,7 +1660,7 @@ VarModify(GNode *ctx, Var_Parse_State *vpstate,
 
     for (i = 0; i < ac; i++) {
 	size_t orig_count = result.buf.count;
-	modProc(ctx, av[i], &result, data);
+	modifyWord(ctx, av[i], &result, data);
 	size_t count = result.buf.count;
 	if (count != orig_count)
 	    SepBuf_Sep(&result);
@@ -1885,7 +1867,7 @@ VarRange(const char *str, int ac)
 static char *
 ParseModifierPart(GNode *ctxt, const char **tstr, int delim,
 		  VarEvalFlags eflags, VarPatternFlags *mpflags,
-		  size_t *length, VarSubstituteArgs *subst)
+		  size_t *length, ModifyWord_SubstArgs *subst)
 {
     const char *cp;
     char *rstr;
@@ -2150,34 +2132,34 @@ typedef struct {
 /* :@var@...${var}...@ */
 static Boolean
 ApplyModifier_At(ApplyModifiersState *st) {
-    VarLoop loop;
+    ModifyWord_LoopArgs args;
 
     st->cp = ++st->tstr;
     st->delim = '@';
-    loop.tvar = ParseModifierPart(st->ctxt, &st->cp, st->delim,
+    args.tvar = ParseModifierPart(st->ctxt, &st->cp, st->delim,
 				  st->eflags | VARE_NOSUBST,
 				  NULL, NULL, NULL);
-    if (loop.tvar == NULL)
+    if (args.tvar == NULL)
 	return FALSE;
 
-    loop.str = ParseModifierPart(st->ctxt, &st->cp, st->delim,
+    args.str = ParseModifierPart(st->ctxt, &st->cp, st->delim,
 				 st->eflags | VARE_NOSUBST,
 				 NULL, NULL, NULL);
-    if (loop.str == NULL)
+    if (args.str == NULL)
 	return FALSE;
 
     st->termc = *st->cp;
     st->delim = '\0';
 
-    loop.eflags = st->eflags & (VARE_UNDEFERR | VARE_WANTRES);
+    args.eflags = st->eflags & (VARE_UNDEFERR | VARE_WANTRES);
     int prev_sep = st->parsestate.varSpace;
     st->parsestate.varSpace = ' ';
-    st->newStr = VarModify(
-	st->ctxt, &st->parsestate, st->nstr, VarLoopExpand, &loop);
+    st->newStr = ModifyWords(st->ctxt, &st->parsestate, st->nstr,
+			     ModifyWord_Loop, &args);
     st->parsestate.varSpace = prev_sep;
-    Var_Delete(loop.tvar, st->ctxt);
-    free(loop.tvar);
-    free(loop.str);
+    Var_Delete(args.tvar, st->ctxt);
+    free(args.tvar);
+    free(args.str);
     return TRUE;
 }
 
@@ -2450,9 +2432,10 @@ ApplyModifier_Match(ApplyModifiersState *st)
     if (DEBUG(VAR))
 	fprintf(debug_file, "Pattern[%s] for [%s] is [%s]\n",
 	    st->v->name, st->nstr, pattern);
-    VarModifyCallback callback = st->tstr[0] == 'M' ? VarMatch : VarNoMatch;
-    st->newStr = VarModify(st->ctxt, &st->parsestate, st->nstr, callback,
-			   pattern);
+    ModifyWordsCallback callback = st->tstr[0] == 'M'
+	? ModifyWord_Match : ModifyWord_NoMatch;
+    st->newStr = ModifyWords(st->ctxt, &st->parsestate, st->nstr,
+			     callback, pattern);
     free(pattern);
 }
 
@@ -2460,7 +2443,7 @@ ApplyModifier_Match(ApplyModifiersState *st)
 static Boolean
 ApplyModifier_Subst(ApplyModifiersState *st)
 {
-    VarSubstituteArgs args;
+    ModifyWord_SubstArgs args;
     Var_Parse_State tmpparsestate = st->parsestate;
     st->delim = st->tstr[1];
     st->tstr += 2;
@@ -2509,8 +2492,8 @@ ApplyModifier_Subst(ApplyModifiersState *st)
     }
 
     st->termc = *st->cp;
-    st->newStr = VarModify(st->ctxt, &tmpparsestate, st->nstr,
-			   VarSubstitute, &args);
+    st->newStr = ModifyWords(st->ctxt, &tmpparsestate, st->nstr,
+			     ModifyWord_Subst, &args);
 
     free(lhs);
     free(rhs);
@@ -2519,27 +2502,28 @@ ApplyModifier_Subst(ApplyModifiersState *st)
 }
 
 #ifndef NO_REGEX
+
 /* :C,from,to, */
 static Boolean
 ApplyModifier_Regex(ApplyModifiersState *st)
 {
-    VarREPattern pattern;
+    ModifyWord_SubstRegexArgs args;
 
-    pattern.pflags = 0;
+    args.pflags = 0;
     Var_Parse_State tmpparsestate = st->parsestate;
     st->delim = st->tstr[1];
     st->tstr += 2;
 
     st->cp = st->tstr;
 
-    char *re = ParseModifierPart(st->ctxt, &st->cp, st->delim, st->eflags,
-				 NULL, NULL, NULL);
+    char *re = ParseModifierPart(st->ctxt, &st->cp, st->delim,
+				 st->eflags, NULL, NULL, NULL);
     if (re == NULL)
 	return FALSE;
 
-    pattern.replace = ParseModifierPart(st->ctxt, &st->cp, st->delim,
-					st->eflags, NULL, NULL, NULL);
-    if (pattern.replace == NULL) {
+    args.replace = ParseModifierPart(st->ctxt, &st->cp, st->delim,
+				     st->eflags, NULL, NULL, NULL);
+    if (args.replace == NULL) {
 	free(re);
 	return FALSE;
     }
@@ -2547,10 +2531,10 @@ ApplyModifier_Regex(ApplyModifiersState *st)
     for (;; st->cp++) {
 	switch (*st->cp) {
 	case 'g':
-	    pattern.pflags |= VARP_SUB_GLOBAL;
+	    args.pflags |= VARP_SUB_GLOBAL;
 	    continue;
 	case '1':
-	    pattern.pflags |= VARP_SUB_ONE;
+	    args.pflags |= VARP_SUB_ONE;
 	    continue;
 	case 'W':
 	    tmpparsestate.oneBigWord = TRUE;
@@ -2561,34 +2545,34 @@ ApplyModifier_Regex(ApplyModifiersState *st)
 
     st->termc = *st->cp;
 
-    int error = regcomp(&pattern.re, re, REG_EXTENDED);
+    int error = regcomp(&args.re, re, REG_EXTENDED);
     free(re);
     if (error) {
 	*st->lengthPtr = st->cp - st->start + 1;
-	VarREError(error, &pattern.re, "RE substitution error");
-	free(pattern.replace);
+	VarREError(error, &args.re, "RE substitution error");
+	free(args.replace);
 	return FALSE;
     }
 
-    pattern.nsub = pattern.re.re_nsub + 1;
-    if (pattern.nsub < 1)
-	pattern.nsub = 1;
-    if (pattern.nsub > 10)
-	pattern.nsub = 10;
-    pattern.matches = bmake_malloc(pattern.nsub * sizeof(regmatch_t));
-    st->newStr = VarModify(
-	st->ctxt, &tmpparsestate, st->nstr, VarRESubstitute, &pattern);
-    regfree(&pattern.re);
-    free(pattern.replace);
-    free(pattern.matches);
+    args.nsub = args.re.re_nsub + 1;
+    if (args.nsub < 1)
+	args.nsub = 1;
+    if (args.nsub > 10)
+	args.nsub = 10;
+    args.matches = bmake_malloc(args.nsub * sizeof(regmatch_t));
+    st->newStr = ModifyWords(st->ctxt, &tmpparsestate, st->nstr,
+			     ModifyWord_SubstRegex, &args);
+    regfree(&args.re);
+    free(args.replace);
+    free(args.matches);
     st->delim = '\0';
     return TRUE;
 }
 #endif
 
 static void
-VarModify_Copy(GNode *ctx MAKE_ATTR_UNUSED, const char *word, SepBuf *buf,
-	       void *data MAKE_ATTR_UNUSED)
+VarModify_Copy(GNode *ctx MAKE_ATTR_UNUSED, const char *word,
+	       SepBuf *buf, void *data MAKE_ATTR_UNUSED)
 {
     SepBuf_AddBytes(buf, word, strlen(word));
 }
@@ -2644,8 +2628,8 @@ ApplyModifier_ToSep(ApplyModifiersState *st)
     }
 
     st->termc = *st->cp;
-    st->newStr = VarModify(st->ctxt, &st->parsestate, st->nstr,
-			   VarModify_Copy, NULL);
+    st->newStr = ModifyWords(st->ctxt, &st->parsestate, st->nstr,
+			     VarModify_Copy, NULL);
     return TRUE;
 }
 
@@ -2665,8 +2649,8 @@ ApplyModifier_To(ApplyModifiersState *st)
 
     /* Check for two-character options: ":tu", ":tl" */
     if (st->tstr[1] == 'A') {	/* absolute path */
-	st->newStr = VarModify(
-		st->ctxt, &st->parsestate, st->nstr, VarRealpath, NULL);
+	st->newStr = ModifyWords(st->ctxt, &st->parsestate, st->nstr,
+				 ModifyWord_Realpath, NULL);
 	st->cp = st->tstr + 2;
 	st->termc = *st->cp;
     } else if (st->tstr[1] == 'u') {
@@ -3058,9 +3042,9 @@ ApplyModifier_SysV(ApplyModifiersState *st)
     if (lhs[0] == '\0' && *st->nstr == '\0') {
 	st->newStr = st->nstr;	/* special case */
     } else {
-	VarSYSVSubstArgs args = { lhs, rhs };
-	st->newStr = VarModify(st->ctxt, &st->parsestate, st->nstr,
-			       VarSYSVSubst, &args);
+	ModifyWord_SYSVSubstArgs args = { lhs, rhs };
+	st->newStr = ModifyWords(st->ctxt, &st->parsestate, st->nstr,
+				 ModifyWord_SYSVSubst, &args);
     }
     free(lhs);
     free(rhs);
@@ -3299,8 +3283,8 @@ ApplyModifiers(char *nstr, const char *tstr,
 	    goto default_case;
 	case 'T':
 	    if (st.tstr[1] == st.endc || st.tstr[1] == ':') {
-		st.newStr = VarModify(st.ctxt, &st.parsestate, st.nstr, VarTail,
-				      NULL);
+		st.newStr = ModifyWords(st.ctxt, &st.parsestate, st.nstr,
+					ModifyWord_Tail, NULL);
 		st.cp = st.tstr + 1;
 		st.termc = *st.cp;
 		break;
@@ -3308,8 +3292,8 @@ ApplyModifiers(char *nstr, const char *tstr,
 	    goto default_case;
 	case 'H':
 	    if (st.tstr[1] == st.endc || st.tstr[1] == ':') {
-		st.newStr = VarModify(st.ctxt, &st.parsestate, st.nstr, VarHead,
-				      NULL);
+		st.newStr = ModifyWords(st.ctxt, &st.parsestate, st.nstr,
+					ModifyWord_Head, NULL);
 		st.cp = st.tstr + 1;
 		st.termc = *st.cp;
 		break;
@@ -3317,8 +3301,8 @@ ApplyModifiers(char *nstr, const char *tstr,
 	    goto default_case;
 	case 'E':
 	    if (st.tstr[1] == st.endc || st.tstr[1] == ':') {
-		st.newStr = VarModify(st.ctxt, &st.parsestate, st.nstr, VarSuffix,
-				      NULL);
+		st.newStr = ModifyWords(st.ctxt, &st.parsestate, st.nstr,
+					ModifyWord_Suffix, NULL);
 		st.cp = st.tstr + 1;
 		st.termc = *st.cp;
 		break;
@@ -3326,8 +3310,8 @@ ApplyModifiers(char *nstr, const char *tstr,
 	    goto default_case;
 	case 'R':
 	    if (st.tstr[1] == st.endc || st.tstr[1] == ':') {
-		st.newStr = VarModify(st.ctxt, &st.parsestate, st.nstr, VarRoot,
-				      NULL);
+		st.newStr = ModifyWords(st.ctxt, &st.parsestate, st.nstr,
+					ModifyWord_Root, NULL);
 		st.cp = st.tstr + 1;
 		st.termc = *st.cp;
 		break;
