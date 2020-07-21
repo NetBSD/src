@@ -1,4 +1,4 @@
-/* $NetBSD: db_instruction.h,v 1.9 2012/02/06 02:14:10 matt Exp $ */
+/* $NetBSD: db_instruction.h,v 1.10 2020/07/21 13:37:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -357,9 +357,9 @@ typedef union {
 #define	op_msklh	0x62
 #define	op_inslh	0x67
 #define	op_extlh	0x6a
-#define	op_extqh	0x7a
-#define	op_insqh	0x77
 #define	op_mskqh	0x72
+#define	op_insqh	0x77
+#define	op_extqh	0x7a
 
 		/* MUL, "function" opcodes (bits 5..11)  */
 
