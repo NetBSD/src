@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.171 2018/12/19 13:57:48 maxv Exp $	*/
+/*	$NetBSD: locore.s,v 1.172 2020/07/21 05:45:38 rin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1367,6 +1367,7 @@ GLOBAL(sanity_check)
 	.long	0x18621862	| this is our stack overflow checker.
 
 	.space	4 * PAGE_SIZE
+	.align	4
 ASLOCAL(tmpstk)
 
 GLOBAL(machineid)
