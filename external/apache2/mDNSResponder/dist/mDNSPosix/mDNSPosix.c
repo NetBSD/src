@@ -195,8 +195,9 @@ mDNSexport mStatus mDNSPlatformSendUDP(const mDNS *const m, const void *const ms
     {
         static int MessageCount = 0;
         // Don't report EHOSTDOWN (i.e. ARP failure), ENETDOWN, or no route to host for unicast destinations
-        if (!mDNSAddressIsAllDNSLinkGroup(dst))
+        if (!mDNSAddressIsAllDNSLinkGroup(dst)) {
             if (errno == EHOSTDOWN || errno == ENETDOWN || errno == EHOSTUNREACH || errno == ENETUNREACH) return(mStatus_TransientErr);
+	} else if (errno == EADDRNOTAVAIL) return(mStatus_TransientErr);
 
         if (MessageCount < 1000)
         {
