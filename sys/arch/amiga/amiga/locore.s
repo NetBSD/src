@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.158 2020/06/19 07:43:37 rin Exp $	*/
+/*	$NetBSD: locore.s,v 1.159 2020/07/21 06:39:31 rin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1447,6 +1447,7 @@ ENTRY_NOPROFILE(fpeaemu60)
 
 	.data
 	.space	PAGE_SIZE
+	.align	4
 ASLOCAL(tmpstk)
 
 GLOBAL(mmutype)
