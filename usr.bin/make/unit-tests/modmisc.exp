@@ -83,4 +83,7 @@ mod-assign-nested: else2e2
 mod-assign-nested: then3t3
 mod-assign-nested: else4e4
 mod-tu-space: A   B
+mod-Q: new
+
+line
 exit status 0
