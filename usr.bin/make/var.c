@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.292 2020/07/21 21:13:24 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.293 2020/07/21 21:32:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.292 2020/07/21 21:13:24 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.293 2020/07/21 21:32:55 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.292 2020/07/21 21:13:24 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.293 2020/07/21 21:32:55 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1971,19 +1971,15 @@ ParseModifierPart(GNode *ctxt, const char **tstr, int delim,
 static char *
 VarQuote(char *str, Boolean quoteDollar)
 {
-    Buffer  	  buf;
-    const char	*newline;
-    size_t nlen;
-
-    if ((newline = Shell_GetNewline()) == NULL)
-	newline = "\\\n";
-    nlen = strlen(newline);
-
+    Buffer buf;
     Buf_Init(&buf, 0);
 
     for (; *str != '\0'; str++) {
 	if (*str == '\n') {
-	    Buf_AddBytes(&buf, nlen, newline);
+	    const char *newline = Shell_GetNewline();
+	    if (newline == NULL)
+		newline = "\\\n";
+	    Buf_AddBytes(&buf, strlen(newline), newline);
 	    continue;
 	}
 	if (isspace((unsigned char)*str) || ismeta((unsigned char)*str))
