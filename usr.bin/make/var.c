@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.293 2020/07/21 21:32:55 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.294 2020/07/21 23:22:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.293 2020/07/21 21:32:55 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.294 2020/07/21 23:22:45 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.293 2020/07/21 21:32:55 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.294 2020/07/21 23:22:45 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1435,8 +1435,6 @@ ModifyWord_SubstRegex(GNode *ctx MAKE_ATTR_UNUSED, const char *word,
 	    } else if (*rp == '&' ||
 		(*rp == '\\' && isdigit((unsigned char)rp[1]))) {
 		int n;
-		const char *subbuf;
-		int sublen;
 		char errstr[3];
 
 		if (*rp == '&') {
@@ -1452,20 +1450,16 @@ ModifyWord_SubstRegex(GNode *ctx MAKE_ATTR_UNUSED, const char *word,
 		}
 
 		if (n >= pat->nsub) {
-		    Error("No subexpression %s", &errstr[0]);
-		    subbuf = "";
-		    sublen = 0;
+		    Error("No subexpression %s", errstr);
 		} else if ((pat->matches[n].rm_so == -1) &&
 			   (pat->matches[n].rm_eo == -1)) {
-		    Error("No match for subexpression %s", &errstr[0]);
-		    subbuf = "";
-		    sublen = 0;
+		    Error("No match for subexpression %s", errstr);
 		} else {
-		    subbuf = wp + pat->matches[n].rm_so;
-		    sublen = pat->matches[n].rm_eo - pat->matches[n].rm_so;
+		    const char *subbuf = wp + pat->matches[n].rm_so;
+		    int sublen = pat->matches[n].rm_eo - pat->matches[n].rm_so;
+		    SepBuf_AddBytes(buf, subbuf, sublen);
 		}
 
-		SepBuf_AddBytes(buf, subbuf, sublen);
 	    } else {
 		SepBuf_AddBytes(buf, rp, 1);
 	    }
