@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.291 2020/07/21 20:56:56 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.292 2020/07/21 21:13:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.291 2020/07/21 20:56:56 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.292 2020/07/21 21:13:24 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.291 2020/07/21 20:56:56 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.292 2020/07/21 21:13:24 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -88,8 +88,7 @@ __RCSID("$NetBSD: var.c,v 1.291 2020/07/21 20:56:56 rillig Exp $");
  * Interface:
  *	Var_Set		    Set the value of a variable in the given
  *			    context. The variable is created if it doesn't
- *			    yet exist. The value and variable name need not
- *			    be preserved.
+ *			    yet exist.
  *
  *	Var_Append	    Append more characters to an existing variable
  *			    in the given context. The variable needn't
@@ -103,8 +102,7 @@ __RCSID("$NetBSD: var.c,v 1.291 2020/07/21 20:56:56 rillig Exp $");
  *			    NULL if the variable is undefined.
  *
  *	Var_Subst 	    Substitute either a single variable or all
- *			    variables in a string, using the given context as
- *			    the top-most one.
+ *			    variables in a string, using the given context.
  *
  *	Var_Parse 	    Parse a variable expansion from a string and
  *			    return the result and the number of characters
@@ -128,8 +126,8 @@ __RCSID("$NetBSD: var.c,v 1.291 2020/07/21 20:56:56 rillig Exp $");
 #endif
 #include    <ctype.h>
 #include    <inttypes.h>
-#include    <stdlib.h>
 #include    <limits.h>
+#include    <stdlib.h>
 #include    <time.h>
 
 #include    "make.h"
@@ -138,7 +136,6 @@ __RCSID("$NetBSD: var.c,v 1.291 2020/07/21 20:56:56 rillig Exp $");
 #include    "job.h"
 #include    "metachar.h"
 
-extern int makelevel;
 /*
  * This lets us tell if we have replaced the original environ
  * (which we cannot free).
@@ -154,7 +151,7 @@ char var_Error[] = "";
 
 /*
  * Similar to var_Error, but returned when the 'VARE_UNDEFERR' flag for
- * Var_Parse is not set. Why not just use a constant? Well, gcc likes
+ * Var_Parse is not set. Why not just use a constant? Well, GCC likes
  * to condense identical string instances...
  */
 static char varNoError[] = "";
@@ -163,27 +160,26 @@ static char varNoError[] = "";
  * Traditionally we consume $$ during := like any other expansion.
  * Other make's do not.
  * This knob allows controlling the behavior.
- * FALSE for old behavior.
- * TRUE for new compatible.
+ * FALSE to consume $$ during := assignment.
+ * TRUE to preserve $$ during := assignment.
  */
 #define SAVE_DOLLARS ".MAKE.SAVE_DOLLARS"
 static Boolean save_dollars = TRUE;
 
 /*
  * Internally, variables are contained in four different contexts.
- *	1) the environment. They may not be changed. If an environment
- *	    variable is appended-to, the result is placed in the global
+ *	1) the environment. They cannot be changed. If an environment
+ *	    variable is appended to, the result is placed in the global
  *	    context.
  *	2) the global context. Variables set in the Makefile are located in
- *	    the global context. It is the penultimate context searched when
- *	    substituting.
+ *	    the global context.
  *	3) the command-line context. All variables set on the command line
  *	   are placed in this context. They are UNALTERABLE once placed here.
  *	4) the local context. Each target has associated with it a context
  *	   list. On this list are located the structures describing such
  *	   local variables as $(@) and $(*)
  * The four contexts are searched in the reverse order from which they are
- * listed.
+ * listed (but see checkEnvFirst).
  */
 GNode          *VAR_INTERNAL;	/* variables from make itself */
 GNode          *VAR_GLOBAL;	/* variables from the makefile */
@@ -196,7 +192,8 @@ typedef enum {
 } VarFindFlags;
 
 typedef enum {
-    VAR_IN_USE		= 0x01,	/* Variable's value is currently being used.
+    VAR_IN_USE		= 0x01,	/* Variable's value is currently being used
+				 * by Var_Parse or Var_Subst.
 				 * Used to avoid endless recursion */
     VAR_FROM_ENV	= 0x02,	/* Variable comes from the environment */
     VAR_JUNK		= 0x04,	/* Variable is a junk variable that
@@ -221,19 +218,24 @@ typedef struct Var {
 /*
  * Exporting vars is expensive so skip it if we can
  */
-#define VAR_EXPORTED_NONE	0
-#define VAR_EXPORTED_YES	1
-#define VAR_EXPORTED_ALL	2
-static int var_exportedVars = VAR_EXPORTED_NONE;
-/*
- * We pass this to Var_Export when doing the initial export
- * or after updating an exported var.
- */
-#define VAR_EXPORT_PARENT	1
-/*
- * We pass this to Var_Export1 to tell it to leave the value alone.
- */
-#define VAR_EXPORT_LITERAL	2
+typedef enum {
+    VAR_EXPORTED_NONE,
+    VAR_EXPORTED_YES,
+    VAR_EXPORTED_ALL
+} VarExportedMode;
+static VarExportedMode var_exportedVars = VAR_EXPORTED_NONE;
+
+typedef enum {
+    /*
+     * We pass this to Var_Export when doing the initial export
+     * or after updating an exported var.
+     */
+    VAR_EXPORT_PARENT	= 0x01,
+    /*
+     * We pass this to Var_Export1 to tell it to leave the value alone.
+     */
+    VAR_EXPORT_LITERAL	= 0x02
+} VarExportFlags;
 
 /* Flags for pattern matching in the :S and :C modifiers */
 typedef enum {
@@ -245,7 +247,7 @@ typedef enum {
 } VarPatternFlags;
 
 typedef enum {
-	VAR_NO_EXPORT	= 0x01	/* do not export */
+    VAR_NO_EXPORT	= 0x01	/* do not export */
 } VarSet_Flags;
 
 typedef struct {
@@ -490,12 +492,10 @@ Var_Delete(const char *name, GNode *ctxt)
 	free(cp);
     if (ln != NULL) {
 	Var *v = (Var *)Hash_GetValue(ln);
-	if (v->flags & VAR_EXPORTED) {
+	if (v->flags & VAR_EXPORTED)
 	    unsetenv(v->name);
-	}
-	if (strcmp(MAKE_EXPORTED, v->name) == 0) {
+	if (strcmp(MAKE_EXPORTED, v->name) == 0)
 	    var_exportedVars = VAR_EXPORTED_NONE;
-	}
 	if (v->name != ln->name)
 	    free(v->name);
 	Hash_DeleteEntry(&ctxt->context, ln);
@@ -513,13 +513,13 @@ Var_Delete(const char *name, GNode *ctxt)
  * We only manipulate flags of vars if 'parent' is set.
  */
 static int
-Var_Export1(const char *name, int flags)
+Var_Export1(const char *name, VarExportFlags flags)
 {
     char tmp[BUFSIZ];
     Var *v;
     char *val = NULL;
     int n;
-    int parent = (flags & VAR_EXPORT_PARENT);
+    VarExportFlags parent = flags & VAR_EXPORT_PARENT;
 
     if (*name == '.')
 	return 0;		/* skip internals */
@@ -542,7 +542,7 @@ Var_Export1(const char *name, int flags)
     if (v == NULL)
 	return 0;
     if (!parent &&
-	(v->flags & (VAR_EXPORTED|VAR_REEXPORT)) == VAR_EXPORTED) {
+	(v->flags & (VAR_EXPORTED | VAR_REEXPORT)) == VAR_EXPORTED) {
 	return 0;			/* nothing to do */
     }
     val = Buf_GetAll(&v->val, NULL);
@@ -553,7 +553,7 @@ Var_Export1(const char *name, int flags)
 	     * No point actually exporting it now though,
 	     * the child can do it at the last minute.
 	     */
-	    v->flags |= (VAR_EXPORTED|VAR_REEXPORT);
+	    v->flags |= (VAR_EXPORTED | VAR_REEXPORT);
 	    return 1;
 	}
 	if (v->flags & VAR_IN_USE) {
@@ -570,12 +570,10 @@ Var_Export1(const char *name, int flags)
 	    free(val);
 	}
     } else {
-	if (parent) {
+	if (parent)
 	    v->flags &= ~VAR_REEXPORT;	/* once will do */
-	}
-	if (parent || !(v->flags & VAR_EXPORTED)) {
+	if (parent || !(v->flags & VAR_EXPORTED))
 	    setenv(name, val, 1);
-	}
     }
     /*
      * This is so Var_Set knows to call Var_Export again...
@@ -776,11 +774,9 @@ Var_UnExport(char *str)
 	    if (!v)
 		continue;
 	    if (!unexport_env &&
-		(v->flags & (VAR_EXPORTED|VAR_REEXPORT)) == VAR_EXPORTED)
-	    {
+		(v->flags & (VAR_EXPORTED | VAR_REEXPORT)) == VAR_EXPORTED)
 		unsetenv(v->name);
-	    }
-	    v->flags &= ~(VAR_EXPORTED|VAR_REEXPORT);
+	    v->flags &= ~(VAR_EXPORTED | VAR_REEXPORT);
 	    /*
 	     * If we are unexporting a list,
 	     * remove each one from .MAKE.EXPORTED.
@@ -888,10 +884,8 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
 
 	Var_Append(MAKEOVERRIDES, name, VAR_GLOBAL);
     }
-    if (*name == '.') {
-	if (strcmp(name, SAVE_DOLLARS) == 0)
-	    save_dollars = s2Boolean(val, save_dollars);
-    }
+    if (name[0] == '.' && strcmp(name, SAVE_DOLLARS) == 0)
+	save_dollars = s2Boolean(val, save_dollars);
 
 out:
     free(expanded_name);
@@ -1536,7 +1530,7 @@ ModifyWord_Loop(GNode *ctx, const char *word, SepBuf *buf, void *data)
 
 /*-
  * Implements the :[first..last] modifier.
- * This is a special case of VarModify since we want to be able
+ * This is a special case of ModifyWords since we want to be able
  * to scan the list backwards if first > last.
  */
 static char *
@@ -1654,7 +1648,7 @@ ModifyWords(GNode *ctx, Var_Parse_State *vpstate,
     }
 
     if (DEBUG(VAR)) {
-	fprintf(debug_file, "VarModify: split \"%s\" into %d words\n",
+	fprintf(debug_file, "ModifyWords: split \"%s\" into %d words\n",
 		str, ac);
     }
 
@@ -2418,7 +2412,7 @@ ApplyModifier_Match(ApplyModifiersState *st)
 	endpat = cp2;
     } else {
 	/*
-	 * Either Var_Subst or VarModify will need a
+	 * Either Var_Subst or ModifyWords will need a
 	 * nul-terminated string soon, so construct one now.
 	 */
 	pattern = bmake_strndup(st->tstr+1, endpat - (st->tstr + 1));
@@ -2571,8 +2565,8 @@ ApplyModifier_Regex(ApplyModifiersState *st)
 #endif
 
 static void
-VarModify_Copy(GNode *ctx MAKE_ATTR_UNUSED, const char *word,
-	       SepBuf *buf, void *data MAKE_ATTR_UNUSED)
+ModifyWord_Copy(GNode *ctx MAKE_ATTR_UNUSED, const char *word,
+		SepBuf *buf, void *data MAKE_ATTR_UNUSED)
 {
     SepBuf_AddBytes(buf, word, strlen(word));
 }
@@ -2629,7 +2623,7 @@ ApplyModifier_ToSep(ApplyModifiersState *st)
 
     st->termc = *st->cp;
     st->newStr = ModifyWords(st->ctxt, &st->parsestate, st->nstr,
-			     VarModify_Copy, NULL);
+			     ModifyWord_Copy, NULL);
     return TRUE;
 }
 
