@@ -29,7 +29,7 @@
 #define __INTR_PRIVATE
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: octeon_cpunode.c,v 1.15 2020/07/19 08:58:35 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_cpunode.c,v 1.16 2020/07/21 06:01:10 simonb Exp $");
 
 #include "locators.h"
 #include "cpunode.h"
@@ -37,10 +37,11 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_cpunode.c,v 1.15 2020/07/19 08:58:35 simonb E
 #include "opt_ddb.h"
 
 #include <sys/param.h>
+#include <sys/atomic.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/lwp.h>
-#include <sys/cpu.h>
-#include <sys/atomic.h>
+#include <sys/reboot.h>
 #include <sys/wdog.h>
 
 #include <uvm/uvm.h>
@@ -294,6 +295,12 @@ cpu_cpunode_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 #ifdef MULTIPROCESSOR
+	if ((boothowto & RB_MD1) != 0) {
+		aprint_naive("\n");
+		aprint_normal(": multiprocessor boot disabled\n");
+		return;
+	}
+
 	if (!kcpuset_isset(cpus_booted, cpunum)) {
 		aprint_naive(" disabled\n");
 		aprint_normal(" disabled (unresponsive)\n");
