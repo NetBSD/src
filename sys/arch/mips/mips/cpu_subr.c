@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.55 2020/07/20 14:59:57 jmcneill Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.56 2020/07/21 06:01:10 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.55 2020/07/20 14:59:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.56 2020/07/21 06:01:10 simonb Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -38,19 +38,20 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.55 2020/07/20 14:59:57 jmcneill Exp $
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
-#include <sys/cpu.h>
-#include <sys/intr.h>
 #include <sys/atomic.h>
+#include <sys/bitops.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
+#include <sys/idle.h>
+#include <sys/intr.h>
+#include <sys/ipi.h>
+#include <sys/kernel.h>
 #include <sys/lwp.h>
+#include <sys/module.h>
 #include <sys/proc.h>
 #include <sys/ras.h>
-#include <sys/module.h>
-#include <sys/bitops.h>
-#include <sys/idle.h>
+#include <sys/reboot.h>
 #include <sys/xcall.h>
-#include <sys/kernel.h>
-#include <sys/ipi.h>
 
 #include <uvm/uvm.h>
 
@@ -972,6 +973,9 @@ cpu_boot_secondary_processors(void)
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
+
+	if ((boothowto & RB_MD1) != 0)
+		return;
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		if (CPU_IS_PRIMARY(ci))
