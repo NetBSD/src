@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.18 2020/07/20 19:03:25 rillig Exp $
+# $Id: modmisc.mk,v 1.19 2020/07/21 21:34:41 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -22,6 +22,7 @@ all:	mod-C-limits
 all:	mod-assign
 all:	mod-assign-nested
 all:	mod-tu-space
+all:	mod-Q
 
 modsysv:
 	@echo "The answer is ${libfoo.a:L:libfoo.a=42}"
@@ -172,3 +173,6 @@ mod-tu-space:
 	# as a single string, not as a list of words. Therefore,
 	# the adjacent spaces are preserved.
 	@echo $@: ${a   b:L:tu:Q}
+
+mod-Q:
+	@echo $@: new${.newline:Q}${.newline:Q}line
