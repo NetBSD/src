@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.110 2020/07/18 21:37:38 sjg Exp $	*/
+/*	$NetBSD: make.h,v 1.111 2020/07/21 21:13:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -422,6 +422,8 @@ extern char	curdir[];	/* Startup directory */
 extern char	*progname;	/* The program name */
 extern char	*makeDependfile; /* .depend */
 extern char	**savedEnv;	 /* if we replaced environ this will be non-NULL */
+
+extern int	makelevel;
 
 /*
  * We cannot vfork() in a child of vfork().
