@@ -70,7 +70,11 @@ mDNSexport void mDNSPlatformSourceAddrForDest(mDNSAddr *const src, const mDNSAdd
     else return;
 
     if ((connect(sock, &addr.s, inner_len)) < 0)
-    { LogMsg("mDNSPlatformSourceAddrForDest: connect %#a failed errno %d (%s)", dst, errno, strerror(errno)); goto exit; }
+    {
+        if (errno != EADDRNOTAVAIL)
+	    LogMsg("mDNSPlatformSourceAddrForDest: connect %#a failed errno %d (%s)", dst, errno, strerror(errno));
+	goto exit;
+    }
 
     if ((getsockname(sock, &addr.s, &len)) < 0)
     { LogMsg("mDNSPlatformSourceAddrForDest: getsockname failed errno %d (%s)", errno, strerror(errno)); goto exit; }
