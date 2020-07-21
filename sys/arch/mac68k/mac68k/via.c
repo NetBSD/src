@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.75 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: via.c,v 1.76 2020/07/21 06:10:26 rin Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via.c,v 1.75 2005/12/11 12:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via.c,v 1.76 2020/07/21 06:10:26 rin Exp $");
 
 #include "opt_mac68k.h"
 
@@ -239,6 +239,13 @@ via_set_modem(int onoff)
 		via_reg(VIA1, vBufA) &= ~DA1O_vSync;
 }
 
+#if __GNUC_PREREQ__(8, 0)
+/*
+ * XXX rtclock_intr() requires this for unwinding stack frame.
+ */
+#pragma GCC push_options
+#pragma GCC optimize "-fno-omit-frame-pointer"
+#endif
 void
 via1_intr(void *intr_arg)
 {
@@ -269,6 +276,9 @@ via1_intr(void *intr_arg)
 		++bitnum;
 	} while (intbits >= mask);
 }
+#if __GNUC_PREREQ__(8, 0)
+#pragma GCC pop_options
+#endif
 
 void
 via2_intr(void *intr_arg)

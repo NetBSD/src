@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.172 2020/07/21 05:45:38 rin Exp $	*/
+/*	$NetBSD: locore.s,v 1.173 2020/07/21 06:10:26 rin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -794,6 +794,7 @@ ENTRY_NOPROFILE(rtclock_intr)
 	movw	_C_LABEL(ipl2psl_table)+IPL_CLOCK*2,%sr
 					| raise SPL to splclock()
 	movl	%a6@,%a1		| unwind to frame in intr_dispatch
+					| XXX FIXME
 	lea	%a1@(28),%a1		| push pointer to interrupt frame
 	movl	%a1,%sp@-			| 28 = 16 for regs in intrhand,
 					|    + 4 for args to intr_dispatch

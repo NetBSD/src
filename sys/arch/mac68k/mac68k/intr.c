@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.30 2019/02/19 00:34:50 mrg Exp $	*/
+/*	$NetBSD: intr.c,v 1.31 2020/07/21 06:10:26 rin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.30 2019/02/19 00:34:50 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.31 2020/07/21 06:10:26 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,6 +206,13 @@ intr_disestablish(int ipl)
  *
  * XXX Note: see the warning in intr_establish()
  */
+#if __GNUC_PREREQ__(8, 0)
+/*
+ * XXX rtclock_intr() requires this for unwinding stack frame.
+ */
+#pragma GCC push_options
+#pragma GCC optimize "-fno-omit-frame-pointer"
+#endif
 void
 intr_dispatch(int evec)		/* format | vector offset */
 {
@@ -225,6 +232,9 @@ intr_dispatch(int evec)		/* format | vector offset */
 	(void)(*intr_func[ipl])(intr_arg[ipl]);
 	idepth--;
 }
+#if __GNUC_PREREQ__(8, 0)
+#pragma GCC pop_options
+#endif
 
 /*
  * Default interrupt handler:  do nothing.
