@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.289 2020/07/20 21:33:13 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.290 2020/07/21 20:08:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.289 2020/07/20 21:33:13 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.290 2020/07/21 20:08:44 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.289 2020/07/20 21:33:13 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.290 2020/07/21 20:08:44 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -288,12 +288,6 @@ typedef struct {
     VarPatternFlags pflags;
 } VarREPattern;
 #endif
-
-/* struct passed to VarSelectWords() for ":[start..end]" */
-typedef struct {
-    int		start;		/* first word to select */
-    int		end;		/* last word to select */
-} VarSelectWords_t;
 
 #define BROPEN	'{'
 #define BRCLOSE	'}'
@@ -1565,7 +1559,7 @@ VarLoopExpand(GNode *ctx, const char *word, SepBuf *buf, void *data)
  */
 static char *
 VarSelectWords(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
-	       const char *str, VarSelectWords_t *seldata)
+	       const char *str, int first, int last)
 {
     SepBuf buf;
     char **av;			/* word list */
@@ -1592,21 +1586,21 @@ VarSelectWords(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
      * the positive equivalents (-1 gets converted to argc, -2 gets
      * converted to (argc-1), etc.).
      */
-    if (seldata->start < 0)
-	seldata->start = ac + seldata->start + 1;
-    if (seldata->end < 0)
-	seldata->end = ac + seldata->end + 1;
+    if (first < 0)
+	first += ac + 1;
+    if (last < 0)
+	last += ac + 1;
 
     /*
      * We avoid scanning more of the list than we need to.
      */
-    if (seldata->start > seldata->end) {
-	start = MIN(ac, seldata->start) - 1;
-	end = MAX(0, seldata->end - 1);
+    if (first > last) {
+	start = MIN(ac, first) - 1;
+	end = MAX(0, last - 1);
 	step = -1;
     } else {
-	start = MAX(0, seldata->start - 1);
-	end = MIN(ac, seldata->end);
+	start = MAX(0, first - 1);
+	end = MIN(ac, last);
 	step = 1;
     }
 
@@ -2763,19 +2757,18 @@ ApplyModifier_Words(ApplyModifiersState *st)
      * We expect estr to contain a single integer for :[N], or two integers
      * separated by ".." for :[start..end].
      */
-    VarSelectWords_t seldata = { 0, 0 };
-
     char *ep;
-    seldata.start = strtol(estr, &ep, 0);
+    int first = strtol(estr, &ep, 0);
+    int last;
     if (ep == estr)		/* Found junk instead of a number */
 	goto bad_modifier;
 
     if (ep[0] == '\0') {	/* Found only one integer in :[N] */
-	seldata.end = seldata.start;
+	last = first;
     } else if (ep[0] == '.' && ep[1] == '.' && ep[2] != '\0') {
 	/* Expecting another integer after ".." */
 	ep += 2;
-	seldata.end = strtol(ep, &ep, 0);
+	last = strtol(ep, &ep, 0);
 	if (ep[0] != '\0')	/* Found junk after ".." */
 	    goto bad_modifier;
     } else
@@ -2785,7 +2778,7 @@ ApplyModifier_Words(ApplyModifiersState *st)
      * Now seldata is properly filled in, but we still have to check for 0 as
      * a special case.
      */
-    if (seldata.start == 0 && seldata.end == 0) {
+    if (first == 0 && last == 0) {
 	/* ":[0]" or perhaps ":[0..0]" */
 	st->parsestate.oneBigWord = TRUE;
 	st->newStr = st->nstr;
@@ -2793,11 +2786,11 @@ ApplyModifier_Words(ApplyModifiersState *st)
     }
 
     /* ":[0..N]" or ":[N..0]" */
-    if (seldata.start == 0 || seldata.end == 0)
+    if (first == 0 || last == 0)
 	goto bad_modifier;
 
     /* Normal case: select the words described by seldata. */
-    st->newStr = VarSelectWords(st->ctxt, &st->parsestate, st->nstr, &seldata);
+    st->newStr = VarSelectWords(st->ctxt, &st->parsestate, st->nstr, first, last);
 
 ok:
     st->termc = *st->cp;
