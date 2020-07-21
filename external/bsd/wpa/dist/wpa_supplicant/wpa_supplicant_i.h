@@ -118,6 +118,17 @@ struct wpa_interface {
 	 * interface that is not a network interface.
 	 */
 	int p2p_mgmt;
+
+#ifdef CONFIG_MATCH_IFACE
+	/**
+	 * matched - Interface was matched rather than specified
+	 *
+	 */
+	int matched;
+#define WPA_IFACE_NOTMATCHED	0
+#define WPA_IFACE_MATCHEDNULL	1
+#define WPA_IFACE_MATCHED	2
+#endif /* CONFIG_MATCH_IFACE */
 };
 
 /**
