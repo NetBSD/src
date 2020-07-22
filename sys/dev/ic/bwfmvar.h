@@ -1,4 +1,4 @@
-/* $NetBSD: bwfmvar.h,v 1.10 2020/05/30 15:55:47 jdolecek Exp $ */
+/* $NetBSD: bwfmvar.h,v 1.11 2020/07/22 17:21:25 riastradh Exp $ */
 /* $OpenBSD: bwfmvar.h,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -17,8 +17,25 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifndef	_DEV_IC_BWFMVAR_H
+#define	_DEV_IC_BWFMVAR_H
+
+#include <sys/types.h>
+
+#include <sys/cdefs.h>
+#include <sys/device_if.h>
 #include <sys/pcq.h>
-#include <dev/firmload.h>
+#include <sys/queue.h>
+#include <sys/workqueue.h>
+
+#include <net/if_ether.h>
+
+#include <net80211/ieee80211.h>
+#include <net80211/ieee80211_proto.h>
+#include <net80211/ieee80211_var.h>
+
+struct ieee80211_key;
+struct mbuf;
 
 /* Chipcommon Core Chip IDs */
 #define BRCM_CC_43143_CHIP_ID		43143
@@ -245,3 +262,5 @@ void	bwfm_firmware_close(struct bwfm_firmware_context *);
 void *	bwfm_firmware_data(struct bwfm_firmware_context *,
 	    unsigned int, size_t *);
 const char *bwfm_firmware_description(unsigned int);
+
+#endif	/* _DEV_IC_BWFMVAR_H */
