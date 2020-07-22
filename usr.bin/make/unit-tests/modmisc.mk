@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.16 2020/07/19 20:49:44 rillig Exp $
+# $Id: modmisc.mk,v 1.20 2020/07/21 23:19:46 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -20,6 +20,9 @@ all:	mod-S mod-C mod-at-varname mod-at-resolve mod-at-dollar
 all:	mod-subst-dollar mod-loop-dollar
 all:	mod-C-limits
 all:	mod-assign
+all:	mod-assign-nested
+all:	mod-tu-space
+all:	mod-Q
 
 modsysv:
 	@echo "The answer is ${libfoo.a:L:libfoo.a=42}"
@@ -64,13 +67,16 @@ undefvar:
 	@echo @:${:U:@var@empty@}
 
 mod-S:
+	@echo $@:
 	@echo :${:Ua b b c:S,a b,,:Q}:
 	@echo :${:Ua b b c:S,a b,,1:Q}:
 	@echo :${:Ua b b c:S,a b,,W:Q}:
 	@echo :${:Ua b b c:S,b,,g:Q}:
 	@echo :${:U1 2 3 1 2 3:S,1 2,___,Wg:S,_,x,:Q}:
+	@echo ${:U12345:S,,sep,g:Q}
 
 mod-C:
+	@echo $@:
 	@echo :${:Ua b b c:C,a b,,:Q}:
 	@echo :${:Ua b b c:C,a b,,1:Q}:
 	@echo :${:Ua b b c:C,a b,,W:Q}:
@@ -156,3 +162,20 @@ mod-assign:
 	# The assignments happen in the global scope and thus are
 	# preserved even after the shell command has been run.
 	@echo $@: global: ${FIRST:Q}, ${LAST:Q}, ${APPENDED:Q}, ${RAN:Q}.
+
+mod-assign-nested:
+	@echo $@: ${1:?${THEN1::=then1${IT1::=t1}}:${ELSE1::=else1${IE1::=e1}}}${THEN1}${ELSE1}${IT1}${IE1}
+	@echo $@: ${0:?${THEN2::=then2${IT2::=t2}}:${ELSE2::=else2${IE2::=e2}}}${THEN2}${ELSE2}${IT2}${IE2}
+	@echo $@: ${SINK3:Q}
+	@echo $@: ${SINK4:Q}
+SINK3:=	${1:?${THEN3::=then3${IT3::=t3}}:${ELSE3::=else3${IE3::=e3}}}${THEN3}${ELSE3}${IT3}${IE3}
+SINK4:=	${0:?${THEN4::=then4${IT4::=t4}}:${ELSE4::=else4${IE4::=e4}}}${THEN4}${ELSE4}${IT4}${IE4}
+
+mod-tu-space:
+	# The :tu and :tl modifiers operate on the variable value
+	# as a single string, not as a list of words. Therefore,
+	# the adjacent spaces are preserved.
+	@echo $@: ${a   b:L:tu:Q}
+
+mod-Q:
+	@echo $@: new${.newline:Q}${.newline:Q}line

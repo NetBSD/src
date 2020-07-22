@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.c,v 1.32 2016/03/03 21:38:55 nat Exp $	*/
+/*	$NetBSD: tetris.c,v 1.33 2020/07/21 02:42:05 nia Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -207,7 +207,6 @@ main(int argc, char *argv[])
 	scr_init();
 	setup_board();
 
-	srandom(getpid());
 	scr_set();
 
 	pos = A_FIRST*B_COLS + (B_COLS/2)-1;

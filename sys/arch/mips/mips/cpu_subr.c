@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.50 2020/07/19 09:30:08 simonb Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.56 2020/07/21 06:01:10 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.50 2020/07/19 09:30:08 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.56 2020/07/21 06:01:10 simonb Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -38,19 +38,20 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.50 2020/07/19 09:30:08 simonb Exp $")
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
-#include <sys/cpu.h>
-#include <sys/intr.h>
 #include <sys/atomic.h>
+#include <sys/bitops.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
+#include <sys/idle.h>
+#include <sys/intr.h>
+#include <sys/ipi.h>
+#include <sys/kernel.h>
 #include <sys/lwp.h>
+#include <sys/module.h>
 #include <sys/proc.h>
 #include <sys/ras.h>
-#include <sys/module.h>
-#include <sys/bitops.h>
-#include <sys/idle.h>
+#include <sys/reboot.h>
 #include <sys/xcall.h>
-#include <sys/kernel.h>
-#include <sys/ipi.h>
 
 #include <uvm/uvm.h>
 
@@ -126,11 +127,13 @@ cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_package_id,
 	KASSERT(cpu_id < MAXCPUS);
 
 #ifdef MIPS64_OCTEON
-	vaddr_t exc_page = MIPS_UTLB_MISS_EXC_VEC + 0x1000*cpu_id;
-	__CTASSERT(sizeof(struct cpu_info) + sizeof(struct pmap_tlb_info) <= 0x1000 - 0x280);
+	const int exc_step = 1 << MIPS_EBASE_EXC_BASE_SHIFT;
+	vaddr_t exc_page = MIPS_UTLB_MISS_EXC_VEC + exc_step * cpu_id;
+	__CTASSERT(sizeof(struct cpu_info) + sizeof(struct pmap_tlb_info)
+	    <= exc_step - 0x280);
 
-	struct cpu_info * const ci = ((struct cpu_info *)(exc_page + 0x1000)) - 1;
-	memset((void *)exc_page, 0, PAGE_SIZE);
+	struct cpu_info * const ci = ((struct cpu_info *)(exc_page + exc_step)) - 1;
+	memset((void *)exc_page, 0, exc_step);
 
 	if (ti == NULL) {
 		ti = ((struct pmap_tlb_info *)ci) - 1;
@@ -971,6 +974,9 @@ cpu_boot_secondary_processors(void)
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
 
+	if ((boothowto & RB_MD1) != 0)
+		return;
+
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		if (CPU_IS_PRIMARY(ci))
 			continue;
@@ -986,8 +992,8 @@ cpu_boot_secondary_processors(void)
 		atomic_or_ulong(&ci->ci_flags, CPUF_RUNNING);
 		kcpuset_set(cpus_running, cpu_index(ci));
 		// Spin until the cpu calls idle_loop
-		for (u_int i = 0; i < 100; i++) {
-			if (kcpuset_isset(cpus_running, cpu_index(ci)))
+		for (u_int i = 0; i < 10000; i++) {
+			if (kcpuset_isset(kcpuset_running, cpu_index(ci)))
 				break;
 			delay(1000);
 		}

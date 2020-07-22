@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.171 2018/12/19 13:57:48 maxv Exp $	*/
+/*	$NetBSD: locore.s,v 1.173 2020/07/21 06:10:26 rin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -794,6 +794,7 @@ ENTRY_NOPROFILE(rtclock_intr)
 	movw	_C_LABEL(ipl2psl_table)+IPL_CLOCK*2,%sr
 					| raise SPL to splclock()
 	movl	%a6@,%a1		| unwind to frame in intr_dispatch
+					| XXX FIXME
 	lea	%a1@(28),%a1		| push pointer to interrupt frame
 	movl	%a1,%sp@-			| 28 = 16 for regs in intrhand,
 					|    + 4 for args to intr_dispatch
@@ -1367,6 +1368,7 @@ GLOBAL(sanity_check)
 	.long	0x18621862	| this is our stack overflow checker.
 
 	.space	4 * PAGE_SIZE
+	.align	4
 ASLOCAL(tmpstk)
 
 GLOBAL(machineid)

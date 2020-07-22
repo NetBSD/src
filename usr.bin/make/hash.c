@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.24 2020/07/19 15:42:25 riastradh Exp $	*/
+/*	$NetBSD: hash.c,v 1.25 2020/07/20 18:12:48 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: hash.c,v 1.24 2020/07/19 15:42:25 riastradh Exp $";
+static char rcsid[] = "$NetBSD: hash.c,v 1.25 2020/07/20 18:12:48 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)hash.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: hash.c,v 1.24 2020/07/19 15:42:25 riastradh Exp $");
+__RCSID("$NetBSD: hash.c,v 1.25 2020/07/20 18:12:48 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -108,12 +108,15 @@ static void RebuildTable(Hash_Table *);
 #define rebuildLimit 3
 
 /* The hash function(s) */
-/* This one matches Gosling's emacs */
+
+#ifndef HASH
+/* The default: this one matches Gosling's emacs */
 #define HASH(h, key, p) do { \
 	for (h = 0, p = key; *p;) \
 		h = (h << 5) - h + *p++; \
 	} while (0)
 
+#endif
 
 /*
  *---------------------------------------------------------
@@ -154,7 +157,7 @@ Hash_InitTable(Hash_Table *t, int numBuckets)
 			 continue;
 	}
 	t->numEntries = 0;
-	t->maxlen = 0;
+	t->maxchain = 0;
 	t->size = i;
 	t->mask = i - 1;
 	t->bucketPtr = hp = bmake_malloc(sizeof(*hp) * i);
@@ -236,17 +239,19 @@ Hash_FindEntry(Hash_Table *t, const char *key)
 	}
 	HASH(h, key, p);
 	p = key;
+	chainlen = 0;
+#ifdef DEBUG_HASH_LOOKUP
 	if (DEBUG(HASH))
 		fprintf(debug_file, "%s: %p h=%x key=%s\n", __func__,
 		    t, h, key);
-	chainlen = 0;
+#endif
 	for (e = t->bucketPtr[h & t->mask]; e != NULL; e = e->next) {
 		chainlen++;
 		if (e->namehash == h && strcmp(e->name, p) == 0)
 			break;
 	}
-	if (chainlen > t->maxlen)
-		t->maxlen = chainlen;
+	if (chainlen > t->maxchain)
+		t->maxchain = chainlen;
 	return e;
 }
 
@@ -292,10 +297,12 @@ Hash_CreateEntry(Hash_Table *t, const char *key, Boolean *newPtr)
 	HASH(h, key, p);
 	keylen = p - key;
 	p = key;
+	chainlen = 0;
+#ifdef DEBUG_HASH_LOOKUP
 	if (DEBUG(HASH))
 		fprintf(debug_file, "%s: %p h=%x key=%s\n", __func__,
 		    t, h, key);
-	chainlen = 0;
+#endif
 	for (e = t->bucketPtr[h & t->mask]; e != NULL; e = e->next) {
 		chainlen++;
 		if (e->namehash == h && strcmp(e->name, p) == 0) {
@@ -304,8 +311,8 @@ Hash_CreateEntry(Hash_Table *t, const char *key, Boolean *newPtr)
 			break;
 		}
 	}
-	if (chainlen > t->maxlen)
-		t->maxlen = chainlen;
+	if (chainlen > t->maxchain)
+		t->maxchain = chainlen;
 	if (e)
 		return e;
 
@@ -490,9 +497,9 @@ RebuildTable(Hash_Table *t)
 	}
 	free(oldhp);
 	if (DEBUG(HASH))
-		fprintf(debug_file, "%s: %p size=%d entries=%d maxlen=%d\n",
-		    __func__, t, t->size, t->numEntries, t->maxlen);
-	t->maxlen = 0;
+		fprintf(debug_file, "%s: %p size=%d entries=%d maxchain=%d\n",
+		    __func__, t, t->size, t->numEntries, t->maxchain);
+	t->maxchain = 0;
 }
 
 void Hash_ForEach(Hash_Table *t, void (*action)(void *, void *), void *data)
@@ -504,4 +511,12 @@ void Hash_ForEach(Hash_Table *t, void (*action)(void *, void *), void *data)
 	     e != NULL;
 	     e = Hash_EnumNext(&search))
 		action(Hash_GetValue(e), data);
+}
+
+void
+Hash_DebugStats(Hash_Table *t, const char *name)
+{
+    if (DEBUG(HASH))
+	fprintf(debug_file, "Hash_Table %s: size=%d numEntries=%d maxchain=%d\n",
+		name, t->size, t->numEntries, t->maxchain);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_intr.c,v 1.18 2020/07/17 21:59:30 jmcneill Exp $	*/
+/*	$NetBSD: octeon_intr.c,v 1.20 2020/07/20 14:05:51 jmcneill Exp $	*/
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.18 2020/07/17 21:59:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.20 2020/07/20 14:05:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -158,42 +158,19 @@ struct octeon_intrhand {
 static int octeon_send_ipi(struct cpu_info *, int);
 static int octeon_ipi_intr(void *);
 
-struct octeon_intrhand ipi_intrhands[2] = {
+struct octeon_intrhand ipi_intrhands[1] = {
 	[0] = {
 		.ih_func = octeon_ipi_intr,
 		.ih_arg = (void *)(uintptr_t)__BITS(15,0),
 		.ih_irq = CIU_INT_MBOX_15_0,
-		.ih_ipl = IPL_SCHED,
-	},
-	[1] = {
-		.ih_func = octeon_ipi_intr,
-		.ih_arg = (void *)(uintptr_t)__BITS(31,16),
-		.ih_irq = CIU_INT_MBOX_31_16,
 		.ih_ipl = IPL_HIGH,
 	},
-};
-
-#define	OCTEON_IPI_SCHED(n)	__BIT((n) + 0)
-#define	OCTEON_IPI_HIGH(n)	__BIT((n) + 16)
-
-static uint64_t octeon_ipi_mask[NIPIS] = {
-	[IPI_NOP]		= OCTEON_IPI_SCHED(IPI_NOP),
-	[IPI_AST]		= OCTEON_IPI_SCHED(IPI_AST),
-	[IPI_SHOOTDOWN]		= OCTEON_IPI_SCHED(IPI_SHOOTDOWN),
-	[IPI_SYNCICACHE]	= OCTEON_IPI_SCHED(IPI_SYNCICACHE),
-	[IPI_KPREEMPT]		= OCTEON_IPI_SCHED(IPI_KPREEMPT),
-	[IPI_SUSPEND]		= OCTEON_IPI_HIGH(IPI_SUSPEND),
-	[IPI_HALT]		= OCTEON_IPI_HIGH(IPI_HALT),
-	[IPI_XCALL]		= OCTEON_IPI_HIGH(IPI_XCALL),
-	[IPI_GENERIC]		= OCTEON_IPI_HIGH(IPI_GENERIC),
-	[IPI_WDOG]		= OCTEON_IPI_HIGH(IPI_WDOG),
 };
 #endif
 
 struct octeon_intrhand *octciu_intrs[NIRQS] = {
 #ifdef MULTIPROCESSOR
 	[CIU_INT_MBOX_15_0] = &ipi_intrhands[0],
-	[CIU_INT_MBOX_31_16] = &ipi_intrhands[1],
 #endif
 };
 
@@ -270,8 +247,7 @@ octeon_intr_init(struct cpu_info *ci)
 
 #ifdef MULTIPROCESSOR
 	// Enable the IPIs
-	cpu->cpu_ip3_enable[0] |= __BIT(CIU_INT_MBOX_15_0);
-	cpu->cpu_ip4_enable[0] |= __BIT(CIU_INT_MBOX_31_16);
+	cpu->cpu_ip4_enable[0] |= __BIT(CIU_INT_MBOX_15_0);
 #endif
 
 	if (ci->ci_dev) {
@@ -518,7 +494,7 @@ octeon_ipi_intr(void *arg)
 	struct cpu_softc * const cpu = ci->ci_softc;
 	uint32_t ipi_mask = (uintptr_t) arg;
 
-	KASSERTMSG((ipi_mask & __BITS(31,16)) == 0 || ci->ci_cpl >= IPL_SCHED,
+	KASSERTMSG(ci->ci_cpl == IPL_HIGH,
 	    "ipi_mask %#"PRIx32" cpl %d", ipi_mask, ci->ci_cpl);
 
 	ipi_mask &= mips3_ld(cpu->cpu_mbox_set);
@@ -573,7 +549,7 @@ octeon_send_ipi(struct cpu_info *ci, int req)
 		return -1;
 
 	struct cpu_softc * const cpu = ci->ci_softc;
-	const uint64_t ipi_mask = octeon_ipi_mask[req];
+	const uint32_t ipi_mask = __BIT(req);
 
 	atomic_or_64(&ci->ci_request_ipis, ipi_mask);
 

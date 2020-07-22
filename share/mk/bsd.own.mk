@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1200 2020/07/04 21:02:16 chs Exp $
+#	$NetBSD: bsd.own.mk,v 1.1202 2020/07/21 14:42:44 tsutsui Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1517,17 +1517,10 @@ X11SRCDIR.${_proto}proto?=		${X11SRCDIRMIT}/${_proto}proto/dist
 .if \
     ${MACHINE} == "alpha"	|| \
     ${MACHINE} == "amiga"	|| \
-    ${MACHINE} == "ews4800mips"	|| \
-    ${MACHINE} == "hpcarm"	|| \
-    ${MACHINE} == "hpcmips"	|| \
-    ${MACHINE} == "hpcsh"	|| \
     ${MACHINE} == "mac68k"	|| \
     ${MACHINE} == "netwinder"	|| \
-    ${MACHINE} == "newsmips"	|| \
     ${MACHINE} == "sgimips"	|| \
-    ${MACHINE} == "vax"		|| \
-    ${MACHINE} == "x68k"	|| \
-    ${MACHINE} == "zaurus"
+    ${MACHINE} == "vax"
 HAVE_XORG_SERVER_VER?=110
 .else
 HAVE_XORG_SERVER_VER?=120
