@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.13 2019/12/01 15:34:44 ad Exp $	*/
+/*	$NetBSD: ipifuncs.c,v 1.14 2020/07/22 15:00:49 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.13 2019/12/01 15:34:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.14 2020/07/22 15:00:49 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -152,6 +152,12 @@ ipi_process(struct cpu_info *ci, uint64_t ipi_mask)
 		ci->ci_evcnt_per_ipi[IPI_GENERIC].ev_count++;
 		ipi_cpu_handler();
 	}
+#ifdef __HAVE_PREEMPTION
+	if (ipi_mask & __BIT(IPI_KPREEMPT)) {
+		ci->ci_evcnt_per_ipi[IPI_KPREEMPT].ev_count++;
+		ipi_kpreempt(ci);
+	}
+#endif
 }
 
 void
