@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.28 2019/12/27 09:41:48 msaitoh Exp $	*/
+/*	$NetBSD: sfas.c,v 1.29 2020/07/22 01:24:39 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.28 2019/12/27 09:41:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.29 2020/07/22 01:24:39 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1023,7 +1023,7 @@ sfas_midaction(struct sfas_softc *dev, sfas_regmap_p rp, struct nexus *nexus)
 
 		case SFAS_NS_RESET:
 			/*
-			 * We were reseting this SCSI-unit. Clean up the
+			 * We were resetting this SCSI-unit. Clean up the
 			 * nexus struct.
 			 */
 			dev->sc_led(dev, 0);

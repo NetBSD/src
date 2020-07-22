@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 2016/12/22 14:47:57 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14 2020/07/22 01:24:39 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2016/12/22 14:47:57 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14 2020/07/22 01:24:39 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/boot_flag.h>
@@ -278,7 +278,7 @@ cpu_reboot(int howto, char *bootstr)
 		cnpollc(0);
 	}
 
-	printf("reseting board...\n\n");
+	printf("resetting board...\n\n");
 	mips_icache_sync_all();
 	mips_dcache_wbinv_all();
 

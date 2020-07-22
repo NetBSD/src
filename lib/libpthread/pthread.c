@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.177 2020/06/14 21:31:11 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.178 2020/07/22 01:24:39 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.177 2020/06/14 21:31:11 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.178 2020/07/22 01:24:39 msaitoh Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -203,7 +203,7 @@ pthread__init(void)
 
 	/*
 	 * Allocate pthread_keys descriptors before
-	 * reseting __uselibcstub because otherwise
+	 * resetting __uselibcstub because otherwise
 	 * malloc() will call pthread_keys_create()
 	 * while pthread_keys descriptors are not
 	 * yet allocated.

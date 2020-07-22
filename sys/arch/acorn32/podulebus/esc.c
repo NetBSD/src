@@ -1,4 +1,4 @@
-/*	$NetBSD: esc.c,v 1.32 2019/12/27 09:41:48 msaitoh Exp $	*/
+/*	$NetBSD: esc.c,v 1.33 2020/07/22 01:24:39 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.32 2019/12/27 09:41:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.33 2020/07/22 01:24:39 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1102,7 +1102,7 @@ esc_midaction(struct esc_softc *dev, esc_regmap_p rp, struct nexus *nexus)
 
 		case ESC_NS_RESET:
 			/*
-			 * We were reseting this SCSI-unit. Clean up the
+			 * We were resetting this SCSI-unit. Clean up the
 			 * nexus struct.
 			 */
 			dev->sc_led(dev, 0);

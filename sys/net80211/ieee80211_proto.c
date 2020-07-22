@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.c,v 1.35 2020/07/13 05:40:25 mrg Exp $	*/
+/*	$NetBSD: ieee80211_proto.c,v 1.36 2020/07/22 01:24:40 msaitoh Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.23 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.35 2020/07/13 05:40:25 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.36 2020/07/22 01:24:40 msaitoh Exp $");
 #endif
 
 /*
@@ -143,7 +143,7 @@ ieee80211_proto_detach(struct ieee80211com *ic)
 {
 
 	/*
-	 * This should not be needed as we detach when reseting
+	 * This should not be needed as we detach when resetting
 	 * the state but be conservative here since the
 	 * authenticator may do things like spawn kernel threads.
 	 */

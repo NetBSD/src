@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.25 2016/12/22 14:47:56 cherry Exp $ */
+/* $NetBSD: machdep.c,v 1.26 2020/07/22 01:24:39 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2016/12/22 14:47:56 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2020/07/22 01:24:39 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -482,7 +482,7 @@ cpu_reboot(int howto, char *bootstr)
 		cnpollc(0);
 	}
 
-	printf("reseting board...\n\n");
+	printf("resetting board...\n\n");
 	mips_icache_sync_all();
 	mips_dcache_wbinv_all();
 	SW_WRITE(SW_SFTRES_REG, 0);			/* reset */
