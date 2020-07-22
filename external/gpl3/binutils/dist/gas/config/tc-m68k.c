@@ -2794,7 +2794,7 @@ m68k_ip (char *instring)
 		      && opP->index.reg <= ZDATA7)
 		    nextword |= (opP->index.reg - ZDATA0) << 12;
 		  else if (opP->index.reg >= ZADDR0
-			   || opP->index.reg <= ZADDR7)
+			   && opP->index.reg <= ZADDR7)
 		    nextword |= (opP->index.reg - ZADDR0 + 8) << 12;
 		}
 
