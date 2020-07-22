@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: bootconf.sh,v 1.16 2020/07/04 06:24:53 skrll Exp $
+# $NetBSD: bootconf.sh,v 1.17 2020/07/22 16:50:41 martin Exp $
 #
 
 # PROVIDE: bootconf
-# REQUIRE: mountcritlocal
+# REQUIRE: MOUNTCRITLOCAL
 # KEYWORD: interactive
 
 $_rc_subr_loaded . /etc/rc.subr
