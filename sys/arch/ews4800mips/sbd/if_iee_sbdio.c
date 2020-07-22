@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iee_sbdio.c,v 1.12 2015/06/23 21:00:23 matt Exp $	*/
+/*	$NetBSD: if_iee_sbdio.c,v 1.13 2020/07/22 01:24:40 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iee_sbdio.c,v 1.12 2015/06/23 21:00:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iee_sbdio.c,v 1.13 2020/07/22 01:24:40 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -160,7 +160,7 @@ iee_sbdio_reset(struct iee_softc *sc)
 	cmd = IEE_PORT_SCP | IEE_PHYS_SHMEM(sc->sc_scp_off);
 
 	/* Initiate a Hardware reset. */
-	printf("%s: reseting chip... ", device_xname(sc->sc_dev));
+	printf("%s: resetting chip... ", device_xname(sc->sc_dev));
 	iee_sbdio_chip_reset(sc);
 
 	/* Set SCP address to CU */

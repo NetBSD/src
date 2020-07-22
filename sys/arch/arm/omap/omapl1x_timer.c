@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: omapl1x_timer.c,v 1.1 2013/10/02 16:48:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapl1x_timer.c,v 1.2 2020/07/22 01:24:39 msaitoh Exp $");
 
 #include "opt_timer.h"
 
@@ -486,7 +486,7 @@ omapl1xtimer_attach (device_t parent, device_t self, void *aux)
 	wdt.wdt_addr = OMAPL1X_WDT_ADDR;
 	wdt.wdt_size = OMAPL1X_WDT_SIZE;
 
-	/* Map WDT registers. We want to use it for reseting the chip */
+	/* Map WDT registers. We want to use it for resetting the chip */
 	if (bus_space_map(wdt.wdt_iot, wdt.wdt_addr,
 			  wdt.wdt_size, 0, &wdt.wdt_ioh)) {
 		aprint_error_dev(self, "can't map wdt mem space\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: ventel.c,v 1.16 2006/12/14 17:09:43 christos Exp $	*/
+/*	$NetBSD: ventel.c,v 1.17 2020/07/22 01:24:40 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ventel.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: ventel.c,v 1.16 2006/12/14 17:09:43 christos Exp $");
+__RCSID("$NetBSD: ventel.c,v 1.17 2020/07/22 01:24:40 msaitoh Exp $");
 #endif /* not lint */
 
 /*
@@ -221,7 +221,7 @@ vensync(int fd)
 	(void)ioctl(FD, TIOCSDTR, 0);
 	while (already < MAXRETRY) {
 		/*
-		 * After reseting the modem, send it two \r's to
+		 * After resetting the modem, send it two \r's to
 		 * autobaud on. Make sure to delay between them
 		 * so the modem can frame the incoming characters.
 		 */
