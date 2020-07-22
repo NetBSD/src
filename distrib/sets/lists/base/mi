@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1255 2020/07/08 13:39:04 thorpej Exp $
+# $NetBSD: mi,v 1.1256 2020/07/22 19:02:01 roy Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -492,6 +492,9 @@
 ./libexec/resolvconf				base-resolvconf-root
 ./libexec/resolvconf/dnsmasq			base-resolvconf-root
 ./libexec/resolvconf/libc			base-resolvconf-root
+./libexec/resolvconf/libc.d			base-resolvconf-root
+./libexec/resolvconf/libc.d/avahi-daemon	base-resolvconf-root
+./libexec/resolvconf/libc.d/mdnsd		base-resolvconf-root
 ./libexec/resolvconf/named			base-resolvconf-root
 ./libexec/resolvconf/pdns_recursor		base-resolvconf-root
 ./libexec/resolvconf/pdnsd			base-resolvconf-root
