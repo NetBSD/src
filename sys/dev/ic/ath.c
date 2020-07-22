@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.131 2020/06/12 15:34:20 thorpej Exp $	*/
+/*	$NetBSD: ath.c,v 1.132 2020/07/22 01:24:40 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.131 2020/06/12 15:34:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.132 2020/07/22 01:24:40 msaitoh Exp $");
 #endif
 
 /*
@@ -403,7 +403,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	/*
 	 * Allocate hardware transmit queues: one queue for
 	 * beacon frames and one data queue for each QoS
-	 * priority.  Note that the hal handles reseting
+	 * priority.  Note that the hal handles resetting
 	 * these queues at the needed time.
 	 *
 	 * XXX PS-Poll
