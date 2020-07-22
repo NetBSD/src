@@ -1,4 +1,4 @@
-/* $NetBSD: bwfmreg.h,v 1.6 2019/10/28 06:37:51 mlelstv Exp $ */
+/* $NetBSD: bwfmreg.h,v 1.7 2020/07/22 17:21:25 riastradh Exp $ */
 /* $OpenBSD: bwfmreg.h,v 1.16 2018/02/07 21:44:09 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -16,6 +16,19 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#ifndef	_DEV_IC_BWFMREG_H
+#define	_DEV_IC_BWFMREG_H
+
+#include <sys/param.h>
+#include <sys/types.h>
+
+#include <sys/cdefs.h>
+
+#include <net/if.h>
+#include <net/if_ether.h>
+
+#include <net80211/ieee80211.h>
 
 /* SDIO registers */
 #define BWFM_SDIO_FUNC1_SBADDRLOW		0x1000A
@@ -785,3 +798,5 @@ struct bwfm_event {
 	struct bwfm_ethhdr hdr;
 	struct bwfm_event_msg msg;
 } __packed;
+
+#endif	/* _DEV_IC_BWFMREG_H */
