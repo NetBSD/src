@@ -1,4 +1,4 @@
-# $NetBSD: t_repeated_updown.sh,v 1.3 2020/06/27 04:15:17 jruoho Exp $
+# $NetBSD: t_repeated_updown.sh,v 1.4 2020/07/22 05:47:24 martin Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -42,14 +42,12 @@ repeated_updown_body() {
 
 	for i in $(ifconfig -l); do
 
-		state="up"
-		ifconfig -s $i
+		# skip all interfaces that are already marked UP
+		ifconfig $i | fgrep -q UP >/dev/null && continue
 
-		if [ $? -eq 1 ]; then
-			state="down"
-			ifconfig $i up
-			echo "Initialized $i up"
-		fi
+		state="down"
+		ifconfig $i up
+		echo "Initialized $i up"
 
 		while [ $n -gt 0 ]; do
 			ifconfig $i down
