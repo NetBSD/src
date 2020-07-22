@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.221 2020/07/03 11:03:42 roy Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.222 2020/07/22 19:02:01 roy Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -92,6 +92,7 @@
 ./libexec/devpubd-hooks
 ./libexec/dhcpcd-hooks
 ./libexec/resolvconf
+./libexec/resolvconf/libc.d
 ./mnt
 ./rescue
 ./root
