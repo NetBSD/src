@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_usb.c,v 1.14 2020/07/22 17:17:37 riastradh Exp $ */
+/* $NetBSD: if_bwfm_usb.c,v 1.15 2020/07/22 17:18:10 riastradh Exp $ */
 /* $OpenBSD: if_bwfm_usb.c,v 1.2 2017/10/15 14:55:13 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -18,34 +18,36 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bwfm_usb.c,v 1.14 2020/07/22 17:17:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bwfm_usb.c,v 1.15 2020/07/22 17:18:10 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/types.h>
+
 #include <sys/buf.h>
+#include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/device.h>
+#include <sys/mutex.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
-#include <sys/mutex.h>
+#include <sys/systm.h>
 #include <sys/workqueue.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
 #include <net/if_dl.h>
-#include <net/if_media.h>
 #include <net/if_ether.h>
+#include <net/if_media.h>
 
 #include <netinet/in.h>
 
 #include <net80211/ieee80211_var.h>
 
 #include <dev/usb/usb.h>
+#include <dev/usb/usbdevs.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdivar.h>
-#include <dev/usb/usbdevs.h>
 
 #include <dev/ic/bwfmreg.h>
 #include <dev/ic/bwfmvar.h>
@@ -53,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bwfm_usb.c,v 1.14 2020/07/22 17:17:37 riastradh E
 static const struct bwfm_firmware_selector bwfm_usb_fwtab[] = {
 	BWFM_FW_ENTRY(BRCM_CC_43143_CHIP_ID,
 		      BWFM_FWSEL_ALLREVS, "brcmfmac43143"),
-	
+
 	BWFM_FW_ENTRY(BRCM_CC_43235_CHIP_ID,
 		      BWFM_FWSEL_REV_EQ(3), "brcmfmac43236b"),
 	BWFM_FW_ENTRY(BRCM_CC_43236_CHIP_ID,
@@ -63,12 +65,12 @@ static const struct bwfm_firmware_selector bwfm_usb_fwtab[] = {
 
 	BWFM_FW_ENTRY(BRCM_CC_43242_CHIP_ID,
 		      BWFM_FWSEL_ALLREVS, "brcmfmac43242a"),
-	
+
 	BWFM_FW_ENTRY(BRCM_CC_43566_CHIP_ID,
 		      BWFM_FWSEL_ALLREVS, "brcmfmac43569"),
 	BWFM_FW_ENTRY(BRCM_CC_43569_CHIP_ID,
 		      BWFM_FWSEL_ALLREVS, "brcmfmac43569"),
-	
+
 	BWFM_FW_ENTRY(CY_CC_4373_CHIP_ID,
 		      BWFM_FWSEL_ALLREVS, "brcmfmac4373"),
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.109 2020/07/22 17:17:36 riastradh Exp $	*/
+/*	$NetBSD: if_se.c,v 1.110 2020/07/22 17:18:10 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.109 2020/07/22 17:17:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.110 2020/07/22 17:18:10 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -68,48 +68,47 @@ __KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.109 2020/07/22 17:17:36 riastradh Exp $"
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/callout.h>
-#include <sys/syslog.h>
-#include <sys/kernel.h>
-#include <sys/file.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
+#include <sys/types.h>
+
 #include <sys/buf.h>
-#include <sys/uio.h>
-#include <sys/malloc.h>
-#include <sys/errno.h>
-#include <sys/device.h>
-#include <sys/disklabel.h>
-#include <sys/disk.h>
-#include <sys/proc.h>
+#include <sys/callout.h>
 #include <sys/conf.h>
+#include <sys/device.h>
+#include <sys/disk.h>
+#include <sys/disklabel.h>
+#include <sys/errno.h>
+#include <sys/file.h>
+#include <sys/ioctl.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
 #include <sys/mutex.h>
+#include <sys/proc.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/syslog.h>
+#include <sys/systm.h>
+#include <sys/uio.h>
 #include <sys/workqueue.h>
 
-#include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsi_ctron_ether.h>
 #include <dev/scsipi/scsiconf.h>
+#include <dev/scsipi/scsipi_all.h>
 
-#include <sys/mbuf.h>
-
-#include <sys/socket.h>
+#include <net/bpf.h>
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
-#include <net/bpf.h>
 
 #ifdef INET
-#include <netinet/in.h>
 #include <netinet/if_inarp.h>
+#include <netinet/in.h>
 #endif
-
 
 #ifdef NETATALK
 #include <netatalk/at.h>
 #endif
-
 
 #define SETIMEOUT	1000
 #define	SEOUTSTANDING	4
