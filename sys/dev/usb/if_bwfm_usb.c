@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_usb.c,v 1.13 2020/05/31 11:12:36 jdolecek Exp $ */
+/* $NetBSD: if_bwfm_usb.c,v 1.14 2020/07/22 17:17:37 riastradh Exp $ */
 /* $OpenBSD: if_bwfm_usb.c,v 1.2 2017/10/15 14:55:13 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bwfm_usb.c,v 1.13 2020/05/31 11:12:36 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bwfm_usb.c,v 1.14 2020/07/22 17:17:37 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -30,7 +30,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_bwfm_usb.c,v 1.13 2020/05/31 11:12:36 jdolecek Ex
 #include <sys/socket.h>
 #include <sys/mutex.h>
 #include <sys/workqueue.h>
-#include <sys/pcq.h>
 
 #include <net/bpf.h>
 #include <net/if.h>

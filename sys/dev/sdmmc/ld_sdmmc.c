@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_sdmmc.c,v 1.38 2020/05/24 17:26:18 riastradh Exp $	*/
+/*	$NetBSD: ld_sdmmc.c,v 1.39 2020/07/22 17:17:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.38 2020/05/24 17:26:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.39 2020/07/22 17:17:37 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.38 2020/05/24 17:26:18 riastradh Exp 
 #include <sys/kthread.h>
 #include <sys/syslog.h>
 #include <sys/module.h>
-#include <sys/pcq.h>
+#include <sys/kmem.h>
 
 #include <dev/ldvar.h>
 

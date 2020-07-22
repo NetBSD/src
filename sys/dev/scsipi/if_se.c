@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.108 2020/06/29 23:04:57 riastradh Exp $	*/
+/*	$NetBSD: if_se.c,v 1.109 2020/07/22 17:17:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.108 2020/06/29 23:04:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.109 2020/07/22 17:17:36 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -85,7 +85,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.108 2020/06/29 23:04:57 riastradh Exp $"
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/mutex.h>
-#include <sys/pcq.h>
 #include <sys/workqueue.h>
 
 #include <dev/scsipi/scsipi_all.h>
