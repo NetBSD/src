@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2016/06/10 03:42:14 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2020/07/22 19:26:37 tsutsui Exp $
 
 .include "../Makefile.common"
 
@@ -9,6 +9,12 @@ SUBDIR+= xfree86
 
 .if ${XSERVER_X68K} != "no"
 SUBDIR+=netbsd/x68k
+.endif
+
+.if ${XSERVER_XSUN} != "no" || \
+    ${XSERVER_XSUNMONO} != "no" || \
+    ${XSERVER_XSUN24} != "no"
+SUBDIR+=sun
 .endif
 
 .if 0
@@ -50,10 +56,6 @@ SUBDIR+=netbsd/macppc
 
 .if ${XSERVER_XNEWSMIPS} != "no"
 SUBDIR+=netbsd/newsmips
-.endif
-
-.if ${XSERVER_XSUN} != "no"
-SUBDIR+=sun
 .endif
 
 .if ${XSERVER_XVFB} != "no"
