@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2020/07/18 16:07:15 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.8 2020/07/22 21:25:03 tsutsui Exp $
 
 .include <bsd.own.mk>
 
@@ -28,20 +28,13 @@ SRCS+=	miinitext.c
 .PATH:	${X11SRCDIR.xorg-server}/fb
 SRCS+=	fbcmap_mi.c
 
-CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
-		-I${X11SRCDIR.xorg-server}/hw/netbsd/x68k \
-		-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
-		-I${X11SRCDIR.xorg-server}/fb \
-		-I${X11SRCDIR.xorg-server}/mi \
-		-I${X11SRCDIR.xorg-server}/render \
-		-I${X11SRCDIR.xorg-server}/present \
-		-I${X11SRCDIR.xorg-server}/miext/damage \
-		-I${DESTDIR}${X11INCDIR}/X11
+CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/netbsd/x68k \
+		${X11INCS.DIX}
 
 CPPFLAGS+=	-UXFree86LOADER -UXF86VIDMODE -UXFreeXDGA -UXF86MISC \
 		-UXF86DRI -UXF86BIGFONT
 
-CPPFLAGS+=	-DHAVE_DIX_CONFIG_H
+CPPFLAGS+=	-UHAVE_XORG_CONFIG_H
 CPPFLAGS+=	-DHAVE_STRCASECMP
 
 CPPFLAGS.x68kConfig.c=	 -DX11_LIBDIR=\"${X11ETCDIR}\"
