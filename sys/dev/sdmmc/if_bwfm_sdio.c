@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_sdio.c,v 1.21 2020/07/20 06:47:02 mrg Exp $ */
+/* $NetBSD: if_bwfm_sdio.c,v 1.22 2020/07/22 17:22:43 riastradh Exp $ */
 /* $OpenBSD: if_bwfm_sdio.c,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -27,6 +27,7 @@
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/mutex.h>
+#include <sys/kmem.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
