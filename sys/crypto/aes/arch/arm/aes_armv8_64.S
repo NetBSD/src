@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_armv8_64.S,v 1.5 2020/07/19 07:32:43 ryo Exp $	*/
+/*	$NetBSD: aes_armv8_64.S,v 1.6 2020/07/22 06:15:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -827,7 +827,7 @@ aesarmv8_xts_mulx:
 	 *     carried into x^128 = x^7 + x^2 + x + 1.
 	 */
 	adrl	x0, xtscarry
-	cmlt	v1.2d, v31.2d, #0 /* v1.2d[i] := -1 if v9.2d[i] < 0, else 0 */
+	cmlt	v1.2d, v31.2d, #0 /* v1.2d[i] := -1 if v31.2d[i] < 0, else 0 */
 	ldr	q0, [x0]		/* q0 := xtscarry */
 	ext	v1.16b, v1.16b, v1.16b, #8 /* swap halves of q1 */
 	shl	v31.2d, v31.2d, #1	/* shift */
