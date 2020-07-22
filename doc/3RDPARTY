@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1735 2020/07/03 10:47:29 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.1736 2020/07/22 19:03:15 roy Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1044,12 +1044,12 @@ Location:	external/bsd/openpam/dist
 Notes:
 
 Package:	openresolv
-Version:	3.10.0
-Current Vers:	3.10.0
+Version:	3.11.0
+Current Vers:	3.11.0
 Maintainer:	roy
 Archive Site:	ftp://roy.marples.name/pub/openresolv/
 Home Page:	http://roy.marples.name/projects/openresolv/
-Date:		2020-01-27
+Date:		2020-07-22
 Mailing List: 	openresolv-discuss@marples.name
 License:	BSD (2-clause)
 Location:	external/bsd/openresolv/dist
