@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_sdmmc.c,v 1.39 2020/07/22 17:17:37 riastradh Exp $	*/
+/*	$NetBSD: ld_sdmmc.c,v 1.40 2020/07/22 17:18:10 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
@@ -28,27 +28,29 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.39 2020/07/22 17:17:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.40 2020/07/22 17:18:10 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/device.h>
+#include <sys/types.h>
+
 #include <sys/buf.h>
 #include <sys/bufq.h>
 #include <sys/bus.h>
-#include <sys/endian.h>
-#include <sys/dkio.h>
+#include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
-#include <sys/kthread.h>
-#include <sys/syslog.h>
-#include <sys/module.h>
+#include <sys/dkio.h>
+#include <sys/endian.h>
+#include <sys/kernel.h>
 #include <sys/kmem.h>
+#include <sys/kthread.h>
+#include <sys/module.h>
+#include <sys/syslog.h>
+#include <sys/systm.h>
 
 #include <dev/ldvar.h>
 
