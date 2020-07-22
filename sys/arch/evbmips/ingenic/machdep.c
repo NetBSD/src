@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 2017/05/21 06:49:12 skrll Exp $ */
+/*	$NetBSD: machdep.c,v 1.15 2020/07/22 01:24:39 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14 2017/05/21 06:49:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2020/07/22 01:24:39 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -329,7 +329,7 @@ haltsys:
 		cnpollc(0);
 	}
 
-	printf("reseting board...\n\n");
+	printf("resetting board...\n\n");
 	mips_icache_sync_all();
 	mips_dcache_wbinv_all();
 	ingenic_reset();

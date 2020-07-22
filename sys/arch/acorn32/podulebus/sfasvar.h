@@ -1,4 +1,4 @@
-/* $NetBSD: sfasvar.h,v 1.7 2012/10/27 17:17:24 chs Exp $ */
+/* $NetBSD: sfasvar.h,v 1.8 2020/07/22 01:24:39 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -129,7 +129,7 @@ struct nexus {
 #define SFAS_NS_RESELECTED	10	/* We was reselected */
 #define SFAS_NS_DONE		11	/* Done. Prephsase to FINISHED */
 #define SFAS_NS_FINISHED	12	/* Realy done. Call scsi_done */
-#define SFAS_NS_RESET		13	/* We are reseting this unit */
+#define SFAS_NS_RESET		13	/* We are resetting this unit */
 
 /* SCSI nexus flags */
 #define SFAS_NF_UNIT_BUSY	0x0001	/* Unit is not available */
