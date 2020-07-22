@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2718 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2719 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -258,3 +258,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		[simonb 20200715]
 	libc: Added ppoll() wrapper around native pollts(2) [kamil 20200717]
 	openresolv: Import version 3.11.0 [roy 20200722]
+	sun3: Add Xorg-Server-1.20'fied ancient monolithc Xsun servers.
+		[tsutsui 20200722]
