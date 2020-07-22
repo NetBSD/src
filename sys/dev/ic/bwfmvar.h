@@ -1,4 +1,4 @@
-/* $NetBSD: bwfmvar.h,v 1.11 2020/07/22 17:21:25 riastradh Exp $ */
+/* $NetBSD: bwfmvar.h,v 1.12 2020/07/22 17:23:52 riastradh Exp $ */
 /* $OpenBSD: bwfmvar.h,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -24,7 +24,6 @@
 
 #include <sys/cdefs.h>
 #include <sys/device_if.h>
-#include <sys/pcq.h>
 #include <sys/queue.h>
 #include <sys/workqueue.h>
 
@@ -36,6 +35,7 @@
 
 struct ieee80211_key;
 struct mbuf;
+struct pool_cache;
 
 /* Chipcommon Core Chip IDs */
 #define BRCM_CC_43143_CHIP_ID		43143
@@ -223,8 +223,7 @@ struct bwfm_softc {
 	int			 sc_tx_timer;
 
 	bool			 sc_if_attached;
-	struct bwfm_task	 sc_task[BWFM_TASK_COUNT];
-	pcq_t			*sc_freetask;
+	struct pool_cache	*sc_freetask;
 	struct workqueue	*sc_taskq;
 
 	int			(*sc_newstate)(struct ieee80211com *,
