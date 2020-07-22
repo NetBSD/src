@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20 2020/07/19 08:53:24 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21 2020/07/22 13:24:17 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -114,7 +114,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2020/07/19 08:53:24 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2020/07/22 13:24:17 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2020/07/19 08:53:24 simonb Exp $");
 #include <mips/cavium/include/iobusvar.h>
 #include <mips/cavium/include/bootbusvar.h>
 
-#include <mips/cavium/dev/octeon_uartreg.h>
+#include <mips/cavium/dev/octeon_uartvar.h>
 #include <mips/cavium/dev/octeon_ciureg.h>
 #include <mips/cavium/dev/octeon_gpioreg.h>
 
@@ -202,6 +202,15 @@ mach_init(uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3)
 
 	cpu_reset_address = octeon_soft_reset;
 
+#if 1 || defined(OCTEON_EARLY_CONSOLE)	/* XXX - remove "1 ||" when MP works */
+	/*
+	 * Set up very conservative timer params so we can use delay(9)
+	 * early.  It doesn't matter if we delay too long at this stage.
+	 */
+	octeon_cal_timer(2000 * 1000 * 1000);
+	octuart_early_cnattach(comcnrate);
+#endif /* OCTEON_EARLY_CONSOLE */
+
 	KASSERT(MIPS_XKPHYS_P(arg3));
 	btinfo_paddr = mips3_ld(arg3 + OCTEON_BTINFO_PADDR_OFFSET);
 
@@ -240,8 +249,9 @@ mach_init(uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3)
 
 #ifdef DEBUG
 	/* Show a couple of boot desc/info params for positive feedback */
-	printf(">> boot desc eclock = %d\n", octeon_btdesc.obt_eclock);
-	printf(">> boot info board  = %d\n", octeon_btinfo.obt_board_type);
+	printf(">> boot desc eclock    = %d\n", octeon_btdesc.obt_eclock);
+	printf(">> boot desc core mask = %#x\n", octeon_btinfo.obt_core_mask);
+	printf(">> boot info board     = %d\n", octeon_btinfo.obt_board_type);
 #endif /* DEBUG */
 
 	mach_init_memory();
