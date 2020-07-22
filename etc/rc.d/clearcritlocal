@@ -1,0 +1,26 @@
+#!/bin/sh
+#
+# $NetBSD: clearcritlocal,v 1.1 2020/07/22 16:50:41 martin Exp $
+#
+
+# REQUIRE: mountcritlocal
+# BEFORE: MOUNTCRITLOCAL
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name="clearcritlocal"
+start_cmd="clearcritlocal_start"
+stop_cmd=":"
+
+clearcritlocal_start()
+{
+	#	clean up left-over files.
+	#	this could include the cleanup of lock files and /var/run, etc.
+	#
+	rm -f /etc/nologin /var/spool/lock/LCK.*
+	test -d /var/run && (cd /var/run && rm -rf -- *)
+	return 0
+}
+
+load_rc_config $name
+run_rc_command "$1"

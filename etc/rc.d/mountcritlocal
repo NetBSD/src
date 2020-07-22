@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: mountcritlocal,v 1.15 2016/07/23 01:38:35 kre Exp $
+# $NetBSD: mountcritlocal,v 1.16 2020/07/22 16:50:41 martin Exp $
 #
 
 # PROVIDE: mountcritlocal
@@ -19,19 +19,6 @@ mountcritlocal_start()
 	#	This usually includes /var.
 	#
 	mount_critical_filesystems local || return $?
-
-	#	clean up left-over files.
-	#	this could include the cleanup of lock files and /var/run, etc.
-	#
-	rm -f /etc/nologin /var/spool/lock/LCK.*
-	test -d /var/run && (cd /var/run && rm -rf -- *)
-
-	#       create LVM locking directory, it needs to be owned by operator
-	#	group and has parmissions to allow lock file creation.
-	#
-	mkdir -p /var/run/lvm
-	chown root:operator /var/run/lvm
-	chmod 770 /var/run/lvm
 	return 0
 }
 

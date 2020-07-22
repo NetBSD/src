@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: rc,v 1.173 2017/03/20 16:02:48 christos Exp $
+# $NetBSD: rc,v 1.174 2020/07/22 16:50:41 martin Exp $
 #
 # rc --
 #	Run the scripts in /etc/rc.d with rcorder, and log output
@@ -191,7 +191,7 @@ rc_real_work()
 #  * Scripts run during the boot may clear /tmp and/var/run, so even
 #    if they are writable, using those directories too early may be
 #    problematic.  We assume that it's safe to write to our log file
-#    after the mountcritlocal script has run.
+#    after the MOUNTCRITLOCAL script has run.
 #
 #  * /usr/bin/tee cannot be used because the /usr file system may not
 #    be mounted early in the boot.
@@ -322,10 +322,10 @@ rc_postprocess_metadata()
 				printf "%s\n" "$msg"
 			fi
 		fi
-		# After the mountcritlocal script has finished, it's
+		# After the MOUNTCRITLOCAL script has finished, it's
 		# OK to flush the log to disk
 		case "$1" in
-		*/mountcritlocal)
+		*/MOUNTCRITLOCAL)
 			rc_log_flush OK
 			;;
 		esac

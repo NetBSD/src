@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.260 2020/06/15 01:57:30 christos Exp $
+# $NetBSD: mi,v 1.261 2020/07/22 16:50:41 martin Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -201,6 +201,7 @@
 ./etc/rc.d/btuartd				etc-obsolete		obsolete
 ./etc/rc.d/ccd					etc-sys-rc
 ./etc/rc.d/cgd					etc-sys-rc
+./etc/rc.d/clearcritlocal				etc-sys-rc
 ./etc/rc.d/cleartmp				etc-sys-rc
 ./etc/rc.d/cron					etc-cron-rc
 ./etc/rc.d/devpubd				etc-sys-rc
@@ -243,6 +244,7 @@
 ./etc/rc.d/lkm1					etc-obsolete		obsolete
 ./etc/rc.d/lkm2					etc-obsolete		obsolete
 ./etc/rc.d/lkm3					etc-obsolete		obsolete
+./etc/rc.d/llvmlockdir				etc-sys-rc
 ./etc/rc.d/local				etc-sys-rc
 ./etc/rc.d/lpd					etc-lpr-rc
 ./etc/rc.d/lvm					etc-sys-rc
@@ -254,6 +256,7 @@
 ./etc/rc.d/motd					etc-sys-rc
 ./etc/rc.d/mountall				etc-sys-rc
 ./etc/rc.d/mountcritlocal			etc-sys-rc
+./etc/rc.d/MOUNTCRITLOCAL			etc-sys-rc
 ./etc/rc.d/mountcritremote			etc-sys-rc
 ./etc/rc.d/mountd				etc-nfsserver-rc
 ./etc/rc.d/moused				etc-sysutil-rc
