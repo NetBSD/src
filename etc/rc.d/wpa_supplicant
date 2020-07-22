@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: wpa_supplicant,v 1.7 2018/06/29 12:34:15 roy Exp $
+# $NetBSD: wpa_supplicant,v 1.8 2020/07/22 16:50:41 martin Exp $
 #
 
 # PROVIDE: wpa_supplicant
-# REQUIRE: network mountcritlocal
+# REQUIRE: network MOUNTCRITLOCAL
 # BEFORE:  NETWORKING dhcpcd
 #
 #	We need to run a command that resides in /usr/sbin, and the

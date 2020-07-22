@@ -1,0 +1,10 @@
+#!/bin/sh
+#
+# $NetBSD: MOUNTCRITLOCAL,v 1.1 2020/07/22 16:50:41 martin Exp $
+#
+
+# REQUIRE: mountcritlocal
+# PROVIDE: MOUNTCRITLOCAL
+
+#	This is a dummy dependency, for services which require local
+#	disks to be mounted and fully setup
