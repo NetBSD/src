@@ -29,7 +29,7 @@
 #define __INTR_PRIVATE
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: octeon_cpunode.c,v 1.16 2020/07/21 06:01:10 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_cpunode.c,v 1.17 2020/07/22 15:01:18 jmcneill Exp $");
 
 #include "locators.h"
 #include "cpunode.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_cpunode.c,v 1.16 2020/07/21 06:01:10 simonb E
 #include <mips/cache.h>
 #include <mips/mips_opcode.h>
 #include <mips/mips3_clock.h>
+#include <mips/mips3_pte.h>
 
 #include <mips/cavium/octeonvar.h>
 #include <mips/cavium/dev/octeon_ciureg.h>
@@ -204,7 +205,13 @@ octeon_fixup_cpu_info_references(int32_t load_addr, uint32_t new_insns[2],
 static void
 octeon_cpu_init(struct cpu_info *ci)
 {
+	extern const mips_locore_jumpvec_t mips64r2_locore_vec;
 	bool ok __diagused;
+
+	mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_TO_MASK(PAGE_SIZE));
+	mips3_cp0_wired_write(0);
+	(*mips64r2_locore_vec.ljv_tlb_invalidate_all)();
+	mips3_cp0_wired_write(pmap_tlb0_info.ti_wired);
 
 	// First thing is setup the execption vectors for this cpu.
 	mips64r2_vector_init(&mips_splsw);
