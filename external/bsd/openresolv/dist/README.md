@@ -62,3 +62,7 @@ openresolv ships with helpers for:
 See the
 [configuration section](https://roy.marples.name/projects/openresolv/config)
 for more details.
+
+If openresolv updates `/etc/resolv.conf` it can notify the following of this:
+  *  [Bonjour (mdnsd)](https://developer.apple.com/bonjour/)
+  *  [avahi](http://www.avahi.org/)
