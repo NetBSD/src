@@ -1,4 +1,4 @@
-/*      $NetBSD: opms.c,v 1.29 2017/10/25 08:12:37 maya Exp $        */
+/*      $NetBSD: opms.c,v 1.30 2020/07/22 01:24:40 msaitoh Exp $        */
 
 /*
  * Copyright 1997
@@ -75,7 +75,7 @@
 **    NOTE : The mouse is an auxiliary device off the keyboard and as such
 **           shares the same device registers.  This shouldn't be an issue
 **           since each logical device generates its own unique IRQ.  But
-**           it is worth noting that reseting or mucking with one can affect
+**           it is worth noting that resetting or mucking with one can affect
 **           the other.
 **
 **  AUTHORS:
@@ -91,7 +91,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.29 2017/10/25 08:12:37 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.30 2020/07/22 01:24:40 msaitoh Exp $");
 
 #include "opms.h"
 #if NOPMS > 1

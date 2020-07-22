@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.56 2016/12/22 14:47:56 cherry Exp $ */
+/* $NetBSD: machdep.c,v 1.57 2020/07/22 01:24:39 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56 2016/12/22 14:47:56 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57 2020/07/22 01:24:39 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -412,7 +412,7 @@ cpu_reboot(int howto, char *bootstr)
 		cnpollc(0);
 	}
 
-	printf("reseting board...\n\n");
+	printf("resetting board...\n\n");
 
 	/*
 	 * Try to use board-specific reset logic, which might involve a better

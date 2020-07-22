@@ -1,4 +1,4 @@
-/* $NetBSD: escvar.h,v 1.8 2012/10/27 17:17:23 chs Exp $ */
+/* $NetBSD: escvar.h,v 1.9 2020/07/22 01:24:39 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -130,7 +130,7 @@ struct nexus {
 #define ESC_NS_RESELECTED	10	/* We was reselected */
 #define ESC_NS_DONE		11	/* Done. Prephsase to FINISHED */
 #define ESC_NS_FINISHED		12	/* Realy done. Call scsi_done */
-#define ESC_NS_RESET		13	/* We are reseting this unit */
+#define ESC_NS_RESET		13	/* We are resetting this unit */
 
 /* SCSI nexus flags */
 #define ESC_NF_UNIT_BUSY	0x0001	/* Unit is not available */
