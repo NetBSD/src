@@ -1,4 +1,4 @@
-/* $NetBSD: bwfm.c,v 1.27 2020/07/22 17:18:49 riastradh Exp $ */
+/* $NetBSD: bwfm.c,v 1.28 2020/07/22 17:21:25 riastradh Exp $ */
 /* $OpenBSD: bwfm.c,v 1.5 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -39,6 +39,8 @@
 #include <netinet/in.h>
 
 #include <net80211/ieee80211_var.h>
+
+#include <dev/firmload.h>
 
 #include <dev/ic/bwfmreg.h>
 #include <dev/ic/bwfmvar.h>
