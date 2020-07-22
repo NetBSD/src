@@ -1,9 +1,9 @@
 #!/bin/sh
 
-# $NetBSD: dhcpcd,v 1.9 2020/05/31 12:58:09 roy Exp $
+# $NetBSD: dhcpcd,v 1.10 2020/07/22 16:50:41 martin Exp $
 
 # PROVIDE: dhcpcd
-# REQUIRE: network mountcritlocal
+# REQUIRE: network MOUNTCRITLOCAL
 # BEFORE:  NETWORKING
 
 $_rc_subr_loaded . /etc/rc.subr
