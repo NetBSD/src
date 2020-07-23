@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 2013/04/28 12:11:26 kiyohara Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 2020/07/23 19:25:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -66,20 +66,10 @@
 
 #include <sys/queue.h>
 
-#if defined(_LKM)
-
-int	_splraise(int);
-int	_spllower(int);
-void	splx(int);
-
-#else	/* _LKM */
-
 #define PIC_MAXSOURCES		16
 #define PIC_MAXMAXSOURCES	16
 
 #include <arm/pic/picvar.h>
-
-#endif /* _LKM */
 
 #define	splsoft()	_splraise(IPL_SOFT)
 
