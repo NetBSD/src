@@ -29,7 +29,6 @@ mod-C:
 :a b b c:
 : b c:
 make: RE substitution error: (details omitted)
-make: Unclosed substitution for  (, missing)
 :C,word,____,:Q}:
 :a c:
 :x__ 3 x__ 3:
@@ -74,7 +73,6 @@ mod-C-limits:22-missing:1 6
 mod-C-limits:22-ok:1 33 556
 mod-C-limits:capture:ihgfedcbaabcdefghijABCDEFGHIJa0a1a2rest
 make: RE substitution error: (details omitted)
-make: Unclosed substitution for UNDEF (, missing)
 mod-C-errors:
 mod-assign: first=1.
 mod-assign: last=3.
