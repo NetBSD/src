@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.10 2012/06/10 13:15:24 skrll Exp $	*/
+/*	$NetBSD: intr.h,v 1.11 2020/07/23 19:23:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -66,14 +66,6 @@
 
 #ifndef _LOCORE
 
-#if defined(_LKM)
-
-int	_splraise(int);
-int	_spllower(int);
-void	splx(int);
-
-#else	/* _LKM */
-
 #include "opt_arm_intr_impl.h"
 
 #if defined(ARM_INTR_IMPL)
@@ -117,8 +109,6 @@ void	splx(int);
 #error ARM_INTR_IMPL not defined.
 
 #endif	/* ARM_INTR_IMPL */
-
-#endif /* _LKM */
 
 typedef uint8_t ipl_t;
 typedef struct {
