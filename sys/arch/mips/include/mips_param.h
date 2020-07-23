@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.41 2020/07/23 12:13:25 skrll Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.42 2020/07/23 12:15:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -80,13 +80,8 @@
 #define MSGBUFSIZE	NBPG		/* default message buffer size */
 #endif
 
-#ifdef MIPS64_OCTEON
 #define COHERENCY_UNIT	128
 #define CACHE_LINE_SIZE	128
-#endif
-#ifndef COHERENCY_UNIT
-#define COHERENCY_UNIT	32	/* MIPS cachelines are usually 32 bytes */
-#endif
 
 #ifdef ENABLE_MIPS_16KB_PAGE
 #define	PGSHIFT		14		/* LOG2(NBPG) */
