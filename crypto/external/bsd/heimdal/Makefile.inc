@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.5 2019/12/17 00:17:00 christos Exp $
+# $NetBSD: Makefile.inc,v 1.6 2020/07/23 07:53:35 mrg Exp $
 
 HEIMBASE?=	${NETBSDSRCDIR}/crypto/external/bsd/heimdal
 HEIMDIST=	${HEIMBASE}/dist
@@ -15,8 +15,6 @@ LIBIPC_PIC=	${LIBIPCDIR}/libipc.a
 .else
 LIBIPC_PIC=	${LIBIPCDIR}/libipc_pic.a
 .endif
-
-VERSION!= ${TOOL_SED} -ne 's/.*PACKAGE_VERSION[ 	]*"\([0-9.]*\)"/\1/p' ${.PARSEDIR}/include/config.h
 
 .if ${USETOOLS} != "yes"
 COMPILEETOBJ!=     cd ${HEIMBASE}/lib/libcom_err/compile_et && ${PRINTOBJDIR}
