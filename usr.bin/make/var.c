@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.297 2020/07/23 19:49:39 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.298 2020/07/23 20:24:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.297 2020/07/23 19:49:39 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.298 2020/07/23 20:24:22 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.297 2020/07/23 19:49:39 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.298 2020/07/23 20:24:22 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2086,7 +2086,7 @@ typedef struct {
     const char *cp;		/* Secondary pointer into str (place marker
 				 * for tstr) */
     char termc;			/* Character which terminated scan */
-    char delim;
+    char missing_delim;		/* For error reporting */
     int modifier;		/* that we are processing */
     Var_Parse_State parsestate;	/* Flags passed to helper functions */
 
@@ -2109,21 +2109,24 @@ ApplyModifier_Loop(ApplyModifiersState *st) {
 
     args.ctx = st->ctxt;
     st->cp = ++st->tstr;
-    st->delim = '@';
-    args.tvar = ParseModifierPart(st->ctxt, &st->cp, st->delim,
+    char delim = '@';
+    args.tvar = ParseModifierPart(st->ctxt, &st->cp, delim,
 				  st->eflags | VARE_NOSUBST,
 				  NULL, NULL, NULL);
-    if (args.tvar == NULL)
+    if (args.tvar == NULL) {
+	st->missing_delim = delim;
 	return FALSE;
+    }
 
-    args.str = ParseModifierPart(st->ctxt, &st->cp, st->delim,
+    args.str = ParseModifierPart(st->ctxt, &st->cp, delim,
 				 st->eflags | VARE_NOSUBST,
 				 NULL, NULL, NULL);
-    if (args.str == NULL)
+    if (args.str == NULL) {
+	st->missing_delim = delim;
 	return FALSE;
+    }
 
     st->termc = *st->cp;
-    st->delim = '\0';
 
     args.eflags = st->eflags & (VARE_UNDEFERR | VARE_WANTRES);
     int prev_sep = st->parsestate.varSpace;
@@ -2286,12 +2289,14 @@ ApplyModifier_Path(ApplyModifiersState *st)
 static Boolean
 ApplyModifier_Exclam(ApplyModifiersState *st)
 {
-    st->delim = '!';
     st->cp = ++st->tstr;
-    char *cmd = ParseModifierPart(st->ctxt, &st->cp, st->delim, st->eflags,
+    char delim = '!';
+    char *cmd = ParseModifierPart(st->ctxt, &st->cp, delim, st->eflags,
 				  NULL, NULL, NULL);
-    if (cmd == NULL)
+    if (cmd == NULL) {
+	st->missing_delim = delim;
 	return FALSE;
+    }
 
     const char *emsg = NULL;
     if (st->eflags & VARE_WANTRES)
@@ -2304,7 +2309,6 @@ ApplyModifier_Exclam(ApplyModifiersState *st)
 	Error(emsg, st->nstr);
 
     st->termc = *st->cp;
-    st->delim = '\0';
     if (st->v->flags & VAR_JUNK)
 	st->v->flags |= VAR_KEEP;
     return TRUE;
@@ -2419,7 +2423,7 @@ ApplyModifier_Subst(ApplyModifiersState *st)
 {
     ModifyWord_SubstArgs args;
     Var_Parse_State tmpparsestate = st->parsestate;
-    st->delim = st->tstr[1];
+    char delim = st->tstr[1];
     st->tstr += 2;
 
     /*
@@ -2433,16 +2437,20 @@ ApplyModifier_Subst(ApplyModifiersState *st)
     }
 
     st->cp = st->tstr;
-    char *lhs = ParseModifierPart(st->ctxt, &st->cp, st->delim, st->eflags,
+    char *lhs = ParseModifierPart(st->ctxt, &st->cp, delim, st->eflags,
 				  &args.pflags, &args.lhsLen, NULL);
-    if (lhs == NULL)
+    if (lhs == NULL) {
+	st->missing_delim = delim;
 	return FALSE;
+    }
     args.lhs = lhs;
 
-    char *rhs = ParseModifierPart(st->ctxt, &st->cp, st->delim, st->eflags,
+    char *rhs = ParseModifierPart(st->ctxt, &st->cp, delim, st->eflags,
 				  NULL, &args.rhsLen, &args);
-    if (rhs == NULL)
+    if (rhs == NULL) {
+	st->missing_delim = delim;
 	return FALSE;
+    }
     args.rhs = rhs;
 
     /*
@@ -2471,7 +2479,6 @@ ApplyModifier_Subst(ApplyModifiersState *st)
 
     free(lhs);
     free(rhs);
-    st->delim = '\0';
     return TRUE;
 }
 
@@ -2493,7 +2500,7 @@ ApplyModifier_Regex(ApplyModifiersState *st)
     char *re = ParseModifierPart(st->ctxt, &st->cp, delim,
 				 st->eflags, NULL, NULL, NULL);
     if (re == NULL) {
-	st->delim = delim;
+	st->missing_delim = delim;
 	return FALSE;
     }
 
@@ -2501,7 +2508,7 @@ ApplyModifier_Regex(ApplyModifiersState *st)
 				     st->eflags, NULL, NULL, NULL);
     if (args.replace == NULL) {
 	free(re);
-	st->delim = delim;
+	st->missing_delim = delim;
 	return FALSE;
     }
 
@@ -2658,14 +2665,15 @@ static int
 ApplyModifier_Words(ApplyModifiersState *st)
 {
     st->cp = st->tstr + 1;	/* point to char after '[' */
-    st->delim = ']';		/* look for closing ']' */
-    char *estr = ParseModifierPart(st->ctxt, &st->cp, st->delim, st->eflags,
+    char delim = ']';		/* look for closing ']' */
+    char *estr = ParseModifierPart(st->ctxt, &st->cp, delim, st->eflags,
 				   NULL, NULL, NULL);
-    if (estr == NULL)
-	return 'c';		/* missing ']' */
+    if (estr == NULL) {
+	st->missing_delim = delim;
+	return 'c';
+    }
 
     /* now st->cp points just after the closing ']' */
-    st->delim = '\0';
     if (st->cp[0] != ':' && st->cp[0] != st->endc)
 	goto bad_modifier;	/* Found junk after ']' */
 
@@ -2802,20 +2810,23 @@ ApplyModifier_IfElse(ApplyModifiersState *st)
     }
 
     st->cp = ++st->tstr;
-    st->delim = ':';
+    char delim = ':';
     char *then_expr = ParseModifierPart(
-	st->ctxt, &st->cp, st->delim, then_eflags, NULL, NULL, NULL);
-    if (then_expr == NULL)
+	st->ctxt, &st->cp, delim, then_eflags, NULL, NULL, NULL);
+    if (then_expr == NULL) {
+	st->missing_delim = delim;
 	return FALSE;
+    }
 
-    st->delim = st->endc;	/* BRCLOSE or PRCLOSE */
+    delim = st->endc;		/* BRCLOSE or PRCLOSE */
     char *else_expr = ParseModifierPart(
-	st->ctxt, &st->cp, st->delim, else_eflags, NULL, NULL, NULL);
-    if (else_expr == NULL)
+	st->ctxt, &st->cp, delim, else_eflags, NULL, NULL, NULL);
+    if (else_expr == NULL) {
+	st->missing_delim = delim;
 	return FALSE;
+    }
 
     st->termc = *--st->cp;
-    st->delim = '\0';
     if (cond_rc == COND_INVALID) {
 	Error("Bad conditional expression `%s' in %s?%s:%s",
 	    st->v->name, st->v->name, then_expr, else_expr);
@@ -2896,21 +2907,22 @@ ApplyModifier_Assign(ApplyModifiersState *st)
 	st->cp = ++st->tstr;
 	break;
     }
-    st->delim = st->startc == PROPEN ? PRCLOSE : BRCLOSE;
 
+    char delim = st->startc == PROPEN ? PRCLOSE : BRCLOSE;
     VarEvalFlags eflags = (st->eflags & VARE_WANTRES) ? 0 : VARE_NOSUBST;
-    char *val = ParseModifierPart(st->ctxt, &st->cp, st->delim,
+    char *val = ParseModifierPart(st->ctxt, &st->cp, delim,
 				  st->eflags | eflags, NULL, NULL, NULL);
     if (st->v->flags & VAR_JUNK) {
 	/* restore original name */
 	free(st->v->name);
 	st->v->name = sv_name;
     }
-    if (val == NULL)
+    if (val == NULL) {
+	st->missing_delim = delim;
 	return 'c';
+    }
 
     st->termc = *--st->cp;
-    st->delim = '\0';
 
     if (st->eflags & VARE_WANTRES) {
 	switch (op[0]) {
@@ -2996,25 +3008,28 @@ ApplyModifier_SysV(ApplyModifiersState *st)
     if (*st->cp != st->endc || !eqFound)
 	return 0;
 
-    st->delim = '=';
+    char delim = '=';
     st->cp = st->tstr;
-    char *lhs = ParseModifierPart(st->ctxt, &st->cp, st->delim, st->eflags,
+    char *lhs = ParseModifierPart(st->ctxt, &st->cp, delim, st->eflags,
 				  NULL, NULL, NULL);
-    if (lhs == NULL)
+    if (lhs == NULL) {
+	st->missing_delim = delim;
 	return 'c';
+    }
 
-    st->delim = st->endc;
-    char *rhs = ParseModifierPart(st->ctxt, &st->cp, st->delim, st->eflags,
+    delim = st->endc;
+    char *rhs = ParseModifierPart(st->ctxt, &st->cp, delim, st->eflags,
 				  NULL, NULL, NULL);
-    if (rhs == NULL)
+    if (rhs == NULL) {
+	st->missing_delim = delim;
 	return 'c';
+    }
 
     /*
      * SYSV modifications happen through the whole
      * string. Note the pattern is anchored at the end.
      */
     st->termc = *--st->cp;
-    st->delim = '\0';
     if (lhs[0] == '\0' && *st->nstr == '\0') {
 	st->newStr = st->nstr;	/* special case */
     } else {
@@ -3380,9 +3395,9 @@ bad_modifier:
 
 cleanup:
     *st.lengthPtr = st.cp - st.start;
-    if (st.delim != '\0')
+    if (st.missing_delim != '\0')
 	Error("Unclosed substitution for %s (%c missing)",
-	      st.v->name, st.delim);
+	      st.v->name, st.missing_delim);
     free(*st.freePtr);
     *st.freePtr = NULL;
     return var_Error;
