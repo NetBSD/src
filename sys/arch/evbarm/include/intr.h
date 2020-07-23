@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.26 2014/03/13 23:48:38 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.27 2020/07/23 19:04:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -71,14 +71,6 @@
 
 #include <sys/queue.h>
 
-#if defined(_LKM)
-
-int	_splraise(int);
-int	_spllower(int);
-void	splx(int);
-
-#else	/* _LKM */
-
 #include "opt_arm_intr_impl.h"
 
 #if defined(ARM_INTR_IMPL)
@@ -121,8 +113,6 @@ void	splx(int);
 #error ARM_INTR_IMPL not defined.
 
 #endif	/* ARM_INTR_IMPL */
-
-#endif /* _LKM */
 
 typedef uint8_t ipl_t;
 typedef struct {
