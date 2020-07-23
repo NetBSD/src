@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs.h,v 1.9 2014/08/10 08:53:22 hannken Exp $	*/
+/*	$NetBSD: hfs.h,v 1.10 2020/07/23 19:26:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -27,8 +27,8 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */                                     
- 
+ */
+
 #ifndef _FS_HFS_HFS_H_
 #define _FS_HFS_HFS_H_
 
@@ -87,7 +87,7 @@ struct hfsnode {
 			hfs_cnid_t		cnid;
 		} u; /* convenience for accessing common record info */
 	} h_rec; /* catalog record for this hnode */
-	
+
 	/*
 	 * We cache this vnode's parent CNID here upon vnode creation (i.e., during
 	 * hfs_vop_vget()) for quick access without needing to search the catalog.
