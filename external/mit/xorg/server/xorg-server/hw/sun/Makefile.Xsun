@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.Xsun,v 1.1 2020/07/22 20:54:08 tsutsui Exp $
+#	$NetBSD: Makefile.Xsun,v 1.2 2020/07/23 09:59:36 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -73,6 +73,7 @@ SRCS+=  stubs.c
 SRCS+=	fbcmap_mi.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/sun \
+		-I${DESTDIR}${X11INCDIR}/xorg \
 		${X11INCS.DIX}
 
 CPPFLAGS+=	-UHAVE_XORG_CONFIG_H
@@ -89,6 +90,7 @@ LDADD+= ${LDADD.dix} \
 	${LDADD.xkbstubs} \
 	${LDADD.randr} \
 	${LDADD.Xext} \
+	${LDADD.dbe} \
 	${LDADD.composite} \
 	${LDADD.record} \
 	${LDADD.render} \
@@ -98,9 +100,9 @@ LDADD+= ${LDADD.dix} \
 	${LDADD.miext/damage} \
 	${LDADD.miext/sync} \
 	${LDADD.Xi} \
+	${LDADD.present} \
 	-lXfont2 \
 	-lpixman-1 \
-	-lXext \
 	-lX11 \
 	-lz \
 	-lm
@@ -111,6 +113,7 @@ DPADD+= ${LDADD.dix} \
 	${DPADD.xkb} \
 	${DPADD.randr} \
 	${DPADD.Xext} \
+	${DPADD.dbe} \
 	${DPADD.composite} \
 	${DPADD.record} \
 	${DPADD.render} \
@@ -120,6 +123,7 @@ DPADD+= ${LDADD.dix} \
 	${DPADD.miext/damage} \
 	${DPADD.miext/sync} \
 	${DPADD.Xi} \
+	${DPADD.present} \
 	${LIBXFONT2} \
 	${LIBPIXMAN-1} \
 	${LIBXEXT} \
