@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.14 2020/07/18 18:11:46 nia Exp $
+.\"	$NetBSD: hardware,v 1.15 2020/07/23 14:09:31 nia Exp $
 .\"
 .\" Copyright (c) 2001-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,6 +40,8 @@ Samsung Exynos 5422 (e.g. ODROID-XU3/XU-4)
 .It
 Texas Instruments OMAP3 (e.g. BeagleBoard, BeagleBone Black...)
 .It
+Xilinx Zynq (e.g. Zedboard, Parallella...)
+.It
 NVIDIA Tegra K1
 .El
 .Ss2 64-bit SoCs supported by GENERIC64 kernels
@@ -55,6 +57,8 @@ Allwinner H5, H6, A64 (e.g. PINE64, Pinebook, NanoPi A64, OLinuXino...)
 Amlogic S905 (e.g. ODROID-C2, Le Potato, NanoPi K2...)
 .It
 Broadcom BCM2837 (e.g. Raspberry Pi 3)
+.It
+Marvell ThunderX
 .It
 Rockchip RK3328, RK3328 (e.g. Pinebook Pro, RockPro64, Firefly...)
 .It
