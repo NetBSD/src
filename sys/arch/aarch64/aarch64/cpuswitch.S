@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.21 2020/05/23 18:08:59 ryo Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.22 2020/07/23 13:12:54 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include "opt_ddb.h"
 #include "opt_kasan.h"
 
-RCSID("$NetBSD: cpuswitch.S,v 1.21 2020/05/23 18:08:59 ryo Exp $")
+RCSID("$NetBSD: cpuswitch.S,v 1.22 2020/07/23 13:12:54 skrll Exp $")
 
 	ARMV8_DEFINE_OPTIONS
 
@@ -76,16 +76,18 @@ ENTRY_NP(cpu_switchto)
 	str	x4, [x6, #PCB_TF]
 
 	/* We are done with the old lwp */
-
-	DISABLE_INTERRUPT
 	ldr	x6, [x1, #L_PCB]	/* x6 = lwp_getpcb(newlwp) */
 	ldr	x4, [x6, #PCB_TF]	/* get trapframe ptr (aka SP) */
 #ifdef DDB
 	str	xzr, [x6, #PCB_TF]	/* clear l->l_addr->pcb_tf */
 #endif
 	ldr	x5, [x1, #L_MD_CPACR]	/* get cpacr_el1 */
+
+	mrs	x3, tpidr_el1
+	DISABLE_INTERRUPT
 	mov	sp, x4			/* restore stack pointer */
 	msr	cpacr_el1, x5		/* restore cpacr_el1 */
+	str	x1, [x3, #CI_CURLWP]	/* switch curlwp to new lwp */
 
 #ifdef ARMV83_PAC
 	/* Switch the PAC key. */
@@ -116,8 +118,6 @@ ENTRY_NP(cpu_switchto)
 1:
 #endif
 
-	mrs	x3, tpidr_el1
-	str	x1, [x3, #CI_CURLWP]	/* switch curlwp to new lwp */
 	ENABLE_INTERRUPT
 
 	/*
@@ -161,15 +161,31 @@ ENTRY_NP(cpu_switchto_softint)
 	stp	x27, x28, [sp, #TF_X27]
 	stp	x29, x2, [sp, #TF_X29]	/* tf->lr = softint_cleanup; */
 
-	mrs	x3, tpidr_el1		/* x3 := curcpu() */
-	DISABLE_INTERRUPT
-	ldr	x19, [x3, #CI_CURLWP]	/* x19 := curcpu()->ci_curlwp */
+	mrs	x20, tpidr_el1		/* x20 := curcpu() */
+	ldr	x19, [x20, #CI_CURLWP]	/* x19 := curcpu()->ci_curlwp */
 	mov	x4, sp
+
 	mrs	x5, cpacr_el1
 	ldr	x6, [x19, #L_PCB]	/* x6 = lwp_getpcb(curlwp) */
 	str	x4, [x6, #PCB_TF]
 	str	x5, [x19, #L_MD_CPACR]
-	str	x0, [x3, #CI_CURLWP]	/* curcpu()->ci_curlwp = softlwp; */
+
+#ifdef KASAN
+	/* clear the new stack */
+	stp	x0, x1, [sp, #-16]!
+	bl	_C_LABEL(kasan_softint)
+	ldp	x0, x1, [sp], #16
+#endif
+
+	ldr	x4, [x0, #L_MD_UTF]
+
+	DISABLE_INTERRUPT
+	/* onto new stack */
+	sub	sp, x4, #TF_SIZE	/* new sp := softlwp->l_md_utf - 1 */
+	str	x0, [x20, #CI_CURLWP]	/* curcpu()->ci_curlwp = softlwp; */
+
+	mov	x5, #CPACR_FPEN_NONE
+	msr	cpacr_el1, x5		/* cpacr_el1 = CPACR_FPEN_NONE */
 
 #ifdef ARMV83_PAC
 	/* Switch the PAC key. */
@@ -181,34 +197,22 @@ ENTRY_NP(cpu_switchto_softint)
 	msr	APIAKeyHi_EL1, x6
 1:
 #endif
-
-#ifdef KASAN
-	/* clear the new stack */
-	stp	x0, x1, [sp, #-16]!
-	bl	_C_LABEL(kasan_softint)
-	ldp	x0, x1, [sp], #16
-#endif
-
-	/* onto new stack */
-	ldr	x4, [x0, #L_MD_UTF]
-	sub	sp, x4, #TF_SIZE	/* new sp := softlwp->l_md_utf - 1 */
-	mov	x5, #CPACR_FPEN_NONE
-	msr	cpacr_el1, x5		/* cpacr_el1 = CPACR_FPEN_NONE */
 	ENABLE_INTERRUPT
 
 	/* softint_dispatch(pinned_lwp, ipl) */
 	mov	x0, x19			/* x0 := pinned_lwp */
 	bl	_C_LABEL(softint_dispatch)
 
-	mrs	x3, tpidr_el1
-	DISABLE_INTERRUPT
-	str	x19, [x3, #CI_CURLWP]	/* curcpu()->ci_curlwp := x19 */
+	mrs	x20, tpidr_el1
 	ldr	x6, [x19, #L_PCB]	/* x6 = lwp_getpcb(curlwp) */
 	ldr	x4, [x6, #PCB_TF]	/* x4 := pinned_lwp->l_addr->pcb_tf */
 #ifdef DDB
 	str	xzr, [x6, #PCB_TF]	/* clear l->l_addr->pcb_tf */
 #endif
 	ldr	x5, [x19, #L_MD_CPACR]	/* x5 := pinned_lwp->l_md_cpacr */
+
+	DISABLE_INTERRUPT
+	str	x19, [x20, #CI_CURLWP]	/* curcpu()->ci_curlwp := x19 */
 	mov	sp, x4			/* restore pinned_lwp sp */
 	msr	cpacr_el1, x5		/* restore pinned_lwp cpacr */
 
@@ -245,10 +249,10 @@ END(cpu_switchto_softint)
 ENTRY_NP(softint_cleanup)
 	mov	lr, x20			/* restore original lr */
 
-	mrs	x3, tpidr_el1		/* curcpu() */
-	ldr	w2, [x3, #CI_MTX_COUNT]	/* ->ci_mtx_count */
+	mrs	x20, tpidr_el1		/* curcpu() */
+	ldr	w2, [x20, #CI_MTX_COUNT]/* ->ci_mtx_count */
 	add	w2, w2, #1
-	str	w2, [x3, #CI_MTX_COUNT]
+	str	w2, [x20, #CI_MTX_COUNT]
 
 	msr	daif, x19		/* restore interrupt mask */
 	ldp	x19, x20, [sp], #16	/* restore */
@@ -360,6 +364,7 @@ ENTRY_NP(el0_trap)
 	nop				/* dummy for DDB backtrace (for lr-4) */
 #endif
 ENTRY_NP(el0_trap_exit)
+	DISABLE_INTERRUPT		/* make sure I|F marked */
 1:
 	/* while (curcpu()->ci_astpending & __BIT(0)) { */
 	mrs	x8, tpidr_el1
@@ -379,8 +384,6 @@ ENTRY_NP(el0_trap_exit)
 	b	1b
 	/* } */
 9:
-	DISABLE_INTERRUPT		/* make sure I|F marked */
-
 	mrs	x8, tpidr_el1
 	ldr	x9, [x8, #CI_CURLWP]
 	ldr	x23, [x9, #L_MD_CPACR]
@@ -423,7 +426,6 @@ ENTRY_NP(el0_trap_exit)
 	orr	x0, x0, #MDSCR_SS
 	msr	mdscr_el1, x0
 1:
-
 	unwind_x0_x2
 
 	/* leave sp at l_md.md_utf, return back to EL0 user process */
