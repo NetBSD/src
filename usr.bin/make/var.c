@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.296 2020/07/23 19:32:54 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.297 2020/07/23 19:49:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.296 2020/07/23 19:32:54 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.297 2020/07/23 19:49:39 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.296 2020/07/23 19:32:54 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.297 2020/07/23 19:49:39 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2485,20 +2485,23 @@ ApplyModifier_Regex(ApplyModifiersState *st)
 
     args.pflags = 0;
     Var_Parse_State tmpparsestate = st->parsestate;
-    st->delim = st->tstr[1];
+    char delim = st->tstr[1];
     st->tstr += 2;
 
     st->cp = st->tstr;
 
-    char *re = ParseModifierPart(st->ctxt, &st->cp, st->delim,
+    char *re = ParseModifierPart(st->ctxt, &st->cp, delim,
 				 st->eflags, NULL, NULL, NULL);
-    if (re == NULL)
+    if (re == NULL) {
+	st->delim = delim;
 	return FALSE;
+    }
 
-    args.replace = ParseModifierPart(st->ctxt, &st->cp, st->delim,
+    args.replace = ParseModifierPart(st->ctxt, &st->cp, delim,
 				     st->eflags, NULL, NULL, NULL);
     if (args.replace == NULL) {
 	free(re);
+	st->delim = delim;
 	return FALSE;
     }
 
@@ -2539,7 +2542,6 @@ ApplyModifier_Regex(ApplyModifiersState *st)
     regfree(&args.re);
     free(args.replace);
     free(args.matches);
-    st->delim = '\0';
     return TRUE;
 }
 #endif
