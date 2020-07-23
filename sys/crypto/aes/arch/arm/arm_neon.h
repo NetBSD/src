@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_neon.h,v 1.2 2020/06/30 21:24:00 riastradh Exp $	*/
+/*	$NetBSD: arm_neon.h,v 1.3 2020/07/23 11:33:01 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ typedef struct { uint8x8_t val[2]; } uint8x8x2_t;
 #elif defined(__clang__)
 
 #define	_INTRINSATTR							      \
-	__attribute__((__always_inline__, __nodebug))
+	__attribute__((__always_inline__, __nodebug__))
 
 typedef __attribute__((neon_vector_type(16))) int8_t int8x16_t;
 typedef __attribute__((neon_vector_type(2))) int64_t int64x2_t;
