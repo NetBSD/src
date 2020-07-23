@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.40 2020/06/25 18:20:18 jdolecek Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.41 2020/07/23 19:07:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -133,11 +133,11 @@
 
 /*
  * If MIN_PAGE_SIZE and MAX_PAGE_SIZE are not equal, then we must use
- * non-constant PAGE_SIZE, et al for LKMs.
+ * non-constant PAGE_SIZE, et al for modules.
  */
 #if (MIN_PAGE_SIZE != MAX_PAGE_SIZE)
 #define	__uvmexp_pagesize
-#if defined(_LKM) || defined(_MODULE)
+#if defined(_MODULE)
 #undef PAGE_SIZE
 #undef PAGE_MASK
 #undef PAGE_SHIFT
