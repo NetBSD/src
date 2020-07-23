@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.20 2020/07/21 23:19:46 rillig Exp $
+# $Id: modmisc.mk,v 1.21 2020/07/23 19:46:55 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -19,6 +19,7 @@ all:	modvar modvarloop modsysv mod-HTE emptyvar undefvar
 all:	mod-S mod-C mod-at-varname mod-at-resolve mod-at-dollar
 all:	mod-subst-dollar mod-loop-dollar
 all:	mod-C-limits
+all:	mod-C-errors
 all:	mod-assign
 all:	mod-assign-nested
 all:	mod-tu-space
@@ -152,6 +153,9 @@ mod-C-limits:
 	# The :C modifier only handles single-digit capturing groups,
 	# which is more than enough for daily use.
 	@echo $@:capture:${:UabcdefghijABCDEFGHIJrest:C,(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.),\9\8\7\6\5\4\3\2\1\0\10\11\12,}
+
+mod-C-errors:
+	@echo $@: ${UNDEF:Uvalue:C,[,,}
 
 # Just a bit of basic code coverage for the obscure ::= assignment modifiers.
 mod-assign:
