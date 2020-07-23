@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.295 2020/07/21 23:47:50 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.296 2020/07/23 19:32:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.295 2020/07/21 23:47:50 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.296 2020/07/23 19:32:54 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.295 2020/07/21 23:47:50 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.296 2020/07/23 19:32:54 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1566,9 +1566,7 @@ VarSelectWords(Var_Parse_State *vpstate, const char *str, int first, int last)
 	step = 1;
     }
 
-    for (i = start;
-	 (step < 0 && i >= end) || (step > 0 && i < end);
-	 i += step) {
+    for (i = start; (step < 0) == (i >= end); i += step) {
 	if (av[i][0] != '\0') {
 	    SepBuf_AddBytes(&buf, av[i], strlen(av[i]));
 	    SepBuf_Sep(&buf);
