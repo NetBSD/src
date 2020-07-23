@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2019/12/17 00:16:26 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2020/07/23 07:53:35 mrg Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -9,6 +9,8 @@ SCRIPTS=	krb5-config
 MAN=		krb5-config.1
 
 CLEANFILES+=	krb5-config
+
+VERSION!= ${TOOL_SED} -ne 's/.*PACKAGE_VERSION[ 	]*"\([0-9.]*\)"/\1/p' ${HEIMBASE}/include/config.h
 
 krb5-config: krb5-config.in
 	${TOOL_SED} \
