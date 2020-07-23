@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.15 2020/07/23 14:09:31 nia Exp $
+.\"	$NetBSD: hardware,v 1.16 2020/07/23 14:10:25 nia Exp $
 .\"
 .\" Copyright (c) 2001-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,6 +35,8 @@ Allwinner A10, A13, A20, A32, A80, A83T, H3 (e.g. Cubieboard, OLinuXino, LeMaker
 Amlogic S805 (e.g. ODROID-C1)
 .It
 Broadcom BCM2836 (e.g. Raspberry Pi 2)
+.It
+Freescale i.MX6 Dual/DualLite/Quad, i.MX7 Dual (e.g. Wandboard, UDOO, Hummingboard...)
 .It
 Samsung Exynos 5422 (e.g. ODROID-XU3/XU-4)
 .It
