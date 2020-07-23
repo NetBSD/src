@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.81 2020/03/14 14:05:42 ad Exp $ */
+/* $NetBSD: pmap.h,v 1.82 2020/07/23 19:23:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -188,7 +188,6 @@ typedef struct pv_entry {
 #define	_PMAP_MAY_USE_PROM_CONSOLE
 #endif
 
-#ifndef _LKM
 #if defined(MULTIPROCESSOR)
 struct cpu_info;
 struct trapframe;
@@ -206,7 +205,6 @@ void	pmap_do_tlb_shootdown(struct cpu_info *, struct trapframe *);
 #define	PMAP_TLB_SHOOTDOWN(pm, va, pte)		/* nothing */
 #define	PMAP_TLB_SHOOTNOW()			/* nothing */
 #endif /* MULTIPROCESSOR */
-#endif /* _LKM */
 
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
