@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2020/07/22 19:26:37 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.3 2020/07/23 09:09:12 tsutsui Exp $
 
 .include "../Makefile.common"
 
@@ -34,28 +34,12 @@ SUBDIR+=netbsd/arm32vidc
 SUBDIR+=netbsd/dec
 .endif
 
-.if ${XSERVER_XDREAMCAST} != "no"
-SUBDIR+=netbsd/dreamcast
-.endif
-
 .if ${XSERVER_XFREE86} != "no"
 SUBDIR+=xfree86
 .endif
 
-.if ${XSERVER_XHPC} != "no"
-SUBDIR+=netbsd/hpc
-.endif
-
 .if ${XSERVER_XMAC68K} != "no"
 SUBDIR+=netbsd/mac68k
-.endif
-
-.if ${XSERVER_XMACPPC} != "no"
-SUBDIR+=netbsd/macppc
-.endif
-
-.if ${XSERVER_XNEWSMIPS} != "no"
-SUBDIR+=netbsd/newsmips
 .endif
 
 .if ${XSERVER_XVFB} != "no"
