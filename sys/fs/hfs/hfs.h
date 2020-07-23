@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs.h,v 1.10 2020/07/23 19:26:00 skrll Exp $	*/
+/*	$NetBSD: hfs.h,v 1.11 2020/07/23 19:26:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -41,9 +41,9 @@
 /*#define HFS_DEBUG*/
 
 #ifdef HFS_DEBUG
-	#if defined(_KERNEL) && !defined(_LKM)
+	#if defined(_KERNEL)
 		#include "opt_ddb.h"
-	#endif /* defined(_KERNEL_) && !defined(_LKM) */
+	#endif /* defined(_KERNEL_)
 #endif /* HFS_DEBUG */
 
 #include <fs/hfs/libhfs.h>
