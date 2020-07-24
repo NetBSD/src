@@ -1,11 +1,11 @@
-#	$NetBSD: OCTEON,v 1.7 2020/07/17 14:57:54 jmcneill Exp $
+#	$NetBSD: OCTEON,v 1.8 2020/07/24 12:07:09 jmcneill Exp $
 
 include 	"arch/mips/conf/std.octeon"
 include 	"arch/evbmips/conf/files.octeon"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"OCTEON-$Revision: 1.7 $"
+#ident 		"OCTEON-$Revision: 1.8 $"
 
 maxusers	32
 
@@ -187,6 +187,7 @@ pseudo-device	pty				# pseudo-terminals
 pseudo-device	clockctl			# user control of clock subsystem
 pseudo-device	ksyms				# /dev/ksyms
 pseudo-device	drvctl				# driver control
+pseudo-device	openfirm			# /dev/openfirm
 
 # A pseudo device needed for Coda		# also needs CODA (above)
 #pseudo-device	vcoda				# coda minicache <-> venus comm.
