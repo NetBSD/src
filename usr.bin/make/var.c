@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.302 2020/07/24 07:59:35 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.303 2020/07/24 08:03:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.302 2020/07/24 07:59:35 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.303 2020/07/24 08:03:27 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.302 2020/07/24 07:59:35 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.303 2020/07/24 08:03:27 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1376,9 +1376,9 @@ VarREError(int reerr, regex_t *pat, const char *str)
 typedef struct {
     regex_t	   re;
     int		   nsub;
-    regmatch_t 	  *matches;
     char 	  *replace;
     VarPatternFlags pflags;
+    regmatch_t 	  matches[10];
 } ModifyWord_SubstRegexArgs;
 
 /* Callback for ModifyWords to implement the :C/from/to/ modifier.
@@ -2530,12 +2530,10 @@ ApplyModifier_Regex(const char *mod, ApplyModifiersState *st)
 	args.nsub = 1;
     if (args.nsub > 10)
 	args.nsub = 10;
-    args.matches = bmake_malloc(args.nsub * sizeof(regmatch_t));
     st->newStr = ModifyWords(st->ctxt, st->sep, oneBigWord, st->nstr,
 			     ModifyWord_SubstRegex, &args);
     regfree(&args.re);
     free(args.replace);
-    free(args.matches);
     return TRUE;
 }
 #endif
