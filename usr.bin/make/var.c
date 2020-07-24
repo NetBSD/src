@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.300 2020/07/24 07:29:18 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.301 2020/07/24 07:52:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.300 2020/07/24 07:29:18 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.301 2020/07/24 07:52:44 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.300 2020/07/24 07:29:18 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.301 2020/07/24 07:52:44 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -249,20 +249,6 @@ typedef enum {
 typedef enum {
     VAR_NO_EXPORT	= 0x01	/* do not export */
 } VarSet_Flags;
-
-typedef struct {
-    /*
-     * The following fields are set by Var_Parse() when it
-     * encounters modifiers that need to keep state for use by
-     * subsequent modifiers within the same variable expansion.
-     */
-    Byte	varSpace;	/* Word separator in expansions */
-    Boolean	oneBigWord;	/* TRUE if we will treat the variable as a
-				 * single big word, even if it contains
-				 * embedded spaces (as opposed to the
-				 * usual behaviour of treating it as
-				 * several space-separated words). */
-} Var_Parse_State;
 
 #define BROPEN	'{'
 #define BRCLOSE	'}'
@@ -1521,7 +1507,8 @@ ModifyWord_Loop(const char *word, SepBuf *buf, void *data)
  * to scan the list backwards if first > last.
  */
 static char *
-VarSelectWords(Var_Parse_State *vpstate, const char *str, int first, int last)
+VarSelectWords(Byte sep, Boolean oneBigWord, const char *str, int first,
+	       int last)
 {
     SepBuf buf;
     char **av;			/* word list */
@@ -1529,9 +1516,9 @@ VarSelectWords(Var_Parse_State *vpstate, const char *str, int first, int last)
     int ac, i;
     int start, end, step;
 
-    SepBuf_Init(&buf, vpstate->varSpace);
+    SepBuf_Init(&buf, sep);
 
-    if (vpstate->oneBigWord) {
+    if (oneBigWord) {
 	/* fake what brk_string() would do if there were only one word */
 	ac = 1;
 	av = bmake_malloc((ac + 1) * sizeof(char *));
@@ -1609,7 +1596,7 @@ ModifyWord_Realpath(const char *word, SepBuf *buf, void *data MAKE_ATTR_UNUSED)
  *-----------------------------------------------------------------------
  */
 static char *
-ModifyWords(GNode *ctx, Var_Parse_State *vpstate,
+ModifyWords(GNode *ctx, Byte sep, Boolean oneBigWord,
 	    const char *str, ModifyWordsCallback modifyWord, void *data)
 {
     SepBuf result;
@@ -1617,9 +1604,9 @@ ModifyWords(GNode *ctx, Var_Parse_State *vpstate,
     char *as;			/* word list memory */
     int ac, i;
 
-    SepBuf_Init(&result, vpstate->varSpace);
+    SepBuf_Init(&result, sep);
 
-    if (vpstate->oneBigWord) {
+    if (oneBigWord) {
 	/* fake what brk_string() would do if there were only one word */
 	ac = 1;
 	av = bmake_malloc((ac + 1) * sizeof(char *));
@@ -1646,7 +1633,6 @@ ModifyWords(GNode *ctx, Var_Parse_State *vpstate,
     free(as);
     free(av);
 
-    vpstate->varSpace = result.sep;
     return SepBuf_Destroy(&result, FALSE);
 }
 
@@ -2087,7 +2073,13 @@ typedef struct {
     char termc;			/* Character which terminated scan */
     char missing_delim;		/* For error reporting */
     int modifier;		/* that we are processing */
-    Var_Parse_State parsestate;	/* Flags passed to helper functions */
+
+    Byte	sep;		/* Word separator in expansions */
+    Boolean	oneBigWord;	/* TRUE if we will treat the variable as a
+				 * single big word, even if it contains
+				 * embedded spaces (as opposed to the
+				 * usual behaviour of treating it as
+				 * several space-separated words). */
 
     /* result */
     char *newStr;		/* New value to return */
@@ -2128,11 +2120,11 @@ ApplyModifier_Loop(const char *mod, ApplyModifiersState *st) {
     st->termc = *st->cp;
 
     args.eflags = st->eflags & (VARE_UNDEFERR | VARE_WANTRES);
-    int prev_sep = st->parsestate.varSpace;
-    st->parsestate.varSpace = ' ';
-    st->newStr = ModifyWords(st->ctxt, &st->parsestate, st->nstr,
+    int prev_sep = st->sep;
+    st->sep = ' ';		/* XXX: this is inconsistent */
+    st->newStr = ModifyWords(st->ctxt, st->sep, st->oneBigWord, st->nstr,
 			     ModifyWord_Loop, &args);
-    st->parsestate.varSpace = prev_sep;
+    st->sep = prev_sep;
     Var_Delete(args.tvar, st->ctxt);
     free(args.tvar);
     free(args.str);
@@ -2409,7 +2401,7 @@ ApplyModifier_Match(const char *mod, ApplyModifiersState *st)
 	    st->v->name, st->nstr, pattern);
     ModifyWordsCallback callback = mod[0] == 'M'
 	? ModifyWord_Match : ModifyWord_NoMatch;
-    st->newStr = ModifyWords(st->ctxt, &st->parsestate, st->nstr,
+    st->newStr = ModifyWords(st->ctxt, st->sep, st->oneBigWord, st->nstr,
 			     callback, pattern);
     free(pattern);
 }
@@ -2419,7 +2411,7 @@ static Boolean
 ApplyModifier_Subst(const char * const mod, ApplyModifiersState *st)
 {
     ModifyWord_SubstArgs args;
-    Var_Parse_State tmpparsestate = st->parsestate;
+    Boolean oneBigWord = st->oneBigWord;
     char delim = mod[1];
 
     st->cp = mod + 2;
@@ -2464,14 +2456,14 @@ ApplyModifier_Subst(const char * const mod, ApplyModifiersState *st)
 	    args.pflags |= VARP_SUB_ONE;
 	    continue;
 	case 'W':
-	    tmpparsestate.oneBigWord = TRUE;
+	    oneBigWord = TRUE;
 	    continue;
 	}
 	break;
     }
 
     st->termc = *st->cp;
-    st->newStr = ModifyWords(st->ctxt, &tmpparsestate, st->nstr,
+    st->newStr = ModifyWords(st->ctxt, st->sep, oneBigWord, st->nstr,
 			     ModifyWord_Subst, &args);
 
     free(lhs);
@@ -2488,7 +2480,7 @@ ApplyModifier_Regex(const char *mod, ApplyModifiersState *st)
     ModifyWord_SubstRegexArgs args;
 
     args.pflags = 0;
-    Var_Parse_State tmpparsestate = st->parsestate;
+    Boolean oneBigWord = st->oneBigWord;
     char delim = mod[1];
 
     st->cp = mod + 2;
@@ -2517,7 +2509,7 @@ ApplyModifier_Regex(const char *mod, ApplyModifiersState *st)
 	    args.pflags |= VARP_SUB_ONE;
 	    continue;
 	case 'W':
-	    tmpparsestate.oneBigWord = TRUE;
+	    oneBigWord = TRUE;
 	    continue;
 	}
 	break;
@@ -2540,7 +2532,7 @@ ApplyModifier_Regex(const char *mod, ApplyModifiersState *st)
     if (args.nsub > 10)
 	args.nsub = 10;
     args.matches = bmake_malloc(args.nsub * sizeof(regmatch_t));
-    st->newStr = ModifyWords(st->ctxt, &tmpparsestate, st->nstr,
+    st->newStr = ModifyWords(st->ctxt, st->sep, oneBigWord, st->nstr,
 			     ModifyWord_SubstRegex, &args);
     regfree(&args.re);
     free(args.replace);
@@ -2561,11 +2553,11 @@ ApplyModifier_ToSep(const char *sep, ApplyModifiersState *st)
 {
     if (sep[0] != st->endc && (sep[1] == st->endc || sep[1] == ':')) {
 	/* ":ts<unrecognised><endc>" or ":ts<unrecognised>:" */
-	st->parsestate.varSpace = sep[0];
+	st->sep = sep[0];
 	st->cp = sep + 1;
     } else if (sep[0] == st->endc || sep[0] == ':') {
 	/* ":ts<endc>" or ":ts:" */
-	st->parsestate.varSpace = 0;	/* no separator */
+	st->sep = '\0';		/* no separator */
 	st->cp = sep;
     } else if (sep[0] == '\\') {
 	const char *xp = sep + 1;
@@ -2573,11 +2565,11 @@ ApplyModifier_ToSep(const char *sep, ApplyModifiersState *st)
 
 	switch (sep[1]) {
 	case 'n':
-	    st->parsestate.varSpace = '\n';
+	    st->sep = '\n';
 	    st->cp = sep + 2;
 	    break;
 	case 't':
-	    st->parsestate.varSpace = '\t';
+	    st->sep = '\t';
 	    st->cp = sep + 2;
 	    break;
 	case 'x':
@@ -2593,8 +2585,7 @@ ApplyModifier_ToSep(const char *sep, ApplyModifiersState *st)
 
 	    char *end;
 	get_numeric:
-	    st->parsestate.varSpace = strtoul(sep + 1 + (sep[1] == 'x'),
-					      &end, base);
+	    st->sep = strtoul(sep + 1 + (sep[1] == 'x'), &end, base);
 	    if (*end != ':' && *end != st->endc)
 	        return FALSE;
 	    st->cp = end;
@@ -2605,7 +2596,7 @@ ApplyModifier_ToSep(const char *sep, ApplyModifiersState *st)
     }
 
     st->termc = *st->cp;
-    st->newStr = ModifyWords(st->ctxt, &st->parsestate, st->nstr,
+    st->newStr = ModifyWords(st->ctxt, st->sep, st->oneBigWord, st->nstr,
 			     ModifyWord_Copy, NULL);
     return TRUE;
 }
@@ -2626,7 +2617,7 @@ ApplyModifier_To(const char *mod, ApplyModifiersState *st)
 
     /* Check for two-character options: ":tu", ":tl" */
     if (mod[1] == 'A') {	/* absolute path */
-	st->newStr = ModifyWords(st->ctxt, &st->parsestate, st->nstr,
+	st->newStr = ModifyWords(st->ctxt, st->sep, st->oneBigWord, st->nstr,
 				 ModifyWord_Realpath, NULL);
 	st->cp = mod + 2;
 	st->termc = *st->cp;
@@ -2643,7 +2634,7 @@ ApplyModifier_To(const char *mod, ApplyModifiersState *st)
 	st->cp = mod + 2;
 	st->termc = *st->cp;
     } else if (mod[1] == 'W' || mod[1] == 'w') {
-	st->parsestate.oneBigWord = (mod[1] == 'W');
+	st->oneBigWord = mod[1] == 'W';
 	st->newStr = st->nstr;
 	st->cp = mod + 2;
 	st->termc = *st->cp;
@@ -2684,7 +2675,7 @@ ApplyModifier_Words(const char *mod, ApplyModifiersState *st)
 	int newStrSize = (sizeof(int) * CHAR_BIT + 2) / 3 + 2;
 
 	st->newStr = bmake_malloc(newStrSize);
-	if (st->parsestate.oneBigWord) {
+	if (st->oneBigWord) {
 	    strncpy(st->newStr, "1", newStrSize);
 	} else {
 	    /* XXX: brk_string() is a rather expensive
@@ -2703,14 +2694,14 @@ ApplyModifier_Words(const char *mod, ApplyModifiersState *st)
 
     if (estr[0] == '*' && estr[1] == '\0') {
 	/* Found ":[*]" */
-	st->parsestate.oneBigWord = TRUE;
+	st->oneBigWord = TRUE;
 	st->newStr = st->nstr;
 	goto ok;
     }
 
     if (estr[0] == '@' && estr[1] == '\0') {
 	/* Found ":[@]" */
-	st->parsestate.oneBigWord = FALSE;
+	st->oneBigWord = FALSE;
 	st->newStr = st->nstr;
 	goto ok;
     }
@@ -2742,7 +2733,7 @@ ApplyModifier_Words(const char *mod, ApplyModifiersState *st)
      */
     if (first == 0 && last == 0) {
 	/* ":[0]" or perhaps ":[0..0]" */
-	st->parsestate.oneBigWord = TRUE;
+	st->oneBigWord = TRUE;
 	st->newStr = st->nstr;
 	goto ok;
     }
@@ -2752,7 +2743,7 @@ ApplyModifier_Words(const char *mod, ApplyModifiersState *st)
 	goto bad_modifier;
 
     /* Normal case: select the words described by seldata. */
-    st->newStr = VarSelectWords(&st->parsestate, st->nstr, first, last);
+    st->newStr = VarSelectWords(st->sep, st->oneBigWord, st->nstr, first, last);
 
 ok:
     st->termc = *st->cp;
@@ -3027,7 +3018,7 @@ ApplyModifier_SysV(const char *mod, ApplyModifiersState *st)
 	st->newStr = st->nstr;	/* special case */
     } else {
 	ModifyWord_SYSVSubstArgs args = { st->ctxt, lhs, rhs };
-	st->newStr = ModifyWords(st->ctxt, &st->parsestate, st->nstr,
+	st->newStr = ModifyWords(st->ctxt, st->sep, st->oneBigWord, st->nstr,
 				 ModifyWord_SYSVSubst, &args);
     }
     free(lhs);
@@ -3111,7 +3102,7 @@ ApplyModifiers(char *nstr, const char *tstr,
     ApplyModifiersState st = {
 	startc, endc, v, ctxt, eflags, lengthPtr, freePtr,
 	nstr, tstr, tstr,
-	'\0', '\0', 0, {' ', FALSE}, NULL
+	'\0', '\0', 0, ' ', FALSE, NULL
     };
 
     const char *p = tstr;
@@ -3268,8 +3259,8 @@ ApplyModifiers(char *nstr, const char *tstr,
 	    goto default_case;
 	case 'T':
 	    if (p[1] == st.endc || p[1] == ':') {
-		st.newStr = ModifyWords(st.ctxt, &st.parsestate, st.nstr,
-					ModifyWord_Tail, NULL);
+		st.newStr = ModifyWords(st.ctxt, st.sep, st.oneBigWord,
+					st.nstr, ModifyWord_Tail, NULL);
 		st.cp = p + 1;
 		st.termc = *st.cp;
 		break;
@@ -3277,8 +3268,8 @@ ApplyModifiers(char *nstr, const char *tstr,
 	    goto default_case;
 	case 'H':
 	    if (p[1] == st.endc || p[1] == ':') {
-		st.newStr = ModifyWords(st.ctxt, &st.parsestate, st.nstr,
-					ModifyWord_Head, NULL);
+		st.newStr = ModifyWords(st.ctxt, st.sep, st.oneBigWord,
+					st.nstr, ModifyWord_Head, NULL);
 		st.cp = p + 1;
 		st.termc = *st.cp;
 		break;
@@ -3286,8 +3277,8 @@ ApplyModifiers(char *nstr, const char *tstr,
 	    goto default_case;
 	case 'E':
 	    if (p[1] == st.endc || p[1] == ':') {
-		st.newStr = ModifyWords(st.ctxt, &st.parsestate, st.nstr,
-					ModifyWord_Suffix, NULL);
+		st.newStr = ModifyWords(st.ctxt, st.sep, st.oneBigWord,
+					st.nstr, ModifyWord_Suffix, NULL);
 		st.cp = p + 1;
 		st.termc = *st.cp;
 		break;
@@ -3295,8 +3286,8 @@ ApplyModifiers(char *nstr, const char *tstr,
 	    goto default_case;
 	case 'R':
 	    if (p[1] == st.endc || p[1] == ':') {
-		st.newStr = ModifyWords(st.ctxt, &st.parsestate, st.nstr,
-					ModifyWord_Root, NULL);
+		st.newStr = ModifyWords(st.ctxt, st.sep, st.oneBigWord,
+					st.nstr, ModifyWord_Root, NULL);
 		st.cp = p + 1;
 		st.termc = *st.cp;
 		break;
