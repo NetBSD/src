@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.299 2020/07/24 07:24:21 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.300 2020/07/24 07:29:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.299 2020/07/24 07:24:21 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.300 2020/07/24 07:29:18 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.299 2020/07/24 07:24:21 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.300 2020/07/24 07:29:18 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2082,8 +2082,8 @@ typedef struct {
     /* read-write */
     char *nstr;
     const char *start;
-    const char *cp;		/* Secondary pointer into str (place marker
-				 * for tstr) */
+    const char *cp;		/* The position where parsing continues
+				 * after the current modifier. */
     char termc;			/* Character which terminated scan */
     char missing_delim;		/* For error reporting */
     int modifier;		/* that we are processing */
