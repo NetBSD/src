@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.303 2020/07/24 08:03:27 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.304 2020/07/24 08:06:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.303 2020/07/24 08:03:27 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.304 2020/07/24 08:06:28 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.303 2020/07/24 08:03:27 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.304 2020/07/24 08:06:28 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1386,26 +1386,26 @@ typedef struct {
 static void
 ModifyWord_SubstRegex(const char *word, SepBuf *buf, void *data)
 {
-    ModifyWord_SubstRegexArgs *pat = data;
+    ModifyWord_SubstRegexArgs *args = data;
     int xrv;
     const char *wp = word;
     char *rp;
     int flags = 0;
 
-    if ((pat->pflags & (VARP_SUB_ONE | VARP_SUB_MATCHED)) ==
+    if ((args->pflags & (VARP_SUB_ONE | VARP_SUB_MATCHED)) ==
 	(VARP_SUB_ONE | VARP_SUB_MATCHED))
 	xrv = REG_NOMATCH;
     else {
     tryagain:
-	xrv = regexec(&pat->re, wp, pat->nsub, pat->matches, flags);
+	xrv = regexec(&args->re, wp, args->nsub, args->matches, flags);
     }
 
     switch (xrv) {
     case 0:
-	pat->pflags |= VARP_SUB_MATCHED;
-	SepBuf_AddBytes(buf, wp, pat->matches[0].rm_so);
+	args->pflags |= VARP_SUB_MATCHED;
+	SepBuf_AddBytes(buf, wp, args->matches[0].rm_so);
 
-	for (rp = pat->replace; *rp; rp++) {
+	for (rp = args->replace; *rp; rp++) {
 	    if (*rp == '\\' && (rp[1] == '&' || rp[1] == '\\')) {
 		SepBuf_AddBytes(buf, rp + 1, 1);
 		rp++;
@@ -1426,14 +1426,15 @@ ModifyWord_SubstRegex(const char *word, SepBuf *buf, void *data)
 		    rp++;
 		}
 
-		if (n >= pat->nsub) {
+		if (n >= args->nsub) {
 		    Error("No subexpression %s", errstr);
-		} else if ((pat->matches[n].rm_so == -1) &&
-			   (pat->matches[n].rm_eo == -1)) {
+		} else if ((args->matches[n].rm_so == -1) &&
+			   (args->matches[n].rm_eo == -1)) {
 		    Error("No match for subexpression %s", errstr);
 		} else {
-		    const char *subbuf = wp + pat->matches[n].rm_so;
-		    int sublen = pat->matches[n].rm_eo - pat->matches[n].rm_so;
+		    const char *subbuf = wp + args->matches[n].rm_so;
+		    int sublen = args->matches[n].rm_eo -
+				 args->matches[n].rm_so;
 		    SepBuf_AddBytes(buf, subbuf, sublen);
 		}
 
@@ -1441,10 +1442,10 @@ ModifyWord_SubstRegex(const char *word, SepBuf *buf, void *data)
 		SepBuf_AddBytes(buf, rp, 1);
 	    }
 	}
-	wp += pat->matches[0].rm_eo;
-	if (pat->pflags & VARP_SUB_GLOBAL) {
+	wp += args->matches[0].rm_eo;
+	if (args->pflags & VARP_SUB_GLOBAL) {
 	    flags |= REG_NOTBOL;
-	    if (pat->matches[0].rm_so == 0 && pat->matches[0].rm_eo == 0) {
+	    if (args->matches[0].rm_so == 0 && args->matches[0].rm_eo == 0) {
 		SepBuf_AddBytes(buf, wp, 1);
 		wp++;
 	    }
@@ -1456,7 +1457,7 @@ ModifyWord_SubstRegex(const char *word, SepBuf *buf, void *data)
 	}
 	break;
     default:
-	VarREError(xrv, &pat->re, "Unexpected regex error");
+	VarREError(xrv, &args->re, "Unexpected regex error");
 	/* fall through */
     case REG_NOMATCH:
 	SepBuf_AddBytes(buf, wp, strlen(wp));
