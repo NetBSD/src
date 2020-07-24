@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.301 2020/07/24 07:52:44 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.302 2020/07/24 07:59:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.301 2020/07/24 07:52:44 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.302 2020/07/24 07:59:35 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.301 2020/07/24 07:52:44 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.302 2020/07/24 07:59:35 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -634,11 +634,9 @@ Var_ExportVars(void)
 void
 Var_Export(char *str, int isExport)
 {
-    char *name;
-    char *val;
     char **av;
     char *as;
-    int flags;
+    VarExportFlags flags;
     int ac;
     int i;
 
@@ -656,11 +654,12 @@ Var_Export(char *str, int isExport)
     } else {
 	flags |= VAR_EXPORT_PARENT;
     }
-    val = Var_Subst(NULL, str, VAR_GLOBAL, VARE_WANTRES);
+
+    char *val = Var_Subst(NULL, str, VAR_GLOBAL, VARE_WANTRES);
     if (*val) {
 	av = brk_string(val, &ac, FALSE, &as);
 	for (i = 0; i < ac; i++) {
-	    name = av[i];
+	    const char *name = av[i];
 	    if (!name[1]) {
 		/*
 		 * A single char.
@@ -2151,7 +2150,7 @@ ApplyModifier_Defined(const char *mod, ApplyModifiersState *st)
 	neflags = st->eflags;
 
     /*
-     * Pass through tstr looking for 1) escaped delimiters,
+     * Pass through mod looking for 1) escaped delimiters,
      * '$'s and backslashes (place the escaped character in
      * uninterpreted) and 2) unescaped $'s that aren't before
      * the delimiter (expand the variable substitution).
