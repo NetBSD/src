@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.Xsun,v 1.2 2020/07/23 09:59:36 mrg Exp $
+#	$NetBSD: Makefile.Xsun,v 1.3 2020/07/24 02:25:58 tsutsui Exp $
 
 .include <bsd.own.mk>
 
@@ -73,11 +73,10 @@ SRCS+=  stubs.c
 SRCS+=	fbcmap_mi.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/sun \
-		-I${DESTDIR}${X11INCDIR}/xorg \
 		${X11INCS.DIX}
 
 CPPFLAGS+=	-UHAVE_XORG_CONFIG_H
-
+CPPFLAGS+=	-UDBE -UXRECORD -UPRESENT
 CPPFLAGS+=	-UXFree86LOADER -UXF86VIDMODE -UXFreeXDGA -UXF86MISC \
 		-UXF86DRI -UXF86BIGFONT
 
@@ -90,9 +89,7 @@ LDADD+= ${LDADD.dix} \
 	${LDADD.xkbstubs} \
 	${LDADD.randr} \
 	${LDADD.Xext} \
-	${LDADD.dbe} \
 	${LDADD.composite} \
-	${LDADD.record} \
 	${LDADD.render} \
 	${LDADD.os} \
 	${LDADD.xfixes} \
@@ -100,7 +97,6 @@ LDADD+= ${LDADD.dix} \
 	${LDADD.miext/damage} \
 	${LDADD.miext/sync} \
 	${LDADD.Xi} \
-	${LDADD.present} \
 	-lXfont2 \
 	-lpixman-1 \
 	-lX11 \
@@ -113,9 +109,7 @@ DPADD+= ${LDADD.dix} \
 	${DPADD.xkb} \
 	${DPADD.randr} \
 	${DPADD.Xext} \
-	${DPADD.dbe} \
 	${DPADD.composite} \
-	${DPADD.record} \
 	${DPADD.render} \
 	${DPADD.os} \
 	${DPADD.xfixes} \
@@ -123,10 +117,8 @@ DPADD+= ${LDADD.dix} \
 	${DPADD.miext/damage} \
 	${DPADD.miext/sync} \
 	${DPADD.Xi} \
-	${DPADD.present} \
 	${LIBXFONT2} \
 	${LIBPIXMAN-1} \
-	${LIBXEXT} \
 	${LIBX11} \
 	${LIBZ} \
 	${LIBM}
