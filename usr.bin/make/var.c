@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.304 2020/07/24 08:06:28 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.305 2020/07/24 08:12:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.304 2020/07/24 08:06:28 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.305 2020/07/24 08:12:43 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.304 2020/07/24 08:06:28 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.305 2020/07/24 08:12:43 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1378,7 +1378,6 @@ typedef struct {
     int		   nsub;
     char 	  *replace;
     VarPatternFlags pflags;
-    regmatch_t 	  matches[10];
 } ModifyWord_SubstRegexArgs;
 
 /* Callback for ModifyWords to implement the :C/from/to/ modifier.
@@ -1391,19 +1390,20 @@ ModifyWord_SubstRegex(const char *word, SepBuf *buf, void *data)
     const char *wp = word;
     char *rp;
     int flags = 0;
+    regmatch_t m[10];
 
     if ((args->pflags & (VARP_SUB_ONE | VARP_SUB_MATCHED)) ==
 	(VARP_SUB_ONE | VARP_SUB_MATCHED))
 	xrv = REG_NOMATCH;
     else {
     tryagain:
-	xrv = regexec(&args->re, wp, args->nsub, args->matches, flags);
+	xrv = regexec(&args->re, wp, args->nsub, m, flags);
     }
 
     switch (xrv) {
     case 0:
 	args->pflags |= VARP_SUB_MATCHED;
-	SepBuf_AddBytes(buf, wp, args->matches[0].rm_so);
+	SepBuf_AddBytes(buf, wp, m[0].rm_so);
 
 	for (rp = args->replace; *rp; rp++) {
 	    if (*rp == '\\' && (rp[1] == '&' || rp[1] == '\\')) {
@@ -1428,24 +1428,21 @@ ModifyWord_SubstRegex(const char *word, SepBuf *buf, void *data)
 
 		if (n >= args->nsub) {
 		    Error("No subexpression %s", errstr);
-		} else if ((args->matches[n].rm_so == -1) &&
-			   (args->matches[n].rm_eo == -1)) {
+		} else if (m[n].rm_so == -1 && m[n].rm_eo == -1) {
 		    Error("No match for subexpression %s", errstr);
 		} else {
-		    const char *subbuf = wp + args->matches[n].rm_so;
-		    int sublen = args->matches[n].rm_eo -
-				 args->matches[n].rm_so;
-		    SepBuf_AddBytes(buf, subbuf, sublen);
+		    SepBuf_AddBytes(buf, wp + m[n].rm_so,
+				    m[n].rm_eo - m[n].rm_so);
 		}
 
 	    } else {
 		SepBuf_AddBytes(buf, rp, 1);
 	    }
 	}
-	wp += args->matches[0].rm_eo;
+	wp += m[0].rm_eo;
 	if (args->pflags & VARP_SUB_GLOBAL) {
 	    flags |= REG_NOTBOL;
-	    if (args->matches[0].rm_so == 0 && args->matches[0].rm_eo == 0) {
+	    if (m[0].rm_so == 0 && m[0].rm_eo == 0) {
 		SepBuf_AddBytes(buf, wp, 1);
 		wp++;
 	    }
