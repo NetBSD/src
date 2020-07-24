@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.196 2020/07/17 12:12:24 jdolecek Exp $
+# $NetBSD: md.i386,v 1.197 2020/07/24 06:12:21 jdolecek Exp $
 ./usr/include/clang-3.4/__wmmintrin_aes.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/__wmmintrin_pclmul.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/ammintrin.h		comp-obsolete		obsolete
@@ -872,7 +872,7 @@
 ./usr/include/x86/via_padlock.h			comp-c-include
 ./usr/include/xen				comp-c-include
 ./usr/include/xen/intrdefs.h			comp-c-include
-./usr/include/xen/xenio.h			comp-obsolete		obsolete
+./usr/include/xen/xenio.h			comp-c-include
 ./usr/include/xen/xenio3.h			comp-obsolete		obsolete
 ./usr/include/xmmintrin.h			comp-obsolete		obsolete
 ./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.asan-i386.a	comp-obsolete	obsolete
