@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.4 2020/07/18 17:45:11 nia Exp $
+.\"	$NetBSD: upgrade,v 1.5 2020/07/24 12:41:20 nia Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,31 +34,40 @@ is by using the sysutils/sysupgrade package from pkgsrc.
 .Pp
 First, edit
 .Pa /usr/pkg/etc/sysupgrade.conf .
-Make sure RELEASEDIR and KERNEL are correct:
+Make sure RELEASEDIR and ARCHIVE_EXTENSION are correct:
 .Bd -literal
+# Replace evbarm-aarch64 with evbarm-earmv7hf on a 32-bit system, evbarm-earmv6hf on the original RPI
 RELEASEDIR="https://cdn.netbsd.org/pub/NetBSD/NetBSD-\*V/evbarm-aarch64/"
-.Ed
-or
-.Bd -literal
-RELEASEDIR="https://cdn.netbsd.org/pub/NetBSD/NetBSD-\*V/evbarm-earmv7hf/"
-.Ed
-or
-.Bd -literal
-RELEASEDIR="https://cdn.netbsd.org/pub/NetBSD/NetBSD-\*V/evbarm-earmv6hf/"
+ARCHIVE_EXTENSION=tar.xz
 .Ed
 .Pp
 Make sure
 .Pa /boot
 is mounted, and copy the new board-specific
 .Pa *.dts
-file into place, and
+device tree file into place.
+Note that the device tree files are sorted into SoC-type subdirectories in
+.Pa /boot/dtb ,
+e.g. allwinner, amlogic, broadcom, freescale, nvidia, rockchip.
+.Pp
+For example, for the Allwinner-based PINE A64 LTS:
+.Bd -literal
+$ ftp https://cdn.netbsd.org/pub/NetBSD/NetBSD-\*V/evbarm-aarch64/binary/kernel/sun50i-a64-pine64-lts.dtb.gz
+$ gunzip sun50i-a64-pine64-lts.dtb.gz
+# cp sun50i-a64-pine64-lts.dtb /boot/dtb/allwinner/
+.Ed
+Also copy
 .Pa bootaa64.efi
-if applicable.
+if applicable:
+.Bd -literal
+$ ftp https://cdn.netbsd.org/pub/NetBSD/NetBSD-\*V/evbarm-aarch64/installation/misc/bootaa64.efi
+# cp bootaa64.efi /boot/EFI/BOOT/bootaa64.efi
+.Ed
 .Pp
 Finally:
 .Bd -literal
 # sysupgrade fetch
-# sysupgrade kernel netbsd-GENERIC (or netbsd-GENERIC64)
+# sysupgrade kernel
 # sysupgrade modules
 # reboot
 # sysupgrade sets
@@ -67,8 +76,9 @@ Finally:
 # reboot
 .Ed
 .Pp
-Rebooting with a new kernel before updating the sets is the most
-careful possible path.
+This is the most careful possible path with sysupgrade that makes sure
+the kernel and userland are always fully compatible, by making sure the
+kernel and boot files are newer than the userland.
 It is also possible to:
 .Bd -literal
 # sysupgrade auto
