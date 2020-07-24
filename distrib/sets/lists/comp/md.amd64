@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.278 2020/07/17 12:12:24 jdolecek Exp $
+# $NetBSD: md.amd64,v 1.279 2020/07/24 06:12:21 jdolecek Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -1003,7 +1003,7 @@
 ./usr/include/x86/via_padlock.h			comp-c-include
 ./usr/include/xen				comp-c-include
 ./usr/include/xen/intrdefs.h			comp-c-include
-./usr/include/xen/xenio.h			comp-obsolete		obsolete
+./usr/include/xen/xenio.h			comp-c-include
 ./usr/include/xen/xenio3.h			comp-obsolete		obsolete
 ./usr/include/xmmintrin.h			comp-obsolete		obsolete
 ./usr/lib/clang/7.0.0/lib/netbsd/libclang_rt.asan-i386.a	comp-obsolete	obsolete
