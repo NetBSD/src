@@ -1,0 +1,7 @@
+#	$NetBSD: files.chacha,v 1.1 2020/07/25 22:46:35 riastradh Exp $
+
+define	chacha
+
+file	crypto/chacha/chacha_impl.c			chacha
+file	crypto/chacha/chacha_ref.c			chacha
+file	crypto/chacha/chacha_selftest.c			chacha

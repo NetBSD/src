@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1272 2020/07/25 22:26:23 riastradh Exp $
+#	$NetBSD: files,v 1.1273 2020/07/25 22:46:34 riastradh Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -202,6 +202,7 @@ defflag	opt_machdep.h		MACHDEP
 # Individual crypto transforms
 include "crypto/adiantum/files.adiantum"
 include "crypto/aes/files.aes"
+include "crypto/chacha/files.chacha"
 include "crypto/des/files.des"
 include "crypto/blowfish/files.blowfish"
 include "crypto/cast128/files.cast128"
