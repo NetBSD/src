@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_sse2.h,v 1.2 2020/06/29 23:50:05 riastradh Exp $	*/
+/*	$NetBSD: aes_sse2.h,v 1.3 2020/07/25 22:12:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,12 @@
 #ifndef	_CRYPTO_AES_ARCH_X86_AES_SSE2_H
 #define	_CRYPTO_AES_ARCH_X86_AES_SSE2_H
 
-#include <crypto/aes/aes.h>
+#include <sys/types.h>
+
+#include <crypto/aes/aes_impl.h>
+
+struct aesenc;
+struct aesdec;
 
 /*
  * These functions MUST NOT use any vector registers for parameters or

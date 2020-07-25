@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_sse2_impl.c,v 1.3 2020/06/30 20:32:11 riastradh Exp $	*/
+/*	$NetBSD: aes_sse2_impl.c,v 1.4 2020/07/25 22:12:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,12 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_sse2_impl.c,v 1.3 2020/06/30 20:32:11 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_sse2_impl.c,v 1.4 2020/07/25 22:12:57 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/endian.h>
 
 #include <crypto/aes/aes.h>
+#include <crypto/aes/aes_impl.h>
 #include <crypto/aes/arch/x86/aes_sse2.h>
 
 #ifdef _KERNEL
