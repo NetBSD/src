@@ -1,6 +1,6 @@
-#	$NetBSD: files.adiantum,v 1.2 2020/07/25 22:41:31 riastradh Exp $
+#	$NetBSD: files.adiantum,v 1.3 2020/07/25 22:47:16 riastradh Exp $
 
-define	adiantum: aes
+define	adiantum: aes, chacha
 
 file	crypto/adiantum/adiantum.c		adiantum
 file	crypto/adiantum/adiantum_selftest.c	adiantum
