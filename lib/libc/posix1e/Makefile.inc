@@ -25,7 +25,6 @@ SRCS+=	acl_branding.c			\
 	acl_to_text.c			\
 	acl_to_text_nfs4.c              \
 	acl_valid.c			\
-	extattr.c			\
 	subr_acl_nfs4.c
 
 MAN+=	acl.3				\
