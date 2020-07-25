@@ -1,4 +1,4 @@
-/*	$NetBSD: immintrin.h,v 1.2 2020/06/29 23:51:35 riastradh Exp $	*/
+/*	$NetBSD: immintrin.h,v 1.3 2020/07/25 22:31:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -51,6 +51,7 @@ typedef long long __m128i_u
 typedef long long __v2di __attribute__((__vector_size__(16)));
 typedef unsigned long long __v2du __attribute__((__vector_size__(16)));
 typedef int __v4si __attribute__((__vector_size__(16)));
+typedef unsigned __v4su __attribute__((__vector_size__(16)));
 typedef float __v4sf __attribute__((__vector_size__(16)));
 typedef short __v8hi __attribute__((__vector_size__(16)));
 typedef char __v16qi __attribute__((__vector_size__(16)));
@@ -65,6 +66,7 @@ typedef long long __m128i_u
 typedef long long __v2di __attribute__((__vector_size__(16)));
 typedef unsigned long long __v2du __attribute__((__vector_size__(16)));
 typedef int __v4si __attribute__((__vector_size__(16)));
+typedef unsigned __v4su __attribute__((__vector_size__(16)));
 typedef float __v4sf __attribute__((__vector_size__(16)));
 typedef short __v8hi __attribute__((__vector_size__(16)));
 typedef char __v16qi __attribute__((__vector_size__(16)));
@@ -82,6 +84,13 @@ typedef char __v16qi __attribute__((__vector_size__(16)));
 #endif
 
 #define	_SSSE3_ATTR	__attribute__((target("ssse3")))
+
+_INTRINSATTR
+static __inline __m128i
+_mm_add_epi32(__m128i __a, __m128i __b)
+{
+	return (__m128i)((__v4su)__a + (__v4su)__b);
+}
 
 #if defined(__GNUC__) && !defined(__clang__)
 #define	_mm_alignr_epi8(hi,lo,bytes)					      \
