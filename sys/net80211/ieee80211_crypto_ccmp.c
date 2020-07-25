@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto_ccmp.c,v 1.15 2018/09/03 16:29:36 riastradh Exp $	*/
+/*	$NetBSD: ieee80211_crypto_ccmp.c,v 1.16 2020/07/25 22:26:23 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_ccmp.c,v 1.7 2005/07/11 03:06:23 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.15 2018/09/03 16:29:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.16 2020/07/25 22:26:23 riastradh Exp $");
 #endif
 
 /*
@@ -60,13 +60,15 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.15 2018/09/03 16:29:36 r
 
 #include <net80211/ieee80211_var.h>
 
-#include <crypto/rijndael/rijndael.h>
+#include <crypto/aes/aes.h>
+#include <crypto/aes/aes_ccm.h>
+#include <crypto/aes/aes_ccm_mbuf.h>
 
 #define AES_BLOCK_LEN 16
 
 struct ccmp_ctx {
 	struct ieee80211com *cc_ic;	/* for diagnostics */
-	rijndael_ctx cc_aes;
+	struct aesenc cc_aes;
 };
 
 static	void *ccmp_attach(struct ieee80211com *, struct ieee80211_key *);
@@ -133,7 +135,7 @@ ccmp_setkey(struct ieee80211_key *k)
 		return 0;
 	}
 	if (k->wk_flags & IEEE80211_KEY_SWCRYPT)
-		rijndael_set_key(&ctx->cc_aes, k->wk_key, k->wk_keylen*NBBY);
+		aes_setenckey128(&ctx->cc_aes, k->wk_key);
 	return 1;
 }
 
@@ -287,261 +289,100 @@ xor_block(uint8_t *b, const uint8_t *a, size_t len)
  */
 
 static void
-ccmp_init_blocks(rijndael_ctx *ctx, struct ieee80211_frame *wh,
-	u_int64_t pn, size_t dlen,
-	uint8_t b0[AES_BLOCK_LEN], uint8_t aad[2 * AES_BLOCK_LEN],
-	uint8_t auth[AES_BLOCK_LEN], uint8_t s0[AES_BLOCK_LEN])
+ccmp_init_blocks(struct aesenc *ctx, struct ieee80211_frame *wh,
+    u_int64_t pn, size_t data_len, struct aes_ccm *aes_ccm)
 {
+	uint8_t nonce[13];
+	uint8_t ad[32];
+	uint8_t qos;
+	size_t adlen;
+
 #define	IS_4ADDRESS(wh) \
 	((wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) == IEEE80211_FC1_DIR_DSTODS)
 #define	IS_QOS_DATA(wh)	ieee80211_has_qos(wh)
 
-	/* CCM Initial Block:
-	 * Flag (Include authentication header, M=3 (8-octet MIC),
-	 *       L=1 (2-octet Dlen))
-	 * Nonce: 0x00 | A2 | PN
-	 * Dlen */
-	b0[0] = 0x59;
-	/* NB: b0[1] set below */
-	IEEE80211_ADDR_COPY(b0 + 2, wh->i_addr2);
-	b0[8] = pn >> 40;
-	b0[9] = pn >> 32;
-	b0[10] = pn >> 24;
-	b0[11] = pn >> 16;
-	b0[12] = pn >> 8;
-	b0[13] = pn >> 0;
-	b0[14] = (dlen >> 8) & 0xff;
-	b0[15] = dlen & 0xff;
+	/* nonce[0] is qos, determined later */
+	IEEE80211_ADDR_COPY(nonce + 1, wh->i_addr2);
+	nonce[7] = pn >> 40;
+	nonce[8] = pn >> 32;
+	nonce[9] = pn >> 24;
+	nonce[10] = pn >> 16;
+	nonce[11] = pn >> 8;
+	nonce[12] = pn >> 0;
 
-	/* AAD:
-	 * FC with bits 4..6 and 11..13 masked to zero; 14 is always one
-	 * A1 | A2 | A3
-	 * SC with bits 4..15 (seq#) masked to zero
-	 * A4 (if present)
-	 * QC (if present)
-	 */
-	aad[0] = 0;	/* AAD length >> 8 */
-	/* NB: aad[1] set below */
-	aad[2] = wh->i_fc[0] & 0x8f;	/* XXX magic #s */
-	aad[3] = wh->i_fc[1] & 0xc7;	/* XXX magic #s */
+	ad[0] = wh->i_fc[0] & 0x8f;	/* XXX magic #s */
+	ad[1] = wh->i_fc[1] & 0xc7;	/* XXX magic #s */
 	/* NB: we know 3 addresses are contiguous */
-	memcpy(aad + 4, wh->i_addr1, 3 * IEEE80211_ADDR_LEN);
-	aad[22] = wh->i_seq[0] & IEEE80211_SEQ_FRAG_MASK;
-	aad[23] = 0; /* all bits masked */
+	memcpy(ad + 2, wh->i_addr1, 3 * IEEE80211_ADDR_LEN);
+	ad[20] = wh->i_seq[0] & IEEE80211_SEQ_FRAG_MASK;
+	ad[21] = 0; /* all bits masked */
+
 	/*
 	 * Construct variable-length portion of AAD based
 	 * on whether this is a 4-address frame/QOS frame.
-	 * We always zero-pad to 32 bytes before running it
-	 * through the cipher.
 	 *
 	 * We also fill in the priority bits of the CCM
 	 * initial block as we know whether or not we have
 	 * a QOS frame.
 	 */
 	if (IS_4ADDRESS(wh)) {
-		IEEE80211_ADDR_COPY(aad + 24,
-			((struct ieee80211_frame_addr4 *)wh)->i_addr4);
+		IEEE80211_ADDR_COPY(ad + 22,
+		    ((const struct ieee80211_frame_addr4 *)wh)->i_addr4);
 		if (IS_QOS_DATA(wh)) {
-			struct ieee80211_qosframe_addr4 *qwh4 =
-				(struct ieee80211_qosframe_addr4 *) wh;
-			aad[30] = qwh4->i_qos[0] & 0x0f;/* just priority bits */
-			aad[31] = 0;
-			b0[1] = aad[30];
-			aad[1] = 22 + IEEE80211_ADDR_LEN + 2;
+			const struct ieee80211_qosframe_addr4 *qwh4 =
+			    (const struct ieee80211_qosframe_addr4 *)wh;
+			qos = qwh4->i_qos[0] & 0x0f; /* just priority bits */
+			ad[28] = qos;
+			ad[29] = 0;
+			adlen = 22 + IEEE80211_ADDR_LEN + 2;
 		} else {
-			*(u_int16_t *)&aad[30] = 0;
-			b0[1] = 0;
-			aad[1] = 22 + IEEE80211_ADDR_LEN;
+			qos = 0;
+			adlen = 22 + IEEE80211_ADDR_LEN;
 		}
 	} else {
 		if (IS_QOS_DATA(wh)) {
-			struct ieee80211_qosframe *qwh =
-				(struct ieee80211_qosframe*) wh;
-			aad[24] = qwh->i_qos[0] & 0x0f;	/* just priority bits */
-			aad[25] = 0;
-			b0[1] = aad[24];
-			aad[1] = 22 + 2;
+			const struct ieee80211_qosframe *qwh =
+			    (const struct ieee80211_qosframe *)wh;
+			qos = qwh->i_qos[0] & 0x0f; /* just priority bits */
+			ad[22] = qos;
+			ad[23] = 0;
+			adlen = 22 + 2;
 		} else {
-			*(u_int16_t *)&aad[24] = 0;
-			b0[1] = 0;
-			aad[1] = 22;
+			qos = 0;
+			adlen = 22;
 		}
-		*(u_int16_t *)&aad[26] = 0;
-		*(u_int32_t *)&aad[28] = 0;
 	}
+	nonce[0] = qos;
 
-	/* Start with the first block and AAD */
-	rijndael_encrypt(ctx, b0, auth);
-	xor_block(auth, aad, AES_BLOCK_LEN);
-	rijndael_encrypt(ctx, auth, auth);
-	xor_block(auth, &aad[AES_BLOCK_LEN], AES_BLOCK_LEN);
-	rijndael_encrypt(ctx, auth, auth);
-	b0[0] &= 0x07;
-	b0[14] = b0[15] = 0;
-	rijndael_encrypt(ctx, b0, s0);
+	aes_ccm_init(aes_ccm, AES_128_NROUNDS, ctx, 2 /* L, counter octets */,
+	    IEEE80211_WEP_MICLEN, nonce, sizeof nonce, ad, adlen, data_len);
+
 #undef	IS_QOS_DATA
 #undef	IS_4ADDRESS
 }
 
-#define	CCMP_ENCRYPT(_i, _b, _b0, _pos, _e, _len) do {	\
-	/* Authentication */				\
-	xor_block(_b, _pos, _len);			\
-	rijndael_encrypt(&ctx->cc_aes, _b, _b);		\
-	/* Encryption, with counter */			\
-	_b0[14] = (_i >> 8) & 0xff;			\
-	_b0[15] = _i & 0xff;				\
-	rijndael_encrypt(&ctx->cc_aes, _b0, _e);	\
-	xor_block(_pos, _e, _len);			\
-} while (0)
-
 static int
-ccmp_encrypt(struct ieee80211_key *key, struct mbuf *m0, int hdrlen)
+ccmp_encrypt(struct ieee80211_key *key, struct mbuf *m, int hdrlen)
 {
 	struct ccmp_ctx *ctx = key->wk_private;
 	struct ieee80211_frame *wh;
-	struct mbuf *m = m0;
-	int data_len, i, space;
-	uint8_t aad[2 * AES_BLOCK_LEN], b0[AES_BLOCK_LEN], b[AES_BLOCK_LEN],
-		e[AES_BLOCK_LEN], s0[AES_BLOCK_LEN];
-	uint8_t *pos;
+	struct aes_ccm aes_ccm;
+	size_t data_len;
+	uint8_t mic[IEEE80211_WEP_MICLEN];
+
+	KASSERT(hdrlen >= 0);
+	KASSERT(hdrlen < m->m_pkthdr.len);
+	KASSERT(ccmp.ic_header <= m->m_pkthdr.len - hdrlen);
 
 	ctx->cc_ic->ic_stats.is_crypto_ccmp++;
 
 	wh = mtod(m, struct ieee80211_frame *);
 	data_len = m->m_pkthdr.len - (hdrlen + ccmp.ic_header);
-	ccmp_init_blocks(&ctx->cc_aes, wh, key->wk_keytsc,
-		data_len, b0, aad, b, s0);
+	ccmp_init_blocks(&ctx->cc_aes, wh, key->wk_keytsc, data_len, &aes_ccm);
+	aes_ccm_enc_mbuf(&aes_ccm, m, hdrlen + ccmp.ic_header, data_len, mic);
 
-	i = 1;
-	pos = mtod(m, uint8_t *) + hdrlen + ccmp.ic_header;
-	/* NB: assumes header is entirely in first mbuf */
-	space = m->m_len - (hdrlen + ccmp.ic_header);
-	for (;;) {
-		if (space > data_len)
-			space = data_len;
-
-		/*
-		 * Do full blocks.
-		 */
-		while (space >= AES_BLOCK_LEN) {
-			CCMP_ENCRYPT(i, b, b0, pos, e, AES_BLOCK_LEN);
-			pos += AES_BLOCK_LEN, space -= AES_BLOCK_LEN;
-			data_len -= AES_BLOCK_LEN;
-			i++;
-		}
-		if (data_len <= 0)		/* no more data */
-			break;
-
-		m = m->m_next;
-		if (m == NULL) {		/* last buffer */
-			if (space != 0) {
-				/*
-				 * Short last block.
-				 */
-				CCMP_ENCRYPT(i, b, b0, pos, e, space);
-			}
-			break;
-		}
-		if (space != 0) {
-			uint8_t *pos_next;
-			int space_next;
-			int len, dl, sp;
-			struct mbuf *n;
-
-			/*
-			 * Block straddles one or more mbufs, gather data
-			 * into the block buffer b, apply the cipher, then
-			 * scatter the results back into the mbuf chain.
-			 * The buffer will automatically get space bytes
-			 * of data at offset 0 copied in+out by the
-			 * CCMP_ENCRYPT request so we must take care of
-			 * the remaining data.
-			 */
-			n = m;
-			dl = data_len;
-			sp = space;
-			for (;;) {
-				pos_next = mtod(n, uint8_t *);
-				len = uimin(dl, AES_BLOCK_LEN);
-				space_next = len > sp ? len - sp : 0;
-				if (n->m_len >= space_next) {
-					/*
-					 * This mbuf has enough data; just grab
-					 * what we need and stop.
-					 */
-					xor_block(b+sp, pos_next, space_next);
-					break;
-				}
-				/*
-				 * This mbuf's contents are insufficient,
-				 * take them all and prepare to advance to
-				 * the next mbuf.
-				 */
-				xor_block(b+sp, pos_next, n->m_len);
-				sp += n->m_len, dl -= n->m_len;
-				n = n->m_next;
-				if (n == NULL)
-					break;
-			}
-
-			CCMP_ENCRYPT(i, b, b0, pos, e, space);
-
-			/* NB: just like above, but scatter data to mbufs */
-			dl = data_len;
-			sp = space;
-			for (;;) {
-				pos_next = mtod(m, uint8_t *);
-				len = uimin(dl, AES_BLOCK_LEN);
-				space_next = len > sp ? len - sp : 0;
-				if (m->m_len >= space_next) {
-					xor_block(pos_next, e+sp, space_next);
-					break;
-				}
-				xor_block(pos_next, e+sp, m->m_len);
-				sp += m->m_len, dl -= m->m_len;
-				m = m->m_next;
-				if (m == NULL)
-					goto done;
-			}
-
-			/*
-			 * Do bookkeeping.  m now points to the last mbuf
-			 * we grabbed data from.  We know we consumed a
-			 * full block of data as otherwise we'd have hit
-			 * the end of the mbuf chain, so deduct from data_len.
-			 * Otherwise advance the block number (i) and setup
-			 * pos+space to reflect contents of the new mbuf.
-			 */
-			data_len -= AES_BLOCK_LEN;
-			i++;
-			pos = pos_next + space_next;
-			space = m->m_len - space_next;
-		} else {
-			/*
-			 * Setup for next buffer.
-			 */
-			pos = mtod(m, uint8_t *);
-			space = m->m_len;
-		}
-	}
-
-done:
-	/* tack on MIC */
-	xor_block(b, s0, ccmp.ic_trailer);
-	return m_append(m0, ccmp.ic_trailer, b);
+	return m_append(m, ccmp.ic_trailer, mic);
 }
-#undef CCMP_ENCRYPT
-
-#define	CCMP_DECRYPT(_i, _b, _b0, _pos, _a, _len) do {	\
-	/* Decrypt, with counter */			\
-	_b0[14] = (_i >> 8) & 0xff;			\
-	_b0[15] = _i & 0xff;				\
-	rijndael_encrypt(&ctx->cc_aes, _b0, _b);	\
-	xor_block(_pos, _b, _len);			\
-	/* Authentication */				\
-	xor_block(_a, _pos, _len);			\
-	rijndael_encrypt(&ctx->cc_aes, _a, _a);		\
-} while (0)
 
 static int
 ccmp_decrypt(struct ieee80211_key *key, u_int64_t pn, struct mbuf *m,
@@ -549,90 +390,33 @@ ccmp_decrypt(struct ieee80211_key *key, u_int64_t pn, struct mbuf *m,
 {
 	struct ccmp_ctx *ctx = key->wk_private;
 	struct ieee80211_frame *wh;
-	uint8_t aad[2 * AES_BLOCK_LEN];
-	uint8_t b0[AES_BLOCK_LEN], b[AES_BLOCK_LEN], a[AES_BLOCK_LEN];
-	uint8_t mic[AES_BLOCK_LEN];
+	struct aes_ccm aes_ccm;
 	size_t data_len;
-	int i;
-	uint8_t *pos;
-	u_int space;
+	uint8_t mic[IEEE80211_WEP_MICLEN];
+
+	KASSERT(hdrlen >= 0);
+	KASSERT(hdrlen < m->m_pkthdr.len);
+	KASSERT(ccmp.ic_header < m->m_pkthdr.len - hdrlen);
+	KASSERT(ccmp.ic_trailer < m->m_pkthdr.len - (hdrlen + ccmp.ic_header));
 
 	ctx->cc_ic->ic_stats.is_crypto_ccmp++;
 
 	wh = mtod(m, struct ieee80211_frame *);
 	data_len = m->m_pkthdr.len - (hdrlen + ccmp.ic_header + ccmp.ic_trailer);
-	ccmp_init_blocks(&ctx->cc_aes, wh, pn, data_len, b0, aad, a, b);
+	ccmp_init_blocks(&ctx->cc_aes, wh, pn, data_len, &aes_ccm);
 	m_copydata(m, m->m_pkthdr.len - ccmp.ic_trailer, ccmp.ic_trailer, mic);
-	xor_block(mic, b, ccmp.ic_trailer);
 
-	i = 1;
-	pos = mtod(m, uint8_t *) + hdrlen + ccmp.ic_header;
-	space = m->m_len - (hdrlen + ccmp.ic_header);
-	for (;;) {
-		if (space > data_len)
-			space = data_len;
-		while (space >= AES_BLOCK_LEN) {
-			CCMP_DECRYPT(i, b, b0, pos, a, AES_BLOCK_LEN);
-			pos += AES_BLOCK_LEN, space -= AES_BLOCK_LEN;
-			data_len -= AES_BLOCK_LEN;
-			i++;
-		}
-		if (data_len <= 0)		/* no more data */
-			break;
-
-		m = m->m_next;
-		if (m == NULL) {		/* last buffer */
-			if (space != 0)		/* short last block */
-				CCMP_DECRYPT(i, b, b0, pos, a, space);
-			break;
-		}
-
-		if (space != 0) {
-			uint8_t *pos_next;
-			u_int space_next;
-			u_int len;
-
-			/*
-			 * Block straddles buffers, split references.  We
-			 * do not handle splits that require >2 buffers
-			 * since rx'd frames are never badly fragmented
-			 * because drivers typically recv in clusters.
-			 */
-			pos_next = mtod(m, uint8_t *);
-			len = uimin(data_len, AES_BLOCK_LEN);
-			space_next = len > space ? len - space : 0;
-			IASSERT(m->m_len >= space_next,
-				("not enough data in following buffer, "
-				"m_len %u need %u\n", m->m_len, space_next));
-
-			xor_block(b+space, pos_next, space_next);
-			CCMP_DECRYPT(i, b, b0, pos, a, space);
-			xor_block(pos_next, b+space, space_next);
-			data_len -= len;
-			i++;
-
-			pos = pos_next + space_next;
-			space = m->m_len - space_next;
-		} else {
-			/*
-			 * Setup for next buffer.
-			 */
-			pos = mtod(m, uint8_t *);
-			space = m->m_len;
-		}
-	}
-
-	if (memcmp(mic, a, ccmp.ic_trailer) != 0) {
+	if (!aes_ccm_dec_mbuf(&aes_ccm, m, hdrlen + ccmp.ic_header, data_len,
+		mic)) {
 		IEEE80211_DPRINTF(ctx->cc_ic, IEEE80211_MSG_CRYPTO,
-			"[%s] AES-CCM decrypt failed; MIC mismatch\n",
-			ether_sprintf(wh->i_addr2));
+		    "[%s] AES-CCM decrypt failed; MIC mismatch\n",
+		    ether_sprintf(wh->i_addr2));
 		ctx->cc_ic->ic_stats.is_rx_ccmpmic++;
 		return 0;
 	}
 
 	return 1;
 }
-#undef CCMP_DECRYPT
 
 IEEE80211_CRYPTO_SETUP(ccmp_register)
 {
