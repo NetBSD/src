@@ -1,4 +1,4 @@
-/*	$NetBSD: immintrin.h,v 1.3 2020/07/25 22:31:04 riastradh Exp $	*/
+/*	$NetBSD: immintrin.h,v 1.4 2020/07/25 22:44:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@ _mm_load_si128(const __m128i *__p)
 	return *__p;
 }
 
-_INTRINSATTR _SSSE3_ATTR
+_INTRINSATTR
 static __inline __m128
 _mm_movehl_ps(__m128 __v0, __m128 __v1)
 {
@@ -279,8 +279,8 @@ _mm_unpacklo_epi64(__m128i __lo, __m128i __hi)
 	return (__m128i)__builtin_ia32_punpcklqdq128((__v2di)__lo,
 	    (__v2di)__hi);
 #elif defined(__clang__)
-	return (__m128i)__builtin_shufflevector((__v4si)__lo, (__v4si)__hi,
-	    0, 4, 1, 5);
+	return (__m128i)__builtin_shufflevector((__v2di)__lo, (__v2di)__hi,
+	    0,2);
 #endif
 }
 
