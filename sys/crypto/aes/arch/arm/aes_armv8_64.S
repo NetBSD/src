@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_armv8_64.S,v 1.6 2020/07/22 06:15:21 riastradh Exp $	*/
+/*	$NetBSD: aes_armv8_64.S,v 1.7 2020/07/25 22:32:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -437,13 +437,13 @@ END(aesarmv8_setenckey256)
  */
 ENTRY(aesarmv8_enctodec)
 	ldr	q0, [x0, x2, lsl #4]	/* load last round key */
-1:	str	q0, [x1], #0x10	/* store round key */
+	b	2f
+1:	aesimc	v0.16b, v0.16b	/* convert encryption to decryption */
+2:	str	q0, [x1], #0x10	/* store round key */
 	subs	x2, x2, #1	/* count down round */
 	ldr	q0, [x0, x2, lsl #4]	/* load previous round key */
-	b.eq	2f		/* stop if this is the last one */
-	aesimc	v0.16b, v0.16b	/* convert encryption to decryption */
-	b	1b
-2:	str	q0, [x1]	/* store first round key verbatim */
+	b.ne	1b		/* repeat if there's more */
+	str	q0, [x1]	/* store first round key verbatim */
 	ret
 END(aesarmv8_enctodec)
 
@@ -536,17 +536,17 @@ ENTRY(aesarmv8_cbc_dec1)
 	add	x2, x2, x3		/* x2 := pointer past end of out */
 	ldr	q0, [x1, #-0x10]!	/* q0 := last ciphertext block */
 	str	q0, [x4]		/* update iv */
-1:	mov	x0, x9			/* x0 := enckey */
-	mov	x3, x5			/* x3 := nrounds */
-	bl	aesarmv8_dec1		/* q0 := cv ^ ptxt; trash x0/x3/q16 */
-	subs	x10, x10, #0x10		/* count down nbytes */
-	b.eq	2f			/* stop if this is the first block */
-	ldr	q31, [x1, #-0x10]!	/* q31 := chaining value */
+	b	2f
+1:	ldr	q31, [x1, #-0x10]!	/* q31 := chaining value */
 	eor	v0.16b, v0.16b, v31.16b	/* q0 := plaintext block */
 	str	q0, [x2, #-0x10]!	/* store plaintext block */
 	mov	v0.16b, v31.16b		/* move cv = ciphertext block */
-	b	1b
-2:	eor	v0.16b, v0.16b, v24.16b	/* q0 := first plaintext block */
+2:	mov	x0, x9			/* x0 := enckey */
+	mov	x3, x5			/* x3 := nrounds */
+	bl	aesarmv8_dec1		/* q0 := cv ^ ptxt; trash x0/x3/q16 */
+	subs	x10, x10, #0x10		/* count down nbytes */
+	b.ne	1b			/* repeat if more blocks */
+	eor	v0.16b, v0.16b, v24.16b	/* q0 := first plaintext block */
 	str	q0, [x2, #-0x10]!	/* store first plaintext block */
 	ldp	fp, lr, [sp], #16	/* pop stack frame */
 	ret
@@ -573,7 +573,11 @@ ENTRY(aesarmv8_cbc_dec8)
 	add	x2, x2, x3		/* x2 := pointer past end of out */
 	ldp	q6, q7, [x1, #-0x20]!	/* q6, q7 := last ciphertext blocks */
 	str	q7, [x4]		/* update iv */
-1:	ldp	q4, q5, [x1, #-0x20]!
+	b	2f
+1:	ldp	q6, q7, [x1, #-0x20]!
+	eor	v0.16b, v0.16b, v7.16b	/* q0 := pt0 */
+	stp	q0, q1, [x2, #-0x20]!
+2:	ldp	q4, q5, [x1, #-0x20]!
 	ldp	q2, q3, [x1, #-0x20]!
 	ldp	q0, q1, [x1, #-0x20]!
 	mov	v31.16b, v6.16b		/* q[24+i] := cv[i], 0<i<8 */
@@ -598,12 +602,8 @@ ENTRY(aesarmv8_cbc_dec8)
 	stp	q6, q7, [x2, #-0x20]!	/* store plaintext blocks */
 	stp	q4, q5, [x2, #-0x20]!
 	stp	q2, q3, [x2, #-0x20]!
-	b.eq	2f			/* stop if this is the first block */
-	ldp	q6, q7, [x1, #-0x20]!
-	eor	v0.16b, v0.16b, v7.16b	/* q0 := pt0 */
-	stp	q0, q1, [x2, #-0x20]!
-	b	1b
-2:	eor	v0.16b, v0.16b, v24.16b	/* q0 := pt0 */
+	b.ne	1b			/* repeat if there's more */
+	eor	v0.16b, v0.16b, v24.16b	/* q0 := pt0 */
 	stp	q0, q1, [x2, #-0x20]!	/* store first two plaintext blocks */
 	ldp	fp, lr, [sp], #16	/* pop stack frame */
 	ret
@@ -873,15 +873,15 @@ END(aesarmv8_xts_update)
 	.type	aesarmv8_enc1,@function
 aesarmv8_enc1:
 	ldr	q16, [x0], #0x10	/* load round key */
-1:	subs	x3, x3, #1
+	b	2f
+1:	/* q0 := MixColumns(q0) */
+	aesmc	v0.16b, v0.16b
+2:	subs	x3, x3, #1
 	/* q0 := ShiftRows(SubBytes(AddRoundKey_q16(q0))) */
 	aese	v0.16b, v16.16b
 	ldr	q16, [x0], #0x10		/* load next round key */
-	b.eq	2f
-	/* q0 := MixColumns(q0) */
-	aesmc	v0.16b, v0.16b
-	b	1b
-2:	eor	v0.16b, v0.16b, v16.16b
+	b.ne	1b
+	eor	v0.16b, v0.16b, v16.16b
 	ret
 END(aesarmv8_enc1)
 
@@ -899,7 +899,17 @@ END(aesarmv8_enc1)
 	.type	aesarmv8_enc8,@function
 aesarmv8_enc8:
 	ldr	q16, [x0], #0x10	/* load round key */
-1:	subs	x3, x3, #1
+	b	2f
+1:	/* q[i] := MixColumns(q[i]) */
+	aesmc	v0.16b, v0.16b
+	aesmc	v1.16b, v1.16b
+	aesmc	v2.16b, v2.16b
+	aesmc	v3.16b, v3.16b
+	aesmc	v4.16b, v4.16b
+	aesmc	v5.16b, v5.16b
+	aesmc	v6.16b, v6.16b
+	aesmc	v7.16b, v7.16b
+2:	subs	x3, x3, #1
 	/* q[i] := ShiftRows(SubBytes(AddRoundKey_q16(q[i]))) */
 	aese	v0.16b, v16.16b
 	aese	v1.16b, v16.16b
@@ -910,18 +920,8 @@ aesarmv8_enc8:
 	aese	v6.16b, v16.16b
 	aese	v7.16b, v16.16b
 	ldr	q16, [x0], #0x10	/* load next round key */
-	b.eq	2f
-	/* q[i] := MixColumns(q[i]) */
-	aesmc	v0.16b, v0.16b
-	aesmc	v1.16b, v1.16b
-	aesmc	v2.16b, v2.16b
-	aesmc	v3.16b, v3.16b
-	aesmc	v4.16b, v4.16b
-	aesmc	v5.16b, v5.16b
-	aesmc	v6.16b, v6.16b
-	aesmc	v7.16b, v7.16b
-	b	1b
-2:	eor	v0.16b, v0.16b, v16.16b	/* AddRoundKey */
+	b.ne	1b
+	eor	v0.16b, v0.16b, v16.16b	/* AddRoundKey */
 	eor	v1.16b, v1.16b, v16.16b
 	eor	v2.16b, v2.16b, v16.16b
 	eor	v3.16b, v3.16b, v16.16b
@@ -945,15 +945,15 @@ END(aesarmv8_enc8)
 	.type	aesarmv8_dec1,@function
 aesarmv8_dec1:
 	ldr	q16, [x0], #0x10	/* load round key */
-1:	subs	x3, x3, #1
+	b	2f
+1:	/* q0 := InMixColumns(q0) */
+	aesimc	v0.16b, v0.16b
+2:	subs	x3, x3, #1
 	/* q0 := InSubBytes(InShiftRows(AddRoundKey_q16(q0))) */
 	aesd	v0.16b, v16.16b
 	ldr	q16, [x0], #0x10	/* load next round key */
-	b.eq	2f
-	/* q0 := InMixColumns(q0) */
-	aesimc	v0.16b, v0.16b
-	b	1b
-2:	eor	v0.16b, v0.16b, v16.16b
+	b.ne	1b
+	eor	v0.16b, v0.16b, v16.16b
 	ret
 END(aesarmv8_dec1)
 
@@ -971,7 +971,17 @@ END(aesarmv8_dec1)
 	.type	aesarmv8_dec8,@function
 aesarmv8_dec8:
 	ldr	q16, [x0], #0x10	/* load round key */
-1:	subs	x3, x3, #1
+	b	2f
+1:	/* q[i] := InMixColumns(q[i]) */
+	aesimc	v0.16b, v0.16b
+	aesimc	v1.16b, v1.16b
+	aesimc	v2.16b, v2.16b
+	aesimc	v3.16b, v3.16b
+	aesimc	v4.16b, v4.16b
+	aesimc	v5.16b, v5.16b
+	aesimc	v6.16b, v6.16b
+	aesimc	v7.16b, v7.16b
+2:	subs	x3, x3, #1
 	/* q[i] := InSubBytes(InShiftRows(AddRoundKey_q16(q[i]))) */
 	aesd	v0.16b, v16.16b
 	aesd	v1.16b, v16.16b
@@ -982,18 +992,8 @@ aesarmv8_dec8:
 	aesd	v6.16b, v16.16b
 	aesd	v7.16b, v16.16b
 	ldr	q16, [x0], #0x10	/* load next round key */
-	b.eq	2f
-	/* q[i] := InMixColumns(q[i]) */
-	aesimc	v0.16b, v0.16b
-	aesimc	v1.16b, v1.16b
-	aesimc	v2.16b, v2.16b
-	aesimc	v3.16b, v3.16b
-	aesimc	v4.16b, v4.16b
-	aesimc	v5.16b, v5.16b
-	aesimc	v6.16b, v6.16b
-	aesimc	v7.16b, v7.16b
-	b	1b
-2:	eor	v0.16b, v0.16b, v16.16b	/* AddRoundKey */
+	b.ne	1b
+	eor	v0.16b, v0.16b, v16.16b	/* AddRoundKey */
 	eor	v1.16b, v1.16b, v16.16b
 	eor	v2.16b, v2.16b, v16.16b
 	eor	v3.16b, v3.16b, v16.16b
