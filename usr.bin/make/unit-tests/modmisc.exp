@@ -90,4 +90,5 @@ mod-tu-space: A   B
 mod-Q: new
 
 line
+mod-break-many-words: 500
 exit status 0
