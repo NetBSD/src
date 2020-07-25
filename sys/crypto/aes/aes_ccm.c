@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_ccm.c,v 1.1 2020/07/25 22:15:55 riastradh Exp $	*/
+/*	$NetBSD: aes_ccm.c,v 1.2 2020/07/25 22:27:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_ccm.c,v 1.1 2020/07/25 22:15:55 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_ccm.c,v 1.2 2020/07/25 22:27:53 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(1, "$NetBSD: aes_ccm.c,v 1.1 2020/07/25 22:15:55 riastradh Exp $"
 
 #include <crypto/aes/aes.h>
 #include <crypto/aes/aes_ccm.h>
+#include <crypto/aes/aes_impl.h>
 
 static inline void
 xor(uint8_t *x, const uint8_t *a, const uint8_t *b, size_t n)
@@ -52,13 +53,6 @@ xor(uint8_t *x, const uint8_t *a, const uint8_t *b, size_t n)
 
 	while (n --> 0)
 		*x++ = *a++ ^ *b++;
-}
-
-static inline void
-xor16(uint8_t *x, const uint8_t *a, const uint8_t *b)
-{
-
-	xor(x, a, b, 16);
 }
 
 /* RFC 3610, §2.2 Authentication */
@@ -157,9 +151,10 @@ aes_ccm_init(struct aes_ccm *C, unsigned nr, const struct aesenc *enc,
 		aes_enc(enc, C->auth, C->auth, C->nr);
 
 		/* If there was anything more, process 16 bytes at a time.  */
-		for (; adlen >= 16; adp += 16, adlen -= 16) {
-			xor16(C->auth, C->auth, adp);
-			aes_enc(enc, C->auth, C->auth, C->nr);
+		if (adlen - (adlen % 16)) {
+			aes_cbcmac_update1(enc, adp, adlen - (adlen % 16),
+			    C->auth, C->nr);
+			adlen %= 16;
 		}
 
 		/*
@@ -217,15 +212,12 @@ aes_ccm_enc(struct aes_ccm *C, const void *in, void *out, size_t nbytes)
 	}
 
 	/* Process 16 bytes at a time.  */
-	for (; nbytes >= 16; p += 16, q += 16, nbytes -= 16) {
-		/* authenticate */
-		xor16(C->auth, C->auth, p);
-		aes_enc(C->enc, C->auth, C->auth, C->nr);
-
-		/* encrypt */
-		aes_ccm_inc(C);
-		aes_enc(C->enc, C->in, C->out, C->nr);
-		xor16(q, C->out, p);
+	if (nbytes - (nbytes % 16)) {
+		aes_ccm_enc1(C->enc, p, q, nbytes - (nbytes % 16), C->auth,
+		    C->nr);
+		p += nbytes - (nbytes % 16);
+		q += nbytes - (nbytes % 16);
+		nbytes %= 16;
 	}
 
 	/* Incorporate any <16-byte unit as a partial block.  */
@@ -278,15 +270,12 @@ aes_ccm_dec(struct aes_ccm *C, const void *in, void *out, size_t nbytes)
 	}
 
 	/* Process 16 bytes at a time.  */
-	for (; nbytes >= 16; p += 16, q += 16, nbytes -= 16) {
-		/* decrypt */
-		aes_ccm_inc(C);
-		aes_enc(C->enc, C->in, C->out, C->nr);
-		xor16(q, C->out, p);
-
-		/* authenticate */
-		xor16(C->auth, C->auth, q);
-		aes_enc(C->enc, C->auth, C->auth, C->nr);
+	if (nbytes - (nbytes % 16)) {
+		aes_ccm_dec1(C->enc, p, q, nbytes - (nbytes % 16), C->auth,
+		    C->nr);
+		p += nbytes - (nbytes % 16);
+		q += nbytes - (nbytes % 16);
+		nbytes %= 16;
 	}
 
 	/* Incorporate any <16-byte unit as a partial block.  */

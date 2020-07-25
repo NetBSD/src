@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_impl.h,v 1.1 2020/07/25 22:12:57 riastradh Exp $	*/
+/*	$NetBSD: aes_impl.h,v 1.2 2020/07/25 22:27:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -51,10 +51,27 @@ struct aes_impl {
 		    uint8_t[static 16], size_t, uint8_t[static 16], uint32_t);
 	void	(*ai_xts_dec)(const struct aesdec *, const uint8_t[static 16],
 		    uint8_t[static 16], size_t, uint8_t[static 16], uint32_t);
+	void	(*ai_cbcmac_update1)(const struct aesenc *,
+		    const uint8_t[static 16], size_t, uint8_t[static 16],
+		    uint32_t);
+	void	(*ai_ccm_enc1)(const struct aesenc *,
+		    const uint8_t[static 16], uint8_t[static 16],
+		    size_t, uint8_t[static 32], uint32_t);
+	void	(*ai_ccm_dec1)(const struct aesenc *,
+		    const uint8_t[static 16], uint8_t[static 16],
+		    size_t, uint8_t[static 32], uint32_t);
 };
 
 void	aes_md_init(const struct aes_impl *);
 
 int	aes_selftest(const struct aes_impl *);
+
+/* Internal subroutines dispatched to implementation for AES-CCM.  */
+void	aes_cbcmac_update1(const struct aesenc *, const uint8_t[static 16],
+	    size_t, uint8_t[static 16], uint32_t);
+void	aes_ccm_enc1(const struct aesenc *, const uint8_t[static 16],
+	    uint8_t[static 16], size_t, uint8_t[static 32], uint32_t);
+void	aes_ccm_dec1(const struct aesenc *, const uint8_t[static 16],
+	    uint8_t[static 16], size_t, uint8_t[static 32], uint32_t);
 
 #endif	/* _CRYPTO_AES_AES_IMPL_H */
