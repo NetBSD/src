@@ -1,4 +1,4 @@
-/*	$NetBSD: immintrin.h,v 1.4 2020/07/25 22:44:32 riastradh Exp $	*/
+/*	$NetBSD: immintrin.h,v 1.5 2020/07/25 22:45:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -103,6 +103,20 @@ _mm_add_epi32(__m128i __a, __m128i __b)
 #endif
 
 _INTRINSATTR
+static __inline __m128
+_mm_load1_ps(const float *__p)
+{
+	return __extension__ (__m128)(__v4sf) { *__p, *__p, *__p, *__p };
+}
+
+_INTRINSATTR
+static __inline __m128i
+_mm_loadu_si128(const __m128i_u *__p)
+{
+	return ((const struct { __m128i_u __v; } _PACKALIAS *)__p)->__v;
+}
+
+_INTRINSATTR
 static __inline __m128i
 _mm_loadu_si32(const void *__p)
 {
@@ -132,8 +146,18 @@ _mm_movehl_ps(__m128 __v0, __m128 __v1)
 #if defined(__GNUC__) && !defined(__clang__)
 	return (__m128)__builtin_ia32_movhlps((__v4sf)__v0, (__v4sf)__v1);
 #elif defined(__clang__)
-	return __builtin_shufflevector((__v4sf)__v0, (__v4sf)__v1,
-	    6, 7, 2, 3);
+	return __builtin_shufflevector((__v4sf)__v0, (__v4sf)__v1, 6,7,2,3);
+#endif
+}
+
+_INTRINSATTR
+static __inline __m128
+_mm_movelh_ps(__m128 __v0, __m128 __v1)
+{
+#if defined(__GNUC__) && !defined(__clang__)
+	return (__m128)__builtin_ia32_movlhps((__v4sf)__v0, (__v4sf)__v1);
+#elif defined(__clang__)
+	return __builtin_shufflevector((__v4sf)__v0, (__v4sf)__v1, 0,1,4,5);
 #endif
 }
 
@@ -205,6 +229,13 @@ _mm_shuffle_epi8(__m128i __vtbl, __m128i __vidx)
 
 _INTRINSATTR
 static __inline __m128i
+_mm_slli_epi32(__m128i __v, uint8_t __bits)
+{
+	return (__m128i)__builtin_ia32_pslldi128((__v4si)__v, (int)__bits);
+}
+
+_INTRINSATTR
+static __inline __m128i
 _mm_slli_epi64(__m128i __v, uint8_t __bits)
 {
 	return (__m128i)__builtin_ia32_psllqi128((__v2di)__v, (int)__bits);
@@ -245,6 +276,13 @@ _mm_srli_epi64(__m128i __v, uint8_t __bits)
 
 _INTRINSATTR
 static __inline void
+_mm_storeu_si128(__m128i_u *__p, __m128i __v)
+{
+	((struct { __m128i_u __v; } _PACKALIAS *)__p)->__v = __v;
+}
+
+_INTRINSATTR
+static __inline void
 _mm_storeu_si32(void *__p, __m128i __v)
 {
 	((struct { int32_t __v; } _PACKALIAS *)__p)->__v = ((__v4si)__v)[0];
@@ -269,6 +307,32 @@ static __inline __m128i
 _mm_sub_epi64(__m128i __x, __m128i __y)
 {
 	return (__m128i)((__v2du)__x - (__v2du)__y);
+}
+
+_INTRINSATTR
+static __inline __m128i
+_mm_unpackhi_epi32(__m128i __lo, __m128i __hi)
+{
+#if defined(__GNUC__) && !defined(__clang__)
+	return (__m128i)__builtin_ia32_punpckhdq128((__v4si)__lo,
+	    (__v4si)__hi);
+#elif defined(__clang__)
+	return (__m128i)__builtin_shufflevector((__v4si)__lo, (__v4si)__hi,
+	    2,6,3,7);
+#endif
+}
+
+_INTRINSATTR
+static __inline __m128i
+_mm_unpacklo_epi32(__m128i __lo, __m128i __hi)
+{
+#if defined(__GNUC__) && !defined(__clang__)
+	return (__m128i)__builtin_ia32_punpckldq128((__v4si)__lo,
+	    (__v4si)__hi);
+#elif defined(__clang__)
+	return (__m128i)__builtin_shufflevector((__v4si)__lo, (__v4si)__hi,
+	    0,4,1,5);
+#endif
 }
 
 _INTRINSATTR
