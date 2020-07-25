@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_bear.c,v 1.3 2020/07/25 22:12:57 riastradh Exp $	*/
+/*	$NetBSD: aes_bear.c,v 1.4 2020/07/25 22:28:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_bear.c,v 1.3 2020/07/25 22:12:57 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_bear.c,v 1.4 2020/07/25 22:28:27 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/endian.h>
@@ -597,6 +597,220 @@ out:	/* Store the updated tweak.  */
 	explicit_memset(q, 0, sizeof q);
 }
 
+static void
+aesbear_cbcmac_update1(const struct aesenc *enc, const uint8_t in[static 16],
+    size_t nbytes, uint8_t auth[static 16], uint32_t nrounds)
+{
+	uint32_t sk_exp[120];
+	uint32_t q[8];
+
+	KASSERT(nbytes);
+	KASSERT(nbytes % 16 == 0);
+
+	/* Expand round keys for bitslicing.  */
+	br_aes_ct_skey_expand(sk_exp, nrounds, enc->aese_aes.aes_rk);
+
+	/* Initialize garbage block.  */
+	q[1] = q[3] = q[5] = q[7] = 0;
+
+	/* Load initial authenticator.  */
+	q[2*0] = le32dec(auth + 4*0);
+	q[2*1] = le32dec(auth + 4*1);
+	q[2*2] = le32dec(auth + 4*2);
+	q[2*3] = le32dec(auth + 4*3);
+
+	for (; nbytes; nbytes -= 16, in += 16) {
+		/* Combine input block.  */
+		q[2*0] ^= le32dec(in + 4*0);
+		q[2*1] ^= le32dec(in + 4*1);
+		q[2*2] ^= le32dec(in + 4*2);
+		q[2*3] ^= le32dec(in + 4*3);
+
+		/* Transform to bitslice, encrypt, transform from bitslice.  */
+		br_aes_ct_ortho(q);
+		br_aes_ct_bitslice_encrypt(nrounds, sk_exp, q);
+		br_aes_ct_ortho(q);
+	}
+
+	/* Store updated authenticator.  */
+	le32enc(auth + 4*0, q[2*0]);
+	le32enc(auth + 4*1, q[2*1]);
+	le32enc(auth + 4*2, q[2*2]);
+	le32enc(auth + 4*3, q[2*3]);
+
+	/* Paranoia: Zero temporary buffers.  */
+	explicit_memset(sk_exp, 0, sizeof sk_exp);
+	explicit_memset(q, 0, sizeof q);
+}
+
+static void
+aesbear_ccm_enc1(const struct aesenc *enc, const uint8_t *in, uint8_t *out,
+    size_t nbytes, uint8_t authctr[32], uint32_t nrounds)
+{
+	uint32_t sk_exp[120];
+	uint32_t q[8];
+	uint32_t c0, c1, c2, c3;
+
+	KASSERT(nbytes);
+	KASSERT(nbytes % 16 == 0);
+
+	/* Expand round keys for bitslicing.  */
+	br_aes_ct_skey_expand(sk_exp, nrounds, enc->aese_aes.aes_rk);
+
+	/* Set first block to authenticator.  */
+	q[2*0] = le32dec(authctr + 4*0);
+	q[2*1] = le32dec(authctr + 4*1);
+	q[2*2] = le32dec(authctr + 4*2);
+	q[2*3] = le32dec(authctr + 4*3);
+
+	/* Load initial counter block, big-endian so we can increment it.  */
+	c0 = le32dec(authctr + 16 + 4*0);
+	c1 = le32dec(authctr + 16 + 4*1);
+	c2 = le32dec(authctr + 16 + 4*2);
+	c3 = be32dec(authctr + 16 + 4*3);
+
+	for (; nbytes; nbytes -= 16, in += 16, out += 16) {
+		/* Update authenticator.  */
+		q[2*0] ^= le32dec(in + 4*0);
+		q[2*1] ^= le32dec(in + 4*1);
+		q[2*2] ^= le32dec(in + 4*2);
+		q[2*3] ^= le32dec(in + 4*3);
+
+		/* Increment 32-bit counter.  */
+		q[2*0 + 1] = c0;
+		q[2*1 + 1] = c1;
+		q[2*2 + 1] = c2;
+		q[2*3 + 1] = bswap32(++c3);
+
+		/* Encrypt authenticator and counter.  */
+		br_aes_ct_ortho(q);
+		br_aes_ct_bitslice_encrypt(nrounds, sk_exp, q);
+		br_aes_ct_ortho(q);
+
+		/* Encrypt with CTR output.  */
+		le32enc(out + 4*0, le32dec(in + 4*0) ^ q[2*0 + 1]);
+		le32enc(out + 4*1, le32dec(in + 4*1) ^ q[2*1 + 1]);
+		le32enc(out + 4*2, le32dec(in + 4*2) ^ q[2*2 + 1]);
+		le32enc(out + 4*3, le32dec(in + 4*3) ^ q[2*3 + 1]);
+	}
+
+	/* Update authenticator.  */
+	le32enc(authctr + 4*0, q[2*0]);
+	le32enc(authctr + 4*1, q[2*1]);
+	le32enc(authctr + 4*2, q[2*2]);
+	le32enc(authctr + 4*3, q[2*3]);
+
+	/* Update counter.  */
+	be32enc(authctr + 16 + 4*3, c3);
+
+	/* Paranoia: Zero temporary buffers.  */
+	explicit_memset(sk_exp, 0, sizeof sk_exp);
+	explicit_memset(q, 0, sizeof q);
+}
+
+static void
+aesbear_ccm_dec1(const struct aesenc *enc, const uint8_t *in, uint8_t *out,
+    size_t nbytes, uint8_t authctr[32], uint32_t nrounds)
+{
+	uint32_t sk_exp[120];
+	uint32_t q[8];
+	uint32_t c0, c1, c2, c3;
+	uint32_t b0, b1, b2, b3;
+
+	KASSERT(nbytes);
+	KASSERT(nbytes % 16 == 0);
+
+	/* Expand round keys for bitslicing.  */
+	br_aes_ct_skey_expand(sk_exp, nrounds, enc->aese_aes.aes_rk);
+
+	/* Load initial counter block, big-endian so we can increment it.  */
+	c0 = le32dec(authctr + 16 + 4*0);
+	c1 = le32dec(authctr + 16 + 4*1);
+	c2 = le32dec(authctr + 16 + 4*2);
+	c3 = be32dec(authctr + 16 + 4*3);
+
+	/* Increment 32-bit counter.  */
+	q[2*0] = c0;
+	q[2*1] = c1;
+	q[2*2] = c2;
+	q[2*3] = bswap32(++c3);
+
+	/*
+	 * Set the second block to garbage -- we don't have any
+	 * plaintext to authenticate yet.
+	 */
+	q[1] = q[3] = q[5] = q[7] = 0;
+
+	/* Encrypt first CTR.  */
+	br_aes_ct_ortho(q);
+	br_aes_ct_bitslice_encrypt(nrounds, sk_exp, q);
+	br_aes_ct_ortho(q);
+
+	/* Load the initial authenticator.  */
+	q[2*0 + 1] = le32dec(authctr + 4*0);
+	q[2*1 + 1] = le32dec(authctr + 4*1);
+	q[2*2 + 1] = le32dec(authctr + 4*2);
+	q[2*3 + 1] = le32dec(authctr + 4*3);
+
+	for (;; in += 16, out += 16) {
+		/* Decrypt the block.  */
+		b0 = le32dec(in + 4*0) ^ q[2*0];
+		b1 = le32dec(in + 4*1) ^ q[2*1];
+		b2 = le32dec(in + 4*2) ^ q[2*2];
+		b3 = le32dec(in + 4*3) ^ q[2*3];
+
+		/* Update authenticator.  */
+		q[2*0 + 1] ^= b0;
+		q[2*1 + 1] ^= b1;
+		q[2*2 + 1] ^= b2;
+		q[2*3 + 1] ^= b3;
+
+		/* Store plaintext.  */
+		le32enc(out + 4*0, b0);
+		le32enc(out + 4*1, b1);
+		le32enc(out + 4*2, b2);
+		le32enc(out + 4*3, b3);
+
+		/* If this is the last block, stop.  */
+		if ((nbytes -= 16) == 0)
+			break;
+
+		/* Increment 32-bit counter.  */
+		q[2*0] = c0;
+		q[2*1] = c1;
+		q[2*2] = c2;
+		q[2*3] = bswap32(++c3);
+
+		/* Authenticate previous plaintext, encrypt next CTR.  */
+		br_aes_ct_ortho(q);
+		br_aes_ct_bitslice_encrypt(nrounds, sk_exp, q);
+		br_aes_ct_ortho(q);
+	}
+
+	/*
+	 * Authenticate last plaintext.  We're only doing this for the
+	 * authenticator, not for the counter, so don't bother to
+	 * initialize q[2*i].  (Even for the sake of sanitizers,
+	 * they're already initialized to something by now.)
+	 */
+	br_aes_ct_ortho(q);
+	br_aes_ct_bitslice_encrypt(nrounds, sk_exp, q);
+	br_aes_ct_ortho(q);
+
+	/* Update authenticator.  */
+	le32enc(authctr + 4*0, q[2*0 + 1]);
+	le32enc(authctr + 4*1, q[2*1 + 1]);
+	le32enc(authctr + 4*2, q[2*2 + 1]);
+	le32enc(authctr + 4*3, q[2*3 + 1]);
+
+	/* Update counter.  */
+	be32enc(authctr + 16 + 4*3, c3);
+
+	/* Paranoia: Zero temporary buffers.  */
+	explicit_memset(sk_exp, 0, sizeof sk_exp);
+	explicit_memset(q, 0, sizeof q);
+}
+
 static int
 aesbear_probe(void)
 {
@@ -624,4 +838,7 @@ struct aes_impl aes_bear_impl = {
 	.ai_cbc_dec = aesbear_cbc_dec,
 	.ai_xts_enc = aesbear_xts_enc,
 	.ai_xts_dec = aesbear_xts_dec,
+	.ai_cbcmac_update1 = aesbear_cbcmac_update1,
+	.ai_ccm_enc1 = aesbear_ccm_enc1,
+	.ai_ccm_dec1 = aesbear_ccm_dec1,
 };
