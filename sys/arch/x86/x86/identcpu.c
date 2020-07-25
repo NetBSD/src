@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.114 2020/07/25 22:12:56 riastradh Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.115 2020/07/25 22:44:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.114 2020/07/25 22:12:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.115 2020/07/25 22:44:02 riastradh Exp $");
 
 #include "opt_xen.h"
 
@@ -1001,12 +1001,6 @@ cpu_probe(struct cpu_info *ci)
 		/* Early patch of text segment. */
 		x86_patch(true);
 #endif
-		/*
-		 * XXX There is a bug with FPU in kernel that we
-		 * haven't been able to track down yet, and all of the
-		 * accelerated AES code relies on that, so it is
-		 * disabled temporarily while we diagnose the bug.
-		 */
 #ifdef __x86_64__	/* not yet implemented on i386 */
 		if (cpu_feature[1] & CPUID2_AES)
 			aes_md_init(&aes_ni_impl);
