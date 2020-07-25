@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_impl.c,v 1.7 2020/07/25 22:36:42 riastradh Exp $	*/
+/*	$NetBSD: aes_impl.c,v 1.8 2020/07/25 22:42:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_impl.c,v 1.7 2020/07/25 22:36:42 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_impl.c,v 1.8 2020/07/25 22:42:03 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/kernel.h>
@@ -111,7 +111,7 @@ aes_select(void)
 	if (aes_impl == NULL)
 		panic("AES self-tests failed");
 
-	aprint_normal("aes: %s\n", aes_impl->ai_name);
+	aprint_verbose("aes: %s\n", aes_impl->ai_name);
 	return 0;
 }
 
