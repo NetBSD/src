@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_sse2_subr.c,v 1.2 2020/06/30 20:32:11 riastradh Exp $	*/
+/*	$NetBSD: aes_sse2_subr.c,v 1.3 2020/07/25 22:29:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_sse2_subr.c,v 1.2 2020/06/30 20:32:11 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_sse2_subr.c,v 1.3 2020/07/25 22:29:56 riastradh Exp $");
 
 #ifdef _KERNEL
 #include <sys/systm.h>
@@ -516,6 +516,180 @@ out:	/* Store the updated tweak.  */
 	explicit_memset(sk_exp, 0, sizeof sk_exp);
 	explicit_memset(q, 0, sizeof q);
 	explicit_memset(t, 0, sizeof t);
+}
+
+void
+aes_sse2_cbcmac_update1(const struct aesenc *enc, const uint8_t in[static 16],
+    size_t nbytes, uint8_t auth[static 16], uint32_t nrounds)
+{
+	uint64_t sk_exp[120];
+	__m128i q[4];
+
+	KASSERT(nbytes);
+	KASSERT(nbytes % 16 == 0);
+
+	/* Expand round keys for bitslicing.  */
+	aes_sse2_skey_expand(sk_exp, nrounds, enc->aese_aes.aes_rk64);
+
+	/* Load initial authenticator.  */
+	q[0] = aes_sse2_interleave_in(_mm_loadu_epi8(auth));
+
+	for (; nbytes; nbytes -= 16, in += 16) {
+		q[0] ^= aes_sse2_interleave_in(_mm_loadu_epi8(in));
+		aes_sse2_ortho(q);
+		aes_sse2_bitslice_encrypt(nrounds, sk_exp, q);
+		aes_sse2_ortho(q);
+	}
+
+	/* Store updated authenticator.  */
+	_mm_storeu_epi8(auth, aes_sse2_interleave_out(q[0]));
+
+	/* Paranoia: Zero temporary buffers.  */
+	explicit_memset(sk_exp, 0, sizeof sk_exp);
+	explicit_memset(q, 0, sizeof q);
+}
+
+void
+aes_sse2_ccm_enc1(const struct aesenc *enc, const uint8_t in[static 16],
+    uint8_t out[static 16], size_t nbytes, uint8_t authctr[static 32],
+    uint32_t nrounds)
+{
+	uint64_t sk_exp[120];
+	__m128i q[4];
+	__m128i ctr;
+	uint32_t c0, c1, c2, c3;
+
+	KASSERT(nbytes);
+	KASSERT(nbytes % 16 == 0);
+
+	/* Expand round keys for bitslicing.  */
+	aes_sse2_skey_expand(sk_exp, nrounds, enc->aese_aes.aes_rk64);
+
+	/* Set first block to authenticator.  */
+	q[0] = aes_sse2_interleave_in(_mm_loadu_epi8(authctr));
+
+	/* Load initial counter block, big-endian so we can increment it.  */
+	c0 = le32dec(authctr + 16 + 4*0);
+	c1 = le32dec(authctr + 16 + 4*1);
+	c2 = le32dec(authctr + 16 + 4*2);
+	c3 = be32dec(authctr + 16 + 4*3);
+
+	/* Set other blocks to garbage -- can't take advantage.  */
+	q[2] = q[3] = _mm_setzero_si128();
+
+	for (; nbytes; nbytes -= 16, in += 16, out += 16) {
+		/* Update authenticator.  */
+		q[0] ^= aes_sse2_interleave_in(_mm_loadu_epi8(in));
+
+		/* Increment 32-bit counter.  */
+		ctr = _mm_set_epi32(bswap32(++c3), c2, c1, c0);
+		q[1] = aes_sse2_interleave_in(ctr);
+
+		/* Encrypt authenticator and counter.  */
+		aes_sse2_ortho(q);
+		aes_sse2_bitslice_encrypt(nrounds, sk_exp, q);
+		aes_sse2_ortho(q);
+
+		/* Encrypt with CTR output.  */
+		_mm_storeu_epi8(out,
+		    _mm_loadu_epi8(in) ^ aes_sse2_interleave_out(q[1]));
+	}
+
+	/* Update authenticator.  */
+	_mm_storeu_epi8(authctr, aes_sse2_interleave_out(q[0]));
+
+	/* Update counter.  */
+	be32enc(authctr + 16 + 4*3, c3);
+
+	/* Paranoia: Zero temporary buffers.  */
+	explicit_memset(sk_exp, 0, sizeof sk_exp);
+	explicit_memset(q, 0, sizeof q);
+}
+
+void
+aes_sse2_ccm_dec1(const struct aesenc *enc, const uint8_t in[static 16],
+    uint8_t out[static 16], size_t nbytes, uint8_t authctr[static 32],
+    uint32_t nrounds)
+{
+	uint64_t sk_exp[120];
+	__m128i q[4];
+	__m128i ctr, block;
+	uint32_t c0, c1, c2, c3;
+
+	KASSERT(nbytes);
+	KASSERT(nbytes % 16 == 0);
+
+	/* Expand round keys for bitslicing.  */
+	aes_sse2_skey_expand(sk_exp, nrounds, enc->aese_aes.aes_rk64);
+
+	/* Load initial counter block, big-endian so we can increment it.  */
+	c0 = le32dec(authctr + 16 + 4*0);
+	c1 = le32dec(authctr + 16 + 4*1);
+	c2 = le32dec(authctr + 16 + 4*2);
+	c3 = be32dec(authctr + 16 + 4*3);
+
+	/* Increment 32-bit counter.  */
+	ctr = _mm_set_epi32(bswap32(++c3), c2, c1, c0);
+	q[0] = aes_sse2_interleave_in(ctr);
+
+	/*
+	 * Set the other blocks to garbage -- we don't have any
+	 * plaintext to authenticate yet.
+	 */
+	q[1] = q[2] = q[3] = _mm_setzero_si128();
+
+	/* Encrypt first CTR.  */
+	aes_sse2_ortho(q);
+	aes_sse2_bitslice_encrypt(nrounds, sk_exp, q);
+	aes_sse2_ortho(q);
+
+	/* Load the initial authenticator.  */
+	q[1] = aes_sse2_interleave_in(_mm_loadu_epi8(authctr));
+
+	for (;; in += 16, out += 16) {
+		/* Decrypt the block.  */
+		block = _mm_loadu_epi8(in) ^ aes_sse2_interleave_out(q[0]);
+
+		/* Update authenticator.  */
+		q[1] ^= aes_sse2_interleave_in(block);
+
+		/* Store plaintext.  */
+		_mm_storeu_epi8(out, block);
+
+		/* If this is the last block, stop.  */
+		if ((nbytes -= 16) == 0)
+			break;
+
+		/* Increment 32-bit counter.  */
+		ctr = _mm_set_epi32(bswap32(++c3), c2, c1, c0);
+		q[0] = aes_sse2_interleave_in(ctr);
+
+		/* Authenticate previous plaintext, encrypt next CTR.  */
+		aes_sse2_ortho(q);
+		aes_sse2_bitslice_encrypt(nrounds, sk_exp, q);
+		aes_sse2_ortho(q);
+	}
+
+	/*
+	 * Authenticate last plaintext.  We're only doing this for the
+	 * authenticator, not for the counter, so don't bother to
+	 * initialize q[0], q[2], q[3].  (Even for the sake of
+	 * sanitizers, they're already initialized to something by
+	 * now.)
+	 */
+	aes_sse2_ortho(q);
+	aes_sse2_bitslice_encrypt(nrounds, sk_exp, q);
+	aes_sse2_ortho(q);
+
+	/* Update authenticator.  */
+	_mm_storeu_epi8(authctr, aes_sse2_interleave_out(q[1]));
+
+	/* Update counter.  */
+	be32enc(authctr + 16 + 4*3, c3);
+
+	/* Paranoia: Zero temporary buffers.  */
+	explicit_memset(sk_exp, 0, sizeof sk_exp);
+	explicit_memset(q, 0, sizeof q);
 }
 
 int
