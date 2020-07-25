@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_ssse3_subr.c,v 1.2 2020/06/30 20:32:11 riastradh Exp $	*/
+/*	$NetBSD: aes_ssse3_subr.c,v 1.3 2020/07/25 22:31:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_ssse3_subr.c,v 1.2 2020/06/30 20:32:11 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_ssse3_subr.c,v 1.3 2020/07/25 22:31:04 riastradh Exp $");
 
 #ifdef _KERNEL
 #include <sys/systm.h>
@@ -206,6 +206,75 @@ aes_ssse3_xts_dec(const struct aesdec *dec, const uint8_t in[static 16],
 		t = aes_ssse3_xts_update(t);
 	}
 	storeblock(tweak, t);
+}
+
+void
+aes_ssse3_cbcmac_update1(const struct aesenc *enc, const uint8_t in[static 16],
+    size_t nbytes, uint8_t auth0[static 16], uint32_t nrounds)
+{
+	__m128i auth;
+
+	KASSERT(nbytes);
+	KASSERT(nbytes % 16 == 0);
+
+	auth = loadblock(auth0);
+	for (; nbytes; nbytes -= 16, in += 16)
+		auth = aes_ssse3_enc1(enc, auth ^ loadblock(in), nrounds);
+	storeblock(auth0, auth);
+}
+
+void
+aes_ssse3_ccm_enc1(const struct aesenc *enc, const uint8_t in[static 16],
+    uint8_t out[static 16], size_t nbytes, uint8_t authctr[static 32],
+    uint32_t nrounds)
+{
+	const __m128i ctr32_inc = _mm_set_epi32(1, 0, 0, 0);
+	const __m128i bs32 =
+	    _mm_set_epi32(0x0c0d0e0f, 0x08090a0b, 0x04050607, 0x00010203);
+	__m128i auth, ctr_be, ctr, ptxt;
+
+	KASSERT(nbytes);
+	KASSERT(nbytes % 16 == 0);
+
+	auth = loadblock(authctr);
+	ctr_be = loadblock(authctr + 16);
+	ctr = _mm_shuffle_epi8(ctr_be, bs32);
+	for (; nbytes; nbytes -= 16, in += 16, out += 16) {
+		ptxt = loadblock(in);
+		auth = aes_ssse3_enc1(enc, auth ^ ptxt, nrounds);
+		ctr = _mm_add_epi32(ctr, ctr32_inc);
+		ctr_be = _mm_shuffle_epi8(ctr, bs32);
+		storeblock(out, ptxt ^ aes_ssse3_enc1(enc, ctr_be, nrounds));
+	}
+	storeblock(authctr, auth);
+	storeblock(authctr + 16, ctr_be);
+}
+
+void
+aes_ssse3_ccm_dec1(const struct aesenc *enc, const uint8_t in[static 16],
+    uint8_t out[static 16], size_t nbytes, uint8_t authctr[static 32],
+    uint32_t nrounds)
+{
+	const __m128i ctr32_inc = _mm_set_epi32(1, 0, 0, 0);
+	const __m128i bs32 =
+	    _mm_set_epi32(0x0c0d0e0f, 0x08090a0b, 0x04050607, 0x00010203);
+	__m128i auth, ctr_be, ctr, ptxt;
+
+	KASSERT(nbytes);
+	KASSERT(nbytes % 16 == 0);
+
+	auth = loadblock(authctr);
+	ctr_be = loadblock(authctr + 16);
+	ctr = _mm_shuffle_epi8(ctr_be, bs32);
+	for (; nbytes; nbytes -= 16, in += 16, out += 16) {
+		ctr = _mm_add_epi32(ctr, ctr32_inc);
+		ctr_be = _mm_shuffle_epi8(ctr, bs32);
+		ptxt = loadblock(in) ^ aes_ssse3_enc1(enc, ctr_be, nrounds);
+		storeblock(out, ptxt);
+		auth = aes_ssse3_enc1(enc, auth ^ ptxt, nrounds);
+	}
+	storeblock(authctr, auth);
+	storeblock(authctr + 16, ctr_be);
 }
 
 int
