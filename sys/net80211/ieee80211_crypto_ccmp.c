@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto_ccmp.c,v 1.16 2020/07/25 22:26:23 riastradh Exp $	*/
+/*	$NetBSD: ieee80211_crypto_ccmp.c,v 1.17 2020/07/25 22:27:05 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_ccmp.c,v 1.7 2005/07/11 03:06:23 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.16 2020/07/25 22:26:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.17 2020/07/25 22:27:05 riastradh Exp $");
 #endif
 
 /*
@@ -47,10 +47,10 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.16 2020/07/25 22:26:23 r
  * its license is included below.
  */
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/mbuf.h>
+#include <sys/systm.h>
 
 #include <sys/socket.h>
 
@@ -67,8 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.16 2020/07/25 22:26:23 r
 #define AES_BLOCK_LEN 16
 
 struct ccmp_ctx {
-	struct ieee80211com *cc_ic;	/* for diagnostics */
 	struct aesenc cc_aes;
+	struct ieee80211com *cc_ic;	/* for diagnostics */
 };
 
 static	void *ccmp_attach(struct ieee80211com *, struct ieee80211_key *);
@@ -106,7 +106,7 @@ ccmp_attach(struct ieee80211com *ic, struct ieee80211_key *k)
 {
 	struct ccmp_ctx *ctx;
 
-	ctx = malloc(sizeof(struct ccmp_ctx), M_DEVBUF, M_NOWAIT | M_ZERO);
+	ctx = kmem_zalloc(sizeof(*ctx), KM_NOSLEEP);
 	if (ctx == NULL) {
 		ic->ic_stats.is_crypto_nomem++;
 		return NULL;
@@ -120,7 +120,7 @@ ccmp_detach(struct ieee80211_key *k)
 {
 	struct ccmp_ctx *ctx = k->wk_private;
 
-	free(ctx, M_DEVBUF);
+	kmem_free(ctx, sizeof(*ctx));
 }
 
 static int
