@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh4.c,v 1.24 2013/05/14 14:11:43 tsutsui Exp $	*/
+/*	$NetBSD: cache_sh4.c,v 1.25 2020/07/25 23:38:48 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_sh4.c,v 1.24 2013/05/14 14:11:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_sh4.c,v 1.25 2020/07/25 23:38:48 uwe Exp $");
 
 #include "opt_cache.h"
 
@@ -104,6 +104,17 @@ sh4_cache_config(void)
 		r = SH4_CCR_EMODE|SH4_CCR_ICE|SH4_CCR_OCE|SH4_CCR_WT;
 		break;
 #endif
+
+	/*
+	 * The ST40 cache sizes can be customized for each product.
+	 * Refer to product-specific documentation for the cache sizes.
+	 */
+	case CPU_PRODUCT_STX7105:
+		icache_size = 32 * 1024;
+		dcache_size = 32 * 1024;
+		ways = 2;
+		r = SH4_CCR_EMODE|SH4_CCR_ICE|SH4_CCR_OCE|SH4_CCR_WT;
+		break;
 	}
 #if defined(SH4_CACHE_DISABLE_ICACHE)
 	r &= ~SH4_CCR_ICE;

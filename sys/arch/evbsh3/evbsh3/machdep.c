@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.75 2014/06/19 13:20:13 msaitoh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.76 2020/07/25 23:38:48 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.75 2014/06/19 13:20:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.76 2020/07/25 23:38:48 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -286,6 +286,8 @@ initSH3(void *pc)	/* XXX return address */
 	sh_cpu_init(CPU_ARCH_SH4, CPU_PRODUCT_7751);
 #elif defined(SH7751R)
 	sh_cpu_init(CPU_ARCH_SH4, CPU_PRODUCT_7751R);
+#elif defined(STX7105)
+	sh_cpu_init(CPU_ARCH_SH4, CPU_PRODUCT_STX7105);
 #else
 #error "unsupported SH4 variants"
 #endif
