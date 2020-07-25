@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_neon.h,v 1.4 2020/07/25 22:36:06 riastradh Exp $	*/
+/*	$NetBSD: arm_neon.h,v 1.5 2020/07/25 22:42:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -237,7 +237,12 @@ vld1q_u8(const uint8_t *__p8)
 	return (uint8x16_t)__builtin_neon_vld1v16qi(__p);
 #endif
 #elif defined(__clang__)
-	return (uint8x16_t)__builtin_neon_vld1q_v(__p8, 48);
+	uint8x16_t __v = (uint8x16_t)__builtin_neon_vld1q_v(__p8, 48);
+#ifndef __LITTLE_ENDIAN__
+	__v = __builtin_shufflevector(__v, __v,
+	    15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0);
+#endif
+	return __v;
 #endif
 }
 
@@ -442,7 +447,7 @@ vst1q_u8(uint8_t *__p8, uint8x16_t __v)
 #elif defined(__clang__)
 #ifndef __LITTLE_ENDIAN__
 	__v = __builtin_shufflevector(__v, __v,
-	    15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);
+	    15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0);
 #endif
 	__builtin_neon_vst1q_v(__p8, __v, 48);
 #endif
