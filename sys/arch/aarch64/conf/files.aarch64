@@ -1,4 +1,4 @@
-#	$NetBSD: files.aarch64,v 1.25 2020/07/17 07:16:10 ryo Exp $
+#	$NetBSD: files.aarch64,v 1.26 2020/07/25 22:51:57 riastradh Exp $
 
 defflag opt_cpuoptions.h	AARCH64_ALIGNMENT_CHECK
 defflag opt_cpuoptions.h	AARCH64_EL0_STACK_ALIGNMENT_CHECK
@@ -145,3 +145,6 @@ include "crypto/aes/arch/arm/files.aesarmv8"
 
 # vpaes with ARM NEON
 include "crypto/aes/arch/arm/files.aesneon"
+
+# ChaCha with ARM NEON
+include "crypto/chacha/arch/arm/files.chacha_arm"

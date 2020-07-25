@@ -1,0 +1,9 @@
+#	$NetBSD: files.chacha_arm,v 1.1 2020/07/25 22:51:57 riastradh Exp $
+
+ifdef aarch64
+makeoptions	chacha	"COPTS.chacha_neon.c"+="-march=armv8-a"
+endif
+
+file	crypto/chacha/arch/arm/chacha_neon.c		chacha
+file	crypto/chacha/arch/arm/chacha_neon_64.S		chacha & aarch64
+file	crypto/chacha/arch/arm/chacha_neon_impl.c	chacha
