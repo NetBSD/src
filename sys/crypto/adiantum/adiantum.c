@@ -1,4 +1,4 @@
-/*	$NetBSD: adiantum.c,v 1.2 2020/07/25 22:41:03 riastradh Exp $	*/
+/*	$NetBSD: adiantum.c,v 1.3 2020/07/25 22:47:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: adiantum.c,v 1.2 2020/07/25 22:41:03 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: adiantum.c,v 1.3 2020/07/25 22:47:16 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/endian.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(1, "$NetBSD: adiantum.c,v 1.2 2020/07/25 22:41:03 riastradh Exp $
 
 #include <crypto/adiantum/adiantum.h>
 #include <crypto/aes/aes.h>
+#include <crypto/chacha/chacha.h>
 
 #else  /* !defined(_KERNEL) */
 
@@ -1804,270 +1805,6 @@ nhpoly1305_selftest(void)
 	return result;
 }
 
-/* ChaCha core */
-
-static uint32_t
-rol32(uint32_t u, unsigned c)
-{
-
-	return (u << c) | (u >> (32 - c));
-}
-
-#define	CHACHA_QUARTERROUND(a, b, c, d) do {				      \
-	(a) += (b); (d) ^= (a); (d) = rol32((d), 16);			      \
-	(c) += (d); (b) ^= (c); (b) = rol32((b), 12);			      \
-	(a) += (b); (d) ^= (a); (d) = rol32((d),  8);			      \
-	(c) += (d); (b) ^= (c); (b) = rol32((b),  7);			      \
-} while (/*CONSTCOND*/0)
-
-const uint8_t chacha_const32[16] = "expand 32-byte k";
-
-static void
-chacha_core(uint8_t out[restrict static 64], const uint8_t in[static 16],
-    const uint8_t k[static 32], const uint8_t c[static 16], unsigned nr)
-{
-	uint32_t x0,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15;
-	uint32_t y0,y1,y2,y3,y4,y5,y6,y7,y8,y9,y10,y11,y12,y13,y14,y15;
-	int i;
-
-	x0 = y0 = le32dec(c + 0);
-	x1 = y1 = le32dec(c + 4);
-	x2 = y2 = le32dec(c + 8);
-	x3 = y3 = le32dec(c + 12);
-	x4 = y4 = le32dec(k + 0);
-	x5 = y5 = le32dec(k + 4);
-	x6 = y6 = le32dec(k + 8);
-	x7 = y7 = le32dec(k + 12);
-	x8 = y8 = le32dec(k + 16);
-	x9 = y9 = le32dec(k + 20);
-	x10 = y10 = le32dec(k + 24);
-	x11 = y11 = le32dec(k + 28);
-	x12 = y12 = le32dec(in + 0);
-	x13 = y13 = le32dec(in + 4);
-	x14 = y14 = le32dec(in + 8);
-	x15 = y15 = le32dec(in + 12);
-
-	for (i = nr; i > 0; i -= 2) {
-		CHACHA_QUARTERROUND( y0, y4, y8,y12);
-		CHACHA_QUARTERROUND( y1, y5, y9,y13);
-		CHACHA_QUARTERROUND( y2, y6,y10,y14);
-		CHACHA_QUARTERROUND( y3, y7,y11,y15);
-		CHACHA_QUARTERROUND( y0, y5,y10,y15);
-		CHACHA_QUARTERROUND( y1, y6,y11,y12);
-		CHACHA_QUARTERROUND( y2, y7, y8,y13);
-		CHACHA_QUARTERROUND( y3, y4, y9,y14);
-	}
-
-	le32enc(out + 0, x0 + y0);
-	le32enc(out + 4, x1 + y1);
-	le32enc(out + 8, x2 + y2);
-	le32enc(out + 12, x3 + y3);
-	le32enc(out + 16, x4 + y4);
-	le32enc(out + 20, x5 + y5);
-	le32enc(out + 24, x6 + y6);
-	le32enc(out + 28, x7 + y7);
-	le32enc(out + 32, x8 + y8);
-	le32enc(out + 36, x9 + y9);
-	le32enc(out + 40, x10 + y10);
-	le32enc(out + 44, x11 + y11);
-	le32enc(out + 48, x12 + y12);
-	le32enc(out + 52, x13 + y13);
-	le32enc(out + 56, x14 + y14);
-	le32enc(out + 60, x15 + y15);
-}
-
-/* https://tools.ietf.org/html/draft-strombergson-chacha-test-vectors-00 */
-static int
-chacha_core_selftest(void)
-{
-	/* TC1, 32-byte key, rounds=12, keystream block 1 */
-	static const uint8_t zero[32];
-	static const uint8_t expected0[64] = {
-		0x9b,0xf4,0x9a,0x6a, 0x07,0x55,0xf9,0x53,
-		0x81,0x1f,0xce,0x12, 0x5f,0x26,0x83,0xd5,
-		0x04,0x29,0xc3,0xbb, 0x49,0xe0,0x74,0x14,
-		0x7e,0x00,0x89,0xa5, 0x2e,0xae,0x15,0x5f,
-		0x05,0x64,0xf8,0x79, 0xd2,0x7a,0xe3,0xc0,
-		0x2c,0xe8,0x28,0x34, 0xac,0xfa,0x8c,0x79,
-		0x3a,0x62,0x9f,0x2c, 0xa0,0xde,0x69,0x19,
-		0x61,0x0b,0xe8,0x2f, 0x41,0x13,0x26,0xbe,
-	};
-	/* TC7, 32-byte key, rounds=12, keystream block 2 */
-	static const uint8_t k1[32] = {
-		0x00,0x11,0x22,0x33, 0x44,0x55,0x66,0x77,
-		0x88,0x99,0xaa,0xbb, 0xcc,0xdd,0xee,0xff,
-		0xff,0xee,0xdd,0xcc, 0xbb,0xaa,0x99,0x88,
-		0x77,0x66,0x55,0x44, 0x33,0x22,0x11,0x00,
-	};
-	static const uint8_t in1[16] = {
-		0x01,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
-		0x0f,0x1e,0x2d,0x3c, 0x4b,0x59,0x68,0x77,
-	};
-	static const uint8_t expected1[64] = {
-		0xcd,0x9a,0x2a,0xa9, 0xea,0x93,0xc2,0x67,
-		0x5e,0x82,0x88,0x14, 0x08,0xde,0x85,0x2c,
-		0x62,0xfa,0x74,0x6a, 0x30,0xe5,0x2b,0x45,
-		0xa2,0x69,0x62,0xcf, 0x43,0x51,0xe3,0x04,
-		0xd3,0x13,0x20,0xbb, 0xd6,0xaa,0x6c,0xc8,
-		0xf3,0x26,0x37,0xf9, 0x59,0x34,0xe4,0xc1,
-		0x45,0xef,0xd5,0x62, 0x31,0xef,0x31,0x61,
-		0x03,0x28,0x36,0xf4, 0x96,0x71,0x83,0x3e,
-	};
-	uint8_t out[64];
-	int result = 0;
-
-	chacha_core(out, zero, zero, chacha_const32, 12);
-	if (memcmp(out, expected0, 64)) {
-		hexdump(printf, "chacha core 1", out, sizeof out);
-		result = -1;
-	}
-
-	chacha_core(out, in1, k1, chacha_const32, 12);
-	if (memcmp(out, expected1, 64)) {
-		hexdump(printf, "chacha core 2", out, sizeof out);
-		result = -1;
-	}
-
-	return result;
-}
-
-/* HChaCha */
-
-static void
-hchacha(uint8_t out[restrict static 32], const uint8_t in[static 16],
-    const uint8_t k[static 32], const uint8_t c[static 16], unsigned nr)
-{
-	uint8_t t[64];
-
-	chacha_core(t, in, k, c, nr);
-	le32enc(out + 0, le32dec(t + 0) - le32dec(c + 0));
-	le32enc(out + 4, le32dec(t + 4) - le32dec(c + 4));
-	le32enc(out + 8, le32dec(t + 8) - le32dec(c + 8));
-	le32enc(out + 12, le32dec(t + 12) - le32dec(c + 12));
-	le32enc(out + 16, le32dec(t + 48) - le32dec(in + 0));
-	le32enc(out + 20, le32dec(t + 52) - le32dec(in + 4));
-	le32enc(out + 24, le32dec(t + 56) - le32dec(in + 8));
-	le32enc(out + 28, le32dec(t + 60) - le32dec(in + 12));
-}
-
-static int
-hchacha_selftest(void)
-{
-	/* https://tools.ietf.org/html/draft-irtf-cfrg-xchacha-03, §2.2.1 */
-	static const uint8_t k[32] = {
-		0x00,0x01,0x02,0x03, 0x04,0x05,0x06,0x07,
-		0x08,0x09,0x0a,0x0b, 0x0c,0x0d,0x0e,0x0f,
-		0x10,0x11,0x12,0x13, 0x14,0x15,0x16,0x17,
-		0x18,0x19,0x1a,0x1b, 0x1c,0x1d,0x1e,0x1f,
-	};
-	static const uint8_t in[16] = {
-		0x00,0x00,0x00,0x09, 0x00,0x00,0x00,0x4a,
-		0x00,0x00,0x00,0x00, 0x31,0x41,0x59,0x27,
-	};
-	static const uint8_t expected[32] = {
-		0x82,0x41,0x3b,0x42, 0x27,0xb2,0x7b,0xfe,
-		0xd3,0x0e,0x42,0x50, 0x8a,0x87,0x7d,0x73,
-		0xa0,0xf9,0xe4,0xd5, 0x8a,0x74,0xa8,0x53,
-		0xc1,0x2e,0xc4,0x13, 0x26,0xd3,0xec,0xdc,
-	};
-	uint8_t out[32];
-	int result = 0;
-
-	hchacha(out, in, k, chacha_const32, 20);
-	if (memcmp(out, expected, 32)) {
-		hexdump(printf, "hchacha", out, sizeof out);
-		result = -1;
-	}
-
-	return result;
-}
-
-/* XChaCha */
-
-static void
-xchacha_xor(uint8_t *c, const uint8_t *p, size_t nbytes,
-    const uint8_t nonce[static 24], const uint8_t k[static 32], unsigned nr)
-{
-	uint8_t h[32];
-	uint8_t in[16];
-	uint8_t block[64];
-	unsigned i;
-
-	hchacha(h, nonce, k, chacha_const32, nr);
-	memset(in, 0, 8);
-	memcpy(in + 8, nonce + 16, 8);
-
-	for (; nbytes; nbytes -= i, c += i, p += i) {
-		chacha_core(block, in, h, chacha_const32, nr);
-		for (i = 0; i < MIN(nbytes, 64); i++)
-			c[i] = p[i] ^ block[i];
-		le32enc(in, 1 + le32dec(in));
-	}
-}
-
-static int
-xchacha_selftest(void)
-{
-	/* https://tools.ietf.org/html/draft-irtf-cfrg-xchacha-03, A.2.2 */
-	static const uint8_t k[32] = {
-		0x80,0x81,0x82,0x83, 0x84,0x85,0x86,0x87,
-		0x88,0x89,0x8a,0x8b, 0x8c,0x8d,0x8e,0x8f,
-		0x90,0x91,0x92,0x93, 0x94,0x95,0x96,0x97,
-		0x98,0x99,0x9a,0x9b, 0x9c,0x9d,0x9e,0x9f,
-	};
-	static const uint8_t nonce[24] = {
-		0x40,0x41,0x42,0x43, 0x44,0x45,0x46,0x47,
-		0x48,0x49,0x4a,0x4b, 0x4c,0x4d,0x4e,0x4f,
-		0x50,0x51,0x52,0x53, 0x54,0x55,0x56,0x58,
-	};
-	static const uint8_t p[128] = {
-		0x54,0x68,0x65,0x20, 0x64,0x68,0x6f,0x6c,
-		0x65,0x20,0x28,0x70, 0x72,0x6f,0x6e,0x6f,
-		0x75,0x6e,0x63,0x65, 0x64,0x20,0x22,0x64,
-		0x6f,0x6c,0x65,0x22, 0x29,0x20,0x69,0x73,
-		0x20,0x61,0x6c,0x73, 0x6f,0x20,0x6b,0x6e,
-		0x6f,0x77,0x6e,0x20, 0x61,0x73,0x20,0x74,
-		0x68,0x65,0x20,0x41, 0x73,0x69,0x61,0x74,
-		0x69,0x63,0x20,0x77, 0x69,0x6c,0x64,0x20,
-		0x64,0x6f,0x67,0x2c, 0x20,0x72,0x65,0x64,
-		0x20,0x64,0x6f,0x67, 0x2c,0x20,0x61,0x6e,
-		0x64,0x20,0x77,0x68, 0x69,0x73,0x74,0x6c,
-		0x69,0x6e,0x67,0x20, 0x64,0x6f,0x67,0x2e,
-		0x20,0x49,0x74,0x20, 0x69,0x73,0x20,0x61,
-		0x62,0x6f,0x75,0x74, 0x20,0x74,0x68,0x65,
-		0x20,0x73,0x69,0x7a, 0x65,0x20,0x6f,0x66,
-		0x20,0x61,0x20,0x47, 0x65,0x72,0x6d,0x61,
-	};
-	static const uint8_t expected[128] = {
-		0x45,0x59,0xab,0xba, 0x4e,0x48,0xc1,0x61,
-		0x02,0xe8,0xbb,0x2c, 0x05,0xe6,0x94,0x7f,
-		0x50,0xa7,0x86,0xde, 0x16,0x2f,0x9b,0x0b,
-		0x7e,0x59,0x2a,0x9b, 0x53,0xd0,0xd4,0xe9,
-		0x8d,0x8d,0x64,0x10, 0xd5,0x40,0xa1,0xa6,
-		0x37,0x5b,0x26,0xd8, 0x0d,0xac,0xe4,0xfa,
-		0xb5,0x23,0x84,0xc7, 0x31,0xac,0xbf,0x16,
-		0xa5,0x92,0x3c,0x0c, 0x48,0xd3,0x57,0x5d,
-		0x4d,0x0d,0x2c,0x67, 0x3b,0x66,0x6f,0xaa,
-		0x73,0x10,0x61,0x27, 0x77,0x01,0x09,0x3a,
-		0x6b,0xf7,0xa1,0x58, 0xa8,0x86,0x42,0x92,
-		0xa4,0x1c,0x48,0xe3, 0xa9,0xb4,0xc0,0xda,
-		0xec,0xe0,0xf8,0xd9, 0x8d,0x0d,0x7e,0x05,
-		0xb3,0x7a,0x30,0x7b, 0xbb,0x66,0x33,0x31,
-		0x64,0xec,0x9e,0x1b, 0x24,0xea,0x0d,0x6c,
-		0x3f,0xfd,0xdc,0xec, 0x4f,0x68,0xe7,0x44,
-	};
-	uint8_t c[128];
-	int result = 0;
-
-	xchacha_xor(c, p, 128, nonce, k, 20);
-	if (memcmp(c, expected, 128)) {
-		hexdump(printf, "xchacha", c, sizeof c);
-		result = -1;
-	}
-
-	return result;
-}
-
 void
 adiantum_init(struct adiantum *A, const uint8_t key[static 32])
 {
@@ -2078,7 +1815,8 @@ adiantum_init(struct adiantum *A, const uint8_t key[static 32])
 
 	/* Relies on ordering of struct members.  */
 	memset(A->kk, 0, 32 + 16 + 16 + 1072);
-	xchacha_xor(A->kk, A->kk, 32 + 16 + 16 + 1072, nonce, A->ks, 12);
+	xchacha_stream_xor(A->kk, A->kk, 32 + 16 + 16 + 1072, 0, nonce, A->ks,
+	    12);
 
 	/* Put the NH key words into host byte order.  */
 	for (i = 0; i < __arraycount(A->kn); i++)
@@ -2150,7 +1888,7 @@ adiantum_enc(void *c, const void *p, size_t len, const void *t, size_t tlen,
 
 	memcpy(nonce, buf, 16);
 	le64enc(nonce + 16, 1);
-	xchacha_xor(cL, pL, Llen, nonce, A->ks, 12);
+	xchacha_stream_xor(cL, pL, Llen, 0, nonce, A->ks, 12);
 
 	adiantum_hash(h, cL, Llen, t, tlen, A->kt, A->kl, A->kn);
 	sub128(cR, buf, h);
@@ -2182,7 +1920,7 @@ adiantum_dec(void *p, const void *c, size_t len, const void *t, size_t tlen,
 
 	memcpy(nonce, buf, 16);
 	le64enc(nonce + 16, 1);
-	xchacha_xor(pL, cL, Llen, nonce, A->ks, 12);
+	xchacha_stream_xor(pL, cL, Llen, 0, nonce, A->ks, 12);
 
 	aes_dec(&A->kk_dec, buf, buf, AES_256_NROUNDS); /* buf := P_M */
 	adiantum_hash(h, pL, Llen, t, tlen, A->kt, A->kl, A->kn);
@@ -2194,7 +1932,7 @@ adiantum_dec(void *p, const void *c, size_t len, const void *t, size_t tlen,
 
 #ifdef _KERNEL
 
-MODULE(MODULE_CLASS_MISC, adiantum, "aes");
+MODULE(MODULE_CLASS_MISC, adiantum, "aes,chacha");
 
 static int
 adiantum_modcmd(modcmd_t cmd, void *opaque)
@@ -2207,12 +1945,10 @@ adiantum_modcmd(modcmd_t cmd, void *opaque)
 		result |= poly1305_selftest();
 		result |= nh_selftest();
 		result |= nhpoly1305_selftest();
-		result |= chacha_core_selftest();
-		result |= hchacha_selftest();
-		result |= xchacha_selftest();
 		result |= adiantum_selftest();
 		if (result)
-			panic("adiantum self-tests failed");
+			panic("adiantum self-test failed");
+		aprint_verbose("adiantum: self-test passed\n");
 		return 0;
 	}
 	case MODULE_CMD_FINI:
@@ -2301,9 +2037,6 @@ main(void)
 	result |= poly1305_selftest();
 	result |= nh_selftest();
 	result |= nhpoly1305_selftest();
-	result |= chacha_core_selftest();
-	result |= hchacha_selftest();
-	result |= xchacha_selftest();
 	result |= adiantum_selftest();
 	if (result)
 		return result;
