@@ -1,4 +1,4 @@
-/*	$NetBSD: cputypes.h,v 1.12 2009/04/21 12:57:41 nonaka Exp $	*/
+/*	$NetBSD: cputypes.h,v 1.13 2020/07/25 22:59:55 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -56,6 +56,9 @@
 #define	CPU_PRODUCT_7750R	9
 #define	CPU_PRODUCT_7751	10
 #define	CPU_PRODUCT_7751R	11
+
+/* STMicroelectronics ST40 series (SH4) */
+#define CPU_PRODUCT_STX7105	12	/* ST40-300 */
 
 
 #ifndef _LOCORE
