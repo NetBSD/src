@@ -1,4 +1,4 @@
-/*	$NetBSD: mvxpsec.c,v 1.6 2020/07/25 22:37:16 riastradh Exp $	*/
+/*	$NetBSD: mvxpsec.c,v 1.7 2020/07/25 22:37:48 riastradh Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -24,6 +24,11 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifdef _KERNEL_OPT
+#include "opt_ipsec.h"
+#endif
+
 /*
  * Cryptographic Engine and Security Accelerator(MVXPSEC)
  */
@@ -63,7 +68,9 @@
 #include <netinet/ip.h>
 #include <netinet/ip6.h>
 
+#if NIPSEC > 0
 #include <netipsec/esp_var.h>
+#endif
 
 #include <arm/cpufunc.h>
 #include <arm/marvell/mvsocvar.h>
@@ -2513,6 +2520,7 @@ mvxpsec_packet_setmbuf(struct mvxpsec_packet *mv_p, struct mbuf *m)
 		}
 	}
 	if (pktlen > SRAM_PAYLOAD_SIZE) {
+#if NIPSEC > 0
 		extern   percpu_t *espstat_percpu;
 	       	/* XXX:
 		 * layer violation. opencrypto knows our max packet size
@@ -2520,6 +2528,7 @@ mvxpsec_packet_setmbuf(struct mvxpsec_packet *mv_p, struct mbuf *m)
 		 */
 
 		_NET_STATINC(espstat_percpu, ESP_STAT_TOOBIG);
+#endif
 		log(LOG_ERR,
 		    "%s: ESP Packet too large: %zu [oct.] > %zu [oct.]\n",
 		    device_xname(sc->sc_dev),
@@ -2562,6 +2571,7 @@ mvxpsec_packet_setuio(struct mvxpsec_packet *mv_p, struct uio *uio)
 	struct mvxpsec_softc *sc = mv_s->sc;
 
 	if (uio->uio_resid > SRAM_PAYLOAD_SIZE) {
+#if NIPSEC > 0
 		extern   percpu_t *espstat_percpu;
 	       	/* XXX:
 		 * layer violation. opencrypto knows our max packet size
@@ -2569,6 +2579,7 @@ mvxpsec_packet_setuio(struct mvxpsec_packet *mv_p, struct uio *uio)
 		 */
 
 		_NET_STATINC(espstat_percpu, ESP_STAT_TOOBIG);
+#endif
 		log(LOG_ERR,
 		    "%s: uio request too large: %zu [oct.] > %zu [oct.]\n",
 		    device_xname(sc->sc_dev),
