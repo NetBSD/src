@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.71 2020/07/25 20:44:50 rillig Exp $
+#	$NetBSD: Makefile,v 1.72 2020/07/25 20:50:00 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
 SRCS=	arch.c buf.c compat.c cond.c dir.c for.c hash.c job.c main.c
 SRCS+=	make.c make_malloc.c metachar.c parse.c
-SRCS+=	str.c strlist.c suff.c targ.c trace.c var.c util.c 
+SRCS+=	str.c strlist.c suff.c targ.c trace.c var.c util.c
 SRCS+=	lstAppend.c lstAtEnd.c lstAtFront.c lstClose.c lstConcat.c
 SRCS+=	lstDatum.c lstDeQueue.c lstDestroy.c lstDupl.c lstEnQueue.c
 SRCS+=	lstFind.c lstFindFrom.c lstFirst.c lstForEach.c lstForEachFrom.c
@@ -18,22 +18,22 @@ SRCS+=		meta.c
 CPPFLAGS+=	-DUSE_META
 
 USE_FILEMON?=	ktrace
-.if ${USE_FILEMON:tl} != "no"
+.  if ${USE_FILEMON:tl} != "no"
 
 .PATH:	${.CURDIR}/filemon
 SRCS+=		filemon_${USE_FILEMON}.c
 CPPFLAGS+=	-DUSE_FILEMON
 CPPFLAGS+=	-DUSE_FILEMON_${USE_FILEMON:tu}
 
-.if ${USE_FILEMON} == "dev"
+.    if ${USE_FILEMON} == "dev"
 FILEMON_H?=	/usr/include/dev/filemon/filemon.h
-.if exists(${FILEMON_H}) && ${FILEMON_H:T} == "filemon.h"
+.      if exists(${FILEMON_H}) && ${FILEMON_H:T} == "filemon.h"
 COPTS.filemon_dev.c+= \
 		-DHAVE_FILEMON_H -I${FILEMON_H:H}
+.      endif
+.    endif
+.  endif
 .endif
-.endif				# USE_FILEMON == dev
-.endif				# USE_FILEMON
-.endif				# USE_META
 
 .PATH:	${.CURDIR}/lst.lib
 SUBDIR.roff+=	PSD.doc
@@ -50,7 +50,7 @@ COPTS.job.c+=	-Wno-format-nonliteral
 COPTS.parse.c+=	-Wno-format-nonliteral
 COPTS.var.c+=	-Wno-format-nonliteral
 
-.ifdef TOOLDIR
+.if defined(TOOLDIR)
 # This is a native NetBSD build, use libutil rather than the local emalloc etc.
 CPPFLAGS+=	-DUSE_EMALLOC
 LDADD+=		-lutil
