@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_ni_64.S,v 1.3 2020/07/25 22:11:05 riastradh Exp $	*/
+/*	$NetBSD: aes_ni_64.S,v 1.4 2020/07/25 22:29:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -951,6 +951,142 @@ ENTRY(aesni_xts_update)
 END(aesni_xts_update)
 
 /*
+ * aesni_cbcmac_update1(const struct aesenc *enckey@rdi, const uint8_t *in@rsi,
+ *     size_t nbytes@rdx, uint8_t auth[16] @rcx, uint32_t nrounds@r8d)
+ *
+ *	Update CBC-MAC.
+ *
+ *	nbytes must be a positive integral multiple of 16.
+ *
+ *	Standard ABI calling convention.
+ */
+ENTRY(aesni_cbcmac_update1)
+	movdqu	(%rcx),%xmm0		/* xmm0 := auth */
+	mov	%rdx,%r10		/* r10 := nbytes */
+	mov	%rcx,%rdx		/* rdx := &auth */
+1:	pxor	(%rsi),%xmm0		/* xmm0 ^= plaintext block */
+	lea	0x10(%rsi),%rsi
+	mov	%r8d,%ecx		/* ecx := nrounds */
+	call	aesni_enc1		/* xmm0 := auth'; trash rax,rcx,xmm8 */
+	sub	$0x10,%r10
+	jnz	1b
+	movdqu	%xmm0,(%rdx)		/* store auth' */
+	ret
+END(aesni_cbcmac_update1)
+
+/*
+ * aesni_ccm_enc1(const struct aesenc *enckey@rdi, const uint8_t *in@rsi,
+ *     uint8_t *out@rdx, size_t nbytes@rcx,
+ *     uint8_t authctr[32] @r8, uint32_t nrounds@r9d)
+ *
+ *	Update CCM encryption.
+ *
+ *	nbytes must be a positive integral multiple of 16.
+ *
+ *	Standard ABI calling convention.
+ */
+ENTRY(aesni_ccm_enc1)
+	mov	%rcx,%r10		/* r10 := nbytes */
+	movdqu	0x10(%r8),%xmm2		/* xmm2 := ctr (be) */
+	movdqa	bswap32(%rip),%xmm4	/* xmm4 := bswap32 table */
+	movdqa	ctr32_inc(%rip),%xmm5	/* xmm5 := (0,0,0,1) (le) */
+	movdqu	(%r8),%xmm0		/* xmm0 := auth */
+	pshufb	%xmm4,%xmm2		/* xmm2 := ctr (le) */
+1:	movdqu	(%rsi),%xmm3		/* xmm3 := plaintext block */
+	paddd	%xmm5,%xmm2		/* increment ctr (32-bit) */
+	lea	0x10(%rsi),%rsi
+	movdqa	%xmm2,%xmm1		/* xmm1 := ctr (le) */
+	mov	%r9d,%ecx		/* ecx := nrounds */
+	pshufb	%xmm4,%xmm1		/* xmm1 := ctr (be) */
+	pxor	%xmm3,%xmm0		/* xmm0 := auth ^ ptxt */
+	call	aesni_enc2		/* trash rax/rcx/xmm8 */
+	pxor	%xmm1,%xmm3		/* xmm3 := ciphertext block */
+	sub	$0x10,%r10		/* count down bytes */
+	movdqu	%xmm3,(%rdx)		/* store ciphertext block */
+	lea	0x10(%rdx),%rdx
+	jnz	1b			/* repeat if more blocks */
+	pshufb	%xmm4,%xmm2		/* xmm2 := ctr (be) */
+	movdqu	%xmm0,(%r8)		/* store updated auth */
+	movdqu	%xmm2,0x10(%r8)		/* store updated ctr */
+	ret
+END(aesni_ccm_enc1)
+
+/*
+ * aesni_ccm_dec1(const struct aesenc *enckey@rdi, const uint8_t *in@rsi,
+ *     uint8_t *out@rdx, size_t nbytes@rcx,
+ *     uint8_t authctr[32] @r8, uint32_t nrounds@r9d)
+ *
+ *	Update CCM decryption.
+ *
+ *	nbytes must be a positive integral multiple of 16.
+ *
+ *	Standard ABI calling convention.
+ */
+ENTRY(aesni_ccm_dec1)
+	movdqu	0x10(%r8),%xmm2		/* xmm2 := ctr (be) */
+	movdqa	bswap32(%rip),%xmm4	/* xmm4 := bswap32 table */
+	movdqa	ctr32_inc(%rip),%xmm5	/* xmm5 := (0,0,0,1) (le) */
+	movdqu	(%r8),%xmm1		/* xmm1 := auth */
+	pshufb	%xmm4,%xmm2		/* xmm2 := ctr (le) */
+	mov	%rcx,%r10		/* r10 := nbytes */
+
+	/* Decrypt the first block.  */
+	paddd	%xmm5,%xmm2		/* increment ctr (32-bit) */
+	mov	%r9d,%ecx		/* ecx := nrounds */
+	movdqa	%xmm2,%xmm0		/* xmm0 := ctr (le) */
+	movdqu	(%rsi),%xmm3		/* xmm3 := ctxt */
+	pshufb	%xmm4,%xmm0		/* xmm0 := ctr (be) */
+	lea	0x10(%rsi),%rsi
+	call	aesni_enc1		/* xmm0 := pad; trash rax/rcx/xmm8 */
+	jmp	2f
+
+1:	/*
+	 * Authenticate the last block and decrypt the next block
+	 * simultaneously.
+	 *
+	 *	xmm1 = auth ^ ptxt[-1]
+	 *	xmm2 = ctr[-1] (le)
+	 */
+	paddd	%xmm5,%xmm2		/* increment ctr (32-bit) */
+	mov	%r9d,%ecx		/* ecx := nrounds */
+	movdqa	%xmm2,%xmm0		/* xmm0 := ctr (le) */
+	movdqu	(%rsi),%xmm3		/* xmm3 := ctxt */
+	pshufb	%xmm4,%xmm0		/* xmm0 := ctr (be) */
+	lea	0x10(%rsi),%rsi
+	call	aesni_enc2		/* xmm0 := pad, xmm1 := auth';
+					 * trash rax/rcx/xmm8 */
+2:	pxor	%xmm0,%xmm3		/* xmm3 := ptxt */
+	sub	$0x10,%r10
+	movdqu	%xmm3,(%rdx)		/* store plaintext */
+	lea	0x10(%rdx),%rdx
+	pxor	%xmm3,%xmm1		/* xmm1 := auth ^ ptxt */
+	jnz	1b
+
+	/* Authenticate the last block.  */
+	movdqa	%xmm1,%xmm0		/* xmm0 := auth ^ ptxt */
+	mov	%r9d,%ecx		/* ecx := nrounds */
+	call	aesni_enc1		/* xmm0 := auth' */
+	pshufb	%xmm4,%xmm2		/* xmm2 := ctr (be) */
+	movdqu	%xmm0,(%r8)		/* store updated auth */
+	movdqu	%xmm2,0x10(%r8)		/* store updated ctr */
+	ret
+END(aesni_ccm_dec1)
+
+	.section .rodata
+	.p2align 4
+	.type	bswap32,@object
+bswap32:
+	.byte	3,2,1,0, 7,6,5,4, 11,10,9,8, 15,14,13,12
+END(bswap32)
+
+	.section .rodata
+	.p2align 4
+	.type	ctr32_inc,@object
+ctr32_inc:
+	.byte	0,0,0,0, 0,0,0,0, 0,0,0,0, 1,0,0,0
+END(ctr32_inc)
+
+/*
  * aesni_enc1(const struct aesenc *enckey@rdi, uint128_t block@xmm0,
  *     uint32_t nrounds@ecx)
  *
@@ -974,6 +1110,35 @@ aesni_enc1:
 	aesenclast %xmm8,%xmm0
 	ret
 END(aesni_enc1)
+
+/*
+ * aesni_enc2(const struct aesenc *enckey@rdi, uint128_t block0@xmm0,
+ *     uint128_t block1@xmm1, uint32_t nrounds@ecx)
+ *
+ *	Encrypt two AES blocks in %xmm0 and %xmm1.
+ *
+ *	Internal ABI.  Uses %rax and %xmm8 as temporaries.  Destroys %ecx.
+ */
+	.text
+	_ALIGN_TEXT
+	.type	aesni_enc2,@function
+aesni_enc2:
+	movdqa	(%rdi),%xmm8	/* xmm8 := first round key */
+	shl	$4,%ecx		/* ecx := total byte size of round keys */
+	lea	0x10(%rdi,%rcx),%rax	/* rax := end of round key array */
+	neg	%rcx		/* rcx := byte offset of round key from end */
+	pxor	%xmm8,%xmm0	/* xor in first round key */
+	pxor	%xmm8,%xmm1
+	jmp	2f
+1:	aesenc	%xmm8,%xmm0
+	aesenc	%xmm8,%xmm1
+2:	movdqa	(%rax,%rcx),%xmm8	/* load round key */
+	add	$0x10,%rcx
+	jnz	1b		/* repeat if there's more */
+	aesenclast %xmm8,%xmm0
+	aesenclast %xmm8,%xmm1
+	ret
+END(aesni_enc2)
 
 /*
  * aesni_enc8(const struct aesenc *enckey@rdi, uint128_t block0@xmm0, ...,
