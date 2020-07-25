@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.21 2020/07/23 19:46:55 rillig Exp $
+# $Id: modmisc.mk,v 1.22 2020/07/25 20:35:35 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -24,6 +24,7 @@ all:	mod-assign
 all:	mod-assign-nested
 all:	mod-tu-space
 all:	mod-Q
+all:	mod-break-many-words
 
 modsysv:
 	@echo "The answer is ${libfoo.a:L:libfoo.a=42}"
@@ -183,3 +184,7 @@ mod-tu-space:
 
 mod-Q:
 	@echo $@: new${.newline:Q}${.newline:Q}line
+
+# Cover the bmake_realloc in brk_string.
+mod-break-many-words:
+	@echo $@: ${UNDEF:U:range=500:[#]}
