@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_armv8_64.S,v 1.7 2020/07/25 22:32:09 riastradh Exp $	*/
+/*	$NetBSD: aes_armv8_64.S,v 1.8 2020/07/25 22:33:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -25,6 +25,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/endian.h>
 
 #include <aarch64/asm.h>
 
@@ -861,6 +863,161 @@ ENTRY(aesarmv8_xts_update)
 END(aesarmv8_xts_update)
 
 /*
+ * aesarmv8_cbcmac_update1(const struct aesenc *enckey@x0,
+ *     const uint8_t *in@x1, size_t nbytes@x2, uint8_t auth[16] @x3,
+ *     uint32_t nrounds@x4)
+ *
+ *	Update CBC-MAC.
+ *
+ *	nbytes must be a positive integral multiple of 16.
+ *
+ *	Standard ABI calling convention.
+ */
+ENTRY(aesarmv8_cbcmac_update1)
+	stp	fp, lr, [sp, #-16]!	/* push stack frame */
+	mov	fp, sp
+	ldr	q0, [x3]		/* q0 := initial authenticator */
+	mov	x9, x0			/* x9 := enckey */
+	mov	x5, x3			/* x5 := &auth (enc1 trashes x3) */
+1:	ldr	q1, [x1], #0x10		/* q1 := plaintext block */
+	mov	x0, x9			/* x0 := enckey */
+	mov	x3, x4			/* x3 := nrounds */
+	eor	v0.16b, v0.16b, v1.16b	/* q0 := auth ^ ptxt */
+	bl	aesarmv8_enc1		/* q0 := auth'; trash x0/x3/q16 */
+	subs	x2, x2, #0x10		/* count down nbytes */
+	b.ne	1b			/* repeat if x10 is nonzero */
+	str	q0, [x5]		/* store updated authenticator */
+	ldp	fp, lr, [sp], #16	/* pop stack frame */
+	ret
+END(aesarmv8_cbcmac_update1)
+
+/*
+ * aesarmv8_ccm_enc1(const struct aesenc *enckey@x0, const uint8_t *in@x1,
+ *     uint8_t *out@x2, size_t nbytes@x3, uint8_t authctr[32] @x4,
+ *     uint32_t nrounds@x5)
+ *
+ *	Update CCM encryption.
+ *
+ *	nbytes must be a positive integral multiple of 16.
+ *
+ *	Standard ABI calling convention.
+ */
+ENTRY(aesarmv8_ccm_enc1)
+	stp	fp, lr, [sp, #-16]!	/* push stack frame */
+	mov	fp, sp
+	ldp	q0, q2, [x4]		/* q0 := auth, q2 := ctr (be) */
+	adrl	x11, ctr32_inc		/* x11 := &ctr32_inc */
+	ld1	{v5.4s}, [x11]		/* q5 := (0,0,0,1) (host-endian) */
+	mov	x9, x0			/* x9 := enckey */
+	mov	x10, x3			/* x10 := nbytes */
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+	rev32	v2.16b, v2.16b		/* q2 := ctr (host-endian) */
+#endif
+1:	ldr	q3, [x1], #0x10		/* q3 := plaintext block */
+	add	v2.4s, v2.4s, v5.4s	/* increment ctr (32-bit) */
+	mov	x0, x9			/* x0 := enckey */
+	mov	x3, x5			/* x3 := nrounds */
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+	rev32	v1.16b, v2.16b		/* q1 := ctr (big-endian) */
+#else
+	mov	v1.16b, v2.16b		/* q1 := ctr (big-endian) */
+#endif
+	eor	v0.16b, v0.16b, v3.16b	/* q0 := auth ^ ptxt */
+	bl	aesarmv8_enc2		/* q0 := auth', q1 := pad;
+					 * trash x0/x3/q16 */
+	eor	v3.16b, v1.16b, v3.16b	/* q3 := ciphertext block */
+	subs	x10, x10, #0x10		/* count down bytes */
+	str	q3, [x2], #0x10		/* store ciphertext block */
+	b.ne	1b			/* repeat if more blocks */
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+	rev32	v2.16b, v2.16b		/* q2 := ctr (big-endian) */
+#endif
+	stp	q0, q2, [x4]		/* store updated auth/ctr */
+	ldp	fp, lr, [sp], #16	/* pop stack frame */
+	ret
+END(aesarmv8_ccm_enc1)
+
+/*
+ * aesarmv8_ccm_dec1(const struct aesenc *enckey@x0, const uint8_t *in@x1,
+ *     uint8_t *out@x2, size_t nbytes@x3, uint8_t authctr[32] @x4,
+ *     uint32_t nrounds@x5)
+ *
+ *	Update CCM decryption.
+ *
+ *	nbytes must be a positive integral multiple of 16.
+ *
+ *	Standard ABI calling convention.
+ */
+ENTRY(aesarmv8_ccm_dec1)
+	stp	fp, lr, [sp, #-16]!	/* push stack frame */
+	mov	fp, sp
+	ldp	q1, q2, [x4]		/* q1 := auth, q2 := ctr (be) */
+	adrl	x11, ctr32_inc		/* x11 := &ctr32_inc */
+	ld1	{v5.4s}, [x11]		/* q5 := (0,0,0,1) (host-endian) */
+	mov	x9, x0			/* x9 := enckey */
+	mov	x10, x3			/* x10 := nbytes */
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+	rev32	v2.16b, v2.16b		/* q2 := ctr (host-endian) */
+#endif
+
+	/* Decrypt the first block.  */
+	add	v2.4s, v2.4s, v5.4s	/* increment ctr (32-bit) */
+	mov	x3, x5			/* x3 := nrounds */
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+	rev32	v0.16b, v2.16b		/* q0 := ctr (big-endian) */
+#else
+	mov	v0.16b, v2.16b		/* q0 := ctr (big-endian) */
+#endif
+	ldr	q3, [x1], #0x10		/* q3 := ctxt */
+	bl	aesarmv8_enc1		/* q0 := pad; trash x0/x3/q16 */
+	b	2f
+
+1:	/*
+	 * Authenticate the last block and decrypt the next block
+	 * simultaneously.
+	 *
+	 *	q1 = auth ^ ptxt[-1]
+	 *	q2 = ctr[-1] (le)
+	 */
+	add	v2.4s, v2.4s, v5.4s	/* increment ctr (32-bit) */
+	mov	x0, x9			/* x0 := enckey */
+	mov	x3, x5			/* x3 := nrounds */
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+	rev32	v0.16b, v2.16b		/* q0 := ctr (big-endian) */
+#else
+	mov	v0.16b, v2.16b		/* q0 := ctr (big-endian) */
+#endif
+	ldr	q3, [x1], #0x10		/* q3 := ctxt */
+	bl	aesarmv8_enc2		/* q0 := pad, q1 := auth';
+					 * trash x0/x3/q16 */
+2:	eor	v3.16b, v0.16b, v3.16b	/* q3 := plaintext block */
+	subs	x10, x10, #0x10
+	str	q3, [x2], #0x10		/* store plaintext */
+	eor	v1.16b, v1.16b, v3.16b	/* q1 := auth ^ ptxt */
+	b.ne	1b
+
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+	rev32	v2.16b, v2.16b		/* q2 := ctr (big-endian) */
+#endif
+
+	/* Authenticate the last block.  */
+	mov	x0, x9			/* x0 := enckey */
+	mov	x3, x5			/* x3 := nrounds */
+	mov	v0.16b, v1.16b		/* q0 := auth ^ ptxt */
+	bl	aesarmv8_enc1		/* q0 := auth'; trash x0/x3/q16 */
+	stp	q0, q2, [x4]		/* store updated auth/ctr */
+	ldp	fp, lr, [sp], #16	/* pop stack frame */
+	ret
+END(aesarmv8_ccm_dec1)
+
+	.section .rodata
+	.p2align 4
+	.type	ctr32_inc,@object
+ctr32_inc:
+	.int	0, 0, 0, 1
+END(ctr32_inc)
+
+/*
  * aesarmv8_enc1(const struct aesenc *enckey@x0,
  *     uint128_t block@q0, uint32_t nrounds@x3)
  *
@@ -884,6 +1041,34 @@ aesarmv8_enc1:
 	eor	v0.16b, v0.16b, v16.16b
 	ret
 END(aesarmv8_enc1)
+
+/*
+ * aesarmv8_enc2(const struct aesenc *enckey@x0,
+ *     uint128_t block@q0, uint128_t block@q1, uint32_t nrounds@x3)
+ *
+ *	Encrypt two AES blocks in q0 and q1.
+ *
+ *	Internal ABI.  Uses q16 as temporary.  Destroys x0 and x3.
+ */
+	.text
+	_ALIGN_TEXT
+	.type	aesarmv8_enc2,@function
+aesarmv8_enc2:
+	ldr	q16, [x0], #0x10	/* load round key */
+	b	2f
+1:	/* q[i] := MixColumns(q[i]) */
+	aesmc	v0.16b, v0.16b
+	aesmc	v1.16b, v1.16b
+2:	subs	x3, x3, #1
+	/* q[i] := ShiftRows(SubBytes(AddRoundKey_q16(q[i]))) */
+	aese	v0.16b, v16.16b
+	aese	v1.16b, v16.16b
+	ldr	q16, [x0], #0x10		/* load next round key */
+	b.ne	1b
+	eor	v0.16b, v0.16b, v16.16b
+	eor	v1.16b, v1.16b, v16.16b
+	ret
+END(aesarmv8_enc2)
 
 /*
  * aesarmv8_enc8(const struct aesenc *enckey@x0,
