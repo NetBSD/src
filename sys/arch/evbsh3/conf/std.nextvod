@@ -1,4 +1,4 @@
-# $NetBSD: std.nextvod,v 1.1 2020/07/19 23:44:36 uwe Exp $
+# $NetBSD: std.nextvod,v 1.2 2020/07/25 23:38:48 uwe Exp $
 
 include "arch/evbsh3/conf/std.evbsh3.el"
 include "arch/evbsh3/conf/files.nextvod"
@@ -9,7 +9,7 @@ makeoptions	BOARDMKFRAG="${THISSH3}/conf/mk.nextvod"
 
 # CPU support
 options 	SH4
-options 	SH7751R		# a white lie to get it to compile
+options 	STX7105
 options 	DONT_INIT_BSC
 
 options 	IOM_RAM_BEGIN=0x00000000 	# NB: physical address
