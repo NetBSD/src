@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.70 2020/07/25 20:41:58 rillig Exp $
+#	$NetBSD: Makefile,v 1.71 2020/07/25 20:44:50 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -11,51 +11,50 @@ SRCS+=	lstFind.c lstFindFrom.c lstFirst.c lstForEach.c lstForEachFrom.c
 SRCS+=	lstInit.c lstInsert.c lstIsAtEnd.c lstIsEmpty.c lstLast.c lstMember.c
 SRCS+=	lstNext.c lstOpen.c lstPrev.c lstRemove.c lstReplace.c lstSucc.c
 
-USE_META ?= yes
+USE_META?=	yes
 .if ${USE_META:tl} != "no"
 
-SRCS+=	meta.c
-CPPFLAGS+= -DUSE_META
+SRCS+=		meta.c
+CPPFLAGS+=	-DUSE_META
 
-USE_FILEMON ?= ktrace
+USE_FILEMON?=	ktrace
 .if ${USE_FILEMON:tl} != "no"
 
 .PATH:	${.CURDIR}/filemon
-SRCS+=	filemon_${USE_FILEMON}.c
-CPPFLAGS+= -DUSE_FILEMON -DUSE_FILEMON_${USE_FILEMON:tu}
+SRCS+=		filemon_${USE_FILEMON}.c
+CPPFLAGS+=	-DUSE_FILEMON
+CPPFLAGS+=	-DUSE_FILEMON_${USE_FILEMON:tu}
 
 .if ${USE_FILEMON} == "dev"
-FILEMON_H ?= /usr/include/dev/filemon/filemon.h
+FILEMON_H?=	/usr/include/dev/filemon/filemon.h
 .if exists(${FILEMON_H}) && ${FILEMON_H:T} == "filemon.h"
-COPTS.filemon_dev.c += -DHAVE_FILEMON_H -I${FILEMON_H:H}
+COPTS.filemon_dev.c+= \
+		-DHAVE_FILEMON_H -I${FILEMON_H:H}
 .endif
 .endif				# USE_FILEMON == dev
-
 .endif				# USE_FILEMON
-
 .endif				# USE_META
 
 .PATH:	${.CURDIR}/lst.lib
 SUBDIR.roff+=	PSD.doc
 .if make(obj) || make(clean)
-SUBDIR+= unit-tests
+SUBDIR+=	unit-tests
 .endif
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
 
-CPPFLAGS+= -DMAKE_NATIVE
-COPTS.var.c += -Wno-cast-qual
-COPTS.job.c += -Wno-format-nonliteral
-COPTS.parse.c += -Wno-format-nonliteral
-COPTS.var.c += -Wno-format-nonliteral
+CPPFLAGS+=	-DMAKE_NATIVE
+COPTS.var.c+=	-Wno-cast-qual
+COPTS.job.c+=	-Wno-format-nonliteral
+COPTS.parse.c+=	-Wno-format-nonliteral
+COPTS.var.c+=	-Wno-format-nonliteral
 
 .ifdef TOOLDIR
-# this is a native netbsd build, 
-# use libutil rather than the local emalloc etc.
-CPPFLAGS+= -DUSE_EMALLOC
-LDADD+=-lutil
-DPADD+=${LIBUTIL}
+# This is a native NetBSD build, use libutil rather than the local emalloc etc.
+CPPFLAGS+=	-DUSE_EMALLOC
+LDADD+=		-lutil
+DPADD+=		${LIBUTIL}
 .endif
 
 COPTS.arch.c+=	${GCC_NO_FORMAT_TRUNCATION}
