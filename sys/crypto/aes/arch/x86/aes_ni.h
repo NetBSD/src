@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_ni.h,v 1.2 2020/07/25 22:12:57 riastradh Exp $	*/
+/*	$NetBSD: aes_ni.h,v 1.3 2020/07/25 22:29:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -65,6 +65,13 @@ void	aesni_xts_dec1(const struct aesdec *, const uint8_t[static 16],
 void	aesni_xts_dec8(const struct aesdec *, const uint8_t[static 128],
 	    uint8_t[static 128], size_t, uint8_t[static 16], uint32_t);
 void	aesni_xts_update(const uint8_t[static 16], uint8_t[static 16]);
+
+void	aesni_cbcmac_update1(const struct aesenc *, const uint8_t[static 16],
+	    size_t, uint8_t[static 16], uint32_t);
+void	aesni_ccm_enc1(const struct aesenc *, const uint8_t[static 16],
+	    uint8_t[static 16], size_t, uint8_t[static 32], uint32_t);
+void	aesni_ccm_dec1(const struct aesenc *, const uint8_t[static 16],
+	    uint8_t[static 16], size_t, uint8_t[static 32], uint32_t);
 
 extern struct aes_impl aes_ni_impl;
 
