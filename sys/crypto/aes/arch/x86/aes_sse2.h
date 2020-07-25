@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_sse2.h,v 1.3 2020/07/25 22:12:57 riastradh Exp $	*/
+/*	$NetBSD: aes_sse2.h,v 1.4 2020/07/25 22:29:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -58,6 +58,12 @@ void aes_sse2_xts_enc(const struct aesenc *, const uint8_t[static 16],
     uint8_t[static 16], size_t nbytes, uint8_t[static 16], uint32_t);
 void aes_sse2_xts_dec(const struct aesdec *, const uint8_t[static 16],
     uint8_t[static 16], size_t nbytes, uint8_t[static 16], uint32_t);
+void aes_sse2_cbcmac_update1(const struct aesenc *, const uint8_t[static 16],
+    size_t, uint8_t[static 16], uint32_t);
+void aes_sse2_ccm_enc1(const struct aesenc *, const uint8_t[static 16],
+    uint8_t[static 16], size_t, uint8_t[static 32], uint32_t);
+void aes_sse2_ccm_dec1(const struct aesenc *, const uint8_t[static 16],
+    uint8_t[static 16], size_t, uint8_t[static 32], uint32_t);
 
 int aes_sse2_selftest(void);
 
