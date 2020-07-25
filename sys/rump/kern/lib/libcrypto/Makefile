@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2020/06/29 23:44:01 riastradh Exp $
+#	$NetBSD: Makefile,v 1.9 2020/07/25 22:40:08 riastradh Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../crypto/adiantum				\
@@ -34,7 +34,6 @@ SRCS+=	aes_ct.c
 SRCS+=	aes_ct_dec.c
 SRCS+=	aes_ct_enc.c
 SRCS+=	aes_impl.c
-SRCS+=	aes_rijndael.c
 SRCS+=	aes_selftest.c
 
 # skipjack
