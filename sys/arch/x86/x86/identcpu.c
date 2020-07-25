@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.113 2020/07/20 16:45:41 riastradh Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.114 2020/07/25 22:12:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.113 2020/07/20 16:45:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.114 2020/07/25 22:12:56 riastradh Exp $");
 
 #include "opt_xen.h"
 
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.113 2020/07/20 16:45:41 riastradh Exp
 #include <sys/device.h>
 #include <sys/cpu.h>
 
+#include <crypto/aes/aes_impl.h>
 #include <crypto/aes/arch/x86/aes_ni.h>
 #include <crypto/aes/arch/x86/aes_sse2.h>
 #include <crypto/aes/arch/x86/aes_ssse3.h>

@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.68 2020/07/13 16:54:03 riastradh Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.69 2020/07/25 22:12:56 riastradh Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -32,7 +32,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.68 2020/07/13 16:54:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.69 2020/07/25 22:12:56 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.68 2020/07/13 16:54:03 riastradh Exp 
 
 #include <uvm/uvm_extern.h>		/* for pmap.h */
 
-#include <crypto/aes/aes.h>
+#include <crypto/aes/aes_impl.h>
 #include <crypto/aes/arch/arm/aes_neon.h>
 
 #ifdef FPU_VFP

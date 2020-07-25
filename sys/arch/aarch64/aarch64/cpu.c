@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.52 2020/07/01 08:01:07 ryo Exp $ */
+/* $NetBSD: cpu.c,v 1.53 2020/07/25 22:12:56 riastradh Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.52 2020/07/01 08:01:07 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.53 2020/07/25 22:12:56 riastradh Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -44,6 +44,7 @@ __KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.52 2020/07/01 08:01:07 ryo Exp $");
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 
+#include <crypto/aes/aes_impl.h>
 #include <crypto/aes/arch/arm/aes_armv8.h>
 #include <crypto/aes/arch/arm/aes_neon.h>
 

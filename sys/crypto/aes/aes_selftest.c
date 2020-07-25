@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_selftest.c,v 1.2 2020/06/30 20:32:11 riastradh Exp $	*/
+/*	$NetBSD: aes_selftest.c,v 1.3 2020/07/25 22:12:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_selftest.c,v 1.2 2020/06/30 20:32:11 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_selftest.c,v 1.3 2020/07/25 22:12:57 riastradh Exp $");
 
 #ifdef _KERNEL
 
@@ -66,6 +66,7 @@ hexdump(int (*prf)(const char *, ...) __printflike(1,2), const char *prefix,
 #endif	/* _KERNEL */
 
 #include <crypto/aes/aes.h>
+#include <crypto/aes/aes_impl.h>
 
 static const unsigned aes_keybytes[] __unused = { 16, 24, 32 };
 static const unsigned aes_keybits[] __unused = { 128, 192, 256 };

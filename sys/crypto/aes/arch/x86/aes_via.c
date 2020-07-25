@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_via.c,v 1.3 2020/06/30 20:32:11 riastradh Exp $	*/
+/*	$NetBSD: aes_via.c,v 1.4 2020/07/25 22:12:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_via.c,v 1.3 2020/06/30 20:32:11 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_via.c,v 1.4 2020/07/25 22:12:57 riastradh Exp $");
 
 #ifdef _KERNEL
 #include <sys/types.h>
@@ -47,6 +47,7 @@ struct evcnt { uint64_t ev_count; };
 
 #include <crypto/aes/aes.h>
 #include <crypto/aes/aes_bear.h>
+#include <crypto/aes/aes_impl.h>
 
 #ifdef _KERNEL
 #include <x86/cpufunc.h>

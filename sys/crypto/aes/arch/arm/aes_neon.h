@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_neon.h,v 1.1 2020/06/29 23:56:31 riastradh Exp $	*/
+/*	$NetBSD: aes_neon.h,v 1.2 2020/07/25 22:12:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,12 @@
 #ifndef	_CRYPTO_AES_ARCH_ARM_AES_NEON_H
 #define	_CRYPTO_AES_ARCH_ARM_AES_NEON_H
 
-#include <crypto/aes/aes.h>
+#include <sys/types.h>
+
+#include <crypto/aes/aes_impl.h>
+
+struct aesenc;
+struct aesdec;
 
 /*
  * These functions MUST NOT use any vector registers for parameters or

@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_ni.h,v 1.1 2020/06/29 23:29:40 riastradh Exp $	*/
+/*	$NetBSD: aes_ni.h,v 1.2 2020/07/25 22:12:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,10 @@
 
 #include <sys/types.h>
 
-#include <crypto/aes/aes.h>
+#include <crypto/aes/aes_impl.h>
+
+struct aesenc;
+struct aesdec;
 
 /* Assembly routines */
 
