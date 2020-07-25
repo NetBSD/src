@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_armv8.c,v 1.4 2020/07/25 22:12:57 riastradh Exp $	*/
+/*	$NetBSD: aes_armv8.c,v 1.5 2020/07/25 22:33:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_armv8.c,v 1.4 2020/07/25 22:12:57 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_armv8.c,v 1.5 2020/07/25 22:33:04 riastradh Exp $");
 
 #ifdef _KERNEL
 #include <sys/types.h>
@@ -206,6 +206,48 @@ aesarmv8_xts_dec_impl(const struct aesdec *dec, const uint8_t in[static 16],
 	fpu_kern_leave();
 }
 
+static void
+aesarmv8_cbcmac_update1_impl(const struct aesenc *enc,
+    const uint8_t in[static 16], size_t nbytes, uint8_t auth[static 16],
+    uint32_t nrounds)
+{
+
+	KASSERT(nbytes);
+	KASSERT(nbytes % 16 == 0);
+
+	fpu_kern_enter();
+	aesarmv8_cbcmac_update1(enc, in, nbytes, auth, nrounds);
+	fpu_kern_leave();
+}
+
+static void
+aesarmv8_ccm_enc1_impl(const struct aesenc *enc, const uint8_t in[static 16],
+    uint8_t out[static 16], size_t nbytes, uint8_t authctr[static 32],
+    uint32_t nrounds)
+{
+
+	KASSERT(nbytes);
+	KASSERT(nbytes % 16 == 0);
+
+	fpu_kern_enter();
+	aesarmv8_ccm_enc1(enc, in, out, nbytes, authctr, nrounds);
+	fpu_kern_leave();
+}
+
+static void
+aesarmv8_ccm_dec1_impl(const struct aesenc *enc, const uint8_t in[static 16],
+    uint8_t out[static 16], size_t nbytes, uint8_t authctr[static 32],
+    uint32_t nrounds)
+{
+
+	KASSERT(nbytes);
+	KASSERT(nbytes % 16 == 0);
+
+	fpu_kern_enter();
+	aesarmv8_ccm_dec1(enc, in, out, nbytes, authctr, nrounds);
+	fpu_kern_leave();
+}
+
 static int
 aesarmv8_xts_update_selftest(void)
 {
@@ -285,4 +327,7 @@ struct aes_impl aes_armv8_impl = {
 	.ai_cbc_dec = aesarmv8_cbc_dec_impl,
 	.ai_xts_enc = aesarmv8_xts_enc_impl,
 	.ai_xts_dec = aesarmv8_xts_dec_impl,
+	.ai_cbcmac_update1 = aesarmv8_cbcmac_update1_impl,
+	.ai_ccm_enc1 = aesarmv8_ccm_enc1_impl,
+	.ai_ccm_dec1 = aesarmv8_ccm_dec1_impl,
 };
