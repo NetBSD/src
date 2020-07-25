@@ -1,7 +1,6 @@
-#	$NetBSD: files.aes,v 1.2 2020/07/25 22:15:55 riastradh Exp $
+#	$NetBSD: files.aes,v 1.3 2020/07/25 22:40:08 riastradh Exp $
 
 define	aes
-define	rijndael: aes	# legacy Rijndael API
 
 file	crypto/aes/aes_bear.c			aes
 file	crypto/aes/aes_ccm.c			aes
@@ -10,5 +9,4 @@ file	crypto/aes/aes_ct.c			aes
 file	crypto/aes/aes_ct_dec.c			aes
 file	crypto/aes/aes_ct_enc.c			aes
 file	crypto/aes/aes_impl.c			aes
-file	crypto/aes/aes_rijndael.c		rijndael
 file	crypto/aes/aes_selftest.c		aes
