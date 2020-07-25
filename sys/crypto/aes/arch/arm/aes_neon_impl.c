@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_neon_impl.c,v 1.3 2020/07/25 22:12:57 riastradh Exp $	*/
+/*	$NetBSD: aes_neon_impl.c,v 1.4 2020/07/25 22:36:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_neon_impl.c,v 1.3 2020/07/25 22:12:57 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_neon_impl.c,v 1.4 2020/07/25 22:36:06 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/proc.h>
@@ -144,6 +144,39 @@ aes_neon_xts_dec_impl(const struct aesdec *dec, const uint8_t in[static 16],
 	fpu_kern_leave();
 }
 
+static void
+aes_neon_cbcmac_update1_impl(const struct aesenc *enc,
+    const uint8_t in[static 16], size_t nbytes, uint8_t auth[static 16],
+    uint32_t nrounds)
+{
+
+	fpu_kern_enter();
+	aes_neon_cbcmac_update1(enc, in, nbytes, auth, nrounds);
+	fpu_kern_leave();
+}
+
+static void
+aes_neon_ccm_enc1_impl(const struct aesenc *enc, const uint8_t in[static 16],
+    uint8_t out[static 16], size_t nbytes, uint8_t authctr[static 32],
+    uint32_t nrounds)
+{
+
+	fpu_kern_enter();
+	aes_neon_ccm_enc1(enc, in, out, nbytes, authctr, nrounds);
+	fpu_kern_leave();
+}
+
+static void
+aes_neon_ccm_dec1_impl(const struct aesenc *enc, const uint8_t in[static 16],
+    uint8_t out[static 16], size_t nbytes, uint8_t authctr[static 32],
+    uint32_t nrounds)
+{
+
+	fpu_kern_enter();
+	aes_neon_ccm_dec1(enc, in, out, nbytes, authctr, nrounds);
+	fpu_kern_leave();
+}
+
 static int
 aes_neon_probe(void)
 {
@@ -204,4 +237,7 @@ struct aes_impl aes_neon_impl = {
 	.ai_cbc_dec = aes_neon_cbc_dec_impl,
 	.ai_xts_enc = aes_neon_xts_enc_impl,
 	.ai_xts_dec = aes_neon_xts_dec_impl,
+	.ai_cbcmac_update1 = aes_neon_cbcmac_update1_impl,
+	.ai_ccm_enc1 = aes_neon_ccm_enc1_impl,
+	.ai_ccm_dec1 = aes_neon_ccm_dec1_impl,
 };

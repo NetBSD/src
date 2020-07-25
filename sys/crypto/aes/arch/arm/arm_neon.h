@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_neon.h,v 1.3 2020/07/23 11:33:01 ryo Exp $	*/
+/*	$NetBSD: arm_neon.h,v 1.4 2020/07/25 22:36:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -88,6 +88,13 @@ typedef struct { uint8x8_t val[2]; } uint8x8x2_t;
 #error Teach me how to neon in your compile!
 
 #endif
+
+_INTRINSATTR
+static __inline uint32x4_t
+vaddq_u32(uint32x4_t __v0, uint32x4_t __v1)
+{
+	return __v0 + __v1;
+}
 
 _INTRINSATTR
 static __inline uint32x4_t
@@ -326,6 +333,19 @@ static __inline uint8x16_t
 vreinterpretq_u8_u64(uint64x2_t __v)
 {
 	return (uint8x16_t)__v;
+}
+
+_INTRINSATTR
+static __inline uint8x16_t
+vrev32q_u8(uint8x16_t __v)
+{
+#if defined(__GNUC__) && !defined(__clang__)
+	return __builtin_shuffle(__v,
+	    (uint8x16_t) { 3,2,1,0, 7,6,5,4, 11,10,9,8, 15,14,13,12 });
+#elif defined(__clang__)
+	return __builtin_shufflevector(__v,
+	    3,2,1,0, 7,6,5,4, 11,10,9,8, 15,14,13,12);
+#endif
 }
 
 #if defined(__GNUC__) && !defined(__clang__)
