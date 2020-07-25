@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_rng.c,v 1.17 2020/06/15 01:24:20 riastradh Exp $ */
+/* $NetBSD: cpu_rng.c,v 1.18 2020/07/25 22:10:34 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,9 +30,9 @@
  */
 
 /*
- * The VIA RNG code in this file is inspired by Jason Wright and
- * Theo de Raadt's OpenBSD version but has been rewritten in light of
- * comments from Henric Jungheim on the tech@openbsd.org mailing list.
+ * For reference on VIA XSTORERNG, see the VIA PadLock Programming
+ * Guide (`VIA PPG'), August 4, 2005.
+ * http://linux.via.com.tw/support/beginDownload.action?eleid=181&fid=261
  *
  * For reference on Intel RDRAND/RDSEED, see the Intel Digital Random
  * Number Generator Software Implementation Guide (`Intel DRNG SIG'),
@@ -183,48 +183,53 @@ cpu_rng_rdseed_rdrand(uint64_t *out)
 	return n;
 }
 
+/*
+ * VIA PPG says EAX[4:0] is nbytes, but the only documented numbers of
+ * bytes are 0,1,2,4,8 -- and there's only 8 bytes of output buffer
+ * anyway, so let's ignore bit 4 and treat it like EAX[3:0] instead.
+ */
+#define	VIA_RNG_STATUS_NBYTES	__BITS(3,0)
+#define	VIA_RNG_STATUS_MSR110B	__BITS(31,5)
+
 static size_t
 cpu_rng_via(uint64_t *out)
 {
 	u_long psl;
-	uint32_t creg0, rndsts;
+	uint32_t cr0, status, nbytes;
 
 	/*
-	 * Sadly, we have to monkey with the coprocessor enable and fault
-	 * registers, which are really for the FPU, in order to read
-	 * from the RNG.
-	 *
-	 * Don't remove CR0_TS from the call below -- comments in the Linux
-	 * driver indicate that the xstorerng instruction can generate
-	 * spurious DNA faults though no FPU or SIMD state is changed
-	 * even if such a fault is generated.
-	 *
-	 * XXX can this really happen if we don't use "rep xstorrng"?
+	 * The XSTORE instruction is handled by the SSE unit, which
+	 * requires the CR0 TS and CR0 EM bits to be clear.  We disable
+	 * all processor interrupts so there is no danger of any
+	 * interrupt handler changing CR0 while we work -- although
+	 * really, software splvm or fpu_kern_enter/leave should be
+	 * enough (but we'll do that in a separate change for the
+	 * benefit of bisection in case I'm wrong).
 	 */
-	kpreempt_disable();
 	psl = x86_read_psl();
 	x86_disable_intr();
-	creg0 = rcr0();
-	lcr0(creg0 & ~(CR0_EM|CR0_TS)); /* Permit access to SIMD/FPU path */
-	/*
-	 * The VIA RNG has an output queue of 8-byte values.  Read one.
-	 * This is atomic, so if the FPU were already enabled, we could skip
-	 * all the preemption and interrupt frobbing.  If we had bread,
-	 * we could have a ham sandwich, if we had any ham.
-	 */
-	__asm __volatile("xstorerng"
-	    : "=a" (rndsts), "+D" (out) : "d" (0) : "memory");
-	/* Put CR0 back how it was */
-	lcr0(creg0);
+	cr0 = rcr0();
+	lcr0(cr0 & ~(CR0_EM|CR0_TS));
+
+	/* Read up to eight bytes out of the buffer.  */
+	asm volatile("xstorerng"
+	    : "=a"(status)
+	    : "D"(out), "d"(0) /* EDX[1:0]=00 -> wait for 8 bytes or fail */
+	    : "memory");
+
+	/* Restore CR0 and interrupts.  */
+	lcr0(cr0);
 	x86_write_psl(psl);
-	kpreempt_enable();
+
+	/* Get the number of bytes stored.  (Should always be 8 or 0.)  */
+	nbytes = __SHIFTOUT(status, VIA_RNG_STATUS_NBYTES);
 
 	/*
 	 * The Cryptography Research paper on the VIA RNG estimates
 	 * 0.75 bits of entropy per output bit and advises users to
 	 * be "even more conservative".
 	 */
-	return (rndsts & 0xf) ? 0 : sizeof(uint64_t) * NBBY/2;
+	return nbytes * NBBY/2;
 }
 
 static size_t
