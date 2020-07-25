@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_selftest.c,v 1.3 2020/07/25 22:12:57 riastradh Exp $	*/
+/*	$NetBSD: aes_selftest.c,v 1.4 2020/07/25 22:27:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_selftest.c,v 1.3 2020/07/25 22:12:57 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_selftest.c,v 1.4 2020/07/25 22:27:53 riastradh Exp $");
 
 #ifdef _KERNEL
 
@@ -400,6 +400,149 @@ aes_selftest_encdec_xts(const struct aes_impl *impl)
 	return 0;
 }
 
+static int
+aes_selftest_cbcmac(const struct aes_impl *impl)
+{
+	static const uint8_t m[48] = {
+		0x00,0x01,0x02,0x03, 0x04,0x05,0x06,0x07,
+		0x08,0x09,0x0a,0x0b, 0x0c,0x0d,0x0e,0x0f,
+		0x10,0x11,0x12,0x13, 0x14,0x15,0x16,0x17,
+		0x18,0x19,0x1a,0x1b, 0x1c,0x1d,0x1e,0x1f,
+		0x20,0x21,0x22,0x23, 0x24,0x25,0x26,0x27,
+		0x28,0x29,0x2a,0x2b, 0x2c,0x2d,0x2e,0x2f,
+	};
+	static uint8_t auth16[16] = {
+		0x7a,0xca,0x0f,0xd9, 0xbc,0xd6,0xec,0x7c,
+		0x9f,0x97,0x46,0x66, 0x16,0xe6,0xa2,0x82,
+	};
+	static uint8_t auth48[16] = {
+		0x26,0x9a,0xe5,0xfc, 0x8c,0x53,0x0f,0xf7,
+		0x6b,0xd9,0xec,0x05, 0x40,0xf7,0x35,0x13,
+	};
+	static const uint8_t key[16];
+	struct aesenc enc;
+	uint8_t auth[16];
+	const unsigned nr = AES_128_NROUNDS;
+
+	if (impl->ai_cbcmac_update1 == NULL)
+		return 0;
+
+	memset(auth, 0, sizeof auth);
+
+	impl->ai_setenckey(&enc, key, nr);
+	impl->ai_cbcmac_update1(&enc, m, 16, auth, nr);
+	if (memcmp(auth, auth16, 16))
+		return aes_selftest_fail(impl, auth, auth16, 16,
+		    "AES-128 CBC-MAC (16)");
+	impl->ai_cbcmac_update1(&enc, m + 16, 32, auth, nr);
+	if (memcmp(auth, auth48, 16))
+		return aes_selftest_fail(impl, auth, auth48, 16,
+		    "AES-128 CBC-MAC (48)");
+
+	return 0;
+}
+
+static int
+aes_selftest_ccm(const struct aes_impl *impl)
+{
+	static const uint8_t ptxt[48] = {
+		0x00,0x01,0x02,0x03, 0x04,0x05,0x06,0x07,
+		0x08,0x09,0x0a,0x0b, 0x0c,0x0d,0x0e,0x0f,
+		0x10,0x11,0x12,0x13, 0x14,0x15,0x16,0x17,
+		0x18,0x19,0x1a,0x1b, 0x1c,0x1d,0x1e,0x1f,
+		0x20,0x21,0x22,0x23, 0x24,0x25,0x26,0x27,
+		0x28,0x29,0x2a,0x2b, 0x2c,0x2d,0x2e,0x2f,
+	};
+	static uint8_t ctr0[16] = {
+		/* L - 1, #octets in counter */
+		[0] = 0x01,
+		/* nonce */
+		[1] = 0,1,2,3,4,5,6,7,8,9,10,11,12,
+		[14] = 0,
+		[15] = 254,
+	};
+	static uint8_t authctr16[32] = {
+		/* authentication tag */
+		0x7a,0xca,0x0f,0xd9, 0xbc,0xd6,0xec,0x7c,
+		0x9f,0x97,0x46,0x66, 0x16,0xe6,0xa2,0x82,
+
+		/* L - 1, #octets in counter */
+		[16 + 0] = 0x01,
+		/* nonce */
+		[16 + 1] = 0,1,2,3,4,5,6,7,8,9,10,11,12,
+		[16 + 14] = 0,
+		[16 + 15] = 255,
+	};
+	static uint8_t authctr48[32] = {
+		/* authentication tag */
+		0x26,0x9a,0xe5,0xfc, 0x8c,0x53,0x0f,0xf7,
+		0x6b,0xd9,0xec,0x05, 0x40,0xf7,0x35,0x13,
+
+		/* L - 1, #octets in counter */
+		[16 + 0] = 0x01,
+		/* nonce */
+		[16 + 1] = 0,1,2,3,4,5,6,7,8,9,10,11,12,
+		[16 + 14] = 1,
+		[16 + 15] = 1,
+	};
+	static uint8_t ctxt[48] = {
+		0xa4,0x35,0x07,0x5c, 0xdf,0x2d,0x67,0xd3,
+		0xbf,0x1f,0x36,0x93, 0xe4,0x43,0xcb,0x1e,
+		0xa0,0x82,0x9c,0x2a, 0x0b,0x66,0x46,0x05,
+		0x80,0x17,0x71,0xa1, 0x7b,0x09,0xa7,0xd5,
+		0x91,0x0b,0xb3,0x96, 0xd1,0x5e,0x29,0x3e,
+		0x74,0x94,0x74,0x6d, 0x6b,0x25,0x43,0x8c,
+	};
+	static const uint8_t key[16];
+	struct aesenc enc;
+	uint8_t authctr[32];
+	uint8_t buf[48];
+	const unsigned nr = AES_128_NROUNDS;
+	int result = 0;
+
+	if (impl->ai_ccm_enc1 == NULL)
+		return 0;
+
+	impl->ai_setenckey(&enc, key, nr);
+
+	memset(authctr, 0, 16);
+	memcpy(authctr + 16, ctr0, 16);
+
+	impl->ai_ccm_enc1(&enc, ptxt, buf, 16, authctr, nr);
+	if (memcmp(authctr, authctr16, 32))
+		result |= aes_selftest_fail(impl, authctr, authctr16, 32,
+		    "AES-128 CCM encrypt auth/ctr (16)");
+	impl->ai_ccm_enc1(&enc, ptxt + 16, buf + 16, 32, authctr, nr);
+	if (memcmp(authctr, authctr48, 32))
+		result |= aes_selftest_fail(impl, authctr, authctr48, 32,
+		    "AES-128 CCM encrypt auth/ctr (48)");
+
+	if (memcmp(buf, ctxt, 32))
+		result |= aes_selftest_fail(impl, buf, ctxt, 48,
+		    "AES-128 CCM ciphertext");
+
+	if (impl->ai_ccm_dec1 == NULL)
+		return result;
+
+	memset(authctr, 0, 16);
+	memcpy(authctr + 16, ctr0, 16);
+
+	impl->ai_ccm_dec1(&enc, ctxt, buf, 16, authctr, nr);
+	if (memcmp(authctr, authctr16, 32))
+		result |= aes_selftest_fail(impl, authctr, authctr16, 32,
+		    "AES-128 CCM decrypt auth/ctr (16)");
+	impl->ai_ccm_dec1(&enc, ctxt + 16, buf + 16, 32, authctr, nr);
+	if (memcmp(authctr, authctr48, 32))
+		result |= aes_selftest_fail(impl, authctr, authctr48, 32,
+		    "AES-128 CCM decrypt auth/ctr (48)");
+
+	if (memcmp(buf, ptxt, 32))
+		result |= aes_selftest_fail(impl, buf, ptxt, 48,
+		    "AES-128 CCM plaintext");
+
+	return result;
+}
+
 int
 aes_selftest(const struct aes_impl *impl)
 {
@@ -413,6 +556,10 @@ aes_selftest(const struct aes_impl *impl)
 	if (aes_selftest_encdec_cbc(impl))
 		result = -1;
 	if (aes_selftest_encdec_xts(impl))
+		result = -1;
+	if (aes_selftest_cbcmac(impl))
+		result = -1;
+	if (aes_selftest_ccm(impl))
 		result = -1;
 
 	return result;
