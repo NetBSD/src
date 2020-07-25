@@ -1,4 +1,4 @@
-/*	$NetBSD: adiantum.c,v 1.1 2020/06/29 23:44:01 riastradh Exp $	*/
+/*	$NetBSD: adiantum.c,v 1.2 2020/07/25 22:41:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: adiantum.c,v 1.1 2020/06/29 23:44:01 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: adiantum.c,v 1.2 2020/07/25 22:41:03 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/endian.h>
@@ -2143,8 +2143,6 @@ adiantum_enc(void *c, const void *p, size_t len, const void *t, size_t tlen,
 	uint8_t nonce[24];
 
 	KASSERT(len % 16 == 0);
-
-	aes_enc(&A->kk_enc, p, buf, AES_256_NROUNDS);
 
 	adiantum_hash(h, pL, Llen, t, tlen, A->kt, A->kl, A->kn);
 	add128(buf, pR, h);	/* buf := P_M */
