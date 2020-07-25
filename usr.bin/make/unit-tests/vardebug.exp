@@ -1,0 +1,46 @@
+Global:RELEVANT = yes
+Global:VAR = added
+Global:VAR = overwritten
+Global:delete VAR
+Global:delete VAR (not found)
+Applying[] :U to ""
+Result[] of :U is ""
+Var_Set("${:U}", "empty name", ...) name expands to empty string - ignored
+Applying[] :U to ""
+Result[] of :U is ""
+Var_Append("${:U}", "empty name", ...) name expands to empty string - ignored
+Global:FROM_CMDLINE = overwritten ignored!
+Global:VAR = 1
+Global:VAR = 1 2
+Global:VAR = 1 2 3
+Applying[VAR] :M to "1 2 3"
+Pattern[VAR] for [1 2 3] is [[2]]
+ModifyWords: split "1 2 3" into 3 words
+VarMatch [1] [[2]]
+VarMatch [2] [[2]]
+VarMatch [3] [[2]]
+Result[VAR] of :M is "2"
+Applying[VAR] :N to "1 2 3"
+Pattern[VAR] for [1 2 3] is [[2]]
+ModifyWords: split "1 2 3" into 3 words
+Result[VAR] of :N is "1 3"
+Applying[VAR] :S to "1 2 3"
+Modifier part: "2"
+Modifier part: "two"
+ModifyWords: split "1 2 3" into 3 words
+Result[VAR] of :S is "1 two 3"
+Applying[VAR] :Q to "1 2 3"
+QuoteMeta: [1\ 2\ 3]
+Result[VAR] of :Q is "1\ 2\ 3"
+Applying[VAR] :t to "1 2 3"
+Result[VAR] of :t is "1 2 3"
+Applying[VAR] :t to "1 2 3"
+Result[VAR] of :t is "1 2 3"
+Applying[VAR] :Q to "1 2 3"
+QuoteMeta: [1\ 2\ 3]
+Result[VAR] of :Q is "1\ 2\ 3"
+Applying[] :U to ""
+Result[] of :U is "VAR"
+Global:delete VAR
+Global:RELEVANT = no
+exit status 0
