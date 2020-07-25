@@ -1,4 +1,4 @@
-/* $NetBSD: cgd_crypto.c,v 1.26 2020/06/29 23:44:01 riastradh Exp $ */
+/* $NetBSD: cgd_crypto.c,v 1.27 2020/07/25 22:14:35 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.26 2020/06/29 23:44:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.27 2020/07/25 22:14:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.26 2020/06/29 23:44:01 riastradh Ex
 
 #include <crypto/adiantum/adiantum.h>
 #include <crypto/aes/aes.h>
+#include <crypto/aes/aes_cbc.h>
+#include <crypto/aes/aes_xts.h>
 #include <crypto/blowfish/blowfish.h>
 #include <crypto/des/des.h>
 
