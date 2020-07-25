@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_via.c,v 1.4 2020/07/25 22:12:57 riastradh Exp $	*/
+/*	$NetBSD: aes_via.c,v 1.5 2020/07/25 22:31:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_via.c,v 1.4 2020/07/25 22:12:57 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_via.c,v 1.5 2020/07/25 22:31:32 riastradh Exp $");
 
 #ifdef _KERNEL
 #include <sys/types.h>
@@ -674,6 +674,176 @@ aesvia_xts_dec(const struct aesdec *dec, const uint8_t in[static 16],
 	explicit_memset(t, 0, sizeof t);
 }
 
+static struct evcnt cbcmac_aligned_evcnt = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "aesvia", "cbcmac aligned");
+EVCNT_ATTACH_STATIC(cbcmac_aligned_evcnt);
+static struct evcnt cbcmac_unaligned_evcnt = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "aesvia", "cbcmac unaligned");
+EVCNT_ATTACH_STATIC(cbcmac_unaligned_evcnt);
+
+static void
+aesvia_cbcmac_update1(const struct aesenc *enc, const uint8_t in[static 16],
+    size_t nbytes, uint8_t auth0[static 16], uint32_t nrounds)
+{
+	const uint32_t cw0 = aesvia_keylen_cw0(nrounds);
+	uint8_t authbuf[16] __aligned(16);
+	uint8_t *auth = auth0;
+
+	KASSERT(nbytes);
+	KASSERT(nbytes % 16 == 0);
+
+	if ((uintptr_t)auth0 & 0xf) {
+		memcpy(authbuf, auth0, 16);
+		auth = authbuf;
+		cbcmac_unaligned_evcnt.ev_count++;
+	} else {
+		cbcmac_aligned_evcnt.ev_count++;
+	}
+
+	fpu_kern_enter();
+	aesvia_reload_keys();
+	for (; nbytes; nbytes -= 16, in += 16) {
+		xor128(auth, auth, in);
+		aesvia_encN(enc, auth, auth, 1, cw0);
+	}
+	fpu_kern_leave();
+
+	if ((uintptr_t)auth0 & 0xf) {
+		memcpy(auth0, authbuf, 16);
+		explicit_memset(authbuf, 0, sizeof authbuf);
+	}
+}
+
+static struct evcnt ccmenc_aligned_evcnt = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "aesvia", "ccmenc aligned");
+EVCNT_ATTACH_STATIC(ccmenc_aligned_evcnt);
+static struct evcnt ccmenc_unaligned_evcnt = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "aesvia", "ccmenc unaligned");
+EVCNT_ATTACH_STATIC(ccmenc_unaligned_evcnt);
+
+static void
+aesvia_ccm_enc1(const struct aesenc *enc, const uint8_t in[static 16],
+    uint8_t out[static 16], size_t nbytes, uint8_t authctr0[static 32],
+    uint32_t nrounds)
+{
+	const uint32_t cw0 = aesvia_keylen_cw0(nrounds);
+	uint8_t authctrbuf[32] __aligned(16);
+	uint8_t *authctr;
+	uint32_t c0, c1, c2, c3;
+
+	KASSERT(nbytes);
+	KASSERT(nbytes % 16 == 0);
+
+	if ((uintptr_t)authctr0 & 0xf) {
+		memcpy(authctrbuf, authctr0, 16);
+		authctr = authctrbuf;
+		ccmenc_unaligned_evcnt.ev_count++;
+	} else {
+		ccmenc_aligned_evcnt.ev_count++;
+	}
+	c0 = le32dec(authctr0 + 16 + 4*0);
+	c1 = le32dec(authctr0 + 16 + 4*1);
+	c2 = le32dec(authctr0 + 16 + 4*2);
+	c3 = be32dec(authctr0 + 16 + 4*3);
+
+	/*
+	 * In principle we could use REP XCRYPTCTR here, but that
+	 * doesn't help to compute the CBC-MAC step, and certain VIA
+	 * CPUs have some weird errata with REP XCRYPTCTR that make it
+	 * kind of a pain to use.  So let's just use REP XCRYPTECB to
+	 * simultaneously compute the CBC-MAC step and the CTR step.
+	 * (Maybe some VIA CPUs will compute REP XCRYPTECB in parallel,
+	 * who knows...)
+	 */
+	fpu_kern_enter();
+	aesvia_reload_keys();
+	for (; nbytes; nbytes -= 16, in += 16, out += 16) {
+		xor128(authctr, authctr, in);
+		le32enc(authctr + 16 + 4*0, c0);
+		le32enc(authctr + 16 + 4*1, c1);
+		le32enc(authctr + 16 + 4*2, c2);
+		be32enc(authctr + 16 + 4*3, ++c3);
+		aesvia_encN(enc, authctr, authctr, 2, cw0);
+		xor128(out, in, authctr + 16);
+	}
+	fpu_kern_leave();
+
+	if ((uintptr_t)authctr0 & 0xf) {
+		memcpy(authctr0, authctrbuf, 16);
+		explicit_memset(authctrbuf, 0, sizeof authctrbuf);
+	}
+
+	le32enc(authctr0 + 16 + 4*0, c0);
+	le32enc(authctr0 + 16 + 4*1, c1);
+	le32enc(authctr0 + 16 + 4*2, c2);
+	be32enc(authctr0 + 16 + 4*3, c3);
+}
+
+static struct evcnt ccmdec_aligned_evcnt = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "aesvia", "ccmdec aligned");
+EVCNT_ATTACH_STATIC(ccmdec_aligned_evcnt);
+static struct evcnt ccmdec_unaligned_evcnt = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "aesvia", "ccmdec unaligned");
+EVCNT_ATTACH_STATIC(ccmdec_unaligned_evcnt);
+
+static void
+aesvia_ccm_dec1(const struct aesenc *enc, const uint8_t in[static 16],
+    uint8_t out[static 16], size_t nbytes, uint8_t authctr0[static 32],
+    uint32_t nrounds)
+{
+	const uint32_t cw0 = aesvia_keylen_cw0(nrounds);
+	uint8_t authctrbuf[32] __aligned(16);
+	uint8_t *authctr;
+	uint32_t c0, c1, c2, c3;
+
+	KASSERT(nbytes);
+	KASSERT(nbytes % 16 == 0);
+
+	c0 = le32dec(authctr0 + 16 + 4*0);
+	c1 = le32dec(authctr0 + 16 + 4*1);
+	c2 = le32dec(authctr0 + 16 + 4*2);
+	c3 = be32dec(authctr0 + 16 + 4*3);
+
+	if ((uintptr_t)authctr0 & 0xf) {
+		memcpy(authctrbuf, authctr0, 16);
+		authctr = authctrbuf;
+		le32enc(authctr + 16 + 4*0, c0);
+		le32enc(authctr + 16 + 4*1, c1);
+		le32enc(authctr + 16 + 4*2, c2);
+		ccmdec_unaligned_evcnt.ev_count++;
+	} else {
+		ccmdec_aligned_evcnt.ev_count++;
+	}
+
+	fpu_kern_enter();
+	aesvia_reload_keys();
+	be32enc(authctr + 16 + 4*3, ++c3);
+	aesvia_encN(enc, authctr + 16, authctr + 16, 1, cw0);
+	for (;; in += 16, out += 16) {
+		xor128(out, authctr + 16, in);
+		xor128(authctr, authctr, out);
+		if ((nbytes -= 16) == 0)
+			break;
+		le32enc(authctr + 16 + 4*0, c0);
+		le32enc(authctr + 16 + 4*1, c1);
+		le32enc(authctr + 16 + 4*2, c2);
+		be32enc(authctr + 16 + 4*3, ++c3);
+		aesvia_encN(enc, authctr, authctr, 2, cw0);
+	}
+	aesvia_encN(enc, authctr, authctr, 1, cw0);
+	fpu_kern_leave();
+
+	if ((uintptr_t)authctr0 & 0xf) {
+		memcpy(authctr0, authctrbuf, 16);
+		explicit_memset(authctrbuf, 0, sizeof authctrbuf);
+	}
+
+	le32enc(authctr0 + 16 + 4*0, c0);
+	le32enc(authctr0 + 16 + 4*1, c1);
+	le32enc(authctr0 + 16 + 4*2, c2);
+	be32enc(authctr0 + 16 + 4*3, c3);
+}
+
 static int
 aesvia_probe(void)
 {
@@ -727,4 +897,7 @@ struct aes_impl aes_via_impl = {
 	.ai_cbc_dec = aesvia_cbc_dec,
 	.ai_xts_enc = aesvia_xts_enc,
 	.ai_xts_dec = aesvia_xts_dec,
+	.ai_cbcmac_update1 = aesvia_cbcmac_update1,
+	.ai_ccm_enc1 = aesvia_ccm_enc1,
+	.ai_ccm_dec1 = aesvia_ccm_dec1,
 };
