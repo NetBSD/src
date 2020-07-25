@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.875 2020/07/25 21:23:09 rillig Exp $
+# $NetBSD: mi,v 1.876 2020/07/25 22:53:38 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4085,6 +4085,10 @@
 ./usr/tests/sys/crypto/aes/Atffile		tests-sys-tests	compattestfile,atf
 ./usr/tests/sys/crypto/aes/Kyuafile		tests-sys-tests	compattestfile,atf,kyua
 ./usr/tests/sys/crypto/aes/t_aes		tests-sys-tests	compattestfile,atf
+./usr/tests/sys/crypto/chacha			tests-sys-tests	compattestfile,atf
+./usr/tests/sys/crypto/chacha/Atffile		tests-sys-tests	compattestfile,atf
+./usr/tests/sys/crypto/chacha/Kyuafile		tests-sys-tests	compattestfile,atf,kyua
+./usr/tests/sys/crypto/chacha/t_chacha		tests-sys-tests	compattestfile,atf
 ./usr/tests/sys/net				tests-sys-tests	compattestfile,atf
 ./usr/tests/sys/net/Atffile			tests-sys-tests	compattestfile,atf
 ./usr/tests/sys/net/Kyuafile			tests-sys-tests	compattestfile,atf,kyua
