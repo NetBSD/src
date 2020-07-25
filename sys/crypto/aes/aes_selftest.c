@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_selftest.c,v 1.4 2020/07/25 22:27:53 riastradh Exp $	*/
+/*	$NetBSD: aes_selftest.c,v 1.5 2020/07/25 22:36:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_selftest.c,v 1.4 2020/07/25 22:27:53 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_selftest.c,v 1.5 2020/07/25 22:36:42 riastradh Exp $");
 
 #ifdef _KERNEL
 
@@ -424,9 +424,6 @@ aes_selftest_cbcmac(const struct aes_impl *impl)
 	uint8_t auth[16];
 	const unsigned nr = AES_128_NROUNDS;
 
-	if (impl->ai_cbcmac_update1 == NULL)
-		return 0;
-
 	memset(auth, 0, sizeof auth);
 
 	impl->ai_setenckey(&enc, key, nr);
@@ -500,9 +497,6 @@ aes_selftest_ccm(const struct aes_impl *impl)
 	const unsigned nr = AES_128_NROUNDS;
 	int result = 0;
 
-	if (impl->ai_ccm_enc1 == NULL)
-		return 0;
-
 	impl->ai_setenckey(&enc, key, nr);
 
 	memset(authctr, 0, 16);
@@ -520,9 +514,6 @@ aes_selftest_ccm(const struct aes_impl *impl)
 	if (memcmp(buf, ctxt, 32))
 		result |= aes_selftest_fail(impl, buf, ctxt, 48,
 		    "AES-128 CCM ciphertext");
-
-	if (impl->ai_ccm_dec1 == NULL)
-		return result;
 
 	memset(authctr, 0, 16);
 	memcpy(authctr + 16, ctr0, 16);

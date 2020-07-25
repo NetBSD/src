@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_impl.c,v 1.6 2020/07/25 22:27:53 riastradh Exp $	*/
+/*	$NetBSD: aes_impl.c,v 1.7 2020/07/25 22:36:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_impl.c,v 1.6 2020/07/25 22:27:53 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_impl.c,v 1.7 2020/07/25 22:36:42 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/kernel.h>
@@ -288,16 +288,6 @@ aes_xts_dec(struct aesdec *dec, const uint8_t in[static 16],
 	aes_impl->ai_xts_dec(dec, in, out, nbytes, tweak, nrounds);
 }
 
-static void
-xor16(uint8_t *x, const uint8_t *a, const uint8_t *b)
-{
-
-	le32enc(x + 4*0, le32dec(a + 4*0) ^ le32dec(b + 4*0));
-	le32enc(x + 4*1, le32dec(a + 4*1) ^ le32dec(b + 4*1));
-	le32enc(x + 4*2, le32dec(a + 4*2) ^ le32dec(b + 4*2));
-	le32enc(x + 4*3, le32dec(a + 4*3) ^ le32dec(b + 4*3));
-}
-
 void
 aes_cbcmac_update1(const struct aesenc *enc, const uint8_t in[static 16],
     size_t nbytes, uint8_t auth[static 16], uint32_t nrounds)
@@ -307,15 +297,7 @@ aes_cbcmac_update1(const struct aesenc *enc, const uint8_t in[static 16],
 	KASSERT(nbytes % 16 == 0);
 
 	aes_guarantee_selected();
-	if (aes_impl->ai_cbcmac_update1) {
-		aes_impl->ai_cbcmac_update1(enc, in, nbytes, auth, nrounds);
-		return;
-	}
-
-	for (; nbytes; in += 16, nbytes -= 16) {
-		xor16(auth, auth, in);
-		aes_enc(enc, auth, auth, nrounds);
-	}
+	aes_impl->ai_cbcmac_update1(enc, in, nbytes, auth, nrounds);
 }
 
 void
@@ -323,26 +305,12 @@ aes_ccm_enc1(const struct aesenc *enc, const uint8_t in[static 16],
     uint8_t out[static 16], size_t nbytes, uint8_t authctr[static 32],
     uint32_t nrounds)
 {
-	uint8_t *auth = authctr;
-	uint8_t *ctr = authctr + 16;
 
 	KASSERT(nbytes);
 	KASSERT(nbytes % 16 == 0);
 
 	aes_guarantee_selected();
-	if (aes_impl->ai_ccm_enc1) {
-		aes_impl->ai_ccm_enc1(enc, in, out, nbytes, auth, nrounds);
-		return;
-	}
-
-	for (; nbytes; in += 16, out += 16, nbytes -= 16) {
-		xor16(auth, auth, in);
-		aes_enc(enc, auth, auth, nrounds);
-
-		be32enc(ctr + 12, 1 + be32dec(ctr + 12));
-		aes_enc(enc, ctr, out, nrounds);
-		xor16(out, out, in);
-	}
+	aes_impl->ai_ccm_enc1(enc, in, out, nbytes, authctr, nrounds);
 }
 
 void
@@ -350,26 +318,12 @@ aes_ccm_dec1(const struct aesenc *enc, const uint8_t in[static 16],
     uint8_t out[static 16], size_t nbytes, uint8_t authctr[static 32],
     uint32_t nrounds)
 {
-	uint8_t *auth = authctr;
-	uint8_t *ctr = authctr + 16;
 
 	KASSERT(nbytes);
 	KASSERT(nbytes % 16 == 0);
 
 	aes_guarantee_selected();
-	if (aes_impl->ai_ccm_dec1) {
-		aes_impl->ai_ccm_dec1(enc, in, out, nbytes, auth, nrounds);
-		return;
-	}
-
-	for (; nbytes >= 16; in += 16, out += 16, nbytes -= 16) {
-		be32enc(ctr + 12, 1 + be32dec(ctr + 12));
-		aes_enc(enc, ctr, out, nrounds);
-		xor16(out, out, in);
-
-		xor16(auth, auth, out);
-		aes_enc(enc, auth, auth, nrounds);
-	}
+	aes_impl->ai_ccm_dec1(enc, in, out, nbytes, authctr, nrounds);
 }
 
 /*
