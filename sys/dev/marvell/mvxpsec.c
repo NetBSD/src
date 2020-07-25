@@ -1,4 +1,4 @@
-/*	$NetBSD: mvxpsec.c,v 1.5 2019/12/27 09:41:51 msaitoh Exp $	*/
+/*	$NetBSD: mvxpsec.c,v 1.6 2020/07/25 22:37:16 riastradh Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -52,8 +52,6 @@
 #include <sys/md5.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <crypto/rijndael/rijndael.h>
 
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/xform.h>
