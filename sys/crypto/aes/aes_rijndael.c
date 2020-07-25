@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_rijndael.c,v 1.1 2020/06/29 23:27:52 riastradh Exp $	*/
+/*	$NetBSD: aes_rijndael.c,v 1.2 2020/07/25 22:14:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -44,12 +44,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_rijndael.c,v 1.1 2020/06/29 23:27:52 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_rijndael.c,v 1.2 2020/07/25 22:14:35 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
 
 #include <crypto/aes/aes.h>
+#include <crypto/aes/aes_cbc.h>
+#include <crypto/aes/aes_xts.h>
 #include <crypto/rijndael/rijndael.h>
 #include <crypto/rijndael/rijndael-alg-fst.h>
 #include <crypto/rijndael/rijndael-api-fst.h>

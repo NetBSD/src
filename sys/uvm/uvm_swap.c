@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.197 2020/07/09 05:57:15 skrll Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.198 2020/07/25 22:14:35 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.197 2020/07/09 05:57:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.198 2020/07/25 22:14:35 riastradh Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.197 2020/07/09 05:57:15 skrll Exp $")
 #include <miscfs/specfs/specdev.h>
 
 #include <crypto/aes/aes.h>
+#include <crypto/aes/aes_cbc.h>
 
 /*
  * uvm_swap.c: manage configuration and i/o to swap space.

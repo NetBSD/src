@@ -1,4 +1,4 @@
-/*	$NetBSD: aes.h,v 1.4 2020/07/25 22:14:35 riastradh Exp $	*/
+/*	$NetBSD: aes_cbc.h,v 1.1 2020/07/25 22:14:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -26,44 +26,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_CRYPTO_AES_AES_H
-#define	_CRYPTO_AES_AES_H
+#ifndef	_CRYPTO_AES_AES_CBC_H
+#define	_CRYPTO_AES_AES_CBC_H
 
 #include <sys/types.h>
-#include <sys/cdefs.h>
 
-/*
- * struct aes
- *
- *	Expanded round keys.
- */
-union aes {
-	uint32_t	aes_rk[60];
-	uint64_t	aes_rk64[30];
-} __aligned(16);
+struct aesenc;
+struct aesdec;
 
-#define	AES_128_NROUNDS	10
-#define	AES_192_NROUNDS	12
-#define	AES_256_NROUNDS	14
+void	aes_cbc_enc(struct aesenc *, const uint8_t[static 16],
+	    uint8_t[static 16], size_t, uint8_t[static 16], uint32_t);
+void	aes_cbc_dec(struct aesdec *, const uint8_t[static 16],
+	    uint8_t[static 16], size_t, uint8_t[static 16], uint32_t);
 
-struct aesenc {
-	union aes	aese_aes;
-};
-
-struct aesdec {
-	union aes	aesd_aes;
-};
-
-uint32_t aes_setenckey128(struct aesenc *, const uint8_t[static 16]);
-uint32_t aes_setenckey192(struct aesenc *, const uint8_t[static 24]);
-uint32_t aes_setenckey256(struct aesenc *, const uint8_t[static 32]);
-uint32_t aes_setdeckey128(struct aesdec *, const uint8_t[static 16]);
-uint32_t aes_setdeckey192(struct aesdec *, const uint8_t[static 24]);
-uint32_t aes_setdeckey256(struct aesdec *, const uint8_t[static 32]);
-
-void	aes_enc(const struct aesenc *, const uint8_t[static 16],
-	    uint8_t[static 16], uint32_t);
-void	aes_dec(const struct aesdec *, const uint8_t[static 16],
-	    uint8_t[static 16], uint32_t);
-
-#endif	/* _CRYPTO_AES_AES_H */
+#endif	/* _CRYPTO_AES_AES_CBC_H */

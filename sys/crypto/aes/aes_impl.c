@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_impl.c,v 1.4 2020/07/25 22:12:57 riastradh Exp $	*/
+/*	$NetBSD: aes_impl.c,v 1.5 2020/07/25 22:14:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_impl.c,v 1.4 2020/07/25 22:12:57 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_impl.c,v 1.5 2020/07/25 22:14:35 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/kernel.h>
@@ -37,8 +37,10 @@ __KERNEL_RCSID(1, "$NetBSD: aes_impl.c,v 1.4 2020/07/25 22:12:57 riastradh Exp $
 #include <sys/systm.h>
 
 #include <crypto/aes/aes.h>
+#include <crypto/aes/aes_cbc.h>
 #include <crypto/aes/aes_bear.h> /* default implementation */
 #include <crypto/aes/aes_impl.h>
+#include <crypto/aes/aes_xts.h>
 
 static int aes_selftest_stdkeysched(void);
 
