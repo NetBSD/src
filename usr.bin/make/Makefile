@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.72 2020/07/25 20:50:00 rillig Exp $
+#	$NetBSD: Makefile,v 1.73 2020/07/25 21:00:48 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -10,6 +10,13 @@ SRCS+=	lstDatum.c lstDeQueue.c lstDestroy.c lstDupl.c lstEnQueue.c
 SRCS+=	lstFind.c lstFindFrom.c lstFirst.c lstForEach.c lstForEachFrom.c
 SRCS+=	lstInit.c lstInsert.c lstIsAtEnd.c lstIsEmpty.c lstLast.c lstMember.c
 SRCS+=	lstNext.c lstOpen.c lstPrev.c lstRemove.c lstReplace.c lstSucc.c
+
+USE_COVERAGE?=	no		# works only with gcc; clang9 fails to link
+.if ${USE_COVERAGE} == "yes"
+COPTS=		--coverage -O0 -ggdb
+LDADD=		--coverage
+CLEANFILES+=	${SRCS:.c=.gcda} ${SRCS:.c=.gcno} ${SRCS:=.gcov}
+.endif
 
 USE_META?=	yes
 .if ${USE_META:tl} != "no"
@@ -64,5 +71,12 @@ COPTS.meta.c+=	${GCC_NO_FORMAT_TRUNCATION}
 COPTS.parse.c+=	${GCC_NO_FORMAT_TRUNCATION}
 
 # A simple unit-test driver to help catch regressions
-accept test: .MAKE
-	cd ${.CURDIR}/unit-tests && MAKEFLAGS= ${.MAKE} -r -m / TEST_MAKE=${TEST_MAKE:U${.OBJDIR}/${PROG:T}} ${.TARGET}
+test: .MAKE
+	cd ${.CURDIR}/unit-tests \
+	&& MAKEFLAGS= ${.MAKE} -r -m / TEST_MAKE=${TEST_MAKE:U${.OBJDIR}/${PROG:T}} ${.TARGET}
+.if ${USE_COVERAGE} == yes
+	gcov ${SRCS}
+.endif
+
+accept: .MAKE
+	cd ${.CURDIR}/unit-tests && ${.MAKE} ${.TARGET}
