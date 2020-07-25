@@ -1,0 +1,6 @@
+#	$NetBSD: files.chacha_x86,v 1.1 2020/07/25 22:49:20 riastradh Exp $
+
+makeoptions	chacha	"COPTS.chacha_sse2.c"+="-msse -msse2"
+
+file	crypto/chacha/arch/x86/chacha_sse2.c		chacha
+file	crypto/chacha/arch/x86/chacha_sse2_impl.c	chacha

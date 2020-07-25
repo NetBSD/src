@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.117 2020/07/14 00:45:53 yamaguchi Exp $
+#	$NetBSD: files.x86,v 1.118 2020/07/25 22:49:20 riastradh Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPDEBUG MPBIOS_SCANPCI
@@ -179,3 +179,6 @@ include "crypto/aes/arch/x86/files.aessse2"
 
 # Permutation-based AES with PSHUFB
 include "crypto/aes/arch/x86/files.aesssse3"
+
+# ChaCha with SSE2
+include "crypto/chacha/arch/x86/files.chacha_x86"
