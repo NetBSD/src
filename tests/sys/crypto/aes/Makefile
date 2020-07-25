@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile,v 1.2 2020/07/01 09:58:29 riastradh Exp $
+#	$NetBSD: Makefile,v 1.3 2020/07/25 22:33:04 riastradh Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/sys/crypto/aes
 
 TESTS_C=	t_aes
+
+AFLAGS+=	-D_LOCORE
 
 .PATH:	${NETBSDSRCDIR}/sys/crypto/aes
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sys
