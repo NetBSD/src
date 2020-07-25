@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_via.h,v 1.2 2020/07/25 22:12:57 riastradh Exp $	*/
+/*	$NetBSD: aes_impl.h,v 1.1 2020/07/25 22:12:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -26,11 +26,35 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_CRYPTO_AES_ARCH_X86_AES_VIA_H
-#define	_CRYPTO_AES_ARCH_X86_AES_VIA_H
+#ifndef	_CRYPTO_AES_AES_IMPL_H
+#define	_CRYPTO_AES_AES_IMPL_H
 
-#include <crypto/aes/aes_impl.h>
+#include <sys/types.h>
 
-extern struct aes_impl aes_via_impl;
+struct aesenc;
+struct aesdec;
 
-#endif	/* _CRYPTO_AES_ARCH_X86_AES_VIA_H */
+struct aes_impl {
+	const char *ai_name;
+	int	(*ai_probe)(void);
+	void	(*ai_setenckey)(struct aesenc *, const uint8_t *, uint32_t);
+	void	(*ai_setdeckey)(struct aesdec *, const uint8_t *, uint32_t);
+	void	(*ai_enc)(const struct aesenc *, const uint8_t[static 16],
+		    uint8_t[static 16], uint32_t);
+	void	(*ai_dec)(const struct aesdec *, const uint8_t[static 16],
+		    uint8_t[static 16], uint32_t);
+	void	(*ai_cbc_enc)(const struct aesenc *, const uint8_t[static 16],
+		    uint8_t[static 16], size_t, uint8_t[static 16], uint32_t);
+	void	(*ai_cbc_dec)(const struct aesdec *, const uint8_t[static 16],
+		    uint8_t[static 16], size_t, uint8_t[static 16], uint32_t);
+	void	(*ai_xts_enc)(const struct aesenc *, const uint8_t[static 16],
+		    uint8_t[static 16], size_t, uint8_t[static 16], uint32_t);
+	void	(*ai_xts_dec)(const struct aesdec *, const uint8_t[static 16],
+		    uint8_t[static 16], size_t, uint8_t[static 16], uint32_t);
+};
+
+void	aes_md_init(const struct aes_impl *);
+
+int	aes_selftest(const struct aes_impl *);
+
+#endif	/* _CRYPTO_AES_AES_IMPL_H */
