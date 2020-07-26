@@ -92,7 +92,7 @@ static void Reconfigure(mDNS *m)
     mDNS_SetPrimaryInterfaceInfo(m, NULL, NULL, NULL);
     mDNS_Lock(m);
     if (ParseDNSServers(m, uDNS_SERVERS_FILE) < 0)
-        LogMsg("Unable to parse DNS server list. Unicast DNS-SD unavailable");
+        LogInfo("Unable to parse DNS server list. Unicast DNS-SD unavailable");
     mDNS_Unlock(m);
     ReadDDNSSettingsFromConfFile(m, CONFIG_FILE, &DynDNSHostname, &DynDNSZone, NULL);
     mDNSPlatformSourceAddrForDest(&DynDNSIP, &dummy);
@@ -177,7 +177,7 @@ int main(int argc, char **argv)
 
     ParseCmdLinArgs(argc, argv);
 
-    LogMsg("%s starting", mDNSResponderVersionString);
+    LogInfo("%s starting", mDNSResponderVersionString);
 
     err = mDNS_Init(&mDNSStorage, &PlatformStorage, gRRCache, RR_CACHE_SIZE, mDNS_Init_AdvertiseLocalAddresses,
                     mDNS_StatusCallback, mDNS_Init_NoInitCallbackContext);
@@ -200,7 +200,7 @@ int main(int argc, char **argv)
     if (mStatus_NoError == err)
         err = MainLoop(&mDNSStorage);
 
-    LogMsg("%s stopping", mDNSResponderVersionString);
+    LogInfo("%s stopping", mDNSResponderVersionString);
 
     mDNS_Close(&mDNSStorage);
 
