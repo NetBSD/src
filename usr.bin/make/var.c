@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.329 2020/07/26 19:44:04 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.330 2020/07/26 19:55:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.329 2020/07/26 19:44:04 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.330 2020/07/26 19:55:24 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.329 2020/07/26 19:44:04 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.330 2020/07/26 19:55:24 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1838,6 +1838,7 @@ ParseModifierPart(const char **tstr, int delim, VarEvalFlags eflags,
 		    Buf_AddByte(&buf, *cp);
 	    } else {
 		if (eflags & VARE_WANTRES) {
+		    char   *cp2;
 		    int     len;
 		    void   *freeIt;
 
@@ -1846,9 +1847,8 @@ ParseModifierPart(const char **tstr, int delim, VarEvalFlags eflags,
 		     * delimiter, assume it's a variable
 		     * substitution and recurse.
 		     */
-		    VarEvalFlags sub_eflags = errnum | (eflags & VARE_WANTRES);
-		    const char *cp2 = Var_Parse(cp, ctxt, sub_eflags,
-						&len, &freeIt);
+		    cp2 = Var_Parse(cp, ctxt, errnum | (eflags & VARE_WANTRES),
+				    &len, &freeIt);
 		    Buf_AddStr(&buf, cp2);
 		    free(freeIt);
 		    cp += len - 1;
@@ -2145,11 +2145,11 @@ ApplyModifier_Defined(const char *mod, ApplyModifiersState *st)
 	     * If unescaped dollar sign, assume it's a
 	     * variable substitution and recurse.
 	     */
+	    char    *cp2;
 	    int	    len;
 	    void    *freeIt;
 
-	    const char *cp2 = Var_Parse(st->cp, st->ctxt, neflags,
-					&len, &freeIt);
+	    cp2 = Var_Parse(st->cp, st->ctxt, neflags, &len, &freeIt);
 	    Buf_AddStr(&buf, cp2);
 	    free(freeIt);
 	    st->cp += len - 1;
@@ -3077,11 +3077,11 @@ ApplyModifiers(char *nstr, const char *tstr,
 	     * We may have some complex modifiers in a variable.
 	     */
 	    void *freeIt;
+	    char *rval;
 	    int rlen;
 	    int c;
 
-	    const char *rval = Var_Parse(p, st.ctxt, st.eflags,
-					 &rlen, &freeIt);
+	    rval = Var_Parse(p, st.ctxt, st.eflags, &rlen, &freeIt);
 
 	    /*
 	     * If we have not parsed up to st.endc or ':',
@@ -3383,7 +3383,7 @@ cleanup:
  *-----------------------------------------------------------------------
  */
 /* coverity[+alloc : arg-*4] */
-const char *
+char *
 Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags flags,
 	  int *lengthPtr, void **freePtr)
 {
@@ -3436,13 +3436,13 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags flags,
 		 */
 		switch (str[1]) {
 		case '@':
-		    return "$(.TARGET)";
+		    return UNCONST("$(.TARGET)");
 		case '%':
-		    return "$(.MEMBER)";
+		    return UNCONST("$(.MEMBER)");
 		case '*':
-		    return "$(.PREFIX)";
+		    return UNCONST("$(.PREFIX)");
 		case '!':
-		    return "$(.ARCHIVE)";
+		    return UNCONST("$(.ARCHIVE)");
 		}
 	    }
 	    return (flags & VARE_UNDEFERR) ? var_Error : varNoError;
@@ -3475,8 +3475,7 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags flags,
 	    if (*tstr == '$') {
 		int rlen;
 		void *freeIt;
-		const char *rval = Var_Parse(tstr, ctxt, flags,
-					     &rlen, &freeIt);
+		char *rval = Var_Parse(tstr, ctxt, flags, &rlen, &freeIt);
 		if (rval != NULL)
 		    Buf_AddStr(&buf, rval);
 		free(freeIt);
@@ -3714,7 +3713,7 @@ char *
 Var_Subst(const char *var, const char *str, GNode *ctxt, VarEvalFlags flags)
 {
     Buffer	buf;		/* Buffer for forming things */
-    const char	*val;		/* Value to substitute for a variable */
+    char	*val;		/* Value to substitute for a variable */
     int		length;		/* Length of the variable invocation */
     Boolean	trailingBslash;	/* variable ends in \ */
     void	*freeIt = NULL;	/* Set if it should be freed */
