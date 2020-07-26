@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.10 2020/07/26 04:03:45 riastradh Exp $
+#	$NetBSD: Makefile,v 1.11 2020/07/26 04:25:14 riastradh Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../crypto/adiantum				\
 	${.CURDIR}/../../../../crypto/aes				\
-	${.CURDIR}/../../../../crypto/chacha				\
 	${.CURDIR}/../../../../crypto/blowfish				\
 	${.CURDIR}/../../../../crypto/camellia				\
 	${.CURDIR}/../../../../crypto/cast128				\
+	${.CURDIR}/../../../../crypto/chacha				\
 	${.CURDIR}/../../../../crypto/des				\
 	${.CURDIR}/../../../../crypto/skipjack
 
@@ -36,6 +36,8 @@ SRCS+=	des_ecb.c des_setkey.c des_enc.c des_cbc.c des_module.c
 
 # AES
 SRCS+=	aes_bear.c
+SRCS+=	aes_ccm.c
+SRCS+=	aes_ccm_mbuf.c
 SRCS+=	aes_ct.c
 SRCS+=	aes_ct_dec.c
 SRCS+=	aes_ct_enc.c
