@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.14 2009/08/12 08:27:24 dholland Exp $	*/
+/*	$NetBSD: random.c,v 1.15 2020/07/26 15:24:00 nia Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994\
 #if 0
 static char sccsid[] = "@(#)random.c	8.6 (Berkeley) 6/1/94";
 #else
-__RCSID("$NetBSD: random.c,v 1.14 2009/08/12 08:27:24 dholland Exp $");
+__RCSID("$NetBSD: random.c,v 1.15 2020/07/26 15:24:00 nia Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,6 @@ static void usage(void) __dead;
 int
 main(int argc, char *argv[])
 {
-	struct timeval tp;
 	double denom;
 	int ch, random_exit, selected, unbuffer_output;
 	char *ep;
@@ -103,12 +102,9 @@ main(int argc, char *argv[])
 		/* NOTREACHED */
 	}
 
-	(void)gettimeofday(&tp, NULL);
-	srandom((unsigned long)tp.tv_usec + tp.tv_sec + getpid());
-
 	/* Compute a random exit status between 0 and denom - 1. */
 	if (random_exit)
-		return ((denom * random()) / RANDOM_MAX);
+		return arc4random_uniform(denom);
 
 	/*
 	 * Act as a filter, randomly choosing lines of the standard input
@@ -123,7 +119,7 @@ main(int argc, char *argv[])
 	 * 0 (which has a 1 / denom chance of being true), we select the
 	 * line.
 	 */
-	selected = (int)(denom * random() / RANDOM_MAX) == 0;
+	selected = (arc4random_uniform(denom) == 0);
 	while ((ch = getchar()) != EOF) {
 		if (selected)
 			(void)putchar(ch);
@@ -133,7 +129,7 @@ main(int argc, char *argv[])
 				err(2, "stdout");
 
 			/* Now see if the next line is to be printed. */
-			selected = (int)(denom * random() / RANDOM_MAX) == 0;
+			selected = (arc4random_uniform(denom) == 0);
 		}
 	}
 	if (ferror(stdin))
