@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.74 2020/07/26 07:15:26 rillig Exp $
+#	$NetBSD: Makefile,v 1.75 2020/07/26 20:04:57 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -37,11 +37,13 @@ COPTS.filemon_dev.c+= \
 .  endif
 .endif
 
-.PATH:	${.CURDIR}/lst.lib
 SUBDIR.roff+=	PSD.doc
 .if make(obj) || make(clean)
 SUBDIR+=	unit-tests
 .endif
+
+${SRCS:M*.c:.c=.o}: buf.h config.h dir.h hash.h job.h lst.h make.h make_malloc.h
+${SRCS:M*.c:.c=.o}: meta.h metachar.h nonints.h pathnames.h sprite.h strlist.h trace.h
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
