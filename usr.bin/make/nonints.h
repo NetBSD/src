@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.82 2020/07/20 19:53:40 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.83 2020/07/26 18:11:12 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -181,12 +181,9 @@ void Targ_Propagate_Wait(void);
 typedef enum {
     /* Treat undefined variables as errors. */
     VARE_UNDEFERR	= 0x01,
-    /* Actually evaluate the text, fully expanding variables.
-     * Without this flag, the text is only parsed but not evaluated. */
+    /* Expand and evaluate variables during parsing. */
     VARE_WANTRES	= 0x02,
-    VARE_ASSIGN		= 0x04,
-    /* Return the literal text, without expanding variables. */
-    VARE_NOSUBST	= 0x08
+    VARE_ASSIGN		= 0x04
 } VarEvalFlags;
 
 void Var_Delete(const char *, GNode *);

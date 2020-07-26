@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.322 2020/07/26 17:44:54 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.323 2020/07/26 18:11:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.322 2020/07/26 17:44:54 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.323 2020/07/26 18:11:12 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.322 2020/07/26 17:44:54 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.323 2020/07/26 18:11:12 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1834,7 +1834,7 @@ ParseModifierPart(GNode *ctxt, const char **tstr, int delim,
 		else
 		    Buf_AddByte(&buf, *cp);
 	    } else {
-		if (!(eflags & VARE_NOSUBST)) {
+		if (eflags & VARE_WANTRES) {
 		    char   *cp2;
 		    int     len;
 		    void   *freeIt;
@@ -2075,7 +2075,7 @@ ApplyModifier_Loop(const char *mod, ApplyModifiersState *st) {
     st->cp = mod + 1;
     char delim = '@';
     args.tvar = ParseModifierPart(st->ctxt, &st->cp, delim,
-				  st->eflags | VARE_NOSUBST,
+				  st->eflags & ~VARE_WANTRES,
 				  NULL, NULL, NULL);
     if (args.tvar == NULL) {
 	st->missing_delim = delim;
@@ -2083,7 +2083,7 @@ ApplyModifier_Loop(const char *mod, ApplyModifiersState *st) {
     }
 
     args.str = ParseModifierPart(st->ctxt, &st->cp, delim,
-				 st->eflags | VARE_NOSUBST,
+				 st->eflags & ~VARE_WANTRES,
 				 NULL, NULL, NULL);
     if (args.str == NULL) {
 	st->missing_delim = delim;
@@ -2857,9 +2857,8 @@ ApplyModifier_Assign(const char *mod, ApplyModifiersState *st)
     }
 
     char delim = st->startc == PROPEN ? PRCLOSE : BRCLOSE;
-    VarEvalFlags eflags = (st->eflags & VARE_WANTRES) ? 0 : VARE_NOSUBST;
     char *val = ParseModifierPart(st->ctxt, &st->cp, delim,
-				  st->eflags | eflags, NULL, NULL, NULL);
+				  st->eflags, NULL, NULL, NULL);
     if (st->v->flags & VAR_JUNK) {
 	/* restore original name */
 	free(st->v->name);
