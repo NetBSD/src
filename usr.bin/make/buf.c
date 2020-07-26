@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.26 2020/07/03 08:02:55 rillig Exp $	*/
+/*	$NetBSD: buf.c,v 1.27 2020/07/26 13:39:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,25 +70,26 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: buf.c,v 1.26 2020/07/03 08:02:55 rillig Exp $";
+static char rcsid[] = "$NetBSD: buf.c,v 1.27 2020/07/26 13:39:30 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)buf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: buf.c,v 1.26 2020/07/03 08:02:55 rillig Exp $");
+__RCSID("$NetBSD: buf.c,v 1.27 2020/07/26 13:39:30 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
 
 /*-
  * buf.c --
- *	Functions for automatically-expanded buffers.
+ *	Functions for automatically-expanded NUL-terminated buffers.
  */
 
-#include    "make.h"
-#include    "buf.h"
+#include <limits.h>
+#include "make.h"
+#include "buf.h"
 
 #ifndef max
 #define max(a,b)  ((a) > (b) ? (a) : (b))
@@ -138,6 +139,28 @@ Buf_AddBytes(Buffer *bp, int numBytes, const Byte *bytesPtr)
     bp->count = count + numBytes;
     ptr[numBytes] = 0;
     memcpy(ptr, bytesPtr, numBytes);
+}
+
+/*-
+ *-----------------------------------------------------------------------
+ * Buf_AddInt --
+ *	Add the given number to the buffer.
+ *
+ *-----------------------------------------------------------------------
+ */
+void
+Buf_AddInt(Buffer *bp, int n)
+{
+    /*
+     * We need enough space for the decimal representation of an int.
+     * We calculate the space needed for the octal representation, and
+     * add enough slop to cope with a '-' sign and a trailing '\0'.
+     */
+    size_t bits = sizeof(int) * CHAR_BIT;
+    char buf[1 + (bits + 2) / 3 + 1];
+
+    int len = snprintf(buf, sizeof buf, "%d", n);
+    Buf_AddBytes(bp, len, buf);
 }
 
 /*-
