@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.85 2020/07/13 12:56:58 simonb Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.86 2020/07/26 07:57:06 simonb Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.85 2020/07/13 12:56:58 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.86 2020/07/26 07:57:06 simonb Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
@@ -301,10 +301,12 @@ db_kvtophys_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 
 #define	FLDWIDTH	10
 
-#define SHOW32(reg, name)	SHOW32SEL(reg, 0, name)
-#define SHOW64(reg, name)	SHOW64SEL(reg, 0, name)
+#define SHOW32(reg, name)	SHOW32SELECT(reg, 0, name)
+#define SHOW64(reg, name)	SHOW64SELECT(reg, 0, name)
+#define SHOW32SEL(reg, name)	SHOW32SELECT(reg, name)
+#define SHOW64SEL(reg, name)	SHOW64SELECT(reg, name)
 
-#define	SHOW32SEL(num, sel, name)					\
+#define	SHOW32SELECT(num, sel, name)					\
 do {									\
 	uint32_t __val;							\
 									\
@@ -319,7 +321,7 @@ do {									\
 } while (0)
 
 /* XXX not 64-bit ABI safe! */
-#define	SHOW64SEL(num, sel, name)					\
+#define	SHOW64SELECT(num, sel, name)					\
 do {									\
 	uint64_t __val;							\
 									\
@@ -421,9 +423,9 @@ db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 
 	if ((cp0flags & MIPS_CP0FL_USE) != 0) {
 		if ((cp0flags & MIPS_CP0FL_EIRR) != 0)
-			SHOW64SEL(9, 6, "eirr");
+			SHOW64SEL(MIPS_COP_0_EIRR, "eirr");
 		if ((cp0flags & MIPS_CP0FL_EIMR) != 0)
-			SHOW64SEL(9, 7, "eimr");
+			SHOW64SEL(MIPS_COP_0_EIMR, "eimr");
 	}
 
 	if (CPUIS64BITS) {
@@ -449,27 +451,27 @@ db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 
 	if ((cp0flags & MIPS_CP0FL_USE) != 0) {
 		if ((cp0flags & MIPS_CP0FL_EBASE) != 0)
-			SHOW32SEL(15, 1, "ebase");
+			SHOW32SEL(MIPS_COP_0_EBASE, "ebase");
 		if ((cp0flags & MIPS_CP0FL_CONFIG) != 0)
 			SHOW32(MIPS_COP_0_CONFIG, "config");
 		if ((cp0flags & MIPS_CP0FL_CONFIG1) != 0)
-			SHOW32SEL(16, 1, "config1");
+			SHOW32SEL(MIPS_COP_0_CONFIG1, "config1");
 		if ((cp0flags & MIPS_CP0FL_CONFIG2) != 0)
-			SHOW32SEL(16, 2, "config2");
+			SHOW32SEL(MIPS_COP_0_CONFIG2, "config2");
 		if ((cp0flags & MIPS_CP0FL_CONFIG3) != 0)
-			SHOW32SEL(16, 3, "config3");
+			SHOW32SEL(MIPS_COP_0_CONFIG3, "config3");
 		if ((cp0flags & MIPS_CP0FL_CONFIG4) != 0)
-			SHOW32SEL(16, 4, "config4");
+			SHOW32SEL(MIPS_COP_0_CONFIG4, "config4");
 		if ((cp0flags & MIPS_CP0FL_CONFIG5) != 0)
-			SHOW32SEL(16, 5, "config5");
+			SHOW32SEL(MIPS_COP_0_CONFIG5, "config5");
 		if ((cp0flags & MIPS_CP0FL_CONFIG6) != 0)
-			SHOW32SEL(16, 6, "config6");
+			SHOW32SEL(MIPS_COP_0_CONFIG6, "config6");
 		if ((cp0flags & MIPS_CP0FL_CONFIG7) != 0)
-			SHOW32SEL(16, 7, "config7");
+			SHOW32SEL(MIPS_COP_0_CONFIG7, "config7");
 		if (CPUISMIPSNNR2)
-			SHOW32(7, "hwrena");
+			SHOW32(MIPS_COP_0_HWRENA, "hwrena");
 		if (MIPS_HAS_USERLOCAL)
-			SHOW32SEL(4, 2, "userlocal");
+			SHOW32SEL(MIPS_COP_0_USERLOCAL, "userlocal");
 	} else {
 		SHOW32(MIPS_COP_0_CONFIG, "config");
 #if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
@@ -508,9 +510,11 @@ db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 
 	if (CPUISMIPSNN) {
 		if (CPUIS64BITS) {
-			SHOW64(MIPS_COP_0_PERFCNT, "perfcnt");
+			SHOW64(MIPS_COP_0_PERFCNT0_CTL, "perfcnt0ctl");
+			SHOW64SEL(MIPS_COP_0_PERFCNT0_CNT, "perfcnt0cnt");
 		} else {
-			SHOW32(MIPS_COP_0_PERFCNT, "perfcnt");
+			SHOW32(MIPS_COP_0_PERFCNT0_CTL, "perfcnt0ctl");
+			SHOW32SEL(MIPS_COP_0_PERFCNT0_CNT, "perfcnt0cnt");
 		}
 	}
 
