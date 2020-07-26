@@ -13,4 +13,8 @@ VAR:S,V,v,=Thevariable
 Expect: Unclosed substitution for VAR (, missing)
 make: Unclosed substitution for VAR (, missing)
 VAR:S,V,v=
+Expect: errors about missing @ delimiter
+
+
+1 2 3
 exit status 0
