@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.43 2020/07/23 15:24:37 skrll Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.44 2020/07/26 07:13:51 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 
 /*
  * Most MIPS have a cache line size of 32 bytes, but Cavium chips
- * have a line size 128bytes and we need to cover the larger size.
+ * have a line size 128 bytes and we need to cover the larger size.
  */
 #define COHERENCY_UNIT	128
 #define CACHE_LINE_SIZE	128
