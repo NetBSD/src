@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.320 2020/07/26 17:21:28 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.321 2020/07/26 17:23:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.320 2020/07/26 17:21:28 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.321 2020/07/26 17:23:00 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.320 2020/07/26 17:21:28 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.321 2020/07/26 17:23:00 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1829,10 +1829,10 @@ ParseModifierPart(GNode *ctxt, const char **tstr, int delim,
 	    cp++;
 	} else if (*cp == '$') {
 	    if (cp[1] == delim) {	/* Unescaped $ at end of pattern */
-		if (out_pflags == NULL)
-		    Buf_AddByte(&buf, *cp);
-		else
+		if (out_pflags != NULL)
 		    *out_pflags |= VARP_ANCHOR_END;
+		else
+		    Buf_AddByte(&buf, *cp);
 	    } else {
 		if (!(eflags & VARE_NOSUBST)) {
 		    char   *cp2;
