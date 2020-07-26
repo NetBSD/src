@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.22 2020/07/25 20:35:35 rillig Exp $
+# $Id: modmisc.mk,v 1.23 2020/07/26 11:39:55 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -16,19 +16,23 @@ MOD_OPT=@d@$${exists($$d):?$$d:$${d:S,/usr,/opt,}}@
 MOD_SEP=S,:, ,g
 
 all:	modvar modvarloop modsysv mod-HTE emptyvar undefvar
-all:	mod-S mod-C mod-at-varname mod-at-resolve mod-at-dollar
+all:	mod-subst
+all:	mod-regex
+all:	mod-loop-varname mod-loop-resolve mod-loop-varname-dollar
 all:	mod-subst-dollar mod-loop-dollar
-all:	mod-C-limits
-all:	mod-C-errors
+all:	mod-regex-limits
+all:	mod-regex-errors
 all:	mod-assign
 all:	mod-assign-nested
 all:	mod-tu-space
-all:	mod-Q
+all:	mod-quote
 all:	mod-break-many-words
 
+# See also sysv.mk.
 modsysv:
 	@echo "The answer is ${libfoo.a:L:libfoo.a=42}"
 
+# Demonstrates modifiers that are given indirectly from a variable.
 modvar:
 	@echo "path='${path}'"
 	@echo "path='${path:${MOD_NODOT}}'"
@@ -68,7 +72,7 @@ undefvar:
 	@echo C:${:U:C,^$,empty,}
 	@echo @:${:U:@var@empty@}
 
-mod-S:
+mod-subst:
 	@echo $@:
 	@echo :${:Ua b b c:S,a b,,:Q}:
 	@echo :${:Ua b b c:S,a b,,1:Q}:
@@ -77,7 +81,7 @@ mod-S:
 	@echo :${:U1 2 3 1 2 3:S,1 2,___,Wg:S,_,x,:Q}:
 	@echo ${:U12345:S,,sep,g:Q}
 
-mod-C:
+mod-regex:
 	@echo $@:
 	@echo :${:Ua b b c:C,a b,,:Q}:
 	@echo :${:Ua b b c:C,a b,,1:Q}:
@@ -89,7 +93,7 @@ mod-C:
 # In the :@ modifier, the name of the loop variable can even be generated
 # dynamically.  There's no practical use-case for this, and hopefully nobody
 # will ever depend on this, but technically it's possible.
-mod-at-varname:
+mod-loop-varname:
 	@echo :${:Uone two three:@${:Ubar:S,b,v,}@+${var}+@:Q}:
 
 # The :@ modifier resolves the variables a little more often than expected.
@@ -102,13 +106,13 @@ RES1=		1d${RES2} 1i$${RES2}
 RES2=		2d${RES3} 2i$${RES3}
 RES3=		3
 
-mod-at-resolve:
+mod-loop-resolve:
 	@echo $@:${RESOLVE:@v@w${v}w@:Q}:
 
-# As of 2020-07-19, the variable name of the :@ modifier may end with one
-# or two dollar signs, which are silently ignored.  There's no point in
-# allowing a dollar sign in that position.
-mod-at-dollar:
+# Until 2020-07-20, the variable name of the :@ modifier could end with one
+# or two dollar signs, which were silently ignored.
+# There's no point in allowing a dollar sign in that position.
+mod-loop-varname-dollar:
 	@echo $@:${1 2 3:L:@v$@($v)@:Q}.
 	@echo $@:${1 2 3:L:@v$$@($v)@:Q}.
 	@echo $@:${1 2 3:L:@v$$$@($v)@:Q}.
@@ -144,7 +148,7 @@ mod-loop-dollar:
 	@echo $@:${:U5:@word@$$$$${word}$$$$$@:Q}:
 	@echo $@:${:U6:@word@$$$$$${word}$$$$$$@:Q}:
 
-mod-C-limits:
+mod-regex-limits:
 	@echo $@:00-ok:${:U1 23 456:C,..,\0\0,:Q}
 	@echo $@:11-missing:${:U1 23 456:C,..,\1\1,:Q}
 	@echo $@:11-ok:${:U1 23 456:C,(.).,\1\1,:Q}
@@ -155,7 +159,7 @@ mod-C-limits:
 	# which is more than enough for daily use.
 	@echo $@:capture:${:UabcdefghijABCDEFGHIJrest:C,(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.)(.),\9\8\7\6\5\4\3\2\1\0\10\11\12,}
 
-mod-C-errors:
+mod-regex-errors:
 	@echo $@: ${UNDEF:Uvalue:C,[,,}
 
 # Just a bit of basic code coverage for the obscure ::= assignment modifiers.
@@ -182,7 +186,7 @@ mod-tu-space:
 	# the adjacent spaces are preserved.
 	@echo $@: ${a   b:L:tu:Q}
 
-mod-Q:
+mod-quote:
 	@echo $@: new${.newline:Q}${.newline:Q}line
 
 # Cover the bmake_realloc in brk_string.
