@@ -1,4 +1,4 @@
-/*	$NetBSD: adiantum.c,v 1.4 2020/07/25 23:05:40 riastradh Exp $	*/
+/*	$NetBSD: adiantum.c,v 1.5 2020/07/26 04:05:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: adiantum.c,v 1.4 2020/07/25 23:05:40 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: adiantum.c,v 1.5 2020/07/26 04:05:20 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/endian.h>
@@ -207,8 +207,7 @@ poly1305_init(struct poly1305 *P, const uint8_t key[static 16])
 }
 
 static void
-poly1305_update_internal(struct poly1305 *P, const uint8_t m[static 16],
-    uint32_t pad)
+poly1305_update_blocks(struct poly1305 *P, const uint8_t *m, size_t mlen)
 {
 	uint32_t r0 = P->r[0];
 	uint32_t r1 = P->r[1];
@@ -220,41 +219,66 @@ poly1305_update_internal(struct poly1305 *P, const uint8_t m[static 16],
 	uint32_t h2 = P->h[2];
 	uint32_t h3 = P->h[3];
 	uint32_t h4 = P->h[4];
+	uint32_t m0, m1, m2, m3, m4; /* 26-bit message chunks */
 	uint64_t k0, k1, k2, k3, k4; /* 64-bit extension of h */
 	uint64_t p0, p1, p2, p3, p4; /* columns of product */
 	uint32_t c;		     /* carry */
 
-	/* h' := h + m */
-	h0 += (le32dec(m +  0) >> 0) & 0x03ffffff;
-	h1 += (le32dec(m +  3) >> 2) & 0x03ffffff;
-	h2 += (le32dec(m +  6) >> 4) & 0x03ffffff;
-	h3 += (le32dec(m +  9) >> 6);
-	h4 += (le32dec(m + 12) >> 8) | (pad << 24);
+	while (mlen) {
+		if (__predict_false(mlen < 16)) {
+			/* Handle padding for uneven last block.  */
+			uint8_t buf[16];
+			unsigned i;
 
-	/* extend to 64 bits */
-	k0 = h0;
-	k1 = h1;
-	k2 = h2;
-	k3 = h3;
-	k4 = h4;
+			for (i = 0; i < mlen; i++)
+				buf[i] = m[i];
+			buf[i++] = 1;
+			for (; i < 16; i++)
+				buf[i] = 0;
+			m0 = le32dec(buf +  0) >> 0;
+			m1 = le32dec(buf +  3) >> 2;
+			m2 = le32dec(buf +  6) >> 4;
+			m3 = le32dec(buf +  9) >> 6;
+			m4 = le32dec(buf + 12) >> 8;
+			mlen = 0;
 
-	/* p := h' * r = (h + m)*r mod 2^130 - 5 */
-	p0 = r0*k0 + 5*r4*k1 + 5*r3*k2 + 5*r2*k3 + 5*r1*k4;
-	p1 = r1*k0 +   r0*k1 + 5*r4*k2 + 5*r3*k3 + 5*r2*k4;
-	p2 = r2*k0 +   r1*k1 +   r0*k2 + 5*r4*k3 + 5*r3*k4;
-	p3 = r3*k0 +   r2*k1 +   r1*k2 +   r0*k3 + 5*r4*k4;
-	p4 = r4*k0 +   r3*k1 +   r2*k2 +   r1*k3 +   r0*k4;
+			explicit_memset(buf, 0, sizeof buf);
+		} else {
+			m0 = le32dec(m +  0) >> 0;
+			m1 = le32dec(m +  3) >> 2;
+			m2 = le32dec(m +  6) >> 4;
+			m3 = le32dec(m +  9) >> 6;
+			m4 = le32dec(m + 12) >> 8;
+			m4 |= 1u << 24;
+			m += 16;
+			mlen -= 16;
+		}
 
-	/* propagate carries */
-	p0 += 0; c = p0 >> 26; h0 = p0 & 0x03ffffff;
-	p1 += c; c = p1 >> 26; h1 = p1 & 0x03ffffff;
-	p2 += c; c = p2 >> 26; h2 = p2 & 0x03ffffff;
-	p3 += c; c = p3 >> 26; h3 = p3 & 0x03ffffff;
-	p4 += c; c = p4 >> 26; h4 = p4 & 0x03ffffff;
+		/* k := h + m, extended to 64 bits */
+		k0 = h0 + (m0 & 0x03ffffff);
+		k1 = h1 + (m1 & 0x03ffffff);
+		k2 = h2 + (m2 & 0x03ffffff);
+		k3 = h3 + m3;
+		k4 = h4 + m4;
 
-	/* reduce 2^130 = 5 */
-	h0 += c*5; c = h0 >> 26; h0 &= 0x03ffffff;
-	h1 += c;
+		/* p := k * r = (h + m)*r mod 2^130 - 5 */
+		p0 = r0*k0 + 5*r4*k1 + 5*r3*k2 + 5*r2*k3 + 5*r1*k4;
+		p1 = r1*k0 +   r0*k1 + 5*r4*k2 + 5*r3*k3 + 5*r2*k4;
+		p2 = r2*k0 +   r1*k1 +   r0*k2 + 5*r4*k3 + 5*r3*k4;
+		p3 = r3*k0 +   r2*k1 +   r1*k2 +   r0*k3 + 5*r4*k4;
+		p4 = r4*k0 +   r3*k1 +   r2*k2 +   r1*k3 +   r0*k4;
+
+		/* propagate carries and update h */
+		p0 += 0; c = p0 >> 26; h0 = p0 & 0x03ffffff;
+		p1 += c; c = p1 >> 26; h1 = p1 & 0x03ffffff;
+		p2 += c; c = p2 >> 26; h2 = p2 & 0x03ffffff;
+		p3 += c; c = p3 >> 26; h3 = p3 & 0x03ffffff;
+		p4 += c; c = p4 >> 26; h4 = p4 & 0x03ffffff;
+
+		/* reduce 2^130 = 5 */
+		h0 += c*5; c = h0 >> 26; h0 &= 0x03ffffff;
+		h1 += c;
+	}
 
 	/* update hash values */
 	P->h[0] = h0;
@@ -264,32 +288,6 @@ poly1305_update_internal(struct poly1305 *P, const uint8_t m[static 16],
 	P->h[4] = h4;
 }
 
-static void
-poly1305_update_block(struct poly1305 *P, const uint8_t m[static 16])
-{
-
-	poly1305_update_internal(P, m, 1);
-}
-
-static void
-poly1305_update_last(struct poly1305 *P, const uint8_t *m, size_t mlen)
-{
-	uint8_t buf[16];
-	unsigned i;
-
-	if (mlen == 16) {
-		poly1305_update_internal(P, m, 1);
-		return;
-	}
-
-	for (i = 0; i < mlen; i++)
-		buf[i] = m[i];
-	buf[i++] = 1;
-	for (; i < 16; i++)
-		buf[i] = 0;
-	poly1305_update_internal(P, buf, 0);
-}
-
 static void
 poly1305_final(uint8_t h[static 16], struct poly1305 *P)
 {
@@ -345,9 +343,7 @@ poly1305(uint8_t h[static 16], const uint8_t *m, size_t mlen,
 	struct poly1305 P;
 
 	poly1305_init(&P, k);
-	for (; mlen > 16; mlen -= 16, m += 16)
-		poly1305_update_block(&P, m);
-	poly1305_update_last(&P, m, mlen);
+	poly1305_update_blocks(&P, m, mlen);
 	poly1305_final(h, &P);
 }
 
@@ -464,8 +460,7 @@ nhpoly1305(uint8_t h[static 16], const uint8_t *m, size_t mlen,
 	poly1305_init(&P, pk);
 	for (; mlen; m += MIN(mlen, 1024), mlen -= MIN(mlen, 1024)) {
 		nh(h0, m, MIN(mlen, 1024), nhk);
-		poly1305_update_block(&P, h0 + 16*0);
-		poly1305_update_block(&P, h0 + 16*1);
+		poly1305_update_blocks(&P, h0, 32);
 	}
 	poly1305_final(h, &P);
 }
@@ -1834,7 +1829,6 @@ adiantum_hash(uint8_t h[static 16], const void *l, size_t llen,
     const uint8_t kl[static 16],
     const uint32_t kn[static 268])
 {
-	const uint8_t *t8 = t;
 	struct poly1305 P;
 	uint8_t llenbuf[16];
 	uint8_t ht[16];
@@ -1847,14 +1841,8 @@ adiantum_hash(uint8_t h[static 16], const void *l, size_t llen,
 
 	/* Compute H_T := Poly1305_{K_T}(le128(|l|) || tweak).  */
 	poly1305_init(&P, kt);
-	if (tlen == 0) {
-		poly1305_update_last(&P, llenbuf, 16);
-	} else {
-		poly1305_update_block(&P, llenbuf);
-		for (; tlen > 16; t8 += 16, tlen -= 16)
-			poly1305_update_block(&P, t8);
-		poly1305_update_last(&P, t8, tlen);
-	}
+	poly1305_update_blocks(&P, llenbuf, 16);
+	poly1305_update_blocks(&P, t, tlen);
 	poly1305_final(ht, &P);
 
 	/* Compute H_L := Poly1305_{K_L}(NH(pad_128(l))).  */
