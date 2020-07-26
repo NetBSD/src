@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.562 2020/01/23 23:56:07 uwe Exp $
+.\"	$NetBSD: main,v 1.563 2020/07/26 11:05:39 jmcneill Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -793,61 +793,6 @@ A number of things have been removed from the
 See the
 .Dq Components removed from NetBSD
 section near the beginning of this document for a list.
-.if \n[arm] \{\
-.Ss2 Important note regarding ABI change on ARM ports
-.Pp
-In
-.Nx
-7.0, most ARM ports (all but acorn32, and epoc32) have switched
-to the official standard ABI
-.Pq EABI5
-which is recommended by ARM for ELF binaries.
-.Pp
-Backwards compatibility is provided for binaries using the previous ABI
-.Pq oabi .
-A
-.Nx
-\*V
-kernel with the
-.Dv COMPAT_NETBSD32
-option enabled will allow you to execute oabi binaries.
-This option is enabled in the kernels distributed with this release.
-.Pp
-However, new binaries can not be mixed with old libraries, and shared
-libraries are incompatible.
-.Pp
-.Ic sysinst
-does not provide an automatic mechanism to partially upgrade an old
-installation.
-There are two ways to handle the transition:
-.(enum
-.Pp
-Do a complete update.
-.Pp
-This means updating your system with
-.Ic sysinst ,
-then deleting and recompiling all other binaries, whether they were
-installed locally or through pkgsrc.
-This is the preferred, cleanest approach.
-.It
-Move your old binaries and libraries to
-.Pa /compat/netbsd32
-and replace them one by one.
-.Pp
-For example, move all of
-.Pa /usr/pkg
-to
-.Pa /compat/netbsd32/usr/pkg
-and add
-.Pa /compat/netbsd32/usr/pkg/bin
-to the end of your PATH.
-Most binaries should still run, and can be replaced over time with
-recompiled packages, which will install to
-.Pa /usr/pkg
-again.
-.enum)
-.
-.\}
 .Ss "Using online NetBSD documentation"
 .Pp
 Documentation is available if you installed the manual
