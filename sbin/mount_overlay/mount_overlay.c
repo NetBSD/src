@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_overlay.c,v 1.13 2011/08/29 14:35:02 joerg Exp $	*/
+/*	$NetBSD: mount_overlay.c,v 1.14 2020/07/26 08:20:22 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_null.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_overlay.c,v 1.13 2011/08/29 14:35:02 joerg Exp $");
+__RCSID("$NetBSD: mount_overlay.c,v 1.14 2020/07/26 08:20:22 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,6 +57,8 @@ __RCSID("$NetBSD: mount_overlay.c,v 1.13 2011/08/29 14:35:02 joerg Exp $");
 #include <string.h>
 
 #include <mntopts.h>
+
+#include "mountprog.h"
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
@@ -102,19 +104,8 @@ mount_overlay(int argc, char *argv[])
 	if (argc != 2)
 		usage();
 
-	if (realpath(argv[0], target) == NULL)        /* Check device path */
-		err(1, "realpath %s", argv[0]);
-	if (strncmp(argv[0], target, MAXPATHLEN)) {
-		warnx("\"%s\" is a relative path.", argv[0]);
-		warnx("using \"%s\" instead.", target);
-	}
-
-	if (realpath(argv[1], canon_dir) == NULL)    /* Check mounton path */
-		err(1, "realpath %s", argv[1]);
-	if (strncmp(argv[1], canon_dir, MAXPATHLEN)) {
-		warnx("\"%s\" is a relative path.", argv[1]);
-		warnx("using \"%s\" instead.", canon_dir);
-	}
+	pathadj(argv[0], target);
+	pathadj(argv[1], canon_dir);
 
 	args.la.target = target;
 
