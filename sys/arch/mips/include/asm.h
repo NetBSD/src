@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.56 2020/04/17 14:19:43 joerg Exp $	*/
+/*	$NetBSD: asm.h,v 1.57 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -267,7 +267,7 @@ _C_LABEL(x):
 	.asciz str;			\
 	.align	3
 
-#define RCSID(x)	.pushsection ".ident","MS",@progbits,1;		\
+#define	RCSID(x)	.pushsection ".ident","MS",@progbits,1;		\
 			.asciz x;					\
 			.popsection
 
@@ -515,9 +515,9 @@ _C_LABEL(x):
 
 /* CPU dependent hook for cp0 load delays */
 #if defined(MIPS1) || defined(MIPS2) || defined(MIPS3)
-#define MFC0_HAZARD	sll $0,$0,1	/* super scalar nop */
+#define	MFC0_HAZARD	sll $0,$0,1	/* super scalar nop */
 #else
-#define MFC0_HAZARD	/* nothing */
+#define	MFC0_HAZARD	/* nothing */
 #endif
 
 #if _MIPS_ISA == _MIPS_ISA_MIPS1 || _MIPS_ISA == _MIPS_ISA_MIPS2 || \

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.10 2013/05/23 21:39:49 christos Exp $ */
+/*	$NetBSD: sysarch.h,v 1.11 2020/07/26 08:08:41 simonb Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -26,13 +26,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #ifndef _MIPS_SYSARCH_H_
-#define _MIPS_SYSARCH_H_
+#define	_MIPS_SYSARCH_H_
 
 /*
  * Architecture specific syscalls (mips)
  */
-#define MIPS_CACHEFLUSH	0
-#define MIPS_CACHECTL	1
+#define	MIPS_CACHEFLUSH	0
+#define	MIPS_CACHECTL	1
 
 struct mips_cacheflush_args {
 	vaddr_t va;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wired_map.h,v 1.3 2007/02/21 22:59:47 thorpej Exp $	*/
+/*	$NetBSD: wired_map.h,v 1.4 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2005 Tadpole Computer Inc.
@@ -32,7 +32,7 @@
  */
 
 #ifndef _MIPS_WIRED_MAP_H
-#define _MIPS_WIRED_MAP_H
+#define	_MIPS_WIRED_MAP_H
 
 /*
  * Certain machines have peripheral busses which are only accessible
@@ -62,12 +62,12 @@
  */
 
 #ifndef MIPS3_WIRED_SIZE
-#define MIPS3_WIRED_SIZE	MIPS3_PG_SIZE_MASK_TO_SIZE(MIPS3_PG_SIZE_16M)
+#define	MIPS3_WIRED_SIZE	MIPS3_PG_SIZE_MASK_TO_SIZE(MIPS3_PG_SIZE_16M)
 #endif
-#define MIPS3_WIRED_OFFMASK	(MIPS3_WIRED_SIZE - 1)
+#define	MIPS3_WIRED_OFFMASK	(MIPS3_WIRED_SIZE - 1)
 
-#define MIPS3_WIRED_ENTRY_SIZE(pgsize)	((pgsize) * 2)
-#define MIPS3_WIRED_ENTRY_OFFMASK(pgsize) (MIPS3_WIRED_ENTRY_SIZE(pgsize) - 1)
+#define	MIPS3_WIRED_ENTRY_SIZE(pgsize)	((pgsize) * 2)
+#define	MIPS3_WIRED_ENTRY_OFFMASK(pgsize) (MIPS3_WIRED_ENTRY_SIZE(pgsize) - 1)
 
 /*
  * This defines the maximum number of wired TLB entries that the wired
@@ -77,7 +77,7 @@
  * and that is not included in this number.
  */
 #ifndef MIPS3_NWIRED_ENTRY
-#define MIPS3_NWIRED_ENTRY	8	/* upper limit */
+#define	MIPS3_NWIRED_ENTRY	8	/* upper limit */
 #endif
 
 struct wired_map_entry {

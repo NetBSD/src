@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.71 2019/04/01 06:12:51 msaitoh Exp $	*/
+/*	$NetBSD: pmap.h,v 1.72 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,37 +85,37 @@
 #include <sys/kernhist.h>
 
 #ifndef __BSD_PTENTRY_T__
-#define __BSD_PTENTRY_T__
+#define	__BSD_PTENTRY_T__
 typedef uint32_t pt_entry_t;
-#define PRIxPTE		PRIx32
+#define	PRIxPTE		PRIx32
 #endif /* __BSD_PTENTRY_T__ */
 
-#define KERNEL_PID			0
+#define	KERNEL_PID			0
 
 #if defined(__PMAP_PRIVATE)
 
 #include <mips/locore.h>
 #include <mips/cache.h>
 
-#define PMAP_VIRTUAL_CACHE_ALIASES
-#define PMAP_INVALID_SEGTAB_ADDRESS	((pmap_segtab_t *)NULL)
+#define	PMAP_VIRTUAL_CACHE_ALIASES
+#define	PMAP_INVALID_SEGTAB_ADDRESS	((pmap_segtab_t *)NULL)
 #define	PMAP_TLB_NEED_SHOOTDOWN
-#define PMAP_TLB_FLUSH_ASID_ON_RESET	false
+#define	PMAP_TLB_FLUSH_ASID_ON_RESET	false
 #if UPAGES > 1
-#define PMAP_TLB_WIRED_UPAGES		MIPS3_TLB_WIRED_UPAGES
+#define	PMAP_TLB_WIRED_UPAGES		MIPS3_TLB_WIRED_UPAGES
 #endif
-#define pmap_md_tlb_asid_max()		(MIPS_TLB_NUM_PIDS - 1)
+#define	pmap_md_tlb_asid_max()		(MIPS_TLB_NUM_PIDS - 1)
 #ifdef MULTIPROCESSOR
-#define PMAP_NO_PV_UNCACHED
+#define	PMAP_NO_PV_UNCACHED
 #endif
 
 /*
  * We need the pmap_segtab's to be aligned on MIPS*R2 so we can use the
  * EXT/INS instructions on their addresses.
- */     
+ */
 #if (MIPS32R2 + MIPS64R2 + MIPS64R2_RMIXL) > 0
-#define PMAP_SEGTAB_ALIGN __aligned(sizeof(void *)*NSEGPG) __section(".data1")
-#endif   
+#define	PMAP_SEGTAB_ALIGN __aligned(sizeof(void *)*NSEGPG) __section(".data1")
+#endif
 
 #include <uvm/uvm_physseg.h>
 
@@ -155,9 +155,9 @@ struct tlbmask {
 };
 
 #ifdef _LP64
-#define PMAP_SEGTABSIZE		NSEGPG
+#define	PMAP_SEGTABSIZE		NSEGPG
 #else
-#define PMAP_SEGTABSIZE		(1 << (31 - SEGSHIFT))
+#define	PMAP_SEGTABSIZE		(1 << (31 - SEGSHIFT))
 #endif
 
 #include <uvm/pmap/vmpagemd.h>
@@ -172,8 +172,8 @@ struct tlbmask {
 #define	PMAP_CCA_FOR_PA(pa)	CCA_UNCACHED		/* uncached */
 
 #if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
-#define PGC_NOCACHE	0x4000000000000000ULL
-#define PGC_PREFETCH	0x2000000000000000ULL
+#define	PGC_NOCACHE	0x4000000000000000ULL
+#define	PGC_PREFETCH	0x2000000000000000ULL
 #endif
 
 #if defined(__PMAP_PRIVATE)
@@ -202,7 +202,7 @@ struct tlbmask {
  * dynamically allocated at boot time.
  */
 
-#define pmap_phys_address(x)	mips_ptob(x)
+#define	pmap_phys_address(x)	mips_ptob(x)
 
 /*
  *	Bootstrap the system enough to run with virtual memory.
@@ -217,7 +217,7 @@ void	pmap_procwr(struct proc *, vaddr_t, size_t);
  * the virtually-indexed cache on mips3 CPUs.
  */
 #ifdef MIPS3_PLUS
-#define PMAP_PREFER(pa, va, sz, td)	pmap_prefer((pa), (va), (sz), (td))
+#define	PMAP_PREFER(pa, va, sz, td)	pmap_prefer((pa), (va), (sz), (td))
 void	pmap_prefer(vaddr_t, vaddr_t *, vsize_t, int);
 #endif /* MIPS3_PLUS */
 

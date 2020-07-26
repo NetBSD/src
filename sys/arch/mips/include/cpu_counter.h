@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_counter.h,v 1.5 2016/07/11 16:15:35 matt Exp $	*/
+/*	$NetBSD: cpu_counter.h,v 1.6 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #ifndef _MIPS_CPU_COUNTER_H_
-#define _MIPS_CPU_COUNTER_H_
+#define	_MIPS_CPU_COUNTER_H_
 
 /*
  * Machine-specific support for CPU counter.
@@ -54,12 +54,12 @@ cpu_hascounter(void)
 }
 
 #if __mips >= 3 || !defined(__mips_o32) || defined(MIPS3_PLUS)
-#define cpu_counter()		cpu_counter32()
+#define	cpu_counter()		cpu_counter32()
 
 uint32_t cpu_counter32(void);	/* weak alias of mips3_cp0_count_read */
 #else
 #define	cpu_counter()		(0)
-#define cpu_counter32()		(0)
+#define	cpu_counter32()		(0)
 #endif
 
 static __inline uint64_t

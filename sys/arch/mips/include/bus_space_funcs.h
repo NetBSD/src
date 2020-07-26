@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_funcs.h,v 1.1 2011/07/01 17:28:55 dyoung Exp $	*/
+/*	$NetBSD: bus_space_funcs.h,v 1.2 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -129,7 +129,7 @@ do {									\
 /*
  * Get kernel virtual address for ranges mapped BUS_SPACE_MAP_LINEAR.
  */
-#define bus_space_vaddr(t, h) \
+#define	bus_space_vaddr(t, h) \
 	(*(t)->bs_vaddr)((t)->bs_cookie, (h))
 
 /*

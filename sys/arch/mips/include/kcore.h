@@ -1,4 +1,4 @@
-/*	$NetBSD: kcore.h,v 1.3 2015/06/12 16:28:39 matt Exp $	*/
+/*	$NetBSD: kcore.h,v 1.4 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
  */
 
 #ifndef _MIPS_KCORE_H_
-#define _MIPS_KCORE_H_
+#define	_MIPS_KCORE_H_
 
 typedef struct cpu_kcore_hdr {
 	uint64_t	sysmappa;		/* PA of Sysmap */

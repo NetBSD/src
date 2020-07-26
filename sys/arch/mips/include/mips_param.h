@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.44 2020/07/26 07:13:51 simonb Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.45 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -58,11 +58,11 @@
  */
 #ifndef _KERNEL
 #undef MACHINE
-#define MACHINE "mips"
+#define	MACHINE "mips"
 #endif
 
-#define ALIGNBYTES32		(sizeof(double) - 1)
-#define ALIGN32(p)		(((uintptr_t)(p) + ALIGNBYTES32) &~ALIGNBYTES32)
+#define	ALIGNBYTES32		(sizeof(double) - 1)
+#define	ALIGN32(p)		(((uintptr_t)(p) + ALIGNBYTES32) &~ALIGNBYTES32)
 
 /*
  * On mips, UPAGES is fixed by sys/arch/mips/mips/locore code
@@ -77,15 +77,15 @@
 #endif
 
 #ifndef MSGBUFSIZE
-#define MSGBUFSIZE	NBPG		/* default message buffer size */
+#define	MSGBUFSIZE	NBPG		/* default message buffer size */
 #endif
 
 /*
  * Most MIPS have a cache line size of 32 bytes, but Cavium chips
  * have a line size 128 bytes and we need to cover the larger size.
  */
-#define COHERENCY_UNIT	128
-#define CACHE_LINE_SIZE	128
+#define	COHERENCY_UNIT	128
+#define	CACHE_LINE_SIZE	128
 
 #ifdef ENABLE_MIPS_16KB_PAGE
 #define	PGSHIFT		14		/* LOG2(NBPG) */
@@ -135,10 +135,10 @@
 /*
  * Mach derived conversion macros
  */
-#define mips_round_page(x)	((((uintptr_t)(x)) + NBPG - 1) & ~(NBPG-1))
-#define mips_trunc_page(x)	((uintptr_t)(x) & ~(NBPG-1))
-#define mips_btop(x)		((paddr_t)(x) >> PGSHIFT)
-#define mips_ptob(x)		((paddr_t)(x) << PGSHIFT)
+#define	mips_round_page(x)	((((uintptr_t)(x)) + NBPG - 1) & ~(NBPG-1))
+#define	mips_trunc_page(x)	((uintptr_t)(x) & ~(NBPG-1))
+#define	mips_btop(x)		((paddr_t)(x) >> PGSHIFT)
+#define	mips_ptob(x)		((paddr_t)(x) << PGSHIFT)
 
 #ifdef __MIPSEL__
 #define	MID_MACHINE	MID_PMAX	/* MID_PMAX (little-endian) */

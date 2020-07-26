@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r4k.h,v 1.16 2016/07/12 15:56:23 skrll Exp $	*/
+/*	$NetBSD: cache_r4k.h,v 1.17 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -63,7 +63,7 @@
  *
  *	Perform the specified cache operation on a single line.
  */
-#define cache_op_r4k_line(va, op)				\
+#define	cache_op_r4k_line(va, op)				\
 {								\
 	__asm volatile(						\
 		".set push"		"\n\t"			\
@@ -120,7 +120,7 @@ cache_r4k_op_8lines_NN(size_t n, register_t va, u_int op)
  *
  *	Perform the specified cache operation on 32 n-byte cache lines.
  */
-#define cache_r4k_op_32lines_NN(n, va, op)				\
+#define	cache_r4k_op_32lines_NN(n, va, op)				\
 {									\
 	__asm volatile(							\
 		".set push"			"\n\t"			\
@@ -327,7 +327,7 @@ void	cache_r4k_sdcache_index_wb_inv_16(vaddr_t, vsize_t);
 void	cache_r4k_sdcache_hit_inv_16(register_t, vsize_t);
 void	cache_r4k_sdcache_hit_wb_inv_16(register_t, vsize_t);
 void	cache_r4k_sdcache_hit_wb_16(register_t, vsize_t);
- 
+
 /* cache_r4k_pcache32.S */
 
 void	cache_r4k_icache_index_inv_32(vaddr_t, vsize_t);
@@ -343,7 +343,7 @@ void	cache_r4k_sdcache_index_wb_inv_32(vaddr_t, vsize_t);
 void	cache_r4k_sdcache_hit_inv_32(register_t, vsize_t);
 void	cache_r4k_sdcache_hit_wb_inv_32(register_t, vsize_t);
 void	cache_r4k_sdcache_hit_wb_32(register_t, vsize_t);
- 
+
 /* cache_r4k_pcache64.S */
 
 void	cache_r4k_icache_index_inv_64(vaddr_t, vsize_t);
@@ -359,7 +359,7 @@ void	cache_r4k_sdcache_index_wb_inv_64(vaddr_t, vsize_t);
 void	cache_r4k_sdcache_hit_inv_64(register_t, vsize_t);
 void	cache_r4k_sdcache_hit_wb_inv_64(register_t, vsize_t);
 void	cache_r4k_sdcache_hit_wb_64(register_t, vsize_t);
- 
+
 /* cache_r4k_pcache128.S */
 
 void	cache_r4k_icache_index_inv_128(vaddr_t, vsize_t);
@@ -375,5 +375,5 @@ void	cache_r4k_sdcache_index_wb_inv_128(vaddr_t, vsize_t);
 void	cache_r4k_sdcache_hit_inv_128(register_t, vsize_t);
 void	cache_r4k_sdcache_hit_wb_inv_128(register_t, vsize_t);
 void	cache_r4k_sdcache_hit_wb_128(register_t, vsize_t);
- 
+
 #endif /* !_LOCORE */

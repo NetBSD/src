@@ -1,4 +1,4 @@
-/*	$NetBSD: float.h,v 1.17 2013/05/23 21:39:49 christos Exp $ */
+/*	$NetBSD: float.h,v 1.18 2020/07/26 08:08:41 simonb Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #ifndef _MIPS_FLOAT_H_
-#define _MIPS_FLOAT_H_
+#define	_MIPS_FLOAT_H_
 
 #include <sys/cdefs.h>
 
@@ -34,7 +34,7 @@
 
 #if __GNUC_PREREQ__(4,1)
 
-#define LDBL_MANT_DIG	__LDBL_MANT_DIG__
+#define	LDBL_MANT_DIG	__LDBL_MANT_DIG__
 #define	LDBL_DIG	__LDBL_DIG__
 #define	LDBL_MIN_EXP	__LDBL_MIN_EXP__
 #define	LDBL_MIN_10_EXP	__LDBL_MIN_10_EXP__
@@ -46,7 +46,7 @@
 
 #else
 
-#define LDBL_MANT_DIG	113
+#define	LDBL_MANT_DIG	113
 #define	LDBL_DIG	33
 #define	LDBL_MIN_EXP	(-16381)
 #define	LDBL_MIN_10_EXP	(-4931)

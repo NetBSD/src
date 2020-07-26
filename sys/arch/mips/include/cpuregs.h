@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.104 2020/07/26 07:52:07 simonb Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.105 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -620,12 +620,12 @@
 #define	MIPS_COP_0_PWBASE	_(5), 5
 #define	MIPS_COP_0_PWFIELD	_(5), 6
 #define	MIPS_COP_0_PWSIZE	_(5), 7
-#define MIPS_COP_0_PWCTL	_(6), 6
-#define MIPS_COP_0_EIRR		_(6), 6		/* RMI */
-#define MIPS_COP_0_EIMR		_(6), 7		/* RMI */
+#define	MIPS_COP_0_PWCTL	_(6), 6
+#define	MIPS_COP_0_EIRR		_(6), 6		/* RMI */
+#define	MIPS_COP_0_EIMR		_(6), 7		/* RMI */
 #define	MIPS_COP_0_HWRENA	_(7)
-#define MIPS_COP_0_BADINSTR	_(8), 1
-#define MIPS_COP_0_BADINSTRP	_(8), 2
+#define	MIPS_COP_0_BADINSTR	_(8), 1
+#define	MIPS_COP_0_BADINSTRP	_(8), 2
 #define	MIPS_COP_0_CVMCNT	_(9), 6		/* CAVIUM */
 #define	MIPS_COP_0_CVMCTL	_(9), 7		/* CAVIUM */
 #define	MIPS_COP_0_CVMMEMCTL	_(11), 7	/* CAVIUM */
@@ -637,13 +637,13 @@
 #define	MIPS_COP_0_EBASE	_(15), 1
 #define	MIPS_COP_0_CDMMBASE	_(15), 2
 #define	MIPS_COP_0_CMGCRBASE	_(15), 3
-#define MIPS_COP_0_CONFIG1	_(16), 1
-#define MIPS_COP_0_CONFIG2	_(16), 2
-#define MIPS_COP_0_CONFIG3	_(16), 3
-#define MIPS_COP_0_CONFIG4	_(16), 4
-#define MIPS_COP_0_CONFIG5	_(16), 5
-#define MIPS_COP_0_CONFIG6	_(16), 6
-#define MIPS_COP_0_CONFIG7	_(16), 7
+#define	MIPS_COP_0_CONFIG1	_(16), 1
+#define	MIPS_COP_0_CONFIG2	_(16), 2
+#define	MIPS_COP_0_CONFIG3	_(16), 3
+#define	MIPS_COP_0_CONFIG4	_(16), 4
+#define	MIPS_COP_0_CONFIG5	_(16), 5
+#define	MIPS_COP_0_CONFIG6	_(16), 6
+#define	MIPS_COP_0_CONFIG7	_(16), 7
 #define	MIPS_COP_0_OSSCRATCH	_(22)		/* RMI */
 #define	MIPS_COP_0_DIAG		_(22)		/* LOONGSON2 */
 #define	MIPS_COP_0_MCD		_(22)		/* CAVIUM */
@@ -1133,22 +1133,22 @@
  *	The translated address is thus (addr & ~mask) | (mmap & ~0xfffff).
  */
 
-#define LOONGSON_AWR_BASE_ADDRESS	0x3ff00000ULL
+#define	LOONGSON_AWR_BASE_ADDRESS	0x3ff00000ULL
 
-#define LOONGSON_AWR_BASE(master, window) \
+#define	LOONGSON_AWR_BASE(master, window) \
 	(LOONGSON_AWR_BASE_ADDRESS + (window) * 0x08 + (master) * 0x60 + 0x00)
-#define LOONGSON_AWR_SIZE(master, window) \
+#define	LOONGSON_AWR_SIZE(master, window) \
 	(LOONGSON_AWR_BASE_ADDRESS + (window) * 0x08 + (master) * 0x60 + 0x20)
-#define LOONGSON_AWR_MMAP(master, window) \
+#define	LOONGSON_AWR_MMAP(master, window) \
 	(LOONGSON_AWR_BASE_ADDRESS + (window) * 0x08 + (master) * 0x60 + 0x40)
 
 /*
  * Bits in the diagnostic register
  */
 
-#define COP_0_DIAG_ITLB_CLEAR	0x04
-#define COP_0_DIAG_BTB_CLEAR	0x02
-#define COP_0_DIAG_RAS_DISABLE	0x01
+#define	COP_0_DIAG_ITLB_CLEAR	0x04
+#define	COP_0_DIAG_BTB_CLEAR	0x02
+#define	COP_0_DIAG_RAS_DISABLE	0x01
 
 #endif /* MIPS3_LOONGSON2 */
 

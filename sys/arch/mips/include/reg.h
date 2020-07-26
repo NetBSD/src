@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.18 2017/12/29 09:27:01 maya Exp $	*/
+/*	$NetBSD: reg.h,v 1.19 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #ifndef _MIPS_REG_H_
-#define _MIPS_REG_H_
+#define	_MIPS_REG_H_
 
 
 struct reg {

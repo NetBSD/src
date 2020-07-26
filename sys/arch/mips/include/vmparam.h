@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.62 2019/05/05 18:13:16 christos Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.63 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,11 +66,11 @@
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
 
-#define MIN_PAGE_SHIFT	12
+#define	MIN_PAGE_SHIFT	12
 #define	MAX_PAGE_SHIFT	14
 
-#define MAX_PAGE_SIZE	(1 << MAX_PAGE_SHIFT)
-#define MIN_PAGE_SIZE	(1 << MIN_PAGE_SHIFT)
+#define	MAX_PAGE_SIZE	(1 << MAX_PAGE_SHIFT)
+#define	MIN_PAGE_SIZE	(1 << MIN_PAGE_SHIFT)
 
 /*
  * USRSTACK is the top (end) of the user stack.
@@ -147,7 +147,7 @@
  * The default PTE number is enough to cover 8 disks * MAXBSIZE.
  */
 #ifndef USRIOSIZE
-#define USRIOSIZE	(MAXBSIZE/PAGE_SIZE * 8)
+#define	USRIOSIZE	(MAXBSIZE/PAGE_SIZE * 8)
 #endif
 
 /*
@@ -158,46 +158,46 @@
  * user/kernel map constants
  * These are negative addresses since MIPS addresses are signed.
  */
-#define VM_MIN_ADDRESS		((vaddr_t)0x00000000)
+#define	VM_MIN_ADDRESS		((vaddr_t)0x00000000)
 #ifdef _LP64
-#define MIPS_VM_MAXUSER_ADDRESS	((vaddr_t) 1L << 40)
+#define	MIPS_VM_MAXUSER_ADDRESS	((vaddr_t) 1L << 40)
 #ifdef ENABLE_MIPS_16KB_PAGE
-#define VM_MAXUSER_ADDRESS	mips_vm_maxuser_address
+#define	VM_MAXUSER_ADDRESS	mips_vm_maxuser_address
 #else
-#define VM_MAXUSER_ADDRESS	MIPS_VM_MAXUSER_ADDRESS
+#define	VM_MAXUSER_ADDRESS	MIPS_VM_MAXUSER_ADDRESS
 #endif
-#define VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS	/* 0x0000010000000000 */
-#define VM_MIN_KERNEL_ADDRESS	((vaddr_t) 3L << 62)	/* 0xC000000000000000 */
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t) -1L << 31)	/* 0xFFFFFFFF80000000 */
+#define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS	/* 0x0000010000000000 */
+#define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) 3L << 62)	/* 0xC000000000000000 */
+#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t) -1L << 31)	/* 0xFFFFFFFF80000000 */
 #else
-#define VM_MAXUSER_ADDRESS	((vaddr_t)-0x7fffffff-1)/* 0xFFFFFFFF80000000 */
-#define VM_MAX_ADDRESS		((vaddr_t)-0x7fffffff-1)/* 0xFFFFFFFF80000000 */
-#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)-0x40000000)	/* 0xFFFFFFFFC0000000 */
+#define	VM_MAXUSER_ADDRESS	((vaddr_t)-0x7fffffff-1)/* 0xFFFFFFFF80000000 */
+#define	VM_MAX_ADDRESS		((vaddr_t)-0x7fffffff-1)/* 0xFFFFFFFF80000000 */
+#define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)-0x40000000)	/* 0xFFFFFFFFC0000000 */
 #ifdef ENABLE_MIPS_TX3900
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)-0x01000000)	/* 0xFFFFFFFFFF000000 */
+#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)-0x01000000)	/* 0xFFFFFFFFFF000000 */
 #else
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)-0x00004000)	/* 0xFFFFFFFFFFFFC000 */
+#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)-0x00004000)	/* 0xFFFFFFFFFFFFC000 */
 #endif
 #endif
-#define VM_MAXUSER_ADDRESS32	((vaddr_t)(1UL << 31))	/* 0x0000000080000000 */
+#define	VM_MAXUSER_ADDRESS32	((vaddr_t)(1UL << 31))	/* 0x0000000080000000 */
 
 /*
  * The address to which unspecified mapping requests default
  */
-#define __USE_TOPDOWN_VM
+#define	__USE_TOPDOWN_VM
 
-#define VM_DEFAULT_ADDRESS_TOPDOWN(da, sz) \
+#define	VM_DEFAULT_ADDRESS_TOPDOWN(da, sz) \
     trunc_page(USRSTACK - MAXSSIZ - (sz) - user_stack_guard_size)
-#define VM_DEFAULT_ADDRESS_BOTTOMUP(da, sz) \
+#define	VM_DEFAULT_ADDRESS_BOTTOMUP(da, sz) \
     round_page((vaddr_t)(da) + (vsize_t)maxdmap)
 
-#define VM_DEFAULT_ADDRESS32_TOPDOWN(da, sz) \
+#define	VM_DEFAULT_ADDRESS32_TOPDOWN(da, sz) \
     trunc_page(USRSTACK32 - MAXSSIZ32 - (sz) - user_stack_guard_size)
-#define VM_DEFAULT_ADDRESS32_BOTTOMUP(da, sz) \
+#define	VM_DEFAULT_ADDRESS32_BOTTOMUP(da, sz) \
     round_page((vaddr_t)(da) + (vsize_t)MAXDSIZ32)
 
 /* virtual sizes (bytes) for various kernel submaps */
-#define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
+#define	VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
 /* VM_PHYSSEG_MAX defined by platform-dependent code. */
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
@@ -205,8 +205,8 @@
 
 #ifndef VM_NFREELIST
 #define	VM_NFREELIST		16	/* 16 distinct memory segments */
-#define VM_FREELIST_DEFAULT	0
-#define VM_FREELIST_MAX		1
+#define	VM_FREELIST_DEFAULT	0
+#define	VM_FREELIST_MAX		1
 #endif
 
 #ifdef _KERNEL

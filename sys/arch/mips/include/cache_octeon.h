@@ -1,7 +1,7 @@
-/*	$NetBSD: cache_octeon.h,v 1.4 2020/06/14 08:43:07 simonb Exp $	*/
+/*	$NetBSD: cache_octeon.h,v 1.5 2020/07/26 08:08:41 simonb Exp $	*/
 
 #ifndef _MIPS_CACHE_OCTEON_H_
-#define _MIPS_CACHE_OCTEON_H_
+#define	_MIPS_CACHE_OCTEON_H_
 
 #define	CACHE_OCTEON_I			0
 #define	CACHE_OCTEON_D			1

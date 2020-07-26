@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.17 2019/06/18 21:18:12 kamil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.18 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
  */
 
 #ifndef _MIPS_PTRACE_H_
-#define _MIPS_PTRACE_H_
+#define	_MIPS_PTRACE_H_
 
 /* MIPS PT_STEP PT_FIRSTMACH+0 might be defined by a port specific header */
 #define	PT_GETREGS	(PT_FIRSTMACH + 1)
@@ -51,7 +51,7 @@
 #define	PT_CLEARSTEP	(PT_FIRSTMACH + 6)
 #endif
 
-#define PT_MACHDEP_STRINGS \
+#define	PT_MACHDEP_STRINGS \
 	"PT_STEP", \
 	"PT_GETREGS", \
 	"PT_SETREGS", \
@@ -61,23 +61,23 @@
 	"PT_CLEARSTEP",
 
 #include <machine/reg.h>
-#define PTRACE_REG_PC(r)	(r)->r_regs[35]
-#define PTRACE_REG_FP(r)	(r)->r_regs[30]
-#define PTRACE_REG_SET_PC(r, v)	(r)->r_regs[35] = (v)
-#define PTRACE_REG_SP(r)	(r)->r_regs[29]
-#define PTRACE_REG_INTRV(r)	(r)->r_regs[2]
+#define	PTRACE_REG_PC(r)	(r)->r_regs[35]
+#define	PTRACE_REG_FP(r)	(r)->r_regs[30]
+#define	PTRACE_REG_SET_PC(r, v)	(r)->r_regs[35] = (v)
+#define	PTRACE_REG_SP(r)	(r)->r_regs[29]
+#define	PTRACE_REG_INTRV(r)	(r)->r_regs[2]
 
-#define PTRACE_BREAKPOINT	((const uint8_t[]) { 0x00, 0x00, 0x00, 0x0d })
-#define PTRACE_BREAKPOINT_ASM	__asm __volatile("break")
-#define PTRACE_BREAKPOINT_SIZE	4
+#define	PTRACE_BREAKPOINT	((const uint8_t[]) { 0x00, 0x00, 0x00, 0x0d })
+#define	PTRACE_BREAKPOINT_ASM	__asm __volatile("break")
+#define	PTRACE_BREAKPOINT_SIZE	4
 
 /*
  * Glue for gdb: map NetBSD register names to legacy ptrace register names
  */
-#define GPR_BASE 0
+#define	GPR_BASE 0
 
 #ifndef JB_PC
-#define JB_PC	2	/* pc is at ((long *)jmp_buf)[2] */
+#define	JB_PC	2	/* pc is at ((long *)jmp_buf)[2] */
 #endif
 
 #include <machine/reg.h>	/* Historically in sys/ptrace.h */

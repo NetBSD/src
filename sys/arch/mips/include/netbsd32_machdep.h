@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.5 2017/10/31 12:37:23 martin Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.6 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #ifndef _MACHINE_NETBSD32_H_
-#define _MACHINE_NETBSD32_H_
+#define	_MACHINE_NETBSD32_H_
 
 #include <sys/types.h>
 
@@ -40,7 +40,7 @@
 #define	NETBSD32_POINTER_TYPE			int32_t
 typedef struct { NETBSD32_POINTER_TYPE i32; }	netbsd32_pointer_t;
 
-#define NETBSD32_INT64_ALIGN
+#define	NETBSD32_INT64_ALIGN
 
 typedef netbsd32_pointer_t			netbsd32_sigcontextp_t;
 

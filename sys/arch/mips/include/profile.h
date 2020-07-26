@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.21 2011/02/20 07:45:47 matt Exp $	*/
+/*	$NetBSD: profile.h,v 1.22 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #ifndef _MIPS_PROFILE_H_
-#define _MIPS_PROFILE_H_
+#define	_MIPS_PROFILE_H_
 
 #ifdef _KERNEL
  /*

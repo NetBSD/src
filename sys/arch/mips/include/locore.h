@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.109 2020/07/23 19:22:13 skrll Exp $ */
+/* $NetBSD: locore.h,v 1.110 2020/07/26 08:08:41 simonb Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -26,7 +26,7 @@
  */
 
 #ifndef _MIPS_LOCORE_H
-#define _MIPS_LOCORE_H
+#define	_MIPS_LOCORE_H
 
 #if defined(_KERNEL_OPT)
 #include "opt_cputype.h"
@@ -41,9 +41,9 @@
 #include <mips/reg.h>
 
 #ifndef __BSD_PTENTRY_T__
-#define __BSD_PTENTRY_T__
+#define	__BSD_PTENTRY_T__
 typedef uint32_t pt_entry_t;
-#define PRIxPTE		PRIx32
+#define	PRIxPTE		PRIx32
 #endif
 
 #include <uvm/pmap/tlb.h>
@@ -77,13 +77,13 @@ typedef uint32_t pt_entry_t;
 
 #define	MIPS3_PLUS	1
 #if !defined(MIPS32) && !defined(MIPS32R2)
-#define MIPS3_64BIT	1
+#define	MIPS3_64BIT	1
 #endif
 #if !defined(MIPS3) && !defined(MIPS4)
-#define MIPSNN		1
+#define	MIPSNN		1
 #endif
 #if defined(MIPS32R2) || defined(MIPS64R2)
-#define MIPSNNR2	1
+#define	MIPSNNR2	1
 #endif
 #else
 #undef MIPS3_PLUS
@@ -298,13 +298,13 @@ struct mips_options {
 #else
 #define	MIPS_HAS_R4K_MMU	1
 #if !defined(MIPS3_4100)
-#define MIPS_HAS_LLSC		1
+#define	MIPS_HAS_LLSC		1
 #else
-#define MIPS_HAS_LLSC		(mips_options.mips_has_llsc)
+#define	MIPS_HAS_LLSC		(mips_options.mips_has_llsc)
 #endif
 #endif
 #define	MIPS_HAS_LLADDR		((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
-#define MIPS_HAS_DSP		(mips_options.mips_cpu_flags & CPU_MIPS_HAVE_DSP)
+#define	MIPS_HAS_DSP		(mips_options.mips_cpu_flags & CPU_MIPS_HAVE_DSP)
 # define MIPS_HAS_USERLOCAL	(mips_options.mips_cpu_flags & CPU_MIPS_HAVE_USERLOCAL)
 
 /* This test is ... rather bogus */
@@ -726,33 +726,33 @@ void	mips_page_physload(vaddr_t, vaddr_t,
 /*
  * CPU identification, from PRID register.
  */
-#define MIPS_PRID_REV(x)	(((x) >>  0) & 0x00ff)
-#define MIPS_PRID_IMPL(x)	(((x) >>  8) & 0x00ff)
+#define	MIPS_PRID_REV(x)	(((x) >>  0) & 0x00ff)
+#define	MIPS_PRID_IMPL(x)	(((x) >>  8) & 0x00ff)
 
 /* pre-MIPS32/64 */
-#define MIPS_PRID_RSVD(x)	(((x) >> 16) & 0xffff)
-#define MIPS_PRID_REV_MIN(x)	((MIPS_PRID_REV(x) >> 0) & 0x0f)
-#define MIPS_PRID_REV_MAJ(x)	((MIPS_PRID_REV(x) >> 4) & 0x0f)
+#define	MIPS_PRID_RSVD(x)	(((x) >> 16) & 0xffff)
+#define	MIPS_PRID_REV_MIN(x)	((MIPS_PRID_REV(x) >> 0) & 0x0f)
+#define	MIPS_PRID_REV_MAJ(x)	((MIPS_PRID_REV(x) >> 4) & 0x0f)
 
 /* MIPS32/64 */
-#define MIPS_PRID_CID(x)	(((x) >> 16) & 0x00ff)	/* Company ID */
-#define     MIPS_PRID_CID_PREHISTORIC	0x00	/* Not MIPS32/64 */
-#define     MIPS_PRID_CID_MTI		0x01	/* MIPS Technologies, Inc. */
-#define     MIPS_PRID_CID_BROADCOM	0x02	/* Broadcom */
-#define     MIPS_PRID_CID_ALCHEMY	0x03	/* Alchemy Semiconductor */
-#define     MIPS_PRID_CID_SIBYTE	0x04	/* SiByte */
-#define     MIPS_PRID_CID_SANDCRAFT	0x05	/* SandCraft */
-#define     MIPS_PRID_CID_PHILIPS	0x06	/* Philips */
-#define     MIPS_PRID_CID_TOSHIBA	0x07	/* Toshiba */
-#define     MIPS_PRID_CID_MICROSOFT	0x07	/* Microsoft also, sigh */
-#define     MIPS_PRID_CID_LSI		0x08	/* LSI */
+#define	MIPS_PRID_CID(x)	(((x) >> 16) & 0x00ff)	/* Company ID */
+#define	    MIPS_PRID_CID_PREHISTORIC	0x00	/* Not MIPS32/64 */
+#define	    MIPS_PRID_CID_MTI		0x01	/* MIPS Technologies, Inc. */
+#define	    MIPS_PRID_CID_BROADCOM	0x02	/* Broadcom */
+#define	    MIPS_PRID_CID_ALCHEMY	0x03	/* Alchemy Semiconductor */
+#define	    MIPS_PRID_CID_SIBYTE	0x04	/* SiByte */
+#define	    MIPS_PRID_CID_SANDCRAFT	0x05	/* SandCraft */
+#define	    MIPS_PRID_CID_PHILIPS	0x06	/* Philips */
+#define	    MIPS_PRID_CID_TOSHIBA	0x07	/* Toshiba */
+#define	    MIPS_PRID_CID_MICROSOFT	0x07	/* Microsoft also, sigh */
+#define	    MIPS_PRID_CID_LSI		0x08	/* LSI */
 				/*	0x09	unannounced */
 				/*	0x0a	unannounced */
-#define     MIPS_PRID_CID_LEXRA		0x0b	/* Lexra */
-#define     MIPS_PRID_CID_RMI		0x0c	/* RMI / NetLogic */
-#define     MIPS_PRID_CID_CAVIUM	0x0d	/* Cavium */
-#define     MIPS_PRID_CID_INGENIC	0xe1
-#define MIPS_PRID_COPTS(x)	(((x) >> 24) & 0x00ff)	/* Company Options */
+#define	    MIPS_PRID_CID_LEXRA		0x0b	/* Lexra */
+#define	    MIPS_PRID_CID_RMI		0x0c	/* RMI / NetLogic */
+#define	    MIPS_PRID_CID_CAVIUM	0x0d	/* Cavium */
+#define	    MIPS_PRID_CID_INGENIC	0xe1
+#define	MIPS_PRID_COPTS(x)	(((x) >> 24) & 0x00ff)	/* Company Options */
 
 #ifdef _KERNEL
 /*
@@ -771,43 +771,43 @@ void mips_machdep_cache_config(void);
  */
 
 #if 0
-#define TF_AST		0		/* really zero */
-#define TF_V0		_R_V0
-#define TF_V1		_R_V1
-#define TF_A0		_R_A0
-#define TF_A1		_R_A1
-#define TF_A2		_R_A2
-#define TF_A3		_R_A3
-#define TF_T0		_R_T0
-#define TF_T1		_R_T1
-#define TF_T2		_R_T2
-#define TF_T3		_R_T3
+#define	TF_AST		0		/* really zero */
+#define	TF_V0		_R_V0
+#define	TF_V1		_R_V1
+#define	TF_A0		_R_A0
+#define	TF_A1		_R_A1
+#define	TF_A2		_R_A2
+#define	TF_A3		_R_A3
+#define	TF_T0		_R_T0
+#define	TF_T1		_R_T1
+#define	TF_T2		_R_T2
+#define	TF_T3		_R_T3
 
 #if defined(__mips_n32) || defined(__mips_n64)
-#define TF_A4		_R_A4
-#define TF_A5		_R_A5
-#define TF_A6		_R_A6
-#define TF_A7		_R_A7
+#define	TF_A4		_R_A4
+#define	TF_A5		_R_A5
+#define	TF_A6		_R_A6
+#define	TF_A7		_R_A7
 #else
-#define TF_T4		_R_T4
-#define TF_T5		_R_T5
-#define TF_T6		_R_T6
-#define TF_T7		_R_T7
+#define	TF_T4		_R_T4
+#define	TF_T5		_R_T5
+#define	TF_T6		_R_T6
+#define	TF_T7		_R_T7
 #endif /* __mips_n32 || __mips_n64 */
 
-#define TF_TA0		_R_TA0
-#define TF_TA1		_R_TA1
-#define TF_TA2		_R_TA2
-#define TF_TA3		_R_TA3
+#define	TF_TA0		_R_TA0
+#define	TF_TA1		_R_TA1
+#define	TF_TA2		_R_TA2
+#define	TF_TA3		_R_TA3
 
-#define TF_T8		_R_T8
-#define TF_T9		_R_T9
+#define	TF_T8		_R_T8
+#define	TF_T9		_R_T9
 
-#define TF_RA		_R_RA
-#define TF_SR		_R_SR
-#define TF_MULLO	_R_MULLO
-#define TF_MULHI	_R_MULLO
-#define TF_EPC		_R_PC		/* may be changed by trap() call */
+#define	TF_RA		_R_RA
+#define	TF_SR		_R_SR
+#define	TF_MULLO	_R_MULLO
+#define	TF_MULHI	_R_MULLO
+#define	TF_EPC		_R_PC		/* may be changed by trap() call */
 
 #define	TF_NREGS	(sizeof(struct reg) / sizeof(mips_reg_t))
 #endif
@@ -864,20 +864,20 @@ struct pridtab {
 /*
  * bitfield defines for cpu_cp0flags
  */
-#define  MIPS_CP0FL_USE		__BIT(0)	/* use these flags */
-#define  MIPS_CP0FL_ECC		__BIT(1)
-#define  MIPS_CP0FL_CACHE_ERR	__BIT(2)
-#define  MIPS_CP0FL_EIRR	__BIT(3)
-#define  MIPS_CP0FL_EIMR	__BIT(4)
-#define  MIPS_CP0FL_EBASE	__BIT(5)  /* XXX probeable - shouldn't be hard coded */
-#define  MIPS_CP0FL_CONFIG	__BIT(6)  /* XXX defined - doesn't need to be hard coded */
-#define  MIPS_CP0FL_CONFIG1	__BIT(7)  /* XXX probeable - shouldn't be hard coded */
-#define  MIPS_CP0FL_CONFIG2	__BIT(8)  /* XXX probeable - shouldn't be hard coded */
-#define  MIPS_CP0FL_CONFIG3	__BIT(9)  /* XXX probeable - shouldn't be hard coded */
-#define  MIPS_CP0FL_CONFIG4	__BIT(10) /* XXX probeable - shouldn't be hard coded */
-#define  MIPS_CP0FL_CONFIG5	__BIT(11) /* XXX probeable - shouldn't be hard coded */
-#define  MIPS_CP0FL_CONFIG6	__BIT(12) /* XXX probeable - shouldn't be hard coded */
-#define  MIPS_CP0FL_CONFIG7	__BIT(13) /* XXX probeable - shouldn't be hard coded */
+#define	 MIPS_CP0FL_USE		__BIT(0)	/* use these flags */
+#define	 MIPS_CP0FL_ECC		__BIT(1)
+#define	 MIPS_CP0FL_CACHE_ERR	__BIT(2)
+#define	 MIPS_CP0FL_EIRR	__BIT(3)
+#define	 MIPS_CP0FL_EIMR	__BIT(4)
+#define	 MIPS_CP0FL_EBASE	__BIT(5)  /* XXX probeable - shouldn't be hard coded */
+#define	 MIPS_CP0FL_CONFIG	__BIT(6)  /* XXX defined - doesn't need to be hard coded */
+#define	 MIPS_CP0FL_CONFIG1	__BIT(7)  /* XXX probeable - shouldn't be hard coded */
+#define	 MIPS_CP0FL_CONFIG2	__BIT(8)  /* XXX probeable - shouldn't be hard coded */
+#define	 MIPS_CP0FL_CONFIG3	__BIT(9)  /* XXX probeable - shouldn't be hard coded */
+#define	 MIPS_CP0FL_CONFIG4	__BIT(10) /* XXX probeable - shouldn't be hard coded */
+#define	 MIPS_CP0FL_CONFIG5	__BIT(11) /* XXX probeable - shouldn't be hard coded */
+#define	 MIPS_CP0FL_CONFIG6	__BIT(12) /* XXX probeable - shouldn't be hard coded */
+#define	 MIPS_CP0FL_CONFIG7	__BIT(13) /* XXX probeable - shouldn't be hard coded */
 
 /*
  * cpu_cidflags defines, by company
@@ -885,13 +885,13 @@ struct pridtab {
 /*
  * RMI company-specific cpu_cidflags
  */
-#define MIPS_CIDFL_RMI_TYPE		__BITS(2,0)
+#define	MIPS_CIDFL_RMI_TYPE		__BITS(2,0)
 # define  CIDFL_RMI_TYPE_XLR		0
 # define  CIDFL_RMI_TYPE_XLS		1
 # define  CIDFL_RMI_TYPE_XLP		2
-#define MIPS_CIDFL_RMI_THREADS_MASK	__BITS(6,3)
+#define	MIPS_CIDFL_RMI_THREADS_MASK	__BITS(6,3)
 # define MIPS_CIDFL_RMI_THREADS_SHIFT	3
-#define MIPS_CIDFL_RMI_CORES_MASK	__BITS(10,7)
+#define	MIPS_CIDFL_RMI_CORES_MASK	__BITS(10,7)
 # define MIPS_CIDFL_RMI_CORES_SHIFT	7
 # define LOG2_1	0
 # define LOG2_2	1
@@ -906,7 +906,7 @@ struct pridtab {
 # define MIPS_CIDFL_RMI_NCORES(cidfl)					\
 		(1 << (((cidfl) & MIPS_CIDFL_RMI_CORES_MASK)		\
 			>> MIPS_CIDFL_RMI_CORES_SHIFT))
-#define MIPS_CIDFL_RMI_L2SZ_MASK	__BITS(14,11)
+#define	MIPS_CIDFL_RMI_L2SZ_MASK	__BITS(14,11)
 # define MIPS_CIDFL_RMI_L2SZ_SHIFT	11
 # define RMI_L2SZ_256KB	 0
 # define RMI_L2SZ_512KB  1

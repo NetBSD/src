@@ -1,4 +1,4 @@
-/*	$NetBSD: int_fmtio.h,v 1.6 2014/08/13 19:48:17 matt Exp $	*/
+/*	$NetBSD: int_fmtio.h,v 1.7 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #ifndef _MIPS_INT_FMTIO_H_
-#define _MIPS_INT_FMTIO_H_
+#define	_MIPS_INT_FMTIO_H_
 
 #ifdef __INTPTR_FMTd__
 #include <sys/common_int_fmtio.h>

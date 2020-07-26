@@ -1,4 +1,4 @@
-/*	$NetBSD: kdbparam.h,v 1.8 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: kdbparam.h,v 1.9 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,14 +39,14 @@
  */
 
 #if BYTE_ORDER == LITTLE_ENDIAN
-#define kdbshorten(w)	((w) & 0xFFFF)
+#define	kdbshorten(w)	((w) & 0xFFFF)
 #define	kdbbyte(w)	((w) & 0xFF)
 #define	kdbitol(a,b)	((long)(((b) << 16) | ((a) & 0xFFFF)))
 #define	kdbbtol(a)	((long)(a))
 #endif
 
-#define LPRMODE		"%R"
-#define OFFMODE		"+%R"
+#define	LPRMODE		"%R"
+#define	OFFMODE		"+%R"
 
 #define	SETBP(ins)	MIPS_BREAK_BRKPT
 

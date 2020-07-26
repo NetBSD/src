@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar_limits.h,v 1.3 2008/04/28 20:23:28 martin Exp $	*/
+/*	$NetBSD: wchar_limits.h,v 1.4 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #ifndef _MIPS_WCHAR_LIMITS_H_
-#define _MIPS_WCHAR_LIMITS_H_
+#define	_MIPS_WCHAR_LIMITS_H_
 
 /*
  * 7.18.3 Limits of other integer types

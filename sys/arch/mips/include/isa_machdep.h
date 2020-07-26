@@ -1,4 +1,4 @@
-/* $NetBSD: isa_machdep.h,v 1.8 2016/10/18 22:04:34 jdolecek Exp $ */
+/* $NetBSD: isa_machdep.h,v 1.9 2020/07/26 08:08:41 simonb Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -135,9 +135,9 @@ struct mips_isa_chipset {
 	_isa_dmamem_unmap(&(ic)->ic_dmastate, (c), (k), (s))
 #define	isa_dmamem_mmap(ic, c, a, s, o, p, f)				\
 	_isa_dmamem_mmap(&(ic)->ic_dmastate, (c), (a), (s), (o), (p), (f))
-#define isa_drq_alloc(ic, c)						\
+#define	isa_drq_alloc(ic, c)						\
 	_isa_drq_alloc(&(ic)->ic_dmastate, c)
-#define isa_drq_free(ic, c)						\
+#define	isa_drq_free(ic, c)						\
 	_isa_drq_free(&(ic)->ic_dmastate, c)
 #define	isa_drq_isfree(ic, c)						\
 	_isa_drq_isfree(&(ic)->ic_dmastate, (c))
@@ -151,7 +151,7 @@ struct mips_isa_chipset {
 /*
  * mips-specific ISA functions.
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
- */ 
+ */
 #define	isa_intr_string(c, i, buf, len)					\
     (*(c)->ic_intr_string)((c)->ic_v, (i), buf, len)
 

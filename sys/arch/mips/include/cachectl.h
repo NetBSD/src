@@ -1,4 +1,4 @@
-/*	$NetBSD: cachectl.h,v 1.10 2012/03/29 21:20:08 christos Exp $	*/
+/*	$NetBSD: cachectl.h,v 1.11 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #ifndef _MIPS_CACHECTL_H_
-#define _MIPS_CACHECTL_H_
+#define	_MIPS_CACHECTL_H_
 
 #include <sys/cdefs.h>
 
@@ -42,16 +42,16 @@ int  _cacheflush(void *, size_t, int);
 int  cacheflush(void *, size_t, int);
 
 					/* cacheflush() flags: */
-#define ICACHE	0x01			/* invalidate I-cache */
-#define DCACHE	0x02			/* writeback and invalidate D-cache */
-#define BCACHE	(ICACHE|DCACHE)		/* invalidate both caches, as above */
+#define	ICACHE	0x01			/* invalidate I-cache */
+#define	DCACHE	0x02			/* writeback and invalidate D-cache */
+#define	BCACHE	(ICACHE|DCACHE)		/* invalidate both caches, as above */
 
 
 int  cachectl(void *, size_t, int);
 
 					/* cachectl() cache operations: */
-#define CACHEABLE       0x00		/* make page(s) cacheable */
-#define UNCACHEABLE     0x01		/* make page(s) uncacheable */
+#define	CACHEABLE       0x00		/* make page(s) cacheable */
+#define	UNCACHEABLE     0x01		/* make page(s) uncacheable */
 
 __END_DECLS
 

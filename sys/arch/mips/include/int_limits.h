@@ -1,4 +1,4 @@
-/*	$NetBSD: int_limits.h,v 1.9 2014/08/13 22:31:07 matt Exp $	*/
+/*	$NetBSD: int_limits.h,v 1.10 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #ifndef _MIPS_INT_LIMITS_H_
-#define _MIPS_INT_LIMITS_H_
+#define	_MIPS_INT_LIMITS_H_
 
 #ifdef __SIG_ATOMIC_MAX__
 #include <sys/common_int_limits.h>
@@ -104,7 +104,7 @@
 #endif
 
 /* 7.18.2.3 Limits of fastest minimum-width integer types */
- 
+
 /* minimum values of fastest minimum-width signed integer types */
 #define	INT_FAST8_MIN	(-0x7fffffff-1)			/* int_fast8_t	  */
 #define	INT_FAST16_MIN	(-0x7fffffff-1)			/* int_fast16_t	  */
