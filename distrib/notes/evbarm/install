@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.14 2020/07/18 16:41:14 nia Exp $
+.\"	$NetBSD: install,v 1.15 2020/07/26 11:00:28 jmcneill Exp $
 .\"
 .\" Copyright (c) 2001-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Ss2 Installation for ARMv7 and AArch64 devices with U-Boot
+.Ss2 Installation for Armv7 and AArch64 devices with U-Boot
 .Bl -bullet -offset indent -compact
 .It
 Download or build armv7.img.gz (32-bit) or arm64.img.gz (64-bit).
@@ -73,14 +73,14 @@ If you do not want to prepare a SD card image manually, NetBSD developer
 Jared McNeill provides pre-prepared images on his website
 .Lk http://www.armbsd.org/arm/ "armbsd.org" .
 .Ss2 Installing NetBSD/evbarm to a SATA hard disk
-Some ARM boards offer a SATA interface, and you might want to install NetBSD
+Some Arm boards offer a SATA interface, and you might want to install NetBSD
 to a hard disk after you've got it running from an SD card.
 You can do this using 
 .Xr sysinst 8
 from within NetBSD.
 .Pp
 There are instructions for using
-.Lk https://wiki.netbsd.org/ports/evbarm/install_using_sysinst/ "sysinst on ARM"
+.Lk https://wiki.netbsd.org/ports/evbarm/install_using_sysinst/ "sysinst on Arm"
 on the NetBSD wiki.
 The main difference from installing on other ports is that a FAT32
 partition is required for /boot.
