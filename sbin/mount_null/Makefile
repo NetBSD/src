@@ -1,13 +1,15 @@
-#	$NetBSD: Makefile,v 1.12 2005/06/27 01:00:06 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2020/07/26 08:20:22 mlelstv Exp $
 #	@(#)Makefile	8.3 (Berkeley) 3/27/94
 
 .include <bsd.own.mk>
 
 PROG=	mount_null
-SRCS=	mount_null.c
+SRCS=	mount_null.c pathadj.c
 MAN=	mount_null.8
 
-CPPFLAGS+= -I${NETBSDSRCDIR}/sys
+MOUNT=  ${NETBSDSRCDIR}/sbin/mount
+CPPFLAGS+= -I${NETBSDSRCDIR}/sys -I${MOUNT}
+.PATH:  ${MOUNT}
 
 DPADD+=${LIBUTIL}
 LDADD+=-lutil
