@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.12 2020/07/18 16:41:14 nia Exp $
+.\"	$NetBSD: prep,v 1.13 2020/07/26 11:00:28 jmcneill Exp $
 .\"
 .\" Copyright (c) 2001-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .
 .Pp
 After writing an SD card image, there are generally no specific
-preparation steps needed for ARM.
+preparation steps needed for Arm.
 .Pp
 Once the system is booted, the init system will resize the root partition
 to take up the entire disk.
