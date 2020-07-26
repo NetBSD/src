@@ -1,4 +1,4 @@
-/*	$NetBSD: unwind.c,v 1.4 2020/01/22 16:07:40 mgorny Exp $	*/
+/*	$NetBSD: unwind.c,v 1.5 2020/07/26 15:53:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -67,7 +67,9 @@ backtrace(void **arr, size_t len)
 	ctx.n = (size_t)~0;
 
 	_Unwind_Backtrace(tracer, &ctx);
-	if (ctx.n != (size_t)~0 && ctx.n > 0)
+	if (ctx.n == (size_t)~0)
+		ctx.n = 0;
+	else if (ctx.n > 0)
 		ctx.arr[--ctx.n] = NULL;	/* Skip frame below __start */
 
 	return ctx.n;
