@@ -1,4 +1,4 @@
-/* $NetBSD: mount_ados.c,v 1.29 2011/08/29 14:35:00 joerg Exp $ */
+/* $NetBSD: mount_ados.c,v 1.30 2020/07/26 08:20:22 mlelstv Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_ados.c,v 1.29 2011/08/29 14:35:00 joerg Exp $");
+__RCSID("$NetBSD: mount_ados.c,v 1.30 2020/07/26 08:20:22 mlelstv Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -120,21 +120,11 @@ mount_ados(int argc, char **argv)
 	dev = argv[optind];
 	dir = argv[optind + 1];
 
-	if (realpath(dev, canon_dev) == NULL)        /* Check device path */
-		err(1, "realpath %s", dev);
-	if (strncmp(dev, canon_dev, MAXPATHLEN)) {
-		warnx("\"%s\" is a relative path.", dev);
-		dev = canon_dev;
-		warnx("using \"%s\" instead.", dev);
-	}
+	pathadj(dev, canon_dev);
+	dev = canon_dev;
 
-	if (realpath(dir, canon_dir) == NULL)        /* Check mounton path */
-		err(1, "realpath %s", dir);
-	if (strncmp(dir, canon_dir, MAXPATHLEN)) {
-		warnx("\"%s\" is a relative path.", dir);
-		dir = canon_dir;
-		warnx("using \"%s\" instead.", dir);
-	}
+	pathadj(dir, canon_dir);
+	dir = canon_dir;
 
 	args.fspec = dev;
 	if (!set_gid || !set_uid || !set_mask) {

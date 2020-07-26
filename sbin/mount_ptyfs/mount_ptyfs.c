@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_ptyfs.c,v 1.17 2016/09/05 01:09:57 sevan Exp $	*/
+/*	$NetBSD: mount_ptyfs.c,v 1.18 2020/07/26 08:20:23 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_ptyfs.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_ptyfs.c,v 1.17 2016/09/05 01:09:57 sevan Exp $");
+__RCSID("$NetBSD: mount_ptyfs.c,v 1.18 2020/07/26 08:20:23 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,6 +97,8 @@ __RCSID("$NetBSD: mount_ptyfs.c,v 1.17 2016/09/05 01:09:57 sevan Exp $");
 #include <util.h>
 
 #include <mntopts.h>
+
+#include "mountprog.h"
 
 #define ALTF_GROUP	0x1
 #define ALTF_MODE	0x2
@@ -202,12 +204,7 @@ mount_ptyfs(int argc, char *argv[])
 	if (argc != 2)
 		usage();
 
-	if (realpath(argv[1], canon_dir) == NULL)   /* Check mounton path */
-		err(1, "realpath %s", argv[1]);
-	if (strncmp(argv[1], canon_dir, MAXPATHLEN)) {
-		warnx("\"%s\" is a relative path.", argv[1]);
-		warnx("using \"%s\" instead.", canon_dir);
-	}
+	pathadj(argv[1], canon_dir);
 
 	if (mount(MOUNT_PTYFS, canon_dir, mntflags, &args, sizeof args) == -1)
 		err(1, "ptyfs on %s", canon_dir);

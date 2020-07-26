@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_kernfs.c,v 1.25 2011/08/29 14:35:01 joerg Exp $	*/
+/*	$NetBSD: mount_kernfs.c,v 1.26 2020/07/26 08:20:22 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_kernfs.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_kernfs.c,v 1.25 2011/08/29 14:35:01 joerg Exp $");
+__RCSID("$NetBSD: mount_kernfs.c,v 1.26 2020/07/26 08:20:22 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,6 +92,7 @@ __RCSID("$NetBSD: mount_kernfs.c,v 1.25 2011/08/29 14:35:01 joerg Exp $");
 
 #include <mntopts.h>
 
+#include "mountprog.h"
 #include "mount_kernfs.h"
 
 static const struct mntopt mopts[] = {
@@ -142,12 +143,7 @@ mount_kernfs_parseargs(int argc, char *argv[], void *dummy, int *mntflags,
 		exit(0);
 
 	strlcpy(canon_dev, argv[0], MAXPATHLEN);
-	if (realpath(argv[1], canon_dir) == NULL)    /* Check mounton path */
-		err(1, "realpath %s", argv[1]);
-	if (strncmp(argv[1], canon_dir, MAXPATHLEN)) {
-		warnx("\"%s\" is a relative path.", argv[1]);
-		warnx("using \"%s\" instead.", canon_dir);
-	}
+	pathadj(argv[1], canon_dir);
 }
 
 int

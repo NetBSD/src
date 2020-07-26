@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_autofs.c,v 1.4 2019/11/20 17:18:35 tkusumi Exp $	*/
+/*	$NetBSD: mount_autofs.c,v 1.5 2020/07/26 08:20:22 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_autofs.c,v 1.4 2019/11/20 17:18:35 tkusumi Exp $");
+__RCSID("$NetBSD: mount_autofs.c,v 1.5 2020/07/26 08:20:22 mlelstv Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: mount_autofs.c,v 1.4 2019/11/20 17:18:35 tkusumi Exp $");
 
 #include <fs/autofs/autofs_mount.h>
 
+#include "mountprog.h"
 #include "mount_autofs.h"
 
 static const struct mntopt mopts[] = {
@@ -102,12 +103,7 @@ mount_autofs_parseargs(int argc, char *argv[], void *v, int *mntflags,
 		usage();
 
 	strlcpy(canon_dev, argv[0], MAXPATHLEN);
-	if (realpath(argv[1], canon_dir) == NULL)    /* Check mounton path */
-		err(EXIT_FAILURE, "realpath %s", canon_dir);
-	if (strncmp(argv[1], canon_dir, MAXPATHLEN)) {
-		warnx("\"%s\" is a relative path.", argv[1]);
-		warnx("using \"%s\" instead.", canon_dir);
-	}
+	pathadj(argv[1], canon_dir);
 }
 
 int
