@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsNN.h,v 1.8 2020/06/13 14:41:24 simonb Exp $	*/
+/*	$NetBSD: mipsNN.h,v 1.9 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*
  * Copyright 2000, 2001
@@ -153,10 +153,10 @@
 #define	MIPSNN_CFG1_DA(x)	MIPSNN_GET(CFG1_DA, (x))
 
 /* "C2" (R): Coprocessor 2 implemented if set. */
-#define MIPSNN_CFG1_C2		0x00000040
+#define	MIPSNN_CFG1_C2		0x00000040
 
 /* "MD" (R): MDMX ASE implemented if set. */
-#define MIPSNN_CFG1_MD		0x00000020
+#define	MIPSNN_CFG1_MD		0x00000020
 
 /* "PC" (R): Performance Counters implemented if set. */
 #define	MIPSNN_CFG1_PC		0x00000010
@@ -304,27 +304,27 @@
  */
 
 /* "CTLB_SIZE" (R): Number of Combined TLB entries - 1. */
-#define MIPSNN_RMIXLP_CFG6_CTLB_SIZE_MASK	0xffff0000
-#define MIPSNN_RMIXLP_CFG6_CTLB_SIZE_SHIFT	16
+#define	MIPSNN_RMIXLP_CFG6_CTLB_SIZE_MASK	0xffff0000
+#define	MIPSNN_RMIXLP_CFG6_CTLB_SIZE_SHIFT	16
 
 /* "VTLB_SIZE" (R): Number of Variable TLB entries - 1. */
-#define MIPSNN_RMIXLP_CFG6_VTLB_SIZE_MASK	0x0000ffc0
-#define MIPSNN_RMIXLP_CFG6_VTLB_SIZE_SHIFT	6
+#define	MIPSNN_RMIXLP_CFG6_VTLB_SIZE_MASK	0x0000ffc0
+#define	MIPSNN_RMIXLP_CFG6_VTLB_SIZE_SHIFT	6
 
 /* "ELVT" (RW): Enable Large Variable TLB. */
-#define MIPSNN_RMIXLP_CFG6_ELVT			0x00000020
+#define	MIPSNN_RMIXLP_CFG6_ELVT			0x00000020
 
 /* "EPW" (RW): Enable PageWalker. */
-#define MIPSNN_RMIXLP_CFG6_EPW			0x00000008
+#define	MIPSNN_RMIXLP_CFG6_EPW			0x00000008
 
 /* "EFT" (RW): Enable Fixed TLB. */
-#define MIPSNN_RMIXLP_CFG6_EFT			0x00000004
+#define	MIPSNN_RMIXLP_CFG6_EFT			0x00000004
 
 /* "PWI" (R): PageWalker implemented. */
-#define MIPSNN_RMIXLP_CFG6_PWI			0x00000001
+#define	MIPSNN_RMIXLP_CFG6_PWI			0x00000001
 
 /* "FTI" (R): Fixed TLB implemented. */
-#define MIPSNN_RMIXLP_CFG6_FTI			0x00000001
+#define	MIPSNN_RMIXLP_CFG6_FTI			0x00000001
 
 /*
  * Values in Configuration Register 7 (CP0 Register 16, Select 7)
@@ -332,11 +332,11 @@
  */
 
 /* "LG" (RW): Small or Large Page. */
-#define MIPSNN_RMIXLP_CFG7_LG_MASK	__BIT(61)
+#define	MIPSNN_RMIXLP_CFG7_LG_MASK	__BIT(61)
 
 /* "MASKLG" (RW): large page size supported in CAM only. */
-#define MIPSNN_RMIXLP_CFG7_MASKLG_MASK	0x0000ff00
-#define MIPSNN_RMIXLP_CFG7_MASKLG_SHIFT	8
+#define	MIPSNN_RMIXLP_CFG7_MASKLG_MASK	0x0000ff00
+#define	MIPSNN_RMIXLP_CFG7_MASKLG_SHIFT	8
 
 #define	MIPSNN_RMIXLP_CFG7_MASKLG_4KB	(0xff >> 8)
 #define	MIPSNN_RMIXLP_CFG7_MASKLG_16KB	(0xff >> 7)
@@ -349,8 +349,8 @@
 #define	MIPSNN_RMIXLP_CFG7_MASKLG_256MB	(0xff >> 0)
 
 /* "MASKSM" (RW): small page size supported in CAM/RAM. */
-#define MIPSNN_RMIXLP_CFG7_MASKSM_MASK	0x000000ff
-#define MIPSNN_RMIXLP_CFG7_MASKSM_SHIFT	0
+#define	MIPSNN_RMIXLP_CFG7_MASKSM_MASK	0x000000ff
+#define	MIPSNN_RMIXLP_CFG7_MASKSM_SHIFT	0
 
 #define	MIPSNN_RMIXLP_CFG7_MASKSM_4KB	(0xff >> 8)
 #define	MIPSNN_RMIXLP_CFG7_MASKSM_16KB	(0xff >> 7)
@@ -367,33 +367,33 @@
  * for the MTI 74K and 1074K cores.
  */
 /* "SPCD" (R/W): Sleep state Perforance Counter Disable. */
-#define MIPSNN_MTI_CFG6_SPCD		__BIT(14)
+#define	MIPSNN_MTI_CFG6_SPCD		__BIT(14)
 
 /* "SYND" (R/W): SYNonym tag update Disable. */
-#define MIPSNN_MTI_CFG6_SYND		__BIT(13)
+#define	MIPSNN_MTI_CFG6_SYND		__BIT(13)
 
 /* "IFUPerfCtl" (R/W): IFU Performance Control. */
-#define MIPSNN_MTI_CFG6_IFU_PERF_CTL_MASK			__BIT(12:10)
-#define MIPSNN_MTI_CFG6_IFU_PERF_CTL_STALL			0
-#define MIPSNN_MTI_CFG6_IFU_PERF_CTL_JUMP			1
-#define MIPSNN_MTI_CFG6_IFU_PERF_CTL_STALLED_INSN		2
-#define MIPSNN_MTI_CFG6_IFU_PERF_CTL_CACHE_MISPREDICTION	3
-#define MIPSNN_MTI_CFG6_IFU_PERF_CTL_CACHE_PREDICTION		4
-#define MIPSNN_MTI_CFG6_IFU_PERF_CTL_BAD_JR_CACHE_ENTRY		5
-#define MIPSNN_MTI_CFG6_IFU_PERF_CTL_UNIMPL			6
-#define MIPSNN_MTI_CFG6_IFU_PERF_CTL_CBRACH_TAKEN		7
+#define	MIPSNN_MTI_CFG6_IFU_PERF_CTL_MASK			__BIT(12:10)
+#define	MIPSNN_MTI_CFG6_IFU_PERF_CTL_STALL			0
+#define	MIPSNN_MTI_CFG6_IFU_PERF_CTL_JUMP			1
+#define	MIPSNN_MTI_CFG6_IFU_PERF_CTL_STALLED_INSN		2
+#define	MIPSNN_MTI_CFG6_IFU_PERF_CTL_CACHE_MISPREDICTION	3
+#define	MIPSNN_MTI_CFG6_IFU_PERF_CTL_CACHE_PREDICTION		4
+#define	MIPSNN_MTI_CFG6_IFU_PERF_CTL_BAD_JR_CACHE_ENTRY		5
+#define	MIPSNN_MTI_CFG6_IFU_PERF_CTL_UNIMPL			6
+#define	MIPSNN_MTI_CFG6_IFU_PERF_CTL_CBRACH_TAKEN		7
 
 /* "NMRUP" (R): Most Recently Used JTLB Replacement scheme Present. */
-#define MIPSNN_MTI_CFG6_NMRUP		__BIT(9)	/* 1: implemented */
+#define	MIPSNN_MTI_CFG6_NMRUP		__BIT(9)	/* 1: implemented */
 
 /* "NMRUD" (R/W): NMRU Disable. */
-#define MIPSNN_MTI_CFG6_NMRUD		__BIT(8)	/* 1: TLBWR is random */
+#define	MIPSNN_MTI_CFG6_NMRUD		__BIT(8)	/* 1: TLBWR is random */
 
 /* "JRCP" (R): JR Cache Present. */
-#define MIPSNN_MTI_CFG6_JRCP		__BIT(1)	/* 1: implemented */
+#define	MIPSNN_MTI_CFG6_JRCP		__BIT(1)	/* 1: implemented */
 
 /* "JRCD" (R/W): JR Cache prediction Disable. */
-#define MIPSNN_MTI_CFG6_JRCD		__BIT(0)	/* 1: disabled */
+#define	MIPSNN_MTI_CFG6_JRCD		__BIT(0)	/* 1: disabled */
 
 
 /*
@@ -402,52 +402,52 @@
  */
 
 /* "WII" (R): Wait IE Ignore. */
-#define MIPSNN_MTI_CFG7_WII		__BIT(31)
+#define	MIPSNN_MTI_CFG7_WII		__BIT(31)
 
 /* "FPFS" (R/W): Fast Prepare For Store (74K, 1074K) */
-#define MIPSNN_MTI_CFG7_FPFS		__BIT(30)
+#define	MIPSNN_MTI_CFG7_FPFS		__BIT(30)
 
 /* "IHB" (R/W): Implicit HB (74K, 1074K) */
-#define MIPSNN_MTI_CFG7_IHB		__BIT(29)
+#define	MIPSNN_MTI_CFG7_IHB		__BIT(29)
 
 /* "FPR1" (R): Float Point Ratio 1 (74K, 1074K). */
-#define MIPSNN_MTI_CFG7_FPR1		__BIT(28)	/* 1: 3:2 */
+#define	MIPSNN_MTI_CFG7_FPR1		__BIT(28)	/* 1: 3:2 */
 
 /* "SEHB" (R/W): slow EHB (74K, 1074K) */
-#define MIPSNN_MTI_CFG7_SEHB		__BIT(27)
+#define	MIPSNN_MTI_CFG7_SEHB		__BIT(27)
 
 /* "CP2IO" (R/W): Force COP2 data to be in-order (74K, 1074K) */
-#define MIPSNN_MTI_CFG7_CP2IO		__BIT(26)
+#define	MIPSNN_MTI_CFG7_CP2IO		__BIT(26)
 
 /* "IAGN" (R/W): Issue LSU-side instructions in program order (74K, 1074K) */
-#define MIPSNN_MTI_CFG7_IAGN		__BIT(25)
+#define	MIPSNN_MTI_CFG7_IAGN		__BIT(25)
 
 /* "IAGN" (R/W): Issue LSU-side instructions in program order (74K, 1074K) */
-#define MIPSNN_MTI_CFG7_IAGN		__BIT(25)
+#define	MIPSNN_MTI_CFG7_IAGN		__BIT(25)
 
 /* "IALU" (R/W): Issue ALU-side instructions in program order (74K, 1074K) */
-#define MIPSNN_MTI_CFG7_IALU		__BIT(24)
+#define	MIPSNN_MTI_CFG7_IALU		__BIT(24)
 
 /* "DGHR" (R/W): disable global history in branch prediction (74K, 1074K). */
-#define MIPSNN_MTI_CFG7_DGHR		__BIT(23)	/* 1: disable */
+#define	MIPSNN_MTI_CFG7_DGHR		__BIT(23)	/* 1: disable */
 
 /* "SG" (R/W): Single Graduation per cycle (74K, 1074K). */
-#define MIPSNN_MTI_CFG7_SG		__BIT(22)	/* 1: no superscalar */
+#define	MIPSNN_MTI_CFG7_SG		__BIT(22)	/* 1: no superscalar */
 
 /* "SUI" (R/W): Strict Uncached Instruction (SUI) policy control (74K, 1074K). */
-#define MIPSNN_MTI_CFG7_SUI		__BIT(21)
+#define	MIPSNN_MTI_CFG7_SUI		__BIT(21)
 
 /* "NCWB" (R/W): Non-Choerent WriteBack (1004K). */
-#define MIPSNN_MTI_CFG7_NCWB		__BIT(20)
+#define	MIPSNN_MTI_CFG7_NCWB		__BIT(20)
 
 /* "PCT" (R): Performance Counters per TC (34K, 1004K). */
-#define MIPSNN_MTI_CFG7_PCT		__BIT(19)
+#define	MIPSNN_MTI_CFG7_PCT		__BIT(19)
 
 /* "HCI" (R): Hardware Cache Initialization. */
-#define MIPSNN_MTI_CFG7_HCI		__BIT(18)
+#define	MIPSNN_MTI_CFG7_HCI		__BIT(18)
 
 /* "FPR" (R): Float Point Ratio. */
-#define MIPSNN_MTI_CFG7_FPR0		__BIT(17)	/* 1: half speed */
+#define	MIPSNN_MTI_CFG7_FPR0		__BIT(17)	/* 1: half speed */
 
 #define	MIPSNN_MTI_CFG7_FPR_MASK	(MIPSNN_MTI_CFG7_FPR1|MIPSNN_MTI_CFG7_FPR0)
 #define	MIPSNN_MTI_CFG7_FPR_SHIFT	0
@@ -457,10 +457,10 @@
 #define	MIPSNN_MTI_CFG7_FPR_RESERVED	MIPSNN_MTI_CFG7_FPR_MASK
 
 /* "AR" (R): Alias Removal. */
-#define MIPSNN_MTI_CFG7_AR		__BIT(16)	/* 1: no virt aliases */
+#define	MIPSNN_MTI_CFG7_AR		__BIT(16)	/* 1: no virt aliases */
 
 /* "PREF" (R/W): Instruction Prefetching (74K, 1074K). */
-#define MIPSNN_MTI_CFG7_PREF_MASK	__BITS(12:11)
+#define	MIPSNN_MTI_CFG7_PREF_MASK	__BITS(12:11)
 #define	MIPSNN_MTI_CFG7_PREF_SHIFT	11
 #define	MIPSNN_MTI_CFG7_PREF_DISABLE	0
 #define	MIPSNN_MTI_CFG7_PREF_ONELINE	1
@@ -468,34 +468,34 @@
 #define	MIPSNN_MTI_CFG7_PREF_TWOLINES	3
 
 /* "IAR" (R): Instruction Alias Removal. */
-#define MIPSNN_MTI_CFG7_IAR		__BIT(10)	/* 1: no virt aliases */
+#define	MIPSNN_MTI_CFG7_IAR		__BIT(10)	/* 1: no virt aliases */
 
 /* "IVA" (R or RW): Instruction Virtual Alias fix disable. */
-#define MIPSNN_MTI_CFG7_IVA		__BIT(9)	/* 1: fix disable */
+#define	MIPSNN_MTI_CFG7_IVA		__BIT(9)	/* 1: fix disable */
 
 /* "ES" (RW): External Sync. */
-#define MIPSNN_MTI_CFG7_ES		__BIT(8)
+#define	MIPSNN_MTI_CFG7_ES		__BIT(8)
 
 /* "BTLM" (RW): Block TC on Load Miss. */
-#define MIPSNN_MTI_CFG7_BTLM		__BIT(7)
+#define	MIPSNN_MTI_CFG7_BTLM		__BIT(7)
 
 /* "CPOOO" (RW): Out-Of-Order on Coprocessor interfaces (COP0/COP1). */
-#define MIPSNN_MTI_CFG7_CPOOO		__BIT(6)	/* 1: disable OOO */
+#define	MIPSNN_MTI_CFG7_CPOOO		__BIT(6)	/* 1: disable OOO */
 
 /* "NBLSU" (RW): Non-Blocking LSU. (24K, 34K) */
-#define MIPSNN_MTI_CFG7_NBLSU		__BIT(5)	/* 1: stalls pipeline */
+#define	MIPSNN_MTI_CFG7_NBLSU		__BIT(5)	/* 1: stalls pipeline */
 
 /* "UBL" (RW): Uncached Loads Blocking. */
-#define MIPSNN_MTI_CFG7_UBL		__BIT(4)	/* 1: blocking loads */
+#define	MIPSNN_MTI_CFG7_UBL		__BIT(4)	/* 1: blocking loads */
 
 /* "BP" (RW): Branch Prediction. */
-#define MIPSNN_MTI_CFG7_BP		__BIT(3)	/* 1: disabled */
+#define	MIPSNN_MTI_CFG7_BP		__BIT(3)	/* 1: disabled */
 
 /* "RPS" (RW): Return Prediction Stack. */
-#define MIPSNN_MTI_CFG7_RPS		__BIT(2)	/* 1: disabled */
+#define	MIPSNN_MTI_CFG7_RPS		__BIT(2)	/* 1: disabled */
 
 /* "BHT" (RW): Branch History Table. */
-#define MIPSNN_MTI_CFG7_BHT		__BIT(1)	/* 1: disabled */
+#define	MIPSNN_MTI_CFG7_BHT		__BIT(1)	/* 1: disabled */
 
 /* "SL" (RW): Scheduled Loads. */
-#define MIPSNN_MTI_CFG7_SL		__BIT(0)	/* 1: load misses block */
+#define	MIPSNN_MTI_CFG7_SL		__BIT(0)	/* 1: load misses block */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.14 2016/08/18 22:23:20 skrll Exp $	*/
+/*	$NetBSD: cache.h,v 1.15 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #ifndef _MIPS_CACHE_H_
-#define _MIPS_CACHE_H_
+#define	_MIPS_CACHE_H_
 
 /*
  * Cache operations.
