@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.9 2020/07/25 22:40:08 riastradh Exp $
+#	$NetBSD: Makefile,v 1.10 2020/07/26 04:03:45 riastradh Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../crypto/adiantum				\
 	${.CURDIR}/../../../../crypto/aes				\
+	${.CURDIR}/../../../../crypto/chacha				\
 	${.CURDIR}/../../../../crypto/blowfish				\
 	${.CURDIR}/../../../../crypto/camellia				\
 	${.CURDIR}/../../../../crypto/cast128				\
@@ -21,6 +22,11 @@ SRCS+=	bf_ecb.c bf_enc.c bf_cbc.c bf_skey.c bf_module.c
 
 # camellia
 SRCS+=  camellia.c camellia-api.c
+
+# ChaCha
+SRCS+=	chacha_impl.c
+SRCS+=	chacha_ref.c
+SRCS+=	chacha_selftest.c
 
 # cast128
 SRCS+=	cast128.c
