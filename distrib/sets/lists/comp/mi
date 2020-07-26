@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2340 2020/07/17 15:34:17 kamil Exp $
+#	$NetBSD: mi,v 1.2341 2020/07/26 18:11:43 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -7073,7 +7073,7 @@
 ./usr/share/man/cat3/explicit_memset.0		comp-c-catman		.cat
 ./usr/share/man/cat3/expm1.0			comp-c-catman		.cat
 ./usr/share/man/cat3/expm1f.0			comp-c-catman		.cat
-./usr/share/man/cat3/extattr.0			comp-c-catman		.cat
+./usr/share/man/cat3/extattr.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/extattr_copy_fd.0		comp-c-catman		.cat
 ./usr/share/man/cat3/extattr_copy_file.0	comp-c-catman		.cat
 ./usr/share/man/cat3/extattr_copy_link.0	comp-c-catman		.cat
@@ -15324,7 +15324,7 @@
 ./usr/share/man/html3/explicit_memset.html	comp-c-htmlman		html
 ./usr/share/man/html3/expm1.html		comp-c-htmlman		html
 ./usr/share/man/html3/expm1f.html		comp-c-htmlman		html
-./usr/share/man/html3/extattr.html		comp-c-htmlman		html
+./usr/share/man/html3/extattr.html		comp-obsolete		obsolete
 ./usr/share/man/html3/extattr_copy_fd.html	comp-c-htmlman		html
 ./usr/share/man/html3/extattr_copy_file.html	comp-c-htmlman		html
 ./usr/share/man/html3/extattr_copy_link.html	comp-c-htmlman		html
@@ -23511,7 +23511,7 @@
 ./usr/share/man/man3/explicit_memset.3		comp-c-man		.man
 ./usr/share/man/man3/expm1.3			comp-c-man		.man
 ./usr/share/man/man3/expm1f.3			comp-c-man		.man
-./usr/share/man/man3/extattr.3			comp-c-man		.man
+./usr/share/man/man3/extattr.3			comp-obsolete		obsolete
 ./usr/share/man/man3/extattr_copy_fd.3		comp-c-man		.man
 ./usr/share/man/man3/extattr_copy_file.3	comp-c-man		.man
 ./usr/share/man/man3/extattr_copy_link.3	comp-c-man		.man
