@@ -8,9 +8,9 @@
  *
  * Copyright (c) 2020 genua GmbH <info@genua.de>
  * Copyright (c) 2020 James Wah <james@laird-wah.net>
- * Copyright (c) 2020 Jaromir Dolecek <jdolecek@NetBSD.org>
  *
- * OpenBSD port written by Jaromir Dolecek for genua GmbH
+ * The OpenBSD and NetBSD support was written by Jaromir Dolecek for
+ * Moritz Systems Technology Company Sp. z o.o.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -74,7 +74,7 @@ MODULE_DEVICE_TABLE(pci, xmm7360_ids);
 #include "opt_gateway.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xmm7360.c,v 1.1 2020/07/26 14:51:18 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xmm7360.c,v 1.2 2020/07/26 17:12:41 jdolecek Exp $");
 #endif
 
 #include <sys/param.h>
