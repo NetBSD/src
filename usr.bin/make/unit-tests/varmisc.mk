@@ -1,4 +1,4 @@
-# $Id: varmisc.mk,v 1.12 2020/07/26 10:48:21 rillig Exp $
+# $Id: varmisc.mk,v 1.13 2020/07/26 10:59:56 rillig Exp $
 #
 # Miscellaneous variable tests.
 
@@ -98,3 +98,44 @@ save-dollars:
 .for val in ${SD_VALUES}
 	@printf '%s: %-8s = %s\n' $@ ${val} ${SD.${val}:Q}
 .endfor
+
+# Appending to an undefined variable does not add a space in front.
+.undef APPENDED
+APPENDED+=	value
+.if ${APPENDED} != "value"
+.error "${APPENDED}"
+.endif
+
+# Appending to an empty variable adds a space between the old value
+# and the additional value.
+APPENDED=	# empty
+APPENDED+=	value
+.if ${APPENDED} != " value"
+.error "${APPENDED}"
+.endif
+
+# Appending to parameterized variables works as well.
+PARAM=		param
+VAR.${PARAM}=	1
+VAR.${PARAM}+=	2
+.if ${VAR.param} != "1 2"
+.error "${VAR.param}"
+.endif
+
+# The variable name can contain arbitrary characters.
+# If the expanded variable name ends in a +, this still does not influence
+# the parser. The assignment operator is still a simple assignment.
+# Therefore, there is no need to add a space between the variable name
+# and the assignment operator.
+PARAM=		+
+VAR.${PARAM}=	1
+VAR.${PARAM}+=	2
+.if ${VAR.+} != "1 2"
+.error "${VAR.+}"
+.endif
+.for param in + ! ?
+VAR.${param}=	${param}
+.endfor
+.if ${VAR.+} != "+" || ${VAR.!} != "!" || ${VAR.?} != "?"
+.error "${VAR.+}" "${VAR.!}" "${VAR.?}"
+.endif
