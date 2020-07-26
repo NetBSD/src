@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1696 2020/07/17 15:24:03 kamil Exp $
+# $NetBSD: mi,v 1.1697 2020/07/26 15:13:09 jdolecek Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2049,6 +2049,8 @@
 ./usr/share/man/cat4/wsmuxctl.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wss.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wt.0			man-sys-catman		.cat
+./usr/share/man/cat4/wwan.0			man-sys-catman		.cat
+./usr/share/man/cat4/wwanc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x68k/bmd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x68k/intio.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x68k/intro.0		man-sys-catman		.cat
@@ -5177,6 +5179,8 @@
 ./usr/share/man/html4/wsmuxctl.html		man-sys-htmlman		html
 ./usr/share/man/html4/wss.html			man-sys-htmlman		html
 ./usr/share/man/html4/wt.html			man-sys-htmlman		html
+./usr/share/man/html4/wwan.html			man-sys-htmlman		html
+./usr/share/man/html4/wwanc.html		man-sys-htmlman		html
 ./usr/share/man/html4/x68k/bmd.html		man-sys-htmlman		html
 ./usr/share/man/html4/x68k/intio.html		man-sys-htmlman		html
 ./usr/share/man/html4/x68k/intro.html		man-sys-htmlman		html
@@ -8237,6 +8241,8 @@
 ./usr/share/man/man4/wsmuxctl.4			man-sys-man		.man
 ./usr/share/man/man4/wss.4			man-sys-man		.man
 ./usr/share/man/man4/wt.4			man-sys-man		.man
+./usr/share/man/man4/wwan.4			man-sys-man		.man
+./usr/share/man/man4/wwanc.4			man-sys-man		.man
 ./usr/share/man/man4/x68k/bmd.4			man-sys-man		.man
 ./usr/share/man/man4/x68k/intio.4		man-sys-man		.man
 ./usr/share/man/man4/x68k/intro.4		man-sys-man		.man
