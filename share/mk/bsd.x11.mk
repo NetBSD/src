@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.132 2019/07/10 21:53:35 mrg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.132.2.1 2020/07/26 10:59:47 martin Exp $
 
 .include <bsd.init.mk>
 
@@ -46,8 +46,8 @@ X11FLAGS.EXTENSION=	${X11FLAGS.BASE_EXTENSION} \
 X11FLAGS.DIX=		-DHAVE_DIX_CONFIG_H -D_BSD_SOURCE -DHAS_FCHOWN \
 			-DHAS_STICKY_DIR_BIT -D_POSIX_THREAD_SAFE_FUNCTIONS=200112L \
 			-DHAVE_XORG_CONFIG_H
-X11INCS.DIX=		-I${X11INCSDIR}/freetype2  \
-			-I${X11INCSDIR}/pixman-1 \
+X11INCS.DIX=		-I${X11INCDIR}/freetype2  \
+			-I${X11INCDIR}/pixman-1 \
 			-I$(X11SRCDIR.xorg-server)/include \
 			-I$(X11SRCDIR.xorg-server)/Xext \
 			-I$(X11SRCDIR.xorg-server)/composite \
