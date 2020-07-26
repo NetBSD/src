@@ -17,14 +17,14 @@ C:
 S:empty
 C:empty
 @:
-mod-S:
+mod-subst:
 :a b b c:
 :a b b c:
 : b c:
 :a c:
 :x__ 3 x__ 3:
 12345
-mod-C:
+mod-regex:
 :a b b c:
 :a b b c:
 : b c:
@@ -33,10 +33,10 @@ make: RE substitution error: (details omitted)
 :a c:
 :x__ 3 x__ 3:
 :+one+ +two+ +three+:
-mod-at-resolve:w1d2d3w w2i3w w1i2d3 2i${RES3}w w1d2d3 2i${RES3} 1i${RES2}w:
-mod-at-dollar:(1) (2) (3).
-mod-at-dollar:() () ().
-mod-at-dollar:() () ().
+mod-loop-resolve:w1d2d3w w2i3w w1i2d3 2i${RES3}w w1d2d3 2i${RES3} 1i${RES2}w:
+mod-loop-varname-dollar:(1) (2) (3).
+mod-loop-varname-dollar:() () ().
+mod-loop-varname-dollar:() () ().
 mod-subst-dollar:$1:
 mod-subst-dollar:$2:
 mod-subst-dollar:$3:
@@ -53,27 +53,27 @@ mod-loop-dollar:$3$:
 mod-loop-dollar:$${word}$$:
 mod-loop-dollar:$$5$$:
 mod-loop-dollar:$$${word}$$$:
-mod-C-limits:00-ok:1 2323 45456
+mod-regex-limits:00-ok:1 2323 45456
 make: No subexpression \1
 make: No subexpression \1
 make: No subexpression \1
 make: No subexpression \1
-mod-C-limits:11-missing:1 6
-mod-C-limits:11-ok:1 22 446
+mod-regex-limits:11-missing:1 6
+mod-regex-limits:11-ok:1 22 446
 make: No subexpression \2
 make: No subexpression \2
 make: No subexpression \2
 make: No subexpression \2
-mod-C-limits:22-missing:1 6
+mod-regex-limits:22-missing:1 6
 make: No subexpression \2
 make: No subexpression \2
 make: No subexpression \2
 make: No subexpression \2
-mod-C-limits:22-missing:1 6
-mod-C-limits:22-ok:1 33 556
-mod-C-limits:capture:ihgfedcbaabcdefghijABCDEFGHIJa0a1a2rest
+mod-regex-limits:22-missing:1 6
+mod-regex-limits:22-ok:1 33 556
+mod-regex-limits:capture:ihgfedcbaabcdefghijABCDEFGHIJa0a1a2rest
 make: RE substitution error: (details omitted)
-mod-C-errors:
+mod-regex-errors:
 mod-assign: first=1.
 mod-assign: last=3.
 mod-assign: appended=1 2 3.
@@ -87,7 +87,7 @@ mod-assign-nested: else2e2
 mod-assign-nested: then3t3
 mod-assign-nested: else4e4
 mod-tu-space: A   B
-mod-Q: new
+mod-quote: new
 
 line
 mod-break-many-words: 500
