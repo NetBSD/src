@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.311 2020/07/26 12:27:09 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.312 2020/07/26 13:39:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.311 2020/07/26 12:27:09 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.312 2020/07/26 13:39:30 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.311 2020/07/26 12:27:09 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.312 2020/07/26 13:39:30 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1776,10 +1776,9 @@ static char *
 VarRange(const char *str, int ac)
 {
     Buffer	  buf;		/* Buffer for new string */
-    char	  tmp[32];	/* each element */
     char 	**av;		/* List of words to affect */
     char 	 *as;		/* Word list memory */
-    int 	  i, n;
+    int 	  i;
 
     Buf_Init(&buf, 0);
     if (ac > 0) {
@@ -1789,10 +1788,7 @@ VarRange(const char *str, int ac)
 	av = brk_string(str, &ac, FALSE, &as);
     }
     for (i = 0; i < ac; i++) {
-	n = snprintf(tmp, sizeof(tmp), "%d", 1 + i);
-	if (n >= (int)sizeof(tmp))
-	    break;
-	Buf_AddBytes(&buf, n, tmp);
+	Buf_AddInt(&buf, 1 + i);
 	if (i != ac - 1)
 	    Buf_AddByte(&buf, ' ');
     }
@@ -2657,28 +2653,21 @@ ApplyModifier_Words(const char *mod, ApplyModifiersState *st)
 	goto bad_modifier;	/* empty square brackets in ":[]". */
 
     if (estr[0] == '#' && estr[1] == '\0') { /* Found ":[#]" */
-	/*
-	 * We will need enough space for the decimal representation of an int.
-	 * We calculate the space needed for the octal representation, and add
-	 * enough slop to cope with a '-' sign (which should never be needed)
-	 * and a '\0' string terminator.
-	 */
-	int newStrSize = (sizeof(int) * CHAR_BIT + 2) / 3 + 2;
-
-	st->newStr = bmake_malloc(newStrSize);
 	if (st->oneBigWord) {
-	    strncpy(st->newStr, "1", newStrSize);
+	    st->newStr = bmake_strdup("1");
 	} else {
 	    /* XXX: brk_string() is a rather expensive
 	     * way of counting words. */
-	    char **av;
 	    char *as;
 	    int ac;
-
-	    av = brk_string(st->nstr, &ac, FALSE, &as);
-	    snprintf(st->newStr, newStrSize, "%d", ac);
+	    char **av = brk_string(st->nstr, &ac, FALSE, &as);
 	    free(as);
 	    free(av);
+
+	    Buffer buf;
+	    Buf_Init(&buf, 4);	/* 3 digits + '\0' */
+	    Buf_AddInt(&buf, ac);
+	    st->newStr = Buf_Destroy(&buf, FALSE);
 	}
 	goto ok;
     }
