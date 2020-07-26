@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.488 2020/05/26 18:38:37 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.489 2020/07/26 21:28:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.488 2020/05/26 18:38:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.489 2020/07/26 21:28:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1543,7 +1543,7 @@ vfs_vnode_print(struct vnode *vp, int full, void (*pr)(const char *, ...))
 
 	uvm_object_printit(&vp->v_uobj, full, pr);
 	(*pr)("\n");
-	vprint_common(vp, "", printf);
+	vprint_common(vp, "", pr);
 	if (full) {
 		struct buf *bp;
 
