@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.319 2020/07/26 17:10:56 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.320 2020/07/26 17:21:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.319 2020/07/26 17:10:56 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.320 2020/07/26 17:21:28 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.319 2020/07/26 17:10:56 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.320 2020/07/26 17:21:28 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1793,27 +1793,27 @@ VarRange(const char *str, int ac)
  * a backslash or a dollar, put a backslash before it.
  *
  * Return the expanded string or NULL if the delimiter was missing.
- * If pattern is specified, handle escaped ampersands and replace unescaped
- * ampersands with the lhs of the pattern (for the :S and :C modifiers).
  *
- * If length is specified, return the string length of the buffer.
- * If mpflags is specified and the last character of the pattern is a $,
+ * If pattern is specified, handle escaped ampersands and replace unescaped
+ * ampersands with the lhs of the pattern (for the :S modifier).
+ *
+ * If out_length is specified, return the string length of the buffer
+ * (except on parse errors).
+ *
+ * If out_pflags is specified and the last character of the pattern is a $,
  * set the VARP_ANCHOR_END bit of mpflags.
  */
 static char *
 ParseModifierPart(GNode *ctxt, const char **tstr, int delim,
-		  VarEvalFlags eflags, VarPatternFlags *mpflags,
-		  size_t *length, ModifyWord_SubstArgs *subst)
+		  VarEvalFlags eflags, VarPatternFlags *out_pflags,
+		  size_t *out_length, ModifyWord_SubstArgs *subst)
 {
     const char *cp;
     char *rstr;
     Buffer buf;
-    size_t junk;
     VarEvalFlags errnum = eflags & VARE_UNDEFERR;
 
     Buf_Init(&buf, 0);
-    if (length == NULL)
-	length = &junk;
 
     /*
      * Skim through until the matching delimiter is found;
@@ -1829,10 +1829,10 @@ ParseModifierPart(GNode *ctxt, const char **tstr, int delim,
 	    cp++;
 	} else if (*cp == '$') {
 	    if (cp[1] == delim) {	/* Unescaped $ at end of pattern */
-		if (mpflags == NULL)
+		if (out_pflags == NULL)
 		    Buf_AddByte(&buf, *cp);
 		else
-		    *mpflags |= VARP_ANCHOR_END;
+		    *out_pflags |= VARP_ANCHOR_END;
 	    } else {
 		if (!(eflags & VARE_NOSUBST)) {
 		    char   *cp2;
@@ -1884,12 +1884,12 @@ ParseModifierPart(GNode *ctxt, const char **tstr, int delim,
 
     if (*cp != delim) {
 	*tstr = cp;
-	*length = 0;
 	return NULL;
     }
 
     *tstr = ++cp;
-    *length = Buf_Size(&buf);
+    if (out_length != NULL)
+	*out_length = Buf_Size(&buf);
     rstr = Buf_Destroy(&buf, FALSE);
     if (DEBUG(VAR))
 	fprintf(debug_file, "Modifier part: \"%s\"\n", rstr);
