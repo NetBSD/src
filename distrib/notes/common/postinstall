@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.86 2019/11/27 09:29:25 martin Exp $
+.\"	$NetBSD: postinstall,v 1.87 2020/07/26 18:53:50 nia Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -348,7 +348,7 @@ is correctly configured, you can install them with the following commands:
 .Ic # pkgin install bash
 .Ic # pkgin install perl
 .Ic # pkgin install apache
-.Ic # pkgin install kde
+.Ic # pkgin install xfce4
 .Ic # pkgin install firefox
 \&...
 .Ed
@@ -359,7 +359,7 @@ directory.
 .Note)
 .Pp
 The above commands will install the Tenex-csh and Bourne Again shells,
-the Perl programming language, Apache web server, KDE desktop
+the Perl programming language, Apache web server, Xfce desktop
 environment and the Firefox web browser
 as well as all the packages they depend on.
 .It
