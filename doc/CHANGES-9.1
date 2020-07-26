@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.83 2020/07/20 18:35:18 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.84 2020/07/26 11:09:19 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -3503,4 +3503,57 @@ distrib/notes/evbarm/xfer			1.3,1.4
 
 	Modernize evbarm install instructions.
 	[nia, ticket #1022]
+
+external/apache2/mDNSResponder/dist/mDNSPosix/PosixDaemon.c 1.13,1.14
+external/apache2/mDNSResponder/dist/mDNSPosix/mDNSPosix.c 1.17
+external/apache2/mDNSResponder/dist/mDNSShared/PlatformCommon.c 1.6
+
+	Silence mdnsd at start/stop time.
+	[roy, ticket #1023]
+
+sys/dev/pci/pci_subr.c				1.224
+
+	change pci_conf_print() to allocate memory for the regs dynamically
+	instead of on-stack.
+	[jdolecek, ticket #1024]
+
+sys/dev/wsfb/genfb.c				1.73
+
+	reduce stack usage in genfb_calc_hsize()
+	[jdolecek, ticket #1025]
+
+xsrc/external/mit/xorg-server.old/dist/hw/netbsd/x68k/x68kInit.c 1.3
+
+	Use AllocDevicePair() to initialize input devices in InitInput().
+	[tsutsui, ticket #1026]
+
+xsrc/external/mit/xorg-server.old/dist/fb/fb.h	1.2
+xsrc/external/mit/xorg-server.old/dist/fb/fbcmap_mi.c 1.2
+xsrc/external/mit/xorg-server.old/dist/fb/fbscreen.c	1.2
+xsrc/external/mit/xorg-server/dist/fb/fb.h		1.2
+xsrc/external/mit/xorg-server/dist/fb/fbcmap_mi.c	1.2
+xsrc/external/mit/xorg-server/dist/fb/fbscreen.c	1.2
+
+	Fix 1bpp Xservers on "whitePixel=0, blackPixel=1" VRAMs.
+	[tsutsui, ticket #1027]
+
+external/mit/xorg/server/xorg-server.old/hw/xnest/Makefile 1.4
+external/mit/xorg/server/xorg-server/hw/xnest/Makefile 1.22
+share/mk/bsd.x11.mk				1.135
+
+	PR 55500: fix typos in ${X11INCS.DIX} include paths.
+	Remove extra "-I" for ${X11INCS.DIX} macro.
+	[tsutsui, ticket #1028]
+
+distrib/notes/evbarm/upgrade			1.3-1.5
+
+	Improve upgrade instrucstions for evbarm.
+	[nia, ticket #1029]
+
+distrib/notes/evbarm/contents			1.11
+distrib/notes/evbarm/hardware			1.15
+
+	Fix location of device trees.
+	Add more supported hardware.
+	[nia, ticket #1030]
 
