@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.28 2015/06/30 04:20:19 matt Exp $	*/
+/*	$NetBSD: proc.h,v 1.29 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #ifndef _MIPS_PROC_H_
-#define _MIPS_PROC_H_
+#define	_MIPS_PROC_H_
 
 #include <sys/param.h>
 #include <mips/vmparam.h>

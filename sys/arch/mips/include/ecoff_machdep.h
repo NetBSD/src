@@ -1,4 +1,4 @@
-/*	$NetBSD: ecoff_machdep.h,v 1.23 2017/02/23 18:56:12 christos Exp $	*/
+/*	$NetBSD: ecoff_machdep.h,v 1.24 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -34,46 +34,46 @@
  * SUCH DAMAGE.
  */
 
-#define ECOFF_LDPGSZ 4096
+#define	ECOFF_LDPGSZ 4096
 
-#define ECOFF_PAD
-#define ECOFF32_PAD
+#define	ECOFF_PAD
+#define	ECOFF32_PAD
 
-#define ECOFF32_MACHDEP \
+#define	ECOFF32_MACHDEP \
         ecoff32_ulong gprmask; \
         ecoff32_ulong cprmask[4]; \
         ecoff32_ulong gp_value
 
-#define ECOFF_MACHDEP \
+#define	ECOFF_MACHDEP \
         u_long gprmask; \
         u_long cprmask[4]; \
         u_long gp_value
 #ifdef _KERNEL
 #include <mips/locore.h>		/* mips CPU architecture levels */
-#define _MIPS3_OK() CPUISMIPS3
+#define	_MIPS3_OK() CPUISMIPS3
 #else
-#define _MIPS3_OK() /*CONSTCOND*/1
+#define	_MIPS3_OK() /*CONSTCOND*/1
 #endif
 
 
-#define ECOFF_MAGIC_MIPSEB	0x0160	/* mips1, big-endian */
-#define ECOFF_MAGIC_MIPSEL	0x0162	/* mips1, little-endian */
-#define ECOFF_MAGIC_MIPSEL3	0x0142	/* mips3, little-endian */
+#define	ECOFF_MAGIC_MIPSEB	0x0160	/* mips1, big-endian */
+#define	ECOFF_MAGIC_MIPSEL	0x0162	/* mips1, little-endian */
+#define	ECOFF_MAGIC_MIPSEL3	0x0142	/* mips3, little-endian */
 
 #if BYTE_ORDER == LITTLE_ENDIAN
-#define ECOFF_BADMAG(ep) \
+#define	ECOFF_BADMAG(ep) \
     (!								\
 	((ep)->f.f_magic == ECOFF_MAGIC_MIPSEL ||		\
 	 (_MIPS3_OK() && (ep)->f.f_magic == ECOFF_MAGIC_MIPSEL3)) \
     )
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-#define ECOFF_BADMAG(ep) ((ep)->f.f_magic != ECOFF_MAGIC_MIPSEB)
+#define	ECOFF_BADMAG(ep) ((ep)->f.f_magic != ECOFF_MAGIC_MIPSEB)
 #endif
 
 
-#define ECOFF_SEGMENT_ALIGNMENT(ep) ((ep)->a.vstamp < 23 ? 8 : 16)
-#define ECOFF32_SEGMENT_ALIGNMENT(ep) ((ep)->a.vstamp < 23 ? 8 : 16)
+#define	ECOFF_SEGMENT_ALIGNMENT(ep) ((ep)->a.vstamp < 23 ? 8 : 16)
+#define	ECOFF32_SEGMENT_ALIGNMENT(ep) ((ep)->a.vstamp < 23 ? 8 : 16)
 
 #ifdef _KERNEL
 struct proc;
@@ -143,7 +143,7 @@ struct ecoff_symhdr {
 };
 
 /* Macro for field name used by cgd's Alpha-derived code */
-#define esymMax iextMax
+#define	esymMax iextMax
 
 
 struct ecoff_extsym {

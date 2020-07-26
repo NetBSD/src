@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.8 2014/03/29 19:28:29 christos Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.9 2020/07/26 08:08:41 simonb Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #ifndef _MIPS_INCLUDE_PCI_MACHDEP_H_
-#define _MIPS_INCLUDE_PCI_MACHDEP_H_
+#define	_MIPS_INCLUDE_PCI_MACHDEP_H_
 
 /*
  * __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH (if used) needs to be
@@ -63,7 +63,7 @@ struct mips_pci_chipset {
 	void		(*pc_conf_write)(void *, pcitag_t, int, pcireg_t);
 
 	void		*pc_intr_v;
-	int		(*pc_intr_map)(const struct pci_attach_args *, 
+	int		(*pc_intr_map)(const struct pci_attach_args *,
 			    pci_intr_handle_t *);
 	const char	*(*pc_intr_string)(void *, pci_intr_handle_t,
 			    char *, size_t);

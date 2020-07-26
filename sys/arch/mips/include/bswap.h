@@ -1,4 +1,4 @@
-/*      $NetBSD: bswap.h,v 1.4 2013/05/23 21:39:49 christos Exp $      */
+/*      $NetBSD: bswap.h,v 1.5 2020/07/26 08:08:41 simonb Exp $      */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 #ifndef _MIPS_BSWAP_H_
 #define	_MIPS_BSWAP_H_
 
-#define __BSWAP_RENAME
+#define	__BSWAP_RENAME
 #include <sys/bswap.h>
 
 #endif /* !_MIPS_BSWAP_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sljit_machdep.h,v 1.1 2014/07/23 18:19:44 alnsn Exp $	*/
+/*	$NetBSD: sljit_machdep.h,v 1.2 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2012,2014 The NetBSD Foundation, Inc.
@@ -27,12 +27,12 @@
  */
 
 #ifndef _MIPS_SLJITARCH_H
-#define _MIPS_SLJITARCH_H
+#define	_MIPS_SLJITARCH_H
 
 #ifdef _LP64
-#define SLJIT_CONFIG_MIPS_64 1
+#define	SLJIT_CONFIG_MIPS_64 1
 #else
-#define SLJIT_CONFIG_MIPS_32 1
+#define	SLJIT_CONFIG_MIPS_32 1
 #endif
 
 #include <sys/types.h>
@@ -40,12 +40,12 @@
 #ifdef _KERNEL
 #include <mips/cache.h>
 
-#define SLJIT_CACHE_FLUSH(from, to) mips_icache_sync_range( \
+#define	SLJIT_CACHE_FLUSH(from, to) mips_icache_sync_range( \
 	(vaddr_t)(from), (vsize_t)((const char *)(to) - (const char *)(from)))
 #else
 #include <mips/cachectl.h>
 
-#define SLJIT_CACHE_FLUSH(from, to) \
+#define	SLJIT_CACHE_FLUSH(from, to) \
 	(void)_cacheflush((void*)(from), (size_t)((to) - (from)), ICACHE)
 #endif
 

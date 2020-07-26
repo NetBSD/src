@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.5 2019/10/29 04:55:36 christos Exp $	*/
+/*	$NetBSD: fenv.h,v 1.6 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
@@ -68,7 +68,7 @@ extern const fenv_t	__fe_dfl_env;
 
 /* We need to be able to map status flag positions to mask flag positions */
 #define	_ENABLE_MASK	(FE_ALL_EXCEPT << _ENABLE_SHIFT)
-#define _ENABLE_SHIFT    5
+#define	_ENABLE_SHIFT    5
 
 static inline fpu_control_t
 __rfs(void)

@@ -1,4 +1,4 @@
-/*	$NetBSD: int_mwgwtypes.h,v 1.6 2014/08/13 22:25:39 matt Exp $	*/
+/*	$NetBSD: int_mwgwtypes.h,v 1.7 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #ifndef _MIPS_INT_MWGWTYPES_H_
-#define _MIPS_INT_MWGWTYPES_H_
+#define	_MIPS_INT_MWGWTYPES_H_
 
 #ifdef __UINT_FAST64_TYPE__
 #include <sys/common_int_mwgwtypes.h>

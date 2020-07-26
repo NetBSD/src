@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_pte.h,v 1.29 2016/07/11 16:15:35 matt Exp $	*/
+/*	$NetBSD: mips3_pte.h,v 1.30 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #ifndef _MIPS_MIPS3_PTE_H_
-#define _MIPS_MIPS3_PTE_H_
+#define	_MIPS_MIPS3_PTE_H_
 
 /*
  * R4000 hardware page table entry
@@ -68,24 +68,24 @@ unsigned int 	pg_g:1,			/* HW: ignore asid bit */
 #endif
 #endif /* _LOCORE */
 
-#define MIPS3_PG_WIRED	0x80000000	/* SW */
-#define MIPS3_PG_RO	0x40000000	/* SW */
+#define	MIPS3_PG_WIRED	0x80000000	/* SW */
+#define	MIPS3_PG_RO	0x40000000	/* SW */
 
 #if PGSHIFT == 14
 #define	MIPS3_PG_SVPN	(~0UL << 14)	/* Software page no mask */
 #define	MIPS3_PG_HVPN	(~0UL << 15)	/* Hardware page no mask */
-#define MIPS3_PG_ODDPG	(MIPS3_PG_SVPN ^ MIPS3_PG_HVPN)
+#define	MIPS3_PG_ODDPG	(MIPS3_PG_SVPN ^ MIPS3_PG_HVPN)
 #elif PGSHIFT == 13
 #ifdef MIPS3_4100
-#define 8KB page size is not supported on the MIPS3_4100
+#define	8KB page size is not supported on the MIPS3_4100
 #endif
 #define	MIPS3_PG_SVPN	(~0UL << 13)	/* Software page no mask */
 #define	MIPS3_PG_HVPN	(~0UL << 13)	/* Hardware page no mask */
-#define MIPS3_PG_NEXT	(1 << (12 - MIPS3_DEFAULT_PG_SHIFT))
+#define	MIPS3_PG_NEXT	(1 << (12 - MIPS3_DEFAULT_PG_SHIFT))
 #elif PGSHIFT == 12
 #define	MIPS3_PG_SVPN	(~0UL << 12)	/* Software page no mask */
 #define	MIPS3_PG_HVPN	(~0UL << 13)	/* Hardware page no mask */
-#define MIPS3_PG_ODDPG	(MIPS3_PG_SVPN ^ MIPS3_PG_HVPN)
+#define	MIPS3_PG_ODDPG	(MIPS3_PG_SVPN ^ MIPS3_PG_HVPN)
 #endif
 					/* Odd even pte entry */
 #define	MIPS3_PG_ASID	0x000000ff	/* Address space ID */
@@ -139,28 +139,28 @@ unsigned int 	pg_g:1,			/* HW: ignore asid bit */
 	(MIPS3_PG_G | MIPS3_PG_V | MIPS3_PG_D | MIPS3_CCA_TO_PG(cca))
 #define	MIPS3_PG_FRAME	0x3fffffc0
 
-#define MIPS3_DEFAULT_PG_SHIFT	6
-#define MIPS3_4100_PG_SHIFT	4
+#define	MIPS3_DEFAULT_PG_SHIFT	6
+#define	MIPS3_4100_PG_SHIFT	4
 
 /* NEC Vr4100 CPUs have different PFN layout to support 1kbytes/page */
 #if defined(MIPS3_4100)
-#define MIPS3_PG_SHIFT	mips_options.mips3_pg_shift
+#define	MIPS3_PG_SHIFT	mips_options.mips3_pg_shift
 #else
-#define MIPS3_PG_SHIFT	MIPS3_DEFAULT_PG_SHIFT
+#define	MIPS3_PG_SHIFT	MIPS3_DEFAULT_PG_SHIFT
 #endif
 
 /* pte accessor macros */
 
-#define mips3_pfn_is_ext(x) ((x) & 0x3c000000)
-#define mips3_paddr_to_tlbpfn(x) \
+#define	mips3_pfn_is_ext(x) ((x) & 0x3c000000)
+#define	mips3_paddr_to_tlbpfn(x) \
     (((paddr_t)(x) >> MIPS3_PG_SHIFT) & MIPS3_PG_FRAME)
-#define mips3_tlbpfn_to_paddr(x) \
+#define	mips3_tlbpfn_to_paddr(x) \
     ((paddr_t)((x) & MIPS3_PG_FRAME) << MIPS3_PG_SHIFT)
-#define mips3_vad_to_vpn(x) ((vaddr_t)(x) & MIPS3_PG_SVPN)
-#define mips3_vpn_to_vad(x) ((x) & MIPS3_PG_SVPN)
+#define	mips3_vad_to_vpn(x) ((vaddr_t)(x) & MIPS3_PG_SVPN)
+#define	mips3_vpn_to_vad(x) ((x) & MIPS3_PG_SVPN)
 
-#define MIPS3_PTE_TO_PADDR(pte) (mips3_tlbpfn_to_paddr(pte))
-#define MIPS3_PAGE_IS_RDONLY(pte,va) \
+#define	MIPS3_PTE_TO_PADDR(pte) (mips3_tlbpfn_to_paddr(pte))
+#define	MIPS3_PAGE_IS_RDONLY(pte,va) \
     (pmap_is_page_ro_p(pmap_kernel(), mips_trunc_page(va), (pte)))
 
 
