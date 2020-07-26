@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.129 2020/05/02 22:11:16 christos Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.130 2020/07/26 00:21:24 chs Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.129 2020/05/02 22:11:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.130 2020/07/26 00:21:24 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -232,6 +232,14 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	if (length < 0)
 		return (EINVAL);
 
+	/*
+	 * Historically clients did not have to specify which data
+	 * they were truncating. So, if not specified, we assume
+	 * traditional behavior, e.g., just the normal data.
+	 */
+	if ((ioflag & (IO_EXT | IO_NORMAL)) == 0)
+		ioflag |= IO_NORMAL;
+
 	fs = oip->i_fs;
 #define i_din2 i_din.ffs2_din
 	extblocks = 0;
@@ -267,6 +275,8 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 			extblocks = 0;
 		}
 	}
+	if ((ioflag & IO_NORMAL) == 0)
+		return (0);
 	if (ovp->v_type == VLNK &&
 	    (oip->i_size < ump->um_maxsymlinklen ||
 	     (ump->um_maxsymlinklen == 0 && datablocks == 0))) {
@@ -376,8 +386,7 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 		}
 	}
 
-	if (!(ioflag & IO_EXT))
-		genfs_node_wrlock(ovp);
+	genfs_node_wrlock(ovp);
 	oip->i_size = length;
 	DIP_ASSIGN(oip, size, length);
 	uvm_vnp_setsize(ovp, length);
@@ -586,8 +595,7 @@ out:
 	oip->i_size = length;
 	DIP_ASSIGN(oip, size, length);
 	DIP_ADD(oip, blocks, -blocksreleased);
-	if (!(ioflag & IO_EXT))
-		genfs_node_unlock(ovp);
+	genfs_node_unlock(ovp);
 	oip->i_flag |= IN_CHANGE;
 	UFS_WAPBL_UPDATE(ovp, NULL, NULL, 0);
 #if defined(QUOTA) || defined(QUOTA2)
