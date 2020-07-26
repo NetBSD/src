@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.20 2020/07/26 10:52:17 jmcneill Exp $
+.\"	$NetBSD: hardware,v 1.21 2020/07/26 10:55:36 jmcneill Exp $
 .\"
 .\" Copyright (c) 2001-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,7 +36,7 @@ Amlogic S805 (e.g. ODROID-C1)
 .It
 Broadcom BCM2836 (e.g. Raspberry Pi 2)
 .It
-Freescale i.MX6 Dual/DualLite/Quad, i.MX7 Dual (e.g. Wandboard, UDOO, Hummingboard...)
+Freescale/NXP i.MX6 Dual/DualLite/Quad, i.MX7 Dual (e.g. Wandboard, UDOO, Hummingboard...)
 .It
 Samsung Exynos 5422 (e.g. ODROID-XU3/XU-4)
 .It
@@ -59,6 +59,8 @@ Allwinner H5, H6, A64 (e.g. PINE64, Pinebook, NanoPi A64, OLinuXino...)
 Amlogic S905 (e.g. ODROID-C2, Le Potato, NanoPi K2...)
 .It
 Broadcom BCM2837, BCM2711 (e.g. Raspberry Pi 3 and 4)
+.It
+Freescale/NXP i.MX8MQ (e.g. Hummingboard...)
 .It
 Rockchip RK3328, RK3328 (e.g. Pinebook Pro, RockPro64, Firefly...)
 .It
