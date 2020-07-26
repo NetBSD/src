@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.67.2.2 2020/04/15 14:15:17 martin Exp $ */
+/*	$NetBSD: genfb.c,v 1.67.2.3 2020/07/26 10:47:25 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.67.2.2 2020/04/15 14:15:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.67.2.3 2020/07/26 10:47:25 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -632,18 +632,25 @@ genfb_calc_hsize(struct genfb_softc *sc)
 	device_t dev = sc->sc_dev;
 	prop_dictionary_t dict = device_properties(dev);
 	prop_data_t edid_data;
-	struct edid_info edid;
+	struct edid_info *edid;
 	const char *edid_ptr;
+	int hsize;
 
 	edid_data = prop_dictionary_get(dict, "EDID");
 	if (edid_data == NULL || prop_data_size(edid_data) < 128)
 		return 0;
 
-	edid_ptr = prop_data_data_nocopy(edid_data);
-	if (edid_parse(__UNCONST(edid_ptr), &edid) != 0)
-		return 0;
+	edid = kmem_alloc(sizeof(*edid), KM_SLEEP);
 
-	return (int)edid.edid_max_hsize * 10;
+	edid_ptr = prop_data_data_nocopy(edid_data);
+	if (edid_parse(__UNCONST(edid_ptr), edid) == 0)
+		hsize = (int)edid->edid_max_hsize * 10;
+	else
+		hsize = 0;
+
+	kmem_free(edid, sizeof(*edid));
+
+	return hsize;
 }
 
 /* Return the minimum number of character columns based on DPI */
