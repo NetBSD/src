@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.24 2020/07/26 12:18:11 rillig Exp $
+# $Id: modmisc.mk,v 1.25 2020/07/26 12:19:37 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -73,8 +73,7 @@ undefvar:
 	@echo @:${:U:@var@empty@}
 
 WORDS=		sequences of letters
-# FIXME: The "*" in "letters" must not be substituted because of the 1.
-.if ${WORDS:S,e,*,1} != "s*quences of l*tters"
+.if ${WORDS:S,e,*,1} != "s*quences of letters"
 .warning ${WORDS:S,e,*,1}
 .endif
 .if ${WORDS:S,e,*,} != "s*quences of l*tters"
