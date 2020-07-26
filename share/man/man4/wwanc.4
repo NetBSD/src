@@ -1,4 +1,4 @@
-.\" $NetBSD: wwanc.4,v 1.1 2020/07/26 15:13:09 jdolecek Exp $
+.\" $NetBSD: wwanc.4,v 1.2 2020/07/26 15:56:30 jdolecek Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,6 +57,7 @@ The following devices should work:
 .Xr pci 4 ,
 .Xr ifconfig.if 5 ,
 .Xr ifconfig 8 ,
+.Xr MAKEDEV 8 ,
 .Lk https://github.com/xmm7360/xmm7360-pci "Linux driver repository"
 .Sh HISTORY
 The
@@ -82,3 +83,7 @@ driver IPv6 support is untested.
 .Pp
 Network initialization requires Python script published on the Linux
 driver repository.
+The script requires the management device nodes to be created via:
+.Bd -literal -offset indent
+cd /dev && ./MAKEDEV xmm0
+.Ed
