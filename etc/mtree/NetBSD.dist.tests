@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.173 2020/07/03 04:25:28 jruoho Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.174 2020/07/26 05:06:29 riastradh Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -164,6 +164,7 @@
 ./usr/libdata/debug/usr/tests/sys
 ./usr/libdata/debug/usr/tests/sys/crypto
 ./usr/libdata/debug/usr/tests/sys/crypto/aes
+./usr/libdata/debug/usr/tests/sys/crypto/chacha
 ./usr/libdata/debug/usr/tests/sys/net
 ./usr/libdata/debug/usr/tests/sys/netatalk
 ./usr/libdata/debug/usr/tests/sys/netinet
@@ -391,6 +392,7 @@
 ./usr/tests/sys
 ./usr/tests/sys/crypto
 ./usr/tests/sys/crypto/aes
+./usr/tests/sys/crypto/chacha
 ./usr/tests/sys/net
 ./usr/tests/sys/netatalk
 ./usr/tests/sys/netinet
