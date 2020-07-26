@@ -1,4 +1,4 @@
-# $Id: varmisc.mk,v 1.15 2020/07/26 20:30:42 rillig Exp $
+# $Id: varmisc.mk,v 1.16 2020/07/26 21:09:49 rillig Exp $
 #
 # Miscellaneous variable tests.
 
@@ -7,6 +7,7 @@ all: unmatched_var_paren D_true U_true D_false U_false Q_lhs Q_rhs NQ_none \
 all: save-dollars
 all: export-appended
 all: parse-dynamic
+all: varerror-unclosed
 
 unmatched_var_paren:
 	@echo ${foo::=foo-text}
@@ -174,3 +175,12 @@ ${:U>}=		after
 
 parse-dynamic:
 	@echo $@: ${G_TARGET} ${G_MEMBER} ${G_PREFIX} ${G_ARCHIVE} ${G_ALLSRC}
+
+# As of 2020-07-26, make does not complain about unclosed variables.
+# It does complain about unclosed variables when parsing modifiers though.
+varerror-unclosed:
+	@echo $@:begin
+	@echo ${UNCLOSED
+	@echo ${UNCLOSED:M${PATTERN
+	@echo ${UNCLOSED.${param
+	@echo $@:end
