@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.27 2019/01/21 20:28:18 dholland Exp $	*/
+/*	$NetBSD: limits.h,v 1.28 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -112,19 +112,19 @@
 
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 #ifdef _LP64
-#define LONG_BIT	64
+#define	LONG_BIT	64
 #else
-#define LONG_BIT	32
+#define	LONG_BIT	32
 #endif
-#define WORD_BIT	32
+#define	WORD_BIT	32
 
-#define DBL_DIG		__DBL_DIG__
-#define DBL_MAX		__DBL_MAX__
-#define DBL_MIN		__DBL_MIN__
+#define	DBL_DIG		__DBL_DIG__
+#define	DBL_MAX		__DBL_MAX__
+#define	DBL_MIN		__DBL_MIN__
 
-#define FLT_DIG		__FLT_DIG__
-#define FLT_MAX		__FLT_MAX__
-#define FLT_MIN		__FLT_MIN__
+#define	FLT_DIG		__FLT_DIG__
+#define	FLT_MAX		__FLT_MAX__
+#define	FLT_MIN		__FLT_MIN__
 #endif
 
 #endif /* _MIPS_LIMITS_H_ */

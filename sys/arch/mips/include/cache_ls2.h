@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_ls2.h,v 1.3 2016/07/11 16:15:35 matt Exp $	*/
+/*	$NetBSD: cache_ls2.h,v 1.4 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #ifndef _MIPS_CACHE_LS2_H_
-#define _MIPS_CACHE_LS2_H_
+#define	_MIPS_CACHE_LS2_H_
 
 /*
  * Cache definitions/operations for Loongson-style caches.
@@ -48,7 +48,7 @@
  * The way is encoded in the bottom 2 bits of VA.
  */
 
-#define cache_op_ls2_8line_4way(va, op)					\
+#define	cache_op_ls2_8line_4way(va, op)					\
 	__asm volatile(							\
                 ".set noreorder					\n\t"	\
                 "cache %1, 0x00(%0); cache %1, 0x20(%0)		\n\t"	\
@@ -72,7 +72,7 @@
             : "r" (va), "i" (op)					\
             : "memory");
 
-#define cache_op_ls2_line_4way(va, op)					\
+#define	cache_op_ls2_line_4way(va, op)					\
 	__asm volatile(							\
                 ".set noreorder					\n\t"	\
                 "cache %1, 0(%0); cache %1, 1(%0)		\n\t"	\
@@ -82,7 +82,7 @@
             : "r" (va), "i" (op)					\
             : "memory");
 
-#define cache_op_ls2_8line(va, op)					\
+#define	cache_op_ls2_8line(va, op)					\
 	__asm volatile(							\
                 ".set noreorder					\n\t"	\
                 "cache %1, 0x00(%0); cache %1, 0x20(%0)		\n\t"	\
@@ -94,7 +94,7 @@
             : "r" (va), "i" (op)					\
             : "memory");
 
-#define cache_op_ls2_line(va, op)					\
+#define	cache_op_ls2_line(va, op)					\
 	__asm volatile(							\
                 ".set noreorder					\n\t"	\
                 "cache %1, 0(%0)				\n\t"	\

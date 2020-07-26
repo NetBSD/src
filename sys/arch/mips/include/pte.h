@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.25 2017/06/24 07:00:37 skrll Exp $	*/
+/*	$NetBSD: pte.h,v 1.26 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #ifndef  __MIPS_PTE_H__
-#define  __MIPS_PTE_H__
+#define	 __MIPS_PTE_H__
 
 #include <mips/mips1_pte.h>
 #include <mips/mips3_pte.h>
@@ -53,9 +53,9 @@
 
 #ifndef _LOCORE
 #ifndef __BSD_PTENTRY_T__
-#define __BSD_PTENTRY_T__
+#define	__BSD_PTENTRY_T__
 typedef uint32_t pt_entry_t;
-#define PRIxPTE		PRIx32
+#define	PRIxPTE		PRIx32
 #endif
 
 /*
@@ -256,7 +256,7 @@ mips_paddr_to_tlbpfn(paddr_t pa)
 #endif /* ! _LOCORE */
 
 #if defined(_KERNEL) && !defined(_LOCORE)
-#define MIPS_MMU(X)	(MIPS_HAS_R4K_MMU ? MIPS3_##X : MIPS1_##X)
+#define	MIPS_MMU(X)	(MIPS_HAS_R4K_MMU ? MIPS3_##X : MIPS1_##X)
 static inline bool
 pte_valid_p(pt_entry_t pte)
 {

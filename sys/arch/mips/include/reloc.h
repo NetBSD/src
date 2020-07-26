@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.h,v 1.9 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: reloc.h,v 1.10 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
  */
 
 #ifndef __MIPS_RELOC_H__
-#define __MIPS_RELOC_H__
+#define	__MIPS_RELOC_H__
 /*
  * MIPS relocation types.
  */
@@ -69,5 +69,5 @@ struct reloc_info_mips {
 	long	r_addend;	/* value to add to symbol value */
 };
 
-#define relocation_info reloc_info_mips
+#define	relocation_info reloc_info_mips
 #endif /* __MIPS_RELOC_H__ */

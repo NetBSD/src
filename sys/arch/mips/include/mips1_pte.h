@@ -1,4 +1,4 @@
-/*	$NetBSD: mips1_pte.h,v 1.20 2015/06/26 22:56:36 matt Exp $	*/
+/*	$NetBSD: mips1_pte.h,v 1.21 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #ifndef _MIPS_MIPS1_PTE_H_
-#define _MIPS_MIPS1_PTE_H_
+#define	_MIPS_MIPS1_PTE_H_
 /*
  * R2000 hardware page table entry
  */
@@ -74,16 +74,16 @@ unsigned int	pg_prot:2,		/* SW: access control */
 #endif /* _LOCORE */
 
 #define	MIPS1_PG_PROT	0x00000003
-#define MIPS1_PG_RW	0x00000000
-#define MIPS1_PG_RO	0x00000001
-#define MIPS1_PG_WIRED	0x00000002
+#define	MIPS1_PG_RW	0x00000000
+#define	MIPS1_PG_RO	0x00000001
+#define	MIPS1_PG_WIRED	0x00000002
 #define	MIPS1_PG_G	0x00000100
 #define	MIPS1_PG_V	0x00000200
 #define	MIPS1_PG_NV	0x00000000
 #define	MIPS1_PG_D	0x00000400
 #define	MIPS1_PG_N	0x00000800
 #define	MIPS1_PG_FRAME	0xfffff000
-#define MIPS1_PG_SHIFT	12
+#define	MIPS1_PG_SHIFT	12
 #define	MIPS1_PG_PFNUM(x) (((x) & MIPS1_PG_FRAME) >> MIPS1_PG_SHIFT)
 
 #define	MIPS1_PG_ROPAGE	MIPS1_PG_V
@@ -97,6 +97,6 @@ unsigned int	pg_prot:2,		/* SW: access control */
 #define	mips1_paddr_to_tlbpfn(x)	(x)
 
 #define	MIPS1_PTE_TO_PADDR(pte) ((unsigned)(pte) & MIPS1_PG_FRAME)
-#define MIPS1_PAGE_IS_RDONLY(pte,va) ((int)(pte) & MIPS1_PG_RO)
+#define	MIPS1_PAGE_IS_RDONLY(pte,va) ((int)(pte) & MIPS1_PG_RO)
 
 #endif /* !_MIPS_MIPS1_PTE_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.10 2015/06/06 04:31:52 matt Exp $ */
+/* $NetBSD: intr.h,v 1.11 2020/07/26 08:08:41 simonb Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 #define	IST_LEVEL_HIGH	4		/* level triggered, active high */
 #define	IST_LEVEL_LOW	5		/* level triggered, active low */
 
-#define IST_MPSAFE	0x100		/* interrupt is MPSAFE */
+#define	IST_MPSAFE	0x100		/* interrupt is MPSAFE */
 
 #define	IPI_NOP		0		/* do nothing, interrupt only */
 #define	IPI_AST		1		/* force ast */
@@ -113,8 +113,8 @@ typedef struct {
 #ifdef _KERNEL
 
 #if defined(MULTIPROCESSOR) && defined(__HAVE_FAST_SOFTINTS)
-#define __HAVE_PREEMPTION	1
-#define SOFTINT_KPREEMPT	(SOFTINT_COUNT+0)
+#define	__HAVE_PREEMPTION	1
+#define	SOFTINT_KPREEMPT	(SOFTINT_COUNT+0)
 #endif
 
 #ifdef __INTR_PRIVATE

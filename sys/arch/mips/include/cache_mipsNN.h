@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_mipsNN.h,v 1.5 2016/07/11 16:15:35 matt Exp $	*/
+/*	$NetBSD: cache_mipsNN.h,v 1.6 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #ifndef _MIPS_CACHE_MIPSNN_H_
-#define _MIPS_CACHE_MIPSNN_H_
+#define	_MIPS_CACHE_MIPSNN_H_
 
 void	mipsNN_cache_init(uint32_t, uint32_t);
 
