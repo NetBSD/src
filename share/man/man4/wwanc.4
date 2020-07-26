@@ -1,4 +1,4 @@
-.\" $NetBSD: wwanc.4,v 1.3 2020/07/26 15:57:03 jdolecek Exp $
+.\" $NetBSD: wwanc.4,v 1.4 2020/07/26 21:47:16 wiz Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,13 +38,14 @@ The
 .Nm
 driver provides support for Fibocom L850-GL / Intel XMM7360.
 .Pp
-Device establishes connections via cellular networks such as
+The device establishes connections via cellular networks such as
 GPRS, UMTS, and LTE.
 They appear as a regular point-to-point network interface,
 transporting raw IP frames.
 .Pp
-SIM card needs to be unlocked, driver provides no means to provide
-password for the SIM.
+The SIM card needs to be unlocked, the
+.Nm
+driver provides no means to provide a password for the SIM.
 .Sh HARDWARE
 The following devices should work:
 .Pp
@@ -81,7 +82,7 @@ The
 .Nm
 driver IPv6 support is untested.
 .Pp
-Network initialization requires Python script published on the Linux
+Network initialization requires a Python script published in the Linux
 driver repository.
 The script requires the management device nodes to be created via:
 .Bd -literal -offset indent
