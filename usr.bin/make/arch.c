@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.74 2020/07/19 12:26:17 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.75 2020/07/26 20:21:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.74 2020/07/19 12:26:17 rillig Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.75 2020/07/26 20:21:31 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.74 2020/07/19 12:26:17 rillig Exp $");
+__RCSID("$NetBSD: arch.c,v 1.75 2020/07/26 20:21:31 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -257,7 +257,7 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 	     */
 	    int 	length;
 	    void	*freeIt;
-	    char	*result;
+	    const char	*result;
 
 	    result = Var_Parse(cp, ctxt, VARE_UNDEFERR|VARE_WANTRES,
 			       &length, &freeIt);
@@ -299,7 +299,7 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 		 */
 		int 	length;
 		void	*freeIt;
-		char	*result;
+		const char *result;
 
 		result = Var_Parse(cp, ctxt, VARE_UNDEFERR|VARE_WANTRES,
 				   &length, &freeIt);

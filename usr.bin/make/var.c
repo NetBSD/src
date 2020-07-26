@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.330 2020/07/26 19:55:24 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.331 2020/07/26 20:21:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.330 2020/07/26 19:55:24 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.331 2020/07/26 20:21:31 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.330 2020/07/26 19:55:24 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.331 2020/07/26 20:21:31 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1838,7 +1838,7 @@ ParseModifierPart(const char **tstr, int delim, VarEvalFlags eflags,
 		    Buf_AddByte(&buf, *cp);
 	    } else {
 		if (eflags & VARE_WANTRES) {
-		    char   *cp2;
+		    const char *cp2;
 		    int     len;
 		    void   *freeIt;
 
@@ -2145,7 +2145,7 @@ ApplyModifier_Defined(const char *mod, ApplyModifiersState *st)
 	     * If unescaped dollar sign, assume it's a
 	     * variable substitution and recurse.
 	     */
-	    char    *cp2;
+	    const char *cp2;
 	    int	    len;
 	    void    *freeIt;
 
@@ -3077,7 +3077,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	     * We may have some complex modifiers in a variable.
 	     */
 	    void *freeIt;
-	    char *rval;
+	    const char *rval;
 	    int rlen;
 	    int c;
 
@@ -3383,7 +3383,7 @@ cleanup:
  *-----------------------------------------------------------------------
  */
 /* coverity[+alloc : arg-*4] */
-char *
+const char *
 Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags flags,
 	  int *lengthPtr, void **freePtr)
 {
@@ -3436,13 +3436,13 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags flags,
 		 */
 		switch (str[1]) {
 		case '@':
-		    return UNCONST("$(.TARGET)");
+		    return "$(.TARGET)";
 		case '%':
-		    return UNCONST("$(.MEMBER)");
+		    return "$(.MEMBER)";
 		case '*':
-		    return UNCONST("$(.PREFIX)");
+		    return "$(.PREFIX)";
 		case '!':
-		    return UNCONST("$(.ARCHIVE)");
+		    return "$(.ARCHIVE)";
 		}
 	    }
 	    return (flags & VARE_UNDEFERR) ? var_Error : varNoError;
@@ -3475,7 +3475,7 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags flags,
 	    if (*tstr == '$') {
 		int rlen;
 		void *freeIt;
-		char *rval = Var_Parse(tstr, ctxt, flags, &rlen, &freeIt);
+		const char *rval = Var_Parse(tstr, ctxt, flags, &rlen, &freeIt);
 		if (rval != NULL)
 		    Buf_AddStr(&buf, rval);
 		free(freeIt);
@@ -3713,7 +3713,7 @@ char *
 Var_Subst(const char *var, const char *str, GNode *ctxt, VarEvalFlags flags)
 {
     Buffer	buf;		/* Buffer for forming things */
-    char	*val;		/* Value to substitute for a variable */
+    const char	*val;		/* Value to substitute for a variable */
     int		length;		/* Length of the variable invocation */
     Boolean	trailingBslash;	/* variable ends in \ */
     void	*freeIt = NULL;	/* Set if it should be freed */
