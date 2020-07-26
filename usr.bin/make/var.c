@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.312 2020/07/26 13:39:30 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.313 2020/07/26 15:09:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.312 2020/07/26 13:39:30 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.313 2020/07/26 15:09:10 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.312 2020/07/26 13:39:30 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.313 2020/07/26 15:09:10 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -279,9 +279,6 @@ typedef enum {
 static Var *
 VarFind(const char *name, GNode *ctxt, VarFindFlags flags)
 {
-    Hash_Entry         	*var;
-    Var			*v;
-
     /*
      * If the variable name begins with a '.', it could very well be one of
      * the local ones.  We check the name against all the local variables
@@ -330,7 +327,7 @@ VarFind(const char *name, GNode *ctxt, VarFindFlags flags)
      * look for it in VAR_CMD, VAR_GLOBAL and the environment, in that order,
      * depending on the FIND_* flags in 'flags'
      */
-    var = Hash_FindEntry(&ctxt->context, name);
+    Hash_Entry *var = Hash_FindEntry(&ctxt->context, name);
 
     if (var == NULL && (flags & FIND_CMD) && ctxt != VAR_CMD) {
 	var = Hash_FindEntry(&VAR_CMD->context, name);
@@ -348,13 +345,10 @@ VarFind(const char *name, GNode *ctxt, VarFindFlags flags)
 	char *env;
 
 	if ((env = getenv(name)) != NULL) {
-	    int len;
-
-	    v = bmake_malloc(sizeof(Var));
+	    Var *v = bmake_malloc(sizeof(Var));
 	    v->name = bmake_strdup(name);
 
-	    len = strlen(env);
-
+	    int len = (int)strlen(env);
 	    Buf_Init(&v->val, len + 1);
 	    Buf_AddBytes(&v->val, len, env);
 
@@ -428,19 +422,15 @@ VarFreeEnv(Var *v, Boolean destroy)
 static void
 VarAdd(const char *name, const char *val, GNode *ctxt)
 {
-    Var   	  *v;
-    int		  len;
-    Hash_Entry    *h;
+    Var *v = bmake_malloc(sizeof(Var));
 
-    v = bmake_malloc(sizeof(Var));
-
-    len = val != NULL ? strlen(val) : 0;
+    int len = val != NULL ? (int)strlen(val) : 0;
     Buf_Init(&v->val, len + 1);
     Buf_AddBytes(&v->val, len, val);
 
     v->flags = 0;
 
-    h = Hash_CreateEntry(&ctxt->context, name, NULL);
+    Hash_Entry *h = Hash_CreateEntry(&ctxt->context, name, NULL);
     Hash_SetValue(h, v);
     v->name = h->name;
     if (DEBUG(VAR) && !(ctxt->flags & INTERNAL)) {
@@ -838,7 +828,7 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
     } else {
 	Buf_Empty(&v->val);
 	if (val)
-	    Buf_AddBytes(&v->val, strlen(val), val);
+	    Buf_AddStr(&v->val, val);
 
 	if (DEBUG(VAR)) {
 	    fprintf(debug_file, "%s:%s = %s\n", ctxt->name, name, val);
@@ -960,7 +950,7 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 	Var_Set(name, val, ctxt);
     } else if (ctxt == VAR_CMD || !(v->flags & VAR_FROM_CMD)) {
 	Buf_AddByte(&v->val, ' ');
-	Buf_AddBytes(&v->val, strlen(val), val);
+	Buf_AddStr(&v->val, val);
 
 	if (DEBUG(VAR)) {
 	    fprintf(debug_file, "%s:%s = %s\n", ctxt->name, name,
@@ -1700,7 +1690,7 @@ VarOrder(const char *str, const char otype)
     }
 
     for (i = 0; i < ac; i++) {
-	Buf_AddBytes(&buf, strlen(av[i]), av[i]);
+	Buf_AddStr(&buf, av[i]);
 	if (i != ac - 1)
 	    Buf_AddByte(&buf, ' ');
     }
@@ -1747,7 +1737,7 @@ VarUniq(const char *str)
     }
 
     for (i = 0; i < ac; i++) {
-	Buf_AddBytes(&buf, strlen(av[i]), av[i]);
+	Buf_AddStr(&buf, av[i]);
 	if (i != ac - 1)
 	    Buf_AddByte(&buf, ' ');
     }
@@ -1862,7 +1852,7 @@ ParseModifierPart(GNode *ctxt, const char **tstr, int delim,
 		     */
 		    cp2 = Var_Parse(cp, ctxt, errnum | (eflags & VARE_WANTRES),
 				    &len, &freeIt);
-		    Buf_AddBytes(&buf, strlen(cp2), cp2);
+		    Buf_AddStr(&buf, cp2);
 		    free(freeIt);
 		    cp += len - 1;
 		} else {
@@ -1886,7 +1876,7 @@ ParseModifierPart(GNode *ctxt, const char **tstr, int delim,
 				    --depth;
 			    }
 			}
-			Buf_AddBytes(&buf, cp2 - cp, cp);
+			Buf_AddBytesBetween(&buf, cp, cp2);
 			cp = --cp2;
 		    } else
 			Buf_AddByte(&buf, *cp);
@@ -1937,14 +1927,14 @@ VarQuote(char *str, Boolean quoteDollar)
 	    const char *newline = Shell_GetNewline();
 	    if (newline == NULL)
 		newline = "\\\n";
-	    Buf_AddBytes(&buf, strlen(newline), newline);
+	    Buf_AddStr(&buf, newline);
 	    continue;
 	}
 	if (isspace((unsigned char)*str) || ismeta((unsigned char)*str))
 	    Buf_AddByte(&buf, '\\');
 	Buf_AddByte(&buf, *str);
 	if (quoteDollar && *str == '$')
-	    Buf_AddBytes(&buf, 2, "\\$");
+	    Buf_AddStr(&buf, "\\$");
     }
 
     str = Buf_Destroy(&buf, FALSE);
@@ -2165,7 +2155,7 @@ ApplyModifier_Defined(const char *mod, ApplyModifiersState *st)
 	    void    *freeIt;
 
 	    cp2 = Var_Parse(st->cp, st->ctxt, neflags, &len, &freeIt);
-	    Buf_AddBytes(&buf, strlen(cp2), cp2);
+	    Buf_AddStr(&buf, cp2);
 	    free(freeIt);
 	    st->cp += len - 1;
 	} else {
@@ -3497,7 +3487,7 @@ Var_Parse(const char *str, GNode *ctxt, VarEvalFlags flags,
 		void *freeIt;
 		char *rval = Var_Parse(tstr, ctxt, flags, &rlen, &freeIt);
 		if (rval != NULL)
-		    Buf_AddBytes(&buf, strlen(rval), rval);
+		    Buf_AddStr(&buf, rval);
 		free(freeIt);
 		tstr += rlen - 1;
 	    } else
@@ -3767,7 +3757,7 @@ Var_Subst(const char *var, const char *str, GNode *ctxt, VarEvalFlags flags)
 
 	    for (cp = str++; *str != '$' && *str != '\0'; str++)
 		continue;
-	    Buf_AddBytes(&buf, str - cp, cp);
+	    Buf_AddBytesBetween(&buf, cp, str);
 	} else {
 	    if (var != NULL) {
 		int expand;
@@ -3799,7 +3789,7 @@ Var_Subst(const char *var, const char *str, GNode *ctxt, VarEvalFlags flags)
 			 * the nested one
 			 */
 			if (*p == '$') {
-			    Buf_AddBytes(&buf, p - str, str);
+			    Buf_AddBytesBetween(&buf, str, p);
 			    str = p;
 			    continue;
 			}
@@ -3812,7 +3802,7 @@ Var_Subst(const char *var, const char *str, GNode *ctxt, VarEvalFlags flags)
 			     */
 			    for (; *p != '$' && *p != '\0'; p++)
 				continue;
-			    Buf_AddBytes(&buf, p - str, str);
+			    Buf_AddBytesBetween(&buf, str, p);
 			    str = p;
 			    expand = FALSE;
 			} else
