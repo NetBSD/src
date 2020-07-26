@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.1 2020/07/26 07:15:26 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.2 2020/07/26 07:24:27 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -36,11 +36,11 @@
 #include "make_malloc.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.1 2020/07/26 07:15:26 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.2 2020/07/26 07:24:27 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.1 2020/07/26 07:15:26 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.2 2020/07/26 07:24:27 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -85,24 +85,34 @@ typedef struct	List {
 #define	PAlloc(var,ptype)	var = (ptype) bmake_malloc(sizeof *(var))
 
 /*
- * LstValid (l) --
- *	Return TRUE if the list l is valid
+ * LstValid --
+ *	Return TRUE if the list is valid
  */
-#define LstValid(l)	((Lst)(l) != NULL)
+static Boolean
+LstValid(Lst l)
+{
+    return l != NULL;
+}
 
 /*
- * LstNodeValid (ln, l) --
- *	Return TRUE if the LstNode ln is valid with respect to l
+ * LstNodeValid --
+ *	Return TRUE if the list node is valid
  */
-#define LstNodeValid(ln, l)	((ln) != NULL)
+static Boolean
+LstNodeValid(LstNode ln)
+{
+    return ln != NULL;
+}
 
 /*
  * LstIsEmpty (l) --
  *	TRUE if the list l is empty.
  */
-#define LstIsEmpty(l)	(((List)(l))->firstPtr == NULL)
-
-/*	$NetBSD: lst.c,v 1.1 2020/07/26 07:15:26 rillig Exp $	*/
+static Boolean
+LstIsEmpty(Lst l)
+{
+    return l->firstPtr == NULL;
+}
 
 /*-
  *-----------------------------------------------------------------------
@@ -275,7 +285,7 @@ Lst_InsertBefore(Lst l, LstNode ln, void *d)
     if (LstValid (l) && (LstIsEmpty (l) && ln == NULL))
 	goto ok;
 
-    if (!LstValid (l) || LstIsEmpty (l) || !LstNodeValid (ln, l)) {
+    if (!LstValid (l) || LstIsEmpty (l) || !LstNodeValid (ln)) {
 	return FAILURE;
     }
 
@@ -341,7 +351,7 @@ Lst_InsertAfter(Lst l, LstNode ln, void *d)
 	goto ok;
     }
 
-    if (!LstValid (l) || LstIsEmpty (l)  || ! LstNodeValid (ln, l)) {
+    if (!LstValid (l) || LstIsEmpty (l)  || ! LstNodeValid (ln)) {
 	return FAILURE;
     }
     ok:
@@ -447,7 +457,7 @@ Lst_Remove(Lst l, LstNode ln)
     List 	list = l;
     ListNode	lNode = ln;
 
-    if (!LstValid (l) || !LstNodeValid (ln, l)) {
+    if (!LstValid (l) || !LstNodeValid (ln)) {
 	    return FAILURE;
     }
 
@@ -722,7 +732,7 @@ Lst_FindFrom(Lst l, LstNode ln, const void *d,
 {
     ListNode	tln;
 
-    if (!LstValid (l) || LstIsEmpty (l) || !LstNodeValid (ln, l)) {
+    if (!LstValid (l) || LstIsEmpty (l) || !LstNodeValid (ln)) {
 	return NULL;
     }
 
