@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.220 2020/06/07 09:45:19 maxv Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.221 2020/07/26 15:47:27 jdolecek Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2233,6 +2233,14 @@ kcov)
 ipmi[0-9]*)
 	unit=${i#ipmi}
 	mkdev ipmi${unit} c %ipmi_chr% $unit 600
+	;;
+
+xmm[0-9])
+	unit=${i#xmm}
+	makedir xmm${unit} 755
+	mkdev xmm${unit}/rpc c %wwanc_chr% $(($unit * 65536 + 1))
+	mkdev ttyXMM${unit}0 c %wwanc_chr% $(($unit * 65536 + 2))
+	mkdev ttyXMM${unit}1 c %wwanc_chr% $(($unit * 65536 + 4))
 	;;
 
 midevend)
