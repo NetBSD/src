@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.52 2020/07/19 09:26:18 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.53 2020/07/26 16:51:53 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: str.c,v 1.52 2020/07/19 09:26:18 rillig Exp $";
+static char rcsid[] = "$NetBSD: str.c,v 1.53 2020/07/26 16:51:53 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: str.c,v 1.52 2020/07/19 09:26:18 rillig Exp $");
+__RCSID("$NetBSD: str.c,v 1.53 2020/07/26 16:51:53 rillig Exp $");
 #endif
 #endif				/* not lint */
 #endif
@@ -128,18 +128,19 @@ str_concat(const char *s1, const char *s2, int flags)
  *	spaces) taking quotation marks into account.  Leading tabs/spaces
  *	are ignored.
  *
- * If expand is TRUE, quotes are removed and escape sequences
- *  such as \r, \t, etc... are expanded.
+ *	If expand is TRUE, quotes are removed and escape sequences
+ *	such as \r, \t, etc... are expanded. In this case, the return value
+ *	is NULL on parse errors.
  *
  * returns --
  *	Pointer to the array of pointers to the words.
- *      Memory containing the actual words in *store_words_buf.
- *		Both of these must be free'd by the caller.
- *      Number of words in *store_words_len.
+ *	Memory containing the actual words in *out_words_buf.
+ *	Both of these must be free'd by the caller.
+ *	Number of words in *out_words_len.
  */
 char **
-brk_string(const char *str, int *store_words_len, Boolean expand,
-	char **store_words_buf)
+brk_string(const char *str, int *out_words_len, Boolean expand,
+	char **out_words_buf)
 {
 	char inquote;
 	const char *str_p;
@@ -226,7 +227,7 @@ brk_string(const char *str, int *store_words_len, Boolean expand,
 				if (expand && inquote) {
 					free(words);
 					free(words_buf);
-					*store_words_buf = NULL;
+					*out_words_buf = NULL;
 					return NULL;
 				}
 				goto done;
@@ -274,8 +275,8 @@ brk_string(const char *str, int *store_words_len, Boolean expand,
 		*word_end++ = ch;
 	}
 done:	words[words_len] = NULL;
-	*store_words_len = words_len;
-	*store_words_buf = words_buf;
+	*out_words_len = words_len;
+	*out_words_buf = words_buf;
 	return words;
 }
 
