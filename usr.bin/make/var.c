@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.334 2020/07/26 22:19:11 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.335 2020/07/26 22:43:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.334 2020/07/26 22:19:11 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.335 2020/07/26 22:43:16 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.334 2020/07/26 22:19:11 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.335 2020/07/26 22:43:16 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3358,6 +3358,45 @@ cleanup:
     return var_Error;
 }
 
+static Boolean
+VarIsDynamic(GNode *ctxt, const char *varname, size_t namelen)
+{
+    if ((namelen == 1 ||
+	 (namelen == 2 && (varname[1] == 'F' || varname[1] == 'D'))) &&
+	(ctxt == VAR_CMD || ctxt == VAR_GLOBAL))
+    {
+	/*
+	 * If substituting a local variable in a non-local context,
+	 * assume it's for dynamic source stuff. We have to handle
+	 * this specially and return the longhand for the variable
+	 * with the dollar sign escaped so it makes it back to the
+	 * caller. Only four of the local variables are treated
+	 * specially as they are the only four that will be set
+	 * when dynamic sources are expanded.
+	 */
+	switch (varname[0]) {
+	case '@':
+	case '%':
+	case '*':
+	case '!':
+	    return TRUE;
+	}
+	return FALSE;
+    }
+
+    if (namelen > 2 && varname[0] == '.' &&
+	isupper((unsigned char) varname[1]) &&
+	(ctxt == VAR_CMD || ctxt == VAR_GLOBAL))
+    {
+	return strcmp(varname, ".TARGET") == 0 ||
+	    strcmp(varname, ".ARCHIVE") == 0 ||
+	    strcmp(varname, ".PREFIX") == 0 ||
+	    strcmp(varname, ".MEMBER") == 0;
+    }
+
+    return FALSE;
+}
+
 /*-
  *-----------------------------------------------------------------------
  * Var_Parse --
@@ -3542,39 +3581,7 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
 	}
 
 	if (v == NULL) {
-	    if ((namelen == 1 ||
-		 (namelen == 2 && (varname[1] == 'F' || varname[1] == 'D'))) &&
-		(ctxt == VAR_CMD || ctxt == VAR_GLOBAL))
-	    {
-		/*
-		 * If substituting a local variable in a non-local context,
-		 * assume it's for dynamic source stuff. We have to handle
-		 * this specially and return the longhand for the variable
-		 * with the dollar sign escaped so it makes it back to the
-		 * caller. Only four of the local variables are treated
-		 * specially as they are the only four that will be set
-		 * when dynamic sources are expanded.
-		 */
-		switch (varname[0]) {
-		case '@':
-		case '%':
-		case '*':
-		case '!':
-		    dynamic = TRUE;
-		    break;
-		}
-	    } else if (namelen > 2 && varname[0] == '.' &&
-		       isupper((unsigned char) varname[1]) &&
-		       (ctxt == VAR_CMD || ctxt == VAR_GLOBAL))
-	    {
-		if ((strcmp(varname, ".TARGET") == 0) ||
-		    (strcmp(varname, ".ARCHIVE") == 0) ||
-		    (strcmp(varname, ".PREFIX") == 0) ||
-		    (strcmp(varname, ".MEMBER") == 0))
-		{
-		    dynamic = TRUE;
-		}
-	    }
+	    dynamic = VarIsDynamic(ctxt, varname, namelen);
 
 	    if (!haveModifier) {
 		/*
