@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.22 2018/02/15 15:53:56 kamil Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.23 2020/07/26 08:08:41 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -30,59 +30,59 @@
  */
 
 #ifndef _MIPS_MCONTEXT_H_
-#define _MIPS_MCONTEXT_H_
+#define	_MIPS_MCONTEXT_H_
 
 /*
  * General register state
  */
-#define _NGREG		37	/* R0-R31, MDLO, MDHI, CAUSE, PC, SR */
+#define	_NGREG		37	/* R0-R31, MDLO, MDHI, CAUSE, PC, SR */
 
-#define _REG_R0		0
-#define _REG_AT		1
-#define _REG_V0		2
-#define _REG_V1		3
-#define _REG_A0		4
-#define _REG_A1		5
-#define _REG_A2		6
-#define _REG_A3		7
-#define _REG_T0		8
-#define _REG_T1		9
-#define _REG_T2		10
-#define _REG_T3		11
-#define _REG_T4		12
-#define _REG_T5		13
-#define _REG_T6		14
-#define _REG_T7		15
-#define _REG_S0		16
-#define _REG_S1		17
-#define _REG_S2		18
-#define _REG_S3		19
-#define _REG_S4		20
-#define _REG_S5		21
-#define _REG_S6		22
-#define _REG_S7		23
-#define _REG_T8		24
-#define _REG_T9		25
-#define _REG_K0		26
-#define _REG_K1		27
-#define _REG_GP		28
-#define _REG_SP		29
-#define _REG_S8		30
-#define _REG_RA		31
+#define	_REG_R0		0
+#define	_REG_AT		1
+#define	_REG_V0		2
+#define	_REG_V1		3
+#define	_REG_A0		4
+#define	_REG_A1		5
+#define	_REG_A2		6
+#define	_REG_A3		7
+#define	_REG_T0		8
+#define	_REG_T1		9
+#define	_REG_T2		10
+#define	_REG_T3		11
+#define	_REG_T4		12
+#define	_REG_T5		13
+#define	_REG_T6		14
+#define	_REG_T7		15
+#define	_REG_S0		16
+#define	_REG_S1		17
+#define	_REG_S2		18
+#define	_REG_S3		19
+#define	_REG_S4		20
+#define	_REG_S5		21
+#define	_REG_S6		22
+#define	_REG_S7		23
+#define	_REG_T8		24
+#define	_REG_T9		25
+#define	_REG_K0		26
+#define	_REG_K1		27
+#define	_REG_GP		28
+#define	_REG_SP		29
+#define	_REG_S8		30
+#define	_REG_RA		31
 
 /* XXX: The following conflict with <mips/regnum.h> */
-#define _REG_MDLO	32		
-#define _REG_MDHI	33
-#define _REG_CAUSE	34
-#define _REG_EPC	35
-#define _REG_SR		36
+#define	_REG_MDLO	32
+#define	_REG_MDHI	33
+#define	_REG_CAUSE	34
+#define	_REG_EPC	35
+#define	_REG_SR		36
 
 #ifndef __ASSEMBLER__
 
 /* Make sure this is signed; we need pointers to be sign-extended. */
 #if defined(__mips_n32)
 typedef	long long	__greg_t;
-#else   
+#else
 typedef	long		__greg_t;
 #endif /* __mips_n32 */
 
@@ -152,23 +152,23 @@ typedef struct {
 
 #endif /* !__ASSEMBLER__ */
 
-#define _UC_MACHINE_PAD		14	/* Padding appended to ucontext_t */
+#define	_UC_MACHINE_PAD		14	/* Padding appended to ucontext_t */
 
 #define	_UC_SETSTACK	0x00010000
 #define	_UC_CLRSTACK	0x00020000
 #define	_UC_TLSBASE	0x00040000
 
-#define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
-#define _UC_MACHINE_FP(uc)	((uc)->uc_mcontext.__gregs[_REG_S8])
-#define _UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_EPC])
-#define _UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_V0])
+#define	_UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
+#define	_UC_MACHINE_FP(uc)	((uc)->uc_mcontext.__gregs[_REG_S8])
+#define	_UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_EPC])
+#define	_UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_V0])
 
 #define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
 
-#define _UC_MACHINE32_SP(uc)	_UC_MACHINE_SP(uc)
-#define _UC_MACHINE32_PC(uc)	_UC_MACHINE_PC(uc)
-#define _UC_MACHINE32_INTRV(uc)	_UC_MACHINE_INTRV(uc)
-#define _UC_MACHINE32_PAD	14	/* Padding appended to ucontext32_t */
+#define	_UC_MACHINE32_SP(uc)	_UC_MACHINE_SP(uc)
+#define	_UC_MACHINE32_PC(uc)	_UC_MACHINE_PC(uc)
+#define	_UC_MACHINE32_INTRV(uc)	_UC_MACHINE_INTRV(uc)
+#define	_UC_MACHINE32_PAD	14	/* Padding appended to ucontext32_t */
 
 #define	_UC_MACHINE32_SET_PC(uc, pc)	_UC_MACHINE_PC((uc), (pc))
 
@@ -210,14 +210,14 @@ __lwp_gettcb_fast(void)
 		// emulating rdhwr $3,$29 on a CN50xx
 		"addiu $2,$0,316; syscall; nop; move %[__tcb],$2"
 #else
-		".set push"   
+		".set push"
 		";.set mips32r2"
 		";.p2align 4"
 		";ssnop"
 		";rdhwr $3,$29"
 		";ssnop"
 		";move %0,$3"
-		";.set pop"     
+		";.set pop"
 #endif
 	    : [__tcb]"=r"(__tcb)
 	    :
