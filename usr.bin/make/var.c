@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.326 2020/07/26 19:13:42 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.327 2020/07/26 19:16:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.326 2020/07/26 19:13:42 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.327 2020/07/26 19:16:17 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.326 2020/07/26 19:13:42 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.327 2020/07/26 19:16:17 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3383,7 +3383,7 @@ cleanup:
  */
 /* coverity[+alloc : arg-*4] */
 char *
-Var_Parse(const char *str, GNode *ctxt, VarEvalFlags flags,
+Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags flags,
 	  int *lengthPtr, void **freePtr)
 {
     const char	*tstr;		/* Pointer into str */
@@ -3394,7 +3394,6 @@ Var_Parse(const char *str, GNode *ctxt, VarEvalFlags flags,
     char	 startc;	/* Starting character when variable in parens
 				 * or braces */
     int		 vlen;		/* Length of variable name */
-    const char 	*start;		/* Points to original start of str */
     char	*nstr;		/* New string, used during expansion */
     Boolean	 dynamic;	/* TRUE if the variable is local and we're
 				 * expanding it in a non-local context. This
@@ -3405,7 +3404,6 @@ Var_Parse(const char *str, GNode *ctxt, VarEvalFlags flags,
     *freePtr = NULL;
     extramodifiers = NULL;
     dynamic = FALSE;
-    start = str;
 
     startc = str[1];
     if (startc != PROPEN && startc != BROPEN) {
@@ -3577,9 +3575,9 @@ Var_Parse(const char *str, GNode *ctxt, VarEvalFlags flags,
 		 * No modifiers -- have specification length so we can return
 		 * now.
 		 */
-		*lengthPtr = tstr - start + 1;
+		*lengthPtr = tstr - str + 1;
 		if (dynamic) {
-		    char *pstr = bmake_strndup(start, *lengthPtr);
+		    char *pstr = bmake_strndup(str, *lengthPtr);
 		    *freePtr = pstr;
 		    Buf_Destroy(&buf, TRUE);
 		    return pstr;
@@ -3647,7 +3645,7 @@ Var_Parse(const char *str, GNode *ctxt, VarEvalFlags flags,
 	    *freePtr = extraFree;
 	}
     }
-    *lengthPtr = tstr - start + (*tstr ? 1 : 0);
+    *lengthPtr = tstr - str + (*tstr ? 1 : 0);
 
     if (v->flags & VAR_FROM_ENV) {
 	Boolean destroy = FALSE;
@@ -3674,7 +3672,7 @@ Var_Parse(const char *str, GNode *ctxt, VarEvalFlags flags,
 		*freePtr = NULL;
 	    }
 	    if (dynamic) {
-		nstr = bmake_strndup(start, *lengthPtr);
+		nstr = bmake_strndup(str, *lengthPtr);
 		*freePtr = nstr;
 	    } else {
 		nstr = (flags & VARE_UNDEFERR) ? var_Error : varNoError;
