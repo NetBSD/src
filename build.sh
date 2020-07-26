@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.342 2020/06/30 21:22:19 riastradh Exp $
+#	$NetBSD: build.sh,v 1.343 2020/07/26 09:17:24 rillig Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1664,7 +1664,7 @@ rebuildmake()
 {
 	make="$(print_tooldir_make)"
 	if [ -n "${make}" ] && [ -x "${make}" ]; then
-		for f in usr.bin/make/*.[ch] usr.bin/make/lst.lib/*.[ch]; do
+		for f in usr.bin/make/*.[ch]; do
 			if [ "${f}" -nt "${make}" ]; then
 				statusmsg "${make} outdated" \
 					"(older than ${f}), needs building."
@@ -1698,7 +1698,7 @@ rebuildmake()
 	    bomb "Build of ${toolprefix}make failed"
 	make="${tmpdir}/${toolprefix}make"
 	${runcmd} cd "${TOP}"
-	${runcmd} rm -f usr.bin/make/*.o usr.bin/make/lst.lib/*.o
+	${runcmd} rm -f usr.bin/make/*.o
 	done_rebuildmake=true
 }
 
@@ -1961,7 +1961,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.342 2020/06/30 21:22:19 riastradh Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.343 2020/07/26 09:17:24 rillig Exp $
 # with these arguments: ${_args}
 #
 
