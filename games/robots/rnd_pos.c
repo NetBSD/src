@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd_pos.c,v 1.10 2009/08/12 08:30:55 dholland Exp $	*/
+/*	$NetBSD: rnd_pos.c,v 1.11 2020/07/26 15:38:22 nia Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rnd_pos.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: rnd_pos.c,v 1.10 2009/08/12 08:30:55 dholland Exp $");
+__RCSID("$NetBSD: rnd_pos.c,v 1.11 2020/07/26 15:38:22 nia Exp $");
 #endif
 #endif /* not lint */
 
@@ -43,8 +43,6 @@ __RCSID("$NetBSD: rnd_pos.c,v 1.10 2009/08/12 08:30:55 dholland Exp $");
 #include "robots.h"
 
 #define IS_SAME(p,y,x)	((p).y != -1 && (p).y == y && (p).x == x)
-
-static int rnd(int);
 
 /*
  * rnd_pos:
@@ -57,17 +55,10 @@ rnd_pos(void)
 	static int call = 0;
 
 	do {
-		pos.y = rnd(Y_FIELDSIZE - 1) + 1;
-		pos.x = rnd(X_FIELDSIZE - 1) + 1;
+		pos.y = arc4random_uniform(Y_FIELDSIZE - 1) + 1;
+		pos.x = arc4random_uniform(X_FIELDSIZE - 1) + 1;
 		refresh();
 	} while (Field[pos.y][pos.x] != 0);
 	call++;
 	return &pos;
-}
-
-static int
-rnd(int range)
-{
-
-	return random() % range;
 }

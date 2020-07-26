@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.32 2009/08/12 08:30:55 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.33 2020/07/26 15:38:22 nia Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.32 2009/08/12 08:30:55 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.33 2020/07/26 15:38:22 nia Exp $");
 #endif
 #endif /* not lint */
 
@@ -167,7 +167,6 @@ main(int argc, char **argv)
 		stdscr = newwin(Y_SIZE, X_SIZE, 0, 0);
 	}
 
-	srandom(time(NULL));
 	if (Real_time)
 		signal(SIGALRM, move_robots);
 	do {
