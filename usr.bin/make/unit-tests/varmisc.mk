@@ -1,10 +1,11 @@
-# $Id: varmisc.mk,v 1.13 2020/07/26 10:59:56 rillig Exp $
+# $Id: varmisc.mk,v 1.14 2020/07/26 11:10:29 rillig Exp $
 #
 # Miscellaneous variable tests.
 
 all: unmatched_var_paren D_true U_true D_false U_false Q_lhs Q_rhs NQ_none \
 	strftime cmpv manok
 all: save-dollars
+all: export-appended
 
 unmatched_var_paren:
 	@echo ${foo::=foo-text}
@@ -139,3 +140,19 @@ VAR.${param}=	${param}
 .if ${VAR.+} != "+" || ${VAR.!} != "!" || ${VAR.?} != "?"
 .error "${VAR.+}" "${VAR.!}" "${VAR.?}"
 .endif
+
+# Appending to a variable from the environment creates a copy of that variable
+# in the global context.
+# The appended value is not exported automatically.
+# When a variable is exported, the exported value is taken at the time of the
+# .export directive. Later changes to the variable have no effect.
+.export FROM_ENV_BEFORE
+FROM_ENV+=		mk
+FROM_ENV_BEFORE+=	mk
+FROM_ENV_AFTER+=	mk
+.export FROM_ENV_AFTER
+
+export-appended:
+	@echo $@: "$$FROM_ENV"
+	@echo $@: "$$FROM_ENV_BEFORE"
+	@echo $@: "$$FROM_ENV_AFTER"
