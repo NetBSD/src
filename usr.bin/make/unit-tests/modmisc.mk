@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.23 2020/07/26 11:39:55 rillig Exp $
+# $Id: modmisc.mk,v 1.24 2020/07/26 12:18:11 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -71,6 +71,27 @@ undefvar:
 	@echo S:${:U:S,^$,empty,}
 	@echo C:${:U:C,^$,empty,}
 	@echo @:${:U:@var@empty@}
+
+WORDS=		sequences of letters
+# FIXME: The "*" in "letters" must not be substituted because of the 1.
+.if ${WORDS:S,e,*,1} != "s*quences of l*tters"
+.warning ${WORDS:S,e,*,1}
+.endif
+.if ${WORDS:S,e,*,} != "s*quences of l*tters"
+.error oops
+.endif
+.if ${WORDS:S,e,*,g} != "s*qu*nc*s of l*tt*rs"
+.error oops
+.endif
+.if ${WORDS:S,^sequ,occurr,} != "occurrences of letters"
+.error oops
+.endif
+.if ${WORDS:S,^of,with,} != "sequences with letters"
+.error oops
+.endif
+.if ${WORDS:S,^office,does not match,} != ${WORDS}
+.error oops
+.endif
 
 mod-subst:
 	@echo $@:
