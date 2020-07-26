@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.17 2020/07/26 10:49:05 jmcneill Exp $
+.\"	$NetBSD: hardware,v 1.18 2020/07/26 10:50:26 jmcneill Exp $
 .\"
 .\" Copyright (c) 2001-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,7 +48,7 @@ NVIDIA Tegra K1
 .El
 .Ss2 64-bit SoCs supported by GENERIC64 kernels
 .Pp
-Devices conforming to the Server Base System Architecture specification,
+Devices conforming to the Arm "ServerReady" (SBBR and SBSA) specifications,
 and
 .Lk "https://wiki.netbsd.org/ports/evbarm/qemu_arm/" "QEMU"
 are also supported.
