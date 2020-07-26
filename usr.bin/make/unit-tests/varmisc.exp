@@ -43,4 +43,5 @@ save-dollars: off      = $
 export-appended: env
 export-appended: env
 export-appended: env mk
+parse-dynamic: parse-dynamic parse-dynamic before
 exit status 0
