@@ -1,4 +1,4 @@
-# $Id: varmisc.mk,v 1.14 2020/07/26 11:10:29 rillig Exp $
+# $Id: varmisc.mk,v 1.15 2020/07/26 20:30:42 rillig Exp $
 #
 # Miscellaneous variable tests.
 
@@ -6,6 +6,7 @@ all: unmatched_var_paren D_true U_true D_false U_false Q_lhs Q_rhs NQ_none \
 	strftime cmpv manok
 all: save-dollars
 all: export-appended
+all: parse-dynamic
 
 unmatched_var_paren:
 	@echo ${foo::=foo-text}
@@ -156,3 +157,20 @@ export-appended:
 	@echo $@: "$$FROM_ENV"
 	@echo $@: "$$FROM_ENV_BEFORE"
 	@echo $@: "$$FROM_ENV_AFTER"
+
+# begin parse-dynamic
+#
+# Demonstrate that the target-specific variables are not evaluated in
+# the global context. They are preserved until there is a local context
+# in which resolving them makes sense.
+
+${:U>}=		before
+G_TARGET:=	$@
+G_MEMBER:=	$%
+G_PREFIX:=	$*
+G_ARCHIVE:=	$!
+G_ALLSRC:=	$>
+${:U>}=		after
+
+parse-dynamic:
+	@echo $@: ${G_TARGET} ${G_MEMBER} ${G_PREFIX} ${G_ARCHIVE} ${G_ALLSRC}
