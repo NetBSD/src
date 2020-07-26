@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.429 2020/06/24 03:38:01 thorpej Exp $
+#	$NetBSD: files.pci,v 1.430 2020/07/26 14:51:18 jdolecek Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -1165,3 +1165,10 @@ file	dev/pci/if_ixl.c	ixl
 defflag	opt_if_ixl.h	IXL_DEBUG
 defparam opt_if_ixl.h	IXL_STATS_INTERVAL_MSEC
 			IXL_QUEUE_NUM
+
+# Intel XMM 7360 LTE modem
+device  wwanc {} : tty
+attach  wwanc at pci
+device  wwan: ifnet
+attach  wwan at wwanc
+file    dev/pci/xmm7360.c               wwanc | wwan            needs-flag
