@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.323 2020/07/26 18:11:12 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.324 2020/07/26 18:47:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.323 2020/07/26 18:11:12 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.324 2020/07/26 18:47:02 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.323 2020/07/26 18:11:12 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.324 2020/07/26 18:47:02 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1786,27 +1786,29 @@ VarRange(const char *str, int ac)
 
 /*-
  * Parse a text part of a modifier such as the "from" and "to" in :S/from/to/
- * or the :@ modifier. Nested variables in the text are expanded unless
- * VARE_NOSUBST is set.
+ * or the :@ modifier, until the next unescaped delimiter.  The delimiter, as
+ * well as the backslash or the dollar, can be escaped with a backslash.
  *
- * The text part is parsed until the next delimiter.  To escape the delimiter,
- * a backslash or a dollar, put a backslash before it.
+ * Return the parsed (and possibly expanded) string, or NULL if no delimiter
+ * was found.
  *
- * Return the expanded string or NULL if the delimiter was missing.
+ * Nested variables in the text are expanded unless VARE_NOSUBST is set.
  *
- * If pattern is specified, handle escaped ampersands and replace unescaped
- * ampersands with the lhs of the pattern (for the :S modifier).
- *
- * If out_length is specified, return the string length of the buffer
- * (except on parse errors).
+ * If out_length is specified, store the length of the returned string, just
+ * to save another strlen call.
  *
  * If out_pflags is specified and the last character of the pattern is a $,
- * set the VARP_ANCHOR_END bit of mpflags.
+ * set the VARP_ANCHOR_END bit of mpflags (for the first part of the :S
+ * modifier).
+ *
+ * If subst is specified, handle escaped ampersands and replace unescaped
+ * ampersands with the lhs of the pattern (for the second part of the :S
+ * modifier).
  */
 static char *
-ParseModifierPart(GNode *ctxt, const char **tstr, int delim,
-		  VarEvalFlags eflags, VarPatternFlags *out_pflags,
-		  size_t *out_length, ModifyWord_SubstArgs *subst)
+ParseModifierPart(const char **tstr, int delim, VarEvalFlags eflags,
+		  GNode *ctxt, size_t *out_length,
+		  VarPatternFlags *out_pflags, ModifyWord_SubstArgs *subst)
 {
     const char *cp;
     char *rstr;
@@ -1822,8 +1824,9 @@ ParseModifierPart(GNode *ctxt, const char **tstr, int delim,
      * touch other backslashes.
      */
     for (cp = *tstr; *cp != '\0' && *cp != delim; cp++) {
-	Boolean is_escaped = cp[0] == '\\' && (cp[1] == delim ||
-	    cp[1] == '\\' || cp[1] == '$' || (subst != NULL && cp[1] == '&'));
+	Boolean is_escaped = cp[0] == '\\' && (
+	    cp[1] == delim || cp[1] == '\\' || cp[1] == '$' ||
+	    (cp[1] == '&' && subst != NULL));
 	if (is_escaped) {
 	    Buf_AddByte(&buf, cp[1]);
 	    cp++;
@@ -2074,17 +2077,15 @@ ApplyModifier_Loop(const char *mod, ApplyModifiersState *st) {
     args.ctx = st->ctxt;
     st->cp = mod + 1;
     char delim = '@';
-    args.tvar = ParseModifierPart(st->ctxt, &st->cp, delim,
-				  st->eflags & ~VARE_WANTRES,
-				  NULL, NULL, NULL);
+    args.tvar = ParseModifierPart(&st->cp, delim, st->eflags & ~VARE_WANTRES,
+				  st->ctxt, NULL, NULL, NULL);
     if (args.tvar == NULL) {
 	st->missing_delim = delim;
 	return FALSE;
     }
 
-    args.str = ParseModifierPart(st->ctxt, &st->cp, delim,
-				 st->eflags & ~VARE_WANTRES,
-				 NULL, NULL, NULL);
+    args.str = ParseModifierPart(&st->cp, delim, st->eflags & ~VARE_WANTRES,
+				 st->ctxt, NULL, NULL, NULL);
     if (args.str == NULL) {
 	st->missing_delim = delim;
 	return FALSE;
@@ -2253,7 +2254,7 @@ ApplyModifier_Exclam(const char *mod, ApplyModifiersState *st)
 {
     st->cp = mod + 1;
     char delim = '!';
-    char *cmd = ParseModifierPart(st->ctxt, &st->cp, delim, st->eflags,
+    char *cmd = ParseModifierPart(&st->cp, delim, st->eflags, st->ctxt,
 				  NULL, NULL, NULL);
     if (cmd == NULL) {
 	st->missing_delim = delim;
@@ -2399,16 +2400,16 @@ ApplyModifier_Subst(const char * const mod, ApplyModifiersState *st)
 	st->cp++;
     }
 
-    char *lhs = ParseModifierPart(st->ctxt, &st->cp, delim, st->eflags,
-				  &args.pflags, &args.lhsLen, NULL);
+    char *lhs = ParseModifierPart(&st->cp, delim, st->eflags, st->ctxt,
+				  &args.lhsLen, &args.pflags, NULL);
     if (lhs == NULL) {
 	st->missing_delim = delim;
 	return FALSE;
     }
     args.lhs = lhs;
 
-    char *rhs = ParseModifierPart(st->ctxt, &st->cp, delim, st->eflags,
-				  NULL, &args.rhsLen, &args);
+    char *rhs = ParseModifierPart(&st->cp, delim, st->eflags, st->ctxt,
+				  &args.rhsLen, NULL, &args);
     if (rhs == NULL) {
 	st->missing_delim = delim;
 	return FALSE;
@@ -2458,15 +2459,15 @@ ApplyModifier_Regex(const char *mod, ApplyModifiersState *st)
 
     st->cp = mod + 2;
 
-    char *re = ParseModifierPart(st->ctxt, &st->cp, delim,
-				 st->eflags, NULL, NULL, NULL);
+    char *re = ParseModifierPart(&st->cp, delim, st->eflags, st->ctxt,
+				 NULL, NULL, NULL);
     if (re == NULL) {
 	st->missing_delim = delim;
 	return FALSE;
     }
 
-    args.replace = ParseModifierPart(st->ctxt, &st->cp, delim,
-				     st->eflags, NULL, NULL, NULL);
+    args.replace = ParseModifierPart(&st->cp, delim, st->eflags, st->ctxt,
+				     NULL, NULL, NULL);
     if (args.replace == NULL) {
 	free(re);
 	st->missing_delim = delim;
@@ -2620,9 +2621,9 @@ ApplyModifier_To(const char *mod, ApplyModifiersState *st)
 static int
 ApplyModifier_Words(const char *mod, ApplyModifiersState *st)
 {
-    st->cp = mod + 1;	/* point to char after '[' */
+    st->cp = mod + 1;		/* point to char after '[' */
     char delim = ']';		/* look for closing ']' */
-    char *estr = ParseModifierPart(st->ctxt, &st->cp, delim, st->eflags,
+    char *estr = ParseModifierPart(&st->cp, delim, st->eflags, st->ctxt,
 				   NULL, NULL, NULL);
     if (estr == NULL) {
 	st->missing_delim = delim;
@@ -2760,16 +2761,16 @@ ApplyModifier_IfElse(const char *mod, ApplyModifiersState *st)
 
     st->cp = mod + 1;
     char delim = ':';
-    char *then_expr = ParseModifierPart(
-	st->ctxt, &st->cp, delim, then_eflags, NULL, NULL, NULL);
+    char *then_expr = ParseModifierPart(&st->cp, delim, then_eflags, st->ctxt,
+					NULL, NULL, NULL);
     if (then_expr == NULL) {
 	st->missing_delim = delim;
 	return FALSE;
     }
 
     delim = st->endc;		/* BRCLOSE or PRCLOSE */
-    char *else_expr = ParseModifierPart(
-	st->ctxt, &st->cp, delim, else_eflags, NULL, NULL, NULL);
+    char *else_expr = ParseModifierPart(&st->cp, delim, else_eflags, st->ctxt,
+					NULL, NULL, NULL);
     if (else_expr == NULL) {
 	st->missing_delim = delim;
 	return FALSE;
@@ -2857,8 +2858,8 @@ ApplyModifier_Assign(const char *mod, ApplyModifiersState *st)
     }
 
     char delim = st->startc == PROPEN ? PRCLOSE : BRCLOSE;
-    char *val = ParseModifierPart(st->ctxt, &st->cp, delim,
-				  st->eflags, NULL, NULL, NULL);
+    char *val = ParseModifierPart(&st->cp, delim, st->eflags, st->ctxt,
+				  NULL, NULL, NULL);
     if (st->v->flags & VAR_JUNK) {
 	/* restore original name */
 	free(st->v->name);
@@ -2957,7 +2958,7 @@ ApplyModifier_SysV(const char *mod, ApplyModifiersState *st)
 
     char delim = '=';
     st->cp = mod;
-    char *lhs = ParseModifierPart(st->ctxt, &st->cp, delim, st->eflags,
+    char *lhs = ParseModifierPart(&st->cp, delim, st->eflags, st->ctxt,
 				  NULL, NULL, NULL);
     if (lhs == NULL) {
 	st->missing_delim = delim;
@@ -2965,7 +2966,7 @@ ApplyModifier_SysV(const char *mod, ApplyModifiersState *st)
     }
 
     delim = st->endc;
-    char *rhs = ParseModifierPart(st->ctxt, &st->cp, delim, st->eflags,
+    char *rhs = ParseModifierPart(&st->cp, delim, st->eflags, st->ctxt,
 				  NULL, NULL, NULL);
     if (rhs == NULL) {
 	st->missing_delim = delim;
