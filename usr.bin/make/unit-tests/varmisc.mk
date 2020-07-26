@@ -1,9 +1,10 @@
-# $Id: varmisc.mk,v 1.11 2020/07/19 20:37:57 rillig Exp $
+# $Id: varmisc.mk,v 1.12 2020/07/26 10:48:21 rillig Exp $
 #
 # Miscellaneous variable tests.
 
 all: unmatched_var_paren D_true U_true D_false U_false Q_lhs Q_rhs NQ_none \
 	strftime cmpv manok
+all: save-dollars
 
 unmatched_var_paren:
 	@echo ${foo::=foo-text}
@@ -82,3 +83,18 @@ manok:
 VARNAME=	${VARNAME${:U1}}
 .if defined(VARNAME${:U2}) && !empty(VARNAME${:U2})
 .endif
+
+# begin .MAKE.SAVE_DOLLARS; see Var_Set_with_flags and s2Boolean.
+SD_VALUES=	0 1 2 False True false true Yes No yes no On Off ON OFF on off
+SD_4_DOLLARS=	$$$$
+
+.for val in ${SD_VALUES}
+.MAKE.SAVE_DOLLARS:=	${val}	# Must be := since a simple = has no effect.
+SD.${val}:=		${SD_4_DOLLARS}
+.endfor
+.MAKE.SAVE_DOLLARS:=	yes
+
+save-dollars:
+.for val in ${SD_VALUES}
+	@printf '%s: %-8s = %s\n' $@ ${val} ${SD.${val}:Q}
+.endfor
