@@ -1,4 +1,4 @@
-# $Id: moderrs.mk,v 1.3 2020/07/26 14:16:45 rillig Exp $
+# $Id: moderrs.mk,v 1.4 2020/07/26 14:39:46 rillig Exp $
 #
 # various modifier error tests
 
@@ -10,6 +10,7 @@ MOD_S:= ${MOD_TERM},
 
 all:	modunkn modunknV varterm vartermV modtermV modloop
 all:	modwords
+all:	modexclam
 
 modunkn:
 	@echo "Expect: Unknown modifier 'Z'"
@@ -57,3 +58,12 @@ modwords:
 	# This results in a range from LONG_MAX - 1 to 3,
 	# which is empty.
 	@echo 12345=${UNDEF:U1 2 3:[123451234512345123451234512345]:S,^$,ok,:S,^3$,ok,}
+
+modexclam:
+	@echo "Expect: 2 errors about missing ! delimiter"
+	@echo ${VARNAME:!echo}
+	# When the final exclamation mark is missing, there is no
+	# fallback to the SysV substitution modifier.
+	# If there were a fallback, the output would be "exclam",
+	# and the above would have produced an "Unknown modifier '!'".
+	@echo ${!:L:!=exclam}
