@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.876 2020/07/25 22:53:38 riastradh Exp $
+# $NetBSD: mi,v 1.877 2020/07/26 14:22:22 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -184,6 +184,7 @@
 ./usr/libdata/debug/usr/tests/sys					tests-sys-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/sys/crypto				tests-sys-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/sys/crypto/aes				tests-sys-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/sys/crypto/chacha				tests-sys-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/sys/net					tests-sys-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/sys/netatalk				tests-sys-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/sys/netinet				tests-sys-debug		compattestfile,atf
