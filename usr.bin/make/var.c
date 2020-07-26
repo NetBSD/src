@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.324 2020/07/26 18:47:02 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.325 2020/07/26 19:11:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.324 2020/07/26 18:47:02 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.325 2020/07/26 19:11:06 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.324 2020/07/26 18:47:02 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.325 2020/07/26 19:11:06 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3452,7 +3452,7 @@ Var_Parse(const char *str, GNode *ctxt, VarEvalFlags flags,
 	    return (flags & VARE_UNDEFERR) ? var_Error : varNoError;
 	} else {
 	    haveModifier = FALSE;
-	    tstr = &str[1];
+	    tstr = str + 1;
 	    endc = str[1];
 	}
     } else {
@@ -3501,10 +3501,11 @@ Var_Parse(const char *str, GNode *ctxt, VarEvalFlags flags,
 	    Buf_Destroy(&buf, TRUE);
 	    return var_Error;
 	}
-	str = Buf_GetAll(&buf, &vlen);
+
+	char *varname = Buf_GetAll(&buf, &vlen);
 
 	/*
-	 * At this point, str points into newly allocated memory from
+	 * At this point, varname points into newly allocated memory from
 	 * buf, containing only the name of the variable.
 	 *
 	 * start and tstr point into the const string that was pointed
@@ -3514,23 +3515,23 @@ Var_Parse(const char *str, GNode *ctxt, VarEvalFlags flags,
 	 * will be '\0', ':', PRCLOSE, or BRCLOSE.
 	 */
 
-	v = VarFind(str, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
+	v = VarFind(varname, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
 	/*
 	 * Check also for bogus D and F forms of local variables since we're
 	 * in a local context and the name is the right length.
 	 */
-	if ((v == NULL) && (ctxt != VAR_CMD) && (ctxt != VAR_GLOBAL) &&
-		(vlen == 2) && (str[1] == 'F' || str[1] == 'D') &&
-		strchr("@%?*!<>", str[0]) != NULL) {
+	if (v == NULL && ctxt != VAR_CMD && ctxt != VAR_GLOBAL &&
+		vlen == 2 && (varname[1] == 'F' || varname[1] == 'D') &&
+		strchr("@%?*!<>", varname[0]) != NULL) {
 	    /*
 	     * Well, it's local -- go look for it.
 	     */
-	    name[0] = *str;
+	    name[0] = varname[0];
 	    name[1] = '\0';
 	    v = VarFind(name, ctxt, 0);
 
 	    if (v != NULL) {
-		if (str[1] == 'D') {
+		if (varname[1] == 'D') {
 		    extramodifiers = "H:";
 		} else { /* F */
 		    extramodifiers = "T:";
@@ -3539,9 +3540,9 @@ Var_Parse(const char *str, GNode *ctxt, VarEvalFlags flags,
 	}
 
 	if (v == NULL) {
-	    if (((vlen == 1) ||
-		 (((vlen == 2) && (str[1] == 'F' || str[1] == 'D')))) &&
-		((ctxt == VAR_CMD) || (ctxt == VAR_GLOBAL)))
+	    if ((vlen == 1 ||
+		 ((vlen == 2 && (varname[1] == 'F' || varname[1] == 'D')))) &&
+		(ctxt == VAR_CMD || ctxt == VAR_GLOBAL))
 	    {
 		/*
 		 * If substituting a local variable in a non-local context,
@@ -3552,7 +3553,7 @@ Var_Parse(const char *str, GNode *ctxt, VarEvalFlags flags,
 		 * specially as they are the only four that will be set
 		 * when dynamic sources are expanded.
 		 */
-		switch (*str) {
+		switch (varname[0]) {
 		case '@':
 		case '%':
 		case '*':
@@ -3560,15 +3561,15 @@ Var_Parse(const char *str, GNode *ctxt, VarEvalFlags flags,
 		    dynamic = TRUE;
 		    break;
 		}
-	    } else if (vlen > 2 && *str == '.' &&
-		       isupper((unsigned char) str[1]) &&
+	    } else if (vlen > 2 && varname[0] == '.' &&
+		       isupper((unsigned char) varname[1]) &&
 		       (ctxt == VAR_CMD || ctxt == VAR_GLOBAL))
 	    {
 		int len = vlen - 1;
-		if ((strncmp(str, ".TARGET", len) == 0) ||
-		    (strncmp(str, ".ARCHIVE", len) == 0) ||
-		    (strncmp(str, ".PREFIX", len) == 0) ||
-		    (strncmp(str, ".MEMBER", len) == 0))
+		if ((strncmp(varname, ".TARGET", len) == 0) ||
+		    (strncmp(varname, ".ARCHIVE", len) == 0) ||
+		    (strncmp(varname, ".PREFIX", len) == 0) ||
+		    (strncmp(varname, ".MEMBER", len) == 0))
 		{
 		    dynamic = TRUE;
 		}
@@ -3595,7 +3596,7 @@ Var_Parse(const char *str, GNode *ctxt, VarEvalFlags flags,
 		 * so kludge up a Var structure for the modifications
 		 */
 		v = bmake_malloc(sizeof(Var));
-		v->name = UNCONST(str);
+		v->name = varname;
 		Buf_Init(&v->val, 1);
 		v->flags = VAR_JUNK;
 		Buf_Destroy(&buf, FALSE);
@@ -3668,7 +3669,7 @@ Var_Parse(const char *str, GNode *ctxt, VarEvalFlags flags,
 	/*
 	 * Perform any free'ing needed and set *freePtr to NULL so the caller
 	 * doesn't try to free a static pointer.
-	 * If VAR_KEEP is also set then we want to keep str as is.
+	 * If VAR_KEEP is also set then we want to keep str(?) as is.
 	 */
 	if (!(v->flags & VAR_KEEP)) {
 	    if (*freePtr) {
