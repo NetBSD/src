@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_subr.S,v 1.6 2015/06/07 08:03:10 matt Exp $	*/
+/*	$NetBSD: rmixl_subr.S,v 1.7 2020/07/26 07:48:07 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -37,12 +37,9 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: rmixl_subr.S,v 1.6 2015/06/07 08:03:10 matt Exp $");
+RCSID("$NetBSD: rmixl_subr.S,v 1.7 2020/07/26 07:48:07 simonb Exp $");
 
 #include "assym.h"
-
-#define RMIXL_COP_0_EIRR	_(9), 6
-#define RMIXL_COP_0_EIMR	_(9), 7
 
 	.set    noreorder
 	.set	arch=xlr
@@ -83,14 +80,14 @@ END(rmixl_mtcr)
  *	clobbered by the EIRR read-modify-write 
  */
 LEAF(rmixl_eirr_ack)
-	dmtc0	zero, RMIXL_COP_0_EIMR	/* EIMR = 0 */
+	dmtc0	zero, MIPS_COP_0_EIMR	/* EIMR = 0 */
 	COP0_SYNC
-	dmfc0	a3, RMIXL_COP_0_EIRR	/* a3 = EIRR */
+	dmfc0	a3, MIPS_COP_0_EIRR	/* a3 = EIRR */
 	and	a3, a2			/* a3 &= preserve */
 	or	a3, a1			/* a3 |= vecbit */
-	dmtc0	a3, RMIXL_COP_0_EIRR	/* EIRR = a3 */
+	dmtc0	a3, MIPS_COP_0_EIRR	/* EIRR = a3 */
 	COP0_SYNC
-	dmtc0	a0, RMIXL_COP_0_EIMR	/* EIMR = eimr */
+	dmtc0	a0, MIPS_COP_0_EIMR	/* EIMR = eimr */
 	JR_HB_RA
 END(rmixl_eirr_ack)
 
@@ -144,7 +141,7 @@ NESTED(rmixl_cpu_trampoline, CALLFRAME_SIZ, ra)
 	li		t0, 0
 #endif
 
-	mtc0		zero, RMIXL_COP_0_EIMR	/* disable all in MIPS_COP_0_EIMR */
+	mtc0		zero, MIPS_COP_0_EIMR	/* disable all in MIPS_COP_0_EIMR */
 
 	mtc0		t0, MIPS_COP_0_STATUS
 
