@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.32 2020/07/26 07:25:38 ryo Exp $ */
+/* $NetBSD: trap.c,v 1.33 2020/07/26 07:26:52 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.32 2020/07/26 07:25:38 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.33 2020/07/26 07:26:52 ryo Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -588,6 +588,46 @@ arm_cond_match(uint32_t insn, uint64_t spsr)
 	return (!match != !invert);
 }
 
+uint8_t atomic_swap_8(volatile uint8_t *, uint8_t);
+
+static int
+emul_arm_swp(uint32_t insn, struct trapframe *tf)
+{
+	struct faultbuf fb;
+	vaddr_t vaddr;
+	uint32_t val;
+	int Rn, Rd, Rm, error;
+
+	Rn = __SHIFTOUT(insn, 0x000f0000);
+	Rd = __SHIFTOUT(insn, 0x0000f000);
+	Rm = __SHIFTOUT(insn, 0x0000000f);
+
+	vaddr = tf->tf_reg[Rn] & 0xffffffff;
+	val = tf->tf_reg[Rm];
+
+	/* fault if insn is swp, and unaligned access */
+	if ((insn & 0x00400000) == 0 && (vaddr & 3) != 0) {
+		tf->tf_far = vaddr;
+		return EFAULT;
+	}
+
+	/* vaddr will always point to userspace, since it has only 32bit */
+	if ((error = cpu_set_onfault(&fb)) == 0) {
+		if (insn & 0x00400000) {
+			/* swpb */
+			val = atomic_swap_8(vaddr, val);
+		} else {
+			/* swp */
+			val = atomic_swap_32(vaddr, val);
+		}
+		cpu_unset_onfault();
+		tf->tf_reg[Rd] = val;
+	} else {
+		tf->tf_far = reg_far_el1_read();
+	}
+	return error;
+}
+
 static enum emul_arm_result
 emul_thumb_insn(struct trapframe *tf, uint32_t insn, int insn_size)
 {
@@ -634,6 +674,15 @@ emul_arm_insn(struct trapframe *tf)
 	/* Unconditional instruction extension space? */
 	if ((insn & 0xf0000000) == 0xf0000000)
 		goto unknown_insn;
+
+	/* swp,swpb */
+	if ((insn & 0x0fb00ff0) == 0x01000090) {
+		if (arm_cond_match(insn, tf->tf_spsr)) {
+			if (emul_arm_swp(insn, tf) != 0)
+				return EMUL_ARM_FAULT;
+		}
+		goto emulated;
+	}
 
 	/*
 	 * Emulate ARMv6 instructions with cache operations
