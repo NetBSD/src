@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.16 2020/07/23 14:10:25 nia Exp $
+.\"	$NetBSD: hardware,v 1.17 2020/07/26 10:49:05 jmcneill Exp $
 .\"
 .\" Copyright (c) 2001-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +40,7 @@ Freescale i.MX6 Dual/DualLite/Quad, i.MX7 Dual (e.g. Wandboard, UDOO, Hummingboa
 .It
 Samsung Exynos 5422 (e.g. ODROID-XU3/XU-4)
 .It
-Texas Instruments OMAP3 (e.g. BeagleBoard, BeagleBone Black...)
+Texas Instruments AM335x and OMAP3 (e.g. BeagleBoard, BeagleBone Black...)
 .It
 Xilinx Zynq (e.g. Zedboard, Parallella...)
 .It
