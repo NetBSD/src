@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.315 2020/07/26 15:37:44 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.316 2020/07/26 15:53:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.315 2020/07/26 15:37:44 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.316 2020/07/26 15:53:01 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.315 2020/07/26 15:37:44 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.316 2020/07/26 15:53:01 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1595,6 +1595,13 @@ static char *
 ModifyWords(GNode *ctx, Byte sep, Boolean oneBigWord,
 	    const char *str, ModifyWordsCallback modifyWord, void *data)
 {
+    if (oneBigWord) {
+	SepBuf result;
+	SepBuf_Init(&result, sep);
+	modifyWord(str, &result, data);
+	return SepBuf_Destroy(&result, FALSE);
+    }
+
     SepBuf result;
     char **av;			/* word list */
     char *as;			/* word list memory */
@@ -1602,16 +1609,7 @@ ModifyWords(GNode *ctx, Byte sep, Boolean oneBigWord,
 
     SepBuf_Init(&result, sep);
 
-    if (oneBigWord) {
-	/* fake what brk_string() would do if there were only one word */
-	ac = 1;
-	av = bmake_malloc((ac + 1) * sizeof(char *));
-	as = bmake_strdup(str);
-	av[0] = as;
-	av[1] = NULL;
-    } else {
-	av = brk_string(str, &ac, FALSE, &as);
-    }
+    av = brk_string(str, &ac, FALSE, &as);
 
     if (DEBUG(VAR)) {
 	fprintf(debug_file, "ModifyWords: split \"%s\" into %d words\n",
