@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.5 2020/07/26 10:58:59 jmcneill Exp $
+.\"	$NetBSD: xfer,v 1.6 2020/07/26 11:00:28 jmcneill Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -26,10 +26,10 @@
 .\"
 .
 .Pp
-Generally, NetBSD is installed on ARM devices by writing a live image
+Generally, NetBSD is installed on Arm devices by writing a live image
 (armv7.img, or arm64.img for 64-bit devices)
 to a SD card or USB device.
-For ARMv6 Raspberry Pi 1s, this image is rpi.img.gz.
+For Armv6 Raspberry Pi 1s, this image is rpi.img.gz.
 The storage device should be at least 2GB.
 .Pp
 If you're on Windows rather than a Unix variant, you can use
@@ -40,7 +40,7 @@ to write images, and
 .Lk https://www.7-zip.org/ 7-Zip
 to decompress .gz files.
 .Pp
-ARM devices generally also ship with a vendor-specific U-Boot
+Arm devices generally also ship with a vendor-specific U-Boot
 bootloader, which may be replaced with a board-specific "mainline"
 U-Boot image from pkgsrc for an optimal NetBSD experience.
 The images available from
