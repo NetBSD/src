@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_ccm.c,v 1.2 2020/07/25 22:27:53 riastradh Exp $	*/
+/*	$NetBSD: aes_ccm.c,v 1.3 2020/07/26 04:44:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_ccm.c,v 1.2 2020/07/25 22:27:53 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_ccm.c,v 1.3 2020/07/26 04:44:47 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -588,7 +588,7 @@ aes_ccm_selftest(void)
 /* XXX provisional hack */
 #include <sys/module.h>
 
-MODULE(MODULE_CLASS_MISC, aes_ccm, NULL);
+MODULE(MODULE_CLASS_MISC, aes_ccm, "aes");
 
 static int
 aes_ccm_modcmd(modcmd_t cmd, void *opaque)
