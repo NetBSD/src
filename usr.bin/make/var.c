@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.317 2020/07/26 16:59:08 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.318 2020/07/26 17:09:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.317 2020/07/26 16:59:08 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.318 2020/07/26 17:09:23 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.317 2020/07/26 16:59:08 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.318 2020/07/26 17:09:23 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1699,9 +1699,9 @@ VarOrder(const char *str, const char otype)
     }
 
     for (i = 0; i < ac; i++) {
-	Buf_AddStr(&buf, av[i]);
-	if (i != ac - 1)
+	if (i != 0)
 	    Buf_AddByte(&buf, ' ');
+	Buf_AddStr(&buf, av[i]);
     }
 
     free(as);
@@ -1746,9 +1746,9 @@ VarUniq(const char *str)
     }
 
     for (i = 0; i < ac; i++) {
-	Buf_AddStr(&buf, av[i]);
-	if (i != ac - 1)
+	if (i != 0)
 	    Buf_AddByte(&buf, ' ');
+	Buf_AddStr(&buf, av[i]);
     }
 
     free(as);
@@ -1787,9 +1787,9 @@ VarRange(const char *str, int ac)
 	av = brk_string(str, &ac, FALSE, &as);
     }
     for (i = 0; i < ac; i++) {
-	Buf_AddInt(&buf, 1 + i);
-	if (i != ac - 1)
+	if (i != 0)
 	    Buf_AddByte(&buf, ' ');
+	Buf_AddInt(&buf, 1 + i);
     }
 
     free(as);
