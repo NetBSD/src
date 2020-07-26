@@ -1,15 +1,10 @@
-#	$NetBSD: Makefile,v 1.73 2020/07/25 21:00:48 rillig Exp $
+#	$NetBSD: Makefile,v 1.74 2020/07/26 07:15:26 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
-SRCS=	arch.c buf.c compat.c cond.c dir.c for.c hash.c job.c main.c
+SRCS=	arch.c buf.c compat.c cond.c dir.c for.c hash.c job.c lst.c main.c
 SRCS+=	make.c make_malloc.c metachar.c parse.c
 SRCS+=	str.c strlist.c suff.c targ.c trace.c var.c util.c
-SRCS+=	lstAppend.c lstAtEnd.c lstAtFront.c lstClose.c lstConcat.c
-SRCS+=	lstDatum.c lstDeQueue.c lstDestroy.c lstDupl.c lstEnQueue.c
-SRCS+=	lstFind.c lstFindFrom.c lstFirst.c lstForEach.c lstForEachFrom.c
-SRCS+=	lstInit.c lstInsert.c lstIsAtEnd.c lstIsEmpty.c lstLast.c lstMember.c
-SRCS+=	lstNext.c lstOpen.c lstPrev.c lstRemove.c lstReplace.c lstSucc.c
 
 USE_COVERAGE?=	no		# works only with gcc; clang9 fails to link
 .if ${USE_COVERAGE} == "yes"
