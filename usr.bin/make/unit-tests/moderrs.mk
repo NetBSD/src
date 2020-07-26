@@ -1,4 +1,4 @@
-# $Id: moderrs.mk,v 1.1 2014/08/21 13:44:51 apb Exp $
+# $Id: moderrs.mk,v 1.2 2020/07/26 10:04:06 rillig Exp $
 #
 # various modifier error tests
 
@@ -8,7 +8,7 @@ MOD_UNKN=Z
 MOD_TERM=S,V,v
 MOD_S:= ${MOD_TERM},
 
-all:	modunkn modunknV varterm vartermV modtermV
+all:	modunkn modunknV varterm vartermV modtermV modloop
 
 modunkn:
 	@echo "Expect: Unknown modifier 'Z'"
@@ -29,3 +29,9 @@ vartermV:
 modtermV:
 	@echo "Expect: Unclosed substitution for VAR (, missing)"
 	-@echo "VAR:${MOD_TERM}=${VAR:${MOD_TERM}}"
+
+modloop:
+	@echo "Expect: errors about missing @ delimiter"
+	@echo ${UNDEF:U1 2 3:@var}
+	@echo ${UNDEF:U1 2 3:@var@...}
+	@echo ${UNDEF:U1 2 3:@var@${var}@}
