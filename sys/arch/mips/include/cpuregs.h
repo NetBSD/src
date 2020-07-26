@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.103 2020/07/26 07:46:21 simonb Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.104 2020/07/26 07:52:07 simonb Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -642,6 +642,8 @@
 #define MIPS_COP_0_CONFIG3	_(16), 3
 #define MIPS_COP_0_CONFIG4	_(16), 4
 #define MIPS_COP_0_CONFIG5	_(16), 5
+#define MIPS_COP_0_CONFIG6	_(16), 6
+#define MIPS_COP_0_CONFIG7	_(16), 7
 #define	MIPS_COP_0_OSSCRATCH	_(22)		/* RMI */
 #define	MIPS_COP_0_DIAG		_(22)		/* LOONGSON2 */
 #define	MIPS_COP_0_MCD		_(22)		/* CAVIUM */
