@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.321 2020/07/26 17:23:00 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.322 2020/07/26 17:44:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.321 2020/07/26 17:23:00 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.322 2020/07/26 17:44:54 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.321 2020/07/26 17:23:00 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.322 2020/07/26 17:44:54 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1666,7 +1666,7 @@ static char *
 VarOrder(const char *str, const char otype)
 {
     Buffer buf;			/* Buffer for the new string */
-    char **av;			/* word list [first word does not count] */
+    char **av;			/* word list */
     char *as;			/* word list memory */
     int ac, i;
 
