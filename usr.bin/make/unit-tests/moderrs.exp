@@ -26,4 +26,9 @@ make: Unclosed substitution for UNDEF (] missing)
 
 13=
 12345=ok
+Expect: 2 errors about missing ! delimiter
+make: Unclosed substitution for VARNAME (! missing)
+
+make: Unclosed substitution for ! (! missing)
+
 exit status 0
