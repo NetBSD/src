@@ -1,4 +1,4 @@
-/*	$NetBSD: strfile.c,v 1.41 2020/07/21 03:05:40 nia Exp $	*/
+/*	$NetBSD: strfile.c,v 1.42 2020/07/26 15:14:09 nia Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: strfile.c,v 1.41 2020/07/21 03:05:40 nia Exp $");
+__RCSID("$NetBSD: strfile.c,v 1.42 2020/07/26 15:14:09 nia Exp $");
 #endif
 #endif /* not lint */
 #endif /* __NetBSD__ */
@@ -438,6 +438,8 @@ randomize(void)
 	off_t	tmp;
 	off_t	*sp;
 
+	srandom((int)(time(NULL) + getpid()));
+
 	Tbl.str_flags |= STR_RANDOM;
 	cnt = Tbl.str_numstr;
 
@@ -446,7 +448,7 @@ randomize(void)
 	 */
 
 	for (sp = Seekpts; cnt > 0; cnt--, sp++) {
-		i = arc4random_uniform(cnt);
+		i = random() % cnt;
 		tmp = sp[0];
 		sp[0] = sp[i];
 		sp[i] = tmp;
