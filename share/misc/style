@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.54 2019/01/28 17:29:44 christos Exp $ */
+/* $NetBSD: style,v 1.55 2020/07/26 09:22:15 rillig Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: style,v 1.54 2019/01/28 17:29:44 christos Exp $");
+__RCSID("$NetBSD: style,v 1.55 2020/07/26 09:22:15 rillig Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -147,7 +147,7 @@ do {									\
 
 #define	DOUBLE(x) ((x) * 2)
 
-/* Enum types are capitalized.  No comma on the last element. */
+/* Enum constants are capitalized.  No comma on the last element. */
 enum enumtype {
 	ONE,
 	TWO
