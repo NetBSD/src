@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.335 2020/07/26 22:43:16 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.336 2020/07/26 23:03:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.335 2020/07/26 22:43:16 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.336 2020/07/26 23:03:54 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.335 2020/07/26 22:43:16 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.336 2020/07/26 23:03:54 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3384,7 +3384,7 @@ VarIsDynamic(GNode *ctxt, const char *varname, size_t namelen)
 	return FALSE;
     }
 
-    if (namelen > 2 && varname[0] == '.' &&
+    if ((namelen == 7 || namelen == 8) && varname[0] == '.' &&
 	isupper((unsigned char) varname[1]) &&
 	(ctxt == VAR_CMD || ctxt == VAR_GLOBAL))
     {
