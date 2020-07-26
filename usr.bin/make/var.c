@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.318 2020/07/26 17:09:23 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.319 2020/07/26 17:10:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.318 2020/07/26 17:09:23 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.319 2020/07/26 17:10:56 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.318 2020/07/26 17:09:23 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.319 2020/07/26 17:10:56 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1711,22 +1711,7 @@ VarOrder(const char *str, const char otype)
 }
 
 
-/*-
- *-----------------------------------------------------------------------
- * VarUniq --
- *	Remove adjacent duplicate words.
- *
- * Input:
- *	str		String whose words should be sorted
- *
- * Results:
- *	A string containing the resulting words.
- *
- * Side Effects:
- *	None.
- *
- *-----------------------------------------------------------------------
- */
+/* Remove adjacent duplicate words. */
 static char *
 VarUniq(const char *str)
 {
