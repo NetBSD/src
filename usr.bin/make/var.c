@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.316 2020/07/26 15:53:01 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.317 2020/07/26 16:59:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.316 2020/07/26 15:53:01 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.317 2020/07/26 16:59:08 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.316 2020/07/26 15:53:01 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.317 2020/07/26 16:59:08 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1683,19 +1683,17 @@ VarOrder(const char *str, const char otype)
 	    qsort(av, ac, sizeof(char *), VarWordCompare);
 	    break;
 	case 'x':		/* randomize */
-	    {
-		/*
-		 * We will use [ac..2] range for mod factors. This will produce
-		 * random numbers in [(ac-1)..0] interval, and minimal
-		 * reasonable value for mod factor is 2 (the mod 1 will produce
-		 * 0 with probability 1).
-		 */
-		for (i = ac - 1; i > 0; i--) {
-		    int rndidx = random() % (i + 1);
-		    char *t = av[i];
-		    av[i] = av[rndidx];
-		    av[rndidx] = t;
-		}
+	    /*
+	     * We will use [ac..2] range for mod factors. This will produce
+	     * random numbers in [(ac-1)..0] interval, and minimal
+	     * reasonable value for mod factor is 2 (the mod 1 will produce
+	     * 0 with probability 1).
+	     */
+	    for (i = ac - 1; i > 0; i--) {
+		int rndidx = random() % (i + 1);
+		char *t = av[i];
+		av[i] = av[rndidx];
+		av[rndidx] = t;
 	    }
 	}
     }
