@@ -1,6 +1,7 @@
-# $Id: sysv.mk,v 1.8 2020/07/20 16:27:55 rillig Exp $
+# $Id: sysv.mk,v 1.9 2020/07/26 11:19:04 rillig Exp $
 
 all: foo fun sam bla words ampersand anchor-dollar
+all: mismatch
 
 FOO ?=
 FOOBAR = ${FOO:=bar}
@@ -61,3 +62,9 @@ ampersand:
 anchor-dollar:
 	@echo $@: ${:U${value:L:e$=x}:Q}
 	@echo $@: ${:U${value:L:e=x}:Q}
+
+# Words that don't match are copied unmodified.
+# The % placeholder can be anywhere in the string.
+mismatch:
+	@echo $@: ${:Ufile.c file.h:%.c=%.cpp}
+	@echo $@: ${:Ufile.c other.c:file.%=renamed.%}
