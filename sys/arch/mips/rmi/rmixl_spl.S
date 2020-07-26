@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_spl.S,v 1.4 2015/06/19 06:32:08 matt Exp $	*/
+/*	$NetBSD: rmixl_spl.S,v 1.5 2020/07/26 07:48:07 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: rmixl_spl.S,v 1.4 2015/06/19 06:32:08 matt Exp $");
+RCSID("$NetBSD: rmixl_spl.S,v 1.5 2020/07/26 07:48:07 simonb Exp $");
 
 #include "assym.h"
 
@@ -47,8 +47,6 @@ RCSID("$NetBSD: rmixl_spl.S,v 1.4 2015/06/19 06:32:08 matt Exp $");
 #define RMIXL_EIRR_PRESERVE	(RMIXL_INT_MASK_5 | RMIXL_SOFT_INT_MASK)
 #define RMIXL_INT_MASK_1	(MIPS_INT_MASK_1 >> 8)
 #define RMIXL_INT_MASK_5	(MIPS_INT_MASK_5 >> 8)
-#define RMIXL_COP_0_EIRR	_(9), 6
-#define RMIXL_COP_0_EIMR	_(9), 7
 
 	.set noreorder
 
@@ -89,9 +87,9 @@ LEAF_NOPROFILE(rmixl_spl_init_cpu)
 	ori	t0, MIPS_SR_INT_IE		# set IE
 	mtc0	zero, MIPS_COP_0_STATUS		## disable all ints in STATUS
 	COP0_SYNC
-	dmtc0	zero, RMIXL_COP_0_EIMR		##  "       "   "   "  EIMR
+	dmtc0	zero, MIPS_COP_0_EIMR		##  "       "   "   "  EIMR
 	COP0_SYNC
-	dmtc0	zero, RMIXL_COP_0_EIRR		## clear EIRR
+	dmtc0	zero, MIPS_COP_0_EIRR		## clear EIRR
 	COP0_SYNC
 	mtc0	t0, MIPS_COP_0_STATUS		## set STATUS | IE
 	JR_HB_RA
@@ -110,8 +108,8 @@ _splraise:
 	 * Can only use a0-a3 and v0-v1
 	 * old IPL is returned in v0
 	 */
-	dmfc0	a2, RMIXL_COP_0_EIMR		# save EIMR
-	dmtc0	zero, RMIXL_COP_0_EIMR		## disable all interrupts
+	dmfc0	a2, MIPS_COP_0_EIMR		# save EIMR
+	dmtc0	zero, MIPS_COP_0_EIMR		## disable all interrupts
 	COP0_SYNC
 	PTR_L	a3, L_CPU(MIPS_CURLWP)		##
 	INT_L	v0, CPU_INFO_CPL(a3)		## get current IPL from cpu_info
@@ -119,10 +117,10 @@ _splraise:
 	bnez	v1, 1f				## yes, don't change.
 	 nop
 	INT_S	a1, CPU_INFO_CPL(a3)		## save IPL in cpu_info
-	dmtc0	a0, RMIXL_COP_0_EIMR		## set new EIMR
+	dmtc0	a0, MIPS_COP_0_EIMR		## set new EIMR
 	JR_HB_RA
 1:
-	dmtc0	a2, RMIXL_COP_0_EIMR		## restore saved EIMR
+	dmtc0	a2, MIPS_COP_0_EIMR		## restore saved EIMR
 	JR_HB_RA
 
 STATIC_LEAF(_splsw_splx)
@@ -132,17 +130,17 @@ STATIC_XLEAF(_splsw_splx_noprof)		# does not get mcount hooks
 	PTR_ADDU v1, a2				# add to table addr
 	REG_L	v1, (v1)			# load EIMR bits for this IPL
 
-	dmtc0	zero, RMIXL_COP_0_EIMR		## disable all interrupts
+	dmtc0	zero, MIPS_COP_0_EIMR		## disable all interrupts
 	COP0_SYNC
 	PTR_L	a3, L_CPU(MIPS_CURLWP)		## get cpu_info
 	INT_S	a0, CPU_INFO_CPL(a3)		## save IPL in cpu_info
-	dmtc0	v1, RMIXL_COP_0_EIMR		## set new EIMR
+	dmtc0	v1, MIPS_COP_0_EIMR		## set new EIMR
 	JR_HB_RA
 END(_splsw_splx)
 
 STATIC_LEAF(_splsw_spl0)
 	REG_L	v1, _C_LABEL(ipl_eimr_map) + 8*IPL_NONE
-	dmtc0	zero, RMIXL_COP_0_EIMR		## disable all interrupts
+	dmtc0	zero, MIPS_COP_0_EIMR		## disable all interrupts
 	COP0_SYNC
 	PTR_L	a3, L_CPU(MIPS_CURLWP)		## get cpu_info
 #if IPL_NONE == 0
@@ -150,22 +148,22 @@ STATIC_LEAF(_splsw_spl0)
 #else
 #error IPL_NONE != 0
 #endif
-	dmtc0	v1, RMIXL_COP_0_EIMR		## set new EIMR
+	dmtc0	v1, MIPS_COP_0_EIMR		## set new EIMR
 	JR_HB_RA
 END(_splsw_spl0)
 
 STATIC_LEAF(_splsw_setsoftintr)
 	dsrl	a0, 8				# convert CAUSE bit to EIRR bit
 	and	a0, RMIXL_SOFT_INT_MASK		# restrict to softint bits
-	dmfc0	v1, RMIXL_COP_0_EIMR		# save EIMR register
-	dmtc0	zero, RMIXL_COP_0_EIMR		## disable all interrupts
+	dmfc0	v1, MIPS_COP_0_EIMR		# save EIMR register
+	dmtc0	zero, MIPS_COP_0_EIMR		## disable all interrupts
 	COP0_SYNC
-	dmfc0	v0, RMIXL_COP_0_EIRR		## load EIRR
+	dmfc0	v0, MIPS_COP_0_EIRR		## load EIRR
 	and	v0, RMIXL_EIRR_PRESERVE		## preserve clock & softints
 	or	v0, a0				## set new softint bit
-	dmtc0	v0, RMIXL_COP_0_EIRR		## store EIRR
+	dmtc0	v0, MIPS_COP_0_EIRR		## store EIRR
 	COP0_SYNC
-	dmtc0	v1, RMIXL_COP_0_EIMR		## restore EIMR
+	dmtc0	v1, MIPS_COP_0_EIMR		## restore EIMR
 	JR_HB_RA
 END(_splsw_setsoftintr)
 
@@ -173,14 +171,14 @@ STATIC_LEAF(_splsw_clrsoftintr)
 	dsrl	a0, 8				# convert CAUSE bit to EIRR bit
 	and	a0, RMIXL_SOFT_INT_MASK		# restrict to softint bits
 	xor	a0, RMIXL_EIRR_PRESERVE		# clear from preserve mask
-	dmfc0	v1, RMIXL_COP_0_EIMR		# save EIMR register
-	dmtc0	zero, RMIXL_COP_0_EIMR		## disable all interrupts
+	dmfc0	v1, MIPS_COP_0_EIMR		# save EIMR register
+	dmtc0	zero, MIPS_COP_0_EIMR		## disable all interrupts
 	COP0_SYNC
-	dmfc0	v0, RMIXL_COP_0_EIRR		## load EIRR
+	dmfc0	v0, MIPS_COP_0_EIRR		## load EIRR
 	and	v0, a0				## apply preserve mask
-	dmtc0	v0, RMIXL_COP_0_EIRR		## store EIRR
+	dmtc0	v0, MIPS_COP_0_EIRR		## store EIRR
 	COP0_SYNC
-	dmtc0	v1, RMIXL_COP_0_EIMR		## restore EIMR
+	dmtc0	v1, MIPS_COP_0_EIMR		## restore EIMR
 	JR_HB_RA
 END(_splsw_clrsoftintr)
 
@@ -196,7 +194,7 @@ END(_splsw_splraise)
 
 STATIC_LEAF(_splsw_splhigh)
 STATIC_XLEAF(_splsw_splhigh_noprof)
-	dmtc0	zero, RMIXL_COP_0_EIMR		## disable all interrupts
+	dmtc0	zero, MIPS_COP_0_EIMR		## disable all interrupts
 	COP0_SYNC
 	PTR_L	a3, L_CPU(MIPS_CURLWP)		## get cpu_info from curlwp
 	li	a1, IPL_HIGH			##
@@ -257,7 +255,7 @@ STATIC_LEAF(_splsw_splsoftclock)
 END(_splsw_splsoftclock)
 
 STATIC_LEAF(_splsw_splintr)
-	dmfc0	ta1, RMIXL_COP_0_EIRR		# get active interrupts
+	dmfc0	ta1, MIPS_COP_0_EIRR		# get active interrupts
 						# restrict to hard int bits:
 	and	v1, ta1, RMIXL_SOFT_INT_MASK	#  v1 = ta1 & ~RMIXL_SOFT_INT_MASK
 	xor	v1, ta1				#   "       "
@@ -309,7 +307,7 @@ STATIC_LEAF(_splsw_splcheck)
 	PTR_L	t0, L_CPU(MIPS_CURLWP)
 	INT_L	t1, CPU_INFO_CPL(t0)		# get current priority level
 
-	dmfc0	t0, RMIXL_COP_0_EIMR		# get current EIMR
+	dmfc0	t0, MIPS_COP_0_EIMR		# get current EIMR
 
 	PTR_LA	t2, _C_LABEL(ipl_eimr_map)
 	sll	t1, MAP_SCALESHIFT		# shift cpl to array index
