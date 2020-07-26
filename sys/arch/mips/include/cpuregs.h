@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.102 2020/07/20 03:17:44 simonb Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.103 2020/07/26 07:46:21 simonb Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -498,13 +498,22 @@
  *  4	MIPS_COP_0_TLB_CONTEXT	3636 TLB Context.
  *  4/2	MIPS_COP_0_USERLOCAL	..36 UserLocal.
  *  5	MIPS_COP_0_TLB_PG_MASK	.333 TLB Page Mask register.
- *  5/1 MIPS_COP_0_PG_GRAIN	..33 PageGrain register
+ *  5/1 MIPS_COP_0_PG_GRAIN	..33 PageGrain register.
+ *  5/5 MIPS_COP_0_PWBASE	..33 Page Walker Base register.
+ *  5/6 MIPS_COP_0_PWFIELD	..33 Page Walker Field register.
+ *  5/7 MIPS_COP_0_PWSIZE	..33 Page Walker Size register.
  *  6	MIPS_COP_0_TLB_WIRED	.333 Wired TLB number.
+ *  6/6	MIPS_COP_0_PWCTL	..33 Page Walker Control register.
+ *  6/6	MIPS_COP_0_EIRR		...6 [RMI] Extended Interrupt Request Register.
+ *  6/7	MIPS_COP_0_EIMR		...6 [RMI] Extended Interrupt Mask Register.
  *  7	MIPS_COP_0_HWRENA	..33 rdHWR Enable.
  *  8	MIPS_COP_0_BAD_VADDR	3636 Bad virtual address.
  *  9	MIPS_COP_0_COUNT	.333 Count register.
+ *  9/6	MIPS_COP_0_CVMCNT	...6 [CAVIUM] CvmCtl register.
+ *  9/7	MIPS_COP_0_CVMCTL	...6 [CAVIUM] CvmCount register (64 bit).
  * 10	MIPS_COP_0_TLB_HI	3636 TLB entry high.
  * 11	MIPS_COP_0_COMPARE	.333 Compare (against Count).
+ * 11/7	MIPS_COP_0_CVMMEMCTL	...6 [CAVIUM] CvmMemCtl register.
  * 12	MIPS_COP_0_STATUS	3333 Status register.
  * 12/1	MIPS_COP_0_INTCTL	..33 Interrupt Control.
  * 12/2	MIPS_COP_0_SRSCTL	..33 Shadow Register Set Selectors.
@@ -523,23 +532,32 @@
  * 16/7	MIPS_COP_0_CONFIG7	..33 Configuration register 7.
  * 17	MIPS_COP_0_LLADDR	.336 Load Linked Address.
  * 18	MIPS_COP_0_WATCH_LO	.336 WatchLo register.
+ * 18/1	MIPS_COP_0_WATCH_LO2	..ii WatchLo 1 register.
  * 19	MIPS_COP_0_WATCH_HI	.333 WatchHi register.
+ * 19/1	MIPS_COP_0_WATCH_HI1	..ii WatchHi 1 register.
  * 20	MIPS_COP_0_TLB_XCONTEXT .6.6 TLB XContext register.
  * 22	MIPS_COP_0_OSSCRATCH	...6 [RMI] OS Scratch register. (select 0..7)
  * 22	MIPS_COP_0_DIAG		...6 [LOONGSON2] Diagnostic register.
+ * 22	MIPS_COP_0_MCD		...6 [CAVIUM] Multi-Core Debug register.
  * 23	MIPS_COP_0_DEBUG	.... Debug JTAG register.
  * 24	MIPS_COP_0_DEPC		.... DEPC JTAG register.
- * 25	MIPS_COP_0_PERFCNT	..36 Performance Counter register.
+ * 25/0	MIPS_COP_0_PERFCNT0_CTL	..ii Performance Counter 0 control register.
+ * 25/1	MIPS_COP_0_PERFCNT0_CNT	..ii Performance Counter 0 value register.
+ * 25/2	MIPS_COP_0_PERFCNT1_CTL	..ii Performance Counter 1 control register.
+ * 25/3	MIPS_COP_0_PERFCNT1_CNT	..ii Performance Counter 1 value register.
  * 26	MIPS_COP_0_ECC		.3ii ECC / Error Control register.
  * 27	MIPS_COP_0_CACHE_ERR	.3ii Cache Error register.
+ * 27	MIPS_COP_0_CACHE_ERR_I	...6 [CAVIUM] Cache Error register (instr).
+ * 27/1	MIPS_COP_0_CACHE_ERR_D	...6 [CAVIUM] Cache Error register (data).
+ * 27/1	MIPS_COP_0_CACHE_ERR	.3ii Cache Error register.
  * 28/0	MIPS_COP_0_TAG_LO	.3ii Cache TagLo register (instr).
  * 28/1	MIPS_COP_0_DATA_LO	..ii Cache DataLo register (instr).
  * 28/2	MIPS_COP_0_TAG_LO	..ii Cache TagLo register (data).
  * 28/3	MIPS_COP_0_DATA_LO	..ii Cache DataLo register (data).
  * 29/0	MIPS_COP_0_TAG_HI	.3ii Cache TagHi register (instr).
  * 29/1	MIPS_COP_0_DATA_HI	..ii Cache DataHi register (instr).
- * 29/2	MIPS_COP_0_TAG_HI	..ii Cache TagHi register (data).
- * 29/3	MIPS_COP_0_DATA_HI	..ii Cache DataHi register (data).
+ * 29/2	MIPS_COP_0_TAG_HI_DATA	..ii Cache TagHi register (data).
+ * 29/3	MIPS_COP_0_DATA_HI_DATA	..ii Cache DataHi register (data).
  * 30	MIPS_COP_0_ERROR_PC	.636 Error EPC register.
  * 31	MIPS_COP_0_DESAVE	.... DESAVE JTAG register.
  */
@@ -561,7 +579,6 @@
 #define	MIPS_COP_0_EXC_PC	_(14)
 #define	MIPS_COP_0_PRID		_(15)
 
-
 /* MIPS-I */
 #define	MIPS_COP_0_TLB_LOW	_(2)
 
@@ -578,12 +595,17 @@
 #define	MIPS_COP_0_CONFIG	_(16)
 #define	MIPS_COP_0_LLADDR	_(17)
 #define	MIPS_COP_0_WATCH_LO	_(18)
+#define	MIPS_COP_0_WATCH_LO1	_(18), 1	/* MIPS32/64 optional */
 #define	MIPS_COP_0_WATCH_HI	_(19)
+#define	MIPS_COP_0_WATCH_HI1	_(19), 1	/* MIPS32/64 optional */
 #define	MIPS_COP_0_TLB_XCONTEXT _(20)
 #define	MIPS_COP_0_ECC		_(26)
 #define	MIPS_COP_0_CACHE_ERR	_(27)
+#define	MIPS_COP_0_CACHE_ERR_I	_(27)		/* CAVIUM */
+#define	MIPS_COP_0_CACHE_ERR_D	_(27), 1	/* CAVIUM */
 #define	MIPS_COP_0_TAG_LO	_(28)
 #define	MIPS_COP_0_TAG_HI	_(29)
+#define	MIPS_COP_0_TAG_HI_DATA	_(29), 2
 #define	MIPS_COP_0_ERROR_PC	_(30)
 
 /* MIPS32/64 */
@@ -599,9 +621,14 @@
 #define	MIPS_COP_0_PWFIELD	_(5), 6
 #define	MIPS_COP_0_PWSIZE	_(5), 7
 #define MIPS_COP_0_PWCTL	_(6), 6
+#define MIPS_COP_0_EIRR		_(6), 6		/* RMI */
+#define MIPS_COP_0_EIMR		_(6), 7		/* RMI */
 #define	MIPS_COP_0_HWRENA	_(7)
 #define MIPS_COP_0_BADINSTR	_(8), 1
 #define MIPS_COP_0_BADINSTRP	_(8), 2
+#define	MIPS_COP_0_CVMCNT	_(9), 6		/* CAVIUM */
+#define	MIPS_COP_0_CVMCTL	_(9), 7		/* CAVIUM */
+#define	MIPS_COP_0_CVMMEMCTL	_(11), 7	/* CAVIUM */
 #define	MIPS_COP_0_INTCTL	_(12), 1
 #define	MIPS_COP_0_SRSCTL	_(12), 2
 #define	MIPS_COP_0_SRSMAP	_(12), 3
@@ -616,12 +643,17 @@
 #define MIPS_COP_0_CONFIG4	_(16), 4
 #define MIPS_COP_0_CONFIG5	_(16), 5
 #define	MIPS_COP_0_OSSCRATCH	_(22)		/* RMI */
-#define	MIPS_COP_0_DIAG		_(22)
+#define	MIPS_COP_0_DIAG		_(22)		/* LOONGSON2 */
+#define	MIPS_COP_0_MCD		_(22)		/* CAVIUM */
 #define	MIPS_COP_0_DEBUG	_(23)
 #define	MIPS_COP_0_DEPC		_(24)
-#define	MIPS_COP_0_PERFCNT	_(25)
-#define	MIPS_COP_0_DATA_LO	_(28)
-#define	MIPS_COP_0_DATA_HI	_(29)
+#define	MIPS_COP_0_PERFCNT0_CTL	_(25)
+#define	MIPS_COP_0_PERFCNT0_CNT	_(25), 1
+#define	MIPS_COP_0_PERFCNT1_CTL	_(25), 2
+#define	MIPS_COP_0_PERFCNT1_CNT	_(25), 3
+#define	MIPS_COP_0_DATA_LO	_(28), 1
+#define	MIPS_COP_0_DATA_HI	_(29), 3
+#define	MIPS_COP_0_DATA_HI_DATA	_(29)
 #define	MIPS_COP_0_DESAVE	_(31)
 
 #define	MIPS_DIAG_RAS_DISABLE	0x00000001	/* Loongson2 */
