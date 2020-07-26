@@ -1,4 +1,4 @@
-/*	$NetBSD: pathadj.c,v 1.2 2011/02/17 16:57:46 pooka Exp $	*/
+/*	$NetBSD: pathadj.c,v 1.3 2020/07/26 08:20:22 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation.  All Rights Reserved.
@@ -37,10 +37,13 @@ void
 pathadj(const char *input, char *adjusted)
 {
 
-	if (realpath(input, adjusted) == NULL)
+	if (realpath(input, adjusted) == NULL) {
 		warn("Warning: realpath %s", input);
-	if (strncmp(input, adjusted, MAXPATHLEN)) {
-		warnx("\"%s\" is a non-resolved or relative path.", input);
+		return;
+	}
+
+	if (input[0] != '/') {
+		warnx("\"%s\" is a relative path.", input);
 		warnx("using \"%s\" instead.", adjusted);
 	}
 }
