@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.333 2020/07/26 21:31:11 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.334 2020/07/26 22:19:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.333 2020/07/26 21:31:11 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.334 2020/07/26 22:19:11 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.333 2020/07/26 21:31:11 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.334 2020/07/26 22:19:11 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -135,6 +135,12 @@ __RCSID("$NetBSD: var.c,v 1.333 2020/07/26 21:31:11 rillig Exp $");
 #include    "dir.h"
 #include    "job.h"
 #include    "metachar.h"
+
+#define VAR_DEBUG(fmt, ...)	\
+    if (!DEBUG(VAR))		\
+	(void) 0;		\
+    else			\
+	fprintf(debug_file, fmt, __VA_ARGS__)
 
 /*
  * This lets us tell if we have replaced the original environ
@@ -3561,11 +3567,10 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
 		       isupper((unsigned char) varname[1]) &&
 		       (ctxt == VAR_CMD || ctxt == VAR_GLOBAL))
 	    {
-		int len = namelen - 1;
-		if ((strncmp(varname, ".TARGET", len) == 0) ||
-		    (strncmp(varname, ".ARCHIVE", len) == 0) ||
-		    (strncmp(varname, ".PREFIX", len) == 0) ||
-		    (strncmp(varname, ".MEMBER", len) == 0))
+		if ((strcmp(varname, ".TARGET") == 0) ||
+		    (strcmp(varname, ".ARCHIVE") == 0) ||
+		    (strcmp(varname, ".PREFIX") == 0) ||
+		    (strcmp(varname, ".MEMBER") == 0))
 		{
 		    dynamic = TRUE;
 		}
