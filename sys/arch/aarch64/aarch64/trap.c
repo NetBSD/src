@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.31 2020/07/08 03:45:13 ryo Exp $ */
+/* $NetBSD: trap.c,v 1.32 2020/07/26 07:25:38 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.31 2020/07/08 03:45:13 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.32 2020/07/26 07:25:38 ryo Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -374,8 +374,10 @@ emul_aarch64_insn(struct trapframe *tf)
 {
 	uint32_t insn;
 
-	if (ufetch_32((uint32_t *)tf->tf_pc, &insn))
+	if (ufetch_32((uint32_t *)tf->tf_pc, &insn)) {
+		tf->tf_far = reg_far_el1_read();
 		return EMUL_ARM_FAULT;
+	}
 
 	if ((insn & 0xffffffe0) == 0xd53b0020) {
 		/* mrs x?,ctr_el0 */
@@ -457,7 +459,7 @@ trap_el0_sync(struct trapframe *tf)
 			goto unknown;
 		case EMUL_ARM_FAULT:
 			do_trapsignal(l, SIGSEGV, SEGV_MAPERR,
-			    (void *)tf->tf_pc, esr);
+			    (void *)tf->tf_far, esr);
 			break;
 		}
 		userret(l);
@@ -550,74 +552,126 @@ fetch_arm_insn(uint64_t pc, uint64_t spsr, uint32_t *insn)
 	return 4;
 }
 
+static bool
+arm_cond_match(uint32_t insn, uint64_t spsr)
+{
+	bool invert = (insn >> 28) & 1;
+	bool match;
+
+	switch (insn >> 29) {
+	case 0:	/* EQ or NE */
+		match = spsr & SPSR_Z;
+		break;
+	case 1:	/* CS/HI or CC/LO */
+		match = spsr & SPSR_C;
+		break;
+	case 2:	/* MI or PL */
+		match = spsr & SPSR_N;
+		break;
+	case 3:	/* VS or VC */
+		match = spsr & SPSR_V;
+		break;
+	case 4:	/* HI or LS */
+		match = ((spsr & (SPSR_C | SPSR_Z)) == SPSR_C);
+		break;
+	case 5:	/* GE or LT */
+		match = (!(spsr & SPSR_N) == !(spsr & SPSR_V));
+		break;
+	case 6:	/* GT or LE */
+		match = !(spsr & SPSR_Z) &&
+		    (!(spsr & SPSR_N) == !(spsr & SPSR_V));
+		break;
+	case 7:	/* AL */
+		match = true;
+		break;
+	}
+	return (!match != !invert);
+}
+
+static enum emul_arm_result
+emul_thumb_insn(struct trapframe *tf, uint32_t insn, int insn_size)
+{
+	/* T32-16bit or 32bit instructions */
+	switch (insn_size) {
+	case 2:
+		/* Breakpoint used by GDB */
+		if (insn == 0xdefe) {
+			do_trapsignal(curlwp, SIGTRAP, TRAP_BRKPT,
+			    (void *)tf->tf_pc, 0);
+			return EMUL_ARM_SUCCESS;
+		}
+		/* XXX: some T32 IT instruction deprecated should be emulated */
+		break;
+	case 4:
+		break;
+	default:
+		return EMUL_ARM_FAULT;
+	}
+	return EMUL_ARM_UNKNOWN;
+}
+
 static enum emul_arm_result
 emul_arm_insn(struct trapframe *tf)
 {
-	struct lwp * const l = curlwp;
 	uint32_t insn;
 	int insn_size;
 
 	insn_size = fetch_arm_insn(tf->tf_pc, tf->tf_spsr, &insn);
+	tf->tf_far = reg_far_el1_read();
 
-	switch (insn_size) {
-	case 2:
-		/* T32-16bit instruction */
+	if (tf->tf_spsr & SPSR_A32_T)
+		return emul_thumb_insn(tf, insn, insn_size);
+	if (insn_size != 4)
+		return EMUL_ARM_FAULT;
 
-		/*
-		 * Breakpoint used by GDB.
-		 */
-		if (insn == 0xdefe)
-			goto trap;
+	/* Breakpoint used by GDB */
+	if (insn == 0xe6000011 || insn == 0xe7ffdefe) {
+		do_trapsignal(curlwp, SIGTRAP, TRAP_BRKPT,
+		    (void *)tf->tf_pc, 0);
+		return EMUL_ARM_SUCCESS;
+	}
 
-		/* XXX: some T32 IT instruction deprecated should be emulated */
-		break;
-	case 4:
-		/* T32-32bit instruction, or A32 instruction */
+	/* Unconditional instruction extension space? */
+	if ((insn & 0xf0000000) == 0xf0000000)
+		goto unknown_insn;
 
-		/*
-		 * Breakpoint used by GDB.
-		 */
-		if (insn == 0xe6000011 || insn == 0xe7ffdefe) {
- trap:
-			do_trapsignal(l, SIGTRAP, TRAP_BRKPT,
-			    (void *)tf->tf_pc, 0);
-			return 0;
-		}
-
-		/*
-		 * Emulate ARMv6 instructions with cache operations
-		 * register (c7), that can be used in user mode.
-		 */
-		switch (insn & 0x0fff0fff) {
-		case 0x0e070f95:
+	/*
+	 * Emulate ARMv6 instructions with cache operations
+	 * register (c7), that can be used in user mode.
+	 */
+	switch (insn & 0x0fff0fff) {
+	case 0x0e070f95:
+		if (arm_cond_match(insn, tf->tf_spsr)) {
 			/*
 			 * mcr p15, 0, <Rd>, c7, c5, 4
 			 * (flush prefetch buffer)
 			 */
 			__asm __volatile("isb sy" ::: "memory");
-			goto emulated;
-		case 0x0e070f9a:
+		}
+		goto emulated;
+	case 0x0e070f9a:
+		if (arm_cond_match(insn, tf->tf_spsr)) {
 			/*
 			 * mcr p15, 0, <Rd>, c7, c10, 4
 			 * (data synchronization barrier)
 			 */
 			__asm __volatile("dsb sy" ::: "memory");
-			goto emulated;
-		case 0x0e070fba:
+		}
+		goto emulated;
+	case 0x0e070fba:
+		if (arm_cond_match(insn, tf->tf_spsr)) {
 			/*
 			 * mcr p15, 0, <Rd>, c7, c10, 5
 			 * (data memory barrier)
 			 */
 			__asm __volatile("dmb sy" ::: "memory");
-			goto emulated;
-		default:
-			break;
 		}
-		break;
+		goto emulated;
 	default:
-		return EMUL_ARM_FAULT;
+		break;
 	}
 
+ unknown_insn:
 	/* unknown, or unsupported instruction */
 	return EMUL_ARM_UNKNOWN;
 
@@ -685,7 +739,7 @@ trap_el0_32sync(struct trapframe *tf)
 			goto unknown;
 		case EMUL_ARM_FAULT:
 			do_trapsignal(l, SIGSEGV, SEGV_MAPERR,
-			    (void *)tf->tf_pc, esr);
+			    (void *)tf->tf_far, esr);
 			break;
 		}
 		userret(l);
