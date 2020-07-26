@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.410 2020/07/13 07:22:51 mrg Exp $
+#	$NetBSD: bsd.README,v 1.411 2020/07/26 09:22:43 rillig Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -94,7 +94,7 @@ TOOL_xxx	A tool that is provided as part of the USETOOLS
 		TOOL_xxx variables should refer to tools that are
 		already installed on the host system.
 
-The following variables that control how things are made/installed that
+The following variables control how things are made/installed that
 are not set by default. These should not be set by Makefiles; they're for
 the user to define in MAKECONF (see <bsd.own.mk>, below, or mk.conf(5))
 or on the make(1) command line:
