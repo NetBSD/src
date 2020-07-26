@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.4.4.3 2020/07/20 18:32:55 martin Exp $
+.\"	$NetBSD: contents,v 1.4.4.4 2020/07/26 11:07:56 martin Exp $
 .\"
 .\" Copyright (c) 1999-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,8 +61,6 @@ operating system for a range of 64-bit devices (includes a GENERIC64 kernel).
 A gzipped writable image containing the complete 32-bit
 .Nx
 operating system for Raspberry Pi variants only (includes RPI kernels).
-.			It Pa *.dtb.gz
-Gzipped board-specific device trees.
 .		tag) \" binary/gzimg/
 .		It Pa kernel/
 .		(tag netbsd.gz -compact \" binary/kernel
@@ -76,6 +74,8 @@ do not need board-specific kernels.
 A gzipped ARMv6 kernel which supports the Raspberry Pi 1 only.
 .			It Pa netbsd-RPI2.gz
 A gzipped ARMv6 kernel which supports the Raspberry Pi 2 only.
+.			It Pa *.dtb.gz
+Gzipped board-specific device trees.
 .		tag) \" binary/kernel/
 .
 .		It Pa sets/
