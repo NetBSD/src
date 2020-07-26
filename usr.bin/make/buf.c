@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.27 2020/07/26 13:39:30 rillig Exp $	*/
+/*	$NetBSD: buf.c,v 1.28 2020/07/26 15:09:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: buf.c,v 1.27 2020/07/26 13:39:30 rillig Exp $";
+static char rcsid[] = "$NetBSD: buf.c,v 1.28 2020/07/26 15:09:10 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)buf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: buf.c,v 1.27 2020/07/26 13:39:30 rillig Exp $");
+__RCSID("$NetBSD: buf.c,v 1.28 2020/07/26 15:09:10 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -139,6 +139,18 @@ Buf_AddBytes(Buffer *bp, int numBytes, const Byte *bytesPtr)
     bp->count = count + numBytes;
     ptr[numBytes] = 0;
     memcpy(ptr, bytesPtr, numBytes);
+}
+
+void
+Buf_AddBytesBetween(Buffer *bp, const char *start, const char *end)
+{
+    Buf_AddBytes(bp, (int)(end - start), start);
+}
+
+void
+Buf_AddStr(Buffer *bp, const char *str)
+{
+    Buf_AddBytes(bp, (int)strlen(str), str);
 }
 
 /*-
