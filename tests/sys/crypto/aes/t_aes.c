@@ -1,4 +1,4 @@
-/*	$NetBSD: t_aes.c,v 1.1 2020/06/30 20:32:11 riastradh Exp $	*/
+/*	$NetBSD: t_aes.c,v 1.2 2020/07/26 12:43:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,6 +29,7 @@
 #include <sys/types.h>
 
 #include <crypto/aes/aes.h>
+#include <crypto/aes/aes_impl.h>
 #include <crypto/aes/aes_bear.h>
 
 #if defined(__i386__) || defined(__x86_64__)
