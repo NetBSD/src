@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: buildmake.sh.in,v 1.15 2020/06/13 11:39:43 lukem Exp $
+#	$NetBSD: buildmake.sh.in,v 1.16 2020/07/26 09:17:24 rillig Exp $
 #
 # buildmake.sh.in - Autoconf-processed shell script for building make(1).
 #
@@ -28,7 +28,7 @@ docmd () {
 	$3 || exit 1
 }
 
-for f in $MKSRCDIR/*.c $MKSRCDIR/lst.lib/*.c; do
+for f in $MKSRCDIR/*.c; do
 	docmd "compile " "$f" "${_CC} ${_CFLAGS} -c $f"
 done
 
