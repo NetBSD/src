@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.81 2020/07/19 12:35:30 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.82 2020/07/26 20:21:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.81 2020/07/19 12:35:30 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.82 2020/07/26 20:21:31 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.81 2020/07/19 12:35:30 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.82 2020/07/26 20:21:31 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -153,7 +153,7 @@ static Boolean CondDoMake(int, const char *);
 static Boolean CondDoExists(int, const char *);
 static Boolean CondDoTarget(int, const char *);
 static Boolean CondDoCommands(int, const char *);
-static Boolean CondCvtArg(char *, double *);
+static Boolean CondCvtArg(const char *, double *);
 static Token CondToken(Boolean);
 static Token CondT(Boolean);
 static Token CondF(Boolean);
@@ -286,7 +286,7 @@ CondGetArg(Boolean doEval, char **linePtr, char **argPtr, const char *func)
 	    int		len;
 	    void	*freeIt;
 	    VarEvalFlags eflags = VARE_UNDEFERR | (doEval ? VARE_WANTRES : 0);
-	    char *cp2 = Var_Parse(cp, VAR_CMD, eflags, &len, &freeIt);
+	    const char *cp2 = Var_Parse(cp, VAR_CMD, eflags, &len, &freeIt);
 	    Buf_AddBytes(&buf, strlen(cp2), cp2);
 	    free(freeIt);
 	    cp += len;
@@ -479,7 +479,7 @@ CondDoCommands(int argLen MAKE_ATTR_UNUSED, const char *arg)
  *-----------------------------------------------------------------------
  */
 static Boolean
-CondCvtArg(char *str, double *value)
+CondCvtArg(const char *str, double *value)
 {
     char *eptr, ech;
     unsigned long l_val;
@@ -525,12 +525,12 @@ CondCvtArg(char *str, double *value)
  *-----------------------------------------------------------------------
  */
 /* coverity:[+alloc : arg-*2] */
-static char *
+static const char *
 CondGetString(Boolean doEval, Boolean *quoted, void **freeIt, Boolean strictLHS)
 {
     Buffer buf;
-    char *cp;
-    char *str;
+    const char *cp;
+    const char *str;
     int	len;
     int qt;
     char *start;
@@ -626,8 +626,8 @@ CondGetString(Boolean doEval, Boolean *quoted, void **freeIt, Boolean strictLHS)
 	}
     }
  got_str:
-    str = Buf_GetAll(&buf, NULL);
-    *freeIt = str;
+    *freeIt = Buf_GetAll(&buf, NULL);
+    str = *freeIt;
  cleanup:
     Buf_Destroy(&buf, FALSE);
     return str;
@@ -650,8 +650,8 @@ static Token
 compare_expression(Boolean doEval)
 {
     Token	t;
-    char	*lhs;
-    char	*rhs;
+    const char	*lhs;
+    const char	*rhs;
     char	*op;
     void	*lhsFree;
     void	*rhsFree;
@@ -821,7 +821,7 @@ get_mpt_arg(Boolean doEval, char **linePtr, char **argPtr, const char *func MAKE
      */
     int	    length;
     void    *freeIt;
-    char    *val;
+    const char *val;
     char    *cp = *linePtr;
 
     /* We do all the work here and return the result as the length */
@@ -840,7 +840,7 @@ get_mpt_arg(Boolean doEval, char **linePtr, char **argPtr, const char *func MAKE
     }
 
     /* A variable is empty when it just contains spaces... 4/15/92, christos */
-    while (isspace(*(unsigned char *)val))
+    while (isspace((unsigned char)val[0]))
 	val++;
 
     /*
