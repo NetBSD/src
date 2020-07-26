@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.327 2020/07/26 19:16:17 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.328 2020/07/26 19:36:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.327 2020/07/26 19:16:17 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.328 2020/07/26 19:36:24 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.327 2020/07/26 19:16:17 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.328 2020/07/26 19:36:24 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3355,9 +3355,10 @@ cleanup:
 /*-
  *-----------------------------------------------------------------------
  * Var_Parse --
- *	Given the start of a variable invocation, extract the variable
- *	name and find its value, then modify it according to the
- *	specification.
+ *	Given the start of a variable invocation (such as $v, $(VAR),
+ *	${VAR:Mpattern}), extract the variable name, possibly some
+ *	modifiers and find its value by applying the modifiers to the
+ *	original value.
  *
  * Input:
  *	str		The string to parse
@@ -3393,7 +3394,6 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags flags,
 				 * or braces */
     char	 startc;	/* Starting character when variable in parens
 				 * or braces */
-    int		 vlen;		/* Length of variable name */
     char	*nstr;		/* New string, used during expansion */
     Boolean	 dynamic;	/* TRUE if the variable is local and we're
 				 * expanding it in a non-local context. This
@@ -3498,7 +3498,8 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags flags,
 	    return var_Error;
 	}
 
-	char *varname = Buf_GetAll(&buf, &vlen);
+	int namelen;
+	char *varname = Buf_GetAll(&buf, &namelen);
 
 	/*
 	 * At this point, varname points into newly allocated memory from
@@ -3517,7 +3518,7 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags flags,
 	 * in a local context and the name is the right length.
 	 */
 	if (v == NULL && ctxt != VAR_CMD && ctxt != VAR_GLOBAL &&
-		vlen == 2 && (varname[1] == 'F' || varname[1] == 'D') &&
+		namelen == 2 && (varname[1] == 'F' || varname[1] == 'D') &&
 		strchr("@%?*!<>", varname[0]) != NULL) {
 	    /*
 	     * Well, it's local -- go look for it.
@@ -3535,8 +3536,8 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags flags,
 	}
 
 	if (v == NULL) {
-	    if ((vlen == 1 ||
-		 ((vlen == 2 && (varname[1] == 'F' || varname[1] == 'D')))) &&
+	    if ((namelen == 1 ||
+		 (namelen == 2 && (varname[1] == 'F' || varname[1] == 'D'))) &&
 		(ctxt == VAR_CMD || ctxt == VAR_GLOBAL))
 	    {
 		/*
@@ -3556,11 +3557,11 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags flags,
 		    dynamic = TRUE;
 		    break;
 		}
-	    } else if (vlen > 2 && varname[0] == '.' &&
+	    } else if (namelen > 2 && varname[0] == '.' &&
 		       isupper((unsigned char) varname[1]) &&
 		       (ctxt == VAR_CMD || ctxt == VAR_GLOBAL))
 	    {
-		int len = vlen - 1;
+		int len = namelen - 1;
 		if ((strncmp(varname, ".TARGET", len) == 0) ||
 		    (strncmp(varname, ".ARCHIVE", len) == 0) ||
 		    (strncmp(varname, ".PREFIX", len) == 0) ||
