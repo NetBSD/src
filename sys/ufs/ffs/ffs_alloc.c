@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.167 2020/04/18 19:18:34 christos Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.168 2020/07/26 00:20:13 chs Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.167 2020/04/18 19:18:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.168 2020/07/26 00:20:13 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -204,7 +204,7 @@ ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size,
 	 */
 
 	struct vnode *vp = ITOV(ip);
-	if (vp->v_type == VREG &&
+	if (vp->v_type == VREG && (flags & IO_EXT) == 0 &&
 	    ffs_lblktosize(fs, (voff_t)lbn) < round_page(vp->v_size) &&
 	    ((vp->v_vflag & VV_MAPPED) != 0 || (size & PAGE_MASK) != 0 ||
 	     ffs_blkoff(fs, size) != 0)) {
