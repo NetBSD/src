@@ -44,6 +44,8 @@ export-appended: env
 export-appended: env
 export-appended: env mk
 parse-dynamic: parse-dynamic parse-dynamic before
+parse-dynamic: parse-dynamic parse-dynamic after
+parse-dynamic: parse-dynamic parse-dynamic after
 varerror-unclosed:begin
 
 make: Unclosed variable specification (expecting '}') for "UNCLOSED" (value "") modifier M
