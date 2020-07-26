@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.21 2020/07/26 10:55:36 jmcneill Exp $
+.\"	$NetBSD: hardware,v 1.22 2020/07/26 10:58:27 jmcneill Exp $
 .\"
 .\" Copyright (c) 2001-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@ are also supported.
 .It
 Allwinner H5, H6, A64 (e.g. PINE64, Pinebook, NanoPi A64, OLinuXino...)
 .It
-Amlogic S905 (e.g. ODROID-C2, Le Potato, NanoPi K2...)
+Amlogic S905, S805X, S905D, S905W, S905X (e.g. ODROID-C2, Le Potato, NanoPi K2...)
 .It
 Broadcom BCM2837, BCM2711 (e.g. Raspberry Pi 3 and 4)
 .It
