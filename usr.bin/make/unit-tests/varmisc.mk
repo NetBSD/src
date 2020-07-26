@@ -1,4 +1,4 @@
-# $Id: varmisc.mk,v 1.16 2020/07/26 21:09:49 rillig Exp $
+# $Id: varmisc.mk,v 1.17 2020/07/26 21:46:10 rillig Exp $
 #
 # Miscellaneous variable tests.
 
@@ -165,16 +165,31 @@ export-appended:
 # the global context. They are preserved until there is a local context
 # in which resolving them makes sense.
 
+# There are different code paths for short names ...
 ${:U>}=		before
-G_TARGET:=	$@
-G_MEMBER:=	$%
-G_PREFIX:=	$*
-G_ARCHIVE:=	$!
-G_ALLSRC:=	$>
+GS_TARGET:=	$@
+GS_MEMBER:=	$%
+GS_PREFIX:=	$*
+GS_ARCHIVE:=	$!
+GS_ALLSRC:=	$>
 ${:U>}=		after
+# ... and for braced short names ...
+GB_TARGET:=	${@}
+GB_MEMBER:=	${%}
+GB_PREFIX:=	${*}
+GB_ARCHIVE:=	${!}
+GB_ALLSRC:=	${>}
+# ... and for long names.
+GL_TARGET:=	${.TARGET}
+GL_MEMBER:=	${.MEMBER}
+GL_PREFIX:=	${.PREFIX}
+GL_ARCHIVE:=	${.ARCHIVE}
+GL_ALLSRC:=	${.ALLSRC}
 
 parse-dynamic:
-	@echo $@: ${G_TARGET} ${G_MEMBER} ${G_PREFIX} ${G_ARCHIVE} ${G_ALLSRC}
+	@echo $@: ${GS_TARGET} ${GS_MEMBER} ${GS_PREFIX} ${GS_ARCHIVE} ${GS_ALLSRC}
+	@echo $@: ${GB_TARGET} ${GB_MEMBER} ${GB_PREFIX} ${GB_ARCHIVE} ${GB_ALLSRC}
+	@echo $@: ${GL_TARGET} ${GL_MEMBER} ${GL_PREFIX} ${GL_ARCHIVE} ${GL_ALLSRC}
 
 # As of 2020-07-26, make does not complain about unclosed variables.
 # It does complain about unclosed variables when parsing modifiers though.
