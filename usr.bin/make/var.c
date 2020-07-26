@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.331 2020/07/26 20:21:31 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.332 2020/07/26 21:19:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.331 2020/07/26 20:21:31 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.332 2020/07/26 21:19:42 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.331 2020/07/26 20:21:31 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.332 2020/07/26 21:19:42 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3452,11 +3452,11 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags flags,
 	    endc = str[1];
 	}
     } else {
-	Buffer buf;		/* Holds the variable name */
+	Buffer namebuf;		/* Holds the variable name */
 	int depth = 1;
 
 	endc = startc == PROPEN ? PRCLOSE : BRCLOSE;
-	Buf_Init(&buf, 0);
+	Buf_Init(&namebuf, 0);
 
 	/*
 	 * Skip to the end character or a colon, whichever comes first.
@@ -3477,11 +3477,11 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags flags,
 		void *freeIt;
 		const char *rval = Var_Parse(tstr, ctxt, flags, &rlen, &freeIt);
 		if (rval != NULL)
-		    Buf_AddStr(&buf, rval);
+		    Buf_AddStr(&namebuf, rval);
 		free(freeIt);
 		tstr += rlen - 1;
 	    } else
-		Buf_AddByte(&buf, *tstr);
+		Buf_AddByte(&namebuf, *tstr);
 	}
 	if (*tstr == ':') {
 	    haveModifier = TRUE;
@@ -3494,16 +3494,16 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags flags,
 	     * the end of the string, since that's what make does.
 	     */
 	    *lengthPtr = tstr - str;
-	    Buf_Destroy(&buf, TRUE);
+	    Buf_Destroy(&namebuf, TRUE);
 	    return var_Error;
 	}
 
 	int namelen;
-	char *varname = Buf_GetAll(&buf, &namelen);
+	char *varname = Buf_GetAll(&namebuf, &namelen);
 
 	/*
 	 * At this point, varname points into newly allocated memory from
-	 * buf, containing only the name of the variable.
+	 * namebuf, containing only the name of the variable.
 	 *
 	 * start and tstr point into the const string that was pointed
 	 * to by the original value of the str parameter.  start points
@@ -3580,10 +3580,10 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags flags,
 		if (dynamic) {
 		    char *pstr = bmake_strndup(str, *lengthPtr);
 		    *freePtr = pstr;
-		    Buf_Destroy(&buf, TRUE);
+		    Buf_Destroy(&namebuf, TRUE);
 		    return pstr;
 		} else {
-		    Buf_Destroy(&buf, TRUE);
+		    Buf_Destroy(&namebuf, TRUE);
 		    return (flags & VARE_UNDEFERR) ? var_Error : varNoError;
 		}
 	    } else {
@@ -3595,10 +3595,10 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags flags,
 		v->name = varname;
 		Buf_Init(&v->val, 1);
 		v->flags = VAR_JUNK;
-		Buf_Destroy(&buf, FALSE);
+		Buf_Destroy(&namebuf, FALSE);
 	    }
 	} else
-	    Buf_Destroy(&buf, TRUE);
+	    Buf_Destroy(&namebuf, TRUE);
     }
 
     if (v->flags & VAR_IN_USE) {
