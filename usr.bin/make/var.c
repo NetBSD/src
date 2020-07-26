@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.313 2020/07/26 15:09:10 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.314 2020/07/26 15:26:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.313 2020/07/26 15:09:10 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.314 2020/07/26 15:26:27 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.313 2020/07/26 15:09:10 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.314 2020/07/26 15:26:27 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1059,7 +1059,7 @@ SepBuf_Sep(SepBuf *buf)
 }
 
 static void
-SepBuf_AddBytes(SepBuf *buf, const void *mem, size_t mem_size)
+SepBuf_AddBytes(SepBuf *buf, const char *mem, size_t mem_size)
 {
     if (mem_size == 0)
 	return;
@@ -1068,6 +1068,18 @@ SepBuf_AddBytes(SepBuf *buf, const void *mem, size_t mem_size)
 	buf->needSep = FALSE;
     }
     Buf_AddBytes(&buf->buf, mem_size, mem);
+}
+
+static void
+SepBuf_AddBytesBetween(SepBuf *buf, const char *start, const char *end)
+{
+    SepBuf_AddBytes(buf, start, (size_t)(end - start));
+}
+
+static void
+SepBuf_AddStr(SepBuf *buf, const char *str)
+{
+    SepBuf_AddBytes(buf, str, strlen(str));
 }
 
 static char *
@@ -1090,9 +1102,9 @@ ModifyWord_Head(const char *word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 {
     const char *slash = strrchr(word, '/');
     if (slash != NULL)
-	SepBuf_AddBytes(buf, word, slash - word);
+	SepBuf_AddBytesBetween(buf, word, slash);
     else
-	SepBuf_AddBytes(buf, ".", 1);
+	SepBuf_AddStr(buf, ".");
 }
 
 /* Callback for ModifyWords to implement the :T modifier.
@@ -1102,7 +1114,7 @@ ModifyWord_Tail(const char *word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 {
     const char *slash = strrchr(word, '/');
     const char *base = slash != NULL ? slash + 1 : word;
-    SepBuf_AddBytes(buf, base, strlen(base));
+    SepBuf_AddStr(buf, base);
 }
 
 /* Callback for ModifyWords to implement the :E modifier.
@@ -1112,7 +1124,7 @@ ModifyWord_Suffix(const char *word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 {
     const char *dot = strrchr(word, '.');
     if (dot != NULL)
-	SepBuf_AddBytes(buf, dot + 1, strlen(dot + 1));
+	SepBuf_AddStr(buf, dot + 1);
 }
 
 /* Callback for ModifyWords to implement the :R modifier.
@@ -1120,7 +1132,7 @@ ModifyWord_Suffix(const char *word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 static void
 ModifyWord_Root(const char *word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 {
-    char *dot = strrchr(word, '.');
+    const char *dot = strrchr(word, '.');
     size_t len = dot != NULL ? (size_t)(dot - word) : strlen(word);
     SepBuf_AddBytes(buf, word, len);
 }
@@ -1134,7 +1146,7 @@ ModifyWord_Match(const char *word, SepBuf *buf, void *data)
     if (DEBUG(VAR))
 	fprintf(debug_file, "VarMatch [%s] [%s]\n", word, pattern);
     if (Str_Match(word, pattern))
-	SepBuf_AddBytes(buf, word, strlen(word));
+	SepBuf_AddStr(buf, word);
 }
 
 /* Callback for ModifyWords to implement the :N modifier.
@@ -1144,7 +1156,7 @@ ModifyWord_NoMatch(const char *word, SepBuf *buf, void *data)
 {
     const char *pattern = data;
     if (!Str_Match(word, pattern))
-	SepBuf_AddBytes(buf, word, strlen(word));
+	SepBuf_AddStr(buf, word);
 }
 
 #ifdef SYSVVARSUB
@@ -1231,7 +1243,7 @@ Str_SYSVSubst(SepBuf *buf, const char *pat, const char *src, size_t len,
 
     if ((m = strchr(pat, '%')) != NULL && lhsHasPercent) {
 	/* Copy the prefix */
-	SepBuf_AddBytes(buf, pat, m - pat);
+	SepBuf_AddBytesBetween(buf, pat, m);
 	/* skip the % */
 	pat = m + 1;
     }
@@ -1241,7 +1253,7 @@ Str_SYSVSubst(SepBuf *buf, const char *pat, const char *src, size_t len,
     }
 
     /* append the rest */
-    SepBuf_AddBytes(buf, pat, strlen(pat));
+    SepBuf_AddStr(buf, pat);
 }
 
 
@@ -1265,7 +1277,7 @@ ModifyWord_SYSVSubst(const char *word, SepBuf *buf, void *data)
 	Str_SYSVSubst(buf, varexp, ptr, len, hasPercent);
 	free(varexp);
     } else {
-	SepBuf_AddBytes(buf, word, strlen(word));
+	SepBuf_AddStr(buf, word);
     }
 }
 #endif
@@ -1317,7 +1329,7 @@ ModifyWord_Subst(const char *word, SepBuf *buf, void *data)
 	if (memcmp(start, args->lhs, args->lhsLen) != 0)
 	    goto nosub;
 
-	SepBuf_AddBytes(buf, word, start - word);
+	SepBuf_AddBytesBetween(buf, word, start);
 	SepBuf_AddBytes(buf, args->rhs, args->rhsLen);
 	args->pflags |= VARP_SUB_MATCHED;
 	return;
@@ -1326,7 +1338,7 @@ ModifyWord_Subst(const char *word, SepBuf *buf, void *data)
     /* unanchored */
     const char *cp;
     while ((cp = Str_FindSubstring(word, args->lhs)) != NULL) {
-	SepBuf_AddBytes(buf, word, cp - word);
+	SepBuf_AddBytesBetween(buf, word, cp);
 	SepBuf_AddBytes(buf, args->rhs, args->rhsLen);
 	args->pflags |= VARP_SUB_MATCHED;
 	wordLen -= (cp - word) + args->lhsLen;
@@ -1418,8 +1430,8 @@ tryagain:
 		} else if (m[n].rm_so == -1 && m[n].rm_eo == -1) {
 		    Error("No match for subexpression %s", errstr);
 		} else {
-		    SepBuf_AddBytes(buf, wp + m[n].rm_so,
-				    m[n].rm_eo - m[n].rm_so);
+		    SepBuf_AddBytesBetween(buf, wp + m[n].rm_so,
+					   wp + m[n].rm_eo);
 		}
 
 	    } else {
@@ -1437,7 +1449,7 @@ tryagain:
 		goto tryagain;
 	}
 	if (*wp) {
-	    SepBuf_AddBytes(buf, wp, strlen(wp));
+	    SepBuf_AddStr(buf, wp);
 	}
 	break;
     default:
@@ -1445,7 +1457,7 @@ tryagain:
 	/* fall through */
     case REG_NOMATCH:
     nosub:
-	SepBuf_AddBytes(buf, wp, strlen(wp));
+	SepBuf_AddStr(buf, wp);
 	break;
     }
 }
@@ -1480,7 +1492,7 @@ ModifyWord_Loop(const char *word, SepBuf *buf, void *data)
 	if (s[0] == '\n' || (buf->buf.count > 0 &&
 	    buf->buf.buffer[buf->buf.count - 1] == '\n'))
 	    buf->needSep = FALSE;
-	SepBuf_AddBytes(buf, s, strlen(s));
+	SepBuf_AddStr(buf, s);
     }
     free(s);
 }
@@ -1539,7 +1551,7 @@ VarSelectWords(Byte sep, Boolean oneBigWord, const char *str, int first,
     }
 
     for (i = start; (step < 0) == (i >= end); i += step) {
-	SepBuf_AddBytes(&buf, av[i], strlen(av[i]));
+	SepBuf_AddStr(&buf, av[i]);
 	SepBuf_Sep(&buf);
     }
 
@@ -1558,11 +1570,11 @@ ModifyWord_Realpath(const char *word, SepBuf *buf, void *data MAKE_ATTR_UNUSED)
     struct stat st;
     char rbuf[MAXPATHLEN];
 
-    char *rp = cached_realpath(word, rbuf);
+    const char *rp = cached_realpath(word, rbuf);
     if (rp != NULL && *rp == '/' && stat(rp, &st) == 0)
 	word = rp;
 
-    SepBuf_AddBytes(buf, word, strlen(word));
+    SepBuf_AddStr(buf, word);
 }
 
 /*-
@@ -2521,7 +2533,7 @@ ApplyModifier_Regex(const char *mod, ApplyModifiersState *st)
 static void
 ModifyWord_Copy(const char *word, SepBuf *buf, void *data MAKE_ATTR_UNUSED)
 {
-    SepBuf_AddBytes(buf, word, strlen(word));
+    SepBuf_AddStr(buf, word);
 }
 
 /* :ts<separator> */
