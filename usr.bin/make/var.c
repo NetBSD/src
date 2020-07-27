@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.340 2020/07/27 21:54:25 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.341 2020/07/27 22:02:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.340 2020/07/27 21:54:25 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.341 2020/07/27 22:02:26 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.340 2020/07/27 21:54:25 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.341 2020/07/27 22:02:26 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2053,7 +2053,6 @@ typedef struct {
 				 * after the current modifier. */
     char termc;			/* Character which terminated scan */
     char missing_delim;		/* For error reporting */
-    int modifier;		/* that we are processing */
 
     Byte	sep;		/* Word separator in expansions */
     Boolean	oneBigWord;	/* TRUE if we will treat the variable as a
@@ -3080,7 +3079,7 @@ ApplyModifiers(char *nstr, const char *tstr,
     ApplyModifiersState st = {
 	startc, endc, v, ctxt, eflags, lengthPtr, freePtr,
 	nstr, tstr, tstr,
-	'\0', '\0', 0, ' ', FALSE, NULL
+	'\0', '\0', ' ', FALSE, NULL
     };
 
     const char *p = tstr;
@@ -3144,7 +3143,8 @@ ApplyModifiers(char *nstr, const char *tstr,
 		*p, st.nstr);
 	}
 	st.newStr = var_Error;
-	switch ((st.modifier = *p)) {
+	char modifier = *p;
+	switch (modifier) {
 	case ':':
 	    {
 		int res = ApplyModifier_Assign(p, &st);
@@ -3230,7 +3230,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	case 'q':
 	case 'Q':
 	    if (p[1] == st.endc || p[1] == ':') {
-		st.newStr = VarQuote(st.nstr, st.modifier == 'q');
+		st.newStr = VarQuote(st.nstr, modifier == 'q');
 		st.cp = p + 1;
 		st.termc = *st.cp;
 		break;
@@ -3326,7 +3326,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	}
 	if (DEBUG(VAR)) {
 	    fprintf(debug_file, "Result[%s] of :%c is \"%s\"\n",
-		st.v->name, st.modifier, st.newStr);
+		st.v->name, modifier, st.newStr);
 	}
 
 	if (st.newStr != st.nstr) {
@@ -3342,7 +3342,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	if (st.termc == '\0' && st.endc != '\0') {
 	    Error("Unclosed variable specification (expecting '%c') "
 		"for \"%s\" (value \"%s\") modifier %c",
-		st.endc, st.v->name, st.nstr, st.modifier);
+		st.endc, st.v->name, st.nstr, modifier);
 	} else if (st.termc == ':') {
 	    st.cp++;
 	}
