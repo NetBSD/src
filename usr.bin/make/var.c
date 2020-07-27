@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.348 2020/07/27 23:24:55 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.349 2020/07/27 23:37:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.348 2020/07/27 23:24:55 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.349 2020/07/27 23:37:37 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.348 2020/07/27 23:24:55 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.349 2020/07/27 23:37:37 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2045,7 +2045,7 @@ typedef struct {
     VarEvalFlags eflags;
 
     /* read-write */
-    char *nstr;
+    char *val;
     const char *next;		/* The position where parsing continues
 				 * after the current modifier. */
     char termc;			/* Character which terminated scan */
@@ -2059,7 +2059,7 @@ typedef struct {
 				 * several space-separated words). */
 
     /* result */
-    char *newStr;		/* New value to return */
+    char *newVal;		/* New value to return */
 } ApplyModifiersState;
 
 /* we now have some modifiers with long names */
@@ -2106,7 +2106,7 @@ ApplyModifier_Loop(const char *mod, ApplyModifiersState *st) {
     args.eflags = st->eflags & (VARE_UNDEFERR | VARE_WANTRES);
     int prev_sep = st->sep;
     st->sep = ' ';		/* XXX: this is inconsistent */
-    st->newStr = ModifyWords(st->ctxt, st->sep, st->oneBigWord, st->nstr,
+    st->newVal = ModifyWords(st->ctxt, st->sep, st->oneBigWord, st->val,
 			     ModifyWord_Loop, &args);
     st->sep = prev_sep;
     Var_Delete(args.tvar, st->ctxt);
@@ -2173,9 +2173,9 @@ ApplyModifier_Defined(const char *mod, ApplyModifiersState *st)
     if (st->v->flags & VAR_JUNK)
 	st->v->flags |= VAR_KEEP;
     if (neflags & VARE_WANTRES) {
-	st->newStr = Buf_Destroy(&buf, FALSE);
+	st->newVal = Buf_Destroy(&buf, FALSE);
     } else {
-	st->newStr = st->nstr;
+	st->newVal = st->val;
 	Buf_Destroy(&buf, TRUE);
     }
 }
@@ -2198,7 +2198,7 @@ ApplyModifier_Gmtime(const char *mod, ApplyModifiersState *st)
 	utc = 0;
 	st->next = mod + 6;
     }
-    st->newStr = VarStrftime(st->nstr, 1, utc);
+    st->newVal = VarStrftime(st->val, 1, utc);
     st->termc = *st->next;
     return TRUE;
 }
@@ -2221,7 +2221,7 @@ ApplyModifier_Localtime(const char *mod, ApplyModifiersState *st)
 	utc = 0;
 	st->next = mod + 9;
     }
-    st->newStr = VarStrftime(st->nstr, 0, utc);
+    st->newVal = VarStrftime(st->val, 0, utc);
     st->termc = *st->next;
     return TRUE;
 }
@@ -2235,7 +2235,7 @@ ApplyModifier_Hash(const char *mod, ApplyModifiersState *st)
 	return FALSE;
     }
 
-    st->newStr = VarHash(st->nstr);
+    st->newVal = VarHash(st->val);
     st->next = mod + 4;
     st->termc = *st->next;
     return TRUE;
@@ -2249,14 +2249,14 @@ ApplyModifier_Path(const char *mod, ApplyModifiersState *st)
 	st->v->flags |= VAR_KEEP;
     GNode *gn = Targ_FindNode(st->v->name, TARG_NOCREATE);
     if (gn == NULL || gn->type & OP_NOPATH) {
-	st->newStr = NULL;
+	st->newVal = NULL;
     } else if (gn->path) {
-	st->newStr = bmake_strdup(gn->path);
+	st->newVal = bmake_strdup(gn->path);
     } else {
-	st->newStr = Dir_FindFile(st->v->name, Suff_FindPath(gn));
+	st->newVal = Dir_FindFile(st->v->name, Suff_FindPath(gn));
     }
-    if (!st->newStr)
-	st->newStr = bmake_strdup(st->v->name);
+    if (!st->newVal)
+	st->newVal = bmake_strdup(st->v->name);
     st->next = mod + 1;
     st->termc = *st->next;
 }
@@ -2276,13 +2276,13 @@ ApplyModifier_Exclam(const char *mod, ApplyModifiersState *st)
 
     const char *emsg = NULL;
     if (st->eflags & VARE_WANTRES)
-	st->newStr = Cmd_Exec(cmd, &emsg);
+	st->newVal = Cmd_Exec(cmd, &emsg);
     else
-	st->newStr = varNoError;
+	st->newVal = varNoError;
     free(cmd);
 
     if (emsg)
-	Error(emsg, st->nstr);
+	Error(emsg, st->val);
 
     st->termc = *st->next;
     if (st->v->flags & VAR_JUNK)
@@ -2308,7 +2308,7 @@ ApplyModifier_Range(const char *mod, ApplyModifiersState *st)
 	n = 0;
 	st->next = mod + 5;
     }
-    st->newStr = VarRange(st->nstr, n);
+    st->newVal = VarRange(st->val, n);
     st->termc = *st->next;
     return TRUE;
 }
@@ -2380,11 +2380,11 @@ ApplyModifier_Match(const char *mod, ApplyModifiersState *st)
 
     if (DEBUG(VAR))
 	fprintf(debug_file, "Pattern[%s] for [%s] is [%s]\n",
-	    st->v->name, st->nstr, pattern);
+	    st->v->name, st->val, pattern);
 
     ModifyWordsCallback callback = mod[0] == 'M'
 	? ModifyWord_Match : ModifyWord_NoMatch;
-    st->newStr = ModifyWords(st->ctxt, st->sep, st->oneBigWord, st->nstr,
+    st->newVal = ModifyWords(st->ctxt, st->sep, st->oneBigWord, st->val,
 			     callback, pattern);
     free(pattern);
 }
@@ -2446,7 +2446,7 @@ ApplyModifier_Subst(const char * const mod, ApplyModifiersState *st)
     }
 
     st->termc = *st->next;
-    st->newStr = ModifyWords(st->ctxt, st->sep, oneBigWord, st->nstr,
+    st->newVal = ModifyWords(st->ctxt, st->sep, oneBigWord, st->val,
 			     ModifyWord_Subst, &args);
 
     free(lhs);
@@ -2513,7 +2513,7 @@ ApplyModifier_Regex(const char *mod, ApplyModifiersState *st)
 	args.nsub = 1;
     if (args.nsub > 10)
 	args.nsub = 10;
-    st->newStr = ModifyWords(st->ctxt, st->sep, oneBigWord, st->nstr,
+    st->newVal = ModifyWords(st->ctxt, st->sep, oneBigWord, st->val,
 			     ModifyWord_SubstRegex, &args);
     regfree(&args.re);
     free(args.replace);
@@ -2576,7 +2576,7 @@ ApplyModifier_ToSep(const char *sep, ApplyModifiersState *st)
     }
 
     st->termc = *st->next;
-    st->newStr = ModifyWords(st->ctxt, st->sep, st->oneBigWord, st->nstr,
+    st->newVal = ModifyWords(st->ctxt, st->sep, st->oneBigWord, st->val,
 			     ModifyWord_Copy, NULL);
     return TRUE;
 }
@@ -2597,25 +2597,25 @@ ApplyModifier_To(const char *mod, ApplyModifiersState *st)
 
     /* Check for two-character options: ":tu", ":tl" */
     if (mod[1] == 'A') {	/* absolute path */
-	st->newStr = ModifyWords(st->ctxt, st->sep, st->oneBigWord, st->nstr,
+	st->newVal = ModifyWords(st->ctxt, st->sep, st->oneBigWord, st->val,
 				 ModifyWord_Realpath, NULL);
 	st->next = mod + 2;
 	st->termc = *st->next;
     } else if (mod[1] == 'u') {
-	char *dp = bmake_strdup(st->nstr);
-	for (st->newStr = dp; *dp; dp++)
+	char *dp = bmake_strdup(st->val);
+	for (st->newVal = dp; *dp; dp++)
 	    *dp = toupper((unsigned char)*dp);
 	st->next = mod + 2;
 	st->termc = *st->next;
     } else if (mod[1] == 'l') {
-	char *dp = bmake_strdup(st->nstr);
-	for (st->newStr = dp; *dp; dp++)
+	char *dp = bmake_strdup(st->val);
+	for (st->newVal = dp; *dp; dp++)
 	    *dp = tolower((unsigned char)*dp);
 	st->next = mod + 2;
 	st->termc = *st->next;
     } else if (mod[1] == 'W' || mod[1] == 'w') {
 	st->oneBigWord = mod[1] == 'W';
-	st->newStr = st->nstr;
+	st->newVal = st->val;
 	st->next = mod + 2;
 	st->termc = *st->next;
     } else {
@@ -2647,20 +2647,20 @@ ApplyModifier_Words(const char *mod, ApplyModifiersState *st)
 
     if (estr[0] == '#' && estr[1] == '\0') { /* Found ":[#]" */
 	if (st->oneBigWord) {
-	    st->newStr = bmake_strdup("1");
+	    st->newVal = bmake_strdup("1");
 	} else {
 	    /* XXX: brk_string() is a rather expensive
 	     * way of counting words. */
 	    char *as;
 	    int ac;
-	    char **av = brk_string(st->nstr, &ac, FALSE, &as);
+	    char **av = brk_string(st->val, &ac, FALSE, &as);
 	    free(as);
 	    free(av);
 
 	    Buffer buf;
 	    Buf_Init(&buf, 4);	/* 3 digits + '\0' */
 	    Buf_AddInt(&buf, ac);
-	    st->newStr = Buf_Destroy(&buf, FALSE);
+	    st->newVal = Buf_Destroy(&buf, FALSE);
 	}
 	goto ok;
     }
@@ -2668,14 +2668,14 @@ ApplyModifier_Words(const char *mod, ApplyModifiersState *st)
     if (estr[0] == '*' && estr[1] == '\0') {
 	/* Found ":[*]" */
 	st->oneBigWord = TRUE;
-	st->newStr = st->nstr;
+	st->newVal = st->val;
 	goto ok;
     }
 
     if (estr[0] == '@' && estr[1] == '\0') {
 	/* Found ":[@]" */
 	st->oneBigWord = FALSE;
-	st->newStr = st->nstr;
+	st->newVal = st->val;
 	goto ok;
     }
 
@@ -2707,7 +2707,7 @@ ApplyModifier_Words(const char *mod, ApplyModifiersState *st)
     if (first == 0 && last == 0) {
 	/* ":[0]" or perhaps ":[0..0]" */
 	st->oneBigWord = TRUE;
-	st->newStr = st->nstr;
+	st->newVal = st->val;
 	goto ok;
     }
 
@@ -2716,7 +2716,7 @@ ApplyModifier_Words(const char *mod, ApplyModifiersState *st)
 	goto bad_modifier;
 
     /* Normal case: select the words described by seldata. */
-    st->newStr = VarSelectWords(st->sep, st->oneBigWord, st->nstr, first, last);
+    st->newVal = VarSelectWords(st->sep, st->oneBigWord, st->val, first, last);
 
 ok:
     st->termc = *st->next;
@@ -2746,7 +2746,7 @@ ApplyModifier_Order(const char *mod, ApplyModifiersState *st)
     } else {
 	return FALSE;
     }
-    st->newStr = VarOrder(st->nstr, otype);
+    st->newVal = VarOrder(st->val, otype);
     return TRUE;
 }
 
@@ -2792,10 +2792,10 @@ ApplyModifier_IfElse(const char *mod, ApplyModifiersState *st)
     }
 
     if (value) {
-	st->newStr = then_expr;
+	st->newVal = then_expr;
 	free(else_expr);
     } else {
-	st->newStr = else_expr;
+	st->newVal = else_expr;
 	free(then_expr);
     }
     if (st->v->flags & VAR_JUNK)
@@ -2887,12 +2887,12 @@ ApplyModifier_Assign(const char *mod, ApplyModifiersState *st)
 	    break;
 	case '!': {
 	    const char *emsg;
-	    st->newStr = Cmd_Exec(val, &emsg);
+	    st->newVal = Cmd_Exec(val, &emsg);
 	    if (emsg)
-		Error(emsg, st->nstr);
+		Error(emsg, st->val);
 	    else
-		Var_Set(st->v->name, st->newStr, v_ctxt);
-	    free(st->newStr);
+		Var_Set(st->v->name, st->newVal, v_ctxt);
+	    free(st->newVal);
 	    break;
 	}
 	case '?':
@@ -2905,7 +2905,7 @@ ApplyModifier_Assign(const char *mod, ApplyModifiersState *st)
 	}
     }
     free(val);
-    st->newStr = varNoError;
+    st->newVal = varNoError;
     return 0;
 }
 
@@ -2921,14 +2921,14 @@ ApplyModifier_Remember(const char *mod, ApplyModifiersState *st)
     if (mod[1] == '=') {
 	size_t n = strcspn(mod + 2, ":)}");
 	char *name = bmake_strndup(mod + 2, n);
-	Var_Set(name, st->nstr, st->ctxt);
+	Var_Set(name, st->val, st->ctxt);
 	free(name);
 	st->next = mod + 2 + n;
     } else {
-	Var_Set("_", st->nstr, st->ctxt);
+	Var_Set("_", st->val, st->ctxt);
 	st->next = mod + 1;
     }
-    st->newStr = st->nstr;
+    st->newVal = st->val;
     st->termc = *st->next;
     return TRUE;
 }
@@ -2983,11 +2983,11 @@ ApplyModifier_SysV(const char *mod, ApplyModifiersState *st)
      * string. Note the pattern is anchored at the end.
      */
     st->termc = *--st->next;
-    if (lhs[0] == '\0' && *st->nstr == '\0') {
-	st->newStr = st->nstr;	/* special case */
+    if (lhs[0] == '\0' && *st->val == '\0') {
+	st->newVal = st->val;	/* special case */
     } else {
 	ModifyWord_SYSVSubstArgs args = { st->ctxt, lhs, rhs };
-	st->newStr = ModifyWords(st->ctxt, st->sep, st->oneBigWord, st->nstr,
+	st->newVal = ModifyWords(st->ctxt, st->sep, st->oneBigWord, st->val,
 				 ModifyWord_SYSVSubst, &args);
     }
     free(lhs);
@@ -3063,14 +3063,14 @@ ApplyModifier_SysV(const char *mod, ApplyModifiersState *st)
  * Assignment operators (see ApplyModifier_Assign).
  */
 static char *
-ApplyModifiers(char *nstr, const char * const tstr,
+ApplyModifiers(char *val, const char * const tstr,
 	       int const startc, int const endc,
 	       Var * const v, GNode * const ctxt, VarEvalFlags const eflags,
 	       int * const lengthPtr, void ** const freePtr)
 {
     ApplyModifiersState st = {
 	startc, endc, v, ctxt, eflags,
-	nstr, tstr, '\0', '\0', ' ', FALSE, NULL
+	val, tstr, '\0', '\0', ' ', FALSE, NULL
     };
 
     const char *p = tstr;
@@ -3109,10 +3109,10 @@ ApplyModifiers(char *nstr, const char * const tstr,
 	    if (rval != NULL && *rval) {
 		int used;
 
-		st.nstr = ApplyModifiers(st.nstr, rval, 0, 0, st.v,
+		st.val = ApplyModifiers(st.val, rval, 0, 0, st.v,
 				      st.ctxt, st.eflags, &used, freePtr);
-		if (st.nstr == var_Error
-		    || (st.nstr == varNoError && (st.eflags & VARE_UNDEFERR) == 0)
+		if (st.val == var_Error
+		    || (st.val == varNoError && (st.eflags & VARE_UNDEFERR) == 0)
 		    || strlen(rval) != (size_t) used) {
 		    free(freeIt);
 		    goto out;	/* error already reported */
@@ -3131,9 +3131,9 @@ ApplyModifiers(char *nstr, const char * const tstr,
     apply_mods:
 	if (DEBUG(VAR)) {
 	    fprintf(debug_file, "Applying[%s] :%c to \"%s\"\n", st.v->name,
-		*p, st.nstr);
+		*p, st.val);
 	}
-	st.newStr = var_Error;
+	st.newVal = var_Error;
 	char modifier = *p;
 	switch (modifier) {
 	case ':':
@@ -3163,7 +3163,7 @@ ApplyModifiers(char *nstr, const char * const tstr,
 	    {
 		if (st.v->flags & VAR_JUNK)
 		    st.v->flags |= VAR_KEEP;
-		st.newStr = bmake_strdup(st.v->name);
+		st.newVal = bmake_strdup(st.v->name);
 		st.next = p + 1;
 		st.termc = *st.next;
 		break;
@@ -3221,7 +3221,7 @@ ApplyModifiers(char *nstr, const char * const tstr,
 	case 'q':
 	case 'Q':
 	    if (p[1] == st.endc || p[1] == ':') {
-		st.newStr = VarQuote(st.nstr, modifier == 'q');
+		st.newVal = VarQuote(st.val, modifier == 'q');
 		st.next = p + 1;
 		st.termc = *st.next;
 		break;
@@ -3229,8 +3229,8 @@ ApplyModifiers(char *nstr, const char * const tstr,
 	    goto default_case;
 	case 'T':
 	    if (p[1] == st.endc || p[1] == ':') {
-		st.newStr = ModifyWords(st.ctxt, st.sep, st.oneBigWord,
-					st.nstr, ModifyWord_Tail, NULL);
+		st.newVal = ModifyWords(st.ctxt, st.sep, st.oneBigWord,
+					st.val, ModifyWord_Tail, NULL);
 		st.next = p + 1;
 		st.termc = *st.next;
 		break;
@@ -3238,8 +3238,8 @@ ApplyModifiers(char *nstr, const char * const tstr,
 	    goto default_case;
 	case 'H':
 	    if (p[1] == st.endc || p[1] == ':') {
-		st.newStr = ModifyWords(st.ctxt, st.sep, st.oneBigWord,
-					st.nstr, ModifyWord_Head, NULL);
+		st.newVal = ModifyWords(st.ctxt, st.sep, st.oneBigWord,
+					st.val, ModifyWord_Head, NULL);
 		st.next = p + 1;
 		st.termc = *st.next;
 		break;
@@ -3247,8 +3247,8 @@ ApplyModifiers(char *nstr, const char * const tstr,
 	    goto default_case;
 	case 'E':
 	    if (p[1] == st.endc || p[1] == ':') {
-		st.newStr = ModifyWords(st.ctxt, st.sep, st.oneBigWord,
-					st.nstr, ModifyWord_Suffix, NULL);
+		st.newVal = ModifyWords(st.ctxt, st.sep, st.oneBigWord,
+					st.val, ModifyWord_Suffix, NULL);
 		st.next = p + 1;
 		st.termc = *st.next;
 		break;
@@ -3256,8 +3256,8 @@ ApplyModifiers(char *nstr, const char * const tstr,
 	    goto default_case;
 	case 'R':
 	    if (p[1] == st.endc || p[1] == ':') {
-		st.newStr = ModifyWords(st.ctxt, st.sep, st.oneBigWord,
-					st.nstr, ModifyWord_Root, NULL);
+		st.newVal = ModifyWords(st.ctxt, st.sep, st.oneBigWord,
+					st.val, ModifyWord_Root, NULL);
 		st.next = p + 1;
 		st.termc = *st.next;
 		break;
@@ -3273,7 +3273,7 @@ ApplyModifiers(char *nstr, const char * const tstr,
 	    break;
 	case 'u':
 	    if (p[1] == st.endc || p[1] == ':') {
-		st.newStr = VarUniq(st.nstr);
+		st.newVal = VarUniq(st.val);
 		st.next = p + 1;
 		st.termc = *st.next;
 		break;
@@ -3284,11 +3284,11 @@ ApplyModifiers(char *nstr, const char * const tstr,
 	    if (p[1] == 'h' && (p[2] == st.endc || p[2] == ':')) {
 		const char *emsg;
 		if (st.eflags & VARE_WANTRES) {
-		    st.newStr = Cmd_Exec(st.nstr, &emsg);
+		    st.newVal = Cmd_Exec(st.val, &emsg);
 		    if (emsg)
-			Error(emsg, st.nstr);
+			Error(emsg, st.val);
 		} else
-		    st.newStr = varNoError;
+		    st.newVal = varNoError;
 		st.next = p + 2;
 		st.termc = *st.next;
 		break;
@@ -3312,29 +3312,29 @@ ApplyModifiers(char *nstr, const char * const tstr,
 			 st.next++)
 			continue;
 		    st.termc = *st.next;
-		    st.newStr = var_Error;
+		    st.newVal = var_Error;
 		}
 	    }
 	}
 	if (DEBUG(VAR)) {
 	    fprintf(debug_file, "Result[%s] of :%c is \"%s\"\n",
-		st.v->name, modifier, st.newStr);
+		st.v->name, modifier, st.newVal);
 	}
 
-	if (st.newStr != st.nstr) {
+	if (st.newVal != st.val) {
 	    if (*freePtr) {
-		free(st.nstr);
+		free(st.val);
 		*freePtr = NULL;
 	    }
-	    st.nstr = st.newStr;
-	    if (st.nstr != var_Error && st.nstr != varNoError) {
-		*freePtr = st.nstr;
+	    st.val = st.newVal;
+	    if (st.val != var_Error && st.val != varNoError) {
+		*freePtr = st.val;
 	    }
 	}
 	if (st.termc == '\0' && st.endc != '\0') {
 	    Error("Unclosed variable specification (expecting '%c') "
 		"for \"%s\" (value \"%s\") modifier %c",
-		st.endc, st.v->name, st.nstr, modifier);
+		st.endc, st.v->name, st.val, modifier);
 	} else if (st.termc == ':') {
 	    st.next++;
 	}
@@ -3342,7 +3342,7 @@ ApplyModifiers(char *nstr, const char * const tstr,
     }
 out:
     *lengthPtr = p - tstr;
-    return st.nstr;
+    return st.val;
 
 bad_modifier:
     Error("Bad modifier `:%.*s' for %s",
