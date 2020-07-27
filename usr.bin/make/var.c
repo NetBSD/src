@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.347 2020/07/27 23:04:18 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.348 2020/07/27 23:24:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.347 2020/07/27 23:04:18 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.348 2020/07/27 23:24:55 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.347 2020/07/27 23:04:18 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.348 2020/07/27 23:24:55 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2046,7 +2046,7 @@ typedef struct {
 
     /* read-write */
     char *nstr;
-    const char *cp;		/* The position where parsing continues
+    const char *next;		/* The position where parsing continues
 				 * after the current modifier. */
     char termc;			/* Character which terminated scan */
     char missing_delim;		/* For error reporting */
@@ -2085,23 +2085,23 @@ ApplyModifier_Loop(const char *mod, ApplyModifiersState *st) {
     ModifyWord_LoopArgs args;
 
     args.ctx = st->ctxt;
-    st->cp = mod + 1;
+    st->next = mod + 1;
     char delim = '@';
-    args.tvar = ParseModifierPart(&st->cp, delim, st->eflags & ~VARE_WANTRES,
+    args.tvar = ParseModifierPart(&st->next, delim, st->eflags & ~VARE_WANTRES,
 				  st->ctxt, NULL, NULL, NULL);
     if (args.tvar == NULL) {
 	st->missing_delim = delim;
 	return FALSE;
     }
 
-    args.str = ParseModifierPart(&st->cp, delim, st->eflags & ~VARE_WANTRES,
+    args.str = ParseModifierPart(&st->next, delim, st->eflags & ~VARE_WANTRES,
 				 st->ctxt, NULL, NULL, NULL);
     if (args.str == NULL) {
 	st->missing_delim = delim;
 	return FALSE;
     }
 
-    st->termc = *st->cp;
+    st->termc = *st->next;
 
     args.eflags = st->eflags & (VARE_UNDEFERR | VARE_WANTRES);
     int prev_sep = st->sep;
@@ -2167,8 +2167,8 @@ ApplyModifier_Defined(const char *mod, ApplyModifiersState *st)
 	}
     }
 
-    st->cp = p;
-    st->termc = *st->cp;
+    st->next = p;
+    st->termc = *st->next;
 
     if (st->v->flags & VAR_JUNK)
 	st->v->flags |= VAR_KEEP;
@@ -2185,7 +2185,7 @@ static Boolean
 ApplyModifier_Gmtime(const char *mod, ApplyModifiersState *st)
 {
     if (!ModMatchEq(mod, "gmtime", st->endc)) {
-	st->cp = mod + 1;
+	st->next = mod + 1;
 	return FALSE;
     }
 
@@ -2193,13 +2193,13 @@ ApplyModifier_Gmtime(const char *mod, ApplyModifiersState *st)
     if (mod[6] == '=') {
 	char *ep;
 	utc = strtoul(mod + 7, &ep, 10);
-	st->cp = ep;
+	st->next = ep;
     } else {
 	utc = 0;
-	st->cp = mod + 6;
+	st->next = mod + 6;
     }
     st->newStr = VarStrftime(st->nstr, 1, utc);
-    st->termc = *st->cp;
+    st->termc = *st->next;
     return TRUE;
 }
 
@@ -2208,7 +2208,7 @@ static Boolean
 ApplyModifier_Localtime(const char *mod, ApplyModifiersState *st)
 {
     if (!ModMatchEq(mod, "localtime", st->endc)) {
-	st->cp = mod + 1;
+	st->next = mod + 1;
 	return FALSE;
     }
 
@@ -2216,13 +2216,13 @@ ApplyModifier_Localtime(const char *mod, ApplyModifiersState *st)
     if (mod[9] == '=') {
 	char *ep;
 	utc = strtoul(mod + 10, &ep, 10);
-	st->cp = ep;
+	st->next = ep;
     } else {
 	utc = 0;
-	st->cp = mod + 9;
+	st->next = mod + 9;
     }
     st->newStr = VarStrftime(st->nstr, 0, utc);
-    st->termc = *st->cp;
+    st->termc = *st->next;
     return TRUE;
 }
 
@@ -2231,13 +2231,13 @@ static Boolean
 ApplyModifier_Hash(const char *mod, ApplyModifiersState *st)
 {
     if (!ModMatch(mod, "hash", st->endc)) {
-	st->cp = mod + 1;
+	st->next = mod + 1;
 	return FALSE;
     }
 
     st->newStr = VarHash(st->nstr);
-    st->cp = mod + 4;
-    st->termc = *st->cp;
+    st->next = mod + 4;
+    st->termc = *st->next;
     return TRUE;
 }
 
@@ -2257,17 +2257,17 @@ ApplyModifier_Path(const char *mod, ApplyModifiersState *st)
     }
     if (!st->newStr)
 	st->newStr = bmake_strdup(st->v->name);
-    st->cp = mod + 1;
-    st->termc = *st->cp;
+    st->next = mod + 1;
+    st->termc = *st->next;
 }
 
 /* :!cmd! */
 static Boolean
 ApplyModifier_Exclam(const char *mod, ApplyModifiersState *st)
 {
-    st->cp = mod + 1;
+    st->next = mod + 1;
     char delim = '!';
-    char *cmd = ParseModifierPart(&st->cp, delim, st->eflags, st->ctxt,
+    char *cmd = ParseModifierPart(&st->next, delim, st->eflags, st->ctxt,
 				  NULL, NULL, NULL);
     if (cmd == NULL) {
 	st->missing_delim = delim;
@@ -2284,7 +2284,7 @@ ApplyModifier_Exclam(const char *mod, ApplyModifiersState *st)
     if (emsg)
 	Error(emsg, st->nstr);
 
-    st->termc = *st->cp;
+    st->termc = *st->next;
     if (st->v->flags & VAR_JUNK)
 	st->v->flags |= VAR_KEEP;
     return TRUE;
@@ -2295,7 +2295,7 @@ static Boolean
 ApplyModifier_Range(const char *mod, ApplyModifiersState *st)
 {
     if (!ModMatchEq(mod, "range", st->endc)) {
-	st->cp = mod + 1;
+	st->next = mod + 1;
 	return FALSE;
     }
 
@@ -2303,13 +2303,13 @@ ApplyModifier_Range(const char *mod, ApplyModifiersState *st)
     if (mod[5] == '=') {
 	char *ep;
 	n = strtoul(mod + 6, &ep, 10);
-	st->cp = ep;
+	st->next = ep;
     } else {
 	n = 0;
-	st->cp = mod + 5;
+	st->next = mod + 5;
     }
     st->newStr = VarRange(st->nstr, n);
-    st->termc = *st->cp;
+    st->termc = *st->next;
     return TRUE;
 }
 
@@ -2344,9 +2344,9 @@ ApplyModifier_Match(const char *mod, ApplyModifiersState *st)
 		break;
 	}
     }
-    st->cp = p;
-    st->termc = *st->cp;
-    const char *endpat = st->cp;
+    st->next = p;
+    st->termc = *st->next;
+    const char *endpat = st->next;
 
     char *pattern;
     if (copy) {
@@ -2397,19 +2397,19 @@ ApplyModifier_Subst(const char * const mod, ApplyModifiersState *st)
     Boolean oneBigWord = st->oneBigWord;
     char delim = mod[1];
 
-    st->cp = mod + 2;
+    st->next = mod + 2;
 
     /*
      * If pattern begins with '^', it is anchored to the
      * start of the word -- skip over it and flag pattern.
      */
     args.pflags = 0;
-    if (*st->cp == '^') {
+    if (*st->next == '^') {
 	args.pflags |= VARP_ANCHOR_START;
-	st->cp++;
+	st->next++;
     }
 
-    char *lhs = ParseModifierPart(&st->cp, delim, st->eflags, st->ctxt,
+    char *lhs = ParseModifierPart(&st->next, delim, st->eflags, st->ctxt,
 				  &args.lhsLen, &args.pflags, NULL);
     if (lhs == NULL) {
 	st->missing_delim = delim;
@@ -2417,7 +2417,7 @@ ApplyModifier_Subst(const char * const mod, ApplyModifiersState *st)
     }
     args.lhs = lhs;
 
-    char *rhs = ParseModifierPart(&st->cp, delim, st->eflags, st->ctxt,
+    char *rhs = ParseModifierPart(&st->next, delim, st->eflags, st->ctxt,
 				  &args.rhsLen, NULL, &args);
     if (rhs == NULL) {
 	st->missing_delim = delim;
@@ -2430,8 +2430,8 @@ ApplyModifier_Subst(const char * const mod, ApplyModifiersState *st)
      * delimiter, substitution is global and is marked that
      * way.
      */
-    for (;; st->cp++) {
-	switch (*st->cp) {
+    for (;; st->next++) {
+	switch (*st->next) {
 	case 'g':
 	    args.pflags |= VARP_SUB_GLOBAL;
 	    continue;
@@ -2445,7 +2445,7 @@ ApplyModifier_Subst(const char * const mod, ApplyModifiersState *st)
 	break;
     }
 
-    st->termc = *st->cp;
+    st->termc = *st->next;
     st->newStr = ModifyWords(st->ctxt, st->sep, oneBigWord, st->nstr,
 			     ModifyWord_Subst, &args);
 
@@ -2466,16 +2466,16 @@ ApplyModifier_Regex(const char *mod, ApplyModifiersState *st)
     Boolean oneBigWord = st->oneBigWord;
     char delim = mod[1];
 
-    st->cp = mod + 2;
+    st->next = mod + 2;
 
-    char *re = ParseModifierPart(&st->cp, delim, st->eflags, st->ctxt,
+    char *re = ParseModifierPart(&st->next, delim, st->eflags, st->ctxt,
 				 NULL, NULL, NULL);
     if (re == NULL) {
 	st->missing_delim = delim;
 	return FALSE;
     }
 
-    args.replace = ParseModifierPart(&st->cp, delim, st->eflags, st->ctxt,
+    args.replace = ParseModifierPart(&st->next, delim, st->eflags, st->ctxt,
 				     NULL, NULL, NULL);
     if (args.replace == NULL) {
 	free(re);
@@ -2483,8 +2483,8 @@ ApplyModifier_Regex(const char *mod, ApplyModifiersState *st)
 	return FALSE;
     }
 
-    for (;; st->cp++) {
-	switch (*st->cp) {
+    for (;; st->next++) {
+	switch (*st->next) {
 	case 'g':
 	    args.pflags |= VARP_SUB_GLOBAL;
 	    continue;
@@ -2498,7 +2498,7 @@ ApplyModifier_Regex(const char *mod, ApplyModifiersState *st)
 	break;
     }
 
-    st->termc = *st->cp;
+    st->termc = *st->next;
 
     int error = regcomp(&args.re, re, REG_EXTENDED);
     free(re);
@@ -2534,11 +2534,11 @@ ApplyModifier_ToSep(const char *sep, ApplyModifiersState *st)
     if (sep[0] != st->endc && (sep[1] == st->endc || sep[1] == ':')) {
 	/* ":ts<unrecognised><endc>" or ":ts<unrecognised>:" */
 	st->sep = sep[0];
-	st->cp = sep + 1;
+	st->next = sep + 1;
     } else if (sep[0] == st->endc || sep[0] == ':') {
 	/* ":ts<endc>" or ":ts:" */
 	st->sep = '\0';		/* no separator */
-	st->cp = sep;
+	st->next = sep;
     } else if (sep[0] == '\\') {
 	const char *xp = sep + 1;
 	int base = 8;		/* assume octal */
@@ -2546,11 +2546,11 @@ ApplyModifier_ToSep(const char *sep, ApplyModifiersState *st)
 	switch (sep[1]) {
 	case 'n':
 	    st->sep = '\n';
-	    st->cp = sep + 2;
+	    st->next = sep + 2;
 	    break;
 	case 't':
 	    st->sep = '\t';
-	    st->cp = sep + 2;
+	    st->next = sep + 2;
 	    break;
 	case 'x':
 	    base = 16;
@@ -2568,14 +2568,14 @@ ApplyModifier_ToSep(const char *sep, ApplyModifiersState *st)
 	    st->sep = strtoul(sep + 1 + (sep[1] == 'x'), &end, base);
 	    if (*end != ':' && *end != st->endc)
 	        return FALSE;
-	    st->cp = end;
+	    st->next = end;
 	    break;
 	}
     } else {
 	return FALSE;		/* Found ":ts<unrecognised><unrecognised>". */
     }
 
-    st->termc = *st->cp;
+    st->termc = *st->next;
     st->newStr = ModifyWords(st->ctxt, st->sep, st->oneBigWord, st->nstr,
 			     ModifyWord_Copy, NULL);
     return TRUE;
@@ -2585,7 +2585,7 @@ ApplyModifier_ToSep(const char *sep, ApplyModifiersState *st)
 static Boolean
 ApplyModifier_To(const char *mod, ApplyModifiersState *st)
 {
-    st->cp = mod + 1;	/* make sure it is set */
+    st->next = mod + 1;	/* make sure it is set */
     if (mod[1] == st->endc || mod[1] == ':')
 	return FALSE;		/* Found ":t<endc>" or ":t:". */
 
@@ -2599,25 +2599,25 @@ ApplyModifier_To(const char *mod, ApplyModifiersState *st)
     if (mod[1] == 'A') {	/* absolute path */
 	st->newStr = ModifyWords(st->ctxt, st->sep, st->oneBigWord, st->nstr,
 				 ModifyWord_Realpath, NULL);
-	st->cp = mod + 2;
-	st->termc = *st->cp;
+	st->next = mod + 2;
+	st->termc = *st->next;
     } else if (mod[1] == 'u') {
 	char *dp = bmake_strdup(st->nstr);
 	for (st->newStr = dp; *dp; dp++)
 	    *dp = toupper((unsigned char)*dp);
-	st->cp = mod + 2;
-	st->termc = *st->cp;
+	st->next = mod + 2;
+	st->termc = *st->next;
     } else if (mod[1] == 'l') {
 	char *dp = bmake_strdup(st->nstr);
 	for (st->newStr = dp; *dp; dp++)
 	    *dp = tolower((unsigned char)*dp);
-	st->cp = mod + 2;
-	st->termc = *st->cp;
+	st->next = mod + 2;
+	st->termc = *st->next;
     } else if (mod[1] == 'W' || mod[1] == 'w') {
 	st->oneBigWord = mod[1] == 'W';
 	st->newStr = st->nstr;
-	st->cp = mod + 2;
-	st->termc = *st->cp;
+	st->next = mod + 2;
+	st->termc = *st->next;
     } else {
 	/* Found ":t<unrecognised>:" or ":t<unrecognised><endc>". */
 	return FALSE;
@@ -2629,17 +2629,17 @@ ApplyModifier_To(const char *mod, ApplyModifiersState *st)
 static int
 ApplyModifier_Words(const char *mod, ApplyModifiersState *st)
 {
-    st->cp = mod + 1;		/* point to char after '[' */
+    st->next = mod + 1;		/* point to char after '[' */
     char delim = ']';		/* look for closing ']' */
-    char *estr = ParseModifierPart(&st->cp, delim, st->eflags, st->ctxt,
+    char *estr = ParseModifierPart(&st->next, delim, st->eflags, st->ctxt,
 				   NULL, NULL, NULL);
     if (estr == NULL) {
 	st->missing_delim = delim;
 	return 'c';
     }
 
-    /* now st->cp points just after the closing ']' */
-    if (st->cp[0] != ':' && st->cp[0] != st->endc)
+    /* now st->next points just after the closing ']' */
+    if (st->next[0] != ':' && st->next[0] != st->endc)
 	goto bad_modifier;	/* Found junk after ']' */
 
     if (estr[0] == '\0')
@@ -2719,7 +2719,7 @@ ApplyModifier_Words(const char *mod, ApplyModifiersState *st)
     st->newStr = VarSelectWords(st->sep, st->oneBigWord, st->nstr, first, last);
 
 ok:
-    st->termc = *st->cp;
+    st->termc = *st->next;
     free(estr);
     return 0;
 
@@ -2734,15 +2734,15 @@ ApplyModifier_Order(const char *mod, ApplyModifiersState *st)
 {
     char otype;
 
-    st->cp = mod + 1;	/* skip to the rest in any case */
+    st->next = mod + 1;	/* skip to the rest in any case */
     if (mod[1] == st->endc || mod[1] == ':') {
 	otype = 's';
-	st->termc = *st->cp;
+	st->termc = *st->next;
     } else if ((mod[1] == 'r' || mod[1] == 'x') &&
 	       (mod[2] == st->endc || mod[2] == ':')) {
 	otype = mod[1];
-	st->cp = mod + 2;
-	st->termc = *st->cp;
+	st->next = mod + 2;
+	st->termc = *st->next;
     } else {
 	return FALSE;
     }
@@ -2767,9 +2767,9 @@ ApplyModifier_IfElse(const char *mod, ApplyModifiersState *st)
 	    else_eflags |= VARE_WANTRES;
     }
 
-    st->cp = mod + 1;
+    st->next = mod + 1;
     char delim = ':';
-    char *then_expr = ParseModifierPart(&st->cp, delim, then_eflags, st->ctxt,
+    char *then_expr = ParseModifierPart(&st->next, delim, then_eflags, st->ctxt,
 					NULL, NULL, NULL);
     if (then_expr == NULL) {
 	st->missing_delim = delim;
@@ -2777,14 +2777,14 @@ ApplyModifier_IfElse(const char *mod, ApplyModifiersState *st)
     }
 
     delim = st->endc;		/* BRCLOSE or PRCLOSE */
-    char *else_expr = ParseModifierPart(&st->cp, delim, else_eflags, st->ctxt,
+    char *else_expr = ParseModifierPart(&st->next, delim, else_eflags, st->ctxt,
 					NULL, NULL, NULL);
     if (else_expr == NULL) {
 	st->missing_delim = delim;
 	return FALSE;
     }
 
-    st->termc = *--st->cp;
+    st->termc = *--st->next;
     if (cond_rc == COND_INVALID) {
 	Error("Bad conditional expression `%s' in %s?%s:%s",
 	    st->v->name, st->v->name, then_expr, else_expr);
@@ -2858,15 +2858,15 @@ ApplyModifier_Assign(const char *mod, ApplyModifiersState *st)
     case '+':
     case '?':
     case '!':
-	st->cp = mod + 3;
+	st->next = mod + 3;
 	break;
     default:
-	st->cp = mod + 2;
+	st->next = mod + 2;
 	break;
     }
 
     char delim = st->startc == PROPEN ? PRCLOSE : BRCLOSE;
-    char *val = ParseModifierPart(&st->cp, delim, st->eflags, st->ctxt,
+    char *val = ParseModifierPart(&st->next, delim, st->eflags, st->ctxt,
 				  NULL, NULL, NULL);
     if (st->v->flags & VAR_JUNK) {
 	/* restore original name */
@@ -2878,7 +2878,7 @@ ApplyModifier_Assign(const char *mod, ApplyModifiersState *st)
 	return 'c';
     }
 
-    st->termc = *--st->cp;
+    st->termc = *--st->next;
 
     if (st->eflags & VARE_WANTRES) {
 	switch (op[0]) {
@@ -2914,7 +2914,7 @@ static Boolean
 ApplyModifier_Remember(const char *mod, ApplyModifiersState *st)
 {
     if (!ModMatchEq(mod, "_", st->endc)) {
-	st->cp = mod + 1;
+	st->next = mod + 1;
 	return FALSE;
     }
 
@@ -2923,13 +2923,13 @@ ApplyModifier_Remember(const char *mod, ApplyModifiersState *st)
 	char *name = bmake_strndup(mod + 2, n);
 	Var_Set(name, st->nstr, st->ctxt);
 	free(name);
-	st->cp = mod + 2 + n;
+	st->next = mod + 2 + n;
     } else {
 	Var_Set("_", st->nstr, st->ctxt);
-	st->cp = mod + 1;
+	st->next = mod + 1;
     }
     st->newStr = st->nstr;
-    st->termc = *st->cp;
+    st->termc = *st->next;
     return TRUE;
 }
 
@@ -2945,25 +2945,25 @@ ApplyModifier_SysV(const char *mod, ApplyModifiersState *st)
      * to verify it is a SYSV-make-style translation:
      * it must be: <string1>=<string2>)
      */
-    st->cp = mod;
+    st->next = mod;
     int nest = 1;
-    while (*st->cp != '\0' && nest > 0) {
-	if (*st->cp == '=') {
+    while (*st->next != '\0' && nest > 0) {
+	if (*st->next == '=') {
 	    eqFound = TRUE;
 	    /* continue looking for st->endc */
-	} else if (*st->cp == st->endc)
+	} else if (*st->next == st->endc)
 	    nest--;
-	else if (*st->cp == st->startc)
+	else if (*st->next == st->startc)
 	    nest++;
 	if (nest > 0)
-	    st->cp++;
+	    st->next++;
     }
-    if (*st->cp != st->endc || !eqFound)
+    if (*st->next != st->endc || !eqFound)
 	return 0;
 
     char delim = '=';
-    st->cp = mod;
-    char *lhs = ParseModifierPart(&st->cp, delim, st->eflags, st->ctxt,
+    st->next = mod;
+    char *lhs = ParseModifierPart(&st->next, delim, st->eflags, st->ctxt,
 				  NULL, NULL, NULL);
     if (lhs == NULL) {
 	st->missing_delim = delim;
@@ -2971,7 +2971,7 @@ ApplyModifier_SysV(const char *mod, ApplyModifiersState *st)
     }
 
     delim = st->endc;
-    char *rhs = ParseModifierPart(&st->cp, delim, st->eflags, st->ctxt,
+    char *rhs = ParseModifierPart(&st->next, delim, st->eflags, st->ctxt,
 				  NULL, NULL, NULL);
     if (rhs == NULL) {
 	st->missing_delim = delim;
@@ -2982,7 +2982,7 @@ ApplyModifier_SysV(const char *mod, ApplyModifiersState *st)
      * SYSV modifications happen through the whole
      * string. Note the pattern is anchored at the end.
      */
-    st->termc = *--st->cp;
+    st->termc = *--st->next;
     if (lhs[0] == '\0' && *st->nstr == '\0') {
 	st->newStr = st->nstr;	/* special case */
     } else {
@@ -3164,8 +3164,8 @@ ApplyModifiers(char *nstr, const char * const tstr,
 		if (st.v->flags & VAR_JUNK)
 		    st.v->flags |= VAR_KEEP;
 		st.newStr = bmake_strdup(st.v->name);
-		st.cp = p + 1;
-		st.termc = *st.cp;
+		st.next = p + 1;
+		st.termc = *st.next;
 		break;
 	    }
 	case 'P':
@@ -3222,8 +3222,8 @@ ApplyModifiers(char *nstr, const char * const tstr,
 	case 'Q':
 	    if (p[1] == st.endc || p[1] == ':') {
 		st.newStr = VarQuote(st.nstr, modifier == 'q');
-		st.cp = p + 1;
-		st.termc = *st.cp;
+		st.next = p + 1;
+		st.termc = *st.next;
 		break;
 	    }
 	    goto default_case;
@@ -3231,8 +3231,8 @@ ApplyModifiers(char *nstr, const char * const tstr,
 	    if (p[1] == st.endc || p[1] == ':') {
 		st.newStr = ModifyWords(st.ctxt, st.sep, st.oneBigWord,
 					st.nstr, ModifyWord_Tail, NULL);
-		st.cp = p + 1;
-		st.termc = *st.cp;
+		st.next = p + 1;
+		st.termc = *st.next;
 		break;
 	    }
 	    goto default_case;
@@ -3240,8 +3240,8 @@ ApplyModifiers(char *nstr, const char * const tstr,
 	    if (p[1] == st.endc || p[1] == ':') {
 		st.newStr = ModifyWords(st.ctxt, st.sep, st.oneBigWord,
 					st.nstr, ModifyWord_Head, NULL);
-		st.cp = p + 1;
-		st.termc = *st.cp;
+		st.next = p + 1;
+		st.termc = *st.next;
 		break;
 	    }
 	    goto default_case;
@@ -3249,8 +3249,8 @@ ApplyModifiers(char *nstr, const char * const tstr,
 	    if (p[1] == st.endc || p[1] == ':') {
 		st.newStr = ModifyWords(st.ctxt, st.sep, st.oneBigWord,
 					st.nstr, ModifyWord_Suffix, NULL);
-		st.cp = p + 1;
-		st.termc = *st.cp;
+		st.next = p + 1;
+		st.termc = *st.next;
 		break;
 	    }
 	    goto default_case;
@@ -3258,8 +3258,8 @@ ApplyModifiers(char *nstr, const char * const tstr,
 	    if (p[1] == st.endc || p[1] == ':') {
 		st.newStr = ModifyWords(st.ctxt, st.sep, st.oneBigWord,
 					st.nstr, ModifyWord_Root, NULL);
-		st.cp = p + 1;
-		st.termc = *st.cp;
+		st.next = p + 1;
+		st.termc = *st.next;
 		break;
 	    }
 	    goto default_case;
@@ -3274,8 +3274,8 @@ ApplyModifiers(char *nstr, const char * const tstr,
 	case 'u':
 	    if (p[1] == st.endc || p[1] == ':') {
 		st.newStr = VarUniq(st.nstr);
-		st.cp = p + 1;
-		st.termc = *st.cp;
+		st.next = p + 1;
+		st.termc = *st.next;
 		break;
 	    }
 	    goto default_case;
@@ -3289,8 +3289,8 @@ ApplyModifiers(char *nstr, const char * const tstr,
 			Error(emsg, st.nstr);
 		} else
 		    st.newStr = varNoError;
-		st.cp = p + 2;
-		st.termc = *st.cp;
+		st.next = p + 2;
+		st.termc = *st.next;
 		break;
 	    }
 	    goto default_case;
@@ -3306,11 +3306,12 @@ ApplyModifiers(char *nstr, const char * const tstr,
 #endif
 		{
 		    Error("Unknown modifier '%c'", *p);
-		    for (st.cp = p + 1;
-			 *st.cp != ':' && *st.cp != st.endc && *st.cp != '\0';
-			 st.cp++)
+		    for (st.next = p + 1;
+			 *st.next != ':' && *st.next != st.endc &&
+			 *st.next != '\0';
+			 st.next++)
 			continue;
-		    st.termc = *st.cp;
+		    st.termc = *st.next;
 		    st.newStr = var_Error;
 		}
 	    }
@@ -3335,9 +3336,9 @@ ApplyModifiers(char *nstr, const char * const tstr,
 		"for \"%s\" (value \"%s\") modifier %c",
 		st.endc, st.v->name, st.nstr, modifier);
 	} else if (st.termc == ':') {
-	    st.cp++;
+	    st.next++;
 	}
-	p = st.cp;
+	p = st.next;
     }
 out:
     *lengthPtr = p - tstr;
@@ -3348,7 +3349,7 @@ bad_modifier:
 	  (int)strcspn(p, ":)}"), p, st.v->name);
 
 cleanup:
-    *lengthPtr = st.cp - tstr;
+    *lengthPtr = st.next - tstr;
     if (st.missing_delim != '\0')
 	Error("Unclosed substitution for %s (%c missing)",
 	      st.v->name, st.missing_delim);
