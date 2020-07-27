@@ -1,4 +1,4 @@
-# $NetBSD: t_random_garbage.sh,v 1.3 2020/07/03 07:03:14 jruoho Exp $
+# $NetBSD: t_random_garbage.sh,v 1.4 2020/07/27 07:36:19 jruoho Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -63,7 +63,9 @@ random_garbage_body() {
 	#
 	# Take care.
 	#
-	atf_skip "The test is not safe (PR kern/55451)"
+	if ! [ $(atf_config_get "run_unsafe" "no") = "yes" ]; then
+		atf_skip "The test is not safe (PR kern/55451)"
+	fi
 
 	opts="advbase advskew broadcast carpdev description \
 	      media mediaopt -mediaopt mode instance metric mtu \
