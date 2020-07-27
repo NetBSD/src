@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.336 2020/07/26 23:03:54 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.337 2020/07/27 17:41:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.336 2020/07/26 23:03:54 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.337 2020/07/27 17:41:09 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.336 2020/07/26 23:03:54 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.337 2020/07/27 17:41:09 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -98,8 +98,8 @@ __RCSID("$NetBSD: var.c,v 1.336 2020/07/26 23:03:54 rillig Exp $");
  *
  *	Var_Exists	    See if a variable exists.
  *
- *	Var_Value 	    Return the value of a variable in a context or
- *			    NULL if the variable is undefined.
+ *	Var_Value 	    Return the unexpanded value of a variable in a
+ *			    context or NULL if the variable is undefined.
  *
  *	Var_Subst 	    Substitute either a single variable or all
  *			    variables in a string, using the given context.
@@ -1015,30 +1015,30 @@ Var_Exists(const char *name, GNode *ctxt)
 /*-
  *-----------------------------------------------------------------------
  * Var_Value --
- *	Return the value of the named variable in the given context
+ *	Return the unexpanded value of the given variable in the given
+ *	context.
  *
  * Input:
  *	name		name to find
  *	ctxt		context in which to search for it
  *
  * Results:
- *	The value if the variable exists, NULL if it doesn't
- *
- * Side Effects:
- *	None
+ *	The value if the variable exists, NULL if it doesn't.
+ *	If the returned value is not NULL, the caller must free *freeIt
+ *	as soon as the returned value is no longer needed.
  *-----------------------------------------------------------------------
  */
 char *
-Var_Value(const char *name, GNode *ctxt, char **frp)
+Var_Value(const char *name, GNode *ctxt, char **freeIt)
 {
     Var *v = VarFind(name, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
-    *frp = NULL;
+    *freeIt = NULL;
     if (v == NULL)
 	return NULL;
 
     char *p = Buf_GetAll(&v->val, NULL);
     if (VarFreeEnv(v, FALSE))
-	*frp = p;
+	*freeIt = p;
     return p;
 }
 
