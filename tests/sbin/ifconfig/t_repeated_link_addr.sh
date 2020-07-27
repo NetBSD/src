@@ -1,4 +1,4 @@
-# $NetBSD: t_repeated_link_addr.sh,v 1.3 2020/07/06 10:35:00 jruoho Exp $
+# $NetBSD: t_repeated_link_addr.sh,v 1.4 2020/07/27 16:57:44 gson Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,6 +36,11 @@ repeated_link_addr_head() {
 }
 
 repeated_link_addr_body() {
+
+	if ! [ $(atf_config_get "run_unsafe" "no") = "yes" ]
+	then
+		atf_skip "can disrupt networking; also PR port-evbarm/55521"
+	fi
 
 	fail=0
 	addrs="00:11:00:00:00:00 \
