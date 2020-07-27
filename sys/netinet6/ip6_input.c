@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.217 2020/06/19 16:08:06 maxv Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.218 2020/07/27 14:06:58 roy Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.217 2020/06/19 16:08:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.218 2020/07/27 14:06:58 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -155,6 +155,20 @@ static void sysctl_net_inet6_ip6_setup(struct sysctllog **);
 #define	SOFTNET_LOCK()		KASSERT(mutex_owned(softnet_lock))
 #define	SOFTNET_UNLOCK()	KASSERT(mutex_owned(softnet_lock))
 #endif
+
+/* Ensure that non packed structures are the desired size. */
+__CTASSERT(sizeof(struct ip6_hdr) == 40);
+__CTASSERT(sizeof(struct ip6_ext) == 2);
+__CTASSERT(sizeof(struct ip6_hbh) == 2);
+__CTASSERT(sizeof(struct ip6_dest) == 2);
+__CTASSERT(sizeof(struct ip6_opt) == 2);
+__CTASSERT(sizeof(struct ip6_opt_jumbo) == 6);
+__CTASSERT(sizeof(struct ip6_opt_nsap) == 4);
+__CTASSERT(sizeof(struct ip6_opt_tunnel) == 3);
+__CTASSERT(sizeof(struct ip6_opt_router) == 4);
+__CTASSERT(sizeof(struct ip6_rthdr) == 4);
+__CTASSERT(sizeof(struct ip6_rthdr0) == 8);
+__CTASSERT(sizeof(struct ip6_frag) == 8);
 
 /*
  * IP6 initialization: fill in IP6 protocol switch table.
