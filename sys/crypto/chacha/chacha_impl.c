@@ -1,4 +1,4 @@
-/*	$NetBSD: chacha_impl.c,v 1.1 2020/07/25 22:46:34 riastradh Exp $	*/
+/*	$NetBSD: chacha_impl.c,v 1.2 2020/07/27 20:45:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@ static const struct chacha_impl	*chacha_md_impl	__read_mostly;
 static const struct chacha_impl	*chacha_impl	__read_mostly;
 
 static int
-sysctl_hw_chacha_impl(SYSCTLFN_ARGS)
+sysctl_kern_crypto_chacha_selected(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
 
@@ -55,14 +55,24 @@ sysctl_hw_chacha_impl(SYSCTLFN_ARGS)
 	return sysctl_lookup(SYSCTLFN_CALL(&node));
 }
 
-SYSCTL_SETUP(sysctl_hw_chacha_setup, "sysctl hw.chacha_impl setup")
+SYSCTL_SETUP(sysctl_kern_crypto_chacha_setup, "sysctl kern.crypto.chacha setup")
 {
+	const struct sysctlnode *cnode;
+	const struct sysctlnode *chacha_node;
 
-	sysctl_createv(clog, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT|CTLFLAG_READONLY, CTLTYPE_STRING, "chacha_impl",
+	sysctl_createv(clog, 0, NULL, &cnode, 0, CTLTYPE_NODE, "crypto",
+	    SYSCTL_DESCR("Kernel cryptography"),
+	    NULL, 0, NULL, 0,
+	    CTL_KERN, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &cnode, &chacha_node, 0, CTLTYPE_NODE, "chacha",
+	    SYSCTL_DESCR("ChaCha"),
+	    NULL, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &chacha_node, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READONLY, CTLTYPE_STRING, "selected",
 	    SYSCTL_DESCR("Selected ChaCha implementation"),
-	    sysctl_hw_chacha_impl, 0, NULL, 0,
-	    CTL_HW, CTL_CREATE, CTL_EOL);
+	    sysctl_kern_crypto_chacha_selected, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL);
 }
 
 static int
