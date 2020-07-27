@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_armv8_64.S,v 1.9 2020/07/27 20:53:22 riastradh Exp $	*/
+/*	$NetBSD: aes_armv8_64.S,v 1.10 2020/07/27 20:54:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -1041,15 +1041,18 @@ END(ctr32_inc)
 	.type	aesarmv8_enc1,@function
 aesarmv8_enc1:
 	ldr	q16, [x0], #0x10	/* load round key */
-	b	2f
+	sub	x3, x3, #1
 	_ALIGN_TEXT
-1:	/* q0 := MixColumns(q0) */
+1:	/* q0 := MixColumns(ShiftRows(SubBytes(AddRoundKey_q16(q0)))) */
+	aese	v0.16b, v16.16b
 	aesmc	v0.16b, v0.16b
-2:	subs	x3, x3, #1
+	ldr	q16, [x0], #0x10
+	subs	x3, x3, #1
+	b.ne	1b
 	/* q0 := ShiftRows(SubBytes(AddRoundKey_q16(q0))) */
 	aese	v0.16b, v16.16b
-	ldr	q16, [x0], #0x10		/* load next round key */
-	b.ne	1b
+	ldr	q16, [x0]		/* load last round key */
+	/* q0 := AddRoundKey_q16(q0) */
 	eor	v0.16b, v0.16b, v16.16b
 	ret
 END(aesarmv8_enc1)
@@ -1067,17 +1070,21 @@ END(aesarmv8_enc1)
 	.type	aesarmv8_enc2,@function
 aesarmv8_enc2:
 	ldr	q16, [x0], #0x10	/* load round key */
-	b	2f
+	sub	x3, x3, #1
 	_ALIGN_TEXT
-1:	/* q[i] := MixColumns(q[i]) */
+1:	/* q[i] := MixColumns(ShiftRows(SubBytes(AddRoundKey_q16(q[i])))) */
+	aese	v0.16b, v16.16b
 	aesmc	v0.16b, v0.16b
+	aese	v1.16b, v16.16b
 	aesmc	v1.16b, v1.16b
-2:	subs	x3, x3, #1
+	ldr	q16, [x0], #0x10	/* load next round key */
+	subs	x3, x3, #1
+	b.ne	1b
 	/* q[i] := ShiftRows(SubBytes(AddRoundKey_q16(q[i]))) */
 	aese	v0.16b, v16.16b
 	aese	v1.16b, v16.16b
-	ldr	q16, [x0], #0x10		/* load next round key */
-	b.ne	1b
+	ldr	q16, [x0]		/* load last round key */
+	/* q[i] := AddRoundKey_q16(q[i]) */
 	eor	v0.16b, v0.16b, v16.16b
 	eor	v1.16b, v1.16b, v16.16b
 	ret
@@ -1097,18 +1104,28 @@ END(aesarmv8_enc2)
 	.type	aesarmv8_enc8,@function
 aesarmv8_enc8:
 	ldr	q16, [x0], #0x10	/* load round key */
-	b	2f
+	sub	x3, x3, #1
 	_ALIGN_TEXT
-1:	/* q[i] := MixColumns(q[i]) */
+1:	/* q[i] := MixColumns(ShiftRows(SubBytes(AddRoundKey_q16(q[i])))) */
+	aese	v0.16b, v16.16b
 	aesmc	v0.16b, v0.16b
+	aese	v1.16b, v16.16b
 	aesmc	v1.16b, v1.16b
+	aese	v2.16b, v16.16b
 	aesmc	v2.16b, v2.16b
+	aese	v3.16b, v16.16b
 	aesmc	v3.16b, v3.16b
+	aese	v4.16b, v16.16b
 	aesmc	v4.16b, v4.16b
+	aese	v5.16b, v16.16b
 	aesmc	v5.16b, v5.16b
+	aese	v6.16b, v16.16b
 	aesmc	v6.16b, v6.16b
+	aese	v7.16b, v16.16b
 	aesmc	v7.16b, v7.16b
-2:	subs	x3, x3, #1
+	ldr	q16, [x0], #0x10	/* load next round key */
+	subs	x3, x3, #1
+	b.ne	1b
 	/* q[i] := ShiftRows(SubBytes(AddRoundKey_q16(q[i]))) */
 	aese	v0.16b, v16.16b
 	aese	v1.16b, v16.16b
@@ -1118,9 +1135,9 @@ aesarmv8_enc8:
 	aese	v5.16b, v16.16b
 	aese	v6.16b, v16.16b
 	aese	v7.16b, v16.16b
-	ldr	q16, [x0], #0x10	/* load next round key */
-	b.ne	1b
-	eor	v0.16b, v0.16b, v16.16b	/* AddRoundKey */
+	ldr	q16, [x0]		/* load last round key */
+	/* q[i] := AddRoundKey_q16(q[i]) */
+	eor	v0.16b, v0.16b, v16.16b
 	eor	v1.16b, v1.16b, v16.16b
 	eor	v2.16b, v2.16b, v16.16b
 	eor	v3.16b, v3.16b, v16.16b
@@ -1144,15 +1161,19 @@ END(aesarmv8_enc8)
 	.type	aesarmv8_dec1,@function
 aesarmv8_dec1:
 	ldr	q16, [x0], #0x10	/* load round key */
-	b	2f
+	sub	x3, x3, #1
 	_ALIGN_TEXT
-1:	/* q0 := InMixColumns(q0) */
+1:	/* q0 := InSubBytes(InShiftRows(AddRoundKey_q16(q0))) */
+	aesd	v0.16b, v16.16b
+	/* q0 := InMixColumns(q0) */
 	aesimc	v0.16b, v0.16b
-2:	subs	x3, x3, #1
+	ldr	q16, [x0], #0x10	/* load next round key */
+	subs	x3, x3, #1
+	b.ne	1b
 	/* q0 := InSubBytes(InShiftRows(AddRoundKey_q16(q0))) */
 	aesd	v0.16b, v16.16b
-	ldr	q16, [x0], #0x10	/* load next round key */
-	b.ne	1b
+	ldr	q16, [x0]		/* load last round key */
+	/* q0 := AddRoundKey_q16(q0) */
 	eor	v0.16b, v0.16b, v16.16b
 	ret
 END(aesarmv8_dec1)
@@ -1171,18 +1192,29 @@ END(aesarmv8_dec1)
 	.type	aesarmv8_dec8,@function
 aesarmv8_dec8:
 	ldr	q16, [x0], #0x10	/* load round key */
-	b	2f
+	sub	x3, x3, #1
 	_ALIGN_TEXT
-1:	/* q[i] := InMixColumns(q[i]) */
+1:	/* q[i] := InSubBytes(InShiftRows(AddRoundKey_q16(q[i]))) */
+	aesd	v0.16b, v16.16b
+	/* q[i] := InMixColumns(q[i]) */
 	aesimc	v0.16b, v0.16b
+	aesd	v1.16b, v16.16b
 	aesimc	v1.16b, v1.16b
+	aesd	v2.16b, v16.16b
 	aesimc	v2.16b, v2.16b
+	aesd	v3.16b, v16.16b
 	aesimc	v3.16b, v3.16b
+	aesd	v4.16b, v16.16b
 	aesimc	v4.16b, v4.16b
+	aesd	v5.16b, v16.16b
 	aesimc	v5.16b, v5.16b
+	aesd	v6.16b, v16.16b
 	aesimc	v6.16b, v6.16b
+	aesd	v7.16b, v16.16b
 	aesimc	v7.16b, v7.16b
-2:	subs	x3, x3, #1
+	ldr	q16, [x0], #0x10	/* load next round key */
+	subs	x3, x3, #1
+	b.ne	1b
 	/* q[i] := InSubBytes(InShiftRows(AddRoundKey_q16(q[i]))) */
 	aesd	v0.16b, v16.16b
 	aesd	v1.16b, v16.16b
@@ -1192,9 +1224,9 @@ aesarmv8_dec8:
 	aesd	v5.16b, v16.16b
 	aesd	v6.16b, v16.16b
 	aesd	v7.16b, v16.16b
-	ldr	q16, [x0], #0x10	/* load next round key */
-	b.ne	1b
-	eor	v0.16b, v0.16b, v16.16b	/* AddRoundKey */
+	ldr	q16, [x0]		/* load last round key */
+	/* q[i] := AddRoundKey_q16(q[i]) */
+	eor	v0.16b, v0.16b, v16.16b
 	eor	v1.16b, v1.16b, v16.16b
 	eor	v2.16b, v2.16b, v16.16b
 	eor	v3.16b, v3.16b, v16.16b
