@@ -1,0 +1,10 @@
+ar cru libprog.a archive.mk modmisc.mk varmisc.mk
+ranlib libprog.a
+ar t libprog.a
+archive.mk
+modmisc.mk
+varmisc.mk
+depend-on-existing-member
+`depend-on-nonexistent-member' is up to date.
+rm libprog.a
+exit status 0

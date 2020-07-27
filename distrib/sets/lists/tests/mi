@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.878 2020/07/26 22:15:36 rillig Exp $
+# $NetBSD: mi,v 1.879 2020/07/27 18:51:03 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4522,6 +4522,8 @@
 ./usr/tests/usr.bin/make/t_make			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/Makefile	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/archive.exp	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/archive.mk	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/comment.exp	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/comment.mk	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/cond-late.exp	tests-usr.bin-tests	compattestfile,atf
