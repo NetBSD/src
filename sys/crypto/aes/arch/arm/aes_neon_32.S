@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_neon_32.S,v 1.1 2020/06/29 23:57:56 riastradh Exp $	*/
+/*	$NetBSD: aes_neon_32.S,v 1.2 2020/07/27 20:52:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,8 +30,14 @@
 
 	.fpu	neon
 
+	.text
+	.p2align 2
+.Lconstants_addr:
+	.long	.Lconstants - .
+
 	.section .rodata
 	.p2align 4
+.Lconstants:
 
 	.type	inv,_ASM_TYPE_OBJECT
 inv:
@@ -239,7 +245,7 @@ ENTRY(aes_neon_enc1)
 	 * r3: rmod4
 	 * r4: mc_forward
 	 * r5: mc_backward
-	 * r6,r7,r8,r10,r11: temporaries
+	 * r6,r7,r8,r10,r11,r12: temporaries
 	 * q0={d0-d1}: x/ak/A
 	 * q1={d2-d3}: 0x0f0f...
 	 * q2={d4-d5}: lo/k/j/io
@@ -258,23 +264,30 @@ ENTRY(aes_neon_enc1)
 	 * q15={d30-d31}: A2_B/sr[rmod4]
 	 */
 
+	/* r12 := .Lconstants - .Lconstants_addr, r11 := .Lconstants_addr */
+	ldr	r12, .Lconstants_addr
+	adr	r11, .Lconstants_addr
+
 	vld1.64	{d28-d29}, [r0 :128]!	/* q14 = *rk++ */
 	movw	r3, #0
 	vmov.i8	q1, #0x0f
 
+	/* r12 := .Lconstants */
+	add	r12, r12, r11
+
 	/* (q4, q5) := (iptlo, ipthi) */
-	ldr	r6, =iptlo
-	ldr	r7, =ipthi
+	add	r6, r12, #(iptlo - .Lconstants)
+	add	r7, r12, #(ipthi - .Lconstants)
 	vld1.64	{d8-d9}, [r6 :128]
 	vld1.64	{d10-d11}, [r7 :128]
 
 	/* load the rest of the constants */
-	ldr	r4, =sb1_0
-	ldr	r5, =sb1_1
-	ldr	r6, =sb2_0
-	ldr	r7, =sb2_1
-	ldr	r8, =inv
-	ldr	r10, =inva
+	add	r4, r12, #(sb1_0 - .Lconstants)
+	add	r5, r12, #(sb1_1 - .Lconstants)
+	add	r6, r12, #(sb2_0 - .Lconstants)
+	add	r7, r12, #(sb2_1 - .Lconstants)
+	add	r8, r12, #(inv - .Lconstants)
+	add	r10, r12, #(inva - .Lconstants)
 	vld1.64	{d12-d13}, [r4 :128]	/* q6 = sb1[0] */
 	vld1.64	{d14-d15}, [r5 :128]	/* q7 = sb1[1] */
 	vld1.64	{d16-d17}, [r6 :128]	/* q8 = sb2[0] */
@@ -283,8 +296,8 @@ ENTRY(aes_neon_enc1)
 	vld1.64	{d22-d23}, [r10 :128]	/* q11 = inva */
 
 	/* (r4, r5) := (&mc_forward[0], &mc_backward[0]) */
-	ldr	r4, =mc_forward
-	ldr	r5, =mc_backward
+	add	r4, r12, #(mc_forward - .Lconstants)
+	add	r5, r12, #(mc_backward - .Lconstants)
 
 	/* (q2, q3) := (lo, hi) */
 	vshr.u8	q3, q0, #4
@@ -392,9 +405,9 @@ ENTRY(aes_neon_enc1)
 	bne	1b
 
 	/* (q6, q7, q15) := (sbo[0], sbo[1], sr[rmod4]) */
-	ldr	r8, =sr
-	ldr	r6, =sbo_0
-	ldr	r7, =sbo_1
+	add	r8, r12, #(sr - .Lconstants)
+	add	r6, r12, #(sbo_0 - .Lconstants)
+	add	r7, r12, #(sbo_1 - .Lconstants)
 	add	r8, r8, r3, lsl #4
 	vld1.64	{d12-d13}, [r6 :128]
 	vld1.64	{d14-d15}, [r7 :128]
@@ -469,23 +482,30 @@ ENTRY(aes_neon_dec1)
 	 * q15={d30-d31}: mc/sr[3 & ~(nrounds - 1)]
 	 */
 
+	/* r12 := .Lconstants - .Lconstants_addr, r11 := .Lconstants_addr */
+	ldr	r12, .Lconstants_addr
+	adr	r11, .Lconstants_addr
+
 	vld1.64	{d28-d29}, [r0 :128]!	/* q14 = *rk++ */
 	rsb	r3, r1, #0		/* r3 := ~(x - 1) = -x */
 	vmov.i8	q1, #0x0f
 	and	r3, r3, #3		/* r3 := 3 & ~(x - 1) */
 
+	/* r12 := .Lconstants */
+	add	r12, r12, r11
+
 	/* (q4, q5) := (diptlo, dipthi) */
-	ldr	r6, =diptlo
-	ldr	r7, =dipthi
+	add	r6, r12, #(diptlo - .Lconstants)
+	add	r7, r12, #(dipthi - .Lconstants)
 	vld1.64	{d8-d9}, [r6 :128]
 	vld1.64	{d10-d11}, [r7 :128]
 
 	/* load the rest of the constants */
-	ldr	r4, =dsbb_0
-	ldr	r5, =dsbb_1
-	ldr	r6, =inv
-	ldr	r7, =inva
-	ldr	r8, =.Lmc_forward_3
+	add	r4, r12, #(dsbb_0 - .Lconstants)
+	add	r5, r12, #(dsbb_1 - .Lconstants)
+	add	r6, r12, #(inv - .Lconstants)
+	add	r7, r12, #(inva - .Lconstants)
+	add	r8, r12, #(.Lmc_forward_3 - .Lconstants)
 	vld1.64	{d12-d13}, [r4 :128]	/* q6 := dsbb[0] */
 	vld1.64	{d14-d15}, [r5 :128]	/* q7 := dsbb[1] */
 	vld1.64	{d20-d21}, [r6 :128]	/* q10 := inv */
@@ -504,8 +524,8 @@ ENTRY(aes_neon_dec1)
 	vtbl.8	d7, {d10-d11}, d7
 
 	/* load dsb9 */
-	ldr	r4, =dsb9_0
-	ldr	r5, =dsb9_1
+	add	r4, r12, #(dsb9_0 - .Lconstants)
+	add	r5, r12, #(dsb9_1 - .Lconstants)
 	vld1.64	{d8-d9}, [r4 :128]	/* q4 := dsb9[0] */
 	vld1.64	{d10-d11}, [r5 :128]	/* q5 := dsb9[1] */
 
@@ -516,7 +536,7 @@ ENTRY(aes_neon_dec1)
 	b	2f
 
 1:	/* load dsbd */
-	ldr	r4, =dsbd_0
+	add	r4, r12, #(dsbd_0 - .Lconstants)
 	vld1.64	{d16-d17}, [r4 :128]!	/* q8 := dsbd[0] */
 	vld1.64	{d18-d19}, [r4 :128]	/* q9 := dsbd[1] */
 
@@ -543,7 +563,7 @@ ENTRY(aes_neon_dec1)
 	veor	q0, q0, q13
 
 	/* load dsbe */
-	ldr	r4, =dsbe_0
+	add	r4, r12, #(dsbe_0 - .Lconstants)
 	vld1.64	{d16-d17}, [r4 :128]!	/* q8 := dsbe[0] */
 	vld1.64	{d18-d19}, [r4 :128]	/* q9 := dsbe[1] */
 
@@ -619,9 +639,9 @@ ENTRY(aes_neon_dec1)
 	bne	1b
 
 	/* (q6, q7, q15) := (dsbo[0], dsbo[1], sr[i]) */
-	ldr	r8, =sr
-	ldr	r6, =dsbo_0
-	ldr	r7, =dsbo_1
+	add	r8, r12, #(sr - .Lconstants)
+	add	r6, r12, #(dsbo_0 - .Lconstants)
+	add	r7, r12, #(dsbo_1 - .Lconstants)
 	add	r8, r8, r3, lsl #4
 	vld1.64	{d12-d13}, [r6 :128]
 	vld1.64	{d14-d15}, [r7 :128]
