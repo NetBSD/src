@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.68 2020/05/11 10:21:24 skrll Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.69 2020/07/27 08:26:09 skrll Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -29,7 +29,7 @@ MKLDSCRIPT?=	no
 CFLAGS+=	-ffreestanding ${COPTS}
 CPPFLAGS+=	-nostdinc -I. -I${.CURDIR} -isystem $S -isystem $S/arch
 CPPFLAGS+=	-isystem ${S}/../common/include
-CPPFLAGS+=	-D_KERNEL -D_LKM -D_MODULE -DSYSCTL_INCLUDE_DESCR
+CPPFLAGS+=	-D_KERNEL -D_MODULE -DSYSCTL_INCLUDE_DESCR
 
 CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member -Wno-error=constant-conversion
 
