@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.338 2020/07/27 19:59:59 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.339 2020/07/27 21:08:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.338 2020/07/27 19:59:59 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.339 2020/07/27 21:08:41 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.338 2020/07/27 19:59:59 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.339 2020/07/27 21:08:41 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2137,15 +2137,13 @@ ApplyModifier_Defined(const char *mod, ApplyModifiersState *st)
      * The result is left in the Buffer buf.
      */
     Buf_Init(&buf, 0);
-    for (st->cp = mod + 1;
-	 *st->cp != st->endc && *st->cp != ':' && *st->cp != '\0';
-	 st->cp++) {
-	if (*st->cp == '\\' &&
-	    (st->cp[1] == ':' || st->cp[1] == '$' || st->cp[1] == st->endc ||
-	     st->cp[1] == '\\')) {
-	    Buf_AddByte(&buf, st->cp[1]);
-	    st->cp++;
-	} else if (*st->cp == '$') {
+    const char *p = mod + 1;
+    while (*p != st->endc && *p != ':' && *p != '\0') {
+	if (*p == '\\' &&
+	    (p[1] == ':' || p[1] == '$' || p[1] == st->endc || p[1] == '\\')) {
+	    Buf_AddByte(&buf, p[1]);
+	    p += 2;
+	} else if (*p == '$') {
 	    /*
 	     * If unescaped dollar sign, assume it's a
 	     * variable substitution and recurse.
@@ -2154,15 +2152,17 @@ ApplyModifier_Defined(const char *mod, ApplyModifiersState *st)
 	    int	    len;
 	    void    *freeIt;
 
-	    cp2 = Var_Parse(st->cp, st->ctxt, neflags, &len, &freeIt);
+	    cp2 = Var_Parse(p, st->ctxt, neflags, &len, &freeIt);
 	    Buf_AddStr(&buf, cp2);
 	    free(freeIt);
-	    st->cp += len - 1;
+	    p += len;
 	} else {
-	    Buf_AddByte(&buf, *st->cp);
+	    Buf_AddByte(&buf, *p);
+	    p++;
 	}
     }
 
+    st->cp = p;
     st->termc = *st->cp;
 
     if (st->v->flags & VAR_JUNK)
