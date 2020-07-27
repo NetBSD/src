@@ -1,4 +1,4 @@
-/*	$NetBSD: chacha_neon_64.S,v 1.3 2020/07/27 20:53:23 riastradh Exp $	*/
+/*	$NetBSD: chacha_neon_64.S,v 1.4 2020/07/27 20:57:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,6 +27,8 @@
  */
 
 #include <aarch64/asm.h>
+
+RCSID("$NetBSD: chacha_neon_64.S,v 1.4 2020/07/27 20:57:23 riastradh Exp $")
 
 #define	ROUND(a0,b0,c0,d0,a1,b1,c1,d1,a2,b2,c2,d2,a3,b3,c3,d3,t0,t1,t2,t3, r) \
 STEP(STEP0,a0,b0,c0,d0,a1,b1,c1,d1,a2,b2,c2,d2,a3,b3,c3,d3,t0,t1,t2,t3, r);   \

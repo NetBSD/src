@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_armv8_64.S,v 1.10 2020/07/27 20:54:11 riastradh Exp $	*/
+/*	$NetBSD: aes_armv8_64.S,v 1.11 2020/07/27 20:57:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,6 +29,8 @@
 #include <sys/endian.h>
 
 #include <aarch64/asm.h>
+
+RCSID("$NetBSD: aes_armv8_64.S,v 1.11 2020/07/27 20:57:23 riastradh Exp $")
 
 	.arch_extension	aes
 
