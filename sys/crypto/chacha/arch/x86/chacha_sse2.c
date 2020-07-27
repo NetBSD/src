@@ -1,4 +1,4 @@
-/*	$NetBSD: chacha_sse2.c,v 1.1 2020/07/25 22:49:20 riastradh Exp $	*/
+/*	$NetBSD: chacha_sse2.c,v 1.2 2020/07/27 20:48:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -313,7 +313,7 @@ out:	if (n) {
 		in3 = _mm_set_epi32(le32dec(nonce + 8), le32dec(nonce + 4),
 		    le32dec(nonce), blkno);
 
-		for (; n >= 64; s += 64, n -= 64) {
+		for (; n; s += 64, n -= 64) {
 			r0 = in0;
 			r1 = in1;
 			r2 = in2;
@@ -323,35 +323,24 @@ out:	if (n) {
 			r1 = _mm_add_epi32(r1, in1);
 			r2 = _mm_add_epi32(r2, in2);
 			r3 = _mm_add_epi32(r3, in3);
+
+			if (n < 64) {
+				uint8_t buf[64] __aligned(16);
+
+				_mm_storeu_si128((__m128i *)buf + 0, r0);
+				_mm_storeu_si128((__m128i *)buf + 1, r1);
+				_mm_storeu_si128((__m128i *)buf + 2, r2);
+				_mm_storeu_si128((__m128i *)buf + 3, r3);
+				memcpy(s, buf, n);
+
+				break;
+			}
+
 			_mm_storeu_si128((__m128i *)s + 0, r0);
 			_mm_storeu_si128((__m128i *)s + 1, r1);
 			_mm_storeu_si128((__m128i *)s + 2, r2);
 			_mm_storeu_si128((__m128i *)s + 3, r3);
 			in3 = _mm_add_epi32(in3, blkno_inc);
-		}
-
-		if (n) {
-			uint8_t buf[64];
-			unsigned i;
-
-			r0 = in0;
-			r1 = in1;
-			r2 = in2;
-			r3 = in3;
-			chacha_permute(&r0, &r1, &r2, &r3, nr);
-			r0 = _mm_add_epi32(r0, in0);
-			r1 = _mm_add_epi32(r1, in1);
-			r2 = _mm_add_epi32(r2, in2);
-			r3 = _mm_add_epi32(r3, in3);
-			_mm_storeu_si128((__m128i *)buf + 0, r0);
-			_mm_storeu_si128((__m128i *)buf + 1, r1);
-			_mm_storeu_si128((__m128i *)buf + 2, r2);
-			_mm_storeu_si128((__m128i *)buf + 3, r3);
-
-			for (i = 0; i < n - n%4; i += 4)
-				le32enc(s + i, le32dec(buf + i));
-			for (; i < n; i++)
-				s[i] = buf[i];
 		}
 	}
 }
@@ -480,7 +469,7 @@ out:	if (n) {
 		in3 = _mm_set_epi32(le32dec(nonce + 8), le32dec(nonce + 4),
 		    le32dec(nonce), blkno);
 
-		for (; n >= 64; s += 64, p += 64, n -= 64) {
+		for (; n; s += 64, p += 64, n -= 64) {
 			r0 = in0;
 			r1 = in1;
 			r2 = in2;
@@ -490,6 +479,25 @@ out:	if (n) {
 			r1 = _mm_add_epi32(r1, in1);
 			r2 = _mm_add_epi32(r2, in2);
 			r3 = _mm_add_epi32(r3, in3);
+
+			if (n < 64) {
+				uint8_t buf[64] __aligned(16);
+				unsigned i;
+
+				_mm_storeu_si128((__m128i *)buf + 0, r0);
+				_mm_storeu_si128((__m128i *)buf + 1, r1);
+				_mm_storeu_si128((__m128i *)buf + 2, r2);
+				_mm_storeu_si128((__m128i *)buf + 3, r3);
+
+				for (i = 0; i < n - n%4; i += 4)
+					le32enc(s + i,
+					    le32dec(p + i) ^ le32dec(buf + i));
+				for (; i < n; i++)
+					s[i] = p[i] ^ buf[i];
+
+				break;
+			}
+
 			r0 ^= _mm_loadu_si128((const __m128i *)p + 0);
 			r1 ^= _mm_loadu_si128((const __m128i *)p + 1);
 			r2 ^= _mm_loadu_si128((const __m128i *)p + 2);
@@ -499,31 +507,6 @@ out:	if (n) {
 			_mm_storeu_si128((__m128i *)s + 2, r2);
 			_mm_storeu_si128((__m128i *)s + 3, r3);
 			in3 = _mm_add_epi32(in3, blkno_inc);
-		}
-
-		if (n) {
-			uint8_t buf[64];
-			unsigned i;
-
-			r0 = in0;
-			r1 = in1;
-			r2 = in2;
-			r3 = in3;
-			chacha_permute(&r0, &r1, &r2, &r3, nr);
-			r0 = _mm_add_epi32(r0, in0);
-			r1 = _mm_add_epi32(r1, in1);
-			r2 = _mm_add_epi32(r2, in2);
-			r3 = _mm_add_epi32(r3, in3);
-			_mm_storeu_si128((__m128i *)buf + 0, r0);
-			_mm_storeu_si128((__m128i *)buf + 1, r1);
-			_mm_storeu_si128((__m128i *)buf + 2, r2);
-			_mm_storeu_si128((__m128i *)buf + 3, r3);
-
-			for (i = 0; i < n - n%4; i += 4)
-				le32enc(s + i,
-				    le32dec(p + i) ^ le32dec(buf + i));
-			for (; i < n; i++)
-				s[i] = p[i] ^ buf[i];
 		}
 	}
 }
