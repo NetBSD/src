@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.68 2020/07/27 19:23:12 rillig Exp $
+# $NetBSD: Makefile,v 1.69 2020/07/27 19:45:56 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -79,6 +79,7 @@ TESTS+=		varshell
 
 # Override environment variables for some of the tests.
 ENV.envfirst=		FROM_ENV=value-from-env
+ENV.export=		-i PATH=${PATH:Q}
 ENV.varmisc=		FROM_ENV=env
 ENV.varmisc+=		FROM_ENV_BEFORE=env
 ENV.varmisc+=		FROM_ENV_AFTER=env
@@ -133,7 +134,7 @@ LANG=		C
 	@echo testing ${.IMPSRC}
 	@set -eu; \
 	cd ${.OBJDIR}; \
-	${ENV.${.TARGET:R}} ${TEST_MAKE} \
+	env ${ENV.${.TARGET:R}} ${TEST_MAKE} \
 	  ${FLAGS.${.TARGET:R}:U-k} -f ${.IMPSRC} \
 	  > ${.TARGET}.tmp 2>&1 \
 	&& status=$$? || status=$$?; \

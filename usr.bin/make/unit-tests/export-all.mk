@@ -1,4 +1,4 @@
-# $Id: export-all.mk,v 1.2 2015/04/10 20:41:59 sjg Exp $
+# $Id: export-all.mk,v 1.3 2020/07/27 19:45:56 rillig Exp $
 
 UT_OK=good
 UT_F=fine
@@ -17,6 +17,7 @@ UT_OKDIR = ${${here}/../${here:T}:L:${M_tA}:T}
 
 .export
 
+FILTER_CMD=	grep ^UT_
 .include "export.mk"
 
 UT_TEST=export-all

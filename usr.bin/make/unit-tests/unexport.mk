@@ -1,6 +1,7 @@
-# $Id: unexport.mk,v 1.1 2014/08/21 13:44:52 apb Exp $
+# $Id: unexport.mk,v 1.2 2020/07/27 19:45:56 rillig Exp $
 
 # pick up a bunch of exported vars
+FILTER_CMD=	grep ^UT_
 .include "export.mk"
 
 .unexport UT_ZOO UT_FOO
