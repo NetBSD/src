@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_ccm.c,v 1.3 2020/07/26 04:44:47 riastradh Exp $	*/
+/*	$NetBSD: aes_ccm.c,v 1.4 2020/07/27 20:44:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_ccm.c,v 1.3 2020/07/26 04:44:47 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_ccm.c,v 1.4 2020/07/27 20:44:30 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,18 +66,20 @@ xor(uint8_t *x, const uint8_t *a, const uint8_t *b, size_t n)
 static void
 aes_ccm_inc(struct aes_ccm *C)
 {
+	uint8_t *ctr = C->authctr + 16;
 
 	KASSERT(C->L == 2);
-	if (++C->in[15] == 0 && ++C->in[14] == 0)
+	if (++ctr[15] == 0 && ++ctr[14] == 0)
 		panic("AES-CCM overflow");
 }
 
 static void
 aes_ccm_zero_ctr(struct aes_ccm *C)
 {
+	uint8_t *ctr = C->authctr + 16;
 
 	KASSERT(C->L == 2);
-	C->in[14] = C->in[15] = 0;
+	ctr[14] = ctr[15] = 0;
 }
 
 void
@@ -87,6 +89,8 @@ aes_ccm_init(struct aes_ccm *C, unsigned nr, const struct aesenc *enc,
     size_t mlen)
 {
 	const uint8_t *adp = ad;
+	uint8_t *auth = C->authctr;
+	uint8_t *ctr = C->authctr + 16;
 	unsigned i;
 
 	KASSERT(L == 2);
@@ -102,58 +106,58 @@ aes_ccm_init(struct aes_ccm *C, unsigned nr, const struct aesenc *enc,
 	C->mlen = C->mleft = mlen;
 
 	/* Encode B0, the initial authenticated data block.  */
-	C->auth[0] = __SHIFTIN(adlen == 0 ? 0 : 1, CCM_AFLAGS_ADATA);
-	C->auth[0] |= __SHIFTIN((M - 2)/2, CCM_AFLAGS_M);
-	C->auth[0] |= __SHIFTIN(L - 1, CCM_AFLAGS_L);
-	memcpy(C->auth + 1, nonce, noncelen);
+	auth[0] = __SHIFTIN(adlen == 0 ? 0 : 1, CCM_AFLAGS_ADATA);
+	auth[0] |= __SHIFTIN((M - 2)/2, CCM_AFLAGS_M);
+	auth[0] |= __SHIFTIN(L - 1, CCM_AFLAGS_L);
+	memcpy(auth + 1, nonce, noncelen);
 	for (i = 0; i < L; i++, mlen >>= 8) {
 		KASSERT(i < 16 - 1 - noncelen);
-		C->auth[16 - i - 1] = mlen & 0xff;
+		auth[16 - i - 1] = mlen & 0xff;
 	}
-	aes_enc(enc, C->auth, C->auth, C->nr);
+	aes_enc(enc, auth, auth, C->nr);
 
 	/* Process additional authenticated data, if any.  */
 	if (adlen) {
 		/* Encode the length according to the table on p. 4.  */
 		if (adlen < 0xff00) {
-			C->auth[0] ^= adlen >> 8;
-			C->auth[1] ^= adlen;
+			auth[0] ^= adlen >> 8;
+			auth[1] ^= adlen;
 			i = 2;
 		} else if (adlen < 0xffffffff) {
-			C->auth[0] ^= 0xff;
-			C->auth[1] ^= 0xfe;
-			C->auth[2] ^= adlen >> 24;
-			C->auth[3] ^= adlen >> 16;
-			C->auth[4] ^= adlen >> 8;
-			C->auth[5] ^= adlen;
+			auth[0] ^= 0xff;
+			auth[1] ^= 0xfe;
+			auth[2] ^= adlen >> 24;
+			auth[3] ^= adlen >> 16;
+			auth[4] ^= adlen >> 8;
+			auth[5] ^= adlen;
 			i = 6;
 #if SIZE_MAX > 0xffffffffU
 		} else {
 			CTASSERT(SIZE_MAX <= 0xffffffffffffffff);
-			C->auth[0] ^= 0xff;
-			C->auth[1] ^= 0xff;
-			C->auth[2] ^= adlen >> 56;
-			C->auth[3] ^= adlen >> 48;
-			C->auth[4] ^= adlen >> 40;
-			C->auth[5] ^= adlen >> 32;
-			C->auth[6] ^= adlen >> 24;
-			C->auth[7] ^= adlen >> 16;
-			C->auth[8] ^= adlen >> 8;
-			C->auth[9] ^= adlen;
+			auth[0] ^= 0xff;
+			auth[1] ^= 0xff;
+			auth[2] ^= adlen >> 56;
+			auth[3] ^= adlen >> 48;
+			auth[4] ^= adlen >> 40;
+			auth[5] ^= adlen >> 32;
+			auth[6] ^= adlen >> 24;
+			auth[7] ^= adlen >> 16;
+			auth[8] ^= adlen >> 8;
+			auth[9] ^= adlen;
 			i = 10;
 #endif
 		}
 
 		/* Fill out the partial block if we can, and encrypt.  */
-		xor(C->auth + i, C->auth + i, adp, MIN(adlen, 16 - i));
+		xor(auth + i, auth + i, adp, MIN(adlen, 16 - i));
 		adp += MIN(adlen, 16 - i);
 		adlen -= MIN(adlen, 16 - i);
-		aes_enc(enc, C->auth, C->auth, C->nr);
+		aes_enc(enc, auth, auth, C->nr);
 
 		/* If there was anything more, process 16 bytes at a time.  */
 		if (adlen - (adlen % 16)) {
 			aes_cbcmac_update1(enc, adp, adlen - (adlen % 16),
-			    C->auth, C->nr);
+			    auth, C->nr);
 			adlen %= 16;
 		}
 
@@ -162,15 +166,15 @@ aes_ccm_init(struct aes_ccm *C, unsigned nr, const struct aesenc *enc,
 		 * with zeros, which is a no-op) and process it.
 		 */
 		if (adlen) {
-			xor(C->auth, C->auth, adp, adlen);
-			aes_enc(enc, C->auth, C->auth, C->nr);
+			xor(auth, auth, adp, adlen);
+			aes_enc(enc, auth, auth, C->nr);
 		}
 	}
 
 	/* Set up the AES input for AES-CTR encryption.  */
-	C->in[0] = __SHIFTIN(L - 1, CCM_EFLAGS_L);
-	memcpy(C->in + 1, nonce, noncelen);
-	memset(C->in + 1 + noncelen, 0, 16 - 1 - noncelen);
+	ctr[0] = __SHIFTIN(L - 1, CCM_EFLAGS_L);
+	memcpy(ctr + 1, nonce, noncelen);
+	memset(ctr + 1 + noncelen, 0, 16 - 1 - noncelen);
 
 	/* Start on a block boundary.  */
 	C->i = 0;
@@ -179,6 +183,8 @@ aes_ccm_init(struct aes_ccm *C, unsigned nr, const struct aesenc *enc,
 void
 aes_ccm_enc(struct aes_ccm *C, const void *in, void *out, size_t nbytes)
 {
+	uint8_t *auth = C->authctr;
+	uint8_t *ctr = C->authctr + 16;
 	const uint8_t *p = in;
 	uint8_t *q = out;
 
@@ -193,7 +199,7 @@ aes_ccm_enc(struct aes_ccm *C, const void *in, void *out, size_t nbytes)
 	if (C->i) {
 		unsigned m = MIN(16 - C->i, nbytes);
 
-		xor(C->auth + C->i, C->auth + C->i, p, m);
+		xor(auth + C->i, auth + C->i, p, m);
 		xor(q, C->out + C->i, p, m);
 		C->i += m;
 		p += m;
@@ -202,7 +208,7 @@ aes_ccm_enc(struct aes_ccm *C, const void *in, void *out, size_t nbytes)
 
 		if (C->i == 16) {
 			/* Finished a block; authenticate it.  */
-			aes_enc(C->enc, C->auth, C->auth, C->nr);
+			aes_enc(C->enc, auth, auth, C->nr);
 			C->i = 0;
 		} else {
 			/* Didn't finish block, must be done with input. */
@@ -213,7 +219,7 @@ aes_ccm_enc(struct aes_ccm *C, const void *in, void *out, size_t nbytes)
 
 	/* Process 16 bytes at a time.  */
 	if (nbytes - (nbytes % 16)) {
-		aes_ccm_enc1(C->enc, p, q, nbytes - (nbytes % 16), C->auth,
+		aes_ccm_enc1(C->enc, p, q, nbytes - (nbytes % 16), auth,
 		    C->nr);
 		p += nbytes - (nbytes % 16);
 		q += nbytes - (nbytes % 16);
@@ -223,11 +229,11 @@ aes_ccm_enc(struct aes_ccm *C, const void *in, void *out, size_t nbytes)
 	/* Incorporate any <16-byte unit as a partial block.  */
 	if (nbytes) {
 		/* authenticate */
-		xor(C->auth, C->auth, p, nbytes);
+		xor(auth, auth, p, nbytes);
 
 		/* encrypt */
 		aes_ccm_inc(C);
-		aes_enc(C->enc, C->in, C->out, C->nr);
+		aes_enc(C->enc, ctr, C->out, C->nr);
 		xor(q, C->out, p, nbytes);
 
 		C->i = nbytes;
@@ -237,6 +243,8 @@ aes_ccm_enc(struct aes_ccm *C, const void *in, void *out, size_t nbytes)
 void
 aes_ccm_dec(struct aes_ccm *C, const void *in, void *out, size_t nbytes)
 {
+	uint8_t *auth = C->authctr;
+	uint8_t *ctr = C->authctr + 16;
 	const uint8_t *p = in;
 	uint8_t *q = out;
 
@@ -252,7 +260,7 @@ aes_ccm_dec(struct aes_ccm *C, const void *in, void *out, size_t nbytes)
 		unsigned m = MIN(16 - C->i, nbytes);
 
 		xor(q, C->out + C->i, p, m);
-		xor(C->auth + C->i, C->auth + C->i, q, m);
+		xor(auth + C->i, auth + C->i, q, m);
 		C->i += m;
 		p += m;
 		q += m;
@@ -260,7 +268,7 @@ aes_ccm_dec(struct aes_ccm *C, const void *in, void *out, size_t nbytes)
 
 		if (C->i == 16) {
 			/* Finished a block; authenticate it.  */
-			aes_enc(C->enc, C->auth, C->auth, C->nr);
+			aes_enc(C->enc, auth, auth, C->nr);
 			C->i = 0;
 		} else {
 			/* Didn't finish block, must be done with input. */
@@ -271,7 +279,7 @@ aes_ccm_dec(struct aes_ccm *C, const void *in, void *out, size_t nbytes)
 
 	/* Process 16 bytes at a time.  */
 	if (nbytes - (nbytes % 16)) {
-		aes_ccm_dec1(C->enc, p, q, nbytes - (nbytes % 16), C->auth,
+		aes_ccm_dec1(C->enc, p, q, nbytes - (nbytes % 16), auth,
 		    C->nr);
 		p += nbytes - (nbytes % 16);
 		q += nbytes - (nbytes % 16);
@@ -282,11 +290,11 @@ aes_ccm_dec(struct aes_ccm *C, const void *in, void *out, size_t nbytes)
 	if (nbytes) {
 		/* decrypt */
 		aes_ccm_inc(C);
-		aes_enc(C->enc, C->in, C->out, C->nr);
+		aes_enc(C->enc, ctr, C->out, C->nr);
 		xor(q, C->out, p, nbytes);
 
 		/* authenticate */
-		xor(C->auth, C->auth, q, nbytes);
+		xor(auth, auth, q, nbytes);
 
 		C->i = nbytes;
 	}
@@ -295,6 +303,8 @@ aes_ccm_dec(struct aes_ccm *C, const void *in, void *out, size_t nbytes)
 void
 aes_ccm_tag(struct aes_ccm *C, void *out)
 {
+	uint8_t *auth = C->authctr;
+	const uint8_t *ctr = C->authctr + 16;
 
 	KASSERTMSG(C->mleft == 0,
 	    "message too short: promised %zu bytes, processed %zu",
@@ -302,14 +312,14 @@ aes_ccm_tag(struct aes_ccm *C, void *out)
 
 	/* Zero-pad and munch up a partial block, if any.  */
 	if (C->i)
-		aes_enc(C->enc, C->auth, C->auth, C->nr);
+		aes_enc(C->enc, auth, auth, C->nr);
 
 	/* Zero the counter and generate a pad for the tag.  */
 	aes_ccm_zero_ctr(C);
-	aes_enc(C->enc, C->in, C->out, C->nr);
+	aes_enc(C->enc, ctr, C->out, C->nr);
 
 	/* Copy out as many bytes as requested.  */
-	xor(out, C->out, C->auth, C->M);
+	xor(out, C->out, auth, C->M);
 
 	C->i = ~0u;		/* paranoia: prevent future misuse */
 }
