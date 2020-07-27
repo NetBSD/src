@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.337 2020/07/27 17:41:09 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.338 2020/07/27 19:59:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.337 2020/07/27 17:41:09 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.338 2020/07/27 19:59:59 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.337 2020/07/27 17:41:09 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.338 2020/07/27 19:59:59 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -690,6 +690,8 @@ extern char **environ;
 
 /*
  * This is called when .unexport[-env] is seen.
+ *
+ * str must have the form "unexport[-env] varname...".
  */
 void
 Var_UnExport(char *str)
@@ -700,12 +702,9 @@ Var_UnExport(char *str)
     Boolean unexport_env;
     int n;
 
-    if (str == NULL || str[0] == '\0')
-	return;			/* assert? */
-
     vlist = NULL;
 
-    str += 8;
+    str += strlen("unexport");
     unexport_env = (strncmp(str, "-env", 4) == 0);
     if (unexport_env) {
 	char **newenv;
