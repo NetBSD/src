@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.110 2020/07/26 08:08:41 simonb Exp $ */
+/* $NetBSD: locore.h,v 1.111 2020/07/27 08:25:28 skrll Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -28,7 +28,7 @@
 #ifndef _MIPS_LOCORE_H
 #define	_MIPS_LOCORE_H
 
-#if defined(_KERNEL_OPT)
+#if !defined(_MODULE) && defined(_KERNEL_OPT)
 #include "opt_cputype.h"
 #endif
 
@@ -51,8 +51,8 @@ typedef uint32_t pt_entry_t;
 
 #ifdef _KERNEL
 
-#if defined(_MODULAR) || defined(_STANDALONE)
-/* Assume all CPU architectures are valid for LKM's and standlone progs */
+#if defined(_MODULE) || defined(_STANDALONE)
+/* Assume all CPU architectures are valid for modules and standlone progs */
 #if !defined(__mips_n32) && !defined(__mips_n64)
 #define	MIPS1		1
 #endif
@@ -64,7 +64,7 @@ typedef uint32_t pt_entry_t;
 #endif
 #define	MIPS64		1
 #define	MIPS64R2	1
-#endif /* _MODULAR || _STANDALONE */
+#endif /* _MODULE || _STANDALONE */
 
 #if (MIPS1 + MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) == 0
 #error at least one of MIPS1, MIPS3, MIPS4, MIPS32, MIPS32R2, MIPS64, or MIPS64R2 must be specified
