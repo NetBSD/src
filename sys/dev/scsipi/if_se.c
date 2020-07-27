@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.110 2020/07/22 17:18:10 riastradh Exp $	*/
+/*	$NetBSD: if_se.c,v 1.111 2020/07/27 15:41:03 jdc Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.110 2020/07/22 17:18:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.111 2020/07/27 15:41:03 jdc Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -332,6 +332,7 @@ seattach(device_t parent, device_t self, void *aux)
 
 	sc->sc_attach_state = 0;
 	callout_init(&sc->sc_recv_ch, CALLOUT_MPSAFE);
+	callout_setfunc(&sc->sc_recv_ch, se_recv_callout, (void *)sc);
 	mutex_init(&sc->sc_iflock, MUTEX_DEFAULT, IPL_SOFTNET);
 
 	/*
@@ -415,7 +416,6 @@ sedetach(device_t self, int flags)
 		mutex_enter(&sc->sc_iflock);
 		ifp->if_flags &= ~IFF_RUNNING;
 		se_disable(sc);
-		callout_halt(&sc->sc_recv_ch, NULL);
 		ether_ifdetach(ifp);
 		if_detach(ifp);
 		mutex_exit(&sc->sc_iflock);
@@ -464,18 +464,13 @@ static void
 se_ifstart(struct ifnet *ifp)
 {
 	struct se_softc *sc = ifp->if_softc;
-	int i = 100;
 
 	mutex_enter(&sc->sc_iflock);
-	while (i && sc->sc_send_work_pending == true) {
-		i--;
-		delay(10);
-	}
-	if (i) {
+	if (!sc->sc_send_work_pending)  {
 		sc->sc_send_work_pending = true;
 		workqueue_enqueue(sc->sc_send_wq, &sc->sc_send_work, NULL);
-	} else
-		if_statinc(ifp, if_oerrors);
+	} 
+	/* else: nothing to do - work is already queued */
 	mutex_exit(&sc->sc_iflock);
 }
 
@@ -575,8 +570,7 @@ sedone(struct scsipi_xfer *xs, int error)
 		/* scsipi_free_xs will call start. Harmless. */
 		if (error) {
 			/* Reschedule after a delay */
-			callout_reset(&sc->sc_recv_ch, se_poll,
-			    se_recv_callout, (void *)sc);
+			callout_schedule(&sc->sc_recv_ch, se_poll);
 		} else {
 			int n, ntimeo;
 			n = se_read(sc, xs->data, xs->datalen - xs->resid);
@@ -597,8 +591,7 @@ sedone(struct scsipi_xfer *xs, int error)
 					  se_poll: ntimeo);
 			}
 			sc->sc_last_timeout = ntimeo;
-			callout_reset(&sc->sc_recv_ch, ntimeo,
-			    se_recv_callout, (void *)sc);
+			callout_schedule(&sc->sc_recv_ch, ntimeo);
 		}
 	}
 }
@@ -618,8 +611,8 @@ se_recv_callout(void *v)
 
 	mutex_enter(&sc->sc_iflock);
 	if (sc->sc_recv_work_pending == true) {
-		callout_reset(&sc->sc_recv_ch, se_poll,
-		    se_recv_callout, (void *)sc);
+		callout_schedule(&sc->sc_recv_ch, se_poll);
+		mutex_exit(&sc->sc_iflock);
 		return;
 	}
 
@@ -660,8 +653,7 @@ se_recv(struct se_softc *sc)
 	    sc->sc_rbuf, RBUF_LEN, SERETRIES, SETIMEOUT, NULL,
 	    XS_CTL_NOSLEEP | XS_CTL_DATA_IN);
 	if (error)
-		callout_reset(&sc->sc_recv_ch, se_poll,
-		    se_recv_callout, (void *)sc);
+		callout_schedule(&sc->sc_recv_ch, se_poll);
 }
 
 /*
@@ -923,12 +915,19 @@ se_init(struct se_softc *sc)
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_UP)) == IFF_UP) {
 		ifp->if_flags |= IFF_RUNNING;
 		mutex_enter(&sc->sc_iflock);
-		sc->sc_recv_work_pending = true;
-		workqueue_enqueue(sc->sc_recv_wq, &sc->sc_recv_work, NULL);
+		if (!sc->sc_recv_work_pending)  {
+			sc->sc_recv_work_pending = true;
+			workqueue_enqueue(sc->sc_recv_wq, &sc->sc_recv_work,
+			    NULL);
+		} 
 		mutex_exit(&sc->sc_iflock);
 		ifp->if_flags &= ~IFF_OACTIVE;
 		mutex_enter(&sc->sc_iflock);
-		workqueue_enqueue(sc->sc_send_wq, &sc->sc_send_work, NULL);
+		if (!sc->sc_send_work_pending)  {
+			sc->sc_send_work_pending = true;
+			workqueue_enqueue(sc->sc_send_wq, &sc->sc_send_work,
+			    NULL);
+		} 
 		mutex_exit(&sc->sc_iflock);
 	}
 	return (error);
@@ -1019,7 +1018,7 @@ se_stop(struct se_softc *sc)
 {
 
 	/* Don't schedule any reads */
-	callout_stop(&sc->sc_recv_ch);
+	callout_halt(&sc->sc_recv_ch, &sc->sc_iflock);
 
 	/* Wait for the workqueues to finish */
 	mutex_enter(&sc->sc_iflock);
