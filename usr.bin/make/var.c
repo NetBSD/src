@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.345 2020/07/27 22:50:01 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.346 2020/07/27 22:59:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.345 2020/07/27 22:50:01 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.346 2020/07/27 22:59:49 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.345 2020/07/27 22:50:01 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.346 2020/07/27 22:59:49 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2349,22 +2349,21 @@ ApplyModifier_Match(const char *mod, ApplyModifiersState *st)
     st->termc = *st->cp;
     const char *endpat = st->cp;
 
-    char *pattern = NULL;
+    char *pattern;
     if (copy) {
 	/* Compress the \:'s out of the pattern. */
 	pattern = bmake_malloc(st->cp - (mod + 1) + 1);
-	char *cp2;
-	for (cp2 = pattern, st->cp = mod + 1;
-	     st->cp < endpat;
-	     st->cp++, cp2++) {
-	    if ((*st->cp == '\\') && (st->cp+1 < endpat) &&
+	char *dst = pattern;
+	const char *src = mod + 1;
+	for (; src < endpat; src++, dst++) {
+	    if (src[0] == '\\' && src + 1 < endpat &&
 		/* XXX: st->startc is missing here; see above */
-		(st->cp[1] == ':' || st->cp[1] == st->endc))
-		st->cp++;
-	    *cp2 = *st->cp;
+		(src[1] == ':' || src[1] == st->endc))
+		src++;
+	    *dst = *src;
 	}
-	*cp2 = '\0';
-	endpat = cp2;
+	*dst = '\0';
+	endpat = dst;
     } else {
 	/*
 	 * Either Var_Subst or ModifyWords will need a
@@ -2372,15 +2371,18 @@ ApplyModifier_Match(const char *mod, ApplyModifiersState *st)
 	 */
 	pattern = bmake_strndup(mod + 1, endpat - (mod + 1));
     }
+
     if (needSubst) {
 	/* pattern contains embedded '$', so use Var_Subst to expand it. */
 	char *old_pattern = pattern;
 	pattern = Var_Subst(NULL, pattern, st->ctxt, st->eflags);
 	free(old_pattern);
     }
+
     if (DEBUG(VAR))
 	fprintf(debug_file, "Pattern[%s] for [%s] is [%s]\n",
 	    st->v->name, st->nstr, pattern);
+
     ModifyWordsCallback callback = mod[0] == 'M'
 	? ModifyWord_Match : ModifyWord_NoMatch;
     st->newStr = ModifyWords(st->ctxt, st->sep, st->oneBigWord, st->nstr,
