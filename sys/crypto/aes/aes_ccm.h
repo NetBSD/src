@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_ccm.h,v 1.1 2020/07/25 22:15:55 riastradh Exp $	*/
+/*	$NetBSD: aes_ccm.h,v 1.2 2020/07/27 20:44:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -35,8 +35,7 @@ struct aesenc;
 
 struct aes_ccm {
 	const struct aesenc	*enc;
-	uint8_t			auth[16];
-	uint8_t			in[16];		/* AES input block */
+	uint8_t			authctr[32];	/* authenticator and counter */
 	uint8_t			out[16];	/* AES output block */
 	size_t			mlen, mleft;
 	unsigned		i, nr, L, M;
