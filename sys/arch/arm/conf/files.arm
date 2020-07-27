@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.158 2020/06/29 23:56:31 riastradh Exp $
+#	$NetBSD: files.arm,v 1.159 2020/07/27 20:49:45 riastradh Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -263,6 +263,5 @@ file	arch/arm/arm/linux_trap.c		compat_linux
 # profiling support
 file	dev/tprof/tprof_armv7.c			tprof
 
-# vpaes with ARM NEON -- disabled for now pending arm32 kernel fpu
-# support and ctf
+# vpaes with ARM NEON
 include "crypto/aes/arch/arm/files.aesneon"
