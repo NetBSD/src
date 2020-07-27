@@ -1,4 +1,4 @@
-/*	$NetBSD: chacha_neon.c,v 1.1 2020/07/25 22:51:57 riastradh Exp $	*/
+/*	$NetBSD: chacha_neon.c,v 1.2 2020/07/27 20:48:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -168,7 +168,7 @@ chacha_stream_neon(uint8_t *restrict s, size_t n,
 			le32dec(nonce + 8)
 		};
 
-		for (; n >= 64; s += 64, n -= 64) {
+		for (; n; s += 64, n -= 64) {
 			r0 = in0;
 			r1 = in1;
 			r2 = in2;
@@ -178,31 +178,24 @@ chacha_stream_neon(uint8_t *restrict s, size_t n,
 			r1 = vhtole_u32(vaddq_u32(r1, in1));
 			r2 = vhtole_u32(vaddq_u32(r2, in2));
 			r3 = vhtole_u32(vaddq_u32(r3, in3));
+
+			if (n < 64) {
+				uint8_t buf[64] __aligned(16);
+
+				vst1q_u32((uint32_t *)buf + 4*0, r0);
+				vst1q_u32((uint32_t *)buf + 4*1, r1);
+				vst1q_u32((uint32_t *)buf + 4*2, r2);
+				vst1q_u32((uint32_t *)buf + 4*3, r3);
+				memcpy(s, buf, n);
+
+				break;
+			}
+
 			vst1q_u32((uint32_t *)s + 4*0, r0);
 			vst1q_u32((uint32_t *)s + 4*1, r1);
 			vst1q_u32((uint32_t *)s + 4*2, r2);
 			vst1q_u32((uint32_t *)s + 4*3, r3);
 			in3 = vaddq_u32(in3, blkno_inc);
-		}
-
-		if (n) {
-			uint8_t buf[64];
-
-			r0 = in0;
-			r1 = in1;
-			r2 = in2;
-			r3 = in3;
-			chacha_permute(&r0, &r1, &r2, &r3, nr);
-			r0 = vhtole_u32(vaddq_u32(r0, in0));
-			r1 = vhtole_u32(vaddq_u32(r1, in1));
-			r2 = vhtole_u32(vaddq_u32(r2, in2));
-			r3 = vhtole_u32(vaddq_u32(r3, in3));
-			vst1q_u32((uint32_t *)buf + 4*0, r0);
-			vst1q_u32((uint32_t *)buf + 4*1, r1);
-			vst1q_u32((uint32_t *)buf + 4*2, r2);
-			vst1q_u32((uint32_t *)buf + 4*3, r3);
-
-			memcpy(s, buf, n);
 		}
 	}
 }
@@ -234,7 +227,7 @@ chacha_stream_xor_neon(uint8_t *s, const uint8_t *p, size_t n,
 			le32dec(nonce + 8)
 		};
 
-		for (; n >= 64; s += 64, p += 64, n -= 64) {
+		for (; n; s += 64, p += 64, n -= 64) {
 			r0 = in0;
 			r1 = in1;
 			r2 = in2;
@@ -244,6 +237,25 @@ chacha_stream_xor_neon(uint8_t *s, const uint8_t *p, size_t n,
 			r1 = vhtole_u32(vaddq_u32(r1, in1));
 			r2 = vhtole_u32(vaddq_u32(r2, in2));
 			r3 = vhtole_u32(vaddq_u32(r3, in3));
+
+			if (n < 64) {
+				uint8_t buf[64] __aligned(16);
+				unsigned i;
+
+				vst1q_u32((uint32_t *)buf + 4*0, r0);
+				vst1q_u32((uint32_t *)buf + 4*1, r1);
+				vst1q_u32((uint32_t *)buf + 4*2, r2);
+				vst1q_u32((uint32_t *)buf + 4*3, r3);
+
+				for (i = 0; i < n - n%4; i += 4)
+					le32enc(s + i,
+					    le32dec(p + i) ^ le32dec(buf + i));
+				for (; i < n; i++)
+					s[i] = p[i] ^ buf[i];
+
+				break;
+			}
+
 			r0 ^= vld1q_u32((const uint32_t *)p + 4*0);
 			r1 ^= vld1q_u32((const uint32_t *)p + 4*1);
 			r2 ^= vld1q_u32((const uint32_t *)p + 4*2);
@@ -253,31 +265,6 @@ chacha_stream_xor_neon(uint8_t *s, const uint8_t *p, size_t n,
 			vst1q_u32((uint32_t *)s + 4*2, r2);
 			vst1q_u32((uint32_t *)s + 4*3, r3);
 			in3 = vaddq_u32(in3, blkno_inc);
-		}
-
-		if (n) {
-			uint8_t buf[64];
-			unsigned i;
-
-			r0 = in0;
-			r1 = in1;
-			r2 = in2;
-			r3 = in3;
-			chacha_permute(&r0, &r1, &r2, &r3, nr);
-			r0 = vhtole_u32(vaddq_u32(r0, in0));
-			r1 = vhtole_u32(vaddq_u32(r1, in1));
-			r2 = vhtole_u32(vaddq_u32(r2, in2));
-			r3 = vhtole_u32(vaddq_u32(r3, in3));
-			vst1q_u32((uint32_t *)buf + 4*0, r0);
-			vst1q_u32((uint32_t *)buf + 4*1, r1);
-			vst1q_u32((uint32_t *)buf + 4*2, r2);
-			vst1q_u32((uint32_t *)buf + 4*3, r3);
-
-			for (i = 0; i < n - n%4; i += 4)
-				le32enc(s + i,
-				    le32dec(p + i) ^ le32dec(buf + i));
-			for (; i < n; i++)
-				s[i] = p[i] ^ buf[i];
 		}
 	}
 }
