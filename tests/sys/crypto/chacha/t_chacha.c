@@ -1,4 +1,4 @@
-/*	$NetBSD: t_chacha.c,v 1.2 2020/07/27 20:51:29 riastradh Exp $	*/
+/*	$NetBSD: t_chacha.c,v 1.3 2020/07/27 20:59:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <crypto/chacha/arch/x86/chacha_sse2.h>
 #endif
 
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
 #include <crypto/chacha/arch/arm/chacha_neon.h>
 #endif
 
@@ -81,7 +81,7 @@ ATF_TC_BODY(name, tc)							      \
 		atf_tc_fail("%s self-test failed", (impl)->ci_name);	      \
 }
 
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
 CHACHA_SELFTEST(chacha_neon_selftest, &chacha_neon_impl,
     "ARM NEON ChaCha self-test")
 #endif
@@ -96,7 +96,7 @@ ATF_TP_ADD_TCS(tp)
 
 	ATF_TP_ADD_TC(tp, chacha_ref_selftest);
 
-#ifdef __ARM_NEON__
+#ifdef __ARM_NEON
 	ATF_TP_ADD_TC(tp, chacha_neon_selftest);
 #endif
 
