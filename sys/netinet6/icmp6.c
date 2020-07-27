@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.245 2020/06/12 11:04:45 roy Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.246 2020/07/27 14:52:55 roy Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.245 2020/06/12 11:04:45 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.246 2020/07/27 14:52:55 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -113,6 +113,32 @@ __KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.245 2020/06/12 11:04:45 roy Exp $");
 #if defined(NFAITH) && 0 < NFAITH
 #include <net/if_faith.h>
 #endif
+
+/* Ensure that non packed structures are the desired size. */
+__CTASSERT(sizeof(struct icmp6_hdr) == 8);
+__CTASSERT(sizeof(struct icmp6_nodeinfo) == 16);
+__CTASSERT(sizeof(struct icmp6_namelookup) == 20);
+__CTASSERT(sizeof(struct icmp6_router_renum) == 16);
+
+__CTASSERT(sizeof(struct nd_router_solicit) == 8);
+__CTASSERT(sizeof(struct nd_router_advert) == 16);
+__CTASSERT(sizeof(struct nd_neighbor_solicit) == 24);
+__CTASSERT(sizeof(struct nd_neighbor_advert) == 24);
+__CTASSERT(sizeof(struct nd_redirect) == 40);
+__CTASSERT(sizeof(struct nd_opt_hdr) == 2);
+__CTASSERT(sizeof(struct nd_opt_route_info) == 8);
+__CTASSERT(sizeof(struct nd_opt_prefix_info) == 32);
+__CTASSERT(sizeof(struct nd_opt_rd_hdr) == 8);
+__CTASSERT(sizeof(struct nd_opt_mtu) == 8);
+__CTASSERT(sizeof(struct nd_opt_nonce) == 2 + ND_OPT_NONCE_LEN);
+__CTASSERT(sizeof(struct nd_opt_rdnss) == 8);
+__CTASSERT(sizeof(struct nd_opt_dnssl) == 8);
+
+__CTASSERT(sizeof(struct mld_hdr) == 24);
+__CTASSERT(sizeof(struct ni_reply_fqdn) == 8);
+__CTASSERT(sizeof(struct rr_pco_match) == 24);
+__CTASSERT(sizeof(struct rr_pco_use) == 32);
+__CTASSERT(sizeof(struct rr_result) == 24);
 
 extern struct domain inet6domain;
 
