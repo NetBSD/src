@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.40 2020/07/12 13:33:44 skrll Exp $	*/
+/*	$NetBSD: gic.c,v 1.41 2020/07/27 18:36:23 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.40 2020/07/12 13:33:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.41 2020/07/27 18:36:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -570,8 +570,6 @@ armgic_match(device_t parent, cfdata_t cf, void *aux)
 	struct mpcore_attach_args * const mpcaa = aux;
 
 	if (strcmp(cf->cf_name, mpcaa->mpcaa_name) != 0)
-		return 0;
-	if (!CPU_ID_CORTEX_P(cputype) || CPU_ID_CORTEX_A8_P(cputype))
 		return 0;
 
 	return 1;
