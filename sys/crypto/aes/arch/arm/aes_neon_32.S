@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_neon_32.S,v 1.3 2020/07/27 20:53:22 riastradh Exp $	*/
+/*	$NetBSD: aes_neon_32.S,v 1.4 2020/07/27 20:57:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,6 +27,8 @@
  */
 
 #include <arm/asm.h>
+
+RCSID("$NetBSD: aes_neon_32.S,v 1.4 2020/07/27 20:57:23 riastradh Exp $")
 
 	.fpu	neon
 
