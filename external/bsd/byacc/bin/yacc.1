@@ -1,4 +1,4 @@
-.\"	$NetBSD: yacc.1,v 1.8 2020/07/26 23:18:06 uwe Exp $
+.\"	$NetBSD: yacc.1,v 1.9 2020/07/27 00:34:56 uwe Exp $
 .\"
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)yacc.1	5.7 (Berkeley) 7/30/91
 .\"	from: Id: yacc.1,v 1.24 2014/10/06 00:03:48 tom Exp
-.\"	$NetBSD: yacc.1,v 1.8 2020/07/26 23:18:06 uwe Exp $
+.\"	$NetBSD: yacc.1,v 1.9 2020/07/27 00:34:56 uwe Exp $
 .\"
 .Dd October 5, 2014
 .Dt YACC 1
@@ -40,7 +40,7 @@
 .Sh NAME
 .Nm yacc
 .Nd an
-.Tn LALR(1)
+.Tn LALR Ns (1)
 parser generator
 .Sh SYNOPSIS
 .Nm
@@ -54,10 +54,10 @@ parser generator
 reads the grammar specification in the file
 .Ar filename
 and generates an
-.Tn LALR(1)
+.Tn LALR Ns (1)
 parser for it.
 The parsers consist of a set of
-.Tn LALR(1)
+.Tn LALR Ns (1)
 parsing tables and a driver routine
 written in the C programming language.
 .Nm
@@ -65,7 +65,7 @@ normally writes the parse tables and the driver routine to the file
 .Pa y.tab.c .
 .Pp
 The following options are available:
-.Bl -tag -width symbol_prefixXXX
+.Bl -tag -width Fl
 .It Fl b Ar file_prefix
 The
 .Fl b
@@ -73,7 +73,7 @@ option changes the prefix prepended to the output file names to
 the string denoted by
 .Ar file_prefix .
 The default prefix is the character
-.Ar y .
+.Ql y .
 .It Fl B
 Create a backtracking parser (compile-type configuration for
 .Nm ) .
@@ -83,12 +83,14 @@ The
 option causes the header file
 .Pa y.tab.h
 to be written.
-It contains #define's for the token identifiers.
+It contains
+.No #define Ns 's
+for the token identifiers.
 .It Fl g
 The
 .Fl g
 option causes a graphical description of the generated
-.Tn LALR(1)
+.Tn LALR Ns (1)
 parser to be written to the file
 .Pa y.dot
 in graphviz format, ready to be processed by
@@ -100,15 +102,19 @@ option causes a supplementary header file
 .Pa y.tab.i
 to be written.
 It contains extern declarations
-and supplementary #define's as needed to map the conventional
+and supplementary
+.No #define Ns 's
+as needed to map the conventional
 .Nm
-yy-prefixed names to whatever the
+.Va yy Ns \&-prefixed
+names to whatever the
 .Fl p
 option may specify.
 The code file, e.g.,
 .Pa y.tab.c
-is modified to #include this file
-as well as the
+is modified to
+.No #include
+this file as well as the
 .Pa y.tab.h
 file, enforcing consistent usage of the symbols defined in those files.
 The supplementary header file makes it simpler to separate compilation
@@ -118,18 +124,25 @@ If the
 .Fl l
 option is not specified,
 .Nm
-will insert #line directives in the generated code.
-The #line directives let the C compiler relate errors in the
+will insert
+.No #line
+directives in the generated code.
+The
+.No #line
+directives let the C compiler relate errors in the
 generated code to the user's original code.
 If the
 .Fl l
 option is specified,
 .Nm
-will not insert the #line directives.
-#line directives specified by the user will be retained.
+will not insert the
+.No #line
+directives.
+.No #line
+directives specified by the user will be retained.
 .It Fl L
 Enable position processing, e.g.,
-.Dq %locations
+.Ql %locations
 (compile-type configuration for
 .Nm ) .
 .It Fl o Ar output_file
@@ -146,7 +159,7 @@ The
 options instructs
 .Nm
 to create a reentrant parser, like
-.Dq %pure-parser
+.Ql %pure-parser
 does.
 .It Fl p Ar symbol_prefix
 The
@@ -155,7 +168,7 @@ option changes the prefix prepended to yacc-generated symbols to
 the string denoted by
 .Ar symbol_prefix .
 The default prefix is the string
-.Ar yy .
+.Ql yy .
 .It Fl r
 The
 .Fl r
@@ -167,15 +180,15 @@ The code file is named
 and the tables file is named
 .Pa y.tab.c .
 The prefix
-.Dq y .
+.Ql y
 can be overridden using the
 .Fl b
 option.
 .It Fl s
 Suppress
-.Dq #define
+.No #define
 statements generated for string literals in a
-.Dq %token
+.Ql %token
 statement, to more closely match original
 .Nm
 behavior.
@@ -183,10 +196,14 @@ behavior.
 Normally when
 .Nm
 sees a line such as
-.Dq %token OP_ADD "ADD"
+.Pp
+.Dl %token OP_ADD \*qADD\*q
+.Pp
 it notices that the quoted
 .Dq ADD
-is a valid C identifier, and generates a #define not only for
+is a valid C identifier, and generates a
+.No #define
+not only for
 .Dv OP_ADD ,
 but for
 .Dv ADD
@@ -196,18 +213,19 @@ e.g.,
 #define OP_ADD 257
 #define ADD 258
 .Ed
+.Pp
 The original
 .Nm
 does not generate the second
-.Dq #define .
+.No #define .
 The
 .Fl s
 option suppresses this
-.Dq #define .
+.No #define .
 .Pp
 .St -p1003.1
 documents only names and numbers for
-.Dq %token ,
+.Ql %token ,
 though the original
 .Nm
 and
@@ -243,18 +261,15 @@ compatibility with
 .Xr bison 1
 and other implementations of yacc.
 The
-.Dq %destructor
+.Ql %destructor
 and
-.Dq %locations
+.Ql %locations
 features are available only if
 .Nm yacc
 has been configured and compiled to support the back-tracking functionality.
 The remaining features are always available:
-.Pp
-.Dv %destructor {
-.Dv code }
-.Dv symbol+
-.Pp
+.Bl -tag -width Ic
+.It Ic %destructor { Ar code Ic } Ar symbol Ns +
 Defines code that is invoked when a symbol is automatically
 discarded during error recovery.
 This code can be used to
@@ -267,32 +282,31 @@ discards symbols on the stack and input tokens until it reaches a state
 that will allow parsing to continue.
 This error recovery approach results in a memory leak
 if the
-.Dq YYSTYPE
+.Vt YYSTYPE
 value is, or contains, pointers to dynamically allocated memory.
 .Pp
 The bracketed
-.Dv code
+.Ar code
 is invoked whenever the parser discards one of the symbols.
-Within
-.Dv  code ,
-.Dq $$
+Within it
+.Sq Li $$
 or
-.Dq $\*[Lt]tag\*[Gt]$
+.Sq Li $\*[Lt] Ns Ar tag Ns Li \*[Gt]$
 designates the semantic value associated with the discarded symbol, and
-.Dq @$
+.Sq Li @$
 designates its location (see
-.Dq %locations
+.Ql %locations
 directive).
 .Pp
 A per-symbol destructor is defined by listing a grammar symbol
 in
-.Dv symbol+ .
+.Ar symbol Ns + .
 A per-type destructor is defined  by listing a semantic type tag (e.g.,
-.Dq \*[Lt]some_tag\*[Gt] )
+.Sq Li \*[Lt] Ns Ar some_tag Ns Li \*[Gt] )
 in
-.Dv symbol+ ;
+.Ar symbol Ns + ;
 in this case, the parser will invoke
-.Dv code
+.Ar code
 whenever it discards any grammar symbol that has that semantic type tag,
 unless that symbol has its own per-symbol destructor.
 .Pp
@@ -301,62 +315,60 @@ invoked when discarding any grammar symbol that has no per-symbol and no
 per-type destructor:
 .Pp
 The code for
-.Dq \*[Lt]*\*[Gt]
+.Sq Li \*[Lt]*\*[Gt]
 is used
 for grammar symbols that have an explicitly declared semantic type tag
 (via
-.Dq %type ) ;
+.Ql %type ) ;
 .Pp
-the code for
-.Dq \*[Lt]\*[Gt]
+The code for
+.Sq Li \*[Lt]\*[Gt]
 is used for grammar symbols that have no declared semantic type tag.
-.Pp
-.Bl -tag -width "%expect-rr number" -compact
-.It Dv %expect Ar number
+.It Ic %expect Ar number
 Tell
 .Nm
 the expected number of shift/reduce conflicts.
 That makes it only report the number if it differs.
-.It Dv %expect-rr Ar number
+.It Ic %expect-rr Ar number
 Tell
 .Nm
 the expected number of reduce/reduce conflicts.
 That makes it only report the number if it differs.
-This is (unlike
-.Xr bison 1 )
+This is, unlike
+.Xr bison 1 ,
 allowable in
-.Tn LALR(1)
+.Tn LALR Ns (1)
 parsers.
-.It Dv %locations
+.It Ic %locations
 Tell
 .Nm
 to enable  management of position information associated with each token,
 provided by the lexer in the global variable
-.Dv yylloc ,
+.Va yylloc ,
 similar to management of semantic value information provided in
-.Dv yylval .
+.Va yylval .
 .Pp
 As for semantic values, locations can be referenced within actions using
-.Dv @$
+.Sq Li @$
 to refer to the location of the left hand side symbol, and
-.Dv @N
-.Dv ( N
+.Sq Li @ Ns Ar N\|
+.Ar ( N
 an integer) to refer to the location of one of the right hand side
 symbols.
 Also as for semantic values, when a rule is matched, a default
 action is used the compute the location represented by
-.Dv @$
+.Sq Li @$
 as the beginning of the first symbol and the end of the last symbol
 in the right hand side of the rule.
 This default computation can be overridden by
 explicit assignment to
-.Dv @$
+.Sq Li @$
 in a rule action.
 .Pp
 The type of
-.Dv yylloc
+.Va yylloc
 is
-.Dv YYLTYPE ,
+.Vt YYLTYPE ,
 which is defined by default as:
 .Bd -literal -offset indent
 typedef struct YYLTYPE {
@@ -367,7 +379,7 @@ typedef struct YYLTYPE {
 } YYLTYPE;
 .Ed
 .Pp
-.Dv YYLTYPE
+.Vt YYLTYPE
 can be redefined by the user
 .Dv ( YYLTYPE_IS_DEFINED
 must be defined, to inhibit the default)
@@ -381,36 +393,36 @@ left hand side of the rule, before the associated action is executed;
 this macro can be redefined by the user.
 .Pp
 This directive adds a
-.Dv YYLTYPE
+.Vt YYLTYPE
 parameter to
 .Fn yyerror .
 If the
-.Dq %pure-parser
+.Ql %pure-parser
 directive is present,
 a
-.Dv YYLTYPE
+.Vt YYLTYPE
 parameter is added to
 .Fn yylex
 calls.
-.It Dv %lex-param Ar { Ar argument-declaration Ar }
+.It Ic %lex-param { Ar argument-declaration Ic }
 By default, the lexer accepts no parameters, e.g.,
 .Fn yylex .
 Use this directive to add parameter declarations for your customized lexer.
-.It Dv %parse-param Ar { Ar argument-declaration Ar }
+.It Ic %parse-param { Ar argument-declaration Ic }
 By default, the parser accepts no parameters, e.g.,
 .Fn yyparse .
 Use this directive to add parameter declarations for your customized parser.
-.It Dv %pure-parser
+.It Ic %pure-parser
 Most variables (other than
-.Fa yydebug
+.Va yydebug
 and
-.Fa yynerrs )
+.Va yynerrs )
 are allocated on the stack within
 .Fn yyparse ,
 making the parser reasonably reentrant.
-.It Dv %token-table
+.It Ic %token-table
 Make the parser's names for tokens available in the
-.Dv yytname
+.Va yytname
 array.
 However,
 .Nm
@@ -425,34 +437,45 @@ in this array.
 .Sh PORTABILITY
 According to Robert Corbett:
 .Bd -filled -offset indent
-Berkeley Yacc is an LALR(1) parser generator.
-Berkeley Yacc has been made as compatible as possible with AT\*[Am]T Yacc.
+Berkeley Yacc is an
+.Tn LALR Ns (1)
+parser generator.
+Berkeley Yacc has been made as compatible as possible with
+.Tn AT\*[Am]T
+Yacc.
 Berkeley Yacc can accept any input specification that conforms to the
-AT\*[Am]T Yacc documentation.
-Specifications that take advantage of undocumented features of AT\*[Am]T
+.Tn AT\*[Am]T
+Yacc documentation.
+Specifications that take advantage of undocumented features of
+.Tn AT\*[Am]T
 Yacc will probably be rejected.
 .Ed
 .Pp
 The rationale in
 .%U http://pubs.opengroup.org/onlinepubs/9699919799/utilities/yacc.html
-documents some features of AT\*[Am]T yacc which are no longer required for
-POSIX compliance.
+documents some features of
+.Tn AT\*[Am]T
+yacc which are no longer required for POSIX compliance.
 .Pp
 That said, you may be interested in reusing grammar files with some
-other implementation which is not strictly compatible with AT\*[Am]T yacc.
+other implementation which is not strictly compatible with
+.Tn AT\*[Am]T
+yacc.
 For instance, there is
 .Xr bison 1 .
 Here are a few differences:
+.Pp
 .Nm
 accepts an equals mark preceding the left curly brace
 of an action (as in the original grammar file
 .Dv ftp.y ) :
 .Bd -literal -offset indent
-|	STAT CRLF
+    |	STAT CRLF
 	= {
 		statcmd();
 	}
 .Ed
+.Pp
 .Nm
 and
 .Xr bison 1
@@ -467,14 +490,14 @@ without providing prototypes.
 .Pp
 .Xr bison 1
 support for
-.Dq %expect
+.Ql %expect
 is broken in more than one release.
 For best results using
 .Xr bison 1 ,
 delete that directive.
 .Pp
 .Xr bison 1
-no equivalent for some of
+has no equivalent for some of
 .Nm Ns 's
 command-line options, relying on directives embedded in the grammar file.
 .Pp
@@ -485,9 +508,9 @@ features of AT\*[Am]T yacc which were deemed obsolescent.
 .Pp
 .Nm
 accepts multiple parameters with
-.Dq %lex-param
+.Ql %lex-param
 and
-.Dq %parse-param
+.Ql %parse-param
 in two forms
 .Bd -literal -offset indent
 {type1 name1} {type2 name2} ...
@@ -502,23 +525,23 @@ Like
 .Xr bison 1 ,
 .Nm
 will add parameters specified via
-.Dq %parse-param
+.Ql %parse-param
 to
 .Fn yyparse ,
 .Fn yyerror
 and (if configured for back-tracking)
 to the destructor declared using
-.Dq %destructor .
+.Ql %destructor .
 .Pp
 .Xr bison 1
 puts the additional parameters
-.Dv first
+.Em first
 for
 .Fn yyparse
 and
 .Fn yyerror
 but
-.Dv last
+.Em last
 for destructors.
 .Nm
 matches this behavior.
@@ -538,25 +561,25 @@ files are created.
 The names of the tables generated by this version of
 .Nm
 are
-.Dq yylhs ,
-.Dq yylen ,
-.Dq yydefred ,
-.Dq yydgoto ,
-.Dq yysindex ,
-.Dq yyrindex ,
-.Dq yygindex ,
-.Dq yytable ,
+.Va yylhs ,
+.Va yylen ,
+.Va yydefred ,
+.Va yydgoto ,
+.Va yysindex ,
+.Va yyrindex ,
+.Va yygindex ,
+.Va yytable ,
 and
-.Dq yycheck .
+.Va yycheck .
 Two additional tables,
-.Dq yyname
+.Va yyname
 and
-.Dq yyrule ,
+.Va yyrule ,
 are created if
 .Dv YYDEBUG
 is defined and non-zero.
 .Sh FILES
-.Bl -tag -width /tmp/yacc.uXXXXXXXX -compact
+.Bl -tag -compact
 .It Pa y.code.c
 .It Pa y.tab.c
 .It Pa y.tab.h
@@ -569,7 +592,7 @@ is defined and non-zero.
 If there are rules that are never reduced, the number of such rules is
 written to the standard error.
 If there are any
-.Tn LALR(1)
+.Tn LALR Ns (1)
 conflicts, the number of conflicts is also written
 to the standard error.
 .\" .Sh SEE ALSO
