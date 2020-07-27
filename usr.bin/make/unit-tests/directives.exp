@@ -1,0 +1,30 @@
+make: "directives.mk" line 10: begin .export tests
+make: "directives.mk" line 11: Unknown directive
+make: "directives.mk" line 20: begin .export-env tests
+make: "directives.mk" line 30: begin .export-literal tests
+make: "directives.mk" line 40: begin .info tests
+make: "directives.mk" line 41: Unknown directive
+make: "directives.mk" line 42: Unknown directive
+make: "directives.mk" line 43: message
+make: "directives.mk" line 44: indented message
+make: "directives.mk" line 45: Unknown directive
+make: "directives.mk" line 46: message
+make: "directives.mk" line 50: begin .undef tests
+make: "directives.mk" line 51: Unknown directive
+make: "directives.mk" line 60: begin .unexport tests
+make: "directives.mk" line 61: Unknown directive
+make: "directives.mk" line 70: begin .unexport-env tests
+make: "directives.mk" line 80: begin .warning tests
+make: "directives.mk" line 81: Unknown directive
+make: "directives.mk" line 82: Unknown directive
+make: "directives.mk" line 83: Unknown directive
+make: "directives.mk" line 84: warning: message
+make: "directives.mk" line 85: Unknown directive
+make: "directives.mk" line 86: warning: messages
+make: "directives.mk" line 90: begin .elif misspellings tests, part 1
+make: "directives.mk" line 100: begin .elif misspellings tests, part 2
+make: "directives.mk" line 110: begin .elif misspellings tests, part 3
+make: "directives.mk" line 120: end of the tests
+make: Fatal errors encountered -- cannot continue
+make: stopped in unit-tests
+exit status 1
