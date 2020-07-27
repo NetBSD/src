@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.15 2020/07/26 08:08:41 simonb Exp $	*/
+/*	$NetBSD: cache.h,v 1.16 2020/07/27 10:59:10 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -228,7 +228,7 @@ struct mips_cache_info {
 
 #if (MIPS1 + MIPS64_RMIXL + MIPS64R2_RMIXL + MIPS64_OCTEON) > 0 && \
     (MIPS3 + MIPS4) == 0 \
-     && !defined(MODULE)
+     && !defined(_MODULE)
 #define	MIPS_CACHE_ALIAS_MASK		0
 #define	MIPS_CACHE_VIRTUAL_ALIAS	false
 #else
