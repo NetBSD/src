@@ -1,4 +1,4 @@
-# $NetBSD: envfirst.mk,v 1.1 2020/07/25 21:19:29 rillig Exp $
+# $NetBSD: envfirst.mk,v 1.2 2020/07/27 18:57:42 rillig Exp $
 #
 # The -e option makes environment variables stronger than global variables.
 
@@ -27,6 +27,13 @@ FROM_ENV?=	default
 # Neither can the assignment modifiers.
 .if ${FROM_ENV::=from-condition}
 .endif
+.if ${FROM_ENV} != value-from-env
+.error ${FROM_ENV}
+.endif
+
+# Even .undef doesn't work since it only affects the global context,
+# which is independent from the environment variables.
+.undef FROM_ENV
 .if ${FROM_ENV} != value-from-env
 .error ${FROM_ENV}
 .endif
