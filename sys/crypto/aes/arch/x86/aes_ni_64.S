@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_ni_64.S,v 1.5 2020/07/27 20:53:22 riastradh Exp $	*/
+/*	$NetBSD: aes_ni_64.S,v 1.6 2020/07/27 20:57:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,6 +27,8 @@
  */
 
 #include <machine/asm.h>
+
+RCSID("$NetBSD: aes_ni_64.S,v 1.6 2020/07/27 20:57:23 riastradh Exp $")
 
 /*
  * MOVDQA/MOVDQU are Move Double Quadword (Aligned/Unaligned), defined
