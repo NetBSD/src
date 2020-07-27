@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.343 2020/07/27 22:24:03 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.344 2020/07/27 22:30:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.343 2020/07/27 22:24:03 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.344 2020/07/27 22:30:00 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.343 2020/07/27 22:24:03 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.344 2020/07/27 22:30:00 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2043,8 +2043,6 @@ typedef struct {
     Var *v;
     GNode *ctxt;
     VarEvalFlags eflags;
-    int *lengthPtr;
-    void **freePtr;
 
     /* read-write */
     char *nstr;
@@ -3075,7 +3073,7 @@ ApplyModifiers(char *nstr, const char * const tstr,
 	       int * const lengthPtr, void ** const freePtr)
 {
     ApplyModifiersState st = {
-	startc, endc, v, ctxt, eflags, lengthPtr, freePtr,
+	startc, endc, v, ctxt, eflags,
 	nstr, tstr, '\0', '\0', ' ', FALSE, NULL
     };
 
@@ -3116,7 +3114,7 @@ ApplyModifiers(char *nstr, const char * const tstr,
 		int used;
 
 		st.nstr = ApplyModifiers(st.nstr, rval, 0, 0, st.v,
-				      st.ctxt, st.eflags, &used, st.freePtr);
+				      st.ctxt, st.eflags, &used, freePtr);
 		if (st.nstr == var_Error
 		    || (st.nstr == varNoError && (st.eflags & VARE_UNDEFERR) == 0)
 		    || strlen(rval) != (size_t) used) {
@@ -3327,13 +3325,13 @@ ApplyModifiers(char *nstr, const char * const tstr,
 	}
 
 	if (st.newStr != st.nstr) {
-	    if (*st.freePtr) {
+	    if (*freePtr) {
 		free(st.nstr);
-		*st.freePtr = NULL;
+		*freePtr = NULL;
 	    }
 	    st.nstr = st.newStr;
 	    if (st.nstr != var_Error && st.nstr != varNoError) {
-		*st.freePtr = st.nstr;
+		*freePtr = st.nstr;
 	    }
 	}
 	if (st.termc == '\0' && st.endc != '\0') {
@@ -3346,7 +3344,7 @@ ApplyModifiers(char *nstr, const char * const tstr,
 	p = st.cp;
     }
 out:
-    *st.lengthPtr = p - tstr;
+    *lengthPtr = p - tstr;
     return st.nstr;
 
 bad_modifier:
@@ -3354,12 +3352,12 @@ bad_modifier:
 	  (int)strcspn(p, ":)}"), p, st.v->name);
 
 cleanup:
-    *st.lengthPtr = st.cp - tstr;
+    *lengthPtr = st.cp - tstr;
     if (st.missing_delim != '\0')
 	Error("Unclosed substitution for %s (%c missing)",
 	      st.v->name, st.missing_delim);
-    free(*st.freePtr);
-    *st.freePtr = NULL;
+    free(*freePtr);
+    *freePtr = NULL;
     return var_Error;
 }
 
