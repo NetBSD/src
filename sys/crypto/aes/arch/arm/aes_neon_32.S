@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_neon_32.S,v 1.2 2020/07/27 20:52:10 riastradh Exp $	*/
+/*	$NetBSD: aes_neon_32.S,v 1.3 2020/07/27 20:53:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -316,6 +316,7 @@ ENTRY(aes_neon_enc1)
 
 	b	2f
 
+	_ALIGN_TEXT
 1:	vld1.64	{d28-d29}, [r0 :128]!	/* q14 = *rk++ */
 
 	/* q0 := A = rk[i] + sb1_0(io) + sb1_1(jo) */
@@ -535,6 +536,7 @@ ENTRY(aes_neon_dec1)
 
 	b	2f
 
+	_ALIGN_TEXT
 1:	/* load dsbd */
 	add	r4, r12, #(dsbd_0 - .Lconstants)
 	vld1.64	{d16-d17}, [r4 :128]!	/* q8 := dsbd[0] */
