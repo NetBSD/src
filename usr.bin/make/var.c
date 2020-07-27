@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.342 2020/07/27 22:21:29 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.343 2020/07/27 22:24:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.342 2020/07/27 22:21:29 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.343 2020/07/27 22:24:03 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.342 2020/07/27 22:21:29 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.343 2020/07/27 22:24:03 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2048,7 +2048,6 @@ typedef struct {
 
     /* read-write */
     char *nstr;
-    const char *start;
     const char *cp;		/* The position where parsing continues
 				 * after the current modifier. */
     char termc;			/* Character which terminated scan */
@@ -3070,15 +3069,14 @@ ApplyModifier_SysV(const char *mod, ApplyModifiersState *st)
  * Assignment operators (see ApplyModifier_Assign).
  */
 static char *
-ApplyModifiers(char *nstr, const char *tstr,
+ApplyModifiers(char *nstr, const char * const tstr,
 	       int const startc, int const endc,
 	       Var * const v, GNode * const ctxt, VarEvalFlags const eflags,
 	       int * const lengthPtr, void ** const freePtr)
 {
     ApplyModifiersState st = {
 	startc, endc, v, ctxt, eflags, lengthPtr, freePtr,
-	nstr, tstr, tstr,
-	'\0', '\0', ' ', FALSE, NULL
+	nstr, tstr, '\0', '\0', ' ', FALSE, NULL
     };
 
     const char *p = tstr;
@@ -3348,7 +3346,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	p = st.cp;
     }
 out:
-    *st.lengthPtr = p - st.start;
+    *st.lengthPtr = p - tstr;
     return st.nstr;
 
 bad_modifier:
@@ -3356,7 +3354,7 @@ bad_modifier:
 	  (int)strcspn(p, ":)}"), p, st.v->name);
 
 cleanup:
-    *st.lengthPtr = st.cp - st.start;
+    *st.lengthPtr = st.cp - tstr;
     if (st.missing_delim != '\0')
 	Error("Unclosed substitution for %s (%c missing)",
 	      st.v->name, st.missing_delim);
