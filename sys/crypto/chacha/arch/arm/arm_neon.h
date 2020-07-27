@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_neon.h,v 1.2 2020/07/27 20:58:06 riastradh Exp $	*/
+/*	$NetBSD: arm_neon.h,v 1.3 2020/07/27 20:58:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -527,6 +527,40 @@ vsliq_n_s32(int32x4_t __vins, int32x4_t __vsh, uint8_t __bits)
 	__builtin_shufflevector(__r, __r, 3,2,1,0);			      \
 })
 #endif	/* __LITTLE_ENDIAN__ */
+#endif
+
+#if defined(__GNUC__) && !defined(__clang__)
+_INTRINSATTR
+static __inline uint32x4_t
+vsriq_n_u32(uint32x4_t __vins, uint32x4_t __vsh, uint8_t __bits)
+{
+#ifdef __aarch64__
+	return __builtin_aarch64_usri_nv4si_uuus(__vins, __vsh, __bits);
+#else
+	return (uint32x4_t)__builtin_neon_vsri_nv4si((int32x4_t)__vins,
+	    (int32x4_t)__vsh, __bits);
+#endif
+}
+#elif defined(__clang__)
+#ifdef __LITTLE_ENDIAN__
+#define	vsriq_n_u32(__vins, __vsh, __bits)				      \
+	(int32x4_t)__builtin_neon_vsriq_n_v((int32x4_t)(__vins),	      \
+	    (int32x4_t)(__vsh), (__bits), 34)
+#else
+#define	vsliq_n_s32(__vins, __vsh, __bits) (				      \
+{									      \
+	int32x4_t __tvins = (__vins);					      \
+	int32x4_t __tvsh = (__vsh);					      \
+	uint8_t __tbits = (__bits);					      \
+	int32x4_t __vins_r = __builtin_shufflevector(__tvins, __tvins,	      \
+	    3,2,1,0);							      \
+	int32x4_t __vsh_r = __builtin_shufflevector(__tvsh, __tvsh,	      \
+	    3,2,1,0);							      \
+	int32x4_t __r = __builtin_neon_vsriq_n_v(__tvins, __tvsh, __tbits,    \
+	    34);							      \
+	__builtin_shufflevector(__r, __r, 3,2,1,0);			      \
+})
+#endif
 #endif
 
 _INTRINSATTR

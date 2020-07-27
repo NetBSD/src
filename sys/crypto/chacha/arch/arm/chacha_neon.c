@@ -1,4 +1,4 @@
-/*	$NetBSD: chacha_neon.c,v 1.4 2020/07/27 20:58:06 riastradh Exp $	*/
+/*	$NetBSD: chacha_neon.c,v 1.5 2020/07/27 20:58:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,15 @@ static inline uint32x4_t
 vrolq_n_u32(uint32x4_t x, uint8_t n)
 {
 
+	/*
+	 * Tempting to use VSHL/VSRI instead of VSHL/VSHR/VORR, but in
+	 * practice it hurts performance at least on Cortex-A8.
+	 */
+#if 1
 	return vshlq_n_u32(x, n) | vshrq_n_u32(x, 32 - n);
+#else
+	return vsriq_n_u32(vshlq_n_u32(x, n), x, 32 - n);
+#endif
 }
 
 static inline uint32x4_t
