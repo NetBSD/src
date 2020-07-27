@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_neon.h,v 1.1 2020/07/25 22:51:57 riastradh Exp $	*/
+/*	$NetBSD: arm_neon.h,v 1.2 2020/07/27 20:58:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 typedef __Int32x4_t int32x4_t;
 typedef __Int64x2_t int64x2_t;
 typedef __Int8x16_t int8x16_t;
+typedef __Uint16x8_t uint16x8_t;
 typedef __Uint32x4_t uint32x4_t;
 typedef __Uint64x2_t uint64x2_t;
 typedef __Uint8x16_t uint8x16_t;
@@ -46,6 +47,7 @@ typedef __Uint8x16_t uint8x16_t;
 typedef __simd128_int32_t int32x4_t;
 typedef __simd128_int64_t int64x2_t;
 typedef __simd128_int8_t int8x16_t;
+typedef __simd128_uint16_t uint16x8_t;
 typedef __simd128_uint32_t uint32x4_t;
 typedef __simd128_uint64_t uint64x2_t;
 typedef __simd128_uint8_t uint8x16_t;
@@ -70,9 +72,11 @@ typedef struct { uint8x8_t val[2]; } uint8x8x2_t;
 typedef __attribute__((neon_vector_type(16))) int8_t int8x16_t;
 typedef __attribute__((neon_vector_type(2))) int64_t int64x2_t;
 typedef __attribute__((neon_vector_type(4))) int32_t int32x4_t;
+
 typedef __attribute__((neon_vector_type(16))) uint8_t uint8x16_t;
 typedef __attribute__((neon_vector_type(2))) uint64_t uint64x2_t;
 typedef __attribute__((neon_vector_type(4))) uint32_t uint32x4_t;
+typedef __attribute__((neon_vector_type(8))) uint16_t uint16x8_t;
 
 typedef __attribute__((neon_vector_type(8))) uint8_t uint8x8_t;
 typedef struct { uint8x8_t val[2]; } uint8x8x2_t;
@@ -330,10 +334,38 @@ vreinterpretq_s32_u8(uint8x16_t __v)
 }
 
 _INTRINSATTR
+static __inline uint16x8_t
+vreinterpretq_u16_u32(uint32x4_t __v)
+{
+	return (uint16x8_t)__v;
+}
+
+_INTRINSATTR
+static __inline uint32x4_t
+vreinterpretq_u32_u16(uint16x8_t __v)
+{
+	return (uint32x4_t)__v;
+}
+
+_INTRINSATTR
+static __inline uint32x4_t
+vreinterpretq_u32_u64(uint64x2_t __v)
+{
+	return (uint32x4_t)__v;
+}
+
+_INTRINSATTR
 static __inline uint32x4_t
 vreinterpretq_u32_u8(uint8x16_t __v)
 {
 	return (uint32x4_t)__v;
+}
+
+_INTRINSATTR
+static __inline uint64x2_t
+vreinterpretq_u64_u32(uint32x4_t __v)
+{
+	return (uint64x2_t)__v;
 }
 
 _INTRINSATTR
@@ -362,6 +394,17 @@ static __inline uint8x16_t
 vreinterpretq_u8_u64(uint64x2_t __v)
 {
 	return (uint8x16_t)__v;
+}
+
+_INTRINSATTR
+static __inline uint16x8_t
+vrev32q_u16(uint16x8_t __v)
+{
+#if defined(__GNUC__) && !defined(__clang__)
+	return __builtin_shuffle(__v, (uint16x8_t) { 1,0, 3,2, 5,4, 7,6 });
+#elif defined(__clang__)
+	return __builtin_shufflevector(__v,  1,0, 3,2, 5,4, 7,6);
+#endif
 }
 
 _INTRINSATTR
@@ -530,5 +573,59 @@ vst1q_u8(uint8_t *__p8, uint8x16_t __v)
 	__builtin_neon_vst1q_v(__p8, __v, 48);
 #endif
 }
+
+#ifndef __aarch64__		/* XXX */
+
+_INTRINSATTR
+static __inline uint8x8_t
+vtbl1_u8(uint8x8_t __tab, uint8x8_t __idx)
+{
+#if defined(__GNUC__) && !defined(__clang__)
+	return (uint8x8_t)__builtin_neon_vtbl1v8qi((int8x8_t)__tab,
+	    (int8x8_t)__idx);
+#elif defined(__clang__)
+	uint8x8_t __ret;
+#ifndef __LITTLE_ENDIAN__
+	__tab = __builtin_shufflevector(__tab, __tab, 7,6,5,4,3,2,1,0);
+	__idx = __builtin_shufflevector(__idx, __idx, 7,6,5,4,3,2,1,0);
+#endif
+	__ret = (uint8x8_t)__builtin_neon_vtbl1_v((int8x8_t)__tab,
+	    (int8x8_t)__idx, 16);
+#ifndef __LITTLE_ENDIAN__
+	__ret = __builtin_shufflevector(__ret, __ret, 7,6,5,4,3,2,1,0);
+#endif
+	return __ret;
+#endif
+}
+
+_INTRINSATTR
+static __inline uint8x8_t
+vtbl2_u8(uint8x8x2_t __tab, uint8x8_t __idx)
+{
+#if defined(__GNUC__) && !defined(__clang__)
+	union {
+		uint8x8x2_t __u8x8x82;
+		__builtin_neon_ti __ti;
+	} __u = { __tab };
+	return (uint8x8_t)__builtin_neon_vtbl2v8qi(__u.__ti, (int8x8_t)__idx);
+#elif defined(__clang__)
+	uint8x8_t __ret;
+#ifndef __LITTLE_ENDIAN__
+	__tab.val[0] = __builtin_shufflevector(__tab.val[0], __tab.val[0],
+	    7,6,5,4,3,2,1,0);
+	__tab.val[1] = __builtin_shufflevector(__tab.val[1], __tab.val[1],
+	    7,6,5,4,3,2,1,0);
+	__idx = __builtin_shufflevector(__idx, __idx, 7,6,5,4,3,2,1,0);
+#endif
+	__ret = (uint8x8_t)__builtin_neon_vtbl2_v((int8x8_t)__tab.val[0],
+	    (int8x8_t)__tab.val[1], (int8x8_t)__idx, 16);
+#ifndef __LITTLE_ENDIAN__
+	__ret = __builtin_shufflevector(__ret, __ret, 7,6,5,4,3,2,1,0);
+#endif
+	return __ret;
+#endif
+}
+
+#endif	/* !defined(__aarch64__) */
 
 #endif	/* _SYS_CRYPTO_CHACHA_ARCH_ARM_ARM_NEON_H */
