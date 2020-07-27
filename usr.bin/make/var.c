@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.349 2020/07/27 23:37:37 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.350 2020/07/27 23:56:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.349 2020/07/27 23:37:37 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.350 2020/07/27 23:56:15 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.349 2020/07/27 23:37:37 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.350 2020/07/27 23:56:15 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2036,16 +2036,24 @@ VarStrftime(const char *fmt, int zulu, time_t utc)
     return bmake_strdup(buf);
 }
 
+/* The ApplyModifier functions all work in the same way.
+ * They parse the modifier (often until the next colon) and store the
+ * updated position for the parser into st->next.
+ * They take the st->val and generate st->newVal from it.
+ * On success, they set st->termc to *st->next, redundantly.
+ * On failure, many of them update st->missing_delim.
+ */
 typedef struct {
-    /* const parameters */
     int startc;			/* '\0' or '{' or '(' */
     int endc;
     Var *v;
     GNode *ctxt;
     VarEvalFlags eflags;
 
-    /* read-write */
-    char *val;
+    char *val;			/* The value of the expression before the
+				 * modifier is applied */
+    char *newVal;		/* The new value after applying the modifier
+				 * to the expression */
     const char *next;		/* The position where parsing continues
 				 * after the current modifier. */
     char termc;			/* Character which terminated scan */
@@ -2058,8 +2066,6 @@ typedef struct {
 				 * usual behaviour of treating it as
 				 * several space-separated words). */
 
-    /* result */
-    char *newVal;		/* New value to return */
 } ApplyModifiersState;
 
 /* we now have some modifiers with long names */
@@ -3070,7 +3076,7 @@ ApplyModifiers(char *val, const char * const tstr,
 {
     ApplyModifiersState st = {
 	startc, endc, v, ctxt, eflags,
-	val, tstr, '\0', '\0', ' ', FALSE, NULL
+	val, NULL, NULL, '\0', '\0', ' ', FALSE
     };
 
     const char *p = tstr;
