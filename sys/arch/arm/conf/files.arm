@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.159 2020/07/27 20:49:45 riastradh Exp $
+#	$NetBSD: files.arm,v 1.160 2020/07/27 20:51:29 riastradh Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -265,3 +265,6 @@ file	dev/tprof/tprof_armv7.c			tprof
 
 # vpaes with ARM NEON
 include "crypto/aes/arch/arm/files.aesneon"
+
+# ChaCha with ARM NEON
+include "crypto/chacha/arch/arm/files.chacha_arm"
