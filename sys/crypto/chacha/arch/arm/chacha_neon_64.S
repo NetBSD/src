@@ -1,4 +1,4 @@
-/*	$NetBSD: chacha_neon_64.S,v 1.2 2020/07/27 20:50:25 riastradh Exp $	*/
+/*	$NetBSD: chacha_neon_64.S,v 1.3 2020/07/27 20:53:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -201,6 +201,7 @@ ENTRY(chacha_stream256_neon)
 	mov	w11, v14.s[0]
 	mov	w12, v15.s[0]
 
+	_ALIGN_TEXT
 1:	subs	w5, w5, #2
 	ROUND(v0,v1,v2,v3, v4,v5,v6,v7, v8,v9,v10,v11, v12,v13,v14,v15,
 	    v28,v29,v30,v31, v27)
@@ -339,6 +340,7 @@ ENTRY(chacha_stream_xor256_neon)
 	mov	w11, v14.s[0]
 	mov	w12, v15.s[0]
 
+        _ALIGN_TEXT
 1:	subs	w6, w6, #2
 	ROUND(v0,v1,v2,v3, v4,v5,v6,v7, v8,v9,v10,v11, v12,v13,v14,v15,
 	    v28,v29,v30,v31, v27)
