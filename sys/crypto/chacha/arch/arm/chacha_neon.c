@@ -1,4 +1,4 @@
-/*	$NetBSD: chacha_neon.c,v 1.3 2020/07/27 20:51:29 riastradh Exp $	*/
+/*	$NetBSD: chacha_neon.c,v 1.4 2020/07/27 20:58:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -59,6 +59,69 @@ vletoh_u32(uint32x4_t x)
 #endif
 }
 
+static inline uint32x4_t
+rol16(uint32x4_t x)
+{
+	uint16x8_t y16, x16 = vreinterpretq_u16_u32(x);
+
+	y16 = vrev32q_u16(x16);
+
+	return vreinterpretq_u32_u16(y16);
+}
+
+static inline uint32x4_t
+rol12(uint32x4_t x)
+{
+
+	return vrolq_n_u32(x, 12);
+}
+
+static inline uint32x4_t
+rol8(uint32x4_t x)
+{
+#if defined(__aarch64__)
+	static const uint8x16_t rol8_tab = {
+		  3, 0, 1, 2,  7, 4, 5, 6,
+		 11, 8, 9,10, 15,12,13,14,
+	};
+	uint8x16_t y8, x8 = vreinterpretq_u8_u32(x);
+
+	y8 = vqtbl1q_u8(x8, rol8_tab);
+
+	return vreinterpretq_u32_u8(y8);
+#elif 0
+	/*
+	 * GCC does a lousy job with this, spilling two 64-bit vector
+	 * registers to the stack every time.  There should be plenty
+	 * of vector registers free, requiring no spills at all, and
+	 * GCC should be able to hoist the load of rol8_tab out of any
+	 * loops, but it doesn't and so attempting to use VTBL hurts
+	 * more than it helps.
+	 */
+	static const uint8x8_t rol8_tab = {
+		 3, 0, 1, 2,  7, 4, 5, 6,
+	};
+
+	uint64x2_t y64, x64 = vreinterpretq_u64_u32(x);
+
+	y64 = (uint64x2_t) {
+		(uint64_t)vtbl1_u8((uint8x8_t)x64[0], rol8_tab),
+		(uint64_t)vtbl1_u8((uint8x8_t)x64[1], rol8_tab),
+	};
+
+	return vreinterpretq_u32_u64(y64);
+#else
+	return vrolq_n_u32(x, 8);
+#endif
+}
+
+static inline uint32x4_t
+rol7(uint32x4_t x)
+{
+
+	return vrolq_n_u32(x, 7);
+}
+
 static inline void
 chacha_permute(uint32x4_t *p0, uint32x4_t *p1, uint32x4_t *p2, uint32x4_t *p3,
     unsigned nr)
@@ -72,20 +135,20 @@ chacha_permute(uint32x4_t *p0, uint32x4_t *p1, uint32x4_t *p2, uint32x4_t *p3,
 	r3 = *p3;
 
 	for (; nr > 0; nr -= 2) {
-		r0 = vaddq_u32(r0, r1); r3 ^= r0; r3 = vrolq_n_u32(r3, 16);
-		r2 = vaddq_u32(r2, r3); r1 ^= r2; r1 = vrolq_n_u32(r1, 12);
-		r0 = vaddq_u32(r0, r1); r3 ^= r0; r3 = vrolq_n_u32(r3, 8);
-		r2 = vaddq_u32(r2, r3); r1 ^= r2; r1 = vrolq_n_u32(r1, 7);
+		r0 = vaddq_u32(r0, r1); r3 ^= r0; r3 = rol16(r3);
+		r2 = vaddq_u32(r2, r3); r1 ^= r2; r1 = rol12(r1);
+		r0 = vaddq_u32(r0, r1); r3 ^= r0; r3 = rol8(r3);
+		r2 = vaddq_u32(r2, r3); r1 ^= r2; r1 = rol7(r1);
 
 		c0 = r0;
 		c1 = vextq_u32(r1, r1, 1);
 		c2 = vextq_u32(r2, r2, 2);
 		c3 = vextq_u32(r3, r3, 3);
 
-		c0 = vaddq_u32(c0, c1); c3 ^= c0; c3 = vrolq_n_u32(c3, 16);
-		c2 = vaddq_u32(c2, c3); c1 ^= c2; c1 = vrolq_n_u32(c1, 12);
-		c0 = vaddq_u32(c0, c1); c3 ^= c0; c3 = vrolq_n_u32(c3, 8);
-		c2 = vaddq_u32(c2, c3); c1 ^= c2; c1 = vrolq_n_u32(c1, 7);
+		c0 = vaddq_u32(c0, c1); c3 ^= c0; c3 = rol16(c3);
+		c2 = vaddq_u32(c2, c3); c1 ^= c2; c1 = rol12(c1);
+		c0 = vaddq_u32(c0, c1); c3 ^= c0; c3 = rol8(c3);
+		c2 = vaddq_u32(c2, c3); c1 ^= c2; c1 = rol7(c1);
 
 		r0 = c0;
 		r1 = vextq_u32(c1, c1, 3);
