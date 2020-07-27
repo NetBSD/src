@@ -74,7 +74,7 @@ MODULE_DEVICE_TABLE(pci, xmm7360_ids);
 #include "opt_gateway.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xmm7360.c,v 1.2 2020/07/26 17:12:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xmm7360.c,v 1.3 2020/07/27 14:09:00 riastradh Exp $");
 #endif
 
 #include <sys/param.h>
@@ -188,7 +188,7 @@ typedef struct mutex spinlock_t;
 	+ __validate_container_of(PTR, TYPE, FIELD))
 
 /* Copied from NetBSD <sys/cdefs.h> */
-#define __UNVOLATILE(a)		((void *)(unsigned long)(volatile void *)(a))	
+#define __UNVOLATILE(a)		((void *)(unsigned long)(volatile void *)(a))
 
 #if OpenBSD <= 201911
 /* Backward compat with OpenBSD 6.6 */
@@ -263,7 +263,7 @@ typedef struct kmutex spinlock_t;
 #define XMM_KQ_ISFD_INITIALIZER		.f_isfd = 1
 #define tty_lock()			mutex_spin_enter(&tty_lock)
 #define tty_unlock()			mutex_spin_exit(&tty_lock)
-#define tty_locked()			KASSERT(mutex_owned(&tty_lock))	
+#define tty_locked()			KASSERT(mutex_owned(&tty_lock))
 #define bpfattach(bpf, ifp, dlt, sz)	bpf_attach(ifp, dlt, sz)
 #define NBPFILTER			1
 #define BPF_MTAP_OUT(ifp, m)		bpf_mtap(ifp, m, BPF_D_OUT)
@@ -3058,7 +3058,7 @@ wwan_if_input(struct ifnet *ifp, struct mbuf *m)
 	if_statadd(ifp, if_ibytes, m->m_pkthdr.len);
 
 	/*
-	 * The interface can't receive packets for other host, so never 
+	 * The interface can't receive packets for other host, so never
 	 * really IFF_PROMISC even if bpf listener is attached.
 	 */
 	if (pfil_run_hooks(ifp->if_pfil, &m, ifp, PFIL_IN) != 0)
