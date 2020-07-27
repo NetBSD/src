@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.339 2020/07/27 21:08:41 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.340 2020/07/27 21:54:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.339 2020/07/27 21:08:41 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.340 2020/07/27 21:54:25 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.339 2020/07/27 21:08:41 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.340 2020/07/27 21:54:25 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2067,12 +2067,21 @@ typedef struct {
 } ApplyModifiersState;
 
 /* we now have some modifiers with long names */
-#define STRMOD_MATCH(s, want, n) \
-    (strncmp(s, want, n) == 0 && (s[n] == st->endc || s[n] == ':'))
-#define STRMOD_MATCHX(s, want, n) \
-    (strncmp(s, want, n) == 0 && \
-     (s[n] == st->endc || s[n] == ':' || s[n] == '='))
-#define CHARMOD_MATCH(c) (c == st->endc || c == ':')
+static Boolean
+ModMatch(const char *mod, const char *modname, char endc)
+{
+    size_t n = strlen(modname);
+    return strncmp(mod, modname, n) == 0 &&
+	   (mod[n] == endc || mod[n] == ':');
+}
+
+static inline Boolean
+ModMatchEq(const char *mod, const char *modname, char endc)
+{
+    size_t n = strlen(modname);
+    return strncmp(mod, modname, n) == 0 &&
+	   (mod[n] == endc || mod[n] == ':' || mod[n] == '=');
+}
 
 /* :@var@...${var}...@ */
 static Boolean
@@ -2179,13 +2188,14 @@ ApplyModifier_Defined(const char *mod, ApplyModifiersState *st)
 static Boolean
 ApplyModifier_Gmtime(const char *mod, ApplyModifiersState *st)
 {
-    time_t utc;
-    char *ep;
-
-    st->cp = mod + 1;		/* make sure it is set */
-    if (!STRMOD_MATCHX(mod, "gmtime", 6))
+    if (!ModMatchEq(mod, "gmtime", st->endc)) {
+	st->cp = mod + 1;
 	return FALSE;
+    }
+
+    time_t utc;
     if (mod[6] == '=') {
+	char *ep;
 	utc = strtoul(mod + 7, &ep, 10);
 	st->cp = ep;
     } else {
@@ -2201,14 +2211,14 @@ ApplyModifier_Gmtime(const char *mod, ApplyModifiersState *st)
 static Boolean
 ApplyModifier_Localtime(const char *mod, ApplyModifiersState *st)
 {
-    time_t utc;
-    char *ep;
-
-    st->cp = mod + 1;	/* make sure it is set */
-    if (!STRMOD_MATCHX(mod, "localtime", 9))
+    if (!ModMatchEq(mod, "localtime", st->endc)) {
+	st->cp = mod + 1;
 	return FALSE;
+    }
 
+    time_t utc;
     if (mod[9] == '=') {
+	char *ep;
 	utc = strtoul(mod + 10, &ep, 10);
 	st->cp = ep;
     } else {
@@ -2224,9 +2234,11 @@ ApplyModifier_Localtime(const char *mod, ApplyModifiersState *st)
 static Boolean
 ApplyModifier_Hash(const char *mod, ApplyModifiersState *st)
 {
-    st->cp = mod + 1;	/* make sure it is set */
-    if (!STRMOD_MATCH(mod, "hash", 4))
+    if (!ModMatch(mod, "hash", st->endc)) {
+	st->cp = mod + 1;
 	return FALSE;
+    }
+
     st->newStr = VarHash(st->nstr);
     st->cp = mod + 4;
     st->termc = *st->cp;
@@ -2286,14 +2298,14 @@ ApplyModifier_Exclam(const char *mod, ApplyModifiersState *st)
 static Boolean
 ApplyModifier_Range(const char *mod, ApplyModifiersState *st)
 {
-    int n;
-    char *ep;
-
-    st->cp = mod + 1;	/* make sure it is set */
-    if (!STRMOD_MATCHX(mod, "range", 5))
+    if (!ModMatchEq(mod, "range", st->endc)) {
+	st->cp = mod + 1;
 	return FALSE;
+    }
 
+    int n;
     if (mod[5] == '=') {
+	char *ep;
 	n = strtoul(mod + 6, &ep, 10);
 	st->cp = ep;
     } else {
@@ -2910,23 +2922,20 @@ ApplyModifier_Assign(const char *mod, ApplyModifiersState *st)
 static Boolean
 ApplyModifier_Remember(const char *mod, ApplyModifiersState *st)
 {
-    st->cp = mod + 1;	/* make sure it is set */
-    if (!STRMOD_MATCHX(mod, "_", 1))
+    if (!ModMatchEq(mod, "_", st->endc)) {
+	st->cp = mod + 1;
 	return FALSE;
+    }
 
     if (mod[1] == '=') {
-	char *np;
-	int n;
-
-	st->cp++;
-	n = strcspn(st->cp, ":)}");
-	np = bmake_strndup(st->cp, n + 1);
-	np[n] = '\0';
+	size_t n = strcspn(mod + 2, ":)}");
+	char *name = bmake_strndup(mod + 2, n);
+	Var_Set(name, st->nstr, st->ctxt);
+	free(name);
 	st->cp = mod + 2 + n;
-	Var_Set(np, st->nstr, st->ctxt);
-	free(np);
     } else {
 	Var_Set("_", st->nstr, st->ctxt);
+	st->cp = mod + 1;
     }
     st->newStr = st->nstr;
     st->termc = *st->cp;

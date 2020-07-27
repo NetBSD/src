@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.26 2020/07/26 13:09:53 rillig Exp $
+# $Id: modmisc.mk,v 1.27 2020/07/27 21:54:25 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -27,6 +27,7 @@ all:	mod-assign-nested
 all:	mod-tu-space
 all:	mod-quote
 all:	mod-break-many-words
+all:	mod-remember
 
 # See also sysv.mk.
 modsysv:
@@ -242,3 +243,11 @@ mod-quote:
 # Cover the bmake_realloc in brk_string.
 mod-break-many-words:
 	@echo $@: ${UNDEF:U:range=500:[#]}
+
+# Demonstrate the :_ modifier.
+# In the parameterized form, having the variable name on the right side
+# of the = assignment operator is confusing. Luckily this modifier is
+# only rarely needed.
+mod-remember:
+	@echo $@: ${1 2 3:L:_:@var@${_}@}
+	@echo $@: ${1 2 3:L:@var@${var:_=SAVED:}@}, SAVED=${SAVED}
