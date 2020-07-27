@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.20 2020/07/23 19:04:03 skrll Exp $	*/
+/* 	$NetBSD: intr.h,v 1.21 2020/07/27 12:32:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -72,6 +72,14 @@
 
 #include <sys/queue.h>
 
+#if defined(_MODULE)
+
+int	_splraise(int);
+int	_spllower(int);
+void	splx(int);
+
+#else	/* _MODULE */
+
 #include "opt_arm_intr_impl.h"
 
 #if defined(ARM_INTR_IMPL)
@@ -117,6 +125,8 @@
 #endif	/* ARM_INTR_IMPL */
 
 #define splsoft()	_splraise(IPL_SOFT)
+
+#endif /* _MODULE */
 
 typedef uint8_t ipl_t;
 typedef struct {
