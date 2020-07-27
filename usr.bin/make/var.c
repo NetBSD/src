@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.346 2020/07/27 22:59:49 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.347 2020/07/27 23:04:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.346 2020/07/27 22:59:49 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.347 2020/07/27 23:04:18 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.346 2020/07/27 22:59:49 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.347 2020/07/27 23:04:18 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2325,34 +2325,33 @@ ApplyModifier_Match(const char *mod, ApplyModifiersState *st)
      * XXX This will likely not work right if $() and ${} are intermixed.
      */
     int nest = 1;
-    for (st->cp = mod + 1;
-	 *st->cp != '\0' && !(*st->cp == ':' && nest == 1);
-	 st->cp++) {
-	if (*st->cp == '\\' &&
-	    (st->cp[1] == ':' || st->cp[1] == st->endc ||
-	     st->cp[1] == st->startc)) {
+    const char *p;
+    for (p = mod + 1; *p != '\0' && !(*p == ':' && nest == 1); p++) {
+	if (*p == '\\' &&
+	    (p[1] == ':' || p[1] == st->endc || p[1] == st->startc)) {
 	    if (!needSubst)
 		copy = TRUE;
-	    st->cp++;
+	    p++;
 	    continue;
 	}
-	if (*st->cp == '$')
+	if (*p == '$')
 	    needSubst = TRUE;
-	if (*st->cp == '(' || *st->cp == '{')
+	if (*p == '(' || *p == '{')
 	    ++nest;
-	if (*st->cp == ')' || *st->cp == '}') {
+	if (*p == ')' || *p == '}') {
 	    --nest;
 	    if (nest == 0)
 		break;
 	}
     }
+    st->cp = p;
     st->termc = *st->cp;
     const char *endpat = st->cp;
 
     char *pattern;
     if (copy) {
 	/* Compress the \:'s out of the pattern. */
-	pattern = bmake_malloc(st->cp - (mod + 1) + 1);
+	pattern = bmake_malloc(endpat - (mod + 1) + 1);
 	char *dst = pattern;
 	const char *src = mod + 1;
 	for (; src < endpat; src++, dst++) {
