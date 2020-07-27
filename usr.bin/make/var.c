@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.344 2020/07/27 22:30:00 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.345 2020/07/27 22:50:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.344 2020/07/27 22:30:00 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.345 2020/07/27 22:50:01 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.344 2020/07/27 22:30:00 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.345 2020/07/27 22:50:01 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2351,19 +2351,14 @@ ApplyModifier_Match(const char *mod, ApplyModifiersState *st)
 
     char *pattern = NULL;
     if (copy) {
-	/*
-	 * Need to compress the \:'s out of the pattern, so
-	 * allocate enough room to hold the uncompressed
-	 * pattern (note that st->cp started at mod+1, so
-	 * st->cp - mod takes the null byte into account) and
-	 * compress the pattern into the space.
-	 */
-	pattern = bmake_malloc(st->cp - mod);
+	/* Compress the \:'s out of the pattern. */
+	pattern = bmake_malloc(st->cp - (mod + 1) + 1);
 	char *cp2;
 	for (cp2 = pattern, st->cp = mod + 1;
 	     st->cp < endpat;
 	     st->cp++, cp2++) {
 	    if ((*st->cp == '\\') && (st->cp+1 < endpat) &&
+		/* XXX: st->startc is missing here; see above */
 		(st->cp[1] == ':' || st->cp[1] == st->endc))
 		st->cp++;
 	    *cp2 = *st->cp;
