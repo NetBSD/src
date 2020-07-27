@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.69 2020/07/25 22:12:56 riastradh Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.70 2020/07/27 20:51:29 riastradh Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -32,7 +32,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.69 2020/07/25 22:12:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.70 2020/07/27 20:51:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.69 2020/07/25 22:12:56 riastradh Exp 
 
 #include <crypto/aes/aes_impl.h>
 #include <crypto/aes/arch/arm/aes_neon.h>
+#include <crypto/chacha/arch/arm/chacha_neon.h>
+#include <crypto/chacha/chacha_impl.h>
 
 #ifdef FPU_VFP
 
@@ -409,6 +411,7 @@ vfp_attach(struct cpu_info *ci)
 			install_coproc_handler(CORE_UNKNOWN_HANDLER,
 			    neon_handler);
 			aes_md_init(&aes_neon_impl);
+			chacha_md_init(&chacha_neon_impl);
 		}
 #endif
 	}
