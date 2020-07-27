@@ -1,4 +1,4 @@
-/*	$NetBSD: chacha_impl.c,v 1.2 2020/07/27 20:45:15 riastradh Exp $	*/
+/*	$NetBSD: chacha_impl.c,v 1.3 2020/07/27 20:49:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -38,16 +38,13 @@
 #include "chacha.h"
 #include "chacha_ref.h"
 
-static const struct chacha_impl	*chacha_md_impl	__read_mostly;
-static const struct chacha_impl	*chacha_impl	__read_mostly;
+static const struct chacha_impl	*chacha_md_impl __read_mostly;
+static const struct chacha_impl	*chacha_impl __read_mostly = &chacha_ref_impl;
 
 static int
 sysctl_kern_crypto_chacha_selected(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
-
-	KASSERTMSG(chacha_impl != NULL,
-	    "sysctl ran before ChaCha implementation was selected");
 
 	node = *rnode;
 	node.sysctl_data = __UNCONST(chacha_impl->ci_name);
@@ -79,8 +76,6 @@ static int
 chacha_select(void)
 {
 
-	KASSERT(chacha_impl == NULL);
-
 	if (chacha_md_impl) {
 		if (chacha_selftest(chacha_md_impl))
 			aprint_error("chacha: self-test failed: %s\n",
@@ -88,15 +83,6 @@ chacha_select(void)
 		else
 			chacha_impl = chacha_md_impl;
 	}
-	if (chacha_impl == NULL) {
-		if (chacha_selftest(&chacha_ref_impl))
-			aprint_error("chacha: self-test failed: %s\n",
-			    chacha_ref_impl.ci_name);
-		else
-			chacha_impl = &chacha_ref_impl;
-	}
-	if (chacha_impl == NULL)
-		panic("ChaCha self-tests failed");
 
 	aprint_verbose("chacha: %s\n", chacha_impl->ci_name);
 	return 0;
@@ -118,26 +104,11 @@ chacha_modcmd(modcmd_t cmd, void *opaque)
 	}
 }
 
-static void
-chacha_guarantee_selected(void)
-{
-#if 0
-	static once_t once;
-	int error;
-
-	error = RUN_ONCE(&once, chacha_select);
-	KASSERT(error == 0);
-#endif
-}
-
 void
 chacha_md_init(const struct chacha_impl *impl)
 {
 
 	KASSERT(cold);
-	KASSERTMSG(chacha_impl == NULL,
-	    "ChaCha implementation `%s' already chosen, can't offer `%s'",
-	    chacha_impl->ci_name, impl->ci_name);
 	KASSERTMSG(chacha_md_impl == NULL,
 	    "ChaCha implementation `%s' already offered, can't offer `%s'",
 	    chacha_md_impl->ci_name, impl->ci_name);
@@ -153,7 +124,6 @@ chacha_core(uint8_t out[restrict static CHACHA_CORE_OUTBYTES],
     unsigned nr)
 {
 
-	chacha_guarantee_selected();
 	(*chacha_impl->ci_chacha_core)(out, in, k, c, nr);
 }
 
@@ -165,7 +135,6 @@ hchacha(uint8_t out[restrict static HCHACHA_OUTBYTES],
     unsigned nr)
 {
 
-	chacha_guarantee_selected();
 	(*chacha_impl->ci_hchacha)(out, in, k, c, nr);
 }
 
@@ -176,7 +145,6 @@ chacha_stream(uint8_t *restrict s, size_t nbytes, uint32_t blkno,
     unsigned nr)
 {
 
-	chacha_guarantee_selected();
 	(*chacha_impl->ci_chacha_stream)(s, nbytes, blkno, nonce, key, nr);
 }
 
@@ -187,7 +155,6 @@ chacha_stream_xor(uint8_t *c, const uint8_t *p, size_t nbytes, uint32_t blkno,
     unsigned nr)
 {
 
-	chacha_guarantee_selected();
 	(*chacha_impl->ci_chacha_stream_xor)(c, p, nbytes, blkno, nonce, key,
 	    nr);
 }
@@ -199,7 +166,6 @@ xchacha_stream(uint8_t *restrict s, size_t nbytes, uint32_t blkno,
     unsigned nr)
 {
 
-	chacha_guarantee_selected();
 	(*chacha_impl->ci_xchacha_stream)(s, nbytes, blkno, nonce, key, nr);
 }
 
@@ -210,7 +176,6 @@ xchacha_stream_xor(uint8_t *c, const uint8_t *p, size_t nbytes, uint32_t blkno,
     unsigned nr)
 {
 
-	chacha_guarantee_selected();
 	(*chacha_impl->ci_xchacha_stream_xor)(c, p, nbytes, blkno, nonce, key,
 	    nr);
 }
