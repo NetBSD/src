@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_impl.c,v 1.8 2020/07/25 22:42:03 riastradh Exp $	*/
+/*	$NetBSD: aes_impl.c,v 1.9 2020/07/27 20:45:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_impl.c,v 1.8 2020/07/25 22:42:03 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_impl.c,v 1.9 2020/07/27 20:45:15 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/kernel.h>
@@ -48,7 +48,7 @@ static const struct aes_impl	*aes_md_impl	__read_mostly;
 static const struct aes_impl	*aes_impl	__read_mostly;
 
 static int
-sysctl_hw_aes_impl(SYSCTLFN_ARGS)
+sysctl_kern_crypto_aes_selected(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
 
@@ -61,14 +61,24 @@ sysctl_hw_aes_impl(SYSCTLFN_ARGS)
 	return sysctl_lookup(SYSCTLFN_CALL(&node));
 }
 
-SYSCTL_SETUP(sysctl_hw_aes_setup, "sysctl hw.aes_impl setup")
+SYSCTL_SETUP(sysctl_kern_crypto_aes_setup, "sysctl kern.crypto.aes setup")
 {
+	const struct sysctlnode *cnode;
+	const struct sysctlnode *aes_node;
 
-	sysctl_createv(clog, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT|CTLFLAG_READONLY, CTLTYPE_STRING, "aes_impl",
+	sysctl_createv(clog, 0, NULL, &cnode, 0, CTLTYPE_NODE, "crypto",
+	    SYSCTL_DESCR("Kernel cryptography"),
+	    NULL, 0, NULL, 0,
+	    CTL_KERN, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &cnode, &aes_node, 0, CTLTYPE_NODE, "aes",
+	    SYSCTL_DESCR("AES -- Advanced Encryption Standard"),
+	    NULL, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &aes_node, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READONLY, CTLTYPE_STRING, "selected",
 	    SYSCTL_DESCR("Selected AES implementation"),
-	    sysctl_hw_aes_impl, 0, NULL, 0,
-	    CTL_HW, CTL_CREATE, CTL_EOL);
+	    sysctl_kern_crypto_aes_selected, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL);
 }
 
 /*
