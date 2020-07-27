@@ -1,4 +1,4 @@
-.\" $NetBSD: wwanc.4,v 1.5 2020/07/27 11:12:56 jdolecek Exp $
+.\" $NetBSD: wwanc.4,v 1.6 2020/07/27 14:17:47 jdolecek Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -87,7 +87,8 @@ The
 driver IPv6 support is untested.
 .Pp
 Network initialization requires a Python script published in the Linux
-driver repository.
+driver repository, available as package
+.Pa pkgsrc/net/py-xmm7360 .
 The script requires the management device nodes to be created via:
 .Bd -literal -offset indent
 cd /dev && ./MAKEDEV xmm0
