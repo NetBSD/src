@@ -1,4 +1,4 @@
-/*	$NetBSD: chacha_neon_64.S,v 1.1 2020/07/25 22:51:57 riastradh Exp $	*/
+/*	$NetBSD: chacha_neon_64.S,v 1.2 2020/07/27 20:50:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -26,23 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-.macro	adrl 	reg, addr
-	adrp	\reg, \addr
-	add	\reg, \reg, #:lo12:\addr
-.endm
-
-#define	_ALIGN_TEXT							      \
-	.p2align 4
-
-#define	ENTRY(x)							      \
-	.text;								      \
-	_ALIGN_TEXT;							      \
-	.global	x;							      \
-	.type	x,@function;						      \
-x:
-
-#define	END(x)								      \
-	.size x, . - x
+#include <aarch64/asm.h>
 
 #define	ROUND(a0,b0,c0,d0,a1,b1,c1,d1,a2,b2,c2,d2,a3,b3,c3,d3,t0,t1,t2,t3, r) \
 STEP(STEP0,a0,b0,c0,d0,a1,b1,c1,d1,a2,b2,c2,d2,a3,b3,c3,d3,t0,t1,t2,t3, r);   \
