@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.33 2020/07/26 07:26:52 ryo Exp $ */
+/* $NetBSD: trap.c,v 1.34 2020/07/27 07:32:48 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.33 2020/07/26 07:26:52 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.34 2020/07/27 07:32:48 ryo Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -615,10 +615,10 @@ emul_arm_swp(uint32_t insn, struct trapframe *tf)
 	if ((error = cpu_set_onfault(&fb)) == 0) {
 		if (insn & 0x00400000) {
 			/* swpb */
-			val = atomic_swap_8(vaddr, val);
+			val = atomic_swap_8((uint8_t *)vaddr, val);
 		} else {
 			/* swp */
-			val = atomic_swap_32(vaddr, val);
+			val = atomic_swap_32((uint32_t *)vaddr, val);
 		}
 		cpu_unset_onfault();
 		tf->tf_reg[Rd] = val;
