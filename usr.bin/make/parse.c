@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.239 2020/07/28 16:42:22 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.240 2020/07/28 18:15:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.239 2020/07/28 16:42:22 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.240 2020/07/28 18:15:11 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.239 2020/07/28 16:42:22 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.240 2020/07/28 18:15:11 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1289,7 +1289,16 @@ ParseDoDependency(char *line)
 		(strncmp(line, ">>>>>>", 6) == 0))
 		Parse_Error(PARSE_FATAL,
 		    "Makefile appears to contain unresolved cvs/rcs/??? merge conflicts");
-	    else
+	    else if (lstart[0] == '.') {
+		const char *dirstart = lstart + 1;
+		while (isspace((unsigned char)*dirstart))
+		    dirstart++;
+		const char *dirend = dirstart;
+		while (isalnum((unsigned char)*dirend) || *dirend == '-')
+		    dirend++;
+		Parse_Error(PARSE_FATAL, "Unknown directive \"%.*s\"",
+			    (int)(dirend - dirstart), dirstart);
+	    } else
 		Parse_Error(PARSE_FATAL, lstart[0] == '.' ? "Unknown directive"
 				     : "Need an operator");
 	    goto out;
