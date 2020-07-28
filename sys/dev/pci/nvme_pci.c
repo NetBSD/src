@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme_pci.c,v 1.27 2019/12/02 03:06:51 msaitoh Exp $	*/
+/*	$NetBSD: nvme_pci.c,v 1.28 2020/07/28 09:36:05 jdolecek Exp $	*/
 /*	$OpenBSD: nvme_pci.c,v 1.3 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.27 2019/12/02 03:06:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.28 2020/07/28 09:36:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,6 +108,8 @@ static const struct nvme_pci_quirk {
 	    NVME_QUIRK_DELAY_B4_CHK_RDY },
 	{ PCI_VENDOR_SAMSUNGELEC3, PCI_PRODUCT_SAMSUNGELEC3_172XAB,
 	    NVME_QUIRK_DELAY_B4_CHK_RDY },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_DC_P4500_SSD,
+	    NVME_QUIRK_NOMSI },
 };
 
 static const struct nvme_pci_quirk *
@@ -157,6 +159,10 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 		sc->sc_dmat = pa->pa_dmat64;
 	else
 		sc->sc_dmat = pa->pa_dmat;
+
+	quirk = nvme_pci_lookup_quirk(pa);
+	if (quirk != NULL)
+		sc->sc_quirks = quirk->quirks;
 
 	pci_aprint_devinfo(pa, NULL);
 
@@ -220,10 +226,6 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ih = kmem_zalloc(sizeof(*sc->sc_ih) * psc->psc_nintrs, KM_SLEEP);
 	sc->sc_softih = kmem_zalloc(
 	    sizeof(*sc->sc_softih) * psc->psc_nintrs, KM_SLEEP);
-
-	quirk = nvme_pci_lookup_quirk(pa);
-	if (quirk != NULL)
-		sc->sc_quirks = quirk->quirks;
 
 	if (nvme_attach(sc) != 0) {
 		/* error printed by nvme_attach() */
@@ -412,6 +414,8 @@ nvme_pci_setup_intr(struct pci_attach_args *pa, struct nvme_pci_softc *psc)
 	}
 
 	/* MSI */
+	if (sc->sc_quirks & NVME_QUIRK_NOMSI)
+		goto force_intx;
 	counts[PCI_INTR_TYPE_MSI] = pci_msi_count(pa->pa_pc, pa->pa_tag);
 	if (counts[PCI_INTR_TYPE_MSI] > 0) {
 		while (counts[PCI_INTR_TYPE_MSI] > ncpu + 1) {
