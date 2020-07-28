@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.14 2020/07/28 20:36:43 uwe Exp $	*/
+/*	$NetBSD: locore.S,v 1.15 2020/07/28 21:25:48 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -97,10 +97,7 @@ ALTENTRY(kernel_text)
 	/* Set SP to initial position */
 	mov.l	XLtmpstk, r15
 
-	/* Mask all interrupt */
-	__INTR_MASK(r0, r1)
-
-	/* Set Register Bank to Bank 0 */
+	/* Set Status Register */
 	mov.l	SR_init, r0
 	ldc	r0, sr
 
