@@ -1,4 +1,4 @@
-# $Id: varmisc.mk,v 1.18 2020/07/28 17:18:40 rillig Exp $
+# $Id: varmisc.mk,v 1.19 2020/07/28 19:39:43 rillig Exp $
 #
 # Miscellaneous variable tests.
 
@@ -206,3 +206,14 @@ varerror-unclosed:
 	@echo ${UNCLOSED.${i}
 .endfor
 	@echo $@:end
+
+# As of 2020-07-28, .undef only undefines the first variable.
+# All further variable names are silently ignored.
+# See parse.c, string literal "undef".
+1=		1
+2=		2
+3=		3
+.undef 1 2 3
+.if ${1:U_}${2:U_}${3:U_} != _23
+.warning $1$2$3
+.endif
