@@ -31,7 +31,11 @@ make: "directives.mk" line 132: Unknown directive "elsif"
 make: "directives.mk" line 133: 1 taken
 make: "directives.mk" line 134: Unknown directive "elsif"
 make: "directives.mk" line 135: 2 taken
-make: "directives.mk" line 140: end of the tests
+make: "directives.mk" line 140: Unknown directive "indented"
+make: "directives.mk" line 141: Unknown directive "indented"
+make: "directives.mk" line 142: Unknown directive "indented"
+make: "directives.mk" line 143: Unknown directive "info"
+make: "directives.mk" line 150: end of the tests
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests
 exit status 1
