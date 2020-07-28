@@ -1,3 +1,5 @@
-#	$NetBSD: files.cprng_fast,v 1.2 2014/08/10 16:44:35 tls Exp $
+#	$NetBSD: files.cprng_fast,v 1.3 2020/07/28 20:15:07 riastradh Exp $
 
-file	crypto/cprng_fast/cprng_fast.c
+define	cprng_fast: chacha
+
+file	crypto/cprng_fast/cprng_fast.c	cprng_fast

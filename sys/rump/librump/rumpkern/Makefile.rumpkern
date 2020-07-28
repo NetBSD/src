@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.183 2020/04/30 03:28:19 riastradh Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.184 2020/07/28 20:15:07 riastradh Exp $
 #
 
 IOCONFDIR:=	${.PARSEDIR}
@@ -17,6 +17,7 @@ MAN=		rump.3 rump_lwproc.3
 	${RUMPTOP}/../dev					\
 	${RUMPTOP}/../crypto/nist_hash_drbg			\
 	${RUMPTOP}/../crypto/cprng_fast				\
+	${RUMPTOP}/../crypto/chacha				\
 	${RUMPTOP}/../secmodel					\
 	${RUMPTOP}/../secmodel/suser				\
 	${RUMPTOP}/../compat/common
@@ -156,6 +157,9 @@ SRCS+=	clock_subr.c
 # are available from the rumpkern_crypto component
 SRCS+=	nist_hash_drbg.c
 SRCS+=	cprng_fast.c
+SRCS+=	chacha_impl.c
+SRCS+=	chacha_ref.c
+SRCS+=	chacha_selftest.c
 
 .include "${RUMPTOP}/Makefile.rump"
 .include <bsd.own.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2020/07/26 04:25:49 riastradh Exp $
+#	$NetBSD: Makefile,v 1.13 2020/07/28 20:15:07 riastradh Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../crypto/adiantum				\
@@ -6,7 +6,6 @@
 	${.CURDIR}/../../../../crypto/blowfish				\
 	${.CURDIR}/../../../../crypto/camellia				\
 	${.CURDIR}/../../../../crypto/cast128				\
-	${.CURDIR}/../../../../crypto/chacha				\
 	${.CURDIR}/../../../../crypto/des				\
 	${.CURDIR}/../../../../crypto/skipjack
 
@@ -35,11 +34,6 @@ SRCS+=  camellia.c camellia-api.c
 
 # cast128
 SRCS+=	cast128.c
-
-# ChaCha
-SRCS+=	chacha_impl.c
-SRCS+=	chacha_ref.c
-SRCS+=	chacha_selftest.c
 
 # DES
 SRCS+=	des_ecb.c des_setkey.c des_enc.c des_cbc.c des_module.c
