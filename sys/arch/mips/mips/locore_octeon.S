@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_octeon.S,v 1.12 2020/07/26 07:47:27 simonb Exp $	*/
+/*	$NetBSD: locore_octeon.S,v 1.13 2020/07/28 00:35:38 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <mips/asm.h>
-RCSID("$NetBSD: locore_octeon.S,v 1.12 2020/07/26 07:47:27 simonb Exp $")
+RCSID("$NetBSD: locore_octeon.S,v 1.13 2020/07/28 00:35:38 simonb Exp $")
 
 #include "cpunode.h"			/* for NWDOG */
 #include "opt_cputype.h"
@@ -37,7 +37,7 @@ RCSID("$NetBSD: locore_octeon.S,v 1.12 2020/07/26 07:47:27 simonb Exp $")
 #include <mips/cpuregs.h>
 #include <arch/mips/cavium/dev/octeon_corereg.h>
 
-RCSID("$NetBSD: locore_octeon.S,v 1.12 2020/07/26 07:47:27 simonb Exp $")
+RCSID("$NetBSD: locore_octeon.S,v 1.13 2020/07/28 00:35:38 simonb Exp $")
 
 #include "assym.h"
 
@@ -132,13 +132,10 @@ NESTED_NOPROFILE(octeon_cpu_spinup, 0, ra)
 	COP0_SYNC
 
 	// Indicate this CPU was started by u-boot
-	PTR_LA	t0, _C_LABEL(cpus_booted) # get addr for kcpuset
-1:	sync
-	PTR_L	a0, (t0)		# get kcpuset
-	beqz	a0, 1b			# loop until not NULL
-	 nop
-	jal	_C_LABEL(kcpuset_atomic_set)
-	 move	a1, s0			# pass it our cpu number
+	PTR_LA	a0, _C_LABEL(cpus_booted)
+	li	a1, 1
+	jal	_C_LABEL(atomic_or_64)
+	 sllv	a1, a1, s0		# shift cpu number to bit position
 
 	// Wait until cpuid_infos[cpunum] is not NULL.
 	PTR_LA	a1, _C_LABEL(cpuid_infos)

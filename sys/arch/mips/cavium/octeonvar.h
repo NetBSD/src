@@ -1,4 +1,4 @@
-/*	$NetBSD: octeonvar.h,v 1.16 2020/07/17 21:59:30 jmcneill Exp $	*/
+/*	$NetBSD: octeonvar.h,v 1.17 2020/07/28 00:35:38 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -201,9 +201,6 @@ struct octfau_map {
 
 #ifdef _KERNEL
 extern struct octeon_config	octeon_configuration;
-#ifdef MULTIPROCESSOR
-extern kcpuset_t		*cpus_booted;
-#endif
 
 const char	*octeon_cpu_model(mips_prid_t);
 
