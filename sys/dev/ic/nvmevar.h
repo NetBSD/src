@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmevar.h,v 1.20 2019/06/28 15:08:47 jmcneill Exp $	*/
+/*	$NetBSD: nvmevar.h,v 1.21 2020/07/28 09:36:05 jdolecek Exp $	*/
 /*	$OpenBSD: nvmevar.h,v 1.8 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -140,6 +140,7 @@ struct nvme_softc {
 
 	uint32_t		sc_quirks;
 #define	NVME_QUIRK_DELAY_B4_CHK_RDY	__BIT(0)
+#define	NVME_QUIRK_NOMSI		__BIT(1)
 
 	char			sc_modelname[81];
 };
