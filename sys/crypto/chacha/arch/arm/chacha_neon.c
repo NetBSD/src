@@ -1,4 +1,4 @@
-/*	$NetBSD: chacha_neon.c,v 1.5 2020/07/27 20:58:56 riastradh Exp $	*/
+/*	$NetBSD: chacha_neon.c,v 1.6 2020/07/28 20:05:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@ vhtole_u32(uint32x4_t x)
 #if _BYTE_ORDER == _LITTLE_ENDIAN
 	return x;
 #elif _BYTE_ORDER == _BIG_ENDIAN
-	return vrev32q_u8(x);
+	return vreinterpretq_u32_u8(vrev32q_u8(vreinterpretq_u8_u32(x)));
 #endif
 }
 
@@ -63,7 +63,7 @@ vletoh_u32(uint32x4_t x)
 #if _BYTE_ORDER == _LITTLE_ENDIAN
 	return x;
 #elif _BYTE_ORDER == _BIG_ENDIAN
-	return vrev32q_u8(x);
+	return vreinterpretq_u32_u8(vrev32q_u8(vreinterpretq_u8_u32(x)));
 #endif
 }
 
