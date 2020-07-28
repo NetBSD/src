@@ -35,7 +35,8 @@ make: "directives.mk" line 140: Unknown directive "indented"
 make: "directives.mk" line 141: Unknown directive "indented"
 make: "directives.mk" line 142: Unknown directive "indented"
 make: "directives.mk" line 143: Unknown directive "info"
-make: "directives.mk" line 150: end of the tests
+make: "directives.mk" line 150: Could not find nonexistent.mk
+make: "directives.mk" line 160: end of the tests
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests
 exit status 1
