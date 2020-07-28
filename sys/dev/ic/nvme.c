@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.48 2020/04/07 07:25:41 ryo Exp $	*/
+/*	$NetBSD: nvme.c,v 1.49 2020/07/28 15:59:19 jdolecek Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.48 2020/04/07 07:25:41 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.49 2020/07/28 15:59:19 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -499,7 +499,7 @@ nvme_print(void *aux, const char *pnp)
 	struct nvme_attach_args *naa = aux;
 
 	if (pnp)
-		aprint_normal("at %s", pnp);
+		aprint_normal("ld at %s", pnp);
 
 	if (naa->naa_nsid > 0)
 		aprint_normal(" nsid %d", naa->naa_nsid);
