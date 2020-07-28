@@ -1,11 +1,11 @@
-# $NetBSD: directives.mk,v 1.1 2020/07/27 20:46:17 rillig Exp $
+# $NetBSD: directives.mk,v 1.2 2020/07/28 17:47:57 rillig Exp $
 #
 # Tests for parsing directives, in the same order as in the manual page.
 #
-# Each test group has 10 lines, to keep the expected file stable.
+# Each test group has 10 lines, to keep the line numbers in directives.exp
+# stable.
 #
 # no tests for .error since it exits immediately, see ParseMessage.
-
 
 .info begin .export tests
 .expor				# misspelled
@@ -116,6 +116,26 @@
 .endif
 
 
+
+.info which branch is taken on misspelling after false?
+.if 0
+.elsif 1
+.info 1 taken
+.elsif 2
+.info 2 taken
+.else
+.info else taken
+.endif
+
+.info which branch is taken on misspelling after true?
+.if 1
+.elsif 1
+.info 1 taken
+.elsif 2
+.info 2 taken
+.else
+.info else taken
+.endif
 
 .info end of the tests
 
