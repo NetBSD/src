@@ -19,6 +19,10 @@ make: Unclosed substitution for UNDEF (@ missing)
 make: Unclosed substitution for UNDEF (@ missing)
 
 1 2 3
+modloop-close:
+make: Unclosed variable specification (expecting '}') for "UNDEF" (value "1}... 2}... 3}...") modifier @
+1}... 2}... 3}...
+1}... 2}... 3}...
 Expect: 2 errors about missing ] delimiter
 make: Unclosed substitution for UNDEF (] missing)
 

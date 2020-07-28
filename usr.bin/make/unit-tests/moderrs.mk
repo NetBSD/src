@@ -1,4 +1,4 @@
-# $Id: moderrs.mk,v 1.4 2020/07/26 14:39:46 rillig Exp $
+# $Id: moderrs.mk,v 1.5 2020/07/28 00:13:29 rillig Exp $
 #
 # various modifier error tests
 
@@ -9,6 +9,7 @@ MOD_TERM=S,V,v
 MOD_S:= ${MOD_TERM},
 
 all:	modunkn modunknV varterm vartermV modtermV modloop
+all:	modloop-close
 all:	modwords
 all:	modexclam
 
@@ -37,6 +38,17 @@ modloop:
 	@echo ${UNDEF:U1 2 3:@var}
 	@echo ${UNDEF:U1 2 3:@var@...}
 	@echo ${UNDEF:U1 2 3:@var@${var}@}
+
+# The closing brace after the ${var} is part of the replacement string.
+# In ParseModifierPart, braces and parentheses don't have to be balanced.
+# This is contrary to the :M, :N modifiers, where both parentheses and
+# braces must be balanced.
+# This is also contrary to the SysV modifier, where only the actually
+# used delimiter (either braces or parentheses) must be balanced.
+modloop-close:
+	@echo $@:
+	@echo ${UNDEF:U1 2 3:@var@${var}}...@
+	@echo ${UNDEF:U1 2 3:@var@${var}}...@}
 
 modwords:
 	@echo "Expect: 2 errors about missing ] delimiter"
