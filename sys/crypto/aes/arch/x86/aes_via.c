@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_via.c,v 1.5 2020/07/25 22:31:32 riastradh Exp $	*/
+/*	$NetBSD: aes_via.c,v 1.6 2020/07/28 14:01:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_via.c,v 1.5 2020/07/25 22:31:32 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_via.c,v 1.6 2020/07/28 14:01:35 riastradh Exp $");
 
 #ifdef _KERNEL
 #include <sys/types.h>
@@ -739,6 +739,7 @@ aesvia_ccm_enc1(const struct aesenc *enc, const uint8_t in[static 16],
 		authctr = authctrbuf;
 		ccmenc_unaligned_evcnt.ev_count++;
 	} else {
+		authctr = authctr0;
 		ccmenc_aligned_evcnt.ev_count++;
 	}
 	c0 = le32dec(authctr0 + 16 + 4*0);
@@ -812,6 +813,7 @@ aesvia_ccm_dec1(const struct aesenc *enc, const uint8_t in[static 16],
 		le32enc(authctr + 16 + 4*2, c2);
 		ccmdec_unaligned_evcnt.ev_count++;
 	} else {
+		authctr = authctr0;
 		ccmdec_aligned_evcnt.ev_count++;
 	}
 
