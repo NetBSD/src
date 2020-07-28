@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.13 2020/07/12 03:52:51 uwe Exp $	*/
+/*	$NetBSD: locore.S,v 1.14 2020/07/28 20:36:43 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -76,8 +76,8 @@
 #include "opt_memsize.h"
 #include "assym.h"
 
-#if defined(SH3) && defined(SH4)	
-#error "evbsh3 port don't support SH3,SH4 common kernel."	
+#if defined(SH3) && defined(SH4)
+#error "evbsh3 port don't support SH3,SH4 common kernel."
 #endif
 
 #include <sh3/asm.h>
@@ -142,7 +142,7 @@ start1:
 	mov.l	___start, r3
 	sub	r2, r3
 	mov.l	XL_ram_start, r4
-	mov.l	@r4, r4	
+	mov.l	@r4, r4
 	add	r4, r3		/* dest address */
 1:
 	mov.l	@r1+, r4
@@ -159,7 +159,7 @@ start1:
 	.align	2
 LXstart_in_RAM:
 	.long	start_in_RAM
-XL_ram_start:	
+XL_ram_start:
 	.long	_C_LABEL(ram_start)
 #else /* ROMIMAGE */
 #ifndef	DONT_INIT_BSC
@@ -206,7 +206,7 @@ cache_on:
 	nop
 	jmp @r2
 	nop
-	
+
 	.align	2
 main_label:
 #endif /* SH4 */
