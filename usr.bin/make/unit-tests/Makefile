@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.73 2020/07/28 16:26:37 sjg Exp $
+# $NetBSD: Makefile,v 1.74 2020/07/28 18:39:56 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -158,7 +158,7 @@ _SED_CMDS+=	-e 's,${UNIT_TESTS:S,.,\\.,g}/,,g'
 	@echo postprocess ${.TARGET}
 	@${TOOL_SED} ${_SED_CMDS} ${SED_CMDS.${.TARGET:R}} \
 	  < ${.IMPSRC} > ${.TARGET}.tmp1
-	@${POSTPROC.${.TARGET:R}:U${TOOL_SED}} < ${.TARGET}.tmp1 > ${.TARGET}.tmp2
+	@${POSTPROC.${.TARGET:R}:Ucat} < ${.TARGET}.tmp1 > ${.TARGET}.tmp2
 	@rm ${.TARGET}.tmp1
 	@echo "exit status `cat ${.TARGET:R}.status`" >> ${.TARGET}.tmp2
 	@mv ${.TARGET}.tmp2 ${.TARGET}
