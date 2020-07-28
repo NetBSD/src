@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.181 2020/05/26 14:03:21 jdolecek Exp $
+# $NetBSD: XEN3_DOM0,v 1.182 2020/07/28 09:38:06 jdolecek Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -12,7 +12,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOM0-$Revision: 1.181 $"
+#ident		"XEN3_DOM0-$Revision: 1.182 $"
 
 maxusers	32		# estimated number of users
 
@@ -224,7 +224,6 @@ pci*		at hypervisor? bus ?
 pci*		at pchb? bus ?
 ppb*		at pci? dev ? function ?	# PCI-PCI bridges
 pci*		at ppb? bus ?
-options 	NO_PCI_MSI_MSIX
 
 # pci backend devices, used for PCI pass-through. To export a PCI device
 # to a domU, the device has to be attached to the pciback driver in the dom0.
