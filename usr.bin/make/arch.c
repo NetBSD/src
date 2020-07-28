@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.76 2020/07/27 19:06:45 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.77 2020/07/28 16:42:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.76 2020/07/27 19:06:45 rillig Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.77 2020/07/28 16:42:22 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.76 2020/07/27 19:06:45 rillig Exp $");
+__RCSID("$NetBSD: arch.c,v 1.77 2020/07/28 16:42:22 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -276,7 +276,7 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 
     *cp++ = '\0';
     if (subLibName) {
-	libName = Var_Subst(NULL, libName, ctxt, VARE_UNDEFERR|VARE_WANTRES);
+	libName = Var_Subst(libName, ctxt, VARE_UNDEFERR|VARE_WANTRES);
     }
 
 
@@ -356,8 +356,7 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 	    char    *oldMemName = memName;
 	    size_t   sz;
 
-	    memName = Var_Subst(NULL, memName, ctxt,
-				VARE_UNDEFERR|VARE_WANTRES);
+	    memName = Var_Subst(memName, ctxt, VARE_UNDEFERR | VARE_WANTRES);
 
 	    /*
 	     * Now form an archive spec and recurse to deal with nested
