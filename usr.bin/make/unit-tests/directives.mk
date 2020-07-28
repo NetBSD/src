@@ -1,4 +1,4 @@
-# $NetBSD: directives.mk,v 1.4 2020/07/28 19:19:30 rillig Exp $
+# $NetBSD: directives.mk,v 1.5 2020/07/28 20:57:59 rillig Exp $
 #
 # Tests for parsing directives, in the same order as in the manual page.
 #
@@ -141,6 +141,16 @@
 .  indented 2 spaces
 .	indented tab
 .${:Uinfo} directives cannot be indirect
+
+
+
+
+
+
+.include "nonexistent.mk"
+.include "/dev/null"		# size 0
+# including a directory technically succeeds, but shouldn't.
+#.include "."			# directory
 
 
 
