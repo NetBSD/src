@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21 2020/07/22 13:24:17 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22 2020/07/28 00:35:38 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -114,7 +114,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2020/07/22 13:24:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2020/07/28 00:35:38 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -457,10 +457,6 @@ int	waittime = -1;
 void
 cpu_startup(void)
 {
-#ifdef MULTIPROCESSOR
-	// Create a kcpuset so we can see on which CPUs the kernel was started.
-	kcpuset_create(&cpus_booted, true);
-#endif
 
 	/*
 	 * Do the common startup items.

@@ -29,7 +29,7 @@
 #define __INTR_PRIVATE
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: octeon_cpunode.c,v 1.17 2020/07/22 15:01:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_cpunode.c,v 1.18 2020/07/28 00:35:38 simonb Exp $");
 
 #include "locators.h"
 #include "cpunode.h"
@@ -81,7 +81,10 @@ CFATTACH_DECL_NEW(cpunode, sizeof(struct cpunode_softc),
 CFATTACH_DECL_NEW(cpu_cpunode, 0,
     cpu_cpunode_match, cpu_cpunode_attach, NULL, NULL);
 
-kcpuset_t *cpus_booted;
+#ifdef MULTIPROCESSOR
+CTASSERT(MAXCPUS <= sizeof(uint64_t) * NBBY);
+volatile uint64_t cpus_booted = __BIT(0);	/* cpu0 is always booted */
+#endif
 
 static void wdog_cpunode_poke(void *arg);
 
@@ -125,9 +128,7 @@ cpunode_mainbus_attach(device_t parent, device_t self, void *aux)
 	if (cvmctl & CP0_CVMCTL_REPUN)
 		aprint_normal(", unaligned-access ok");
 #ifdef MULTIPROCESSOR
-	uint32_t booted[1];
-	kcpuset_export_u32(cpus_booted, booted, sizeof(booted));
-	aprint_normal(", booted %#" PRIx32, booted[0]);
+	aprint_normal(", booted %#" PRIx64, cpus_booted);
 #endif
 	aprint_normal("\n");
 
@@ -308,7 +309,7 @@ cpu_cpunode_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (!kcpuset_isset(cpus_booted, cpunum)) {
+	if (!(cpus_booted & __BIT(cpunum))) {
 		aprint_naive(" disabled\n");
 		aprint_normal(" disabled (unresponsive)\n");
 		return;
