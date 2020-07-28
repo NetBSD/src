@@ -1,4 +1,4 @@
-/*	$NetBSD: chacha_neon.c,v 1.6 2020/07/28 20:05:33 riastradh Exp $	*/
+/*	$NetBSD: chacha_neon.c,v 1.7 2020/07/28 20:08:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -221,10 +221,8 @@ chacha_stream_neon(uint8_t *restrict s, size_t n,
     unsigned nr)
 {
 
-#ifdef __aarch64__
 	for (; n >= 256; s += 256, n -= 256, blkno += 4)
 		chacha_stream256_neon(s, blkno, nonce, k, chacha_const32, nr);
-#endif
 
 	if (n) {
 		const uint32x4_t blkno_inc = {1,0,0,0};
@@ -281,11 +279,9 @@ chacha_stream_xor_neon(uint8_t *s, const uint8_t *p, size_t n,
     unsigned nr)
 {
 
-#ifdef __aarch64__
 	for (; n >= 256; s += 256, p += 256, n -= 256, blkno += 4)
 		chacha_stream_xor256_neon(s, p, blkno, nonce, k,
 		    chacha_const32, nr);
-#endif
 
 	if (n) {
 		const uint32x4_t blkno_inc = {1,0,0,0};

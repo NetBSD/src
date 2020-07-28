@@ -1,4 +1,4 @@
-/*	$NetBSD: chacha_neon.h,v 1.2 2020/07/27 20:51:29 riastradh Exp $	*/
+/*	$NetBSD: chacha_neon.h,v 1.3 2020/07/28 20:08:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -64,8 +64,7 @@ void	xchacha_stream_xor_neon(uint8_t *, const uint8_t *, size_t,
 	    const uint8_t[static 32],
 	    unsigned);
 
-#ifdef __aarch64__
-/* Assembly helpers -- aarch64 only for now */
+/* Assembly helpers */
 void	chacha_stream256_neon(uint8_t[restrict static 256], uint32_t,
 	    const uint8_t[static 12],
 	    const uint8_t[static 32],
@@ -78,7 +77,6 @@ void	chacha_stream_xor256_neon(uint8_t[restrict static 256],
 	    const uint8_t[static 32],
 	    const uint8_t[static 16],
 	    unsigned);
-#endif	/* __aarch64__ */
 
 extern const struct chacha_impl chacha_neon_impl;
 

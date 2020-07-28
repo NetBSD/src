@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2020/07/27 20:51:29 riastradh Exp $
+#	$NetBSD: Makefile,v 1.3 2020/07/28 20:08:48 riastradh Exp $
 
 .include <bsd.own.mk>
 
@@ -22,7 +22,9 @@ SRCS.t_chacha+=	chacha_selftest.c
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/crypto/chacha/arch/arm
 
 SRCS.t_chacha+=	chacha_neon.c
-.if !empty(MACHINE_ARCH:Maarch64*)
+.if !empty(MACHINE_ARCH:Mearmv7*)
+SRCS.t_chacha+=	chacha_neon_32.S
+.elif !empty(MACHINE_ARCH:Maarch64*)
 SRCS.t_chacha+=	chacha_neon_64.S
 .endif
 SRCS.t_chacha+=	chacha_neon_impl.c

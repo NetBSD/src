@@ -1,4 +1,4 @@
-#	$NetBSD: files.chacha_arm,v 1.2 2020/07/27 20:51:29 riastradh Exp $
+#	$NetBSD: files.chacha_arm,v 1.3 2020/07/28 20:08:48 riastradh Exp $
 
 ifdef aarch64
 makeoptions	chacha	"COPTS.chacha_neon.c"+="-march=armv8-a"
@@ -7,5 +7,6 @@ makeoptions	aes	"COPTS.chacha_neon.c"+="-mfloat-abi=softfp -mfpu=neon"
 endif
 
 file	crypto/chacha/arch/arm/chacha_neon.c	chacha & (cpu_cortex | aarch64)
+file	crypto/chacha/arch/arm/chacha_neon_32.S	chacha & cpu_cortex & !aarch64
 file	crypto/chacha/arch/arm/chacha_neon_64.S	chacha & aarch64
 file	crypto/chacha/arch/arm/chacha_neon_impl.c chacha & (cpu_cortex | aarch64)
