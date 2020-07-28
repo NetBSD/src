@@ -1,4 +1,4 @@
-# $NetBSD: directives.mk,v 1.3 2020/07/28 18:25:33 rillig Exp $
+# $NetBSD: directives.mk,v 1.4 2020/07/28 19:19:30 rillig Exp $
 #
 # Tests for parsing directives, in the same order as in the manual page.
 #
@@ -44,7 +44,7 @@
 .info		indented message
 .information
 .information message		# oops: misspelled
-
+.info.man:			# not a message, but a suffix rule
 
 
 .info begin .undef tests
