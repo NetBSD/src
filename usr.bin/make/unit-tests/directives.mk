@@ -1,4 +1,4 @@
-# $NetBSD: directives.mk,v 1.2 2020/07/28 17:47:57 rillig Exp $
+# $NetBSD: directives.mk,v 1.3 2020/07/28 18:25:33 rillig Exp $
 #
 # Tests for parsing directives, in the same order as in the manual page.
 #
@@ -136,6 +136,16 @@
 .else
 .info else taken
 .endif
+
+.indented none
+.  indented 2 spaces
+.	indented tab
+.${:Uinfo} directives cannot be indirect
+
+
+
+
+
 
 .info end of the tests
 
