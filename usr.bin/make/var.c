@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.350 2020/07/27 23:56:15 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.351 2020/07/28 00:01:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.350 2020/07/27 23:56:15 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.351 2020/07/28 00:01:13 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.350 2020/07/27 23:56:15 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.351 2020/07/28 00:01:13 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2040,7 +2040,6 @@ VarStrftime(const char *fmt, int zulu, time_t utc)
  * They parse the modifier (often until the next colon) and store the
  * updated position for the parser into st->next.
  * They take the st->val and generate st->newVal from it.
- * On success, they set st->termc to *st->next, redundantly.
  * On failure, many of them update st->missing_delim.
  */
 typedef struct {
@@ -2056,7 +2055,6 @@ typedef struct {
 				 * to the expression */
     const char *next;		/* The position where parsing continues
 				 * after the current modifier. */
-    char termc;			/* Character which terminated scan */
     char missing_delim;		/* For error reporting */
 
     Byte	sep;		/* Word separator in expansions */
@@ -2106,8 +2104,6 @@ ApplyModifier_Loop(const char *mod, ApplyModifiersState *st) {
 	st->missing_delim = delim;
 	return FALSE;
     }
-
-    st->termc = *st->next;
 
     args.eflags = st->eflags & (VARE_UNDEFERR | VARE_WANTRES);
     int prev_sep = st->sep;
@@ -2174,7 +2170,6 @@ ApplyModifier_Defined(const char *mod, ApplyModifiersState *st)
     }
 
     st->next = p;
-    st->termc = *st->next;
 
     if (st->v->flags & VAR_JUNK)
 	st->v->flags |= VAR_KEEP;
@@ -2205,7 +2200,6 @@ ApplyModifier_Gmtime(const char *mod, ApplyModifiersState *st)
 	st->next = mod + 6;
     }
     st->newVal = VarStrftime(st->val, 1, utc);
-    st->termc = *st->next;
     return TRUE;
 }
 
@@ -2228,7 +2222,6 @@ ApplyModifier_Localtime(const char *mod, ApplyModifiersState *st)
 	st->next = mod + 9;
     }
     st->newVal = VarStrftime(st->val, 0, utc);
-    st->termc = *st->next;
     return TRUE;
 }
 
@@ -2243,7 +2236,6 @@ ApplyModifier_Hash(const char *mod, ApplyModifiersState *st)
 
     st->newVal = VarHash(st->val);
     st->next = mod + 4;
-    st->termc = *st->next;
     return TRUE;
 }
 
@@ -2264,7 +2256,6 @@ ApplyModifier_Path(const char *mod, ApplyModifiersState *st)
     if (!st->newVal)
 	st->newVal = bmake_strdup(st->v->name);
     st->next = mod + 1;
-    st->termc = *st->next;
 }
 
 /* :!cmd! */
@@ -2290,7 +2281,6 @@ ApplyModifier_Exclam(const char *mod, ApplyModifiersState *st)
     if (emsg)
 	Error(emsg, st->val);
 
-    st->termc = *st->next;
     if (st->v->flags & VAR_JUNK)
 	st->v->flags |= VAR_KEEP;
     return TRUE;
@@ -2315,7 +2305,6 @@ ApplyModifier_Range(const char *mod, ApplyModifiersState *st)
 	st->next = mod + 5;
     }
     st->newVal = VarRange(st->val, n);
-    st->termc = *st->next;
     return TRUE;
 }
 
@@ -2351,7 +2340,6 @@ ApplyModifier_Match(const char *mod, ApplyModifiersState *st)
 	}
     }
     st->next = p;
-    st->termc = *st->next;
     const char *endpat = st->next;
 
     char *pattern;
@@ -2451,7 +2439,6 @@ ApplyModifier_Subst(const char * const mod, ApplyModifiersState *st)
 	break;
     }
 
-    st->termc = *st->next;
     st->newVal = ModifyWords(st->ctxt, st->sep, oneBigWord, st->val,
 			     ModifyWord_Subst, &args);
 
@@ -2503,8 +2490,6 @@ ApplyModifier_Regex(const char *mod, ApplyModifiersState *st)
 	}
 	break;
     }
-
-    st->termc = *st->next;
 
     int error = regcomp(&args.re, re, REG_EXTENDED);
     free(re);
@@ -2581,7 +2566,6 @@ ApplyModifier_ToSep(const char *sep, ApplyModifiersState *st)
 	return FALSE;		/* Found ":ts<unrecognised><unrecognised>". */
     }
 
-    st->termc = *st->next;
     st->newVal = ModifyWords(st->ctxt, st->sep, st->oneBigWord, st->val,
 			     ModifyWord_Copy, NULL);
     return TRUE;
@@ -2606,24 +2590,20 @@ ApplyModifier_To(const char *mod, ApplyModifiersState *st)
 	st->newVal = ModifyWords(st->ctxt, st->sep, st->oneBigWord, st->val,
 				 ModifyWord_Realpath, NULL);
 	st->next = mod + 2;
-	st->termc = *st->next;
     } else if (mod[1] == 'u') {
 	char *dp = bmake_strdup(st->val);
 	for (st->newVal = dp; *dp; dp++)
 	    *dp = toupper((unsigned char)*dp);
 	st->next = mod + 2;
-	st->termc = *st->next;
     } else if (mod[1] == 'l') {
 	char *dp = bmake_strdup(st->val);
 	for (st->newVal = dp; *dp; dp++)
 	    *dp = tolower((unsigned char)*dp);
 	st->next = mod + 2;
-	st->termc = *st->next;
     } else if (mod[1] == 'W' || mod[1] == 'w') {
 	st->oneBigWord = mod[1] == 'W';
 	st->newVal = st->val;
 	st->next = mod + 2;
-	st->termc = *st->next;
     } else {
 	/* Found ":t<unrecognised>:" or ":t<unrecognised><endc>". */
 	return FALSE;
@@ -2725,7 +2705,6 @@ ApplyModifier_Words(const char *mod, ApplyModifiersState *st)
     st->newVal = VarSelectWords(st->sep, st->oneBigWord, st->val, first, last);
 
 ok:
-    st->termc = *st->next;
     free(estr);
     return 0;
 
@@ -2743,12 +2722,10 @@ ApplyModifier_Order(const char *mod, ApplyModifiersState *st)
     st->next = mod + 1;	/* skip to the rest in any case */
     if (mod[1] == st->endc || mod[1] == ':') {
 	otype = 's';
-	st->termc = *st->next;
     } else if ((mod[1] == 'r' || mod[1] == 'x') &&
 	       (mod[2] == st->endc || mod[2] == ':')) {
 	otype = mod[1];
 	st->next = mod + 2;
-	st->termc = *st->next;
     } else {
 	return FALSE;
     }
@@ -2790,7 +2767,7 @@ ApplyModifier_IfElse(const char *mod, ApplyModifiersState *st)
 	return FALSE;
     }
 
-    st->termc = *--st->next;
+    st->next--;
     if (cond_rc == COND_INVALID) {
 	Error("Bad conditional expression `%s' in %s?%s:%s",
 	    st->v->name, st->v->name, then_expr, else_expr);
@@ -2884,7 +2861,7 @@ ApplyModifier_Assign(const char *mod, ApplyModifiersState *st)
 	return 'c';
     }
 
-    st->termc = *--st->next;
+    st->next--;
 
     if (st->eflags & VARE_WANTRES) {
 	switch (op[0]) {
@@ -2935,7 +2912,6 @@ ApplyModifier_Remember(const char *mod, ApplyModifiersState *st)
 	st->next = mod + 1;
     }
     st->newVal = st->val;
-    st->termc = *st->next;
     return TRUE;
 }
 
@@ -2988,7 +2964,7 @@ ApplyModifier_SysV(const char *mod, ApplyModifiersState *st)
      * SYSV modifications happen through the whole
      * string. Note the pattern is anchored at the end.
      */
-    st->termc = *--st->next;
+    st->next--;
     if (lhs[0] == '\0' && *st->val == '\0') {
 	st->newVal = st->val;	/* special case */
     } else {
@@ -3076,7 +3052,7 @@ ApplyModifiers(char *val, const char * const tstr,
 {
     ApplyModifiersState st = {
 	startc, endc, v, ctxt, eflags,
-	val, NULL, NULL, '\0', '\0', ' ', FALSE
+	val, NULL, NULL, '\0', ' ', FALSE
     };
 
     const char *p = tstr;
@@ -3171,7 +3147,6 @@ ApplyModifiers(char *val, const char * const tstr,
 		    st.v->flags |= VAR_KEEP;
 		st.newVal = bmake_strdup(st.v->name);
 		st.next = p + 1;
-		st.termc = *st.next;
 		break;
 	    }
 	case 'P':
@@ -3229,7 +3204,6 @@ ApplyModifiers(char *val, const char * const tstr,
 	    if (p[1] == st.endc || p[1] == ':') {
 		st.newVal = VarQuote(st.val, modifier == 'q');
 		st.next = p + 1;
-		st.termc = *st.next;
 		break;
 	    }
 	    goto default_case;
@@ -3238,7 +3212,6 @@ ApplyModifiers(char *val, const char * const tstr,
 		st.newVal = ModifyWords(st.ctxt, st.sep, st.oneBigWord,
 					st.val, ModifyWord_Tail, NULL);
 		st.next = p + 1;
-		st.termc = *st.next;
 		break;
 	    }
 	    goto default_case;
@@ -3247,7 +3220,6 @@ ApplyModifiers(char *val, const char * const tstr,
 		st.newVal = ModifyWords(st.ctxt, st.sep, st.oneBigWord,
 					st.val, ModifyWord_Head, NULL);
 		st.next = p + 1;
-		st.termc = *st.next;
 		break;
 	    }
 	    goto default_case;
@@ -3256,7 +3228,6 @@ ApplyModifiers(char *val, const char * const tstr,
 		st.newVal = ModifyWords(st.ctxt, st.sep, st.oneBigWord,
 					st.val, ModifyWord_Suffix, NULL);
 		st.next = p + 1;
-		st.termc = *st.next;
 		break;
 	    }
 	    goto default_case;
@@ -3265,7 +3236,6 @@ ApplyModifiers(char *val, const char * const tstr,
 		st.newVal = ModifyWords(st.ctxt, st.sep, st.oneBigWord,
 					st.val, ModifyWord_Root, NULL);
 		st.next = p + 1;
-		st.termc = *st.next;
 		break;
 	    }
 	    goto default_case;
@@ -3281,7 +3251,6 @@ ApplyModifiers(char *val, const char * const tstr,
 	    if (p[1] == st.endc || p[1] == ':') {
 		st.newVal = VarUniq(st.val);
 		st.next = p + 1;
-		st.termc = *st.next;
 		break;
 	    }
 	    goto default_case;
@@ -3296,7 +3265,6 @@ ApplyModifiers(char *val, const char * const tstr,
 		} else
 		    st.newVal = varNoError;
 		st.next = p + 2;
-		st.termc = *st.next;
 		break;
 	    }
 	    goto default_case;
@@ -3317,7 +3285,6 @@ ApplyModifiers(char *val, const char * const tstr,
 			 *st.next != '\0';
 			 st.next++)
 			continue;
-		    st.termc = *st.next;
 		    st.newVal = var_Error;
 		}
 	    }
@@ -3337,11 +3304,11 @@ ApplyModifiers(char *val, const char * const tstr,
 		*freePtr = st.val;
 	    }
 	}
-	if (st.termc == '\0' && st.endc != '\0') {
+	if (*st.next == '\0' && st.endc != '\0') {
 	    Error("Unclosed variable specification (expecting '%c') "
 		"for \"%s\" (value \"%s\") modifier %c",
 		st.endc, st.v->name, st.val, modifier);
-	} else if (st.termc == ':') {
+	} else if (*st.next == ':') {
 	    st.next++;
 	}
 	p = st.next;
