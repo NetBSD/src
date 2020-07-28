@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.70 2020/07/27 20:46:17 rillig Exp $
+# $NetBSD: Makefile,v 1.71 2020/07/28 00:48:00 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -88,6 +88,7 @@ ENV.varmisc+=		FROM_ENV_AFTER=env
 # Override make flags for some of the tests; default is -k.
 FLAGS.doterror=		# none
 FLAGS.envfirst=		-e
+FLAGS.export=		-r
 FLAGS.order=		-j1
 FLAGS.vardebug=		-k -dv FROM_CMDLINE=
 
