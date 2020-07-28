@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.241 2020/07/28 18:31:16 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.242 2020/07/28 19:13:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.241 2020/07/28 18:31:16 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.242 2020/07/28 19:13:49 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.241 2020/07/28 18:31:16 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.242 2020/07/28 19:13:49 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -393,7 +393,7 @@ loadedfile_create(const char *path)
 	struct loadedfile *lf;
 
 	lf = bmake_malloc(sizeof(*lf));
-	lf->path = (path == NULL ? "(stdin)" : path);
+	lf->path = path == NULL ? "(stdin)" : path;
 	lf->buf = NULL;
 	lf->len = 0;
 	lf->maplen = 0;
@@ -914,7 +914,7 @@ ParseDoOp(void *gnp, void *opp)
 	return 1;
     }
 
-    if ((op == OP_DOUBLEDEP) && ((gn->type & OP_OPMASK) == OP_DOUBLEDEP)) {
+    if (op == OP_DOUBLEDEP && (gn->type & OP_OPMASK) == OP_DOUBLEDEP) {
 	/*
 	 * If the node was the object of a :: operator, we need to create a
 	 * new instance of it for the children and commands on this dependency
@@ -1105,7 +1105,7 @@ static int
 ParseFindMain(void *gnp, void *dummy MAKE_ATTR_UNUSED)
 {
     GNode   	  *gn = (GNode *)gnp;
-    if ((gn->type & OP_NOTARGET) == 0) {
+    if (!(gn->type & OP_NOTARGET)) {
 	mainNode = gn;
 	Targ_SetMain(gn);
 	return 1;
@@ -1430,7 +1430,7 @@ ParseDoDependency(char *line)
 	 * Have word in line. Get or create its node and stick it at
 	 * the end of the targets list
 	 */
-	if ((specType == Not) && (*line != '\0')) {
+	if (specType == Not && *line != '\0') {
 	    if (Dir_HasWildcards(line)) {
 		/*
 		 * Targets are to be sought only in the current directory,
@@ -1481,7 +1481,7 @@ ParseDoDependency(char *line)
 	    Boolean warning = FALSE;
 
 	    while (*cp && (ParseIsEscaped(lstart, cp) ||
-		((*cp != '!') && (*cp != ':')))) {
+		(*cp != '!' && *cp != ':'))) {
 		if (ParseIsEscaped(lstart, cp) ||
 		    (*cp != ' ' && *cp != '\t')) {
 		    warning = TRUE;
@@ -1498,7 +1498,7 @@ ParseDoDependency(char *line)
 	}
 	line = cp;
     } while (*line && (ParseIsEscaped(lstart, line) ||
-	((*line != '!') && (*line != ':'))));
+	(*line != '!' && *line != ':')));
 
     /*
      * Don't need the list of target names anymore...
@@ -1618,17 +1618,17 @@ ParseDoDependency(char *line)
 	    goto out;
 	}
 	*line = '\0';
-    } else if ((specType == NotParallel) || (specType == SingleShell) ||
-	    (specType == DeleteOnError)) {
+    } else if (specType == NotParallel || specType == SingleShell ||
+	    specType == DeleteOnError) {
 	*line = '\0';
     }
 
     /*
      * NOW GO FOR THE SOURCES
      */
-    if ((specType == Suffixes) || (specType == ExPath) ||
-	(specType == Includes) || (specType == Libs) ||
-	(specType == Null) || (specType == ExObjdir))
+    if (specType == Suffixes || specType == ExPath ||
+	specType == Includes || specType == Libs ||
+	specType == Null || specType == ExObjdir)
     {
 	while (*line) {
 	    /*
@@ -1709,7 +1709,7 @@ ParseDoDependency(char *line)
 	     * and handle them accordingly.
 	     */
 	    for (; *cp && !isspace ((unsigned char)*cp); cp++) {
-		if ((*cp == LPAREN) && (cp > line) && (cp[-1] != '$')) {
+		if (*cp == LPAREN && cp > line && cp[-1] != '$') {
 		    /*
 		     * Only stop for a left parenthesis if it isn't at the
 		     * start of a word (that'll be for variable changes
@@ -1797,8 +1797,8 @@ Parse_IsVar(char *line)
     /*
      * Skip to variable name
      */
-    for (;(*line == ' ') || (*line == '\t'); line++)
-	continue;
+    while (*line == ' ' || *line == '\t')
+	line++;
 
     /* Scan for one of the assignment operators outside a variable expansion */
     while ((ch = *line++) != 0) {
@@ -1875,9 +1875,8 @@ Parse_DoVar(char *line, GNode *ctxt)
     /*
      * Skip to variable name
      */
-    while ((*line == ' ') || (*line == '\t')) {
+    while (*line == ' ' || *line == '\t')
 	line++;
-    }
 
     /*
      * Skip to operator character, nulling out whitespace as we go
@@ -2290,7 +2289,7 @@ ParseDoInclude(char *line)
 {
     char          endc;	    	/* the character which ends the file spec */
     char          *cp;		/* current position in file spec */
-    int		  silent = (*line != 'i') ? 1 : 0;
+    int		  silent = *line != 'i';
     char	  *file = &line[7 + silent];
 
     /* Skip to delimiter character so we know where to look */
@@ -2332,7 +2331,7 @@ ParseDoInclude(char *line)
      */
     file = Var_Subst(file, VAR_CMD, VARE_WANTRES);
 
-    Parse_include_file(file, endc == '>', (*line == 'd'), silent);
+    Parse_include_file(file, endc == '>', *line == 'd', silent);
     free(file);
 }
 
@@ -2606,7 +2605,7 @@ ParseTraditionalInclude(char *line)
 {
     char          *cp;		/* current position in file spec */
     int		   done = 0;
-    int		   silent = (line[0] != 'i') ? 1 : 0;
+    int		   silent = line[0] != 'i';
     char	  *file = &line[silent + 7];
     char	  *all_files;
 
@@ -3062,9 +3061,8 @@ Parse_File(const char *name, int fd)
     inLine = FALSE;
     fatals = 0;
 
-    if (name == NULL) {
-	    name = "(stdin)";
-    }
+    if (name == NULL)
+	name = "(stdin)";
 
     Parse_SetInput(name, 0, -1, loadedfile_nextbuf, lf);
     curFile->lf = lf;
@@ -3093,7 +3091,7 @@ Parse_File(const char *name, int fd)
 		    for (cp += 5; isspace((unsigned char) *cp); cp++)
 			continue;
 		    for (cp2 = cp; !isspace((unsigned char) *cp2) &&
-				   (*cp2 != '\0'); cp2++)
+				   *cp2 != '\0'; cp2++)
 			continue;
 		    *cp2 = '\0';
 		    Var_Delete(cp, VAR_GLOBAL);
@@ -3181,10 +3179,10 @@ Parse_File(const char *name, int fd)
 	     */
 	    cp = line;
 	    if (isspace((unsigned char) line[0])) {
-		while ((*cp != '\0') && isspace((unsigned char) *cp))
+		while (isspace((unsigned char) *cp))
 		    cp++;
 		while (*cp && (ParseIsEscaped(line, cp) ||
-			(*cp != ':') && (*cp != '!'))) {
+			*cp != ':' && *cp != '!')) {
 		    cp++;
 		}
 		if (*cp == '\0') {
