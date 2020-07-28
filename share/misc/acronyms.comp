@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.308 2020/07/11 13:04:29 nia Exp $
+$NetBSD: acronyms.comp,v 1.309 2020/07/28 14:35:34 leot Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1646,6 +1646,7 @@ TSP	Tunnel Setup Protocol
 TSP	time synchronization protocol
 TSP	traveling salesman problem
 TSS	task state segment
+TSV	tab-separated values
 TTL	time to live
 TTL	transistor-transistor logic
 TTM	translation table maps
