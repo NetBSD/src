@@ -1,4 +1,4 @@
-/*	$NetBSD: cputypes.h,v 1.13 2020/07/25 22:59:55 uwe Exp $	*/
+/*	$NetBSD: cputypes.h,v 1.14 2020/07/28 01:40:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,8 +33,8 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_cputype.h"
-#elif defined(_LKM)
-/* If building an LKM, include both SH3 and SH4 support. */
+#elif defined(_MODULE)
+/* If building a module, include both SH3 and SH4 support. */
 #define	SH3
 #define	SH4
 #endif
