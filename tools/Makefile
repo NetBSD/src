@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.205 2019/11/11 22:45:27 joerg Exp $
+#	$NetBSD: Makefile,v 1.206 2020/07/28 21:38:15 uwe Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -214,7 +214,8 @@ SUBDIR+=	elftosb
 .endif
 
 .if ${MACHINE} == "evbarm" || ${MACHINE} == "evbmips" || \
-    ${MACHINE} == "evbppc" || ${MACHINE} == "sandpoint"
+    ${MACHINE} == "evbppc" || ${MACHINE} == "evbsh3" || \
+    ${MACHINE} == "sandpoint"
 SUBDIR+=	mkubootimage
 SUBDIR+=	libfdt .WAIT
 SUBDIR+=	dtc
