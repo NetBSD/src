@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3PAE_DOM0,v 1.29 2020/05/26 14:03:21 jdolecek Exp $
+#	$NetBSD: XEN3PAE_DOM0,v 1.30 2020/07/28 09:38:06 jdolecek Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -212,7 +212,6 @@ balloon*	at xenbus?		# Xen balloon device
 # PCI bus support
 pci*		at hypervisor? bus ?
 pci*		at pchb? bus ?
-options 	NO_PCI_MSI_MSIX
 
 # PCI bridges
 ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
