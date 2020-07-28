@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.240 2020/07/28 18:15:11 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.241 2020/07/28 18:31:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.240 2020/07/28 18:15:11 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.241 2020/07/28 18:31:16 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.240 2020/07/28 18:15:11 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.241 2020/07/28 18:31:16 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1299,8 +1299,7 @@ ParseDoDependency(char *line)
 		Parse_Error(PARSE_FATAL, "Unknown directive \"%.*s\"",
 			    (int)(dirend - dirstart), dirstart);
 	    } else
-		Parse_Error(PARSE_FATAL, lstart[0] == '.' ? "Unknown directive"
-				     : "Need an operator");
+		Parse_Error(PARSE_FATAL, "Need an operator");
 	    goto out;
 	}
 
