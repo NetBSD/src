@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.352 2020/07/28 16:42:22 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.353 2020/07/28 17:18:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.352 2020/07/28 16:42:22 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.353 2020/07/28 17:18:40 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.352 2020/07/28 16:42:22 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.353 2020/07/28 17:18:40 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3506,6 +3506,8 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
 	} else if (*tstr == endc) {
 	    haveModifier = FALSE;
 	} else {
+	    Parse_Error(PARSE_FATAL, "Unclosed variable \"%s\"",
+			Buf_GetAll(&namebuf, NULL));
 	    /*
 	     * If we never did find the end character, return NULL
 	     * right now, setting the length to be the distance to

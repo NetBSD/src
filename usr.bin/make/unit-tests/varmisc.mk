@@ -1,4 +1,4 @@
-# $Id: varmisc.mk,v 1.17 2020/07/26 21:46:10 rillig Exp $
+# $Id: varmisc.mk,v 1.18 2020/07/28 17:18:40 rillig Exp $
 #
 # Miscellaneous variable tests.
 
@@ -191,11 +191,18 @@ parse-dynamic:
 	@echo $@: ${GB_TARGET} ${GB_MEMBER} ${GB_PREFIX} ${GB_ARCHIVE} ${GB_ALLSRC}
 	@echo $@: ${GL_TARGET} ${GL_MEMBER} ${GL_PREFIX} ${GL_ARCHIVE} ${GL_ALLSRC}
 
-# As of 2020-07-26, make does not complain about unclosed variables.
-# It does complain about unclosed variables when parsing modifiers though.
+# Since 2020-07-28, make complains about unclosed variables.
+# Before that, it had not complained about unclosed variables only when
+# parsing the modifiers, but not when parsing the variable name.
 varerror-unclosed:
 	@echo $@:begin
+	@echo $(
+	@echo $(UNCLOSED
 	@echo ${UNCLOSED
 	@echo ${UNCLOSED:M${PATTERN
 	@echo ${UNCLOSED.${param
+	@echo $
+.for i in 1 2 3
+	@echo ${UNCLOSED.${i}
+.endfor
 	@echo $@:end

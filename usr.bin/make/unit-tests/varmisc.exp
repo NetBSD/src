@@ -47,9 +47,24 @@ parse-dynamic: parse-dynamic parse-dynamic before
 parse-dynamic: parse-dynamic parse-dynamic after
 parse-dynamic: parse-dynamic parse-dynamic after
 varerror-unclosed:begin
+make: Unclosed variable ""
 
+make: Unclosed variable "UNCLOSED"
+
+make: Unclosed variable "UNCLOSED"
+
+make: Unclosed variable "PATTERN"
 make: Unclosed variable specification (expecting '}') for "UNCLOSED" (value "") modifier M
 
+make: Unclosed variable "param"
+make: Unclosed variable "UNCLOSED."
+
+
+make: Unclosed variable "UNCLOSED.1"
+
+make: Unclosed variable "UNCLOSED.2"
+
+make: Unclosed variable "UNCLOSED.3"
 
 varerror-unclosed:end
 exit status 0
