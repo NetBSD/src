@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto_ccmp.c,v 1.17 2020/07/25 22:27:05 riastradh Exp $	*/
+/*	$NetBSD: ieee80211_crypto_ccmp.c,v 1.18 2020/07/28 15:41:26 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_ccmp.c,v 1.7 2005/07/11 03:06:23 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.17 2020/07/25 22:27:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.18 2020/07/28 15:41:26 riastradh Exp $");
 #endif
 
 /*
@@ -264,14 +264,6 @@ static int
 ccmp_demic(struct ieee80211_key *k, struct mbuf *m, int force)
 {
 	return 1;
-}
-
-static __inline void
-xor_block(uint8_t *b, const uint8_t *a, size_t len)
-{
-	int i;
-	for (i = 0; i < len; i++)
-		b[i] ^= a[i];
 }
 
 /*
