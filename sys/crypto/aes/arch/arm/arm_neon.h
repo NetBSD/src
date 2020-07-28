@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_neon.h,v 1.6 2020/07/25 22:43:01 riastradh Exp $	*/
+/*	$NetBSD: arm_neon.h,v 1.7 2020/07/28 20:11:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@ typedef __Int8x16_t int8x16_t;
 typedef __Uint32x4_t uint32x4_t;
 typedef __Uint64x2_t uint64x2_t;
 typedef __Uint8x16_t uint8x16_t;
+typedef struct { uint8x16_t val[2]; } uint8x16x2_t;
 #else
 typedef __simd128_int32_t int32x4_t;
 typedef __simd128_int64_t int64x2_t;
@@ -54,6 +55,7 @@ typedef __simd64_int8_t int8x8_t;
 typedef __simd64_uint8_t uint8x8_t;
 typedef __builtin_neon_udi uint64x1_t;
 typedef struct { uint8x8_t val[2]; } uint8x8x2_t;
+typedef struct { uint8x16_t val[2]; } uint8x16x2_t;
 #endif
 
 #if defined(__AARCH64EB__) || defined(__ARM_BIG_ENDIAN)
