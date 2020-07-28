@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.74 2020/07/28 18:39:56 sjg Exp $
+# $NetBSD: Makefile,v 1.75 2020/07/28 22:44:44 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -31,6 +31,7 @@
 # Each test is in a sub-makefile.
 # Keep the list sorted.
 TESTS+=		# archive	# broken on FreeBSD
+TESTS+=		cmdline
 TESTS+=		comment
 TESTS+=		cond-late
 TESTS+=		cond-short
