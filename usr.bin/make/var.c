@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.351 2020/07/28 00:01:13 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.352 2020/07/28 16:42:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.351 2020/07/28 00:01:13 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.352 2020/07/28 16:42:22 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.351 2020/07/28 00:01:13 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.352 2020/07/28 16:42:22 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -461,7 +461,7 @@ Var_Delete(const char *name, GNode *ctxt)
     char *cp;
 
     if (strchr(name, '$') != NULL) {
-	cp = Var_Subst(NULL, name, VAR_GLOBAL, VARE_WANTRES);
+	cp = Var_Subst(name, VAR_GLOBAL, VARE_WANTRES);
     } else {
 	cp = UNCONST(name);
     }
@@ -547,7 +547,7 @@ Var_Export1(const char *name, VarExportFlags flags)
 	}
 	n = snprintf(tmp, sizeof(tmp), "${%s}", name);
 	if (n < (int)sizeof(tmp)) {
-	    val = Var_Subst(NULL, tmp, VAR_GLOBAL, VARE_WANTRES);
+	    val = Var_Subst(tmp, VAR_GLOBAL, VARE_WANTRES);
 	    setenv(name, val, 1);
 	    free(val);
 	}
@@ -610,7 +610,7 @@ Var_ExportVars(void)
 	int ac;
 	int i;
 
-	val = Var_Subst(NULL, tmp, VAR_GLOBAL, VARE_WANTRES);
+	val = Var_Subst(tmp, VAR_GLOBAL, VARE_WANTRES);
 	if (*val) {
 	    av = brk_string(val, &ac, FALSE, &as);
 	    for (i = 0; i < ac; i++)
@@ -651,7 +651,7 @@ Var_Export(char *str, int isExport)
 	flags |= VAR_EXPORT_PARENT;
     }
 
-    char *val = Var_Subst(NULL, str, VAR_GLOBAL, VARE_WANTRES);
+    char *val = Var_Subst(str, VAR_GLOBAL, VARE_WANTRES);
     if (*val) {
 	av = brk_string(val, &ac, FALSE, &as);
 	for (i = 0; i < ac; i++) {
@@ -738,7 +738,7 @@ Var_UnExport(char *str)
 
     if (!vlist) {
 	/* Using .MAKE.EXPORTED */
-	vlist = Var_Subst(NULL, "${" MAKE_EXPORTED ":O:u}", VAR_GLOBAL,
+	vlist = Var_Subst("${" MAKE_EXPORTED ":O:u}", VAR_GLOBAL,
 			  VARE_WANTRES);
     }
     if (vlist) {
@@ -767,7 +767,7 @@ Var_UnExport(char *str)
 		n = snprintf(tmp, sizeof(tmp),
 			     "${" MAKE_EXPORTED ":N%s}", v->name);
 		if (n < (int)sizeof(tmp)) {
-		    cp = Var_Subst(NULL, tmp, VAR_GLOBAL, VARE_WANTRES);
+		    cp = Var_Subst(tmp, VAR_GLOBAL, VARE_WANTRES);
 		    Var_Set(MAKE_EXPORTED, cp, VAR_GLOBAL);
 		    free(cp);
 		}
@@ -795,7 +795,7 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
      * point in searching them all just to save a bit of memory...
      */
     if (strchr(name, '$') != NULL) {
-	expanded_name = Var_Subst(NULL, name, ctxt, VARE_WANTRES);
+	expanded_name = Var_Subst(name, ctxt, VARE_WANTRES);
 	if (expanded_name[0] == '\0') {
 	    if (DEBUG(VAR)) {
 		fprintf(debug_file, "Var_Set(\"%s\", \"%s\", ...) "
@@ -936,7 +936,7 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
     char *expanded_name = NULL;
 
     if (strchr(name, '$') != NULL) {
-	expanded_name = Var_Subst(NULL, name, ctxt, VARE_WANTRES);
+	expanded_name = Var_Subst(name, ctxt, VARE_WANTRES);
 	if (expanded_name[0] == '\0') {
 	    if (DEBUG(VAR)) {
 		fprintf(debug_file, "Var_Append(\"%s\", \"%s\", ...) "
@@ -1001,7 +1001,7 @@ Var_Exists(const char *name, GNode *ctxt)
     char          *cp;
 
     if ((cp = strchr(name, '$')) != NULL)
-	cp = Var_Subst(NULL, name, ctxt, VARE_WANTRES);
+	cp = Var_Subst(name, ctxt, VARE_WANTRES);
     v = VarFind(cp ? cp : name, ctxt, FIND_CMD | FIND_GLOBAL | FIND_ENV);
     free(cp);
     if (v == NULL)
@@ -1278,7 +1278,7 @@ ModifyWord_SYSVSubst(const char *word, SepBuf *buf, void *data)
     Boolean hasPercent;
     const char *ptr = Str_SYSVMatch(word, args->lhs, &len, &hasPercent);
     if (ptr != NULL) {
-	char *varexp = Var_Subst(NULL, args->rhs, args->ctx, VARE_WANTRES);
+	char *varexp = Var_Subst(args->rhs, args->ctx, VARE_WANTRES);
 	Str_SYSVSubst(buf, varexp, ptr, len, hasPercent);
 	free(varexp);
     } else {
@@ -1486,7 +1486,7 @@ ModifyWord_Loop(const char *word, SepBuf *buf, void *data)
 
     const ModifyWord_LoopArgs *args = data;
     Var_Set_with_flags(args->tvar, word, args->ctx, VAR_NO_EXPORT);
-    char *s = Var_Subst(NULL, args->str, args->ctx, args->eflags);
+    char *s = Var_Subst(args->str, args->ctx, args->eflags);
     if (DEBUG(VAR)) {
 	fprintf(debug_file,
 		"ModifyWord_Loop: in \"%s\", replace \"%s\" with \"%s\" "
@@ -2368,7 +2368,7 @@ ApplyModifier_Match(const char *mod, ApplyModifiersState *st)
     if (needSubst) {
 	/* pattern contains embedded '$', so use Var_Subst to expand it. */
 	char *old_pattern = pattern;
-	pattern = Var_Subst(NULL, pattern, st->ctxt, st->eflags);
+	pattern = Var_Subst(pattern, st->ctxt, st->eflags);
 	free(old_pattern);
     }
 
@@ -3603,7 +3603,7 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
      */
     nstr = Buf_GetAll(&v->val, NULL);
     if (strchr(nstr, '$') != NULL && (eflags & VARE_WANTRES) != 0) {
-	nstr = Var_Subst(NULL, nstr, ctxt, eflags);
+	nstr = Var_Subst(nstr, ctxt, eflags);
 	*freePtr = nstr;
     }
 
@@ -3695,7 +3695,7 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
  *-----------------------------------------------------------------------
  */
 char *
-Var_Subst(const char *var, const char *str, GNode *ctxt, VarEvalFlags eflags)
+Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags)
 {
     Buffer	buf;		/* Buffer for forming things */
     const char	*val;		/* Value to substitute for a variable */
@@ -3713,7 +3713,7 @@ Var_Subst(const char *var, const char *str, GNode *ctxt, VarEvalFlags eflags)
     while (*str) {
 	if (*str == '\n' && trailingBslash)
 	    Buf_AddByte(&buf, ' ');
-	if (var == NULL && (*str == '$') && (str[1] == '$')) {
+	if ((*str == '$') && (str[1] == '$')) {
 	    /*
 	     * A dollar sign may be escaped either with another dollar sign.
 	     * In such a case, we skip over the escape character and store the
@@ -3735,61 +3735,6 @@ Var_Subst(const char *var, const char *str, GNode *ctxt, VarEvalFlags eflags)
 		continue;
 	    Buf_AddBytesBetween(&buf, cp, str);
 	} else {
-	    if (var != NULL) {
-		int expand;
-		for (;;) {
-		    if (str[1] == '\0') {
-			/* A trailing $ is kind of a special case */
-			Buf_AddByte(&buf, str[0]);
-			str++;
-			expand = FALSE;
-		    } else if (str[1] != PROPEN && str[1] != BROPEN) {
-			if (str[1] != *var || strlen(var) > 1) {
-			    Buf_AddBytes(&buf, 2, str);
-			    str += 2;
-			    expand = FALSE;
-			} else
-			    expand = TRUE;
-			break;
-		    } else {
-			const char *p;
-
-			/* Scan up to the end of the variable name. */
-			for (p = &str[2]; *p &&
-			     *p != ':' && *p != PRCLOSE && *p != BRCLOSE; p++)
-			    if (*p == '$')
-				break;
-			/*
-			 * A variable inside the variable. We cannot expand
-			 * the external variable yet, so we try again with
-			 * the nested one
-			 */
-			if (*p == '$') {
-			    Buf_AddBytesBetween(&buf, str, p);
-			    str = p;
-			    continue;
-			}
-
-			if (strncmp(var, str + 2, p - str - 2) != 0 ||
-			    var[p - str - 2] != '\0') {
-			    /*
-			     * Not the variable we want to expand, scan
-			     * until the next variable
-			     */
-			    for (; *p != '$' && *p != '\0'; p++)
-				continue;
-			    Buf_AddBytesBetween(&buf, str, p);
-			    str = p;
-			    expand = FALSE;
-			} else
-			    expand = TRUE;
-			break;
-		    }
-		}
-		if (!expand)
-		    continue;
-	    }
-
 	    val = Var_Parse(str, ctxt, eflags, &length, &freeIt);
 
 	    /*
