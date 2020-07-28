@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.195 2020/07/14 00:45:53 yamaguchi Exp $	*/
+/*	$NetBSD: cpu.c,v 1.196 2020/07/28 14:49:55 fcambus Exp $	*/
 
 /*
  * Copyright (c) 2000-2020 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.195 2020/07/14 00:45:53 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.196 2020/07/28 14:49:55 fcambus Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -1224,7 +1224,7 @@ cpu_stop(device_t dv)
 
 	KASSERT((ci->ci_flags & CPUF_PRESENT) != 0);
 
-	if ((ci->ci_flags & CPUF_PRIMARY) != 0)
+	if (CPU_IS_PRIMARY(ci))
 		return true;
 
 	if (ci->ci_data.cpu_idlelwp == NULL)
@@ -1269,7 +1269,7 @@ cpu_resume(device_t dv, const pmf_qual_t *qual)
 	if ((ci->ci_flags & CPUF_PRESENT) == 0)
 		return true;
 
-	if ((ci->ci_flags & CPUF_PRIMARY) != 0)
+	if (CPU_IS_PRIMARY(ci))
 		goto out;
 
 	if (ci->ci_data.cpu_idlelwp == NULL)
@@ -1312,7 +1312,7 @@ cpu_get_tsc_freq(struct cpu_info *ci)
 	uint64_t freq = 0, freq_from_cpuid, t0, t1;
 	int64_t overhead;
 
-	if ((ci->ci_flags & CPUF_PRIMARY) != 0 && cpu_hascounter()) {
+	if (CPU_IS_PRIMARY(ci) && cpu_hascounter()) {
 		/*
 		 * If it's the first call of this function, try to get TSC
 		 * freq from CPUID by calling cpu_tsc_freq_cpuid().
