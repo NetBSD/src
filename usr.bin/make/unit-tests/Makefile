@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.72 2020/07/28 16:11:55 rillig Exp $
+# $NetBSD: Makefile,v 1.73 2020/07/28 16:26:37 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -136,7 +136,7 @@ LANG=		C
 	@echo testing ${.IMPSRC}
 	@set -eu; \
 	cd ${.OBJDIR}; \
-	env ${ENV.${.TARGET:R}} ${TEST_MAKE} \
+	env ${ENV.${.TARGET:R}} ${TEST_MAKE} -C ${.CURDIR} \
 	  ${FLAGS.${.TARGET:R}:U-k} -f ${.IMPSRC} \
 	  > ${.TARGET}.tmp 2>&1 \
 	&& status=$$? || status=$$?; \
