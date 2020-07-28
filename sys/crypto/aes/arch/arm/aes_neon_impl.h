@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_neon_impl.h,v 1.1 2020/06/29 23:56:31 riastradh Exp $	*/
+/*	$NetBSD: aes_neon_impl.h,v 1.2 2020/07/28 20:11:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -38,5 +38,34 @@
 
 uint8x16_t aes_neon_enc1(const struct aesenc *, uint8x16_t, unsigned);
 uint8x16_t aes_neon_dec1(const struct aesdec *, uint8x16_t, unsigned);
+
+#ifdef __aarch64__
+
+uint8x16x2_t aes_neon_enc2(const struct aesenc *, uint8x16x2_t, unsigned);
+uint8x16x2_t aes_neon_dec2(const struct aesdec *, uint8x16x2_t, unsigned);
+
+#else
+
+static inline uint8x16x2_t
+aes_neon_enc2(const struct aesenc *enc, uint8x16x2_t b2, unsigned nrounds)
+{
+
+	return (uint8x16x2_t) { .val = {
+		[0] = aes_neon_enc1(enc, b2.val[0], nrounds),
+		[1] = aes_neon_enc1(enc, b2.val[1], nrounds),
+	} };
+}
+
+static inline uint8x16x2_t
+aes_neon_dec2(const struct aesdec *dec, uint8x16x2_t b2, unsigned nrounds)
+{
+
+	return (uint8x16x2_t) { .val = {
+		[0] = aes_neon_dec1(dec, b2.val[0], nrounds),
+		[1] = aes_neon_dec1(dec, b2.val[1], nrounds),
+	} };
+}
+
+#endif
 
 #endif	/* _CRYPTO_AES_ARCH_ARM_AES_NEON_IMPL_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_neon.c,v 1.3 2020/06/30 20:32:11 riastradh Exp $	*/
+/*	$NetBSD: aes_neon.c,v 1.4 2020/07/28 20:11:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_neon.c,v 1.3 2020/06/30 20:32:11 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_neon.c,v 1.4 2020/07/28 20:11:09 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -589,6 +589,59 @@ aes_neon_enc1(const struct aesenc *enc, uint8x16_t x, unsigned nrounds)
 	return vqtbl1q_u8(x, sr[rmod4]);
 }
 
+uint8x16x2_t
+aes_neon_enc2(const struct aesenc *enc, uint8x16x2_t x, unsigned nrounds)
+{
+	const uint32_t *rk32 = enc->aese_aes.aes_rk;
+	uint8x16_t inv_ = *(const volatile uint8x16_t *)&inv;
+	uint8x16_t inva_ = *(const volatile uint8x16_t *)&inva;
+	uint8x16_t sb1_0 = ((const volatile uint8x16_t *)sb1)[0];
+	uint8x16_t sb1_1 = ((const volatile uint8x16_t *)sb1)[1];
+	uint8x16_t sb2_0 = ((const volatile uint8x16_t *)sb2)[0];
+	uint8x16_t sb2_1 = ((const volatile uint8x16_t *)sb2)[1];
+	uint8x16_t x0 = x.val[0], x1 = x.val[1];
+	uint8x16_t io0, jo0, io1, jo1;
+	unsigned rmod4 = 0;
+
+	x0 = aes_schedule_transform(x0, ipt);
+	x1 = aes_schedule_transform(x1, ipt);
+	x0 ^= loadroundkey(rk32);
+	x1 ^= loadroundkey(rk32);
+	for (;;) {
+		uint8x16_t A_0, A2_0, A2_B_0, A2_B_D_0;
+		uint8x16_t A_1, A2_1, A2_B_1, A2_B_D_1;
+
+		subbytes(&io0, &jo0, x0, inv_, inva_);
+		subbytes(&io1, &jo1, x1, inv_, inva_);
+
+		rk32 += 4;
+		rmod4 = (rmod4 + 1) % 4;
+		if (--nrounds == 0)
+			break;
+
+		A_0 = vqtbl1q_u8(sb1_0, io0) ^ vqtbl1q_u8(sb1_1, jo0);
+		A_1 = vqtbl1q_u8(sb1_0, io1) ^ vqtbl1q_u8(sb1_1, jo1);
+		A_0 ^= loadroundkey(rk32);
+		A_1 ^= loadroundkey(rk32);
+		A2_0 = vqtbl1q_u8(sb2_0, io0) ^ vqtbl1q_u8(sb2_1, jo0);
+		A2_1 = vqtbl1q_u8(sb2_0, io1) ^ vqtbl1q_u8(sb2_1, jo1);
+		A2_B_0 = A2_0 ^ vqtbl1q_u8(A_0, mc_forward[rmod4]);
+		A2_B_1 = A2_1 ^ vqtbl1q_u8(A_1, mc_forward[rmod4]);
+		A2_B_D_0 = A2_B_0 ^ vqtbl1q_u8(A_0, mc_backward[rmod4]);
+		A2_B_D_1 = A2_B_1 ^ vqtbl1q_u8(A_1, mc_backward[rmod4]);
+		x0 = A2_B_D_0 ^ vqtbl1q_u8(A2_B_0, mc_forward[rmod4]);
+		x1 = A2_B_D_1 ^ vqtbl1q_u8(A2_B_1, mc_forward[rmod4]);
+	}
+	x0 = vqtbl1q_u8(sbo[0], io0) ^ vqtbl1q_u8(sbo[1], jo0);
+	x1 = vqtbl1q_u8(sbo[0], io1) ^ vqtbl1q_u8(sbo[1], jo1);
+	x0 ^= loadroundkey(rk32);
+	x1 ^= loadroundkey(rk32);
+	return (uint8x16x2_t) { .val = {
+		[0] = vqtbl1q_u8(x0, sr[rmod4]),
+		[1] = vqtbl1q_u8(x1, sr[rmod4]),
+	} };
+}
+
 uint8x16_t
 aes_neon_dec1(const struct aesdec *dec, uint8x16_t x, unsigned nrounds)
 {
@@ -626,6 +679,62 @@ aes_neon_dec1(const struct aesdec *dec, uint8x16_t x, unsigned nrounds)
 	x = vqtbl1q_u8(dsbo[0], io) ^ vqtbl1q_u8(dsbo[1], jo);
 	x ^= loadroundkey(rk32);
 	return vqtbl1q_u8(x, sr[i]);
+}
+
+uint8x16x2_t
+aes_neon_dec2(const struct aesdec *dec, uint8x16x2_t x, unsigned nrounds)
+{
+	const uint32_t *rk32 = dec->aesd_aes.aes_rk;
+	unsigned i = 3 & ~(nrounds - 1);
+	uint8x16_t inv_ = *(const volatile uint8x16_t *)&inv;
+	uint8x16_t inva_ = *(const volatile uint8x16_t *)&inva;
+	uint8x16_t x0 = x.val[0], x1 = x.val[1];
+	uint8x16_t io0, jo0, io1, jo1, mc;
+
+	x0 = aes_schedule_transform(x0, dipt);
+	x1 = aes_schedule_transform(x1, dipt);
+	x0 ^= loadroundkey(rk32);
+	x1 ^= loadroundkey(rk32);
+	rk32 += 4;
+
+	mc = mc_forward[3];
+	for (;;) {
+		subbytes(&io0, &jo0, x0, inv_, inva_);
+		subbytes(&io1, &jo1, x1, inv_, inva_);
+		if (--nrounds == 0)
+			break;
+
+		x0 = vqtbl1q_u8(dsb9[0], io0) ^ vqtbl1q_u8(dsb9[1], jo0);
+		x1 = vqtbl1q_u8(dsb9[0], io1) ^ vqtbl1q_u8(dsb9[1], jo1);
+		x0 ^= loadroundkey(rk32);
+		x1 ^= loadroundkey(rk32);
+		rk32 += 4;				/* next round key */
+
+		x0 = vqtbl1q_u8(x0, mc);
+		x1 = vqtbl1q_u8(x1, mc);
+		x0 ^= vqtbl1q_u8(dsbd[0], io0) ^ vqtbl1q_u8(dsbd[1], jo0);
+		x1 ^= vqtbl1q_u8(dsbd[0], io1) ^ vqtbl1q_u8(dsbd[1], jo1);
+
+		x0 = vqtbl1q_u8(x0, mc);
+		x1 = vqtbl1q_u8(x1, mc);
+		x0 ^= vqtbl1q_u8(dsbb[0], io0) ^ vqtbl1q_u8(dsbb[1], jo0);
+		x1 ^= vqtbl1q_u8(dsbb[0], io1) ^ vqtbl1q_u8(dsbb[1], jo1);
+
+		x0 = vqtbl1q_u8(x0, mc);
+		x1 = vqtbl1q_u8(x1, mc);
+		x0 ^= vqtbl1q_u8(dsbe[0], io0) ^ vqtbl1q_u8(dsbe[1], jo0);
+		x1 ^= vqtbl1q_u8(dsbe[0], io1) ^ vqtbl1q_u8(dsbe[1], jo1);
+
+		mc = vextq_u8(mc, mc, 12);
+	}
+	x0 = vqtbl1q_u8(dsbo[0], io0) ^ vqtbl1q_u8(dsbo[1], jo0);
+	x1 = vqtbl1q_u8(dsbo[0], io1) ^ vqtbl1q_u8(dsbo[1], jo1);
+	x0 ^= loadroundkey(rk32);
+	x1 ^= loadroundkey(rk32);
+	return (uint8x16x2_t) { .val = {
+		[0] = vqtbl1q_u8(x0, sr[i]),
+		[1] = vqtbl1q_u8(x1, sr[i]),
+	} };
 }
 
 #endif
