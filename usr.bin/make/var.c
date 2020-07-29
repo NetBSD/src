@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.353 2020/07/28 17:18:40 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.354 2020/07/29 19:48:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.353 2020/07/28 17:18:40 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.354 2020/07/29 19:48:33 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.353 2020/07/28 17:18:40 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.354 2020/07/29 19:48:33 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2523,7 +2523,7 @@ static Boolean
 ApplyModifier_ToSep(const char *sep, ApplyModifiersState *st)
 {
     if (sep[0] != st->endc && (sep[1] == st->endc || sep[1] == ':')) {
-	/* ":ts<unrecognised><endc>" or ":ts<unrecognised>:" */
+	/* ":ts<any><endc>" or ":ts<any>:" */
 	st->sep = sep[0];
 	st->next = sep + 1;
     } else if (sep[0] == st->endc || sep[0] == ':') {
