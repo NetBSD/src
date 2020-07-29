@@ -74,7 +74,7 @@ MODULE_DEVICE_TABLE(pci, xmm7360_ids);
 #include "opt_gateway.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xmm7360.c,v 1.3 2020/07/27 14:09:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xmm7360.c,v 1.4 2020/07/29 13:00:26 jdolecek Exp $");
 #endif
 
 #include <sys/param.h>
@@ -3029,6 +3029,10 @@ wwan_if_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 		/* NOTREACHED */
 	}
 
+	/* Needed for tcpdump(1) et.al */
+	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
+	m_adj(m, sizeof(u_int32_t));
+
 	(*input)(ifp, m);
 	return 1;
 }
@@ -3242,7 +3246,12 @@ wwan_attach(struct device *parent, struct device *self, void *aux)
 	if_deferred_start_init(ifp, NULL);
 	if_alloc_sadl(ifp);
 #if NBPFILTER > 0
+#ifdef __OpenBSD__
+	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(u_int32_t));
+#endif
+#ifdef __NetBSD__
 	bpfattach(&ifp->if_bpf, ifp, DLT_RAW, 0);
+#endif
 #endif
 
 	printf("\n");
