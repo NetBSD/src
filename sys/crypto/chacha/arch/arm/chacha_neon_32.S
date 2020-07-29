@@ -1,4 +1,4 @@
-/*	$NetBSD: chacha_neon_32.S,v 1.1 2020/07/28 20:08:48 riastradh Exp $	*/
+/*	$NetBSD: chacha_neon_32.S,v 1.2 2020/07/29 14:23:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: chacha_neon_32.S,v 1.1 2020/07/28 20:08:48 riastradh Exp $")
+RCSID("$NetBSD: chacha_neon_32.S,v 1.2 2020/07/29 14:23:59 riastradh Exp $")
 
 	.fpu	neon
 
@@ -305,21 +305,29 @@ ENTRY(chacha_stream256_neon)
 	 *	q7 = (x3[4], x3[5]; x3[6], x3[7])
 	 *
 	 * The first two rows to write out are q0 = x0[0:4) and q4 =
-	 * x0[4:8).  If we first swap q1 and q4, then once we've
-	 * written them out we free up consecutive registers q0-q1 for
-	 * store-multiple.
+	 * x0[4:8).  Swapping q1<->q4, q3<->q6, q9<->q12, and q11<->q14
+	 * enables us to issue all stores in consecutive pairs:
+	 *	x0 in q0-q1
+	 *	x1 in q8-q9
+	 *	x2 in q2-q3
+	 *	x3 in q10-q11
+	 *	x4 in q4-q5
+	 *	x5 in q12-q3
+	 *	x6 in q6-q7
+	 *	x7 in q14-q15
 	 */
 
 	vswp	q1, q4
+	vswp	q3, q6
 
 	vadd.u32 q0, q0, q9
 	vadd.u32 q4, q4, q9
 	vadd.u32 q2, q2, q9
-	vadd.u32 q3, q3, q9
+	vadd.u32 q6, q6, q9
 
 	vadd.u32 q1, q1, q8
 	vadd.u32 q5, q5, q8
-	vadd.u32 q6, q6, q8
+	vadd.u32 q3, q3, q8
 	vadd.u32 q7, q7, q8
 
 	vld1.32 {q8-q9}, [fp, :256]	/* restore q8-q9 */
@@ -349,14 +357,17 @@ ENTRY(chacha_stream256_neon)
 	vswp	d19, d22
 	vswp	d27, d30
 
-	vadd.u32 q8, q8, q0
-	vadd.u32 q9, q9, q0
-	vadd.u32 q10, q10, q0
-	vadd.u32 q11, q11, q0
+	vswp	q9, q12
+	vswp	q11, q14
 
-	vadd.u32 q12, q12, q1
+	vadd.u32 q8, q8, q0
+	vadd.u32 q12, q12, q0
+	vadd.u32 q10, q10, q0
+	vadd.u32 q14, q14, q0
+
+	vadd.u32 q9, q9, q1
 	vadd.u32 q13, q13, q1
-	vadd.u32 q14, q14, q1
+	vadd.u32 q11, q11, q1
 	vadd.u32 q15, q15, q1
 
 	LE32TOH(q8)
@@ -368,28 +379,18 @@ ENTRY(chacha_stream256_neon)
 	LE32TOH(q14)
 	LE32TOH(q15)
 
-	/* prepare to zero temporary space on stack */
-	vmov.i32 q0, #0
-	vmov.i32 q1, #0
-
-	/* vst1.32	{q0}, [r0]! */
-	/* vst1.32	{q1}, [r0]! */	/* (was q4 before vswp) */
-	vst1.32	{q8}, [r0]!
-	vst1.32	{q12}, [r0]!
-	vst1.32	{q2}, [r0]!
-	vst1.32	{q6}, [r0]!
-	vst1.32	{q10}, [r0]!
-	vst1.32	{q14}, [r0]!
-	vst1.32	{q4}, [r0]!	/* (was q1 before vswp) */
-	vst1.32	{q5}, [r0]!
-	vst1.32	{q9}, [r0]!
-	vst1.32	{q13}, [r0]!
-	vst1.32 {q3}, [r0]!
-	vst1.32 {q7}, [r0]!
-	vst1.32 {q11}, [r0]!
-	vst1.32 {q15}, [r0]
+	/* vst1.32	{q0-q1}, [r0]! */
+	vst1.32	{q8-q9}, [r0]!
+	vst1.32	{q2-q3}, [r0]!
+	vst1.32	{q10-q11}, [r0]!
+	vst1.32	{q4-q5}, [r0]!
+	vst1.32	{q12-q13}, [r0]!
+	vst1.32 {q6-q7}, [r0]!
+	vst1.32 {q14-q15}, [r0]
 
 	/* zero temporary space on the stack */
+	vmov.i32 q0, #0
+	vmov.i32 q1, #0
 	vst1.8	{q0-q1}, [fp, :256]
 
 	/* restore callee-saves registers and stack */
@@ -481,42 +482,8 @@ ENTRY(chacha_stream_xor256_neon)
 	 * in only 16 registers, compute p[i] ^ (y[i] + x[i]) for i in
 	 * {0,1,2,...,15}.  The twist is that the p[i] and the y[i] are
 	 * transposed from one another, and the x[i] are in general
-	 * registers and memory.  So we have:
-	 *
-	 *	q0 = (x0[0], x1[0]; x2[0], x3[0])
-	 *	q1 = (x0[1], x1[1]; x2[1], x3[1])
-	 *	q2 = (x0[2], x1[2]; x2[2], x3[2])
-	 *	q3 = (x0[3], x1[3]; x2[3], x3[3])
-	 *	...
-	 *	q15 = (x0[15], x1[15]; x2[15], x3[15])
-	 *
-	 * where xi[j] is the jth word of the ith 16-word block.  Zip
-	 * consecutive pairs with vzip.32, and you get:
-	 *
-	 *	q0 = (x0[0], x0[1]; x1[0], x1[1])
-	 *	q1 = (x2[0], x2[1]; x3[0], x3[1])
-	 *	q2 = (x0[2], x0[3]; x1[2], x1[3])
-	 *	q3 = (x2[2], x2[3]; x3[2], x3[3])
-	 *	...
-	 *	q15 = (x2[14], x2[15]; x3[14], x3[15])
-	 *
-	 * As 64-bit d registers, this is:
-	 *
-	 *	d0 = (x0[0], x0[1])	d1 = (x1[0], x1[1])
-	 *	d2 = (x2[0], x2[1])	d3 = (x3[0], x3[1])
-	 *	d4 = (x0[2], x0[3])	d5 = (x1[2], x1[3])
-	 *	d6 = (x2[2], x2[3])	d7 = (x3[2], x3[3])
-	 *	...
-	 *	d30 = (x2[14], x2[15])	d31 = (x3[14], x3[15])
-	 *
-	 * Swap d1<->d4, d3<->d6, ..., and you get:
-	 *
-	 *	q0 = (x0[0], x0[1]; x0[2], x0[3])
-	 *	q1 = (x2[0], x2[1]; x2[2], x2[3])
-	 *	q2 = (x1[0], x1[1]; x1[2], x1[3])
-	 *	q3 = (x3[0], x3[1]; x3[2], x3[3])
-	 *	...
-	 *	q15 = (x15[0], x15[1]; x15[2], x15[3])
+	 * registers and memory.  See comments in chacha_stream256_neon
+	 * for the layout with swaps.
 	 */
 
 	sub	r7, r7, #0x10
@@ -533,39 +500,22 @@ ENTRY(chacha_stream_xor256_neon)
 	vadd.u32 q12, q12, q8	/* q12 += (blkno,blkno+1,blkno+2,blkno+3) */
 	vld1.32	{q8}, [r4]!	/* q8 := key[0:16) */
 
-	vswp	d1, d4
-	vswp	d9, d12
 	vswp	d3, d6
+	vswp	d9, d12
+	vswp	d1, d4
 	vswp	d11, d14
 
-	/*
-	 * At this point, the blocks are:
-	 *
-	 *	q0 = (x0[0], x0[1]; x0[2], x0[3])
-	 *	q1 = (x2[0], x2[1]; x2[2], x2[3])
-	 *	q2 = (x1[0], x1[1]; x1[2], x1[3])
-	 *	q3 = (x3[0], x3[1]; x3[2], x3[3])
-	 *	q4 = (x0[4], x0[5]; x0[6], x0[7])
-	 *	q5 = (x2[4], x2[5]; x2[6], x2[7])
-	 *	q6 = (x1[4], x1[5]; x1[6], x1[7])
-	 *	q7 = (x3[4], x3[5]; x3[6], x3[7])
-	 *
-	 * The first two rows to write out are q0 = x0[0:4) and q4 =
-	 * x0[4:8).  If we first swap q1 and q4, then once we've
-	 * written them out we free up consecutive registers q0-q1 for
-	 * store-multiple.
-	 */
-
 	vswp	q1, q4
+	vswp	q3, q6
 
 	vadd.u32 q0, q0, q9
 	vadd.u32 q4, q4, q9
 	vadd.u32 q2, q2, q9
-	vadd.u32 q3, q3, q9
+	vadd.u32 q6, q6, q9
 
 	vadd.u32 q1, q1, q8
 	vadd.u32 q5, q5, q8
-	vadd.u32 q6, q6, q8
+	vadd.u32 q3, q3, q8
 	vadd.u32 q7, q7, q8
 
 	vld1.32 {q8-q9}, [r1]!	/* load plaintext bytes [0:32) */
@@ -595,21 +545,22 @@ ENTRY(chacha_stream_xor256_neon)
 	vzip.32	q12, q13
 	vzip.32	q14, q15
 
-	vswp	d17, d20
-	vswp	d25, d28
 	vswp	d19, d22
+	vswp	d25, d28
+	vswp	d17, d20
 	vswp	d27, d30
 
 	vswp	q9, q12		/* free up q9 earlier for consecutive q8-q9 */
+	vswp	q11, q14
 
 	vadd.u32 q8, q8, q0
 	vadd.u32 q12, q12, q0
 	vadd.u32 q10, q10, q0
-	vadd.u32 q11, q11, q0
+	vadd.u32 q14, q14, q0
 
 	vadd.u32 q9, q9, q1
 	vadd.u32 q13, q13, q1
-	vadd.u32 q14, q14, q1
+	vadd.u32 q11, q11, q1
 	vadd.u32 q15, q15, q1
 
 	vld1.32	{q0-q1}, [r1]!	/* load plaintext bytes [32:64) */
@@ -617,10 +568,10 @@ ENTRY(chacha_stream_xor256_neon)
 	LE32TOH(q8)
 	LE32TOH(q9)
 	LE32TOH(q10)
-	LE32TOH(q14)
+	LE32TOH(q11)
 	LE32TOH(q12)
 	LE32TOH(q13)
-	LE32TOH(q11)
+	LE32TOH(q14)
 	LE32TOH(q15)
 
 	veor	q0, q0, q8	/* compute ciphertext bytes [32:64) */
@@ -631,40 +582,38 @@ ENTRY(chacha_stream_xor256_neon)
 	vld1.32	{q0-q1}, [r1]!	/* load plaintext bytes [96:128) */
 
 	veor	q2, q2, q8	/* compute ciphertext bytes [64:96) */
-	veor	q6, q6, q9
+	veor	q3, q3, q9
 
 	vld1.32	{q8-q9}, [r1]!	/* load plaintext bytes [128:160) */
-	vst1.32	{q2}, [r0]!	/* store ciphertext bytes [64:80) */
+	vst1.32	{q2-q3}, [r0]!	/* store ciphertext bytes [64:80) */
 
 	veor	q10, q10, q0	/* compute ciphertext bytes [96:128) */
-	veor	q14, q14, q1
+	veor	q11, q11, q1
 
 	vld1.32	{q0-q1}, [r1]!	/* load plaintext bytes [160:192) */
-	vst1.32	{q6}, [r0]!	/* store ciphertext bytes [80:96) */
+	vst1.32	{q10-q11}, [r0]!	/* store ciphertext bytes [80:96) */
 
 	veor	q4, q4, q8	/* compute ciphertext bytes [128:160) */
 	veor	q5, q5, q9
 
 	vld1.32	{q8-q9}, [r1]!	/* load plaintext bytes [192:224) */
-	vst1.32	{q10}, [r0]!	/* store ciphertext bytes [96:112) */
+	vst1.32	{q4-q5}, [r0]!	/* store ciphertext bytes [96:112) */
 
 	veor	q12, q12, q0	/* compute ciphertext bytes [160:192) */
 	veor	q13, q13, q1
 
 	vld1.32	{q0-q1}, [r1]	/* load plaintext bytes [224:256) */
-	vst1.32	{q14}, [r0]!	/* store ciphertext bytes [112:128) */
+	vst1.32	{q12-q13}, [r0]!	/* store ciphertext bytes [112:128) */
 
-	veor	q8, q3, q8	/* compute ciphertext bytes [192:224) */
-	veor	q9, q7, q9
+	veor	q6, q6, q8	/* compute ciphertext bytes [192:224) */
+	veor	q7, q7, q9
 
-	vst1.32	{q4-q5}, [r0]!	/* store ciphertext bytes [128:160) */
-	vst1.32	{q12-q13}, [r0]!	/* store ciphertext bytes [160:192) */
+	vst1.32	{q6-q7}, [r0]!	/* store ciphertext bytes [192:224) */
 
-	veor	q0, q11, q0	/* compute ciphertext bytes [224:256) */
-	veor	q1, q15, q1
+	veor	q14, q14, q0	/* compute ciphertext bytes [224:256) */
+	veor	q15, q15, q1
 
-	vst1.32	{q8-q9}, [r0]!	/* store ciphertext bytes [192:224) */
-	vst1.32	{q0-q1}, [r0]	/* store ciphertext bytes [224:256) */
+	vst1.32	{q14-q15}, [r0]	/* store ciphertext bytes [224:256) */
 
 	/* zero temporary space on the stack */
 	vmov.i32 q0, #0
