@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.105 2020/07/26 08:08:41 simonb Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.106 2020/07/29 09:00:05 simonb Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -840,6 +840,24 @@
 #define	MIPS_TLB_NUM_PIDS \
     ((MIPS_HAS_R4K_MMU) ? MIPS3_TLB_NUM_ASIDS : MIPS1_TLB_NUM_PIDS)
 #endif
+
+/*
+ * WatchLo/WatchHi watchpoint registers
+ */
+#define	MIPS_WATCHLO_VADDR32		__BITS(31,3)	/* 32-bit addr */
+#define	MIPS_WATCHLO_VADDR64		__BITS(63,3)	/* 64-bit addr */
+#define	MIPS_WATCHLO_INSN		__BIT(2)
+#define	MIPS_WATCHLO_DATA_READ		__BIT(1)
+#define	MIPS_WATCHLO_DATA_WRITE		__BIT(0)
+
+#define	MIPS_WATCHHI_M			__BIT(31)	/* next watch reg implemented */
+#define	MIPS_WATCHHI_G			__BIT(30)	/* use WatchLo vaddr */
+#define	MIPS_WATCHHI_EAS		__BITS(25,24)	/* extended ASID */
+#define	MIPS_WATCHHI_ASID		__BITS(23,16)
+#define	MIPS_WATCHHI_MASK		__BITS(11,3)
+#define	MIPS_WATCHHI_INSN		MIPS_WATCHLO_INSN
+#define	MIPS_WATCHHI_DATA_READ		MIPS_WATCHLO_DATA_READ
+#define	MIPS_WATCHHI_DATA_WRITE		MIPS_WATCHLO_DATA_WRITE
 
 /*
  * RDHWR register numbers
