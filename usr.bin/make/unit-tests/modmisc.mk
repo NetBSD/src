@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.28 2020/07/29 18:48:47 rillig Exp $
+# $Id: modmisc.mk,v 1.29 2020/07/29 21:35:35 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -261,6 +261,7 @@ mod-gmtime:
 	@echo ${%Y:L:gmtim=1593536400}		# modifier name too short
 	@echo ${%Y:L:gmtime=1593536400}		# 2020-07-01T00:00:00Z
 	@echo ${%Y:L:gmtimer=1593536400}	# modifier name too long
+	@echo ${%Y:L:gm=gm:M*}
 
 mod-localtime:
 	@echo $@:
