@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.75 2020/07/26 20:04:57 rillig Exp $
+#	$NetBSD: Makefile,v 1.76 2020/07/29 20:57:31 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -77,3 +77,10 @@ test: .MAKE
 
 accept: .MAKE
 	cd ${.CURDIR}/unit-tests && ${.MAKE} ${.TARGET}
+
+retest:
+	${.MAKE} -C ${.CURDIR}/unit-tests cleandir
+.if ${USE_COVERAGE} == yes
+	rm -f *.gcov *.gcda
+.endif
+	${.MAKE} test
