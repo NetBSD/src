@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1736 2020/07/22 19:03:15 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.1737 2020/07/29 06:50:33 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -2066,7 +2066,7 @@ Copied from FreeBSD:
 
 Package:	gettext
 Version:	0.16.1 (Last GPLv2+ version)
-Current Vers:	0.19.8
+Current Vers:	0.21
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gettext/
 Home Page:	http://www.gnu.org/software/gettext/
