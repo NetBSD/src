@@ -1,4 +1,4 @@
-/*	$NetBSD: db_lex.c,v 1.25 2019/11/22 23:01:49 ad Exp $	*/
+/*	$NetBSD: db_lex.c,v 1.26 2020/07/29 23:29:42 uwe Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_lex.c,v 1.25 2019/11/22 23:01:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_lex.c,v 1.26 2020/07/29 23:29:42 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +87,16 @@ db_set_line(const char *sp, const char *ep)
 
 	db_lp = sp;
 	db_endlp = ep;
+}
+
+void
+db_get_line(const char **psp, const char **pep)
+{
+
+    if (psp != NULL)
+	*psp = db_lp;
+    if (pep != NULL)
+	*pep = db_endlp;
 }
 
 static void
