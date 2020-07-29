@@ -74,7 +74,7 @@ MODULE_DEVICE_TABLE(pci, xmm7360_ids);
 #include "opt_gateway.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xmm7360.c,v 1.5 2020/07/29 13:01:19 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xmm7360.c,v 1.6 2020/07/29 13:03:36 jdolecek Exp $");
 #endif
 
 #include <sys/param.h>
@@ -286,9 +286,11 @@ typedef struct kmutex spinlock_t;
 		return -error;				\
 	__ret;						\
 })
-#define xmm7360_os_msleep(msec)				\
-		KASSERT(!cold);				\
-		tsleep(xmm, 0, "wwancsl", msec * hz / 1000)
+#define xmm7360_os_msleep(msec)					\
+	do {							\
+		KASSERT(!cold);					\
+		tsleep(xmm, 0, "wwancsl", msec * hz / 1000);	\
+	} while (0)
 
 static void *dma_alloc_coherent(struct device *, size_t, dma_addr_t *, int);
 static void dma_free_coherent(struct device *, size_t, volatile void *, dma_addr_t);
