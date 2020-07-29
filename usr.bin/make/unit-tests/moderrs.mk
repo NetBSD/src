@@ -1,4 +1,4 @@
-# $Id: moderrs.mk,v 1.7 2020/07/29 19:48:33 rillig Exp $
+# $Id: moderrs.mk,v 1.8 2020/07/29 20:33:38 rillig Exp $
 #
 # various modifier error tests
 
@@ -151,9 +151,7 @@ mod-ifelse-parse:
 mod-assign-parse:
 	@echo $@:
 	@echo ${ASSIGN::x}	# 'x' is an unknown assignment operator
-# disabled for now; segfaults on NetBSD-8.0-x86_64 in Var_Parse line 3636:
-# *lengthPtr = tstr - str + (*tstr ? 1 : 0);
-#	@echo ${::=value}	# trying to set the empty variable
+	@echo ${::=value}	# trying to set the empty variable
 	@echo ${ASSIGN::=value	# missing closing brace
 
 mod-remember-parse:

@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.354 2020/07/29 19:48:33 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.355 2020/07/29 20:33:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.354 2020/07/29 19:48:33 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.355 2020/07/29 20:33:38 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.354 2020/07/29 19:48:33 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.355 2020/07/29 20:33:38 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2575,7 +2575,7 @@ ApplyModifier_ToSep(const char *sep, ApplyModifiersState *st)
 static Boolean
 ApplyModifier_To(const char *mod, ApplyModifiersState *st)
 {
-    st->next = mod + 1;	/* make sure it is set */
+    st->next = mod + 1;		/* make sure it is set */
     if (mod[1] == st->endc || mod[1] == ':')
 	return FALSE;		/* Found ":t<endc>" or ":t:". */
 
@@ -2818,8 +2818,10 @@ ApplyModifier_Assign(const char *mod, ApplyModifiersState *st)
 
     GNode *v_ctxt;		/* context where v belongs */
 
-    if (st->v->name[0] == 0)
+    if (st->v->name[0] == 0) {
+	st->next = mod + 1;
 	return 'b';
+    }
 
     v_ctxt = st->ctxt;
     char *sv_name = NULL;
@@ -3117,6 +3119,7 @@ ApplyModifiers(char *val, const char * const tstr,
 	}
 	st.newVal = var_Error;
 	char modifier = *p;
+	st.next = NULL;	/* fail fast if an ApplyModifier forgets to set this */
 	switch (modifier) {
 	case ':':
 	    {

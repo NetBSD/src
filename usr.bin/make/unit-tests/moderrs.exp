@@ -117,6 +117,8 @@ then
 mod-assign-parse:
 make: Unknown modifier ':'
 
+make: Bad modifier `:' for 
+value}
 make: Unclosed substitution for ASSIGN (} missing)
 
 mod-remember-parse:
