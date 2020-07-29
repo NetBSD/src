@@ -1,4 +1,4 @@
-# $Id: moderrs.mk,v 1.5 2020/07/28 00:13:29 rillig Exp $
+# $Id: moderrs.mk,v 1.6 2020/07/29 18:48:47 rillig Exp $
 #
 # various modifier error tests
 
@@ -12,6 +12,7 @@ all:	modunkn modunknV varterm vartermV modtermV modloop
 all:	modloop-close
 all:	modwords
 all:	modexclam
+all:	mod-subst-delimiter
 
 modunkn:
 	@echo "Expect: Unknown modifier 'Z'"
@@ -79,3 +80,22 @@ modexclam:
 	# If there were a fallback, the output would be "exclam",
 	# and the above would have produced an "Unknown modifier '!'".
 	@echo ${!:L:!=exclam}
+
+# XXX: For "${VAR:S", I wonder where the "(@ missing)" comes from.
+# This could be undefined behavior, but it's reproducible.
+mod-subst-delimiter:
+	@echo $@:
+	@echo ${VAR:S
+	@echo ${VAR:S,
+	@echo ${VAR:S,from
+	@echo ${VAR:S,from,
+	@echo ${VAR:S,from,to
+	@echo ${VAR:S,from,to,
+	@echo ${VAR:S,from,to,}
+	@echo 1: ${VAR:S
+	@echo 2: ${VAR:S,
+	@echo 3: ${VAR:S,from
+	@echo ${VAR:S,from,
+	@echo ${VAR:S,from,to
+	@echo ${VAR:S,from,to,
+	@echo ${VAR:S,from,to,}

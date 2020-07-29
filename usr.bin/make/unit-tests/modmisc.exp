@@ -93,4 +93,29 @@ line
 mod-break-many-words: 500
 mod-remember: 1 2 3 1 2 3 1 2 3
 mod-remember: 1 2 3, SAVED=3
+mod-gmtime:
+%Y
+2020
+%Y
+mod-localtime:
+%Y
+2020
+%Y
+mod-hash:
+make: Unknown modifier 'h'
+
+26bb0f5f
+12345
+make: Unknown modifier 'h'
+
+make: Unknown modifier 'h'
+
+mod-range:
+make: Unknown modifier 'r'
+
+1 2 3
+make: Unknown modifier 'r'
+
+make: Unknown modifier 'r'
+
 exit status 0

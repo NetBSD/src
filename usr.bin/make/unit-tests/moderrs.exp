@@ -35,4 +35,31 @@ make: Unclosed substitution for VARNAME (! missing)
 
 make: Unclosed substitution for ! (! missing)
 
+mod-subst-delimiter:
+make: Unclosed substitution for VAR (@ missing)
+
+make: Unclosed substitution for VAR (, missing)
+
+make: Unclosed substitution for VAR (, missing)
+
+make: Unclosed substitution for VAR (, missing)
+
+make: Unclosed substitution for VAR (, missing)
+
+make: Unclosed variable specification (expecting '}') for "VAR" (value "TheVariable") modifier S
+TheVariable
+TheVariable
+make: Unclosed variable specification (expecting '}') for "VAR" (value "TheVariable") modifier S
+1: TheVariable
+make: Unclosed substitution for VAR (, missing)
+2:
+make: Unclosed substitution for VAR (, missing)
+3:
+make: Unclosed substitution for VAR (, missing)
+
+make: Unclosed substitution for VAR (, missing)
+
+make: Unclosed variable specification (expecting '}') for "VAR" (value "TheVariable") modifier S
+TheVariable
+TheVariable
 exit status 0
