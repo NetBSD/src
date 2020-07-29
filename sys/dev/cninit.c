@@ -1,4 +1,4 @@
-/*	$NetBSD: cninit.c,v 1.13 2020/07/17 02:16:57 uwe Exp $	*/
+/*	$NetBSD: cninit.c,v 1.14 2020/07/29 01:55:58 uwe Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cninit.c,v 1.13 2020/07/17 02:16:57 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cninit.c,v 1.14 2020/07/29 01:55:58 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -58,8 +58,6 @@ cninit(void)
 {
 	struct consdev *bestMatch;
 	struct consdev *cp;
-
-	cn_tab = NULL;
 
 	/*
 	 * Collect information about all possible consoles
@@ -84,7 +82,6 @@ cninit(void)
 	 * Turn on console
 	 */
 	{
-		/* XXX: can this ever be non-NULL? */
 		struct consdev *old_cn_tab = cn_tab;
 
 		/* cn_init may set cn_tab to self */
