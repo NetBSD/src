@@ -74,7 +74,7 @@ MODULE_DEVICE_TABLE(pci, xmm7360_ids);
 #include "opt_gateway.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xmm7360.c,v 1.4 2020/07/29 13:00:26 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xmm7360.c,v 1.5 2020/07/29 13:01:19 jdolecek Exp $");
 #endif
 
 #include <sys/param.h>
@@ -692,7 +692,7 @@ static void xmm7360_cmd_ring_free(struct xmm_dev *xmm) {
 static void xmm7360_td_ring_activate(struct xmm_dev *xmm, u8 ring_id)
 {
 	struct td_ring *ring = &xmm->td_ring[ring_id];
-	int ret;
+	int ret __diagused;
 
 	xmm->cp->s_rptr[ring_id] = xmm->cp->s_wptr[ring_id] = 0;
 	ring->last_handled = 0;
@@ -2643,9 +2643,9 @@ wwanctty(dev_t dev)
 static int
 wwancparam(struct tty *tp, struct termios *t)
 {
-	struct wwanc_softc *sc = (struct wwanc_softc *)tp->t_sc;
+	struct wwanc_softc *sc __diagused = (struct wwanc_softc *)tp->t_sc;
 	dev_t dev = tp->t_dev;
-	int func = DEVFUNC(dev);
+	int func __diagused = DEVFUNC(dev);
 
 	KASSERT(DEV_IS_TTY(dev));
 	KASSERT(tp == sc->sc_tty[func]);
