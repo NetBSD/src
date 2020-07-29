@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.357 2020/07/29 21:23:26 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.358 2020/07/29 21:35:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.357 2020/07/29 21:23:26 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.358 2020/07/29 21:35:35 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.357 2020/07/29 21:23:26 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.358 2020/07/29 21:35:35 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2039,7 +2039,8 @@ VarStrftime(const char *fmt, int zulu, time_t utc)
 
 /* The ApplyModifier functions all work in the same way.
  * They parse the modifier (often until the next colon) and store the
- * updated position for the parser into st->next.
+ * updated position for the parser into st->next
+ * (except when returning AMR_UNKNOWN).
  * They take the st->val and generate st->newVal from it.
  * On failure, many of them update st->missing_delim.
  */
@@ -2195,10 +2196,8 @@ ApplyModifier_Defined(const char *mod, ApplyModifiersState *st)
 static ApplyModifierResult
 ApplyModifier_Gmtime(const char *mod, ApplyModifiersState *st)
 {
-    if (!ModMatchEq(mod, "gmtime", st->endc)) {
-	st->next = mod + 1;
+    if (!ModMatchEq(mod, "gmtime", st->endc))
 	return AMR_UNKNOWN;
-    }
 
     time_t utc;
     if (mod[6] == '=') {
@@ -2217,10 +2216,8 @@ ApplyModifier_Gmtime(const char *mod, ApplyModifiersState *st)
 static Boolean
 ApplyModifier_Localtime(const char *mod, ApplyModifiersState *st)
 {
-    if (!ModMatchEq(mod, "localtime", st->endc)) {
-	st->next = mod + 1;
+    if (!ModMatchEq(mod, "localtime", st->endc))
 	return AMR_UNKNOWN;
-    }
 
     time_t utc;
     if (mod[9] == '=') {
@@ -2239,10 +2236,8 @@ ApplyModifier_Localtime(const char *mod, ApplyModifiersState *st)
 static ApplyModifierResult
 ApplyModifier_Hash(const char *mod, ApplyModifiersState *st)
 {
-    if (!ModMatch(mod, "hash", st->endc)) {
-	st->next = mod + 1;
+    if (!ModMatch(mod, "hash", st->endc))
 	return AMR_UNKNOWN;
-    }
 
     st->newVal = VarHash(st->val);
     st->next = mod + 4;
@@ -2301,10 +2296,8 @@ ApplyModifier_Exclam(const char *mod, ApplyModifiersState *st)
 static ApplyModifierResult
 ApplyModifier_Range(const char *mod, ApplyModifiersState *st)
 {
-    if (!ModMatchEq(mod, "range", st->endc)) {
-	st->next = mod + 1;
+    if (!ModMatchEq(mod, "range", st->endc))
 	return AMR_UNKNOWN;
-    }
 
     int n;
     if (mod[5] == '=') {
@@ -2910,10 +2903,8 @@ ApplyModifier_Assign(const char *mod, ApplyModifiersState *st)
 static ApplyModifierResult
 ApplyModifier_Remember(const char *mod, ApplyModifiersState *st)
 {
-    if (!ModMatchEq(mod, "_", st->endc)) {
-	st->next = mod + 1;
+    if (!ModMatchEq(mod, "_", st->endc))
 	return AMR_UNKNOWN;
-    }
 
     if (mod[1] == '=') {
 	size_t n = strcspn(mod + 2, ":)}");
