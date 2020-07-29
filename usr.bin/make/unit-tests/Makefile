@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.75 2020/07/28 22:44:44 rillig Exp $
+# $NetBSD: Makefile,v 1.76 2020/07/29 19:48:33 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -94,6 +94,7 @@ FLAGS.order=		-j1
 FLAGS.vardebug=		-k -dv FROM_CMDLINE=
 
 # Some tests need extra post-processing.
+SED_CMDS.moderrs+=	-e 's,\(substitution error:\).*,\1 (details omitted),'
 SED_CMDS.modmisc+=	-e 's,\(substitution error:\).*,\1 (details omitted),'
 SED_CMDS.varshell+=	-e 's,^[a-z]*sh: ,,'
 SED_CMDS.varshell+=	-e '/command/s,No such.*,not found,'

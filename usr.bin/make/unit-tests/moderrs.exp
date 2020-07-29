@@ -62,4 +62,76 @@ make: Unclosed substitution for VAR (, missing)
 make: Unclosed variable specification (expecting '}') for "VAR" (value "TheVariable") modifier S
 TheVariable
 TheVariable
+mod-regex-delimiter:
+make: RE substitution error: (details omitted)
+make: Unclosed substitution for VAR (, missing)
+echo
+make: Unclosed substitution for VAR (, missing)
+
+make: Unclosed substitution for VAR (, missing)
+
+make: Unclosed substitution for VAR (, missing)
+
+make: Unclosed substitution for VAR (, missing)
+
+make: Unclosed variable specification (expecting '}') for "VAR" (value "TheVariable") modifier C
+TheVariable
+TheVariable
+make: RE substitution error: (details omitted)
+1:
+make: Unclosed substitution for VAR (, missing)
+2:
+make: Unclosed substitution for VAR (, missing)
+3:
+make: Unclosed substitution for VAR (, missing)
+
+make: Unclosed substitution for VAR (, missing)
+
+make: Unclosed variable specification (expecting '}') for "VAR" (value "TheVariable") modifier C
+TheVariable
+TheVariable
+mod-ts-parse:
+112358132134
+15152535558513521534
+make: Bad modifier `:ts\65oct' for FIB
+65oct}
+make: Bad modifier `:tsxy' for FIB
+xy}
+mod-t-parse:
+make: Bad modifier `:txy' for FIB
+y}
+make: Bad modifier `:t' for FIB
+
+make: Bad modifier `:t' for FIB
+M*}
+mod-ifelse-parse:
+make: Unclosed substitution for FIB (: missing)
+
+make: Unclosed substitution for FIB (: missing)
+
+make: Unclosed substitution for FIB (} missing)
+
+make: Unclosed substitution for FIB (} missing)
+
+then
+mod-assign-parse:
+make: Unknown modifier ':'
+
+make: Unclosed substitution for ASSIGN (} missing)
+
+mod-remember-parse:
+1 1 2 3 5 8 13 21 34
+make: Unknown modifier '_'
+
+mod-sysv-parse:
+make: Unknown modifier '3'
+make: Unclosed variable specification (expecting '}') for "FIB" (value "") modifier 3
+
+make: Unknown modifier '3'
+make: Unclosed variable specification (expecting '}') for "FIB" (value "") modifier 3
+
+make: Unknown modifier '3'
+make: Unclosed variable specification (expecting '}') for "FIB" (value "") modifier 3
+
+1 1 2 x3 5 8 1x3 21 34
 exit status 0
