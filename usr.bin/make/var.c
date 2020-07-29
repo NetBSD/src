@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.356 2020/07/29 20:57:31 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.357 2020/07/29 21:23:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.356 2020/07/29 20:57:31 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.357 2020/07/29 21:23:26 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.356 2020/07/29 20:57:31 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.357 2020/07/29 21:23:26 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -124,6 +124,7 @@ __RCSID("$NetBSD: var.c,v 1.356 2020/07/29 20:57:31 rillig Exp $");
 #include    <sys/types.h>
 #include    <regex.h>
 #endif
+#include    <assert.h>
 #include    <ctype.h>
 #include    <inttypes.h>
 #include    <limits.h>
@@ -3058,11 +3059,20 @@ ApplyModifier_SysV(const char *mod, ApplyModifiersState *st)
  * Assignment operators (see ApplyModifier_Assign).
  */
 static char *
-ApplyModifiers(char *val, const char * const tstr,
-	       int const startc, int const endc,
-	       Var * const v, GNode * const ctxt, VarEvalFlags const eflags,
-	       int * const lengthPtr, void ** const freePtr)
-{
+ApplyModifiers(
+    char *val,			/* the current value of the variable */
+    const char * const tstr,	/* the string to be parsed */
+    int const startc,		/* '(' or '{' or '\0' */
+    int const endc,		/* ')' or '}' or '\0' */
+    Var * const v,		/* the variable may have its flags changed */
+    GNode * const ctxt,		/* for looking up and modifying variables */
+    VarEvalFlags const eflags,
+    int * const lengthPtr,	/* returns the number of skipped bytes */
+    void ** const freePtr	/* free this after using the return value */
+) {
+    assert(startc == '(' || startc == '{' || startc == '\0');
+    assert(endc == ')' || endc == '}' || startc == '\0');
+
     ApplyModifiersState st = {
 	startc, endc, v, ctxt, eflags,
 	val, NULL, NULL, '\0', ' ', FALSE
@@ -3087,9 +3097,7 @@ ApplyModifiers(char *val, const char * const tstr,
 	     * we are not interested.
 	     */
 	    if (rval != NULL && *rval &&
-		(c = p[rlen]) != '\0' &&
-		c != ':' &&
-		c != st.endc) {
+		(c = p[rlen]) != '\0' && c != ':' && c != st.endc) {
 		free(freeIt);
 		goto apply_mods;
 	    }
