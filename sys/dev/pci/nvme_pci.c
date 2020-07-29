@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme_pci.c,v 1.28 2020/07/28 09:36:05 jdolecek Exp $	*/
+/*	$NetBSD: nvme_pci.c,v 1.29 2020/07/29 07:14:45 jdolecek Exp $	*/
 /*	$OpenBSD: nvme_pci.c,v 1.3 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.28 2020/07/28 09:36:05 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.29 2020/07/29 07:14:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,7 +401,7 @@ nvme_pci_setup_intr(struct pci_attach_args *pa, struct nvme_pci_softc *psc)
 	memset(counts, 0, sizeof(counts));
 
 	if (nvme_pci_force_intx)
-		goto force_intx;
+		goto setup_intx;
 
 	/* MSI-X */
 	counts[PCI_INTR_TYPE_MSIX] = uimin(pci_msix_count(pa->pa_pc, pa->pa_tag),
@@ -415,7 +415,7 @@ nvme_pci_setup_intr(struct pci_attach_args *pa, struct nvme_pci_softc *psc)
 
 	/* MSI */
 	if (sc->sc_quirks & NVME_QUIRK_NOMSI)
-		goto force_intx;
+		goto setup_intx;
 	counts[PCI_INTR_TYPE_MSI] = pci_msi_count(pa->pa_pc, pa->pa_tag);
 	if (counts[PCI_INTR_TYPE_MSI] > 0) {
 		while (counts[PCI_INTR_TYPE_MSI] > ncpu + 1) {
@@ -431,7 +431,7 @@ nvme_pci_setup_intr(struct pci_attach_args *pa, struct nvme_pci_softc *psc)
 			counts[PCI_INTR_TYPE_MSI] = 2;	/* adminq + 1 ioq */
 	}
 
-force_intx:
+setup_intx:
 	/* INTx */
 	counts[PCI_INTR_TYPE_INTX] = 1;
 
