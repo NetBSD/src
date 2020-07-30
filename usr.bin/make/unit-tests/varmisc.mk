@@ -1,4 +1,4 @@
-# $Id: varmisc.mk,v 1.19 2020/07/28 19:39:43 rillig Exp $
+# $Id: varmisc.mk,v 1.20 2020/07/30 13:50:27 rillig Exp $
 #
 # Miscellaneous variable tests.
 
@@ -194,6 +194,10 @@ parse-dynamic:
 # Since 2020-07-28, make complains about unclosed variables.
 # Before that, it had not complained about unclosed variables only when
 # parsing the modifiers, but not when parsing the variable name.
+
+UNCLOSED_INDIR_1=	${UNCLOSED_ORIG
+UNCLOSED_INDIR_2=	${UNCLOSED_INDIR_1}
+
 varerror-unclosed:
 	@echo $@:begin
 	@echo $(
@@ -205,6 +209,7 @@ varerror-unclosed:
 .for i in 1 2 3
 	@echo ${UNCLOSED.${i}
 .endfor
+	@echo ${UNCLOSED_INDIR_2}
 	@echo $@:end
 
 # As of 2020-07-28, .undef only undefines the first variable.
