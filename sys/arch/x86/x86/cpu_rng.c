@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_rng.c,v 1.18 2020/07/25 22:10:34 riastradh Exp $ */
+/* $NetBSD: cpu_rng.c,v 1.19 2020/07/30 17:26:23 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -228,6 +228,11 @@ cpu_rng_via(uint64_t *out)
 	 * The Cryptography Research paper on the VIA RNG estimates
 	 * 0.75 bits of entropy per output bit and advises users to
 	 * be "even more conservative".
+	 *
+	 *	`Evaluation of VIA C3 Nehemiah Random Number
+	 *	Generator', Cryptography Research, Inc., February 27,
+	 *	2003.
+	 *	https://www.rambus.com/wp-content/uploads/2015/08/VIA_rng.pdf
 	 */
 	return nbytes * NBBY/2;
 }
