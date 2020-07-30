@@ -1,4 +1,4 @@
-/* $NetBSD: pmb.h,v 1.2 2020/07/30 03:19:33 uwe Exp $ */
+/* $NetBSD: pmb.h,v 1.3 2020/07/30 20:59:08 uwe Exp $ */
 /*
  * Copyright (c) 2020 Valery Ushakov
  * All rights reserved.
@@ -87,15 +87,31 @@
 #define   ST40_PMB_DA_PPN_MASK		0xff000000
 #define   ST40_PMB_DA_PPN_SHIFT		24
 
+/*
+ * size field is not continuous hence the kludgy list with all the
+ * possible junk bits in the middle.
+ */
 #define   ST40_PMB_DA_BITS			\
 	  "\177\020"				\
 	  "f\030\010" "PPN\0"			\
 	  "b\010"     "V\0"			\
 	  "F\04\04"   "\0"			\
+	    ":\017"   "512M\0"			\
+	    ":\016"   "128M\0"			\
+	    ":\015"   "512M\0"			\
+	    ":\014"   "128M\0"			\
+	    ":\013"   "512M\0"			\
+	    ":\012"   "128M\0"			\
 	    ":\011"   "512M\0"			\
 	    ":\010"   "128M\0"			\
-	    ":\01"    "64M\0"			\
-	    ":\0"     "16M\0"			\
+	    ":\007"    "64M\0"			\
+	    ":\006"    "16M\0"			\
+	    ":\005"    "64M\0"			\
+	    ":\004"    "16M\0"			\
+	    ":\003"    "64M\0"			\
+	    ":\002"    "16M\0"			\
+	    ":\001"    "64M\0"			\
+	    ":\000"    "16M\0"			\
 	  "b\011"     "UB\0"			\
 	  "b\03"      "C\0"			\
 	  "F\0\01"    "\0"			\
