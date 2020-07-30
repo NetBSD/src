@@ -66,5 +66,7 @@ make: Unclosed variable "UNCLOSED.2"
 
 make: Unclosed variable "UNCLOSED.3"
 
+make: Unclosed variable "UNCLOSED_ORIG"
+
 varerror-unclosed:end
 exit status 0
