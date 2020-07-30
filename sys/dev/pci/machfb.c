@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.99 2020/07/05 09:23:42 martin Exp $	*/
+/*	$NetBSD: machfb.c,v 1.100 2020/07/30 21:29:20 macallan Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0,
-	"$NetBSD: machfb.c,v 1.99 2020/07/05 09:23:42 martin Exp $");
+	"$NetBSD: machfb.c,v 1.100 2020/07/30 21:29:20 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,6 +147,7 @@ struct mach64_softc {
 	uint8_t sc_edid_data[1024];
     	struct edid_info sc_ei;
     	int sc_setmode;
+    	int sc_gen_cntl;
 
 	u_char sc_cmap_red[256];
 	u_char sc_cmap_green[256];
@@ -613,7 +614,11 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_console = mach64_is_console(sc);
-	aprint_debug("gen_cntl: %08x\n", regr(sc, CRTC_GEN_CNTL));
+	sc->sc_gen_cntl = regr(sc, CRTC_GEN_CNTL);
+	aprint_debug("gen_cntl: %08x\n", sc->sc_gen_cntl);
+	sc->sc_gen_cntl &= CRTC_CSYNC_EN;
+	aprint_normal_dev(sc->sc_dev, "found composite sync %s\n",
+	    sc->sc_gen_cntl ? "enabled" : "disabled");
 
 #define MODE_IS_VALID(m) ((sc->ramdac_freq >= (m)->dot_clock) && \
 			  ((m)->hdisplay <= 1280))
@@ -996,11 +1001,7 @@ mach64_set_crtcregs(struct mach64_softc *sc, struct mach64_crtcregs *crtc)
 	regw(sc, CRTC_OFF_PITCH, (sc->virt_x >> 3) << 22);
 
 	regw(sc, CRTC_GEN_CNTL, crtc->gen_cntl | crtc->color_depth |
-/* XXX this unconditionally enables composite sync on SPARC */
-#ifdef __sparc__
-	    CRTC_CSYNC_EN |
-#endif
-	    CRTC_EXT_DISP_EN | CRTC_EXT_EN);
+	    sc->sc_gen_cntl | CRTC_EXT_DISP_EN | CRTC_EXT_EN);
 }
 
 static int
