@@ -1,4 +1,4 @@
-/* $NetBSD: pmb.h,v 1.3 2020/07/30 20:59:08 uwe Exp $ */
+/* $NetBSD: pmb.h,v 1.4 2020/07/30 21:25:43 uwe Exp $ */
 /*
  * Copyright (c) 2020 Valery Ushakov
  * All rights reserved.
@@ -117,5 +117,10 @@
 	  "F\0\01"    "\0"			\
 	    ":\01"    "WT\0"			\
 	    ":\0"     "CB\0"
+
+
+#ifndef _LOCORE
+void st40_pmb_init(int);
+#endif	/* !_LOCORE */
 
 #endif	/* !_SH3_PMB_H_ */
