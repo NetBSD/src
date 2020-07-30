@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.70 2020/04/30 20:48:10 skrll Exp $	*/
+/*	$NetBSD: types.h,v 1.71 2020/07/30 06:54:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -142,27 +142,31 @@ typedef __uint32_t tlb_asid_t;
 #define	PCU_UNIT_COUNT	2
 #endif
 
-
 #define	__SIMPLELOCK_LOCKED	1
 #define	__SIMPLELOCK_UNLOCKED	0
 
-#define	__HAVE_FAST_SOFTINTS
-#define	__HAVE_SYSCALL_INTERN
-#define	__HAVE_CPU_LWP_SETPRIVATE
-#define	__HAVE_CPU_DATA_FIRST
-#define	__HAVE_MD_CPU_OFFLINE
-#define	__HAVE_CPU_COUNTER
-#define	__HAVE_CPU_UAREA_ROUTINES
 #define	__HAVE_COMMON___TLS_GET_ADDR
+#define	__HAVE_CPU_COUNTER
+#define	__HAVE_CPU_DATA_FIRST
+#define	__HAVE_CPU_LWP_SETPRIVATE
+#define	__HAVE_CPU_UAREA_ROUTINES
+#define	__HAVE_FAST_SOFTINTS
+#define	__HAVE_MD_CPU_OFFLINE
+#define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
+#define	__HAVE_MM_MD_KERNACC
+#define	__HAVE_MM_MD_CACHE_ALIASING
+#define	__HAVE_SYSCALL_INTERN
+#define	__HAVE_TLS_VARIANT_I
+#define	__HAVE_UCAS_FULL
 #define	__HAVE___LWP_GETTCB_FAST
 #define	__HAVE___LWP_SETTCB
-#define	__HAVE_TLS_VARIANT_I
+
+/* XXX temporary */
+#define	__HAVE_UNLOCKED_PMAP
 
 #if !defined(__mips_o32)
 #define	__HAVE_ATOMIC64_OPS
 #endif
-
-#define	__HAVE_UCAS_FULL
 
 #if defined(_KERNEL)
 #define	__HAVE_RAS
@@ -171,11 +175,5 @@ typedef __uint32_t tlb_asid_t;
 #endif
 #endif /* _KERNEL */
 
-#define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
-#define	__HAVE_MM_MD_KERNACC
-#define	__HAVE_MM_MD_CACHE_ALIASING
-
-/* XXX temporary */
-#define	__HAVE_UNLOCKED_PMAP
 
 #endif	/* _MIPS_TYPES_H_ */
