@@ -1,4 +1,4 @@
-/* $NetBSD: pmb.h,v 1.1 2020/07/25 22:26:59 uwe Exp $ */
+/* $NetBSD: pmb.h,v 1.2 2020/07/30 03:19:33 uwe Exp $ */
 /*
  * Copyright (c) 2020 Valery Ushakov
  * All rights reserved.
@@ -44,9 +44,14 @@
 
 
 /* Physical address space control register (ST4-300) */
-#define ST40_PMB_PASCR			0xff000070
+#define ST40_PASCR			0xff000070
 #define   ST40_PASCR_UB_MASK		  0x0000000f
 #define   ST40_PASCR_SE			  0x80000000
+
+#define   ST40_PASCR_BITS			\
+		"\177\020"			\
+		"b\037"  "SE\0"			\
+		"f\0\04" "UB\0"
 
 
 /* Memory-mapped PMB */
@@ -62,6 +67,11 @@
 #define   ST40_PMB_AA_VPN_MASK		  0xff000000
 #define   ST40_PMB_AA_VPN_SHIFT		  24
 
+#define   ST40_PMB_AA_BITS			\
+	  "\177\020"				\
+	  "f\030\010" "VPN\0"			\
+	  "b\010"     "V\0"
+
 
 /* PMB Data Array */
 #define   ST40_PMB_DA			0xf7100000
@@ -76,5 +86,20 @@
 #define   ST40_PMB_DA_V			0x00000100
 #define   ST40_PMB_DA_PPN_MASK		0xff000000
 #define   ST40_PMB_DA_PPN_SHIFT		24
+
+#define   ST40_PMB_DA_BITS			\
+	  "\177\020"				\
+	  "f\030\010" "PPN\0"			\
+	  "b\010"     "V\0"			\
+	  "F\04\04"   "\0"			\
+	    ":\011"   "512M\0"			\
+	    ":\010"   "128M\0"			\
+	    ":\01"    "64M\0"			\
+	    ":\0"     "16M\0"			\
+	  "b\011"     "UB\0"			\
+	  "b\03"      "C\0"			\
+	  "F\0\01"    "\0"			\
+	    ":\01"    "WT\0"			\
+	    ":\0"     "CB\0"
 
 #endif	/* !_SH3_PMB_H_ */
