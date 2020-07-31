@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.111 2020/07/27 08:25:28 skrll Exp $ */
+/* $NetBSD: locore.h,v 1.112 2020/07/31 03:03:04 simonb Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -876,8 +876,8 @@ struct pridtab {
 #define	 MIPS_CP0FL_CONFIG3	__BIT(9)  /* XXX probeable - shouldn't be hard coded */
 #define	 MIPS_CP0FL_CONFIG4	__BIT(10) /* XXX probeable - shouldn't be hard coded */
 #define	 MIPS_CP0FL_CONFIG5	__BIT(11) /* XXX probeable - shouldn't be hard coded */
-#define	 MIPS_CP0FL_CONFIG6	__BIT(12) /* XXX probeable - shouldn't be hard coded */
-#define	 MIPS_CP0FL_CONFIG7	__BIT(13) /* XXX probeable - shouldn't be hard coded */
+#define	 MIPS_CP0FL_CONFIG6	__BIT(12)
+#define	 MIPS_CP0FL_CONFIG7	__BIT(13)
 
 /*
  * cpu_cidflags defines, by company
