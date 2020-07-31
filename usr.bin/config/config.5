@@ -1,4 +1,4 @@
-.\" $NetBSD: config.5,v 1.41 2020/07/31 23:30:23 uwe Exp $
+.\" $NetBSD: config.5,v 1.42 2020/07/31 23:42:21 uwe Exp $
 .\"
 .\"  Copyright (c) 2006, 2007 The NetBSD Foundation.
 .\"  All rights reserved.
@@ -666,6 +666,26 @@ indicates when the relevant line should be added to
 and works just like the
 .Ic file
 statement.
+.\"
+.Pp
+.It Ic makeoptions \
+    Ar condition name Ns Ic += Ns Ar value \
+    Ns Op Ic \&, Ar condition name Ns Ic += Ns Ar value \
+    Ns Op Ic \&, Ar ...
+Appends to a definition in the generated
+.Pa Makefile .
+.Pp
+This variant of
+.Ic makeoptions
+belongs to the options description section.
+The
+.Ar condition
+is mandatory and only
+.Ic +=
+can be used.
+Not to be confused with the the confusingly similar variant of
+.Ic makeoptions
+used in the selections section.
 .El
 .\"
 .\"
@@ -868,14 +888,18 @@ is defined with
 the
 .Ar value
 is defined as an option too.
-.\"
-.\" XXX: This variant of makeoptions can only be specified in the descriptions.
-.It Ic makeoptions \
-    Ar condition name Ns Ic += Ns Ar value \
-    Ns Op Ic \&, Ar condition name Ns Ic += Ns Ar value \
-    Ns Op Ic \&, Ar ...
-Appends to a definition in the generated
-.Pa Makefile .
+.Pp
+This variant of
+.Ic makeoptions
+belongs to the options selection section.
+Both
+.Ic =
+and
+.Ic +=
+can be used.
+Not to be confused with the confusingly similar variant of
+.Ic makeoptions
+used in the descriptions section.
 .\"
 .It Ic no makeoptions Ar name Op , Ar name Op , Ar ...
 Removes one or more definitions from the generated
