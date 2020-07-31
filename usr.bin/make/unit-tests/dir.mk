@@ -1,4 +1,4 @@
-# $NetBSD: dir.mk,v 1.2 2020/07/31 20:02:44 rillig Exp $
+# $NetBSD: dir.mk,v 1.3 2020/07/31 20:08:08 rillig Exp $
 #
 # Tests for dir.c.
 
@@ -32,7 +32,21 @@ fourteen:
 fifteen:
 	@echo 15
 
+# There may be multiple brace groups side by side.
 all: {pre-,}{patch,configure}
 
 pre-patch patch pre-configure configure:
+	@echo $@
+
+# Empty pieces are allowed in the braces.
+all: {fetch,extract}{,-post}
+
+fetch fetch-post extract extract-post:
+	@echo $@
+
+# The expansions may have duplicates.
+# These are merged together because of the dependency line.
+all: dup-{1,1,1,1,1,1,1}
+
+dup-1:
 	@echo $@

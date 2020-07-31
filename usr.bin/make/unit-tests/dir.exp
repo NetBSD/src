@@ -10,4 +10,9 @@ pre-patch
 pre-configure
 patch
 configure
+fetch
+fetch-post
+extract
+extract-post
+dup-1
 exit status 0
