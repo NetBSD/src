@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsNN.h,v 1.9 2020/07/26 08:08:41 simonb Exp $	*/
+/*	$NetBSD: mipsNN.h,v 1.10 2020/07/31 02:34:38 simonb Exp $	*/
 
 /*
  * Copyright 2000, 2001
@@ -256,7 +256,7 @@
 /* "MCU" (R): MCU ASE extension present. */
 #define	MIPSNN_CFG3_MCU		0x00020000
 
-/* "ISAOnExc" (R): ISA used on exception. */
+/* "ISAOnExc" (R/RW): ISA used on exception. */
 #define	MIPSNN_CFG3_ISAOnExc	0x00010000	/* microMIPS used on entrance to exception vector */
 
 /* "ISA" (R): Instruction Set Availability. */
@@ -297,6 +297,180 @@
 
 /* "TL" (R): Trace Logic implemented. */
 #define	MIPSNN_CFG3_TL		0x00000001
+
+/*
+ * Values in Configuration Register 4 (CP0 Register 16, Select 4)
+ */
+
+/* "M" (R): Configuration Register 5 present. */
+#define	MIPSNN_CFG4_M					__BIT(31)
+
+/* "IE" (R): TLB invalidate instruction support/configuration. */
+#define	MIPSNN_CFG4_IE					__BITS(30,29)
+
+/* "AE" (R): Extend EntryHi[ASID] to 10 bits. */
+#define	MIPSNN_CFG4_AE					__BIT(28)
+
+/* "VTLBSizeExt" (R): TLB invalidate instruction support/configuration. */
+#define	MIPSNN_CFG4_VTLB_SE				__BITS(27,24)
+
+/* "KScrExist" (R): Number of kernel mode scratch registers available. */
+#define	MIPSNN_CFG4_KSCR_EXIST				__BITS(23,16)
+
+/* "MMUExtDef" (R): MMU extension definition. */
+#define	MIPSNN_CFG4_MMU_EXT_DEF				__BITS(15,14)
+#define	  MIPSNN_CFG4_MMU_EXT_DEF_MMU			  1
+#define	  MIPSNN_CFG4_MMU_EXT_DEF_FLTB			  2
+#define	  MIPSNN_CFG4_MMU_EXT_DEF_VTLB			  3
+
+/* "MMUSizeExt" (R): Extension of Config1[MMUSize-1] field. */
+#define	MIPSNN_CFG4_MMU_EXT_DEF_MMU_SIZE_EXT		__BITS(7,0)
+
+/* "FTLBPageSize" (R/RW): Indicates the Page Size of the FTLB Array Entries. */
+#define	MIPSNN_CFG4_FTLB_FTLB_PAGE_SIZE		__BITS(10,8)
+#define	  MIPSNN_CFG4_FTLB_FTLB_PAGE_SIZE_1K	  0
+#define	  MIPSNN_CFG4_FTLB_FTLB_PAGE_SIZE_4K	  1
+#define	  MIPSNN_CFG4_FTLB_FTLB_PAGE_SIZE_16K	  2
+#define	  MIPSNN_CFG4_FTLB_FTLB_PAGE_SIZE_64K	  3
+#define	  MIPSNN_CFG4_FTLB_FTLB_PAGE_SIZE_256K	  4
+#define	  MIPSNN_CFG4_FTLB_FTLB_PAGE_SIZE_1G	  5
+#define	  MIPSNN_CFG4_FTLB_FTLB_PAGE_SIZE_4G	  6
+/* "FTLBWays" (R): Indicates the Set Associativity of the FTLB Array. */
+#define	MIPSNN_CFG4_FTLB_FTLB_WAYS		__BITS(7,4)
+#define	  MIPSNN_CFG4_FTLB_FTLB_WAYS_2		  0
+#define	  MIPSNN_CFG4_FTLB_FTLB_WAYS_3		  1
+#define	  MIPSNN_CFG4_FTLB_FTLB_WAYS_4		  2
+#define	  MIPSNN_CFG4_FTLB_FTLB_WAYS_5		  3
+#define	  MIPSNN_CFG4_FTLB_FTLB_WAYS_6		  4
+#define	  MIPSNN_CFG4_FTLB_FTLB_WAYS_7		  5
+#define	  MIPSNN_CFG4_FTLB_FTLB_WAYS_8		  6
+/* "FTLBSets" (R): Indicates the number of Set per Way within the FTLB Array. */
+#define	MIPSNN_CFG4_FTLB_FTLB_SETS		__BITS(3,0)
+#define	  MIPSNN_CFG4_FTLB_FTLB_SETS_1		  0
+#define	  MIPSNN_CFG4_FTLB_FTLB_SETS_2		  1
+#define	  MIPSNN_CFG4_FTLB_FTLB_SETS_4		  2
+#define	  MIPSNN_CFG4_FTLB_FTLB_SETS_8		  3
+#define	  MIPSNN_CFG4_FTLB_FTLB_SETS_16		  4
+#define	  MIPSNN_CFG4_FTLB_FTLB_SETS_32		  5
+#define	  MIPSNN_CFG4_FTLB_FTLB_SETS_64		  6
+#define	  MIPSNN_CFG4_FTLB_FTLB_SETS_128	  7
+#define	  MIPSNN_CFG4_FTLB_FTLB_SETS_256	  8
+#define	  MIPSNN_CFG4_FTLB_FTLB_SETS_512	  9
+#define	  MIPSNN_CFG4_FTLB_FTLB_SETS_1024	  10
+#define	  MIPSNN_CFG4_FTLB_FTLB_SETS_2048	  11
+#define	  MIPSNN_CFG4_FTLB_FTLB_SETS_4096	  12
+#define	  MIPSNN_CFG4_FTLB_FTLB_SETS_8192	  13
+#define	  MIPSNN_CFG4_FTLB_FTLB_SETS_16384	  14
+#define	  MIPSNN_CFG4_FTLB_FTLB_SETS_32768	  15
+
+/* "MMUSizeExt" (R): Extension of Config1[MMUSize-1] field. */
+#define	MIPSNN_CFG4_FVTLB_VTLB_SIZE_EXT		__BITS(27,24)
+/* "FTLBPageSize" (R/RW): Indicates the Page Size of the FTLB Array Entries. */
+#define	MIPSNN_CFG4_FVTLB_FTLB_PAGE_SIZE	__BITS(12,8)
+#define	  MIPSNN_CFG4_FVTLB_FTLB_PAGE_SIZE_1K	  0
+#define	  MIPSNN_CFG4_FVTLB_FTLB_PAGE_SIZE_4K	  1
+#define	  MIPSNN_CFG4_FVTLB_FTLB_PAGE_SIZE_16K	  2
+#define	  MIPSNN_CFG4_FVTLB_FTLB_PAGE_SIZE_64K	  3
+#define	  MIPSNN_CFG4_FVTLB_FTLB_PAGE_SIZE_256K	  4
+#define	  MIPSNN_CFG4_FVTLB_FTLB_PAGE_SIZE_1M	  5
+#define	  MIPSNN_CFG4_FVTLB_FTLB_PAGE_SIZE_4M	  6
+#define	  MIPSNN_CFG4_FVTLB_FTLB_PAGE_SIZE_16M	  7
+#define	  MIPSNN_CFG4_FVTLB_FTLB_PAGE_SIZE_64M	  8
+#define	  MIPSNN_CFG4_FVTLB_FTLB_PAGE_SIZE_256M	  9
+#define	  MIPSNN_CFG4_FVTLB_FTLB_PAGE_SIZE_1G	  10
+#define	  MIPSNN_CFG4_FVTLB_FTLB_PAGE_SIZE_4G	  11
+#define	  MIPSNN_CFG4_FVTLB_FTLB_PAGE_SIZE_16G	  12
+#define	  MIPSNN_CFG4_FVTLB_FTLB_PAGE_SIZE_64G	  13
+#define	  MIPSNN_CFG4_FVTLB_FTLB_PAGE_SIZE_256G	  14
+#define	  MIPSNN_CFG4_FVTLB_FTLB_PAGE_SIZE_1T	  15
+#define	  MIPSNN_CFG4_FVTLB_FTLB_PAGE_SIZE_4T	  16
+#define	  MIPSNN_CFG4_FVTLB_FTLB_PAGE_SIZE_16T	  17
+#define	  MIPSNN_CFG4_FVTLB_FTLB_PAGE_SIZE_64T	  18
+#define	  MIPSNN_CFG4_FVTLB_FTLB_PAGE_SIZE_256T	  19
+/* "FTLBWays" (R): Indicates the Set Associativity of the FTLB Array. */
+#define	MIPSNN_CFG4_FVTLB_FTLB_WAYS		__BITS(7,4)
+#define	  MIPSNN_CFG4_FVTLB_FTLB_WAYS_2		  0
+#define	  MIPSNN_CFG4_FVTLB_FTLB_WAYS_3		  1
+#define	  MIPSNN_CFG4_FVTLB_FTLB_WAYS_4		  2
+#define	  MIPSNN_CFG4_FVTLB_FTLB_WAYS_5		  3
+#define	  MIPSNN_CFG4_FVTLB_FTLB_WAYS_6		  4
+#define	  MIPSNN_CFG4_FVTLB_FTLB_WAYS_7		  5
+#define	  MIPSNN_CFG4_FVTLB_FTLB_WAYS_8		  6
+/* "FTLBSets" (R): Indicates the number of Set per Way within the FTLB Array. */
+#define	MIPSNN_CFG4_FVTLB_FTLB_SETS		__BITS(3,0)
+#define	  MIPSNN_CFG4_FVTLB_FTLB_SETS_1		  0
+#define	  MIPSNN_CFG4_FVTLB_FTLB_SETS_2		  1
+#define	  MIPSNN_CFG4_FVTLB_FTLB_SETS_4		  2
+#define	  MIPSNN_CFG4_FVTLB_FTLB_SETS_8		  3
+#define	  MIPSNN_CFG4_FVTLB_FTLB_SETS_16	  4
+#define	  MIPSNN_CFG4_FVTLB_FTLB_SETS_32	  5
+#define	  MIPSNN_CFG4_FVTLB_FTLB_SETS_64	  6
+#define	  MIPSNN_CFG4_FVTLB_FTLB_SETS_128	  7
+#define	  MIPSNN_CFG4_FVTLB_FTLB_SETS_256	  8
+#define	  MIPSNN_CFG4_FVTLB_FTLB_SETS_512	  9
+#define	  MIPSNN_CFG4_FVTLB_FTLB_SETS_1024	  10
+#define	  MIPSNN_CFG4_FVTLB_FTLB_SETS_2048	  11
+#define	  MIPSNN_CFG4_FVTLB_FTLB_SETS_4096	  12
+#define	  MIPSNN_CFG4_FVTLB_FTLB_SETS_8192	  13
+#define	  MIPSNN_CFG4_FVTLB_FTLB_SETS_16384	  14
+#define	  MIPSNN_CFG4_FVTLB_FTLB_SETS_32768	  15
+
+
+/*
+ * Values in Configuration Register 5 (CP0 Register 16, Select 5)
+ */
+
+/* "M" (R): Reserved for undefined configuration present. */
+#define	MIPSNN_CFG5_M					__BIT(31)
+
+/* "K" (RW): Enable/disable Config K0/Ku/K23 if segmentation is implemented. */
+#define	MIPSNN_CFG5_K					__BIT(30)
+
+/* "CV" (RW): Cache Error Exception Vector control disable. */
+#define	MIPSNN_CFG5_CV					__BIT(29)
+
+/* "EVA" (R): Enhanced Virtual Addressing instructions implemented. */
+#define	MIPSNN_CFG5_EVA					__BIT(28)
+
+/* "MSAEn" (RW): MIPS SIMD Architecture (MSA) enable. */
+#define	MIPSNN_CFG5_MSAEn				__BIT(27)
+
+/* "XNP" (R): Extended LL/SC instructions non present. */
+#define	MIPSNN_CFG5_XNP					__BIT(13)
+
+/* "DEC" (R): Dual Endian Capability. */
+#define	MIPSNN_CFG5_DEC					__BIT(11)
+
+/* "L2C" (R): Indicates presense of COP0 Config2. */
+#define	MIPSNN_CFG5_L2C					__BIT(10)
+
+/* "UFE" (RW): Enable for user mode access to Config5[FRE]. */
+#define	MIPSNN_CFG5_UFE					__BIT(9)
+
+/* "FRE" (RW): Enable for user mode to emulate Status[FR]=0 handling. */
+#define	MIPSNN_CFG5_FRE					__BIT(8)
+
+/* "VP" (R): Virtual Processor - multi-threading features supported. */
+#define	MIPSNN_CFG5_VP					__BIT(7)
+
+/* "SBRI" (RW): SDBBP instruction Reserved Instruction control. */
+#define	MIPSNN_CFG5_SBRI				__BIT(6)
+
+/* "MVH" (R): Move To/From High COP0 (MTHCO/MFHCO) instructions implemented. */
+#define	MIPSNN_CFG5_MVH					__BIT(5)
+
+/* "LLB" (R): Load-Linked Bit (LLB) is present in COP0 LLAddr. */
+#define	MIPSNN_CFG5_LLB					__BIT(4)
+
+/* "MRP" (R): COP0 Memory Accessibility Attributes Regisers are present. */
+#define	MIPSNN_CFG5_MRP					__BIT(3)
+
+/* "UFR" (R): Allows user-mode access to Status[FR] using CTC1/CFC1. */
+#define	MIPSNN_CFG5_UFR					__BIT(2)
+
+/* "NFExists" (R): Nested Fault feature exists. */
+#define	MIPSNN_CFG5_NF_EXISTS				__BIT(0)
+
 
 /*
  * Values in Configuration Register 6 (CP0 Register 16, Select 6)
@@ -361,6 +535,7 @@
 #define	MIPSNN_RMIXLP_CFG7_MASKSM_16MB	(0xff >> 2)
 #define	MIPSNN_RMIXLP_CFG7_MASKSM_64MB	(0xff >> 1)
 #define	MIPSNN_RMIXLP_CFG7_MASKSM_256MB	(0xff >> 0)
+
 
 /*
  * Values in Configuration Register 6 (CP0 Register 16, Select 6)
