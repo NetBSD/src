@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.112 2020/07/31 03:03:04 simonb Exp $ */
+/* $NetBSD: locore.h,v 1.113 2020/07/31 08:54:09 simonb Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -806,7 +806,7 @@ void mips_machdep_cache_config(void);
 #define	TF_RA		_R_RA
 #define	TF_SR		_R_SR
 #define	TF_MULLO	_R_MULLO
-#define	TF_MULHI	_R_MULLO
+#define	TF_MULHI	_R_MULHI
 #define	TF_EPC		_R_PC		/* may be changed by trap() call */
 
 #define	TF_NREGS	(sizeof(struct reg) / sizeof(mips_reg_t))
