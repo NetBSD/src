@@ -97,6 +97,8 @@ make: Bad modifier `:ts\65oct' for FIB
 make: Bad modifier `:tsxy' for FIB
 xy}
 mod-t-parse:
+make: Bad modifier `:t' for FIB
+
 make: Bad modifier `:txy' for FIB
 y}
 make: Bad modifier `:t' for FIB
