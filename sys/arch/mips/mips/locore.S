@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.223 2020/07/20 03:23:42 simonb Exp $	*/
+/*	$NetBSD: locore.S,v 1.224 2020/07/31 20:03:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
 #include <mips/trap.h>
 #include <mips/locore.h>
 
-RCSID("$NetBSD: locore.S,v 1.223 2020/07/20 03:23:42 simonb Exp $")
+RCSID("$NetBSD: locore.S,v 1.224 2020/07/31 20:03:20 skrll Exp $")
 
 #include "assym.h"
 
@@ -88,7 +88,7 @@ _C_LABEL(kernel_text):
 	mtc0	zero, MIPS_COP_0_CAUSE
 	COP0_SYNC
 
-#if defined(_LP64) 
+#if defined(_LP64)
 	/* Enable 64-bit addressing */
 	mfc0	k0, MIPS_COP_0_STATUS
 	MFC0_HAZARD
