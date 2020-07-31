@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.76 2020/07/29 20:57:31 rillig Exp $
+#	$NetBSD: Makefile,v 1.77 2020/07/31 07:29:21 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -8,9 +8,15 @@ SRCS+=	str.c strlist.c suff.c targ.c trace.c var.c util.c
 
 USE_COVERAGE?=	no		# works only with gcc; clang9 fails to link
 .if ${USE_COVERAGE} == "yes"
-COPTS=		--coverage -O0 -ggdb
-LDADD=		--coverage
+COPTS+=		--coverage -O0 -ggdb
+LDADD+=		--coverage
 CLEANFILES+=	${SRCS:.c=.gcda} ${SRCS:.c=.gcno} ${SRCS:=.gcov}
+.endif
+
+USE_UBSAN?=	no
+.if ${USE_UBSAN} == "yes"
+COPTS+=		-fsanitize=undefined
+LDADD+=		-fsanitize=undefined
 .endif
 
 USE_META?=	yes
