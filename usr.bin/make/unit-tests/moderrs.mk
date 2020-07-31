@@ -1,4 +1,4 @@
-# $Id: moderrs.mk,v 1.9 2020/07/31 13:30:09 rillig Exp $
+# $Id: moderrs.mk,v 1.10 2020/07/31 13:49:25 rillig Exp $
 #
 # various modifier error tests
 
@@ -135,6 +135,7 @@ mod-ts-parse:
 
 mod-t-parse:
 	@echo $@:
+	@echo ${FIB:t
 	@echo ${FIB:txy}
 	@echo ${FIB:t}
 	@echo ${FIB:t:M*}
