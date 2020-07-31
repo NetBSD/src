@@ -1,0 +1,33 @@
+# $NetBSD: dir.mk,v 1.1 2020/07/31 16:42:51 rillig Exp $
+#
+# Tests for dir.c.
+
+# Dependency lines may use braces for expansion.
+all: {one,two,three}
+
+one:
+	@echo 1
+two:
+	@echo 2
+three:
+	@echo 3
+
+# The braces may start in the middle of a word.
+all: f{our,ive}
+
+four:
+	@echo 4
+five:
+	@echo 5
+six:
+	@echo 6
+
+# But nested braces don't work.
+all: {{thi,fou}r,fif}teen
+
+thirteen:
+	@echo 13
+fourteen:
+	@echo 14
+fifteen:
+	@echo 15
