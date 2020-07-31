@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.68 2020/07/16 01:20:38 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.69 2020/07/31 09:07:17 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.68 2020/07/16 01:20:38 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.69 2020/07/31 09:07:17 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -904,6 +904,7 @@ static void	ixl_stats_callout(void *);
 static void	ixl_stats_update(void *);
 static int	ixl_setup_sysctls(struct ixl_softc *);
 static void	ixl_teardown_sysctls(struct ixl_softc *);
+static int	ixl_sysctl_itr_handler(SYSCTLFN_PROTO);
 static int	ixl_queue_pairs_alloc(struct ixl_softc *);
 static void	ixl_queue_pairs_free(struct ixl_softc *);
 
@@ -6631,6 +6632,14 @@ ixl_setup_sysctls(struct ixl_softc *sc)
 		goto out;
 
 	error = sysctl_createv(log, 0, &rxnode, NULL,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "itr",
+	    SYSCTL_DESCR("Interrupt Throttling"),
+	    ixl_sysctl_itr_handler, 0,
+	    (void *)sc, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		goto out;
+
+	error = sysctl_createv(log, 0, &rxnode, NULL,
 	    CTLFLAG_READWRITE, CTLTYPE_INT, "intr_process_limit",
 	    SYSCTL_DESCR("max number of Rx packets"
 	    " to process for interrupt processing"),
@@ -6650,6 +6659,14 @@ ixl_setup_sysctls(struct ixl_softc *sc)
 	    0, CTLTYPE_NODE, "tx",
 	    SYSCTL_DESCR("ixl information and settings for Tx"),
 	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		goto out;
+
+	error = sysctl_createv(log, 0, &txnode, NULL,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "itr",
+	    SYSCTL_DESCR("Interrupt Throttling"),
+	    ixl_sysctl_itr_handler, 0,
+	    (void *)sc, 0, CTL_CREATE, CTL_EOL);
 	if (error)
 		goto out;
 
@@ -6684,6 +6701,52 @@ ixl_teardown_sysctls(struct ixl_softc *sc)
 {
 
 	sysctl_teardown(&sc->sc_sysctllog);
+}
+
+static bool
+ixl_sysctlnode_is_rx(struct sysctlnode *node)
+{
+
+	if (strstr(node->sysctl_parent->sysctl_name, "rx") != NULL)
+		return true;
+
+	return false;
+}
+
+static int
+ixl_sysctl_itr_handler(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct ixl_softc *sc = (struct ixl_softc *)node.sysctl_data;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	uint32_t newitr, *itrptr;
+	int error;
+
+	if (ixl_sysctlnode_is_rx(&node)) {
+		itrptr = &sc->sc_itr_rx;
+	} else {
+		itrptr = &sc->sc_itr_tx;
+	}
+
+	newitr = *itrptr;
+	node.sysctl_data = &newitr;
+	node.sysctl_size = sizeof(newitr);
+
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	if (error || newp == NULL)
+		return error;
+
+	/* ITRs are applied in ixl_init() for simple implementaion */
+	if (ISSET(ifp->if_flags, IFF_RUNNING))
+		return EBUSY;
+
+	if (newitr > 0x07ff)
+		return EINVAL;
+
+	*itrptr = newitr;
+
+	return 0;
 }
 
 static struct workqueue *
