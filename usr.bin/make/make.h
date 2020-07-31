@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.111 2020/07/21 21:13:24 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.112 2020/07/31 20:22:10 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -473,6 +473,8 @@ extern int debug;
 #define DEBUG_SCRIPT	0x20000
 #define DEBUG_PARSE	0x40000
 #define DEBUG_CWD	0x80000
+
+#define DEBUG_LINT	0x100000
 
 #define CONCAT(a,b)	a##b
 
