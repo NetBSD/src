@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.361 2020/07/31 13:39:15 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.362 2020/07/31 13:43:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.361 2020/07/31 13:39:15 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.362 2020/07/31 13:43:44 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.361 2020/07/31 13:39:15 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.362 2020/07/31 13:43:44 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2392,8 +2392,6 @@ ApplyModifier_Match(const char *mod, ApplyModifiersState *st)
 static ApplyModifierResult
 ApplyModifier_Subst(const char * const mod, ApplyModifiersState *st)
 {
-    ModifyWord_SubstArgs args;
-    Boolean oneBigWord = st->oneBigWord;
     char delim = mod[1];
     if (delim == '\0') {
 	Error("Missing delimiter for :S modifier");
@@ -2403,11 +2401,13 @@ ApplyModifier_Subst(const char * const mod, ApplyModifiersState *st)
 
     st->next = mod + 2;
 
+    ModifyWord_SubstArgs args;
+    args.pflags = 0;
+
     /*
      * If pattern begins with '^', it is anchored to the
      * start of the word -- skip over it and flag pattern.
      */
-    args.pflags = 0;
     if (*st->next == '^') {
 	args.pflags |= VARP_ANCHOR_START;
 	st->next++;
@@ -2429,11 +2429,7 @@ ApplyModifier_Subst(const char * const mod, ApplyModifiersState *st)
     }
     args.rhs = rhs;
 
-    /*
-     * Check for global substitution. If 'g' after the final
-     * delimiter, substitution is global and is marked that
-     * way.
-     */
+    Boolean oneBigWord = st->oneBigWord;
     for (;; st->next++) {
 	switch (*st->next) {
 	case 'g':
