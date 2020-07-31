@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.37 2020/05/23 18:42:17 nia Exp $
+$NetBSD: TODO.smpnet,v 1.38 2020/07/31 16:59:04 maxv Exp $
 
 MP-safe components
 ==================
@@ -18,6 +18,7 @@ kernel option.  Some components scale up and some don't.
    - Ethernet (if_ethersubr.c)
    - bridge(4)
      - STP
+     - BRIDGE_IPF
    - Fast forward (ipflow)
  - Layer 3
    - All except for items in the below section
@@ -61,7 +62,6 @@ Unprotected ones
 
  - Layer 2
    - ARCNET (if_arcsubr.c)
-   - BRIDGE_IPF
    - IEEE 1394 (if_ieee1394subr.c)
    - IEEE 802.11 (ieee80211(4))
  - Layer 3
