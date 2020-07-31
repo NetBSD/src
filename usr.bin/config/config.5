@@ -1,4 +1,4 @@
-.\" $NetBSD: config.5,v 1.38 2017/07/03 21:34:18 wiz Exp $
+.\" $NetBSD: config.5,v 1.39 2020/07/31 20:01:42 uwe Exp $
 .\"
 .\"  Copyright (c) 2006, 2007 The NetBSD Foundation.
 .\"  All rights reserved.
@@ -76,20 +76,25 @@ from the kernel source tree.
 Statements are separated by new-line characters.
 However, new-line characters can appear in the middle of a given statement,
 with the value of a space character.
+.\"
+.\"
 .Ss OBJECTS AND NAMES
+.\"
 .Xr config 1
 is a rather complicated piece of software that tries to comply with any
 configuration the user might think of.
 Quite a few different objects are manipulated through the kernel configuration
 file, therefore some definitions are needed.
+.\"
+.\"
 .Ss Options and attributes
+.\"
 The basic objects driving the kernel compilation are
 .Em options ,
 and are called
-.Ar attributes
+.Em attributes
 in some contexts.
-An
-.Ar attribute
+An attribute
 usually refers to a feature a given piece of hardware might have.
 However, the scope of an attribute is rather wide and can just be a place
 holder to group some source files together.
@@ -98,104 +103,118 @@ There is a special class of attribute, named
 .Em interface attribute ,
 which represents a hook that allows a device to attach to (i.e., be a child of)
 another device.
-An
-.Em interface attribute
+An interface attribute
 has a (possibly empty) list of
-.Ar locators
+.Em locators
 to match the actual location of a device.
-For example, on a PCI bus, devices are located by a
-.Em device number
+For example, on a PCI bus, devices are located by a device number
 that is fixed by the wiring of the motherboard.
 Additionally, each of those devices can appear through several interfaces named
-.Em functions .
+functions.
 A single PCI device entity is a unique function number of a given device from
 the considered PCI bus.
 Therefore, the locators for a
 .Xr pci 4
 device are
-.Ar dev
+.Ql dev
 (for device), and
-.Ar function .
+.Ql function .
 .Pp
 A
-.Ar locator
+.Em locator
 can either be a single integer value, or an array of integer values.
 It can have a default value, in which case it can be wildcarded with a
-.Dq \&?
+.Ql \&?
 in the options selection section of the configuration file.
-A single
-.Ar locator
+A single locator
 definition can take one of the following forms:
-.Bl -enum -offset indent -compact
+.Pp
+.Bl -bullet -offset indent -compact
 .It
 .Ar locator
 .It
-.Ar locator
-=
-.Ar value
+.Ar locator\| Ns Li =\| Ns Ar value
 .It
-.Ar locator Ns Oo Ar length Oc
+.Li "\&[" Ns Ar locator\| Ns Li =\| Ns Ar value\| Ns Li "\&]"
 .It
-.Ar locator Ns Oo Ar length Oc = Brq Ar value , ...
+.Ar locator Ns Li "\&[" Ns Ar length Ns Li "\&]"
+.It
+.Ar locator Ns Li "\&[" Ns Ar length Ns Li "\&]={" \
+        Ns Ar value\| Ns Li \&, Ar ... Ns Li "\&}"
+.It
+.Li "\&[" Ns Ar locator Ns Li "\&[" Ns Ar length Ns Li "\&]={" \
+        Ns Ar value\| Ns Li \&, Ar ... Ns Li "\&}]"
 .El
+.Pp
 The variants that specify a default value can be enclosed into square brackets,
 in which case the locator will not have to be specified later in the options
 selection section of the configuration file.
 .Pp
 In the options selection section, the locators are specified when declaring an
 instance as a space-separated list of
-.Dq Ao Ar locator Ac Ao Ar value Ac
+.Dq Ao Ar locator\| Ac \~ Ao Ar value\| Ac
 where value can be the
-.Dq \&?
+.Ql \&?
 wildcard if the locator allows it.
+.\"
+.\"
 .Ss Devices, instances and attachments
+.\"
 The main benefit of the kernel configuration file is to allow the user to avoid
 compiling some drivers, and wire down the configuration of some others.
 We have already seen that devices attach to each other through
-.Em interface attributes ,
+interface attributes,
 but not everything can attach to anything.
 Furthermore, the user has the ability to define precise instances for the
 devices.
-An
-.Ar instance
+An instance
 is simply the reality of a device when it is probed and attached by the kernel.
 .Pp
 Each driver has a name for its devices.
-It is called the base device name and is found as
-.Ar base
+It is called the
+.Em base device name
+and is found as
+.Dq Ar base
 in this documentation.
 An
-.Ar instance
-is the concatenation of a device name and a number.
+.Em instance
+is the concatenation of a base device name and a number.
 In the kernel configuration file, instances can sometimes be wildcarded
 (i.e., the number is replaced by a
-.Dq *
+.Ql *
 or a
-.Dq \&? )
+.Ql \&? )
 in order to match all the possible instances of a device.
 .Pp
 The usual
-.Dq *
+.Ql *
 becomes a
-.Dq \&?
+.Ql \&?
 when the instance name is used as an
 .Em attachment name .
 In the options selection part of the kernel configuration files, an
 .Em attachment
-is an
-.Em interface attribute
+is an interface attribute
 concatenated with a number or the wildcard
-.Dq \&? .
+.Ql \&? .
+.\"
+.\"
 .Ss Pseudo-devices
+.\"
 Some components of the kernel behave like a device although they don't have
 any actual reality in the hardware.
 For example, this is the case for special network devices, such as
 .Xr tun 4
 and
 .Xr tap 4 .
-They are integrated in the kernel as pseudo-devices, and can have several
+They are integrated in the kernel as
+.Em pseudo-devices ,
+and can have several
 instances and even children, just like normal devices.
+.\"
+.\"
 .Ss Dependencies
+.\"
 The options description part of the kernel configuration file contains all the
 logic that ties the source files together, and it is done first through writing
 down dependencies between
@@ -203,32 +222,33 @@ down dependencies between
 objects.
 .Pp
 In this documentation, the syntax for
-.Ar dependencies
-is a comma-separated list of
-.Ar options
-and
-.Ar attributes .
+.Em dependencies
+is a comma-separated list of options and attributes .
 .Pp
 For example, the use of an Ethernet network card requires the source files that
 handle the specificities of that protocol.
 Therefore, all Ethernet network card drivers depend on the
-.Ar ether
+.Ql ether
 attribute.
+.\"
+.\"
 .Ss Conditions
+.\"
 Finally, source file selection is possible through the help of
-conditionals, referred to as
-.Ar condition
+.Em conditionals ,
+referred to as
+.Dq Ar condition
 later in this documentation.
-The syntax for those conditions uses well-known operators (
-.Dq & ,
-.Dq |
+The syntax for those conditions uses well-known operators
+.Pf ( Ql & ,
+.Ql \(or ,
 and
-.Dq \&! )
-to combine
-.Ar options
-and
-.Ar attributes .
+.Ql \&! )
+to combine options and attributes .
+.\"
+.\"
 .Ss CONTEXT NEUTRAL STATEMENTS
+.\"
 .Bl -ohang
 .It Ic version Ar yyyymmdd
 Indicates the syntax version used by the rest of the file, or until the next
@@ -295,7 +315,10 @@ has been previously defined, through
 or any other statement that implicitely defines attributes such as
 .Ic device .
 .El
+.\"
+.\"
 .Ss PREAMBLE
+.\"
 In addition to
 .Ic include , cinclude ,
 and
@@ -319,7 +342,10 @@ and is superseded by the
 parameter of
 .Xr config 1 .
 .El
+.\"
+.\"
 .Ss OPTIONS DESCRIPTION
+.\"
 The user will not usually have to use descriptive statements, as they are meant
 for the developer to tie a given piece of code to the rest of the kernel.
 However, third parties may provide sources to add to the kernel compilation,
@@ -568,7 +594,10 @@ and works just like the
 .Ic file
 statement.
 .El
+.\"
+.\"
 .Ss OPTIONS SELECTION
+.\"
 .Bl -ohang
 .It Ic machine Ar machine Op Ar arch Op Ar subarch Op Ar ...
 The
