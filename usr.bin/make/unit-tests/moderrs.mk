@@ -1,4 +1,4 @@
-# $Id: moderrs.mk,v 1.10 2020/07/31 13:49:25 rillig Exp $
+# $Id: moderrs.mk,v 1.11 2020/07/31 15:16:05 rillig Exp $
 #
 # various modifier error tests
 
@@ -90,8 +90,6 @@ modexclam:
 	# and the above would have produced an "Unknown modifier '!'".
 	@echo ${!:L:!=exclam}
 
-# XXX: For "${VAR:S", I wonder where the "(@ missing)" comes from.
-# This could be undefined behavior, but it's reproducible.
 mod-subst-delimiter:
 	@echo $@:
 	@echo ${VAR:S
