@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.367 2020/07/31 14:54:03 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.368 2020/07/31 14:59:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.367 2020/07/31 14:54:03 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.368 2020/07/31 14:59:53 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.367 2020/07/31 14:54:03 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.368 2020/07/31 14:59:53 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2045,11 +2045,11 @@ VarStrftime(const char *fmt, int zulu, time_t utc)
  * On failure, many of them update st->missing_delim.
  */
 typedef struct {
-    int startc;			/* '\0' or '{' or '(' */
-    int endc;
-    Var *v;
-    GNode *ctxt;
-    VarEvalFlags eflags;
+    const int startc;		/* '\0' or '{' or '(' */
+    const int endc;
+    Var * const v;
+    GNode * const ctxt;
+    const VarEvalFlags eflags;
 
     char *val;			/* The value of the expression before the
 				 * modifier is applied */
