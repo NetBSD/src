@@ -1,4 +1,4 @@
-# $Id: moderrs.mk,v 1.8 2020/07/29 20:33:38 rillig Exp $
+# $Id: moderrs.mk,v 1.9 2020/07/31 13:30:09 rillig Exp $
 #
 # various modifier error tests
 
@@ -109,7 +109,6 @@ mod-subst-delimiter:
 	@echo ${VAR:S,from,to,
 	@echo ${VAR:S,from,to,}
 
-# XXX: Where does the "echo" in the output of "${VAR:C" come from?
 mod-regex-delimiter:
 	@echo $@:
 	@echo ${VAR:C
