@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.77 2020/07/28 16:42:22 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.78 2020/07/31 16:26:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.77 2020/07/28 16:42:22 rillig Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.78 2020/07/31 16:26:16 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.77 2020/07/28 16:42:22 rillig Exp $");
+__RCSID("$NetBSD: arch.c,v 1.78 2020/07/31 16:26:16 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -562,8 +562,7 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
 
 	    if (len > AR_MAX_NAME_LEN) {
 		len = AR_MAX_NAME_LEN;
-		strncpy(copy, member, AR_MAX_NAME_LEN);
-		copy[AR_MAX_NAME_LEN] = '\0';
+		snprintf(copy, sizeof copy, "%s", member);
 	    }
 	    if ((he = Hash_FindEntry(&ar->members, copy)) != NULL)
 		return (struct ar_hdr *)Hash_GetValue(he);
@@ -814,8 +813,7 @@ ArchSVR4Entry(Arch *ar, char *name, size_t size, FILE *arch)
 	fprintf(debug_file, "Replaced %s with %s\n", name, &ar->fnametab[entry]);
     }
 
-    (void)strncpy(name, &ar->fnametab[entry], MAXPATHLEN);
-    name[MAXPATHLEN] = '\0';
+    snprintf(name, MAXPATHLEN + 1, "%s", &ar->fnametab[entry]);
     return 1;
 }
 #endif
