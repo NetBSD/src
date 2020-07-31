@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.77 2020/07/31 16:59:34 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.78 2020/07/31 17:41:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.77 2020/07/31 16:59:34 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.78 2020/07/31 17:41:35 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.77 2020/07/31 16:59:34 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.78 2020/07/31 17:41:35 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -694,16 +694,20 @@ DirExpandCurly(const char *word, const char *brace, Lst path, Lst expansions)
     for (end = start, bracelevel = 0; *end != '\0'; end++) {
 	if (*end == '{') {
 	    bracelevel++;
-	} else if ((*end == '}') && (bracelevel-- == 0)) {
+	} else if (*end == '}' && bracelevel-- == 0) {
 	    break;
 	}
     }
+    if (DEBUG(DIR))
+	fprintf(debug_file, "%s: word=\"%s\" start=\"%s\" end=\"%s\"\n",
+		__func__, word, start, end);
+
     if (*end == '\0') {
 	Error("Unterminated {} clause \"%s\"", start);
 	return;
-    } else {
-	end++;
     }
+
+    end++;
     otherLen = brace - word + strlen(end);
 
     for (cp = start; cp < end; cp++) {
@@ -733,6 +737,10 @@ DirExpandCurly(const char *word, const char *brace, Lst path, Lst expansions)
 	    fileend += cp - start;
 	}
 	strcpy(fileend, end);
+	if (DEBUG(DIR))
+	    fprintf(debug_file, "%s: \"%.*s\" + \"%.*s\" + \"%s\" = \"%s\"\n",
+		__func__, (int)(brace - word), word, (int)(cp - start), start,
+		end, file);
 
 	/*
 	 * See if the result has any wildcards in it. If we find one, call
