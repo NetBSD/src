@@ -1,4 +1,4 @@
-# $NetBSD: dir.mk,v 1.1 2020/07/31 16:42:51 rillig Exp $
+# $NetBSD: dir.mk,v 1.2 2020/07/31 20:02:44 rillig Exp $
 #
 # Tests for dir.c.
 
@@ -31,3 +31,8 @@ fourteen:
 	@echo 14
 fifteen:
 	@echo 15
+
+all: {pre-,}{patch,configure}
+
+pre-patch patch pre-configure configure:
+	@echo $@
