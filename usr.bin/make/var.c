@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.363 2020/07/31 13:56:19 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.364 2020/07/31 14:07:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.363 2020/07/31 13:56:19 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.364 2020/07/31 14:07:21 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.363 2020/07/31 13:56:19 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.364 2020/07/31 14:07:21 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2603,14 +2603,18 @@ ApplyModifier_To(const char *mod, ApplyModifiersState *st)
 				 ModifyWord_Realpath, NULL);
 	st->next = mod + 2;
     } else if (mod[1] == 'u') {
-	char *dp = bmake_strdup(st->val);
-	for (st->newVal = dp; *dp; dp++)
-	    *dp = toupper((unsigned char)*dp);
+	size_t len = strlen(st->val);
+	st->newVal = bmake_malloc(len + 1);
+	size_t i;
+	for (i = 0; i < len + 1; i++)
+	    st->newVal[i] = toupper((unsigned char)st->val[i]);
 	st->next = mod + 2;
     } else if (mod[1] == 'l') {
-	char *dp = bmake_strdup(st->val);
-	for (st->newVal = dp; *dp; dp++)
-	    *dp = tolower((unsigned char)*dp);
+	size_t len = strlen(st->val);
+	st->newVal = bmake_malloc(len + 1);
+	size_t i;
+	for (i = 0; i < len + 1; i++)
+	    st->newVal[i] = tolower((unsigned char)st->val[i]);
 	st->next = mod + 2;
     } else if (mod[1] == 'W' || mod[1] == 'w') {
 	st->oneBigWord = mod[1] == 'W';
