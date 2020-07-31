@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.366 2020/07/31 14:26:22 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.367 2020/07/31 14:54:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.366 2020/07/31 14:26:22 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.367 2020/07/31 14:54:03 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.366 2020/07/31 14:26:22 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.367 2020/07/31 14:54:03 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3062,14 +3062,13 @@ ApplyModifier_SysV(const char *mod, ApplyModifiersState *st)
  */
 static char *
 ApplyModifiers(
+    const char **pp,		/* the parsing position, updated upon return */
     char *val,			/* the current value of the variable */
-    const char * const tstr,	/* the string to be parsed */
     int const startc,		/* '(' or '{' or '\0' */
     int const endc,		/* ')' or '}' or '\0' */
     Var * const v,		/* the variable may have its flags changed */
     GNode * const ctxt,		/* for looking up and modifying variables */
     VarEvalFlags const eflags,
-    int * const lengthPtr,	/* returns the number of skipped bytes */
     void ** const freePtr	/* free this after using the return value */
 ) {
     assert(startc == '(' || startc == '{' || startc == '\0');
@@ -3080,7 +3079,7 @@ ApplyModifiers(
 	val, NULL, NULL, '\0', ' ', FALSE
     };
 
-    const char *p = tstr;
+    const char *p = *pp;
     while (*p != '\0' && *p != endc) {
 
 	if (*p == '$') {
@@ -3112,13 +3111,12 @@ ApplyModifiers(
 	    p += rlen;
 
 	    if (rval != NULL && *rval) {
-		int used;
-
-		st.val = ApplyModifiers(st.val, rval, 0, 0, st.v,
-				      st.ctxt, st.eflags, &used, freePtr);
+		const char *rval_pp = rval;
+		st.val = ApplyModifiers(&rval_pp, st.val, 0, 0, v,
+					ctxt, eflags, freePtr);
 		if (st.val == var_Error
 		    || (st.val == varNoError && (st.eflags & VARE_UNDEFERR) == 0)
-		    || strlen(rval) != (size_t) used) {
+		    || *rval_pp != '\0') {
 		    free(freeIt);
 		    goto out;	/* error already reported */
 		}
@@ -3320,7 +3318,7 @@ ApplyModifiers(
 	p = st.next;
     }
 out:
-    *lengthPtr = p - tstr;
+    *pp = p;
     return st.val;
 
 bad_modifier:
@@ -3328,7 +3326,7 @@ bad_modifier:
 	  (int)strcspn(p, ":)}"), p, st.v->name);
 
 cleanup:
-    *lengthPtr = st.next - tstr;
+    *pp = st.next;
     if (st.missing_delim != '\0')
 	Error("Unclosed substitution for %s (%c missing)",
 	      st.v->name, st.missing_delim);
@@ -3619,21 +3617,20 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
 
     if (nstr != NULL && (haveModifier || extramodifiers != NULL)) {
 	void *extraFree;
-	int used;
 
 	extraFree = NULL;
 	if (extramodifiers != NULL) {
-	    nstr = ApplyModifiers(nstr, extramodifiers, '(', ')',
-				  v, ctxt, eflags, &used, &extraFree);
+	    const char *em = extramodifiers;
+	    nstr = ApplyModifiers(&em, nstr, '(', ')',
+				  v, ctxt, eflags, &extraFree);
 	}
 
 	if (haveModifier) {
 	    /* Skip initial colon. */
 	    tstr++;
 
-	    nstr = ApplyModifiers(nstr, tstr, startc, endc,
-				  v, ctxt, eflags, &used, freePtr);
-	    tstr += used;
+	    nstr = ApplyModifiers(&tstr, nstr, startc, endc,
+				  v, ctxt, eflags, freePtr);
 	    free(extraFree);
 	} else {
 	    *freePtr = extraFree;
