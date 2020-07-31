@@ -6,4 +6,8 @@
 13
 14
 15
+pre-patch
+pre-configure
+patch
+configure
 exit status 0

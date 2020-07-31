@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.80 2020/07/31 19:50:44 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.81 2020/07/31 20:02:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.80 2020/07/31 19:50:44 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.81 2020/07/31 20:02:44 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.80 2020/07/31 19:50:44 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.81 2020/07/31 20:02:44 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -752,7 +752,7 @@ DirExpandCurly(const char *word, const char *brace, Lst path, Lst expansions)
     /* Split the middle into pieces, separated by commas. */
 
     const char *piece = middle;
-    while (piece < middle_end) {
+    while (piece < middle_end + 1) {
 	const char *piece_end = separator_comma(piece);
 	size_t piece_len = (size_t)(piece_end - piece);
 
