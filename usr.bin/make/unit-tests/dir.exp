@@ -15,4 +15,5 @@ fetch-post
 extract
 extract-post
 dup-1
+single-word
 exit status 0
