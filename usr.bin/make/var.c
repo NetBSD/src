@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.364 2020/07/31 14:07:21 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.365 2020/07/31 14:11:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.364 2020/07/31 14:07:21 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.365 2020/07/31 14:11:21 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.364 2020/07/31 14:07:21 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.365 2020/07/31 14:11:21 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -536,7 +536,7 @@ Var_Export1(const char *name, VarExportFlags flags)
 	     * No point actually exporting it now though,
 	     * the child can do it at the last minute.
 	     */
-	    v->flags |= (VAR_EXPORTED | VAR_REEXPORT);
+	    v->flags |= VAR_EXPORTED | VAR_REEXPORT;
 	    return 1;
 	}
 	if (v->flags & VAR_IN_USE) {
@@ -706,7 +706,7 @@ Var_UnExport(char *str)
     vlist = NULL;
 
     str += strlen("unexport");
-    unexport_env = (strncmp(str, "-env", 4) == 0);
+    unexport_env = strncmp(str, "-env", 4) == 0;
     if (unexport_env) {
 	char **newenv;
 
@@ -1868,7 +1868,7 @@ ParseModifierPart(const char **tstr, int delim, VarEvalFlags eflags,
 			 * It will be interpreted later.
 			 */
 			int have = *cp2;
-			int want = (*cp2 == PROPEN) ? PRCLOSE : BRCLOSE;
+			int want = *cp2 == PROPEN ? PRCLOSE : BRCLOSE;
 			int depth = 1;
 
 			for (++cp2; *cp2 != '\0' && depth > 0; ++cp2) {
@@ -2137,9 +2137,9 @@ ApplyModifier_Defined(const char *mod, ApplyModifiersState *st)
     if (st->eflags & VARE_WANTRES) {
 	Boolean wantres;
 	if (*mod == 'U')
-	    wantres = ((st->v->flags & VAR_JUNK) != 0);
+	    wantres = (st->v->flags & VAR_JUNK) != 0;
 	else
-	    wantres = ((st->v->flags & VAR_JUNK) == 0);
+	    wantres = (st->v->flags & VAR_JUNK) == 0;
 	neflags = st->eflags & ~VARE_WANTRES;
 	if (wantres)
 	    neflags |= VARE_WANTRES;
