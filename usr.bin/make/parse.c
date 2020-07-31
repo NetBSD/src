@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.242 2020/07/28 19:13:49 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.243 2020/07/31 20:22:10 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.242 2020/07/28 19:13:49 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.243 2020/07/31 20:22:10 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.242 2020/07/28 19:13:49 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.243 2020/07/31 20:22:10 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1947,6 +1947,16 @@ Parse_DoVar(char *line, GNode *ctxt)
 
     while (isspace((unsigned char)*cp))
 	cp++;
+
+    if (DEBUG(LINT)) {
+	if (type != VAR_SUBST && strchr(cp, '$') != NULL) {
+	    /* sanity check now */
+	    char *cp2;
+
+	    cp2 = Var_Subst(cp, ctxt, VARE_WANTRES|VARE_ASSIGN);
+	    free(cp2);
+	}
+    }
 
     if (type == VAR_APPEND) {
 	Var_Append(line, cp, ctxt);
