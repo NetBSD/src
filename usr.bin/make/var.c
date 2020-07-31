@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.365 2020/07/31 14:11:21 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.366 2020/07/31 14:26:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.365 2020/07/31 14:11:21 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.366 2020/07/31 14:26:22 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.365 2020/07/31 14:11:21 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.366 2020/07/31 14:26:22 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3642,18 +3642,15 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
     *lengthPtr = tstr - str + (*tstr ? 1 : 0);
 
     if (v->flags & VAR_FROM_ENV) {
-	Boolean destroy = FALSE;
-
-	if (nstr != Buf_GetAll(&v->val, NULL)) {
-	    destroy = TRUE;
-	} else {
+	Boolean destroy = nstr != Buf_GetAll(&v->val, NULL);
+	if (!destroy) {
 	    /*
 	     * Returning the value unmodified, so tell the caller to free
 	     * the thing.
 	     */
 	    *freePtr = nstr;
 	}
-	VarFreeEnv(v, destroy);
+	(void)VarFreeEnv(v, destroy);
     } else if (v->flags & VAR_JUNK) {
 	/*
 	 * Perform any free'ing needed and set *freePtr to NULL so the caller
@@ -3661,8 +3658,8 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
 	 * If VAR_KEEP is also set then we want to keep str(?) as is.
 	 */
 	if (!(v->flags & VAR_KEEP)) {
-	    if (*freePtr) {
-		free(nstr);
+	    if (*freePtr != NULL) {
+		free(*freePtr);
 		*freePtr = NULL;
 	    }
 	    if (dynamic) {
