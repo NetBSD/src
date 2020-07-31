@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.295 2020/07/13 05:20:45 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.296 2020/07/31 02:58:03 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.295 2020/07/13 05:20:45 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.296 2020/07/31 02:58:03 simonb Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -674,7 +674,8 @@ static const struct pridtab cputab[] = {
 	  MIPS64_FLAGS | CPU_MIPS_D_CACHE_COHERENT | CPU_MIPS_NO_LLADDR,
 	  MIPS_CP0FL_USE |
 	  MIPS_CP0FL_EBASE | MIPS_CP0FL_CONFIG |
-	  MIPS_CP0FL_CONFIG1 | MIPS_CP0FL_CONFIG2 | MIPS_CP0FL_CONFIG3,
+	  MIPS_CP0FL_CONFIG1 | MIPS_CP0FL_CONFIG2 | MIPS_CP0FL_CONFIG3 |
+	  MIPS_CP0FL_CONFIG4,
 	  0,
 	  "CN70xx/CN71xx"	},
 
