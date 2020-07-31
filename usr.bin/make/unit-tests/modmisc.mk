@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.29 2020/07/29 21:35:35 rillig Exp $
+# $Id: modmisc.mk,v 1.30 2020/07/31 14:36:58 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -17,6 +17,7 @@ MOD_SEP=S,:, ,g
 
 all:	modvar modvarloop modsysv mod-HTE emptyvar undefvar
 all:	mod-subst
+all:	mod-subst-chain
 all:	mod-regex
 all:	mod-loop-varname mod-loop-resolve mod-loop-varname-dollar
 all:	mod-subst-dollar mod-loop-dollar
@@ -135,6 +136,18 @@ mod-subst:
 	@echo :${:Ua b b c:S,b,,g:Q}:
 	@echo :${:U1 2 3 1 2 3:S,1 2,___,Wg:S,_,x,:Q}:
 	@echo ${:U12345:S,,sep,g:Q}
+
+# The :S and :C modifiers can be chained without a separating ':'.
+# This is not documented in the manual page.
+# It works because ApplyModifier_Subst scans for the known modifiers g1W
+# and then just returns to ApplyModifiers.  There, the colon is optionally
+# skipped (see the *st.next == ':' at the end of the loop).
+#
+# Most other modifiers cannot be chained since their parsers skip until
+# the next ':' or '}' or ')'.
+mod-subst-chain:
+	@echo $@:
+	@echo ${:Ua b c:S,a,A,S,b,B,}.
 
 mod-regex:
 	@echo $@:
