@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.362 2020/07/31 13:43:44 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.363 2020/07/31 13:56:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.362 2020/07/31 13:43:44 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.363 2020/07/31 13:56:19 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.362 2020/07/31 13:43:44 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.363 2020/07/31 13:56:19 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2585,8 +2585,10 @@ ApplyModifier_ToSep(const char *sep, ApplyModifiersState *st)
 static ApplyModifierResult
 ApplyModifier_To(const char *mod, ApplyModifiersState *st)
 {
+    assert(mod[0] == 't');
+
     st->next = mod + 1;		/* make sure it is set */
-    if (mod[1] == st->endc || mod[1] == ':')
+    if (mod[1] == st->endc || mod[1] == ':' || mod[1] == '\0')
 	return AMR_BAD;		/* Found ":t<endc>" or ":t:". */
 
     if (mod[1] == 's')
