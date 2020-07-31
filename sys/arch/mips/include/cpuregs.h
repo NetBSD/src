@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.106 2020/07/29 09:00:05 simonb Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.107 2020/07/31 02:56:48 simonb Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -529,7 +529,9 @@
  * 16/4	MIPS_COP_0_CONFIG4	..33 Configuration register 6.
  * 16/5	MIPS_COP_0_CONFIG5	..33 Configuration register 7.
  * 16/6	MIPS_COP_0_CONFIG6	..33 Configuration register 6.
+ * 16/6	MIPS_COP_0_CVMMEMCTL2	...6 [CAVIUM] CvmMemCtl2 register.
  * 16/7	MIPS_COP_0_CONFIG7	..33 Configuration register 7.
+ * 16/7	MIPS_COP_0_CVMVMCONFIG	...6 [CAVIUM] CvmVMConfig register.
  * 17	MIPS_COP_0_LLADDR	.336 Load Linked Address.
  * 18	MIPS_COP_0_WATCH_LO	.336 WatchLo register.
  * 18/1	MIPS_COP_0_WATCH_LO2	..ii WatchLo 1 register.
@@ -643,7 +645,9 @@
 #define	MIPS_COP_0_CONFIG4	_(16), 4
 #define	MIPS_COP_0_CONFIG5	_(16), 5
 #define	MIPS_COP_0_CONFIG6	_(16), 6
+#define	MIPS_COP_0_CVMMEMCTL2	_(16), 6	/* CAVIUM */
 #define	MIPS_COP_0_CONFIG7	_(16), 7
+#define	MIPS_COP_0_CVMVMCONFIG	_(16), 7	/* CAVIUM */
 #define	MIPS_COP_0_OSSCRATCH	_(22)		/* RMI */
 #define	MIPS_COP_0_DIAG		_(22)		/* LOONGSON2 */
 #define	MIPS_COP_0_MCD		_(22)		/* CAVIUM */
