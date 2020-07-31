@@ -1,11 +1,9 @@
-make: Unterminated {} clause "thiteen"
 1
 2
 3
 4
 5
-make: don't know how to make fouteen (continuing)
-make: don't know how to make rteen (continuing)
+13
+14
 15
-`all' not remade because of errors.
 exit status 0

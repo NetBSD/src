@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.78 2020/07/31 17:41:35 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.79 2020/07/31 19:06:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.78 2020/07/31 17:41:35 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.79 2020/07/31 19:06:33 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.78 2020/07/31 17:41:35 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.79 2020/07/31 19:06:33 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -715,12 +715,13 @@ DirExpandCurly(const char *word, const char *brace, Lst path, Lst expansions)
 	 * Find the end of this piece of the clause.
 	 */
 	bracelevel = 0;
-	while (*cp != ',') {
-	    if (*cp == '{') {
-		bracelevel++;
-	    } else if ((*cp == '}') && (bracelevel-- <= 0)) {
+	while (*cp != '\0') {
+	    if ((*cp == ',' || *cp == '}') && bracelevel == 0)
 		break;
-	    }
+	    if (*cp == '{')
+		bracelevel++;
+	    if (*cp == '}')
+		bracelevel--;
 	    cp++;
 	}
 	/*
