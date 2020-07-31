@@ -1,4 +1,4 @@
-.\" $NetBSD: config.5,v 1.43 2020/07/31 23:44:04 uwe Exp $
+.\" $NetBSD: config.5,v 1.44 2020/07/31 23:55:57 uwe Exp $
 .\"
 .\"  Copyright (c) 2006, 2007 The NetBSD Foundation.
 .\"  All rights reserved.
@@ -249,7 +249,7 @@ to combine options and attributes .
 .\"
 .Ss CONTEXT NEUTRAL STATEMENTS
 .\"
-.Bl -ohang -compact
+.Bl -tag -width Ic -compact
 .\"
 .Pp
 .It Ic version Ar yyyymmdd
@@ -337,7 +337,7 @@ In addition to
 and
 .Ic prefix ,
 the preamble may contain the following optional statements:
-.Bl -ohang
+.Bl -tag -width Ic
 .\"
 .It Ic build Ar path
 Defines the build directory for the compilation of the kernel.
@@ -368,7 +368,7 @@ and the logic that binds them to the
 .Nx
 kernel will have to be added to the user-edited configuration file.
 .Pp
-.Bl -ohang -compact
+.Bl -tag -width Ic -compact
 .\"
 .Pp
 .It Ic devclass Ar class
@@ -691,7 +691,7 @@ used in the selections section.
 .\"
 .Ss OPTIONS SELECTION
 .\"
-.Bl -ohang
+.Bl -tag -width Ic
 .\"
 .It Ic machine Ar machine Op Ar arch Op Ar subarch Op Ar ...
 The
@@ -701,7 +701,7 @@ exception of context-neutral statements.
 It makes
 .Xr config 1
 include, in that order, the following files:
-.Bl -enum -offset indent -compact
+.Bl -enum
 .It
 .Pa conf/files
 .It
@@ -713,6 +713,7 @@ for each defined sub-architecture
 .It
 .Pa arch/${MACHINE}/conf/files.${MACHINE}
 .El
+.Pp
 It also defines an attribute for the
 .Ar machine ,
 the
