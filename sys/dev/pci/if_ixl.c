@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.70 2020/07/31 09:25:42 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.71 2020/07/31 09:34:33 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.70 2020/07/31 09:25:42 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.71 2020/07/31 09:34:33 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -701,6 +701,7 @@ struct ixl_softc {
 	struct ixl_dmamem	 sc_hmc_pd;
 	struct ixl_hmc_entry	 sc_hmc_entries[IXL_HMC_COUNT];
 
+	struct if_percpuq	*sc_ipq;
 	unsigned int		 sc_tx_ring_ndescs;
 	unsigned int		 sc_rx_ring_ndescs;
 	unsigned int		 sc_nqueue_pairs;
@@ -1418,7 +1419,13 @@ ixl_attach(device_t parent, device_t self, void *aux)
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_NONE, 0, NULL);
 	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_AUTO);
 
-	if_attach(ifp);
+	rv = if_initialize(ifp);
+	if (rv != 0) {
+		aprint_error_dev(self, "if_initialize failed=%d\n", rv);
+		goto teardown_wqs;
+	}
+
+	sc->sc_ipq = if_percpuq_create(ifp);
 	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr);
 	ether_set_ifflags_cb(&sc->sc_ec, ixl_ifflags_cb);
@@ -1470,6 +1477,8 @@ ixl_attach(device_t parent, device_t self, void *aux)
 	sc->sc_itr_rx = IXL_ITR_RX;
 	sc->sc_itr_tx = IXL_ITR_TX;
 	sc->sc_attached = true;
+	if_register(ifp);
+
 	return;
 
 teardown_wqs:
@@ -1556,6 +1565,7 @@ ixl_detach(device_t self, int flags)
 		sc->sc_workq_txrx = NULL;
 	}
 
+	if_percpuq_destroy(sc->sc_ipq);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 	ifmedia_fini(&sc->sc_media);
@@ -3332,7 +3342,7 @@ ixl_rxeof(struct ixl_softc *sc, struct ixl_rx_ring *rxr, u_int rxlimit)
 				if_statinc_ref(nsr, if_ipackets);
 				if_statadd_ref(nsr, if_ibytes,
 				    m->m_pkthdr.len);
-				if_percpuq_enqueue(ifp->if_percpuq, m);
+				if_percpuq_enqueue(sc->sc_ipq, m);
 			} else {
 				if_statinc_ref(nsr, if_ierrors);
 				m_freem(m);
