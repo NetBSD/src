@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.297 2020/07/31 03:07:36 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.298 2020/07/31 08:06:33 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.297 2020/07/31 03:07:36 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.298 2020/07/31 08:06:33 simonb Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -1178,10 +1178,14 @@ mips_vector_init(const struct splsw *splsw, bool multicpu_p)
 #if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
 	if (MIPS_PRID_CID(cpu_id) != 0) {
 		/* MIPS32/MIPS64, use coprocessor 0 config registers */
-		uint32_t cfg, cfg1;
+		uint32_t cfg, cfg1, cfg4;
 
 		cfg = mips3_cp0_config_read();
 		cfg1 = mipsNN_cp0_config1_read();
+		if (opts->mips_cpu->cpu_cp0flags & MIPS_CP0FL_CONFIG4)
+			cfg4 = mipsNN_cp0_config4_read();
+		else
+			cfg4 = 0;
 
 		/* pick CPU type */
 		switch (MIPSNN_GET(CFG_AT, cfg)) {
@@ -1224,7 +1228,21 @@ mips_vector_init(const struct splsw *splsw, bool multicpu_p)
 		/* figure out MMU type (and number of TLB entries) */
 		switch (MIPSNN_GET(CFG_MT, cfg)) {
 		case MIPSNN_CFG_MT_TLB:
+			/*
+			 * Config1[MMUSize-1] defines the number of TLB
+			 * entries minus 1, allowing up to 64 TLBs to be
+			 * defined.  For MIPS32R2 and MIPS64R2 and later
+			 * if the Config4[MMUExtDef] field is 1 then the
+			 * Config4[MMUSizeExt] field is an extension of
+			 * Config1[MMUSize-1] field.
+			 */
 			opts->mips_num_tlb_entries = MIPSNN_CFG1_MS(cfg1);
+			if (__SHIFTOUT(cfg4, MIPSNN_CFG4_MMU_EXT_DEF) ==
+			    MIPSNN_CFG4_MMU_EXT_DEF_MMU) {
+				opts->mips_num_tlb_entries +=
+				__SHIFTOUT(cfg4, MIPSNN_CFG4_MMU_SIZE_EXT) <<
+				    popcount(MIPSNN_CFG1_MS_MASK);
+			}
 			break;
 		case MIPSNN_CFG_MT_NONE:
 		case MIPSNN_CFG_MT_BAT:
