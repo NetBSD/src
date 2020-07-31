@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.133 2020/04/20 21:39:05 ad Exp $ */
+/*     $NetBSD: buf.h,v 1.134 2020/07/31 04:07:30 chs Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2007, 2008 The NetBSD Foundation, Inc.
@@ -287,6 +287,7 @@ buf_t	*incore(struct vnode *, daddr_t);
 int	allocbuf(buf_t *, int, int);
 void	brelsel(buf_t *, int);
 void	brelse(buf_t *, int);
+void	binvalbuf(struct vnode *, daddr_t);
 
 /*
  * So-far indeterminate ops that might belong to either
