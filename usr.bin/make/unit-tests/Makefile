@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.76 2020/07/29 19:48:33 rillig Exp $
+# $NetBSD: Makefile,v 1.77 2020/07/31 16:42:51 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -37,6 +37,7 @@ TESTS+=		cond-late
 TESTS+=		cond-short
 TESTS+=		cond1
 TESTS+=		cond2
+TESTS+=		dir
 TESTS+=		directives
 TESTS+=		dollar
 TESTS+=		doterror
