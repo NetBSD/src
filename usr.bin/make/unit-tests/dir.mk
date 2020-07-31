@@ -1,4 +1,4 @@
-# $NetBSD: dir.mk,v 1.3 2020/07/31 20:08:08 rillig Exp $
+# $NetBSD: dir.mk,v 1.4 2020/07/31 20:16:21 rillig Exp $
 #
 # Tests for dir.c.
 
@@ -49,4 +49,10 @@ fetch fetch-post extract extract-post:
 all: dup-{1,1,1,1,1,1,1}
 
 dup-1:
+	@echo $@
+
+# Other than in Bash, the braces are also expanded if there is no comma.
+all: {{{{{{{{{{single-word}}}}}}}}}}
+
+single-word:
 	@echo $@
