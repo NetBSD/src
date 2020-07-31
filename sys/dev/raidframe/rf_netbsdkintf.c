@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.386 2020/07/31 19:30:09 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.387 2020/07/31 20:34:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.386 2020/07/31 19:30:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.387 2020/07/31 20:34:38 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -3673,7 +3673,7 @@ rf_sync_component_cache(RF_Raid_t *raidPtr, int c)
 		printf("raid%d: cache flush[%d] to component %s failed (%d)\n",
 		    raidPtr->raidid, i, raidPtr->Disks[c].devname, e);
 	}
-	return 0;
+	return e;
 }
 
 int
@@ -3685,7 +3685,7 @@ rf_sync_component_caches(RF_Raid_t *raidPtr)
 	for (c = 0; c < raidPtr->numCol; c++) {
 		if (raidPtr->Disks[c].status == rf_ds_optimal) {
 			int e = rf_sync_component_cache(raidPtr, c);
-			if (error == 0)
+			if (e && !error)
 				error = e;
 		}
 	}
@@ -3695,7 +3695,7 @@ rf_sync_component_caches(RF_Raid_t *raidPtr)
 		/* Need to ensure that the reconstruct actually completed! */
 		if (raidPtr->Disks[sparecol].status == rf_ds_used_spare) {
 			int e = rf_sync_component_cache(raidPtr, sparecol);
-			if (error == 0)
+			if (e && !error)
 				error = e;
 			continue;
 		}
