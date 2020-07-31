@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.296 2020/06/11 19:20:46 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.297 2020/07/31 04:07:30 chs Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.296 2020/06/11 19:20:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.297 2020/07/31 04:07:30 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -1513,6 +1513,36 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 
 	SDT_PROBE1(io, kernel, , getnewbuf__done,  bp);
 	return (bp);
+}
+
+/*
+ * Invalidate the specified buffer if it exists.
+ */
+void
+binvalbuf(struct vnode *vp, daddr_t blkno)
+{
+	buf_t *bp;
+	int err;
+
+	mutex_enter(&bufcache_lock);
+
+ loop:
+	bp = incore(vp, blkno);
+	if (bp != NULL) {
+		err = bbusy(bp, 0, 0, NULL);
+		if (err == EPASSTHROUGH)
+			goto loop;
+		bremfree(bp);
+		if (ISSET(bp->b_oflags, BO_DELWRI)) {
+			SET(bp->b_cflags, BC_NOCACHE);
+			mutex_exit(&bufcache_lock);
+			bwrite(bp);
+		} else {
+			brelsel(bp, BC_INVAL);
+			mutex_exit(&bufcache_lock);
+		}
+	} else
+		mutex_exit(&bufcache_lock);
 }
 
 /*

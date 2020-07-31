@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.130 2020/07/26 00:21:24 chs Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.131 2020/07/31 04:07:30 chs Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.130 2020/07/26 00:21:24 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.131 2020/07/31 04:07:30 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -208,6 +208,7 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 {
 	daddr_t lastblock;
 	struct inode *oip = VTOI(ovp);
+	struct mount *omp = ovp->v_mount;
 	daddr_t bn, lastiblock[UFS_NIADDR], indir_lbn[UFS_NIADDR];
 	daddr_t blks[UFS_NDADDR + UFS_NIADDR], oldblks[UFS_NDADDR + UFS_NIADDR];
 	struct fs *fs;
@@ -220,6 +221,8 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	int sync;
 	struct ufsmount *ump = oip->i_ump;
 	void *dcookie;
+	long bsize;
+	bool wapbl = omp->mnt_wapbl != NULL;
 
 	UFS_WAPBL_JLOCK_ASSERT(ump->um_mountp);
 
@@ -255,11 +258,11 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 #ifdef QUOTA
 			(void) chkdq(oip, -extblocks, NOCRED, FORCE);
 #endif
-			vinvalbuf(ovp, 0, cred, curlwp, 0, 0);
 			osize = oip->i_din2->di_extsize;
 			oip->i_din2->di_blocks -= extblocks;
 			oip->i_din2->di_extsize = 0;
 			for (i = 0; i < UFS_NXADDR; i++) {
+				binvalbuf(ovp, -1 - i);
 				oldblks[i] = oip->i_din2->di_extb[i];
 				oip->i_din2->di_extb[i] = 0;
 			}
@@ -269,8 +272,15 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 			for (i = 0; i < UFS_NXADDR; i++) {
 				if (oldblks[i] == 0)
 					continue;
-				ffs_blkfree(fs, oip->i_devvp, oldblks[i],
-				    ffs_sblksize(fs, osize, i), oip->i_number);
+				bsize = ffs_sblksize(fs, osize, i);
+				if (wapbl) {
+					error = UFS_WAPBL_REGISTER_DEALLOCATION(omp,
+					    FFS_FSBTODB(fs, oldblks[i]), bsize, NULL);
+					if (error)
+						return error;
+				} else 
+					ffs_blkfree(fs, oip->i_devvp, oldblks[i],
+					    bsize, oip->i_number);
 			}
 			extblocks = 0;
 		}
@@ -501,8 +511,6 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	 * All whole direct blocks or frags.
 	 */
 	for (i = UFS_NDADDR - 1; i > lastblock; i--) {
-		long bsize;
-
 		bn = ffs_getdb(fs, oip, i);
 		if (bn == 0)
 			continue;
