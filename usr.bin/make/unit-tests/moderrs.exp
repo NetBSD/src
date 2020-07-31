@@ -63,9 +63,8 @@ make: Unclosed variable specification (expecting '}') for "VAR" (value "TheVaria
 TheVariable
 TheVariable
 mod-regex-delimiter:
-make: RE substitution error: (details omitted)
-make: Unclosed substitution for VAR (, missing)
-echo
+make: Missing delimiter for :C modifier
+
 make: Unclosed substitution for VAR (, missing)
 
 make: Unclosed substitution for VAR (, missing)
@@ -77,7 +76,7 @@ make: Unclosed substitution for VAR (, missing)
 make: Unclosed variable specification (expecting '}') for "VAR" (value "TheVariable") modifier C
 TheVariable
 TheVariable
-make: RE substitution error: (details omitted)
+make: Missing delimiter for :C modifier
 1:
 make: Unclosed substitution for VAR (, missing)
 2:
