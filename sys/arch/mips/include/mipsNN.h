@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsNN.h,v 1.10 2020/07/31 02:34:38 simonb Exp $	*/
+/*	$NetBSD: mipsNN.h,v 1.11 2020/07/31 03:35:05 simonb Exp $	*/
 
 /*
  * Copyright 2000, 2001
@@ -324,7 +324,7 @@
 #define	  MIPSNN_CFG4_MMU_EXT_DEF_VTLB			  3
 
 /* "MMUSizeExt" (R): Extension of Config1[MMUSize-1] field. */
-#define	MIPSNN_CFG4_MMU_EXT_DEF_MMU_SIZE_EXT		__BITS(7,0)
+#define	MIPSNN_CFG4_MMU_SIZE_EXT		__BITS(7,0)
 
 /* "FTLBPageSize" (R/RW): Indicates the Page Size of the FTLB Array Entries. */
 #define	MIPSNN_CFG4_FTLB_FTLB_PAGE_SIZE		__BITS(10,8)
