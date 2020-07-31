@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.385 2020/06/20 18:36:27 riastradh Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.386 2020/07/31 19:30:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.385 2020/06/20 18:36:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.386 2020/07/31 19:30:09 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -3660,43 +3660,44 @@ rf_get_component_caches(RF_Raid_t *raidPtr, int *data)
  * that fails.
  */
 
+static int
+rf_sync_component_cache(RF_Raid_t *raidPtr, int c)
+{
+	int force = 1;
+	int e = 0;
+	for (int i = 0; i < 5; i++) {
+		e = VOP_IOCTL(raidPtr->raid_cinfo[c].ci_vp, DIOCCACHESYNC,
+		    &force, FWRITE, NOCRED);
+		if (!e || e == ENODEV)
+			return e;
+		printf("raid%d: cache flush[%d] to component %s failed (%d)\n",
+		    raidPtr->raidid, i, raidPtr->Disks[c].devname, e);
+	}
+	return 0;
+}
+
 int
 rf_sync_component_caches(RF_Raid_t *raidPtr)
 {
-	int c, sparecol;
-	int e,error;
-	int force = 1;
+	int c, error;
 
 	error = 0;
 	for (c = 0; c < raidPtr->numCol; c++) {
 		if (raidPtr->Disks[c].status == rf_ds_optimal) {
-			e = VOP_IOCTL(raidPtr->raid_cinfo[c].ci_vp, DIOCCACHESYNC,
-					  &force, FWRITE, NOCRED);
-			if (e) {
-				if (e != ENODEV)
-					printf("raid%d: cache flush to component %s failed.\n",
-					       raidPtr->raidid, raidPtr->Disks[c].devname);
-				if (error == 0) {
-					error = e;
-				}
-			}
+			int e = rf_sync_component_cache(raidPtr, c);
+			if (error == 0)
+				error = e;
 		}
 	}
 
-	for( c = 0; c < raidPtr->numSpare ; c++) {
-		sparecol = raidPtr->numCol + c;
+	for (c = 0; c < raidPtr->numSpare ; c++) {
+		int sparecol = raidPtr->numCol + c;
 		/* Need to ensure that the reconstruct actually completed! */
 		if (raidPtr->Disks[sparecol].status == rf_ds_used_spare) {
-			e = VOP_IOCTL(raidPtr->raid_cinfo[sparecol].ci_vp,
-					  DIOCCACHESYNC, &force, FWRITE, NOCRED);
-			if (e) {
-				if (e != ENODEV)
-					printf("raid%d: cache flush to component %s failed.\n",
-					       raidPtr->raidid, raidPtr->Disks[sparecol].devname);
-				if (error == 0) {
-					error = e;
-				}
-			}
+			int e = rf_sync_component_cache(raidPtr, sparecol);
+			if (error == 0)
+				error = e;
+			continue;
 		}
 	}
 	return error;
