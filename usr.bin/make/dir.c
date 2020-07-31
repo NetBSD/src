@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.79 2020/07/31 19:06:33 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.80 2020/07/31 19:50:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.79 2020/07/31 19:06:33 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.80 2020/07/31 19:50:44 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.79 2020/07/31 19:06:33 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.80 2020/07/31 19:50:44 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -647,6 +647,62 @@ DirMatchFiles(const char *pattern, Path *p, Lst expansions)
     return 0;
 }
 
+static const char *
+closing_brace(const char *p)
+{
+    int nest = 0;
+    while (*p != '\0' && !(*p == '}' && nest == 0)) {
+	if (*p == '{')
+	    nest++;
+	if (*p == '}')
+	    nest--;
+	p++;
+    }
+    return p;
+}
+
+static const char *
+separator_comma(const char *p)
+{
+    int nest = 0;
+    while (*p != '\0' && !((*p == '}' || *p == ',') && nest == 0)) {
+	if (*p == '{')
+	    nest++;
+	if (*p == '}')
+	    nest--;
+	p++;
+    }
+    return p;
+}
+
+static Boolean
+contains_wildcard(const char *p)
+{
+    for (; *p != '\0'; p++) {
+	switch(*p) {
+	case '*':
+	case '?':
+	case '{':
+	case '[':
+	    return TRUE;
+	}
+    }
+    return FALSE;
+}
+
+static char *
+concat3(const char *a, size_t a_len, const char *b, size_t b_len,
+	const char *c, size_t c_len)
+{
+    size_t s_len = a_len + b_len + c_len;
+    char *s = bmake_malloc(s_len + 1);
+    memcpy(s, a, a_len);
+    memcpy(s + a_len, b, b_len);
+    memcpy(s + a_len + b_len, c, c_len);
+    s[s_len] = '\0';
+    return s;
+}
+
 /*-
  *-----------------------------------------------------------------------
  * DirExpandCurly --
@@ -672,103 +728,51 @@ DirMatchFiles(const char *pattern, Path *p, Lst expansions)
 static void
 DirExpandCurly(const char *word, const char *brace, Lst path, Lst expansions)
 {
-    const char   *end;	    	/* Character after the closing brace */
-    const char   *cp;	    	/* Current position in brace clause */
-    const char   *start;   	/* Start of current piece of brace clause */
-    int	    	  bracelevel;	/* Number of braces we've seen. If we see a
-				 * right brace when this is 0, we've hit the
-				 * end of the clause. */
-    char    	 *file;    	/* Current expansion */
-    int	    	  otherLen; 	/* The length of the other pieces of the
-				 * expansion (chars before and after the
-				 * clause in 'word') */
-    char    	 *cp2;	    	/* Pointer for checking for wildcards in
-				 * expansion before calling Dir_Expand */
+    /* Split the word into prefix '{' middle '}' suffix. */
 
-    start = brace+1;
+    const char *middle = brace + 1;
+    const char *middle_end = closing_brace(middle);
+    size_t middle_len = (size_t)(middle_end - middle);
 
-    /*
-     * Find the end of the brace clause first, being wary of nested brace
-     * clauses.
-     */
-    for (end = start, bracelevel = 0; *end != '\0'; end++) {
-	if (*end == '{') {
-	    bracelevel++;
-	} else if (*end == '}' && bracelevel-- == 0) {
-	    break;
-	}
+    if (DEBUG(DIR)) {
+	fprintf(debug_file, "%s: word=\"%s\" middle=\"%.*s\"\n",
+		__func__, word, (int)middle_len, middle);
     }
-    if (DEBUG(DIR))
-	fprintf(debug_file, "%s: word=\"%s\" start=\"%s\" end=\"%s\"\n",
-		__func__, word, start, end);
 
-    if (*end == '\0') {
-	Error("Unterminated {} clause \"%s\"", start);
+    if (*middle_end == '\0') {
+	Error("Unterminated {} clause \"%s\"", middle);
 	return;
     }
 
-    end++;
-    otherLen = brace - word + strlen(end);
+    const char *prefix = word;
+    size_t prefix_len = (size_t)(brace - prefix);
+    const char *suffix = middle_end + 1;
+    size_t suffix_len = strlen(suffix);
 
-    for (cp = start; cp < end; cp++) {
-	/*
-	 * Find the end of this piece of the clause.
-	 */
-	bracelevel = 0;
-	while (*cp != '\0') {
-	    if ((*cp == ',' || *cp == '}') && bracelevel == 0)
-		break;
-	    if (*cp == '{')
-		bracelevel++;
-	    if (*cp == '}')
-		bracelevel--;
-	    cp++;
-	}
-	/*
-	 * Allocate room for the combination and install the three pieces.
-	 */
-	file = bmake_malloc(otherLen + cp - start + 1);
-	char *fileend = file;
-	if (brace != word) {
-	    memcpy(file, word, brace - word);
-	    fileend += brace - word;
-	}
-	if (cp != start) {
-	    memcpy(fileend, start, cp - start);
-	    fileend += cp - start;
-	}
-	strcpy(fileend, end);
-	if (DEBUG(DIR))
+    /* Split the middle into pieces, separated by commas. */
+
+    const char *piece = middle;
+    while (piece < middle_end) {
+	const char *piece_end = separator_comma(piece);
+	size_t piece_len = (size_t)(piece_end - piece);
+
+	char *file = concat3(prefix, prefix_len, piece, piece_len,
+			     suffix, suffix_len);
+
+	if (DEBUG(DIR)) {
 	    fprintf(debug_file, "%s: \"%.*s\" + \"%.*s\" + \"%s\" = \"%s\"\n",
-		__func__, (int)(brace - word), word, (int)(cp - start), start,
-		end, file);
+		    __func__, (int)prefix_len, prefix, (int)piece_len, piece,
+		    suffix, file);
+	}
 
-	/*
-	 * See if the result has any wildcards in it. If we find one, call
-	 * Dir_Expand right away, telling it to place the result on our list
-	 * of expansions.
-	 */
-	for (cp2 = file; *cp2 != '\0'; cp2++) {
-	    switch(*cp2) {
-	    case '*':
-	    case '?':
-	    case '{':
-	    case '[':
-		Dir_Expand(file, path, expansions);
-		goto next;
-	    }
-	}
-	if (*cp2 == '\0') {
-	    /*
-	     * Hit the end w/o finding any wildcards, so stick the expansion
-	     * on the end of the list.
-	     */
-	    (void)Lst_AtEnd(expansions, file);
-	} else {
-	next:
+	if (contains_wildcard(file)) {
+	    Dir_Expand(file, path, expansions);
 	    free(file);
+	} else {
+	    (void)Lst_AtEnd(expansions, file);
 	}
-	start = cp+1;
+
+	piece = piece_end + 1;	/* skip over the comma or closing brace */
     }
 }
 
