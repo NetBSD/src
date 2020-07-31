@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.77 2020/07/31 16:42:51 rillig Exp $
+# $NetBSD: Makefile,v 1.78 2020/07/31 22:07:28 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -24,8 +24,11 @@
 # and it should be added to the TESTS list.
 #
 # Any added files must also be added to src/distrib/sets/lists/tests/mi.
-# Makefiles that are not added to TESTS must be ignored in
-# src/tests/usr.bin/make/t_make.sh (example: include-sub).
+# To do that, just run "make sync-mi" in this directory.
+#
+# A few *.mk files are helper files for other tests (such as include-sub.mk)
+# and are thus not added to TESTS.  Such files must be ignored in
+# src/tests/usr.bin/make/t_make.sh.
 #
 
 # Each test is in a sub-makefile.
@@ -185,6 +188,28 @@ accept:
 	  || { echo "Replacing $${test}.exp" ; \
 	       cp $${test}.out ${UNIT_TESTS}/$${test}.exp ; } \
 	done
+
+SYNC_MI_AWK= \
+	BEGIN {								\
+	  testsdir = "usr.bin/make/unit-tests";				\
+	  linestart = "./usr/tests/" testsdir;				\
+	  fmt = linestart "/%s\ttests-usr.bin-tests\tcompattestfile,atf\\n"; \
+	  cmd = "cd " testsdir " && ls *.exp *.mk | xargs printf '" fmt "'" \
+	}								\
+	function startswith(s, prefix) {				\
+	  return substr(s, 1, length(prefix)) == prefix;		\
+	}								\
+	startswith($$1, linestart) && $$1 ~ /\.(exp|mk)$$/ { next }	\
+	{ print $$0 }							\
+	$$1 == linestart "/Makefile" { system(cmd) }
+
+sync-mi:
+	@set -eu;							\
+	cd "${MAKEFILE:tA:H}/../../..";					\
+	mi="distrib/sets/lists/tests/mi";				\
+	awk ${SYNC_MI_AWK:Q} < "$$mi" > "$$mi.$@";			\
+	mv -f "$$mi.$@" "$$mi";						\
+	cvs diff "$$mi" || true
 
 .if exists(${TEST_MAKE})
 ${TESTS:=.rawout}: ${TEST_MAKE}
