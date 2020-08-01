@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.377 2020/08/01 13:16:29 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.378 2020/08/01 13:35:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.377 2020/08/01 13:16:29 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.378 2020/08/01 13:35:13 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.377 2020/08/01 13:16:29 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.378 2020/08/01 13:35:13 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1205,19 +1205,18 @@ Str_SYSVMatch(const char *word, const char *pattern, size_t *match_len,
 	}
     }
 
-    const char *suffix = w;
+    /* Test whether the tail matches */
+    size_t w_len = strlen(w);
+    size_t p_len = strlen(p);
+    if (w_len < p_len)
+	return NULL;
 
-    /* Find a matching tail */
-    /* XXX: This loop should not be necessary since there is only one
-     * possible position where strcmp could ever return 0. */
-    do {
-	if (strcmp(p, w) == 0) {
-	    *match_len = w - suffix;
-	    return suffix;
-	}
-    } while (*w++ != '\0');
+    const char *w_tail = w + w_len - p_len;
+    if (memcmp(p, w_tail, p_len) != 0)
+        return NULL;
 
-    return NULL;
+    *match_len = w_tail - w;
+    return w;
 }
 
 
