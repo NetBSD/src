@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.h,v 1.13 2018/02/19 22:01:15 jdolecek Exp $	*/
+/*	$NetBSD: pmap_tlb.h,v 1.14 2020/08/01 07:14:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -96,6 +96,7 @@ struct pmap_asid_info {
 
 #define	TLBINFO_LOCK(ti)		mutex_spin_enter((ti)->ti_lock)
 #define	TLBINFO_UNLOCK(ti)		mutex_spin_exit((ti)->ti_lock)
+#define	TLBINFO_OWNED(ti)		mutex_owned((ti)->ti_lock)
 #define	PMAP_PAI_ASIDVALID_P(pai, ti)	((pai)->pai_asid != 0)
 #define	PMAP_PAI(pmap, ti)		(&(pmap)->pm_pai[tlbinfo_index(ti)])
 #define	PAI_PMAP(pai, ti)	\
