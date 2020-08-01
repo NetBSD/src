@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.137 2020/02/13 05:19:05 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.138 2020/08/01 17:56:56 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.137 2020/02/13 05:19:05 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.138 2020/08/01 17:56:56 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -309,7 +309,7 @@ argstr(const char *p, int flag)
 			had_dol_at = 0;
 			break;
 		case CTLESC:
-			if ((quotes || ISCTL(*p)))
+			if (quotes || ISCTL(*p))
 				STPUTC(c, expdest);
 			c = *p++;
 			STPUTC(c, expdest);
