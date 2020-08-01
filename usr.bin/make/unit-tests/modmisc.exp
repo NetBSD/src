@@ -31,7 +31,7 @@ mod-regex:
 :a b b c:
 :a b b c:
 : b c:
-make: RE substitution error: (details omitted)
+make: Regex compilation error: (details omitted)
 :C,word,____,:Q}:
 :a c:
 :x__ 3 x__ 3:
@@ -75,7 +75,7 @@ make: No subexpression \2
 mod-regex-limits:22-missing:1 6
 mod-regex-limits:22-ok:1 33 556
 mod-regex-limits:capture:ihgfedcbaabcdefghijABCDEFGHIJa0a1a2rest
-make: RE substitution error: (details omitted)
+make: Regex compilation error: (details omitted)
 mod-regex-errors:
 mod-assign: first=1.
 mod-assign: last=3.
