@@ -1,3 +1,6 @@
+# $NetBSD: modmatch.mk,v 1.7 2020/08/01 18:59:16 rillig Exp $
+#
+# Tests for the :M and :S modifiers.
 
 X=a b c d e
 
@@ -37,3 +40,18 @@ check-cclass:
 # calling itself 601080390 times for 16 asterisks.
 slow: .PHONY
 	@:;: ${:U****************:M****************b:Q}
+
+# As of 2020-08-01, the :M and :N modifiers interpret backslashes differently,
+# depending on whether there was a variable expression before the first
+# backslash or not.  This can be seen by setting the -dv debug flag, in the
+# lines starting with "Pattern".
+#
+# Apart from the different and possibly confusing debug output, there is no
+# difference in behavior.  When parsing the modifier text, only \{, \} and \:
+# are unescaped, and in the pattern matching these have the same meaning as
+# their plain variants '{', '}' and ':'.  In the pattern matching from
+# Str_Match, only \*, \? or \[ would make a noticeable difference.
+SPECIALS=	\: : \\ * \*
+.if ${SPECIALS:M${:U}\:} != ${SPECIALS:M\:${:U}}
+.warning unexpected
+.endif
