@@ -1,4 +1,4 @@
-.\" $NetBSD: config.samples.5,v 1.6 2014/03/06 15:00:21 riastradh Exp $
+.\" $NetBSD: config.samples.5,v 1.7 2020/08/01 00:35:36 uwe Exp $
 .\"
 .\"  Copyright (c) 2006 The NetBSD Foundation.
 .\"  All rights reserved.
@@ -40,23 +40,27 @@ The following lines from the
 kernel configuration file of
 .Nx Ns / Ns i386
 are examples of instances of drivers:
-.Bd -literal
-pchb*	at pci? dev ? function ?	# PCI-Host bridges
-pcib*	at pci? dev ? function ?	# PCI-ISA bridges
-ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+.Bd -literal -offset indent
+pchb*	at pci? dev ? function ?    # PCI-Host bridges
+pcib*	at pci? dev ? function ?    # PCI-ISA bridges
+ppb*	at pci? dev ? function ?    # PCI-PCI bridges
 
-siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
-esiop*	at pci? dev ? function ?	# Symbios 53c875 SCSI and newer
+siop*	at pci? dev ? function ?    # Symbios 53c8xx SCSI
+esiop*	at pci? dev ? function ?    # Symbios 53c875 SCSI and newer
 
-ix0	at isa? port 0x300 irq 10	# EtherExpress/16
+ix0	at isa? port 0x300 irq 10   # EtherExpress/16
 .Ed
 .Pp
 The first three instances allow three different drivers to attach to all the
-matching devices found on any PCI bus.
+matching devices found on any
+.Tn PCI
+bus.
 This is the most generic case.
 .Pp
 The next two lines allow two distinct drivers to attach to any matching device
-found on any PCI bus, but those two drivers are special because they both
+found on any
+.Tn PCI
+bus, but those two drivers are special because they both
 support some of the same devices.
 Each of the driver has a matching function that returns their score for the
 device that is being considered.
@@ -66,12 +70,19 @@ Of course, it is deterministic so if the user wants to change the driver that
 attaches to the device, the instance of the other driver will have to be
 removed, e.g. by commenting it out.
 .Pp
-The last line configures an instance of an ISA device.
-Unlike the PCI bus, the ISA bus cannot discover the devices that are present on
-the bus.
+The last line configures an instance of an
+.Tn ISA
+device.
+Unlike the
+.Tn PCI
+bus, the
+.Tn ISA
+bus cannot discover the devices that are present on the bus.
 The driver has to try accessing the device in order to discover it.
 That implies locators must be specified to some extent: a driver would
-usually need the base address of the device, some need the IRQ line that the
+usually need the base address of the device, some need the
+.Tn IRQ
+line that the
 device is configured to use, though some others would just try a set of known
 values, at the risk of badly interacting with other devices on the bus.
 .Ss Hard-wiring kernel configuration
@@ -84,7 +95,7 @@ changes, even slightly.
 Let's consider the following excerpt of
 .Xr dmesg 8
 output:
-.Bd -literal
+.Bd -literal -offset indent
 auich0 at pci0 dev 31 function 5: i82801DB/DBM (ICH4/ICH4M) AC-97 Audio
 .Ed
 .Pp
@@ -93,17 +104,17 @@ The
 driver (which controls Intel's AC-97 audio chips) attached there because of the
 following instance of
 .Pa GENERIC :
-.Bd -literal
+.Bd -literal -offset indent
 auich* at pci? dev ? function ?
 .Ed
 .Pp
 Hard-wiring that instance means re-writing it to the following:
-.Bd -literal
+.Bd -literal -offset indent
 auich0 at pci0 dev 31 function 5
 .Ed
 .Pp
 and that way,
-.Ar auich0
+.Li auich0
 will attach to that specific location, or will not attach.
 .Ss Removing options and drivers
 When two kernel configurations differ by a very small number of changes, it is
@@ -121,14 +132,16 @@ Additions to
 .Pa GENERIC
 will then automatically be followed and used in case they are relevant.
 .Pp
-While negating an options (with
-.Ic no options )
+While negating an
+.Ic options
+with
+.Ic no options
 is unambiguous, it is not as clear for devices instances.
 .Pp
 The
-.Ic no Ar instance definition
+.Ic no Ar instance-definition
 statements of
-.Xr config 1
+.Xr config 5
 syntax only apply on the current state of the configuration file, not on the
 resulting kernel binary.
 .Xr autoconf 9
@@ -142,7 +155,7 @@ attaching at
 but I do not want any instance of
 .Xr ath 4
 attaching at
-.Ar pci3 .
+.Li pci3 .
 .Dc
 .Ed
 .Pp
@@ -162,11 +175,11 @@ no device at isa0
 .Ed
 .Pp
 One could actually live without the
-.Ar isa0
+.Li isa0
 instance, as all the legacy devices are attached at
-.Ar acpi0 .
+.Li acpi0 .
 But unfortunately, dependencies on the
-.Ar isa
+.Li isa
 attribute are not well registered all through the source tree, so an instance
 of the
 .Xr isa 4
@@ -185,7 +198,7 @@ no device at isa0
 .Ss Interface attributes
 .Em Interface attributes
 are a subtlety of
-.Xr config 1
+.Xr config 5
 and
 .Xr autoconf 9 ,
 which often confuses users and utilities that parse
@@ -202,7 +215,7 @@ audio0 at auvia0: full duplex, mmap, independent
 .Ed
 .Pp
 while the kernel configuration look like this:
-.Bd -literal
+.Bd -literal -offset indent
 auvia* at pci? dev ? function ?
 audio* at audiobus?
 .Ed
@@ -212,16 +225,17 @@ It is not obvious from the kernel configuration file that an
 device can attach at an
 .Xr auvia 4
 device.
-.Ar audiobus
+.Li audiobus
 is an
 .Em interface attribute ,
 exposed by
-.Ar auvia .
+.Li auvia .
 .Pp
 Of course, it is possible to specify
 .Bd -literal -offset indent
 audio* at auvia?
 .Ed
+.Pp
 in the kernel configuration file, but then one instance per audio controller
 would be needed.
 .Em Interface attributes
@@ -235,7 +249,7 @@ Most attachments are done through
 although only a few of them are specified that way in the configuration files
 found in the tree.
 Another example of such an attribute is
-.Ar ata :
+.Li ata :
 .Bd -literal -offset indent
 viaide0 at pci0 dev 17 function 1
 atabus0 at viaide0 channel 0
