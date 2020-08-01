@@ -1,4 +1,4 @@
-.\"     $NetBSD: kthread.9,v 1.28 2015/04/21 11:10:29 pooka Exp $
+.\"     $NetBSD: kthread.9,v 1.29 2020/08/01 02:04:55 riastradh Exp $
 .\"
 .\" Copyright (c) 2000, 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,7 +33,9 @@
 .Sh NAME
 .Nm kthread_create ,
 .Nm kthread_exit ,
-.Nm kthread_join
+.Nm kthread_join ,
+.Nm kthread_fpu_enter ,
+.Nm kthread_fpu_exit
 .Nd kernel threads
 .Sh SYNOPSIS
 .In sys/kthread.h
@@ -44,6 +46,10 @@
 .Fn kthread_exit "int ecode"
 .Ft int
 .Fn kthread_join "lwp_t *l"
+.Ft int
+.Fn kthread_fpu_enter
+.Ft void
+.Fn kthread_fpu_exit "int s"
 .Sh DESCRIPTION
 Kernel threads are light-weight processes which execute entirely
 within the kernel.
@@ -51,6 +57,13 @@ within the kernel.
 Any process can request the creation of a new kernel thread.
 Kernel threads are not swapped out during memory congestion.
 The VM space and limits are shared with proc0 (usually swapper).
+.Pp
+If the machine has any per-CPU floating-point units or SIMD vector
+units that are normally available to user threads, they can be used by
+kthreads between
+.Fn kthread_fpu_enter
+and
+.fn kthread_fpu_exit .
 .Sh FUNCTIONS
 .Bl -tag -width compact
 .It Fn kthread_create "pri" "flags" "ci" "func" "arg" "newlp" "fmt" "..."
@@ -155,6 +168,31 @@ created using the
 .Dv KTHREAD_MUSTJOIN
 flag and would wait on
 .Fa kthread_exit .
+.It Fn kthread_fpu_enter
+Allow the current kthread to use any machine-dependent per-CPU
+floating-point units or SIMD vector units normally available to user
+threads.
+Returns a cookie that must be passed to
+.Fn kthread_fpu_exit
+when done.
+.Pp
+Matching pairs of
+.Fn kthread_fpu_enter
+and
+.Fn kthread_fpu_exit
+may be nested.
+.It Fn kthread_fpu_exit "s"
+Restore the current kthread's access to machine-dependent per-CPU
+floating-point units or SIMD vector units to what it was before the
+call to
+.Fn kthread_fpu_enter
+that returned
+.Fa s .
+.Pp
+On the last
+.Fn kthread_fpu_exit ,
+zero all the units' registers to avoid leaking secrets \(em such units
+are often used for cryptography.
 .El
 .Sh RETURN VALUES
 Upon successful completion,
