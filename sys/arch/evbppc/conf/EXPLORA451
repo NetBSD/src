@@ -1,4 +1,4 @@
-#	$NetBSD: EXPLORA451,v 1.66 2020/03/25 17:06:18 jdolecek Exp $
+#	$NetBSD: EXPLORA451,v 1.67 2020/08/01 08:20:49 maxv Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -166,7 +166,6 @@ pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
-#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

@@ -1,4 +1,4 @@
-# $NetBSD: LOONGSON,v 1.43 2020/01/03 03:44:42 thorpej Exp $
+# $NetBSD: LOONGSON,v 1.44 2020/08/01 08:20:48 maxv Exp $
 #
 # LOONGSON machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/evbmips/conf/std.loongson"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"LOONGSON-$Revision: 1.43 $"
+#ident 		"LOONGSON-$Revision: 1.44 $"
 
 maxusers	16
 
@@ -296,7 +296,6 @@ pseudo-device	vlan
 
 ## Simple inter-network traffic bridging
 pseudo-device	bridge
-#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	drvctl			# driver control

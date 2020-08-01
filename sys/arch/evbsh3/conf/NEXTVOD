@@ -1,4 +1,4 @@
-# $NetBSD: NEXTVOD,v 1.2 2020/07/20 02:04:43 uwe Exp $
+# $NetBSD: NEXTVOD,v 1.3 2020/08/01 08:20:49 maxv Exp $
 
 # This config and related files are placeholders/boilerplate for work
 # in progress.  Not expected to compile.
@@ -6,7 +6,7 @@
 include "arch/evbsh3/conf/std.nextvod"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
-#ident 		"NEXTVOD-$Revision: 1.2 $"
+#ident 		"NEXTVOD-$Revision: 1.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -152,7 +152,6 @@ pseudo-device	loop			# network loopback
 #pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	bridge			# simple inter-network bridging
-#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 #pseudo-device	agr			# IEEE 802.3ad link aggregation
 #pseudo-device	l2tp			# L2TPv3 interface
 #pseudo-device	npf			# NPF packet filter
