@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.137 2020/06/29 23:36:06 riastradh Exp $ */
+/* $NetBSD: cgd.c,v 1.138 2020/08/01 02:15:17 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.137 2020/06/29 23:36:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.138 2020/08/01 02:15:17 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -673,7 +673,7 @@ cgd_create_worker(void)
 	cp = kmem_alloc(sizeof(struct pool), KM_SLEEP);
 
 	error = workqueue_create(&wq, "cgd", cgd_process, NULL,
-	                         PRI_BIO, IPL_BIO, WQ_MPSAFE | WQ_PERCPU);
+	    PRI_BIO, IPL_BIO, WQ_FPU|WQ_MPSAFE|WQ_PERCPU);
 	if (error) {
 		kmem_free(cp, sizeof(struct pool));
 		kmem_free(cw, sizeof(struct cgd_worker));
