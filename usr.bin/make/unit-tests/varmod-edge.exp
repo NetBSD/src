@@ -14,4 +14,5 @@ ok eq-ext
 ok eq-q
 ok eq-bs
 ok eq-esc
+ok colon
 exit status 0
