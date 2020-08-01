@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.376 2020/08/01 12:04:46 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.377 2020/08/01 13:16:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.376 2020/08/01 12:04:46 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.377 2020/08/01 13:16:29 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.376 2020/08/01 12:04:46 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.377 2020/08/01 13:16:29 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1165,55 +1165,55 @@ ModifyWord_NoMatch(const char *word, SepBuf *buf, void *data)
  * Input:
  *	word		Word to examine
  *	pattern		Pattern to examine against
- *	len		Number of characters to substitute
  *
  * Results:
- *	Returns the beginning position of a match or null. The number
- *	of characters matched is returned in len.
+ *	Returns the start of the match, or NULL.
+ *	*match_len returns the length of the match, if any.
+ *	*hasPercent returns whether the pattern contains a percent.
  *-----------------------------------------------------------------------
  */
 static const char *
-Str_SYSVMatch(const char *word, const char *pattern, size_t *len,
+Str_SYSVMatch(const char *word, const char *pattern, size_t *match_len,
     Boolean *hasPercent)
 {
     const char *p = pattern;
     const char *w = word;
-    const char *m;
 
     *hasPercent = FALSE;
-    if (*p == '\0') {
-	/* Null pattern is the whole string */
-	*len = strlen(w);
+    if (*p == '\0') {		/* ${VAR:=suffix} */
+	*match_len = strlen(w);	/* Null pattern is the whole string */
 	return w;
     }
 
-    if ((m = strchr(p, '%')) != NULL) {
+    const char *percent = strchr(p, '%');
+    if (percent != NULL) {	/* ${VAR:...%...=...} */
 	*hasPercent = TRUE;
-	if (*w == '\0') {
-		/* empty word does not match pattern */
-		return NULL;
-	}
-	/* check that the prefix matches */
-	for (; p != m && *w && *w == *p; w++, p++)
-	     continue;
+	if (*w == '\0')
+	    return NULL;	/* empty word does not match pattern */
 
-	if (p != m)
+	/* check that the prefix matches */
+	for (; p != percent && *w != '\0' && *w == *p; w++, p++)
+	     continue;
+	if (p != percent)
 	    return NULL;	/* No match */
 
-	if (*++p == '\0') {
+	p++;			/* Skip the percent */
+	if (*p == '\0') {
 	    /* No more pattern, return the rest of the string */
-	    *len = strlen(w);
+	    *match_len = strlen(w);
 	    return w;
 	}
     }
 
-    m = w;
+    const char *suffix = w;
 
     /* Find a matching tail */
+    /* XXX: This loop should not be necessary since there is only one
+     * possible position where strcmp could ever return 0. */
     do {
 	if (strcmp(p, w) == 0) {
-	    *len = w - m;
-	    return m;
+	    *match_len = w - suffix;
+	    return suffix;
 	}
     } while (*w++ != '\0');
 
@@ -1224,32 +1224,29 @@ Str_SYSVMatch(const char *word, const char *pattern, size_t *len,
 /*-
  *-----------------------------------------------------------------------
  * Str_SYSVSubst --
- *	Substitute '%' on the pattern with len characters from src.
- *	If the pattern does not contain a '%' prepend len characters
- *	from src.
- *
- * Side Effects:
- *	Places result on buf
+ *	Append rhs to the buffer, substituting the first '%' with the
+ *	match, but only if the lhs had a '%' as well.
+ *	If the rhs does not contain a '%', prepend the match.
  *-----------------------------------------------------------------------
  */
 static void
-Str_SYSVSubst(SepBuf *buf, const char *pat, const char *src, size_t src_len,
-	      Boolean lhsHasPercent)
+Str_SYSVSubst(SepBuf *buf, const char *rhs,
+	      const char *match, size_t match_len, Boolean lhsHasPercent)
 {
-    const char *percent = strchr(pat, '%');
+    const char *percent = strchr(rhs, '%');
 
     if (percent != NULL && lhsHasPercent) {
-	/* Copy the prefix */
-	SepBuf_AddBytesBetween(buf, pat, percent);
-	pat = percent + 1;
+	/* Copy the prefix of the replacement pattern */
+	SepBuf_AddBytesBetween(buf, rhs, percent);
+	rhs = percent + 1;
     }
     if (percent != NULL || !lhsHasPercent) {
-	/* Copy the pattern */
-	SepBuf_AddBytes(buf, src, src_len);
+	/* Copy the matched part of the original word */
+	SepBuf_AddBytes(buf, match, match_len);
     }
 
-    /* append the rest */
-    SepBuf_AddStr(buf, pat);
+    /* Append the suffix of the replacement pattern */
+    SepBuf_AddStr(buf, rhs);
 }
 
 
@@ -1265,13 +1262,13 @@ ModifyWord_SYSVSubst(const char *word, SepBuf *buf, void *data)
 {
     const ModifyWord_SYSVSubstArgs *args = data;
 
-    size_t len;
-    Boolean hasPercent;
-    const char *ptr = Str_SYSVMatch(word, args->lhs, &len, &hasPercent);
-    if (ptr != NULL) {
-	char *varexp = Var_Subst(args->rhs, args->ctx, VARE_WANTRES);
-	Str_SYSVSubst(buf, varexp, ptr, len, hasPercent);
-	free(varexp);
+    size_t match_len;
+    Boolean lhsPercent;
+    const char *match = Str_SYSVMatch(word, args->lhs, &match_len, &lhsPercent);
+    if (match != NULL) {
+	char *rhs_expanded = Var_Subst(args->rhs, args->ctx, VARE_WANTRES);
+	Str_SYSVSubst(buf, rhs_expanded, match, match_len, lhsPercent);
+	free(rhs_expanded);
     } else {
 	SepBuf_AddStr(buf, word);
     }
