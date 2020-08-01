@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.288 2020/08/01 09:08:17 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.289 2020/08/01 09:25:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.288 2020/08/01 09:08:17 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.289 2020/08/01 09:25:36 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.288 2020/08/01 09:08:17 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.289 2020/08/01 09:25:36 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -695,7 +695,7 @@ Main_ParseArgLine(const char *line)
 	int argc;			/* Number of arguments in argv */
 	char *args;			/* Space used by the args */
 	char *p1;
-	char *argv0 = Var_Value(".MAKE", VAR_GLOBAL, &p1);
+	const char *argv0 = Var_Value(".MAKE", VAR_GLOBAL, &p1);
 
 	if (line == NULL)
 		return;
@@ -870,7 +870,7 @@ doPrintVars(void)
 	for (ln = Lst_First(variables); ln != NULL;
 	    ln = Lst_Succ(ln)) {
 		char *var = (char *)Lst_Datum(ln);
-		char *value;
+		const char *value;
 		char *p1;
 
 		if (strchr(var, '$')) {
@@ -1975,7 +1975,8 @@ char *
 cached_realpath(const char *pathname, char *resolved)
 {
     GNode *cache;
-    char *rp, *cp;
+    const char *rp;
+    char *cp;
 
     if (!pathname || !pathname[0])
 	return NULL;

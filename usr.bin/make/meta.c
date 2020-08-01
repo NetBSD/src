@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.89 2020/07/28 16:42:22 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.90 2020/08/01 09:25:36 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -314,7 +314,7 @@ meta_name(struct GNode *gn, char *mname, size_t mnamelen,
 static int
 is_submake(void *cmdp, void *gnp)
 {
-    static char *p_make = NULL;
+    static const char *p_make = NULL;
     static int p_len;
     char  *cmd = cmdp;
     GNode *gn = gnp;
@@ -1232,7 +1232,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    CHECK_VALID_META(p);
 		    pid = atoi(p);
 		    if (pid > 0 && pid != lastpid) {
-			char *ldir;
+			const char *ldir;
 			char *tp;
 
 			if (lastpid > 0) {

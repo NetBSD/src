@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.115 2020/07/28 16:42:22 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.116 2020/08/01 09:25:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.115 2020/07/28 16:42:22 rillig Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.116 2020/08/01 09:25:36 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.115 2020/07/28 16:42:22 rillig Exp $");
+__RCSID("$NetBSD: compat.c,v 1.116 2020/08/01 09:25:36 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -126,8 +126,8 @@ static void
 CompatDeleteTarget(GNode *gn)
 {
     if ((gn != NULL) && !Targ_Precious (gn)) {
-	char	  *p1;
-	char 	  *file = Var_Value(TARGET, gn, &p1);
+	char *p1;
+	const char *file = Var_Value(TARGET, gn, &p1);
 
 	if (!noExecute && eunlink(file) != -1) {
 	    Error("*** %s removed", file);
