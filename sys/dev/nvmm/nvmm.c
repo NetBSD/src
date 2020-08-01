@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.c,v 1.32 2020/07/03 16:09:54 maxv Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.33 2020/08/01 08:18:36 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.32 2020/07/03 16:09:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.33 2020/08/01 08:18:36 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,8 +59,10 @@ static struct nvmm_machine machines[NVMM_MAX_MACHINES];
 static volatile unsigned int nmachines __cacheline_aligned;
 
 static const struct nvmm_impl *nvmm_impl_list[] = {
+#if defined(__x86_64__)
 	&nvmm_x86_svm,	/* x86 AMD SVM */
 	&nvmm_x86_vmx	/* x86 Intel VMX */
+#endif
 };
 
 static const struct nvmm_impl *nvmm_impl = NULL;

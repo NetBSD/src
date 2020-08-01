@@ -1,7 +1,7 @@
-/*	$NetBSD: nvmm.h,v 1.12 2019/10/28 08:30:49 maxv Exp $	*/
+/*	$NetBSD: nvmm.h,v 1.13 2020/08/01 08:18:36 maxv Exp $	*/
 
 /*
- * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -44,7 +44,7 @@ typedef uint64_t	gvaddr_t;
 typedef uint32_t	nvmm_machid_t;
 typedef uint32_t	nvmm_cpuid_t;
 
-#ifdef __x86_64__
+#if defined(__x86_64__)
 #include <dev/nvmm/x86/nvmm_x86.h>
 #endif
 
