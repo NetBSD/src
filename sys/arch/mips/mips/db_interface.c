@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.86 2020/07/26 07:57:06 simonb Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.87 2020/08/01 09:29:18 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.86 2020/07/26 07:57:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.87 2020/08/01 09:29:18 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
@@ -702,7 +702,7 @@ db_mfcr_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		"mfcr %0,%1			\n\t"			\
 		".set pop 			\n\t"			\
 	    : "=r"(value) : "r"(addr));
-	
+
 	db_printf("control reg 0x%" DDB_EXPR_FMT "x = 0x%" PRIx64 "\n",
 	    addr, value);
 }
@@ -749,7 +749,7 @@ db_mach_nmi_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
-	
+
 	if (!have_addr) {
 		db_printf("CPU not specific\n");
 		return;
@@ -803,7 +803,7 @@ const struct db_command db_machine_command_table[] = {
 #endif	/* (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0 */
 	{ DDB_ADD_CMD("kvtop",	db_kvtophys_cmd,	0,
 		"Print the physical address for a given kernel virtual address",
-		"address", 
+		"address",
 		"   address:\tvirtual address to look up") },
 	{ DDB_ADD_CMD("tlb",	db_tlbdump_cmd,		0,
 		"Print out TLB entries. (only works with options DEBUG)",
@@ -991,7 +991,7 @@ next_instr_address(db_addr_t pc, bool bd)
 
 	if (bd == false)
 		return (pc + 4);
-	
+
 	if (pc < MIPS_KSEG0_START)
 		ins = mips_ufetch32((void *)pc);
 	else
@@ -1005,15 +1005,15 @@ next_instr_address(db_addr_t pc, bool bd)
 
 #ifdef MULTIPROCESSOR
 
-bool 
+bool
 ddb_running_on_this_cpu_p(void)
-{               
+{
 	return ddb_cpu == cpu_number();
 }
 
-bool 
+bool
 ddb_running_on_any_cpu_p(void)
-{               
+{
 	return ddb_cpu != NOCPU;
 }
 
@@ -1031,7 +1031,7 @@ db_mach_cpu_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *mod
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
-	
+
 	if (!have_addr) {
 		cpu_debug_dump();
 		return;
