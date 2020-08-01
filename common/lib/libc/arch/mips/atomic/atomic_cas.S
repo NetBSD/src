@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas.S,v 1.6 2019/02/20 05:25:12 rin Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.7 2020/08/01 09:26:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -12,7 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *      
+ *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -29,7 +29,7 @@
 #include <machine/asm.h>
 #include "atomic_op_asm.h"
 
-RCSID("$NetBSD: atomic_cas.S,v 1.6 2019/02/20 05:25:12 rin Exp $")
+RCSID("$NetBSD: atomic_cas.S,v 1.7 2020/08/01 09:26:49 skrll Exp $")
 
 	.text
 	.set	noat
