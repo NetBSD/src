@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.53 2018/07/25 14:42:50 kre Exp $	*/
+/*	$NetBSD: exec.c,v 1.54 2020/08/01 17:51:18 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.53 2018/07/25 14:42:50 kre Exp $");
+__RCSID("$NetBSD: exec.c,v 1.54 2020/08/01 17:51:18 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -667,6 +667,10 @@ loop:
 			cmdp = &loc_cmd;
 		} else
 			cmdp = cmdlookup(name, 1);
+
+		if (cmdp->cmdtype == CMDFUNCTION)
+			cmdp = &loc_cmd;
+
 		cmdp->cmdtype = CMDNORMAL;
 		cmdp->param.index = idx;
 		INTON;
