@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.17 2019/04/12 21:12:21 skrll Exp $	*/
+/*	$NetBSD: spl.S,v 1.18 2020/08/01 05:45:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: spl.S,v 1.17 2019/04/12 21:12:21 skrll Exp $")
+RCSID("$NetBSD: spl.S,v 1.18 2020/08/01 05:45:30 skrll Exp $")
 
 #include "assym.h"
 
@@ -252,7 +252,7 @@ STATIC_XLEAF(_splsw_splhigh_noprof)
 	PTR_L	a3, L_CPU(MIPS_CURLWP)
 	NOP_L					# load delay
 	INT_L	v0, CPU_INFO_CPL(a3)		# get current IPL from cpu_info
-	li	a1, IPL_HIGH			# 
+	li	a1, IPL_HIGH			#
 	beq	v0, a1, 1f			# don't do anything if IPL_HIGH
 	 nop					# branch delay
 	mfc0	v1, MIPS_COP_0_STATUS		# fetch status register
