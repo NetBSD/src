@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.375 2020/08/01 09:25:36 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.376 2020/08/01 12:04:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.375 2020/08/01 09:25:36 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.376 2020/08/01 12:04:46 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.375 2020/08/01 09:25:36 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.376 2020/08/01 12:04:46 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1233,20 +1233,19 @@ Str_SYSVMatch(const char *word, const char *pattern, size_t *len,
  *-----------------------------------------------------------------------
  */
 static void
-Str_SYSVSubst(SepBuf *buf, const char *pat, const char *src, size_t len,
+Str_SYSVSubst(SepBuf *buf, const char *pat, const char *src, size_t src_len,
 	      Boolean lhsHasPercent)
 {
-    const char *m;
+    const char *percent = strchr(pat, '%');
 
-    if ((m = strchr(pat, '%')) != NULL && lhsHasPercent) {
+    if (percent != NULL && lhsHasPercent) {
 	/* Copy the prefix */
-	SepBuf_AddBytesBetween(buf, pat, m);
-	/* skip the % */
-	pat = m + 1;
+	SepBuf_AddBytesBetween(buf, pat, percent);
+	pat = percent + 1;
     }
-    if (m != NULL || !lhsHasPercent) {
+    if (percent != NULL || !lhsHasPercent) {
 	/* Copy the pattern */
-	SepBuf_AddBytes(buf, src, len);
+	SepBuf_AddBytes(buf, src, src_len);
     }
 
     /* append the rest */
