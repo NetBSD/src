@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.70 2020/07/27 20:51:29 riastradh Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.71 2020/08/01 02:13:04 riastradh Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -32,12 +32,13 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.70 2020/07/27 20:51:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.71 2020/08/01 02:13:04 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/kthread.h>
 #include <sys/proc.h>
 #include <sys/cpu.h>
 
@@ -424,7 +425,8 @@ vfp_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 	struct cpu_info * const ci = curcpu();
 
 	/* This shouldn't ever happen.  */
-	if (fault_code != FAULT_USER)
+	if (fault_code != FAULT_USER &&
+	    (curlwp->l_flag & (LW_SYSTEM|LW_SYSTEM_FPU)) == LW_SYSTEM)
 		panic("VFP fault at %#x in non-user mode", frame->tf_pc);
 
 	if (ci->ci_vfp_id == 0) {
@@ -504,7 +506,8 @@ neon_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 		return 1;
 
 	/* This shouldn't ever happen.  */
-	if (fault_code != FAULT_USER)
+	if (fault_code != FAULT_USER &&
+	    (curlwp->l_flag & (LW_SYSTEM|LW_SYSTEM_FPU)) == LW_SYSTEM)
 		panic("NEON fault in non-user mode");
 
 	/* if we already own the FPU and it's enabled, raise SIGILL */
@@ -668,12 +671,30 @@ vfp_setcontext(struct lwp *l, const mcontext_t *mcp)
 	    sizeof(mcp->__fpu.__vfpregs.__vfp_fstmx));
 }
 
+/*
+ * True if this is a system thread with its own private FPU state.
+ */
+static inline bool
+lwp_system_fpu_p(struct lwp *l)
+{
+
+	return (l->l_flag & (LW_SYSTEM|LW_SYSTEM_FPU)) ==
+	    (LW_SYSTEM|LW_SYSTEM_FPU);
+}
+
+static const struct vfpreg zero_vfpreg;
+
 void
 fpu_kern_enter(void)
 {
 	struct cpu_info *ci;
 	uint32_t fpexc;
 	int s;
+
+	if (lwp_system_fpu_p(curlwp) && !cpu_intr_p()) {
+		KASSERT(!cpu_softintr_p());
+		return;
+	}
 
 	/*
 	 * Block interrupts up to IPL_VM.  We must block preemption
@@ -701,10 +722,14 @@ fpu_kern_enter(void)
 void
 fpu_kern_leave(void)
 {
-	static const struct vfpreg zero_vfpreg;
 	struct cpu_info *ci = curcpu();
 	int s;
 	uint32_t fpexc;
+
+	if (lwp_system_fpu_p(curlwp) && !cpu_intr_p()) {
+		KASSERT(!cpu_softintr_p());
+		return;
+	}
 
 	KASSERT(ci->ci_cpl == IPL_VM);
 	KASSERT(ci->ci_kfpu_spl != -1);
@@ -728,6 +753,22 @@ fpu_kern_leave(void)
 	s = ci->ci_kfpu_spl;
 	ci->ci_kfpu_spl = -1;
 	splx(s);
+}
+
+void
+kthread_fpu_enter_md(void)
+{
+
+	pcu_load(&arm_vfp_ops);
+}
+
+void
+kthread_fpu_exit_md(void)
+{
+
+	/* XXX Should vfp_state_release zero the registers itself?  */
+	load_vfpregs(&zero_vfpreg);
+	vfp_discardcontext(curlwp, 0);
 }
 
 #endif /* FPU_VFP */
