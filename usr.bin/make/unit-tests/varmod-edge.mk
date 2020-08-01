@@ -1,4 +1,4 @@
-# $NetBSD: varmod-edge.mk,v 1.9 2020/08/01 15:13:45 rillig Exp $
+# $NetBSD: varmod-edge.mk,v 1.10 2020/08/01 15:16:15 rillig Exp $
 #
 # Tests for edge cases in variable modifiers.
 #
@@ -155,6 +155,11 @@ TESTS+=		colon
 INP.colon=	value
 MOD.colon=	${INP.colon:}
 EXP.colon=	value
+
+TESTS+=		colons
+INP.colons=	value
+MOD.colons=	${INP.colons::::}
+EXP.colons=	# empty
 
 all:
 .for test in ${TESTS}
