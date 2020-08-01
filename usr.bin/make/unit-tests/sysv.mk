@@ -1,4 +1,4 @@
-# $Id: sysv.mk,v 1.11 2020/08/01 12:47:56 rillig Exp $
+# $Id: sysv.mk,v 1.12 2020/08/01 13:35:13 rillig Exp $
 
 all: foo fun sam bla words ampersand anchor-dollar
 all: mismatch
@@ -87,8 +87,10 @@ EXPR.7=	${LIST:o%%e=X}		# Only the first '%' is the wildcard.
 EXP.7=	one two			# None of the words contains a literal '%'.
 EXPR.8=	${LIST:%=%%}
 EXP.8=	one% two%
+EXPR.9=	${LIST:%nes=%xxx}	# lhs is longer than the word "one"
+EXP.9=	one two
 
-.for i in ${:U:range=8}
+.for i in ${:U:range=9}
 .if ${EXPR.$i} != ${EXP.$i}
 .warning test case $i expected "${EXP.$i}", got "${EXPR.$i}
 .endif
