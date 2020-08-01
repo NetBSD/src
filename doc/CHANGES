@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2721 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2722 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -262,3 +262,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		[tsutsui 20200722]
 	wwanc(4): Add driver for Intel XMM7360 LTE modem [jdolecek 20200726]
 	xen: MSI enabled by default [jdolecek 20200728]
+	kernel: remove the BRIDGE_IPF option, build its code by default
+		unconditionally. [maxv 20200801]
