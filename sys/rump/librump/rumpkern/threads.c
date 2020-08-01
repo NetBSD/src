@@ -1,4 +1,4 @@
-/*	$NetBSD: threads.c,v 1.26 2017/04/21 19:16:10 kamil Exp $	*/
+/*	$NetBSD: threads.c,v 1.27 2020/08/01 22:30:57 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.26 2017/04/21 19:16:10 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.27 2020/08/01 22:30:57 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -245,6 +245,32 @@ kthread_join(struct lwp *l)
 	membar_consumer();
 
 	return rv;
+}
+
+int
+kthread_fpu_enter(void)
+{
+	struct lwp *l = curlwp;
+	int s;
+
+	KASSERTMSG(l->l_flag & LW_SYSTEM,
+	    "%s is allowed only in kthreads", __func__);
+	s = l->l_flag & LW_SYSTEM_FPU;
+	l->l_flag |= LW_SYSTEM_FPU;
+
+	return s;
+}
+
+void
+kthread_fpu_exit(int s)
+{
+	struct lwp *l = curlwp;
+
+	KASSERT(s == (s & LW_SYSTEM_FPU));
+	KASSERTMSG(l->l_flag & LW_SYSTEM,
+	    "%s is allowed only in kthreads", __func__);
+	KASSERT(l->l_flag & LW_SYSTEM_FPU);
+	l->l_flag ^= s ^ LW_SYSTEM_FPU;
 }
 
 /*
