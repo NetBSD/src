@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.101 2020/07/28 16:42:22 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.102 2020/08/01 09:25:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.101 2020/07/28 16:42:22 rillig Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.102 2020/08/01 09:25:36 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.101 2020/07/28 16:42:22 rillig Exp $");
+__RCSID("$NetBSD: make.c,v 1.102 2020/08/01 09:25:36 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -680,7 +680,7 @@ void
 Make_Update(GNode *cgn)
 {
     GNode 	*pgn;	/* the parent node */
-    char  	*cname;	/* the child's name */
+    const char	*cname;	/* the child's name */
     LstNode	ln; 	/* Element in parents and iParents lists */
     time_t	mtime = -1;
     char	*p1;
@@ -826,7 +826,7 @@ Make_Update(GNode *cgn)
      * of this node.
      */
     if (Lst_Open(cgn->iParents) == SUCCESS) {
-	char	*cpref = Var_Value(PREFIX, cgn, &p1);
+	const char *cpref = Var_Value(PREFIX, cgn, &p1);
 
 	while ((ln = Lst_Next(cgn->iParents)) != NULL) {
 	    pgn = (GNode *)Lst_Datum(ln);
@@ -890,7 +890,7 @@ MakeAddAllSrc(void *cgnp, void *pgnp)
     cgn->type |= OP_MARK;
 
     if ((cgn->type & (OP_EXEC|OP_USE|OP_USEBEFORE|OP_INVISIBLE)) == 0) {
-	char *child, *allsrc;
+	const char *child, *allsrc;
 	char *p1 = NULL, *p2 = NULL;
 
 	if (cgn->type & OP_ARCHV)
