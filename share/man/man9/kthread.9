@@ -1,4 +1,4 @@
-.\"     $NetBSD: kthread.9,v 1.29 2020/08/01 02:04:55 riastradh Exp $
+.\"     $NetBSD: kthread.9,v 1.30 2020/08/01 09:50:42 wiz Exp $
 .\"
 .\" Copyright (c) 2000, 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,7 +63,7 @@ units that are normally available to user threads, they can be used by
 kthreads between
 .Fn kthread_fpu_enter
 and
-.fn kthread_fpu_exit .
+.Fn kthread_fpu_exit .
 .Sh FUNCTIONS
 .Bl -tag -width compact
 .It Fn kthread_create "pri" "flags" "ci" "func" "arg" "newlp" "fmt" "..."
@@ -201,9 +201,8 @@ returns 0.
 Otherwise, the following error values are returned:
 .Bl -tag -width [EAGAIN]
 .It Bq Er EAGAIN
-The limit on the total number of system processes would be exceeded.
-.It Bq Er EAGAIN
-The limit
+The limit on the total number of system processes would be exceeded;
+or the limit
 .Dv RLIMIT_NPROC
 on the total number of processes under execution by this
 user id would be exceeded.
