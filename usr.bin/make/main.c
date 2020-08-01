@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.286 2020/08/01 08:49:47 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.287 2020/08/01 08:55:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.286 2020/08/01 08:49:47 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.287 2020/08/01 08:55:28 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.286 2020/08/01 08:49:47 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.287 2020/08/01 08:55:28 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -694,9 +694,8 @@ Main_ParseArgLine(const char *line)
 	char **argv;			/* Manufactured argument vector */
 	int argc;			/* Number of arguments in argv */
 	char *args;			/* Space used by the args */
-	char *buf, *p1;
+	char *p1;
 	char *argv0 = Var_Value(".MAKE", VAR_GLOBAL, &p1);
-	size_t len;
 
 	if (line == NULL)
 		return;
@@ -705,8 +704,7 @@ Main_ParseArgLine(const char *line)
 	if (!*line)
 		return;
 
-	buf = bmake_malloc(len = strlen(line) + strlen(argv0) + 2);
-	(void)snprintf(buf, len, "%s %s", argv0, line);
+	char *buf = str_concat(argv0, line, STR_ADDSPACE);
 	free(p1);
 
 	argv = brk_string(buf, &argc, TRUE, &args);
