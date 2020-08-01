@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.272 2020/06/27 13:53:10 jmcneill Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.273 2020/08/01 11:18:26 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.272 2020/06/27 13:53:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.273 2020/08/01 11:18:26 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1213,7 +1213,7 @@ config_makeroom(int n, struct cfdriver *cd)
 		 * sleep.
 		 */
 		mutex_exit(&alldevs_lock);
-		nsp = kmem_alloc(sizeof(device_t[nndevs]), KM_SLEEP);
+		nsp = kmem_alloc(sizeof(device_t) * nndevs, KM_SLEEP);
 		mutex_enter(&alldevs_lock);
 
 		/*
@@ -1222,20 +1222,20 @@ config_makeroom(int n, struct cfdriver *cd)
 		 */
 		if (cd->cd_devs != osp) {
 			mutex_exit(&alldevs_lock);
-			kmem_free(nsp, sizeof(device_t[nndevs]));
+			kmem_free(nsp, sizeof(device_t) * nndevs);
 			mutex_enter(&alldevs_lock);
 			continue;
 		}
 
-		memset(nsp + ondevs, 0, sizeof(device_t[nndevs - ondevs]));
+		memset(nsp + ondevs, 0, sizeof(device_t) * (nndevs - ondevs));
 		if (ondevs != 0)
-			memcpy(nsp, cd->cd_devs, sizeof(device_t[ondevs]));
+			memcpy(nsp, cd->cd_devs, sizeof(device_t) * ondevs);
 
 		cd->cd_ndevs = nndevs;
 		cd->cd_devs = nsp;
 		if (ondevs != 0) {
 			mutex_exit(&alldevs_lock);
-			kmem_free(osp, sizeof(device_t[ondevs]));
+			kmem_free(osp, sizeof(device_t) * ondevs);
 			mutex_enter(&alldevs_lock);
 		}
 	}
@@ -1314,7 +1314,7 @@ config_devdelete(device_t dev)
 	device_lock_t dvl = device_getlock(dev);
 
 	if (dg->dg_devs != NULL)
-		kmem_free(dg->dg_devs, sizeof(device_t[dg->dg_ndevs]));
+		kmem_free(dg->dg_devs, sizeof(device_t) * dg->dg_ndevs);
 
 	cv_destroy(&dvl->dvl_cv);
 	mutex_destroy(&dvl->dvl_mtx);
@@ -1447,9 +1447,9 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 		KASSERT(parent); /* no locators at root */
 		ia = cfiattr_lookup(cfdata_ifattr(cf), parent->dv_cfdriver);
 		dev->dv_locators =
-		    kmem_alloc(sizeof(int [ia->ci_loclen + 1]), KM_SLEEP);
-		*dev->dv_locators++ = sizeof(int [ia->ci_loclen + 1]);
-		memcpy(dev->dv_locators, locs, sizeof(int [ia->ci_loclen]));
+		    kmem_alloc(sizeof(int) * (ia->ci_loclen + 1), KM_SLEEP);
+		*dev->dv_locators++ = sizeof(int) * (ia->ci_loclen + 1);
+		memcpy(dev->dv_locators, locs, sizeof(int) * ia->ci_loclen);
 	}
 	dev->dv_properties = prop_dictionary_create();
 	KASSERT(dev->dv_properties != NULL);
@@ -2710,7 +2710,7 @@ device_active_register(device_t dev, void (*handler)(device_t, devactive_t))
 	}
 
 	new_size = old_size + 4;
-	new_handlers = kmem_alloc(sizeof(void *[new_size]), KM_SLEEP);
+	new_handlers = kmem_alloc(sizeof(void *) * new_size, KM_SLEEP);
 
 	for (i = 0; i < old_size; ++i)
 		new_handlers[i] = old_handlers[i];
@@ -2724,7 +2724,7 @@ device_active_register(device_t dev, void (*handler)(device_t, devactive_t))
 	splx(s);
 
 	if (old_size > 0)
-		kmem_free(old_handlers, sizeof(void * [old_size]));
+		kmem_free(old_handlers, sizeof(void *) * old_size);
 
 	return true;
 }
@@ -2758,7 +2758,7 @@ device_active_deregister(device_t dev, void (*handler)(device_t, devactive_t))
 			dev->dv_activity_count = 0;
 			dev->dv_activity_handlers = NULL;
 			splx(s);
-			kmem_free(old_handlers, sizeof(void *[old_size]));
+			kmem_free(old_handlers, sizeof(void *) * old_size);
 		}
 		return;
 	}
