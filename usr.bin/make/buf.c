@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.29 2020/08/01 21:40:49 rillig Exp $	*/
+/*	$NetBSD: buf.c,v 1.30 2020/08/01 21:51:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: buf.c,v 1.29 2020/08/01 21:40:49 rillig Exp $";
+static char rcsid[] = "$NetBSD: buf.c,v 1.30 2020/08/01 21:51:22 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)buf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: buf.c,v 1.29 2020/08/01 21:40:49 rillig Exp $");
+__RCSID("$NetBSD: buf.c,v 1.30 2020/08/01 21:51:22 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -219,11 +219,9 @@ Buf_DestroyCompact(Buffer *buf)
     if (buf->size - buf->count >= BUF_COMPACT_LIMIT) {
 	/* We trust realloc to be smart */
 	Byte *data = bmake_realloc(buf->buffer, buf->count + 1);
-	if (data) {	/* XXX: can never be NULL */
-	    data[buf->count] = 0;
-	    Buf_Destroy(buf, FALSE);
-	    return data;
-	}
+	data[buf->count] = 0;
+	Buf_Destroy(buf, FALSE);
+	return data;
     }
 #endif
     return Buf_Destroy(buf, FALSE);
