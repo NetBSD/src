@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.50 2020/07/01 08:01:07 ryo Exp $ */
+/* $NetBSD: armreg.h,v 1.51 2020/08/01 08:47:05 maxv Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ reg_##regname##_write(uint64_t __val)				\
 {								\
 	__asm __volatile(					\
 	    ASM_ARCH(arch)					\
-	    "msr " #regdesc ", %0" :: "r"(__val)		\
+	    "msr " #regdesc ", %0" :: "r"(__val) : "memory"	\
 	);							\
 }
 
@@ -77,7 +77,9 @@ reg_##regname##_write(uint64_t __val)				\
 static __inline void						\
 reg_##regname##_write(uint64_t __val)				\
 {								\
-	__asm __volatile("msr " #regdesc ", %0" :: "n"(__val));	\
+	__asm __volatile(					\
+	    "msr " #regdesc ", %0" :: "n"(__val) : "memory"	\
+	);							\
 }
 
 #define AARCH64REG_READ_INLINE(regname)				\
@@ -97,7 +99,9 @@ reg_##regname##_write(uint64_t __val)				\
 static __inline void						\
 reg_##regname##_write(uint64_t __val)				\
 {								\
-	__asm __volatile("at " #regdesc ", %0" :: "r"(__val));	\
+	__asm __volatile(					\
+	    "at " #regdesc ", %0" :: "r"(__val) : "memory"	\
+	);							\
 }
 
 #define AARCH64REG_ATWRITE_INLINE(regname)			\
