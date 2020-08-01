@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.21 2020/07/26 15:09:10 rillig Exp $	*/
+/*	$NetBSD: buf.h,v 1.22 2020/08/01 21:40:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -80,23 +80,25 @@
 #ifndef MAKE_BUF_H
 #define MAKE_BUF_H
 
+#include <stddef.h>
+
 typedef char Byte;
 
 typedef struct Buffer {
-    int	    size; 	/* Current size of the buffer */
-    int     count;	/* Number of bytes in buffer */
-    Byte    *buffer;	/* The buffer itself (zero terminated) */
+    size_t size;	/* Current size of the buffer */
+    size_t count;	/* Number of bytes in buffer */
+    Byte *buffer;	/* The buffer itself (zero terminated) */
 } Buffer;
 
-/* If we aren't on netbsd, __predict_false() might not be defined. */
+/* If we aren't on NetBSD, __predict_false() might not be defined. */
 #ifndef __predict_false
 #define __predict_false(x) (x)
 #endif
 
 /* Buf_AddByte adds a single byte to a buffer. */
 #define	Buf_AddByte(bp, byte) do { \
-	int _count = ++(bp)->count; \
-	char *_ptr; \
+	size_t _count = ++(bp)->count; \
+	Byte *_ptr; \
 	if (__predict_false(_count >= (bp)->size)) \
 		Buf_Expand_1(bp); \
 	_ptr = (bp)->buffer + _count; \
@@ -109,13 +111,13 @@ typedef struct Buffer {
 #define Buf_Size(bp) ((bp)->count)
 
 void Buf_Expand_1(Buffer *);
-void Buf_AddBytes(Buffer *, int, const Byte *);
+void Buf_AddBytesZ(Buffer *, const Byte *, size_t);
 void Buf_AddBytesBetween(Buffer *, const Byte *, const Byte *);
 void Buf_AddStr(Buffer *, const char *);
 void Buf_AddInt(Buffer *, int);
-Byte *Buf_GetAll(Buffer *, int *);
+Byte *Buf_GetAllZ(Buffer *, size_t *);
 void Buf_Empty(Buffer *);
-void Buf_Init(Buffer *, int);
+void Buf_InitZ(Buffer *, size_t);
 Byte *Buf_Destroy(Buffer *, Boolean);
 Byte *Buf_DestroyCompact(Buffer *);
 
