@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.92 2020/08/01 09:55:00 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.93 2020/08/01 14:47:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.92 2020/08/01 09:55:00 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.93 2020/08/01 14:47:49 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.92 2020/08/01 09:55:00 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.93 2020/08/01 14:47:49 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -397,7 +397,7 @@ SuffGNHasNameP(const void *gn, const void *name)
     return strcmp(name, ((const GNode *)gn)->name);
 }
 
- 	    /*********** Maintenance Functions ************/
+	    /*********** Maintenance Functions ************/
 
 static void
 SuffUnRef(void *lp, void *sp)
@@ -699,7 +699,7 @@ Suff_AddTransform(char *line)
 {
     GNode         *gn;		/* GNode of transformation rule */
     Suff          *s,		/* source suffix */
-                  *t;		/* target suffix */
+		  *t;		/* target suffix */
     LstNode 	  ln;	    	/* Node for existing transformation */
 
     ln = Lst_Find(transforms, line, SuffGNHasNameP);
@@ -1167,7 +1167,7 @@ Suff_AddLib(char *sname)
     }
 }
 
- 	  /********** Implicit Source Search Functions *********/
+	  /********** Implicit Source Search Functions *********/
 
 /*-
  *-----------------------------------------------------------------------
@@ -1425,7 +1425,7 @@ SuffFindCmds(Src *targ, Lst slst)
 {
     LstNode 	  	ln; 	/* General-purpose list node */
     GNode		*t, 	/* Target GNode */
-	    	  	*s; 	/* Source GNode */
+			*s; 	/* Source GNode */
     int	    	  	prefLen;/* The length of the defined prefix */
     Suff    	  	*suff;	/* Suffix on matching beastie */
     Src	    	  	*ret;	/* Return value */

@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.57 2020/07/28 16:45:56 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.58 2020/08/01 14:47:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.57 2020/07/28 16:45:56 rillig Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.58 2020/08/01 14:47:49 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.57 2020/07/28 16:45:56 rillig Exp $");
+__RCSID("$NetBSD: for.c,v 1.58 2020/08/01 14:47:49 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -487,9 +487,9 @@ For_Run(int lineno)
     accumFor = NULL;
 
     if (strlist_num(&arg->items) == 0) {
-        /* Nothing to expand - possibly due to an earlier syntax error. */
-        For_Free(arg);
-        return;
+	/* Nothing to expand - possibly due to an earlier syntax error. */
+	For_Free(arg);
+	return;
     }
 
     Parse_SetInput(NULL, lineno, -1, For_Iterate, arg);

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.57 2020/07/03 08:13:23 rillig Exp $	*/
+/*	$NetBSD: util.c,v 1.58 2020/08/01 14:47:49 rillig Exp $	*/
 
 /*
  * Missing stuff from OS's
@@ -8,11 +8,11 @@
 #endif
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: util.c,v 1.57 2020/07/03 08:13:23 rillig Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.58 2020/08/01 14:47:49 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.57 2020/07/03 08:13:23 rillig Exp $");
+__RCSID("$NetBSD: util.c,v 1.58 2020/08/01 14:47:49 rillig Exp $");
 #endif
 #endif
 
@@ -178,39 +178,39 @@ strrcpy(char *ptr, char *str)
 } /* end strrcpy */
 
 char    *sys_siglist[] = {
-        "Signal 0",
-        "Hangup",                       /* SIGHUP    */
-        "Interrupt",                    /* SIGINT    */
-        "Quit",                         /* SIGQUIT   */
-        "Illegal instruction",          /* SIGILL    */
-        "Trace/BPT trap",               /* SIGTRAP   */
-        "IOT trap",                     /* SIGIOT    */
-        "EMT trap",                     /* SIGEMT    */
-        "Floating point exception",     /* SIGFPE    */
-        "Killed",                       /* SIGKILL   */
-        "Bus error",                    /* SIGBUS    */
-        "Segmentation fault",           /* SIGSEGV   */
-        "Bad system call",              /* SIGSYS    */
-        "Broken pipe",                  /* SIGPIPE   */
-        "Alarm clock",                  /* SIGALRM   */
-        "Terminated",                   /* SIGTERM   */
-        "User defined signal 1",        /* SIGUSR1   */
-        "User defined signal 2",        /* SIGUSR2   */
-        "Child exited",                 /* SIGCLD    */
-        "Power-fail restart",           /* SIGPWR    */
-        "Virtual timer expired",        /* SIGVTALRM */
-        "Profiling timer expired",      /* SIGPROF   */
-        "I/O possible",                 /* SIGIO     */
-        "Window size changes",          /* SIGWINDOW */
-        "Stopped (signal)",             /* SIGSTOP   */
-        "Stopped",                      /* SIGTSTP   */
-        "Continued",                    /* SIGCONT   */
-        "Stopped (tty input)",          /* SIGTTIN   */
-        "Stopped (tty output)",         /* SIGTTOU   */
-        "Urgent I/O condition",         /* SIGURG    */
-        "Remote lock lost (NFS)",       /* SIGLOST   */
-        "Signal 31",                    /* reserved  */
-        "DIL signal"                    /* SIGDIL    */
+	"Signal 0",
+	"Hangup",                       /* SIGHUP    */
+	"Interrupt",                    /* SIGINT    */
+	"Quit",                         /* SIGQUIT   */
+	"Illegal instruction",          /* SIGILL    */
+	"Trace/BPT trap",               /* SIGTRAP   */
+	"IOT trap",                     /* SIGIOT    */
+	"EMT trap",                     /* SIGEMT    */
+	"Floating point exception",     /* SIGFPE    */
+	"Killed",                       /* SIGKILL   */
+	"Bus error",                    /* SIGBUS    */
+	"Segmentation fault",           /* SIGSEGV   */
+	"Bad system call",              /* SIGSYS    */
+	"Broken pipe",                  /* SIGPIPE   */
+	"Alarm clock",                  /* SIGALRM   */
+	"Terminated",                   /* SIGTERM   */
+	"User defined signal 1",        /* SIGUSR1   */
+	"User defined signal 2",        /* SIGUSR2   */
+	"Child exited",                 /* SIGCLD    */
+	"Power-fail restart",           /* SIGPWR    */
+	"Virtual timer expired",        /* SIGVTALRM */
+	"Profiling timer expired",      /* SIGPROF   */
+	"I/O possible",                 /* SIGIO     */
+	"Window size changes",          /* SIGWINDOW */
+	"Stopped (signal)",             /* SIGSTOP   */
+	"Stopped",                      /* SIGTSTP   */
+	"Continued",                    /* SIGCONT   */
+	"Stopped (tty input)",          /* SIGTTIN   */
+	"Stopped (tty output)",         /* SIGTTOU   */
+	"Urgent I/O condition",         /* SIGURG    */
+	"Remote lock lost (NFS)",       /* SIGLOST   */
+	"Signal 31",                    /* reserved  */
+	"DIL signal"                    /* SIGDIL    */
 };
 #endif /* __hpux__ || __hpux */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.117 2020/08/01 09:55:00 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.118 2020/08/01 14:47:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.117 2020/08/01 09:55:00 rillig Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.118 2020/08/01 14:47:49 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.117 2020/08/01 09:55:00 rillig Exp $");
+__RCSID("$NetBSD: compat.c,v 1.118 2020/08/01 14:47:49 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -212,7 +212,7 @@ CompatRunCommand(void *cmdp, void *gnp)
     char    	  *cmdStart;	/* Start of expanded command */
     char 	  *cp, *bp;
     Boolean 	  silent,   	/* Don't print command */
-	    	  doIt;		/* Execute even if -n */
+		  doIt;		/* Execute even if -n */
     volatile Boolean errCheck; 	/* Check errors */
     int 	  reason;   	/* Reason for child's death */
     int	    	  status;   	/* Description of child's death */
@@ -433,18 +433,18 @@ again:
 #endif
 		if (status != 0) {
 		    if (DEBUG(ERROR)) {
-		        fprintf(debug_file, "\n*** Failed target:  %s\n*** Failed command: ",
+			fprintf(debug_file, "\n*** Failed target:  %s\n*** Failed command: ",
 			    gn->name);
-		        for (cp = cmd; *cp; ) {
-    			    if (isspace((unsigned char)*cp)) {
+			for (cp = cmd; *cp; ) {
+			    if (isspace((unsigned char)*cp)) {
 				fprintf(debug_file, " ");
-			        while (isspace((unsigned char)*cp))
+				while (isspace((unsigned char)*cp))
 				    cp++;
 			    } else {
 				fprintf(debug_file, "%c", *cp);
-			        cp++;
+				cp++;
 			    }
-		        }
+			}
 			fprintf(debug_file, "\n");
 		    }
 		    printf("*** Error code %d", status);
@@ -729,10 +729,10 @@ Compat_Run(Lst targs)
 	gn = Targ_FindNode(".BEGIN", TARG_NOCREATE);
 	if (gn != NULL) {
 	    Compat_Make(gn, gn);
-            if (gn->made == ERROR) {
-                PrintOnError(gn, "\nStop.");
-                exit(1);
-            }
+	    if (gn->made == ERROR) {
+		PrintOnError(gn, "\nStop.");
+		exit(1);
+	    }
 	}
     }
 

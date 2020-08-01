@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.245 2020/08/01 09:55:00 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.246 2020/08/01 14:47:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.245 2020/08/01 09:55:00 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.246 2020/08/01 14:47:49 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.245 2020/08/01 09:55:00 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.246 2020/08/01 14:47:49 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1597,9 +1597,9 @@ ParseDoDependency(char *line)
 		Dir_SetPATH();
 		break;
 #ifdef POSIX
-            case Posix:
-                Var_Set("%POSIX", "1003.2", VAR_GLOBAL);
-                break;
+	    case Posix:
+		Var_Set("%POSIX", "1003.2", VAR_GLOBAL);
+		break;
 #endif
 	    default:
 		break;
@@ -2236,7 +2236,7 @@ Parse_include_file(char *file, Boolean isSystem, Boolean depinc, int silent)
 
 	if (fullname == NULL) {
 	    /*
-    	     * Makefile wasn't found in same directory as included makefile.
+	     * Makefile wasn't found in same directory as included makefile.
 	     * Search for it first on the -I search path,
 	     * then on the .PATH search path, if not found in a -I directory.
 	     * If we have a suffix specific path we should use that.
@@ -2510,7 +2510,7 @@ Parse_SetInput(const char *name, int line, int fd,
     /* Get first block of input data */
     buf = curFile->nextbuf(curFile->nextbuf_arg, &len);
     if (buf == NULL) {
-        /* Was all a waste of time ... */
+	/* Was all a waste of time ... */
 	if (curFile->fname)
 	    free(curFile->fname);
 	free(curFile);
@@ -3338,7 +3338,7 @@ Parse_MainName(void)
 
     if (mainNode == NULL) {
 	Punt("no target to make.");
-    	/*NOTREACHED*/
+	/*NOTREACHED*/
     } else if (mainNode->type & OP_DOUBLEDEP) {
 	(void)Lst_AtEnd(mainList, mainNode);
 	Lst_Concat(mainList, mainNode->cohorts, LST_CONCNEW);

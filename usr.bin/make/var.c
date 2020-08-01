@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.379 2020/08/01 13:51:40 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.380 2020/08/01 14:47:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.379 2020/08/01 13:51:40 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.380 2020/08/01 14:47:49 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.379 2020/08/01 13:51:40 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.380 2020/08/01 14:47:49 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -788,7 +788,7 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
      * point in searching them all just to save a bit of memory...
      */
     if (strchr(name, '$') != NULL) {
-        const char *unexpanded_name = name;
+	const char *unexpanded_name = name;
 	name = name_freeIt = Var_Subst(name, ctxt, VARE_WANTRES);
 	if (name[0] == '\0') {
 	    if (DEBUG(VAR)) {
@@ -1213,7 +1213,7 @@ Str_SYSVMatch(const char *word, const char *pattern, size_t *match_len,
 
     const char *w_tail = w + w_len - p_len;
     if (memcmp(p, w_tail, p_len) != 0)
-        return NULL;
+	return NULL;
 
     *match_len = w_tail - w;
     return w;
@@ -2542,7 +2542,7 @@ ApplyModifier_ToSep(const char *sep, ApplyModifiersState *st)
 	get_numeric:
 	    st->sep = strtoul(sep + 1 + (sep[1] == 'x'), &end, base);
 	    if (*end != ':' && *end != st->endc)
-	        return AMR_BAD;
+		return AMR_BAD;
 	    st->next = end;
 	    break;
 	}

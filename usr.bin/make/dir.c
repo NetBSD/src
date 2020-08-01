@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.82 2020/07/31 20:57:38 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.83 2020/08/01 14:47:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.82 2020/07/31 20:57:38 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.83 2020/08/01 14:47:49 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.82 2020/07/31 20:57:38 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.83 2020/08/01 14:47:49 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -965,7 +965,7 @@ Dir_Expand(const char *word, Lst path, Lst expansions)
  */
 static char *
 DirLookup(Path *p, const char *name MAKE_ATTR_UNUSED, const char *cp,
-          Boolean hasSlash MAKE_ATTR_UNUSED)
+	  Boolean hasSlash MAKE_ATTR_UNUSED)
 {
     char *file;		/* the current filename to check */
 
@@ -1182,7 +1182,7 @@ Dir_FindFile(const char *name, Lst path)
 	p = (Path *)Lst_Datum(ln);
 	if (p == dotLast) {
 	    hasLastDot = TRUE;
-            if (DEBUG(DIR))
+	    if (DEBUG(DIR))
 		fprintf(debug_file, "[dot last]...");
 	}
     }
@@ -1448,7 +1448,7 @@ Dir_FindHereOrAbove(char *here, char *search_path, char *result, int rlen) {
 
 	struct stat st;
 	char dirbase[MAXPATHLEN + 1], *db_end;
-        char try[MAXPATHLEN + 1], *try_end;
+	char try[MAXPATHLEN + 1], *try_end;
 
 	/* copy out our starting point */
 	snprintf(dirbase, sizeof(dirbase), "%s", here);
