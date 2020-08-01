@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.89 2020/08/01 17:25:57 kim Exp $	*/
+/*	$NetBSD: w.c,v 1.90 2020/08/01 17:53:38 kim Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.89 2020/08/01 17:25:57 kim Exp $");
+__RCSID("$NetBSD: w.c,v 1.90 2020/08/01 17:53:38 kim Exp $");
 #endif
 #endif /* not lint */
 
@@ -654,7 +654,7 @@ fixhost(struct entry *ep)
 	 * Leading '[' indicates an IP address inside brackets.
 	 */
 	b = NULL;
-	if (*p == '[') {
+	if (!nflag && (*p == '[')) {
 		for (b = p++; b < &host_buf[sizeof(host_buf)]; b++)
 			if (*b == '\0' || *b == ']')
 				break;
