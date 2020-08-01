@@ -1,4 +1,4 @@
-.\"	$NetBSD: workqueue.9,v 1.13 2020/08/01 02:14:43 riastradh Exp $
+.\"	$NetBSD: workqueue.9,v 1.14 2020/08/01 09:51:06 wiz Exp $
 .\"
 .\" Copyright (c)2005 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -87,7 +87,7 @@ flags may be bitwise ORed together:
 Specifies that the kthread must be allowed to use any machine-dependent
 per-CPU floating-point units or SIMD vector units, as in
 .Xr kthread_fpu_enter 9 / Xr kthread_fpu_exit 9 ,
-when it executes the worker function.u
+when it executes the worker function.
 .It Dv WQ_MPSAFE
 Specifies that the workqueue is multiprocessor safe and does its own locking;
 otherwise the kernel lock will be held while processing work.
