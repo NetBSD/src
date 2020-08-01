@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.371 2020/08/01 07:10:37 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.372 2020/08/01 07:14:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.371 2020/08/01 07:10:37 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.372 2020/08/01 07:14:04 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.371 2020/08/01 07:10:37 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.372 2020/08/01 07:14:04 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -524,10 +524,8 @@ Var_Export1(const char *name, VarExportFlags flags)
     v = VarFind(name, VAR_GLOBAL, 0);
     if (v == NULL)
 	return 0;
-    if (!parent &&
-	(v->flags & (VAR_EXPORTED | VAR_REEXPORT)) == VAR_EXPORTED) {
-	return 0;			/* nothing to do */
-    }
+    if (!parent && (v->flags & VAR_EXPORTED) && !(v->flags & VAR_REEXPORT))
+	return 0;		/* nothing to do */
     val = Buf_GetAll(&v->val, NULL);
     if (!(flags & VAR_EXPORT_LITERAL) && strchr(val, '$')) {
 	if (parent) {
