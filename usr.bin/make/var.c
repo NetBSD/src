@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.373 2020/08/01 07:29:04 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.374 2020/08/01 08:42:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.373 2020/08/01 07:29:04 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.374 2020/08/01 08:42:33 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.373 2020/08/01 07:29:04 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.374 2020/08/01 08:42:33 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1007,7 +1007,7 @@ Var_Exists(const char *name, GNode *ctxt)
  *-----------------------------------------------------------------------
  * Var_Value --
  *	Return the unexpanded value of the given variable in the given
- *	context.
+ *	context, or the usual contexts.
  *
  * Input:
  *	name		name to find
