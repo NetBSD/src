@@ -1,4 +1,4 @@
-/*	$NetBSD: script.c,v 1.21 2011/09/06 18:29:56 joerg Exp $	*/
+/*	$NetBSD: script.c,v 1.22 2020/08/01 17:31:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: script.c,v 1.21 2011/09/06 18:29:56 joerg Exp $");
+__RCSID("$NetBSD: script.c,v 1.22 2020/08/01 17:31:06 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -81,6 +81,7 @@ static int	usesleep, rawout;
 static int	quiet, flush;
 static const char *fname;
 
+static int	isterm;
 static struct	termios tt;
 
 __dead static void	done(void);
@@ -356,6 +357,34 @@ consume(FILE *fp, off_t len, char *buf, int reg)
 } while (0/*CONSTCOND*/)
 
 static void
+termset(void)
+{
+	struct termios traw;
+
+	isterm = isatty(STDOUT_FILENO);
+	if (!isterm)
+		return;
+
+	if (tcgetattr(STDOUT_FILENO, &tt) != 0)
+		err(1, "tcgetattr");
+
+	traw = tt;
+	cfmakeraw(&traw);
+	traw.c_lflag |= ISIG;
+	if (tcsetattr(STDOUT_FILENO, TCSANOW, &traw) != 0)
+		err(1, "tcsetattr");
+}
+
+static void
+termreset(void)
+{
+	if (isterm)
+		tcsetattr(STDOUT_FILENO, TCSADRAIN, &tt);
+
+	isterm = 0;
+}
+
+static void
 playback(FILE *fp)
 {
 	struct timespec tsi, tso;
@@ -398,6 +427,8 @@ playback(FILE *fp)
 				ctime(&tclock));
 			tsi = tso;
 			(void)consume(fp, stamp.scr_len, buf, reg);
+			termset();
+			atexit(termreset);
 			break;
 		case 'e':
 			if (!quiet)
