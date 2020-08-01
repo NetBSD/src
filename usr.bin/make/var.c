@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.383 2020/08/01 17:29:00 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.384 2020/08/01 18:02:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.383 2020/08/01 17:29:00 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.384 2020/08/01 18:02:37 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.383 2020/08/01 17:29:00 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.384 2020/08/01 18:02:37 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2701,7 +2701,7 @@ bad_modifier:
     return AMR_BAD;
 }
 
-/* :O or :Ox */
+/* :O or :Or or :Ox */
 static ApplyModifierResult
 ApplyModifier_Order(const char *mod, ApplyModifiersState *st)
 {
@@ -2726,10 +2726,10 @@ static ApplyModifierResult
 ApplyModifier_IfElse(const char *mod, ApplyModifiersState *st)
 {
     Boolean value = FALSE;
-    int cond_rc = 0;
     VarEvalFlags then_eflags = st->eflags & ~VARE_WANTRES;
     VarEvalFlags else_eflags = st->eflags & ~VARE_WANTRES;
 
+    int cond_rc = COND_PARSE;	/* anything other than COND_INVALID */
     if (st->eflags & VARE_WANTRES) {
 	cond_rc = Cond_EvalExpression(NULL, st->v->name, &value, 0, FALSE);
 	if (cond_rc != COND_INVALID && value)
@@ -2815,7 +2815,7 @@ ApplyModifier_Assign(const char *mod, ApplyModifiersState *st)
     char *sv_name = NULL;
     if (st->v->flags & VAR_JUNK) {
 	/*
-	 * We need to bmake_strdup() it incase ParseModifierPart() recurses.
+	 * We need to bmake_strdup() it in case ParseModifierPart() recurses.
 	 */
 	sv_name = st->v->name;
 	st->v->name = bmake_strdup(st->v->name);
