@@ -103,12 +103,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.19 2020/07/19 16:20:36 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.20 2020/08/01 12:39:40 jdolecek Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
 #include "isa.h"
 #include "pci.h"
+#include "opt_pci.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,6 +126,8 @@ __KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.19 2020/07/19 16:20:36 jdolecek Exp $");
 #include <machine/pio.h>
 #include <xen/evtchn.h>
 #include <xen/intr.h>
+
+#include <dev/pci/pcivar.h>
 
 #ifdef __HAVE_PCI_MSI_MSIX
 #include <x86/pci/msipic.h>

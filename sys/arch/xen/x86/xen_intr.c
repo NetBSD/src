@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.27 2020/05/07 19:48:58 bouyer Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.28 2020/08/01 12:39:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,9 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.27 2020/05/07 19:48:58 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.28 2020/08/01 12:39:40 jdolecek Exp $");
 
 #include "opt_multiprocessor.h"
+#include "opt_pci.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
