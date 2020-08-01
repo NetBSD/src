@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.368 2020/07/31 14:59:53 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.369 2020/08/01 06:35:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.368 2020/07/31 14:59:53 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.369 2020/08/01 06:35:00 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.368 2020/07/31 14:59:53 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.369 2020/08/01 06:35:00 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -582,7 +582,6 @@ Var_ExportVars(void)
 {
     char tmp[BUFSIZ];
     char *val;
-    int n;
 
     /*
      * Several make's support this sort of mechanism for tracking
@@ -601,26 +600,21 @@ Var_ExportVars(void)
 	Hash_ForEach(&VAR_GLOBAL->context, Var_ExportVars_callback, NULL);
 	return;
     }
-    /*
-     * We have a number of exported vars,
-     */
-    n = snprintf(tmp, sizeof(tmp), "${" MAKE_EXPORTED ":O:u}");
-    if (n < (int)sizeof(tmp)) {
+
+    val = Var_Subst("${" MAKE_EXPORTED ":O:u}", VAR_GLOBAL, VARE_WANTRES);
+    if (*val) {
 	char **av;
 	char *as;
 	int ac;
 	int i;
 
-	val = Var_Subst(tmp, VAR_GLOBAL, VARE_WANTRES);
-	if (*val) {
-	    av = brk_string(val, &ac, FALSE, &as);
-	    for (i = 0; i < ac; i++)
-		Var_Export1(av[i], 0);
-	    free(as);
-	    free(av);
-	}
-	free(val);
+	av = brk_string(val, &ac, FALSE, &as);
+	for (i = 0; i < ac; i++)
+	    Var_Export1(av[i], 0);
+	free(as);
+	free(av);
     }
+    free(val);
 }
 
 /*
