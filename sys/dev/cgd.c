@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.138 2020/08/01 02:15:17 riastradh Exp $ */
+/* $NetBSD: cgd.c,v 1.139 2020/08/01 02:15:49 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.138 2020/08/01 02:15:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.139 2020/08/01 02:15:49 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -684,9 +684,8 @@ cgd_create_worker(void)
 	cw->cw_wq = wq;
 	pool_init(cw->cw_cpool, sizeof(struct cgd_xfer), 0,
 	    0, 0, "cgdcpl", NULL, IPL_BIO);
-
 	mutex_init(&cw->cw_lock, MUTEX_DEFAULT, IPL_BIO);
-	
+
 	return cw;
 }
 
