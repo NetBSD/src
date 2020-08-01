@@ -1,4 +1,4 @@
-# $Id: sysv.mk,v 1.9 2020/07/26 11:19:04 rillig Exp $
+# $Id: sysv.mk,v 1.10 2020/08/01 12:04:00 rillig Exp $
 
 all: foo fun sam bla words ampersand anchor-dollar
 all: mismatch
@@ -68,3 +68,28 @@ anchor-dollar:
 mismatch:
 	@echo $@: ${:Ufile.c file.h:%.c=%.cpp}
 	@echo $@: ${:Ufile.c other.c:file.%=renamed.%}
+
+# Trying to cover all possible variants of the SysV modifier.
+LIST=	one two
+EXPR.1=	${LIST:o=X}
+EXP.1=	one twX
+EXPR.2=	${LIST:o=}
+EXP.2=	one tw
+EXPR.3=	${LIST:o=%}
+EXP.3=	one twtwo
+EXPR.4=	${LIST:%o=X}
+EXP.4=	one X
+EXPR.5=	${LIST:o%=X}
+EXP.5=	X twX
+EXPR.6=	${LIST:o%e=X}
+EXP.6=	oXe two
+EXPR.7=	${LIST:o%%e=X}		# Only the first '%' is the wildcard.
+EXP.7=	one two			# None of the words contains a literal '%'.
+EXPR.8=	${LIST:%=%%}
+EXP.8=	oneone twotwo
+
+.for i in ${:U:range=8}
+.if ${EXPR.1} != ${EXP.1}
+.warning expected "${EXP.$i}", got "${EXPR.$i}
+.endif
+.endfor
