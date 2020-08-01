@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs_llsc.S,v 1.9 2019/04/06 03:06:26 thorpej Exp $	*/
+/*	$NetBSD: lock_stubs_llsc.S,v 1.10 2020/08/01 07:09:41 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: lock_stubs_llsc.S,v 1.9 2019/04/06 03:06:26 thorpej Exp $")
+RCSID("$NetBSD: lock_stubs_llsc.S,v 1.10 2020/08/01 07:09:41 simonb Exp $")
 
 #include "assym.h"
 
@@ -47,8 +47,8 @@ RCSID("$NetBSD: lock_stubs_llsc.S,v 1.9 2019/04/06 03:06:26 thorpej Exp $")
 
 #if defined(MULTIPROCESSOR)
 #if defined(__OCTEON__)
-#define	SYNC		sync 4
-#define	BDSYNC		sync 4
+#define	SYNC		sync 4		/* sync 4 == syncw - sync all writes */
+#define	BDSYNC		sync 4		/* sync 4 == syncw - sync all writes */
 #else
 #define	SYNC		sync
 #define	BDSYNC		sync
