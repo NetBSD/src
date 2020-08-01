@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.285 2020/07/31 20:22:10 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.286 2020/08/01 08:49:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.285 2020/07/31 20:22:10 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.286 2020/08/01 08:49:47 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.285 2020/07/31 20:22:10 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.286 2020/08/01 08:49:47 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -368,7 +368,7 @@ debug_setbuf:
 /*
  * does path contain any relative components
  */
-static int
+static Boolean
 is_relpath(const char *path)
 {
 	const char *cp;
@@ -376,10 +376,7 @@ is_relpath(const char *path)
 	if (path[0] != '/')
 		return TRUE;
 	cp = path;
-	do {
-		cp = strstr(cp, "/.");
-		if (!cp)
-			break;
+	while ((cp = strstr(cp, "/.")) != NULL) {
 		cp += 2;
 		if (cp[0] == '/' || cp[0] == '\0')
 			return TRUE;
@@ -387,7 +384,7 @@ is_relpath(const char *path)
 			if (cp[1] == '/' || cp[1] == '\0')
 				return TRUE;
 		}
-	} while (cp);
+	}
 	return FALSE;
 }
 
