@@ -1,4 +1,4 @@
-# $Id: sysv.mk,v 1.10 2020/08/01 12:04:00 rillig Exp $
+# $Id: sysv.mk,v 1.11 2020/08/01 12:47:56 rillig Exp $
 
 all: foo fun sam bla words ampersand anchor-dollar
 all: mismatch
@@ -76,20 +76,20 @@ EXP.1=	one twX
 EXPR.2=	${LIST:o=}
 EXP.2=	one tw
 EXPR.3=	${LIST:o=%}
-EXP.3=	one twtwo
+EXP.3=	one tw%
 EXPR.4=	${LIST:%o=X}
 EXP.4=	one X
 EXPR.5=	${LIST:o%=X}
-EXP.5=	X twX
+EXP.5=	X two
 EXPR.6=	${LIST:o%e=X}
-EXP.6=	oXe two
+EXP.6=	X two
 EXPR.7=	${LIST:o%%e=X}		# Only the first '%' is the wildcard.
 EXP.7=	one two			# None of the words contains a literal '%'.
 EXPR.8=	${LIST:%=%%}
-EXP.8=	oneone twotwo
+EXP.8=	one% two%
 
 .for i in ${:U:range=8}
-.if ${EXPR.1} != ${EXP.1}
-.warning expected "${EXP.$i}", got "${EXPR.$i}
+.if ${EXPR.$i} != ${EXP.$i}
+.warning test case $i expected "${EXP.$i}", got "${EXPR.$i}
 .endif
 .endfor
