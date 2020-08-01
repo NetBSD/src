@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.292 2020/08/01 14:52:14 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.293 2020/08/01 17:45:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.292 2020/08/01 14:52:14 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.293 2020/08/01 17:45:32 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.292 2020/08/01 14:52:14 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.293 2020/08/01 17:45:32 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1581,14 +1581,15 @@ found:
  *	in a string.
  *
  * Results:
- *	A string containing the output of the command, or the empty string
- *	If errnum is not NULL, it contains the reason for the command failure
+ *	A string containing the output of the command, or the empty string.
+ *	*errfmt returns a format string describing the command failure,
+ *	if any, using a single %s conversion specification.
  *
  * Side Effects:
  *	The string must be freed by the caller.
  */
 char *
-Cmd_Exec(const char *cmd, const char **errnum)
+Cmd_Exec(const char *cmd, const char **errfmt)
 {
     const char	*args[4];   	/* Args for invoking the shell */
     int 	fds[2];	    	/* Pipe streams */
@@ -1602,7 +1603,7 @@ Cmd_Exec(const char *cmd, const char **errnum)
     int		savederr;	/* saved errno */
 
 
-    *errnum = NULL;
+    *errfmt = NULL;
 
     if (!shellName)
 	Shell_Init();
@@ -1618,7 +1619,7 @@ Cmd_Exec(const char *cmd, const char **errnum)
      * Open a pipe for fetching its output
      */
     if (pipe(fds) == -1) {
-	*errnum = "Couldn't create pipe for \"%s\"";
+	*errfmt = "Couldn't create pipe for \"%s\"";
 	goto bad;
     }
 
@@ -1647,7 +1648,7 @@ Cmd_Exec(const char *cmd, const char **errnum)
 	/*NOTREACHED*/
 
     case -1:
-	*errnum = "Couldn't exec \"%s\"";
+	*errfmt = "Couldn't exec \"%s\"";
 	goto bad;
 
     default:
@@ -1685,12 +1686,12 @@ Cmd_Exec(const char *cmd, const char **errnum)
 	res = Buf_Destroy(&buf, FALSE);
 
 	if (savederr != 0)
-	    *errnum = "Couldn't read shell's output for \"%s\"";
+	    *errfmt = "Couldn't read shell's output for \"%s\"";
 
 	if (WIFSIGNALED(status))
-	    *errnum = "\"%s\" exited on a signal";
+	    *errfmt = "\"%s\" exited on a signal";
 	else if (WEXITSTATUS(status) != 0)
-	    *errnum = "\"%s\" returned non-zero status";
+	    *errfmt = "\"%s\" returned non-zero status";
 
 	/*
 	 * Null-terminate the result, convert newlines to spaces and
@@ -1715,9 +1716,7 @@ Cmd_Exec(const char *cmd, const char **errnum)
     }
     return res;
 bad:
-    res = bmake_malloc(1);
-    *res = '\0';
-    return res;
+    return bmake_strdup("");
 }
 
 /*-
