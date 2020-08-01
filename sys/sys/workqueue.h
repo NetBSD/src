@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.10 2017/12/28 07:00:52 ozaki-r Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.11 2020/08/01 02:14:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005 YAMAMOTO Takashi,
@@ -47,6 +47,7 @@ struct workqueue;
 
 #define	WQ_MPSAFE	0x01
 #define	WQ_PERCPU	0x02
+#define	WQ_FPU		0x04
 
 int workqueue_create(struct workqueue **, const char *,
     void (*)(struct work *, void *), void *, pri_t, int, int);
