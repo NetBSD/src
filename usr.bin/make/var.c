@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.386 2020/08/01 18:36:49 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.387 2020/08/01 19:19:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.386 2020/08/01 18:36:49 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.387 2020/08/01 19:19:05 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.386 2020/08/01 18:36:49 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.387 2020/08/01 19:19:05 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2273,9 +2273,9 @@ ApplyModifier_Match(const char *mod, ApplyModifiersState *st)
      * original brace level.
      * XXX This will likely not work right if $() and ${} are intermixed.
      */
-    int nest = 1;
+    int nest = 0;
     const char *p;
-    for (p = mod + 1; *p != '\0' && !(*p == ':' && nest == 1); p++) {
+    for (p = mod + 1; *p != '\0' && !(*p == ':' && nest == 0); p++) {
 	if (*p == '\\' &&
 	    (p[1] == ':' || p[1] == st->endc || p[1] == st->startc)) {
 	    if (!needSubst)
@@ -2289,7 +2289,7 @@ ApplyModifier_Match(const char *mod, ApplyModifiersState *st)
 	    ++nest;
 	if (*p == ')' || *p == '}') {
 	    --nest;
-	    if (nest == 0)
+	    if (nest < 0)
 		break;
 	}
     }
