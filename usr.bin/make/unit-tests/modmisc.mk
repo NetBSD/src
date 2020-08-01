@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.31 2020/08/01 17:20:42 rillig Exp $
+# $Id: modmisc.mk,v 1.32 2020/08/01 17:26:41 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -311,5 +311,14 @@ mod-range:
 # Multiple indirect modifiers can be applied one after another as long as
 # they are separated with colons.
 .if ${value:L:${:US,a,A,}:${:US,e,E,}} != "vAluE"
+.warning unexpected
+.endif
+
+# An indirect variable that evaluates to the empty string is allowed though.
+# This makes it possible to define conditional modifiers, like this:
+#
+# M.little-endian=	S,1234,4321,
+# M.big-endian=		# none
+.if ${value:L:${:Dempty}S,a,A,} != "vAlue"
 .warning unexpected
 .endif
