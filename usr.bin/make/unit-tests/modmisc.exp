@@ -1,3 +1,4 @@
+make: Unknown modifier '$'
 path=':/bin:/tmp::/:.:/no/such/dir:.'
 path='/bin:/tmp:/:/no/such/dir'
 path='/bin:/tmp:/:/no/such/dir'
