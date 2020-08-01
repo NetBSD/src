@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.50 2019/06/17 06:38:29 msaitoh Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.51 2020/08/01 12:36:35 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2009 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.50 2019/06/17 06:38:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.51 2020/08/01 12:36:35 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -85,13 +85,14 @@ __KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.50 2019/06/17 06:38:29 msaito
 #include <sys/intr.h>
 #include <sys/kmem.h>
 
-#include <dev/pci/pcivar.h>
-
 #include "ioapic.h"
 #include "eisa.h"
 #include "acpica.h"
 #include "opt_mpbios.h"
 #include "opt_acpi.h"
+#include "opt_pci.h"
+
+#include <dev/pci/pcivar.h>
 
 #include <machine/i82489reg.h>
 

@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.4 2020/04/25 15:26:18 bouyer Exp $ */
+/* $NetBSD: mainbus.c,v 1.5 2020/08/01 12:36:35 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -28,14 +28,17 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4 2020/04/25 15:26:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.5 2020/08/01 12:36:35 jdolecek Exp $");
+
+#include "opt_acpi.h"
+#include "opt_mpbios.h"
+#include "opt_pcifixup.h"
+#include "opt_pci.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
-
-#include <dev/pci/pcivar.h>
 
 #include <machine/cpuvar.h>
 #include <machine/mpbiosvar.h>
@@ -48,10 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4 2020/04/25 15:26:18 bouyer Exp $");
 #include "acpica.h"
 #include "ipmi.h"
 
-#include "opt_acpi.h"
-#include "opt_mpbios.h"
-#include "opt_pcifixup.h"
-
 #if NACPICA > 0
 #include <dev/acpi/acpivar.h>
 #endif
@@ -63,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4 2020/04/25 15:26:18 bouyer Exp $");
 #endif
 
 #if NPCI > 0
+#include <dev/pci/pcivar.h>
 #if defined(PCI_BUS_FIXUP)
 #include <arch/x86/pci/pci_bus_fixup.h>
 #if defined(PCI_ADDR_FIXUP)
