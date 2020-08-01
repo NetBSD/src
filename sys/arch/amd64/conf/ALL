@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.159 2020/08/01 08:20:47 maxv Exp $
+# $NetBSD: ALL,v 1.160 2020/08/01 12:28:19 jdolecek Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.159 $"
+#ident		"ALL-$Revision: 1.160 $"
 
 maxusers	64		# estimated number of users
 
@@ -831,7 +831,6 @@ amr*	at pci? dev ? function ?	# AMI/LSI Logic MegaRAID
 arcmsr* at pci? dev ? function ?	# Areca SATA RAID controllers
 cac*	at pci? dev ? function ?	# Compaq PCI array controllers
 ciss*	at pci? dev ? function ?	# HP Smart Array controllers
-options CISS_NO_INTERRUPT_HACK
 
 icp*	at pci? dev ? function ?	# ICP-Vortex GDT & Intel RAID
 ips*	at pci? dev ? function ?	# Adaptec/IBM ServeRAID
