@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.45 2020/01/08 17:38:42 ad Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.46 2020/08/01 02:04:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007, 2009, 2019 The NetBSD Foundation, Inc.
@@ -31,9 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.45 2020/01/08 17:38:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.46 2020/08/01 02:04:55 riastradh Exp $");
 
 #include <sys/param.h>
+#include <sys/cpu.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
@@ -215,4 +216,72 @@ kthread_join(lwp_t *l)
 	mutex_exit(&kthread_lock);
 
 	return 0;
+}
+
+/*
+ * kthread_fpu_enter()
+ *
+ *	Allow the current lwp, which must be a kthread, to use the FPU.
+ *	Return a cookie that must be passed to kthread_fpu_exit when
+ *	done.  Must be used only in thread context.  Recursive -- you
+ *	can call kthread_fpu_enter several times in a row as long as
+ *	you pass the cookies in reverse order to kthread_fpu_exit.
+ */
+int
+kthread_fpu_enter(void)
+{
+	struct lwp *l = curlwp;
+	int s;
+
+	KASSERTMSG(!cpu_intr_p(),
+	    "%s is not allowed in interrupt context", __func__);
+	KASSERTMSG(!cpu_softintr_p(),
+	    "%s is not allowed in interrupt context", __func__);
+
+	/*
+	 * Remember whether this thread already had FPU access, and
+	 * mark this thread as having FPU access.
+	 */
+	lwp_lock(l);
+	KASSERTMSG(l->l_flag & LW_SYSTEM,
+	    "%s is allowed only in kthreads", __func__);
+	s = l->l_flag & LW_SYSTEM_FPU;
+	l->l_flag |= LW_SYSTEM_FPU;
+	lwp_unlock(l);
+
+	/* Take MD steps to enable the FPU if necessary.  */
+	if (s == 0)
+		kthread_fpu_enter_md();
+
+	return s;
+}
+
+/*
+ * kthread_fpu_exit(s)
+ *
+ *	Restore the current lwp's FPU access to what it was before the
+ *	matching call to kthread_fpu_enter() that returned s.  Must be
+ *	used only in thread context.
+ */
+void
+kthread_fpu_exit(int s)
+{
+	struct lwp *l = curlwp;
+
+	KASSERT(s == (s & LW_SYSTEM_FPU));
+	KASSERTMSG(!cpu_intr_p(),
+	    "%s is not allowed in interrupt context", __func__);
+	KASSERTMSG(!cpu_softintr_p(),
+	    "%s is not allowed in interrupt context", __func__);
+
+	lwp_lock(l);
+	KASSERTMSG(l->l_flag & LW_SYSTEM,
+	    "%s is allowed only in kthreads", __func__);
+	KASSERT(l->l_flag & LW_SYSTEM_FPU);
+	l->l_flag ^= s ^ LW_SYSTEM_FPU;
+	lwp_unlock(l);
+
+	/* Take MD steps to zero and disable the FPU if necessary.  */
+	if (s == 0)
+		kthread_fpu_exit_md();
 }
