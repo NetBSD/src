@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.58 2020/08/01 14:47:49 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.59 2020/08/01 21:40:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.58 2020/08/01 14:47:49 rillig Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.59 2020/08/01 21:40:49 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.58 2020/08/01 14:47:49 rillig Exp $");
+__RCSID("$NetBSD: for.c,v 1.59 2020/08/01 21:40:49 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -270,7 +270,7 @@ For_Eval(char *line)
 	}
     }
 
-    Buf_Init(&new_for->buf, 0);
+    Buf_InitZ(&new_for->buf, 0);
     accumFor = new_for;
     forLevel = 1;
     return 1;
@@ -305,7 +305,7 @@ For_Accum(char *line)
 	}
     }
 
-    Buf_AddBytes(&accumFor->buf, strlen(line), line);
+    Buf_AddStr(&accumFor->buf, line);
     Buf_AddByte(&accumFor->buf, '\n');
     return 1;
 }
@@ -325,12 +325,10 @@ For_Accum(char *line)
  *-----------------------------------------------------------------------
  */
 
-static int
+static size_t
 for_var_len(const char *var)
 {
     char ch, var_start, var_end;
-    int depth;
-    int len;
 
     var_start = *var;
     if (var_start == 0)
@@ -345,7 +343,8 @@ for_var_len(const char *var)
 	/* Single char variable */
 	return 1;
 
-    depth = 1;
+    int depth = 1;
+    size_t len;
     for (len = 1; (ch = var[len++]) != 0;) {
 	if (ch == var_start)
 	    depth++;
@@ -361,23 +360,22 @@ static void
 for_substitute(Buffer *cmds, strlist_t *items, unsigned int item_no, char ech)
 {
     const char *item = strlist_str(items, item_no);
-    int len;
-    char ch;
 
     /* If there were no escapes, or the only escape is the other variable
      * terminator, then just substitute the full string */
     if (!(strlist_info(items, item_no) &
 	    (ech == ')' ? ~FOR_SUB_ESCAPE_BRACE : ~FOR_SUB_ESCAPE_PAREN))) {
-	Buf_AddBytes(cmds, strlen(item), item);
+	Buf_AddStr(cmds, item);
 	return;
     }
 
     /* Escape ':', '$', '\\' and 'ech' - removed by :U processing */
+    char ch;
     while ((ch = *item++) != 0) {
 	if (ch == '$') {
-	    len = for_var_len(item);
+	    size_t len = for_var_len(item);
 	    if (len != 0) {
-		Buf_AddBytes(cmds, len + 1, item - 1);
+		Buf_AddBytesZ(cmds, item - 1, len + 1);
 		item += len;
 		continue;
 	    }
@@ -392,7 +390,7 @@ static char *
 For_Iterate(void *v_arg, size_t *ret_len)
 {
     For *arg = v_arg;
-    int i, len;
+    int i;
     char *var;
     char *cp;
     char *cmd_cp;
@@ -421,9 +419,10 @@ For_Iterate(void *v_arg, size_t *ret_len)
      * to contrive a makefile where an unwanted substitution happens.
      */
 
-    cmd_cp = Buf_GetAll(&arg->buf, &len);
-    body_end = cmd_cp + len;
-    Buf_Init(&cmds, len + 256);
+    size_t cmd_len;
+    cmd_cp = Buf_GetAllZ(&arg->buf, &cmd_len);
+    body_end = cmd_cp + cmd_len;
+    Buf_InitZ(&cmds, cmd_len + 256);
     for (cp = cmd_cp; (cp = strchr(cp, '$')) != NULL;) {
 	char ech;
 	ch = *++cp;
@@ -431,15 +430,15 @@ For_Iterate(void *v_arg, size_t *ret_len)
 	    cp++;
 	    /* Check variable name against the .for loop variables */
 	    STRLIST_FOREACH(var, &arg->vars, i) {
-		len = strlist_info(&arg->vars, i);
-		if (memcmp(cp, var, len) != 0)
+		size_t vlen = strlist_info(&arg->vars, i);
+		if (memcmp(cp, var, vlen) != 0)
 		    continue;
-		if (cp[len] != ':' && cp[len] != ech && cp[len] != '\\')
+		if (cp[vlen] != ':' && cp[vlen] != ech && cp[vlen] != '\\')
 		    continue;
 		/* Found a variable match. Replace with :U<value> */
-		Buf_AddBytes(&cmds, cp - cmd_cp, cmd_cp);
-		Buf_AddBytes(&cmds, 2, ":U");
-		cp += len;
+		Buf_AddBytesBetween(&cmds, cmd_cp, cp);
+		Buf_AddStr(&cmds, ":U");
+		cp += vlen;
 		cmd_cp = cp;
 		for_substitute(&cmds, &arg->items, arg->sub_next + i, ech);
 		break;
@@ -457,15 +456,15 @@ For_Iterate(void *v_arg, size_t *ret_len)
 	    if (var[0] != ch || var[1] != 0)
 		continue;
 	    /* Found a variable match. Replace with ${:U<value>} */
-	    Buf_AddBytes(&cmds, cp - cmd_cp, cmd_cp);
-	    Buf_AddBytes(&cmds, 3, "{:U");
+	    Buf_AddBytesBetween(&cmds, cmd_cp, cp);
+	    Buf_AddStr(&cmds, "{:U");
 	    cmd_cp = ++cp;
 	    for_substitute(&cmds, &arg->items, arg->sub_next + i, /*{*/ '}');
-	    Buf_AddBytes(&cmds, 1, "}");
+	    Buf_AddByte(&cmds, '}');
 	    break;
 	}
     }
-    Buf_AddBytes(&cmds, body_end - cmd_cp, cmd_cp);
+    Buf_AddBytesBetween(&cmds, cmd_cp, body_end);
 
     cp = Buf_Destroy(&cmds, FALSE);
     if (DEBUG(FOR))

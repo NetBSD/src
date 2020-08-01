@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.293 2020/08/01 17:45:32 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.294 2020/08/01 21:40:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.293 2020/08/01 17:45:32 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.294 2020/08/01 21:40:49 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.293 2020/08/01 17:45:32 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.294 2020/08/01 21:40:49 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1599,7 +1599,6 @@ Cmd_Exec(const char *cmd, const char **errfmt)
     int		status;		/* command exit status */
     Buffer	buf;		/* buffer to store the result */
     char	*cp;
-    int		cc;		/* bytes read, or -1 */
     int		savederr;	/* saved errno */
 
 
@@ -1658,13 +1657,15 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 	(void)close(fds[1]);
 
 	savederr = 0;
-	Buf_Init(&buf, 0);
+	Buf_InitZ(&buf, 0);
 
+	/* XXX: split variable cc into 2 */
+	ssize_t cc;		/* bytes read, or -1 */
 	do {
 	    char   result[BUFSIZ];
 	    cc = read(fds[0], result, sizeof(result));
 	    if (cc > 0)
-		Buf_AddBytes(&buf, cc, result);
+		Buf_AddBytesZ(&buf, result, (size_t)cc);
 	}
 	while (cc > 0 || (cc == -1 && errno == EINTR));
 	if (cc == -1)
@@ -1682,7 +1683,7 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 	    JobReapChild(pid, status, FALSE);
 	    continue;
 	}
-	cc = Buf_Size(&buf);
+	cc = (/* XXX */ssize_t)Buf_Size(&buf);
 	res = Buf_Destroy(&buf, FALSE);
 
 	if (savederr != 0)

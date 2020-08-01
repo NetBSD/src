@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.387 2020/08/01 19:19:05 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.388 2020/08/01 21:40:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.387 2020/08/01 19:19:05 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.388 2020/08/01 21:40:49 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.387 2020/08/01 19:19:05 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.388 2020/08/01 21:40:49 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -355,9 +355,9 @@ VarFind(const char *name, GNode *ctxt, VarFindFlags flags)
 	    Var *v = bmake_malloc(sizeof(Var));
 	    v->name = bmake_strdup(name);
 
-	    int len = (int)strlen(env);
-	    Buf_Init(&v->val, len + 1);
-	    Buf_AddBytes(&v->val, len, env);
+	    size_t len = strlen(env);
+	    Buf_InitZ(&v->val, len + 1);
+	    Buf_AddBytesZ(&v->val, env, len);
 
 	    v->flags = VAR_FROM_ENV;
 	    return v;
@@ -431,9 +431,9 @@ VarAdd(const char *name, const char *val, GNode *ctxt)
 {
     Var *v = bmake_malloc(sizeof(Var));
 
-    int len = val != NULL ? (int)strlen(val) : 0;
-    Buf_Init(&v->val, len + 1);
-    Buf_AddBytes(&v->val, len, val);
+    size_t len = val != NULL ? strlen(val) : 0;
+    Buf_InitZ(&v->val, len + 1);
+    Buf_AddBytesZ(&v->val, val, len);
 
     v->flags = 0;
 
@@ -526,7 +526,7 @@ Var_Export1(const char *name, VarExportFlags flags)
 	return 0;
     if (!parent && (v->flags & VAR_EXPORTED) && !(v->flags & VAR_REEXPORT))
 	return 0;		/* nothing to do */
-    val = Buf_GetAll(&v->val, NULL);
+    val = Buf_GetAllZ(&v->val, NULL);
     if (!(flags & VAR_EXPORT_LITERAL) && strchr(val, '$')) {
 	if (parent) {
 	    /*
@@ -952,7 +952,7 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 
 	if (DEBUG(VAR)) {
 	    fprintf(debug_file, "%s:%s = %s\n", ctxt->name, name,
-		    Buf_GetAll(&v->val, NULL));
+		    Buf_GetAllZ(&v->val, NULL));
 	}
 
 	if (v->flags & VAR_FROM_ENV) {
@@ -1027,7 +1027,7 @@ Var_Value(const char *name, GNode *ctxt, char **freeIt)
     if (v == NULL)
 	return NULL;
 
-    char *p = Buf_GetAll(&v->val, NULL);
+    char *p = Buf_GetAllZ(&v->val, NULL);
     if (VarFreeEnv(v, FALSE))
 	*freeIt = p;
     return p;
@@ -1044,7 +1044,7 @@ typedef struct {
 static void
 SepBuf_Init(SepBuf *buf, char sep)
 {
-    Buf_Init(&buf->buf, 32 /* bytes */);
+    Buf_InitZ(&buf->buf, 32 /* bytes */);
     buf->needSep = FALSE;
     buf->sep = sep;
 }
@@ -1064,7 +1064,7 @@ SepBuf_AddBytes(SepBuf *buf, const char *mem, size_t mem_size)
 	Buf_AddByte(&buf->buf, buf->sep);
 	buf->needSep = FALSE;
     }
-    Buf_AddBytes(&buf->buf, mem_size, mem);
+    Buf_AddBytesZ(&buf->buf, mem, mem_size);
 }
 
 static void
@@ -1648,7 +1648,7 @@ VarOrder(const char *str, const char otype)
     char *as;			/* word list memory */
     int ac, i;
 
-    Buf_Init(&buf, 0);
+    Buf_InitZ(&buf, 0);
 
     av = brk_string(str, &ac, FALSE, &as);
 
@@ -1698,7 +1698,7 @@ VarUniq(const char *str)
     char 	 *as;		/* Word list memory */
     int 	  ac, i, j;
 
-    Buf_Init(&buf, 0);
+    Buf_InitZ(&buf, 0);
     av = brk_string(str, &ac, FALSE, &as);
 
     if (ac > 1) {
@@ -1752,7 +1752,7 @@ ParseModifierPart(const char **tstr, int delim, VarEvalFlags eflags,
     Buffer buf;
     VarEvalFlags errnum = eflags & VARE_UNDEFERR;
 
-    Buf_Init(&buf, 0);
+    Buf_InitZ(&buf, 0);
 
     /*
      * Skim through until the matching delimiter is found;
@@ -1817,7 +1817,7 @@ ParseModifierPart(const char **tstr, int delim, VarEvalFlags eflags,
 		}
 	    }
 	} else if (subst != NULL && *cp == '&')
-	    Buf_AddBytes(&buf, subst->lhsLen, subst->lhs);
+	    Buf_AddBytesZ(&buf, subst->lhs, subst->lhsLen);
 	else
 	    Buf_AddByte(&buf, *cp);
     }
@@ -1854,7 +1854,7 @@ static char *
 VarQuote(char *str, Boolean quoteDollar)
 {
     Buffer buf;
-    Buf_Init(&buf, 0);
+    Buf_InitZ(&buf, 0);
 
     for (; *str != '\0'; str++) {
 	if (*str == '\n') {
@@ -1944,7 +1944,7 @@ VarHash(const char *str)
     h *= 0xc2b2ae35;
     h ^= h >> 16;
 
-    Buf_Init(&buf, 0);
+    Buf_InitZ(&buf, 0);
     for (len = 0; len < 8; ++len) {
 	Buf_AddByte(&buf, hexdigits[h & 15]);
 	h >>= 4;
@@ -2084,7 +2084,7 @@ ApplyModifier_Defined(const char *mod, ApplyModifiersState *st)
      * the delimiter (expand the variable substitution).
      * The result is left in the Buffer buf.
      */
-    Buf_Init(&buf, 0);
+    Buf_InitZ(&buf, 0);
     const char *p = mod + 1;
     while (*p != st->endc && *p != ':' && *p != '\0') {
 	if (*p == '\\' &&
@@ -2249,7 +2249,7 @@ ApplyModifier_Range(const char *mod, ApplyModifiersState *st)
     }
 
     Buffer buf;
-    Buf_Init(&buf, 0);
+    Buf_InitZ(&buf, 0);
 
     int i;
     for (i = 0; i < n; i++) {
@@ -2610,7 +2610,7 @@ ApplyModifier_Words(const char *mod, ApplyModifiersState *st)
 	    free(av);
 
 	    Buffer buf;
-	    Buf_Init(&buf, 4);	/* 3 digits + '\0' */
+	    Buf_InitZ(&buf, 4);	/* 3 digits + '\0' */
 	    Buf_AddInt(&buf, ac);
 	    st->newVal = Buf_Destroy(&buf, FALSE);
 	}
@@ -3424,15 +3424,15 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
 	    endc = str[1];
 	}
     } else {
-	Buffer namebuf;		/* Holds the variable name */
-	int depth = 1;
-
 	endc = startc == PROPEN ? PRCLOSE : BRCLOSE;
-	Buf_Init(&namebuf, 0);
+
+	Buffer namebuf;		/* Holds the variable name */
+	Buf_InitZ(&namebuf, 0);
 
 	/*
 	 * Skip to the end character or a colon, whichever comes first.
 	 */
+	int depth = 1;
 	for (tstr = str + 2; *tstr != '\0'; tstr++) {
 	    /* Track depth so we can spot parse errors. */
 	    if (*tstr == startc)
@@ -3461,7 +3461,7 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
 	    haveModifier = FALSE;
 	} else {
 	    Parse_Error(PARSE_FATAL, "Unclosed variable \"%s\"",
-			Buf_GetAll(&namebuf, NULL));
+			Buf_GetAllZ(&namebuf, NULL));
 	    /*
 	     * If we never did find the end character, return NULL
 	     * right now, setting the length to be the distance to
@@ -3472,8 +3472,8 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
 	    return var_Error;
 	}
 
-	int namelen;
-	char *varname = Buf_GetAll(&namebuf, &namelen);
+	size_t namelen;
+	char *varname = Buf_GetAllZ(&namebuf, &namelen);
 
 	/*
 	 * At this point, varname points into newly allocated memory from
@@ -3534,7 +3534,7 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
 		 */
 		v = bmake_malloc(sizeof(Var));
 		v->name = varname;
-		Buf_Init(&v->val, 1);
+		Buf_InitZ(&v->val, 1);
 		v->flags = VAR_JUNK;
 		Buf_Destroy(&namebuf, FALSE);
 	    }
@@ -3557,7 +3557,7 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
      * been dynamically-allocated, so it will need freeing when we
      * return.
      */
-    nstr = Buf_GetAll(&v->val, NULL);
+    nstr = Buf_GetAllZ(&v->val, NULL);
     if (strchr(nstr, '$') != NULL && (eflags & VARE_WANTRES) != 0) {
 	nstr = Var_Subst(nstr, ctxt, eflags);
 	*freePtr = nstr;
@@ -3589,7 +3589,7 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
     *lengthPtr = tstr - str + (*tstr ? 1 : 0);
 
     if (v->flags & VAR_FROM_ENV) {
-	Boolean destroy = nstr != Buf_GetAll(&v->val, NULL);
+	Boolean destroy = nstr != Buf_GetAllZ(&v->val, NULL);
 	if (!destroy) {
 	    /*
 	     * Returning the value unmodified, so tell the caller to free
@@ -3616,7 +3616,7 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
 		nstr = (eflags & VARE_UNDEFERR) ? var_Error : varNoError;
 	    }
 	}
-	if (nstr != Buf_GetAll(&v->val, NULL))
+	if (nstr != Buf_GetAllZ(&v->val, NULL))
 	    Buf_Destroy(&v->val, TRUE);
 	free(v->name);
 	free(v);
@@ -3658,7 +3658,7 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags)
 				 * been reported to prevent a plethora
 				 * of messages when recursing */
 
-    Buf_Init(&buf, 0);
+    Buf_InitZ(&buf, 0);
     errorReported = FALSE;
     trailingBslash = FALSE;
 
@@ -3730,9 +3730,9 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags)
 		 * Copy all the characters from the variable value straight
 		 * into the new string.
 		 */
-		length = strlen(val);
-		Buf_AddBytes(&buf, length, val);
-		trailingBslash = length > 0 && val[length - 1] == '\\';
+		size_t val_len = strlen(val);
+		Buf_AddBytesZ(&buf, val, val_len);
+		trailingBslash = val_len > 0 && val[val_len - 1] == '\\';
 	    }
 	    free(freeIt);
 	    freeIt = NULL;
@@ -3770,7 +3770,7 @@ static void
 VarPrintVar(void *vp, void *data MAKE_ATTR_UNUSED)
 {
     Var *v = (Var *)vp;
-    fprintf(debug_file, "%-16s = %s\n", v->name, Buf_GetAll(&v->val, NULL));
+    fprintf(debug_file, "%-16s = %s\n", v->name, Buf_GetAllZ(&v->val, NULL));
 }
 
 /*-
