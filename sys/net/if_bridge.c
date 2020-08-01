@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.173 2020/05/01 22:27:42 jdolecek Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.174 2020/08/01 06:50:43 maxv Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,10 +80,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.173 2020/05/01 22:27:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.174 2020/08/01 06:50:43 maxv Exp $");
 
 #ifdef _KERNEL_OPT
-#include "opt_bridge_ipf.h"
 #include "opt_inet.h"
 #include "opt_net_mpsafe.h"
 #endif /* _KERNEL_OPT */
@@ -114,19 +113,16 @@ __KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.173 2020/05/01 22:27:42 jdolecek Exp
 #include <net/if_bridgevar.h>
 #include <net/ether_sw_offload.h>
 
-#if defined(BRIDGE_IPF)
 /* Used for bridge_ip[6]_checkbasic */
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_private.h>		/* XXX */
-
 #include <netinet/ip6.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/ip6_private.h>	/* XXX */
-#endif /* BRIDGE_IPF */
 
 /*
  * Size of the route hash table.  Must be a power of two.
@@ -314,7 +310,6 @@ static int	bridge_ioctl_gma(struct bridge_softc *, void *);
 static int	bridge_ioctl_sma(struct bridge_softc *, void *);
 static int	bridge_ioctl_sifprio(struct bridge_softc *, void *);
 static int	bridge_ioctl_sifcost(struct bridge_softc *, void *);
-#if defined(BRIDGE_IPF)
 static int	bridge_ioctl_gfilt(struct bridge_softc *, void *);
 static int	bridge_ioctl_sfilt(struct bridge_softc *, void *);
 static int	bridge_ipf(void *, struct mbuf **, struct ifnet *, int);
@@ -322,7 +317,6 @@ static int	bridge_ip_checkbasic(struct mbuf **mp);
 # ifdef INET6
 static int	bridge_ip6_checkbasic(struct mbuf **mp);
 # endif /* INET6 */
-#endif /* BRIDGE_IPF */
 
 struct bridge_control {
 	int	(*bc_func)(struct bridge_softc *, void *);
@@ -373,10 +367,10 @@ static const struct bridge_control bridge_control_table[] = {
 [BRDGSIFPRIO] = {bridge_ioctl_sifprio, sizeof(struct ifbreq), BC_F_COPYIN|BC_F_SUSER}, 
 
 [BRDGSIFCOST] = {bridge_ioctl_sifcost, sizeof(struct ifbreq), BC_F_COPYIN|BC_F_SUSER}, 
-#if defined(BRIDGE_IPF)
+
 [BRDGGFILT] = {bridge_ioctl_gfilt, sizeof(struct ifbrparam), BC_F_COPYOUT},
 [BRDGSFILT] = {bridge_ioctl_sfilt, sizeof(struct ifbrparam), BC_F_COPYIN|BC_F_SUSER},
-#endif /* BRIDGE_IPF */
+
 [BRDGGIFS] = {bridge_ioctl_gifs, sizeof(struct ifbifconf), BC_F_XLATEIN|BC_F_XLATEOUT},
 [BRDGRTS] = {bridge_ioctl_rts, sizeof(struct ifbaconf), BC_F_XLATEIN|BC_F_XLATEOUT},
 };
@@ -1313,7 +1307,6 @@ bridge_ioctl_sifprio(struct bridge_softc *sc, void *arg)
 	return 0;
 }
 
-#if defined(BRIDGE_IPF)
 static int
 bridge_ioctl_gfilt(struct bridge_softc *sc, void *arg)
 {
@@ -1349,7 +1342,6 @@ bridge_ioctl_sfilt(struct bridge_softc *sc, void *arg)
 
 	return 0;
 }
-#endif /* BRIDGE_IPF */
 
 static int
 bridge_ioctl_sifcost(struct bridge_softc *sc, void *arg)
@@ -2636,7 +2628,6 @@ bridge_rtnode_destroy(struct bridge_rtnode *brt)
 	pool_put(&bridge_rtnode_pool, brt);
 }
 
-#if defined(BRIDGE_IPF)
 extern pfil_head_t *inet_pfil_hook;                 /* XXX */
 extern pfil_head_t *inet6_pfil_hook;                /* XXX */
 
@@ -2917,4 +2908,3 @@ bridge_ip6_checkbasic(struct mbuf **mp)
 	return -1;
 }
 # endif /* INET6 */
-#endif /* BRIDGE_IPF */
