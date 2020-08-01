@@ -1,4 +1,4 @@
-#	$NetBSD: IYONIX,v 1.6 2020/04/18 11:00:38 skrll Exp $
+#	$NetBSD: IYONIX,v 1.7 2020/08/01 08:20:48 maxv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/evbarm/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.6 $"
+#ident 		"GENERIC-$Revision: 1.7 $"
 
 maxusers	32		# estimated number of users
 
@@ -384,7 +384,6 @@ pseudo-device	loop			# network loopback
 #pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	bridge			# simple inter-network bridging
-#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 #pseudo-device	agr			# IEEE 802.3ad link aggregation
 # srt is EXPERIMENTAL
 #pseudo-device	srt			# source-address-based routing

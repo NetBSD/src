@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.158 2020/07/26 14:51:18 jdolecek Exp $
+# $NetBSD: ALL,v 1.159 2020/08/01 08:20:47 maxv Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.158 $"
+#ident		"ALL-$Revision: 1.159 $"
 
 maxusers	64		# estimated number of users
 
@@ -1633,7 +1633,6 @@ pseudo-device	faith			# IPv[46] tcp relay translation i/f
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
-options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	l2tp			# L2TPv3 interface
 #pseudo-device	pf			# PF packet filter

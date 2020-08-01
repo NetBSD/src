@@ -1,4 +1,4 @@
-#	$NetBSD: LINKITSMART7688,v 1.13 2020/03/25 17:06:18 jdolecek Exp $
+#	$NetBSD: LINKITSMART7688,v 1.14 2020/08/01 08:20:48 maxv Exp $
 #
 # MediaTek MT7688
 #
@@ -250,7 +250,6 @@ pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC 1933)
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
-#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	npf			# NPF packet filter
 #pseudo-device	l2tp			# L2TPv3 interface

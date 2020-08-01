@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.95 2020/01/19 01:25:06 thorpej Exp $
+# $NetBSD: GENERIC,v 1.96 2020/08/01 08:20:50 maxv Exp $
 #
 # GENERIC machine description file
 # 
@@ -172,7 +172,6 @@ pseudo-device	fss			# file system snapshot device
 #pseudo-device	npf			# NPF packet filter
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
-#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	clockctl		# user control of clock subsystem
 

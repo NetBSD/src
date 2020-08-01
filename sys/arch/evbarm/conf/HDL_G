@@ -1,4 +1,4 @@
-# $NetBSD: HDL_G,v 1.62 2020/05/16 13:46:11 maya Exp $
+# $NetBSD: HDL_G,v 1.63 2020/08/01 08:20:48 maxv Exp $
 #
 #       HDL_G -- I-O DATA HDL-G Kernel
 #
@@ -396,7 +396,6 @@ pseudo-device	faith			# IPv[46] tcp relay translation i/f
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
-options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 #pseudo-device	kttcp
 
 # miscellaneous pseudo-devices

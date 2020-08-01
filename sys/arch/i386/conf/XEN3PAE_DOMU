@@ -1,4 +1,4 @@
-# $NetBSD: XEN3PAE_DOMU,v 1.13 2020/04/25 16:10:06 bouyer Exp $
+# $NetBSD: XEN3PAE_DOMU,v 1.14 2020/08/01 08:20:49 maxv Exp $
 
 include 	"arch/i386/conf/std.xen"
 
@@ -208,7 +208,6 @@ pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC 1933)
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
-#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	l2tp			# L2TPv3 interface
 pseudo-device	npf			# NPF packet filter
 
