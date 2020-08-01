@@ -1,4 +1,4 @@
-/*	$NetBSD: kthread.h,v 1.13 2015/04/21 11:10:29 pooka Exp $	*/
+/*	$NetBSD: kthread.h,v 1.14 2020/08/01 02:04:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2009 The NetBSD Foundation, Inc.
@@ -55,5 +55,12 @@ int	kthread_create(pri_t, int, struct cpu_info *,
     void (*)(void *), void *, lwp_t **, const char *, ...) __printflike(7, 8);
 void	kthread_exit(int) __dead;
 int	kthread_join(lwp_t *);
+
+int	kthread_fpu_enter(void);
+void	kthread_fpu_exit(int);
+
+/* Internal MD routines -- for use only by kthread_fpu_enter/exit.  */
+void	kthread_fpu_enter_md(void);
+void	kthread_fpu_exit_md(void);
 
 #endif /* _SYS_KTHREAD_H_ */
