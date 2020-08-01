@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.244 2020/08/01 09:25:36 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.245 2020/08/01 09:55:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.244 2020/08/01 09:25:36 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.245 2020/08/01 09:55:00 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.244 2020/08/01 09:25:36 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.245 2020/08/01 09:55:00 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -699,8 +699,8 @@ ParseVErrorInternal(FILE *f, const char *cfname, size_t clineno, int type,
 					fname = cfname;
 			}
 			(void)fprintf(f, "%s/%s", dir, fname);
-			free(cp2);
-			free(cp);
+			bmake_free(cp2);
+			bmake_free(cp);
 		} else
 			(void)fprintf(f, "%s", cfname);
 
@@ -2376,8 +2376,8 @@ ParseSetIncludedFile(void)
 	fprintf(debug_file, "%s: ${.INCLUDEDFROMDIR} = `%s' "
 	    "${.INCLUDEDFROMFILE} = `%s'\n", __func__, pd, pf);
 
-    free(pf_freeIt);
-    free(pd_freeIt);
+    bmake_free(pf_freeIt);
+    bmake_free(pd_freeIt);
 }
 /*-
  *---------------------------------------------------------------------
@@ -2447,7 +2447,7 @@ ParseTrackInput(const char *name)
     }
     Var_Append (MAKE_MAKEFILES, name, VAR_GLOBAL);
  cleanup:
-    free(fp);
+    bmake_free(fp);
 }
 
 

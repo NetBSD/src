@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.78 2020/07/31 16:26:16 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.79 2020/08/01 09:55:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.78 2020/07/31 16:26:16 rillig Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.79 2020/08/01 09:55:00 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.78 2020/07/31 16:26:16 rillig Exp $");
+__RCSID("$NetBSD: arch.c,v 1.79 2020/08/01 09:55:00 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1010,8 +1010,8 @@ Arch_Touch(GNode *gn)
 			  Var_Value(MEMBER, gn, &p2),
 			  &arh, "r+");
 
-    free(p1);
-    free(p2);
+    bmake_free(p1);
+    bmake_free(p2);
 
     snprintf(arh.ar_date, sizeof(arh.ar_date), "%-12ld", (long) now);
 
@@ -1092,8 +1092,8 @@ Arch_MTime(GNode *gn)
 			     Var_Value(MEMBER, gn, &p2),
 			     TRUE);
 
-    free(p1);
-    free(p2);
+    bmake_free(p1);
+    bmake_free(p2);
 
     if (arhPtr != NULL) {
 	modTime = (time_t)strtol(arhPtr->ar_date, NULL, 10);
