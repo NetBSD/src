@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.86 2020/08/01 18:02:37 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.87 2020/08/01 21:40:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.86 2020/08/01 18:02:37 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.87 2020/08/01 21:40:49 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.86 2020/08/01 18:02:37 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.87 2020/08/01 21:40:49 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -238,14 +238,13 @@ static int
 CondGetArg(Boolean doEval, char **linePtr, char **argPtr, const char *func)
 {
     char	  *cp;
-    int	    	  argLen;
     Buffer	  buf;
     int           paren_depth;
     char          ch;
 
     cp = *linePtr;
     if (func != NULL)
-	/* Skip opening '(' - verfied by caller */
+	/* Skip opening '(' - verified by caller */
 	cp++;
 
     if (*cp == '\0') {
@@ -267,7 +266,7 @@ CondGetArg(Boolean doEval, char **linePtr, char **argPtr, const char *func)
      * Create a buffer for the argument and start it out at 16 characters
      * long. Why 16? Why not?
      */
-    Buf_Init(&buf, 16);
+    Buf_InitZ(&buf, 16);
 
     paren_depth = 0;
     for (;;) {
@@ -287,7 +286,7 @@ CondGetArg(Boolean doEval, char **linePtr, char **argPtr, const char *func)
 	    void	*freeIt;
 	    VarEvalFlags eflags = VARE_UNDEFERR | (doEval ? VARE_WANTRES : 0);
 	    const char *cp2 = Var_Parse(cp, VAR_CMD, eflags, &len, &freeIt);
-	    Buf_AddBytes(&buf, strlen(cp2), cp2);
+	    Buf_AddStr(&buf, cp2);
 	    free(freeIt);
 	    cp += len;
 	    continue;
@@ -301,7 +300,8 @@ CondGetArg(Boolean doEval, char **linePtr, char **argPtr, const char *func)
 	cp++;
     }
 
-    *argPtr = Buf_GetAll(&buf, &argLen);
+    size_t argLen;
+    *argPtr = Buf_GetAllZ(&buf, &argLen);
     Buf_Destroy(&buf, FALSE);
 
     while (*cp == ' ' || *cp == '\t') {
@@ -528,7 +528,7 @@ CondGetString(Boolean doEval, Boolean *quoted, void **freeIt, Boolean strictLHS)
     int qt;
     char *start;
 
-    Buf_Init(&buf, 0);
+    Buf_InitZ(&buf, 0);
     str = NULL;
     *freeIt = NULL;
     *quoted = qt = *condExpr == '"' ? 1 : 0;
@@ -619,7 +619,7 @@ CondGetString(Boolean doEval, Boolean *quoted, void **freeIt, Boolean strictLHS)
 	}
     }
  got_str:
-    *freeIt = Buf_GetAll(&buf, NULL);
+    *freeIt = Buf_GetAllZ(&buf, NULL);
     str = *freeIt;
  cleanup:
     Buf_Destroy(&buf, FALSE);
