@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.22 2020/06/24 21:54:57 jdolecek Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.23 2020/08/01 06:50:42 maxv Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -112,7 +112,7 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.22 2020/06/24 21:54:57 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.23 2020/08/01 06:50:42 maxv Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 1.1.1.2 2012/07/22 13:45:27 darrenr Exp";
@@ -5035,7 +5035,7 @@ ipf_nat_out(fr_info_t *fin, nat_t *nat, int natadd, u_32_t nflags)
 		ipf_fix_outcksum(0, &fin->fin_ip->ip_sum, msumd, 0);
 	}
 #if !defined(_KERNEL) || defined(MENTAT) || defined(__sgi) || \
-    defined(linux) || defined(BRIDGE_IPF)
+    defined(linux)
 	else {
 		/*
 		 * Strictly speaking, this isn't necessary on BSD
@@ -5147,7 +5147,7 @@ ipf_nat_out(fr_info_t *fin, nat_t *nat, int natadd, u_32_t nflags)
 		uh->uh_ulen += fin->fin_plen;
 		uh->uh_ulen = htons(uh->uh_ulen);
 #if !defined(_KERNEL) || defined(MENTAT) || defined(__sgi) || \
-    defined(linux) || defined(BRIDGE_IPF)
+    defined(linux)
 		ipf_fix_outcksum(0, &ip->ip_sum, sumd, 0);
 #endif
 
