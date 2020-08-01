@@ -1,5 +1,7 @@
 make: Unclosed variable specification (expecting '}') for "" (value "*)") modifier U
 make: Unclosed substitution for INP.eq-esc (= missing)
+make: Unknown modifier ':'
+make: Unknown modifier ':'
 ok M-paren
 ok M-mixed
 ok M-unescape
@@ -15,4 +17,5 @@ ok eq-q
 ok eq-bs
 ok eq-esc
 ok colon
+ok colons
 exit status 0
