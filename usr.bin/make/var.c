@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.384 2020/08/01 18:02:37 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.385 2020/08/01 18:14:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.384 2020/08/01 18:02:37 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.385 2020/08/01 18:14:08 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.384 2020/08/01 18:02:37 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.385 2020/08/01 18:14:08 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2476,7 +2476,7 @@ ApplyModifier_Regex(const char *mod, ApplyModifiersState *st)
     int error = regcomp(&args.re, re, REG_EXTENDED);
     free(re);
     if (error) {
-	VarREError(error, &args.re, "RE substitution error");
+	VarREError(error, &args.re, "Regex compilation error");
 	free(args.replace);
 	return AMR_CLEANUP;
     }
