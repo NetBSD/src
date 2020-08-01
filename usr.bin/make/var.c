@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.378 2020/08/01 13:35:13 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.379 2020/08/01 13:51:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.378 2020/08/01 13:35:13 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.379 2020/08/01 13:51:40 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.378 2020/08/01 13:35:13 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.379 2020/08/01 13:51:40 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1219,36 +1219,6 @@ Str_SYSVMatch(const char *word, const char *pattern, size_t *match_len,
     return w;
 }
 
-
-/*-
- *-----------------------------------------------------------------------
- * Str_SYSVSubst --
- *	Append rhs to the buffer, substituting the first '%' with the
- *	match, but only if the lhs had a '%' as well.
- *	If the rhs does not contain a '%', prepend the match.
- *-----------------------------------------------------------------------
- */
-static void
-Str_SYSVSubst(SepBuf *buf, const char *rhs,
-	      const char *match, size_t match_len, Boolean lhsHasPercent)
-{
-    const char *percent = strchr(rhs, '%');
-
-    if (percent != NULL && lhsHasPercent) {
-	/* Copy the prefix of the replacement pattern */
-	SepBuf_AddBytesBetween(buf, rhs, percent);
-	rhs = percent + 1;
-    }
-    if (percent != NULL || !lhsHasPercent) {
-	/* Copy the matched part of the original word */
-	SepBuf_AddBytes(buf, match, match_len);
-    }
-
-    /* Append the suffix of the replacement pattern */
-    SepBuf_AddStr(buf, rhs);
-}
-
-
 typedef struct {
     GNode *ctx;
     const char *lhs;
@@ -1264,13 +1234,31 @@ ModifyWord_SYSVSubst(const char *word, SepBuf *buf, void *data)
     size_t match_len;
     Boolean lhsPercent;
     const char *match = Str_SYSVMatch(word, args->lhs, &match_len, &lhsPercent);
-    if (match != NULL) {
-	char *rhs_expanded = Var_Subst(args->rhs, args->ctx, VARE_WANTRES);
-	Str_SYSVSubst(buf, rhs_expanded, match, match_len, lhsPercent);
-	free(rhs_expanded);
-    } else {
+    if (match == NULL) {
 	SepBuf_AddStr(buf, word);
+	return;
     }
+
+    /* Append rhs to the buffer, substituting the first '%' with the
+     * match, but only if the lhs had a '%' as well. */
+
+    char *rhs_expanded = Var_Subst(args->rhs, args->ctx, VARE_WANTRES);
+
+    const char *rhs = rhs_expanded;
+    const char *percent = strchr(rhs, '%');
+
+    if (percent != NULL && lhsPercent) {
+	/* Copy the prefix of the replacement pattern */
+	SepBuf_AddBytesBetween(buf, rhs, percent);
+	rhs = percent + 1;
+    }
+    if (percent != NULL || !lhsPercent)
+	SepBuf_AddBytes(buf, match, match_len);
+
+    /* Append the suffix of the replacement pattern */
+    SepBuf_AddStr(buf, rhs);
+
+    free(rhs_expanded);
 }
 #endif
 
