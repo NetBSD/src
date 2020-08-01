@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.34 2020/07/27 07:32:48 ryo Exp $ */
+/* $NetBSD: trap.c,v 1.35 2020/08/01 02:06:59 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.34 2020/07/27 07:32:48 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.35 2020/08/01 02:06:59 riastradh Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -242,6 +242,12 @@ trap_el1h_sync(struct trapframe *tf)
 		break;
 
 	case ESR_EC_FP_ACCESS:
+		if ((curlwp->l_flag & (LW_SYSTEM|LW_SYSTEM_FPU)) ==
+		    (LW_SYSTEM|LW_SYSTEM_FPU)) {
+			fpu_load(curlwp);
+			break;
+		}
+		/*FALLTHROUGH*/
 	case ESR_EC_FP_TRAP_A64:
 	case ESR_EC_PC_ALIGNMENT:
 	case ESR_EC_SP_ALIGNMENT:
