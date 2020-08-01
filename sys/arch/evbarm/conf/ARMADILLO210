@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO210,v 1.45 2020/04/18 11:00:38 skrll Exp $
+#	$NetBSD: ARMADILLO210,v 1.46 2020/08/01 08:20:48 maxv Exp $
 #
 #	ARMADILLO210 -- Atmark Techno, Armadillo-210
 #
@@ -183,7 +183,6 @@ pseudo-device	loop			# network loopback
 #pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	bridge			# simple inter-network bridging
-#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 #pseudo-device	kttcp			# network loopback
 
 # miscellaneous pseudo-devices

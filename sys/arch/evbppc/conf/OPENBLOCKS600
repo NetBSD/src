@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS600,v 1.28 2020/01/19 01:25:05 thorpej Exp $
+#	$NetBSD: OPENBLOCKS600,v 1.29 2020/08/01 08:20:49 maxv Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include 	"arch/evbppc/conf/std.obs600"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"OPENBLOCKS600-$Revision: 1.28 $"
+#ident 		"OPENBLOCKS600-$Revision: 1.29 $"
 
 maxusers	32
 
@@ -198,7 +198,6 @@ pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC 1933)
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
-#options	BRIDGE_IPF		# bridge uses IPv[46] pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 
 # miscellaneous pseudo-devices
