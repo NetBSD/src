@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.15 2020/07/20 18:12:48 sjg Exp $	*/
+/*	$NetBSD: hash.h,v 1.16 2020/08/01 14:47:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -87,7 +87,7 @@
 
 typedef struct Hash_Entry {
     struct Hash_Entry *next;		/* Used to link together all the
-    					 * entries associated with the same
+					 * entries associated with the same
 					 * bucket. */
     void	      *clientPtr;	/* Arbitrary pointer */
     unsigned	      namehash;		/* hash value of key */
@@ -96,7 +96,7 @@ typedef struct Hash_Entry {
 
 typedef struct Hash_Table {
     struct Hash_Entry **bucketPtr;/* Pointers to Hash_Entry, one
-    				 * for each bucket in the table. */
+				 * for each bucket in the table. */
     int 	size;		/* Actual size of array. */
     int 	numEntries;	/* Number of entries in the table. */
     int 	mask;		/* Used to select bits for hashing. */

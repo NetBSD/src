@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.25 2020/07/20 18:12:48 sjg Exp $	*/
+/*	$NetBSD: hash.c,v 1.26 2020/08/01 14:47:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: hash.c,v 1.25 2020/07/20 18:12:48 sjg Exp $";
+static char rcsid[] = "$NetBSD: hash.c,v 1.26 2020/08/01 14:47:49 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)hash.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: hash.c,v 1.25 2020/07/20 18:12:48 sjg Exp $");
+__RCSID("$NetBSD: hash.c,v 1.26 2020/08/01 14:47:49 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -476,7 +476,7 @@ RebuildTable(Hash_Table *t)
 {
 	Hash_Entry *e, *next = NULL, **hp, **xp;
 	int i, mask;
-        Hash_Entry **oldhp;
+	Hash_Entry **oldhp;
 	int oldsize;
 
 	oldhp = t->bucketPtr;

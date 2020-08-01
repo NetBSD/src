@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.290 2020/08/01 09:55:00 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.291 2020/08/01 14:47:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.290 2020/08/01 09:55:00 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.291 2020/08/01 14:47:49 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.290 2020/08/01 09:55:00 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.291 2020/08/01 14:47:49 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -959,7 +959,7 @@ main(int argc, char **argv)
 	struct stat sb, sa;
 	char *p1, *path;
 	char mdpath[MAXPATHLEN];
-    	const char *machine = getenv("MACHINE");
+	const char *machine = getenv("MACHINE");
 	const char *machine_arch = getenv("MACHINE_ARCH");
 	char *syspath = getenv("MAKESYSPATH");
 	Lst sysMkPath;			/* Path of sys.mk */
@@ -1044,7 +1044,7 @@ main(int argc, char **argv)
 #else
 #ifndef MACHINE_ARCH
 #ifdef MAKE_MACHINE_ARCH
-            machine_arch = MAKE_MACHINE_ARCH;
+	    machine_arch = MAKE_MACHINE_ARCH;
 #else
 	    machine_arch = "unknown";
 #endif
@@ -1487,7 +1487,7 @@ main(int argc, char **argv)
 	meta_finish();
 #endif
 	Suff_End();
-        Targ_End();
+	Targ_End();
 	Arch_End();
 	Var_End();
 	Parse_End();
@@ -1853,7 +1853,7 @@ DieHorribly(void)
  */
 void
 Finish(int errors)
-	           	/* number of errors encountered in Make_Make */
+			/* number of errors encountered in Make_Make */
 {
 	if (dieQuietly(NULL, -1))
 		exit(2);
