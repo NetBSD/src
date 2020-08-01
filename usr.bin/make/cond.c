@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.82 2020/07/26 20:21:31 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.83 2020/08/01 09:30:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.82 2020/07/26 20:21:31 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.83 2020/08/01 09:30:17 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.82 2020/07/26 20:21:31 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.83 2020/08/01 09:30:17 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -334,16 +334,9 @@ CondGetArg(Boolean doEval, char **linePtr, char **argPtr, const char *func)
 static Boolean
 CondDoDefined(int argLen MAKE_ATTR_UNUSED, const char *arg)
 {
-    char    *p1;
-    Boolean result;
-
-    if (Var_Value(arg, VAR_CMD, &p1) != NULL) {
-	result = TRUE;
-    } else {
-	result = FALSE;
-    }
-
-    free(p1);
+    char *freeIt;
+    Boolean result = Var_Value(arg, VAR_CMD, &freeIt) != NULL;
+    free(freeIt);
     return result;
 }
 
