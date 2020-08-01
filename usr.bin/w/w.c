@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.87 2020/07/04 23:30:31 kim Exp $	*/
+/*	$NetBSD: w.c,v 1.88 2020/08/01 15:52:50 kim Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.87 2020/07/04 23:30:31 kim Exp $");
+__RCSID("$NetBSD: w.c,v 1.88 2020/08/01 15:52:50 kim Exp $");
 #endif
 #endif /* not lint */
 
@@ -648,6 +648,24 @@ fixhost(struct entry *ep)
 			m = NULL;
 		} else
 			x = NULL;
+	}
+
+	/*
+	 * Leading '[' indicates an IP address inside brackets.
+	 */
+	if (*p == '[') {
+		for (p++; p < &host_buf[sizeof(host_buf)]; p++)
+			if (*p == '\0' || *p == ']')
+				break;
+		if (p < &host_buf[sizeof(host_buf)] && *p == ']') {
+			*p = '\0';
+			for (x = ++p; x < &host_buf[sizeof(host_buf)]; x++)
+				if (*x == '\0' || *x == ':')
+					break;
+			if (x < &host_buf[sizeof(host_buf)] && *x == ':')
+				*x++ = '\0';
+		}
+		p = host_buf + 1;
 	}
 
 	int af = m ? AF_INET6 : AF_INET;
