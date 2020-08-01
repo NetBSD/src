@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.370 2020/08/01 07:03:50 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.371 2020/08/01 07:10:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.370 2020/08/01 07:03:50 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.371 2020/08/01 07:10:37 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.370 2020/08/01 07:03:50 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.371 2020/08/01 07:10:37 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -529,7 +529,7 @@ Var_Export1(const char *name, VarExportFlags flags)
 	return 0;			/* nothing to do */
     }
     val = Buf_GetAll(&v->val, NULL);
-    if ((flags & VAR_EXPORT_LITERAL) == 0 && strchr(val, '$')) {
+    if (!(flags & VAR_EXPORT_LITERAL) && strchr(val, '$')) {
 	if (parent) {
 	    /*
 	     * Flag this as something we need to re-export.
@@ -805,7 +805,7 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
     if (ctxt == VAR_GLOBAL) {
 	v = VarFind(name, VAR_CMD, 0);
 	if (v != NULL) {
-	    if ((v->flags & VAR_FROM_CMD)) {
+	    if (v->flags & VAR_FROM_CMD) {
 		if (DEBUG(VAR)) {
 		    fprintf(debug_file, "%s:%s = %s ignored!\n", ctxt->name, name, val);
 		}
@@ -816,7 +816,7 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
     }
     v = VarFind(name, ctxt, 0);
     if (v == NULL) {
-	if (ctxt == VAR_CMD && (flags & VAR_NO_EXPORT) == 0) {
+	if (ctxt == VAR_CMD && !(flags & VAR_NO_EXPORT)) {
 	    /*
 	     * This var would normally prevent the same name being added
 	     * to VAR_GLOBAL, so delete it from there if needed.
@@ -833,7 +833,7 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
 	if (DEBUG(VAR)) {
 	    fprintf(debug_file, "%s:%s = %s\n", ctxt->name, name, val);
 	}
-	if ((v->flags & VAR_EXPORTED)) {
+	if (v->flags & VAR_EXPORTED) {
 	    Var_Export1(name, VAR_EXPORT_PARENT);
 	}
     }
@@ -841,7 +841,7 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
      * Any variables given on the command line are automatically exported
      * to the environment (as per POSIX standard)
      */
-    if (ctxt == VAR_CMD && (flags & VAR_NO_EXPORT) == 0) {
+    if (ctxt == VAR_CMD && !(flags & VAR_NO_EXPORT)) {
 	if (v == NULL) {
 	    /* we just added it */
 	    v = VarFind(name, ctxt, 0);
@@ -3109,7 +3109,7 @@ ApplyModifiers(
 		st.val = ApplyModifiers(&rval_pp, st.val, 0, 0, v,
 					ctxt, eflags, freePtr);
 		if (st.val == var_Error
-		    || (st.val == varNoError && (st.eflags & VARE_UNDEFERR) == 0)
+		    || (st.val == varNoError && !(st.eflags & VARE_UNDEFERR))
 		    || *rval_pp != '\0') {
 		    free(freeIt);
 		    goto out;	/* error already reported */
