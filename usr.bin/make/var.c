@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.380 2020/08/01 14:47:49 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.381 2020/08/01 15:03:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.380 2020/08/01 14:47:49 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.381 2020/08/01 15:03:43 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.380 2020/08/01 14:47:49 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.381 2020/08/01 15:03:43 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3420,7 +3420,7 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
 	if (v == NULL) {
 	    *lengthPtr = 2;
 
-	    if ((ctxt == VAR_CMD) || (ctxt == VAR_GLOBAL)) {
+	    if (ctxt == VAR_CMD || ctxt == VAR_GLOBAL) {
 		/*
 		 * If substituting a local variable in a non-local context,
 		 * assume it's for dynamic source stuff. We have to handle
@@ -3689,17 +3689,16 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags)
     while (*str) {
 	if (*str == '\n' && trailingBslash)
 	    Buf_AddByte(&buf, ' ');
-	if ((*str == '$') && (str[1] == '$')) {
+	if (*str == '$' && str[1] == '$') {
 	    /*
-	     * A dollar sign may be escaped either with another dollar sign.
+	     * A dollar sign may be escaped with another dollar sign.
 	     * In such a case, we skip over the escape character and store the
 	     * dollar sign into the buffer directly.
 	     */
 	    if (save_dollars && (eflags & VARE_ASSIGN))
-		Buf_AddByte(&buf, *str);
-	    str++;
-	    Buf_AddByte(&buf, *str);
-	    str++;
+		Buf_AddByte(&buf, '$');
+	    Buf_AddByte(&buf, '$');
+	    str += 2;
 	} else if (*str != '$') {
 	    /*
 	     * Skip as many characters as possible -- either to the end of
