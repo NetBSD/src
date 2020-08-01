@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.369 2020/08/01 06:35:00 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.370 2020/08/01 07:03:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.369 2020/08/01 06:35:00 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.370 2020/08/01 07:03:50 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.369 2020/08/01 06:35:00 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.370 2020/08/01 07:03:50 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -782,7 +782,7 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
 		   VarSet_Flags flags)
 {
     Var *v;
-    char *expanded_name = NULL;
+    char *name_freeIt = NULL;
 
     /*
      * We only look for a variable in the given context since anything set
@@ -790,17 +790,17 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
      * point in searching them all just to save a bit of memory...
      */
     if (strchr(name, '$') != NULL) {
-	expanded_name = Var_Subst(name, ctxt, VARE_WANTRES);
-	if (expanded_name[0] == '\0') {
+        const char *unexpanded_name = name;
+	name = name_freeIt = Var_Subst(name, ctxt, VARE_WANTRES);
+	if (name[0] == '\0') {
 	    if (DEBUG(VAR)) {
 		fprintf(debug_file, "Var_Set(\"%s\", \"%s\", ...) "
 			"name expands to empty string - ignored\n",
-			name, val);
+			unexpanded_name, val);
 	    }
-	    free(expanded_name);
+	    free(name_freeIt);
 	    return;
 	}
-	name = expanded_name;
     }
     if (ctxt == VAR_GLOBAL) {
 	v = VarFind(name, VAR_CMD, 0);
@@ -863,7 +863,7 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
 	save_dollars = s2Boolean(val, save_dollars);
 
 out:
-    free(expanded_name);
+    free(name_freeIt);
     if (v != NULL)
 	VarFreeEnv(v, TRUE);
 }
