@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.85 2020/08/01 14:47:49 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.86 2020/08/01 18:02:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.85 2020/08/01 14:47:49 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.86 2020/08/01 18:02:37 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.85 2020/08/01 14:47:49 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.86 2020/08/01 18:02:37 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -158,7 +158,7 @@ static Token CondToken(Boolean);
 static Token CondT(Boolean);
 static Token CondF(Boolean);
 static Token CondE(Boolean);
-static int do_Cond_EvalExpression(Boolean *);
+static CondEvalResult do_Cond_EvalExpression(Boolean *);
 
 static const struct If {
     const char	*form;	      /* Form of if */
@@ -1147,7 +1147,7 @@ CondE(Boolean doEval)
  *
  *-----------------------------------------------------------------------
  */
-int
+CondEvalResult
 Cond_EvalExpression(const struct If *info, char *line, Boolean *value, int eprint, Boolean strictLHS)
 {
     static const struct If *dflt_info;
@@ -1186,7 +1186,7 @@ Cond_EvalExpression(const struct If *info, char *line, Boolean *value, int eprin
     return rval;
 }
 
-static int
+static CondEvalResult
 do_Cond_EvalExpression(Boolean *value)
 {
 
@@ -1231,16 +1231,12 @@ do_Cond_EvalExpression(Boolean *value)
  *	COND_SKIP	if should skip lines after the conditional
  *	COND_INVALID  	if not a valid conditional.
  *
- * Side Effects:
- *	None.
- *
  * Note that the states IF_ACTIVE and ELSE_ACTIVE are only different in order
- * to detect splurious .else lines (as are SKIP_TO_ELSE and SKIP_TO_ENDIF)
+ * to detect spurious .else lines (as are SKIP_TO_ELSE and SKIP_TO_ENDIF),
  * otherwise .else could be treated as '.elif 1'.
- *
  *-----------------------------------------------------------------------
  */
-int
+CondEvalResult
 Cond_Eval(char *line)
 {
 #define	    MAXIF      128	/* maximum depth of .if'ing */
