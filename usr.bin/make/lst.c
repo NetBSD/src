@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.2 2020/07/26 07:24:27 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.3 2020/08/01 14:47:49 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -36,11 +36,11 @@
 #include "make_malloc.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.2 2020/07/26 07:24:27 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.3 2020/08/01 14:47:49 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.2 2020/07/26 07:24:27 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.3 2020/08/01 14:47:49 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -50,7 +50,7 @@ typedef struct ListNode {
 	unsigned int	useCount:8, /* Count of functions using the node.
 				     * node may not be deleted until count
 				     * goes to 0 */
- 	    	    	flags:8;    /* Node status flags */
+			flags:8;    /* Node status flags */
 	void		*datum;	    /* datum associated with this element */
 } *ListNode;
 /*
@@ -929,7 +929,7 @@ Lst_Concat(Lst l1, Lst l2, int flags)
 	     */
 	    list2->firstPtr->prevPtr = list1->lastPtr;
 	    if (list1->lastPtr != NULL) {
- 		list1->lastPtr->nextPtr = list2->firstPtr;
+		list1->lastPtr->nextPtr = list2->firstPtr;
 	    } else {
 		list1->firstPtr = list2->firstPtr;
 	    }

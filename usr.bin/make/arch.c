@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.79 2020/08/01 09:55:00 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.80 2020/08/01 14:47:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.79 2020/08/01 09:55:00 rillig Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.80 2020/08/01 14:47:49 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.79 2020/08/01 09:55:00 rillig Exp $");
+__RCSID("$NetBSD: arch.c,v 1.80 2020/08/01 14:47:49 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -534,7 +534,7 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
     Hash_Entry	  *he;	      /* Entry containing member's description */
     struct ar_hdr arh;        /* archive-member header for reading archive */
     char	  memName[MAXPATHLEN+1];
-    	    	    	    /* Current member name while hashing. */
+			    /* Current member name while hashing. */
 
     /*
      * Because of space constraints and similar things, files are archived
@@ -604,7 +604,7 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
      * can handle...
      */
     if ((fread(magic, SARMAG, 1, arch) != 1) ||
-    	(strncmp(magic, ARMAG, SARMAG) != 0)) {
+	(strncmp(magic, ARMAG, SARMAG) != 0)) {
 	    fclose(arch);
 	    return NULL;
     }
@@ -786,7 +786,7 @@ ArchSVR4Entry(Arch *ar, char *name, size_t size, FILE *arch)
 	    }
 	if (DEBUG(ARCH)) {
 	    fprintf(debug_file, "Found svr4 archive name table with %lu entries\n",
-	            (unsigned long)entry);
+		    (unsigned long)entry);
 	}
 	return 0;
     }
@@ -862,7 +862,7 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *arhPtr,
      * can handle...
      */
     if ((fread(magic, SARMAG, 1, arch) != 1) ||
-    	(strncmp(magic, ARMAG, SARMAG) != 0)) {
+	(strncmp(magic, ARMAG, SARMAG) != 0)) {
 	    fclose(arch);
 	    return NULL;
     }
