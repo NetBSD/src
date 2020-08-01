@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.13 2020/08/01 09:25:36 rillig Exp $	*/
+/*	$NetBSD: trace.c,v 1.14 2020/08/01 09:55:00 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,11 +31,11 @@
 
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: trace.c,v 1.13 2020/08/01 09:25:36 rillig Exp $";
+static char rcsid[] = "$NetBSD: trace.c,v 1.14 2020/08/01 09:55:00 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: trace.c,v 1.13 2020/08/01 09:25:36 rillig Exp $");
+__RCSID("$NetBSD: trace.c,v 1.14 2020/08/01 09:55:00 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -77,10 +77,10 @@ static const char *evname[] = {
 void
 Trace_Init(const char *pathname)
 {
-	char *p1;
 	if (pathname != NULL) {
 		trpid = getpid();
-		trwd = Var_Value(".CURDIR", VAR_GLOBAL, &p1);
+		char *dontFreeIt;
+		trwd = Var_Value(".CURDIR", VAR_GLOBAL, &dontFreeIt);
 
 		trfile = fopen(pathname, "a");
 	}

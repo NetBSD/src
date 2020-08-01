@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.91 2020/07/28 16:42:22 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.92 2020/08/01 09:55:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.91 2020/07/28 16:42:22 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.92 2020/08/01 09:55:00 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.91 2020/07/28 16:42:22 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.92 2020/08/01 09:55:00 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1942,7 +1942,7 @@ SuffFindArchiveDeps(GNode *gn, Lst slst)
     for (i = (sizeof(copy)/sizeof(copy[0]))-1; i >= 0; i--) {
 	char *p1;
 	Var_Set(copy[i], Var_Value(copy[i], mem, &p1), gn);
-	free(p1);
+	bmake_free(p1);
 
     }
 
