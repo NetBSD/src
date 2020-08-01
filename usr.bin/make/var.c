@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.382 2020/08/01 16:27:03 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.383 2020/08/01 17:29:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.382 2020/08/01 16:27:03 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.383 2020/08/01 17:29:00 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.382 2020/08/01 16:27:03 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.383 2020/08/01 17:29:00 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3008,14 +3008,14 @@ ApplyModifier_SysV(const char *mod, ApplyModifiersState *st)
  *
  *	  :?<true-value>:<false-value>
  *			If the variable evaluates to true, return
- *			true value, else return the second value.
- *    	  :lhs=rhs  	Like :S, but the rhs goes to the end of
- *    			the invocation.
+ *			true-value, else return false-value.
+ *    	  :lhs=rhs  	Similar to :S, but the rhs goes to the end of
+ *    			the invocation, including any ':'.
  *	  :sh		Treat the current value as a command
  *			to be run, new value is its output.
  * The following added so we can handle ODE makefiles.
  *	  :@<tmpvar>@<newval>@
- *			Assign a temporary local variable <tmpvar>
+ *			Assign a temporary global variable <tmpvar>
  *			to the current value of each word in turn
  *			and replace each word with the result of
  *			evaluating <newval>
@@ -3028,7 +3028,7 @@ ApplyModifier_SysV(const char *mod, ApplyModifiersState *st)
  *			the common method of refering to the path
  *			of your dependent 'x' in a rule is to use
  *			the form '${x:P}'.
- *	  :!<cmd>!	Run cmd much the same as :sh run's the
+ *	  :!<cmd>!	Run cmd much the same as :sh runs the
  *			current value of the variable.
  * Assignment operators (see ApplyModifier_Assign).
  */
@@ -3110,7 +3110,7 @@ ApplyModifiers(
 	}
 	st.newVal = var_Error;		/* default value, in case of errors */
 	st.next = NULL; /* fail fast if an ApplyModifier forgets to set this */
-	ApplyModifierResult res = 0;
+	ApplyModifierResult res = AMR_BAD;	/* just a safe fallback */
 	char modifier = *p;
 	switch (modifier) {
 	case ':':
