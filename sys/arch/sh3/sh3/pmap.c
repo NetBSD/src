@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.82 2017/02/02 21:35:29 uwe Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83 2020/08/01 20:54:23 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.82 2017/02/02 21:35:29 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.83 2020/08/01 20:54:23 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -736,9 +736,12 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 {
 	pt_entry_t *pte, entry;
 
-	if ((pte = __pmap_pte_lookup(pmap, va)) == NULL ||
-	    (entry = *pte) == 0 ||
-	    (entry & _PG_WIRED) == 0)
+	pte = __pmap_pte_lookup(pmap, va);
+	if (pte == NULL)
+		return;
+
+	entry = *pte;
+	if ((entry & _PG_WIRED) == 0)
 		return;
 
 	*pte = entry & ~_PG_WIRED;
