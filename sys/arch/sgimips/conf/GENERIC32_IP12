@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP12,v 1.37 2020/01/19 01:25:07 thorpej Exp $
+#	$NetBSD: GENERIC32_IP12,v 1.38 2020/08/01 08:20:52 maxv Exp $
 #
 # GENERIC32_IP12 machine description file
 # 
@@ -32,7 +32,7 @@ makeoptions	TEXTADDR=0x80002000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.37 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.38 $"
 
 maxusers	32
 
@@ -232,7 +232,6 @@ pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	agr			# IEEE 802.3ad link aggregation
-#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 #pseudo-device   accf_data		# "dataready" accept filter
 #pseudo-device   accf_http		# "httpready" accept filter
 

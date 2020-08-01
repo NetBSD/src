@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.38 2020/07/31 16:59:04 maxv Exp $
+$NetBSD: TODO.smpnet,v 1.39 2020/08/01 08:20:47 maxv Exp $
 
 MP-safe components
 ==================
@@ -18,7 +18,6 @@ kernel option.  Some components scale up and some don't.
    - Ethernet (if_ethersubr.c)
    - bridge(4)
      - STP
-     - BRIDGE_IPF
    - Fast forward (ipflow)
  - Layer 3
    - All except for items in the below section

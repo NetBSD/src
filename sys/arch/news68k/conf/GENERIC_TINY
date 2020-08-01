@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC_TINY,v 1.89 2020/01/19 01:25:06 thorpej Exp $
+# 	$NetBSD: GENERIC_TINY,v 1.90 2020/08/01 08:20:51 maxv Exp $
 
 #	news68k GENERIC config file for low memory machines;
 #
@@ -6,7 +6,7 @@ include 	"arch/news68k/conf/std.news68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC_TINY-$Revision: 1.89 $"
+#ident 		"GENERIC_TINY-$Revision: 1.90 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -209,7 +209,6 @@ pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
-#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 #pseudo-device	vcoda			# coda minicache <-> venus comm.
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms

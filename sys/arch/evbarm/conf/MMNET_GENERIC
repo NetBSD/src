@@ -1,4 +1,4 @@
-# $NetBSD: MMNET_GENERIC,v 1.51 2020/05/16 13:46:11 maya Exp $
+# $NetBSD: MMNET_GENERIC,v 1.52 2020/08/01 08:20:48 maxv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mmnet"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.51 $"
+#ident 		"GENERIC-$Revision: 1.52 $"
 
 maxusers	32		# estimated number of users
 
@@ -558,7 +558,6 @@ pseudo-device	tun			# network tunneling over tty
 #pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	bridge			# simple inter-network bridging
-#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 # srt is EXPERIMENTAL
 #pseudo-device	srt			# source-address-based routing
 

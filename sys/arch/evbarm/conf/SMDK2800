@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2800,v 1.63 2020/04/18 11:00:38 skrll Exp $
+#	$NetBSD: SMDK2800,v 1.64 2020/08/01 08:20:48 maxv Exp $
 #
 #	SMDK2800 -- Samsung's S3C2800 evaluation board.
 #
@@ -220,7 +220,6 @@ pseudo-device	loop			# network loopback
 #pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	bridge			# simple inter-network bridging
-#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
