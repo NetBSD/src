@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.401 2020/08/02 18:23:00 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.402 2020/08/02 18:57:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.401 2020/08/02 18:23:00 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.402 2020/08/02 18:57:55 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.401 2020/08/02 18:23:00 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.402 2020/08/02 18:57:55 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1572,70 +1572,6 @@ VarWordCompareReverse(const void *a, const void *b)
     return strcmp(*(const char * const *)b, *(const char * const *)a);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * VarOrder --
- *	Order the words in the string.
- *
- * Input:
- *	str		String whose words should be sorted.
- *	otype		How to order: s - sort, r - reverse, x - random.
- *
- * Results:
- *	A string containing the words ordered.
- *-----------------------------------------------------------------------
- */
-static char *
-VarOrder(const char *str, const char otype)
-{
-    Buffer buf;			/* Buffer for the new string */
-    Buf_InitZ(&buf, 0);
-
-    char **av;			/* word list */
-    char *as;			/* word list memory */
-    int ac;
-    av = brk_string(str, &ac, FALSE, &as);
-
-    if (ac > 0) {
-	switch (otype) {
-	case 'r':		/* reverse sort alphabetically */
-	    qsort(av, ac, sizeof(char *), VarWordCompareReverse);
-	    break;
-	case 's':		/* sort alphabetically */
-	    qsort(av, ac, sizeof(char *), VarWordCompare);
-	    break;
-	case 'x':		/* randomize */
-	    /*
-	     * We will use [ac..2] range for mod factors. This will produce
-	     * random numbers in [(ac-1)..0] interval, and minimal
-	     * reasonable value for mod factor is 2 (the mod 1 will produce
-	     * 0 with probability 1).
-	     */
-	    (void)0;
-	    int i;
-	    for (i = ac - 1; i > 0; i--) {
-		int rndidx = random() % (i + 1);
-		char *t = av[i];
-		av[i] = av[rndidx];
-		av[rndidx] = t;
-	    }
-	}
-    }
-
-    int i;
-    for (i = 0; i < ac; i++) {
-	if (i != 0)
-	    Buf_AddByte(&buf, ' ');
-	Buf_AddStr(&buf, av[i]);
-    }
-
-    free(as);
-    free(av);
-
-    return Buf_Destroy(&buf, FALSE);
-}
-
-
 /* Remove adjacent duplicate words. */
 static char *
 VarUniq(const char *str)
@@ -2621,23 +2557,64 @@ bad_modifier:
     return AMR_BAD;
 }
 
-/* :O or :Or or :Ox */
+/* :O (order ascending) or :Or (order descending) or :Ox (shuffle) */
 static ApplyModifierResult
 ApplyModifier_Order(const char *mod, ApplyModifiersState *st)
 {
-    st->next = mod + 1;	/* skip to the rest in any case */
+    st->next = mod + 1;		/* skip past the 'O' in any case */
 
-    char otype;
+    char *as;			/* word list memory */
+    int ac;
+    char **av = brk_string(st->val, &ac, FALSE, &as);
+
     if (mod[1] == st->endc || mod[1] == ':') {
-	otype = 's';
+    	/* :O sorts ascending */
+	qsort(av, ac, sizeof(char *), VarWordCompare);
+
     } else if ((mod[1] == 'r' || mod[1] == 'x') &&
 	       (mod[2] == st->endc || mod[2] == ':')) {
-	otype = mod[1];
 	st->next = mod + 2;
+
+	if (mod[1] == 'r') {
+	    /* :Or sorts descending */
+	    qsort(av, ac, sizeof(char *), VarWordCompareReverse);
+
+	} else {
+	    /* :Ox shuffles
+	     *
+	     * We will use [ac..2] range for mod factors. This will produce
+	     * random numbers in [(ac-1)..0] interval, and minimal
+	     * reasonable value for mod factor is 2 (the mod 1 will produce
+	     * 0 with probability 1).
+	     */
+	    int i;
+	    for (i = ac - 1; i > 0; i--) {
+		int rndidx = random() % (i + 1);
+		char *t = av[i];
+		av[i] = av[rndidx];
+		av[rndidx] = t;
+	    }
+	}
     } else {
+	free(as);
+	free(av);
 	return AMR_BAD;
     }
-    st->newVal = VarOrder(st->val, otype);
+
+    Buffer buf;
+    Buf_InitZ(&buf, 0);
+
+    int i;
+    for (i = 0; i < ac; i++) {
+	if (i != 0)
+	    Buf_AddByte(&buf, ' ');
+	Buf_AddStr(&buf, av[i]);
+    }
+
+    free(as);
+    free(av);
+
+    st->newVal = Buf_Destroy(&buf, FALSE);
     return AMR_OK;
 }
 
