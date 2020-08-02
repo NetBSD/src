@@ -1,4 +1,4 @@
-/*	$NetBSD: ldvar.h,v 1.33 2019/03/19 07:01:14 mlelstv Exp $	*/
+/*	$NetBSD: ldvar.h,v 1.34 2020/08/02 01:17:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ struct ld_softc {
 
 /* sc_flags */
 #define	LDF_ENABLED	0x001		/* device enabled */
-#define	LDF_DRAIN	0x020		/* maxqueuecnt has changed; drain */
+#define	LDF_UNUSED0	0x020		/* was LDF_DRAIN */
 #define	LDF_NO_RND	0x040		/* do not attach rnd source */
 #define	LDF_MPSAFE	0x080		/* backend is MPSAFE */
 

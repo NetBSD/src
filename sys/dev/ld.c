@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.110 2020/04/13 08:05:02 maxv Exp $	*/
+/*	$NetBSD: ld.c,v 1.111 2020/08/02 01:17:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.110 2020/04/13 08:05:02 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.111 2020/08/02 01:17:56 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,26 +189,25 @@ int
 ldbegindetach(struct ld_softc *sc, int flags)
 {
 	struct dk_softc *dksc = &sc->sc_dksc;
-	int rv = 0;
+	int error;
 
+	/* If we never attached properly, no problem with detaching.  */
 	if ((sc->sc_flags & LDF_ENABLED) == 0)
-		return (0);
+		return 0;
 
-	rv = disk_begindetach(&dksc->sc_dkdev, ld_lastclose, dksc->sc_dev, flags);
+	/*
+	 * If the disk is still open, back out before we commit to
+	 * detaching.
+	 */
+	error = disk_begindetach(&dksc->sc_dkdev, ld_lastclose, dksc->sc_dev,
+	    flags);
+	if (error)
+		return error;
 
-	if (rv != 0)
-		return rv;
+	/* We are now committed to detaching.  Prevent new xfers.  */
+	ldadjqparam(sc, 0);
 
-	mutex_enter(&sc->sc_mutex);
-	sc->sc_maxqueuecnt = 0;
-
-	while (sc->sc_queuecnt > 0) {
-		sc->sc_flags |= LDF_DRAIN;
-		cv_wait(&sc->sc_drain, &sc->sc_mutex);
-	}
-	mutex_exit(&sc->sc_mutex);
-
-	return (rv);
+	return 0;
 }
 
 void
@@ -220,12 +219,17 @@ ldenddetach(struct ld_softc *sc)
 	if ((sc->sc_flags & LDF_ENABLED) == 0)
 		return;
 
-	mutex_enter(&sc->sc_mutex);
-
 	/* Wait for commands queued with the hardware to complete. */
-	if (sc->sc_queuecnt != 0) {
-		if (cv_timedwait(&sc->sc_drain, &sc->sc_mutex, 30 * hz))
+	mutex_enter(&sc->sc_mutex);
+	while (sc->sc_queuecnt > 0) {
+		if (cv_timedwait(&sc->sc_drain, &sc->sc_mutex, 30 * hz)) {
+			/*
+			 * XXX This seems like a recipe for crashing on
+			 * use after free...
+			 */
 			printf("%s: not drained\n", dksc->sc_xname);
+			break;
+		}
 	}
 	mutex_exit(&sc->sc_mutex);
 
@@ -467,10 +471,7 @@ lddone(struct ld_softc *sc, struct buf *bp)
 
 	mutex_enter(&sc->sc_mutex);
 	if (--sc->sc_queuecnt <= sc->sc_maxqueuecnt) {
-		if ((sc->sc_flags & LDF_DRAIN) != 0) {
-			sc->sc_flags &= ~LDF_DRAIN;
-			cv_broadcast(&sc->sc_drain);
-		}
+		cv_broadcast(&sc->sc_drain);
 		mutex_exit(&sc->sc_mutex);
 		dk_start(dksc, NULL);
 	} else
