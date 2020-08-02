@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.405 2020/08/02 19:49:17 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.406 2020/08/02 19:59:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.405 2020/08/02 19:49:17 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.406 2020/08/02 19:59:17 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.405 2020/08/02 19:49:17 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.406 2020/08/02 19:59:17 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2061,7 +2061,7 @@ ApplyModifier_Path(const char *mod, ApplyModifiersState *st)
     } else {
 	st->newVal = Dir_FindFile(st->v->name, Suff_FindPath(gn));
     }
-    if (!st->newVal)
+    if (st->newVal == NULL)
 	st->newVal = bmake_strdup(st->v->name);
     st->next = mod + 1;
     return AMR_OK;
@@ -2087,7 +2087,7 @@ ApplyModifier_Exclam(const char *mod, ApplyModifiersState *st)
 	st->newVal = varNoError;
     free(cmd);
 
-    if (emsg)
+    if (emsg != NULL)
 	Error(emsg, st->val);	/* XXX: why still return AMR_OK? */
 
     if (st->v->flags & VAR_JUNK)
@@ -2749,12 +2749,12 @@ ApplyModifier_Assign(const char *mod, ApplyModifiersState *st)
 	    break;
 	case '!': {
 	    const char *emsg;
-	    st->newVal = Cmd_Exec(val, &emsg);
+	    char *cmd_output = Cmd_Exec(val, &emsg);
 	    if (emsg)
 		Error(emsg, st->val);
 	    else
-		Var_Set(st->v->name, st->newVal, v_ctxt);
-	    free(st->newVal);
+		Var_Set(st->v->name, cmd_output, v_ctxt);
+	    free(cmd_output);
 	    break;
 	}
 	case '?':
@@ -3592,7 +3592,7 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags)
 	    Buf_AddBytesBetween(&buf, cp, str);
 	} else {
 	    int length;
-	    void *freeIt = NULL;
+	    void *freeIt;
 	    const char *val = Var_Parse(str, ctxt, eflags, &length, &freeIt);
 
 	    /*
