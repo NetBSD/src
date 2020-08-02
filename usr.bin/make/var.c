@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.403 2020/08/02 19:08:54 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.404 2020/08/02 19:11:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.403 2020/08/02 19:08:54 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.404 2020/08/02 19:11:57 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.403 2020/08/02 19:08:54 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.404 2020/08/02 19:11:57 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1560,18 +1560,6 @@ ModifyWords(GNode *ctx, Byte sep, Boolean oneBigWord,
 }
 
 
-static int
-VarWordCompare(const void *a, const void *b)
-{
-    return strcmp(*(const char * const *)a, *(const char * const *)b);
-}
-
-static int
-VarWordCompareReverse(const void *a, const void *b)
-{
-    return strcmp(*(const char * const *)b, *(const char * const *)a);
-}
-
 static char *
 WordList_JoinFree(char **av, int ac, char *as)
 {
@@ -2563,6 +2551,18 @@ bad_modifier:
     return AMR_BAD;
 }
 
+static int
+str_cmp_asc(const void *a, const void *b)
+{
+    return strcmp(*(const char * const *)a, *(const char * const *)b);
+}
+
+static int
+str_cmp_desc(const void *a, const void *b)
+{
+    return strcmp(*(const char * const *)b, *(const char * const *)a);
+}
+
 /* :O (order ascending) or :Or (order descending) or :Ox (shuffle) */
 static ApplyModifierResult
 ApplyModifier_Order(const char *mod, ApplyModifiersState *st)
@@ -2575,7 +2575,7 @@ ApplyModifier_Order(const char *mod, ApplyModifiersState *st)
 
     if (mod[1] == st->endc || mod[1] == ':') {
     	/* :O sorts ascending */
-	qsort(av, ac, sizeof(char *), VarWordCompare);
+	qsort(av, ac, sizeof(char *), str_cmp_asc);
 
     } else if ((mod[1] == 'r' || mod[1] == 'x') &&
 	       (mod[2] == st->endc || mod[2] == ':')) {
@@ -2583,7 +2583,7 @@ ApplyModifier_Order(const char *mod, ApplyModifiersState *st)
 
 	if (mod[1] == 'r') {
 	    /* :Or sorts descending */
-	    qsort(av, ac, sizeof(char *), VarWordCompareReverse);
+	    qsort(av, ac, sizeof(char *), str_cmp_desc);
 
 	} else {
 	    /* :Ox shuffles
