@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2722 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2723 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -264,3 +264,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	xen: MSI enabled by default [jdolecek 20200728]
 	kernel: remove the BRIDGE_IPF option, build its code by default
 		unconditionally. [maxv 20200801]
+	aarch64: Add support for Privileged Access Never (PAN).
+		[maxv 20200802]
