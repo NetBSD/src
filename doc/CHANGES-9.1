@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.85 2020/08/02 07:49:46 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.86 2020/08/02 09:14:12 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -3562,4 +3562,31 @@ sys/arch/x86/x86/cpu.c			patch
 	Fix a panic on a CPU which has no rdtsc instruction. This bug was
 	added in ticket #1015.
 	[msaitoh, ticket #1031]
+
+sys/dev/nvmm/files.nvmm				1.3
+sys/dev/nvmm/nvmm.c				1.30-1.32
+sys/dev/nvmm/nvmm_internal.h			1.15,1.16
+sys/dev/nvmm/x86/nvmm_x86_svm.c			1.62,1.63 (patch)
+sys/dev/nvmm/x86/nvmm_x86_vmx.c			1.59-1.61 (patch)
+sys/modules/nvmm/nvmm.ioconf			1.2
+
+	Sync nvmm with HEAD:
+	 - some optimizations (especially on startup)
+	 - style improvements
+	 - PR 55406: prevent ACPI suspend if NVMM when running
+	 - print the backend name when attaching.
+	[maxv, ticket #1032]
+
+xsrc/external/mit/xorg-server.old/dist/dix/pixmap.c	1.2
+xsrc/external/mit/xorg-server/dist/dix/pixmap.c	1.2
+
+	Fix for ZDI-11426:
+	Avoid leaking un-initalized memory to clients by zeroing the
+	whole pixmap on initial allocation.
+	[maya, ticket #1033]
+
+usr.bin/w/w.c					1.88-1.90
+
+	Handle hostname from DISPLAY="[2001:db8::dead:beef]:0" or similar.
+	[kim, ticket #1034]
 
