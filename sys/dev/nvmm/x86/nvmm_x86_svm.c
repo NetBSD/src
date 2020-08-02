@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.46.4.5 2020/05/21 10:52:58 martin Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.46.4.6 2020/08/02 08:49:08 martin Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.46.4.5 2020/05/21 10:52:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.46.4.6 2020/08/02 08:49:08 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1466,13 +1466,7 @@ svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		}
 
 		/* If no reason to return to userland, keep rolling. */
-		if (curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD) {
-			break;
-		}
-		if (curcpu()->ci_data.cpu_softints != 0) {
-			break;
-		}
-		if (curlwp->l_flag & LW_USERRET) {
+		if (nvmm_return_needed()) {
 			break;
 		}
 		if (exit->reason != NVMM_VCPU_EXIT_NONE) {
@@ -2442,6 +2436,7 @@ svm_capability(struct nvmm_capability *cap)
 }
 
 const struct nvmm_impl nvmm_x86_svm = {
+	.name = "x86-svm",
 	.ident = svm_ident,
 	.init = svm_init,
 	.fini = svm_fini,

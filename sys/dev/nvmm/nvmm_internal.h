@@ -1,7 +1,7 @@
-/*	$NetBSD: nvmm_internal.h,v 1.12.2.2 2020/05/13 12:21:56 martin Exp $	*/
+/*	$NetBSD: nvmm_internal.h,v 1.12.2.3 2020/08/02 08:49:08 martin Exp $	*/
 
 /*
- * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -91,6 +91,7 @@ struct nvmm_machine {
 };
 
 struct nvmm_impl {
+	const char *name;
 	bool (*ident)(void);
 	void (*init)(void);
 	void (*fini)(void);
@@ -120,5 +121,17 @@ struct nvmm_impl {
 
 extern const struct nvmm_impl nvmm_x86_svm;
 extern const struct nvmm_impl nvmm_x86_vmx;
+
+static inline bool
+nvmm_return_needed(void)
+{
+	if (preempt_needed()) {
+		return true;
+	}
+	if (curlwp->l_flag & LW_USERRET) {
+		return true;
+	}
+	return false;
+}
 
 #endif /* _NVMM_INTERNAL_H_ */
