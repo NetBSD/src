@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.160 2020/07/27 20:51:29 riastradh Exp $
+#	$NetBSD: files.arm,v 1.161 2020/08/02 06:58:16 maxv Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -79,6 +79,7 @@ defflag  opt_arm_debug.h	VERBOSE_INIT_ARM
 defparam opt_arm_debug.h	EARLYCONS
 
 # ARMv8-specific options
+defflag  opt_cpuoptions.h	ARMV81_PAN
 defflag  opt_cpuoptions.h	ARMV83_PAC
 defflag  opt_cpuoptions.h	ARMV85_BTI
 

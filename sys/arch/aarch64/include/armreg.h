@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.51 2020/08/01 08:47:05 maxv Exp $ */
+/* $NetBSD: armreg.h,v 1.52 2020/08/02 06:58:16 maxv Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -602,6 +602,9 @@ AARCH64REG_WRITE_INLINE3(APGAKeyLo_EL1, apgakeylo_el1, ATTR_ARCH("armv8.3-a"))
 AARCH64REG_READ_INLINE3(APGAKeyHi_EL1, apgakeyhi_el1, ATTR_ARCH("armv8.3-a"))
 AARCH64REG_WRITE_INLINE3(APGAKeyHi_EL1, apgakeyhi_el1, ATTR_ARCH("armv8.3-a"))
 
+AARCH64REG_READ_INLINE3(pan, pan, ATTR_ARCH("armv8.1-a"))
+AARCH64REG_WRITE_INLINE3(pan, pan, ATTR_ARCH("armv8.1-a"))
+
 AARCH64REG_READ_INLINE(cpacr_el1)	// Coprocessor Access Control Regiser
 AARCH64REG_WRITE_INLINE(cpacr_el1)
 
@@ -868,6 +871,7 @@ AARCH64REG_WRITE_INLINE(spsr_el1)
 #define	SPSR_A32_Q 		__BIT(27)	// A32: Overflow
 #define	SPSR_A32_IT1 		__BIT(26)	// A32: IT[1]
 #define	SPSR_A32_IT0 		__BIT(25)	// A32: IT[0]
+#define	SPSR_PAN	 	__BIT(22)	// Privileged Access Never
 #define	SPSR_SS	 		__BIT(21)	// Software Step
 #define	SPSR_SS_SHIFT		21
 #define	SPSR_IL	 		__BIT(20)	// Instruction Length
