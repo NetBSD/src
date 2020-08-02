@@ -4,7 +4,6 @@ Global:NEXT = ${COUNTER::=${COUNTER} a}${COUNTER:[#]}
 Global:A = 
 Applying[COUNTER] :: to ""
 Modifier part: " a"
-ApplyModifier_Assign: "COUNTER" = " a"
 Global:COUNTER =  a
 Result[COUNTER] of :: is ""
 Applying[COUNTER] :[ to " a"
@@ -14,7 +13,6 @@ Global:A = ${COUNTER::= a a}1
 Global:B = 
 Applying[COUNTER] :: to " a"
 Modifier part: " a a"
-ApplyModifier_Assign: "COUNTER" = " a a"
 Global:COUNTER =  a a
 Result[COUNTER] of :: is ""
 Applying[COUNTER] :[ to " a a"
@@ -24,7 +22,6 @@ Global:B = ${COUNTER::= a a a}2
 Global:C = 
 Applying[COUNTER] :: to " a a"
 Modifier part: " a a a"
-ApplyModifier_Assign: "COUNTER" = " a a a"
 Global:COUNTER =  a a a
 Result[COUNTER] of :: is ""
 Applying[COUNTER] :[ to " a a a"
@@ -36,7 +33,6 @@ Global:RELEVANT = yes (run-time part)
 Result[RELEVANT] of :: is ""
 Applying[COUNTER] :: to " a a a"
 Modifier part: " a a"
-ApplyModifier_Assign: "COUNTER" = " a a"
 Global:COUNTER =  a a
 Result[COUNTER] of :: is ""
 Applying[A] :Q to "1"
@@ -44,7 +40,6 @@ QuoteMeta: [1]
 Result[A] of :Q is "1"
 Applying[COUNTER] :: to " a a"
 Modifier part: " a a a"
-ApplyModifier_Assign: "COUNTER" = " a a a"
 Global:COUNTER =  a a a
 Result[COUNTER] of :: is ""
 Applying[B] :Q to "2"
@@ -52,7 +47,6 @@ QuoteMeta: [2]
 Result[B] of :Q is "2"
 Applying[COUNTER] :: to " a a a"
 Modifier part: " a a a a"
-ApplyModifier_Assign: "COUNTER" = " a a a a"
 Global:COUNTER =  a a a a
 Result[COUNTER] of :: is ""
 Applying[C] :Q to "3"
@@ -67,6 +61,5 @@ Result[COUNTER] of :Q is "4"
 A=1 B=2 C=3 COUNTER=4
 Applying[RELEVANT] :: to "yes (run-time part)"
 Modifier part: "no"
-ApplyModifier_Assign: "RELEVANT" = "no"
 Global:RELEVANT = no
 exit status 0
