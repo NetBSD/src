@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.390 2020/08/02 09:06:32 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.391 2020/08/02 09:36:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.390 2020/08/02 09:06:32 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.391 2020/08/02 09:36:54 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.390 2020/08/02 09:06:32 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.391 2020/08/02 09:36:54 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1766,58 +1766,60 @@ ParseModifierPart(
 	if (is_escaped) {
 	    Buf_AddByte(&buf, cp[1]);
 	    cp++;
-	} else if (*cp == '$') {
-	    if (cp[1] == delim) {	/* Unescaped $ at end of pattern */
-		if (out_pflags != NULL)
-		    *out_pflags |= VARP_ANCHOR_END;
-		else
-		    Buf_AddByte(&buf, *cp);
-	    } else {
-		if (eflags & VARE_WANTRES) {
-		    const char *cp2;
-		    int     len;
-		    void   *freeIt;
+	    continue;
+	}
 
-		    /*
-		     * If unescaped dollar sign not before the
-		     * delimiter, assume it's a variable
-		     * substitution and recurse.
-		     */
-		    cp2 = Var_Parse(cp, ctxt, errnum | (eflags & VARE_WANTRES),
-				    &len, &freeIt);
-		    Buf_AddStr(&buf, cp2);
-		    free(freeIt);
-		    cp += len - 1;
-		} else {
-		    const char *cp2 = &cp[1];
+	if (*cp != '$') {	/* Unescaped, simple text */
+	    if (subst != NULL && *cp == '&')
+		Buf_AddBytesZ(&buf, subst->lhs, subst->lhsLen);
+	    else
+		Buf_AddByte(&buf, *cp);
+	    continue;
+	}
 
-		    if (*cp2 == PROPEN || *cp2 == BROPEN) {
-			/*
-			 * Find the end of this variable reference
-			 * and suck it in without further ado.
-			 * It will be interpreted later.
-			 */
-			int have = *cp2;
-			int want = *cp2 == PROPEN ? PRCLOSE : BRCLOSE;
-			int depth = 1;
+	if (cp[1] == delim) {	/* Unescaped $ at end of pattern */
+	    if (out_pflags != NULL)
+		*out_pflags |= VARP_ANCHOR_END;
+	    else
+		Buf_AddByte(&buf, *cp);
+	    continue;
+	}
 
-			for (++cp2; *cp2 != '\0' && depth > 0; ++cp2) {
-			    if (cp2[-1] != '\\') {
-				if (*cp2 == have)
-				    ++depth;
-				if (*cp2 == want)
-				    --depth;
-			    }
-			}
-			Buf_AddBytesBetween(&buf, cp, cp2);
-			cp = --cp2;
-		    } else
-			Buf_AddByte(&buf, *cp);
+	if (eflags & VARE_WANTRES) {	/* Nested variable, evaluated */
+	    const char *cp2;
+	    int     len;
+	    void   *freeIt;
+
+	    cp2 = Var_Parse(cp, ctxt, errnum | (eflags & VARE_WANTRES),
+			    &len, &freeIt);
+	    Buf_AddStr(&buf, cp2);
+	    free(freeIt);
+	    cp += len - 1;
+	    continue;
+	}
+
+	const char *cp2 = &cp[1];	/* Nested variable, only parsed */
+	if (*cp2 == PROPEN || *cp2 == BROPEN) {
+	    /*
+	     * Find the end of this variable reference
+	     * and suck it in without further ado.
+	     * It will be interpreted later.
+	     */
+	    int have = *cp2;
+	    int want = *cp2 == PROPEN ? PRCLOSE : BRCLOSE;
+	    int depth = 1;
+
+	    for (++cp2; *cp2 != '\0' && depth > 0; ++cp2) {
+		if (cp2[-1] != '\\') {
+		    if (*cp2 == have)
+			++depth;
+		    if (*cp2 == want)
+			--depth;
 		}
 	    }
-	} else if (subst != NULL && *cp == '&')
-	    Buf_AddBytesZ(&buf, subst->lhs, subst->lhsLen);
-	else
+	    Buf_AddBytesBetween(&buf, cp, cp2);
+	    cp = --cp2;
+	} else
 	    Buf_AddByte(&buf, *cp);
     }
 
