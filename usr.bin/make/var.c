@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.395 2020/08/02 10:47:09 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.396 2020/08/02 10:49:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.395 2020/08/02 10:47:09 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.396 2020/08/02 10:49:53 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.395 2020/08/02 10:47:09 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.396 2020/08/02 10:49:53 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1746,7 +1746,6 @@ ParseModifierPart(
 				 * allow ampersands to be escaped and replace
 				 * unescaped ampersands with subst->lhs. */
 ) {
-    char *rstr;
     Buffer buf;
 
     Buf_InitZ(&buf, 0);
@@ -1798,6 +1797,15 @@ ParseModifierPart(
 	    continue;
 	}
 
+	/* XXX: This whole block is very similar to Var_Parse without
+	 * VARE_WANTRES.  There may be subtle edge cases though that are
+	 * not yet covered in the unit tests and that are parsed differently,
+	 * depending on whether they are evaluated or not.
+	 *
+	 * This subtle difference is not documented in the manual page,
+	 * neither is the difference between parsing :D and :M documented.
+	 * No code should ever depend on these details, but who knows. */
+
 	const char *varstart = p;	/* Nested variable, only parsed */
 	if (p[1] == PROPEN || p[1] == BROPEN) {
 	    /*
@@ -1832,7 +1840,8 @@ ParseModifierPart(
     *pp = ++p;
     if (out_length != NULL)
 	*out_length = Buf_Size(&buf);
-    rstr = Buf_Destroy(&buf, FALSE);
+
+    char *rstr = Buf_Destroy(&buf, FALSE);
     if (DEBUG(VAR))
 	fprintf(debug_file, "Modifier part: \"%s\"\n", rstr);
     return rstr;
