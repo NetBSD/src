@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.107 2020/07/31 02:56:48 simonb Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.108 2020/08/02 23:04:23 simonb Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -547,6 +547,10 @@
  * 25/1	MIPS_COP_0_PERFCNT0_CNT	..ii Performance Counter 0 value register.
  * 25/2	MIPS_COP_0_PERFCNT1_CTL	..ii Performance Counter 1 control register.
  * 25/3	MIPS_COP_0_PERFCNT1_CNT	..ii Performance Counter 1 value register.
+ * 25/4	MIPS_COP_0_PERFCNT0_CTL	..ii Performance Counter 2 control register.
+ * 25/5	MIPS_COP_0_PERFCNT0_CNT	..ii Performance Counter 2 value register.
+ * 25/6	MIPS_COP_0_PERFCNT1_CTL	..ii Performance Counter 3 control register.
+ * 25/7	MIPS_COP_0_PERFCNT1_CNT	..ii Performance Counter 3 value register.
  * 26	MIPS_COP_0_ECC		.3ii ECC / Error Control register.
  * 27	MIPS_COP_0_CACHE_ERR	.3ii Cache Error register.
  * 27	MIPS_COP_0_CACHE_ERR_I	...6 [CAVIUM] Cache Error register (instr).
@@ -657,6 +661,10 @@
 #define	MIPS_COP_0_PERFCNT0_CNT	_(25), 1
 #define	MIPS_COP_0_PERFCNT1_CTL	_(25), 2
 #define	MIPS_COP_0_PERFCNT1_CNT	_(25), 3
+#define	MIPS_COP_0_PERFCNT2_CTL	_(25), 4
+#define	MIPS_COP_0_PERFCNT2_CNT	_(25), 5
+#define	MIPS_COP_0_PERFCNT3_CTL	_(25), 6
+#define	MIPS_COP_0_PERFCNT3_CNT	_(25), 7
 #define	MIPS_COP_0_DATA_LO	_(28), 1
 #define	MIPS_COP_0_DATA_HI	_(29), 3
 #define	MIPS_COP_0_DATA_HI_DATA	_(29)
