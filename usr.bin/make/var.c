@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.396 2020/08/02 10:49:53 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.397 2020/08/02 12:43:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.396 2020/08/02 10:49:53 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.397 2020/08/02 12:43:40 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.396 2020/08/02 10:49:53 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.397 2020/08/02 12:43:40 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -458,21 +458,16 @@ VarAdd(const char *name, const char *val, GNode *ctxt)
 void
 Var_Delete(const char *name, GNode *ctxt)
 {
-    Hash_Entry 	  *ln;
-    char *cp;
-
-    if (strchr(name, '$') != NULL) {
-	cp = Var_Subst(name, VAR_GLOBAL, VARE_WANTRES);
-    } else {
-	cp = UNCONST(name);
-    }
-    ln = Hash_FindEntry(&ctxt->context, cp);
+    char *name_freeIt = NULL;
+    if (strchr(name, '$') != NULL)
+	name = name_freeIt = Var_Subst(name, VAR_GLOBAL, VARE_WANTRES);
+    Hash_Entry *ln = Hash_FindEntry(&ctxt->context, name);
     if (DEBUG(VAR)) {
 	fprintf(debug_file, "%s:delete %s%s\n",
-	    ctxt->name, cp, ln ? "" : " (not found)");
+	    ctxt->name, name, ln != NULL ? "" : " (not found)");
     }
-    if (cp != name)
-	free(cp);
+    free(name_freeIt);
+
     if (ln != NULL) {
 	Var *v = (Var *)Hash_GetValue(ln);
 	if (v->flags & VAR_EXPORTED)
