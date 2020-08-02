@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.392 2020/08/02 09:43:22 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.393 2020/08/02 09:54:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.392 2020/08/02 09:43:22 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.393 2020/08/02 09:54:44 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.392 2020/08/02 09:43:22 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.393 2020/08/02 09:54:44 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1798,29 +1798,29 @@ ParseModifierPart(
 	    continue;
 	}
 
-	const char *cp2 = &p[1];	/* Nested variable, only parsed */
-	if (*cp2 == PROPEN || *cp2 == BROPEN) {
+	const char *varstart = p;	/* Nested variable, only parsed */
+	if (p[1] == PROPEN || p[1] == BROPEN) {
 	    /*
 	     * Find the end of this variable reference
 	     * and suck it in without further ado.
 	     * It will be interpreted later.
 	     */
-	    int have = *cp2;
-	    int want = *cp2 == PROPEN ? PRCLOSE : BRCLOSE;
+	    int have = p[1];
+	    int want = have == PROPEN ? PRCLOSE : BRCLOSE;
 	    int depth = 1;
 
-	    for (++cp2; *cp2 != '\0' && depth > 0; ++cp2) {
-		if (cp2[-1] != '\\') {
-		    if (*cp2 == have)
+	    for (p += 2; *p != '\0' && depth > 0; ++p) {
+		if (p[-1] != '\\') {
+		    if (*p == have)
 			++depth;
-		    if (*cp2 == want)
+		    if (*p == want)
 			--depth;
 		}
 	    }
-	    Buf_AddBytesBetween(&buf, p, cp2);
-	    p = --cp2;
+	    Buf_AddBytesBetween(&buf, varstart, p);
+	    p--;
 	} else
-	    Buf_AddByte(&buf, *p);
+	    Buf_AddByte(&buf, *varstart);
     }
 
     if (*p != delim) {
