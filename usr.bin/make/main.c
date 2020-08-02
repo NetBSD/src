@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.294 2020/08/01 21:40:49 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.295 2020/08/02 08:06:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.294 2020/08/01 21:40:49 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.295 2020/08/02 08:06:35 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.294 2020/08/01 21:40:49 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.295 2020/08/02 08:06:35 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -745,7 +745,7 @@ Main_SetObjdir(const char *fmt, ...)
 			(void)fprintf(stderr, "make warning: %s: %s.\n",
 				      path, strerror(errno));
 		} else {
-			strncpy(objdir, path, MAXPATHLEN);
+			snprintf(objdir, sizeof objdir, "%s", path);
 			Var_Set(".OBJDIR", objdir, VAR_GLOBAL);
 			setenv("PWD", objdir, 1);
 			Dir_InitDot();
