@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsNN.h,v 1.11 2020/07/31 03:35:05 simonb Exp $	*/
+/*	$NetBSD: mipsNN.h,v 1.12 2020/08/02 23:20:25 simonb Exp $	*/
 
 /*
  * Copyright 2000, 2001
@@ -470,6 +470,48 @@
 
 /* "NFExists" (R): Nested Fault feature exists. */
 #define	MIPSNN_CFG5_NF_EXISTS				__BIT(0)
+
+
+/*
+ * Values in PerfCntCrl Register (CP0 Register 25, Selects 0, 2, 4, 6)
+ */
+
+/* "M" (R): next PerCntCtl register present. */
+#define	MIPSNN_PERFCTL_M				__BIT(31)
+
+/* "W" (R): Width - is a 64-bit counter. */
+#define	MIPSNN_PERFCTL_W				__BIT(30)
+
+/* "Impl" (RAZ): Impl - implementation dependent field. */
+#define	MIPSNN_PERFCTL_IMPL				__BITS(29,25)
+
+/* "EC" (Z): Reserved for Virtualisation Mode. */
+#define	MIPSNN_PERFCTL_EC				__BITS(24,23)
+
+/* "PCTD" (RW): Performance Counter Trace Disable. */
+#define	MIPSNN_PERFCTL_PCTD				__BIT(15)
+
+/*
+ * "EVENT" (RW): Event number.  Note: The MIPS32/MIPS64 PRA specs define
+ * EventExt from 14:11 and Event from 10:5.  For ease of use, we define a
+ * single 10 bit Event field.
+ */
+#define	MIPSNN_PERFCTL_EVENT				__BITS(14,5)
+
+/* "IE" (RW): Interrupt Enable. */
+#define	MIPSNN_PERFCTL_IE				__BIT(4)
+
+/* "U" (RW): Enables event counting in user mode. */
+#define	MIPSNN_PERFCTL_U				__BIT(3)
+
+/* "S" (RW): Enables event counting in supervisor mode. */
+#define	MIPSNN_PERFCTL_S				__BIT(2)
+
+/* "K" (RW): Enables event counting in kernel mode. */
+#define	MIPSNN_PERFCTL_K				__BIT(1)
+
+/* "EXL" (RW): Enables event counting when EXL bit in Status is one. */
+#define	MIPSNN_PERFCTL_EXL				__BIT(0)
 
 
 /*
