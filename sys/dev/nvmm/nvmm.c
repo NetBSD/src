@@ -1,7 +1,7 @@
-/*	$NetBSD: nvmm.c,v 1.22.2.4 2020/05/21 10:52:58 martin Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.22.2.5 2020/08/02 08:49:08 martin Exp $	*/
 
 /*
- * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.22.2.4 2020/05/21 10:52:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.22.2.5 2020/08/02 08:49:08 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.22.2.4 2020/05/21 10:52:58 martin Exp $")
 #include <sys/mman.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
-#include <sys/kauth.h>
+#include <sys/device.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_page.h>
@@ -570,11 +570,19 @@ nvmm_do_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	int ret;
 
 	while (1) {
+		/* Got a signal? Or pending resched? Leave. */
+		if (__predict_false(nvmm_return_needed())) {
+			exit->reason = NVMM_VCPU_EXIT_NONE;
+			return 0;
+		}
+
+		/* Run the VCPU. */
 		ret = (*nvmm_impl->vcpu_run)(mach, vcpu, exit);
 		if (__predict_false(ret != 0)) {
 			return ret;
 		}
 
+		/* Process nested page faults. */
 		if (__predict_true(exit->reason != NVMM_VCPU_EXIT_MEMORY)) {
 			break;
 		}
@@ -952,22 +960,27 @@ nvmm_ctl(struct nvmm_owner *owner, struct nvmm_ioc_ctl *args)
 
 /* -------------------------------------------------------------------------- */
 
+static const struct nvmm_impl *
+nvmm_ident(void)
+{
+	size_t i;
+
+	for (i = 0; i < __arraycount(nvmm_impl_list); i++) {
+		if ((*nvmm_impl_list[i]->ident)())
+			return nvmm_impl_list[i];
+	}
+
+	return NULL;
+}
+
 static int
 nvmm_init(void)
 {
 	size_t i, n;
 
-	for (i = 0; i < __arraycount(nvmm_impl_list); i++) {
-		if (!(*nvmm_impl_list[i]->ident)()) {
-			continue;
-		}
-		nvmm_impl = nvmm_impl_list[i];
-		break;
-	}
-	if (nvmm_impl == NULL) {
-		printf("NVMM: CPU not supported\n");
+	nvmm_impl = nvmm_ident();
+	if (nvmm_impl == NULL)
 		return ENOTSUP;
-	}
 
 	for (i = 0; i < NVMM_MAX_MACHINES; i++) {
 		machines[i].machid = i;
@@ -1161,6 +1174,54 @@ nvmm_ioctl(file_t *fp, u_long cmd, void *data)
 
 /* -------------------------------------------------------------------------- */
 
+static int nvmm_match(device_t, cfdata_t, void *);
+static void nvmm_attach(device_t, device_t, void *);
+static int nvmm_detach(device_t, int);
+
+extern struct cfdriver nvmm_cd;
+
+CFATTACH_DECL_NEW(nvmm, 0, nvmm_match, nvmm_attach, nvmm_detach, NULL);
+
+static struct cfdata nvmm_cfdata[] = {
+	{
+		.cf_name = "nvmm",
+		.cf_atname = "nvmm",
+		.cf_unit = 0,
+		.cf_fstate = FSTATE_STAR,
+		.cf_loc = NULL,
+		.cf_flags = 0,
+		.cf_pspec = NULL,
+	},
+	{ NULL, NULL, 0, FSTATE_NOTFOUND, NULL, 0, NULL }
+};
+
+static int
+nvmm_match(device_t self, cfdata_t cfdata, void *arg)
+{
+	return 1;
+}
+
+static void
+nvmm_attach(device_t parent, device_t self, void *aux)
+{
+	int error;
+
+	error = nvmm_init();
+	if (error)
+		panic("%s: impossible", __func__);
+	aprint_normal_dev(self, "attached, using backend %s\n",
+	    nvmm_impl->name);
+}
+
+static int
+nvmm_detach(device_t self, int flags)
+{
+	if (nmachines > 0)
+		return EBUSY;
+	nvmm_fini();
+	return 0;
+}
+
 void
 nvmmattach(int nunits)
 {
@@ -1169,51 +1230,83 @@ nvmmattach(int nunits)
 
 MODULE(MODULE_CLASS_MISC, nvmm, NULL);
 
+#if defined(_MODULE)
+CFDRIVER_DECL(nvmm, DV_VIRTUAL, NULL);
+#endif
+
 static int
 nvmm_modcmd(modcmd_t cmd, void *arg)
 {
+#if defined(_MODULE)
+	devmajor_t bmajor = NODEVMAJOR;
+	devmajor_t cmajor = 345;
+#endif
 	int error;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		error = nvmm_init();
+		if (nvmm_ident() == NULL) {
+			aprint_error("%s: cpu not supported\n",
+			    nvmm_cd.cd_name);
+			return ENOTSUP;
+		}
+#if defined(_MODULE)
+		error = config_cfdriver_attach(&nvmm_cd);
 		if (error)
 			return error;
+#endif
+		error = config_cfattach_attach(nvmm_cd.cd_name, &nvmm_ca);
+		if (error) {
+			config_cfdriver_detach(&nvmm_cd);
+			aprint_error("%s: config_cfattach_attach failed\n",
+			    nvmm_cd.cd_name);
+			return error;
+		}
+
+		error = config_cfdata_attach(nvmm_cfdata, 1);
+		if (error) {
+			config_cfattach_detach(nvmm_cd.cd_name, &nvmm_ca);
+			config_cfdriver_detach(&nvmm_cd);
+			aprint_error("%s: unable to register cfdata\n",
+			    nvmm_cd.cd_name);
+			return error;
+		}
+
+		if (config_attach_pseudo(nvmm_cfdata) == NULL) {
+			aprint_error("%s: config_attach_pseudo failed\n",
+			    nvmm_cd.cd_name);
+			config_cfattach_detach(nvmm_cd.cd_name, &nvmm_ca);
+			config_cfdriver_detach(&nvmm_cd);
+			return ENXIO;
+		}
 
 #if defined(_MODULE)
-		{
-			devmajor_t bmajor = NODEVMAJOR;
-			devmajor_t cmajor = 345;
-
-			/* mknod /dev/nvmm c 345 0 */
-			error = devsw_attach("nvmm", NULL, &bmajor,
-			    &nvmm_cdevsw, &cmajor);
-			if (error) {
-				nvmm_fini();
-				return error;
-			}
+		/* mknod /dev/nvmm c 345 0 */
+		error = devsw_attach(nvmm_cd.cd_name, NULL, &bmajor,
+			&nvmm_cdevsw, &cmajor);
+		if (error) {
+			aprint_error("%s: unable to register devsw\n",
+			    nvmm_cd.cd_name);
+			config_cfattach_detach(nvmm_cd.cd_name, &nvmm_ca);
+			config_cfdriver_detach(&nvmm_cd);
+			return error;
 		}
 #endif
 		return 0;
-
 	case MODULE_CMD_FINI:
-		if (nmachines > 0) {
-			return EBUSY;
-		}
+		error = config_cfdata_detach(nvmm_cfdata);
+		if (error)
+			return error;
+		error = config_cfattach_detach(nvmm_cd.cd_name, &nvmm_ca);
+		if (error)
+			return error;
 #if defined(_MODULE)
-		{
-			error = devsw_detach(NULL, &nvmm_cdevsw);
-			if (error) {
-				return error;
-			}
-		}
+		config_cfdriver_detach(&nvmm_cd);
+		devsw_detach(NULL, &nvmm_cdevsw);
 #endif
-		nvmm_fini();
 		return 0;
-
 	case MODULE_CMD_AUTOUNLOAD:
 		return EBUSY;
-
 	default:
 		return ENOTTY;
 	}

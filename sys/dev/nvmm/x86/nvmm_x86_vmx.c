@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.36.2.7 2020/05/21 10:52:58 martin Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.36.2.8 2020/08/02 08:49:08 martin Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.36.2.7 2020/05/21 10:52:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.36.2.8 2020/08/02 08:49:08 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -487,7 +487,7 @@ vmx_vmclear(paddr_t *pa)
 #define VMCS_HOST_IA32_SYSENTER_ESP		0x00006C10
 #define VMCS_HOST_IA32_SYSENTER_EIP		0x00006C12
 #define VMCS_HOST_RSP				0x00006C14
-#define VMCS_HOST_RIP				0x00006c16
+#define VMCS_HOST_RIP				0x00006C16
 
 /* VMX basic exit reasons. */
 #define VMCS_EXITCODE_EXC_NMI			0
@@ -2186,13 +2186,7 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		}
 
 		/* If no reason to return to userland, keep rolling. */
-		if (curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD) {
-			break;
-		}
-		if (curcpu()->ci_data.cpu_softints != 0) {
-			break;
-		}
-		if (curlwp->l_flag & LW_USERRET) {
+		if (nvmm_return_needed()) {
 			break;
 		}
 		if (exit->reason != NVMM_VCPU_EXIT_NONE) {
@@ -3402,6 +3396,7 @@ vmx_capability(struct nvmm_capability *cap)
 }
 
 const struct nvmm_impl nvmm_x86_vmx = {
+	.name = "x86-vmx",
 	.ident = vmx_ident,
 	.init = vmx_init,
 	.fini = vmx_fini,
