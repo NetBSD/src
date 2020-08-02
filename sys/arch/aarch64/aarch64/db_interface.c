@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.7 2019/01/27 02:08:36 pgoyette Exp $ */
+/* $NetBSD: db_interface.c,v 1.8 2020/08/02 06:58:16 maxv Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.7 2019/01/27 02:08:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.8 2020/08/02 06:58:16 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -67,6 +67,9 @@ db_read_bytes(vaddr_t addr, size_t size, char *data)
 		}
 		lastpage = atop((vaddr_t)src);
 
+		if (aarch64_pan_enabled)
+			reg_pan_write(0); /* disable PAN */
+
 		tmp = (uintptr_t)src | (uintptr_t)data;
 		if ((size >= 8) && ((tmp & 7) == 0)) {
 			*(uint64_t *)data = *(const uint64_t *)src;
@@ -87,6 +90,9 @@ db_read_bytes(vaddr_t addr, size_t size, char *data)
 			*data++ = *src++;
 			size--;
 		}
+
+		if (aarch64_pan_enabled)
+			reg_pan_write(1); /* enable PAN */
 	}
 }
 

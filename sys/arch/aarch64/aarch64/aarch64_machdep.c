@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.45 2020/07/16 11:36:35 skrll Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.46 2020/08/02 06:58:16 maxv Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.45 2020/07/16 11:36:35 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.46 2020/08/02 06:58:16 maxv Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -476,6 +476,14 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 	    CTLTYPE_INT, "tagged_address",
 	    SYSCTL_DESCR("top byte ignored in the address calculation"),
 	    sysctl_machdep_tagged_address, 0, NULL, 0,
+	    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_INT, "pan",
+	    SYSCTL_DESCR("Whether Privileged Access Never is enabled"),
+	    NULL, 0,
+	    &aarch64_pan_enabled, 0,
 	    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,

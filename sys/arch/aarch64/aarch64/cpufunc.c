@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.23 2020/07/04 04:59:36 rin Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.24 2020/08/02 06:58:16 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.23 2020/07/04 04:59:36 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.24 2020/08/02 06:58:16 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -50,6 +50,7 @@ u_int arm_dcache_maxline;
 u_int aarch64_cache_vindexsize;
 u_int aarch64_cache_prefer_mask;
 
+int aarch64_pan_enabled __read_mostly;
 int aarch64_pac_enabled __read_mostly;
 
 /* cache info per cluster. the same cluster has the same cache configuration? */
@@ -472,6 +473,36 @@ set_cpufuncs(void)
 #endif
 
 	return 0;
+}
+
+void
+aarch64_pan_init(int primary)
+{
+#ifdef ARMV81_PAN
+	uint64_t reg, sctlr;
+
+	/* CPU0 does the detection. */
+	if (primary) {
+		reg = reg_id_aa64mmfr1_el1_read();
+		if (__SHIFTOUT(reg, ID_AA64MMFR1_EL1_PAN) !=
+		    ID_AA64MMFR1_EL1_PAN_NONE)
+			aarch64_pan_enabled = 1;
+	}
+
+	if (!aarch64_pan_enabled)
+		return;
+
+	/*
+	 * On an exception to EL1, have the CPU set the PAN bit automatically.
+	 * This ensures PAN is enabled each time the kernel is entered.
+	 */
+	sctlr = reg_sctlr_el1_read();
+	sctlr &= ~SCTLR_SPAN;
+	reg_sctlr_el1_write(sctlr);
+
+	/* Set the PAN bit right now. */
+	reg_pan_write(1);
+#endif
 }
 
 /*
