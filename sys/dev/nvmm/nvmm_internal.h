@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_internal.h,v 1.12.2.3 2020/08/02 08:49:08 martin Exp $	*/
+/*	$NetBSD: nvmm_internal.h,v 1.12.2.4 2020/08/02 11:19:09 martin Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -125,7 +125,13 @@ extern const struct nvmm_impl nvmm_x86_vmx;
 static inline bool
 nvmm_return_needed(void)
 {
-	if (preempt_needed()) {
+	lwp_t *l = curlwp;
+	int needed;
+
+	KPREEMPT_DISABLE(l);
+	needed = l->l_cpu->ci_want_resched;
+	KPREEMPT_ENABLE(l);
+	if (needed) {
 		return true;
 	}
 	if (curlwp->l_flag & LW_USERRET) {
