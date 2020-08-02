@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.393 2020/08/02 09:54:44 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.394 2020/08/02 10:01:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.393 2020/08/02 09:54:44 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.394 2020/08/02 10:01:50 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.393 2020/08/02 09:54:44 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.394 2020/08/02 10:01:50 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1758,14 +1758,14 @@ ParseModifierPart(
      * backslashes to quote the delimiter, $, and \, but don't
      * touch other backslashes.
      */
-    const char *p;
-    for (p = *pp; *p != '\0' && *p != delim; p++) {
+    const char *p = *pp;
+    while (*p != '\0' && *p != delim) {
 	Boolean is_escaped = p[0] == '\\' && (
 	    p[1] == delim || p[1] == '\\' || p[1] == '$' ||
 	    (p[1] == '&' && subst != NULL));
 	if (is_escaped) {
 	    Buf_AddByte(&buf, p[1]);
-	    p++;
+	    p += 2;
 	    continue;
 	}
 
@@ -1774,6 +1774,7 @@ ParseModifierPart(
 		Buf_AddBytesZ(&buf, subst->lhs, subst->lhsLen);
 	    else
 		Buf_AddByte(&buf, *p);
+	    p++;
 	    continue;
 	}
 
@@ -1782,6 +1783,7 @@ ParseModifierPart(
 		*out_pflags |= VARP_ANCHOR_END;
 	    else
 		Buf_AddByte(&buf, *p);
+	    p++;
 	    continue;
 	}
 
@@ -1794,7 +1796,7 @@ ParseModifierPart(
 			    &len, &freeIt);
 	    Buf_AddStr(&buf, cp2);
 	    free(freeIt);
-	    p += len - 1;
+	    p += len;
 	    continue;
 	}
 
@@ -1818,9 +1820,10 @@ ParseModifierPart(
 		}
 	    }
 	    Buf_AddBytesBetween(&buf, varstart, p);
-	    p--;
-	} else
+	} else {
 	    Buf_AddByte(&buf, *varstart);
+	    p++;
+	}
     }
 
     if (*p != delim) {
