@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.16 2020/07/01 07:59:16 ryo Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.17 2020/08/02 06:58:16 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -63,8 +63,10 @@ extern u_int aarch64_cache_vindexsize;	/* cachesize/way (VIVT/VIPT) */
 extern u_int aarch64_cache_prefer_mask;
 extern u_int cputype;			/* compat arm */
 
+extern int aarch64_pan_enabled;
 extern int aarch64_pac_enabled;
 
+void aarch64_pan_init(int);
 int aarch64_pac_init(int);
 
 int set_cpufuncs(void);
