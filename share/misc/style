@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.58 2020/08/02 01:35:07 riastradh Exp $ */
+/* $NetBSD: style,v 1.59 2020/08/02 01:36:46 riastradh Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: style,v 1.58 2020/08/02 01:35:07 riastradh Exp $");
+__RCSID("$NetBSD: style,v 1.59 2020/08/02 01:36:46 riastradh Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -265,19 +265,6 @@ main(int argc, char *argv[])
 		continue;		/* Explicit no-op */
 	for (;;)
 		stmt;
-
-	/*
-	 * Braces are required for control statements with a single statement
-	 * that may expand to nothing.
-	 */
-#ifdef DEBUG_FOO
-#define DPRINTF(a) printf a
-#else
-#define DPRINTF(a)
-#endif
-	if (broken) {
-		DPRINTF(("broken is %d\n", broken));
-	}
 
 	/*
 	 * Parts of a for loop may be left empty.  Don't put declarations
