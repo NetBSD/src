@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.83.6.2 2020/07/07 10:44:11 martin Exp $	*/
+/*	$NetBSD: w.c,v 1.83.6.3 2020/08/02 09:15:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.83.6.2 2020/07/07 10:44:11 martin Exp $");
+__RCSID("$NetBSD: w.c,v 1.83.6.3 2020/08/02 09:15:03 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -621,7 +621,7 @@ static void
 fixhost(struct entry *ep)
 {
 	char host_buf[sizeof(ep->host)];
-	char *p, *r, *x, *m;
+	char *b, *m, *p, *r, *x;
 	struct hostent *hp;
 	union {
 		struct in_addr l4;
@@ -650,13 +650,35 @@ fixhost(struct entry *ep)
 			x = NULL;
 	}
 
+	/*
+	 * Leading '[' indicates an IP address inside brackets.
+	 */
+	b = NULL;
+	if (!nflag && (*p == '[')) {
+		for (b = p++; b < &host_buf[sizeof(host_buf)]; b++)
+			if (*b == '\0' || *b == ']')
+				break;
+		if (b < &host_buf[sizeof(host_buf)] && *b == ']') {
+			*b = '\0';
+			for (x = b + 1; x < &host_buf[sizeof(host_buf)]; x++)
+				if (*x == '\0' || *x == ':')
+					break;
+			if (x < &host_buf[sizeof(host_buf)] && *x == ':')
+				*x++ = '\0';
+		} else
+			b = NULL;
+	}
+
 	int af = m ? AF_INET6 : AF_INET;
 	size_t alen = m ? sizeof(l.l6) : sizeof(l.l4);
 	if (!nflag && inet_pton(af, p, &l) &&
 	    (hp = gethostbyaddr((char *)&l, alen, af)))
 		r = hp->h_name;
-	else
+	else {
+		if (b)
+			*b = ']';
 		r = host_buf;
+	}
 
 	if (domain[0] != '\0') {
 		p = r;
