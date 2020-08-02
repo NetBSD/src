@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.67 2020/06/14 14:16:49 tsutsui Exp $	*/
+/*	$NetBSD: cache.c,v 1.68 2020/08/02 06:51:47 skrll Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.67 2020/06/14 14:16:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.68 2020/08/02 06:51:47 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -1413,9 +1413,11 @@ mips_config_cache_modern(uint32_t cpu_id)
 			break;
 
 		/* XXX cnMIPS II cores not yet tested */
+		case MIPS_CN61XX:
 		case MIPS_CN63XX:
 		case MIPS_CN66XX:
 		case MIPS_CN68XX:
+		case MIPS_CNF71XX:
 			/* OCTEON II */
 
 			mci->mci_pdcache_line_size = OCTEON_CACHELINE_SIZE;
@@ -1432,6 +1434,7 @@ mips_config_cache_modern(uint32_t cpu_id)
 
 		case MIPS_CN70XX:
 		case MIPS_CN73XX:
+		case MIPS_CNF75XX:
 		case MIPS_CN78XX:
 			/* OCTEON III */
 
