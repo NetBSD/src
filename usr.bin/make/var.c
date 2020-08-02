@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.398 2020/08/02 15:26:49 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.399 2020/08/02 16:06:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.398 2020/08/02 15:26:49 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.399 2020/08/02 16:06:49 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.398 2020/08/02 15:26:49 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.399 2020/08/02 16:06:49 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -336,9 +336,9 @@ VarFind(const char *name, GNode *ctxt, VarFindFlags flags)
      */
     Hash_Entry *var = Hash_FindEntry(&ctxt->context, name);
 
-    if (var == NULL && (flags & FIND_CMD) && ctxt != VAR_CMD) {
+    if (var == NULL && (flags & FIND_CMD) && ctxt != VAR_CMD)
 	var = Hash_FindEntry(&VAR_CMD->context, name);
-    }
+
     if (!checkEnvFirst && var == NULL && (flags & FIND_GLOBAL) &&
 	ctxt != VAR_GLOBAL)
     {
@@ -348,6 +348,7 @@ VarFind(const char *name, GNode *ctxt, VarFindFlags flags)
 	    var = Hash_FindEntry(&VAR_INTERNAL->context, name);
 	}
     }
+
     if (var == NULL && (flags & FIND_ENV)) {
 	char *env;
 
@@ -361,26 +362,25 @@ VarFind(const char *name, GNode *ctxt, VarFindFlags flags)
 
 	    v->flags = VAR_FROM_ENV;
 	    return v;
-	} else if (checkEnvFirst && (flags & FIND_GLOBAL) &&
-		   ctxt != VAR_GLOBAL)
-	{
-	    var = Hash_FindEntry(&VAR_GLOBAL->context, name);
-	    if (var == NULL && ctxt != VAR_INTERNAL) {
-		var = Hash_FindEntry(&VAR_INTERNAL->context, name);
-	    }
-	    if (var == NULL) {
-		return NULL;
-	    } else {
-		return (Var *)Hash_GetValue(var);
-	    }
-	} else {
-	    return NULL;
 	}
-    } else if (var == NULL) {
+
+	if (checkEnvFirst && (flags & FIND_GLOBAL) && ctxt != VAR_GLOBAL) {
+	    var = Hash_FindEntry(&VAR_GLOBAL->context, name);
+	    if (var == NULL && ctxt != VAR_INTERNAL)
+		var = Hash_FindEntry(&VAR_INTERNAL->context, name);
+	    if (var == NULL)
+		return NULL;
+	    else
+		return (Var *)Hash_GetValue(var);
+	}
+
 	return NULL;
-    } else {
-	return (Var *)Hash_GetValue(var);
     }
+
+    if (var == NULL)
+	return NULL;
+    else
+	return (Var *)Hash_GetValue(var);
 }
 
 /*-
