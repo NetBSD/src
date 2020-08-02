@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.73 2020/08/01 02:13:34 riastradh Exp $	*/
+/*	$NetBSD: fpu.c,v 1.74 2020/08/02 18:23:33 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.73 2020/08/01 02:13:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.74 2020/08/02 18:23:33 riastradh Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -107,7 +107,6 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.73 2020/08/01 02:13:34 riastradh Exp $");
 #include <sys/file.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
-#include <sys/kthread.h>
 #include <sys/sysctl.h>
 #include <sys/xcall.h>
 
@@ -132,35 +131,13 @@ void fpu_switch(struct lwp *, struct lwp *);
 
 uint32_t x86_fpu_mxcsr_mask __read_mostly = 0;
 
-/*
- * True if this a thread that is allowed to use the FPU -- either a
- * user thread, or a system thread with LW_SYSTEM_FPU enabled.
- */
-static inline bool
-lwp_can_haz_fpu(struct lwp *l)
-{
-
-	return (l->l_flag & (LW_SYSTEM|LW_SYSTEM_FPU)) != LW_SYSTEM;
-}
-
-/*
- * True if this is a system thread with its own private FPU state.
- */
-static inline bool
-lwp_system_fpu_p(struct lwp *l)
-{
-
-	return (l->l_flag & (LW_SYSTEM|LW_SYSTEM_FPU)) ==
-	    (LW_SYSTEM|LW_SYSTEM_FPU);
-}
-
 static inline union savefpu *
 fpu_lwp_area(struct lwp *l)
 {
 	struct pcb *pcb = lwp_getpcb(l);
 	union savefpu *area = &pcb->pcb_savefpu;
 
-	KASSERT(lwp_can_haz_fpu(l));
+	KASSERT((l->l_flag & LW_SYSTEM) == 0);
 	if (l == curlwp) {
 		fpu_save();
 	}
@@ -178,7 +155,7 @@ fpu_save_lwp(struct lwp *l)
 
 	s = splvm();
 	if (l->l_md.md_flags & MDL_FPU_IN_CPU) {
-		KASSERT(lwp_can_haz_fpu(l));
+		KASSERT((l->l_flag & LW_SYSTEM) == 0);
 		fpu_area_save(area, x86_xsave_features);
 		l->l_md.md_flags &= ~MDL_FPU_IN_CPU;
 	}
@@ -330,7 +307,7 @@ fpu_switch(struct lwp *oldlwp, struct lwp *newlwp)
 	    cpu_index(ci), ci->ci_ilevel);
 
 	if (oldlwp->l_md.md_flags & MDL_FPU_IN_CPU) {
-		KASSERT(lwp_can_haz_fpu(oldlwp));
+		KASSERT(!(oldlwp->l_flag & LW_SYSTEM));
 		pcb = lwp_getpcb(oldlwp);
 		fpu_area_save(&pcb->pcb_savefpu, x86_xsave_features);
 		oldlwp->l_md.md_flags &= ~MDL_FPU_IN_CPU;
@@ -345,11 +322,11 @@ fpu_lwp_fork(struct lwp *l1, struct lwp *l2)
 	union savefpu *fpu_save;
 
 	/* Kernel threads have no FPU. */
-	if (__predict_false(!lwp_can_haz_fpu(l2))) {
+	if (__predict_false(l2->l_flag & LW_SYSTEM)) {
 		return;
 	}
 	/* For init(8). */
-	if (__predict_false(!lwp_can_haz_fpu(l1))) {
+	if (__predict_false(l1->l_flag & LW_SYSTEM)) {
 		memset(&pcb2->pcb_savefpu, 0, x86_fpu_save_size);
 		return;
 	}
@@ -373,8 +350,6 @@ fpu_lwp_abandon(struct lwp *l)
 
 /* -------------------------------------------------------------------------- */
 
-static const union savefpu zero_fpu __aligned(64);
-
 /*
  * fpu_kern_enter()
  *
@@ -393,11 +368,6 @@ fpu_kern_enter(void)
 	struct lwp *l = curlwp;
 	struct cpu_info *ci;
 	int s;
-
-	if (lwp_system_fpu_p(l) && !cpu_intr_p()) {
-		KASSERT(!cpu_softintr_p());
-		return;
-	}
 
 	s = splvm();
 
@@ -431,15 +401,9 @@ fpu_kern_enter(void)
 void
 fpu_kern_leave(void)
 {
-	struct cpu_info *ci;
+	static const union savefpu zero_fpu __aligned(64);
+	struct cpu_info *ci = curcpu();
 	int s;
-
-	if (lwp_system_fpu_p(curlwp) && !cpu_intr_p()) {
-		KASSERT(!cpu_softintr_p());
-		return;
-	}
-
-	ci = curcpu();
 
 	KASSERT(ci->ci_ilevel == IPL_VM);
 	KASSERT(ci->ci_kfpu_spl != -1);
@@ -460,23 +424,6 @@ fpu_kern_leave(void)
 	s = ci->ci_kfpu_spl;
 	ci->ci_kfpu_spl = -1;
 	splx(s);
-}
-
-void
-kthread_fpu_enter_md(void)
-{
-
-	/* Enable the FPU by clearing CR0_TS.  */
-	clts();
-}
-
-void
-kthread_fpu_exit_md(void)
-{
-
-	/* Zero the FPU state and disable the FPU by setting CR0_TS.  */
-	fpu_area_restore(&zero_fpu, x86_xsave_features);
-	stts();
 }
 
 /* -------------------------------------------------------------------------- */
