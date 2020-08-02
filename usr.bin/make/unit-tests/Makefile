@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.80 2020/08/01 18:14:08 rillig Exp $
+# $NetBSD: Makefile,v 1.81 2020/08/02 14:53:02 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -40,6 +40,7 @@ TESTS+=		cond-late
 TESTS+=		cond-short
 TESTS+=		cond1
 TESTS+=		cond2
+TESTS+=		counter
 TESTS+=		dir
 TESTS+=		directives
 TESTS+=		dollar
@@ -91,6 +92,7 @@ ENV.varmisc+=		FROM_ENV_BEFORE=env
 ENV.varmisc+=		FROM_ENV_AFTER=env
 
 # Override make flags for some of the tests; default is -k.
+FLAGS.counter=		-dv
 FLAGS.doterror=		# none
 FLAGS.envfirst=		-e
 FLAGS.export=		-r
@@ -105,6 +107,7 @@ SED_CMDS.varshell+=	-e 's,^[a-z]*sh: ,,'
 SED_CMDS.varshell+=	-e '/command/s,No such.*,not found,'
 
 # Some tests need an additional round of postprocessing.
+POSTPROC.counter=	${TOOL_SED} -n -e '/:RELEVANT = yes/,/:RELEVANT = no/p'
 POSTPROC.vardebug=	${TOOL_SED} -n -e '/:RELEVANT = yes/,/:RELEVANT = no/p'
 
 # End of the configuration section.
