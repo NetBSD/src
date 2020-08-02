@@ -948,7 +948,7 @@ GetModifiedLevel (
     UINT8                   Level,
     UINT16                  MessageId)
 {
-    UINT16                  i;
+    UINT32                  i;
     UINT16                  ExceptionCode;
 
 
