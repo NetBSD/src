@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.388 2020/08/01 21:40:49 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.389 2020/08/02 08:49:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.388 2020/08/01 21:40:49 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.389 2020/08/02 08:49:43 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.388 2020/08/01 21:40:49 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.389 2020/08/02 08:49:43 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1630,7 +1630,7 @@ VarWordCompareReverse(const void *a, const void *b)
  *
  * Input:
  *	str		String whose words should be sorted.
- *	otype		How to order: s - sort, x - random.
+ *	otype		How to order: s - sort, r - reverse, x - random.
  *
  * Results:
  *	A string containing the words ordered.
@@ -1729,17 +1729,17 @@ VarUniq(const char *str)
  * Return the parsed (and possibly expanded) string, or NULL if no delimiter
  * was found.
  *
- * Nested variables in the text are expanded unless VARE_NOSUBST is set.
+ * Nested variables in the text are expanded only if VARE_WANTRES is set.
  *
  * If out_length is specified, store the length of the returned string, just
  * to save another strlen call.
  *
  * If out_pflags is specified and the last character of the pattern is a $,
- * set the VARP_ANCHOR_END bit of mpflags (for the first part of the :S
- * modifier).
+ * set the VARP_ANCHOR_END bit of out_pflags (used for the first part of the
+ * :S modifier).
  *
  * If subst is specified, handle escaped ampersands and replace unescaped
- * ampersands with the lhs of the pattern (for the second part of the :S
+ * ampersands with the lhs of the pattern (used for the second part of the :S
  * modifier).
  */
 static char *
