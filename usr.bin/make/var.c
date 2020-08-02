@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.402 2020/08/02 18:57:55 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.403 2020/08/02 19:08:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.402 2020/08/02 18:57:55 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.403 2020/08/02 19:08:54 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.402 2020/08/02 18:57:55 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.403 2020/08/02 19:08:54 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1572,13 +1572,29 @@ VarWordCompareReverse(const void *a, const void *b)
     return strcmp(*(const char * const *)b, *(const char * const *)a);
 }
 
+static char *
+WordList_JoinFree(char **av, int ac, char *as)
+{
+    Buffer buf;
+    Buf_InitZ(&buf, 0);
+
+    int i;
+    for (i = 0; i < ac; i++) {
+	if (i != 0)
+	    Buf_AddByte(&buf, ' ');
+	Buf_AddStr(&buf, av[i]);
+    }
+
+    free(av);
+    free(as);
+
+    return Buf_Destroy(&buf, FALSE);
+}
+
 /* Remove adjacent duplicate words. */
 static char *
 VarUniq(const char *str)
 {
-    Buffer buf;			/* Buffer for new string */
-    Buf_InitZ(&buf, 0);
-
     char *as;			/* Word list memory */
     int ac;
     char **av = brk_string(str, &ac, FALSE, &as);
@@ -1591,17 +1607,7 @@ VarUniq(const char *str)
 	ac = j + 1;
     }
 
-    int i;
-    for (i = 0; i < ac; i++) {
-	if (i != 0)
-	    Buf_AddByte(&buf, ' ');
-	Buf_AddStr(&buf, av[i]);
-    }
-
-    free(as);
-    free(av);
-
-    return Buf_Destroy(&buf, FALSE);
+    return WordList_JoinFree(av, ac, as);
 }
 
 
@@ -2601,20 +2607,7 @@ ApplyModifier_Order(const char *mod, ApplyModifiersState *st)
 	return AMR_BAD;
     }
 
-    Buffer buf;
-    Buf_InitZ(&buf, 0);
-
-    int i;
-    for (i = 0; i < ac; i++) {
-	if (i != 0)
-	    Buf_AddByte(&buf, ' ');
-	Buf_AddStr(&buf, av[i]);
-    }
-
-    free(as);
-    free(av);
-
-    st->newVal = Buf_Destroy(&buf, FALSE);
+    st->newVal = WordList_JoinFree(av, ac, as);
     return AMR_OK;
 }
 
