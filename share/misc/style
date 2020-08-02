@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.56 2020/08/01 02:45:35 lukem Exp $ */
+/* $NetBSD: style,v 1.57 2020/08/02 00:20:21 lukem Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: style,v 1.56 2020/08/01 02:45:35 lukem Exp $");
+__RCSID("$NetBSD: style,v 1.57 2020/08/02 00:20:21 lukem Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -241,9 +241,8 @@ main(int argc, char *argv[])
 			errno = 0;
 			num = strtol(optarg, &ep, 10);
 			if (num <= 0 || *ep != '\0' || (errno == ERANGE &&
-			    (num == LONG_MAX || num == LONG_MIN)) ) {
+			    (num == LONG_MAX || num == LONG_MIN)) )
 				errx(1, "illegal number -- %s", optarg);
-			}
 			break;
 		case '?':
 		default:
@@ -255,18 +254,16 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	/*
-	 * Space after keywords (while, for, return, switch).
-	 * Braces are preferred for control statements
-	 * with only a single statement.
+	 * Space after keywords (while, for, return, switch).  No braces are
+	 * required for control statements with only a single statement,
+	 * unless it's a long statement.
 	 *
 	 * Forever loops are done with for's, not while's.
 	 */
-	for (p = buf; *p != '\0'; ++p) {
+	for (p = buf; *p != '\0'; ++p)
 		continue;		/* Explicit no-op */
-	}
-	for (;;) {
+	for (;;)
 		stmt;
-	}
 
 	/*
 	 * Braces are required for control statements with a single statement
@@ -291,14 +288,15 @@ main(int argc, char *argv[])
 	}
 
 	/* Second level indents are four spaces. */
-	while (cnt < 20) {
+	while (cnt < 20)
 		z = a + really + long + statement + that + needs + two + lines +
 		    gets + indented + four + spaces + on + the + second +
 		    and + subsequent + lines;
-	}
 
 	/*
 	 * Closing and opening braces go on the same line as the else.
+	 * Don't add braces that aren't necessary except in cases where
+	 * there are ambiguity or readability issues.
 	 */
 	if (test) {
 		/*
@@ -312,14 +310,12 @@ main(int argc, char *argv[])
 	} else if (bar) {
 		stmt;
 		stmt;
-	} else {
+	} else
 		stmt;
-	}
 
 	/* No spaces after function names. */
-	if ((result = function(a1, a2, a3, a4)) == NULL) {
+	if ((result = function(a1, a2, a3, a4)) == NULL)
 		exit(1);
-	}
 
 	/*
 	 * Unary operators don't require spaces, binary operators do.
@@ -397,12 +393,10 @@ function(int a1, int a2, float fl, int a4)
 	 *
 	 * Use err/warn(3), don't roll your own!
 	 */
-	if ((four = malloc(sizeof(*four))) == NULL) {
+	if ((four = malloc(sizeof(*four))) == NULL)
 		err(1, NULL);
-	}
-	if ((six = (int *)overflow()) == NULL) {
+	if ((six = (int *)overflow()) == NULL)
 		errx(1, "Number overflowed.");
-	}
 
 	/* No parentheses are needed around the return value. */
 	return eight;
@@ -426,9 +420,8 @@ dirinfo(const char *p, struct stat *sb, struct dirent *de, struct statfs *sf,
 	_DIAGASSERT(p != NULL);
 	_DIAGASSERT(filedesc != -1);
 
-	if (stat(p, sb) < 0) {
+	if (stat(p, sb) < 0)
 		err(1, "Unable to stat %s", p);
-	}
 
 	/*
 	 * To printf quantities that might be larger than "long", include
