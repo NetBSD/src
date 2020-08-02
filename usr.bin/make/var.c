@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.391 2020/08/02 09:36:54 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.392 2020/08/02 09:43:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.391 2020/08/02 09:36:54 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.392 2020/08/02 09:43:22 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.391 2020/08/02 09:36:54 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.392 2020/08/02 09:43:22 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1731,7 +1731,7 @@ VarUniq(const char *str)
  */
 static char *
 ParseModifierPart(
-    const char **tstr,		/* The parsing position, updated upon return */
+    const char **pp,		/* The parsing position, updated upon return */
     int delim,			/* Parsing stops at this delimiter */
     VarEvalFlags eflags,	/* Flags for evaluating nested variables;
 				 * if VARE_WANTRES is not set, the text is
@@ -1746,7 +1746,6 @@ ParseModifierPart(
 				 * allow ampersands to be escaped and replace
 				 * unescaped ampersands with subst->lhs. */
 ) {
-    const char *cp;
     char *rstr;
     Buffer buf;
     VarEvalFlags errnum = eflags & VARE_UNDEFERR;
@@ -1759,29 +1758,30 @@ ParseModifierPart(
      * backslashes to quote the delimiter, $, and \, but don't
      * touch other backslashes.
      */
-    for (cp = *tstr; *cp != '\0' && *cp != delim; cp++) {
-	Boolean is_escaped = cp[0] == '\\' && (
-	    cp[1] == delim || cp[1] == '\\' || cp[1] == '$' ||
-	    (cp[1] == '&' && subst != NULL));
+    const char *p;
+    for (p = *pp; *p != '\0' && *p != delim; p++) {
+	Boolean is_escaped = p[0] == '\\' && (
+	    p[1] == delim || p[1] == '\\' || p[1] == '$' ||
+	    (p[1] == '&' && subst != NULL));
 	if (is_escaped) {
-	    Buf_AddByte(&buf, cp[1]);
-	    cp++;
+	    Buf_AddByte(&buf, p[1]);
+	    p++;
 	    continue;
 	}
 
-	if (*cp != '$') {	/* Unescaped, simple text */
-	    if (subst != NULL && *cp == '&')
+	if (*p != '$') {	/* Unescaped, simple text */
+	    if (subst != NULL && *p == '&')
 		Buf_AddBytesZ(&buf, subst->lhs, subst->lhsLen);
 	    else
-		Buf_AddByte(&buf, *cp);
+		Buf_AddByte(&buf, *p);
 	    continue;
 	}
 
-	if (cp[1] == delim) {	/* Unescaped $ at end of pattern */
+	if (p[1] == delim) {	/* Unescaped $ at end of pattern */
 	    if (out_pflags != NULL)
 		*out_pflags |= VARP_ANCHOR_END;
 	    else
-		Buf_AddByte(&buf, *cp);
+		Buf_AddByte(&buf, *p);
 	    continue;
 	}
 
@@ -1790,15 +1790,15 @@ ParseModifierPart(
 	    int     len;
 	    void   *freeIt;
 
-	    cp2 = Var_Parse(cp, ctxt, errnum | (eflags & VARE_WANTRES),
+	    cp2 = Var_Parse(p, ctxt, errnum | (eflags & VARE_WANTRES),
 			    &len, &freeIt);
 	    Buf_AddStr(&buf, cp2);
 	    free(freeIt);
-	    cp += len - 1;
+	    p += len - 1;
 	    continue;
 	}
 
-	const char *cp2 = &cp[1];	/* Nested variable, only parsed */
+	const char *cp2 = &p[1];	/* Nested variable, only parsed */
 	if (*cp2 == PROPEN || *cp2 == BROPEN) {
 	    /*
 	     * Find the end of this variable reference
@@ -1817,18 +1817,18 @@ ParseModifierPart(
 			--depth;
 		}
 	    }
-	    Buf_AddBytesBetween(&buf, cp, cp2);
-	    cp = --cp2;
+	    Buf_AddBytesBetween(&buf, p, cp2);
+	    p = --cp2;
 	} else
-	    Buf_AddByte(&buf, *cp);
+	    Buf_AddByte(&buf, *p);
     }
 
-    if (*cp != delim) {
-	*tstr = cp;
+    if (*p != delim) {
+	*pp = p;
 	return NULL;
     }
 
-    *tstr = ++cp;
+    *pp = ++p;
     if (out_length != NULL)
 	*out_length = Buf_Size(&buf);
     rstr = Buf_Destroy(&buf, FALSE);
