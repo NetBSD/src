@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.394 2020/08/02 10:01:50 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.395 2020/08/02 10:47:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.394 2020/08/02 10:01:50 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.395 2020/08/02 10:47:09 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.394 2020/08/02 10:01:50 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.395 2020/08/02 10:47:09 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1748,7 +1748,6 @@ ParseModifierPart(
 ) {
     char *rstr;
     Buffer buf;
-    VarEvalFlags errnum = eflags & VARE_UNDEFERR;
 
     Buf_InitZ(&buf, 0);
 
@@ -1792,8 +1791,7 @@ ParseModifierPart(
 	    int     len;
 	    void   *freeIt;
 
-	    cp2 = Var_Parse(p, ctxt, errnum | (eflags & VARE_WANTRES),
-			    &len, &freeIt);
+	    cp2 = Var_Parse(p, ctxt, eflags & ~VARE_ASSIGN, &len, &freeIt);
 	    Buf_AddStr(&buf, cp2);
 	    free(freeIt);
 	    p += len;
