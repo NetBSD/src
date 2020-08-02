@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.23 2020/07/20 19:02:43 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.24 2020/08/02 09:15:57 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -356,4 +356,17 @@ sys/arch/x86/x86/procfs_machdep.c		1.37,1.38
 
 	Add AMD protected processor identification number (ppin).
 	[msaitoh, ticket #1581]
+
+xsrc/external/mit/xorg-server.old/dist/dix/pixmap.c	1.2
+xsrc/external/mit/xorg-server/dist/dix/pixmap.c	1.2
+
+	Fix for ZDI-11426:
+	Avoid leaking un-initalized memory to clients by zeroing the
+	whole pixmap on initial allocation.
+	[maya, ticket #1582]
+
+usr.bin/w/w.c					1.88-1.90
+
+	Handle hostname from DISPLAY="[2001:db8::dead:beef]:0" or similar.
+	[kim, ticket #1583]
 
