@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.399 2020/08/02 16:06:49 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.400 2020/08/02 17:10:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.399 2020/08/02 16:06:49 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.400 2020/08/02 17:10:54 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.399 2020/08/02 16:06:49 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.400 2020/08/02 17:10:54 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -393,10 +393,7 @@ VarFind(const char *name, GNode *ctxt, VarFindFlags flags)
  *	destroy		true if the value buffer should be destroyed.
  *
  * Results:
- *	1 if it is an environment variable 0 ow.
- *
- * Side Effects:
- *	The variable is free'ed if it is an environent variable.
+ *	TRUE if it is an environment variable, FALSE otherwise.
  *-----------------------------------------------------------------------
  */
 static Boolean
@@ -410,22 +407,8 @@ VarFreeEnv(Var *v, Boolean destroy)
     return TRUE;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * VarAdd  --
- *	Add a new variable of name name and value val to the given context
- *
- * Input:
- *	name		name of variable to add
- *	val		value to set it to
- *	ctxt		context in which to set it
- *
- * Side Effects:
- *	The new variable is placed at the front of the given context
- *	The name and val arguments are duplicated so they may
- *	safely be freed.
- *-----------------------------------------------------------------------
- */
+/* Add a new variable of the given name and value to the given context.
+ * The name and val arguments are duplicated so they may safely be freed. */
 static void
 VarAdd(const char *name, const char *val, GNode *ctxt)
 {
@@ -445,16 +428,7 @@ VarAdd(const char *name, const char *val, GNode *ctxt)
     }
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Var_Delete --
- *	Remove a variable from a context.
- *
- * Side Effects:
- *	The Var structure is removed and freed.
- *
- *-----------------------------------------------------------------------
- */
+/* Remove a variable from a context, freeing the Var structure as well. */
 void
 Var_Delete(const char *name, GNode *ctxt)
 {
@@ -484,7 +458,7 @@ Var_Delete(const char *name, GNode *ctxt)
 
 
 /*
- * Export a var.
+ * Export a variable.
  * We ignore make internal variables (those which start with '.')
  * Also we jump through some hoops to avoid calling setenv
  * more than necessary since it can leak.
@@ -611,9 +585,8 @@ Var_ExportVars(void)
 }
 
 /*
- * This is called when .export is seen or
- * .MAKE.EXPORTED is modified.
- * It is also called when any exported var is modified.
+ * This is called when .export is seen or .MAKE.EXPORTED is modified.
+ * It is also called when any exported variable is modified.
  */
 void
 Var_Export(char *str, int isExport)
@@ -770,6 +743,7 @@ Var_UnExport(char *str)
     }
 }
 
+/* See Var_Set for documentation. */
 static void
 Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
 		   VarSet_Flags flags)
@@ -795,6 +769,7 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
 	    return;
 	}
     }
+
     if (ctxt == VAR_GLOBAL) {
 	v = VarFind(name, VAR_CMD, 0);
 	if (v != NULL) {
@@ -807,6 +782,7 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
 	    VarFreeEnv(v, TRUE);
 	}
     }
+
     v = VarFind(name, ctxt, 0);
     if (v == NULL) {
 	if (ctxt == VAR_CMD && !(flags & VAR_NO_EXPORT)) {
@@ -872,8 +848,8 @@ out:
  *	ctxt		context in which to set it
  *
  * Side Effects:
- *	If the variable doesn't yet exist, a new record is created for it.
- *	Else the old value is freed and the new one stuck in its place
+ *	If the variable doesn't yet exist, it is created.
+ *	Otherwise the new value overwrites and replaces the old value.
  *
  * Notes:
  *	The variable is searched for only in its context before being
@@ -900,12 +876,12 @@ Var_Set(const char *name, const char *val, GNode *ctxt)
  *
  * Input:
  *	name		name of variable to modify
- *	val		String to append to it
- *	ctxt		Context in which this should occur
+ *	val		string to append to it
+ *	ctxt		context in which this should occur
  *
  * Side Effects:
- *	If the variable doesn't exist, it is created. Else the strings
- *	are concatenated (with a space in between).
+ *	If the variable doesn't exist, it is created. Otherwise the strings
+ *	are concatenated, with a space in between.
  *
  * Notes:
  *	Only if the variable is being sought in the global context is the
@@ -1327,16 +1303,7 @@ nosub:
 }
 
 #ifndef NO_REGEX
-/*-
- *-----------------------------------------------------------------------
- * VarREError --
- *	Print the error caused by a regcomp or regexec call.
- *
- * Side Effects:
- *	An error gets printed.
- *
- *-----------------------------------------------------------------------
- */
+/* Print the error caused by a regcomp or regexec call. */
 static void
 VarREError(int reerr, regex_t *pat, const char *str)
 {
@@ -1503,10 +1470,9 @@ VarSelectWords(Byte sep, Boolean oneBigWord, const char *str, int first,
     }
 
     /*
-     * Now sanitize seldata.
-     * If seldata->start or seldata->end are negative, convert them to
-     * the positive equivalents (-1 gets converted to argc, -2 gets
-     * converted to (argc-1), etc.).
+     * Now sanitize the given range.
+     * If first or last are negative, convert them to the positive equivalents
+     * (-1 gets converted to ac, -2 gets converted to (ac - 1), etc.).
      */
     if (first < 0)
 	first += ac + 1;
@@ -1629,10 +1595,6 @@ VarWordCompareReverse(const void *a, const void *b)
  *
  * Results:
  *	A string containing the words ordered.
- *
- * Side Effects:
- *	None.
- *
  *-----------------------------------------------------------------------
  */
 static char *
@@ -1742,7 +1704,6 @@ ParseModifierPart(
 				 * unescaped ampersands with subst->lhs. */
 ) {
     Buffer buf;
-
     Buf_InitZ(&buf, 0);
 
     /*
@@ -1883,23 +1844,8 @@ VarQuote(char *str, Boolean quoteDollar)
     return str;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * VarHash --
- *      Hash the string using the MurmurHash3 algorithm.
- *      Output is computed using 32bit Little Endian arithmetic.
- *
- * Input:
- *	str		String to modify
- *
- * Results:
- *      Hash value of str, encoded as 8 hex digits.
- *
- * Side Effects:
- *      None.
- *
- *-----------------------------------------------------------------------
- */
+/* Compute the 32-bit hash of the given string, using the MurmurHash3
+ * algorithm. Output is encoded as 8 hex digits, in Little Endian order. */
 static char *
 VarHash(const char *str)
 {
@@ -1996,8 +1942,8 @@ typedef struct {
 				 * after the current modifier. */
     char missing_delim;		/* For error reporting */
 
-    Byte	sep;		/* Word separator in expansions */
-    Boolean	oneBigWord;	/* TRUE if we will treat the variable as a
+    Byte sep;			/* Word separator in expansions */
+    Boolean oneBigWord;		/* TRUE if the variable value is treated as a
 				 * single big word, even if it contains
 				 * embedded spaces (as opposed to the
 				 * usual behaviour of treating it as
@@ -2007,13 +1953,13 @@ typedef struct {
 
 typedef enum {
     AMR_OK,			/* Continue parsing */
-    AMR_UNKNOWN,		/* Not a match, try others as well */
-    AMR_BAD,			/* Error out with message */
-    AMR_CLEANUP			/* Error out with "missing delimiter",
+    AMR_UNKNOWN,		/* Not a match, try other modifiers as well */
+    AMR_BAD,			/* Error out with "Bad modifier" message */
+    AMR_CLEANUP			/* Error out, with "Unclosed substitution"
 				 * if st->missing_delim is set. */
 } ApplyModifierResult;
 
-/* we now have some modifiers with long names */
+/* Test whether mod starts with modname, followed by a delimiter. */
 static Boolean
 ModMatch(const char *mod, const char *modname, char endc)
 {
@@ -2022,6 +1968,7 @@ ModMatch(const char *mod, const char *modname, char endc)
 	   (mod[n] == endc || mod[n] == ':');
 }
 
+/* Test whether mod starts with modname, followed by a delimiter or '='. */
 static inline Boolean
 ModMatchEq(const char *mod, const char *modname, char endc)
 {
@@ -3648,7 +3595,8 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
  *	The resulting string.
  *
  * Side Effects:
- *	None.
+ *	Any effects from the modifiers, such as ::=, :sh or !cmd!,
+ *	if eflags contains VARE_WANTRES.
  *-----------------------------------------------------------------------
  */
 char *
@@ -3725,16 +3673,8 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags)
 		    str += 1;
 		}
 	    } else {
-		/*
-		 * We've now got a variable structure to store in. But first,
-		 * advance the string pointer.
-		 */
 		str += length;
 
-		/*
-		 * Copy all the characters from the variable value straight
-		 * into the new string.
-		 */
 		size_t val_len = strlen(val);
 		Buf_AddBytesZ(&buf, val, val_len);
 		trailingBslash = val_len > 0 && val[val_len - 1] == '\\';
@@ -3778,12 +3718,7 @@ VarPrintVar(void *vp, void *data MAKE_ATTR_UNUSED)
     fprintf(debug_file, "%-16s = %s\n", v->name, Buf_GetAllZ(&v->val, NULL));
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Var_Dump --
- *	print all variables in a context
- *-----------------------------------------------------------------------
- */
+/* Print all variables in a context, unordered. */
 void
 Var_Dump(GNode *ctxt)
 {
