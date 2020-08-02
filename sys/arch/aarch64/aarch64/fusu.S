@@ -1,4 +1,4 @@
-/*	$NetBSD: fusu.S,v 1.6 2019/04/06 03:06:24 thorpej Exp $	*/
+/*	$NetBSD: fusu.S,v 1.7 2020/08/02 06:58:16 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019 The NetBSD Foundation, Inc.
@@ -32,7 +32,27 @@
 #include <aarch64/asm.h>
 #include "assym.h"
 
-RCSID("$NetBSD: fusu.S,v 1.6 2019/04/06 03:06:24 thorpej Exp $");
+RCSID("$NetBSD: fusu.S,v 1.7 2020/08/02 06:58:16 maxv Exp $");
+
+#ifdef ARMV81_PAN
+#define PAN_ENABLE	\
+	adrl	x9, _C_LABEL(aarch64_pan_enabled)	; \
+	ldr	w9, [x9]				; \
+	cbz	w9, 666f				; \
+	msr	pan, #1					; \
+666:
+#define PAN_DISABLE	\
+	adrl	x9, _C_LABEL(aarch64_pan_enabled)	; \
+	ldr	w9, [x9]				; \
+	cbz	w9, 666f				; \
+	msr	pan, #0					; \
+666:
+#else
+#define PAN_ENABLE	/* nothing */
+#define PAN_DISABLE	/* nothing */
+#endif
+
+	ARMV8_DEFINE_OPTIONS
 
 	.macro enter_cpu_onfault
 	stp	fp, lr, [sp, #-16]!	/* save fp, lr */
@@ -47,6 +67,8 @@ RCSID("$NetBSD: fusu.S,v 1.6 2019/04/06 03:06:24 thorpej Exp $");
 	mov	x0, sp			/* x0 = faultbuf */
 	bl	cpu_set_onfault		/* x0 = cpu_set_onfault() */
 	cbnz	x0, 9f			/* return if error */
+
+	PAN_DISABLE			/* disable PAN */
 	.endm
 
 	.macro exit_cpu_onfault
@@ -55,6 +77,7 @@ RCSID("$NetBSD: fusu.S,v 1.6 2019/04/06 03:06:24 thorpej Exp $");
 	ldr	x1, [x1, #CI_CURLWP]		/* x1 = curlwp */
 	str	xzr, [x1, #L_MD_ONFAULT]	/* lwp->l_md_onfault = NULL */
 9:
+	PAN_ENABLE				/* enable PAN */
 	add	sp, sp, #FB_T_SIZE		/* pop stack */
 	ldp	x19, x20, [sp], #16		/* restore x19, x20 */
 	ldp	fp, lr, [sp], #16		/* restore fp, lr */

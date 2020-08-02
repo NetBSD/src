@@ -1,4 +1,4 @@
-/* $NetBSD: asm.h,v 1.8 2020/05/11 03:00:57 ryo Exp $ */
+/* $NetBSD: asm.h,v 1.9 2020/08/02 06:58:16 maxv Exp $ */
 
 #ifndef _AARCH64_ASM_H_
 #define _AARCH64_ASM_H_
@@ -33,12 +33,16 @@
  * ARMv8 options to be made available for the compiler to use. Should be
  * inserted at the beginning of the ASM files that need them.
  *
- * For now the only option is PAC, needed for the compiler to recognize
- * the key registers.
+ * The options are:
+ *  - PAN, needed for the compiler to recognize the PAN register.
+ *  - PAC, needed for the compiler to recognize the key registers.
  */
 #ifdef ARMV83_PAC
 #define ARMV8_DEFINE_OPTIONS	\
 	.arch armv8.3-a
+#elif defined(ARMV81_PAN)
+#define ARMV8_DEFINE_OPTIONS	\
+	.arch armv8.1-a
 #else
 #define ARMV8_DEFINE_OPTIONS	/* nothing */
 #endif
