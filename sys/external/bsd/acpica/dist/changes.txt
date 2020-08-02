@@ -1,8 +1,108 @@
 ----------------------------------------
 
 
-30 April 2020. Summary of changes for version 20200430:
+17 July 2020. Summary of changes for version 20200717:
 
+This release is available at https://acpica.org/downloads
+
+
+1) ACPICA kernel-resident subsystem:
+
+Do not increment OperationRegion reference counts for field units. Recent 
+server firmware has revealed that this reference count can overflow on 
+large servers that declare many field units (thousands) under the same 
+OperationRegion. This occurs because each field unit declaration will add 
+a reference count to the source OperationRegion. This release solves the 
+reference count overflow for OperationRegion objects by preventing 
+fieldUnits from incrementing their parent OperationRegion's reference 
+count.
+
+Replaced one-element arrays with flexible-arrays, which were introduced 
+in C99.
+
+Restored the readme file containing the directions for generation of 
+ACPICA from source on MSVC 2017. Updated the file for MSVC 2017. File is 
+located at: generate/msvc2017/readme.txt
+
+2) iASL Compiler/Disassembler and ACPICA tools: 
+
+iASL: Fixed a regression found in version 20200214. Prevent iASL from 
+emitting an extra byte of garbage data when control methods declared a 
+single parameter type without using braces. This extra byte is known to 
+cause a blue screen on the Windows AML interpreter.
+
+iASL: Made a change to allow external declarations to specify the type of 
+a named object even when some name segments are not defined.
+This change allows the following ASL code to compile (When DEV0 is not 
+defined or not defined yet):
+
+    External (\_SB.DEV0.OBJ1, IntObj)
+    External (\_SB.DEV0, DeviceObj)
+
+iASL: Fixed a problem where method names in "Alias ()" statement could be 
+misinterpreted. They are now interpreted correctly as method invocations.
+
+iASL: capture a method parameter count (Within the Method info segment, 
+as well as the argument node) when using parameter type lists.
+
+----------------------------------------
+
+
+28 May 2020. Summary of changes for version 20200528:
+
+
+1) ACPICA kernel-resident subsystem:
+
+Removed old/obsolete Visual Studio files which were used to build the 
+Windows versions of the ACPICA tools. Since we have moved to Visual 
+Studio 2017, we are no longer supporting Visual Studio 2006 and 2009 
+project files. The new subdirectory and solution file are located at:
+
+    acpica/generate/msvc2017/AcpiComponents.sln
+
+
+2) iASL Compiler/Disassembler and ACPICA tools: 
+
+iASL: added support for a new OperationRegion Address Space (subtype): 
+PlatformRtMechanism. Support for this new keyword is being released for 
+early prototyping. It will appear in the next release of the ACPI 
+specification.
+
+iASL: do not optimize the NameString parameter of the CondRefOf operator. 
+In the previous iASL compiler release, the NameString parameter of the 
+CondRefOf was optimized. There is evidence that some implementations of 
+the AML interpreter do not perform the recursive search-to-parent search 
+during the execution of the CondRefOf operator. Therefore, the CondRefOf 
+operator behaves differently when the NameString parameter is a single 
+name segment (a NameSeg) as opposed to a full NamePath (starting at the 
+root scope) or a NameString containing parent prefixes.
+
+iASL: Prevent an inadvertent remark message. This change prevents a 
+remark if within a control method the following exist:
+1) An Operation Region is defined, and
+2) A Field operator is defined that refers to the region.
+This happens because at the top level, the Field operator does not 
+actually create a new named object, it simply references the operation 
+region.
+
+Removed support for the acpinames utility. The acpinames was a simple 
+utility used to populate and display the ACPI namespace without executing 
+any AML code. However, ACPICA now supports executable opcodes outside of 
+control methods. This means that executable AML opcodes such as If and 
+Store opcodes need to be executed during table load. Therefore, acpinames 
+would need to be updated to match the same behavior as the acpiexec 
+utility and since acpiexec can already dump the entire namespace (via the 
+'namespace' command), we no longer have the need to maintain acpinames.
+
+    In order to dump the contents of the ACPI namepsace using acpiexec, 
+execute the following command from the command line:
+
+        acpiexec -b "n" [aml files]
+
+----------------------------------------
+
+
+30 April 2020. Summary of changes for version 20200430:
 
 1) ACPICA kernel-resident subsystem:
 
