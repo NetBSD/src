@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.389 2020/08/02 08:49:43 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.390 2020/08/02 09:06:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.389 2020/08/02 08:49:43 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.390 2020/08/02 09:06:32 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.389 2020/08/02 08:49:43 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.390 2020/08/02 09:06:32 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1728,25 +1728,24 @@ VarUniq(const char *str)
  *
  * Return the parsed (and possibly expanded) string, or NULL if no delimiter
  * was found.
- *
- * Nested variables in the text are expanded only if VARE_WANTRES is set.
- *
- * If out_length is specified, store the length of the returned string, just
- * to save another strlen call.
- *
- * If out_pflags is specified and the last character of the pattern is a $,
- * set the VARP_ANCHOR_END bit of out_pflags (used for the first part of the
- * :S modifier).
- *
- * If subst is specified, handle escaped ampersands and replace unescaped
- * ampersands with the lhs of the pattern (used for the second part of the :S
- * modifier).
  */
 static char *
-ParseModifierPart(const char **tstr, int delim, VarEvalFlags eflags,
-		  GNode *ctxt, size_t *out_length,
-		  VarPatternFlags *out_pflags, ModifyWord_SubstArgs *subst)
-{
+ParseModifierPart(
+    const char **tstr,		/* The parsing position, updated upon return */
+    int delim,			/* Parsing stops at this delimiter */
+    VarEvalFlags eflags,	/* Flags for evaluating nested variables;
+				 * if VARE_WANTRES is not set, the text is
+				 * only parsed */
+    GNode *ctxt,		/* For looking up nested variables */
+    size_t *out_length,		/* Optionally stores the length of the returned
+				 * string, just to save another strlen call. */
+    VarPatternFlags *out_pflags,/* For the first part of the :S modifier,
+				 * sets the VARP_ANCHOR_END flag if the last
+				 * character of the pattern is a $. */
+    ModifyWord_SubstArgs *subst	/* For the second part of the :S modifier,
+				 * allow ampersands to be escaped and replace
+				 * unescaped ampersands with subst->lhs. */
+) {
     const char *cp;
     char *rstr;
     Buffer buf;
