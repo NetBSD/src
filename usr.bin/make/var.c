@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.404 2020/08/02 19:11:57 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.405 2020/08/02 19:49:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.404 2020/08/02 19:11:57 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.405 2020/08/02 19:49:17 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.404 2020/08/02 19:11:57 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.405 2020/08/02 19:49:17 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1815,14 +1815,14 @@ VarHash(const char *str)
     h *= 0xc2b2ae35;
     h ^= h >> 16;
 
-    Buffer buf;
-    Buf_InitZ(&buf, 0);
-    for (len = 0; len < 8; ++len) {
-	Buf_AddByte(&buf, hexdigits[h & 15]);
+    char *buf = bmake_malloc(9);
+    size_t i;
+    for (i = 0; i < 8; i++) {
+	buf[i] = hexdigits[h & 0x0f];
 	h >>= 4;
     }
-
-    return Buf_Destroy(&buf, FALSE);
+    buf[8] = '\0';
+    return buf;
 }
 
 static char *
