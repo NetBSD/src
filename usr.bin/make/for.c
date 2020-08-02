@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.59 2020/08/01 21:40:49 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.60 2020/08/02 08:10:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.59 2020/08/01 21:40:49 rillig Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.60 2020/08/02 08:10:36 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.59 2020/08/01 21:40:49 rillig Exp $");
+__RCSID("$NetBSD: for.c,v 1.60 2020/08/02 08:10:36 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -311,19 +311,6 @@ For_Accum(char *line)
 }
 
 
-/*-
- *-----------------------------------------------------------------------
- * For_Run --
- *	Run the for loop, imitating the actions of an include file
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	None.
- *
- *-----------------------------------------------------------------------
- */
 
 static size_t
 for_var_len(const char *var)
@@ -477,6 +464,7 @@ For_Iterate(void *v_arg, size_t *ret_len)
     return cp;
 }
 
+/* Run the for loop, imitating the actions of an include file. */
 void
 For_Run(int lineno)
 {
