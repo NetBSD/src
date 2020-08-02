@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.84 2020/07/26 11:09:19 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.85 2020/08/02 07:49:46 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -3556,4 +3556,10 @@ distrib/notes/evbarm/hardware			1.15
 	Fix location of device trees.
 	Add more supported hardware.
 	[nia, ticket #1030]
+
+sys/arch/x86/x86/cpu.c			patch
+
+	Fix a panic on a CPU which has no rdtsc instruction. This bug was
+	added in ticket #1015.
+	[msaitoh, ticket #1031]
 
