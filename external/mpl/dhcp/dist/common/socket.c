@@ -1,11 +1,11 @@
-/*	$NetBSD: socket.c,v 1.3 2020/05/15 12:31:03 manu Exp $	*/
+/*	$NetBSD: socket.c,v 1.4 2020/08/03 21:10:56 christos Exp $	*/
 
 /* socket.c
 
    BSD socket interface code... */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2020 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: socket.c,v 1.3 2020/05/15 12:31:03 manu Exp $");
+__RCSID("$NetBSD: socket.c,v 1.4 2020/08/03 21:10:56 christos Exp $");
 
 /* SO_BINDTODEVICE support added by Elliot Poger (poger@leland.stanford.edu).
  * This sockopt allows a socket to be bound to a particular interface,
@@ -216,7 +216,7 @@ if_register_socket(struct interface_info *info, int family,
 	/* Make a socket... */
 	sock = socket(domain, SOCK_DGRAM, IPPROTO_UDP);
 	if (sock < 0) {
-		log_fatal("Can't create dhcp socket: %m");
+		log_fatal("Can't create dhcp socket for %s: %m", info->name);
 	}
 
 	/* Set the REUSEADDR option so that we don't fail to start if
@@ -224,7 +224,8 @@ if_register_socket(struct interface_info *info, int family,
 	flag = 1;
 	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
 			(char *)&flag, sizeof(flag)) < 0) {
-		log_fatal("Can't set SO_REUSEADDR option on dhcp socket: %m");
+		log_fatal("Can't set SO_REUSEADDR on dhcp socket for"
+			  " %s: %m", info->name);
 	}
 
 	/* Set the BROADCAST option so that we can broadcast DHCP responses.
@@ -233,7 +234,8 @@ if_register_socket(struct interface_info *info, int family,
 	if (info->ifp &&
 	    (setsockopt(sock, SOL_SOCKET, SO_BROADCAST,
 			 (char *)&flag, sizeof(flag)) < 0)) {
-		log_fatal("Can't set SO_BROADCAST option on dhcp socket: %m");
+		log_fatal("Can't set SO_BROADCAST on dhcp socket for"
+			  " %s: %m", info->name);
 	}
 
 #if defined(DHCPv6) && defined(SO_REUSEPORT)
@@ -251,8 +253,8 @@ if_register_socket(struct interface_info *info, int family,
 		if ((setsockopt(sock, SOL_SOCKET, SO_REUSEPORT,
 			        (char *)&flag, sizeof(flag)) < 0) &&
 		    (errno != ENOPROTOOPT)) {
-			log_fatal("Can't set SO_REUSEPORT option on dhcp "
-				  "socket: %m");
+			log_fatal("Can't set SO_REUSEPORT on dhcp socket for"
+				  " %s: %m", info->name);
 		}
 	}
 #endif
@@ -271,8 +273,9 @@ if_register_socket(struct interface_info *info, int family,
 	/* Bind this socket to this interface. */
 	if ((local_family != AF_INET6) && (info->ifp != NULL) &&
 	    setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE,
-			(char *)(info -> ifp), sizeof(*(info -> ifp))) < 0) {
-		log_fatal("setsockopt: SO_BINDTODEVICE: %m");
+		       (char *)(info -> ifp), sizeof(*(info -> ifp))) < 0) {
+		log_fatal("Can't set SO_BINDTODEVICE on dhcp socket for"
+			  " %s : %m", (char *)(info->ifp));
 	}
 #endif
 
@@ -287,7 +290,8 @@ if_register_socket(struct interface_info *info, int family,
         if (info->address_count &&
 	    setsockopt(sock, IPPROTO_IP, IP_BROADCAST_IF, &info->addresses[0],
 		       sizeof(info->addresses[0])) < 0)
-		log_fatal("Can't set IP_BROADCAST_IF on dhcp socket: %m");
+		log_fatal("Can't set IP_BROADCAST_IF on dhcp socket for"
+			  " %s: %m", info->name);
 #endif
 
 #if defined(IP_PKTINFO) && defined(IP_RECVPKTINFO)  && defined(USE_V4_PKTINFO)
@@ -299,7 +303,8 @@ if_register_socket(struct interface_info *info, int family,
 		int on = 1;
 		if (setsockopt(sock, IPPROTO_IP, IP_RECVPKTINFO, 
 		               &on, sizeof(on)) != 0) {
-			log_fatal("setsockopt: IPV_RECVPKTINFO: %m");
+			log_fatal("Can't set IP_RECVPTKINFO on dhcp socket for"
+				  " %s: %m", info->name);
 		}
 	}
 #endif
@@ -316,13 +321,15 @@ if_register_socket(struct interface_info *info, int family,
 		/* RFC3542 */
 		if (setsockopt(sock, IPPROTO_IPV6, IPV6_RECVPKTINFO, 
 		               &on, sizeof(on)) != 0) {
-			log_fatal("setsockopt: IPV6_RECVPKTINFO: %m");
+			log_fatal("setsockopt: IPV6_RECVPKTINFO for %s: %m",
+				  info->name);
 		}
 #else
 		/* RFC2292 */
 		if (setsockopt(sock, IPPROTO_IPV6, IPV6_PKTINFO, 
 		               &on, sizeof(on)) != 0) {
-			log_fatal("setsockopt: IPV6_PKTINFO: %m");
+			log_fatal("setsockopt: IPV6_PKTINFO for %s: %m",
+				  info->name);
 		}
 #endif
 	}
@@ -336,7 +343,8 @@ if_register_socket(struct interface_info *info, int family,
 void set_multicast_hop_limit(struct interface_info* info, int hop_limit) {
 	if (setsockopt(info->wfdesc, IPPROTO_IPV6, IPV6_MULTICAST_HOPS,
 		       &hop_limit, sizeof(int)) < 0) {
-		log_fatal("setMulticaseHopLimit: IPV6_MULTICAST_HOPS: %m");
+		log_fatal("setsockopt: IPV6_MULTICAST_HOPS for %s: %m",
+			  info->name);
 	}
 
 	log_debug("Setting hop count limit to %d for interface %s",
@@ -477,7 +485,8 @@ if_register_multicast(struct interface_info *info) {
 	mreq.ipv6mr_interface = if_nametoindex(info->name);
 	if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, 
 		       &mreq, sizeof(mreq)) < 0) {
-		log_fatal("setsockopt: IPV6_JOIN_GROUP: %m");
+		log_fatal("setsockopt: IPV6_JOIN_GROUP for %s: %m",
+			  info->name);
 	}
 
 	/*
@@ -496,7 +505,8 @@ if_register_multicast(struct interface_info *info) {
 		mreq.ipv6mr_interface = if_nametoindex(info->name);
 		if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, 
 			       &mreq, sizeof(mreq)) < 0) {
-			log_fatal("setsockopt: IPV6_JOIN_GROUP: %m");
+			log_fatal("setsockopt: IPV6_JOIN_GROUP for %s: %m",
+				  info->name);
 		}
 	}
 }
@@ -730,7 +740,8 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 			if (setsockopt(interface->wfdesc, IPPROTO_IP,
 				       IP_PKTINFO, (char *)&pktinfo,
 				       sizeof(pktinfo)) < 0) 
-				log_fatal("setsockopt: IP_PKTINFO: %m");
+				log_fatal("setsockopt: IP_PKTINFO for %s: %m",
+					  (char*)(interface->ifp));
 		}
 #endif
 		result = sendto (interface -> wfdesc, (char *)raw, len, 0,
@@ -882,7 +893,13 @@ ssize_t send_packet6(struct interface_info *interface,
 	m.msg_name = &dst;
 	m.msg_namelen = sizeof(dst);
 	ifindex = if_nametoindex(interface->name);
+
+// Per OpenBSD patch-common_socket_c,v 1.7 2018/03/06 08:37:39 sthen Exp
+// always set the scope id.  We'll leave the test for no global socket
+// in place for all others.
+#ifndef __OpenBSD__
 	if (no_global_v6_socket)
+#endif
 		dst.sin6_scope_id = ifindex;
 
 	/*

@@ -1,8 +1,8 @@
-.\"	$NetBSD: dhcpd.conf.5,v 1.2 2018/04/07 22:37:30 christos Exp $
+.\"	$NetBSD: dhcpd.conf.5,v 1.3 2020/08/03 21:10:57 christos Exp $
 .\"
 .\"	dhcpd.conf.5
 .\"
-.\" Copyright (c) 2004-2018 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 2004-2019 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 1996-2003 by Internet Software Consortium
 .\"
 .\" This Source Code Form is subject to the terms of the Mozilla Public
@@ -2079,6 +2079,12 @@ that the server is authoritative for some subnets within a shared
 network, but not authoritative for others, nor is it meaningful to
 specify that the server is authoritative for some host declarations
 and not others.
+.PP
+In order for DHCPINFORMs to be responded to by the server,
+they must match to subnets over which the server has authority;
+otherwise they will be ignored and logged.  To minimize the
+impact on logging volume, only the first and every subsequent 100th
+occurrence of an ignored DHCPINFORM is logged.
 .RE
 .PP
 The \fIboot-unknown-clients\fR statement
@@ -3029,6 +3035,36 @@ checking - if its value is false, no ping check is done.
 .RE
 .PP
 The
+.I ping-cltt-secs
+statement
+.RS 0.25i
+.PP
+.B ping-cltt-secs
+.I seconds\fR\fB;\fR
+.PP
+The server will conduct a ping check if all the following conditions are true:
+.PP
+1. Ping checking is enabled.
+.PP
+2. The server is responding to a DISCOVER.
+.PP
+3. The lease to be offered is neither static nor active (i.e. still a valid
+lease).
+.PP
+4. And any of the following are true:
+    a. This will be the first offer of this lease (CLTT is 0).
+    b. The lease is being offered to a client other than its previous owner
+    c. The lease is being offered to its previous owner and more than
+    \fBping-cltt-secs\fR have elapsed since CLTT of the original lease.
+    d. The lease was abandoned and the server is attempting to reclaim it.
+
+.PP
+The \fBping-cltt-secs\fR statement allows the user to specify the amount of
+time that must elaspe after CLTT before a ping check will be conducted.
+The default value is sixty seconds.
+.RE
+.PP
+The
 .I ping-timeout
 statement
 .RS 0.25i
@@ -3042,7 +3078,21 @@ you to configure how many seconds the DHCP server should wait for an
 ICMP Echo response to be heard, if no ICMP Echo response has been received
 before the timeout expires, it assigns the address.  If a response \fIis\fR
 heard, the lease is abandoned, and the server does not respond to the client.
-If no value is set, ping-timeout defaults to 1 second.
+If no value is set, ping-timeout defaults to 1 second. (See also ping-timeout-ms
+below)
+.RE
+.PP
+The
+.I ping-timeout-ms
+statement
+.RS 0.25i
+.PP
+.B ping-timeout-ms
+.I milliseconds\fR\fB;\fR
+.PP
+Allows you to specify the ping timeout in milliseconds rather than
+seconds.  If this value is greater than zero, the server will use it
+in place of ping-timeout.  The default value is zero.
 .RE
 .PP
 The

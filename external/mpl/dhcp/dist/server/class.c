@@ -1,4 +1,4 @@
-/*	$NetBSD: class.c,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
+/*	$NetBSD: class.c,v 1.3 2020/08/03 21:10:57 christos Exp $	*/
 
 /* class.c
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: class.c,v 1.2 2018/04/07 22:37:30 christos Exp $");
+__RCSID("$NetBSD: class.c,v 1.3 2020/08/03 21:10:57 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -179,7 +179,6 @@ int check_collection (packet, lease, collection)
 				}
 				data_string_copy (&nc -> hash_string, &data,
 						  MDL);
-				data_string_forget (&data, MDL);
 				if (!class -> hash)
 				    class_new_hash(&class->hash,
 						   SCLASS_HASH_SIZE, MDL);
@@ -191,6 +190,8 @@ int check_collection (packet, lease, collection)
 				classify (packet, nc);
 				class_dereference (&nc, MDL);
 			}
+
+			data_string_forget (&data, MDL);
 		}
 	}
 	return matched;

@@ -1,4 +1,4 @@
-/*	$NetBSD: keama.c,v 1.1.1.1 2020/08/03 21:09:08 christos Exp $	*/
+/*	$NetBSD: keama.c,v 1.2 2020/08/03 21:10:57 christos Exp $	*/
 
 /*
  * Copyright(c) 2017-2019 by Internet Systems Consortium, Inc.("ISC")
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: keama.c,v 1.1.1.1 2020/08/03 21:09:08 christos Exp $");
+__RCSID("$NetBSD: keama.c,v 1.2 2020/08/03 21:10:57 christos Exp $");
 
 #include <sys/errno.h>
 #include <arpa/inet.h>

@@ -1,11 +1,11 @@
-/*	$NetBSD: mdb.c,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
+/*	$NetBSD: mdb.c,v 1.3 2020/08/03 21:10:57 christos Exp $	*/
 
 /* mdb.c
 
    Server-specific in-memory database support. */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2019 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mdb.c,v 1.2 2018/04/07 22:37:30 christos Exp $");
+__RCSID("$NetBSD: mdb.c,v 1.3 2020/08/03 21:10:57 christos Exp $");
 
 #include "dhcpd.h"
 #include "omapip/hash.h"
@@ -46,12 +46,12 @@ lease_id_hash_t *lease_hw_addr_hash;
 /*
  * We allow users to specify any option as a host identifier.
  *
- * Any host is uniquely identified by the combination of 
+ * Any host is uniquely identified by the combination of
  * option type & option data.
  *
- * We expect people will only use a few types of options as host 
+ * We expect people will only use a few types of options as host
  * identifier. Because of this, we store a list with an entry for
- * each option type. Each of these has a hash table, which contains 
+ * each option type. Each of these has a hash table, which contains
  * hash of the option data.
  *
  * For v6 we also include a relay count - this specifies which
@@ -92,7 +92,7 @@ isc_result_t enter_class(cd, dynamicp, commit)
 			class_dereference(&c, MDL);
 			return ISC_R_EXISTS;
 		}
-		
+
 		/* Find the tail. */
 		for (c = collections -> classes;
 		     c -> nic; c = c -> nic)
@@ -193,7 +193,7 @@ change_host_uid(struct host_decl *host, const char *uid, int len) {
 		}
 	}
 
-	/* 
+	/*
 	 * Remove the old entry, if one exists.
 	 */
 	if (host->client_identifier.data != NULL) {
@@ -204,7 +204,7 @@ change_host_uid(struct host_decl *host, const char *uid, int len) {
 		data_string_forget(&host->client_identifier, MDL);
 	}
 
-	/* 
+	/*
 	 * Set our new value.
 	 */
 	memset(&host->client_identifier, 0, sizeof(host->client_identifier));
@@ -218,7 +218,7 @@ change_host_uid(struct host_decl *host, const char *uid, int len) {
 	/*
 	 * And add to hash.
 	 */
-	host_hash_add(host_uid_hash, host->client_identifier.data, 
+	host_hash_add(host_uid_hash, host->client_identifier.data,
 		      host->client_identifier.len, host, MDL);
 }
 
@@ -318,10 +318,32 @@ isc_result_t enter_host (hd, dynamicp, commit)
 	esp = NULL;
 	if (executable_statement_foreach (hd->group->statements,
 					  find_uid_statement, &esp, 0)) {
-		(void) evaluate_option_cache (&hd->client_identifier,
-					      NULL, NULL, NULL, NULL, NULL, 
+		struct data_string cid;
+		memset(&cid, 0, sizeof(cid));
+		(void) evaluate_option_cache (&cid,
+					      NULL, NULL, NULL, NULL, NULL,
 					      &global_scope,
 					      esp->data.option, MDL);
+
+		if (hd->client_identifier.len > 0 && cid.len > 0) {
+			char uid_buf[256];
+			char cid_buf[256];
+			print_hex_or_string(hd->client_identifier.len,
+					    hd->client_identifier.data,
+					    sizeof(uid_buf) - 1, uid_buf);
+
+			print_hex_or_string(cid.len, cid.data,
+					    sizeof(cid_buf) - 1, cid_buf);
+
+			log_error ("Warning, host declaration '%s'"
+				   " already has uid '%s',"
+				   " ignoring dhcp-client-identifier '%s'",
+				   hd->name, uid_buf, cid_buf);
+
+			data_string_forget(&cid, MDL);
+		} else {
+			memcpy(&hd->client_identifier, &cid, sizeof(cid));
+		}
 	}
 
 	/* If we got a client identifier, hash this entry by
@@ -384,9 +406,9 @@ isc_result_t enter_host (hd, dynamicp, commit)
 				log_fatal("No memory for host-identifier "
 					  "option information.");
 			}
-			option_reference(&h_id_info->option, 
+			option_reference(&h_id_info->option,
 					 hd->host_id_option, MDL);
-			if (!host_new_hash(&h_id_info->values_hash, 
+			if (!host_new_hash(&h_id_info->values_hash,
 					   HOST_HASH_SIZE, MDL)) {
 				log_fatal("No memory for host-identifier "
 					  "option hash.");
@@ -396,16 +418,16 @@ isc_result_t enter_host (hd, dynamicp, commit)
 			host_id_info = h_id_info;
 		}
 
-		if (host_hash_lookup(&hp, h_id_info->values_hash, 
+		if (host_hash_lookup(&hp, h_id_info->values_hash,
 				     hd->host_id.data, hd->host_id.len, MDL)) {
-			/* 
-			 * If this option is already present, then add 
+			/*
+			 * If this option is already present, then add
 			 * this host to the list in n_ipaddr, unless
 			 * we have already done so previously.
 			 *
 			 * XXXSK: This seems scary to me, but I don't
-			 *        fully understand how these are used. 
-			 *        Shouldn't there be multiple lists, or 
+			 *        fully understand how these are used.
+			 *        Shouldn't there be multiple lists, or
 			 *        maybe we should just forbid duplicates?
 			 */
 			if (np == NULL) {
@@ -419,7 +441,7 @@ isc_result_t enter_host (hd, dynamicp, commit)
 			}
 			host_dereference(&hp, MDL);
 		} else {
-			host_hash_add(h_id_info->values_hash, 
+			host_hash_add(h_id_info->values_hash,
 				      hd->host_id.data,
 				      hd->host_id.len,
 				      hd, MDL);
@@ -445,18 +467,18 @@ isc_result_t delete_class (cp, commit)
 
 	/* do the write first as we won't be leaving it in any data
 	   structures, unlike the host objects */
-	
+
 	if (commit) {
 		write_named_billing_class ((unsigned char *)cp->name, 0, cp);
 		if (!commit_leases ())
 			return ISC_R_IOERROR;
 	}
-	
+
 	/*
 	 * If this is a subclass remove it from the class's hash table
 	 */
 	if (cp->superclass) {
-		class_hash_delete(cp->superclass->hash, 
+		class_hash_delete(cp->superclass->hash,
 				  (const char *)cp->hash_string.data,
 				  cp->hash_string.len,
 				  MDL);
@@ -639,7 +661,7 @@ int find_hosts_by_uid (struct host_decl **hp,
 }
 
 int
-find_hosts_by_option(struct host_decl **hp, 
+find_hosts_by_option(struct host_decl **hp,
 		     struct packet *packet,
 		     struct option_state *opt_state,
 		     const char *file, int line) {
@@ -654,9 +676,9 @@ find_hosts_by_option(struct host_decl **hp,
 	if ((found = find_client_in_ldap (hp, packet, opt_state, file, line)))
 		return found;
 #endif
-	
+
 	for (p = host_id_info; p != NULL; p = p->next) {
-		relay_packet = packet;	
+		relay_packet = packet;
 		relay_state = opt_state;
 
 		/* If this option block is for a relay (relays != 0)
@@ -680,20 +702,20 @@ find_hosts_by_option(struct host_decl **hp,
 			relay_state = relay_packet->options;
 		}
 
-		oc = lookup_option(p->option->universe, 
+		oc = lookup_option(p->option->universe,
 				   relay_state, p->option->code);
 		if (oc != NULL) {
 			memset(&data, 0, sizeof(data));
 
 			if (!evaluate_option_cache(&data, relay_packet, NULL,
 						   NULL, relay_state, NULL,
-						   &global_scope, oc, 
+						   &global_scope, oc,
 						   MDL)) {
 				log_error("Error evaluating option cache");
 				return 0;
 			}
-			
-			found = host_hash_lookup(hp, p->values_hash, 
+
+			found = host_hash_lookup(hp, p->values_hash,
 						 data.data, data.len,
 						 file, line);
 
@@ -954,8 +976,8 @@ int find_grouped_subnet (struct subnet **sp,
 }
 
 /* XXX: could speed up if everyone had a prefix length */
-int 
-subnet_inner_than(const struct subnet *subnet, 
+int
+subnet_inner_than(const struct subnet *subnet,
 		  const struct subnet *scan,
 		  int warnp) {
 #if defined(DHCP4o6)
@@ -1031,7 +1053,7 @@ void enter_subnet (subnet)
 	}
 	subnet_reference (&subnets, subnet, MDL);
 }
-	
+
 /* Enter a new shared network into the shared network list. */
 
 void enter_shared_network (share)
@@ -1044,7 +1066,7 @@ void enter_shared_network (share)
 	}
 	shared_network_reference (&shared_networks, share, MDL);
 }
-	
+
 void new_shared_network_interface (cfile, share, name)
 	struct parse *cfile;
 	struct shared_network *share;
@@ -1054,12 +1076,12 @@ void new_shared_network_interface (cfile, share, name)
 	isc_result_t status;
 
 	if (share -> interface) {
-		parse_warn (cfile, 
+		parse_warn (cfile,
 			    "A subnet or shared network can't be connected %s",
 			    "to two interfaces.");
 		return;
 	}
-	
+
 	for (ip = interfaces; ip; ip = ip -> next)
 		if (!strcmp (ip -> name, name))
 			break;
@@ -1408,7 +1430,7 @@ int supersede_lease (comp, lease, commit, propogate, pimmediate, from_pool)
 	/* If this is the next lease that will timeout on the pool,
 	   zap the old timeout and set the timeout on this pool to the
 	   time that the lease's next event will happen.
-		   
+
 	   We do not actually set the timeout unless commit is true -
 	   we don't want to thrash the timer queue when reading the
 	   lease database.  Instead, the database code calls the
@@ -1521,7 +1543,7 @@ void make_binding_state_transition (struct lease *lease)
 				executable_statement_dereference
 					(&lease->on_star.on_expiry, MDL);
 		}
-		
+
 		/* No sense releasing a lease after it's expired. */
 		if (lease->on_star.on_release)
 			executable_statement_dereference
@@ -1584,7 +1606,7 @@ void make_binding_state_transition (struct lease *lease)
 			executable_statement_dereference
 				(&lease->on_star.on_release, MDL);
 		}
-		
+
 		/* A released lease can't expire. */
 		if (lease->on_star.on_expiry)
 			executable_statement_dereference
@@ -1952,7 +1974,7 @@ void pool_timer (vpool)
 			if (i == EXPIRED_LEASES)
 				continue;
 		}
-#endif		
+#endif
 		lease_reference(&lease, LEASE_GET_FIRSTP(lptr[i]), MDL);
 
 		while (lease) {
@@ -2244,7 +2266,7 @@ hw_hash_add(struct lease *lease)
 	if ((lease->hardware_addr.hlen == 1) &&
 	    (lease->hardware_addr.hbuf[0] == HTYPE_INFINIBAND))
 		return;
-	   
+
 	/* If it's not in the hash, just add it. */
 	if (!find_lease_by_hw_addr (&head, lease -> hardware_addr.hbuf,
 				    lease -> hardware_addr.hlen, MDL))
@@ -2434,12 +2456,12 @@ int write_leases ()
 			}
 		}
 
-		/* XXXJAB this number doesn't include subclasses... */ 
+		/* XXXJAB this number doesn't include subclasses... */
 		log_info ("Wrote %d class decls to leases file.",
 			  numclasseswritten);
 	}
-	
-			
+
+
 	/* Write all the dynamically-created group declarations. */
 	if (group_name_hash) {
 	    num_written = 0;
@@ -2610,7 +2632,7 @@ void lease_insert(struct lease **lq, struct lease *comp)
 	 * a re-queue), use that as a starting point for the insertion-sort.
 	 */
 	if ((server_starting & SS_QFOLLOW) && (lq == last_lq) &&
-	    (comp != last_insert_point) && 
+	    (comp != last_insert_point) &&
 	    (last_insert_point->sort_time <= comp->sort_time)) {
 		prev = last_insert_point;
 		lp = prev->next;
@@ -2660,7 +2682,7 @@ void lease_insert(struct lease **lq, struct lease *comp)
  */
 int lease_enqueue (struct lease *comp)
 {
-	LEASE_STRUCT_PTR lq;  
+	LEASE_STRUCT_PTR lq;
 
 	/* No queue to put it on? */
 	if (!comp -> pool)
@@ -2762,17 +2784,17 @@ lease_instantiate(const void *key, unsigned len, void *object)
  	 * pool must have been formerly configured for failover and
  	 * is now configured as standalone. This means we need to
  	 * move the lease to FTS_FREE to make it available. */
-	if ((lease->binding_state == FTS_BACKUP) && 
+	if ((lease->binding_state == FTS_BACKUP) &&
 	    (lease->pool->failover_peer == NULL)) {
 #else
 	/* We aren't compiled for failover, so just move to FTS_FREE */
-	if (lease->binding_state == FTS_BACKUP) { 
+	if (lease->binding_state == FTS_BACKUP) {
 #endif
 		lease->binding_state = FTS_FREE;
 		lease->next_binding_state = FTS_FREE;
 		lease->rewind_binding_state = FTS_FREE;
 	}
-		
+
 	/* Put the lease on the right queue.  Failure to queue is probably
 	 * due to a bogus binding state.  In such a case, we claim success,
 	 * so that later leases in a hash_foreach are processed, but we

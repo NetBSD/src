@@ -1,4 +1,4 @@
-/*	$NetBSD: dhc6.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
+/*	$NetBSD: dhc6.c,v 1.3 2020/08/03 21:10:56 christos Exp $	*/
 
 /* dhc6.c - DHCPv6 client routines. */
 
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhc6.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
+__RCSID("$NetBSD: dhc6.c,v 1.3 2020/08/03 21:10:56 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -821,8 +821,7 @@ dhc6_parse_ia_na(struct dhc6_ia **pia, struct packet *packet,
 		} else {
 			log_error("Invalid IA_NA option cache.");
 			dfree(ia, MDL);
-			if (ds.len != 0)
-				data_string_forget(&ds, MDL);
+			data_string_forget(&ds, MDL);
 			return ISC_R_UNEXPECTED;
 		}
 	}
@@ -924,8 +923,7 @@ dhc6_parse_ia_ta(struct dhc6_ia **pia, struct packet *packet,
 		} else {
 			log_error("Invalid IA_TA option cache.");
 			dfree(ia, MDL);
-			if (ds.len != 0)
-				data_string_forget(&ds, MDL);
+			data_string_forget(&ds, MDL);
 			return ISC_R_UNEXPECTED;
 		}
 	}
@@ -1047,8 +1045,7 @@ dhc6_parse_ia_pd(struct dhc6_ia **pia, struct packet *packet,
 		} else {
 			log_error("Invalid IA_PD option cache.");
 			dfree(ia, MDL);
-			if (ds.len != 0)
-				data_string_forget(&ds, MDL);
+			data_string_forget(&ds, MDL);
 			return ISC_R_UNEXPECTED;
 		}
 	}
@@ -1163,8 +1160,7 @@ dhc6_parse_addrs(struct dhc6_addr **paddr, struct packet *packet,
 		} else {
 			log_error("Invalid IAADDR option cache.");
 			dfree(addr, MDL);
-			if (ds.len != 0)
-				data_string_forget(&ds, MDL);
+			data_string_forget(&ds, MDL);
 			return ISC_R_UNEXPECTED;
 		}
 	}
@@ -1288,8 +1284,7 @@ dhc6_parse_prefixes(struct dhc6_addr **ppfx, struct packet *packet,
 		} else {
 			log_error("Invalid IAPREFIX option cache.");
 			dfree(pfx, MDL);
-			if (ds.len != 0)
-				data_string_forget(&ds, MDL);
+			data_string_forget(&ds, MDL);
 			return ISC_R_UNEXPECTED;
 		}
 	}
@@ -1311,9 +1306,7 @@ dhc6_lease_destroy(struct dhc6_lease **src, const char *file, int line)
 	}
 	lease = *src;
 
-	if (lease->server_id.len != 0)
-		data_string_forget(&lease->server_id, file, line);
-
+	data_string_forget(&lease->server_id, file, line);
 	for (ia = lease->bindings ; ia != NULL ; ia = nia) {
 		nia = ia->next;
 

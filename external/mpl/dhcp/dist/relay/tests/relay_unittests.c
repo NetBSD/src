@@ -1,4 +1,4 @@
-/*	$NetBSD: relay_unittests.c,v 1.1.1.1 2020/08/03 21:09:10 christos Exp $	*/
+/*	$NetBSD: relay_unittests.c,v 1.2 2020/08/03 21:10:57 christos Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 by Internet Systems Consortium, Inc. ("ISC")
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: relay_unittests.c,v 1.1.1.1 2020/08/03 21:09:10 christos Exp $");
+__RCSID("$NetBSD: relay_unittests.c,v 1.2 2020/08/03 21:10:57 christos Exp $");
 
 #include "config.h"
 #include <atf-c.h>

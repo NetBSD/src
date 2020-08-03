@@ -1,11 +1,11 @@
-/*	$NetBSD: dhclient.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
+/*	$NetBSD: dhclient.c,v 1.3 2020/08/03 21:10:56 christos Exp $	*/
 
 /* dhclient.c
 
    DHCP Client. */
 
 /*
- * Copyright (c) 2004-2018 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2020 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhclient.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
+__RCSID("$NetBSD: dhclient.c,v 1.3 2020/08/03 21:10:56 christos Exp $");
 
 #include "dhcpd.h"
 #include <isc/util.h>
@@ -55,6 +55,8 @@ const char *path_dhclient_pid = NULL;
 static char path_dhclient_script_array[] = _PATH_DHCLIENT_SCRIPT;
 char *path_dhclient_script = path_dhclient_script_array;
 const char *path_dhclient_duid = NULL;
+
+static void add_to_tail(struct client_lease** lease_list, struct client_lease* lease);
 
 /* False (default) => we write and use a pid file */
 isc_boolean_t no_pid_file = ISC_FALSE;
@@ -82,7 +84,7 @@ int decline_wait_time = 10; /* Default to 10 secs per, RFC 2131, 3.1.5 */
 #define ASSERT_STATE(state_is, state_shouldbe) {}
 
 #ifndef UNIT_TEST
-static const char copyright[] = "Copyright 2004-2018 Internet Systems Consortium.";
+static const char copyright[] = "Copyright 2004-2020 Internet Systems Consortium.";
 static const char arr [] = "All rights reserved.";
 static const char message [] = "Internet Systems Consortium DHCP Client";
 static const char url [] = "For info, please visit https://www.isc.org/software/dhcp/";
@@ -142,8 +144,11 @@ static int check_domain_name_list(const char *ptr, size_t len, int dots);
 static int check_option_values(struct universe *universe, unsigned int opt,
 			       const char *ptr, size_t len);
 
+#if defined(NSUPDATE)
 static void dhclient_ddns_cb_free(dhcp_ddns_cb_t *ddns_cb,
                                    char* file, int line);
+#endif /* defined NSUPDATE */
+
 static void
 setup(void) {
 	isc_result_t status;
@@ -236,7 +241,7 @@ add_interfaces(char **ifaces, int nifaces)
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhclient.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
+__RCSID("$NetBSD: dhclient.c,v 1.3 2020/08/03 21:10:56 christos Exp $");
 
 #if defined(DHCPv6) && defined(DHCP4o6)
 static void dhcp4o6_poll(void *dummy);
@@ -1225,7 +1230,7 @@ int find_subnet (struct subnet **sp,
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhclient.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
+__RCSID("$NetBSD: dhclient.c,v 1.3 2020/08/03 21:10:56 christos Exp $");
 
 void state_reboot (cpp)
 	void *cpp;
@@ -1630,8 +1635,16 @@ void bind_lease (client)
 		write_client_lease(client, client->new, 0, 1);
 
 	/* Replace the old active lease with the new one. */
-	if (client->active)
-		destroy_client_lease(client->active);
+	if (client->active) {
+		if (client->active->is_static) {
+			// We need to preserve the fallback lease in case
+			// we lose DHCP service again.
+			add_to_tail(&client->leases, client->active);
+		} else {
+			destroy_client_lease(client->active);
+		}
+	}
+
 	client->active = client->new;
 	client->new = NULL;
 
@@ -1650,7 +1663,8 @@ void bind_lease (client)
 #if defined (NSUPDATE)
 	if (client->config->do_forward_update)
 		dhclient_schedule_updates(client, &client->active->address, 1);
-#endif
+#endif /* defined NSUPDATE */
+
 }
 
 /* state_bound is called when we've successfully bound to a particular
@@ -2515,6 +2529,101 @@ void send_discover (cpp)
 	add_timeout(&tv, send_discover, client, 0, 0);
 }
 
+
+/*
+ * \brief Remove leases from a list of leases which duplicate a given lease
+ *
+ * Searches through a linked-list of leases, remove the first one matches the
+ * given lease's address and value of is_static.   The latter test is done
+ * so we only remove leases that are from the same source (i.e server/lease file
+ *  vs config file).  This ensures we do not discard "fallback" config file leases
+ * that happen to match non-config file leases.
+ *
+ * \param lease_list list of leases to clean
+ * \param lease lease for which duplicates should be removed
+ */
+extern void discard_duplicate (struct client_lease** lease_list,
+                               struct client_lease* lease);
+void discard_duplicate (struct client_lease** lease_list, struct client_lease* lease) {
+	struct client_lease *cur, *prev, *next;
+
+	if (!lease_list || !lease) {
+		return;
+	}
+
+	prev = (struct client_lease *)0;
+	for (cur = *lease_list; cur; cur = next) {
+		next = cur->next;
+		if ((cur->is_static == lease->is_static) &&
+		    (cur->address.len == lease->address.len &&
+		     !memcmp (cur->address.iabuf, lease->address.iabuf,
+			      lease->address.len))) {
+			if (prev)
+				prev->next = next;
+			else
+				*lease_list = next;
+
+			destroy_client_lease (cur);
+			break;
+		} else {
+			prev = cur;
+		}
+	}
+}
+
+/*
+ * \brief Add a given lease to the end of list of leases
+ *
+ * Searches through a linked-list of leases, removing any that match the
+ * given lease's address and value of is_static.  The latter test is done
+ * so we only remove leases that are from the same source (i.e server/lease file
+ *  vs config file).  This ensures we do not discard "fallback" config file leases
+ * that happen to match non-config file leases.
+ *
+ * \param lease_list list of leases to clean
+ * \param lease lease for which duplicates should be removed
+ */
+void add_to_tail(struct client_lease** lease_list,
+		 struct client_lease* lease)
+{
+	if (!lease_list || !lease) {
+		return;
+	}
+
+	/* If there is already a lease for this address and
+	* is_static value, toss discard it.  This ensures
+	* we only keep one dynamic and/or one static lease
+	* for a given address. */
+	discard_duplicate(lease_list, lease);
+
+	/* Find the tail */
+	struct client_lease* tail;
+	for (tail = *lease_list; tail && tail->next; tail = tail->next){};
+
+	/* Ensure the tail points nowhere. */
+	lease->next = NULL;
+
+	/* Add to the tail. */
+	if (!tail) {
+		*lease_list = lease;
+	} else {
+		tail->next = lease;
+	}
+}
+
+#if 0
+void dbg_print_lease(char *text, struct client_lease* lease) {
+	if (!lease) {
+		log_debug("%s, lease is null", text);
+	} else {
+		log_debug ("%s: %p addr:%s expires:%ld :is_static? %d",
+			   text, lease, piaddr (lease->address),
+                           (lease->expiry - cur_time),
+			   lease->is_static);
+	}
+}
+#endif
+
 /* state_panic gets called if we haven't received any offers in a preset
    amount of time.   When this happens, we try to use existing leases that
    haven't yet expired, and failing that, we call the client script and
@@ -2540,8 +2649,10 @@ void state_panic (cpp)
 	/* Run through the list of leases and see if one can be used. */
 	while (client -> active) {
 		if (client -> active -> expiry > cur_time) {
-			log_info ("Trying recorded lease %s",
-			      piaddr (client -> active -> address));
+			log_info ("Trying %s lease %s",
+				  (client -> active -> is_static
+				   ? "fallback" : "recorded"),
+				  piaddr (client -> active -> address));
 			/* Run the client script with the existing
 			   parameters. */
 			script_init(client, "TIMEOUT",
@@ -2588,12 +2699,8 @@ void state_panic (cpp)
 	activate_next:
 		/* Otherwise, put the active lease at the end of the
 		   lease list, and try another lease.. */
-		for (lp = client -> leases; lp -> next; lp = lp -> next)
-			;
-		lp -> next = client -> active;
-		if (lp -> next) {
-			lp -> next -> next = (struct client_lease *)0;
-		}
+		add_to_tail(&client->leases, client->active);
+
 		client -> active = client -> leases;
 		client -> leases = client -> leases -> next;
 
@@ -4135,9 +4242,10 @@ void client_option_envadd (struct option_cache *oc,
 						  "option - discarded",
 						  name);
 				}
-				data_string_forget (&data, MDL);
 			}
 		}
+
+		data_string_forget (&data, MDL);
 	}
 }
 
@@ -4860,7 +4968,8 @@ client_dns_remove(struct client_state *client,
 		}
 	}
 }
-#endif
+#endif /* defined NSUPDATE */
+
 
 isc_result_t dhcp_set_control_state (control_object_state_t oldstate,
 				     control_object_state_t newstate)
@@ -4901,7 +5010,8 @@ isc_result_t dhcp_set_control_state (control_object_state_t oldstate,
 				    client_dns_remove(client,
 						      &client->active->address);
 			    }
-#endif
+#endif /* defined NSUPDATE */
+
 			    do_release (client);
 		    }
 		    break;
@@ -5248,7 +5358,7 @@ dhclient_schedule_updates(struct client_state *client,
 			  piaddr(*addr));
 	}
 }
-#endif
+#endif /* defined NSUPDATE */
 
 void
 dhcpv4_client_assignments(void)
@@ -5443,6 +5553,7 @@ add_reject(struct packet *packet) {
 	log_info("Server added to list of rejected servers.");
 }
 
+#if defined(NSUPDATE)
 /* Wrapper function around common ddns_cb_free function that ensures
  * we set the client_state pointer to the control block to NULL. */
 static void
@@ -5456,6 +5567,7 @@ dhclient_ddns_cb_free(dhcp_ddns_cb_t *ddns_cb, char* file, int line) {
         ddns_cb_free(ddns_cb, file, line);
     }
 }
+#endif /* defined NSUPDATE */
 
 #if defined(DHCPv6) && defined(DHCP4o6)
 /*

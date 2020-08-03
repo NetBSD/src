@@ -1,4 +1,4 @@
-/*	$NetBSD: conflex.c,v 1.1.1.1 2020/08/03 21:09:09 christos Exp $	*/
+/*	$NetBSD: conflex.c,v 1.2 2020/08/03 21:10:57 christos Exp $	*/
 
 /*
  * Copyright (c) 2017 by Internet Systems Consortium, Inc. ("ISC")
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: conflex.c,v 1.1.1.1 2020/08/03 21:09:09 christos Exp $");
+__RCSID("$NetBSD: conflex.c,v 1.2 2020/08/03 21:10:57 christos Exp $");
 
 /* From common/conflex.c */
 

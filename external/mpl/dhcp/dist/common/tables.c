@@ -1,11 +1,11 @@
-/*	$NetBSD: tables.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
+/*	$NetBSD: tables.c,v 1.3 2020/08/03 21:10:56 christos Exp $	*/
 
 /* tables.c
 
    Tables of information... */
 
 /*
- * Copyright (c) 2004-2018 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2019 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tables.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
+__RCSID("$NetBSD: tables.c,v 1.3 2020/08/03 21:10:56 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -89,10 +89,14 @@ HASH_FUNCTIONS (option_code, const unsigned *, struct option,
        the name of the set of enumeration values to parse or emit,
        followed by a '.'.   The width of the data is specified in the
        named enumeration.   Named enumerations are tracked in parse.c.
-   d - Domain name (i.e., FOO or FOO.BAR).
-   D - Domain list (i.e., example.com eng.example.com)
+   d - Domain name (e.g., FOO or FOO.BAR) no quotes,
+       on-wire format is RFC 1035.
+   D - Domain list (e.g., "example.com eng.example.com") quoted, 
+       on-wire format is RFC 1035.
    c - When following a 'D' atom, enables compression pointers.
    Z - Zero-length option
+   k - Key name, unquoted string (e.g. mykey.com or some-text or abc123)
+       parsed with parse_host_name().
 */
 
 struct universe dhcp_universe;

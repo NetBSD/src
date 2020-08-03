@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb6.c,v 1.4 2019/02/04 04:37:50 mrg Exp $	*/
+/*	$NetBSD: mdb6.c,v 1.5 2020/08/03 21:10:57 christos Exp $	*/
 
 /*
  * Copyright (C) 2007-2017 by Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mdb6.c,v 1.4 2019/02/04 04:37:50 mrg Exp $");
+__RCSID("$NetBSD: mdb6.c,v 1.5 2020/08/03 21:10:57 christos Exp $");
 
 
 /*!
@@ -1081,9 +1081,11 @@ create_lease6(struct ipv6_pool *pool, struct iasubopt **addr,
 		case D6O_IA_PD:
 			/* prefix */
 			log_error("create_lease6: prefix pool.");
+			data_string_forget(&ds, MDL);
 			return DHCP_R_INVALIDARG;
 		default:
 			log_error("create_lease6: untyped pool.");
+			data_string_forget(&ds, MDL);
 			return DHCP_R_INVALIDARG;
 		}
 

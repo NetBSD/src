@@ -1,11 +1,11 @@
-/*	$NetBSD: dns.c,v 1.3 2019/01/10 17:41:47 christos Exp $	*/
+/*	$NetBSD: dns.c,v 1.4 2020/08/03 21:10:56 christos Exp $	*/
 
 /* dns.c
 
    Domain Name Service subroutines. */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2019 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2001-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dns.c,v 1.3 2019/01/10 17:41:47 christos Exp $");
+__RCSID("$NetBSD: dns.c,v 1.4 2020/08/03 21:10:56 christos Exp $");
 
 /*! \file common/dns.c
  */
@@ -1250,7 +1250,7 @@ find_cached_zone(dhcp_ddns_cb_t *ddns_cb, int direction)
 	}
 
 	/* Make sure the zone name will fit. */
-	if (strlen(zone->name) > sizeof(ddns_cb->zone_name)) {
+	if (strlen(zone->name) >= sizeof(ddns_cb->zone_name)) {
 		dns_zone_dereference(&zone, MDL);
 		return (ISC_R_NOSPACE);
 	}
@@ -1378,8 +1378,9 @@ void cache_found_zone(dhcp_ddns_ns_t *ns_cb)
 	/* See if there's already such a zone. */
 	if (dns_zone_lookup(&zone, ns_cb->zname) == ISC_R_SUCCESS) {
 		/* If it's not a dynamic zone, leave it alone. */
-		if (zone->timeout == 0)
-			return;
+		if (zone->timeout == 0) {
+			goto cleanup;
+		}
 
 		/* Remove any old addresses in case they've changed */
 		if (zone->primary)
@@ -2106,7 +2107,7 @@ build_dsmm_fwd_add3(dhcp_ddns_cb_t   *ddns_cb,
  * When we're In Dual Stack Mixed Mode and ddns-other-guard-is-dynamic is ON
  * we need only determine if a guard record of the other type exists, to know
  * if we can add/replace and address record of our type.   In other words,
- * the presence of a dynamic entry made belonging to the "other" stack means
+ * the presence of a dynamic entry belonging to the "other" stack means
  * all entries for this name should be dynamic and we overwrite an unguarded
  * address record of our type.
  *
@@ -2132,6 +2133,25 @@ build_dsmm_fwd_add3_other(dhcp_ddns_cb_t   *ddns_cb,
 	log_call("build_fwd_add3_other", pname, uname);
 #endif
 	/* Construct the prereq list */
+
+	// If ID matching is on, a result of NXRRSET from add2 means
+	// either there is no guard of my type, or there is but
+	// it does not match this client.  We need to distinguish
+	// between those two cases here and only allow this add
+	// if there is no guard of my type.
+	if (ddns_cb->flags & DDNS_GUARD_ID_MUST_MATCH) {
+		/* No guard record of my type exists */
+		result = make_dns_dataset(dns_rdataclass_none,
+					  ddns_cb->dhcid_class,
+					  dataspace, NULL, 0, 0);
+		if (result != ISC_R_SUCCESS) {
+			return(result);
+		}
+
+		ISC_LIST_APPEND(pname->list, &dataspace->rdataset, link);
+		dataspace++;
+	}
+
 	/* A guard record of the other type exists */
 	result = make_dns_dataset(dns_rdataclass_any,
 				  ddns_cb->other_dhcid_class,
@@ -2767,7 +2787,7 @@ ddns_modify_fwd(dhcp_ddns_cb_t *ddns_cb, const char *file, int line)
 			     dns_rdataclass_in, zname,
 			     &prereqlist, &updatelist,
 			     zlist, tsec_key,
-			     DNS_CLIENTRESOPT_ALLOWRUN,
+			     DNS_CLIENTUPDOPT_ALLOWRUN,
 			     dhcp_gbl_ctx.task,
 			     ddns_interlude,
 			     (void *)ddns_cb,
@@ -2962,7 +2982,7 @@ ddns_modify_ptr(dhcp_ddns_cb_t *ddns_cb, const char *file, int line)
 			     dns_rdataclass_in, zname,
 			     NULL, &updatelist,
 			     zlist, tsec_key,
-			     DNS_CLIENTRESOPT_ALLOWRUN,
+			     DNS_CLIENTUPDOPT_ALLOWRUN,
 			     dhcp_gbl_ctx.task,
 			     ddns_interlude, (void *)ddns_cb,
 			     &ddns_cb->transaction);

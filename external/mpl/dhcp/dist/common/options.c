@@ -1,11 +1,11 @@
-/*	$NetBSD: options.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.3 2020/08/03 21:10:56 christos Exp $	*/
 
 /* options.c
 
    DHCP options parsing and reassembly. */
 
 /*
- * Copyright (c) 2004-2018 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2019 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: options.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.3 2020/08/03 21:10:56 christos Exp $");
 
 #define DHCP_OPTION_DATA
 #include "dhcpd.h"
@@ -40,6 +40,8 @@ struct option *vendor_cfg_option;
 
 static int pretty_text(char **, char *, const unsigned char **,
 			 const unsigned char *, int);
+static int pretty_dname(char **, char *, const unsigned char *,
+			 const unsigned char *);
 static int pretty_domain(char **, char *, const unsigned char **,
 			 const unsigned char *);
 static int prepare_option_buffer(struct universe *universe, struct buffer *bp,
@@ -228,6 +230,7 @@ int parse_option_buffer (options, buffer, length, universe)
 				log_error("parse_option_buffer: "
 					  "save_option_buffer failed");
 				buffer_dereference(&bp, MDL);
+				option_dereference(&option, MDL);
 				return (0);
 			}
 		} else if (universe->concat_duplicates) {
@@ -239,6 +242,7 @@ int parse_option_buffer (options, buffer, length, universe)
 					     MDL)) {
 				log_error("parse_option_buffer: No memory.");
 				buffer_dereference(&bp, MDL);
+				option_dereference(&option, MDL);
 				return (0);
 			}
 			/* Copy old option to new data object. */
@@ -263,6 +267,7 @@ int parse_option_buffer (options, buffer, length, universe)
 			if (!option_cache_allocate(&nop, MDL)) {
 				log_error("parse_option_buffer: No memory.");
 				buffer_dereference(&bp, MDL);
+				option_dereference(&option, MDL);
 				return (0);
 			}
 
@@ -1408,8 +1413,9 @@ store_options(int *ocount,
 				(option_space_encapsulate
 				 (&encapsulation, packet, lease, client_state,
 				  in_options, cfg_options, scope, &name));
-			data_string_forget (&name, MDL);
 		    }
+
+		    data_string_forget (&name, MDL);
 		}
 	    }
 
@@ -1629,8 +1635,8 @@ format_has_text(format)
 	p = format;
 	while (*p != '\0') {
 		switch (*p++) {
-		    case 'd':
 		    case 't':
+		    case 'k':
 			return 1;
 
 			/* These symbols are arbitrary, not fixed or
@@ -1643,6 +1649,7 @@ format_has_text(format)
 		    case 'X':
 		    case 'x':
 		    case 'D':
+		    case 'd':
 			return 0;
 
 		    case 'c':
@@ -1761,6 +1768,7 @@ format_min_length(format, oc)
 		    case 'A': /* Array of all that precedes. */
 		    case 'a': /* Array of preceding symbol. */
 		    case 'Z': /* nothing. */
+		    case 'k': /* key name */
 			return min_len;
 
 		    case 'c': /* Compress flag for D atom. */
@@ -1885,9 +1893,26 @@ const char *pretty_print_option (option, data, len, emit_commas, emit_quotes)
 			numhunk = -2;
 			break;
 		      case 'd':
-			fmtbuf[l] = 't';
-			/* Fall Through ! */
+			/* Should not be optional, array or compressed */
+			if ((option->format[i+1] == 'o') ||
+			    (option->format[i+1] == 'a') ||
+			    (option->format[i+1] == 'A') ||
+			    (option->format[i+1] == 'c')) {
+				log_error("%s: Illegal use of domain name: %s",
+					  option->name,
+					  &(option->format[i-1]));
+				fmtbuf[l + 1] = 0;
+			}
+			k = MRns_name_len(data + len, data + hunksize);
+			if (k == -1) {
+				log_error("Invalid domain name.");
+				return "<error>";
+			}
+			hunksize += k;
+			break;
+	  		
 		      case 't':
+		      case 'k':
 			fmtbuf[l + 1] = 0;
 			numhunk = -2;
 			break;
@@ -2031,6 +2056,7 @@ const char *pretty_print_option (option, data, len, emit_commas, emit_quotes)
 		for (; j < numelem; j++) {
 			switch (fmtbuf [j]) {
 			      case 't':
+			      case 'k':
 				/* endbuf-1 leaves room for NULL. */
 				k = pretty_text(&op, endbuf - 1, &dp,
 						data + len, emit_quotes);
@@ -2039,6 +2065,18 @@ const char *pretty_print_option (option, data, len, emit_commas, emit_quotes)
 					break;
 				}
 				*op = 0;
+				break;
+			      case 'd': /* RFC1035 format name */
+				k = MRns_name_len(data + len, dp);
+				/* Already tested... */
+				if (k == -1) {
+					log_error("invalid domain name.");
+					return "<error>";
+				}
+				pretty_dname(&op, endbuf-1, dp, data + len);
+				/* pretty_dname does not add the nul */
+				*op = '\0';
+				dp += k;
 				break;
 			      case 'D': /* RFC1035 format name list */
 				for( ; dp < (data + len) ; dp += k) {
@@ -3439,8 +3477,7 @@ int fqdn_option_space_encapsulate (result, packet, lease, client_state,
 	}
       exit:
 	for (i = 1; i <= FQDN_SUBOPTION_COUNT; i++) {
-		if (results [i].len)
-			data_string_forget (&results [i], MDL);
+		data_string_forget (&results[i], MDL);
 	}
 	buffer_dereference (&bp, MDL);
 	if (!status)
@@ -3599,8 +3636,7 @@ fqdn6_option_space_encapsulate(struct data_string *result,
 
       exit:
 	for (i = 1 ; i <= FQDN_SUBOPTION_COUNT ; i++) {
-		if (results[i].len)
-			data_string_forget(&results[i], MDL);
+		data_string_forget(&results[i], MDL);
 	}
 
 	return rval;
@@ -4289,6 +4325,56 @@ pretty_text(char **dst, char *dend, const unsigned char **src,
 }
 
 static int
+pretty_dname(char **dst, char *dend, const unsigned char *src,
+	     const unsigned char *send)
+{
+	const unsigned char *tend;
+	const unsigned char *srcp = src;
+	int count = 0;
+	int tsiz, status;
+
+	if (dst == NULL || dend == NULL || src == NULL || send == NULL ||
+	    *dst == NULL || ((*dst + 1) > dend) || (src >= send))
+		return -1;
+
+	do {
+		/* Continue loop until end of src buffer. */
+		if (srcp >= send)
+			break;
+
+		/* Consume tag size. */
+		tsiz = *srcp;
+		srcp++;
+
+		/* At root, finis. */
+		if (tsiz == 0)
+			break;
+
+		tend = srcp + tsiz;
+
+		/* If the tag exceeds the source buffer, it's illegal.
+		 * This should also trap compression pointers (which should
+		 * not be in these buffers).
+		 */
+		if (tend > send)
+			return -1;
+
+		/* dend-1 leaves room for a trailing dot and quote. */
+		status = pretty_escape(dst, dend-1, &srcp, tend);
+
+		if ((status == -1) || ((*dst + 1) > dend))
+			return -1;
+
+		**dst = '.';
+		(*dst)++;
+		count += status + 1;
+	}
+	while(1);
+
+	return count;
+}
+
+static int
 pretty_domain(char **dst, char *dend, const unsigned char **src,
 	      const unsigned char *send)
 {
@@ -4500,8 +4586,10 @@ void parse_vendor_option(packet, lease, client_state, in_options,
 			      in_options, out_options, scope, oc, MDL);
 
 	/* No name, all done */
-	if (name.len == 0)
+	if (name.len == 0) {
+		data_string_forget(&name, MDL);
 		return;
+	}
 
 	/* Get any vendor option information from the request */
 	oc = lookup_option(&dhcp_universe, in_options, code);

@@ -1,11 +1,11 @@
-/*	$NetBSD: failover.c,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
+/*	$NetBSD: failover.c,v 1.3 2020/08/03 21:10:57 christos Exp $	*/
 
 /* failover.c
 
    Failover protocol support code... */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2020 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1999-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: failover.c,v 1.2 2018/04/07 22:37:30 christos Exp $");
+__RCSID("$NetBSD: failover.c,v 1.3 2020/08/03 21:10:57 christos Exp $");
 
 #include "cdefs.h"
 #include "dhcpd.h"
@@ -6542,6 +6542,7 @@ const char *binding_state_print (enum failover_state state)
 }
 
 
+#if defined (DEBUG_FAILOVER_MESSAGES)
 /*!
  * \brief Given a char pointer, return always return a printable value
  *
@@ -6568,6 +6569,7 @@ static const char *printable(const char* value) {
 
 	return (print_value);
 }
+#endif
 
 /*!
  * \brief Remove information from a prior use of a lease
@@ -6577,8 +6579,12 @@ static const char *printable(const char* value) {
  * \param lease the lease to scrub
  */
 void scrub_lease(struct lease* lease, const char *file, int line) {
+#if defined (DEBUG_FAILOVER_MESSAGES)
+	/* While technically not associated with FO messaging this log statement
+	 * draws more questions then it helps, so we'll ifdef it out */
 	log_debug ("%s(%d):scrubbing lease for %s, hostname: %s", file, line,
 		   piaddr(lease->ip_addr), printable(lease->client_hostname));
+#endif 
 
         if (lease->client_hostname) {
                 dfree (lease->client_hostname, MDL);

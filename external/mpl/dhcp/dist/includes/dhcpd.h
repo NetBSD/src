@@ -1,11 +1,11 @@
-/*	$NetBSD: dhcpd.h,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
+/*	$NetBSD: dhcpd.h,v 1.3 2020/08/03 21:10:56 christos Exp $	*/
 
 /* dhcpd.h
 
    Definitions for dhcpd... */
 
 /*
- * Copyright (c) 2004-2018 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2019 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -809,17 +809,27 @@ struct lease_state {
 #define SV_PERSIST_EUI_64_LEASES	91
 #endif
 #if defined (FAILOVER_PROTOCOL)
-#define SV_CHECK_SECS_BYTE_ORDER	91
+#define SV_CHECK_SECS_BYTE_ORDER	92
 #endif
-#define SV_DDNS_DUAL_STACK_MIXED_MODE	92
-#define SV_DDNS_GUARD_ID_MUST_MATCH 	93
-#define SV_DDNS_OTHER_GUARD_IS_DYNAMIC	94
-#define SV_RELEASE_ON_ROAM		95
-#define SV_LOCAL_ADDRESS6		96
-#define SV_BIND_LOCAL_ADDRESS6		97
+#define SV_DDNS_DUAL_STACK_MIXED_MODE	93
+#define SV_DDNS_GUARD_ID_MUST_MATCH 	94
+#define SV_DDNS_OTHER_GUARD_IS_DYNAMIC	95
+#define SV_RELEASE_ON_ROAM		96
+#define SV_LOCAL_ADDRESS6		97
+#define SV_BIND_LOCAL_ADDRESS6		98
+#define SV_PING_CLTT_SECS		99
+#define SV_PING_TIMEOUT_MS		100
 
 #if !defined (DEFAULT_PING_TIMEOUT)
 # define DEFAULT_PING_TIMEOUT 1
+#endif
+
+#if !defined (DEFAULT_PING_TIMEOUT_MS)
+# define DEFAULT_PING_TIMEOUT_MS 0
+#endif
+
+#if !defined (DEFAULT_PING_CLTT_SECS)
+# define DEFAULT_PING_CLTT_SECS 60  /* in seconds */
 #endif
 
 #if !defined (DEFAULT_DELAYED_ACK)
@@ -1385,6 +1395,7 @@ struct interface_info {
 	unsigned remote_id_len;		/* Length of Remote ID. */
 
 	char name [IFNAMSIZ];		/* Its name... */
+
 	int index;			/* Its if_nametoindex(). */
 	int rfdesc;			/* Its read file descriptor. */
 	int wfdesc;			/* Its write file descriptor, if
@@ -2301,7 +2312,7 @@ int parse_allow_deny (struct option_cache **, struct parse *, int);
 int parse_auth_key (struct data_string *, struct parse *);
 int parse_warn (struct parse *, const char *, ...) __sysloglike(2, 3);
 struct expression *parse_domain_list(struct parse *cfile, int);
-
+struct expression *parse_domain_name(struct parse *cfile);
 
 /* tree.c */
 extern struct binding_scope *global_scope;

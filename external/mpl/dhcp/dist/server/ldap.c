@@ -1,11 +1,11 @@
-/*	$NetBSD: ldap.c,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
+/*	$NetBSD: ldap.c,v 1.3 2020/08/03 21:10:57 christos Exp $	*/
 
 /* ldap.c
 
    Routines for reading the configuration from LDAP */
 
 /*
- * Copyright (c) 2010-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2010-2019 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2003-2006 Ntelos, Inc.
  * All rights reserved.
  *
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ldap.c,v 1.2 2018/04/07 22:37:30 christos Exp $");
+__RCSID("$NetBSD: ldap.c,v 1.3 2020/08/03 21:10:57 christos Exp $");
 
 
 #include "dhcpd.h"
@@ -931,7 +931,7 @@ ldap_parse_failover (struct ldap_config_stack *item, struct parse *cfile)
     ldap_value_free_len (tempbv);
 
 
-  if (primary == -1 || srvaddr[0] == '\0' || srvaddr[1] == '\0')
+  if (primary == -1 || *srvaddr[0] == '\0' || *srvaddr[1] == '\0')
     {
       log_error("Could not decide if the server type is primary"
                 " or secondary for failover peering '%s'.", peername[0]->bv_val);
@@ -1143,7 +1143,7 @@ _do_lookup_dhcp_int_option (struct option_state *options, int option_name)
 {
   struct option_cache *oc;
   struct data_string db;
-  int ret;
+  int ret = 0;
 
   memset (&db, 0, sizeof (db));
   oc = lookup_option (&server_universe, options, option_name);
@@ -1153,13 +1153,14 @@ _do_lookup_dhcp_int_option (struct option_state *options, int option_name)
                              (struct client_state *) NULL, options,
                              (struct option_state *) NULL,
                              &global_scope, oc, MDL) &&
-      db.data != NULL && *db.data != '\0')
+      db.data != NULL)
     {
-      ret = strtol ((const char *) db.data, NULL, 10);
+      if (db.len == 4) {
+         ret = getULong(db.data);
+      } 
+
       data_string_forget (&db, MDL);
     }
-  else
-    ret = 0;
 
   return (ret);
 }

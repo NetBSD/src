@@ -5,7 +5,7 @@
 /* #undef AC_APPLE_UNIVERSAL_BUILD */
 
 /* Define to support binary insertion of leases into queues. */
-/* #undef BINARY_LEASES */
+#define DELAYED_ACK 1
 
 /* Define to compile debug-only DHCP software. */
 /* #undef DEBUG */
@@ -48,7 +48,7 @@
 /* Define to 1 to use the Berkeley Packet Filter interface code. */
 #define HAVE_BPF 1
 
-/* Define to 1 if you have the /dev/random file. */
+/* Define to 1 if you have the /dev/random or other configured file. */
 #define HAVE_DEV_RANDOM 1
 
 /* Define to 1 to use DLPI interface code. */
@@ -145,7 +145,7 @@
 #define PACKAGE_NAME "DHCP"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "DHCP 4.3.3"
+#define PACKAGE_STRING "DHCP 4.4.2"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "dhcp"
@@ -154,13 +154,13 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.3.3"
+#define PACKAGE_VERSION "4.4.2"
 
 /* Define to any value to include Ari's PARANOIA patch. */
 /* #undef PARANOIA */
 
-/* Define to correct bad byteorders in secs field. */
-/* #undef SECS_BYTEORDER */
+/* Define to 1 to include relay port support. */
+/* #undef RELAY_PORT */
 
 /* The size of `struct iaddr *', as computed by sizeof. */
 #define SIZEOF_STRUCT_IADDR_P sizeof(void *)
@@ -170,6 +170,9 @@
 
 /* Define to include server activity tracing support. */
 #define TRACING 1
+
+/* Define to 1 if ethernet devices are in /dev/net */
+/* #undef USE_DEV_NET */
 
 /* Define to include PIDs in syslog messages. */
 #define USE_LOG_PID 1
@@ -234,6 +237,9 @@
 
 /* File for dhclient6 process information. */
 /* #undef _PATH_DHCLIENT6_PID */
+
+/* Default file containing dhcpd configuration. */
+/* #undef _PATH_DHCPD_CONF */
 
 /* File for dhclient leases. */
 /* #undef _PATH_DHCLIENT_DB */

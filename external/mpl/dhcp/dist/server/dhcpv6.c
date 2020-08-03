@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcpv6.c,v 1.3 2019/01/10 17:41:47 christos Exp $	*/
+/*	$NetBSD: dhcpv6.c,v 1.4 2020/08/03 21:10:57 christos Exp $	*/
 
 /*
  * Copyright (C) 2006-2017 by Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcpv6.c,v 1.3 2019/01/10 17:41:47 christos Exp $");
+__RCSID("$NetBSD: dhcpv6.c,v 1.4 2020/08/03 21:10:57 christos Exp $");
 
 
 /*! \file server/dhcpv6.c */
@@ -638,13 +638,9 @@ valid_client_msg(struct packet *packet, struct data_string *client_id) {
 	ret_val = 1;
 
 exit:
-	if (data.len > 0) {
-		data_string_forget(&data, MDL);
-	}
+	data_string_forget(&data, MDL);
 	if (!ret_val) {
-		if (client_id->len > 0) {
-			data_string_forget(client_id, MDL);
-		}
+		data_string_forget(client_id, MDL);
 	}
 	return ret_val;
 }
@@ -729,12 +725,8 @@ valid_client_resp(struct packet *packet,
 
 exit:
 	if (!ret_val) {
-		if (server_id->len > 0) {
-			data_string_forget(server_id, MDL);
-		}
-		if (client_id->len > 0) {
-			data_string_forget(client_id, MDL);
-		}
+		data_string_forget(server_id, MDL);
+		data_string_forget(client_id, MDL);
 	}
 	return ret_val;
 }
@@ -846,9 +838,7 @@ valid_client_info_req(struct packet *packet, struct data_string *server_id) {
 
 exit:
 	if (!ret_val) {
-		if (server_id->len > 0) {
-			data_string_forget(server_id, MDL);
-		}
+		data_string_forget(server_id, MDL);
 	}
 	return ret_val;
 }
@@ -1036,11 +1026,12 @@ static void check_pool6_threshold(struct reply_state *reply,
 			pond->low_threshold = 0;
 			pond->logged = 0;
 			log_error("Pool threshold reset - shared subnet: %s; "
-				  "address: %s; low threshold %" PRIu64 "/%" PRIu64 ".",
+				  "address: %s; low threshold %llu/%llu.",
 				  shared_name,
 				  inet_ntop(AF_INET6, &lease->addr,
 					    tmp_addr, sizeof(tmp_addr)),
-				  used, count);
+				  (long long unsigned)(used),
+				  (long long unsigned)(count));
 		}
 		return;
 	}
@@ -1069,10 +1060,11 @@ static void check_pool6_threshold(struct reply_state *reply,
 
 	/* we've exceeded it, output a message */
 	log_error("Pool threshold exceeded - shared subnet: %s; "
-		  "address: %s; high threshold %d%% %" PRIu64 "/%" PRIu64 ".",
+		  "address: %s; high threshold %d%% %llu/%llu.",
 		  shared_name,
 		  inet_ntop(AF_INET6, &lease->addr, tmp_addr, sizeof(tmp_addr)),
-		  poolhigh, used, count);
+		  poolhigh, (long long unsigned)(used),
+		  (long long unsigned)(count));
 
 	/* handle the low threshold now, if we don't
 	 * have one we default to 0. */
@@ -1441,13 +1433,16 @@ pick_v6_address(struct reply_state *reply)
 	if (jumbo_range != 0) {
 		log_debug("Unable to pick client address: "
 			  "no addresses available  - shared network %s: "
-			  " 2^64-1 < total, %" PRIu64 " active,  %" PRIu64 " abandoned",
-			  shared_name, active - abandoned, abandoned);
+			  " 2^64-1 < total, %llu active,  %llu abandoned",
+			  shared_name, (long long unsigned)(active - abandoned),
+			  (long long unsigned)(abandoned));
 	} else {
 		log_debug("Unable to pick client address: "
 			  "no addresses available  - shared network %s: "
-			  "%" PRIu64 " total, %" PRIu64 " active,  %" PRIu64 " abandoned",
-			  shared_name, total, active - abandoned, abandoned);
+			  "%llu total, %llu active,  %llu abandoned",
+			  shared_name, (long long unsigned)(total),
+			  (long long unsigned)(active - abandoned),
+		          (long long unsigned)(abandoned));
 	}
 
 	return ISC_R_NORESOURCES;
