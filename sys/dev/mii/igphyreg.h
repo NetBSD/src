@@ -1,4 +1,4 @@
-/*	$NetBSD: igphyreg.h,v 1.12 2020/08/03 07:16:51 msaitoh Exp $	*/
+/*	$NetBSD: igphyreg.h,v 1.13 2020/08/03 07:25:59 msaitoh Exp $	*/
 
 /*******************************************************************************
 
@@ -53,18 +53,18 @@
 
 /* IGP01E1000 Specific Port Status Register - R/O */
 #define IGPHY_PORT_STATUS		0x11
-#define PSSR_AUTONEG_FAILED		0x0001 /* RO LH SC */
-#define PSSR_POLARITY_REVERSED		0x0002
-#define PSSR_CABLE_LENGTH		0x007C
-#define PSSR_FULL_DUPLEX		0x0200
-#define PSSR_LINK_UP			0x0400
-#define PSSR_MDIX			0x0800
-#define PSSR_SPEED_MASK			0xC000 /* speed bits mask */
-#define PSSR_SPEED_10MBPS		0x4000
-#define PSSR_SPEED_100MBPS		0x8000
-#define PSSR_SPEED_1000MBPS		0xC000
-#define PSSR_CABLE_LENGTH_SHIFT 	0x0002 /* shift right 2 */
-#define PSSR_MDIX_SHIFT			0x000B /* shift right 11 */
+#define IGPHY_PSSR_AUTONEG_FAILED	0x0001 /* RO LH SC */
+#define IGPHY_PSSR_POLARITY_REVERSED	0x0002
+#define IGPHY_PSSR_CABLE_LENGTH		0x007C
+#define IGPHY_PSSR_FULL_DUPLEX		0x0200
+#define IGPHY_PSSR_LINK_UP		0x0400
+#define IGPHY_PSSR_MDIX			0x0800
+#define IGPHY_PSSR_SPEED_MASK		0xC000 /* speed bits mask */
+#define IGPHY_PSSR_SPEED_10MBPS		0x4000
+#define IGPHY_PSSR_SPEED_100MBPS	0x8000
+#define IGPHY_PSSR_SPEED_1000MBPS	0xC000
+#define IGPHY_PSSR_CABLE_LENGTH_SHIFT 	0x0002 /* shift right 2 */
+#define IGPHY_PSSR_MDIX_SHIFT		0x000B /* shift right 11 */
 
 /* IGP01E1000 Specific Port Control Register - R/W */
 #define IGPHY_PORT_CTRL			0x12
