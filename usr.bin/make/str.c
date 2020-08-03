@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.54 2020/08/01 10:44:23 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.55 2020/08/03 20:26:09 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: str.c,v 1.54 2020/08/01 10:44:23 rillig Exp $";
+static char rcsid[] = "$NetBSD: str.c,v 1.55 2020/08/03 20:26:09 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: str.c,v 1.54 2020/08/01 10:44:23 rillig Exp $");
+__RCSID("$NetBSD: str.c,v 1.55 2020/08/03 20:26:09 rillig Exp $");
 #endif
 #endif				/* not lint */
 #endif
@@ -142,26 +142,35 @@ char **
 brk_string(const char *str, int *out_words_len, Boolean expand,
 	char **out_words_buf)
 {
+    	size_t str_len;
+    	char *words_buf;
+    	int words_cap;
+    	char **words;
+    	int words_len;
+    	char inquote;
+    	char *word_start;
+    	char *word_end;
+	const char *str_p;
+
 	/* skip leading space chars. */
 	for (; *str == ' ' || *str == '\t'; ++str)
 		continue;
 
 	/* words_buf holds the words, separated by '\0'. */
-	size_t str_len = strlen(str);
-	char *words_buf = bmake_malloc(strlen(str) + 1);
+	str_len = strlen(str);
+	words_buf = bmake_malloc(strlen(str) + 1);
 
-	int words_cap = MAX((str_len / 5), 50);
-	char **words = bmake_malloc((words_cap + 1) * sizeof(char *));
+	words_cap = MAX((str_len / 5), 50);
+	words = bmake_malloc((words_cap + 1) * sizeof(char *));
 
 	/*
 	 * copy the string; at the same time, parse backslashes,
 	 * quotes and build the word list.
 	 */
-	int words_len = 0;
-	char inquote = '\0';
-	char *word_start = words_buf;
-	char *word_end = words_buf;
-	const char *str_p;
+	words_len = 0;
+	inquote = '\0';
+	word_start = words_buf;
+	word_end = words_buf;
 	for (str_p = str;; ++str_p) {
 		char ch = *str_p;
 		switch(ch) {
