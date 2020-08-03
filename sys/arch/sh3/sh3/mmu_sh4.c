@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_sh4.c,v 1.14 2012/02/12 16:34:10 matt Exp $	*/
+/*	$NetBSD: mmu_sh4.c,v 1.15 2020/08/03 16:43:44 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmu_sh4.c,v 1.14 2012/02/12 16:34:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmu_sh4.c,v 1.15 2020/08/03 16:43:44 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,10 +81,10 @@ void
 sh4_tlb_invalidate_addr(int asid, vaddr_t va)
 {
 	uint32_t pteh;
-	int s;
+	int sr;
 
 	va &= SH4_PTEH_VPN_MASK;
-	s = _cpu_exception_suspend();
+	sr = _cpu_exception_suspend();
 
 	/* Save current ASID */
 	pteh = _reg_read_4(SH4_PTEH);
@@ -98,16 +98,16 @@ sh4_tlb_invalidate_addr(int asid, vaddr_t va)
 	/* Restore ASID */
 	_reg_write_4(SH4_PTEH, pteh);
 
-	_cpu_exception_resume(s);
+	_cpu_set_sr(sr);
 }
 
 void
 sh4_tlb_invalidate_asid(int asid)
 {
 	uint32_t a;
-	int e, s;
+	int e, sr;
 
-	s = _cpu_exception_suspend();
+	sr = _cpu_exception_suspend();
 	/* Invalidate entry attribute to ASID */
 	RUN_P2;
 	for (e = 0; e < SH4_UTLB_ENTRY; e++) {
@@ -118,16 +118,16 @@ sh4_tlb_invalidate_asid(int asid)
 
 	__sh4_itlb_invalidate_all();
 	RUN_P1;
-	_cpu_exception_resume(s);
+	_cpu_set_sr(sr);
 }
 
 void
 sh4_tlb_invalidate_all(void)
 {
 	uint32_t a;
-	int e, eend, s;
+	int e, eend, sr;
 
-	s = _cpu_exception_suspend();
+	sr = _cpu_exception_suspend();
 	/* If non-wired entry limit is zero, clear all entry. */
 	a = _reg_read_4(SH4_MMUCR) & SH4_MMUCR_URB_MASK;
 	eend = a ? (a >> SH4_MMUCR_URB_SHIFT) : SH4_UTLB_ENTRY;
@@ -145,7 +145,7 @@ sh4_tlb_invalidate_all(void)
 	_reg_write_4(SH4_ITLB_DA1 | (2 << SH4_ITLB_E_SHIFT), 0);
 	_reg_write_4(SH4_ITLB_DA1 | (3 << SH4_ITLB_E_SHIFT), 0);
 	RUN_P1;
-	_cpu_exception_resume(s);
+	_cpu_set_sr(sr);
 }
 
 void
@@ -153,11 +153,11 @@ sh4_tlb_update(int asid, vaddr_t va, uint32_t pte)
 {
 	uint32_t oasid;
 	uint32_t ptel;
-	int s;
+	int sr;
 
 	KDASSERT(asid < 0x100 && (pte & ~PGOFSET) != 0 && va != 0);
 
-	s = _cpu_exception_suspend();
+	sr = _cpu_exception_suspend();
 	/* Save old ASID */
 	oasid = _reg_read_4(SH4_PTEH) & SH4_PTEH_ASID_MASK;
 
@@ -180,5 +180,5 @@ sh4_tlb_update(int asid, vaddr_t va, uint32_t pte)
 	/* Restore old ASID */
 	if (asid != oasid)
 		_reg_write_4(SH4_PTEH, oasid);
-	_cpu_exception_resume(s);
+	_cpu_set_sr(sr);
 }

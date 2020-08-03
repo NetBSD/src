@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.59 2020/08/03 03:34:11 uwe Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.60 2020/08/03 16:43:44 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.59 2020/08/03 03:34:11 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.60 2020/08/03 16:43:44 uwe Exp $")
 
 
 /*
@@ -305,8 +305,8 @@ NENTRY(_cpu_exception_suspend)
 	swap.w	r1, r1		/* r1 = PSL_BL */
 	or	r1, r2		/* r2 |= PSL_BL */
 	ldc	r2, sr		/* SR = r2 */
-	rts
-	 and	r1, r0		/* r0 &= 0x10000000 */
+	rts			/* return old SR */
+	 nop
 	SET_ENTRY_SIZE(_cpu_exception_suspend)
 
 
