@@ -1,4 +1,4 @@
-/*	$NetBSD: amtrelay_260.c,v 1.1.1.3 2020/05/24 19:36:44 christos Exp $	*/
+/*	$NetBSD: amtrelay_260.c,v 1.1.1.4 2020/08/03 17:07:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -167,10 +167,10 @@ totext_amtrelay(ARGS_TOTEXT) {
 	case 0:
 		break;
 	case 1:
-		return (inet_totext(AF_INET, &region, target));
+		return (inet_totext(AF_INET, tctx->flags, &region, target));
 
 	case 2:
-		return (inet_totext(AF_INET6, &region, target));
+		return (inet_totext(AF_INET6, tctx->flags, &region, target));
 
 	case 3:
 		dns_name_init(&name, NULL);

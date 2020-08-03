@@ -31,6 +31,7 @@ options {
 	ixfr-from-differences yes;
 	check-integrity no;
 	allow-query-on { 10.53.0.2; };
+	blackhole { 10.53.0.8; };
 };
 
 key one {

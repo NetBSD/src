@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.1.1.5 2020/05/24 19:36:43 christos Exp $	*/
+/*	$NetBSD: view.c,v 1.1.1.6 2020/08/03 17:07:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,8 +18,8 @@
 #include <stdbool.h>
 
 #ifdef HAVE_LMDB
-#include <lmdb.h>
-#endif /* ifdef HAVE_LMDB */
+#include <dns/lmdb.h>
+#endif /* HAVE_LMDB */
 
 #include <isc/atomic.h>
 #include <isc/file.h>
@@ -1514,7 +1514,7 @@ dns_viewlist_findzone(dns_viewlist_t *list, const dns_name_t *name,
 	for (view = ISC_LIST_HEAD(*list); view != NULL;
 	     view = ISC_LIST_NEXT(view, link))
 	{
-		if (allclasses == false && view->rdclass != rdclass) {
+		if (!allclasses && view->rdclass != rdclass) {
 			continue;
 		}
 

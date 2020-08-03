@@ -1,4 +1,4 @@
-/*	$NetBSD: aaaa_28.c,v 1.1.1.4 2020/05/24 19:36:45 christos Exp $	*/
+/*	$NetBSD: aaaa_28.c,v 1.1.1.5 2020/08/03 17:07:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -77,7 +77,7 @@ totext_in_aaaa(ARGS_TOTEXT) {
 		return (str_totext(buf, target));
 	}
 	dns_rdata_toregion(rdata, &region);
-	return (inet_totext(AF_INET6, &region, target));
+	return (inet_totext(AF_INET6, tctx->flags, &region, target));
 }
 
 static inline isc_result_t

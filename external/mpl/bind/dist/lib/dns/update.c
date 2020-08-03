@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.1.1.5 2020/05/24 19:36:42 christos Exp $	*/
+/*	$NetBSD: update.c,v 1.1.1.6 2020/08/03 17:07:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -212,7 +212,7 @@ update_log(dns_update_log_t *callback, dns_zone_t *zone, int level,
 		return;
 	}
 
-	if (isc_log_wouldlog(dns_lctx, level) == false) {
+	if (!isc_log_wouldlog(dns_lctx, level)) {
 		return;
 	}
 

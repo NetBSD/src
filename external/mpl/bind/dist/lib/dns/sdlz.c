@@ -1,4 +1,4 @@
-/*	$NetBSD: sdlz.c,v 1.1.1.5 2020/05/24 19:36:42 christos Exp $	*/
+/*	$NetBSD: sdlz.c,v 1.1.1.6 2020/08/03 17:07:11 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -531,7 +531,7 @@ getnodedata(dns_db_t *db, const dns_name_t *name, bool create,
 	REQUIRE(nodep != NULL && *nodep == NULL);
 
 	if (sdlz->dlzimp->methods->newversion == NULL) {
-		REQUIRE(create == false);
+		REQUIRE(!create);
 	}
 
 	isc_buffer_init(&b, namestr, sizeof(namestr));

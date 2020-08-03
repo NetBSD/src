@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_filesystem_driver.c,v 1.1.1.4 2020/05/24 19:36:37 christos Exp $	*/
+/*	$NetBSD: dlz_filesystem_driver.c,v 1.1.1.5 2020/08/03 17:07:08 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -491,7 +491,7 @@ process_dir(isc_dir_t *dir, void *passback, config_data_t *cd,
 				 * are performing a zone xfr and we
 				 * could not find a host entry.
 				 */
-			} else if (dir_list != NULL && foundHost == false) {
+			} else if (dir_list != NULL && !foundHost) {
 				continue;
 			}
 		} else { /* if we cannot stat entry, skip it. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tsig.c,v 1.1.1.5 2020/05/24 19:36:42 christos Exp $	*/
+/*	$NetBSD: tsig.c,v 1.1.1.6 2020/08/03 17:07:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -146,7 +146,7 @@ tsig_log(dns_tsigkey_t *key, int level, const char *fmt, ...) {
 	char namestr[DNS_NAME_FORMATSIZE];
 	char creatorstr[DNS_NAME_FORMATSIZE];
 
-	if (isc_log_wouldlog(dns_lctx, level) == false) {
+	if (!isc_log_wouldlog(dns_lctx, level)) {
 		return;
 	}
 	if (key != NULL) {
