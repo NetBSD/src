@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.4 2019/04/16 06:45:04 skrll Exp $ */
+/*	$NetBSD: dino.c,v 1.4.4.1 2020/08/03 09:19:37 martin Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.4 2019/04/16 06:45:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.4.4.1 2020/08/03 09:19:37 martin Exp $");
 
 /* #include "cardbus.h" */
 
@@ -1655,9 +1655,8 @@ dinoattach(device_t parent, device_t self, void *aux)
 	/* interrupts guts */
 	s = splhigh();
 	r->icr = 0;
-	r->imr = ~0;
-	(void)r->irr0;
 	r->imr = 0;
+	(void)r->irr0;
 	r->iar0 = ci->ci_hpa | (31 - ca->ca_irq);
 	splx(s);
 	/* Establish the interrupt register. */
