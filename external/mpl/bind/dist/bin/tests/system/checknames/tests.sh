@@ -127,7 +127,7 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 n=`expr $n + 1`
 
-echo_i "check that updates to 'check-names master ignore;' succeed and are not logged ($n)"
+echo_i "check that updates to 'check-names primary ignore;' succeed and are not logged ($n)"
 ret=0
 not=1
 $NSUPDATE -d <<END > nsupdate.out.test$n 2>&1 || ret=1

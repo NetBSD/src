@@ -46,21 +46,6 @@ if [ ! "$PERL_JSON" -a ! "$PERL_XML" ]; then
 fi
 
 
-gettraffic() {
-    sleep 1
-    echo_i "... using $1"
-    case $1 in
-        xml) path='xml/v3/traffic' ;;
-        json) path='json/v1/traffic' ;;
-        *) return 1 ;;
-    esac
-    file=`$PERL fetch.pl -p ${EXTRAPORT1} $path`
-    cp $file $file.$1.$2
-    $PERL traffic-${1}.pl $file 2>/dev/null | sort > traffic.out.$2
-    result=$?
-    return $result
-}
-
 getzones() {
     sleep 1
     echo_i "... using $1"
@@ -87,81 +72,6 @@ loadkeys_on() {
 
 status=0
 n=1
-ret=0
-echo_i "fetching traffic size data ($n)"
-if [ $PERL_XML ]; then
-    gettraffic xml x$n || ret=1
-    cmp traffic.out.x$n traffic.expect.$n || ret=1
-fi
-if [ $PERL_JSON ]; then
-    gettraffic json j$n || ret=1
-    cmp traffic.out.j$n traffic.expect.$n || ret=1
-fi
-if [ $ret != 0 ]; then echo_i "failed"; fi
-status=`expr $status + $ret`
-n=`expr $n + 1`
-
-ret=0
-echo_i "fetching traffic size data after small UDP query ($n)"
-$DIGCMD short.example txt > dig.out.$n || ret=1
-if [ $PERL_XML ]; then
-    gettraffic xml x$n || ret=1
-    cmp traffic.out.x$n traffic.expect.$n || ret=1
-fi
-if [ $PERL_JSON ]; then
-    gettraffic json j$n || ret=1
-    cmp traffic.out.j$n traffic.expect.$n || ret=1
-fi
-if [ $ret != 0 ]; then echo_i "failed"; fi
-status=`expr $status + $ret`
-n=`expr $n + 1`
-
-ret=0
-n=`expr $n + 1`
-echo_i "fetching traffic size data after large UDP query ($n)"
-$DIGCMD long.example txt > dig.out.$n || ret=1
-if [ $PERL_XML ]; then
-    gettraffic xml x$n || ret=1
-    cmp traffic.out.x$n traffic.expect.$n || ret=1
-fi
-if [ $PERL_JSON ]; then
-    gettraffic json j$n || ret=1
-    cmp traffic.out.j$n traffic.expect.$n || ret=1
-fi
-if [ $ret != 0 ]; then echo_i "failed"; fi
-status=`expr $status + $ret`
-n=`expr $n + 1`
-
-ret=0
-echo_i "fetching traffic size data after small TCP query ($n)"
-$DIGCMD +tcp short.example txt > dig.out.$n || ret=1
-if [ $PERL_XML ]; then
-    gettraffic xml x$n || ret=1
-    cmp traffic.out.x$n traffic.expect.$n || ret=1
-fi
-if [ $PERL_JSON ]; then
-    gettraffic json j$n || ret=1
-    cmp traffic.out.j$n traffic.expect.$n || ret=1
-fi
-if [ $ret != 0 ]; then echo_i "failed"; fi
-status=`expr $status + $ret`
-n=`expr $n + 1`
-
-ret=0
-echo_i "fetching traffic size data after large TCP query ($n)"
-$DIGCMD +tcp long.example txt > dig.out.$n || ret=1
-if [ $PERL_XML ]; then
-    gettraffic xml x$n || ret=1
-    cmp traffic.out.x$n traffic.expect.$n || ret=1
-fi
-if [ $PERL_JSON ]; then
-    gettraffic json j$n || ret=1
-    cmp traffic.out.j$n traffic.expect.$n || ret=1
-fi
-if [ $ret != 0 ]; then echo_i "failed"; fi
-status=`expr $status + $ret`
-n=`expr $n + 1`
-
 ret=0
 echo_i "checking consistency between named.stats and xml/json ($n)"
 rm -f ns2/named.stats
@@ -360,25 +270,6 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 n=`expr $n + 1`
 
-# 4. Test a zone with more than four keys.
-zone="manykeys"
-ksk8_id=`cat ns2/$zone.ksk8.id`
-zsk8_id=`cat ns2/$zone.zsk8.id`
-ksk13_id=`cat ns2/$zone.ksk13.id`
-zsk13_id=`cat ns2/$zone.zsk13.id`
-ksk14_id=`cat ns2/$zone.ksk14.id`
-zsk14_id=`cat ns2/$zone.zsk14.id`
-
-ret=0
-echo_i "fetch zone stats data for a zone with many keys ($n)"
-# Fetch and check the dnssec sign statistics.
-if [ $PERL_XML ]; then
-    getzones xml $zone x$n || ret=1
-fi
-if [ $PERL_JSON ]; then
-    getzones json $zone j$n || ret=1
-fi
-# The output is gibberish, but at least make sure it does not crash.
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 n=`expr $n + 1`

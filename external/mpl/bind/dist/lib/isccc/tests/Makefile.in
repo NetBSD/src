@@ -22,7 +22,7 @@ VERSION=@BIND9_VERSION@
 CINCLUDES =	-I. -Iinclude ${ISCCC_INCLUDES} ${ISC_INCLUDES} @CMOCKA_CFLAGS@
 CDEFINES =
 
-ISCLIBS =	../../isc/libisc.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
+ISCLIBS =	../../isc/libisc.@A@
 ISCDEPLIBS =	../../isc/libisc.@A@
 ISCCCLIBS =	../libisccc.@A@
 ISCCCDEPLIBS =	../libisccc.@A@

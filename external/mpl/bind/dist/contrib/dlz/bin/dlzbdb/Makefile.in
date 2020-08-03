@@ -21,7 +21,7 @@ CDEFINES =      @CONTRIB_DLZ@
 CWARNINGS =
 
 DLZLIBS = 	@DLZ_DRIVER_LIBS@
-ISCLIBS =	../../../../lib/isc/libisc.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
+ISCLIBS =	../../../../lib/isc/libisc.@A@ @NO_LIBTOOL_ISCLIBS@
 
 DEPLIBS =	${ISCDEPLIBS}
 
@@ -30,12 +30,6 @@ LIBS =		${ISCLIBS} ${DLZLIBS} @LIBS@
 TARGETS =	dlzbdb
 
 SRCS =		dlzbdb.c
-
-#MANPAGES =	
-
-#HTMLPAGES =	
-
-#MANOBJS =	${MANPAGES} ${HTMLPAGES}
 
 @BIND9_MAKE_RULES@
 
@@ -46,17 +40,11 @@ dlzbdb.@O@: dlzbdb.c
 dlzbdb: dlzbdb.@O@ ${DEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} -o $@ dlzbdb.@O@ ${LIBS}
 
-doc man:: ${MANOBJS}
-
-#docclean manclean maintainer-clean::
-#	rm -f ${MANOBJS}
-
 clean distclean maintainer-clean::
 	rm -f ${TARGETS}
 
 installdirs:
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${sbindir}
-#	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${mandir}/man8
 
 install:: dlzbdb installdirs
 	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} dlzbdb ${DESTDIR}${sbindir}

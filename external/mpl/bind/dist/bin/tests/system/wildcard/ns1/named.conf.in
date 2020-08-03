@@ -24,6 +24,10 @@ options {
 
 zone "." { type master; file "root.db.signed"; };
 
+/*
+ * RFC 4592 example zone.
+ */
+zone "example" { type master; file "example.db"; };
 zone "nsec" { type master; file "nsec.db.signed"; };
 zone "private.nsec" { type master; file "private.nsec.db.signed"; };
 

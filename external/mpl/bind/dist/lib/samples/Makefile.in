@@ -25,8 +25,8 @@ CDEFINES =	-DVERSION=\"${VERSION}\" \
 		-DSYSCONFDIR=\"${sysconfdir}\"
 CWARNINGS =
 
-ISCLIBS =	../isc/libisc.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
-DNSLIBS =	../dns/libdns.@A@ ${MAXMINDDB_LIBS} @DNS_CRYPTO_LIBS@
+ISCLIBS =	../isc/libisc.@A@ @NO_LIBTOOL_ISCLIBS@
+DNSLIBS =	../dns/libdns.@A@ @NO_LIBTOOL_DNSLIBS@
 ISCCFGLIBS =	../isccfg/libisccfg.@A@
 IRSLIBS =	../irs/libirs.@A@
 
@@ -55,12 +55,6 @@ SRCS =		resolve.c \
 		sample-async.c sample-gai.c sample-update.c \
 		sample-request.c nsprobe.c
 
-MANPAGES =
-
-HTMLPAGES =
-
-MANOBJS =	${MANPAGES} ${HTMLPAGES}
-
 @BIND9_MAKE_RULES@
 
 resolve@EXEEXT@: resolve.@O@ ${IRSDEPLIBS} ${DEPLIBS}
@@ -86,11 +80,6 @@ sample-request@EXEEXT@: sample-request.@O@ ${DEPLIBS}
 nsprobe@EXEEXT@: nsprobe.@O@ ${DEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
 	nsprobe.@O@ ${LIBS}
-
-doc man:: ${MANOBJS}
-
-docclean manclean maintainer-clean::
-	rm -f ${MANOBJS}
 
 clean distclean maintainer-clean::
 	rm -f ${TARGETS}

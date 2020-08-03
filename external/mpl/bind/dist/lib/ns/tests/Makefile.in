@@ -26,9 +26,9 @@ CINCLUDES =	-I. -Iinclude ${NS_INCLUDES} ${DNS_INCLUDES} ${ISC_INCLUDES} \
 		@CMOCKA_CFLAGS@
 CDEFINES =	-DTESTS="\"${top_builddir}/lib/ns/tests/\"" -DNAMED_PLUGINDIR=\"${plugindir}\"
 
-ISCLIBS =	../../isc/libisc.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
+ISCLIBS =	../../isc/libisc.@A@ @NO_LIBTOOL_ISCLIBS@
 ISCDEPLIBS =	../../isc/libisc.@A@
-DNSLIBS =	../../dns/libdns.@A@ ${MAXMINDDB_LIBS} @DNS_CRYPTO_LIBS@
+DNSLIBS =	../../dns/libdns.@A@ @NO_LIBTOOL_DNSLIBS@
 DNSDEPLIBS =	../../dns/libdns.@A@
 NSLIBS =	../libns.@A@
 NSDEPLIBS =	../libns.@A@

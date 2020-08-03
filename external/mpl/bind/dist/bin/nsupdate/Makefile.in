@@ -26,10 +26,10 @@ CINCLUDES =	${DNS_INCLUDES} ${BIND9_INCLUDES} ${ISC_INCLUDES} \
 CDEFINES =	-DVERSION=\"${VERSION}\" @USE_GSSAPI@
 CWARNINGS =
 
-DNSLIBS =	../../lib/dns/libdns.@A@ ${MAXMINDDB_LIBS} @DNS_CRYPTO_LIBS@
+DNSLIBS =	../../lib/dns/libdns.@A@ @NO_LIBTOOL_DNSLIBS@
 BIND9LIBS =	../../lib/bind9/libbind9.@A@
-ISCLIBS =	../../lib/isc/libisc.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
-ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
+ISCLIBS =	../../lib/isc/libisc.@A@ @NO_LIBTOOL_ISCLIBS@
+ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ @NO_LIBTOOL_ISCLIBS@
 ISCCFGLIBS =	../../lib/isccfg/libisccfg.@A@
 IRSLIBS =	../../lib/irs/libirs.@A@
 
@@ -43,7 +43,8 @@ DEPLIBS =	${DNSDEPLIBS} ${IRSDEPLIBS} ${BIND9DEPLIBS} \
 		${ISCDEPLIBS} ${ISCCFGDEPLIBS}
 
 LIBS =		${DNSLIBS} ${IRSLIBS} ${BIND9LIBS} \
-		${ISCCFGLIBS} ${ISCLIBS} @LIBS@
+		${ISCCFGLIBS} ${ISCLIBS} ${GSSAPI_LIBS} \
+		@LIBS@
 
 NOSYMLIBS =	${DNSLIBS} ${IRSLIBS} ${BIND9LIBS} \
 		${ISCCFGLIBS} ${ISCNOSYMLIBS} @LIBS@
@@ -58,12 +59,6 @@ UOBJS =
 
 SRCS =		nsupdate.c
 
-MANPAGES =	nsupdate.1
-
-HTMLPAGES =	nsupdate.html
-
-MANOBJS =	${MANPAGES} ${HTMLPAGES}
-
 @BIND9_MAKE_RULES@
 
 nsupdate.@O@: nsupdate.c
@@ -76,22 +71,14 @@ nsupdate@EXEEXT@: nsupdate.@O@ ${UOBJS} ${DEPLIBS}
 	export LIBS0="${DNSLIBS} ${IRSLIBS}"; \
 	${FINALBUILDCMD}
 
-doc man:: ${MANOBJS}
-
-docclean manclean maintainer-clean::
-	rm -f ${MANOBJS}
-
 clean distclean::
 	rm -f ${TARGETS}
 
 installdirs:
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${bindir}
-	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${mandir}/man1
 
 install:: nsupdate@EXEEXT@ installdirs
 	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} nsupdate@EXEEXT@ ${DESTDIR}${bindir}
-	${INSTALL_DATA} ${srcdir}/nsupdate.1 ${DESTDIR}${mandir}/man1
 
 uninstall::
-	rm -f ${DESTDIR}${mandir}/man1/nsupdate.1
 	${LIBTOOL_MODE_UNINSTALL} rm -f ${DESTDIR}${bindir}/nsupdate@EXEEXT@

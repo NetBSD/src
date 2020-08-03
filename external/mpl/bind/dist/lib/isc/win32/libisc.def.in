@@ -606,6 +606,7 @@ isc_stdio_sync
 isc_stdio_tell
 isc_stdio_write
 isc_stdtime_get
+isc_stdtime_tostring
 isc_string_strerror_r
 isc_symtab_count
 isc_symtab_create
@@ -693,6 +694,8 @@ isc_timermgr_destroy
 isc_timermgr_poke
 isc_tm_timegm
 isc_tm_strptime
+isc_utf8_bom
+isc_utf8_valid
 isc_win32os_versioncheck
 openlog
 @IF PKCS11

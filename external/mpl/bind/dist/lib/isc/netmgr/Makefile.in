@@ -19,6 +19,7 @@ CINCLUDES =	-I${srcdir}/include \
 		-I${srcdir}/.. \
 		${OPENSSL_CFLAGS} \
 		${JSON_C_CFLAGS} \
+		${LIBUV_CFLAGS} \
 		${LIBXML2_CFLAGS}
 
 CDEFINES =

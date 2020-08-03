@@ -20,10 +20,6 @@ SUBDIRS	=	isc
 TARGETS =	dnssec-checkds dnssec-coverage dnssec-keymgr
 PYSRCS =	dnssec-checkds.py dnssec-coverage.py dnssec-keymgr.py
 
-MANPAGES =	dnssec-checkds.8 dnssec-coverage.8 dnssec-keymgr.8
-HTMLPAGES =	dnssec-checkds.html dnssec-coverage.html dnssec-keymgr.html
-MANOBJS =	${MANPAGES} ${HTMLPAGES}
-
 @BIND9_MAKE_RULES@
 
 dnssec-checkds: dnssec-checkds.py
@@ -38,22 +34,13 @@ dnssec-keymgr: dnssec-keymgr.py
 	cp -f dnssec-keymgr.py dnssec-keymgr
 	chmod +x dnssec-keymgr
 
-doc man:: ${MANOBJS}
-
-docclean manclean maintainer-clean::
-	rm -f ${MANOBJS}
-
 installdirs:
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${sbindir}
-	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${mandir}/man8
 
 install:: ${TARGETS} installdirs
 	${INSTALL_SCRIPT} dnssec-checkds ${DESTDIR}${sbindir}
 	${INSTALL_SCRIPT} dnssec-coverage ${DESTDIR}${sbindir}
 	${INSTALL_SCRIPT} dnssec-keymgr ${DESTDIR}${sbindir}
-	${INSTALL_DATA} ${srcdir}/dnssec-checkds.8 ${DESTDIR}${mandir}/man8
-	${INSTALL_DATA} ${srcdir}/dnssec-coverage.8 ${DESTDIR}${mandir}/man8
-	${INSTALL_DATA} ${srcdir}/dnssec-keymgr.8 ${DESTDIR}${mandir}/man8
 	if test -n "${PYTHON}" ; then \
 		if test -n "${DESTDIR}" ; then \
 			${PYTHON} ${srcdir}/setup.py install --root=${DESTDIR} --prefix=${prefix} @PYTHON_INSTALL_LIB@ ; \
@@ -64,9 +51,6 @@ install:: ${TARGETS} installdirs
 	fi
 
 uninstall::
-	rm -f ${DESTDIR}${mandir}/man8/dnssec-keymgr.8
-	rm -f ${DESTDIR}${mandir}/man8/dnssec-coverage.8
-	rm -f ${DESTDIR}${mandir}/man8/dnssec-checkds.8
 	rm -f ${DESTDIR}${sbindir}/dnssec-keymgr
 	rm -f ${DESTDIR}${sbindir}/dnssec-coverage
 	rm -f ${DESTDIR}${sbindir}/dnssec-checkds

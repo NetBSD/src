@@ -61,13 +61,13 @@ PARALLEL_COMMON="dnssec rpzrecurse serve-stale \
 	ednscompliance emptyzones \
 	fetchlimit filter-aaaa formerr forward \
 	geoip2 glue idna inline integrity ixfr \
-	kasp keepalive legacy limits \
+	keepalive legacy limits \
 	masterfile masterformat metadata mirror mkeys \
 	names notify nslookup nsupdate nzd2nzf \
 	padding pending pipelined qmin \
 	reclimit redirect resolver rndc rootkeysentinel rpz \
 	rrchecker rrl rrsetorder rsabigexponent runtime \
-	sfcache smartsign sortlist \
+	sfcache shutdown smartsign sortlist \
 	spf staticstub statistics statschannel stub synthfromdnssec \
 	tcp tools tsig tsiggss ttl \
 	unknown upforwd verify views wildcard \
@@ -292,6 +292,13 @@ keyfile_to_dskeys() {
     echo "};"
 }
 
+# keyfile_to_trusted_keys: convert key data contained in the keyfile(s)
+# provided to a "trust-keys" section suitable for including in a
+# resolver's configuration file
+keyfile_to_trusted_keys() {
+    keyfile_to_keys "trusted-keys" "" $*
+}
+
 # keyfile_to_static_keys: convert key data contained in the keyfile(s)
 # provided to a *static-key* "trust-anchors" section suitable for including in
 # a resolver's configuration file
@@ -475,6 +482,22 @@ retry_quiet() {
 	__retry_quiet=1
 	_retry "$@"
 }
+
+# _repeat: keep running command up to $1 times, unless it fails
+_repeat() (
+    __retries="${1}"
+    shift
+    while :; do
+	if ! "$@"; then
+	    return 1
+	fi
+	__retries=$((__retries-1))
+	if [ "${__retries}" -le 0 ]; then
+	    break
+	fi
+    done
+    return 0
+)
 
 rndc_reload() {
     echo_i "`$RNDC -c ../common/rndc.conf -s $2 -p ${CONTROLPORT} reload $3 2>&1 | sed 's/^/'$1' /'`"

@@ -10,7 +10,7 @@
 $ORIGIN test.
 $TTL    15
 test.  15  IN        SOA ns1.test.  hostmaster.test. (
-                              4 ; serial
+                              3 ; serial
                               3H ; refresh
                               15 ; retry
                               1w ; expire

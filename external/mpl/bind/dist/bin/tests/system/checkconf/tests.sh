@@ -381,7 +381,7 @@ if [ $ret != 0 ]; then echo_i "failed"; ret=1; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
-echo_i "check that named-checkconf -l print out the zone list ($n)"
+echo_i "check that named-checkconf -l prints out the zone list ($n)"
 ret=0
 $CHECKCONF -l good.conf |
 grep -v "is not implemented" |

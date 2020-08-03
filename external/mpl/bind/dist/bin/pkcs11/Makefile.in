@@ -17,7 +17,7 @@ CINCLUDES =	${ISC_INCLUDES}
 
 CDEFINES =
 
-ISCLIBS =	../../lib/isc/libisc.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
+ISCLIBS =	../../lib/isc/libisc.@A@ @NO_LIBTOOL_ISCLIBS@
 
 ISCDEPLIBS =	../../lib/isc/libisc.@A@
 
@@ -34,13 +34,6 @@ SRCS =		pkcs11-list.c pkcs11-destroy.c \
 		pkcs11-keygen.c pkcs11-tokens.c
 OBJS =		pkcs11-list.@O@ pkcs11-destroy.@O@ \
 		pkcs11-keygen.@O@ pkcs11-tokens.@O@
-
-
-MANPAGES =	pkcs11-list.8 pkcs11-destroy.8 \
-		pkcs11-keygen.8 pkcs11-tokens.8
-HTMLPAGES =	pkcs11-list.html pkcs11-destroy.html \
-		pkcs11-keygen.html pkcs11-tokens.html
-MANOBJS =	${MANPAGES} ${HTMLPAGES}
 
 @BIND9_MAKE_RULES@
 
@@ -60,14 +53,8 @@ pkcs11-tokens@EXEEXT@: pkcs11-tokens.@O@ ${DEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${ALL_CFLAGS} ${LDFLAGS} \
 		-o $@ pkcs11-tokens.@O@ ${LIBS}
 
-doc man:: ${MANOBJS}
-
-docclean manclean maintainer-clean::
-	rm -f ${MANOBJS}
-
 installdirs:
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${sbindir}
-	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${mandir}/man8
 
 install:: ${TARGETS} installdirs
 	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} pkcs11-list@EXEEXT@ \
@@ -78,16 +65,8 @@ install:: ${TARGETS} installdirs
 		${DESTDIR}${sbindir}
 	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} pkcs11-tokens@EXEEXT@ \
 		${DESTDIR}${sbindir}
-	${INSTALL_DATA} ${srcdir}/pkcs11-list.8 ${DESTDIR}${mandir}/man8
-	${INSTALL_DATA} ${srcdir}/pkcs11-destroy.8 ${DESTDIR}${mandir}/man8
-	${INSTALL_DATA} ${srcdir}/pkcs11-keygen.8 ${DESTDIR}${mandir}/man8
-	${INSTALL_DATA} ${srcdir}/pkcs11-tokens.8 ${DESTDIR}${mandir}/man8
 
 uninstall::
-	rm -f ${DESTDIR}${mandir}/man8/pkcs11-tokens.8
-	rm -f ${DESTDIR}${mandir}/man8/pkcs11-keygen.8
-	rm -f ${DESTDIR}${mandir}/man8/pkcs11-destroy.8
-	rm -f ${DESTDIR}${mandir}/man8/pkcs11-list.8
 	${LIBTOOL_MODE_UNINSTALL} rm -f /
 		${DESTDIR}${sbindir}/pkcs11-tokens@EXEEXT@
 	${LIBTOOL_MODE_UNINSTALL} rm -f /

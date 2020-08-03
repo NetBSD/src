@@ -16,7 +16,7 @@ top_srcdir =	@top_srcdir@
 CINCLUDES =	${ISC_INCLUDES}
 CDEFINES =
 
-ISCLIBS =	../../../lib/isc/libisc.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
+ISCLIBS =	../../../lib/isc/libisc.@A@ @NO_LIBTOOL_ISCLIBS@
 
 LIBS =		${ISCLIBS} @LIBS@
 

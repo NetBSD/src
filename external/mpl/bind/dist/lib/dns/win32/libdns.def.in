@@ -472,6 +472,7 @@ dns_keydata_fromdnskey
 dns_keydata_todnskey
 dns_keyflags_fromtext
 dns_keymgr_run
+dns_keymgr_status
 dns_keynode_dsset
 dns_keynode_initial
 dns_keynode_managed

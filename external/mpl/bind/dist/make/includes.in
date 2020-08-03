@@ -26,7 +26,9 @@ ISCCFG_INCLUDES = @BIND9_ISCCFG_BUILDINCLUDE@ \
        -I${top_srcdir}/lib/isccfg/include
 
 DNS_INCLUDES = @BIND9_DNS_BUILDINCLUDE@ \
-	-I${top_srcdir}/lib/dns/include
+	-I${top_srcdir}/lib/dns/include \
+	${FSTRM_CFLAGS} ${PROTOBUF_C_CFLAGS} \
+	${OPENSSL_CFLAGS} ${LMDB_CFLAGS}
 
 NS_INCLUDES = @BIND9_NS_BUILDINCLUDE@ \
 	-I${top_srcdir}/lib/ns/include

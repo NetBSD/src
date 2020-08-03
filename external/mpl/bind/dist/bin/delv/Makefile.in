@@ -24,9 +24,9 @@ CDEFINES =	-DVERSION=\"${VERSION}\" \
 CWARNINGS =
 
 ISCCFGLIBS =	../../lib/isccfg/libisccfg.@A@
-DNSLIBS =	../../lib/dns/libdns.@A@ ${MAXMINDDB_LIBS} @DNS_CRYPTO_LIBS@
-ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
-ISCLIBS =	../../lib/isc/libisc.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
+DNSLIBS =	../../lib/dns/libdns.@A@ @NO_LIBTOOL_DNSLIBS@
+ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ @NO_LIBTOOL_ISCLIBS@
+ISCLIBS =	../../lib/isc/libisc.@A@ @NO_LIBTOOL_ISCLIBS@
 IRSLIBS =	../../lib/irs/libirs.@A@
 
 ISCCFGDEPLIBS =	../../lib/isccfg/libisccfg.@A@
@@ -47,12 +47,6 @@ OBJS =		delv.@O@
 
 SRCS =		delv.c
 
-MANPAGES =	delv.1
-
-HTMLPAGES =	delv.html
-
-MANOBJS =	${MANPAGES} ${HTMLPAGES}
-
 @BIND9_MAKE_RULES@
 
 delv@EXEEXT@: delv.@O@ ${DEPLIBS}
@@ -62,21 +56,13 @@ delv@EXEEXT@: delv.@O@ ${DEPLIBS}
 
 installdirs:
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${bindir}
-	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${mandir}/man1
 
 install:: delv@EXEEXT@ installdirs
 	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} \
 		delv@EXEEXT@ ${DESTDIR}${bindir}
-	${INSTALL_DATA} ${srcdir}/delv.1 ${DESTDIR}${mandir}/man1
 
 uninstall::
-	rm -f ${DESTDIR}${mandir}/man1/delv.1
 	${LIBTOOL_MODE_UNINSTALL} rm -f ${DESTDIR}${bindir}/delv@EXEEXT@
-
-doc man:: ${MANOBJS}
-
-docclean manclean maintainer-clean::
-	rm -f ${MANOBJS}
 
 clean distclean maintainer-clean::
 	rm -f ${TARGETS}

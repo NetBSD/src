@@ -21,15 +21,15 @@ CINCLUDES =	${DNS_INCLUDES} ${ISC_INCLUDES} \
 CDEFINES =
 CWARNINGS =
 
-DNSLIBS =	../../../../lib/dns/libdns.@A@ ${MAXMINDDB_LIBS} @DNS_CRYPTO_LIBS@
-ISCLIBS =	../../../../lib/isc/libisc.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
+DNSLIBS =	../../../../lib/dns/libdns.@A@ @NO_LIBTOOL_DNSLIBS@
+ISCLIBS =	../../../../lib/isc/libisc.@A@ @NO_LIBTOOL_ISCLIBS@
 
 DNSDEPLIBS =	../../../../lib/dns/libdns.@A@
 ISCDEPLIBS =	../../../../lib/isc/libisc.@A@
 
 DEPLIBS =	${DNSDEPLIBS} ${ISCDEPLIBS}
 
-LIBS =		${DNSLIBS} ${ISCLIBS} @LIBS@
+LIBS =		${DNSLIBS} ${ISCLIBS} ${OPENSSL_LIBS} @LIBS@
 
 TARGETS =	bigkey@EXEEXT@
 

@@ -26,10 +26,10 @@ CDEFINES =	-DVERSION=\"${VERSION}\"
 CWARNINGS =
 
 ISCCFGLIBS =	../../lib/isccfg/libisccfg.@A@
-DNSLIBS =	../../lib/dns/libdns.@A@ ${MAXMINDDB_LIBS} @DNS_CRYPTO_LIBS@
+DNSLIBS =	../../lib/dns/libdns.@A@ @NO_LIBTOOL_DNSLIBS@
 BIND9LIBS =	../../lib/bind9/libbind9.@A@
-ISCLIBS =	../../lib/isc/libisc.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
-ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
+ISCLIBS =	../../lib/isc/libisc.@A@ @NO_LIBTOOL_ISCLIBS@
+ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ @NO_LIBTOOL_ISCLIBS@
 IRSLIBS =	../../lib/irs/libirs.@A@
 
 ISCCFGDEPLIBS =	../../lib/isccfg/libisccfg.@A@
@@ -57,12 +57,6 @@ UOBJS =
 
 SRCS =		dig.c dighost.c host.c nslookup.c
 
-MANPAGES =	dig.1 host.1 nslookup.1
-
-HTMLPAGES =	dig.html host.html nslookup.html
-
-MANOBJS =	${MANPAGES} ${HTMLPAGES}
-
 @BIND9_MAKE_RULES@
 
 LDFLAGS =	@LDFLAGS@ @LIBIDN2_LDFLAGS@
@@ -82,17 +76,11 @@ nslookup@EXEEXT@: nslookup.@O@ dighost.@O@ ${UOBJS} ${DEPLIBS}
 	export LIBS0="${DNSLIBS} ${IRSLIBS}"; \
 	${FINALBUILDCMD}
 
-doc man:: ${MANOBJS}
-
-docclean manclean maintainer-clean::
-	rm -f ${MANOBJS}
-
 clean distclean maintainer-clean::
 	rm -f ${TARGETS}
 
 installdirs:
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${bindir}
-	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${mandir}/man1
 
 install:: dig@EXEEXT@ host@EXEEXT@ nslookup@EXEEXT@ installdirs
 	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} \
@@ -101,14 +89,8 @@ install:: dig@EXEEXT@ host@EXEEXT@ nslookup@EXEEXT@ installdirs
 		host@EXEEXT@ ${DESTDIR}${bindir}
 	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} \
 		nslookup@EXEEXT@ ${DESTDIR}${bindir}
-	for m in ${MANPAGES}; do \
-		${INSTALL_DATA} ${srcdir}/$$m ${DESTDIR}${mandir}/man1 || exit 1; \
-	done
 
 uninstall::
-	for m in ${MANPAGES}; do \
-		rm -f ${DESTDIR}${mandir}/man1/$$m || exit 1; \
-	done
 	${LIBTOOL_MODE_UNINSTALL} rm -f ${DESTDIR}${bindir}/nslookup@EXEEXT@
 	${LIBTOOL_MODE_UNINSTALL} rm -f ${DESTDIR}${bindir}/host@EXEEXT@
 	${LIBTOOL_MODE_UNINSTALL} rm -f ${DESTDIR}${bindir}/dig@EXEEXT@

@@ -775,7 +775,7 @@
           <xsl:for-each select="views/view">
             <h3>Zones for View <xsl:value-of select="@name"/></h3>
             <table class="zones">
-              <thead><tr><th>Name</th><th>Class</th><th>Type</th><th>Serial</th></tr></thead>
+              <thead><tr><th>Name</th><th>Class</th><th>Type</th><th>Serial</th><th>Loaded</th><th>Expires</th><th>Refresh</th></tr></thead>
               <tbody>
                 <xsl:for-each select="zones/zone">
                   <xsl:variable name="css-class15">
@@ -788,7 +788,10 @@
                       <td><xsl:value-of select="@name"/></td>
                       <td><xsl:value-of select="@rdataclass"/></td>
                       <td><xsl:value-of select="type"/></td>
-                      <td><xsl:value-of select="serial"/></td></tr>
+                      <td><xsl:value-of select="serial"/></td>
+                      <td><xsl:value-of select="loaded"/></td>
+                      <td><xsl:value-of select="expires"/></td>
+                      <td><xsl:value-of select="refresh"/></td></tr>
                 </xsl:for-each>
               </tbody>
             </table>

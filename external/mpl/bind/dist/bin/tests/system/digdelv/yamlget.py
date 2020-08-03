@@ -13,7 +13,9 @@ import sys
 
 try:
     import yaml
-except (ModuleNotFoundError, ImportError):
+# flake8: noqa: E722
+# pylint: disable=bare-except
+except:
     print("No python yaml module, skipping")
     sys.exit(1)
 
@@ -25,6 +27,10 @@ with open(sys.argv[1], "r") as f:
             except ValueError:
                 pass
 
-            item = item[key]
+            try:
+                item = item[key]
+            except KeyError:
+                print('Key "' + key + '" not found.')
+                sys.exit(1)
 
         print(item)

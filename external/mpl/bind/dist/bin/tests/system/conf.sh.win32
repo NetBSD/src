@@ -19,6 +19,7 @@ TOP=${SYSTEMTESTTOP:=.}/../../..
 
 # Make it absolute so that it continues to work after we cd.
 TOP=`cd $TOP && pwd`
+TOP_SRCDIR="$TOP"
 
 # This is the windows build. This disables certain tests cases
 # and changes some specific behaviors where necessary.

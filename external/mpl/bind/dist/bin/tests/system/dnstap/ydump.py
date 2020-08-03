@@ -25,5 +25,5 @@ DATAFILE = sys.argv[2]
 ARGS = [DNSTAP_READ, '-y', DATAFILE]
 
 with subprocess.Popen(ARGS, stdout=subprocess.PIPE) as f:
-    for l in yaml.load_all(f.stdout):
-        pprint.pprint(l)
+    for y in yaml.load_all(f.stdout, Loader=yaml.SafeLoader):
+        pprint.pprint(y)

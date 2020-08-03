@@ -42,16 +42,16 @@ offer support on a "best effort" basis for some.
 
 ### Regularly tested platforms
 
-As of Mar 2020, BIND 9.16 is fully supported and regularly tested on the
+As of Jul 2020, BIND 9.16 is fully supported and regularly tested on the
 following systems:
 
 * Debian 9, 10
-* Ubuntu LTS 16.04, 18.04
-* Fedora 31
+* Ubuntu LTS 16.04, 20.04
+* Fedora 32
 * Red Hat Enterprise Linux / CentOS 7, 8
-* FreeBSD 11.3, 12.1
-* OpenBSD 6.6
-* Alpine Linux
+* FreeBSD 11.4, 12.1
+* OpenBSD 6.7
+* Alpine Linux 3.12
 
 The amd64, i386, armhf and arm64 CPU architectures are all fully supported.
 

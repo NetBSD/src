@@ -20,10 +20,8 @@ CINCLUDES =     ${ISC_INCLUDES} ${DNS_INCLUDES}
 CDEFINES =
 CWARNINGS =
 
-DNSLIBS =
-ISCLIBS =	../../../../lib/isc/libisc.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
+ISCLIBS =	../../../../lib/isc/libisc.@A@ @NO_LIBTOOL_ISCLIBS@
 
-DNSDEPLIBS =
 ISCDEPLIBS =    ../../../../lib/isc/libisc.@A@
 
 DEPLIBS =	${ISCDEPLIBS}

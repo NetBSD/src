@@ -206,6 +206,15 @@ if [ -x ${DELV} ] ; then
    n=$((n+1))
    test "$ret" -eq 0 || echo_i "failed"
    status=$((status+ret))
+
+   ret=0
+   echo_i "checking positive validation NSEC using dns_client (trusted-keys) ($n)"
+   "$DELV" -a ns1/trusted.keys -p "$PORT" @10.53.0.4 a a.example > delv.out$n || ret=1
+   grep "a.example..*10.0.0.1" delv.out$n > /dev/null || ret=1
+   grep "a.example..*.RRSIG.A [0-9][0-9]* 2 300 .*" delv.out$n > /dev/null || ret=1
+   n=$((n+1))
+   test "$ret" -eq 0 || echo_i "failed"
+   status=$((status+ret))
 fi
 
 echo_i "checking positive validation NSEC3 ($n)"
@@ -2633,12 +2642,15 @@ status=$((status+ret))
 
 echo_i "clear signing records ($n)"
 { rndccmd 10.53.0.3 signing -clear all update-nsec3.example > /dev/null; } 2>&1 || ret=1
-sleep 1
-{ rndccmd 10.53.0.3 signing -list update-nsec3.example > signing.out; } 2>&1
-grep -q "No signing records found" signing.out || {
-        ret=1
-        sed 's/^/ns3 /' signing.out | cat_i
+check_no_signing_record_found() {
+  { rndccmd 10.53.0.3 signing -list update-nsec3.example > signing.out; } 2>&1
+  grep -q "No signing records found" signing.out || {
+    sed 's/^/ns3 /' signing.out | cat_i
+    return 1
+  }
+  return 0
 }
+retry_quiet 5 check_no_signing_record_found || ret=1
 n=$((n+1))
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))
@@ -3532,6 +3544,13 @@ grep "dnskey-unsupported-2\.example\..*IN.*DNSKEY.*257 3 255" dig.out.test$n > /
 n=$((n+1))
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))
+
+# TODO: test case for GL #1689.
+# If we allow the dnssec tools to use deprecated algorithms (such as RSAMD5)
+# we could write a test that signs a zone with supported and unsupported
+# algorithm, apply a fixed rrset order such that the unsupported algorithm
+# precedes the supported one in the DNSKEY RRset, and verify the result still
+# validates succesfully.
 
 echo_i "check that a lone non matching CDNSKEY record is rejected ($n)"
 ret=0

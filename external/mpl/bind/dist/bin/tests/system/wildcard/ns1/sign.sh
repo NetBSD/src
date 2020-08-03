@@ -16,6 +16,9 @@ SYSTESTDIR=wildcard
 
 dssets=
 
+# RFC 4592 example zone.
+cp example.db.in example.db
+
 zone=nsec
 infile=nsec.db.in
 zonefile=nsec.db
