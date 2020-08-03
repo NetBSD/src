@@ -1,0 +1,4 @@
+# bad (no hardware address) LL server duid config
+
+# LL server duid declaration
+server-duid ll fddi;

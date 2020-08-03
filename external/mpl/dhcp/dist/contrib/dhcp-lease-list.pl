@@ -20,6 +20,8 @@
 #
 # 2016-01-18 - Mainly cosmetics. Eliminated spurious output in "parsable" mode.
 #              Provided for the various conventional lease file locations. (cbp)
+#
+# 2019-06-20 - Updated OUI_URL location. -TS
 
 use strict;
 use warnings;
@@ -30,7 +32,7 @@ my @all_leases;
 my @leases;
 
 my @OUIS = ('/usr/share/misc/oui.txt', '/usr/local/etc/oui.txt');
-my $OUI_URL = 'http://standards.ieee.org/regauth/oui/oui.txt';
+my $OUI_URL = 'http://standards-oui.ieee.org/oui.txt';
 my $oui;
 
 my %data;

@@ -1,0 +1,7 @@
+# option definition config
+
+# options
+option space foobar;
+option space xyz;
+
+option foobar.encap code 1 = encapsulate xyz;
