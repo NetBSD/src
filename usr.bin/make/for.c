@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.60 2020/08/02 08:10:36 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.61 2020/08/03 20:26:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.60 2020/08/02 08:10:36 rillig Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.61 2020/08/03 20:26:09 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.60 2020/08/02 08:10:36 rillig Exp $");
+__RCSID("$NetBSD: for.c,v 1.61 2020/08/03 20:26:09 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -316,6 +316,8 @@ static size_t
 for_var_len(const char *var)
 {
     char ch, var_start, var_end;
+    int depth;
+    size_t len;
 
     var_start = *var;
     if (var_start == 0)
@@ -330,8 +332,7 @@ for_var_len(const char *var)
 	/* Single char variable */
 	return 1;
 
-    int depth = 1;
-    size_t len;
+    depth = 1;
     for (len = 1; (ch = var[len++]) != 0;) {
 	if (ch == var_start)
 	    depth++;
@@ -346,6 +347,8 @@ for_var_len(const char *var)
 static void
 for_substitute(Buffer *cmds, strlist_t *items, unsigned int item_no, char ech)
 {
+    char ch;
+
     const char *item = strlist_str(items, item_no);
 
     /* If there were no escapes, or the only escape is the other variable
@@ -357,7 +360,6 @@ for_substitute(Buffer *cmds, strlist_t *items, unsigned int item_no, char ech)
     }
 
     /* Escape ':', '$', '\\' and 'ech' - removed by :U processing */
-    char ch;
     while ((ch = *item++) != 0) {
 	if (ch == '$') {
 	    size_t len = for_var_len(item);
@@ -384,6 +386,7 @@ For_Iterate(void *v_arg, size_t *ret_len)
     char *body_end;
     char ch;
     Buffer cmds;
+    size_t cmd_len;
 
     if (arg->sub_next + strlist_num(&arg->vars) > strlist_num(&arg->items)) {
 	/* No more iterations */
@@ -406,7 +409,6 @@ For_Iterate(void *v_arg, size_t *ret_len)
      * to contrive a makefile where an unwanted substitution happens.
      */
 
-    size_t cmd_len;
     cmd_cp = Buf_GetAllZ(&arg->buf, &cmd_len);
     body_end = cmd_cp + cmd_len;
     Buf_InitZ(&cmds, cmd_len + 256);
