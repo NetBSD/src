@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.246 2020/08/01 14:47:49 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.247 2020/08/03 20:26:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.246 2020/08/01 14:47:49 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.247 2020/08/03 20:26:09 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.246 2020/08/01 14:47:49 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.247 2020/08/03 20:26:09 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1291,9 +1291,10 @@ ParseDoDependency(char *line)
 		    "Makefile appears to contain unresolved cvs/rcs/??? merge conflicts");
 	    else if (lstart[0] == '.') {
 		const char *dirstart = lstart + 1;
+		const char *dirend;
 		while (isspace((unsigned char)*dirstart))
 		    dirstart++;
-		const char *dirend = dirstart;
+		dirend = dirstart;
 		while (isalnum((unsigned char)*dirend) || *dirend == '-')
 		    dirend++;
 		Parse_Error(PARSE_FATAL, "Unknown directive \"%.*s\"",
@@ -2364,12 +2365,12 @@ ParseDoInclude(char *line)
 static void
 ParseSetIncludedFile(void)
 {
-    char *pf_freeIt;
-    char *pd_freeIt;
+    const char *pf, *pd;
+    char *pf_freeIt, *pd_freeIt;
 
-    const char *pf = Var_Value(".PARSEFILE", VAR_GLOBAL, &pf_freeIt);
+    pf = Var_Value(".PARSEFILE", VAR_GLOBAL, &pf_freeIt);
     Var_Set(".INCLUDEDFROMFILE", pf, VAR_GLOBAL);
-    const char *pd = Var_Value(".PARSEDIR", VAR_GLOBAL, &pd_freeIt);
+    pd = Var_Value(".PARSEDIR", VAR_GLOBAL, &pd_freeIt);
     Var_Set(".INCLUDEDFROMDIR", pd, VAR_GLOBAL);
 
     if (DEBUG(PARSE))

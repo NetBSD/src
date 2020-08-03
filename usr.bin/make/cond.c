@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.87 2020/08/01 21:40:49 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.88 2020/08/03 20:26:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.87 2020/08/01 21:40:49 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.88 2020/08/03 20:26:09 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.87 2020/08/01 21:40:49 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.88 2020/08/03 20:26:09 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -241,6 +241,7 @@ CondGetArg(Boolean doEval, char **linePtr, char **argPtr, const char *func)
     Buffer	  buf;
     int           paren_depth;
     char          ch;
+    size_t	  argLen;
 
     cp = *linePtr;
     if (func != NULL)
@@ -300,7 +301,6 @@ CondGetArg(Boolean doEval, char **linePtr, char **argPtr, const char *func)
 	cp++;
     }
 
-    size_t argLen;
     *argPtr = Buf_GetAllZ(&buf, &argLen);
     Buf_Destroy(&buf, FALSE);
 

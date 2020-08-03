@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.30 2020/08/01 21:51:22 rillig Exp $	*/
+/*	$NetBSD: buf.c,v 1.31 2020/08/03 20:26:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: buf.c,v 1.30 2020/08/01 21:51:22 rillig Exp $";
+static char rcsid[] = "$NetBSD: buf.c,v 1.31 2020/08/03 20:26:09 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)buf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: buf.c,v 1.30 2020/08/01 21:51:22 rillig Exp $");
+__RCSID("$NetBSD: buf.c,v 1.31 2020/08/03 20:26:09 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -107,13 +107,14 @@ void
 Buf_AddBytesZ(Buffer *bp, const Byte *bytesPtr, size_t numBytes)
 {
     size_t count = bp->count;
+    Byte *ptr;
 
     if (__predict_false(count + numBytes >= bp->size)) {
 	bp->size += max(bp->size, numBytes + 16);
 	bp->buffer = bmake_realloc(bp->buffer, bp->size);
     }
 
-    Byte *ptr = bp->buffer + count;
+    ptr = bp->buffer + count;
     bp->count = count + numBytes;
     memcpy(ptr, bytesPtr, numBytes);
     ptr[numBytes] = '\0';

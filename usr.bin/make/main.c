@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.295 2020/08/02 08:06:35 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.296 2020/08/03 20:26:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.295 2020/08/02 08:06:35 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.296 2020/08/03 20:26:09 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.295 2020/08/02 08:06:35 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.296 2020/08/03 20:26:09 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -696,6 +696,7 @@ Main_ParseArgLine(const char *line)
 	char *args;			/* Space used by the args */
 	char *p1;
 	const char *argv0 = Var_Value(".MAKE", VAR_GLOBAL, &p1);
+	char *buf;
 
 	if (line == NULL)
 		return;
@@ -704,7 +705,7 @@ Main_ParseArgLine(const char *line)
 	if (!*line)
 		return;
 
-	char *buf = str_concat(argv0, line, STR_ADDSPACE);
+	buf = str_concat(argv0, line, STR_ADDSPACE);
 	free(p1);
 
 	argv = brk_string(buf, &argc, TRUE, &args);
@@ -764,14 +765,17 @@ Main_SetVarObjdir(const char *var, const char *suffix)
 {
 	char *path_freeIt;
 	const char *path = Var_Value(var, VAR_CMD, &path_freeIt);
+	const char *xpath;
+	char *xpath_freeIt;
+
 	if (path == NULL || path[0] == '\0') {
 		bmake_free(path_freeIt);
 		return FALSE;
 	}
 
 	/* expand variable substitutions */
-	const char *xpath = path;
-	char *xpath_freeIt = NULL;
+	xpath = path;
+	xpath_freeIt = NULL;
 	if (strchr(path, '$') != 0)
 		xpath = xpath_freeIt = Var_Subst(path, VAR_GLOBAL,
 						 VARE_WANTRES);
@@ -1600,7 +1604,7 @@ Cmd_Exec(const char *cmd, const char **errfmt)
     Buffer	buf;		/* buffer to store the result */
     char	*cp;
     int		savederr;	/* saved errno */
-
+    ssize_t	cc;		/* bytes read, or -1 */
 
     *errfmt = NULL;
 
@@ -1660,7 +1664,6 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 	Buf_InitZ(&buf, 0);
 
 	/* XXX: split variable cc into 2 */
-	ssize_t cc;		/* bytes read, or -1 */
 	do {
 	    char   result[BUFSIZ];
 	    cc = read(fds[0], result, sizeof(result));
@@ -2037,6 +2040,8 @@ void
 PrintOnError(GNode *gn, const char *s)
 {
     static GNode *en = NULL;
+    const char *expr;
+    char *cp;
 
     if (DEBUG(HASH)) {
 	Targ_Stats();
@@ -2062,8 +2067,8 @@ PrintOnError(GNode *gn, const char *s)
 	Var_Delete(".ERROR_CMD", VAR_GLOBAL);
 	Lst_ForEach(gn->commands, addErrorCMD, gn);
     }
-    const char *expr = "${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'\n@}";
-    char *cp = Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES);
+    expr = "${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'\n@}";
+    cp = Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES);
     if (cp) {
 	if (*cp)
 	    printf("%s", cp);
@@ -2085,13 +2090,15 @@ void
 Main_ExportMAKEFLAGS(Boolean first)
 {
     static int once = 1;
+    const char *expr;
+    char *s;
 
     if (once != first)
 	return;
     once = 0;
 
-    const char *expr = "${.MAKEFLAGS} ${.MAKEOVERRIDES:O:u:@v@$v=${$v:Q}@}";
-    char *s = Var_Subst(expr, VAR_CMD, VARE_WANTRES);
+    expr = "${.MAKEFLAGS} ${.MAKEOVERRIDES:O:u:@v@$v=${$v:Q}@}";
+    s = Var_Subst(expr, VAR_CMD, VARE_WANTRES);
     if (s != NULL && s[0] != '\0') {
 #ifdef POSIX
 	setenv("MAKEFLAGS", s, 1);

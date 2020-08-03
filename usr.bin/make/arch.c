@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.80 2020/08/01 14:47:49 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.81 2020/08/03 20:26:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.80 2020/08/01 14:47:49 rillig Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.81 2020/08/03 20:26:09 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.80 2020/08/01 14:47:49 rillig Exp $");
+__RCSID("$NetBSD: arch.c,v 1.81 2020/08/03 20:26:09 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -624,6 +624,8 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
 	     */
 	    goto badarch;
 	} else {
+	    char *nameend;
+
 	    /*
 	     * We need to advance the stream's pointer to the start of the
 	     * next header. Files are padded with newlines to an even-byte
@@ -634,7 +636,7 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
 	    size = (int)strtol(arh.ar_size, NULL, 10);
 
 	    memcpy(memName, arh.ar_name, sizeof(arh.ar_name));
-	    char *nameend = memName + AR_MAX_NAME_LEN;
+	    nameend = memName + AR_MAX_NAME_LEN;
 	    while (*nameend == ' ') {
 		nameend--;
 	    }
@@ -851,6 +853,7 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *arhPtr,
     int		  size;       /* Size of archive member */
     char	  magic[SARMAG];
     size_t	  len, tlen;
+    const char *  base;
 
     arch = fopen(archive, mode);
     if (arch == NULL) {
@@ -873,7 +876,7 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *arhPtr,
      * to point 'member' to the final component, if there is one, to make
      * the comparisons easier...
      */
-    const char *base = strrchr(member, '/');
+    base = strrchr(member, '/');
     if (base != NULL) {
 	member = base + 1;
     }
