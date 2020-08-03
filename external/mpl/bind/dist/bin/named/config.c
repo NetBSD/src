@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.8 2020/05/24 19:46:12 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.9 2020/08/03 17:23:37 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -171,7 +171,7 @@ options {\n\
 	max-ncache-ttl 10800; /* 3 hours */\n\
 	max-recursion-depth 7;\n\
 	max-recursion-queries 75;\n\
-	max-stale-ttl 604800; /* 1 week */\n\
+	max-stale-ttl 43200; /* 12 hours */\n\
 	message-compression yes;\n\
 	min-ncache-ttl 0; /* 0 hours */\n\
 	min-cache-ttl 0; /* 0 seconds */\n\
@@ -352,6 +352,10 @@ named_checknames_get(const cfg_obj_t **maps, const char *which,
 	const cfg_obj_t *type;
 	const cfg_obj_t *value;
 	int i;
+
+	REQUIRE(maps != NULL);
+	REQUIRE(which != NULL);
+	REQUIRE(obj != NULL && *obj == NULL);
 
 	for (i = 0;; i++) {
 		if (maps[i] == NULL) {

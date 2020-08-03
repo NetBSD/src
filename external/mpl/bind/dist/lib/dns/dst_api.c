@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_api.c,v 1.6 2020/05/24 19:46:22 christos Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.7 2020/08/03 17:23:41 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -188,7 +188,7 @@ dst_lib_init(isc_mem_t *mctx, const char *engine) {
 	isc_result_t result;
 
 	REQUIRE(mctx != NULL);
-	REQUIRE(dst_initialized == false);
+	REQUIRE(!dst_initialized);
 
 	UNUSED(engine);
 
@@ -250,7 +250,7 @@ out:
 void
 dst_lib_destroy(void) {
 	int i;
-	RUNTIME_CHECK(dst_initialized == true);
+	RUNTIME_CHECK(dst_initialized);
 	dst_initialized = false;
 
 	for (i = 0; i < DST_MAX_ALGS; i++) {
@@ -266,7 +266,7 @@ dst_lib_destroy(void) {
 
 bool
 dst_algorithm_supported(unsigned int alg) {
-	REQUIRE(dst_initialized == true);
+	REQUIRE(dst_initialized);
 
 	if (alg >= DST_MAX_ALGS || dst_t_func[alg] == NULL) {
 		return (false);
@@ -287,7 +287,7 @@ dst_context_create(dst_key_t *key, isc_mem_t *mctx, isc_logcategory_t *category,
 	dst_context_t *dctx;
 	isc_result_t result;
 
-	REQUIRE(dst_initialized == true);
+	REQUIRE(dst_initialized);
 	REQUIRE(VALID_KEY(key));
 	REQUIRE(mctx != NULL);
 	REQUIRE(dctxp != NULL && *dctxp == NULL);
@@ -368,8 +368,7 @@ dst_context_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 	if (key->func->sign == NULL) {
 		return (DST_R_NOTPRIVATEKEY);
 	}
-	if (key->func->isprivate == NULL || key->func->isprivate(key) == false)
-	{
+	if (key->func->isprivate == NULL || !key->func->isprivate(key)) {
 		return (DST_R_NOTPRIVATEKEY);
 	}
 
@@ -415,7 +414,7 @@ dst_context_verify2(dst_context_t *dctx, unsigned int maxbits,
 isc_result_t
 dst_key_computesecret(const dst_key_t *pub, const dst_key_t *priv,
 		      isc_buffer_t *secret) {
-	REQUIRE(dst_initialized == true);
+	REQUIRE(dst_initialized);
 	REQUIRE(VALID_KEY(pub) && VALID_KEY(priv));
 	REQUIRE(secret != NULL);
 
@@ -432,7 +431,7 @@ dst_key_computesecret(const dst_key_t *pub, const dst_key_t *priv,
 		return (DST_R_KEYCANNOTCOMPUTESECRET);
 	}
 
-	if (dst_key_isprivate(priv) == false) {
+	if (!dst_key_isprivate(priv)) {
 		return (DST_R_NOTPRIVATEKEY);
 	}
 
@@ -443,7 +442,7 @@ isc_result_t
 dst_key_tofile(const dst_key_t *key, int type, const char *directory) {
 	isc_result_t ret = ISC_R_SUCCESS;
 
-	REQUIRE(dst_initialized == true);
+	REQUIRE(dst_initialized);
 	REQUIRE(VALID_KEY(key));
 	REQUIRE((type &
 		 (DST_TYPE_PRIVATE | DST_TYPE_PUBLIC | DST_TYPE_STATE)) != 0);
@@ -492,7 +491,7 @@ dst_key_getfilename(dns_name_t *name, dns_keytag_t id, unsigned int alg,
 		    isc_buffer_t *buf) {
 	isc_result_t result;
 
-	REQUIRE(dst_initialized == true);
+	REQUIRE(dst_initialized);
 	REQUIRE(dns_name_isabsolute(name));
 	REQUIRE((type &
 		 (DST_TYPE_PRIVATE | DST_TYPE_PUBLIC | DST_TYPE_STATE)) != 0);
@@ -521,7 +520,7 @@ dst_key_fromfile(dns_name_t *name, dns_keytag_t id, unsigned int alg, int type,
 	isc_buffer_t buf;
 	dst_key_t *key;
 
-	REQUIRE(dst_initialized == true);
+	REQUIRE(dst_initialized);
 	REQUIRE(dns_name_isabsolute(name));
 	REQUIRE((type & (DST_TYPE_PRIVATE | DST_TYPE_PUBLIC)) != 0);
 	REQUIRE(mctx != NULL);
@@ -574,7 +573,7 @@ dst_key_fromnamedfile(const char *filename, const char *dirname, int type,
 	int newfilenamelen = 0;
 	isc_lex_t *lex = NULL;
 
-	REQUIRE(dst_initialized == true);
+	REQUIRE(dst_initialized);
 	REQUIRE(filename != NULL);
 	REQUIRE((type & (DST_TYPE_PRIVATE | DST_TYPE_PUBLIC)) != 0);
 	REQUIRE(mctx != NULL);
@@ -705,7 +704,7 @@ out:
 
 isc_result_t
 dst_key_todns(const dst_key_t *key, isc_buffer_t *target) {
-	REQUIRE(dst_initialized == true);
+	REQUIRE(dst_initialized);
 	REQUIRE(VALID_KEY(key));
 	REQUIRE(target != NULL);
 
@@ -808,7 +807,7 @@ dst_key_frombuffer(const dns_name_t *name, unsigned int alg, unsigned int flags,
 
 isc_result_t
 dst_key_tobuffer(const dst_key_t *key, isc_buffer_t *target) {
-	REQUIRE(dst_initialized == true);
+	REQUIRE(dst_initialized);
 	REQUIRE(VALID_KEY(key));
 	REQUIRE(target != NULL);
 
@@ -826,7 +825,7 @@ dst_key_privatefrombuffer(dst_key_t *key, isc_buffer_t *buffer) {
 	isc_lex_t *lex = NULL;
 	isc_result_t result = ISC_R_SUCCESS;
 
-	REQUIRE(dst_initialized == true);
+	REQUIRE(dst_initialized);
 	REQUIRE(VALID_KEY(key));
 	REQUIRE(!dst_key_isprivate(key));
 	REQUIRE(buffer != NULL);
@@ -895,7 +894,7 @@ dst_key_buildinternal(const dns_name_t *name, unsigned int alg,
 	dst_key_t *key;
 	isc_result_t result;
 
-	REQUIRE(dst_initialized == true);
+	REQUIRE(dst_initialized);
 	REQUIRE(dns_name_isabsolute(name));
 	REQUIRE(mctx != NULL);
 	REQUIRE(keyp != NULL && *keyp == NULL);
@@ -929,7 +928,7 @@ dst_key_fromlabel(const dns_name_t *name, int alg, unsigned int flags,
 	dst_key_t *key;
 	isc_result_t result;
 
-	REQUIRE(dst_initialized == true);
+	REQUIRE(dst_initialized);
 	REQUIRE(dns_name_isabsolute(name));
 	REQUIRE(mctx != NULL);
 	REQUIRE(keyp != NULL && *keyp == NULL);
@@ -971,7 +970,7 @@ dst_key_generate(const dns_name_t *name, unsigned int alg, unsigned int bits,
 	dst_key_t *key;
 	isc_result_t ret;
 
-	REQUIRE(dst_initialized == true);
+	REQUIRE(dst_initialized);
 	REQUIRE(dns_name_isabsolute(name));
 	REQUIRE(mctx != NULL);
 	REQUIRE(keyp != NULL && *keyp == NULL);
@@ -1140,7 +1139,7 @@ static bool
 comparekeys(const dst_key_t *key1, const dst_key_t *key2,
 	    bool match_revoked_key,
 	    bool (*compare)(const dst_key_t *key1, const dst_key_t *key2)) {
-	REQUIRE(dst_initialized == true);
+	REQUIRE(dst_initialized);
 	REQUIRE(VALID_KEY(key1));
 	REQUIRE(VALID_KEY(key2));
 
@@ -1236,7 +1235,7 @@ dst_key_pubcompare(const dst_key_t *key1, const dst_key_t *key2,
 
 bool
 dst_key_paramcompare(const dst_key_t *key1, const dst_key_t *key2) {
-	REQUIRE(dst_initialized == true);
+	REQUIRE(dst_initialized);
 	REQUIRE(VALID_KEY(key1));
 	REQUIRE(VALID_KEY(key2));
 
@@ -1245,7 +1244,7 @@ dst_key_paramcompare(const dst_key_t *key1, const dst_key_t *key2) {
 	}
 	if (key1->key_alg == key2->key_alg &&
 	    key1->func->paramcompare != NULL &&
-	    key1->func->paramcompare(key1, key2) == true)
+	    key1->func->paramcompare(key1, key2))
 	{
 		return (true);
 	} else {
@@ -1255,7 +1254,7 @@ dst_key_paramcompare(const dst_key_t *key1, const dst_key_t *key2) {
 
 void
 dst_key_attach(dst_key_t *source, dst_key_t **target) {
-	REQUIRE(dst_initialized == true);
+	REQUIRE(dst_initialized);
 	REQUIRE(target != NULL && *target == NULL);
 	REQUIRE(VALID_KEY(source));
 
@@ -1265,7 +1264,7 @@ dst_key_attach(dst_key_t *source, dst_key_t **target) {
 
 void
 dst_key_free(dst_key_t **keyp) {
-	REQUIRE(dst_initialized == true);
+	REQUIRE(dst_initialized);
 	REQUIRE(keyp != NULL && VALID_KEY(*keyp));
 	dst_key_t *key = *keyp;
 	*keyp = NULL;
@@ -1313,7 +1312,7 @@ dst_key_buildfilename(const dst_key_t *key, int type, const char *directory,
 
 isc_result_t
 dst_key_sigsize(const dst_key_t *key, unsigned int *n) {
-	REQUIRE(dst_initialized == true);
+	REQUIRE(dst_initialized);
 	REQUIRE(VALID_KEY(key));
 	REQUIRE(n != NULL);
 
@@ -1367,7 +1366,7 @@ dst_key_sigsize(const dst_key_t *key, unsigned int *n) {
 
 isc_result_t
 dst_key_secretsize(const dst_key_t *key, unsigned int *n) {
-	REQUIRE(dst_initialized == true);
+	REQUIRE(dst_initialized);
 	REQUIRE(VALID_KEY(key));
 	REQUIRE(n != NULL);
 
@@ -1418,7 +1417,7 @@ dst_key_restore(dns_name_t *name, unsigned int alg, unsigned int flags,
 	isc_result_t result;
 	dst_key_t *key;
 
-	REQUIRE(dst_initialized == true);
+	REQUIRE(dst_initialized);
 	REQUIRE(keyp != NULL && *keyp == NULL);
 
 	if (alg >= DST_MAX_ALGS || dst_t_func[alg] == NULL) {
@@ -1843,7 +1842,7 @@ cleanup:
 
 static bool
 issymmetric(const dst_key_t *key) {
-	REQUIRE(dst_initialized == true);
+	REQUIRE(dst_initialized);
 	REQUIRE(VALID_KEY(key));
 
 	/* XXXVIX this switch statement is too sparse to gen a jump table. */
@@ -1909,7 +1908,6 @@ printtime(const dst_key_t *key, int type, const char *tag, FILE *stream) {
 	isc_result_t result;
 	char output[26]; /* Minimum buffer as per ctime_r() specification. */
 	isc_stdtime_t when;
-	time_t t;
 	char utc[sizeof("YYYYMMDDHHSSMM")];
 	isc_buffer_t b;
 	isc_region_t r;
@@ -1919,18 +1917,7 @@ printtime(const dst_key_t *key, int type, const char *tag, FILE *stream) {
 		return;
 	}
 
-	/* time_t and isc_stdtime_t might be different sizes */
-	t = when;
-#ifdef WIN32
-	if (ctime_s(output, sizeof(output), &t) != 0) {
-		goto error;
-	}
-#else  /* ifdef WIN32 */
-	if (ctime_r(&t, output) == NULL) {
-		goto error;
-	}
-#endif /* ifdef WIN32 */
-
+	isc_stdtime_tostring(when, output, sizeof(output));
 	isc_buffer_init(&b, utc, sizeof(utc));
 	result = dns_time32_totext(when, &b);
 	if (result != ISC_R_SUCCESS) {
@@ -2024,6 +2011,8 @@ write_key_state(const dst_key_t *key, int type, const char *directory) {
 		printtime(key, DST_TIME_INACTIVE, "Retired", fp);
 		printtime(key, DST_TIME_REVOKE, "Revoked", fp);
 		printtime(key, DST_TIME_DELETE, "Removed", fp);
+		printtime(key, DST_TIME_SYNCPUBLISH, "PublishCDS", fp);
+		printtime(key, DST_TIME_SYNCDELETE, "DeleteCDS", fp);
 
 		printtime(key, DST_TIME_DNSKEY, "DNSKEYChange", fp);
 		printtime(key, DST_TIME_ZRRSIG, "ZRRSIGChange", fp);
@@ -2266,7 +2255,7 @@ frombuffer(const dns_name_t *name, unsigned int alg, unsigned int flags,
 
 static isc_result_t
 algorithm_status(unsigned int alg) {
-	REQUIRE(dst_initialized == true);
+	REQUIRE(dst_initialized);
 
 	if (dst_algorithm_supported(alg)) {
 		return (ISC_R_SUCCESS);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpz.c,v 1.7 2020/05/24 19:46:23 christos Exp $	*/
+/*	$NetBSD: rpz.c,v 1.8 2020/08/03 17:23:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1789,7 +1789,7 @@ finish_update(dns_rpz_zone_t *rpz) {
 	/*
 	 * If there's an update pending, schedule it.
 	 */
-	if (rpz->updatepending == true) {
+	if (rpz->updatepending) {
 		if (rpz->min_update_interval > 0) {
 			uint64_t defer = rpz->min_update_interval;
 			char dname[DNS_NAME_FORMATSIZE];

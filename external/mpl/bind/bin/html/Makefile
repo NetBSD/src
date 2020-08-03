@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2018/08/12 13:02:25 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2020/08/03 17:23:35 christos Exp $
 
-.include <bsd.own.mk>
-.include "${.CURDIR}/../Makefile.inc"
+.include <bsd.init.mk>
 
 .if ${MKDOC} != "no"
 

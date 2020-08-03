@@ -1,4 +1,4 @@
-/*	$NetBSD: result.h,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
+/*	$NetBSD: result.h,v 1.5 2020/08/03 17:23:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -156,8 +156,9 @@
 #define DNS_R_BADSIG0		(ISC_RESULTCLASS_DNS + 116)
 #define DNS_R_TOOMANYRECORDS	(ISC_RESULTCLASS_DNS + 117)
 #define DNS_R_VERIFYFAILURE	(ISC_RESULTCLASS_DNS + 118)
+#define DNS_R_ATZONETOP		(ISC_RESULTCLASS_DNS + 119)
 
-#define DNS_R_NRESULTS 119 /*%< Number of results */
+#define DNS_R_NRESULTS 120 /*%< Number of results */
 
 /*
  * DNS wire format rcodes.

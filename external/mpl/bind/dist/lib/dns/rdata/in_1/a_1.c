@@ -1,4 +1,4 @@
-/*	$NetBSD: a_1.c,v 1.5 2020/05/24 19:46:25 christos Exp $	*/
+/*	$NetBSD: a_1.c,v 1.6 2020/08/03 17:23:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -61,7 +61,7 @@ totext_in_a(ARGS_TOTEXT) {
 	UNUSED(tctx);
 
 	dns_rdata_toregion(rdata, &region);
-	return (inet_totext(AF_INET, &region, target));
+	return (inet_totext(AF_INET, tctx->flags, &region, target));
 }
 
 static inline isc_result_t

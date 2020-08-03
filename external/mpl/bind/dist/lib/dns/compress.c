@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.4 2020/05/24 19:46:22 christos Exp $	*/
+/*	$NetBSD: compress.c,v 1.5 2020/08/03 17:23:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -226,7 +226,7 @@ dns_compress_findglobal(dns_compress_t *cctx, const dns_name_t *name,
 	unsigned char *p;
 
 	REQUIRE(VALID_CCTX(cctx));
-	REQUIRE(dns_name_isabsolute(name) == true);
+	REQUIRE(dns_name_isabsolute(name));
 	REQUIRE(offset != NULL);
 
 	if (ISC_UNLIKELY((cctx->allowed & DNS_COMPRESS_ENABLED) == 0)) {

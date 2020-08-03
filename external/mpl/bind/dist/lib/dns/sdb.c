@@ -1,4 +1,4 @@
-/*	$NetBSD: sdb.c,v 1.6 2020/05/24 19:46:23 christos Exp $	*/
+/*	$NetBSD: sdb.c,v 1.7 2020/08/03 17:23:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -608,7 +608,7 @@ attachversion(dns_db_t *db, dns_dbversion_t *source,
 static void
 closeversion(dns_db_t *db, dns_dbversion_t **versionp, bool commit) {
 	REQUIRE(versionp != NULL && *versionp == (void *)&dummy);
-	REQUIRE(commit == false);
+	REQUIRE(!commit);
 
 	UNUSED(db);
 	UNUSED(commit);
@@ -765,7 +765,6 @@ findnodeext(dns_db_t *db, const dns_name_t *name, bool create,
 	unsigned int labels;
 
 	REQUIRE(VALID_SDB(sdb));
-	REQUIRE(create == false);
 	REQUIRE(nodep != NULL && *nodep == NULL);
 
 	UNUSED(name);
