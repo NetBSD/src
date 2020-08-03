@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_sh4.c,v 1.15 2020/08/03 16:43:44 uwe Exp $	*/
+/*	$NetBSD: mmu_sh4.c,v 1.16 2020/08/03 19:08:55 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmu_sh4.c,v 1.15 2020/08/03 16:43:44 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmu_sh4.c,v 1.16 2020/08/03 19:08:55 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,9 @@ sh4_tlb_update(int asid, vaddr_t va, uint32_t pte)
 	uint32_t ptel;
 	int sr;
 
-	KDASSERT(asid < 0x100 && (pte & ~PGOFSET) != 0 && va != 0);
+	KDASSERT(asid < 0x100);
+	KDASSERT(va != 0);
+	KDASSERT((pte & ~PGOFSET) != 0);
 
 	sr = _cpu_exception_suspend();
 	/* Save old ASID */
