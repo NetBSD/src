@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.40 2009/03/18 10:22:36 cegger Exp $	*/
+/*	$NetBSD: clock.c,v 1.41 2020/08/03 16:43:44 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.40 2009/03/18 10:22:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.41 2020/08/03 16:43:44 uwe Exp $");
 
 #include "opt_pclock.h"
 #include "opt_hz.h"
@@ -111,7 +111,7 @@ do {									\
 void
 sh_clock_init(int flags)
 {
-	uint32_t s, t0, cnt_1s;
+	uint32_t sr, t0, cnt_1s;
 
 	sh_clock.flags = flags;
 
@@ -143,12 +143,12 @@ sh_clock_init(int flags)
 		_reg_bset_1(SH_(RCR2), SH_RCR2_ENABLE);
 	}
 
-	s = _cpu_exception_suspend();
+	sr = _cpu_exception_suspend();
 	_cpu_spin(1);	/* load function on cache. */
 	TMU_START(0);
 	_cpu_spin(10000000);
 	t0 = TMU_ELAPSED(0);
-	_cpu_exception_resume(s);
+	_cpu_set_sr(sr);
 
 	sh_clock.cpucycle_1us = (sh_clock.tmuclk * 10) / t0;
 
@@ -166,14 +166,14 @@ sh_clock_init(int flags)
 
 		/* set TMU channel 1 source to PCLOCK / 4 */
 		_reg_write_2(SH_(TCR1), TCR_TPSC_P4);
-		s = _cpu_exception_suspend();
+		sr = _cpu_exception_suspend();
 		_cpu_spin(1);	/* load function on cache. */
 		TMU_START(0);
 		TMU_START(1);
 		_cpu_spin(cnt_1s); /* 1 sec. */
 		t0 = TMU_ELAPSED(0);
 		t1 = TMU_ELAPSED(1);
-		_cpu_exception_resume(s);
+		_cpu_set_sr(sr);
 
 		sh_clock.pclock
 		    = ((uint64_t)t1 * 4 * SH_RTC_CLOCK + t0/2) / t0;
