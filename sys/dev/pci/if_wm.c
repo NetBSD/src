@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.682 2020/08/03 07:16:51 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.683 2020/08/03 10:52:08 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.682 2020/08/03 07:16:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.683 2020/08/03 10:52:08 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -139,6 +139,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.682 2020/08/03 07:16:51 msaitoh Exp $");
 #include <dev/mii/igphyvar.h>
 #include <dev/mii/inbmphyreg.h>
 #include <dev/mii/ihphyreg.h>
+#include <dev/mii/makphyreg.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -887,6 +888,7 @@ static int	wm_read_emi_reg_locked(device_t, int, uint16_t *);
 static int	wm_write_emi_reg_locked(device_t, int, uint16_t);
 /* SGMII */
 static bool	wm_sgmii_uses_mdio(struct wm_softc *);
+static void	wm_sgmii_sfp_preconfig(struct wm_softc *);
 static int	wm_sgmii_readreg(device_t, int, int, uint16_t *);
 static int	wm_sgmii_readreg_locked(device_t, int, int, uint16_t *);
 static int	wm_sgmii_writereg(device_t, int, int, uint16_t);
@@ -10390,7 +10392,6 @@ wm_get_phy_id_82575(struct wm_softc *sc)
 	return phyid;
 }
 
-
 /*
  * wm_gmii_mediainit:
  *
@@ -10439,6 +10440,9 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	sc->sc_ethercom.ec_mii = &sc->sc_mii;
 	ifmedia_init_with_lock(&mii->mii_media, IFM_IMASK, wm_gmii_mediachange,
 	    wm_gmii_mediastatus, sc->sc_core_lock);
+
+	/* Setup internal SGMII PHY for SFP */
+	wm_sgmii_sfp_preconfig(sc);
 
 	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
 	    || (sc->sc_type == WM_T_82580)
@@ -11826,6 +11830,38 @@ wm_sgmii_uses_mdio(struct wm_softc *sc)
 	return ismdio;
 }
 
+/* Setup internal SGMII PHY for SFP */
+static void
+wm_sgmii_sfp_preconfig(struct wm_softc *sc)
+{
+	uint16_t id1, id2, phyreg;
+	int i, rv;
+
+	if (((sc->sc_flags & WM_F_SGMII) == 0)
+	    || ((sc->sc_flags & WM_F_SFP) == 0))
+		return;
+
+	for (i = 0; i < MII_NPHY; i++) {
+		sc->phy.no_errprint = true;
+		rv = sc->phy.readreg_locked(sc->sc_dev, i, MII_PHYIDR1, &id1);
+		if (rv != 0)
+			continue;
+		rv = sc->phy.readreg_locked(sc->sc_dev, i, MII_PHYIDR2, &id2);
+		if (rv != 0)
+			continue;
+		if (MII_OUI(id1, id2) != MII_OUI_xxMARVELL)
+			continue;
+		sc->phy.no_errprint = false;
+
+		sc->phy.readreg_locked(sc->sc_dev, i, MAKPHY_ESSR, &phyreg);
+		phyreg &= ~(ESSR_SER_ANEG_BYPASS | ESSR_HWCFG_MODE);
+		phyreg |= ESSR_SGMII_WOC_COPPER;
+		sc->phy.writereg_locked(sc->sc_dev, i, MAKPHY_ESSR, phyreg);
+		break;
+	}
+
+}
+
 /*
  * wm_sgmii_readreg:	[mii interface function]
  *
@@ -12414,8 +12450,13 @@ wm_serdes_mediachange(struct ifnet *ifp)
 
 	sc->sc_ctrl |= CTRL_SLU;
 
-	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576))
+	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)) {
 		sc->sc_ctrl |= CTRL_SWDPIN(0) | CTRL_SWDPIN(1);
+
+		reg = CSR_READ(sc, WMREG_CONNSW);
+		reg |= CONNSW_ENRGSRC;
+		CSR_WRITE(sc, WMREG_CONNSW, reg);
+	}
 
 	pcs_lctl = CSR_READ(sc, WMREG_PCS_LCTL);
 	switch (ctrl_ext & CTRL_EXT_LINK_MODE_MASK) {
