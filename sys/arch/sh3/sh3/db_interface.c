@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.61 2011/01/28 21:06:07 uwe Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.62 2020/08/03 01:14:26 uwe Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.61 2011/01/28 21:06:07 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.62 2020/08/03 01:14:26 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -447,25 +447,27 @@ static void
 db_cachedump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
+	void (*cachedump_p2)(vaddr_t);
+
 #ifdef SH3
 	if (CPU_IS_SH3)
-		__db_cachedump_sh3(have_addr ? addr : 0);
+		cachedump_p2 = (void *)SH3_P1SEG_TO_P2SEG(__db_cachedump_sh3);
 #endif
 #ifdef SH4
 	if (CPU_IS_SH4)
-		__db_cachedump_sh4(have_addr ? addr : 0);
+		cachedump_p2 = (void *)SH3_P1SEG_TO_P2SEG(__db_cachedump_sh4);
 #endif
+	(*cachedump_p2)(have_addr ? addr : 0);
 }
 
 #ifdef SH3
-static void
+static __noinline void
 __db_cachedump_sh3(vaddr_t va_start)
 {
 	uint32_t r;
 	vaddr_t va, va_end, cca;
 	int entry, way;
 
-	RUN_P2;
 	/* disable cache */
 	_reg_write_4(SH3_CCR,
 	    _reg_read_4(SH3_CCR) & ~SH3_CCR_CE);
@@ -497,19 +499,15 @@ __db_cachedump_sh3(vaddr_t va_start)
 	/* enable cache */
 	_reg_bset_4(SH3_CCR, SH3_CCR_CE);
 	sh_icache_sync_all();
-
-	RUN_P1;
 }
 #endif /* SH3 */
 
 #ifdef SH4
-static void
+static __noinline void
 __db_cachedump_sh4(vaddr_t va)
 {
 	uint32_t r, e;
 	int i, istart, iend;
-
-	RUN_P2; /* must access from P2 */
 
 	/* disable I/D-cache */
 	_reg_write_4(SH4_CCR,
@@ -548,8 +546,6 @@ __db_cachedump_sh4(vaddr_t va)
 	_reg_write_4(SH4_CCR,
 	    _reg_read_4(SH4_CCR) | SH4_CCR_ICE | SH4_CCR_OCE);
 	sh_icache_sync_all();
-
-	RUN_P1;
 }
 #endif /* SH4 */
 
