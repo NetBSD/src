@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.62 2020/08/03 01:14:26 uwe Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.63 2020/08/03 01:18:45 uwe Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.62 2020/08/03 01:14:26 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.63 2020/08/03 01:18:45 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -74,10 +74,10 @@ static void __db_tlbdump_page_size_sh4(uint32_t);
 
 static void db_cachedump_cmd(db_expr_t, bool, db_expr_t, const char *);
 #ifdef SH3
-static void __db_cachedump_sh3(vaddr_t);
+static __noinline void __db_cachedump_sh3(vaddr_t);
 #endif
 #ifdef SH4
-static void __db_cachedump_sh4(vaddr_t);
+static __noinline void __db_cachedump_sh4(vaddr_t);
 #endif
 
 static void db_frame_cmd(db_expr_t, bool, db_expr_t, const char *);
