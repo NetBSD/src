@@ -1,4 +1,4 @@
-/*	$NetBSD: os.c,v 1.8 2020/05/24 19:46:12 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.9 2020/08/03 17:23:38 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -395,7 +395,7 @@ named_os_started(void) {
 }
 
 static char unamebuf[BUFSIZ];
-static char *unamep = NULL;
+static const char *unamep = NULL;
 
 static void
 getuname(void) {
@@ -464,7 +464,7 @@ err:
  * GetVersionEx() returns 6.2 (aka Windows 8.1) since it was obsoleted
  * so we had to switch to the recommended way to get the Windows version.
  */
-char *
+const char *
 named_os_uname(void) {
 	if (unamep == NULL) {
 		getuname();

@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.c,v 1.4 2020/05/24 19:46:27 christos Exp $	*/
+/*	$NetBSD: mutex.c,v 1.5 2020/08/03 17:23:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -94,7 +94,7 @@ isc_mutex_init_profile(isc_mutex_t *mp, const char *file, int line) {
 
 	RUNTIME_CHECK(pthread_mutex_lock(&statslock) == 0);
 
-	if (stats_init == false) {
+	if (!stats_init) {
 		stats_init = true;
 	}
 

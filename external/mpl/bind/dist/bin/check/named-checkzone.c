@@ -1,4 +1,4 @@
-/*	$NetBSD: named-checkzone.c,v 1.4 2020/05/24 19:46:10 christos Exp $	*/
+/*	$NetBSD: named-checkzone.c,v 1.5 2020/08/03 17:23:36 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -72,9 +72,9 @@ usage(void) {
 	fprintf(stderr,
 		"usage: %s [-djqvD] [-c class] "
 		"[-f inputformat] [-F outputformat] [-J filename] "
-		"[-t directory] [-w directory] [-k (ignore|warn|fail)] "
-		"[-n (ignore|warn|fail)] [-m (ignore|warn|fail)] "
-		"[-r (ignore|warn|fail)] "
+		"[-s (full|relative)] [-t directory] [-w directory] "
+		"[-k (ignore|warn|fail)] [-m (ignore|warn|fail)] "
+		"[-n (ignore|warn|fail)] [-r (ignore|warn|fail)] "
 		"[-i (full|full-sibling|local|local-sibling|none)] "
 		"[-M (ignore|warn|fail)] [-S (ignore|warn|fail)] "
 		"[-W (ignore|warn)] "

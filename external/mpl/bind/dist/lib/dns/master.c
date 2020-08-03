@@ -1,4 +1,4 @@
-/*	$NetBSD: master.c,v 1.5 2020/05/24 19:46:23 christos Exp $	*/
+/*	$NetBSD: master.c,v 1.6 2020/08/03 17:23:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -340,6 +340,13 @@ static unsigned char ip6_arpa_data[] = "\003IP6\004ARPA";
 static unsigned char ip6_arpa_offsets[] = { 0, 4, 9 };
 static dns_name_t const ip6_arpa = DNS_NAME_INITABSOLUTE(ip6_arpa_data,
 							 ip6_arpa_offsets);
+
+static inline bool
+dns_master_isprimary(dns_loadctx_t *lctx) {
+	return ((lctx->options & DNS_MASTER_ZONE) != 0 &&
+		(lctx->options & DNS_MASTER_SLAVE) == 0 &&
+		(lctx->options & DNS_MASTER_KEY) == 0);
+}
 
 static inline isc_result_t
 gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *token, bool eol,
@@ -842,10 +849,7 @@ generate(dns_loadctx_t *lctx, char *range, char *lhs, char *gtype, char *rhs,
 	 * RFC2930: TKEY and TSIG are not allowed to be loaded
 	 * from master files.
 	 */
-	if ((lctx->options & DNS_MASTER_ZONE) != 0 &&
-	    (lctx->options & DNS_MASTER_SLAVE) == 0 &&
-	    dns_rdatatype_ismeta(type))
-	{
+	if (dns_master_isprimary(lctx) && dns_rdatatype_ismeta(type)) {
 		(*callbacks->error)(callbacks, "%s: %s:%lu: meta RR type '%s'",
 				    "$GENERATE", source, line, gtype);
 		result = DNS_R_METATYPE;
@@ -871,11 +875,8 @@ generate(dns_loadctx_t *lctx, char *range, char *lhs, char *gtype, char *rhs,
 			goto error_cleanup;
 		}
 
-		if ((lctx->options & DNS_MASTER_ZONE) != 0 &&
-		    (lctx->options & DNS_MASTER_SLAVE) == 0 &&
-		    (lctx->options & DNS_MASTER_KEY) == 0 &&
-		    !dns_name_issubdomain(owner, lctx->top))
-		{
+		if (dns_master_isprimary(lctx) &&
+		    !dns_name_issubdomain(owner, lctx->top)) {
 			char namebuf[DNS_NAME_FORMATSIZE];
 			dns_name_format(owner, namebuf, sizeof(namebuf));
 			/*
@@ -1543,11 +1544,8 @@ load_text(dns_loadctx_t *lctx) {
 						       callbacks);
 				}
 			}
-			if ((lctx->options & DNS_MASTER_ZONE) != 0 &&
-			    (lctx->options & DNS_MASTER_SLAVE) == 0 &&
-			    (lctx->options & DNS_MASTER_KEY) == 0 &&
-			    !dns_name_issubdomain(new_name, lctx->top))
-			{
+			if (dns_master_isprimary(lctx) &&
+			    !dns_name_issubdomain(new_name, lctx->top)) {
 				char namebuf[DNS_NAME_FORMATSIZE];
 				dns_name_format(new_name, namebuf,
 						sizeof(namebuf));
@@ -1742,8 +1740,7 @@ load_text(dns_loadctx_t *lctx) {
 		 * RFC1123: MD and MF are not allowed to be loaded from
 		 * master files.
 		 */
-		if ((lctx->options & DNS_MASTER_ZONE) != 0 &&
-		    (lctx->options & DNS_MASTER_SLAVE) == 0 &&
+		if (dns_master_isprimary(lctx) &&
 		    (type == dns_rdatatype_md || type == dns_rdatatype_mf))
 		{
 			char typebuf[DNS_RDATATYPE_FORMATSIZE];
@@ -1765,10 +1762,7 @@ load_text(dns_loadctx_t *lctx) {
 		 * RFC2930: TKEY and TSIG are not allowed to be loaded
 		 * from master files.
 		 */
-		if ((lctx->options & DNS_MASTER_ZONE) != 0 &&
-		    (lctx->options & DNS_MASTER_SLAVE) == 0 &&
-		    dns_rdatatype_ismeta(type))
-		{
+		if (dns_master_isprimary(lctx) && dns_rdatatype_ismeta(type)) {
 			char typebuf[DNS_RDATATYPE_FORMATSIZE];
 
 			result = DNS_R_METATYPE;
@@ -1904,6 +1898,30 @@ load_text(dns_loadctx_t *lctx) {
 			}
 		}
 
+		if (dns_rdatatype_atparent(type) &&
+		    dns_master_isprimary(lctx) &&
+		    dns_name_equal(ictx->current, lctx->top))
+		{
+			char namebuf[DNS_NAME_FORMATSIZE];
+			char typebuf[DNS_RDATATYPE_FORMATSIZE];
+
+			dns_name_format(ictx->current, namebuf,
+					sizeof(namebuf));
+			dns_rdatatype_format(type, typebuf, sizeof(typebuf));
+			(*callbacks->error)(
+				callbacks,
+				"%s:%lu: %s record at top of zone (%s)", source,
+				line, typebuf, namebuf);
+			result = DNS_R_ATZONETOP;
+			if (MANYERRS(lctx, result)) {
+				SETRESULT(lctx, result);
+				target = target_ft;
+				continue;
+			} else {
+				goto insist_and_cleanup;
+			}
+		}
+
 		if (type == dns_rdatatype_rrsig || type == dns_rdatatype_sig) {
 			covers = dns_rdata_covers(&rdata[rdcount]);
 		} else {
@@ -1965,8 +1983,7 @@ load_text(dns_loadctx_t *lctx) {
 		}
 
 		if ((type == dns_rdatatype_sig || type == dns_rdatatype_nxt) &&
-		    lctx->warn_tcr && (lctx->options & DNS_MASTER_ZONE) != 0 &&
-		    (lctx->options & DNS_MASTER_SLAVE) == 0)
+		    lctx->warn_tcr && dns_master_isprimary(lctx))
 		{
 			(*callbacks->warn)(callbacks,
 					   "%s:%lu: old style DNSSEC "

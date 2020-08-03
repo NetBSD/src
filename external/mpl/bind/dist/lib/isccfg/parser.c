@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.8 2020/05/24 19:46:29 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.9 2020/08/03 17:23:43 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -3225,6 +3225,7 @@ parse_netaddr(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	CHECK(cfg_create_obj(pctx, type, &obj));
 	CHECK(cfg_parse_rawaddr(pctx, flags, &netaddr));
 	isc_sockaddr_fromnetaddr(&obj->value.sockaddr, &netaddr, 0);
+	obj->value.sockaddrdscp.dscp = -1;
 	*ret = obj;
 	return (ISC_R_SUCCESS);
 cleanup:

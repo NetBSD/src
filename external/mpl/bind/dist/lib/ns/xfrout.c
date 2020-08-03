@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrout.c,v 1.7 2020/05/24 19:46:29 christos Exp $	*/
+/*	$NetBSD: xfrout.c,v 1.8 2020/08/03 17:23:43 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -652,14 +652,13 @@ typedef struct {
 	dns_db_t *db;
 	dns_dbversion_t *ver;
 	isc_quota_t *quota;
-	rrstream_t *stream;    /* The XFR RR stream */
-	bool question_added;   /* QUESTION section sent? */
-	bool end_of_stream;    /* EOS has been reached */
-	isc_buffer_t buf;      /* Buffer for message owner
-				* names and rdatas */
-	isc_buffer_t txlenbuf; /* Transmit length buffer */
-	isc_buffer_t txbuf;    /* Transmit message buffer */
-	size_t cbytes;	       /* Length of current message */
+	rrstream_t *stream;  /* The XFR RR stream */
+	bool question_added; /* QUESTION section sent? */
+	bool end_of_stream;  /* EOS has been reached */
+	isc_buffer_t buf;    /* Buffer for message owner
+			      * names and rdatas */
+	isc_buffer_t txbuf;  /* Transmit message buffer */
+	size_t cbytes;	     /* Length of current message */
 	void *txmem;
 	unsigned int txmemlen;
 	dns_tsigkey_t *tsigkey; /* Key used to create TSIG */
@@ -968,23 +967,6 @@ got_soa:
 
 	current_serial = dns_soa_getserial(&current_soa_tuple->rdata);
 	if (reqtype == dns_rdatatype_ixfr) {
-		/*
-		 * Outgoing IXFR may have been disabled for this peer
-		 * or globally.
-		 */
-		if ((client->attributes & NS_CLIENTATTR_TCP) != 0) {
-			bool provide_ixfr;
-
-			provide_ixfr = client->view->provideixfr;
-			if (peer != NULL) {
-				(void)dns_peer_getprovideixfr(peer,
-							      &provide_ixfr);
-			}
-			if (provide_ixfr == false) {
-				goto axfr_fallback;
-			}
-		}
-
 		if (!have_soa) {
 			FAILC(DNS_R_FORMERR, "IXFR request missing SOA");
 		}
@@ -1009,6 +991,29 @@ got_soa:
 			is_poll = true;
 			goto have_stream;
 		}
+
+		/*
+		 * Outgoing IXFR may have been disabled for this peer
+		 * or globally.
+		 */
+		if ((client->attributes & NS_CLIENTATTR_TCP) != 0) {
+			bool provide_ixfr;
+
+			provide_ixfr = client->view->provideixfr;
+			if (peer != NULL) {
+				(void)dns_peer_getprovideixfr(peer,
+							      &provide_ixfr);
+			}
+			if (!provide_ixfr) {
+				xfrout_log1(client, question_name,
+					    question_class, ISC_LOG_DEBUG(4),
+					    "IXFR delta response disabled due "
+					    "to 'provide-ixfr no;' being set");
+				mnemonic = "AXFR-style IXFR";
+				goto axfr_fallback;
+			}
+		}
+
 		journalfile = is_dlz ? NULL : dns_zone_getjournal(zone);
 		if (journalfile != NULL) {
 			result = ixfr_rrstream_create(
@@ -1237,12 +1242,11 @@ xfrout_ctx_create(isc_mem_t *mctx, ns_client_t *client, unsigned int id,
 
 	/*
 	 * Allocate another temporary buffer for the compressed
-	 * response message and its TCP length prefix.
+	 * response message.
 	 */
-	len = 2 + 65535;
+	len = NS_CLIENT_TCP_BUFFER_SIZE;
 	mem = isc_mem_get(mctx, len);
-	isc_buffer_init(&xfr->txlenbuf, mem, 2);
-	isc_buffer_init(&xfr->txbuf, (char *)mem + 2, len - 2);
+	isc_buffer_init(&xfr->txbuf, (char *)mem, len);
 	xfr->txmem = mem;
 	xfr->txmemlen = len;
 
@@ -1292,7 +1296,6 @@ sendstream(xfrout_ctx_t *xfr) {
 	int n_rrs;
 
 	isc_buffer_clear(&xfr->buf);
-	isc_buffer_clear(&xfr->txlenbuf);
 	isc_buffer_clear(&xfr->txbuf);
 
 	is_tcp = ((xfr->client->attributes & NS_CLIENTATTR_TCP) != 0);
@@ -1659,11 +1662,11 @@ xfrout_senddone(isc_nmhandle_t *handle, isc_result_t result, void *arg) {
 	(void)isc_timer_touch(xfr->client->timer);
 #endif /* if 0 */
 
-	if (xfr->shuttingdown == true) {
+	if (xfr->shuttingdown) {
 		xfrout_maybe_destroy(xfr);
 	} else if (result != ISC_R_SUCCESS) {
 		xfrout_fail(xfr, result, "send");
-	} else if (xfr->end_of_stream == false) {
+	} else if (!xfr->end_of_stream) {
 		sendstream(xfr);
 	} else {
 		/* End of zone transfer stream. */
@@ -1702,7 +1705,7 @@ xfrout_fail(xfrout_ctx_t *xfr, isc_result_t result, const char *msg) {
 
 static void
 xfrout_maybe_destroy(xfrout_ctx_t *xfr) {
-	INSIST(xfr->shuttingdown == true);
+	INSIST(xfr->shuttingdown);
 #if 0
 	if (xfr->sends > 0) {
 		/*

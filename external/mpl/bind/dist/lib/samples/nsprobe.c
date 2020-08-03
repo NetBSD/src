@@ -1,4 +1,4 @@
-/*	$NetBSD: nsprobe.c,v 1.5 2020/05/24 19:46:30 christos Exp $	*/
+/*	$NetBSD: nsprobe.c,v 1.6 2020/08/03 17:23:44 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -534,7 +534,7 @@ request_done(isc_task_t *task, isc_event_t *event) {
 	dns_rdatatype_t type;
 
 	REQUIRE(task == probe_task);
-	REQUIRE(trans != NULL && trans->inuse == true);
+	REQUIRE(trans != NULL && trans->inuse);
 	rmessage = rev->rmessage;
 	REQUIRE(rmessage == trans->rmessage);
 	INSIST(outstanding_probes > 0);
@@ -788,7 +788,7 @@ resolve_nsaddress(isc_task_t *task, isc_event_t *event) {
 	isc_result_t result;
 
 	REQUIRE(task == probe_task);
-	REQUIRE(trans->inuse == true);
+	REQUIRE(trans->inuse);
 	REQUIRE(pns != NULL);
 	INSIST(outstanding_probes > 0);
 
@@ -926,7 +926,7 @@ resolve_ns(isc_task_t *task, isc_event_t *event) {
 	struct probe_ns *pns;
 
 	REQUIRE(task == probe_task);
-	REQUIRE(trans->inuse == true);
+	REQUIRE(trans->inuse);
 	INSIST(outstanding_probes > 0);
 
 	for (name = ISC_LIST_HEAD(rev->answerlist); name != NULL;
@@ -999,7 +999,7 @@ probe_domain(struct probe_trans *trans) {
 	char *cp;
 
 	REQUIRE(trans != NULL);
-	REQUIRE(trans->inuse == false);
+	REQUIRE(!trans->inuse);
 	REQUIRE(outstanding_probes < MAX_PROBES);
 
 	/* Construct domain */

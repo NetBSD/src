@@ -1,4 +1,4 @@
-/*	$NetBSD: update_test.c,v 1.6 2020/05/24 19:46:25 christos Exp $	*/
+/*	$NetBSD: update_test.c,v 1.7 2020/08/03 17:23:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -77,9 +77,32 @@ set_mystdtime(int year, int month, int day) {
 	mystdtime = timegm(&tm);
 }
 
+/*
+ * Override isc_stdtime_get() from lib/isc/[unix/win32]/stdtime.c
+ * with our own for testing purposes.
+ */
 void
 isc_stdtime_get(isc_stdtime_t *now) {
 	*now = mystdtime;
+}
+
+/*
+ * Because update_test.o requires dns_update_*() symbols, the linker is able
+ * to resolve them using libdns.a(update.o).  That object has other symbol
+ * dependencies (dst_key_*()), so it pulls libdns.a(dst_api.o).
+ * That object file requires the isc_stdtime_tostring() symbol.
+ *
+ * Define a local version here so that we don't have to depend on
+ * libisc.a(stdtime.o).  If isc_stdtime_tostring() would be left undefined,
+ * the linker has to get the required object file, and that will result in a
+ * multiple definition error because the isc_stdtime_get() symbol exported
+ * there is already in the exported list.
+ */
+void
+isc_stdtime_tostring(isc_stdtime_t t, char *out, size_t outlen) {
+	UNUSED(t);
+	UNUSED(out);
+	UNUSED(outlen);
 }
 
 /* simple increment by 1 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: l32_105.c,v 1.5 2020/05/24 19:46:24 christos Exp $	*/
+/*	$NetBSD: l32_105.c,v 1.6 2020/08/03 17:23:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -75,7 +75,7 @@ totext_l32(ARGS_TOTEXT) {
 
 	RETERR(str_totext(" ", target));
 
-	return (inet_totext(AF_INET, &region, target));
+	return (inet_totext(AF_INET, tctx->flags, &region, target));
 }
 
 static inline isc_result_t

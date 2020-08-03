@@ -1,4 +1,4 @@
-/*	$NetBSD: statschannel.c,v 1.7 2020/05/24 19:46:12 christos Exp $	*/
+/*	$NetBSD: statschannel.c,v 1.8 2020/08/03 17:23:37 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1811,6 +1811,43 @@ zone_xmlrender(dns_zone_t *zone, void *arg) {
 	}
 	TRY0(xmlTextWriterEndElement(writer)); /* serial */
 
+	/*
+	 * Export zone timers to the statistics channel in XML format.  For
+	 * master zones, only include the loaded time.  For slave zones, also
+	 * include the expires and refresh times.
+	 */
+	isc_time_t timestamp;
+
+	result = dns_zone_getloadtime(zone, &timestamp);
+	if (result != ISC_R_SUCCESS) {
+		goto error;
+	}
+
+	isc_time_formatISO8601(&timestamp, buf, 64);
+	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "loaded"));
+	TRY0(xmlTextWriterWriteString(writer, ISC_XMLCHAR buf));
+	TRY0(xmlTextWriterEndElement(writer));
+
+	if (dns_zone_gettype(zone) == dns_zone_slave) {
+		result = dns_zone_getexpiretime(zone, &timestamp);
+		if (result != ISC_R_SUCCESS) {
+			goto error;
+		}
+		isc_time_formatISO8601(&timestamp, buf, 64);
+		TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "expires"));
+		TRY0(xmlTextWriterWriteString(writer, ISC_XMLCHAR buf));
+		TRY0(xmlTextWriterEndElement(writer));
+
+		result = dns_zone_getrefreshtime(zone, &timestamp);
+		if (result != ISC_R_SUCCESS) {
+			goto error;
+		}
+		isc_time_formatISO8601(&timestamp, buf, 64);
+		TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "refresh"));
+		TRY0(xmlTextWriterWriteString(writer, ISC_XMLCHAR buf));
+		TRY0(xmlTextWriterEndElement(writer));
+	}
+
 	if (statlevel == dns_zonestat_full) {
 		isc_stats_t *zonestats;
 		isc_stats_t *gluecachestats;
@@ -2619,6 +2656,40 @@ zone_jsonrender(dns_zone_t *zone, void *arg) {
 
 	if (zoneobj == NULL) {
 		return (ISC_R_NOMEMORY);
+	}
+
+	/*
+	 * Export zone timers to the statistics channel in JSON format.  For
+	 * master zones, only include the loaded time.  For slave zones, also
+	 * include the expires and refresh times.
+	 */
+
+	isc_time_t timestamp;
+
+	result = dns_zone_getloadtime(zone, &timestamp);
+	if (result != ISC_R_SUCCESS) {
+		goto error;
+	}
+
+	isc_time_formatISO8601(&timestamp, buf, 64);
+	json_object_object_add(zoneobj, "loaded", json_object_new_string(buf));
+
+	if (dns_zone_gettype(zone) == dns_zone_slave) {
+		result = dns_zone_getexpiretime(zone, &timestamp);
+		if (result != ISC_R_SUCCESS) {
+			goto error;
+		}
+		isc_time_formatISO8601(&timestamp, buf, 64);
+		json_object_object_add(zoneobj, "expires",
+				       json_object_new_string(buf));
+
+		result = dns_zone_getrefreshtime(zone, &timestamp);
+		if (result != ISC_R_SUCCESS) {
+			goto error;
+		}
+		isc_time_formatISO8601(&timestamp, buf, 64);
+		json_object_object_add(zoneobj, "refresh",
+				       json_object_new_string(buf));
 	}
 
 	if (statlevel == dns_zonestat_full) {

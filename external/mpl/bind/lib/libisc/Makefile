@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2020/06/03 02:07:52 christos Exp $
+#	$NetBSD: Makefile,v 1.14 2020/08/03 17:23:44 christos Exp $
 
 LIB=isc
 #USE_SHLIBDIR=   yes
@@ -42,7 +42,7 @@ SRCS=		app.c assertions.c astack.c base32.c base64.c bind9.c buffer.c \
 		ratelimiter.c regex.c \
 		region.c result.c rwlock.c safe.c serial.c siphash.c \
 		sockaddr.c stats.c string.c symtab.c task.c \
-		taskpool.c timer.c tm.c version.c \
+		taskpool.c timer.c tm.c utf8.c version.c \
 		${UNIX_SRCS} ${PTHREAD_SRCS} ${CRYPTO_SRCS} ${NETMGR_SRCS}
 
 

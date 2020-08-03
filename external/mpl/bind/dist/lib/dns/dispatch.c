@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatch.c,v 1.5 2020/05/24 19:46:22 christos Exp $	*/
+/*	$NetBSD: dispatch.c,v 1.6 2020/08/03 17:23:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -3274,7 +3274,7 @@ dns_dispatch_getnext(dns_dispentry_t *resp, dns_dispatchevent_t **sockevent) {
 
 	LOCK(&disp->lock);
 
-	REQUIRE(resp->item_out == true);
+	REQUIRE(resp->item_out);
 	resp->item_out = false;
 
 	if (ev->buffer.base != NULL) {
@@ -3381,7 +3381,7 @@ dns_dispatch_removeresponse(dns_dispentry_t **resp,
 	}
 
 	if (ev != NULL) {
-		REQUIRE(res->item_out == true);
+		REQUIRE(res->item_out);
 		res->item_out = false;
 		if (ev->buffer.base != NULL) {
 			free_buffer(disp, ev->buffer.base, ev->buffer.length);

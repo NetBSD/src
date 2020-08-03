@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2018/08/12 13:02:26 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2020/08/03 17:23:36 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -6,15 +6,15 @@
 
 TOOLS=${IDIST}/bin/tools
 
-.PATH: ${TOOLS}
+.PATH: ${TOOLS} ${IDIST}/doc/man
 
 PROG=${BASE}
 SRCS=${BASE}.c
 ${BASE}.o: ${VERSIONFILE}
-.if exists(${TOOLS}/${BASE}.8)
+.if exists(${IDIST}/doc/man/${BASE}.8in)
 BINDIR=/usr/sbin
 MAN=${BASE}.8
-.elif exists(${TOOLS}/${BASE}.1)
+.elif exists(${IDIST}/doc/man/${BASE}.1in)
 BINDIR=/usr/bin
 MAN=${BASE}.1
 .endif

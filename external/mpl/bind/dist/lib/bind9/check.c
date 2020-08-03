@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.8 2020/05/24 19:46:22 christos Exp $	*/
+/*	$NetBSD: check.c,v 1.9 2020/08/03 17:23:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -813,7 +813,7 @@ check_recursionacls(cfg_aclconfctx_t *actx, const cfg_obj_t *voptions,
 			continue;
 		}
 
-		if (recursion == false && !dns_acl_isnone(acl)) {
+		if (!recursion && !dns_acl_isnone(acl)) {
 			cfg_obj_log(aclobj, logctx, ISC_LOG_WARNING,
 				    "both \"recursion no;\" and "
 				    "\"%s\" active%s%s",
@@ -1566,6 +1566,81 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx,
 			    "ECS can no longer be used in geoip ACLs");
 		if (result == ISC_R_SUCCESS) {
 			result = ISC_R_FAILURE;
+		}
+	}
+
+	obj = NULL;
+	(void)cfg_map_get(options, "check-names", &obj);
+	if (obj != NULL && !cfg_obj_islist(obj)) {
+		obj = NULL;
+	}
+	if (obj != NULL) {
+		enum { MAS = 1, PRI = 2, SLA = 4, SEC = 8 } values = 0;
+		for (const cfg_listelt_t *el = cfg_list_first(obj); el != NULL;
+		     el = cfg_list_next(el))
+		{
+			const cfg_obj_t *tuple = cfg_listelt_value(el);
+			const cfg_obj_t *type = cfg_tuple_get(tuple, "type");
+			const char *keyword = cfg_obj_asstring(type);
+			if (strcasecmp(keyword, "primary") == 0) {
+				if ((values & PRI) == PRI) {
+					cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
+						    "'check-names primary' "
+						    "duplicated");
+					if (result == ISC_R_SUCCESS) {
+						result = ISC_R_FAILURE;
+					}
+				}
+				values |= PRI;
+			} else if (strcasecmp(keyword, "master") == 0) {
+				if ((values & MAS) == MAS) {
+					cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
+						    "'check-names master' "
+						    "duplicated");
+					if (result == ISC_R_SUCCESS) {
+						result = ISC_R_FAILURE;
+					}
+				}
+				values |= MAS;
+			} else if (strcasecmp(keyword, "secondary") == 0) {
+				if ((values & SEC) == SEC) {
+					cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
+						    "'check-names secondary' "
+						    "duplicated");
+					if (result == ISC_R_SUCCESS) {
+						result = ISC_R_FAILURE;
+					}
+				}
+				values |= SEC;
+			} else if (strcasecmp(keyword, "slave") == 0) {
+				if ((values & SLA) == SLA) {
+					cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
+						    "'check-names slave' "
+						    "duplicated");
+					if (result == ISC_R_SUCCESS) {
+						result = ISC_R_FAILURE;
+					}
+				}
+				values |= SLA;
+			}
+		}
+
+		if ((values & (PRI | MAS)) == (PRI | MAS)) {
+			cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
+				    "'check-names' cannot take both "
+				    "'primary' and 'master'");
+			if (result == ISC_R_SUCCESS) {
+				result = ISC_R_FAILURE;
+			}
+		}
+
+		if ((values & (SEC | SLA)) == (SEC | SLA)) {
+			cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
+				    "'check-names' cannot take both "
+				    "'secondary' and 'slave'");
+			if (result == ISC_R_SUCCESS) {
+				result = ISC_R_FAILURE;
+			}
 		}
 	}
 

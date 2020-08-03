@@ -1,4 +1,4 @@
-/*	$NetBSD: astack.c,v 1.2 2020/05/24 19:46:26 christos Exp $	*/
+/*	$NetBSD: astack.c,v 1.3 2020/08/03 17:23:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -45,7 +45,7 @@ isc_astack_new(isc_mem_t *mctx, size_t size) {
 
 bool
 isc_astack_trypush(isc_astack_t *stack, void *obj) {
-	if (isc_mutex_trylock(&stack->lock) == false) {
+	if (!isc_mutex_trylock(&stack->lock)) {
 		if (stack->pos >= stack->size) {
 			UNLOCK(&stack->lock);
 			return (false);

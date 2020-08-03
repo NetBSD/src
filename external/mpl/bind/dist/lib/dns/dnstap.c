@@ -1,4 +1,4 @@
-/*	$NetBSD: dnstap.c,v 1.7 2020/05/24 19:46:22 christos Exp $	*/
+/*	$NetBSD: dnstap.c,v 1.8 2020/08/03 17:23:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -339,7 +339,7 @@ dns_dt_reopen(dns_dtenv_t *env, int roll) {
 		fstrm_iothr_destroy(&env->iothr);
 	}
 
-	if (roll != 0) {
+	if (roll == 0) {
 		roll = env->rolls;
 	}
 
@@ -351,7 +351,7 @@ dns_dt_reopen(dns_dtenv_t *env, int roll) {
 		char *filename = isc_mem_strdup(env->mctx, env->path);
 		file.name = filename;
 		file.stream = NULL;
-		file.versions = roll != 0 ? roll : env->rolls;
+		file.versions = roll;
 		file.maximum_size = 0;
 		file.maximum_reached = false;
 		file.suffix = env->suffix;

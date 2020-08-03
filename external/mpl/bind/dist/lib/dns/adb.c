@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.5 2020/05/24 19:46:22 christos Exp $	*/
+/*	$NetBSD: adb.c,v 1.6 2020/08/03 17:23:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1113,7 +1113,7 @@ kill_name(dns_adbname_t **n, isc_eventtype_t ev) {
 	 * just kill the name here.
 	 */
 	if (!NAME_FETCH(name)) {
-		INSIST(result == false);
+		INSIST(!result);
 		result = unlink_name(adb, name);
 		free_adbname(adb, &name);
 		if (result) {
@@ -1304,7 +1304,7 @@ shutdown_names(dns_adb_t *adb) {
 			 * irefcnt ourselves, since it will not be
 			 * automatically triggered by a name being unlinked.
 			 */
-			INSIST(result == false);
+			INSIST(!result);
 			result = dec_adb_irefcnt(adb);
 		} else {
 			/*
@@ -1315,7 +1315,7 @@ shutdown_names(dns_adb_t *adb) {
 			 */
 			while (name != NULL) {
 				next_name = ISC_LIST_NEXT(name, plink);
-				INSIST(result == false);
+				INSIST(!result);
 				result = kill_name(&name,
 						   DNS_EVENT_ADBSHUTDOWN);
 				name = next_name;
@@ -2444,8 +2444,7 @@ check_stale_name(dns_adb_t *adb, int bucket, isc_stdtime_t now) {
 		    (overmem || victim->last_used + ADB_STALE_MARGIN <= now))
 		{
 			RUNTIME_CHECK(
-				kill_name(&victim, DNS_EVENT_ADBCANCELED) ==
-				false);
+				!kill_name(&victim, DNS_EVENT_ADBCANCELED));
 			victims++;
 		}
 
@@ -2509,7 +2508,7 @@ cleanup_names(dns_adb_t *adb, int bucket, isc_stdtime_t now) {
 	name = ISC_LIST_HEAD(adb->names[bucket]);
 	while (name != NULL) {
 		next_name = ISC_LIST_NEXT(name, plink);
-		INSIST(result == false);
+		INSIST(!result);
 		result = check_expire_namehooks(name, now);
 		if (!result) {
 			result = check_expire_name(&name, now);
@@ -2534,7 +2533,7 @@ cleanup_entries(dns_adb_t *adb, int bucket, isc_stdtime_t now) {
 	entry = ISC_LIST_HEAD(adb->entries[bucket]);
 	while (entry != NULL) {
 		next_entry = ISC_LIST_NEXT(entry, plink);
-		INSIST(result == false);
+		INSIST(!result);
 		result = check_expire_entry(adb, &entry, now);
 		entry = next_entry;
 	}
@@ -3089,7 +3088,7 @@ dns_adb_createfind(dns_adb_t *adb, isc_task_t *task, isc_taskaction_t action,
 	if (adb->name_sd[bucket]) {
 		DP(DEF_LEVEL, "dns_adb_createfind: returning "
 			      "ISC_R_SHUTTINGDOWN");
-		RUNTIME_CHECK(free_adbfind(adb, &find) == false);
+		RUNTIME_CHECK(!free_adbfind(adb, &find));
 		result = ISC_R_SHUTTINGDOWN;
 		goto out;
 	}
@@ -3106,7 +3105,7 @@ dns_adb_createfind(dns_adb_t *adb, isc_task_t *task, isc_taskaction_t action,
 
 		adbname = new_adbname(adb, name);
 		if (adbname == NULL) {
-			RUNTIME_CHECK(free_adbfind(adb, &find) == false);
+			RUNTIME_CHECK(!free_adbfind(adb, &find));
 			result = ISC_R_NOMEMORY;
 			goto out;
 		}
@@ -3130,7 +3129,7 @@ dns_adb_createfind(dns_adb_t *adb, isc_task_t *task, isc_taskaction_t action,
 	/*
 	 * Expire old entries, etc.
 	 */
-	RUNTIME_CHECK(check_expire_namehooks(adbname, now) == false);
+	RUNTIME_CHECK(!check_expire_namehooks(adbname, now));
 
 	/*
 	 * Do we know that the name is an alias?
@@ -3410,8 +3409,7 @@ dns_adb_destroyfind(dns_adbfind_t **findp) {
 		entry = ai->entry;
 		ai->entry = NULL;
 		INSIST(DNS_ADBENTRY_VALID(entry));
-		RUNTIME_CHECK(dec_entry_refcnt(adb, overmem, entry, true) ==
-			      false);
+		RUNTIME_CHECK(!dec_entry_refcnt(adb, overmem, entry, true));
 		free_adbaddrinfo(adb, &ai);
 		ai = ISC_LIST_HEAD(find->list);
 	}
@@ -3508,10 +3506,10 @@ dns_adb_dump(dns_adb_t *adb, FILE *f) {
 	isc_stdtime_get(&now);
 
 	for (i = 0; i < adb->nnames; i++) {
-		RUNTIME_CHECK(cleanup_names(adb, i, now) == false);
+		RUNTIME_CHECK(!cleanup_names(adb, i, now));
 	}
 	for (i = 0; i < adb->nentries; i++) {
-		RUNTIME_CHECK(cleanup_entries(adb, i, now) == false);
+		RUNTIME_CHECK(!cleanup_entries(adb, i, now));
 	}
 
 	dump_adb(adb, f, false, now);
@@ -4825,10 +4823,10 @@ dns_adb_flush(dns_adb_t *adb) {
 	 * Call our cleanup routines.
 	 */
 	for (i = 0; i < adb->nnames; i++) {
-		RUNTIME_CHECK(cleanup_names(adb, i, INT_MAX) == false);
+		RUNTIME_CHECK(!cleanup_names(adb, i, INT_MAX));
 	}
 	for (i = 0; i < adb->nentries; i++) {
-		RUNTIME_CHECK(cleanup_entries(adb, i, INT_MAX) == false);
+		RUNTIME_CHECK(!cleanup_entries(adb, i, INT_MAX));
 	}
 
 #ifdef DUMP_ADB_AFTER_CLEANING
@@ -4856,8 +4854,7 @@ dns_adb_flushname(dns_adb_t *adb, const dns_name_t *name) {
 		if (!NAME_DEAD(adbname) && dns_name_equal(name, &adbname->name))
 		{
 			RUNTIME_CHECK(
-				kill_name(&adbname, DNS_EVENT_ADBCANCELED) ==
-				false);
+				!kill_name(&adbname, DNS_EVENT_ADBCANCELED));
 		}
 		adbname = nextname;
 	}
@@ -4884,7 +4881,7 @@ dns_adb_flushnames(dns_adb_t *adb, const dns_name_t *name) {
 			    dns_name_issubdomain(&adbname->name, name)) {
 				ret = kill_name(&adbname,
 						DNS_EVENT_ADBCANCELED);
-				RUNTIME_CHECK(ret == false);
+				RUNTIME_CHECK(!ret);
 			}
 			adbname = nextname;
 		}

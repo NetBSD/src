@@ -1,4 +1,4 @@
-/*	$NetBSD: sample-async.c,v 1.4 2020/05/24 19:46:30 christos Exp $	*/
+/*	$NetBSD: sample-async.c,v 1.5 2020/08/03 17:23:44 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -159,7 +159,7 @@ process_answer(isc_task_t *task, isc_event_t *event) {
 	isc_result_t result;
 
 	REQUIRE(task == query_task);
-	REQUIRE(trans->inuse == true);
+	REQUIRE(trans->inuse);
 	REQUIRE(outstanding_queries > 0);
 
 	printf("answer[%2d]\n", trans->id);
@@ -213,7 +213,7 @@ dispatch_query(struct query_trans *trans) {
 	char *cp;
 
 	REQUIRE(trans != NULL);
-	REQUIRE(trans->inuse == false);
+	REQUIRE(!trans->inuse);
 	REQUIRE(ISC_LIST_EMPTY(trans->answerlist));
 	REQUIRE(outstanding_queries < MAX_QUERIES);
 
@@ -397,7 +397,7 @@ main(int argc, char *argv[]) {
 
 	/* Sanity check */
 	for (i = 0; i < MAX_QUERIES; i++) {
-		INSIST(query_array[i].inuse == false);
+		INSIST(!query_array[i].inuse);
 	}
 
 	/* Cleanup */

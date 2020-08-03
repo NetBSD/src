@@ -1,4 +1,4 @@
-/*	$NetBSD: spnego.c,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
+/*	$NetBSD: spnego.c,v 1.5 2020/08/03 17:23:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -354,35 +354,39 @@ gssapi_spnego_decapsulate(OM_uint32 *, gss_buffer_t, unsigned char **, size_t *,
 
 /* mod_auth_kerb.c */
 
+/*
+ * Check whether 'token' matches the SPNEGO OID.  If it does, return 'true';
+ * otherwise, return 'false'.
+ */
 static bool
 cmp_gss_type(gss_buffer_t token, gss_OID gssoid) {
 	unsigned char *p;
 	size_t len;
 
 	if (token->length == 0U) {
-		return (GSS_S_DEFECTIVE_TOKEN);
+		return (false);
 	}
 
 	p = token->value;
 	if (*p++ != 0x60) {
-		return (GSS_S_DEFECTIVE_TOKEN);
+		return (false);
 	}
 	len = *p++;
 	if (len & 0x80) {
 		if ((len & 0x7f) > 4U) {
-			return (GSS_S_DEFECTIVE_TOKEN);
+			return (false);
 		}
 		p += len & 0x7f;
 	}
 	if (*p++ != 0x06) {
-		return (GSS_S_DEFECTIVE_TOKEN);
+		return (false);
 	}
 
 	if (((OM_uint32)*p++) != gssoid->length) {
-		return (GSS_S_DEFECTIVE_TOKEN);
+		return (false);
 	}
 
-	return (!isc_safe_memequal(p, gssoid->elements, gssoid->length));
+	return (isc_safe_memequal(p, gssoid->elements, gssoid->length));
 }
 
 /* accept_sec_context.c */
@@ -560,7 +564,7 @@ gss_accept_sec_context_spnego(OM_uint32 *minor_status,
 	 * PDU.  If not, dispatch to the GSSAPI library and get out.
 	 */
 
-	if (cmp_gss_type(input_token_buffer, GSS_SPNEGO_MECH)) {
+	if (!cmp_gss_type(input_token_buffer, GSS_SPNEGO_MECH)) {
 		return (gss_accept_sec_context(
 			minor_status, context_handle, acceptor_cred_handle,
 			input_token_buffer, input_chan_bindings, src_name,

@@ -1,4 +1,4 @@
-/*	$NetBSD: wks_11.c,v 1.5 2020/05/24 19:46:25 christos Exp $	*/
+/*	$NetBSD: wks_11.c,v 1.6 2020/08/03 17:23:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -220,7 +220,7 @@ totext_in_wks(ARGS_TOTEXT) {
 	REQUIRE(rdata->length >= 5);
 
 	dns_rdata_toregion(rdata, &sr);
-	RETERR(inet_totext(AF_INET, &sr, target));
+	RETERR(inet_totext(AF_INET, tctx->flags, &sr, target));
 	isc_region_consume(&sr, 4);
 
 	proto = uint8_fromregion(&sr);

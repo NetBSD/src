@@ -1,4 +1,4 @@
-/*	$NetBSD: db_test.c,v 1.5 2020/05/24 19:46:25 christos Exp $	*/
+/*	$NetBSD: db_test.c,v 1.6 2020/08/03 17:23:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -213,7 +213,7 @@ dns_dbfind_staleok_test(void **state) {
 		count = 0;
 		do {
 			count++;
-			assert_in_range(count, 0, 20); /* loop sanity */
+			assert_in_range(count, 1, 21); /* loop sanity */
 			assert_int_equal(rdataset.attributes &
 						 DNS_RDATASETATTR_STALE,
 					 0);

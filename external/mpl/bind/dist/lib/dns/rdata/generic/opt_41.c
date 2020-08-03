@@ -1,4 +1,4 @@
-/*	$NetBSD: opt_41.c,v 1.7 2020/05/24 19:46:24 christos Exp $	*/
+/*	$NetBSD: opt_41.c,v 1.8 2020/08/03 17:23:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,6 +19,8 @@
 #define RRTYPE_OPT_ATTRIBUTES                                   \
 	(DNS_RDATATYPEATTR_SINGLETON | DNS_RDATATYPEATTR_META | \
 	 DNS_RDATATYPEATTR_NOTQUESTION)
+
+#include <isc/utf8.h>
 
 static inline isc_result_t
 fromtext_opt(ARGS_FROMTEXT) {
@@ -204,6 +206,24 @@ fromwire_opt(ARGS_FROMWIRE) {
 			break;
 		case DNS_OPT_KEY_TAG:
 			if (length == 0 || (length % 2) != 0) {
+				return (DNS_R_OPTERR);
+			}
+			isc_region_consume(&sregion, length);
+			break;
+		case DNS_OPT_EDE:
+			if (length < 2) {
+				return (DNS_R_OPTERR);
+			}
+			/* UTF-8 Byte Order Mark is not permitted. RFC 5198 */
+			if (isc_utf8_bom(sregion.base + 2, length - 2)) {
+				return (DNS_R_OPTERR);
+			}
+			/*
+			 * The EXTRA-TEXT field is specified as UTF-8, and
+			 * therefore must be validated for correctness
+			 * according to RFC 3269 security considerations.
+			 */
+			if (!isc_utf8_valid(sregion.base + 2, length - 2)) {
 				return (DNS_R_OPTERR);
 			}
 			isc_region_consume(&sregion, length);

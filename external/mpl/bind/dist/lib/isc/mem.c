@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.6 2020/05/24 19:46:26 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.7 2020/08/03 17:23:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -447,6 +447,7 @@ more_frags(isc__mem_t *ctx, size_t new_size) {
 	if (ctx->basic_blocks == NULL) {
 		more_basic_blocks(ctx);
 	}
+	INSIST(ctx->basic_blocks != NULL);
 
 	total_size = ctx->mem_target;
 	tmp = ctx->basic_blocks;
@@ -518,6 +519,7 @@ mem_getunlocked(isc__mem_t *ctx, size_t size) {
 	if (ctx->freelists[new_size] == NULL) {
 		more_frags(ctx, new_size);
 	}
+	INSIST(ctx->freelists[new_size] != NULL);
 
 	/*
 	 * The free list uses the "rounded-up" size "new_size".

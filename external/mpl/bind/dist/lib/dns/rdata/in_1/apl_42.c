@@ -1,4 +1,4 @@
-/*	$NetBSD: apl_42.c,v 1.5 2020/05/24 19:46:25 christos Exp $	*/
+/*	$NetBSD: apl_42.c,v 1.6 2020/08/03 17:23:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -156,7 +156,7 @@ totext_in_apl(ARGS_TOTEXT) {
 			INSIST(prefix <= 32);
 			memset(buf, 0, sizeof(buf));
 			memmove(buf, sr.base, len);
-			RETERR(inet_totext(AF_INET, &ir, target));
+			RETERR(inet_totext(AF_INET, tctx->flags, &ir, target));
 			break;
 
 		case 2:
@@ -164,7 +164,7 @@ totext_in_apl(ARGS_TOTEXT) {
 			INSIST(prefix <= 128);
 			memset(buf, 0, sizeof(buf));
 			memmove(buf, sr.base, len);
-			RETERR(inet_totext(AF_INET6, &ir, target));
+			RETERR(inet_totext(AF_INET6, tctx->flags, &ir, target));
 			break;
 
 		default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: lib.c,v 1.5 2020/05/24 19:46:23 christos Exp $	*/
+/*	$NetBSD: lib.c,v 1.6 2020/08/03 17:23:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -50,7 +50,7 @@ static void
 initialize(void) {
 	isc_result_t result;
 
-	REQUIRE(initialize_done == false);
+	REQUIRE(!initialize_done);
 
 	isc_refcount_init(&references, 0);
 

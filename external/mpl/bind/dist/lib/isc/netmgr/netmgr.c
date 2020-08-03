@@ -1,4 +1,4 @@
-/*	$NetBSD: netmgr.c,v 1.2 2020/05/24 19:46:27 christos Exp $	*/
+/*	$NetBSD: netmgr.c,v 1.3 2020/08/03 17:23:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -278,6 +278,9 @@ nm_destroy(isc_nm_t **mgr0) {
 
 		isc_queue_destroy(worker->ievents);
 		isc_queue_destroy(worker->ievents_prio);
+		isc_mutex_destroy(&worker->lock);
+		isc_condition_destroy(&worker->cond);
+
 		isc_mem_put(mgr->mctx, worker->recvbuf,
 			    ISC_NETMGR_RECVBUF_SIZE);
 		isc_thread_join(worker->thread, NULL);
@@ -605,8 +608,11 @@ process_queue(isc__networker_t *worker, isc_queue_t *queue) {
 		case netievent_tcplisten:
 			isc__nm_async_tcplisten(worker, ievent);
 			break;
-		case netievent_tcpchildlisten:
-			isc__nm_async_tcpchildlisten(worker, ievent);
+		case netievent_tcpchildaccept:
+			isc__nm_async_tcpchildaccept(worker, ievent);
+			break;
+		case netievent_tcpaccept:
+			isc__nm_async_tcpaccept(worker, ievent);
 			break;
 		case netievent_tcpstartread:
 			isc__nm_async_tcp_startread(worker, ievent);
@@ -617,11 +623,11 @@ process_queue(isc__networker_t *worker, isc_queue_t *queue) {
 		case netievent_tcpsend:
 			isc__nm_async_tcpsend(worker, ievent);
 			break;
+		case netievent_tcpdnssend:
+			isc__nm_async_tcpdnssend(worker, ievent);
+			break;
 		case netievent_tcpstop:
 			isc__nm_async_tcpstop(worker, ievent);
-			break;
-		case netievent_tcpchildstop:
-			isc__nm_async_tcpchildstop(worker, ievent);
 			break;
 		case netievent_tcpclose:
 			isc__nm_async_tcpclose(worker, ievent);
@@ -770,9 +776,12 @@ nmsocket_cleanup(isc_nmsocket_t *sock, bool dofree) {
 	}
 
 	isc_astack_destroy(sock->inactivereqs);
+	sock->magic = 0;
 
 	isc_mem_free(sock->mgr->mctx, sock->ah_frees);
 	isc_mem_free(sock->mgr->mctx, sock->ah_handles);
+	isc_mutex_destroy(&sock->lock);
+	isc_condition_destroy(&sock->cond);
 
 	if (dofree) {
 		isc_nm_t *mgr = sock->mgr;
@@ -823,10 +832,13 @@ nmsocket_maybe_destroy(isc_nmsocket_t *sock) {
 	if (active_handles == 0 || sock->tcphandle != NULL) {
 		destroy = true;
 	}
-	UNLOCK(&sock->lock);
 
 	if (destroy) {
+		atomic_store(&sock->destroying, true);
+		UNLOCK(&sock->lock);
 		nmsocket_cleanup(sock, true);
+	} else {
+		UNLOCK(&sock->lock);
 	}
 }
 
@@ -924,6 +936,7 @@ isc__nmsocket_init(isc_nmsocket_t *sock, isc_nm_t *mgr, isc_nmsocket_type type,
 					  sock->ah_size * sizeof(size_t));
 	sock->ah_handles = isc_mem_allocate(
 		mgr->mctx, sock->ah_size * sizeof(isc_nmhandle_t *));
+	ISC_LINK_INIT(&sock->quotacb, link);
 	for (size_t i = 0; i < 32; i++) {
 		sock->ah_frees[i] = i;
 		sock->ah_handles[i] = NULL;
@@ -941,7 +954,6 @@ isc__nmsocket_init(isc_nmsocket_t *sock, isc_nm_t *mgr, isc_nmsocket_type type,
 		break;
 	case isc_nm_tcpsocket:
 	case isc_nm_tcplistener:
-	case isc_nm_tcpchildlistener:
 		if (family == AF_INET) {
 			sock->statsindex = tcp4statsindex;
 		} else {
@@ -1152,6 +1164,8 @@ isc_nmhandle_unref(isc_nmhandle_t *handle) {
 	if (isc_refcount_decrement(&handle->references) > 1) {
 		return;
 	}
+	/* We need an acquire memory barrier here */
+	(void)isc_refcount_current(&handle->references);
 
 	sock = handle->sock;
 	handle->sock = NULL;
@@ -1425,7 +1439,7 @@ isc__nm_drop_interlocked(isc_nm_t *mgr) {
 	LOCK(&mgr->lock);
 	bool success = atomic_compare_exchange_strong(&mgr->interlocked,
 						      &(bool){ true }, false);
-	INSIST(success == true);
+	INSIST(success);
 	BROADCAST(&mgr->wkstatecond);
 	UNLOCK(&mgr->lock);
 }

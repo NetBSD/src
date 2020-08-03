@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.4 2020/05/24 19:46:22 christos Exp $	*/
+/*	$NetBSD: db.c,v 1.5 2020/08/03 17:23:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -412,7 +412,7 @@ dns_db_closeversion(dns_db_t *db, dns_dbversion_t **versionp, bool commit) {
 
 	(db->methods->closeversion)(db, versionp, commit);
 
-	if (commit == true) {
+	if (commit) {
 		for (listener = ISC_LIST_HEAD(db->update_listeners);
 		     listener != NULL; listener = ISC_LIST_NEXT(listener, link))
 		{
@@ -892,7 +892,7 @@ dns_db_unregister(dns_dbimplementation_t **dbimp) {
 isc_result_t
 dns_db_getoriginnode(dns_db_t *db, dns_dbnode_t **nodep) {
 	REQUIRE(DNS_DB_VALID(db));
-	REQUIRE(dns_db_iszone(db) == true);
+	REQUIRE(dns_db_iszone(db));
 	REQUIRE(nodep != NULL && *nodep == NULL);
 
 	if (db->methods->getoriginnode != NULL) {
@@ -930,7 +930,7 @@ dns_db_getnsec3parameters(dns_db_t *db, dns_dbversion_t *version,
 			  uint16_t *iterations, unsigned char *salt,
 			  size_t *salt_length) {
 	REQUIRE(DNS_DB_VALID(db));
-	REQUIRE(dns_db_iszone(db) == true);
+	REQUIRE(dns_db_iszone(db));
 
 	if (db->methods->getnsec3parameters != NULL) {
 		return ((db->methods->getnsec3parameters)(db, version, hash,
@@ -945,7 +945,7 @@ isc_result_t
 dns_db_getsize(dns_db_t *db, dns_dbversion_t *version, uint64_t *records,
 	       uint64_t *bytes) {
 	REQUIRE(DNS_DB_VALID(db));
-	REQUIRE(dns_db_iszone(db) == true);
+	REQUIRE(dns_db_iszone(db));
 
 	if (db->methods->getsize != NULL) {
 		return ((db->methods->getsize)(db, version, records, bytes));

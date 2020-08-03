@@ -1,4 +1,4 @@
-/*	$NetBSD: httpd.c,v 1.4 2020/05/24 19:46:26 christos Exp $	*/
+/*	$NetBSD: httpd.c,v 1.5 2020/08/03 17:23:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1043,7 +1043,7 @@ isc_httpd_recvdone(isc_task_t *task, isc_event_t *ev) {
 
 	isc_httpd_addheader(httpd, "Server: libisc", NULL);
 
-	if (is_compressed == true) {
+	if (is_compressed) {
 		isc_httpd_addheader(httpd, "Content-Encoding", "deflate");
 		isc_httpd_addheaderuint(
 			httpd, "Content-Length",

@@ -1,4 +1,4 @@
-/*	$NetBSD: a6_38.c,v 1.5 2020/05/24 19:46:25 christos Exp $	*/
+/*	$NetBSD: a6_38.c,v 1.6 2020/08/03 17:23:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -128,7 +128,7 @@ totext_in_a6(ARGS_TOTEXT) {
 		addr[octets] &= mask;
 		ar.base = addr;
 		ar.length = sizeof(addr);
-		RETERR(inet_totext(AF_INET6, &ar, target));
+		RETERR(inet_totext(AF_INET6, tctx->flags, &ar, target));
 		isc_region_consume(&sr, 16 - octets);
 	}
 

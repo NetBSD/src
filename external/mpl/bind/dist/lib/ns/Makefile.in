@@ -22,17 +22,18 @@ USE_ISC_SPNEGO = @USE_ISC_SPNEGO@
 
 CINCLUDES =	-I. -I${top_srcdir}/lib/ns -Iinclude \
 		${NS_INCLUDES} ${DNS_INCLUDES} ${ISC_INCLUDES} \
-		${OPENSSL_CFLAGS} @DST_GSSAPI_INC@
+		${OPENSSL_CFLAGS} @DST_GSSAPI_INC@ \
+		${FSTRM_CFLAGS}
 
 CDEFINES =	-DNAMED_PLUGINDIR=\"${plugindir}\"
 
 CWARNINGS =
 
-ISCLIBS =	../../lib/isc/libisc.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
+ISCLIBS =	../../lib/isc/libisc.@A@
 
 ISCDEPLIBS =	../../lib/isc/libisc.@A@
 
-DNSLIBS =	../../lib/dns/libdns.@A@ ${MAXMINDDB_LIBS} @DNS_CRYPTO_LIBS@
+DNSLIBS =	../../lib/dns/libdns.@A@ @NO_LIBTOOL_DNSLIBS@
 
 DNSDEPLIBS =	../../lib/dns/libdns.@A@
 
@@ -74,7 +75,7 @@ libns.la: ${OBJS}
 	${LIBTOOL_MODE_LINK} \
 		${CC} ${ALL_CFLAGS} ${LDFLAGS} -o libns.la -rpath ${libdir} \
 		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
-		${OBJS} ${ISCLIBS} @DNS_CRYPTO_LIBS@ ${LIBS}
+		${OBJS} ${ISCLIBS} ${DNSLIBS} @DNS_CRYPTO_LIBS@ ${LIBS}
 
 timestamp: libns.@A@
 	touch timestamp

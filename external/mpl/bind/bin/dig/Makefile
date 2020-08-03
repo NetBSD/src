@@ -1,18 +1,16 @@
-#	$NetBSD: Makefile,v 1.1 2018/08/12 13:02:25 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2020/08/03 17:23:35 christos Exp $
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 PROG=	dig
 SRCS=	dig.c dighost.c
 BINDIR=	/usr/bin
-
-.include "${.CURDIR}/../Makefile.inc"
 
 DIST=${IDIST}/bin/dig
 CPPFLAGS+= -I${DIST}/include
 
 dig.o: ${VERSIONFILE}
 
-.PATH: ${DIST}
+.PATH: ${DIST} ${IDIST}/doc/man
 
 .include <bsd.prog.mk>

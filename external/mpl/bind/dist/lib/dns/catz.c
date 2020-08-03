@@ -1,4 +1,4 @@
-/*	$NetBSD: catz.c,v 1.5 2020/05/24 19:46:22 christos Exp $	*/
+/*	$NetBSD: catz.c,v 1.6 2020/08/03 17:23:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -821,7 +821,7 @@ dns_catz_zone_detach(dns_catz_zone_t **zonep) {
 		}
 		zone->magic = 0;
 		isc_timer_detach(&zone->updatetimer);
-		if (zone->db_registered == true) {
+		if (zone->db_registered) {
 			INSIST(dns_db_updatenotify_unregister(
 				       zone->db, dns_catz_dbupdate_callback,
 				       zone->catzs) == ISC_R_SUCCESS);
@@ -1670,7 +1670,7 @@ dns_catz_generate_zonecfg(dns_catz_zone_t *zone, dns_catz_entry_t *entry,
 		isc_buffer_putstr(buffer, "; ");
 	}
 	isc_buffer_putstr(buffer, "}; ");
-	if (entry->opts.in_memory == false) {
+	if (!entry->opts.in_memory) {
 		isc_buffer_putstr(buffer, "file \"");
 		result = dns_catz_generate_masterfilename(zone, entry, &buffer);
 		if (result != ISC_R_SUCCESS) {
@@ -1760,7 +1760,7 @@ dns_catz_dbupdate_callback(dns_db_t *db, void *fn_arg) {
 		dns_db_attach(db, &zone->db);
 	}
 
-	if (zone->updatepending == false) {
+	if (!zone->updatepending) {
 		zone->updatepending = true;
 		isc_time_now(&now);
 		tdiff = isc_time_microdiff(&now, &zone->lastupdated) / 1000000;
@@ -1983,7 +1983,7 @@ dns_catz_update_from_db(dns_db_t *db, dns_catz_zones_t *catzs) {
 	 * update callback in zone_startload or axfr_makedb, but we will
 	 * call onupdate() artificially so we can register the callback here.
 	 */
-	if (oldzone->db_registered == false) {
+	if (!oldzone->db_registered) {
 		result = dns_db_updatenotify_register(
 			db, dns_catz_dbupdate_callback, oldzone->catzs);
 		if (result == ISC_R_SUCCESS) {
@@ -2027,7 +2027,7 @@ dns_catz_postreconfig(dns_catz_zones_t *catzs) {
 		dns_catz_zone_t *zone = NULL;
 
 		isc_ht_iter_current(iter, (void **)&zone);
-		if (zone->active == false) {
+		if (!zone->active) {
 			char cname[DNS_NAME_FORMATSIZE];
 			dns_name_format(&zone->name, cname,
 					DNS_NAME_FORMATSIZE);

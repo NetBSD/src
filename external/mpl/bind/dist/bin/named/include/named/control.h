@@ -1,4 +1,4 @@
-/*	$NetBSD: control.h,v 1.4 2020/05/24 19:46:12 christos Exp $	*/
+/*	$NetBSD: control.h,v 1.5 2020/08/03 17:23:37 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -63,6 +63,7 @@
 #define NAMED_COMMAND_SHOWZONE	   "showzone"
 #define NAMED_COMMAND_SYNC	   "sync"
 #define NAMED_COMMAND_SIGNING	   "signing"
+#define NAMED_COMMAND_DNSSEC	   "dnssec"
 #define NAMED_COMMAND_ZONESTATUS   "zonestatus"
 #define NAMED_COMMAND_NTA	   "nta"
 #define NAMED_COMMAND_TESTGEN	   "testgen"

@@ -1,4 +1,4 @@
-/*	$NetBSD: server.h,v 1.5 2020/05/24 19:46:12 christos Exp $	*/
+/*	$NetBSD: server.h,v 1.6 2020/08/03 17:23:37 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -334,6 +334,13 @@ named_server_showzone(named_server_t *server, isc_lex_t *lex,
 isc_result_t
 named_server_signing(named_server_t *server, isc_lex_t *lex,
 		     isc_buffer_t **text);
+
+/*%
+ * Lists the DNSSEC status for a given zone.
+ */
+isc_result_t
+named_server_dnssec(named_server_t *server, isc_lex_t *lex,
+		    isc_buffer_t **text);
 
 /*%
  * Lists status information for a given zone (e.g., name, type, files,

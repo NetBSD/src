@@ -1,4 +1,4 @@
-/*	$NetBSD: socket_test.c,v 1.6 2020/05/24 19:46:27 christos Exp $	*/
+/*	$NetBSD: socket_test.c,v 1.7 2020/08/03 17:23:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -38,6 +38,8 @@
 static bool recv_dscp;
 static unsigned int recv_dscp_value;
 static bool recv_trunc;
+isc_socket_t *s1 = NULL, *s2 = NULL, *s3 = NULL;
+isc_task_t *test_task = NULL;
 
 /*
  * Helper functions
@@ -58,6 +60,19 @@ _setup(void **state) {
 static int
 _teardown(void **state) {
 	UNUSED(state);
+
+	if (s1 != NULL) {
+		isc_socket_detach(&s1);
+	}
+	if (s2 != NULL) {
+		isc_socket_detach(&s2);
+	}
+	if (s3 != NULL) {
+		isc_socket_detach(&s3);
+	}
+	if (test_task != NULL) {
+		isc_task_detach(&test_task);
+	}
 
 	isc_test_end();
 
@@ -164,8 +179,6 @@ udp_sendto_test(void **state) {
 	isc_result_t result;
 	isc_sockaddr_t addr1, addr2;
 	struct in_addr in;
-	isc_socket_t *s1 = NULL, *s2 = NULL;
-	isc_task_t *task = NULL;
 	char sendbuf[BUFSIZ], recvbuf[BUFSIZ];
 	completion_t completion;
 	isc_region_t r;
@@ -192,7 +205,7 @@ udp_sendto_test(void **state) {
 	assert_int_equal(result, ISC_R_SUCCESS);
 	assert_true(isc_sockaddr_getport(&addr2) != 0);
 
-	result = isc_task_create(taskmgr, 0, &task);
+	result = isc_task_create(taskmgr, 0, &test_task);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	snprintf(sendbuf, sizeof(sendbuf), "Hello");
@@ -200,7 +213,7 @@ udp_sendto_test(void **state) {
 	r.length = strlen(sendbuf) + 1;
 
 	completion_init(&completion);
-	result = isc_socket_sendto(s1, &r, task, event_done, &completion,
+	result = isc_socket_sendto(s1, &r, test_task, event_done, &completion,
 				   &addr2, NULL);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	waitfor(&completion);
@@ -210,17 +223,12 @@ udp_sendto_test(void **state) {
 	r.base = (void *)recvbuf;
 	r.length = BUFSIZ;
 	completion_init(&completion);
-	result = isc_socket_recv(s2, &r, 1, task, event_done, &completion);
+	result = isc_socket_recv(s2, &r, 1, test_task, event_done, &completion);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	waitfor(&completion);
 	assert_true(atomic_load(&completion.done));
 	assert_int_equal(completion.result, ISC_R_SUCCESS);
 	assert_string_equal(recvbuf, "Hello");
-
-	isc_task_detach(&task);
-
-	isc_socket_detach(&s1);
-	isc_socket_detach(&s2);
 }
 
 /* Test UDP sendto/recv with duplicated socket */
@@ -229,8 +237,6 @@ udp_dup_test(void **state) {
 	isc_result_t result;
 	isc_sockaddr_t addr1, addr2;
 	struct in_addr in;
-	isc_socket_t *s1 = NULL, *s2 = NULL, *s3 = NULL;
-	isc_task_t *task = NULL;
 	char sendbuf[BUFSIZ], recvbuf[BUFSIZ];
 	completion_t completion;
 	isc_region_t r;
@@ -260,7 +266,7 @@ udp_dup_test(void **state) {
 	result = isc_socket_dup(s2, &s3);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
-	result = isc_task_create(taskmgr, 0, &task);
+	result = isc_task_create(taskmgr, 0, &test_task);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	snprintf(sendbuf, sizeof(sendbuf), "Hello");
@@ -268,7 +274,7 @@ udp_dup_test(void **state) {
 	r.length = strlen(sendbuf) + 1;
 
 	completion_init(&completion);
-	result = isc_socket_sendto(s1, &r, task, event_done, &completion,
+	result = isc_socket_sendto(s1, &r, test_task, event_done, &completion,
 				   &addr2, NULL);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	waitfor(&completion);
@@ -280,7 +286,7 @@ udp_dup_test(void **state) {
 	r.length = strlen(sendbuf) + 1;
 
 	completion_init(&completion);
-	result = isc_socket_sendto(s1, &r, task, event_done, &completion,
+	result = isc_socket_sendto(s1, &r, test_task, event_done, &completion,
 				   &addr2, NULL);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	waitfor(&completion);
@@ -290,7 +296,7 @@ udp_dup_test(void **state) {
 	r.base = (void *)recvbuf;
 	r.length = BUFSIZ;
 	completion_init(&completion);
-	result = isc_socket_recv(s2, &r, 1, task, event_done, &completion);
+	result = isc_socket_recv(s2, &r, 1, test_task, event_done, &completion);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	waitfor(&completion);
 	assert_true(atomic_load(&completion.done));
@@ -300,18 +306,12 @@ udp_dup_test(void **state) {
 	r.base = (void *)recvbuf;
 	r.length = BUFSIZ;
 	completion_init(&completion);
-	result = isc_socket_recv(s3, &r, 1, task, event_done, &completion);
+	result = isc_socket_recv(s3, &r, 1, test_task, event_done, &completion);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	waitfor(&completion);
 	assert_true(atomic_load(&completion.done));
 	assert_int_equal(completion.result, ISC_R_SUCCESS);
 	assert_string_equal(recvbuf, "World");
-
-	isc_task_detach(&task);
-
-	isc_socket_detach(&s1);
-	isc_socket_detach(&s2);
-	isc_socket_detach(&s3);
 }
 
 /* Test UDP sendto/recv (IPv4) */
@@ -320,8 +320,6 @@ udp_dscp_v4_test(void **state) {
 	isc_result_t result;
 	isc_sockaddr_t addr1, addr2;
 	struct in_addr in;
-	isc_socket_t *s1 = NULL, *s2 = NULL;
-	isc_task_t *task = NULL;
 	char sendbuf[BUFSIZ], recvbuf[BUFSIZ];
 	completion_t completion;
 	isc_region_t r;
@@ -349,7 +347,7 @@ udp_dscp_v4_test(void **state) {
 	assert_int_equal(result, ISC_R_SUCCESS);
 	assert_true(isc_sockaddr_getport(&addr2) != 0);
 
-	result = isc_task_create(taskmgr, 0, &task);
+	result = isc_task_create(taskmgr, 0, &test_task);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	snprintf(sendbuf, sizeof(sendbuf), "Hello");
@@ -374,7 +372,8 @@ udp_dscp_v4_test(void **state) {
 	recv_dscp = false;
 	recv_dscp_value = 0;
 
-	result = isc_socket_sendto2(s1, &r, task, &addr2, NULL, socketevent, 0);
+	result = isc_socket_sendto2(s1, &r, test_task, &addr2, NULL,
+				    socketevent, 0);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	waitfor(&completion);
 	assert_true(atomic_load(&completion.done));
@@ -383,7 +382,7 @@ udp_dscp_v4_test(void **state) {
 	r.base = (void *)recvbuf;
 	r.length = BUFSIZ;
 	completion_init(&completion);
-	result = isc_socket_recv(s2, &r, 1, task, event_done, &completion);
+	result = isc_socket_recv(s2, &r, 1, test_task, event_done, &completion);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	waitfor(&completion);
 	assert_true(atomic_load(&completion.done));
@@ -396,10 +395,6 @@ udp_dscp_v4_test(void **state) {
 	} else {
 		assert_false(recv_dscp);
 	}
-	isc_task_detach(&task);
-
-	isc_socket_detach(&s1);
-	isc_socket_detach(&s2);
 }
 
 /* Test UDP sendto/recv (IPv6) */
@@ -408,8 +403,6 @@ udp_dscp_v6_test(void **state) {
 	isc_result_t result;
 	isc_sockaddr_t addr1, addr2;
 	struct in6_addr in6;
-	isc_socket_t *s1 = NULL, *s2 = NULL;
-	isc_task_t *task = NULL;
 	char sendbuf[BUFSIZ], recvbuf[BUFSIZ];
 	completion_t completion;
 	isc_region_t r;
@@ -441,7 +434,7 @@ udp_dscp_v6_test(void **state) {
 	assert_int_equal(result, ISC_R_SUCCESS);
 	assert_true(isc_sockaddr_getport(&addr2) != 0);
 
-	result = isc_task_create(taskmgr, 0, &task);
+	result = isc_task_create(taskmgr, 0, &test_task);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	snprintf(sendbuf, sizeof(sendbuf), "Hello");
@@ -464,7 +457,8 @@ udp_dscp_v6_test(void **state) {
 	recv_dscp = false;
 	recv_dscp_value = 0;
 
-	result = isc_socket_sendto2(s1, &r, task, &addr2, NULL, socketevent, 0);
+	result = isc_socket_sendto2(s1, &r, test_task, &addr2, NULL,
+				    socketevent, 0);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	waitfor(&completion);
 	assert_true(atomic_load(&completion.done));
@@ -473,7 +467,7 @@ udp_dscp_v6_test(void **state) {
 	r.base = (void *)recvbuf;
 	r.length = BUFSIZ;
 	completion_init(&completion);
-	result = isc_socket_recv(s2, &r, 1, task, event_done, &completion);
+	result = isc_socket_recv(s2, &r, 1, test_task, event_done, &completion);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	waitfor(&completion);
 	assert_true(atomic_load(&completion.done));
@@ -485,11 +479,6 @@ udp_dscp_v6_test(void **state) {
 	} else {
 		assert_false(recv_dscp);
 	}
-
-	isc_task_detach(&task);
-
-	isc_socket_detach(&s1);
-	isc_socket_detach(&s2);
 }
 
 /* Test TCP sendto/recv (IPv4) */
@@ -498,8 +487,6 @@ tcp_dscp_v4_test(void **state) {
 	isc_result_t result;
 	isc_sockaddr_t addr1;
 	struct in_addr in;
-	isc_socket_t *s1 = NULL, *s2 = NULL, *s3 = NULL;
-	isc_task_t *task = NULL;
 	char sendbuf[BUFSIZ], recvbuf[BUFSIZ];
 	completion_t completion, completion2;
 	isc_region_t r;
@@ -524,15 +511,16 @@ tcp_dscp_v4_test(void **state) {
 	result = isc_socket_create(socketmgr, PF_INET, isc_sockettype_tcp, &s2);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
-	result = isc_task_create(taskmgr, 0, &task);
+	result = isc_task_create(taskmgr, 0, &test_task);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	completion_init(&completion2);
-	result = isc_socket_accept(s1, task, accept_done, &completion2);
+	result = isc_socket_accept(s1, test_task, accept_done, &completion2);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	completion_init(&completion);
-	result = isc_socket_connect(s2, &addr1, task, event_done, &completion);
+	result = isc_socket_connect(s2, &addr1, test_task, event_done,
+				    &completion);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	waitfor2(&completion, &completion2);
 	assert_true(atomic_load(&completion.done));
@@ -551,8 +539,8 @@ tcp_dscp_v4_test(void **state) {
 	recv_dscp_value = 0;
 
 	completion_init(&completion);
-	result = isc_socket_sendto(s2, &r, task, event_done, &completion, NULL,
-				   NULL);
+	result = isc_socket_sendto(s2, &r, test_task, event_done, &completion,
+				   NULL, NULL);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	waitfor(&completion);
 	assert_true(atomic_load(&completion.done));
@@ -561,7 +549,7 @@ tcp_dscp_v4_test(void **state) {
 	r.base = (void *)recvbuf;
 	r.length = BUFSIZ;
 	completion_init(&completion);
-	result = isc_socket_recv(s3, &r, 1, task, event_done, &completion);
+	result = isc_socket_recv(s3, &r, 1, test_task, event_done, &completion);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	waitfor(&completion);
 	assert_true(atomic_load(&completion.done));
@@ -575,12 +563,6 @@ tcp_dscp_v4_test(void **state) {
 	} else {
 		assert_false(recv_dscp);
 	}
-
-	isc_task_detach(&task);
-
-	isc_socket_detach(&s1);
-	isc_socket_detach(&s2);
-	isc_socket_detach(&s3);
 }
 
 /* Test TCP sendto/recv (IPv6) */
@@ -589,8 +571,6 @@ tcp_dscp_v6_test(void **state) {
 	isc_result_t result;
 	isc_sockaddr_t addr1;
 	struct in6_addr in6;
-	isc_socket_t *s1 = NULL, *s2 = NULL, *s3 = NULL;
-	isc_task_t *task = NULL;
 	char sendbuf[BUFSIZ], recvbuf[BUFSIZ];
 	completion_t completion, completion2;
 	isc_region_t r;
@@ -619,15 +599,16 @@ tcp_dscp_v6_test(void **state) {
 				   &s2);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
-	result = isc_task_create(taskmgr, 0, &task);
+	result = isc_task_create(taskmgr, 0, &test_task);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	completion_init(&completion2);
-	result = isc_socket_accept(s1, task, accept_done, &completion2);
+	result = isc_socket_accept(s1, test_task, accept_done, &completion2);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	completion_init(&completion);
-	result = isc_socket_connect(s2, &addr1, task, event_done, &completion);
+	result = isc_socket_connect(s2, &addr1, test_task, event_done,
+				    &completion);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	waitfor2(&completion, &completion2);
 	assert_true(atomic_load(&completion.done));
@@ -646,8 +627,8 @@ tcp_dscp_v6_test(void **state) {
 	recv_dscp_value = 0;
 
 	completion_init(&completion);
-	result = isc_socket_sendto(s2, &r, task, event_done, &completion, NULL,
-				   NULL);
+	result = isc_socket_sendto(s2, &r, test_task, event_done, &completion,
+				   NULL, NULL);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	waitfor(&completion);
 	assert_true(atomic_load(&completion.done));
@@ -656,7 +637,7 @@ tcp_dscp_v6_test(void **state) {
 	r.base = (void *)recvbuf;
 	r.length = BUFSIZ;
 	completion_init(&completion);
-	result = isc_socket_recv(s3, &r, 1, task, event_done, &completion);
+	result = isc_socket_recv(s3, &r, 1, test_task, event_done, &completion);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	waitfor(&completion);
 	assert_true(atomic_load(&completion.done));
@@ -674,12 +655,6 @@ tcp_dscp_v6_test(void **state) {
 	} else {
 		assert_false(recv_dscp);
 	}
-
-	isc_task_detach(&task);
-
-	isc_socket_detach(&s1);
-	isc_socket_detach(&s2);
-	isc_socket_detach(&s3);
 }
 
 /* probe dscp capabilities */
@@ -721,8 +696,6 @@ udp_trunc_test(void **state) {
 	isc_result_t result;
 	isc_sockaddr_t addr1, addr2;
 	struct in_addr in;
-	isc_socket_t *s1 = NULL, *s2 = NULL;
-	isc_task_t *task = NULL;
 	char sendbuf[BUFSIZ * 2], recvbuf[BUFSIZ];
 	completion_t completion;
 	isc_region_t r;
@@ -749,7 +722,7 @@ udp_trunc_test(void **state) {
 	assert_int_equal(result, ISC_R_SUCCESS);
 	assert_true(isc_sockaddr_getport(&addr2) != 0);
 
-	result = isc_task_create(taskmgr, 0, &task);
+	result = isc_task_create(taskmgr, 0, &test_task);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	/*
@@ -766,7 +739,8 @@ udp_trunc_test(void **state) {
 		test_mctx, s1, ISC_SOCKEVENT_SENDDONE, event_done, &completion);
 	assert_non_null(socketevent);
 
-	result = isc_socket_sendto2(s1, &r, task, &addr2, NULL, socketevent, 0);
+	result = isc_socket_sendto2(s1, &r, test_task, &addr2, NULL,
+				    socketevent, 0);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	waitfor(&completion);
 	assert_true(atomic_load(&completion.done));
@@ -776,7 +750,7 @@ udp_trunc_test(void **state) {
 	r.length = BUFSIZ;
 	completion_init(&completion);
 	recv_trunc = false;
-	result = isc_socket_recv(s2, &r, 1, task, event_done, &completion);
+	result = isc_socket_recv(s2, &r, 1, test_task, event_done, &completion);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	waitfor(&completion);
 	assert_true(atomic_load(&completion.done));
@@ -798,7 +772,8 @@ udp_trunc_test(void **state) {
 		test_mctx, s1, ISC_SOCKEVENT_SENDDONE, event_done, &completion);
 	assert_non_null(socketevent);
 
-	result = isc_socket_sendto2(s1, &r, task, &addr2, NULL, socketevent, 0);
+	result = isc_socket_sendto2(s1, &r, test_task, &addr2, NULL,
+				    socketevent, 0);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	waitfor(&completion);
 	assert_true(atomic_load(&completion.done));
@@ -808,18 +783,13 @@ udp_trunc_test(void **state) {
 	r.length = BUFSIZ;
 	completion_init(&completion);
 	recv_trunc = false;
-	result = isc_socket_recv(s2, &r, 1, task, event_done, &completion);
+	result = isc_socket_recv(s2, &r, 1, test_task, event_done, &completion);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	waitfor(&completion);
 	assert_true(atomic_load(&completion.done));
 	assert_int_equal(completion.result, ISC_R_SUCCESS);
 	assert_string_equal(recvbuf, "Hello");
 	assert_true(recv_trunc);
-
-	isc_task_detach(&task);
-
-	isc_socket_detach(&s1);
-	isc_socket_detach(&s2);
 }
 
 /*

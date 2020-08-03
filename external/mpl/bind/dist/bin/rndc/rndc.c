@@ -1,4 +1,4 @@
-/*	$NetBSD: rndc.c,v 1.4 2020/05/24 19:46:13 christos Exp $	*/
+/*	$NetBSD: rndc.c,v 1.5 2020/08/03 17:23:38 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -106,6 +106,9 @@ command is one of the following:\n\
 		Add zone to given view. Requires allow-new-zones option.\n\
   delzone [-clean] zone [class [view]]\n\
 		Removes zone from given view.\n\
+  dnssec -status zone [class [view]]\n\
+		Show the DNSSEC signing state for the specified zone.\n\
+		Requires the zone to have a dnssec-policy.\n\
   dnstap -reopen\n\
 		Close, truncate and re-open the DNSTAP output file.\n\
   dnstap -roll count\n\

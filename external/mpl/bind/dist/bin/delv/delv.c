@@ -1,4 +1,4 @@
-/*	$NetBSD: delv.c,v 1.6 2020/05/24 19:46:11 christos Exp $	*/
+/*	$NetBSD: delv.c,v 1.7 2020/08/03 17:23:36 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -608,6 +608,7 @@ key_fromconfig(const cfg_obj_t *key, dns_client_t *client) {
 	       INITIAL_DS,
 	       STATIC_DS,
 	       TRUSTED } anchortype;
+	const cfg_obj_t *obj;
 
 	keynamestr = cfg_obj_asstring(cfg_tuple_get(key, "name"));
 	CHECK(convert_name(&fkeyname, &keyname, keynamestr));
@@ -640,21 +641,30 @@ key_fromconfig(const cfg_obj_t *key, dns_client_t *client) {
 	rdata3 = cfg_obj_asuint32(cfg_tuple_get(key, "rdata3"));
 
 	/* What type of trust anchor is this? */
-	atstr = cfg_obj_asstring(cfg_tuple_get(key, "anchortype"));
-	if (strcasecmp(atstr, "static-key") == 0) {
+	obj = cfg_tuple_get(key, "anchortype");
+	if (cfg_obj_isvoid(obj)) {
+		/*
+		 * "anchortype" is not defined, this must be a static-key
+		 * configured with trusted-keys.
+		 */
 		anchortype = STATIC_KEY;
-	} else if (strcasecmp(atstr, "static-ds") == 0) {
-		anchortype = STATIC_DS;
-	} else if (strcasecmp(atstr, "initial-key") == 0) {
-		anchortype = INITIAL_KEY;
-	} else if (strcasecmp(atstr, "initial-ds") == 0) {
-		anchortype = INITIAL_DS;
 	} else {
-		delv_log(ISC_LOG_ERROR,
-			 "key '%s': invalid initialization method '%s'",
-			 keynamestr, atstr);
-		result = ISC_R_FAILURE;
-		goto cleanup;
+		atstr = cfg_obj_asstring(obj);
+		if (strcasecmp(atstr, "static-key") == 0) {
+			anchortype = STATIC_KEY;
+		} else if (strcasecmp(atstr, "static-ds") == 0) {
+			anchortype = STATIC_DS;
+		} else if (strcasecmp(atstr, "initial-key") == 0) {
+			anchortype = INITIAL_KEY;
+		} else if (strcasecmp(atstr, "initial-ds") == 0) {
+			anchortype = INITIAL_DS;
+		} else {
+			delv_log(ISC_LOG_ERROR,
+				 "key '%s': invalid initialization method '%s'",
+				 keynamestr, atstr);
+			result = ISC_R_FAILURE;
+			goto cleanup;
+		}
 	}
 
 	isc_buffer_init(&databuf, data, sizeof(data));

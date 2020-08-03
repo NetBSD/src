@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.7 2020/05/24 19:46:29 christos Exp $	*/
+/*	$NetBSD: update.c,v 1.8 2020/08/03 17:23:43 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -284,7 +284,7 @@ update_log(ns_client_t *client, dns_zone_t *zone, int level, const char *fmt,
 		return;
 	}
 
-	if (isc_log_wouldlog(ns_lctx, level) == false) {
+	if (!isc_log_wouldlog(ns_lctx, level)) {
 		return;
 	}
 
@@ -907,7 +907,7 @@ typedef struct {
 static isc_result_t
 ssu_checkrule(void *data, dns_rdataset_t *rrset) {
 	ssu_check_t *ssuinfo = data;
-	bool result;
+	bool rule_ok;
 
 	/*
 	 * If we're deleting all records, it's ok to delete RRSIG and NSEC even
@@ -917,10 +917,11 @@ ssu_checkrule(void *data, dns_rdataset_t *rrset) {
 	    rrset->type == dns_rdatatype_nsec) {
 		return (ISC_R_SUCCESS);
 	}
-	result = dns_ssutable_checkrules(
+
+	rule_ok = dns_ssutable_checkrules(
 		ssuinfo->table, ssuinfo->signer, ssuinfo->name, ssuinfo->addr,
 		ssuinfo->tcp, ssuinfo->aclenv, rrset->type, ssuinfo->key);
-	return (result == true ? ISC_R_SUCCESS : ISC_R_FAILURE);
+	return (rule_ok ? ISC_R_SUCCESS : ISC_R_FAILURE);
 }
 
 static bool
@@ -2943,6 +2944,19 @@ update_action(isc_task_t *task, isc_event_t *event) {
 					continue;
 				}
 				soa_serial_changed = true;
+			}
+
+			if (dns_rdatatype_atparent(rdata.type) &&
+			    dns_name_equal(name, zonename)) {
+				char typebuf[DNS_RDATATYPE_FORMATSIZE];
+
+				dns_rdatatype_format(rdata.type, typebuf,
+						     sizeof(typebuf));
+				update_log(client, zone, LOGLEVEL_PROTOCOL,
+					   "attempt to add a %s record at "
+					   "zone apex ignored",
+					   typebuf);
+				continue;
 			}
 
 			if (rdata.type == privatetype) {

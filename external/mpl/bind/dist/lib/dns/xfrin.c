@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrin.c,v 1.5 2020/05/24 19:46:23 christos Exp $	*/
+/*	$NetBSD: xfrin.c,v 1.6 2020/08/03 17:23:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1631,7 +1631,7 @@ xfrin_log1(int level, const char *zonetext, const isc_sockaddr_t *masteraddr,
 	   const char *fmt, ...) {
 	va_list ap;
 
-	if (isc_log_wouldlog(dns_lctx, level) == false) {
+	if (!isc_log_wouldlog(dns_lctx, level)) {
 		return;
 	}
 
@@ -1649,7 +1649,7 @@ xfrin_log(dns_xfrin_ctx_t *xfr, int level, const char *fmt, ...) {
 	va_list ap;
 	char zonetext[DNS_NAME_MAXTEXT + 32];
 
-	if (isc_log_wouldlog(dns_lctx, level) == false) {
+	if (!isc_log_wouldlog(dns_lctx, level)) {
 		return;
 	}
 

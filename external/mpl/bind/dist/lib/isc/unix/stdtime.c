@@ -1,4 +1,4 @@
-/*	$NetBSD: stdtime.c,v 1.4 2020/05/24 19:46:27 christos Exp $	*/
+/*	$NetBSD: stdtime.c,v 1.5 2020/08/03 17:23:43 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -50,4 +50,19 @@ isc_stdtime_get(isc_stdtime_t *t) {
 	REQUIRE(ts.tv_sec > 0 && ts.tv_nsec >= 0 && ts.tv_nsec < NS_PER_S);
 
 	*t = (isc_stdtime_t)ts.tv_sec;
+}
+
+void
+isc_stdtime_tostring(isc_stdtime_t t, char *out, size_t outlen) {
+	time_t when;
+
+	REQUIRE(out != NULL);
+	REQUIRE(outlen >= 26);
+
+	UNUSED(outlen);
+
+	/* time_t and isc_stdtime_t might be different sizes */
+	when = t;
+	INSIST((ctime_r(&when, out) != NULL));
+	*(out + strlen(out) - 1) = '\0';
 }

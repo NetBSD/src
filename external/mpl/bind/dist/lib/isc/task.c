@@ -1,4 +1,4 @@
-/*	$NetBSD: task.c,v 1.8 2020/05/24 19:46:26 christos Exp $	*/
+/*	$NetBSD: task.c,v 1.9 2020/08/03 17:23:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -197,8 +197,8 @@ void
 isc__taskmgr_resume(isc_taskmgr_t *manager0);
 
 #define DEFAULT_DEFAULT_QUANTUM 25
-#define FINISHED(m)                                      \
-	(atomic_load_relaxed(&((m)->exiting)) == true && \
+#define FINISHED(m)                              \
+	(atomic_load_relaxed(&((m)->exiting)) && \
 	 atomic_load(&(m)->tasks_count) == 0)
 
 /*%
@@ -1358,9 +1358,12 @@ static void
 manager_free(isc__taskmgr_t *manager) {
 	for (unsigned int i = 0; i < manager->workers; i++) {
 		isc_mutex_destroy(&manager->queues[i].lock);
+		isc_condition_destroy(&manager->queues[i].work_available);
 	}
 	isc_mutex_destroy(&manager->lock);
+	isc_mutex_destroy(&manager->excl_lock);
 	isc_mutex_destroy(&manager->halt_lock);
+	isc_condition_destroy(&manager->halt_cond);
 	isc_mem_put(manager->mctx, manager->queues,
 		    manager->workers * sizeof(isc__taskqueue_t));
 	manager->common.impmagic = 0;
@@ -1682,7 +1685,7 @@ isc_task_endexclusive(isc_task_t *task0) {
 		isc_nm_resume(manager->nm);
 	}
 	LOCK(&manager->halt_lock);
-	REQUIRE(atomic_load_relaxed(&manager->exclusive_req) == true);
+	REQUIRE(atomic_load_relaxed(&manager->exclusive_req));
 	atomic_store_relaxed(&manager->exclusive_req, false);
 	while (manager->halted > 0) {
 		BROADCAST(&manager->halt_cond);

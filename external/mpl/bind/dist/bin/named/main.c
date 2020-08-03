@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 2020/05/24 19:46:12 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.9 2020/08/03 17:23:37 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -359,11 +359,12 @@ save_command_line(int argc, char *argv[]) {
 		*dst++ = ' ';
 
 		while (*src != '\0' && dst < eob) {
-			if (isalnum((unsigned char)*src) || *src == ',' || *src == '-' ||
-			    *src == '_' || *src == '.' || *src == '/')
+			if (isalnum(*(unsigned char *)src) || *src == ',' ||
+			    *src == '-' || *src == '_' || *src == '.' ||
+			    *src == '/')
 			{
 				*dst++ = *src++;
-			} else if (isprint((unsigned char)*src)) {
+			} else if (isprint(*(unsigned char *)src)) {
 				if (dst + 2 >= eob) {
 					goto add_ellipsis;
 				}
