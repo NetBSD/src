@@ -24,4 +24,4 @@ done
 
 $SIGNER -g -s 20000101000000 -e 20361231235959 -o $zone \
 	$infile Kexample.+005+51829 Kexample.+005+51829 \
-	> /dev/null 2> signer.err
+	> /dev/null 2> signer.err || true

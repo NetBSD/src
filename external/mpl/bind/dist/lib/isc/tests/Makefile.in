@@ -18,11 +18,10 @@ VERSION=@BIND9_VERSION@
 CINCLUDES =	-I. -Iinclude ${ISC_INCLUDES} \
 		${OPENSSL_CFLAGS} @CMOCKA_CFLAGS@ \
 		${JSON_C_CFLAGS} \
-		${LIBXML2_CFLAGS} \
-		${ZLIB_CFLAGS}
+		${LIBXML2_CFLAGS}
 CDEFINES =	-DTESTS="\"${top_builddir}/lib/isc/tests/\""
 
-ISCLIBS =	../libisc.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
+ISCLIBS =	../libisc.@A@ @NO_LIBTOOL_ISCLIBS@
 ISCDEPLIBS =	../libisc.@A@
 
 LIBS =		@LIBS@ @CMOCKA_LIBS@
@@ -97,7 +96,7 @@ heap_test@EXEEXT@: heap_test.@O@ isctest.@O@ ${ISCDEPLIBS}
 hmac_test@EXEEXT@: hmac_test.@O@ ${ISCDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
 		${LDFLAGS} -o $@ hmac_test.@O@ \
-		${ISCLIBS} ${LIBS}
+		${ISCLIBS} ${OPENSSL_LIBS} ${LIBS}
 
 ht_test@EXEEXT@: ht_test.@O@ isctest.@O@ ${ISCDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
@@ -112,7 +111,7 @@ lex_test@EXEEXT@: lex_test.@O@ isctest.@O@ ${ISCDEPLIBS}
 md_test@EXEEXT@: md_test.@O@ ${ISCDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
 		${LDFLAGS} -o $@ md_test.@O@ \
-		${ISCLIBS} ${LIBS}
+		${ISCLIBS} ${OPENSSL_LIBS} ${LIBS}
 
 mem_test@EXEEXT@: mem_test.@O@ isctest.@O@ ${ISCDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \

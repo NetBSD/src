@@ -19,7 +19,7 @@ options {
 	listen-on-v6 { none; };
 	recursion yes;
 	dnssec-validation yes;
-	check-names master ignore;
+	check-names primary ignore;
 	notify yes;
 };
 

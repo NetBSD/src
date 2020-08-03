@@ -33,7 +33,7 @@ HEADERS =	aes.h app.h assertions.h astack.h atomic.h backtrace.h \
 		region.h resource.h result.h resultclass.h rwlock.h \
 		safe.h serial.h siphash.h sockaddr.h socket.h \
 		stats.h stdio.h strerr.h string.h symtab.h \
-		task.h taskpool.h timer.h tm.h types.h util.h version.h
+		task.h taskpool.h timer.h tm.h types.h utf8.h util.h version.h
 
 SUBDIRS =
 TARGETS =

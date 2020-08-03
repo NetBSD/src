@@ -11,6 +11,15 @@
 
 // NS5
 
+key rndc_key {
+	secret "1234abcd8765";
+	algorithm hmac-sha256;
+};
+
+controls {
+	inet 10.53.0.5 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
 key "sha1" {
 	algorithm "hmac-sha1";
 	secret "FrSt77yPTFx6hTs4i2tKLB9LmE0=";

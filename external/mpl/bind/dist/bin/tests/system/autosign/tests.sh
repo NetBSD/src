@@ -1237,16 +1237,20 @@ $SETTIME -K ns3 -A now+3s $ksk > settime.out.test$n.ksk || ret=1
 echo_i "waiting for changes to take effect"
 sleep 3
 wait_for_log 10 "add delay\.example\..*NSEC.a\.delay\.example\. NS SOA RRSIG NSEC DNSKEY" ns3/named.run
-$DIG $DIGOPTS +noall +answer dnskey delay.example. @10.53.0.3 > dig.out.ns3.1.test$n || ret=1
-# DNSKEY expected:
-awk 'BEGIN {r=1} $4=="DNSKEY" {r=0} END {exit r}' dig.out.ns3.1.test$n || ret=1
-# RRSIG expected:
-awk 'BEGIN {r=1} $4=="RRSIG" {r=0} END {exit r}' dig.out.ns3.1.test$n || ret=1
-$DIG $DIGOPTS +noall +answer a a.delay.example. @10.53.0.3 > dig.out.ns3.2.test$n || ret=1
-# A expected:
-awk 'BEGIN {r=1} $4=="A" {r=0} END {exit r}' dig.out.ns3.2.test$n || ret=1
-# RRSIG expected:
-awk 'BEGIN {r=1} $4=="RRSIG" {r=0} END {exit r}' dig.out.ns3.2.test$n || ret=1
+check_is_signed() {
+  $DIG $DIGOPTS +noall +answer dnskey delay.example. @10.53.0.3 > dig.out.ns3.1.test$n || return 1
+  # DNSKEY expected:
+  awk 'BEGIN {r=1} $4=="DNSKEY" {r=0} END {exit r}' dig.out.ns3.1.test$n || return 1
+  # RRSIG expected:
+  awk 'BEGIN {r=1} $4=="RRSIG" {r=0} END {exit r}' dig.out.ns3.1.test$n || return 1
+  $DIG $DIGOPTS +noall +answer a a.delay.example. @10.53.0.3 > dig.out.ns3.2.test$n || return 1
+  # A expected:
+  awk 'BEGIN {r=1} $4=="A" {r=0} END {exit r}' dig.out.ns3.2.test$n || return 1
+  # RRSIG expected:
+  awk 'BEGIN {r=1} $4=="RRSIG" {r=0} END {exit r}' dig.out.ns3.2.test$n || return 1
+  return 0
+}
+retry_quiet 5 check_is_signed || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`

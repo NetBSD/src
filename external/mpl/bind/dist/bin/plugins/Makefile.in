@@ -17,9 +17,9 @@ CINCLUDES =	-I${srcdir}/include -I${srcdir}/unix/include -I. \
 		${NS_INCLUDES} ${DNS_INCLUDES} \
 		${ISCCFG_INCLUDES} ${ISC_INCLUDES}
 
-DNSLIBS =	../../lib/dns/libdns.@A@ ${MAXMINDDB_LIBS} @DNS_CRYPTO_LIBS@
+DNSLIBS =	../../lib/dns/libdns.@A@ @NO_LIBTOOL_DNSLIBS@
 ISCCFGLIBS =	../../lib/isccfg/libisccfg.@A@
-ISCLIBS =	../../lib/isc/libisc.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
+ISCLIBS =	../../lib/isc/libisc.@A@ @NO_LIBTOOL_ISCLIBS@
 NSLIBS =	../../lib/ns/libns.@A@
 
 LIBS =
@@ -34,12 +34,6 @@ SO_SRCS =	filter-aaaa.c
 CFLAGS =	@CFLAGS@ @SO_CFLAGS@
 SO_LDFLAGS =	@LDFLAGS@ @SO_LDFLAGS@
 
-MANPAGES =	filter-aaaa.8
-
-HTMLPAGES =	filter-aaaa.html
-
-MANOBJS =	${MANPAGES} ${HTMLPAGES}
-
 @BIND9_MAKE_RULES@
 
 lib/filter-aaaa.@SO@: filter-aaaa.@SO@
@@ -50,18 +44,12 @@ filter-aaaa.@SO@: filter-aaaa.@O@
 	${LIBTOOL_MODE_LINK} @SO_LD@ ${SO_LDFLAGS} -o $@ \
 		filter-aaaa.@O@ ${LIBS}
 
-doc man:: ${MANOBJS}
-
-docclean manclean maintainer-clean::
-	rm -f ${MANOBJS}
-
 clean distclean::
 	rm -f filter-aaaa.so
 	rm -f ${TARGETS} ${OBJS}
 
 installdirs:
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${plugindir}
-	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${mandir}/man8
 
 install:: @SO_TARGETS@ installdirs
 	for i in ${SO_INSTALL} ; \
@@ -72,8 +60,6 @@ install:: @SO_TARGETS@ installdirs
 				 ${DESTDIR}${plugindir}; \
 		fi \
 	done
-	${INSTALL_DATA} ${srcdir}/filter-aaaa.8 ${DESTDIR}${mandir}/man8
 
 uninstall::
 	${LIBTOOL_MODE_UNINSTALL} rm -f ${DESTDIR}${plugindir}/filter-aaaa.@SO@
-	rm -f ${DESTDIR}${mandir}/man8/filter-aaaa.8
