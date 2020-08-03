@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.247 2020/08/03 20:26:09 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.248 2020/08/03 20:43:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.247 2020/08/03 20:26:09 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.248 2020/08/03 20:43:41 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.247 2020/08/03 20:26:09 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.248 2020/08/03 20:43:41 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -147,8 +147,7 @@ __RCSID("$NetBSD: parse.c,v 1.247 2020/08/03 20:26:09 rillig Exp $");
 #include "buf.h"
 #include "pathnames.h"
 
-////////////////////////////////////////////////////////////
-// types and constants
+/* types and constants */
 
 /*
  * Structure for a file being read ("included file")
@@ -225,8 +224,7 @@ typedef enum {
 #define RPAREN	')'
 
 
-////////////////////////////////////////////////////////////
-// result data
+/* result data */
 
 /*
  * The main target to create. This is the first target on the first
@@ -234,8 +232,7 @@ typedef enum {
  */
 static GNode *mainNode;
 
-////////////////////////////////////////////////////////////
-// eval state
+/* eval state */
 
 /* targets we're working on */
 static Lst targets;
@@ -259,8 +256,7 @@ static ParseSpecial specType;
  */
 static GNode	*predecessor;
 
-////////////////////////////////////////////////////////////
-// parser state
+/* parser state */
 
 /* true if currently in a dependency line or its commands */
 static Boolean inLine;
@@ -283,8 +279,7 @@ Lst parseIncPath;	/* dirs for "..." includes */
 Lst sysIncPath;		/* dirs for <...> includes */
 Lst defIncPath;		/* default for sysIncPath */
 
-////////////////////////////////////////////////////////////
-// parser tables
+/* parser tables */
 
 /*
  * The parseKeywords table is searched using binary search when deciding
@@ -344,8 +339,7 @@ static const struct {
 { ".WAIT",	  Wait, 	0 },
 };
 
-////////////////////////////////////////////////////////////
-// local functions
+/* local functions */
 
 static int ParseIsEscaped(const char *, const char *);
 static void ParseErrorInternal(const char *, size_t, int, const char *, ...)
@@ -373,8 +367,7 @@ static char *ParseReadLine(void);
 static void ParseFinishLine(void);
 static void ParseMark(GNode *);
 
-////////////////////////////////////////////////////////////
-// file loader
+/* file loader */
 
 struct loadedfile {
 	const char *path;		/* name, for error reports */
@@ -585,8 +578,7 @@ done:
 	return lf;
 }
 
-////////////////////////////////////////////////////////////
-// old code
+/* old code */
 
 /*-
  *----------------------------------------------------------------------
@@ -2544,13 +2536,13 @@ IsInclude(const char *line, Boolean sysv)
 	static const char inc[] = "include";
 	static const size_t inclen = sizeof(inc) - 1;
 
-	// 'd' is not valid for sysv
+	/* 'd' is not valid for sysv */
 	int o = strchr(&("ds-"[sysv]), *line) != NULL;
 
 	if (strncmp(line + o, inc, inclen) != 0)
 		return FALSE;
 
-	// Space is not mandatory for BSD .include
+	/* Space is not mandatory for BSD .include */
 	return !sysv || isspace((unsigned char)line[inclen + o]);
 }
 
