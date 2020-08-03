@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.409 2020/08/03 15:08:00 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.410 2020/08/03 15:43:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.409 2020/08/03 15:08:00 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.410 2020/08/03 15:43:32 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.409 2020/08/03 15:08:00 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.410 2020/08/03 15:43:32 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1933,6 +1933,13 @@ ApplyModifier_Loop(const char **pp, ApplyModifiersState *st) {
     if (args.tvar == NULL) {
 	st->missing_delim = delim;
 	return AMR_CLEANUP;
+    }
+    if (DEBUG(LINT) && strchr(args.tvar, '$') != NULL) {
+	Parse_Error(PARSE_FATAL,
+		    "In the :@ modifier of \"%s\", the variable name \"%s\" "
+		    "must not contain a dollar.",
+		    st->v->name, args.tvar);
+        return AMR_CLEANUP;
     }
 
     args.str = ParseModifierPart(pp, delim, st->eflags & ~VARE_WANTRES,

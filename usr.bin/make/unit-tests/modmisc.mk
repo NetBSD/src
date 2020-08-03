@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.32 2020/08/01 17:26:41 rillig Exp $
+# $Id: modmisc.mk,v 1.33 2020/08/03 15:43:32 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -161,6 +161,7 @@ mod-regex:
 # In the :@ modifier, the name of the loop variable can even be generated
 # dynamically.  There's no practical use-case for this, and hopefully nobody
 # will ever depend on this, but technically it's possible.
+# Therefore, in -dL mode, this is forbidden, see lint.mk.
 mod-loop-varname:
 	@echo :${:Uone two three:@${:Ubar:S,b,v,}@+${var}+@:Q}:
 
