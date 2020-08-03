@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.87 2020/08/02 11:20:24 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.88 2020/08/03 09:20:29 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -3589,4 +3589,13 @@ usr.bin/w/w.c					1.88-1.90
 
 	Handle hostname from DISPLAY="[2001:db8::dead:beef]:0" or similar.
 	[kim, ticket #1034]
+
+sys/arch/hppa/dev/asp.c				1.2
+sys/arch/hppa/dev/dino.c			1.5
+sys/arch/hppa/dev/lasi.c			1.3
+sys/arch/hppa/dev/wax.c				1.2
+
+	Mask all interrupts before reading (and clearing) the interrupt
+	request register in attach.
+	[skrll, ticket #1035]
 
