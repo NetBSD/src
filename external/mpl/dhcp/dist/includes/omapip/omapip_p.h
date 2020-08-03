@@ -1,11 +1,11 @@
-/*	$NetBSD: omapip_p.h,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
+/*	$NetBSD: omapip_p.h,v 1.3 2020/08/03 21:10:57 christos Exp $	*/
 
 /* omapip_p.h
 
    Private master include file for the OMAPI library. */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2019 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -286,7 +286,8 @@ void log_fatal (const char *, ...) __sysloglike(1, 2) ISC_DHCP_NORETURN;
 int log_error (const char *, ...) __sysloglike(1, 2);
 int log_info (const char *, ...) __sysloglike(1, 2);
 int log_debug (const char *, ...) __sysloglike(1, 2);
-void do_percentm (char *obuf, const char *ibuf);
+
+void do_percentm (char *obuf, size_t obufsiz, const char *ibuf);
 
 isc_result_t uerr2isc (int);
 isc_result_t ns_rcode_to_isc (int);

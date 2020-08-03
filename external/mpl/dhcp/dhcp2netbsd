@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: dhcp2netbsd,v 1.2 2018/04/07 22:34:51 christos Exp $
+#	$NetBSD: dhcp2netbsd,v 1.3 2020/08/03 21:10:56 christos Exp $
 #
 # Copyright (c) 2003, 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -67,8 +67,7 @@ __RCSID("\$NetBSD\$");
 mv /tmp/dhcp1$$ $c && echo did source mods for $c
 done
 
- for f in dst/dst_api.c dst/dst_support.c dst/hmac_link.c dst/prandom.c \
-     omapip/inet_addr.c omapip/iscprint.c server/dhcpv6.c \
+for f in omapip/inet_addr.c omapip/iscprint.c server/dhcpv6.c \
      server/dhcpleasequery.c server/ldap.c server/mdb6.c; do
 	c=$FILE/$f
 	sed -E -e \

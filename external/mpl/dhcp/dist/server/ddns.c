@@ -1,4 +1,4 @@
-/*	$NetBSD: ddns.c,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
+/*	$NetBSD: ddns.c,v 1.3 2020/08/03 21:10:57 christos Exp $	*/
 
 /* ddns.c
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ddns.c,v 1.2 2018/04/07 22:37:30 christos Exp $");
+__RCSID("$NetBSD: ddns.c,v 1.3 2020/08/03 21:10:57 christos Exp $");
 
 #include "dhcpd.h"
 #include <dns/result.h>
@@ -1292,9 +1292,10 @@ ddns_update_lease_ptr(struct lease    *lease,
 					    file, line);
 #endif
 			/*
-			 * never reached. update_lease_failed
-			 * calls log_fatal.
+			 * not reached when update_lease_failed is called,
+			 * it calls log_fatal.
 			 */
+			ipv6_pool_dereference(&pool, MDL);
 			return(ISC_R_FAILURE);
 		}
 		ipv6_pool_dereference(&pool, MDL);

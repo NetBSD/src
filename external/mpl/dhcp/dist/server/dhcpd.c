@@ -1,11 +1,11 @@
-/*	$NetBSD: dhcpd.c,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
+/*	$NetBSD: dhcpd.c,v 1.3 2020/08/03 21:10:57 christos Exp $	*/
 
 /* dhcpd.c
 
    DHCP Server Daemon. */
 
 /*
- * Copyright (c) 2004-2018 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2020 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -29,10 +29,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcpd.c,v 1.2 2018/04/07 22:37:30 christos Exp $");
+__RCSID("$NetBSD: dhcpd.c,v 1.3 2020/08/03 21:10:57 christos Exp $");
 
 static const char copyright[] =
-"Copyright 2004-2018 Internet Systems Consortium.";
+"Copyright 2004-2020 Internet Systems Consortium.";
 static const char arr [] = "All rights reserved.";
 static const char message [] = "Internet Systems Consortium DHCP Server";
 static const char url [] =
@@ -226,7 +226,7 @@ static void omapi_listener_start (void *foo)
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcpd.c,v 1.2 2018/04/07 22:37:30 christos Exp $");
+__RCSID("$NetBSD: dhcpd.c,v 1.3 2020/08/03 21:10:57 christos Exp $");
 static char use_noarg[] = "No argument for command: %s ";
 
 static void

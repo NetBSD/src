@@ -1,4 +1,4 @@
-/*	$NetBSD: data.h,v 1.1.1.1 2020/08/03 21:09:08 christos Exp $	*/
+/*	$NetBSD: data.h,v 1.2 2020/08/03 21:10:57 christos Exp $	*/
 
 /*
  * Copyright (c) 2017 by Internet Systems Consortium, Inc. ("ISC")

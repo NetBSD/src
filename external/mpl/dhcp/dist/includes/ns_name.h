@@ -1,7 +1,7 @@
-/*	$NetBSD: ns_name.h,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
+/*	$NetBSD: ns_name.h,v 1.3 2020/08/03 21:10:56 christos Exp $	*/
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2019 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2001-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -33,6 +33,7 @@
  * <viraj_bais@ccm.fm.intel.com>
  */
 
+int MRns_name_len(const unsigned char *, const unsigned char *);
 int MRns_name_compress(const char *, u_char *, size_t, const unsigned char **,
 		       const unsigned char **);
 int MRns_name_unpack(const unsigned char *, const unsigned char *,
