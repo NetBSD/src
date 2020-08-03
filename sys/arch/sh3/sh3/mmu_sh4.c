@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_sh4.c,v 1.19 2020/08/03 22:43:52 uwe Exp $	*/
+/*	$NetBSD: mmu_sh4.c,v 1.20 2020/08/03 23:01:47 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmu_sh4.c,v 1.19 2020/08/03 22:43:52 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmu_sh4.c,v 1.20 2020/08/03 23:01:47 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,11 +41,12 @@ __KERNEL_RCSID(0, "$NetBSD: mmu_sh4.c,v 1.19 2020/08/03 22:43:52 uwe Exp $");
 
 static __noinline void __sh4_tlb_assoc(uint32_t);
 
-#define	SH4_MMU_HAZARD	__asm volatile("nop;nop;nop;nop;nop;nop;nop;nop;")
-
 /* Must be inlined because we "call" it while running on P2 */
 static inline void __sh4_itlb_invalidate_all(void)
     __attribute__((always_inline));
+
+#define	SH4_MMU_HAZARD	__asm volatile("nop;nop;nop;nop;nop;nop;nop;nop;")
+
 
 
 static inline void
@@ -61,6 +62,7 @@ __sh4_itlb_invalidate_all(void)
 void
 sh4_mmu_start(void)
 {
+	uint32_t cr;
 
 	/* Zero clear all TLB entry */
 	_reg_write_4(SH4_MMUCR, 0);	/* zero wired entry */
@@ -69,13 +71,14 @@ sh4_mmu_start(void)
 	/* Set current ASID to 0 */
 	sh_tlb_set_asid(0);
 
-	/*
-	 * User can't access store queue
-	 * make wired entry for u-area.
-	 */
-	_reg_write_4(SH4_MMUCR, SH4_MMUCR_AT | SH4_MMUCR_TI | SH4_MMUCR_SQMD |
-	    (SH4_UTLB_ENTRY - UPAGES) << SH4_MMUCR_URB_SHIFT);
+	cr  = SH4_MMUCR_AT;	/* address translation enabled */
+	cr |= SH4_MMUCR_TI;	/* TLB invalidate */
+	cr |= SH4_MMUCR_SQMD;	/* store queues not accessible to user */
 
+	/* resereve TLB entries for wired u-area (cf. sh4_switch_resume) */
+	cr |= (SH4_UTLB_ENTRY - UPAGES) << SH4_MMUCR_URB_SHIFT;
+
+	_reg_write_4(SH4_MMUCR, cr);
 	SH4_MMU_HAZARD;
 }
 
