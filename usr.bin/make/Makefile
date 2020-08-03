@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.78 2020/08/01 21:48:17 rillig Exp $
+#	$NetBSD: Makefile,v 1.79 2020/08/03 20:26:09 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -72,6 +72,8 @@ COPTS.dir.c+=	${GCC_NO_FORMAT_TRUNCATION}
 COPTS.main.c+=	${GCC_NO_FORMAT_TRUNCATION} ${GCC_NO_STRINGOP_TRUNCATION}
 COPTS.meta.c+=	${GCC_NO_FORMAT_TRUNCATION}
 COPTS.parse.c+=	${GCC_NO_FORMAT_TRUNCATION}
+
+COPTS+=		-Wdeclaration-after-statement
 
 # A simple unit-test driver to help catch regressions
 test: .MAKE
