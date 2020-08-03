@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.63 2020/08/03 01:18:45 uwe Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.64 2020/08/03 01:56:18 uwe Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.63 2020/08/03 01:18:45 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64 2020/08/03 01:56:18 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -66,6 +66,13 @@ db_regs_t ddb_regs;		/* register state */
 static void kdb_printtrap(u_int, int);
 
 static void db_tlbdump_cmd(db_expr_t, bool, db_expr_t, const char *);
+#ifdef SH4
+static __noinline void
+__db_get_itlb_sh4(uint32_t, uint32_t *, uint32_t *, uint32_t *);
+static __noinline void
+__db_get_utlb_sh4(uint32_t, uint32_t *, uint32_t *, uint32_t *);
+#endif
+
 static char *__db_procname_by_asid(int);
 static void __db_tlbdump_pfn(uint32_t);
 #ifdef SH4
@@ -320,7 +327,12 @@ db_tlbdump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 #endif /* SH3 */
 #ifdef SH4
 	if (CPU_IS_SH4) {
+		void (*get_itlb_p2)(uint32_t, uint32_t *, uint32_t *, uint32_t *);
+		void (*get_utlb_p2)(uint32_t, uint32_t *, uint32_t *, uint32_t *);
 		uint32_t aa, da1, da2;
+
+		get_itlb_p2 = (void *)SH3_P1SEG_TO_P2SEG(__db_get_itlb_sh4);
+		get_utlb_p2 = (void *)SH3_P1SEG_TO_P2SEG(__db_get_utlb_sh4);
 
 		/* MMU configuration */
 		r = _reg_read_4(SH4_MMUCR);
@@ -338,11 +350,7 @@ db_tlbdump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		for (i = 0; i < 4; i++) {
 			e = i << SH4_ITLB_E_SHIFT;
 
-			RUN_P2;
-			aa = _reg_read_4(SH4_ITLB_AA | e);
-			da1 = _reg_read_4(SH4_ITLB_DA1 | e);
-			da2 = _reg_read_4(SH4_ITLB_DA2 | e);
-			RUN_P1;
+			(*get_itlb_p2)(e, &aa, &da1, &da2);
 
 			db_printf("0x%08x   %3d",
 			    aa & SH4_ITLB_AA_VPN_MASK,
@@ -367,11 +375,7 @@ db_tlbdump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		for (i = 0; i < 64; i++) {
 			e = i << SH4_UTLB_E_SHIFT;
 
-			RUN_P2;
-			aa = _reg_read_4(SH4_UTLB_AA | e);
-			da1 = _reg_read_4(SH4_UTLB_DA1 | e);
-			da2 = _reg_read_4(SH4_UTLB_DA2 | e);
-			RUN_P1;
+			(*get_utlb_p2)(e, &aa, &da1, &da2);
 
 			db_printf("0x%08x   %3d",
 			    aa & SH4_UTLB_AA_VPN_MASK,
@@ -396,6 +400,29 @@ db_tlbdump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	}
 #endif /* SH4 */
 }
+
+
+#ifdef SH4
+static __noinline void
+__db_get_itlb_sh4(uint32_t e, uint32_t *paa, uint32_t *pda1, uint32_t *pda2)
+{
+
+	*paa = _reg_read_4(SH4_ITLB_AA | e);
+	*pda1 = _reg_read_4(SH4_ITLB_DA1 | e);
+	*pda2 = _reg_read_4(SH4_ITLB_DA2 | e);
+}
+
+
+static __noinline void
+__db_get_utlb_sh4(uint32_t e, uint32_t *paa, uint32_t *pda1, uint32_t *pda2)
+{
+
+	*paa = _reg_read_4(SH4_UTLB_AA | e);
+	*pda1 = _reg_read_4(SH4_UTLB_DA1 | e);
+	*pda2 = _reg_read_4(SH4_UTLB_DA2 | e);
+}
+#endif	/* SH4 */
+
 
 static void
 __db_tlbdump_pfn(uint32_t r)
