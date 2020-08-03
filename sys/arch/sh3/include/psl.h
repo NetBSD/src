@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.11 2011/01/26 19:07:42 uwe Exp $	*/
+/*	$NetBSD: psl.h,v 1.12 2020/08/03 16:43:44 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -61,6 +61,12 @@
 
 #ifdef _KERNEL
 #ifndef _LOCORE
+
+static inline __always_inline void
+_cpu_set_sr(uint32_t sr)
+{
+    __asm volatile("ldc %0, sr" :: "r"(sr));
+}
 
 /* SR.IMASK */
 int _cpu_intr_raise(int);
