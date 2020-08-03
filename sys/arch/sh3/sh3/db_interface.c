@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.64 2020/08/03 01:56:18 uwe Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.65 2020/08/03 21:53:25 uwe Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64 2020/08/03 01:56:18 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.65 2020/08/03 21:53:25 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -331,8 +331,8 @@ db_tlbdump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		void (*get_utlb_p2)(uint32_t, uint32_t *, uint32_t *, uint32_t *);
 		uint32_t aa, da1, da2;
 
-		get_itlb_p2 = (void *)SH3_P1SEG_TO_P2SEG(__db_get_itlb_sh4);
-		get_utlb_p2 = (void *)SH3_P1SEG_TO_P2SEG(__db_get_utlb_sh4);
+		get_itlb_p2 = SH3_P2SEG_FUNC(__db_get_itlb_sh4);
+		get_utlb_p2 = SH3_P2SEG_FUNC(__db_get_utlb_sh4);
 
 		/* MMU configuration */
 		r = _reg_read_4(SH4_MMUCR);
@@ -478,11 +478,11 @@ db_cachedump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 
 #ifdef SH3
 	if (CPU_IS_SH3)
-		cachedump_p2 = (void *)SH3_P1SEG_TO_P2SEG(__db_cachedump_sh3);
+		cachedump_p2 = SH3_P2SEG_FUNC(__db_cachedump_sh3);
 #endif
 #ifdef SH4
 	if (CPU_IS_SH4)
-		cachedump_p2 = (void *)SH3_P1SEG_TO_P2SEG(__db_cachedump_sh4);
+		cachedump_p2 = SH3_P2SEG_FUNC(__db_cachedump_sh4);
 #endif
 	(*cachedump_p2)(have_addr ? addr : 0);
 }
