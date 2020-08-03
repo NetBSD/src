@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.681 2020/07/09 06:42:44 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.682 2020/08/03 07:16:51 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.681 2020/07/09 06:42:44 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.682 2020/08/03 07:16:51 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -4319,7 +4319,7 @@ wm_init_lcd_from_nvm(struct wm_softc *sc)
 		if (wm_nvm_read(sc, (word_addr + i * 2 + 1), 1, &reg_addr) !=0)
 			goto release;
 
-		if (reg_addr == MII_IGPHY_PAGE_SELECT)
+		if (reg_addr == IGPHY_PAGE_SELECT)
 			phy_page = reg_data;
 
 		reg_addr &= IGPHY_MAXREGADDR;
@@ -10883,7 +10883,7 @@ wm_gmii_i82544_readreg_locked(device_t dev, int phy, int reg, uint16_t *val)
 		case WMPHY_IGP_2:
 		case WMPHY_IGP_3:
 			rv = wm_gmii_mdic_writereg(dev, phy,
-			    MII_IGPHY_PAGE_SELECT, reg);
+			    IGPHY_PAGE_SELECT, reg);
 			if (rv != 0)
 				return rv;
 			break;
@@ -10933,7 +10933,7 @@ wm_gmii_i82544_writereg_locked(device_t dev, int phy, int reg, uint16_t val)
 		case WMPHY_IGP_2:
 		case WMPHY_IGP_3:
 			rv = wm_gmii_mdic_writereg(dev, phy,
-			    MII_IGPHY_PAGE_SELECT, reg);
+			    IGPHY_PAGE_SELECT, reg);
 			if (rv != 0)
 				return rv;
 			break;
@@ -11098,7 +11098,7 @@ wm_gmii_bm_readreg(device_t dev, int phy, int reg, uint16_t *val)
 		if ((phy == 1) && (sc->sc_type != WM_T_82574)
 		    && (sc->sc_type != WM_T_82583))
 			rv = wm_gmii_mdic_writereg(dev, phy,
-			    MII_IGPHY_PAGE_SELECT, page << BME1000_PAGE_SHIFT);
+			    IGPHY_PAGE_SELECT, page << BME1000_PAGE_SHIFT);
 		else
 			rv = wm_gmii_mdic_writereg(dev, phy,
 			    BME1000_PHY_PAGE_SELECT, page);
@@ -11145,7 +11145,7 @@ wm_gmii_bm_writereg(device_t dev, int phy, int reg, uint16_t val)
 		if ((phy == 1) && (sc->sc_type != WM_T_82574)
 		    && (sc->sc_type != WM_T_82583))
 			rv = wm_gmii_mdic_writereg(dev, phy,
-			    MII_IGPHY_PAGE_SELECT, page << BME1000_PAGE_SHIFT);
+			    IGPHY_PAGE_SELECT, page << BME1000_PAGE_SHIFT);
 		else
 			rv = wm_gmii_mdic_writereg(dev, phy,
 			    BME1000_PHY_PAGE_SELECT, page);
@@ -11183,7 +11183,7 @@ wm_enable_phy_wakeup_reg_access_bm(device_t dev, uint16_t *phy_regp)
 	/* All page select, port ctrl and wakeup registers use phy address 1 */
 
 	/* Select Port Control Registers page */
-	rv = wm_gmii_mdic_writereg(dev, 1, MII_IGPHY_PAGE_SELECT,
+	rv = wm_gmii_mdic_writereg(dev, 1, IGPHY_PAGE_SELECT,
 	    BM_PORT_CTRL_PAGE << IGP3_PAGE_SHIFT);
 	if (rv != 0)
 		return rv;
@@ -11206,7 +11206,7 @@ wm_enable_phy_wakeup_reg_access_bm(device_t dev, uint16_t *phy_regp)
 	/* Select Host Wakeup Registers page - caller now able to write
 	 * registers on the Wakeup registers page
 	 */
-	return wm_gmii_mdic_writereg(dev, 1, MII_IGPHY_PAGE_SELECT,
+	return wm_gmii_mdic_writereg(dev, 1, IGPHY_PAGE_SELECT,
 	    BM_WUC_PAGE << IGP3_PAGE_SHIFT);
 }
 
@@ -11232,7 +11232,7 @@ wm_disable_phy_wakeup_reg_access_bm(device_t dev, uint16_t *phy_regp)
 		return -1;
 
 	/* Select Port Control Registers page */
-	wm_gmii_mdic_writereg(dev, 1, MII_IGPHY_PAGE_SELECT,
+	wm_gmii_mdic_writereg(dev, 1, IGPHY_PAGE_SELECT,
 	    BM_PORT_CTRL_PAGE << IGP3_PAGE_SHIFT);
 
 	/* Restore 769.17 to its original value */
@@ -11379,7 +11379,7 @@ wm_gmii_hv_readreg_locked(device_t dev, int phy, int reg, uint16_t *val)
 		page = 0;
 
 	if (regnum > BME1000_MAX_MULTI_PAGE_REG) {
-		rv = wm_gmii_mdic_writereg(dev, 1, MII_IGPHY_PAGE_SELECT,
+		rv = wm_gmii_mdic_writereg(dev, 1, IGPHY_PAGE_SELECT,
 		    page << BME1000_PAGE_SHIFT);
 		if (rv != 0)
 			return rv;
@@ -11465,7 +11465,7 @@ wm_gmii_hv_writereg_locked(device_t dev, int phy, int reg, uint16_t val)
 
 		if (regnum > BME1000_MAX_MULTI_PAGE_REG) {
 			rv = wm_gmii_mdic_writereg(dev, 1,
-			    MII_IGPHY_PAGE_SELECT, page << BME1000_PAGE_SHIFT);
+			    IGPHY_PAGE_SELECT, page << BME1000_PAGE_SHIFT);
 			if (rv != 0)
 				return rv;
 		}
@@ -15469,9 +15469,9 @@ wm_lplu_d0_disable(struct wm_softc *sc)
 	case WM_T_82573:
 	case WM_T_82575:
 	case WM_T_82576:
-		mii->mii_readreg(sc->sc_dev, 1, MII_IGPHY_POWER_MGMT, &phyval);
+		mii->mii_readreg(sc->sc_dev, 1, IGPHY_POWER_MGMT, &phyval);
 		phyval &= ~PMR_D0_LPLU;
-		mii->mii_writereg(sc->sc_dev, 1, MII_IGPHY_POWER_MGMT, phyval);
+		mii->mii_writereg(sc->sc_dev, 1, IGPHY_POWER_MGMT, phyval);
 		break;
 	case WM_T_82580:
 	case WM_T_I350:
@@ -15797,7 +15797,7 @@ wm_hv_phy_workarounds_ich8lan(struct wm_softc *sc)
 	/* Select page 0 */
 	if ((rv = sc->phy.acquire(sc)) != 0)
 		return rv;
-	rv = wm_gmii_mdic_writereg(dev, 1, MII_IGPHY_PAGE_SELECT, 0);
+	rv = wm_gmii_mdic_writereg(dev, 1, IGPHY_PAGE_SELECT, 0);
 	sc->phy.release(sc);
 	if (rv != 0)
 		return rv;
