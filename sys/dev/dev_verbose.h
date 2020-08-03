@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_verbose.h,v 1.2 2015/11/13 01:37:19 christos Exp $ */
+/*	$NetBSD: dev_verbose.h,v 1.3 2020/08/03 18:19:35 uwe Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -79,7 +79,7 @@ tag ## verbose_modcmd(modcmd_t cmd, void *arg)				\
 		return ENOTTY;						\
 	}								\
 }									\
-MODULE(MODULE_CLASS_MISC, tag ## verbose, deps)
+MODULE(MODULE_CLASS_DRIVER, tag ## verbose, deps)
 
 #endif /* KERNEL */
 
