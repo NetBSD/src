@@ -1,7 +1,6 @@
                 Internet Systems Consortium DHCP Distribution
-                            Version 4.4.1
-                           28 February 2018
-
+                            Version 4.4.2
+                            22 January 2020
                              Release Notes
 
                               NEW FEATURES
@@ -10,7 +9,24 @@ Please note that that ISC DHCP is now licensed under the Mozilla Public License,
 MPL 2.0. Please see https://www.mozilla.org/en-US/MPL/2.0/ to read the MPL 2.0
 license terms.
 
-The areas of focus for ISC DHCP 4.4 were:
+While release 4.4.2 is primarily a maintenance release that addresses a number
+of defects, it does introduce a few new features:
+
+- Keama - Keama is a migration utility that assists in converting ISC DHCP
+  server configuration files to Kea configuration files.  It is found in the
+  keama subdirectory and includes a README.md file with instructions on how
+  to build it as well as a manpage on its usage.
+
+- Two new server parameters related to ping checking were added:
+
+1. ping-cltt-secs which allows the user to specify the number of seconds
+   that must elapse since CLTT before a ping check is conducted.
+
+2. ping-timeout-ms which allows the user to specify the amount of time the
+   server waits for a ping-check response in milliseconds rather than in
+   seconds.
+
+In general, the areas of focus for ISC DHCP 4.4 were:
 
 1. Dynamic DNS additions
 2. dhclient improvements
@@ -87,7 +103,161 @@ ISC DHCP is open source software maintained by Internet Systems
 Consortium.  This product includes cryptographic software written
 by Eric Young (eay@cryptsoft.com).
 
-                Changes since 4.4.0 (New Features)
+		Changes since 4.4.2b1 (Bug Fixes)
+
+- Added a clarification on DHCPINFORMs and server authority to
+  dhcpd.conf.5
+  [Gitlab #37]
+
+- Only emit lease scrubbing log messages when DEBUG_FAILOVER_MESSAGES
+  is defined.
+  [Gitlab #72]
+
+- Added the interface name to socket initialization failure log messages.
+  Prior to this the log messages stated only the error reason without
+  stating the target interface.
+  [Gitlab #75]
+
+- Corrected buffer pointer logic in dhcrelay functions that manipulate
+  agent relay options. Thanks to Thomas Imbert of MSRC Vulnerabilities
+  & Mitigations for reporting the issue.
+  [#71]
+
+- Corrected unresolved symbol errors building relay_unittests when
+  configured to build using libtool.
+  [#80]
+
+		Changes since 4.4.1 (New Features)
+
+- A new configuration parameter, ping-cltt-secs (v4 operation only), has
+  been added to allow the user to specify the number of seconds that must
+  elapse since CLTT before a ping check is conducted.  Prior to this, the
+  value was hard coded at 60 seconds.  Please see the server man pages for
+  a more detailed discussion.
+  [ISC-Bugs #36283]
+
+- A new configuration parameter, ping-timeout-ms (v4 operation only),
+  has been added that allows the user to specify the amount of time
+  the server waits for a ping-check response in milliseconds rather
+  than in seconds (via ping-timeout). When greater than zero, the value
+  of ping-timeout-ms will override the value of ping-timeout.  Thanks
+  to Jay Doran from Bluecat Networks for suggesting this feature.
+  [Gitlab #10]
+
+- An experimental tool called, Keama (KEA Migration Assistant), which helps
+  translate ISC DHCP configurations to Kea configurations, is now included
+  in the distribution.
+  [Gitlab #34]
+
+		Changes since 4.4.1 (Bug Fixes)
+
+- Corrected a misuse of the BIND9 DDNS API which caused DDNS updates to be
+  carried out over TCP rather than UDP. The coding error was exposed by
+  migration to BIND9 9.11.  Thanks to Jinmei Tatuya at Infoblox for
+  reporting the issue.
+  [ISC-Bugs #47757]
+
+- Bind9 now defaults to requiring python to build. The Makefile for
+  building Bind9 when bundled with ISC DHCP was modified to turn off
+  this dependency.
+  [Gitlab #3]
+
+- Corrected a dual-stack mixed-mode issue that occurs when both
+  ddns-guard-id-must-match and ddns-other-guard-is-dynamic
+  are enabled and that caused the server to incorrectly interpret
+  the presence of a guard record belonging to another client as
+  a case of no guard record at all.  Thanks to Fernando Soto
+  from BlueCat Networks for reporting this issue.
+  [Gitlab #1]
+
+- Corrected a compilation issue that occurred when building without DNS
+  update ability (e.g. by undefining NSUPDATE).
+  [Gitlab #16]
+
+- Corrected an issue that was causing the server, when running in
+  DHPCv4 mode, to segfault when class lease limits are reached.
+  Thanks to Peter Nagy at Porion-Digital for reporting the matter
+  and submitting a patch.
+  [Gitlab #13]
+
+- Made minor changes to eliminate warnings when compiled with GCC 9.
+  Thanks to Brett Neumeier for bringing the matter to our attention.
+  [Gitlab #15]
+
+- Fixed potential memory leaks in parser error message generation
+  spotted by Coverity, CIDs: 1448191, 1448193, 1448194, 1448195
+  [Gitlab #30]
+
+- Updated URL of IEEE oui.txt in contrib/dhcp-lease-list.pl. Thanks
+  to Tommy Smith for contributing the patch.
+  [Gitlab #26]
+
+- Fixed define flags when using SO_BINDTODEVICE. Thanks to Joe LeVeque for
+  reporting the issue.
+  [GitLab #19]
+
+- Applied a patch from OpenBSD to always set the scope id of outbound
+  DHPCv6 packets.  Note this change only applies when compiling under
+  OpenBSD.  Thanks to Brad Smith at OpenBSD from bringing it to our
+  attention.
+  [Gitlab #33]
+
+- Modified dhclient to not discard config file leases that are
+  duplicates of server-provided leases and to retain such leases
+  after they have been used as the fallback active lease and
+  DHCP service has been restored.  This allows them to be used
+  more than once during the lifetime of a dhclient instance.
+  This applies to DHCPv4 operation only.
+  [Gitlab #9]
+
+- Corrected a number of reference counter and zero-length buffer leaks.
+  Thanks to Christopher Ertl of MSRC Vulnerabilities & Mitigations for
+  pointing them out.
+  [Gitlab #57]
+
+- Closed a small window of time between the installation of graceful
+  shutdown signal handlers and application context startup, during which
+  the receipt of shutdown signal would cause a REQUIRE() assertion to
+  occur.  Note this issue is only visible when compiling with
+  ENABLE_GENTLE_SHUTDOWN defined.
+  [Gitlab #53]
+
+- Corrected a buffer overflow that can occur when retrieving zone
+  names that are more than 255 characters in length.
+  [Gitlab #20]
+
+- The "d" domain name option format was incorrectly handled as text
+  instead of RFC 1035 wire format. Thanks to Jay Doran at BlueCat Networks
+  for reporting this issue.
+  [Gitlab #2]
+
+- Improved the error message issued when a host declaration has both
+  a uid and a dhcp-client-identifier. Server configuration parsing will
+  now fail if a host declaration specifies more than one uid.
+  [Gitlab #7]
+
+- Updated developer's documentation on building and running unit tests.
+  Removed support for --with-atf=bind as BIND9 no longer bundles in ATF
+  source.
+  [Gitlab #35]
+
+- Fixed a syntax error in ldap.c which cropped up under Ubuntu
+  18.04.1/gcc 7.4.0. Thanks to Charles Hedrick for pointing it out.
+  [Gitlab #51]
+
+- Added clarification to dhcp-options.5 section on ip-address values
+  describing the first-use DNS resolution of options with hostnames as
+  values (e.g. next-server).
+  [Gitlab #28]
+
+- The option format for the server option omapi-key was changed to a
+  format type 'k' (key name); while server options ldap-port and
+  ldap-init-retry were changed to 'L' (unsigned 32-bit integer). These
+  three options were inadvertantly broken when the 'd' format content
+  was changed to comply with RFC 1035 wire format (see Gitlab #2).
+  [Gitlab #68]
+
+		Changes since 4.4.0 (New Features)
 - none
 		Changes since 4.4.0 (Bug Fixes)
 
@@ -108,6 +278,12 @@ by Eric Young (eay@cryptsoft.com).
   readable form. Reported by Felix Wilhelm, Google Security Team.
   [ISC-Bugs #47139]
   CVE: CVE-2018-5732
+
+- Added use of new Bind9 compatibility header files, that are now necessary
+  to supply type definitions for primitive data types, removed from Bind9
+  proper.  Altered util/bind.sh to pull from Bind9 repo on gitlab.
+  [ISC-Bugs #48072]
+  [ISC-Bugs #48071]
 
                 Changes since 4.4.0b1 (New Features)
 

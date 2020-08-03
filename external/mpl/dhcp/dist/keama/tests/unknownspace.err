@@ -1,0 +1,4 @@
+# unknown option config
+
+# unknown option
+option this-space-does-not-exist.domain-search "example.com";

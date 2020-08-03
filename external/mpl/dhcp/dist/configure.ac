@@ -1,4 +1,4 @@
-AC_INIT([DHCP],[4.4.1],[dhcp-users@isc.org])
+AC_INIT([DHCP],[4.4.2],[dhcp-users@isc.org])
 
 
 # we specify "foreign" to avoid having to have the GNU mandated files,
@@ -249,24 +249,15 @@ fi
 
 # Testing section
 
+# Bind Makefile needs to know ATF is not included.
+AM_CONDITIONAL(BIND_ATF, test "foo" = "barr")
+
 DISTCHECK_ATF_CONFIGURE_FLAG=
 atf_path="no"
 AC_ARG_WITH([atf],
-    AS_HELP_STRING([--with-atf=PATH],[specify location where atf was installed (or "bind")]),
+    AS_HELP_STRING([--with-atf=PATH],[specify location where atf was installed]),
     [atf_path="$withval"])
-AM_CONDITIONAL(BIND_ATF, test "$atf_path" = "bind")
-if test "$atf_path" = "bind" ; then
-    DISTCHECK_ATF_CONFIGURE_FLAG="--with-atf=bind"
-    atf_pcp="bind"
-    atf_path="\${top_srcdir}/bind/atf"
-    ATF_CFLAGS="-I$atf_path/include -DUNIT_TEST"
-    ATF_LDFLAGS="-L$atf_path/lib -latf-c"
-    ATF_BIN=`cd $srcdir; pwd`/bind/atf/bin
-    AC_SUBST(ATF_CFLAGS)
-    AC_SUBST(ATF_LDFLAGS)
-    AC_SUBST(ATF_BIN)
-    BINDCONFIG="$BINDCONFIG --with-atf"
-elif test "$atf_path" != "no" ; then
+if test "$atf_path" != "no" ; then
     DISTCHECK_ATF_CONFIGURE_FLAG="--with-atf=$atf_path"
     # Config path for pkg-config
     atf_pcp=""
@@ -1009,9 +1000,11 @@ AC_CONFIG_FILES([
   dhcpctl/Makefile.am
   dhcpctl/Makefile
   includes/Makefile
+  keama/Makefile
   omapip/Makefile.am
   omapip/Makefile
   relay/Makefile
+  relay/tests/Makefile
   server/Makefile
   tests/Makefile.am
   tests/Makefile

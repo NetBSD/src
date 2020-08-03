@@ -1,0 +1,9 @@
+{
+  # LLT server duid config
+  # LLT server duid declaration
+  "Dhcp6": {
+    "server-id": {
+      "type": "LLT"
+    }
+  }
+}

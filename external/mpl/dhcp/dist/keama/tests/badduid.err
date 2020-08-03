@@ -1,0 +1,4 @@
+# bad (no type) server duid config
+
+# server duid declaration
+server-duid "enterprise-specific-identifier-1234";

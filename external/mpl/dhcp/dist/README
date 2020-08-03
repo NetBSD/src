@@ -1,6 +1,6 @@
 	      Internet Systems Consortium DHCP Distribution
-			     Version 4.4.1
-			    28 February 2018
+			     Version 4.4.2
+			    22 January 2020
 
 			      README FILE
 
@@ -27,18 +27,7 @@ the ISC DHCP Distribution.
 	  5.2.4	  BROADCAST
 	  5.2.6	  IP BOOTP AGENT
 	  5.2.7	  MULTIPLE INTERFACES
-	 5.3	 SCO
-	 5.4	 HP-UX
-	 5.5	 ULTRIX
-	 5.6	 FreeBSD
-	 5.7	 NeXTSTEP
-	 5.8	 SOLARIS
-	  5.8.1 Solaris 11
-	  5.8.2 Solaris 11 and ATF
-	  5.8.3 Other Solaris Items
-	 5.9	 AIX
-	 5.10	 MacOS X
-         5.11    ATF
+     5.3    ATF
 	6	SUPPORT
 	 6.1	 HOW TO REPORT BUGS
 	7	HISTORY
@@ -78,6 +67,9 @@ referred to for information about DHCP options.
 DHCP relay agent documentation is in the dhcrelay man page, the source
 for which is distributed in the relay/ subdirectory.
 
+KEA Migration Assistant documentation, including how to build, install
+and use it, is including in the keama directory.
+
 To read installed manual pages, use the man command.  Type "man page"
 where page is the name of the manual page.   This will only work if
 you have installed the ISC DHCP distribution using the ``make install''
@@ -105,12 +97,12 @@ directory, it may not have up-to-date information).
 To build the DHCP Distribution, unpack the compressed tar file using
 the tar utility and the gzip command - type something like:
 
-	gunzip dhcp-4.4.1.tar.gz
-	tar xvf dhcp-4.4.1.tar
+	gunzip dhcp-4.4.2.tar.gz
+	tar xvf dhcp-4.4.2.tar
 
 			    CONFIGURING IT
 
-Now, cd to the dhcp-4.4.1 subdirectory that you've just created and
+Now, cd to the dhcp-4.4.2 subdirectory that you've just created and
 configure the source tree by typing:
 
 	./configure
@@ -352,234 +344,6 @@ Note that this may affect the performance of your system, since the
 Linux kernel must rewrite packets received via this interface.  For
 more information, consult the vconfig man pages.
 
-				 SCO
-
-ISC DHCP will now work correctly on newer versions of SCO out of the
-box (tested on OpenServer 5.05b, assumed to work on UnixWare 7).
-
-Older versions of SCO have the same problem as Linux (described earlier).
-The thing is, SCO *really* doesn't want to let you add a host route to
-the all-ones broadcast address.
-
-You can try the following:
-
-  ifconfig net0 xxx.xxx.xxx.xxx netmask 0xNNNNNNNN broadcast 255.255.255.255
-
-If this doesn't work, you can also try the following strange hack:
-
-  ifconfig net0 alias 10.1.1.1 netmask 8.0.0.0
-
-Apparently this works because of an interaction between SCO's support
-for network classes and the weird netmask.  The 10.* network is just a
-dummy that can generally be assumed to be safe.   Don't ask why this
-works.   Just try it.   If it works for you, great.
-
-				HP-UX
-
-HP-UX has the same problem with the all-ones broadcast address that
-SCO and Linux have.   One user reported that adding the following to
-/etc/rc.config.d/netconf helped (you may have to modify this to suit
-your local configuration):
-
-INTERFACE_NAME[0]=lan0
-IP_ADDRESS[0]=1.1.1.1
-SUBNET_MASK[0]=255.255.255.0
-BROADCAST_ADDRESS[0]="255.255.255.255"
-LANCONFIG_ARGS[0]="ether"
-DHCP_ENABLE[0]=0
-
-				ULTRIX
-
-Now that we have Ultrix packet filter support, the DHCP Distribution
-on Ultrix should be pretty trouble-free.  However, one thing you do
-need to be aware of is that it now requires that the pfilt device be
-configured into your kernel and present in /dev.  If you type ``man
-packetfilter'', you will get some information on how to configure your
-kernel for the packet filter (if it isn't already) and how to make an
-entry for it in /dev.
-
-			       FreeBSD
-
-Versions of FreeBSD prior to 2.2 have a bug in BPF support in that the
-ethernet driver swaps the ethertype field in the ethernet header
-downstream from BPF, which corrupts the output packet.   If you are
-running a version of FreeBSD prior to 2.2, and you find that dhcpd
-can't communicate with its clients, you should #define BROKEN_FREEBSD_BPF 
-in site.h and recompile.
-
-Modern versions of FreeBSD include the ISC DHCP 3.0 client as part of
-the base system, and the full distribution (for the DHCP server and
-relay agent) is available from the Ports Collection in
-/usr/ports/net/isc-dhcp3, or as a package on FreeBSD installation
-CDROMs.
-
-			      NeXTSTEP
-
-The NeXTSTEP support uses the NeXTSTEP Berkeley Packet Filter
-extension, which is not included in the base NextStep system.  You
-must install this extension in order to get dhcpd or dhclient to work.
-
-			       SOLARIS
-
-There are two known issues seen when compiling using the Sun compiler.
-
-The first is that older Sun compilers generate an error on some of
-our uses of the flexible array option.  Newer versions only generate
-a warning, which can be safely ignored.  If you run into this error
-("type of struct member "buf" can not be derived from structure with
-flexible array member"), upgrade your tools to  Oracle Solaris Studio 
-(previously Sun Studio) 12 or something newer.
-
-The second is the interaction between the configure script and the
-makefiles for the Bind libraries.  Currently we don't pass all
-environment variables between the DHCP configure and the Bind configure.
-
-If you attempt to specify the compiler you wish to use like this:
-
-	CC=/opt/SUNWspro/bin/cc ./configure
-
-"make" may not build the Bind libraries with that compiler.
-
-In order to use the same compiler for Bind and DHCP we suggest the
-following commands:
-
-	CC=/opt/SUNWspro/bin/cc ./configure
-	CC=/opt/SUNWspro/bin/cc make
-
-				Solaris 11
-
-We have integrated a patch from Oracle to use sockets instead of
-DLPI on Solaris 11.  This functionality was written for use with
-Solaris Studio 12.2 and requires the system/header package.
-
-By default this code is disabled in order to minimize disruptions
-for current users.  In order to enable this code you will need to
-enable both USE_SOCKETS and USE_V4_PKTINFO as part of the
-configuration step.  The command line would be something like:
-
-	  ./configure --enable-use-sockets --enable-ipv4-pktinfo
-
-				Solaris 11 and ATF
-
-We have reports that ATF 0.15 and 0.16 do not build on Solaris 11.  The
-following changes to the ATF source code appear to fix this issue:
-
-diff -ru atf-0.15/atf-c/tp_test.c atf-0.15-patched/atf-c/tp_test.c
---- atf-0.15/atf-c/tp_test.c 2011-12-06 06:31:11.000000000 +0100
-+++ atf-0.15-patched/atf-c/tp_test.c 2012-06-19 15:54:57.000000000 +0200
-@@ -28,6 +28,7 @@
-*/
-
-#include <string.h>
-+#include <stdio.h>
-#include <unistd.h>
-
-#include <atf-c.h>
-
-diff -ru atf-0.15/atf-run/requirements.cpp atf-0.15-patched/atf-run/requirements.cpp
---- atf-0.15/atf-run/requirements.cpp 2012-01-13 20:44:25.000000000 +0100
-+++ atf-0.15-patched/atf-run/requirements.cpp 2012-06-19 15:41:51.000000000 +0200
-@@ -29,7 +29,7 @@
-
-extern "C" {
-#include <sys/param.h>
--#include <sys/sysctl.h>
-+//#include <sys/sysctl.h>
-}
-
-#include <cerrno>
-
-				Other Solaris Items
-
-One problem which has been observed and is not fixed in this
-patchlevel has to do with using DLPI on Solaris machines.  The symptom
-of this problem is that the DHCP server never receives any requests.
-This has been observed with Solaris 2.6 and Solaris 7 on Intel x86
-systems, although it may occur with other systems as well.  If you
-encounter this symptom, and you are running the DHCP server on a
-machine with a single broadcast network interface, you may wish to
-edit the includes/site.h file and uncomment the #define USE_SOCKETS
-line.  Then type ``make clean; make''.  As an alternative workaround,
-it has been reported that running 'snoop' will cause the dhcp server
-to start receiving packets.  So the practice reported to us is to run
-snoop at dhcpd startup time, with arguments to cause it to receive one
-packet and exit.
-
-	snoop -c 1 udp port 67 > /dev/null &
-
-The DHCP client on Solaris will only work with DLPI.  If you run it
-and it just keeps saying it's sending DHCPREQUEST packets, but never
-gets a response, you may be having DLPI trouble as described above.
-If so, we have no solution to offer at this time, aside from the above
-workaround which should also work here.  Also, because Solaris requires
-you to "plumb" an interface before it can be detected by the DHCP client,
-you must either specify the name(s) of the interface(s) you want to
-configure on the command line, or must plumb the interfaces prior to
-invoking the DHCP client.  This can be done with ``ifconfig iface plumb'',
-where iface is the name of the interface (e.g., ``ifconfig hme0 plumb'').
-
-It should be noted that Solaris versions from 2.6 onward include a
-DHCP client that you can run with ``/sbin/ifconfig iface dhcp start''
-rather than using the ISC DHCP client, including DHCPv6.  Consequently,
-we don't believe there is a need for the client to run on Solaris, and
-have not engineered the needed DHCPv6 modifications for the dhclient-script.
-If you feel this is in error, or have a need, please contact us.
-
-				AIX
-
-The AIX support uses the BSD socket API, which cannot differentiate on
-which network interface a broadcast packet was received; thus the DHCP
-server and relay will work only on a single interface.  (They do work
-on multi-interface machines if configured to listen on only one of the
-interfaces.)
-
-We have reports of Windows XP clients having difficulty retrieving
-addresses from a server running on an AIX machine.  This issue
-was traced to the client requiring messages be sent to the all ones
-broadcast address (255.255.255.255) while the AIX server was sending 
-to 192.168.0.255.
-
-You may be able to solve this by including a relay between the client
-and server with the relay configured to use a broadcast of all-ones.
-
-A second option that worked for AIX 5.1 but doesn't seem to work for
-AIX 5.3 was to:
-	create a host file entry for all-ones (255.255.255.255)
-and then add a route:
-	route add -host all-ones -interface <local-ip-address>
-
-The ISC DHCP distribution does not include a dhclient-script for AIX--
-AIX comes with a DHCP client.  Contribution of a working dhclient-script
-for AIX would be welcome.
-
-
-			       MacOS X
-
-The MacOS X system uses a TCP/IP stack derived from FreeBSD with a
-user-friendly interface named the System Configuration Framework.
-As it includes a builtin DHCPv4 client (you are better just using that),
-this text is only about the DHCPv6 client (``dhclient -6 ...'').  The DNS
-configuration (domain search list and name servers' addresses) is managed
-by a System Configuration agent, not by /etc/resolv.conf (which is a link
-to /var/run/resolv.conf, which itself only reflects the internal state;
-the System Configuration framework's Dynamic Store).
-
-This means that modifying resolv.conf directly doesn't have the
-intended effect, instead the macos script sample creates its own
-resolv.conf.dhclient6 in /var/run, and inserts the contents of this
-file into the Dynamic Store.
-
-When updating the address configuration the System Configuration
-framework expects the prefix and a default router along with the
-configured address. As this extra information is not available via
-the DHCPv6 protocol the System Configuration framework isn't usable
-for address configuration, instead ifconfig is used directly.
-
-Note the Dynamic Store (from which /var/run/resolv.conf is built) is
-recomputed from scratch when the current location/set is changed.
-Running the dhclient-script reinstalls the resolv.conf.dhclient6
-configuration.
-
 
 			       ATF
 
@@ -600,7 +364,7 @@ sponsors.  ISC now also offers commercial quality support contracts for
 ISC DHCP, more information about ISC Support Contracts can be found at
 the following URL:
 
-	https://www.isc.org/services/support/
+	https://www.isc.org/support/
 
 Please understand that we may not respond to support inquiries unless
 you have a support contract.  ISC will continue its practice of always
@@ -620,8 +384,8 @@ the dhcp-users or dhcp-announce mailing lists.
 WHERE TO SEND FEATURE REQUESTS: We like to hear your feedback.  We may
 not respond to it all the time, but we do read it.  If ISC DHCP doesn't
 work well for you, or you have an idea that would improve it for your
-use, please send your suggestion to dhcp-suggest@isc.org.  This is also
-an excellent place to send patches that add new features.
+use, please create an issue at https://gitlab.isc.org/isc-projects/dhcp/issues.  
+This is also an excellent place to send patches that add new features.
 
 WHERE TO REPORT BUGS: If you want the act of sending in a bug report
 to result in you getting help in the form of a fixed piece of
@@ -629,9 +393,9 @@ software, you are asking for help.  Your bug report is helpful to us,
 but fundamentally you are making a support request, so please use the
 addresses described in the previous paragraphs.  If you are _sure_ that
 your problem is a bug, and not user error, or if your bug report
-includes a patch, you can send it to our ticketing system at
-dhcp-bugs@isc.org.  If you have not received a notice that the ticket
-has been resolved, then we're still working on it.
+includes a patch, you can submit it to our ticketing system at 
+https://gitlab.isc.org/isc-projects/dhcp/issues.  If you have not received 
+a notice that the ticket has been resolved, then we're still working on it.
 
 PLEASE DO NOT REPORT BUGS IN OLD SOFTWARE RELEASES!  Fetch the latest
 release and see if the bug is still in that version of the software,
@@ -704,7 +468,7 @@ bug reports are more likely to get handled more quickly overall.
 	  This assumes that it's the dhcp server you're debugging, and
 	  that the core file is in dhcpd.core.
 
-Please see https://www.isc.org/software/dhcp/ for details on how to subscribe
+Please see https://www.isc.org/dhcp/ for details on how to subscribe
 to the ISC DHCP mailing lists.
 
 			       HISTORY
