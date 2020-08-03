@@ -1,7 +1,6 @@
-$NetBSD: TODO,v 1.8 2019/12/04 13:47:03 jmcneill Exp $
+$NetBSD: TODO,v 1.9 2020/08/03 06:29:59 ryo Exp $
 
 TODO list for NetBSD/aarch64
   - kernel preemption
-  - Implement __HAVE_UCAS_FULL or __HAVE_UCAS_MP (don't use full generic impl)
   - pmap should be work even if PID_MAX >= 65536 (don't depend 16bit ASID)
   - TLB ASID in pmap should be randomized

@@ -1,4 +1,4 @@
-/* $NetBSD: copyinout.S,v 1.12 2020/08/03 05:56:49 ryo Exp $ */
+/* $NetBSD: copyinout.S,v 1.13 2020/08/03 06:29:59 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include <aarch64/asm.h>
 #include "assym.h"
 
-RCSID("$NetBSD: copyinout.S,v 1.12 2020/08/03 05:56:49 ryo Exp $");
+RCSID("$NetBSD: copyinout.S,v 1.13 2020/08/03 06:29:59 ryo Exp $");
 
 #ifdef ARMV81_PAN
 #define PAN_ENABLE	\
@@ -348,3 +348,50 @@ ENTRY(kcopy)
 	exit_cpu_onfault
 	ret
 END(kcopy)
+
+
+/* LINTSTUB: int _ucas_32(volatile uint32_t *uptr, uint32_t old, uint32_t new, uint32_t *retp); */
+ENTRY(_ucas_32)
+	tbnz	x0, AARCH64_ADDRTOP_TAG_BIT, 3f	/* not userspace */
+	ands	x8, x0, #3
+	cbnz	x8, 3f				/* not aligned */
+
+	enter_cpu_onfault
+
+1:	ldxr	w4, [x0]		/* load old value */
+	cmp	w4, w1			/*   compare? */
+	b.ne	2f			/*     return if different */
+	stxr	w5, w2, [x0]		/* store new value */
+	cbnz	w5, 1b			/*   succeed? nope, try again. */
+2:	str	w4, [x3]
+	mov	x8, #0			/* error = 0 */
+
+	exit_cpu_onfault
+	ret
+3:
+	mov	x0, #EFAULT
+	ret
+END(_ucas_32)
+
+/* LINTSTUB: int _ucas_64(volatile uint64_t *uptr, uint64_t old, uint64_t new, uint64_t *retp); */
+ENTRY(_ucas_64)
+	tbnz	x0, AARCH64_ADDRTOP_TAG_BIT, 3f	/* not userspace */
+	ands	x8, x0, #7
+	cbnz	x8, 3f				/* not aligned */
+
+	enter_cpu_onfault
+
+1:	ldxr	x4, [x0]		/* load old value */
+	cmp	x4, x1			/*   compare? */
+	b.ne	2f			/*     return if different */
+	stxr	w5, x2, [x0]		/* store new value */
+	cbnz	w5, 1b			/*   succeed? nope, try again. */
+2:	str	x4, [x3]
+	mov	x8, #0			/* error = 0 */
+
+	exit_cpu_onfault
+	ret
+3:
+	mov	x0, #EFAULT
+	ret
+END(_ucas_64)

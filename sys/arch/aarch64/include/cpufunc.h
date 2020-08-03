@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.17 2020/08/02 06:58:16 maxv Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.18 2020/08/03 06:30:00 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -167,6 +167,7 @@ cpu_earlydevice_va_p(void)
 #endif /* _KERNEL */
 
 /* definitions of TAG and PAC in pointers */
+#define AARCH64_ADDRTOP_TAG_BIT		55
 #define AARCH64_ADDRTOP_TAG		__BIT(55)	/* ECR_EL1.TBI[01]=1 */
 #define AARCH64_ADDRTOP_MSB		__BIT(63)	/* ECR_EL1.TBI[01]=0 */
 #define AARCH64_ADDRESS_TAG_MASK	__BITS(63,56)	/* if TCR.TBI[01]=1 */
