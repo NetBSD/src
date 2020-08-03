@@ -1,4 +1,4 @@
-/*	$NetBSD: igphy.c,v 1.35 2020/08/03 07:16:51 msaitoh Exp $	*/
+/*	$NetBSD: igphy.c,v 1.36 2020/08/03 07:25:59 msaitoh Exp $	*/
 
 /*
  * The Intel copyright applies to the analog register setup, and the
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.35 2020/08/03 07:16:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.36 2020/08/03 07:25:59 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mii.h"
@@ -431,7 +431,7 @@ igphy_status(struct mii_softc *sc)
 
 	PHY_READ(sc, IGPHY_PORT_STATUS, &pssr);
 
-	if (pssr & PSSR_LINK_UP)
+	if (pssr & IGPHY_PSSR_LINK_UP)
 		mii->mii_media_status |= IFM_ACTIVE;
 
 	PHY_READ(sc, MII_BMCR, &bmcr);
@@ -453,19 +453,19 @@ igphy_status(struct mii_softc *sc)
 			mii->mii_media_active |= IFM_NONE;
 			return;
 		}
-		switch (pssr & PSSR_SPEED_MASK) {
-		case PSSR_SPEED_1000MBPS:
+		switch (pssr & IGPHY_PSSR_SPEED_MASK) {
+		case IGPHY_PSSR_SPEED_1000MBPS:
 			mii->mii_media_active |= IFM_1000_T;
 			PHY_READ(sc, MII_100T2SR, &gtsr);
 			if (gtsr & GTSR_MS_RES)
 				mii->mii_media_active |= IFM_ETH_MASTER;
 			break;
 
-		case PSSR_SPEED_100MBPS:
+		case IGPHY_PSSR_SPEED_100MBPS:
 			mii->mii_media_active |= IFM_100_TX;
 			break;
 
-		case PSSR_SPEED_10MBPS:
+		case IGPHY_PSSR_SPEED_10MBPS:
 			mii->mii_media_active |= IFM_10_T;
 			break;
 
@@ -475,7 +475,7 @@ igphy_status(struct mii_softc *sc)
 			return;
 		}
 
-		if (pssr & PSSR_FULL_DUPLEX)
+		if (pssr & IGPHY_PSSR_FULL_DUPLEX)
 			mii->mii_media_active |=
 			    IFM_FDX | mii_phy_flowstatus(sc);
 		else

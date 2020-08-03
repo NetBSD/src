@@ -1,4 +1,4 @@
-/*	$NetBSD: makphyreg.h,v 1.10 2019/12/12 09:25:37 msaitoh Exp $	*/
+/*	$NetBSD: makphyreg.h,v 1.11 2020/08/03 07:25:59 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -92,15 +92,15 @@
 #define	MSCR_ENHANCED_SGMII	0x0004	/* Enhanced SGMII */
 
 #define	MAKPHY_PSSR		0x11	/* PHY specific status register */
-#define	PSSR_JABBER		(1U << 0)   /* jabber indication */
-#define	PSSR_POLARITY		(1U << 1)   /* polarity indiciation */
-#define	PSSR_MDIX		(1U << 6)   /* 1 = MIDX, 0 = MDI */
-#define	PSSR_CABLE_LENGTH_get(x) (((x) >> 7) & 0x3)
-#define	PSSR_LINK		(1U << 10)  /* link indication */
-#define	PSSR_RESOLVED		(1U << 11)  /* speed and duplex resolved */
-#define	PSSR_PAGE_RECEIVED	(1U << 12)  /* page received */
-#define	PSSR_DUPLEX		(1U << 13)  /* 1 = FDX */
-#define	PSSR_SPEED_get(x)	(((x) >> 14) & 0x3)
+#define	MAKPHY_PSSR_JABBER	(1U << 0)   /* jabber indication */
+#define	MAKPHY_PSSR_POLARITY	(1U << 1)   /* polarity indiciation */
+#define	MAKPHY_PSSR_MDIX	(1U << 6)   /* 1 = MIDX, 0 = MDI */
+#define	MAKPHY_PSSR_CABLE_LENGTH_get(x) (((x) >> 7) & 0x3)
+#define	MAKPHY_PSSR_LINK	(1U << 10)  /* link indication */
+#define	MAKPHY_PSSR_RESOLVED	(1U << 11)  /* speed and duplex resolved */
+#define	MAKPHY_PSSR_PAGE_RECEIVED (1U << 12)  /* page received */
+#define	MAKPHY_PSSR_DUPLEX	(1U << 13)  /* 1 = FDX */
+#define	MAKPHY_PSSR_SPEED_get(x) (((x) >> 14) & 0x3)
 
 #define	SPEED_10		0
 #define	SPEED_100		1
@@ -108,10 +108,10 @@
 #define	SPEED_reserved		3
 
 /* For 88E1112 */
-#define	PSSR_RESOLUTION_FIBER	(1U << 7)   /*
-					     * Fiber/Copper resolution
-					     * 1 = Fiber, 0 = Copper
-					     */
+#define	MAKPHY_PSSR_RESOLUTION_FIBER (1U << 7) /*
+						* Fiber/Copper resolution
+						* 1 = Fiber, 0 = Copper
+						*/
 
 #define	MAKPHY_IE		0x12	/* Interrupt enable */
 #define	IE_JABBER		(1U << 0)   /* jabber indication */
