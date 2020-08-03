@@ -1,4 +1,4 @@
-/*	$NetBSD: view.h,v 1.5 2020/05/24 19:46:23 christos Exp $	*/
+/*	$NetBSD: view.h,v 1.6 2020/08/03 17:23:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -250,25 +250,6 @@ struct dns_view {
 #define DNS_VIEWATTR_RESSHUTDOWN 0x01
 #define DNS_VIEWATTR_ADBSHUTDOWN 0x02
 #define DNS_VIEWATTR_REQSHUTDOWN 0x04
-
-#ifdef HAVE_LMDB
-#include <lmdb.h>
-/*
- * MDB_NOTLS is used to prevent problems after configuration is reloaded, due
- * to the way LMDB's use of thread-local storage (TLS) interacts with the BIND9
- * thread model.
- */
-#define DNS_LMDB_COMMON_FLAGS (MDB_CREATE | MDB_NOSUBDIR | MDB_NOTLS)
-#ifndef __OpenBSD__
-#define DNS_LMDB_FLAGS (DNS_LMDB_COMMON_FLAGS)
-#else /* __OpenBSD__ */
-/*
- * OpenBSD does not have a unified buffer cache, which requires both reads and
- * writes to be performed using mmap().
- */
-#define DNS_LMDB_FLAGS (DNS_LMDB_COMMON_FLAGS | MDB_WRITEMAP)
-#endif /* __OpenBSD__ */
-#endif /* HAVE_LMDB */
 
 isc_result_t
 dns_view_create(isc_mem_t *mctx, dns_rdataclass_t rdclass, const char *name,

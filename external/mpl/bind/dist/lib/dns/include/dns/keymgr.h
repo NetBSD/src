@@ -1,4 +1,4 @@
-/*	$NetBSD: keymgr.h,v 1.2 2020/05/24 19:46:23 christos Exp $	*/
+/*	$NetBSD: keymgr.h,v 1.3 2020/08/03 17:23:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -51,6 +51,23 @@ dns_keymgr_run(const dns_name_t *origin, dns_rdataclass_t rdclass,
  *
  *	Ensures:
  *\li		On error, keypool is unchanged
+ */
+
+void
+dns_keymgr_status(dns_kasp_t *kasp, dns_dnsseckeylist_t *keyring,
+		  isc_stdtime_t now, char *out, size_t out_len);
+/*%<
+ * Retrieve the status of given 'kasp' policy and keys in the
+ * 'keyring' and store the printable output in the 'out' buffer.
+ *
+ *	Requires:
+ *\li		'kasp' is not NULL.
+ *\li		'keyring' is not NULL.
+ *\li		'out' is not NULL.
+ *
+ *	Returns:
+ *\li		Printable status in 'out'.
+ *
  */
 
 ISC_LANG_ENDDECLS

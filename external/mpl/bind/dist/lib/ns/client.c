@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.10 2020/05/25 15:13:25 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.11 2020/08/03 17:23:43 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -288,45 +288,20 @@ client_senddone(isc_nmhandle_t *handle, isc_result_t result, void *cbarg) {
 	isc_nmhandle_unref(handle);
 }
 
-/*%
- * We only want to fail with ISC_R_NOSPACE when called from
- * ns_client_sendraw() and not when called from ns_client_send(),
- * tcpbuffer is NULL when called from ns_client_sendraw() and
- * length != 0.  tcpbuffer != NULL when called from ns_client_send()
- * and length == 0.
- */
-
-static isc_result_t
+static void
 client_allocsendbuf(ns_client_t *client, isc_buffer_t *buffer,
-		    isc_buffer_t *tcpbuffer, uint32_t length,
 		    unsigned char **datap) {
 	unsigned char *data;
 	uint32_t bufsize;
-	isc_result_t result;
 
 	REQUIRE(datap != NULL);
-	REQUIRE((tcpbuffer == NULL && length != 0) ||
-		(tcpbuffer != NULL && length == 0));
 
 	if (TCP_CLIENT(client)) {
 		INSIST(client->tcpbuf == NULL);
-		if (length + 2 > NS_CLIENT_TCP_BUFFER_SIZE) {
-			result = ISC_R_NOSPACE;
-			goto done;
-		}
 		client->tcpbuf = isc_mem_get(client->mctx,
 					     NS_CLIENT_TCP_BUFFER_SIZE);
 		data = client->tcpbuf;
-		if (tcpbuffer != NULL) {
-			isc_buffer_init(tcpbuffer, data,
-					NS_CLIENT_TCP_BUFFER_SIZE);
-			isc_buffer_init(buffer, data,
-					NS_CLIENT_TCP_BUFFER_SIZE);
-		} else {
-			isc_buffer_init(buffer, data,
-					NS_CLIENT_TCP_BUFFER_SIZE);
-			INSIST(length <= 0xffff);
-		}
+		isc_buffer_init(buffer, data, NS_CLIENT_TCP_BUFFER_SIZE);
 	} else {
 		data = client->sendbuf;
 		if ((client->attributes & NS_CLIENTATTR_HAVECOOKIE) == 0) {
@@ -344,17 +319,9 @@ client_allocsendbuf(ns_client_t *client, isc_buffer_t *buffer,
 		if (bufsize > NS_CLIENT_SEND_BUFFER_SIZE) {
 			bufsize = NS_CLIENT_SEND_BUFFER_SIZE;
 		}
-		if (length > bufsize) {
-			result = ISC_R_NOSPACE;
-			goto done;
-		}
 		isc_buffer_init(buffer, data, bufsize);
 	}
 	*datap = data;
-	result = ISC_R_SUCCESS;
-
-done:
-	return (result);
 }
 
 static isc_result_t
@@ -386,8 +353,10 @@ ns_client_sendraw(ns_client_t *client, dns_message_t *message) {
 		goto done;
 	}
 
-	result = client_allocsendbuf(client, &buffer, NULL, mr->length, &data);
-	if (result != ISC_R_SUCCESS) {
+	client_allocsendbuf(client, &buffer, &data);
+
+	if (mr->length > isc_buffer_length(&buffer)) {
+		result = ISC_R_NOSPACE;
 		goto done;
 	}
 
@@ -423,7 +392,6 @@ ns_client_send(ns_client_t *client) {
 	isc_result_t result;
 	unsigned char *data;
 	isc_buffer_t buffer = { .magic = 0 };
-	isc_buffer_t tcpbuffer = { .magic = 0 };
 	isc_region_t r;
 	dns_compress_t cctx;
 	bool cleanup_cctx = false;
@@ -492,13 +460,7 @@ ns_client_send(ns_client_t *client) {
 		}
 	}
 
-	/*
-	 * XXXRTH  The following doesn't deal with TCP buffer resizing.
-	 */
-	result = client_allocsendbuf(client, &buffer, &tcpbuffer, 0, &data);
-	if (result != ISC_R_SUCCESS) {
-		goto done;
-	}
+	client_allocsendbuf(client, &buffer, &data);
 
 	result = dns_compress_init(&cctx, -1, client->mctx);
 	if (result != ISC_R_SUCCESS) {
@@ -520,7 +482,7 @@ ns_client_send(ns_client_t *client) {
 			dns_compress_setsensitive(&cctx, true);
 		}
 
-		if (client->view->msgcompression == false) {
+		if (!client->view->msgcompression) {
 			dns_compress_disable(&cctx);
 		}
 	}
@@ -620,7 +582,6 @@ renderend:
 		client->sendcb(&buffer);
 	} else if (TCP_CLIENT(client)) {
 		isc_buffer_usedregion(&buffer, &r);
-		isc_buffer_add(&tcpbuffer, r.length);
 #ifdef HAVE_DNSTAP
 		if (client->view != NULL) {
 			dns_dt_send(client->view, dtmsgtype, &client->peeraddr,
@@ -629,11 +590,10 @@ renderend:
 		}
 #endif /* HAVE_DNSTAP */
 
-		/* don't count the 2-octet length header */
-		respsize = isc_buffer_usedlength(&tcpbuffer) - 2;
+		respsize = isc_buffer_usedlength(&buffer);
 
 		isc_nmhandle_ref(client->handle);
-		result = client_sendpkg(client, &tcpbuffer);
+		result = client_sendpkg(client, &buffer);
 		if (result != ISC_R_SUCCESS) {
 			/* We won't get a callback to clean it up */
 			isc_nmhandle_unref(client->handle);
@@ -1659,7 +1619,6 @@ ns__client_put_cb(void *client0) {
 void
 ns__client_request(isc_nmhandle_t *handle, isc_region_t *region, void *arg) {
 	ns_client_t *client;
-	bool newclient = false;
 	ns_clientmgr_t *mgr;
 	ns_interface_t *ifp;
 	isc_result_t result;
@@ -1756,28 +1715,22 @@ ns__client_request(isc_nmhandle_t *handle, isc_region_t *region, void *arg) {
 	}
 #endif /* if NS_CLIENT_DROPPORT */
 
+	env = ns_interfacemgr_getaclenv(client->manager->interface->mgr);
+	if (client->sctx->blackholeacl != NULL &&
+	    (dns_acl_match(&netaddr, NULL, client->sctx->blackholeacl, env,
+			   &match, NULL) == ISC_R_SUCCESS) &&
+	    match > 0)
+	{
+		ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
+			      NS_LOGMODULE_CLIENT, ISC_LOG_DEBUG(10),
+			      "dropped request: blackholed peer");
+		isc_task_unpause(client->task);
+		return;
+	}
+
 	ns_client_log(client, NS_LOGCATEGORY_CLIENT, NS_LOGMODULE_CLIENT,
 		      ISC_LOG_DEBUG(3), "%s request",
 		      TCP_CLIENT(client) ? "TCP" : "UDP");
-
-	/*
-	 * Check the blackhole ACL for UDP only, since TCP is done in
-	 * client_newconn.
-	 */
-	env = ns_interfacemgr_getaclenv(client->manager->interface->mgr);
-	if (newclient) {
-		if (client->sctx->blackholeacl != NULL &&
-		    (dns_acl_match(&netaddr, NULL, client->sctx->blackholeacl,
-				   env, &match, NULL) == ISC_R_SUCCESS) &&
-		    match > 0)
-		{
-			ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
-				      NS_LOGMODULE_CLIENT, ISC_LOG_DEBUG(10),
-				      "blackholed UDP datagram");
-			isc_task_unpause(client->task);
-			return;
-		}
-	}
 
 	result = dns_message_peekheader(buffer, &id, &flags);
 	if (result != ISC_R_SUCCESS) {
@@ -2150,7 +2103,7 @@ ns__client_request(isc_nmhandle_t *handle, isc_region_t *region, void *arg) {
 	 * cache there is no point in setting RA.
 	 */
 	ra = false;
-	if (client->view->resolver != NULL && client->view->recursion == true &&
+	if (client->view->resolver != NULL && client->view->recursion &&
 	    ns_client_checkaclsilent(client, NULL, client->view->recursionacl,
 				     true) == ISC_R_SUCCESS &&
 	    ns_client_checkaclsilent(client, NULL, client->view->cacheacl,
@@ -2165,7 +2118,7 @@ ns__client_request(isc_nmhandle_t *handle, isc_region_t *region, void *arg) {
 		ra = true;
 	}
 
-	if (ra == true) {
+	if (ra) {
 		client->attributes |= NS_CLIENTATTR_RA;
 	}
 
@@ -2239,17 +2192,36 @@ ns__client_request(isc_nmhandle_t *handle, isc_region_t *region, void *arg) {
 	isc_task_unpause(client->task);
 }
 
-void
+isc_result_t
 ns__client_tcpconn(isc_nmhandle_t *handle, isc_result_t result, void *arg) {
-	ns_server_t *sctx = (ns_server_t *)arg;
+	ns_interface_t *ifp = (ns_interface_t *)arg;
+	dns_aclenv_t *env = ns_interfacemgr_getaclenv(ifp->mgr);
+	ns_server_t *sctx = ns_interfacemgr_getserver(ifp->mgr);
 	unsigned int tcpquota;
+	isc_sockaddr_t peeraddr;
+	isc_netaddr_t netaddr;
+	int match;
 
-	UNUSED(handle);
 	UNUSED(result);
+
+	if (handle != NULL) {
+		peeraddr = isc_nmhandle_peeraddr(handle);
+		isc_netaddr_fromsockaddr(&netaddr, &peeraddr);
+
+		if (sctx->blackholeacl != NULL &&
+		    (dns_acl_match(&netaddr, NULL, sctx->blackholeacl, env,
+				   &match, NULL) == ISC_R_SUCCESS) &&
+		    match > 0)
+		{
+			return (ISC_R_CONNREFUSED);
+		}
+	}
 
 	tcpquota = isc_quota_getused(&sctx->tcpquota);
 	ns_stats_update_if_greater(sctx->nsstats, ns_statscounter_tcphighwater,
 				   tcpquota);
+
+	return (ISC_R_SUCCESS);
 }
 
 static void

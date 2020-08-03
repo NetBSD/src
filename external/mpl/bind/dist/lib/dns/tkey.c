@@ -1,4 +1,4 @@
-/*	$NetBSD: tkey.c,v 1.6 2020/05/24 19:46:23 christos Exp $	*/
+/*	$NetBSD: tkey.c,v 1.7 2020/08/03 17:23:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1508,7 +1508,7 @@ dns_tkey_gssnegotiate(dns_message_t *qmsg, dns_message_t *rmsg,
 	RETERR(dns_rdata_tostruct(&rtkeyrdata, &rtkey, NULL));
 	freertkey = true;
 
-	if (win2k == true) {
+	if (win2k) {
 		RETERR(find_tkey(qmsg, &tkeyname, &qtkeyrdata,
 				 DNS_SECTION_ANSWER));
 	} else {

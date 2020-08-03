@@ -1,4 +1,4 @@
-/*	$NetBSD: fsaccess.c,v 1.4 2020/05/24 19:46:28 christos Exp $	*/
+/*	$NetBSD: fsaccess.c,v 1.5 2020/08/03 17:23:43 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -206,7 +206,7 @@ NTFS_Access_Control(const char *filename, const char *user, int access,
 	}
 
 	/* For directories check the directory-specific bits */
-	if (isdir == true) {
+	if (isdir) {
 		if ((caccess & ISC_FSACCESS_CREATECHILD) != 0) {
 			NTFSbits |= FILE_ADD_SUBDIRECTORY | FILE_ADD_FILE;
 		}

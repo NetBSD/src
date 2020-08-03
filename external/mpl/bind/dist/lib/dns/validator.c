@@ -1,4 +1,4 @@
-/*	$NetBSD: validator.c,v 1.7 2020/05/24 19:46:23 christos Exp $	*/
+/*	$NetBSD: validator.c,v 1.8 2020/08/03 17:23:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -154,6 +154,9 @@ expire_rdatasets(dns_validator_t *val) {
  */
 static void
 disassociate_rdatasets(dns_validator_t *val) {
+	if (dns_rdataset_isassociated(&val->fdsset)) {
+		dns_rdataset_disassociate(&val->fdsset);
+	}
 	if (dns_rdataset_isassociated(&val->frdataset)) {
 		dns_rdataset_disassociate(&val->frdataset);
 	}
@@ -531,7 +534,6 @@ fetch_callback_ds(isc_task_t *task, isc_event_t *event) {
 				      "dsset with trust %s",
 				      dns_trust_totext(rdataset->trust));
 			val->dsset = &val->frdataset;
-			INSIST(val->keynode == NULL);
 			result = validate_dnskey(val);
 			if (result != DNS_R_WAIT) {
 				validator_done(val, result);
@@ -1126,24 +1128,25 @@ select_signing_key(dns_validator_t *val, dns_rdataset_t *rdataset) {
 		INSIST(val->key == NULL);
 		result = dst_key_fromdns(&siginfo->signer, rdata.rdclass, &b,
 					 val->view->mctx, &val->key);
-		if (result != ISC_R_SUCCESS) {
-			goto failure;
-		}
-		if (siginfo->algorithm == (dns_secalg_t)dst_key_alg(val->key) &&
-		    siginfo->keyid == (dns_keytag_t)dst_key_id(val->key) &&
-		    dst_key_iszonekey(val->key))
-		{
-			if (foundold) {
-				/*
-				 * This is the key we're looking for.
-				 */
-				return (ISC_R_SUCCESS);
-			} else if (dst_key_compare(oldkey, val->key)) {
-				foundold = true;
-				dst_key_free(&oldkey);
+		if (result == ISC_R_SUCCESS) {
+			if (siginfo->algorithm ==
+				    (dns_secalg_t)dst_key_alg(val->key) &&
+			    siginfo->keyid ==
+				    (dns_keytag_t)dst_key_id(val->key) &&
+			    dst_key_iszonekey(val->key))
+			{
+				if (foundold) {
+					/*
+					 * This is the key we're looking for.
+					 */
+					return (ISC_R_SUCCESS);
+				} else if (dst_key_compare(oldkey, val->key)) {
+					foundold = true;
+					dst_key_free(&oldkey);
+				}
 			}
+			dst_key_free(&val->key);
 		}
-		dst_key_free(&val->key);
 		dns_rdata_reset(&rdata);
 		result = dns_rdataset_next(rdataset);
 	} while (result == ISC_R_SUCCESS);
@@ -1685,7 +1688,6 @@ get_dsset(dns_validator_t *val, dns_name_t *tname, isc_result_t *resp) {
 		 * We have a DS RRset.
 		 */
 		val->dsset = &val->frdataset;
-		INSIST(val->keynode == NULL);
 		if ((DNS_TRUST_PENDING(val->frdataset.trust) ||
 		     DNS_TRUST_ANSWER(val->frdataset.trust)) &&
 		    dns_rdataset_isassociated(&val->fsigrdataset))
@@ -1781,11 +1783,10 @@ validate_dnskey(dns_validator_t *val) {
 		result = dns_keytable_find(val->keytable, val->event->name,
 					   &keynode);
 		if (result == ISC_R_SUCCESS) {
-			val->dsset = dns_keynode_dsset(keynode);
-			if (val->dsset == NULL) {
-				dns_keytable_detachkeynode(val->keytable,
-							   &keynode);
+			if (dns_keynode_dsset(keynode, &val->fdsset)) {
+				val->dsset = &val->fdsset;
 			}
+			dns_keytable_detachkeynode(val->keytable, &keynode);
 		}
 	}
 
@@ -1816,14 +1817,6 @@ validate_dnskey(dns_validator_t *val) {
 		 */
 		result = get_dsset(val, val->event->name, &tresult);
 		if (result == ISC_R_COMPLETE) {
-			if (tresult == DNS_R_WAIT) {
-				/*
-				 * Keep the keynode attached so we don't
-				 * lose val->dsset.
-				 */
-				val->keynode = keynode;
-			}
-
 			result = tresult;
 			goto cleanup;
 		}
@@ -1835,8 +1828,8 @@ validate_dnskey(dns_validator_t *val) {
 	INSIST(val->dsset != NULL);
 
 	if (val->dsset->trust < dns_trust_secure) {
-		INSIST(keynode == NULL);
-		return (markanswer(val, "validate_dnskey (2)", "insecure DS"));
+		result = markanswer(val, "validate_dnskey (2)", "insecure DS");
+		goto cleanup;
 	}
 
 	/*
@@ -1951,9 +1944,9 @@ validate_dnskey(dns_validator_t *val) {
 	}
 
 cleanup:
-	if (keynode != NULL) {
+	if (val->dsset == &val->fdsset) {
 		val->dsset = NULL;
-		dns_keytable_detachkeynode(val->keytable, &keynode);
+		dns_rdataset_disassociate(&val->fdsset);
 	}
 
 	return (result);
@@ -3115,6 +3108,7 @@ dns_validator_create(dns_view_t *view, dns_name_t *name, dns_rdatatype_t type,
 	}
 
 	val->mustbesecure = dns_resolver_getmustbesecure(view->resolver, name);
+	dns_rdataset_init(&val->fdsset);
 	dns_rdataset_init(&val->frdataset);
 	dns_rdataset_init(&val->fsigrdataset);
 	dns_fixedname_init(&val->wild);
@@ -3207,10 +3201,6 @@ destroy(dns_validator_t *val) {
 		dst_key_free(&val->key);
 	}
 	if (val->keytable != NULL) {
-		if (val->keynode != NULL) {
-			dns_keytable_detachkeynode(val->keytable,
-						   &val->keynode);
-		}
 		dns_keytable_detach(&val->keytable);
 	}
 	if (val->subvalidator != NULL) {

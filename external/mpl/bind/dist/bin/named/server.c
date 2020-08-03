@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.10 2020/05/24 19:46:12 christos Exp $	*/
+/*	$NetBSD: server.c,v 1.11 2020/08/03 17:23:37 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -60,6 +60,7 @@
 #include <dns/dlz.h>
 #include <dns/dns64.h>
 #include <dns/dnsrps.h>
+#include <dns/dnssec.h>
 #include <dns/dyndb.h>
 #include <dns/events.h>
 #include <dns/fixedname.h>
@@ -67,6 +68,7 @@
 #include <dns/geoip.h>
 #include <dns/journal.h>
 #include <dns/kasp.h>
+#include <dns/keymgr.h>
 #include <dns/keytable.h>
 #include <dns/keyvalues.h>
 #include <dns/lib.h>
@@ -130,7 +132,7 @@
 #endif /* ifdef HAVE_LIBSCF */
 
 #ifdef HAVE_LMDB
-#include <lmdb.h>
+#include <dns/lmdb.h>
 #define count_newzones	   count_newzones_db
 #define configure_newzones configure_newzones_db
 #define dumpzone	   dumpzone_db
@@ -2669,7 +2671,7 @@ catz_addmodzone_taskaction(isc_task_t *task, isc_event_t *event0) {
 	result = dns_zt_find(ev->view->zonetable,
 			     dns_catz_entry_getname(ev->entry), 0, NULL, &zone);
 
-	if (ev->mod == true) {
+	if (ev->mod) {
 		if (result != ISC_R_SUCCESS) {
 			isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 				      NAMED_LOGMODULE_SERVER, ISC_LOG_WARNING,
@@ -6942,24 +6944,26 @@ struct dotat_arg {
  */
 static isc_result_t
 get_tat_qname(dns_name_t *target, dns_name_t *keyname, dns_keynode_t *keynode) {
-	dns_rdataset_t *dsset = NULL;
+	dns_rdataset_t dsset;
 	unsigned int i, n = 0;
 	uint16_t ids[12];
 	isc_textregion_t r;
 	char label[64];
 	int m;
 
-	if ((dsset = dns_keynode_dsset(keynode)) != NULL) {
+	dns_rdataset_init(&dsset);
+	if (dns_keynode_dsset(keynode, &dsset)) {
 		isc_result_t result;
 
-		for (result = dns_rdataset_first(dsset);
-		     result == ISC_R_SUCCESS; result = dns_rdataset_next(dsset))
+		for (result = dns_rdataset_first(&dsset);
+		     result == ISC_R_SUCCESS;
+		     result = dns_rdataset_next(&dsset))
 		{
 			dns_rdata_t rdata = DNS_RDATA_INIT;
 			dns_rdata_ds_t ds;
 
 			dns_rdata_reset(&rdata);
-			dns_rdataset_current(dsset, &rdata);
+			dns_rdataset_current(&dsset, &rdata);
 			result = dns_rdata_tostruct(&rdata, &ds, NULL);
 			RUNTIME_CHECK(result == ISC_R_SUCCESS);
 			if (n < (sizeof(ids) / sizeof(ids[0]))) {
@@ -6967,6 +6971,7 @@ get_tat_qname(dns_name_t *target, dns_name_t *keyname, dns_keynode_t *keynode) {
 				n++;
 			}
 		}
+		dns_rdataset_disassociate(&dsset);
 	}
 
 	if (n == 0) {
@@ -10092,6 +10097,7 @@ named_server_destroy(named_server_t **serverp) {
 	dst_lib_destroy();
 
 	isc_event_free(&server->reload_event);
+	isc_mutex_destroy(&server->reload_event_lock);
 
 	INSIST(ISC_LIST_EMPTY(server->kasplist));
 	INSIST(ISC_LIST_EMPTY(server->viewlist));
@@ -14459,6 +14465,83 @@ cleanup:
 	if (db != NULL) {
 		dns_db_detach(&db);
 	}
+	if (zone != NULL) {
+		dns_zone_detach(&zone);
+	}
+
+	return (result);
+}
+
+isc_result_t
+named_server_dnssec(named_server_t *server, isc_lex_t *lex,
+		    isc_buffer_t **text) {
+	isc_result_t result = ISC_R_SUCCESS;
+	dns_zone_t *zone = NULL;
+	dns_kasp_t *kasp = NULL;
+	dns_dnsseckeylist_t keys;
+	dns_dnsseckey_t *key;
+	const char *ptr;
+	/* variables for -status */
+	char output[BUFSIZ];
+	isc_stdtime_t now;
+	isc_time_t timenow;
+	const char *dir;
+
+	/* Skip the command name. */
+	ptr = next_token(lex, text);
+	if (ptr == NULL) {
+		return (ISC_R_UNEXPECTEDEND);
+	}
+
+	/* Find out what we are to do. */
+	ptr = next_token(lex, text);
+	if (ptr == NULL) {
+		return (ISC_R_UNEXPECTEDEND);
+	}
+
+	if (strcasecmp(ptr, "-status") != 0) {
+		return (DNS_R_SYNTAX);
+	}
+
+	ISC_LIST_INIT(keys);
+
+	CHECK(zone_from_args(server, lex, NULL, &zone, NULL, text, false));
+	if (zone == NULL) {
+		CHECK(ISC_R_UNEXPECTEDEND);
+	}
+
+	kasp = dns_zone_getkasp(zone);
+	if (kasp == NULL) {
+		CHECK(putstr(text, "zone does not have dnssec-policy"));
+		CHECK(putnull(text));
+		goto cleanup;
+	}
+
+	/* -status */
+	TIME_NOW(&timenow);
+	now = isc_time_seconds(&timenow);
+	dir = dns_zone_getkeydirectory(zone);
+	LOCK(&kasp->lock);
+	result = dns_dnssec_findmatchingkeys(dns_zone_getorigin(zone), dir, now,
+					     dns_zone_getmctx(zone), &keys);
+	UNLOCK(&kasp->lock);
+
+	if (result != ISC_R_SUCCESS && result != ISC_R_NOTFOUND) {
+		goto cleanup;
+	}
+	LOCK(&kasp->lock);
+	dns_keymgr_status(kasp, &keys, now, &output[0], sizeof(output));
+	UNLOCK(&kasp->lock);
+	CHECK(putstr(text, output));
+	CHECK(putnull(text));
+
+cleanup:
+	while (!ISC_LIST_EMPTY(keys)) {
+		key = ISC_LIST_HEAD(keys);
+		ISC_LIST_UNLINK(keys, key, link);
+		dns_dnsseckey_destroy(dns_zone_getmctx(zone), &key);
+	}
+
 	if (zone != NULL) {
 		dns_zone_detach(&zone);
 	}

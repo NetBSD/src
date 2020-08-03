@@ -1,18 +1,16 @@
-#	$NetBSD: Makefile,v 1.1 2018/08/12 13:02:26 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2020/08/03 17:23:35 christos Exp $
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 PROG=	nslookup
 SRCS=	nslookup.c dighost.c
 MAN=	nslookup.8
 BINDIR=	/usr/bin
 
-.include "${.CURDIR}/../Makefile.inc"
-
 DIST=${IDIST}/bin/dig
 CPPFLAGS+= -I${DIST}/include
 
-.PATH: ${DIST}
+.PATH: ${DIST} ${IDIST}/doc/man
 DPADD+=${LIBEDIT} ${LIBTERMINFO}
 LDADD+=-ledit -lterminfo
 

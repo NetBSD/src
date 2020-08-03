@@ -1,4 +1,4 @@
-/*	$NetBSD: zoneverify.c,v 1.5 2020/05/24 19:46:23 christos Exp $	*/
+/*	$NetBSD: zoneverify.c,v 1.6 2020/08/03 17:23:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1480,7 +1480,7 @@ check_dnskey_sigs(vctx_t *vctx, const dns_rdata_dnskey_t *dnskey,
 	bool *goodkey = NULL;
 	dst_key_t *key = NULL;
 	isc_result_t result;
-	dns_rdataset_t *dsset = NULL;
+	dns_rdataset_t dsset;
 
 	active_keys = (is_ksk ? vctx->ksk_algorithms : vctx->zsk_algorithms);
 	standby_keys = (is_ksk ? vctx->standby_ksk : vctx->standby_zsk);
@@ -1545,9 +1545,11 @@ check_dnskey_sigs(vctx_t *vctx, const dns_rdata_dnskey_t *dnskey,
 	 * it doesn't have any DNSKEY ones. So, we can check for a DS
 	 * match and then stop.
 	 */
-	if ((dsset = dns_keynode_dsset(keynode)) != NULL) {
-		for (result = dns_rdataset_first(dsset);
-		     result == ISC_R_SUCCESS; result = dns_rdataset_next(dsset))
+	dns_rdataset_init(&dsset);
+	if (dns_keynode_dsset(keynode, &dsset)) {
+		for (result = dns_rdataset_first(&dsset);
+		     result == ISC_R_SUCCESS;
+		     result = dns_rdataset_next(&dsset))
 		{
 			dns_rdata_t dsrdata = DNS_RDATA_INIT;
 			dns_rdata_t newdsrdata = DNS_RDATA_INIT;
@@ -1555,7 +1557,7 @@ check_dnskey_sigs(vctx_t *vctx, const dns_rdata_dnskey_t *dnskey,
 			dns_rdata_ds_t ds;
 
 			dns_rdata_reset(&dsrdata);
-			dns_rdataset_current(dsset, &dsrdata);
+			dns_rdataset_current(&dsset, &dsrdata);
 			result = dns_rdata_tostruct(&dsrdata, &ds, NULL);
 			RUNTIME_CHECK(result == ISC_R_SUCCESS);
 
@@ -1580,6 +1582,7 @@ check_dnskey_sigs(vctx_t *vctx, const dns_rdata_dnskey_t *dnskey,
 				break;
 			}
 		}
+		dns_rdataset_disassociate(&dsset);
 
 		goto cleanup;
 	}

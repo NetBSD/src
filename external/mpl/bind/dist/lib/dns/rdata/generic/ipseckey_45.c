@@ -1,4 +1,4 @@
-/*	$NetBSD: ipseckey_45.c,v 1.6 2020/05/24 19:46:24 christos Exp $	*/
+/*	$NetBSD: ipseckey_45.c,v 1.7 2020/08/03 17:23:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -176,12 +176,12 @@ totext_ipseckey(ARGS_TOTEXT) {
 		break;
 
 	case 1:
-		RETERR(inet_totext(AF_INET, &region, target));
+		RETERR(inet_totext(AF_INET, tctx->flags, &region, target));
 		isc_region_consume(&region, 4);
 		break;
 
 	case 2:
-		RETERR(inet_totext(AF_INET6, &region, target));
+		RETERR(inet_totext(AF_INET6, tctx->flags, &region, target));
 		isc_region_consume(&region, 16);
 		break;
 

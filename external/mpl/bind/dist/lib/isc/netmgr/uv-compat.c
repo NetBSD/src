@@ -1,4 +1,4 @@
-/*	$NetBSD: uv-compat.c,v 1.2 2020/05/24 19:46:27 christos Exp $	*/
+/*	$NetBSD: uv-compat.c,v 1.3 2020/08/03 17:23:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -74,6 +74,7 @@ isc_uv_export(uv_stream_t *stream, isc_uv_stream_info_t *info) {
 	if (xfer_info.delayed_error != 0) {
 		return (xfer_info.delayed_error);
 	}
+	INSIST(xfer_type == UV__IPC_SOCKET_XFER_TCP_CONNECTION);
 	info->type = UV_TCP;
 	info->socket_info = xfer_info.socket_info;
 	return (0);
@@ -86,7 +87,7 @@ isc_uv_import(uv_stream_t *stream, isc_uv_stream_info_t *info) {
 	}
 
 	return (uv__tcp_xfer_import(
-		(uv_tcp_t *)stream, UV__IPC_SOCKET_XFER_TCP_SERVER,
+		(uv_tcp_t *)stream, UV__IPC_SOCKET_XFER_TCP_CONNECTION,
 		&(uv__ipc_socket_xfer_info_t){
 			.socket_info = info->socket_info }));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: os.h,v 1.3 2019/01/09 16:54:59 christos Exp $	*/
+/*	$NetBSD: os.h,v 1.4 2020/08/03 17:23:37 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -75,7 +75,7 @@ named_os_tzset(void);
 void
 named_os_started(void);
 
-char *
+const char *
 named_os_uname(void);
 
 #endif /* NAMED_OS_H */
