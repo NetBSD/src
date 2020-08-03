@@ -19,9 +19,9 @@ CINCLUDES =	-I. -Iinclude ${DNS_INCLUDES} ${ISC_INCLUDES} \
 		${OPENSSL_CFLAGS} ${MAXMINDDB_CFLAGS} @CMOCKA_CFLAGS@
 CDEFINES =	-DTESTS="\"${top_builddir}/lib/dns/tests/\""
 
-ISCLIBS =	../../isc/libisc.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
+ISCLIBS =	../../isc/libisc.@A@ @NO_LIBTOOL_ISCLIBS@
 ISCDEPLIBS =	../../isc/libisc.@A@
-DNSLIBS =	../libdns.@A@ ${MAXMINDDB_LIBS} @DNS_CRYPTO_LIBS@
+DNSLIBS =	../libdns.@A@ @NO_LIBTOOL_DNSLIBS@
 DNSDEPLIBS =	../libdns.@A@
 
 LIBS =		@LIBS@ @CMOCKA_LIBS@
@@ -132,7 +132,7 @@ dispatch_test@EXEEXT@: dispatch_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 dnstap_test@EXEEXT@: dnstap_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
 		${LDFLAGS} -o $@ dnstap_test.@O@ dnstest.@O@ \
-		${DNSLIBS} ${ISCLIBS} ${LIBS}
+		${FSTRM_LIBS} ${DNSLIBS} ${ISCLIBS} ${LIBS}
 
 dst_test@EXEEXT@: dst_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
@@ -142,7 +142,7 @@ dst_test@EXEEXT@: dst_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 geoip_test@EXEEXT@: geoip_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
 		${LDFLAGS} -o $@ geoip_test.@O@ dnstest.@O@ \
-		${DNSLIBS} ${ISCLIBS} ${LIBS}
+		${DNSLIBS} ${MAXMINDDB_LIBS} ${ISCLIBS} ${LIBS}
 
 keytable_test@EXEEXT@: keytable_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \

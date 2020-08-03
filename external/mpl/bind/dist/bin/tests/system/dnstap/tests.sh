@@ -759,5 +759,28 @@ lines=`$DNSTAPREAD -y large-answer.fstrm | grep -c "opcode: QUERY"`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
+test_dnstap_roll() (
+    ip="$1"
+    ns="$2"
+    n="$3"
+    $RNDCCMD -s "${ip}" dnstap -roll "${n}" | sed "s/^/${ns} /" | cat_i &&
+    files=$(find "$ns" -name "dnstap.out.[0-9]" | wc -l) &&
+    test "$files" -le "${n}" && test "$files" -ge "1"
+)
+
+echo_i "checking 'rndc -roll <value>' (no versions)"
+ret=0
+start_server --noclean --restart --port "${PORT}" dnstap ns3
+_repeat 5 test_dnstap_roll 10.53.0.3 ns3 3 || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
+
+echo_i "checking 'rndc -roll <value>' (versions)"
+ret=0
+start_server --noclean --restart --port "${PORT}" dnstap ns2
+_repeat 5 test_dnstap_roll 10.53.0.2 ns2 3 || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
+
 echo_i "exit status: $status"
-[ $status -eq 0 ] || exit 1
+[ "$status" -eq 0 ] || exit 1

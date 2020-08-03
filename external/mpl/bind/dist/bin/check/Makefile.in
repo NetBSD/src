@@ -22,10 +22,10 @@ CINCLUDES =	${NS_INCLUDES} ${BIND9_INCLUDES} ${DNS_INCLUDES} ${ISCCFG_INCLUDES} 
 CDEFINES = 	-DNAMED_CONFFILE=\"${sysconfdir}/named.conf\"
 CWARNINGS =
 
-DNSLIBS =	../../lib/dns/libdns.@A@ ${MAXMINDDB_LIBS} @DNS_CRYPTO_LIBS@
+DNSLIBS =	../../lib/dns/libdns.@A@ @NO_LIBTOOL_DNSLIBS@
 ISCCFGLIBS =	../../lib/isccfg/libisccfg.@A@
-ISCLIBS =	../../lib/isc/libisc.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
-ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
+ISCLIBS =	../../lib/isc/libisc.@A@ @NO_LIBTOOL_ISCLIBS@
+ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ @NO_LIBTOOL_ISCLIBS@
 BIND9LIBS =	../../lib/bind9/libbind9.@A@
 NSLIBS =	../../lib/ns/libns.@A@
 
@@ -45,12 +45,6 @@ TARGETS =	named-checkconf@EXEEXT@ named-checkzone@EXEEXT@
 
 # Alphabetically
 SRCS =		named-checkconf.c named-checkzone.c check-tool.c
-
-MANPAGES =	named-checkconf.8 named-checkzone.8
-
-HTMLPAGES =	named-checkconf.html named-checkzone.html
-
-MANOBJS =	${MANPAGES} ${HTMLPAGES}
 
 @BIND9_MAKE_RULES@
 
@@ -76,25 +70,15 @@ named-checkzone@EXEEXT@: named-checkzone.@O@ check-tool.@O@ ${ISCDEPLIBS} \
 	export LIBS0="${NSLIBS} ${ISCCFGLIBS} ${DNSLIBS}"; \
 	${FINALBUILDCMD}
 
-doc man:: ${MANOBJS}
-
-docclean manclean maintainer-clean::
-	rm -f ${MANOBJS}
-
 installdirs:
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${sbindir}
-	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${mandir}/man8
 
 install:: named-checkconf@EXEEXT@ named-checkzone@EXEEXT@ installdirs
 	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} named-checkconf@EXEEXT@ ${DESTDIR}${sbindir}
 	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} named-checkzone@EXEEXT@ ${DESTDIR}${sbindir}
 	(cd ${DESTDIR}${sbindir}; rm -f named-compilezone@EXEEXT@; ${LINK_PROGRAM} named-checkzone@EXEEXT@ named-compilezone@EXEEXT@)
-	for m in ${MANPAGES}; do ${INSTALL_DATA} ${srcdir}/$$m ${DESTDIR}${mandir}/man8 || exit 1; done
-	(cd ${DESTDIR}${mandir}/man8; rm -f named-compilezone.8; ${LINK_PROGRAM} named-checkzone.8 named-compilezone.8)
 
 uninstall::
-	rm -f ${DESTDIR}${mandir}/man8/named-compilezone.8
-	for m in ${MANPAGES}; do rm -f ${DESTDIR}${mandir}/man8/$$m || exit 1; done
 	rm -f ${DESTDIR}${sbindir}/named-compilezone@EXEEXT@
 	${LIBTOOL_MODE_UNINSTALL} rm -f ${DESTDIR}${sbindir}/named-checkconf@EXEEXT@
 	${LIBTOOL_MODE_UNINSTALL} rm -f ${DESTDIR}${sbindir}/named-checkzone@EXEEXT@

@@ -187,60 +187,6 @@ copy InstallFiles ..\Build\Debug\
 if NOT Exist ..\Build mkdir ..\Build
 if NOT Exist ..\Build\Release mkdir ..\Build\Release
 
-echo Copying the ARM and the Installation Notes.
-
-copy ..\COPYRIGHT ..\Build\Release
-copy ..\README ..\Build\Release
-copy ..\HISTORY ..\Build\Release
-copy readme1st.txt ..\Build\Release
-copy index.html ..\Build\Release
-copy ..\doc\arm\*.html ..\Build\Release
-copy ..\doc\arm\notes.pdf ..\Build\Release
-copy ..\doc\arm\Bv9ARM.pdf ..\Build\Release
-copy ..\CHANGES ..\Build\Release
-if Exist ..\CHANGES.SE copy ..\CHANGES.SE ..\Build\Release
-copy ..\FAQ ..\Build\Release
-
-echo Copying the standalone manual pages.
-
-copy ..\bin\named\named.html ..\Build\Release
-copy ..\bin\named\named.conf.html ..\Build\Release
-copy ..\bin\rndc\*.html ..\Build\Release
-copy ..\bin\confgen\*.html ..\Build\Release
-copy ..\bin\dig\*.html ..\Build\Release
-copy ..\bin\delv\*.html ..\Build\Release
-copy ..\bin\nsupdate\*.html ..\Build\Release
-copy ..\bin\check\*.html ..\Build\Release
-copy ..\bin\dnssec\dnssec-keygen.html ..\Build\Release
-copy ..\bin\dnssec\dnssec-signzone.html ..\Build\Release
-copy ..\bin\dnssec\dnssec-dsfromkey.html ..\Build\Release
-copy ..\bin\dnssec\dnssec-keyfromlabel.html ..\Build\Release
-copy ..\bin\dnssec\dnssec-settime.html ..\Build\Release
-copy ..\bin\dnssec\dnssec-revoke.html ..\Build\Release
-copy ..\bin\dnssec\dnssec-verify.html ..\Build\Release
-copy ..\bin\dnssec\dnssec-importkey.html ..\Build\Release
-@IF PYTHON
-copy ..\bin\python\dnssec-checkds.html ..\Build\Release
-copy ..\bin\python\dnssec-coverage.html ..\Build\Release
-copy ..\bin\python\dnssec-keymgr.html ..\Build\Release
-@END PYTHON
-@IF PKCS11
-copy ..\bin\pkcs11\pkcs11-keygen.html ..\Build\Release
-copy ..\bin\pkcs11\pkcs11-list.html ..\Build\Release
-copy ..\bin\pkcs11\pkcs11-destroy.html ..\Build\Release
-copy ..\bin\pkcs11\pkcs11-tokens.html ..\Build\Release
-@END PKCS11
-copy ..\bin\tools\arpaname.html ..\Build\Release
-copy ..\bin\tools\named-journalprint.html ..\Build\Release
-copy ..\bin\tools\named-rrchecker.html ..\Build\Release
-copy ..\bin\tools\nsec3hash.html ..\Build\Release
-copy ..\bin\tools\mdig.html ..\Build\Release
-
-echo Copying the migration notes.
-
-copy ..\doc\misc\migration ..\Build\Release
-copy ..\doc\misc\migration-4to9 ..\Build\Release
-
 echo Copying the OpenSSL DLL and LICENSE.
 
 copy @OPENSSL_DLL@ ..\Build\Release\
@@ -375,6 +321,7 @@ copy InstallFiles ..\Build\Release\
     <ClInclude Include="..\include\isc\timer.h" />
     <ClInclude Include="..\include\isc\tm.h" />
     <ClInclude Include="..\include\isc\types.h" />
+    <ClInclude Include="..\include\isc\utf8.h" />
     <ClInclude Include="..\include\isc\util.h" />
     <ClInclude Include="..\include\isc\version.h" />
 @IF PKCS11
@@ -478,6 +425,7 @@ copy InstallFiles ..\Build\Release\
     <ClCompile Include="..\taskpool.c" />
     <ClCompile Include="..\timer.c" />
     <ClCompile Include="..\tm.c" />
+    <ClCompile Include="..\utf8.c" />
 @IF PKCS11
     <ClCompile Include="..\pk11.c" />
     <ClCompile Include="..\pk11_result.c" />

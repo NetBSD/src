@@ -62,7 +62,7 @@ OBJS =		pk11.@O@ pk11_result.@O@ \
 		region.@O@ regex.@O@ result.@O@ rwlock.@O@ \
 		safe.@O@ serial.@O@ siphash.@O@ sockaddr.@O@ stats.@O@ \
 		string.@O@ symtab.@O@ task.@O@ taskpool.@O@ \
-		tm.@O@ timer.@O@ version.@O@ \
+		utf8.@O@ tm.@O@ timer.@O@ version.@O@ \
 		${UNIXOBJS} ${THREADOBJS}
 SYMTBLOBJS =	backtrace-emptytbl.@O@
 
@@ -80,9 +80,9 @@ SRCS =		pk11.c pk11_result.c \
 		ratelimiter.c region.c regex.c result.c rwlock.c \
 		safe.c serial.c siphash.c sockaddr.c stats.c string.c \
 		symtab.c task.c taskpool.c timer.c \
-		tm.c version.c
+		utf8.c tm.c version.c
 
-LIBS =		${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS} @LIBS@
+LIBS =		${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBUV_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS} @LIBS@
 
 # Note: the order of SUBDIRS is important.
 # Attempt to disable parallel processing.

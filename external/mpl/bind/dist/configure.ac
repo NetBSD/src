@@ -48,6 +48,7 @@ AC_PROG_LIBTOOL
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AX_POSIX_SHELL
+AC_PROG_MKDIR_P
 
 AC_SUBST(STD_CINCLUDES)
 AC_SUBST(STD_CDEFINES)
@@ -339,7 +340,7 @@ case "$INSTALL" in
 		;;
 esac
 
-AC_PATH_PROGS([PYTEST], [pytest-3 pytest pytest-pypy], [])
+AC_PATH_PROGS([PYTEST], [pytest-3 py.test-3 pytest pytest-pypy], [])
 AS_IF([test -z "$PYTEST"],
       [AC_MSG_WARN([pytest not found, some system tests will be skipped])])
 AC_SUBST([PYTEST])
@@ -666,14 +667,16 @@ AC_CHECK_HEADERS([pthread_np.h], [], [], [#include <pthread.h>])
 AC_MSG_CHECKING(for libuv)
 PKG_CHECK_MODULES([LIBUV], [libuv >= 1.0.0], [],
 		  [AC_MSG_ERROR([libuv not found])])
+AC_SUBST([LIBUV_CFLAGS])
+AC_SUBST([LIBUV_LIBS])
+
 AX_SAVE_FLAGS([libuv])
-
 CFLAGS="$CFLAGS $LIBUV_CFLAGS"
-LIBS="$LIBS $LIBUV_LIBS"
-
+LIBS="$LDFLAGS $LIBUV_LIBS"
 # Those functions are only provided in newer versions of libuv, we'll be emulating them
 # for now
 AC_CHECK_FUNCS([uv_handle_get_data uv_handle_set_data uv_import])
+AX_RESTORE_FLAGS([libuv])
 
 #
 # flockfile is usually provided by pthreads
@@ -690,7 +693,8 @@ AC_SUBST(ALWAYS_DEFINES)
 AC_MSG_CHECKING(for libtool)
 AC_ARG_WITH(libtool, AS_HELP_STRING([--with-libtool], [use GNU libtool]),
 	    use_libtool="$withval", use_libtool="no")
-
+NO_LIBTOOL_ISCLIBS=
+NO_LIBTOOL_DNSLIBS=
 case $use_libtool in
 	yes)
 		AC_MSG_RESULT(yes)
@@ -717,9 +721,13 @@ case $use_libtool in
 		LIBTOOL_MODE_LINK=
 		LIBTOOL_MODE_UNINSTALL=
 		INSTALL_LIBRARY='${INSTALL_DATA}'
+		NO_LIBTOOL_ISCLIBS='${NO_LIBTOOL_ISCLIBS}'
+		NO_LIBTOOL_DNSLIBS='${NO_LIBTOOL_DNSLIBS}'
 		;;
 esac
 AC_SUBST(INSTALL_LIBRARY)
+AC_SUBST(NO_LIBTOOL_ISCLIBS)
+AC_SUBST(NO_LIBTOOL_DNSLIBS)
 
 #
 # Do we want to use pthread rwlock?
@@ -866,6 +874,7 @@ AC_SUBST([OPENSSL_LIBS])
 
 PKCS11_TOOLS=
 PKCS11_TEST=
+PKCS11_MANS=
 #
 # was --enable-native-pkcs11 specified?
 #
@@ -879,6 +888,7 @@ AS_CASE([$enable_native_pkcs11],
 	[no],[AC_MSG_RESULT([no])],
 	[yes],[PKCS11_TOOLS=pkcs11
 	       PKCS11_TEST=pkcs11
+	       PKCS11_MANS='${pkcs11_man8_MANS}'
 	       CRYPTO=pkcs11
 	       AS_IF([$use_threads],
 		     [:],
@@ -888,6 +898,7 @@ AS_CASE([$enable_native_pkcs11],
 	      ])
 AC_SUBST([PKCS11_TEST])
 AC_SUBST([PKCS11_TOOLS])
+AC_SUBST([PKCS11_MANS])
 
 AC_SUBST([CRYPTO])
 AS_CASE([$CRYPTO],
@@ -1218,7 +1229,7 @@ AC_ARG_WITH(lmdb,
 have_lmdb=""
 case "$use_lmdb" in
 	no)
-		lmdb_libs=""
+		LMDB_LIBS=""
 		;;
 	auto|yes)
 		for d in /usr /usr/local /opt/local
@@ -1227,8 +1238,8 @@ case "$use_lmdb" in
 			then
 				if test ${d} != /usr
 				then
-					lmdb_cflags="-I ${d}/include"
-					LIBS="$LIBS -L${d}/lib"
+					LMDB_CFLAGS="-I ${d}/include"
+					LMDB_LIBS="-L${d}/lib"
 				fi
 				have_lmdb="yes"
 			fi
@@ -1237,8 +1248,8 @@ case "$use_lmdb" in
 	*)
 		if test -f "${use_lmdb}/include/lmdb.h"
 		then
-			lmdb_cflags="-I${use_lmdb}/include"
-			LIBS="$LIBS -L${use_lmdb}/lib"
+			LMDB_CFLAGS="-I${use_lmdb}/include"
+			LMDB_LIBS="-L${use_lmdb}/lib"
 			have_lmdb="yes"
 		else
 			AC_MSG_ERROR([$use_lmdb/include/lmdb.h not found.])
@@ -1249,30 +1260,38 @@ esac
 if test "X${have_lmdb}" != "X"
 then
 	AC_MSG_RESULT(yes)
+	AX_SAVE_FLAGS([lmdb])
+	CFLAGS="$CFLAGS $LMDB_CFLAGS"
+	LIBS="$LIBS $LMDB_LIBS"
 	AC_SEARCH_LIBS([mdb_env_create], [lmdb], [],
 		       [AC_MSG_ERROR([found lmdb include but not library.])
 			have_lmdb=""])
+	LMDB_LIBS="$LMDB_LIBS $ac_cv_search_mdb_env_create"
+	AX_RESTORE_FLAGS([lmdb])
 elif test "X$use_lmdb" = Xyes
 then
 	AC_MSG_ERROR([include/lmdb.h not found.])
 else
 	AC_MSG_RESULT(no)
 fi
+AC_SUBST([LMDB_CFLAGS])
+AC_SUBST([LMDB_LIBS])
 
 NZD_TOOLS=""
 NZDSRCS=
 NZDTARGETS=
 if test "X${have_lmdb}" != "X"
 then
-	CFLAGS="$CFLAGS $lmdb_cflags"
 	AC_DEFINE(HAVE_LMDB, 1, [Define if lmdb was found])
 	NZD_TOOLS="nzd"
 	NZDSRCS='${NZDSRCS}'
 	NZDTARGETS='${NZDTARGETS}'
+	NZD_MANS='${nzd_man8_MANS}'
 fi
 AC_SUBST(NZD_TOOLS)
 AC_SUBST(NZDSRCS)
 AC_SUBST(NZDTARGETS)
+AC_SUBST(NZD_MANS)
 
 #
 # was --with-libxml2 specified?
@@ -1922,11 +1941,11 @@ if test "x$use_dnstap" != "xno"; then
 	    # before protobuf-c-1.0.0
 	    if test -f $withval/include/google/protobuf-c/protobuf-c.h
 	    then
-		CFLAGS="$CFLAGS -I$withval/include/google"
+		PROTOBUF_C_CFLAGS="-I$withval/include/google"
 	    else
-		CFLAGS="$CFLAGS -I$withval/include"
+		PROTOBUF_C_CFLAGS="-I$withval/include"
 	    fi
-	    LDFLAGS="$LDFLAGS -L$withval/lib"
+	    PROTOBUF_C_LIBS="-L$withval/lib"
 	    AC_PATH_PROG([PROTOC_C], [protoc-c], [],
 			 [$PATH$PATH_SEPARATOR$withval/bin])
 	], [
@@ -1934,12 +1953,16 @@ if test "x$use_dnstap" != "xno"; then
 	    # before protobuf-c-1.0.0
 	    if test -f /usr/include/google/protobuf-c/protobuf-c.h
 	    then
-		CFLAGS="$CFLAGS -I/usr/include/google"
+		PROTOBUF_C_CFLAGS="-I/usr/include/google"
 	    else
 		if test -f /usr/local/include/google/protobuf-c/protobuf-c.h
 		then
-		    CFLAGS="$CFLAGS -I/usr/local/include/google"
-		    LDFLAGS="$LDFLAGS -L/usr/local/lib"
+		    PROTOBUF_C_CFLAGS="-I/usr/local/include/google"
+		    PROTOBUF_C_LIBS="-L/usr/local/lib"
+		elif test -f /opt/local/include/google/protobuf-c/protobuf-c.h
+		then
+		    PROTOBUF_C_CFLAGS="-I/opt/local/include/google"
+		    PROTOBUF_C_LIBS="-L/opt/local/lib"
 		fi
 	    fi
 	    AC_PATH_PROG([PROTOC_C],[protoc-c])
@@ -1949,28 +1972,58 @@ if test "x$use_dnstap" != "xno"; then
 	fi
 	AC_ARG_WITH([libfstrm], AS_HELP_STRING([--with-libfstrm=path],
 		    [Path where libfstrm is installed, for dnstap]), [
-	    CFLAGS="$CFLAGS -I$withval/include"
-	    LDFLAGS="$LDFLAGS -L$withval/lib"
+	    FSTRM_CFLAGS="-I$withval/include"
+	    FSTRM_LIBS="-L$withval/lib"
 	    AC_PATH_PROG([FSTRM_CAPTURE], [fstrm_capture], [], [$PATH$PATH_SEPARATOR$withval/bin])
 	],[
-	    AC_PATH_PROG([FSTRM_CAPTURE], [fstrm_capture])
+	    for d in /usr /usr/local /opt/local
+	    do
+		if test -f "${d}/include/fstrm.h"
+		then
+		    if test ${d} != /usr
+		    then
+			FSTRM_CFLAGS="-I${d}/include"
+			FSTRM_LIBS="-L${d}/lib"
+		    fi
+		    have_fstrm="$d"
+		    break
+		fi
+	    done
+	    if test -z "$have_fstrm"; then
+		AC_PATH_PROG([FSTRM_CAPTURE], [fstrm_capture])
+	    else
+		AC_PATH_PROG([FSTRM_CAPTURE], [fstrm_capture], [], [$PATH$PATH_SEPARATOR$have_fstrm/bin])
+	    fi
 	])
+	AX_SAVE_FLAGS([dnstap])
+	CFLAGS="$CFLAGS $PROTOBUF_C_CFLAGS $FSTRM_CFLAGS"
+	LIBS="$LDFLAGS $PROTOBUF_C_LIBS $FSTRM_LIBS"
 
 	AC_SEARCH_LIBS([fstrm_iothr_init], [fstrm], [],
 		       AC_MSG_ERROR([The fstrm library was not found. Please install fstrm!]))
+	FSTRM_LIBS="$FSTRM_LIBS $ac_cv_search_fstrm_iothr_init"
+
 	AC_SEARCH_LIBS([protobuf_c_message_pack], [protobuf-c], [],
 		       AC_MSG_ERROR([The protobuf-c library was not found. Please install protobuf-c!]))
+	PROTOBUF_C_LIBS="$PROTOBUF_C_LIBS $ac_cv_search_protobuf_c_message_pack"
 
+	AX_RESTORE_FLAGS([dnstap])
 	AC_DEFINE(HAVE_DNSTAP, 1, [Define to 1 to enable dnstap support])
 	DNSTAP=dnstap
 	DNSTAPSRCS='${DNSTAPSRCS}'
 	DNSTAPOBJS='${DNSTAPOBJS}'
 	DNSTAPTARGETS='${DNSTAPTARGETS}'
+	DNSTAP_MANS='${dnstap_man1_MANS}'
 fi
 AC_SUBST(DNSTAP)
 AC_SUBST(DNSTAPSRCS)
 AC_SUBST(DNSTAPOBJS)
 AC_SUBST(DNSTAPTARGETS)
+AC_SUBST(DNSTAP_MANS)
+AC_SUBST([PROTOBUF_C_CFLAGS])
+AC_SUBST([PROTOBUF_C_LIBS])
+AC_SUBST([FSTRM_CFLAGS])
+AC_SUBST([FSTRM_LIBS])
 
 #
 #  The following sets up how non-blocking i/o is established.
@@ -2004,51 +2057,50 @@ esac
 #
 
 #
-# Look for TeX.
+# The following sections deal with tools used for formatting
+# the documentation.  They are all optional, unless you are
+# a developer editing the documentation source.
 #
 
-AC_PATH_PROGS(LATEX, latex, latex)
-AC_SUBST(LATEX)
+#
+# Look for sphinx-build
+#
+AC_ARG_VAR([SPHINX_BUILD], [path to sphinx-build binary used to build the documentation])
+AC_PATH_PROG([SPHINX_BUILD], [sphinx-build], [:])
+AM_CONDITIONAL([HAVE_SPHINX_BUILD], [test "$SPHINX_BUILD" != ":"])
 
-AC_PATH_PROGS(PDFLATEX, pdflatex, pdflatex)
-AC_SUBST(PDFLATEX)
-
-AC_PATH_PROGS(DBLATEX, dblatex, dblatex)
-AC_SUBST(DBLATEX)
+AC_PATH_PROG([XELATEX], [xelatex], [:])
+AC_PATH_PROG([LATEXMK], [latexmk], [:])
+AM_CONDITIONAL([HAVE_XELATEX], [test "$XELATEX" != ":" && test "$LATEXMK" != ":"])
 
 #
-# Look for w3m
+# Pull release date from CHANGES file last modification date
+# for reproducible builds
 #
+release_date=`date -r CHANGES +%Y-%m-%d`
+AC_SUBST([RELEASE_DATE], $release_date)
 
-AC_PATH_PROGS(W3M, w3m, w3m)
-AC_SUBST(W3M)
-
-#
-# Look for pandoc
-#
-AC_PATH_PROG(PANDOC, pandoc, pandoc)
-AC_SUBST(PANDOC)
-
-
-#
-# Look for xsltproc (libxslt)
-#
-
-AC_PATH_PROG(XSLTPROC, xsltproc, xsltproc)
-AC_SUBST(XSLTPROC)
-
-#
-# Look for xmllint (libxml2)
-#
-
-AC_PATH_PROG(XMLLINT, xmllint, xmllint)
-AC_SUBST(XMLLINT)
+# Don't build the documentation if the sphinx-build is not present
+PDFTARGET=
+HTMLTARGET=
+MANSRCS=
+AS_IF([test -n "$SPHINX_BUILD"],[
+	  MANSRCS='$(MANPAGES_IN)'
+	  HTMLTARGET='html dirhtml'
+	  AC_PATH_PROGS([PDFLATEX], [pdflatex], [])
+	  AC_PATH_PROGS([LATEXMK], [latexmk], [])
+	  AS_IF([test -n "$PDFLATEX" && test -n "$LATEXMK"],[
+		    PDFTARGET='pdf'
+		])
+      ])
+AC_SUBST([HTMLTARGET])
+AC_SUBST([PDFTARGET])
+AC_SUBST([MANSRCS])
 
 #
 # Look for Doxygen
 #
-
-AC_PATH_PROG(DOXYGEN, doxygen, doxygen)
+AC_PATH_PROGS([DOXYGEN], [doxygen])
 AC_SUBST(DOXYGEN)
 
 #
@@ -2057,76 +2109,6 @@ AC_SUBST(DOXYGEN)
 
 AC_PATH_PROG(CURL, curl, curl)
 AC_SUBST(CURL)
-
-#
-# Subroutine for searching for an ordinary file (e.g., a stylesheet)
-# in a number of directories:
-#
-#   NOM_PATH_FILE(VARIABLE, FILENAME, DIRECTORIES)
-#
-# If the file FILENAME is found in one of the DIRECTORIES, the shell
-# variable VARIABLE is defined to its absolute pathname.  Otherwise,
-# it is set to FILENAME, with no directory prefix (that's not terribly
-# useful, but looks less confusing in substitutions than leaving it
-# empty).  The variable VARIABLE will be substituted into output files.
-#
-
-AC_DEFUN([NOM_PATH_FILE], [
-$1=""
-AC_MSG_CHECKING(for $2)
-for d in $3
-do
-	f=$d/$2
-	if test -f $f
-	then
-		$1=$f
-		AC_MSG_RESULT($f)
-		break
-	fi
-done
-if test "X[$]$1" = "X"
-then
-	AC_MSG_RESULT("not found");
-	$1=$2
-fi
-AC_SUBST($1)
-])
-
-#
-# Look for Docbook-XSL stylesheets.  Location probably varies by system.
-# If it's not explicitly specified, guess where it might be found, based on
-# where SGML stuff lives on some systems (FreeBSD is the only one we're sure
-# of at the moment).
-#
-AC_MSG_CHECKING(for Docbook-XSL path)
-AC_ARG_WITH(docbook-xsl,
-	    AS_HELP_STRING([--with-docbook-xsl[=PATH]],
-			   [specify path for Docbook-XSL stylesheets]),
-   docbook_path="$withval", docbook_path="auto")
-case "$docbook_path" in
-auto)
-	AC_MSG_RESULT(auto)
-	docbook_xsl_trees="/usr/pkg/share/xsl/docbook /usr/local/share/xsl/docbook-ns /usr/local/share/xsl/docbook /usr/share/xsl/docbook /usr/share/sgml/docbook/xsl-stylesheets /opt/local/share/xsl/docbook-xsl /opt/local/share/xsl/docbook-xsl-nons /usr/share/xml/docbook/stylesheet/docbook-xsl"
-	;;
-*)
-	docbook_xsl_trees="$withval"
-	AC_MSG_RESULT($docbook_xsl_trees)
-	;;
-esac
-
-#
-# Look for stylesheets we need.
-#
-
-NOM_PATH_FILE(XSLT_DOCBOOK_STYLE_HTML, html/docbook.xsl, $docbook_xsl_trees)
-NOM_PATH_FILE(XSLT_DOCBOOK_STYLE_XHTML, xhtml/docbook.xsl, $docbook_xsl_trees)
-NOM_PATH_FILE(XSLT_DOCBOOK_STYLE_MAN, manpages/docbook.xsl, $docbook_xsl_trees)
-NOM_PATH_FILE(XSLT_DOCBOOK_CHUNK_HTML, html/chunk.xsl, $docbook_xsl_trees)
-NOM_PATH_FILE(XSLT_DOCBOOK_CHUNK_XHTML, xhtml/chunk.xsl, $docbook_xsl_trees)
-NOM_PATH_FILE(XSLT_DOCBOOK_CHUNKTOC_HTML, html/chunktoc.xsl, $docbook_xsl_trees)
-NOM_PATH_FILE(XSLT_DOCBOOK_CHUNKTOC_XHTML, xhtml/chunktoc.xsl, $docbook_xsl_trees)
-NOM_PATH_FILE(XSLT_DOCBOOK_MAKETOC_HTML, html/maketoc.xsl, $docbook_xsl_trees)
-NOM_PATH_FILE(XSLT_DOCBOOK_MAKETOC_XHTML, xhtml/maketoc.xsl, $docbook_xsl_trees)
 
 #
 # IDN support using libidn2
@@ -2171,16 +2153,14 @@ AC_ARG_WITH([cmocka],
 AS_CASE([$with_cmocka],
 	[no],[],
 	[detect],[PKG_CHECK_MODULES([CMOCKA], [cmocka >= 1.0.0],
-				    [AC_DEFINE([HAVE_CMOCKA], [1], [Use CMocka])
-				     UNITTESTS=tests],[with_cmocka=no])],
+				    [AC_DEFINE([HAVE_CMOCKA], [1], [Use CMocka])],
+				    [with_cmocka=no])],
 	[yes],[PKG_CHECK_MODULES([CMOCKA], [cmocka >= 1.0.0],
-				 [AC_DEFINE([HAVE_CMOCKA], [1], [Use CMocka])])
-	                          UNITTESTS=tests],
+				 [AC_DEFINE([HAVE_CMOCKA], [1], [Use CMocka])])],
 	[AC_MSG_ERROR([Use PKG_CONFIG_PATH to specify path to CMocka library])]
        )
 AC_SUBST([CMOCKA_CFLAGS])
 AC_SUBST([CMOCKA_LIBS])
-AC_SUBST(UNITTESTS)
 
 #
 # Check for kyua execution engine if CMocka was requested
@@ -2190,9 +2170,10 @@ AC_ARG_VAR([KYUA], [path to kyua execution engine])
 AS_IF([test "$with_cmocka" != "no"],
       [AC_PATH_PROGS([KYUA], [kyua], [])
        AS_IF([test -z "$KYUA"],
-            [AC_MSG_WARN([kyua test execution engine not found])])])
-
+             [AC_MSG_WARN([kyua test execution engine not found])],
+             [UNITTESTS=tests])])
 AC_SUBST([KYUA])
+AC_SUBST([UNITTESTS])
 
 #
 # Check for -Wl,--wrap= support
@@ -2434,7 +2415,8 @@ AS_IF([test "$pic_mode" = "no"],
 
 AS_CASE([$with_dlopen],
 	[auto|yes],[
-	  AC_SEARCH_LIBS([dlopen],[dl])
+	  # -fsanitize=thread hijacks dlopen and dlclose so use dlsym.
+	  AC_SEARCH_LIBS([dlsym],[dl])
 	  AC_CHECK_FUNCS([dlopen dlclose dlsym],
 			 [with_dlopen="yes"],
 			 [with_dlopen="no"])
@@ -2822,20 +2804,11 @@ AC_CONFIG_FILES([
 	contrib/scripts/zone-edit.sh
 	doc/Makefile
 	doc/arm/Makefile
-	doc/arm/noteversion.xml
-	doc/arm/pkgversion.xml
-	doc/arm/releaseinfo.xml
 	doc/doxygen/Doxyfile
 	doc/doxygen/Makefile
 	doc/doxygen/doxygen-input-filter
+	doc/man/Makefile
 	doc/misc/Makefile
-	doc/tex/Makefile
-	doc/tex/armstyle.sty
-	doc/xsl/Makefile
-	doc/xsl/isc-docbook-chunk.xsl
-	doc/xsl/isc-docbook-html.xsl
-	doc/xsl/isc-manpage.xsl
-	doc/xsl/isc-notes-html.xsl
 	fuzz/Makefile
 	lib/Makefile
 	lib/bind9/Makefile

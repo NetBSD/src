@@ -21,10 +21,10 @@ CINCLUDES =	${DNS_INCLUDES} ${ISC_INCLUDES} ${ISCCFG_INCLUDES} \
 CDEFINES =	-DVERSION=\"${VERSION}\" -DNAMED_CONFFILE=\"${sysconfdir}/named.conf\"
 CWARNINGS =
 
-DNSLIBS =	../../lib/dns/libdns.@A@ ${MAXMINDDB_LIBS} @DNS_CRYPTO_LIBS@
+DNSLIBS =	../../lib/dns/libdns.@A@ @NO_LIBTOOL_DNSLIBS@
 ISCCFGLIBS =	../../lib/isccfg/libisccfg.@A@
-ISCLIBS =	../../lib/isc/libisc.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
-ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
+ISCLIBS =	../../lib/isc/libisc.@A@ @NO_LIBTOOL_ISCLIBS@
+ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ @NO_LIBTOOL_ISCLIBS@
 
 DNSDEPLIBS =	../../lib/dns/libdns.@A@
 ISCDEPLIBS =	../../lib/isc/libisc.@A@
@@ -49,18 +49,6 @@ SRCS =		dnssec-cds.c dnssec-dsfromkey.c dnssec-importkey.c \
 		dnssec-keyfromlabel.c dnssec-keygen.c dnssec-revoke.c \
 		dnssec-settime.c dnssec-signzone.c dnssec-verify.c \
 		dnssectool.c
-
-MANPAGES =	dnssec-cds.8 dnssec-dsfromkey.8 dnssec-importkey.8 \
-		dnssec-keyfromlabel.8 dnssec-keygen.8 dnssec-revoke.8 \
-		dnssec-settime.8 dnssec-signzone.8 dnssec-verify.8
-
-HTMLPAGES =	dnssec-cds.html dnssec-dsfromkey.html \
-		dnssec-importkey.html dnssec-keyfromlabel.html \
-		dnssec-keygen.html dnssec-revoke.html \
-		dnssec-settime.html dnssec-signzone.html \
-		dnssec-verify.html
-
-MANOBJS =	${MANPAGES} ${HTMLPAGES}
 
 @BIND9_MAKE_RULES@
 
@@ -108,21 +96,14 @@ dnssec-importkey@EXEEXT@: dnssec-importkey.@O@ ${OBJS} ${DEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
 	dnssec-importkey.@O@ ${OBJS} ${LIBS}
 
-doc man:: ${MANOBJS}
-
-docclean manclean maintainer-clean::
-	rm -f ${MANOBJS}
-
 installdirs:
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${sbindir}
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${mandir}/man8
 
 install:: ${TARGETS} installdirs
 	for t in ${TARGETS}; do ${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} $$t ${DESTDIR}${sbindir} || exit 1; done
-	for m in ${MANPAGES}; do ${INSTALL_DATA} ${srcdir}/$$m ${DESTDIR}${mandir}/man8 || exit 1; done
 
 uninstall::
-	for m in ${MANPAGES}; do rm -f ${DESTDIR}${mandir}/man8/$$m || exit 1; done
 	for t in ${TARGETS}; do ${LIBTOOL_MODE_UNINSTALL} rm -f ${DESTDIR}${sbindir}/$$t || exit 1; done
 
 clean distclean::
