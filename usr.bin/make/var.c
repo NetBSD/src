@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.407 2020/08/02 20:13:05 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.408 2020/08/03 14:42:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.407 2020/08/02 20:13:05 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.408 2020/08/03 14:42:50 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.407 2020/08/02 20:13:05 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.408 2020/08/03 14:42:50 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2804,20 +2804,20 @@ ApplyModifier_SysV(const char *mod, ApplyModifiersState *st)
      * to verify it is a SYSV-make-style translation:
      * it must be: <string1>=<string2>)
      */
-    st->next = mod;
     int nest = 1;
-    while (*st->next != '\0' && nest > 0) {
-	if (*st->next == '=') {
+    const char *next = mod;
+    while (*next != '\0' && nest > 0) {
+	if (*next == '=') {
 	    eqFound = TRUE;
 	    /* continue looking for st->endc */
-	} else if (*st->next == st->endc)
+	} else if (*next == st->endc)
 	    nest--;
-	else if (*st->next == st->startc)
+	else if (*next == st->startc)
 	    nest++;
 	if (nest > 0)
-	    st->next++;
+	    (next)++;
     }
-    if (*st->next != st->endc || !eqFound)
+    if (*next != st->endc || !eqFound)
 	return AMR_UNKNOWN;
 
     char delim = '=';
