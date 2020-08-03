@@ -1,4 +1,4 @@
-/*	$NetBSD: script.c,v 1.23 2020/08/02 16:23:33 christos Exp $	*/
+/*	$NetBSD: script.c,v 1.24 2020/08/03 03:34:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: script.c,v 1.23 2020/08/02 16:23:33 christos Exp $");
+__RCSID("$NetBSD: script.c,v 1.24 2020/08/03 03:34:43 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -166,7 +166,7 @@ main(int argc, char *argv[])
 			err(EXIT_FAILURE, "openpty");
 	} else {
 		if (openpty(&master, &slave, NULL, NULL, NULL) == -1)
-			err(EXIT_FAILURE, "openpty");		
+			err(EXIT_FAILURE, "openpty");
 	}
 
 	if (!quiet)
@@ -200,7 +200,7 @@ main(int argc, char *argv[])
 	if (!rawout)
 		(void)fclose(fscript);
 	while ((scc = read(STDIN_FILENO, ibuf, BUFSIZ)) > 0) {
-		cc = (size_t)scc;	
+		cc = (size_t)scc;
 		if (rawout)
 			record(fscript, ibuf, cc, 'i');
 		(void)write(master, ibuf, cc);
@@ -413,7 +413,7 @@ playback(FILE *fp)
 	int reg;
 
 	if (fstat(fileno(fp), &pst) == -1)
-		err(EXIT_FAILURE, "fstat failed");	
+		err(EXIT_FAILURE, "fstat failed");
 
 	reg = S_ISREG(pst.st_mode);
 
