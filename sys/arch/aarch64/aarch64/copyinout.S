@@ -1,4 +1,4 @@
-/* $NetBSD: copyinout.S,v 1.11 2020/08/02 06:58:16 maxv Exp $ */
+/* $NetBSD: copyinout.S,v 1.12 2020/08/03 05:56:49 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include <aarch64/asm.h>
 #include "assym.h"
 
-RCSID("$NetBSD: copyinout.S,v 1.11 2020/08/02 06:58:16 maxv Exp $");
+RCSID("$NetBSD: copyinout.S,v 1.12 2020/08/03 05:56:49 ryo Exp $");
 
 #ifdef ARMV81_PAN
 #define PAN_ENABLE	\
@@ -63,7 +63,7 @@ RCSID("$NetBSD: copyinout.S,v 1.11 2020/08/02 06:58:16 maxv Exp $");
 	mov	x19, x0			/* x19 = arg0 */
 	mov	x20, x1			/* x20 = arg1 */
 
-	/* if (cpu_set_onfault(fb) != 0) return -1 */
+	/* if (cpu_set_onfault(fb) != 0) return error */
 	sub	sp, sp, #FB_T_SIZE	/* allocate struct faultbuf */
 	mov	x0, sp			/* x0 = faultbuf */
 	stp	x2, x3, [sp, #-16]!	/* save x2, x3 */
@@ -79,10 +79,8 @@ RCSID("$NetBSD: copyinout.S,v 1.11 2020/08/02 06:58:16 maxv Exp $");
 	.endm
 
 	.macro exit_cpu_onfault
-	/* curlwp->l_md.md_onfault = NULL */
-	mrs	x0, tpidr_el1			/* curcpu */
-	ldr	x0, [x0, #CI_CURLWP]		/* x0 = curlwp */
-	str	xzr, [x0, #L_MD_ONFAULT]	/* lwp->l_md_onfault = NULL */
+	bl	cpu_unset_onfault
+	mov	x8, xzr
 9:
 	PAN_ENABLE				/* enable PAN */
 	add	sp, sp, #FB_T_SIZE		/* pop stack */
