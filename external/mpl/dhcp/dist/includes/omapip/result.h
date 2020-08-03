@@ -1,4 +1,4 @@
-/*	$NetBSD: result.h,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
+/*	$NetBSD: result.h,v 1.3 2020/08/03 21:10:57 christos Exp $	*/
 
 /* result.h
  */

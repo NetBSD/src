@@ -1,11 +1,11 @@
-/*	$NetBSD: clparse.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
+/*	$NetBSD: clparse.c,v 1.3 2020/08/03 21:10:56 christos Exp $	*/
 
 /* clparse.c
 
    Parser for dhclient config and lease files... */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2019 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: clparse.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
+__RCSID("$NetBSD: clparse.c,v 1.3 2020/08/03 21:10:56 christos Exp $");
 
 #include "dhcpd.h"
 #include <errno.h>
@@ -51,6 +51,9 @@ static struct dhc6_addr *parse_client6_iaprefix_statement(struct parse *cfile);
 #endif /* DHCPv6 */
 
 static void parse_lease_id_format (struct parse *cfile);
+
+extern void discard_duplicate (struct client_lease** lease_list,
+                               struct client_lease* lease);
 
 /* client-conf-file :== client-declarations END_OF_FILE
    client-declarations :== <nil>
@@ -1101,7 +1104,7 @@ void parse_client_lease_statement (cfile, is_static)
 	struct parse *cfile;
 	int is_static;
 {
-	struct client_lease *lease, *lp, *pl, *next;
+	struct client_lease *lease;
 	struct interface_info *ip = (struct interface_info *)0;
 	int token;
 	const char *val;
@@ -1159,22 +1162,11 @@ void parse_client_lease_statement (cfile, is_static)
 	/* The new lease may supersede a lease that's not the
 	   active lease but is still on the lease list, so scan the
 	   lease list looking for a lease with the same address, and
-	   if we find it, toss it. */
-	pl = (struct client_lease *)0;
-	for (lp = client -> leases; lp; lp = next) {
-		next = lp -> next;
-		if (lp -> address.len == lease -> address.len &&
-		    !memcmp (lp -> address.iabuf, lease -> address.iabuf,
-			     lease -> address.len)) {
-			if (pl)
-				pl -> next = next;
-			else
-				client -> leases = next;
-			destroy_client_lease (lp);
-			break;
-		} else
-			pl = lp;
-	}
+	   if we find it, toss it. We only allow supercession if
+	   the leases originated from the same source. In other words,
+	   either both are from the config file or both are from the lease
+	   file.  This keeps us from discarding fallback leases */
+	discard_duplicate (&client->leases, lease);
 
 	/* If this is a preloaded lease, just put it on the list of recorded
 	   leases - don't make it the active lease. */
