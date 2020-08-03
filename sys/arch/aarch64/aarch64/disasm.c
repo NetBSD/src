@@ -1,4 +1,4 @@
-/*	$NetBSD: disasm.c,v 1.8 2020/05/26 05:25:21 ryo Exp $	*/
+/*	$NetBSD: disasm.c,v 1.9 2020/08/03 19:16:56 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disasm.c,v 1.8 2020/05/26 05:25:21 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disasm.c,v 1.9 2020/08/03 19:16:56 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -342,11 +342,23 @@ const struct sysreg_table sysreg_table[] = {
 	{	SYSREG_ENC(3, 0,  2,  0, 0), "ttbr0_el1"		},
 	{	SYSREG_ENC(3, 0,  2,  0, 1), "ttbr1_el1"		},
 	{	SYSREG_ENC(3, 0,  2,  0, 2), "tcr_el1"			},
+	{	SYSREG_ENC(3, 0,  2,  1, 0), "apiakeylo_el1"		},
+	{	SYSREG_ENC(3, 0,  2,  1, 1), "apiakeyhi_el1"		},
+	{	SYSREG_ENC(3, 0,  2,  1, 2), "apibkeylo_el1"		},
+	{	SYSREG_ENC(3, 0,  2,  1, 3), "apibkeyhi_el1"		},
+	{	SYSREG_ENC(3, 0,  2,  2, 0), "apdakeylo_el1"		},
+	{	SYSREG_ENC(3, 0,  2,  2, 1), "apdakeyhi_el1"		},
+	{	SYSREG_ENC(3, 0,  2,  2, 2), "apdbkeylo_el1"		},
+	{	SYSREG_ENC(3, 0,  2,  2, 3), "apdbkeyhi_el1"		},
+	{	SYSREG_ENC(3, 0,  2,  3, 0), "apgakeylo_el1"		},
+	{	SYSREG_ENC(3, 0,  2,  3, 1), "apgakeyhi_el1"		},
 	{	SYSREG_ENC(3, 0,  4,  0, 0), "spsr_el1"			},
 	{	SYSREG_ENC(3, 0,  4,  0, 1), "elr_el1"			},
 	{	SYSREG_ENC(3, 0,  4,  1, 0), "sp_el0"			},
 	{	SYSREG_ENC(3, 0,  4,  2, 0), "spsel"			},
 	{	SYSREG_ENC(3, 0,  4,  2, 2), "currentel"		},
+	{	SYSREG_ENC(3, 0,  4,  2, 3), "pan"			},
+	{	SYSREG_ENC(3, 0,  4,  2, 4), "uao"			},
 	{	SYSREG_ENC(3, 0,  5,  1, 0), "afsr0_el1"		},
 	{	SYSREG_ENC(3, 0,  5,  1, 1), "afsr1_el1"		},
 	{	SYSREG_ENC(3, 0,  5,  2, 0), "esr_el1"			},
@@ -369,8 +381,13 @@ const struct sysreg_table sysreg_table[] = {
 	{	SYSREG_ENC(3, 2,  0,  0, 0), "csselr_el1"		},
 	{	SYSREG_ENC(3, 3,  0,  0, 1), "ctr_el0"			},
 	{	SYSREG_ENC(3, 3,  0,  0, 7), "dczid_el0"		},
+	{	SYSREG_ENC(3, 3,  2,  4, 0), "rndr"			},
+	{	SYSREG_ENC(3, 3,  2,  4, 1), "rndrrs"			},
 	{	SYSREG_ENC(3, 3,  4,  2, 0), "nzcv"			},
 	{	SYSREG_ENC(3, 3,  4,  2, 1), "daif"			},
+	{	SYSREG_ENC(3, 3,  4,  2, 5), "dit"			},
+	{	SYSREG_ENC(3, 3,  4,  2, 6), "ssbs"			},
+	{	SYSREG_ENC(3, 3,  4,  2, 7), "tco"			},
 	{	SYSREG_ENC(3, 3,  4,  4, 0), "fpcr"			},
 	{	SYSREG_ENC(3, 3,  4,  4, 1), "fpsr"			},
 	{	SYSREG_ENC(3, 3,  4,  5, 0), "dspsr_el0"		},
@@ -1239,10 +1256,33 @@ static struct op_sys_table op_sys_table[] = {
 	{ SYSREG_ENC(1, 3, 7, 11, 1), OPE_XT,	"dc\tcvau"		},
 	{ SYSREG_ENC(1, 3, 7, 14, 1), OPE_XT,	"dc\tcivac"		},
 	{ SYSREG_ENC(1, 3, 7,  4, 1), OPE_XT,	"dc\tzva"		},
+	{ SYSREG_ENC(1, 0, 7,  6, 3), OPE_XT,	"dc\tigvac"		},
+	{ SYSREG_ENC(1, 0, 7,  6, 4), OPE_XT,	"dc\tigsw"		},
+	{ SYSREG_ENC(1, 0, 7,  6, 5), OPE_XT,	"dc\tigdvac"		},
+	{ SYSREG_ENC(1, 0, 7,  6, 6), OPE_XT,	"dc\tigdsw"		},
+	{ SYSREG_ENC(1, 0, 7, 10, 4), OPE_XT,	"dc\tcgsw"		},
+	{ SYSREG_ENC(1, 0, 7, 10, 6), OPE_XT,	"dc\tcgdsw"		},
+	{ SYSREG_ENC(1, 0, 7, 14, 4), OPE_XT,	"dc\tcigsw"		},
+	{ SYSREG_ENC(1, 0, 7, 14, 6), OPE_XT,	"dc\tcigdsw"		},
+	{ SYSREG_ENC(1, 3, 7,  4, 3), OPE_XT,	"dc\tgva"		},
+	{ SYSREG_ENC(1, 3, 7,  4, 4), OPE_XT,	"dc\tgzva"		},
+	{ SYSREG_ENC(1, 3, 7, 10, 3), OPE_XT,	"dc\tcgvac"		},
+	{ SYSREG_ENC(1, 3, 7, 10, 5), OPE_XT,	"dc\tcgdvac"		},
+	{ SYSREG_ENC(1, 3, 7, 12, 3), OPE_XT,	"dc\tcgvap"		},
+	{ SYSREG_ENC(1, 3, 7, 12, 5), OPE_XT,	"dc\tcgdvap"		},
+	{ SYSREG_ENC(1, 3, 7, 13, 3), OPE_XT,	"dc\tcgvadp"		},
+	{ SYSREG_ENC(1, 3, 7, 13, 5), OPE_XT,	"dc\tcgdvadp"		},
+	{ SYSREG_ENC(1, 3, 7, 14, 3), OPE_XT,	"dc\tcigvac"		},
+	{ SYSREG_ENC(1, 3, 7, 14, 5), OPE_XT,	"dc\tcigdvac"		},
+	{ SYSREG_ENC(1, 3, 7, 12, 1), OPE_XT,	"dc\tcvap"		},
+	{ SYSREG_ENC(1, 3, 7, 13, 1), OPE_XT,	"dc\tcvadp"		},
+
 	{ SYSREG_ENC(1, 0, 7,  8, 0), OPE_XT,	"at\ts1e1r"		},
 	{ SYSREG_ENC(1, 0, 7,  8, 1), OPE_XT,	"at\ts1e1w"		},
 	{ SYSREG_ENC(1, 0, 7,  8, 2), OPE_XT,	"at\ts1e0r"		},
 	{ SYSREG_ENC(1, 0, 7,  8, 3), OPE_XT,	"at\ts1e0w"		},
+	{ SYSREG_ENC(1, 0, 7,  9, 0), OPE_XT,	"at\ts1e1rp"	},
+	{ SYSREG_ENC(1, 0, 7,  9, 1), OPE_XT,	"at\ts1e1wp"	},
 	{ SYSREG_ENC(1, 4, 7,  8, 0), OPE_XT,	"at\ts1e2r"		},
 	{ SYSREG_ENC(1, 4, 7,  8, 1), OPE_XT,	"at\ts1e2w"		},
 	{ SYSREG_ENC(1, 4, 7,  8, 4), OPE_XT,	"at\ts12e1r"		},
@@ -1251,6 +1291,11 @@ static struct op_sys_table op_sys_table[] = {
 	{ SYSREG_ENC(1, 4, 7,  8, 7), OPE_XT,	"at\ts12e0w"		},
 	{ SYSREG_ENC(1, 6, 7,  8, 0), OPE_XT,	"at\ts1e3r"		},
 	{ SYSREG_ENC(1, 6, 7,  8, 1), OPE_XT,	"at\ts1e3w"		},
+
+	{ SYSREG_ENC(1, 3, 7,  3, 4), OPE_XT,	"cfp\trctx"			},
+	{ SYSREG_ENC(1, 3, 7,  3, 5), OPE_XT,	"dvp\trctx"			},
+	{ SYSREG_ENC(1, 3, 7,  3, 7), OPE_XT,	"cpp\trctx"			},
+
 	{ SYSREG_ENC(1, 0, 8,  3, 0), OPE_NONE,	"tlbi\tvmalle1is"	},
 	{ SYSREG_ENC(1, 0, 8,  3, 1), OPE_XT,	"tlbi\tvae1is"		},
 	{ SYSREG_ENC(1, 0, 8,  3, 2), OPE_XT,	"tlbi\taside1is"	},
@@ -1336,6 +1381,8 @@ OP6FUNC(op_bfi, sf, n, immr, imms, Rn, Rd)
 
 	/* ALIAS: bfm,bfxil */
 	/* it is not disassembled as bfm */
+
+	/* XXX: if Rn=31, should be used "bfc"? (armv8.2) */
 	if (imms < immr) {
 		PRINTF("bfi\t%s, %s, #%"PRIu64", #%"PRIu64"\n",
 		    ZREGNAME(sf, Rd),
@@ -1634,68 +1681,47 @@ OP6FUNC(op_ror_imm, sf, n, Rm, imms, Rn, Rd)
 	}
 }
 
+#define CRm_OP2(crm,op)	((crm) << 3 | (op))
+static const char *hint_table[] = {
+	[CRm_OP2(0, 0)] = "nop",
+	[CRm_OP2(0, 1)] = "yield",
+	[CRm_OP2(0, 2)] = "wfe",
+	[CRm_OP2(0, 3)] = "wfi",
+	[CRm_OP2(0, 4)] = "sev",
+	[CRm_OP2(0, 5)] = "sevl",
+	[CRm_OP2(0, 7)] = "xpaclri",
+	[CRm_OP2(1, 0)] = "pacia1716",
+	[CRm_OP2(1, 2)] = "pacib1716",
+	[CRm_OP2(1, 4)] = "autia1716",
+	[CRm_OP2(1, 6)] = "autib1716",
+	[CRm_OP2(2, 0)] = "esb",
+	[CRm_OP2(2, 1)] = "psb\tcsync",
+	[CRm_OP2(2, 2)] = "tsb\tcsync",
+	[CRm_OP2(2, 4)] = "csdb",
+	[CRm_OP2(3, 0)] = "paciaz",
+	[CRm_OP2(3, 1)] = "paciasp",
+	[CRm_OP2(3, 2)] = "pacibz",
+	[CRm_OP2(3, 3)] = "pacibsp",
+	[CRm_OP2(3, 4)] = "autiaz",
+	[CRm_OP2(3, 5)] = "autiasp",
+	[CRm_OP2(3, 6)] = "autibz",
+	[CRm_OP2(3, 7)] = "autibsp",
+	[CRm_OP2(4, 0)] = "bti",
+	[CRm_OP2(4, 2)] = "bti\tc",
+	[CRm_OP2(4, 4)] = "bti\tj",
+	[CRm_OP2(4, 6)] = "bti\tjc",
+};
+
 OP2FUNC(op_hint, CRm, op2)
 {
-#define CRm_OP2(crm,op)	((crm) << 3 | (op))
-
 	const uint64_t op = CRm_OP2(CRm, op2);
 
-	/* ALIAS: nop,sev,sevl,wfe,wfi,yield */
-	switch (op) {
-	case CRm_OP2(0, 0):
-		PRINTF("nop\n");
-		break;
-	case CRm_OP2(0, 1):
-		PRINTF("yield\n");
-		break;
-	case CRm_OP2(0, 2):
-		PRINTF("wfe\n");
-		break;
-	case CRm_OP2(0, 3):
-		PRINTF("wfi\n");
-		break;
-	case CRm_OP2(0, 4):
-		PRINTF("sev\n");
-		break;
-	case CRm_OP2(0, 5):
-		PRINTF("sevl\n");
-		break;
-	case CRm_OP2(0, 7):
-		PRINTF("xpaclri\n");
-		break;
-	case CRm_OP2(1, 0):
-		PRINTF("pacia1716\n");
-		break;
-	case CRm_OP2(1, 2):
-		PRINTF("pacib1716\n");
-		break;
-	case CRm_OP2(3, 0):
-		PRINTF("paciaz\n");
-		break;
-	case CRm_OP2(3, 1):
-		PRINTF("paciasp\n");
-		break;
-	case CRm_OP2(3, 2):
-		PRINTF("pacibz\n");
-		break;
-	case CRm_OP2(3, 3):
-		PRINTF("pacibsp\n");
-		break;
-	case CRm_OP2(4, 0):
-		PRINTF("bti\n");
-		break;
-	case CRm_OP2(4, 2):
-		PRINTF("bti\tc\n");
-		break;
-	case CRm_OP2(4, 4):
-		PRINTF("bti\tj\n");
-		break;
-	case CRm_OP2(4, 6):
-		PRINTF("bti\tjc\n");
-		break;
-	default:
+	/* ALIAS: nop,sev,sevl,wfe,wfi,yield,etc,.. */
+	if (op < __arraycount(hint_table) &&
+	    hint_table[op] != NULL) {
+		PRINTF("%s\n", hint_table[op]);
+	} else {
 		PRINTF("hint\t#0x%"PRIx64"\n", op);
-		break;
 	}
 }
 
@@ -2492,8 +2518,32 @@ OP3FUNC(op_msr_imm, op1, CRm, op2)
 #define MSRIMM_OP(op1, op2)	(((op1) << 3) | (op2))
 
 	switch (MSRIMM_OP(op1, op2)) {
+	case MSRIMM_OP(0, 0):
+		PRINTF("cfinv\n");
+		return;
+	case MSRIMM_OP(0, 1):
+		PRINTF("xaflag\n");
+		return;
+	case MSRIMM_OP(0, 2):
+		PRINTF("axflag\n");
+		return;
+	case MSRIMM_OP(0, 3):
+		pstatefield = "uao";
+		break;
+	case MSRIMM_OP(0, 4):
+		pstatefield = "pan";
+		break;
 	case MSRIMM_OP(0, 5):
 		pstatefield = "spsel";
+		break;
+	case MSRIMM_OP(3, 1):
+		pstatefield = "ssbs";
+		break;
+	case MSRIMM_OP(3, 2):
+		pstatefield = "dit";
+		break;
+	case MSRIMM_OP(3, 4):
+		pstatefield = "tco";
 		break;
 	case MSRIMM_OP(3, 6):
 		pstatefield = "daifset";
