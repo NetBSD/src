@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata.c,v 1.7 2020/05/24 19:46:23 christos Exp $	*/
+/*	$NetBSD: rdata.c,v 1.8 2020/08/03 17:23:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -153,7 +153,7 @@ static isc_result_t
 str_totext(const char *source, isc_buffer_t *target);
 
 static isc_result_t
-inet_totext(int af, isc_region_t *src, isc_buffer_t *target);
+inet_totext(int af, uint32_t flags, isc_region_t *src, isc_buffer_t *target);
 
 static bool
 buffer_empty(isc_buffer_t *source);
@@ -909,7 +909,7 @@ dns_rdata_fromtext(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
 	unsigned int length;
 	bool unknown;
 
-	REQUIRE(origin == NULL || dns_name_isabsolute(origin) == true);
+	REQUIRE(origin == NULL || dns_name_isabsolute(origin));
 	if (rdata != NULL) {
 		REQUIRE(DNS_RDATA_INITIALIZED(rdata));
 		REQUIRE(DNS_RDATA_VALIDFLAGS(rdata));
@@ -1077,8 +1077,7 @@ rdata_totext(dns_rdata_t *rdata, dns_rdata_textctx_t *tctx,
 	unsigned int cur;
 
 	REQUIRE(rdata != NULL);
-	REQUIRE(tctx->origin == NULL ||
-		dns_name_isabsolute(tctx->origin) == true);
+	REQUIRE(tctx->origin == NULL || dns_name_isabsolute(tctx->origin));
 
 	/*
 	 * Some DynDNS meta-RRs have empty rdata.
@@ -1409,7 +1408,7 @@ txt_totext(isc_region_t *source, bool quote, isc_buffer_t *target) {
 
 	REQUIRE(n + 1 <= source->length);
 	if (n == 0U) {
-		REQUIRE(quote == true);
+		REQUIRE(quote);
 	}
 
 	if (quote) {
@@ -1757,7 +1756,7 @@ str_totext(const char *source, isc_buffer_t *target) {
 }
 
 static isc_result_t
-inet_totext(int af, isc_region_t *src, isc_buffer_t *target) {
+inet_totext(int af, uint32_t flags, isc_region_t *src, isc_buffer_t *target) {
 	char tmpbuf[64];
 
 	/* Note - inet_ntop doesn't do size checking on its input. */
@@ -1768,6 +1767,22 @@ inet_totext(int af, isc_region_t *src, isc_buffer_t *target) {
 		return (ISC_R_NOSPACE);
 	}
 	isc_buffer_putstr(target, tmpbuf);
+
+	/*
+	 * An IPv6 address ending in "::" breaks YAML
+	 * parsing, so append 0 in that case.
+	 */
+	if (af == AF_INET6 && (flags & DNS_STYLEFLAG_YAML) != 0) {
+		isc_region_t tr;
+		isc_buffer_usedregion(target, &tr);
+		if (tr.base[tr.length - 1] == ':') {
+			if (isc_buffer_availablelength(target) == 0) {
+				return (ISC_R_NOSPACE);
+			}
+			isc_buffer_putmem(target, "0", 1);
+		}
+	}
+
 	return (ISC_R_SUCCESS);
 }
 

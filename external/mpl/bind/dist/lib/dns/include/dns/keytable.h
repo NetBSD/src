@@ -1,4 +1,4 @@
-/*	$NetBSD: keytable.h,v 1.4 2020/05/24 19:46:23 christos Exp $	*/
+/*	$NetBSD: keytable.h,v 1.5 2020/08/03 17:23:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -305,17 +305,20 @@ dns_keytable_totext(dns_keytable_t *keytable, isc_buffer_t **buf);
  * Dump the keytable to buffer at 'buf'
  */
 
-dns_rdataset_t *
-dns_keynode_dsset(dns_keynode_t *keynode);
+bool
+dns_keynode_dsset(dns_keynode_t *keynode, dns_rdataset_t *rdataset);
 /*%<
- * Return a pointer to the DS RRset associated with 'keynode'.
+ * Clone the DS RRset associated with 'keynode' into 'rdataset' if
+ * it exists.  'dns_rdataset_disassociate(rdataset)' needs to be
+ * called when done.
  *
  * Returns:
- *\li	ISC_R_SUCCESS
- *\li	ISC_R_FAILURE if the keynode does not contain a DS trust anchor.
+ *\li	true if there is a DS RRset.
+ *\li	false if there isn't DS RRset.
  *
  * Requires:
  *\li	'keynode' is valid.
+ *\li	'rdataset' is valid or NULL.
  */
 
 bool

@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-keygen.c,v 1.6 2020/05/24 19:46:11 christos Exp $	*/
+/*	$NetBSD: dnssec-keygen.c,v 1.7 2020/08/03 17:23:37 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -817,7 +817,7 @@ keygen(keygen_ctx_t *ctx, isc_mem_t *mctx, int argc, char **argv) {
 
 			dst_key_free(&key);
 		}
-	} while (conflict == true);
+	} while (conflict);
 
 	if (conflict) {
 		fatal("cannot generate a null key due to possible key ID "
@@ -1224,18 +1224,7 @@ main(int argc, char **argv) {
 			fatal("-k and -3 cannot be used together");
 		}
 
-		if (ctx.setpub || ctx.setact || ctx.setrev || ctx.setinact ||
-		    ctx.setdel || ctx.unsetpub || ctx.unsetact ||
-		    ctx.unsetrev || ctx.unsetinact || ctx.unsetdel ||
-		    ctx.setsyncadd || ctx.setsyncdel)
-		{
-			fatal("cannot use -k together with "
-			      "-P, -A, -R, -I, or -D options "
-			      "(use dnssec-settime on keys afterwards)");
-		}
-
 		ctx.options |= DST_TYPE_STATE;
-		ctx.genonly = true;
 
 		if (strcmp(ctx.policy, "default") == 0) {
 			ctx.use_nsec3 = false;

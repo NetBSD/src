@@ -1,4 +1,4 @@
-/*	$NetBSD: controlconf.c,v 1.4 2020/05/24 19:46:12 christos Exp $	*/
+/*	$NetBSD: controlconf.c,v 1.5 2020/08/03 17:23:37 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -228,6 +228,7 @@ shutdown_listener(controllistener_t *listener) {
 	if (listener->listening) {
 		isc_socket_cancel(listener->sock, listener->task,
 				  ISC_SOCKCANCEL_ACCEPT);
+		return;
 	}
 
 	maybe_free_listener(listener);
@@ -638,6 +639,8 @@ control_newconn(isc_task_t *task, isc_event_t *event) {
 
 	UNUSED(task);
 
+	REQUIRE(listener->listening);
+
 	listener->listening = false;
 
 	if (nevent->result != ISC_R_SUCCESS) {
@@ -649,6 +652,14 @@ control_newconn(isc_task_t *task, isc_event_t *event) {
 	}
 
 	sock = nevent->newsocket;
+
+	/* Is the server shutting down? */
+	if (listener->controls->shuttingdown) {
+		isc_socket_detach(&sock);
+		shutdown_listener(listener);
+		goto cleanup;
+	}
+
 	isc_socket_setname(sock, "control", NULL);
 	(void)isc_socket_getpeername(sock, &peeraddr);
 	if (listener->type == isc_sockettype_tcp &&
@@ -1123,36 +1134,33 @@ add_listener(named_controls_t *cp, controllistener_t **listenerp,
 
 	listener = isc_mem_get(mctx, sizeof(*listener));
 
-	if (result == ISC_R_SUCCESS) {
-		listener->mctx = NULL;
-		isc_mem_attach(mctx, &listener->mctx);
-		listener->controls = cp;
-		listener->task = cp->server->task;
-		listener->address = *addr;
-		listener->sock = NULL;
-		listener->listening = false;
-		listener->exiting = false;
-		listener->acl = NULL;
-		listener->type = type;
-		listener->perm = 0;
-		listener->owner = 0;
-		listener->group = 0;
-		listener->readonly = false;
-		ISC_LINK_INIT(listener, link);
-		ISC_LIST_INIT(listener->keys);
-		ISC_LIST_INIT(listener->connections);
+	listener->mctx = NULL;
+	isc_mem_attach(mctx, &listener->mctx);
+	listener->controls = cp;
+	listener->task = cp->server->task;
+	listener->address = *addr;
+	listener->sock = NULL;
+	listener->listening = false;
+	listener->exiting = false;
+	listener->acl = NULL;
+	listener->type = type;
+	listener->perm = 0;
+	listener->owner = 0;
+	listener->group = 0;
+	listener->readonly = false;
+	ISC_LINK_INIT(listener, link);
+	ISC_LIST_INIT(listener->keys);
+	ISC_LIST_INIT(listener->connections);
 
-		/*
-		 * Make the acl.
-		 */
-		if (control != NULL && type == isc_sockettype_tcp) {
-			allow = cfg_tuple_get(control, "allow");
-			result = cfg_acl_fromconfig(allow, config, named_g_lctx,
-						    aclconfctx, mctx, 0,
-						    &new_acl);
-		} else {
-			result = dns_acl_any(mctx, &new_acl);
-		}
+	/*
+	 * Make the acl.
+	 */
+	if (control != NULL && type == isc_sockettype_tcp) {
+		allow = cfg_tuple_get(control, "allow");
+		result = cfg_acl_fromconfig(allow, config, named_g_lctx,
+					    aclconfctx, mctx, 0, &new_acl);
+	} else {
+		result = dns_acl_any(mctx, &new_acl);
 	}
 
 	if ((result == ISC_R_SUCCESS) && (control != NULL)) {

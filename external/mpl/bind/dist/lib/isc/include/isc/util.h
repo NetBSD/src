@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.8 2020/05/24 19:46:26 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.9 2020/08/03 17:23:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -77,6 +77,8 @@
 		_u.k = konst;          \
 		var = _u.v;            \
 	} while (/*CONSTCOND*/0)
+
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 
 /*%
  * Use this in translation units that would otherwise be empty, to

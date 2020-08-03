@@ -1,4 +1,4 @@
-/*	$NetBSD: client.h,v 1.9 2020/05/25 15:13:25 christos Exp $	*/
+/*	$NetBSD: client.h,v 1.10 2020/08/03 17:23:43 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -83,7 +83,7 @@
  *** Types
  ***/
 
-#define NS_CLIENT_TCP_BUFFER_SIZE  (65535 + 2)
+#define NS_CLIENT_TCP_BUFFER_SIZE  65535
 #define NS_CLIENT_SEND_BUFFER_SIZE 4096
 
 /*!
@@ -477,7 +477,7 @@ ns__client_request(isc_nmhandle_t *handle, isc_region_t *region, void *arg);
  * (Not intended for use outside this module and associated tests.)
  */
 
-void
+isc_result_t
 ns__client_tcpconn(isc_nmhandle_t *handle, isc_result_t result, void *arg);
 
 /*%<

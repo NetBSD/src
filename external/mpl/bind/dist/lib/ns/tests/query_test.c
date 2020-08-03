@@ -1,4 +1,4 @@
-/*	$NetBSD: query_test.c,v 1.6 2020/05/24 19:46:30 christos Exp $	*/
+/*	$NetBSD: query_test.c,v 1.7 2020/08/03 17:23:43 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -97,8 +97,7 @@ run_sfcache_test(const ns__query_sfcache_test_params_t *test) {
 
 	REQUIRE(test != NULL);
 	REQUIRE(test->id.description != NULL);
-	REQUIRE(test->cache_entry_present == true ||
-		test->cache_entry_flags == 0);
+	REQUIRE(test->cache_entry_present || test->cache_entry_flags == 0);
 
 	/*
 	 * Interrupt execution if ns_query_done() is called.

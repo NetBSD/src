@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_dbi.c,v 1.6 2020/05/24 19:46:20 christos Exp $	*/
+/*	$NetBSD: dlz_dbi.c,v 1.7 2020/08/03 17:23:39 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -81,7 +81,7 @@ destroy_querylist(query_list_t **querylist) {
 		 * was really a query segment, and not a pointer to
 		 * %zone%, or %record%, or %client%
 		 */
-		if (tseg->cmd != NULL && tseg->direct == true) {
+		if (tseg->cmd != NULL && tseg->direct) {
 			free(tseg->cmd);
 		}
 		/* get the next query segment, before we destroy this one. */
@@ -285,7 +285,7 @@ build_querystring(query_list_t *querylist) {
 		 * if this is a query segment, use the
 		 * precalculated string length
 		 */
-		if (tseg->direct == true) {
+		if (tseg->direct) {
 			length += tseg->strlen;
 		} else { /* calculate string length for dynamic segments. */
 			length += strlen(*(char **)tseg->cmd);
@@ -303,7 +303,7 @@ build_querystring(query_list_t *querylist) {
 	/* start at the top of the list again */
 	tseg = DLZ_LIST_HEAD(*querylist);
 	while (tseg != NULL) {
-		if (tseg->direct == true) {
+		if (tseg->direct) {
 			/* query segments */
 			strcat(qs, tseg->cmd);
 		} else {

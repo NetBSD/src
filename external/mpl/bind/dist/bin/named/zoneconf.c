@@ -1,4 +1,4 @@
-/*	$NetBSD: zoneconf.c,v 1.7 2020/05/24 19:46:12 christos Exp $	*/
+/*	$NetBSD: zoneconf.c,v 1.8 2020/08/03 17:23:37 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -732,22 +732,27 @@ strtoargv(isc_mem_t *mctx, char *s, unsigned int *argcp, char ***argvp) {
 static void
 checknames(dns_zonetype_t ztype, const cfg_obj_t **maps,
 	   const cfg_obj_t **objp) {
-	const char *zone = NULL;
 	isc_result_t result;
 
 	switch (ztype) {
 	case dns_zone_slave:
 	case dns_zone_mirror:
-		zone = "slave";
+		result = named_checknames_get(maps, "secondary", objp);
+		if (result != ISC_R_SUCCESS) {
+			result = named_checknames_get(maps, "slave", objp);
+		}
 		break;
 	case dns_zone_master:
-		zone = "master";
+		result = named_checknames_get(maps, "primary", objp);
+		if (result != ISC_R_SUCCESS) {
+			result = named_checknames_get(maps, "master", objp);
+		}
 		break;
 	default:
 		INSIST(0);
 		ISC_UNREACHABLE();
 	}
-	result = named_checknames_get(maps, zone, objp);
+
 	INSIST(result == ISC_R_SUCCESS && objp != NULL && *objp != NULL);
 }
 
@@ -1404,6 +1409,7 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 		INSIST(result == ISC_R_SUCCESS);
 		dns_zone_setrequestixfr(zone, cfg_obj_asboolean(obj));
 
+		obj = NULL;
 		checknames(ztype, maps, &obj);
 		INSIST(obj != NULL);
 		if (strcasecmp(cfg_obj_asstring(obj), "warn") == 0) {

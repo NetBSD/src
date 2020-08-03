@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.c,v 1.10 2020/05/25 15:14:04 christos Exp $	*/
+/*	$NetBSD: zone.c,v 1.11 2020/08/03 17:23:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -158,11 +158,11 @@ typedef struct dns_include dns_include_t;
 
 #define DNS_ZONE_CHECKLOCK
 #ifdef DNS_ZONE_CHECKLOCK
-#define LOCK_ZONE(z)                          \
-	do {                                  \
-		LOCK(&(z)->lock);             \
-		INSIST((z)->locked == false); \
-		(z)->locked = true;           \
+#define LOCK_ZONE(z)                  \
+	do {                          \
+		LOCK(&(z)->lock);     \
+		INSIST(!(z)->locked); \
+		(z)->locked = true;   \
 	} while (/*CONSTCOND*/0)
 #define UNLOCK_ZONE(z)               \
 	do {                         \
@@ -174,7 +174,7 @@ typedef struct dns_include dns_include_t;
 	do {                                            \
 		result = isc_mutex_trylock(&(z)->lock); \
 		if (result == ISC_R_SUCCESS) {          \
-			INSIST((z)->locked == false);   \
+			INSIST(!(z)->locked);           \
 			(z)->locked = true;             \
 		}                                       \
 	} while (/*CONSTCOND*/0)
@@ -4045,7 +4045,7 @@ create_keydata(dns_zone_t *zone, dns_db_t *db, dns_dbversion_t *ver,
 	/*
 	 * If the keynode has no trust anchor set, we shouldn't be here.
 	 */
-	if (dns_keynode_dsset(keynode) == NULL) {
+	if (!dns_keynode_dsset(keynode, NULL)) {
 		return (ISC_R_FAILURE);
 	}
 
@@ -4444,7 +4444,7 @@ addifmissing(dns_keytable_t *keytable, dns_keynode_t *keynode,
 	/*
 	 * If the keynode has no trust anchor set, return.
 	 */
-	if (dns_keynode_dsset(keynode) == NULL) {
+	if (!dns_keynode_dsset(keynode, NULL)) {
 		return;
 	}
 
@@ -9992,7 +9992,7 @@ keyfetch_done(isc_task_t *task, isc_event_t *event) {
 	bool free_needed;
 	dns_keynode_t *keynode = NULL;
 	dns_rdataset_t *dnskeys = NULL, *dnskeysigs = NULL;
-	dns_rdataset_t *keydataset = NULL, *dsset = NULL;
+	dns_rdataset_t *keydataset = NULL, dsset;
 
 	UNUSED(task);
 	INSIST(event != NULL && event->ev_type == DNS_EVENT_FETCHDONE);
@@ -10078,7 +10078,8 @@ keyfetch_done(isc_task_t *task, isc_event_t *event) {
 	/*
 	 * If the keynode has a DS trust anchor, use it for verification.
 	 */
-	if ((dsset = dns_keynode_dsset(keynode)) != NULL) {
+	dns_rdataset_init(&dsset);
+	if (dns_keynode_dsset(keynode, &dsset)) {
 		for (result = dns_rdataset_first(dnskeysigs);
 		     result == ISC_R_SUCCESS;
 		     result = dns_rdataset_next(dnskeysigs))
@@ -10091,15 +10092,15 @@ keyfetch_done(isc_task_t *task, isc_event_t *event) {
 			result = dns_rdata_tostruct(&sigrr, &sig, NULL);
 			RUNTIME_CHECK(result == ISC_R_SUCCESS);
 
-			for (tresult = dns_rdataset_first(dsset);
+			for (tresult = dns_rdataset_first(&dsset);
 			     tresult == ISC_R_SUCCESS;
-			     tresult = dns_rdataset_next(dsset))
+			     tresult = dns_rdataset_next(&dsset))
 			{
 				dns_rdata_t dsrdata = DNS_RDATA_INIT;
 				dns_rdata_ds_t ds;
 
 				dns_rdata_reset(&dsrdata);
-				dns_rdataset_current(dsset, &dsrdata);
+				dns_rdataset_current(&dsset, &dsrdata);
 				tresult = dns_rdata_tostruct(&dsrdata, &ds,
 							     NULL);
 				RUNTIME_CHECK(tresult == ISC_R_SUCCESS);
@@ -10146,6 +10147,7 @@ keyfetch_done(isc_task_t *task, isc_event_t *event) {
 				break;
 			}
 		}
+		dns_rdataset_disassociate(&dsset);
 	}
 
 anchors_done:
@@ -10750,7 +10752,7 @@ zone_refreshkeys(dns_zone_t *zone) {
 		 */
 
 #ifdef ENABLE_AFL
-		if (dns_fuzzing_resolver == false) {
+		if (!dns_fuzzing_resolver) {
 #endif /* ifdef ENABLE_AFL */
 			result = dns_resolver_createfetch(
 				zone->view->resolver, kname,
@@ -10830,7 +10832,7 @@ zone_maintenance(dns_zone_t *zone) {
 	const char me[] = "zone_maintenance";
 	isc_time_t now;
 	isc_result_t result;
-	bool dumping, load_pending;
+	bool dumping, load_pending, viewok;
 
 	REQUIRE(DNS_ZONE_VALID(zone));
 	ENTER;
@@ -10853,7 +10855,10 @@ zone_maintenance(dns_zone_t *zone) {
 	 * adb or resolver will be NULL, and we had better not try
 	 * to do further maintenance on it.
 	 */
-	if (zone->view == NULL || zone->view->adb == NULL) {
+	LOCK_ZONE(zone);
+	viewok = (zone->view != NULL && zone->view->adb != NULL);
+	UNLOCK_ZONE(zone);
+	if (!viewok) {
 		return;
 	}
 
@@ -12754,7 +12759,7 @@ next_master:
 			 * Did we get a good answer from all the masters?
 			 */
 			for (j = 0; j < zone->masterscnt; j++) {
-				if (zone->mastersok[j] == false) {
+				if (!zone->mastersok[j]) {
 					{
 						done = false;
 						break;
@@ -13278,7 +13283,7 @@ next_master:
 			 * Did we get a good answer from all the masters?
 			 */
 			for (j = 0; j < zone->masterscnt; j++) {
-				if (zone->mastersok[j] == false) {
+				if (!zone->mastersok[j]) {
 					{
 						done = false;
 						break;
@@ -16993,7 +16998,7 @@ got_transfer_quota(isc_task_t *task, isc_event_t *event) {
 		if (peer == NULL || result != ISC_R_SUCCESS) {
 			use_ixfr = zone->requestixfr;
 		}
-		if (use_ixfr == false) {
+		if (!use_ixfr) {
 			dns_zone_logc(zone, DNS_LOGCATEGORY_XFER_IN,
 				      ISC_LOG_DEBUG(1),
 				      "IXFR disabled, "
@@ -19561,7 +19566,7 @@ zone_rekey(dns_zone_t *zone) {
 
 		/*
 		 * Clear fullsign flag, if it was set, so we don't do
-		 * another full signing next time
+		 * another full signing next time.
 		 */
 		DNS_ZONEKEY_CLROPTION(zone, DNS_ZONEKEY_FULLSIGN);
 
@@ -19678,6 +19683,19 @@ zone_rekey(dns_zone_t *zone) {
 		dnssec_log(zone, ISC_LOG_INFO, "next key event: %s", timebuf);
 	}
 	UNLOCK_ZONE(zone);
+
+	if (isc_log_wouldlog(dns_lctx, ISC_LOG_DEBUG(3))) {
+		for (key = ISC_LIST_HEAD(dnskeys); key != NULL;
+		     key = ISC_LIST_NEXT(key, link)) {
+			/* This debug log is used in the kasp system test */
+			char algbuf[DNS_SECALG_FORMATSIZE];
+			dns_secalg_format(dst_key_alg(key->key), algbuf,
+					  sizeof(algbuf));
+			dnssec_log(zone, ISC_LOG_DEBUG(3),
+				   "zone_rekey done: key %d/%s",
+				   dst_key_id(key->key), algbuf);
+		}
+	}
 
 	result = ISC_R_SUCCESS;
 

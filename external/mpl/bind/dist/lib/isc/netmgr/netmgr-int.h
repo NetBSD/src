@@ -1,4 +1,4 @@
-/*	$NetBSD: netmgr-int.h,v 1.2 2020/05/24 19:46:27 christos Exp $	*/
+/*	$NetBSD: netmgr-int.h,v 1.3 2020/08/03 17:23:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -24,6 +24,7 @@
 #include <isc/mem.h>
 #include <isc/netmgr.h>
 #include <isc/queue.h>
+#include <isc/quota.h>
 #include <isc/random.h>
 #include <isc/refcount.h>
 #include <isc/region.h>
@@ -133,11 +134,13 @@ typedef enum isc__netievent_type {
 	netievent_tcprecv,
 	netievent_tcpstartread,
 	netievent_tcppauseread,
-	netievent_tcpchildlisten,
-	netievent_tcpchildstop,
+	netievent_tcpchildaccept,
+	netievent_tcpaccept,
 	netievent_tcpstop,
 	netievent_tcpclose,
+
 	netievent_tcpdnsclose,
+	netievent_tcpdnssend,
 
 	netievent_closecb,
 	netievent_shutdown,
@@ -157,7 +160,7 @@ typedef enum isc__netievent_type {
  */
 typedef union {
 	isc_nm_recv_cb_t recv;
-	isc_nm_cb_t accept;
+	isc_nm_accept_cb_t accept;
 } isc__nm_readcb_t;
 
 typedef union {
@@ -167,7 +170,7 @@ typedef union {
 
 typedef union {
 	isc_nm_recv_cb_t recv;
-	isc_nm_cb_t accept;
+	isc_nm_accept_cb_t accept;
 	isc_nm_cb_t send;
 	isc_nm_cb_t connect;
 } isc__nm_cb_t;
@@ -213,7 +216,6 @@ typedef struct isc__netievent__socket {
 typedef isc__netievent__socket_t isc__netievent_udplisten_t;
 typedef isc__netievent__socket_t isc__netievent_udpstop_t;
 typedef isc__netievent__socket_t isc__netievent_tcpstop_t;
-typedef isc__netievent__socket_t isc__netievent_tcpchildstop_t;
 typedef isc__netievent__socket_t isc__netievent_tcpclose_t;
 typedef isc__netievent__socket_t isc__netievent_tcpdnsclose_t;
 typedef isc__netievent__socket_t isc__netievent_startread_t;
@@ -229,20 +231,31 @@ typedef struct isc__netievent__socket_req {
 typedef isc__netievent__socket_req_t isc__netievent_tcpconnect_t;
 typedef isc__netievent__socket_req_t isc__netievent_tcplisten_t;
 typedef isc__netievent__socket_req_t isc__netievent_tcpsend_t;
+typedef isc__netievent__socket_req_t isc__netievent_tcpdnssend_t;
 
-typedef struct isc__netievent__socket_streaminfo {
+typedef struct isc__netievent__socket_streaminfo_quota {
 	isc__netievent_type type;
 	isc_nmsocket_t *sock;
 	isc_uv_stream_info_t streaminfo;
-} isc__netievent__socket_streaminfo_t;
+	isc_quota_t *quota;
+} isc__netievent__socket_streaminfo_quota_t;
 
-typedef isc__netievent__socket_streaminfo_t isc__netievent_tcpchildlisten_t;
+typedef isc__netievent__socket_streaminfo_quota_t
+	isc__netievent_tcpchildaccept_t;
 
 typedef struct isc__netievent__socket_handle {
 	isc__netievent_type type;
 	isc_nmsocket_t *sock;
 	isc_nmhandle_t *handle;
 } isc__netievent__socket_handle_t;
+
+typedef struct isc__netievent__socket_quota {
+	isc__netievent_type type;
+	isc_nmsocket_t *sock;
+	isc_quota_t *quota;
+} isc__netievent__socket_quota_t;
+
+typedef isc__netievent__socket_quota_t isc__netievent_tcpaccept_t;
 
 typedef struct isc__netievent_udpsend {
 	isc__netievent_type type;
@@ -263,7 +276,8 @@ typedef union {
 	isc__netievent__socket_t nis;
 	isc__netievent__socket_req_t nisr;
 	isc__netievent_udpsend_t nius;
-	isc__netievent__socket_streaminfo_t niss;
+	isc__netievent__socket_quota_t nisq;
+	isc__netievent__socket_streaminfo_quota_t nissq;
 } isc__netievent_storage_t;
 
 /*
@@ -326,7 +340,6 @@ typedef enum isc_nmsocket_type {
 	isc_nm_udplistener, /* Aggregate of nm_udpsocks */
 	isc_nm_tcpsocket,
 	isc_nm_tcplistener,
-	isc_nm_tcpchildlistener,
 	isc_nm_tcpdnslistener,
 	isc_nm_tcpdnssocket
 } isc_nmsocket_type;
@@ -372,16 +385,7 @@ struct isc_nmsocket {
 	 */
 	isc_quota_t *quota;
 	isc_quota_t *pquota;
-
-	/*%
-	 * How many connections we have not accepted due to quota?
-	 * When we close a connection we need to accept a new one.
-	 */
-	int overquota;
-	/*%
-	 * How many active connections we have?
-	 */
-	int conns;
+	isc_quota_cb_t quotacb;
 
 	/*%
 	 * Socket statistics
@@ -706,11 +710,11 @@ isc__nm_async_tcpconnect(isc__networker_t *worker, isc__netievent_t *ev0);
 void
 isc__nm_async_tcplisten(isc__networker_t *worker, isc__netievent_t *ev0);
 void
-isc__nm_async_tcpchildlisten(isc__networker_t *worker, isc__netievent_t *ev0);
+isc__nm_async_tcpaccept(isc__networker_t *worker, isc__netievent_t *ev0);
+void
+isc__nm_async_tcpchildaccept(isc__networker_t *worker, isc__netievent_t *ev0);
 void
 isc__nm_async_tcpstop(isc__networker_t *worker, isc__netievent_t *ev0);
-void
-isc__nm_async_tcpchildstop(isc__networker_t *worker, isc__netievent_t *ev0);
 void
 isc__nm_async_tcpsend(isc__networker_t *worker, isc__netievent_t *ev0);
 void
@@ -746,6 +750,9 @@ isc__nm_tcpdns_stoplistening(isc_nmsocket_t *sock);
 
 void
 isc__nm_async_tcpdnsclose(isc__networker_t *worker, isc__netievent_t *ev0);
+
+void
+isc__nm_async_tcpdnssend(isc__networker_t *worker, isc__netievent_t *ev0);
 
 #define isc__nm_uverr2result(x) \
 	isc___nm_uverr2result(x, true, __FILE__, __LINE__)
