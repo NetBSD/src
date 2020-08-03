@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.14 2020/07/08 03:45:13 ryo Exp $	*/
+/*	$NetBSD: machdep.h,v 1.15 2020/08/03 05:56:50 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -113,15 +113,10 @@ void interrupt(struct trapframe *);
 
 /* cpu_onfault */
 int cpu_set_onfault(struct faultbuf *) __returns_twice;
+void cpu_unset_onfault(void);
 void cpu_jump_onfault(struct trapframe *, const struct faultbuf *, int);
 
 #if defined(_KERNEL)
-static inline void
-cpu_unset_onfault(void)
-{
-	curlwp->l_md.md_onfault = NULL;
-}
-
 static inline void
 cpu_enable_onfault(struct faultbuf *fb)
 {
