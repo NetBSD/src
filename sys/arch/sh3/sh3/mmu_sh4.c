@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_sh4.c,v 1.17 2020/08/03 19:24:28 uwe Exp $	*/
+/*	$NetBSD: mmu_sh4.c,v 1.18 2020/08/03 22:28:39 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmu_sh4.c,v 1.17 2020/08/03 19:24:28 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmu_sh4.c,v 1.18 2020/08/03 22:28:39 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,6 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: mmu_sh4.c,v 1.17 2020/08/03 19:24:28 uwe Exp $");
 #include <sh3/pte.h>	/* NetBSD/sh3 specific PTE */
 #include <sh3/mmu.h>
 #include <sh3/mmu_sh4.h>
+
+static __noinline void __sh4_tlb_assoc(uint32_t);
 
 #define	SH4_MMU_HAZARD	__asm volatile("nop;nop;nop;nop;nop;nop;nop;nop;")
 
@@ -77,29 +79,42 @@ sh4_mmu_start(void)
 	SH4_MMU_HAZARD;
 }
 
+
+/*
+ * Perform associative write to UTLB.  Must be called via its P2
+ * address.  Note, the ASID match is against PTEH, not "va".  The
+ * caller is responsible for saving/setting/restoring PTEH.
+ */
+static __noinline void
+__sh4_tlb_assoc(uint32_t va)
+{
+
+	_reg_write_4(SH4_UTLB_AA | SH4_UTLB_A, va);
+	PAD_P1_SWITCH;
+}
+
+
 void
 sh4_tlb_invalidate_addr(int asid, vaddr_t va)
 {
-	uint32_t pteh;
-	int sr;
+	void (*tlb_assoc_p2)(uint32_t);
+	uint32_t opteh;
+	uint32_t sr;
+
+	tlb_assoc_p2 = SH3_P2SEG_FUNC(__sh4_tlb_assoc);
 
 	va &= SH4_UTLB_AA_VPN_MASK;
+
 	sr = _cpu_exception_suspend();
+	opteh = _reg_read_4(SH4_PTEH); /* save current ASID */
 
-	/* Save current ASID */
-	pteh = _reg_read_4(SH4_PTEH);
-	/* Set ASID for associative write */
-	_reg_write_4(SH4_PTEH, asid);
+	_reg_write_4(SH4_PTEH, asid); /* set ASID for associative write */
+	(*tlb_assoc_p2)(va); /* invalidate { va, ASID } entry if exists */
 
-	/* Associative write(UTLB/ITLB). not required ITLB invalidate. */
-	RUN_P2;
-	_reg_write_4(SH4_UTLB_AA | SH4_UTLB_A, va); /* Clear D, V */
-	RUN_P1;
-	/* Restore ASID */
-	_reg_write_4(SH4_PTEH, pteh);
-
+	_reg_write_4(SH4_PTEH, opteh); /* restore ASID */
 	_cpu_set_sr(sr);
 }
+
 
 void
 sh4_tlb_invalidate_asid(int asid)
@@ -151,36 +166,37 @@ sh4_tlb_invalidate_all(void)
 void
 sh4_tlb_update(int asid, vaddr_t va, uint32_t pte)
 {
-	uint32_t oasid;
-	uint32_t ptel;
-	int sr;
+	void (*tlb_assoc_p2)(uint32_t);
+	uint32_t opteh, ptel;
+	uint32_t sr;
 
 	KDASSERT(asid < 0x100);
 	KDASSERT(va != 0);
 	KDASSERT((pte & ~PGOFSET) != 0);
 
+	tlb_assoc_p2 = SH3_P2SEG_FUNC(__sh4_tlb_assoc);
+
 	sr = _cpu_exception_suspend();
-	/* Save old ASID */
-	oasid = _reg_read_4(SH4_PTEH) & SH4_PTEH_ASID_MASK;
+	opteh = _reg_read_4(SH4_PTEH); /* save old ASID */
 
-	/* Invalidate old entry (if any) */
-	sh4_tlb_invalidate_addr(asid, va);
-
-	_reg_write_4(SH4_PTEH, asid);
-	/* Load new entry */
+	/*
+	 * Invalidate { va, ASID } entry if exists.  Only ASID is
+	 * matched in PTEH, but set the va part too for ldtlb below.
+	 */
 	_reg_write_4(SH4_PTEH, (va & ~PGOFSET) | asid);
+	(*tlb_assoc_p2)(va & SH4_UTLB_AA_VPN_MASK);
+
+	/* Load new entry (PTEH is already set) */
 	ptel = pte & PG_HW_BITS;
+	_reg_write_4(SH4_PTEL, ptel);
 	if (pte & _PG_PCMCIA) {
 		_reg_write_4(SH4_PTEA,
 		    (pte >> _PG_PCMCIA_SHIFT) & SH4_PTEA_SA_MASK);
 	} else {
 		_reg_write_4(SH4_PTEA, 0);
 	}
-	_reg_write_4(SH4_PTEL, ptel);
 	__asm volatile("ldtlb; nop");
 
-	/* Restore old ASID */
-	if (asid != oasid)
-		_reg_write_4(SH4_PTEH, oasid);
+	_reg_write_4(SH4_PTEH, opteh); /* restore old ASID */
 	_cpu_set_sr(sr);
 }
