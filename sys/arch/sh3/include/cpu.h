@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59 2019/12/01 15:34:45 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.60 2020/08/03 21:53:25 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2019 The NetBSD Foundation, Inc. All rights reserved.
@@ -151,8 +151,14 @@ do {									\
 #define	SH3_P2SEG_TO_PHYS(x)	((uint32_t)(x) & SH3_PHYS_MASK)
 #define	SH3_PHYS_TO_P1SEG(x)	((uint32_t)(x) | SH3_P1SEG_BASE)
 #define	SH3_PHYS_TO_P2SEG(x)	((uint32_t)(x) | SH3_P2SEG_BASE)
-#define	SH3_P1SEG_TO_P2SEG(x)	((uint32_t)(x) | 0x20000000)
-#define	SH3_P2SEG_TO_P1SEG(x)	((uint32_t)(x) & ~0x20000000)
+#define	SH3_P1SEG_TO_P2SEG(x)	((uint32_t)(x) + 0x20000000u)
+#define	SH3_P2SEG_TO_P1SEG(x)	((uint32_t)(x) - 0x20000000u)
+
+#ifdef __GNUC__
+#define SH3_P2SEG_FUNC(f) ((__typeof__(f) *)SH3_P1SEG_TO_P2SEG(f))
+#else
+#define SH3_P2SEG_FUNC(f) ((void *)SH3_P1SEG_TO_P2SEG(f))
+#endif
 
 #ifndef __lint__
 
