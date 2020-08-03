@@ -1,4 +1,4 @@
-/*	$NetBSD: miidevs_data.h,v 1.153 2020/06/23 14:35:59 msaitoh Exp $	*/
+/*	$NetBSD: miidevs_data.h,v 1.154 2020/08/03 14:00:41 uwe Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -41,7 +41,7 @@ struct mii_knowndev {
 	int model;
 	const char *descr;
 };
-struct mii_knowndev mii_knowndevs[] = {
+const struct mii_knowndev mii_knowndevs[] = {
  { MII_OUI_AGERE, MII_MODEL_AGERE_ET1011, MII_STR_AGERE_ET1011 },
  { MII_OUI_AGERE, MII_MODEL_AGERE_ET1011C, MII_STR_AGERE_ET1011C },
  { MII_OUI_xxASIX, MII_MODEL_xxASIX_AX88X9X, MII_STR_xxASIX_AX88X9X },
