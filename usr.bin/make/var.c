@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.410 2020/08/03 15:43:32 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.411 2020/08/03 16:45:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.410 2020/08/03 15:43:32 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.411 2020/08/03 16:45:23 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.410 2020/08/03 15:43:32 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.411 2020/08/03 16:45:23 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -137,11 +137,13 @@ __RCSID("$NetBSD: var.c,v 1.410 2020/08/03 15:43:32 rillig Exp $");
 #include    "job.h"
 #include    "metachar.h"
 
-#define VAR_DEBUG(fmt, ...)	\
-    if (!DEBUG(VAR))		\
-	(void) 0;		\
-    else			\
+#define VAR_DEBUG_IF(cond, fmt, ...)	\
+    if (!(DEBUG(VAR) && (cond)))	\
+	(void) 0;			\
+    else				\
 	fprintf(debug_file, fmt, __VA_ARGS__)
+
+#define VAR_DEBUG(fmt, ...) VAR_DEBUG_IF(TRUE, fmt, __VA_ARGS__)
 
 /*
  * This lets us tell if we have replaced the original environ
@@ -423,9 +425,8 @@ VarAdd(const char *name, const char *val, GNode *ctxt)
     Hash_Entry *h = Hash_CreateEntry(&ctxt->context, name, NULL);
     Hash_SetValue(h, v);
     v->name = h->name;
-    if (DEBUG(VAR) && !(ctxt->flags & INTERNAL)) {
-	fprintf(debug_file, "%s:%s = %s\n", ctxt->name, name, val);
-    }
+    VAR_DEBUG_IF(!(ctxt->flags & INTERNAL),
+		 "%s:%s = %s\n", ctxt->name, name, val);
 }
 
 /* Remove a variable from a context, freeing the Var structure as well. */
@@ -436,10 +437,8 @@ Var_Delete(const char *name, GNode *ctxt)
     if (strchr(name, '$') != NULL)
 	name = name_freeIt = Var_Subst(name, VAR_GLOBAL, VARE_WANTRES);
     Hash_Entry *ln = Hash_FindEntry(&ctxt->context, name);
-    if (DEBUG(VAR)) {
-	fprintf(debug_file, "%s:delete %s%s\n",
-	    ctxt->name, name, ln != NULL ? "" : " (not found)");
-    }
+    VAR_DEBUG("%s:delete %s%s\n",
+	      ctxt->name, name, ln != NULL ? "" : " (not found)");
     free(name_freeIt);
 
     if (ln != NULL) {
@@ -754,11 +753,9 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
 	const char *unexpanded_name = name;
 	name = name_freeIt = Var_Subst(name, ctxt, VARE_WANTRES);
 	if (name[0] == '\0') {
-	    if (DEBUG(VAR)) {
-		fprintf(debug_file, "Var_Set(\"%s\", \"%s\", ...) "
-			"name expands to empty string - ignored\n",
-			unexpanded_name, val);
-	    }
+	    VAR_DEBUG("Var_Set(\"%s\", \"%s\", ...) "
+		      "name expands to empty string - ignored\n",
+		      unexpanded_name, val);
 	    free(name_freeIt);
 	    return;
 	}
@@ -769,9 +766,7 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
 	v = VarFind(name, VAR_CMD, 0);
 	if (v != NULL) {
 	    if (v->flags & VAR_FROM_CMD) {
-		if (DEBUG(VAR)) {
-		    fprintf(debug_file, "%s:%s = %s ignored!\n", ctxt->name, name, val);
-		}
+		VAR_DEBUG("%s:%s = %s ignored!\n", ctxt->name, name, val);
 		goto out;
 	    }
 	    VarFreeEnv(v, TRUE);
@@ -794,9 +789,7 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
 	if (val)
 	    Buf_AddStr(&v->val, val);
 
-	if (DEBUG(VAR)) {
-	    fprintf(debug_file, "%s:%s = %s\n", ctxt->name, name, val);
-	}
+	VAR_DEBUG("%s:%s = %s\n", ctxt->name, name, val);
 	if (v->flags & VAR_EXPORTED) {
 	    Var_Export1(name, VAR_EXPORT_PARENT);
 	}
@@ -895,11 +888,9 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
     if (strchr(name, '$') != NULL) {
 	expanded_name = Var_Subst(name, ctxt, VARE_WANTRES);
 	if (expanded_name[0] == '\0') {
-	    if (DEBUG(VAR)) {
-		fprintf(debug_file, "Var_Append(\"%s\", \"%s\", ...) "
-			"name expands to empty string - ignored\n",
-			name, val);
-	    }
+	    VAR_DEBUG("Var_Append(\"%s\", \"%s\", ...) "
+		      "name expands to empty string - ignored\n",
+		      name, val);
 	    free(expanded_name);
 	    return;
 	}
@@ -914,10 +905,8 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 	Buf_AddByte(&v->val, ' ');
 	Buf_AddStr(&v->val, val);
 
-	if (DEBUG(VAR)) {
-	    fprintf(debug_file, "%s:%s = %s\n", ctxt->name, name,
-		    Buf_GetAllZ(&v->val, NULL));
-	}
+	VAR_DEBUG("%s:%s = %s\n", ctxt->name, name,
+		  Buf_GetAllZ(&v->val, NULL));
 
 	if (v->flags & VAR_FROM_ENV) {
 	    /*
@@ -1104,8 +1093,7 @@ static void
 ModifyWord_Match(const char *word, SepBuf *buf, void *data)
 {
     const char *pattern = data;
-    if (DEBUG(VAR))
-	fprintf(debug_file, "VarMatch [%s] [%s]\n", word, pattern);
+    VAR_DEBUG("VarMatch [%s] [%s]\n", word, pattern);
     if (Str_Match(word, pattern))
 	SepBuf_AddStr(buf, word);
 }
@@ -1414,12 +1402,10 @@ ModifyWord_Loop(const char *word, SepBuf *buf, void *data)
     const ModifyWord_LoopArgs *args = data;
     Var_Set_with_flags(args->tvar, word, args->ctx, VAR_NO_EXPORT);
     char *s = Var_Subst(args->str, args->ctx, args->eflags);
-    if (DEBUG(VAR)) {
-	fprintf(debug_file,
-		"ModifyWord_Loop: in \"%s\", replace \"%s\" with \"%s\" "
-		"to \"%s\"\n",
-		word, args->tvar, args->str, s ? s : "(null)");
-    }
+
+    VAR_DEBUG("ModifyWord_Loop: in \"%s\", replace \"%s\" with \"%s\" "
+	      "to \"%s\"\n",
+	      word, args->tvar, args->str, s ? s : "(null)");
 
     if (s != NULL && s[0] != '\0') {
 	if (s[0] == '\n' || (buf->buf.count > 0 &&
@@ -1541,10 +1527,7 @@ ModifyWords(GNode *ctx, Byte sep, Boolean oneBigWord,
     int ac;
     av = brk_string(str, &ac, FALSE, &as);
 
-    if (DEBUG(VAR)) {
-	fprintf(debug_file, "ModifyWords: split \"%s\" into %d words\n",
-		str, ac);
-    }
+    VAR_DEBUG("ModifyWords: split \"%s\" into %d words\n", str, ac);
 
     int i;
     for (i = 0; i < ac; i++) {
@@ -1721,8 +1704,7 @@ ParseModifierPart(
 	*out_length = Buf_Size(&buf);
 
     char *rstr = Buf_Destroy(&buf, FALSE);
-    if (DEBUG(VAR))
-	fprintf(debug_file, "Modifier part: \"%s\"\n", rstr);
+    VAR_DEBUG("Modifier part: \"%s\"\n", rstr);
     return rstr;
 }
 
@@ -1762,8 +1744,7 @@ VarQuote(char *str, Boolean quoteDollar)
     }
 
     str = Buf_Destroy(&buf, FALSE);
-    if (DEBUG(VAR))
-	fprintf(debug_file, "QuoteMeta: [%s]\n", str);
+    VAR_DEBUG("QuoteMeta: [%s]\n", str);
     return str;
 }
 
@@ -2233,9 +2214,7 @@ ApplyModifier_Match(const char **pp, ApplyModifiersState *st)
 	free(old_pattern);
     }
 
-    if (DEBUG(VAR))
-	fprintf(debug_file, "Pattern[%s] for [%s] is [%s]\n",
-	    st->v->name, st->val, pattern);
+    VAR_DEBUG("Pattern[%s] for [%s] is [%s]\n", st->v->name, st->val, pattern);
 
     ModifyWordsCallback callback = mod[0] == 'M'
 	? ModifyWord_Match : ModifyWord_NoMatch;
@@ -3005,10 +2984,8 @@ ApplyModifiers(
 		goto apply_mods;
 	    }
 
-	    if (DEBUG(VAR)) {
-		fprintf(debug_file, "Got '%s' from '%.*s'%.*s\n",
-		       rval, rlen, p, rlen, p + rlen);
-	    }
+	    VAR_DEBUG("Got '%s' from '%.*s'%.*s\n",
+		      rval, rlen, p, rlen, p + rlen);
 
 	    p += rlen;
 
@@ -3034,10 +3011,7 @@ ApplyModifiers(
 	    continue;
 	}
     apply_mods:
-	if (DEBUG(VAR)) {
-	    fprintf(debug_file, "Applying[%s] :%c to \"%s\"\n", st.v->name,
-		*p, st.val);
-	}
+	VAR_DEBUG( "Applying[%s] :%c to \"%s\"\n", st.v->name, *p, st.val);
 	st.newVal = var_Error;		/* default value, in case of errors */
 	ApplyModifierResult res = AMR_BAD;	/* just a safe fallback */
 	mod = p;
@@ -3195,10 +3169,7 @@ ApplyModifiers(
 	if (res == AMR_BAD)
 	    goto bad_modifier;
 
-	if (DEBUG(VAR)) {
-	    fprintf(debug_file, "Result[%s] of :%c is \"%s\"\n",
-		st.v->name, *mod, st.newVal);
-	}
+	VAR_DEBUG("Result[%s] of :%c is \"%s\"\n", st.v->name, *mod, st.newVal);
 
 	if (st.newVal != st.val) {
 	    if (*freePtr) {
