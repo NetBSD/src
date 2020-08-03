@@ -27,11 +27,16 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifdef _KERNEL_OPT
+#include "opt_net_mpsafe.h"
+#endif
+
 #include <sys/cdefs.h>
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.24 2020/03/03 21:42:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.25 2020/08/03 19:44:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +60,14 @@ __KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.24 2020/03/03 21:42:31 jdolecek Exp $")
 #include <net/if_vlanvar.h>
 
 #include <dev/pci/if_enavar.h>
+
+#ifdef NET_MPSAFE
+#define	WQ_FLAGS	WQ_MPSAFE
+#define	CALLOUT_FLAGS	CALLOUT_MPSAFE
+#else
+#define	WQ_FLAGS	0
+#define	CALLOUT_FLAGS	0
+#endif
 
 /*********************************************************
  *  Function prototypes
@@ -677,7 +690,7 @@ ena_setup_tx_resources(struct ena_adapter *adapter, int qid)
 
 	/* Allocate workqueues */
 	int rc = workqueue_create(&tx_ring->enqueue_tq, "ena_tx_enq",
-	    ena_deferred_mq_start, tx_ring, 0, IPL_NET, WQ_PERCPU | WQ_MPSAFE);
+	    ena_deferred_mq_start, tx_ring, 0, IPL_NET, WQ_PERCPU | WQ_FLAGS);
 	if (unlikely(rc != 0)) {
 		ena_trace(ENA_ALERT,
 		    "Unable to create workqueue for enqueue task\n");
@@ -883,7 +896,7 @@ ena_setup_rx_resources(struct ena_adapter *adapter, unsigned int qid)
 
 	/* Allocate workqueues */
 	int rc = workqueue_create(&rx_ring->cmpl_tq, "ena_rx_comp",
-	    ena_deferred_rx_cleanup, rx_ring, 0, IPL_NET, WQ_PERCPU | WQ_MPSAFE);
+	    ena_deferred_rx_cleanup, rx_ring, 0, IPL_NET, WQ_PERCPU | WQ_FLAGS);
 	if (unlikely(rc != 0)) {
 		ena_trace(ENA_ALERT,
 		    "Unable to create workqueue for RX completion task\n");
@@ -3795,12 +3808,12 @@ ena_attach(device_t parent, device_t self, void *aux)
 		goto err_ifp_free;
 	}
 
-	callout_init(&adapter->timer_service, CALLOUT_MPSAFE);
+	callout_init(&adapter->timer_service, CALLOUT_FLAGS);
 	callout_setfunc(&adapter->timer_service, ena_timer_service, adapter);
 
 	/* Initialize reset task queue */
 	rc = workqueue_create(&adapter->reset_tq, "ena_reset_enq",
-	    ena_reset_task, adapter, 0, IPL_NET, WQ_PERCPU | WQ_MPSAFE);
+	    ena_reset_task, adapter, 0, IPL_NET, WQ_PERCPU | WQ_FLAGS);
 	if (unlikely(rc != 0)) {
 		ena_trace(ENA_ALERT,
 		    "Unable to create workqueue for reset task\n");
