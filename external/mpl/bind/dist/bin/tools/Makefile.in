@@ -18,15 +18,17 @@ VERSION=@BIND9_VERSION@
 CINCLUDES =	${DNS_INCLUDES} ${ISC_INCLUDES} ${ISCCFG_INCLUDES} \
 		${BIND9_INCLUDES} \
 		${OPENSSL_CFLAGS} \
-		${MAXMINDDB_CFLAGS}
+		${PROTOBUF_C_CFLAGS} \
+		${MAXMINDDB_CFLAGS} \
+		${LMDB_CFLAGS}
 
 CDEFINES =	-DVERSION=\"${VERSION}\"
 CWARNINGS =
 
-DNSLIBS =	../../lib/dns/libdns.@A@ ${MAXMINDDB_LIBS} @DNS_CRYPTO_LIBS@
+DNSLIBS =	../../lib/dns/libdns.@A@ @NO_LIBTOOL_DNSLIBS@
 BIND9LIBS =	../../lib/bind9/libbind9.@A@
-ISCLIBS =	../../lib/isc/libisc.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
-ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
+ISCLIBS =	../../lib/isc/libisc.@A@ @NO_LIBTOOL_ISCLIBS@
+ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ @NO_LIBTOOL_ISCLIBS@
 ISCCFGLIBS = 	../../lib/isccfg/libisccfg.@A@
 
 DNSDEPLIBS =	../../lib/dns/libdns.@A@
@@ -51,16 +53,6 @@ NZDSRCS  =	named-nzd2nzf.c
 SRCS =		arpaname.c named-journalprint.c named-rrchecker.c \
 		nsec3hash.c mdig.c \
 		@DNSTAPSRCS@ @NZDSRCS@
-
-MANPAGES =	arpaname.1 dnstap-read.1 \
-		mdig.1 named-journalprint.8 \
-		named-nzd2nzf.8 named-rrchecker.1 nsec3hash.8
-
-HTMLPAGES =	arpaname.html dnstap-read.html \
-		mdig.html named-journalprint.html \
-		named-nzd2nzf.html named-rrchecker.html nsec3hash.html
-
-MANOBJS =	${MANPAGES} ${HTMLPAGES}
 
 @BIND9_MAKE_RULES@
 
@@ -90,34 +82,25 @@ mdig@EXEEXT@: mdig.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS} ${BIND9DEPLIBS}
 
 dnstap-read@EXEEXT@: dnstap-read.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 	export BASEOBJS="dnstap-read.@O@"; \
-	export LIBS0="${DNSLIBS}"; \
+	export LIBS0="${DNSLIBS} ${PROTOBUF_C_LIBS}"; \
 	${FINALBUILDCMD}
 
 named-nzd2nzf@EXEEXT@: named-nzd2nzf.@O@ ${NZDDEPLIBS}
 	export BASEOBJS="named-nzd2nzf.@O@"; \
-	export LIBS0="${ISCCFGLIBS} ${ISCCCLIBS} ${BIND9LIBS} ${DNSLIBS}"; \
+	export LIBS0="${ISCCFGLIBS} ${ISCCCLIBS} ${BIND9LIBS} ${DNSLIBS} ${LMDB_LIBS}"; \
 	${FINALBUILDCMD}
-
-doc man:: ${MANOBJS}
-
-docclean manclean maintainer-clean::
-	rm -f ${MANOBJS}
 
 installdirs:
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${bindir}
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${sbindir}
-	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${mandir}/man1
-	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${mandir}/man8
 
 nzd:
 	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} named-nzd2nzf@EXEEXT@ \
 		${DESTDIR}${sbindir}
-	${INSTALL_DATA} ${srcdir}/named-nzd2nzf.8 ${DESTDIR}${mandir}/man8
 
 dnstap:
 	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} dnstap-read@EXEEXT@ \
 		${DESTDIR}${bindir}
-	${INSTALL_DATA} ${srcdir}/dnstap-read.1 ${DESTDIR}${mandir}/man1
 
 install:: ${TARGETS} installdirs @DNSTAP@ @NZD_TOOLS@
 	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} arpaname@EXEEXT@ \
@@ -130,18 +113,8 @@ install:: ${TARGETS} installdirs @DNSTAP@ @NZD_TOOLS@
 		${DESTDIR}${sbindir}
 	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} mdig@EXEEXT@ \
 		${DESTDIR}${bindir}
-	${INSTALL_DATA} ${srcdir}/arpaname.1 ${DESTDIR}${mandir}/man1
-	${INSTALL_DATA} ${srcdir}/named-journalprint.8 ${DESTDIR}${mandir}/man8
-	${INSTALL_DATA} ${srcdir}/named-rrchecker.1 ${DESTDIR}${mandir}/man1
-	${INSTALL_DATA} ${srcdir}/nsec3hash.8 ${DESTDIR}${mandir}/man8
-	${INSTALL_DATA} ${srcdir}/mdig.1 ${DESTDIR}${mandir}/man1
 
 uninstall::
-	rm -f ${DESTDIR}${mandir}/man1/mdig.1
-	rm -f ${DESTDIR}${mandir}/man8/nsec3hash.8
-	rm -f ${DESTDIR}${mandir}/man1/named-rrchecker.1
-	rm -f ${DESTDIR}${mandir}/man8/named-journalprint.8
-	rm -f ${DESTDIR}${mandir}/man1/arpaname.1
 	${LIBTOOL_MODE_UNINSTALL} rm -f \
 		${DESTDIR}${bindir}/mdig@EXEEXT@
 	${LIBTOOL_MODE_UNINSTALL} rm -f \
@@ -152,10 +125,8 @@ uninstall::
 		${DESTDIR}${sbindir}/named-journalprint@EXEEXT@
 	${LIBTOOL_MODE_UNINSTALL} rm -f \
 		${DESTDIR}${bindir}/arpaname@EXEEXT@
-	rm -f ${DESTDIR}${mandir}/man1/dnstap-read.1
 	${LIBTOOL_MODE_UNINSTALL} rm -f \
 		${DESTDIR}${bindir}/dnstap-read@EXEEXT@
-	rm -f ${DESTDIR}${mandir}/man8/named-nzd2nzf.8
 	${LIBTOOL_MODE_UNINSTALL} rm -f \
 		${DESTDIR}${sbindir}/named-nzd2nzf@EXEEXT@
 

@@ -263,6 +263,9 @@
     <ClInclude Include="..\include\isc\types.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\isc\utf8.h">
+      <Filter>Library Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\include\isc\util.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
@@ -618,6 +621,9 @@
       <Filter>Library Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\tm.c">
+      <Filter>Library Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\utf8.c">
       <Filter>Library Source Files</Filter>
     </ClCompile>
 @IF PKCS11

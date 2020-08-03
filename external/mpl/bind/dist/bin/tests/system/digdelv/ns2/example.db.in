@@ -28,6 +28,8 @@ b			A	10.0.0.2
 b			AAAA	fd92:7065:b8e:ffff::2
 c			A	10.0.0.3
 c			AAAA	fd92:7065:b8e:ffff::3
+d			A	10.0.0.0
+d			AAAA	fd92:7065:b8e:ffff::
 
 xn--caf-dma		A	10.1.2.3
 

@@ -143,5 +143,93 @@ grep -i 'flags:.* ad[ ;]'  dig.out.ns4.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
+echo_i "checking RFC 4592 responses ..."
+
+n=`expr $n + 1`
+echo_i "checking RFC 4592: host3.example. QTYPE=MX, QCLASS=IN ($n)"
+ret=0
+$DIG $DIGOPTS @10.53.0.1 host3.example. MX IN > dig.out.ns1.test$n || ret=1
+grep '^host3.example..*IN.MX.10 host1.example.' dig.out.ns1.test$n > /dev/null || ret=1
+grep "status: NOERROR" dig.out.ns1.test$n > /dev/null || ret=1
+grep "ANSWER: 1," dig.out.ns1.test$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "checking RFC 4592: host3.example. QTYPE=A, QCLASS=IN ($n)"
+ret=0
+$DIG $DIGOPTS @10.53.0.1 host3.example. A IN > dig.out.ns1.test$n || ret=1
+grep "status: NOERROR" dig.out.ns1.test$n > /dev/null || ret=1
+grep "ANSWER: 0," dig.out.ns1.test$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "checking RFC 4592: foo.bar.example. QTYPE=TXT, QCLASS=IN ($n)"
+ret=0
+$DIG $DIGOPTS @10.53.0.1 foo.bar.example TXT IN > dig.out.ns1.test$n || ret=1
+grep '^foo.bar.example..*IN.TXT."this is a wildcard"' dig.out.ns1.test$n > /dev/null || ret=1
+grep "status: NOERROR" dig.out.ns1.test$n > /dev/null || ret=1
+grep "ANSWER: 1," dig.out.ns1.test$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "checking RFC 4592: host1.example. QTYPE=MX, QCLASS=IN ($n)"
+ret=0
+$DIG $DIGOPTS @10.53.0.1 host1.example MX IN > dig.out.ns1.test$n || ret=1
+grep "status: NOERROR" dig.out.ns1.test$n > /dev/null || ret=1
+grep "ANSWER: 0," dig.out.ns1.test$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "checking RFC 4592: host1.example. QTYPE=MX, QCLASS=IN ($n)"
+ret=0
+$DIG $DIGOPTS @10.53.0.1 host1.example MX IN > dig.out.ns1.test$n || ret=1
+grep "status: NOERROR" dig.out.ns1.test$n > /dev/null || ret=1
+grep "ANSWER: 0," dig.out.ns1.test$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "checking RFC 4592: sub.*.example. QTYPE=MX, QCLASS=IN ($n)"
+ret=0
+$DIG $DIGOPTS @10.53.0.1 "sub.*.example." MX IN > dig.out.ns1.test$n || ret=1
+grep "status: NOERROR" dig.out.ns1.test$n > /dev/null || ret=1
+grep "ANSWER: 0," dig.out.ns1.test$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "checking RFC 4592: _telnet._tcp.host1.example. QTYPE=SRV, QCLASS=IN ($n)"
+ret=0
+$DIG $DIGOPTS @10.53.0.1 _telnet._tcp.host1.example. SRV IN > dig.out.ns1.test$n || ret=1
+grep "status: NXDOMAIN" dig.out.ns1.test$n > /dev/null || ret=1
+grep "ANSWER: 0," dig.out.ns1.test$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "checking RFC 4592: host.subdel.example. QTYPE=A, QCLASS=IN ($n)"
+ret=0
+$DIG $DIGOPTS @10.53.0.1 host.subdel.example A IN > dig.out.ns1.test$n || ret=1
+grep "status: NOERROR" dig.out.ns1.test$n > /dev/null || ret=1
+grep "ANSWER: 0," dig.out.ns1.test$n > /dev/null || ret=1
+grep "AUTHORITY: 2," dig.out.ns1.test$n > /dev/null || ret=1
+grep "subdel.example..*IN.NS.ns.example.com." dig.out.ns1.test$n > /dev/null || ret=1
+grep "subdel.example..*IN.NS.ns.example.net." dig.out.ns1.test$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "checking RFC 4592: ghost.*.example. QTYPE=MX, QCLASS=IN ($n)"
+ret=0
+$DIG $DIGOPTS @10.53.0.1 "ghost.*.example" MX IN > dig.out.ns1.test$n || ret=1
+grep "status: NXDOMAIN" dig.out.ns1.test$n > /dev/null || ret=1
+grep "ANSWER: 0," dig.out.ns1.test$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

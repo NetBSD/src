@@ -12,9 +12,8 @@
 # shellcheck source=conf.sh
 . "$SYSTEMTESTTOP/conf.sh"
 
-copy_setports ns2/named.conf.in ns2/named.conf
+for conf in ns*/named.conf.in; do
+    copy_setports "$conf" "$(dirname "$conf")/$(basename "$conf" .in)"
+done
 
-(
-    cd ns2
-    $SHELL sign.sh
-)
+(cd ns2 && $SHELL sign.sh)

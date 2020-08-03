@@ -47,21 +47,22 @@ CINCLUDES =	-I${srcdir}/include -I${srcdir}/unix/include -I. \
 		${BIND9_INCLUDES} ${ISCCFG_INCLUDES} ${ISCCC_INCLUDES} \
 		${ISC_INCLUDES} ${DLZDRIVER_INCLUDES} \
 		${DBDRIVER_INCLUDES} \
+		${FSTRM_CFLAGS} \
 		${OPENSSL_CFLAGS} \
+		${PROTOBUF_C_CFLAGS} \
 		${JSON_C_CFLAGS} \
 		${LIBXML2_CFLAGS} \
-		${MAXMINDDB_CFLAGS} \
-		${ZLIB_CFLAGS}
+		${MAXMINDDB_CFLAGS}
 
 CDEFINES =      @CONTRIB_DLZ@
 
 CWARNINGS =
 
-DNSLIBS =	../../lib/dns/libdns.@A@ ${MAXMINDDB_LIBS} @DNS_CRYPTO_LIBS@
+DNSLIBS =	../../lib/dns/libdns.@A@ @NO_LIBTOOL_DNSLIBS@
 ISCCFGLIBS =	../../lib/isccfg/libisccfg.@A@
 ISCCCLIBS =	../../lib/isccc/libisccc.@A@
-ISCLIBS =	../../lib/isc/libisc.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
-ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ ${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS}
+ISCLIBS =	../../lib/isc/libisc.@A@ @NO_LIBTOOL_ISCLIBS@
+ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ @NO_LIBTOOL_ISCLIBS@
 BIND9LIBS =	../../lib/bind9/libbind9.@A@
 NSLIBS =	../../lib/ns/libns.@A@
 
@@ -78,11 +79,14 @@ DEPLIBS =	${NSDEPLIBS} ${DNSDEPLIBS} ${BIND9DEPLIBS} \
 LIBS =		${NSLIBS} ${DNSLIBS} ${BIND9LIBS} \
 		${ISCCFGLIBS} ${ISCCCLIBS} ${ISCLIBS} \
 		${DLZDRIVER_LIBS} ${DBDRIVER_LIBS} @LIBCAP_LIBS@ \
-		@LIBS@
+		${FSTRM_LIBS} ${PROTOBUF_C_LIBS} ${LMDB_LIBS} ${ZLIB_LIBS} \
+		${JSON_C_LIBS} ${LIBXML2_LIBS} ${MAXMINDDB_LIBS} \
+		${OPENSSL_LIBS} @LIBS@
 
 NOSYMLIBS =	${NSLIBS} ${DNSLIBS} ${BIND9LIBS} \
 		${ISCCFGLIBS} ${ISCCCLIBS} ${ISCNOSYMLIBS} \
 		${DLZDRIVER_LIBS} ${DBDRIVER_LIBS} @LIBCAP_LIBS@ \
+		${FSTRM_LIBS} ${PROTOBUF_C_LIBS} ${LMDB_LIBS} ${ZLIB_LIBS} \
 		@LIBS@
 
 SUBDIRS =	unix
@@ -112,12 +116,6 @@ SRCS =		builtin.c config.c control.c \
 		server.c statschannel.c \
 		tkeyconf.c tsigconf.c zoneconf.c \
 		${DLZDRIVER_SRCS} ${DBDRIVER_SRCS}
-
-MANPAGES =	named.8 named.conf.5
-
-HTMLPAGES =	named.html named.conf.html
-
-MANOBJS =	${MANPAGES} ${HTMLPAGES}
 
 @BIND9_MAKE_RULES@
 
@@ -152,11 +150,6 @@ named@EXEEXT@: ${OBJS} ${DEPLIBS}
 	export BASEOBJS="${OBJS} ${UOBJS}"; \
 	${FINALBUILDCMD}
 
-doc man:: ${MANOBJS}
-
-docclean manclean maintainer-clean::
-	rm -f ${MANOBJS}
-
 clean distclean maintainer-clean::
 	rm -f ${TARGETS} ${OBJS}
 
@@ -170,17 +163,11 @@ statschannel.@O@: bind9.xsl.h
 
 installdirs:
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${sbindir}
-	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${mandir}/man5
-	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${mandir}/man8
 
 install:: named@EXEEXT@ installdirs
 	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} named@EXEEXT@ ${DESTDIR}${sbindir}
-	${INSTALL_DATA} ${srcdir}/named.8 ${DESTDIR}${mandir}/man8
-	${INSTALL_DATA} ${srcdir}/named.conf.5 ${DESTDIR}${mandir}/man5
 
 uninstall::
-	rm -f ${DESTDIR}${mandir}/man5/named.conf.5
-	rm -f ${DESTDIR}${mandir}/man8/named.8
 	${LIBTOOL_MODE_UNINSTALL} rm -f ${DESTDIR}${sbindir}/named@EXEEXT@
 
 @DLZ_DRIVER_RULES@

@@ -194,20 +194,22 @@ fi
 # Clean up files left from any potential previous runs
 if test -f $systest/clean.sh
 then
-    ( cd $systest && $SHELL clean.sh "$@" )
-    ret=$?
-    if [ $ret -ne 0 ]; then
-	echowarn "I:$systest:clean.sh script failed with $ret"
+    if ! ( cd "${systest}" && $SHELL clean.sh "$@" ); then
+	echowarn "I:$systest:clean.sh script failed"
+	echofail "R:$systest:FAIL"
+	echoend  "E:$systest:$(date_with_args)"
+	exit 1
     fi
 fi
 
 # Set up any dynamically generated test data
 if test -f $systest/setup.sh
 then
-    ( cd $systest && $SHELL setup.sh "$@" )
-    ret=$?
-    if [ $ret -ne 0 ]; then
-	echowarn "I:$systest:clean.sh script failed with $ret"
+    if ! ( cd "${systest}" && $SHELL setup.sh "$@" ); then
+	echowarn "I:$systest:setup.sh script failed"
+	echofail "R:$systest:FAIL"
+	echoend  "E:$systest:$(date_with_args)"
+	exit 1
     fi
 fi
 

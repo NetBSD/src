@@ -55,6 +55,7 @@ ns_interfacemgr_create
 ns_interfacemgr_detach
 ns_interfacemgr_dumprecursing
 ns_interfacemgr_getaclenv
+ns_interfacemgr_getserver
 ns_interfacemgr_islistening
 ns_interfacemgr_listeningon
 ns_interfacemgr_scan

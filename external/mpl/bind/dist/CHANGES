@@ -1,3 +1,147 @@
+	--- 9.16.5 released ---
+
+5458.	[bug]		Prevent a theoretically possible NULL dereference caused
+			by a data race between zone_maintenance() and
+			dns_zone_setview_helper(). [GL #1627]
+
+5455.	[bug]		named could crash when cleaning dead nodes in
+			lib/dns/rbtdb.c that were being reused. [GL #1968]
+
+5454.	[bug]		Address a startup crash that occurred when the server
+			was under load and the root zone had not yet been
+			loaded. [GL #1862]
+
+5453.	[bug]		named crashed on shutdown when a new rndc connection was
+			received during shutdown. [GL #1747]
+
+5452.	[bug]		The "blackhole" ACL was accidentally disabled for client
+			queries. [GL #1936]
+
+5451.	[func]		Add 'rndc dnssec -status' command. [GL #1612]
+
+5449.	[bug]		Fix a socket shutdown race in netmgr udp. [GL #1938]
+
+5448.	[bug]		Fix a race condition in isc__nm_tcpdns_send().
+			[GL #1937]
+
+5447.	[bug]		IPv6 addresses ending in "::" could break YAML
+			parsing. A "0" is now appended to such addresses
+			in YAML output from dig, mdig, delv, and dnstap-read.
+			[GL #1952]
+
+5446.	[bug]		The validator could fail to accept a properly signed
+			RRset if an unsupported algorithm appeared earlier in
+			the DNSKEY RRset than a supported algorithm. It could
+			also stop if it detected a malformed public key.
+			[GL #1689]
+
+5444.	[bug]		'rndc dnstap -roll <value>' did not limit the number of
+			saved files to <value>. [GL !3728]
+
+5443.	[bug]		The "primary" and "secondary" keywords, when used
+			as parameters for "check-names", were not
+			processed correctly and were being ignored. [GL #1949]
+
+5441.	[bug]		${LMDB_CFLAGS} was missing from make/includes.in.
+			[GL #1955]
+
+5440.	[test]		Properly handle missing kyua. [GL #1950]
+
+5439.	[bug]		The DS RRset returned by dns_keynode_dsset() was used in
+			a non-thread-safe manner. [GL #1926]
+
+	--- 9.16.4 released ---
+
+5438.	[bug]		Fix a race in TCP accepting code. [GL #1930]
+
+5437.	[bug]		Fix a data race in lib/dns/resolver.c:log_formerr().
+			[GL #1808]
+
+5436.	[security]	It was possible to trigger an INSIST when determining
+			whether a record would fit into a TCP message buffer.
+			(CVE-2020-8618) [GL #1850]
+
+5435.	[tests]		Add RFC 4592 responses examples to the wildcard system
+			test. [GL #1718]
+
+5434.	[security]	It was possible to trigger an INSIST in
+			lib/dns/rbtdb.c:new_reference() with a particular zone
+			content and query patterns. (CVE-2020-8619) [GL #1111]
+			[GL #1718]
+
+5431.	[func]		Reject DS records at the zone apex when loading
+			master files. Log but otherwise ignore attempts to
+			add DS records at the zone apex via UPDATE. [GL #1798]
+
+5430.	[doc]		Update docs - with netmgr, a separate listening socket
+			is created for each IPv6 interface (just as with IPv4).
+			[GL #1782]
+
+5428.	[bug]		Clean up GSSAPI resources in nsupdate only after taskmgr
+			has been destroyed. Thanks to Petr Menšík. [GL !3316]
+
+5426.	[bug]		Don't abort() when setting SO_INCOMING_CPU on the socket
+			fails. [GL #1911]
+
+5425.	[func]		The default value of "max-stale-ttl" has been changed
+			from 1 week to 12 hours. [GL #1877]
+
+5424.	[bug]		With KASP, when creating a successor key, the "goal"
+			state of the current active key (predecessor) was not
+			changed and thus never removed from the zone. [GL #1846]
+
+5423.	[bug]		Fix a bug in keymgr_key_has_successor(): it incorrectly
+			returned true if any other key in the keyring had a
+			successor. [GL #1845]
+
+5422.	[bug]		When using dnssec-policy, print correct key timing
+			metadata. [GL #1843]
+
+5421.	[bug]		Fix a race that could cause named to crash when looking
+			up the nodename of an RBT node if the tree was modified.
+			[GL #1857]
+
+5420.	[bug]		Add missing isc_{mutex,conditional}_destroy() calls
+			that caused a memory leak on FreeBSD. [GL #1893]
+
+5418.	[bug]		delv failed to parse deprecated trusted-keys-style
+			trust anchors. [GL #1860]
+
+5416.	[bug]		Fix a lock order inversion in lib/isc/unix/socket.c.
+			[GL #1859]
+
+5415.	[test]		Address race in dnssec system test that led to
+			test failures. [GL #1852]
+
+5414.	[test]		Adjust time allowed for journal truncation to occur
+			in nsupdate system test to avoid test failure.
+			[GL #1855]
+
+5413.	[test]		Address race in autosign system test that led to
+			test failures. [GL #1852]
+
+5412.	[bug]		'provide-ixfr no;' failed to return up-to-date responses
+			when the serial was greater than or equal to the
+			current serial. [GL #1714]
+
+5411.	[cleanup]	TCP accept code has been refactored to use a single
+			accept() and pass the accepted socket to child threads
+			for processing. [GL !3320]
+
+5409.	[performance]	When looking up NSEC3 data in a zone database, skip the
+			check for empty non-terminal nodes; the NSEC3 tree does
+			not have any. [GL #1834]
+
+5408.	[protocol]	Print Extended DNS Errors if present in OPT record.
+			[GL #1835]
+
+5407.	[func]		Zone timers are now exported via statistics channel.
+			Thanks to Paul Frieden, Verizon Media. [GL #1232]
+
+5405.	[bug]		'named-checkconf -p' could include spurious text in
+			server-addresses statements due to an uninitialized DSCP
+			value. [GL #1812]
+
 	--- 9.16.3 released ---
 
 5404.	[bug]		'named-checkconf -z' could incorrectly indicate
