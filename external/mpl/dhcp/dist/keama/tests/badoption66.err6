@@ -1,0 +1,3 @@
+# bad '6' (Ipv6 address) option data
+
+option dhcp6.unicast "2001::1";

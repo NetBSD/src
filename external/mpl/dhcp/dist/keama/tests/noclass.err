@@ -1,0 +1,7 @@
+# orphan subclass declaration config
+
+# class declaration
+subclass "foobar" "abcd {
+    default-lease-time 1800;
+}
+
