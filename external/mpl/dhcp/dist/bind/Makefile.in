@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2018  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009-2019  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -23,7 +23,7 @@ exec_prefix = @exec_prefix@
 
 bindconfig = --without-openssl --without-libxml2 --without-libjson \
 	--without-gssapi --disable-threads --without-lmdb \
-	--includedir=@includedir@ --libdir=@libdir@ \
+	--includedir=@includedir@ --libdir=@libdir@  --without-python\
 	@BINDLT@ @BINDIOMUX@ @BINDCONFIG@ --enable-full-report
 
 @BIND_ATF_FALSE@cleandirs = ./lib ./include

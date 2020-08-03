@@ -1,4 +1,4 @@
-/*	$NetBSD: result.h,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $	*/
+/*	$NetBSD: result.h,v 1.1.1.2 2020/08/03 21:09:07 christos Exp $	*/
 
 /* result.h
  */
@@ -28,6 +28,7 @@
 #ifndef DHCP_RESULT_H
 #define DHCP_RESULT_H 1
 
+#include <isc/boolean.h>
 #include <isc/lang.h>
 #include <isc/resultclass.h>
 #include <isc/types.h>

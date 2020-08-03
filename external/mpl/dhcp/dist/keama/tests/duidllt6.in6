@@ -1,0 +1,5 @@
+# LLT server duid config
+
+# LLT server duid declaration
+server-duid llt;
+

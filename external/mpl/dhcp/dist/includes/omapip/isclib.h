@@ -1,11 +1,11 @@
-/*	$NetBSD: isclib.h,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $	*/
+/*	$NetBSD: isclib.h,v 1.1.1.2 2020/08/03 21:09:07 christos Exp $	*/
 
 /* isclib.h
 
    connections to the isc and dns libraries */
 
 /*
- * Copyright (c) 2009-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2009-2019 by Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -50,6 +50,9 @@
 #include <string.h>
 #include <netdb.h>
 
+#include <isc/boolean.h>
+#include <isc/int.h>
+
 #include <isc/buffer.h>
 #include <isc/lex.h>
 #include <isc/lib.h>
@@ -93,7 +96,8 @@
 typedef struct dhcp_context {
 	isc_mem_t	*mctx;
 	isc_appctx_t	*actx;
-	int              actx_started;
+	int              actx_started; // ISC_TRUE if ctxstart has been called
+	int              actx_running; // ISC_TRUE if ctxrun has been called
 	isc_taskmgr_t	*taskmgr;
 	isc_task_t	*task;
 	isc_socketmgr_t *socketmgr;
@@ -140,6 +144,9 @@ void isclib_cleanup(void);
 void dhcp_signal_handler(int signal);
 extern int shutdown_signal;
 
+#if defined (NSUPDATE)
 isc_result_t dns_client_init();
+#endif /* defined NSUPDATE */
+
 
 #endif /* ISCLIB_H */

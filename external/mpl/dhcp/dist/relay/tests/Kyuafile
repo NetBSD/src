@@ -1,0 +1,4 @@
+syntax(2)
+test_suite('dhcrelay')
+
+atf_test_program{name='relay_unittests'}

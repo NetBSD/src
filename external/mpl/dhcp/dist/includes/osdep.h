@@ -1,4 +1,4 @@
-/*	$NetBSD: osdep.h,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $	*/
+/*	$NetBSD: osdep.h,v 1.1.1.2 2020/08/03 21:09:07 christos Exp $	*/
 
 /* osdep.h
 
@@ -140,6 +140,10 @@
 #  define USE_UPF_RECEIVE
 #endif
 
+#if defined (SO_BINDTODEVICE) && !defined (HAVE_SO_BINDTODEVICE)
+# define HAVE_SO_BINDTODEVICE
+#endif
+
 /* Porting::
 
    If you add support for sending packets directly out an interface,
@@ -263,10 +267,6 @@
 
 #if defined (ARPHRD_METRICOM) && !defined (HAVE_ARPHRD_METRICOM)
 # define HAVE_ARPHRD_METRICOM
-#endif
-
-#if defined (SO_BINDTODEVICE) && !defined (HAVE_SO_BINDTODEVICE)
-# define HAVE_SO_BINDTODEVICE
 #endif
 
 #if defined (AF_LINK) && !defined (HAVE_AF_LINK)

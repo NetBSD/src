@@ -1,11 +1,11 @@
-/*	$NetBSD: discover.c,v 1.1.1.1 2018/04/07 22:34:25 christos Exp $	*/
+/*	$NetBSD: discover.c,v 1.1.1.2 2020/08/03 21:09:09 christos Exp $	*/
 
 /* discover.c
 
    Find and identify the network interfaces. */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2020 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: discover.c,v 1.1.1.1 2018/04/07 22:34:25 christos Exp $");
+__RCSID("$NetBSD: discover.c,v 1.1.1.2 2020/08/03 21:09:09 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -44,7 +44,10 @@ __RCSID("$NetBSD: discover.c,v 1.1.1.1 2018/04/07 22:34:25 christos Exp $");
 # include <net/if6.h>
 #endif
 
-struct interface_info *interfaces, *dummy_interfaces, *fallback_interface;
+struct interface_info *interfaces = 0;
+struct interface_info *dummy_interfaces = 0;
+struct interface_info *fallback_interface = 0;
+
 int interfaces_invalidated;
 int quiet_interface_discovery;
 u_int16_t local_port;
@@ -648,7 +651,9 @@ discover_interfaces(int state) {
 				log_fatal("Error allocating interface %s: %s",
 					  info.name, isc_result_totext(status));
 			}
-			strncpy(tmp->name, info.name, sizeof(tmp->name) - 1);
+
+			memcpy(tmp->name, info.name, sizeof(tmp->name));
+
 			interface_snorf(tmp, ir);
 			interface_dereference(&tmp, MDL);
 			tmp = interfaces; /* XXX */
