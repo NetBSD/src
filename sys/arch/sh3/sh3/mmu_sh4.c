@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_sh4.c,v 1.18 2020/08/03 22:28:39 uwe Exp $	*/
+/*	$NetBSD: mmu_sh4.c,v 1.19 2020/08/03 22:43:52 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmu_sh4.c,v 1.18 2020/08/03 22:28:39 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmu_sh4.c,v 1.19 2020/08/03 22:43:52 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ sh4_mmu_start(void)
 
 	/* Zero clear all TLB entry */
 	_reg_write_4(SH4_MMUCR, 0);	/* zero wired entry */
-	sh_tlb_invalidate_all();
+	sh4_tlb_invalidate_all();
 
 	/* Set current ASID to 0 */
 	sh_tlb_set_asid(0);
