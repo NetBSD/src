@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.14 2020/02/14 07:21:02 skrll Exp $ */
+/* $NetBSD: types.h,v 1.15 2020/08/03 06:30:00 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -105,6 +105,7 @@ typedef __uint64_t __register_t;
 #define __HAVE_SYSCALL_INTERN
 #define __HAVE_TLS_VARIANT_I
 #define __HAVE___LWP_GETPRIVATE_FAST
+#define __HAVE_UCAS_FULL
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 #define PCU_FPU			0

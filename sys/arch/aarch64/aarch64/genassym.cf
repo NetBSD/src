@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.27 2020/08/03 05:56:50 ryo Exp $
+# $NetBSD: genassym.cf,v 1.28 2020/08/03 06:29:59 ryo Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -56,6 +56,7 @@ include <arm/bus_defs.h>
 include <aarch64/vmparam.h>
 include <aarch64/frame.h>
 include <aarch64/armreg.h>
+include <aarch64/cpufunc.h>
 include <aarch64/pte.h>
 
 define	__HAVE_FAST_SOFTINTS	1
@@ -75,6 +76,8 @@ define	UPAGES			UPAGES
 define	USPACE			(UPAGES * PAGE_SIZE)
 
 #define	PV_PA			offsetof(pv_addr_t, pv_pa)
+
+define	AARCH64_ADDRTOP_TAG_BIT	AARCH64_ADDRTOP_TAG_BIT
 
 define	L0_ADDR_BITS		L0_ADDR_BITS
 define	L0_SHIFT		L0_SHIFT
