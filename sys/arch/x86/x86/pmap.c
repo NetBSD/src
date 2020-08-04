@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.402 2020/08/04 06:22:54 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.403 2020/08/04 06:23:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.402 2020/08/04 06:22:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.403 2020/08/04 06:23:46 skrll Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -233,7 +233,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.402 2020/08/04 06:22:54 skrll Exp $");
  * pg->uobject->vmobjlock, pg->uanon->an_lock
  *
  * 	For managed pages, these per-object locks are taken by the VM system
- *	before calling into the pmap module - either a read or write hold. 
+ *	before calling into the pmap module - either a read or write hold.
  *	The lock hold prevent pages from changing identity while the pmap is
  *	operating on them.  For example, the same lock is held across a call
  *	to pmap_remove() and the following call to pmap_update(), so that a
@@ -250,7 +250,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.402 2020/08/04 06:22:54 skrll Exp $");
  *
  * pmaps_lock
  *
- *	This lock protects the list of active pmaps (headed by "pmaps"). 
+ *	This lock protects the list of active pmaps (headed by "pmaps").
  *	It's acquired when adding or removing pmaps or adjusting kernel PDEs.
  *
  * pp_lock
@@ -2066,7 +2066,7 @@ pmap_free_pv(struct pmap *pmap, struct pv_entry *pve)
 		/* part -> full */
 		LIST_REMOVE(pvp, pvp_list);
 		LIST_INSERT_HEAD(&pmap->pm_pvp_full, pvp, pvp_list);
-	} 
+	}
 }
 
 /*
@@ -2394,7 +2394,7 @@ pmap_freepage(struct pmap *pmap, struct vm_page *ptp, int level)
 	/*
 	 * Enqueue the PTP to be freed by pmap_update().  We can't remove
 	 * the page from the uvm_object, as that can take further locks
-	 * (intolerable right now because the PTEs are likely mapped in). 
+	 * (intolerable right now because the PTEs are likely mapped in).
 	 * Instead mark the PTP as free and if we bump into it again, we'll
 	 * either ignore or reuse (depending on what's useful at the time).
 	 */
@@ -3091,7 +3091,7 @@ pmap_zap_ptp(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 		 * tree by skipping to the next VA in the tree whenever
 		 * there is a match here.  The tree will be cleared out in
 		 * one pass before return to pmap_remove_all().
-		 */ 
+		 */
 		oattrs = pmap_pte_to_pp_attrs(opte);
 		if (pve != NULL && pve->pve_pte.pte_va == va) {
 			pp = pve->pve_pp;
@@ -3153,7 +3153,7 @@ pmap_zap_ptp(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
  *
  * Ordinarily when removing mappings it's important to hold the UVM object's
  * lock, so that pages do not gain a new identity while retaining stale TLB
- * entries (the same lock hold covers both pmap_remove() and pmap_update()). 
+ * entries (the same lock hold covers both pmap_remove() and pmap_update()).
  * Here it's known that the address space is no longer visible to any user
  * process, so we don't need to worry about that.
  */
@@ -3172,7 +3172,7 @@ pmap_remove_all(struct pmap *pmap)
 	if (pmap->pm_remove != NULL) {
 		return false;
 	}
- 
+
 	for (;;) {
 		/* Fetch a block of PTPs from tree. */
 		mutex_enter(&pmap->pm_lock);
@@ -4371,7 +4371,7 @@ pmap_pp_remove(struct pmap_page *pp, paddr_t pa)
 		    "va %lx pmap %p ptp %p is free", va, pmap, ptp);
 		KASSERTMSG(ptp == NULL || ptp->wire_count > 1,
 		    "va %lx pmap %p ptp %p is empty", va, pmap, ptp);
-		    
+
 #ifdef DEBUG
 		pmap_check_pv(pmap, ptp, pp, pvpte->pte_va, true);
 		rb_tree_t *tree = (ptp != NULL ?
@@ -4841,7 +4841,7 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	else
 #endif
 		new_pg = PHYS_TO_VM_PAGE(pa);
-		
+
 	if (new_pg != NULL) {
 		/* This is a managed page */
 		npte |= PTE_PVLIST;
@@ -5063,7 +5063,7 @@ same_pa:
 
 struct pmap_data_gnt {
 	SLIST_ENTRY(pmap_data_gnt) pd_gnt_list;
-	vaddr_t pd_gnt_sva; 
+	vaddr_t pd_gnt_sva;
 	vaddr_t pd_gnt_eva; /* range covered by this gnt */
 	int pd_gnt_refs; /* ref counter */
 	struct gnttab_map_grant_ref pd_gnt_ops[1]; /* variable length */
