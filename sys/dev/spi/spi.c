@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.14 2020/06/11 02:39:30 thorpej Exp $ */
+/* $NetBSD: spi.c,v 1.15 2020/08/04 13:20:45 kardel Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.14 2020/06/11 02:39:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.15 2020/08/04 13:20:45 kardel Exp $");
 
 #include "locators.h"
 
@@ -287,7 +287,7 @@ spi_attach(device_t parent, device_t self, void *aux)
 	aprint_naive(": SPI bus\n");
 	aprint_normal(": SPI bus\n");
 
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_BIO);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
 	cv_init(&sc->sc_cv, "spictl");
 
 	sc->sc_controller = *sba->sba_controller;
@@ -463,7 +463,7 @@ void
 spi_transfer_init(struct spi_transfer *st)
 {
 
-	mutex_init(&st->st_lock, MUTEX_DEFAULT, IPL_BIO);
+	mutex_init(&st->st_lock, MUTEX_DEFAULT, IPL_VM);
 	cv_init(&st->st_cv, "spixfr");
 
 	st->st_flags = 0;
