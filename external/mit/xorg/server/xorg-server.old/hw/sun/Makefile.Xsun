@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.Xsun,v 1.1 2020/07/22 19:26:37 tsutsui Exp $
+#	$NetBSD: Makefile.Xsun,v 1.2 2020/08/04 14:35:24 tsutsui Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,7 @@ WARNS?=	2
 .PATH:	${X11SRCDIR.xorg-server}/hw/sun
 
 BUILDSYMLINKS=
+CPPFLAGS+=	-DDEFAULT_LOGDIR=\"/var/log\" -DDEFAULT_LOGPREFIX=\"${PROG}.\"
 CPPFLAGS+=	-DINCLUDE_CG2_HEADER
 #CPPFLAGS+=	-DLOWMEMFTPT
 
