@@ -1,4 +1,4 @@
-/* $NetBSD: pmb.c,v 1.1 2020/07/30 03:57:52 uwe Exp $ */
+/* $NetBSD: pmb.c,v 1.2 2020/08/04 02:09:57 uwe Exp $ */
 /*
  * Copyright (c) 2020 Valery Ushakov
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmb.c,v 1.1 2020/07/30 03:57:52 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmb.c,v 1.2 2020/08/04 02:09:57 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,25 +36,28 @@ __KERNEL_RCSID(0, "$NetBSD: pmb.c,v 1.1 2020/07/30 03:57:52 uwe Exp $");
 #include <sh3/pmb.h>
 
 
+static void st40_pmb_dump(int se_mode, int ub29);
+
+
+
 void
 st40_pmb_init(int product)
 {
+	uint32_t pascr = 0;	/* XXX: -Wuninitialized */
 	int se_mode;
-	bool have_ub;
-	uint8_t ub;
+	int ub29;
 	char bits[64];
 
 	switch (product) {
 
 	/* ST40-300 */
 	case CPU_PRODUCT_STX7105: {
-		uint32_t pascr = _reg_read_4(ST40_PASCR);
+		pascr = _reg_read_4(ST40_PASCR);
 		snprintb(bits, sizeof(bits), ST40_PASCR_BITS, pascr);
 		printf("PMB: PASCR=%s\n", bits);
 
 		se_mode = (pascr & ST40_PASCR_SE);
-		have_ub = true;
-		ub = (uint8_t)(pascr & ST40_PASCR_UB_MASK);
+		ub29 = pascr & ST40_PASCR_UB_MASK;
 		break;
 	}
 
@@ -64,8 +67,7 @@ st40_pmb_init(int product)
 		uint32_t mmucr = _reg_read_4(SH4_MMUCR);
 
 		se_mode = (mmucr & ST40_MMUCR_SE);
-		have_ub = false;
-		ub = 0;
+		ub29 = -1;
 		break;
 	}
 #endif
@@ -75,14 +77,24 @@ st40_pmb_init(int product)
 		return;
 	}
 
+	st40_pmb_dump(se_mode, ub29);
+}
+
+
+static void
+st40_pmb_dump(int se_mode, int ub29)
+{
+	char bits[64] __unused;
+
 	if (!se_mode) {
 		printf("PMB: 29-bit mode\n");
-		if (have_ub) {
-			for (int area = 0; area < 8; ++area) {
-				bool unbuffered = !!(ub & (1u << area));
-				printf("PMB: area%d %s\n", area,
-				       unbuffered ? "UNBUFFERED" : "buffered");
-			}
+		if (ub29 == -1)
+			return;
+
+		for (int area = 0; area < 8; ++area) {
+			bool unbuffered = !!((uint32_t)ub29 & (1u << area));
+			printf("PMB: area%d %s\n", area,
+			       unbuffered ? "UB" : "--");
 		}
 		return;
 	}
@@ -135,6 +147,7 @@ st40_pmb_init(int product)
 		       sz << 4,
 		       data & ST40_PMB_DA_UB ? "UB" : "--",
 		       data & ST40_PMB_DA_C  ?  "C" : "-",
-		       data & ST40_PMB_DA_WT ? "WT" : "CB");
+		       data & ST40_PMB_DA_C  ?
+		           (data & ST40_PMB_DA_WT ? "WT" : "CB") : "--");
 	}
 }
