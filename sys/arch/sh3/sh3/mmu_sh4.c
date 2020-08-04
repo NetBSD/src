@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_sh4.c,v 1.20 2020/08/03 23:01:47 uwe Exp $	*/
+/*	$NetBSD: mmu_sh4.c,v 1.21 2020/08/04 01:55:16 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmu_sh4.c,v 1.20 2020/08/03 23:01:47 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmu_sh4.c,v 1.21 2020/08/04 01:55:16 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,25 +39,12 @@ __KERNEL_RCSID(0, "$NetBSD: mmu_sh4.c,v 1.20 2020/08/03 23:01:47 uwe Exp $");
 #include <sh3/mmu.h>
 #include <sh3/mmu_sh4.h>
 
-static __noinline void __sh4_tlb_assoc(uint32_t);
-
-/* Must be inlined because we "call" it while running on P2 */
-static inline void __sh4_itlb_invalidate_all(void)
-    __attribute__((always_inline));
+static __noinline void do_tlb_assoc(uint32_t);
+static __noinline void do_invalidate_asid(int);
+static __noinline void do_invalidate_all(uint32_t);
 
 #define	SH4_MMU_HAZARD	__asm volatile("nop;nop;nop;nop;nop;nop;nop;nop;")
 
-
-
-static inline void
-__sh4_itlb_invalidate_all(void)
-{
-
-	_reg_write_4(SH4_ITLB_AA, 0);
-	_reg_write_4(SH4_ITLB_AA | (1 << SH4_ITLB_E_SHIFT), 0);
-	_reg_write_4(SH4_ITLB_AA | (2 << SH4_ITLB_E_SHIFT), 0);
-	_reg_write_4(SH4_ITLB_AA | (3 << SH4_ITLB_E_SHIFT), 0);
-}
 
 void
 sh4_mmu_start(void)
@@ -89,7 +76,7 @@ sh4_mmu_start(void)
  * caller is responsible for saving/setting/restoring PTEH.
  */
 static __noinline void
-__sh4_tlb_assoc(uint32_t va)
+do_tlb_assoc(uint32_t va)
 {
 
 	_reg_write_4(SH4_UTLB_AA | SH4_UTLB_A, va);
@@ -104,7 +91,7 @@ sh4_tlb_invalidate_addr(int asid, vaddr_t va)
 	uint32_t opteh;
 	uint32_t sr;
 
-	tlb_assoc_p2 = SH3_P2SEG_FUNC(__sh4_tlb_assoc);
+	tlb_assoc_p2 = SH3_P2SEG_FUNC(do_tlb_assoc);
 
 	va &= SH4_UTLB_AA_VPN_MASK;
 
@@ -119,52 +106,84 @@ sh4_tlb_invalidate_addr(int asid, vaddr_t va)
 }
 
 
+static __noinline void
+do_invalidate_asid(int asid)
+{
+	int e;
+
+	for (e = 0; e < SH4_UTLB_ENTRY; ++e) {
+		uint32_t addr = SH4_UTLB_AA | (e << SH4_UTLB_E_SHIFT);
+		uint32_t aa = _reg_read_4(addr);
+		if ((aa & SH4_UTLB_AA_ASID_MASK) == asid)
+			_reg_write_4(addr, 0);
+	}
+
+	for (e = 0; e < SH4_ITLB_ENTRY; ++e) {
+		uint32_t addr = SH4_ITLB_AA | (e << SH4_UTLB_E_SHIFT);
+		uint32_t aa = _reg_read_4(addr);
+		if ((aa & SH4_ITLB_AA_ASID_MASK) == asid)
+			_reg_write_4(addr, 0);
+	}
+
+	PAD_P1_SWITCH;
+}
+
+
 void
 sh4_tlb_invalidate_asid(int asid)
 {
-	uint32_t a;
-	int e, sr;
+	void (*invalidate_asid_p2)(int);
+	uint32_t sr;
+
+	KDASSERT(asid != 0);
+
+	invalidate_asid_p2 = SH3_P2SEG_FUNC(do_invalidate_asid);
 
 	sr = _cpu_exception_suspend();
-	/* Invalidate entry attribute to ASID */
-	RUN_P2;
-	for (e = 0; e < SH4_UTLB_ENTRY; e++) {
-		a = SH4_UTLB_AA | (e << SH4_UTLB_E_SHIFT);
-		if ((_reg_read_4(a) & SH4_UTLB_AA_ASID_MASK) == asid)
-			_reg_write_4(a, 0);
-	}
+	(*invalidate_asid_p2)(asid);
 
-	__sh4_itlb_invalidate_all();
-	RUN_P1;
 	_cpu_set_sr(sr);
 }
+
+
+static __noinline void
+do_invalidate_all(uint32_t limit)
+{
+	int e;
+
+	for (e = 0; e < limit; ++e) {
+		_reg_write_4(SH4_UTLB_AA  | (e << SH4_UTLB_E_SHIFT), 0);
+		_reg_write_4(SH4_UTLB_DA1 | (e << SH4_UTLB_E_SHIFT), 0);
+	}
+
+	for (e = 0; e < SH4_ITLB_ENTRY; ++e) {
+		_reg_write_4(SH4_ITLB_AA  | (e << SH4_ITLB_E_SHIFT), 0);
+		_reg_write_4(SH4_ITLB_DA1 | (e << SH4_ITLB_E_SHIFT), 0);
+	}
+
+	PAD_P1_SWITCH;
+}
+
 
 void
 sh4_tlb_invalidate_all(void)
 {
-	uint32_t a;
-	int e, eend, sr;
+	void (*invalidate_all_p2)(uint32_t);
+	uint32_t limit;
+	uint32_t sr;
+
+	invalidate_all_p2 = SH3_P2SEG_FUNC(do_invalidate_all);
+
+	/* do we resereve TLB entries for wired u-area? */
+	limit = _reg_read_4(SH4_MMUCR) & SH4_MMUCR_URB_MASK;
+	limit = limit ? (limit >> SH4_MMUCR_URB_SHIFT) : SH4_UTLB_ENTRY;
 
 	sr = _cpu_exception_suspend();
-	/* If non-wired entry limit is zero, clear all entry. */
-	a = _reg_read_4(SH4_MMUCR) & SH4_MMUCR_URB_MASK;
-	eend = a ? (a >> SH4_MMUCR_URB_SHIFT) : SH4_UTLB_ENTRY;
+	(*invalidate_all_p2)(limit);
 
-	RUN_P2;
-	for (e = 0; e < eend; e++) {
-		a = SH4_UTLB_AA | (e << SH4_UTLB_E_SHIFT);
-		_reg_write_4(a, 0);
-		a = SH4_UTLB_DA1 | (e << SH4_UTLB_E_SHIFT);
-		_reg_write_4(a, 0);
-	}
-	__sh4_itlb_invalidate_all();
-	_reg_write_4(SH4_ITLB_DA1, 0);
-	_reg_write_4(SH4_ITLB_DA1 | (1 << SH4_ITLB_E_SHIFT), 0);
-	_reg_write_4(SH4_ITLB_DA1 | (2 << SH4_ITLB_E_SHIFT), 0);
-	_reg_write_4(SH4_ITLB_DA1 | (3 << SH4_ITLB_E_SHIFT), 0);
-	RUN_P1;
 	_cpu_set_sr(sr);
 }
+
 
 void
 sh4_tlb_update(int asid, vaddr_t va, uint32_t pte)
@@ -177,7 +196,7 @@ sh4_tlb_update(int asid, vaddr_t va, uint32_t pte)
 	KDASSERT(va != 0);
 	KDASSERT((pte & ~PGOFSET) != 0);
 
-	tlb_assoc_p2 = SH3_P2SEG_FUNC(__sh4_tlb_assoc);
+	tlb_assoc_p2 = SH3_P2SEG_FUNC(do_tlb_assoc);
 
 	sr = _cpu_exception_suspend();
 	opteh = _reg_read_4(SH4_PTEH); /* save old ASID */
