@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.401 2020/07/19 13:58:26 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.402 2020/08/04 06:22:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.401 2020/07/19 13:58:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.402 2020/08/04 06:22:54 skrll Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -251,7 +251,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.401 2020/07/19 13:58:26 maxv Exp $");
  * pmaps_lock
  *
  *	This lock protects the list of active pmaps (headed by "pmaps"). 
- *	It's acqired when adding or removing pmaps or adjusting kernel PDEs.
+ *	It's acquired when adding or removing pmaps or adjusting kernel PDEs.
  *
  * pp_lock
  *
