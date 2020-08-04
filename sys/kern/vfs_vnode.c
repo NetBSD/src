@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.125 2020/06/14 00:20:17 ad Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.126 2020/08/04 03:00:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.125 2020/06/14 00:20:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.126 2020/08/04 03:00:10 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -756,7 +756,8 @@ vput(vnode_t *vp)
 		}
 		lktype = LK_NONE;
 	} else if ((vp->v_vflag & VV_LOCKSWORK) == 0) {
-		lktype = LK_EXCLUSIVE;
+		VOP_UNLOCK(vp);
+		lktype = LK_NONE;
 	} else {
 		lktype = VOP_ISLOCKED(vp);
 		KASSERT(lktype != LK_NONE);
