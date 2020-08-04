@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.378 2020/04/04 20:49:31 ad Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.379 2020/08/04 03:00:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.378 2020/04/04 20:49:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.379 2020/08/04 03:00:47 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1592,6 +1592,7 @@ lfs_init_vnode(struct ulfsmount *ump, ino_t ino, struct vnode *vp)
 
 	vp->v_tag = VT_LFS;
 	vp->v_op = lfs_vnodeop_p;
+	vp->v_vflag |= VV_LOCKSWORK;
 	vp->v_data = ip;
 }
 
