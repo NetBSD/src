@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.35.10.1 2018/07/26 23:23:50 snj Exp $ */
+/* $NetBSD: coretemp.c,v 1.35.10.2 2020/08/05 16:05:49 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.35.10.1 2018/07/26 23:23:50 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.35.10.2 2020/08/05 16:05:49 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -271,6 +271,19 @@ coretemp_tjmax(device_t self)
 	sc->sc_tjmax = 100;
 
 	if ((model == 0x0f && stepping >= 2) || (model == 0x0e)) {
+		/*
+		 * Check MSR_IA32_PLATFORM_ID(0x17) bit 28. It's not documented
+		 * in the datasheet, but the following page describes the
+		 * detail:
+		 *   http://software.intel.com/en-us/articles/
+		 *     mobile-intel-core2-processor-detection-table/
+		 *   Was: http://softwarecommunity.intel.com/Wiki/Mobility/
+		 *     720.htm
+		 */
+		if (rdmsr_safe(MSR_IA32_PLATFORM_ID, &msr) != 0)
+			goto notee;
+		if ((model < 0x17) && ((msr & __BIT(28)) == 0))
+			goto notee;
 
 		if (rdmsr_safe(MSR_IA32_EXT_CONFIG, &msr) == EFAULT)
 			return;
@@ -290,6 +303,7 @@ coretemp_tjmax(device_t self)
 		} else
 			sc->sc_tjmax = 90;
 	} else {
+notee:
 		/*
 		 * Attempt to get Tj(max) from IA32_TEMPERATURE_TARGET,
 		 * but only consider the interval [70, 110] C as valid.
