@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.88.6.2 2019/03/09 17:10:20 martin Exp $
+#	$NetBSD: files.x86,v 1.88.6.3 2020/08/05 16:20:08 martin Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -84,6 +84,7 @@ file	arch/x86/x86/efi.c		machdep
 file	arch/x86/x86/errata.c		machdep
 file	arch/x86/x86/genfb_machdep.c	machdep
 file	arch/x86/x86/identcpu.c		machdep
+file	arch/x86/x86/identcpu_subr.c	machdep
 file	arch/x86/x86/i8259.c		machdep
 file	arch/x86/x86/intr.c		machdep
 file	arch/x86/x86/nmi.c		machdep
