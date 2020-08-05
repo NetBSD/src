@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.36.2.8 2020/08/02 08:49:08 martin Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.36.2.9 2020/08/05 15:18:24 martin Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.36.2.8 2020/08/02 08:49:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.36.2.9 2020/08/05 15:18:24 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,6 +135,7 @@ vmx_vmwrite(uint64_t field, uint64_t value)
 	);
 }
 
+#ifdef DIAGNOSTIC
 static inline paddr_t
 vmx_vmptrst(void)
 {
@@ -149,6 +150,7 @@ vmx_vmptrst(void)
 
 	return pa;
 }
+#endif
 
 static inline void
 vmx_vmptrld(paddr_t *pa)
@@ -871,15 +873,11 @@ vmx_vmcs_enter(struct nvmm_cpu *vcpu)
 {
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
 	struct cpu_info *vmcs_ci;
-	paddr_t oldpa __diagused;
 
 	cpudata->vmcs_refcnt++;
 	if (cpudata->vmcs_refcnt > 1) {
-#ifdef DIAGNOSTIC
 		KASSERT(kpreempt_disabled());
-		oldpa = vmx_vmptrst();
-		KASSERT(oldpa == cpudata->vmcs_pa);
-#endif
+		KASSERT(vmx_vmptrst() == cpudata->vmcs_pa);
 		return;
 	}
 
@@ -909,9 +907,7 @@ vmx_vmcs_leave(struct nvmm_cpu *vcpu)
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
 
 	KASSERT(kpreempt_disabled());
-#ifdef DIAGNOSTIC
 	KASSERT(vmx_vmptrst() == cpudata->vmcs_pa);
-#endif
 	KASSERT(cpudata->vmcs_refcnt > 0);
 	cpudata->vmcs_refcnt--;
 
@@ -929,9 +925,7 @@ vmx_vmcs_destroy(struct nvmm_cpu *vcpu)
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
 
 	KASSERT(kpreempt_disabled());
-#ifdef DIAGNOSTIC
 	KASSERT(vmx_vmptrst() == cpudata->vmcs_pa);
-#endif
 	KASSERT(cpudata->vmcs_refcnt == 1);
 	cpudata->vmcs_refcnt--;
 
@@ -2230,7 +2224,7 @@ vmx_memalloc(paddr_t *pa, vaddr_t *va, size_t npages)
 	    &pglist, 1, 0);
 	if (ret != 0)
 		return ENOMEM;
-	_pa = TAILQ_FIRST(&pglist)->phys_addr;
+	_pa = VM_PAGE_TO_PHYS(TAILQ_FIRST(&pglist));
 	_va = uvm_km_alloc(kernel_map, npages * PAGE_SIZE, 0,
 	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
 	if (_va == 0)
@@ -3248,7 +3242,7 @@ static void
 vmx_change_cpu(void *arg1, void *arg2)
 {
 	struct cpu_info *ci = curcpu();
-	bool enable = (bool)arg1;
+	bool enable = arg1 != NULL;
 	uint64_t cr4;
 
 	if (!enable) {

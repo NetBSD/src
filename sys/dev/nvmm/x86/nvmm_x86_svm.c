@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.46.4.6 2020/08/02 08:49:08 martin Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.46.4.7 2020/08/05 15:18:24 martin Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.46.4.6 2020/08/02 08:49:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.46.4.7 2020/08/05 15:18:24 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,7 +225,7 @@ int svm_vmrun(paddr_t, uint64_t *);
 #define VMCB_EXITCODE_AVIC_INCOMP_IPI	0x0401
 #define VMCB_EXITCODE_AVIC_NOACCEL	0x0402
 #define VMCB_EXITCODE_VMGEXIT		0x0403
-#define VMCB_EXITCODE_INVALID		-1
+#define VMCB_EXITCODE_INVALID		-1ULL
 
 /* -------------------------------------------------------------------------- */
 
@@ -1507,7 +1507,7 @@ svm_memalloc(paddr_t *pa, vaddr_t *va, size_t npages)
 	    &pglist, 1, 0);
 	if (ret != 0)
 		return ENOMEM;
-	_pa = TAILQ_FIRST(&pglist)->phys_addr;
+	_pa = VM_PAGE_TO_PHYS(TAILQ_FIRST(&pglist));
 	_va = uvm_km_alloc(kernel_map, npages * PAGE_SIZE, 0,
 	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
 	if (_va == 0)
@@ -2337,7 +2337,7 @@ svm_init_asid(uint32_t maxasid)
 static void
 svm_change_cpu(void *arg1, void *arg2)
 {
-	bool enable = (bool)arg1;
+	bool enable = arg1 != NULL;
 	uint64_t msr;
 
 	msr = rdmsr(MSR_VMCR);
