@@ -1,4 +1,4 @@
-/* $NetBSD: if_tireg.h,v 1.20 2012/10/27 17:18:34 chs Exp $ */
+/* $NetBSD: if_tireg.h,v 1.20.30.1 2020/08/05 16:08:09 martin Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -39,7 +39,7 @@
  * which can be accessed with the CSR_READ_4()/CSR_WRITE_4() macros.
  * Each register must be accessed using 32 bit operations.
  *
- * All reegisters are accessed through a 16K shared memory block.
+ * All registers are accessed through a 16K shared memory block.
  * The first group of registers are actually copies of the PCI
  * configuration space registers.
  */
