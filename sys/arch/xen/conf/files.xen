@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.147.2.3 2019/09/23 13:51:12 martin Exp $
+#	$NetBSD: files.xen,v 1.147.2.4 2020/08/05 16:20:08 martin Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -136,6 +136,7 @@ file	arch/xen/x86/xen_bus_dma.c	machdep
 file	arch/x86/x86/bus_space.c	machdep
 file	arch/xen/x86/consinit.c		machdep
 file	arch/x86/x86/identcpu.c		machdep
+file	arch/x86/x86/identcpu_subr.c	machdep
 file	arch/xen/x86/intr.c		machdep
 file	arch/xen/x86/xen_ipi.c		multiprocessor
 file	arch/x86/x86/pmap.c		machdep
