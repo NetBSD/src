@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.h,v 1.13 2020/08/01 08:18:36 maxv Exp $	*/
+/*	$NetBSD: nvmm.h,v 1.14 2020/08/05 16:36:33 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -95,5 +95,10 @@ struct nvmm_comm_page {
 
 #define NVMM_COMM_CPUID(off)		\
 	((off >> 12) & 0xFF)
+
+#ifdef _KERNEL
+/* At most one page, for the NVMM_COMM_* macros. */
+CTASSERT(sizeof(struct nvmm_comm_page) <= PAGE_SIZE);
+#endif
 
 #endif
