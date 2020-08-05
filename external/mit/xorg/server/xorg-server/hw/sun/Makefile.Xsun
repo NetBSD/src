@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.Xsun,v 1.4 2020/08/04 14:31:58 tsutsui Exp $
+#	$NetBSD: Makefile.Xsun,v 1.5 2020/08/05 15:48:09 tsutsui Exp $
 
 .include <bsd.own.mk>
 
@@ -69,9 +69,6 @@ SRCS+=	sunFbs.c sunIo.c sunKbd.c sunKeyMap.c sunMouse.c
 
 .PATH:  ${X11SRCDIR.xorg-server}/Xi
 SRCS+=  stubs.c
-
-.PATH:	${X11SRCDIR.xorg-server}/fb
-SRCS+=	fbcmap_mi.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/sun \
 		${X11INCS.DIX}
