@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.24.6.19 2020/01/24 18:37:31 martin Exp $ */
+/* $NetBSD: ixgbe.h,v 1.24.6.20 2020/08/05 15:58:02 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -268,10 +268,10 @@ typedef struct _ixgbe_vendor_info_t {
 
 /* This is used to get SFP+ module data */
 struct ixgbe_i2c_req {
-        u8 dev_addr;
-        u8 offset;
-        u8 len;
-        u8 data[8];
+	u8 dev_addr;
+	u8 offset;
+	u8 len;
+	u8 data[8];
 };
 
 struct ixgbe_bp_data {
@@ -334,13 +334,15 @@ struct ix_queue {
 	char             namebuf[32];
 	char             evnamebuf[32];
 
-	kmutex_t         dc_mtx;	/* lock for disabled_count and this queue's EIMS/EIMC bit */
-	int              disabled_count;/*
-					 * means
-					 *     0   : this queue is enabled
-					 *     > 0 : this queue is disabled
-					 *           the value is ixgbe_disable_queue() called count
-					 */
+	/* Lock for disabled_count and this queue's EIMS/EIMC bit */
+	kmutex_t         dc_mtx;
+	/*
+	 * disabled_count means:
+	 *     0   : this queue is enabled
+	 *     > 0 : this queue is disabled
+	 *           the value is ixgbe_disable_queue() called count
+	 */
+	int              disabled_count;
 	bool             txrx_use_workqueue;
 };
 
@@ -373,10 +375,10 @@ struct tx_ring {
 	u16			atr_sample;
 	u16			atr_count;
 
-	u64			bytes;  /* used for AIM */
+	u64			bytes;  /* Used for AIM */
 	u64			packets;
 	/* Soft Stats */
-	struct evcnt	   	tso_tx;
+	struct evcnt		tso_tx;
 	struct evcnt		no_desc_avail;
 	struct evcnt		total_packets;
 	struct evcnt		pcq_drops;
@@ -409,7 +411,7 @@ struct rx_ring {
 	bool			hw_rsc;
 	bool			vtag_strip;
 	u16			next_to_refresh;
-	u16 			next_to_check;
+	u16			next_to_check;
 	u16			num_desc;
 	u16			mbuf_sz;
 #if 0
@@ -417,8 +419,8 @@ struct rx_ring {
 #endif
 	struct ixgbe_rx_buf	*rx_buffers;
 	ixgbe_dma_tag_t		*ptag;
-	u16	                last_rx_mbuf_sz;
-	u32                	last_num_rx_desc;
+	u16			last_rx_mbuf_sz;
+	u32			last_num_rx_desc;
 	ixgbe_extmem_head_t	jcl_head;
 
 	u64			bytes; /* Used for AIM calc */
@@ -427,10 +429,10 @@ struct rx_ring {
 	/* Soft stats */
 	struct evcnt		rx_copies;
 	struct evcnt		rx_packets;
-	struct evcnt 		rx_bytes;
-	struct evcnt 		rx_discarded;
-	struct evcnt 		no_jmbuf;
-	u64 			rsc_num;
+	struct evcnt		rx_bytes;
+	struct evcnt		rx_discarded;
+	struct evcnt		no_jmbuf;
+	u64			rsc_num;
 
 	/* Flow Director */
 	u64			flm;
@@ -495,7 +497,7 @@ struct adapter {
 	u16			num_segs;
 	u32			link_speed;
 	bool			link_up;
-	u32 			vector;
+	u32			vector;
 	u16			dmac;
 	u32			phy_layer;
 
@@ -520,15 +522,17 @@ struct adapter {
 	void			*phy_si;   /* PHY intr tasklet */
 
 	bool			txrx_use_workqueue;
-	struct workqueue	*que_wq;    /* workqueue for ixgbe_handle_que_work() */
-					    /*
-					     * que_wq's "enqueued flag" is not required,
-					     * because twice workqueue_enqueue() for
-					     * ixgbe_handle_que_work() is avoided by masking
-					     * the queue's interrupt by EIMC.
-					     * See also ixgbe_msix_que().
-					     */
-	struct workqueue	*txr_wq;    /* workqueue for ixgbe_deferred_mq_start_work() */
+
+	/*
+	 * Workqueue for ixgbe_handle_que_work().
+	 *
+	 * que_wq's "enqueued flag" is not required, because twice
+	 * workqueue_enqueue() for ixgbe_handle_que_work() is avoided by
+	 * masking the queue's interrupt by EIMC. See also ixgbe_msix_que().
+	 */
+	struct workqueue	*que_wq;
+	/* Workqueue for ixgbe_deferred_mq_start_work() */
+	struct workqueue	*txr_wq;
 	percpu_t		*txr_wq_enqueued;
 
 	/*
@@ -569,23 +573,23 @@ struct adapter {
 	struct ixgbe_bp_data    bypass;
 
 	/* Netmap */
-	void 			(*init_locked)(struct adapter *);
-	void 			(*stop_locked)(void *);
+	void			(*init_locked)(struct adapter *);
+	void			(*stop_locked)(void *);
 
 	/* Firmware error check */
 	u_int                   recovery_mode;
 	struct callout          recovery_mode_timer;
 
 	/* Misc stats maintained by the driver */
-	struct evcnt	   	efbig_tx_dma_setup;
-	struct evcnt   		mbuf_defrag_failed;
-	struct evcnt	   	efbig2_tx_dma_setup;
-	struct evcnt	   	einval_tx_dma_setup;
-	struct evcnt	   	other_tx_dma_setup;
-	struct evcnt	   	eagain_tx_dma_setup;
-	struct evcnt	   	enomem_tx_dma_setup;
-	struct evcnt	   	tso_err;
-	struct evcnt	   	watchdog_events;
+	struct evcnt		efbig_tx_dma_setup;
+	struct evcnt		mbuf_defrag_failed;
+	struct evcnt		efbig2_tx_dma_setup;
+	struct evcnt		einval_tx_dma_setup;
+	struct evcnt		other_tx_dma_setup;
+	struct evcnt		eagain_tx_dma_setup;
+	struct evcnt		enomem_tx_dma_setup;
+	struct evcnt		tso_err;
+	struct evcnt		watchdog_events;
 	struct evcnt		link_irq;
 	struct evcnt		link_sicount;
 	struct evcnt		mod_sicount;
@@ -628,7 +632,7 @@ struct adapter {
 
 
 #define IXGBE_CORE_LOCK_INIT(_sc, _name) \
-        mutex_init(&(_sc)->core_mtx, MUTEX_DEFAULT, IPL_SOFTNET)
+	mutex_init(&(_sc)->core_mtx, MUTEX_DEFAULT, IPL_SOFTNET)
 #define IXGBE_CORE_LOCK_DESTROY(_sc)      mutex_destroy(&(_sc)->core_mtx)
 #define IXGBE_TX_LOCK_DESTROY(_sc)        mutex_destroy(&(_sc)->tx_mtx)
 #define IXGBE_RX_LOCK_DESTROY(_sc)        mutex_destroy(&(_sc)->rx_mtx)
@@ -641,31 +645,6 @@ struct adapter {
 #define IXGBE_RX_UNLOCK(_sc)              mutex_exit(&(_sc)->rx_mtx)
 #define IXGBE_CORE_LOCK_ASSERT(_sc)       KASSERT(mutex_owned(&(_sc)->core_mtx))
 #define IXGBE_TX_LOCK_ASSERT(_sc)         KASSERT(mutex_owned(&(_sc)->tx_mtx))
-
-/* Stats macros */
-#if __FreeBSD_version >= 1100036
-#define IXGBE_SET_IPACKETS(sc, count)    (sc)->ipackets = (count)
-#define IXGBE_SET_IERRORS(sc, count)     (sc)->ierrors = (count)
-#define IXGBE_SET_OPACKETS(sc, count)    (sc)->opackets = (count)
-#define IXGBE_SET_OERRORS(sc, count)     (sc)->oerrors = (count)
-#define IXGBE_SET_COLLISIONS(sc, count)
-#define IXGBE_SET_IBYTES(sc, count)      (sc)->ibytes = (count)
-#define IXGBE_SET_OBYTES(sc, count)      (sc)->obytes = (count)
-#define IXGBE_SET_IMCASTS(sc, count)     (sc)->imcasts = (count)
-#define IXGBE_SET_OMCASTS(sc, count)     (sc)->omcasts = (count)
-#define IXGBE_SET_IQDROPS(sc, count)     (sc)->iqdrops = (count)
-#else
-#define IXGBE_SET_IPACKETS(sc, count)    (sc)->ifp->if_ipackets = (count)
-#define IXGBE_SET_IERRORS(sc, count)     (sc)->ifp->if_ierrors = (count)
-#define IXGBE_SET_OPACKETS(sc, count)    (sc)->ifp->if_opackets = (count)
-#define IXGBE_SET_OERRORS(sc, count)     (sc)->ifp->if_oerrors = (count)
-#define IXGBE_SET_COLLISIONS(sc, count)  (sc)->ifp->if_collisions = (count)
-#define IXGBE_SET_IBYTES(sc, count)      (sc)->ifp->if_ibytes = (count)
-#define IXGBE_SET_OBYTES(sc, count)      (sc)->ifp->if_obytes = (count)
-#define IXGBE_SET_IMCASTS(sc, count)     (sc)->ifp->if_imcasts = (count)
-#define IXGBE_SET_OMCASTS(sc, count)     (sc)->ifp->if_omcasts = (count)
-#define IXGBE_SET_IQDROPS(sc, count)     (sc)->ifp->if_iqdrops = (count)
-#endif
 
 /* External PHY register addresses */
 #define IXGBE_PHY_CURRENT_TEMP		0xC820
