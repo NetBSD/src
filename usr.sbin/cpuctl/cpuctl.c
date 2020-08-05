@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuctl.c,v 1.28.8.1 2019/05/12 09:21:12 martin Exp $	*/
+/*	$NetBSD: cpuctl.c,v 1.28.8.2 2020/08/05 15:48:53 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2012, 2015 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cpuctl.c,v 1.28.8.1 2019/05/12 09:21:12 martin Exp $");
+__RCSID("$NetBSD: cpuctl.c,v 1.28.8.2 2020/08/05 15:48:53 martin Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -383,3 +383,4 @@ aprint_normal_dev(const char *dev, const char *fmt, ...)
 }
 __strong_alias(aprint_verbose_dev,aprint_normal_dev)
 __strong_alias(aprint_error_dev,aprint_normal_dev)
+__strong_alias(aprint_debug_dev,aprint_normal_dev)
