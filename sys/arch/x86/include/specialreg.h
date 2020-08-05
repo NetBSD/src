@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.170 2020/07/20 05:50:55 maxv Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.171 2020/08/05 15:40:46 maxv Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -109,6 +109,7 @@
 #define CR4_OSFXSR	0x00000200 /* enable fxsave/fxrestor and SSE */
 #define CR4_OSXMMEXCPT	0x00000400 /* enable unmasked SSE exceptions */
 #define CR4_UMIP	0x00000800 /* user-mode instruction prevention */
+#define CR4_LA57	0x00001000 /* 57-bit linear addresses */
 #define CR4_VMXE	0x00002000 /* enable VMX operations */
 #define CR4_SMXE	0x00004000 /* enable SMX operations */
 #define CR4_FSGSBASE	0x00010000 /* enable *FSBASE and *GSBASE instructions */
@@ -116,7 +117,9 @@
 #define CR4_OSXSAVE	0x00040000 /* enable xsave and xrestore */
 #define CR4_SMEP	0x00100000 /* enable SMEP support */
 #define CR4_SMAP	0x00200000 /* enable SMAP support */
-#define CR4_PKE		0x00400000 /* protection key enable */
+#define CR4_PKE		0x00400000 /* enable Protection Keys for user pages */
+#define CR4_CET		0x00800000 /* enable CET */
+#define CR4_PKS		0x01000000 /* enable Protection Keys for kern pages */
 
 /*
  * Extended Control Register XCR0
@@ -131,13 +134,17 @@
 #define XCR0_Hi16_ZMM	0x00000080	/* AVX-512 512 bits upper registers */
 #define XCR0_PT		0x00000100	/* Processor Trace state */
 #define XCR0_PKRU	0x00000200	/* Protection Key state */
+#define XCR0_CET_U	0x00000800	/* User CET state */
+#define XCR0_CET_S	0x00001000	/* Kern CET state */
 #define XCR0_HDC	0x00002000	/* Hardware Duty Cycle state */
+#define XCR0_HWP	0x00010000	/* Hardware P-states */
 
 #define XCR0_FLAGS1	"\20" \
 	"\1" "x87"		"\2" "SSE"		"\3" "AVX"	\
 	"\4" "BNDREGS"		"\5" "BNDCSR"		"\6" "Opmask"	\
 	"\7" "ZMM_Hi256"	"\10" "Hi16_ZMM"	"\11" "PT"	\
-	"\12" "PKRU"		"\16" "HDC"
+	"\12" "PKRU"		"\14" "CET_U"		"\15" "CET_S"	\
+	"\16" "HDC"		"\21" "HWP"
 
 /*
  * Known FPU bits, only these get enabled. The save area is sized for all the
@@ -147,7 +154,7 @@
 			 XCR0_Opmask | XCR0_ZMM_Hi256 | XCR0_Hi16_ZMM)
 
 /*
- * XSAVE component indices.
+ * XSAVE component indices, internal to NetBSD.
  */
 #define XSAVE_X87	0
 #define XSAVE_SSE	1
@@ -157,9 +164,6 @@
 #define XSAVE_Opmask	5
 #define XSAVE_ZMM_Hi256	6
 #define XSAVE_Hi16_ZMM	7
-#define XSAVE_PT	8
-#define XSAVE_PKRU	9
-#define XSAVE_HDC	10
 
 /*
  * Highest XSAVE component enabled by XCR0_FPU.
@@ -448,7 +452,7 @@
 #define CPUID_SEF_OSPKE		__BIT(4)  /* OS has set CR4.PKE to ena. protec. keys */
 #define CPUID_SEF_WAITPKG	__BIT(5)  /* TPAUSE,UMONITOR,UMWAIT */
 #define CPUID_SEF_AVX512_VBMI2	__BIT(6)  /* AVX-512 Vector Byte Manipulation 2 */
-#define CPUID_SEF_CET_SS	__BIT(7)  /* CET shadow stack */
+#define CPUID_SEF_CET_SS	__BIT(7)  /* CET Shadow Stack */
 #define CPUID_SEF_GFNI		__BIT(8)
 #define CPUID_SEF_VAES		__BIT(9)
 #define CPUID_SEF_VPCLMULQDQ	__BIT(10)
@@ -461,7 +465,7 @@
 #define CPUID_SEF_MOVDIRI	__BIT(27) /* MOVDIRI instruction */
 #define CPUID_SEF_MOVDIR64B	__BIT(28) /* MOVDIR64B instruction */
 #define CPUID_SEF_SGXLC		__BIT(30) /* SGX Launch Configuration */
-#define CPUID_SEF_PKS		__BIT(31) /* Protection Keys */
+#define CPUID_SEF_PKS		__BIT(31) /* Protection Keys for Kern-mode pages */
 
 #define CPUID_SEF_FLAGS1	"\177\20" \
 	"b\0PREFETCHWT1\0" "b\1AVX512_VBMI\0" "b\2UMIP\0" "b\3PKU\0"	\
@@ -481,7 +485,7 @@
 #define CPUID_SEF_SRBDS_CTRL	__BIT(9)  /* IA32_MCU_OPT_CTRL */
 #define CPUID_SEF_MD_CLEAR	__BIT(10)
 #define CPUID_SEF_TSX_FORCE_ABORT __BIT(13) /* MSR_TSX_FORCE_ABORT bit 0 */
-#define CPUID_SEF_SERIALIZE	__BIT(14)
+#define CPUID_SEF_SERIALIZE	__BIT(14) /* SERIALIZE instruction */
 #define CPUID_SEF_HYBRID	__BIT(15) /* Hybrid part */
 #define CPUID_SEF_TSXLDTRK	__BIT(16) /* TSX suspend load addr tracking */
 #define CPUID_SEF_CET_IBT	__BIT(20) /* CET Indirect Branch Tracking */
