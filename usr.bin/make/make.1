@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.284 2020/07/31 20:22:10 sjg Exp $
+.\"	$NetBSD: make.1,v 1.285 2020/08/05 08:43:24 dholland Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd July 31, 2020
+.Dd August 5, 2020
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -419,34 +419,39 @@ or more sources.
 This creates a relationship where the targets
 .Dq depend
 on the sources
-and are usually created from them.
-The exact relationship between the target and the source is determined
-by the operator that separates them.
-The three operators are as follows:
+and are customarily created from them.
+A target is considered out-of-date if it does not exist, or if its
+modification time is less than that of any of its sources.
+An out-of-date target will be re-created, but not until all sources
+have been examined and themselves re-created as needed.
+Three operators may be used:
 .Bl -tag -width flag
 .It Ic \&:
-A target is considered out-of-date if its modification time is less than
-those of any of its sources.
-Sources for a target accumulate over dependency lines when this operator
-is used.
-The target is removed if
+Many dependency lines may name this target but only one may have
+attached shell commands.
+All sources named in all dependency lines are considered together,
+and if needed the attached shell commands are run to create or
+re-create the target.
+If
 .Nm
-is interrupted.
+is interrupted, the target is removed.
 .It Ic \&!
-Targets are always re-created, but not until all sources have been
-examined and re-created as necessary.
-Sources for a target accumulate over dependency lines when this operator
-is used.
-The target is removed if
-.Nm
-is interrupted.
+The same, but the target is always re-created whether or not it is out
+of date.
 .It Ic \&::
-If no sources are specified, the target is always re-created.
-Otherwise, a target is considered out-of-date if any of its sources has
-been modified more recently than the target.
-Sources for a target do not accumulate over dependency lines when this
-operator is used.
-The target will not be removed if
+Any dependency line may have attached shell commands, but each one
+is handled independently: its sources are considered and the attached
+shell commands are run if the target is out of date with respect to
+(only) those sources.
+Thus, different groups of the attached shell commands may be run
+depending on the circumstances.
+Furthermore, unlike
+.Ic \&:,
+for dependency lines with no sources, the attached shell
+commands are always run.
+Also unlike
+.Ic \&:,
+the target will not be removed if
 .Nm
 is interrupted.
 .El
