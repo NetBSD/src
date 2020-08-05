@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.98.6.11 2020/01/24 18:43:35 martin Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.98.6.12 2020/08/05 17:22:46 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -694,7 +694,7 @@ struct livengood_tcpip_ctxdesc {
 #define	ICR_RXT0	(1U << 7)	/* Rx ring 0 timer */
 #define	ICR_MDAC	(1U << 9)	/* MDIO access complete */
 #define	ICR_RXCFG	(1U << 10)	/* Receiving /C/ */
-#define	ICR_GPI(x)	(1U << (x))	/* general purpose interrupts */
+#define	ICR_GPI(x)	__BIT(11+(x))	/* general purpose interrupts */
 #define	ICR_RXQ(x)	__BIT(20+(x))	/* 82574: Rx queue x interrupt x=0,1 */
 #define	ICR_TXQ(x)	__BIT(22+(x))	/* 82574: Tx queue x interrupt x=0,1 */
 #define	ICR_OTHER	__BIT(24)	/* 82574: Other interrupt */
@@ -1474,6 +1474,7 @@ struct livengood_tcpip_ctxdesc {
 #define	NVM_CFG2_MNGM_NCSI	1
 #define	NVM_CFG2_MNGM_PT	2
 
+#define	NVM_COMPAT_MAS_EN(x)		__BIT(x) /* Media Auto Sense Enable */
 #define	NVM_COMPAT_SERDES_FORCE_MODE	__BIT(14) /* Don't use autonego */
 
 #define NVM_FUTURE_INIT_WORD1_VALID_CHECKSUM	0x0040
@@ -1618,7 +1619,8 @@ struct livengood_tcpip_ctxdesc {
 #define SFF_SFP_ETH_FLAGS_1000LX	0x02
 #define SFF_SFP_ETH_FLAGS_1000CX	0x04
 #define SFF_SFP_ETH_FLAGS_1000T		0x08
-#define SFF_SFP_ETH_FLAGS_100FX		0x10
+#define SFF_SFP_ETH_FLAGS_100LX		0x10
+#define SFF_SFP_ETH_FLAGS_100FX		0x20
 
 /* I21[01] PHY related definitions */
 #define GS40G_PAGE_SELECT	0x16
