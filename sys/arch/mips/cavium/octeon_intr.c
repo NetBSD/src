@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_intr.c,v 1.21 2020/08/05 04:19:11 simonb Exp $	*/
+/*	$NetBSD: octeon_intr.c,v 1.22 2020/08/05 04:47:35 simonb Exp $	*/
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.21 2020/08/05 04:19:11 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.22 2020/08/05 04:47:35 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -88,7 +88,7 @@ static const struct ipl_sr_map octeon_ipl_sr_map = {
     },
 };
 
-const char * octeon_intrnames[NIRQS] = {
+static const char * octeon_intrnames[NIRQS] = {
 	"workq 0",
 	"workq 1",
 	"workq 2",
@@ -166,7 +166,7 @@ struct octeon_intrhand {
 static int octeon_send_ipi(struct cpu_info *, int);
 static int octeon_ipi_intr(void *);
 
-struct octeon_intrhand ipi_intrhands[1] = {
+static struct octeon_intrhand ipi_intrhands[1] = {
 	[0] = {
 		.ih_func = octeon_ipi_intr,
 		.ih_arg = (void *)(uintptr_t)__BITS(15,0),
@@ -176,13 +176,13 @@ struct octeon_intrhand ipi_intrhands[1] = {
 };
 #endif
 
-struct octeon_intrhand *octciu_intrs[NIRQS] = {
+static struct octeon_intrhand *octciu_intrs[NIRQS] = {
 #ifdef MULTIPROCESSOR
 	[CIU_INT_MBOX_15_0] = &ipi_intrhands[0],
 #endif
 };
 
-kmutex_t octeon_intr_lock;
+static kmutex_t octeon_intr_lock;
 
 #if defined(MULTIPROCESSOR)
 #define	OCTEON_NCPU	MAXCPUS
