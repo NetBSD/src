@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_osdep.h,v 1.17.6.6 2020/01/24 18:37:31 martin Exp $ */
+/* $NetBSD: ixgbe_osdep.h,v 1.17.6.7 2020/08/05 15:58:02 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -139,7 +139,7 @@ enum {
 #define IXGBE_CPU_TO_LE16 htole16
 #define IXGBE_CPU_TO_LE32 htole32
 #define IXGBE_LE32_TO_CPU le32toh
-#define IXGBE_LE32_TO_CPUS(x)
+#define IXGBE_LE32_TO_CPUS(x) (*(x) = le32toh(*(x)))
 #define IXGBE_CPU_TO_BE16 htobe16
 #define IXGBE_CPU_TO_BE32 htobe32
 #define IXGBE_BE32_TO_CPU be32toh

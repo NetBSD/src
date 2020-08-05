@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.56.2.29 2020/01/24 18:37:31 martin Exp $*/
+/*$NetBSD: ixv.c,v 1.56.2.30 2020/08/05 15:58:03 martin Exp $*/
 
 /******************************************************************************
 
@@ -158,7 +158,7 @@ const struct sysctlnode *ixv_sysctl_instance(struct adapter *);
 static const ixgbe_vendor_info_t *ixv_lookup(const struct pci_attach_args *);
 
 /************************************************************************
- * FreeBSD Device Interface Entry Points
+ * NetBSD Device Interface Entry Points
  ************************************************************************/
 CFATTACH_DECL3_NEW(ixv, sizeof(struct adapter),
     ixv_probe, ixv_attach, ixv_detach, NULL, NULL, NULL,
@@ -233,11 +233,11 @@ static u32 ixv_shadow_vfta[IXGBE_VFTA_SIZE];
 #ifdef NET_MPSAFE
 #define IXGBE_MPSAFE		1
 #define IXGBE_CALLOUT_FLAGS	CALLOUT_MPSAFE
-#define IXGBE_SOFTINFT_FLAGS	SOFTINT_MPSAFE
+#define IXGBE_SOFTINT_FLAGS	SOFTINT_MPSAFE
 #define IXGBE_WORKQUEUE_FLAGS	WQ_PERCPU | WQ_MPSAFE
 #else
 #define IXGBE_CALLOUT_FLAGS	0
-#define IXGBE_SOFTINFT_FLAGS	0
+#define IXGBE_SOFTINT_FLAGS	0
 #define IXGBE_WORKQUEUE_FLAGS	WQ_PERCPU
 #endif
 #define IXGBE_WORKQUEUE_PRI PRI_SOFTNET
@@ -326,8 +326,8 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 
 	/* Allocate, clear, and link in our adapter structure */
 	adapter = device_private(dev);
-	adapter->dev = dev;
 	adapter->hw.back = adapter;
+	adapter->dev = dev;
 	hw = &adapter->hw;
 
 	adapter->init_locked = ixv_init_locked;
@@ -348,7 +348,7 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	aprint_normal(": %s, Version - %s\n",
 	    ixv_strings[ent->index], ixv_driver_version);
 
-	/* Core Lock Init*/
+	/* Core Lock Init */
 	IXGBE_CORE_LOCK_INIT(adapter, device_xname(dev));
 
 	/* Do base PCI setup - map BAR0 */
@@ -1101,7 +1101,7 @@ ixv_negotiate_api(struct adapter *adapter)
 
 
 /************************************************************************
- * ixv_set_multi - Multicast Update
+ * ixv_set_rxfilter - Multicast Update
  *
  *   Called whenever multicast address list is updated.
  ************************************************************************/
@@ -1186,7 +1186,7 @@ ixv_set_rxfilter(struct adapter *adapter)
 			error = ENOSPC;
 		} else {
 			ifp->if_flags |= IFF_ALLMULTI;
-			return rc; /* Promisc might failed */
+			return rc; /* Promisc might have failed */
 		}
 
 		if (rc == 0)
@@ -2331,12 +2331,8 @@ ixv_update_stats(struct adapter *adapter)
 	    stats->vfgotc);
 	UPDATE_STAT_32(IXGBE_VFMPRC, stats->last_vfmprc, stats->vfmprc);
 
-	/* Fill out the OS statistics structure */
-	/*
-	 * NetBSD: Don't override if_{i|o}{packets|bytes|mcasts} with
-	 * adapter->stats counters. It's required to make ifconfig -z
-	 * (SOICZIFDATA) work.
-	 */
+	/* VF doesn't count errors by hardware */
+
 } /* ixv_update_stats */
 
 /************************************************************************
@@ -2367,7 +2363,7 @@ ixv_sysctl_interrupt_rate_handler(SYSCTLFN_ARGS)
 	if (rate > 0 && rate < 500000) {
 		if (rate < 1000)
 			rate = 1000;
-		reg |= ((4000000/rate) & 0xff8);
+		reg |= ((4000000 / rate) & 0xff8);
 		/*
 		 * When RSC is used, ITR interval must be larger than
 		 * RSC_DELAY. Currently, we use 2us for RSC_DELAY.
@@ -3176,11 +3172,11 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 
 #ifndef IXGBE_LEGACY_TX
 		txr->txr_si
-		    = softint_establish(SOFTINT_NET | IXGBE_SOFTINFT_FLAGS,
+		    = softint_establish(SOFTINT_NET | IXGBE_SOFTINT_FLAGS,
 			ixgbe_deferred_mq_start, txr);
 #endif
 		que->que_si
-		    = softint_establish(SOFTINT_NET | IXGBE_SOFTINFT_FLAGS,
+		    = softint_establish(SOFTINT_NET | IXGBE_SOFTINT_FLAGS,
 			ixv_handle_que, que);
 		if (que->que_si == NULL) {
 			aprint_error_dev(dev,
@@ -3227,8 +3223,8 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	/* Round-robin affinity */
 	kcpuset_zero(affinity);
 	kcpuset_set(affinity, cpu_id % ncpu);
-	error = interrupt_distribute(adapter->osdep.ihs[vector],
-	    affinity, NULL);
+	error = interrupt_distribute(adapter->osdep.ihs[vector], affinity,
+	    NULL);
 
 	aprint_normal_dev(dev,
 	    "for link, interrupting at %s", intrstr);
@@ -3238,7 +3234,7 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 		aprint_normal("\n");
 
 	/* Tasklets for Mailbox */
-	adapter->link_si = softint_establish(SOFTINT_NET |IXGBE_SOFTINFT_FLAGS,
+	adapter->link_si = softint_establish(SOFTINT_NET |IXGBE_SOFTINT_FLAGS,
 	    ixv_handle_link, adapter);
 	/*
 	 * Due to a broken design QEMU will fail to properly

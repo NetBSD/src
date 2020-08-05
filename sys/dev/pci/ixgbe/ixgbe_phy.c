@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_phy.c,v 1.11.6.5 2020/01/24 18:37:31 martin Exp $ */
+/* $NetBSD: ixgbe_phy.c,v 1.11.6.6 2020/08/05 15:58:02 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -1784,7 +1784,7 @@ s32 ixgbe_identify_qsfp_module_generic(struct ixgbe_hw *hw)
 
 	/* Determine PHY vendor for optical modules */
 	if (comp_codes_10g & (IXGBE_SFF_10GBASESR_CAPABLE |
-			      IXGBE_SFF_10GBASELR_CAPABLE))  {
+			      IXGBE_SFF_10GBASELR_CAPABLE)) {
 		status = hw->phy.ops.read_i2c_eeprom(hw,
 					    IXGBE_SFF_QSFP_VENDOR_OUI_BYTE0,
 					    &oui_bytes[0]);

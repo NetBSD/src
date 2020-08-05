@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.24.2.19 2020/01/24 18:37:31 martin Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.24.2.20 2020/08/05 15:58:02 martin Exp $ */
 
 /******************************************************************************
 
@@ -926,7 +926,7 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 	vlan_macip_lens |= ip_hlen;
 
 	/* No support for offloads for non-L4 next headers */
- 	switch (ipproto) {
+	switch (ipproto) {
 	case IPPROTO_TCP:
 		if (mp->m_pkthdr.csum_flags &
 		    (M_CSUM_TCPv4 | M_CSUM_TCPv6))
@@ -1569,7 +1569,6 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 		rxbuf->addr = htole64(rxbuf->pmap->dm_segs[0].ds_addr);
 	}
 
-
 	/* Setup our descriptor indices */
 	rxr->next_to_check = 0;
 	rxr->next_to_refresh = 0;
@@ -1625,6 +1624,7 @@ ixgbe_setup_receive_structures(struct adapter *adapter)
 	struct rx_ring *rxr = adapter->rx_rings;
 	int            j;
 
+	INIT_DEBUGOUT("ixgbe_setup_receive_structures");
 	for (j = 0; j < adapter->num_queues; j++, rxr++)
 		if (ixgbe_setup_receive_ring(rxr))
 			goto fail;
@@ -2233,7 +2233,7 @@ ixgbe_allocate_queues(struct adapter *adapter)
 
 	/* First, allocate the top level queue structs */
 	adapter->queues = (struct ix_queue *)malloc(sizeof(struct ix_queue) *
-            adapter->num_queues, M_DEVBUF, M_NOWAIT | M_ZERO);
+	    adapter->num_queues, M_DEVBUF, M_NOWAIT | M_ZERO);
         if (adapter->queues == NULL) {
 		aprint_error_dev(dev, "Unable to allocate queue memory\n");
                 error = ENOMEM;
@@ -2300,7 +2300,7 @@ ixgbe_allocate_queues(struct adapter *adapter)
 			    "Critical Failure setting up transmit buffers\n");
 			error = ENOMEM;
 			goto err_tx_desc;
-        	}
+		}
 		if (!(adapter->feat_en & IXGBE_FEATURE_LEGACY_TX)) {
 			/* Allocate a buf ring */
 			txr->txr_interq = pcq_create(IXGBE_BR_SIZE, KM_SLEEP);

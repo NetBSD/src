@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.88.2.39 2020/01/24 18:37:31 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.88.2.40 2020/08/05 15:58:02 martin Exp $ */
 
 /******************************************************************************
 
@@ -168,9 +168,9 @@ static bool	ixgbe_suspend(device_t, const pmf_qual_t *);
 static bool	ixgbe_resume(device_t, const pmf_qual_t *);
 static int	ixgbe_ifflags_cb(struct ethercom *);
 static int	ixgbe_ioctl(struct ifnet *, u_long, void *);
-static void	ixgbe_ifstop(struct ifnet *, int);
 static int	ixgbe_init(struct ifnet *);
 static void	ixgbe_init_locked(struct adapter *);
+static void	ixgbe_ifstop(struct ifnet *, int);
 static void	ixgbe_stop(void *);
 static void	ixgbe_init_device_features(struct adapter *);
 static void	ixgbe_check_fan_failure(struct adapter *, u32, bool);
@@ -406,11 +406,11 @@ static int (*ixgbe_ring_empty)(struct ifnet *, pcq_t *);
 #ifdef NET_MPSAFE
 #define IXGBE_MPSAFE		1
 #define IXGBE_CALLOUT_FLAGS	CALLOUT_MPSAFE
-#define IXGBE_SOFTINFT_FLAGS	SOFTINT_MPSAFE
+#define IXGBE_SOFTINT_FLAGS	SOFTINT_MPSAFE
 #define IXGBE_WORKQUEUE_FLAGS	WQ_PERCPU | WQ_MPSAFE
 #else
 #define IXGBE_CALLOUT_FLAGS	0
-#define IXGBE_SOFTINFT_FLAGS	0
+#define IXGBE_SOFTINT_FLAGS	0
 #define IXGBE_WORKQUEUE_FLAGS	WQ_PERCPU
 #endif
 #define IXGBE_WORKQUEUE_PRI PRI_SOFTNET
@@ -671,6 +671,8 @@ ixgbe_initialize_transmit_units(struct adapter *adapter)
 	struct tx_ring	*txr = adapter->tx_rings;
 	struct ixgbe_hw	*hw = &adapter->hw;
 	int i;
+
+	INIT_DEBUGOUT("ixgbe_initialize_transmit_units");
 
 	/* Setup the Base and Length of the Tx Descriptor Ring */
 	for (i = 0; i < adapter->num_queues; i++, txr++) {
@@ -1094,17 +1096,17 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 		goto err_late;
 
 	/* Tasklets for Link, SFP, Multispeed Fiber and Flow Director */
-	adapter->link_si = softint_establish(SOFTINT_NET |IXGBE_SOFTINFT_FLAGS,
+	adapter->link_si = softint_establish(SOFTINT_NET |IXGBE_SOFTINT_FLAGS,
 	    ixgbe_handle_link, adapter);
-	adapter->mod_si = softint_establish(SOFTINT_NET | IXGBE_SOFTINFT_FLAGS,
+	adapter->mod_si = softint_establish(SOFTINT_NET | IXGBE_SOFTINT_FLAGS,
 	    ixgbe_handle_mod, adapter);
-	adapter->msf_si = softint_establish(SOFTINT_NET | IXGBE_SOFTINFT_FLAGS,
+	adapter->msf_si = softint_establish(SOFTINT_NET | IXGBE_SOFTINT_FLAGS,
 	    ixgbe_handle_msf, adapter);
-	adapter->phy_si = softint_establish(SOFTINT_NET | IXGBE_SOFTINFT_FLAGS,
+	adapter->phy_si = softint_establish(SOFTINT_NET | IXGBE_SOFTINT_FLAGS,
 	    ixgbe_handle_phy, adapter);
 	if (adapter->feat_en & IXGBE_FEATURE_FDIR)
 		adapter->fdir_si =
-		    softint_establish(SOFTINT_NET | IXGBE_SOFTINFT_FLAGS,
+		    softint_establish(SOFTINT_NET | IXGBE_SOFTINT_FLAGS,
 			ixgbe_reinit_fdir, adapter);
 	if ((adapter->link_si == NULL) || (adapter->mod_si == NULL)
 	    || (adapter->msf_si == NULL) || (adapter->phy_si == NULL)
@@ -3179,7 +3181,7 @@ ixgbe_sysctl_interrupt_rate_handler(SYSCTLFN_ARGS)
 	if (rate > 0 && rate < 500000) {
 		if (rate < 1000)
 			rate = 1000;
-		reg |= ((4000000/rate) & 0xff8);
+		reg |= ((4000000 / rate) & 0xff8);
 		/*
 		 * When RSC is used, ITR interval must be larger than
 		 * RSC_DELAY. Currently, we use 2us for RSC_DELAY.
@@ -4391,7 +4393,7 @@ ixgbe_local_timer1(void *arg)
 {
 	struct adapter	*adapter = arg;
 	device_t	dev = adapter->dev;
-	struct ix_queue *que = adapter->queues;
+	struct ix_queue	*que = adapter->queues;
 	u64		queues = 0;
 	u64		v0, v1, v2, v3, v4, v5, v6, v7;
 	int		hung = 0;
@@ -4464,7 +4466,7 @@ ixgbe_local_timer1(void *arg)
 		}
 	}
 
-	/* Only truely watchdog if all queues show hung */
+	/* Only truly watchdog if all queues show hung */
 	if (hung == adapter->num_queues)
 		goto watchdog;
 #if 0 /* XXX Avoid unexpectedly disabling interrupt forever (PR#53294) */
@@ -6146,7 +6148,7 @@ out:
  *   return 0 on success, positive on failure
  ************************************************************************/
 static int
-ixgbe_ioctl(struct ifnet * ifp, u_long command, void *data)
+ixgbe_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct adapter	*adapter = ifp->if_softc;
 	struct ixgbe_hw *hw = &adapter->hw;
@@ -6433,7 +6435,7 @@ alloc_retry:
 	 */
 	if (!(adapter->feat_en & IXGBE_FEATURE_LEGACY_TX)) {
 		txr->txr_si =
-		    softint_establish(SOFTINT_NET | IXGBE_SOFTINFT_FLAGS,
+		    softint_establish(SOFTINT_NET | IXGBE_SOFTINT_FLAGS,
 			ixgbe_deferred_mq_start, txr);
 
 		snprintf(wqname, sizeof(wqname), "%sdeferTx", device_xname(dev));
@@ -6442,7 +6444,7 @@ alloc_retry:
 		    IPL_NET, IXGBE_WORKQUEUE_FLAGS);
 		adapter->txr_wq_enqueued = percpu_alloc(sizeof(u_int));
 	}
-	que->que_si = softint_establish(SOFTINT_NET | IXGBE_SOFTINFT_FLAGS,
+	que->que_si = softint_establish(SOFTINT_NET | IXGBE_SOFTINT_FLAGS,
 	    ixgbe_handle_que, que);
 	snprintf(wqname, sizeof(wqname), "%sTxRx", device_xname(dev));
 	error = workqueue_create(&adapter->que_wq, wqname,
@@ -6582,7 +6584,7 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 
 		if (!(adapter->feat_en & IXGBE_FEATURE_LEGACY_TX)) {
 			txr->txr_si = softint_establish(
-				SOFTINT_NET | IXGBE_SOFTINFT_FLAGS,
+				SOFTINT_NET | IXGBE_SOFTINT_FLAGS,
 				ixgbe_deferred_mq_start, txr);
 			if (txr->txr_si == NULL) {
 				aprint_error_dev(dev,
@@ -6592,7 +6594,7 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 			}
 		}
 		que->que_si
-		    = softint_establish(SOFTINT_NET | IXGBE_SOFTINFT_FLAGS,
+		    = softint_establish(SOFTINT_NET | IXGBE_SOFTINT_FLAGS,
 			ixgbe_handle_que, que);
 		if (que->que_si == NULL) {
 			aprint_error_dev(dev,
@@ -6654,7 +6656,7 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 
 	if (adapter->feat_cap & IXGBE_FEATURE_SRIOV) {
 		adapter->mbx_si =
-		    softint_establish(SOFTINT_NET | IXGBE_SOFTINFT_FLAGS,
+		    softint_establish(SOFTINT_NET | IXGBE_SOFTINT_FLAGS,
 			ixgbe_handle_mbx, adapter);
 		if (adapter->mbx_si == NULL) {
 			aprint_error_dev(dev,
