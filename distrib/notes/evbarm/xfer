@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.2.48.1 2020/07/20 18:32:55 martin Exp $
+.\"	$NetBSD: xfer,v 1.2.48.2 2020/08/05 14:29:59 martin Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@ to decompress .gz files.
 .Pp
 ARM devices generally also ship with a vendor-specific U-Boot
 bootloader, which may be replaced with a board-specific "mainline"
-U-Boot image from pkgsrc for an an optimal NetBSD experience.
+U-Boot image from pkgsrc for an optimal NetBSD experience.
 The images available from
 .Lk http://www.armbsd.org/arm/ "armbsd.org"
 come pre-prepared with a board-specific U-Boot image if one is
