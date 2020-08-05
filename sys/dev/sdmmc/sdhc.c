@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.100.4.1 2018/01/07 09:24:59 snj Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.100.4.2 2020/08/05 16:14:25 martin Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.100.4.1 2018/01/07 09:24:59 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.100.4.2 2020/08/05 16:14:25 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -315,6 +315,12 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 		break;
 	case SDHC_SPEC_VERS_400:
 		aprint_normal("4.0");
+		break;
+	case SDHC_SPEC_VERS_410:
+		aprint_normal("4.1");
+		break;
+	case SDHC_SPEC_VERS_420:
+		aprint_normal("4.2");
 		break;
 	case SDHC_SPEC_NOVERS:
 		hp->specver = -1;
