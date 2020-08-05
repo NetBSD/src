@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.50.6.3 2018/07/26 20:32:38 snj Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.50.6.4 2020/08/05 15:54:30 martin Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.50.6.3 2018/07/26 20:32:38 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.50.6.4 2020/08/05 15:54:30 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -118,8 +118,10 @@ ichsmb_match(device_t parent, cfdata_t match, void *aux)
 		case PCI_PRODUCT_INTEL_100SERIES_LP_SMB:
 		case PCI_PRODUCT_INTEL_2HS_SMB:
 		case PCI_PRODUCT_INTEL_3HS_SMB:
+		case PCI_PRODUCT_INTEL_3HS_U_SMB:
 		case PCI_PRODUCT_INTEL_CORE4G_M_SMB:
 		case PCI_PRODUCT_INTEL_CORE5G_M_SMB:
+		case PCI_PRODUCT_INTEL_CMTLK_SMB:
 		case PCI_PRODUCT_INTEL_BAYTRAIL_PCU_SMB:
 		case PCI_PRODUCT_INTEL_BSW_PCU_SMB:
 		case PCI_PRODUCT_INTEL_APL_SMB:
@@ -237,7 +239,6 @@ ichsmb_chdet(device_t self, device_t child)
 
 	if (sc->sc_i2c_device == child)
 		sc->sc_i2c_device = NULL;
-
 }
 
 static int
@@ -282,7 +283,7 @@ ichsmb_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	    LPCIB_SMB_HS_INTR | LPCIB_SMB_HS_DEVERR |
 	    LPCIB_SMB_HS_BUSERR | LPCIB_SMB_HS_FAILED);
 	bus_space_barrier(sc->sc_iot, sc->sc_ioh, LPCIB_SMB_HS, 1,
-	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);  
+	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
 
 	/* Wait for bus to be idle */
 	for (retries = 100; retries > 0; retries--) {
