@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86.c,v 1.10 2020/08/05 15:16:50 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86.c,v 1.11 2020/08/05 15:38:28 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86.c,v 1.10 2020/08/05 15:16:50 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86.c,v 1.11 2020/08/05 15:38:28 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -304,16 +304,16 @@ const struct nvmm_x86_cpuid_mask nvmm_cpuid_00000007 = {
 	.ebx =
 	    CPUID_SEF_FSGSBASE |
 	    /* CPUID_SEF_TSC_ADJUST excluded */
-	    CPUID_SEF_SGX |
+	    /* CPUID_SEF_SGX excluded */
 	    CPUID_SEF_BMI1 |
-	    CPUID_SEF_HLE |
+	    /* CPUID_SEF_HLE excluded */
 	    /* CPUID_SEF_AVX2 excluded */
 	    CPUID_SEF_FDPEXONLY |
 	    CPUID_SEF_SMEP |
 	    CPUID_SEF_BMI2 |
 	    CPUID_SEF_ERMS |
 	    /* CPUID_SEF_INVPCID excluded, but re-included in VMX */
-	    CPUID_SEF_RTM |
+	    /* CPUID_SEF_RTM excluded */
 	    /* CPUID_SEF_QM excluded */
 	    CPUID_SEF_FPUCSDS |
 	    /* CPUID_SEF_MPX excluded */
@@ -337,9 +337,9 @@ const struct nvmm_x86_cpuid_mask nvmm_cpuid_00000007 = {
 	    CPUID_SEF_PREFETCHWT1 |
 	    /* CPUID_SEF_AVX512_VBMI excluded */
 	    CPUID_SEF_UMIP |
-	    CPUID_SEF_PKU |
+	    /* CPUID_SEF_PKU excluded */
 	    CPUID_SEF_OSPKE |
-	    CPUID_SEF_WAITPKG |
+	    /* CPUID_SEF_WAITPKG excluded */
 	    /* CPUID_SEF_AVX512_VBMI2 excluded */
 	    /* CPUID_SEF_CET_SS excluded */
 	    CPUID_SEF_GFNI |
@@ -352,13 +352,13 @@ const struct nvmm_x86_cpuid_mask nvmm_cpuid_00000007 = {
 	    /* CPUID_SEF_RDPID excluded */
 	    CPUID_SEF_CLDEMOTE |
 	    CPUID_SEF_MOVDIRI |
-	    CPUID_SEF_MOVDIR64B |
-	    CPUID_SEF_SGXLC,
+	    CPUID_SEF_MOVDIR64B,
+	    /* CPUID_SEF_SGXLC excluded */
 	    /* CPUID_SEF_PKS excluded */
 	.edx =
 	    /* CPUID_SEF_AVX512_4VNNIW excluded */
 	    /* CPUID_SEF_AVX512_4FMAPS excluded */
-	    /* CPUID_SEF_FSREP_MOV excluded */
+	    CPUID_SEF_FSREP_MOV |
 	    /* CPUID_SEF_AVX512_VP2INTERSECT excluded */
 	    /* CPUID_SEF_SRBDS_CTRL excluded */
 	    CPUID_SEF_MD_CLEAR |
@@ -391,7 +391,7 @@ const struct nvmm_x86_cpuid_mask nvmm_cpuid_80000001 = {
 	    /* CPUID_OSVW excluded */
 	    CPUID_IBS |
 	    CPUID_XOP |
-	    CPUID_SKINIT |
+	    /* CPUID_SKINIT excluded */
 	    CPUID_WDT |
 	    CPUID_LWP |
 	    CPUID_FMA4 |
