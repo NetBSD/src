@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.25 2020/08/05 14:18:54 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.26 2020/08/05 17:31:45 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -820,4 +820,176 @@ usr.bin/w/w.c					1.88-1.90
 
 	Handle hostname from DISPLAY="[2001:db8::dead:beef]:0" or similar.
 	[kim, ticket #1583]
+
+sys/dev/dev_verbose.h				1.3
+
+	PR 55535: make built-in verbose modules available before the
+	start of the autoconfiguration.
+	[uwe, ticket #1584]
+
+usr.sbin/cpuctl/Makefile			1.9
+usr.sbin/cpuctl/arch/cpuctl_i386.h		1.5
+usr.sbin/cpuctl/arch/i386.c			1.111-1.113 via patch
+usr.sbin/cpuctl/cpuctl.c			1.31
+usr.sbin/cpuctl/cpuctl.h			1.7
+sys/arch/x86/x86/identcpu_subr.c		1.1-1.7
+
+	- Get TSC frequency from CPUID 0x15 and/or x16 for newer Intel
+	  processors.
+	- Add 0xa5 and 0xa6 for Comet Lake.
+	- Rename ci_cpuid_level to ci_max_cpuid and ci_cpuid_extlevel to
+	  ci_max_ext_cpuid to match x86/include/cpu.h. No functional change.
+	- Sort some entries.
+	- Add comment.
+	[msaitoh, ticket #1585]
+
+sys/dev/pci/ichsmb.c				1.66-1.68 via patch
+
+	- Add Comet Lake, Whiskey Lake U and Amber Lake Y support.
+	- Whitespace fix.
+	[msaitoh, ticket #1586]
+
+sys/dev/pci/ixgbe/ix_txrx.c			1.62-1.63 via patch
+sys/dev/pci/ixgbe/ixgbe.c			1.225, 1.228-1.229, 1.232 via
+						patch
+sys/dev/pci/ixgbe/ixgbe.h			1.64, 1.66
+sys/dev/pci/ixgbe/ixv.c				1.146, 1.148-1.150 via patch
+sys/dev/pci/ixgbe/ixgbe_common.c		1.27
+sys/dev/pci/ixgbe/ixgbe_vf.c			1.23
+sys/dev/pci/ixgbe/ixgbe_82598.c			1.15
+sys/dev/pci/ixgbe/ixgbe_x550.c			1.18
+sys/dev/pci/ixgbe/ixgbe_netbsd.c		1.14
+sys/dev/pci/ixgbe/ixgbe_phy.c			1.21
+sys/dev/pci/ixgbe/ixgbe_osdep.h			1.26
+
+	- Fix IXGBE_LE32_TO_CPUS() macro for big endian machine. This problem
+	  was only on X550.
+	- Add debug printf()s.
+	- Use unsigned to avoid undefined behavior in
+	  ixgbe_fc_enable_generic().
+	- Modify a little to reduce diff between ixgbe.c and ixv.c.
+	  No functional change.
+	- Modify comment.
+	- Remove unused macros.
+	- Whitespace fix.
+	- Fix typos.
+	[msaitoh, ticket #1587]
+
+sys/arch/x86/include/specialreg.h		1.162-1.168 via patch
+
+	- AMD CPUID Fn8000_000a %edx bit 20 is "SPEC_CTRL".
+	- Add some bit definitions of AMD's CPUID Fn8000_001f Encrypted Memory
+	  features.
+	- Add AMD INVLPGB/TLBSYNC hypervisor enable in VMCB and TLBSYNC
+	  intercept bit.
+	- Add AMD MSR_DE_CFG's bit 1 as DE_CFG_LFENCE_SERIALIZE.
+	- Add some definitions for Intel:
+	  - Add CPUID leaf 6 %eax bit 19 for HW_FEEDBACK* and
+	    IA32_PACKAGE_TERM* MSRs.
+	  - Add CPUID leaf 7 %ecx bit 31 for Protection Keys.
+	  - Add definition of Load only TLB and Store only TLB.
+	  - Add IF_PSCHANGE_MC_NO bit of IA32_ARCH_CAPABILITIES
+	  - Fix HWP_IGNIDL.
+	- Add CPUID 7 %edx bit 9 "SRBDS_CTRL"
+	- Modify comment. Style and fix typo.
+	[msaitoh, ticket #1588]
+
+sys/arch/x86/x86/coretemp.c			1.37
+
+	Add special handling for model 0x0f stepping >=2 or mode 0x0e to
+	get Tjmax.
+	[msaitoh, ticket #1589]
+
+sys/dev/pci/if_ti.c				1.103, 1.106, 1.108,
+						1.116-1.120 via patch
+sys/dev/pci/if_tireg.h				1.26
+
+	- Use pci_intr_establish_xname()
+	- Don't clear CFI and priority bit to pass them to the upper layer.
+	- Add support for Farallon PN9000SX from FreeBSD.
+	- u_int_{8,16,32}_t -> uint_{8,16,32}_t
+	- Fix typo in comment.
+	- Style fix.
+	[msaitoh, ticket #1590]
+
+sys/dev/pci/piixpm.c				1.57-1.59, 1.61-1.63 via patch
+sys/dev/pci/piixpmreg.h				1.9-1.12
+
+	- Fix number of port for Hudson rev. 0x1f and newer.
+	- Read SB800_SMB_HOSTC correctly. This register is not in the PCI
+	  config space but in the I/O space.
+	- The bit 0 of SB800_SMB_HOSTC is 0 on SMI or 1 on IRQ, so invert the
+	  check.
+	- Don't force using SMBUS0SEL register.
+	- Acquire/release host semaphore to share SMBus between the host and
+	  the embedded controller (IMC). Without this change, "shutdown -r"
+	  does power off and not boot on some machines.
+	- Save/restore port number before selecting port.
+	- Modify comment.
+	- Whitespace fix.
+	[msaitoh, ticket #1591]
+
+sys/dev/sdmmc/sdhc.c				1.107
+sys/dev/sdmmc/sdhcreg.h				1.21
+
+	Identify SDHC 4.1 and 4.2.
+	[msaitoh, ticket #1592]
+
+sys/arch/x86/conf/files.x86			1.108
+sys/arch/x86/include/apicvar.h			1.7 via patch
+sys/arch/x86/include/cpu.h			1.121
+sys/arch/x86/x86/cpu.c				1.185 via patch
+sys/arch/x86/x86/hyperv.c			1.7
+sys/arch/x86/x86/tsc.c				1.41
+sys/arch/xen/conf/files.xen			1.181
+
+	Get TSC frequency from CPUID 0x15 and/or x16 if it's available.
+	This change fixes a problem that newer Intel processors' timer
+	counts very slowly.
+	[msaitoh, ticket #1593]
+
+sys/dev/pci/if_wm.c				1.655-1.658, 1.660, 1.662,
+						1.664-1.668, 1.671-1.674,
+						1.678,1.680-1.685 via patch
+sys/dev/pci/if_wmreg.c				1.118-1.119 via patch
+sys/dev/pci/if_wmvar.c				1.45 via patch
+sys/dev/mii/igphy.c				1.35-1.36 via patch
+sys/dev/mii/igphyreg.h				1.12-1.13
+sys/dev/mii/makphy.c				1.66 via patch
+sys/dev/mii/makphyreg.h				1.11
+
+	- Add SFP support. Module insertion/removal is not supported yet.
+	  Currently, SFP detection is only done in the driver's attach phase.
+	- Detect the Media Auto Sense feature. Not supported yet.
+	- Fix SFF_SFP_ETH_FLAGS_100FX. It's not 0x10 but 0x20.
+	- Add extra delay in wm_serdes_power_up_link_82575().
+	- Add Intel I219 LM10-LM15 and V10-V14.
+	- wm(4) can use workqueue as deferred Rx/Tx handler).
+	  Set hw.wm*.txrx_workqueue=1 to use workqueue instead of softint.
+	  The default value of hw.wm*.txrx_workqueue is 0 which use softint
+	  as before.
+	- Unset RSS UDP flags like ixg(4) and other OSes. To handle IP
+	  fragmented UDP, first packet and second packet should be processed
+	  in the same Rx queue.
+	- It's useless to not to set PCI_PMCSR_PME_STS bit when writing because
+	  the bit is W1C. Instead, always write PCI_PMCSR_PME_STS bit to clear
+	  in case it's already set.
+	- Actually writing always the checksum offload context descriptor
+	  makes the HW do extra processing, avoid doing that if possible.
+	- Fix a bug that the WMREG_EEARBC_I210 register is incorrectly set if
+	  the system uses iNVM.
+	- "wmX: 0" on 82542 is difficult to understand, so don't print it.
+	- Explicitly cast from uint16_t to uint32_t before shifting 16bit left
+	  when printing Image Unique ID to avoid undefined behavior.
+	- Set if_baudrate for non-MII device.
+	- Rename some macros and function.
+	- KNF. Add comment.
+	[msaitoh, ticket #1594]
+
+sys/arch/x86/include/specialreg.h		1.129 via patch
+sys/arch/x86/x86/errata.c			1.24-1.26
+
+	Add six errata for AMD Family 17h (Ryzen etc).
+	[msaitoh, ticket #1595]
+
 
