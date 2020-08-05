@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.65 2020/07/19 06:56:09 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.66 2020/08/05 10:31:37 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.65 2020/07/19 06:56:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.66 2020/08/05 10:31:37 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,7 @@ svm_stgi(void)
 #define VMCB_EXITCODE_AVIC_INCOMP_IPI	0x0401
 #define VMCB_EXITCODE_AVIC_NOACCEL	0x0402
 #define VMCB_EXITCODE_VMGEXIT		0x0403
-#define VMCB_EXITCODE_INVALID		-1
+#define VMCB_EXITCODE_INVALID		-1ULL
 
 /* -------------------------------------------------------------------------- */
 
