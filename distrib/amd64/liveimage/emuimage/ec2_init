@@ -1,0 +1,15 @@
+# $NetBSD: ec2_init,v 1.1 2020/08/05 01:35:18 jmcneill Exp $
+
+is_ec2() {
+	dmi_vendor="$(/sbin/sysctl -qn machdep.dmi.system-vendor | tr '[A-Z]' '[a-z]')"
+	case "$dmi_vendor" in
+	amazon*)
+		printf YES
+		;;
+	*)
+		printf NO
+		;;
+	esac
+}
+
+ec2_init=$(is_ec2)
