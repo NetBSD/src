@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.60.2.1 2020/01/28 11:04:14 martin Exp $	*/
+/*	$NetBSD: makphy.c,v 1.60.2.2 2020/08/05 15:14:18 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.60.2.1 2020/01/28 11:04:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.60.2.2 2020/08/05 15:14:18 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -428,7 +428,7 @@ makphy_status(struct mii_softc *sc)
 	/* XXX FIXME: Use different page for Fiber on newer chips */
 	PHY_READ(sc, MAKPHY_PSSR, &pssr);
 
-	if (pssr & PSSR_LINK)
+	if (pssr & MAKPHY_PSSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
 	if (bmcr & BMCR_LOOP)
@@ -445,13 +445,13 @@ makphy_status(struct mii_softc *sc)
 		 * Check Speed and Duplex Resolved bit.
 		 * Note that this bit is always 1 when autonego is not enabled.
 		 */
-		if (!(pssr & PSSR_RESOLVED)) {
+		if (!(pssr & MAKPHY_PSSR_RESOLVED)) {
 			/* Erg, still trying, I guess... */
 			mii->mii_media_active |= IFM_NONE;
 			return;
 		}
 	} else {
-		if ((pssr & PSSR_LINK) == 0) {
+		if ((pssr & MAKPHY_PSSR_LINK) == 0) {
 			mii->mii_media_active |= IFM_NONE;
 			return;
 		}
@@ -479,10 +479,10 @@ makphy_status(struct mii_softc *sc)
 		/* Fiber/Copper auto select mode */
 
 		PHY_READ(sc, MAKPHY_PSSR, &pssr);
-		if ((pssr & PSSR_RESOLUTION_FIBER) == 0)
+		if ((pssr & MAKPHY_PSSR_RESOLUTION_FIBER) == 0)
 			goto copper;
 
-		switch (PSSR_SPEED_get(pssr)) {
+		switch (MAKPHY_PSSR_SPEED_get(pssr)) {
 		case SPEED_1000:
 			mii->mii_media_active |= IFM_1000_SX;
 			break;
@@ -496,7 +496,7 @@ makphy_status(struct mii_softc *sc)
 		}
 	} else {
 copper:
-		switch (PSSR_SPEED_get(pssr)) {
+		switch (MAKPHY_PSSR_SPEED_get(pssr)) {
 		case SPEED_1000:
 			mii->mii_media_active |= IFM_1000_T;
 			break;
@@ -513,7 +513,7 @@ copper:
 		}
 	}
 
-	if (pssr & PSSR_DUPLEX)
+	if (pssr & MAKPHY_PSSR_DUPLEX)
 		mii->mii_media_active |= mii_phy_flowstatus(sc) | IFM_FDX;
 	else
 		mii->mii_media_active |= IFM_HDX;
