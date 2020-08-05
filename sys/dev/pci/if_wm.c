@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.683 2020/08/03 10:52:08 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.684 2020/08/05 01:58:42 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.683 2020/08/03 10:52:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.684 2020/08/05 01:58:42 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -13947,7 +13947,8 @@ printver:
 	}
 
 	if (have_uid && (wm_nvm_read(sc, NVM_OFF_IMAGE_UID0, 1, &uid0) == 0))
-		aprint_verbose(", Image Unique ID %08x", (uid1 << 16) | uid0);
+		aprint_verbose(", Image Unique ID %08x",
+		    ((uint32_t)uid1 << 16) | uid0);
 }
 
 /*
