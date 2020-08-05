@@ -1,4 +1,4 @@
-/*	$NetBSD: igphyreg.h,v 1.11 2019/01/22 03:42:27 msaitoh Exp $	*/
+/*	$NetBSD: igphyreg.h,v 1.11.4.1 2020/08/05 15:14:18 martin Exp $	*/
 
 /*******************************************************************************
 
@@ -43,7 +43,7 @@
  */
 
 /* IGP01E1000 Specific Port Config Register - R/W */
-#define MII_IGPHY_PORT_CONFIG		0x10 /* PHY specific config register */
+#define IGPHY_PORT_CONFIG		0x10 /* PHY specific config register */
 #define PSCFR_AUTO_MDIX_PAR_DETECT	0x0010
 #define PSCFR_PRE_EN			0x0020
 #define PSCFR_SMART_SPEED		0x0080
@@ -52,22 +52,22 @@
 #define PSCFR_DISABLE_TRANSMIT		0x2000
 
 /* IGP01E1000 Specific Port Status Register - R/O */
-#define MII_IGPHY_PORT_STATUS		0x11
-#define PSSR_AUTONEG_FAILED		0x0001 /* RO LH SC */
-#define PSSR_POLARITY_REVERSED		0x0002
-#define PSSR_CABLE_LENGTH		0x007C
-#define PSSR_FULL_DUPLEX		0x0200
-#define PSSR_LINK_UP			0x0400
-#define PSSR_MDIX			0x0800
-#define PSSR_SPEED_MASK			0xC000 /* speed bits mask */
-#define PSSR_SPEED_10MBPS		0x4000
-#define PSSR_SPEED_100MBPS		0x8000
-#define PSSR_SPEED_1000MBPS		0xC000
-#define PSSR_CABLE_LENGTH_SHIFT 	0x0002 /* shift right 2 */
-#define PSSR_MDIX_SHIFT			0x000B /* shift right 11 */
+#define IGPHY_PORT_STATUS		0x11
+#define IGPHY_PSSR_AUTONEG_FAILED	0x0001 /* RO LH SC */
+#define IGPHY_PSSR_POLARITY_REVERSED	0x0002
+#define IGPHY_PSSR_CABLE_LENGTH		0x007C
+#define IGPHY_PSSR_FULL_DUPLEX		0x0200
+#define IGPHY_PSSR_LINK_UP		0x0400
+#define IGPHY_PSSR_MDIX			0x0800
+#define IGPHY_PSSR_SPEED_MASK		0xC000 /* speed bits mask */
+#define IGPHY_PSSR_SPEED_10MBPS		0x4000
+#define IGPHY_PSSR_SPEED_100MBPS	0x8000
+#define IGPHY_PSSR_SPEED_1000MBPS	0xC000
+#define IGPHY_PSSR_CABLE_LENGTH_SHIFT 	0x0002 /* shift right 2 */
+#define IGPHY_PSSR_MDIX_SHIFT		0x000B /* shift right 11 */
 
 /* IGP01E1000 Specific Port Control Register - R/W */
-#define MII_IGPHY_PORT_CTRL		0x12
+#define IGPHY_PORT_CTRL			0x12
 #define PSCR_TP_LOOPBACK		0x0010
 #define PSCR_CORRECT_NC_SCMBLR		0x0200
 #define PSCR_TEN_CRS_SELECT		0x0400
@@ -76,7 +76,7 @@
 #define PSCR_FORCE_MDI_MDIX 		0x2000 /* 0-MDI, 1-MDIX */
 
 /* IGP01E1000 Specific Port Link Health Register */
-#define MII_IGPHY_LINK_HEALTH		0x13
+#define IGPHY_LINK_HEALTH		0x13
 #define PLHR_VALID_CHANNEL_A		0x0001
 #define PLHR_VALID_CHANNEL_B		0x0002
 #define PLHR_VALID_CHANNEL_C		0x0004
@@ -96,61 +96,61 @@
 #define GMII_SPD			0x20 /* Enable SPD */
 
 /* IGP01E1000 Channel Quality Register */
-#define MII_IGPHY_CHANNEL_QUALITY	0x15
+#define IGPHY_CHANNEL_QUALITY		0x15
 #define MSE_CHANNEL_A			0x000F
 #define MSE_CHANNEL_B			0x00F0
 #define MSE_CHANNEL_C			0x0F00
 #define MSE_CHANNEL_D			0xF000
 
 /* IGP01E1000 Power Management */
-#define MII_IGPHY_POWER_MGMT		0x19
+#define IGPHY_POWER_MGMT		0x19
 #define PMR_SPD_EN			0x0001
 #define PMR_D0_LPLU			0x0002
 #define PMR_D3_LPLU			0x0004
 #define PMR_DIS_1000			0x0040
 
-#define MII_IGPHY_PAGE_SELECT		0x1F
+#define IGPHY_PAGE_SELECT		0x1F
 #define IGPHY_MAXREGADDR		0x1F
 #define IGPHY_PAGEMASK			(~IGPHY_MAXREGADDR)
 
 /* IGP01E1000 AGC Registers - stores the cable length values*/
-#define MII_IGPHY_AGC_A			0x1172
-#define MII_IGPHY_AGC_PARAM_A		0x1171
-#define MII_IGPHY_AGC_B			0x1272
-#define MII_IGPHY_AGC_PARAM_B		0x1271
-#define MII_IGPHY_AGC_C			0x1472
-#define MII_IGPHY_AGC_PARAM_C		0x1471
-#define MII_IGPHY_AGC_D			0x1872
-#define MII_IGPHY_AGC_PARAM_D		0x1871
+#define IGPHY_AGC_A			0x1172
+#define IGPHY_AGC_PARAM_A		0x1171
+#define IGPHY_AGC_B			0x1272
+#define IGPHY_AGC_PARAM_B		0x1271
+#define IGPHY_AGC_C			0x1472
+#define IGPHY_AGC_PARAM_C		0x1471
+#define IGPHY_AGC_D			0x1872
+#define IGPHY_AGC_PARAM_D		0x1871
 #define AGC_LENGTH_SHIFT		7  /* Coarse - 13:11, Fine - 10:7 */
 #define AGC_LENGTH_TABLE_SIZE		128
 #define AGC_RANGE			10
 
 /* IGP01E1000 DSP Reset Register */
-#define MII_IGPHY_DSP_RESET		0x1F33
-#define MII_IGPHY_DSP_SET		0x1F71
-#define MII_IGPHY_DSP_FFE		0x1F35
-#define MII_IGPHY_CHANNEL_NUM		4
-#define MII_IGPHY_EDAC_MU_INDEX		0xC000
-#define MII_IGPHY_EDAC_SIGN_EXT_9_BITS	0x8000
-#define MII_IGPHY_ANALOG_TX_STATE	0x2890
-#define MII_IGPHY_ANALOG_CLASS_A	0x2000
-#define MII_IGPHY_FORCE_ANALOG_ENABLE	0x0004
-#define MII_IGPHY_DSP_FFE_CM_CP		0x0069
-#define MII_IGPHY_DSP_FFE_DEFAULT	0x002A
+#define IGPHY_DSP_RESET			0x1F33
+#define IGPHY_DSP_SET			0x1F71
+#define IGPHY_DSP_FFE			0x1F35
+#define IGPHY_CHANNEL_NUM		4
+#define IGPHY_EDAC_MU_INDEX		0xC000
+#define IGPHY_EDAC_SIGN_EXT_9_BITS	0x8000
+#define IGPHY_ANALOG_TX_STATE		0x2890
+#define IGPHY_ANALOG_CLASS_A		0x2000
+#define IGPHY_FORCE_ANALOG_ENABLE	0x0004
+#define IGPHY_DSP_FFE_CM_CP		0x0069
+#define IGPHY_DSP_FFE_DEFAULT		0x002A
 
 /* IGP01E1000 PCS Initialization register - stores the polarity status */
-#define MII_IGPHY_PCS_INIT_REG		0x00B4
-#define MII_IGPHY_PCS_CTRL_REG		0x00B5
+#define IGPHY_PCS_INIT_REG		0x00B4
+#define IGPHY_PCS_CTRL_REG		0x00B5
 
-#define MII_IGPHY_ANALOG_REGS_PAGE	0x20C0
+#define IGPHY_ANALOG_REGS_PAGE		0x20C0
 #define PHY_POLARITY_MASK		0x0078
 
 /* IGP01E1000 Analog Register */
-#define MII_IGPHY_ANALOG_SPARE_FUSE_STATUS	0x20D1
-#define MII_IGPHY_ANALOG_FUSE_STATUS		0x20D0
-#define MII_IGPHY_ANALOG_FUSE_CONTROL		0x20DC
-#define MII_IGPHY_ANALOG_FUSE_BYPASS		0x20DE
+#define IGPHY_ANALOG_SPARE_FUSE_STATUS	0x20D1
+#define IGPHY_ANALOG_FUSE_STATUS	0x20D0
+#define IGPHY_ANALOG_FUSE_CONTROL	0x20DC
+#define IGPHY_ANALOG_FUSE_BYPASS	0x20DE
 #define ANALOG_FUSE_POLY_MASK		0xF000
 #define ANALOG_FUSE_FINE_MASK		0x0F80
 #define ANALOG_FUSE_COARSE_MASK		0x0070
@@ -180,7 +180,7 @@ IGPHY_READ(struct mii_softc *sc, int reg, uint16_t *val)
 {
 	int rv;
 
-	if ((rv = PHY_WRITE(sc, MII_IGPHY_PAGE_SELECT, reg & ~0x1f)) != 0)
+	if ((rv = PHY_WRITE(sc, IGPHY_PAGE_SELECT, reg & ~0x1f)) != 0)
 		return rv;
 	return PHY_READ(sc, reg & 0x1f, val);
 }
@@ -189,7 +189,7 @@ IGPHY_WRITE(struct mii_softc *sc, int reg, uint16_t val)
 {
 	int rv;
 
-	if ((rv = PHY_WRITE(sc, MII_IGPHY_PAGE_SELECT, reg & ~0x1f)) != 0)
+	if ((rv = PHY_WRITE(sc, IGPHY_PAGE_SELECT, reg & ~0x1f)) != 0)
 		return rv;
 
 	return PHY_WRITE(sc, reg & 0x1f, val);
