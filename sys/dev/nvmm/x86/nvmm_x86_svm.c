@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.66 2020/08/05 10:31:37 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.67 2020/08/05 15:22:25 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.66 2020/08/05 10:31:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.67 2020/08/05 15:22:25 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,11 +232,16 @@ svm_stgi(void)
 #define VMCB_EXITCODE_CR13_WRITE_TRAP	0x009D
 #define VMCB_EXITCODE_CR14_WRITE_TRAP	0x009E
 #define VMCB_EXITCODE_CR15_WRITE_TRAP	0x009F
+#define VMCB_EXITCODE_INVLPGB		0x00A0
+#define VMCB_EXITCODE_INVLPGB_ILLEGAL	0x00A1
+#define VMCB_EXITCODE_INVPCID		0x00A2
 #define VMCB_EXITCODE_MCOMMIT		0x00A3
+#define VMCB_EXITCODE_TLBSYNC		0x00A4
 #define VMCB_EXITCODE_NPF		0x0400
 #define VMCB_EXITCODE_AVIC_INCOMP_IPI	0x0401
 #define VMCB_EXITCODE_AVIC_NOACCEL	0x0402
 #define VMCB_EXITCODE_VMGEXIT		0x0403
+#define VMCB_EXITCODE_BUSY		-2ULL
 #define VMCB_EXITCODE_INVALID		-1ULL
 
 /* -------------------------------------------------------------------------- */
@@ -307,7 +312,11 @@ struct vmcb_ctrl {
 #define VMCB_CTRL_INTERCEPT_WCR_SPEC(x)	__BIT(16 + x)
 
 	uint32_t intercept_misc3;
+#define VMCB_CTRL_INTERCEPT_INVLPGB_ALL	__BIT(0)
+#define VMCB_CTRL_INTERCEPT_INVLPGB_ILL	__BIT(1)
+#define VMCB_CTRL_INTERCEPT_PCID	__BIT(2)
 #define VMCB_CTRL_INTERCEPT_MCOMMIT	__BIT(3)
+#define VMCB_CTRL_INTERCEPT_TLBSYNC	__BIT(4)
 
 	uint8_t  rsvd1[36];
 	uint16_t pause_filt_thresh;
@@ -335,6 +344,7 @@ struct vmcb_ctrl {
 
 	uint64_t intr;
 #define VMCB_CTRL_INTR_SHADOW		__BIT(0)
+#define VMCB_CTRL_INTR_MASK		__BIT(1)
 
 	uint64_t exitcode;
 	uint64_t exitinfo1;
@@ -399,7 +409,7 @@ struct vmcb_ctrl {
 #define VMCB_CTRL_AVIC_PHYS_MAX_INDEX	__BITS(7,0)
 
 	uint64_t rsvd4;
-	uint64_t vmcb_ptr;
+	uint64_t vmsa_ptr;
 
 	uint8_t	pad[752];
 } __packed;
@@ -1449,6 +1459,11 @@ svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		case VMCB_EXITCODE_CLGI:
 		case VMCB_EXITCODE_SKINIT:
 		case VMCB_EXITCODE_RDTSCP:
+		case VMCB_EXITCODE_RDPRU:
+		case VMCB_EXITCODE_INVLPGB:
+		case VMCB_EXITCODE_INVPCID:
+		case VMCB_EXITCODE_MCOMMIT:
+		case VMCB_EXITCODE_TLBSYNC:
 			svm_inject_ud(vcpu);
 			exit->reason = NVMM_VCPU_EXIT_NONE;
 			break;
@@ -2042,7 +2057,17 @@ svm_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	    VMCB_CTRL_INTERCEPT_RDTSCP |
 	    VMCB_CTRL_INTERCEPT_MONITOR |
 	    VMCB_CTRL_INTERCEPT_MWAIT |
-	    VMCB_CTRL_INTERCEPT_XSETBV;
+	    VMCB_CTRL_INTERCEPT_XSETBV |
+	    VMCB_CTRL_INTERCEPT_RDPRU;
+
+	/*
+	 * Intercept everything.
+	 */
+	vmcb->ctrl.intercept_misc3 =
+	    VMCB_CTRL_INTERCEPT_INVLPGB_ALL |
+	    VMCB_CTRL_INTERCEPT_PCID |
+	    VMCB_CTRL_INTERCEPT_MCOMMIT |
+	    VMCB_CTRL_INTERCEPT_TLBSYNC;
 
 	/* Intercept all I/O accesses. */
 	memset(cpudata->iobm, 0xFF, IOBM_SIZE);
