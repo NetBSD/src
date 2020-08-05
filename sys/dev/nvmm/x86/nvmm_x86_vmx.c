@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.65 2020/07/19 06:56:09 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.66 2020/08/05 10:20:50 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.65 2020/07/19 06:56:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.66 2020/08/05 10:20:50 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -883,15 +883,11 @@ vmx_vmcs_enter(struct nvmm_cpu *vcpu)
 {
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
 	struct cpu_info *vmcs_ci;
-	paddr_t oldpa __diagused;
 
 	cpudata->vmcs_refcnt++;
 	if (cpudata->vmcs_refcnt > 1) {
-#ifdef DIAGNOSTIC
 		KASSERT(kpreempt_disabled());
-		oldpa = vmx_vmptrst();
-		KASSERT(oldpa == cpudata->vmcs_pa);
-#endif
+		KASSERT(vmx_vmptrst() == cpudata->vmcs_pa);
 		return;
 	}
 
@@ -921,9 +917,7 @@ vmx_vmcs_leave(struct nvmm_cpu *vcpu)
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
 
 	KASSERT(kpreempt_disabled());
-#ifdef DIAGNOSTIC
 	KASSERT(vmx_vmptrst() == cpudata->vmcs_pa);
-#endif
 	KASSERT(cpudata->vmcs_refcnt > 0);
 	cpudata->vmcs_refcnt--;
 
@@ -941,9 +935,7 @@ vmx_vmcs_destroy(struct nvmm_cpu *vcpu)
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
 
 	KASSERT(kpreempt_disabled());
-#ifdef DIAGNOSTIC
 	KASSERT(vmx_vmptrst() == cpudata->vmcs_pa);
-#endif
 	KASSERT(cpudata->vmcs_refcnt == 1);
 	cpudata->vmcs_refcnt--;
 
