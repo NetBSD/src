@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_intr.c,v 1.20 2020/07/20 14:05:51 jmcneill Exp $	*/
+/*	$NetBSD: octeon_intr.c,v 1.21 2020/08/05 04:19:11 simonb Exp $	*/
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.20 2020/07/20 14:05:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.21 2020/08/05 04:19:11 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -61,6 +61,14 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.20 2020/07/20 14:05:51 jmcneill Ex
 
 #include <mips/cavium/dev/octeon_ciureg.h>
 #include <mips/cavium/octeonvar.h>
+
+/*
+ * XXX:
+ * Force all interrupts (except clock intrs and IPIs) to be routed
+ * through cpu0 until MP on MIPS is more stable.
+ */
+#define	OCTEON_CPU0_INTERRUPTS
+
 
 /*
  * This is a mask of bits to clear in the SR when we go to a
@@ -305,7 +313,9 @@ octeon_intr_establish(int irq, int ipl, int (*func)(void *), void *arg)
 {
 	struct octeon_intrhand *ih;
 	struct cpu_softc *cpu;
+#ifndef OCTEON_CPU0_INTERRUPTS
 	int cpunum;
+#endif
 
 	if (irq >= NIRQS)
 		panic("octeon_intr_establish: bogus IRQ %d", irq);
@@ -346,6 +356,11 @@ octeon_intr_establish(int irq, int ipl, int (*func)(void *), void *arg)
 		break;
 
 	case IPL_SCHED:
+#ifdef OCTEON_CPU0_INTERRUPTS
+		cpu = &octeon_cpu_softc[0];
+		cpu->cpu_ip3_enable[bank] |= irq_mask;
+		mips3_sd(cpu->cpu_ip3_en[bank], cpu->cpu_ip3_enable[bank]);
+#else	/* OCTEON_CPU0_INTERRUPTS */
 		for (cpunum = 0; cpunum < OCTEON_NCPU; cpunum++) {
 			cpu = &octeon_cpu_softc[cpunum];
 			if (cpu->cpu_ci == NULL)
@@ -353,10 +368,16 @@ octeon_intr_establish(int irq, int ipl, int (*func)(void *), void *arg)
 			cpu->cpu_ip3_enable[bank] |= irq_mask;
 			mips3_sd(cpu->cpu_ip3_en[bank], cpu->cpu_ip3_enable[bank]);
 		}
+#endif	/* OCTEON_CPU0_INTERRUPTS */
 		break;
 
 	case IPL_DDB:
 	case IPL_HIGH:
+#ifdef OCTEON_CPU0_INTERRUPTS
+		cpu = &octeon_cpu_softc[0];
+		cpu->cpu_ip4_enable[bank] |= irq_mask;
+		mips3_sd(cpu->cpu_ip4_en[bank], cpu->cpu_ip4_enable[bank]);
+#else	/* OCTEON_CPU0_INTERRUPTS */
 		for (cpunum = 0; cpunum < OCTEON_NCPU; cpunum++) {
 			cpu = &octeon_cpu_softc[cpunum];
 			if (cpu->cpu_ci == NULL)
@@ -364,6 +385,7 @@ octeon_intr_establish(int irq, int ipl, int (*func)(void *), void *arg)
 			cpu->cpu_ip4_enable[bank] |= irq_mask;
 			mips3_sd(cpu->cpu_ip4_en[bank], cpu->cpu_ip4_enable[bank]);
 		}
+#endif	/* OCTEON_CPU0_INTERRUPTS */
 		break;
 	}
 
