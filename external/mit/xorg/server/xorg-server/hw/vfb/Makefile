@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2018/12/31 11:14:04 mrg Exp $
+#	$NetBSD: Makefile,v 1.19 2020/08/05 15:48:09 tsutsui Exp $
 
 .include <bsd.own.mk>
 
@@ -12,10 +12,6 @@ PROG=		Xvfb
 .PATH:		${X11SRCDIR.xorg-server}/Xi
 .PATH:		${X11SRCDIR.xorg-server}/mi
 SRCS=		InitInput.c InitOutput.c miinitext.c stubs.c
-
-# XXX should not be needed now
-#.PATH:		${X11SRCDIR.xorg-server}/fb
-#SRCS+=		fbcmap_mi.c
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xorg-server}/fb \
