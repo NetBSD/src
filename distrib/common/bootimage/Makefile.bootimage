@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.25 2020/05/28 15:13:21 jmcneill Exp $
+#	$NetBSD: Makefile.bootimage,v 1.26 2020/08/05 01:35:18 jmcneill Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -135,6 +135,8 @@
 #	FATFILES
 #		list of additional files to be copied into FAT partition
 #		(default: empty)
+#	IMAGEHOSTNAME
+#		if set, sets the default hostname in rc.conf (default: empty)
 #
 
 .include <bsd.own.mk> 		#
@@ -345,6 +347,16 @@ ${TARGETFS}: prepare_md_post ${WORKFSTAB}
 	@echo Setting rc_configured=YES in /etc/rc.conf ...
 	${TOOL_SED} "s/rc_configured=NO/rc_configured=YES/"		\
 	    < ${WORKDIR}/etc/rc.conf > ${WORKRCCONF}
+.if defined(IMAGEHOSTNAME)
+	@echo Setting hostname=${IMAGEHOSTNAME} in /etc/rc.conf ...
+	echo "hostname=${IMAGEHOSTNAME}" >> ${WORKRCCONF}
+.endif
+.if ${SWAPSECTORS} == 0
+	@echo Setting no_swap=YES in /etc/rc.conf ...
+	echo "no_swap=YES" >> ${WORKRCCONF}
+	@echo Setting savecore=NO in /etc/rc.conf ...
+	echo "savecore=NO" >> ${WORKRCCONF}
+.endif
 	${INSTALL} ${COPY} -m 0644 ${WORKRCCONF} ${WORKDIR}/etc/rc.conf
 .if defined(IMGDIR_EXTRA)
 	@echo Copying extra dirs...
