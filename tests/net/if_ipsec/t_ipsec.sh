@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec.sh,v 1.10 2019/08/19 03:22:05 ozaki-r Exp $
+#	$NetBSD: t_ipsec.sh,v 1.11 2020/08/05 01:10:50 knakahara Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -300,8 +300,8 @@ setup_if_ipsec_sa()
 	fi
 
 	cat > $tmpfile <<-EOF
-    	add $dst $src $proto $inid -u $inunique $algo_args;
-    	add $src $dst $proto $outid -u $outunique $algo_args;
+	add $dst $src $proto $inid -u $inunique -m transport $algo_args;
+	add $src $dst $proto $outid -u $outunique -m transport $algo_args;
 	EOF
 	$DEBUG && cat $tmpfile
 	export RUMP_SERVER=$sock
