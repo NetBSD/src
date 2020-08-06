@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.414 2020/08/06 17:32:40 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.415 2020/08/06 17:48:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.414 2020/08/06 17:32:40 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.415 2020/08/06 17:48:41 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.414 2020/08/06 17:32:40 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.415 2020/08/06 17:48:41 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1999,18 +1999,11 @@ ApplyModifier_Defined(const char **pp, ApplyModifiersState *st)
     Buffer buf;			/* Buffer for patterns */
     const char *p;
 
-    VarEvalFlags neflags;
+    VarEvalFlags eflags = st->eflags & ~VARE_WANTRES;
     if (st->eflags & VARE_WANTRES) {
-	Boolean wantres;
-	if (**pp == 'U')
-	    wantres = (st->v->flags & VAR_JUNK) != 0;
-	else
-	    wantres = (st->v->flags & VAR_JUNK) == 0;
-	neflags = st->eflags & ~VARE_WANTRES;
-	if (wantres)
-	    neflags |= VARE_WANTRES;
-    } else
-	neflags = st->eflags;
+	if ((**pp == 'D') == !(st->v->flags & VAR_JUNK))
+	    eflags |= VARE_WANTRES;
+    }
 
     /*
      * Pass through mod looking for 1) escaped delimiters,
@@ -2035,7 +2028,7 @@ ApplyModifier_Defined(const char **pp, ApplyModifiersState *st)
 	    int	    len;
 	    void    *freeIt;
 
-	    cp2 = Var_Parse(p, st->ctxt, neflags, &len, &freeIt);
+	    cp2 = Var_Parse(p, st->ctxt, eflags, &len, &freeIt);
 	    Buf_AddStr(&buf, cp2);
 	    free(freeIt);
 	    p += len;
@@ -2048,7 +2041,7 @@ ApplyModifier_Defined(const char **pp, ApplyModifiersState *st)
 
     if (st->v->flags & VAR_JUNK)
 	st->v->flags |= VAR_KEEP;
-    if (neflags & VARE_WANTRES) {
+    if (eflags & VARE_WANTRES) {
 	st->newVal = Buf_Destroy(&buf, FALSE);
     } else {
 	st->newVal = st->val;
