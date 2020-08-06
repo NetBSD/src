@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.16 2020/08/01 14:47:49 rillig Exp $	*/
+/*	$NetBSD: hash.h,v 1.17 2020/08/06 17:22:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -132,12 +132,6 @@ typedef struct Hash_Search {
  */
 
 #define Hash_SetValue(h, val) ((h)->clientPtr = (val))
-
-/*
- * Hash_Size(n) returns the number of words in an object of n bytes
- */
-
-#define	Hash_Size(n)	(((n) + sizeof (int) - 1) / sizeof (int))
 
 void Hash_InitTable(Hash_Table *, int);
 void Hash_DeleteTable(Hash_Table *);
