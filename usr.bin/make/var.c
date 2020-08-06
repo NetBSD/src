@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.415 2020/08/06 17:48:41 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.416 2020/08/06 17:51:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.415 2020/08/06 17:48:41 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.416 2020/08/06 17:51:21 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.415 2020/08/06 17:48:41 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.416 2020/08/06 17:51:21 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2136,7 +2136,7 @@ ApplyModifier_Exclam(const char **pp, ApplyModifiersState *st)
 {
     char delim;
     char *cmd;
-    const char *emsg;
+    const char *errfmt;
 
     (*pp)++;
     delim = '!';
@@ -2147,15 +2147,15 @@ ApplyModifier_Exclam(const char **pp, ApplyModifiersState *st)
 	return AMR_CLEANUP;
     }
 
-    emsg = NULL;
+    errfmt = NULL;
     if (st->eflags & VARE_WANTRES)
-	st->newVal = Cmd_Exec(cmd, &emsg);
+	st->newVal = Cmd_Exec(cmd, &errfmt);
     else
 	st->newVal = varNoError;
     free(cmd);
 
-    if (emsg != NULL)
-	Error(emsg, st->val);	/* XXX: why still return AMR_OK? */
+    if (errfmt != NULL)
+	Error(errfmt, st->val);	/* XXX: why still return AMR_OK? */
 
     if (st->v->flags & VAR_JUNK)
 	st->v->flags |= VAR_KEEP;
@@ -2845,10 +2845,10 @@ ApplyModifier_Assign(const char **pp, ApplyModifiersState *st)
 	    Var_Append(st->v->name, val, v_ctxt);
 	    break;
 	case '!': {
-	    const char *emsg;
-	    char *cmd_output = Cmd_Exec(val, &emsg);
-	    if (emsg)
-		Error(emsg, st->val);
+	    const char *errfmt;
+	    char *cmd_output = Cmd_Exec(val, &errfmt);
+	    if (errfmt)
+		Error(errfmt, st->val);
 	    else
 		Var_Set(st->v->name, cmd_output, v_ctxt);
 	    free(cmd_output);
@@ -3216,10 +3216,10 @@ ApplyModifiers(
 	case 's':
 	    if (p[1] == 'h' && (p[2] == st.endc || p[2] == ':')) {
 		if (st.eflags & VARE_WANTRES) {
-		    const char *emsg;
-		    st.newVal = Cmd_Exec(st.val, &emsg);
-		    if (emsg)
-			Error(emsg, st.val);
+		    const char *errfmt;
+		    st.newVal = Cmd_Exec(st.val, &errfmt);
+		    if (errfmt)
+			Error(errfmt, st.val);
 		} else
 		    st.newVal = varNoError;
 		p += 2;
