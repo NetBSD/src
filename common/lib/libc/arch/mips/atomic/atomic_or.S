@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_or.S,v 1.5 2020/08/01 09:26:49 skrll Exp $	*/
+/*	$NetBSD: atomic_or.S,v 1.6 2020/08/06 10:00:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 #endif /* _KERNEL_OPT */
 
 LEAF(_atomic_or_32)
+	LLSCSYNC
 1:	INT_LL		t0, 0(a0)
 	 nop
 	or		t0, a1
@@ -55,6 +56,7 @@ END(_atomic_or_32)
 ATOMIC_OP_ALIAS(atomic_or_32, _atomic_or_32)
 
 LEAF(_atomic_or_32_nv)
+	LLSCSYNC
 1:	INT_LL		v0, 0(a0)
 	 nop
 	or		v0, a1
@@ -69,6 +71,7 @@ ATOMIC_OP_ALIAS(atomic_or_32_nv, _atomic_or_32_nv)
 
 #if !defined(__mips_o32)
 LEAF(_atomic_or_64)
+	LLSCSYNC
 1:	REG_LL		t0, 0(a0)
 	 nop
 	or		t0, a1
@@ -81,6 +84,7 @@ END(_atomic_or_64)
 ATOMIC_OP_ALIAS(atomic_or_64, _atomic_or_64)
 
 LEAF(_atomic_or_64_nv)
+	LLSCSYNC
 1:	REG_LL		v0, 0(a0)
 	 nop
 	or		v0, a1
