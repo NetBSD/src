@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.28 2020/08/03 06:29:59 ryo Exp $
+# $NetBSD: genassym.cf,v 1.29 2020/08/06 06:49:55 ryo Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -162,21 +162,20 @@ define	L_MD_DB_USER		offsetof(struct lwp, l_md.md_db_user)
 define	L_MD_GA_USER		offsetof(struct lwp, l_md.md_ga_user)
 define	LW_SYSTEM		LW_SYSTEM
 
-define	FB_REG_X19		offsetof(struct faultbuf, fb_reg[FB_X19])
-define	FB_REG_X20		offsetof(struct faultbuf, fb_reg[FB_X20])
-define	FB_REG_X21		offsetof(struct faultbuf, fb_reg[FB_X21])
-define	FB_REG_X22		offsetof(struct faultbuf, fb_reg[FB_X22])
-define	FB_REG_X23		offsetof(struct faultbuf, fb_reg[FB_X23])
-define	FB_REG_X24		offsetof(struct faultbuf, fb_reg[FB_X24])
-define	FB_REG_X25		offsetof(struct faultbuf, fb_reg[FB_X25])
-define	FB_REG_X26		offsetof(struct faultbuf, fb_reg[FB_X26])
-define	FB_REG_X27		offsetof(struct faultbuf, fb_reg[FB_X27])
-define	FB_REG_X28		offsetof(struct faultbuf, fb_reg[FB_X28])
-define	FB_REG_X29		offsetof(struct faultbuf, fb_reg[FB_X29])
-define	FB_REG_LR		offsetof(struct faultbuf, fb_reg[FB_LR])
-define	FB_REG_SP		offsetof(struct faultbuf, fb_reg[FB_SP])
-define	FB_OLD			offsetof(struct faultbuf, fb_old)
-define	FB_IDEPTH		offsetof(struct faultbuf, fb_idepth)
+define	FB_X19			FB_X19
+define	FB_X20			FB_X20
+define	FB_X21			FB_X21
+define	FB_X22			FB_X22
+define	FB_X23			FB_X23
+define	FB_X24			FB_X24
+define	FB_X25			FB_X25
+define	FB_X26			FB_X26
+define	FB_X27			FB_X27
+define	FB_X28			FB_X28
+define	FB_X29			FB_X29
+define	FB_LR			FB_LR
+define	FB_SP			FB_SP
+define	FB_MAX			FB_MAX
 define	FB_T_SIZE		roundup(sizeof(struct faultbuf), 16)
 
 define	LBL_X19			LBL_X19
