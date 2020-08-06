@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.83 2020/08/03 15:43:32 rillig Exp $
+# $NetBSD: Makefile,v 1.84 2020/08/06 05:36:33 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -70,6 +70,7 @@ TESTS+=		# phony-end	# broken by reverting POSIX changes
 TESTS+=		posix
 TESTS+=		# posix1	# broken by reverting POSIX changes
 TESTS+=		qequals
+TESTS+=		recursive
 TESTS+=		# suffixes	# broken by reverting POSIX changes
 TESTS+=		sunshcmd
 TESTS+=		sysv
@@ -90,6 +91,7 @@ ENV.counter=		-i
 ENV.envfirst=		FROM_ENV=value-from-env
 ENV.export=		-i PATH=${PATH:Q}
 ENV.lint=		-i
+ENV.recursive=		-i
 ENV.varmisc=		FROM_ENV=env
 ENV.varmisc+=		FROM_ENV_BEFORE=env
 ENV.varmisc+=		FROM_ENV_AFTER=env
@@ -101,6 +103,7 @@ FLAGS.envfirst=		-e
 FLAGS.export=		-r
 FLAGS.lint=		-dL -k
 FLAGS.order=		-j1
+FLAGS.recursive=	-dL
 FLAGS.vardebug=		-k -dv FROM_CMDLINE=
 
 # Some tests need extra post-processing.
