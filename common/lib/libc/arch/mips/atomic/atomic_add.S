@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add.S,v 1.6 2020/08/01 09:26:49 skrll Exp $	*/
+/*	$NetBSD: atomic_add.S,v 1.7 2020/08/06 10:00:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <machine/asm.h>
 #include "atomic_op_asm.h"
 
-RCSID("$NetBSD: atomic_add.S,v 1.6 2020/08/01 09:26:49 skrll Exp $")
+RCSID("$NetBSD: atomic_add.S,v 1.7 2020/08/06 10:00:21 skrll Exp $")
 
 	.text
 	.set	noreorder
@@ -49,6 +49,7 @@ LEAF(_atomic_add_32)
 #if defined(_MIPS_ARCH_OCTEONP) || defined(_MIPS_ARCH_OCTEON2)
 	saa		a1, (a0)
 #else
+	LLSCSYNC
 1:	INT_LL		t0, 0(a0)
 	 nop
 	INT_ADDU	t0, a1
@@ -62,6 +63,7 @@ END(_atomic_add_32)
 ATOMIC_OP_ALIAS(atomic_add_32, _atomic_add_32)
 
 LEAF(_atomic_add_32_nv)
+	LLSCSYNC
 1:	INT_LL		v0, 0(a0)
 	 nop
 	INT_ADDU	v0, a1
@@ -79,6 +81,7 @@ LEAF(_atomic_add_64)
 #if defined(_MIPS_ARCH_OCTEONP) || defined(_MIPS_ARCH_OCTEON2)
 	saad		a1, (a0)
 #else
+	LLSCSYNC
 1:	REG_LL		t0, 0(a0)
 	 nop
 	REG_ADDU	t0, a1
@@ -92,6 +95,7 @@ END(_atomic_add_64)
 ATOMIC_OP_ALIAS(atomic_add_64, _atomic_add_64)
 
 LEAF(_atomic_add_64_nv)
+	LLSCSYNC
 1:	REG_LL		v0, 0(a0)
 	 nop
 	REG_ADDU	v0, a1

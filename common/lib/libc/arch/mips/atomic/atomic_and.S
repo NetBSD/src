@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_and.S,v 1.5 2020/08/01 09:26:49 skrll Exp $	*/
+/*	$NetBSD: atomic_and.S,v 1.6 2020/08/06 10:00:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <machine/asm.h>
 #include "atomic_op_asm.h"
 
-RCSID("$NetBSD: atomic_and.S,v 1.5 2020/08/01 09:26:49 skrll Exp $")
+RCSID("$NetBSD: atomic_and.S,v 1.6 2020/08/06 10:00:21 skrll Exp $")
 
 	.text
 	.set	noreorder
@@ -46,6 +46,7 @@ RCSID("$NetBSD: atomic_and.S,v 1.5 2020/08/01 09:26:49 skrll Exp $")
 
 
 LEAF(_atomic_and_32)
+	LLSCSYNC
 1:	INT_LL		t0, 0(a0)
 	 nop
 	and		t0, a1
@@ -58,6 +59,7 @@ END(_atomic_and_32)
 ATOMIC_OP_ALIAS(atomic_and_32, _atomic_and_32)
 
 LEAF(_atomic_and_32_nv)
+	LLSCSYNC
 1:	INT_LL		v0, 0(a0)
 	 nop
 	and		v0, a1
@@ -72,6 +74,7 @@ ATOMIC_OP_ALIAS(atomic_and_32_nv, _atomic_and_32_nv)
 
 #if !defined(__mips_o32)
 LEAF(_atomic_and_64)
+	LLSCSYNC
 1:	REG_LL		t0, 0(a0)
 	 nop
 	and		t0, a1
@@ -84,6 +87,7 @@ END(_atomic_and_64)
 ATOMIC_OP_ALIAS(atomic_and_64, _atomic_and_64)
 
 LEAF(_atomic_and_64_nv)
+	LLSCSYNC
 1:	REG_LL		v0, 0(a0)
 	 nop
 	and		v0, a1
