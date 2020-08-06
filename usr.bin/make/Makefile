@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.80 2020/08/06 05:27:31 rillig Exp $
+#	$NetBSD: Makefile,v 1.81 2020/08/06 05:32:26 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -52,8 +52,6 @@ SUBDIR+=	unit-tests
 
 ${SRCS:M*.c:.c=.o}: buf.h config.h dir.h hash.h job.h lst.h make.h make_malloc.h
 ${SRCS:M*.c:.c=.o}: meta.h metachar.h nonints.h pathnames.h sprite.h strlist.h trace.h
-
-TARGETS+=	retest
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
