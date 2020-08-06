@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.110 2019/08/18 04:14:40 kamil Exp $	*/
+/*	$NetBSD: inet.c,v 1.111 2020/08/06 07:38:54 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.110 2019/08/18 04:14:40 kamil Exp $");
+__RCSID("$NetBSD: inet.c,v 1.111 2020/08/06 07:38:54 knakahara Exp $");
 #endif
 #endif /* not lint */
 
@@ -622,6 +622,7 @@ ip_stats(u_long off, const char *name)
 	p(IP_STAT_CANTFORWARD, "\t%" PRIu64 " packet%s not forwardable\n");
 	p(IP_STAT_REDIRECTSENT, "\t%" PRIu64 " redirect%s sent\n");
 	p(IP_STAT_NOGIF, "\t%" PRIu64 " packet%s no matching gif found\n");
+	p(IP_STAT_NOIPSEC, "\t%" PRIu64 " packet%s no matching ipsecif found\n");
 	p(IP_STAT_LOCALOUT, "\t%" PRIu64 " packet%s sent from this host\n");
 	p(IP_STAT_RAWOUT, "\t%" PRIu64 " packet%s sent with fabricated ip header\n");
 	p(IP_STAT_ODROPPED, "\t%" PRIu64 " output packet%s dropped due to no bufs, etc.\n");
