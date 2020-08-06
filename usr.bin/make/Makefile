@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.79 2020/08/03 20:26:09 rillig Exp $
+#	$NetBSD: Makefile,v 1.80 2020/08/06 05:27:31 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -6,6 +6,7 @@ SRCS=	arch.c buf.c compat.c cond.c dir.c for.c hash.c job.c lst.c main.c
 SRCS+=	make.c make_malloc.c metachar.c parse.c
 SRCS+=	str.c strlist.c suff.c targ.c trace.c var.c util.c
 
+# Whether to generate a coverage report after running the tests.
 USE_COVERAGE?=	no		# works only with gcc; clang9 fails to link
 .if ${USE_COVERAGE} == "yes"
 COPTS+=		--coverage -O0 -ggdb
@@ -13,6 +14,7 @@ LDADD+=		--coverage
 CLEANFILES+=	${SRCS:.c=.gcda} ${SRCS:.c=.gcno} ${SRCS:=.gcov}
 .endif
 
+# Whether to compile using the Undefined Behavior Sanitizer (GCC, Clang).
 USE_UBSAN?=	no
 .if ${USE_UBSAN} == "yes"
 COPTS+=		-fsanitize=undefined
@@ -50,6 +52,8 @@ SUBDIR+=	unit-tests
 
 ${SRCS:M*.c:.c=.o}: buf.h config.h dir.h hash.h job.h lst.h make.h make_malloc.h
 ${SRCS:M*.c:.c=.o}: meta.h metachar.h nonints.h pathnames.h sprite.h strlist.h trace.h
+
+TARGETS+=	retest
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
