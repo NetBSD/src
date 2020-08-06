@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.74 2020/04/23 00:24:16 joerg Exp $	*/
+/*	$NetBSD: inet6.c,v 1.75 2020/08/06 07:38:54 knakahara Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.74 2020/04/23 00:24:16 joerg Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.75 2020/08/06 07:38:54 knakahara Exp $");
 #endif
 #endif /* not lint */
 
@@ -724,6 +724,7 @@ ip6_stats(u_long off, const char *name)
 	p(IP6_STAT_EXTHDRTOOLONG,
 	    "\t%llu packet%s whose headers are not continuous\n");
 	p(IP6_STAT_NOGIF, "\t%llu tunneling packet%s that can't find gif\n");
+	p(IP6_STAT_NOIPSEC, "\t%llu tunneling packet%s that can't find ipsecif\n");
 	p(IP6_STAT_TOOMANYHDR,
 	    "\t%llu packet%s discarded due to too many headers\n");
 
