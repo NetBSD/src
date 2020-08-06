@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.84 2020/08/06 05:36:33 rillig Exp $
+# $NetBSD: Makefile,v 1.85 2020/08/06 16:23:52 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -103,7 +103,7 @@ FLAGS.envfirst=		-e
 FLAGS.export=		-r
 FLAGS.lint=		-dL -k
 FLAGS.order=		-j1
-FLAGS.recursive=	-dL
+FLAGS.recursive=	-dL -r
 FLAGS.vardebug=		-k -dv FROM_CMDLINE=
 
 # Some tests need extra post-processing.
