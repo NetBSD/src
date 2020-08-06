@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.17 2020/08/06 06:49:55 ryo Exp $	*/
+/*	$NetBSD: fault.c,v 1.18 2020/08/06 06:50:39 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.17 2020/08/06 06:49:55 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.18 2020/08/06 06:50:39 ryo Exp $");
 
 #include "opt_compat_netbsd32.h"
 #include "opt_ddb.h"
@@ -223,10 +223,12 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass)
 
  do_fault:
 	/* faultbail path? */
-	fb = cpu_disable_onfault();
-	if (fb != NULL) {
-		cpu_jump_onfault(tf, fb, EFAULT);
-		return;
+	if (curcpu()->ci_intr_depth == 0) {
+		fb = cpu_disable_onfault();
+		if (fb != NULL) {
+			cpu_jump_onfault(tf, fb, EFAULT);
+			return;
+		}
 	}
 
  handle_fault:
