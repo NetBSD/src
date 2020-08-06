@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.413 2020/08/03 21:44:43 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.414 2020/08/06 17:32:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.413 2020/08/03 21:44:43 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.414 2020/08/06 17:32:40 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.413 2020/08/03 21:44:43 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.414 2020/08/06 17:32:40 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -216,12 +216,15 @@ typedef enum {
     VAR_REEXPORT	= 0x20,	/* Indicate if var needs re-export.
 				 * This would be true if it contains $'s */
     VAR_FROM_CMD	= 0x40	/* Variable came from command line */
-} Var_Flags;
+} VarFlags;
 
 typedef struct Var {
-    char          *name;	/* the variable's name */
+    char          *name;	/* the variable's name; it is allocated for
+				 * environment variables and aliased to the
+				 * Hash_Entry name for all other variables,
+				 * and thus must not be modified */
     Buffer	  val;		/* its value */
-    Var_Flags	  flags;    	/* miscellaneous status flags */
+    VarFlags	  flags;    	/* miscellaneous status flags */
 }  Var;
 
 /*
@@ -420,16 +423,16 @@ VarAdd(const char *name, const char *val, GNode *ctxt)
     Var *v = bmake_malloc(sizeof(Var));
 
     size_t len = val != NULL ? strlen(val) : 0;
-    Hash_Entry *h;
+    Hash_Entry *he;
 
     Buf_InitZ(&v->val, len + 1);
     Buf_AddBytesZ(&v->val, val, len);
 
     v->flags = 0;
 
-    h = Hash_CreateEntry(&ctxt->context, name, NULL);
-    Hash_SetValue(h, v);
-    v->name = h->name;
+    he = Hash_CreateEntry(&ctxt->context, name, NULL);
+    Hash_SetValue(he, v);
+    v->name = he->name;
     VAR_DEBUG_IF(!(ctxt->flags & INTERNAL),
 		 "%s:%s = %s\n", ctxt->name, name, val);
 }
@@ -439,24 +442,24 @@ void
 Var_Delete(const char *name, GNode *ctxt)
 {
     char *name_freeIt = NULL;
-    Hash_Entry *ln;
+    Hash_Entry *he;
 
     if (strchr(name, '$') != NULL)
 	name = name_freeIt = Var_Subst(name, VAR_GLOBAL, VARE_WANTRES);
-    ln = Hash_FindEntry(&ctxt->context, name);
+    he = Hash_FindEntry(&ctxt->context, name);
     VAR_DEBUG("%s:delete %s%s\n",
-	      ctxt->name, name, ln != NULL ? "" : " (not found)");
+	      ctxt->name, name, he != NULL ? "" : " (not found)");
     free(name_freeIt);
 
-    if (ln != NULL) {
-	Var *v = (Var *)Hash_GetValue(ln);
+    if (he != NULL) {
+	Var *v = (Var *)Hash_GetValue(he);
 	if (v->flags & VAR_EXPORTED)
 	    unsetenv(v->name);
 	if (strcmp(MAKE_EXPORTED, v->name) == 0)
 	    var_exportedVars = VAR_EXPORTED_NONE;
-	if (v->name != ln->name)
+	if (v->name != he->name)
 	    free(v->name);
-	Hash_DeleteEntry(&ctxt->context, ln);
+	Hash_DeleteEntry(&ctxt->context, he);
 	Buf_Destroy(&v->val, TRUE);
 	free(v);
     }
