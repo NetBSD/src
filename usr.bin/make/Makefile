@@ -1,10 +1,43 @@
-#	$NetBSD: Makefile,v 1.81 2020/08/06 05:32:26 rillig Exp $
+#	$NetBSD: Makefile,v 1.82 2020/08/07 05:13:04 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
-SRCS=	arch.c buf.c compat.c cond.c dir.c for.c hash.c job.c lst.c main.c
-SRCS+=	make.c make_malloc.c metachar.c parse.c
-SRCS+=	str.c strlist.c suff.c targ.c trace.c var.c util.c
+SRCS=	arch.c
+SRCS+=  buf.c
+SRCS+=  compat.c
+SRCS+=  cond.c
+SRCS+=  dir.c
+SRCS+=  for.c
+SRCS+=  hash.c
+SRCS+=  job.c
+SRCS+=  lst.c
+SRCS+=  main.c
+SRCS+=	make.c
+SRCS+=  make_malloc.c
+SRCS+=  metachar.c
+SRCS+=  parse.c
+SRCS+=	str.c
+SRCS+=  strlist.c
+SRCS+=  suff.c
+SRCS+=  targ.c
+SRCS+=  trace.c
+SRCS+=  var.c
+SRCS+=  util.c
+HDRS=   buf.h
+HDRS+=  config.h
+HDRS+=  dir.h
+HDRS+=  hash.h
+HDRS+=  job.h
+HDRS+=  lst.h
+HDRS+=  make.h
+HDRS+=  make_malloc.h
+HDRS+=  meta.h
+HDRS+=  metachar.h
+HDRS+=  nonints.h
+HDRS+=  pathnames.h
+HDRS+=  sprite.h
+HDRS+=  strlist.h
+HDRS+=  trace.h
 
 # Whether to generate a coverage report after running the tests.
 USE_COVERAGE?=	no		# works only with gcc; clang9 fails to link
@@ -50,8 +83,7 @@ SUBDIR.roff+=	PSD.doc
 SUBDIR+=	unit-tests
 .endif
 
-${SRCS:M*.c:.c=.o}: buf.h config.h dir.h hash.h job.h lst.h make.h make_malloc.h
-${SRCS:M*.c:.c=.o}: meta.h metachar.h nonints.h pathnames.h sprite.h strlist.h trace.h
+${SRCS:M*.c:.c=.o}: ${HDRS}
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
