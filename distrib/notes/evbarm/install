@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.15 2020/07/26 11:00:28 jmcneill Exp $
+.\"	$NetBSD: install,v 1.16 2020/08/07 00:27:11 snj Exp $
 .\"
 .\" Copyright (c) 2001-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,7 +43,8 @@ If you are using Microsoft Windows, you can use
 to write SD card images, which can handle decompression too.
 .It
 To replace the vendor U-Boot bootloader with a "mainline" U-Boot,
-obtain a board-specific image. Bootloaders are provided by the
+obtain a board-specific image.
+Bootloaders are provided by the
 .Pa sysutils/u-boot-*
 packages in
 .Lk https://www.pkgsrc.org/ "pkgsrc" .
@@ -58,7 +59,7 @@ existing
 .Lk https://cdn.netbsd.org/pub/pkgsrc/packages/NetBSD/aarch64/9.0/All/ "NetBSD binary package set".
 .Pp
 Install the board-specific U-Boot to the SD card,
-e.g. for Allwiner devices (PINE H64 in this case):
+e.g. for Allwinner devices (PINE H64 in this case):
 .Bd -literal
 # dd if=/usr/pkg/share/u-boot/pine-h64/u-boot-sunxi-with-spl.bin of=/dev/rld0d bs=1k seek=8 conv=sync
 .Ed
