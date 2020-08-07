@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.885 2020/08/06 05:36:32 rillig Exp $
+# $NetBSD: mi,v 1.886 2020/08/07 19:24:27 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4558,6 +4558,8 @@
 ./usr/tests/usr.bin/make/unit-tests/export-all.mk	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/export-env.exp	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/export-env.mk	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/export-variants.exp	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/export-variants.mk	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/export.exp	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/export.mk	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/forloop.exp	tests-usr.bin-tests	compattestfile,atf
