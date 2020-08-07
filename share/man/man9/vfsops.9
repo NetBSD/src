@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfsops.9,v 1.50 2020/07/04 21:07:29 christos Exp $
+.\"     $NetBSD: vfsops.9,v 1.51 2020/08/07 17:59:32 christos Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 4, 2020
+.Dd August 7, 2020
 .Dt VFSOPS 9
 .Os
 .Sh NAME
@@ -60,7 +60,7 @@
 .Ft int
 .Fn VFS_UNMOUNT "struct mount *mp" "int mntflags"
 .Ft int
-.Fn VFS_ROOT "struct mount *mp" "struct vnode **vpp"
+.Fn VFS_ROOT "struct mount *mp" "int lktype" "struct vnode **vpp"
 .Ft int
 .Fn VFS_QUOTACTL "struct mount *mp" "struct quotactl_args *args"
 .Ft int
@@ -68,13 +68,13 @@
 .Ft int
 .Fn VFS_SYNC "struct mount *mp" "int waitfor" "kauth_cred_t cred"
 .Ft int
-.Fn VFS_VGET "struct mount *mp" "ino_t ino" "struct vnode **vpp"
+.Fn VFS_VGET "struct mount *mp" "ino_t ino" "int lktype" "struct vnode **vpp"
 .Ft int
 .Fn VFS_LOADVNODE "struct mount *mp" "struct vnode *vp" "const void *key" "size_t key_len" "const void **new_key"
 .Ft int
 .Fn VFS_NEWVNODE "struct mount *mp" "struct vnode *dvp" "struct vnode *vp" "struct vattr *vap" "kauth_cred_t cred" "void *extra" "size_t *key_len" "const void **new_key"
 .Ft int
-.Fn VFS_FHTOVP "struct mount *mp" "struct fid *fhp" "struct vnode **vpp"
+.Fn VFS_FHTOVP "struct mount *mp" "struct fid *fhp" "int lktype" "struct vnode **vpp"
 .Ft int
 .Fn VFS_VPTOFH "struct vnode *vp" "struct fid *fhp" "size_t *fh_size"
 .Ft int
@@ -282,12 +282,21 @@ is specified in the flags
 then open files are forcibly closed.
 The function also deallocates space associated with data structure
 that were allocated for the file system when it was mounted.
-.It Fn VFS_ROOT "mp" "vpp"
+.It Fn VFS_ROOT "mp" "lktype" "vpp"
 Get the root vnode of the file system specified by the mount
 structure
 .Fa mp .
 The vnode is returned in the address given by
-.Fa vpp .
+.Fa vpp ,
+with lock type
+.Fa lktype .
+.Fa lktype
+can be
+.Dv LK_NONE ,
+or
+.Dv LK_SHARED ,
+or
+.Dv LK_EXCLUSIVE .
 This function is used by the pathname translation algorithms when a
 vnode that has been covered by a mounted file system is encountered.
 While resolving the pathname, the pathname translation algorithm will
@@ -333,11 +342,20 @@ The argument
 specifies the calling credentials.
 .Fn VFS_SYNC
 does not provide any return value since the operation can never fail.
-.It Fn VFS_VGET "mp" "ino" "vpp"
+.It Fn VFS_VGET "mp" "ino" "lktype" "vpp"
 Get vnode for a file system type specific file id
 .Fa ino
 for the file system specified by the mount structure
-.Fa mp .
+.Fa mp ,
+with lock type
+.Fa lktype .
+.Fa lktype
+can be
+.Dv LK_NONE ,
+or
+.Dv LK_SHARED ,
+or
+.Dv LK_EXCLUSIVE .
 The vnode is returned in the address specified
 .Fa vpp .
 The function is optional for file systems which have a unique id
@@ -386,11 +404,20 @@ The key for the file is returned in the addresses specified by
 .Fa key_len
 and
 .Fa new_key .
-.It Fn VFS_FHTOVP "mp" "fhp" "vpp"
+.It Fn VFS_FHTOVP "mp" "fhp" "lktype" "vpp"
 Get the vnode for the file handle
 .Fa fhp
 in the file system specified by the mount structure
-.Fa mp .
+.Fa mp ,
+with lock type
+.Fa lktype .
+.Fa lktype
+can be
+.Dv LK_NONE ,
+or
+.Dv LK_SHARED ,
+or
+.Dv LK_EXCLUSIVE .
 The locked vnode is returned in
 .Fa vpp .
 .Pp
