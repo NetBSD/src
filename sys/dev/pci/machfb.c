@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.100 2020/07/30 21:29:20 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.101 2020/08/07 18:26:33 jdc Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0,
-	"$NetBSD: machfb.c,v 1.100 2020/07/30 21:29:20 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.101 2020/08/07 18:26:33 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,8 +228,9 @@ CFATTACH_DECL_NEW(machfb, sizeof(struct mach64_softc), mach64_match,
 static void	mach64_init(struct mach64_softc *);
 static int	mach64_get_memsize(struct mach64_softc *);
 static int	mach64_get_max_ramdac(struct mach64_softc *);
+static int	mach64_ref_freq(void);
 
-#if 0
+#ifdef MACHFB_DEBUG
 static void	mach64_get_mode(struct mach64_softc *, struct videomode *);
 #endif
 
@@ -505,6 +506,9 @@ mach64_attach(device_t parent, device_t self, void *aux)
 
 	printf("%s: %d KB ROM at 0x%08x\n", device_xname(sc->sc_dev),
 	    (int)sc->sc_rom.vb_size >> 10, (uint32_t)sc->sc_rom.vb_base);
+#ifdef MACHFB_DEBUG
+	mach64_get_mode(sc, NULL);
+#endif
 
 	prop_dictionary_get_uint32(device_properties(self), "width", &width);
 	prop_dictionary_get_uint32(device_properties(self), "height", &height);
@@ -556,23 +560,13 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	else
 		sc->memtype = regr(sc, CONFIG_STAT0) & 0x07;
 
-	/*
-	 * XXX is there any way to calculate reference frequency from
-	 * known values?
-	 */
-	if ((mach64_chip_id == PCI_PRODUCT_ATI_RAGE_XL_PCI) ||
-	    ((mach64_chip_id >= PCI_PRODUCT_ATI_RAGE_LT_PRO_PCI) &&
-	    (mach64_chip_id <= PCI_PRODUCT_ATI_RAGE_LT_PRO))) {
-		aprint_normal_dev(sc->sc_dev, "ref_freq=29.498MHz\n");
-		sc->ref_freq = 29498;
-	} else
-		sc->ref_freq = 14318;
+	sc->ref_freq = mach64_ref_freq();
 
 	reg = regr(sc, CLOCK_CNTL);
-	aprint_debug("CLOCK_CNTL: %08x\n", reg);
 	sc->sc_clock = reg & 3;
-	aprint_debug("using clock %d\n", sc->sc_clock);
+	DPRINTF("using clock %d\n", sc->sc_clock);
 
+	DPRINTF("ref_freq: %d\n", sc->ref_freq);
 	sc->ref_div = regrb_pll(sc, PLL_REF_DIV);
 	DPRINTF("ref_div: %d\n", sc->ref_div);
 	sc->mclk_fb_div = regrb_pll(sc, MCLK_FB_DIV);
@@ -636,8 +630,9 @@ mach64_attach(device_t parent, device_t self, void *aux)
 				    sizeof(struct videomode));
 				sc->sc_setmode = 1;
 			} else {
-				aprint_error_dev(sc->sc_dev,
-				    "unable to use preferred mode\n");
+				aprint_normal_dev(sc->sc_dev,
+				    "unable to use EDID preferred mode "
+				    "(%d x %d)\n", m->hdisplay, m->vdisplay);
 			}
 		}
 		/*
@@ -905,32 +900,118 @@ mach64_get_max_ramdac(struct mach64_softc *sc)
 		return 80000;
 }
 
-#if 0
+static int
+mach64_ref_freq(void)
+{
+	/*
+	 * There doesn't seem to be any way to calculate the reference
+	 * frequency from known values
+	 */
+	if ((mach64_chip_id == PCI_PRODUCT_ATI_RAGE_XL_PCI) ||
+	    ((mach64_chip_id >= PCI_PRODUCT_ATI_RAGE_LT_PRO_PCI) &&
+	    (mach64_chip_id <= PCI_PRODUCT_ATI_RAGE_L_MOB_M1_PCI)))
+		return 29498;
+	else
+		return 14318;
+}
+
+#ifdef MACHFB_DEBUG
 static void
 mach64_get_mode(struct mach64_softc *sc, struct videomode *mode)
 {
-	struct mach64_crtcregs crtc;
+	int htotal, hdisplay, hsync_start, hsync_end;
+	int vtotal, vdisplay, vsync_start, vsync_end;
+	int gen_ctl, clk_ctl, clock;
+	int ref_freq, ref_div, mclk_fb_div, vclk_post_div, vclk_fb_div;
+	int nhsync, nvsync;
+	int post_div, dot_clock, vrefresh, vrefresh2;
 
-	crtc.h_total_disp = regr(sc, CRTC_H_TOTAL_DISP);
-	crtc.h_sync_strt_wid = regr(sc, CRTC_H_SYNC_STRT_WID);
-	crtc.v_total_disp = regr(sc, CRTC_V_TOTAL_DISP);
-	crtc.v_sync_strt_wid = regr(sc, CRTC_V_SYNC_STRT_WID);
+	hdisplay = regr(sc, CRTC_H_TOTAL_DISP);
+	hsync_end = regr(sc, CRTC_H_SYNC_STRT_WID);
+	vdisplay = regr(sc, CRTC_V_TOTAL_DISP);
+	vsync_end = regr(sc, CRTC_V_SYNC_STRT_WID);
+	gen_ctl = regr(sc, CRTC_GEN_CNTL);
+	clk_ctl = regr(sc, CLOCK_CNTL);
+	clock = clk_ctl & 3;
+	ref_div = regrb_pll(sc, PLL_REF_DIV);
+	mclk_fb_div = regrb_pll(sc, MCLK_FB_DIV);
+	vclk_post_div = regrb_pll(sc, VCLK_POST_DIV);
+	vclk_fb_div = regrb_pll(sc, VCLK0_FB_DIV + clock);
+	ref_freq = mach64_ref_freq();
 
-	mode->htotal = ((crtc.h_total_disp & 0xffff) + 1) << 3;
-	mode->hdisplay = ((crtc.h_total_disp >> 16) + 1) << 3;
-	mode->hsync_start = ((crtc.h_sync_strt_wid & 0xffff) + 1) << 3;
-	mode->hsync_end = ((crtc.h_sync_strt_wid >> 16) << 3) +
-	    mode->hsync_start;
-	mode->vtotal = (crtc.v_total_disp & 0xffff) + 1;
-	mode->vdisplay = (crtc.v_total_disp >> 16) + 1;
-	mode->vsync_start = (crtc.v_sync_strt_wid & 0xffff) + 1;
-	mode->vsync_end = (crtc.v_sync_strt_wid >> 16) + mode->vsync_start;
+	aprint_normal_dev(sc->sc_dev, "CRTC registers:\n");
+	aprint_normal("\th total: 0x%08x  h sync: 0x%08x\n",
+	    hdisplay, hsync_end);
+	aprint_normal("\tv total: 0x%08x  v sync: 0x%08x\n",
+	    vdisplay, vsync_end);
+	aprint_normal("\t g cntl: 0x%08x  c cntl: 0x%08x\n",
+	    gen_ctl, clk_ctl);
+	aprint_normal("\t rfreq %d  rdiv: %d\n", ref_freq, ref_div);
+	aprint_normal_dev(sc->sc_dev, "PLL registers:\n");
+	aprint_normal("\t m div: 0x%02x  p div: 0x%02x  v%d div: 0x%02x\n",
+	    mclk_fb_div, vclk_post_div, clock, vclk_fb_div);
 
-#ifdef MACHFB_DEBUG
-	printf("mach64_get_mode: %d %d %d %d %d %d %d %d\n",
-	    mode->hdisplay, mode->hsync_start, mode->hsync_end, mode->htotal,
-	    mode->vdisplay, mode->vsync_start, mode->vsync_end, mode->vtotal);
-#endif
+	htotal = ((hdisplay & 0x01ff) + 1) << 3;
+	hdisplay = (((hdisplay & 0x1ff0000) >> 16) + 1) << 3;
+	if (hsync_end & CRTC_HSYNC_NEG)
+		nhsync = 1;
+	else
+		nhsync = 0;
+	hsync_start = (((hsync_end & 0xff) + 1) << 3) +
+	    ((hsync_end & 0x700) >> 8);
+	hsync_end = (((hsync_end & 0x1f0000) >> 16) << 3) + hsync_start;
+
+	vtotal = (vdisplay & 0x07ff) + 1;
+	vdisplay = ((vdisplay & 0x7ff0000) >> 16) + 1;
+	if (vsync_end & CRTC_VSYNC_NEG)
+		nvsync = 1;
+	else
+		nvsync = 0;
+	vsync_start = (vsync_end & 0x07ff) + 1;
+	vsync_end = ((vsync_end & 0x1f0000) >> 16) + vsync_start;
+
+	switch ((vclk_post_div >> (clock * 2)) & 3) {
+		case 3:
+			post_div = 8;
+			break;
+		case 2:
+			post_div = 4;
+			break;
+		case 1:
+			post_div = 2;
+			break;
+		default:
+			post_div = 1;
+			break;
+	}
+	dot_clock = (2 * ref_freq * vclk_fb_div) / (ref_div * post_div);
+	vrefresh = (dot_clock * 1000) / (htotal * vtotal);
+	vrefresh2 = ((dot_clock * 1000) - (vrefresh * htotal * vtotal)) * 100 /
+	    (htotal * vtotal);
+
+	aprint_normal_dev(sc->sc_dev, "Video mode:\n");
+	aprint_normal("\t%d" "x%d @ %d.%02dHz "
+	    "(%d %d %d %d %d %d %d %cH %cV)\n",
+	    hdisplay, vdisplay, vrefresh, vrefresh2, dot_clock,
+	    hsync_start, hsync_end, htotal, vsync_start, vsync_end, vtotal,
+	    nhsync == 1 ? '-' : '+', nvsync == 1 ? '-' : '+');
+
+	if (mode != NULL) {
+		mode->dot_clock = dot_clock;
+		mode->htotal = htotal;
+		mode->hdisplay = hdisplay;
+		mode->hsync_start = hsync_start;
+		mode->hsync_end = hsync_end;
+		mode->vtotal = vtotal;
+		mode->vdisplay = vdisplay;
+		mode->vsync_start = vsync_start;
+		mode->vsync_end = vsync_end;
+		mode->flags = 0;
+		if (nhsync)
+			mode->flags |= VID_NHSYNC;
+		if (nvsync)
+			mode->flags |= VID_NVSYNC;
+	}
 }
 #endif
 
@@ -947,7 +1028,7 @@ mach64_calc_crtcregs(struct mach64_softc *sc, struct mach64_crtcregs *crtc,
 	    ((mode->htotal >> 3) - 1);
 	crtc->h_sync_strt_wid =
 	    (((mode->hsync_end - mode->hsync_start) >> 3) << 16) |
-	    ((mode->hsync_start >> 3) - 1);
+	    ((mode->hsync_start >> 3) - 1) | ((mode->hsync_start & 7) << 8);
 
 	crtc->v_total_disp = ((mode->vdisplay - 1) << 16) |
 	    (mode->vtotal - 1);
@@ -991,6 +1072,10 @@ mach64_set_crtcregs(struct mach64_softc *sc, struct mach64_crtcregs *crtc)
 	if (sc->has_dsp)
 		mach64_set_dsp(sc);
 
+	DPRINTF("\th total: 0x%08x  h sync: 0x%08x\n",
+	    crtc->h_total_disp, crtc->h_sync_strt_wid);
+	DPRINTF("\tv total: 0x%08x  v sync: 0x%08x\n",
+	    crtc->v_total_disp, crtc->v_sync_strt_wid);
 	regw(sc, CRTC_H_TOTAL_DISP, crtc->h_total_disp);
 	regw(sc, CRTC_H_SYNC_STRT_WID, crtc->h_sync_strt_wid);
 	regw(sc, CRTC_V_TOTAL_DISP, crtc->v_total_disp);
@@ -1170,7 +1255,7 @@ mach64_set_dsp(struct mach64_softc *sc)
 		       (sc->vclk_freq * sc->bits_per_pixel);
 
 	DPRINTF("xclks_per_qw %d %d\n", xclks_per_qw >> 7, xclks_per_qw_m);
-		DPRINTF("mem %dkHz v %dkHz\n", sc->mem_freq, sc->vclk_freq);
+	DPRINTF("mem %dkHz v %dkHz\n", sc->mem_freq, sc->vclk_freq);
 
 	y = (xclks_per_qw * fifo_depth) >> 11;
 		       
@@ -1224,15 +1309,13 @@ mach64_set_dsp(struct mach64_softc *sc)
 	dsp_on = fifo_on >> dsp_precision;
 	dsp_off = fifo_off >> dsp_precision;
 
-#ifdef MACHFB_DEBUG
-	printf("dsp_xclks_per_qw = %d, dsp_on = %d, dsp_off = %d,\n"
+	DPRINTF("dsp_xclks_per_qw = %d, dsp_on = %d, dsp_off = %d,\n"
 	    "dsp_precision = %d, dsp_loop_latency = %d,\n"
 	    "mclk_fb_div = %d, vclk_fb_div = %d,\n"
 	    "mclk_post_div = %d, vclk_post_div = %d\n",
 	    dsp_xclks_per_qw, dsp_on, dsp_off, dsp_precision, dsp_loop_latency,
 	    sc->mclk_fb_div, sc->vclk_fb_div,
 	    sc->mclk_post_div, sc->vclk_post_div);
-#endif
 	DPRINTF("DSP_ON_OFF %08x\n", regr(sc, DSP_ON_OFF));
 	DPRINTF("DSP_CONFIG %08x\n", regr(sc, DSP_CONFIG));
 	regw(sc, DSP_ON_OFF, ((dsp_on << 16) & DSP_ON) | (dsp_off & DSP_OFF));
