@@ -1,4 +1,4 @@
-/*	$NetBSD: script.c,v 1.24 2020/08/03 03:34:43 christos Exp $	*/
+/*	$NetBSD: script.c,v 1.25 2020/08/07 13:36:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: script.c,v 1.24 2020/08/03 03:34:43 christos Exp $");
+__RCSID("$NetBSD: script.c,v 1.25 2020/08/07 13:36:28 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -156,17 +156,22 @@ main(int argc, char *argv[])
 	if (pflg)
 		playback(fscript);
 
-	isterm = isatty(STDIN_FILENO);
-	if (isterm) {
-		if (tcgetattr(STDIN_FILENO, &tt) == -1)
-			err(EXIT_FAILURE, "tcgetattr");
-		if (ioctl(STDIN_FILENO, TIOCGWINSZ, &win) == -1)
+	if (tcgetattr(STDIN_FILENO, &tt) == -1 ||
+	    ioctl(STDIN_FILENO, TIOCGWINSZ, &win) == -1) {
+		switch (errno) {
+		case ENOTTY:
+			if (openpty(&master, &slave, NULL, NULL, NULL) == -1)
+				err(EXIT_FAILURE, "openpty");
+			break;
+		case EBADF:
+			err(EXIT_FAILURE, "%d not valid fd", STDIN_FILENO);
+		default: /* errno == EFAULT or EINVAL for ioctl. Not reached in practice. */
 			err(EXIT_FAILURE, "ioctl");
+		}
+	} else {
 		if (openpty(&master, &slave, NULL, &tt, &win) == -1)
 			err(EXIT_FAILURE, "openpty");
-	} else {
-		if (openpty(&master, &slave, NULL, NULL, NULL) == -1)
-			err(EXIT_FAILURE, "openpty");
+		isterm = 1;
 	}
 
 	if (!quiet)
@@ -377,18 +382,17 @@ termset(void)
 {
 	struct termios traw;
 
-	isterm = isatty(STDOUT_FILENO);
-	if (!isterm)
+	if (tcgetattr(STDOUT_FILENO, &tt) == -1) {
+		if (errno == EBADF)
+			err(EXIT_FAILURE, "%d not valid fd", STDOUT_FILENO);
+		/* errno == ENOTTY */
 		return;
-
-	if (tcgetattr(STDOUT_FILENO, &tt) == -1)
-		err(EXIT_FAILURE, "tcgetattr");
-
+	}
+	isterm = 1;
 	traw = tt;
 	cfmakeraw(&traw);
 	traw.c_lflag |= ISIG;
-	if (tcsetattr(STDOUT_FILENO, TCSANOW, &traw) == -1)
-		err(EXIT_FAILURE, "tcsetattr");
+        (void)tcsetattr(STDOUT_FILENO, TCSANOW, &traw);
 }
 
 static void
