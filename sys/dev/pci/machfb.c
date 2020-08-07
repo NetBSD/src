@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.101 2020/08/07 18:26:33 jdc Exp $	*/
+/*	$NetBSD: machfb.c,v 1.102 2020/08/07 23:31:07 macallan Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0,
-	"$NetBSD: machfb.c,v 1.101 2020/08/07 18:26:33 jdc Exp $");
+	"$NetBSD: machfb.c,v 1.102 2020/08/07 23:31:07 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,6 +126,7 @@ struct mach64_softc {
 	int max_y;
 	int virt_x;
 	int virt_y;
+	int stride;	/* in pixels */
 	int color_depth;
 
 	int mem_freq;
@@ -690,9 +691,10 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	sc->bits_per_pixel = 8;
 	sc->virt_x = sc->sc_my_mode->hdisplay;
 	sc->virt_y = sc->sc_my_mode->vdisplay;
+	sc->stride = (sc->virt_x + 7) & ~7;	/* hw needs multiples of 8 */
 	sc->max_x = sc->virt_x - 1;
 	sc->max_y = (sc->memsize * 1024) /
-	    (sc->virt_x * (sc->bits_per_pixel / 8)) - 1;
+	    (sc->stride * (sc->bits_per_pixel / 8)) - 1;
 
 	sc->color_depth = CRTC_PIX_WIDTH_8BPP;
 
@@ -734,9 +736,9 @@ mach64_attach(device_t parent, device_t self, void *aux)
 		mach64_defaultscreen.nrows = ri->ri_rows;
 		mach64_defaultscreen.ncols = ri->ri_cols;
 		glyphcache_init(&sc->sc_gc, sc->sc_my_mode->vdisplay + 5,
-		    ((sc->memsize * 1024) / sc->sc_my_mode->hdisplay) -
+		    ((sc->memsize * 1024) / sc->stride) -
 		      sc->sc_my_mode->vdisplay - 5,
-		    sc->sc_my_mode->hdisplay,
+		    sc->stride,
 		    ri->ri_font->fontwidth,
 		    ri->ri_font->fontheight,
 		    defattr);
@@ -754,9 +756,9 @@ mach64_attach(device_t parent, device_t self, void *aux)
 			(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 
 		glyphcache_init(&sc->sc_gc, sc->sc_my_mode->vdisplay + 5,
-		    ((sc->memsize * 1024) / sc->sc_my_mode->hdisplay) -
+		    ((sc->memsize * 1024) / sc->stride) -
 		      sc->sc_my_mode->vdisplay - 5,
-		    sc->sc_my_mode->hdisplay,
+		    sc->stride,
 		    ri->ri_font->fontwidth,
 		    ri->ri_font->fontheight,
 		    defattr);
@@ -818,7 +820,7 @@ mach64_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 	ri->ri_depth = sc->bits_per_pixel;
 	ri->ri_width = sc->sc_my_mode->hdisplay;
 	ri->ri_height = sc->sc_my_mode->vdisplay;
-	ri->ri_stride = ri->ri_width;
+	ri->ri_stride = sc->stride;
 	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
 	if (ri->ri_depth == 8)
 		ri->ri_flg |= RI_8BIT_IS_RGB | RI_ENABLE_ALPHA |
@@ -1083,7 +1085,7 @@ mach64_set_crtcregs(struct mach64_softc *sc, struct mach64_crtcregs *crtc)
 
 	regw(sc, CRTC_VLINE_CRNT_VLINE, 0);
 
-	regw(sc, CRTC_OFF_PITCH, (sc->virt_x >> 3) << 22);
+	regw(sc, CRTC_OFF_PITCH, (sc->stride >> 3) << 22);
 
 	regw(sc, CRTC_GEN_CNTL, crtc->gen_cntl | crtc->color_depth |
 	    sc->sc_gen_cntl | CRTC_EXT_DISP_EN | CRTC_EXT_EN);
@@ -1129,7 +1131,7 @@ mach64_init_engine(struct mach64_softc *sc)
 {
 	uint32_t pitch_value;
 
-	pitch_value = sc->virt_x;
+	pitch_value = sc->stride;
 
 	if (sc->bits_per_pixel == 24)
 		pitch_value *= 3;
@@ -1143,7 +1145,7 @@ mach64_init_engine(struct mach64_softc *sc)
 	regw(sc, DST_OFF_PITCH, (pitch_value >> 3) << 22);
 
 	/* make sure the visible area starts where we're going to draw */
-	regw(sc, CRTC_OFF_PITCH, (sc->virt_x >> 3) << 22);
+	regw(sc, CRTC_OFF_PITCH, (sc->stride >> 3) << 22);
 
 	regw(sc, DST_Y_X, 0);
 	regw(sc, DST_HEIGHT, 0);
@@ -1216,7 +1218,7 @@ mach64_adjust_frame(struct mach64_softc *sc, int x, int y)
 {
 	int offset;
 
-	offset = ((x + y * sc->virt_x) * (sc->bits_per_pixel >> 3)) >> 3;
+	offset = ((x + y * sc->stride) * (sc->bits_per_pixel >> 3)) >> 3;
 
 	regw(sc, CRTC_OFF_PITCH, (regr(sc, CRTC_OFF_PITCH) & 0xfff00000) |
 	     offset);
@@ -1921,7 +1923,7 @@ mach64_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		return 0;
 
 	case WSDISPLAYIO_LINEBYTES:
-		*(u_int *)data = sc->virt_x * sc->bits_per_pixel / 8;
+		*(u_int *)data = sc->stride * sc->bits_per_pixel / 8;
 		return 0;
 
 	case WSDISPLAYIO_GINFO:
