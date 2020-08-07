@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.22 2020/06/23 06:28:02 martin Exp $
+.\"	$NetBSD: contents,v 1.23 2020/08/07 00:43:47 snj Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -199,7 +199,7 @@ system call and library manual pages.
 This distribution set contains debug information for
 all base system utilities.
 It is useful when reporting issues with binaries or during
-developement.
+development.
 This set is huge, if the target disk is small, do not install it.
 .
 .It Sy etc
@@ -288,7 +288,7 @@ The extra libraries and include files needed to compile X source code.
 This distribution set contains debug information for
 all X11 binaries.
 It is useful when reporting issues with these binaries or during
-developement.
+development.
 This set is huge, if the target disk is small, do not install it.
 .
 .It Sy xfont
