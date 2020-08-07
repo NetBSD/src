@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_coldfire.h,v 1.2 2014/03/18 18:20:41 riastradh Exp $	*/
+/*	$NetBSD: pmap_coldfire.h,v 1.3 2020/08/07 07:19:45 skrll Exp $	*/
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -134,6 +134,20 @@ static inline size_t
 pmap_md_tlb_asid_max(void)
 {
 	return PMAP_TLB_NUM_PIDS - 1;
+}
+
+static inline void
+pmap_md_xtab_activate(struct pmap *pm, struct lwp *l)
+{
+
+	/* nothing */
+}
+
+static inline void
+pmap_md_xtab_deactivate(struct pmap *pm)
+{
+
+	/* nothing */
 }
 #endif
 
