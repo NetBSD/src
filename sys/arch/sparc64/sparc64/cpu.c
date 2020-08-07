@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.137 2019/12/30 06:54:31 macallan Exp $ */
+/*	$NetBSD: cpu.c,v 1.138 2020/08/07 14:20:08 fcambus Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.137 2019/12/30 06:54:31 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.138 2020/08/07 14:20:08 fcambus Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -503,7 +503,7 @@ cpu_attach(device_t parent, device_t dev, void *aux)
 	 * For other cpus, we need to call mi_cpu_attach()
 	 * and complete setting up cpcb.
 	 */
-	if (ci->ci_flags & CPUF_PRIMARY) {
+	if (CPU_IS_PRIMARY(ci)) {
 		fpstate_cache = pool_cache_init(sizeof(struct fpstate64),
 					SPARC64_BLOCK_SIZE, 0, 0, "fpstate",
 					NULL, IPL_NONE, NULL, NULL, NULL);
