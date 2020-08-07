@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.h,v 1.35 2020/06/27 17:29:19 christos Exp $	*/
+/*	$NetBSD: genfs.h,v 1.36 2020/08/07 18:14:21 christos Exp $	*/
 
 #ifndef	_MISCFS_GENFS_GENFS_H_
 #define	_MISCFS_GENFS_GENFS_H_
@@ -64,7 +64,7 @@ int	genfs_can_chown(struct vnode *, kauth_cred_t, uid_t, gid_t, uid_t,
 int	genfs_can_chtimes(struct vnode *, kauth_cred_t, uid_t, u_int);
 int	genfs_can_chflags(struct vnode *, kauth_cred_t, uid_t, bool);
 int	genfs_can_sticky(struct vnode *, kauth_cred_t, uid_t, uid_t);
-int	genfs_can_extattr(struct vnode *, kauth_cred_t, int, int);
+int	genfs_can_extattr(struct vnode *, kauth_cred_t, accmode_t, int);
 
 /*
  * Rename is complicated.  Sorry.
