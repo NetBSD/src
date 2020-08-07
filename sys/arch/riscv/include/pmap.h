@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.4 2020/03/11 13:30:31 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.5 2020/08/07 07:19:45 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019 The NetBSD Foundation, Inc.
@@ -163,6 +163,21 @@ pmap_md_tlb_asid_max(void)
 {
 	return PMAP_TLB_NUM_PIDS - 1;
 }
+
+static inline void
+pmap_md_xtab_activate(struct pmap *pm, struct lwp *l)
+{
+
+	/* nothing */
+}
+
+static inline void
+pmap_md_xtab_deactivate(struct pmap *pm)
+{
+
+	/* nothing */
+}
+
 #endif /* __PMAP_PRIVATE */
 #endif /* _KERNEL */
 
