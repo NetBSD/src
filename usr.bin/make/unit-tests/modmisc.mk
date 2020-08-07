@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.33 2020/08/03 15:43:32 rillig Exp $
+# $Id: modmisc.mk,v 1.34 2020/08/07 20:10:35 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -164,6 +164,19 @@ mod-regex:
 # Therefore, in -dL mode, this is forbidden, see lint.mk.
 mod-loop-varname:
 	@echo :${:Uone two three:@${:Ubar:S,b,v,}@+${var}+@:Q}:
+	# ":::" is a very creative variable name, unlikely in practice
+	# The expression ${\:\:\:} would not work since backslashes can only
+	# be escaped in the modifiers, but not in the variable name.
+	@echo :${:U1 2 3:@:::@x${${:U\:\:\:}}y@}:
+	# "@@" is another creative variable name.
+	@echo :${:U1 2 3:@\@\@@x${@@}y@}:
+	# Even "@" works as a variable name since the variable is installed
+	# in the "current" scope, which in this case is the one from the
+	# target.
+	@echo :$@: :${:U1 2 3:@\@@x${@}y@}: :$@:
+	# In extreme cases, even the backslash can be used as variable name.
+	# It needs to be doubled though.
+	@echo :${:U1 2 3:@\\@x${${:Ux:S,x,\\,}}y@}:
 
 # The :@ modifier resolves the variables a little more often than expected.
 # In particular, it resolves _all_ variables from the context, and not only
