@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.85 2020/08/06 16:23:52 sjg Exp $
+# $NetBSD: Makefile,v 1.86 2020/08/07 13:43:50 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -55,7 +55,7 @@ TESTS+=		export-env
 TESTS+=		forloop
 TESTS+=		forsubst
 TESTS+=		hash
-TESTS+=		# impsrc	# broken by reverting POSIX changes
+TESTS+=		impsrc
 TESTS+=		include-main
 TESTS+=		lint
 TESTS+=		misc
