@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.433 2020/08/08 18:54:04 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.434 2020/08/08 19:13:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.433 2020/08/08 18:54:04 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.434 2020/08/08 19:13:39 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.433 2020/08/08 18:54:04 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.434 2020/08/08 19:13:39 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2898,6 +2898,21 @@ ApplyModifier_Remember(const char **pp, ApplyModifiersState *st)
     return AMR_OK;
 }
 
+/* Apply the given function to each word of the variable value. */
+static ApplyModifierResult
+ApplyModifier_WordFunc(const char **pp, ApplyModifiersState *st,
+		       ModifyWordsCallback modifyWord)
+{
+    char delim = (*pp)[1];
+    if (delim != st->endc && delim != ':')
+	return AMR_UNKNOWN;
+
+    st->newVal = ModifyWords(st->ctxt, st->sep, st->oneBigWord,
+			    st->val, modifyWord, NULL);
+    (*pp)++;
+    return AMR_OK;
+}
+
 #ifdef SYSVVARSUB
 /* :from=to */
 static ApplyModifierResult
@@ -3122,40 +3137,16 @@ ApplyModifiers(
 		res = AMR_UNKNOWN;
 	    break;
 	case 'T':
-	    if (p[1] == st.endc || p[1] == ':') {
-		st.newVal = ModifyWords(st.ctxt, st.sep, st.oneBigWord,
-					st.val, ModifyWord_Tail, NULL);
-		p++;
-		res = AMR_OK;
-	    } else
-		res = AMR_UNKNOWN;
+	    res = ApplyModifier_WordFunc(&p, &st, ModifyWord_Tail);
 	    break;
 	case 'H':
-	    if (p[1] == st.endc || p[1] == ':') {
-		st.newVal = ModifyWords(st.ctxt, st.sep, st.oneBigWord,
-					st.val, ModifyWord_Head, NULL);
-		p++;
-		res = AMR_OK;
-	    } else
-		res = AMR_UNKNOWN;
+	    res = ApplyModifier_WordFunc(&p, &st, ModifyWord_Head);
 	    break;
 	case 'E':
-	    if (p[1] == st.endc || p[1] == ':') {
-		st.newVal = ModifyWords(st.ctxt, st.sep, st.oneBigWord,
-					st.val, ModifyWord_Suffix, NULL);
-		p++;
-		res = AMR_OK;
-	    } else
-		res = AMR_UNKNOWN;
+	    res = ApplyModifier_WordFunc(&p, &st, ModifyWord_Suffix);
 	    break;
 	case 'R':
-	    if (p[1] == st.endc || p[1] == ':') {
-		st.newVal = ModifyWords(st.ctxt, st.sep, st.oneBigWord,
-					st.val, ModifyWord_Root, NULL);
-		p++;
-		res = AMR_OK;
-	    } else
-		res = AMR_UNKNOWN;
+	    res = ApplyModifier_WordFunc(&p, &st, ModifyWord_Root);
 	    break;
 	case 'r':
 	    res = ApplyModifier_Range(&p, &st);
