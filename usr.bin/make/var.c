@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.423 2020/08/08 13:00:07 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.424 2020/08/08 13:03:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.423 2020/08/08 13:00:07 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.424 2020/08/08 13:03:13 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.423 2020/08/08 13:00:07 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.424 2020/08/08 13:03:13 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1297,7 +1297,7 @@ ModifyWord_Subst(const char *word, SepBuf *buf, void *data)
 	return;
     }
 
-    /* unanchored */
+    /* unanchored case, may match more than once */
     while ((match = Str_FindSubstring(word, args->lhs)) != NULL) {
 	SepBuf_AddBytesBetween(buf, word, match);
 	SepBuf_AddBytes(buf, args->rhs, args->rhsLen);

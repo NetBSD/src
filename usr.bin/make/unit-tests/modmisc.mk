@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.34 2020/08/07 20:10:35 rillig Exp $
+# $Id: modmisc.mk,v 1.35 2020/08/08 13:03:13 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -148,6 +148,11 @@ mod-subst:
 mod-subst-chain:
 	@echo $@:
 	@echo ${:Ua b c:S,a,A,S,b,B,}.
+	# There is no 'i' modifier for the :S or :C modifiers.
+	# The error message is "make: Unknown modifier 'i'", which is
+	# kind of correct, although it is mixing the terms for variable
+	# modifiers with the matching modifiers.
+	@echo ${:Uvalue:S,a,x,i}.
 
 mod-regex:
 	@echo $@:

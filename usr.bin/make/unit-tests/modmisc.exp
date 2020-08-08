@@ -27,6 +27,8 @@ mod-subst:
 12345
 mod-subst-chain:
 A B c.
+make: Unknown modifier 'i'
+.
 mod-regex:
 :a b b c:
 :a b b c:
