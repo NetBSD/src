@@ -14752,6 +14752,7 @@ do
     i386_aout_vec)		 tb="$tb i386aout.lo aout32.lo" ;;
     i386_aout_bsd_vec)		 tb="$tb i386bsd.lo aout32.lo" ;;
     i386_aout_lynx_vec)		 tb="$tb i386lynx.lo lynx-core.lo aout32.lo" ;;
+    i386_aout_nbsd_vec)		 tb="$tb i386netbsd.lo aout32.lo" ;;
     i386_coff_vec)		 tb="$tb coff-i386.lo $coff" ;;
     i386_coff_go32_vec)		 tb="$tb coff-go32.lo $coff" ;;
     i386_coff_go32stubbed_vec)	 tb="$tb coff-stgo32.lo $coff" ;;
