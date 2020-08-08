@@ -1,4 +1,4 @@
-# $NetBSD: varmod-edge.mk,v 1.11 2020/08/01 15:28:28 rillig Exp $
+# $NetBSD: varmod-edge.mk,v 1.12 2020/08/08 13:29:09 rillig Exp $
 #
 # Tests for edge cases in variable modifiers.
 #
@@ -149,7 +149,7 @@ TESTS+=		eq-esc
 INP.eq-esc=	file.c file...
 MOD.eq-esc=	${INP.eq-esc:a\=b}
 EXP.eq-esc=	# empty
-# make: Unclosed substitution for INP.eq-esc (= missing)
+# make: Unfinished modifier for INP.eq-esc ('=' missing)
 
 TESTS+=		colon
 INP.colon=	value
