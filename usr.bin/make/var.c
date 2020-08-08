@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.428 2020/08/08 13:27:42 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.429 2020/08/08 13:31:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.428 2020/08/08 13:27:42 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.429 2020/08/08 13:31:24 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.428 2020/08/08 13:27:42 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.429 2020/08/08 13:31:24 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3273,7 +3273,7 @@ VarIsDynamic(GNode *ctxt, const char *varname, size_t namelen)
  *	freePtr		OUT: Non-NULL if caller should free *freePtr
  *
  * Results:
- *	The (possibly-modified) value of the variable or var_Error if the
+ *	The value of the variable expression or var_Error if the
  *	specification is invalid. The length of the specification is
  *	placed in *lengthPtr (for invalid specifications, this is just
  *	2...?).
@@ -3281,8 +3281,7 @@ VarIsDynamic(GNode *ctxt, const char *varname, size_t namelen)
  *	should pass to free() to free memory used by the result.
  *
  * Side Effects:
- *	None.
- *
+ *	Any effects from the modifiers, such as :!cmd! or ::=value.
  *-----------------------------------------------------------------------
  */
 /* coverity[+alloc : arg-*4] */
@@ -3292,9 +3291,9 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
 {
     const char	*tstr;		/* Pointer into str */
     Boolean 	 haveModifier;	/* TRUE if have modifiers for the variable */
-    char	 startc;	/* Starting character when variable in parens
+    char	 startc;	/* Starting character if variable in parens
 				 * or braces */
-    char	 endc;		/* Ending character when variable in parens
+    char	 endc;		/* Ending character if variable in parens
 				 * or braces */
     Boolean	 dynamic;	/* TRUE if the variable is local and we're
 				 * expanding it in a non-local context. This
@@ -3378,7 +3377,7 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
 		if (--depth == 0)
 		    break;
 	    }
-	    if (depth == 1 && *tstr == ':')
+	    if (*tstr == ':' && depth == 1)
 		break;
 	    /* A variable inside a variable, expand. */
 	    if (*tstr == '$') {
