@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_mod.c,v 1.22 2020/03/21 16:17:08 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_mod.c,v 1.23 2020/08/08 19:08:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.22 2020/03/21 16:17:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.23 2020/08/08 19:08:48 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -131,29 +131,28 @@ static struct execsw netbsd32_execsw[] = {
 };
 
 #if defined(__amd64__)
+#include <x86/cpu.h>
 
 /* This code was moved here, from $SRC/arch/amd64/amd64/trap.c */
 
 static int
 amd64_oosyscall_handle(struct proc *p, struct trapframe *frame)
 {
-
-	static const char lcall[7] = { 0x9a, 0, 0, 0, 0, 7, 0 };
-	const size_t sz = sizeof(lcall);
-	char tmp[sizeof(lcall) /* Avoids VLA */];
+	int error = EPASSTHROUGH;
+#define LCALLSZ	7
 
 	/* Check for the oosyscall lcall instruction. */
 	if (p->p_emul == &emul_netbsd32 &&
-	    frame->tf_rip < VM_MAXUSER_ADDRESS32 - sz &&
-	    copyin((void *)frame->tf_rip, tmp, sz) == 0 &&
-	    memcmp(tmp, lcall, sz) == 0) {
-
+	    frame->tf_rip < VM_MAXUSER_ADDRESS32 - LCALLSZ && 
+	    (error = x86_cpu_is_lcall((void *)frame->tf_rip)) == 0)
+	{
 		/* Advance past the lcall and save instruction size. */
-		frame->tf_rip += sz;
-		frame->tf_err = sz;
+		frame->tf_rip += LCALLSZ;
+		frame->tf_err = LCALLSZ;
 		return 0;
-	} else
-		return EPASSTHROUGH;
+	}
+
+	return error;
 }
 #endif /* defined(__amd64__) */
 
