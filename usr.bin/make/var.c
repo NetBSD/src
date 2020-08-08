@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.426 2020/08/08 13:13:34 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.427 2020/08/08 13:17:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.426 2020/08/08 13:13:34 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.427 2020/08/08 13:17:39 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.426 2020/08/08 13:13:34 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.427 2020/08/08 13:17:39 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -823,7 +823,7 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
 	 * that the command-line settings continue to override
 	 * Makefile settings.
 	 */
-	if (varNoExportEnv != TRUE)
+	if (!varNoExportEnv)
 	    setenv(name, val ? val : "", 1);
 
 	Var_Append(MAKEOVERRIDES, name, VAR_GLOBAL);
@@ -895,19 +895,19 @@ Var_Set(const char *name, const char *val, GNode *ctxt)
 void
 Var_Append(const char *name, const char *val, GNode *ctxt)
 {
-    char *expanded_name = NULL;
+    char *name_freeIt = NULL;
     Var *v;
 
     if (strchr(name, '$') != NULL) {
-	expanded_name = Var_Subst(name, ctxt, VARE_WANTRES);
-	if (expanded_name[0] == '\0') {
+        const char *unexpanded_name = name;
+	name = name_freeIt = Var_Subst(name, ctxt, VARE_WANTRES);
+	if (name[0] == '\0') {
 	    VAR_DEBUG("Var_Append(\"%s\", \"%s\", ...) "
 		      "name expands to empty string - ignored\n",
-		      name, val);
-	    free(expanded_name);
+		      unexpanded_name, val);
+	    free(name_freeIt);
 	    return;
 	}
-	name = expanded_name;
     }
 
     v = VarFind(name, ctxt, ctxt == VAR_GLOBAL ? (FIND_CMD | FIND_ENV) : 0);
@@ -935,7 +935,7 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 	    Hash_SetValue(h, v);
 	}
     }
-    free(expanded_name);
+    free(name_freeIt);
 }
 
 /*-
