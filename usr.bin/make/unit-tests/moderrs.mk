@@ -1,4 +1,4 @@
-# $Id: moderrs.mk,v 1.11 2020/07/31 15:16:05 rillig Exp $
+# $Id: moderrs.mk,v 1.12 2020/08/08 13:27:42 rillig Exp $
 #
 # various modifier error tests
 
@@ -40,7 +40,7 @@ vartermV:
 	@echo VAR:${MOD_TERM},=${VAR:${MOD_S}
 
 modtermV:
-	@echo "Expect: Unclosed substitution for VAR (, missing)"
+	@echo "Expect: Unfinished modifier for VAR (',' missing)"
 	-@echo "VAR:${MOD_TERM}=${VAR:${MOD_TERM}}"
 
 modloop:
