@@ -1,4 +1,4 @@
-# $NetBSD: export-variants.mk,v 1.1 2020/08/07 19:24:27 rillig Exp $
+# $NetBSD: export-variants.mk,v 1.2 2020/08/08 13:00:07 rillig Exp $
 #
 # Test whether exported variables apply to each variant of running
 # external commands:
