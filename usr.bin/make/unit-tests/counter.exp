@@ -2,64 +2,64 @@ Global:RELEVANT = yes (load-time part)
 Global:COUNTER = 
 Global:NEXT = ${COUNTER::=${COUNTER} a}${COUNTER:[#]}
 Global:A = 
-Applying[COUNTER] :: to ""
+Applying ${COUNTER::...} to "" (eflags = VARE_WANTRES|VARE_ASSIGN, vflags = none)
 Modifier part: " a"
 Global:COUNTER =  a
-Result[COUNTER] of :: is ""
-Applying[COUNTER] :[ to " a"
+Result of ${COUNTER::=${COUNTER} a} is "" (eflags = VARE_WANTRES|VARE_ASSIGN, vflags = none)
+Applying ${COUNTER:[...} to " a" (eflags = VARE_WANTRES|VARE_ASSIGN, vflags = none)
 Modifier part: "#"
-Result[COUNTER] of :[ is "1"
+Result of ${COUNTER:[#]} is "1" (eflags = VARE_WANTRES|VARE_ASSIGN, vflags = none)
 Global:A = ${COUNTER::= a a}1
 Global:B = 
-Applying[COUNTER] :: to " a"
+Applying ${COUNTER::...} to " a" (eflags = VARE_WANTRES|VARE_ASSIGN, vflags = none)
 Modifier part: " a a"
 Global:COUNTER =  a a
-Result[COUNTER] of :: is ""
-Applying[COUNTER] :[ to " a a"
+Result of ${COUNTER::=${COUNTER} a} is "" (eflags = VARE_WANTRES|VARE_ASSIGN, vflags = none)
+Applying ${COUNTER:[...} to " a a" (eflags = VARE_WANTRES|VARE_ASSIGN, vflags = none)
 Modifier part: "#"
-Result[COUNTER] of :[ is "2"
+Result of ${COUNTER:[#]} is "2" (eflags = VARE_WANTRES|VARE_ASSIGN, vflags = none)
 Global:B = ${COUNTER::= a a a}2
 Global:C = 
-Applying[COUNTER] :: to " a a"
+Applying ${COUNTER::...} to " a a" (eflags = VARE_WANTRES|VARE_ASSIGN, vflags = none)
 Modifier part: " a a a"
 Global:COUNTER =  a a a
-Result[COUNTER] of :: is ""
-Applying[COUNTER] :[ to " a a a"
+Result of ${COUNTER::=${COUNTER} a} is "" (eflags = VARE_WANTRES|VARE_ASSIGN, vflags = none)
+Applying ${COUNTER:[...} to " a a a" (eflags = VARE_WANTRES|VARE_ASSIGN, vflags = none)
 Modifier part: "#"
-Result[COUNTER] of :[ is "3"
+Result of ${COUNTER:[#]} is "3" (eflags = VARE_WANTRES|VARE_ASSIGN, vflags = none)
 Global:C = ${COUNTER::= a a a a}3
 Global:RELEVANT = no
 Global:RELEVANT = yes (run-time part)
-Result[RELEVANT] of :: is ""
-Applying[COUNTER] :: to " a a a"
+Result of ${RELEVANT::=yes (run-time part)} is "" (eflags = VARE_WANTRES, vflags = none)
+Applying ${COUNTER::...} to " a a a" (eflags = VARE_WANTRES, vflags = none)
 Modifier part: " a a"
 Global:COUNTER =  a a
-Result[COUNTER] of :: is ""
-Applying[A] :Q to "1"
+Result of ${COUNTER::= a a} is "" (eflags = VARE_WANTRES, vflags = none)
+Applying ${A:Q} to "1" (eflags = VARE_WANTRES, vflags = none)
 QuoteMeta: [1]
-Result[A] of :Q is "1"
-Applying[COUNTER] :: to " a a"
+Result of ${A:Q} is "1" (eflags = VARE_WANTRES, vflags = none)
+Applying ${COUNTER::...} to " a a" (eflags = VARE_WANTRES, vflags = none)
 Modifier part: " a a a"
 Global:COUNTER =  a a a
-Result[COUNTER] of :: is ""
-Applying[B] :Q to "2"
+Result of ${COUNTER::= a a a} is "" (eflags = VARE_WANTRES, vflags = none)
+Applying ${B:Q} to "2" (eflags = VARE_WANTRES, vflags = none)
 QuoteMeta: [2]
-Result[B] of :Q is "2"
-Applying[COUNTER] :: to " a a a"
+Result of ${B:Q} is "2" (eflags = VARE_WANTRES, vflags = none)
+Applying ${COUNTER::...} to " a a a" (eflags = VARE_WANTRES, vflags = none)
 Modifier part: " a a a a"
 Global:COUNTER =  a a a a
-Result[COUNTER] of :: is ""
-Applying[C] :Q to "3"
+Result of ${COUNTER::= a a a a} is "" (eflags = VARE_WANTRES, vflags = none)
+Applying ${C:Q} to "3" (eflags = VARE_WANTRES, vflags = none)
 QuoteMeta: [3]
-Result[C] of :Q is "3"
-Applying[COUNTER] :[ to " a a a a"
+Result of ${C:Q} is "3" (eflags = VARE_WANTRES, vflags = none)
+Applying ${COUNTER:[...} to " a a a a" (eflags = VARE_WANTRES, vflags = none)
 Modifier part: "#"
-Result[COUNTER] of :[ is "4"
-Applying[COUNTER] :Q to "4"
+Result of ${COUNTER:[#]} is "4" (eflags = VARE_WANTRES, vflags = none)
+Applying ${COUNTER:Q} to "4" (eflags = VARE_WANTRES, vflags = none)
 QuoteMeta: [4]
-Result[COUNTER] of :Q is "4"
+Result of ${COUNTER:Q} is "4" (eflags = VARE_WANTRES, vflags = none)
 A=1 B=2 C=3 COUNTER=4
-Applying[RELEVANT] :: to "yes (run-time part)"
+Applying ${RELEVANT::...} to "yes (run-time part)" (eflags = VARE_WANTRES, vflags = none)
 Modifier part: "no"
 Global:RELEVANT = no
 exit status 0
