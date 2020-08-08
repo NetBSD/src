@@ -1,5 +1,5 @@
 
-/*	$NetBSD: trap.c,v 1.304 2020/07/14 00:45:52 yamaguchi Exp $	*/
+/*	$NetBSD: trap.c,v 1.305 2020/08/08 19:08:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.304 2020/07/14 00:45:52 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.305 2020/08/08 19:08:48 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -447,19 +447,15 @@ kernelfault:
 		/* NOTREACHED */
 
 	case T_PROTFLT|T_USER:		/* protection fault */
-#if defined(COMPAT_10)
+#if defined(COMPAT_10) || defined(COMPAT_NOMID)
 	{
-		static const char lcall[7] = { 0x9a, 0, 0, 0, 0, 7, 0 };
-		const size_t sz = sizeof(lcall);
-		char tmp[sizeof(lcall)];
-
+#define LCALLSZ 7
 		/* Check for the osyscall lcall instruction. */
-		if (frame->tf_eip < VM_MAXUSER_ADDRESS - sz &&
-		    copyin((void *)frame->tf_eip, tmp, sz) == 0 &&
-		    memcmp(tmp, lcall, sz) == 0) {
+		if (frame->tf_eip < VM_MAXUSER_ADDRESS - LCALLSZ &&
+		    x86_cpu_is_lcall((const void *)frame->tf_eip)) {
 
 			/* Advance past the lcall. */
-			frame->tf_eip += sz;
+			frame->tf_eip += LCALLSZ;
 
 			/* Do the syscall. */
 			p->p_md.md_syscall(frame);

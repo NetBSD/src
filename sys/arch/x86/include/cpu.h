@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.128 2020/07/19 13:55:09 maxv Exp $	*/
+/*	$NetBSD: cpu.h,v 1.129 2020/08/08 19:08:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -564,6 +564,7 @@ extern void (*x86_delay)(unsigned int);
 
 /* cpu.c */
 void	cpu_probe_features(struct cpu_info *);
+int	x86_cpu_is_lcall(const void *);
 
 /* vm_machdep.c */
 void	cpu_proc_fork(struct proc *, struct proc *);

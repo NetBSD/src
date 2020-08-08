@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.196 2020/07/28 14:49:55 fcambus Exp $	*/
+/*	$NetBSD: cpu.c,v 1.197 2020/08/08 19:08:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2020 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.196 2020/07/28 14:49:55 fcambus Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.197 2020/08/08 19:08:48 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -1450,4 +1450,27 @@ void
 cpu_kick(struct cpu_info *ci)
 {
 	x86_send_ipi(ci, X86_IPI_AST);
+}
+
+int
+x86_cpu_is_lcall(const void *ip)
+{
+        static const uint8_t lcall[] = { 0x9a, 0, 0, 0, 0 };
+	int error;
+        const size_t sz = sizeof(lcall) + 2;
+        uint8_t tmp[sizeof(lcall) + 2];
+
+	if ((error = copyin(ip, tmp, sz)) != 0)
+		return error;
+
+	if (memcmp(tmp, lcall, sizeof(lcall)) != 0 || tmp[sz - 1] != 0)
+		return EINVAL;
+
+	switch (tmp[sz - 2]) {
+        case (uint8_t)0x07: /* NetBSD */
+	case (uint8_t)0x87: /* BSD/OS */
+		return 0;
+	default:
+		return EINVAL;
+        }
 }
