@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.422 2020/08/08 12:43:06 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.423 2020/08/08 13:00:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.422 2020/08/08 12:43:06 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.423 2020/08/08 13:00:07 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.422 2020/08/08 12:43:06 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.423 2020/08/08 13:00:07 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -603,7 +603,7 @@ Var_ExportVars(void)
  * It is also called when any exported variable is modified.
  */
 void
-Var_Export(char *str, int isExport)
+Var_Export(const char *str, int isExport)
 {
     VarExportFlags flags;
     char *val;
@@ -655,19 +655,21 @@ extern char **environ;
  * str must have the form "unexport[-env] varname...".
  */
 void
-Var_UnExport(char *str)
+Var_UnExport(const char *str)
 {
     char tmp[BUFSIZ];
-    char *vlist;
-    char *cp;
+    const char *varnames;
+    char *varnames_freeIt;
     int n;
     Boolean unexport_env;
 
-    vlist = NULL;
+    varnames = NULL;
+    varnames_freeIt = NULL;
 
     str += strlen("unexport");
     unexport_env = strncmp(str, "-env", 4) == 0;
     if (unexport_env) {
+	const char *cp;
 	char **newenv;
 
 	cp = getenv(MAKE_LEVEL_ENV);	/* we should preserve this */
@@ -681,8 +683,7 @@ Var_UnExport(char *str)
 	    }
 	    newenv = bmake_malloc(2 * sizeof(char *));
 	}
-	if (!newenv)
-	    return;
+
 	/* Note: we cannot safely free() the original environ. */
 	environ = savedEnv = newenv;
 	newenv[0] = NULL;
@@ -690,45 +691,50 @@ Var_UnExport(char *str)
 	if (cp && *cp)
 	    setenv(MAKE_LEVEL_ENV, cp, 1);
     } else {
-	for (; *str != '\n' && isspace((unsigned char)*str); str++)
+	for (; isspace((unsigned char)*str); str++)
 	    continue;
-	if (str[0] && str[0] != '\n') {
-	    vlist = str;
-	}
+	if (str[0] != '\0')
+	    varnames = str;
     }
 
-    if (!vlist) {
+    if (varnames == NULL) {
 	/* Using .MAKE.EXPORTED */
-	vlist = Var_Subst("${" MAKE_EXPORTED ":O:u}", VAR_GLOBAL,
-			  VARE_WANTRES);
+	varnames = varnames_freeIt = Var_Subst("${" MAKE_EXPORTED ":O:u}",
+					       VAR_GLOBAL, VARE_WANTRES);
     }
-    if (vlist) {
+
+    if (TRUE) {
 	Var *v;
 	char **av;
 	char *as;
 	int ac;
 	int i;
 
-	av = brk_string(vlist, &ac, FALSE, &as);
+	av = brk_string(varnames, &ac, FALSE, &as);
 	for (i = 0; i < ac; i++) {
 	    v = VarFind(av[i], VAR_GLOBAL, 0);
-	    if (!v)
+	    if (v == NULL) {
+		VAR_DEBUG("Not unexporting \"%s\" (not found)\n", av[i]);
 		continue;
-	    if (!unexport_env &&
-		(v->flags & (VAR_EXPORTED | VAR_REEXPORT)) == VAR_EXPORTED)
+	    }
+
+	    VAR_DEBUG("Unexporting \"%s\"\n", av[i]);
+	    if (!unexport_env && (v->flags & VAR_EXPORTED) &&
+		!(v->flags & VAR_REEXPORT))
 		unsetenv(v->name);
 	    v->flags &= ~(VAR_EXPORTED | VAR_REEXPORT);
+
 	    /*
 	     * If we are unexporting a list,
 	     * remove each one from .MAKE.EXPORTED.
 	     * If we are removing them all,
 	     * just delete .MAKE.EXPORTED below.
 	     */
-	    if (vlist == str) {
+	    if (varnames == str) {
 		n = snprintf(tmp, sizeof(tmp),
 			     "${" MAKE_EXPORTED ":N%s}", v->name);
 		if (n < (int)sizeof(tmp)) {
-		    cp = Var_Subst(tmp, VAR_GLOBAL, VARE_WANTRES);
+		    char *cp = Var_Subst(tmp, VAR_GLOBAL, VARE_WANTRES);
 		    Var_Set(MAKE_EXPORTED, cp, VAR_GLOBAL);
 		    free(cp);
 		}
@@ -736,9 +742,9 @@ Var_UnExport(char *str)
 	}
 	free(as);
 	free(av);
-	if (vlist != str) {
+	if (varnames != str) {
 	    Var_Delete(MAKE_EXPORTED, VAR_GLOBAL);
-	    free(vlist);
+	    free(varnames_freeIt);
 	}
     }
 }
