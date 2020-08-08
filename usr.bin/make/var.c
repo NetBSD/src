@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.420 2020/08/08 12:37:37 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.421 2020/08/08 12:39:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.420 2020/08/08 12:37:37 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.421 2020/08/08 12:39:48 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.420 2020/08/08 12:37:37 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.421 2020/08/08 12:39:48 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -235,6 +235,7 @@ typedef enum {
     VAR_EXPORTED_YES,
     VAR_EXPORTED_ALL
 } VarExportedMode;
+
 static VarExportedMode var_exportedVars = VAR_EXPORTED_NONE;
 
 typedef enum {
@@ -467,13 +468,13 @@ Var_Delete(const char *name, GNode *ctxt)
 
 
 /*
- * Export a variable.
+ * Export a single variable.
  * We ignore make internal variables (those which start with '.')
  * Also we jump through some hoops to avoid calling setenv
  * more than necessary since it can leak.
  * We only manipulate flags of vars if 'parent' is set.
  */
-static int
+static Boolean
 Var_Export1(const char *name, VarExportFlags flags)
 {
     char tmp[BUFSIZ];
@@ -482,7 +483,7 @@ Var_Export1(const char *name, VarExportFlags flags)
     char *val;
 
     if (*name == '.')
-	return 0;		/* skip internals */
+	return FALSE;		/* skip internals */
     if (!name[1]) {
 	/*
 	 * A single char.
@@ -495,16 +496,16 @@ Var_Export1(const char *name, VarExportFlags flags)
 	case '%':
 	case '*':
 	case '!':
-	    return 0;
+	    return FALSE;
 	}
     }
 
     v = VarFind(name, VAR_GLOBAL, 0);
     if (v == NULL)
-	return 0;
+	return FALSE;
 
     if (!parent && (v->flags & VAR_EXPORTED) && !(v->flags & VAR_REEXPORT))
-	return 0;		/* nothing to do */
+	return FALSE;		/* nothing to do */
 
     val = Buf_GetAllZ(&v->val, NULL);
     if (!(flags & VAR_EXPORT_LITERAL) && strchr(val, '$')) {
@@ -517,14 +518,14 @@ Var_Export1(const char *name, VarExportFlags flags)
 	     * the child can do it at the last minute.
 	     */
 	    v->flags |= VAR_EXPORTED | VAR_REEXPORT;
-	    return 1;
+	    return TRUE;
 	}
 	if (v->flags & VAR_IN_USE) {
 	    /*
 	     * We recursed while exporting in a child.
 	     * This isn't going to end well, just skip it.
 	     */
-	    return 0;
+	    return FALSE;
 	}
 	n = snprintf(tmp, sizeof(tmp), "${%s}", name);
 	if (n < (int)sizeof(tmp)) {
@@ -544,7 +545,7 @@ Var_Export1(const char *name, VarExportFlags flags)
     if (parent) {
 	v->flags |= VAR_EXPORTED;
     }
-    return 1;
+    return TRUE;
 }
 
 static void
@@ -647,7 +648,7 @@ Var_Export(char *str, int isExport)
 		}
 	    }
 	    if (Var_Export1(name, flags)) {
-		if (VAR_EXPORTED_ALL != var_exportedVars)
+		if (var_exportedVars != VAR_EXPORTED_ALL)
 		    var_exportedVars = VAR_EXPORTED_YES;
 		if (isExport && (flags & VAR_EXPORT_PARENT)) {
 		    Var_Append(MAKE_EXPORTED, name, VAR_GLOBAL);
