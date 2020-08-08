@@ -1,4 +1,4 @@
-/*	$NetBSD: script.c,v 1.25 2020/08/07 13:36:28 christos Exp $	*/
+/*	$NetBSD: script.c,v 1.26 2020/08/08 16:01:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: script.c,v 1.25 2020/08/07 13:36:28 christos Exp $");
+__RCSID("$NetBSD: script.c,v 1.26 2020/08/08 16:01:35 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -158,16 +158,10 @@ main(int argc, char *argv[])
 
 	if (tcgetattr(STDIN_FILENO, &tt) == -1 ||
 	    ioctl(STDIN_FILENO, TIOCGWINSZ, &win) == -1) {
-		switch (errno) {
-		case ENOTTY:
-			if (openpty(&master, &slave, NULL, NULL, NULL) == -1)
-				err(EXIT_FAILURE, "openpty");
-			break;
-		case EBADF:
-			err(EXIT_FAILURE, "%d not valid fd", STDIN_FILENO);
-		default: /* errno == EFAULT or EINVAL for ioctl. Not reached in practice. */
-			err(EXIT_FAILURE, "ioctl");
-		}
+		if (errno != ENOTTY) /* For debugger. */
+			err(EXIT_FAILURE, "tcgetattr/ioctl");
+		if (openpty(&master, &slave, NULL, NULL, NULL) == -1)
+			err(EXIT_FAILURE, "openpty");
 	} else {
 		if (openpty(&master, &slave, NULL, &tt, &win) == -1)
 			err(EXIT_FAILURE, "openpty");
@@ -383,9 +377,8 @@ termset(void)
 	struct termios traw;
 
 	if (tcgetattr(STDOUT_FILENO, &tt) == -1) {
-		if (errno == EBADF)
-			err(EXIT_FAILURE, "%d not valid fd", STDOUT_FILENO);
-		/* errno == ENOTTY */
+		if (errno != ENOTTY) /* For debugger. */
+			err(EXIT_FAILURE, "tcgetattr");
 		return;
 	}
 	isterm = 1;
