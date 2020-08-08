@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.114 2020/01/10 06:24:17 macallan Exp $
+#	$NetBSD: files.macppc,v 1.115 2020/08/08 22:37:19 macallan Exp $
 #
 # macppc-specific configuration info
 
@@ -290,9 +290,10 @@ file arch/macppc/dev/ki2c.c			ki2c
 defflag opt_ki2c.h	KI2C_DEBUG
 
 # snapper audio
-device snapper: audiobus
+device snapper: audiobus, onewirebus, onewire, onewire_bitbang
 attach snapper at obio
 file arch/macppc/dev/snapper.c			snapper
+defflag opt_snapper.h	SNAPPER_DEBUG
 
 include "arch/powerpc/conf/majors.powerpc"
 

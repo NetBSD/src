@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.54 2020/04/11 01:42:56 macallan Exp $	*/
+/*	$NetBSD: snapper.c,v 1.55 2020/08/08 22:37:19 macallan Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.54 2020/04/11 01:42:56 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.55 2020/08/08 22:37:19 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -49,13 +49,16 @@ __KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.54 2020/04/11 01:42:56 macallan Exp $"
 
 #include <uvm/uvm_extern.h>
 #include <dev/i2c/i2cvar.h>
+#include <dev/onewire/onewirevar.h>
 
 #include <machine/autoconf.h>
 #include <machine/pio.h>
 
 #include <macppc/dev/deqvar.h>
 #include <macppc/dev/obiovar.h>
-//#define SNAPPER_DEBUG
+
+#include "opt_snapper.h"
+
 #ifdef SNAPPER_DEBUG
 # define DPRINTF printf
 #else
@@ -116,6 +119,10 @@ struct snapper_softc {
 
 	kmutex_t sc_lock;
 	kmutex_t sc_intr_lock;
+
+	struct onewire_bus	sc_ow_bus;
+	device_t		sc_ow_dev;
+	int			sc_ow_data;
 };
 
 static int snapper_match(device_t, struct cfdata *, void *);
@@ -154,6 +161,24 @@ static void snapper_mute_headphone(struct snapper_softc *, int);
 static int snapper_cint(void *);
 static int tas3004_init(struct snapper_softc *);
 static void snapper_init(struct snapper_softc *, int);
+
+static void snapper_setup_ow(struct snapper_softc *);
+static int snapper_ow_reset(void *);
+static int snapper_ow_read_bit(void *);
+static void snapper_ow_write_bit(void *, int);
+
+static void snapper_bb_rx(void *);
+static void snapper_bb_tx(void *);
+static int snapper_bb_get(void *);
+static void snapper_bb_set(void *, int);
+
+static const struct onewire_bbops snapper_bbops = {
+	snapper_bb_rx,
+	snapper_bb_tx,
+	snapper_bb_get,
+	snapper_bb_set
+};
+
 
 static void
 snapper_volume(audio_filter_arg_t *arg)
@@ -497,7 +522,8 @@ static bus_size_t amp_mute;
 static bus_size_t headphone_mute;
 static bus_size_t audio_hw_reset;
 static bus_size_t headphone_detect;
-static uint8_t headphone_detect_active = 0;
+static bus_size_t owaddr = -1;
+static uint8_t headphone_detect_active;
 
 
 /* I2S registers */
@@ -2059,7 +2085,7 @@ snapper_init(struct snapper_softc *sc, int node)
 
 	gpio = OF_child(gpio);
 	while (gpio) {
-		char name[64], audio_gpio[64];
+		char name[64], audio_gpio[64], sid[64];
 		int intr[2];
 		bus_size_t addr;
 
@@ -2068,6 +2094,7 @@ snapper_init(struct snapper_softc *sc, int node)
 		addr = 0;
 		OF_getprop(gpio, "name", name, sizeof name);
 		OF_getprop(gpio, "audio-gpio", audio_gpio, sizeof audio_gpio);
+		OF_getprop(gpio, "one-wire-bus", sid, sizeof sid);
 		if (OF_getprop(gpio, "AAPL,address", &addr, sizeof addr) == -1)
 			if (OF_getprop(gpio, "reg", reg, sizeof reg)
 			    == sizeof reg)
@@ -2091,13 +2118,17 @@ snapper_init(struct snapper_softc *sc, int node)
 		/* extint-gpio15 */
 		if (strcmp(audio_gpio, "headphone-detect") == 0 ||
 		    strcmp(name, "headphone-detect") == 0) {
-		    	uint32_t act;
+		    	uint32_t act = 0;
 			headphone_detect = addr;
 			OF_getprop(gpio, "audio-gpio-active-state", &act, 4);
 			headphone_detect_active = act;
 			if (OF_getprop(gpio, "interrupts", intr, 8) == 8) {
 				headphone_detect_intr = intr[0];
 			}
+		}
+		/* extint-gpio16 on Quicksilver */
+		if (strcmp(sid, "speaker-id") == 0) {
+			owaddr = addr;
 		}
 		/* gpio11 (keywest-11) */
 		if (strcmp(audio_gpio, "audio-hw-reset") == 0 ||
@@ -2106,6 +2137,8 @@ snapper_init(struct snapper_softc *sc, int node)
 
 		gpio = OF_peer(gpio);
 	}
+
+	if (owaddr != -1) snapper_setup_ow(sc);
 
 	DPRINTF(" headphone-mute %x\n", headphone_mute);
 	DPRINTF(" amp-mute %x\n", amp_mute);
@@ -2153,4 +2186,75 @@ snapper_init(struct snapper_softc *sc, int node)
 	sc->mixer[4] = 128;
 	sc->mixer[5] = 0;
 	snapper_write_mixers(sc);
+}
+
+static void
+snapper_setup_ow(struct snapper_softc *sc)
+{
+	struct onewirebus_attach_args oba;
+
+	/* Attach 1-Wire bus */
+	sc->sc_ow_bus.bus_cookie = sc;
+	sc->sc_ow_bus.bus_reset = snapper_ow_reset;
+	sc->sc_ow_bus.bus_read_bit = snapper_ow_read_bit;
+	sc->sc_ow_bus.bus_write_bit = snapper_ow_write_bit;
+
+	memset(&oba, 0, sizeof(oba));
+	oba.oba_bus = &sc->sc_ow_bus;
+	sc->sc_ow_dev = config_found(sc->sc_dev, &oba, onewirebus_print);
+
+}
+
+static int
+snapper_ow_reset(void *cookie)
+{
+	return (onewire_bb_reset(&snapper_bbops, cookie));
+}
+
+static int
+snapper_ow_read_bit(void *cookie)
+{
+	return (onewire_bb_read_bit(&snapper_bbops, cookie));
+}
+
+static void
+snapper_ow_write_bit(void *cookie, int bit)
+{
+	onewire_bb_write_bit(&snapper_bbops, cookie, bit);
+}
+
+static void
+snapper_bb_rx(void *cookie)
+{
+	struct snapper_softc *sc = cookie;
+
+	sc->sc_ow_data &= ~GPIO_DDR_OUTPUT;
+	obio_write_1(owaddr, sc->sc_ow_data);
+}
+
+static void
+snapper_bb_tx(void *cookie)
+{
+	struct snapper_softc *sc = cookie;
+
+	sc->sc_ow_data |= GPIO_DDR_OUTPUT;
+	obio_write_1(owaddr, sc->sc_ow_data);
+}
+
+static int snapper_bb_get(void *cookie)
+{
+	int data = (obio_read_1(owaddr) & GPIO_LEVEL) ? 1 : 0;
+	return data;
+}
+
+static void snapper_bb_set(void *cookie, int bit)
+{
+	struct snapper_softc *sc = cookie;
+
+	if (bit) {
+		sc->sc_ow_data |= GPIO_DATA;
+	} else
+		sc->sc_ow_data &= ~GPIO_DATA;
+
+	obio_write_1(owaddr, sc->sc_ow_data);
 }
