@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.421 2020/08/08 12:39:48 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.422 2020/08/08 12:43:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.421 2020/08/08 12:39:48 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.422 2020/08/08 12:43:06 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.421 2020/08/08 12:39:48 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.422 2020/08/08 12:43:06 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -469,7 +469,7 @@ Var_Delete(const char *name, GNode *ctxt)
 
 /*
  * Export a single variable.
- * We ignore make internal variables (those which start with '.')
+ * We ignore make internal variables (those which start with '.').
  * Also we jump through some hoops to avoid calling setenv
  * more than necessary since it can leak.
  * We only manipulate flags of vars if 'parent' is set.
@@ -482,9 +482,9 @@ Var_Export1(const char *name, VarExportFlags flags)
     Var *v;
     char *val;
 
-    if (*name == '.')
+    if (name[0] == '.')
 	return FALSE;		/* skip internals */
-    if (!name[1]) {
+    if (name[1] == '\0') {
 	/*
 	 * A single char.
 	 * If it is one of the vars that should only appear in
@@ -508,7 +508,7 @@ Var_Export1(const char *name, VarExportFlags flags)
 	return FALSE;		/* nothing to do */
 
     val = Buf_GetAllZ(&v->val, NULL);
-    if (!(flags & VAR_EXPORT_LITERAL) && strchr(val, '$')) {
+    if (!(flags & VAR_EXPORT_LITERAL) && strchr(val, '$') != NULL) {
 	int n;
 
 	if (parent) {
@@ -608,7 +608,7 @@ Var_Export(char *str, int isExport)
     VarExportFlags flags;
     char *val;
 
-    if (isExport && (!str || !str[0])) {
+    if (isExport && str[0] == '\0') {
 	var_exportedVars = VAR_EXPORTED_ALL; /* use with caution! */
 	return;
     }
@@ -624,7 +624,7 @@ Var_Export(char *str, int isExport)
     }
 
     val = Var_Subst(str, VAR_GLOBAL, VARE_WANTRES);
-    if (*val) {
+    if (val[0] != '\0') {
 	char *as;
 	int ac;
 	char **av = brk_string(val, &ac, FALSE, &as);
@@ -632,21 +632,6 @@ Var_Export(char *str, int isExport)
 	int i;
 	for (i = 0; i < ac; i++) {
 	    const char *name = av[i];
-	    if (!name[1]) {
-		/*
-		 * A single char.
-		 * If it is one of the vars that should only appear in
-		 * local context, skip it, else we can get Var_Subst
-		 * into a loop.
-		 */
-		switch (name[0]) {
-		case '@':
-		case '%':
-		case '*':
-		case '!':
-		    continue;
-		}
-	    }
 	    if (Var_Export1(name, flags)) {
 		if (var_exportedVars != VAR_EXPORTED_ALL)
 		    var_exportedVars = VAR_EXPORTED_YES;
