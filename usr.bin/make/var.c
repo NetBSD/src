@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.424 2020/08/08 13:03:13 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.425 2020/08/08 13:05:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.424 2020/08/08 13:03:13 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.425 2020/08/08 13:05:24 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.424 2020/08/08 13:03:13 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.425 2020/08/08 13:05:24 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1849,15 +1849,15 @@ VarHash(const char *str)
 }
 
 static char *
-VarStrftime(const char *fmt, int zulu, time_t utc)
+VarStrftime(const char *fmt, Boolean zulu, time_t tim)
 {
     char buf[BUFSIZ];
 
-    if (!utc)
-	time(&utc);
+    if (!tim)
+	time(&tim);
     if (!*fmt)
 	fmt = "%c";
-    strftime(buf, sizeof(buf), fmt, zulu ? gmtime(&utc) : localtime(&utc));
+    strftime(buf, sizeof(buf), fmt, zulu ? gmtime(&tim) : localtime(&tim));
 
     buf[sizeof(buf) - 1] = '\0';
     return bmake_strdup(buf);
@@ -2061,7 +2061,7 @@ ApplyModifier_Gmtime(const char **pp, ApplyModifiersState *st)
 	utc = 0;
 	*pp = mod + 6;
     }
-    st->newVal = VarStrftime(st->val, 1, utc);
+    st->newVal = VarStrftime(st->val, TRUE, utc);
     return AMR_OK;
 }
 
@@ -2083,7 +2083,7 @@ ApplyModifier_Localtime(const char **pp, ApplyModifiersState *st)
 	utc = 0;
 	*pp = mod + 9;
     }
-    st->newVal = VarStrftime(st->val, 0, utc);
+    st->newVal = VarStrftime(st->val, FALSE, utc);
     return AMR_OK;
 }
 
