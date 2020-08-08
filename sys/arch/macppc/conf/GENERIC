@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.369 2020/08/01 08:20:50 maxv Exp $
+# $NetBSD: GENERIC,v 1.370 2020/08/08 22:41:14 macallan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.369 $"
+#ident 		"GENERIC-$Revision: 1.370 $"
 
 maxusers	32
 
@@ -384,6 +384,11 @@ deq* 		at iic?		# mixer/equalizer, used by snapper
 
 wi* 		at obio?	# AirMac
 snapper* 	at obio?	# Snapper audio device
+
+# this is for talking to the onewire-EEPROM hiding in Apple Pro speakers.
+# or other onewire devices you may want to hook up to it
+#onewire* 	at snapper?
+#oweeprom* 	at onewire?
 
 cardslot* at cbb?
 cardbus* at cardslot?
