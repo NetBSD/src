@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_neon_subr.c,v 1.4 2020/07/28 20:11:09 riastradh Exp $	*/
+/*	$NetBSD: aes_neon_subr.c,v 1.5 2020/08/08 14:47:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,9 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_neon_subr.c,v 1.4 2020/07/28 20:11:09 riastradh Exp $");
-
-#include <sys/endian.h>
+__KERNEL_RCSID(1, "$NetBSD: aes_neon_subr.c,v 1.5 2020/08/08 14:47:01 riastradh Exp $");
 
 #ifdef _KERNEL
 #include <sys/systm.h>
@@ -38,6 +36,7 @@ __KERNEL_RCSID(1, "$NetBSD: aes_neon_subr.c,v 1.4 2020/07/28 20:11:09 riastradh 
 #include <assert.h>
 #include <inttypes.h>
 #include <stdio.h>
+#include <string.h>
 #define	KASSERT			assert
 #endif
 
@@ -144,7 +143,8 @@ static inline uint8x16_t
 aes_neon_xts_update(uint8x16_t t8)
 {
 	const int32x4_t zero = vdupq_n_s32(0);
-	const int32x4_t carry = {0x87, 1, 1, 1};
+	/* (0x87,1,1,1) */
+	const uint32x4_t carry = vsetq_lane_u32(0x87, vdupq_n_u32(1), 0);
 	int32x4_t t, t_;
 	uint32x4_t mask;
 
@@ -161,32 +161,36 @@ static int
 aes_neon_xts_update_selftest(void)
 {
 	static const struct {
-		uint32_t in[4], out[4];
+		uint8_t in[16], out[16];
 	} cases[] = {
-		[0] = { {1}, {2} },
-		[1] = { {0x80000000U,0,0,0}, {0,1,0,0} },
-		[2] = { {0,0x80000000U,0,0}, {0,0,1,0} },
-		[3] = { {0,0,0x80000000U,0}, {0,0,0,1} },
-		[4] = { {0,0,0,0x80000000U}, {0x87,0,0,0} },
-		[5] = { {0,0x80000000U,0,0x80000000U}, {0x87,0,1,0} },
+		[0] = { {1,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0},
+			{2,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0} },
+		[1] = { {0,0,0,0x80, 0,0,0,0, 0,0,0,0, 0,0,0,0},
+			{0,0,0,0, 1,0,0,0, 0,0,0,0, 0,0,0,0} },
+		[2] = { {0,0,0,0, 0,0,0,0x80, 0,0,0,0, 0,0,0,0},
+			{0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0} },
+		[3] = { {0,0,0,0, 0,0,0,0, 0,0,0,0x80, 0,0,0,0},
+			{0,0,0,0, 0,0,0,0, 0,0,0,0, 1,0,0,0} },
+		[4] = { {0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0x80},
+			{0x87,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0} },
+		[5] = { {0,0,0,0, 0,0,0,0x80, 0,0,0,0, 0,0,0,0x80},
+			{0x87,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0} },
 	};
 	unsigned i;
-	uint32_t t[4];
+	uint8_t t[16];
 	int result = 0;
 
 	for (i = 0; i < sizeof(cases)/sizeof(cases[0]); i++) {
-		t[0] = cases[i].in[0];
-		t[1] = cases[i].in[1];
-		t[2] = cases[i].in[2];
-		t[3] = cases[i].in[3];
-		storeblock(t, aes_neon_xts_update(loadblock(t)));
-		if (t[0] != cases[i].out[0] ||
-		    t[1] != cases[i].out[1] ||
-		    t[2] != cases[i].out[2] ||
-		    t[3] != cases[i].out[3]) {
-			printf("%s %u:"
-			    " %"PRIx32" %"PRIx32" %"PRIx32" %"PRIx32"\n",
-			    __func__, i, t[0], t[1], t[2], t[3]);
+		storeblock(t, aes_neon_xts_update(loadblock(cases[i].in)));
+		if (memcmp(t, cases[i].out, 16)) {
+			char buf[33];
+			unsigned j;
+
+			for (j = 0; j < 16; j++) {
+				snprintf(buf + 2*j, sizeof(buf) - 2*j,
+				    " %02hhx", t[j]);
+			}
+			printf("%s %u: %s\n", __func__, i, buf);
 			result = -1;
 		}
 	}
@@ -289,22 +293,13 @@ aes_neon_cbcmac_update1(const struct aesenc *enc, const uint8_t in[static 16],
  * function, which should substantially improve CCM throughput.
  */
 
-#if _BYTE_ORDER == _LITTLE_ENDIAN
-#define	vbetoh32q_u8	vrev32q_u8
-#define	vhtobe32q_u8	vrev32q_u8
-#elif _BYTE_ORDER == _BIG_ENDIAN
-#define	vbetoh32q_u8(x)	(x)
-#define	vhtobe32q_u8(x)	(x)
-#else
-#error what kind of endian are you anyway
-#endif
-
 void
 aes_neon_ccm_enc1(const struct aesenc *enc, const uint8_t in[static 16],
     uint8_t out[static 16], size_t nbytes, uint8_t authctr[static 32],
     uint32_t nrounds)
 {
-	const uint32x4_t ctr32_inc = {0, 0, 0, 1};
+	/* (0,0,0,1) */
+	const uint32x4_t ctr32_inc = vsetq_lane_u32(1, vdupq_n_u32(0), 3);
 	uint8x16_t auth, ptxt, ctr_be;
 	uint32x4_t ctr;
 
@@ -313,12 +308,12 @@ aes_neon_ccm_enc1(const struct aesenc *enc, const uint8_t in[static 16],
 
 	auth = loadblock(authctr);
 	ctr_be = loadblock(authctr + 16);
-	ctr = vreinterpretq_u32_u8(vbetoh32q_u8(ctr_be));
+	ctr = vreinterpretq_u32_u8(vrev32q_u8(ctr_be));
 	for (; nbytes; nbytes -= 16, in += 16, out += 16) {
 		uint8x16x2_t b2;
 		ptxt = loadblock(in);
 		ctr = vaddq_u32(ctr, ctr32_inc);
-		ctr_be = vhtobe32q_u8(vreinterpretq_u8_u32(ctr));
+		ctr_be = vrev32q_u8(vreinterpretq_u8_u32(ctr));
 
 		b2.val[0] = auth ^ ptxt;
 		b2.val[1] = ctr_be;
@@ -335,7 +330,8 @@ aes_neon_ccm_dec1(const struct aesenc *enc, const uint8_t in[static 16],
     uint8_t out[static 16], size_t nbytes, uint8_t authctr[static 32],
     uint32_t nrounds)
 {
-	const uint32x4_t ctr32_inc = {0, 0, 0, 1};
+	/* (0,0,0,1) */
+	const uint32x4_t ctr32_inc = vsetq_lane_u32(1, vdupq_n_u32(0), 3);
 	uint8x16_t auth, ctr_be, ptxt, pad;
 	uint32x4_t ctr;
 
@@ -343,9 +339,9 @@ aes_neon_ccm_dec1(const struct aesenc *enc, const uint8_t in[static 16],
 	KASSERT(nbytes % 16 == 0);
 
 	ctr_be = loadblock(authctr + 16);
-	ctr = vreinterpretq_u32_u8(vbetoh32q_u8(ctr_be));
+	ctr = vreinterpretq_u32_u8(vrev32q_u8(ctr_be));
 	ctr = vaddq_u32(ctr, ctr32_inc);
-	ctr_be = vhtobe32q_u8(vreinterpretq_u8_u32(ctr));
+	ctr_be = vrev32q_u8(vreinterpretq_u8_u32(ctr));
 	pad = aes_neon_enc1(enc, ctr_be, nrounds);
 	auth = loadblock(authctr);
 	for (;; in += 16, out += 16) {
@@ -359,7 +355,7 @@ aes_neon_ccm_dec1(const struct aesenc *enc, const uint8_t in[static 16],
 			break;
 
 		ctr = vaddq_u32(ctr, ctr32_inc);
-		ctr_be = vhtobe32q_u8(vreinterpretq_u8_u32(ctr));
+		ctr_be = vrev32q_u8(vreinterpretq_u8_u32(ctr));
 		b2.val[0] = auth;
 		b2.val[1] = ctr_be;
 		b2 = aes_neon_enc2(enc, b2, nrounds);
