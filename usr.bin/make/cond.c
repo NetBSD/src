@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.88 2020/08/03 20:26:09 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.89 2020/08/08 16:31:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.88 2020/08/03 20:26:09 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.89 2020/08/08 16:31:37 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.88 2020/08/03 20:26:09 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.89 2020/08/08 16:31:37 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -145,34 +145,8 @@ typedef enum {
  * Structures to handle elegantly the different forms of #if's. The
  * last two fields are stored in condInvert and condDefProc, respectively.
  */
-static void CondPushBack(Token);
-static int CondGetArg(Boolean, char **, char **, const char *);
-static Boolean CondDoDefined(int, const char *);
-static int CondStrMatch(const void *, const void *);
-static Boolean CondDoMake(int, const char *);
-static Boolean CondDoExists(int, const char *);
-static Boolean CondDoTarget(int, const char *);
-static Boolean CondDoCommands(int, const char *);
-static Boolean CondCvtArg(const char *, double *);
-static Token CondToken(Boolean);
-static Token CondT(Boolean);
-static Token CondF(Boolean);
 static Token CondE(Boolean);
 static CondEvalResult do_Cond_EvalExpression(Boolean *);
-
-static const struct If {
-    const char	*form;	      /* Form of if */
-    int		formlen;      /* Length of form */
-    Boolean	doNot;	      /* TRUE if default function should be negated */
-    Boolean	(*defProc)(int, const char *); /* Default function to apply */
-} ifs[] = {
-    { "def",	  3,	  FALSE,  CondDoDefined },
-    { "ndef",	  4,	  TRUE,	  CondDoDefined },
-    { "make",	  4,	  FALSE,  CondDoMake },
-    { "nmake",	  5,	  TRUE,	  CondDoMake },
-    { "",	  0,	  FALSE,  CondDoDefined },
-    { NULL,	  0,	  FALSE,  NULL }
-};
 
 static const struct If *if_info;        /* Info for current statement */
 static char 	  *condExpr;	    	/* The expression to parse */
@@ -625,7 +599,21 @@ CondGetString(Boolean doEval, Boolean *quoted, void **freeIt, Boolean strictLHS)
     Buf_Destroy(&buf, FALSE);
     return str;
 }
-
+
+static const struct If {
+    const char	*form;	      /* Form of if */
+    int		formlen;      /* Length of form */
+    Boolean	doNot;	      /* TRUE if default function should be negated */
+    Boolean	(*defProc)(int, const char *); /* Default function to apply */
+} ifs[] = {
+    { "def",	  3,	  FALSE,  CondDoDefined },
+    { "ndef",	  4,	  TRUE,	  CondDoDefined },
+    { "make",	  4,	  FALSE,  CondDoMake },
+    { "nmake",	  5,	  TRUE,	  CondDoMake },
+    { "",	  0,	  FALSE,  CondDoDefined },
+    { NULL,	  0,	  FALSE,  NULL }
+};
+
 /*-
  *-----------------------------------------------------------------------
  * CondToken --
@@ -1129,6 +1117,31 @@ CondE(Boolean doEval)
     return l;
 }
 
+static CondEvalResult
+do_Cond_EvalExpression(Boolean *value)
+{
+
+    switch (CondE(TRUE)) {
+    case TOK_TRUE:
+	if (CondToken(TRUE) == TOK_EOF) {
+	    *value = TRUE;
+	    return COND_PARSE;
+	}
+	break;
+    case TOK_FALSE:
+	if (CondToken(TRUE) == TOK_EOF) {
+	    *value = FALSE;
+	    return COND_PARSE;
+	}
+	break;
+    default:
+    case TOK_ERROR:
+	break;
+    }
+
+    return COND_INVALID;
+}
+
 /*-
  *-----------------------------------------------------------------------
  * Cond_EvalExpression --
@@ -1184,31 +1197,6 @@ Cond_EvalExpression(const struct If *info, char *line, Boolean *value, int eprin
     condPushBack = sv_condPushBack;
 
     return rval;
-}
-
-static CondEvalResult
-do_Cond_EvalExpression(Boolean *value)
-{
-
-    switch (CondE(TRUE)) {
-    case TOK_TRUE:
-	if (CondToken(TRUE) == TOK_EOF) {
-	    *value = TRUE;
-	    return COND_PARSE;
-	}
-	break;
-    case TOK_FALSE:
-	if (CondToken(TRUE) == TOK_EOF) {
-	    *value = FALSE;
-	    return COND_PARSE;
-	}
-	break;
-    default:
-    case TOK_ERROR:
-	break;
-    }
-
-    return COND_INVALID;
 }
 
 
