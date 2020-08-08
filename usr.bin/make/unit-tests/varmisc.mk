@@ -1,4 +1,4 @@
-# $Id: varmisc.mk,v 1.20 2020/07/30 13:50:27 rillig Exp $
+# $Id: varmisc.mk,v 1.21 2020/08/08 14:59:59 rillig Exp $
 #
 # Miscellaneous variable tests.
 
@@ -192,7 +192,7 @@ parse-dynamic:
 	@echo $@: ${GL_TARGET} ${GL_MEMBER} ${GL_PREFIX} ${GL_ARCHIVE} ${GL_ALLSRC}
 
 # Since 2020-07-28, make complains about unclosed variables.
-# Before that, it had not complained about unclosed variables only when
+# Before that, it had complained about unclosed variables only when
 # parsing the modifiers, but not when parsing the variable name.
 
 UNCLOSED_INDIR_1=	${UNCLOSED_ORIG
