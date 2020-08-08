@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.429 2020/08/08 13:31:24 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.430 2020/08/08 13:50:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.429 2020/08/08 13:31:24 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.430 2020/08/08 13:50:23 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.429 2020/08/08 13:31:24 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.430 2020/08/08 13:50:23 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -131,6 +131,7 @@ __RCSID("$NetBSD: var.c,v 1.429 2020/08/08 13:31:24 rillig Exp $");
 #include    <stdlib.h>
 #include    <time.h>
 
+#include    "enum.h"
 #include    "make.h"
 #include    "buf.h"
 #include    "dir.h"
@@ -144,6 +145,11 @@ __RCSID("$NetBSD: var.c,v 1.429 2020/08/08 13:31:24 rillig Exp $");
 	fprintf(debug_file, fmt, __VA_ARGS__)
 
 #define VAR_DEBUG(fmt, ...) VAR_DEBUG_IF(TRUE, fmt, __VA_ARGS__)
+
+ENUM_RTTI_3(VarEvalFlags,
+	   VARE_UNDEFERR,
+	   VARE_WANTRES,
+	   VARE_ASSIGN);
 
 /*
  * This lets us tell if we have replaced the original environ
@@ -217,6 +223,15 @@ typedef enum {
 				 * This would be true if it contains $'s */
     VAR_FROM_CMD	= 0x40	/* Variable came from command line */
 } VarFlags;
+
+ENUM_RTTI_7(VarFlags,
+	   VAR_IN_USE,
+	   VAR_FROM_ENV,
+	   VAR_JUNK,
+	   VAR_KEEP,
+	   VAR_EXPORTED,
+	   VAR_REEXPORT,
+	   VAR_FROM_CMD);
 
 typedef struct Var {
     char          *name;	/* the variable's name; it is allocated for
@@ -3019,10 +3034,27 @@ ApplyModifiers(
 	    continue;
 	}
     apply_mods:
-	VAR_DEBUG("Applying[%s] :%c to \"%s\"\n", st.v->name, *p, st.val);
 	st.newVal = var_Error;	/* default value, in case of errors */
 	res = AMR_BAD;		/* just a safe fallback */
 	mod = p;
+
+	if (DEBUG(VAR)) {
+	    char vflags_str[VarFlags_ToStringSize];
+	    char eflags_str[VarEvalFlags_ToStringSize];
+	    Boolean is_single_char = mod[0] != '\0' &&
+	        (mod[1] == endc || mod[1] == ':');
+
+	    /* At this point, only the first character of the modifier can
+	     * be used since the end of the modifier is not yet known. */
+	    VAR_DEBUG("Applying ${%s:%c%s} to \"%s\" "
+		      "(eflags = %s, vflags = %s)\n",
+		      st.v->name, mod[0], is_single_char ? "" : "...", st.val,
+		      Enum_ToString(eflags_str, sizeof eflags_str, st.eflags,
+				    VarEvalFlags_ToStringSpecs),
+		      Enum_ToString(vflags_str, sizeof vflags_str, st.v->flags,
+				    VarFlags_ToStringSpecs));
+	}
+
 	switch (*mod) {
 	case ':':
 	    res = ApplyModifier_Assign(&p, &st);
@@ -3177,7 +3209,18 @@ ApplyModifiers(
 	if (res == AMR_BAD)
 	    goto bad_modifier;
 
-	VAR_DEBUG("Result[%s] of :%c is \"%s\"\n", st.v->name, *mod, st.newVal);
+	if (DEBUG(VAR)) {
+	    char eflags_str[VarEvalFlags_ToStringSize];
+	    char vflags_str[VarFlags_ToStringSize];
+
+	    VAR_DEBUG("Result of ${%s:%.*s} is \"%s\" "
+		      "(eflags = %s, vflags = %s)\n",
+		      st.v->name, (int)(p - mod), mod, st.newVal,
+		      Enum_ToString(eflags_str, sizeof eflags_str, st.eflags,
+				    VarEvalFlags_ToStringSpecs),
+		      Enum_ToString(vflags_str, sizeof vflags_str, st.v->flags,
+				    VarFlags_ToStringSpecs));
+	}
 
 	if (st.newVal != st.val) {
 	    if (*freePtr) {
