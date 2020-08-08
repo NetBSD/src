@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.90 2020/08/08 16:57:59 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.91 2020/08/08 17:03:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.90 2020/08/08 16:57:59 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.91 2020/08/08 17:03:04 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.90 2020/08/08 16:57:59 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.91 2020/08/08 17:03:04 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -149,7 +149,7 @@ static Token CondE(Boolean);
 static CondEvalResult do_Cond_EvalExpression(Boolean *);
 
 static const struct If *if_info;        /* Info for current statement */
-static char 	  *condExpr;	    	/* The expression to parse */
+static const char *condExpr;	    	/* The expression to parse */
 static Token	  condPushBack=TOK_NONE;	/* Single push-back token used in
 					 * parsing */
 
@@ -188,9 +188,10 @@ CondPushBack(Token t)
  *	*linePtr is updated to point behind the ')' of the function call.
  */
 static int
-CondGetArg(Boolean doEval, char **linePtr, char **argPtr, const char *func)
+CondGetArg(Boolean doEval, const char **linePtr, char **argPtr,
+	   const char *func)
 {
-    char	  *cp;
+    const char	  *cp;
     Buffer	  buf;
     int           paren_depth;
     char          ch;
@@ -396,7 +397,7 @@ CondGetString(Boolean doEval, Boolean *quoted, void **freeIt, Boolean strictLHS)
     const char *str;
     int	len;
     int qt;
-    char *start;
+    const char *start;
 
     Buf_InitZ(&buf, 0);
     str = NULL;
@@ -522,7 +523,7 @@ compare_expression(Boolean doEval)
     Token	t;
     const char	*lhs;
     const char	*rhs;
-    char	*op;
+    const char	*op;
     void	*lhsFree;
     void	*rhsFree;
     Boolean lhsQuoted;
@@ -683,7 +684,8 @@ done:
 }
 
 static int
-get_mpt_arg(Boolean doEval, char **linePtr, char **argPtr, const char *func MAKE_ATTR_UNUSED)
+get_mpt_arg(Boolean doEval, const char **linePtr, char **argPtr,
+	    const char *func MAKE_ATTR_UNUSED)
 {
     /*
      * Use Var_Parse to parse the spec in parens and return
@@ -692,7 +694,7 @@ get_mpt_arg(Boolean doEval, char **linePtr, char **argPtr, const char *func MAKE
     int	    length;
     void    *freeIt;
     const char *val;
-    char    *cp = *linePtr;
+    const char *cp = *linePtr;
 
     /* We do all the work here and return the result as the length */
     *argPtr = NULL;
@@ -734,7 +736,7 @@ compare_function(Boolean doEval)
     static const struct fn_def {
 	const char  *fn_name;
 	int         fn_name_len;
-	int         (*fn_getarg)(Boolean, char **, char **, const char *);
+	int         (*fn_getarg)(Boolean, const char **, char **, const char *);
 	Boolean     (*fn_proc)(int, const char *);
     } fn_defs[] = {
 	{ "defined",   7, CondGetArg, CondDoDefined },
@@ -749,15 +751,15 @@ compare_function(Boolean doEval)
     Token	t;
     char	*arg = NULL;
     int	arglen;
-    char *cp = condExpr;
-    char *cp1;
+    const char *cp = condExpr;
+    const char *cp1;
 
     for (fn_def = fn_defs; fn_def->fn_name != NULL; fn_def++) {
 	if (!istoken(cp, fn_def->fn_name, fn_def->fn_name_len))
 	    continue;
 	cp += fn_def->fn_name_len;
 	/* There can only be whitespace before the '(' */
-	while (isspace(*(unsigned char *)cp))
+	while (isspace((unsigned char)*cp))
 	    cp++;
 	if (*cp != '(')
 	    break;
@@ -788,7 +790,7 @@ compare_function(Boolean doEval)
      * expression.
      */
     arglen = CondGetArg(doEval, &cp, &arg, NULL);
-    for (cp1 = cp; isspace(*(unsigned char *)cp1); cp1++)
+    for (cp1 = cp; isspace((unsigned char)*cp1); cp1++)
 	continue;
     if (*cp1 == '=' || *cp1 == '!')
 	return compare_expression(doEval);
@@ -1053,7 +1055,7 @@ Cond_EvalExpression(const struct If *info, char *line, Boolean *value, int eprin
 {
     static const struct If *dflt_info;
     const struct If *sv_if_info = if_info;
-    char *sv_condExpr = condExpr;
+    const char *sv_condExpr = condExpr;
     Token sv_condPushBack = condPushBack;
     int rval;
 
