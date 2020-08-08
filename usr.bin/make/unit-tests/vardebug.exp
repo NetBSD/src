@@ -40,6 +40,21 @@ Applying[VAR] :Q to "1 2 3"
 QuoteMeta: [1\ 2\ 3]
 Result[VAR] of :Q is "1\ 2\ 3"
 Applying[] :U to ""
+Result[] of :U is "value"
+Applying[] :U to ""
+Result[] of :U is "M*e"
+Got 'M*e' from '${:UM*e}':Mvalu[e
+Applying[] :M to "value"
+Pattern[] for [value] is [*e]
+ModifyWords: split "value" into 1 words
+VarMatch [value] [*e]
+Result[] of :M is "value"
+Applying[] :M to "value"
+Pattern[] for [value] is [valu[e]]
+ModifyWords: split "value" into 1 words
+VarMatch [value] [valu[e]]
+Result[] of :M is "value"
+Applying[] :U to ""
 Result[] of :U is "VAR"
 Global:delete VAR
 Global:RELEVANT = no
