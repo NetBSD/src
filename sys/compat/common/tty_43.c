@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_43.c,v 1.36 2020/05/23 23:42:41 ad Exp $	*/
+/*	$NetBSD: tty_43.c,v 1.37 2020/08/08 19:04:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.36 2020/05/23 23:42:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.37 2020/08/08 19:04:58 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -250,8 +250,8 @@ compat_43_ttioctl(struct tty *tp, u_long com, void *data, int flag,
 
 	case OTIOCGETD:
 		mutex_spin_enter(&tty_lock);
-		*(int *)data = (tp->t_linesw == NULL) ?
-		    2 /* XXX old NTTYDISC */ : tp->t_linesw->l_no;
+		*(int *)data = (tp->t_linesw == NULL || tp->t_linesw->l_no == 0)
+		    ? 2 /* XXX old NTTYDISC */ : tp->t_linesw->l_no;
 		mutex_spin_exit(&tty_lock);
 		break;
 
