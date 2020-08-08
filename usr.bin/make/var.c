@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.418 2020/08/08 12:32:26 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.419 2020/08/08 12:35:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.418 2020/08/08 12:32:26 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.419 2020/08/08 12:35:15 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.418 2020/08/08 12:32:26 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.419 2020/08/08 12:35:15 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2956,72 +2956,7 @@ ApplyModifier_SysV(const char **pp, ApplyModifiersState *st)
 }
 #endif
 
-/*
- * Now we need to apply any modifiers the user wants applied.
- * These are:
- *  	  :M<pattern>	words which match the given <pattern>.
- *  			<pattern> is of the standard file
- *  			wildcarding form.
- *  	  :N<pattern>	words which do not match the given <pattern>.
- *  	  :S<d><pat1><d><pat2><d>[1gW]
- *  			Substitute <pat2> for <pat1> in the value
- *  	  :C<d><pat1><d><pat2><d>[1gW]
- *  			Substitute <pat2> for regex <pat1> in the value
- *  	  :H		Substitute the head of each word
- *  	  :T		Substitute the tail of each word
- *  	  :E		Substitute the extension (minus '.') of
- *  			each word
- *  	  :R		Substitute the root of each word
- *  			(pathname minus the suffix).
- *	  :O		("Order") Alphabeticaly sort words in variable.
- *	  :Ox		("intermiX") Randomize words in variable.
- *	  :u		("uniq") Remove adjacent duplicate words.
- *	  :tu		Converts the variable contents to uppercase.
- *	  :tl		Converts the variable contents to lowercase.
- *	  :ts[c]	Sets varSpace - the char used to
- *			separate words to 'c'. If 'c' is
- *			omitted then no separation is used.
- *	  :tW		Treat the variable contents as a single
- *			word, even if it contains spaces.
- *			(Mnemonic: one big 'W'ord.)
- *	  :tw		Treat the variable contents as multiple
- *			space-separated words.
- *			(Mnemonic: many small 'w'ords.)
- *	  :[index]	Select a single word from the value.
- *	  :[start..end]	Select multiple words from the value.
- *	  :[*] or :[0]	Select the entire value, as a single
- *			word.  Equivalent to :tW.
- *	  :[@]		Select the entire value, as multiple
- *			words.	Undoes the effect of :[*].
- *			Equivalent to :tw.
- *	  :[#]		Returns the number of words in the value.
- *
- *	  :?<true-value>:<false-value>
- *			If the variable evaluates to true, return
- *			true-value, else return false-value.
- *    	  :lhs=rhs  	Similar to :S, but the rhs goes to the end of
- *    			the invocation, including any ':'.
- *	  :sh		Treat the current value as a command
- *			to be run, new value is its output.
- * The following added so we can handle ODE makefiles.
- *	  :@<tmpvar>@<newval>@
- *			Assign a temporary global variable <tmpvar>
- *			to the current value of each word in turn
- *			and replace each word with the result of
- *			evaluating <newval>
- *	  :D<newval>	Use <newval> as value if variable defined
- *	  :U<newval>	Use <newval> as value if variable undefined
- *	  :L		Use the name of the variable as the value.
- *	  :P		Use the path of the node that has the same
- *			name as the variable as the value.  This
- *			basically includes an implied :L so that
- *			the common method of refering to the path
- *			of your dependent 'x' in a rule is to use
- *			the form '${x:P}'.
- *	  :!<cmd>!	Run cmd much the same as :sh runs the
- *			current value of the variable.
- * Assignment operators (see ApplyModifier_Assign).
- */
+/* Apply any modifiers (such as :Mpattern or :@var@loop@ or :Q or ::=value). */
 static char *
 ApplyModifiers(
     const char **pp,		/* the parsing position, updated upon return */
