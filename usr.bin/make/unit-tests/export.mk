@@ -1,11 +1,11 @@
-# $Id: export.mk,v 1.4 2020/07/28 18:53:07 sjg Exp $
+# $Id: export.mk,v 1.5 2020/08/08 13:00:07 rillig Exp $
 
 UT_TEST=export
 UT_FOO=foo${BAR}
 UT_FU=fubar
 UT_ZOO=hoopie
 UT_NO=all
-# belive it or not, we expect this one to come out with $UT_FU unexpanded.
+# believe it or not, we expect this one to come out with $UT_FU unexpanded.
 UT_DOLLAR= This is $$UT_FU
 
 .export UT_FU UT_FOO

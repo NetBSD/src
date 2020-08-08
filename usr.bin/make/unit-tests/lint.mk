@@ -1,4 +1,4 @@
-# $NetBSD: lint.mk,v 1.1 2020/08/03 15:43:32 rillig Exp $
+# $NetBSD: lint.mk,v 1.2 2020/08/08 13:00:07 rillig Exp $
 #
 # Demonstrates stricter checks that are only enabled in the lint mode,
 # using the -dL option.
