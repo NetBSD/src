@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.61 2020/08/03 20:26:09 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.62 2020/08/08 18:54:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.61 2020/08/03 20:26:09 rillig Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.62 2020/08/08 18:54:04 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.61 2020/08/03 20:26:09 rillig Exp $");
+__RCSID("$NetBSD: for.c,v 1.62 2020/08/08 18:54:04 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -270,7 +270,7 @@ For_Eval(char *line)
 	}
     }
 
-    Buf_InitZ(&new_for->buf, 0);
+    Buf_Init(&new_for->buf, 0);
     accumFor = new_for;
     forLevel = 1;
     return 1;
@@ -364,7 +364,7 @@ for_substitute(Buffer *cmds, strlist_t *items, unsigned int item_no, char ech)
 	if (ch == '$') {
 	    size_t len = for_var_len(item);
 	    if (len != 0) {
-		Buf_AddBytesZ(cmds, item - 1, len + 1);
+		Buf_AddBytes(cmds, item - 1, len + 1);
 		item += len;
 		continue;
 	    }
@@ -409,9 +409,9 @@ For_Iterate(void *v_arg, size_t *ret_len)
      * to contrive a makefile where an unwanted substitution happens.
      */
 
-    cmd_cp = Buf_GetAllZ(&arg->buf, &cmd_len);
+    cmd_cp = Buf_GetAll(&arg->buf, &cmd_len);
     body_end = cmd_cp + cmd_len;
-    Buf_InitZ(&cmds, cmd_len + 256);
+    Buf_Init(&cmds, cmd_len + 256);
     for (cp = cmd_cp; (cp = strchr(cp, '$')) != NULL;) {
 	char ech;
 	ch = *++cp;
