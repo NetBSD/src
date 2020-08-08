@@ -1,4 +1,4 @@
-# $NetBSD: vardebug.mk,v 1.1 2020/07/25 21:19:29 rillig Exp $
+# $NetBSD: vardebug.mk,v 1.2 2020/08/08 12:22:10 rillig Exp $
 #
 # Demonstrates the debugging output for var.c.
 
@@ -31,6 +31,10 @@ VAR+=		3
 .endif
 
 .if ${VAR:tu:tl:Q}		# ApplyModifiers
+.endif
+
+# ApplyModifiers, "Got ..."
+.if ${:Uvalue:${:UM*e}:Mvalu[e]}
 .endif
 
 .undef ${:UVAR}			# Var_Delete
