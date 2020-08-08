@@ -107,6 +107,9 @@ mod-gmtime:
 2020
 %Y
 %Y
+mod-gmtime-indirect:
+make: Unknown modifier '1'
+
 mod-localtime:
 %Y
 2020
