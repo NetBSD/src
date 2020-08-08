@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.419 2020/08/08 12:35:15 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.420 2020/08/08 12:37:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.419 2020/08/08 12:35:15 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.420 2020/08/08 12:37:37 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.419 2020/08/08 12:35:15 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.420 2020/08/08 12:37:37 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -455,7 +455,7 @@ Var_Delete(const char *name, GNode *ctxt)
 	Var *v = (Var *)Hash_GetValue(he);
 	if (v->flags & VAR_EXPORTED)
 	    unsetenv(v->name);
-	if (strcmp(MAKE_EXPORTED, v->name) == 0)
+	if (strcmp(v->name, MAKE_EXPORTED) == 0)
 	    var_exportedVars = VAR_EXPORTED_NONE;
 	if (v->name != he->name)
 	    free(v->name);
@@ -572,10 +572,10 @@ Var_ExportVars(void)
     snprintf(tmp, sizeof(tmp), "%d", makelevel + 1);
     setenv(MAKE_LEVEL_ENV, tmp, 1);
 
-    if (VAR_EXPORTED_NONE == var_exportedVars)
+    if (var_exportedVars == VAR_EXPORTED_NONE)
 	return;
 
-    if (VAR_EXPORTED_ALL == var_exportedVars) {
+    if (var_exportedVars == VAR_EXPORTED_ALL) {
 	/* Ouch! This is crazy... */
 	Hash_ForEach(&VAR_GLOBAL->context, Var_ExportVars_callback, NULL);
 	return;
