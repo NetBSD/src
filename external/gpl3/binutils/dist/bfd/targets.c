@@ -727,6 +727,7 @@ extern const bfd_target hppa_som_vec;
 extern const bfd_target i386_aout_vec;
 extern const bfd_target i386_aout_bsd_vec;
 extern const bfd_target i386_aout_lynx_vec;
+extern const bfd_target i386_aout_nbsd_vec;
 extern const bfd_target i386_coff_vec;
 extern const bfd_target i386_coff_go32_vec;
 extern const bfd_target i386_coff_go32stubbed_vec;
