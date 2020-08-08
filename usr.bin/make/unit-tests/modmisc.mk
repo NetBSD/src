@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.35 2020/08/08 13:03:13 rillig Exp $
+# $Id: modmisc.mk,v 1.36 2020/08/08 13:09:55 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -30,6 +30,7 @@ all:	mod-quote
 all:	mod-break-many-words
 all:	mod-remember
 all:	mod-gmtime
+all:	mod-gmtime-indirect
 all:	mod-localtime
 all:	mod-hash
 all:	mod-range
@@ -294,6 +295,16 @@ mod-gmtime:
 	@echo ${%Y:L:gmtime=1593536400}		# 2020-07-01T00:00:00Z
 	@echo ${%Y:L:gmtimer=1593536400}	# modifier name too long
 	@echo ${%Y:L:gm=gm:M*}
+
+mod-gmtime-indirect:
+	@echo $@:
+	# It's not possible to pass the seconds via a variable expression.
+	# Parsing of the :gmtime modifier stops at the '$' and returns to
+	# ApplyModifiers.  There, a colon would be skipped but not a dollar.
+	# Parsing continues by looking at the next modifier.  Now the ${:U}
+	# is expanded and interpreted as a variable modifier, which results
+	# in the error message "Unknown modifier '1'".
+	@echo ${%Y:L:gmtime=${:U1593536400}}
 
 mod-localtime:
 	@echo $@:
