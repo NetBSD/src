@@ -1,4 +1,4 @@
-/*	$NetBSD: chacha_neon.c,v 1.7 2020/07/28 20:08:48 riastradh Exp $	*/
+/*	$NetBSD: chacha_neon.c,v 1.8 2020/08/08 14:47:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,42 +30,18 @@
 #include <sys/endian.h>
 
 #include "arm_neon.h"
+#include "arm_neon_imm.h"
 #include "chacha_neon.h"
 
-static inline uint32x4_t
-vrolq_n_u32(uint32x4_t x, uint8_t n)
-{
-
-	/*
-	 * Tempting to use VSHL/VSRI instead of VSHL/VSHR/VORR, but in
-	 * practice it hurts performance at least on Cortex-A8.
-	 */
+/*
+ * Tempting to use VSHL/VSRI instead of VSHL/VSHR/VORR, but in practice
+ * it hurts performance at least on Cortex-A8.
+ */
 #if 1
-	return vshlq_n_u32(x, n) | vshrq_n_u32(x, 32 - n);
+#define	vrolq_n_u32(x, n)	(vshlq_n_u32(x, n) | vshrq_n_u32(x, 32 - (n)))
 #else
-	return vsriq_n_u32(vshlq_n_u32(x, n), x, 32 - n);
+#define	vrolq_n_u32(x, n)	vsriq_n_u32(vshlq_n_u32(x, n), x, 32 - (n))
 #endif
-}
-
-static inline uint32x4_t
-vhtole_u32(uint32x4_t x)
-{
-#if _BYTE_ORDER == _LITTLE_ENDIAN
-	return x;
-#elif _BYTE_ORDER == _BIG_ENDIAN
-	return vreinterpretq_u32_u8(vrev32q_u8(vreinterpretq_u8_u32(x)));
-#endif
-}
-
-static inline uint32x4_t
-vletoh_u32(uint32x4_t x)
-{
-#if _BYTE_ORDER == _LITTLE_ENDIAN
-	return x;
-#elif _BYTE_ORDER == _BIG_ENDIAN
-	return vreinterpretq_u32_u8(vrev32q_u8(vreinterpretq_u8_u32(x)));
-#endif
-}
 
 static inline uint32x4_t
 rol16(uint32x4_t x)
@@ -88,10 +64,10 @@ static inline uint32x4_t
 rol8(uint32x4_t x)
 {
 #if defined(__aarch64__)
-	static const uint8x16_t rol8_tab = {
+	static const uint8x16_t rol8_tab = VQ_N_U8(
 		  3, 0, 1, 2,  7, 4, 5, 6,
-		 11, 8, 9,10, 15,12,13,14,
-	};
+		 11, 8, 9,10, 15,12,13,14
+	);
 	uint8x16_t y8, x8 = vreinterpretq_u8_u32(x);
 
 	y8 = vqtbl1q_u8(x8, rol8_tab);
@@ -106,9 +82,9 @@ rol8(uint32x4_t x)
 	 * loops, but it doesn't and so attempting to use VTBL hurts
 	 * more than it helps.
 	 */
-	static const uint8x8_t rol8_tab = {
-		 3, 0, 1, 2,  7, 4, 5, 6,
-	};
+	static const uint8x8_t rol8_tab = V_N_U8(
+		 3, 0, 1, 2,  7, 4, 5, 6
+	);
 
 	uint64x2_t y64, x64 = vreinterpretq_u64_u32(x);
 
@@ -180,17 +156,17 @@ chacha_core_neon(uint8_t out[restrict static 64],
 	uint32x4_t in0, in1, in2, in3;
 	uint32x4_t r0, r1, r2, r3;
 
-	r0 = in0 = vletoh_u32(vld1q_u32((const uint32_t *)c));
-	r1 = in1 = vletoh_u32(vld1q_u32((const uint32_t *)k));
-	r2 = in2 = vletoh_u32(vld1q_u32((const uint32_t *)k + 4));
-	r3 = in3 = vletoh_u32(vld1q_u32((const uint32_t *)in));
+	r0 = in0 = vreinterpretq_u32_u8(vld1q_u8(c));
+	r1 = in1 = vreinterpretq_u32_u8(vld1q_u8(k + 0));
+	r2 = in2 = vreinterpretq_u32_u8(vld1q_u8(k + 16));
+	r3 = in3 = vreinterpretq_u32_u8(vld1q_u8(in));
 
 	chacha_permute(&r0, &r1, &r2, &r3, nr);
 
-	vst1q_u32((uint32_t *)out + 0, vhtole_u32(vaddq_u32(r0, in0)));
-	vst1q_u32((uint32_t *)out + 4, vhtole_u32(vaddq_u32(r1, in1)));
-	vst1q_u32((uint32_t *)out + 8, vhtole_u32(vaddq_u32(r2, in2)));
-	vst1q_u32((uint32_t *)out + 12, vhtole_u32(vaddq_u32(r3, in3)));
+	vst1q_u8(out + 0, vreinterpretq_u8_u32(vaddq_u32(r0, in0)));
+	vst1q_u8(out + 16, vreinterpretq_u8_u32(vaddq_u32(r1, in1)));
+	vst1q_u8(out + 32, vreinterpretq_u8_u32(vaddq_u32(r2, in2)));
+	vst1q_u8(out + 48, vreinterpretq_u8_u32(vaddq_u32(r3, in3)));
 }
 
 void
@@ -202,15 +178,15 @@ hchacha_neon(uint8_t out[restrict static 32],
 {
 	uint32x4_t r0, r1, r2, r3;
 
-	r0 = vletoh_u32(vld1q_u32((const uint32_t *)c));
-	r1 = vletoh_u32(vld1q_u32((const uint32_t *)k));
-	r2 = vletoh_u32(vld1q_u32((const uint32_t *)k + 4));
-	r3 = vletoh_u32(vld1q_u32((const uint32_t *)in));
+	r0 = vreinterpretq_u32_u8(vld1q_u8(c));
+	r1 = vreinterpretq_u32_u8(vld1q_u8(k + 0));
+	r2 = vreinterpretq_u32_u8(vld1q_u8(k + 16));
+	r3 = vreinterpretq_u32_u8(vld1q_u8(in));
 
 	chacha_permute(&r0, &r1, &r2, &r3, nr);
 
-	vst1q_u32((uint32_t *)out + 0, r0);
-	vst1q_u32((uint32_t *)out + 4, r3);
+	vst1q_u8(out + 0, vreinterpretq_u8_u32(r0));
+	vst1q_u8(out + 16, vreinterpretq_u8_u32(r3));
 }
 
 void
@@ -225,19 +201,20 @@ chacha_stream_neon(uint8_t *restrict s, size_t n,
 		chacha_stream256_neon(s, blkno, nonce, k, chacha_const32, nr);
 
 	if (n) {
-		const uint32x4_t blkno_inc = {1,0,0,0};
+		const uint32x4_t blkno_inc = /* (1,0,0,0) */
+		    vsetq_lane_u32(1, vdupq_n_u32(0), 0);
 		uint32x4_t in0, in1, in2, in3;
 		uint32x4_t r0, r1, r2, r3;
 
-		in0 = vletoh_u32(vld1q_u32((const uint32_t *)chacha_const32));
-		in1 = vletoh_u32(vld1q_u32((const uint32_t *)k));
-		in2 = vletoh_u32(vld1q_u32((const uint32_t *)k + 4));
-		in3 = (uint32x4_t) {
+		in0 = vreinterpretq_u32_u8(vld1q_u8(chacha_const32));
+		in1 = vreinterpretq_u32_u8(vld1q_u8(k + 0));
+		in2 = vreinterpretq_u32_u8(vld1q_u8(k + 16));
+		in3 = (uint32x4_t) VQ_N_U32(
 			blkno,
 			le32dec(nonce),
 			le32dec(nonce + 4),
 			le32dec(nonce + 8)
-		};
+		);
 
 		for (; n; s += 64, n -= 64) {
 			r0 = in0;
@@ -245,27 +222,27 @@ chacha_stream_neon(uint8_t *restrict s, size_t n,
 			r2 = in2;
 			r3 = in3;
 			chacha_permute(&r0, &r1, &r2, &r3, nr);
-			r0 = vhtole_u32(vaddq_u32(r0, in0));
-			r1 = vhtole_u32(vaddq_u32(r1, in1));
-			r2 = vhtole_u32(vaddq_u32(r2, in2));
-			r3 = vhtole_u32(vaddq_u32(r3, in3));
+			r0 = vaddq_u32(r0, in0);
+			r1 = vaddq_u32(r1, in1);
+			r2 = vaddq_u32(r2, in2);
+			r3 = vaddq_u32(r3, in3);
 
 			if (n < 64) {
 				uint8_t buf[64] __aligned(16);
 
-				vst1q_u32((uint32_t *)buf + 4*0, r0);
-				vst1q_u32((uint32_t *)buf + 4*1, r1);
-				vst1q_u32((uint32_t *)buf + 4*2, r2);
-				vst1q_u32((uint32_t *)buf + 4*3, r3);
+				vst1q_u8(buf + 0, vreinterpretq_u8_u32(r0));
+				vst1q_u8(buf + 16, vreinterpretq_u8_u32(r1));
+				vst1q_u8(buf + 32, vreinterpretq_u8_u32(r2));
+				vst1q_u8(buf + 48, vreinterpretq_u8_u32(r3));
 				memcpy(s, buf, n);
 
 				break;
 			}
 
-			vst1q_u32((uint32_t *)s + 4*0, r0);
-			vst1q_u32((uint32_t *)s + 4*1, r1);
-			vst1q_u32((uint32_t *)s + 4*2, r2);
-			vst1q_u32((uint32_t *)s + 4*3, r3);
+			vst1q_u8(s + 0, vreinterpretq_u8_u32(r0));
+			vst1q_u8(s + 16, vreinterpretq_u8_u32(r1));
+			vst1q_u8(s + 32, vreinterpretq_u8_u32(r2));
+			vst1q_u8(s + 48, vreinterpretq_u8_u32(r3));
 			in3 = vaddq_u32(in3, blkno_inc);
 		}
 	}
@@ -284,19 +261,20 @@ chacha_stream_xor_neon(uint8_t *s, const uint8_t *p, size_t n,
 		    chacha_const32, nr);
 
 	if (n) {
-		const uint32x4_t blkno_inc = {1,0,0,0};
+		const uint32x4_t blkno_inc = /* (1,0,0,0) */
+		    vsetq_lane_u32(1, vdupq_n_u32(0), 0);
 		uint32x4_t in0, in1, in2, in3;
 		uint32x4_t r0, r1, r2, r3;
 
-		in0 = vletoh_u32(vld1q_u32((const uint32_t *)chacha_const32));
-		in1 = vletoh_u32(vld1q_u32((const uint32_t *)k));
-		in2 = vletoh_u32(vld1q_u32((const uint32_t *)k + 4));
-		in3 = (uint32x4_t) {
+		in0 = vreinterpretq_u32_u8(vld1q_u8(chacha_const32));
+		in1 = vreinterpretq_u32_u8(vld1q_u8(k + 0));
+		in2 = vreinterpretq_u32_u8(vld1q_u8(k + 16));
+		in3 = (uint32x4_t) VQ_N_U32(
 			blkno,
 			le32dec(nonce),
 			le32dec(nonce + 4),
 			le32dec(nonce + 8)
-		};
+		);
 
 		for (; n; s += 64, p += 64, n -= 64) {
 			r0 = in0;
@@ -304,19 +282,19 @@ chacha_stream_xor_neon(uint8_t *s, const uint8_t *p, size_t n,
 			r2 = in2;
 			r3 = in3;
 			chacha_permute(&r0, &r1, &r2, &r3, nr);
-			r0 = vhtole_u32(vaddq_u32(r0, in0));
-			r1 = vhtole_u32(vaddq_u32(r1, in1));
-			r2 = vhtole_u32(vaddq_u32(r2, in2));
-			r3 = vhtole_u32(vaddq_u32(r3, in3));
+			r0 = vaddq_u32(r0, in0);
+			r1 = vaddq_u32(r1, in1);
+			r2 = vaddq_u32(r2, in2);
+			r3 = vaddq_u32(r3, in3);
 
 			if (n < 64) {
 				uint8_t buf[64] __aligned(16);
 				unsigned i;
 
-				vst1q_u32((uint32_t *)buf + 4*0, r0);
-				vst1q_u32((uint32_t *)buf + 4*1, r1);
-				vst1q_u32((uint32_t *)buf + 4*2, r2);
-				vst1q_u32((uint32_t *)buf + 4*3, r3);
+				vst1q_u8(buf + 0, vreinterpretq_u8_u32(r0));
+				vst1q_u8(buf + 16, vreinterpretq_u8_u32(r1));
+				vst1q_u8(buf + 32, vreinterpretq_u8_u32(r2));
+				vst1q_u8(buf + 48, vreinterpretq_u8_u32(r3));
 
 				for (i = 0; i < n - n%4; i += 4)
 					le32enc(s + i,
@@ -327,14 +305,14 @@ chacha_stream_xor_neon(uint8_t *s, const uint8_t *p, size_t n,
 				break;
 			}
 
-			r0 ^= vld1q_u32((const uint32_t *)p + 4*0);
-			r1 ^= vld1q_u32((const uint32_t *)p + 4*1);
-			r2 ^= vld1q_u32((const uint32_t *)p + 4*2);
-			r3 ^= vld1q_u32((const uint32_t *)p + 4*3);
-			vst1q_u32((uint32_t *)s + 4*0, r0);
-			vst1q_u32((uint32_t *)s + 4*1, r1);
-			vst1q_u32((uint32_t *)s + 4*2, r2);
-			vst1q_u32((uint32_t *)s + 4*3, r3);
+			r0 ^= vreinterpretq_u32_u8(vld1q_u8(p + 0));
+			r1 ^= vreinterpretq_u32_u8(vld1q_u8(p + 16));
+			r2 ^= vreinterpretq_u32_u8(vld1q_u8(p + 32));
+			r3 ^= vreinterpretq_u32_u8(vld1q_u8(p + 48));
+			vst1q_u8(s + 0, vreinterpretq_u8_u32(r0));
+			vst1q_u8(s + 16, vreinterpretq_u8_u32(r1));
+			vst1q_u8(s + 32, vreinterpretq_u8_u32(r2));
+			vst1q_u8(s + 48, vreinterpretq_u8_u32(r3));
 			in3 = vaddq_u32(in3, blkno_inc);
 		}
 	}

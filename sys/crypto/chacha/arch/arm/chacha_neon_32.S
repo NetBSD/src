@@ -1,4 +1,4 @@
-/*	$NetBSD: chacha_neon_32.S,v 1.2 2020/07/29 14:23:59 riastradh Exp $	*/
+/*	$NetBSD: chacha_neon_32.S,v 1.3 2020/08/08 14:47:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: chacha_neon_32.S,v 1.2 2020/07/29 14:23:59 riastradh Exp $")
+RCSID("$NetBSD: chacha_neon_32.S,v 1.3 2020/08/08 14:47:01 riastradh Exp $")
 
 	.fpu	neon
 
@@ -54,7 +54,7 @@ RCSID("$NetBSD: chacha_neon_32.S,v 1.2 2020/07/29 14:23:59 riastradh Exp $")
  */
 
 .macro	ROUNDLD	a0,a1,a2,a3, b0,b1,b2,b3, c0,c1,c2,c3, d0,d1,d2,d3
-	vld1.32		{\c2-\c3}, [fp, :256]
+	vld1.8		{\c2-\c3}, [fp, :256]
 .endm
 
 .macro	ROUND	a0,a1,a2,a3, b0,b1,b2,b3, c0,c1,c2,c3, d0,d1,d2,d3, c0l, d0l,d0h,d1l,d1h,d2l,d2h,d3l,d3h
@@ -80,7 +80,7 @@ RCSID("$NetBSD: chacha_neon_32.S,v 1.2 2020/07/29 14:23:59 riastradh Exp $")
 	vadd.u32	\c2, \c2, \d2
 	vadd.u32	\c3, \c3, \d3
 
-	vst1.32		{\c0-\c1}, [fp, :256]	/* free c0 and c1 as temps */
+	vst1.8		{\c0-\c1}, [fp, :256]	/* free c0 and c1 as temps */
 
 	veor		\c0, \b0, \c0
 	veor		\c1, \b1, \c1
@@ -118,7 +118,7 @@ RCSID("$NetBSD: chacha_neon_32.S,v 1.2 2020/07/29 14:23:59 riastradh Exp $")
 	vtbl.8		\d3l, {\d3l}, \c0l
 	vtbl.8		\d3h, {\d3h}, \c0l
 
-	vld1.32		{\c0-\c1}, [fp, :256]	/* restore c0 and c1 */
+	vld1.8		{\c0-\c1}, [fp, :256]	/* restore c0 and c1 */
 
 	/* c += d; b ^= c; b <<<= 7 */
 	vadd.u32	\c2, \c2, \d2
@@ -126,7 +126,7 @@ RCSID("$NetBSD: chacha_neon_32.S,v 1.2 2020/07/29 14:23:59 riastradh Exp $")
 	vadd.u32	\c0, \c0, \d0
 	vadd.u32	\c1, \c1, \d1
 
-	vst1.32		{\c2-\c3}, [fp, :256]	/* free c2 and c3 as temps */
+	vst1.8		{\c2-\c3}, [fp, :256]	/* free c2 and c3 as temps */
 
 	veor		\c2, \b2, \c2
 	veor		\c3, \b3, \c3
@@ -142,14 +142,6 @@ RCSID("$NetBSD: chacha_neon_32.S,v 1.2 2020/07/29 14:23:59 riastradh Exp $")
 	vsri.u32	\b0, \c2, #(32 - 7)
 	vsri.u32	\b1, \c3, #(32 - 7)
 .endm
-
-#if _BYTE_ORDER == _LITTLE_ENDIAN
-#define	HTOLE32(x)
-#define	LE32TOH(x)
-#elif _BYTE_ORDER == _BIG_ENDIAN
-#define	HTOLE32(x)	vrev32.8	x, x
-#define	LE32TOH(x)	vrev32.8	x, x
-#endif
 
 	.text
 	.p2align 2
@@ -183,9 +175,15 @@ ENTRY(chacha_stream256_neon)
 	ldm	ip, {r4, r5}	/* r4 := const, r5 := nr */
 	ldm	r2, {r6, r8, r10}	/* (r6, r8, r10) := nonce[0:12) */
 
-	vld1.32	{q12}, [r4]	/* q12 := constant */
-	vld1.32	{q13-q14}, [r3]	/* q13-q14 := key */
+	vld1.8	{q12}, [r4]	/* q12 := constant */
+	vld1.8	{q13-q14}, [r3]	/* q13-q14 := key */
 	vld1.32	{q15}, [r7, :128]! /* q15 := (0, 1, 2, 3) (128-bit aligned) */
+
+#ifdef __ARM_BIG_ENDIAN
+	rev	r6, r6
+	rev	r8, r8
+	rev	r10, r10
+#endif
 
 	vdup.32	q0, d24[0]	/* q0-q3 := constant */
 	vdup.32	q1, d24[1]
@@ -204,23 +202,6 @@ ENTRY(chacha_stream256_neon)
 	vdup.32	q13, r6		/* q13-q15 := nonce */
 	vdup.32	q14, r8
 	vdup.32	q15, r10
-
-	HTOLE32(q0)
-	HTOLE32(q1)
-	HTOLE32(q2)
-	HTOLE32(q3)
-	HTOLE32(q4)
-	HTOLE32(q5)
-	HTOLE32(q6)
-	HTOLE32(q7)
-	HTOLE32(q8)
-	HTOLE32(q9)
-	HTOLE32(q10)
-	HTOLE32(q11)
-	HTOLE32(q12)
-	HTOLE32(q13)
-	HTOLE32(q14)
-	HTOLE32(q15)
 
 	b	2f
 
@@ -283,9 +264,9 @@ ENTRY(chacha_stream256_neon)
 	vzip.32	q6, q7
 
 	vadd.u32 q8, q8, q9	/* q8 := (blkno,blkno+1,blkno+2,blkno+3) */
-	vld1.32	{q9}, [r4]	/* q9 := constant */
+	vld1.8	{q9}, [r4]	/* q9 := constant */
 	vadd.u32 q12, q12, q8	/* q12 += (blkno,blkno+1,blkno+2,blkno+3) */
-	vld1.32	{q8}, [r3]!	/* q8 := key[0:16) */
+	vld1.8	{q8}, [r3]!	/* q8 := key[0:16) */
 
 	vswp	d1, d4
 	vswp	d9, d12
@@ -330,19 +311,10 @@ ENTRY(chacha_stream256_neon)
 	vadd.u32 q3, q3, q8
 	vadd.u32 q7, q7, q8
 
-	vld1.32 {q8-q9}, [fp, :256]	/* restore q8-q9 */
+	vld1.8	{q8-q9}, [fp, :256]	/* restore q8-q9 */
 
-	LE32TOH(q0)
-	LE32TOH(q1)
-	LE32TOH(q2)
-	LE32TOH(q3)
-	LE32TOH(q4)
-	LE32TOH(q5)
-	LE32TOH(q6)
-	LE32TOH(q7)
-
-	vst1.32	{q0-q1}, [r0]!
-	vld1.32	{q0}, [r3]	/* q0 := key[16:32) */
+	vst1.8	{q0-q1}, [r0]!
+	vld1.8	{q0}, [r3]	/* q0 := key[16:32) */
 	mov	r3, #0		/* q1 = (0, nonce[0:4), ..., nonce[8:12)) */
 	vmov	d2, r3, r6
 	vmov	d3, r8, r10
@@ -370,23 +342,14 @@ ENTRY(chacha_stream256_neon)
 	vadd.u32 q11, q11, q1
 	vadd.u32 q15, q15, q1
 
-	LE32TOH(q8)
-	LE32TOH(q9)
-	LE32TOH(q10)
-	LE32TOH(q11)
-	LE32TOH(q12)
-	LE32TOH(q13)
-	LE32TOH(q14)
-	LE32TOH(q15)
-
-	/* vst1.32	{q0-q1}, [r0]! */
-	vst1.32	{q8-q9}, [r0]!
-	vst1.32	{q2-q3}, [r0]!
-	vst1.32	{q10-q11}, [r0]!
-	vst1.32	{q4-q5}, [r0]!
-	vst1.32	{q12-q13}, [r0]!
-	vst1.32 {q6-q7}, [r0]!
-	vst1.32 {q14-q15}, [r0]
+	/* vst1.8	{q0-q1}, [r0]! */
+	vst1.8	{q8-q9}, [r0]!
+	vst1.8	{q2-q3}, [r0]!
+	vst1.8	{q10-q11}, [r0]!
+	vst1.8	{q4-q5}, [r0]!
+	vst1.8	{q12-q13}, [r0]!
+	vst1.8	{q6-q7}, [r0]!
+	vst1.8	{q14-q15}, [r0]
 
 	/* zero temporary space on the stack */
 	vmov.i32 q0, #0
@@ -426,9 +389,15 @@ ENTRY(chacha_stream_xor256_neon)
 	ldm	ip, {r4, r5, ip}	/* r4 := key, r5 := const, ip := nr */
 	ldm	r3, {r6, r8, r10}	/* (r6, r8, r10) := nonce[0:12) */
 
-	vld1.32	{q12}, [r5]	/* q12 := constant */
-	vld1.32	{q13-q14}, [r4]	/* q13-q14 := key */
+	vld1.8	{q12}, [r5]	/* q12 := constant */
+	vld1.8	{q13-q14}, [r4]	/* q13-q14 := key */
 	vld1.32	{q15}, [r7, :128]! /* q15 := (0, 1, 2, 3) (128-bit aligned) */
+
+#ifdef __ARM_BIG_ENDIAN
+	rev	r6, r6
+	rev	r8, r8
+	rev	r10, r10
+#endif
 
 	vdup.32	q0, d24[0]	/* q0-q3 := constant */
 	vdup.32	q1, d24[1]
@@ -447,23 +416,6 @@ ENTRY(chacha_stream_xor256_neon)
 	vdup.32	q13, r6		/* q13-q15 := nonce */
 	vdup.32	q14, r8
 	vdup.32	q15, r10
-
-	HTOLE32(q0)
-	HTOLE32(q1)
-	HTOLE32(q2)
-	HTOLE32(q3)
-	HTOLE32(q4)
-	HTOLE32(q5)
-	HTOLE32(q6)
-	HTOLE32(q7)
-	HTOLE32(q8)
-	HTOLE32(q9)
-	HTOLE32(q10)
-	HTOLE32(q11)
-	HTOLE32(q12)
-	HTOLE32(q13)
-	HTOLE32(q14)
-	HTOLE32(q15)
 
 	b	2f
 
@@ -496,9 +448,9 @@ ENTRY(chacha_stream_xor256_neon)
 	vzip.32	q6, q7
 
 	vadd.u32 q8, q8, q9	/* q8 := (blkno,blkno+1,blkno+2,blkno+3) */
-	vld1.32	{q9}, [r5]	/* q9 := constant */
+	vld1.8	{q9}, [r5]	/* q9 := constant */
 	vadd.u32 q12, q12, q8	/* q12 += (blkno,blkno+1,blkno+2,blkno+3) */
-	vld1.32	{q8}, [r4]!	/* q8 := key[0:16) */
+	vld1.8	{q8}, [r4]!	/* q8 := key[0:16) */
 
 	vswp	d3, d6
 	vswp	d9, d12
@@ -518,24 +470,15 @@ ENTRY(chacha_stream_xor256_neon)
 	vadd.u32 q3, q3, q8
 	vadd.u32 q7, q7, q8
 
-	vld1.32 {q8-q9}, [r1]!	/* load plaintext bytes [0:32) */
-
-	LE32TOH(q0)
-	LE32TOH(q1)
-	LE32TOH(q2)
-	LE32TOH(q6)
-	LE32TOH(q4)
-	LE32TOH(q5)
-	LE32TOH(q3)
-	LE32TOH(q7)
+	vld1.8	{q8-q9}, [r1]!	/* load plaintext bytes [0:32) */
 
 	veor	q0, q0, q8	/* compute ciphertext bytes [0:32) */
 	veor	q1, q1, q9
 
-	vld1.32 {q8-q9}, [fp, :256]	/* restore q8-q9 */
+	vld1.8	{q8-q9}, [fp, :256]	/* restore q8-q9 */
 
-	vst1.32	{q0-q1}, [r0]!	/* store ciphertext bytes [0:32) */
-	vld1.32	{q0}, [r4]	/* q0 := key[16:32) */
+	vst1.8	{q0-q1}, [r0]!	/* store ciphertext bytes [0:32) */
+	vld1.8	{q0}, [r4]	/* q0 := key[16:32) */
 	mov	r3, #0		/* q1 = (0, nonce[0:4), ..., nonce[8:12)) */
 	vmov	d2, r3, r6
 	vmov	d3, r8, r10
@@ -563,57 +506,48 @@ ENTRY(chacha_stream_xor256_neon)
 	vadd.u32 q11, q11, q1
 	vadd.u32 q15, q15, q1
 
-	vld1.32	{q0-q1}, [r1]!	/* load plaintext bytes [32:64) */
-
-	LE32TOH(q8)
-	LE32TOH(q9)
-	LE32TOH(q10)
-	LE32TOH(q11)
-	LE32TOH(q12)
-	LE32TOH(q13)
-	LE32TOH(q14)
-	LE32TOH(q15)
+	vld1.8	{q0-q1}, [r1]!	/* load plaintext bytes [32:64) */
 
 	veor	q0, q0, q8	/* compute ciphertext bytes [32:64) */
 	veor	q1, q1, q9
 
-	vld1.32	{q8-q9}, [r1]!	/* load plaintext bytes [64:96) */
-	vst1.32	{q0-q1}, [r0]!	/* store ciphertext bytes [32:64) */
-	vld1.32	{q0-q1}, [r1]!	/* load plaintext bytes [96:128) */
+	vld1.8	{q8-q9}, [r1]!	/* load plaintext bytes [64:96) */
+	vst1.8	{q0-q1}, [r0]!	/* store ciphertext bytes [32:64) */
+	vld1.8	{q0-q1}, [r1]!	/* load plaintext bytes [96:128) */
 
 	veor	q2, q2, q8	/* compute ciphertext bytes [64:96) */
 	veor	q3, q3, q9
 
-	vld1.32	{q8-q9}, [r1]!	/* load plaintext bytes [128:160) */
-	vst1.32	{q2-q3}, [r0]!	/* store ciphertext bytes [64:80) */
+	vld1.8	{q8-q9}, [r1]!	/* load plaintext bytes [128:160) */
+	vst1.8	{q2-q3}, [r0]!	/* store ciphertext bytes [64:80) */
 
 	veor	q10, q10, q0	/* compute ciphertext bytes [96:128) */
 	veor	q11, q11, q1
 
-	vld1.32	{q0-q1}, [r1]!	/* load plaintext bytes [160:192) */
-	vst1.32	{q10-q11}, [r0]!	/* store ciphertext bytes [80:96) */
+	vld1.8	{q0-q1}, [r1]!	/* load plaintext bytes [160:192) */
+	vst1.8	{q10-q11}, [r0]!	/* store ciphertext bytes [80:96) */
 
 	veor	q4, q4, q8	/* compute ciphertext bytes [128:160) */
 	veor	q5, q5, q9
 
-	vld1.32	{q8-q9}, [r1]!	/* load plaintext bytes [192:224) */
-	vst1.32	{q4-q5}, [r0]!	/* store ciphertext bytes [96:112) */
+	vld1.8	{q8-q9}, [r1]!	/* load plaintext bytes [192:224) */
+	vst1.8	{q4-q5}, [r0]!	/* store ciphertext bytes [96:112) */
 
 	veor	q12, q12, q0	/* compute ciphertext bytes [160:192) */
 	veor	q13, q13, q1
 
-	vld1.32	{q0-q1}, [r1]	/* load plaintext bytes [224:256) */
-	vst1.32	{q12-q13}, [r0]!	/* store ciphertext bytes [112:128) */
+	vld1.8	{q0-q1}, [r1]	/* load plaintext bytes [224:256) */
+	vst1.8	{q12-q13}, [r0]!	/* store ciphertext bytes [112:128) */
 
 	veor	q6, q6, q8	/* compute ciphertext bytes [192:224) */
 	veor	q7, q7, q9
 
-	vst1.32	{q6-q7}, [r0]!	/* store ciphertext bytes [192:224) */
+	vst1.8	{q6-q7}, [r0]!	/* store ciphertext bytes [192:224) */
 
 	veor	q14, q14, q0	/* compute ciphertext bytes [224:256) */
 	veor	q15, q15, q1
 
-	vst1.32	{q14-q15}, [r0]	/* store ciphertext bytes [224:256) */
+	vst1.8	{q14-q15}, [r0]	/* store ciphertext bytes [224:256) */
 
 	/* zero temporary space on the stack */
 	vmov.i32 q0, #0
@@ -637,5 +571,5 @@ END(v0123)
 
 	.type	rot8,%object
 rot8:
-	.long	0x02010003, 0x06050407
+	.byte	3,0,1,2, 7,4,5,6
 END(rot8)

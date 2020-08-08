@@ -1,4 +1,4 @@
-/*	$NetBSD: chacha_neon_64.S,v 1.5 2020/07/28 15:42:41 riastradh Exp $	*/
+/*	$NetBSD: chacha_neon_64.S,v 1.6 2020/08/08 14:47:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <aarch64/asm.h>
 
-RCSID("$NetBSD: chacha_neon_64.S,v 1.5 2020/07/28 15:42:41 riastradh Exp $")
+RCSID("$NetBSD: chacha_neon_64.S,v 1.6 2020/08/08 14:47:01 riastradh Exp $")
 
 #define	ROUND(a0,b0,c0,d0,a1,b1,c1,d1,a2,b2,c2,d2,a3,b3,c3,d3,t0,t1,t2,t3, r) \
 STEP(STEP0,a0,b0,c0,d0,a1,b1,c1,d1,a2,b2,c2,d2,a3,b3,c3,d3,t0,t1,t2,t3, r);   \
@@ -169,22 +169,22 @@ ENTRY(chacha_stream256_neon)
 	ld3r	{v13.4s-v15.4s}, [x13]	/* (v13,v14,v15) := nonce */
 	add	v12.4s, v12.4s, v26.4s	/* v12 := blkno + (0,1,2,3) */
 
-	HTOLE32(v0.16b)
-	HTOLE32(v1.16b)
-	HTOLE32(v2.16b)
-	HTOLE32(v3.16b)
-	HTOLE32(v4.16b)
-	HTOLE32(v5.16b)
-	HTOLE32(v6.16b)
-	HTOLE32(v7.16b)
-	HTOLE32(v8.16b)
-	HTOLE32(v9.16b)
-	HTOLE32(v10.16b)
-	HTOLE32(v11.16b)
-	HTOLE32(v12.16b)
-	HTOLE32(v13.16b)
-	HTOLE32(v14.16b)
-	HTOLE32(v15.16b)
+	LE32TOH(v0.16b)
+	LE32TOH(v1.16b)
+	LE32TOH(v2.16b)
+	LE32TOH(v3.16b)
+	LE32TOH(v4.16b)
+	LE32TOH(v5.16b)
+	LE32TOH(v6.16b)
+	LE32TOH(v7.16b)
+	LE32TOH(v8.16b)
+	LE32TOH(v9.16b)
+	LE32TOH(v10.16b)
+	LE32TOH(v11.16b)
+	/* LE32TOH(v12.16b) -- blkno, already host order */
+	LE32TOH(v13.16b)
+	LE32TOH(v14.16b)
+	LE32TOH(v15.16b)
 
 	mov	v16.16b, v0.16b
 	mov	v17.16b, v1.16b
@@ -234,22 +234,22 @@ ENTRY(chacha_stream256_neon)
 	add	v14.4s, v14.4s, v30.4s
 	add	v15.4s, v15.4s, v31.4s
 
-	LE32TOH(v0.16b)
-	LE32TOH(v1.16b)
-	LE32TOH(v2.16b)
-	LE32TOH(v3.16b)
-	LE32TOH(v4.16b)
-	LE32TOH(v5.16b)
-	LE32TOH(v6.16b)
-	LE32TOH(v7.16b)
-	LE32TOH(v8.16b)
-	LE32TOH(v9.16b)
-	LE32TOH(v10.16b)
-	LE32TOH(v11.16b)
-	LE32TOH(v12.16b)
-	LE32TOH(v13.16b)
-	LE32TOH(v14.16b)
-	LE32TOH(v15.16b)
+	HTOLE32(v0.16b)
+	HTOLE32(v1.16b)
+	HTOLE32(v2.16b)
+	HTOLE32(v3.16b)
+	HTOLE32(v4.16b)
+	HTOLE32(v5.16b)
+	HTOLE32(v6.16b)
+	HTOLE32(v7.16b)
+	HTOLE32(v8.16b)
+	HTOLE32(v9.16b)
+	HTOLE32(v10.16b)
+	HTOLE32(v11.16b)
+	HTOLE32(v12.16b)
+	HTOLE32(v13.16b)
+	HTOLE32(v14.16b)
+	HTOLE32(v15.16b)
 
 	st4	{ v0.s, v1.s, v2.s, v3.s}[0], [x0], #16
 	st4	{ v4.s, v5.s, v6.s, v7.s}[0], [x0], #16
@@ -308,22 +308,22 @@ ENTRY(chacha_stream_xor256_neon)
 	ld3r	{v13.4s-v15.4s}, [x13]	/* (v13,v14,v15) := nonce */
 	add	v12.4s, v12.4s, v26.4s	/* v12 := blkno + (0,1,2,3) */
 
-	HTOLE32(v0.16b)
-	HTOLE32(v1.16b)
-	HTOLE32(v2.16b)
-	HTOLE32(v3.16b)
-	HTOLE32(v4.16b)
-	HTOLE32(v5.16b)
-	HTOLE32(v6.16b)
-	HTOLE32(v7.16b)
-	HTOLE32(v8.16b)
-	HTOLE32(v9.16b)
-	HTOLE32(v10.16b)
-	HTOLE32(v11.16b)
-	HTOLE32(v12.16b)
-	HTOLE32(v13.16b)
-	HTOLE32(v14.16b)
-	HTOLE32(v15.16b)
+	LE32TOH(v0.16b)
+	LE32TOH(v1.16b)
+	LE32TOH(v2.16b)
+	LE32TOH(v3.16b)
+	LE32TOH(v4.16b)
+	LE32TOH(v5.16b)
+	LE32TOH(v6.16b)
+	LE32TOH(v7.16b)
+	LE32TOH(v8.16b)
+	LE32TOH(v9.16b)
+	LE32TOH(v10.16b)
+	LE32TOH(v11.16b)
+	/* LE32TOH(v12.16b) -- blkno, already host order */
+	LE32TOH(v13.16b)
+	LE32TOH(v14.16b)
+	LE32TOH(v15.16b)
 
 	mov	v16.16b, v0.16b
 	mov	v17.16b, v1.16b
@@ -401,22 +401,22 @@ ENTRY(chacha_stream_xor256_neon)
 	ld4	{v24.s,v25.s,v26.s,v27.s}[3], [x1], #16
 	ld4	{v28.s,v29.s,v30.s,v31.s}[3], [x1], #16
 
-	LE32TOH(v0.16b)
-	LE32TOH(v1.16b)
-	LE32TOH(v2.16b)
-	LE32TOH(v3.16b)
-	LE32TOH(v4.16b)
-	LE32TOH(v5.16b)
-	LE32TOH(v6.16b)
-	LE32TOH(v7.16b)
-	LE32TOH(v8.16b)
-	LE32TOH(v9.16b)
-	LE32TOH(v10.16b)
-	LE32TOH(v11.16b)
-	LE32TOH(v12.16b)
-	LE32TOH(v13.16b)
-	LE32TOH(v14.16b)
-	LE32TOH(v15.16b)
+	HTOLE32(v0.16b)
+	HTOLE32(v1.16b)
+	HTOLE32(v2.16b)
+	HTOLE32(v3.16b)
+	HTOLE32(v4.16b)
+	HTOLE32(v5.16b)
+	HTOLE32(v6.16b)
+	HTOLE32(v7.16b)
+	HTOLE32(v8.16b)
+	HTOLE32(v9.16b)
+	HTOLE32(v10.16b)
+	HTOLE32(v11.16b)
+	HTOLE32(v12.16b)
+	HTOLE32(v13.16b)
+	HTOLE32(v14.16b)
+	HTOLE32(v15.16b)
 
 	eor	v16.16b, v16.16b, v0.16b
 	eor	v17.16b, v17.16b, v1.16b

@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_armv8_64.S,v 1.11 2020/07/27 20:57:23 riastradh Exp $	*/
+/*	$NetBSD: aes_armv8_64.S,v 1.12 2020/08/08 14:47:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -26,11 +26,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/endian.h>
-
 #include <aarch64/asm.h>
 
-RCSID("$NetBSD: aes_armv8_64.S,v 1.11 2020/07/27 20:57:23 riastradh Exp $")
+RCSID("$NetBSD: aes_armv8_64.S,v 1.12 2020/08/08 14:47:01 riastradh Exp $")
 
 	.arch_extension	aes
 
@@ -921,19 +919,13 @@ ENTRY(aesarmv8_ccm_enc1)
 	ld1	{v5.4s}, [x11]		/* q5 := (0,0,0,1) (host-endian) */
 	mov	x9, x0			/* x9 := enckey */
 	mov	x10, x3			/* x10 := nbytes */
-#if _BYTE_ORDER == _LITTLE_ENDIAN
 	rev32	v2.16b, v2.16b		/* q2 := ctr (host-endian) */
-#endif
 	_ALIGN_TEXT
 1:	ldr	q3, [x1], #0x10		/* q3 := plaintext block */
 	add	v2.4s, v2.4s, v5.4s	/* increment ctr (32-bit) */
 	mov	x0, x9			/* x0 := enckey */
 	mov	x3, x5			/* x3 := nrounds */
-#if _BYTE_ORDER == _LITTLE_ENDIAN
 	rev32	v1.16b, v2.16b		/* q1 := ctr (big-endian) */
-#else
-	mov	v1.16b, v2.16b		/* q1 := ctr (big-endian) */
-#endif
 	eor	v0.16b, v0.16b, v3.16b	/* q0 := auth ^ ptxt */
 	bl	aesarmv8_enc2		/* q0 := auth', q1 := pad;
 					 * trash x0/x3/q16 */
@@ -941,9 +933,7 @@ ENTRY(aesarmv8_ccm_enc1)
 	subs	x10, x10, #0x10		/* count down bytes */
 	str	q3, [x2], #0x10		/* store ciphertext block */
 	b.ne	1b			/* repeat if more blocks */
-#if _BYTE_ORDER == _LITTLE_ENDIAN
 	rev32	v2.16b, v2.16b		/* q2 := ctr (big-endian) */
-#endif
 	stp	q0, q2, [x4]		/* store updated auth/ctr */
 	ldp	fp, lr, [sp], #16	/* pop stack frame */
 	ret
@@ -968,18 +958,12 @@ ENTRY(aesarmv8_ccm_dec1)
 	ld1	{v5.4s}, [x11]		/* q5 := (0,0,0,1) (host-endian) */
 	mov	x9, x0			/* x9 := enckey */
 	mov	x10, x3			/* x10 := nbytes */
-#if _BYTE_ORDER == _LITTLE_ENDIAN
 	rev32	v2.16b, v2.16b		/* q2 := ctr (host-endian) */
-#endif
 
 	/* Decrypt the first block.  */
 	add	v2.4s, v2.4s, v5.4s	/* increment ctr (32-bit) */
 	mov	x3, x5			/* x3 := nrounds */
-#if _BYTE_ORDER == _LITTLE_ENDIAN
 	rev32	v0.16b, v2.16b		/* q0 := ctr (big-endian) */
-#else
-	mov	v0.16b, v2.16b		/* q0 := ctr (big-endian) */
-#endif
 	ldr	q3, [x1], #0x10		/* q3 := ctxt */
 	bl	aesarmv8_enc1		/* q0 := pad; trash x0/x3/q16 */
 	b	2f
@@ -995,11 +979,7 @@ ENTRY(aesarmv8_ccm_dec1)
 	add	v2.4s, v2.4s, v5.4s	/* increment ctr (32-bit) */
 	mov	x0, x9			/* x0 := enckey */
 	mov	x3, x5			/* x3 := nrounds */
-#if _BYTE_ORDER == _LITTLE_ENDIAN
 	rev32	v0.16b, v2.16b		/* q0 := ctr (big-endian) */
-#else
-	mov	v0.16b, v2.16b		/* q0 := ctr (big-endian) */
-#endif
 	ldr	q3, [x1], #0x10		/* q3 := ctxt */
 	bl	aesarmv8_enc2		/* q0 := pad, q1 := auth';
 					 * trash x0/x3/q16 */
@@ -1009,15 +989,14 @@ ENTRY(aesarmv8_ccm_dec1)
 	eor	v1.16b, v1.16b, v3.16b	/* q1 := auth ^ ptxt */
 	b.ne	1b
 
-#if _BYTE_ORDER == _LITTLE_ENDIAN
 	rev32	v2.16b, v2.16b		/* q2 := ctr (big-endian) */
-#endif
 
 	/* Authenticate the last block.  */
 	mov	x0, x9			/* x0 := enckey */
 	mov	x3, x5			/* x3 := nrounds */
 	mov	v0.16b, v1.16b		/* q0 := auth ^ ptxt */
 	bl	aesarmv8_enc1		/* q0 := auth'; trash x0/x3/q16 */
+
 	stp	q0, q2, [x4]		/* store updated auth/ctr */
 	ldp	fp, lr, [sp], #16	/* pop stack frame */
 	ret
