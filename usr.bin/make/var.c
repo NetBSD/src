@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.427 2020/08/08 13:17:39 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.428 2020/08/08 13:27:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.427 2020/08/08 13:17:39 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.428 2020/08/08 13:27:42 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.427 2020/08/08 13:17:39 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.428 2020/08/08 13:27:42 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1918,7 +1918,7 @@ typedef enum {
     AMR_OK,			/* Continue parsing */
     AMR_UNKNOWN,		/* Not a match, try other modifiers as well */
     AMR_BAD,			/* Error out with "Bad modifier" message */
-    AMR_CLEANUP			/* Error out, with "Unclosed substitution"
+    AMR_CLEANUP			/* Error out, with "Unfinished modifier"
 				 * if st->missing_delim is set. */
 } ApplyModifierResult;
 
@@ -3209,7 +3209,7 @@ bad_modifier:
 cleanup:
     *pp = p;
     if (st.missing_delim != '\0')
-	Error("Unclosed substitution for %s (%c missing)",
+	Error("Unfinished modifier for %s ('%c' missing)",
 	      st.v->name, st.missing_delim);
     free(*freePtr);
     *freePtr = NULL;

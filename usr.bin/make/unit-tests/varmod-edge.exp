@@ -12,7 +12,7 @@ make: "varmod-edge.mk" line omitted: ok M-128
 make: "varmod-edge.mk" line omitted: ok eq-ext
 make: "varmod-edge.mk" line omitted: ok eq-q
 make: "varmod-edge.mk" line omitted: ok eq-bs
-make: Unclosed substitution for INP.eq-esc (= missing)
+make: Unfinished modifier for INP.eq-esc ('=' missing)
 make: "varmod-edge.mk" line omitted: ok eq-esc
 make: "varmod-edge.mk" line omitted: ok colon
 make: Unknown modifier ':'
