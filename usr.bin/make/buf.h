@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.22 2020/08/01 21:40:49 rillig Exp $	*/
+/*	$NetBSD: buf.h,v 1.23 2020/08/08 18:54:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -111,13 +111,13 @@ typedef struct Buffer {
 #define Buf_Size(bp) ((bp)->count)
 
 void Buf_Expand_1(Buffer *);
-void Buf_AddBytesZ(Buffer *, const Byte *, size_t);
+void Buf_AddBytes(Buffer *, const Byte *, size_t);
 void Buf_AddBytesBetween(Buffer *, const Byte *, const Byte *);
 void Buf_AddStr(Buffer *, const char *);
 void Buf_AddInt(Buffer *, int);
-Byte *Buf_GetAllZ(Buffer *, size_t *);
+Byte *Buf_GetAll(Buffer *, size_t *);
 void Buf_Empty(Buffer *);
-void Buf_InitZ(Buffer *, size_t);
+void Buf_Init(Buffer *, size_t);
 Byte *Buf_Destroy(Buffer *, Boolean);
 Byte *Buf_DestroyCompact(Buffer *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.296 2020/08/03 20:26:09 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.297 2020/08/08 18:54:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.296 2020/08/03 20:26:09 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.297 2020/08/08 18:54:04 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.296 2020/08/03 20:26:09 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.297 2020/08/08 18:54:04 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1661,14 +1661,14 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 	(void)close(fds[1]);
 
 	savederr = 0;
-	Buf_InitZ(&buf, 0);
+	Buf_Init(&buf, 0);
 
 	/* XXX: split variable cc into 2 */
 	do {
 	    char   result[BUFSIZ];
 	    cc = read(fds[0], result, sizeof(result));
 	    if (cc > 0)
-		Buf_AddBytesZ(&buf, result, (size_t)cc);
+		Buf_AddBytes(&buf, result, (size_t)cc);
 	}
 	while (cc > 0 || (cc == -1 && errno == EINTR));
 	if (cc == -1)
