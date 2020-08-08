@@ -1,4 +1,4 @@
-/*	$NetBSD: enum.c,v 1.1 2020/08/08 13:50:23 rillig Exp $	*/
+/*	$NetBSD: enum.c,v 1.2 2020/08/08 14:43:28 rillig Exp $	*/
 
 /*
  Copyright (c) 2020 Roland Illig <rillig@NetBSD.org>
@@ -28,11 +28,11 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: enum.c,v 1.1 2020/08/08 13:50:23 rillig Exp $";
+static char rcsid[] = "$NetBSD: enum.c,v 1.2 2020/08/08 14:43:28 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: enum.c,v 1.1 2020/08/08 13:50:23 rillig Exp $");
+__RCSID("$NetBSD: enum.c,v 1.2 2020/08/08 14:43:28 rillig Exp $");
 #endif
 #endif
 
