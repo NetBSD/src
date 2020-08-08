@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.89 2020/08/08 16:31:37 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.90 2020/08/08 16:57:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.89 2020/08/08 16:31:37 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.90 2020/08/08 16:57:59 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.89 2020/08/08 16:31:37 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.90 2020/08/08 16:57:59 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -171,42 +171,21 @@ istoken(const char *str, const char *tok, size_t len)
 	return strncmp(str, tok, len) == 0 && !isalpha((unsigned char)str[len]);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * CondPushBack --
- *	Push back the most recent token read. We only need one level of
- *	this, so the thing is just stored in 'condPushback'.
- *
- * Input:
- *	t		Token to push back into the "stream"
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	condPushback is overwritten.
- *
- *-----------------------------------------------------------------------
- */
+/* Push back the most recent token read. We only need one level of
+ * this, so the thing is just stored in 'condPushback'. */
 static void
 CondPushBack(Token t)
 {
     condPushBack = t;
 }
-
+
 /*-
- *-----------------------------------------------------------------------
- * CondGetArg --
- *	Find the argument of a built-in function.
+ * Parse the argument of a built-in function.
  *
  * Results:
- *	The length of the argument and the address of the argument.
- *
- * Side Effects:
- *	The pointer is set to point to the closing parenthesis of the
- *	function call.
- *
- *-----------------------------------------------------------------------
+ *	The length of the argument.
+ *	*argPtr receives the argument as string.
+ *	*linePtr is updated to point behind the ')' of the function call.
  */
 static int
 CondGetArg(Boolean doEval, char **linePtr, char **argPtr, const char *func)
@@ -291,20 +270,8 @@ CondGetArg(Boolean doEval, char **linePtr, char **argPtr, const char *func)
     *linePtr = cp;
     return argLen;
 }
-
-/*-
- *-----------------------------------------------------------------------
- * CondDoDefined --
- *	Handle the 'defined' function for conditionals.
- *
- * Results:
- *	TRUE if the given variable is defined.
- *
- * Side Effects:
- *	None.
- *
- *-----------------------------------------------------------------------
- */
+
+/* Test whether the given variable is defined. */
 static Boolean
 CondDoDefined(int argLen MAKE_ATTR_UNUSED, const char *arg)
 {
@@ -313,59 +280,23 @@ CondDoDefined(int argLen MAKE_ATTR_UNUSED, const char *arg)
     bmake_free(freeIt);
     return result;
 }
-
-/*-
- *-----------------------------------------------------------------------
- * CondStrMatch --
- *	Front-end for Str_Match so it returns 0 on match and non-zero
- *	on mismatch. Callback function for CondDoMake via Lst_Find
- *
- * Results:
- *	0 if string matches pattern
- *
- * Side Effects:
- *	None
- *
- *-----------------------------------------------------------------------
- */
+
+/* Wrapper around Str_Match that returns 0 on match and non-zero
+ * on mismatch. Callback function for CondDoMake via Lst_Find. */
 static int
-CondStrMatch(const void *string, const void *pattern)
+CondFindStrMatch(const void *string, const void *pattern)
 {
     return !Str_Match(string, pattern);
 }
-
-/*-
- *-----------------------------------------------------------------------
- * CondDoMake --
- *	Handle the 'make' function for conditionals.
- *
- * Results:
- *	TRUE if the given target is being made.
- *
- * Side Effects:
- *	None.
- *
- *-----------------------------------------------------------------------
- */
+
+/* See if the given target is being made. */
 static Boolean
 CondDoMake(int argLen MAKE_ATTR_UNUSED, const char *arg)
 {
-    return Lst_Find(create, arg, CondStrMatch) != NULL;
+    return Lst_Find(create, arg, CondFindStrMatch) != NULL;
 }
-
-/*-
- *-----------------------------------------------------------------------
- * CondDoExists --
- *	See if the given file exists.
- *
- * Results:
- *	TRUE if the file exists and FALSE if it does not.
- *
- * Side Effects:
- *	None.
- *
- *-----------------------------------------------------------------------
- */
+
+/* See if the given file exists. */
 static Boolean
 CondDoExists(int argLen MAKE_ATTR_UNUSED, const char *arg)
 {
@@ -385,20 +316,8 @@ CondDoExists(int argLen MAKE_ATTR_UNUSED, const char *arg)
     }
     return result;
 }
-
-/*-
- *-----------------------------------------------------------------------
- * CondDoTarget --
- *	See if the given node exists and is an actual target.
- *
- * Results:
- *	TRUE if the node exists as a target and FALSE if it does not.
- *
- * Side Effects:
- *	None.
- *
- *-----------------------------------------------------------------------
- */
+
+/* See if the given node exists and is an actual target. */
 static Boolean
 CondDoTarget(int argLen MAKE_ATTR_UNUSED, const char *arg)
 {
@@ -408,21 +327,8 @@ CondDoTarget(int argLen MAKE_ATTR_UNUSED, const char *arg)
     return gn != NULL && !OP_NOP(gn->type);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * CondDoCommands --
- *	See if the given node exists and is an actual target with commands
- *	associated with it.
- *
- * Results:
- *	TRUE if the node exists as a target and has commands associated with
- *	it and FALSE if it does not.
- *
- * Side Effects:
- *	None.
- *
- *-----------------------------------------------------------------------
- */
+/* See if the given node exists and is an actual target with commands
+ * associated with it. */
 static Boolean
 CondDoCommands(int argLen MAKE_ATTR_UNUSED, const char *arg)
 {
@@ -431,19 +337,15 @@ CondDoCommands(int argLen MAKE_ATTR_UNUSED, const char *arg)
     gn = Targ_FindNode(arg, TARG_NOCREATE);
     return gn != NULL && !OP_NOP(gn->type) && !Lst_IsEmpty(gn->commands);
 }
-
+
 /*-
- *-----------------------------------------------------------------------
- * CondCvtArg --
- *	Convert the given number into a double.
- *	We try a base 10 or 16 integer conversion first, if that fails
- *	then we try a floating point conversion instead.
+ * Convert the given number into a double.
+ * We try a base 10 or 16 integer conversion first, if that fails
+ * then we try a floating point conversion instead.
  *
  * Results:
  *	Sets 'value' to double value of string.
- *	Returns 'true' if the convertion suceeded
- *
- *-----------------------------------------------------------------------
+ *	Returns TRUE if the conversion succeeded.
  */
 static Boolean
 CondCvtArg(const char *str, double *value)
@@ -474,22 +376,16 @@ CondCvtArg(const char *str, double *value)
 }
 
 /*-
- *-----------------------------------------------------------------------
- * CondGetString --
- *	Get a string from a variable reference or an optionally quoted
- *	string.  This is called for the lhs and rhs of string compares.
+ * Get a string from a variable reference or an optionally quoted
+ * string.  This is called for the lhs and rhs of string compares.
  *
  * Results:
- *	Sets freeIt if needed,
- *	Sets quoted if string was quoted,
- *	Returns NULL on error,
- *	else returns string - absent any quotes.
+ *	Returns the string, absent any quotes, or NULL on error.
+ *	Sets quoted if the string was quoted.
+ *	Sets freeIt if needed.
  *
  * Side Effects:
- *	Moves condExpr to end of this token.
- *
- *
- *-----------------------------------------------------------------------
+ *	Moves condExpr past the end of this token.
  */
 /* coverity:[+alloc : arg-*2] */
 static const char *
@@ -615,17 +511,10 @@ static const struct If {
 };
 
 /*-
- *-----------------------------------------------------------------------
- * CondToken --
- *	Return the next token from the input.
- *
- * Results:
- *	A Token for the next lexical token in the stream.
+ * Return the next token from the input.
  *
  * Side Effects:
  *	condPushback will be set back to TOK_NONE if it is used.
- *
- *-----------------------------------------------------------------------
  */
 static Token
 compare_expression(Boolean doEval)
@@ -1023,7 +912,7 @@ CondT(Boolean doEval)
     }
     return t;
 }
-
+
 /*-
  *-----------------------------------------------------------------------
  * CondF --
@@ -1069,7 +958,7 @@ CondF(Boolean doEval)
     }
     return l;
 }
-
+
 /*-
  *-----------------------------------------------------------------------
  * CondE --
@@ -1156,8 +1045,7 @@ do_Cond_EvalExpression(Boolean *value)
  *	(*value) is set to the boolean value of the condition
  *
  * Side Effects:
- *	None.
- *
+ *	Any effects from evaluating the variables.
  *-----------------------------------------------------------------------
  */
 CondEvalResult
@@ -1199,7 +1087,7 @@ Cond_EvalExpression(const struct If *info, char *line, Boolean *value, int eprin
     return rval;
 }
 
-
+
 /*-
  *-----------------------------------------------------------------------
  * Cond_Eval --
@@ -1374,21 +1262,6 @@ Cond_Eval(char *line)
     return COND_PARSE;
 }
 
-
-
-/*-
- *-----------------------------------------------------------------------
- * Cond_End --
- *	Make sure everything's clean at the end of a makefile.
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	Parse_Error will be called if open conditionals are around.
- *
- *-----------------------------------------------------------------------
- */
 void
 Cond_restore_depth(unsigned int saved_depth)
 {
