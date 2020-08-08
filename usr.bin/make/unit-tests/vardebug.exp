@@ -57,5 +57,12 @@ Result of ${:Mvalu[e]} is "value" (eflags = VARE_UNDEFERR|VARE_WANTRES, vflags =
 Applying ${:U...} to "" (eflags = VARE_WANTRES, vflags = VAR_JUNK)
 Result of ${:UVAR} is "VAR" (eflags = VARE_WANTRES, vflags = VAR_JUNK|VAR_KEEP)
 Global:delete VAR
+Applying ${:U...} to "" (eflags = VARE_UNDEFERR|VARE_WANTRES, vflags = VAR_JUNK)
+Result of ${:Uvariable} is "variable" (eflags = VARE_UNDEFERR|VARE_WANTRES, vflags = VAR_JUNK|VAR_KEEP)
+Applying ${:u...} to "variable" (eflags = VARE_UNDEFERR|VARE_WANTRES, vflags = VAR_JUNK|VAR_KEEP)
+make: Unknown modifier 'u'
+Result of ${:unknown} is error (eflags = VARE_UNDEFERR|VARE_WANTRES, vflags = VAR_JUNK|VAR_KEEP)
+make: "vardebug.mk" line 44: Malformed conditional (${:Uvariable:unknown})
+make: "vardebug.mk" line 53: Malformed conditional (${UNDEFINED})
 Global:RELEVANT = no
-exit status 0
+exit status 1
