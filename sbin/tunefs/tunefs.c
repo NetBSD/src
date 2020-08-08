@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.52 2020/05/16 18:31:47 christos Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.53 2020/08/08 11:44:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.52 2020/05/16 18:31:47 christos Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.53 2020/08/08 11:44:55 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,6 +95,7 @@ static	void	bread(daddr_t, char *, int, const char *);
 static	void	change_log_info(long long);
 static	void	getsb(struct fs *, const char *);
 static	int	openpartition(const char *, int, char *, size_t);
+static	int	isactive(int, struct statvfs *);
 static	void	show_log_info(void);
 __dead static	void	usage(void);
 
@@ -233,9 +234,9 @@ main(int argc, char *argv[])
 		fi = openpartition(special, openflags, device, sizeof(device));
 		special = device;
 	}
-	active = fstatvfs(fi, &sfs) != -1;
 	if (fi == -1)
 		err(1, "%s", special);
+	active = !Fflag && isactive(fi, &sfs);
 	getsb(&sblock, special);
 
 #define CHANGEVAL(old, new, type, suffix) do				\
@@ -467,6 +468,35 @@ main(int argc, char *argv[])
 			    buf.data, SBLOCKSIZE, special);
 	close(fi);
 	exit(0);
+}
+
+static int
+isactive(int fd, struct statvfs *rsfs)
+{
+	struct stat st0, st;
+	struct statvfs *sfs;
+	int n;
+
+	if (fstat(fd, &st0) == -1) {
+		warn("stat");
+		return 0;
+	}
+
+	if ((n = getmntinfo(&sfs, 0)) == -1) {
+		warn("getmntinfo");
+		return 0;
+	}
+
+	for (int i = 0; i < n; i++) {
+		if (stat(sfs[i].f_mntfromname, &st) == -1)
+			continue;
+		if (st.st_rdev != st0.st_rdev)
+			continue;
+		*rsfs = sfs[i];
+		return 1;
+
+	}
+	return 0;
 }
 
 static void
