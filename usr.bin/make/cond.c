@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.91 2020/08/08 17:03:04 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.92 2020/08/08 18:54:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.91 2020/08/08 17:03:04 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.92 2020/08/08 18:54:04 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.91 2020/08/08 17:03:04 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.92 2020/08/08 18:54:04 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -221,7 +221,7 @@ CondGetArg(Boolean doEval, const char **linePtr, char **argPtr,
      * Create a buffer for the argument and start it out at 16 characters
      * long. Why 16? Why not?
      */
-    Buf_InitZ(&buf, 16);
+    Buf_Init(&buf, 16);
 
     paren_depth = 0;
     for (;;) {
@@ -255,7 +255,7 @@ CondGetArg(Boolean doEval, const char **linePtr, char **argPtr,
 	cp++;
     }
 
-    *argPtr = Buf_GetAllZ(&buf, &argLen);
+    *argPtr = Buf_GetAll(&buf, &argLen);
     Buf_Destroy(&buf, FALSE);
 
     while (*cp == ' ' || *cp == '\t') {
@@ -399,7 +399,7 @@ CondGetString(Boolean doEval, Boolean *quoted, void **freeIt, Boolean strictLHS)
     int qt;
     const char *start;
 
-    Buf_InitZ(&buf, 0);
+    Buf_Init(&buf, 0);
     str = NULL;
     *freeIt = NULL;
     *quoted = qt = *condExpr == '"' ? 1 : 0;
@@ -490,7 +490,7 @@ CondGetString(Boolean doEval, Boolean *quoted, void **freeIt, Boolean strictLHS)
 	}
     }
  got_str:
-    *freeIt = Buf_GetAllZ(&buf, NULL);
+    *freeIt = Buf_GetAll(&buf, NULL);
     str = *freeIt;
  cleanup:
     Buf_Destroy(&buf, FALSE);
