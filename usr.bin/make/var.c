@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.431 2020/08/08 14:28:46 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.432 2020/08/08 18:50:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.431 2020/08/08 14:28:46 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.432 2020/08/08 18:50:11 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.431 2020/08/08 14:28:46 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.432 2020/08/08 18:50:11 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3347,6 +3347,11 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
     const char *extramodifiers;
     Var *v;
     char *nstr;
+    char eflags_str[VarEvalFlags_ToStringSize];
+
+    VAR_DEBUG("%s: %s with %s\n", __func__, str,
+	      Enum_ToString(eflags_str, sizeof eflags_str, eflags,
+			    VarEvalFlags_ToStringSpecs));
 
     *freePtr = NULL;
     extramodifiers = NULL;	/* extra modifiers to apply first */
