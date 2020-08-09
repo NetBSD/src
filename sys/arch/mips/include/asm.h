@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.58 2020/08/06 10:00:20 skrll Exp $	*/
+/*	$NetBSD: asm.h,v 1.59 2020/08/09 08:13:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,10 +53,6 @@
 
 #ifndef _MIPS_ASM_H
 #define	_MIPS_ASM_H
-
-#include "opt_cputype.h"
-#include "opt_lockdebug.h"
-#include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>		/* for API selection */
 #include <mips/regdef.h>
@@ -517,23 +513,17 @@ _C_LABEL(x):
 #define	NOP_L		/* nothing */
 #endif
 
-#if defined(MULTIPROCESSOR)
-#if defined(MIPS64_OCTEON)
+/* compiler define */
+#if defined(__OCTEON__)
 				/* early cnMIPS have erratum which means 2 */
 #define	LLSCSYNC	sync 4; sync 4
 #define	SYNC		sync 4		/* sync 4 == syncw - sync all writes */
 #define	BDSYNC		sync 4		/* sync 4 == syncw - sync all writes */
 #else
-#define	LLSCSYNC	/* nothing (something?) */
+#define	LLSCSYNC	sync
 #define	SYNC		sync
 #define	BDSYNC		sync
 #endif
-#else
-#define	LLSCSYNC	/* nothing */
-#define	SYNC		/* nothing */
-#define	BDSYNC		nop
-#endif /* defined(MULTIPROCESSOR) */
-
 
 /* CPU dependent hook for cp0 load delays */
 #if defined(MIPS1) || defined(MIPS2) || defined(MIPS3)
