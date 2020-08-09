@@ -1,4 +1,4 @@
-/*	$NetBSD: enum.h,v 1.2 2020/08/08 14:43:28 rillig Exp $	*/
+/*	$NetBSD: enum.h,v 1.3 2020/08/09 02:53:21 christos Exp $	*/
 
 /*
  Copyright (c) 2020 Roland Illig <rillig@NetBSD.org>
@@ -59,8 +59,10 @@ const char *Enum_ToString(char *, size_t, int, const EnumToStringSpec *);
 	#v1 ENUM__SEP ENUM__JOIN_6(v2, v3, v4, v5, v6, v7)
 
 #define ENUM__RTTI(typnam, specs, joined) \
-	static const EnumToStringSpec typnam ## _ ## ToStringSpecs[] = specs; \
+	static const EnumToStringSpec typnam ## _ ## ToStringSpecs[] = specs; 
+#if 0
 	static const size_t typnam ## _ ## ToStringSize = sizeof joined
+#endif
 
 #define ENUM__SPEC(v) { v, #v }
 
