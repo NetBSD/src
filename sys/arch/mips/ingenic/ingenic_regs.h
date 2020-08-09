@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_regs.h,v 1.25 2017/05/21 06:49:13 skrll Exp $ */
+/*	$NetBSD: ingenic_regs.h,v 1.26 2020/08/09 07:08:29 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -118,7 +118,7 @@
 static inline void
 writereg(uint32_t reg, uint32_t val)
 {
-	*(volatile int32_t *)MIPS_PHYS_TO_KSEG1(reg) = val;
+	*(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(reg) = val;
 	wbflush();
 }
 
@@ -126,7 +126,7 @@ static inline uint32_t
 readreg(uint32_t reg)
 {
 	wbflush();
-	return *(volatile int32_t *)MIPS_PHYS_TO_KSEG1(reg);
+	return *(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(reg);
 }
 
 
