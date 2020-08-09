@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.36 2020/08/08 13:09:55 rillig Exp $
+# $Id: modmisc.mk,v 1.37 2020/08/09 07:18:03 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -216,6 +216,7 @@ mod-subst-dollar:
 	@echo $@:${:U6:S,^,$$$$$$,:Q}:
 	@echo $@:${:U7:S,^,$$$$$$$,:Q}:
 	@echo $@:${:U8:S,^,$$$$$$$$,:Q}:
+	@echo $@:${:U40:S,^,$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$,:Q}:
 # This generates no dollar at all:
 	@echo $@:${:UU8:S,^,${:U$$$$$$$$},:Q}:
 # Here is an alternative way to generate dollar characters.

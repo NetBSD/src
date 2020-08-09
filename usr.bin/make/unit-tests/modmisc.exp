@@ -54,6 +54,7 @@ mod-subst-dollar:$5:
 mod-subst-dollar:$6:
 mod-subst-dollar:$7:
 mod-subst-dollar:$8:
+mod-subst-dollar:$40:
 mod-subst-dollar:U8:
 mod-subst-dollar:$$$$:
 mod-loop-dollar:1:
