@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.437 2020/08/09 07:09:57 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.438 2020/08/09 09:40:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.437 2020/08/09 07:09:57 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.438 2020/08/09 09:40:48 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.437 2020/08/09 07:09:57 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.438 2020/08/09 09:40:48 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3575,7 +3575,9 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
 	    *freePtr = extraFree;
 	}
     }
-    *lengthPtr = tstr - str + (*tstr ? 1 : 0);
+
+    /* Skip past endc if possible. */
+    *lengthPtr = tstr + (*tstr ? 1 : 0) - str;
 
     if (v->flags & VAR_FROM_ENV) {
 	Boolean destroy = nstr != Buf_GetAll(&v->val, NULL);
