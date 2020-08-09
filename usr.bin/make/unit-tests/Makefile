@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.89 2020/08/07 19:24:27 rillig Exp $
+# $NetBSD: Makefile,v 1.90 2020/08/09 12:59:16 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -59,6 +59,7 @@ TESTS+=		hash
 TESTS+=		impsrc
 TESTS+=		include-main
 TESTS+=		lint
+TESTS+=		make-exported
 TESTS+=		misc
 TESTS+=		moderrs
 TESTS+=		modmatch
@@ -93,6 +94,7 @@ ENV.envfirst=		FROM_ENV=value-from-env
 ENV.export=		-i PATH=${PATH:Q}
 ENV.export-variants=	-i PATH=${PATH:Q}
 ENV.lint=		-i
+ENV.make-exported=	-i PATH=${PATH:Q}
 ENV.recursive=		-i
 ENV.varmisc=		FROM_ENV=env
 ENV.varmisc+=		FROM_ENV_BEFORE=env
