@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.439 2020/08/09 09:44:14 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.440 2020/08/09 11:04:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.439 2020/08/09 09:44:14 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.440 2020/08/09 11:04:05 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.439 2020/08/09 09:44:14 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.440 2020/08/09 11:04:05 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -207,21 +207,29 @@ typedef enum {
 } VarFindFlags;
 
 typedef enum {
-    VAR_IN_USE		= 0x01,	/* Variable's value is currently being used
-				 * by Var_Parse or Var_Subst.
-				 * Used to avoid endless recursion */
-    VAR_FROM_ENV	= 0x02,	/* Variable comes from the environment */
-    VAR_JUNK		= 0x04,	/* Variable is a junk variable that
-				 * should be destroyed when done with
-				 * it. Used by Var_Parse for undefined,
-				 * modified variables */
-    VAR_KEEP		= 0x08,	/* Variable is VAR_JUNK, but we found
-				 * a use for it in some modifier and
-				 * the value is therefore valid */
-    VAR_EXPORTED	= 0x10,	/* Variable is exported */
-    VAR_REEXPORT	= 0x20,	/* Indicate if var needs re-export.
-				 * This would be true if it contains $'s */
-    VAR_FROM_CMD	= 0x40	/* Variable came from command line */
+    /* The variable's value is currently being used by Var_Parse or Var_Subst.
+     * This marker is used to avoid endless recursion. */
+    VAR_IN_USE = 0x01,
+    /* The variable comes from the environment.
+     * These variables are not registered in any GNode, therefore they must
+     * be freed as soon as they are not used anymore. */
+    VAR_FROM_ENV = 0x02,
+    /* The variable is a junk variable that should be destroyed when done with
+     * it.  Used by Var_Parse for undefined, modified variables. */
+    VAR_JUNK = 0x04,
+    /* Variable is VAR_JUNK, but we found a use for it in some modifier and
+     * the value is therefore valid. */
+    VAR_KEEP = 0x08,
+    /* The variable is exported to the environment, to be used by child
+     * processes. */
+    VAR_EXPORTED = 0x10,
+    /* At the point where this variable was exported, it contained an
+     * unresolved reference to another variable.  Before any child process is
+     * started, it needs to be exported again, in the hope that the referenced
+     * variable can then be resolved. */
+    VAR_REEXPORT = 0x20,
+    /* The variable came from command line. */
+    VAR_FROM_CMD = 0x40
 } VarFlags;
 
 ENUM_RTTI_7(VarFlags,
@@ -3591,7 +3599,7 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
 	(void)VarFreeEnv(v, destroy);
     } else if (v->flags & VAR_JUNK) {
 	/*
-	 * Perform any free'ing needed and set *freePtr to NULL so the caller
+	 * Perform any freeing needed and set *freePtr to NULL so the caller
 	 * doesn't try to free a static pointer.
 	 * If VAR_KEEP is also set then we want to keep str(?) as is.
 	 */
