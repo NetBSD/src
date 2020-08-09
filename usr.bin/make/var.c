@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.443 2020/08/09 14:02:15 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.444 2020/08/09 14:30:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.443 2020/08/09 14:02:15 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.444 2020/08/09 14:30:35 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.443 2020/08/09 14:02:15 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.444 2020/08/09 14:30:35 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1933,7 +1933,8 @@ typedef struct {
 				 * to the expression */
     char missing_delim;		/* For error reporting */
 
-    Byte sep;			/* Word separator in expansions */
+    Byte sep;			/* Word separator in expansions
+				 * (see the :ts modifier) */
     Boolean oneBigWord;		/* TRUE if the variable value is treated as a
 				 * single big word, even if it contains
 				 * embedded spaces (as opposed to the
@@ -2991,13 +2992,12 @@ ApplyModifier_SysV(const char **pp, ApplyModifiersState *st)
 #endif
 
 /* Apply any modifiers (such as :Mpattern or :@var@loop@ or :Q or ::=value). */
-
 static char *
 ApplyModifiers(
     const char **pp,		/* the parsing position, updated upon return */
     char *val,			/* the current value of the variable */
-    char const startc,		/* '(' or '{' or '\0' */
-    char const endc,		/* ')' or '}' or '\0' */
+    char const startc,		/* '(' or '{', or '\0' for indirect modifiers */
+    char const endc,		/* ')' or '}', or '\0' for indirect modifiers */
     Var * const v,		/* the variable may have its flags changed */
     GNode * const ctxt,		/* for looking up and modifying variables */
     VarEvalFlags const eflags,
@@ -3045,7 +3045,7 @@ ApplyModifiers(
 
 	    if (rval != NULL && *rval) {
 		const char *rval_pp = rval;
-		st.val = ApplyModifiers(&rval_pp, st.val, 0, 0, v,
+		st.val = ApplyModifiers(&rval_pp, st.val, '\0', '\0', v,
 					ctxt, eflags, freePtr);
 		if (st.val == var_Error
 		    || (st.val == varNoError && !(st.eflags & VARE_UNDEFERR))
