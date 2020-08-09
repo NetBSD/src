@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_neon.h,v 1.8 2020/08/08 14:47:01 riastradh Exp $	*/
+/*	$NetBSD: arm_neon.h,v 1.9 2020/08/09 02:48:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -462,6 +462,22 @@ vsetq_lane_u64(uint64_t __x, uint64x2_t __v, uint8_t __i)
 #define	vsetq_lane_u64(__x, __v, __i)					      \
 	(uint64x2_t)__builtin_neon_vsetq_lane_i64((__x), (int64x2_t)(__v),    \
 	    __neon_laneq_index(__v, __i));
+#endif
+
+#if defined(__GNUC__) && !defined(__clang__)
+_INTRINSATTR
+static __inline int32x4_t
+vshlq_n_s32(int32x4_t __v, uint8_t __bits)
+{
+#ifdef __aarch64__
+	return (int32x4_t)__builtin_aarch64_ashlv4si(__v, __bits);
+#else
+	return (int32x4_t)__builtin_neon_vshl_nv4si(__v, __bits);
+#endif
+}
+#elif defined(__clang__)
+#define	vshlq_n_s32(__v, __bits)					      \
+	(int32x4_t)__builtin_neon_vshlq_n_v((int32x4_t)(__v), (__bits), 34)
 #endif
 
 #if defined(__GNUC__) && !defined(__clang__)
