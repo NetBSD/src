@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.18 2020/08/01 05:45:30 skrll Exp $	*/
+/*	$NetBSD: spl.S,v 1.19 2020/08/09 09:23:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: spl.S,v 1.18 2020/08/01 05:45:30 skrll Exp $")
+RCSID("$NetBSD: spl.S,v 1.19 2020/08/09 09:23:17 skrll Exp $")
 
 #include "assym.h"
 
@@ -83,17 +83,17 @@ _splraise:
 #if !defined(__mips_o32)
 	or	v1, MIPS_SR_INT_IE		#
 	xor	v1, MIPS_SR_INT_IE		# clear interrupt enable bit
-	mtc0	v1, MIPS_COP_0_STATUS		## disable interrupts
+	mtc0	v1, MIPS_COP_0_STATUS		# disable interrupts
 #else
-	mtc0	zero, MIPS_COP_0_STATUS		## disable interrupts
+	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 #endif
 	COP0_SYNC
 #ifdef MULTIPROCESSOR
-	PTR_L	a3, L_CPU(MIPS_CURLWP)		## make sure curcpu is correct
-	NOP_L					## load delay
+	PTR_L	a3, L_CPU(MIPS_CURLWP)		# make sure curcpu is correct
+	NOP_L					# load delay
 #endif
-	INT_S	a1, CPU_INFO_CPL(a3)		## save IPL in cpu_info
-	mtc0	a0, MIPS_COP_0_STATUS		## store back
+	INT_S	a1, CPU_INFO_CPL(a3)		# save IPL in cpu_info
+	mtc0	a0, MIPS_COP_0_STATUS		# store back
 	COP0_SYNC
 #ifdef PARANOIA
 	jr	ra
@@ -140,13 +140,13 @@ STATIC_XLEAF(_splsw_splx_noprof)		# does not get mcount hooks
 #if !defined(__mips_o32)
 	or	v0, v1, MIPS_SR_INT_IE		#
 	xor	v0, MIPS_SR_INT_IE		# clear interrupt enable bit
-	mtc0	v0, MIPS_COP_0_STATUS		## disable interrupts
+	mtc0	v0, MIPS_COP_0_STATUS		# disable interrupts
 #else
-	mtc0	zero, MIPS_COP_0_STATUS		## disable interrupts
+	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 #endif
 	COP0_SYNC
-	INT_S	a0, CPU_INFO_CPL(a3)		## save IPL in cpu_info (KSEG0)
-	mtc0	v1, MIPS_COP_0_STATUS		## store back
+	INT_S	a0, CPU_INFO_CPL(a3)		# save IPL in cpu_info (KSEG0)
+	mtc0	v1, MIPS_COP_0_STATUS		# store back
 	COP0_SYNC
 #ifdef PARANOIA
 	jr	ra
@@ -181,17 +181,17 @@ STATIC_LEAF(_splsw_spl0)
 #if !defined(__mips_o32)
 	or	v1, v0, MIPS_SR_INT_IE		#
 	xor	v1, MIPS_SR_INT_IE		# clear interrupt enable bit
-	mtc0	v1, MIPS_COP_0_STATUS		## disable interrupts
+	mtc0	v1, MIPS_COP_0_STATUS		# disable interrupts
 #else
-	mtc0	zero, MIPS_COP_0_STATUS		## disable interrupts
+	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 #endif
 	COP0_SYNC
 #if IPL_NONE == 0
-	INT_S	zero, CPU_INFO_CPL(a3)		## set ipl to 0
+	INT_S	zero, CPU_INFO_CPL(a3)		# set ipl to 0
 #else
 #error IPL_NONE != 0
 #endif
-	mtc0	v0, MIPS_COP_0_STATUS		## enable all sources
+	mtc0	v0, MIPS_COP_0_STATUS		# enable all sources
 	JR_HB_RA				# return (clear hazards)
 END(_splsw_spl0)
 
@@ -201,9 +201,9 @@ STATIC_LEAF(_splsw_setsoftintr)
 	MFC0_HAZARD				# load delay
 	or	v0, v1, MIPS_SR_INT_IE		#
 	xor	v0, MIPS_SR_INT_IE		# clear interrupt enable bit
-	mtc0	v0, MIPS_COP_0_STATUS		## disable interrupts
+	mtc0	v0, MIPS_COP_0_STATUS		# disable interrupts
 #else
-	mtc0	zero, MIPS_COP_0_STATUS		## disable interrupts
+	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 #endif
 	COP0_SYNC
 	mfc0	v0, MIPS_COP_0_CAUSE		# fetch cause register
@@ -221,9 +221,9 @@ STATIC_LEAF(_splsw_clrsoftintr)
 	MFC0_HAZARD				# load delay
 	or	v0, v1, MIPS_SR_INT_IE		#
 	xor	v0, MIPS_SR_INT_IE		# clear interrupt enable bit
-	mtc0	v0, MIPS_COP_0_STATUS		## disable interrupts
+	mtc0	v0, MIPS_COP_0_STATUS		# disable interrupts
 #else
-	mtc0	zero, MIPS_COP_0_STATUS		## disable interrupts
+	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 #endif
 	COP0_SYNC
 	mfc0	v0, MIPS_COP_0_CAUSE		# fetch cause register
@@ -260,15 +260,15 @@ STATIC_XLEAF(_splsw_splhigh_noprof)
 	and	a0, v1, MIPS_INT_MASK		# select all interrupts
 	xor	a0, v1				# clear all interrupts
 	DYNAMIC_STATUS_MASK(a0,a2)		# machine dependent masking
-	mtc0	a0, MIPS_COP_0_STATUS		## store back
+	mtc0	a0, MIPS_COP_0_STATUS		# store back
 	COP0_SYNC
 #ifdef MULTIPROCESSOR
-	PTR_L	a3, L_CPU(MIPS_CURLWP)		## make sure curcpu is correct
-	NOP_L					## load delay
+	PTR_L	a3, L_CPU(MIPS_CURLWP)		# make sure curcpu is correct
+	NOP_L					# load delay
 #endif
-	INT_S	a1, CPU_INFO_CPL(a3)		## save IPL in cpu_info
+	INT_S	a1, CPU_INFO_CPL(a3)		# save IPL in cpu_info
 #ifdef PARANOIA
-	jr	ra				## return
+	jr	ra				# return
 	 nop					#  branch delay
 #endif /* PARANOIA */
 1:
@@ -279,7 +279,7 @@ STATIC_XLEAF(_splsw_splhigh_noprof)
 2:	bnez	v1, 2b				# loop forever.
 	 nop					# branch delay
 #endif /* PARANOIA */
-	jr	ra				## return
+	jr	ra				# return
 	 nop					# branch delay
 END(_splsw_splhigh)
 
