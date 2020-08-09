@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.34 2020/08/09 00:22:53 dholland Exp $ */
+/* $NetBSD: dir.c,v 1.35 2020/08/09 00:34:21 dholland Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dir.c,v 1.34 2020/08/09 00:22:53 dholland Exp $");
+__RCSID("$NetBSD: dir.c,v 1.35 2020/08/09 00:34:21 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,7 +147,7 @@ dset(Char *dp)
      * other junk characters glob will fail.
      */
 
-    vec = xmalloc((size_t)(2 * sizeof(Char **)));
+    vec = xmalloc(2 * sizeof(*vec));
     vec[0] = Strsave(dp);
     vec[1] = 0;
     setq(STRcwd, vec, &shvhed);

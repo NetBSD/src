@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.35 2020/08/09 00:22:53 dholland Exp $ */
+/* $NetBSD: lex.c,v 1.36 2020/08/09 00:34:21 dholland Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: lex.c,v 1.35 2020/08/09 00:22:53 dholland Exp $");
+__RCSID("$NetBSD: lex.c,v 1.36 2020/08/09 00:34:21 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -1453,7 +1453,8 @@ again:
     if (buf >= fblocks) {
 	Char **nfbuf;
 
-	nfbuf = xcalloc((size_t) (fblocks + 2), sizeof(char **));
+	/* XXX the cast is needed because fblocks is signed */
+	nfbuf = xcalloc((size_t)(fblocks + 2), sizeof(*nfbuf));
 	if (fbuf) {
 	    (void)blkcpy(nfbuf, fbuf);
 	    free(fbuf);
@@ -1623,7 +1624,7 @@ settell(void)
 	return;
     if (lseek(SHIN, (off_t) 0, SEEK_CUR) < 0 || errno == ESPIPE)
 	return;
-    fbuf = xcalloc(2, sizeof(Char **));
+    fbuf = xcalloc(2, sizeof(*fbuf));
     fblocks = 1;
     fbuf[0] = xcalloc(BUFSIZE, sizeof(Char));
     fseekp = fbobp = feobp = lseek(SHIN, (off_t) 0, SEEK_CUR);

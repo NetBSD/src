@@ -1,4 +1,4 @@
-/* $NetBSD: parse.c,v 1.20 2020/08/09 00:22:53 dholland Exp $ */
+/* $NetBSD: parse.c,v 1.21 2020/08/09 00:34:21 dholland Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.20 2020/08/09 00:22:53 dholland Exp $");
+__RCSID("$NetBSD: parse.c,v 1.21 2020/08/09 00:34:21 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -509,7 +509,8 @@ again:
     if (n < 0)
 	n = 0;
     t = xcalloc(1, sizeof(*t));
-    av = xcalloc((size_t)(n + 1), sizeof(Char **));
+    /* XXX the cast is needed because n is signed */
+    av = xcalloc((size_t)(n + 1), sizeof(*av));
     t->t_dcom = av;
     n = 0;
     if (p2->word[0] == ')')
