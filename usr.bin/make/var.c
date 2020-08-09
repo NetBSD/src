@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.436 2020/08/09 07:03:06 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.437 2020/08/09 07:09:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.436 2020/08/09 07:03:06 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.437 2020/08/09 07:09:57 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.436 2020/08/09 07:03:06 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.437 2020/08/09 07:09:57 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1909,8 +1909,8 @@ VarStrftime(const char *fmt, Boolean zulu, time_t tim)
  */
 
 typedef struct {
-    const int startc;		/* '\0' or '{' or '(' */
-    const int endc;
+    const char startc;		/* '\0' or '{' or '(' */
+    const char endc;		/* '\0' or '}' or ')' */
     Var * const v;
     GNode * const ctxt;
     const VarEvalFlags eflags;
@@ -2984,8 +2984,8 @@ static char *
 ApplyModifiers(
     const char **pp,		/* the parsing position, updated upon return */
     char *val,			/* the current value of the variable */
-    int const startc,		/* '(' or '{' or '\0' */
-    int const endc,		/* ')' or '}' or '\0' */
+    char const startc,		/* '(' or '{' or '\0' */
+    char const endc,		/* ')' or '}' or '\0' */
     Var * const v,		/* the variable may have its flags changed */
     GNode * const ctxt,		/* for looking up and modifying variables */
     VarEvalFlags const eflags,
