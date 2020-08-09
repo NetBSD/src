@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.441 2020/08/09 13:05:04 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.442 2020/08/09 13:16:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.441 2020/08/09 13:05:04 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.442 2020/08/09 13:16:10 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.441 2020/08/09 13:05:04 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.442 2020/08/09 13:16:10 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1612,7 +1612,7 @@ WordList_JoinFree(char **av, int ac, char *as)
 
     for (i = 0; i < ac; i++) {
 	if (i != 0)
-	    Buf_AddByte(&buf, ' ');
+	    Buf_AddByte(&buf, ' ');	/* XXX: st->sep, for consistency */
 	Buf_AddStr(&buf, av[i]);
     }
 
@@ -2215,7 +2215,7 @@ ApplyModifier_Range(const char **pp, ApplyModifiersState *st)
 
     for (i = 0; i < n; i++) {
 	if (i != 0)
-	    Buf_AddByte(&buf, ' ');
+	    Buf_AddByte(&buf, ' ');	/* XXX: st->sep, for consistency */
 	Buf_AddInt(&buf, 1 + i);
     }
 
@@ -3667,6 +3667,7 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags)
     while (*str) {
 	if (*str == '\n' && trailingBslash)
 	    Buf_AddByte(&buf, ' ');
+
 	if (*str == '$' && str[1] == '$') {
 	    /*
 	     * A dollar sign may be escaped with another dollar sign.
