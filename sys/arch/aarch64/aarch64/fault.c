@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.18 2020/08/06 06:50:39 ryo Exp $	*/
+/*	$NetBSD: fault.c,v 1.19 2020/08/09 07:26:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.18 2020/08/06 06:50:39 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.19 2020/08/09 07:26:20 skrll Exp $");
 
 #include "opt_compat_netbsd32.h"
 #include "opt_ddb.h"
@@ -181,16 +181,13 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass)
 	else
 		ftype = (rw == 0) ? VM_PROT_READ : VM_PROT_WRITE;
 
-#ifdef UVMHIST
 	if (ftype & VM_PROT_EXECUTE) {
-		UVMHIST_LOG(pmaphist, "pagefault %016lx %016lx in %s EXEC",
-		    tf->tf_far, va, user ? "user" : "kernel", 0);
+		UVMHIST_LOG(pmaphist, "pagefault %016jx %016jx user=%jd EXEC",
+		    tf->tf_far, va, user, 0);
 	} else {
-		UVMHIST_LOG(pmaphist, "pagefault %016lx %016lx in %s %s",
-		    tf->tf_far, va, user ? "user" : "kernel",
-		    (rw == 0) ? "read" : "write");
+		UVMHIST_LOG(pmaphist, "pagefault %016lx %016lx user=%jd "
+		    "write=%jd", tf->tf_far, va, user, rw);
 	}
-#endif
 
 	if (__predict_false(!user && (map != kernel_map) &&
 	    (tf->tf_spsr & SPSR_PAN))) {
