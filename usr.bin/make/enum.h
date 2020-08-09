@@ -1,4 +1,4 @@
-/*	$NetBSD: enum.h,v 1.4 2020/08/09 07:03:06 rillig Exp $	*/
+/*	$NetBSD: enum.h,v 1.5 2020/08/09 09:44:14 rillig Exp $	*/
 
 /*
  Copyright (c) 2020 Roland Illig <rillig@NetBSD.org>
@@ -33,6 +33,8 @@
 /*
  * Generate string representation for bitmasks.
  */
+
+#include <stddef.h>
 
 typedef struct {
 	int es_value;
