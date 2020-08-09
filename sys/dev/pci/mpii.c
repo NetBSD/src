@@ -1,4 +1,4 @@
-/* $NetBSD: mpii.c,v 1.22 2019/03/11 14:35:22 kardel Exp $ */
+/* $NetBSD: mpii.c,v 1.22.4.1 2020/08/09 14:14:34 martin Exp $ */
 /*	$OpenBSD: mpii.c,v 1.115 2018/08/14 05:22:21 jmatthew Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.22 2019/03/11 14:35:22 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.22.4.1 2020/08/09 14:14:34 martin Exp $");
 
 #include "bio.h"
 
@@ -244,8 +244,10 @@ struct mpii_softc {
 	struct workqueue	*sc_evt_ack_wq;
 	struct work		sc_evt_ack_work;
 
+#if NBIO > 0
 	struct sysmon_envsys	*sc_sme;
 	envsys_data_t		*sc_sensors;
+#endif
 };
 
 int	mpii_match(device_t, cfdata_t, void *);
