@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_neon_imm.h,v 1.1 2020/08/08 14:47:01 riastradh Exp $	*/
+/*	$NetBSD: arm_neon_imm.h,v 1.2 2020/08/09 01:59:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 #define	V_N_U8(a,b,c,d,e,f,g,h)						      \
 	{h,g,f,e,d,c,b,a}
 #define	VQ_N_U8(a,b,c,d,e,f,g,h, i,j,k,l,m,n,o,p)			      \
-	{h,g,f,e,d,c,b,a, p,o,n,m,l,k,i,j}
+	{p,o,n,m,l,k,j,i, h,g,f,e,d,c,b,a}
 #define	VQ_N_U32(a,b,c,d)						      \
 	{d,c, b,a}
 #endif
