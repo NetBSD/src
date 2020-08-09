@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.40 2020/08/09 09:17:19 rillig Exp $
+# $Id: modmisc.mk,v 1.41 2020/08/09 09:32:04 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -412,6 +412,18 @@ mod-range:
 # Cmd_Exec returns only a string pointer without length information.
 .if ${:!echo hello | tr 'l' '\0'!} != "he"
 .warning unexpected
+.endif
+
+.if ${:!echo!} != ""
+.warning A newline at the end of the output must be stripped.
+.endif
+
+.if ${:!echo;echo!} != " "
+.warning Only a single newline at the end of the output is stripped.
+.endif
+
+.if ${:!echo;echo;echo;echo!} != "   "
+.warning Other newlines in the output are converted to spaces.
 .endif
 
 # end mod-shell
