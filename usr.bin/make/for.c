@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.62 2020/08/08 18:54:04 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.63 2020/08/09 19:51:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.62 2020/08/08 18:54:04 rillig Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.63 2020/08/09 19:51:02 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.62 2020/08/08 18:54:04 rillig Exp $");
+__RCSID("$NetBSD: for.c,v 1.63 2020/08/09 19:51:02 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -83,33 +83,32 @@ __RCSID("$NetBSD: for.c,v 1.62 2020/08/08 18:54:04 rillig Exp $");
  * For_Run.
  */
 
-static int  	  forLevel = 0;  	/* Nesting level	*/
+static int forLevel = 0;	/* Nesting level */
 
 /*
  * State of a for loop.
  */
 typedef struct {
-    Buffer	  buf;			/* Body of loop		*/
-    strlist_t     vars;			/* Iteration variables	*/
-    strlist_t     items;		/* Substitution items */
-    char          *parse_buf;
-    int           short_var;
-    int           sub_next;
+    Buffer buf;			/* Body of loop */
+    strlist_t vars;		/* Iteration variables */
+    strlist_t items;		/* Substitution items */
+    char *parse_buf;
+    int short_var;
+    int sub_next;
 } For;
 
-static For        *accumFor;            /* Loop being accumulated */
+static For *accumFor;		/* Loop being accumulated */
 
-
 
 static char *
 make_str(const char *ptr, int len)
 {
-	char *new_ptr;
+    char *new_ptr;
 
-	new_ptr = bmake_malloc(len + 1);
-	memcpy(new_ptr, ptr, len);
-	new_ptr[len] = 0;
-	return new_ptr;
+    new_ptr = bmake_malloc(len + 1);
+    memcpy(new_ptr, ptr, len);
+    new_ptr[len] = 0;
+    return new_ptr;
 }
 
 static void
@@ -155,7 +154,7 @@ For_Eval(char *line)
     int n, nwords;
 
     /* Skip the '.' and any following whitespace */
-    for (ptr++; *ptr && isspace((unsigned char) *ptr); ptr++)
+    for (ptr++; *ptr && isspace((unsigned char)*ptr); ptr++)
 	continue;
 
     /*
@@ -163,8 +162,8 @@ For_Eval(char *line)
      * a for.
      */
     if (ptr[0] != 'f' || ptr[1] != 'o' || ptr[2] != 'r' ||
-	    !isspace((unsigned char) ptr[3])) {
-	if (ptr[0] == 'e' && strncmp(ptr+1, "ndfor", 5) == 0) {
+	!isspace((unsigned char)ptr[3])) {
+	if (ptr[0] == 'e' && strncmp(ptr + 1, "ndfor", 5) == 0) {
 	    Parse_Error(PARSE_FATAL, "for-less endfor");
 	    return -1;
 	}
@@ -181,7 +180,7 @@ For_Eval(char *line)
 
     /* Grab the variables. Terminate on "in". */
     for (;; ptr += len) {
-	while (*ptr && isspace((unsigned char) *ptr))
+	while (*ptr && isspace((unsigned char)*ptr))
 	    ptr++;
 	if (*ptr == '\0') {
 	    Parse_Error(PARSE_FATAL, "missing `in' in for");
@@ -205,7 +204,7 @@ For_Eval(char *line)
 	return -1;
     }
 
-    while (*ptr && isspace((unsigned char) *ptr))
+    while (*ptr && isspace((unsigned char)*ptr))
 	ptr++;
 
     /*
@@ -232,7 +231,7 @@ For_Eval(char *line)
 		continue;
 	    escapes = 0;
 	    while ((ch = *ptr++)) {
-		switch(ch) {
+		switch (ch) {
 		case ':':
 		case '$':
 		case '\\':
@@ -288,17 +287,17 @@ For_Accum(char *line)
 
     if (*ptr == '.') {
 
-	for (ptr++; *ptr && isspace((unsigned char) *ptr); ptr++)
+	for (ptr++; *ptr && isspace((unsigned char)*ptr); ptr++)
 	    continue;
 
 	if (strncmp(ptr, "endfor", 6) == 0 &&
-		(isspace((unsigned char) ptr[6]) || !ptr[6])) {
+	    (isspace((unsigned char)ptr[6]) || !ptr[6])) {
 	    if (DEBUG(FOR))
 		(void)fprintf(debug_file, "For: end for %d\n", forLevel);
 	    if (--forLevel <= 0)
 		return 0;
 	} else if (strncmp(ptr, "for", 3) == 0 &&
-		 isspace((unsigned char) ptr[3])) {
+		   isspace((unsigned char)ptr[3])) {
 	    forLevel++;
 	    if (DEBUG(FOR))
 		(void)fprintf(debug_file, "For: new loop %d\n", forLevel);
@@ -310,7 +309,6 @@ For_Accum(char *line)
     return 1;
 }
 
-
 
 static size_t
 for_var_len(const char *var)
@@ -354,7 +352,7 @@ for_substitute(Buffer *cmds, strlist_t *items, unsigned int item_no, char ech)
     /* If there were no escapes, or the only escape is the other variable
      * terminator, then just substitute the full string */
     if (!(strlist_info(items, item_no) &
-	    (ech == ')' ? ~FOR_SUB_ESCAPE_BRACE : ~FOR_SUB_ESCAPE_PAREN))) {
+	  (ech == ')' ? ~FOR_SUB_ESCAPE_BRACE : ~FOR_SUB_ESCAPE_PAREN))) {
 	Buf_AddStr(cmds, item);
 	return;
     }

@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.33 2020/08/09 18:52:03 rillig Exp $	*/
+/*	$NetBSD: buf.c,v 1.34 2020/08/09 19:51:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: buf.c,v 1.33 2020/08/09 18:52:03 rillig Exp $";
+static char rcsid[] = "$NetBSD: buf.c,v 1.34 2020/08/09 19:51:02 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)buf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: buf.c,v 1.33 2020/08/09 18:52:03 rillig Exp $");
+__RCSID("$NetBSD: buf.c,v 1.34 2020/08/09 19:51:02 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -144,8 +144,8 @@ Buf_AddInt(Buffer *bp, int n)
      * add enough slop to cope with a '-' sign and a trailing '\0'.
      */
     enum {
-        bits  = sizeof(int) * CHAR_BIT,
-        buf_size = 1 + (bits + 2) / 3 + 1
+	bits = sizeof(int) * CHAR_BIT,
+	buf_size = 1 + (bits + 2) / 3 + 1
     };
     char buf[buf_size];
 
@@ -209,7 +209,7 @@ Buf_Destroy(Buffer *buf, Boolean freeData)
 }
 
 #ifndef BUF_COMPACT_LIMIT
-# define BUF_COMPACT_LIMIT 128          /* worthwhile saving */
+# define BUF_COMPACT_LIMIT 128		/* worthwhile saving */
 #endif
 
 /* Reset the buffer and return its data.
