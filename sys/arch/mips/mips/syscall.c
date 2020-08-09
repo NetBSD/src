@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.49 2016/07/31 07:06:24 skrll Exp $	*/
+/*	$NetBSD: syscall.c,v 1.50 2020/08/09 06:43:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.49 2016/07/31 07:06:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.50 2020/08/09 06:43:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -196,7 +196,7 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t pc)
 			 * Start copying args skipping the register slots
 			 * slots on the stack.
 			 */
-			usp = reg->r_regs[_R_SP] + nsaved*sizeof(register_t);
+			usp = reg->r_regs[_R_SP] + nsaved * sizeof(register_t);
 			error = copyin((register_t *)usp, &copyargs[nregs],
 			    (nargs - nregs) * sizeof(copyargs[0]));
 			if (error)
@@ -236,7 +236,7 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t pc)
 			 * after skipping the slots for the 4 register passed
 			 * arguments.
 			 */
-			usp = reg->r_regs[_R_SP] + 4*sizeof(int32_t);
+			usp = reg->r_regs[_R_SP] + 4 * sizeof(int32_t);
 			error = copyin((int32_t *)usp, copy32args,
 			    (nargs + narg64 - nregs) * sizeof(copy32args[0]));
 			if (error)
