@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_sdio.c,v 1.3.8.2 2020/05/07 17:06:44 martin Exp $ */
+/* $NetBSD: if_bwfm_sdio.c,v 1.3.8.3 2020/08/09 14:03:07 martin Exp $ */
 /* $OpenBSD: if_bwfm_sdio.c,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -71,7 +71,6 @@ enum bwfm_sdio_clkstate {
 struct bwfm_sdio_softc {
 	struct bwfm_softc	sc_sc;
 	kmutex_t		sc_lock;
-	kmutex_t		sc_intr_lock;
 
 	bool			sc_bwfm_attached;
 
@@ -303,10 +302,8 @@ bwfm_sdio_attach(device_t parent, device_t self, void *aux)
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_rxctl_cv, "bwfmctl");
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	sdmmc_init_task(&sc->sc_task, bwfm_sdio_task, sc);
-	sc->sc_task_queued = false;
 
 	sc->sc_bounce_size = 64 * 1024;
 	sc->sc_bounce_buf = kmem_alloc(sc->sc_bounce_size, KM_SLEEP);
@@ -548,9 +545,8 @@ bwfm_sdio_attachhook(device_t self)
 		goto err;
 	}
 
-//	bwfm_sdio_dev_write(sc, SDPCMD_HOSTINTMASK,
-//	    SDPCMD_INTSTATUS_HMB_SW_MASK | SDPCMD_INTSTATUS_CHIPACTIVE);
-	bwfm_sdio_dev_write(sc, SDPCMD_HOSTINTMASK, 0xffffffff);
+	bwfm_sdio_dev_write(sc, SDPCMD_HOSTINTMASK,
+	    SDPCMD_INTSTATUS_HMB_SW_MASK | SDPCMD_INTSTATUS_CHIPACTIVE);
 	bwfm_sdio_write_1(sc, BWFM_SDIO_WATERMARK, 8);
 
 	if (bwfm_chip_sr_capable(bwfm)) {
@@ -668,10 +664,11 @@ bwfm_sdio_detach(device_t self, int flags)
 	if (sc->sc_bwfm_attached)
 		bwfm_detach(&sc->sc_sc, flags);
 
+	sdmmc_del_task(sc->sc_sf[1]->sc, &sc->sc_task, NULL);
+
 	kmem_free(sc->sc_sf, sc->sc_sf_size);
 	kmem_free(sc->sc_bounce_buf, sc->sc_bounce_size);
 
-	mutex_destroy(&sc->sc_intr_lock);
 	cv_destroy(&sc->sc_rxctl_cv);
 	mutex_destroy(&sc->sc_lock);
 
@@ -739,7 +736,7 @@ bwfm_sdio_read_4(struct bwfm_sdio_softc *sc, uint32_t addr)
 		sf = sc->sc_sf[1];
 
 	rv = sdmmc_io_read_4(sf, addr);
-	return rv;
+	return htole32(rv);
 }
 
 static void
@@ -782,7 +779,7 @@ bwfm_sdio_write_4(struct bwfm_sdio_softc *sc, uint32_t addr, uint32_t data)
 	else
 		sf = sc->sc_sf[1];
 
-	sdmmc_io_write_4(sf, addr, data);
+	sdmmc_io_write_4(sf, addr, htole32(data));
 }
 
 static int
@@ -1474,11 +1471,7 @@ bwfm_sdio_intr1(void *v, const char *name)
 
 	DPRINTF(("%s: %s\n", DEVNAME(sc), name));
 
-	mutex_enter(&sc->sc_intr_lock);
-	if (!sdmmc_task_pending(&sc->sc_task))
-		sdmmc_add_task(sc->sc_sf[1]->sc, &sc->sc_task);
-	sc->sc_task_queued = true;
-	mutex_exit(&sc->sc_intr_lock);
+	sdmmc_add_task(sc->sc_sf[1]->sc, &sc->sc_task);
 	return 1;
 }
 
@@ -1492,33 +1485,13 @@ static void
 bwfm_sdio_task(void *v)
 {
 	struct bwfm_sdio_softc *sc = (void *)v;
-#ifdef BWFM_DEBUG
-	unsigned count = 0;
-#endif
 
-	mutex_enter(&sc->sc_intr_lock);
-	while (sc->sc_task_queued) {
+	mutex_enter(&sc->sc_lock);
+	bwfm_sdio_task1(sc);
 #ifdef BWFM_DEBUG
-		++count;
+	bwfm_sdio_debug_console(sc);
 #endif
-		sc->sc_task_queued = false;
-		mutex_exit(&sc->sc_intr_lock);
-
-		mutex_enter(&sc->sc_lock);
-		bwfm_sdio_task1(sc);
-#ifdef BWFM_DEBUG
-		bwfm_sdio_debug_console(sc);
-#endif
-		mutex_exit(&sc->sc_lock);
-
-		mutex_enter(&sc->sc_intr_lock);
-	}
-	mutex_exit(&sc->sc_intr_lock);
-
-#ifdef BWFM_DEBUG
-	if (count > 1)
-		DPRINTF(("%s: finished %u tasks\n", DEVNAME(sc), count));
-#endif
+	mutex_exit(&sc->sc_lock);
 }
 
 static void
@@ -1541,7 +1514,6 @@ bwfm_sdio_task1(struct bwfm_sdio_softc *sc)
 
 	intstat = bwfm_sdio_dev_read(sc, BWFM_SDPCMD_INTSTATUS);
 	DPRINTF(("%s: intstat 0x%" PRIx32 "\n", DEVNAME(sc), intstat));
-	intstat &= (SDPCMD_INTSTATUS_HMB_SW_MASK|SDPCMD_INTSTATUS_CHIPACTIVE);
 	if (intstat)
 		bwfm_sdio_dev_write(sc, BWFM_SDPCMD_INTSTATUS, intstat);
 
@@ -1868,6 +1840,11 @@ bwfm_sdio_rx_frames(struct bwfm_sdio_softc *sc)
 				break;
 			}
 			m_adj(m, hoff);
+			/* don't pass empty packet to stack */
+			if (m->m_len == 0) {
+				m_freem(m);
+				break;
+			}
 			bwfm_rx(&sc->sc_sc, m);
 			nextlen = swhdr->nextlen << 4;
 			break;
@@ -2014,6 +1991,11 @@ bwfm_sdio_rx_glom(struct bwfm_sdio_softc *sc, uint16_t *sublen, int nsub,
 				break;
 			}
 			m_adj(m, hoff);
+			/* don't pass empty packet to stack */
+			if (m->m_len == 0) {
+				m_freem(m);
+				break;
+			}
 			bwfm_rx(&sc->sc_sc, m);
 			break;
 		case BWFM_SDIO_SWHDR_CHANNEL_GLOM:

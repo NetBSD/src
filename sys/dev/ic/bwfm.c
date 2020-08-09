@@ -1,4 +1,4 @@
-/* $NetBSD: bwfm.c,v 1.14.6.1 2020/02/25 18:40:43 martin Exp $ */
+/* $NetBSD: bwfm.c,v 1.14.6.2 2020/08/09 14:03:08 martin Exp $ */
 /* $OpenBSD: bwfm.c,v 1.5 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -18,21 +18,23 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/types.h>
+
 #include <sys/buf.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/pcq.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
-#include <sys/kmem.h>
+#include <sys/systm.h>
 #include <sys/workqueue.h>
-#include <sys/pcq.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
 #include <net/if_dl.h>
-#include <net/if_media.h>
 #include <net/if_ether.h>
+#include <net/if_media.h>
 
 #include <netinet/in.h>
 
@@ -203,7 +205,7 @@ bwfm_attach(struct bwfm_softc *sc)
 	    sizeof(bandlist))) {
 		printf("%s: couldn't get supported band list\n", DEVNAME(sc));
 		return;
-	} 
+	}
 	const u_int nbands = le32toh(bandlist[0]);
 	for (i = 1; i <= MIN(nbands, __arraycount(bandlist) - 1); i++) {
 		switch (le32toh(bandlist[i])) {
@@ -252,12 +254,8 @@ bwfm_attach(struct bwfm_softc *sc)
 
 		return; /* Error */
 	}
-		
-	ieee80211_ifattach(ic);
-	ifp->if_percpuq = if_percpuq_create(ifp);
-	if_deferred_start_init(ifp, NULL);
-	if_register(ifp);
 
+	ieee80211_ifattach(ic);
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = bwfm_newstate;
 	ic->ic_newassoc = bwfm_newassoc;
@@ -265,6 +263,10 @@ bwfm_attach(struct bwfm_softc *sc)
 	ic->ic_recv_mgmt = bwfm_recv_mgmt;
 	ic->ic_crypto.cs_key_set = bwfm_key_set;
 	ic->ic_crypto.cs_key_delete = bwfm_key_delete;
+
+	ifp->if_percpuq = if_percpuq_create(ifp);
+	if_deferred_start_init(ifp, NULL);
+	if_register(ifp);
 	ieee80211_media_init(ic, bwfm_media_change, ieee80211_media_status);
 
 	ieee80211_announce(ic);
@@ -401,7 +403,7 @@ bwfm_init(struct ifnet *ifp)
 #ifdef BWFM_DEBUG
 	memset(evmask, 0xff, sizeof(evmask));
 #endif
-	
+
 	if (bwfm_fwvar_var_set_data(sc, "event_msgs", evmask, sizeof(evmask))) {
 		printf("%s: could not set event mask\n", DEVNAME(sc));
 		return EIO;
