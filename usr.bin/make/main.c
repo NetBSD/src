@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.298 2020/08/09 09:01:29 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.299 2020/08/09 09:07:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.298 2020/08/09 09:01:29 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.299 2020/08/09 09:07:54 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.298 2020/08/09 09:01:29 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.299 2020/08/09 09:07:54 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1698,20 +1698,13 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 	else if (WEXITSTATUS(status) != 0)
 	    *errfmt = "\"%s\" returned non-zero status";
 
-	/* Null-terminate the result and convert newlines to spaces. */
-	res[res_len] = '\0';
+	/* Convert newlines to spaces.  A final newline is just stripped */
 	cp = &res[res_len];
-
-	if (res_len > 0 && *--cp == '\n') {
-	    /*
-	     * A final newline is just stripped
-	     */
+	if (res_len > 0 && *--cp == '\n')
 	    *cp-- = '\0';
-	}
 	while (cp >= res) {
-	    if (*cp == '\n') {
+	    if (*cp == '\n')
 		*cp = ' ';
-	    }
 	    cp--;
 	}
 	break;
