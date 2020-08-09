@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.26 2020/08/05 17:31:45 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.27 2020/08/09 14:18:56 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -991,5 +991,10 @@ sys/arch/x86/x86/errata.c			1.24-1.26
 
 	Add six errata for AMD Family 17h (Ryzen etc).
 	[msaitoh, ticket #1595]
+
+sys/dev/pci/mpii.c				1.25
+
+	mpii(4): make it compilable without bio(4).
+	[jnemeth, ticket #1596]
 
 
