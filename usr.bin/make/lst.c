@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.3 2020/08/01 14:47:49 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.4 2020/08/09 20:49:15 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -36,53 +36,54 @@
 #include "make_malloc.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.3 2020/08/01 14:47:49 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.4 2020/08/09 20:49:15 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.3 2020/08/01 14:47:49 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.4 2020/08/09 20:49:15 rillig Exp $");
 #endif /* not lint */
 #endif
 
 typedef struct ListNode {
-	struct ListNode	*prevPtr;   /* previous element in list */
-	struct ListNode	*nextPtr;   /* next in list */
-	unsigned int	useCount:8, /* Count of functions using the node.
-				     * node may not be deleted until count
-				     * goes to 0 */
-			flags:8;    /* Node status flags */
-	void		*datum;	    /* datum associated with this element */
+    struct ListNode *prevPtr;	/* previous element in list */
+    struct ListNode *nextPtr;	/* next in list */
+    unsigned int useCount: 8,	/* Count of functions using the node.
+				 * node may not be deleted until count
+				 * goes to 0 */
+    		 flags: 8;	/* Node status flags */
+    void *datum;		/* datum associated with this element */
 } *ListNode;
 /*
  * Flags required for synchronization
  */
-#define LN_DELETED  	0x0001      /* List node should be removed when done */
+#define LN_DELETED	0x0001	/* List node should be removed when done */
 
 typedef enum {
     Head, Middle, Tail, Unknown
 } Where;
 
-typedef struct	List {
-	ListNode  	firstPtr; /* first node in list */
-	ListNode  	lastPtr;  /* last node in list */
-	Boolean	  	isCirc;	  /* true if the list should be considered
-				   * circular */
+typedef struct List {
+    ListNode firstPtr;		/* first node in list */
+    ListNode lastPtr;		/* last node in list */
+    Boolean isCirc;		/* true if the list should be considered
+				 * circular */
 /*
  * fields for sequential access
  */
-	Where	  	atEnd;	  /* Where in the list the last access was */
-	Boolean	  	isOpen;	  /* true if list has been Lst_Open'ed */
-	ListNode  	curPtr;	  /* current node, if open. NULL if
-				   * *just* opened */
-	ListNode  	prevPtr;  /* Previous node, if open. Used by
-				   * Lst_Remove */
+    Where atEnd;		/* Where in the list the last access was */
+    Boolean isOpen;		/* true if list has been Lst_Open'ed */
+    ListNode curPtr;		/* current node, if open. NULL if
+				 * *just* opened */
+    ListNode prevPtr;		/* Previous node, if open. Used by
+				 * Lst_Remove */
 } *List;
 
 /*
  * PAlloc (var, ptype) --
  *	Allocate a pointer-typedef structure 'ptype' into the variable 'var'
  */
-#define	PAlloc(var,ptype)	var = (ptype) bmake_malloc(sizeof *(var))
+#define PAlloc(var, ptype) \
+    var = (ptype) bmake_malloc(sizeof *(var))
 
 /*
  * LstValid --
@@ -133,7 +134,7 @@ LstIsEmpty(Lst l)
 Lst
 Lst_Init(Boolean circ)
 {
-    List	nList;
+    List nList;
 
     PAlloc (nList, List);
 
@@ -166,11 +167,11 @@ Lst_Init(Boolean circ)
 Lst
 Lst_Duplicate(Lst l, DuplicateProc *copyProc)
 {
-    Lst 	nl;
-    ListNode  	ln;
-    List 	list = l;
+    Lst nl;
+    ListNode ln;
+    List list = l;
 
-    if (!LstValid (l)) {
+    if (!LstValid(l)) {
 	return NULL;
     }
 
@@ -217,8 +218,8 @@ Lst_Duplicate(Lst l, DuplicateProc *copyProc)
 void
 Lst_Destroy(Lst list, FreeProc *freeProc)
 {
-    ListNode	ln;
-    ListNode	tln = NULL;
+    ListNode ln;
+    ListNode tln = NULL;
 
     if (list == NULL)
 	return;
@@ -233,14 +234,14 @@ Lst_Destroy(Lst list, FreeProc *freeProc)
 
     if (freeProc) {
 	for (ln = list->firstPtr; ln != NULL; ln = tln) {
-	     tln = ln->nextPtr;
-	     freeProc(ln->datum);
-	     free(ln);
+	    tln = ln->nextPtr;
+	    freeProc(ln->datum);
+	    free(ln);
 	}
     } else {
 	for (ln = list->firstPtr; ln != NULL; ln = tln) {
-	     tln = ln->nextPtr;
-	     free(ln);
+	    tln = ln->nextPtr;
+	    free(ln);
 	}
     }
 
@@ -274,18 +275,18 @@ Lst_Destroy(Lst list, FreeProc *freeProc)
 ReturnStatus
 Lst_InsertBefore(Lst l, LstNode ln, void *d)
 {
-    ListNode	nLNode;	/* new lnode for d */
-    ListNode	lNode = ln;
-    List 	list = l;
+    ListNode nLNode;		/* new lnode for d */
+    ListNode lNode = ln;
+    List list = l;
 
 
     /*
      * check validity of arguments
      */
-    if (LstValid (l) && (LstIsEmpty (l) && ln == NULL))
+    if (LstValid(l) && (LstIsEmpty(l) && ln == NULL))
 	goto ok;
 
-    if (!LstValid (l) || LstIsEmpty (l) || !LstNodeValid (ln)) {
+    if (!LstValid(l) || LstIsEmpty(l) || !LstNodeValid(ln)) {
 	return FAILURE;
     }
 
@@ -343,15 +344,15 @@ Lst_InsertBefore(Lst l, LstNode ln, void *d)
 ReturnStatus
 Lst_InsertAfter(Lst l, LstNode ln, void *d)
 {
-    List 	list;
-    ListNode	lNode;
-    ListNode	nLNode;
+    List list;
+    ListNode lNode;
+    ListNode nLNode;
 
-    if (LstValid (l) && (ln == NULL && LstIsEmpty (l))) {
+    if (LstValid(l) && (ln == NULL && LstIsEmpty(l))) {
 	goto ok;
     }
 
-    if (!LstValid (l) || LstIsEmpty (l)  || ! LstNodeValid (ln)) {
+    if (!LstValid(l) || LstIsEmpty(l) || !LstNodeValid(ln)) {
 	return FAILURE;
     }
     ok:
@@ -404,7 +405,7 @@ Lst_InsertAfter(Lst l, LstNode ln, void *d)
 ReturnStatus
 Lst_AtFront(Lst l, void *d)
 {
-    LstNode	front;
+    LstNode front;
 
     front = Lst_First(l);
     return Lst_InsertBefore(l, front, d);
@@ -430,7 +431,7 @@ Lst_AtFront(Lst l, void *d)
 ReturnStatus
 Lst_AtEnd(Lst l, void *d)
 {
-    LstNode	end;
+    LstNode end;
 
     end = Lst_Last(l);
     return Lst_InsertAfter(l, end, d);
@@ -454,11 +455,11 @@ Lst_AtEnd(Lst l, void *d)
 ReturnStatus
 Lst_Remove(Lst l, LstNode ln)
 {
-    List 	list = l;
-    ListNode	lNode = ln;
+    List list = l;
+    ListNode lNode = ln;
 
-    if (!LstValid (l) || !LstNodeValid (ln)) {
-	    return FAILURE;
+    if (!LstValid(l) || !LstNodeValid(ln)) {
+	return FAILURE;
     }
 
     /*
@@ -562,7 +563,7 @@ Lst_Replace(LstNode ln, void *d)
 LstNode
 Lst_First(Lst l)
 {
-    if (!LstValid (l) || LstIsEmpty (l)) {
+    if (!LstValid(l) || LstIsEmpty(l)) {
 	return NULL;
     } else {
 	return l->firstPtr;
@@ -585,7 +586,7 @@ Lst_First(Lst l)
 LstNode
 Lst_Last(Lst l)
 {
-    if (!LstValid(l) || LstIsEmpty (l)) {
+    if (!LstValid(l) || LstIsEmpty(l)) {
 	return NULL;
     } else {
 	return l->lastPtr;
@@ -730,9 +731,9 @@ LstNode
 Lst_FindFrom(Lst l, LstNode ln, const void *d,
 	     int (*cProc)(const void *, const void *))
 {
-    ListNode	tln;
+    ListNode tln;
 
-    if (!LstValid (l) || LstIsEmpty (l) || !LstNodeValid (ln)) {
+    if (!LstValid(l) || LstIsEmpty(l) || !LstNodeValid(ln)) {
 	return NULL;
     }
 
@@ -753,8 +754,8 @@ Lst_FindFrom(Lst l, LstNode ln, const void *d,
 LstNode
 Lst_Member(Lst l, void *d)
 {
-    List    	  	list = l;
-    ListNode	lNode;
+    List list = l;
+    ListNode lNode;
 
     if (list == NULL) {
 	return NULL;
@@ -821,13 +822,13 @@ int
 Lst_ForEachFrom(Lst l, LstNode ln, int (*proc)(void *, void *),
 		void *d)
 {
-    ListNode	tln = ln;
-    List 	list = l;
-    ListNode	next;
-    Boolean 	    	done;
-    int     	    	result;
+    ListNode tln = ln;
+    List list = l;
+    ListNode next;
+    Boolean done;
+    int result;
 
-    if (!LstValid (list) || LstIsEmpty (list)) {
+    if (!LstValid(list) || LstIsEmpty(list)) {
 	return 0;
     }
 
@@ -848,9 +849,9 @@ Lst_ForEachFrom(Lst l, LstNode ln, int (*proc)(void *, void *),
 	 */
 	done = (next == NULL || next == list->firstPtr);
 
-	(void) tln->useCount++;
-	result = (*proc) (tln->datum, d);
-	(void) tln->useCount--;
+	(void)tln->useCount++;
+	result = (*proc)(tln->datum, d);
+	(void)tln->useCount--;
 
 	/*
 	 * Now check whether a node has been added.
@@ -858,8 +859,8 @@ Lst_ForEachFrom(Lst l, LstNode ln, int (*proc)(void *, void *),
 	 *       the new node was added.
 	 */
 	if (next != tln->nextPtr) {
-		next = tln->nextPtr;
-		done = 0;
+	    next = tln->nextPtr;
+	    done = 0;
 	}
 
 	if (tln->flags & LN_DELETED) {
@@ -897,14 +898,14 @@ Lst_ForEachFrom(Lst l, LstNode ln, int (*proc)(void *, void *),
 ReturnStatus
 Lst_Concat(Lst l1, Lst l2, int flags)
 {
-    ListNode  	ln;     /* original LstNode */
-    ListNode  	nln;    /* new LstNode */
-    ListNode  	last;   /* the last element in the list. Keeps
+    ListNode ln;     /* original LstNode */
+    ListNode nln;    /* new LstNode */
+    ListNode last;   /* the last element in the list. Keeps
 				 * bookkeeping until the end */
-    List 	list1 = l1;
-    List 	list2 = l2;
+    List list1 = l1;
+    List list2 = l2;
 
-    if (!LstValid (l1) || !LstValid (l2)) {
+    if (!LstValid(l1) || !LstValid(l2)) {
 	return FAILURE;
     }
 
@@ -1035,14 +1036,14 @@ Lst_Concat(Lst l1, Lst l2, int flags)
 ReturnStatus
 Lst_Open(Lst l)
 {
-	if (LstValid (l) == FALSE) {
-		return FAILURE;
-	}
-	(l)->isOpen = TRUE;
-	(l)->atEnd = LstIsEmpty (l) ? Head : Unknown;
-	(l)->curPtr = NULL;
+    if (LstValid(l) == FALSE) {
+	return FAILURE;
+    }
+    l->isOpen = TRUE;
+    l->atEnd = LstIsEmpty(l) ? Head : Unknown;
+    l->curPtr = NULL;
 
-	return SUCCESS;
+    return SUCCESS;
 }
 
 /*-
@@ -1063,12 +1064,12 @@ Lst_Open(Lst l)
 LstNode
 Lst_Next(Lst l)
 {
-    ListNode	tln;
-    List 	list = l;
+    ListNode tln;
+    List list = l;
 
-    if ((LstValid (l) == FALSE) ||
+    if ((LstValid(l) == FALSE) ||
 	(list->isOpen == FALSE)) {
-	    return NULL;
+	return NULL;
     }
 
     list->prevPtr = list->curPtr;
@@ -1130,7 +1131,7 @@ Lst_IsAtEnd(Lst l)
 {
     List list = l;
 
-    return !LstValid (l) || !list->isOpen ||
+    return !LstValid(l) || !list->isOpen ||
 	   list->atEnd == Head || list->atEnd == Tail;
 }
 
@@ -1153,7 +1154,7 @@ Lst_IsAtEnd(Lst l)
 void
 Lst_Close(Lst l)
 {
-    List 	list = l;
+    List list = l;
 
     if (LstValid(l) == TRUE) {
 	list->isOpen = FALSE;
@@ -1183,7 +1184,7 @@ Lst_Close(Lst l)
 ReturnStatus
 Lst_EnQueue(Lst l, void *d)
 {
-    if (LstValid (l) == FALSE) {
+    if (LstValid(l) == FALSE) {
 	return FAILURE;
     }
 
@@ -1208,7 +1209,7 @@ void *
 Lst_DeQueue(Lst l)
 {
     void *rd;
-    ListNode	tln;
+    ListNode tln;
 
     tln = Lst_First(l);
     if (tln == NULL) {
