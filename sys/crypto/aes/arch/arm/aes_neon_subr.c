@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_neon_subr.c,v 1.5 2020/08/08 14:47:01 riastradh Exp $	*/
+/*	$NetBSD: aes_neon_subr.c,v 1.6 2020/08/09 02:00:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_neon_subr.c,v 1.5 2020/08/08 14:47:01 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_neon_subr.c,v 1.6 2020/08/09 02:00:57 riastradh Exp $");
 
 #ifdef _KERNEL
 #include <sys/systm.h>
@@ -286,12 +286,6 @@ aes_neon_cbcmac_update1(const struct aesenc *enc, const uint8_t in[static 16],
 		auth = aes_neon_enc1(enc, auth ^ loadblock(in), nrounds);
 	storeblock(auth0, auth);
 }
-
-/*
- * XXX On aarch64, we have enough registers that we should be able to
- * pipeline two simultaneous vpaes computations in an `aes_neon_enc2'
- * function, which should substantially improve CCM throughput.
- */
 
 void
 aes_neon_ccm_enc1(const struct aesenc *enc, const uint8_t in[static 16],
