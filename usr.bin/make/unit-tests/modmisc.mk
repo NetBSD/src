@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.37 2020/08/09 07:18:03 rillig Exp $
+# $Id: modmisc.mk,v 1.38 2020/08/09 07:41:14 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -207,6 +207,16 @@ mod-loop-varname-dollar:
 
 # No matter how many dollar characters there are, they all get merged
 # into a single dollar by the :S modifier.
+#
+# As of 2020-08-09, this is because ParseModifierPart sees a '$' and
+# calls Var_Parse to expand the variable.  In all other places, the "$$"
+# is handled outside of Var_Parse.  Var_Parse therefore considers "$$"
+# one of the "really stupid names", skips the first dollar, and parsing
+# continues with the next character.  This repeats for the other dollar
+# signs, except the one before the delimiter.  That one is handled by
+# the code that optionally interprets the '$' as the end-anchor in the
+# first part of the :S modifier.  That code doesn't call Var_Parse but
+# simply copies the dollar to the result.
 mod-subst-dollar:
 	@echo $@:${:U1:S,^,$,:Q}:
 	@echo $@:${:U2:S,^,$$,:Q}:
@@ -222,6 +232,9 @@ mod-subst-dollar:
 # Here is an alternative way to generate dollar characters.
 # It's unexpectedly complicated though.
 	@echo $@:${:U:range=5:ts\x24:C,[0-9],,g:Q}:
+# In modifiers, dollars are escaped using the backslash, not using another
+# dollar sign.  Therefore, creating a dollar sign is pretty simple:
+	@echo $@:${:Ugood3:S,^,\$\$\$,:Q}
 
 # Demonstrate that it is possible to generate dollar characters using the
 # :@ modifier.
