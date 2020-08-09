@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.90 2020/08/05 15:20:21 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.91 2020/08/09 14:17:17 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -4017,4 +4017,28 @@ sys/dev/nvmm/x86/nvmm_x86_vmx.c			1.46,1.49,1.50,1.66
 
 	No real functional changes, reduce diff to -current.
 	[maxv, ticket #1041]
+
+sys/dev/ic/bwfm.c				1.26,1.27
+sys/dev/sdmmc/if_bwfm_sdio.c			1.5,1.16,1.19-1.21
+sys/dev/sdmmc/ld_sdmmc.c			1.38
+sys/dev/sdmmc/sdmmc.c				1.40
+sys/dev/sdmmc/sdmmc_io.c			1.20
+sys/dev/sdmmc/sdmmc_ioreg.h			1.6
+sys/dev/sdmmc/sdmmc_mem.c			1.72
+sys/dev/sdmmc/sdmmcvar.h			1.35
+
+	Various fixes for bwfm at sdio.
+	[mrg, ticket #1042]
+
+sys/arch/arm/broadcom/bcm2835_spi.c		1.7
+sys/dev/spi/spi.c				1.15
+sys/dev/spi/spivar.h				1.10
+
+	PR kern/55506: fix locking for spi transfers on Raspberry Pi.
+	[kardel, ticket #1043]
+
+sys/dev/pci/mpii.c				1.25
+
+	mpii(4): make it compilable without bio(4).
+	[jnemeth, ticket #1044]
 
