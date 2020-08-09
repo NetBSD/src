@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.309 2020/07/28 14:35:34 leot Exp $
+$NetBSD: acronyms.comp,v 1.310 2020/08/09 22:07:06 maya Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1616,6 +1616,7 @@ TMG	transmogrifier
 TMDS	transition minimized differential signaling
 TMO	timeout
 TOD	time of day
+TOFU	trust on first use
 TOS	terms of service
 TOS	trusted operating system
 TOS	type of service
