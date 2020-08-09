@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.84 2020/07/16 11:36:35 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.85 2020/08/09 09:11:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.84 2020/07/16 11:36:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.85 2020/08/09 09:11:41 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -2236,7 +2236,6 @@ pmap_fault_fixup(struct pmap *pm, vaddr_t va, vm_prot_t accessprot, bool user)
 	UVMHIST_LOG(pmaphist, "pm=%p, va=%016lx, accessprot=%08x",
 	    pm, va, accessprot, 0);
 
-
 #if 0
 	KASSERT_PM_ADDR(pm, va);
 #else
@@ -2246,8 +2245,8 @@ pmap_fault_fixup(struct pmap *pm, vaddr_t va, vm_prot_t accessprot, bool user)
 	    !(IN_RANGE(va, VM_MIN_ADDRESS, VM_MAX_ADDRESS)))) {
 
 		UVMHIST_LOG(pmaphist,
-		    "pmap space and va mismatch: pm=%s, va=%016lx",
-		    (pm == pmap_kernel()) ? "kernel" : "user", va, 0, 0);
+		    "pmap space and va mismatch: kernel=%jd, va=%016lx",
+		    pm == pmap_kernel(), va, 0, 0);
 		return false;
 	}
 #endif
