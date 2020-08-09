@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.32 2020/08/08 18:54:04 rillig Exp $	*/
+/*	$NetBSD: buf.c,v 1.33 2020/08/09 18:52:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: buf.c,v 1.32 2020/08/08 18:54:04 rillig Exp $";
+static char rcsid[] = "$NetBSD: buf.c,v 1.33 2020/08/09 18:52:03 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)buf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: buf.c,v 1.32 2020/08/08 18:54:04 rillig Exp $");
+__RCSID("$NetBSD: buf.c,v 1.33 2020/08/09 18:52:03 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -143,8 +143,11 @@ Buf_AddInt(Buffer *bp, int n)
      * We calculate the space needed for the octal representation, and
      * add enough slop to cope with a '-' sign and a trailing '\0'.
      */
-    size_t bits = sizeof(int) * CHAR_BIT;
-    char buf[1 + (bits + 2) / 3 + 1];
+    enum {
+        bits  = sizeof(int) * CHAR_BIT,
+        buf_size = 1 + (bits + 2) / 3 + 1
+    };
+    char buf[buf_size];
 
     size_t len = (size_t)snprintf(buf, sizeof buf, "%d", n);
     Buf_AddBytes(bp, buf, len);
