@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.304 2020/06/13 14:31:49 sevan Exp $
+$NetBSD: acronyms,v 1.305 2020/08/09 13:48:00 christos Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -568,6 +568,7 @@ TNF	The NetBSD Foundation
 TOC	table of contents
 TOCTOU	time of check to time of use
 TOEFL	test of english as a foreign language
+TOFU	text over, fullquote under (in email)
 TOH	to other half
 TP	toilet paper
 TPTB	the powers that be
