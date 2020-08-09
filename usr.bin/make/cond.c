@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.92 2020/08/08 18:54:04 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.93 2020/08/09 19:51:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.92 2020/08/08 18:54:04 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.93 2020/08/09 19:51:02 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.92 2020/08/08 18:54:04 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.93 2020/08/09 19:51:02 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -93,7 +93,7 @@ __RCSID("$NetBSD: cond.c,v 1.92 2020/08/08 18:54:04 rillig Exp $");
 
 #include    <assert.h>
 #include    <ctype.h>
-#include    <errno.h>    /* For strtoul() error checking */
+#include    <errno.h>
 
 #include    "make.h"
 #include    "hash.h"
@@ -148,13 +148,13 @@ typedef enum {
 static Token CondE(Boolean);
 static CondEvalResult do_Cond_EvalExpression(Boolean *);
 
-static const struct If *if_info;        /* Info for current statement */
-static const char *condExpr;	    	/* The expression to parse */
-static Token	  condPushBack=TOK_NONE;	/* Single push-back token used in
+static const struct If *if_info;	/* Info for current statement */
+static const char *condExpr;		/* The expression to parse */
+static Token condPushBack = TOK_NONE;	/* Single push-back token used in
 					 * parsing */
 
-static unsigned int	cond_depth = 0;  	/* current .if nesting level */
-static unsigned int	cond_min_depth = 0;  	/* depth at makefile open */
+static unsigned int cond_depth = 0;	/* current .if nesting level */
+static unsigned int cond_min_depth = 0;	/* depth at makefile open */
 
 /*
  * Indicate when we should be strict about lhs of comparisons.
@@ -168,7 +168,7 @@ static Boolean lhsStrict;
 static int
 istoken(const char *str, const char *tok, size_t len)
 {
-	return strncmp(str, tok, len) == 0 && !isalpha((unsigned char)str[len]);
+    return strncmp(str, tok, len) == 0 && !isalpha((unsigned char)str[len]);
 }
 
 /* Push back the most recent token read. We only need one level of
@@ -191,11 +191,11 @@ static int
 CondGetArg(Boolean doEval, const char **linePtr, char **argPtr,
 	   const char *func)
 {
-    const char	  *cp;
-    Buffer	  buf;
-    int           paren_depth;
-    char          ch;
-    size_t	  argLen;
+    const char *cp;
+    Buffer buf;
+    int paren_depth;
+    char ch;
+    size_t argLen;
 
     cp = *linePtr;
     if (func != NULL)
@@ -237,8 +237,8 @@ CondGetArg(Boolean doEval, const char **linePtr, char **argPtr,
 	     * variable, so we don't do it too. Nor do we return an error,
 	     * though perhaps we should...
 	     */
-	    int		len;
-	    void	*freeIt;
+	    int len;
+	    void *freeIt;
 	    VarEvalFlags eflags = VARE_UNDEFERR | (doEval ? VARE_WANTRES : 0);
 	    const char *cp2 = Var_Parse(cp, VAR_CMD, eflags, &len, &freeIt);
 	    Buf_AddStr(&buf, cp2);
@@ -248,9 +248,8 @@ CondGetArg(Boolean doEval, const char **linePtr, char **argPtr,
 	}
 	if (ch == '(')
 	    paren_depth++;
-	else
-	    if (ch == ')' && --paren_depth < 0)
-		break;
+	else if (ch == ')' && --paren_depth < 0)
+	    break;
 	Buf_AddByte(&buf, *cp);
 	cp++;
     }
@@ -264,7 +263,7 @@ CondGetArg(Boolean doEval, const char **linePtr, char **argPtr,
 
     if (func != NULL && *cp++ != ')') {
 	Parse_Error(PARSE_WARNING, "Missing closing parenthesis for %s()",
-		     func);
+		    func);
 	return 0;
     }
 
@@ -302,12 +301,12 @@ static Boolean
 CondDoExists(int argLen MAKE_ATTR_UNUSED, const char *arg)
 {
     Boolean result;
-    char    *path;
+    char *path;
 
     path = Dir_FindFile(arg, dirSearchPath);
     if (DEBUG(COND)) {
 	fprintf(debug_file, "exists(%s) result is \"%s\"\n",
-	       arg, path ? path : "");
+		arg, path ? path : "");
     }
     if (path != NULL) {
 	result = TRUE;
@@ -322,7 +321,7 @@ CondDoExists(int argLen MAKE_ATTR_UNUSED, const char *arg)
 static Boolean
 CondDoTarget(int argLen MAKE_ATTR_UNUSED, const char *arg)
 {
-    GNode   *gn;
+    GNode *gn;
 
     gn = Targ_FindNode(arg, TARG_NOCREATE);
     return gn != NULL && !OP_NOP(gn->type);
@@ -333,7 +332,7 @@ CondDoTarget(int argLen MAKE_ATTR_UNUSED, const char *arg)
 static Boolean
 CondDoCommands(int argLen MAKE_ATTR_UNUSED, const char *arg)
 {
-    GNode   *gn;
+    GNode *gn;
 
     gn = Targ_FindNode(arg, TARG_NOCREATE);
     return gn != NULL && !OP_NOP(gn->type) && !Lst_IsEmpty(gn->commands);
@@ -395,7 +394,7 @@ CondGetString(Boolean doEval, Boolean *quoted, void **freeIt, Boolean strictLHS)
     Buffer buf;
     const char *cp;
     const char *str;
-    int	len;
+    int len;
     int qt;
     const char *start;
 
@@ -457,7 +456,7 @@ CondGetString(Boolean doEval, Boolean *quoted, void **freeIt, Boolean strictLHS)
 	     */
 	    if ((condExpr == start + len) &&
 		(*condExpr == '\0' ||
-		 isspace((unsigned char) *condExpr) ||
+		 isspace((unsigned char)*condExpr) ||
 		 strchr("!=><)", *condExpr))) {
 		goto cleanup;
 	    }
@@ -471,12 +470,12 @@ CondGetString(Boolean doEval, Boolean *quoted, void **freeIt, Boolean strictLHS)
 		free(*freeIt);
 		*freeIt = NULL;
 	    }
-	    str = NULL;			/* not finished yet */
-	    condExpr--;			/* don't skip over next char */
+	    str = NULL;		/* not finished yet */
+	    condExpr--;		/* don't skip over next char */
 	    break;
 	default:
 	    if (strictLHS && !qt && *start != '$' &&
-		!isdigit((unsigned char) *start)) {
+		!isdigit((unsigned char)*start)) {
 		/* lhs must be quoted, a variable reference or number */
 		if (*freeIt) {
 		    free(*freeIt);
@@ -489,26 +488,26 @@ CondGetString(Boolean doEval, Boolean *quoted, void **freeIt, Boolean strictLHS)
 	    break;
 	}
     }
- got_str:
+got_str:
     *freeIt = Buf_GetAll(&buf, NULL);
     str = *freeIt;
- cleanup:
+cleanup:
     Buf_Destroy(&buf, FALSE);
     return str;
 }
 
 static const struct If {
-    const char	*form;	      /* Form of if */
-    int		formlen;      /* Length of form */
-    Boolean	doNot;	      /* TRUE if default function should be negated */
-    Boolean	(*defProc)(int, const char *); /* Default function to apply */
+    const char *form;		/* Form of if */
+    int formlen;		/* Length of form */
+    Boolean doNot;		/* TRUE if default function should be negated */
+    Boolean (*defProc)(int, const char *); /* Default function to apply */
 } ifs[] = {
-    { "def",	  3,	  FALSE,  CondDoDefined },
-    { "ndef",	  4,	  TRUE,	  CondDoDefined },
-    { "make",	  4,	  FALSE,  CondDoMake },
-    { "nmake",	  5,	  TRUE,	  CondDoMake },
-    { "",	  0,	  FALSE,  CondDoDefined },
-    { NULL,	  0,	  FALSE,  NULL }
+    { "def",   3, FALSE, CondDoDefined },
+    { "ndef",  4, TRUE,  CondDoDefined },
+    { "make",  4, FALSE, CondDoMake },
+    { "nmake", 5, TRUE,  CondDoMake },
+    { "",      0, FALSE, CondDoDefined },
+    { NULL,    0, FALSE, NULL }
 };
 
 /*-
@@ -520,15 +519,15 @@ static const struct If {
 static Token
 compare_expression(Boolean doEval)
 {
-    Token	t;
-    const char	*lhs;
-    const char	*rhs;
-    const char	*op;
-    void	*lhsFree;
-    void	*rhsFree;
+    Token t;
+    const char *lhs;
+    const char *rhs;
+    const char *op;
+    void *lhsFree;
+    void *rhsFree;
     Boolean lhsQuoted;
     Boolean rhsQuoted;
-    double  	left, right;
+    double left, right;
 
     t = TOK_ERROR;
     rhs = NULL;
@@ -546,7 +545,7 @@ compare_expression(Boolean doEval)
     /*
      * Skip whitespace to get to the operator
      */
-    while (isspace((unsigned char) *condExpr))
+    while (isspace((unsigned char)*condExpr))
 	condExpr++;
 
     /*
@@ -556,39 +555,39 @@ compare_expression(Boolean doEval)
      */
     op = condExpr;
     switch (*condExpr) {
-	case '!':
-	case '=':
-	case '<':
-	case '>':
-	    if (condExpr[1] == '=') {
-		condExpr += 2;
-	    } else {
-		condExpr += 1;
-	    }
-	    break;
-	default:
-	    if (!doEval) {
-		t = TOK_FALSE;
-		goto done;
-	    }
-	    /* For .ifxxx "..." check for non-empty string. */
-	    if (lhsQuoted) {
-		t = lhs[0] != 0;
-		goto done;
-	    }
-	    /* For .ifxxx <number> compare against zero */
-	    if (CondCvtArg(lhs, &left)) {
-		t = left != 0.0;
-		goto done;
-	    }
-	    /* For .if ${...} check for non-empty string (defProc is ifdef). */
-	    if (if_info->form[0] == 0) {
-		t = lhs[0] != 0;
-		goto done;
-	    }
-	    /* Otherwise action default test ... */
-	    t = if_info->defProc(strlen(lhs), lhs) != if_info->doNot;
+    case '!':
+    case '=':
+    case '<':
+    case '>':
+	if (condExpr[1] == '=') {
+	    condExpr += 2;
+	} else {
+	    condExpr += 1;
+	}
+	break;
+    default:
+	if (!doEval) {
+	    t = TOK_FALSE;
 	    goto done;
+	}
+	/* For .ifxxx "..." check for non-empty string. */
+	if (lhsQuoted) {
+	    t = lhs[0] != 0;
+	    goto done;
+	}
+	/* For .ifxxx <number> compare against zero */
+	if (CondCvtArg(lhs, &left)) {
+	    t = left != 0.0;
+	    goto done;
+	}
+	/* For .if ${...} check for non-empty string (defProc is ifdef). */
+	if (if_info->form[0] == 0) {
+	    t = lhs[0] != 0;
+	    goto done;
+	}
+	/* Otherwise action default test ... */
+	t = if_info->defProc(strlen(lhs), lhs) != if_info->doNot;
+	goto done;
     }
 
     while (isspace((unsigned char)*condExpr))
@@ -610,16 +609,16 @@ compare_expression(Boolean doEval)
     }
 
     if (rhsQuoted || lhsQuoted) {
-do_string_compare:
+    do_string_compare:
 	if (((*op != '!') && (*op != '=')) || (op[1] != '=')) {
 	    Parse_Error(PARSE_WARNING,
-    "String comparison operator should be either == or !=");
+			"String comparison operator should be either == or !=");
 	    goto done;
 	}
 
 	if (DEBUG(COND)) {
 	    fprintf(debug_file, "lhs = \"%s\", rhs = \"%s\", op = %.2s\n",
-		   lhs, rhs, op);
+		    lhs, rhs, op);
 	}
 	/*
 	 * Null-terminate rhs and perform the comparison.
@@ -641,9 +640,9 @@ do_string_compare:
 
 	if (DEBUG(COND)) {
 	    fprintf(debug_file, "left = %f, right = %f, op = %.2s\n", left,
-		   right, op);
+		    right, op);
 	}
-	switch(op[0]) {
+	switch (op[0]) {
 	case '!':
 	    if (op[1] != '=') {
 		Parse_Error(PARSE_WARNING,
@@ -691,15 +690,16 @@ get_mpt_arg(Boolean doEval, const char **linePtr, char **argPtr,
      * Use Var_Parse to parse the spec in parens and return
      * TOK_TRUE if the resulting string is empty.
      */
-    int	    length;
-    void    *freeIt;
+    int length;
+    void *freeIt;
     const char *val;
     const char *cp = *linePtr;
 
     /* We do all the work here and return the result as the length */
     *argPtr = NULL;
 
-    val = Var_Parse(cp - 1, VAR_CMD, doEval ? VARE_WANTRES : 0, &length, &freeIt);
+    val = Var_Parse(cp - 1, VAR_CMD, doEval ? VARE_WANTRES : 0, &length,
+		    &freeIt);
     /*
      * Advance *linePtr to beyond the closing ). Note that
      * we subtract one because 'length' is calculated from 'cp - 1'.
@@ -734,23 +734,23 @@ static Token
 compare_function(Boolean doEval)
 {
     static const struct fn_def {
-	const char  *fn_name;
-	int         fn_name_len;
-	int         (*fn_getarg)(Boolean, const char **, char **, const char *);
-	Boolean     (*fn_proc)(int, const char *);
+	const char *fn_name;
+	int fn_name_len;
+	int (*fn_getarg)(Boolean, const char **, char **, const char *);
+	Boolean (*fn_proc)(int, const char *);
     } fn_defs[] = {
-	{ "defined",   7, CondGetArg, CondDoDefined },
-	{ "make",      4, CondGetArg, CondDoMake },
-	{ "exists",    6, CondGetArg, CondDoExists },
-	{ "empty",     5, get_mpt_arg, CondDoEmpty },
-	{ "target",    6, CondGetArg, CondDoTarget },
-	{ "commands",  8, CondGetArg, CondDoCommands },
-	{ NULL,        0, NULL, NULL },
+	{ "defined",  7, CondGetArg,  CondDoDefined },
+	{ "make",     4, CondGetArg,  CondDoMake },
+	{ "exists",   6, CondGetArg,  CondDoExists },
+	{ "empty",    5, get_mpt_arg, CondDoEmpty },
+	{ "target",   6, CondGetArg,  CondDoTarget },
+	{ "commands", 8, CondGetArg,  CondDoCommands },
+	{ NULL,       0, NULL, NULL },
     };
     const struct fn_def *fn_def;
-    Token	t;
-    char	*arg = NULL;
-    int	arglen;
+    Token t;
+    char *arg = NULL;
+    int arglen;
     const char *cp = condExpr;
     const char *cp1;
 
@@ -884,7 +884,7 @@ CondToken(Boolean doEval)
 static Token
 CondT(Boolean doEval)
 {
-    Token   t;
+    Token t;
 
     t = CondToken(doEval);
 
@@ -932,7 +932,7 @@ CondT(Boolean doEval)
 static Token
 CondF(Boolean doEval)
 {
-    Token   l, o;
+    Token l, o;
 
     l = CondT(doEval);
     if (l != TOK_ERROR) {
@@ -978,7 +978,7 @@ CondF(Boolean doEval)
 static Token
 CondE(Boolean doEval)
 {
-    Token   l, o;
+    Token l, o;
 
     l = CondF(doEval);
     if (l != TOK_ERROR) {
@@ -1051,7 +1051,8 @@ do_Cond_EvalExpression(Boolean *value)
  *-----------------------------------------------------------------------
  */
 CondEvalResult
-Cond_EvalExpression(const struct If *info, char *line, Boolean *value, int eprint, Boolean strictLHS)
+Cond_EvalExpression(const struct If *info, char *line, Boolean *value,
+		    int eprint, Boolean strictLHS)
 {
     static const struct If *dflt_info;
     const struct If *sv_if_info = if_info;
@@ -1066,7 +1067,7 @@ Cond_EvalExpression(const struct If *info, char *line, Boolean *value, int eprin
 
     if (info == NULL && (info = dflt_info) == NULL) {
 	/* Scan for the entry for .if - it can't be first */
-	for (info = ifs; ; info++)
+	for (info = ifs;; info++)
 	    if (info->form[0] == 0)
 		break;
 	dflt_info = info;
@@ -1117,23 +1118,23 @@ Cond_EvalExpression(const struct If *info, char *line, Boolean *value, int eprin
 CondEvalResult
 Cond_Eval(char *line)
 {
-#define	    MAXIF      128	/* maximum depth of .if'ing */
-#define	    MAXIF_BUMP  32	/* how much to grow by */
+    enum { MAXIF = 128 };	/* maximum depth of .if'ing */
+    enum { MAXIF_BUMP = 32 };	/* how much to grow by */
     enum if_states {
 	IF_ACTIVE,		/* .if or .elif part active */
 	ELSE_ACTIVE,		/* .else part active */
 	SEARCH_FOR_ELIF,	/* searching for .elif/else to execute */
-	SKIP_TO_ELSE,           /* has been true, but not seen '.else' */
+	SKIP_TO_ELSE,		/* has been true, but not seen '.else' */
 	SKIP_TO_ENDIF		/* nothing else to execute */
     };
     static enum if_states *cond_state = NULL;
     static unsigned int max_if_depth = MAXIF;
 
     const struct If *ifp;
-    Boolean 	    isElif;
-    Boolean 	    value;
-    int	    	    level;  	/* Level at which to report errors. */
-    enum if_states  state;
+    Boolean isElif;
+    Boolean value;
+    int level;			/* Level at which to report errors. */
+    enum if_states state;
 
     level = PARSE_FATAL;
     if (!cond_state) {
@@ -1156,7 +1157,8 @@ Cond_Eval(char *line)
 	    }
 	    /* Return state for previous conditional */
 	    cond_depth--;
-	    return cond_state[cond_depth] <= ELSE_ACTIVE ? COND_PARSE : COND_SKIP;
+	    return cond_state[cond_depth] <= ELSE_ACTIVE
+		   ? COND_PARSE : COND_SKIP;
 	}
 
 	/* Quite likely this is 'else' or 'elif' */
@@ -1200,7 +1202,7 @@ Cond_Eval(char *line)
      * function is, etc. -- by looking in the table of valid "ifs"
      */
     line += 2;
-    for (ifp = ifs; ; ifp++) {
+    for (ifp = ifs;; ifp++) {
 	if (ifp->form == NULL)
 	    return COND_INVALID;
 	if (istoken(ifp->form, line, ifp->formlen)) {
@@ -1236,8 +1238,8 @@ Cond_Eval(char *line)
 	     * can need more than the default.
 	     */
 	    max_if_depth += MAXIF_BUMP;
-	    cond_state = bmake_realloc(cond_state, max_if_depth *
-		sizeof(*cond_state));
+	    cond_state = bmake_realloc(cond_state,
+				       max_if_depth * sizeof(*cond_state));
 	}
 	state = cond_state[cond_depth];
 	cond_depth++;
