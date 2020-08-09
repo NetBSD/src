@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.297 2020/08/08 18:54:04 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.298 2020/08/09 09:01:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.297 2020/08/08 18:54:04 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.298 2020/08/09 09:01:29 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.297 2020/08/08 18:54:04 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.298 2020/08/09 09:01:29 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1599,12 +1599,13 @@ Cmd_Exec(const char *cmd, const char **errfmt)
     int 	fds[2];	    	/* Pipe streams */
     int 	cpid;	    	/* Child PID */
     int 	pid;	    	/* PID from wait() */
-    char	*res;		/* result */
     int		status;		/* command exit status */
     Buffer	buf;		/* buffer to store the result */
+    ssize_t	bytes_read;
+    char	*res;		/* result */
+    size_t	res_len;
     char	*cp;
     int		savederr;	/* saved errno */
-    ssize_t	cc;		/* bytes read, or -1 */
 
     *errfmt = NULL;
 
@@ -1666,12 +1667,12 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 	/* XXX: split variable cc into 2 */
 	do {
 	    char   result[BUFSIZ];
-	    cc = read(fds[0], result, sizeof(result));
-	    if (cc > 0)
-		Buf_AddBytes(&buf, result, (size_t)cc);
+	    bytes_read = read(fds[0], result, sizeof(result));
+	    if (bytes_read > 0)
+		Buf_AddBytes(&buf, result, (size_t)bytes_read);
 	}
-	while (cc > 0 || (cc == -1 && errno == EINTR));
-	if (cc == -1)
+	while (bytes_read > 0 || (bytes_read == -1 && errno == EINTR));
+	if (bytes_read == -1)
 	    savederr = errno;
 
 	/*
@@ -1686,7 +1687,7 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 	    JobReapChild(pid, status, FALSE);
 	    continue;
 	}
-	cc = (/* XXX */ssize_t)Buf_Size(&buf);
+	res_len = Buf_Size(&buf);
 	res = Buf_Destroy(&buf, FALSE);
 
 	if (savederr != 0)
@@ -1697,14 +1698,11 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 	else if (WEXITSTATUS(status) != 0)
 	    *errfmt = "\"%s\" returned non-zero status";
 
-	/*
-	 * Null-terminate the result, convert newlines to spaces and
-	 * install it in the variable.
-	 */
-	res[cc] = '\0';
-	cp = &res[cc];
+	/* Null-terminate the result and convert newlines to spaces. */
+	res[res_len] = '\0';
+	cp = &res[res_len];
 
-	if (cc > 0 && *--cp == '\n') {
+	if (res_len > 0 && *--cp == '\n') {
 	    /*
 	     * A final newline is just stripped
 	     */
