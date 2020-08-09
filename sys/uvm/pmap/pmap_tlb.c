@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.33 2020/04/14 05:43:57 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.34 2020/08/09 06:26:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.33 2020/04/14 05:43:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.34 2020/08/09 06:26:49 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -643,8 +643,9 @@ pmap_tlb_shootdown_bystanders(pmap_t pm)
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(maphist, "pm %#jx", (uintptr_t)pm, 0, 0, 0);
 
-	kcpuset_t *pm_active;
-	kcpuset_clone(&pm_active, pm->pm_active);
+	const struct cpu_info * const ci = curcpu();
+	kcpuset_t *pm_active = ci->ci_shootdowncpus;
+	kcpuset_copy(pm_active, pm->pm_active);
 	kcpuset_remove(pm_active, cpu_tlb_info(curcpu())->ti_kcpuset);
 	const bool kernel_p = (pm == pmap_kernel());
 	bool ipi_sent = false;
@@ -718,8 +719,6 @@ pmap_tlb_shootdown_bystanders(pmap_t pm)
 		}
 		TLBINFO_UNLOCK(ti);
 	}
-
-	kcpuset_destroy(pm_active);
 
 	UVMHIST_LOG(maphist, " <-- done (ipi_sent=%jd)", ipi_sent, 0, 0, 0);
 
