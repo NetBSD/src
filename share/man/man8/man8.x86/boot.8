@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.21 2020/07/15 12:38:30 kim Exp $
+.\"	$NetBSD: boot.8,v 1.22 2020/08/09 18:54:59 kim Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -178,7 +178,7 @@ The default
 .Va device
 will be set to the disk from which the boot loader was loaded.
 The partition is set to the first match in this list:
-.Bl -enum -compact
+.Bl -enum
 .It
 The first
 .Xr gpt 8
@@ -193,6 +193,7 @@ The first partition with a file system that could be bootable.
 .It
 The first partition.
 .El
+.Pp
 To boot from an alternate disk, the full name of the device should
 be given at the prompt.
 .Va device
@@ -213,10 +214,9 @@ is the unit number, and
 .Va x
 is the partition letter.
 .Pp
-In the later case, the following list of supported devices may
+In the latter case, the following list of supported devices may
 vary from installation to installation:
-.Pp
-.Bl -hang -compact
+.Bl -hang
 .It hd
 Hard disks as numbered by the BIOS.
 This includes ST506, IDE, ESDI, RLL disks on a WD100[2367] or
@@ -767,7 +767,7 @@ directory in a
 formatted partition of type
 .Tn EFI
 (Either
-.Xr mbr 8
+.Xr x86/mbr 8
 and
 .Xr gpt 8 ,
 see the
@@ -839,10 +839,10 @@ disklabel (if it is a hard disk).
 .Pp
 .Tn UEFI
 implementation are supposed to support either
-.Xr mbr 8
+.Xr x86/mbr 8
 or
 .Xr gpt 8
-partitionning, but some do not handle the later.
+partitioning, but some do not handle the latter.
 .Tn UEFI
 Booting
 from a
@@ -851,17 +851,20 @@ partitioned disk is still possible in this case, by adding
 an overlapping
 .Tn EFI
 partition in the protective
-.Xr mbr 8
+.Xr x86/mbr 8
 block.
 This can be achieved using the following commands
 (you must adapt the hard disk and
 .Tn EFI
 partition start end size to fit your setup):
-.Dl Ic dd if=/dev/rwd0d bs=512 count=1 of=mbr
-.Dl Ic fdisk -FIfaui1s 4/34/32768 -c /usr/mdec/mbr mbr
-.Dl Ic dd if=mbr bs=512 count=1 of=/dev/rwd0d conv=notrunc
+.Bd -unfilled -offset indent
+.Cm dd if=/dev/rwd0d bs=512 count=1 of=mbr
+.Cm fdisk -FIfaui1s 4/34/32768 -c /usr/mdec/mbr mbr
+.Cm dd if=mbr bs=512 count=1 of=/dev/rwd0d conv=notrunc
+.Ed
+.Pp
 The resulting
-.Xr mbr 8
+.Xr x86/mbr 8
 partition table will look like this:
 .Bd -unfilled -offset indent
 0: GPT Protective MBR (sysid 238)
