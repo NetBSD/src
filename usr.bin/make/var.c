@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.440 2020/08/09 11:04:05 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.441 2020/08/09 13:05:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.440 2020/08/09 11:04:05 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.441 2020/08/09 13:05:04 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.440 2020/08/09 11:04:05 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.441 2020/08/09 13:05:04 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -623,10 +623,14 @@ Var_ExportVars(void)
 
 /*
  * This is called when .export is seen or .MAKE.EXPORTED is modified.
+ *
  * It is also called when any exported variable is modified.
+ * XXX: Is it really?
+ *
+ * str has the format "[-env|-literal] varname...".
  */
 void
-Var_Export(const char *str, int isExport)
+Var_Export(const char *str, Boolean isExport)
 {
     VarExportFlags flags;
     char *val;
