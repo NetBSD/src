@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.438 2020/08/09 09:40:48 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.439 2020/08/09 09:44:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.438 2020/08/09 09:40:48 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.439 2020/08/09 09:44:14 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.438 2020/08/09 09:40:48 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.439 2020/08/09 09:44:14 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -131,9 +131,9 @@ __RCSID("$NetBSD: var.c,v 1.438 2020/08/09 09:40:48 rillig Exp $");
 #include    <stdlib.h>
 #include    <time.h>
 
-#include    "enum.h"
 #include    "make.h"
 #include    "buf.h"
+#include    "enum.h"
 #include    "dir.h"
 #include    "job.h"
 #include    "metachar.h"

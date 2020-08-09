@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.301 2020/08/09 09:27:44 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.302 2020/08/09 09:44:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.301 2020/08/09 09:27:44 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.302 2020/08/09 09:44:14 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.301 2020/08/09 09:27:44 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.302 2020/08/09 09:44:14 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -124,13 +124,13 @@ __RCSID("$NetBSD: main.c,v 1.301 2020/08/09 09:27:44 rillig Exp $");
 #include <sys/utsname.h>
 #include <sys/wait.h>
 
+#include <ctype.h>
 #include <errno.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <ctype.h>
 
 #include "make.h"
 #include "hash.h"
@@ -1582,7 +1582,7 @@ found:
 /*-
  * Cmd_Exec --
  *	Execute the command in cmd, and return the output of that command
- *	in a string.
+ *	in a string.  In the output, newlines are replaced with spaces.
  *
  * Results:
  *	A string containing the output of the command, or the empty string.
