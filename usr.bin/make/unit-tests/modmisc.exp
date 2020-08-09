@@ -57,6 +57,7 @@ mod-subst-dollar:$8:
 mod-subst-dollar:$40:
 mod-subst-dollar:U8:
 mod-subst-dollar:$$$$:
+mod-subst-dollar:$$$good3
 mod-loop-dollar:1:
 mod-loop-dollar:${word}$:
 mod-loop-dollar:$3$:
