@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.38 2020/08/09 07:41:14 rillig Exp $
+# $Id: modmisc.mk,v 1.39 2020/08/09 08:03:31 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -17,6 +17,7 @@ MOD_SEP=S,:, ,g
 
 all:	modvar modvarloop modsysv mod-HTE emptyvar undefvar
 all:	mod-subst
+all:	mod-subst-delimiter
 all:	mod-subst-chain
 all:	mod-regex
 all:	mod-loop-varname mod-loop-resolve mod-loop-varname-dollar
@@ -137,6 +138,40 @@ mod-subst:
 	@echo :${:Ua b b c:S,b,,g:Q}:
 	@echo :${:U1 2 3 1 2 3:S,1 2,___,Wg:S,_,x,:Q}:
 	@echo ${:U12345:S,,sep,g:Q}
+
+# The :S and :C modifiers accept an arbitrary character as the delimiter,
+# including characters that are otherwise used as escape characters or
+# interpreted in a special way.  This can be used to confuse humans.
+mod-subst-delimiter:
+	@echo $@:
+	@echo ${:U1 2 3:S	2	two	:Q} horizontal tabulator
+	@echo ${:U1 2 3:S 2 two :Q} space
+	@echo ${:U1 2 3:S!2!two!:Q} exclamation mark
+	@echo ${:U1 2 3:S"2"two":Q} double quotes
+	# In shell command lines, the hash does not need to be escaped.
+	# It needs to be escaped in variable assignment lines though.
+	@echo ${:U1 2 3:S#2#two#:Q} hash
+	@echo ${:U1 2 3:S$2$two$:Q} dollar
+	@echo ${:U1 2 3:S%2%two%:Q} percent
+	@echo ${:U1 2 3:S'2'two':Q} apostrophe
+	@echo ${:U1 2 3:S(2(two(:Q} opening parenthesis
+	@echo ${:U1 2 3:S)2)two):Q} closing parenthesis
+	@echo ${:U1 2 3:S121two1:Q} digit
+	@echo ${:U1 2 3:S:2:two::Q} colon
+	@echo ${:U1 2 3:S<2<two<:Q} less than sign
+	@echo ${:U1 2 3:S=2=two=:Q} equal sign
+	@echo ${:U1 2 3:S>2>two>:Q} greater than sign
+	@echo ${:U1 2 3:S?2?two?:Q} question mark
+	@echo ${:U1 2 3:S@2@two@:Q} at
+	@echo ${:U1 2 3:Sa2atwoa:Q} letter
+	@echo ${:U1 2 3:S[2[two[:Q} opening bracket
+	@echo ${:U1 2 3:S\2\two\:Q} backslash
+	@echo ${:U1 2 3:S]2]two]:Q} closing bracket
+	@echo ${:U1 2 3:S^2^two^:Q} caret
+	@echo ${:U1 2 3:S{2{two{:Q} opening brace
+	@echo ${:U1 2 3:S|2|two|:Q} vertical line
+	@echo ${:U1 2 3:S}2}two}:Q} closing brace
+	@echo ${:U1 2 3:S~2~two~:Q} tilde
 
 # The :S and :C modifiers can be chained without a separating ':'.
 # This is not documented in the manual page.
