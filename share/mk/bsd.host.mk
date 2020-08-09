@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.host.mk,v 1.4 2018/02/25 18:53:23 chs Exp $
+#	$NetBSD: bsd.host.mk,v 1.5 2020/08/09 21:13:38 christos Exp $
 
 .if !defined(_BSD_HOST_MK_)
 _BSD_HOST_MK_=1
@@ -63,6 +63,10 @@ HOST_MKDEPCXX?=	${TOOLDIR}/bin/${_TOOL_PREFIX}host-mkdep
 .else
 HOST_MKDEP?=	CC=${HOST_CC:Q} mkdep
 HOST_MKDEPCXX?=	CC=${HOST_CXX:Q} mkdep
+.endif
+
+.if ${HOST_OSTYPE:MLinux*}
+HOST_CPPFLAGS+=-D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
 .endif
 
 .if ${NEED_OWN_INSTALL_TARGET} != "no"
