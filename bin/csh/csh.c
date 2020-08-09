@@ -1,4 +1,4 @@
-/* $NetBSD: csh.c,v 1.50 2020/04/03 18:11:29 joerg Exp $ */
+/* $NetBSD: csh.c,v 1.51 2020/08/09 00:22:53 dholland Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-__RCSID("$NetBSD: csh.c,v 1.50 2020/04/03 18:11:29 joerg Exp $");
+__RCSID("$NetBSD: csh.c,v 1.51 2020/08/09 00:22:53 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -697,7 +697,7 @@ importpath(Char *cp)
      * i+2 where i is the number of colons in the path. There are i+1
      * directories in the path plus we need room for a zero terminator.
      */
-    pv = (Char **)xcalloc((size_t) (i + 2), sizeof(Char **));
+    pv = xcalloc((size_t) (i + 2), sizeof(Char **));
     dp = cp;
     i = 0;
     if (*dp)
@@ -1211,7 +1211,7 @@ process(int catch)
 	 * Made it!
 	 */
 	freelex(&paraml);
-	freesyn((struct command *) savet), savet = NULL;
+	freesyn(savet), savet = NULL;
     }
     resexit(osetexit);
     savet = t;

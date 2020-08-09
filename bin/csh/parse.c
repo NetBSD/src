@@ -1,4 +1,4 @@
-/* $NetBSD: parse.c,v 1.19 2019/01/05 16:54:00 christos Exp $ */
+/* $NetBSD: parse.c,v 1.20 2020/08/09 00:22:53 dholland Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.19 2019/01/05 16:54:00 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.20 2020/08/09 00:22:53 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -262,7 +262,7 @@ syn0(struct wordent *p1, struct wordent *p2, int flags)
 	    if (t1->t_dtyp == NODE_LIST ||
 		t1->t_dtyp == NODE_AND ||
 		t1->t_dtyp == NODE_OR) {
-		t = (struct command *)xcalloc(1, sizeof(*t));
+		t = xcalloc(1, sizeof(*t));
 		t->t_dtyp = NODE_PAREN;
 		t->t_dflg = F_AMPERSAND | F_NOINTERRUPT;
 		t->t_dspr = t1;
@@ -270,7 +270,7 @@ syn0(struct wordent *p1, struct wordent *p2, int flags)
 	    }
 	    else
 		t1->t_dflg |= F_AMPERSAND | F_NOINTERRUPT;
-	    t = (struct command *)xcalloc(1, sizeof(*t));
+	    t = xcalloc(1, sizeof(*t));
 	    t->t_dtyp = NODE_LIST;
 	    t->t_dflg = 0;
 	    t->t_dcar = t1;
@@ -308,7 +308,7 @@ syn1(struct wordent *p1, struct wordent *p2, int flags)
 	case '\n':
 	    if (l != 0)
 		break;
-	    t = (struct command *) xcalloc(1, sizeof(*t));
+	    t = xcalloc(1, sizeof(*t));
 	    t->t_dtyp = NODE_LIST;
 	    t->t_dcar = syn1a(p1, p, flags);
 	    t->t_dcdr = syntax(p->next, p2, flags);
@@ -344,7 +344,7 @@ syn1a(struct wordent *p1, struct wordent *p2, int flags)
 	    if (p->word[1] != '|')
 		continue;
 	    if (l == 0) {
-		t = (struct command *)xcalloc(1, sizeof(*t));
+		t = xcalloc(1, sizeof(*t));
 		t->t_dtyp = NODE_OR;
 		t->t_dcar = syn1b(p1, p, flags);
 		t->t_dcdr = syn1a(p->next, p2, flags);
@@ -379,7 +379,7 @@ syn1b(struct wordent *p1, struct wordent *p2, int flags)
 	    continue;
 	case '&':
 	    if (p->word[1] == '&' && l == 0) {
-		t = (struct command *)xcalloc(1, sizeof(*t));
+		t = xcalloc(1, sizeof(*t));
 		t->t_dtyp = NODE_AND;
 		t->t_dcar = syn2(p1, p, flags);
 		t->t_dcdr = syn1b(p->next, p2, flags);
@@ -416,7 +416,7 @@ syn2(struct wordent *p1, struct wordent *p2, int flags)
 	case '|':
 	    if (l != 0)
 		continue;
-	    t = (struct command *)xcalloc(1, sizeof(*t));
+	    t = xcalloc(1, sizeof(*t));
 	    f = flags | POUT;
 	    pn = p->next;
 	    if (pn != p2 && pn->word[0] == '&') {
@@ -508,8 +508,8 @@ again:
 	}
     if (n < 0)
 	n = 0;
-    t = (struct command *)xcalloc(1, sizeof(*t));
-    av = (Char **)xcalloc((size_t)(n + 1), sizeof(Char **));
+    t = xcalloc(1, sizeof(*t));
+    av = xcalloc((size_t)(n + 1), sizeof(Char **));
     t->t_dcom = av;
     n = 0;
     if (p2->word[0] == ')')

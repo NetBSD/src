@@ -1,4 +1,4 @@
-/* $NetBSD: proc.c,v 1.39 2020/04/03 18:11:29 joerg Exp $ */
+/* $NetBSD: proc.c,v 1.40 2020/08/09 00:22:53 dholland Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)proc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: proc.c,v 1.39 2020/04/03 18:11:29 joerg Exp $");
+__RCSID("$NetBSD: proc.c,v 1.40 2020/08/09 00:22:53 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -455,7 +455,7 @@ palloc(int pid, struct command *t)
     struct process *pp;
     int i;
 
-    pp = (struct process *)xcalloc(1, (size_t)sizeof(struct process));
+    pp = xcalloc(1, sizeof(*pp));
     pp->p_pid = pid;
     pp->p_flags = t->t_dflg & F_AMPERSAND ? PRUNNING : PRUNNING | PFOREGND;
     if (t->t_dflg & F_TIME)

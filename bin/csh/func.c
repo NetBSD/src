@@ -1,4 +1,4 @@
-/* $NetBSD: func.c,v 1.43 2019/01/06 01:22:50 christos Exp $ */
+/* $NetBSD: func.c,v 1.44 2020/08/09 00:22:53 dholland Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: func.c,v 1.43 2019/01/06 01:22:50 christos Exp $");
+__RCSID("$NetBSD: func.c,v 1.44 2020/08/09 00:22:53 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -414,7 +414,7 @@ doforeach(Char **v, struct command *t)
     v = globall(v);
     if (v == 0)
 	stderror(ERR_NAME | ERR_NOMATCH);
-    nwp = (struct whyle *) xcalloc(1, sizeof *nwp);
+    nwp = xcalloc(1, sizeof *nwp);
     nwp->w_fe = nwp->w_fe0 = v;
     gargv = 0;
     btell(&nwp->w_start);
@@ -452,7 +452,7 @@ dowhile(Char **v, struct command *t)
 	stderror(ERR_NAME | ERR_EXPRESSION);
     if (!again) {
 	struct whyle *nwp =
-	(struct whyle *)xcalloc(1, sizeof(*nwp));
+		xcalloc(1, sizeof(*nwp));
 
 	nwp->w_start = lineloc;
 	nwp->w_end.type = F_SEEK;
