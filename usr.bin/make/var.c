@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.444 2020/08/09 14:30:35 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.445 2020/08/09 15:07:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.444 2020/08/09 14:30:35 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.445 2020/08/09 15:07:13 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.444 2020/08/09 14:30:35 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.445 2020/08/09 15:07:13 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1384,36 +1384,34 @@ tryagain:
 	    if (*rp == '\\' && (rp[1] == '&' || rp[1] == '\\')) {
 		SepBuf_AddBytes(buf, rp + 1, 1);
 		rp++;
-	    } else if (*rp == '&' ||
-		       (*rp == '\\' && isdigit((unsigned char)rp[1]))) {
-		int n;
-		char errstr[3];
+		continue;
+	    }
 
-		if (*rp == '&') {
-		    n = 0;
-		    errstr[0] = '&';
-		    errstr[1] = '\0';
-		} else {
-		    n = rp[1] - '0';
-		    errstr[0] = '\\';
-		    errstr[1] = rp[1];
-		    errstr[2] = '\0';
-		    rp++;
-		}
+	    if (*rp == '&') {
+		SepBuf_AddBytesBetween(buf, wp + m[0].rm_so, wp + m[0].rm_eo);
+		continue;
+	    }
+
+	    if (*rp != '\\' || !isdigit((unsigned char)rp[1])) {
+		SepBuf_AddBytes(buf, rp, 1);
+		continue;
+	    }
+
+	    {			/* \0 to \9 backreference */
+		int n = rp[1] - '0';
+		rp++;
 
 		if (n >= args->nsub) {
-		    Error("No subexpression %s", errstr);
+		    Error("No subexpression \\%d", n);
 		} else if (m[n].rm_so == -1 && m[n].rm_eo == -1) {
-		    Error("No match for subexpression %s", errstr);
+		    Error("No match for subexpression \\%d", n);
 		} else {
 		    SepBuf_AddBytesBetween(buf, wp + m[n].rm_so,
 					   wp + m[n].rm_eo);
 		}
-
-	    } else {
-		SepBuf_AddBytes(buf, rp, 1);
 	    }
 	}
+
 	wp += m[0].rm_eo;
 	if (args->pflags & VARP_SUB_GLOBAL) {
 	    flags |= REG_NOTBOL;
