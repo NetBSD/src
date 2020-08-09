@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.39 2020/08/09 08:03:31 rillig Exp $
+# $Id: modmisc.mk,v 1.40 2020/08/09 09:17:19 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -401,3 +401,17 @@ mod-range:
 .if ${value:L:${:Dempty}S,a,A,} != "vAlue"
 .warning unexpected
 .endif
+
+# begin mod-shell
+
+.if ${:!echo hello | tr 'l' 'l'!} != "hello"
+.warning unexpected
+.endif
+
+# The output is truncated at the first null byte.
+# Cmd_Exec returns only a string pointer without length information.
+.if ${:!echo hello | tr 'l' '\0'!} != "he"
+.warning unexpected
+.endif
+
+# end mod-shell
