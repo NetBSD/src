@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_io.c,v 1.14.4.1 2020/02/25 18:40:43 martin Exp $	*/
+/*	$NetBSD: sdmmc_io.c,v 1.14.4.2 2020/08/09 14:03:07 martin Exp $	*/
 /*	$OpenBSD: sdmmc_io.c,v 1.10 2007/09/17 01:33:33 krw Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Routines for SD I/O cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.14.4.1 2020/02/25 18:40:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.14.4.2 2020/08/09 14:03:07 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -804,10 +804,7 @@ sdmmc_card_intr(device_t dev)
 	if (sc->sc_sct->card_enable_intr == NULL)
 		return;
 
-	mutex_enter(&sc->sc_intr_task_mtx);
-	if (!sdmmc_task_pending(&sc->sc_intr_task))
-		sdmmc_add_task(sc, &sc->sc_intr_task);
-	mutex_exit(&sc->sc_intr_task_mtx);
+	sdmmc_add_task(sc, &sc->sc_intr_task);
 }
 
 void
