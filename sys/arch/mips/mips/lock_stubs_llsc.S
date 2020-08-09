@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs_llsc.S,v 1.11 2020/08/06 10:00:21 skrll Exp $	*/
+/*	$NetBSD: lock_stubs_llsc.S,v 1.12 2020/08/09 08:33:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -31,19 +31,14 @@
 
 #include "opt_cputype.h"
 #include "opt_lockdebug.h"
-#include "opt_multiprocessor.h"
 
 #include <sys/errno.h>
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: lock_stubs_llsc.S,v 1.11 2020/08/06 10:00:21 skrll Exp $")
+RCSID("$NetBSD: lock_stubs_llsc.S,v 1.12 2020/08/09 08:33:52 skrll Exp $")
 
 #include "assym.h"
-
-#if defined(DIAGNOSTIC) || defined(MULTIPROCESSOR)
-#define	FULL
-#endif
 
 /*
  * Set ISA level for the assembler.
@@ -259,7 +254,7 @@ STATIC_NESTED(llsc_mutex_spin_enter, CALLFRAME_SIZ, ra)
 12:	bnez	v0, 12b			# loop forever if any are true
 	 nop
 #endif /* PARANOIA */
-#if defined(FULL)
+
 	LLSCSYNC
 	INT_LL	t3, MTX_LOCK(t0)
 3:
@@ -273,10 +268,6 @@ STATIC_NESTED(llsc_mutex_spin_enter, CALLFRAME_SIZ, ra)
 4:
 	j	_C_LABEL(mutex_spin_retry)
 	 move	a0, t0
-#else
-	j	ra
-	 nop
-#endif /* FULL */
 END(llsc_mutex_spin_enter)
 
 /*
