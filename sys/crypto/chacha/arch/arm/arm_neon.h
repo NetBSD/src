@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_neon.h,v 1.5 2020/08/09 02:48:38 riastradh Exp $	*/
+/*	$NetBSD: arm_neon.h,v 1.6 2020/08/09 02:49:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -84,6 +84,8 @@ typedef __attribute__((neon_vector_type(16))) uint8_t uint8x16_t;
 typedef __attribute__((neon_vector_type(2))) uint64_t uint64x2_t;
 typedef __attribute__((neon_vector_type(4))) uint32_t uint32x4_t;
 typedef __attribute__((neon_vector_type(8))) uint16_t uint16x8_t;
+
+typedef __attribute__((neon_vector_type(8))) int8_t int8x8_t;
 
 typedef __attribute__((neon_vector_type(8))) uint8_t uint8x8_t;
 
@@ -218,7 +220,7 @@ vextq_u8(uint8x16_t __lo, uint8x16_t __hi, uint8_t __i)
 	    15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0);			      \
 	uint8x16_t __r = __builtin_neon_vextq_v((int8x16_t)__lo_r,	      \
 	    (int8x16_t)__hi_r, (__i), 48);				      \
-	return __builtin_shufflevector(__r, __r,			      \
+	__builtin_shufflevector(__r, __r,				      \
 	    15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0);			      \
 })
 #endif	/* __LITTLE_ENDIAN */
@@ -326,19 +328,37 @@ vqtbl1q_u8(uint8x16_t __tab, uint8x16_t __idx)
 	return (uint8x16_t)__out64;
 #endif
 #elif defined(__clang__)
-#ifdef __LITTLE_ENDIAN__
-	return (uint8x16_t)__builtin_neon_vqtbl1q_v((int8x16_t)__tab,
-	    (int8x16_t)__idx, 48);
-#else
-	uint32x4_t __lo_r = __builtin_shufflevector(__lo, __lo,
+#ifndef __LITTLE_ENDIAN__
+	__tab = __builtin_shufflevector(__tab, __tab,
 	    15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0);
-	uint32x4_t __hi_r = __builtin_shufflevector(__hi, __hi,
-	    15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0);
-	uint32x4_t __r = __builtin_neon_vqtbl1q_v((int8x16_t)__tab,
-	    (int8x16_t)__idx, __i, 48);
-	return __builtin_shufflevector(__r, __r,
+	__idx = __builtin_shufflevector(__idx, __idx,
 	    15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0);
 #endif
+	uint8x16_t __r;
+#ifdef __aarch64__
+	__r = __builtin_neon_vqtbl1q_v((int8x16_t)__tab, (int8x16_t)__idx, 48);
+#else
+	uint64x2_t __tab64 = (uint64x2_t)__tab;
+	uint8x8_t __tablo = (uint8x8_t)__tab64[0];
+	uint8x8_t __tabhi = (uint8x8_t)__tab64[1];
+	uint64x2_t __idx64, __out64;
+	int8x8_t __idxlo, __idxhi, __outlo, __outhi;
+
+	__idx64 = (uint64x2_t)__idx;
+	__idxlo = (int8x8_t)__idx64[0];
+	__idxhi = (int8x8_t)__idx64[1];
+	__outlo = (uint8x8_t)__builtin_neon_vtbl2_v((int8x8_t)__tablo,
+	    (int8x8_t)__tabhi, (int8x8_t)__idxlo, 16);
+	__outhi = (uint8x8_t)__builtin_neon_vtbl2_v((int8x8_t)__tablo,
+	    (int8x8_t)__tabhi, (int8x8_t)__idxhi, 16);
+	__out64 = (uint64x2_t) { (uint64_t)__outlo, (uint64_t)__outhi };
+	__r = (uint8x16_t)__out64;
+#endif
+#ifndef __LITTLE_ENDIAN__
+	__r = __builtin_shufflevector(__r, __r,
+	    15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0);
+#endif
+	return __r;
 #endif
 }
 
@@ -579,7 +599,7 @@ vsriq_n_u32(uint32x4_t __vins, uint32x4_t __vsh, uint8_t __bits)
 	(int32x4_t)__builtin_neon_vsriq_n_v((int32x4_t)(__vins),	      \
 	    (int32x4_t)(__vsh), (__bits), 34)
 #else
-#define	vsliq_n_s32(__vins, __vsh, __bits) (				      \
+#define	vsriq_n_s32(__vins, __vsh, __bits) (				      \
 {									      \
 	int32x4_t __tvins = (__vins);					      \
 	int32x4_t __tvsh = (__vsh);					      \
