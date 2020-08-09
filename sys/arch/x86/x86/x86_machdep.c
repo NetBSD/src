@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.145 2020/07/19 14:31:31 maxv Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.146 2020/08/09 15:32:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.145 2020/07/19 14:31:31 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.146 2020/08/09 15:32:44 christos Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -1507,4 +1507,27 @@ cpu_initclocks(void)
 
 	/* Now start the clocks on this CPU (the boot CPU). */
 	(*x86_initclock_func)();
+}
+
+int
+x86_cpu_is_lcall(const void *ip)
+{
+        static const uint8_t lcall[] = { 0x9a, 0, 0, 0, 0 };
+	int error;
+        const size_t sz = sizeof(lcall) + 2;
+        uint8_t tmp[sizeof(lcall) + 2];
+
+	if ((error = copyin(ip, tmp, sz)) != 0)
+		return error;
+
+	if (memcmp(tmp, lcall, sizeof(lcall)) != 0 || tmp[sz - 1] != 0)
+		return EINVAL;
+
+	switch (tmp[sz - 2]) {
+        case (uint8_t)0x07: /* NetBSD */
+	case (uint8_t)0x87: /* BSD/OS */
+		return 0;
+	default:
+		return EINVAL;
+        }
 }
