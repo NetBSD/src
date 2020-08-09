@@ -1,4 +1,4 @@
-# $Id: moderrs.mk,v 1.13 2020/08/09 15:03:25 rillig Exp $
+# $Id: moderrs.mk,v 1.14 2020/08/09 15:15:29 rillig Exp $
 #
 # various modifier error tests
 
@@ -140,7 +140,7 @@ mod-regex-delimiter:
 mod-regex-undefined-subexpression:
 	@echo $@:
 	@echo ${FIB:C,1(.*),one\1,}		# all ok
-	@echo ${FIB:C,1(.*)|2(.*),\1+\2,}	# no match for subexpression
+	@echo ${FIB:C,1(.*)|2(.*),(\1)+(\2),:Q}	# no match for subexpression
 
 mod-ts-parse:
 	@echo $@:
