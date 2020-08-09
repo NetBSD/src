@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.90 2020/08/08 13:00:07 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.91 2020/08/09 13:05:04 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -200,7 +200,7 @@ void Var_End(void);
 void Var_Stats(void);
 void Var_Dump(GNode *);
 void Var_ExportVars(void);
-void Var_Export(const char *, int);
+void Var_Export(const char *, Boolean);
 void Var_UnExport(const char *);
 
 /* util.c */
