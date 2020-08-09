@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_neon_subr.c,v 1.6 2020/08/09 02:00:57 riastradh Exp $	*/
+/*	$NetBSD: aes_neon_subr.c,v 1.7 2020/08/09 02:48:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_neon_subr.c,v 1.6 2020/08/09 02:00:57 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_neon_subr.c,v 1.7 2020/08/09 02:48:38 riastradh Exp $");
 
 #ifdef _KERNEL
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ aes_neon_xts_update(uint8x16_t t8)
 	t = vreinterpretq_s32_u8(t8);
 	mask = vcltq_s32(t, zero);		/* -1 if high bit set else 0 */
 	mask = vextq_u32(mask, mask, 3);	/* rotate quarters */
-	t_ = vsliq_n_s32(zero, t, 1);		/* shift */
+	t_ = vshlq_n_s32(t, 1);			/* shift */
 	t_ ^= carry & mask;
 
 	return vreinterpretq_u8_s32(t_);
