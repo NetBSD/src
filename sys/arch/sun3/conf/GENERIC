@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.183 2020/08/01 08:20:52 maxv Exp $
+# $NetBSD: GENERIC,v 1.184 2020/08/10 06:32:58 rin Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,9 +25,11 @@ include 	"arch/sun3/conf/std.sun3"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.183 $"
+#ident		"GENERIC-$Revision: 1.184 $"
 
-makeoptions	COPTS="-Os -fno-unwind-tables"	# bootloader has size limit (~2MB)
+makeoptions	COPTS="-Os -fno-unwind-tables -fno-omit-frame-pointer"
+	# Bootloader has size limit (~2MB). -fno-omit-frame-pointer is
+	# necessary for backtraces in DDB.
 
 # Machines to be supported by this kernel
 options 	FPU_EMULATE
