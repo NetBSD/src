@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.207 2020/05/10 06:38:24 maxv Exp $
+# $NetBSD: HACKS,v 1.208 2020/08/10 06:46:27 rin Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -974,4 +974,30 @@ descr	GCC 8.4 miscompiles dwarf2expr.c with -O2 or -O1, which results in
 	crashes with 'gdb_exception_RETURN_MASK_ERROR'. Note that this occurs
 	only for earmv7hf{,eb} as far as I can see. Neither earmv6hf{,eb} nor
 	earmv7{,eb} (softfloat) are affected.
+kcah
+
+port	m68k
+hack	compile aes_ccm_tag() with -O0 for GCC8
+cdate	Mon Aug 10 06:27:29 UTC 2020
+who	rin
+file	src/sys/crypto/aes/aes_ccm.c: 1.5
+descr	GCC 8.4 miscompiles aes_ccm_tag() for m68k with optimization level
+	-O[12], which results in failure in aes_ccm_selftest().
+	This is observed for amiga (A1200, 68060), mac68k (Quadra 840AV,
+	68040), and luna68k (nono, 68030 emulator). However, it is not for
+	sun3 (TME, 68020 emulator) and sun2 (TME, 68010 emulator).
+	At the moment, it is unclear whether this is due to differences b/w
+	68010-20 vs 68030-60, or something wrong with TME.
+kcah
+
+port	sun2
+hack	compile kernel with -fno-omit-frame-pointer for GCC8
+cdate	Mon Aug 10 06:28:42 UTC 2020
+who	rin
+file	src/sys/arch/sun2/conf/Makefile.sun2: 1.25
+descr	Work around for reproducible kernel freezes just after ``Starting
+	postfix.'', where I cannot even enter DDB nor obtain crash dump.
+	I still haven't figured out why. Possibly something wrong with -Os
+	optimization level for GCC/m68k, cf.,
+	http://mail-index.netbsd.org/port-sun3/2020/07/19/msg000166.html
 kcah
