@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.98 2020/06/14 00:25:22 ad Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.99 2020/08/10 11:09:15 rin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.98 2020/06/14 00:25:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.99 2020/08/10 11:09:15 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,7 +320,7 @@ startover:
 		(void)memset(pgs, 0, pgs_size);
 	}
 
-	UVMHIST_LOG(ubchist, "ridx %jd npages %jd startoff %jd endoff %jd",
+	UVMHIST_LOG(ubchist, "ridx %jd npages %jd startoff %#jx endoff %#jx",
 	    ridx, npages, startoffset, endoffset);
 
 	if (trans_mount == NULL) {
