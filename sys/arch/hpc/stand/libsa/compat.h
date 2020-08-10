@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.h,v 1.3 2005/12/11 12:17:30 christos Exp $	*/
+/*	$NetBSD: compat.h,v 1.4 2020/08/10 10:59:33 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -37,7 +37,7 @@
  */
 #define	__lint__
 #define	__symbolrename(x)
-#define	_LKM
+#define	_MODULE
 #define	_STANDALONE
 #define	__STDC__
 #define	NO_LONG_LONG

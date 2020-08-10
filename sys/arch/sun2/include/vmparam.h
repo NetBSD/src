@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.15 2013/01/07 16:58:08 chs Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.16 2020/08/10 10:59:33 rin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -107,10 +107,10 @@
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0
 
-#ifdef	_LKM
+#ifdef	_MODULE
 #undef	KERNBASE
 extern	char KERNBASE[];
-#endif	/* _LKM */
+#endif	/* _MODULE */
 
 /* This is needed by some LKMs. */
 #define VM_PHYSSEG_MAX		4

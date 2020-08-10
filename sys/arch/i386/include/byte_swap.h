@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.16 2020/07/23 19:21:23 skrll Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.17 2020/08/10 10:59:33 rin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@ __byte_swap_u16_variable(uint16_t x)
 }
 
 __END_DECLS
-#elif defined(_KERNEL) || defined(_LKM)
+#elif defined(_KERNEL)
 #define	__BYTE_SWAP_U32_VARIABLE __byte_swap_u32_variable
 #define	__BYTE_SWAP_U16_VARIABLE __byte_swap_u16_variable
 uint32_t	__byte_swap_u32_variable(uint32_t);
