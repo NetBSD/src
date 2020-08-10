@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.205 2020/08/01 14:47:49 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.206 2020/08/10 19:53:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.205 2020/08/01 14:47:49 rillig Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.206 2020/08/10 19:53:19 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.205 2020/08/01 14:47:49 rillig Exp $");
+__RCSID("$NetBSD: job.c,v 1.206 2020/08/10 19:53:19 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2199,7 +2199,7 @@ Shell_Init(void)
 	    shellName++;
 	} else
 #endif
-	shellPath = str_concat(_PATH_DEFSHELLDIR, shellName, STR_ADDSLASH);
+	shellPath = str_concat3(_PATH_DEFSHELLDIR, "/", shellName);
     }
     if (commandShell->exit == NULL) {
 	commandShell->exit = "";

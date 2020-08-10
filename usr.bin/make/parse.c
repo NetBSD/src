@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.250 2020/08/09 13:05:04 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.251 2020/08/10 19:53:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.250 2020/08/09 13:05:04 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.251 2020/08/10 19:53:19 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.250 2020/08/09 13:05:04 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.251 2020/08/10 19:53:19 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2219,7 +2219,7 @@ Parse_include_file(char *file, Boolean isSystem, Boolean depinc, int silent)
 		    break;
 		*prefEnd = '\0';
 	    }
-	    newName = str_concat(incdir, file + i, STR_ADDSLASH);
+	    newName = str_concat3(incdir, "/", file + i);
 	    fullname = Dir_FindFile(newName, parseIncPath);
 	    if (fullname == NULL)
 		fullname = Dir_FindFile(newName, dirSearchPath);

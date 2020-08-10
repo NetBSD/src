@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.302 2020/08/09 09:44:14 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.303 2020/08/10 19:53:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.302 2020/08/09 09:44:14 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.303 2020/08/10 19:53:19 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.302 2020/08/09 09:44:14 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.303 2020/08/10 19:53:19 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -705,7 +705,7 @@ Main_ParseArgLine(const char *line)
 	if (!*line)
 		return;
 
-	buf = str_concat(argv0, line, STR_ADDSPACE);
+	buf = str_concat3(argv0, " ", line);
 	free(p1);
 
 	argv = brk_string(buf, &argc, TRUE, &args);
