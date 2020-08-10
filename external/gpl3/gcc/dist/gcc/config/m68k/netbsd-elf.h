@@ -292,8 +292,6 @@ while (0)
 /* Boundary (in *bits*) on which stack pointer should be aligned.
    The m68k/SVR4 convention is to keep the stack pointer longword aligned.  */
 
-#undef STACK_BOUNDARY
-#define STACK_BOUNDARY 32
 #undef PREFERRED_STACK_BOUNDARY
 #define PREFERRED_STACK_BOUNDARY 32
 
