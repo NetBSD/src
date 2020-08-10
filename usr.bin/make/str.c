@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.56 2020/08/09 10:24:02 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.57 2020/08/10 19:20:33 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: str.c,v 1.56 2020/08/09 10:24:02 rillig Exp $";
+static char rcsid[] = "$NetBSD: str.c,v 1.57 2020/08/10 19:20:33 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: str.c,v 1.56 2020/08/09 10:24:02 rillig Exp $");
+__RCSID("$NetBSD: str.c,v 1.57 2020/08/10 19:20:33 rillig Exp $");
 #endif
 #endif				/* not lint */
 #endif
@@ -85,8 +85,7 @@ __RCSID("$NetBSD: str.c,v 1.56 2020/08/09 10:24:02 rillig Exp $");
 
 /*-
  * str_concat --
- *	concatenate the two strings, inserting a space or slash between them,
- *	freeing them if requested.
+ *	concatenate the two strings, inserting a space or slash between them.
  *
  * returns --
  *	the resulting string in allocated space.
@@ -94,15 +93,9 @@ __RCSID("$NetBSD: str.c,v 1.56 2020/08/09 10:24:02 rillig Exp $");
 char *
 str_concat(const char *s1, const char *s2, int flags)
 {
-	int len1, len2;
-	char *result;
-
-	/* get the length of both strings */
-	len1 = strlen(s1);
-	len2 = strlen(s2);
-
-	/* allocate length plus separator plus EOS */
-	result = bmake_malloc((unsigned int)(len1 + len2 + 2));
+	size_t len1 = strlen(s1);
+	size_t len2 = strlen(s2);
+	char *result = bmake_malloc(len1 + 1 + len2 + 1);
 
 	/* copy first string into place */
 	memcpy(result, s1, len1);
