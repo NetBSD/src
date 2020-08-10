@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.30 2014/01/04 00:10:02 dsl Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.31 2020/08/10 09:38:48 rin Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.30 2014/01/04 00:10:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.31 2020/08/10 09:38:48 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,13 +114,10 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 	struct frame *frame = process_frame(l);
 
 	/*
-	 * in the hp300 machdep.c _write_regs, PC alignment wasn't
-	 * checked.  If an odd address is placed in the PC and the
-	 * program is allowed to run, it will cause an Address Error
-	 * which will be transmitted to the process by a SIGBUS.
-	 * No reasonable debugger would let this happen, but
-	 * it's not our problem.
+	 * Avoid kernel address error at rte instruction.
 	 */
+	if (regs->r_pc & 1)
+		return EINVAL;
 
 	/*
 	 * XXX
@@ -171,14 +168,10 @@ process_set_pc(struct lwp *l, void *addr)
 	struct frame *frame = process_frame(l);
 
 	/*
-	 * in the hp300 machdep.c _set_pc, PC alignment is guaranteed
-	 * by chopping off the low order bit of the new pc.
-	 * If an odd address was placed in the PC and the program
-	 * is allowed to run, it will cause an Address Error
-	 * which will be transmitted to the process by a SIGBUS.
-	 * No reasonable debugger would let this happen, but
-	 * it's not our problem.
+	 * Avoid kernel address error at rte instruction.
 	 */
+	if ((u_int)addr & 1)
+		return EINVAL;
 	frame->f_pc = (u_int)addr;
 
 	return 0;
