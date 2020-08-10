@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2020/02/01 08:08:15 isaki Exp $
+#	$NetBSD: Makefile,v 1.19 2020/08/10 07:00:49 rin Exp $
 
 NOMAN=		# defined
 .include <bsd.own.mk>
@@ -23,7 +23,7 @@ CPPFLAGS+=	-nostdinc -I${KERN} -I${.CURDIR} -I.
 CPPFLAGS+=	-I${.CURDIR}/../libiocs
 CPPFLAGS+=	-DTEXTADDR="0x${TEXT}" 
 CPPFLAGS+=	-DBOOT=\"${BOOT}\" -DBOOT_VERS=\"${VERSION}\"
-CFLAGS=		-Wno-main -Os -m68000
+CFLAGS=		-Wno-main -Os -m68000 -Wno-attributes
 AFLAGS+=	-m68000
 
 LINKFLAGS=	-N -static -Ttext ${TEXT}
