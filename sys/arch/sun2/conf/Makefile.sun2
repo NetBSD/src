@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun2,v 1.24 2018/09/22 12:24:03 rin Exp $
+# $NetBSD: Makefile.sun2,v 1.25 2020/08/10 06:28:42 rin Exp $
 
 # Makefile for NetBSD
 #
@@ -34,6 +34,11 @@ GENASSYM_CONF=	${SUN2}/sun2/genassym.cf
 CPPFLAGS+=	-Dsun2
 CFLAGS+=	-msoft-float -fno-defer-pop
 AFLAGS+=	-x assembler-with-cpp
+
+# XXX
+.if ${HAVE_GCC:U0} >= 8
+COPTS+=		-fno-omit-frame-pointer
+.endif
 
 ##
 ## (3) libkern and compat
