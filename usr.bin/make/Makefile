@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.84 2020/08/09 05:51:04 rillig Exp $
+#	$NetBSD: Makefile,v 1.85 2020/08/10 18:20:28 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -46,8 +46,8 @@ USE_COVERAGE?=	no		# works only with gcc; clang9 fails to link
 .if ${USE_COVERAGE} == "yes"
 COPTS+=		--coverage -O0 -ggdb
 LDADD+=		--coverage
-CLEANFILES+=	${SRCS:.c=.gcda} ${SRCS:.c=.gcno} ${SRCS:=.gcov}
 .endif
+CLEANFILES+=	*.gcda *.gcno *.gcov
 
 # Whether to compile using the Undefined Behavior Sanitizer (GCC, Clang).
 USE_UBSAN?=	no
