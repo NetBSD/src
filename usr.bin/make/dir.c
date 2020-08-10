@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.85 2020/08/09 19:51:02 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.86 2020/08/10 19:30:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.85 2020/08/09 19:51:02 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.86 2020/08/10 19:30:30 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.85 2020/08/09 19:51:02 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.86 2020/08/10 19:30:30 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1735,7 +1735,7 @@ Dir_MakeFlags(const char *flag, Lst path)
     if (Lst_Open(path) == SUCCESS) {
 	while ((ln = Lst_Next(path)) != NULL) {
 	    p = (Path *)Lst_Datum(ln);
-	    s2 = str_concat(flag, p->name, 0);
+	    s2 = str_concat(flag, p->name, STR_ADDNONE);
 	    str = str_concat(s1 = str, s2, STR_ADDSPACE);
 	    free(s1);
 	    free(s2);

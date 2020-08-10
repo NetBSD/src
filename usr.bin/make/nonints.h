@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.91 2020/08/09 13:05:04 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.92 2020/08/10 19:30:30 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -134,7 +134,14 @@ void Parse_SetInput(const char *, int, int, char *(*)(void *, size_t *), void *)
 Lst Parse_MainName(void);
 
 /* str.c */
-char *str_concat(const char *, const char *, int);
+
+typedef enum {
+    STR_ADDNONE,		/* just concat the two strings */
+    STR_ADDSPACE,		/* add a space between the two strings */
+    STR_ADDSLASH		/* add a slash between the two strings */
+} StrConcatMode;
+
+char *str_concat(const char *, const char *, StrConcatMode);
 char **brk_string(const char *, int *, Boolean, char **);
 char *Str_FindSubstring(const char *, const char *);
 Boolean Str_Match(const char *, const char *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.113 2020/08/01 18:02:37 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.114 2020/08/10 19:30:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -312,18 +312,6 @@ typedef struct GNode {
 #define TARG_NOCREATE	0x00	  /* don't create it */
 #define TARG_CREATE	0x01	  /* create node if not found */
 #define TARG_NOHASH	0x02	  /* don't look in/add to hash table */
-
-/*
- * These constants are all used by the Str_Concat function to decide how the
- * final string should look. If STR_ADDSPACE is given, a space will be
- * placed between the two strings. If STR_ADDSLASH is given, a '/' will
- * be used instead of a space. If neither is given, no intervening characters
- * will be placed between the two strings in the final output. If the
- * STR_DOFREE bit is set, the two input strings will be freed before
- * Str_Concat returns.
- */
-#define STR_ADDSPACE	0x01	/* add a space when Str_Concat'ing */
-#define STR_ADDSLASH	0x02	/* add a slash when Str_Concat'ing */
 
 /*
  * Error levels for parsing. PARSE_FATAL means the process cannot continue

@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.57 2020/08/10 19:20:33 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.58 2020/08/10 19:30:30 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: str.c,v 1.57 2020/08/10 19:20:33 rillig Exp $";
+static char rcsid[] = "$NetBSD: str.c,v 1.58 2020/08/10 19:30:30 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: str.c,v 1.57 2020/08/10 19:20:33 rillig Exp $");
+__RCSID("$NetBSD: str.c,v 1.58 2020/08/10 19:30:30 rillig Exp $");
 #endif
 #endif				/* not lint */
 #endif
@@ -91,7 +91,7 @@ __RCSID("$NetBSD: str.c,v 1.57 2020/08/10 19:20:33 rillig Exp $");
  *	the resulting string in allocated space.
  */
 char *
-str_concat(const char *s1, const char *s2, int flags)
+str_concat(const char *s1, const char *s2, StrConcatMode mode)
 {
 	size_t len1 = strlen(s1);
 	size_t len2 = strlen(s2);
@@ -101,10 +101,10 @@ str_concat(const char *s1, const char *s2, int flags)
 	memcpy(result, s1, len1);
 
 	/* add separator character */
-	if (flags & STR_ADDSPACE) {
+	if (mode == STR_ADDSPACE) {
 		result[len1] = ' ';
 		++len1;
-	} else if (flags & STR_ADDSLASH) {
+	} else if (mode == STR_ADDSLASH) {
 		result[len1] = '/';
 		++len1;
 	}
