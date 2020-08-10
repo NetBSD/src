@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.18 2020/02/20 08:27:39 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.19 2020/08/10 10:59:34 rin Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -104,7 +104,7 @@ define	FC_SUPERD			FC_SUPERD
 define	FC_USERD			FC_USERD
 define	IC_CLEAR			IC_CLEAR
 
-ifndef _LKM
+ifndef _MODULE
 # bus error stuff
 define	BUSERR_REG			BUSERR_REG
 define	BUSERR_MMU			BUSERR_MMU
@@ -155,7 +155,7 @@ define	P_VMSPACE		offsetof(struct proc, p_vmspace)
 
 # XXX: HP-UX trace bit?
 
-ifndef _LKM
+ifndef _MODULE
 # VM/pmap structure fields
 define	VM_PMAP			offsetof(struct vmspace, vm_map.pmap)
 define	PM_CTXNUM		offsetof(struct pmap, pm_ctxnum)

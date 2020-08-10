@@ -1,4 +1,4 @@
-/* $NetBSD: keylock.h,v 1.1 2009/08/14 21:17:22 mbalmer Exp $ */
+/* $NetBSD: keylock.h,v 1.2 2020/08/10 10:59:34 rin Exp $ */
 /*-
  * Copyright (c) 2009 Marc Balmer <marc@msys.ch>
  * All rights reserved.
@@ -33,9 +33,9 @@ void secmodel_keylock_init(void);
 void secmodel_keylock_start(void);
 void secmodel_keylock_stop(void);
 
-#if defined(_LKM)
+#if defined(_MODULE)
 SYSCTL_SETUP_PROTO(sysctl_security_keylock_setup);
-#endif /* _LKM */
+#endif /* _MODULE */
 
 int secmodel_keylock_system_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);
