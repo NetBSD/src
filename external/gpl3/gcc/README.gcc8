@@ -1,4 +1,4 @@
-$NetBSD: README.gcc8,v 1.9 2020/05/29 01:18:50 mrg Exp $
+$NetBSD: README.gcc8,v 1.10 2020/08/10 10:42:10 rin Exp $
 
 new stuff:
 	cc1objcplus
@@ -45,8 +45,8 @@ earmv7hfeb	y	y	y	y		y		y	y	y
 hppa		y	y	y	y		y		y	y	y
 i386		y	y	y	y		y		y	y	y
 ia64		y	y	y	y		y		y	n	y
-m68000		y	n[3]	y	y		y		?	?	?
-m68k		y	y	y	y		y		?	?	?
+m68000		y	y	y	y		y		y	?	?
+m68k		y	y	y	y		y		y	?	?
 mipseb		y	y	y	y		y		y	y	y
 mipsel		y	y	y	y		y		y	y	y
 mips64eb	y	y	y	y		y		y	y	y
@@ -66,7 +66,6 @@ coldfire	?	N/A	?	?		?		N/A	N/A
 ------------	-----	-------	------	----------	------------	----	---
 architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 
-[3] - kernel faults loading, too large?
 [5] - c++ exceptions are broken
 
 CPU vs platform test table (for CPUs with multiple ports).  this is "make release" or just kernels.
@@ -84,7 +83,7 @@ earmv7:		-		-	-	k		k		-		-		-		-		-
 earmv7hf:	-		-	-	k		k		-		-		-		-		-
 
 		amiga		atari	cesfic	hp300		luna68k		mac68k		mvme68k		news68k		next68k		sun3	x68k
-m68k:		k		k	k	k		k		y		k		k		k		y 	k
+m68k:		r		y	y	y		y		r		y		y		y		r 	y
 
 		evbmips		emips		ews4800mips	mipsco		newsmips	sgimips
 mipseb:		k		k		k		k		k		y
