@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.445 2020/08/09 15:07:13 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.446 2020/08/10 20:07:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.445 2020/08/09 15:07:13 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.446 2020/08/10 20:07:14 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.445 2020/08/09 15:07:13 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.446 2020/08/10 20:07:14 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -500,7 +500,6 @@ Var_Delete(const char *name, GNode *ctxt)
 static Boolean
 Var_Export1(const char *name, VarExportFlags flags)
 {
-    char tmp[BUFSIZ];
     VarExportFlags parent = flags & VAR_EXPORT_PARENT;
     Var *v;
     char *val;
@@ -532,7 +531,7 @@ Var_Export1(const char *name, VarExportFlags flags)
 
     val = Buf_GetAll(&v->val, NULL);
     if (!(flags & VAR_EXPORT_LITERAL) && strchr(val, '$') != NULL) {
-	int n;
+	char *expr;
 
 	if (parent) {
 	    /*
@@ -550,12 +549,12 @@ Var_Export1(const char *name, VarExportFlags flags)
 	     */
 	    return FALSE;
 	}
-	n = snprintf(tmp, sizeof(tmp), "${%s}", name);
-	if (n < (int)sizeof(tmp)) {
-	    val = Var_Subst(tmp, VAR_GLOBAL, VARE_WANTRES);
-	    setenv(name, val, 1);
-	    free(val);
-	}
+
+	expr = str_concat3("${", name, "}");
+	val = Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES);
+	setenv(name, val, 1);
+	free(val);
+	free(expr);
     } else {
 	if (parent)
 	    v->flags &= ~VAR_REEXPORT;	/* once will do */
@@ -684,10 +683,8 @@ extern char **environ;
 void
 Var_UnExport(const char *str)
 {
-    char tmp[BUFSIZ];
     const char *varnames;
     char *varnames_freeIt;
-    int n;
     Boolean unexport_env;
 
     varnames = NULL;
@@ -758,13 +755,11 @@ Var_UnExport(const char *str)
 	     * just delete .MAKE.EXPORTED below.
 	     */
 	    if (varnames == str) {
-		n = snprintf(tmp, sizeof(tmp),
-			     "${" MAKE_EXPORTED ":N%s}", v->name);
-		if (n < (int)sizeof(tmp)) {
-		    char *cp = Var_Subst(tmp, VAR_GLOBAL, VARE_WANTRES);
-		    Var_Set(MAKE_EXPORTED, cp, VAR_GLOBAL);
-		    free(cp);
-		}
+		char *expr = str_concat3("${" MAKE_EXPORTED ":N", v->name, "}");
+		char *cp = Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES);
+		Var_Set(MAKE_EXPORTED, cp, VAR_GLOBAL);
+		free(cp);
+		free(expr);
 	    }
 	}
 	free(as);
