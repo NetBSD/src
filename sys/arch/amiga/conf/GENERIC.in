@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.144 2020/08/01 08:20:47 maxv Exp $
+# $NetBSD: GENERIC.in,v 1.145 2020/08/10 06:32:57 rin Exp $
 #
 ##
 # GENERIC machine description file
@@ -52,12 +52,14 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.144 $"
+#ident 		"GENERIC-$Revision: 1.145 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
-makeoptions	COPTS="-Os"
+makeoptions	COPTS="-Os -fno-omit-frame-pointer"
 ',`m4_dnl
-makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
+makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-omit-frame-pointer"
+	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
+	# backtraces in DDB.
 ')m4_dnl
 
 maxusers	8

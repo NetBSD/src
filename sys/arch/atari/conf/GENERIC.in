@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.118 2019/04/13 08:22:59 isaki Exp $
+#	$NetBSD: GENERIC.in,v 1.119 2020/08/10 06:32:58 rin Exp $
 #
 # Generic atari
 #
@@ -20,7 +20,9 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #endif /* !SMALL030_KERNEL */
 
 #if !defined(SMALL030_KERNEL)
-makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
+makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-omit-frame-pointer" \
+# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for backtraces \
+in DDB.
 #else
 makeoptions	COPTS="-Os"			# optimize for space
 #endif /* !SMALL030_KERNEL */
