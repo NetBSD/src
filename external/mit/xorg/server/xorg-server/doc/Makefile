@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2016/08/14 00:03:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2020/08/10 09:23:37 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@
 .PATH: ${X11SRCDIR.xorg-server}/doc
 .PATH: ${X11SRCDIR.xorg-server}/man
 MAN=	Xserver.1
-X11EXTRAMANDEFS+=	-e 's%__default_font_path__%${X11DEFAULTFONTPATH:ts,:S/,/, /g}%g'
+X11EXTRAMANDEFS+=	-e 's%@default_font_path@%${X11DEFAULTFONTPATH:ts,:S/,/, /g}%g'
 
 .include <bsd.x11.mk>
 .include <bsd.man.mk>
