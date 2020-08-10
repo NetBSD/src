@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_ccm.c,v 1.4 2020/07/27 20:44:30 riastradh Exp $	*/
+/*	$NetBSD: aes_ccm.c,v 1.5 2020/08/10 06:27:29 rin Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_ccm.c,v 1.4 2020/07/27 20:44:30 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_ccm.c,v 1.5 2020/08/10 06:27:29 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -301,6 +301,9 @@ aes_ccm_dec(struct aes_ccm *C, const void *in, void *out, size_t nbytes)
 }
 
 void
+#if defined(__m68k__) && __GNUC_PREREQ__(8, 0)
+__attribute__((__optimize__("O0")))
+#endif
 aes_ccm_tag(struct aes_ccm *C, void *out)
 {
 	uint8_t *auth = C->authctr;
