@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.21 2009/05/19 18:39:27 phx Exp $	*/
+/*	$NetBSD: intr.h,v 1.22 2020/08/10 10:59:33 rin Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@ splraiseipl(ipl_cookie_t icookie)
 #define splsoftbio()		splraise1()
 #define	splvm()			splraise4()
 
-#ifndef _LKM
+#ifndef _MODULE
 
 #ifndef LEV6_DEFER
 #define splsched()	splraise6()
@@ -93,7 +93,7 @@ splraiseipl(ipl_cookie_t icookie)
 #define splhigh()	splraise4()
 #endif
 
-#else	/* _LKM */
+#else	/* _MODULE */
 
 extern int _spllkm6(void);
 extern int _spllkm7(void);
@@ -101,7 +101,7 @@ extern int _spllkm7(void);
 #define splsched()	_spllkm6()
 #define splhigh()	_spllkm7()
 
-#endif /* _LKM */
+#endif /* _MODULE */
 
 #define splx(s)		_spl(s)
 

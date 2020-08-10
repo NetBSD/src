@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fdvar.h,v 1.15 2012/10/27 17:18:00 chs Exp $	*/
+/*	$NetBSD: iwm_fdvar.h,v 1.16 2020/08/10 10:59:33 rin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -195,7 +195,7 @@ typedef struct iwm_softc iwm_softc_t;
 /* 
  * IWM Loadable Kernel Module : Exported functions 
  */
-#ifdef _LKM
+#ifdef _MODULE
 int	fdModInit(void);
 void	fdModFree(void);
 #endif

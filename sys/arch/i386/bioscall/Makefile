@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.20 2014/03/04 14:58:14 joerg Exp $
+#	$NetBSD: Makefile,v 1.21 2020/08/10 10:59:33 rin Exp $
 
 CPPFLAGS=	${APMCPPFLAGS}
 KSRC=${.CURDIR}/../../..
 ARCHSRC=${.CURDIR}/../..
 I386=${KSRC}/arch/i386
 X86=${KSRC}/arch/x86
-CPPFLAGS+=-I${ARCHSRC} -I${KSRC} -I${.CURDIR} -I${.OBJDIR} -D_LKM -D_KERNEL
+CPPFLAGS+=-I${ARCHSRC} -I${KSRC} -I${.CURDIR} -I${.OBJDIR} -D_MODULE -D_KERNEL
 
 SRCS=	biostramp.S
 OBJS=	biostramp.o

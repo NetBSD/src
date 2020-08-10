@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.83 2018/09/03 16:29:34 riastradh Exp $	*/
+/*	$NetBSD: pf.c,v 1.84 2020/08/10 10:59:34 rin Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.83 2018/09/03 16:29:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.84 2020/08/10 10:59:34 rin Exp $");
 
 #include "pflog.h"
 
@@ -923,7 +923,7 @@ pf_insert_state(struct pfi_kif *kif, struct pf_state *s)
 	return (0);
 }
 
-#ifdef _LKM
+#ifdef _MODULE
 volatile int pf_purge_thread_stop;
 volatile int pf_purge_thread_running;
 #endif
@@ -933,14 +933,14 @@ pf_purge_thread(void *v)
 {
 	int nloops = 0, s;
 
-#ifdef _LKM
+#ifdef _MODULE
 	pf_purge_thread_running = 1;
 	pf_purge_thread_stop = 0;
 
 	while (!pf_purge_thread_stop) {
 #else
 	for (;;) {
-#endif /* !_LKM */
+#endif /* !_MODULE */
 		tsleep(pf_purge_thread, PWAIT, "pftm", 1 * hz);
 
 		s = splsoftnet();
@@ -960,11 +960,11 @@ pf_purge_thread(void *v)
 		splx(s);
 	}
 
-#ifdef _LKM
+#ifdef _MODULE
 	pf_purge_thread_running = 0;
 	wakeup(&pf_purge_thread_running);
 	kthread_exit(0);
-#endif /* _LKM */
+#endif /* _MODULE */
 }
 
 u_int32_t
