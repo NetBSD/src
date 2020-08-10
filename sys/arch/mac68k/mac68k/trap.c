@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.150 2019/11/21 19:24:00 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.151 2020/08/10 10:51:21 rin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.150 2019/11/21 19:24:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.151 2020/08/10 10:51:21 rin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -332,8 +332,8 @@ copyfault:
 	/*
 	 * divde by zero, CHK/TRAPV inst 
 	 */
-	case T_ZERODIV|T_USER:		/* Divide by zero trap */
-		ksi.ksi_code = FPE_FLTDIV;
+	case T_ZERODIV|T_USER:		/* Integer divide by zero trap */
+		ksi.ksi_code = FPE_INTDIV;
 	case T_CHKINST|T_USER:		/* CHK instruction trap */
 	case T_TRAPVINST|T_USER:	/* TRAPV instruction trap */
 		ksi.ksi_addr = (void *)(int)fp->f_format;
@@ -457,7 +457,12 @@ copyfault:
 	case T_TRACE:		/* tracing a trap instruction */
 	case T_TRAP15|T_USER:	/* SUN user trace trap */
 		fp->f_sr &= ~PSL_T;
+		ksi.ksi_addr = (void *)fp->f_pc;
 		ksi.ksi_signo = SIGTRAP;
+		if (type == (T_TRAP15|T_USER))
+			ksi.ksi_code = TRAP_BRKPT;
+		else
+			ksi.ksi_code = TRAP_TRACE;
 		break;
 
 	case T_ASTFLT:		/* System async trap, cannot happen */
