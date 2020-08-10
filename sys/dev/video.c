@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.37 2020/05/22 11:23:51 jmcneill Exp $ */
+/* $NetBSD: video.c,v 1.38 2020/08/10 19:27:27 rjs Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.37 2020/05/22 11:23:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.38 2020/08/10 19:27:27 rjs Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -804,6 +804,49 @@ video_enum_format(struct video_softc *sc, struct v4l2_fmtdesc *fmtdesc)
 		sizeof(fmtdesc->description));
 	fmtdesc->pixelformat = fmt.fmt.pix.pixelformat;
 
+	return 0;
+}
+
+static int
+video_enum_framesizes(struct video_softc *sc, struct v4l2_frmsizeenum *frmdesc)
+{
+	const struct video_hw_if *hw;
+	struct video_format vfmt;
+	struct v4l2_format fmt;
+	int err;
+
+	hw = sc->hw_if;
+	if (hw->enum_format == NULL)
+		return ENOTTY;
+
+	err = hw->enum_format(sc->hw_softc, frmdesc->index, &vfmt);
+	if (err != 0)
+		return err;
+
+	video_format_to_v4l2_format(&vfmt, &fmt);
+	if (fmt.fmt.pix.pixelformat != frmdesc->pixel_format) {
+		printf("video_enum_framesizes: type mismatch %x %x\n",
+		    fmt.fmt.pix.pixelformat, frmdesc->pixel_format);
+	}
+	
+	frmdesc->type = V4L2_FRMSIZE_TYPE_DISCRETE; /* TODO: only one type for now */
+	frmdesc->discrete.width = vfmt.width;
+	frmdesc->discrete.height = vfmt.height;
+	return 0;
+}
+
+static int
+video_enum_frameival(struct video_softc *sc, struct v4l2_frmivalenum *frmdesc)
+{
+	const struct video_hw_if *hw;
+
+	hw = sc->hw_if;
+	if (hw->enum_format == NULL)
+		return ENOTTY;
+
+	frmdesc->type = V4L2_FRMSIZE_TYPE_DISCRETE;
+	frmdesc->discrete.numerator = 1;
+	frmdesc->discrete.denominator = 15;
 	return 0;
 }
 
@@ -1870,7 +1913,7 @@ buf50tobuf(const void *data, struct v4l2_buffer *buf)
 	buf->m.offset = b50->m.offset;
 	/* XXX: Handle userptr */
 	buf->length = b50->length;
-	buf->input = b50->input;
+	buf->reserved2 = b50->reserved2;
 	buf->reserved = b50->reserved;
 }
 
@@ -1891,7 +1934,7 @@ buftobuf50(void *data, const struct v4l2_buffer *buf)
 	b50->m.offset = buf->m.offset;
 	/* XXX: Handle userptr */
 	b50->length = buf->length;
-	b50->input = buf->input;
+	b50->reserved2 = buf->reserved2;
 	b50->reserved = buf->reserved;
 }
 #endif
@@ -1914,6 +1957,8 @@ videoioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct v4l2_requestbuffers *reqbufs;
 	struct v4l2_buffer *buf;
 	struct v4l2_streamparm *parm;
+	struct v4l2_frmsizeenum *size;
+	struct v4l2_frmivalenum *ival;
 	v4l2_std_id *stdid;
 	enum v4l2_buf_type *typep;
 	int *ip;
@@ -2077,6 +2122,12 @@ videoioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case VIDIOC_STREAMOFF:
 		typep = data;
 		return video_stream_off(sc, *typep);
+	case VIDIOC_ENUM_FRAMESIZES:
+		size = data;
+		return video_enum_framesizes(sc, size);
+	case VIDIOC_ENUM_FRAMEINTERVALS:
+		ival = data;
+		return video_enum_frameival(sc, ival);
 	default:
 		DPRINTF(("videoioctl: invalid cmd %s (%lx)\n",
 			 video_ioctl_str(cmd), cmd));
@@ -2150,10 +2201,10 @@ video_ioctl_str(u_long cmd)
 		str = "VIDIOC_STREAMOFF";
 		break;
 	case VIDIOC_G_PARM:
-		str = "VIDIOC_G_PARAM";
+		str = "VIDIOC_G_PARM";
 		break;
 	case VIDIOC_S_PARM:
-		str = "VIDIOC_S_PARAM";
+		str = "VIDIOC_S_PARM";
 		break;
 	case VIDIOC_G_STD:
 		str = "VIDIOC_G_STD";
@@ -2256,6 +2307,12 @@ video_ioctl_str(u_long cmd)
 		break;
 	case VIDIOC_S_PRIORITY:
 		str = "VIDIOC_S_PRIORITY";
+		break;
+	case VIDIOC_ENUM_FRAMESIZES:
+		str = "VIDIOC_ENUM_FRAMESIZES";
+		break;
+	case VIDIOC_ENUM_FRAMEINTERVALS:
+		str = "VIDIOC_FRAMEINTERVALS";
 		break;
 	default:
 		str = "unknown";
@@ -2520,7 +2577,7 @@ video_stream_realloc_bufs(struct video_stream *vs, uint8_t nbufs)
 		buf->memory = V4L2_MEMORY_MMAP;
 		buf->m.offset = offset;
 		buf->length = PAGE_ALIGN(vs->vs_format.sample_size);
-		buf->input = 0;
+		buf->reserved2 = 0;
 		buf->reserved = 0;
 
 		offset += buf->length;
