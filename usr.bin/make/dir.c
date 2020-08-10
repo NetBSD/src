@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.86 2020/08/10 19:30:30 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.87 2020/08/10 19:53:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.86 2020/08/10 19:30:30 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.87 2020/08/10 19:53:19 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.86 2020/08/10 19:30:30 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.87 2020/08/10 19:53:19 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -640,8 +640,7 @@ DirMatchFiles(const char *pattern, Path *p, Lst expansions)
 	{
 	    (void)Lst_AtEnd(expansions,
 			    (isDot ? bmake_strdup(entry->name) :
-			     str_concat(p->name, entry->name,
-					STR_ADDSLASH)));
+			     str_concat3(p->name, "/", entry->name)));
 	}
     }
     return 0;
@@ -981,7 +980,7 @@ DirLookup(Path *p, const char *name MAKE_ATTR_UNUSED, const char *cp,
     if (Hash_FindEntry(&p->files, cp) == NULL)
 	return NULL;
 
-    file = str_concat(p->name, cp, STR_ADDSLASH);
+    file = str_concat3(p->name, "/", cp);
     if (DEBUG(DIR)) {
 	fprintf(debug_file, "   returning %s\n", file);
     }
@@ -1012,7 +1011,7 @@ DirLookupSubdir(Path *p, const char *name)
     char *file;			/* the current filename to check */
 
     if (p != dot) {
-	file = str_concat(p->name, name, STR_ADDSLASH);
+	file = str_concat3(p->name, "/", name);
     } else {
 	/*
 	 * Checking in dot -- DON'T put a leading ./ on the thing.
@@ -1117,7 +1116,7 @@ DirFindDot(Boolean hasSlash MAKE_ATTR_UNUSED, const char *name, const char *cp)
 	}
 	hits += 1;
 	cur->hits += 1;
-	return str_concat(cur->name, cp, STR_ADDSLASH);
+	return str_concat3(cur->name, "/", cp);
     }
 
     return NULL;
@@ -1735,8 +1734,8 @@ Dir_MakeFlags(const char *flag, Lst path)
     if (Lst_Open(path) == SUCCESS) {
 	while ((ln = Lst_Next(path)) != NULL) {
 	    p = (Path *)Lst_Datum(ln);
-	    s2 = str_concat(flag, p->name, STR_ADDNONE);
-	    str = str_concat(s1 = str, s2, STR_ADDSPACE);
+	    s2 = str_concat2(flag, p->name);
+	    str = str_concat3(s1 = str, " ", s2);
 	    free(s1);
 	    free(s2);
 	}
