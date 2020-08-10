@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.5 2020/08/07 07:19:45 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.6 2020/08/10 06:53:11 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019 The NetBSD Foundation, Inc.
@@ -111,15 +111,15 @@ struct pmap_md {
 void	pmap_bootstrap(void);
 
 struct vm_page *
-        pmap_md_alloc_poolpage(int flags);
-vaddr_t pmap_md_map_poolpage(paddr_t, vsize_t);
-void    pmap_md_unmap_poolpage(vaddr_t, vsize_t);
-bool    pmap_md_direct_mapped_vaddr_p(vaddr_t);
-bool    pmap_md_io_vaddr_p(vaddr_t);
-paddr_t pmap_md_direct_mapped_vaddr_to_paddr(vaddr_t);
-vaddr_t pmap_md_direct_map_paddr(paddr_t);
-void    pmap_md_init(void);
-bool    pmap_md_tlb_check_entry(void *, vaddr_t, tlb_asid_t, pt_entry_t);
+	pmap_md_alloc_poolpage(int flags);
+vaddr_t	pmap_md_map_poolpage(paddr_t, vsize_t);
+void	pmap_md_unmap_poolpage(vaddr_t, vsize_t);
+bool	pmap_md_direct_mapped_vaddr_p(vaddr_t);
+bool	pmap_md_io_vaddr_p(vaddr_t);
+paddr_t	pmap_md_direct_mapped_vaddr_to_paddr(vaddr_t);
+vaddr_t	pmap_md_direct_map_paddr(paddr_t);
+void	pmap_md_init(void);
+bool	pmap_md_tlb_check_entry(void *, vaddr_t, tlb_asid_t, pt_entry_t);
 //void    pmap_md_page_syncicache(struct vm_page *, const kcpuset_t *);
 
 void	pmap_md_pdetab_activate(struct pmap *);
