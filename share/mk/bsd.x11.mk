@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.135 2020/07/20 13:55:08 tsutsui Exp $
+#	$NetBSD: bsd.x11.mk,v 1.136 2020/08/10 09:23:37 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -136,7 +136,7 @@ XORG_SERVER_TEENY=	6
 XORG_SERVER_MINOR=	20
 XORG_SERVER_TEENY=	6
 .endif
-  
+
 XVENDORNAMESHORT=	'"X.Org"'
 XVENDORNAME=		'"The X.Org Foundation"'
 XORG_RELEASE=		'"Release ${XORG_SERVER_MAJOR}.${XORG_SERVER_MINOR}.${XORG_SERVER_TEENY}"'
@@ -193,6 +193,15 @@ realall: ${CPPSCRIPTS}
 
 CLEANFILES+= ${CPPSCRIPTS}
 .endif								# }
+
+# Used by pkg-config and manual handling to ensure we picked up all
+# the necessary changes.
+#
+# Skip any line that starts with .IN (old X11 indexing method),
+# or between a tab(@) and .TE.
+_X11SKIP_FALSE_POSITIVE_GREP_CMD= \
+	${TOOL_SED} -e '/tab(@)/,/^\.TE/d' -e '/^\.IN /d' ${.TARGET}.tmp | \
+	${TOOL_GREP} -E '@([^ 	]+)@'
 
 #
 # X.Org pkgconfig files handling
@@ -356,13 +365,12 @@ ${_pkg}.pc: ${PKGDIST.${_pkg}}/configure Makefile
 		s,@FREETYPE_CFLAGS@,-I${X11ROOTDIR}/include/freetype2 -I${X11ROOTDIR}/include,;" \
 		-e '/^Libs:/ s%-L\([^ 	]*\)%-Wl,-rpath,\1 &%g' \
 		< ${.IMPSRC} > ${.TARGET}.tmp
-	if ${TOOL_GREP} '@.*@' ${.TARGET}.tmp; then \
-		echo "${.TARGET} matches @.*@, probably missing updates" 1>&2; \
+	if ${_X11SKIP_FALSE_POSITIVE_GREP_CMD}; then \
+		echo "pkg-config ${.TARGET} matches @.*@, probably missing updates" 1>&2; \
 		false; \
 	else \
 		${MV} ${.TARGET}.tmp ${.TARGET}; \
 	fi
-
 
 CLEANFILES+= ${_PKGCONFIG_FILES} ${_PKGCONFIG_FILES:C/$/.tmp/}
 .endif
@@ -396,39 +404,52 @@ CLEANDIRFILES+= ${MAN:U${PROG:D${PROG.1}}}
 
 .SUFFIXES:	.man .man.pre .1 .3 .4 .5 .7
 
-_X11MANTRANSFORM= \
-	${X11EXTRAMANTRANSFORMS} \
-	__adminmansuffix__	8 \
-	__apploaddir__		${X11ROOTDIR}/lib/X11/app-defaults \
-	__appmansuffix__ 	1 \
-	__bindir__		${X11BINDIR} \
-	__datadir__		${X11LIBDIR} \
-	__libdir__		${X11ROOTDIR}/lib \
-	__xkbconfigroot__	${X11LIBDIR}/xkb \
-	__sysconfdir__		/etc \
-	__drivermansuffix__	4 \
-	__filemansuffix__	5 \
-	__LIB_MAN_SUFFIX__	3 \
-	__libmansuffix__	3 \
-	__logdir__		/var/log \
-	__mandir__		${X11MANDIR} \
-	__miscmansuffix__	7 \
-	__oslibmansuffix__	3 \
-	__projectroot__		${X11ROOTDIR}
-
 # Note the escaping trick for _X11MANTRANSFORM using % to replace spaces
 XORGVERSION=	'"X Version 11"'
-X11MANCPP?=	no
+
+_X11MANTRANSFORM= \
+	${X11EXTRAMANTRANSFORMS}
+
+# These ones used to appear as __foo__ but may be now @foo@.
+_X11MANTRANSFORMS_BOTH=\
+	${X11EXTRAMANTRANSFORMS_BOTH} \
+	appmansuffix		1 \
+	LIB_MAN_SUFFIX		3 \
+	libmansuffix		3 \
+	oslibmansuffix		3 \
+	drivermansuffix		4 \
+	filemansuffix		5 \
+	miscmansuffix		7 \
+	adminmansuffix		8 \
+	logdir			/var/log \
+	sysconfdir		/etc \
+	apploaddir		${X11ROOTDIR}/lib/X11/app-defaults \
+	bindir			${X11BINDIR} \
+	datadir			${X11LIBDIR} \
+	libdir			${X11ROOTDIR}/lib \
+	mandir			${X11MANDIR} \
+	projectroot		${X11ROOTDIR} \
+	xkbconfigroot		${X11LIBDIR}/xkb \
+	vendorversion		${XORGVERSION:C/ /%/gW} \
+	XCONFIGFILE		xorg.conf \
+	xconfigfile		xorg.conf \
+	XCONFIGFILEMAN		'xorg.conf(5)' \
+	xorgversion		${XORGVERSION:C/ /%/gW} \
+	XSERVERNAME		Xorg \
+	xservername		Xorg
+
+.for __def__ __value__ in ${_X11MANTRANSFORMS_BOTH}
 _X11MANTRANSFORM+= \
-	__vendorversion__	${XORGVERSION:C/ /%/gW} \
-	__XCONFIGFILE__		xorg.conf \
-	__xconfigfile__		xorg.conf \
-	__XCONFIGFILEMAN__	'xorg.conf(5)' \
-	__xorgversion__		${XORGVERSION:C/ /%/gW} \
-	__XSERVERNAME__		Xorg \
-	__xservername__		Xorg
+	__${__def__}__		${__value__} \
+	@${__def__}@		${__value__}
+.endfor
+
+_X11MANTRANSFORM+= \
 
 _X11MANTRANSFORMCMD=	${TOOL_SED} -e 's/\\$$/\\ /' ${.IMPSRC}
+
+# XXX document me.
+X11MANCPP?=	no
 
 .if ${X11MANCPP} != "no"
 _X11MANTRANSFORMCMD+=	| ${CC} -E -undef -traditional -
@@ -446,7 +467,13 @@ _X11MANTRANSFORMCMD+=	${X11EXTRAMANDEFS}
 .man.1 .man.3 .man.4 .man.5 .man.7 .man.pre.1 .man.pre.4 .man.pre.5:
 	${_MKTARGET_CREATE}
 	rm -f ${.TARGET}
-	${_X11MANTRANSFORMCMD} | ${X11TOOL_UNXCOMM} > ${.TARGET}
+	${_X11MANTRANSFORMCMD} | ${X11TOOL_UNXCOMM} > ${.TARGET}.tmp
+	if ${_X11SKIP_FALSE_POSITIVE_GREP_CMD}; then \
+		echo "manual ${.TARGET} matches @.*@, probably missing updates" 1>&2; \
+		false; \
+	else \
+		${MV} ${.TARGET}.tmp ${.TARGET}; \
+	fi
 
 ##### Pull in related .mk logic
 .include <bsd.clean.mk>
