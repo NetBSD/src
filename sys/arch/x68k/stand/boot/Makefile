@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2020/01/18 05:46:25 isaki Exp $
+#	$NetBSD: Makefile,v 1.34 2020/08/10 07:00:49 rin Exp $
 
 NOMAN=		# defined
 
@@ -40,7 +40,7 @@ CPPFLAGS+=	-DLIBSA_ENABLE_LS_OP
 CPPFLAGS+=	-DRTC_OFFSET=${RTC_OFFSET}
 CPPFLAGS+=	-DSUPPORT_BOOTP -DSUPPORT_DHCP
 #CPPFLAGS+=	-DDEBUG
-CFLAGS=		-Wno-main -Os -m68020-60
+CFLAGS=		-Wno-main -Os -m68020-60 -Wno-attributes
 LINKFLAGS=	-N -static -T ${.CURDIR}/../boot/boot.ldscript
 LINKFLAGS+=	--defsym=TEXTADDR=$(TEXT)
 ELF2AOUT_OPTS=	-O
