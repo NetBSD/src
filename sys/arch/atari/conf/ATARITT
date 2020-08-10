@@ -1,14 +1,14 @@
 #
-# $NetBSD: ATARITT,v 1.120 2019/04/13 08:26:14 isaki Exp $
+# $NetBSD: ATARITT,v 1.121 2020/08/10 06:34:25 rin Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: GENERIC.in,v 1.118 2019/04/13 08:22:59 isaki Exp $
+#		NetBSD: GENERIC.in,v 1.119 2020/08/10 06:32:58 rin Exp $
 include "arch/atari/conf/std.atari"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
-makeoptions COPTS="-O2 -fno-reorder-blocks" # see share/mk/sys.mk
+makeoptions COPTS="-O2 -fno-reorder-blocks -fno-omit-frame-pointer" # See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for backtraces in DDB.
 maxusers 16
 options HZ=64 # Set the clock-rate (48/64/96)
 options INSECURE # disable kernel security levels
