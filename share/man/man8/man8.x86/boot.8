@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.22 2020/08/09 18:54:59 kim Exp $
+.\"	$NetBSD: boot.8,v 1.23 2020/08/10 01:10:26 uwe Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -99,7 +99,7 @@ master boot record - see
 .Xr x86/mbr 8 ) .
 .Ss Normal Operation
 Once running, a banner similar to the following will appear:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 >> NetBSD BIOS Boot, revision 3.0
 >> (user@buildhost, builddate)
 >> Memory: 637/15360 k
@@ -113,7 +113,7 @@ In the example above, it will be
 which is the file
 .Pa /netbsd
 on partition
-.Dq a
+.Dq Li a
 of the
 .Nx
 .Tn MBR
@@ -122,7 +122,7 @@ partition of the first hard disk known to the
 .Po
 which is an
 .Tn IDE
-or similar device - see the
+or similar device \(em see the
 .Sx BUGS
 section
 .Pc .
@@ -173,9 +173,9 @@ input of these commands:
 .\" also duplicated in the x86-specific x86/dosboot.8 and x86/pxeboot.8;
 .\" please try to keep all relevant files synchronized.
 .Bl -tag -width 04n -offset 04n
-.It Ic boot Oo Va device : Oc Ns Oo Va filename Oc Oo Fl 1234abcdmqsvxz Oc
+.It Ic boot Oo Ar device Ns Ic \&: Oc Ns Oo Ar filename Oc Oo Fl 1234abcdmqsvxz Oc
 The default
-.Va device
+.Ar device
 will be set to the disk from which the boot loader was loaded.
 The partition is set to the first match in this list:
 .Bl -enum
@@ -196,22 +196,22 @@ The first partition.
 .Pp
 To boot from an alternate disk, the full name of the device should
 be given at the prompt.
-.Va device
+.Ar device
 is of the form
-.Va NAME=partition_label
+.Li NAME= Ns Ar partition_label
 when booting from a
 .Xr gpt 8
 partitioned disk.
 Otherwise, the syntax is
-.Xo Va xd
-.Op Va N Ns Op Va x
+.Xo Ar xd\^ Ns
+.Op Ar N\^ Ns Op Ar x
 .Xc
 where
-.Va xd
+.Ar xd
 is the device from which to boot,
-.Va N
+.Ar N
 is the unit number, and
-.Va x
+.Ar x
 is the partition letter.
 .Pp
 In the latter case, the following list of supported devices may
@@ -238,7 +238,7 @@ attribute set.
 Inner RAIDframe partitions can also be given to the
 .Ic dev
 command using he
-.Va NAME=partition_label
+.Li NAME= Ns Ar partition_label
 syntax.
 .El
 .Pp
@@ -261,7 +261,7 @@ Options are:
 .Bl -tag -width xxx
 .It Fl 1
 Sets the machine-dependent flag
-.Sy RB_MD1
+.Dv RB_MD1
 in
 .Va boothowto .
 In
@@ -270,7 +270,7 @@ this disables multiprocessor boot;
 the kernel will boot in uniprocessor mode.
 .It Fl 2
 Sets the machine-dependent flag
-.Sy RB_MD2
+.Dv RB_MD2
 in
 .Va boothowto .
 In
@@ -278,7 +278,7 @@ In
 this disables ACPI.
 .It Fl 3
 Sets the machine-dependent flag
-.Sy RB_MD3
+.Dv RB_MD3
 in
 .Va boothowto .
 In
@@ -286,7 +286,7 @@ In
 this disables SVS.
 .It Fl 4
 Sets the machine-dependent flag
-.Sy RB_MD4
+.Dv RB_MD4
 in
 .Va boothowto .
 In
@@ -294,7 +294,7 @@ In
 this has no effect.
 .It Fl a
 Sets the
-.Sy RB_ASKNAME
+.Dv RB_ASKNAME
 flag in
 .Va boothowto .
 This causes the kernel to prompt for the root file system device,
@@ -302,13 +302,13 @@ the system crash dump device, and the path to
 .Xr init 8 .
 .It Fl b
 Sets the
-.Sy RB_HALT
+.Dv RB_HALT
 flag in
 .Va boothowto .
 This causes subsequent reboot attempts to halt instead of rebooting.
 .It Fl c
 Sets the
-.Sy RB_USERCONF
+.Dv RB_USERCONF
 flag in
 .Va boothowto .
 This causes the kernel to enter the
@@ -320,7 +320,7 @@ allows devices to be enabled or disabled, and allows device locators
 to be modified before the kernel attempts to attach the devices.
 .It Fl d
 Sets the
-.Sy RB_KDB
+.Dv RB_KDB
 flag in
 .Va boothowto .
 Requests the kernel to enter debug mode, in which it
@@ -328,76 +328,76 @@ waits for a connection from a kernel debugger; see
 .Xr ddb 4 .
 .It Fl m
 Sets the
-.Sy RB_MINIROOT
+.Dv RB_MINIROOT
 flag in
 .Va boothowto .
 Informs the kernel that a mini-root file system is present in memory.
 .It Fl q
 Sets the
-.Sy AB_QUIET
+.Dv AB_QUIET
 flag in
 .Va boothowto .
 Boot the system in quiet mode.
 .It Fl s
 Sets the
-.Sy RB_SINGLE
+.Dv RB_SINGLE
 flag in
 .Va boothowto .
 Boot the system in single-user mode.
 .It Fl v
 Sets the
-.Sy AB_VERBOSE
+.Dv AB_VERBOSE
 flag in
 .Va boothowto .
 Boot the system in verbose mode.
 .It Fl x
 Sets the
-.Sy AB_DEBUG
+.Dv AB_DEBUG
 flag in
 .Va boothowto .
 Boot the system with debug messages enabled.
 .It Fl z
 Sets the
-.Sy AB_SILENT
+.Dv AB_SILENT
 flag in
 .Va boothowto .
 Boot the system in silent mode.
 .El
-.It Ic consdev Va dev Ns Oo Ns , Ns Va speed Oc
+.It Ic consdev Ar dev\| Ns Oo Ns Ic \&, Ns Ar speed Oc
 Immediately switch the console to the specified device
-.Va dev
+.Ar dev
 and reprint the banner.
-.Va dev
+.Ar dev
 must be one of
 .\" .Bl -item -width com[0123]kbd -offset indent -compact
-.Ar pc , com0 , com1 , com2 ,
-.Ar com3 , com0kbd , com1kbd , com2kbd ,
-.Ar com3kbd ,
+.Li pc , com0 , com1 , com2 ,
+.Li com3 , com0kbd , com1kbd , com2kbd ,
+.Li com3kbd ,
 or
-.Ar auto .
+.Li auto .
 See
 .Sx Console Selection Policy
 in
 .Xr x86/boot_console 8 .
 .Pp
 A
-.Va speed
+.Ar speed
 for the serial port is optional and defaults to 9600.
 If a value of zero is specified, then the current baud rate (set by the
 BIOS) will be used.
 Setting the
-.Va speed
+.Ar speed
 with the
-.Ar pc
+.Li pc
 device is not possible.
-.It Ic dev Op Va device
+.It Ic dev Op Ar device
 Set the default drive and partition for subsequent file system
 operations.
 Without an argument, print the current setting.
-.Va device
+.Ar device
 is of the form specified in
-.Cm boot .
-.It Ic fs Va file
+.Ic boot .
+.It Ic fs Ar file
 Load a file system image from the specified
 .Ar file ,
 and request the kernel to use it as the root file system.
@@ -406,22 +406,24 @@ The
 utility may be used to create suitable file system images.
 .It Ic help
 Print an overview about commands and arguments.
-.It Ic load Va module Op Ar arguments
+.It Ic load Ar module Op Ar arguments
 Load the specified kernel
-.Va module ,
+.Ar module ,
 and pass it the specified
 .Ar arguments .
 If the module name is not an absolute path,
-.Pa /stand/ Xo Ns
-.Aq Sy arch Ns
+.Bd -ragged -offset indent -compact
+.Pa /stand/ Ns Xo Ns
+.Aq Ar arch Ns
 .Pa / Ns
-.Aq Sy osversion Ns
+.Aq Ar osversion Ns
 .Pa /modules/ Ns
-.Aq Sy module Ns
+.Aq Ar module Ns
 .Pa / Ns
-.Aq Sy module Ns
+.Aq Ar module Ns
 .Pa .kmod
 .Xc
+.Ed
 is used.
 Possible uses of the
 .Ic load
@@ -448,16 +450,15 @@ being separated with spaces
 Override the default boot device.
 .Ar dev
 is of the form
-.Va NAME=partition_label
+.Li NAME= Ns Ar partition_label
 for
 .Xr gpt 8
 partitioned disks.
 It can also be a unit name
-.Po Dq wd0
-.Pc ,
+.Pq Ql wd0 ,
 or an interface name
-.Po Dq bge0 ,
-.Dq wm0 ,
+.Po Ql bge0 ,
+.Ql wm0 ,
 \&...
 .Pc
 for cases where the root file system has to be loaded
@@ -475,32 +476,32 @@ See
 .Sx Console Selection Policy
 in
 .Xr x86/boot_console 8 .
-.It Xo Ic ip Ns = Ns
-.Ar my_ip : Ns Ar serv_ip : Ns Ar gw_ip : Ns
-.Ar mask : Ns Ar host : Ns Ar iface
+.It Xo Ic ip Ns Li \&= Ns
+.Ar my_ip Ns Li \&: Ns Ar serv_ip Ns Li \&: Ns Ar gw_ip Ns Li \&: Ns
+.Ar mask Ns Li \&: Ns Ar host Ns Li \&: Ns Ar iface
 .Xc
 Specify various parameters for a network boot (IPs are in
 dot notation),
 each one separated by a colon:
 .Bl -tag -width xxxxxxx
-.It Va my_ip
+.It Ar my_ip
 address of the host
-.It Va serv_ip
+.It Ar serv_ip
 address of the NFS server
-.It Va gw_ip
+.It Ar gw_ip
 address of the gateway
-.It Va mask
+.It Ar mask
 network mask
-.It Va host
+.It Ar host
 address of the host
-.It Va iface
+.It Ar iface
 interface
-.Po e.g., Dq xennet0
+.Po e.g., Dq Li xennet0
 or
-.Dq eth0
+.Dq Li eth0
 .Pc
 .El
-.It Ic nfsroot Ns = Ns Ar address : Ns Ar rootpath
+.It Ic nfsroot Ns = Ns Ar address Ns Li \&: Ns Ar rootpath
 Boot the system with root on NFS.
 .Ar address
 is the address of the NFS server, and
@@ -510,42 +511,50 @@ is the remote mount point for the root file system.
 Pass a list of PCI IDs for use with the PCI backend driver,
 .Xr pciback 4 .
 .Ar pcidevs
-is formed of multiple IDs (in bus:device.function notation),
+is formed of multiple IDs (in
+.Ar bus Ns Li \&: Ns Ar device Ns Li \&. Ns Ar function
+notation),
 each ID being surrounded with brackets.
 PCI domain IDs are currently ignored.
 See
 .Xr pciback 4 .
 .El
-.It Ic ls Op Pa path
+.It Ic ls Op Ar path
 Print a directory listing of
-.Pa path ,
+.Ar path ,
 containing inode number, filename, and file type.
-.Pa path
+.Ar path
 can contain a device specification.
 .It Ic menu
 Display the boot menu and initiate a countdown,
 similarly to what would have happened if interactive mode
 had not been entered.
-.It Ic modules Bro Ar on | off | enabled | disabled Brc
+.It Ic modules Bro Li \^on \
+           No \(or Li off \
+           No \(or Li enabled \
+           No \(or Li disabled\^ \
+           Brc
 The values
-.Ar enabled , on
+.Ql enabled ,
+.Ql on
 will enable module loading for
-.Cm boot
+.Ic boot
 and
-.Cm multiboot ,
+.Ic multiboot ,
 whereas
-.Ar disabled , off
+.Ql disabled ,
+.Ql off
 will turn off the feature.
-.It Ic multiboot Va kernel Op Ar arguments
+.It Ic multiboot Ar kernel Op Ar arguments
 Boot the specified
-.Va kernel ,
+.Ar kernel ,
 using the
 .Dq multiboot
 protocol instead of the native
 .Nx
 boot protocol.
 The
-.Va kernel
+.Ar kernel
 is specified in the same way as with the
 .Ic boot
 command.
@@ -568,8 +577,10 @@ for single user mode) must be passed as options to the
 .Ic load
 command.
 Options for the hypervisor (such as
-.Dq dom0_mem=256M
-to reserve 256 MB of memory for DOM0)
+.Dq Li dom0_mem=256M
+to reserve
+.Pf 256 Tn MB
+of memory for DOM0)
 must be passed as options to the
 .Ic multiboot
 command.
@@ -632,9 +643,9 @@ Using the same seed file on more then one host,
 or for more than one boot on the same host,
 will reduce the quality of random numbers
 and may impact system security.
-.It Ic userconf Va command
+.It Ic userconf Ar command
 Pass command
-.Va command
+.Ar command
 to
 .Xr userconf 4
 at boot time.
@@ -656,19 +667,28 @@ GIF,
 PSD (composited view only),
 or
 PIC.
-.It Ic vesa Bro Va modenum | Ar on | off | enabled | disabled | list Brc
+.It Ic vesa Bro Ar \^modenum \
+        No \(or Li on \
+        No \(or Li off \
+        No \(or Li enabled \
+        No \(or Li disabled \
+        No \(or Li list Brc
 Initialise the video card to the specified resolution and bit depth.
 The
-.Va modenum
+.Ar modenum
 should be in the form of
-.Ar 0x100 , 800x600 , 800x600x32 .
+.Ql 0x100 ,
+.Ql 800x600 ,
+.Ql 800x600x32 .
 The values
-.Ar enabled , on
+.Ql enabled ,
+.Ql on
 put the display into the default mode, and
-.Ar disabled , off
+.Ql disabled ,
+.Ql off
 returns the display into standard vga mode.
 The value
-.Ar list
+.Ql list
 lists all supported modes.
 .El
 .Pp
@@ -682,22 +702,27 @@ The kernel uses information from the bootloader to locate the
 file system to mount as root.
 There are three methods:
 .Bl -tag -width 04n -offset 04n
-.It Ic BTINFO_ROOTDEVICE Va from
+.\" XXX: what this .Va is supposed to mean?
+.It Dv BTINFO_ROOTDEVICE Va from
 .Xr boot.cfg 5
 or multiboot.
 The bootloader passes the root device name as driver, unit, and
-partition (like sd0a).
+partition (like
+.Ql sd0a Ns ).
 This will be automatically substituted by a
 .Xr dk 4
 wedge if one is discovered.
 .Pp
-The bootloader passes a wedge name as "wedge:" followed by the name.
+The bootloader passes a wedge name as
+.Dq Li wedge:
+followed by the name.
 The kernel will search for a
 .Xr dk 4
 device with that name.
-.It Ic BTINFO_BOOTWEDGE Va determined by bootblock
+.It Dv BTINFO_BOOTWEDGE Va determined by bootblock
 The bootloader passes start offset and length of a hard disk partition
-and a offset, size and hash of a "boot area".
+and a offset, size and hash of a
+.Dq boot area .
 Then kernel searches
 all disks and wedges for a block sequence at that offset with a
 matching hash.
@@ -705,14 +730,21 @@ If one is found, the kernel will look for a wedge
 on that device at the same offset.
 .Pp
 An additional partition number is provided if the bootloader also
-passed a BTINFO_BOOTDISK record.
-This (or partition 'a') will be used
+passed a
+.Dv BTINFO_BOOTDISK
+record.
+This (or partition
+.Ql a )
+will be used
 by the kernel as a fallback if there is no matching wedge.
-.It Ic BTINFO_BOOTDISK Va determined by bootblock
-This uses the device number passed by the BIOS that
-distinguishes between floppy, hard drive and CD-ROM boot.
+.It Dv BTINFO_BOOTDISK Va determined by bootblock
+This uses the device number passed by the
+.Tn BIOS
+that distinguishes between floppy, hard drive and
+.Tn CD-ROM
+boot.
 .Bl -tag -width xxx
-.It Ic Floppy
+.It Floppy
 The kernel searches for the
 .Xr fd 4
 device with the correct unit, the partition number is used
@@ -720,15 +752,19 @@ to select a specific disk format.
 See
 .Xr fd 4
 for details.
-.It Ic Hard drive
+.It Hard drive
 The bootloader passed a partition number and disklabel
 data (offset, type, checksum, packname).
 The kernel searches
 all disks for a matching disklabel.
 If one is found, the
 kernel will use that device and partition number.
-.It Ic CDROM
-The BIOS does not distinguish between multiple CD devices.
+.It Tn CDROM
+The
+.Tn BIOS
+does not distinguish between multiple
+.Tn CD
+devices.
 The kernel searches for the first
 .Xr cd 4
 device.
@@ -804,9 +840,7 @@ Any
 .Ar filename
 specified after the boot options, e.g.:
 .Pp
-.Bd -unfilled -offset indent -compact
-.Cm boot -d netbsd.test
-.Ed
+.Dl boot -d netbsd.test
 .Pp
 is ignored, and the default kernel is booted.
 .Pp
@@ -857,16 +891,16 @@ This can be achieved using the following commands
 (you must adapt the hard disk and
 .Tn EFI
 partition start end size to fit your setup):
-.Bd -unfilled -offset indent
-.Cm dd if=/dev/rwd0d bs=512 count=1 of=mbr
-.Cm fdisk -FIfaui1s 4/34/32768 -c /usr/mdec/mbr mbr
-.Cm dd if=mbr bs=512 count=1 of=/dev/rwd0d conv=notrunc
+.Bd -literal -offset indent
+dd if=/dev/rwd0d bs=512 count=1 of=mbr
+fdisk -FIfaui1s 4/34/32768 -c /usr/mdec/mbr mbr
+dd if=mbr bs=512 count=1 of=/dev/rwd0d conv=notrunc
 .Ed
 .Pp
 The resulting
 .Xr x86/mbr 8
 partition table will look like this:
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 0: GPT Protective MBR (sysid 238)
     start 1, size 2097151 (1024 MB, Cyls 0-130/138/8)
         PBR is not bootable: Bad magic number (0x0000)
