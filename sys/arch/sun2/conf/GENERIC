@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.106 2020/08/01 08:20:52 maxv Exp $
+# $NetBSD: GENERIC,v 1.107 2020/08/10 06:29:49 rin Exp $
 #
 # GENERIC machine description file
 # 
@@ -29,10 +29,13 @@ options 	INSECURE		# allow modload(8) in multiuser mode
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.106 $"
+#ident 		"GENERIC-$Revision: 1.107 $"
 
-makeoptions	COPTS="-Os -fno-inline-small-functions"
-					# bootloader has size limit (~2MB)
+# Bootloader has size limit (~2MB). Kernel should be smaller than this
+# hard limit. Otherwise, it freezes before adding swap even with 7MB
+# memory. -fno-omit-frame-pointer is necessary for backtraces in DDB.
+options 	NO_KERNEL_RCSIDS
+makeoptions	COPTS="-Os -fno-inline-small-functions -fno-asynchronous-unwind-tables -fno-unwind-tables -fno-omit-frame-pointer"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
