@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2019/06/12 06:20:21 martin Exp $
+#	$NetBSD: Makefile,v 1.3 2020/08/10 06:54:45 rin Exp $
 #
 # Makefile for mac68k
 #
@@ -12,5 +12,8 @@ NOPARTMAN=	yes
 NO_GPT=		yes
 NO_MBR=		yes
 .endif
+
+# XXX
+COPTS.md.c=	-Wno-stringop-truncation
 
 .include "../../Makefile.inc"
