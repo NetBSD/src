@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.58 2020/05/24 17:28:20 jakllsch Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.59 2020/08/10 19:27:27 rjs Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.58 2020/05/24 17:28:20 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.59 2020/08/10 19:27:27 rjs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1909,17 +1909,19 @@ uvideo_enum_format(void *addr, uint32_t index, struct video_format *format)
 {
 	struct uvideo_softc *sc = addr;
 	struct uvideo_stream *vs = sc->sc_stream_in;
-	struct uvideo_pixel_format *pixel_format;
+	struct uvideo_format *video_format;
 	int off;
 
 	if (sc->sc_dying)
 		return EIO;
 
 	off = 0;
-	SIMPLEQ_FOREACH(pixel_format, &vs->vs_pixel_formats, entries) {
+	SIMPLEQ_FOREACH(video_format, &vs->vs_formats, entries) {
 		if (off++ != index)
 			continue;
-		format->pixel_format = pixel_format->pixel_format;
+		format->pixel_format = video_format->format.pixel_format;
+		format->width = video_format->format.width;
+		format->height = video_format->format.height;
 		return 0;
 	}
 
