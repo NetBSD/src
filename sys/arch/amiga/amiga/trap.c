@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.138 2019/11/21 19:23:58 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.139 2020/08/10 10:51:21 rin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.138 2019/11/21 19:23:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.139 2020/08/10 10:51:21 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -573,7 +573,7 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 	 * divde by zero, CHK/TRAPV inst
 	 */
 	case T_ZERODIV|T_USER:
-		ksi.ksi_code = FPE_FLTDIV;
+		ksi.ksi_code = FPE_INTDIV;
 	case T_CHKINST|T_USER:
 	case T_TRAPVINST|T_USER:
 		ksi.ksi_addr = (void *)(int)fp->f_format;
@@ -674,7 +674,12 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 		}
 #endif
 		fp->f_sr &= ~PSL_T;
+		ksi.ksi_addr = (void *)fp->f_pc;
 		ksi.ksi_signo = SIGTRAP;
+		if (type == (T_TRAP15|T_USER))
+			ksi.ksi_code = TRAP_BRKPT;
+		else
+			ksi.ksi_code = TRAP_TRACE;
 		break;
 	/*
 	 * Kernel AST (should not happen)
