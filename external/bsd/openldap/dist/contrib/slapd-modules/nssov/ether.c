@@ -1,10 +1,10 @@
-/*	$NetBSD: ether.c,v 1.1.1.7 2019/08/08 13:31:05 christos Exp $	*/
+/*	$NetBSD: ether.c,v 1.1.1.8 2020/08/11 13:12:02 christos Exp $	*/
 
 /* ether.c - ethernet address lookup routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2019 The OpenLDAP Foundation.
+ * Copyright 2008-2020 The OpenLDAP Foundation.
  * Copyright 2008 by Howard Chu, Symas Corp.
  * All rights reserved.
  *

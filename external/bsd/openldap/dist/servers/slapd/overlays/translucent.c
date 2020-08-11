@@ -1,10 +1,10 @@
-/*	$NetBSD: translucent.c,v 1.1.1.7 2019/08/08 13:31:41 christos Exp $	*/
+/*	$NetBSD: translucent.c,v 1.1.1.8 2020/08/11 13:12:15 christos Exp $	*/
 
 /* translucent.c - translucent proxy module */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2019 The OpenLDAP Foundation.
+ * Copyright 2004-2020 The OpenLDAP Foundation.
  * Portions Copyright 2005 Symas Corporation.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: translucent.c,v 1.1.1.7 2019/08/08 13:31:41 christos Exp $");
+__RCSID("$NetBSD: translucent.c,v 1.1.1.8 2020/08/11 13:12:15 christos Exp $");
 
 #include "portable.h"
 
@@ -112,7 +112,8 @@ static ConfigOCs translucentocs[] = {
 	{ "( OLcfgOvOc:14.2 "
 	  "NAME 'olcTranslucentDatabase' "
 	  "DESC 'Translucent target database configuration' "
-	  "AUXILIARY )", Cft_Misc, olcDatabaseDummy, translucent_ldadd },
+	/* co_table is initialized in translucent_initialize() */
+	  "AUXILIARY )", Cft_Misc, NULL, translucent_ldadd },
 	{ NULL, 0, NULL }
 };
 /* for translucent_init() */
@@ -1386,6 +1387,12 @@ translucent_db_destroy( BackendDB *be, ConfigReply *cr )
 int translucent_initialize() {
 
 	int rc;
+
+	/* olcDatabaseDummy is defined in slapd, and Windows
+	   will not let us initialize a struct element with a data pointer
+	   from another library, so we have to initialize this element
+	   "by hand".  */
+	translucentocs[1].co_table = olcDatabaseDummy;
 
 	Debug(LDAP_DEBUG_TRACE, "==> translucent_initialize\n", 0, 0, 0);
 

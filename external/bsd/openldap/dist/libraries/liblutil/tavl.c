@@ -1,10 +1,10 @@
-/*	$NetBSD: tavl.c,v 1.1.1.7 2019/08/08 13:31:14 christos Exp $	*/
+/*	$NetBSD: tavl.c,v 1.1.1.8 2020/08/11 13:12:05 christos Exp $	*/
 
 /* avl.c - routines to implement an avl tree */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2019 The OpenLDAP Foundation.
+ * Copyright 2005-2020 The OpenLDAP Foundation.
  * Portions Copyright (c) 2005 by Howard Chu, Symas Corp.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tavl.c,v 1.1.1.7 2019/08/08 13:31:14 christos Exp $");
+__RCSID("$NetBSD: tavl.c,v 1.1.1.8 2020/08/11 13:12:05 christos Exp $");
 
 #include "portable.h"
 

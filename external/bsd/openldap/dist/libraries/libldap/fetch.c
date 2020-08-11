@@ -1,10 +1,10 @@
-/*	$NetBSD: fetch.c,v 1.1.1.4 2019/08/08 13:31:15 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.1.1.5 2020/08/11 13:12:05 christos Exp $	*/
 
 /* fetch.c - routines for fetching data at URLs */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2019 The OpenLDAP Foundation.
+ * Copyright 1999-2020 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fetch.c,v 1.1.1.4 2019/08/08 13:31:15 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.1.1.5 2020/08/11 13:12:05 christos Exp $");
 
 #include "portable.h"
 

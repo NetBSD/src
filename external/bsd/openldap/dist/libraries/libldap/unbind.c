@@ -1,9 +1,9 @@
-/*	$NetBSD: unbind.c,v 1.1.1.7 2019/08/08 13:31:15 christos Exp $	*/
+/*	$NetBSD: unbind.c,v 1.1.1.8 2020/08/11 13:12:05 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2019 The OpenLDAP Foundation.
+ * Copyright 1998-2020 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unbind.c,v 1.1.1.7 2019/08/08 13:31:15 christos Exp $");
+__RCSID("$NetBSD: unbind.c,v 1.1.1.8 2020/08/11 13:12:05 christos Exp $");
 
 #include "portable.h"
 
@@ -139,6 +139,7 @@ ldap_ld_free(
 	/* Should already be closed by ldap_free_connection which knows not to free
 	 * this one */
 	ber_int_sb_destroy( ld->ld_sb );
+	LBER_FREE( ld->ld_sb );
 
 	LDAP_MUTEX_LOCK( &ld->ld_ldopts_mutex );
 

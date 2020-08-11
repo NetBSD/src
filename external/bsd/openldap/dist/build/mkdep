@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2019 The OpenLDAP Foundation.
+## Copyright 1998-2020 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -103,7 +103,7 @@ if test ! -w $MAKE ; then
 	exit 1
 fi
 
-TMP=/tmp/mkdep$$
+TMP=${TMPDIR-/tmp}/mkdep$$
 
 trap 'rm -f $TMP.sed $TMP ; exit 1' 1 2 3 13 15
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: backover.c,v 1.1.1.8 2019/08/08 13:31:36 christos Exp $	*/
+/*	$NetBSD: backover.c,v 1.1.1.9 2020/08/11 13:12:13 christos Exp $	*/
 
 /* backover.c - backend overlay routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2019 The OpenLDAP Foundation.
+ * Copyright 2003-2020 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -19,7 +19,7 @@
 /* Functions to overlay other modules over a backend. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: backover.c,v 1.1.1.8 2019/08/08 13:31:36 christos Exp $");
+__RCSID("$NetBSD: backover.c,v 1.1.1.9 2020/08/11 13:12:13 christos Exp $");
 
 #include "portable.h"
 

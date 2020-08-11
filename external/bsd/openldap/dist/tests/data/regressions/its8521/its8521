@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2019 The OpenLDAP Foundation.
+## Copyright 1998-2020 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -12,6 +12,10 @@
 ## A copy of this license is available in the file LICENSE in the
 ## top-level directory of the distribution or, alternatively, at
 ## <http://www.OpenLDAP.org/license.html>.
+
+echo "This test is no longer valid after the fixes in ITS#9015"
+echo "http://www.openldap.org/its/index.cgi/?findid=9015"
+exit 0
 
 echo "running defines.sh"
 . $SRCDIR/scripts/defines.sh

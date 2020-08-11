@@ -1,4 +1,4 @@
-/*	$NetBSD: constraint.c,v 1.1.1.6 2018/02/06 01:53:16 christos Exp $	*/
+/*	$NetBSD: constraint.c,v 1.1.1.7 2020/08/11 13:12:14 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* constraint.c - Overlay to constrain attributes to certain values */
@@ -20,7 +20,7 @@
  *			Emmannuel Dreyfus <manu@netbsd.org>
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: constraint.c,v 1.1.1.6 2018/02/06 01:53:16 christos Exp $");
+__RCSID("$NetBSD: constraint.c,v 1.1.1.7 2020/08/11 13:12:14 christos Exp $");
 
 #include "portable.h"
 
@@ -451,7 +451,7 @@ constraint_cf_gen( ConfigArgs *c )
 						}
 
 						if ( ap.restrict_lud->lud_attrs != NULL ) {
-							if ( ap.restrict_lud->lud_attrs[0] != '\0' ) {
+							if ( ap.restrict_lud->lud_attrs[0] != NULL ) {
 								snprintf( c->cr_msg, sizeof( c->cr_msg ),
 									"%s %s: attrs not allowed in restrict URI %s\n",
 									c->argv[0], c->argv[1], arg);

@@ -1,10 +1,10 @@
-/*	$NetBSD: thr_nt.c,v 1.1.1.7 2019/08/08 13:31:13 christos Exp $	*/
+/*	$NetBSD: thr_nt.c,v 1.1.1.8 2020/08/11 13:12:04 christos Exp $	*/
 
 /* thr_nt.c - wrapper around NT threads */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2019 The OpenLDAP Foundation.
+ * Copyright 1998-2020 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: thr_nt.c,v 1.1.1.7 2019/08/08 13:31:13 christos Exp $");
+__RCSID("$NetBSD: thr_nt.c,v 1.1.1.8 2020/08/11 13:12:04 christos Exp $");
 
 #include "portable.h"
 
@@ -56,6 +56,17 @@ ldap_int_thread_initialize( void )
 int
 ldap_int_thread_destroy( void )
 {
+	return 0;
+}
+
+int
+ldap_int_mutex_firstcreate( ldap_int_thread_mutex_t *mutex )
+{
+	if ( *mutex == NULL ) {
+		HANDLE p = CreateMutex( NULL, 0, NULL );
+		if ( InterlockedCompareExchangePointer((PVOID*)mutex, (PVOID)p, NULL) != NULL)
+			CloseHandle( p );
+	}
 	return 0;
 }
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: refint.c,v 1.1.1.8 2019/08/08 13:31:40 christos Exp $	*/
+/*	$NetBSD: refint.c,v 1.1.1.9 2020/08/11 13:12:15 christos Exp $	*/
 
 /* refint.c - referential integrity module */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2019 The OpenLDAP Foundation.
+ * Copyright 2004-2020 The OpenLDAP Foundation.
  * Portions Copyright 2004 Symas Corporation.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: refint.c,v 1.1.1.8 2019/08/08 13:31:40 christos Exp $");
+__RCSID("$NetBSD: refint.c,v 1.1.1.9 2020/08/11 13:12:15 christos Exp $");
 
 #include "portable.h"
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: tools.c,v 1.1.1.4 2019/08/08 13:31:44 christos Exp $	*/
+/*	$NetBSD: tools.c,v 1.1.1.5 2020/08/11 13:12:16 christos Exp $	*/
 
 /* tools.c - tools for slap tools */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2011-2019 The OpenLDAP Foundation.
+ * Copyright 2011-2020 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tools.c,v 1.1.1.4 2019/08/08 13:31:44 christos Exp $");
+__RCSID("$NetBSD: tools.c,v 1.1.1.5 2020/08/11 13:12:16 christos Exp $");
 
 #include "portable.h"
 
@@ -198,6 +198,17 @@ int mdb_tool_entry_close(
 			return -1;
 		}
 		mdb_tool_txn = NULL;
+	}
+	if( txi ) {
+		int rc;
+		if (( rc = mdb_txn_commit( txi ))) {
+			Debug( LDAP_DEBUG_ANY,
+				LDAP_XSTRING(mdb_tool_entry_close) ": database %s: "
+				"txn_commit failed: %s (%d)\n",
+				be->be_suffix[0].bv_val, mdb_strerror(rc), rc );
+			return -1;
+		}
+		txi = NULL;
 	}
 
 	if( nholes ) {

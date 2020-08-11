@@ -1,9 +1,9 @@
-/*	$NetBSD: ucstr.c,v 1.1.1.7 2019/08/08 13:31:11 christos Exp $	*/
+/*	$NetBSD: ucstr.c,v 1.1.1.8 2020/08/11 13:12:03 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2019 The OpenLDAP Foundation.
+ * Copyright 1998-2020 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ucstr.c,v 1.1.1.7 2019/08/08 13:31:11 christos Exp $");
+__RCSID("$NetBSD: ucstr.c,v 1.1.1.8 2020/08/11 13:12:03 christos Exp $");
 
 #include "portable.h"
 
@@ -114,6 +114,7 @@ struct berval * UTF8bvnormalize(
 	void *ctx )
 {
 	int i, j, len, clen, outpos, ucsoutlen, outsize, last;
+	int didnewbv = 0;
 	char *out, *outtmp, *s;
 	ac_uint4 *ucs, *p, *ucsout;
 
@@ -137,6 +138,7 @@ struct berval * UTF8bvnormalize(
 	if ( !newbv ) {
 		newbv = ber_memalloc_x( sizeof(struct berval), ctx );
 		if ( !newbv ) return NULL;
+		didnewbv = 1;
 	}
 
 	/* Should first check to see if string is already in proper
@@ -150,6 +152,9 @@ struct berval * UTF8bvnormalize(
 			outsize = len + 7;
 			out = (char *) ber_memalloc_x( outsize, ctx );
 			if ( out == NULL ) {
+fail:
+				if ( didnewbv )
+					ber_memfree_x( newbv, ctx );
 				return NULL;
 			}
 			outpos = 0;
@@ -176,7 +181,7 @@ struct berval * UTF8bvnormalize(
 			outsize = len + 7;
 			out = (char *) ber_memalloc_x( outsize, ctx );
 			if ( out == NULL ) {
-				return NULL;
+				goto fail;
 			}
 			outpos = i - 1;
 			memcpy(out, s, outpos);
@@ -185,7 +190,7 @@ struct berval * UTF8bvnormalize(
 		outsize = len + 7;
 		out = (char *) ber_memalloc_x( outsize, ctx );
 		if ( out == NULL ) {
-			return NULL;
+			goto fail;
 		}
 		outpos = 0;
 		i = 0;
@@ -194,7 +199,7 @@ struct berval * UTF8bvnormalize(
 	p = ucs = ber_memalloc_x( len * sizeof(*ucs), ctx );
 	if ( ucs == NULL ) {
 		ber_memfree_x(out, ctx);
-		return NULL;
+		goto fail;
 	}
 
 	/* convert character before first non-ascii to ucs-4 */
@@ -212,7 +217,7 @@ struct berval * UTF8bvnormalize(
 			if ( clen == 0 ) {
 				ber_memfree_x( ucs, ctx );
 				ber_memfree_x( out, ctx );
-				return NULL;
+				goto fail;
 			}
 			if ( clen == 1 ) {
 				/* ascii */
@@ -224,7 +229,7 @@ struct berval * UTF8bvnormalize(
 				if ( (s[i] & 0xc0) != 0x80 ) {
 					ber_memfree_x( ucs, ctx );
 					ber_memfree_x( out, ctx );
-					return NULL;
+					goto fail;
 				}
 				*p <<= 6;
 				*p |= s[i] & 0x3f;
@@ -256,7 +261,7 @@ struct berval * UTF8bvnormalize(
 						ber_memfree_x( ucsout, ctx );
 						ber_memfree_x( ucs, ctx );
 						ber_memfree_x( out, ctx );
-						return NULL;
+						goto fail;
 					}
 					out = outtmp;
 				}
@@ -280,7 +285,7 @@ struct berval * UTF8bvnormalize(
 			if (outtmp == NULL) {
 				ber_memfree_x( ucs, ctx );
 				ber_memfree_x( out, ctx );
-				return NULL;
+				goto fail;
 			}
 			out = outtmp;
 		}

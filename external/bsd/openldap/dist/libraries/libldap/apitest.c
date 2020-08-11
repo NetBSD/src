@@ -1,10 +1,10 @@
-/*	$NetBSD: apitest.c,v 1.1.1.7 2019/08/08 13:31:15 christos Exp $	*/
+/*	$NetBSD: apitest.c,v 1.1.1.8 2020/08/11 13:12:05 christos Exp $	*/
 
 /* apitest.c -- OpenLDAP API Test Program */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2019 The OpenLDAP Foundation.
+ * Copyright 1998-2020 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *
@@ -21,7 +21,7 @@
  * OpenLDAP Software.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apitest.c,v 1.1.1.7 2019/08/08 13:31:15 christos Exp $");
+__RCSID("$NetBSD: apitest.c,v 1.1.1.8 2020/08/11 13:12:05 christos Exp $");
 
 #include "portable.h"
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: syncrepl.c,v 1.1.1.8 2019/08/08 13:31:39 christos Exp $	*/
+/*	$NetBSD: syncrepl.c,v 1.1.1.9 2020/08/11 13:12:14 christos Exp $	*/
 
 /* syncrepl.c -- Replication Engine which uses the LDAP Sync protocol */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2019 The OpenLDAP Foundation.
+ * Copyright 2003-2020 The OpenLDAP Foundation.
  * Portions Copyright 2003 by IBM Corporation.
  * Portions Copyright 2003-2008 by Howard Chu, Symas Corporation.
  * All rights reserved.
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: syncrepl.c,v 1.1.1.8 2019/08/08 13:31:39 christos Exp $");
+__RCSID("$NetBSD: syncrepl.c,v 1.1.1.9 2020/08/11 13:12:14 christos Exp $");
 
 #include "portable.h"
 

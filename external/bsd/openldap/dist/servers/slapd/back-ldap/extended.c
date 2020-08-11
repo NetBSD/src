@@ -1,10 +1,10 @@
-/*	$NetBSD: extended.c,v 1.1.1.7 2019/08/08 13:31:42 christos Exp $	*/
+/*	$NetBSD: extended.c,v 1.1.1.8 2020/08/11 13:12:15 christos Exp $	*/
 
 /* extended.c - ldap backend extended routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2019 The OpenLDAP Foundation.
+ * Copyright 2003-2020 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: extended.c,v 1.1.1.7 2019/08/08 13:31:42 christos Exp $");
+__RCSID("$NetBSD: extended.c,v 1.1.1.8 2020/08/11 13:12:15 christos Exp $");
 
 #include "portable.h"
 
@@ -63,7 +63,7 @@ ldap_back_extended_one( Operation *op, SlapReply *rs, ldap_back_exop_f exop )
 		return -1;
 	}
 
-	ctrls = op->o_ctrls;
+	ctrls = oldctrls = op->o_ctrls;
 	if ( ldap_back_controls_add( op, rs, lc, &ctrls ) )
 	{
 		op->o_ctrls = oldctrls;

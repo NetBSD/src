@@ -1,10 +1,10 @@
-/*	$NetBSD: ldapsearch.c,v 1.1.1.7 2019/08/08 13:31:09 christos Exp $	*/
+/*	$NetBSD: ldapsearch.c,v 1.1.1.8 2020/08/11 13:12:03 christos Exp $	*/
 
 /* ldapsearch -- a tool for searching LDAP directories */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2019 The OpenLDAP Foundation.
+ * Copyright 1998-2020 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
  * Portions Copyright 2001-2003 IBM Corporation.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ldapsearch.c,v 1.1.1.7 2019/08/08 13:31:09 christos Exp $");
+__RCSID("$NetBSD: ldapsearch.c,v 1.1.1.8 2020/08/11 13:12:03 christos Exp $");
 
 #include "portable.h"
 
@@ -1516,7 +1516,7 @@ static int dosearch(
 				nresponses_psearch = 0;
 
 				if ( strcmp( retoid, LDAP_SYNC_INFO ) == 0 ) {
-					printf(_("SyncInfo Received\n"));
+					printf(_("# SyncInfo Received\n"));
 					ldap_memfree( retoid );
 					ber_bvfree( retdata );
 					break;

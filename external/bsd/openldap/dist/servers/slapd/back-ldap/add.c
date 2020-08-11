@@ -1,10 +1,10 @@
-/*	$NetBSD: add.c,v 1.1.1.7 2019/08/08 13:31:43 christos Exp $	*/
+/*	$NetBSD: add.c,v 1.1.1.8 2020/08/11 13:12:15 christos Exp $	*/
 
 /* add.c - ldap backend add function */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2019 The OpenLDAP Foundation.
+ * Copyright 1999-2020 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: add.c,v 1.1.1.7 2019/08/08 13:31:43 christos Exp $");
+__RCSID("$NetBSD: add.c,v 1.1.1.8 2020/08/11 13:12:15 christos Exp $");
 
 #include "portable.h"
 

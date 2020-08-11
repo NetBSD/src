@@ -1,10 +1,10 @@
-/*	$NetBSD: getpeereid.c,v 1.1.1.8 2019/08/08 13:31:14 christos Exp $	*/
+/*	$NetBSD: getpeereid.c,v 1.1.1.9 2020/08/11 13:12:05 christos Exp $	*/
 
 /* getpeereid.c */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2019 The OpenLDAP Foundation.
+ * Copyright 2000-2020 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getpeereid.c,v 1.1.1.8 2019/08/08 13:31:14 christos Exp $");
+__RCSID("$NetBSD: getpeereid.c,v 1.1.1.9 2020/08/11 13:12:05 christos Exp $");
 
 #include "portable.h"
 

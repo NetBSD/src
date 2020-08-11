@@ -1,8 +1,8 @@
-/*	$NetBSD: SaslInteractionHandler.h,v 1.1.1.6 2019/08/08 13:31:08 christos Exp $	*/
+/*	$NetBSD: SaslInteractionHandler.h,v 1.1.1.7 2020/08/11 13:12:03 christos Exp $	*/
 
 // $OpenLDAP$
 /*
- * Copyright 2007-2019 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2007-2020 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 

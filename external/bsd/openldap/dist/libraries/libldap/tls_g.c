@@ -1,10 +1,10 @@
-/*	$NetBSD: tls_g.c,v 1.1.1.6 2019/08/08 13:31:15 christos Exp $	*/
+/*	$NetBSD: tls_g.c,v 1.1.1.7 2020/08/11 13:12:05 christos Exp $	*/
 
 /* tls_g.c - Handle tls/ssl using GNUTLS. */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2019 The OpenLDAP Foundation.
+ * Copyright 2008-2020 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls_g.c,v 1.1.1.6 2019/08/08 13:31:15 christos Exp $");
+__RCSID("$NetBSD: tls_g.c,v 1.1.1.7 2020/08/11 13:12:05 christos Exp $");
 
 #include "portable.h"
 
@@ -72,51 +72,10 @@ static int tlsg_cert_verify( tlsg_session *s );
 
 #ifdef LDAP_R_COMPILE
 
-static int
-tlsg_mutex_init( void **priv )
-{
-	int err = 0;
-	ldap_pvt_thread_mutex_t *lock = LDAP_MALLOC( sizeof( ldap_pvt_thread_mutex_t ));
-
-	if ( !lock )
-		err = ENOMEM;
-	if ( !err ) {
-		err = ldap_pvt_thread_mutex_init( lock );
-		if ( err )
-			LDAP_FREE( lock );
-		else
-			*priv = lock;
-	}
-	return err;
-}
-
-static int
-tlsg_mutex_destroy( void **lock )
-{
-	int err = ldap_pvt_thread_mutex_destroy( *lock );
-	LDAP_FREE( *lock );
-	return err;
-}
-
-static int
-tlsg_mutex_lock( void **lock )
-{
-	return ldap_pvt_thread_mutex_lock( *lock );
-}
-
-static int
-tlsg_mutex_unlock( void **lock )
-{
-	return ldap_pvt_thread_mutex_unlock( *lock );
-}
-
 static void
 tlsg_thr_init( void )
 {
-	gnutls_global_set_mutex (tlsg_mutex_init,
-		tlsg_mutex_destroy,
-		tlsg_mutex_lock,
-		tlsg_mutex_unlock);
+	/* do nothing */
 }
 #endif /* LDAP_R_COMPILE */
 

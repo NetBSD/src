@@ -1,9 +1,9 @@
-/*	$NetBSD: connection.c,v 1.1.1.7 2019/08/08 13:31:37 christos Exp $	*/
+/*	$NetBSD: connection.c,v 1.1.1.8 2020/08/11 13:12:13 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2019 The OpenLDAP Foundation.
+ * Copyright 1998-2020 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: connection.c,v 1.1.1.7 2019/08/08 13:31:37 christos Exp $");
+__RCSID("$NetBSD: connection.c,v 1.1.1.8 2020/08/11 13:12:13 christos Exp $");
 
 #include "portable.h"
 
@@ -546,6 +546,23 @@ Connection * connection_init(
 		Debug( LDAP_DEBUG_ANY,
 			"connection_init(%d, %s): set nonblocking failed\n",
 			s, c->c_peer_name.bv_val, 0 );
+
+		c->c_listener = NULL;
+		if(c->c_peer_domain.bv_val != NULL) {
+			free(c->c_peer_domain.bv_val);
+		}
+		BER_BVZERO( &c->c_peer_domain );
+		if(c->c_peer_name.bv_val != NULL) {
+			free(c->c_peer_name.bv_val);
+		}
+		BER_BVZERO( &c->c_peer_name );
+
+		ber_sockbuf_free( c->c_sb );
+		c->c_sb = NULL;
+		c->c_sd = AC_SOCKET_INVALID;
+		ldap_pvt_thread_mutex_unlock( &c->c_mutex );
+
+		return NULL;
 	}
 
 	ldap_pvt_thread_mutex_lock( &conn_nextid_mutex );

@@ -18,7 +18,7 @@ gcc -shared -I../../../include -I../../../servers/slapd -Wall -g \
 	-o allop.so allop.c
 
 ---
-Copyright 2004-2019 The OpenLDAP Foundation. All rights reserved.
+Copyright 2004-2020 The OpenLDAP Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted only as authorized by the OpenLDAP

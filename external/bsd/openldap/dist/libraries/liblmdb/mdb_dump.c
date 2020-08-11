@@ -1,8 +1,8 @@
-/*	$NetBSD: mdb_dump.c,v 1.1.1.3 2019/08/08 13:31:13 christos Exp $	*/
+/*	$NetBSD: mdb_dump.c,v 1.1.1.4 2020/08/11 13:12:05 christos Exp $	*/
 
 /* mdb_dump.c - memory-mapped database dump tool */
 /*
- * Copyright 2011-2018 Howard Chu, Symas Corp.
+ * Copyright 2011-2020 Howard Chu, Symas Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -70,6 +70,8 @@ static void text(MDB_val *v)
 	end = c + v->mv_size;
 	while (c < end) {
 		if (isprint(*c)) {
+			if (*c == '\\')
+				putchar('\\');
 			putchar(*c);
 		} else {
 			putchar('\\');

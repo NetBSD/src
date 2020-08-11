@@ -1,10 +1,10 @@
-/*	$NetBSD: tls2.c,v 1.1.1.6 2019/08/08 13:31:14 christos Exp $	*/
+/*	$NetBSD: tls2.c,v 1.1.1.7 2020/08/11 13:12:05 christos Exp $	*/
 
 /* tls.c - Handle tls/ssl. */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2019 The OpenLDAP Foundation.
+ * Copyright 1998-2020 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls2.c,v 1.1.1.6 2019/08/08 13:31:14 christos Exp $");
+__RCSID("$NetBSD: tls2.c,v 1.1.1.7 2020/08/11 13:12:05 christos Exp $");
 
 #include "portable.h"
 #include "ldap_config.h"
@@ -897,78 +897,71 @@ ldap_int_tls_start ( LDAP *ld, LDAPConn *conn, LDAPURLDesc *srv )
 	ld->ld_errno = LDAP_SUCCESS;
 	ret = ldap_int_tls_connect( ld, conn, host );
 
+	 /* this mainly only happens for non-blocking io
+	  * but can also happen when the handshake is too
+	  * big for a single network message.
+	  */
+	while ( ret > 0 ) {
 #ifdef LDAP_USE_NON_BLOCKING_TLS
-	while ( ret > 0 ) { /* this should only happen for non-blocking io */
-		int wr=0;
+		if ( async ) {
+			struct timeval curr_time_tv, delta_tv;
+			int wr=0;
 
-		if ( sb->sb_trans_needs_read ) {
-			wr=0;
-		} else if ( sb->sb_trans_needs_write ) {
-			wr=1;
-		}
-		Debug( LDAP_DEBUG_TRACE, "ldap_int_tls_start: ldap_int_tls_connect needs %s\n",
-				wr ? "write": "read", 0, 0);
-
-		ret = ldap_int_poll( ld, sd, &tv, wr);
-		if ( ret < 0 ) {
-			ld->ld_errno = LDAP_TIMEOUT;
-			break;
-		} else {
-			/* ldap_int_poll called ldap_pvt_ndelay_off if not async */
-			if ( !async ) {
-				ber_sockbuf_ctrl( sb, LBER_SB_OPT_SET_NONBLOCK, (void*)1 );
+			if ( sb->sb_trans_needs_read ) {
+				wr=0;
+			} else if ( sb->sb_trans_needs_write ) {
+				wr=1;
 			}
-			ret = ldap_int_tls_connect( ld, conn, host );
-			if ( ret > 0 ) { /* need to call tls_connect once more */
-				struct timeval curr_time_tv, delta_tv;
+			Debug1( LDAP_DEBUG_TRACE, "ldap_int_tls_start: ldap_int_tls_connect needs %s\n",
+					wr ? "write": "read" );
 
-				/* This is mostly copied from result.c:wait4msg(), should
-				 * probably be moved into a separate function */
+			/* This is mostly copied from result.c:wait4msg(), should
+			 * probably be moved into a separate function */
 #ifdef HAVE_GETTIMEOFDAY
-				gettimeofday( &curr_time_tv, NULL );
+			gettimeofday( &curr_time_tv, NULL );
 #else /* ! HAVE_GETTIMEOFDAY */
-				time( &curr_time_tv.tv_sec );
-				curr_time_tv.tv_usec = 0;
+			time( &curr_time_tv.tv_sec );
+			curr_time_tv.tv_usec = 0;
 #endif /* ! HAVE_GETTIMEOFDAY */
 
-				/* delta = curr - start */
-				delta_tv.tv_sec = curr_time_tv.tv_sec - start_time_tv.tv_sec;
-				delta_tv.tv_usec = curr_time_tv.tv_usec - start_time_tv.tv_usec;
-				if ( delta_tv.tv_usec < 0 ) {
-					delta_tv.tv_sec--;
-					delta_tv.tv_usec += 1000000;
-				}
+			/* delta = curr - start */
+			delta_tv.tv_sec = curr_time_tv.tv_sec - start_time_tv.tv_sec;
+			delta_tv.tv_usec = curr_time_tv.tv_usec - start_time_tv.tv_usec;
+			if ( delta_tv.tv_usec < 0 ) {
+				delta_tv.tv_sec--;
+				delta_tv.tv_usec += 1000000;
+			}
 
-				/* tv0 < delta ? */
-				if ( ( tv0.tv_sec < delta_tv.tv_sec ) ||
-					 ( ( tv0.tv_sec == delta_tv.tv_sec ) &&
-					   ( tv0.tv_usec < delta_tv.tv_usec ) ) )
-				{
-					ret = -1;
-					ld->ld_errno = LDAP_TIMEOUT;
-					break;
-				} else {
-					/* timeout -= delta_time */
-					tv0.tv_sec -= delta_tv.tv_sec;
-					tv0.tv_usec -= delta_tv.tv_usec;
-					if ( tv0.tv_usec < 0 ) {
-						tv0.tv_sec--;
-						tv0.tv_usec += 1000000;
-					}
-					start_time_tv.tv_sec = curr_time_tv.tv_sec;
-					start_time_tv.tv_usec = curr_time_tv.tv_usec;
-				}
-				tv = tv0;
-				Debug( LDAP_DEBUG_TRACE, "ldap_int_tls_start: ld %p %ld s %ld us to go\n",
-					(void *)ld, (long) tv.tv_sec, (long) tv.tv_usec );
+			/* tv0 < delta ? */
+			if ( ( tv0.tv_sec < delta_tv.tv_sec ) ||
+				 ( ( tv0.tv_sec == delta_tv.tv_sec ) &&
+				   ( tv0.tv_usec < delta_tv.tv_usec ) ) )
+			{
+				ret = -1;
+				ld->ld_errno = LDAP_TIMEOUT;
+				break;
+			}
+			/* timeout -= delta_time */
+			tv0.tv_sec -= delta_tv.tv_sec;
+			tv0.tv_usec -= delta_tv.tv_usec;
+			if ( tv0.tv_usec < 0 ) {
+				tv0.tv_sec--;
+				tv0.tv_usec += 1000000;
+			}
+			start_time_tv.tv_sec = curr_time_tv.tv_sec;
+			start_time_tv.tv_usec = curr_time_tv.tv_usec;
+			tv = tv0;
+			Debug3( LDAP_DEBUG_TRACE, "ldap_int_tls_start: ld %p %ld s %ld us to go\n",
+				(void *)ld, (long) tv.tv_sec, (long) tv.tv_usec );
+			ret = ldap_int_poll( ld, sd, &tv, wr);
+			if ( ret < 0 ) {
+				ld->ld_errno = LDAP_TIMEOUT;
+				break;
 			}
 		}
-	}
-	/* Leave it nonblocking if async */
-	if ( !async && ld->ld_options.ldo_tm_net.tv_sec >= 0 ) {
-		ber_sockbuf_ctrl( sb, LBER_SB_OPT_SET_NONBLOCK, NULL );
-	}
 #endif /* LDAP_USE_NON_BLOCKING_TLS */
+		ret = ldap_int_tls_connect( ld, conn, host );
+	}
 
 	if ( ret < 0 ) {
 		if ( ld->ld_errno == LDAP_SUCCESS )

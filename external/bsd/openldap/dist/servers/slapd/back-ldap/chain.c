@@ -1,10 +1,10 @@
-/*	$NetBSD: chain.c,v 1.1.1.7 2019/08/08 13:31:43 christos Exp $	*/
+/*	$NetBSD: chain.c,v 1.1.1.8 2020/08/11 13:12:15 christos Exp $	*/
 
 /* chain.c - chain LDAP operations */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2019 The OpenLDAP Foundation.
+ * Copyright 2003-2020 The OpenLDAP Foundation.
  * Portions Copyright 2003 Howard Chu.
  * All rights reserved.
  *
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: chain.c,v 1.1.1.7 2019/08/08 13:31:43 christos Exp $");
+__RCSID("$NetBSD: chain.c,v 1.1.1.8 2020/08/11 13:12:15 christos Exp $");
 
 #include "portable.h"
 
@@ -1283,7 +1283,7 @@ static ConfigOCs chainocs[] = {
 		"NAME 'olcChainDatabase' "
 		"DESC 'Chain remote server configuration' "
 		"AUXILIARY )",
-		Cft_Misc, olcDatabaseDummy, chain_ldadd
+		Cft_Misc, NULL, chain_ldadd
 #ifdef SLAP_CONFIG_DELETE
 		, NULL, chain_lddel
 #endif
@@ -2318,6 +2318,12 @@ chain_initialize( void )
 
 	/* Make sure we don't exceed the bits reserved for userland */
 	config_check_userland( CH_LAST );
+
+	/* olcDatabaseDummy is defined in slapd, and Windows
+	   will not let us initialize a struct element with a data pointer
+	   from another library, so we have to initialize this element
+	   "by hand".  */
+	chainocs[1].co_table = olcDatabaseDummy;
 
 #ifdef LDAP_CONTROL_X_CHAINING_BEHAVIOR
 	rc = register_supported_control( LDAP_CONTROL_X_CHAINING_BEHAVIOR,

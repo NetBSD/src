@@ -2,7 +2,7 @@ dnl OpenLDAP Autoconf Macros
 dnl $OpenLDAP$
 dnl This work is part of OpenLDAP Software <http://www.openldap.org/>.
 dnl
-dnl Copyright 1998-2019 The OpenLDAP Foundation.
+dnl Copyright 1998-2020 The OpenLDAP Foundation.
 dnl All rights reserved.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -242,33 +242,6 @@ AC_DEFUN([OL_RESOLVER_LINK],
 OL_RESOLVER_TRY(ol_cv_resolver_none)
 OL_RESOLVER_TRY(ol_cv_resolver_resolv,[-lresolv])
 OL_RESOLVER_TRY(ol_cv_resolver_bind,[-lbind])
-])
-dnl
-dnl ====================================================================
-dnl International Components for Unicode (ICU)
-AC_DEFUN([OL_ICU],
-[ol_icu=no
-AC_CHECK_HEADERS( unicode/utypes.h )
-if test $ac_cv_header_unicode_utypes_h = yes ; then
-	dnl OL_ICULIBS="-licui18n -licuuc -licudata"
-	OL_ICULIBS="-licuuc -licudata"
-
-	AC_CACHE_CHECK([for ICU libraries], [ol_cv_lib_icu], [
-		ol_LIBS="$LIBS"
-		LIBS="$OL_ICULIBS $LIBS"
-		AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-#include <unicode/utypes.h>
-]], [[
-(void) u_errorName(0);
-]])],[ol_cv_lib_icu=yes],[ol_cv_lib_icu=no])
-		LIBS="$ol_LIBS"
-])
-
-	if test $ol_cv_lib_icu != no ; then
-		ol_icu="$OL_ICULIBS"
-		AC_DEFINE(HAVE_ICU,1,[define if you actually have ICU])
-	fi
-fi
 ])
 dnl
 dnl ====================================================================

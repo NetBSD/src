@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 1999-2019 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2020 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Replication
@@ -994,7 +994,7 @@ The following example is for a self-contained push-based replication solution:
 >	database    mdb
 >	suffix      "dc=suretecsystems,dc=com"
 >	directory   /usr/local/var/openldap-data
->   maxsize     85899345920
+>	maxsize     85899345920
 >	
 >	checkpoint      1024 5
 >	
@@ -1080,7 +1080,7 @@ A replica configuration for this type of setup could be:
 >	suffix      "dc=suretecsystems,dc=com"
 >	directory   /usr/local/var/openldap-slave/data
 >	
->   maxsize         85899345920
+>	maxsize         85899345920
 >	checkpoint      1024 5
 >	
 >	index       objectClass eq

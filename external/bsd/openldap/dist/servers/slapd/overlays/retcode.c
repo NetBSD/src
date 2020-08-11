@@ -1,10 +1,10 @@
-/*	$NetBSD: retcode.c,v 1.1.1.7 2019/08/08 13:31:39 christos Exp $	*/
+/*	$NetBSD: retcode.c,v 1.1.1.8 2020/08/11 13:12:14 christos Exp $	*/
 
 /* retcode.c - customizable response for client testing purposes */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2019 The OpenLDAP Foundation.
+ * Copyright 2005-2020 The OpenLDAP Foundation.
  * Portions Copyright 2005 Pierangelo Masarati <ando@sys-net.it>
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: retcode.c,v 1.1.1.7 2019/08/08 13:31:39 christos Exp $");
+__RCSID("$NetBSD: retcode.c,v 1.1.1.8 2020/08/11 13:12:14 christos Exp $");
 
 #include "portable.h"
 
