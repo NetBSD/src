@@ -1,4 +1,4 @@
-/*	$NetBSD: slapcommon.h,v 1.1.1.8 2020/08/11 13:12:13 christos Exp $	*/
+/*	$NetBSD: slapcommon.h,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
 
 /* slapcommon.h - common definitions for the slap tools */
 /* $OpenLDAP$ */

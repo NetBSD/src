@@ -1,4 +1,4 @@
-/*	$NetBSD: addpartial-overlay.c,v 1.1.1.8 2020/08/11 13:12:02 christos Exp $	*/
+/*	$NetBSD: addpartial-overlay.c,v 1.2 2020/08/11 13:15:34 christos Exp $	*/
 
 /* addpartial-overlay.c */
 /* $OpenLDAP$ */
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: addpartial-overlay.c,v 1.1.1.8 2020/08/11 13:12:02 christos Exp $");
+__RCSID("$NetBSD: addpartial-overlay.c,v 1.2 2020/08/11 13:15:34 christos Exp $");
 
 #include "portable.h" 
 #include "slap.h"

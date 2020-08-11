@@ -1,4 +1,4 @@
-/*	$NetBSD: ad.c,v 1.1.1.8 2020/08/11 13:12:14 christos Exp $	*/
+/*	$NetBSD: ad.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
 
 /* ad.c - routines for dealing with attribute descriptions */
 /* $OpenLDAP$ */
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ad.c,v 1.1.1.8 2020/08/11 13:12:14 christos Exp $");
+__RCSID("$NetBSD: ad.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
 
 #include "portable.h"
 

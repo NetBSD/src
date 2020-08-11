@@ -1,6 +1,6 @@
 .lf 1 stdin
-.TH SLAPD-BDB 5 "2014/01/26" "OpenLDAP 2.4.39"
-.\" Copyright 1998-2014 The OpenLDAP Foundation All Rights Reserved.
+.TH SLAPD-BDB 5 "2020/04/28" "OpenLDAP 2.4.50"
+.\" Copyright 1998-2020 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -13,7 +13,11 @@ The \fBbdb\fP backend to
 uses the Oracle Berkeley DB (BDB) package to store data.
 It makes extensive use of indexing and caching to speed data access.
 .LP
-\fBhdb\fP is the recommended primary database backend.  It is a variant of
+Note that BDB is deprecated and support will be dropped in future
+OpenLDAP releases. Installations should use the \fBmdb\fP
+backend instead.
+.LP
+\fBhdb\fP is a variant of
 the \fBbdb\fP backend that uses a hierarchical database layout which
 supports subtree renames. It is both more space-efficient and more
 execution-efficient than the \fBbdb\fP backend.  It is otherwise identical
@@ -270,6 +274,7 @@ Berkeley DB configuration file
 .SH SEE ALSO
 .BR slapd.conf (5),
 .BR slapd\-config (5),
+.BR slapd\-mdb (5),
 .BR slapd (8),
 .BR slapadd (8),
 .BR slapcat (8),
@@ -281,8 +286,8 @@ Berkeley DB documentation.
 .B "OpenLDAP Software"
 is developed and maintained by The OpenLDAP Project <http://www.openldap.org/>.
 .B "OpenLDAP Software"
-is derived from University of Michigan LDAP 3.3 Release.  
-.lf 279 stdin
+is derived from the University of Michigan LDAP 3.3 Release.  
+.lf 284 stdin
 Originally begun by Kurt Zeilenga. Caching mechanisms originally designed
 by Jong-Hyuk Choi. Completion and subsequent work, as well as
 back-hdb, by Howard Chu.

@@ -1,6 +1,6 @@
 .lf 1 stdin
-.TH SLAPD-LDAP 5 "2014/01/26" "OpenLDAP 2.4.39"
-.\" Copyright 1998-2014 The OpenLDAP Foundation All Rights Reserved.
+.TH SLAPD-LDAP 5 "2020/04/28" "OpenLDAP 2.4.50"
+.\" Copyright 1998-2020 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -114,11 +114,11 @@ needs to be created.
 .B [tls_cacert=<file>]
 .B [tls_cacertdir=<path>]
 .B [tls_reqcert=never|allow|try|demand]
-.B [tls_ciphersuite=<ciphers>]
+.B [tls_cipher_suite=<ciphers>]
 .B [tls_protocol_min=<major>[.<minor>]]
 .B [tls_crlcheck=none|peer|all]
 .RS
-Allows to define the parameters of the authentication method that is 
+Allows one to define the parameters of the authentication method that is
 internally used by the proxy to collect info related to access control,
 and whenever an operation occurs with the identity of the rootdn
 of the LDAP proxy database.
@@ -204,14 +204,16 @@ if defined, selects what
 identities are authorized to exploit the identity assertion feature.
 The string
 .B <authz-regexp>
-follows the rules defined for the
+mostly follows the rules defined for the
 .I authzFrom
 attribute.
 See 
 .BR slapd.conf (5),
 section related to
 .BR authz\-policy ,
-for details on the syntax of this field.
+for details on the syntax of this field.  This parameter differs from
+the documented behavior in relation to the meaning of *, which in this
+case allows anonymous rather than denies.
 
 .HP
 .hy 0
@@ -226,11 +228,11 @@ for details on the syntax of this field.
 .B [tls_cacert=<file>]
 .B [tls_cacertdir=<path>]
 .B [tls_reqcert=never|allow|try|demand]
-.B [tls_ciphersuite=<ciphers>]
+.B [tls_cipher_suite=<ciphers>]
 .B [tls_protocol_min=<version>]
 .B [tls_crlcheck=none|peer|all]
 .RS
-Allows to define the parameters of the authentication method that is 
+Allows one to define the parameters of the authentication method that is
 internally used by the proxy to authorize connections that are 
 authenticated by other databases.
 Direct binds are always proxied without any idassert handling.
@@ -451,6 +453,13 @@ do not return search reference responses.
 By default, they are returned unless request is LDAPv2.
 
 .TP
+.B omit-unknown-schema <NO|yes>
+If
+.BR yes ,
+do not return objectClasses or attributes that are not known to the local server.
+The default is to return all schema elements.
+
+.TP
 .B noundeffilter <NO|yes>
 If
 .BR yes ,
@@ -463,7 +472,7 @@ which corresponds to the empty result set.
 
 .TP
 .B onerr {CONTINUE|stop}
-This directive allows to select the behavior in case an error is returned
+This directive allows one to select the behavior in case an error is returned
 by the remote server during a search.
 The default, \fBcontinue\fP, consists in returning success.
 If the value is set to \fBstop\fP, the error is returned to the client.
@@ -534,7 +543,7 @@ support is detected by reading the remote server's root DSE.
 
 .TP
 .B timeout [<op>=]<val> [...]
-This directive allows to set per-operation timeouts.
+This directive allows one to set per-operation timeouts.
 Operations can be
 
 \fB<op> ::= bind, add, delete, modrdn, modify, compare, search\fP
@@ -569,28 +578,32 @@ is used.
 
 .HP
 .hy 0
-.B tls {[try\-]start|[try\-]propagate|ldaps}
+.B tls {none|[try\-]start|[try\-]propagate|ldaps}
+.B [starttls=no]
 .B [tls_cert=<file>]
 .B [tls_key=<file>]
 .B [tls_cacert=<file>]
 .B [tls_cacertdir=<path>]
 .B [tls_reqcert=never|allow|try|demand]
-.B [tls_ciphersuite=<ciphers>]
+.B [tls_cipher_suite=<ciphers>]
 .B [tls_crlcheck=none|peer|all]
 .RS
-Specify the use of TLS when a regular connection is initialized. The
-StartTLS extended operation will be used unless the URI directive protocol
-scheme is \fBldaps://\fP. In that case this keyword may only be
-set to "ldaps" and the StartTLS operation will not be used.
-\fBpropagate\fP issues the StartTLS operation only if the original
-connection did.
+Specify TLS settings for regular connections.
+
+The first parameter only applies to \fBldap://\fP connections and so
+at the moment, \fBnone\fP and \fBldaps\fP are equivalent.
+
+With \fBpropagate\fP, the proxy issues StartTLS operation only if
+the original connection has a TLS layer set up.
 The \fBtry\-\fP prefix instructs the proxy to continue operations
 if the StartTLS operation failed; its use is \fBnot\fP recommended.
 
 The TLS settings default to the same as the main slapd TLS settings,
 except for
 .B tls_reqcert
-which defaults to "demand".
+which defaults to "demand" and
+.B starttls
+which is overshadowed by the first keyword and thus ignored.
 .RE
 
 .TP

@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.1.1.9 2020/08/11 13:12:15 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.2 2020/08/11 13:15:40 christos Exp $	*/
 
 /* search.c - ldap backend search function */
 /* $OpenLDAP$ */
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: search.c,v 1.1.1.9 2020/08/11 13:12:15 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.2 2020/08/11 13:15:40 christos Exp $");
 
 #include "portable.h"
 

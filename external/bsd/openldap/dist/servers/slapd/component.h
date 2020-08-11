@@ -1,4 +1,4 @@
-/*	$NetBSD: component.h,v 1.1.1.8 2020/08/11 13:12:13 christos Exp $	*/
+/*	$NetBSD: component.h,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
 
 /* component.h */
 /* $OpenLDAP$ */
@@ -21,7 +21,7 @@
 #define _H_SLAPD_COMPONENT
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: component.h,v 1.1.1.8 2020/08/11 13:12:13 christos Exp $");
+__RCSID("$NetBSD: component.h,v 1.2 2020/08/11 13:15:39 christos Exp $");
 
 #include "portable.h"
 

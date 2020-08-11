@@ -1,4 +1,4 @@
-/*	$NetBSD: backend.c,v 1.1.1.8 2020/08/11 13:12:13 christos Exp $	*/
+/*	$NetBSD: backend.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
 
 /* backend.c - routines for dealing with back-end databases */
 /* $OpenLDAP$ */
@@ -28,7 +28,7 @@
 
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: backend.c,v 1.1.1.8 2020/08/11 13:12:13 christos Exp $");
+__RCSID("$NetBSD: backend.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
 
 #include "portable.h"
 

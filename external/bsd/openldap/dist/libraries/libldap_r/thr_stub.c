@@ -1,4 +1,4 @@
-/*	$NetBSD: thr_stub.c,v 1.1.1.9 2020/08/11 13:12:04 christos Exp $	*/
+/*	$NetBSD: thr_stub.c,v 1.2 2020/08/11 13:15:38 christos Exp $	*/
 
 /* thr_stub.c - stubs for the threads */
 /* $OpenLDAP$ */
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: thr_stub.c,v 1.1.1.9 2020/08/11 13:12:04 christos Exp $");
+__RCSID("$NetBSD: thr_stub.c,v 1.2 2020/08/11 13:15:38 christos Exp $");
 
 #include "portable.h"
 

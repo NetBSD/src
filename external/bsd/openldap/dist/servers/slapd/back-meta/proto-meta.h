@@ -1,4 +1,4 @@
-/*	$NetBSD: proto-meta.h,v 1.1.1.8 2020/08/11 13:12:15 christos Exp $	*/
+/*	$NetBSD: proto-meta.h,v 1.2 2020/08/11 13:15:40 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.

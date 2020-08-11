@@ -1,4 +1,4 @@
-/*	$NetBSD: messages.c,v 1.1.1.8 2020/08/11 13:12:05 christos Exp $	*/
+/*	$NetBSD: messages.c,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
 
 /* messages.c */
 /* $OpenLDAP$ */
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: messages.c,v 1.1.1.8 2020/08/11 13:12:05 christos Exp $");
+__RCSID("$NetBSD: messages.c,v 1.2 2020/08/11 13:15:37 christos Exp $");
 
 #include "portable.h"
 

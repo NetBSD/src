@@ -1,6 +1,6 @@
 .lf 1 stdin
-.TH SLAPD 8C "2014/01/26" "OpenLDAP 2.4.39"
-.\" Copyright 1998-2014 The OpenLDAP Foundation All Rights Reserved.
+.TH SLAPD 8C "2020/04/28" "OpenLDAP 2.4.50"
+.\" Copyright 1998-2020 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -124,7 +124,7 @@ at what debug-level debugging statements should be logged to the
 facility.
 The value \fIsyslog-level\fP can be set to any value or combination
 allowed by the \fB\-d\fP switch.
-Slapd logs all messages selected by \fIsyslog-leveli\fP 
+Slapd logs all messages selected by \fIsyslog-level\fP 
 at the
 .BR syslog (3)
 severity debug-level \fBDEBUG\fP,
@@ -306,7 +306,7 @@ that must be an SLP attribute list definition according to the SLP standard.
 For example, \fB"slp=(tree=production),(server-type=OpenLDAP),(server\-version=2.4.15)"\fP
 registers at SLP DAs with the three SLP attributes tree, server-type and server-version
 that have the values given above.
-This allows to specifically query the SLP DAs for LDAP servers holding the
+This allows one to specifically query the SLP DAs for LDAP servers holding the
 .I production
 tree in case multiple trees are available.
 .RE
@@ -365,5 +365,5 @@ See http://www.openldap.org/its/
 .B "OpenLDAP Software"
 is developed and maintained by The OpenLDAP Project <http://www.openldap.org/>.
 .B "OpenLDAP Software"
-is derived from University of Michigan LDAP 3.3 Release.  
+is derived from the University of Michigan LDAP 3.3 Release.  
 .lf 363 stdin

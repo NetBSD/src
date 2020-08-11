@@ -1,4 +1,4 @@
-/*	$NetBSD: constraint.c,v 1.1.1.7 2020/08/11 13:12:14 christos Exp $	*/
+/*	$NetBSD: constraint.c,v 1.2 2020/08/11 13:15:42 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* constraint.c - Overlay to constrain attributes to certain values */
@@ -20,7 +20,7 @@
  *			Emmannuel Dreyfus <manu@netbsd.org>
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: constraint.c,v 1.1.1.7 2020/08/11 13:12:14 christos Exp $");
+__RCSID("$NetBSD: constraint.c,v 1.2 2020/08/11 13:15:42 christos Exp $");
 
 #include "portable.h"
 

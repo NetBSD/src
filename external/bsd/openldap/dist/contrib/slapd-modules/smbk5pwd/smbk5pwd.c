@@ -1,4 +1,4 @@
-/*	$NetBSD: smbk5pwd.c,v 1.1.1.9 2020/08/11 13:12:02 christos Exp $	*/
+/*	$NetBSD: smbk5pwd.c,v 1.2 2020/08/11 13:15:36 christos Exp $	*/
 
 /* smbk5pwd.c - Overlay for managing Samba and Heimdal passwords */
 /* $OpenLDAP$ */

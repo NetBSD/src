@@ -1,4 +1,4 @@
-/*	$NetBSD: testavl.c,v 1.1.1.8 2020/08/11 13:12:05 christos Exp $	*/
+/*	$NetBSD: testavl.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
 
 /* testavl.c - Test Tim Howes AVL code */
 /* $OpenLDAP$ */
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: testavl.c,v 1.1.1.8 2020/08/11 13:12:05 christos Exp $");
+__RCSID("$NetBSD: testavl.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
 
 #include "portable.h"
 

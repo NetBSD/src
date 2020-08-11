@@ -1,4 +1,4 @@
-/*	$NetBSD: pw-argon2.c,v 1.1.1.1 2020/08/11 13:12:02 christos Exp $	*/
+/*	$NetBSD: pw-argon2.c,v 1.2 2020/08/11 13:15:36 christos Exp $	*/
 
 /* pw-argon2.c - Password module for argon2 */
 /* $OpenLDAP$ */
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pw-argon2.c,v 1.1.1.1 2020/08/11 13:12:02 christos Exp $");
+__RCSID("$NetBSD: pw-argon2.c,v 1.2 2020/08/11 13:15:36 christos Exp $");
 
 #include "portable.h"
 #include "ac/string.h"
