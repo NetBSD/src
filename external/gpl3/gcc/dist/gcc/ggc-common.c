@@ -1,5 +1,5 @@
 /* Simple garbage collection for the GNU compiler.
-   Copyright (C) 1999-2018 Free Software Foundation, Inc.
+   Copyright (C) 1999-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -836,22 +836,10 @@ struct ggc_usage: public mem_usage
     : mem_usage (allocated, times, peak),
     m_freed (freed), m_collected (collected), m_overhead (overhead) {}
 
-  /* Equality operator.  */
-  inline bool
-  operator== (const ggc_usage &second) const
-  {
-    return (get_balance () == second.get_balance ()
-	    && m_peak == second.m_peak
-	    && m_times == second.m_times);
-  }
-
   /* Comparison operator.  */
   inline bool
   operator< (const ggc_usage &second) const
   {
-    if (*this == second)
-      return false;
-
     return (get_balance () == second.get_balance () ?
 	    (m_peak == second.m_peak ? m_times < second.m_times
 	     : m_peak < second.m_peak)
@@ -938,10 +926,7 @@ struct ggc_usage: public mem_usage
     const mem_pair_t f = *(const mem_pair_t *)first;
     const mem_pair_t s = *(const mem_pair_t *)second;
 
-    if (*f.second == *s.second)
-      return 0;
-
-    return *f.second < *s.second ? 1 : -1;
+    return (*f.second) < (*s.second);
   }
 
   /* Compare rows in final GGC summary dump.  */

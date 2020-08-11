@@ -1,5 +1,5 @@
 /* Analysis of polymorphic call context.
-   Copyright (C) 2013-2018 Free Software Foundation, Inc.
+   Copyright (C) 2013-2017 Free Software Foundation, Inc.
    Contributed by Jan Hubicka
 
 This file is part of GCC.
@@ -759,7 +759,7 @@ ipa_polymorphic_call_context::set_by_invariant (tree cst,
 						tree otr_type,
 						HOST_WIDE_INT off)
 {
-  poly_int64 offset2, size, max_size;
+  HOST_WIDE_INT offset2, size, max_size;
   bool reverse;
   tree base;
 
@@ -772,7 +772,7 @@ ipa_polymorphic_call_context::set_by_invariant (tree cst,
 
   cst = TREE_OPERAND (cst, 0);
   base = get_ref_base_and_extent (cst, &offset2, &size, &max_size, &reverse);
-  if (!DECL_P (base) || !known_size_p (max_size) || maybe_ne (max_size, size))
+  if (!DECL_P (base) || max_size == -1 || max_size != size)
     return false;
 
   /* Only type inconsistent programs can have otr_type that is
@@ -899,35 +899,31 @@ ipa_polymorphic_call_context::ipa_polymorphic_call_context (tree fndecl,
       base_pointer = walk_ssa_copies (base_pointer, &visited);
       if (TREE_CODE (base_pointer) == ADDR_EXPR)
 	{
-	  HOST_WIDE_INT offset2, size;
+	  HOST_WIDE_INT size, max_size;
+	  HOST_WIDE_INT offset2;
 	  bool reverse;
 	  tree base
-	    = get_ref_base_and_extent_hwi (TREE_OPERAND (base_pointer, 0),
-					   &offset2, &size, &reverse);
-	  if (!base)
-	    break;
+	    = get_ref_base_and_extent (TREE_OPERAND (base_pointer, 0),
+				       &offset2, &size, &max_size, &reverse);
 
-	  combine_speculation_with (TYPE_MAIN_VARIANT (TREE_TYPE (base)),
-				    offset + offset2,
-				    true,
-				    NULL /* Do not change outer type.  */);
+	  if (max_size != -1 && max_size == size)
+	    combine_speculation_with (TYPE_MAIN_VARIANT (TREE_TYPE (base)),
+				      offset + offset2,
+				      true,
+				      NULL /* Do not change outer type.  */);
 
 	  /* If this is a varying address, punt.  */
-	  if (TREE_CODE (base) == MEM_REF || DECL_P (base))
+	  if ((TREE_CODE (base) == MEM_REF || DECL_P (base))
+	      && max_size != -1
+	      && max_size == size)
 	    {
 	      /* We found dereference of a pointer.  Type of the pointer
 		 and MEM_REF is meaningless, but we can look futher.  */
-	      offset_int mem_offset;
-	      if (TREE_CODE (base) == MEM_REF
-		  && mem_ref_offset (base).is_constant (&mem_offset))
+	      if (TREE_CODE (base) == MEM_REF)
 		{
-		  offset_int o = mem_offset * BITS_PER_UNIT;
-		  o += offset;
-		  o += offset2;
-		  if (!wi::fits_shwi_p (o))
-		    break;
 		  base_pointer = TREE_OPERAND (base, 0);
-		  offset = o.to_shwi ();
+		  offset
+		    += offset2 + mem_ref_offset (base).to_short_addr () * BITS_PER_UNIT;
 		  outer_type = NULL;
 		}
 	      /* We found base object.  In this case the outer_type
@@ -965,16 +961,10 @@ ipa_polymorphic_call_context::ipa_polymorphic_call_context (tree fndecl,
 	    break;
 	}
       else if (TREE_CODE (base_pointer) == POINTER_PLUS_EXPR
-	       && TREE_CODE (TREE_OPERAND (base_pointer, 1)) == INTEGER_CST)
+	       && tree_fits_uhwi_p (TREE_OPERAND (base_pointer, 1)))
 	{
-	  offset_int o
-	    = offset_int::from (wi::to_wide (TREE_OPERAND (base_pointer, 1)),
-				SIGNED);
-	  o *= BITS_PER_UNIT;
-	  o += offset;
-	  if (!wi::fits_shwi_p (o))
-	    break;
-	  offset = o.to_shwi ();
+	  offset += tree_to_shwi (TREE_OPERAND (base_pointer, 1))
+		    * BITS_PER_UNIT;
 	  base_pointer = TREE_OPERAND (base_pointer, 0);
 	}
       else
@@ -995,21 +985,8 @@ ipa_polymorphic_call_context::ipa_polymorphic_call_context (tree fndecl,
 	{
 	  outer_type
 	     = TYPE_MAIN_VARIANT (TREE_TYPE (TREE_TYPE (base_pointer)));
-	  cgraph_node *node = cgraph_node::get (current_function_decl);
 	  gcc_assert (TREE_CODE (outer_type) == RECORD_TYPE
 		      || TREE_CODE (outer_type) == UNION_TYPE);
-
-	  /* Handle the case we inlined into a thunk.  In this case
-	     thunk has THIS pointer of type bar, but it really receives
-	     address to its base type foo which sits in bar at
-	     0-thunk.fixed_offset.  It starts with code that adds
-	     think.fixed_offset to the pointer to compensate for this.
-
-	     Because we walked all the way to the begining of thunk, we now
-	     see pointer &bar-thunk.fixed_offset and need to compensate
-	     for it.  */
-	  if (node->thunk.fixed_offset)
-	    offset -= node->thunk.fixed_offset * BITS_PER_UNIT;
 
 	  /* Dynamic casting has possibly upcasted the type
 	     in the hiearchy.  In this case outer type is less
@@ -1018,11 +995,7 @@ ipa_polymorphic_call_context::ipa_polymorphic_call_context (tree fndecl,
 	  if ((otr_type
 	       && !contains_type_p (outer_type, offset,
 				    otr_type))
-	      || !contains_polymorphic_type_p (outer_type)
-	      /* If we compile thunk with virtual offset, the THIS pointer
-		 is adjusted by unknown value.  We can't thus use outer info
-		 at all.  */
-	      || node->thunk.virtual_offset_p)
+	      || !contains_polymorphic_type_p (outer_type))
 	    {
 	      outer_type = NULL;
 	      if (instance)
@@ -1047,15 +1020,7 @@ ipa_polymorphic_call_context::ipa_polymorphic_call_context (tree fndecl,
 	      maybe_in_construction = false;
 	    }
 	  if (instance)
-	    {
-	      /* If method is expanded thunk, we need to apply thunk offset
-		 to instance pointer.  */
-	      if (node->thunk.virtual_offset_p
-		  || node->thunk.fixed_offset)
-		*instance = NULL;
-	      else
-	        *instance = base_pointer;
-	    }
+	    *instance = base_pointer;
 	  return;
 	}
       /* Non-PODs passed by value are really passed by invisible
@@ -1174,7 +1139,7 @@ noncall_stmt_may_be_vtbl_ptr_store (gimple *stmt)
 	  if (TREE_CODE (lhs) == COMPONENT_REF
 	      && !DECL_VIRTUAL_P (TREE_OPERAND (lhs, 1)))
 	    return false;
-	  /* In the future we might want to use get_ref_base_and_extent to find
+	  /* In the future we might want to use get_base_ref_and_offset to find
 	     if there is a field corresponding to the offset and if so, proceed
 	     almost like if it was a component ref.  */
 	}
@@ -1206,7 +1171,7 @@ static tree
 extr_type_from_vtbl_ptr_store (gimple *stmt, struct type_change_info *tci,
 			       HOST_WIDE_INT *type_offset)
 {
-  poly_int64 offset, size, max_size;
+  HOST_WIDE_INT offset, size, max_size;
   tree lhs, rhs, base;
   bool reverse;
 
@@ -1288,23 +1253,17 @@ extr_type_from_vtbl_ptr_store (gimple *stmt, struct type_change_info *tci,
 	    }
 	  return tci->offset > POINTER_SIZE ? error_mark_node : NULL_TREE;
 	}
-      if (maybe_ne (offset, tci->offset)
-	  || maybe_ne (size, POINTER_SIZE)
-	  || maybe_ne (max_size, POINTER_SIZE))
+      if (offset != tci->offset
+	  || size != POINTER_SIZE
+	  || max_size != POINTER_SIZE)
 	{
 	  if (dump_file)
-	    {
-	      fprintf (dump_file, "    wrong offset ");
-	      print_dec (offset, dump_file);
-	      fprintf (dump_file, "!=%i or size ", (int) tci->offset);
-	      print_dec (size, dump_file);
-	      fprintf (dump_file, "\n");
-	    }
-	  return (known_le (offset + POINTER_SIZE, tci->offset)
-		  || (known_size_p (max_size)
-		      && known_gt (tci->offset + POINTER_SIZE,
-				   offset + max_size))
-		  ? error_mark_node : NULL);
+	    fprintf (dump_file, "    wrong offset %i!=%i or size %i\n",
+		     (int)offset, (int)tci->offset, (int)size);
+	  return offset + POINTER_SIZE <= tci->offset
+	         || (max_size != -1
+		     && tci->offset + POINTER_SIZE > offset + max_size)
+		 ? error_mark_node : NULL;
 	}
     }
 
@@ -1434,27 +1393,26 @@ check_stmt_for_type_change (ao_ref *ao ATTRIBUTE_UNUSED, tree vdef, void *data)
       {
 	tree op = walk_ssa_copies (gimple_call_arg (stmt, 0));
 	tree type = TYPE_METHOD_BASETYPE (TREE_TYPE (fn));
-	HOST_WIDE_INT offset = 0;
+	HOST_WIDE_INT offset = 0, size, max_size;
 	bool reverse;
 
 	if (dump_file)
 	  {
 	    fprintf (dump_file, "  Checking constructor call: ");
-	    print_gimple_stmt (dump_file, stmt, 0);
+	    print_gimple_stmt (dump_file, stmt, 0, 0);
 	  }
 
 	/* See if THIS parameter seems like instance pointer.  */
 	if (TREE_CODE (op) == ADDR_EXPR)
 	  {
-	    HOST_WIDE_INT size;
-	    op = get_ref_base_and_extent_hwi (TREE_OPERAND (op, 0),
-					      &offset, &size, &reverse);
-	    if (!op)
+	    op = get_ref_base_and_extent (TREE_OPERAND (op, 0), &offset,
+					  &size, &max_size, &reverse);
+	    if (size != max_size || max_size == -1)
 	      {
                 tci->speculative++;
 	        return csftc_abort_walking_p (tci->speculative);
 	      }
-	    if (TREE_CODE (op) == MEM_REF)
+	    if (op && TREE_CODE (op) == MEM_REF)
 	      {
 		if (!tree_fits_shwi_p (TREE_OPERAND (op, 1)))
 		  {
@@ -1503,7 +1461,7 @@ check_stmt_for_type_change (ao_ref *ao ATTRIBUTE_UNUSED, tree vdef, void *data)
      if (dump_file)
 	{
           fprintf (dump_file, "  Function call may change dynamic type:");
-	  print_gimple_stmt (dump_file, stmt, 0);
+	  print_gimple_stmt (dump_file, stmt, 0, 0);
 	}
      tci->speculative++;
      return csftc_abort_walking_p (tci->speculative);
@@ -1516,7 +1474,7 @@ check_stmt_for_type_change (ao_ref *ao ATTRIBUTE_UNUSED, tree vdef, void *data)
       if (dump_file)
 	{
 	  fprintf (dump_file, "  Checking vtbl store: ");
-	  print_gimple_stmt (dump_file, stmt, 0);
+	  print_gimple_stmt (dump_file, stmt, 0, 0);
 	}
 
       type = extr_type_from_vtbl_ptr_store (stmt, tci, &offset);
@@ -1572,9 +1530,6 @@ ipa_polymorphic_call_context::get_dynamic_type (tree instance,
   HOST_WIDE_INT instance_offset = offset;
   tree instance_outer_type = outer_type;
 
-  if (!instance)
-    return false;
-
   if (otr_type)
     otr_type = TYPE_MAIN_VARIANT (otr_type);
 
@@ -1613,6 +1568,7 @@ ipa_polymorphic_call_context::get_dynamic_type (tree instance,
   if (gimple_code (call) == GIMPLE_CALL)
     {
       tree ref = gimple_call_fn (call);
+      HOST_WIDE_INT offset2, size, max_size;
       bool reverse;
 
       if (TREE_CODE (ref) == OBJ_TYPE_REF)
@@ -1642,11 +1598,10 @@ ipa_polymorphic_call_context::get_dynamic_type (tree instance,
 		  && !SSA_NAME_IS_DEFAULT_DEF (ref)
 		  && gimple_assign_load_p (SSA_NAME_DEF_STMT (ref)))
 		{
-		  HOST_WIDE_INT offset2, size;
 		  tree ref_exp = gimple_assign_rhs1 (SSA_NAME_DEF_STMT (ref));
 		  tree base_ref
-		    = get_ref_base_and_extent_hwi (ref_exp, &offset2,
-						   &size, &reverse);
+		    = get_ref_base_and_extent (ref_exp, &offset2, &size,
+					       &max_size, &reverse);
 
 		  /* Finally verify that what we found looks like read from
 		     OTR_OBJECT or from INSTANCE with offset OFFSET.  */
@@ -1699,9 +1654,9 @@ ipa_polymorphic_call_context::get_dynamic_type (tree instance,
   if (dump_file)
     {
       fprintf (dump_file, "Determining dynamic type for call: ");
-      print_gimple_stmt (dump_file, call, 0);
+      print_gimple_stmt (dump_file, call, 0, 0);
       fprintf (dump_file, "  Starting walk at: ");
-      print_gimple_stmt (dump_file, stmt, 0);
+      print_gimple_stmt (dump_file, stmt, 0, 0);
       fprintf (dump_file, "  instance pointer: ");
       print_generic_expr (dump_file, otr_object, TDF_SLIM);
       fprintf (dump_file, "  Outer instance pointer: ");

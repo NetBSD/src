@@ -1,5 +1,5 @@
 /* Localize comdats.
-   Copyright (C) 2014-2018 Free Software Foundation, Inc.
+   Copyright (C) 2014-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -211,11 +211,8 @@ set_comdat_group (symtab_node *symbol,
   symtab_node *head = (symtab_node *)head_p;
 
   gcc_assert (!symbol->get_comdat_group ());
-  if (symbol->real_symbol_p ())
-    {
-      symbol->set_comdat_group (head->get_comdat_group ());
-      symbol->add_to_same_comdat_group (head);
-    }
+  symbol->set_comdat_group (head->get_comdat_group ());
+  symbol->add_to_same_comdat_group (head);
   return false;
 }
 
@@ -419,7 +416,7 @@ public:
 bool
 pass_ipa_comdats::gate (function *)
 {
-  return HAVE_COMDAT_GROUP;
+  return HAVE_COMDAT_GROUP && optimize;
 }
 
 } // anon namespace

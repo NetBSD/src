@@ -6,11 +6,11 @@
 //===----------------------------------------------------------------------===//
 //
 // This file contains the unwind.h-based (aka "slow") stack unwinding routines
-// available to the tools on Linux, Android, NetBSD and FreeBSD.
+// available to the tools on Linux, Android, and FreeBSD.
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_platform.h"
-#if SANITIZER_FREEBSD || SANITIZER_LINUX || SANITIZER_NETBSD
+#if SANITIZER_FREEBSD || SANITIZER_LINUX
 #include "sanitizer_common.h"
 #include "sanitizer_stacktrace.h"
 
@@ -76,8 +76,7 @@ void SanitizerInitializeUnwinder() {
 }
 #endif
 
-#if defined(__arm__) && !SANITIZER_NETBSD
-// NetBSD uses dwarf EH
+#ifdef __arm__
 #define UNWIND_STOP _URC_END_OF_STACK
 #define UNWIND_CONTINUE _URC_NO_REASON
 #else
@@ -164,4 +163,4 @@ void BufferedStackTrace::SlowUnwindStackWithContext(uptr pc, void *context,
 
 }  // namespace __sanitizer
 
-#endif  // SANITIZER_FREEBSD || SANITIZER_LINUX || SANITIZER_NETBSD
+#endif  // SANITIZER_FREEBSD || SANITIZER_LINUX

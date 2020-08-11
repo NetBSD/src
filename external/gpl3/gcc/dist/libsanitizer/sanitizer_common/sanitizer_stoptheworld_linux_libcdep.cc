@@ -14,8 +14,7 @@
 
 #if SANITIZER_LINUX && (defined(__x86_64__) || defined(__mips__) || \
                         defined(__aarch64__) || defined(__powerpc64__) || \
-                        defined(__s390__) || defined(__i386__) || \
-                        defined(__arm__))
+                        defined(__s390__))
 
 #include "sanitizer_stoptheworld.h"
 
@@ -30,13 +29,17 @@
 #include <sys/types.h> // for pid_t
 #include <sys/uio.h> // for iovec
 #include <elf.h> // for NT_PRSTATUS
-#if defined(__aarch64__) && !SANITIZER_ANDROID
+#if SANITIZER_ANDROID && defined(__arm__)
+# include <linux/user.h>  // for pt_regs
+#else
+# ifdef __aarch64__
 // GLIBC 2.20+ sys/user does not include asm/ptrace.h
-# include <asm/ptrace.h>
-#endif
-#include <sys/user.h>  // for user_regs_struct
-#if SANITIZER_ANDROID && SANITIZER_MIPS
-# include <asm/reg.h>  // for mips SP register in sys/user.h
+#  include <asm/ptrace.h>
+# endif
+# include <sys/user.h>  // for user_regs_struct
+# if SANITIZER_ANDROID && SANITIZER_MIPS
+#   include <asm/reg.h>  // for mips SP register in sys/user.h
+# endif
 #endif
 #include <sys/wait.h> // for signal-related stuff
 
@@ -76,22 +79,7 @@
 
 namespace __sanitizer {
 
-class SuspendedThreadsListLinux : public SuspendedThreadsList {
- public:
-  SuspendedThreadsListLinux() : thread_ids_(1024) {}
-
-  tid_t GetThreadID(uptr index) const;
-  uptr ThreadCount() const;
-  bool ContainsTid(tid_t thread_id) const;
-  void Append(tid_t tid);
-
-  PtraceRegistersStatus GetRegistersAndSP(uptr index, uptr *buffer,
-                                          uptr *sp) const;
-  uptr RegisterCount() const;
-
- private:
-  InternalMmapVector<tid_t> thread_ids_;
-};
+COMPILER_CHECK(sizeof(SuspendedThreadID) == sizeof(pid_t));
 
 // Structure for passing arguments into the tracer thread.
 struct TracerThreadArgument {
@@ -116,31 +104,31 @@ class ThreadSuspender {
   bool SuspendAllThreads();
   void ResumeAllThreads();
   void KillAllThreads();
-  SuspendedThreadsListLinux &suspended_threads_list() {
+  SuspendedThreadsList &suspended_threads_list() {
     return suspended_threads_list_;
   }
   TracerThreadArgument *arg;
  private:
-  SuspendedThreadsListLinux suspended_threads_list_;
+  SuspendedThreadsList suspended_threads_list_;
   pid_t pid_;
-  bool SuspendThread(tid_t thread_id);
+  bool SuspendThread(SuspendedThreadID thread_id);
 };
 
-bool ThreadSuspender::SuspendThread(tid_t tid) {
+bool ThreadSuspender::SuspendThread(SuspendedThreadID tid) {
   // Are we already attached to this thread?
   // Currently this check takes linear time, however the number of threads is
   // usually small.
-  if (suspended_threads_list_.ContainsTid(tid)) return false;
+  if (suspended_threads_list_.Contains(tid))
+    return false;
   int pterrno;
   if (internal_iserror(internal_ptrace(PTRACE_ATTACH, tid, nullptr, nullptr),
                        &pterrno)) {
     // Either the thread is dead, or something prevented us from attaching.
     // Log this event and move on.
-    VReport(1, "Could not attach to thread %zu (errno %d).\n", (uptr)tid,
-            pterrno);
+    VReport(1, "Could not attach to thread %d (errno %d).\n", tid, pterrno);
     return false;
   } else {
-    VReport(2, "Attached to thread %zu.\n", (uptr)tid);
+    VReport(2, "Attached to thread %d.\n", tid);
     // The thread is not guaranteed to stop before ptrace returns, so we must
     // wait on it. Note: if the thread receives a signal concurrently,
     // we can get notification about the signal before notification about stop.
@@ -158,8 +146,8 @@ bool ThreadSuspender::SuspendThread(tid_t tid) {
       if (internal_iserror(waitpid_status, &wperrno)) {
         // Got a ECHILD error. I don't think this situation is possible, but it
         // doesn't hurt to report it.
-        VReport(1, "Waiting on thread %zu failed, detaching (errno %d).\n",
-                (uptr)tid, wperrno);
+        VReport(1, "Waiting on thread %d failed, detaching (errno %d).\n",
+                tid, wperrno);
         internal_ptrace(PTRACE_DETACH, tid, nullptr, nullptr);
         return false;
       }
@@ -176,7 +164,7 @@ bool ThreadSuspender::SuspendThread(tid_t tid) {
 }
 
 void ThreadSuspender::ResumeAllThreads() {
-  for (uptr i = 0; i < suspended_threads_list_.ThreadCount(); i++) {
+  for (uptr i = 0; i < suspended_threads_list_.thread_count(); i++) {
     pid_t tid = suspended_threads_list_.GetThreadID(i);
     int pterrno;
     if (!internal_iserror(internal_ptrace(PTRACE_DETACH, tid, nullptr, nullptr),
@@ -192,7 +180,7 @@ void ThreadSuspender::ResumeAllThreads() {
 }
 
 void ThreadSuspender::KillAllThreads() {
-  for (uptr i = 0; i < suspended_threads_list_.ThreadCount(); i++)
+  for (uptr i = 0; i < suspended_threads_list_.thread_count(); i++)
     internal_ptrace(PTRACE_KILL, suspended_threads_list_.GetThreadID(i),
                     nullptr, nullptr);
 }
@@ -244,7 +232,7 @@ static void TracerThreadDieCallback() {
 
 // Signal handler to wake up suspended threads when the tracer thread dies.
 static void TracerThreadSignalHandler(int signum, void *siginfo, void *uctx) {
-  SignalContext ctx(siginfo, uctx);
+  SignalContext ctx = SignalContext::Create(siginfo, uctx);
   Printf("Tracer caught signal %d: addr=0x%zx pc=0x%zx sp=0x%zx\n", signum,
          ctx.addr, ctx.pc, ctx.sp);
   ThreadSuspender *inst = thread_suspender_instance;
@@ -261,7 +249,7 @@ static void TracerThreadSignalHandler(int signum, void *siginfo, void *uctx) {
 }
 
 // Size of alternative stack for signal handlers in the tracer thread.
-static const int kHandlerStackSize = 8192;
+static const int kHandlerStackSize = 4096;
 
 // This function will be run as a cloned task.
 static int TracerThread(void* argument) {
@@ -503,28 +491,9 @@ typedef _user_regs_struct regs_struct;
 #error "Unsupported architecture"
 #endif // SANITIZER_ANDROID && defined(__arm__)
 
-tid_t SuspendedThreadsListLinux::GetThreadID(uptr index) const {
-  CHECK_LT(index, thread_ids_.size());
-  return thread_ids_[index];
-}
-
-uptr SuspendedThreadsListLinux::ThreadCount() const {
-  return thread_ids_.size();
-}
-
-bool SuspendedThreadsListLinux::ContainsTid(tid_t thread_id) const {
-  for (uptr i = 0; i < thread_ids_.size(); i++) {
-    if (thread_ids_[i] == thread_id) return true;
-  }
-  return false;
-}
-
-void SuspendedThreadsListLinux::Append(tid_t tid) {
-  thread_ids_.push_back(tid);
-}
-
-PtraceRegistersStatus SuspendedThreadsListLinux::GetRegistersAndSP(
-    uptr index, uptr *buffer, uptr *sp) const {
+int SuspendedThreadsList::GetRegistersAndSP(uptr index,
+                                            uptr *buffer,
+                                            uptr *sp) const {
   pid_t tid = GetThreadID(index);
   regs_struct regs;
   int pterrno;
@@ -542,23 +511,19 @@ PtraceRegistersStatus SuspendedThreadsListLinux::GetRegistersAndSP(
   if (isErr) {
     VReport(1, "Could not get registers from thread %d (errno %d).\n", tid,
             pterrno);
-    // ESRCH means that the given thread is not suspended or already dead.
-    // Therefore it's unsafe to inspect its data (e.g. walk through stack) and
-    // we should notify caller about this.
-    return pterrno == ESRCH ? REGISTERS_UNAVAILABLE_FATAL
-                            : REGISTERS_UNAVAILABLE;
+    return -1;
   }
 
   *sp = regs.REG_SP;
   internal_memcpy(buffer, &regs, sizeof(regs));
-  return REGISTERS_AVAILABLE;
+  return 0;
 }
 
-uptr SuspendedThreadsListLinux::RegisterCount() const {
+uptr SuspendedThreadsList::RegisterCount() {
   return sizeof(regs_struct) / sizeof(uptr);
 }
 } // namespace __sanitizer
 
 #endif  // SANITIZER_LINUX && (defined(__x86_64__) || defined(__mips__)
         // || defined(__aarch64__) || defined(__powerpc64__)
-        // || defined(__s390__) || defined(__i386__) || defined(__arm__)
+        // || defined(__s390__)

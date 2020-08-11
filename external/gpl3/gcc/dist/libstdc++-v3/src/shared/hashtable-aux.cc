@@ -1,6 +1,6 @@
 // std::__detail and std::tr1::__detail definitions -*- C++ -*-
 
-// Copyright (C) 2007-2018 Free Software Foundation, Inc.
+// Copyright (C) 2007-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -24,6 +24,7 @@
 
 namespace __detail
 {
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
   // The sentinel value is kept only for abi backward compatibility.
   extern const unsigned long __prime_list[] = // 256 + 1 or 256 + 48 + 1
   {
@@ -89,4 +90,5 @@ namespace __detail
     18446744073709551557ul, 18446744073709551557ul
 #endif
   };
+_GLIBCXX_END_NAMESPACE_VERSION
 } // namespace __detail

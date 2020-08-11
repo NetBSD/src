@@ -1,5 +1,5 @@
 ;; Predicate definitions for SPARC.
-;; Copyright (C) 2005-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2005-2017 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -466,17 +466,17 @@
 {
   switch (GET_MODE (XEXP (op, 0)))
     {
-    case E_CCmode:
-    case E_CCXmode:
+    case CCmode:
+    case CCXmode:
       return true;
-    case E_CCNZmode:
-    case E_CCXNZmode:
+    case CCNZmode:
+    case CCXNZmode:
       return nz_comparison_operator (op, mode);
-    case E_CCCmode:
-    case E_CCXCmode:
+    case CCCmode:
+    case CCXCmode:
       return c_comparison_operator (op, mode);
-    case E_CCVmode:
-    case E_CCXVmode:
+    case CCVmode:
+    case CCXVmode:
       return v_comparison_operator (op, mode);
     default:
       return false;
@@ -489,8 +489,8 @@
 {
   switch (GET_MODE (XEXP (op, 0)))
     {
-    case E_CCFPmode:
-    case E_CCFPEmode:
+    case CCFPmode:
+    case CCFPEmode:
       return true;
     default:
       return false;

@@ -1,5 +1,5 @@
 /* Target definitions for PowerPC running Darwin (Mac OS X).
-   Copyright (C) 1997-2018 Free Software Foundation, Inc.
+   Copyright (C) 1997-2017 Free Software Foundation, Inc.
    Contributed by Apple Computer Inc.
 
    This file is part of GCC.
@@ -156,18 +156,6 @@
    %:version-compare(!> 10.4 mmacosx-version-min= crt3_2.o%s) \
   }}"
 
-/* As for crt1, we need to force the dylib crt for 10.6.  */
-#undef DARWIN_DYLIB1_SPEC
-#define DARWIN_DYLIB1_SPEC						\
-  "%:version-compare(!> 10.5 mmacosx-version-min= -ldylib1.o)		\
-   %:version-compare(>< 10.5 10.7 mmacosx-version-min= -ldylib1.10.5.o)"
-
-/* Likewise, the bundle crt.  */
-#undef DARWIN_BUNDLE1_SPEC
-#define DARWIN_BUNDLE1_SPEC \
-"%{!static:%:version-compare(< 10.7 mmacosx-version-min= -lbundle1.o)	\
-	   %{fgnu-tm: -lcrttms.o}}"
-
 /* The PPC regs save/restore functions are leaves and could, conceivably
    be used by the tm destructor.  */
 #undef ENDFILE_SPEC
@@ -196,45 +184,19 @@
 #undef  RS6000_PIC_OFFSET_TABLE_REGNUM
 #define RS6000_PIC_OFFSET_TABLE_REGNUM 31
 
-/* Darwin's stack must remain 16-byte aligned for both 32 and 64 bit
-   ABIs.  */
+/* Pad the outgoing args area to 16 bytes instead of the usual 8.  */
 
-#undef  STACK_BOUNDARY
-#define STACK_BOUNDARY 128
-
-/* Offset within stack frame to start allocating local variables at.
-   For supported Darwin versions, FRAME_GROWS_DOWNWARD is true, therefore
-   this value is the offset to the END of the first local allocated.
-
-   On the RS/6000, the frame pointer is the same as the stack pointer,
-   except for dynamic allocations.  So we start after the fixed area and
-   outgoing parameter area.
-
-   If the function uses dynamic stack space (CALLS_ALLOCA is set), that
-   space needs to be aligned to STACK_BOUNDARY, i.e. the sum of the
-   sizes of the fixed area and the parameter area must be a multiple of
-   STACK_BOUNDARY.  */
-
-#undef RS6000_STARTING_FRAME_OFFSET
-#define RS6000_STARTING_FRAME_OFFSET					\
-  (cfun->calls_alloca							\
-   ? RS6000_ALIGN (crtl->outgoing_args_size + RS6000_SAVE_AREA, 16)	\
-   : (RS6000_ALIGN (crtl->outgoing_args_size, 16) + RS6000_SAVE_AREA))
-
-/* Offset from the stack pointer register to an item dynamically
-   allocated on the stack, e.g., by `alloca'.
-
-   The default value for this macro is `STACK_POINTER_OFFSET' plus the
-   length of the outgoing arguments.  The default is correct for most
-   machines.  See `function.c' for details.
-
-   This value must be a multiple of STACK_BOUNDARY (hard coded in
-   `emit-rtl.c').  */
+#undef STARTING_FRAME_OFFSET
+#define STARTING_FRAME_OFFSET						\
+  (FRAME_GROWS_DOWNWARD							\
+   ? 0									\
+   : (RS6000_ALIGN (crtl->outgoing_args_size, 16)		\
+      + RS6000_SAVE_AREA))
 
 #undef STACK_DYNAMIC_OFFSET
 #define STACK_DYNAMIC_OFFSET(FUNDECL)					\
-  RS6000_ALIGN (crtl->outgoing_args_size.to_constant()			\
-		+ STACK_POINTER_OFFSET, 16)
+  (RS6000_ALIGN (crtl->outgoing_args_size, 16)		\
+   + (STACK_POINTER_OFFSET))
 
 /* Darwin uses a function call if everything needs to be saved/restored.  */
 
@@ -268,8 +230,13 @@
     "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23",             \
     "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31",             \
     "vrsave", "vscr",							\
+    "spe_acc", "spefscr",                                               \
     "sfp",								\
-    "tfhar", "tfiar", "texasr"						\
+    "tfhar", "tfiar", "texasr",						\
+    "rh0",  "rh1",  "rh2",  "rh3",  "rh4",  "rh5",  "rh6",  "rh7",	\
+    "rh8",  "rh9",  "rh10", "rh11", "rh12", "rh13", "rh14", "rh15",	\
+    "rh16", "rh17", "rh18", "rh19", "rh20", "rh21", "rh22", "rh23",	\
+    "rh24", "rh25", "rh26", "rh27", "rh28", "rh29", "rh30", "rh31"	\
 }
 
 /* This outputs NAME to FILE.  */
@@ -350,9 +317,6 @@
 #undef  TARGET_IEEEQUAD
 #define TARGET_IEEEQUAD 0
 
-#undef  TARGET_IEEEQUAD_DEFAULT
-#define TARGET_IEEEQUAD_DEFAULT 0
-
 /* Since Darwin doesn't do TOCs, stub this out.  */
 
 #define ASM_OUTPUT_SPECIAL_POOL_ENTRY_P(X, MODE)  ((void)X, (void)MODE, 0)
@@ -418,7 +382,7 @@
    registers and memory.  FIRST is nonzero if this is the only
    element.  */
 #define BLOCK_REG_PADDING(MODE, TYPE, FIRST) \
-  (!(FIRST) ? PAD_UPWARD : targetm.calls.function_arg_padding (MODE, TYPE))
+  (!(FIRST) ? upward : FUNCTION_ARG_PADDING (MODE, TYPE))
 
 #define DOUBLE_INT_ASM_OP "\t.quad\t"
 

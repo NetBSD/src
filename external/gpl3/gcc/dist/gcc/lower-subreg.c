@@ -1,5 +1,5 @@
 /* Decompose multiword subregs.
-   Copyright (C) 2007-2018 Free Software Foundation, Inc.
+   Copyright (C) 2007-2017 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@redhat.com>
 		  Ian Lance Taylor <iant@google.com>
 
@@ -40,7 +40,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-pass.h"
 #include "lower-subreg.h"
 #include "rtl-iter.h"
-#include "target.h"
 
 
 /* Decompose multi-word pseudo-registers into individual
@@ -103,19 +102,6 @@ struct target_lower_subreg *this_target_lower_subreg
 #define choices \
   this_target_lower_subreg->x_choices
 
-/* Return true if MODE is a mode we know how to lower.  When returning true,
-   store its byte size in *BYTES and its word size in *WORDS.  */
-
-static inline bool
-interesting_mode_p (machine_mode mode, unsigned int *bytes,
-		    unsigned int *words)
-{
-  if (!GET_MODE_SIZE (mode).is_constant (bytes))
-    return false;
-  *words = CEIL (*bytes, UNITS_PER_WORD);
-  return true;
-}
-
 /* RTXes used while computing costs.  */
 struct cost_rtxes {
   /* Source and target registers.  */
@@ -142,7 +128,7 @@ shift_cost (bool speed_p, struct cost_rtxes *rtxes, enum rtx_code code,
   PUT_CODE (rtxes->shift, code);
   PUT_MODE (rtxes->shift, mode);
   PUT_MODE (rtxes->source, mode);
-  XEXP (rtxes->shift, 1) = gen_int_shift_amount (mode, op1);
+  XEXP (rtxes->shift, 1) = GEN_INT (op1);
   return set_src_cost (rtxes->shift, mode, speed_p);
 }
 
@@ -212,10 +198,10 @@ compute_costs (bool speed_p, struct cost_rtxes *rtxes)
   for (i = 0; i < MAX_MACHINE_MODE; i++)
     {
       machine_mode mode = (machine_mode) i;
-      unsigned int size, factor;
-      if (interesting_mode_p (mode, &size, &factor) && factor > 1)
+      int factor = GET_MODE_SIZE (mode) / UNITS_PER_WORD;
+      if (factor > 1)
 	{
-	  unsigned int mode_move_cost;
+	  int mode_move_cost;
 
 	  PUT_MODE (rtxes->target, mode);
 	  PUT_MODE (rtxes->source, mode);
@@ -280,7 +266,7 @@ init_lower_subreg (void)
 
   memset (this_target_lower_subreg, 0, sizeof (*this_target_lower_subreg));
 
-  twice_word_mode = GET_MODE_2XWIDER_MODE (word_mode).require ();
+  twice_word_mode = GET_MODE_2XWIDER_MODE (word_mode);
 
   rtxes.target = gen_rtx_REG (word_mode, LAST_VIRTUAL_REGISTER + 1);
   rtxes.source = gen_rtx_REG (word_mode, LAST_VIRTUAL_REGISTER + 2);
@@ -363,7 +349,8 @@ simple_move (rtx_insn *insn, bool speed_p)
      size.  */
   mode = GET_MODE (SET_DEST (set));
   if (!SCALAR_INT_MODE_P (mode)
-      && !int_mode_for_size (GET_MODE_BITSIZE (mode), 0).exists ())
+      && (mode_for_size (GET_MODE_SIZE (mode) * BITS_PER_UNIT, MODE_INT, 0)
+	  == BLKmode))
     return NULL_RTX;
 
   /* Reject PARTIAL_INT modes.  They are used for processor specific
@@ -418,7 +405,10 @@ find_pseudo_copy (rtx set)
 static void
 propagate_pseudo_copies (void)
 {
-  auto_bitmap queue, propagate;
+  bitmap queue, propagate;
+
+  queue = BITMAP_ALLOC (NULL);
+  propagate = BITMAP_ALLOC (NULL);
 
   bitmap_copy (queue, decomposable_context);
   do
@@ -439,6 +429,9 @@ propagate_pseudo_copies (void)
       bitmap_ior_into (decomposable_context, propagate);
     }
   while (!bitmap_empty_p (queue));
+
+  BITMAP_FREE (queue);
+  BITMAP_FREE (propagate);
 }
 
 /* A pointer to one of these values is passed to
@@ -482,10 +475,10 @@ find_decomposable_subregs (rtx *loc, enum classify_move_insn *pcmi)
 	      continue;
 	    }
 
-	  if (!interesting_mode_p (GET_MODE (x), &outer_size, &outer_words)
-	      || !interesting_mode_p (GET_MODE (inner), &inner_size,
-				      &inner_words))
-	    continue;
+	  outer_size = GET_MODE_SIZE (GET_MODE (x));
+	  inner_size = GET_MODE_SIZE (GET_MODE (inner));
+	  outer_words = (outer_size + UNITS_PER_WORD - 1) / UNITS_PER_WORD;
+	  inner_words = (inner_size + UNITS_PER_WORD - 1) / UNITS_PER_WORD;
 
 	  /* We only try to decompose single word subregs of multi-word
 	     registers.  When we find one, we return -1 to avoid iterating
@@ -519,7 +512,7 @@ find_decomposable_subregs (rtx *loc, enum classify_move_insn *pcmi)
 	     likely to mess up whatever the backend is trying to do.  */
 	  if (outer_words > 1
 	      && outer_size == inner_size
-	      && !targetm.modes_tieable_p (GET_MODE (x), GET_MODE (inner)))
+	      && !MODES_TIEABLE_P (GET_MODE (x), GET_MODE (inner)))
 	    {
 	      bitmap_set_bit (non_decomposable_context, regno);
 	      bitmap_set_bit (subreg_context, regno);
@@ -529,7 +522,7 @@ find_decomposable_subregs (rtx *loc, enum classify_move_insn *pcmi)
 	}
       else if (REG_P (x))
 	{
-	  unsigned int regno, size, words;
+	  unsigned int regno;
 
 	  /* We will see an outer SUBREG before we see the inner REG, so
 	     when we see a plain REG here it means a direct reference to
@@ -549,8 +542,7 @@ find_decomposable_subregs (rtx *loc, enum classify_move_insn *pcmi)
 
 	  regno = REGNO (x);
 	  if (!HARD_REGISTER_NUM_P (regno)
-	      && interesting_mode_p (GET_MODE (x), &size, &words)
-	      && words > 1)
+	      && GET_MODE_SIZE (GET_MODE (x)) > UNITS_PER_WORD)
 	    {
 	      switch (*pcmi)
 		{
@@ -558,7 +550,7 @@ find_decomposable_subregs (rtx *loc, enum classify_move_insn *pcmi)
 		  bitmap_set_bit (non_decomposable_context, regno);
 		  break;
 		case DECOMPOSABLE_SIMPLE_MOVE:
-		  if (targetm.modes_tieable_p (GET_MODE (x), word_mode))
+		  if (MODES_TIEABLE_P (GET_MODE (x), word_mode))
 		    bitmap_set_bit (decomposable_context, regno);
 		  break;
 		case SIMPLE_MOVE:
@@ -590,15 +582,15 @@ static void
 decompose_register (unsigned int regno)
 {
   rtx reg;
-  unsigned int size, words, i;
+  unsigned int words, i;
   rtvec v;
 
   reg = regno_reg_rtx[regno];
 
   regno_reg_rtx[regno] = NULL_RTX;
 
-  if (!interesting_mode_p (GET_MODE (reg), &size, &words))
-    gcc_unreachable ();
+  words = GET_MODE_SIZE (GET_MODE (reg));
+  words = (words + UNITS_PER_WORD - 1) / UNITS_PER_WORD;
 
   v = rtvec_alloc (words);
   for (i = 0; i < words; ++i)
@@ -619,35 +611,25 @@ decompose_register (unsigned int regno)
 /* Get a SUBREG of a CONCATN.  */
 
 static rtx
-simplify_subreg_concatn (machine_mode outermode, rtx op, poly_uint64 orig_byte)
+simplify_subreg_concatn (machine_mode outermode, rtx op,
+			 unsigned int byte)
 {
-  unsigned int outer_size, outer_words, inner_size, inner_words;
+  unsigned int inner_size;
   machine_mode innermode, partmode;
   rtx part;
   unsigned int final_offset;
-  unsigned int byte;
+
+  gcc_assert (GET_CODE (op) == CONCATN);
+  gcc_assert (byte % GET_MODE_SIZE (outermode) == 0);
 
   innermode = GET_MODE (op);
-  if (!interesting_mode_p (outermode, &outer_size, &outer_words)
-      || !interesting_mode_p (innermode, &inner_size, &inner_words))
-    gcc_unreachable ();
-
-  /* Must be constant if interesting_mode_p passes.  */
-  byte = orig_byte.to_constant ();
-  gcc_assert (GET_CODE (op) == CONCATN);
-  gcc_assert (byte % outer_size == 0);
-
-  gcc_assert (byte < inner_size);
-  if (outer_size > inner_size)
+  gcc_assert (byte < GET_MODE_SIZE (innermode));
+  if (GET_MODE_SIZE (outermode) > GET_MODE_SIZE (innermode))
     return NULL_RTX;
 
-  inner_size /= XVECLEN (op, 0);
+  inner_size = GET_MODE_SIZE (innermode) / XVECLEN (op, 0);
   part = XVECEXP (op, 0, byte / inner_size);
   partmode = GET_MODE (part);
-
-  final_offset = byte % inner_size;
-  if (final_offset + outer_size > inner_size)
-    return NULL_RTX;
 
   /* VECTOR_CSTs in debug expressions are expanded into CONCATN instead of
      regular CONST_VECTORs.  They have vector or integer modes, depending
@@ -655,8 +637,14 @@ simplify_subreg_concatn (machine_mode outermode, rtx op, poly_uint64 orig_byte)
   if (partmode == VOIDmode && VECTOR_MODE_P (innermode))
     partmode = GET_MODE_INNER (innermode);
   else if (partmode == VOIDmode)
-    partmode = mode_for_size (inner_size * BITS_PER_UNIT,
-			      GET_MODE_CLASS (innermode), 0).require ();
+    {
+      enum mode_class mclass = GET_MODE_CLASS (innermode);
+      partmode = mode_for_size (inner_size * BITS_PER_UNIT, mclass, 0);
+    }
+
+  final_offset = byte % inner_size;
+  if (final_offset + GET_MODE_SIZE (outermode) > inner_size)
+    return NULL_RTX;
 
   return simplify_gen_subreg (outermode, part, partmode, final_offset);
 }
@@ -677,9 +665,9 @@ simplify_gen_subreg_concatn (machine_mode outermode, rtx op,
     {
       rtx op2;
 
-      if (known_eq (GET_MODE_SIZE (GET_MODE (op)),
-		    GET_MODE_SIZE (GET_MODE (SUBREG_REG (op))))
-	  && known_eq (SUBREG_BYTE (op), 0))
+      if ((GET_MODE_SIZE (GET_MODE (op))
+	   == GET_MODE_SIZE (GET_MODE (SUBREG_REG (op))))
+	  && SUBREG_BYTE (op) == 0)
 	return simplify_gen_subreg_concatn (outermode, SUBREG_REG (op),
 					    GET_MODE (SUBREG_REG (op)), byte);
 
@@ -688,8 +676,10 @@ simplify_gen_subreg_concatn (machine_mode outermode, rtx op,
       if (op2 == NULL_RTX)
 	{
 	  /* We don't handle paradoxical subregs here.  */
-	  gcc_assert (!paradoxical_subreg_p (outermode, GET_MODE (op)));
-	  gcc_assert (!paradoxical_subreg_p (op));
+	  gcc_assert (GET_MODE_SIZE (outermode)
+		      <= GET_MODE_SIZE (GET_MODE (op)));
+	  gcc_assert (GET_MODE_SIZE (GET_MODE (op))
+		      <= GET_MODE_SIZE (GET_MODE (SUBREG_REG (op))));
 	  op2 = simplify_subreg_concatn (outermode, SUBREG_REG (op),
 					 byte + SUBREG_BYTE (op));
 	  gcc_assert (op2 != NULL_RTX);
@@ -710,7 +700,10 @@ simplify_gen_subreg_concatn (machine_mode outermode, rtx op,
      resolve_simple_move will ask for the high part of the paradoxical
      subreg, which does not have a value.  Just return a zero.  */
   if (ret == NULL_RTX
-      && paradoxical_subreg_p (op))
+      && GET_CODE (op) == SUBREG
+      && SUBREG_BYTE (op) == 0
+      && (GET_MODE_SIZE (innermode)
+	  > GET_MODE_SIZE (GET_MODE (SUBREG_REG (op)))))
     return CONST0_RTX (outermode);
 
   gcc_assert (ret != NULL_RTX);
@@ -830,10 +823,9 @@ can_decompose_p (rtx x)
 
       if (HARD_REGISTER_NUM_P (regno))
 	{
-	  unsigned int byte, num_bytes, num_words;
+	  unsigned int byte, num_bytes;
 
-	  if (!interesting_mode_p (GET_MODE (x), &num_bytes, &num_words))
-	    return false;
+	  num_bytes = GET_MODE_SIZE (GET_MODE (x));
 	  for (byte = 0; byte < num_bytes; byte += UNITS_PER_WORD)
 	    if (simplify_subreg_regno (regno, GET_MODE (x), byte, word_mode) < 0)
 	      return false;
@@ -856,15 +848,14 @@ resolve_simple_move (rtx set, rtx_insn *insn)
   rtx src, dest, real_dest;
   rtx_insn *insns;
   machine_mode orig_mode, dest_mode;
-  unsigned int orig_size, words;
+  unsigned int words;
   bool pushing;
 
   src = SET_SRC (set);
   dest = SET_DEST (set);
   orig_mode = GET_MODE (dest);
 
-  if (!interesting_mode_p (orig_mode, &orig_size, &words))
-    gcc_unreachable ();
+  words = (GET_MODE_SIZE (orig_mode) + UNITS_PER_WORD - 1) / UNITS_PER_WORD;
   gcc_assert (words > 1);
 
   start_sequence ();
@@ -878,8 +869,9 @@ resolve_simple_move (rtx set, rtx_insn *insn)
 
   if (GET_CODE (src) == SUBREG
       && resolve_reg_p (SUBREG_REG (src))
-      && (maybe_ne (SUBREG_BYTE (src), 0)
-	  || maybe_ne (orig_size, GET_MODE_SIZE (GET_MODE (SUBREG_REG (src))))))
+      && (SUBREG_BYTE (src) != 0
+	  || (GET_MODE_SIZE (orig_mode)
+	      != GET_MODE_SIZE (GET_MODE (SUBREG_REG (src))))))
     {
       real_dest = dest;
       dest = gen_reg_rtx (orig_mode);
@@ -892,9 +884,9 @@ resolve_simple_move (rtx set, rtx_insn *insn)
 
   if (GET_CODE (dest) == SUBREG
       && resolve_reg_p (SUBREG_REG (dest))
-      && (maybe_ne (SUBREG_BYTE (dest), 0)
-	  || maybe_ne (orig_size,
-		       GET_MODE_SIZE (GET_MODE (SUBREG_REG (dest))))))
+      && (SUBREG_BYTE (dest) != 0
+	  || (GET_MODE_SIZE (orig_mode)
+	      != GET_MODE_SIZE (GET_MODE (SUBREG_REG (dest))))))
     {
       rtx reg, smove;
       rtx_insn *minsn;
@@ -984,7 +976,11 @@ resolve_simple_move (rtx set, rtx_insn *insn)
       if (real_dest == NULL_RTX)
 	real_dest = dest;
       if (!SCALAR_INT_MODE_P (dest_mode))
-	dest_mode = int_mode_for_mode (dest_mode).require ();
+	{
+	  dest_mode = mode_for_size (GET_MODE_SIZE (dest_mode) * BITS_PER_UNIT,
+				     MODE_INT, 0);
+	  gcc_assert (dest_mode != BLKmode);
+	}
       dest = gen_reg_rtx (dest_mode);
       if (REG_P (real_dest))
 	REG_ATTRS (dest) = REG_ATTRS (real_dest);
@@ -994,7 +990,7 @@ resolve_simple_move (rtx set, rtx_insn *insn)
     {
       unsigned int i, j, jinc;
 
-      gcc_assert (orig_size % UNITS_PER_WORD == 0);
+      gcc_assert (GET_MODE_SIZE (orig_mode) % UNITS_PER_WORD == 0);
       gcc_assert (GET_CODE (XEXP (dest, 0)) != PRE_MODIFY);
       gcc_assert (GET_CODE (XEXP (dest, 0)) != POST_MODIFY);
 
@@ -1089,7 +1085,7 @@ resolve_clobber (rtx pat, rtx_insn *insn)
 {
   rtx reg;
   machine_mode orig_mode;
-  unsigned int orig_size, words, i;
+  unsigned int words, i;
   int ret;
 
   reg = XEXP (pat, 0);
@@ -1097,8 +1093,8 @@ resolve_clobber (rtx pat, rtx_insn *insn)
     return false;
 
   orig_mode = GET_MODE (reg);
-  if (!interesting_mode_p (orig_mode, &orig_size, &words))
-    gcc_unreachable ();
+  words = GET_MODE_SIZE (orig_mode);
+  words = (words + UNITS_PER_WORD - 1) / UNITS_PER_WORD;
 
   ret = validate_change (NULL_RTX, &XEXP (pat, 0),
 			 simplify_gen_subreg_concatn (word_mode, reg,
@@ -1239,7 +1235,6 @@ resolve_shift_zext (rtx_insn *insn)
   rtx_insn *insns;
   rtx src_reg, dest_reg, dest_upper, upper_src = NULL_RTX;
   int src_reg_num, dest_reg_num, offset1, offset2, src_offset;
-  scalar_int_mode inner_mode;
 
   set = single_set (insn);
   if (!set)
@@ -1253,8 +1248,6 @@ resolve_shift_zext (rtx_insn *insn)
     return NULL;
 
   op_operand = XEXP (op, 0);
-  if (!is_a <scalar_int_mode> (GET_MODE (op_operand), &inner_mode))
-    return NULL;
 
   /* We can tear this operation apart only if the regs were already
      torn apart.  */
@@ -1267,7 +1260,8 @@ resolve_shift_zext (rtx_insn *insn)
   src_reg_num = (GET_CODE (op) == LSHIFTRT || GET_CODE (op) == ASHIFTRT)
 		? 1 : 0;
 
-  if (WORDS_BIG_ENDIAN && GET_MODE_SIZE (inner_mode) > UNITS_PER_WORD)
+  if (WORDS_BIG_ENDIAN
+      && GET_MODE_SIZE (GET_MODE (op_operand)) > UNITS_PER_WORD)
     src_reg_num = 1 - src_reg_num;
 
   if (GET_CODE (op) == ZERO_EXTEND)
@@ -1362,13 +1356,12 @@ dump_shift_choices (enum rtx_code code, bool *splitting)
 static void
 dump_choices (bool speed_p, const char *description)
 {
-  unsigned int size, factor, i;
+  unsigned int i;
 
   fprintf (dump_file, "Choices when optimizing for %s:\n", description);
 
   for (i = 0; i < MAX_MACHINE_MODE; i++)
-    if (interesting_mode_p ((machine_mode) i, &size, &factor)
-	&& factor > 1)
+    if (GET_MODE_SIZE ((machine_mode) i) > UNITS_PER_WORD)
       fprintf (dump_file, "  %s mode %s for copy lowering.\n",
 	       choices[speed_p].move_modes_to_split[i]
 	       ? "Splitting"

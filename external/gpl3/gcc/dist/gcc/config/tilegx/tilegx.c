@@ -1,5 +1,5 @@
 /* Subroutines used for code generation on the Tilera TILE-Gx.
-   Copyright (C) 2011-2018 Free Software Foundation, Inc.
+   Copyright (C) 2011-2017 Free Software Foundation, Inc.
    Contributed by Walter Lee (walt@tilera.com)
 
    This file is part of GCC.
@@ -18,8 +18,6 @@
    along with GCC; see the file COPYING3.  If not see
    <http://www.gnu.org/licenses/>.  */
 
-#define IN_TARGET_CODE 1
-
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -32,7 +30,6 @@
 #include "df.h"
 #include "tm_p.h"
 #include "stringpool.h"
-#include "attribs.h"
 #include "expmed.h"
 #include "optabs.h"
 #include "regs.h"
@@ -109,19 +106,19 @@ tilegx_option_override (void)
 
 /* Implement TARGET_SCALAR_MODE_SUPPORTED_P.  */
 static bool
-tilegx_scalar_mode_supported_p (scalar_mode mode)
+tilegx_scalar_mode_supported_p (machine_mode mode)
 {
   switch (mode)
     {
-    case E_QImode:
-    case E_HImode:
-    case E_SImode:
-    case E_DImode:
-    case E_TImode:
+    case QImode:
+    case HImode:
+    case SImode:
+    case DImode:
+    case TImode:
       return true;
 
-    case E_SFmode:
-    case E_DFmode:
+    case SFmode:
+    case DFmode:
       return true;
 
     default:
@@ -190,7 +187,7 @@ tilegx_return_in_memory (const_tree type, const_tree fndecl ATTRIBUTE_UNUSED)
 
 /* Implement TARGET_MODE_REP_EXTENDED.  */
 static int
-tilegx_mode_rep_extended (scalar_int_mode mode, scalar_int_mode mode_rep)
+tilegx_mode_rep_extended (machine_mode mode, machine_mode mode_rep)
 {
   /* SImode register values are sign-extended to DImode.  */
   if (mode == SImode && mode_rep == DImode)
@@ -1468,16 +1465,16 @@ tilegx_simd_int (rtx num, machine_mode mode)
 
   switch (mode)
     {
-    case E_QImode:
+    case QImode:
       n = 0x0101010101010101LL * (n & 0x000000FF);
       break;
-    case E_HImode:
+    case HImode:
       n = 0x0001000100010001LL * (n & 0x0000FFFF);
       break;
-    case E_SImode:
+    case SImode:
       n = 0x0000000100000001LL * (n & 0xFFFFFFFF);
       break;
-    case E_DImode:
+    case DImode:
       break;
     default:
       gcc_unreachable ();
@@ -1962,7 +1959,7 @@ tilegx_expand_unaligned_load (rtx dest_reg, rtx mem, HOST_WIDE_INT bitsize,
 	extract_bit_field (gen_lowpart (DImode, wide_result),
 			   bitsize, bit_offset % BITS_PER_UNIT,
 			   !sign, gen_lowpart (DImode, dest_reg),
-			   DImode, DImode, false, NULL);
+			   DImode, DImode, false);
 
       if (extracted != dest_reg)
 	emit_move_insn (dest_reg, gen_lowpart (DImode, extracted));
@@ -2622,8 +2619,9 @@ cbranch_predicted_p (rtx_insn *insn)
 
   if (x)
     {
-      return profile_probability::from_reg_br_prob_note (XINT (x, 0))
-	     >= profile_probability::even ();
+      int pred_val = XINT (x, 0);
+
+      return pred_val >= REG_BR_PROB_BASE / 2;
     }
 
   return false;
@@ -5065,7 +5063,7 @@ tilegx_trampoline_init (rtx m_tramp, tree fndecl, rtx static_chain)
 					      TRAMPOLINE_SIZE));
 
   emit_library_call (gen_rtx_SYMBOL_REF (Pmode, "__clear_cache"),
-		     LCT_NORMAL, VOIDmode, begin_addr, Pmode,
+		     LCT_NORMAL, VOIDmode, 2, begin_addr, Pmode,
 		     end_addr, Pmode);
 }
 
@@ -5562,14 +5560,7 @@ tilegx_file_end (void)
     file_end_indicate_exec_stack ();
 }
 
-/* Implement TARGET_TRULY_NOOP_TRUNCATION.  We represent all SI values
-   as sign-extended DI values in registers.  */
 
-static bool
-tilegx_truly_noop_truncation (poly_uint64 outprec, poly_uint64 inprec)
-{
-  return inprec <= 32 || outprec > 32;
-}
 
 #undef  TARGET_HAVE_TLS
 #define TARGET_HAVE_TLS HAVE_AS_TLS
@@ -5732,12 +5723,6 @@ tilegx_truly_noop_truncation (poly_uint64 outprec, poly_uint64 inprec)
 
 #undef  TARGET_CAN_USE_DOLOOP_P
 #define TARGET_CAN_USE_DOLOOP_P can_use_doloop_if_innermost
-
-#undef  TARGET_TRULY_NOOP_TRUNCATION
-#define TARGET_TRULY_NOOP_TRUNCATION tilegx_truly_noop_truncation
-
-#undef  TARGET_CONSTANT_ALIGNMENT
-#define TARGET_CONSTANT_ALIGNMENT constant_alignment_word_strings
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 

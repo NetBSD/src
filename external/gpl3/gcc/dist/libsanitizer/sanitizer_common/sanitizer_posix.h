@@ -14,7 +14,6 @@
 // ----------- ATTENTION -------------
 // This header should NOT include any other headers from sanitizer runtime.
 #include "sanitizer_internal_defs.h"
-#include "sanitizer_platform_limits_netbsd.h"
 #include "sanitizer_platform_limits_posix.h"
 
 #if !SANITIZER_POSIX
@@ -86,9 +85,6 @@ bool internal_sigismember(__sanitizer_sigset_t *set, int signum);
 
 uptr internal_execve(const char *filename, char *const argv[],
                      char *const envp[]);
-
-bool IsStateDetached(int state);
-
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_POSIX_H

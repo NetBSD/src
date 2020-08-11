@@ -9,4 +9,3 @@
 
 STAGE2_CFLAGS += -fcompare-debug=
 STAGE3_CFLAGS += -fcompare-debug
-do-compare = $(SHELL) $(srcdir)/contrib/compare-debug $$f1 $$f2

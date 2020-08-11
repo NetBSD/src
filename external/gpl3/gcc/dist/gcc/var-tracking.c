@@ -1,5 +1,5 @@
 /* Variable tracking routines for the GNU compiler.
-   Copyright (C) 2002-2018 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -390,16 +390,8 @@ struct variable
 /* Pointer to the BB's information specific to variable tracking pass.  */
 #define VTI(BB) ((variable_tracking_info *) (BB)->aux)
 
-/* Return MEM_OFFSET (MEM) as a HOST_WIDE_INT, or 0 if we can't.  */
-
-static inline HOST_WIDE_INT
-int_mem_offset (const_rtx mem)
-{
-  HOST_WIDE_INT offset;
-  if (MEM_OFFSET_KNOWN_P (mem) && MEM_OFFSET (mem).is_constant (&offset))
-    return offset;
-  return 0;
-}
+/* Macro to access MEM_OFFSET as an HOST_WIDE_INT.  Evaluates MEM twice.  */
+#define INT_MEM_OFFSET(mem) (MEM_OFFSET_KNOWN_P (mem) ? MEM_OFFSET (mem) : 0)
 
 #if CHECKING_P && (GCC_VERSION >= 2007)
 
@@ -674,6 +666,7 @@ static bool dataflow_set_different (dataflow_set *, dataflow_set *);
 static void dataflow_set_destroy (dataflow_set *);
 
 static bool track_expr_p (tree, bool);
+static bool same_variable_part_p (rtx, tree, HOST_WIDE_INT);
 static void add_uses_1 (rtx *, void *);
 static void add_stores (rtx, const_rtx, void *);
 static bool compute_bb_dataflow (basic_block);
@@ -704,6 +697,7 @@ static void delete_variable_part (dataflow_set *, rtx,
 static void emit_notes_in_bb (basic_block, dataflow_set *);
 static void vt_emit_notes (void);
 
+static bool vt_get_decl_and_offset (rtx, tree *, HOST_WIDE_INT *);
 static void vt_add_function_parameters (void);
 static bool vt_initialize (void);
 static void vt_finalize (void);
@@ -964,24 +958,6 @@ use_narrower_mode_test (rtx x, const_rtx subreg)
 	  case MULT:
 	    break;
 	  case ASHIFT:
-	    if (GET_MODE (XEXP (x, 1)) != VOIDmode)
-	      {
-		enum machine_mode mode = GET_MODE (subreg);
-		rtx op1 = XEXP (x, 1);
-		enum machine_mode op1_mode = GET_MODE (op1);
-		if (GET_MODE_PRECISION (as_a <scalar_int_mode> (mode))
-		    < GET_MODE_PRECISION (as_a <scalar_int_mode> (op1_mode)))
-		  {
-		    poly_uint64 byte = subreg_lowpart_offset (mode, op1_mode);
-		    if (GET_CODE (op1) == SUBREG || GET_CODE (op1) == CONCAT)
-		      {
-			if (!simplify_subreg (mode, op1, op1_mode, byte))
-			  return false;
-		      }
-		    else if (!validate_subreg (mode, op1_mode, op1, byte))
-		      return false;
-		  }
-	      }
 	    iter.substitute (XEXP (x, 0));
 	    break;
 	  default:
@@ -994,7 +970,7 @@ use_narrower_mode_test (rtx x, const_rtx subreg)
 /* Transform X into narrower mode MODE from wider mode WMODE.  */
 
 static rtx
-use_narrower_mode (rtx x, scalar_int_mode mode, scalar_int_mode wmode)
+use_narrower_mode (rtx x, machine_mode mode, machine_mode wmode)
 {
   rtx op0, op1;
   if (CONSTANT_P (x))
@@ -1015,8 +991,7 @@ use_narrower_mode (rtx x, scalar_int_mode mode, scalar_int_mode wmode)
       /* Ensure shift amount is not wider than mode.  */
       if (GET_MODE (op1) == VOIDmode)
 	op1 = lowpart_subreg (mode, op1, wmode);
-      else if (GET_MODE_PRECISION (mode)
-	       < GET_MODE_PRECISION (as_a <scalar_int_mode> (GET_MODE (op1))))
+      else if (GET_MODE_PRECISION (mode) < GET_MODE_PRECISION (GET_MODE (op1)))
 	op1 = lowpart_subreg (mode, op1, GET_MODE (op1));
       return simplify_gen_binary (ASHIFT, mode, op0, op1);
     default:
@@ -1033,8 +1008,6 @@ adjust_mems (rtx loc, const_rtx old_rtx, void *data)
   rtx mem, addr = loc, tem;
   machine_mode mem_mode_save;
   bool store_save;
-  scalar_int_mode tem_mode, tem_subreg_mode;
-  poly_int64 size;
   switch (GET_CODE (loc))
     {
     case REG:
@@ -1079,9 +1052,11 @@ adjust_mems (rtx loc, const_rtx old_rtx, void *data)
       return mem;
     case PRE_INC:
     case PRE_DEC:
-      size = GET_MODE_SIZE (amd->mem_mode);
-      addr = plus_constant (GET_MODE (loc), XEXP (loc, 0),
-			    GET_CODE (loc) == PRE_INC ? size : -size);
+      addr = gen_rtx_PLUS (GET_MODE (loc), XEXP (loc, 0),
+			   gen_int_mode (GET_CODE (loc) == PRE_INC
+					 ? GET_MODE_SIZE (amd->mem_mode)
+					 : -GET_MODE_SIZE (amd->mem_mode),
+					 GET_MODE (loc)));
       /* FALLTHRU */
     case POST_INC:
     case POST_DEC:
@@ -1089,10 +1064,12 @@ adjust_mems (rtx loc, const_rtx old_rtx, void *data)
 	addr = XEXP (loc, 0);
       gcc_assert (amd->mem_mode != VOIDmode && amd->mem_mode != BLKmode);
       addr = simplify_replace_fn_rtx (addr, old_rtx, adjust_mems, data);
-      size = GET_MODE_SIZE (amd->mem_mode);
-      tem = plus_constant (GET_MODE (loc), XEXP (loc, 0),
-			   (GET_CODE (loc) == PRE_INC
-			    || GET_CODE (loc) == POST_INC) ? size : -size);
+      tem = gen_rtx_PLUS (GET_MODE (loc), XEXP (loc, 0),
+			  gen_int_mode ((GET_CODE (loc) == PRE_INC
+					 || GET_CODE (loc) == POST_INC)
+					? GET_MODE_SIZE (amd->mem_mode)
+					: -GET_MODE_SIZE (amd->mem_mode),
+					GET_MODE (loc)));
       store_save = amd->store;
       amd->store = false;
       tem = simplify_replace_fn_rtx (tem, old_rtx, adjust_mems, data);
@@ -1139,20 +1116,22 @@ adjust_mems (rtx loc, const_rtx old_rtx, void *data)
       if (tem == NULL_RTX)
 	tem = gen_rtx_raw_SUBREG (GET_MODE (loc), addr, SUBREG_BYTE (loc));
     finish_subreg:
-      if (MAY_HAVE_DEBUG_BIND_INSNS
+      if (MAY_HAVE_DEBUG_INSNS
 	  && GET_CODE (tem) == SUBREG
 	  && (GET_CODE (SUBREG_REG (tem)) == PLUS
 	      || GET_CODE (SUBREG_REG (tem)) == MINUS
 	      || GET_CODE (SUBREG_REG (tem)) == MULT
 	      || GET_CODE (SUBREG_REG (tem)) == ASHIFT)
-	  && is_a <scalar_int_mode> (GET_MODE (tem), &tem_mode)
-	  && is_a <scalar_int_mode> (GET_MODE (SUBREG_REG (tem)),
-				     &tem_subreg_mode)
-	  && (GET_MODE_PRECISION (tem_mode)
-	      < GET_MODE_PRECISION (tem_subreg_mode))
+	  && (GET_MODE_CLASS (GET_MODE (tem)) == MODE_INT
+	      || GET_MODE_CLASS (GET_MODE (tem)) == MODE_PARTIAL_INT)
+	  && (GET_MODE_CLASS (GET_MODE (SUBREG_REG (tem))) == MODE_INT
+	      || GET_MODE_CLASS (GET_MODE (SUBREG_REG (tem))) == MODE_PARTIAL_INT)
+	  && GET_MODE_PRECISION (GET_MODE (tem))
+	     < GET_MODE_PRECISION (GET_MODE (SUBREG_REG (tem)))
 	  && subreg_lowpart_p (tem)
 	  && use_narrower_mode_test (SUBREG_REG (tem), tem))
-	return use_narrower_mode (SUBREG_REG (tem), tem_mode, tem_subreg_mode);
+	return use_narrower_mode (SUBREG_REG (tem), GET_MODE (tem),
+				  GET_MODE (SUBREG_REG (tem)));
       return tem;
     case ASM_OPERANDS:
       /* Don't do any replacements in second and following
@@ -1351,7 +1330,7 @@ dv_onepart_p (decl_or_value dv)
 {
   tree decl;
 
-  if (!MAY_HAVE_DEBUG_BIND_INSNS)
+  if (!MAY_HAVE_DEBUG_INSNS)
     return NOT_ONEPART;
 
   if (dv_is_value_p (dv))
@@ -1864,32 +1843,6 @@ var_reg_decl_set (dataflow_set *set, rtx loc, enum var_init_status initialized,
   set_variable_part (set, loc, dv, offset, initialized, set_src, iopt);
 }
 
-/* Return true if we should track a location that is OFFSET bytes from
-   a variable.  Store the constant offset in *OFFSET_OUT if so.  */
-
-static bool
-track_offset_p (poly_int64 offset, HOST_WIDE_INT *offset_out)
-{
-  HOST_WIDE_INT const_offset;
-  if (!offset.is_constant (&const_offset)
-      || !IN_RANGE (const_offset, 0, MAX_VAR_PARTS - 1))
-    return false;
-  *offset_out = const_offset;
-  return true;
-}
-
-/* Return the offset of a register that track_offset_p says we
-   should track.  */
-
-static HOST_WIDE_INT
-get_tracked_reg_offset (rtx loc)
-{
-  HOST_WIDE_INT offset;
-  if (!track_offset_p (REG_OFFSET (loc), &offset))
-    gcc_unreachable ();
-  return offset;
-}
-
 /* Set the register to contain REG_EXPR (LOC), REG_OFFSET (LOC).  */
 
 static void
@@ -1897,7 +1850,7 @@ var_reg_set (dataflow_set *set, rtx loc, enum var_init_status initialized,
 	     rtx set_src)
 {
   tree decl = REG_EXPR (loc);
-  HOST_WIDE_INT offset = get_tracked_reg_offset (loc);
+  HOST_WIDE_INT offset = REG_OFFSET (loc);
 
   var_reg_decl_set (set, loc, initialized,
 		    dv_from_decl (decl), offset, set_src, INSERT);
@@ -1943,7 +1896,7 @@ var_reg_delete_and_set (dataflow_set *set, rtx loc, bool modify,
 			enum var_init_status initialized, rtx set_src)
 {
   tree decl = REG_EXPR (loc);
-  HOST_WIDE_INT offset = get_tracked_reg_offset (loc);
+  HOST_WIDE_INT offset = REG_OFFSET (loc);
   attrs *node, *next;
   attrs **nextp;
 
@@ -1984,10 +1937,10 @@ var_reg_delete (dataflow_set *set, rtx loc, bool clobber)
   attrs **nextp = &set->regs[REGNO (loc)];
   attrs *node, *next;
 
-  HOST_WIDE_INT offset;
-  if (clobber && track_offset_p (REG_OFFSET (loc), &offset))
+  if (clobber)
     {
       tree decl = REG_EXPR (loc);
+      HOST_WIDE_INT offset = REG_OFFSET (loc);
 
       decl = var_debug_decl (decl);
 
@@ -2383,7 +2336,7 @@ var_mem_set (dataflow_set *set, rtx loc, enum var_init_status initialized,
 	     rtx set_src)
 {
   tree decl = MEM_EXPR (loc);
-  HOST_WIDE_INT offset = int_mem_offset (loc);
+  HOST_WIDE_INT offset = INT_MEM_OFFSET (loc);
 
   var_mem_decl_set (set, loc, initialized,
 		    dv_from_decl (decl), offset, set_src, INSERT);
@@ -2401,7 +2354,7 @@ var_mem_delete_and_set (dataflow_set *set, rtx loc, bool modify,
 			enum var_init_status initialized, rtx set_src)
 {
   tree decl = MEM_EXPR (loc);
-  HOST_WIDE_INT offset = int_mem_offset (loc);
+  HOST_WIDE_INT offset = INT_MEM_OFFSET (loc);
 
   clobber_overlapping_mems (set, loc);
   decl = var_debug_decl (decl);
@@ -2422,7 +2375,7 @@ static void
 var_mem_delete (dataflow_set *set, rtx loc, bool clobber)
 {
   tree decl = MEM_EXPR (loc);
-  HOST_WIDE_INT offset = int_mem_offset (loc);
+  HOST_WIDE_INT offset = INT_MEM_OFFSET (loc);
 
   clobber_overlapping_mems (set, loc);
   decl = var_debug_decl (decl);
@@ -3536,12 +3489,6 @@ loc_cmp (rtx x, rtx y)
 	  return -1;
 	else
 	  return 1;
-
-      case 'p':
-	r = compare_sizes_for_sort (SUBREG_BYTE (x), SUBREG_BYTE (y));
-	if (r != 0)
-	  return r;
-	break;
 
       case 'V':
       case 'E':
@@ -4671,7 +4618,7 @@ find_mem_expr_in_1pdv (tree expr, rtx val, variable_table_type *vars)
   for (node = var->var_part[0].loc_chain; node; node = node->next)
     if (MEM_P (node->loc)
 	&& MEM_EXPR (node->loc) == expr
-	&& int_mem_offset (node->loc) == 0)
+	&& INT_MEM_OFFSET (node->loc) == 0)
       {
 	where = node;
 	break;
@@ -4736,7 +4683,7 @@ dataflow_set_preserve_mem_locs (variable **slot, dataflow_set *set)
 	      /* We want to remove dying MEMs that don't refer to DECL.  */
 	      if (GET_CODE (loc->loc) == MEM
 		  && (MEM_EXPR (loc->loc) != decl
-		      || int_mem_offset (loc->loc) != 0)
+		      || INT_MEM_OFFSET (loc->loc) != 0)
 		  && mem_dies_at_call (loc->loc))
 		break;
 	      /* We want to move here MEMs that do refer to DECL.  */
@@ -4780,7 +4727,7 @@ dataflow_set_preserve_mem_locs (variable **slot, dataflow_set *set)
 
 	  if (GET_CODE (loc->loc) != MEM
 	      || (MEM_EXPR (loc->loc) == decl
-		  && int_mem_offset (loc->loc) == 0)
+		  && INT_MEM_OFFSET (loc->loc) == 0)
 	      || !mem_dies_at_call (loc->loc))
 	    {
 	      if (old_loc != loc->loc && emit_notes)
@@ -4907,7 +4854,7 @@ dataflow_set_clear_at_call (dataflow_set *set, rtx_insn *call_insn)
   EXECUTE_IF_SET_IN_HARD_REG_SET (invalidated_regs, 0, r, hrsi)
     var_regno_delete (set, r);
 
-  if (MAY_HAVE_DEBUG_BIND_INSNS)
+  if (MAY_HAVE_DEBUG_INSNS)
     {
       set->traversed_vars = set->vars;
       shared_hash_htab (set->vars)
@@ -5223,20 +5170,20 @@ track_expr_p (tree expr, bool need_rtl)
 	      || (TREE_CODE (realdecl) == MEM_REF
 		  && TREE_CODE (TREE_OPERAND (realdecl, 0)) == ADDR_EXPR))
 	    {
-	      HOST_WIDE_INT bitsize, bitpos;
+	      HOST_WIDE_INT bitsize, bitpos, maxsize;
 	      bool reverse;
 	      tree innerdecl
-		= get_ref_base_and_extent_hwi (realdecl, &bitpos,
-					       &bitsize, &reverse);
-	      if (!innerdecl
-		  || !DECL_P (innerdecl)
+		= get_ref_base_and_extent (realdecl, &bitpos, &bitsize,
+					   &maxsize, &reverse);
+	      if (!DECL_P (innerdecl)
 		  || DECL_IGNORED_P (innerdecl)
 		  /* Do not track declarations for parts of tracked record
 		     parameters since we want to track them as a whole.  */
 		  || tracked_record_parameter_p (innerdecl)
 		  || TREE_STATIC (innerdecl)
-		  || bitsize == 0
-		  || bitpos + bitsize > 256)
+		  || bitsize <= 0
+		  || bitpos + bitsize > 256
+		  || bitsize != maxsize)
 		return 0;
 	      else
 		realdecl = expr;
@@ -5273,12 +5220,11 @@ track_expr_p (tree expr, bool need_rtl)
   if (decl_rtl && MEM_P (decl_rtl))
     {
       /* Do not track structures and arrays.  */
-      if ((GET_MODE (decl_rtl) == BLKmode
-	   || AGGREGATE_TYPE_P (TREE_TYPE (realdecl)))
-	  && !tracked_record_parameter_p (realdecl))
+      if (GET_MODE (decl_rtl) == BLKmode
+	  || AGGREGATE_TYPE_P (TREE_TYPE (realdecl)))
 	return 0;
       if (MEM_SIZE_KNOWN_P (decl_rtl)
-	  && maybe_gt (MEM_SIZE (decl_rtl), MAX_VAR_PARTS))
+	  && MEM_SIZE (decl_rtl) > MAX_VAR_PARTS)
 	return 0;
     }
 
@@ -5291,10 +5237,10 @@ track_expr_p (tree expr, bool need_rtl)
    EXPR+OFFSET.  */
 
 static bool
-same_variable_part_p (rtx loc, tree expr, poly_int64 offset)
+same_variable_part_p (rtx loc, tree expr, HOST_WIDE_INT offset)
 {
   tree expr2;
-  poly_int64 offset2;
+  HOST_WIDE_INT offset2;
 
   if (! DECL_P (expr))
     return false;
@@ -5307,7 +5253,7 @@ same_variable_part_p (rtx loc, tree expr, poly_int64 offset)
   else if (MEM_P (loc))
     {
       expr2 = MEM_EXPR (loc);
-      offset2 = int_mem_offset (loc);
+      offset2 = INT_MEM_OFFSET (loc);
     }
   else
     return false;
@@ -5318,7 +5264,7 @@ same_variable_part_p (rtx loc, tree expr, poly_int64 offset)
   expr = var_debug_decl (expr);
   expr2 = var_debug_decl (expr2);
 
-  return (expr == expr2 && known_eq (offset, offset2));
+  return (expr == expr2 && offset == offset2);
 }
 
 /* LOC is a REG or MEM that we would like to track if possible.
@@ -5332,7 +5278,7 @@ same_variable_part_p (rtx loc, tree expr, poly_int64 offset)
    from EXPR in *OFFSET_OUT (if nonnull).  */
 
 static bool
-track_loc_p (rtx loc, tree expr, poly_int64 offset, bool store_reg_p,
+track_loc_p (rtx loc, tree expr, HOST_WIDE_INT offset, bool store_reg_p,
 	     machine_mode *mode_out, HOST_WIDE_INT *offset_out)
 {
   machine_mode mode;
@@ -5348,7 +5294,7 @@ track_loc_p (rtx loc, tree expr, poly_int64 offset, bool store_reg_p,
       machine_mode pseudo_mode;
 
       pseudo_mode = PSEUDO_REGNO_MODE (ORIGINAL_REGNO (loc));
-      if (paradoxical_subreg_p (mode, pseudo_mode))
+      if (GET_MODE_SIZE (mode) > GET_MODE_SIZE (pseudo_mode))
 	{
 	  offset += byte_lowpart_offset (pseudo_mode, mode);
 	  mode = pseudo_mode;
@@ -5362,24 +5308,23 @@ track_loc_p (rtx loc, tree expr, poly_int64 offset, bool store_reg_p,
      because the real and imaginary parts are represented as separate
      pseudo registers, even if the whole complex value fits into one
      hard register.  */
-  if ((paradoxical_subreg_p (mode, DECL_MODE (expr))
+  if ((GET_MODE_SIZE (mode) > GET_MODE_SIZE (DECL_MODE (expr))
        || (store_reg_p
 	   && !COMPLEX_MODE_P (DECL_MODE (expr))
-	   && hard_regno_nregs (REGNO (loc), DECL_MODE (expr)) == 1))
-      && known_eq (offset + byte_lowpart_offset (DECL_MODE (expr), mode), 0))
+	   && hard_regno_nregs[REGNO (loc)][DECL_MODE (expr)] == 1))
+      && offset + byte_lowpart_offset (DECL_MODE (expr), mode) == 0)
     {
       mode = DECL_MODE (expr);
       offset = 0;
     }
 
-  HOST_WIDE_INT const_offset;
-  if (!track_offset_p (offset, &const_offset))
+  if (offset < 0 || offset >= MAX_VAR_PARTS)
     return false;
 
   if (mode_out)
     *mode_out = mode;
   if (offset_out)
-    *offset_out = const_offset;
+    *offset_out = offset;
   return true;
 }
 
@@ -5390,7 +5335,7 @@ track_loc_p (rtx loc, tree expr, poly_int64 offset, bool store_reg_p,
 static rtx
 var_lowpart (machine_mode mode, rtx loc)
 {
-  unsigned int regno;
+  unsigned int offset, reg_offset, regno;
 
   if (GET_MODE (loc) == mode)
     return loc;
@@ -5398,12 +5343,12 @@ var_lowpart (machine_mode mode, rtx loc)
   if (!REG_P (loc) && !MEM_P (loc))
     return NULL;
 
-  poly_uint64 offset = byte_lowpart_offset (mode, GET_MODE (loc));
+  offset = byte_lowpart_offset (mode, GET_MODE (loc));
 
   if (MEM_P (loc))
     return adjust_address_nv (loc, mode, offset);
 
-  poly_uint64 reg_offset = subreg_lowpart_offset (mode, GET_MODE (loc));
+  reg_offset = subreg_lowpart_offset (mode, GET_MODE (loc));
   regno = REGNO (loc) + subreg_regno_offset (REGNO (loc), GET_MODE (loc),
 					     reg_offset, mode);
   return gen_rtx_REG_offset (loc, mode, regno, offset);
@@ -5576,13 +5521,13 @@ use_type (rtx loc, struct count_use_info *cui, machine_mode *modep)
 	return MO_CLOBBER;
       else if (target_for_debug_bind (var_debug_decl (expr)))
 	return MO_CLOBBER;
-      else if (track_loc_p (loc, expr, int_mem_offset (loc),
+      else if (track_loc_p (loc, expr, INT_MEM_OFFSET (loc),
 			    false, modep, NULL)
 	       /* Multi-part variables shouldn't refer to one-part
 		  variable names such as VALUEs (never happens) or
 		  DEBUG_EXPRs (only happens in the presence of debug
 		  insns).  */
-	       && (!MAY_HAVE_DEBUG_BIND_INSNS
+	       && (!MAY_HAVE_DEBUG_INSNS
 		   || !rtx_debug_expr_p (XEXP (loc, 0))))
 	return MO_USE;
       else
@@ -5980,9 +5925,7 @@ add_stores (rtx loc, const_rtx expr, void *cuip)
 	  mo.type = MO_CLOBBER;
 	  mo.u.loc = loc;
 	  if (GET_CODE (expr) == SET
-	      && (SET_DEST (expr) == loc
-		  || (GET_CODE (SET_DEST (expr)) == STRICT_LOW_PART
-		      && XEXP (SET_DEST (expr), 0) == loc))
+	      && SET_DEST (expr) == loc
 	      && !unsuitable_loc (SET_SRC (expr))
 	      && find_use_val (loc, mode, cui))
 	    {
@@ -6073,7 +6016,7 @@ add_stores (rtx loc, const_rtx expr, void *cuip)
 	      rtx xexpr = gen_rtx_SET (loc, src);
 	      if (same_variable_part_p (SET_SRC (xexpr),
 					MEM_EXPR (loc),
-					int_mem_offset (loc)))
+					INT_MEM_OFFSET (loc)))
 		mo.type = MO_COPY;
 	      else
 		mo.type = MO_SET;
@@ -6357,19 +6300,18 @@ prepare_call_arguments (basic_block bb, rtx_insn *insn)
 	else if (REG_P (x))
 	  {
 	    cselib_val *val = cselib_lookup (x, GET_MODE (x), 0, VOIDmode);
-	    scalar_int_mode mode;
 	    if (val && cselib_preserved_value_p (val))
 	      item = val->val_rtx;
-	    else if (is_a <scalar_int_mode> (GET_MODE (x), &mode))
+	    else if (GET_MODE_CLASS (GET_MODE (x)) == MODE_INT
+		     || GET_MODE_CLASS (GET_MODE (x)) == MODE_PARTIAL_INT)
 	      {
-		opt_scalar_int_mode mode_iter;
-		FOR_EACH_WIDER_MODE (mode_iter, mode)
-		  {
-		    mode = mode_iter.require ();
-		    if (GET_MODE_BITSIZE (mode) > BITS_PER_WORD)
-		      break;
+		machine_mode mode = GET_MODE (x);
 
+		while ((mode = GET_MODE_WIDER_MODE (mode)) != VOIDmode
+		       && GET_MODE_BITSIZE (mode) <= BITS_PER_WORD)
+		  {
 		    rtx reg = simplify_subreg (mode, x, GET_MODE (x), 0);
+
 		    if (reg == NULL_RTX || !REG_P (reg))
 		      continue;
 		    val = cselib_lookup (reg, mode, 0, VOIDmode);
@@ -6404,9 +6346,8 @@ prepare_call_arguments (basic_block bb, rtx_insn *insn)
 	      {
 		/* For non-integer stack argument see also if they weren't
 		   initialized by integers.  */
-		scalar_int_mode imode;
-		if (int_mode_for_mode (GET_MODE (mem)).exists (&imode)
-		    && imode != GET_MODE (mem))
+		machine_mode imode = int_mode_for_mode (GET_MODE (mem));
+		if (imode != GET_MODE (mem) && imode != BLKmode)
 		  {
 		    val = cselib_lookup (adjust_address_nv (mem, imode, 0),
 					 imode, 0, VOIDmode);
@@ -6749,7 +6690,7 @@ compute_bb_dataflow (basic_block bb)
   dataflow_set_copy (&old_out, out);
   dataflow_set_copy (out, in);
 
-  if (MAY_HAVE_DEBUG_BIND_INSNS)
+  if (MAY_HAVE_DEBUG_INSNS)
     local_get_addr_cache = new hash_map<rtx, rtx>;
 
   FOR_EACH_VEC_ELT (VTI (bb)->mos, i, mo)
@@ -7031,7 +6972,7 @@ compute_bb_dataflow (basic_block bb)
 	}
     }
 
-  if (MAY_HAVE_DEBUG_BIND_INSNS)
+  if (MAY_HAVE_DEBUG_INSNS)
     {
       delete local_get_addr_cache;
       local_get_addr_cache = NULL;
@@ -7118,7 +7059,7 @@ vt_find_locations (void)
 	      else
 		oldinsz = oldoutsz = 0;
 
-	      if (MAY_HAVE_DEBUG_BIND_INSNS)
+	      if (MAY_HAVE_DEBUG_INSNS)
 		{
 		  dataflow_set *in = &VTI (bb)->in, *first_out = NULL;
 		  bool first = true, adjust = false;
@@ -7179,7 +7120,7 @@ vt_find_locations (void)
 
 	      if (htabmax && htabsz > htabmax)
 		{
-		  if (MAY_HAVE_DEBUG_BIND_INSNS)
+		  if (MAY_HAVE_DEBUG_INSNS)
 		    inform (DECL_SOURCE_LOCATION (cfun->decl),
 			    "variable tracking size limit exceeded with "
 			    "-fvar-tracking-assignments, retrying without");
@@ -7239,7 +7180,7 @@ vt_find_locations (void)
 	}
     }
 
-  if (success && MAY_HAVE_DEBUG_BIND_INSNS)
+  if (success && MAY_HAVE_DEBUG_INSNS)
     FOR_EACH_BB_FN (bb, cfun)
       gcc_assert (VTI (bb)->flooded);
 
@@ -8491,7 +8432,7 @@ vt_expand_loc_callback (rtx x, bitmap regs,
 
       /* Invalid SUBREGs are ok in debug info.  ??? We could try
 	 alternate expansions for the VALUE as well.  */
-      if (!result && GET_MODE (subreg) != VOIDmode)
+      if (!result)
 	result = gen_rtx_raw_SUBREG (GET_MODE (x), subreg, SUBREG_BYTE (x));
 
       return result;
@@ -8628,7 +8569,7 @@ vt_expand_loc (rtx loc, variable_table_type *vars)
   struct expand_loc_callback_data data;
   rtx result;
 
-  if (!MAY_HAVE_DEBUG_BIND_INSNS)
+  if (!MAY_HAVE_DEBUG_INSNS)
     return loc;
 
   INIT_ELCD (data, vars);
@@ -8705,7 +8646,7 @@ emit_note_insn_var_location (variable **varp, emit_note_data *data)
     {
       machine_mode mode, wider_mode;
       rtx loc2;
-      HOST_WIDE_INT offset, size, wider_size;
+      HOST_WIDE_INT offset;
 
       if (i == 0 && var->onepart)
 	{
@@ -8760,22 +8701,15 @@ emit_note_insn_var_location (variable **varp, emit_note_data *data)
       mode = GET_MODE (var->var_part[i].cur_loc);
       if (mode == VOIDmode && var->onepart)
 	mode = DECL_MODE (decl);
-      /* We ony track subparts of constant-sized objects, since at present
-	 there's no representation for polynomial pieces.  */
-      if (!GET_MODE_SIZE (mode).is_constant (&size))
-	{
-	  complete = false;
-	  continue;
-	}
-      last_limit = offsets[n_var_parts] + size;
+      last_limit = offsets[n_var_parts] + GET_MODE_SIZE (mode);
 
       /* Attempt to merge adjacent registers or memory.  */
+      wider_mode = GET_MODE_WIDER_MODE (mode);
       for (j = i + 1; j < var->n_var_parts; j++)
 	if (last_limit <= VAR_PART_OFFSET (var, j))
 	  break;
       if (j < var->n_var_parts
-	  && GET_MODE_WIDER_MODE (mode).exists (&wider_mode)
-	  && GET_MODE_SIZE (wider_mode).is_constant (&wider_size)
+	  && wider_mode != VOIDmode
 	  && var->var_part[j].cur_loc
 	  && mode == GET_MODE (var->var_part[j].cur_loc)
 	  && (REG_P (loc[n_var_parts]) || MEM_P (loc[n_var_parts]))
@@ -8786,8 +8720,8 @@ emit_note_insn_var_location (variable **varp, emit_note_data *data)
 	  rtx new_loc = NULL;
 
 	  if (REG_P (loc[n_var_parts])
-	      && hard_regno_nregs (REGNO (loc[n_var_parts]), mode) * 2
-		 == hard_regno_nregs (REGNO (loc[n_var_parts]), wider_mode)
+	      && hard_regno_nregs[REGNO (loc[n_var_parts])][mode] * 2
+		 == hard_regno_nregs[REGNO (loc[n_var_parts])][wider_mode]
 	      && end_hard_regno (mode, REGNO (loc[n_var_parts]))
 		 == REGNO (loc2))
 	    {
@@ -8813,12 +8747,14 @@ emit_note_insn_var_location (variable **varp, emit_note_data *data)
 	      if ((REG_P (XEXP (loc[n_var_parts], 0))
 		   && rtx_equal_p (XEXP (loc[n_var_parts], 0),
 				   XEXP (XEXP (loc2, 0), 0))
-		   && INTVAL (XEXP (XEXP (loc2, 0), 1)) == size)
+		   && INTVAL (XEXP (XEXP (loc2, 0), 1))
+		      == GET_MODE_SIZE (mode))
 		  || (GET_CODE (XEXP (loc[n_var_parts], 0)) == PLUS
 		      && CONST_INT_P (XEXP (XEXP (loc[n_var_parts], 0), 1))
 		      && rtx_equal_p (XEXP (XEXP (loc[n_var_parts], 0), 0),
 				      XEXP (XEXP (loc2, 0), 0))
-		      && INTVAL (XEXP (XEXP (loc[n_var_parts], 0), 1)) + size
+		      && INTVAL (XEXP (XEXP (loc[n_var_parts], 0), 1))
+			 + GET_MODE_SIZE (mode)
 			 == INTVAL (XEXP (XEXP (loc2, 0), 1))))
 		new_loc = adjust_address_nv (loc[n_var_parts],
 					     wider_mode, 0);
@@ -8828,7 +8764,7 @@ emit_note_insn_var_location (variable **varp, emit_note_data *data)
 	    {
 	      loc[n_var_parts] = new_loc;
 	      mode = wider_mode;
-	      last_limit = offsets[n_var_parts] + wider_size;
+	      last_limit = offsets[n_var_parts] + GET_MODE_SIZE (mode);
 	      i = j;
 	    }
 	}
@@ -8880,12 +8816,14 @@ emit_note_insn_var_location (variable **varp, emit_note_data *data)
       /* Make sure that the call related notes come first.  */
       while (NEXT_INSN (insn)
 	     && NOTE_P (insn)
-	     && NOTE_KIND (insn) == NOTE_INSN_VAR_LOCATION
-	     && NOTE_DURING_CALL_P (insn))
+	     && ((NOTE_KIND (insn) == NOTE_INSN_VAR_LOCATION
+		  && NOTE_DURING_CALL_P (insn))
+		 || NOTE_KIND (insn) == NOTE_INSN_CALL_ARG_LOCATION))
 	insn = NEXT_INSN (insn);
       if (NOTE_P (insn)
-	  && NOTE_KIND (insn) == NOTE_INSN_VAR_LOCATION
-	  && NOTE_DURING_CALL_P (insn))
+	  && ((NOTE_KIND (insn) == NOTE_INSN_VAR_LOCATION
+	       && NOTE_DURING_CALL_P (insn))
+	      || NOTE_KIND (insn) == NOTE_INSN_CALL_ARG_LOCATION))
 	note = emit_note_after (NOTE_INSN_VAR_LOCATION, insn);
       else
 	note = emit_note_before (NOTE_INSN_VAR_LOCATION, insn);
@@ -9067,7 +9005,7 @@ emit_notes_for_changes (rtx_insn *insn, enum emit_note_where where,
   if (!changed_variables->elements ())
     return;
 
-  if (MAY_HAVE_DEBUG_BIND_INSNS)
+  if (MAY_HAVE_DEBUG_INSNS)
     process_changed_values (htab);
 
   data.insn = insn;
@@ -9228,6 +9166,7 @@ emit_notes_in_bb (basic_block bb, dataflow_set *set)
 	    emit_notes_for_changes (insn, EMIT_NOTE_AFTER_CALL_INSN, set->vars);
 	    {
 	      rtx arguments = mo->u.loc, *p = &arguments;
+	      rtx_note *note;
 	      while (*p)
 		{
 		  XEXP (XEXP (*p, 0), 1)
@@ -9235,11 +9174,7 @@ emit_notes_in_bb (basic_block bb, dataflow_set *set)
 				     shared_hash_htab (set->vars));
 		  /* If expansion is successful, keep it in the list.  */
 		  if (XEXP (XEXP (*p, 0), 1))
-		    {
-		      XEXP (XEXP (*p, 0), 1)
-			= copy_rtx_if_shared (XEXP (XEXP (*p, 0), 1));
-		      p = &XEXP (*p, 1);
-		    }
+		    p = &XEXP (*p, 1);
 		  /* Otherwise, if the following item is data_value for it,
 		     drop it too too.  */
 		  else if (XEXP (*p, 1)
@@ -9255,7 +9190,8 @@ emit_notes_in_bb (basic_block bb, dataflow_set *set)
 		  else
 		    *p = XEXP (*p, 1);
 		}
-	      add_reg_note (insn, REG_CALL_ARG_LOCATION, arguments);
+	      note = emit_note_after (NOTE_INSN_CALL_ARG_LOCATION, insn);
+	      NOTE_VAR_LOCATION (note) = arguments;
 	    }
 	    break;
 
@@ -9553,8 +9489,10 @@ vt_emit_notes (void)
      delete_variable_part).  */
   emit_notes = true;
 
-  if (MAY_HAVE_DEBUG_BIND_INSNS)
-    dropped_values = new variable_table_type (cselib_get_next_uid () * 2);
+  if (MAY_HAVE_DEBUG_INSNS)
+    {
+      dropped_values = new variable_table_type (cselib_get_next_uid () * 2);
+    }
 
   dataflow_set_init (&cur);
 
@@ -9564,13 +9502,13 @@ vt_emit_notes (void)
 	 subsequent basic blocks.  */
       emit_notes_for_differences (BB_HEAD (bb), &cur, &VTI (bb)->in);
 
-      if (MAY_HAVE_DEBUG_BIND_INSNS)
+      if (MAY_HAVE_DEBUG_INSNS)
 	local_get_addr_cache = new hash_map<rtx, rtx>;
 
       /* Emit the notes for the changes in the basic block itself.  */
       emit_notes_in_bb (bb, &cur);
 
-      if (MAY_HAVE_DEBUG_BIND_INSNS)
+      if (MAY_HAVE_DEBUG_INSNS)
 	delete local_get_addr_cache;
       local_get_addr_cache = NULL;
 
@@ -9586,7 +9524,7 @@ vt_emit_notes (void)
 
   dataflow_set_destroy (&cur);
 
-  if (MAY_HAVE_DEBUG_BIND_INSNS)
+  if (MAY_HAVE_DEBUG_INSNS)
     delete dropped_values;
   dropped_values = NULL;
 
@@ -9597,7 +9535,7 @@ vt_emit_notes (void)
    assign declaration to *DECLP and offset to *OFFSETP, and return true.  */
 
 static bool
-vt_get_decl_and_offset (rtx rtl, tree *declp, poly_int64 *offsetp)
+vt_get_decl_and_offset (rtx rtl, tree *declp, HOST_WIDE_INT *offsetp)
 {
   if (REG_P (rtl))
     {
@@ -9623,10 +9561,8 @@ vt_get_decl_and_offset (rtx rtl, tree *declp, poly_int64 *offsetp)
 	    decl = REG_EXPR (reg);
 	  if (REG_EXPR (reg) != decl)
 	    break;
-	  HOST_WIDE_INT this_offset;
-	  if (!track_offset_p (REG_OFFSET (reg), &this_offset))
-	    break;
-	  offset = MIN (offset, this_offset);
+	  if (REG_OFFSET (reg) < offset)
+	    offset = REG_OFFSET (reg);
 	}
 
       if (i == len)
@@ -9641,7 +9577,7 @@ vt_get_decl_and_offset (rtx rtl, tree *declp, poly_int64 *offsetp)
       if (MEM_ATTRS (rtl))
 	{
 	  *declp = MEM_EXPR (rtl);
-	  *offsetp = int_mem_offset (rtl);
+	  *offsetp = INT_MEM_OFFSET (rtl);
 	  return true;
 	}
     }
@@ -9670,10 +9606,9 @@ vt_add_function_parameter (tree parm)
   rtx incoming = DECL_INCOMING_RTL (parm);
   tree decl;
   machine_mode mode;
-  poly_int64 offset;
+  HOST_WIDE_INT offset;
   dataflow_set *out;
   decl_or_value dv;
-  bool incoming_ok = true;
 
   if (TREE_CODE (parm) != PARM_DECL)
     return;
@@ -9764,7 +9699,6 @@ vt_add_function_parameter (tree parm)
 
   if (!vt_get_decl_and_offset (incoming, &decl, &offset))
     {
-      incoming_ok = false;
       if (MEM_P (incoming))
 	{
 	  /* This means argument is passed by invisible reference.  */
@@ -9795,8 +9729,7 @@ vt_add_function_parameter (tree parm)
       offset = 0;
     }
 
-  HOST_WIDE_INT const_offset;
-  if (!track_loc_p (incoming, parm, offset, false, &mode, &const_offset))
+  if (!track_loc_p (incoming, parm, offset, false, &mode, &offset))
     return;
 
   out = &VTI (ENTRY_BLOCK_PTR_FOR_FN (cfun))->out;
@@ -9817,7 +9750,7 @@ vt_add_function_parameter (tree parm)
 	 arguments passed by invisible reference aren't dealt with
 	 above: incoming-rtl will have Pmode rather than the
 	 expected mode for the type.  */
-      if (const_offset)
+      if (offset)
 	return;
 
       lowpart = var_lowpart (mode, incoming);
@@ -9832,7 +9765,7 @@ vt_add_function_parameter (tree parm)
       if (val)
 	{
 	  preserve_value (val);
-	  set_variable_part (out, val->val_rtx, dv, const_offset,
+	  set_variable_part (out, val->val_rtx, dv, offset,
 			     VAR_INIT_STATUS_INITIALIZED, NULL, INSERT);
 	  dv = dv_from_value (val->val_rtx);
 	}
@@ -9853,9 +9786,9 @@ vt_add_function_parameter (tree parm)
     {
       incoming = var_lowpart (mode, incoming);
       gcc_assert (REGNO (incoming) < FIRST_PSEUDO_REGISTER);
-      attrs_list_insert (&out->regs[REGNO (incoming)], dv, const_offset,
+      attrs_list_insert (&out->regs[REGNO (incoming)], dv, offset,
 			 incoming);
-      set_variable_part (out, incoming, dv, const_offset,
+      set_variable_part (out, incoming, dv, offset,
 			 VAR_INIT_STATUS_INITIALIZED, NULL, INSERT);
       if (dv_is_value_p (dv))
 	{
@@ -9883,26 +9816,20 @@ vt_add_function_parameter (tree parm)
     {
       int i;
 
-      /* The following code relies on vt_get_decl_and_offset returning true for
-	 incoming, which might not be always the case.  */
-      if (!incoming_ok)
-	return;
       for (i = 0; i < XVECLEN (incoming, 0); i++)
 	{
 	  rtx reg = XEXP (XVECEXP (incoming, 0, i), 0);
-	  /* vt_get_decl_and_offset has already checked that the offset
-	     is a valid variable part.  */
-	  const_offset = get_tracked_reg_offset (reg);
+	  offset = REG_OFFSET (reg);
 	  gcc_assert (REGNO (reg) < FIRST_PSEUDO_REGISTER);
-	  attrs_list_insert (&out->regs[REGNO (reg)], dv, const_offset, reg);
-	  set_variable_part (out, reg, dv, const_offset,
+	  attrs_list_insert (&out->regs[REGNO (reg)], dv, offset, reg);
+	  set_variable_part (out, reg, dv, offset,
 			     VAR_INIT_STATUS_INITIALIZED, NULL, INSERT);
 	}
     }
   else if (MEM_P (incoming))
     {
       incoming = var_lowpart (mode, incoming);
-      set_variable_part (out, incoming, dv, const_offset,
+      set_variable_part (out, incoming, dv, offset,
 			 VAR_INIT_STATUS_INITIALIZED, NULL, INSERT);
     }
 }
@@ -9957,7 +9884,7 @@ vt_init_cfa_base (void)
       cfa_base_rtx = NULL_RTX;
       return;
     }
-  if (!MAY_HAVE_DEBUG_BIND_INSNS)
+  if (!MAY_HAVE_DEBUG_INSNS)
     return;
 
   /* Tell alias analysis that cfa_base_rtx should share
@@ -9971,35 +9898,6 @@ vt_init_cfa_base (void)
 				 VOIDmode, get_insns ());
   preserve_value (val);
   cselib_preserve_cfa_base_value (val, REGNO (cfa_base_rtx));
-}
-
-/* Reemit INSN, a MARKER_DEBUG_INSN, as a note.  */
-
-static rtx_insn *
-reemit_marker_as_note (rtx_insn *insn)
-{
-  gcc_checking_assert (DEBUG_MARKER_INSN_P (insn));
-
-  enum insn_note kind = INSN_DEBUG_MARKER_KIND (insn);
-
-  switch (kind)
-    {
-    case NOTE_INSN_BEGIN_STMT:
-    case NOTE_INSN_INLINE_ENTRY:
-      {
-	rtx_insn *note = NULL;
-	if (cfun->debug_nonbind_markers)
-	  {
-	    note = emit_note_before (kind, insn);
-	    NOTE_MARKER_LOCATION (note) = INSN_LOCATION (insn);
-	  }
-	delete_insn (insn);
-	return note;
-      }
-
-    default:
-      gcc_unreachable ();
-    }
 }
 
 /* Allocate and initialize the data structures for variable tracking
@@ -10028,7 +9926,7 @@ vt_initialize (void)
       VTI (bb)->permp = NULL;
     }
 
-  if (MAY_HAVE_DEBUG_BIND_INSNS)
+  if (MAY_HAVE_DEBUG_INSNS)
     {
       cselib_init (CSELIB_RECORD_MEMORY | CSELIB_PRESERVE_CONSTANTS);
       scratch_regs = BITMAP_ALLOC (NULL);
@@ -10041,7 +9939,7 @@ vt_initialize (void)
       global_get_addr_cache = NULL;
     }
 
-  if (MAY_HAVE_DEBUG_BIND_INSNS)
+  if (MAY_HAVE_DEBUG_INSNS)
     {
       rtx reg, expr;
       int ofst;
@@ -10171,7 +10069,7 @@ vt_initialize (void)
       HOST_WIDE_INT pre, post = 0;
       basic_block first_bb, last_bb;
 
-      if (MAY_HAVE_DEBUG_BIND_INSNS)
+      if (MAY_HAVE_DEBUG_INSNS)
 	{
 	  cselib_record_sets_hook = add_with_sets;
 	  if (dump_file && (dump_flags & TDF_DETAILS))
@@ -10198,9 +10096,8 @@ vt_initialize (void)
 	{
 	  HOST_WIDE_INT offset = VTI (bb)->out.stack_adjust;
 	  VTI (bb)->out.stack_adjust = VTI (bb)->in.stack_adjust;
-
-	  rtx_insn *next;
-	  FOR_BB_INSNS_SAFE (bb, insn, next)
+	  for (insn = BB_HEAD (bb); insn != NEXT_INSN (BB_END (bb));
+	       insn = NEXT_INSN (insn))
 	    {
 	      if (INSN_P (insn))
 		{
@@ -10223,13 +10120,7 @@ vt_initialize (void)
 
 		  cselib_hook_called = false;
 		  adjust_insn (bb, insn);
-		  if (DEBUG_MARKER_INSN_P (insn))
-		    {
-		      reemit_marker_as_note (insn);
-		      continue;
-		    }
-
-		  if (MAY_HAVE_DEBUG_BIND_INSNS)
+		  if (MAY_HAVE_DEBUG_INSNS)
 		    {
 		      if (CALL_P (insn))
 			prepare_call_arguments (bb, insn);
@@ -10264,7 +10155,7 @@ vt_initialize (void)
 		      vt_init_cfa_base ();
 		      hard_frame_pointer_adjustment = fp_cfa_offset;
 		      /* Disassociate sp from fp now.  */
-		      if (MAY_HAVE_DEBUG_BIND_INSNS)
+		      if (MAY_HAVE_DEBUG_INSNS)
 			{
 			  cselib_val *v;
 			  cselib_invalidate_rtx (stack_pointer_rtx);
@@ -10284,7 +10175,7 @@ vt_initialize (void)
 
       bb = last_bb;
 
-      if (MAY_HAVE_DEBUG_BIND_INSNS)
+      if (MAY_HAVE_DEBUG_INSNS)
 	{
 	  cselib_preserve_only_values ();
 	  cselib_reset_table (cselib_get_next_uid ());
@@ -10304,40 +10195,10 @@ vt_initialize (void)
 
 static int debug_label_num = 1;
 
-/* Remove from the insn stream a single debug insn used for
-   variable tracking at assignments.  */
+/* Get rid of all debug insns from the insn stream.  */
 
-static inline void
-delete_vta_debug_insn (rtx_insn *insn)
-{
-  if (DEBUG_MARKER_INSN_P (insn))
-    {
-      reemit_marker_as_note (insn);
-      return;
-    }
-
-  tree decl = INSN_VAR_LOCATION_DECL (insn);
-  if (TREE_CODE (decl) == LABEL_DECL
-      && DECL_NAME (decl)
-      && !DECL_RTL_SET_P (decl))
-    {
-      PUT_CODE (insn, NOTE);
-      NOTE_KIND (insn) = NOTE_INSN_DELETED_DEBUG_LABEL;
-      NOTE_DELETED_LABEL_NAME (insn)
-	= IDENTIFIER_POINTER (DECL_NAME (decl));
-      SET_DECL_RTL (decl, insn);
-      CODE_LABEL_NUMBER (insn) = debug_label_num++;
-    }
-  else
-    delete_insn (insn);
-}
-
-/* Remove from the insn stream all debug insns used for variable
-   tracking at assignments.  USE_CFG should be false if the cfg is no
-   longer usable.  */
-
-void
-delete_vta_debug_insns (bool use_cfg)
+static void
+delete_debug_insns (void)
 {
   basic_block bb;
   rtx_insn *insn, *next;
@@ -10345,20 +10206,27 @@ delete_vta_debug_insns (bool use_cfg)
   if (!MAY_HAVE_DEBUG_INSNS)
     return;
 
-  if (use_cfg)
-    FOR_EACH_BB_FN (bb, cfun)
-      {
-	FOR_BB_INSNS_SAFE (bb, insn, next)
-	  if (DEBUG_INSN_P (insn))
-	    delete_vta_debug_insn (insn);
-      }
-  else
-    for (insn = get_insns (); insn; insn = next)
-      {
-	next = NEXT_INSN (insn);
+  FOR_EACH_BB_FN (bb, cfun)
+    {
+      FOR_BB_INSNS_SAFE (bb, insn, next)
 	if (DEBUG_INSN_P (insn))
-	  delete_vta_debug_insn (insn);
-      }
+	  {
+	    tree decl = INSN_VAR_LOCATION_DECL (insn);
+	    if (TREE_CODE (decl) == LABEL_DECL
+		&& DECL_NAME (decl)
+		&& !DECL_RTL_SET_P (decl))
+	      {
+		PUT_CODE (insn, NOTE);
+		NOTE_KIND (insn) = NOTE_INSN_DELETED_DEBUG_LABEL;
+		NOTE_DELETED_LABEL_NAME (insn)
+		  = IDENTIFIER_POINTER (DECL_NAME (decl));
+		SET_DECL_RTL (decl, insn);
+		CODE_LABEL_NUMBER (insn) = debug_label_num++;
+	      }
+	    else
+	      delete_insn (insn);
+	  }
+    }
 }
 
 /* Run a fast, BB-local only version of var tracking, to take care of
@@ -10371,7 +10239,7 @@ static void
 vt_debug_insns_local (bool skipped ATTRIBUTE_UNUSED)
 {
   /* ??? Just skip it all for now.  */
-  delete_vta_debug_insns (true);
+  delete_debug_insns ();
 }
 
 /* Free the data structures needed for variable tracking.  */
@@ -10406,7 +10274,7 @@ vt_finalize (void)
   location_chain_pool.release ();
   shared_hash_pool.release ();
 
-  if (MAY_HAVE_DEBUG_BIND_INSNS)
+  if (MAY_HAVE_DEBUG_INSNS)
     {
       if (global_get_addr_cache)
 	delete global_get_addr_cache;
@@ -10436,23 +10304,17 @@ variable_tracking_main_1 (void)
 {
   bool success;
 
-  /* We won't be called as a separate pass if flag_var_tracking is not
-     set, but final may call us to turn debug markers into notes.  */
-  if ((!flag_var_tracking && MAY_HAVE_DEBUG_INSNS)
-      || flag_var_tracking_assignments < 0
+  if (flag_var_tracking_assignments < 0
       /* Var-tracking right now assumes the IR doesn't contain
 	 any pseudos at this point.  */
       || targetm.no_register_allocation)
     {
-      delete_vta_debug_insns (true);
+      delete_debug_insns ();
       return 0;
     }
 
-  if (!flag_var_tracking)
-    return 0;
-
-  if (n_basic_blocks_for_fn (cfun) > 500
-      && n_edges_for_fn (cfun) / n_basic_blocks_for_fn (cfun) >= 20)
+  if (n_basic_blocks_for_fn (cfun) > 500 &&
+      n_edges_for_fn (cfun) / n_basic_blocks_for_fn (cfun) >= 20)
     {
       vt_debug_insns_local (true);
       return 0;
@@ -10472,7 +10334,7 @@ variable_tracking_main_1 (void)
     {
       vt_finalize ();
 
-      delete_vta_debug_insns (true);
+      delete_debug_insns ();
 
       /* This is later restored by our caller.  */
       flag_var_tracking_assignments = 0;

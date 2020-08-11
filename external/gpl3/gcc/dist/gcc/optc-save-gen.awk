@@ -1,4 +1,4 @@
-#  Copyright (C) 2003-2018 Free Software Foundation, Inc.
+#  Copyright (C) 2003-2017 Free Software Foundation, Inc.
 #  Contributed by Kelley Cook, June 2004.
 #  Original code from Neil Booth, May 2003.
 #
@@ -41,10 +41,13 @@ print "#include " quote "flags.h" quote
 print "#include " quote "target.h" quote
 print "#include " quote "inchash.h" quote
 print "#include " quote "hash-set.h" quote
+print "#include " quote "machmode.h" quote
 print "#include " quote "vec.h" quote
+print "#include " quote "double-int.h" quote
 print "#include " quote "input.h" quote
 print "#include " quote "alias.h" quote
 print "#include " quote "symtab.h" quote
+print "#include " quote "wide-int.h" quote
 print "#include " quote "inchash.h" quote
 print "#include " quote "tree.h" quote
 print "#include " quote "fold-const.h" quote
@@ -680,7 +683,7 @@ for (i = 0; i < n_target_array; i++) {
 }
 for (i = 0; i < n_target_val; i++) {
 	name = var_target_val[i]
-	print "  hstate.add_hwi (ptr->" name");";
+	print "  hstate.add_wide_int (ptr->" name");";
 }
 print "  return hstate.end ();";
 print "}";
@@ -770,7 +773,7 @@ for (i = 0; i < n_opt_val; i++) {
 	if (!var_opt_hash[i])
 		continue;
 	name = var_opt_val[i]
-	print "  hstate.add_hwi (ptr->" name");";
+	print "  hstate.add_wide_int (ptr->" name");";
 }
 print "  return hstate.end ();";
 print "}";

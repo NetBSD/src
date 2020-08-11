@@ -1,5 +1,5 @@
 /* Define builtin-in macros for the C family front ends.
-   Copyright (C) 2002-2018 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -73,27 +73,22 @@ mode_has_fma (machine_mode mode)
   switch (mode)
     {
 #ifdef HAVE_fmasf4
-    case E_SFmode:
+    case SFmode:
       return !!HAVE_fmasf4;
 #endif
 
 #ifdef HAVE_fmadf4
-    case E_DFmode:
+    case DFmode:
       return !!HAVE_fmadf4;
 #endif
 
-#ifdef HAVE_fmakf4	/* PowerPC if long double != __float128.  */
-    case E_KFmode:
-      return !!HAVE_fmakf4;
-#endif
-
 #ifdef HAVE_fmaxf4
-    case E_XFmode:
+    case XFmode:
       return !!HAVE_fmaxf4;
 #endif
 
 #ifdef HAVE_fmatf4
-    case E_TFmode:
+    case TFmode:
       return !!HAVE_fmatf4;
 #endif
 
@@ -970,15 +965,11 @@ c_cpp_builtins (cpp_reader *pfile)
 	  cpp_define (pfile, "__cpp_capture_star_this=201603");
 	  cpp_define (pfile, "__cpp_inline_variables=201606");
 	  cpp_define (pfile, "__cpp_aggregate_bases=201603");
-	  cpp_define (pfile, "__cpp_deduction_guides=201611");
+	  cpp_define (pfile, "__cpp_deduction_guides=201606");
 	  cpp_define (pfile, "__cpp_noexcept_function_type=201510");
-	  /* Old macro, superseded by
-	     __cpp_nontype_template_parameter_auto.  */
 	  cpp_define (pfile, "__cpp_template_auto=201606");
 	  cpp_define (pfile, "__cpp_structured_bindings=201606");
 	  cpp_define (pfile, "__cpp_variadic_using=201611");
-	  cpp_define (pfile, "__cpp_guaranteed_copy_elision=201606");
-	  cpp_define (pfile, "__cpp_nontype_template_parameter_auto=201606");
 	}
       if (flag_concepts)
 	cpp_define (pfile, "__cpp_concepts=201507");
@@ -1128,8 +1119,8 @@ c_cpp_builtins (cpp_reader *pfile)
 	       floatn_nx_types[i].extended ? "X" : "");
       sprintf (csuffix, "F%d%s", floatn_nx_types[i].n,
 	       floatn_nx_types[i].extended ? "x" : "");
-      builtin_define_float_constants (prefix, ggc_strdup (csuffix), "%s",
-				      csuffix, FLOATN_NX_TYPE_NODE (i));
+      builtin_define_float_constants (prefix, ggc_strdup (csuffix), "%s", NULL,
+				      FLOATN_NX_TYPE_NODE (i));
     }
 
   /* For decfloat.h.  */
@@ -1197,10 +1188,10 @@ c_cpp_builtins (cpp_reader *pfile)
   if (flag_building_libgcc)
     {
       /* Properties of floating-point modes for libgcc2.c.  */
-      opt_scalar_float_mode mode_iter;
-      FOR_EACH_MODE_IN_CLASS (mode_iter, MODE_FLOAT)
+      for (machine_mode mode = GET_CLASS_NARROWEST_MODE (MODE_FLOAT);
+	   mode != VOIDmode;
+	   mode = GET_MODE_WIDER_MODE (mode))
 	{
-	  scalar_float_mode mode = mode_iter.require ();
 	  const char *name = GET_MODE_NAME (mode);
 	  char *macro_name
 	    = (char *) alloca (strlen (name)
@@ -1624,7 +1615,7 @@ builtin_define_with_hex_fp_value (const char *macro,
 				  const char *fp_cast)
 {
   REAL_VALUE_TYPE real;
-  char dec_str[64], buf[256], buf1[128], buf2[64];
+  char dec_str[64], buf1[256], buf2[256];
 
   /* This is very expensive, so if possible expand them lazily.  */
   if (lazy_hex_fp_value_count < LAZY_HEX_FP_VALUES_CNT
@@ -1667,11 +1658,11 @@ builtin_define_with_hex_fp_value (const char *macro,
 
   /* Assemble the macro in the following fashion
      macro = fp_cast [dec_str fp_suffix] */
-  sprintf (buf2, "%s%s", dec_str, fp_suffix);
-  sprintf (buf1, fp_cast, buf2);
-  sprintf (buf, "%s=%s", macro, buf1);
+  sprintf (buf1, "%s%s", dec_str, fp_suffix);
+  sprintf (buf2, fp_cast, buf1);
+  sprintf (buf1, "%s=%s", macro, buf2);
 
-  cpp_define (parse_in, buf);
+  cpp_define (parse_in, buf1);
 }
 
 /* Return a string constant for the suffix for a value of type TYPE

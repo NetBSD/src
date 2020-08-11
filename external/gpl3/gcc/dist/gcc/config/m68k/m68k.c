@@ -1,5 +1,5 @@
 /* Subroutines for insn-output.c for Motorola 68000 family.
-   Copyright (C) 1987-2018 Free Software Foundation, Inc.
+   Copyright (C) 1987-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -17,16 +17,12 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-#define IN_TARGET_CODE 1
-
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
 #include "backend.h"
 #include "cfghooks.h"
 #include "tree.h"
-#include "stringpool.h"
-#include "attribs.h"
 #include "rtl.h"
 #include "df.h"
 #include "alias.h"
@@ -178,7 +174,7 @@ static bool m68k_return_in_memory (const_tree, const_tree);
 #endif
 static void m68k_output_dwarf_dtprel (FILE *, int, rtx) ATTRIBUTE_UNUSED;
 static void m68k_trampoline_init (rtx, tree, rtx);
-static poly_int64 m68k_return_pops_args (tree, tree, poly_int64);
+static int m68k_return_pops_args (tree, tree, int);
 static rtx m68k_delegitimize_address (rtx);
 static void m68k_function_arg_advance (cumulative_args_t, machine_mode,
 				       const_tree, bool);
@@ -189,9 +185,6 @@ static bool m68k_output_addr_const_extra (FILE *, rtx);
 static void m68k_init_sync_libfuncs (void) ATTRIBUTE_UNUSED;
 static enum flt_eval_method
 m68k_excess_precision (enum excess_precision_type);
-static unsigned int m68k_hard_regno_nregs (unsigned int, machine_mode);
-static bool m68k_hard_regno_mode_ok (unsigned int, machine_mode);
-static bool m68k_modes_tieable_p (machine_mode, machine_mode);
 static machine_mode m68k_promote_function_mode (const_tree, machine_mode,
 						int *, const_tree, int);
 
@@ -341,28 +334,20 @@ static machine_mode m68k_promote_function_mode (const_tree, machine_mode,
 #undef TARGET_ATOMIC_TEST_AND_SET_TRUEVAL
 #define TARGET_ATOMIC_TEST_AND_SET_TRUEVAL 128
 
-#undef TARGET_HARD_REGNO_NREGS
-#define TARGET_HARD_REGNO_NREGS m68k_hard_regno_nregs
-#undef TARGET_HARD_REGNO_MODE_OK
-#define TARGET_HARD_REGNO_MODE_OK m68k_hard_regno_mode_ok
-
-#undef TARGET_MODES_TIEABLE_P
-#define TARGET_MODES_TIEABLE_P m68k_modes_tieable_p
-
 #undef TARGET_PROMOTE_FUNCTION_MODE
 #define TARGET_PROMOTE_FUNCTION_MODE m68k_promote_function_mode
 
 static const struct attribute_spec m68k_attribute_table[] =
 {
-  /* { name, min_len, max_len, decl_req, type_req, fn_type_req,
-       affects_type_identity, handler, exclude } */
-  { "interrupt", 0, 0, true,  false, false, false,
-    m68k_handle_fndecl_attribute, NULL },
-  { "interrupt_handler", 0, 0, true,  false, false, false,
-    m68k_handle_fndecl_attribute, NULL },
-  { "interrupt_thread", 0, 0, true,  false, false, false,
-    m68k_handle_fndecl_attribute, NULL },
-  { NULL, 0, 0, false, false, false, false, NULL, NULL }
+  /* { name, min_len, max_len, decl_req, type_req, fn_type_req, handler,
+       affects_type_identity } */
+  { "interrupt", 0, 0, true,  false, false, m68k_handle_fndecl_attribute,
+    false },
+  { "interrupt_handler", 0, 0, true,  false, false,
+    m68k_handle_fndecl_attribute, false },
+  { "interrupt_thread", 0, 0, true,  false, false,
+    m68k_handle_fndecl_attribute, false },
+  { NULL,                0, 0, false, false, false, NULL, false }
 };
 
 struct gcc_target targetm = TARGET_INITIALIZER;
@@ -1639,11 +1624,11 @@ output_dbcc_and_branch (rtx *operands)
      to compensate for the fact that dbcc decrements in HImode.  */
   switch (GET_MODE (operands[0]))
     {
-      case E_SImode:
+      case SImode:
         output_asm_insn ("clr%.w %0\n\tsubq%.l #1,%0\n\tjpl %l1", operands);
         break;
 
-      case E_HImode:
+      case HImode:
         break;
 
       default:
@@ -2558,7 +2543,7 @@ m68k_call_tls_get_addr (rtx x, rtx eqv, enum m68k_reloc reloc)
 
   m68k_libcall_value_in_a0_p = true;
   a0 = emit_library_call_value (m68k_get_tls_get_addr (), NULL_RTX, LCT_PURE,
-				Pmode, x, Pmode);
+				Pmode, 1, x, Pmode);
   m68k_libcall_value_in_a0_p = false;
   
   insns = get_insns ();
@@ -2607,7 +2592,7 @@ m68k_call_m68k_read_tp (void)
   /* Emit the call sequence.  */
   m68k_libcall_value_in_a0_p = true;
   a0 = emit_library_call_value (m68k_get_m68k_read_tp (), NULL_RTX, LCT_PURE,
-				Pmode);
+				Pmode, 0);
   m68k_libcall_value_in_a0_p = false;
   insns = get_insns ();
   end_sequence ();
@@ -3528,7 +3513,8 @@ output_reg_adjust (rtx reg, int n)
 {
   const char *s;
 
-  gcc_assert (GET_MODE (reg) == SImode && n >= -12 && n != 0 && n <= 12);
+  gcc_assert (GET_MODE (reg) == SImode
+	      && -12 <= n && n != 0 && n <= 12);
 
   switch (n)
     {
@@ -3570,7 +3556,8 @@ emit_reg_adjust (rtx reg1, int n)
 {
   rtx reg2;
 
-  gcc_assert (GET_MODE (reg1) == SImode && n >= -12 && n != 0 && n <= 12);
+  gcc_assert (GET_MODE (reg1) == SImode
+	      && -12 <= n && n != 0 && n <= 12);
 
   reg1 = copy_rtx (reg1);
   reg2 = copy_rtx (reg1);
@@ -5186,26 +5173,12 @@ m68k_hard_regno_rename_ok (unsigned int old_reg ATTRIBUTE_UNUSED,
   return 1;
 }
 
-/* Implement TARGET_HARD_REGNO_NREGS.
+/* Value is true if hard register REGNO can hold a value of machine-mode
+   MODE.  On the 68000, we let the cpu registers can hold any mode, but
+   restrict the 68881 registers to floating-point modes.  */
 
-   On the m68k, ordinary registers hold 32 bits worth;
-   for the 68881 registers, a single register is always enough for
-   anything that can be stored in them at all.  */
-
-static unsigned int
-m68k_hard_regno_nregs (unsigned int regno, machine_mode mode)
-{
-  if (regno >= 16)
-    return GET_MODE_NUNITS (mode);
-  return CEIL (GET_MODE_SIZE (mode), UNITS_PER_WORD);
-}
-
-/* Implement TARGET_HARD_REGNO_MODE_OK.  On the 68000, we let the cpu
-   registers can hold any mode, but restrict the 68881 registers to
-   floating-point modes.  */
-
-static bool
-m68k_hard_regno_mode_ok (unsigned int regno, machine_mode mode)
+bool
+m68k_regno_mode_ok (int regno, machine_mode mode)
 {
   if (DATA_REGNO_P (regno))
     {
@@ -5228,18 +5201,6 @@ m68k_hard_regno_mode_ok (unsigned int regno, machine_mode mode)
 	return true;
     }
   return false;
-}
-
-/* Implement TARGET_MODES_TIEABLE_P.  */
-
-static bool
-m68k_modes_tieable_p (machine_mode mode1, machine_mode mode2)
-{
-  return (!TARGET_HARD_FLOAT
-	  || ((GET_MODE_CLASS (mode1) == MODE_FLOAT
-	       || GET_MODE_CLASS (mode1) == MODE_COMPLEX_FLOAT)
-	      == (GET_MODE_CLASS (mode2) == MODE_FLOAT
-		  || GET_MODE_CLASS (mode2) == MODE_COMPLEX_FLOAT)));
 }
 
 /* Implement SECONDARY_RELOAD_CLASS.  */
@@ -5312,9 +5273,9 @@ rtx
 m68k_libcall_value (machine_mode mode)
 {
   switch (mode) {
-  case E_SFmode:
-  case E_DFmode:
-  case E_XFmode:
+  case SFmode:
+  case DFmode:
+  case XFmode:
     if (TARGET_68881)
       return gen_rtx_REG (mode, FP0_REG);
     break;
@@ -5335,9 +5296,9 @@ m68k_function_value (const_tree valtype, const_tree func ATTRIBUTE_UNUSED)
 
   mode = TYPE_MODE (valtype);
   switch (mode) {
-  case E_SFmode:
-  case E_DFmode:
-  case E_XFmode:
+  case SFmode:
+  case DFmode:
+  case XFmode:
     if (TARGET_68881)
       return gen_rtx_REG (mode, FP0_REG);
     break;
@@ -5563,11 +5524,11 @@ sched_attr_op_type (rtx_insn *insn, bool opx_p, bool address_p)
     {
       switch (GET_MODE (op))
 	{
-	case E_SFmode:
+	case SFmode:
 	  return OP_TYPE_IMM_W;
 
-	case E_VOIDmode:
-	case E_DFmode:
+	case VOIDmode:
+	case DFmode:
 	  return OP_TYPE_IMM_L;
 
 	default:
@@ -5581,13 +5542,13 @@ sched_attr_op_type (rtx_insn *insn, bool opx_p, bool address_p)
     {
       switch (GET_MODE (op))
 	{
-	case E_QImode:
+	case QImode:
 	  return OP_TYPE_IMM_Q;
 
-	case E_HImode:
+	case HImode:
 	  return OP_TYPE_IMM_W;
 
-	case E_SImode:
+	case SImode:
 	  return OP_TYPE_IMM_L;
 
 	default:
@@ -6536,14 +6497,14 @@ m68k_trampoline_init (rtx m_tramp, tree fndecl, rtx chain_value)
    standard Unix calling sequences.  If the option is not selected,
    the caller must always pop the args.  */
 
-static poly_int64
-m68k_return_pops_args (tree fundecl, tree funtype, poly_int64 size)
+static int
+m68k_return_pops_args (tree fundecl, tree funtype, int size)
 {
   return ((TARGET_RTD
 	   && (!fundecl
 	       || TREE_CODE (fundecl) != IDENTIFIER_NODE)
 	   && (!stdarg_p (funtype)))
-	  ? (HOST_WIDE_INT) size : 0);
+	  ? size : 0);
 }
 
 /* Make sure everything's fine if we *don't* have a given processor.
@@ -6613,17 +6574,6 @@ m68k_excess_precision (enum excess_precision_type type)
 	gcc_unreachable ();
     }
   return FLT_EVAL_METHOD_UNPREDICTABLE;
-}
-
-/* Implement PUSH_ROUNDING.  On the 680x0, sp@- in a byte insn really pushes
-   a word.  On the ColdFire, sp@- in a byte insn pushes just a byte.  */
-
-poly_int64
-m68k_push_rounding (poly_int64 bytes)
-{
-  if (TARGET_COLDFIRE)
-    return bytes;
-  return (bytes + 1) & ~1;
 }
 
 /* Implement TARGET_PROMOTE_FUNCTION_MODE.  */
