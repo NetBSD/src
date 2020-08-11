@@ -1,9 +1,9 @@
-/*	$NetBSD: proto-mdb.h,v 1.1.1.4 2019/08/08 13:31:44 christos Exp $	*/
+/*	$NetBSD: proto-mdb.h,v 1.1.1.5 2020/08/11 13:12:16 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2019 The OpenLDAP Foundation.
+ * Copyright 2000-2020 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -50,6 +50,7 @@ void mdb_attr_info_free( AttrInfo *ai );
 
 int mdb_ad_read( struct mdb_info *mdb, MDB_txn *txn );
 int mdb_ad_get( struct mdb_info *mdb, MDB_txn *txn, AttributeDescription *ad );
+void mdb_ad_unwind( struct mdb_info *mdb, int prev_ads );
 
 /*
  * config.c

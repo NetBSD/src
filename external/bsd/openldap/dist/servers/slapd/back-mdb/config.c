@@ -1,10 +1,10 @@
-/*	$NetBSD: config.c,v 1.1.1.4 2019/08/08 13:31:44 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.1.1.5 2020/08/11 13:12:16 christos Exp $	*/
 
 /* config.c - mdb backend configuration file routine */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2019 The OpenLDAP Foundation.
+ * Copyright 2000-2020 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: config.c,v 1.1.1.4 2019/08/08 13:31:44 christos Exp $");
+__RCSID("$NetBSD: config.c,v 1.1.1.5 2020/08/11 13:12:16 christos Exp $");
 
 #include "portable.h"
 
@@ -526,22 +526,22 @@ mdb_cf_gen( ConfigArgs *c )
 		}
 		break;
 	case MDB_CHKPT: {
-		long	l;
-		mdb->mi_txn_cp = 1;
-		if ( lutil_atolx( &l, c->argv[1], 0 ) != 0 ) {
+		unsigned cp_kbyte, cp_min;
+		if ( lutil_atoux( &cp_kbyte, c->argv[1], 0 ) != 0 ) {
 			fprintf( stderr, "%s: "
 				"invalid kbyte \"%s\" in \"checkpoint\".\n",
 				c->log, c->argv[1] );
 			return 1;
 		}
-		mdb->mi_txn_cp_kbyte = l;
-		if ( lutil_atolx( &l, c->argv[2], 0 ) != 0 ) {
+		if ( lutil_atoux( &cp_min, c->argv[2], 0 ) != 0 ) {
 			fprintf( stderr, "%s: "
 				"invalid minutes \"%s\" in \"checkpoint\".\n",
 				c->log, c->argv[2] );
 			return 1;
 		}
-		mdb->mi_txn_cp_min = l;
+		mdb->mi_txn_cp = 1;
+		mdb->mi_txn_cp_kbyte = cp_kbyte;
+		mdb->mi_txn_cp_min = cp_min;
 		/* If we're in server mode and time-based checkpointing is enabled,
 		 * submit a task to perform periodic checkpoints.
 		 */
@@ -599,7 +599,7 @@ mdb_cf_gen( ConfigArgs *c )
 		if ( c->value_int )
 			mdb->mi_dbenv_flags |= MDB_NOSYNC;
 		else
-			mdb->mi_dbenv_flags ^= MDB_NOSYNC;
+			mdb->mi_dbenv_flags &= ~MDB_NOSYNC;
 		if ( mdb->mi_flags & MDB_IS_OPEN ) {
 			mdb_env_set_flags( mdb->mi_dbenv, MDB_NOSYNC,
 				c->value_int );

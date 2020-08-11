@@ -1,10 +1,10 @@
-/*	$NetBSD: denyop.c,v 1.1.1.7 2019/08/08 13:31:04 christos Exp $	*/
+/*	$NetBSD: denyop.c,v 1.1.1.8 2020/08/11 13:12:01 christos Exp $	*/
 
 /* denyop.c - Denies operations */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2019 The OpenLDAP Foundation.
+ * Copyright 2004-2020 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: denyop.c,v 1.1.1.7 2019/08/08 13:31:04 christos Exp $");
+__RCSID("$NetBSD: denyop.c,v 1.1.1.8 2020/08/11 13:12:01 christos Exp $");
 
 #include "portable.h"
 
