@@ -1,4 +1,4 @@
-/* $NetBSD: spivar.h,v 1.7 2019/02/23 10:43:25 mlelstv Exp $ */
+/* $NetBSD: spivar.h,v 1.7.4.1 2020/08/11 19:13:43 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -103,7 +103,7 @@ struct spi_chunk {
 struct spi_transfer {
 	struct spi_chunk *st_chunks;		/* chained bufs */
 	SIMPLEQ_ENTRY(spi_transfer) st_chain;	/* chain of submitted jobs */
-	int		st_flags;
+	volatile int	st_flags;
 	int		st_errno;
 	int		st_slave;
 	void		*st_private;
