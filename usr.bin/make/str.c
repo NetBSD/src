@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.59 2020/08/10 19:53:19 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.60 2020/08/11 18:41:46 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: str.c,v 1.59 2020/08/10 19:53:19 rillig Exp $";
+static char rcsid[] = "$NetBSD: str.c,v 1.60 2020/08/11 18:41:46 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: str.c,v 1.59 2020/08/10 19:53:19 rillig Exp $");
+__RCSID("$NetBSD: str.c,v 1.60 2020/08/11 18:41:46 rillig Exp $");
 #endif
 #endif				/* not lint */
 #endif
@@ -106,6 +106,22 @@ str_concat3(const char *s1, const char *s2, const char *s3)
 	memcpy(result, s1, len1);
 	memcpy(result + len1, s2, len2);
 	memcpy(result + len1 + len2, s3, len3 + 1);
+	return result;
+}
+
+/* Return the concatenation of s1, s2, s3 and s4, freshly allocated. */
+char *
+str_concat4(const char *s1, const char *s2, const char *s3, const char *s4)
+{
+	size_t len1 = strlen(s1);
+	size_t len2 = strlen(s2);
+	size_t len3 = strlen(s3);
+	size_t len4 = strlen(s4);
+	char *result = bmake_malloc(len1 + len2 + len3 + len4 + 1);
+	memcpy(result, s1, len1);
+	memcpy(result + len1, s2, len2);
+	memcpy(result + len1 + len2, s3, len3);
+	memcpy(result + len1 + len2 + len3, s4, len4 + 1);
 	return result;
 }
 
