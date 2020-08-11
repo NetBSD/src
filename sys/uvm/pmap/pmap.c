@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.51 2020/08/07 07:19:45 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.52 2020/08/11 05:43:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.51 2020/08/07 07:19:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.52 2020/08/11 05:43:45 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1309,8 +1309,6 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 
 	/*
 	 * Now validate mapping with desired protection/wiring.
-	 * Assume uniform modified and referenced status for all
-	 * MIPS pages in a MACH page.
 	 */
 	if (wired) {
 		pmap->pm_stats.wired_count++;
