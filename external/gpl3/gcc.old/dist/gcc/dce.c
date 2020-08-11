@@ -86,6 +86,32 @@ deletable_insn_p_1 (rtx body)
     }
 }
 
+/* Don't delete calls that may throw if we cannot do so.  */
+
+static bool
+can_delete_call (rtx_insn *insn)
+{
+  if (cfun->can_delete_dead_exceptions && can_alter_cfg)
+    return true;
+  if (!insn_nothrow_p (insn))
+    return false;
+  if (can_alter_cfg)
+    return true;
+  /* If we can't alter cfg, even when the call can't throw exceptions, it
+     might have EDGE_ABNORMAL_CALL edges and so we shouldn't delete such
+     calls.  */
+  gcc_assert (CALL_P (insn));
+  if (BLOCK_FOR_INSN (insn) && BB_END (BLOCK_FOR_INSN (insn)) == insn)
+    {
+      edge e;
+      edge_iterator ei;
+
+      FOR_EACH_EDGE (e, ei, BLOCK_FOR_INSN (insn)->succs)
+	if ((e->flags & EDGE_ABNORMAL_CALL) != 0)
+	  return false;
+    }
+  return true;
+}
 
 /* Return true if INSN is a normal instruction that can be deleted by
    the DCE pass.  */
@@ -108,7 +134,9 @@ deletable_insn_p (rtx_insn *insn, bool fast, bitmap arg_stores)
       /* We can delete dead const or pure calls as long as they do not
          infinite loop.  */
       && (RTL_CONST_OR_PURE_CALL_P (insn)
-	  && !RTL_LOOPING_CONST_OR_PURE_CALL_P (insn)))
+	  && !RTL_LOOPING_CONST_OR_PURE_CALL_P (insn))
+      /* Don't delete calls that may throw if we cannot do so.  */
+      && can_delete_call (insn))
     return find_call_stack_args (as_a <rtx_call_insn *> (insn), false,
 				 fast, arg_stores);
 
@@ -200,7 +228,8 @@ mark_insn (rtx_insn *insn, bool fast)
 	  && !df_in_progress
 	  && !SIBLING_CALL_P (insn)
 	  && (RTL_CONST_OR_PURE_CALL_P (insn)
-	      && !RTL_LOOPING_CONST_OR_PURE_CALL_P (insn)))
+	      && !RTL_LOOPING_CONST_OR_PURE_CALL_P (insn))
+	  && can_delete_call (insn))
 	find_call_stack_args (as_a <rtx_call_insn *> (insn), true, fast, NULL);
     }
 }
@@ -569,7 +598,12 @@ delete_unmarked_insns (void)
 	  rtx turn_into_use = NULL_RTX;
 
 	  /* Always delete no-op moves.  */
-	  if (noop_move_p (insn))
+	  if (noop_move_p (insn)
+	      /* Unless the no-op move can throw and we are not allowed
+		 to alter cfg.  */
+	      && (!cfun->can_throw_non_call_exceptions
+		  || (cfun->can_delete_dead_exceptions && can_alter_cfg)
+		  || insn_nothrow_p (insn)))
 	    {
 	      if (RTX_FRAME_RELATED_P (insn))
 		turn_into_use
@@ -612,12 +646,6 @@ delete_unmarked_insns (void)
 	     for the destination regs in order to avoid dangling notes.  */
 	  remove_reg_equal_equiv_notes_for_defs (insn);
 
-	  /* If a pure or const call is deleted, this may make the cfg
-	     have unreachable blocks.  We rememeber this and call
-	     delete_unreachable_blocks at the end.  */
-	  if (CALL_P (insn))
-	    must_clean = true;
-
 	  if (turn_into_use)
 	    {
 	      /* Don't remove frame related noop moves if they cary
@@ -630,12 +658,15 @@ delete_unmarked_insns (void)
 	    }
 	  else
 	    /* Now delete the insn.  */
-	    delete_insn_and_edges (insn);
+	    must_clean |= delete_insn_and_edges (insn);
 	}
 
   /* Deleted a pure or const call.  */
   if (must_clean)
-    delete_unreachable_blocks ();
+    {
+      delete_unreachable_blocks ();
+      free_dominance_info (CDI_DOMINATORS);
+    }
 }
 
 

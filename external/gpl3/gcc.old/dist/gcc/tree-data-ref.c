@@ -1396,7 +1396,7 @@ object_address_invariant_in_loop_p (const struct loop *loop, const_tree obj)
 
 bool
 dr_may_alias_p (const struct data_reference *a, const struct data_reference *b,
-		bool loop_nest)
+		struct loop *loop_nest)
 {
   tree addr_a = DR_BASE_OBJECT (a);
   tree addr_b = DR_BASE_OBJECT (b);
@@ -1420,6 +1420,11 @@ dr_may_alias_p (const struct data_reference *a, const struct data_reference *b,
 
   if ((TREE_CODE (addr_a) == MEM_REF || TREE_CODE (addr_a) == TARGET_MEM_REF)
       && (TREE_CODE (addr_b) == MEM_REF || TREE_CODE (addr_b) == TARGET_MEM_REF)
+      /* For cross-iteration dependences the cliques must be valid for the
+	 whole loop, not just individual iterations.  */
+      && (!loop_nest
+	  || MR_DEPENDENCE_CLIQUE (addr_a) == 1
+	  || MR_DEPENDENCE_CLIQUE (addr_a) == loop_nest->owned_clique)
       && MR_DEPENDENCE_CLIQUE (addr_a) == MR_DEPENDENCE_CLIQUE (addr_b)
       && MR_DEPENDENCE_BASE (addr_a) != MR_DEPENDENCE_BASE (addr_b))
     return false;
@@ -1500,7 +1505,7 @@ initialize_data_dependence_relation (struct data_reference *a,
     }
 
   /* If the data references do not alias, then they are independent.  */
-  if (!dr_may_alias_p (a, b, loop_nest.exists ()))
+  if (!dr_may_alias_p (a, b, loop_nest.exists () ? loop_nest[0] : NULL))
     {
       DDR_ARE_DEPENDENT (res) = chrec_known;
       return res;
@@ -2118,6 +2123,8 @@ initialize_matrix_A (lambda_matrix A, tree chrec, unsigned index, int mult)
   switch (TREE_CODE (chrec))
     {
     case POLYNOMIAL_CHREC:
+      if (!cst_and_fits_in_hwi (CHREC_RIGHT (chrec)))
+	return chrec_dont_know;
       A[index][0] = mult * int_cst_value (CHREC_RIGHT (chrec));
       return initialize_matrix_A (A, CHREC_LEFT (chrec), index + 1, mult);
 
@@ -2499,7 +2506,7 @@ analyze_subscript_affine_affine (tree chrec_a,
 				 tree *last_conflicts)
 {
   unsigned nb_vars_a, nb_vars_b, dim;
-  HOST_WIDE_INT init_a, init_b, gamma, gcd_alpha_beta;
+  HOST_WIDE_INT gamma, gcd_alpha_beta;
   lambda_matrix A, U, S;
   struct obstack scratch_obstack;
 
@@ -2536,9 +2543,20 @@ analyze_subscript_affine_affine (tree chrec_a,
   A = lambda_matrix_new (dim, 1, &scratch_obstack);
   S = lambda_matrix_new (dim, 1, &scratch_obstack);
 
-  init_a = int_cst_value (initialize_matrix_A (A, chrec_a, 0, 1));
-  init_b = int_cst_value (initialize_matrix_A (A, chrec_b, nb_vars_a, -1));
-  gamma = init_b - init_a;
+  tree init_a = initialize_matrix_A (A, chrec_a, 0, 1);
+  tree init_b = initialize_matrix_A (A, chrec_b, nb_vars_a, -1);
+  if (init_a == chrec_dont_know
+      || init_b == chrec_dont_know)
+    {
+      if (dump_file && (dump_flags & TDF_DETAILS))
+	fprintf (dump_file, "affine-affine test failed: "
+		 "representation issue.\n");
+      *overlaps_a = conflict_fn_not_known ();
+      *overlaps_b = conflict_fn_not_known ();
+      *last_conflicts = chrec_dont_know;
+      goto end_analyze_subs_aa;
+    }
+  gamma = int_cst_value (init_b) - int_cst_value (init_a);
 
   /* Don't do all the hard work of solving the Diophantine equation
      when we already know the solution: for example,

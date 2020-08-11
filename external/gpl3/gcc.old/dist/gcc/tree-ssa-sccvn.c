@@ -1981,9 +1981,20 @@ vn_reference_lookup_3 (ao_ref *ref, tree vuse, void *vr_,
 	  tree rhs = gimple_assign_rhs1 (def_stmt);
 	  if (TREE_CODE (rhs) == SSA_NAME)
 	    rhs = SSA_VAL (rhs);
+	  unsigned pad = 0;
+	  enum machine_mode mode = TYPE_MODE (TREE_TYPE (rhs));
+	  if (BYTES_BIG_ENDIAN
+	      && (SCALAR_INT_MODE_P (mode)
+		  || ALL_SCALAR_FIXED_POINT_MODE_P (mode)
+		  || SCALAR_FLOAT_MODE_P (mode)))
+	    {
+	      /* On big-endian the padding is at the 'front' so
+		 just skip the initial bytes.  */
+	      pad = GET_MODE_SIZE (mode) - size2 / BITS_PER_UNIT;
+	    }
 	  len = native_encode_expr (gimple_assign_rhs1 (def_stmt),
 				    buffer, sizeof (buffer),
-				    (offset - offset2) / BITS_PER_UNIT);
+				    (offset - offset2) / BITS_PER_UNIT + pad);
 	  if (len > 0 && len * BITS_PER_UNIT >= ref->size)
 	    {
 	      tree type = vr->type;
@@ -2029,6 +2040,7 @@ vn_reference_lookup_3 (ao_ref *ref, tree vuse, void *vr_,
       base2 = get_ref_base_and_extent (gimple_assign_lhs (def_stmt),
 				       &offset2, &size2, &maxsize2,
 				       &reverse);
+      tree def_rhs = gimple_assign_rhs1 (def_stmt);
       if (!reverse
 	  && maxsize2 != -1
 	  && maxsize2 == size2
@@ -2041,11 +2053,14 @@ vn_reference_lookup_3 (ao_ref *ref, tree vuse, void *vr_,
 	     according to endianness.  */
 	  && (! INTEGRAL_TYPE_P (vr->type)
 	      || ref->size == TYPE_PRECISION (vr->type))
-	  && ref->size % BITS_PER_UNIT == 0)
+	  && ref->size % BITS_PER_UNIT == 0
+	  && (! INTEGRAL_TYPE_P (TREE_TYPE (def_rhs))
+	      || (TYPE_PRECISION (TREE_TYPE (def_rhs))
+		  == GET_MODE_PRECISION (TYPE_MODE (TREE_TYPE (def_rhs))))))
 	{
 	  code_helper rcode = BIT_FIELD_REF;
 	  tree ops[3];
-	  ops[0] = SSA_VAL (gimple_assign_rhs1 (def_stmt));
+	  ops[0] = SSA_VAL (def_rhs);
 	  ops[1] = bitsize_int (ref->size);
 	  ops[2] = bitsize_int (offset - offset2);
 	  tree val = vn_nary_build_or_lookup (rcode, vr->type, ops);
@@ -3572,7 +3587,17 @@ visit_nary_op (tree lhs, gassign *stmt)
 		  ops[0] = vn_nary_op_lookup_pieces
 		      (2, gimple_assign_rhs_code (def), type, ops, NULL);
 		  /* We have wider operation available.  */
-		  if (ops[0])
+		  if (ops[0]
+		      /* If the leader is a wrapping operation we can
+			 insert it for code hoisting w/o introducing
+			 undefined overflow.  If it is not it has to
+			 be available.  See PR86554.  */
+		      && (TYPE_OVERFLOW_WRAPS (TREE_TYPE (ops[0]))
+			  || TREE_CODE (ops[0]) != SSA_NAME
+			  || SSA_NAME_IS_DEFAULT_DEF (ops[0])
+			  || dominated_by_p_w_unex
+			       (gimple_bb (stmt),
+				gimple_bb (SSA_NAME_DEF_STMT (ops[0])))))
 		    {
 		      unsigned lhs_prec = TYPE_PRECISION (type);
 		      unsigned rhs_prec = TYPE_PRECISION (TREE_TYPE (rhs1));
@@ -5131,5 +5156,56 @@ vn_nary_may_trap (vn_nary_op_t nary)
     if (tree_could_trap_p (nary->op[i]))
       return true;
 
+  return false;
+}
+
+/* Return true if the reference operation REF may trap.  */
+
+bool
+vn_reference_may_trap (vn_reference_t ref)
+{
+  switch (ref->operands[0].opcode)
+    {
+    case MODIFY_EXPR:
+    case CALL_EXPR:
+      /* We do not handle calls.  */
+    case ADDR_EXPR:
+      /* And toplevel address computations never trap.  */
+      return false;
+    default:;
+    }
+
+  vn_reference_op_t op;
+  unsigned i;
+  FOR_EACH_VEC_ELT (ref->operands, i, op)
+    {
+      switch (op->opcode)
+	{
+	case WITH_SIZE_EXPR:
+	case TARGET_MEM_REF:
+	  /* Always variable.  */
+	  return true;
+	case COMPONENT_REF:
+	  if (op->op1 && TREE_CODE (op->op1) == SSA_NAME)
+	    return true;
+	  break;
+	case ARRAY_RANGE_REF:
+	case ARRAY_REF:
+	  if (TREE_CODE (op->op0) == SSA_NAME)
+	    return true;
+	  break;
+	case MEM_REF:
+	  /* Nothing interesting in itself, the base is separate.  */
+	  break;
+	/* The following are the address bases.  */
+	case SSA_NAME:
+	  return true;
+	case ADDR_EXPR:
+	  if (op->op0)
+	    return tree_could_trap_p (TREE_OPERAND (op->op0, 0));
+	  return false;
+	default:;
+	}
+    }
   return false;
 }
