@@ -10,7 +10,6 @@
 // Interceptors for operators new and delete.
 //===----------------------------------------------------------------------===//
 #include "interception/interception.h"
-#include "sanitizer_common/sanitizer_allocator.h"
 #include "sanitizer_common/sanitizer_internal_defs.h"
 #include "tsan_interceptors.h"
 
@@ -23,15 +22,13 @@ struct nothrow_t {};
 DECLARE_REAL(void *, malloc, uptr size)
 DECLARE_REAL(void, free, void *ptr)
 
-// TODO(alekseys): throw std::bad_alloc instead of dying on OOM.
-#define OPERATOR_NEW_BODY(mangled_name, nothrow) \
+#define OPERATOR_NEW_BODY(mangled_name) \
   if (cur_thread()->in_symbolizer) \
     return InternalAlloc(size); \
   void *p = 0; \
   {  \
     SCOPED_INTERCEPTOR_RAW(mangled_name, size); \
     p = user_alloc(thr, pc, size); \
-    if (!nothrow && UNLIKELY(!p)) DieOnFailure::OnOOM(); \
   }  \
   invoke_malloc_hook(p, size);  \
   return p;
@@ -39,25 +36,25 @@ DECLARE_REAL(void, free, void *ptr)
 SANITIZER_INTERFACE_ATTRIBUTE
 void *operator new(__sanitizer::uptr size);
 void *operator new(__sanitizer::uptr size) {
-  OPERATOR_NEW_BODY(_Znwm, false /*nothrow*/);
+  OPERATOR_NEW_BODY(_Znwm);
 }
 
 SANITIZER_INTERFACE_ATTRIBUTE
 void *operator new[](__sanitizer::uptr size);
 void *operator new[](__sanitizer::uptr size) {
-  OPERATOR_NEW_BODY(_Znam, false /*nothrow*/);
+  OPERATOR_NEW_BODY(_Znam);
 }
 
 SANITIZER_INTERFACE_ATTRIBUTE
 void *operator new(__sanitizer::uptr size, std::nothrow_t const&);
 void *operator new(__sanitizer::uptr size, std::nothrow_t const&) {
-  OPERATOR_NEW_BODY(_ZnwmRKSt9nothrow_t, true /*nothrow*/);
+  OPERATOR_NEW_BODY(_ZnwmRKSt9nothrow_t);
 }
 
 SANITIZER_INTERFACE_ATTRIBUTE
 void *operator new[](__sanitizer::uptr size, std::nothrow_t const&);
 void *operator new[](__sanitizer::uptr size, std::nothrow_t const&) {
-  OPERATOR_NEW_BODY(_ZnamRKSt9nothrow_t, true /*nothrow*/);
+  OPERATOR_NEW_BODY(_ZnamRKSt9nothrow_t);
 }
 
 #define OPERATOR_DELETE_BODY(mangled_name) \

@@ -1,5 +1,5 @@
 /* Vectorizer
-   Copyright (C) 2003-2018 Free Software Foundation, Inc.
+   Copyright (C) 2003-2017 Free Software Foundation, Inc.
    Contributed by Dorit Naishlos <dorit@il.ibm.com>
 
 This file is part of GCC.
@@ -76,8 +76,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-ssa-propagate.h"
 #include "dbgcnt.h"
 #include "tree-scalar-evolution.h"
-#include "stringpool.h"
-#include "attribs.h"
 
 
 /* Loop or bb location.  */
@@ -91,7 +89,7 @@ vec<stmt_vec_info> stmt_vec_info_vec;
 struct simduid_to_vf : free_ptr_hash<simduid_to_vf>
 {
   unsigned int simduid;
-  poly_uint64 vf;
+  int vf;
 
   /* hash_table support.  */
   static inline hashval_t hash (const simduid_to_vf *);
@@ -161,7 +159,7 @@ adjust_simduid_builtins (hash_table<simduid_to_vf> *htab)
 
       for (i = gsi_start_bb (bb); !gsi_end_p (i); )
 	{
-	  poly_uint64 vf = 1;
+	  unsigned int vf = 1;
 	  enum internal_fn ifn;
 	  gimple *stmt = gsi_stmt (i);
 	  tree t;
@@ -231,11 +229,8 @@ adjust_simduid_builtins (hash_table<simduid_to_vf> *htab)
 	    default:
 	      gcc_unreachable ();
 	    }
-	  tree lhs = gimple_call_lhs (stmt);
-	  if (lhs)
-	    replace_uses_by (lhs, t);
-	  release_defs (stmt);
-	  gsi_remove (&i, true);
+	  update_call_from_tree (&i, t);
+	  gsi_next (&i);
 	}
     }
 }
@@ -338,7 +333,7 @@ shrink_simd_arrays
     if ((*iter)->simduid != -1U)
       {
 	tree decl = (*iter)->decl;
-	poly_uint64 vf = 1;
+	int vf = 1;
 	if (simduid_to_vf_htab)
 	  {
 	    simduid_to_vf *p = NULL, data;
@@ -356,36 +351,22 @@ shrink_simd_arrays
   delete simd_array_to_simduid_htab;
 }
 
-/* Initialize the vec_info with kind KIND_IN and target cost data
-   TARGET_COST_DATA_IN.  */
+/* A helper function to free data refs.  */
 
-vec_info::vec_info (vec_info::vec_kind kind_in, void *target_cost_data_in)
-  : kind (kind_in),
-    datarefs (vNULL),
-    ddrs (vNULL),
-    target_cost_data (target_cost_data_in)
+void
+vect_destroy_datarefs (vec_info *vinfo)
 {
-}
-
-vec_info::~vec_info ()
-{
-  slp_instance instance;
   struct data_reference *dr;
   unsigned int i;
 
-  FOR_EACH_VEC_ELT (datarefs, i, dr)
+  FOR_EACH_VEC_ELT (vinfo->datarefs, i, dr)
     if (dr->aux)
       {
         free (dr->aux);
         dr->aux = NULL;
       }
 
-  FOR_EACH_VEC_ELT (slp_instances, i, instance)
-    vect_free_slp_instance (instance);
-
-  free_data_refs (datarefs);
-  free_dependence_relations (ddrs);
-  destroy_cost_data (target_cost_data);
+  free_data_refs (vinfo->datarefs);
 }
 
 /* A helper function to free scev and LOOP niter information, as well as
@@ -396,10 +377,10 @@ vect_free_loop_info_assumptions (struct loop *loop)
 {
   scev_reset_htab ();
   /* We need to explicitly reset upper bound information since they are
-     used even after free_numbers_of_iterations_estimates.  */
+     used even after free_numbers_of_iterations_estimates_loop.  */
   loop->any_upper_bound = false;
   loop->any_likely_upper_bound = false;
-  free_numbers_of_iterations_estimates (loop);
+  free_numbers_of_iterations_estimates_loop (loop);
   loop_constraint_clear (loop, LOOP_C_FINITE);
 }
 
@@ -464,58 +445,25 @@ vect_loop_vectorized_call (struct loop *loop)
   return NULL;
 }
 
-/* If LOOP has been versioned during loop distribution, return the gurading
-   internal call.  */
+/* Fold LOOP_VECTORIZED internal call G to VALUE and
+   update any immediate uses of it's LHS.  */
 
-static gimple *
-vect_loop_dist_alias_call (struct loop *loop)
+static void
+fold_loop_vectorized_call (gimple *g, tree value)
 {
-  basic_block bb;
-  basic_block entry;
-  struct loop *outer, *orig;
-  gimple_stmt_iterator gsi;
-  gimple *g;
+  tree lhs = gimple_call_lhs (g);
+  use_operand_p use_p;
+  imm_use_iterator iter;
+  gimple *use_stmt;
+  gimple_stmt_iterator gsi = gsi_for_stmt (g);
 
-  if (loop->orig_loop_num == 0)
-    return NULL;
-
-  orig = get_loop (cfun, loop->orig_loop_num);
-  if (orig == NULL)
+  update_call_from_tree (&gsi, value);
+  FOR_EACH_IMM_USE_STMT (use_stmt, iter, lhs)
     {
-      /* The original loop is somehow destroyed.  Clear the information.  */
-      loop->orig_loop_num = 0;
-      return NULL;
+      FOR_EACH_IMM_USE_ON_STMT (use_p, iter)
+	SET_USE (use_p, value);
+      update_stmt (use_stmt);
     }
-
-  if (loop != orig)
-    bb = nearest_common_dominator (CDI_DOMINATORS, loop->header, orig->header);
-  else
-    bb = loop_preheader_edge (loop)->src;
-
-  outer = bb->loop_father;
-  entry = ENTRY_BLOCK_PTR_FOR_FN (cfun);
-
-  /* Look upward in dominance tree.  */
-  for (; bb != entry && flow_bb_inside_loop_p (outer, bb);
-       bb = get_immediate_dominator (CDI_DOMINATORS, bb))
-    {
-      g = last_stmt (bb);
-      if (g == NULL || gimple_code (g) != GIMPLE_COND)
-	continue;
-
-      gsi = gsi_for_stmt (g);
-      gsi_prev (&gsi);
-      if (gsi_end_p (gsi))
-	continue;
-
-      g = gsi_stmt (gsi);
-      /* The guarding internal function call must have the same distribution
-	 alias id.  */
-      if (gimple_call_internal_p (g, IFN_LOOP_DIST_ALIAS)
-	  && (tree_to_shwi (gimple_call_arg (g, 0)) == loop->orig_loop_num))
-	return g;
-    }
-  return NULL;
 }
 
 /* Set the uids of all the statements in basic blocks inside loop
@@ -543,7 +491,7 @@ set_uid_loop_bbs (loop_vec_info loop_vinfo, gimple *loop_vectorized_call)
 	{
 	  arg = gimple_call_arg (g, 0);
 	  get_loop (cfun, tree_to_shwi (arg))->dont_vectorize = true;
-	  fold_loop_internal_call (g, boolean_false_node);
+	  fold_loop_vectorized_call (g, boolean_false_node);
 	}
     }
   bbs = get_loop_body (scalar_loop);
@@ -644,7 +592,7 @@ vectorize_loops (void)
     else
       {
 	loop_vec_info loop_vinfo, orig_loop_vinfo;
-	gimple *loop_vectorized_call, *loop_dist_alias_call;
+	gimple *loop_vectorized_call;
        try_vectorize:
 	if (!((flag_tree_loop_vectorize
 	       && optimize_loop_nest_for_speed_p (loop))
@@ -652,7 +600,6 @@ vectorize_loops (void)
 	  continue;
 	orig_loop_vinfo = NULL;
 	loop_vectorized_call = vect_loop_vectorized_call (loop);
-	loop_dist_alias_call = vect_loop_dist_alias_call (loop);
        vectorize_epilogue:
 	vect_location = find_loop_location (loop);
         if (LOCATION_LOCUS (vect_location) != UNKNOWN_LOCATION
@@ -702,8 +649,8 @@ vectorize_loops (void)
 		  {
 		    dump_printf_loc (MSG_OPTIMIZED_LOCATIONS, vect_location,
 				     "basic block vectorized\n");
-		    fold_loop_internal_call (loop_vectorized_call,
-					     boolean_true_node);
+		    fold_loop_vectorized_call (loop_vectorized_call,
+					       boolean_true_node);
 		    loop_vectorized_call = NULL;
 		    ret |= TODO_cleanup_cfg;
 		  }
@@ -756,15 +703,8 @@ vectorize_loops (void)
 
 	if (loop_vectorized_call)
 	  {
-	    fold_loop_internal_call (loop_vectorized_call, boolean_true_node);
+	    fold_loop_vectorized_call (loop_vectorized_call, boolean_true_node);
 	    loop_vectorized_call = NULL;
-	    ret |= TODO_cleanup_cfg;
-	  }
-	if (loop_dist_alias_call)
-	  {
-	    tree value = gimple_call_arg (loop_dist_alias_call, 1);
-	    fold_loop_internal_call (loop_dist_alias_call, value);
-	    loop_dist_alias_call = NULL;
 	    ret |= TODO_cleanup_cfg;
 	  }
 
@@ -798,16 +738,7 @@ vectorize_loops (void)
 	    gimple *g = vect_loop_vectorized_call (loop);
 	    if (g)
 	      {
-		fold_loop_internal_call (g, boolean_false_node);
-		ret |= TODO_cleanup_cfg;
-		g = NULL;
-	      }
-	    else
-	      g = vect_loop_dist_alias_call (loop);
-
-	    if (g)
-	      {
-		fold_loop_internal_call (g, boolean_false_node);
+		fold_loop_vectorized_call (g, boolean_false_node);
 		ret |= TODO_cleanup_cfg;
 	      }
 	  }
@@ -825,9 +756,8 @@ vectorize_loops (void)
       has_mask_store = false;
       if (loop_vinfo)
 	has_mask_store = LOOP_VINFO_HAS_MASK_STORE (loop_vinfo);
-      delete loop_vinfo;
-      if (has_mask_store
-	  && targetm.vectorize.empty_mask_is_expensive (IFN_MASK_STORE))
+      destroy_loop_vec_info (loop_vinfo, true);
+      if (has_mask_store)
 	optimize_mask_stores (loop);
       loop->aux = NULL;
     }
@@ -1016,13 +946,12 @@ static unsigned
 get_vec_alignment_for_array_type (tree type) 
 {
   gcc_assert (TREE_CODE (type) == ARRAY_TYPE);
-  poly_uint64 array_size, vector_size;
 
   tree vectype = get_vectype_for_scalar_type (strip_array_types (type));
   if (!vectype
-      || !poly_int_tree_p (TYPE_SIZE (type), &array_size)
-      || !poly_int_tree_p (TYPE_SIZE (vectype), &vector_size)
-      || maybe_lt (array_size, vector_size))
+      || !TYPE_SIZE (type)
+      || TREE_CODE (TYPE_SIZE (type)) != INTEGER_CST
+      || tree_int_cst_lt (TYPE_SIZE (type), TYPE_SIZE (vectype)))
     return 0;
 
   return TYPE_ALIGN (vectype);

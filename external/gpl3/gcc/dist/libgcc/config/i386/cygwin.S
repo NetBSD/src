@@ -1,6 +1,6 @@
 /* stuff needed for libgcc on win32.
  *
- *   Copyright (C) 1996-2018 Free Software Foundation, Inc.
+ *   Copyright (C) 1996-2017 Free Software Foundation, Inc.
  *   Written By Steve Chamberlain
  * 
  * This file is free software; you can redistribute it and/or modify it
@@ -23,11 +23,31 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include "i386-asm.h"
+#include "auto-host.h"
 
-#ifdef HAVE_AS_CFI_SECTIONS
+#ifdef HAVE_GAS_CFI_SECTIONS_DIRECTIVE
 	.cfi_sections	.debug_frame
-#endif
+# define cfi_startproc()		.cfi_startproc
+# define cfi_endproc()			.cfi_endproc
+# define cfi_adjust_cfa_offset(X) 	.cfi_adjust_cfa_offset X
+# define cfi_def_cfa_register(X)	.cfi_def_cfa_register X
+# define cfi_register(D,S)		.cfi_register D, S
+# ifdef __x86_64__
+#  define cfi_push(X)		.cfi_adjust_cfa_offset 8; .cfi_rel_offset X, 0
+#  define cfi_pop(X)		.cfi_adjust_cfa_offset -8; .cfi_restore X
+# else
+#  define cfi_push(X)		.cfi_adjust_cfa_offset 4; .cfi_rel_offset X, 0
+#  define cfi_pop(X)		.cfi_adjust_cfa_offset -4; .cfi_restore X
+# endif
+#else
+# define cfi_startproc()
+# define cfi_endproc()
+# define cfi_adjust_cfa_offset(X)
+# define cfi_def_cfa_register(X)
+# define cfi_register(D,S)
+# define cfi_push(X)
+# define cfi_pop(X)
+#endif /* HAVE_GAS_CFI_SECTIONS_DIRECTIVE */
 
 #ifdef L_chkstk
 /* Function prologue calls __chkstk to probe the stack when allocating more

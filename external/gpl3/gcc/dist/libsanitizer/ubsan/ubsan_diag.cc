@@ -24,25 +24,20 @@
 
 using namespace __ubsan;
 
-void __ubsan::GetStackTraceWithPcBpAndContext(BufferedStackTrace *stack,
-                                              uptr max_depth, uptr pc, uptr bp,
-                                              void *context, bool fast) {
-  uptr top = 0;
-  uptr bottom = 0;
-  if (fast)
-    GetThreadStackTopAndBottom(false, &top, &bottom);
-  stack->Unwind(max_depth, pc, bp, context, top, bottom, fast);
-}
-
 static void MaybePrintStackTrace(uptr pc, uptr bp) {
   // We assume that flags are already parsed, as UBSan runtime
   // will definitely be called when we print the first diagnostics message.
   if (!flags()->print_stacktrace)
     return;
-
+  // We can only use slow unwind, as we don't have any information about stack
+  // top/bottom.
+  // FIXME: It's better to respect "fast_unwind_on_fatal" runtime flag and
+  // fetch stack top/bottom information if we have it (e.g. if we're running
+  // under ASan).
+  if (StackTrace::WillUseFastUnwind(false))
+    return;
   BufferedStackTrace stack;
-  GetStackTraceWithPcBpAndContext(&stack, kStackTraceMax, pc, bp, nullptr,
-                                  common_flags()->fast_unwind_on_fatal);
+  stack.Unwind(kStackTraceMax, pc, bp, 0, 0, 0, false);
   stack.Print();
 }
 
@@ -82,16 +77,16 @@ static void MaybeReportErrorSummary(Location Loc, ErrorType Type) {
       AI.line = SLoc.getLine();
       AI.column = SLoc.getColumn();
       AI.function = internal_strdup("");  // Avoid printing ?? as function name.
-      ReportErrorSummary(ErrorKind, AI, GetSanititizerToolName());
+      ReportErrorSummary(ErrorKind, AI);
       AI.Clear();
       return;
     }
   } else if (Loc.isSymbolizedStack()) {
     const AddressInfo &AI = Loc.getSymbolizedStack()->info;
-    ReportErrorSummary(ErrorKind, AI, GetSanititizerToolName());
+    ReportErrorSummary(ErrorKind, AI);
     return;
   }
-  ReportErrorSummary(ErrorKind, GetSanititizerToolName());
+  ReportErrorSummary(ErrorKind);
 }
 
 namespace {
@@ -99,7 +94,9 @@ class Decorator : public SanitizerCommonDecorator {
  public:
   Decorator() : SanitizerCommonDecorator() {}
   const char *Highlight() const { return Green(); }
+  const char *EndHighlight() const { return Default(); }
   const char *Note() const { return Black(); }
+  const char *EndNote() const { return Default(); }
 };
 }
 
@@ -158,7 +155,7 @@ static void RenderLocation(InternalScopedString *Buffer, Location Loc) {
                            common_flags()->strip_path_prefix);
     else if (Info.module)
       RenderModuleLocation(Buffer, Info.module, Info.module_offset,
-                           Info.module_arch, common_flags()->strip_path_prefix);
+                           common_flags()->strip_path_prefix);
     else
       Buffer->append("%p", Info.address);
     return;
@@ -295,7 +292,7 @@ static void PrintMemorySnippet(const Decorator &Decor, MemoryLocation Loc,
     Buffer.append("%c", P == Loc ? '^' : Byte);
     Buffer.append("%c", Byte);
   }
-  Buffer.append("%s\n", Decor.Default());
+  Buffer.append("%s\n", Decor.EndHighlight());
 
   // Go over the line again, and print names for the ranges.
   InRange = 0;
@@ -335,7 +332,7 @@ static void PrintMemorySnippet(const Decorator &Decor, MemoryLocation Loc,
 
 Diag::~Diag() {
   // All diagnostics should be printed under report mutex.
-  ScopedReport::CheckLocked();
+  CommonSanitizerReportMutex.CheckLocked();
   Decorator Decor;
   InternalScopedString Buffer(1024);
 
@@ -345,12 +342,12 @@ Diag::~Diag() {
 
   switch (Level) {
   case DL_Error:
-    Buffer.append("%s runtime error: %s%s", Decor.Warning(), Decor.Default(),
+    Buffer.append("%s runtime error: %s%s", Decor.Warning(), Decor.EndWarning(),
                   Decor.Bold());
     break;
 
   case DL_Note:
-    Buffer.append("%s note: %s", Decor.Note(), Decor.Default());
+    Buffer.append("%s note: %s", Decor.Note(), Decor.EndNote());
     break;
   }
 
@@ -363,15 +360,17 @@ Diag::~Diag() {
     PrintMemorySnippet(Decor, Loc.getMemoryLocation(), Ranges, NumRanges, Args);
 }
 
-ScopedReport::Initializer::Initializer() { InitAsStandaloneIfNecessary(); }
-
 ScopedReport::ScopedReport(ReportOptions Opts, Location SummaryLoc,
                            ErrorType Type)
-    : Opts(Opts), SummaryLoc(SummaryLoc), Type(Type) {}
+    : Opts(Opts), SummaryLoc(SummaryLoc), Type(Type) {
+  InitAsStandaloneIfNecessary();
+  CommonSanitizerReportMutex.Lock();
+}
 
 ScopedReport::~ScopedReport() {
   MaybePrintStackTrace(Opts.pc, Opts.bp);
   MaybeReportErrorSummary(SummaryLoc, Type);
+  CommonSanitizerReportMutex.Unlock();
   if (flags()->halt_on_error)
     Die();
 }

@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1998-2017 Free Software Foundation, Inc.
    Contributed by Joern Rennecke
 
    This file is part of GCC.
@@ -20,8 +20,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
-#define IN_TARGET_CODE 1
 
 #include "config.h"
 
@@ -49,6 +47,14 @@
 
 #define SPECFILE_USAGE_URL                              \
   "https://gcc.gnu.org/gcc-5/changes.html"
+
+/* Return true iff STR starts with PREFIX.  */
+
+static bool
+str_prefix_p (const char *str, const char *prefix)
+{
+  return 0 == strncmp (str, prefix, strlen (prefix));
+}
 
 
 static const char header[] =
@@ -97,7 +103,7 @@ static const char help_dev_lib_name[] =
   "#     #include <avr/io.h>\n"
   "#\n"
   "# will include the desired device header.  For ATmega8A the supplement\n"
-  "# to *cpp_avrlibc would read\n"
+  "# to *cpp would read\n"
   "#\n"
   "#     -D__AVR_DEV_LIB_NAME__=m8a\n"
   "\n";
@@ -107,7 +113,6 @@ static void
 print_mcu (const avr_mcu_t *mcu)
 {
   const char *sp8_spec;
-  const char *rcall_spec;
   const avr_mcu_t *arch_mcu;
   const avr_arch_t *arch;
   enum avr_arch_id arch_id = mcu->arch_id;
@@ -125,21 +130,12 @@ print_mcu (const avr_mcu_t *mcu)
 
   FILE *f = fopen (name ,"w");
 
-  bool absdata = (mcu->dev_attribute & AVR_ISA_LDS) != 0;
-  bool errata_skip = (mcu->dev_attribute & AVR_ERRATA_SKIP) != 0;
-  bool rmw = (mcu->dev_attribute & AVR_ISA_RMW) != 0;
-  bool sp8 = (mcu->dev_attribute & AVR_SHORT_SP) != 0;
-  bool rcall = (mcu->dev_attribute & AVR_ISA_RCALL);
-  bool is_arch = mcu->macro == NULL;
+  bool absdata = 0 != (mcu->dev_attribute & AVR_ISA_LDS);
+  bool errata_skip = 0 != (mcu->dev_attribute & AVR_ERRATA_SKIP);
+  bool rmw = 0 != (mcu->dev_attribute & AVR_ISA_RMW);
+  bool sp8 = 0 != (mcu->dev_attribute & AVR_SHORT_SP);
+  bool is_arch = NULL == mcu->macro;
   bool is_device = ! is_arch;
-  int flash_pm_offset = 0;
-
-  if (arch->flash_pm_offset
-      && mcu->flash_pm_offset
-      && mcu->flash_pm_offset != arch->flash_pm_offset)
-    {
-      flash_pm_offset = mcu->flash_pm_offset;
-    }
 
   if (is_arch
       && (ARCH_AVR2 == arch_id
@@ -154,25 +150,13 @@ print_mcu (const avr_mcu_t *mcu)
       sp8_spec = sp8 ? "-msp8" :"%<msp8";
     }
 
-  if (is_arch
-      && ARCH_AVRXMEGA3 == arch_id)
-    {
-      // Leave "avrxmega3" alone.  This architectures is the only one
-      // that mixes devices with and without JMP / CALL.
-      rcall_spec = "";
-    }
-  else
-    {
-      rcall_spec = rcall ? "-mshort-calls" : "%<mshort-calls";
-    }
-
   fprintf (f, "#\n"
            "# Auto-generated specs for AVR ");
   if (is_arch)
     fprintf (f, "core architecture %s\n", arch->name);
   else
-    fprintf (f, "device %s (core %s, %d-bit SP%s)\n", mcu->name,
-             arch->name, sp8 ? 8 : 16, rcall ? ", short-calls" : "");
+    fprintf (f, "device %s (core %s, %d-bit SP)\n",
+             mcu->name, arch->name, sp8 ? 8 : 16);
   fprintf (f, "%s\n", header);
 
   if (is_device)
@@ -226,11 +210,6 @@ print_mcu (const avr_mcu_t *mcu)
            : "\t%{mrmw}");
 #endif // have avr-as -mrmw
 
-#ifdef HAVE_AS_AVR_MGCCISR_OPTION
-  fprintf (f, "*asm_gccisr:\n%s\n\n",
-           "\t%{!mno-gas-isr-prologues: -mgcc-isr}");
-#endif // have avr-as -mgcc-isr
-
   fprintf (f, "*asm_errata_skip:\n%s\n\n", errata_skip
            ? "\t%{mno-skip-bug}"
            : "\t%{!mskip-bug: -mno-skip-bug}");
@@ -253,11 +232,7 @@ print_mcu (const avr_mcu_t *mcu)
 
   fprintf (f, "*link_relax:\n\t%s\n\n", LINK_RELAX_SPEC);
 
-  fprintf (f, "*link_arch:\n\t%s", LINK_ARCH_SPEC);
-  if (is_device
-      && flash_pm_offset)
-    fprintf (f, " --defsym=__RODATA_PM_OFFSET__=0x%x", flash_pm_offset);
-  fprintf (f, "\n\n");
+  fprintf (f, "*link_arch:\n\t%s\n\n", LINK_ARCH_SPEC);
 
   if (is_device)
     {
@@ -280,31 +255,14 @@ print_mcu (const avr_mcu_t *mcu)
     {
       fprintf (f, "*self_spec:\n");
       fprintf (f, "\t%%{!mmcu=avr*: %%<mmcu=* -mmcu=%s} ", arch->name);
-      fprintf (f, "%s ", rcall_spec);
       fprintf (f, "%s\n\n", sp8_spec);
 
 #if defined (WITH_AVRLIBC)
       fprintf (f, "%s\n", help_dev_lib_name);
-
-      fprintf (f, "*cpp_avrlibc:\n");
-      fprintf (f, "\t-D__AVR_DEVICE_NAME__=%s", mcu->name);
-      fprintf (f, "\n\n");
 #endif // WITH_AVRLIBC
-
-      fprintf (f, "*cpp_mcu:\n");
-      fprintf (f, "\t-D%s", mcu->macro);
-      if (flash_pm_offset)
-	{
-	  fprintf (f, " -U__AVR_PM_BASE_ADDRESS__");
-	  fprintf (f, " -D__AVR_PM_BASE_ADDRESS__=0x%x", flash_pm_offset);
-	}
-      fprintf (f, "\n\n");
 
       fprintf (f, "*cpp:\n");
-      fprintf (f, "\t%%(cpp_mcu)");
-#if defined (WITH_AVRLIBC)
-      fprintf (f, " %%(cpp_avrlibc)");
-#endif // WITH_AVRLIBC
+      fprintf (f, "\t-D%s -D__AVR_DEVICE_NAME__=%s", mcu->macro, mcu->name);
       fprintf (f, "\n\n");
     }
 

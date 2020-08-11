@@ -32,12 +32,13 @@ SANITIZER_INTERFACE_ATTRIBUTE int __sanitizer_install_malloc_and_free_hooks(
     void (*free_hook)(const void *));
 
 SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
-    void __sanitizer_malloc_hook(void *ptr, uptr size);
+    /* OPTIONAL */ void __sanitizer_malloc_hook(void *ptr, uptr size);
 SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
-    void __sanitizer_free_hook(void *ptr);
+    /* OPTIONAL */ void __sanitizer_free_hook(void *ptr);
 
-SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE void
-__sanitizer_print_memory_profile(uptr top_percent, uptr max_number_of_contexts);
+
+SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
+    void __sanitizer_print_memory_profile(int top_percent);
 }  // extern "C"
 
 #endif  // SANITIZER_ALLOCATOR_INTERFACE_H

@@ -1,4 +1,4 @@
-;; Copyright (C) 2002-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2002-2017 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -151,11 +151,11 @@
 
 ;; Jump instructions are executed in the branch unit completely transparent to us
 (define_insn_reservation "athlon_branch" 0
-			 (and (eq_attr "cpu" "athlon,k8,amdfam10")
+			 (and (eq_attr "cpu" "athlon,k8,generic,amdfam10")
 			      (eq_attr "type" "ibr"))
 			 "athlon-direct,athlon-ieu")
 (define_insn_reservation "athlon_call" 0
-			 (and (eq_attr "cpu" "athlon,k8")
+			 (and (eq_attr "cpu" "athlon,k8,generic")
 			      (eq_attr "type" "call,callv"))
 			 "athlon-vector,athlon-ieu")
 (define_insn_reservation "athlon_call_amdfam10" 0
@@ -166,15 +166,15 @@
 ;; Latency of push operation is 3 cycles, but ESP value is available
 ;; earlier
 (define_insn_reservation "athlon_push" 2
-			 (and (eq_attr "cpu" "athlon,k8,amdfam10")
+			 (and (eq_attr "cpu" "athlon,k8,generic,amdfam10")
 			      (eq_attr "type" "push"))
 			 "athlon-direct,athlon-agu,athlon-store")
 (define_insn_reservation "athlon_pop" 4
-			 (and (eq_attr "cpu" "athlon,k8")
+			 (and (eq_attr "cpu" "athlon,k8,generic")
 			      (eq_attr "type" "pop"))
 			 "athlon-vector,athlon-load,athlon-ieu")
 (define_insn_reservation "athlon_pop_k8" 3
-			 (and (eq_attr "cpu" "k8")
+			 (and (eq_attr "cpu" "k8,generic")
 			      (eq_attr "type" "pop"))
 			 "athlon-double,(athlon-ieu+athlon-load)")
 (define_insn_reservation "athlon_pop_amdfam10" 3
@@ -186,13 +186,13 @@
 			      (eq_attr "type" "leave"))
 			 "athlon-vector,(athlon-ieu+athlon-load)")
 (define_insn_reservation "athlon_leave_k8" 3
-			 (and (eq_attr "cpu" "k8,amdfam10")
+			 (and (eq_attr "cpu" "k8,generic,amdfam10")
 			      (eq_attr "type" "leave"))
 			 "athlon-double,(athlon-ieu+athlon-load)")
 
 ;; Lea executes in AGU unit with 2 cycles latency.
 (define_insn_reservation "athlon_lea" 2
-			 (and (eq_attr "cpu" "athlon,k8")
+			 (and (eq_attr "cpu" "athlon,k8,generic")
 			      (eq_attr "type" "lea"))
 			 "athlon-direct,athlon-agu,nothing")
 ;; Lea executes in AGU unit with 1 cycle latency on AMDFAM10
@@ -209,13 +209,13 @@
 			 "athlon-vector,athlon-ieu0,athlon-mult,nothing,nothing,athlon-ieu0")
 ;; ??? Widening multiply is vector or double.
 (define_insn_reservation "athlon_imul_k8_DI" 4
-			 (and (eq_attr "cpu" "k8,amdfam10")
+			 (and (eq_attr "cpu" "k8,generic,amdfam10")
 			      (and (eq_attr "type" "imul")
 				   (and (eq_attr "mode" "DI")
 					(eq_attr "memory" "none,unknown"))))
 			 "athlon-direct0,athlon-ieu0,athlon-mult,nothing,athlon-ieu0")
 (define_insn_reservation "athlon_imul_k8" 3
-			 (and (eq_attr "cpu" "k8,amdfam10")
+			 (and (eq_attr "cpu" "k8,generic,amdfam10")
 			      (and (eq_attr "type" "imul")
 				   (eq_attr "memory" "none,unknown")))
 			 "athlon-direct0,athlon-ieu0,athlon-mult,athlon-ieu0")
@@ -231,13 +231,13 @@
 				   (eq_attr "memory" "load,both")))
 			 "athlon-vector,athlon-load,athlon-ieu,athlon-mult,nothing,nothing,athlon-ieu")
 (define_insn_reservation "athlon_imul_mem_k8_DI" 7
-			 (and (eq_attr "cpu" "k8,amdfam10")
+			 (and (eq_attr "cpu" "k8,generic,amdfam10")
 			      (and (eq_attr "type" "imul")
 				   (and (eq_attr "mode" "DI")
 					(eq_attr "memory" "load,both"))))
 			 "athlon-vector,athlon-load,athlon-ieu,athlon-mult,nothing,athlon-ieu")
 (define_insn_reservation "athlon_imul_mem_k8" 6
-			 (and (eq_attr "cpu" "k8,amdfam10")
+			 (and (eq_attr "cpu" "k8,generic,amdfam10")
 			      (and (eq_attr "type" "imul")
 				   (eq_attr "memory" "load,both")))
 			 "athlon-vector,athlon-load,athlon-ieu,athlon-mult,athlon-ieu")
@@ -251,12 +251,12 @@
 ;; Using the same heuristics for amdfam10 as K8 with idiv
 
 (define_insn_reservation "athlon_idiv" 6
-			 (and (eq_attr "cpu" "athlon,k8,amdfam10")
+			 (and (eq_attr "cpu" "athlon,k8,generic,amdfam10")
 			      (and (eq_attr "type" "idiv")
 				   (eq_attr "memory" "none,unknown")))
 			 "athlon-vector,(athlon-ieu0*6+(athlon-fpsched,athlon-fvector))")
 (define_insn_reservation "athlon_idiv_mem" 9
-			 (and (eq_attr "cpu" "athlon,k8,amdfam10")
+			 (and (eq_attr "cpu" "athlon,k8,generic,amdfam10")
 			      (and (eq_attr "type" "idiv")
 				   (eq_attr "memory" "load,both")))
 			 "athlon-vector,((athlon-load,athlon-ieu0*6)+(athlon-fpsched,athlon-fvector))")
@@ -264,13 +264,13 @@
 ;; as idiv to create smaller automata.  This probably does not matter much.
 ;; Using the same heuristics for amdfam10 as K8 with idiv
 (define_insn_reservation "athlon_str" 6
-			 (and (eq_attr "cpu" "athlon,k8,amdfam10")
+			 (and (eq_attr "cpu" "athlon,k8,generic,amdfam10")
 			      (and (eq_attr "type" "str")
 				   (eq_attr "memory" "load,both,store")))
 			 "athlon-vector,athlon-load,athlon-ieu0*6")
 
 (define_insn_reservation "athlon_idirect" 1
-			 (and (eq_attr "cpu" "athlon,k8")
+			 (and (eq_attr "cpu" "athlon,k8,generic")
 			      (and (eq_attr "athlon_decode" "direct")
 				   (and (eq_attr "unit" "integer,unknown")
 					(eq_attr "memory" "none,unknown"))))
@@ -282,7 +282,7 @@
 					(eq_attr "memory" "none,unknown"))))
 			 "athlon-direct,athlon-ieu")
 (define_insn_reservation "athlon_ivector" 2
-			 (and (eq_attr "cpu" "athlon,k8")
+			 (and (eq_attr "cpu" "athlon,k8,generic")
 			      (and (eq_attr "athlon_decode" "vector")
 				   (and (eq_attr "unit" "integer,unknown")
 					(eq_attr "memory" "none,unknown"))))
@@ -295,13 +295,13 @@
 			 "athlon-vector,athlon-ieu,athlon-ieu")
 
 (define_insn_reservation "athlon_idirect_loadmov" 3
-			 (and (eq_attr "cpu" "athlon,k8,amdfam10")
+			 (and (eq_attr "cpu" "athlon,k8,generic,amdfam10")
 			      (and (eq_attr "type" "imov")
 				   (eq_attr "memory" "load")))
 			 "athlon-direct,athlon-load")
 
 (define_insn_reservation "athlon_idirect_load" 4
-			 (and (eq_attr "cpu" "athlon,k8")
+			 (and (eq_attr "cpu" "athlon,k8,generic")
 			      (and (eq_attr "athlon_decode" "direct")
 				   (and (eq_attr "unit" "integer,unknown")
 					(eq_attr "memory" "load"))))
@@ -313,7 +313,7 @@
 					(eq_attr "memory" "load"))))
 			 "athlon-direct,athlon-load,athlon-ieu")
 (define_insn_reservation "athlon_ivector_load" 6
-			 (and (eq_attr "cpu" "athlon,k8")
+			 (and (eq_attr "cpu" "athlon,k8,generic")
 			      (and (eq_attr "athlon_decode" "vector")
 				   (and (eq_attr "unit" "integer,unknown")
 					(eq_attr "memory" "load"))))
@@ -326,13 +326,13 @@
 			 "athlon-vector,athlon-load,athlon-ieu,athlon-ieu")
 
 (define_insn_reservation "athlon_idirect_movstore" 1
-			 (and (eq_attr "cpu" "athlon,k8,amdfam10")
+			 (and (eq_attr "cpu" "athlon,k8,generic,amdfam10")
 			      (and (eq_attr "type" "imov")
 				   (eq_attr "memory" "store")))
 			 "athlon-direct,athlon-agu,athlon-store")
 
 (define_insn_reservation "athlon_idirect_both" 4
-			 (and (eq_attr "cpu" "athlon,k8")
+			 (and (eq_attr "cpu" "athlon,k8,generic")
 			      (and (eq_attr "athlon_decode" "direct")
 				   (and (eq_attr "unit" "integer,unknown")
 					(eq_attr "memory" "both"))))
@@ -349,7 +349,7 @@
 			  athlon-store")
 
 (define_insn_reservation "athlon_ivector_both" 6
-			 (and (eq_attr "cpu" "athlon,k8")
+			 (and (eq_attr "cpu" "athlon,k8,generic")
 			      (and (eq_attr "athlon_decode" "vector")
 				   (and (eq_attr "unit" "integer,unknown")
 					(eq_attr "memory" "both"))))
@@ -368,7 +368,7 @@
 			  athlon-store")
 
 (define_insn_reservation "athlon_idirect_store" 1
-			 (and (eq_attr "cpu" "athlon,k8")
+			 (and (eq_attr "cpu" "athlon,k8,generic")
 			      (and (eq_attr "athlon_decode" "direct")
 				   (and (eq_attr "unit" "integer,unknown")
 					(eq_attr "memory" "store"))))
@@ -383,7 +383,7 @@
 			  athlon-store")
 
 (define_insn_reservation "athlon_ivector_store" 2
-			 (and (eq_attr "cpu" "athlon,k8")
+			 (and (eq_attr "cpu" "athlon,k8,generic")
 			      (and (eq_attr "athlon_decode" "vector")
 				   (and (eq_attr "unit" "integer,unknown")
 					(eq_attr "memory" "store"))))
@@ -405,7 +405,7 @@
 					(eq_attr "mode" "XF"))))
 			 "athlon-vector,athlon-fpload2,athlon-fvector*9")
 (define_insn_reservation "athlon_fldxf_k8" 13
-			 (and (eq_attr "cpu" "k8,amdfam10")
+			 (and (eq_attr "cpu" "k8,generic,amdfam10")
 			      (and (eq_attr "type" "fmov")
 				   (and (eq_attr "memory" "load")
 					(eq_attr "mode" "XF"))))
@@ -417,7 +417,7 @@
 				   (eq_attr "memory" "load")))
 			 "athlon-direct,athlon-fpload,athlon-fany")
 (define_insn_reservation "athlon_fld_k8" 2
-			 (and (eq_attr "cpu" "k8,amdfam10")
+			 (and (eq_attr "cpu" "k8,generic,amdfam10")
 			      (and (eq_attr "type" "fmov")
 				   (eq_attr "memory" "load")))
 			 "athlon-direct,athlon-fploadk8,athlon-fstore")
@@ -429,7 +429,7 @@
 					(eq_attr "mode" "XF"))))
 			 "athlon-vector,(athlon-fpsched+athlon-agu),(athlon-store2+(athlon-fvector*7))")
 (define_insn_reservation "athlon_fstxf_k8" 8
-			 (and (eq_attr "cpu" "k8,amdfam10")
+			 (and (eq_attr "cpu" "k8,generic,amdfam10")
 			      (and (eq_attr "type" "fmov")
 				   (and (eq_attr "memory" "store,both")
 					(eq_attr "mode" "XF"))))
@@ -440,16 +440,16 @@
 				   (eq_attr "memory" "store,both")))
 			 "athlon-direct,(athlon-fpsched+athlon-agu),(athlon-fstore+athlon-store)")
 (define_insn_reservation "athlon_fst_k8" 2
-			 (and (eq_attr "cpu" "k8,amdfam10")
+			 (and (eq_attr "cpu" "k8,generic,amdfam10")
 			      (and (eq_attr "type" "fmov")
 				   (eq_attr "memory" "store,both")))
 			 "athlon-direct,(athlon-fpsched+athlon-agu),(athlon-fstore+athlon-store)")
 (define_insn_reservation "athlon_fist" 4
-			 (and (eq_attr "cpu" "athlon,k8,amdfam10")
+			 (and (eq_attr "cpu" "athlon,k8,generic,amdfam10")
 			      (eq_attr "type" "fistp,fisttp"))
 			 "athlon-direct,(athlon-fpsched+athlon-agu),(athlon-fstore+athlon-store)")
 (define_insn_reservation "athlon_fmov" 2
-			 (and (eq_attr "cpu" "athlon,k8,amdfam10")
+			 (and (eq_attr "cpu" "athlon,k8,generic,amdfam10")
 			      (eq_attr "type" "fmov"))
 			 "athlon-direct,athlon-fpsched,athlon-faddmul")
 (define_insn_reservation "athlon_fadd_load" 4
@@ -458,12 +458,12 @@
 				   (eq_attr "memory" "load")))
 			 "athlon-direct,athlon-fpload,athlon-fadd")
 (define_insn_reservation "athlon_fadd_load_k8" 6
-			 (and (eq_attr "cpu" "k8,amdfam10")
+			 (and (eq_attr "cpu" "k8,generic,amdfam10")
 			      (and (eq_attr "type" "fop")
 				   (eq_attr "memory" "load")))
 			 "athlon-direct,athlon-fploadk8,athlon-fadd")
 (define_insn_reservation "athlon_fadd" 4
-			 (and (eq_attr "cpu" "athlon,k8,amdfam10")
+			 (and (eq_attr "cpu" "athlon,k8,generic,amdfam10")
 			      (eq_attr "type" "fop"))
 			 "athlon-direct,athlon-fpsched,athlon-fadd")
 (define_insn_reservation "athlon_fmul_load" 4
@@ -472,16 +472,16 @@
 				   (eq_attr "memory" "load")))
 			 "athlon-direct,athlon-fpload,athlon-fmul")
 (define_insn_reservation "athlon_fmul_load_k8" 6
-			 (and (eq_attr "cpu" "k8,amdfam10")
+			 (and (eq_attr "cpu" "k8,generic,amdfam10")
 			      (and (eq_attr "type" "fmul")
 				   (eq_attr "memory" "load")))
 			 "athlon-direct,athlon-fploadk8,athlon-fmul")
 (define_insn_reservation "athlon_fmul" 4
-			 (and (eq_attr "cpu" "athlon,k8,amdfam10")
+			 (and (eq_attr "cpu" "athlon,k8,generic,amdfam10")
 			      (eq_attr "type" "fmul"))
 			 "athlon-direct,athlon-fpsched,athlon-fmul")
 (define_insn_reservation "athlon_fsgn" 2
-			 (and (eq_attr "cpu" "athlon,k8,amdfam10")
+			 (and (eq_attr "cpu" "athlon,k8,generic,amdfam10")
 			      (eq_attr "type" "fsgn"))
 			 "athlon-direct,athlon-fpsched,athlon-fmul")
 (define_insn_reservation "athlon_fdiv_load" 24
@@ -490,7 +490,7 @@
 				   (eq_attr "memory" "load")))
 			 "athlon-direct,athlon-fpload,athlon-fmul")
 (define_insn_reservation "athlon_fdiv_load_k8" 13
-			 (and (eq_attr "cpu" "k8,amdfam10")
+			 (and (eq_attr "cpu" "k8,generic,amdfam10")
 			      (and (eq_attr "type" "fdiv")
 				   (eq_attr "memory" "load")))
 			 "athlon-direct,athlon-fploadk8,athlon-fmul")
@@ -499,16 +499,16 @@
 			      (eq_attr "type" "fdiv"))
 			 "athlon-direct,athlon-fpsched,athlon-fmul")
 (define_insn_reservation "athlon_fdiv_k8" 11
-			 (and (eq_attr "cpu" "k8,amdfam10")
+			 (and (eq_attr "cpu" "k8,generic,amdfam10")
 			      (eq_attr "type" "fdiv"))
 			 "athlon-direct,athlon-fpsched,athlon-fmul")
 (define_insn_reservation "athlon_fpspc_load" 103
-			 (and (eq_attr "cpu" "athlon,k8,amdfam10")
+			 (and (eq_attr "cpu" "athlon,k8,generic,amdfam10")
 			      (and (eq_attr "type" "fpspc")
 				   (eq_attr "memory" "load")))
 			 "athlon-vector,athlon-fpload,athlon-fvector")
 (define_insn_reservation "athlon_fpspc" 100
-			 (and (eq_attr "cpu" "athlon,k8,amdfam10")
+			 (and (eq_attr "cpu" "athlon,k8,generic,amdfam10")
 			      (eq_attr "type" "fpspc"))
 			 "athlon-vector,athlon-fpsched,athlon-fvector")
 (define_insn_reservation "athlon_fcmov_load" 7
@@ -521,12 +521,12 @@
 			      (eq_attr "type" "fcmov"))
 			 "athlon-vector,athlon-fpsched,athlon-fvector")
 (define_insn_reservation "athlon_fcmov_load_k8" 17
-			 (and (eq_attr "cpu" "k8,amdfam10")
+			 (and (eq_attr "cpu" "k8,generic,amdfam10")
 			      (and (eq_attr "type" "fcmov")
 				   (eq_attr "memory" "load")))
 			 "athlon-vector,athlon-fploadk8,athlon-fvector")
 (define_insn_reservation "athlon_fcmov_k8" 15
-			 (and (eq_attr "cpu" "k8,amdfam10")
+			 (and (eq_attr "cpu" "k8,generic,amdfam10")
 			      (eq_attr "type" "fcmov"))
 			 "athlon-vector,athlon-fpsched,athlon-fvector")
 ;; fcomi is vector decoded by uses only one pipe.
@@ -537,13 +537,13 @@
 				        (eq_attr "memory" "load"))))
 			 "athlon-vector,athlon-fpload,athlon-fadd")
 (define_insn_reservation "athlon_fcomi_load_k8" 5
-			 (and (eq_attr "cpu" "k8,amdfam10")
+			 (and (eq_attr "cpu" "k8,generic,amdfam10")
 			      (and (eq_attr "type" "fcmp")
 				   (and (eq_attr "athlon_decode" "vector")
 				        (eq_attr "memory" "load"))))
 			 "athlon-vector,athlon-fploadk8,athlon-fadd")
 (define_insn_reservation "athlon_fcomi" 3
-			 (and (eq_attr "cpu" "athlon,k8,amdfam10")
+			 (and (eq_attr "cpu" "athlon,k8,generic,amdfam10")
 			      (and (eq_attr "athlon_decode" "vector")
 				   (eq_attr "type" "fcmp")))
 			 "athlon-vector,athlon-fpsched,athlon-fadd")
@@ -553,18 +553,18 @@
 				   (eq_attr "memory" "load")))
 			 "athlon-direct,athlon-fpload,athlon-fadd")
 (define_insn_reservation "athlon_fcom_load_k8" 4
-			 (and (eq_attr "cpu" "k8,amdfam10")
+			 (and (eq_attr "cpu" "k8,generic,amdfam10")
 			      (and (eq_attr "type" "fcmp")
 				   (eq_attr "memory" "load")))
 			 "athlon-direct,athlon-fploadk8,athlon-fadd")
 (define_insn_reservation "athlon_fcom" 2
-			 (and (eq_attr "cpu" "athlon,k8,amdfam10")
+			 (and (eq_attr "cpu" "athlon,k8,generic,amdfam10")
 			      (eq_attr "type" "fcmp"))
 			 "athlon-direct,athlon-fpsched,athlon-fadd")
 ;; Never seen by the scheduler because we still don't do post reg-stack
 ;; scheduling.
 ;(define_insn_reservation "athlon_fxch" 2
-;			 (and (eq_attr "cpu" "athlon,k8,amdfam10")
+;			 (and (eq_attr "cpu" "athlon,k8,generic,amdfam10")
 ;			      (eq_attr "type" "fxch"))
 ;			 "athlon-direct,athlon-fpsched,athlon-fany")
 
@@ -580,8 +580,13 @@
 			      (and (eq_attr "type" "ssemov")
 				   (match_operand:DF 1 "memory_operand")))
 			 "athlon-direct,athlon-fploadk8,athlon-fstore")
+(define_insn_reservation "athlon_movsd_load_generic" 2
+			 (and (eq_attr "cpu" "generic")
+			      (and (eq_attr "type" "ssemov")
+				   (match_operand:DF 1 "memory_operand")))
+			 "athlon-double,athlon-fploadk8,(athlon-fstore+athlon-fmul)")
 (define_insn_reservation "athlon_movaps_load_k8" 2
-			 (and (eq_attr "cpu" "k8")
+			 (and (eq_attr "cpu" "k8,generic")
 			      (and (eq_attr "type" "ssemov")
 				   (and (eq_attr "mode" "V4SF,V2DF,TI")
 					(eq_attr "memory" "load"))))
@@ -599,7 +604,7 @@
 					(eq_attr "memory" "load"))))
 			 "athlon-vector,athlon-fpload,(athlon-fany*2)")
 (define_insn_reservation "athlon_movss_load_k8" 1
-			 (and (eq_attr "cpu" "k8")
+			 (and (eq_attr "cpu" "k8,generic")
 			      (and (eq_attr "type" "ssemov")
 				   (and (eq_attr "mode" "SF,DI")
 					(eq_attr "memory" "load"))))
@@ -610,7 +615,7 @@
 				   (eq_attr "memory" "load")))
 			 "athlon-direct,athlon-fpload,athlon-fany")
 (define_insn_reservation "athlon_mmxsseld_k8" 2
-			 (and (eq_attr "cpu" "k8")
+			 (and (eq_attr "cpu" "k8,generic")
 			      (and (eq_attr "type" "mmxmov,ssemov")
 				   (eq_attr "memory" "load")))
 			 "athlon-direct,athlon-fploadk8,athlon-fstore")
@@ -632,19 +637,19 @@
 				   (eq_attr "memory" "load")))
 			 "athlon-direct,athlon-fploadk8, athlon-fany")
 (define_insn_reservation "athlon_mmxssest" 3
-			 (and (eq_attr "cpu" "k8")
+			 (and (eq_attr "cpu" "k8,generic")
 			      (and (eq_attr "type" "mmxmov,ssemov")
 				   (and (eq_attr "mode" "V4SF,V2DF,TI")
 					(eq_attr "memory" "store,both"))))
 			 "athlon-vector,(athlon-fpsched+athlon-agu),((athlon-fstore+athlon-store2)*2)")
 (define_insn_reservation "athlon_mmxssest_k8" 3
-			 (and (eq_attr "cpu" "k8")
+			 (and (eq_attr "cpu" "k8,generic")
 			      (and (eq_attr "type" "mmxmov,ssemov")
 				   (and (eq_attr "mode" "V4SF,V2DF,TI")
 					(eq_attr "memory" "store,both"))))
 			 "athlon-double,(athlon-fpsched+athlon-agu),((athlon-fstore+athlon-store2)*2)")
 (define_insn_reservation "athlon_mmxssest_short" 2
-			 (and (eq_attr "cpu" "athlon,k8")
+			 (and (eq_attr "cpu" "athlon,k8,generic")
 			      (and (eq_attr "type" "mmxmov,ssemov")
 				   (eq_attr "memory" "store,both")))
 			 "athlon-direct,(athlon-fpsched+athlon-agu),(athlon-fstore+athlon-store)")
@@ -668,7 +673,7 @@
 				   (eq_attr "memory" "store,both")))
 			 "athlon-direct,(athlon-fpsched+athlon-agu),(athlon-fstore+athlon-store)")
 (define_insn_reservation "athlon_movaps_k8" 2
-			 (and (eq_attr "cpu" "k8")
+			 (and (eq_attr "cpu" "k8,generic")
 			      (and (eq_attr "type" "ssemov")
 				   (eq_attr "mode" "V4SF,V2DF,TI")))
 			 "athlon-double,athlon-fpsched,((athlon-faddmul+athlon-faddmul) | (athlon-faddmul, athlon-faddmul))")
@@ -678,25 +683,25 @@
 				   (eq_attr "mode" "V4SF,V2DF,TI")))
 			 "athlon-vector,athlon-fpsched,(athlon-faddmul+athlon-faddmul)")
 (define_insn_reservation "athlon_mmxssemov" 2
-			 (and (eq_attr "cpu" "athlon,k8")
+			 (and (eq_attr "cpu" "athlon,k8,generic")
 			      (eq_attr "type" "mmxmov,ssemov"))
 			 "athlon-direct,athlon-fpsched,athlon-faddmul")
 (define_insn_reservation "athlon_mmxmul_load" 4
-			 (and (eq_attr "cpu" "athlon,k8")
+			 (and (eq_attr "cpu" "athlon,k8,generic")
 			      (and (eq_attr "type" "mmxmul")
 				   (eq_attr "memory" "load")))
 			 "athlon-direct,athlon-fpload,athlon-fmul")
 (define_insn_reservation "athlon_mmxmul" 3
-			 (and (eq_attr "cpu" "athlon,k8")
+			 (and (eq_attr "cpu" "athlon,k8,generic")
 			      (eq_attr "type" "mmxmul"))
 			 "athlon-direct,athlon-fpsched,athlon-fmul")
 (define_insn_reservation "athlon_mmx_load" 3
-			 (and (eq_attr "cpu" "athlon,k8")
+			 (and (eq_attr "cpu" "athlon,k8,generic")
 			      (and (eq_attr "unit" "mmx")
 				   (eq_attr "memory" "load")))
 			 "athlon-direct,athlon-fpload,athlon-faddmul")
 (define_insn_reservation "athlon_mmx" 2
-			 (and (eq_attr "cpu" "athlon,k8")
+			 (and (eq_attr "cpu" "athlon,k8,generic")
 			      (eq_attr "unit" "mmx"))
 			 "athlon-direct,athlon-fpsched,athlon-faddmul")
 ;; SSE operations are handled by the i387 unit as well.  The latency
@@ -708,7 +713,7 @@
 				   (eq_attr "memory" "load")))
 			 "athlon-vector,athlon-fpload2,(athlon-fmul*2)")
 (define_insn_reservation "athlon_sselog_load_k8" 5
-			 (and (eq_attr "cpu" "k8")
+			 (and (eq_attr "cpu" "k8,generic")
 			      (and (eq_attr "type" "sselog,sselog1,sseshuf,sseshuf1")
 				   (eq_attr "memory" "load")))
 			 "athlon-double,athlon-fpload2k8,(athlon-fmul*2)")
@@ -722,7 +727,7 @@
 			      (eq_attr "type" "sselog,sselog1,sseshuf,sseshuf1"))
 			 "athlon-vector,athlon-fpsched,athlon-fmul*2")
 (define_insn_reservation "athlon_sselog_k8" 3
-			 (and (eq_attr "cpu" "k8")
+			 (and (eq_attr "cpu" "k8,generic")
 			      (eq_attr "type" "sselog,sselog1,sseshuf,sseshuf1"))
 			 "athlon-double,athlon-fpsched,athlon-fmul")
 (define_insn_reservation "athlon_sselog_amdfam10" 2
@@ -738,13 +743,13 @@
 					(eq_attr "memory" "load"))))
 			 "athlon-direct,athlon-fpload,athlon-fadd")
 (define_insn_reservation "athlon_ssecmp_load_k8" 4
-			 (and (eq_attr "cpu" "k8,amdfam10")
+			 (and (eq_attr "cpu" "k8,generic,amdfam10")
 			      (and (eq_attr "type" "ssecmp")
 				   (and (eq_attr "mode" "SF,DF,DI,TI")
 					(eq_attr "memory" "load"))))
 			 "athlon-direct,athlon-fploadk8,athlon-fadd")
 (define_insn_reservation "athlon_ssecmp" 2
-			 (and (eq_attr "cpu" "athlon,k8,amdfam10")
+			 (and (eq_attr "cpu" "athlon,k8,generic,amdfam10")
 			      (and (eq_attr "type" "ssecmp")
 				   (eq_attr "mode" "SF,DF,DI,TI")))
 			 "athlon-direct,athlon-fpsched,athlon-fadd")
@@ -754,7 +759,7 @@
 				   (eq_attr "memory" "load")))
 			 "athlon-vector,athlon-fpload2,(athlon-fadd*2)")
 (define_insn_reservation "athlon_ssecmpvector_load_k8" 5
-			 (and (eq_attr "cpu" "k8")
+			 (and (eq_attr "cpu" "k8,generic")
 			      (and (eq_attr "type" "ssecmp")
 				   (eq_attr "memory" "load")))
 			 "athlon-double,athlon-fpload2k8,(athlon-fadd*2)")
@@ -768,7 +773,7 @@
 			      (eq_attr "type" "ssecmp"))
 			 "athlon-vector,athlon-fpsched,(athlon-fadd*2)")
 (define_insn_reservation "athlon_ssecmpvector_k8" 3
-			 (and (eq_attr "cpu" "k8")
+			 (and (eq_attr "cpu" "k8,generic")
 			      (eq_attr "type" "ssecmp"))
 			 "athlon-double,athlon-fpsched,(athlon-fadd*2)")
 (define_insn_reservation "athlon_ssecmpvector_amdfam10" 2
@@ -781,7 +786,7 @@
 				   (eq_attr "memory" "load")))
 			 "athlon-vector,athlon-fpload,athlon-fadd")
 (define_insn_reservation "athlon_ssecomi_load_k8" 6
-			 (and (eq_attr "cpu" "k8")
+			 (and (eq_attr "cpu" "k8,generic")
 			      (and (eq_attr "type" "ssecomi")
 				   (eq_attr "memory" "load")))
 			 "athlon-vector,athlon-fploadk8,athlon-fadd")
@@ -791,7 +796,7 @@
 				   (eq_attr "memory" "load")))
 			 "athlon-direct,athlon-fploadk8,athlon-fadd")
 (define_insn_reservation "athlon_ssecomi" 4
-			 (and (eq_attr "cpu" "athlon,k8")
+			 (and (eq_attr "cpu" "athlon,k8,generic")
 			      (eq_attr "type" "ssecomi"))
 			 "athlon-vector,athlon-fpsched,athlon-fadd")
 (define_insn_reservation "athlon_ssecomi_amdfam10" 3
@@ -806,13 +811,13 @@
 					(eq_attr "memory" "load"))))
 			 "athlon-direct,athlon-fpload,athlon-fadd")
 (define_insn_reservation "athlon_sseadd_load_k8" 6
-			 (and (eq_attr "cpu" "k8,amdfam10")
+			 (and (eq_attr "cpu" "k8,generic,amdfam10")
 			      (and (eq_attr "type" "sseadd,sseadd1")
 				   (and (eq_attr "mode" "SF,DF,DI")
 					(eq_attr "memory" "load"))))
 			 "athlon-direct,athlon-fploadk8,athlon-fadd")
 (define_insn_reservation "athlon_sseadd" 4
-			 (and (eq_attr "cpu" "athlon,k8,amdfam10")
+			 (and (eq_attr "cpu" "athlon,k8,generic,amdfam10")
 			      (and (eq_attr "type" "sseadd,sseadd1")
 				   (eq_attr "mode" "SF,DF,DI")))
 			 "athlon-direct,athlon-fpsched,athlon-fadd")
@@ -822,7 +827,7 @@
 				   (eq_attr "memory" "load")))
 			 "athlon-vector,athlon-fpload2,(athlon-fadd*2)")
 (define_insn_reservation "athlon_sseaddvector_load_k8" 7
-			 (and (eq_attr "cpu" "k8")
+			 (and (eq_attr "cpu" "k8,generic")
 			      (and (eq_attr "type" "sseadd,sseadd1")
 				   (eq_attr "memory" "load")))
 			 "athlon-double,athlon-fpload2k8,(athlon-fadd*2)")
@@ -836,7 +841,7 @@
 			      (eq_attr "type" "sseadd,sseadd1"))
 			 "athlon-vector,athlon-fpsched,(athlon-fadd*2)")
 (define_insn_reservation "athlon_sseaddvector_k8" 5
-			 (and (eq_attr "cpu" "k8")
+			 (and (eq_attr "cpu" "k8,generic")
 			      (eq_attr "type" "sseadd,sseadd1"))
 			 "athlon-double,athlon-fpsched,(athlon-fadd*2)")
 (define_insn_reservation "athlon_sseaddvector_amdfam10" 4
@@ -850,7 +855,7 @@
 
 ;; cvtss2sd
 (define_insn_reservation "athlon_ssecvt_cvtss2sd_load_k8" 4
-			 (and (eq_attr "cpu" "k8,athlon")
+			 (and (eq_attr "cpu" "k8,athlon,generic")
 			      (and (eq_attr "type" "ssecvt")
 				   (and (eq_attr "athlon_decode" "direct")
 					(and (eq_attr "mode" "DF")
@@ -864,7 +869,7 @@
 					     (eq_attr "memory" "load")))))
 			 "athlon-double,athlon-fploadk8,(athlon-faddmul+athlon-fstore)")
 (define_insn_reservation "athlon_ssecvt_cvtss2sd" 2
-			 (and (eq_attr "cpu" "athlon,k8")
+			 (and (eq_attr "cpu" "athlon,k8,generic")
 			      (and (eq_attr "type" "ssecvt")
 				   (and (eq_attr "athlon_decode" "direct")
 					(eq_attr "mode" "DF"))))
@@ -877,7 +882,7 @@
 			 "athlon-vector,athlon-fpsched,athlon-faddmul,(athlon-fstore*2)")
 ;; cvtps2pd.  Model same way the other double decoded FP conversions.
 (define_insn_reservation "athlon_ssecvt_cvtps2pd_load_k8" 5
-			 (and (eq_attr "cpu" "k8,athlon")
+			 (and (eq_attr "cpu" "k8,athlon,generic")
 			      (and (eq_attr "type" "ssecvt")
 				   (and (eq_attr "athlon_decode" "double")
 					(and (eq_attr "mode" "V2DF,V4SF,TI")
@@ -891,7 +896,7 @@
 					     (eq_attr "memory" "load")))))
 			 "athlon-direct,athlon-fploadk8,athlon-fstore")
 (define_insn_reservation "athlon_ssecvt_cvtps2pd_k8" 3
-			 (and (eq_attr "cpu" "k8,athlon")
+			 (and (eq_attr "cpu" "k8,athlon,generic")
 			      (and (eq_attr "type" "ssecvt")
 				   (and (eq_attr "athlon_decode" "double")
 					(eq_attr "mode" "V2DF,V4SF,TI"))))
@@ -927,7 +932,7 @@
 					     (eq_attr "memory" "load")))))
 			 "athlon-vector,athlon-fpload,(athlon-fstore*2)")
 (define_insn_reservation "athlon_sseicvt_cvtsi2ss_load_k8" 9
-			 (and (eq_attr "cpu" "k8")
+			 (and (eq_attr "cpu" "k8,generic")
 			      (and (eq_attr "type" "sseicvt")
 				   (and (eq_attr "athlon_decode" "double")
 					(and (eq_attr "mode" "SF,DF")
@@ -942,7 +947,7 @@
 			 "athlon-double,athlon-fploadk8,(athlon-faddmul+athlon-fstore)")
 ;; cvtsi2sd reg,reg is double decoded (vector on Athlon)
 (define_insn_reservation "athlon_sseicvt_cvtsi2sd_k8" 11
-			 (and (eq_attr "cpu" "k8,athlon")
+			 (and (eq_attr "cpu" "k8,athlon,generic")
 			      (and (eq_attr "type" "sseicvt")
 				   (and (eq_attr "athlon_decode" "double")
 					(and (eq_attr "mode" "SF,DF")
@@ -957,7 +962,7 @@
 			 "athlon-vector,athlon-fploadk8,(athlon-faddmul+athlon-fstore)")
 ;; cvtsi2ss reg, reg is doublepath
 (define_insn_reservation "athlon_sseicvt_cvtsi2ss" 14
-			 (and (eq_attr "cpu" "athlon,k8")
+			 (and (eq_attr "cpu" "athlon,k8,generic")
 			      (and (eq_attr "type" "sseicvt")
 				   (and (eq_attr "athlon_decode" "vector")
 					(and (eq_attr "mode" "SF,DF")
@@ -972,7 +977,7 @@
 			 "athlon-vector,athlon-fploadk8,(athlon-faddmul+athlon-fstore)")
 ;; cvtsd2ss mem,reg is doublepath, troughput unknown, latency 9
 (define_insn_reservation "athlon_ssecvt_cvtsd2ss_load_k8" 9
-			 (and (eq_attr "cpu" "k8,athlon")
+			 (and (eq_attr "cpu" "k8,athlon,generic")
 			      (and (eq_attr "type" "ssecvt")
 				   (and (eq_attr "athlon_decode" "double")
 					(and (eq_attr "mode" "SF")
@@ -987,7 +992,7 @@
 			 "athlon-double,athlon-fploadk8,(athlon-faddmul+athlon-fstore)")
 ;; cvtsd2ss reg,reg is vectorpath, troughput unknown, latency 12
 (define_insn_reservation "athlon_ssecvt_cvtsd2ss" 12
-			 (and (eq_attr "cpu" "athlon,k8")
+			 (and (eq_attr "cpu" "athlon,k8,generic")
 			      (and (eq_attr "type" "ssecvt")
 				   (and (eq_attr "athlon_decode" "vector")
 					(and (eq_attr "mode" "SF")
@@ -1001,7 +1006,7 @@
 					     (eq_attr "memory" "none")))))
 			 "athlon-vector,athlon-fpsched,athlon-faddmul,(athlon-fstore*2)")
 (define_insn_reservation "athlon_ssecvt_cvtpd2ps_load_k8" 8
-			 (and (eq_attr "cpu" "athlon,k8")
+			 (and (eq_attr "cpu" "athlon,k8,generic")
 			      (and (eq_attr "type" "ssecvt")
 				   (and (eq_attr "athlon_decode" "vector")
 					(and (eq_attr "mode" "V4SF,V2DF,TI")
@@ -1017,7 +1022,7 @@
 ;; cvtpd2ps mem,reg is vectorpath, troughput unknown, latency 10
 ;; ??? Why it is fater than cvtsd2ss?
 (define_insn_reservation "athlon_ssecvt_cvtpd2ps" 8
-			 (and (eq_attr "cpu" "athlon,k8")
+			 (and (eq_attr "cpu" "athlon,k8,generic")
 			      (and (eq_attr "type" "ssecvt")
 				   (and (eq_attr "athlon_decode" "vector")
 					(and (eq_attr "mode" "V4SF,V2DF,TI")
@@ -1032,7 +1037,7 @@
 			 "athlon-double,athlon-fpsched,(athlon-faddmul+athlon-fstore)")
 ;; cvtsd2si mem,reg is doublepath, troughput 1, latency 9
 (define_insn_reservation "athlon_secvt_cvtsX2si_load" 9
-			 (and (eq_attr "cpu" "athlon,k8")
+			 (and (eq_attr "cpu" "athlon,k8,generic")
 			      (and (eq_attr "type" "sseicvt")
 				   (and (eq_attr "athlon_decode" "vector")
 					(and (eq_attr "mode" "SI,DI")
@@ -1054,7 +1059,7 @@
 					     (eq_attr "memory" "none")))))
 			 "athlon-vector,athlon-fpsched,athlon-fvector")
 (define_insn_reservation "athlon_ssecvt_cvtsX2si_k8" 9
-			 (and (eq_attr "cpu" "k8")
+			 (and (eq_attr "cpu" "k8,generic")
 			      (and (eq_attr "type" "sseicvt")
 				   (and (eq_attr "athlon_decode" "double")
 					(and (eq_attr "mode" "SI,DI")
@@ -1092,13 +1097,13 @@
 					(eq_attr "memory" "load"))))
 			 "athlon-direct,athlon-fpload,athlon-fmul")
 (define_insn_reservation "athlon_ssemul_load_k8" 6
-			 (and (eq_attr "cpu" "k8,amdfam10")
+			 (and (eq_attr "cpu" "k8,generic,amdfam10")
 			      (and (eq_attr "type" "ssemul")
 				   (and (eq_attr "mode" "SF,DF")
 					(eq_attr "memory" "load"))))
 			 "athlon-direct,athlon-fploadk8,athlon-fmul")
 (define_insn_reservation "athlon_ssemul" 4
-			 (and (eq_attr "cpu" "athlon,k8,amdfam10")
+			 (and (eq_attr "cpu" "athlon,k8,generic,amdfam10")
 			      (and (eq_attr "type" "ssemul")
 				   (eq_attr "mode" "SF,DF")))
 			 "athlon-direct,athlon-fpsched,athlon-fmul")
@@ -1108,7 +1113,7 @@
 				   (eq_attr "memory" "load")))
 			 "athlon-vector,athlon-fpload2,(athlon-fmul*2)")
 (define_insn_reservation "athlon_ssemulvector_load_k8" 7
-			 (and (eq_attr "cpu" "k8")
+			 (and (eq_attr "cpu" "k8,generic")
 			      (and (eq_attr "type" "ssemul")
 				   (eq_attr "memory" "load")))
 			 "athlon-double,athlon-fpload2k8,(athlon-fmul*2)")
@@ -1122,7 +1127,7 @@
 			      (eq_attr "type" "ssemul"))
 			 "athlon-vector,athlon-fpsched,(athlon-fmul*2)")
 (define_insn_reservation "athlon_ssemulvector_k8" 5
-			 (and (eq_attr "cpu" "k8")
+			 (and (eq_attr "cpu" "k8,generic")
 			      (eq_attr "type" "ssemul"))
 			 "athlon-double,athlon-fpsched,(athlon-fmul*2)")
 (define_insn_reservation "athlon_ssemulvector_amdfam10" 4
@@ -1137,13 +1142,13 @@
 					(eq_attr "memory" "load"))))
 			 "athlon-direct,athlon-fpload,athlon-fmul*17")
 (define_insn_reservation "athlon_ssediv_load_k8" 22
-			 (and (eq_attr "cpu" "k8,amdfam10")
+			 (and (eq_attr "cpu" "k8,generic,amdfam10")
 			      (and (eq_attr "type" "ssediv")
 				   (and (eq_attr "mode" "SF,DF")
 					(eq_attr "memory" "load"))))
 			 "athlon-direct,athlon-fploadk8,athlon-fmul*17")
 (define_insn_reservation "athlon_ssediv" 20
-			 (and (eq_attr "cpu" "athlon,k8,amdfam10")
+			 (and (eq_attr "cpu" "athlon,k8,generic,amdfam10")
 			      (and (eq_attr "type" "ssediv")
 				   (eq_attr "mode" "SF,DF")))
 			 "athlon-direct,athlon-fpsched,athlon-fmul*17")
@@ -1153,7 +1158,7 @@
 				   (eq_attr "memory" "load")))
 			 "athlon-vector,athlon-fpload2,athlon-fmul*34")
 (define_insn_reservation "athlon_ssedivvector_load_k8" 35
-			 (and (eq_attr "cpu" "k8")
+			 (and (eq_attr "cpu" "k8,generic")
 			      (and (eq_attr "type" "ssediv")
 				   (eq_attr "memory" "load")))
 			 "athlon-double,athlon-fpload2k8,athlon-fmul*34")
@@ -1167,7 +1172,7 @@
 			      (eq_attr "type" "ssediv"))
 			 "athlon-vector,athlon-fmul*34")
 (define_insn_reservation "athlon_ssedivvector_k8" 39
-			 (and (eq_attr "cpu" "k8")
+			 (and (eq_attr "cpu" "k8,generic")
 			      (eq_attr "type" "ssediv"))
 			 "athlon-double,athlon-fmul*34")
 (define_insn_reservation "athlon_ssedivvector_amdfam10" 20

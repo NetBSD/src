@@ -1,5 +1,5 @@
 /* Machine description patterns for PowerPC running Darwin (Mac OS X).
-   Copyright (C) 2004-2018 Free Software Foundation, Inc.
+   Copyright (C) 2004-2017 Free Software Foundation, Inc.
    Contributed by Apple Computer Inc.
 
 This file is part of GCC.
@@ -30,28 +30,29 @@ You should have received a copy of the GNU General Public License
   [(set (match_operand:DF 0 "gpc_reg_operand" "=f,!r")
         (mem:DF (lo_sum:SI (match_operand:SI 1 "gpc_reg_operand" "b,b")
                            (match_operand 2 "" ""))))]
-  "TARGET_MACHO && TARGET_HARD_FLOAT && !TARGET_64BIT"
+  "TARGET_MACHO && TARGET_HARD_FLOAT && TARGET_FPRS && !TARGET_64BIT"
+  "*
 {
   switch (which_alternative)
     {
       case 0:
-	return "lfd %0,lo16(%2)(%1)";
+	return \"lfd %0,lo16(%2)(%1)\";
       case 1:
 	{
 	  if (TARGET_POWERPC64 && TARGET_32BIT)
 	    /* Note, old assemblers didn't support relocation here.  */
-	    return "ld %0,lo16(%2)(%1)";
+	    return \"ld %0,lo16(%2)(%1)\";
 	  else
 	    {
-	      output_asm_insn ("la %0,lo16(%2)(%1)", operands);
-	      output_asm_insn ("lwz %L0,4(%0)", operands);
-	      return ("lwz %0,0(%0)");
+	      output_asm_insn (\"la %0,lo16(%2)(%1)\", operands);
+	      output_asm_insn (\"lwz %L0,4(%0)\", operands);
+	      return (\"lwz %0,0(%0)\");
 	    }
 	}
       default:
 	gcc_unreachable ();
     }
-}
+}"
   [(set_attr "type" "load")
    (set_attr "length" "4,12")])
 
@@ -60,18 +61,19 @@ You should have received a copy of the GNU General Public License
   [(set (match_operand:DF 0 "gpc_reg_operand" "=f,!r")
         (mem:DF (lo_sum:DI (match_operand:DI 1 "gpc_reg_operand" "b,b")
                            (match_operand 2 "" ""))))]
-  "TARGET_MACHO && TARGET_HARD_FLOAT && TARGET_64BIT"
+  "TARGET_MACHO && TARGET_HARD_FLOAT && TARGET_FPRS && TARGET_64BIT"
+  "*
 {
   switch (which_alternative)
     {
       case 0:
-	return "lfd %0,lo16(%2)(%1)";
+	return \"lfd %0,lo16(%2)(%1)\";
       case 1:
-	return "ld %0,lo16(%2)(%1)";
+	return \"ld %0,lo16(%2)(%1)\";
       default:
 	gcc_unreachable ();
     }
-}
+}"
   [(set_attr "type" "load")
    (set_attr "length" "4,4")])
 
@@ -79,7 +81,7 @@ You should have received a copy of the GNU General Public License
   [(set (mem:DF (lo_sum:SI (match_operand:SI 1 "gpc_reg_operand" "b")
                            (match_operand 2 "" "")))
 	(match_operand:DF 0 "gpc_reg_operand" "f"))]
-  "TARGET_MACHO && TARGET_HARD_FLOAT && ! TARGET_64BIT"
+  "TARGET_MACHO && TARGET_HARD_FLOAT && TARGET_FPRS && ! TARGET_64BIT"
   "stfd %0,lo16(%2)(%1)"
   [(set_attr "type" "store")
    (set_attr "length" "4")])
@@ -88,7 +90,7 @@ You should have received a copy of the GNU General Public License
   [(set (mem:DF (lo_sum:DI (match_operand:DI 1 "gpc_reg_operand" "b")
                            (match_operand 2 "" "")))
 	(match_operand:DF 0 "gpc_reg_operand" "f"))]
-  "TARGET_MACHO && TARGET_HARD_FLOAT && TARGET_64BIT"
+  "TARGET_MACHO && TARGET_HARD_FLOAT && TARGET_FPRS && TARGET_64BIT"
   "stfd %0,lo16(%2)(%1)"
   [(set_attr "type" "store")
    (set_attr "length" "4")])
@@ -97,7 +99,7 @@ You should have received a copy of the GNU General Public License
   [(set (match_operand:SF 0 "gpc_reg_operand" "=f,!r")
         (mem:SF (lo_sum:SI (match_operand:SI 1 "gpc_reg_operand" "b,b")
                            (match_operand 2 "" ""))))]
-  "TARGET_MACHO && TARGET_HARD_FLOAT && ! TARGET_64BIT"
+  "TARGET_MACHO && TARGET_HARD_FLOAT && TARGET_FPRS && ! TARGET_64BIT"
   "@
    lfs %0,lo16(%2)(%1)
    lwz %0,lo16(%2)(%1)"
@@ -108,7 +110,7 @@ You should have received a copy of the GNU General Public License
   [(set (match_operand:SF 0 "gpc_reg_operand" "=f,!r")
         (mem:SF (lo_sum:DI (match_operand:DI 1 "gpc_reg_operand" "b,b")
                            (match_operand 2 "" ""))))]
-  "TARGET_MACHO && TARGET_HARD_FLOAT && TARGET_64BIT"
+  "TARGET_MACHO && TARGET_HARD_FLOAT && TARGET_FPRS && TARGET_64BIT"
   "@
    lfs %0,lo16(%2)(%1)
    lwz %0,lo16(%2)(%1)"
@@ -119,7 +121,7 @@ You should have received a copy of the GNU General Public License
   [(set (mem:SF (lo_sum:SI (match_operand:SI 1 "gpc_reg_operand" "b,b")
                            (match_operand 2 "" "")))
 	(match_operand:SF 0 "gpc_reg_operand" "f,!r"))]
-  "TARGET_MACHO && TARGET_HARD_FLOAT && ! TARGET_64BIT"
+  "TARGET_MACHO && TARGET_HARD_FLOAT && TARGET_FPRS && ! TARGET_64BIT"
   "@
    stfs %0,lo16(%2)(%1)
    stw %0,lo16(%2)(%1)"
@@ -130,7 +132,7 @@ You should have received a copy of the GNU General Public License
   [(set (mem:SF (lo_sum:DI (match_operand:DI 1 "gpc_reg_operand" "b,b")
                            (match_operand 2 "" "")))
 	(match_operand:SF 0 "gpc_reg_operand" "f,!r"))]
-  "TARGET_MACHO && TARGET_HARD_FLOAT && TARGET_64BIT"
+  "TARGET_MACHO && TARGET_HARD_FLOAT && TARGET_FPRS && TARGET_64BIT"
   "@
    stfs %0,lo16(%2)(%1)
    stw %0,lo16(%2)(%1)"
@@ -139,8 +141,8 @@ You should have received a copy of the GNU General Public License
 
 ;; Mach-O PIC trickery.
 (define_expand "macho_high"
-  [(set (match_operand 0 "")
-	(high (match_operand 1 "")))]
+  [(set (match_operand 0 "" "")
+	(high (match_operand 1 "" "")))]
   "TARGET_MACHO"
 {
   if (TARGET_64BIT)
@@ -165,9 +167,9 @@ You should have received a copy of the GNU General Public License
   "lis %0,ha16(%1)")
 
 (define_expand "macho_low"
-  [(set (match_operand 0 "")
-	(lo_sum (match_operand 1 "")
-		   (match_operand 2 "")))]
+  [(set (match_operand 0 "" "")
+	(lo_sum (match_operand 1 "" "")
+		   (match_operand 2 "" "")))]
    "TARGET_MACHO"
 {
   if (TARGET_64BIT)
@@ -193,10 +195,10 @@ You should have received a copy of the GNU General Public License
    "la %0,lo16(%2)(%1)")
 
 (define_split
-  [(set (mem:V4SI (plus:DI (match_operand:DI 0 "gpc_reg_operand")
-			 (match_operand:DI 1 "short_cint_operand")))
-	(match_operand:V4SI 2 "register_operand"))
-   (clobber (match_operand:DI 3 "gpc_reg_operand"))]
+  [(set (mem:V4SI (plus:DI (match_operand:DI 0 "gpc_reg_operand" "")
+			 (match_operand:DI 1 "short_cint_operand" "")))
+	(match_operand:V4SI 2 "register_operand" ""))
+   (clobber (match_operand:DI 3 "gpc_reg_operand" ""))]
   "TARGET_MACHO && TARGET_64BIT"
   [(set (match_dup 3) (plus:DI (match_dup 0) (match_dup 1)))
    (set (mem:V4SI (match_dup 3))
@@ -205,7 +207,7 @@ You should have received a copy of the GNU General Public License
 
 (define_expand "load_macho_picbase"
   [(set (reg:SI LR_REGNO)
-        (unspec [(match_operand 0 "")]
+        (unspec [(match_operand 0 "" "")]
                    UNSPEC_LD_MPIC))]
   "(DEFAULT_ABI == ABI_DARWIN) && flag_pic"
 {
@@ -228,7 +230,7 @@ You should have received a copy of the GNU General Public License
 #else
   gcc_unreachable ();
 #endif
-  return "bcl 20,31,%0\n%0:";
+  return "bcl 20,31,%0\\n%0:";
 }
   [(set_attr "type" "branch")
    (set_attr "cannot_copy" "yes")
@@ -245,17 +247,17 @@ You should have received a copy of the GNU General Public License
 #else
   gcc_unreachable ();
 #endif
-  return "bcl 20,31,%0\n%0:";
+  return "bcl 20,31,%0\\n%0:";
 }
   [(set_attr "type" "branch")
    (set_attr "cannot_copy" "yes")
    (set_attr "length" "4")])
 
 (define_expand "macho_correct_pic"
-  [(set (match_operand 0 "")
-	(plus (match_operand 1 "")
-		 (unspec [(match_operand 2 "")
-			     (match_operand 3 "")]
+  [(set (match_operand 0 "" "")
+	(plus (match_operand 1 "" "")
+		 (unspec [(match_operand 2 "" "")
+			     (match_operand 3 "" "")]
 			    UNSPEC_MPIC_CORRECT)))]
   "DEFAULT_ABI == ABI_DARWIN"
 {
@@ -351,7 +353,7 @@ You should have received a copy of the GNU General Public License
 
 (define_expand "reload_macho_picbase"
   [(set (reg:SI LR_REGNO)
-        (unspec [(match_operand 0 "")]
+        (unspec [(match_operand 0 "" "")]
                    UNSPEC_RELD_MPIC))]
   "(DEFAULT_ABI == ABI_DARWIN) && flag_pic"
 {
@@ -374,14 +376,14 @@ You should have received a copy of the GNU General Public License
     {
       static char tmp[64];
       const char *cnam = machopic_get_function_picbase ();
-      snprintf (tmp, 64, "bcl 20,31,%s\n%s:\n%%0:", cnam, cnam);
+      snprintf (tmp, 64, "bcl 20,31,%s\\n%s:\\n%%0:", cnam, cnam);
       return tmp;
     }
   else
 #else
   gcc_unreachable ();
 #endif
-    return "bcl 20,31,%0\n%0:";
+    return "bcl 20,31,%0\\n%0:";
 }
   [(set_attr "type" "branch")
    (set_attr "cannot_copy" "yes")
@@ -398,14 +400,14 @@ You should have received a copy of the GNU General Public License
     {
       static char tmp[64];
       const char *cnam = machopic_get_function_picbase ();
-      snprintf (tmp, 64, "bcl 20,31,%s\n%s:\n%%0:", cnam, cnam);
+      snprintf (tmp, 64, "bcl 20,31,%s\\n%s:\\n%%0:", cnam, cnam);
       return tmp;
     }
   else
 #else
   gcc_unreachable ();
 #endif
-    return "bcl 20,31,%0\n%0:";
+    return "bcl 20,31,%0\\n%0:";
 }
   [(set_attr "type" "branch")
    (set_attr "cannot_copy" "yes")
