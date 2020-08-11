@@ -1,5 +1,5 @@
 
-/*	$NetBSD: trap.c,v 1.305 2020/08/08 19:08:48 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.306 2020/08/11 04:30:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.305 2020/08/08 19:08:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.306 2020/08/11 04:30:16 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -165,7 +165,10 @@ int	trapdebug = 0;
 #define	IDTVEC(name)	__CONCAT(X, name)
 
 #ifdef TRAP_SIGDEBUG
-static void frame_dump(struct trapframe *, struct pcb *);
+static void sigdebug(const struct trapframe *, const ksiginfo_t *, int);
+#define SIGDEBUG(a, b, c) sigdebug(a, b, c)
+#else
+#define SIGDEBUG(a, b, c)
 #endif
 
 void
@@ -285,7 +288,7 @@ trap(struct trapframe *frame)
 	struct trapframe *vframe;
 	ksiginfo_t ksi;
 	void *onfault;
-	int type, error;
+	int type, error = 0;
 	uint32_t cr2;
 	bool pfail;
 
@@ -440,6 +443,7 @@ kernelfault:
 		if (!pmap_exec_fixup(&p->p_vmspace->vm_map, vframe, pcb)) {
 			/* Save outer frame for any signal return */
 			l->l_md.md_regs = vframe;
+			SIGDEBUG(vframe, &ksi, error);
 			(*p->p_emul->e_trapsignal)(l, &ksi);
 		}
 		/* Return to user by reloading the user frame */
@@ -452,7 +456,7 @@ kernelfault:
 #define LCALLSZ 7
 		/* Check for the osyscall lcall instruction. */
 		if (frame->tf_eip < VM_MAXUSER_ADDRESS - LCALLSZ &&
-		    x86_cpu_is_lcall((const void *)frame->tf_eip)) {
+		    x86_cpu_is_lcall((const void *)frame->tf_eip) == 0) {
 
 			/* Advance past the lcall. */
 			frame->tf_eip += LCALLSZ;
@@ -468,12 +472,6 @@ kernelfault:
 	case T_SEGNPFLT|T_USER:
 	case T_STKFLT|T_USER:
 	case T_ALIGNFLT|T_USER:
-#ifdef TRAP_SIGDEBUG
-		printf("pid %d.%d (%s): BUS/SEGV (%#x) at eip %#x addr %#"
-		    PRIxREGISTER "\n", p->p_pid, l->l_lid, p->p_comm,
-		    type, frame->tf_eip, rcr2());
-		frame_dump(frame, pcb);
-#endif
 		KSI_INIT_TRAP(&ksi);
 
 		ksi.ksi_addr = (void *)rcr2();
@@ -510,12 +508,6 @@ kernelfault:
 
 	case T_PRIVINFLT|T_USER:	/* privileged instruction fault */
 	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
-#ifdef TRAP_SIGDEBUG
-		printf("pid %d.%d (%s): ILL at eip %#x addr %#"
-		    PRIxREGISTER "\n", p->p_pid, l->l_lid, p->p_comm,
-		    frame->tf_eip, rcr2());
-		frame_dump(frame, pcb);
-#endif
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_addr = (void *) frame->tf_eip;
@@ -732,12 +724,7 @@ faultcommon:
 			break;
 		}
 
-#ifdef TRAP_SIGDEBUG
-		printf("pid %d.%d (%s): signal %d at eip %#x addr %#lx "
-		    "error %d\n", p->p_pid, l->l_lid, p->p_comm, ksi.ksi_signo,
-		    frame->tf_eip, va, error);
-		frame_dump(frame, pcb);
-#endif
+		SIGDEBUG(frame, &ksi, error);
 		(*p->p_emul->e_trapsignal)(l, &ksi);
 		break;
 	}
@@ -776,6 +763,7 @@ faultcommon:
 			else
 				ksi.ksi_code = TRAP_TRACE;
 			ksi.ksi_addr = (void *)frame->tf_eip;
+			SIGDEBUG(frame, &ksi, error);
 			(*p->p_emul->e_trapsignal)(l, &ksi);
 		}
 		break;
@@ -802,6 +790,7 @@ out:
 	return;
 trapsignal:
 	ksi.ksi_trap = type & ~T_USER;
+	SIGDEBUG(frame, &ksi, error);
 	(*p->p_emul->e_trapsignal)(l, &ksi);
 	userret(l);
 }
@@ -824,11 +813,9 @@ startlwp(void *arg)
 }
 
 #ifdef TRAP_SIGDEBUG
-void
-frame_dump(struct trapframe *tf, struct pcb *pcb)
+static void
+frame_dump(const struct trapframe *tf, const struct pcb *pcb)
 {
-	int i;
-	unsigned long *p;
 	uint64_t fsd, gsd;
 
 	printf("trapframe %p\n", tf);
@@ -848,11 +835,19 @@ frame_dump(struct trapframe *tf, struct pcb *pcb)
 	memcpy(&gsd, &pcb->pcb_gsd, sizeof(gsd));
 	printf("fsbase 0x%016llx gsbase 0x%016llx\n", fsd, gsd);
 	printf("\n");
-	printf("Stack dump:\n");
-	for (i = 0, p = (unsigned long *) tf; i < 20; i ++, p += 8)
-		printf(" 0x%.8lx 0x%.8lx 0x%.8lx 0x%.8lx"
-		       " 0x%.8lx 0x%.8lx 0x%.8lx 0x%.8lx\n",
-		       p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
-	printf("\n");
+	hexdump(printf, "Stack dump", tf, 256);
+}
+
+static void
+sigdebug(const struct trapframe *tf, const ksiginfo_t *ksi, int e)
+{
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
+
+	printf("pid %d.%d (%s): signal %d code=%d (trap %x) "
+	    "@eip %#x addr %#x error=%d\n",
+	    p->p_pid, l->l_lid, p->p_comm, ksi->ksi_signo, ksi->ksi_code,
+	    tf->tf_trapno, tf->tf_eip, rcr2(), e);
+	frame_dump(tf, lwp_getpcb(l));
 }
 #endif
