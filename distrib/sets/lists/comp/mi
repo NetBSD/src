@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2341 2020/07/26 18:11:43 christos Exp $
+#	$NetBSD: mi,v 1.2342 2020/08/11 13:19:15 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2652,6 +2652,7 @@
 ./usr/include/objc/sarray.h			comp-obsolete		obsolete
 ./usr/include/objc/thr.h			comp-c-include		gcc
 ./usr/include/objc/typedstream.h		comp-obsolete		obsolete
+./usr/include/openldap.h			comp-ldap-include	ldap
 ./usr/include/openpgpsdk/accumulate.h		comp-obsolete		obsolete
 ./usr/include/openpgpsdk/armour.h		comp-obsolete		obsolete
 ./usr/include/openpgpsdk/callback.h		comp-obsolete		obsolete
