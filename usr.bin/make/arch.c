@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.81 2020/08/03 20:26:09 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.82 2020/08/11 18:41:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.81 2020/08/03 20:26:09 rillig Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.82 2020/08/11 18:41:46 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.81 2020/08/03 20:26:09 rillig Exp $");
+__RCSID("$NetBSD: arch.c,v 1.82 2020/08/11 18:41:46 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -354,7 +354,6 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 	    char    *buf;
 	    char    *sacrifice;
 	    char    *oldMemName = memName;
-	    size_t   sz;
 
 	    memName = Var_Subst(memName, ctxt, VARE_UNDEFERR | VARE_WANTRES);
 
@@ -363,10 +362,7 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 	     * variables and multi-word variable values.... The results
 	     * are just placed at the end of the nodeLst we're returning.
 	     */
-	    sz = strlen(memName)+strlen(libName)+3;
-	    buf = sacrifice = bmake_malloc(sz);
-
-	    snprintf(buf, sz, "%s(%s)", libName, memName);
+	    buf = sacrifice = str_concat4(libName, "(", memName, ")");
 
 	    if (strchr(memName, '$') && strcmp(memName, oldMemName) == 0) {
 		/*
