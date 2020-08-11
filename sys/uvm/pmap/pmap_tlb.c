@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.35 2020/08/11 06:09:44 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.36 2020/08/11 06:54:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.35 2020/08/11 06:09:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.36 2020/08/11 06:54:14 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -215,7 +215,7 @@ static void
 pmap_tlb_pai_check(struct pmap_tlb_info *ti, bool locked_p)
 {
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(pmaphist, "(ti=%#jx)", (uintptr_t)ti, 0, 0, 0);
+	UVMHIST_CALLARGS(maphist, "(ti=%#jx)", (uintptr_t)ti, 0, 0, 0);
 
 #ifdef DIAGNOSTIC
 	struct pmap_asid_info *pai;
@@ -236,7 +236,7 @@ pmap_tlb_pai_check(struct pmap_tlb_info *ti, bool locked_p)
 	if (!locked_p)
 		TLBINFO_UNLOCK(ti);
 #endif
-	UVMHIST_LOG(pmaphist, " <-- done", 0, 0, 0, 0);
+	UVMHIST_LOG(maphist, " <-- done", 0, 0, 0, 0);
 }
 
 static void
