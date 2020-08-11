@@ -1,5 +1,5 @@
 /* pass_manager.h - The pipeline of optimization passes
-   Copyright (C) 2013-2017 Free Software Foundation, Inc.
+   Copyright (C) 2013-2018 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -47,9 +47,6 @@ class context;
 class pass_manager
 {
 public:
-  void *operator new (size_t sz);
-  void operator delete (void *ptr);
-
   pass_manager (context *ctxt);
   ~pass_manager ();
 
