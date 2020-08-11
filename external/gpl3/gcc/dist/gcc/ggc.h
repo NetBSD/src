@@ -1,6 +1,6 @@
 /* Garbage collection for the GNU compiler.
 
-   Copyright (C) 1998-2018 Free Software Foundation, Inc.
+   Copyright (C) 1998-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -23,6 +23,9 @@ along with GCC; see the file COPYING3.  If not see
 
 /* Symbols are marked with `ggc' for `gcc gc' so as not to interfere with
    an external gc library that might be linked in.  */
+
+/* Constants for general use.  */
+extern const char empty_string[];	/* empty string */
 
 /* Internal functions and data structures used by the GTY
    machinery, including the generated gt*.[hc] files.  */
@@ -124,8 +127,9 @@ extern void *ggc_internal_alloc (size_t, void (*)(void *), size_t,
 				 size_t CXX_MEM_STAT_INFO)
      ATTRIBUTE_MALLOC;
 
-inline void *
-ggc_internal_alloc (size_t s CXX_MEM_STAT_INFO)
+     static inline
+     void *
+     ggc_internal_alloc (size_t s CXX_MEM_STAT_INFO)
 {
   return ggc_internal_alloc (s, NULL, 0, 1 PASS_MEM_STAT);
 }
@@ -137,7 +141,8 @@ extern void *ggc_internal_cleared_alloc (size_t, void (*)(void *),
 					 size_t, size_t
 					 CXX_MEM_STAT_INFO) ATTRIBUTE_MALLOC;
 
-inline void *
+static inline
+void *
 ggc_internal_cleared_alloc (size_t s CXX_MEM_STAT_INFO)
 {
   return ggc_internal_cleared_alloc (s, NULL, 0, 1 PASS_MEM_STAT);
@@ -163,7 +168,7 @@ finalize (void *p)
 }
 
 template<typename T>
-inline bool
+static inline bool
 need_finalization_p ()
 {
 #if GCC_VERSION >= 4003
@@ -174,7 +179,7 @@ need_finalization_p ()
 }
 
 template<typename T>
-inline T *
+static inline T *
 ggc_alloc (ALONE_CXX_MEM_STAT_INFO)
 {
   if (need_finalization_p<T> ())
@@ -186,7 +191,7 @@ ggc_alloc (ALONE_CXX_MEM_STAT_INFO)
 }
 
 template<typename T>
-inline T *
+static inline T *
 ggc_cleared_alloc (ALONE_CXX_MEM_STAT_INFO)
 {
   if (need_finalization_p<T> ())
@@ -199,7 +204,7 @@ ggc_cleared_alloc (ALONE_CXX_MEM_STAT_INFO)
 }
 
 template<typename T>
-inline T *
+static inline T *
 ggc_vec_alloc (size_t c CXX_MEM_STAT_INFO)
 {
   if (need_finalization_p<T> ())
@@ -211,7 +216,7 @@ ggc_vec_alloc (size_t c CXX_MEM_STAT_INFO)
 }
 
 template<typename T>
-inline T *
+static inline T *
 ggc_cleared_vec_alloc (size_t c CXX_MEM_STAT_INFO)
 {
   if (need_finalization_p<T> ())
@@ -224,7 +229,7 @@ ggc_cleared_vec_alloc (size_t c CXX_MEM_STAT_INFO)
 							 0, 0 PASS_MEM_STAT));
 }
 
-inline void *
+static inline void *
 ggc_alloc_atomic (size_t s CXX_MEM_STAT_INFO)
 {
     return ggc_internal_alloc (s PASS_MEM_STAT);
@@ -269,52 +274,52 @@ extern void init_ggc_heuristics (void);
 
 /* Memory statistics passing versions of some allocators.  Too few of them to
    make gengtype produce them, so just define the needed ones here.  */
-inline struct rtx_def *
+static inline struct rtx_def *
 ggc_alloc_rtx_def_stat (size_t s CXX_MEM_STAT_INFO)
 {
   return (struct rtx_def *) ggc_internal_alloc (s PASS_MEM_STAT);
 }
 
-inline union tree_node *
+static inline union tree_node *
 ggc_alloc_tree_node_stat (size_t s CXX_MEM_STAT_INFO)
 {
   return (union tree_node *) ggc_internal_alloc (s PASS_MEM_STAT);
 }
 
-inline union tree_node *
+static inline union tree_node *
 ggc_alloc_cleared_tree_node_stat (size_t s CXX_MEM_STAT_INFO)
 {
   return (union tree_node *) ggc_internal_cleared_alloc (s PASS_MEM_STAT);
 }
 
-inline gimple *
+static inline gimple *
 ggc_alloc_cleared_gimple_statement_stat (size_t s CXX_MEM_STAT_INFO)
 {
   return (gimple *) ggc_internal_cleared_alloc (s PASS_MEM_STAT);
 }
 
-inline void
+static inline void
 gt_ggc_mx (const char *s)
 {
   ggc_test_and_set_mark (const_cast<char *> (s));
 }
 
-inline void
+static inline void
 gt_pch_nx (const char *)
 {
 }
 
-inline void
+static inline void
 gt_ggc_mx (int)
 {
 }
 
-inline void
+static inline void
 gt_pch_nx (int)
 {
 }
 
-inline void
+static inline void
 gt_pch_nx (unsigned int)
 {
 }

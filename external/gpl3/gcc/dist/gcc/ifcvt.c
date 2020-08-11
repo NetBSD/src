@@ -1,5 +1,5 @@
 /* If-conversion support.
-   Copyright (C) 2000-2018 Free Software Foundation, Inc.
+   Copyright (C) 2000-2017 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -78,12 +78,14 @@ static int cond_exec_changed_p;
 
 /* Forward references.  */
 static int count_bb_insns (const_basic_block);
-static bool cheap_bb_rtx_cost_p (const_basic_block, profile_probability, int);
+static bool cheap_bb_rtx_cost_p (const_basic_block, int, int);
 static rtx_insn *first_active_insn (basic_block);
 static rtx_insn *last_active_insn (basic_block, int);
 static rtx_insn *find_active_insn_before (basic_block, rtx_insn *);
 static rtx_insn *find_active_insn_after (basic_block, rtx_insn *);
 static basic_block block_fallthru (basic_block);
+static int cond_exec_process_insns (ce_if_block *, rtx_insn *, rtx, rtx, int,
+				    int);
 static rtx cond_exec_get_condition (rtx_insn *);
 static rtx noce_get_condition (rtx_insn *, rtx_insn **, bool);
 static int noce_operand_ok (const_rtx);
@@ -121,7 +123,7 @@ count_bb_insns (const_basic_block bb)
   return count;
 }
 
-/* Determine whether the total insn_cost on non-jump insns in
+/* Determine whether the total insn_rtx_cost on non-jump insns in
    basic block BB is less than MAX_COST.  This function returns
    false if the cost of any instruction could not be estimated. 
 
@@ -130,17 +132,14 @@ count_bb_insns (const_basic_block bb)
    plus a small fudge factor.  */
 
 static bool
-cheap_bb_rtx_cost_p (const_basic_block bb,
-		     profile_probability prob, int max_cost)
+cheap_bb_rtx_cost_p (const_basic_block bb, int scale, int max_cost)
 {
   int count = 0;
   rtx_insn *insn = BB_HEAD (bb);
   bool speed = optimize_bb_for_speed_p (bb);
-  int scale = prob.initialized_p () ? prob.to_reg_br_prob_base ()
-	      : REG_BR_PROB_BASE;
 
   /* Set scale to REG_BR_PROB_BASE to void the identical scaling
-     applied to insn_cost when optimizing for size.  Only do
+     applied to insn_rtx_cost when optimizing for size.  Only do
      this after combine because if-conversion might interfere with
      passes before combine.
 
@@ -163,7 +162,7 @@ cheap_bb_rtx_cost_p (const_basic_block bb,
     {
       if (NONJUMP_INSN_P (insn))
 	{
-	  int cost = insn_cost (insn, speed) * REG_BR_PROB_BASE;
+	  int cost = insn_rtx_cost (PATTERN (insn), speed) * REG_BR_PROB_BASE;
 	  if (cost == 0)
 	    return false;
 
@@ -333,8 +332,7 @@ cond_exec_process_insns (ce_if_block *ce_info ATTRIBUTE_UNUSED,
 			 /* if block information */rtx_insn *start,
 			 /* first insn to look at */rtx end,
 			 /* last insn to look at */rtx test,
-			 /* conditional execution test */profile_probability
-							    prob_val,
+			 /* conditional execution test */int prob_val,
 			 /* probability of branch taken. */int mod_ok)
 {
   int must_be_last = FALSE;
@@ -409,11 +407,10 @@ cond_exec_process_insns (ce_if_block *ce_info ATTRIBUTE_UNUSED,
 
       validate_change (insn, &PATTERN (insn), pattern, 1);
 
-      if (CALL_P (insn) && prob_val.initialized_p ())
+      if (CALL_P (insn) && prob_val >= 0)
 	validate_change (insn, &REG_NOTES (insn),
 			 gen_rtx_INT_LIST ((machine_mode) REG_BR_PROB,
-					   prob_val.to_reg_br_prob_note (),
-					   REG_NOTES (insn)), 1);
+					   prob_val, REG_NOTES (insn)), 1);
 
     insn_done:
       if (insn == end)
@@ -472,8 +469,8 @@ cond_exec_process_if_block (ce_if_block * ce_info,
   int then_mod_ok;		/* whether conditional mods are ok in THEN */
   rtx true_expr;		/* test for else block insns */
   rtx false_expr;		/* test for then block insns */
-  profile_probability true_prob_val;/* probability of else block */
-  profile_probability false_prob_val;/* probability of then block */
+  int true_prob_val;		/* probability of else block */
+  int false_prob_val;		/* probability of then block */
   rtx_insn *then_last_head = NULL;	/* Last match at the head of THEN */
   rtx_insn *else_last_head = NULL;	/* Last match at the head of ELSE */
   rtx_insn *then_first_tail = NULL;	/* First match at the tail of THEN */
@@ -618,13 +615,13 @@ cond_exec_process_if_block (ce_if_block * ce_info,
   note = find_reg_note (BB_END (test_bb), REG_BR_PROB, NULL_RTX);
   if (note)
     {
-      true_prob_val = profile_probability::from_reg_br_prob_note (XINT (note, 0));
-      false_prob_val = true_prob_val.invert ();
+      true_prob_val = XINT (note, 0);
+      false_prob_val = REG_BR_PROB_BASE - true_prob_val;
     }
   else
     {
-      true_prob_val = profile_probability::uninitialized ();
-      false_prob_val = profile_probability::uninitialized ();
+      true_prob_val = -1;
+      false_prob_val = -1;
     }
 
   /* If we have && or || tests, do them here.  These tests are in the adjacent
@@ -894,7 +891,7 @@ noce_emit_move_insn (rtx x, rtx y)
 {
   machine_mode outmode;
   rtx outer, inner;
-  poly_int64 bitpos;
+  int bitpos;
 
   if (GET_CODE (x) != STRICT_LOW_PART)
     {
@@ -1287,7 +1284,7 @@ noce_try_store_flag_constants (struct noce_if_info *if_info)
   HOST_WIDE_INT itrue, ifalse, diff, tmp;
   int normalize;
   bool can_reverse;
-  machine_mode mode = GET_MODE (if_info->x);
+  machine_mode mode = GET_MODE (if_info->x);;
   rtx common = NULL_RTX;
 
   rtx a = if_info->a;
@@ -1724,12 +1721,12 @@ noce_emit_cmove (struct noce_if_info *if_info, rtx x, enum rtx_code code,
     {
       rtx reg_vtrue = SUBREG_REG (vtrue);
       rtx reg_vfalse = SUBREG_REG (vfalse);
-      poly_uint64 byte_vtrue = SUBREG_BYTE (vtrue);
-      poly_uint64 byte_vfalse = SUBREG_BYTE (vfalse);
+      unsigned int byte_vtrue = SUBREG_BYTE (vtrue);
+      unsigned int byte_vfalse = SUBREG_BYTE (vfalse);
       rtx promoted_target;
 
       if (GET_MODE (reg_vtrue) != GET_MODE (reg_vfalse)
-	  || maybe_ne (byte_vtrue, byte_vfalse)
+	  || byte_vtrue != byte_vfalse
 	  || (SUBREG_PROMOTED_VAR_P (vtrue)
 	      != SUBREG_PROMOTED_VAR_P (vfalse))
 	  || (SUBREG_PROMOTED_GET (vtrue)
@@ -2808,17 +2805,13 @@ noce_try_bitop (struct noce_if_info *if_info)
 {
   rtx cond, x, a, result;
   rtx_insn *seq;
-  scalar_int_mode mode;
+  machine_mode mode;
   enum rtx_code code;
   int bitnum;
 
   x = if_info->x;
   cond = if_info->cond;
   code = GET_CODE (cond);
-
-  /* Check for an integer operation.  */
-  if (!is_a <scalar_int_mode> (GET_MODE (x), &mode))
-    return FALSE;
 
   if (!noce_simple_bbs (if_info))
     return FALSE;
@@ -2842,6 +2835,7 @@ noce_try_bitop (struct noce_if_info *if_info)
 	  || ! rtx_equal_p (x, XEXP (cond, 0)))
 	return FALSE;
       bitnum = INTVAL (XEXP (cond, 2));
+      mode = GET_MODE (x);
       if (BITS_BIG_ENDIAN)
 	bitnum = GET_MODE_BITSIZE (mode) - 1 - bitnum;
       if (bitnum < 0 || bitnum >= HOST_BITS_PER_WIDE_INT)
@@ -3021,7 +3015,7 @@ bb_valid_for_noce_process_p (basic_block test_bb, rtx cond,
   if (first_insn == last_insn)
     {
       *simple_p = noce_operand_ok (SET_DEST (first_set));
-      *cost += pattern_cost (first_set, speed_p);
+      *cost += insn_rtx_cost (first_set, speed_p);
       return *simple_p;
     }
 
@@ -3037,7 +3031,7 @@ bb_valid_for_noce_process_p (basic_block test_bb, rtx cond,
   /* The regs that are live out of test_bb.  */
   bitmap test_bb_live_out = df_get_live_out (test_bb);
 
-  int potential_cost = pattern_cost (last_set, speed_p);
+  int potential_cost = insn_rtx_cost (last_set, speed_p);
   rtx_insn *insn;
   FOR_BB_INSNS (test_bb, insn)
     {
@@ -3057,7 +3051,7 @@ bb_valid_for_noce_process_p (basic_block test_bb, rtx cond,
 	      || reg_overlap_mentioned_p (SET_DEST (sset), cond))
 	    goto free_bitmap_and_fail;
 
-	  potential_cost += pattern_cost (sset, speed_p);
+	  potential_cost += insn_rtx_cost (sset, speed_p);
 	  bitmap_set_bit (test_bb_temps, REGNO (SET_DEST (sset)));
 	}
     }
@@ -3198,7 +3192,7 @@ noce_convert_multiple_sets (struct noce_if_info *if_info)
 	{
 	  machine_mode src_mode = GET_MODE (new_val);
 	  machine_mode dst_mode = GET_MODE (temp);
-	  if (!partial_subreg_p (dst_mode, src_mode))
+	  if (GET_MODE_SIZE (src_mode) <= GET_MODE_SIZE (dst_mode))
 	    {
 	      end_sequence ();
 	      return FALSE;
@@ -3209,7 +3203,7 @@ noce_convert_multiple_sets (struct noce_if_info *if_info)
 	{
 	  machine_mode src_mode = GET_MODE (old_val);
 	  machine_mode dst_mode = GET_MODE (temp);
-	  if (!partial_subreg_p (dst_mode, src_mode))
+	  if (GET_MODE_SIZE (src_mode) <= GET_MODE_SIZE (dst_mode))
 	    {
 	      end_sequence ();
 	      return FALSE;
@@ -3446,14 +3440,7 @@ noce_process_if_block (struct noce_if_info *if_info)
     }
   else
     {
-      insn_b = if_info->cond_earliest;
-      do
-	insn_b = prev_nonnote_nondebug_insn (insn_b);
-      while (insn_b
-	     && (BLOCK_FOR_INSN (insn_b)
-		 == BLOCK_FOR_INSN (if_info->cond_earliest))
-	     && !modified_in_p (x, insn_b));
-
+      insn_b = prev_nonnote_nondebug_insn (if_info->cond_earliest);
       /* We're going to be moving the evaluation of B down from above
 	 COND_EARLIEST to JUMP.  Make sure the relevant data is still
 	 intact.  */
@@ -4813,8 +4800,7 @@ find_if_case_1 (basic_block test_bb, edge then_edge, edge else_edge)
   basic_block then_bb = then_edge->dest;
   basic_block else_bb = else_edge->dest;
   basic_block new_bb;
-  int then_bb_index;
-  profile_probability then_prob;
+  int then_bb_index, then_prob;
   rtx else_target = NULL_RTX;
 
   /* If we are partitioning hot/cold basic blocks, we don't want to
@@ -4860,7 +4846,10 @@ find_if_case_1 (basic_block test_bb, edge then_edge, edge else_edge)
 	     "\nIF-CASE-1 found, start %d, then %d\n",
 	     test_bb->index, then_bb->index);
 
-  then_prob = then_edge->probability.invert ();
+  if (then_edge->probability)
+    then_prob = REG_BR_PROB_BASE - then_edge->probability;
+  else
+    then_prob = REG_BR_PROB_BASE / 2;
 
   /* We're speculating from the THEN path, we want to make sure the cost
      of speculation is within reason.  */
@@ -4931,7 +4920,7 @@ find_if_case_2 (basic_block test_bb, edge then_edge, edge else_edge)
   basic_block then_bb = then_edge->dest;
   basic_block else_bb = else_edge->dest;
   edge else_succ;
-  profile_probability then_prob, else_prob;
+  int then_prob, else_prob;
 
   /* We do not want to speculate (empty) loop latches.  */
   if (current_loops
@@ -4977,8 +4966,16 @@ find_if_case_2 (basic_block test_bb, edge then_edge, edge else_edge)
   if (then_bb->index < NUM_FIXED_BLOCKS)
     return FALSE;
 
-  else_prob = else_edge->probability;
-  then_prob = else_prob.invert ();
+  if (else_edge->probability)
+    {
+      else_prob = else_edge->probability;
+      then_prob = REG_BR_PROB_BASE - else_prob;
+    }
+  else
+    {
+      else_prob = REG_BR_PROB_BASE / 2;
+      then_prob = REG_BR_PROB_BASE / 2;
+    }
 
   /* ELSE is predicted or SUCC(ELSE) postdominates THEN.  */
   if (else_prob > then_prob)
@@ -5124,9 +5121,7 @@ dead_or_predicable (basic_block test_bb, basic_block merge_bb,
 	return FALSE;
 
       rtx note = find_reg_note (jump, REG_BR_PROB, NULL_RTX);
-      profile_probability prob_val
-	  = (note ? profile_probability::from_reg_br_prob_note (XINT (note, 0))
-	     : profile_probability::uninitialized ());
+      int prob_val = (note ? XINT (note, 0) : -1);
 
       if (reversep)
 	{
@@ -5135,7 +5130,8 @@ dead_or_predicable (basic_block test_bb, basic_block merge_bb,
 	    return FALSE;
 	  cond = gen_rtx_fmt_ee (rev, GET_MODE (cond), XEXP (cond, 0),
 			         XEXP (cond, 1));
-	  prob_val = prob_val.invert ();
+	  if (prob_val >= 0)
+	    prob_val = REG_BR_PROB_BASE - prob_val;
 	}
 
       if (cond_exec_process_insns (NULL, head, end, cond, prob_val, 0)
@@ -5283,6 +5279,8 @@ dead_or_predicable (basic_block test_bb, basic_block merge_bb,
       redirect_edge_succ (BRANCH_EDGE (test_bb), new_dest);
       if (reversep)
 	{
+	  std::swap (BRANCH_EDGE (test_bb)->count,
+		     FALLTHRU_EDGE (test_bb)->count);
 	  std::swap (BRANCH_EDGE (test_bb)->probability,
 		     FALLTHRU_EDGE (test_bb)->probability);
 	  update_br_prob_note (test_bb);
@@ -5445,10 +5443,6 @@ if_convert (bool after_combine)
 
   if (optimize == 1)
     df_remove_problem (df_live);
-
-  /* Some non-cold blocks may now be only reachable from cold blocks.
-     Fix that up.  */
-  fixup_partitions ();
 
   checking_verify_flow_info ();
 }

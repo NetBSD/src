@@ -1,5 +1,5 @@
 /* Subroutines for the gcc driver.
-   Copyright (C) 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2009-2017 Free Software Foundation, Inc.
    Contributed by Georg-Johann Lay <avr@gjlay.de>
 
 This file is part of GCC.
@@ -18,16 +18,14 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-#define IN_TARGET_CODE 1
-
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
 #include "diagnostic.h"
 #include "tm.h"
 
-// Remove -nodevicelib and -nodevicespecs from the command line if not needed.
-#define X_NODEVLIB "%<nodevicelib %<nodevicespecs"
+// Remove -nodevicelib from the command line if not needed
+#define X_NODEVLIB "%<nodevicelib"
 
 static const char dir_separator_str[] = { DIR_SEPARATOR, 0 };
 
@@ -59,7 +57,7 @@ avr_devicespecs_file (int argc, const char **argv)
       return X_NODEVLIB;
 
     case 1:
-      if (strcmp ("device-specs", argv[0]) == 0)
+      if (0 == strcmp ("device-specs", argv[0]))
         {
           /* FIXME:  This means "device-specs%s" from avr.h:DRIVER_SELF_SPECS
              has not been resolved to a path.  That case can occur when the
@@ -81,7 +79,7 @@ avr_devicespecs_file (int argc, const char **argv)
       // Allow specifying the same MCU more than once.
 
       for (int i = 2; i < argc; i++)
-	if (strcmp (mmcu, argv[i]) != 0)
+        if (0 != strcmp (mmcu, argv[i]))
           {
             error ("specified option %qs more than once", "-mmcu");
             return X_NODEVLIB;
@@ -102,8 +100,8 @@ avr_devicespecs_file (int argc, const char **argv)
         return X_NODEVLIB;
       }
 
-  return concat ("%{!nodevicespecs:-specs=device-specs", dir_separator_str,
-				 "specs-", mmcu, "%s} %<nodevicespecs"
+  return concat ("-specs=device-specs", dir_separator_str, "specs-",
+                 mmcu, "%s"
 #if defined (WITH_AVRLIBC)
                  " %{mmcu=avr*:" X_NODEVLIB "} %{!mmcu=*:" X_NODEVLIB "}",
 #else

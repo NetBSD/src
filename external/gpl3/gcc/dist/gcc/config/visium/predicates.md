@@ -1,5 +1,5 @@
 ;; Predicate definitions for Visium.
-;; Copyright (C) 2005-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2005-2017 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -25,7 +25,7 @@
 ;; Return true if OP is a constant in the range 1 .. 31.
 (define_predicate "const_shift_operand"
   (and (match_code "const_int")
-       (match_test "IN_RANGE (INTVAL (op), 1, 31)")))
+       (match_test "1 <= INTVAL (op) && INTVAL (op) <= 31")))
 
 ;; Return true if OP is either a register or the constant 0.
 (define_predicate "reg_or_0_operand"
@@ -153,16 +153,16 @@
 {
   switch (GET_MODE (XEXP (op, 0)))
     {
-    case E_CCmode:
+    case CCmode:
       return ordered_comparison_operator (op, mode);
-    case E_CCNZmode:
+    case CCNZmode:
       return visium_nz_comparison_operator (op, mode);
-    case E_CCCmode:
+    case CCCmode:
       return visium_c_comparison_operator (op, mode);
-    case E_CCVmode:
+    case CCVmode:
       return visium_v_comparison_operator (op, mode);
-    case E_CCFPmode:
-    case E_CCFPEmode:
+    case CCFPmode:
+    case CCFPEmode:
       return visium_fp_comparison_operator (op, mode);
     default:
       return false;

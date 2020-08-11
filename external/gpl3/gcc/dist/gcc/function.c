@@ -1,5 +1,5 @@
 /* Expands front end tree to back end RTL for GCC.
-   Copyright (C) 1987-2018 Free Software Foundation, Inc.
+   Copyright (C) 1987-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -77,10 +77,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "rtl-chkp.h"
 #include "tree-dfa.h"
 #include "tree-ssa.h"
-#include "stringpool.h"
-#include "attribs.h"
-#include "gimple.h"
-#include "options.h"
 
 /* So we can assign to cfun in this file.  */
 #undef cfun
@@ -220,7 +216,7 @@ free_after_compilation (struct function *f)
    This size counts from zero.  It is not rounded to PREFERRED_STACK_BOUNDARY;
    the caller may have to do that.  */
 
-poly_int64
+HOST_WIDE_INT
 get_frame_size (void)
 {
   if (FRAME_GROWS_DOWNWARD)
@@ -234,22 +230,20 @@ get_frame_size (void)
    return FALSE.  */
 
 bool
-frame_offset_overflow (poly_int64 offset, tree func)
+frame_offset_overflow (HOST_WIDE_INT offset, tree func)
 {
-  poly_uint64 size = FRAME_GROWS_DOWNWARD ? -offset : offset;
-  unsigned HOST_WIDE_INT limit
-    = ((HOST_WIDE_INT_1U << (GET_MODE_BITSIZE (Pmode) - 1))
-       /* Leave room for the fixed part of the frame.  */
-       - 64 * UNITS_PER_WORD);
+  unsigned HOST_WIDE_INT size = FRAME_GROWS_DOWNWARD ? -offset : offset;
 
-  if (!coeffs_in_range_p (size, 0U, limit))
+  if (size > (HOST_WIDE_INT_1U << (GET_MODE_BITSIZE (Pmode) - 1))
+	       /* Leave room for the fixed part of the frame.  */
+	       - 64 * UNITS_PER_WORD)
     {
       error_at (DECL_SOURCE_LOCATION (func),
 		"total size of local objects too large");
-      return true;
+      return TRUE;
     }
 
-  return false;
+  return FALSE;
 }
 
 /* Return the minimum spill slot alignment for a register of mode MODE.  */
@@ -288,46 +282,48 @@ get_stack_local_alignment (tree type, machine_mode mode)
    given a start/length pair that lies at the end of the frame.  */
 
 static bool
-try_fit_stack_local (poly_int64 start, poly_int64 length,
-		     poly_int64 size, unsigned int alignment,
-		     poly_int64_pod *poffset)
+try_fit_stack_local (HOST_WIDE_INT start, HOST_WIDE_INT length,
+		     HOST_WIDE_INT size, unsigned int alignment,
+		     HOST_WIDE_INT *poffset)
 {
-  poly_int64 this_frame_offset;
+  HOST_WIDE_INT this_frame_offset;
   int frame_off, frame_alignment, frame_phase;
 
   /* Calculate how many bytes the start of local variables is off from
      stack alignment.  */
   frame_alignment = PREFERRED_STACK_BOUNDARY / BITS_PER_UNIT;
-  frame_off = targetm.starting_frame_offset () % frame_alignment;
+  frame_off = STARTING_FRAME_OFFSET % frame_alignment;
   frame_phase = frame_off ? frame_alignment - frame_off : 0;
 
   /* Round the frame offset to the specified alignment.  */
 
+  /*  We must be careful here, since FRAME_OFFSET might be negative and
+      division with a negative dividend isn't as well defined as we might
+      like.  So we instead assume that ALIGNMENT is a power of two and
+      use logical operations which are unambiguous.  */
   if (FRAME_GROWS_DOWNWARD)
     this_frame_offset
-      = (aligned_lower_bound (start + length - size - frame_phase, alignment)
+      = (FLOOR_ROUND (start + length - size - frame_phase,
+		      (unsigned HOST_WIDE_INT) alignment)
 	 + frame_phase);
   else
     this_frame_offset
-      = aligned_upper_bound (start - frame_phase, alignment) + frame_phase;
+      = (CEIL_ROUND (start - frame_phase,
+		     (unsigned HOST_WIDE_INT) alignment)
+	 + frame_phase);
 
   /* See if it fits.  If this space is at the edge of the frame,
      consider extending the frame to make it fit.  Our caller relies on
      this when allocating a new slot.  */
-  if (maybe_lt (this_frame_offset, start))
-    {
-      if (known_eq (frame_offset, start))
-	frame_offset = this_frame_offset;
-      else
-	return false;
-    }
-  else if (maybe_gt (this_frame_offset + size, start + length))
-    {
-      if (known_eq (frame_offset, start + length))
-	frame_offset = this_frame_offset + size;
-      else
-	return false;
-    }
+  if (frame_offset == start && this_frame_offset < frame_offset)
+    frame_offset = this_frame_offset;
+  else if (this_frame_offset < start)
+    return false;
+  else if (start + length == frame_offset
+	   && this_frame_offset + size > start + length)
+    frame_offset = this_frame_offset + size;
+  else if (this_frame_offset + size > start + length)
+    return false;
 
   *poffset = this_frame_offset;
   return true;
@@ -338,7 +334,7 @@ try_fit_stack_local (poly_int64 start, poly_int64 length,
    function's frame_space_list.  */
 
 static void
-add_frame_space (poly_int64 start, poly_int64 end)
+add_frame_space (HOST_WIDE_INT start, HOST_WIDE_INT end)
 {
   struct frame_space *space = ggc_alloc<frame_space> ();
   space->next = crtl->frame_space_list;
@@ -365,12 +361,12 @@ add_frame_space (poly_int64 start, poly_int64 end)
    We do not round to stack_boundary here.  */
 
 rtx
-assign_stack_local_1 (machine_mode mode, poly_int64 size,
+assign_stack_local_1 (machine_mode mode, HOST_WIDE_INT size,
 		      int align, int kind)
 {
   rtx x, addr;
-  poly_int64 bigend_correction = 0;
-  poly_int64 slot_offset = 0, old_frame_offset;
+  int bigend_correction = 0;
+  HOST_WIDE_INT slot_offset = 0, old_frame_offset;
   unsigned int alignment, alignment_in_bits;
 
   if (align == 0)
@@ -381,7 +377,7 @@ assign_stack_local_1 (machine_mode mode, poly_int64 size,
   else if (align == -1)
     {
       alignment = BIGGEST_ALIGNMENT / BITS_PER_UNIT;
-      size = aligned_upper_bound (size, alignment);
+      size = CEIL_ROUND (size, alignment);
     }
   else if (align == -2)
     alignment = 1; /* BITS_PER_UNIT / BITS_PER_UNIT */
@@ -417,7 +413,7 @@ assign_stack_local_1 (machine_mode mode, poly_int64 size,
 		     requested size is 0 or the estimated stack
 		     alignment >= mode alignment.  */
 		  gcc_assert ((kind & ASLK_REDUCE_ALIGN)
-			      || known_eq (size, 0)
+		              || size == 0
 			      || (crtl->stack_alignment_estimated
 				  >= GET_MODE_ALIGNMENT (mode)));
 		  alignment_in_bits = crtl->stack_alignment_estimated;
@@ -432,7 +428,7 @@ assign_stack_local_1 (machine_mode mode, poly_int64 size,
   if (crtl->max_used_stack_slot_alignment < alignment_in_bits)
     crtl->max_used_stack_slot_alignment = alignment_in_bits;
 
-  if (mode != BLKmode || maybe_ne (size, 0))
+  if (mode != BLKmode || size != 0)
     {
       if (kind & ASLK_RECORD_PAD)
 	{
@@ -445,9 +441,9 @@ assign_stack_local_1 (machine_mode mode, poly_int64 size,
 					alignment, &slot_offset))
 		continue;
 	      *psp = space->next;
-	      if (known_gt (slot_offset, space->start))
+	      if (slot_offset > space->start)
 		add_frame_space (space->start, slot_offset);
-	      if (known_lt (slot_offset + size, space->start + space->length))
+	      if (slot_offset + size < space->start + space->length)
 		add_frame_space (slot_offset + size,
 				 space->start + space->length);
 	      goto found_space;
@@ -469,9 +465,9 @@ assign_stack_local_1 (machine_mode mode, poly_int64 size,
 
       if (kind & ASLK_RECORD_PAD)
 	{
-	  if (known_gt (slot_offset, frame_offset))
+	  if (slot_offset > frame_offset)
 	    add_frame_space (frame_offset, slot_offset);
-	  if (known_lt (slot_offset + size, old_frame_offset))
+	  if (slot_offset + size < old_frame_offset)
 	    add_frame_space (slot_offset + size, old_frame_offset);
 	}
     }
@@ -482,9 +478,9 @@ assign_stack_local_1 (machine_mode mode, poly_int64 size,
 
       if (kind & ASLK_RECORD_PAD)
 	{
-	  if (known_gt (slot_offset, old_frame_offset))
+	  if (slot_offset > old_frame_offset)
 	    add_frame_space (old_frame_offset, slot_offset);
-	  if (known_lt (slot_offset + size, frame_offset))
+	  if (slot_offset + size < frame_offset)
 	    add_frame_space (slot_offset + size, frame_offset);
 	}
     }
@@ -492,17 +488,8 @@ assign_stack_local_1 (machine_mode mode, poly_int64 size,
  found_space:
   /* On a big-endian machine, if we are allocating more space than we will use,
      use the least significant bytes of those that are allocated.  */
-  if (mode != BLKmode)
-    {
-      /* The slot size can sometimes be smaller than the mode size;
-	 e.g. the rs6000 port allocates slots with a vector mode
-	 that have the size of only one element.  However, the slot
-	 size must always be ordered wrt to the mode size, in the
-	 same way as for a subreg.  */
-      gcc_checking_assert (ordered_p (GET_MODE_SIZE (mode), size));
-      if (BYTES_BIG_ENDIAN && maybe_lt (GET_MODE_SIZE (mode), size))
-	bigend_correction = size - GET_MODE_SIZE (mode);
-    }
+  if (BYTES_BIG_ENDIAN && mode != BLKmode && GET_MODE_SIZE (mode) < size)
+    bigend_correction = size - GET_MODE_SIZE (mode);
 
   /* If we have already instantiated virtual registers, return the actual
      address relative to the frame pointer.  */
@@ -510,7 +497,7 @@ assign_stack_local_1 (machine_mode mode, poly_int64 size,
     addr = plus_constant (Pmode, frame_pointer_rtx,
 			  trunc_int_for_mode
 			  (slot_offset + bigend_correction
-			   + targetm.starting_frame_offset (), Pmode));
+			   + STARTING_FRAME_OFFSET, Pmode));
   else
     addr = plus_constant (Pmode, virtual_stack_vars_rtx,
 			  trunc_int_for_mode
@@ -532,7 +519,7 @@ assign_stack_local_1 (machine_mode mode, poly_int64 size,
 /* Wrap up assign_stack_local_1 with last parameter as false.  */
 
 rtx
-assign_stack_local (machine_mode mode, poly_int64 size, int align)
+assign_stack_local (machine_mode mode, HOST_WIDE_INT size, int align)
 {
   return assign_stack_local_1 (mode, size, align, ASLK_RECORD_PAD);
 }
@@ -559,7 +546,7 @@ struct GTY(()) temp_slot {
   /* The rtx to used to reference the slot.  */
   rtx slot;
   /* The size, in units, of the slot.  */
-  poly_int64 size;
+  HOST_WIDE_INT size;
   /* The type of the object in the slot, or zero if it doesn't correspond
      to a type.  We use this to determine whether a slot can be reused.
      It can be reused if objects of the type of the new slot will always
@@ -573,10 +560,10 @@ struct GTY(()) temp_slot {
   int level;
   /* The offset of the slot from the frame_pointer, including extra space
      for alignment.  This info is for combine_temp_slots.  */
-  poly_int64 base_offset;
+  HOST_WIDE_INT base_offset;
   /* The size of the slot, including extra space for alignment.  This
      info is for combine_temp_slots.  */
-  poly_int64 full_size;
+  HOST_WIDE_INT full_size;
 };
 
 /* Entry for the below hash table.  */
@@ -754,14 +741,18 @@ find_temp_slot_from_address (rtx x)
     return p;
 
   /* Last resort: Address is a virtual stack var address.  */
-  poly_int64 offset;
-  if (strip_offset (x, &offset) == virtual_stack_vars_rtx)
+  if (GET_CODE (x) == PLUS
+      && XEXP (x, 0) == virtual_stack_vars_rtx
+      && CONST_INT_P (XEXP (x, 1)))
     {
       int i;
       for (i = max_slot_level (); i >= 0; i--)
 	for (p = *temp_slots_at_level (i); p; p = p->next)
-	  if (known_in_range_p (offset, p->base_offset, p->full_size))
-	    return p;
+	  {
+	    if (INTVAL (XEXP (x, 1)) >= p->base_offset
+		&& INTVAL (XEXP (x, 1)) < p->base_offset + p->full_size)
+	      return p;
+	  }
     }
 
   return NULL;
@@ -778,13 +769,16 @@ find_temp_slot_from_address (rtx x)
    TYPE is the type that will be used for the stack slot.  */
 
 rtx
-assign_stack_temp_for_type (machine_mode mode, poly_int64 size, tree type)
+assign_stack_temp_for_type (machine_mode mode, HOST_WIDE_INT size,
+			    tree type)
 {
   unsigned int align;
   struct temp_slot *p, *best_p = 0, *selected = NULL, **pp;
   rtx slot;
 
-  gcc_assert (known_size_p (size));
+  /* If SIZE is -1 it means that somebody tried to allocate a temporary
+     of a variable size.  */
+  gcc_assert (size != -1);
 
   align = get_stack_local_alignment (type, mode);
 
@@ -799,16 +793,13 @@ assign_stack_temp_for_type (machine_mode mode, poly_int64 size, tree type)
     {
       for (p = avail_temp_slots; p; p = p->next)
 	{
-	  if (p->align >= align
-	      && known_ge (p->size, size)
+	  if (p->align >= align && p->size >= size
 	      && GET_MODE (p->slot) == mode
 	      && objects_must_conflict_p (p->type, type)
-	      && (best_p == 0
-		  || (known_eq (best_p->size, p->size)
-		      ? best_p->align > p->align
-		      : known_ge (best_p->size, p->size))))
+	      && (best_p == 0 || best_p->size > p->size
+		  || (best_p->size == p->size && best_p->align > p->align)))
 	    {
-	      if (p->align == align && known_eq (p->size, size))
+	      if (p->align == align && p->size == size)
 		{
 		  selected = p;
 		  cut_slot_from_list (selected, &avail_temp_slots);
@@ -832,9 +823,9 @@ assign_stack_temp_for_type (machine_mode mode, poly_int64 size, tree type)
       if (GET_MODE (best_p->slot) == BLKmode)
 	{
 	  int alignment = best_p->align / BITS_PER_UNIT;
-	  poly_int64 rounded_size = aligned_upper_bound (size, alignment);
+	  HOST_WIDE_INT rounded_size = CEIL_ROUND (size, alignment);
 
-	  if (known_ge (best_p->size - rounded_size, alignment))
+	  if (best_p->size - rounded_size >= alignment)
 	    {
 	      p = ggc_alloc<temp_slot> ();
 	      p->in_use = 0;
@@ -857,7 +848,7 @@ assign_stack_temp_for_type (machine_mode mode, poly_int64 size, tree type)
   /* If we still didn't find one, make a new temporary.  */
   if (selected == 0)
     {
-      poly_int64 frame_offset_old = frame_offset;
+      HOST_WIDE_INT frame_offset_old = frame_offset;
 
       p = ggc_alloc<temp_slot> ();
 
@@ -871,9 +862,9 @@ assign_stack_temp_for_type (machine_mode mode, poly_int64 size, tree type)
       gcc_assert (mode != BLKmode || align == BIGGEST_ALIGNMENT);
       p->slot = assign_stack_local_1 (mode,
 				      (mode == BLKmode
-				       ? aligned_upper_bound (size,
-							      (int) align
-							      / BITS_PER_UNIT)
+				       ? CEIL_ROUND (size,
+						     (int) align
+						     / BITS_PER_UNIT)
 				       : size),
 				      align, 0);
 
@@ -938,7 +929,7 @@ assign_stack_temp_for_type (machine_mode mode, poly_int64 size, tree type)
    reuse.  First two arguments are same as in preceding function.  */
 
 rtx
-assign_stack_temp (machine_mode mode, poly_int64 size)
+assign_stack_temp (machine_mode mode, HOST_WIDE_INT size)
 {
   return assign_stack_temp_for_type (mode, size, NULL_TREE);
 }
@@ -1057,14 +1048,14 @@ combine_temp_slots (void)
 	  if (GET_MODE (q->slot) != BLKmode)
 	    continue;
 
-	  if (known_eq (p->base_offset + p->full_size, q->base_offset))
+	  if (p->base_offset + p->full_size == q->base_offset)
 	    {
 	      /* Q comes after P; combine Q into P.  */
 	      p->size += q->size;
 	      p->full_size += q->full_size;
 	      delete_q = 1;
 	    }
-	  else if (known_eq (q->base_offset + q->full_size, p->base_offset))
+	  else if (q->base_offset + q->full_size == p->base_offset)
 	    {
 	      /* P comes after Q; combine P into Q.  */
 	      q->size += p->size;
@@ -1369,11 +1360,11 @@ initial_value_entry (int i, rtx *hreg, rtx *preg)
    routines.  They contain the offsets of the virtual registers from their
    respective hard registers.  */
 
-static poly_int64 in_arg_offset;
-static poly_int64 var_offset;
-static poly_int64 dynamic_offset;
-static poly_int64 out_arg_offset;
-static poly_int64 cfa_offset;
+static int in_arg_offset;
+static int var_offset;
+static int dynamic_offset;
+static int out_arg_offset;
+static int cfa_offset;
 
 /* In most machines, the stack pointer register is equivalent to the bottom
    of the stack.  */
@@ -1409,7 +1400,7 @@ static poly_int64 cfa_offset;
   : 0) + (STACK_POINTER_OFFSET))
 #else
 #define STACK_DYNAMIC_OFFSET(FNDECL)	\
-  ((ACCUMULATE_OUTGOING_ARGS ? crtl->outgoing_args_size : poly_int64 (0)) \
+((ACCUMULATE_OUTGOING_ARGS ? crtl->outgoing_args_size : 0)	      \
  + (STACK_POINTER_OFFSET))
 #endif
 #endif
@@ -1420,10 +1411,10 @@ static poly_int64 cfa_offset;
    offset indirectly through the pointer.  Otherwise, return 0.  */
 
 static rtx
-instantiate_new_reg (rtx x, poly_int64_pod *poffset)
+instantiate_new_reg (rtx x, HOST_WIDE_INT *poffset)
 {
   rtx new_rtx;
-  poly_int64 offset;
+  HOST_WIDE_INT offset;
 
   if (x == virtual_incoming_args_rtx)
     {
@@ -1482,7 +1473,7 @@ instantiate_virtual_regs_in_rtx (rtx *loc)
       if (rtx x = *loc)
 	{
 	  rtx new_rtx;
-	  poly_int64 offset;
+	  HOST_WIDE_INT offset;
 	  switch (GET_CODE (x))
 	    {
 	    case REG:
@@ -1535,7 +1526,7 @@ safe_insn_predicate (int code, int operand, rtx x)
 static void
 instantiate_virtual_regs_in_insn (rtx_insn *insn)
 {
-  poly_int64 offset;
+  HOST_WIDE_INT offset;
   int insn_code, i;
   bool any_change = false;
   rtx set, new_rtx, x;
@@ -1574,8 +1565,7 @@ instantiate_virtual_regs_in_insn (rtx_insn *insn)
 	 to the generic case is avoiding a new pseudo and eliminating a
 	 move insn in the initial rtl stream.  */
       new_rtx = instantiate_new_reg (SET_SRC (set), &offset);
-      if (new_rtx
-	  && maybe_ne (offset, 0)
+      if (new_rtx && offset != 0
 	  && REG_P (SET_DEST (set))
 	  && REGNO (SET_DEST (set)) > LAST_VIRTUAL_REGISTER)
 	{
@@ -1601,18 +1591,17 @@ instantiate_virtual_regs_in_insn (rtx_insn *insn)
 
       /* Handle a plus involving a virtual register by determining if the
 	 operands remain valid if they're modified in place.  */
-      poly_int64 delta;
       if (GET_CODE (SET_SRC (set)) == PLUS
 	  && recog_data.n_operands >= 3
 	  && recog_data.operand_loc[1] == &XEXP (SET_SRC (set), 0)
 	  && recog_data.operand_loc[2] == &XEXP (SET_SRC (set), 1)
-	  && poly_int_rtx_p (recog_data.operand[2], &delta)
+	  && CONST_INT_P (recog_data.operand[2])
 	  && (new_rtx = instantiate_new_reg (recog_data.operand[1], &offset)))
 	{
-	  offset += delta;
+	  offset += INTVAL (recog_data.operand[2]);
 
 	  /* If the sum is zero, then replace with a plain move.  */
-	  if (known_eq (offset, 0)
+	  if (offset == 0
 	      && REG_P (SET_DEST (set))
 	      && REGNO (SET_DEST (set)) > LAST_VIRTUAL_REGISTER)
 	    {
@@ -1690,7 +1679,7 @@ instantiate_virtual_regs_in_insn (rtx_insn *insn)
 	  new_rtx = instantiate_new_reg (x, &offset);
 	  if (new_rtx == NULL)
 	    continue;
-	  if (known_eq (offset, 0))
+	  if (offset == 0)
 	    x = new_rtx;
 	  else
 	    {
@@ -1715,7 +1704,7 @@ instantiate_virtual_regs_in_insn (rtx_insn *insn)
 	  new_rtx = instantiate_new_reg (SUBREG_REG (x), &offset);
 	  if (new_rtx == NULL)
 	    continue;
-	  if (maybe_ne (offset, 0))
+	  if (offset != 0)
 	    {
 	      start_sequence ();
 	      new_rtx = expand_simple_binop
@@ -1939,7 +1928,7 @@ instantiate_virtual_regs (void)
 
   /* Compute the offsets to use for this function.  */
   in_arg_offset = FIRST_PARM_OFFSET (current_function_decl);
-  var_offset = targetm.starting_frame_offset ();
+  var_offset = STARTING_FRAME_OFFSET;
   dynamic_offset = STACK_DYNAMIC_OFFSET (current_function_decl);
   out_arg_offset = STACK_POINTER_OFFSET;
 #ifdef FRAME_POINTER_CFA_OFFSET
@@ -1960,11 +1949,10 @@ instantiate_virtual_regs (void)
 	   Fortunately, they shouldn't contain virtual registers either.  */
         if (GET_CODE (PATTERN (insn)) == USE
 	    || GET_CODE (PATTERN (insn)) == CLOBBER
-	    || GET_CODE (PATTERN (insn)) == ASM_INPUT
-	    || DEBUG_MARKER_INSN_P (insn))
+	    || GET_CODE (PATTERN (insn)) == ASM_INPUT)
 	  continue;
-	else if (DEBUG_BIND_INSN_P (insn))
-	  instantiate_virtual_regs_in_rtx (INSN_VAR_LOCATION_PTR (insn));
+	else if (DEBUG_INSN_P (insn))
+	  instantiate_virtual_regs_in_rtx (&INSN_VAR_LOCATION (insn));
 	else
 	  instantiate_virtual_regs_in_insn (insn);
 
@@ -2094,9 +2082,6 @@ aggregate_value_p (const_tree exp, const_tree fntype)
   if (TREE_ADDRESSABLE (type))
     return 1;
 
-  if (TYPE_EMPTY_P (type))
-    return 0;
-
   if (flag_pcc_struct_return && AGGREGATE_TYPE_P (type))
     return 1;
 
@@ -2113,7 +2098,7 @@ aggregate_value_p (const_tree exp, const_tree fntype)
     return 0;
 
   regno = REGNO (reg);
-  nregs = hard_regno_nregs (regno, TYPE_MODE (type));
+  nregs = hard_regno_nregs[regno][TYPE_MODE (type)];
   for (i = 0; i < nregs; i++)
     if (! call_used_regs[regno + i])
       return 1;
@@ -2233,11 +2218,20 @@ use_register_for_decl (const_tree decl)
   if (!DECL_REGISTER (decl))
     return false;
 
-  /* When not optimizing, disregard register keyword for types that
-     could have methods, otherwise the methods won't be callable from
-     the debugger.  */
-  if (RECORD_OR_UNION_TYPE_P (TREE_TYPE (decl)))
-    return false;
+  switch (TREE_CODE (TREE_TYPE (decl)))
+    {
+    case RECORD_TYPE:
+    case UNION_TYPE:
+    case QUAL_UNION_TYPE:
+      /* When not optimizing, disregard register keyword for variables with
+	 types containing methods, otherwise the methods won't be callable
+	 from the debugger.  */
+      if (TYPE_METHODS (TYPE_MAIN_VARIANT (TREE_TYPE (decl))))
+	return false;
+      break;
+    default:
+      break;
+    }
 
   return true;
 }
@@ -2477,7 +2471,8 @@ assign_parm_find_data_types (struct assign_parm_data_all *all, tree parm,
   /* If the parm is to be passed as a transparent union or record, use the
      type of the first field for the tests below.  We have already verified
      that the modes are the same.  */
-  if (RECORD_OR_UNION_TYPE_P (passed_type)
+  if ((TREE_CODE (passed_type) == UNION_TYPE
+       || TREE_CODE (passed_type) == RECORD_TYPE)
       && TYPE_TRANSPARENT_AGGR (passed_type))
     passed_type = TREE_TYPE (first_field (passed_type));
 
@@ -2539,9 +2534,6 @@ assign_parm_find_entry_rtl (struct assign_parm_data_all *all,
       data->entry_parm = data->stack_parm = const0_rtx;
       return;
     }
-
-  targetm.calls.warn_parameter_passing_abi (all->args_so_far,
-					    data->passed_type);
 
   entry_parm = targetm.calls.function_incoming_arg (all->args_so_far,
 						    data->promoted_mode,
@@ -2713,9 +2705,9 @@ assign_parm_find_stack_rtl (tree parm, struct assign_parm_data_one *data)
 	  set_mem_size (stack_parm, GET_MODE_SIZE (data->promoted_mode));
 	  if (MEM_EXPR (stack_parm) && MEM_OFFSET_KNOWN_P (stack_parm))
 	    {
-	      poly_int64 offset = subreg_lowpart_offset (DECL_MODE (parm),
-							 data->promoted_mode);
-	      if (maybe_ne (offset, 0))
+	      int offset = subreg_lowpart_offset (DECL_MODE (parm),
+						  data->promoted_mode);
+	      if (offset)
 		set_mem_offset (stack_parm, MEM_OFFSET (stack_parm) - offset);
 	    }
 	}
@@ -2728,15 +2720,12 @@ assign_parm_find_stack_rtl (tree parm, struct assign_parm_data_one *data)
      is TARGET_FUNCTION_ARG_BOUNDARY.  If we're using slot_offset, we're
      intentionally forcing upward padding.  Otherwise we have to come
      up with a guess at the alignment based on OFFSET_RTX.  */
-  poly_int64 offset;
-  if (data->locate.where_pad != PAD_DOWNWARD || data->entry_parm)
+  if (data->locate.where_pad != downward || data->entry_parm)
     align = boundary;
-  else if (poly_int_rtx_p (offset_rtx, &offset))
+  else if (CONST_INT_P (offset_rtx))
     {
-      align = least_bit_hwi (boundary);
-      unsigned int offset_align = known_alignment (offset) * BITS_PER_UNIT;
-      if (offset_align != 0)
-	align = MIN (align, offset_align);
+      align = INTVAL (offset_rtx) * BITS_PER_UNIT | boundary;
+      align = least_bit_hwi (align);
     }
   set_mem_align (stack_parm, align);
 
@@ -2883,9 +2872,9 @@ assign_parm_setup_block_p (struct assign_parm_data_one *data)
   /* Only assign_parm_setup_block knows how to deal with register arguments
      that are padded at the least significant end.  */
   if (REG_P (data->entry_parm)
-      && known_lt (GET_MODE_SIZE (data->promoted_mode), UNITS_PER_WORD)
+      && GET_MODE_SIZE (data->promoted_mode) < UNITS_PER_WORD
       && (BLOCK_REG_PADDING (data->passed_mode, data->passed_type, 1)
-	  == (BYTES_BIG_ENDIAN ? PAD_UPWARD : PAD_DOWNWARD)))
+	  == (BYTES_BIG_ENDIAN ? upward : downward)))
     return true;
 #endif
 
@@ -2946,7 +2935,7 @@ assign_parm_setup_block (struct assign_parm_data_all *all,
       SET_DECL_ALIGN (parm, MAX (DECL_ALIGN (parm), BITS_PER_WORD));
       stack_parm = assign_stack_local (BLKmode, size_stored,
 				       DECL_ALIGN (parm));
-      if (known_eq (GET_MODE_SIZE (GET_MODE (entry_parm)), size))
+      if (GET_MODE_SIZE (GET_MODE (entry_parm)) == size)
 	PUT_MODE (stack_parm, GET_MODE (entry_parm));
       set_mem_attributes (stack_parm, parm, 1);
     }
@@ -2996,14 +2985,14 @@ assign_parm_setup_block (struct assign_parm_data_all *all,
 	 that mode's store operation.  */
       else if (size <= UNITS_PER_WORD)
 	{
-	  unsigned int bits = size * BITS_PER_UNIT;
-	  machine_mode mode = int_mode_for_size (bits, 0).else_blk ();
+	  machine_mode mode
+	    = mode_for_size (size * BITS_PER_UNIT, MODE_INT, 0);
 
 	  if (mode != BLKmode
 #ifdef BLOCK_REG_PADDING
 	      && (size == UNITS_PER_WORD
 		  || (BLOCK_REG_PADDING (mode, data->passed_type, 1)
-		      != (BYTES_BIG_ENDIAN ? PAD_UPWARD : PAD_DOWNWARD)))
+		      != (BYTES_BIG_ENDIAN ? upward : downward)))
 #endif
 	      )
 	    {
@@ -3015,8 +3004,7 @@ assign_parm_setup_block (struct assign_parm_data_all *all,
 		 to the value directly in mode MODE, otherwise we must
 		 start with the register in word_mode and explicitly
 		 convert it.  */
-	      if (targetm.truly_noop_truncation (size * BITS_PER_UNIT,
-						 BITS_PER_WORD))
+	      if (TRULY_NOOP_TRUNCATION (size * BITS_PER_UNIT, BITS_PER_WORD))
 		reg = gen_rtx_REG (mode, REGNO (entry_parm));
 	      else
 		{
@@ -3044,7 +3032,7 @@ assign_parm_setup_block (struct assign_parm_data_all *all,
 	      gcc_checking_assert (BYTES_BIG_ENDIAN
 				   && (BLOCK_REG_PADDING (mode,
 							  data->passed_type, 1)
-				       == PAD_UPWARD));
+				       == upward));
 
 	      int by = (UNITS_PER_WORD - size) * BITS_PER_UNIT;
 
@@ -3065,7 +3053,7 @@ assign_parm_setup_block (struct assign_parm_data_all *all,
 	  else if (size != UNITS_PER_WORD
 #ifdef BLOCK_REG_PADDING
 		   && (BLOCK_REG_PADDING (mode, data->passed_type, 1)
-		       == PAD_DOWNWARD)
+		       == downward)
 #else
 		   && BYTES_BIG_ENDIAN
 #endif
@@ -3089,7 +3077,7 @@ assign_parm_setup_block (struct assign_parm_data_all *all,
 #ifdef BLOCK_REG_PADDING
 	  gcc_checking_assert (BLOCK_REG_PADDING (GET_MODE (mem),
 						  data->passed_type, 0)
-			       == PAD_UPWARD);
+			       == upward);
 #endif
 	  emit_move_insn (mem, entry_parm);
 	}
@@ -3097,7 +3085,7 @@ assign_parm_setup_block (struct assign_parm_data_all *all,
 	move_block_from_reg (REGNO (entry_parm), mem,
 			     size_stored / UNITS_PER_WORD);
     }
-  else if (data->stack_parm == 0 && !TYPE_EMPTY_P (data->passed_type))
+  else if (data->stack_parm == 0)
     {
       push_to_sequence2 (all->first_conversion_insn, all->last_conversion_insn);
       emit_block_move (stack_parm, data->entry_parm, GEN_INT (size),
@@ -3281,11 +3269,13 @@ assign_parm_setup_reg (struct assign_parm_data_all *all, tree parm,
       push_to_sequence2 (all->first_conversion_insn, all->last_conversion_insn);
       tempreg = convert_to_mode (data->nominal_mode, tempreg, unsignedp);
 
-      if (partial_subreg_p (tempreg)
+      if (GET_CODE (tempreg) == SUBREG
 	  && GET_MODE (tempreg) == data->nominal_mode
 	  && REG_P (SUBREG_REG (tempreg))
 	  && data->nominal_mode == data->passed_mode
-	  && GET_MODE (SUBREG_REG (tempreg)) == GET_MODE (data->entry_parm))
+	  && GET_MODE (SUBREG_REG (tempreg)) == GET_MODE (data->entry_parm)
+	  && GET_MODE_SIZE (GET_MODE (tempreg))
+	     < GET_MODE_SIZE (GET_MODE (data->entry_parm)))
 	{
 	  /* The argument is already sign/zero extended, so note it
 	     into the subreg.  */
@@ -3382,7 +3372,8 @@ assign_parm_setup_reg (struct assign_parm_data_all *all, tree parm,
       /* Mark complex types separately.  */
       if (GET_CODE (parmreg) == CONCAT)
 	{
-	  scalar_mode submode = GET_MODE_INNER (GET_MODE (parmreg));
+	  machine_mode submode
+	    = GET_MODE_INNER (GET_MODE (parmreg));
 	  int regnor = REGNO (XEXP (parmreg, 0));
 	  int regnoi = REGNO (XEXP (parmreg, 1));
 	  rtx stackr = adjust_address_nv (data->stack_parm, submode, 0);
@@ -3442,13 +3433,12 @@ assign_parm_setup_stack (struct assign_parm_data_all *all, tree parm,
 
       if (data->stack_parm)
 	{
-	  poly_int64 offset
-	    = subreg_lowpart_offset (data->nominal_mode,
-				     GET_MODE (data->stack_parm));
+	  int offset = subreg_lowpart_offset (data->nominal_mode,
+					      GET_MODE (data->stack_parm));
 	  /* ??? This may need a big-endian conversion on sparc64.  */
 	  data->stack_parm
 	    = adjust_address (data->stack_parm, data->nominal_mode, 0);
-	  if (maybe_ne (offset, 0) && MEM_OFFSET_KNOWN_P (data->stack_parm))
+	  if (offset && MEM_OFFSET_KNOWN_P (data->stack_parm))
 	    set_mem_offset (data->stack_parm,
 			    MEM_OFFSET (data->stack_parm) + offset);
 	}
@@ -3473,9 +3463,7 @@ assign_parm_setup_stack (struct assign_parm_data_all *all, tree parm,
       dest = validize_mem (copy_rtx (data->stack_parm));
       src = validize_mem (copy_rtx (data->entry_parm));
 
-      if (TYPE_EMPTY_P (data->passed_type))
-	/* Empty types don't really need to be copied.  */;
-      else if (MEM_P (src))
+      if (MEM_P (src))
 	{
 	  /* Use a block move to handle potentially misaligned entry_parm.  */
 	  if (!to_conversion)
@@ -3522,7 +3510,7 @@ assign_parms_unsplit_complex (struct assign_parm_data_all *all,
 	  && targetm.calls.split_complex_arg (TREE_TYPE (parm)))
 	{
 	  rtx tmp, real, imag;
-	  scalar_mode inner = GET_MODE_INNER (DECL_MODE (parm));
+	  machine_mode inner = GET_MODE_INNER (DECL_MODE (parm));
 
 	  real = DECL_RTL (fnargs[i]);
 	  imag = DECL_RTL (fnargs[i + 1]);
@@ -3750,16 +3738,6 @@ assign_parms (tree fndecl)
 	{
 	  assign_parm_find_stack_rtl (parm, &data);
 	  assign_parm_adjust_entry_rtl (&data);
-	  /* For arguments that occupy no space in the parameter
-	     passing area, have non-zero size and have address taken,
-	     force creation of a stack slot so that they have distinct
-	     address from other parameters.  */
-	  if (TYPE_EMPTY_P (data.passed_type)
-	      && TREE_ADDRESSABLE (parm)
-	      && data.entry_parm == data.stack_parm
-	      && MEM_P (data.entry_parm)
-	      && int_size_in_bytes (data.passed_type))
-	    data.stack_parm = NULL_RTX;
 	}
       if (!POINTER_BOUNDS_TYPE_P (data.passed_type))
 	{
@@ -3910,15 +3888,14 @@ assign_parms (tree fndecl)
   /* Adjust function incoming argument size for alignment and
      minimum length.  */
 
-  crtl->args.size = upper_bound (crtl->args.size, all.reg_parm_stack_space);
-  crtl->args.size = aligned_upper_bound (crtl->args.size,
-					 PARM_BOUNDARY / BITS_PER_UNIT);
+  crtl->args.size = MAX (crtl->args.size, all.reg_parm_stack_space);
+  crtl->args.size = CEIL_ROUND (crtl->args.size,
+					   PARM_BOUNDARY / BITS_PER_UNIT);
 
   if (ARGS_GROW_DOWNWARD)
     {
       crtl->args.arg_offset_rtx
-	= (all.stack_args_size.var == 0
-	   ? gen_int_mode (-all.stack_args_size.constant, Pmode)
+	= (all.stack_args_size.var == 0 ? GEN_INT (-all.stack_args_size.constant)
 	   : expand_expr (size_diffop (all.stack_args_size.var,
 				       size_int (-all.stack_args_size.constant)),
 			  NULL_RTX, VOIDmode, EXPAND_NORMAL));
@@ -4006,7 +3983,7 @@ gimplify_parm_type (tree *tp, int *walk_subtrees, void *data)
    statements to add to the beginning of the function.  */
 
 gimple_seq
-gimplify_parameters (gimple_seq *cleanup)
+gimplify_parameters (void)
 {
   struct assign_parm_data_all all;
   tree parm;
@@ -4071,16 +4048,6 @@ gimplify_parameters (gimple_seq *cleanup)
 		  else if (TREE_CODE (type) == COMPLEX_TYPE
 			   || TREE_CODE (type) == VECTOR_TYPE)
 		    DECL_GIMPLE_REG_P (local) = 1;
-
-		  if (!is_gimple_reg (local)
-		      && flag_stack_reuse != SR_NONE)
-		    {
-		      tree clobber = build_constructor (type, NULL);
-		      gimple *clobber_stmt;
-		      TREE_THIS_VOLATILE (clobber) = 1;
-		      clobber_stmt = gimple_build_assign (local, clobber);
-		      gimple_seq_add_stmt (cleanup, clobber_stmt);
-		    }
 		}
 	      else
 		{
@@ -4091,9 +4058,10 @@ gimplify_parameters (gimple_seq *cleanup)
 		  DECL_IGNORED_P (addr) = 0;
 		  local = build_fold_indirect_ref (addr);
 
-		  t = build_alloca_call_expr (DECL_SIZE_UNIT (parm),
-					      DECL_ALIGN (parm),
-					      max_int_size_in_bytes (type));
+		  t = builtin_decl_explicit (BUILT_IN_ALLOCA_WITH_ALIGN);
+		  t = build_call_expr (t, 2, DECL_SIZE_UNIT (parm),
+				       size_int (DECL_ALIGN (parm)));
+
 		  /* The call has been built for a variable-sized object.  */
 		  CALL_ALLOCA_FOR_VAR_P (t) = 1;
 		  t = fold_convert (ptr_type, t);
@@ -4140,7 +4108,7 @@ gimplify_parameters (gimple_seq *cleanup)
    rounding affects the initial and starting offsets, but not the argument
    size.
 
-   The second, controlled by TARGET_FUNCTION_ARG_PADDING and PARM_BOUNDARY,
+   The second, controlled by FUNCTION_ARG_PADDING and PARM_BOUNDARY,
    optionally rounds the size of the parm to PARM_BOUNDARY.  The
    initial offset is not affected by this rounding, while the size always
    is and the starting offset may be.  */
@@ -4158,7 +4126,7 @@ locate_and_pad_parm (machine_mode passed_mode, tree type, int in_regs,
 		     struct locate_and_pad_arg_data *locate)
 {
   tree sizetree;
-  pad_direction where_pad;
+  enum direction where_pad;
   unsigned int boundary, round_boundary;
   int part_size_in_regs;
 
@@ -4168,28 +4136,23 @@ locate_and_pad_parm (machine_mode passed_mode, tree type, int in_regs,
     {
       if (reg_parm_stack_space > 0)
 	{
-	  if (initial_offset_ptr->var
-	      || !ordered_p (initial_offset_ptr->constant,
-			     reg_parm_stack_space))
+	  if (initial_offset_ptr->var)
 	    {
 	      initial_offset_ptr->var
 		= size_binop (MAX_EXPR, ARGS_SIZE_TREE (*initial_offset_ptr),
 			      ssize_int (reg_parm_stack_space));
 	      initial_offset_ptr->constant = 0;
 	    }
-	  else
-	    initial_offset_ptr->constant
-	      = ordered_max (initial_offset_ptr->constant,
-			     reg_parm_stack_space);
+	  else if (initial_offset_ptr->constant < reg_parm_stack_space)
+	    initial_offset_ptr->constant = reg_parm_stack_space;
 	}
     }
 
   part_size_in_regs = (reg_parm_stack_space == 0 ? partial : 0);
 
-  sizetree = (type
-	      ? arg_size_in_bytes (type)
-	      : size_int (GET_MODE_SIZE (passed_mode)));
-  where_pad = targetm.calls.function_arg_padding (passed_mode, type);
+  sizetree
+    = type ? size_in_bytes (type) : size_int (GET_MODE_SIZE (passed_mode));
+  where_pad = FUNCTION_ARG_PADDING (passed_mode, type);
   boundary = targetm.calls.function_arg_boundary (passed_mode, type);
   round_boundary = targetm.calls.function_arg_round_boundary (passed_mode,
 							      type);
@@ -4238,7 +4201,7 @@ locate_and_pad_parm (machine_mode passed_mode, tree type, int in_regs,
 
       {
 	tree s2 = sizetree;
-	if (where_pad != PAD_NONE
+	if (where_pad != none
 	    && (!tree_fits_uhwi_p (sizetree)
 		|| (tree_to_uhwi (sizetree) * BITS_PER_UNIT) % round_boundary))
 	  s2 = round_up (s2, round_boundary / BITS_PER_UNIT);
@@ -4263,7 +4226,7 @@ locate_and_pad_parm (machine_mode passed_mode, tree type, int in_regs,
       /* Pad_below needs the pre-rounded size to know how much to pad
 	 below.  */
       locate->offset = locate->slot_offset;
-      if (where_pad == PAD_DOWNWARD)
+      if (where_pad == downward)
 	pad_below (&locate->offset, passed_mode, sizetree);
 
     }
@@ -4282,10 +4245,10 @@ locate_and_pad_parm (machine_mode passed_mode, tree type, int in_regs,
       /* Pad_below needs the pre-rounded size to know how much to pad below
 	 so this must be done before rounding up.  */
       locate->offset = locate->slot_offset;
-      if (where_pad == PAD_DOWNWARD)
+      if (where_pad == downward)
 	pad_below (&locate->offset, passed_mode, sizetree);
 
-      if (where_pad != PAD_NONE
+      if (where_pad != none
 	  && (!tree_fits_uhwi_p (sizetree)
 	      || (tree_to_uhwi (sizetree) * BITS_PER_UNIT) % round_boundary))
 	sizetree = round_up (sizetree, round_boundary / BITS_PER_UNIT);
@@ -4295,8 +4258,9 @@ locate_and_pad_parm (machine_mode passed_mode, tree type, int in_regs,
       locate->size.constant -= part_size_in_regs;
     }
 
-  locate->offset.constant
-    += targetm.calls.function_arg_offset (passed_mode, type);
+#ifdef FUNCTION_ARG_OFFSET
+  locate->offset.constant += FUNCTION_ARG_OFFSET (passed_mode, type);
+#endif
 }
 
 /* Round the stack offset in *OFFSET_PTR up to a multiple of BOUNDARY.
@@ -4307,9 +4271,9 @@ pad_to_arg_alignment (struct args_size *offset_ptr, int boundary,
 		      struct args_size *alignment_pad)
 {
   tree save_var = NULL_TREE;
-  poly_int64 save_constant = 0;
+  HOST_WIDE_INT save_constant = 0;
   int boundary_in_bytes = boundary / BITS_PER_UNIT;
-  poly_int64 sp_offset = STACK_POINTER_OFFSET;
+  HOST_WIDE_INT sp_offset = STACK_POINTER_OFFSET;
 
 #ifdef SPARC_STACK_BOUNDARY_HACK
   /* ??? The SPARC port may claim a STACK_BOUNDARY higher than
@@ -4330,10 +4294,7 @@ pad_to_arg_alignment (struct args_size *offset_ptr, int boundary,
 
   if (boundary > BITS_PER_UNIT)
     {
-      int misalign;
-      if (offset_ptr->var
-	  || !known_misalignment (offset_ptr->constant + sp_offset,
-				  boundary_in_bytes, &misalign))
+      if (offset_ptr->var)
 	{
 	  tree sp_offset_tree = ssize_int (sp_offset);
 	  tree offset = size_binop (PLUS_EXPR,
@@ -4354,13 +4315,13 @@ pad_to_arg_alignment (struct args_size *offset_ptr, int boundary,
 	}
       else
 	{
-	  if (ARGS_GROW_DOWNWARD)
-	    offset_ptr->constant -= misalign;
-	  else
-	    offset_ptr->constant += -misalign & (boundary_in_bytes - 1);
+	  offset_ptr->constant = -sp_offset +
+	    (ARGS_GROW_DOWNWARD
+	    ? FLOOR_ROUND (offset_ptr->constant + sp_offset, boundary_in_bytes)
+	    : CEIL_ROUND (offset_ptr->constant + sp_offset, boundary_in_bytes));
 
-	  if (boundary > PARM_BOUNDARY)
-	    alignment_pad->constant = offset_ptr->constant - save_constant;
+	    if (boundary > PARM_BOUNDARY)
+	      alignment_pad->constant = offset_ptr->constant - save_constant;
 	}
     }
 }
@@ -4368,18 +4329,21 @@ pad_to_arg_alignment (struct args_size *offset_ptr, int boundary,
 static void
 pad_below (struct args_size *offset_ptr, machine_mode passed_mode, tree sizetree)
 {
-  unsigned int align = PARM_BOUNDARY / BITS_PER_UNIT;
-  int misalign;
-  if (passed_mode != BLKmode
-      && known_misalignment (GET_MODE_SIZE (passed_mode), align, &misalign))
-    offset_ptr->constant += -misalign & (align - 1);
+  if (passed_mode != BLKmode)
+    {
+      if (GET_MODE_BITSIZE (passed_mode) % PARM_BOUNDARY)
+	offset_ptr->constant
+	  += (((GET_MODE_BITSIZE (passed_mode) + PARM_BOUNDARY - 1)
+	       / PARM_BOUNDARY * PARM_BOUNDARY / BITS_PER_UNIT)
+	      - GET_MODE_SIZE (passed_mode));
+    }
   else
     {
       if (TREE_CODE (sizetree) != INTEGER_CST
-	  || (TREE_INT_CST_LOW (sizetree) & (align - 1)) != 0)
+	  || (TREE_INT_CST_LOW (sizetree) * BITS_PER_UNIT) % PARM_BOUNDARY)
 	{
 	  /* Round the size up to multiple of PARM_BOUNDARY bits.  */
-	  tree s2 = round_up (sizetree, align);
+	  tree s2 = round_up (sizetree, PARM_BOUNDARY / BITS_PER_UNIT);
 	  /* Add it in.  */
 	  ADD_PARM_SIZE (*offset_ptr, s2);
 	  SUB_PARM_SIZE (*offset_ptr, sizetree);
@@ -4761,11 +4725,11 @@ number_blocks (tree fn)
   int n_blocks;
   tree *block_vector;
 
-  /* For XCOFF debugging output, we start numbering the blocks
+  /* For SDB and XCOFF debugging output, we start numbering the blocks
      from 1 within each function, rather than keeping a running
      count.  */
-#if defined (XCOFF_DEBUGGING_INFO)
-  if (write_symbols == XCOFF_DEBUG)
+#if SDB_DEBUGGING_INFO || defined (XCOFF_DEBUGGING_INFO)
+  if (write_symbols == SDB_DEBUG || write_symbols == XCOFF_DEBUG)
     next_block_index = 1;
 #endif
 
@@ -4983,12 +4947,6 @@ allocate_struct_function (tree fndecl, bool abstract_p)
       if (!profile_flag && !flag_instrument_function_entry_exit)
 	DECL_NO_INSTRUMENT_FUNCTION_ENTRY_EXIT (fndecl) = 1;
     }
-
-  /* Don't enable begin stmt markers if var-tracking at assignments is
-     disabled.  The markers make little sense without the variable
-     binding annotations among them.  */
-  cfun->debug_nonbind_markers = lang_hooks.emits_begin_stmt
-    && MAY_HAVE_DEBUG_MARKER_STMTS;
 }
 
 /* This is like allocate_struct_function, but pushes a new cfun for FNDECL
@@ -5306,7 +5264,7 @@ expand_function_start (tree subr)
     }
 
   /* The following was moved from init_function_start.
-     The move was supposed to make sdb output more accurate.  */
+     The move is supposed to make sdb output more accurate.  */
   /* Indicate the beginning of the function body,
      as opposed to parm setup.  */
   emit_note (NOTE_INSN_FUNCTION_BEG);
@@ -5497,7 +5455,7 @@ expand_function_end (void)
   do_pending_stack_adjust ();
 
   /* Output a linenumber for the end of the function.
-     SDB depended on this.  */
+     SDB depends on this.  */
   set_curr_insn_location (input_location);
 
   /* Before the return label (if any), clobber the return
@@ -5546,7 +5504,6 @@ expand_function_end (void)
 	  : DECL_REGISTER (decl_result))
 	{
 	  rtx real_decl_rtl = crtl->return_rtx;
-	  complex_mode cmode;
 
 	  /* This should be set in assign_parms.  */
 	  gcc_assert (REG_FUNCTION_VALUE_P (real_decl_rtl));
@@ -5587,8 +5544,8 @@ expand_function_end (void)
 	     need to generate some non-trivial bitfield insertions.  Do that
 	     on a pseudo and not the hard register.  */
 	  else if (GET_CODE (decl_rtl) == CONCAT
-		   && is_complex_int_mode (GET_MODE (decl_rtl), &cmode)
-		   && GET_MODE_BITSIZE (cmode) <= BITS_PER_WORD)
+		   && GET_MODE_CLASS (GET_MODE (decl_rtl)) == MODE_COMPLEX_INT
+		   && GET_MODE_BITSIZE (GET_MODE (decl_rtl)) <= BITS_PER_WORD)
 	    {
 	      int old_generating_concat_p;
 	      rtx tmp;
@@ -5644,8 +5601,8 @@ expand_function_end (void)
       REG_FUNCTION_VALUE_P (outgoing) = 1;
 
       /* The address may be ptr_mode and OUTGOING may be Pmode.  */
-      scalar_int_mode mode = as_a <scalar_int_mode> (GET_MODE (outgoing));
-      value_address = convert_memory_address (mode, value_address);
+      value_address = convert_memory_address (GET_MODE (outgoing),
+					      value_address);
 
       emit_move_insn (outgoing, value_address);
 
@@ -5738,58 +5695,6 @@ get_arg_pointer_save_area (void)
   return ret;
 }
 
-
-/* If debugging dumps are requested, dump information about how the
-   target handled -fstack-check=clash for the prologue.
-
-   PROBES describes what if any probes were emitted.
-
-   RESIDUALS indicates if the prologue had any residual allocation
-   (i.e. total allocation was not a multiple of PROBE_INTERVAL).  */
-
-void
-dump_stack_clash_frame_info (enum stack_clash_probes probes, bool residuals)
-{
-  if (!dump_file)
-    return;
-
-  switch (probes)
-    {
-    case NO_PROBE_NO_FRAME:
-      fprintf (dump_file,
-	       "Stack clash no probe no stack adjustment in prologue.\n");
-      break;
-    case NO_PROBE_SMALL_FRAME:
-      fprintf (dump_file,
-	       "Stack clash no probe small stack adjustment in prologue.\n");
-      break;
-    case PROBE_INLINE:
-      fprintf (dump_file, "Stack clash inline probes in prologue.\n");
-      break;
-    case PROBE_LOOP:
-      fprintf (dump_file, "Stack clash probe loop in prologue.\n");
-      break;
-    }
-
-  if (residuals)
-    fprintf (dump_file, "Stack clash residual allocation in prologue.\n");
-  else
-    fprintf (dump_file, "Stack clash no residual allocation in prologue.\n");
-
-  if (frame_pointer_needed)
-    fprintf (dump_file, "Stack clash frame pointer needed.\n");
-  else
-    fprintf (dump_file, "Stack clash no frame pointer needed.\n");
-
-  if (TREE_THIS_VOLATILE (cfun->decl))
-    fprintf (dump_file,
-	     "Stack clash noreturn prologue, assuming no implicit"
-	     " probes in caller.\n");
-  else
-    fprintf (dump_file,
-	     "Stack clash not noreturn prologue.\n");
-}
-
 /* Add a list of INSNS to the hash HASHP, possibly allocating HASHP
    for the first time.  */
 
@@ -6177,17 +6082,16 @@ thread_prologue_and_epilogue_insns (void)
       if (prologue_insn
 	  && BLOCK_FOR_INSN (prologue_insn) == NULL)
 	prologue_insn = NULL;
-      if (split_prologue_insn || prologue_insn)
-	{
-	  auto_sbitmap blocks (last_basic_block_for_fn (cfun));
-	  bitmap_clear (blocks);
-	  if (split_prologue_insn)
-	    bitmap_set_bit (blocks,
-			    BLOCK_FOR_INSN (split_prologue_insn)->index);
-	  if (prologue_insn)
-	    bitmap_set_bit (blocks, BLOCK_FOR_INSN (prologue_insn)->index);
-	  find_many_sub_basic_blocks (blocks);
-	}
+      auto_sbitmap blocks (last_basic_block_for_fn (cfun));
+      bitmap_clear (blocks);
+      if (split_prologue_insn)
+	bitmap_set_bit (blocks,
+			BLOCK_FOR_INSN (split_prologue_insn)->index);
+      if (prologue_insn)
+	bitmap_set_bit (blocks, BLOCK_FOR_INSN (prologue_insn)->index);
+      bitmap_set_bit (blocks, entry_edge->dest->index);
+      bitmap_set_bit (blocks, orig_entry_edge->dest->index);
+      find_many_sub_basic_blocks (blocks);
     }
 
   default_rtl_profile ();
@@ -6366,7 +6270,7 @@ fndecl_name (tree fndecl)
 {
   if (fndecl == NULL)
     return "(nofn)";
-  return lang_hooks.decl_printable_name (fndecl, 1);
+  return lang_hooks.decl_printable_name (fndecl, 2);
 }
 
 /* Returns the name of function FN.  */

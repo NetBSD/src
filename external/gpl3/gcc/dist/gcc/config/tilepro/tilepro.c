@@ -1,5 +1,5 @@
 /* Subroutines used for code generation on the Tilera TILEPro.
-   Copyright (C) 2011-2018 Free Software Foundation, Inc.
+   Copyright (C) 2011-2017 Free Software Foundation, Inc.
    Contributed by Walter Lee (walt@tilera.com)
 
    This file is part of GCC.
@@ -18,8 +18,6 @@
    along with GCC; see the file COPYING3.  If not see
    <http://www.gnu.org/licenses/>.  */
 
-#define IN_TARGET_CODE 1
-
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -32,7 +30,6 @@
 #include "memmodel.h"
 #include "tm_p.h"
 #include "stringpool.h"
-#include "attribs.h"
 #include "expmed.h"
 #include "optabs.h"
 #include "regs.h"
@@ -86,18 +83,18 @@ tilepro_option_override (void)
 
 /* Implement TARGET_SCALAR_MODE_SUPPORTED_P.  */
 static bool
-tilepro_scalar_mode_supported_p (scalar_mode mode)
+tilepro_scalar_mode_supported_p (machine_mode mode)
 {
   switch (mode)
     {
-    case E_QImode:
-    case E_HImode:
-    case E_SImode:
-    case E_DImode:
+    case QImode:
+    case HImode:
+    case SImode:
+    case DImode:
       return true;
 
-    case E_SFmode:
-    case E_DFmode:
+    case SFmode:
+    case DFmode:
       return true;
 
     default:
@@ -1210,15 +1207,15 @@ tilepro_simd_int (rtx num, machine_mode mode)
 
   switch (mode)
     {
-    case E_QImode:
+    case QImode:
       n = 0x01010101 * (n & 0x000000FF);
       break;
-    case E_HImode:
+    case HImode:
       n = 0x00010001 * (n & 0x0000FFFF);
       break;
-    case E_SImode:
+    case SImode:
       break;
-    case E_DImode:
+    case DImode:
       break;
     default:
       gcc_unreachable ();
@@ -1691,7 +1688,7 @@ tilepro_expand_unaligned_load (rtx dest_reg, rtx mem, HOST_WIDE_INT bitsize,
 	extract_bit_field (gen_lowpart (SImode, wide_result),
 			   bitsize, bit_offset % BITS_PER_UNIT,
 			   !sign, gen_lowpart (SImode, dest_reg),
-			   SImode, SImode, false, NULL);
+			   SImode, SImode, false);
 
       if (extracted != dest_reg)
 	emit_move_insn (dest_reg, gen_lowpart (SImode, extracted));
@@ -2422,8 +2419,9 @@ cbranch_predicted_p (rtx_insn *insn)
 
   if (x)
     {
-      return profile_probability::from_reg_br_prob_note (XINT (x, 0))
-	     >= profile_probability::even ();
+      int pred_val = XINT (x, 0);
+
+      return pred_val >= REG_BR_PROB_BASE / 2;
     }
 
   return false;
@@ -4474,7 +4472,7 @@ tilepro_trampoline_init (rtx m_tramp, tree fndecl, rtx static_chain)
 					      TRAMPOLINE_SIZE));
 
   emit_library_call (gen_rtx_SYMBOL_REF (Pmode, "__clear_cache"),
-		     LCT_NORMAL, VOIDmode, begin_addr, Pmode,
+		     LCT_NORMAL, VOIDmode, 2, begin_addr, Pmode,
 		     end_addr, Pmode);
 }
 
@@ -5092,9 +5090,6 @@ tilepro_file_end (void)
 
 #undef  TARGET_CAN_USE_DOLOOP_P
 #define TARGET_CAN_USE_DOLOOP_P can_use_doloop_if_innermost
-
-#undef  TARGET_CONSTANT_ALIGNMENT
-#define TARGET_CONSTANT_ALIGNMENT constant_alignment_word_strings
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 

@@ -1,5 +1,5 @@
 ;; Predicate definitions for HP PA-RISC.
-;; Copyright (C) 2005-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2005-2017 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -272,12 +272,12 @@
      assumed in the instruction encoding.  */
   switch (mode)
     {
-    case E_BLKmode:
-    case E_QImode:
-    case E_HImode:
+    case BLKmode:
+    case QImode:
+    case HImode:
       return true;
 
-    case E_VOIDmode:
+    case VOIDmode:
       return false;
 
     default:
@@ -662,8 +662,8 @@
   (and (match_code "symbol_ref")
        (match_test "SYMBOL_REF_TLS_MODEL (op) == TLS_MODEL_LOCAL_EXEC")))
 
-;; True iff OP is an operator suitable for use in a double-word cmpib
-;; instruction.
+;; True iff this is a comparison operator.  This allows the use of
+;; MATCH_OPERATOR to recognize all the branch insns.
 
 (define_predicate "cmpib_comparison_operator"
   (match_code "eq,ne,lt,le,leu,gt,gtu,ge"))

@@ -1,5 +1,5 @@
 /* Output routines for Motorola MCore processor
-   Copyright (C) 1993-2018 Free Software Foundation, Inc.
+   Copyright (C) 1993-2017 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -17,8 +17,6 @@
    along with GCC; see the file COPYING3.  If not see
    <http://www.gnu.org/licenses/>.  */
 
-#define IN_TARGET_CODE 1
-
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -30,7 +28,6 @@
 #include "memmodel.h"
 #include "tm_p.h"
 #include "stringpool.h"
-#include "attribs.h"
 #include "emit-rtl.h"
 #include "diagnostic-core.h"
 #include "stor-layout.h"
@@ -146,20 +143,18 @@ static void       mcore_option_override		(void);
 static bool       mcore_legitimate_constant_p   (machine_mode, rtx);
 static bool	  mcore_legitimate_address_p	(machine_mode, rtx, bool,
 						 addr_space_t);
-static bool	  mcore_hard_regno_mode_ok	(unsigned int, machine_mode);
-static bool	  mcore_modes_tieable_p		(machine_mode, machine_mode);
 
 /* MCore specific attributes.  */
 
 static const struct attribute_spec mcore_attribute_table[] =
 {
-  /* { name, min_len, max_len, decl_req, type_req, fn_type_req,
-       affects_type_identity, handler, exclude } */
-  { "dllexport", 0, 0, true,  false, false, false, NULL, NULL },
-  { "dllimport", 0, 0, true,  false, false, false, NULL, NULL },
-  { "naked",     0, 0, true,  false, false, false,
-    mcore_handle_naked_attribute, NULL },
-  { NULL,        0, 0, false, false, false, false, NULL, NULL }
+  /* { name, min_len, max_len, decl_req, type_req, fn_type_req, handler,
+       affects_type_identity } */
+  { "dllexport", 0, 0, true,  false, false, NULL, false },
+  { "dllimport", 0, 0, true,  false, false, NULL, false },
+  { "naked",     0, 0, true,  false, false, mcore_handle_naked_attribute,
+    false },
+  { NULL,        0, 0, false, false, false, NULL, false }
 };
 
 /* Initialize the GCC target structure.  */
@@ -243,15 +238,6 @@ static const struct attribute_spec mcore_attribute_table[] =
 
 #undef TARGET_WARN_FUNC_RETURN
 #define TARGET_WARN_FUNC_RETURN mcore_warn_func_return
-
-#undef TARGET_HARD_REGNO_MODE_OK
-#define TARGET_HARD_REGNO_MODE_OK mcore_hard_regno_mode_ok
-
-#undef TARGET_MODES_TIEABLE_P
-#define TARGET_MODES_TIEABLE_P mcore_modes_tieable_p
-
-#undef TARGET_CONSTANT_ALIGNMENT
-#define TARGET_CONSTANT_ALIGNMENT constant_alignment_word_strings
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 
@@ -1295,11 +1281,11 @@ mcore_output_move (rtx insn ATTRIBUTE_UNUSED, rtx operands[],
 	  else
 	    switch (GET_MODE (src))		/* r-m */
 	      {
-	      case E_SImode:
+	      case SImode:
 		return "ldw\t%0,%1";
-	      case E_HImode:
+	      case HImode:
 		return "ld.h\t%0,%1";
-	      case E_QImode:
+	      case QImode:
 		return "ld.b\t%0,%1";
 	      default:
 		gcc_unreachable ();
@@ -1326,11 +1312,11 @@ mcore_output_move (rtx insn ATTRIBUTE_UNUSED, rtx operands[],
   else if (GET_CODE (dst) == MEM)               /* m-r */
     switch (GET_MODE (dst))
       {
-      case E_SImode:
+      case SImode:
 	return "stw\t%1,%0";
-      case E_HImode:
+      case HImode:
 	return "st.h\t%1,%0";
-      case E_QImode:
+      case QImode:
 	return "st.b\t%1,%0";
       default:
 	gcc_unreachable ();
@@ -3273,22 +3259,3 @@ mcore_legitimate_address_p (machine_mode mode, rtx x, bool strict_p,
   return false;
 }
 
-/* Implement TARGET_HARD_REGNO_MODE_OK.  We may keep double values in
-   even registers.  */
-
-static bool
-mcore_hard_regno_mode_ok (unsigned int regno, machine_mode mode)
-{
-  if (TARGET_8ALIGN && GET_MODE_SIZE (mode) > UNITS_PER_WORD)
-    return (regno & 1) == 0;
-
-  return regno < 18;
-}
-
-/* Implement TARGET_MODES_TIEABLE_P.  */
-
-static bool
-mcore_modes_tieable_p (machine_mode mode1, machine_mode mode2)
-{
-  return mode1 == mode2 || GET_MODE_CLASS (mode1) == GET_MODE_CLASS (mode2);
-}
