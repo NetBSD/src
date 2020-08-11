@@ -912,6 +912,11 @@ extern void omp_clause_range_check_failed (const_tree, const char *, int,
   (TREE_CHECK2 (NODE, VAR_DECL, \
 		RESULT_DECL)->decl_common.decl_nonshareable_flag)
 
+/* In a PARM_DECL, set for Fortran hidden string length arguments that some
+   buggy callers don't pass to the callee.  */
+#define DECL_HIDDEN_STRING_LENGTH(NODE) \
+  (TREE_CHECK (NODE, PARM_DECL)->decl_common.decl_nonshareable_flag)
+
 /* In a CALL_EXPR, means that the call is the jump from a thunk to the
    thunked-to function.  */
 #define CALL_FROM_THUNK_P(NODE) (CALL_EXPR_CHECK (NODE)->base.protected_flag)
@@ -1231,6 +1236,9 @@ extern void protected_set_expr_location (tree, location_t);
    ASM_OPERAND with no operands.  */
 #define ASM_INPUT_P(NODE) (ASM_EXPR_CHECK (NODE)->base.static_flag)
 #define ASM_VOLATILE_P(NODE) (ASM_EXPR_CHECK (NODE)->base.public_flag)
+/* Nonzero if we want to consider this asm as minimum length and cost
+   for inlining decisions.  */
+#define ASM_INLINE_P(NODE) (ASM_EXPR_CHECK (NODE)->base.protected_flag)
 
 /* COND_EXPR accessors.  */
 #define COND_EXPR_COND(NODE)	(TREE_OPERAND (COND_EXPR_CHECK (NODE), 0))

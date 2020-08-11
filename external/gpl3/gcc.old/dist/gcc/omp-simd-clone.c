@@ -240,6 +240,10 @@ simd_clone_clauses_extract (struct cgraph_node *node, tree clauses,
 	  }
 	case OMP_CLAUSE_ALIGNED:
 	  {
+	    /* Ignore aligned (x) for declare simd, for the ABI we really
+	       need an alignment specified.  */
+	    if (OMP_CLAUSE_ALIGNED_ALIGNMENT (t) == NULL_TREE)
+	      break;
 	    tree decl = OMP_CLAUSE_DECL (t);
 	    int argno = tree_to_uhwi (decl);
 	    clone_info->args[argno].alignment
@@ -861,6 +865,18 @@ ipa_simd_modify_stmt_ops (tree *tp, int *walk_subtrees, void *data)
 
   if (tp != orig_tp)
     {
+      if (gimple_code (info->stmt) == GIMPLE_PHI
+	  && cand
+	  && TREE_CODE (*orig_tp) == ADDR_EXPR
+	  && TREE_CODE (TREE_OPERAND (*orig_tp, 0)) == PARM_DECL
+	  && cand->alias_ptr_type)
+	{
+	  gcc_assert (TREE_CODE (cand->alias_ptr_type) == SSA_NAME);
+	  *orig_tp = cand->alias_ptr_type;
+	  info->modified = true;
+	  return NULL_TREE;
+	}
+
       repl = build_fold_addr_expr (repl);
       gimple *stmt;
       if (is_gimple_debug (info->stmt))
@@ -877,7 +893,18 @@ ipa_simd_modify_stmt_ops (tree *tp, int *walk_subtrees, void *data)
 	  stmt = gimple_build_assign (make_ssa_name (TREE_TYPE (repl)), repl);
 	  repl = gimple_assign_lhs (stmt);
 	}
-      gimple_stmt_iterator gsi = gsi_for_stmt (info->stmt);
+      gimple_stmt_iterator gsi;
+      if (gimple_code (info->stmt) == GIMPLE_PHI)
+	{
+	  gsi = gsi_after_labels (single_succ (ENTRY_BLOCK_PTR_FOR_FN (cfun)));
+	  /* Cache SSA_NAME for next time.  */
+	  if (cand
+	      && TREE_CODE (*orig_tp) == ADDR_EXPR
+	      && TREE_CODE (TREE_OPERAND (*orig_tp, 0)) == PARM_DECL)
+	    cand->alias_ptr_type = repl;
+	}
+      else
+	gsi = gsi_for_stmt (info->stmt);
       gsi_insert_before (&gsi, stmt, GSI_SAME_STMT);
       *orig_tp = repl;
     }
@@ -978,6 +1005,31 @@ ipa_simd_modify_function_body (struct cgraph_node *node,
     {
       gimple_stmt_iterator gsi;
 
+      for (gsi = gsi_start_phis (bb); !gsi_end_p (gsi); gsi_next (&gsi))
+	{
+	  gphi *phi = as_a <gphi *> (gsi_stmt (gsi));
+	  int i, n = gimple_phi_num_args (phi);
+	  info.stmt = phi;
+	  struct walk_stmt_info wi;
+	  memset (&wi, 0, sizeof (wi));
+	  info.modified = false;
+	  wi.info = &info;
+	  for (i = 0; i < n; ++i)
+	    {
+	      int walk_subtrees = 1;
+	      tree arg = gimple_phi_arg_def (phi, i);
+	      tree op = arg;
+	      ipa_simd_modify_stmt_ops (&op, &walk_subtrees, &wi);
+	      if (op != arg)
+		{
+		  SET_PHI_ARG_DEF (phi, i, op);
+		  gcc_assert (TREE_CODE (op) == SSA_NAME);
+		  if (gimple_phi_arg_edge (phi, i)->flags & EDGE_ABNORMAL)
+		    SSA_NAME_OCCURS_IN_ABNORMAL_PHI (op) = 1;
+		}
+	    }
+	}
+
       gsi = gsi_start_bb (bb);
       while (!gsi_end_p (gsi))
 	{
@@ -993,6 +1045,8 @@ ipa_simd_modify_function_body (struct cgraph_node *node,
 	  if (greturn *return_stmt = dyn_cast <greturn *> (stmt))
 	    {
 	      tree retval = gimple_return_retval (return_stmt);
+	      edge e = find_edge (bb, EXIT_BLOCK_PTR_FOR_FN (cfun));
+	      e->flags |= EDGE_FALLTHRU;
 	      if (!retval)
 		{
 		  gsi_remove (&gsi, true);
@@ -1133,14 +1187,9 @@ simd_clone_adjust (struct cgraph_node *node)
       basic_block orig_exit = EDGE_PRED (EXIT_BLOCK_PTR_FOR_FN (cfun), 0)->src;
       incr_bb = create_empty_bb (orig_exit);
       add_bb_to_loop (incr_bb, body_bb->loop_father);
-      /* The succ of orig_exit was EXIT_BLOCK_PTR_FOR_FN (cfun), with an empty
-	 flag.  Set it now to be a FALLTHRU_EDGE.  */
-      gcc_assert (EDGE_COUNT (orig_exit->succs) == 1);
-      EDGE_SUCC (orig_exit, 0)->flags |= EDGE_FALLTHRU;
-      for (unsigned i = 0;
-	   i < EDGE_COUNT (EXIT_BLOCK_PTR_FOR_FN (cfun)->preds); ++i)
+      while (EDGE_COUNT (EXIT_BLOCK_PTR_FOR_FN (cfun)->preds))
 	{
-	  edge e = EDGE_PRED (EXIT_BLOCK_PTR_FOR_FN (cfun), i);
+	  edge e = EDGE_PRED (EXIT_BLOCK_PTR_FOR_FN (cfun), 0);
 	  redirect_edge_succ (e, incr_bb);
 	}
     }

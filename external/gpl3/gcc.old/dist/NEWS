@@ -9,27 +9,30 @@ http://gcc.gnu.org/gcc-7/index.html
 
                               GCC 7 Release Series
 
-   Dec 6, 2018
+   Nov 14, 2019
 
    The [1]GNU project and the GCC developers are pleased to announce the
-   release of GCC 7.4.
+   release of GCC 7.5.
 
    This release is a bug-fix release, containing fixes for regressions in
-   GCC 7.3 relative to previous releases of GCC.
+   GCC 7.4 relative to previous releases of GCC.
 
 Release History
 
+   GCC 7.5
+          Nov 14, 2019 ([2]changes, [3]documentation)
+
    GCC 7.4
-          Dec 6, 2018 ([2]changes, [3]documentation)
+          Dec 6, 2018 ([4]changes, [5]documentation)
 
    GCC 7.3
-          Jan 25, 2018 ([4]changes, [5]documentation)
+          Jan 25, 2018 ([6]changes, [7]documentation)
 
    GCC 7.2
-          Aug 14, 2017 ([6]changes, [7]documentation)
+          Aug 14, 2017 ([8]changes, [9]documentation)
 
    GCC 7.1
-          May 2, 2017 ([8]changes, [9]documentation)
+          May 2, 2017 ([10]changes, [11]documentation)
 
 References and Acknowledgements
 
@@ -37,58 +40,60 @@ References and Acknowledgements
    supports several other languages aside from C, it now stands for the
    GNU Compiler Collection.
 
-   A list of [10]successful builds is updated as new information becomes
+   A list of [12]successful builds is updated as new information becomes
    available.
 
    The GCC developers would like to thank the numerous people that have
    contributed new features, improvements, bug fixes, and other changes as
-   well as test results to GCC. This [11]amazing group of volunteers is
+   well as test results to GCC. This [13]amazing group of volunteers is
    what makes GCC successful.
 
-   For additional information about GCC please refer to the [12]GCC
-   project web site or contact the [13]GCC development mailing list.
+   For additional information about GCC please refer to the [14]GCC
+   project web site or contact the [15]GCC development mailing list.
 
-   To obtain GCC please use [14]our mirror sites or [15]our SVN server.
+   To obtain GCC please use [16]our mirror sites or [17]our SVN server.
 
 
     For questions related to the use of GCC, please consult these web
-    pages and the [16]GCC manuals. If that fails, the
-    [17]gcc-help@gcc.gnu.org mailing list might help. Comments on these
+    pages and the [18]GCC manuals. If that fails, the
+    [19]gcc-help@gcc.gnu.org mailing list might help. Comments on these
     web pages and the development of GCC are welcome on our developer
-    list at [18]gcc@gcc.gnu.org. All of [19]our lists have public
+    list at [20]gcc@gcc.gnu.org. All of [21]our lists have public
     archives.
 
-   Copyright (C) [20]Free Software Foundation, Inc. Verbatim copying and
+   Copyright (C) [22]Free Software Foundation, Inc. Verbatim copying and
    distribution of this entire article is permitted in any medium,
    provided this notice is preserved.
 
-   These pages are [21]maintained by the GCC team. Last modified
-   2018-12-06[22].
+   These pages are [23]maintained by the GCC team. Last modified
+   2019-11-14[24].
 
 References
 
    1. http://www.gnu.org/
    2. http://gcc.gnu.org/gcc-7/changes.html
-   3. http://gcc.gnu.org/onlinedocs/7.4.0/
+   3. http://gcc.gnu.org/onlinedocs/7.5.0/
    4. http://gcc.gnu.org/gcc-7/changes.html
-   5. http://gcc.gnu.org/onlinedocs/7.3.0/
+   5. http://gcc.gnu.org/onlinedocs/7.4.0/
    6. http://gcc.gnu.org/gcc-7/changes.html
-   7. http://gcc.gnu.org/onlinedocs/7.2.0/
+   7. http://gcc.gnu.org/onlinedocs/7.3.0/
    8. http://gcc.gnu.org/gcc-7/changes.html
-   9. http://gcc.gnu.org/onlinedocs/7.1.0/
-  10. http://gcc.gnu.org/gcc-7/buildstat.html
-  11. http://gcc.gnu.org/onlinedocs/gcc/Contributors.html
-  12. http://gcc.gnu.org/index.html
-  13. mailto:gcc@gcc.gnu.org
-  14. http://gcc.gnu.org/mirrors.html
-  15. http://gcc.gnu.org/svn.html
-  16. https://gcc.gnu.org/onlinedocs/
-  17. mailto:gcc-help@gcc.gnu.org
-  18. mailto:gcc@gcc.gnu.org
-  19. https://gcc.gnu.org/lists.html
-  20. https://www.fsf.org/
-  21. https://gcc.gnu.org/about.html
-  22. http://validator.w3.org/check/referer
+   9. http://gcc.gnu.org/onlinedocs/7.2.0/
+  10. http://gcc.gnu.org/gcc-7/changes.html
+  11. http://gcc.gnu.org/onlinedocs/7.1.0/
+  12. http://gcc.gnu.org/gcc-7/buildstat.html
+  13. http://gcc.gnu.org/onlinedocs/gcc/Contributors.html
+  14. http://gcc.gnu.org/index.html
+  15. mailto:gcc@gcc.gnu.org
+  16. http://gcc.gnu.org/mirrors.html
+  17. http://gcc.gnu.org/svn.html
+  18. https://gcc.gnu.org/onlinedocs/
+  19. mailto:gcc-help@gcc.gnu.org
+  20. mailto:gcc@gcc.gnu.org
+  21. https://gcc.gnu.org/lists.html
+  22. https://www.fsf.org/
+  23. https://gcc.gnu.org/about.html
+  24. http://validator.w3.org/check/referer
 ======================================================================
 http://gcc.gnu.org/gcc-7/changes.html
 
@@ -1139,20 +1144,27 @@ GCC 7.4
    not be complete (that is, it is possible that some PRs that have been
    fixed are not listed here).
 
+GCC 7.5
+
+   This is the [28]list of problem reports (PRs) from GCC's bug tracking
+   system that are known to be fixed in the 7.5 release. This list might
+   not be complete (that is, it is possible that some PRs that have been
+   fixed are not listed here).
+
 
     For questions related to the use of GCC, please consult these web
-    pages and the [28]GCC manuals. If that fails, the
-    [29]gcc-help@gcc.gnu.org mailing list might help. Comments on these
+    pages and the [29]GCC manuals. If that fails, the
+    [30]gcc-help@gcc.gnu.org mailing list might help. Comments on these
     web pages and the development of GCC are welcome on our developer
-    list at [30]gcc@gcc.gnu.org. All of [31]our lists have public
+    list at [31]gcc@gcc.gnu.org. All of [32]our lists have public
     archives.
 
-   Copyright (C) [32]Free Software Foundation, Inc. Verbatim copying and
+   Copyright (C) [33]Free Software Foundation, Inc. Verbatim copying and
    distribution of this entire article is permitted in any medium,
    provided this notice is preserved.
 
-   These pages are [33]maintained by the GCC team. Last modified
-   2018-12-06[34].
+   These pages are [34]maintained by the GCC team. Last modified
+   2019-11-14[35].
 
 References
 
@@ -1183,17 +1195,20 @@ References
   25. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=7.3
   26. https://www.gaisler.com/index.php/information/app-tech-notes
   27. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=7.4
-  28. https://gcc.gnu.org/onlinedocs/
-  29. mailto:gcc-help@gcc.gnu.org
-  30. mailto:gcc@gcc.gnu.org
-  31. https://gcc.gnu.org/lists.html
-  32. https://www.fsf.org/
-  33. https://gcc.gnu.org/about.html
-  34. http://validator.w3.org/check/referer
+  28. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=7.5
+  29. https://gcc.gnu.org/onlinedocs/
+  30. mailto:gcc-help@gcc.gnu.org
+  31. mailto:gcc@gcc.gnu.org
+  32. https://gcc.gnu.org/lists.html
+  33. https://www.fsf.org/
+  34. https://gcc.gnu.org/about.html
+  35. http://validator.w3.org/check/referer
 ======================================================================
 http://gcc.gnu.org/gcc-6/index.html
 
                               GCC 6 Release Series
+
+   (This release series is no longer supported.)
 
    October 26, 2018
 
@@ -1252,7 +1267,7 @@ References and Acknowledgements
    provided this notice is preserved.
 
    These pages are [23]maintained by the GCC team. Last modified
-   2018-10-26[24].
+   2019-06-09[24].
 
 References
 
@@ -2033,6 +2048,8 @@ http://gcc.gnu.org/gcc-5/index.html
 
                               GCC 5 Release Series
 
+   (This release series is no longer supported.)
+
    October 10, 2017
 
    The [1]GNU project and the GCC developers are pleased to announce the
@@ -2090,7 +2107,7 @@ References and Acknowledgements
    provided this notice is preserved.
 
    These pages are [23]maintained by the GCC team. Last modified
-   2018-09-30[24].
+   2019-06-09[24].
 
 References
 
@@ -3062,6 +3079,8 @@ http://gcc.gnu.org/gcc-4.9/index.html
 
                              GCC 4.9 Release Series
 
+   (This release series is no longer supported.)
+
    Aug 3, 2016
 
    The [1]GNU project and the GCC developers are pleased to announce the
@@ -3069,8 +3088,6 @@ http://gcc.gnu.org/gcc-4.9/index.html
 
    This release is a bug-fix release, containing fixes for regressions in
    GCC 4.9.3 relative to previous releases of GCC.
-
-   This release series is no longer maintained.
 
 Release History
 
@@ -3121,7 +3138,7 @@ References and Acknowledgements
    provided this notice is preserved.
 
    These pages are [23]maintained by the GCC team. Last modified
-   2018-09-30[24].
+   2019-06-09[24].
 
 References
 
@@ -3805,6 +3822,8 @@ http://gcc.gnu.org/gcc-4.8/index.html
 
                              GCC 4.8 Release Series
 
+   (This release series is no longer supported.)
+
    June 23, 2015
 
    The [1]GNU project and the GCC developers are pleased to announce the
@@ -3812,8 +3831,6 @@ http://gcc.gnu.org/gcc-4.8/index.html
 
    This release is a bug-fix release, containing fixes for regressions in
    GCC 4.8.4 relative to previous releases of GCC.
-
-   This release series is no longer maintained.
 
 Release History
 
@@ -3867,7 +3884,7 @@ References and Acknowledgements
    provided this notice is preserved.
 
    These pages are [25]maintained by the GCC team. Last modified
-   2018-09-30[26].
+   2019-06-09[26].
 
 References
 
@@ -4676,6 +4693,8 @@ http://gcc.gnu.org/gcc-4.7/index.html
 
                              GCC 4.7 Release Series
 
+   (This release series is no longer supported.)
+
    June 12, 2014
 
    The [1]GNU project and the GCC developers are pleased to announce the
@@ -4683,8 +4702,6 @@ http://gcc.gnu.org/gcc-4.7/index.html
 
    This release is a bug-fix release, containing fixes for regressions in
    GCC 4.7.3 relative to previous releases of GCC.
-
-   This release series is no longer maintained.
 
 Release History
 
@@ -4735,7 +4752,7 @@ References and Acknowledgements
    provided this notice is preserved.
 
    These pages are [23]maintained by the GCC team. Last modified
-   2018-09-30[24].
+   2019-06-09[24].
 
 References
 
@@ -4977,8 +4994,8 @@ void foo (char *a, const char *b, const char *c, const char *d)
 
 New Languages and Language specific improvements
 
-     * Version 3.1 of the [5]OpenMP specification is now supported for the
-       C, C++, and Fortran compilers.
+     * Version 3.1 of the OpenMP specification is now supported for the C,
+       C++, and Fortran compilers.
 
   Ada
 
@@ -5005,7 +5022,7 @@ New Languages and Language specific improvements
        constructs, use the -fgnu-tm option.
        Support is currently available for Alpha, ARM, PowerPC, SH, SPARC,
        and 32-bit/64-bit x86 platforms.
-       For more details on transactional memory see [6]the GCC WiKi.
+       For more details on transactional memory see [5]the GCC WiKi.
      * Support for atomic operations specifying the C++11/C11 memory model
        has been added. These new __atomic routines replace the existing
        __sync built-in routines.
@@ -5016,7 +5033,7 @@ New Languages and Language specific improvements
        library functions is available on the GCC atomic wiki in the
        "External Atomics Library" section.
        For more details on the memory models and features, see the
-       [7]atomic wiki.
+       [6]atomic wiki.
      * When a binary operation is performed on vector types and one of the
        operands is a uniform vector, it is possible to replace the vector
        with the generating element. For example:
@@ -5046,7 +5063,7 @@ res = a - x;  /* means a - {x,x,x,x}  */
      * G++ now accepts the -std=c++11, -std=gnu++11, and -Wc++11-compat
        options, which are equivalent to -std=c++0x, -std=gnu++0x, and
        -Wc++0x-compat, respectively.
-     * G++ now implements [8]C++11 extended friend syntax:
+     * G++ now implements [7]C++11 extended friend syntax:
 
 template<class W>
 class Q
@@ -5061,7 +5078,7 @@ struct B
   int ar[Q<B>::I];
 };
 
-     * Thanks to Ville Voutilainen, G++ now implements [9]C++11 explicit
+     * Thanks to Ville Voutilainen, G++ now implements [8]C++11 explicit
        override control.
 
 struct B {
@@ -5078,26 +5095,26 @@ struct D : B {
 struct E final { };
 struct F: E { }; // error: deriving from final class
 
-     * G++ now implements [10]C++11 non-static data member initializers.
+     * G++ now implements [9]C++11 non-static data member initializers.
 
 struct A {
   int i = 42;
 } a; // initializes a.i to 42
 
-     * Thanks to Ed Smith-Rowland, G++ now implements [11]C++11
+     * Thanks to Ed Smith-Rowland, G++ now implements [10]C++11
        user-defined literals.
 
 // Not actually a good approximation.  :)
 constexpr long double operator"" _degrees (long double d) { return d * 0.0175; }
 long double pi = 180.0_degrees;
 
-     * G++ now implements [12]C++11 alias-declarations.
+     * G++ now implements [11]C++11 alias-declarations.
 
 template <class T> using Ptr = T*;
 Ptr<int> ip;  // decltype(ip) is int*
 
      * Thanks to Ville Voutilainen and Pedro Lamarao, G++ now implements
-       [13]C++11 delegating constructors.
+       [12]C++11 delegating constructors.
 
 struct A {
   A(int);
@@ -5176,14 +5193,14 @@ const int &y = f(2);
        Using-declarations are to be used instead. Furthermore, some
        efforts have been made to improve the support of class scope
        using-declarations. In particular, using-declarations referring to
-       a dependent type now work as expected ([14]bug c++/14258).
+       a dependent type now work as expected ([13]bug c++/14258).
      * The ELF symbol visibility of a template instantiation is now
        properly constrained by the visibility of its template arguments
-       ([15]bug c++/35688).
+       ([14]bug c++/35688).
 
     Runtime Library (libstdc++)
 
-     * [16]Improved experimental support for the new ISO C++ standard,
+     * [15]Improved experimental support for the new ISO C++ standard,
        C++11, including:
           + using noexcept in most of the library;
           + implementations of pointer_traits, allocator_traits and
@@ -5199,27 +5216,27 @@ const int &y = f(2);
 
   Fortran
 
-     * The compile flag [17]-fstack-arrays has been added, which causes
+     * The compile flag [16]-fstack-arrays has been added, which causes
        all local arrays to be put on stack memory. For some programs this
        will improve the performance significantly. If your program uses
        very large local arrays, it is possible that you will have to
        extend your runtime limits for stack memory.
-     * The [18]-Ofast flag now also implies [19]-fno-protect-parens and
-       [20]-fstack-arrays.
+     * The [17]-Ofast flag now also implies [18]-fno-protect-parens and
+       [19]-fstack-arrays.
      * Front-end optimizations can now be selected by the
-       [21]-ffrontend-optimize option and deselected by the
+       [20]-ffrontend-optimize option and deselected by the
        -fno-frontend-optimize option.
      * When front-end optimization removes a function call,
-       [22]-Wfunction-elimination warns about that.
+       [21]-Wfunction-elimination warns about that.
      * When performing front-end-optimization, the
-       [23]-faggressive-function-elimination option allows the removal of
+       [22]-faggressive-function-elimination option allows the removal of
        duplicate function calls even for impure functions.
-     * The flag [24]-Wreal-q-constant has been added, which warns if
+     * The flag [23]-Wreal-q-constant has been added, which warns if
        floating-point literals have been specified using q (such as
        1.0q0); the q marker is now supported as a vendor extension to
        denote quad precision (REAL(16) or, if not available, REAL(10)).
        Consider using a kind parameter (such as in 1.0_qp) instead, which
-       can be obtained via [25]SELECTED_REAL_KIND.
+       can be obtained via [24]SELECTED_REAL_KIND.
      * The GFORTRAN_USE_STDERR environment variable has been removed. GNU
        Fortran now always prints error messages to standard error. If you
        wish to redirect standard error, please consult the manual for your
@@ -5229,32 +5246,32 @@ const int &y = f(2);
        gfortran will now always abort the program. Whether a core dump is
        generated depends on the user environment settings; see the ulimit
        -c setting for POSIX shells, limit coredumpsize for C shells, and
-       the [26]WER user-mode dumps settings on Windows.
-     * The [27]-fbacktrace option is now enabled by default. When
+       the [25]WER user-mode dumps settings on Windows.
+     * The [26]-fbacktrace option is now enabled by default. When
        encountering a fatal error, gfortran will attempt to print a
        backtrace to standard error before aborting. It can be disabled
        with -fno-backtrace. Note: On POSIX targets with the addr2line
        utility from GNU binutils, GNU Fortran can print a backtrace with
        function name, file name, line number information in addition to
        the addresses; otherwise only the addresses are printed.
-     * [28]Fortran 2003:
+     * [27]Fortran 2003:
           + Generic interface names which have the same name as derived
             types are now supported, which allows to write constructor
             functions. Note that Fortran does not support static
             constructor functions; only default initialization or an
             explicit structure-constructor initialization are available.
-          + [29]Polymorphic (class) arrays are now supported.
-     * [30]Fortran 2008:
+          + [28]Polymorphic (class) arrays are now supported.
+     * [29]Fortran 2008:
           + Support for the DO CONCURRENT construct has been added, which
             allows the user to specify that individual loop iterations
             have no interdependencies.
-          + [31]Coarrays: Full single-image support except for polymorphic
+          + [30]Coarrays: Full single-image support except for polymorphic
             coarrays. Additionally, preliminary support for multiple
-            images via an MPI-based [32]coarray communication library has
+            images via an MPI-based [31]coarray communication library has
             been added. Note: The library version is not yet usable as
             remote coarray access is not yet possible.
-     * [33]TS 29113:
-          + New flag [34]-std=f2008ts permits programs that are expected
+     * [32]TS 29113:
+          + New flag [33]-std=f2008ts permits programs that are expected
             to conform to the Fortran 2008 standard and the draft
             Technical Specification (TS) 29113 on Further Interoperability
             of Fortran with C.
@@ -5267,7 +5284,7 @@ const int &y = f(2);
 
   Go
 
-     * GCC 4.7 implements the [35]Go 1 language standard. The library
+     * GCC 4.7 implements the [34]Go 1 language standard. The library
        support in 4.7.0 is not quite complete, due to release timing.
        Release 4.7.1 includes complete support for Go 1. The Go library is
        from the Go 1.0.1 release.
@@ -5290,7 +5307,7 @@ New Targets and Target Specific Improvements
 
      * GCC now supports the XMEGA architecture. This requires GNU binutils
        2.22 or later.
-     * Support for the [36]named address spaces __flash, __flash1, ...,
+     * Support for the [35]named address spaces __flash, __flash1, ...,
        __flash5 and __memx has been added. These address spaces locate
        read-only data in flash memory and allow reading from flash memory
        by means of ordinary C code, i.e. without the need of (inline)
@@ -5305,12 +5322,12 @@ int add_values (const __flash int *p, int i)
 
      * Support has been added for the AVR-specific configure option
        --with-avrlibc=yes in order to arrange for better integration of
-       [37]AVR-Libc. This configure option is supported in avr-gcc 4.7.2
+       [36]AVR-Libc. This configure option is supported in avr-gcc 4.7.2
        and newer and will only take effect in non-RTEMS configurations. If
        avr-gcc is configured for RTEMS, the option will be ignored which
-       is the same as specifying --with-avrlibc=no. See [38]PR54461 for
+       is the same as specifying --with-avrlibc=no. See [37]PR54461 for
        more technical details.
-     * Support for AVR-specific [39]built-in functions has been added.
+     * Support for AVR-specific [38]built-in functions has been added.
      * Support has been added for the signed and unsigned 24-bit scalar
        integer types __int24 and __uint24.
      * New command-line options -maccumulate-args, -mbranch-cost=cost and
@@ -5392,7 +5409,7 @@ void set_portb (uint8_t value)
        FMA, BMI, BMI2, LZCNT is available through -march=core-avx2.
      * Support for new AMD family 15h processors (Piledriver core) is now
        available through -march=bdver2 and -mtune=bdver2 options.
-     * Support for [40]the x32 psABI is now available through the -mx32
+     * Support for [39]the x32 psABI is now available through the -mx32
        option.
      * Windows mingw targets are using the -mms-bitfields option by
        default.
@@ -5507,57 +5524,57 @@ Other significant improvements
        the DW_AT_producer attribute string in the DWARF debugging
        information.
      * GCC now supports various new GNU extensions to the DWARF debugging
-       information format, like [41]entry value and [42]call site
-       information, [43]typed DWARF stack or [44]a more compact macro
+       information format, like [40]entry value and [41]call site
+       information, [42]typed DWARF stack or [43]a more compact macro
        representation. Support for these extensions has been added to GDB
        7.4. They can be disabled through the -gstrict-dwarf command-line
        option.
 
 GCC 4.7.1
 
-   This is the [45]list of problem reports (PRs) from GCC's bug tracking
+   This is the [44]list of problem reports (PRs) from GCC's bug tracking
    system that are known to be fixed in the 4.7.1 release. This list might
    not be complete (that is, it is possible that some PRs that have been
    fixed are not listed here).
 
-   The Go front end in the 4.7.1 release fully supports the [46]Go 1
+   The Go front end in the 4.7.1 release fully supports the [45]Go 1
    language standard.
 
 GCC 4.7.2
 
-   This is the [47]list of problem reports (PRs) from GCC's bug tracking
+   This is the [46]list of problem reports (PRs) from GCC's bug tracking
    system that are known to be fixed in the 4.7.2 release. This list might
    not be complete (that is, it is possible that some PRs that have been
    fixed are not listed here).
 
 GCC 4.7.3
 
-   This is the [48]list of problem reports (PRs) from GCC's bug tracking
+   This is the [47]list of problem reports (PRs) from GCC's bug tracking
    system that are known to be fixed in the 4.7.3 release. This list might
    not be complete (that is, it is possible that some PRs that have been
    fixed are not listed here).
 
 GCC 4.7.4
 
-   This is the [49]list of problem reports (PRs) from GCC's bug tracking
+   This is the [48]list of problem reports (PRs) from GCC's bug tracking
    system that are known to be fixed in the 4.7.4 release. This list might
    not be complete (that is, it is possible that some PRs that have been
    fixed are not listed here).
 
 
     For questions related to the use of GCC, please consult these web
-    pages and the [50]GCC manuals. If that fails, the
-    [51]gcc-help@gcc.gnu.org mailing list might help. Comments on these
+    pages and the [49]GCC manuals. If that fails, the
+    [50]gcc-help@gcc.gnu.org mailing list might help. Comments on these
     web pages and the development of GCC are welcome on our developer
-    list at [52]gcc@gcc.gnu.org. All of [53]our lists have public
+    list at [51]gcc@gcc.gnu.org. All of [52]our lists have public
     archives.
 
-   Copyright (C) [54]Free Software Foundation, Inc. Verbatim copying and
+   Copyright (C) [53]Free Software Foundation, Inc. Verbatim copying and
    distribution of this entire article is permitted in any medium,
    provided this notice is preserved.
 
-   These pages are [55]maintained by the GCC team. Last modified
-   2018-09-30[56].
+   These pages are [54]maintained by the GCC team. Last modified
+   2019-07-10[55].
 
 References
 
@@ -5565,62 +5582,63 @@ References
    2. http://savannah.nongnu.org/bugs/?35407
    3. https://gcc.gnu.org/PR18145
    4. https://gcc.gnu.org/gcc-4.7/porting_to.html
-   5. http://www.openmp.org/specifications/
-   6. https://gcc.gnu.org/wiki/TransactionalMemory
-   7. https://gcc.gnu.org/wiki/Atomic/GCCMM
+   5. https://gcc.gnu.org/wiki/TransactionalMemory
+   6. https://gcc.gnu.org/wiki/Atomic/GCCMM
+   7. http://gcc.gnu.org/gcc-4.7/cxx0x_status.html
    8. http://gcc.gnu.org/gcc-4.7/cxx0x_status.html
    9. http://gcc.gnu.org/gcc-4.7/cxx0x_status.html
   10. http://gcc.gnu.org/gcc-4.7/cxx0x_status.html
   11. http://gcc.gnu.org/gcc-4.7/cxx0x_status.html
   12. http://gcc.gnu.org/gcc-4.7/cxx0x_status.html
-  13. http://gcc.gnu.org/gcc-4.7/cxx0x_status.html
-  14. https://gcc.gnu.org/PR14258
-  15. https://gcc.gnu.org/PR35688
-  16. https://gcc.gnu.org/onlinedocs/gcc-4.7.4/libstdc++/manual/manual/status.html#status.iso.2011
-  17. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Code-Gen-Options.html#index-g_t_0040code_007bfstack-arrays_007d-254
-  18. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gcc/Optimize-Options.html#index-Ofast-689
-  19. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Code-Gen-Options.html#index-g_t_0040code_007bfno-protect-parens_007d-270
-  20. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Code-Gen-Options.html#index-g_t_0040code_007bfstack-arrays_007d-254
-  21. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Code-Gen-Options.html#index-g_t_0040code_007bfrontend-optimize_007d-275
-  22. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Error-and-Warning-Options.html#index-g_t_0040code_007bWfunction-elimination_007d-170
-  23. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Code-Gen-Options.html#index-g_t_0040code_007bfaggressive-function-elimination_007d-270
-  24. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Error-and-Warning-Options.html#index-g_t_0040code_007bWreal-q-constant_007d-149
-  25. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/SELECTED_005fREAL_005fKIND.html
-  26. https://docs.microsoft.com/en-us/windows/desktop/wer/collecting-user-mode-dumps
-  27. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Debugging-Options.html#index-g_t_0040code_007bfno-backtrace_007d-183
-  28. https://gcc.gnu.org/wiki/Fortran2003Status
-  29. https://gcc.gnu.org/wiki/OOP
-  30. https://gcc.gnu.org/wiki/Fortran2008Status
-  31. https://gcc.gnu.org/wiki/Coarray
-  32. https://gcc.gnu.org/wiki/CoarrayLib
-  33. https://gcc.gnu.org/wiki/TS29113Status
-  34. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Fortran-Dialect-Options.html#index-g_t_0040code_007bstd_003d_007d_0040var_007bstd_007d-option-53
-  35. https://golang.org/doc/go1
-  36. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gcc/Named-Address-Spaces.html
-  37. http://nongnu.org/avr-libc/
-  38. https://gcc.gnu.org/PR54461
-  39. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gcc/AVR-Built%5f002din-Functions.html
-  40. https://sites.google.com/site/x32abi/
-  41. http://www.dwarfstd.org/ShowIssue.php?issue=100909.1
-  42. http://www.dwarfstd.org/ShowIssue.php?issue=100909.2
-  43. http://www.dwarfstd.org/ShowIssue.php?issue=140425.1
-  44. http://www.dwarfstd.org/ShowIssue.php?issue=110722.1
-  45. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=4.7.1
-  46. https://golang.org/doc/go1
-  47. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=4.7.2
-  48. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=4.7.3
-  49. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=4.7.4
-  50. https://gcc.gnu.org/onlinedocs/
-  51. mailto:gcc-help@gcc.gnu.org
-  52. mailto:gcc@gcc.gnu.org
-  53. https://gcc.gnu.org/lists.html
-  54. https://www.fsf.org/
-  55. https://gcc.gnu.org/about.html
-  56. http://validator.w3.org/check/referer
+  13. https://gcc.gnu.org/PR14258
+  14. https://gcc.gnu.org/PR35688
+  15. https://gcc.gnu.org/onlinedocs/gcc-4.7.4/libstdc++/manual/manual/status.html#status.iso.2011
+  16. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Code-Gen-Options.html#index-g_t_0040code_007bfstack-arrays_007d-254
+  17. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gcc/Optimize-Options.html#index-Ofast-689
+  18. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Code-Gen-Options.html#index-g_t_0040code_007bfno-protect-parens_007d-270
+  19. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Code-Gen-Options.html#index-g_t_0040code_007bfstack-arrays_007d-254
+  20. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Code-Gen-Options.html#index-g_t_0040code_007bfrontend-optimize_007d-275
+  21. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Error-and-Warning-Options.html#index-g_t_0040code_007bWfunction-elimination_007d-170
+  22. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Code-Gen-Options.html#index-g_t_0040code_007bfaggressive-function-elimination_007d-270
+  23. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Error-and-Warning-Options.html#index-g_t_0040code_007bWreal-q-constant_007d-149
+  24. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/SELECTED_005fREAL_005fKIND.html
+  25. https://docs.microsoft.com/en-us/windows/win32/wer/collecting-user-mode-dumps
+  26. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Debugging-Options.html#index-g_t_0040code_007bfno-backtrace_007d-183
+  27. https://gcc.gnu.org/wiki/Fortran2003Status
+  28. https://gcc.gnu.org/wiki/OOP
+  29. https://gcc.gnu.org/wiki/Fortran2008Status
+  30. https://gcc.gnu.org/wiki/Coarray
+  31. https://gcc.gnu.org/wiki/CoarrayLib
+  32. https://gcc.gnu.org/wiki/TS29113Status
+  33. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Fortran-Dialect-Options.html#index-g_t_0040code_007bstd_003d_007d_0040var_007bstd_007d-option-53
+  34. https://golang.org/doc/go1
+  35. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gcc/Named-Address-Spaces.html
+  36. http://nongnu.org/avr-libc/
+  37. https://gcc.gnu.org/PR54461
+  38. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gcc/AVR-Built%5f002din-Functions.html
+  39. https://sites.google.com/site/x32abi/
+  40. http://www.dwarfstd.org/ShowIssue.php?issue=100909.1
+  41. http://www.dwarfstd.org/ShowIssue.php?issue=100909.2
+  42. http://www.dwarfstd.org/ShowIssue.php?issue=140425.1
+  43. http://www.dwarfstd.org/ShowIssue.php?issue=110722.1
+  44. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=4.7.1
+  45. https://golang.org/doc/go1
+  46. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=4.7.2
+  47. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=4.7.3
+  48. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=4.7.4
+  49. https://gcc.gnu.org/onlinedocs/
+  50. mailto:gcc-help@gcc.gnu.org
+  51. mailto:gcc@gcc.gnu.org
+  52. https://gcc.gnu.org/lists.html
+  53. https://www.fsf.org/
+  54. https://gcc.gnu.org/about.html
+  55. http://validator.w3.org/check/referer
 ======================================================================
 http://gcc.gnu.org/gcc-4.6/index.html
 
                              GCC 4.6 Release Series
+
+   (This release series is no longer supported.)
 
    April 12, 2013
 
@@ -5629,8 +5647,6 @@ http://gcc.gnu.org/gcc-4.6/index.html
 
    This release is a bug-fix release, containing fixes for regressions in
    GCC 4.6.3 relative to previous releases of GCC.
-
-   This release series is no longer maintained.
 
 Release History
 
@@ -5681,7 +5697,7 @@ References and Acknowledgements
    provided this notice is preserved.
 
    These pages are [23]maintained by the GCC team. Last modified
-   2018-09-30[24].
+   2019-06-09[24].
 
 References
 
@@ -6645,6 +6661,8 @@ http://gcc.gnu.org/gcc-4.5/index.html
 
                              GCC 4.5 Release Series
 
+   (This release series is no longer supported.)
+
    Jul 2, 2012
 
    The [1]GNU project and the GCC developers are pleased to announce the
@@ -6652,8 +6670,6 @@ http://gcc.gnu.org/gcc-4.5/index.html
 
    This release is a bug-fix release, containing fixes for regressions in
    GCC 4.5.3 relative to previous releases of GCC.
-
-   This release series is no longer maintained.
 
 Release History
 
@@ -6704,7 +6720,7 @@ References and Acknowledgements
    provided this notice is preserved.
 
    These pages are [18]maintained by the GCC team. Last modified
-   2018-09-30[19].
+   2019-06-09[19].
 
 References
 
@@ -7419,6 +7435,8 @@ http://gcc.gnu.org/gcc-4.4/index.html
 
                              GCC 4.4 Release Series
 
+   This release series is no longer maintained.
+
    March 13, 2012
 
    The [1]GNU project and the GCC developers are pleased to announce the
@@ -7426,8 +7444,6 @@ http://gcc.gnu.org/gcc-4.4/index.html
 
    This release is a bug-fix release, containing fixes for regressions in
    GCC 4.4.6 relative to previous releases of GCC.
-
-   This release series is no longer maintained.
 
 Release History
 
@@ -7487,7 +7503,7 @@ References and Acknowledgements
    provided this notice is preserved.
 
    These pages are [21]maintained by the GCC team. Last modified
-   2018-09-30[22].
+   2019-06-09[22].
 
 References
 
@@ -8151,6 +8167,8 @@ http://gcc.gnu.org/gcc-4.3/index.html
 
                              GCC 4.3 Release Series
 
+   (This release series is no longer supported.)
+
    Jun 27, 2011
 
    The [1]GNU project and the GCC developers are pleased to announce the
@@ -8158,8 +8176,6 @@ http://gcc.gnu.org/gcc-4.3/index.html
 
    This release is a bug-fix release, containing fixes for regressions in
    GCC 4.3.5 relative to previous releases of GCC.
-
-   This release series is no longer maintained.
 
 Release History
 
@@ -8216,7 +8232,7 @@ References and Acknowledgements
    provided this notice is preserved.
 
    These pages are [20]maintained by the GCC team. Last modified
-   2018-09-30[21].
+   2019-06-09[21].
 
 References
 
@@ -9062,6 +9078,8 @@ http://gcc.gnu.org/gcc-4.2/index.html
 
                              GCC 4.2 Release Series
 
+   (This release series is no longer supported.)
+
    May 19, 2008
 
    The [1]GNU project and the GCC developers are pleased to announce the
@@ -9069,8 +9087,6 @@ http://gcc.gnu.org/gcc-4.2/index.html
 
    This release is a bug-fix release, containing fixes for regressions in
    GCC 4.2.3 relative to previous releases of GCC.
-
-   This release series is no longer maintained.
 
 Release History
 
@@ -9121,7 +9137,7 @@ References and Acknowledgements
    provided this notice is preserved.
 
    These pages are [18]maintained by the GCC team. Last modified
-   2018-09-30[19].
+   2019-06-09[19].
 
 References
 
@@ -9471,6 +9487,8 @@ http://gcc.gnu.org/gcc-4.1/index.html
 
                              GCC 4.1 Release Series
 
+   (This release series is no longer supported.)
+
    February 13, 2007
 
    The [1]GNU project and the GCC developers are pleased to announce the
@@ -9478,8 +9496,6 @@ http://gcc.gnu.org/gcc-4.1/index.html
 
    This release is a bug-fix release, containing fixes for regressions in
    GCC 4.1.1 relative to previous releases of GCC.
-
-   This release series is no longer maintained.
 
 Release History
 
@@ -9524,7 +9540,7 @@ References and Acknowledgements
    provided this notice is preserved.
 
    These pages are [16]maintained by the GCC team. Last modified
-   2018-09-30[17].
+   2019-06-09[17].
 
 References
 
@@ -10110,6 +10126,8 @@ http://gcc.gnu.org/gcc-4.0/index.html
 
                              GCC 4.0 Release Series
 
+   (This release series is no longer supported.)
+
    January 31, 2007
 
    The [1]GNU project and the GCC developers are pleased to announce the
@@ -10117,8 +10135,6 @@ http://gcc.gnu.org/gcc-4.0/index.html
 
    This release is a bug-fix release, containing fixes for regressions in
    GCC 4.0.3 relative to previous releases of GCC.
-
-   This release series is no longer maintained.
 
 Release History
 
@@ -10169,7 +10185,7 @@ References and Acknowledgements
    provided this notice is preserved.
 
    These pages are [18]maintained by the GCC team. Last modified
-   2018-09-30[19].
+   2019-06-09[19].
 
 References
 
@@ -10727,6 +10743,8 @@ http://gcc.gnu.org/gcc-3.4/index.html
 
                              GCC 3.4 Release Series
 
+   (This release series is no longer supported.)
+
    May 26, 2006
 
    The [1]GNU project and the GCC developers are pleased to announce the
@@ -10739,8 +10757,6 @@ http://gcc.gnu.org/gcc-3.4/index.html
    The GCC 3.4 release series includes numerous [2]new features,
    improvements, bug fixes, and other changes, thanks to an [3]amazing
    group of volunteers.
-
-   This release series is no longer maintained.
 
 Release History
 
@@ -10797,7 +10813,7 @@ References and Acknowledgements
    provided this notice is preserved.
 
    These pages are [22]maintained by the GCC team. Last modified
-   2018-09-30[23].
+   2019-06-09[23].
 
 References
 
@@ -13012,6 +13028,8 @@ http://gcc.gnu.org/gcc-3.3/index.html
 
                              GCC 3.3 Release Series
 
+   (This release series is no longer supported.)
+
    May 03, 2005
 
    The [1]GNU project and the GCC developers are pleased to announce the
@@ -13025,8 +13043,6 @@ http://gcc.gnu.org/gcc-3.3/index.html
    The GCC 3.3 release series includes numerous [2]new features,
    improvements, bug fixes, and other changes, thanks to an [3]amazing
    group of volunteers.
-
-   This release series is no longer maintained.
 
 Release History
 
@@ -13083,7 +13099,7 @@ References and Acknowledgements
    provided this notice is preserved.
 
    These pages are [21]maintained by the GCC team. Last modified
-   2018-09-30[22].
+   2019-06-09[22].
 
 References
 
@@ -15025,6 +15041,8 @@ http://gcc.gnu.org/gcc-3.2/index.html
 
                              GCC 3.2 Release Series
 
+   (This release series is no longer supported.)
+
    April 25, 2003
 
    The [1]GNU project and the GCC developers are pleased to announce the
@@ -15041,8 +15059,6 @@ http://gcc.gnu.org/gcc-3.2/index.html
 
    Please refer to our [2]detailed list of news, caveats, and bug-fixes
    for further information.
-
-   This release series is no longer maintained.
 
 Release History
 
@@ -15090,7 +15106,7 @@ References and Acknowledgements
    provided this notice is preserved.
 
    These pages are [17]maintained by the GCC team. Last modified
-   2018-09-30[18].
+   2019-06-09[18].
 
 References
 
@@ -15975,14 +15991,14 @@ http://gcc.gnu.org/gcc-3.1/index.html
 
                                     GCC 3.1
 
+   (This release series is no longer supported.)
+
    July 27, 2002
 
    The [1]GNU project and the GCC developers are pleased to announce the
    release of GCC 3.1.1.
 
    The links below still apply to GCC 3.1.1.
-
-   This release series is no longer maintained.
 
    May 15, 2002
 
@@ -16020,7 +16036,7 @@ http://gcc.gnu.org/gcc-3.1/index.html
    provided this notice is preserved.
 
    These pages are [14]maintained by the GCC team. Last modified
-   2018-09-30[15].
+   2019-06-09[15].
 
 References
 
@@ -16398,13 +16414,13 @@ http://gcc.gnu.org/gcc-3.0/index.html
 
                                    GCC 3.0.4
 
+   (This release series is no longer supported.)
+
    February 20, 2002
 
    The [1]GNU project and the GCC developers are pleased to announce the
    release of GCC 3.0.4, which is a bug-fix release for the GCC 3.0
    series.
-
-   This release series is no longer maintained.
 
    GCC used to stand for the GNU C Compiler, but since the compiler
    supports several other languages aside from C, it now stands for the
@@ -16450,7 +16466,7 @@ Previous 3.0.x Releases
    provided this notice is preserved.
 
    These pages are [14]maintained by the GCC team. Last modified
-   2018-09-30[15].
+   2019-06-09[15].
 
 References
 
@@ -16731,10 +16747,10 @@ http://gcc.gnu.org/gcc-2.95/index.html
 
                                     GCC 2.95
 
+   (This release series is no longer supported.)
+
    March 16, 2001: The GNU project and the GCC developers are pleased to
    announce the release of GCC version 2.95.3.
-
-   This release is no longer maintained.
 
 Release History
 
@@ -16797,7 +16813,7 @@ References and Acknowledgements
    provided this notice is preserved.
 
    These pages are [15]maintained by the GCC team. Last modified
-   2018-09-30[16].
+   2019-06-09[16].
 
 References
 

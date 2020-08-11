@@ -1012,7 +1012,7 @@ eliminate_using_constants (enum tree_code opcode,
 		    fprintf (dump_file, "Found * 0, removing all other ops\n");
 
 		  reassociate_stats.ops_eliminated += ops->length () - 1;
-		  ops->truncate (1);
+		  ops->truncate (0);
 		  ops->quick_push (oelast);
 		  return;
 		}
@@ -2140,7 +2140,8 @@ init_range_entry (struct range_entry *r, tree exp, gimple *stmt)
 	  exp_type = boolean_type_node;
 	}
 
-      if (TREE_CODE (arg0) != SSA_NAME)
+      if (TREE_CODE (arg0) != SSA_NAME
+	  || SSA_NAME_OCCURS_IN_ABNORMAL_PHI (arg0))
 	break;
       loc = gimple_location (stmt);
       switch (code)
@@ -4593,6 +4594,7 @@ rewrite_expr_tree_parallel (gassign *stmt, int width,
       else
 	{
 	  stmts[i] = build_and_add_sum (TREE_TYPE (last_rhs1), op1, op2, opcode);
+	  gimple_set_visited (stmts[i], true);
 	}
       if (dump_file && (dump_flags & TDF_DETAILS))
 	{
