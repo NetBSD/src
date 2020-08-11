@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.303 2020/08/10 19:53:19 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.304 2020/08/11 18:52:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.303 2020/08/10 19:53:19 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.304 2020/08/11 18:52:03 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.303 2020/08/10 19:53:19 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.304 2020/08/11 18:52:03 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1517,8 +1517,7 @@ ReadMakefile(const void *p, const void *q MAKE_ATTR_UNUSED)
 {
 	const char *fname = p;		/* makefile to read */
 	int fd;
-	size_t len = MAXPATHLEN;
-	char *name, *path = bmake_malloc(len);
+	char *name, *path = NULL;
 
 	if (!strcmp(fname, "-")) {
 		Parse_File(NULL /*stdin*/, -1);
@@ -1526,22 +1525,16 @@ ReadMakefile(const void *p, const void *q MAKE_ATTR_UNUSED)
 	} else {
 		/* if we've chdir'd, rebuild the path name */
 		if (strcmp(curdir, objdir) && *fname != '/') {
-			size_t plen = strlen(curdir) + strlen(fname) + 2;
-			if (len < plen)
-				path = bmake_realloc(path, len = 2 * plen);
-
-			(void)snprintf(path, len, "%s/%s", curdir, fname);
+			path = str_concat3(curdir, "/", fname);
 			fd = open(path, O_RDONLY);
 			if (fd != -1) {
 				fname = path;
 				goto found;
 			}
+		    	free(path);
 
 			/* If curdir failed, try objdir (ala .depend) */
-			plen = strlen(objdir) + strlen(fname) + 2;
-			if (len < plen)
-				path = bmake_realloc(path, len = 2 * plen);
-			(void)snprintf(path, len, "%s/%s", objdir, fname);
+			path = str_concat3(objdir, "/", fname);
 			fd = open(path, O_RDONLY);
 			if (fd != -1) {
 				fname = path;
