@@ -1,5 +1,5 @@
 /* Perform optimizations on tree structure.
-   Copyright (C) 1998-2018 Free Software Foundation, Inc.
+   Copyright (C) 1998-2017 Free Software Foundation, Inc.
    Written by Mark Michell (mark@codesourcery.com).
 
 This file is part of GCC.
@@ -205,10 +205,10 @@ cdtor_comdat_group (tree complete, tree base)
 static bool
 can_alias_cdtor (tree fn)
 {
+#ifndef ASM_OUTPUT_DEF
   /* If aliases aren't supported by the assembler, fail.  */
-  if (!TARGET_SUPPORTS_ALIASES)
-    return false;
-
+  return false;
+#endif
   /* We can't use an alias if there are virtual bases.  */
   if (CLASSTYPE_VBASECLASSES (DECL_CONTEXT (fn)))
     return false;
@@ -282,12 +282,8 @@ maybe_thunk_body (tree fn, bool force)
 
   populate_clone_array (fn, fns);
 
-  /* Can happen during error recovery (c++/71464).  */
-  if (!fns[0] || !fns[1])
-    return 0;
-
   /* Don't use thunks if the base clone omits inherited parameters.  */
-  if (ctor_omit_inherited_parms (fns[0]))
+  if (fns[0] && ctor_omit_inherited_parms (fns[0]))
     return 0;
 
   DECL_ABSTRACT_P (fn) = false;
@@ -351,7 +347,7 @@ maybe_thunk_body (tree fn, bool force)
     }
   args = XALLOCAVEC (tree, max_parms);
 
-  /* We know that any clones immediately follow FN in TYPE_FIELDS.  */
+  /* We know that any clones immediately follow FN in TYPE_METHODS.  */
   FOR_EACH_CLONE (clone, fn)
     {
       tree clone_parm;
@@ -443,7 +439,7 @@ maybe_thunk_body (tree fn, bool force)
 	}
 
       DECL_ABSTRACT_ORIGIN (clone) = NULL;
-      expand_or_defer_fn (finish_function (/*inline_p=*/false));
+      expand_or_defer_fn (finish_function (0));
     }
   return 1;
 }
@@ -474,7 +470,7 @@ maybe_clone_body (tree fn)
   if (!tree_versionable_function_p (fn))
     need_alias = true;
 
-  /* We know that any clones immediately follow FN in the TYPE_FIELDS
+  /* We know that any clones immediately follow FN in the TYPE_METHODS
      list.  */
   push_to_top_level ();
   for (idx = 0; idx < 3; idx++)
@@ -543,7 +539,7 @@ maybe_clone_body (tree fn)
   /* Emit the DWARF1 abstract instance.  */
   (*debug_hooks->deferred_inline_function) (fn);
 
-  /* We know that any clones immediately follow FN in the TYPE_FIELDS. */
+  /* We know that any clones immediately follow FN in the TYPE_METHODS list. */
   for (idx = 0; idx < 3; idx++)
     {
       tree parm;
@@ -684,7 +680,7 @@ maybe_clone_body (tree fn)
       cp_function_chain->can_throw = !TREE_NOTHROW (fn);
 
       /* Now, expand this function into RTL, if appropriate.  */
-      finish_function (/*inline_p=*/false);
+      finish_function (0);
       BLOCK_ABSTRACT_ORIGIN (DECL_INITIAL (clone)) = DECL_INITIAL (fn);
       if (alias)
 	{

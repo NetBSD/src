@@ -1,4 +1,4 @@
-/* Copyright (C) 2008-2018 Free Software Foundation, Inc.
+/* Copyright (C) 2008-2017 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -32,9 +32,9 @@
 
 /* AES */
 
-#if !defined(__AES__) || !defined(__SSE2__)
+#ifndef __AES__
 #pragma GCC push_options
-#pragma GCC target("aes,sse2")
+#pragma GCC target("aes")
 #define __DISABLE_AES__
 #endif /* __AES__ */
 
@@ -101,9 +101,9 @@ _mm_aeskeygenassist_si128 (__m128i __X, const int __C)
 
 /* PCLMUL */
 
-#if !defined(__PCLMUL__) || !defined(__SSE2__)
+#ifndef __PCLMUL__
 #pragma GCC push_options
-#pragma GCC target("pclmul,sse2")
+#pragma GCC target("pclmul")
 #define __DISABLE_PCLMUL__
 #endif /* __PCLMUL__ */
 

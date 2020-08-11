@@ -29,7 +29,6 @@ struct AddressInfo {
 
   char *module;
   uptr module_offset;
-  ModuleArch module_arch;
 
   static const uptr kUnknown = ~(uptr)0;
   char *function;
@@ -42,7 +41,7 @@ struct AddressInfo {
   AddressInfo();
   // Deletes all strings and resets all fields.
   void Clear();
-  void FillModuleInfo(const char *mod_name, uptr mod_offset, ModuleArch arch);
+  void FillModuleInfo(const char *mod_name, uptr mod_offset);
 };
 
 // Linked list of symbolized frames (each frame is described by AddressInfo).
@@ -64,8 +63,6 @@ struct DataInfo {
   // (de)allocated using sanitizer internal allocator.
   char *module;
   uptr module_offset;
-  ModuleArch module_arch;
-
   char *file;
   uptr line;
   char *name;
@@ -117,10 +114,7 @@ class Symbolizer final {
   void AddHooks(StartSymbolizationHook start_hook,
                 EndSymbolizationHook end_hook);
 
-  void RefreshModules();
   const LoadedModule *FindModuleForAddress(uptr address);
-
-  void InvalidateModuleList();
 
  private:
   // GetModuleNameAndOffsetForPC has to return a string to the caller.
@@ -147,10 +141,8 @@ class Symbolizer final {
   static Symbolizer *PlatformInit();
 
   bool FindModuleNameAndOffsetForAddress(uptr address, const char **module_name,
-                                         uptr *module_offset,
-                                         ModuleArch *module_arch);
+                                         uptr *module_offset);
   ListOfModules modules_;
-  ListOfModules fallback_modules_;
   // If stale, need to reload the modules before looking up addresses.
   bool modules_fresh_;
 

@@ -54,6 +54,11 @@ void _free_base(void *ptr) {
 }
 
 ALLOCATION_FUNCTION_ATTRIBUTE
+void cfree(void *ptr) {
+  CHECK(!"cfree() should not be used on Windows");
+}
+
+ALLOCATION_FUNCTION_ATTRIBUTE
 void *malloc(size_t size) {
   GET_STACK_TRACE_MALLOC;
   return asan_malloc(size, &stack);
@@ -98,7 +103,7 @@ void *realloc(void *ptr, size_t size) {
 
 ALLOCATION_FUNCTION_ATTRIBUTE
 void *_realloc_dbg(void *ptr, size_t size, int) {
-  UNREACHABLE("_realloc_dbg should not exist!");
+  CHECK(!"_realloc_dbg should not exist!");
   return 0;
 }
 

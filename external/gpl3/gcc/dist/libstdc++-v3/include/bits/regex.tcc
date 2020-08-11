@@ -1,6 +1,6 @@
 // class template regex -*- C++ -*-
 
-// Copyright (C) 2013-2018 Free Software Foundation, Inc.
+// Copyright (C) 2013-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -30,10 +30,10 @@
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {
-_GLIBCXX_BEGIN_NAMESPACE_VERSION
-
 namespace __detail
 {
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
+
   // Result of merging regex_match and regex_search.
   //
   // __policy now can be _S_auto (auto dispatch) and _S_alternate (use
@@ -118,7 +118,11 @@ namespace __detail
 	}
       return __ret;
     }
+
+_GLIBCXX_END_NAMESPACE_VERSION
 }
+
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   template<typename _Ch_type>
   template<typename _Fwd_iter>
@@ -373,32 +377,22 @@ namespace __detail
 
       if (__flags & regex_constants::format_sed)
 	{
-	  bool __escaping = false;
-	  for (; __fmt_first != __fmt_last; __fmt_first++)
-	    {
-	      if (__escaping)
-		{
-		  __escaping = false;
-		  if (__fctyp.is(__ctype_type::digit, *__fmt_first))
-		    __output(__traits.value(*__fmt_first, 10));
-		  else
-		    *__out++ = *__fmt_first;
-		  continue;
-		}
-	      if (*__fmt_first == '\\')
-		{
-		  __escaping = true;
-		  continue;
-		}
-	      if (*__fmt_first == '&')
-		{
-		  __output(0);
-		  continue;
-		}
-	      *__out++ = *__fmt_first;
-	    }
-	  if (__escaping)
-	    *__out++ = '\\';
+	  for (; __fmt_first != __fmt_last;)
+	    if (*__fmt_first == '&')
+	      {
+		__output(0);
+		++__fmt_first;
+	      }
+	    else if (*__fmt_first == '\\')
+	      {
+		if (++__fmt_first != __fmt_last
+		    && __fctyp.is(__ctype_type::digit, *__fmt_first))
+		  __output(__traits.value(*__fmt_first++, 10));
+		else
+		  *__out++ = '\\';
+	      }
+	    else
+	      *__out++ = *__fmt_first++;
 	}
       else
 	{
@@ -669,3 +663,4 @@ namespace __detail
 
 _GLIBCXX_END_NAMESPACE_VERSION
 } // namespace
+

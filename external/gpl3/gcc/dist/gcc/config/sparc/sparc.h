@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for Sun SPARC.
-   Copyright (C) 1987-2018 Free Software Foundation, Inc.
+   Copyright (C) 1987-2017 Free Software Foundation, Inc.
    Contributed by Michael Tiemann (tiemann@cygnus.com).
    64-bit SPARC-V9 support by Michael Tiemann, Jim Wilson, and Doug Evans,
    at Cygnus Support.
@@ -579,6 +579,12 @@ extern enum cmodel sparc_cmodel;
 #define STACK_SAVEAREA_MODE(LEVEL) \
   ((LEVEL) == SAVE_NONLOCAL ? (TARGET_ARCH64 ? TImode : DImode) : Pmode)
 
+/* Make strings word-aligned so strcpy from constants will be faster.  */
+#define CONSTANT_ALIGNMENT(EXP, ALIGN)  \
+  ((TREE_CODE (EXP) == STRING_CST	\
+    && (ALIGN) < FASTEST_ALIGNMENT)	\
+   ? FASTEST_ALIGNMENT : (ALIGN))
+
 /* Make arrays of chars word-aligned for the same reasons.  */
 #define DATA_ALIGNMENT(TYPE, ALIGN)		\
   (TREE_CODE (TYPE) == ARRAY_TYPE		\
@@ -739,21 +745,46 @@ extern enum cmodel sparc_cmodel;
 				\
   1, 1, 1, 1, 1, 1, 1}
 
+/* Return number of consecutive hard regs needed starting at reg REGNO
+   to hold something of mode MODE.
+   This is ordinarily the length in words of a value of mode MODE
+   but can be less for certain modes in special long registers.
+
+   On SPARC, ordinary registers hold 32 bits worth;
+   this means both integer and floating point registers.
+   On v9, integer regs hold 64 bits worth; floating point regs hold
+   32 bits worth (this includes the new fp regs as even the odd ones are
+   included in the hard register count).  */
+
+#define HARD_REGNO_NREGS(REGNO, MODE) \
+  ((REGNO) == SPARC_GSR_REG ? 1 :					\
+   (TARGET_ARCH64							\
+    ? (SPARC_INT_REG_P (REGNO) || (REGNO) == FRAME_POINTER_REGNUM			\
+       ? (GET_MODE_SIZE (MODE) + UNITS_PER_WORD - 1) / UNITS_PER_WORD	\
+       : (GET_MODE_SIZE (MODE) + 3) / 4)				\
+    : ((GET_MODE_SIZE (MODE) + UNITS_PER_WORD - 1) / UNITS_PER_WORD)))
+
 /* Due to the ARCH64 discrepancy above we must override this next
    macro too.  */
 #define REGMODE_NATURAL_SIZE(MODE) sparc_regmode_natural_size (MODE)
+
+/* Value is 1 if hard register REGNO can hold a value of machine-mode MODE.
+   See sparc.c for how we initialize this.  */
+extern const int *hard_regno_mode_classes;
+extern int sparc_mode_class[];
+
+/* ??? Because of the funny way we pass parameters we should allow certain
+   ??? types of float/complex values to be in integer registers during
+   ??? RTL generation.  This only matters on arch32.  */
+#define HARD_REGNO_MODE_OK(REGNO, MODE) \
+  ((hard_regno_mode_classes[REGNO] & sparc_mode_class[MODE]) != 0)
 
 /* Value is 1 if it is OK to rename a hard register FROM to another hard
    register TO.  We cannot rename %g1 as it may be used before the save
    register window instruction in the prologue.  */
 #define HARD_REGNO_RENAME_OK(FROM, TO) ((FROM) != 1)
 
-/* Select a register mode required for caller save of hard regno REGNO.
-   Contrary to what is documented, the default is not the smallest suitable
-   mode but the largest suitable mode for the given (REGNO, NREGS) pair and
-   it quickly creates paradoxical subregs that can be problematic.  */
-#define HARD_REGNO_CALLER_SAVE_MODE(REGNO, NREGS, MODE) \
-  ((MODE) == VOIDmode ? choose_hard_reg_mode (REGNO, NREGS, false) : (MODE))
+#define MODES_TIEABLE_P(MODE1, MODE2) sparc_modes_tieable_p (MODE1, MODE2)
 
 /* Specify the registers used for certain standard purposes.
    The values of these macros are register numbers.  */
@@ -778,29 +809,13 @@ extern enum cmodel sparc_cmodel;
 /* The soft frame pointer does not have the stack bias applied.  */
 #define FRAME_POINTER_REGNUM 101
 
+/* Given the stack bias, the stack pointer isn't actually aligned.  */
 #define INIT_EXPANDERS							 \
   do {									 \
-    if (crtl->emit.regno_pointer_align)					 \
+    if (crtl->emit.regno_pointer_align && SPARC_STACK_BIAS)	 \
       {									 \
-	/* The biased stack pointer is only aligned on BITS_PER_UNIT.  */\
-	if (SPARC_STACK_BIAS)						 \
-	  {								 \
-	    REGNO_POINTER_ALIGN (STACK_POINTER_REGNUM)			 \
-	      = BITS_PER_UNIT;	 					 \
-	    REGNO_POINTER_ALIGN (HARD_FRAME_POINTER_REGNUM)		 \
-	      = BITS_PER_UNIT;						 \
-	  }								 \
-									 \
-	/* In 32-bit mode, not everything is double-word aligned.  */	 \
-	if (TARGET_ARCH32)						 \
-	  {								 \
-	    REGNO_POINTER_ALIGN (VIRTUAL_INCOMING_ARGS_REGNUM)		 \
-	      = BITS_PER_WORD;						 \
-	    REGNO_POINTER_ALIGN (VIRTUAL_STACK_DYNAMIC_REGNUM)		 \
-	      = BITS_PER_WORD;						 \
-	    REGNO_POINTER_ALIGN (VIRTUAL_OUTGOING_ARGS_REGNUM)		 \
-	      = BITS_PER_WORD;						 \
-	  }								 \
+	REGNO_POINTER_ALIGN (STACK_POINTER_REGNUM) = BITS_PER_UNIT;	 \
+	REGNO_POINTER_ALIGN (HARD_FRAME_POINTER_REGNUM) = BITS_PER_UNIT; \
       }									 \
   } while (0)
 
@@ -812,15 +827,14 @@ extern enum cmodel sparc_cmodel;
 #define STATIC_CHAIN_REGNUM (TARGET_ARCH64 ? 5 : 2)
 
 /* Register which holds the global offset table, if any.  */
+
 #define GLOBAL_OFFSET_TABLE_REGNUM 23
 
-/* Register which holds offset table for position-independent data references.
-   The original SPARC ABI imposes no requirement on the choice of the register
-   so we use a pseudo-register to make sure it is properly saved and restored
-   around calls to setjmp.  Now the ABI of VxWorks RTP makes it live on entry
-   to PLT entries so we use the canonical GOT register in this case.  */
+/* Register which holds offset table for position-independent
+   data references.  */
+
 #define PIC_OFFSET_TABLE_REGNUM \
-  (TARGET_VXWORKS_RTP && flag_pic ? GLOBAL_OFFSET_TABLE_REGNUM : INVALID_REGNUM)
+  (flag_pic ? GLOBAL_OFFSET_TABLE_REGNUM : INVALID_REGNUM)
 
 /* Pick a default value we can notice from override_options:
    !v9: Default is on.
@@ -828,6 +842,7 @@ extern enum cmodel sparc_cmodel;
    Originally it was -1, but later on the container of options changed to
    unsigned byte, so we decided to pick 127 as default value, which does
    reflect an undefined default value in case of 0/1.  */
+
 #define DEFAULT_PCC_STRUCT_RETURN 127
 
 /* Functions which return large structures get the address
@@ -863,10 +878,10 @@ extern enum cmodel sparc_cmodel;
 
    For v9 we must distinguish between the upper and lower floating point
    registers because the upper ones can't hold SFmode values.
-   TARGET_HARD_REGNO_MODE_OK won't help here because reload assumes that
-   register(s) satisfying a group need for a class will also satisfy a
-   single need for that class.  EXTRA_FP_REGS is a bit of a misnomer as
-   it covers all 64 fp regs.
+   HARD_REGNO_MODE_OK won't help here because reload assumes that register(s)
+   satisfying a group need for a class will also satisfy a single need for
+   that class.  EXTRA_FP_REGS is a bit of a misnomer as it covers all 64 fp
+   regs.
 
    It is important that one class contains all the general and all the standard
    fp regs.  Otherwise find_reg() won't properly allocate int regs for moves,
@@ -923,6 +938,23 @@ enum reg_class { NO_REGS, FPCC_REGS, I64_REGS, GENERAL_REGS, FP_REGS,
 extern enum reg_class sparc_regno_reg_class[FIRST_PSEUDO_REGISTER];
 
 #define REGNO_REG_CLASS(REGNO) sparc_regno_reg_class[(REGNO)]
+
+/* Defines invalid mode changes.  Borrowed from the PA port.
+
+   SImode loads to floating-point registers are not zero-extended.
+   The definition for LOAD_EXTEND_OP specifies that integer loads
+   narrower than BITS_PER_WORD will be zero-extended.  As a result,
+   we inhibit changes from SImode unless they are to a mode that is
+   identical in size.
+
+   Likewise for SFmode, since word-mode paradoxical subregs are
+   problematic on big-endian architectures.  */
+
+#define CANNOT_CHANGE_MODE_CLASS(FROM, TO, CLASS)		\
+  (TARGET_ARCH64						\
+   && GET_MODE_SIZE (FROM) == 4					\
+   && GET_MODE_SIZE (TO) != 4					\
+   ? reg_classes_intersect_p (CLASS, FP_REGS) : 0)
 
 /* This is the order in which to allocate registers normally.
 
@@ -1047,6 +1079,26 @@ extern char leaf_reg_remap[];
 #define SPARC_SETHI32_P(X) \
   (SPARC_SETHI_P ((unsigned HOST_WIDE_INT) (X) & GET_MODE_MASK (SImode)))
 
+/* On SPARC when not VIS3 it is not possible to directly move data
+   between GENERAL_REGS and FP_REGS.  */
+#define SECONDARY_MEMORY_NEEDED(CLASS1, CLASS2, MODE) \
+  ((FP_REG_CLASS_P (CLASS1) != FP_REG_CLASS_P (CLASS2)) \
+   && (! TARGET_VIS3 \
+       || GET_MODE_SIZE (MODE) > 8 \
+       || GET_MODE_SIZE (MODE) < 4))
+
+/* Get_secondary_mem widens its argument to BITS_PER_WORD which loses on v9
+   because the movsi and movsf patterns don't handle r/f moves.
+   For v8 we copy the default definition.  */
+#define SECONDARY_MEMORY_NEEDED_MODE(MODE) \
+  (TARGET_ARCH64						\
+   ? (GET_MODE_BITSIZE (MODE) < 32				\
+      ? mode_for_size (32, GET_MODE_CLASS (MODE), 0)		\
+      : MODE)							\
+   : (GET_MODE_BITSIZE (MODE) < BITS_PER_WORD			\
+      ? mode_for_size (BITS_PER_WORD, GET_MODE_CLASS (MODE), 0)	\
+      : MODE))
+
 /* Return the maximum number of consecutive registers
    needed to represent mode MODE in a register of class CLASS.  */
 /* On SPARC, this is the size of MODE in words.  */
@@ -1065,6 +1117,12 @@ extern char leaf_reg_remap[];
    that is, each additional local variable allocated
    goes at a more negative offset in the frame.  */
 #define FRAME_GROWS_DOWNWARD 1
+
+/* Offset within stack frame to start allocating local variables at.
+   If FRAME_GROWS_DOWNWARD, this is the offset to the END of the
+   first local allocated.  Otherwise, it is the offset to the BEGINNING
+   of the first local allocated.  */
+#define STARTING_FRAME_OFFSET 0
 
 /* Offset of first parameter from the argument pointer register value.
    !v9: This is 64 for the ins and locals, plus 4 for the struct-return reg
@@ -1170,6 +1228,14 @@ struct sparc_args {
 #define INIT_CUMULATIVE_ARGS(CUM, FNTYPE, LIBNAME, FNDECL, N_NAMED_ARGS) \
 init_cumulative_args (& (CUM), (FNTYPE), (LIBNAME), (FNDECL));
 
+/* If defined, a C expression which determines whether, and in which direction,
+   to pad out an argument with extra space.  The value should be of type
+   `enum direction': either `upward' to pad above the argument,
+   `downward' to pad below, or `none' to inhibit padding.  */
+
+#define FUNCTION_ARG_PADDING(MODE, TYPE) \
+function_arg_padding ((MODE), (TYPE))
+
 
 /* Generate the special assembly code needed to tell the assembler whatever
    it might need to know about the return value of a function.
@@ -1203,7 +1269,7 @@ extern GTY(()) char sparc_hard_reg_printed[8];
 do {									\
   if (TARGET_ARCH64)							\
     {									\
-      int end = end_hard_regno (DECL_MODE (decl), REGNO);		\
+      int end = HARD_REGNO_NREGS ((REGNO), DECL_MODE (decl)) + (REGNO); \
       int reg;								\
       for (reg = (REGNO); reg < 8 && reg < end; reg++)			\
 	if ((reg & ~1) == 2 || (reg & ~1) == 6)				\
@@ -1457,6 +1523,10 @@ do {									   \
 /* Define this to be nonzero if shift instructions ignore all but the low-order
    few bits.  */
 #define SHIFT_COUNT_TRUNCATED 1
+
+/* Value is 1 if truncating an integer of INPREC bits to OUTPREC bits
+   is done just by pretending it is already truncated.  */
+#define TRULY_NOOP_TRUNCATION(OUTPREC, INPREC) 1
 
 /* For SImode, we make sure the top 32-bits of the register are clear and
    then we subtract 32 from the lzd instruction result.  */

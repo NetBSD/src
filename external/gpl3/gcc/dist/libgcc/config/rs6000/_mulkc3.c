@@ -1,4 +1,4 @@
-/* Copyright (C) 1989-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -23,23 +23,19 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 
 /* This is a temporary specialization of code from libgcc/libgcc2.c.  */
 
-#include "soft-fp.h"
-#include "quad-float128.h"
+typedef float KFtype __attribute__ ((mode (KF)));
+typedef __complex float KCtype __attribute__ ((mode (KC)));
 
-#define COPYSIGN(x,y) __builtin_copysignf128 (x, y)
-#define INFINITY __builtin_inff128 ()
+#define COPYSIGN(x,y) __builtin_copysignq (x, y)
+#define INFINITY __builtin_infq ()
 #define isnan __builtin_isnan
 #define isinf __builtin_isinf
 
-#if defined(FLOAT128_HW_INSNS) && !defined(__mulkc3)
-#define __mulkc3 __mulkc3_sw
-#endif
-
-TCtype
-__mulkc3 (TFtype a, TFtype b, TFtype c, TFtype d)
+KCtype
+__mulkc3 (KFtype a, KFtype b, KFtype c, KFtype d)
 {
-  TFtype ac, bd, ad, bc, x, y;
-  TCtype res;
+  KFtype ac, bd, ad, bc, x, y;
+  KCtype res;
 
   ac = a * c;
   bd = b * d;

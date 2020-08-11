@@ -1,6 +1,6 @@
 /* Software floating-point emulation.
    Definitions for IEEE Quad Precision on the PowerPC.
-   Copyright (C) 2016-2018 Free Software Foundation, Inc.
+   Copyright (C) 2016-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Contributed by Michael Meissner (meissner@linux.vnet.ibm.com).
 
@@ -30,19 +30,12 @@
 /* quad.h defines the TFtype type by:
    typedef float TFtype __attribute__ ((mode (TF)));
 
-   This define forces it to use KFmode (aka, ieee 128-bit floating point).
-   However, when the compiler's default is changed so that long double is IEEE
-   128-bit floating point, we need to go back to using TFmode and TCmode.  */
-#ifndef __LONG_DOUBLE_IEEE128__
+   This define forces it to use KFmode (aka, ieee 128-bit floating point).  */
 #define TF KF
 
 /* We also need TCtype to represent complex ieee 128-bit float for
    __mulkc3 and __divkc3.  */
 typedef __complex float TCtype __attribute__ ((mode (KC)));
-
-#else
-typedef __complex float TCtype __attribute__ ((mode (TC)));
-#endif
 
 /* Force the use of the VSX instruction set.  */
 #if defined(_ARCH_PPC) && (!defined(__VSX__) || !defined(__FLOAT128__))
@@ -51,7 +44,12 @@ typedef __complex float TCtype __attribute__ ((mode (TC)));
 
 #include <quad.h>
 
-#define IBM128_TYPE	__ibm128
+#ifdef __LONG_DOUBLE_IEEE128__
+#define IBM128_TYPE		__ibm128
+
+#else
+#define IBM128_TYPE		long double
+#endif
 
 /* Add prototypes of the library functions created.  In case the appropriate
    int/long types are not declared in scope by the time quad.h is included,
@@ -72,7 +70,6 @@ extern TFtype __subkf3_sw (TFtype, TFtype);
 extern TFtype __mulkf3_sw (TFtype, TFtype);
 extern TFtype __divkf3_sw (TFtype, TFtype);
 extern TFtype __negkf2_sw (TFtype);
-extern TFtype __powikf2_sw (TFtype, SItype_ppc);
 extern CMPtype __eqkf2_sw (TFtype, TFtype);
 extern CMPtype __gekf2_sw (TFtype, TFtype);
 extern CMPtype __lekf2_sw (TFtype, TFtype);
@@ -91,8 +88,6 @@ extern TFtype __floatunsikf_sw (USItype_ppc);
 extern TFtype __floatundikf_sw (UDItype_ppc);
 extern IBM128_TYPE __extendkftf2_sw (TFtype);
 extern TFtype __trunctfkf2_sw (IBM128_TYPE);
-extern TCtype __mulkc3_sw (TFtype, TFtype, TFtype, TFtype);
-extern TCtype __divkc3_sw (TFtype, TFtype, TFtype, TFtype);
 
 #ifdef _ARCH_PPC64
 /* We do not provide ifunc resolvers for __fixkfti, __fixunskfti, __floattikf,
@@ -115,7 +110,6 @@ extern TFtype __subkf3_hw (TFtype, TFtype);
 extern TFtype __mulkf3_hw (TFtype, TFtype);
 extern TFtype __divkf3_hw (TFtype, TFtype);
 extern TFtype __negkf2_hw (TFtype);
-extern TFtype __powikf2_hw (TFtype, SItype_ppc);
 extern CMPtype __eqkf2_hw (TFtype, TFtype);
 extern CMPtype __gekf2_hw (TFtype, TFtype);
 extern CMPtype __lekf2_hw (TFtype, TFtype);
@@ -134,8 +128,6 @@ extern TFtype __floatunsikf_hw (USItype_ppc);
 extern TFtype __floatundikf_hw (UDItype_ppc);
 extern IBM128_TYPE __extendkftf2_hw (TFtype);
 extern TFtype __trunctfkf2_hw (IBM128_TYPE);
-extern TCtype __mulkc3_hw (TFtype, TFtype, TFtype, TFtype);
-extern TCtype __divkc3_hw (TFtype, TFtype, TFtype, TFtype);
 
 /* Ifunc function declarations, to automatically switch between software
    emulation and hardware support.  */
@@ -144,7 +136,6 @@ extern TFtype __subkf3 (TFtype, TFtype);
 extern TFtype __mulkf3 (TFtype, TFtype);
 extern TFtype __divkf3 (TFtype, TFtype);
 extern TFtype __negkf2 (TFtype);
-extern TFtype __powikf2 (TFtype, SItype_ppc);
 extern CMPtype __eqkf2 (TFtype, TFtype);
 extern CMPtype __nekf2 (TFtype, TFtype);
 extern CMPtype __gekf2 (TFtype, TFtype);
@@ -183,7 +174,7 @@ union ibm128_union {
 #define CVT_FLOAT128_TO_IBM128(RESULT, VALUE)				\
 {									\
   double __high, __low;							\
-  TFtype __value = (VALUE);						\
+  __float128 __value = (VALUE);						\
   union ibm128_union u;							\
 									\
   __high = (double) __value;						\
@@ -194,7 +185,7 @@ union ibm128_union {
     {									\
       double __high_temp;						\
 									\
-      __low = (double) (__value - (TFtype) __high);			\
+      __low = (double) (__value - (__float128) __high);			\
       /* Renormalize low/high and move them into canonical IBM long	\
 	 double form.  */						\
       __high_temp = __high + __low;					\
@@ -218,13 +209,13 @@ union ibm128_union {
 									\
   /* Handle the special cases of NAN and infinity.  */			\
   if (__builtin_isnan (__high) || __builtin_isinf (__high))		\
-    RESULT = (TFtype) __high;						\
+    RESULT = (__float128) __high;					\
 									\
   /* If low is 0.0, there no need to do the add.  In addition,		\
      avoiding the add produces the correct sign if high is -0.0.  */	\
   else if (__low == 0.0)						\
-    RESULT = (TFtype) __high;						\
+    RESULT = (__float128) __high;					\
 									\
   else									\
-    RESULT = ((TFtype) __high) + ((TFtype) __low);			\
+    RESULT = ((__float128) __high) + ((__float128) __low);		\
 }

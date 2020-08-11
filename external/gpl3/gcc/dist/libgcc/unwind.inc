@@ -1,5 +1,5 @@
 /* Exception handling and frame unwind runtime interface routines. -*- C -*-
-   Copyright (C) 2001-2018 Free Software Foundation, Inc.
+   Copyright (C) 2001-2017 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -36,11 +36,9 @@
 
 static _Unwind_Reason_Code
 _Unwind_RaiseException_Phase2(struct _Unwind_Exception *exc,
-			      struct _Unwind_Context *context,
-			      unsigned long *frames_p)
+			      struct _Unwind_Context *context)
 {
   _Unwind_Reason_Code code;
-  unsigned long frames = 1;
 
   while (1)
     {
@@ -73,10 +71,8 @@ _Unwind_RaiseException_Phase2(struct _Unwind_Exception *exc,
       gcc_assert (!match_handler);
 
       uw_update_context (context, &fs);
-      _Unwind_Frames_Increment (context, frames);
     }
 
-  *frames_p = frames;
   return code;
 }
 
@@ -87,7 +83,6 @@ _Unwind_RaiseException(struct _Unwind_Exception *exc)
 {
   struct _Unwind_Context this_context, cur_context;
   _Unwind_Reason_Code code;
-  unsigned long frames;
 
   /* Set up this_context to describe the current stack frame.  */
   uw_init_context (&this_context);
@@ -133,11 +128,11 @@ _Unwind_RaiseException(struct _Unwind_Exception *exc)
   exc->private_2 = uw_identify_context (&cur_context);
 
   cur_context = this_context;
-  code = _Unwind_RaiseException_Phase2 (exc, &cur_context, &frames);
+  code = _Unwind_RaiseException_Phase2 (exc, &cur_context);
   if (code != _URC_INSTALL_CONTEXT)
     return code;
 
-  uw_install_context (&this_context, &cur_context, frames);
+  uw_install_context (&this_context, &cur_context);
 }
 
 
@@ -145,13 +140,11 @@ _Unwind_RaiseException(struct _Unwind_Exception *exc)
 
 static _Unwind_Reason_Code
 _Unwind_ForcedUnwind_Phase2 (struct _Unwind_Exception *exc,
-			     struct _Unwind_Context *context,
-			     unsigned long *frames_p)
+			     struct _Unwind_Context *context)
 {
   _Unwind_Stop_Fn stop = (_Unwind_Stop_Fn) (_Unwind_Ptr) exc->private_1;
   void *stop_argument = (void *) (_Unwind_Ptr) exc->private_2;
   _Unwind_Reason_Code code, stop_code;
-  unsigned long frames = 1;
 
   while (1)
     {
@@ -190,10 +183,8 @@ _Unwind_ForcedUnwind_Phase2 (struct _Unwind_Exception *exc,
       /* Update cur_context to describe the same frame as fs, and discard
 	 the previous context if necessary.  */
       uw_advance_context (context, &fs);
-      _Unwind_Frames_Increment (context, frames);
     }
 
-  *frames_p = frames;
   return code;
 }
 
@@ -206,7 +197,6 @@ _Unwind_ForcedUnwind (struct _Unwind_Exception *exc,
 {
   struct _Unwind_Context this_context, cur_context;
   _Unwind_Reason_Code code;
-  unsigned long frames;
 
   uw_init_context (&this_context);
   cur_context = this_context;
@@ -214,11 +204,11 @@ _Unwind_ForcedUnwind (struct _Unwind_Exception *exc,
   exc->private_1 = (_Unwind_Ptr) stop;
   exc->private_2 = (_Unwind_Ptr) stop_argument;
 
-  code = _Unwind_ForcedUnwind_Phase2 (exc, &cur_context, &frames);
+  code = _Unwind_ForcedUnwind_Phase2 (exc, &cur_context);
   if (code != _URC_INSTALL_CONTEXT)
     return code;
 
-  uw_install_context (&this_context, &cur_context, frames);
+  uw_install_context (&this_context, &cur_context);
 }
 
 
@@ -230,7 +220,6 @@ _Unwind_Resume (struct _Unwind_Exception *exc)
 {
   struct _Unwind_Context this_context, cur_context;
   _Unwind_Reason_Code code;
-  unsigned long frames;
 
   uw_init_context (&this_context);
   cur_context = this_context;
@@ -238,13 +227,13 @@ _Unwind_Resume (struct _Unwind_Exception *exc)
   /* Choose between continuing to process _Unwind_RaiseException
      or _Unwind_ForcedUnwind.  */
   if (exc->private_1 == 0)
-    code = _Unwind_RaiseException_Phase2 (exc, &cur_context, &frames);
+    code = _Unwind_RaiseException_Phase2 (exc, &cur_context);
   else
-    code = _Unwind_ForcedUnwind_Phase2 (exc, &cur_context, &frames);
+    code = _Unwind_ForcedUnwind_Phase2 (exc, &cur_context);
 
   gcc_assert (code == _URC_INSTALL_CONTEXT);
 
-  uw_install_context (&this_context, &cur_context, frames);
+  uw_install_context (&this_context, &cur_context);
 }
 
 
@@ -256,7 +245,6 @@ _Unwind_Resume_or_Rethrow (struct _Unwind_Exception *exc)
 {
   struct _Unwind_Context this_context, cur_context;
   _Unwind_Reason_Code code;
-  unsigned long frames;
 
   /* Choose between continuing to process _Unwind_RaiseException
      or _Unwind_ForcedUnwind.  */
@@ -266,11 +254,11 @@ _Unwind_Resume_or_Rethrow (struct _Unwind_Exception *exc)
   uw_init_context (&this_context);
   cur_context = this_context;
 
-  code = _Unwind_ForcedUnwind_Phase2 (exc, &cur_context, &frames);
+  code = _Unwind_ForcedUnwind_Phase2 (exc, &cur_context);
 
   gcc_assert (code == _URC_INSTALL_CONTEXT);
 
-  uw_install_context (&this_context, &cur_context, frames);
+  uw_install_context (&this_context, &cur_context);
 }
 
 

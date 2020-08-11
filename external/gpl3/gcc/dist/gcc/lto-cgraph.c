@@ -1,7 +1,7 @@
 /* Write and read the cgraph to the memory mapped representation of a
    .o file.
 
-   Copyright (C) 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2009-2017 Free Software Foundation, Inc.
    Contributed by Kenneth Zadeck <zadeck@naturalbridge.com>
 
 This file is part of GCC.
@@ -38,8 +38,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "ipa-utils.h"
 #include "omp-offload.h"
 #include "ipa-chkp.h"
-#include "stringpool.h"
-#include "attribs.h"
 
 /* True when asm nodes has been output.  */
 bool asm_nodes_output = false;
@@ -258,7 +256,7 @@ lto_output_edge (struct lto_simple_output_block *ob, struct cgraph_edge *edge,
       streamer_write_hwi_stream (ob->main_stream, ref);
     }
 
-  edge->count.stream_out (ob->main_stream);
+  streamer_write_gcov_count_stream (ob->main_stream, edge->count);
 
   bp = bitpack_create (ob->main_stream);
   uid = (!gimple_has_body_p (edge->caller->decl) || edge->caller->thunk.thunk_p
@@ -266,6 +264,7 @@ lto_output_edge (struct lto_simple_output_block *ob, struct cgraph_edge *edge,
   bp_pack_enum (&bp, cgraph_inline_failed_t,
 	        CIF_N_REASONS, edge->inline_failed);
   bp_pack_var_len_unsigned (&bp, uid);
+  bp_pack_var_len_unsigned (&bp, edge->frequency);
   bp_pack_value (&bp, edge->indirect_inlining_edge, 1);
   bp_pack_value (&bp, edge->speculative, 1);
   bp_pack_value (&bp, edge->call_stmt_cannot_inline_p, 1);
@@ -459,7 +458,7 @@ lto_output_node (struct lto_simple_output_block *ob, struct cgraph_node *node,
 
 
   lto_output_fn_decl_index (ob->decl_state, ob->main_stream, node->decl);
-  node->count.stream_out (ob->main_stream);
+  streamer_write_gcov_count_stream (ob->main_stream, node->count);
   streamer_write_hwi_stream (ob->main_stream, node->count_materialization_scale);
 
   streamer_write_hwi_stream (ob->main_stream,
@@ -546,11 +545,7 @@ lto_output_node (struct lto_simple_output_block *ob, struct cgraph_node *node,
   streamer_write_bitpack (&bp);
   streamer_write_data_stream (ob->main_stream, section, strlen (section) + 1);
 
-  /* Stream thunk info always because we use it in
-     ipa_polymorphic_call_context::ipa_polymorphic_call_context
-     to properly interpret THIS pointers for thunks that has been converted
-     to Gimple.  */
-  if (node->definition)
+  if (node->thunk.thunk_p)
     {
       streamer_write_uhwi_stream
 	 (ob->main_stream,
@@ -1251,7 +1246,7 @@ input_node (struct lto_file_decl_data *file_data,
   if (clone_ref != LCC_NOT_FOUND)
     {
       node = dyn_cast<cgraph_node *> (nodes[clone_ref])->create_clone (fn_decl,
-	profile_count::uninitialized (), false,
+	0, CGRAPH_FREQ_BASE, false,
 	vNULL, false, NULL, NULL);
     }
   else
@@ -1261,8 +1256,6 @@ input_node (struct lto_file_decl_data *file_data,
 	 of ipa passes is done.  Alays forcingly create a fresh node.  */
       node = symtab->create_empty ();
       node->decl = fn_decl;
-      if (lookup_attribute ("ifunc", DECL_ATTRIBUTES (fn_decl)))
-	node->ifunc_resolver = 1;
       node->register_symbol ();
     }
 
@@ -1270,7 +1263,7 @@ input_node (struct lto_file_decl_data *file_data,
   if (order >= symtab->order)
     symtab->order = order + 1;
 
-  node->count = profile_count::stream_in (ib);
+  node->count = streamer_read_gcov_count (ib);
   node->count_materialization_scale = streamer_read_hwi (ib);
 
   count = streamer_read_hwi (ib);
@@ -1321,7 +1314,7 @@ input_node (struct lto_file_decl_data *file_data,
   if (section)
     node->set_section_for_node (section);
 
-  if (node->definition)
+  if (node->thunk.thunk_p)
     {
       int type = streamer_read_uhwi (ib);
       HOST_WIDE_INT fixed_offset = streamer_read_uhwi (ib);
@@ -1468,7 +1461,8 @@ input_edge (struct lto_input_block *ib, vec<symtab_node *> nodes,
   struct cgraph_node *caller, *callee;
   struct cgraph_edge *edge;
   unsigned int stmt_id;
-  profile_count count;
+  gcov_type count;
+  int freq;
   cgraph_inline_failed_t inline_failed;
   struct bitpack_d bp;
   int ecf_flags = 0;
@@ -1486,16 +1480,17 @@ input_edge (struct lto_input_block *ib, vec<symtab_node *> nodes,
   else
     callee = NULL;
 
-  count = profile_count::stream_in (ib);
+  count = streamer_read_gcov_count (ib);
 
   bp = streamer_read_bitpack (ib);
   inline_failed = bp_unpack_enum (&bp, cgraph_inline_failed_t, CIF_N_REASONS);
   stmt_id = bp_unpack_var_len_unsigned (&bp);
+  freq = (int) bp_unpack_var_len_unsigned (&bp);
 
   if (indirect)
-    edge = caller->create_indirect_edge (NULL, 0, count);
+    edge = caller->create_indirect_edge (NULL, 0, count, freq);
   else
-    edge = caller->create_edge (callee, NULL, count);
+    edge = caller->create_edge (callee, NULL, count, freq);
 
   edge->indirect_inlining_edge = bp_unpack_value (&bp, 1);
   edge->speculative = bp_unpack_value (&bp, 1);
@@ -1826,13 +1821,8 @@ merge_profile_summaries (struct lto_file_decl_data **file_data_vec)
 	if (scale == REG_BR_PROB_BASE)
 	  continue;
 	for (edge = node->callees; edge; edge = edge->next_callee)
-	  if (edge->count.ipa ().nonzero_p ())
-	    edge->count = edge->count.apply_scale (scale, REG_BR_PROB_BASE);
-	for (edge = node->indirect_calls; edge; edge = edge->next_callee)
-	  if (edge->count.ipa ().nonzero_p ())
-	    edge->count = edge->count.apply_scale (scale, REG_BR_PROB_BASE);
-	if (node->count.ipa ().nonzero_p ())
-	  node->count = node->count.apply_scale (scale, REG_BR_PROB_BASE);
+	  edge->count = apply_scale (edge->count, scale);
+	node->count = apply_scale (node->count, scale);
       }
 }
 

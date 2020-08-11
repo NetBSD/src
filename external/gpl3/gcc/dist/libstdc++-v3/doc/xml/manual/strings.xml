@@ -88,8 +88,7 @@
    <programlisting>
    char toLower (char c)
    {
-      // std::tolower(c) is undefined if c &lt; 0 so cast to unsigned char.
-      return std::tolower((unsigned char)c);
+      return std::tolower(c);
    } </programlisting>
    <para>(Thanks to James Kanze for assistance and suggestions on all of this.)
    </para>

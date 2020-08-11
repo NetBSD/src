@@ -1,5 +1,5 @@
 /* Header file for gimple decl, type and expressions.
-   Copyright (C) 2013-2018 Free Software Foundation, Inc.
+   Copyright (C) 2013-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -119,7 +119,6 @@ static inline bool
 is_gimple_addressable (tree t)
 {
   return (is_gimple_id (t) || handled_component_p (t)
-	  || TREE_CODE (t) == TARGET_MEM_REF
 	  || TREE_CODE (t) == MEM_REF);
 }
 
@@ -131,7 +130,6 @@ is_gimple_constant (const_tree t)
   switch (TREE_CODE (t))
     {
     case INTEGER_CST:
-    case POLY_INT_CST:
     case REAL_CST:
     case FIXED_CST:
     case COMPLEX_CST:

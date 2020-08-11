@@ -1,5 +1,5 @@
 /* DDG - Data Dependence Graph implementation.
-   Copyright (C) 2004-2018 Free Software Foundation, Inc.
+   Copyright (C) 2004-2017 Free Software Foundation, Inc.
    Contributed by Ayal Zaks and Mustafa Hagog <zaks,mustafa@il.ibm.com>
 
 This file is part of GCC.
@@ -1084,15 +1084,16 @@ free_ddg_all_sccs (ddg_all_sccs_ptr all_sccs)
 int
 find_nodes_on_paths (sbitmap result, ddg_ptr g, sbitmap from, sbitmap to)
 {
+  int answer;
   int change;
   unsigned int u = 0;
   int num_nodes = g->num_nodes;
   sbitmap_iterator sbi;
 
-  auto_sbitmap workset (num_nodes);
-  auto_sbitmap reachable_from (num_nodes);
-  auto_sbitmap reach_to (num_nodes);
-  auto_sbitmap tmp (num_nodes);
+  sbitmap workset = sbitmap_alloc (num_nodes);
+  sbitmap reachable_from = sbitmap_alloc (num_nodes);
+  sbitmap reach_to = sbitmap_alloc (num_nodes);
+  sbitmap tmp = sbitmap_alloc (num_nodes);
 
   bitmap_copy (reachable_from, from);
   bitmap_copy (tmp, from);
@@ -1152,7 +1153,12 @@ find_nodes_on_paths (sbitmap result, ddg_ptr g, sbitmap from, sbitmap to)
 	}
     }
 
-  return bitmap_and (result, reachable_from, reach_to);
+  answer = bitmap_and (result, reachable_from, reach_to);
+  sbitmap_free (workset);
+  sbitmap_free (reachable_from);
+  sbitmap_free (reach_to);
+  sbitmap_free (tmp);
+  return answer;
 }
 
 
@@ -1192,9 +1198,10 @@ longest_simple_path (struct ddg * g, int src, int dest, sbitmap nodes)
   int i;
   unsigned int u = 0;
   int change = 1;
+  int result;
   int num_nodes = g->num_nodes;
-  auto_sbitmap workset (num_nodes);
-  auto_sbitmap tmp (num_nodes);
+  sbitmap workset = sbitmap_alloc (num_nodes);
+  sbitmap tmp = sbitmap_alloc (num_nodes);
 
 
   /* Data will hold the distance of the longest path found so far from
@@ -1220,7 +1227,10 @@ longest_simple_path (struct ddg * g, int src, int dest, sbitmap nodes)
 	  change |= update_dist_to_successors (u_node, nodes, tmp);
 	}
     }
-  return g->nodes[dest].aux.count;
+  result = g->nodes[dest].aux.count;
+  sbitmap_free (workset);
+  sbitmap_free (tmp);
+  return result;
 }
 
 #endif /* INSN_SCHEDULING */

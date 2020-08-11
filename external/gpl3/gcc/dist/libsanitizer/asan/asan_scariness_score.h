@@ -45,7 +45,7 @@ struct ScarinessScoreBase {
   };
   int GetScore() const { return score; }
   const char *GetDescription() const { return descr; }
-  void Print() const {
+  void Print() {
     if (score && flags()->print_scariness)
       Printf("SCARINESS: %d (%s)\n", score, descr);
   }

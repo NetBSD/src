@@ -1,6 +1,6 @@
 ;;   Machine description for GNU compiler,
 ;;   for ATMEL AVR micro controllers.
-;;   Copyright (C) 1998-2018 Free Software Foundation, Inc.
+;;   Copyright (C) 1998-2017 Free Software Foundation, Inc.
 ;;   Contributed by Denis Chertykov (chertykov@gmail.com)
 
 ;; This file is part of GCC.
@@ -85,7 +85,6 @@
   [UNSPECV_PROLOGUE_SAVES
    UNSPECV_EPILOGUE_RESTORES
    UNSPECV_WRITE_SP
-   UNSPECV_GASISR
    UNSPECV_GOTO_RECEIVER
    UNSPECV_ENABLE_IRQS
    UNSPECV_MEMORY_BARRIER
@@ -95,12 +94,6 @@
    UNSPECV_DELAY_CYCLES
    ])
 
-;; Chunk numbers for __gcc_isr are hard-coded in GAS.
-(define_constants
-  [(GASISR_Prologue 1)
-   (GASISR_Epilogue 2)
-   (GASISR_Done     0)
-   ])
 
 (include "predicates.md")
 (include "constraints.md")
@@ -334,9 +327,10 @@
         (unspec_volatile:HI [(const_int 0)] UNSPECV_GOTO_RECEIVER))]
   ""
   {
-    rtx offset = gen_int_mode (targetm.starting_frame_offset (), Pmode);
     emit_move_insn (virtual_stack_vars_rtx,
-                    gen_rtx_PLUS (Pmode, hard_frame_pointer_rtx, offset));
+                    gen_rtx_PLUS (Pmode, hard_frame_pointer_rtx,
+                                  gen_int_mode (STARTING_FRAME_OFFSET,
+                                                Pmode)));
     /* ; This might change the hard frame pointer in ways that aren't
        ; apparent to early optimization passes, so force a clobber.  */
     emit_clobber (hard_frame_pointer_rtx);
@@ -4588,7 +4582,7 @@
   [(set (cc0)
         (compare (neg:QI (match_operand:QI 0 "register_operand" "r"))
                  (const_int 0)))]
-  "!flag_wrapv && !flag_trapv"
+  "!flag_wrapv && !flag_trapv && flag_strict_overflow"
   "cp __zero_reg__,%0"
   [(set_attr "cc" "compare")
    (set_attr "length" "1")])
@@ -4606,7 +4600,7 @@
   [(set (cc0)
         (compare (neg:HI (match_operand:HI 0 "register_operand" "r"))
                  (const_int 0)))]
-  "!flag_wrapv && !flag_trapv"
+  "!flag_wrapv && !flag_trapv && flag_strict_overflow"
   "cp __zero_reg__,%A0
 	cpc __zero_reg__,%B0"
 [(set_attr "cc" "compare")
@@ -4629,7 +4623,7 @@
   [(set (cc0)
         (compare (neg:PSI (match_operand:PSI 0 "register_operand" "r"))
                  (const_int 0)))]
-  "!flag_wrapv && !flag_trapv"
+  "!flag_wrapv && !flag_trapv && flag_strict_overflow"
   "cp __zero_reg__,%A0\;cpc __zero_reg__,%B0\;cpc __zero_reg__,%C0"
   [(set_attr "cc" "compare")
    (set_attr "length" "3")])
@@ -4648,7 +4642,7 @@
   [(set (cc0)
         (compare (neg:SI (match_operand:SI 0 "register_operand" "r"))
                  (const_int 0)))]
-  "!flag_wrapv && !flag_trapv"
+  "!flag_wrapv && !flag_trapv && flag_strict_overflow"
   "cp __zero_reg__,%A0
 	cpc __zero_reg__,%B0
 	cpc __zero_reg__,%C0
@@ -5193,7 +5187,7 @@
    (set_attr "cc" "none")])
 
 ;; table jump
-;; For entries in jump table see avr_output_addr_vec.
+;; For entries in jump table see avr_output_addr_vec_elt.
 
 ;; Table made from
 ;;    "rjmp .L<n>"   instructions for <= 8K devices
@@ -5807,38 +5801,6 @@
   [(set_attr "length" "2,3")
    (set_attr "cc" "clobber")
    (set_attr "isa" "rjmp,jmp")])
-
-
-;; $0 = Chunk: 1 = Prologue,  2 = Epilogue
-;; $1 = Register as printed by chunk 0 (Done) in final postscan.
-(define_expand "gasisr"
-  [(parallel [(unspec_volatile [(match_operand:QI 0 "const_int_operand")
-                                (match_operand:QI 1 "const_int_operand")]
-                               UNSPECV_GASISR)
-              (set (reg:HI REG_SP)
-                   (unspec_volatile:HI [(reg:HI REG_SP)] UNSPECV_GASISR))
-              (set (match_dup 2)
-                   (unspec_volatile:BLK [(match_dup 2)]
-                                        UNSPECV_MEMORY_BARRIER))])]
-  "avr_gasisr_prologues"
-  {
-    operands[2] = gen_rtx_MEM (BLKmode, gen_rtx_SCRATCH (Pmode));
-    MEM_VOLATILE_P (operands[2]) = 1;
-  })
-
-(define_insn "*gasisr"
-  [(unspec_volatile [(match_operand:QI 0 "const_int_operand" "P,K")
-                     (match_operand:QI 1 "const_int_operand" "n,n")]
-                    UNSPECV_GASISR)
-   (set (reg:HI REG_SP)
-        (unspec_volatile:HI [(reg:HI REG_SP)] UNSPECV_GASISR))
-   (set (match_operand:BLK 2)
-        (unspec_volatile:BLK [(match_dup 2)] UNSPECV_MEMORY_BARRIER))]
-  "avr_gasisr_prologues"
-  "__gcc_isr %0"
-  [(set_attr "length" "6,5")
-   (set_attr "cc" "clobber")])
-
 
 ; return
 (define_insn "return"
@@ -6805,11 +6767,11 @@
 
 
 (define_insn_and_split "*iorhi3.ashift8-ext.zerox"
-  [(set (match_operand:HI 0 "register_operand"                        "=r,r")
+  [(set (match_operand:HI 0 "register_operand"                        "=r")
         (ior:HI (ashift:HI (any_extend:HI
-                            (match_operand:QI 1 "register_operand"     "r,r"))
+                            (match_operand:QI 1 "register_operand"     "r"))
                            (const_int 8))
-                (zero_extend:HI (match_operand:QI 2 "register_operand" "0,r"))))]
+                (zero_extend:HI (match_operand:QI 2 "register_operand" "r"))))]
   "optimize"
   { gcc_unreachable(); }
   "&& reload_completed"

@@ -1,5 +1,5 @@
 /* SSA operands management for trees.
-   Copyright (C) 2003-2018 Free Software Foundation, Inc.
+   Copyright (C) 2003-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -1139,7 +1139,7 @@ DEBUG_FUNCTION bool
 verify_imm_links (FILE *f, tree var)
 {
   use_operand_p ptr, prev, list;
-  unsigned int count;
+  int count;
 
   gcc_assert (TREE_CODE (var) == SSA_NAME);
 
@@ -1157,31 +1157,20 @@ verify_imm_links (FILE *f, tree var)
   for (ptr = list->next; ptr != list; )
     {
       if (prev != ptr->prev)
-	{
-	  fprintf (f, "prev != ptr->prev\n");
-	  goto error;
-	}
+	goto error;
 
       if (ptr->use == NULL)
-	{
-	  fprintf (f, "ptr->use == NULL\n");
-	  goto error; /* 2 roots, or SAFE guard node.  */
-	}
+	goto error; /* 2 roots, or SAFE guard node.  */
       else if (*(ptr->use) != var)
-	{
-	  fprintf (f, "*(ptr->use) != var\n");
-	  goto error;
-	}
+	goto error;
 
       prev = ptr;
       ptr = ptr->next;
 
-      count++;
-      if (count == 0)
-	{
-	  fprintf (f, "number of immediate uses doesn't fit unsigned int\n");
-	  goto error;
-	}
+      /* Avoid infinite loops.  50,000,000 uses probably indicates a
+	 problem.  */
+      if (count++ > 50000000)
+	goto error;
     }
 
   /* Verify list in the other direction.  */
@@ -1189,25 +1178,15 @@ verify_imm_links (FILE *f, tree var)
   for (ptr = list->prev; ptr != list; )
     {
       if (prev != ptr->next)
-	{
-	  fprintf (f, "prev != ptr->next\n");
-	  goto error;
-	}
+	goto error;
       prev = ptr;
       ptr = ptr->prev;
-      if (count == 0)
-	{
-	  fprintf (f, "count-- < 0\n");
-	  goto error;
-	}
-      count--;
+      if (count-- < 0)
+	goto error;
     }
 
   if (count != 0)
-    {
-      fprintf (f, "count != 0\n");
-      goto error;
-    }
+    goto error;
 
   return false;
 

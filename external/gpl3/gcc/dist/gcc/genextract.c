@@ -1,5 +1,5 @@
 /* Generate code from machine description to extract operands from insn as rtl.
-   Copyright (C) 1987-2018 Free Software Foundation, Inc.
+   Copyright (C) 1987-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -33,10 +33,9 @@ along with GCC; see the file COPYING3.  If not see
 
    The string for each operand describes that path to the operand and
    contains `0' through `9' when going into an expression and `a' through
-   `z' then 'A' through to 'Z' when going into a vector.  We assume here that
-   only the first operand of an rtl expression is a vector.  genrecog.c makes
-   the same assumption (and uses the same representation) and it is currently
-   true.  */
+   `z' when going into a vector.  We assume here that only the first operand
+   of an rtl expression is a vector.  genrecog.c makes the same assumption
+   (and uses the same representation) and it is currently true.  */
 
 typedef char *locstr;
 
@@ -81,23 +80,6 @@ struct accum_extract
 /* Forward declarations.  */
 static void walk_rtx (md_rtx_info *, rtx, struct accum_extract *);
 
-#define UPPER_OFFSET ('A' - ('z' - 'a' + 1))
-
-/* Convert integer OPERAND into a character - either into [a-zA-Z] for vector
-   operands or [0-9] for integer operands - and push onto the end of the path
-   in ACC.  */
-static void
-push_pathstr_operand (int operand, bool is_vector,
-		     struct accum_extract *acc)
-{
-  if (is_vector && 'a' + operand > 'z')
-    acc->pathstr.safe_push (operand + UPPER_OFFSET);
-  else if (is_vector)
-    acc->pathstr.safe_push (operand + 'a');
-  else
-    acc->pathstr.safe_push (operand + '0');
-}
-
 static void
 gen_insn (md_rtx_info *info)
 {
@@ -116,7 +98,7 @@ gen_insn (md_rtx_info *info)
   else
     for (i = XVECLEN (insn, 1) - 1; i >= 0; i--)
       {
-	push_pathstr_operand (i, true, &acc);
+	acc.pathstr.safe_push ('a' + i);
 	walk_rtx (info, XVECEXP (insn, 1, i), &acc);
 	acc.pathstr.pop ();
       }
@@ -226,7 +208,7 @@ static void
 walk_rtx (md_rtx_info *info, rtx x, struct accum_extract *acc)
 {
   RTX_CODE code;
-  int i, len;
+  int i, len, base;
   const char *fmt;
 
   if (x == 0)
@@ -252,9 +234,10 @@ walk_rtx (md_rtx_info *info, rtx x, struct accum_extract *acc)
       VEC_safe_set_locstr (info, &acc->oplocs, XINT (x, 0),
 			   VEC_char_to_string (acc->pathstr));
 
+      base = (code == MATCH_OPERATOR ? '0' : 'a');
       for (i = XVECLEN (x, 2) - 1; i >= 0; i--)
 	{
-	  push_pathstr_operand (i, code != MATCH_OPERATOR, acc);
+	  acc->pathstr.safe_push (base + i);
 	  walk_rtx (info, XVECEXP (x, 2, i), acc);
 	  acc->pathstr.pop ();
         }
@@ -269,9 +252,10 @@ walk_rtx (md_rtx_info *info, rtx x, struct accum_extract *acc)
       if (code == MATCH_DUP)
 	break;
 
+      base = (code == MATCH_OP_DUP ? '0' : 'a');
       for (i = XVECLEN (x, 1) - 1; i >= 0; i--)
         {
-	  push_pathstr_operand (i, code != MATCH_OP_DUP, acc);
+	  acc->pathstr.safe_push (base + i);
 	  walk_rtx (info, XVECEXP (x, 1, i), acc);
 	  acc->pathstr.pop ();
         }
@@ -287,7 +271,7 @@ walk_rtx (md_rtx_info *info, rtx x, struct accum_extract *acc)
     {
       if (fmt[i] == 'e' || fmt[i] == 'u')
 	{
-	  push_pathstr_operand (i, false, acc);
+	  acc->pathstr.safe_push ('0' + i);
 	  walk_rtx (info, XEXP (x, i), acc);
 	  acc->pathstr.pop ();
 	}
@@ -296,7 +280,7 @@ walk_rtx (md_rtx_info *info, rtx x, struct accum_extract *acc)
 	  int j;
 	  for (j = XVECLEN (x, i) - 1; j >= 0; j--)
 	    {
-	      push_pathstr_operand (j, true, acc);
+	      acc->pathstr.safe_push ('a' + j);
 	      walk_rtx (info, XVECEXP (x, i, j), acc);
 	      acc->pathstr.pop ();
 	    }
@@ -327,7 +311,7 @@ print_path (const char *path)
 
   for (i = len - 1; i >= 0 ; i--)
     {
-      if (ISLOWER (path[i]) || ISUPPER (path[i]))
+      if (ISLOWER (path[i]))
 	fputs ("XVECEXP (", stdout);
       else if (ISDIGIT (path[i]))
 	fputs ("XEXP (", stdout);
@@ -339,9 +323,7 @@ print_path (const char *path)
 
   for (i = 0; i < len; i++)
     {
-      if (ISUPPER (path[i]))
-	printf (", 0, %d)", path[i] - UPPER_OFFSET);
-      else if (ISLOWER (path[i]))
+      if (ISLOWER (path[i]))
 	printf (", 0, %d)", path[i] - 'a');
       else if (ISDIGIT (path[i]))
 	printf (", %d)", path[i] - '0');
@@ -361,7 +343,6 @@ print_header (void)
 /* Generated automatically by the program `genextract'\n\
    from the machine description file `md'.  */\n\
 \n\
-#define IN_TARGET_CODE 1\n\
 #include \"config.h\"\n\
 #include \"system.h\"\n\
 #include \"coretypes.h\"\n\

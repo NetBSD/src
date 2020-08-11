@@ -1,6 +1,6 @@
-// Class experimental::filesystem::path -*- C++ -*-
+// Class filesystem::path -*- C++ -*-
 
-// Copyright (C) 2014-2018 Free Software Foundation, Inc.
+// Copyright (C) 2014-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -28,12 +28,11 @@
 
 #include <experimental/filesystem>
 
-namespace fs = std::experimental::filesystem;
-using fs::path;
+using std::experimental::filesystem::path;
 
-fs::filesystem_error::~filesystem_error() = default;
+std::experimental::filesystem::filesystem_error::~filesystem_error() = default;
 
-constexpr path::value_type path::preferred_separator [[gnu::used]];
+constexpr path::value_type path::preferred_separator;
 
 path&
 path::remove_filename()
@@ -341,14 +340,14 @@ path::_M_split_cmpts()
     bool saw_non_sep = !saw_sep_last;
     for (value_type c : _M_pathname)
       {
-	if (_S_is_dir_sep(c))
-	  saw_sep_last = true;
-	else if (saw_sep_last)
-	  {
-	    ++count;
-	    saw_sep_last = false;
-	    saw_non_sep = true;
-	  }
+       if (_S_is_dir_sep(c))
+         saw_sep_last = true;
+       else if (saw_sep_last)
+         {
+           ++count;
+           saw_sep_last = false;
+           saw_non_sep = true;
+         }
       }
     if (saw_non_sep && saw_sep_last)
       ++count; // empty filename after trailing slash
@@ -509,7 +508,7 @@ path::_S_convert_loc(const char* __first, const char* __last,
 }
 
 std::size_t
-fs::hash_value(const path& p) noexcept
+std::experimental::filesystem::hash_value(const path& p) noexcept
 {
   // [path.non-member]
   // "If for two paths, p1 == p2 then hash_value(p1) == hash_value(p2)."
@@ -525,29 +524,3 @@ fs::hash_value(const path& p) noexcept
     }
   return seed;
 }
-
-namespace std
-{
-_GLIBCXX_BEGIN_NAMESPACE_VERSION
-namespace filesystem
-{
-  extern string
-  fs_err_concat(const string& __what, const string& __path1,
-		const string& __path2);
-} // namespace filesystem
-
-namespace experimental::filesystem::v1 {
-_GLIBCXX_BEGIN_NAMESPACE_CXX11
-
-  std::string filesystem_error::_M_gen_what()
-  {
-    using std::filesystem::fs_err_concat;
-    return fs_err_concat(system_error::what(), _M_path1.native(),
-			 _M_path2.native());
-  }
-
-_GLIBCXX_END_NAMESPACE_CXX11
-} // namespace experimental::filesystem::v1
-
-_GLIBCXX_END_NAMESPACE_VERSION
-} // namespace std

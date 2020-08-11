@@ -1,5 +1,5 @@
 /* Operations with very long integers.  -*- C++ -*-
-   Copyright (C) 2012-2018 Free Software Foundation, Inc.
+   Copyright (C) 2012-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -150,23 +150,15 @@ along with GCC; see the file COPYING3.  If not see
    and in wider precisions.
 
    There are constructors to create the various forms of wide_int from
-   trees, rtl and constants.  For trees the options are:
+   trees, rtl and constants.  For trees you can simply say:
 
 	     tree t = ...;
-	     wi::to_wide (t)     // Treat T as a wide_int
-	     wi::to_offset (t)   // Treat T as an offset_int
-	     wi::to_widest (t)   // Treat T as a widest_int
+	     wide_int x = t;
 
-   All three are light-weight accessors that should have no overhead
-   in release builds.  If it is useful for readability reasons to
-   store the result in a temporary variable, the preferred method is:
-
-	     wi::tree_to_wide_ref twide = wi::to_wide (t);
-	     wi::tree_to_offset_ref toffset = wi::to_offset (t);
-	     wi::tree_to_widest_ref twidest = wi::to_widest (t);
-
-   To make an rtx into a wide_int, you have to pair it with a mode.
-   The canonical way to do this is with rtx_mode_t as in:
+   However, a little more syntax is required for rtl constants since
+   they do not have an explicit precision.  To make an rtl into a
+   wide_int, you have to pair it with a mode.  The canonical way to do
+   this is with rtx_mode_t as in:
 
 	     rtx r = ...
 	     wide_int x = rtx_mode_t (r, mode);
@@ -183,22 +175,23 @@ along with GCC; see the file COPYING3.  If not see
 	     offset_int x = (int) c;          // sign-extend C
 	     widest_int x = (unsigned int) c; // zero-extend C
 
-   It is also possible to do arithmetic directly on rtx_mode_ts and
+   It is also possible to do arithmetic directly on trees, rtxes and
    constants.  For example:
 
-	     wi::add (r1, r2);    // add equal-sized rtx_mode_ts r1 and r2
-	     wi::add (r1, 1);     // add 1 to rtx_mode_t r1
+	     wi::add (t1, t2);	  // add equal-sized INTEGER_CSTs t1 and t2
+	     wi::add (t1, 1);     // add 1 to INTEGER_CST t1
+	     wi::add (r1, r2);    // add equal-sized rtx constants r1 and r2
 	     wi::lshift (1, 100); // 1 << 100 as a widest_int
 
    Many binary operations place restrictions on the combinations of inputs,
    using the following rules:
 
-   - {rtx, wide_int} op {rtx, wide_int} -> wide_int
+   - {tree, rtx, wide_int} op {tree, rtx, wide_int} -> wide_int
        The inputs must be the same precision.  The result is a wide_int
        of the same precision
 
-   - {rtx, wide_int} op (un)signed HOST_WIDE_INT -> wide_int
-     (un)signed HOST_WIDE_INT op {rtx, wide_int} -> wide_int
+   - {tree, rtx, wide_int} op (un)signed HOST_WIDE_INT -> wide_int
+     (un)signed HOST_WIDE_INT op {tree, rtx, wide_int} -> wide_int
        The HOST_WIDE_INT is extended or truncated to the precision of
        the other input.  The result is a wide_int of the same precision
        as that input.
@@ -269,21 +262,10 @@ along with GCC; see the file COPYING3.  If not see
 #define WI_BINARY_RESULT(T1, T2) \
   typename wi::binary_traits <T1, T2>::result_type
 
-/* Likewise for binary operators, which excludes the case in which neither
-   T1 nor T2 is a wide-int-based type.  */
-#define WI_BINARY_OPERATOR_RESULT(T1, T2) \
-  typename wi::binary_traits <T1, T2>::operator_result
-
 /* The type of result produced by T1 << T2.  Leads to substitution failure
    if the operation isn't supported.  Defined purely for brevity.  */
 #define WI_SIGNED_SHIFT_RESULT(T1, T2) \
   typename wi::binary_traits <T1, T2>::signed_shift_result_type
-
-/* The type of result produced by a sign-agnostic binary predicate on
-   types T1 and T2.  This is bool if wide-int operations make sense for
-   T1 and T2 and leads to substitution failure otherwise.  */
-#define WI_BINARY_PREDICATE_RESULT(T1, T2) \
-  typename wi::binary_traits <T1, T2>::predicate_result
 
 /* The type of result produced by a signed binary predicate on types T1 and T2.
    This is bool if signed comparisons make sense for T1 and T2 and leads to
@@ -293,7 +275,7 @@ along with GCC; see the file COPYING3.  If not see
 
 /* The type of result produced by a unary operation on type T.  */
 #define WI_UNARY_RESULT(T) \
-  typename wi::binary_traits <T, T>::result_type
+  typename wi::unary_traits <T>::result_type
 
 /* Define a variable RESULT to hold the result of a binary operation on
    X and Y, which have types T1 and T2 respectively.  Define VAL to
@@ -323,9 +305,7 @@ typedef generic_wide_int <wide_int_storage> wide_int;
 typedef FIXED_WIDE_INT (ADDR_MAX_PRECISION) offset_int;
 typedef FIXED_WIDE_INT (WIDE_INT_MAX_PRECISION) widest_int;
 
-/* wi::storage_ref can be a reference to a primitive type,
-   so this is the conservatively-correct setting.  */
-template <bool SE, bool HDP = true>
+template <bool SE>
 struct wide_int_ref_storage;
 
 typedef generic_wide_int <wide_int_ref_storage <false> > wide_int_ref;
@@ -339,8 +319,7 @@ typedef generic_wide_int <wide_int_ref_storage <false> > wide_int_ref;
    to use those.  */
 #define WIDE_INT_REF_FOR(T) \
   generic_wide_int \
-    <wide_int_ref_storage <wi::int_traits <T>::is_sign_extended, \
-			   wi::int_traits <T>::host_dependent_precision> >
+    <wide_int_ref_storage <wi::int_traits <T>::is_sign_extended> >
 
 namespace wi
 {
@@ -390,6 +369,11 @@ namespace wi
 	    enum precision_type P2 = int_traits <T2>::precision_type>
   struct binary_traits;
 
+  /* The result of a unary operation on T is the same as the result of
+     a binary operation on two values of type T.  */
+  template <typename T>
+  struct unary_traits : public binary_traits <T, T> {};
+
   /* Specify the result type for each supported combination of binary
      inputs.  Note that CONST_PRECISION and VAR_PRECISION cannot be
      mixed, in order to give stronger type checking.  When both inputs
@@ -398,15 +382,12 @@ namespace wi
   struct binary_traits <T1, T2, FLEXIBLE_PRECISION, FLEXIBLE_PRECISION>
   {
     typedef widest_int result_type;
-    /* Don't define operators for this combination.  */
   };
 
   template <typename T1, typename T2>
   struct binary_traits <T1, T2, FLEXIBLE_PRECISION, VAR_PRECISION>
   {
     typedef wide_int result_type;
-    typedef result_type operator_result;
-    typedef bool predicate_result;
   };
 
   template <typename T1, typename T2>
@@ -416,9 +397,6 @@ namespace wi
        so as not to confuse gengtype.  */
     typedef generic_wide_int < fixed_wide_int_storage
 			       <int_traits <T2>::precision> > result_type;
-    typedef result_type operator_result;
-    typedef bool predicate_result;
-    typedef result_type signed_shift_result_type;
     typedef bool signed_predicate_result;
   };
 
@@ -426,8 +404,6 @@ namespace wi
   struct binary_traits <T1, T2, VAR_PRECISION, FLEXIBLE_PRECISION>
   {
     typedef wide_int result_type;
-    typedef result_type operator_result;
-    typedef bool predicate_result;
   };
 
   template <typename T1, typename T2>
@@ -437,8 +413,6 @@ namespace wi
        so as not to confuse gengtype.  */
     typedef generic_wide_int < fixed_wide_int_storage
 			       <int_traits <T1>::precision> > result_type;
-    typedef result_type operator_result;
-    typedef bool predicate_result;
     typedef result_type signed_shift_result_type;
     typedef bool signed_predicate_result;
   };
@@ -446,13 +420,11 @@ namespace wi
   template <typename T1, typename T2>
   struct binary_traits <T1, T2, CONST_PRECISION, CONST_PRECISION>
   {
-    STATIC_ASSERT (int_traits <T1>::precision == int_traits <T2>::precision);
     /* Spelled out explicitly (rather than through FIXED_WIDE_INT)
        so as not to confuse gengtype.  */
+    STATIC_ASSERT (int_traits <T1>::precision == int_traits <T2>::precision);
     typedef generic_wide_int < fixed_wide_int_storage
 			       <int_traits <T1>::precision> > result_type;
-    typedef result_type operator_result;
-    typedef bool predicate_result;
     typedef result_type signed_shift_result_type;
     typedef bool signed_predicate_result;
   };
@@ -461,8 +433,6 @@ namespace wi
   struct binary_traits <T1, T2, VAR_PRECISION, VAR_PRECISION>
   {
     typedef wide_int result_type;
-    typedef result_type operator_result;
-    typedef bool predicate_result;
   };
 }
 
@@ -557,7 +527,6 @@ namespace wi
   BINARY_FUNCTION udiv_floor (const T1 &, const T2 &);
   BINARY_FUNCTION sdiv_floor (const T1 &, const T2 &);
   BINARY_FUNCTION div_ceil (const T1 &, const T2 &, signop, bool * = 0);
-  BINARY_FUNCTION udiv_ceil (const T1 &, const T2 &);
   BINARY_FUNCTION div_round (const T1 &, const T2 &, signop, bool * = 0);
   BINARY_FUNCTION divmod_trunc (const T1 &, const T2 &, signop,
 				WI_BINARY_RESULT (T1, T2) *);
@@ -614,7 +583,6 @@ namespace wi
      access.  */
   struct storage_ref
   {
-    storage_ref () {}
     storage_ref (const HOST_WIDE_INT *, unsigned int, unsigned int);
 
     const HOST_WIDE_INT *val;
@@ -707,6 +675,18 @@ public:
   template <typename T>
   generic_wide_int &operator = (const T &);
 
+#define BINARY_PREDICATE(OP, F) \
+  template <typename T> \
+  bool OP (const T &c) const { return wi::F (*this, c); }
+
+#define UNARY_OPERATOR(OP, F) \
+  WI_UNARY_RESULT (generic_wide_int) OP () const { return wi::F (*this); }
+
+#define BINARY_OPERATOR(OP, F) \
+  template <typename T> \
+    WI_BINARY_RESULT (generic_wide_int, T) \
+    OP (const T &c) const { return wi::F (*this, c); }
+
 #define ASSIGNMENT_OPERATOR(OP, F) \
   template <typename T> \
     generic_wide_int &OP (const T &c) { return (*this = wi::F (*this, c)); }
@@ -719,17 +699,32 @@ public:
 #define INCDEC_OPERATOR(OP, DELTA) \
   generic_wide_int &OP () { *this += DELTA; return *this; }
 
+  UNARY_OPERATOR (operator ~, bit_not)
+  UNARY_OPERATOR (operator -, neg)
+  BINARY_PREDICATE (operator ==, eq_p)
+  BINARY_PREDICATE (operator !=, ne_p)
+  BINARY_OPERATOR (operator &, bit_and)
+  BINARY_OPERATOR (and_not, bit_and_not)
+  BINARY_OPERATOR (operator |, bit_or)
+  BINARY_OPERATOR (or_not, bit_or_not)
+  BINARY_OPERATOR (operator ^, bit_xor)
+  BINARY_OPERATOR (operator +, add)
+  BINARY_OPERATOR (operator -, sub)
+  BINARY_OPERATOR (operator *, mul)
   ASSIGNMENT_OPERATOR (operator &=, bit_and)
   ASSIGNMENT_OPERATOR (operator |=, bit_or)
   ASSIGNMENT_OPERATOR (operator ^=, bit_xor)
   ASSIGNMENT_OPERATOR (operator +=, add)
   ASSIGNMENT_OPERATOR (operator -=, sub)
   ASSIGNMENT_OPERATOR (operator *=, mul)
-  ASSIGNMENT_OPERATOR (operator <<=, lshift)
+  SHIFT_ASSIGNMENT_OPERATOR (operator <<=, <<)
   SHIFT_ASSIGNMENT_OPERATOR (operator >>=, >>)
   INCDEC_OPERATOR (operator ++, 1)
   INCDEC_OPERATOR (operator --, -1)
 
+#undef BINARY_PREDICATE
+#undef UNARY_OPERATOR
+#undef BINARY_OPERATOR
 #undef SHIFT_ASSIGNMENT_OPERATOR
 #undef ASSIGNMENT_OPERATOR
 #undef INCDEC_OPERATOR
@@ -937,7 +932,7 @@ decompose (HOST_WIDE_INT *, unsigned int precision,
 /* Provide the storage for a wide_int_ref.  This acts like a read-only
    wide_int, with the optimization that VAL is normally a pointer to
    another integer's storage, so that no array copy is needed.  */
-template <bool SE, bool HDP>
+template <bool SE>
 struct wide_int_ref_storage : public wi::storage_ref
 {
 private:
@@ -946,8 +941,6 @@ private:
   HOST_WIDE_INT scratch[2];
 
 public:
-  wide_int_ref_storage () {}
-
   wide_int_ref_storage (const wi::storage_ref &);
 
   template <typename T>
@@ -958,8 +951,8 @@ public:
 };
 
 /* Create a reference from an existing reference.  */
-template <bool SE, bool HDP>
-inline wide_int_ref_storage <SE, HDP>::
+template <bool SE>
+inline wide_int_ref_storage <SE>::
 wide_int_ref_storage (const wi::storage_ref &x)
   : storage_ref (x)
 {}
@@ -967,30 +960,32 @@ wide_int_ref_storage (const wi::storage_ref &x)
 /* Create a reference to integer X in its natural precision.  Note
    that the natural precision is host-dependent for primitive
    types.  */
-template <bool SE, bool HDP>
+template <bool SE>
 template <typename T>
-inline wide_int_ref_storage <SE, HDP>::wide_int_ref_storage (const T &x)
+inline wide_int_ref_storage <SE>::wide_int_ref_storage (const T &x)
   : storage_ref (wi::int_traits <T>::decompose (scratch,
 						wi::get_precision (x), x))
 {
 }
 
 /* Create a reference to integer X in precision PRECISION.  */
-template <bool SE, bool HDP>
+template <bool SE>
 template <typename T>
-inline wide_int_ref_storage <SE, HDP>::
-wide_int_ref_storage (const T &x, unsigned int precision)
+inline wide_int_ref_storage <SE>::wide_int_ref_storage (const T &x,
+							unsigned int precision)
   : storage_ref (wi::int_traits <T>::decompose (scratch, precision, x))
 {
 }
 
 namespace wi
 {
-  template <bool SE, bool HDP>
-  struct int_traits <wide_int_ref_storage <SE, HDP> >
+  template <bool SE>
+  struct int_traits <wide_int_ref_storage <SE> >
   {
     static const enum precision_type precision_type = VAR_PRECISION;
-    static const bool host_dependent_precision = HDP;
+    /* wi::storage_ref can be a reference to a primitive type,
+       so this is the conservatively-correct setting.  */
+    static const bool host_dependent_precision = true;
     static const bool is_sign_extended = SE;
   };
 }
@@ -1327,7 +1322,7 @@ namespace wi
    bytes beyond the sizeof need to be allocated.  Use set_precision
    to initialize the structure.  */
 template <int N>
-class GTY((user)) trailing_wide_ints
+class GTY(()) trailing_wide_ints
 {
 private:
   /* The shared precision of each number.  */
@@ -1344,14 +1339,9 @@ private:
   HOST_WIDE_INT m_val[1];
 
 public:
-  typedef WIDE_INT_REF_FOR (trailing_wide_int_storage) const_reference;
-
   void set_precision (unsigned int);
-  unsigned int get_precision () const { return m_precision; }
   trailing_wide_int operator [] (unsigned int);
-  const_reference operator [] (unsigned int) const;
   static size_t extra_size (unsigned int);
-  size_t extra_size () const { return extra_size (m_precision); }
 };
 
 inline trailing_wide_int_storage::
@@ -1423,14 +1413,6 @@ trailing_wide_ints <N>::operator [] (unsigned int index)
 				    &m_val[index * m_max_len]);
 }
 
-template <int N>
-inline typename trailing_wide_ints <N>::const_reference
-trailing_wide_ints <N>::operator [] (unsigned int index) const
-{
-  return wi::storage_ref (&m_val[index * m_max_len],
-			  m_len[index], m_precision);
-}
-
 /* Return how many extra bytes need to be added to the end of the structure
    in order to handle N wide_ints of precision PRECISION.  */
 template <int N>
@@ -1486,14 +1468,6 @@ wi::primitive_int_traits <T, signed_p>::decompose (HOST_WIDE_INT *scratch,
 namespace wi
 {
   template <>
-  struct int_traits <unsigned char>
-    : public primitive_int_traits <unsigned char, false> {};
-
-  template <>
-  struct int_traits <unsigned short>
-    : public primitive_int_traits <unsigned short, false> {};
-
-  template <>
   struct int_traits <int>
     : public primitive_int_traits <int, true> {};
 
@@ -1526,7 +1500,6 @@ namespace wi
      and precision PRECISION.  */
   struct hwi_with_prec
   {
-    hwi_with_prec () {}
     hwi_with_prec (HOST_WIDE_INT, unsigned int, signop);
     HOST_WIDE_INT val;
     unsigned int precision;
@@ -1544,12 +1517,8 @@ namespace wi
 
 inline wi::hwi_with_prec::hwi_with_prec (HOST_WIDE_INT v, unsigned int p,
 					 signop s)
-  : precision (p), sgn (s)
+  : val (v), precision (p), sgn (s)
 {
-  if (precision < HOST_BITS_PER_WIDE_INT)
-    val = sext_hwi (v, precision);
-  else
-    val = v;
 }
 
 /* Return a signed integer that has value VAL and precision PRECISION.  */
@@ -1592,30 +1561,6 @@ inline wi::hwi_with_prec
 wi::two (unsigned int precision)
 {
   return wi::shwi (2, precision);
-}
-
-namespace wi
-{
-  /* ints_for<T>::zero (X) returns a zero that, when asssigned to a T,
-     gives that T the same precision as X.  */
-  template<typename T, precision_type = int_traits<T>::precision_type>
-  struct ints_for
-  {
-    static int zero (const T &) { return 0; }
-  };
-
-  template<typename T>
-  struct ints_for<T, VAR_PRECISION>
-  {
-    static hwi_with_prec zero (const T &);
-  };
-}
-
-template<typename T>
-inline wi::hwi_with_prec
-wi::ints_for<T, wi::VAR_PRECISION>::zero (const T &x)
-{
-  return wi::zero (wi::get_precision (x));
 }
 
 namespace wi
@@ -2678,14 +2623,6 @@ wi::div_ceil (const T1 &x, const T2 &y, signop sgn, bool *overflow)
   return quotient;
 }
 
-/* Return X / Y, rouding towards +inf.  Treat X and Y as unsigned values.  */
-template <typename T1, typename T2>
-inline WI_BINARY_RESULT (T1, T2)
-wi::udiv_ceil (const T1 &x, const T2 &y)
-{
-  return div_ceil (x, y, UNSIGNED);
-}
-
 /* Return X / Y, rouding towards nearest with ties away from zero.
    Treat X and Y as having the signedness given by SGN.  Indicate
    in *OVERFLOW if the result overflows.  */
@@ -3174,74 +3111,18 @@ SIGNED_BINARY_PREDICATE (operator >=, ges_p)
 
 #undef SIGNED_BINARY_PREDICATE
 
-#define UNARY_OPERATOR(OP, F) \
-  template<typename T> \
-  WI_UNARY_RESULT (generic_wide_int<T>) \
-  OP (const generic_wide_int<T> &x) \
-  { \
-    return wi::F (x); \
-  }
-
-#define BINARY_PREDICATE(OP, F) \
-  template<typename T1, typename T2> \
-  WI_BINARY_PREDICATE_RESULT (T1, T2) \
-  OP (const T1 &x, const T2 &y) \
-  { \
-    return wi::F (x, y); \
-  }
-
-#define BINARY_OPERATOR(OP, F) \
-  template<typename T1, typename T2> \
-  WI_BINARY_OPERATOR_RESULT (T1, T2) \
-  OP (const T1 &x, const T2 &y) \
-  { \
-    return wi::F (x, y); \
-  }
-
-#define SHIFT_OPERATOR(OP, F) \
-  template<typename T1, typename T2> \
-  WI_BINARY_OPERATOR_RESULT (T1, T1) \
-  OP (const T1 &x, const T2 &y) \
-  { \
-    return wi::F (x, y); \
-  }
-
-UNARY_OPERATOR (operator ~, bit_not)
-UNARY_OPERATOR (operator -, neg)
-BINARY_PREDICATE (operator ==, eq_p)
-BINARY_PREDICATE (operator !=, ne_p)
-BINARY_OPERATOR (operator &, bit_and)
-BINARY_OPERATOR (operator |, bit_or)
-BINARY_OPERATOR (operator ^, bit_xor)
-BINARY_OPERATOR (operator +, add)
-BINARY_OPERATOR (operator -, sub)
-BINARY_OPERATOR (operator *, mul)
-SHIFT_OPERATOR (operator <<, lshift)
-
-#undef UNARY_OPERATOR
-#undef BINARY_PREDICATE
-#undef BINARY_OPERATOR
-#undef SHIFT_OPERATOR
+template <typename T1, typename T2>
+inline WI_SIGNED_SHIFT_RESULT (T1, T2)
+operator << (const T1 &x, const T2 &y)
+{
+  return wi::lshift (x, y);
+}
 
 template <typename T1, typename T2>
 inline WI_SIGNED_SHIFT_RESULT (T1, T2)
 operator >> (const T1 &x, const T2 &y)
 {
   return wi::arshift (x, y);
-}
-
-template <typename T1, typename T2>
-inline WI_SIGNED_SHIFT_RESULT (T1, T2)
-operator / (const T1 &x, const T2 &y)
-{
-  return wi::sdiv_trunc (x, y);
-}
-
-template <typename T1, typename T2>
-inline WI_SIGNED_SHIFT_RESULT (T1, T2)
-operator % (const T1 &x, const T2 &y)
-{
-  return wi::smod_trunc (x, y);
 }
 
 template<typename T>
@@ -3308,8 +3189,6 @@ namespace wi
   wide_int set_bit_in_zero (unsigned int, unsigned int);
   wide_int insert (const wide_int &x, const wide_int &y, unsigned int,
 		   unsigned int);
-  wide_int round_down_for_mask (const wide_int &, const wide_int &);
-  wide_int round_up_for_mask (const wide_int &, const wide_int &);
 
   template <typename T>
   T mask (unsigned int, bool);

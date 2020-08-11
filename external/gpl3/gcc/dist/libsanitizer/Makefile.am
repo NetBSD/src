@@ -17,8 +17,7 @@ endif
 SUBDIRS += lsan asan ubsan
 nodist_saninclude_HEADERS += \
   include/sanitizer/lsan_interface.h \
-  include/sanitizer/asan_interface.h \
-  include/sanitizer/tsan_interface.h
+  include/sanitizer/asan_interface.h
 if TSAN_SUPPORTED
 SUBDIRS += tsan
 endif

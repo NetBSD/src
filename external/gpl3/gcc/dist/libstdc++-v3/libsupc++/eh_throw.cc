@@ -1,5 +1,5 @@
 // -*- C++ -*- Exception handling routines for throwing.
-// Copyright (C) 2001-2018 Free Software Foundation, Inc.
+// Copyright (C) 2001-2017 Free Software Foundation, Inc.
 //
 // This file is part of GCC.
 //
@@ -53,10 +53,8 @@ __gxx_exception_cleanup (_Unwind_Reason_Code code, _Unwind_Exception *exc)
 }
 
 extern "C" __cxa_refcounted_exception*
-__cxxabiv1::
-__cxa_init_primary_exception(void *obj, std::type_info *tinfo,
-			     void (_GLIBCXX_CDTOR_CALLABI *dest) (void *))
-_GLIBCXX_NOTHROW
+__cxxabiv1::__cxa_init_primary_exception(void *obj, std::type_info *tinfo,
+                                         void (_GLIBCXX_CDTOR_CALLABI *dest) (void *))
 {
   __cxa_refcounted_exception *header
     = __get_refcounted_exception_header_from_obj (obj);

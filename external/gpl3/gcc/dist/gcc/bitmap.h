@@ -1,5 +1,5 @@
 /* Functions to support general ended bitmaps.
-   Copyright (C) 1997-2018 Free Software Foundation, Inc.
+   Copyright (C) 1997-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -335,19 +335,20 @@ extern void dump_bitmap_statistics (void);
    to allocate from, NULL for GC'd bitmap.  */
 
 static inline void
-bitmap_initialize (bitmap head, bitmap_obstack *obstack CXX_MEM_STAT_INFO)
+bitmap_initialize_stat (bitmap head, bitmap_obstack *obstack MEM_STAT_DECL)
 {
   head->first = head->current = NULL;
   head->obstack = obstack;
   if (GATHER_STATISTICS)
     bitmap_register (head PASS_MEM_STAT);
 }
+#define bitmap_initialize(h,o) bitmap_initialize_stat (h,o MEM_STAT_INFO)
 
 /* Allocate and free bitmaps from obstack, malloc and gc'd memory.  */
-extern bitmap bitmap_alloc (bitmap_obstack *obstack CXX_MEM_STAT_INFO);
-#define BITMAP_ALLOC bitmap_alloc
-extern bitmap bitmap_gc_alloc (ALONE_CXX_MEM_STAT_INFO);
-#define BITMAP_GGC_ALLOC bitmap_gc_alloc
+extern bitmap bitmap_obstack_alloc_stat (bitmap_obstack *obstack MEM_STAT_DECL);
+#define bitmap_obstack_alloc(t) bitmap_obstack_alloc_stat (t MEM_STAT_INFO)
+extern bitmap bitmap_gc_alloc_stat (ALONE_MEM_STAT_DECL);
+#define bitmap_gc_alloc() bitmap_gc_alloc_stat (ALONE_MEM_STAT_INFO)
 extern void bitmap_obstack_free (bitmap);
 
 /* A few compatibility/functions macros for compatibility with sbitmaps */
@@ -363,6 +364,12 @@ extern unsigned bitmap_last_set_bit (const_bitmap);
 
 /* Compute bitmap hash (for purposes of hashing etc.)  */
 extern hashval_t bitmap_hash (const_bitmap);
+
+/* Allocate a bitmap from a bit obstack.  */
+#define BITMAP_ALLOC(OBSTACK) bitmap_obstack_alloc (OBSTACK)
+
+/* Allocate a gc'd bitmap.  */
+#define BITMAP_GGC_ALLOC() bitmap_gc_alloc ()
 
 /* Do any cleanup needed on a bitmap when it is no longer used.  */
 #define BITMAP_FREE(BITMAP) \
@@ -799,11 +806,10 @@ bmp_iter_and_compl (bitmap_iterator *bi, unsigned *bit_no)
 class auto_bitmap
 {
  public:
-  auto_bitmap () { bitmap_initialize (&m_bits, &bitmap_default_obstack); }
-  explicit auto_bitmap (bitmap_obstack *o) { bitmap_initialize (&m_bits, o); }
-  ~auto_bitmap () { bitmap_clear (&m_bits); }
+  auto_bitmap () { bits = BITMAP_ALLOC (NULL); }
+  ~auto_bitmap () { BITMAP_FREE (bits); }
   // Allow calling bitmap functions on our bitmap.
-  operator bitmap () { return &m_bits; }
+  operator bitmap () { return bits; }
 
  private:
   // Prevent making a copy that references our bitmap.
@@ -814,7 +820,7 @@ class auto_bitmap
   auto_bitmap &operator = (auto_bitmap &&);
 #endif
 
-  bitmap_head m_bits;
+  bitmap bits;
 };
 
 #endif /* GCC_BITMAP_H */

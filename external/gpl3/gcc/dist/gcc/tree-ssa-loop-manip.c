@@ -1,5 +1,5 @@
 /* High-level loop manipulation functions.
-   Copyright (C) 2004-2018 Free Software Foundation, Inc.
+   Copyright (C) 2004-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -690,59 +690,48 @@ rewrite_virtuals_into_loop_closed_ssa (struct loop *loop)
   rewrite_into_loop_closed_ssa_1 (NULL, 0, SSA_OP_VIRTUAL_USES, loop);
 }
 
-/* Check invariants of the loop closed ssa form for the def in DEF_BB.  */
+/* Check invariants of the loop closed ssa form for the USE in BB.  */
 
 static void
-check_loop_closed_ssa_def (basic_block def_bb, tree def)
+check_loop_closed_ssa_use (basic_block bb, tree use)
 {
-  use_operand_p use_p;
-  imm_use_iterator iterator;
-  FOR_EACH_IMM_USE_FAST (use_p, iterator, def)
-    {
-      if (is_gimple_debug (USE_STMT (use_p)))
-	continue;
+  gimple *def;
+  basic_block def_bb;
 
-      basic_block use_bb = gimple_bb (USE_STMT (use_p));
-      if (is_a <gphi *> (USE_STMT (use_p)))
-	use_bb = EDGE_PRED (use_bb, PHI_ARG_INDEX_FROM_USE (use_p))->src;
+  if (TREE_CODE (use) != SSA_NAME || virtual_operand_p (use))
+    return;
 
-      gcc_assert (flow_bb_inside_loop_p (def_bb->loop_father, use_bb));
-    }
+  def = SSA_NAME_DEF_STMT (use);
+  def_bb = gimple_bb (def);
+  gcc_assert (!def_bb
+	      || flow_bb_inside_loop_p (def_bb->loop_father, bb));
 }
 
-/* Checks invariants of loop closed ssa form in BB.  */
+/* Checks invariants of loop closed ssa form in statement STMT in BB.  */
 
 static void
-check_loop_closed_ssa_bb (basic_block bb)
+check_loop_closed_ssa_stmt (basic_block bb, gimple *stmt)
 {
-  for (gphi_iterator bsi = gsi_start_phis (bb); !gsi_end_p (bsi);
-       gsi_next (&bsi))
-    {
-      gphi *phi = bsi.phi ();
+  ssa_op_iter iter;
+  tree var;
 
-      if (!virtual_operand_p (PHI_RESULT (phi)))
-	check_loop_closed_ssa_def (bb, PHI_RESULT (phi));
-    }
+  if (is_gimple_debug (stmt))
+    return;
 
-  for (gimple_stmt_iterator bsi = gsi_start_nondebug_bb (bb); !gsi_end_p (bsi);
-       gsi_next_nondebug (&bsi))
-    {
-      ssa_op_iter iter;
-      tree var;
-      gimple *stmt = gsi_stmt (bsi);
-
-      FOR_EACH_SSA_TREE_OPERAND (var, stmt, iter, SSA_OP_DEF)
-	check_loop_closed_ssa_def (bb, var);
-    }
+  FOR_EACH_SSA_TREE_OPERAND (var, stmt, iter, SSA_OP_USE)
+    check_loop_closed_ssa_use (bb, var);
 }
 
 /* Checks that invariants of the loop closed ssa form are preserved.
-   Call verify_ssa when VERIFY_SSA_P is true.  Note all loops are checked
-   if LOOP is NULL, otherwise, only LOOP is checked.  */
+   Call verify_ssa when VERIFY_SSA_P is true.  */
 
 DEBUG_FUNCTION void
-verify_loop_closed_ssa (bool verify_ssa_p, struct loop *loop)
+verify_loop_closed_ssa (bool verify_ssa_p)
 {
+  basic_block bb;
+  edge e;
+  edge_iterator ei;
+
   if (number_of_loops (cfun) <= 1)
     return;
 
@@ -751,22 +740,20 @@ verify_loop_closed_ssa (bool verify_ssa_p, struct loop *loop)
 
   timevar_push (TV_VERIFY_LOOP_CLOSED);
 
-  if (loop == NULL)
+  FOR_EACH_BB_FN (bb, cfun)
     {
-      basic_block bb;
+      for (gphi_iterator bsi = gsi_start_phis (bb); !gsi_end_p (bsi);
+	   gsi_next (&bsi))
+	{
+	  gphi *phi = bsi.phi ();
+	  FOR_EACH_EDGE (e, ei, bb->preds)
+	    check_loop_closed_ssa_use (e->src,
+				       PHI_ARG_DEF_FROM_EDGE (phi, e));
+	}
 
-      FOR_EACH_BB_FN (bb, cfun)
-	if (bb->loop_father && bb->loop_father->num > 0)
-	  check_loop_closed_ssa_bb (bb);
-    }
-  else
-    {
-      basic_block *bbs = get_loop_body (loop);
-
-      for (unsigned i = 0; i < loop->num_nodes; ++i)
-	check_loop_closed_ssa_bb (bbs[i]);
-
-      free (bbs);
+      for (gimple_stmt_iterator bsi = gsi_start_bb (bb); !gsi_end_p (bsi);
+	   gsi_next (&bsi))
+	check_loop_closed_ssa_stmt (bb, gsi_stmt (bsi));
     }
 
   timevar_pop (TV_VERIFY_LOOP_CLOSED);
@@ -1091,11 +1078,11 @@ determine_exit_conditions (struct loop *loop, struct tree_niter_desc *desc,
 
 static void
 scale_dominated_blocks_in_loop (struct loop *loop, basic_block bb,
-				profile_count num, profile_count den)
+				int num, int den)
 {
   basic_block son;
 
-  if (!den.nonzero_p () && !(num == profile_count::zero ()))
+  if (den == 0)
     return;
 
   for (son = first_dom_son (CDI_DOMINATORS, bb);
@@ -1104,7 +1091,7 @@ scale_dominated_blocks_in_loop (struct loop *loop, basic_block bb,
     {
       if (!flow_bb_inside_loop_p (loop, son))
 	continue;
-      scale_bbs_frequencies_profile_count (&son, 1, num, den);
+      scale_bbs_frequencies_int (&son, 1, num, den);
       scale_dominated_blocks_in_loop (loop, son, num, den);
     }
 }
@@ -1117,13 +1104,7 @@ niter_for_unrolled_loop (struct loop *loop, unsigned factor)
   gcc_assert (factor != 0);
   bool profile_p = false;
   gcov_type est_niter = expected_loop_iterations_unbounded (loop, &profile_p);
-  /* Note that this is really CEIL (est_niter + 1, factor) - 1, where the
-     "+ 1" converts latch iterations to loop iterations and the "- 1"
-     converts back.  */
   gcov_type new_est_niter = est_niter / factor;
-
-  if (est_niter == -1)
-    return -1;
 
   /* Without profile feedback, loops for which we do not know a better estimate
      are assumed to roll 10 times.  When we unroll such loop, it appears to
@@ -1137,15 +1118,6 @@ niter_for_unrolled_loop (struct loop *loop, unsigned factor)
 	new_est_niter = est_niter;
       else
 	new_est_niter = 5;
-    }
-
-  if (loop->any_upper_bound)
-    {
-      /* As above, this is really CEIL (upper_bound + 1, factor) - 1.  */
-      widest_int bound = wi::udiv_floor (loop->nb_iterations_upper_bound,
-					 factor);
-      if (wi::ltu_p (bound, new_est_niter))
-	new_est_niter = bound.to_uhwi ();
     }
 
   return new_est_niter;
@@ -1228,9 +1200,8 @@ tree_transform_and_unroll_loop (struct loop *loop, unsigned factor,
   gimple_stmt_iterator bsi;
   use_operand_p op;
   bool ok;
-  unsigned i;
-  profile_probability prob, prob_entry, scale_unrolled;
-  profile_count freq_e, freq_h;
+  unsigned i, prob, prob_entry, scale_unrolled, scale_rest;
+  gcov_type freq_e, freq_h;
   gcov_type new_est_niter = niter_for_unrolled_loop (loop, factor);
   unsigned irr = loop_preheader_edge (loop)->flags & EDGE_IRREDUCIBLE_LOOP;
   auto_vec<edge> to_remove;
@@ -1241,10 +1212,9 @@ tree_transform_and_unroll_loop (struct loop *loop, unsigned factor,
 
   /* Let us assume that the unrolled loop is quite likely to be entered.  */
   if (integer_nonzerop (enter_main_cond))
-    prob_entry = profile_probability::always ();
+    prob_entry = REG_BR_PROB_BASE;
   else
-    prob_entry = profile_probability::guessed_always ()
-			.apply_scale (PROB_UNROLLED_LOOP_ENTERED, 100);
+    prob_entry = PROB_UNROLLED_LOOP_ENTERED * REG_BR_PROB_BASE / 100;
 
   /* The values for scales should keep profile consistent, and somewhat close
      to correct.
@@ -1259,11 +1229,11 @@ tree_transform_and_unroll_loop (struct loop *loop, unsigned factor,
      of this change (scale the frequencies of blocks before and after the exit
      by appropriate factors).  */
   scale_unrolled = prob_entry;
+  scale_rest = REG_BR_PROB_BASE;
 
-  new_loop = loop_version (loop, enter_main_cond, NULL, prob_entry,
-			   prob_entry.invert (), scale_unrolled,
-			   profile_probability::guessed_always (),
-			   true);
+  new_loop = loop_version (loop, enter_main_cond, NULL,
+			   prob_entry, REG_BR_PROB_BASE - prob_entry,
+			   scale_unrolled, scale_rest, true);
   gcc_assert (new_loop != NULL);
   update_ssa (TODO_update_ssa);
 
@@ -1277,14 +1247,9 @@ tree_transform_and_unroll_loop (struct loop *loop, unsigned factor,
   /* Since the exit edge will be removed, the frequency of all the blocks
      in the loop that are dominated by it must be scaled by
      1 / (1 - exit->probability).  */
-  if (exit->probability.initialized_p ())
-    scale_dominated_blocks_in_loop (loop, exit->src,
-				    /* We are scaling up here so probability
-				       does not fit.  */
-				    loop->header->count,
-				    loop->header->count
-				    - loop->header->count.apply_probability
-					 (exit->probability));
+  scale_dominated_blocks_in_loop (loop, exit->src,
+				  REG_BR_PROB_BASE,
+				  REG_BR_PROB_BASE - exit->probability);
 
   bsi = gsi_last_bb (exit_bb);
   exit_if = gimple_build_cond (EQ_EXPR, integer_zero_node,
@@ -1298,12 +1263,16 @@ tree_transform_and_unroll_loop (struct loop *loop, unsigned factor,
   /* Set the probability of new exit to the same of the old one.  Fix
      the frequency of the latch block, by scaling it back by
      1 - exit->probability.  */
+  new_exit->count = exit->count;
   new_exit->probability = exit->probability;
   new_nonexit = single_pred_edge (loop->latch);
-  new_nonexit->probability = exit->probability.invert ();
+  new_nonexit->probability = REG_BR_PROB_BASE - exit->probability;
   new_nonexit->flags = EDGE_TRUE_VALUE;
-  if (new_nonexit->probability.initialized_p ())
-    scale_bbs_frequencies (&loop->latch, 1, new_nonexit->probability);
+  new_nonexit->count -= exit->count;
+  if (new_nonexit->count < 0)
+    new_nonexit->count = 0;
+  scale_bbs_frequencies_int (&loop->latch, 1, new_nonexit->probability,
+			     REG_BR_PROB_BASE);
 
   old_entry = loop_preheader_edge (loop);
   new_entry = loop_preheader_edge (new_loop);
@@ -1373,29 +1342,41 @@ tree_transform_and_unroll_loop (struct loop *loop, unsigned factor,
      exit edge.  */
 
   freq_h = loop->header->count;
-  freq_e = (loop_preheader_edge (loop))->count ();
-  if (freq_h.nonzero_p ())
+  freq_e = (loop_preheader_edge (loop))->count;
+  /* Use frequency only if counts are zero.  */
+  if (freq_h == 0 && freq_e == 0)
     {
+      freq_h = loop->header->frequency;
+      freq_e = EDGE_FREQUENCY (loop_preheader_edge (loop));
+    }
+  if (freq_h != 0)
+    {
+      gcov_type scale;
       /* Avoid dropping loop body profile counter to 0 because of zero count
 	 in loop's preheader.  */
-      if (freq_h.nonzero_p () && !(freq_e == profile_count::zero ()))
-        freq_e = freq_e.force_nonzero ();
-      scale_loop_frequencies (loop, freq_e.probability_in (freq_h));
+      freq_e = MAX (freq_e, 1);
+      /* This should not overflow.  */
+      scale = GCOV_COMPUTE_SCALE (freq_e * (new_est_niter + 1), freq_h);
+      scale_loop_frequencies (loop, scale, REG_BR_PROB_BASE);
     }
 
   exit_bb = single_pred (loop->latch);
   new_exit = find_edge (exit_bb, rest);
-  new_exit->probability = profile_probability::always ()
-				.apply_scale (1, new_est_niter + 1);
+  new_exit->count = loop_preheader_edge (loop)->count;
+  new_exit->probability = REG_BR_PROB_BASE / (new_est_niter + 1);
 
-  rest->count += new_exit->count ();
+  rest->count += new_exit->count;
+  rest->frequency += EDGE_FREQUENCY (new_exit);
 
   new_nonexit = single_pred_edge (loop->latch);
   prob = new_nonexit->probability;
-  new_nonexit->probability = new_exit->probability.invert ();
-  prob = new_nonexit->probability / prob;
-  if (prob.initialized_p ())
-    scale_bbs_frequencies (&loop->latch, 1, prob);
+  new_nonexit->probability = REG_BR_PROB_BASE - new_exit->probability;
+  new_nonexit->count = exit_bb->count - new_exit->count;
+  if (new_nonexit->count < 0)
+    new_nonexit->count = 0;
+  if (prob > 0)
+    scale_bbs_frequencies_int (&loop->latch, 1, new_nonexit->probability,
+			       prob);
 
   /* Finally create the new counter for number of iterations and add the new
      exit instruction.  */
@@ -1410,8 +1391,7 @@ tree_transform_and_unroll_loop (struct loop *loop, unsigned factor,
 
   checking_verify_flow_info ();
   checking_verify_loop_structure ();
-  checking_verify_loop_closed_ssa (true, loop);
-  checking_verify_loop_closed_ssa (true, new_loop);
+  checking_verify_loop_closed_ssa (true);
 }
 
 /* Wrapper over tree_transform_and_unroll_loop for case we do not
@@ -1512,6 +1492,7 @@ canonicalize_loop_ivs (struct loop *loop, tree *nit, bool bump_in_latch)
   gcond *stmt;
   edge exit = single_dom_exit (loop);
   gimple_seq stmts;
+  machine_mode mode;
   bool unsigned_p = false;
 
   for (psi = gsi_start_phis (loop->header);
@@ -1538,7 +1519,7 @@ canonicalize_loop_ivs (struct loop *loop, tree *nit, bool bump_in_latch)
       precision = TYPE_PRECISION (type);
     }
 
-  scalar_int_mode mode = smallest_int_mode_for_size (precision);
+  mode = smallest_mode_for_size (precision, MODE_INT);
   precision = GET_MODE_PRECISION (mode);
   type = build_nonstandard_integer_type (precision, unsigned_p);
 

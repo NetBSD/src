@@ -1,5 +1,5 @@
 /* Symbol table.
-   Copyright (C) 2012-2018 Free Software Foundation, Inc.
+   Copyright (C) 2012-2017 Free Software Foundation, Inc.
    Contributed by Jan Hubicka
 
 This file is part of GCC.
@@ -35,8 +35,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "output.h"
 #include "ipa-utils.h"
 #include "calls.h"
-#include "stringpool.h"
-#include "attribs.h"
 #include "builtins.h"
 
 static const char *ipa_ref_use_name[] = {"read","write","addr","alias","chkp"};
@@ -299,7 +297,7 @@ symbol_table::change_decl_assembler_name (tree decl, tree name)
       const char *old_name = IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl));
       if (TREE_SYMBOL_REFERENCED (DECL_ASSEMBLER_NAME (decl))
 	  && DECL_RTL_SET_P (decl))
-	warning (0, "%qD renamed after being referenced in assembly", decl);
+	warning (0, "%D renamed after being referenced in assembly", decl);
 
       SET_DECL_ASSEMBLER_NAME (decl, name);
       if (alias)
@@ -523,31 +521,6 @@ symtab_node::name () const
         return "<unnamed>";
     }
   return lang_hooks.decl_printable_name (decl, 2);
-}
-
-const char *
-symtab_node::get_dump_name (bool asm_name_p) const
-{
-#define EXTRA 16
-  const char *fname = asm_name_p ? asm_name () : name ();
-  unsigned l = strlen (fname);
-
-  char *s = (char *)ggc_internal_cleared_alloc (l + EXTRA);
-  snprintf (s, l + EXTRA, "%s/%d", fname, order);
-
-  return s;
-}
-
-const char *
-symtab_node::dump_name () const
-{
-  return get_dump_name (false);
-}
-
-const char *
-symtab_node::dump_asm_name () const
-{
-  return get_dump_name (true);
 }
 
 /* Return ipa reference from this symtab_node to
@@ -779,8 +752,9 @@ symtab_node::dump_references (FILE *file)
   int i;
   for (i = 0; iterate_reference (i, ref); i++)
     {
-      fprintf (file, "%s (%s)",
-	       ref->referred->dump_asm_name (),
+      fprintf (file, "%s/%i (%s)",
+               ref->referred->asm_name (),
+               ref->referred->order,
 	       ipa_ref_use_name [ref->use]);
       if (ref->speculative)
 	fprintf (file, " (speculative)");
@@ -797,8 +771,9 @@ symtab_node::dump_referring (FILE *file)
   int i;
   for (i = 0; iterate_referring(i, ref); i++)
     {
-      fprintf (file, "%s (%s)",
-	       ref->referring->dump_asm_name (),
+      fprintf (file, "%s/%i (%s)",
+               ref->referring->asm_name (),
+               ref->referring->order,
 	       ipa_ref_use_name [ref->use]);
       if (ref->speculative)
 	fprintf (file, " (speculative)");
@@ -817,7 +792,7 @@ symtab_node::dump_base (FILE *f)
     "default", "protected", "hidden", "internal"
   };
 
-  fprintf (f, "%s (%s)", dump_asm_name (), name ());
+  fprintf (f, "%s/%i (%s)", asm_name (), order, name ());
   dump_addr (f, " @", (void *)this);
   fprintf (f, "\n  Type: %s", symtab_type_names[type]);
 
@@ -900,8 +875,9 @@ symtab_node::dump_base (FILE *f)
   fprintf (f, "\n");
   
   if (same_comdat_group)
-    fprintf (f, "  Same comdat group as: %s\n",
-	     same_comdat_group->dump_asm_name ());
+    fprintf (f, "  Same comdat group as: %s/%i\n",
+	     same_comdat_group->asm_name (),
+	     same_comdat_group->order);
   if (next_sharing_asm_name)
     fprintf (f, "  next sharing asm name: %i\n",
 	     next_sharing_asm_name->order);
@@ -938,8 +914,10 @@ symtab_node::dump (FILE *f)
     vnode->dump (f);
 }
 
+/* Dump symbol table to F.  */
+
 void
-symbol_table::dump (FILE *f)
+symtab_node::dump_table (FILE *f)
 {
   symtab_node *node;
   fprintf (f, "Symbol table:\n\n");
@@ -947,11 +925,14 @@ symbol_table::dump (FILE *f)
     node->dump (f);
 }
 
+/* Dump symbol table to stderr.  */
+
 DEBUG_FUNCTION void
-symbol_table::debug (void)
+symtab_node::debug_symtab (void)
 {
-  dump (stderr);
+  dump_table (stderr);
 }
+
 
 /* Return the cgraph node that has ASMNAME for its DECL_ASSEMBLER_NAME.
    Return NULL if there's no such node.  */
@@ -996,13 +977,6 @@ symtab_node::verify_base (void)
       if (TREE_CODE (decl) != FUNCTION_DECL)
 	{
           error ("function symbol is not function");
-          error_found = true;
-	}
-      else if ((lookup_attribute ("ifunc", DECL_ATTRIBUTES (decl))
-		!= NULL)
-	       != dyn_cast <cgraph_node *> (this)->ifunc_resolver)
-	{
-          error ("inconsistent `ifunc' attribute");
           error_found = true;
 	}
     }
@@ -1779,10 +1753,10 @@ symtab_node::noninterposable_alias (void)
 				   (void *)&new_node, true);
   if (new_node)
     return new_node;
-
+#ifndef ASM_OUTPUT_DEF
   /* If aliases aren't supported by the assembler, fail.  */
-  if (!TARGET_SUPPORTS_ALIASES)
-    return NULL;
+  return NULL;
+#endif
 
   /* Otherwise create a new one.  */
   new_decl = copy_node (node->decl);
@@ -1948,20 +1922,20 @@ symtab_node::nonzero_address ()
      bind to NULL. This is on by default on embedded targets only.
 
      Otherwise all non-WEAK symbols must be defined and thus non-NULL or
-     linking fails.  Important case of WEAK we want to do well are comdats,
-     which also must be defined somewhere.
+     linking fails.  Important case of WEAK we want to do well are comdats.
+     Those are handled by later check for definition.
 
      When parsing, beware the cases when WEAK attribute is added later.  */
-  if ((!DECL_WEAK (decl) || DECL_COMDAT (decl))
+  if (!DECL_WEAK (decl)
       && flag_delete_null_pointer_checks)
     {
       refuse_visibility_changes = true;
       return true;
     }
 
-  /* If target is defined and not extern, we know it will be
-     output and thus it will bind to non-NULL.
-     Play safe for flag_delete_null_pointer_checks where weak definition may
+  /* If target is defined and not extern, we know it will be output and thus
+     it will bind to non-NULL.
+     Play safe for flag_delete_null_pointer_checks where weak definition maye
      be re-defined by NULL.  */
   if (definition && !DECL_EXTERNAL (decl)
       && (flag_delete_null_pointer_checks || !DECL_WEAK (decl)))
@@ -2260,13 +2234,13 @@ symtab_node::binds_to_current_def_p (symtab_node *ref)
   if (transparent_alias)
     return definition
 	   && get_alias_target()->binds_to_current_def_p (ref);
-  cgraph_node *cnode = dyn_cast <cgraph_node *> (this);
-  if (cnode && cnode->ifunc_resolver)
+  if (lookup_attribute ("ifunc", DECL_ATTRIBUTES (decl)))
     return false;
   if (decl_binds_to_current_def_p (decl))
     return true;
 
   /* Inline clones always binds locally.  */
+  cgraph_node *cnode = dyn_cast <cgraph_node *> (this);
   if (cnode && cnode->global.inlined_to)
     return true;
 

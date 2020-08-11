@@ -1,6 +1,6 @@
 // unique_ptr implementation -*- C++ -*-
 
-// Copyright (C) 2008-2018 Free Software Foundation, Inc.
+// Copyright (C) 2008-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -48,10 +48,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
    */
 
 #if _GLIBCXX_USE_DEPRECATED
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
   template<typename> class auto_ptr;
-#pragma GCC diagnostic pop
 #endif
 
   /// Primary template of default_delete, used by unique_ptr
@@ -150,14 +147,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       pointer    _M_ptr() const { return std::get<0>(_M_t); }
       _Dp&       _M_deleter() { return std::get<1>(_M_t); }
       const _Dp& _M_deleter() const { return std::get<1>(_M_t); }
-
-      void
-      swap(__uniq_ptr_impl& __rhs) noexcept
-      {
-	using std::swap;
-	swap(this->_M_ptr(), __rhs._M_ptr());
-	swap(this->_M_deleter(), __rhs._M_deleter());
-      }
 
     private:
       tuple<pointer, _Dp> _M_t;
@@ -260,13 +249,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	{ }
 
 #if _GLIBCXX_USE_DEPRECATED
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
       /// Converting constructor from @c auto_ptr
       template<typename _Up, typename = _Require<
 	       is_convertible<_Up*, _Tp*>, is_same<_Dp, default_delete<_Tp>>>>
 	unique_ptr(auto_ptr<_Up>&& __u) noexcept;
-#pragma GCC diagnostic pop
 #endif
 
       /// Destructor, invokes the deleter if the stored pointer is not null.
@@ -389,8 +375,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       void
       swap(unique_ptr& __u) noexcept
       {
-	static_assert(__is_swappable<_Dp>::value, "deleter must be swappable");
-	_M_t.swap(__u._M_t);
+	using std::swap;
+	swap(_M_t, __u._M_t);
       }
 
       // Disable copy from lvalue.
@@ -659,8 +645,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       void
       swap(unique_ptr& __u) noexcept
       {
-	static_assert(__is_swappable<_Dp>::value, "deleter must be swappable");
-	_M_t.swap(__u._M_t);
+	using std::swap;
+	swap(_M_t, __u._M_t);
       }
 
       // Disable copy from lvalue.

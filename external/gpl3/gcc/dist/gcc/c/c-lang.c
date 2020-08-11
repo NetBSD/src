@@ -1,5 +1,5 @@
 /* Language-specific hook definitions for C front end.
-   Copyright (C) 1991-2018 Free Software Foundation, Inc.
+   Copyright (C) 1991-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -58,10 +58,7 @@ namespace selftest {
 void
 run_c_tests (void)
 {
-  /* Run selftests shared within the C family.  */
-  c_family_tests ();
-
-  /* Additional C-specific tests.  */
+  c_format_c_tests ();
 }
 
 } // namespace selftest

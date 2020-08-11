@@ -25,28 +25,61 @@ struct ErrorBase {
   u32 tid;
 };
 
+struct ErrorStackOverflow : ErrorBase {
+  uptr addr, pc, bp, sp;
+  // ErrorStackOverflow never owns the context.
+  void *context;
+  // VS2013 doesn't implement unrestricted unions, so we need a trivial default
+  // constructor
+  ErrorStackOverflow() = default;
+  ErrorStackOverflow(u32 tid, const SignalContext &sig)
+      : ErrorBase(tid),
+        addr(sig.addr),
+        pc(sig.pc),
+        bp(sig.bp),
+        sp(sig.sp),
+        context(sig.context) {
+    scariness.Clear();
+    scariness.Scare(10, "stack-overflow");
+  }
+  void Print();
+};
+
 struct ErrorDeadlySignal : ErrorBase {
-  SignalContext signal;
+  uptr addr, pc, bp, sp;
+  // ErrorDeadlySignal never owns the context.
+  void *context;
+  int signo;
+  SignalContext::WriteFlag write_flag;
+  bool is_memory_access;
   // VS2013 doesn't implement unrestricted unions, so we need a trivial default
   // constructor
   ErrorDeadlySignal() = default;
-  ErrorDeadlySignal(u32 tid, const SignalContext &sig)
-      : ErrorBase(tid), signal(sig) {
+  ErrorDeadlySignal(u32 tid, const SignalContext &sig, int signo_)
+      : ErrorBase(tid),
+        addr(sig.addr),
+        pc(sig.pc),
+        bp(sig.bp),
+        sp(sig.sp),
+        context(sig.context),
+        signo(signo_),
+        write_flag(sig.write_flag),
+        is_memory_access(sig.is_memory_access) {
     scariness.Clear();
-    if (signal.IsStackOverflow()) {
-      scariness.Scare(10, "stack-overflow");
-    } else if (!signal.is_memory_access) {
-      scariness.Scare(10, "signal");
-    } else if (signal.addr < GetPageSizeCached()) {
-      scariness.Scare(10, "null-deref");
-    } else if (signal.addr == signal.pc) {
-      scariness.Scare(60, "wild-jump");
-    } else if (signal.write_flag == SignalContext::WRITE) {
-      scariness.Scare(30, "wild-addr-write");
-    } else if (signal.write_flag == SignalContext::READ) {
-      scariness.Scare(20, "wild-addr-read");
+    if (is_memory_access) {
+      if (addr < GetPageSizeCached()) {
+        scariness.Scare(10, "null-deref");
+      } else if (addr == pc) {
+        scariness.Scare(60, "wild-jump");
+      } else if (write_flag == SignalContext::WRITE) {
+        scariness.Scare(30, "wild-addr-write");
+      } else if (write_flag == SignalContext::READ) {
+        scariness.Scare(20, "wild-addr-read");
+      } else {
+        scariness.Scare(25, "wild-addr");
+      }
     } else {
-      scariness.Scare(25, "wild-addr");
+      scariness.Scare(10, "signal");
     }
   }
   void Print();
@@ -137,7 +170,6 @@ struct ErrorMallocUsableSizeNotOwned : ErrorBase {
         stack(stack_),
         addr_description(addr, /*shouldLockThreadRegistry=*/false) {
     scariness.Clear();
-    scariness.Scare(10, "bad-malloc_usable_size");
   }
   void Print();
 };
@@ -155,7 +187,6 @@ struct ErrorSanitizerGetAllocatedSizeNotOwned : ErrorBase {
         stack(stack_),
         addr_description(addr, /*shouldLockThreadRegistry=*/false) {
     scariness.Clear();
-    scariness.Scare(10, "bad-__sanitizer_get_allocated_size");
   }
   void Print();
 };
@@ -225,10 +256,7 @@ struct ErrorBadParamsToAnnotateContiguousContainer : ErrorBase {
         beg(beg_),
         end(end_),
         old_mid(old_mid_),
-        new_mid(new_mid_) {
-    scariness.Clear();
-    scariness.Scare(10, "bad-__sanitizer_annotate_contiguous_container");
-  }
+        new_mid(new_mid_) {}
   void Print();
 };
 
@@ -244,10 +272,7 @@ struct ErrorODRViolation : ErrorBase {
         global1(*g1),
         global2(*g2),
         stack_id1(stack_id1_),
-        stack_id2(stack_id2_) {
-    scariness.Clear();
-    scariness.Scare(10, "odr-violation");
-  }
+        stack_id2(stack_id2_) {}
   void Print();
 };
 
@@ -265,10 +290,7 @@ struct ErrorInvalidPointerPair : ErrorBase {
         bp(bp_),
         sp(sp_),
         addr1_description(p1, 1, /*shouldLockThreadRegistry=*/false),
-        addr2_description(p2, 1, /*shouldLockThreadRegistry=*/false)  {
-    scariness.Clear();
-    scariness.Scare(10, "invalid-pointer-pair");
-  }
+        addr2_description(p2, 1, /*shouldLockThreadRegistry=*/false) {}
   void Print();
 };
 
@@ -289,6 +311,7 @@ struct ErrorGeneric : ErrorBase {
 
 // clang-format off
 #define ASAN_FOR_EACH_ERROR_KIND(macro)         \
+  macro(StackOverflow)                          \
   macro(DeadlySignal)                           \
   macro(DoubleFree)                             \
   macro(NewDeleteSizeMismatch)                  \
@@ -325,7 +348,6 @@ struct ErrorDescription {
   // We can add a wrapper around it to make it "more c++-like", but that would
   // add a lot of code and the benefit wouldn't be that big.
   union {
-    ErrorBase Base;
     ASAN_FOR_EACH_ERROR_KIND(ASAN_ERROR_DESCRIPTION_MEMBER)
   };
 

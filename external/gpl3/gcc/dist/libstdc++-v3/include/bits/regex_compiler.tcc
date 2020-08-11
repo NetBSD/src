@@ -1,6 +1,6 @@
 // class template regex -*- C++ -*-
 
-// Copyright (C) 2013-2018 Free Software Foundation, Inc.
+// Copyright (C) 2013-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -30,9 +30,8 @@
 
 // FIXME make comments doxygen format.
 
-/*
 // This compiler refers to "Regular Expression Matching Can Be Simple And Fast"
-// (http://swtch.com/~rsc/regexp/regexp1.html),
+// (http://swtch.com/~rsc/regexp/regexp1.html"),
 // but doesn't strictly follow it.
 //
 // When compiling, states are *chained* instead of tree- or graph-constructed.
@@ -52,15 +51,14 @@
 // article.
 //
 // That's why we introduced dummy node here ------ "end_tag" is a dummy node.
-// All dummy nodes will be eliminated at the end of compilation.
-*/
+// All dummy node will be eliminated at the end of compiling process.
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {
-_GLIBCXX_BEGIN_NAMESPACE_VERSION
-
 namespace __detail
 {
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
+
   template<typename _TraitsT>
     _Compiler<_TraitsT>::
     _Compiler(_IterT __b, _IterT __e,
@@ -294,19 +292,19 @@ namespace __detail
       return true;
     }
 
-#define __INSERT_REGEX_MATCHER(__func, ...)\
-	do {\
+#define __INSERT_REGEX_MATCHER(__func, args...)\
+	do\
 	  if (!(_M_flags & regex_constants::icase))\
 	    if (!(_M_flags & regex_constants::collate))\
-	      __func<false, false>(__VA_ARGS__);\
+	      __func<false, false>(args);\
 	    else\
-	      __func<false, true>(__VA_ARGS__);\
+	      __func<false, true>(args);\
 	  else\
 	    if (!(_M_flags & regex_constants::collate))\
-	      __func<true, false>(__VA_ARGS__);\
+	      __func<true, false>(args);\
 	    else\
-	      __func<true, true>(__VA_ARGS__);\
-	} while (false)
+	      __func<true, true>(args);\
+	while (false)
 
   template<typename _TraitsT>
     bool
@@ -635,7 +633,7 @@ namespace __detail
 	return false;
       }() ^ _M_is_non_matching;
     }
-} // namespace __detail
 
 _GLIBCXX_END_NAMESPACE_VERSION
+} // namespace __detail
 } // namespace

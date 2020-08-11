@@ -1,6 +1,6 @@
 // random number generation -*- C++ -*-
 
-// Copyright (C) 2009-2018 Free Software Foundation, Inc.
+// Copyright (C) 2009-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -58,11 +58,15 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     _RealType
     generate_canonical(_UniformRandomNumberGenerator& __g);
 
+_GLIBCXX_END_NAMESPACE_VERSION
+
   /*
    * Implementation-space details.
    */
   namespace __detail
   {
+  _GLIBCXX_BEGIN_NAMESPACE_VERSION
+
     template<typename _UIntType, size_t __w,
 	     bool = __w < static_cast<size_t>
 			  (std::numeric_limits<_UIntType>::digits)>
@@ -185,7 +189,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	_Engine& _M_g;
       };
 
+  _GLIBCXX_END_NAMESPACE_VERSION
   } // namespace __detail
+
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   /**
    * @addtogroup random_generators Random Number Generators
@@ -513,7 +520,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
        */
       static constexpr result_type
       min()
-      { return 0; }
+      { return 0; };
 
       /**
        * @brief Gets the largest possible value in the output range.
@@ -1596,13 +1603,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
     double
     entropy() const noexcept
-    {
-#ifdef _GLIBCXX_USE_RANDOM_TR1
-      return this->_M_getentropy();
-#else
-      return 0.0;
-#endif
-    }
+    { return 0.0; }
 
     result_type
     operator()()
@@ -1626,7 +1627,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
     result_type _M_getval();
     result_type _M_getval_pretr1();
-    double _M_getentropy() const noexcept;
 
     union
     {
@@ -3645,8 +3645,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	       std::bernoulli_distribution& __x)
     {
       double __p;
-      if (__is >> __p)
-	__x.param(bernoulli_distribution::param_type(__p));
+      __is >> __p;
+      __x.param(bernoulli_distribution::param_type(__p));
       return __is;
     }
 

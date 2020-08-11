@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2017 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
 This file is part of GCC.
@@ -17,8 +17,6 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-#define IN_TARGET_CODE 1
-
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -30,7 +28,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "memmodel.h"
 #include "tm_p.h"
 #include "stringpool.h"
-#include "attribs.h"
 #include "optabs.h"
 #include "regs.h"
 #include "emit-rtl.h"
@@ -137,7 +134,9 @@ struct frv_io {
 
 /* Loop with REG set to each hard register in rtx X.  */
 #define FOR_EACH_REGNO(REG, X)						\
-  for (REG = REGNO (X); REG < END_REGNO (X); REG++)
+  for (REG = REGNO (X);							\
+       REG < REGNO (X) + HARD_REGNO_NREGS (REGNO (X), GET_MODE (X));	\
+       REG++)
 
 /* This structure contains machine specific function data.  */
 struct GTY(()) machine_function
@@ -348,8 +347,8 @@ static void frv_reorg_packet 			(void);
 static void frv_register_nop			(rtx);
 static void frv_reorg 				(void);
 static void frv_pack_insns			(void);
-static void frv_function_prologue		(FILE *);
-static void frv_function_epilogue		(FILE *);
+static void frv_function_prologue		(FILE *, HOST_WIDE_INT);
+static void frv_function_epilogue		(FILE *, HOST_WIDE_INT);
 static bool frv_assemble_integer		(rtx, unsigned, int);
 static void frv_init_builtins			(void);
 static rtx frv_expand_builtin			(tree, rtx, rtx, machine_mode, int);
@@ -399,9 +398,6 @@ static bool frv_can_eliminate			(const int, const int);
 static void frv_conditional_register_usage	(void);
 static void frv_trampoline_init			(rtx, tree, rtx);
 static bool frv_class_likely_spilled_p 		(reg_class_t);
-static unsigned int frv_hard_regno_nregs	(unsigned int, machine_mode);
-static bool frv_hard_regno_mode_ok		(unsigned int, machine_mode);
-static bool frv_modes_tieable_p			(machine_mode, machine_mode);
 
 /* Initialize the GCC target structure.  */
 #undef TARGET_PRINT_OPERAND
@@ -518,15 +514,6 @@ static bool frv_modes_tieable_p			(machine_mode, machine_mode);
 #define TARGET_FUNCTION_VALUE frv_function_value
 #undef TARGET_LIBCALL_VALUE
 #define TARGET_LIBCALL_VALUE frv_libcall_value
-
-#undef TARGET_HARD_REGNO_NREGS
-#define TARGET_HARD_REGNO_NREGS frv_hard_regno_nregs
-#undef TARGET_HARD_REGNO_MODE_OK
-#define TARGET_HARD_REGNO_MODE_OK frv_hard_regno_mode_ok
-#undef TARGET_MODES_TIEABLE_P
-#define TARGET_MODES_TIEABLE_P frv_modes_tieable_p
-#undef TARGET_CONSTANT_ALIGNMENT
-#define TARGET_CONSTANT_ALIGNMENT constant_alignment_word_strings
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 
@@ -1413,8 +1400,10 @@ frv_function_contains_far_jump (void)
    will return correctly.  It also does the VLIW packing.  */
 
 static void
-frv_function_prologue (FILE *file)
+frv_function_prologue (FILE *file, HOST_WIDE_INT size ATTRIBUTE_UNUSED)
 {
+  rtx_insn *insn, *next, *last_call;
+
   /* If no frame was created, check whether the function uses a call
      instruction to implement a far jump.  If so, save the link in gr3 and
      replace all returns to LR with returns to GR3.  GR3 is used because it
@@ -1455,6 +1444,32 @@ frv_function_prologue (FILE *file)
 
   /* Allow the garbage collector to free the nops created by frv_reorg.  */
   memset (frv_nops, 0, sizeof (frv_nops));
+
+  /* Locate CALL_ARG_LOCATION notes that have been misplaced
+     and move them back to where they should be located.  */
+  last_call = NULL;
+  for (insn = get_insns (); insn; insn = next)
+    {
+      next = NEXT_INSN (insn);
+      if (CALL_P (insn)
+	  || (INSN_P (insn) && GET_CODE (PATTERN (insn)) == SEQUENCE
+	      && CALL_P (XVECEXP (PATTERN (insn), 0, 0))))
+	last_call = insn;
+
+      if (!NOTE_P (insn) || NOTE_KIND (insn) != NOTE_INSN_CALL_ARG_LOCATION)
+	continue;
+
+      if (NEXT_INSN (last_call) == insn)
+	continue;
+
+      SET_NEXT_INSN (PREV_INSN (insn)) = NEXT_INSN (insn);
+      SET_PREV_INSN (NEXT_INSN (insn)) = PREV_INSN (insn);
+      SET_PREV_INSN (insn) = last_call;
+      SET_NEXT_INSN (insn) = NEXT_INSN (last_call);
+      SET_PREV_INSN (NEXT_INSN (insn)) = insn;
+      SET_NEXT_INSN (PREV_INSN (insn)) = insn;
+      last_call = insn;
+    }
 }
 
 
@@ -1488,7 +1503,7 @@ frv_alloc_temp_reg (
 	}
     }
 
-  nr = hard_regno_nregs (regno, mode);
+  nr = HARD_REGNO_NREGS (regno, mode);
   info->next_reg[ (int)rclass ] = regno + nr;
 
   if (mark_as_used)
@@ -1825,7 +1840,8 @@ frv_expand_prologue (void)
    this function provides a convenient place to do cleanup.  */
 
 static void
-frv_function_epilogue (FILE *)
+frv_function_epilogue (FILE *file ATTRIBUTE_UNUSED,
+                       HOST_WIDE_INT size ATTRIBUTE_UNUSED)
 {
   frv_stack_cache = (frv_stack_t *)0;
 
@@ -2605,6 +2621,7 @@ frv_print_operand_jump_hint (rtx_insn *insn)
   rtx note;
   rtx labelref;
   int ret;
+  int prob = -1;
   enum { UNKNOWN, BACKWARD, FORWARD } jump_type = UNKNOWN;
 
   gcc_assert (JUMP_P (insn));
@@ -2630,8 +2647,8 @@ frv_print_operand_jump_hint (rtx_insn *insn)
 
       else
 	{
-	  ret = ((profile_probability::from_reg_br_prob_note (XINT (note, 0))
-		  >= profile_probability::even ())
+	  prob = XINT (note, 0);
+	  ret = ((prob >= (REG_BR_PROB_BASE / 2))
 		 ? FRV_JUMP_LIKELY
 		 : FRV_JUMP_NOT_LIKELY);
 	}
@@ -3877,10 +3894,10 @@ condexec_memory_operand (rtx op, machine_mode mode)
     default:
       return FALSE;
 
-    case E_QImode:
-    case E_HImode:
-    case E_SImode:
-    case E_SFmode:
+    case QImode:
+    case HImode:
+    case SImode:
+    case SFmode:
       break;
     }
 
@@ -3919,16 +3936,16 @@ frv_emit_move (machine_mode mode, rtx dest, rtx src)
 
   switch (mode)
     {
-    case E_SImode:
+    case SImode:
       if (frv_emit_movsi (dest, src))
 	return;
       break;
 
-    case E_QImode:
-    case E_HImode:
-    case E_DImode:
-    case E_SFmode:
-    case E_DFmode:
+    case QImode:
+    case HImode:
+    case DImode:
+    case SFmode:
+    case DFmode:
       if (!reload_in_progress
 	  && !reload_completed
 	  && !register_operand (dest, mode)
@@ -4233,14 +4250,14 @@ output_move_single (rtx operands[], rtx insn)
 		default:
 		  break;
 
-		case E_QImode:
+		case QImode:
 		  return "ldsb%I1%U1 %M1,%0";
 
-		case E_HImode:
+		case HImode:
 		  return "ldsh%I1%U1 %M1,%0";
 
-		case E_SImode:
-		case E_SFmode:
+		case SImode:
+		case SFmode:
 		  return "ld%I1%U1 %M1, %0";
 		}
 	    }
@@ -4307,14 +4324,14 @@ output_move_single (rtx operands[], rtx insn)
 		default:
 		  break;
 
-		case E_QImode:
+		case QImode:
 		  return "ldbf%I1%U1 %M1,%0";
 
-		case E_HImode:
+		case HImode:
 		  return "ldhf%I1%U1 %M1,%0";
 
-		case E_SImode:
-		case E_SFmode:
+		case SImode:
+		case SFmode:
 		  return "ldf%I1%U1 %M1, %0";
 		}
 	    }
@@ -4352,14 +4369,14 @@ output_move_single (rtx operands[], rtx insn)
 		default:
 		  break;
 
-		case E_QImode:
+		case QImode:
 		  return "stb%I0%U0 %1, %M0";
 
-		case E_HImode:
+		case HImode:
 		  return "sth%I0%U0 %1, %M0";
 
-		case E_SImode:
-		case E_SFmode:
+		case SImode:
+		case SFmode:
 		  return "st%I0%U0 %1, %M0";
 		}
 	    }
@@ -4371,14 +4388,14 @@ output_move_single (rtx operands[], rtx insn)
 		default:
 		  break;
 
-		case E_QImode:
+		case QImode:
 		  return "stbf%I0%U0 %1, %M0";
 
-		case E_HImode:
+		case HImode:
 		  return "sthf%I0%U0 %1, %M0";
 
-		case E_SImode:
-		case E_SFmode:
+		case SImode:
+		case SFmode:
 		  return "stf%I0%U0 %1, %M0";
 		}
 	    }
@@ -4391,14 +4408,14 @@ output_move_single (rtx operands[], rtx insn)
 	    default:
 	      break;
 
-	    case E_QImode:
+	    case QImode:
 	      return "stb%I0%U0 %., %M0";
 
-	    case E_HImode:
+	    case HImode:
 	      return "sth%I0%U0 %., %M0";
 
-	    case E_SImode:
-	    case E_SFmode:
+	    case SImode:
+	    case SFmode:
 	      return "st%I0%U0 %., %M0";
 	    }
 	}
@@ -4575,14 +4592,14 @@ output_condmove_single (rtx operands[], rtx insn)
 		default:
 		  break;
 
-		case E_QImode:
+		case QImode:
 		  return "cldsb%I3%U3 %M3, %2, %1, %e0";
 
-		case E_HImode:
+		case HImode:
 		  return "cldsh%I3%U3 %M3, %2, %1, %e0";
 
-		case E_SImode:
-		case E_SFmode:
+		case SImode:
+		case SFmode:
 		  return "cld%I3%U3 %M3, %2, %1, %e0";
 		}
 	    }
@@ -4636,14 +4653,14 @@ output_condmove_single (rtx operands[], rtx insn)
 		default:
 		  break;
 
-		case E_QImode:
+		case QImode:
 		  return "cstb%I2%U2 %3, %M2, %1, %e0";
 
-		case E_HImode:
+		case HImode:
 		  return "csth%I2%U2 %3, %M2, %1, %e0";
 
-		case E_SImode:
-		case E_SFmode:
+		case SImode:
+		case SFmode:
 		  return "cst%I2%U2 %3, %M2, %1, %e0";
 		}
 	    }
@@ -4660,14 +4677,14 @@ output_condmove_single (rtx operands[], rtx insn)
 	    default:
 	      break;
 
-	    case E_QImode:
+	    case QImode:
 	      return "cstb%I2%U2 %., %M2, %1, %e0";
 
-	    case E_HImode:
+	    case HImode:
 	      return "csth%I2%U2 %., %M2, %1, %e0";
 
-	    case E_SImode:
-	    case E_SFmode:
+	    case SImode:
+	    case SFmode:
 	      return "cst%I2%U2 %., %M2, %1, %e0";
 	    }
 	}
@@ -6225,7 +6242,7 @@ frv_trampoline_init (rtx m_tramp, tree fndecl, rtx static_chain)
   rtx sc_reg = force_reg (Pmode, static_chain);
 
   emit_library_call (gen_rtx_SYMBOL_REF (SImode, "__trampoline_setup"),
-		     LCT_NORMAL, VOIDmode,
+		     LCT_NORMAL, VOIDmode, 4,
 		     addr, Pmode,
 		     GEN_INT (frv_trampoline_size ()), SImode,
 		     fnaddr, Pmode,
@@ -6501,25 +6518,77 @@ frv_adjust_field_align (tree field, int computed)
 }
 
 
-/* Implement TARGET_HARD_REGNO_MODE_OK.  */
+/* A C expression that is nonzero if it is permissible to store a value of mode
+   MODE in hard register number REGNO (or in several registers starting with
+   that one).  For a machine where all registers are equivalent, a suitable
+   definition is
 
-static bool
-frv_hard_regno_mode_ok (unsigned int regno, machine_mode mode)
+        #define HARD_REGNO_MODE_OK(REGNO, MODE) 1
+
+   It is not necessary for this macro to check for the numbers of fixed
+   registers, because the allocation mechanism considers them to be always
+   occupied.
+
+   On some machines, double-precision values must be kept in even/odd register
+   pairs.  The way to implement that is to define this macro to reject odd
+   register numbers for such modes.
+
+   The minimum requirement for a mode to be OK in a register is that the
+   `movMODE' instruction pattern support moves between the register and any
+   other hard register for which the mode is OK; and that moving a value into
+   the register and back out not alter it.
+
+   Since the same instruction used to move `SImode' will work for all narrower
+   integer modes, it is not necessary on any machine for `HARD_REGNO_MODE_OK'
+   to distinguish between these modes, provided you define patterns `movhi',
+   etc., to take advantage of this.  This is useful because of the interaction
+   between `HARD_REGNO_MODE_OK' and `MODES_TIEABLE_P'; it is very desirable for
+   all integer modes to be tieable.
+
+   Many machines have special registers for floating point arithmetic.  Often
+   people assume that floating point machine modes are allowed only in floating
+   point registers.  This is not true.  Any registers that can hold integers
+   can safely *hold* a floating point machine mode, whether or not floating
+   arithmetic can be done on it in those registers.  Integer move instructions
+   can be used to move the values.
+
+   On some machines, though, the converse is true: fixed-point machine modes
+   may not go in floating registers.  This is true if the floating registers
+   normalize any value stored in them, because storing a non-floating value
+   there would garble it.  In this case, `HARD_REGNO_MODE_OK' should reject
+   fixed-point machine modes in floating registers.  But if the floating
+   registers do not automatically normalize, if you can store any bit pattern
+   in one and retrieve it unchanged without a trap, then any machine mode may
+   go in a floating register, so you can define this macro to say so.
+
+   The primary significance of special floating registers is rather that they
+   are the registers acceptable in floating point arithmetic instructions.
+   However, this is of no concern to `HARD_REGNO_MODE_OK'.  You handle it by
+   writing the proper constraints for those instructions.
+
+   On some machines, the floating registers are especially slow to access, so
+   that it is better to store a value in a stack frame than in such a register
+   if floating point arithmetic is not being done.  As long as the floating
+   registers are not in class `GENERAL_REGS', they will not be used unless some
+   pattern's constraint asks for one.  */
+
+int
+frv_hard_regno_mode_ok (int regno, machine_mode mode)
 {
   int base;
   int mask;
 
   switch (mode)
     {
-    case E_CCmode:
-    case E_CC_UNSmode:
-    case E_CC_NZmode:
+    case CCmode:
+    case CC_UNSmode:
+    case CC_NZmode:
       return ICC_P (regno) || GPR_P (regno);
 
-    case E_CC_CCRmode:
+    case CC_CCRmode:
       return CR_P (regno) || GPR_P (regno);
 
-    case E_CC_FPmode:
+    case CC_FPmode:
       return FCC_P (regno) || GPR_P (regno);
 
     default:
@@ -6556,38 +6625,38 @@ frv_hard_regno_mode_ok (unsigned int regno, machine_mode mode)
 
 	  /* Fill in the table.  */
 	  else
-	    return false;
+	    return 0;
 
 	  /* Anything smaller than an SI is OK in any word-sized register.  */
 	  if (GET_MODE_SIZE (mode) < 4)
-	    return true;
+	    return 1;
 
 	  mask = (GET_MODE_SIZE (mode) / 4) - 1;
 	}
       return (((regno - base) & mask) == 0);
     }
 
-  return false;
-}
-
-/* Implement TARGET_MODES_TIEABLE_P.  */
-
-static bool
-frv_modes_tieable_p (machine_mode mode1, machine_mode mode2)
-{
-  return mode1 == mode2;
+  return 0;
 }
 
 
-/* Implement TARGET_HARD_REGNO_NREGS.
+/* A C expression for the number of consecutive hard registers, starting at
+   register number REGNO, required to hold a value of mode MODE.
 
-   On the FRV, make the CC_FP mode take 3 words in the integer registers, so
+   On a machine where all registers are exactly one word, a suitable definition
+   of this macro is
+
+        #define HARD_REGNO_NREGS(REGNO, MODE)            \
+           ((GET_MODE_SIZE (MODE) + UNITS_PER_WORD - 1)  \
+            / UNITS_PER_WORD))  */
+
+/* On the FRV, make the CC_FP mode take 3 words in the integer registers, so
    that we can build the appropriate instructions to properly reload the
    values.  Also, make the byte-sized accumulator guards use one guard
    for each byte.  */
 
-static unsigned int
-frv_hard_regno_nregs (unsigned int regno, machine_mode mode)
+int
+frv_hard_regno_nregs (int regno, machine_mode mode)
 {
   if (ACCG_P (regno))
     return GET_MODE_SIZE (mode);
@@ -6596,7 +6665,17 @@ frv_hard_regno_nregs (unsigned int regno, machine_mode mode)
 }
 
 
-/* Implement CLASS_MAX_NREGS.  */
+/* A C expression for the maximum number of consecutive registers of
+   class RCLASS needed to hold a value of mode MODE.
+
+   This is closely related to the macro `HARD_REGNO_NREGS'.  In fact, the value
+   of the macro `CLASS_MAX_NREGS (RCLASS, MODE)' should be the maximum value of
+   `HARD_REGNO_NREGS (REGNO, MODE)' for all REGNO values in the class RCLASS.
+
+   This macro helps control the handling of multiple-word values in
+   the reload pass.
+
+   This declaration is required.  */
 
 int
 frv_class_max_nregs (enum reg_class rclass, machine_mode mode)
@@ -8541,13 +8620,13 @@ frv_matching_accg_mode (machine_mode mode)
 {
   switch (mode)
     {
-    case E_V4SImode:
+    case V4SImode:
       return V4QImode;
 
-    case E_DImode:
+    case DImode:
       return HImode;
 
-    case E_SImode:
+    case SImode:
       return QImode;
 
     default:
@@ -8611,7 +8690,7 @@ frv_read_iacc_argument (machine_mode mode, tree call,
      avoid creating lots of unnecessary call_insn rtl when IACCs aren't
      being used.  */
   regno = INTVAL (op) + IACC_FIRST;
-  for (i = 0; i < hard_regno_nregs (regno, mode); i++)
+  for (i = 0; i < HARD_REGNO_NREGS (regno, mode); i++)
     global_regs[regno + i] = 1;
 
   return gen_rtx_REG (mode, regno);

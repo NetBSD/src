@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2018 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2017 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -147,8 +147,7 @@ extern __inline unsigned int
 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 __rold (unsigned int __X, int __C)
 {
-  __C &= 31;
-  return (__X << __C) | (__X >> (-__C & 31));
+  return (__X << __C) | (__X >> (32 - __C));
 }
 
 /* 8bit ror */
@@ -172,8 +171,7 @@ extern __inline unsigned int
 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 __rord (unsigned int __X, int __C)
 {
-  __C &= 31;
-  return (__X >> __C) | (__X << (-__C & 31));
+  return (__X >> __C) | (__X << (32 - __C));
 }
 
 /* Pause */
@@ -241,8 +239,7 @@ extern __inline unsigned long long
 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 __rolq (unsigned long long __X, int __C)
 {
-  __C &= 63;
-  return (__X << __C) | (__X >> (-__C & 63));
+  return (__X << __C) | (__X >> (64 - __C));
 }
 
 /* 64bit ror */
@@ -250,8 +247,7 @@ extern __inline unsigned long long
 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 __rorq (unsigned long long __X, int __C)
 {
-  __C &= 63;
-  return (__X >> __C) | (__X << (-__C & 63));
+  return (__X >> __C) | (__X << (64 - __C));
 }
 
 /* Read flags register */

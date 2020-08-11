@@ -1,5 +1,5 @@
 /* Some code common to C and ObjC front ends.
-   Copyright (C) 2001-2018 Free Software Foundation, Inc.
+   Copyright (C) 2001-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -24,12 +24,11 @@ along with GCC; see the file COPYING3.  If not see
 #include "intl.h"
 #include "c-family/c-pretty-print.h"
 #include "tree-pretty-print.h"
-#include "gimple-pretty-print.h"
 #include "langhooks.h"
 #include "c-objc-common.h"
 
 static bool c_tree_printer (pretty_printer *, text_info *, const char *,
-			    int, bool, bool, bool, bool *, const char **);
+			    int, bool, bool, bool);
 
 bool
 c_missing_noreturn_ok_p (tree decl)
@@ -67,8 +66,6 @@ c_objc_common_init (void)
    %D: a general decl,
    %E: an identifier or expression,
    %F: a function declaration,
-   %G: a Gimple call statement,
-   %K: a CALL_EXPR,
    %T: a type.
    %V: a list of type qualifiers from a tree.
    %v: an explicit list of type qualifiers
@@ -78,8 +75,7 @@ c_objc_common_init (void)
    diagnostic machinery.  */
 static bool
 c_tree_printer (pretty_printer *pp, text_info *text, const char *spec,
-		int precision, bool wide, bool set_locus, bool hash,
-		bool *quoted, const char **)
+		int precision, bool wide, bool set_locus, bool hash)
 {
   tree t = NULL_TREE;
   tree name;
@@ -90,16 +86,9 @@ c_tree_printer (pretty_printer *pp, text_info *text, const char *spec,
   if (precision != 0 || wide)
     return false;
 
-  if (*spec == 'G')
-    {
-      percent_G_format (text);
-      return true;
-    }
-
   if (*spec == 'K')
     {
-      t = va_arg (*text->args_ptr, tree);
-      percent_K_format (text, t);
+      percent_K_format (text);
       return true;
     }
 
@@ -166,20 +155,12 @@ c_tree_printer (pretty_printer *pp, text_info *text, const char *spec,
 	      return true;
 
 	    /* They're not, print the stripped version now.  */
-	    if (*quoted)
-	      pp_end_quote (pp, pp_show_color (pp));
 	    pp_c_whitespace (cpp);
 	    pp_left_brace (cpp);
 	    pp_c_ws_string (cpp, _("aka"));
 	    pp_c_whitespace (cpp);
-	    if (*quoted)
-	      pp_begin_quote (pp, pp_show_color (pp));
 	    cpp->type_id (TYPE_CANONICAL (t));
-	    if (*quoted)
-	      pp_end_quote (pp, pp_show_color (pp));
 	    pp_right_brace (cpp);
-	    /* No further closing quotes are needed.  */
-	    *quoted = false;
 	  }
 	return true;
       }

@@ -195,9 +195,9 @@ struct VtablePrefix {
 };
 VtablePrefix *getVtablePrefix(void *Vtable) {
   VtablePrefix *Vptr = reinterpret_cast<VtablePrefix*>(Vtable);
-  VtablePrefix *Prefix = Vptr - 1;
-  if (!IsAccessibleMemoryRange((uptr)Prefix, sizeof(VtablePrefix)))
+  if (!Vptr)
     return nullptr;
+  VtablePrefix *Prefix = Vptr - 1;
   if (!Prefix->TypeInfo)
     // This can't possibly be a valid vtable.
     return nullptr;

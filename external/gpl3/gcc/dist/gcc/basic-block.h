@@ -1,5 +1,5 @@
 /* Define control flow data structures for the CFG.
-   Copyright (C) 1987-2018 Free Software Foundation, Inc.
+   Copyright (C) 1987-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -20,7 +20,12 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef GCC_BASIC_BLOCK_H
 #define GCC_BASIC_BLOCK_H
 
-#include <profile-count.h>
+
+/* Use gcov_type to hold basic block counters.  Should be at least
+   64bit.  Although a counter cannot be negative, we use a signed
+   type, because erroneous negative counts can be generated when the
+   flow graph is manipulated by various optimizations.  A signed type
+   makes those easy to detect.  */
 
 /* Control flow edge information.  */
 struct GTY((user)) edge_def {
@@ -45,10 +50,9 @@ struct GTY((user)) edge_def {
   unsigned int dest_idx;
 
   int flags;			/* see cfg-flags.def */
-  profile_probability probability;
-
-  /* Return count of edge E.  */
-  inline profile_count count () const;
+  int probability;		/* biased by REG_BR_PROB_BASE */
+  gcov_type count;		/* Expected number of executions calculated
+				   in profile.c  */
 };
 
 /* Masks for edge.flags.  */
@@ -146,7 +150,10 @@ struct GTY((chain_next ("%h.next_bb"), chain_prev ("%h.prev_bb"))) basic_block_d
   int index;
 
   /* Expected number of executions: calculated in profile.c.  */
-  profile_count count;
+  gcov_type count;
+
+  /* Expected frequency.  Normalized to be in range 0 to BB_FREQ_MAX.  */
+  int frequency;
 
   /* The discriminator for this block.  The discriminator distinguishes
      among several basic blocks that share a common locus, allowing for
@@ -271,6 +278,9 @@ enum cfg_bb_flags
 /* The two blocks that are always in the cfg.  */
 #define NUM_FIXED_BLOCKS (2)
 
+/* The base value for branch probability notes and edge probabilities.  */
+#define REG_BR_PROB_BASE  10000
+
 /* This is the value which indicates no edge is present.  */
 #define EDGE_INDEX_NO_EDGE	-1
 
@@ -297,8 +307,10 @@ enum cfg_bb_flags
 #define BRANCH_EDGE(bb)			(EDGE_SUCC ((bb), 0)->flags & EDGE_FALLTHRU \
 					 ? EDGE_SUCC ((bb), 1) : EDGE_SUCC ((bb), 0))
 
+#define RDIV(X,Y) (((X) + (Y) / 2) / (Y))
 /* Return expected execution frequency of the edge E.  */
-#define EDGE_FREQUENCY(e)		e->count ().to_frequency (cfun)
+#define EDGE_FREQUENCY(e)		RDIV ((e)->src->frequency * (e)->probability, \
+					      REG_BR_PROB_BASE)
 
 /* Compute a scale factor (or probability) suitable for scaling of
    gcov_type values via apply_probability() and apply_scale().  */
@@ -506,7 +518,6 @@ ei_cond (edge_iterator ei, edge *p)
 					   insns.  */
 #define CLEANUP_CFGLAYOUT	32	/* Do cleanup in cfglayout mode.  */
 #define CLEANUP_CFG_CHANGED	64      /* The caller changed the CFG.  */
-#define CLEANUP_NO_PARTITIONING	128     /* Do not try to fix partitions.  */
 
 /* Return true if BB is in a transaction.  */
 
@@ -636,12 +647,6 @@ has_abnormal_call_or_eh_pred_edge_p (basic_block bb)
       return true;
 
   return false;
-}
-
-/* Return count of edge E.  */
-inline profile_count edge_def::count () const
-{
-  return src->count.apply_probability (probability);
 }
 
 #endif /* GCC_BASIC_BLOCK_H */
