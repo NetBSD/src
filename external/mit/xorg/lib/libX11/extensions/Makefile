@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.2.6.2 2020/08/05 14:16:41 martin Exp $
+# $NetBSD: Makefile,v 1.2.6.3 2020/08/11 07:20:10 martin Exp $
 
 NOPROG=	yes
 
-INCS=  XKBgeom.h
+INCS=  #XKBgeom.h
 INCSDIR=${X11INCDIR}/X11/extensions
 
 .include <bsd.x11.mk>
