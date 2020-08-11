@@ -1,4 +1,4 @@
-/*	$NetBSD: alock.h,v 1.1.1.8 2020/08/11 13:12:14 christos Exp $	*/
+/*	$NetBSD: alock.h,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
 
 /* alock.h - access lock header */
 /* $OpenLDAP$ */
@@ -25,7 +25,7 @@
 #define _ALOCK_H_
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: alock.h,v 1.1.1.8 2020/08/11 13:12:14 christos Exp $");
+__RCSID("$NetBSD: alock.h,v 1.2 2020/08/11 13:15:39 christos Exp $");
 
 #include "portable.h"
 #include <ac/time.h>

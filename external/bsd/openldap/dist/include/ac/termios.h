@@ -1,4 +1,4 @@
-/*	$NetBSD: termios.h,v 1.1.1.8 2020/08/11 13:12:01 christos Exp $	*/
+/*	$NetBSD: termios.h,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
 
 /* Generic termios.h */
 /* $OpenLDAP$ */

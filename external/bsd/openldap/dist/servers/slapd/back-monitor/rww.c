@@ -1,4 +1,4 @@
-/*	$NetBSD: rww.c,v 1.1.1.8 2020/08/11 13:12:15 christos Exp $	*/
+/*	$NetBSD: rww.c,v 1.2 2020/08/11 13:15:41 christos Exp $	*/
 
 /* readw.c - deal with read waiters subsystem */
 /* $OpenLDAP$ */
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rww.c,v 1.1.1.8 2020/08/11 13:12:15 christos Exp $");
+__RCSID("$NetBSD: rww.c,v 1.2 2020/08/11 13:15:41 christos Exp $");
 
 #include "portable.h"
 

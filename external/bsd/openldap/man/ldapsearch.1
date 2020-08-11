@@ -1,7 +1,7 @@
 .lf 1 stdin
-.TH LDAPSEARCH 1 "2014/01/26" "OpenLDAP 2.4.39"
+.TH LDAPSEARCH 1 "2020/04/28" "OpenLDAP 2.4.50"
 .\" $OpenLDAP$
-.\" Copyright 1998-2014 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2020 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldapsearch \- LDAP search tool
@@ -116,7 +116,8 @@ Option \fI\-L\fP controls the format of the output.
 .TP
 .BR \-V [ V ]
 Print version info.
-If \fB\-VV\fP is given, only the version information is printed.
+If \fB\-VV\fP is given, exit after providing version info. Otherwise proceed
+with the specified search
 .TP
 .BI \-d \ debuglevel
 Set the LDAP debugging level to \fIdebuglevel\fP.
@@ -508,5 +509,5 @@ The OpenLDAP Project <http://www.openldap.org/>
 .B "OpenLDAP Software"
 is developed and maintained by The OpenLDAP Project <http://www.openldap.org/>.
 .B "OpenLDAP Software"
-is derived from University of Michigan LDAP 3.3 Release.  
-.lf 506 stdin
+is derived from the University of Michigan LDAP 3.3 Release.  
+.lf 507 stdin

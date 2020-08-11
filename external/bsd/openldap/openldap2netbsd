@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: openldap2netbsd,v 1.3 2017/02/09 01:53:50 christos Exp $
+#	$NetBSD: openldap2netbsd,v 1.4 2020/08/11 13:15:33 christos Exp $
 #
 # Copyright (c) 1998, 1999, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -29,6 +29,15 @@
 # openldap2netbsd:  convert an openldap source tree into a
 # netbsd openldap source tree, under src/external/bsd/openldap/dist.
 #
+# cd openldap-X-Y-Z
+# cvs -d cvs.netbsd.org:/cvsroot import src/external/bsd/openldap/dist OPENLDAP OPENLDAPX_Y_Z
+# configure
+# make
+# merge config.h with ../include/config.h
+# cd ..
+# make configure
+# make update-include
+# make update-man
 
 if [ -z "$1" ] 
 then
@@ -44,11 +53,11 @@ cleantags "$d"
 find "$d" -name '*.[chly]' -print | while read c; do
 	sed 1q < "$c" | grep -q '\$NetBSD' || (
 sed -i -e '1i \
-/*	$NetBSD: openldap2netbsd,v 1.3 2017/02/09 01:53:50 christos Exp $	*/\
+/*	$NetBSD: openldap2netbsd,v 1.4 2020/08/11 13:15:33 christos Exp $	*/\
 
 ' -e '/#include "portable.h"/i \
 #include <sys/cdefs.h>\
-__RCSID("$NetBSD: openldap2netbsd,v 1.3 2017/02/09 01:53:50 christos Exp $");\
+__RCSID("$NetBSD: openldap2netbsd,v 1.4 2020/08/11 13:15:33 christos Exp $");\
 
 ' "$c"
 	)

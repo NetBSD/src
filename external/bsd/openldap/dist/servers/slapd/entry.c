@@ -1,4 +1,4 @@
-/*	$NetBSD: entry.c,v 1.1.1.8 2020/08/11 13:12:13 christos Exp $	*/
+/*	$NetBSD: entry.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
 
 /* entry.c - routines for dealing with entries */
 /* $OpenLDAP$ */
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: entry.c,v 1.1.1.8 2020/08/11 13:12:13 christos Exp $");
+__RCSID("$NetBSD: entry.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
 
 #include "portable.h"
 

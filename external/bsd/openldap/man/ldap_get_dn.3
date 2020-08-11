@@ -1,7 +1,7 @@
 .lf 1 stdin
-.TH LDAP_GET_DN 3 "2014/01/26" "OpenLDAP 2.4.39"
+.TH LDAP_GET_DN 3 "2020/04/28" "OpenLDAP 2.4.50"
 .\" $OpenLDAP$
-.\" Copyright 1998-2014 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2020 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldap_get_dn, ldap_explode_dn, ldap_explode_rdn, ldap_dn2ufn \- LDAP DN handling routines
@@ -83,8 +83,8 @@ is defined as:
 .ft B
 
 typedef struct ldap_ava {
-    char *la_attr;
-    struct berval *la_value;
+    struct berval la_attr;
+    struct berval la_value;
     unsigned la_flags;
 } LDAPAVA;
 
@@ -249,5 +249,5 @@ These routines dynamically allocate memory that the caller must free.
 .B "OpenLDAP Software"
 is developed and maintained by The OpenLDAP Project <http://www.openldap.org/>.
 .B "OpenLDAP Software"
-is derived from University of Michigan LDAP 3.3 Release.  
+is derived from the University of Michigan LDAP 3.3 Release.  
 .lf 247 stdin

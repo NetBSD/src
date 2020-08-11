@@ -1,4 +1,4 @@
-/*	$NetBSD: ch_malloc.c,v 1.1.1.8 2020/08/11 13:12:13 christos Exp $	*/
+/*	$NetBSD: ch_malloc.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
 
 /* ch_malloc.c - malloc routines that test returns from malloc and friends */
 /* $OpenLDAP$ */
@@ -29,7 +29,7 @@
 #define CH_FREE 1
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ch_malloc.c,v 1.1.1.8 2020/08/11 13:12:13 christos Exp $");
+__RCSID("$NetBSD: ch_malloc.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
 
 #include "portable.h"
 

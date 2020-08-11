@@ -1,4 +1,4 @@
-/*	$NetBSD: mtest3.c,v 1.1.1.5 2020/08/11 13:12:04 christos Exp $	*/
+/*	$NetBSD: mtest3.c,v 1.2 2020/08/11 13:15:38 christos Exp $	*/
 
 /* mtest3.c - memory-mapped database tester/toy */
 /*

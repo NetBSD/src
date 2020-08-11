@@ -1,6 +1,6 @@
 .lf 1 stdin
-.TH SLAPD-SOCK 5 "2014/01/26" "OpenLDAP 2.4.39"
-.\" Copyright 2007-2014 The OpenLDAP Foundation All Rights Reserved.
+.TH SLAPD-SOCK 5 "2020/04/28" "OpenLDAP 2.4.50"
+.\" Copyright 2007-2020 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -50,7 +50,7 @@ be sent and from which replies are received.
 
 When used as an overlay, these additional directives are defined:
 .TP
-.B sockops	[ bind | unbind | search | compare | modify | modrdn | add | delete ]*
+.B sockops	[ bind | unbind | search | compare | modify | modrdn | add | delete | extended ]*
 Specify which request types to send to the external program. The default is
 empty (no requests are sent).
 .TP
@@ -59,6 +59,11 @@ Specify which response types to send to the external program. "result"
 sends just the results of an operation. "search" sends all entries that
 the database returned for a search request. The default is empty
 (no responses are sent).
+.TP
+.B sockdnpat	<regexp>
+Specify DN patterns for which the overlay will act. Only operations on
+DNs matching the specified regular expression will be processed. The default
+is empty (all DNs are processed).
 
 .SH PROTOCOL
 The protocol is essentially the same as
@@ -105,6 +110,17 @@ DELETE
 msgid: <message id>
 <repeat { "suffix:" <database suffix DN> }>
 dn: <DN>
+<blank line>
+.fi
+.RE
+.PP
+.RS
+.nf
+EXTENDED
+msgid: <message id>
+<repeat { "suffix:" <database suffix DN> }>
+oid: <OID>
+value: <base64-value>
 <blank line>
 .fi
 .RE
@@ -209,6 +225,11 @@ msgid: <message id>
 .fi
 .RE
 
+.SH KNOWN LIMITATIONS
+The
+.B sock
+backend does not process extended operation results from an external program.
+
 .SH ACCESS CONTROL
 The
 .B sock
@@ -288,6 +309,11 @@ access to the
 pseudo_attribute of the searchBase;
 .B search (=s)
 access to the attributes and values used in the filter is not checked.
+.LP
+The
+.B extended
+operation does not require any access special rights.
+The external program has to implement any sort of access control.
 
 .SH EXAMPLE
 There is an example script in the slapd/back\-sock/ directory

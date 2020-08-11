@@ -1,10 +1,10 @@
-/*	$NetBSD: common.c,v 1.8 2019/08/08 13:50:56 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.9 2020/08/11 13:15:34 christos Exp $	*/
 
 /* common.c - common routines for the ldap client tools */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2019 The OpenLDAP Foundation.
+ * Copyright 1998-2020 The OpenLDAP Foundation.
  * Portions Copyright 2003 Kurt D. Zeilenga.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: common.c,v 1.8 2019/08/08 13:50:56 christos Exp $");
+__RCSID("$NetBSD: common.c,v 1.9 2020/08/11 13:15:34 christos Exp $");
 
 #include "portable.h"
 
@@ -1884,16 +1884,17 @@ int
 tool_check_abandon( LDAP *ld, int msgid )
 {
 	int	rc;
+	LDAPControl *sctrls[1] = { NULL };
 
 	switch ( gotintr ) {
 	case Intr_Cancel:
-		rc = ldap_cancel_s( ld, msgid, NULL, NULL );
+		rc = ldap_cancel_s( ld, msgid, sctrls, NULL );
 		fprintf( stderr, "got interrupt, cancel got %d: %s\n",
 				rc, ldap_err2string( rc ) );
 		return -1;
 
 	case Intr_Abandon:
-		rc = ldap_abandon_ext( ld, msgid, NULL, NULL );
+		rc = ldap_abandon_ext( ld, msgid, sctrls, NULL );
 		fprintf( stderr, "got interrupt, abandon got %d: %s\n",
 				rc, ldap_err2string( rc ) );
 		return -1;
@@ -2333,7 +2334,7 @@ void tool_print_ctrls(
 		/* known controls */
 		for ( j = 0; tool_ctrl_response[j].oid != NULL; j++ ) {
 			if ( strcmp( tool_ctrl_response[j].oid, ctrls[i]->ldctl_oid ) == 0 ) {
-				if ( !(tool_ctrl_response[j].mask & tool_type) ) {
+				if ( !(tool_ctrl_response[j].mask & tool_type )) {
 					/* this control should not appear
 					 * with this tool; warning? */
 				}

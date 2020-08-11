@@ -1,4 +1,4 @@
-/*	$NetBSD: ldif.c,v 1.1.1.5 2020/08/11 13:12:05 christos Exp $	*/
+/*	$NetBSD: ldif.c,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
 
 /* ldif.c - routines for dealing with LDIF files */
 /* $OpenLDAP$ */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ldif.c,v 1.1.1.5 2020/08/11 13:12:05 christos Exp $");
+__RCSID("$NetBSD: ldif.c,v 1.2 2020/08/11 13:15:37 christos Exp $");
 
 #include "portable.h"
 

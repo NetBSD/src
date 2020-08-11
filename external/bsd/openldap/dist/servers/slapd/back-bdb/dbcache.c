@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcache.c,v 1.1.1.8 2020/08/11 13:12:16 christos Exp $	*/
+/*	$NetBSD: dbcache.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
 
 /* dbcache.c - manage cache of open databases */
 /* $OpenLDAP$ */
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dbcache.c,v 1.1.1.8 2020/08/11 13:12:16 christos Exp $");
+__RCSID("$NetBSD: dbcache.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
 
 #include "portable.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: schemaparse.c,v 1.1.1.8 2020/08/11 13:12:13 christos Exp $	*/
+/*	$NetBSD: schemaparse.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
 
 /* schemaparse.c - routines to parse config file objectclass definitions */
 /* $OpenLDAP$ */
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: schemaparse.c,v 1.1.1.8 2020/08/11 13:12:13 christos Exp $");
+__RCSID("$NetBSD: schemaparse.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
 
 #include "portable.h"
 

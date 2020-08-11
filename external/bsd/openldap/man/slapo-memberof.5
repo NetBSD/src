@@ -1,6 +1,6 @@
 .lf 1 stdin
-.TH SLAPO-MEMBEROF 5 "2014/01/26" "OpenLDAP 2.4.39"
-.\" Copyright 1998-2014 The OpenLDAP Foundation, All Rights Reserved.
+.TH SLAPO-MEMBEROF 5 "2020/04/28" "OpenLDAP 2.4.50"
+.\" Copyright 1998-2020 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" $OpenLDAP$
 .SH NAME
@@ -110,7 +110,10 @@ with local storage backends. The maintenance operations it performs
 are internal to the server on which the overlay is configured and
 are never replicated. Replica servers should be configured with their
 own instances of the memberOf overlay if it is desired to maintain
-these memberOf attributes on the replicas.
+these memberOf attributes on the replicas.  Note that slapo-memberOf
+is not compatible with syncrepl based replication, and should not be
+used in a replicated environment. An alternative is to use slapo-dynlist
+to emulate slapo-memberOf behavior.
 
 .SH FILES
 .TP

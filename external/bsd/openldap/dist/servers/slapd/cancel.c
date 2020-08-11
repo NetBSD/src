@@ -1,4 +1,4 @@
-/*	$NetBSD: cancel.c,v 1.1.1.8 2020/08/11 13:12:12 christos Exp $	*/
+/*	$NetBSD: cancel.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
 
 /* cancel.c - LDAP cancel extended operation */
 /* $OpenLDAP$ */
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cancel.c,v 1.1.1.8 2020/08/11 13:12:12 christos Exp $");
+__RCSID("$NetBSD: cancel.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
 
 #include "portable.h"
 

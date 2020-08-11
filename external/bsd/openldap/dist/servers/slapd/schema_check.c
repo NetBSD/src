@@ -1,4 +1,4 @@
-/*	$NetBSD: schema_check.c,v 1.1.1.8 2020/08/11 13:12:13 christos Exp $	*/
+/*	$NetBSD: schema_check.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
 
 /* schema_check.c - routines to enforce schema definitions */
 /* $OpenLDAP$ */
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: schema_check.c,v 1.1.1.8 2020/08/11 13:12:13 christos Exp $");
+__RCSID("$NetBSD: schema_check.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
 
 #include "portable.h"
 

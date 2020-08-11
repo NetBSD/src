@@ -1,4 +1,4 @@
-/*	$NetBSD: back-bdb.h,v 1.1.1.8 2020/08/11 13:12:15 christos Exp $	*/
+/*	$NetBSD: back-bdb.h,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
 
 /* back-bdb.h - bdb back-end header file */
 /* $OpenLDAP$ */
