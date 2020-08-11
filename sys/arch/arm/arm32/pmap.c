@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.419 2020/08/10 05:40:21 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.420 2020/08/11 07:03:33 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -192,7 +192,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.419 2020/08/10 05:40:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.420 2020/08/11 07:03:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -4841,7 +4841,7 @@ pmap_unwire(pmap_t pm, vaddr_t va)
 
 	pmap_release_pmap_lock(pm);
 
-	UVMHIST_LOG(pmaphist, " <-- done", 0, 0, 0, 0);
+	UVMHIST_LOG(maphist, " <-- done", 0, 0, 0, 0);
 }
 
 #ifdef ARM_MMU_EXTENDED
@@ -5178,7 +5178,7 @@ pmap_remove_all(pmap_t pm)
 {
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(pmaphist, "(pm=%#jx)", (uintptr_t)pmap, 0, 0, 0);
+	UVMHIST_CALLARGS(maphist, "(pm=%#jx)", (uintptr_t)pmap, 0, 0, 0);
 
 	KASSERT(pm != pmap_kernel());
 
@@ -5207,7 +5207,7 @@ pmap_remove_all(pmap_t pm)
 #endif
 	pm->pm_remove_all = true;
 
-	UVMHIST_LOG(pmaphist, " <-- done", 0, 0, 0, 0);
+	UVMHIST_LOG(maphist, " <-- done", 0, 0, 0, 0);
 	return false;
 }
 
