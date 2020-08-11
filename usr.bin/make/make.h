@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.114 2020/08/10 19:30:30 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.115 2020/08/11 18:44:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -224,7 +224,7 @@ typedef struct GNode {
     Hash_Table      context;	/* The local variables */
     Lst             commands;  	/* Creation commands */
 
-    struct _Suff    *suffix;	/* Suffix for the node (determined by
+    struct Suff     *suffix;	/* Suffix for the node (determined by
 				 * Suff_FindDeps and opaque to everyone
 				 * but the Suff module) */
     const char	    *fname;	/* filename where the GNode got defined */
