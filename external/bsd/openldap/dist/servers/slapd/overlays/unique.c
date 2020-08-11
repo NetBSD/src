@@ -1,10 +1,10 @@
-/*	$NetBSD: unique.c,v 1.1.1.8 2019/08/08 13:31:40 christos Exp $	*/
+/*	$NetBSD: unique.c,v 1.1.1.9 2020/08/11 13:12:15 christos Exp $	*/
 
 /* unique.c - attribute uniqueness module */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2019 The OpenLDAP Foundation.
+ * Copyright 2004-2020 The OpenLDAP Foundation.
  * Portions Copyright 2004,2006-2007 Symas Corporation.
  * All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unique.c,v 1.1.1.8 2019/08/08 13:31:40 christos Exp $");
+__RCSID("$NetBSD: unique.c,v 1.1.1.9 2020/08/11 13:12:15 christos Exp $");
 
 #include "portable.h"
 
@@ -373,7 +373,7 @@ unique_new_domain ( unique_domain **domainp,
 
 	for ( url_desc = url_descs;
 	      url_desc;
-	      url_desc = url_descs->lud_next ) {
+	      url_desc = url_desc->lud_next ) {
 		rc = unique_new_domain_uri ( &domain->uri,
 					     url_desc,
 					     c );

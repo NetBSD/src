@@ -1,9 +1,9 @@
-/*	$NetBSD: ppolicy.c,v 1.1.1.8 2019/08/08 13:31:40 christos Exp $	*/
+/*	$NetBSD: ppolicy.c,v 1.1.1.9 2020/08/11 13:12:14 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2019 The OpenLDAP Foundation.
+ * Copyright 2004-2020 The OpenLDAP Foundation.
  * Portions Copyright 2004-2005 Howard Chu, Symas Corporation.
  * Portions Copyright 2004 Hewlett-Packard Company.
  * All rights reserved.
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ppolicy.c,v 1.1.1.8 2019/08/08 13:31:40 christos Exp $");
+__RCSID("$NetBSD: ppolicy.c,v 1.1.1.9 2020/08/11 13:12:14 christos Exp $");
 
 #include "portable.h"
 
@@ -1328,9 +1328,8 @@ ppolicy_bind( Operation *op, SlapReply *rs )
 		/* Setup a callback so we can munge the result */
 
 		cb->sc_response = ppolicy_bind_response;
-		cb->sc_next = op->o_callback->sc_next;
 		cb->sc_private = ppb;
-		op->o_callback->sc_next = cb;
+		overlay_callback_after_backover( op, cb, 1 );
 
 		/* Did we receive a password policy request control? */
 		if ( op->o_ctrlflag[ppolicy_cid] ) {
@@ -1474,9 +1473,8 @@ ppolicy_compare(
 		/* Setup a callback so we can munge the result */
 
 		cb->sc_response = ppolicy_compare_response;
-		cb->sc_next = op->o_callback->sc_next;
 		cb->sc_private = ppb;
-		op->o_callback->sc_next = cb;
+		overlay_callback_after_backover( op, cb, 1 );
 
 		op->o_bd->bd_info = (BackendInfo *)on;
 		ppolicy_get( op, e, &ppb->pp );
@@ -2112,10 +2110,11 @@ do_modify:
 				mods = (Modifications *) ch_calloc( sizeof( Modifications ), 1 );
 				mods->sml_op = LDAP_MOD_REPLACE;
 				mods->sml_numvals = 1;
-				mods->sml_values = (BerVarray) ch_malloc( 2 * sizeof( struct berval ) );
+				mods->sml_values = (BerVarray) ch_calloc( sizeof( struct berval ), 2 );
+				mods->sml_nvalues = (BerVarray) ch_calloc( sizeof( struct berval ), 2 );
+
 				ber_dupbv( &mods->sml_values[0], &timestamp );
-				BER_BVZERO( &mods->sml_values[1] );
-				assert( !BER_BVISNULL( &mods->sml_values[0] ) );
+				ber_dupbv( &mods->sml_nvalues[0], &timestamp );
 			} else if (attr_find(e->e_attrs, ad_pwdChangedTime )) {
 				mods = (Modifications *) ch_calloc( sizeof( Modifications ), 1 );
 				mods->sml_op = LDAP_MOD_DELETE;
@@ -2429,7 +2428,7 @@ ppolicy_db_init(
 
 	on->on_bi.bi_private = ch_calloc( sizeof(pp_info), 1 );
 
-	if ( dtblsize && !pwcons ) {
+	if ( !pwcons ) {
 		/* accommodate for c_conn_idx == -1 */
 		pwcons = ch_calloc( sizeof(pw_conn), dtblsize + 1 );
 		pwcons++;

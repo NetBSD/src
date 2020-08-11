@@ -1,10 +1,10 @@
-/*	$NetBSD: cancel.c,v 1.1.1.7 2019/08/08 13:31:35 christos Exp $	*/
+/*	$NetBSD: cancel.c,v 1.1.1.8 2020/08/11 13:12:12 christos Exp $	*/
 
 /* cancel.c - LDAP cancel extended operation */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2019 The OpenLDAP Foundation.
+ * Copyright 1998-2020 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cancel.c,v 1.1.1.7 2019/08/08 13:31:35 christos Exp $");
+__RCSID("$NetBSD: cancel.c,v 1.1.1.8 2020/08/11 13:12:12 christos Exp $");
 
 #include "portable.h"
 
@@ -39,7 +39,8 @@ int cancel_extop( Operation *op, SlapReply *rs )
 	Operation *o;
 	int rc;
 	int opid;
-	BerElement *ber;
+	BerElementBuffer berbuf;
+	BerElement *ber = (BerElement *)&berbuf;
 
 	assert( ber_bvcmp( &slap_EXOP_CANCEL, &op->ore_reqoid ) == 0 );
 
@@ -48,18 +49,18 @@ int cancel_extop( Operation *op, SlapReply *rs )
 		return LDAP_PROTOCOL_ERROR;
 	}
 
-	ber = ber_init( op->ore_reqdata );
-	if ( ber == NULL ) {
-		rs->sr_text = "internal error";
-		return LDAP_OTHER;
+	if ( op->ore_reqdata->bv_len == 0 ) {
+		rs->sr_text = "empty request data field";
+		return LDAP_PROTOCOL_ERROR;
 	}
+
+	/* ber_init2 uses reqdata directly, doesn't allocate new buffers */
+	ber_init2( ber, op->ore_reqdata, 0 );
 
 	if ( ber_scanf( ber, "{i}", &opid ) == LBER_ERROR ) {
 		rs->sr_text = "message ID parse failed";
 		return LDAP_PROTOCOL_ERROR;
 	}
-
-	(void) ber_free( ber, 1 );
 
 	Statslog( LDAP_DEBUG_STATS, "%s CANCEL msg=%d\n",
 		op->o_log_prefix, opid, 0, 0, 0 );

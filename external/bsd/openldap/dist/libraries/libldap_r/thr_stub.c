@@ -1,10 +1,10 @@
-/*	$NetBSD: thr_stub.c,v 1.1.1.8 2019/08/08 13:31:13 christos Exp $	*/
+/*	$NetBSD: thr_stub.c,v 1.1.1.9 2020/08/11 13:12:04 christos Exp $	*/
 
 /* thr_stub.c - stubs for the threads */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2019 The OpenLDAP Foundation.
+ * Copyright 1998-2020 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: thr_stub.c,v 1.1.1.8 2019/08/08 13:31:13 christos Exp $");
+__RCSID("$NetBSD: thr_stub.c,v 1.1.1.9 2020/08/11 13:12:04 christos Exp $");
 
 #include "portable.h"
 

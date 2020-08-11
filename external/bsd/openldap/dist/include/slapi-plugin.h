@@ -1,9 +1,9 @@
-/*	$NetBSD: slapi-plugin.h,v 1.1.1.7 2019/08/08 13:31:03 christos Exp $	*/
+/*	$NetBSD: slapi-plugin.h,v 1.1.1.8 2020/08/11 13:12:01 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2019 The OpenLDAP Foundation.
+ * Copyright 1998-2020 The OpenLDAP Foundation.
  * Portions Copyright 1997,2002,2003 IBM Corporation.
  * All rights reserved.
  *

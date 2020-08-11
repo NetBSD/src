@@ -1,8 +1,8 @@
-/*	$NetBSD: mdb_stat.c,v 1.1.1.4 2019/08/08 13:31:14 christos Exp $	*/
+/*	$NetBSD: mdb_stat.c,v 1.1.1.5 2020/08/11 13:12:05 christos Exp $	*/
 
 /* mdb_stat.c - memory-mapped database status tool */
 /*
- * Copyright 2011-2018 Howard Chu, Symas Corp.
+ * Copyright 2011-2020 Howard Chu, Symas Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

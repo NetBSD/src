@@ -1,10 +1,10 @@
-/*	$NetBSD: rwmmap.c,v 1.1.1.7 2019/08/08 13:31:39 christos Exp $	*/
+/*	$NetBSD: rwmmap.c,v 1.1.1.8 2020/08/11 13:12:14 christos Exp $	*/
 
 /* rwmmap.c - rewrite/mapping routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2019 The OpenLDAP Foundation.
+ * Copyright 1999-2020 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rwmmap.c,v 1.1.1.7 2019/08/08 13:31:39 christos Exp $");
+__RCSID("$NetBSD: rwmmap.c,v 1.1.1.8 2020/08/11 13:12:14 christos Exp $");
 
 #include "portable.h"
 

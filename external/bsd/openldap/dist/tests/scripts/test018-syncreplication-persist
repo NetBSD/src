@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2019 The OpenLDAP Foundation.
+## Copyright 1998-2020 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -494,6 +494,14 @@ EOMODS
 	echo "Waiting $SLEEP1 seconds for syncrepl to receive changes..."
 	sleep $SLEEP1
 fi
+
+# Testing a cancel exop (should go in its own testcase)
+$LDAPSEARCH -D "$MANAGERDN" -h $LOCALHOST -p $PORT1 -w $PASSWD \
+	-e '!cancel' \
+	'(objectclass=*)' '*' $OPATTRS > $TESTOUT 2>&1
+RC=$?
+# cancelled operation returns -1, so no point of checking return code, either
+# it's cancelled or we get stuck forever
 
 echo "Using ldapsearch to read all the entries from the provider..."
 $LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
