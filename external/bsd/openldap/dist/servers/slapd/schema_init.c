@@ -1,10 +1,10 @@
-/*	$NetBSD: schema_init.c,v 1.1.1.8 2019/08/08 13:31:36 christos Exp $	*/
+/*	$NetBSD: schema_init.c,v 1.1.1.9 2020/08/11 13:12:13 christos Exp $	*/
 
 /* schema_init.c - init builtin schema */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2019 The OpenLDAP Foundation.
+ * Copyright 1998-2020 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: schema_init.c,v 1.1.1.8 2019/08/08 13:31:36 christos Exp $");
+__RCSID("$NetBSD: schema_init.c,v 1.1.1.9 2020/08/11 13:12:13 christos Exp $");
 
 #include "portable.h"
 
@@ -5959,18 +5959,18 @@ again:
 	if( BER_BVISEMPTY( &tmp ) ) return LDAP_SUCCESS;
 
 	while( !BER_BVISEMPTY( &tmp ) && ( tmp.bv_val[0] == ' ' ) ) {
-		tmp.bv_len++;
-		tmp.bv_val--;
+		tmp.bv_len--;
+		tmp.bv_val++;
 	}
 	if( !BER_BVISEMPTY( &tmp ) && ( tmp.bv_val[0] == '$' ) ) {
-		tmp.bv_len++;
-		tmp.bv_val--;
+		tmp.bv_len--;
+		tmp.bv_val++;
 	} else {
 		return LDAP_INVALID_SYNTAX;
 	}
 	while( !BER_BVISEMPTY( &tmp ) && ( tmp.bv_val[0] == ' ' ) ) {
-		tmp.bv_len++;
-		tmp.bv_val--;
+		tmp.bv_len--;
+		tmp.bv_val++;
 	}
 
 	goto again;

@@ -1,10 +1,10 @@
-/*	$NetBSD: dn2id.c,v 1.1.1.4 2019/08/08 13:31:44 christos Exp $	*/
+/*	$NetBSD: dn2id.c,v 1.1.1.5 2020/08/11 13:12:16 christos Exp $	*/
 
 /* dn2id.c - routines to deal with the dn2id index */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2019 The OpenLDAP Foundation.
+ * Copyright 2000-2020 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dn2id.c,v 1.1.1.4 2019/08/08 13:31:44 christos Exp $");
+__RCSID("$NetBSD: dn2id.c,v 1.1.1.5 2020/08/11 13:12:16 christos Exp $");
 
 #include "portable.h"
 
@@ -490,10 +490,8 @@ mdb_dn2sups(
 		data.mv_data = d;
 		rc = mdb_cursor_get( cursor, &key, &data, MDB_GET_BOTH );
 		op->o_tmpfree( d, op->o_tmpmemctx );
-		if ( rc ) {
-			mdb_cursor_close( cursor );
+		if ( rc )
 			break;
-		}
 		ptr = (char *) data.mv_data + data.mv_size - 2*sizeof(ID);
 		memcpy( &nid, ptr, sizeof(ID));
 
@@ -512,7 +510,7 @@ mdb_dn2sups(
 			break;
 		}
 	}
-
+	mdb_cursor_close( cursor );
 done:
 	if( rc != 0 ) {
 		Debug( LDAP_DEBUG_TRACE, "<= mdb_dn2sups: get failed: %s (%d)\n",

@@ -1,9 +1,9 @@
-/*	$NetBSD: main.c,v 1.1.1.8 2019/08/08 13:31:35 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.9 2020/08/11 13:12:13 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2019 The OpenLDAP Foundation.
+ * Copyright 1998-2020 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.1.1.8 2019/08/08 13:31:35 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.9 2020/08/11 13:12:13 christos Exp $");
 
 #include "portable.h"
 
@@ -405,11 +405,16 @@ int main( int argc, char **argv )
 
 	slap_sl_mem_init();
 
+
 	(void) ldap_pvt_thread_initialize();
 
 	serverName = lutil_progname( "slapd", argc, argv );
 
 	if ( strcmp( serverName, "slapd" ) ) {
+#ifdef DEBUG_CLOSE
+		extern void slapd_debug_close();
+		slapd_debug_close();
+#endif
 		for (i=0; tools[i].name; i++) {
 			if ( !strcmp( serverName, tools[i].name ) ) {
 				rc = tools[i].func(argc, argv);
@@ -654,6 +659,10 @@ int main( int argc, char **argv )
 					optarg );
 			}
 
+#ifdef DEBUG_CLOSE
+			extern void slapd_debug_close();
+			slapd_debug_close();
+#endif
 			/* try full option string first */
 			for ( i = 0; tools[i].name; i++ ) {
 				if ( strcmp( optarg, &tools[i].name[4] ) == 0 ) {

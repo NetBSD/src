@@ -1,10 +1,10 @@
-/*	$NetBSD: collect.c,v 1.1.1.7 2019/08/08 13:31:40 christos Exp $	*/
+/*	$NetBSD: collect.c,v 1.1.1.8 2020/08/11 13:12:15 christos Exp $	*/
 
 /* collect.c - Demonstration of overlay code */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2019 The OpenLDAP Foundation.
+ * Copyright 2003-2020 The OpenLDAP Foundation.
  * Portions Copyright 2003 Howard Chu.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: collect.c,v 1.1.1.7 2019/08/08 13:31:40 christos Exp $");
+__RCSID("$NetBSD: collect.c,v 1.1.1.8 2020/08/11 13:12:15 christos Exp $");
 
 #include "portable.h"
 

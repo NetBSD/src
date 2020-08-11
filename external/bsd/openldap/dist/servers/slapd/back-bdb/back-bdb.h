@@ -1,10 +1,10 @@
-/*	$NetBSD: back-bdb.h,v 1.1.1.7 2019/08/08 13:31:43 christos Exp $	*/
+/*	$NetBSD: back-bdb.h,v 1.1.1.8 2020/08/11 13:12:15 christos Exp $	*/
 
 /* back-bdb.h - bdb back-end header file */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2019 The OpenLDAP Foundation.
+ * Copyright 2000-2020 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

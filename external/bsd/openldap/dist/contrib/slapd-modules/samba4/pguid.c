@@ -1,10 +1,10 @@
-/*	$NetBSD: pguid.c,v 1.1.1.5 2019/08/08 13:31:04 christos Exp $	*/
+/*	$NetBSD: pguid.c,v 1.1.1.6 2020/08/11 13:12:01 christos Exp $	*/
 
 /* pguid.c - Parent GUID value overlay */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2019 The OpenLDAP Foundation.
+ * Copyright 1998-2020 The OpenLDAP Foundation.
  * Portions Copyright 2008 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pguid.c,v 1.1.1.5 2019/08/08 13:31:04 christos Exp $");
+__RCSID("$NetBSD: pguid.c,v 1.1.1.6 2020/08/11 13:12:01 christos Exp $");
 
 #include "portable.h"
 
