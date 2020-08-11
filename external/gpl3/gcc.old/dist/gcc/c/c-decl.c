@@ -1235,8 +1235,9 @@ pop_scope (void)
 	      && DECL_ABSTRACT_ORIGIN (p) != 0
 	      && DECL_ABSTRACT_ORIGIN (p) != p)
 	    TREE_ADDRESSABLE (DECL_ABSTRACT_ORIGIN (p)) = 1;
-	  if (!DECL_EXTERNAL (p)
+	  if (!TREE_PUBLIC (p)
 	      && !DECL_INITIAL (p)
+	      && !b->nested
 	      && scope != file_scope
 	      && scope != external_scope)
 	    {
@@ -1252,7 +1253,7 @@ pop_scope (void)
 		 in the same translation unit."  */
 	      if (!flag_gnu89_inline
 		  && !lookup_attribute ("gnu_inline", DECL_ATTRIBUTES (p))
-		  && scope != external_scope)
+		  && scope == external_scope)
 		pedwarn (input_location, 0,
 			 "inline function %q+D declared but never defined", p);
 	      DECL_EXTERNAL (p) = 1;
@@ -2347,13 +2348,33 @@ merge_decls (tree newdecl, tree olddecl, tree newtype, tree oldtype)
       if (TYPE_NAME (TREE_TYPE (newdecl)) == newdecl)
 	{
 	  tree remove = TREE_TYPE (newdecl);
-	  for (tree t = TYPE_MAIN_VARIANT (remove); ;
-	       t = TYPE_NEXT_VARIANT (t))
-	    if (TYPE_NEXT_VARIANT (t) == remove)
-	      {
-		TYPE_NEXT_VARIANT (t) = TYPE_NEXT_VARIANT (remove);
-		break;
-	      }
+	  if (TYPE_MAIN_VARIANT (remove) == remove)
+	    {
+	      gcc_assert (TYPE_NEXT_VARIANT (remove) == NULL_TREE);
+	      /* If remove is the main variant, no need to remove that
+		 from the list.  One of the DECL_ORIGINAL_TYPE
+		 variants, e.g. created for aligned attribute, might still
+		 refer to the newdecl TYPE_DECL though, so remove that one
+		 in that case.  */
+	      if (DECL_ORIGINAL_TYPE (newdecl)
+		  && DECL_ORIGINAL_TYPE (newdecl) != remove)
+		for (tree t = TYPE_MAIN_VARIANT (DECL_ORIGINAL_TYPE (newdecl));
+		     t; t = TYPE_MAIN_VARIANT (t))
+		  if (TYPE_NAME (TYPE_NEXT_VARIANT (t)) == newdecl)
+		    {
+		      TYPE_NEXT_VARIANT (t)
+			= TYPE_NEXT_VARIANT (TYPE_NEXT_VARIANT (t));
+		      break;
+		    }
+	    }	    
+	  else
+	    for (tree t = TYPE_MAIN_VARIANT (remove); ;
+		 t = TYPE_NEXT_VARIANT (t))
+	      if (TYPE_NEXT_VARIANT (t) == remove)
+		{
+		  TYPE_NEXT_VARIANT (t) = TYPE_NEXT_VARIANT (remove);
+		  break;
+		}
 	}
     }
 
@@ -6360,10 +6381,12 @@ grokdeclarator (const struct c_declarator *declarator,
 		  quals_used &= TYPE_QUAL_ATOMIC;
 		if (quals_used && VOID_TYPE_P (type) && really_funcdef)
 		  pedwarn (specs_loc, 0,
-			   "function definition has qualified void return type");
+			   "function definition has qualified void "
+			   "return type");
 		else
 		  warning_at (specs_loc, OPT_Wignored_qualifiers,
-			   "type qualifiers ignored on function return type");
+			      "type qualifiers ignored on function "
+			      "return type");
 
 		/* Ensure an error for restrict on invalid types; the
 		   DR#423 resolution is not entirely clear about
@@ -6373,8 +6396,7 @@ grokdeclarator (const struct c_declarator *declarator,
 		    && (!POINTER_TYPE_P (type)
 			|| !C_TYPE_OBJECT_OR_INCOMPLETE_P (TREE_TYPE (type))))
 		  error_at (loc, "invalid use of %<restrict%>");
-		if (quals_used)
-		  type = c_build_qualified_type (type, quals_used);
+		type = c_build_qualified_type (type, quals_used);
 	      }
 	    type_quals = TYPE_UNQUALIFIED;
 

@@ -3044,10 +3044,16 @@ operand_equal_p (const_tree arg0, const_tree arg1, unsigned int flags)
       switch (TREE_CODE (arg0))
 	{
 	case INDIRECT_REF:
-	  if (!(flags & OEP_ADDRESS_OF)
-	      && (TYPE_ALIGN (TREE_TYPE (arg0))
-		  != TYPE_ALIGN (TREE_TYPE (arg1))))
-	    return 0;
+	  if (!(flags & OEP_ADDRESS_OF))
+	    {
+	      if (TYPE_ALIGN (TREE_TYPE (arg0))
+		  != TYPE_ALIGN (TREE_TYPE (arg1)))
+		return 0;
+	      /* Verify that the access types are compatible.  */
+	      if (TYPE_MAIN_VARIANT (TREE_TYPE (arg0))
+		  != TYPE_MAIN_VARIANT (TREE_TYPE (arg1)))
+		return 0;
+	    }
 	  flags &= ~OEP_ADDRESS_OF;
 	  return OP_SAME (0);
 
@@ -4159,7 +4165,7 @@ decode_field_reference (location_t loc, tree *exp_, HOST_WIDE_INT *pbitsize,
      There are problems with FP fields since the type_for_size call
      below can fail for, e.g., XFmode.  */
   if (! INTEGRAL_TYPE_P (TREE_TYPE (exp)))
-    return 0;
+    return NULL_TREE;
 
   /* We are interested in the bare arrangement of bits, so strip everything
      that doesn't affect the machine mode.  However, record the type of the
@@ -4175,7 +4181,7 @@ decode_field_reference (location_t loc, tree *exp_, HOST_WIDE_INT *pbitsize,
       exp = TREE_OPERAND (exp, 0);
       STRIP_NOPS (exp); STRIP_NOPS (and_mask);
       if (TREE_CODE (and_mask) != INTEGER_CST)
-	return 0;
+	return NULL_TREE;
     }
 
   inner = get_inner_reference (exp, pbitsize, pbitpos, &offset, pmode,
@@ -4187,7 +4193,11 @@ decode_field_reference (location_t loc, tree *exp_, HOST_WIDE_INT *pbitsize,
       || (! AGGREGATE_TYPE_P (TREE_TYPE (inner))
 	  && compare_tree_int (TYPE_SIZE (TREE_TYPE (inner)),
 			       *pbitpos + *pbitsize) < 0))
-    return 0;
+    return NULL_TREE;
+
+  unsigned_type = lang_hooks.types.type_for_size (*pbitsize, 1);
+  if (unsigned_type == NULL_TREE)
+    return NULL_TREE;
 
   *exp_ = exp;
 
@@ -4198,7 +4208,6 @@ decode_field_reference (location_t loc, tree *exp_, HOST_WIDE_INT *pbitsize,
     *punsignedp = TYPE_UNSIGNED (outer_type);
 
   /* Compute the mask to access the bitfield.  */
-  unsigned_type = lang_hooks.types.type_for_size (*pbitsize, 1);
   precision = TYPE_PRECISION (unsigned_type);
 
   mask = build_int_cst_type (unsigned_type, -1);
@@ -10726,8 +10735,7 @@ fold_binary_loc (location_t loc, enum tree_code code, tree type,
 		strlen(ptr) != 0   =>  *ptr != 0
 	 Other cases should reduce to one of these two (or a constant)
 	 due to the return value of strlen being unsigned.  */
-      if (TREE_CODE (arg0) == CALL_EXPR
-	  && integer_zerop (arg1))
+      if (TREE_CODE (arg0) == CALL_EXPR && integer_zerop (arg1))
 	{
 	  tree fndecl = get_callee_fndecl (arg0);
 
@@ -10735,12 +10743,17 @@ fold_binary_loc (location_t loc, enum tree_code code, tree type,
 	      && DECL_BUILT_IN_CLASS (fndecl) == BUILT_IN_NORMAL
 	      && DECL_FUNCTION_CODE (fndecl) == BUILT_IN_STRLEN
 	      && call_expr_nargs (arg0) == 1
-	      && TREE_CODE (TREE_TYPE (CALL_EXPR_ARG (arg0, 0))) == POINTER_TYPE)
+	      && (TREE_CODE (TREE_TYPE (CALL_EXPR_ARG (arg0, 0)))
+		  == POINTER_TYPE))
 	    {
-	      tree iref = build_fold_indirect_ref_loc (loc,
-						   CALL_EXPR_ARG (arg0, 0));
+	      tree ptrtype
+		= build_pointer_type (build_qualified_type (char_type_node,
+							    TYPE_QUAL_CONST));
+	      tree ptr = fold_convert_loc (loc, ptrtype,
+					   CALL_EXPR_ARG (arg0, 0));
+	      tree iref = build_fold_indirect_ref_loc (loc, ptr);
 	      return fold_build2_loc (loc, code, type, iref,
-				  build_int_cst (TREE_TYPE (iref), 0));
+				      build_int_cst (TREE_TYPE (iref), 0));
 	    }
 	}
 
