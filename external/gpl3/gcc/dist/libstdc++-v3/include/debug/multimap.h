@@ -1,6 +1,6 @@
 // Debugging multimap implementation -*- C++ -*-
 
-// Copyright (C) 2003-2017 Free Software Foundation, Inc.
+// Copyright (C) 2003-2018 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -105,6 +105,7 @@ namespace __debug
       : _Base(__m, __a) { }
 
       multimap(multimap&& __m, const allocator_type& __a)
+      noexcept( noexcept(_Base(std::move(__m._M_base()), __a)) )
       : _Safe(std::move(__m._M_safe()), __a),
 	_Base(std::move(__m._M_base()), __a) { }
 
@@ -569,6 +570,39 @@ namespace __debug
       const _Base&
       _M_base() const _GLIBCXX_NOEXCEPT { return *this; }
     };
+
+#if __cpp_deduction_guides >= 201606
+
+  template<typename _InputIterator,
+	   typename _Compare = less<__iter_key_t<_InputIterator>>,
+	   typename _Allocator = allocator<__iter_to_alloc_t<_InputIterator>>,
+	   typename = _RequireInputIter<_InputIterator>,
+	   typename = _RequireAllocator<_Allocator>>
+    multimap(_InputIterator, _InputIterator,
+	     _Compare = _Compare(), _Allocator = _Allocator())
+    -> multimap<__iter_key_t<_InputIterator>, __iter_val_t<_InputIterator>,
+		_Compare, _Allocator>;
+
+  template<typename _Key, typename _Tp, typename _Compare = less<_Key>,
+	   typename _Allocator = allocator<pair<const _Key, _Tp>>,
+	   typename = _RequireAllocator<_Allocator>>
+    multimap(initializer_list<pair<_Key, _Tp>>,
+	     _Compare = _Compare(), _Allocator = _Allocator())
+    -> multimap<_Key, _Tp, _Compare, _Allocator>;
+
+  template<typename _InputIterator, typename _Allocator,
+	   typename = _RequireInputIter<_InputIterator>,
+	   typename = _RequireAllocator<_Allocator>>
+    multimap(_InputIterator, _InputIterator, _Allocator)
+    -> multimap<__iter_key_t<_InputIterator>, __iter_val_t<_InputIterator>,
+    less<__iter_key_t<_InputIterator>>, _Allocator>;
+
+  template<typename _Key, typename _Tp, typename _Allocator,
+	   typename = _RequireAllocator<_Allocator>>
+    multimap(initializer_list<pair<_Key, _Tp>>, _Allocator)
+    -> multimap<_Key, _Tp, less<_Key>, _Allocator>;
+
+#endif
 
   template<typename _Key, typename _Tp,
 	   typename _Compare, typename _Allocator>
