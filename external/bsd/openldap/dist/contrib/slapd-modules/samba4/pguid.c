@@ -1,4 +1,4 @@
-/*	$NetBSD: pguid.c,v 1.1.1.6 2020/08/11 13:12:01 christos Exp $	*/
+/*	$NetBSD: pguid.c,v 1.2 2020/08/11 13:15:36 christos Exp $	*/
 
 /* pguid.c - Parent GUID value overlay */
 /* $OpenLDAP$ */
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pguid.c,v 1.1.1.6 2020/08/11 13:12:01 christos Exp $");
+__RCSID("$NetBSD: pguid.c,v 1.2 2020/08/11 13:15:36 christos Exp $");
 
 #include "portable.h"
 

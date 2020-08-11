@@ -1,4 +1,4 @@
-/*	$NetBSD: translucent.c,v 1.1.1.8 2020/08/11 13:12:15 christos Exp $	*/
+/*	$NetBSD: translucent.c,v 1.2 2020/08/11 13:15:42 christos Exp $	*/
 
 /* translucent.c - translucent proxy module */
 /* $OpenLDAP$ */
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: translucent.c,v 1.1.1.8 2020/08/11 13:12:15 christos Exp $");
+__RCSID("$NetBSD: translucent.c,v 1.2 2020/08/11 13:15:42 christos Exp $");
 
 #include "portable.h"
 

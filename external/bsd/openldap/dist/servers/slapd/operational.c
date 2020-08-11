@@ -1,4 +1,4 @@
-/*	$NetBSD: operational.c,v 1.1.1.8 2020/08/11 13:12:13 christos Exp $	*/
+/*	$NetBSD: operational.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
 
 /* operational.c - routines to deal with on-the-fly operational attrs */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: operational.c,v 1.1.1.8 2020/08/11 13:12:13 christos Exp $");
+__RCSID("$NetBSD: operational.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
 
 #include "portable.h"
 

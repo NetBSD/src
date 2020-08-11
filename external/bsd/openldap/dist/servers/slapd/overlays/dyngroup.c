@@ -1,4 +1,4 @@
-/*	$NetBSD: dyngroup.c,v 1.1.1.8 2020/08/11 13:12:14 christos Exp $	*/
+/*	$NetBSD: dyngroup.c,v 1.2 2020/08/11 13:15:42 christos Exp $	*/
 
 /* dyngroup.c - Demonstration of overlay code */
 /* $OpenLDAP$ */
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dyngroup.c,v 1.1.1.8 2020/08/11 13:12:14 christos Exp $");
+__RCSID("$NetBSD: dyngroup.c,v 1.2 2020/08/11 13:15:42 christos Exp $");
 
 #include "portable.h"
 

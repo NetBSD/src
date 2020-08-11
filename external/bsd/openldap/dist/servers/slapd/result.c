@@ -1,4 +1,4 @@
-/*	$NetBSD: result.c,v 1.1.1.9 2020/08/11 13:12:14 christos Exp $	*/
+/*	$NetBSD: result.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
 
 /* result.c - routines to send ldap results, errors, and referrals */
 /* $OpenLDAP$ */
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: result.c,v 1.1.1.9 2020/08/11 13:12:14 christos Exp $");
+__RCSID("$NetBSD: result.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
 
 #include "portable.h"
 

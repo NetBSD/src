@@ -1,4 +1,4 @@
-/*	$NetBSD: ldapurl.c,v 1.1.1.7 2020/08/11 13:12:03 christos Exp $	*/
+/*	$NetBSD: ldapurl.c,v 1.2 2020/08/11 13:15:34 christos Exp $	*/
 
 /* ldapurl -- a tool for generating LDAP URLs */
 /* $OpenLDAP$ */
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ldapurl.c,v 1.1.1.7 2020/08/11 13:12:03 christos Exp $");
+__RCSID("$NetBSD: ldapurl.c,v 1.2 2020/08/11 13:15:34 christos Exp $");
 
 #include "portable.h"
 

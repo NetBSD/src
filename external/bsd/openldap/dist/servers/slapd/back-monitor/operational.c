@@ -1,4 +1,4 @@
-/*	$NetBSD: operational.c,v 1.1.1.8 2020/08/11 13:12:15 christos Exp $	*/
+/*	$NetBSD: operational.c,v 1.2 2020/08/11 13:15:41 christos Exp $	*/
 
 /* operational.c - monitor backend operational attributes function */
 /* $OpenLDAP$ */
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: operational.c,v 1.1.1.8 2020/08/11 13:12:15 christos Exp $");
+__RCSID("$NetBSD: operational.c,v 1.2 2020/08/11 13:15:41 christos Exp $");
 
 #include "portable.h"
 

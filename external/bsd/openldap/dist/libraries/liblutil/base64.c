@@ -1,4 +1,4 @@
-/*	$NetBSD: base64.c,v 1.1.1.8 2020/08/11 13:12:05 christos Exp $	*/
+/*	$NetBSD: base64.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
 
 /* base64.c -- routines to encode/decode base64 data */
 /* $OpenLDAP$ */
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: base64.c,v 1.1.1.8 2020/08/11 13:12:05 christos Exp $");
+__RCSID("$NetBSD: base64.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
 
 #include "portable.h"
 

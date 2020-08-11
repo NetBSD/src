@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_g.c,v 1.1.1.7 2020/08/11 13:12:05 christos Exp $	*/
+/*	$NetBSD: tls_g.c,v 1.2 2020/08/11 13:15:38 christos Exp $	*/
 
 /* tls_g.c - Handle tls/ssl using GNUTLS. */
 /* $OpenLDAP$ */
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls_g.c,v 1.1.1.7 2020/08/11 13:12:05 christos Exp $");
+__RCSID("$NetBSD: tls_g.c,v 1.2 2020/08/11 13:15:38 christos Exp $");
 
 #include "portable.h"
 

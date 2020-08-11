@@ -1,6 +1,6 @@
 .lf 1 stdin
-.TH SLAPD.BACKENDS 5 "2014/01/26" "OpenLDAP 2.4.39"
-.\" Copyright 2006-2014 The OpenLDAP Foundation All Rights Reserved.
+.TH SLAPD.BACKENDS 5 "2020/04/28" "OpenLDAP 2.4.50"
+.\" Copyright 2006-2020 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -23,7 +23,7 @@ manual pages.
 .B bdb
 This was the recommended primary backend through OpenLDAP 2.3, but it has
 since been superseded by the
-.BR hdb
+.BR mdb
 backend.  It takes care to configure it properly.
 It uses the transactional database interface of the Oracle Berkeley
 DB (BDB) package to store data.
@@ -43,7 +43,10 @@ It serves up referrals based upon SRV resource records held in the
 Domain Name System.
 .TP
 .B hdb
-This is the recommended primary backend for a normal slapd database.
+This was the recommended primary backend through OpenLDAP 2.4.40 but it has
+since been superseded by the
+.BR mdb
+backend.  It takes care to configure it properly.
 .B hdb
 is a variant of the
 .B bdb
@@ -66,7 +69,7 @@ Its usage should be limited to very simple databases, where performance
 is not a requirement. This backend also supports subtree renames.
 .TP
 .B mdb
-This will soon be the recommended primary backend, superseding
+This is the recommended primary backend, superseding
 .BR hdb .
 This backend uses OpenLDAP's own MDB transactional database
 library. It is extremely compact and extremely efficient, delivering
@@ -162,5 +165,5 @@ default slapd configuration directory
 .B "OpenLDAP Software"
 is developed and maintained by The OpenLDAP Project <http://www.openldap.org/>.
 .B "OpenLDAP Software"
-is derived from University of Michigan LDAP 3.3 Release.  
-.lf 160 stdin
+is derived from the University of Michigan LDAP 3.3 Release.  
+.lf 163 stdin

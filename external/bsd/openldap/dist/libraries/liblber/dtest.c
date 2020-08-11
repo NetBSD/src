@@ -1,4 +1,4 @@
-/*	$NetBSD: dtest.c,v 1.1.1.8 2020/08/11 13:12:04 christos Exp $	*/
+/*	$NetBSD: dtest.c,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
 
 /* dtest.c - lber decoding test program */
 /* $OpenLDAP$ */
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dtest.c,v 1.1.1.8 2020/08/11 13:12:04 christos Exp $");
+__RCSID("$NetBSD: dtest.c,v 1.2 2020/08/11 13:15:37 christos Exp $");
 
 #include "portable.h"
 

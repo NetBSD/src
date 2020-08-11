@@ -1,4 +1,4 @@
-/*	$NetBSD: proto-back-relay.h,v 1.1.1.8 2020/08/11 13:12:16 christos Exp $	*/
+/*	$NetBSD: proto-back-relay.h,v 1.2 2020/08/11 13:15:41 christos Exp $	*/
 
 /* proto-back-relay.h - relay backend header file */
 /* $OpenLDAP$ */

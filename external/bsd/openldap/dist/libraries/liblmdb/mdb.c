@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.1.1.5 2020/08/11 13:12:05 christos Exp $	*/
+/*	$NetBSD: mdb.c,v 1.2 2020/08/11 13:15:38 christos Exp $	*/
 
 /** @file mdb.c
  *	@brief Lightning memory-mapped database library

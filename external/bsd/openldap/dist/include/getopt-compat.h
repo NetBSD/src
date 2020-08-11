@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt-compat.h,v 1.1.1.8 2020/08/11 13:12:01 christos Exp $	*/
+/*	$NetBSD: getopt-compat.h,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
 
 /* getopt-compat.h -- getopt(3) compatibility header */
 /* $OpenLDAP$ */

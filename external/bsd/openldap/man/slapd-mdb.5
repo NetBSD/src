@@ -1,6 +1,6 @@
 .lf 1 stdin
-.TH SLAPD-MDB 5 "2014/01/26" "OpenLDAP 2.4.39"
-.\" Copyright 2011-2014 The OpenLDAP Foundation All Rights Reserved.
+.TH SLAPD-MDB 5 "2020/04/28" "OpenLDAP 2.4.50"
+.\" Copyright 2011-2020 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -12,7 +12,8 @@ The \fBmdb\fP backend to
 .BR slapd (8)
 uses OpenLDAP's Lightning Memory-Mapped DB (LMDB) library to store data.
 It relies completely on the underlying operating system for memory
-management and does no caching of its own.
+management and does no caching of its own. It is the recommended
+primary database backend.
 .LP
 The \fBmdb\fP backend is similar to the \fBhdb\fP backend in that
 it uses a hierarchical database layout which
@@ -162,6 +163,16 @@ Specify the file protection mode that newly created database
 files should have.
 The default is 0600.
 .TP
+.BI rtxnsize \ <entries>
+Specify the maximum number of entries to process in a single read
+transaction when executing a large search. Long-lived read transactions
+prevent old database pages from being reused in write transactions, and
+so can cause significant growth of the database file when there is
+heavy write traffic. This setting causes the read transaction in
+large searches to be released and reacquired after the given number
+of entries has been read, to give writers the opportunity to
+reclaim old database pages. The default is 10000.
+.TP
 .BI searchstack \ <depth>
 Specify the depth of the stack used for search filter evaluation.
 Search filters are evaluated on a stack to accommodate nested AND / OR
@@ -179,9 +190,6 @@ The
 .B mdb
 backend honors access control semantics as indicated in
 .BR slapd.access (5).
-.SH NOTES
-This is an early release; the database file format or other
-characteristics may change incompatibly in future releases.
 .SH FILES
 .TP
 .B /etc/openldap/slapd.conf
@@ -202,6 +210,6 @@ OpenLDAP LMDB documentation.
 .B "OpenLDAP Software"
 is developed and maintained by The OpenLDAP Project <http://www.openldap.org/>.
 .B "OpenLDAP Software"
-is derived from University of Michigan LDAP 3.3 Release.  
-.lf 200 stdin
+is derived from the University of Michigan LDAP 3.3 Release.  
+.lf 208 stdin
 Written by Howard Chu.

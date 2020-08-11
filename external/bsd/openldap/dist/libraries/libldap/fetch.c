@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.1.1.5 2020/08/11 13:12:05 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
 
 /* fetch.c - routines for fetching data at URLs */
 /* $OpenLDAP$ */
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fetch.c,v 1.1.1.5 2020/08/11 13:12:05 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.2 2020/08/11 13:15:37 christos Exp $");
 
 #include "portable.h"
 

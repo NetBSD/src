@@ -1,4 +1,4 @@
-/*	$NetBSD: back-ldap.h,v 1.1.1.9 2020/08/11 13:12:15 christos Exp $	*/
+/*	$NetBSD: back-ldap.h,v 1.2 2020/08/11 13:15:40 christos Exp $	*/
 
 /* back-ldap.h - ldap backend header file */
 /* $OpenLDAP$ */

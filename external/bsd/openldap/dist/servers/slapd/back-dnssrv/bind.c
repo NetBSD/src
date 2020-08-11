@@ -1,4 +1,4 @@
-/*	$NetBSD: bind.c,v 1.1.1.8 2020/08/11 13:12:16 christos Exp $	*/
+/*	$NetBSD: bind.c,v 1.2 2020/08/11 13:15:40 christos Exp $	*/
 
 /* bind.c - DNS SRV backend bind function */
 /* $OpenLDAP$ */
@@ -23,7 +23,7 @@
 
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bind.c,v 1.1.1.8 2020/08/11 13:12:16 christos Exp $");
+__RCSID("$NetBSD: bind.c,v 1.2 2020/08/11 13:15:40 christos Exp $");
 
 #include "portable.h"
 

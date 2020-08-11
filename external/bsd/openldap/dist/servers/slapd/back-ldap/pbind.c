@@ -1,4 +1,4 @@
-/*	$NetBSD: pbind.c,v 1.1.1.6 2020/08/11 13:12:15 christos Exp $	*/
+/*	$NetBSD: pbind.c,v 1.2 2020/08/11 13:15:40 christos Exp $	*/
 
 /* pbind.c - passthru Bind overlay */
 /* $OpenLDAP$ */
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pbind.c,v 1.1.1.6 2020/08/11 13:12:15 christos Exp $");
+__RCSID("$NetBSD: pbind.c,v 1.2 2020/08/11 13:15:40 christos Exp $");
 
 #include "portable.h"
 

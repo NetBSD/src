@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2018/05/01 19:59:43 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2020/08/11 13:15:33 christos Exp $
 
 .include "openldap.mk"
 
@@ -30,6 +30,8 @@ CONFIGURE_ARGS+=	--sysconfdir=${LDAP_ETCDIR}
 CONFIGURE_ARGS+=	--localstatedir=${LDAP_RUNDIR}
 
 CONFIGURE_ARGS+=	--enable-dynamic
+CONFIGURE_ARGS+=	--disable-bdb
+CONFIGURE_ARGS+=	--disable-hdb
 CONFIGURE_ARGS+=	--disable-slapd
 CONFIGURE_ARGS+=	--with-tls=openssl
 CONFIGURE_ARGS+=	--with-threads

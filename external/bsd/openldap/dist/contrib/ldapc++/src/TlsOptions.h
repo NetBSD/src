@@ -1,4 +1,4 @@
-/*	$NetBSD: TlsOptions.h,v 1.1.1.6 2020/08/11 13:12:03 christos Exp $	*/
+/*	$NetBSD: TlsOptions.h,v 1.2 2020/08/11 13:15:34 christos Exp $	*/
 
 // $OpenLDAP$
 /*

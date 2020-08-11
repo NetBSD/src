@@ -1,4 +1,4 @@
-/*	$NetBSD: ldap_int_thread.h,v 1.1.1.8 2020/08/11 13:12:01 christos Exp $	*/
+/*	$NetBSD: ldap_int_thread.h,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
 
 /* ldap_int_thread.h - ldap internal thread wrappers header file */
 /* $OpenLDAP$ */

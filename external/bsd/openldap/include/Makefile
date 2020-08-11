@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/05/22 13:57:47 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2020/08/11 13:15:43 christos Exp $
 
 .include "../openldap.mk"
 
@@ -6,7 +6,7 @@
 
 INCS=	lber.h lber_types.h \
 	ldap.h ldap_cdefs.h \
-	ldap_features.h ldap_schema.h ldap_utf8.h
+	ldap_features.h ldap_schema.h ldap_utf8.h openldap.h
 
 INCSDIR=/usr/include
 

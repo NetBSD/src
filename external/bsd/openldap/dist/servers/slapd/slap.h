@@ -1,4 +1,4 @@
-/*	$NetBSD: slap.h,v 1.1.1.9 2020/08/11 13:12:14 christos Exp $	*/
+/*	$NetBSD: slap.h,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
 
 /* slap.h - stand alone ldap server include file */
 /* $OpenLDAP$ */

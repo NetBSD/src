@@ -1,6 +1,6 @@
 .lf 1 stdin
-.TH SLAPCAT 8C "2014/01/26" "OpenLDAP 2.4.39"
-.\" Copyright 1998-2014 The OpenLDAP Foundation All Rights Reserved.
+.TH SLAPCAT 8C "2020/04/28" "OpenLDAP 2.4.50"
+.\" Copyright 1998-2020 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -154,7 +154,9 @@ Possible generic options/values are:
 
 .in
 \fIn\fP is the number of columns allowed for the LDIF output
-(\fIn\fP equal to \fI0\fP uses the default, corresponding to 76).
+(\fIn\fP equal to \fI0\fP uses the default, corresponding to 78).
+The minimum is 2, leaving space for one character and one
+continuation character.
 Use \fIno\fP for no wrap.
 .TP
 .BI \-s \ subtree-dn
@@ -178,6 +180,7 @@ always safe to run
 with the
 .BR slapd\-bdb (5),
 .BR slapd\-hdb (5),
+.BR slapd\-mdb (5),
 and
 .BR slapd\-null (5)
 backends.
@@ -205,5 +208,5 @@ give the command:
 .B "OpenLDAP Software"
 is developed and maintained by The OpenLDAP Project <http://www.openldap.org/>.
 .B "OpenLDAP Software"
-is derived from University of Michigan LDAP 3.3 Release.  
-.lf 203 stdin
+is derived from the University of Michigan LDAP 3.3 Release.  
+.lf 206 stdin

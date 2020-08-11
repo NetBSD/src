@@ -5,7 +5,7 @@
 /* begin of portable.h.pre */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2019 The OpenLDAP Foundation
+ * Copyright 1998-2020 The OpenLDAP Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -258,9 +258,6 @@
 
 /* Define to 1 if you have the `hstrerror' function. */
 #define HAVE_HSTRERROR 1
-
-/* define if you actually have ICU */
-/* #undef HAVE_ICU */
 
 /* define to you inet_aton(3) is available */
 #define HAVE_INET_ATON 1
@@ -761,9 +758,6 @@
 #define HAVE_TLS 1
 #endif
 
-/* Define to 1 if you have the <unicode/utypes.h> header file. */
-/* #undef HAVE_UNICODE_UTYPES_H */
-
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
@@ -852,7 +846,7 @@
 #define LDAP_SYSLOG 1
 
 /* Version */
-#define LDAP_VENDOR_VERSION 20448
+#define LDAP_VENDOR_VERSION 20450
 
 /* Major */
 #define LDAP_VENDOR_VERSION_MAJOR 2
@@ -861,7 +855,7 @@
 #define LDAP_VENDOR_VERSION_MINOR 4
 
 /* Patch */
-#define LDAP_VENDOR_VERSION_PATCH 48
+#define LDAP_VENDOR_VERSION_PATCH 50
 
 /* define if memcmp is not 8-bit clean or is otherwise broken */
 /* #undef NEED_MEMCMP_REPLACEMENT */
@@ -876,7 +870,7 @@
 #define OPENLDAP_PACKAGE "OpenLDAP"
 
 /* Version */
-#define OPENLDAP_VERSION "2.4.48"
+#define OPENLDAP_VERSION "2.4.50"
 
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT ""
@@ -1007,7 +1001,7 @@
 /* define for Referential Integrity overlay */
 /* #undef SLAPD_OVER_REFINT */
 
-/* define for Referential Integrity overlay */
+/* define for Return Code Integrity overlay */
 /* #undef SLAPD_OVER_RETCODE */
 
 /* define for Rewrite/Remap overlay */
@@ -1116,7 +1110,7 @@
 /* #undef size_t */
 
 /* define to snprintf routine */
-/* #undef _snprintf */
+#define snprintf _snprintf
 
 /* Define like ber_socklen_t if <sys/socket.h> does not define. */
 /* #undef socklen_t */

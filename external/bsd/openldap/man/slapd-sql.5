@@ -1,5 +1,5 @@
 .lf 1 stdin
-.TH SLAPD-SQL 5 "2014/01/26" "OpenLDAP 2.4.39"
+.TH SLAPD-SQL 5 "2020/04/28" "OpenLDAP 2.4.50"
 .\" $OpenLDAP$
 .SH NAME
 slapd\-sql \- SQL backend to slapd
@@ -311,7 +311,7 @@ by a stored procedure.
 .br
 .B fetch_all_attrs { NO | yes }
 .RS
-The first statement allows to provide a list of attributes that
+The first statement allows one to provide a list of attributes that
 must always be fetched in addition to those requested by any specific
 operation, because they are required for the proper usage of the
 backend.  For instance, all attributes used in ACLs should be listed

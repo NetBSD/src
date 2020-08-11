@@ -1,4 +1,4 @@
-/*	$NetBSD: database.c,v 1.1.1.9 2020/08/11 13:12:15 christos Exp $	*/
+/*	$NetBSD: database.c,v 1.2 2020/08/11 13:15:41 christos Exp $	*/
 
 /* database.c - deals with database subsystem */
 /* $OpenLDAP$ */
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: database.c,v 1.1.1.9 2020/08/11 13:12:15 christos Exp $");
+__RCSID("$NetBSD: database.c,v 1.2 2020/08/11 13:15:41 christos Exp $");
 
 #include "portable.h"
 

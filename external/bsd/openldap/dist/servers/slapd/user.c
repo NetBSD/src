@@ -1,4 +1,4 @@
-/*	$NetBSD: user.c,v 1.1.1.8 2020/08/11 13:12:14 christos Exp $	*/
+/*	$NetBSD: user.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
 
 /* user.c - set user id, group id and group access list */
 /* $OpenLDAP$ */
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: user.c,v 1.1.1.8 2020/08/11 13:12:14 christos Exp $");
+__RCSID("$NetBSD: user.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
 
 #include "portable.h"
 

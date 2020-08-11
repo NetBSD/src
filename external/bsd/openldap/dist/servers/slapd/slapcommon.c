@@ -1,4 +1,4 @@
-/*	$NetBSD: slapcommon.c,v 1.1.1.8 2020/08/11 13:12:13 christos Exp $	*/
+/*	$NetBSD: slapcommon.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
 
 /* slapcommon.c - common routine for the slap tools */
 /* $OpenLDAP$ */
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: slapcommon.c,v 1.1.1.8 2020/08/11 13:12:13 christos Exp $");
+__RCSID("$NetBSD: slapcommon.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
 
 #include "portable.h"
 

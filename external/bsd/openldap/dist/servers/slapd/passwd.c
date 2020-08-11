@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.1.1.8 2020/08/11 13:12:14 christos Exp $	*/
+/*	$NetBSD: passwd.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
 
 /* passwd.c - password extended operation routines */
 /* $OpenLDAP$ */
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: passwd.c,v 1.1.1.8 2020/08/11 13:12:14 christos Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
 
 #include "portable.h"
 

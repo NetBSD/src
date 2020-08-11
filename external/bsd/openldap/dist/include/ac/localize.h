@@ -1,4 +1,4 @@
-/*	$NetBSD: localize.h,v 1.1.1.8 2020/08/11 13:12:01 christos Exp $	*/
+/*	$NetBSD: localize.h,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
 
 /* localize.h (i18n/l10n) */
 /* $OpenLDAP$ */

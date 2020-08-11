@@ -1,4 +1,4 @@
-/*	$NetBSD: proxyOld.c,v 1.1.1.8 2020/08/11 13:12:02 christos Exp $	*/
+/*	$NetBSD: proxyOld.c,v 1.2 2020/08/11 13:15:36 christos Exp $	*/
 
 /* proxyOld.c - module for supporting obsolete (rev 05) proxyAuthz control */
 /* $OpenLDAP$ */

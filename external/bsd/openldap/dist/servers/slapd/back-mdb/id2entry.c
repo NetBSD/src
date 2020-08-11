@@ -1,4 +1,4 @@
-/*	$NetBSD: id2entry.c,v 1.1.1.5 2020/08/11 13:12:16 christos Exp $	*/
+/*	$NetBSD: id2entry.c,v 1.2 2020/08/11 13:15:40 christos Exp $	*/
 
 /* id2entry.c - routines to deal with the id2entry database */
 /* $OpenLDAP$ */
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: id2entry.c,v 1.1.1.5 2020/08/11 13:12:16 christos Exp $");
+__RCSID("$NetBSD: id2entry.c,v 1.2 2020/08/11 13:15:40 christos Exp $");
 
 #include "portable.h"
 

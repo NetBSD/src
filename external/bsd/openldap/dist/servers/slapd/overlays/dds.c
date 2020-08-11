@@ -1,4 +1,4 @@
-/*	$NetBSD: dds.c,v 1.1.1.8 2020/08/11 13:12:14 christos Exp $	*/
+/*	$NetBSD: dds.c,v 1.2 2020/08/11 13:15:42 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dds.c,v 1.1.1.8 2020/08/11 13:12:14 christos Exp $");
+__RCSID("$NetBSD: dds.c,v 1.2 2020/08/11 13:15:42 christos Exp $");
 
 #include "portable.h"
 

@@ -1,8 +1,8 @@
-/* Generated from /usr/src/external/bsd/openldap/dist/include/ldap_config.hin */
+/* Generated from /net/quasar/src-5/NetBSD/src/external/bsd/openldap/dist/include/ldap_config.hin */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2020 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

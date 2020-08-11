@@ -1,4 +1,4 @@
-/*	$NetBSD: referral.c,v 1.1.1.8 2020/08/11 13:12:15 christos Exp $	*/
+/*	$NetBSD: referral.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
 
 /* referral.c - BDB backend referral handler */
 /* $OpenLDAP$ */
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: referral.c,v 1.1.1.8 2020/08/11 13:12:15 christos Exp $");
+__RCSID("$NetBSD: referral.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
 
 #include "portable.h"
 #include <stdio.h>

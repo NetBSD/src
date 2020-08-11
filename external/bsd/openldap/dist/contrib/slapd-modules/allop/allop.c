@@ -1,4 +1,4 @@
-/*	$NetBSD: allop.c,v 1.1.1.8 2020/08/11 13:12:01 christos Exp $	*/
+/*	$NetBSD: allop.c,v 1.2 2020/08/11 13:15:34 christos Exp $	*/
 
 /* allop.c - returns all operational attributes when appropriate */
 /* $OpenLDAP$ */
@@ -36,7 +36,7 @@ allop-URI	<ldapURI>
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: allop.c,v 1.1.1.8 2020/08/11 13:12:01 christos Exp $");
+__RCSID("$NetBSD: allop.c,v 1.2 2020/08/11 13:15:34 christos Exp $");
 
 #include "portable.h"
 

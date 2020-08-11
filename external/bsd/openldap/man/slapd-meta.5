@@ -1,6 +1,6 @@
 .lf 1 stdin
-.TH SLAPD-META 5 "2014/01/26" "OpenLDAP 2.4.39"
-.\" Copyright 1998-2014 The OpenLDAP Foundation, All Rights Reserved.
+.TH SLAPD-META 5 "2020/04/28" "OpenLDAP 2.4.50"
+.\" Copyright 1998-2020 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" Copyright 2001, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
 .\" $OpenLDAP$
@@ -126,7 +126,7 @@ directive.
 
 .TP
 .B onerr {CONTINUE|report|stop}
-This directive allows to select the behavior in case an error is returned
+This directive allows one to select the behavior in case an error is returned
 by one target during a search.
 The default, \fBcontinue\fP, consists in continuing the operation, 
 trying to return as much data as possible.
@@ -313,25 +313,6 @@ If set before any target specification, it affects all targets, unless
 overridden by any per-target directive.
 
 .TP
-.B client\-pr {accept-unsolicited|DISABLE|<size>}
-This feature allows to use RFC 2696 Paged Results control when performing
-search operations with a specific target,
-irrespective of the client's request.
-When set to a numeric value, Paged Results control is always
-used with \fIsize\fP as the page size.
-When set to \fIaccept-unsolicited\fP, unsolicited Paged Results
-control responses are accepted and honored
-for compatibility with broken remote DSAs.
-The client is not exposed to paged results handling
-between
-.BR slapd\-meta (5)
-and the remote servers.
-By default (disabled), Paged Results control is not used
-and responses are not accepted.
-If set before any target specification, it affects all targets, unless
-overridden by any per-target directive.
-
-.TP
 .B default\-target [<target>]
 The "default\-target" directive can also be used during target specification.
 With no arguments it marks the current target as the default.
@@ -381,11 +362,11 @@ for details on the syntax of this field.
 .B [tls_cacert=<file>]
 .B [tls_cacertdir=<path>]
 .B [tls_reqcert=never|allow|try|demand]
-.B [tls_ciphersuite=<ciphers>]
+.B [tls_cipher_suite=<ciphers>]
 .B [tls_protocol_min=<major>[.<minor>]]
 .B [tls_crlcheck=none|peer|all]
 .RS
-Allows to define the parameters of the authentication method that is 
+Allows one to define the parameters of the authentication method that is
 internally used by the proxy to authorize connections that are 
 authenticated by other databases.
 The identity defined by this directive, according to the properties
@@ -604,7 +585,7 @@ The rewrite options are described in the "REWRITING" section.
 
 .TP
 .B subtree\-{exclude|include} "<rule>"
-This directive allows to indicate what subtrees are actually served
+This directive allows one to indicate what subtrees are actually served
 by a target.
 The syntax of the supported rules is
 
@@ -681,7 +662,7 @@ overridden by any per-target directive.
 
 .TP
 .B timeout [<op>=]<val> [...]
-This directive allows to set per-operation timeouts.
+This directive allows one to set per-operation timeouts.
 Operations can be
 
 \fB<op> ::= bind, add, delete, modrdn, modify, compare, search\fP
@@ -817,7 +798,7 @@ Practical configurations may result as a combination of all the
 above scenarios.
 .SH ACLs
 Note on ACLs: at present you may add whatever ACL rule you desire
-to to the Meta (and LDAP) backends.
+to the Meta (and LDAP) backends.
 However, the meaning of an ACL on a proxy may require some
 considerations.
 Two philosophies may be considered:
@@ -883,7 +864,7 @@ An incoming string is matched against a set of rules.
 Rules are made of a regex match pattern, a substitution pattern
 and a set of actions, described by a set of flags.
 In case of match a string rewriting is performed according to the
-substitution pattern that allows to refer to substrings matched in the
+substitution pattern that allows one to refer to substrings matched in the
 incoming string.
 The actions, if any, are finally performed.
 The substitution pattern allows map resolution of substrings.
@@ -1103,7 +1084,7 @@ Examples are reported below.
 .SH "Additional configuration syntax:"
 .TP
 .B rewriteMap "<map type>" "<map name>" "[ <map attrs> ]"
-Allows to define a map that transforms substring rewriting into
+Allows one to define a map that transforms substring rewriting into
 something else.
 The map is referenced inside the substitution pattern of a rule.
 .TP

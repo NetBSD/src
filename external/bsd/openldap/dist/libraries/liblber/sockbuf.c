@@ -1,4 +1,4 @@
-/*	$NetBSD: sockbuf.c,v 1.1.1.8 2020/08/11 13:12:04 christos Exp $	*/
+/*	$NetBSD: sockbuf.c,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
 
 /* sockbuf.c - i/o routines with support for adding i/o layers. */
 /* $OpenLDAP$ */
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sockbuf.c,v 1.1.1.8 2020/08/11 13:12:04 christos Exp $");
+__RCSID("$NetBSD: sockbuf.c,v 1.2 2020/08/11 13:15:37 christos Exp $");
 
 #include "portable.h"
 

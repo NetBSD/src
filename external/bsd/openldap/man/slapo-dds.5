@@ -1,6 +1,6 @@
 .lf 1 stdin
-.TH SLAPO-DDS 5 "2014/01/26" "OpenLDAP 2.4.39"
-.\" Copyright 2005-2014 The OpenLDAP Foundation, All Rights Reserved.
+.TH SLAPO-DDS 5 "2020/04/28" "OpenLDAP 2.4.50"
+.\" Copyright 2005-2020 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" $OpenLDAP$
 .SH NAME
@@ -17,7 +17,7 @@ The name
 .B dds
 stands for
 Dynamic Directory Services.
-It allows to define dynamic objects, characterized by the
+It allows one to define dynamic objects, characterized by the
 .B dynamicObject
 objectClass.
 
@@ -25,7 +25,7 @@ Dynamic objects have a limited lifetime, determined by a time-to-live
 (TTL) that can be refreshed by means of a specific
 .B refresh
 extended operation.
-This operation allows to set the Client Refresh Period (CRP),
+This operation allows one to set the Client Refresh Period (CRP),
 namely the period between refreshes that is required to preserve the
 dynamic object from expiration.
 The expiration time is computed by adding the requested TTL to the 
@@ -127,7 +127,7 @@ By default, tolerance is 0.
 .B dds\-max\-dynamicObjects <num>
 Specifies the maximum number of dynamic objects that can simultaneously exist
 within a naming context.
-This allows to limit the amount of resources (mostly in terms of
+This allows one to limit the amount of resources (mostly in terms of
 run-queue size) that are used by dynamic objects.
 By default, no limit is set.
 
@@ -257,7 +257,7 @@ operational attribute; however, it must not be configured in the shadow
 database.
 Currently, there is no means to remove the 
 .B dynamicObject
-class from the entry; this may be seen as a feature, since it allows to see
+class from the entry; this may be seen as a feature, since it allows one to see
 the dynamic properties of the object.
 
 .SH FILES
