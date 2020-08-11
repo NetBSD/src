@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_verbose.h,v 1.2.10.1 2020/08/05 14:48:35 martin Exp $ */
+/*	$NetBSD: dev_verbose.h,v 1.2.10.2 2020/08/11 17:07:55 martin Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -96,7 +96,7 @@ tag ## _load_verbose(void)						\
 {									\
 									\
 	if (tag ## verbose_loaded == 0)					\
-		module_autoload(# tag "verbose", MODULE_CLASS_MISC);	\
+		module_autoload(# tag "verbose", MODULE_CLASS_DRIVER);	\
 }									\
 									\
 static const char *							\
