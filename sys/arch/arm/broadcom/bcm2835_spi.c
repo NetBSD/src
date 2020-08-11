@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_spi.c,v 1.5 2017/12/10 21:38:26 skrll Exp $	*/
+/*	$NetBSD: bcm2835_spi.c,v 1.5.8.1 2020/08/11 19:13:43 martin Exp $	*/
 
 /*
  * Copyright (c) 2012 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_spi.c,v 1.5 2017/12/10 21:38:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_spi.c,v 1.5.8.1 2020/08/11 19:13:43 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -53,6 +53,7 @@ struct bcmspi_softc {
 	bus_space_handle_t	sc_ioh;
 	void			*sc_intrh;
 	struct spi_controller	sc_spi;
+	kmutex_t                sc_mutex;
 	SIMPLEQ_HEAD(,spi_transfer) sc_q;
 	struct spi_transfer	*sc_transfer;
 	struct spi_chunk	*sc_wchunk;
@@ -131,6 +132,7 @@ bcmspi_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	sc->sc_spi.sct_cookie = sc;
+	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_VM);
 	sc->sc_spi.sct_configure = bcmspi_configure;
 	sc->sc_spi.sct_transfer = bcmspi_transfer;
 	sc->sc_spi.sct_nslaves = 3;
@@ -188,14 +190,13 @@ static int
 bcmspi_transfer(void *cookie, struct spi_transfer *st)
 {
 	struct bcmspi_softc * const sc = cookie;
-	int s;
 
-	s = splbio();
+	mutex_enter(&sc->sc_mutex);
 	spi_transq_enqueue(&sc->sc_q, st);
 	if (sc->sc_running == false) {
 		bcmspi_start(sc);
 	}
-	splx(s);
+	mutex_exit(&sc->sc_mutex);
 	return 0;
 }
 
@@ -225,13 +226,13 @@ bcmspi_start(struct bcmspi_softc * const sc)
 		if (!cold)
 			return;
 
-		int s = splbio();
 		for (;;) {
+		        mutex_exit(&sc->sc_mutex);
 			bcmspi_intr(sc);
+			mutex_enter(&sc->sc_mutex);
 			if (ISSET(st->st_flags, SPI_F_DONE))
 				break;
 		}
-		splx(s);
 	}
 
 	sc->sc_running = false;
@@ -290,6 +291,7 @@ bcmspi_intr(void *cookie)
 	struct spi_transfer *st;
 	uint32_t cs;
 
+	mutex_enter(&sc->sc_mutex);
 	cs = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SPI_CS);
 	if (ISSET(cs, SPI_CS_DONE)) {
 		if (sc->sc_wchunk != NULL) {
@@ -313,5 +315,6 @@ bcmspi_intr(void *cookie)
 	}
 
 end:
+	mutex_exit(&sc->sc_mutex);
 	return ISSET(cs, SPI_CS_DONE|SPI_CS_RXR);
 }
