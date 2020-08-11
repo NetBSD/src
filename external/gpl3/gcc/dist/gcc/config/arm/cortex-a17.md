@@ -1,5 +1,5 @@
 ;; ARM Cortex-A17 pipeline description
-;; Copyright (C) 2014-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2014-2017 Free Software Foundation, Inc.
 ;;
 ;; Contributed by ARM Ltd.
 ;;
@@ -127,37 +127,37 @@
 ;; Loads of up to two words.
 (define_insn_reservation "cortex_a17_load1" 4
   (and (eq_attr "tune" "cortexa17")
-       (eq_attr "type" "load_byte,load_4,load_8"))
+       (eq_attr "type" "load_byte,load1,load2"))
   "ca17_ls0|ca17_ls1")
 
 ;; Loads of three words.
 (define_insn_reservation "cortex_a17_load3" 4
   (and (eq_attr "tune" "cortexa17")
-       (eq_attr "type" "load_12"))
+       (eq_attr "type" "load3"))
   "ca17_ls0+ca17_ls1")
 
 ;; Loads of four words.
 (define_insn_reservation "cortex_a17_load4" 4
   (and (eq_attr "tune" "cortexa17")
-       (eq_attr "type" "load_16"))
+       (eq_attr "type" "load4"))
   "ca17_ls0+ca17_ls1")
 
 ;; Stores of up to two words.
 (define_insn_reservation "cortex_a17_store1" 0
   (and (eq_attr "tune" "cortexa17")
-       (eq_attr "type" "store_4,store_8"))
+       (eq_attr "type" "store1,store2"))
   "ca17_ls0|ca17_ls1")
 
 ;; Stores of three words
 (define_insn_reservation "cortex_a17_store3" 0
   (and (eq_attr "tune" "cortexa17")
-       (eq_attr "type" "store_12"))
+       (eq_attr "type" "store3"))
   "ca17_ls0+ca17_ls1")
 
 ;; Stores of four words.
 (define_insn_reservation "cortex_a17_store4" 0
   (and (eq_attr "tune" "cortexa17")
-       (eq_attr "type" "store_16"))
+       (eq_attr "type" "store4"))
   "ca17_ls0+ca17_ls1")
 
 (define_insn_reservation "cortex_a17_call" 0

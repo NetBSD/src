@@ -1,4 +1,4 @@
-;; Copyright (C) 2011-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2011-2017 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -35,6 +35,7 @@
   "TARGET_INT_SIMD"
   "sadd<qaddsub_suf>%?\\t%0, %1, %2"
   [(set_attr "predicable" "yes")
+   (set_attr "predicable_short_it" "no")
    (set_attr "type" "alu_dsp_reg")])
 
 (define_insn "usadd<mode>3"
@@ -44,6 +45,7 @@
   "TARGET_INT_SIMD"
   "uqadd<qaddsub_suf>%?\\t%0, %1, %2"
   [(set_attr "predicable" "yes")
+   (set_attr "predicable_short_it" "no")
    (set_attr "type" "alu_dsp_reg")])
 
 (define_insn "ssadd<mode>3"
@@ -53,6 +55,7 @@
   "TARGET_INT_SIMD"
   "qadd<qaddsub_suf>%?\\t%0, %1, %2"
   [(set_attr "predicable" "yes")
+   (set_attr "predicable_short_it" "no")
    (set_attr "type" "alu_dsp_reg")])
 
 (define_insn "sub<mode>3"
@@ -72,6 +75,7 @@
   "TARGET_INT_SIMD"
   "ssub<qaddsub_suf>%?\\t%0, %1, %2"
   [(set_attr "predicable" "yes")
+   (set_attr "predicable_short_it" "no")
    (set_attr "type" "alu_dsp_reg")])
 
 (define_insn "ussub<mode>3"
@@ -82,6 +86,7 @@
   "TARGET_INT_SIMD"
   "uqsub<qaddsub_suf>%?\\t%0, %1, %2"
   [(set_attr "predicable" "yes")
+   (set_attr "predicable_short_it" "no")
    (set_attr "type" "alu_dsp_reg")])
 
 (define_insn "sssub<mode>3"
@@ -91,6 +96,7 @@
   "TARGET_INT_SIMD"
   "qsub<qaddsub_suf>%?\\t%0, %1, %2"
   [(set_attr "predicable" "yes")
+   (set_attr "predicable_short_it" "no")
    (set_attr "type" "alu_dsp_reg")])
 
 ;; Fractional multiplies.
@@ -408,6 +414,7 @@
   "TARGET_32BIT && arm_arch6"
   "ssat%?\\t%0, #16, %2%S1"
   [(set_attr "predicable" "yes")
+   (set_attr "predicable_short_it" "no")
    (set_attr "shift" "1")
    (set_attr "type" "alu_shift_imm")])
 
@@ -417,5 +424,6 @@
   "TARGET_INT_SIMD"
   "usat%?\\t%0, #16, %1"
   [(set_attr "predicable" "yes")
+   (set_attr "predicable_short_it" "no")
    (set_attr "type" "alu_imm")]
 )

@@ -1,5 +1,5 @@
 /* Infrastructure to dump our HSAIL IL
-   Copyright (C) 2013-2018 Free Software Foundation, Inc.
+   Copyright (C) 2013-2017 Free Software Foundation, Inc.
    Contributed by Martin Jambor <mjambor@suse.cz> and
    Martin Liska <mliska@suse.cz>.
 
@@ -26,7 +26,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "is-a.h"
 #include "vec.h"
 #include "tree.h"
-#include "basic-block.h"
 #include "cfg.h"
 #include "function.h"
 #include "dumpfile.h"
@@ -727,7 +726,7 @@ dump_hsa_immed (FILE *f, hsa_op_immed *imm)
     & imm->m_type;
 
   if (imm->m_tree_value)
-    print_generic_expr (f, imm->m_tree_value);
+    print_generic_expr (f, imm->m_tree_value, 0);
   else
     {
       if (unsigned_int_type)

@@ -455,11 +455,8 @@ STAGE1_CONFIGURE_FLAGS = --disable-intermodule $(STAGE1_CHECKING) \
 STAGEprofile_CFLAGS = $(STAGE2_CFLAGS) -fprofile-generate
 STAGEprofile_TFLAGS = $(STAGE2_TFLAGS)
 
-STAGEtrain_CFLAGS = $(STAGE3_CFLAGS)
-STAGEtrain_TFLAGS = $(STAGE3_TFLAGS)
-
-STAGEfeedback_CFLAGS = $(STAGE4_CFLAGS) -fprofile-use
-STAGEfeedback_TFLAGS = $(STAGE4_TFLAGS)
+STAGEfeedback_CFLAGS = $(STAGE3_CFLAGS) -fprofile-use
+STAGEfeedback_TFLAGS = $(STAGE3_TFLAGS)
 
 STAGEautoprofile_CFLAGS = $(STAGE2_CFLAGS) -g
 STAGEautoprofile_TFLAGS = $(STAGE2_TFLAGS)
@@ -1718,8 +1715,8 @@ stageprofile-end::
 stagefeedback-start::
 	@r=`${PWD_COMMAND}`; export r; \
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
-	for i in stageprofile-*; do \
-	  j=`echo $$i | sed s/^stageprofile-//`; \
+	for i in prev-*; do \
+	  j=`echo $$i | sed s/^prev-//`; \
 	  cd $$r/$$i && \
 	  { find . -type d | sort | sed 's,.*,$(SHELL) '"$$s"'/mkinstalldirs "../'$$j'/&",' | $(SHELL); } && \
 	  { find . -name '*.*da' | sed 's,.*,$(LN) -f "&" "../'$$j'/&",' | $(SHELL); }; \

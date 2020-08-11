@@ -1,6 +1,6 @@
 /* Medium-level subroutines: convert bit-field store and extract
    and shifts, multiplies and divides to rtl instructions.
-   Copyright (C) 1987-2018 Free Software Foundation, Inc.
+   Copyright (C) 1987-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -31,7 +31,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "tm_p.h"
 #include "expmed.h"
 #include "optabs.h"
-#include "regs.h"
 #include "emit-rtl.h"
 #include "diagnostic-core.h"
 #include "fold-const.h"
@@ -40,49 +39,37 @@ along with GCC; see the file COPYING3.  If not see
 #include "explow.h"
 #include "expr.h"
 #include "langhooks.h"
-#include "tree-vector-builder.h"
 
 struct target_expmed default_target_expmed;
 #if SWITCHABLE_TARGET
 struct target_expmed *this_target_expmed = &default_target_expmed;
 #endif
 
-static bool store_integral_bit_field (rtx, opt_scalar_int_mode,
-				      unsigned HOST_WIDE_INT,
-				      unsigned HOST_WIDE_INT,
-				      poly_uint64, poly_uint64,
-				      machine_mode, rtx, bool, bool);
-static void store_fixed_bit_field (rtx, opt_scalar_int_mode,
+static void store_fixed_bit_field (rtx, unsigned HOST_WIDE_INT,
 				   unsigned HOST_WIDE_INT,
 				   unsigned HOST_WIDE_INT,
-				   poly_uint64, poly_uint64,
-				   rtx, scalar_int_mode, bool);
-static void store_fixed_bit_field_1 (rtx, scalar_int_mode,
+				   unsigned HOST_WIDE_INT,
+				   rtx, bool);
+static void store_fixed_bit_field_1 (rtx, unsigned HOST_WIDE_INT,
 				     unsigned HOST_WIDE_INT,
-				     unsigned HOST_WIDE_INT,
-				     rtx, scalar_int_mode, bool);
-static void store_split_bit_field (rtx, opt_scalar_int_mode,
+				     rtx, bool);
+static void store_split_bit_field (rtx, unsigned HOST_WIDE_INT,
 				   unsigned HOST_WIDE_INT,
 				   unsigned HOST_WIDE_INT,
-				   poly_uint64, poly_uint64,
-				   rtx, scalar_int_mode, bool);
-static rtx extract_integral_bit_field (rtx, opt_scalar_int_mode,
-				       unsigned HOST_WIDE_INT,
-				       unsigned HOST_WIDE_INT, int, rtx,
-				       machine_mode, machine_mode, bool, bool);
-static rtx extract_fixed_bit_field (machine_mode, rtx, opt_scalar_int_mode,
+				   unsigned HOST_WIDE_INT,
+				   rtx, bool);
+static rtx extract_fixed_bit_field (machine_mode, rtx,
 				    unsigned HOST_WIDE_INT,
 				    unsigned HOST_WIDE_INT, rtx, int, bool);
-static rtx extract_fixed_bit_field_1 (machine_mode, rtx, scalar_int_mode,
+static rtx extract_fixed_bit_field_1 (machine_mode, rtx,
 				      unsigned HOST_WIDE_INT,
 				      unsigned HOST_WIDE_INT, rtx, int, bool);
 static rtx lshift_value (machine_mode, unsigned HOST_WIDE_INT, int);
-static rtx extract_split_bit_field (rtx, opt_scalar_int_mode,
-				    unsigned HOST_WIDE_INT,
+static rtx extract_split_bit_field (rtx, unsigned HOST_WIDE_INT,
 				    unsigned HOST_WIDE_INT, int, bool);
 static void do_cmp_and_jump (rtx, rtx, enum rtx_code, machine_mode, rtx_code_label *);
-static rtx expand_smod_pow2 (scalar_int_mode, rtx, HOST_WIDE_INT);
-static rtx expand_sdiv_pow2 (scalar_int_mode, rtx, HOST_WIDE_INT);
+static rtx expand_smod_pow2 (machine_mode, rtx, HOST_WIDE_INT);
+static rtx expand_sdiv_pow2 (machine_mode, rtx, HOST_WIDE_INT);
 
 /* Return a constant integer mask value of mode MODE with BITSIZE ones
    followed by BITPOS zeros, or the complement of that if COMPLEMENT.
@@ -90,7 +77,7 @@ static rtx expand_sdiv_pow2 (scalar_int_mode, rtx, HOST_WIDE_INT);
    mask is zero-extended if BITSIZE+BITPOS is too small for MODE.  */
 
 static inline rtx
-mask_rtx (scalar_int_mode mode, int bitpos, int bitsize, bool complement)
+mask_rtx (machine_mode mode, int bitpos, int bitsize, bool complement)
 {
   return immed_wide_int_const
     (wi::shifted_mask (bitpos, bitsize, complement,
@@ -127,8 +114,8 @@ struct init_expmed_rtl
 };
 
 static void
-init_expmed_one_conv (struct init_expmed_rtl *all, scalar_int_mode to_mode,
-		      scalar_int_mode from_mode, bool speed)
+init_expmed_one_conv (struct init_expmed_rtl *all, machine_mode to_mode,
+		      machine_mode from_mode, bool speed)
 {
   int to_size, from_size;
   rtx which;
@@ -215,29 +202,26 @@ init_expmed_one_mode (struct init_expmed_rtl *all,
 							speed));
     }
 
-  scalar_int_mode int_mode_to;
-  if (is_a <scalar_int_mode> (mode, &int_mode_to))
+  if (SCALAR_INT_MODE_P (mode))
     {
       for (mode_from = MIN_MODE_INT; mode_from <= MAX_MODE_INT;
 	   mode_from = (machine_mode)(mode_from + 1))
-	init_expmed_one_conv (all, int_mode_to,
-			      as_a <scalar_int_mode> (mode_from), speed);
-
-      scalar_int_mode wider_mode;
-      if (GET_MODE_CLASS (int_mode_to) == MODE_INT
-	  && GET_MODE_WIDER_MODE (int_mode_to).exists (&wider_mode))
+	init_expmed_one_conv (all, mode, mode_from, speed);
+    }
+  if (GET_MODE_CLASS (mode) == MODE_INT)
+    {
+      machine_mode  wider_mode = GET_MODE_WIDER_MODE (mode);
+      if (wider_mode != VOIDmode)
 	{
 	  PUT_MODE (all->zext, wider_mode);
 	  PUT_MODE (all->wide_mult, wider_mode);
 	  PUT_MODE (all->wide_lshr, wider_mode);
-	  XEXP (all->wide_lshr, 1)
-	    = gen_int_shift_amount (wider_mode, mode_bitsize);
+	  XEXP (all->wide_lshr, 1) = GEN_INT (mode_bitsize);
 
 	  set_mul_widen_cost (speed, wider_mode,
 			      set_src_cost (all->wide_mult, wider_mode, speed));
-	  set_mul_highpart_cost (speed, int_mode_to,
-				 set_src_cost (all->wide_trunc,
-					       int_mode_to, speed));
+	  set_mul_highpart_cost (speed, mode,
+				 set_src_cost (all->wide_trunc, mode, speed));
 	}
     }
 }
@@ -379,9 +363,9 @@ check_reverse_float_storage_order_support (void)
    useful if X is a CONST_INT.  */
 
 rtx
-flip_storage_order (machine_mode mode, rtx x)
+flip_storage_order (enum machine_mode mode, rtx x)
 {
-  scalar_int_mode int_mode;
+  enum machine_mode int_mode;
   rtx result;
 
   if (mode == QImode)
@@ -401,13 +385,16 @@ flip_storage_order (machine_mode mode, rtx x)
   if (__builtin_expect (reverse_storage_order_supported < 0, 0))
     check_reverse_storage_order_support ();
 
-  if (!is_a <scalar_int_mode> (mode, &int_mode))
+  if (SCALAR_INT_MODE_P (mode))
+    int_mode = mode;
+  else
     {
       if (FLOAT_MODE_P (mode)
 	  && __builtin_expect (reverse_float_storage_order_supported < 0, 0))
 	check_reverse_float_storage_order_support ();
 
-      if (!int_mode_for_size (GET_MODE_PRECISION (mode), 0).exists (&int_mode))
+      int_mode = mode_for_size (GET_MODE_PRECISION (mode), MODE_INT, 0);
+      if (int_mode == BLKmode)
 	{
 	  sorry ("reverse storage order for %smode", GET_MODE_NAME (mode));
 	  return x;
@@ -425,33 +412,31 @@ flip_storage_order (machine_mode mode, rtx x)
   return result;
 }
 
-/* If MODE is set, adjust bitfield memory MEM so that it points to the
-   first unit of mode MODE that contains a bitfield of size BITSIZE at
-   bit position BITNUM.  If MODE is not set, return a BLKmode reference
-   to every byte in the bitfield.  Set *NEW_BITNUM to the bit position
-   of the field within the new memory.  */
+/* Adjust bitfield memory MEM so that it points to the first unit of mode
+   MODE that contains a bitfield of size BITSIZE at bit position BITNUM.
+   If MODE is BLKmode, return a reference to every byte in the bitfield.
+   Set *NEW_BITNUM to the bit position of the field within the new memory.  */
 
 static rtx
-narrow_bit_field_mem (rtx mem, opt_scalar_int_mode mode,
+narrow_bit_field_mem (rtx mem, machine_mode mode,
 		      unsigned HOST_WIDE_INT bitsize,
 		      unsigned HOST_WIDE_INT bitnum,
 		      unsigned HOST_WIDE_INT *new_bitnum)
 {
-  scalar_int_mode imode;
-  if (mode.exists (&imode))
-    {
-      unsigned int unit = GET_MODE_BITSIZE (imode);
-      *new_bitnum = bitnum % unit;
-      HOST_WIDE_INT offset = (bitnum - *new_bitnum) / BITS_PER_UNIT;
-      return adjust_bitfield_address (mem, imode, offset);
-    }
-  else
+  if (mode == BLKmode)
     {
       *new_bitnum = bitnum % BITS_PER_UNIT;
       HOST_WIDE_INT offset = bitnum / BITS_PER_UNIT;
       HOST_WIDE_INT size = ((*new_bitnum + bitsize + BITS_PER_UNIT - 1)
 			    / BITS_PER_UNIT);
-      return adjust_bitfield_address_size (mem, BLKmode, offset, size);
+      return adjust_bitfield_address_size (mem, mode, offset, size);
+    }
+  else
+    {
+      unsigned int unit = GET_MODE_BITSIZE (mode);
+      *new_bitnum = bitnum % unit;
+      HOST_WIDE_INT offset = (bitnum - *new_bitnum) / BITS_PER_UNIT;
+      return adjust_bitfield_address (mem, mode, offset);
     }
 }
 
@@ -469,15 +454,15 @@ static rtx
 adjust_bit_field_mem_for_reg (enum extraction_pattern pattern,
 			      rtx op0, HOST_WIDE_INT bitsize,
 			      HOST_WIDE_INT bitnum,
-			      poly_uint64 bitregion_start,
-			      poly_uint64 bitregion_end,
+			      unsigned HOST_WIDE_INT bitregion_start,
+			      unsigned HOST_WIDE_INT bitregion_end,
 			      machine_mode fieldmode,
 			      unsigned HOST_WIDE_INT *new_bitnum)
 {
   bit_field_mode_iterator iter (bitsize, bitnum, bitregion_start,
 				bitregion_end, MEM_ALIGN (op0),
 				MEM_VOLATILE_P (op0));
-  scalar_int_mode best_mode;
+  machine_mode best_mode;
   if (iter.next_mode (&best_mode))
     {
       /* We can use a memory in BEST_MODE.  See whether this is true for
@@ -488,14 +473,14 @@ adjust_bit_field_mem_for_reg (enum extraction_pattern pattern,
 	{
 	  /* Limit the search to the mode required by the corresponding
 	     register insertion or extraction instruction, if any.  */
-	  scalar_int_mode limit_mode = word_mode;
+	  machine_mode limit_mode = word_mode;
 	  extraction_insn insn;
 	  if (get_best_reg_extraction_insn (&insn, pattern,
 					    GET_MODE_BITSIZE (best_mode),
 					    fieldmode))
 	    limit_mode = insn.field_mode;
 
-	  scalar_int_mode wider_mode;
+	  machine_mode wider_mode;
 	  while (iter.next_mode (&wider_mode)
 		 && GET_MODE_SIZE (wider_mode) <= GET_MODE_SIZE (limit_mode))
 	    best_mode = wider_mode;
@@ -511,17 +496,16 @@ adjust_bit_field_mem_for_reg (enum extraction_pattern pattern,
    offset is then BITNUM / BITS_PER_UNIT.  */
 
 static bool
-lowpart_bit_field_p (poly_uint64 bitnum, poly_uint64 bitsize,
+lowpart_bit_field_p (unsigned HOST_WIDE_INT bitnum,
+		     unsigned HOST_WIDE_INT bitsize,
 		     machine_mode struct_mode)
 {
-  poly_uint64 regsize = REGMODE_NATURAL_SIZE (struct_mode);
   if (BYTES_BIG_ENDIAN)
-    return (multiple_p (bitnum, BITS_PER_UNIT)
-	    && (known_eq (bitnum + bitsize, GET_MODE_BITSIZE (struct_mode))
-		|| multiple_p (bitnum + bitsize,
-			       regsize * BITS_PER_UNIT)));
+    return (bitnum % BITS_PER_UNIT == 0
+	    && (bitnum + bitsize == GET_MODE_BITSIZE (struct_mode)
+		|| (bitnum + bitsize) % BITS_PER_WORD == 0));
   else
-    return multiple_p (bitnum, regsize * BITS_PER_UNIT);
+    return bitnum % BITS_PER_WORD == 0;
 }
 
 /* Return true if -fstrict-volatile-bitfields applies to an access of OP0
@@ -533,9 +517,9 @@ lowpart_bit_field_p (poly_uint64 bitnum, poly_uint64 bitsize,
 static bool
 strict_volatile_bitfield_p (rtx op0, unsigned HOST_WIDE_INT bitsize,
 			    unsigned HOST_WIDE_INT bitnum,
-			    scalar_int_mode fieldmode,
-			    poly_uint64 bitregion_start,
-			    poly_uint64 bitregion_end)
+			    machine_mode fieldmode,
+			    unsigned HOST_WIDE_INT bitregion_start,
+			    unsigned HOST_WIDE_INT bitregion_end)
 {
   unsigned HOST_WIDE_INT modesize = GET_MODE_BITSIZE (fieldmode);
 
@@ -544,6 +528,11 @@ strict_volatile_bitfield_p (rtx op0, unsigned HOST_WIDE_INT bitsize,
   if (!MEM_P (op0)
       || !MEM_VOLATILE_P (op0)
       || flag_strict_volatile_bitfields <= 0)
+    return false;
+
+  /* Non-integral modes likely only happen with packed structures.
+     Punt.  */
+  if (!SCALAR_INT_MODE_P (fieldmode))
     return false;
 
   /* The bit size must not be larger than the field mode, and
@@ -562,42 +551,37 @@ strict_volatile_bitfield_p (rtx op0, unsigned HOST_WIDE_INT bitsize,
     return false;
 
   /* Check for cases where the C++ memory model applies.  */
-  if (maybe_ne (bitregion_end, 0U)
-      && (maybe_lt (bitnum - bitnum % modesize, bitregion_start)
-	  || maybe_gt (bitnum - bitnum % modesize + modesize - 1,
-		       bitregion_end)))
+  if (bitregion_end != 0
+      && (bitnum - bitnum % modesize < bitregion_start
+	  || bitnum - bitnum % modesize + modesize - 1 > bitregion_end))
     return false;
 
   return true;
 }
 
 /* Return true if OP is a memory and if a bitfield of size BITSIZE at
-   bit number BITNUM can be treated as a simple value of mode MODE.
-   Store the byte offset in *BYTENUM if so.  */
+   bit number BITNUM can be treated as a simple value of mode MODE.  */
 
 static bool
-simple_mem_bitfield_p (rtx op0, poly_uint64 bitsize, poly_uint64 bitnum,
-		       machine_mode mode, poly_uint64 *bytenum)
+simple_mem_bitfield_p (rtx op0, unsigned HOST_WIDE_INT bitsize,
+		       unsigned HOST_WIDE_INT bitnum, machine_mode mode)
 {
   return (MEM_P (op0)
-	  && multiple_p (bitnum, BITS_PER_UNIT, bytenum)
-	  && known_eq (bitsize, GET_MODE_BITSIZE (mode))
-	  && (!targetm.slow_unaligned_access (mode, MEM_ALIGN (op0))
-	      || (multiple_p (bitnum, GET_MODE_ALIGNMENT (mode))
+	  && bitnum % BITS_PER_UNIT == 0
+	  && bitsize == GET_MODE_BITSIZE (mode)
+	  && (!SLOW_UNALIGNED_ACCESS (mode, MEM_ALIGN (op0))
+	      || (bitnum % GET_MODE_ALIGNMENT (mode) == 0
 		  && MEM_ALIGN (op0) >= GET_MODE_ALIGNMENT (mode))));
 }
 
 /* Try to use instruction INSV to store VALUE into a field of OP0.
-   If OP0_MODE is defined, it is the mode of OP0, otherwise OP0 is a
-   BLKmode MEM.  VALUE_MODE is the mode of VALUE.  BITSIZE and BITNUM
-   are as for store_bit_field.  */
+   BITSIZE and BITNUM are as for store_bit_field.  */
 
 static bool
 store_bit_field_using_insv (const extraction_insn *insv, rtx op0,
-			    opt_scalar_int_mode op0_mode,
 			    unsigned HOST_WIDE_INT bitsize,
 			    unsigned HOST_WIDE_INT bitnum,
-			    rtx value, scalar_int_mode value_mode)
+			    rtx value)
 {
   struct expand_operand ops[4];
   rtx value1;
@@ -605,7 +589,7 @@ store_bit_field_using_insv (const extraction_insn *insv, rtx op0,
   rtx_insn *last = get_last_insn ();
   bool copy_back = false;
 
-  scalar_int_mode op_mode = insv->field_mode;
+  machine_mode op_mode = insv->field_mode;
   unsigned int unit = GET_MODE_BITSIZE (op_mode);
   if (bitsize == 0 || bitsize > unit)
     return false;
@@ -618,7 +602,7 @@ store_bit_field_using_insv (const extraction_insn *insv, rtx op0,
     {
       /* Convert from counting within OP0 to counting in OP_MODE.  */
       if (BYTES_BIG_ENDIAN)
-	bitnum += unit - GET_MODE_BITSIZE (op0_mode.require ());
+	bitnum += unit - GET_MODE_BITSIZE (GET_MODE (op0));
 
       /* If xop0 is a register, we need it in OP_MODE
 	 to make it acceptable to the format of insv.  */
@@ -671,28 +655,30 @@ store_bit_field_using_insv (const extraction_insn *insv, rtx op0,
 
   /* Convert VALUE to op_mode (which insv insn wants) in VALUE1.  */
   value1 = value;
-  if (value_mode != op_mode)
+  if (GET_MODE (value) != op_mode)
     {
-      if (GET_MODE_BITSIZE (value_mode) >= bitsize)
+      if (GET_MODE_BITSIZE (GET_MODE (value)) >= bitsize)
 	{
 	  rtx tmp;
 	  /* Optimization: Don't bother really extending VALUE
 	     if it has all the bits we will actually use.  However,
 	     if we must narrow it, be sure we do it correctly.  */
 
-	  if (GET_MODE_SIZE (value_mode) < GET_MODE_SIZE (op_mode))
+	  if (GET_MODE_SIZE (GET_MODE (value)) < GET_MODE_SIZE (op_mode))
 	    {
-	      tmp = simplify_subreg (op_mode, value1, value_mode, 0);
+	      tmp = simplify_subreg (op_mode, value1, GET_MODE (value), 0);
 	      if (! tmp)
 		tmp = simplify_gen_subreg (op_mode,
-					   force_reg (value_mode, value1),
-					   value_mode, 0);
+					   force_reg (GET_MODE (value),
+						      value1),
+					   GET_MODE (value), 0);
 	    }
 	  else
 	    {
 	      tmp = gen_lowpart_if_possible (op_mode, value1);
 	      if (! tmp)
-		tmp = gen_lowpart (op_mode, force_reg (value_mode, value1));
+		tmp = gen_lowpart (op_mode, force_reg (GET_MODE (value),
+						       value1));
 	    }
 	  value1 = tmp;
 	}
@@ -728,39 +714,64 @@ store_bit_field_using_insv (const extraction_insn *insv, rtx op0,
    return false instead.  */
 
 static bool
-store_bit_field_1 (rtx str_rtx, poly_uint64 bitsize, poly_uint64 bitnum,
-		   poly_uint64 bitregion_start, poly_uint64 bitregion_end,
+store_bit_field_1 (rtx str_rtx, unsigned HOST_WIDE_INT bitsize,
+		   unsigned HOST_WIDE_INT bitnum,
+		   unsigned HOST_WIDE_INT bitregion_start,
+		   unsigned HOST_WIDE_INT bitregion_end,
 		   machine_mode fieldmode,
 		   rtx value, bool reverse, bool fallback_p)
 {
   rtx op0 = str_rtx;
+  rtx orig_value;
 
   while (GET_CODE (op0) == SUBREG)
     {
-      bitnum += subreg_memory_offset (op0) * BITS_PER_UNIT;
+      /* The following line once was done only if WORDS_BIG_ENDIAN,
+	 but I think that is a mistake.  WORDS_BIG_ENDIAN is
+	 meaningful at a much higher level; when structures are copied
+	 between memory and regs, the higher-numbered regs
+	 always get higher addresses.  */
+      int inner_mode_size = GET_MODE_SIZE (GET_MODE (SUBREG_REG (op0)));
+      int outer_mode_size = GET_MODE_SIZE (GET_MODE (op0));
+      int byte_offset = 0;
+
+      /* Paradoxical subregs need special handling on big-endian machines.  */
+      if (SUBREG_BYTE (op0) == 0 && inner_mode_size < outer_mode_size)
+	{
+	  int difference = inner_mode_size - outer_mode_size;
+
+	  if (WORDS_BIG_ENDIAN)
+	    byte_offset += (difference / UNITS_PER_WORD) * UNITS_PER_WORD;
+	  if (BYTES_BIG_ENDIAN)
+	    byte_offset += difference % UNITS_PER_WORD;
+	}
+      else
+	byte_offset = SUBREG_BYTE (op0);
+
+      bitnum += byte_offset * BITS_PER_UNIT;
       op0 = SUBREG_REG (op0);
     }
 
   /* No action is needed if the target is a register and if the field
      lies completely outside that register.  This can occur if the source
      code contains an out-of-bounds access to a small array.  */
-  if (REG_P (op0) && known_ge (bitnum, GET_MODE_BITSIZE (GET_MODE (op0))))
+  if (REG_P (op0) && bitnum >= GET_MODE_BITSIZE (GET_MODE (op0)))
     return true;
 
   /* Use vec_set patterns for inserting parts of vectors whenever
      available.  */
-  machine_mode outermode = GET_MODE (op0);
-  scalar_mode innermode = GET_MODE_INNER (outermode);
-  poly_uint64 pos;
-  if (VECTOR_MODE_P (outermode)
+  if (VECTOR_MODE_P (GET_MODE (op0))
       && !MEM_P (op0)
-      && optab_handler (vec_set_optab, outermode) != CODE_FOR_nothing
-      && fieldmode == innermode
-      && known_eq (bitsize, GET_MODE_BITSIZE (innermode))
-      && multiple_p (bitnum, GET_MODE_BITSIZE (innermode), &pos))
+      && optab_handler (vec_set_optab, GET_MODE (op0)) != CODE_FOR_nothing
+      && fieldmode == GET_MODE_INNER (GET_MODE (op0))
+      && bitsize == GET_MODE_UNIT_BITSIZE (GET_MODE (op0))
+      && !(bitnum % GET_MODE_UNIT_BITSIZE (GET_MODE (op0))))
     {
       struct expand_operand ops[3];
+      machine_mode outermode = GET_MODE (op0);
+      machine_mode innermode = GET_MODE_INNER (outermode);
       enum insn_code icode = optab_handler (vec_set_optab, outermode);
+      int pos = bitnum / GET_MODE_BITSIZE (innermode);
 
       create_fixed_operand (&ops[0], op0);
       create_input_operand (&ops[1], value, innermode);
@@ -772,16 +783,16 @@ store_bit_field_1 (rtx str_rtx, poly_uint64 bitsize, poly_uint64 bitnum,
   /* If the target is a register, overwriting the entire object, or storing
      a full-word or multi-word field can be done with just a SUBREG.  */
   if (!MEM_P (op0)
-      && known_eq (bitsize, GET_MODE_BITSIZE (fieldmode)))
+      && bitsize == GET_MODE_BITSIZE (fieldmode)
+      && ((bitsize == GET_MODE_BITSIZE (GET_MODE (op0)) && bitnum == 0)
+	  || (bitsize % BITS_PER_WORD == 0 && bitnum % BITS_PER_WORD == 0)))
     {
       /* Use the subreg machinery either to narrow OP0 to the required
 	 words or to cope with mode punning between equal-sized modes.
 	 In the latter case, use subreg on the rhs side, not lhs.  */
       rtx sub;
-      HOST_WIDE_INT regnum;
-      poly_uint64 regsize = REGMODE_NATURAL_SIZE (GET_MODE (op0));
-      if (known_eq (bitnum, 0U)
-	  && known_eq (bitsize, GET_MODE_BITSIZE (GET_MODE (op0))))
+
+      if (bitsize == GET_MODE_BITSIZE (GET_MODE (op0)))
 	{
 	  sub = simplify_gen_subreg (GET_MODE (op0), value, fieldmode, 0);
 	  if (sub)
@@ -792,11 +803,10 @@ store_bit_field_1 (rtx str_rtx, poly_uint64 bitsize, poly_uint64 bitnum,
 	      return true;
 	    }
 	}
-      else if (constant_multiple_p (bitnum, regsize * BITS_PER_UNIT, &regnum)
-	       && multiple_p (bitsize, regsize * BITS_PER_UNIT))
+      else
 	{
 	  sub = simplify_gen_subreg (fieldmode, op0, GET_MODE (op0),
-				     regnum * regsize);
+				     bitnum / BITS_PER_UNIT);
 	  if (sub)
 	    {
 	      if (reverse)
@@ -810,85 +820,40 @@ store_bit_field_1 (rtx str_rtx, poly_uint64 bitsize, poly_uint64 bitnum,
   /* If the target is memory, storing any naturally aligned field can be
      done with a simple store.  For targets that support fast unaligned
      memory, any naturally sized, unit aligned field can be done directly.  */
-  poly_uint64 bytenum;
-  if (simple_mem_bitfield_p (op0, bitsize, bitnum, fieldmode, &bytenum))
+  if (simple_mem_bitfield_p (op0, bitsize, bitnum, fieldmode))
     {
-      op0 = adjust_bitfield_address (op0, fieldmode, bytenum);
+      op0 = adjust_bitfield_address (op0, fieldmode, bitnum / BITS_PER_UNIT);
       if (reverse)
 	value = flip_storage_order (fieldmode, value);
       emit_move_insn (op0, value);
       return true;
     }
 
-  /* It's possible we'll need to handle other cases here for
-     polynomial bitnum and bitsize.  */
-
-  /* From here on we need to be looking at a fixed-size insertion.  */
-  unsigned HOST_WIDE_INT ibitsize = bitsize.to_constant ();
-  unsigned HOST_WIDE_INT ibitnum = bitnum.to_constant ();
-
   /* Make sure we are playing with integral modes.  Pun with subregs
      if we aren't.  This must come after the entire register case above,
      since that case is valid for any mode.  The following cases are only
      valid for integral modes.  */
-  opt_scalar_int_mode op0_mode = int_mode_for_mode (GET_MODE (op0));
-  scalar_int_mode imode;
-  if (!op0_mode.exists (&imode) || imode != GET_MODE (op0))
-    {
-      if (MEM_P (op0))
-	op0 = adjust_bitfield_address_size (op0, op0_mode.else_blk (),
-					    0, MEM_SIZE (op0));
-      else if (!op0_mode.exists ())
-	{
-	  if (ibitnum == 0
-	      && known_eq (ibitsize, GET_MODE_BITSIZE (GET_MODE (op0)))
-	      && MEM_P (value)
-	      && !reverse)
-	    {
-	      value = adjust_address (value, GET_MODE (op0), 0);
-	      emit_move_insn (op0, value);
-	      return true;
-	    }
-	  if (!fallback_p)
-	    return false;
-	  rtx temp = assign_stack_temp (GET_MODE (op0),
-					GET_MODE_SIZE (GET_MODE (op0)));
-	  emit_move_insn (temp, op0);
-	  store_bit_field_1 (temp, bitsize, bitnum, 0, 0, fieldmode, value,
-			     reverse, fallback_p);
-	  emit_move_insn (op0, temp);
-	  return true;
-	}
-      else
-	op0 = gen_lowpart (op0_mode.require (), op0);
-    }
+  {
+    machine_mode imode = int_mode_for_mode (GET_MODE (op0));
+    if (imode != GET_MODE (op0))
+      {
+	if (MEM_P (op0))
+	  op0 = adjust_bitfield_address_size (op0, imode, 0, MEM_SIZE (op0));
+	else
+	  {
+	    gcc_assert (imode != BLKmode);
+	    op0 = gen_lowpart (imode, op0);
+	  }
+      }
+  }
 
-  return store_integral_bit_field (op0, op0_mode, ibitsize, ibitnum,
-				   bitregion_start, bitregion_end,
-				   fieldmode, value, reverse, fallback_p);
-}
-
-/* Subroutine of store_bit_field_1, with the same arguments, except
-   that BITSIZE and BITNUM are constant.  Handle cases specific to
-   integral modes.  If OP0_MODE is defined, it is the mode of OP0,
-   otherwise OP0 is a BLKmode MEM.  */
-
-static bool
-store_integral_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
-			  unsigned HOST_WIDE_INT bitsize,
-			  unsigned HOST_WIDE_INT bitnum,
-			  poly_uint64 bitregion_start,
-			  poly_uint64 bitregion_end,
-			  machine_mode fieldmode,
-			  rtx value, bool reverse, bool fallback_p)
-{
   /* Storing an lsb-aligned field in a register
      can be done with a movstrict instruction.  */
 
   if (!MEM_P (op0)
       && !reverse
-      && lowpart_bit_field_p (bitnum, bitsize, op0_mode.require ())
-      && known_eq (bitsize, GET_MODE_BITSIZE (fieldmode))
+      && lowpart_bit_field_p (bitnum, bitsize, GET_MODE (op0))
+      && bitsize == GET_MODE_BITSIZE (fieldmode)
       && optab_handler (movstrict_optab, fieldmode) != CODE_FOR_nothing)
     {
       struct expand_operand ops[2];
@@ -939,13 +904,10 @@ store_integral_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
 	 subwords to extract.  Note that fieldmode will often (always?) be
 	 VOIDmode, because that is what store_field uses to indicate that this
 	 is a bit field, but passing VOIDmode to operand_subword_force
-	 is not allowed.
-
-	 The mode must be fixed-size, since insertions into variable-sized
-	 objects are meant to be handled before calling this function.  */
-      fixed_size_mode value_mode = as_a <fixed_size_mode> (GET_MODE (value));
-      if (value_mode == VOIDmode)
-	value_mode = smallest_int_mode_for_size (nwords * BITS_PER_WORD);
+	 is not allowed.  */
+      fieldmode = GET_MODE (value);
+      if (fieldmode == VOIDmode)
+	fieldmode = smallest_mode_for_size (nwords * BITS_PER_WORD, MODE_INT);
 
       last = get_last_insn ();
       for (i = 0; i < nwords; i++)
@@ -953,7 +915,7 @@ store_integral_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
 	  /* If I is 0, use the low-order word in both field and target;
 	     if I is 1, use the next to lowest word; and so on.  */
 	  unsigned int wordnum = (backwards
-				  ? GET_MODE_SIZE (value_mode) / UNITS_PER_WORD
+				  ? GET_MODE_SIZE (fieldmode) / UNITS_PER_WORD
 				  - i - 1
 				  : i);
 	  unsigned int bit_offset = (backwards ^ reverse
@@ -961,7 +923,7 @@ store_integral_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
 					    * BITS_PER_WORD,
 					    0)
 				     : (int) i * BITS_PER_WORD);
-	  rtx value_word = operand_subword_force (value, wordnum, value_mode);
+	  rtx value_word = operand_subword_force (value, wordnum, fieldmode);
 	  unsigned HOST_WIDE_INT new_bitsize =
 	    MIN (BITS_PER_WORD, bitsize - i * BITS_PER_WORD);
 
@@ -969,14 +931,12 @@ store_integral_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
 	     to make sure that for big-endian machines the higher order
 	     bits are used.  */
 	  if (new_bitsize < BITS_PER_WORD && BYTES_BIG_ENDIAN && !backwards)
-	    {
-	      int shift = BITS_PER_WORD - new_bitsize;
-	      rtx shift_rtx = gen_int_shift_amount (word_mode, shift);
-	      value_word = simplify_expand_binop (word_mode, lshr_optab,
-						  value_word, shift_rtx,
-						  NULL_RTX, true,
-						  OPTAB_LIB_WIDEN);
-	    }
+	    value_word = simplify_expand_binop (word_mode, lshr_optab,
+						value_word,
+						GEN_INT (BITS_PER_WORD
+							 - new_bitsize),
+						NULL_RTX, true,
+						OPTAB_LIB_WIDEN);
 
 	  if (!store_bit_field_1 (op0, new_bitsize,
 				  bitnum + bit_offset,
@@ -995,16 +955,12 @@ store_integral_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
      integer of the corresponding size.  This can occur on a machine
      with 64 bit registers that uses SFmode for float.  It can also
      occur for unaligned float or complex fields.  */
-  rtx orig_value = value;
-  scalar_int_mode value_mode;
-  if (GET_MODE (value) == VOIDmode)
-    /* By this point we've dealt with values that are bigger than a word,
-       so word_mode is a conservatively correct choice.  */
-    value_mode = word_mode;
-  else if (!is_a <scalar_int_mode> (GET_MODE (value), &value_mode))
+  orig_value = value;
+  if (GET_MODE (value) != VOIDmode
+      && GET_MODE_CLASS (GET_MODE (value)) != MODE_INT
+      && GET_MODE_CLASS (GET_MODE (value)) != MODE_PARTIAL_INT)
     {
-      value_mode = int_mode_for_mode (GET_MODE (value)).require ();
-      value = gen_reg_rtx (value_mode);
+      value = gen_reg_rtx (int_mode_for_mode (GET_MODE (value)));
       emit_move_insn (gen_lowpart (GET_MODE (orig_value), value), orig_value);
     }
 
@@ -1013,25 +969,23 @@ store_integral_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
      Don't do this if op0 is a single hard register wider than word
      such as a float or vector register.  */
   if (!MEM_P (op0)
-      && GET_MODE_SIZE (op0_mode.require ()) > UNITS_PER_WORD
+      && GET_MODE_SIZE (GET_MODE (op0)) > UNITS_PER_WORD
       && (!REG_P (op0)
 	  || !HARD_REGISTER_P (op0)
-	  || hard_regno_nregs (REGNO (op0), op0_mode.require ()) != 1))
+	  || HARD_REGNO_NREGS (REGNO (op0), GET_MODE (op0)) != 1))
     {
       if (bitnum % BITS_PER_WORD + bitsize > BITS_PER_WORD)
 	{
 	  if (!fallback_p)
 	    return false;
 
-	  store_split_bit_field (op0, op0_mode, bitsize, bitnum,
-				 bitregion_start, bitregion_end,
-				 value, value_mode, reverse);
+	  store_split_bit_field (op0, bitsize, bitnum, bitregion_start,
+				 bitregion_end, value, reverse);
 	  return true;
 	}
-      op0 = simplify_gen_subreg (word_mode, op0, op0_mode.require (),
+      op0 = simplify_gen_subreg (word_mode, op0, GET_MODE (op0),
 				 bitnum / BITS_PER_WORD * UNITS_PER_WORD);
       gcc_assert (op0);
-      op0_mode = word_mode;
       bitnum %= BITS_PER_WORD;
     }
 
@@ -1043,10 +997,9 @@ store_integral_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
   if (!MEM_P (op0)
       && !reverse
       && get_best_reg_extraction_insn (&insv, EP_insv,
-				       GET_MODE_BITSIZE (op0_mode.require ()),
+				       GET_MODE_BITSIZE (GET_MODE (op0)),
 				       fieldmode)
-      && store_bit_field_using_insv (&insv, op0, op0_mode,
-				     bitsize, bitnum, value, value_mode))
+      && store_bit_field_using_insv (&insv, op0, bitsize, bitnum, value))
     return true;
 
   /* If OP0 is a memory, try copying it to a register and seeing if a
@@ -1055,8 +1008,7 @@ store_integral_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
     {
       if (get_best_mem_extraction_insn (&insv, EP_insv, bitsize, bitnum,
 					fieldmode)
-	  && store_bit_field_using_insv (&insv, op0, op0_mode,
-					 bitsize, bitnum, value, value_mode))
+	  && store_bit_field_using_insv (&insv, op0, bitsize, bitnum, value))
 	return true;
 
       rtx_insn *last = get_last_insn ();
@@ -1084,8 +1036,8 @@ store_integral_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
   if (!fallback_p)
     return false;
 
-  store_fixed_bit_field (op0, op0_mode, bitsize, bitnum, bitregion_start,
-			 bitregion_end, value, value_mode, reverse);
+  store_fixed_bit_field (op0, bitsize, bitnum, bitregion_start,
+			 bitregion_end, value, reverse);
   return true;
 }
 
@@ -1103,43 +1055,40 @@ store_integral_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
    If REVERSE is true, the store is to be done in reverse order.  */
 
 void
-store_bit_field (rtx str_rtx, poly_uint64 bitsize, poly_uint64 bitnum,
-		 poly_uint64 bitregion_start, poly_uint64 bitregion_end,
+store_bit_field (rtx str_rtx, unsigned HOST_WIDE_INT bitsize,
+		 unsigned HOST_WIDE_INT bitnum,
+		 unsigned HOST_WIDE_INT bitregion_start,
+		 unsigned HOST_WIDE_INT bitregion_end,
 		 machine_mode fieldmode,
 		 rtx value, bool reverse)
 {
   /* Handle -fstrict-volatile-bitfields in the cases where it applies.  */
-  unsigned HOST_WIDE_INT ibitsize = 0, ibitnum = 0;
-  scalar_int_mode int_mode;
-  if (bitsize.is_constant (&ibitsize)
-      && bitnum.is_constant (&ibitnum)
-      && is_a <scalar_int_mode> (fieldmode, &int_mode)
-      && strict_volatile_bitfield_p (str_rtx, ibitsize, ibitnum, int_mode,
-				     bitregion_start, bitregion_end))
+  if (strict_volatile_bitfield_p (str_rtx, bitsize, bitnum, fieldmode,
+				  bitregion_start, bitregion_end))
     {
       /* Storing of a full word can be done with a simple store.
 	 We know here that the field can be accessed with one single
 	 instruction.  For targets that support unaligned memory,
 	 an unaligned access may be necessary.  */
-      if (ibitsize == GET_MODE_BITSIZE (int_mode))
+      if (bitsize == GET_MODE_BITSIZE (fieldmode))
 	{
-	  str_rtx = adjust_bitfield_address (str_rtx, int_mode,
-					     ibitnum / BITS_PER_UNIT);
+	  str_rtx = adjust_bitfield_address (str_rtx, fieldmode,
+					     bitnum / BITS_PER_UNIT);
 	  if (reverse)
-	    value = flip_storage_order (int_mode, value);
-	  gcc_assert (ibitnum % BITS_PER_UNIT == 0);
+	    value = flip_storage_order (fieldmode, value);
+	  gcc_assert (bitnum % BITS_PER_UNIT == 0);
 	  emit_move_insn (str_rtx, value);
 	}
       else
 	{
 	  rtx temp;
 
-	  str_rtx = narrow_bit_field_mem (str_rtx, int_mode, ibitsize,
-					  ibitnum, &ibitnum);
-	  gcc_assert (ibitnum + ibitsize <= GET_MODE_BITSIZE (int_mode));
+	  str_rtx = narrow_bit_field_mem (str_rtx, fieldmode, bitsize, bitnum,
+					  &bitnum);
+	  gcc_assert (bitnum + bitsize <= GET_MODE_BITSIZE (fieldmode));
 	  temp = copy_to_reg (str_rtx);
-	  if (!store_bit_field_1 (temp, ibitsize, ibitnum, 0, 0,
-				  int_mode, value, reverse, true))
+	  if (!store_bit_field_1 (temp, bitsize, bitnum, 0, 0,
+				  fieldmode, value, reverse, true))
 	    gcc_unreachable ();
 
 	  emit_move_insn (str_rtx, temp);
@@ -1151,25 +1100,23 @@ store_bit_field (rtx str_rtx, poly_uint64 bitsize, poly_uint64 bitnum,
   /* Under the C++0x memory model, we must not touch bits outside the
      bit region.  Adjust the address to start at the beginning of the
      bit region.  */
-  if (MEM_P (str_rtx) && maybe_ne (bitregion_start, 0U))
+  if (MEM_P (str_rtx) && bitregion_start > 0)
     {
-      scalar_int_mode best_mode;
-      machine_mode addr_mode = VOIDmode;
+      machine_mode bestmode;
+      HOST_WIDE_INT offset, size;
 
-      poly_uint64 offset = exact_div (bitregion_start, BITS_PER_UNIT);
+      gcc_assert ((bitregion_start % BITS_PER_UNIT) == 0);
+
+      offset = bitregion_start / BITS_PER_UNIT;
       bitnum -= bitregion_start;
-      poly_int64 size = bits_to_bytes_round_up (bitnum + bitsize);
+      size = (bitnum + bitsize + BITS_PER_UNIT - 1) / BITS_PER_UNIT;
       bitregion_end -= bitregion_start;
       bitregion_start = 0;
-      if (bitsize.is_constant (&ibitsize)
-	  && bitnum.is_constant (&ibitnum)
-	  && get_best_mode (ibitsize, ibitnum,
-			    bitregion_start, bitregion_end,
-			    MEM_ALIGN (str_rtx), INT_MAX,
-			    MEM_VOLATILE_P (str_rtx), &best_mode))
-	addr_mode = best_mode;
-      str_rtx = adjust_bitfield_address_size (str_rtx, addr_mode,
-					      offset, size);
+      bestmode = get_best_mode (bitsize, bitnum,
+				bitregion_start, bitregion_end,
+				MEM_ALIGN (str_rtx), VOIDmode,
+				MEM_VOLATILE_P (str_rtx));
+      str_rtx = adjust_bitfield_address_size (str_rtx, bestmode, offset, size);
     }
 
   if (!store_bit_field_1 (str_rtx, bitsize, bitnum,
@@ -1179,18 +1126,16 @@ store_bit_field (rtx str_rtx, poly_uint64 bitsize, poly_uint64 bitnum,
 }
 
 /* Use shifts and boolean operations to store VALUE into a bit field of
-   width BITSIZE in OP0, starting at bit BITNUM.  If OP0_MODE is defined,
-   it is the mode of OP0, otherwise OP0 is a BLKmode MEM.  VALUE_MODE is
-   the mode of VALUE.
+   width BITSIZE in OP0, starting at bit BITNUM.
 
    If REVERSE is true, the store is to be done in reverse order.  */
 
 static void
-store_fixed_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
-		       unsigned HOST_WIDE_INT bitsize,
+store_fixed_bit_field (rtx op0, unsigned HOST_WIDE_INT bitsize,
 		       unsigned HOST_WIDE_INT bitnum,
-		       poly_uint64 bitregion_start, poly_uint64 bitregion_end,
-		       rtx value, scalar_int_mode value_mode, bool reverse)
+		       unsigned HOST_WIDE_INT bitregion_start,
+		       unsigned HOST_WIDE_INT bitregion_end,
+		       rtx value, bool reverse)
 {
   /* There is a case not handled here:
      a structure with a known alignment of just a halfword
@@ -1199,48 +1144,45 @@ store_fixed_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
      and a field split across two bytes.
      Such cases are not supposed to be able to occur.  */
 
-  scalar_int_mode best_mode;
   if (MEM_P (op0))
     {
-      unsigned int max_bitsize = BITS_PER_WORD;
-      scalar_int_mode imode;
-      if (op0_mode.exists (&imode) && GET_MODE_BITSIZE (imode) < max_bitsize)
-	max_bitsize = GET_MODE_BITSIZE (imode);
+      machine_mode mode = GET_MODE (op0);
+      if (GET_MODE_BITSIZE (mode) == 0
+	  || GET_MODE_BITSIZE (mode) > GET_MODE_BITSIZE (word_mode))
+	mode = word_mode;
+      mode = get_best_mode (bitsize, bitnum, bitregion_start, bitregion_end,
+			    MEM_ALIGN (op0), mode, MEM_VOLATILE_P (op0));
 
-      if (!get_best_mode (bitsize, bitnum, bitregion_start, bitregion_end,
-			  MEM_ALIGN (op0), max_bitsize, MEM_VOLATILE_P (op0),
-			  &best_mode))
+      if (mode == VOIDmode)
 	{
 	  /* The only way this should occur is if the field spans word
 	     boundaries.  */
-	  store_split_bit_field (op0, op0_mode, bitsize, bitnum,
-				 bitregion_start, bitregion_end,
-				 value, value_mode, reverse);
+	  store_split_bit_field (op0, bitsize, bitnum, bitregion_start,
+				 bitregion_end, value, reverse);
 	  return;
 	}
 
-      op0 = narrow_bit_field_mem (op0, best_mode, bitsize, bitnum, &bitnum);
+      op0 = narrow_bit_field_mem (op0, mode, bitsize, bitnum, &bitnum);
     }
-  else
-    best_mode = op0_mode.require ();
 
-  store_fixed_bit_field_1 (op0, best_mode, bitsize, bitnum,
-			   value, value_mode, reverse);
+  store_fixed_bit_field_1 (op0, bitsize, bitnum, value, reverse);
 }
 
 /* Helper function for store_fixed_bit_field, stores
-   the bit field always using MODE, which is the mode of OP0.  The other
-   arguments are as for store_fixed_bit_field.  */
+   the bit field always using the MODE of OP0.  */
 
 static void
-store_fixed_bit_field_1 (rtx op0, scalar_int_mode mode,
-			 unsigned HOST_WIDE_INT bitsize,
+store_fixed_bit_field_1 (rtx op0, unsigned HOST_WIDE_INT bitsize,
 			 unsigned HOST_WIDE_INT bitnum,
-			 rtx value, scalar_int_mode value_mode, bool reverse)
+			 rtx value, bool reverse)
 {
+  machine_mode mode;
   rtx temp;
   int all_zero = 0;
   int all_one = 0;
+
+  mode = GET_MODE (op0);
+  gcc_assert (SCALAR_INT_MODE_P (mode));
 
   /* Note that bitsize + bitnum can be greater than GET_MODE_BITSIZE (mode)
      for invalid input, such as f5 from gcc.dg/pr48335-2.c.  */
@@ -1276,10 +1218,10 @@ store_fixed_bit_field_1 (rtx op0, scalar_int_mode mode,
     }
   else
     {
-      int must_and = (GET_MODE_BITSIZE (value_mode) != bitsize
+      int must_and = (GET_MODE_BITSIZE (GET_MODE (value)) != bitsize
 		      && bitnum + bitsize != GET_MODE_BITSIZE (mode));
 
-      if (value_mode != mode)
+      if (GET_MODE (value) != mode)
 	value = convert_to_mode (mode, value, 1);
 
       if (must_and)
@@ -1332,20 +1274,18 @@ store_fixed_bit_field_1 (rtx op0, scalar_int_mode mode,
    OP0 is the REG, SUBREG or MEM rtx for the first of the objects.
    BITSIZE is the field width; BITPOS the position of its first bit
    (within the word).
-   VALUE is the value to store, which has mode VALUE_MODE.
-   If OP0_MODE is defined, it is the mode of OP0, otherwise OP0 is
-   a BLKmode MEM.
+   VALUE is the value to store.
 
    If REVERSE is true, the store is to be done in reverse order.
 
    This does not yet handle fields wider than BITS_PER_WORD.  */
 
 static void
-store_split_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
-		       unsigned HOST_WIDE_INT bitsize,
+store_split_bit_field (rtx op0, unsigned HOST_WIDE_INT bitsize,
 		       unsigned HOST_WIDE_INT bitpos,
-		       poly_uint64 bitregion_start, poly_uint64 bitregion_end,
-		       rtx value, scalar_int_mode value_mode, bool reverse)
+		       unsigned HOST_WIDE_INT bitregion_start,
+		       unsigned HOST_WIDE_INT bitregion_end,
+		       rtx value, bool reverse)
 {
   unsigned int unit, total_bits, bitsdone = 0;
 
@@ -1359,8 +1299,8 @@ store_split_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
   /* If OP0 is a memory with a mode, then UNIT must not be larger than
      OP0's mode as well.  Otherwise, store_fixed_bit_field will call us
      again, and we will mutually recurse forever.  */
-  if (MEM_P (op0) && op0_mode.exists ())
-    unit = MIN (unit, GET_MODE_BITSIZE (op0_mode.require ()));
+  if (MEM_P (op0) && GET_MODE_BITSIZE (GET_MODE (op0)) > 0)
+    unit = MIN (unit, GET_MODE_BITSIZE (GET_MODE (op0)));
 
   /* If VALUE is a constant other than a CONST_INT, get it into a register in
      WORD_MODE.  If we can do this using gen_lowpart_common, do so.  Note
@@ -1372,18 +1312,20 @@ store_split_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
       if (word && (value != word))
 	value = word;
       else
-	value = gen_lowpart_common (word_mode, force_reg (value_mode, value));
-      value_mode = word_mode;
+	value = gen_lowpart_common (word_mode,
+				    force_reg (GET_MODE (value) != VOIDmode
+					       ? GET_MODE (value)
+					       : word_mode, value));
     }
 
-  total_bits = GET_MODE_BITSIZE (value_mode);
+  total_bits = GET_MODE_BITSIZE (GET_MODE (value));
 
   while (bitsdone < bitsize)
     {
       unsigned HOST_WIDE_INT thissize;
       unsigned HOST_WIDE_INT thispos;
       unsigned HOST_WIDE_INT offset;
-      rtx part;
+      rtx part, word;
 
       offset = (bitpos + bitsdone) / unit;
       thispos = (bitpos + bitsdone) % unit;
@@ -1392,9 +1334,9 @@ store_split_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
 	 UNIT close to the end of the region as needed.  If op0 is a REG
 	 or SUBREG of REG, don't do this, as there can't be data races
 	 on a register and we can expand shorter code in some cases.  */
-      if (maybe_ne (bitregion_end, 0U)
+      if (bitregion_end
 	  && unit > BITS_PER_UNIT
-	  && maybe_gt (bitpos + bitsdone - thispos + unit, bitregion_end + 1)
+	  && bitpos + bitsdone - thispos + unit > bitregion_end + 1
 	  && !REG_P (op0)
 	  && (GET_CODE (op0) != SUBREG || !REG_P (SUBREG_REG (op0))))
 	{
@@ -1417,18 +1359,19 @@ store_split_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
 			    & ((HOST_WIDE_INT_1 << thissize) - 1));
           /* Likewise, but the source is little-endian.  */
           else if (reverse)
-	    part = extract_fixed_bit_field (word_mode, value, value_mode,
-					    thissize,
+	    part = extract_fixed_bit_field (word_mode, value, thissize,
 					    bitsize - bitsdone - thissize,
 					    NULL_RTX, 1, false);
 	  else
-	    /* The args are chosen so that the last part includes the
-	       lsb.  Give extract_bit_field the value it needs (with
-	       endianness compensation) to fetch the piece we want.  */
-	    part = extract_fixed_bit_field (word_mode, value, value_mode,
-					    thissize,
-					    total_bits - bitsize + bitsdone,
-					    NULL_RTX, 1, false);
+	    {
+	      int total_bits = GET_MODE_BITSIZE (GET_MODE (value));
+	      /* The args are chosen so that the last part includes the
+		 lsb.  Give extract_bit_field the value it needs (with
+		 endianness compensation) to fetch the piece we want.  */
+	      part = extract_fixed_bit_field (word_mode, value, thissize,
+					      total_bits - bitsize + bitsdone,
+					      NULL_RTX, 1, false);
+	    }
 	}
       else
 	{
@@ -1439,44 +1382,34 @@ store_split_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
 			    & ((HOST_WIDE_INT_1 << thissize) - 1));
 	  /* Likewise, but the source is big-endian.  */
           else if (reverse)
-	    part = extract_fixed_bit_field (word_mode, value, value_mode,
-					    thissize,
+	    part = extract_fixed_bit_field (word_mode, value, thissize,
 					    total_bits - bitsdone - thissize,
 					    NULL_RTX, 1, false);
 	  else
-	    part = extract_fixed_bit_field (word_mode, value, value_mode,
-					    thissize, bitsdone, NULL_RTX,
-					    1, false);
+	    part = extract_fixed_bit_field (word_mode, value, thissize,
+					    bitsdone, NULL_RTX, 1, false);
 	}
 
       /* If OP0 is a register, then handle OFFSET here.  */
-      rtx op0_piece = op0;
-      opt_scalar_int_mode op0_piece_mode = op0_mode;
       if (SUBREG_P (op0) || REG_P (op0))
 	{
-	  scalar_int_mode imode;
-	  if (op0_mode.exists (&imode)
-	      && GET_MODE_SIZE (imode) < UNITS_PER_WORD)
-	    {
-	      if (offset)
-		op0_piece = const0_rtx;
-	    }
+	  machine_mode op0_mode = GET_MODE (op0);
+	  if (op0_mode != BLKmode && GET_MODE_SIZE (op0_mode) < UNITS_PER_WORD)
+	    word = offset ? const0_rtx : op0;
 	  else
-	    {
-	      op0_piece = operand_subword_force (op0,
-						 offset * unit / BITS_PER_WORD,
-						 GET_MODE (op0));
-	      op0_piece_mode = word_mode;
-	    }
+	    word = operand_subword_force (op0, offset * unit / BITS_PER_WORD,
+					  GET_MODE (op0));
 	  offset &= BITS_PER_WORD / unit - 1;
 	}
+      else
+	word = op0;
 
       /* OFFSET is in UNITs, and UNIT is in bits.  If WORD is const0_rtx,
 	 it is just an out-of-bounds access.  Ignore it.  */
-      if (op0_piece != const0_rtx)
-	store_fixed_bit_field (op0_piece, op0_piece_mode, thissize,
-			       offset * unit + thispos, bitregion_start,
-			       bitregion_end, part, word_mode, reverse);
+      if (word != const0_rtx)
+	store_fixed_bit_field (word, thissize, offset * unit + thispos,
+			       bitregion_start, bitregion_end, part,
+			       reverse);
       bitsdone += thissize;
     }
 }
@@ -1497,9 +1430,11 @@ convert_extracted_bit_field (rtx x, machine_mode mode,
      value via a SUBREG.  */
   if (!SCALAR_INT_MODE_P (tmode))
     {
-      scalar_int_mode int_mode = int_mode_for_mode (tmode).require ();
-      x = convert_to_mode (int_mode, x, unsignedp);
-      x = force_reg (int_mode, x);
+      machine_mode smode;
+
+      smode = mode_for_size (GET_MODE_BITSIZE (tmode), MODE_INT, 0);
+      x = convert_to_mode (smode, x, unsignedp);
+      x = force_reg (smode, x);
       return gen_lowpart (tmode, x);
     }
 
@@ -1508,13 +1443,11 @@ convert_extracted_bit_field (rtx x, machine_mode mode,
 
 /* Try to use an ext(z)v pattern to extract a field from OP0.
    Return the extracted value on success, otherwise return null.
-   EXTV describes the extraction instruction to use.  If OP0_MODE
-   is defined, it is the mode of OP0, otherwise OP0 is a BLKmode MEM.
-   The other arguments are as for extract_bit_field.  */
+   EXT_MODE is the mode of the extraction and the other arguments
+   are as for extract_bit_field.  */
 
 static rtx
 extract_bit_field_using_extv (const extraction_insn *extv, rtx op0,
-			      opt_scalar_int_mode op0_mode,
 			      unsigned HOST_WIDE_INT bitsize,
 			      unsigned HOST_WIDE_INT bitnum,
 			      int unsignedp, rtx target,
@@ -1523,7 +1456,7 @@ extract_bit_field_using_extv (const extraction_insn *extv, rtx op0,
   struct expand_operand ops[4];
   rtx spec_target = target;
   rtx spec_target_subreg = 0;
-  scalar_int_mode ext_mode = extv->field_mode;
+  machine_mode ext_mode = extv->field_mode;
   unsigned unit = GET_MODE_BITSIZE (ext_mode);
 
   if (bitsize == 0 || unit < bitsize)
@@ -1537,13 +1470,13 @@ extract_bit_field_using_extv (const extraction_insn *extv, rtx op0,
     {
       /* Convert from counting within OP0 to counting in EXT_MODE.  */
       if (BYTES_BIG_ENDIAN)
-	bitnum += unit - GET_MODE_BITSIZE (op0_mode.require ());
+	bitnum += unit - GET_MODE_BITSIZE (GET_MODE (op0));
 
       /* If op0 is a register, we need it in EXT_MODE to make it
 	 acceptable to the format of ext(z)v.  */
-      if (GET_CODE (op0) == SUBREG && op0_mode.require () != ext_mode)
+      if (GET_CODE (op0) == SUBREG && GET_MODE (op0) != ext_mode)
 	return NULL_RTX;
-      if (REG_P (op0) && op0_mode.require () != ext_mode)
+      if (REG_P (op0) && GET_MODE (op0) != ext_mode)
 	op0 = gen_lowpart_SUBREG (ext_mode, op0);
     }
 
@@ -1568,7 +1501,8 @@ extract_bit_field_using_extv (const extraction_insn *extv, rtx op0,
 	  && TRULY_NOOP_TRUNCATION_MODES_P (GET_MODE (target), ext_mode))
 	{
 	  target = gen_lowpart (ext_mode, target);
-	  if (partial_subreg_p (GET_MODE (spec_target), ext_mode))
+	  if (GET_MODE_PRECISION (ext_mode)
+	      > GET_MODE_PRECISION (GET_MODE (spec_target)))
 	    spec_target_subreg = target;
 	}
       else
@@ -1591,35 +1525,19 @@ extract_bit_field_using_extv (const extraction_insn *extv, rtx op0,
   return NULL_RTX;
 }
 
-/* See whether it would be valid to extract the part of OP0 described
-   by BITNUM and BITSIZE into a value of mode MODE using a subreg
-   operation.  Return the subreg if so, otherwise return null.  */
-
-static rtx
-extract_bit_field_as_subreg (machine_mode mode, rtx op0,
-			     poly_uint64 bitsize, poly_uint64 bitnum)
-{
-  poly_uint64 bytenum;
-  if (multiple_p (bitnum, BITS_PER_UNIT, &bytenum)
-      && known_eq (bitsize, GET_MODE_BITSIZE (mode))
-      && lowpart_bit_field_p (bitnum, bitsize, GET_MODE (op0))
-      && TRULY_NOOP_TRUNCATION_MODES_P (mode, GET_MODE (op0)))
-    return simplify_gen_subreg (mode, op0, GET_MODE (op0), bytenum);
-  return NULL_RTX;
-}
-
 /* A subroutine of extract_bit_field, with the same arguments.
    If FALLBACK_P is true, fall back to extract_fixed_bit_field
    if we can find no other means of implementing the operation.
    if FALLBACK_P is false, return NULL instead.  */
 
 static rtx
-extract_bit_field_1 (rtx str_rtx, poly_uint64 bitsize, poly_uint64 bitnum,
-		     int unsignedp, rtx target, machine_mode mode,
-		     machine_mode tmode, bool reverse, bool fallback_p,
-		     rtx *alt_rtl)
+extract_bit_field_1 (rtx str_rtx, unsigned HOST_WIDE_INT bitsize,
+		     unsigned HOST_WIDE_INT bitnum, int unsignedp, rtx target,
+		     machine_mode mode, machine_mode tmode,
+		     bool reverse, bool fallback_p)
 {
   rtx op0 = str_rtx;
+  machine_mode int_mode;
   machine_mode mode1;
 
   if (tmode == VOIDmode)
@@ -1634,70 +1552,18 @@ extract_bit_field_1 (rtx str_rtx, poly_uint64 bitsize, poly_uint64 bitnum,
   /* If we have an out-of-bounds access to a register, just return an
      uninitialized register of the required mode.  This can occur if the
      source code contains an out-of-bounds access to a small array.  */
-  if (REG_P (op0) && known_ge (bitnum, GET_MODE_BITSIZE (GET_MODE (op0))))
+  if (REG_P (op0) && bitnum >= GET_MODE_BITSIZE (GET_MODE (op0)))
     return gen_reg_rtx (tmode);
 
   if (REG_P (op0)
       && mode == GET_MODE (op0)
-      && known_eq (bitnum, 0U)
-      && known_eq (bitsize, GET_MODE_BITSIZE (GET_MODE (op0))))
+      && bitnum == 0
+      && bitsize == GET_MODE_BITSIZE (GET_MODE (op0)))
     {
       if (reverse)
 	op0 = flip_storage_order (mode, op0);
       /* We're trying to extract a full register from itself.  */
       return op0;
-    }
-
-  /* First try to check for vector from vector extractions.  */
-  if (VECTOR_MODE_P (GET_MODE (op0))
-      && !MEM_P (op0)
-      && VECTOR_MODE_P (tmode)
-      && known_eq (bitsize, GET_MODE_BITSIZE (tmode))
-      && maybe_gt (GET_MODE_SIZE (GET_MODE (op0)), GET_MODE_SIZE (tmode)))
-    {
-      machine_mode new_mode = GET_MODE (op0);
-      if (GET_MODE_INNER (new_mode) != GET_MODE_INNER (tmode))
-	{
-	  scalar_mode inner_mode = GET_MODE_INNER (tmode);
-	  poly_uint64 nunits;
-	  if (!multiple_p (GET_MODE_BITSIZE (GET_MODE (op0)),
-			   GET_MODE_UNIT_BITSIZE (tmode), &nunits)
-	      || !mode_for_vector (inner_mode, nunits).exists (&new_mode)
-	      || !VECTOR_MODE_P (new_mode)
-	      || maybe_ne (GET_MODE_SIZE (new_mode),
-			   GET_MODE_SIZE (GET_MODE (op0)))
-	      || GET_MODE_INNER (new_mode) != GET_MODE_INNER (tmode)
-	      || !targetm.vector_mode_supported_p (new_mode))
-	    new_mode = VOIDmode;
-	}
-      poly_uint64 pos;
-      if (new_mode != VOIDmode
-	  && (convert_optab_handler (vec_extract_optab, new_mode, tmode)
-	      != CODE_FOR_nothing)
-	  && multiple_p (bitnum, GET_MODE_BITSIZE (tmode), &pos))
-	{
-	  struct expand_operand ops[3];
-	  machine_mode outermode = new_mode;
-	  machine_mode innermode = tmode;
-	  enum insn_code icode
-	    = convert_optab_handler (vec_extract_optab, outermode, innermode);
-
-	  if (new_mode != GET_MODE (op0))
-	    op0 = gen_lowpart (new_mode, op0);
-	  create_output_operand (&ops[0], target, innermode);
-	  ops[0].target = 1;
-	  create_input_operand (&ops[1], op0, outermode);
-	  create_integer_operand (&ops[2], pos);
-	  if (maybe_expand_insn (icode, 3, ops))
-	    {
-	      if (alt_rtl && ops[0].target)
-		*alt_rtl = target;
-	      target = ops[0].value;
-	      if (GET_MODE (target) != mode)
-		return gen_lowpart (tmode, target);
-	      return target;
-	    }
-	}
     }
 
   /* See if we can get a better vector mode before extracting.  */
@@ -1720,9 +1586,9 @@ extract_bit_field_1 (rtx str_rtx, poly_uint64 bitsize, poly_uint64 bitnum,
       else
 	new_mode = MIN_MODE_VECTOR_INT;
 
-      FOR_EACH_MODE_FROM (new_mode, new_mode)
-	if (known_eq (GET_MODE_SIZE (new_mode), GET_MODE_SIZE (GET_MODE (op0)))
-	    && known_eq (GET_MODE_UNIT_SIZE (new_mode), GET_MODE_SIZE (tmode))
+      for (; new_mode != VOIDmode ; new_mode = GET_MODE_WIDER_MODE (new_mode))
+	if (GET_MODE_SIZE (new_mode) == GET_MODE_SIZE (GET_MODE (op0))
+	    && GET_MODE_UNIT_SIZE (new_mode) == GET_MODE_SIZE (tmode)
 	    && targetm.vector_mode_supported_p (new_mode))
 	  break;
       if (new_mode != VOIDmode)
@@ -1730,72 +1596,57 @@ extract_bit_field_1 (rtx str_rtx, poly_uint64 bitsize, poly_uint64 bitnum,
     }
 
   /* Use vec_extract patterns for extracting parts of vectors whenever
-     available.  If that fails, see whether the current modes and bitregion
-     give a natural subreg.  */
-  machine_mode outermode = GET_MODE (op0);
-  if (VECTOR_MODE_P (outermode) && !MEM_P (op0))
+     available.  */
+  if (VECTOR_MODE_P (GET_MODE (op0))
+      && !MEM_P (op0)
+      && optab_handler (vec_extract_optab, GET_MODE (op0)) != CODE_FOR_nothing
+      && ((bitnum + bitsize - 1) / GET_MODE_UNIT_BITSIZE (GET_MODE (op0))
+	  == bitnum / GET_MODE_UNIT_BITSIZE (GET_MODE (op0))))
     {
-      scalar_mode innermode = GET_MODE_INNER (outermode);
-      enum insn_code icode
-	= convert_optab_handler (vec_extract_optab, outermode, innermode);
-      poly_uint64 pos;
-      if (icode != CODE_FOR_nothing
-	  && known_eq (bitsize, GET_MODE_BITSIZE (innermode))
-	  && multiple_p (bitnum, GET_MODE_BITSIZE (innermode), &pos))
-	{
-	  struct expand_operand ops[3];
+      struct expand_operand ops[3];
+      machine_mode outermode = GET_MODE (op0);
+      machine_mode innermode = GET_MODE_INNER (outermode);
+      enum insn_code icode = optab_handler (vec_extract_optab, outermode);
+      unsigned HOST_WIDE_INT pos = bitnum / GET_MODE_BITSIZE (innermode);
 
-	  create_output_operand (&ops[0], target, innermode);
-	  ops[0].target = 1;
-	  create_input_operand (&ops[1], op0, outermode);
-	  create_integer_operand (&ops[2], pos);
-	  if (maybe_expand_insn (icode, 3, ops))
-	    {
-	      if (alt_rtl && ops[0].target)
-		*alt_rtl = target;
-	      target = ops[0].value;
-	      if (GET_MODE (target) != mode)
-		return gen_lowpart (tmode, target);
-	      return target;
-	    }
-	}
-      /* Using subregs is useful if we're extracting one register vector
-	 from a multi-register vector.  extract_bit_field_as_subreg checks
-	 for valid bitsize and bitnum, so we don't need to do that here.  */
-      if (VECTOR_MODE_P (mode))
+      create_output_operand (&ops[0], target, innermode);
+      create_input_operand (&ops[1], op0, outermode);
+      create_integer_operand (&ops[2], pos);
+      if (maybe_expand_insn (icode, 3, ops))
 	{
-	  rtx sub = extract_bit_field_as_subreg (mode, op0, bitsize, bitnum);
-	  if (sub)
-	    return sub;
+	  target = ops[0].value;
+      	  if (GET_MODE (target) != mode)
+	    return gen_lowpart (tmode, target);
+	  return target;
 	}
     }
 
   /* Make sure we are playing with integral modes.  Pun with subregs
      if we aren't.  */
-  opt_scalar_int_mode op0_mode = int_mode_for_mode (GET_MODE (op0));
-  scalar_int_mode imode;
-  if (!op0_mode.exists (&imode) || imode != GET_MODE (op0))
-    {
-      if (MEM_P (op0))
-	op0 = adjust_bitfield_address_size (op0, op0_mode.else_blk (),
-					    0, MEM_SIZE (op0));
-      else if (op0_mode.exists (&imode))
-	{
-	  op0 = gen_lowpart (imode, op0);
+  {
+    machine_mode imode = int_mode_for_mode (GET_MODE (op0));
+    if (imode != GET_MODE (op0))
+      {
+	if (MEM_P (op0))
+	  op0 = adjust_bitfield_address_size (op0, imode, 0, MEM_SIZE (op0));
+	else if (imode != BLKmode)
+	  {
+	    op0 = gen_lowpart (imode, op0);
 
-	  /* If we got a SUBREG, force it into a register since we
-	     aren't going to be able to do another SUBREG on it.  */
-	  if (GET_CODE (op0) == SUBREG)
-	    op0 = force_reg (imode, op0);
-	}
-      else
-	{
-	  poly_int64 size = GET_MODE_SIZE (GET_MODE (op0));
-	  rtx mem = assign_stack_temp (GET_MODE (op0), size);
-	  emit_move_insn (mem, op0);
-	  op0 = adjust_bitfield_address_size (mem, BLKmode, 0, size);
-	}
-    }
+	    /* If we got a SUBREG, force it into a register since we
+	       aren't going to be able to do another SUBREG on it.  */
+	    if (GET_CODE (op0) == SUBREG)
+	      op0 = force_reg (imode, op0);
+	  }
+	else
+	  {
+	    HOST_WIDE_INT size = GET_MODE_SIZE (GET_MODE (op0));
+	    rtx mem = assign_stack_temp (GET_MODE (op0), size);
+	    emit_move_insn (mem, op0);
+	    op0 = adjust_bitfield_address_size (mem, BLKmode, 0, size);
+	  }
+      }
+  }
 
   /* ??? We currently assume TARGET is at least as big as BITSIZE.
      If that's wrong, the solution is to test for it and set TARGET to 0
@@ -1803,65 +1654,41 @@ extract_bit_field_1 (rtx str_rtx, poly_uint64 bitsize, poly_uint64 bitnum,
 
   /* Get the mode of the field to use for atomic access or subreg
      conversion.  */
-  if (!SCALAR_INT_MODE_P (tmode)
-      || !mode_for_size (bitsize, GET_MODE_CLASS (tmode), 0).exists (&mode1))
-    mode1 = mode;
+  mode1 = mode;
+  if (SCALAR_INT_MODE_P (tmode))
+    {
+      machine_mode try_mode = mode_for_size (bitsize,
+						  GET_MODE_CLASS (tmode), 0);
+      if (try_mode != BLKmode)
+	mode1 = try_mode;
+    }
   gcc_assert (mode1 != BLKmode);
 
   /* Extraction of a full MODE1 value can be done with a subreg as long
      as the least significant bit of the value is the least significant
      bit of either OP0 or a word of OP0.  */
-  if (!MEM_P (op0) && !reverse)
+  if (!MEM_P (op0)
+      && !reverse
+      && lowpart_bit_field_p (bitnum, bitsize, GET_MODE (op0))
+      && bitsize == GET_MODE_BITSIZE (mode1)
+      && TRULY_NOOP_TRUNCATION_MODES_P (mode1, GET_MODE (op0)))
     {
-      rtx sub = extract_bit_field_as_subreg (mode1, op0, bitsize, bitnum);
+      rtx sub = simplify_gen_subreg (mode1, op0, GET_MODE (op0),
+				     bitnum / BITS_PER_UNIT);
       if (sub)
 	return convert_extracted_bit_field (sub, mode, tmode, unsignedp);
     }
 
   /* Extraction of a full MODE1 value can be done with a load as long as
      the field is on a byte boundary and is sufficiently aligned.  */
-  poly_uint64 bytenum;
-  if (simple_mem_bitfield_p (op0, bitsize, bitnum, mode1, &bytenum))
+  if (simple_mem_bitfield_p (op0, bitsize, bitnum, mode1))
     {
-      op0 = adjust_bitfield_address (op0, mode1, bytenum);
+      op0 = adjust_bitfield_address (op0, mode1, bitnum / BITS_PER_UNIT);
       if (reverse)
 	op0 = flip_storage_order (mode1, op0);
       return convert_extracted_bit_field (op0, mode, tmode, unsignedp);
     }
 
-  /* If we have a memory source and a non-constant bit offset, restrict
-     the memory to the referenced bytes.  This is a worst-case fallback
-     but is useful for things like vector booleans.  */
-  if (MEM_P (op0) && !bitnum.is_constant ())
-    {
-      bytenum = bits_to_bytes_round_down (bitnum);
-      bitnum = num_trailing_bits (bitnum);
-      poly_uint64 bytesize = bits_to_bytes_round_up (bitnum + bitsize);
-      op0 = adjust_bitfield_address_size (op0, BLKmode, bytenum, bytesize);
-      op0_mode = opt_scalar_int_mode ();
-    }
-
-  /* It's possible we'll need to handle other cases here for
-     polynomial bitnum and bitsize.  */
-
-  /* From here on we need to be looking at a fixed-size insertion.  */
-  return extract_integral_bit_field (op0, op0_mode, bitsize.to_constant (),
-				     bitnum.to_constant (), unsignedp,
-				     target, mode, tmode, reverse, fallback_p);
-}
-
-/* Subroutine of extract_bit_field_1, with the same arguments, except
-   that BITSIZE and BITNUM are constant.  Handle cases specific to
-   integral modes.  If OP0_MODE is defined, it is the mode of OP0,
-   otherwise OP0 is a BLKmode MEM.  */
-
-static rtx
-extract_integral_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
-			    unsigned HOST_WIDE_INT bitsize,
-			    unsigned HOST_WIDE_INT bitnum, int unsignedp,
-			    rtx target, machine_mode mode, machine_mode tmode,
-			    bool reverse, bool fallback_p)
-{
   /* Handle fields bigger than a word.  */
 
   if (bitsize > BITS_PER_WORD)
@@ -1881,17 +1708,12 @@ extract_integral_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
 
       /* In case we're about to clobber a base register or something 
 	 (see gcc.c-torture/execute/20040625-1.c).   */
-      if (reg_mentioned_p (target, op0))
+      if (reg_mentioned_p (target, str_rtx))
 	target = gen_reg_rtx (mode);
 
       /* Indicate for flow that the entire target reg is being set.  */
       emit_clobber (target);
 
-      /* The mode must be fixed-size, since extract_bit_field_1 handles
-	 extractions from variable-sized objects before calling this
-	 function.  */
-      unsigned int target_size
-	= GET_MODE_SIZE (GET_MODE (target)).to_constant ();
       last = get_last_insn ();
       for (i = 0; i < nwords; i++)
 	{
@@ -1899,7 +1721,9 @@ extract_integral_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
 	     if I is 1, use the next to lowest word; and so on.  */
 	  /* Word number in TARGET to use.  */
 	  unsigned int wordnum
-	    = (backwards ? target_size / UNITS_PER_WORD - i - 1 : i);
+	    = (backwards
+	       ? GET_MODE_SIZE (GET_MODE (target)) / UNITS_PER_WORD - i - 1
+	       : i);
 	  /* Offset from start of field in OP0.  */
 	  unsigned int bit_offset = (backwards ^ reverse
 				     ? MAX ((int) bitsize - ((int) i + 1)
@@ -1911,7 +1735,7 @@ extract_integral_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
 	    = extract_bit_field_1 (op0, MIN (BITS_PER_WORD,
 					     bitsize - i * BITS_PER_WORD),
 				   bitnum + bit_offset, 1, target_part,
-				   mode, word_mode, reverse, fallback_p, NULL);
+				   mode, word_mode, reverse, fallback_p);
 
 	  gcc_assert (target_part);
 	  if (!result_part)
@@ -1928,11 +1752,11 @@ extract_integral_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
 	{
 	  /* Unless we've filled TARGET, the upper regs in a multi-reg value
 	     need to be zero'd out.  */
-	  if (target_size > nwords * UNITS_PER_WORD)
+	  if (GET_MODE_SIZE (GET_MODE (target)) > nwords * UNITS_PER_WORD)
 	    {
 	      unsigned int i, total_words;
 
-	      total_words = target_size / UNITS_PER_WORD;
+	      total_words = GET_MODE_SIZE (GET_MODE (target)) / UNITS_PER_WORD;
 	      for (i = nwords; i < total_words; i++)
 		emit_move_insn
 		  (operand_subword (target,
@@ -1952,19 +1776,18 @@ extract_integral_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
 
   /* If OP0 is a multi-word register, narrow it to the affected word.
      If the region spans two words, defer to extract_split_bit_field.  */
-  if (!MEM_P (op0) && GET_MODE_SIZE (op0_mode.require ()) > UNITS_PER_WORD)
+  if (!MEM_P (op0) && GET_MODE_SIZE (GET_MODE (op0)) > UNITS_PER_WORD)
     {
       if (bitnum % BITS_PER_WORD + bitsize > BITS_PER_WORD)
 	{
 	  if (!fallback_p)
 	    return NULL_RTX;
-	  target = extract_split_bit_field (op0, op0_mode, bitsize, bitnum,
-					    unsignedp, reverse);
+	  target = extract_split_bit_field (op0, bitsize, bitnum, unsignedp,
+					    reverse);
 	  return convert_extracted_bit_field (target, mode, tmode, unsignedp);
 	}
-      op0 = simplify_gen_subreg (word_mode, op0, op0_mode.require (),
+      op0 = simplify_gen_subreg (word_mode, op0, GET_MODE (op0),
 				 bitnum / BITS_PER_WORD * UNITS_PER_WORD);
-      op0_mode = word_mode;
       bitnum %= BITS_PER_WORD;
     }
 
@@ -1976,13 +1799,12 @@ extract_integral_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
       && !reverse
       /* ??? We could limit the structure size to the part of OP0 that
 	 contains the field, with appropriate checks for endianness
-	 and TARGET_TRULY_NOOP_TRUNCATION.  */
+	 and TRULY_NOOP_TRUNCATION.  */
       && get_best_reg_extraction_insn (&extv, pattern,
-				       GET_MODE_BITSIZE (op0_mode.require ()),
+				       GET_MODE_BITSIZE (GET_MODE (op0)),
 				       tmode))
     {
-      rtx result = extract_bit_field_using_extv (&extv, op0, op0_mode,
-						 bitsize, bitnum,
+      rtx result = extract_bit_field_using_extv (&extv, op0, bitsize, bitnum,
 						 unsignedp, target, mode,
 						 tmode);
       if (result)
@@ -1996,9 +1818,9 @@ extract_integral_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
       if (get_best_mem_extraction_insn (&extv, pattern, bitsize, bitnum,
 					tmode))
 	{
-	  rtx result = extract_bit_field_using_extv (&extv, op0, op0_mode,
-						     bitsize, bitnum,
-						     unsignedp, target, mode,
+	  rtx result = extract_bit_field_using_extv (&extv, op0, bitsize,
+						     bitnum, unsignedp,
+						     target, mode,
 						     tmode);
 	  if (result)
 	    return result;
@@ -2016,7 +1838,7 @@ extract_integral_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
 	  xop0 = copy_to_reg (xop0);
 	  rtx result = extract_bit_field_1 (xop0, bitsize, bitpos,
 					    unsignedp, target,
-					    mode, tmode, reverse, false, NULL);
+					    mode, tmode, reverse, false);
 	  if (result)
 	    return result;
 	  delete_insns_since (last);
@@ -2028,14 +1850,14 @@ extract_integral_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
 
   /* Find a correspondingly-sized integer field, so we can apply
      shifts and masks to it.  */
-  scalar_int_mode int_mode;
-  if (!int_mode_for_mode (tmode).exists (&int_mode))
-    /* If this fails, we should probably push op0 out to memory and then
-       do a load.  */
-    int_mode = int_mode_for_mode (mode).require ();
+  int_mode = int_mode_for_mode (tmode);
+  if (int_mode == BLKmode)
+    int_mode = int_mode_for_mode (mode);
+  /* Should probably push op0 out to memory and then do a load.  */
+  gcc_assert (int_mode != BLKmode);
 
-  target = extract_fixed_bit_field (int_mode, op0, op0_mode, bitsize,
-				    bitnum, target, unsignedp, reverse);
+  target = extract_fixed_bit_field (int_mode, op0, bitsize, bitnum, target,
+				    unsignedp, reverse);
 
   /* Complex values must be reversed piecewise, so we need to undo the global
      reversal, convert to the complex mode and reverse again.  */
@@ -2070,57 +1892,48 @@ extract_integral_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
    if they are equally easy.  */
 
 rtx
-extract_bit_field (rtx str_rtx, poly_uint64 bitsize, poly_uint64 bitnum,
-		   int unsignedp, rtx target, machine_mode mode,
-		   machine_mode tmode, bool reverse, rtx *alt_rtl)
+extract_bit_field (rtx str_rtx, unsigned HOST_WIDE_INT bitsize,
+		   unsigned HOST_WIDE_INT bitnum, int unsignedp, rtx target,
+		   machine_mode mode, machine_mode tmode, bool reverse)
 {
   machine_mode mode1;
 
   /* Handle -fstrict-volatile-bitfields in the cases where it applies.  */
-  if (maybe_ne (GET_MODE_BITSIZE (GET_MODE (str_rtx)), 0))
+  if (GET_MODE_BITSIZE (GET_MODE (str_rtx)) > 0)
     mode1 = GET_MODE (str_rtx);
-  else if (target && maybe_ne (GET_MODE_BITSIZE (GET_MODE (target)), 0))
+  else if (target && GET_MODE_BITSIZE (GET_MODE (target)) > 0)
     mode1 = GET_MODE (target);
   else
     mode1 = tmode;
 
-  unsigned HOST_WIDE_INT ibitsize, ibitnum;
-  scalar_int_mode int_mode;
-  if (bitsize.is_constant (&ibitsize)
-      && bitnum.is_constant (&ibitnum)
-      && is_a <scalar_int_mode> (mode1, &int_mode)
-      && strict_volatile_bitfield_p (str_rtx, ibitsize, ibitnum,
-				     int_mode, 0, 0))
+  if (strict_volatile_bitfield_p (str_rtx, bitsize, bitnum, mode1, 0, 0))
     {
-      /* Extraction of a full INT_MODE value can be done with a simple load.
+      /* Extraction of a full MODE1 value can be done with a simple load.
 	 We know here that the field can be accessed with one single
 	 instruction.  For targets that support unaligned memory,
 	 an unaligned access may be necessary.  */
-      if (ibitsize == GET_MODE_BITSIZE (int_mode))
+      if (bitsize == GET_MODE_BITSIZE (mode1))
 	{
-	  rtx result = adjust_bitfield_address (str_rtx, int_mode,
-						ibitnum / BITS_PER_UNIT);
+	  rtx result = adjust_bitfield_address (str_rtx, mode1,
+						bitnum / BITS_PER_UNIT);
 	  if (reverse)
-	    result = flip_storage_order (int_mode, result);
-	  gcc_assert (ibitnum % BITS_PER_UNIT == 0);
+	    result = flip_storage_order (mode1, result);
+	  gcc_assert (bitnum % BITS_PER_UNIT == 0);
 	  return convert_extracted_bit_field (result, mode, tmode, unsignedp);
 	}
 
-      str_rtx = narrow_bit_field_mem (str_rtx, int_mode, ibitsize, ibitnum,
-				      &ibitnum);
-      gcc_assert (ibitnum + ibitsize <= GET_MODE_BITSIZE (int_mode));
+      str_rtx = narrow_bit_field_mem (str_rtx, mode1, bitsize, bitnum,
+				      &bitnum);
+      gcc_assert (bitnum + bitsize <= GET_MODE_BITSIZE (mode1));
       str_rtx = copy_to_reg (str_rtx);
-      return extract_bit_field_1 (str_rtx, ibitsize, ibitnum, unsignedp,
-				  target, mode, tmode, reverse, true, alt_rtl);
     }
 
   return extract_bit_field_1 (str_rtx, bitsize, bitnum, unsignedp,
-			      target, mode, tmode, reverse, true, alt_rtl);
+			      target, mode, tmode, reverse, true);
 }
 
 /* Use shifts and boolean operations to extract a field of BITSIZE bits
-   from bit BITNUM of OP0.  If OP0_MODE is defined, it is the mode of OP0,
-   otherwise OP0 is a BLKmode MEM.
+   from bit BITNUM of OP0.
 
    UNSIGNEDP is nonzero for an unsigned bit field (don't sign-extend value).
    If REVERSE is true, the extraction is to be done in reverse order.
@@ -2131,40 +1944,41 @@ extract_bit_field (rtx str_rtx, poly_uint64 bitsize, poly_uint64 bitnum,
 
 static rtx
 extract_fixed_bit_field (machine_mode tmode, rtx op0,
-			 opt_scalar_int_mode op0_mode,
 			 unsigned HOST_WIDE_INT bitsize,
 			 unsigned HOST_WIDE_INT bitnum, rtx target,
 			 int unsignedp, bool reverse)
 {
-  scalar_int_mode mode;
   if (MEM_P (op0))
     {
-      if (!get_best_mode (bitsize, bitnum, 0, 0, MEM_ALIGN (op0),
-			  BITS_PER_WORD, MEM_VOLATILE_P (op0), &mode))
+      machine_mode mode
+	= get_best_mode (bitsize, bitnum, 0, 0, MEM_ALIGN (op0), word_mode,
+			 MEM_VOLATILE_P (op0));
+
+      if (mode == VOIDmode)
 	/* The only way this should occur is if the field spans word
 	   boundaries.  */
-	return extract_split_bit_field (op0, op0_mode, bitsize, bitnum,
-					unsignedp, reverse);
+	return extract_split_bit_field (op0, bitsize, bitnum, unsignedp,
+					reverse);
 
       op0 = narrow_bit_field_mem (op0, mode, bitsize, bitnum, &bitnum);
     }
-  else
-    mode = op0_mode.require ();
 
-  return extract_fixed_bit_field_1 (tmode, op0, mode, bitsize, bitnum,
+  return extract_fixed_bit_field_1 (tmode, op0, bitsize, bitnum,
 				    target, unsignedp, reverse);
 }
 
 /* Helper function for extract_fixed_bit_field, extracts
-   the bit field always using MODE, which is the mode of OP0.
-   The other arguments are as for extract_fixed_bit_field.  */
+   the bit field always using the MODE of OP0.  */
 
 static rtx
-extract_fixed_bit_field_1 (machine_mode tmode, rtx op0, scalar_int_mode mode,
+extract_fixed_bit_field_1 (machine_mode tmode, rtx op0,
 			   unsigned HOST_WIDE_INT bitsize,
 			   unsigned HOST_WIDE_INT bitnum, rtx target,
 			   int unsignedp, bool reverse)
 {
+  machine_mode mode = GET_MODE (op0);
+  gcc_assert (SCALAR_INT_MODE_P (mode));
+
   /* Note that bitsize + bitnum can be greater than GET_MODE_BITSIZE (mode)
      for invalid input, such as extract equivalent of f5 from
      gcc.dg/pr48335-2.c.  */
@@ -2191,19 +2005,16 @@ extract_fixed_bit_field_1 (machine_mode tmode, rtx op0, scalar_int_mode mode,
 	    subtarget = 0;
 	  op0 = expand_shift (RSHIFT_EXPR, mode, op0, bitnum, subtarget, 1);
 	}
-      /* Convert the value to the desired mode.  TMODE must also be a
-	 scalar integer for this conversion to make sense, since we
-	 shouldn't reinterpret the bits.  */
-      scalar_int_mode new_mode = as_a <scalar_int_mode> (tmode);
-      if (mode != new_mode)
-	op0 = convert_to_mode (new_mode, op0, 1);
+      /* Convert the value to the desired mode.  */
+      if (mode != tmode)
+	op0 = convert_to_mode (tmode, op0, 1);
 
       /* Unless the msb of the field used to be the msb when we shifted,
 	 mask out the upper bits.  */
 
       if (GET_MODE_BITSIZE (mode) != bitnum + bitsize)
-	return expand_binop (new_mode, and_optab, op0,
-			     mask_rtx (new_mode, 0, bitsize, 0),
+	return expand_binop (GET_MODE (op0), and_optab, op0,
+			     mask_rtx (GET_MODE (op0), 0, bitsize, 0),
 			     target, 1, OPTAB_LIB_WIDEN);
       return op0;
     }
@@ -2214,13 +2025,13 @@ extract_fixed_bit_field_1 (machine_mode tmode, rtx op0, scalar_int_mode mode,
 
   /* Find the narrowest integer mode that contains the field.  */
 
-  opt_scalar_int_mode mode_iter;
-  FOR_EACH_MODE_IN_CLASS (mode_iter, MODE_INT)
-    if (GET_MODE_BITSIZE (mode_iter.require ()) >= bitsize + bitnum)
-      break;
-
-  mode = mode_iter.require ();
-  op0 = convert_to_mode (mode, op0, 0);
+  for (mode = GET_CLASS_NARROWEST_MODE (MODE_INT); mode != VOIDmode;
+       mode = GET_MODE_WIDER_MODE (mode))
+    if (GET_MODE_BITSIZE (mode) >= bitsize + bitnum)
+      {
+	op0 = convert_to_mode (mode, op0, 0);
+	break;
+      }
 
   if (mode != tmode)
     target = 0;
@@ -2253,14 +2064,11 @@ lshift_value (machine_mode mode, unsigned HOST_WIDE_INT value,
    OP0 is the REG, SUBREG or MEM rtx for the first of the two words.
    BITSIZE is the field width; BITPOS, position of its first bit, in the word.
    UNSIGNEDP is 1 if should zero-extend the contents; else sign-extend.
-   If OP0_MODE is defined, it is the mode of OP0, otherwise OP0 is
-   a BLKmode MEM.
 
    If REVERSE is true, the extraction is to be done in reverse order.  */
 
 static rtx
-extract_split_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
-			 unsigned HOST_WIDE_INT bitsize,
+extract_split_bit_field (rtx op0, unsigned HOST_WIDE_INT bitsize,
 			 unsigned HOST_WIDE_INT bitpos, int unsignedp,
 			 bool reverse)
 {
@@ -2279,7 +2087,7 @@ extract_split_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
   while (bitsdone < bitsize)
     {
       unsigned HOST_WIDE_INT thissize;
-      rtx part;
+      rtx part, word;
       unsigned HOST_WIDE_INT thispos;
       unsigned HOST_WIDE_INT offset;
 
@@ -2293,21 +2101,19 @@ extract_split_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
       thissize = MIN (thissize, unit - thispos);
 
       /* If OP0 is a register, then handle OFFSET here.  */
-      rtx op0_piece = op0;
-      opt_scalar_int_mode op0_piece_mode = op0_mode;
       if (SUBREG_P (op0) || REG_P (op0))
 	{
-	  op0_piece = operand_subword_force (op0, offset, op0_mode.require ());
-	  op0_piece_mode = word_mode;
+	  word = operand_subword_force (op0, offset, GET_MODE (op0));
 	  offset = 0;
 	}
+      else
+	word = op0;
 
       /* Extract the parts in bit-counting order,
 	 whose meaning is determined by BYTES_PER_UNIT.
 	 OFFSET is in UNITs, and UNIT is in bits.  */
-      part = extract_fixed_bit_field (word_mode, op0_piece, op0_piece_mode,
-				      thissize, offset * unit + thispos,
-				      0, 1, reverse);
+      part = extract_fixed_bit_field (word_mode, word, thissize,
+				      offset * unit + thispos, 0, 1, reverse);
       bitsdone += thissize;
 
       /* Shift this part into place for the result.  */
@@ -2360,7 +2166,7 @@ extract_split_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
        a zero extension
 
      - when MODE is smaller than SRC_MODE, the extraction involves
-       a truncation (and is thus subject to TARGET_TRULY_NOOP_TRUNCATION).
+       a truncation (and is thus subject to TRULY_NOOP_TRUNCATION).
 
    In other words, this routine performs a computation, whereas the
    gen_lowpart* routines are conceptually lvalue or rvalue subreg
@@ -2369,7 +2175,7 @@ extract_split_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
 rtx
 extract_low_bits (machine_mode mode, machine_mode src_mode, rtx src)
 {
-  scalar_int_mode int_mode, src_int_mode;
+  machine_mode int_mode, src_int_mode;
 
   if (mode == src_mode)
     return src;
@@ -2379,7 +2185,7 @@ extract_low_bits (machine_mode mode, machine_mode src_mode, rtx src)
       /* simplify_gen_subreg can't be used here, as if simplify_subreg
 	 fails, it will happily create (subreg (symbol_ref)) or similar
 	 invalid SUBREGs.  */
-      poly_uint64 byte = subreg_lowpart_offset (mode, src_mode);
+      unsigned int byte = subreg_lowpart_offset (mode, src_mode);
       rtx ret = simplify_subreg (mode, src, src_mode, byte);
       if (ret)
 	return ret;
@@ -2395,21 +2201,22 @@ extract_low_bits (machine_mode mode, machine_mode src_mode, rtx src)
   if (GET_MODE_CLASS (mode) == MODE_CC || GET_MODE_CLASS (src_mode) == MODE_CC)
     return NULL_RTX;
 
-  if (known_eq (GET_MODE_BITSIZE (mode), GET_MODE_BITSIZE (src_mode))
-      && targetm.modes_tieable_p (mode, src_mode))
+  if (GET_MODE_BITSIZE (mode) == GET_MODE_BITSIZE (src_mode)
+      && MODES_TIEABLE_P (mode, src_mode))
     {
       rtx x = gen_lowpart_common (mode, src);
       if (x)
         return x;
     }
 
-  if (!int_mode_for_mode (src_mode).exists (&src_int_mode)
-      || !int_mode_for_mode (mode).exists (&int_mode))
+  src_int_mode = int_mode_for_mode (src_mode);
+  int_mode = int_mode_for_mode (mode);
+  if (src_int_mode == BLKmode || int_mode == BLKmode)
     return NULL_RTX;
 
-  if (!targetm.modes_tieable_p (src_int_mode, src_mode))
+  if (!MODES_TIEABLE_P (src_int_mode, src_mode))
     return NULL_RTX;
-  if (!targetm.modes_tieable_p (int_mode, mode))
+  if (!MODES_TIEABLE_P (int_mode, mode))
     return NULL_RTX;
 
   src = gen_lowpart (src_int_mode, src);
@@ -2464,10 +2271,12 @@ expand_shift_1 (enum tree_code code, machine_mode mode, rtx shifted,
   optab lrotate_optab = rotl_optab;
   optab rrotate_optab = rotr_optab;
   machine_mode op1_mode;
-  scalar_mode scalar_mode = GET_MODE_INNER (mode);
+  machine_mode scalar_mode = mode;
   int attempt;
   bool speed = optimize_insn_for_speed_p ();
 
+  if (VECTOR_MODE_P (mode))
+    scalar_mode = GET_MODE_INNER (mode);
   op1 = amount;
   op1_mode = GET_MODE (op1);
 
@@ -2491,9 +2300,8 @@ expand_shift_1 (enum tree_code code, machine_mode mode, rtx shifted,
       if (CONST_INT_P (op1)
 	  && ((unsigned HOST_WIDE_INT) INTVAL (op1) >=
 	      (unsigned HOST_WIDE_INT) GET_MODE_BITSIZE (scalar_mode)))
-	op1 = gen_int_shift_amount (mode,
-				    (unsigned HOST_WIDE_INT) INTVAL (op1)
-				    % GET_MODE_BITSIZE (scalar_mode));
+	op1 = GEN_INT ((unsigned HOST_WIDE_INT) INTVAL (op1)
+		       % GET_MODE_BITSIZE (scalar_mode));
       else if (GET_CODE (op1) == SUBREG
 	       && subreg_lowpart_p (op1)
 	       && SCALAR_INT_MODE_P (GET_MODE (SUBREG_REG (op1)))
@@ -2510,8 +2318,7 @@ expand_shift_1 (enum tree_code code, machine_mode mode, rtx shifted,
       && IN_RANGE (INTVAL (op1), GET_MODE_BITSIZE (scalar_mode) / 2 + left,
 		   GET_MODE_BITSIZE (scalar_mode) - 1))
     {
-      op1 = gen_int_shift_amount (mode, (GET_MODE_BITSIZE (scalar_mode)
-					 - INTVAL (op1)));
+      op1 = GEN_INT (GET_MODE_BITSIZE (scalar_mode) - INTVAL (op1));
       left = !left;
       code = left ? LROTATE_EXPR : RROTATE_EXPR;
     }
@@ -2590,8 +2397,8 @@ expand_shift_1 (enum tree_code code, machine_mode mode, rtx shifted,
 	      if (op1 == const0_rtx)
 		return shifted;
 	      else if (CONST_INT_P (op1))
-		other_amount = gen_int_shift_amount
-		  (mode, GET_MODE_BITSIZE (scalar_mode) - INTVAL (op1));
+		other_amount = GEN_INT (GET_MODE_BITSIZE (scalar_mode)
+					- INTVAL (op1));
 	      else
 		{
 		  other_amount
@@ -2662,11 +2469,10 @@ expand_shift_1 (enum tree_code code, machine_mode mode, rtx shifted,
 
 rtx
 expand_shift (enum tree_code code, machine_mode mode, rtx shifted,
-	      poly_int64 amount, rtx target, int unsignedp)
+	      int amount, rtx target, int unsignedp)
 {
-  return expand_shift_1 (code, mode, shifted,
-			 gen_int_shift_amount (mode, amount),
-			 target, unsignedp);
+  return expand_shift_1 (code, mode,
+			 shifted, GEN_INT (amount), target, unsignedp);
 }
 
 /* Likewise, but return 0 if that cannot be done.  */
@@ -2700,9 +2506,9 @@ static void synth_mult (struct algorithm *, unsigned HOST_WIDE_INT,
 static rtx expand_mult_const (machine_mode, rtx, HOST_WIDE_INT, rtx,
 			      const struct algorithm *, enum mult_variant);
 static unsigned HOST_WIDE_INT invert_mod2n (unsigned HOST_WIDE_INT, int);
-static rtx extract_high_half (scalar_int_mode, rtx);
-static rtx expmed_mult_highpart (scalar_int_mode, rtx, rtx, rtx, int, int);
-static rtx expmed_mult_highpart_optab (scalar_int_mode, rtx, rtx, rtx,
+static rtx extract_high_half (machine_mode, rtx);
+static rtx expmed_mult_highpart (machine_mode, rtx, rtx, rtx, int, int);
+static rtx expmed_mult_highpart_optab (machine_mode, rtx, rtx, rtx,
 				       int, int);
 /* Compute and return the best algorithm for multiplying by T.
    The algorithm must cost less than cost_limit
@@ -2725,7 +2531,7 @@ synth_mult (struct algorithm *alg_out, unsigned HOST_WIDE_INT t,
   bool cache_hit = false;
   enum alg_code cache_alg = alg_zero;
   bool speed = optimize_insn_for_speed_p ();
-  scalar_int_mode imode;
+  machine_mode imode;
   struct alg_hash_entry *entry_ptr;
 
   /* Indicate that no algorithm is yet found.  If no algorithm
@@ -2738,7 +2544,7 @@ synth_mult (struct algorithm *alg_out, unsigned HOST_WIDE_INT t,
     return;
 
   /* Be prepared for vector modes.  */
-  imode = as_a <scalar_int_mode> (GET_MODE_INNER (mode));
+  imode = GET_MODE_INNER (mode);
 
   maxm = MIN (BITS_PER_WORD, GET_MODE_BITSIZE (imode));
 
@@ -3364,9 +3170,9 @@ expand_mult_const (machine_mode mode, rtx op0, HOST_WIDE_INT val,
 	  /* Write a REG_EQUAL note on the last insn so that we can cse
 	     multiplication sequences.  Note that if ACCUM is a SUBREG,
 	     we've set the inner register and must properly indicate that.  */
-	  tem = op0, nmode = mode;
-	  accum_inner = accum;
-	  if (GET_CODE (accum) == SUBREG)
+          tem = op0, nmode = mode;
+          accum_inner = accum;
+          if (GET_CODE (accum) == SUBREG)
 	    {
 	      accum_inner = SUBREG_REG (accum);
 	      nmode = GET_MODE (accum_inner);
@@ -3380,11 +3186,10 @@ expand_mult_const (machine_mode mode, rtx op0, HOST_WIDE_INT val,
 	  if (!paradoxical_subreg_p (tem))
 	    {
 	      insn = get_last_insn ();
-	      wide_int wval_so_far
-		= wi::uhwi (val_so_far,
-			    GET_MODE_PRECISION (as_a <scalar_mode> (nmode)));
-	      rtx c = immed_wide_int_const (wval_so_far, nmode);
-	      set_dst_reg_note (insn, REG_EQUAL, gen_rtx_MULT (nmode, tem, c),
+	      set_dst_reg_note (insn, REG_EQUAL,
+				gen_rtx_MULT (nmode, tem,
+					      gen_int_mode (val_so_far,
+							    nmode)),
 				accum_inner);
 	    }
 	}
@@ -3421,7 +3226,7 @@ expand_mult_const (machine_mode mode, rtx op0, HOST_WIDE_INT val,
 
 rtx
 expand_mult (machine_mode mode, rtx op0, rtx op1, rtx target,
-	     int unsignedp, bool no_libcall)
+	     int unsignedp)
 {
   enum mult_variant variant;
   struct algorithm algorithm;
@@ -3557,16 +3362,14 @@ expand_mult (machine_mode mode, rtx op0, rtx op1, rtx target,
     {
       op0 = force_reg (GET_MODE (op0), op0);
       return expand_binop (mode, add_optab, op0, op0,
-			   target, unsignedp,
-			   no_libcall ? OPTAB_WIDEN : OPTAB_LIB_WIDEN);
+			   target, unsignedp, OPTAB_LIB_WIDEN);
     }
 
   /* This used to use umul_optab if unsigned, but for non-widening multiply
      there is no difference between signed and unsigned.  */
   op0 = expand_binop (mode, do_trapv ? smulv_optab : smul_optab,
-		      op0, op1, target, unsignedp,
-		      no_libcall ? OPTAB_WIDEN : OPTAB_LIB_WIDEN);
-  gcc_assert (op0 || no_libcall);
+		      op0, op1, target, unsignedp, OPTAB_LIB_WIDEN);
+  gcc_assert (op0);
   return op0;
 }
 
@@ -3756,7 +3559,7 @@ invert_mod2n (unsigned HOST_WIDE_INT x, int n)
    MODE is the mode of operation.  */
 
 rtx
-expand_mult_highpart_adjust (scalar_int_mode mode, rtx adj_operand, rtx op0,
+expand_mult_highpart_adjust (machine_mode mode, rtx adj_operand, rtx op0,
 			     rtx op1, rtx target, int unsignedp)
 {
   rtx tem;
@@ -3781,13 +3584,16 @@ expand_mult_highpart_adjust (scalar_int_mode mode, rtx adj_operand, rtx op0,
 /* Subroutine of expmed_mult_highpart.  Return the MODE high part of OP.  */
 
 static rtx
-extract_high_half (scalar_int_mode mode, rtx op)
+extract_high_half (machine_mode mode, rtx op)
 {
+  machine_mode wider_mode;
+
   if (mode == word_mode)
     return gen_highpart (mode, op);
 
-  scalar_int_mode wider_mode = GET_MODE_WIDER_MODE (mode).require ();
+  gcc_assert (!SCALAR_FLOAT_MODE_P (mode));
 
+  wider_mode = GET_MODE_WIDER_MODE (mode);
   op = expand_shift (RSHIFT_EXPR, wider_mode, op,
 		     GET_MODE_BITSIZE (mode), 0, 1);
   return convert_modes (mode, wider_mode, op, 0);
@@ -3797,17 +3603,19 @@ extract_high_half (scalar_int_mode mode, rtx op)
    optab.  OP1 is an rtx for the constant operand.  */
 
 static rtx
-expmed_mult_highpart_optab (scalar_int_mode mode, rtx op0, rtx op1,
+expmed_mult_highpart_optab (machine_mode mode, rtx op0, rtx op1,
 			    rtx target, int unsignedp, int max_cost)
 {
   rtx narrow_op1 = gen_int_mode (INTVAL (op1), mode);
+  machine_mode wider_mode;
   optab moptab;
   rtx tem;
   int size;
   bool speed = optimize_insn_for_speed_p ();
 
-  scalar_int_mode wider_mode = GET_MODE_WIDER_MODE (mode).require ();
+  gcc_assert (!SCALAR_FLOAT_MODE_P (mode));
 
+  wider_mode = GET_MODE_WIDER_MODE (mode);
   size = GET_MODE_BITSIZE (mode);
 
   /* Firstly, try using a multiplication insn that only generates the needed
@@ -3839,7 +3647,7 @@ expmed_mult_highpart_optab (scalar_int_mode mode, rtx op0, rtx op1,
 
   /* Try widening multiplication.  */
   moptab = unsignedp ? umul_widen_optab : smul_widen_optab;
-  if (convert_optab_handler (moptab, wider_mode, mode) != CODE_FOR_nothing
+  if (widening_optab_handler (moptab, wider_mode, mode) != CODE_FOR_nothing
       && mul_widen_cost (speed, wider_mode) < max_cost)
     {
       tem = expand_binop (wider_mode, moptab, op0, narrow_op1, 0,
@@ -3878,7 +3686,7 @@ expmed_mult_highpart_optab (scalar_int_mode mode, rtx op0, rtx op1,
 
   /* Try widening multiplication of opposite signedness, and adjust.  */
   moptab = unsignedp ? smul_widen_optab : umul_widen_optab;
-  if (convert_optab_handler (moptab, wider_mode, mode) != CODE_FOR_nothing
+  if (widening_optab_handler (moptab, wider_mode, mode) != CODE_FOR_nothing
       && size - 1 < BITS_PER_WORD
       && (mul_widen_cost (speed, wider_mode)
 	  + 2 * shift_cost (speed, mode, size-1)
@@ -3910,9 +3718,10 @@ expmed_mult_highpart_optab (scalar_int_mode mode, rtx op0, rtx op1,
    MAX_COST is the total allowed cost for the expanded RTL.  */
 
 static rtx
-expmed_mult_highpart (scalar_int_mode mode, rtx op0, rtx op1,
+expmed_mult_highpart (machine_mode mode, rtx op0, rtx op1,
 		      rtx target, int unsignedp, int max_cost)
 {
+  machine_mode wider_mode = GET_MODE_WIDER_MODE (mode);
   unsigned HOST_WIDE_INT cnst1;
   int extra_cost;
   bool sign_adjust = false;
@@ -3921,6 +3730,7 @@ expmed_mult_highpart (scalar_int_mode mode, rtx op0, rtx op1,
   rtx tem;
   bool speed = optimize_insn_for_speed_p ();
 
+  gcc_assert (!SCALAR_FLOAT_MODE_P (mode));
   /* We can't support modes wider than HOST_BITS_PER_INT.  */
   gcc_assert (HWI_COMPUTABLE_MODE_P (mode));
 
@@ -3930,7 +3740,6 @@ expmed_mult_highpart (scalar_int_mode mode, rtx op0, rtx op1,
      ??? We might be able to perform double-word arithmetic if
      mode == word_mode, however all the cost calculations in
      synth_mult etc. assume single-word operations.  */
-  scalar_int_mode wider_mode = GET_MODE_WIDER_MODE (mode).require ();
   if (GET_MODE_BITSIZE (wider_mode) > BITS_PER_WORD)
     return expmed_mult_highpart_optab (mode, op0, op1, target,
 				       unsignedp, max_cost);
@@ -3973,7 +3782,7 @@ expmed_mult_highpart (scalar_int_mode mode, rtx op0, rtx op1,
 /* Expand signed modulus of OP0 by a power of two D in mode MODE.  */
 
 static rtx
-expand_smod_pow2 (scalar_int_mode mode, rtx op0, HOST_WIDE_INT d)
+expand_smod_pow2 (machine_mode mode, rtx op0, HOST_WIDE_INT d)
 {
   rtx result, temp, shift;
   rtx_code_label *label;
@@ -3993,7 +3802,7 @@ expand_smod_pow2 (scalar_int_mode mode, rtx op0, HOST_WIDE_INT d)
 	{
 	  HOST_WIDE_INT masklow = (HOST_WIDE_INT_1 << logd) - 1;
 	  signmask = force_reg (mode, signmask);
-	  shift = gen_int_shift_amount (mode, GET_MODE_BITSIZE (mode) - logd);
+	  shift = GEN_INT (GET_MODE_BITSIZE (mode) - logd);
 
 	  /* Use the rtx_cost of a LSHIFTRT instruction to determine
 	     which instruction sequence to use.  If logical right shifts
@@ -4070,7 +3879,7 @@ expand_smod_pow2 (scalar_int_mode mode, rtx op0, HOST_WIDE_INT d)
    This routine is only called for positive values of D.  */
 
 static rtx
-expand_sdiv_pow2 (scalar_int_mode mode, rtx op0, HOST_WIDE_INT d)
+expand_sdiv_pow2 (machine_mode mode, rtx op0, HOST_WIDE_INT d)
 {
   rtx temp;
   rtx_code_label *label;
@@ -4187,6 +3996,7 @@ expand_divmod (int rem_flag, enum tree_code code, machine_mode mode,
   rtx tquotient;
   rtx quotient = 0, remainder = 0;
   rtx_insn *last;
+  int size;
   rtx_insn *insn;
   optab optab1, optab2;
   int op1_is_constant, op1_is_pow2 = 0;
@@ -4287,13 +4097,15 @@ expand_divmod (int rem_flag, enum tree_code code, machine_mode mode,
   optab2 = (op1_is_pow2 ? optab1
 	    : (unsignedp ? udivmod_optab : sdivmod_optab));
 
-  FOR_EACH_MODE_FROM (compute_mode, mode)
+  for (compute_mode = mode; compute_mode != VOIDmode;
+       compute_mode = GET_MODE_WIDER_MODE (compute_mode))
     if (optab_handler (optab1, compute_mode) != CODE_FOR_nothing
 	|| optab_handler (optab2, compute_mode) != CODE_FOR_nothing)
       break;
 
   if (compute_mode == VOIDmode)
-    FOR_EACH_MODE_FROM (compute_mode, mode)
+    for (compute_mode = mode; compute_mode != VOIDmode;
+	 compute_mode = GET_MODE_WIDER_MODE (compute_mode))
       if (optab_libfunc (optab1, compute_mode)
 	  || optab_libfunc (optab2, compute_mode))
 	break;
@@ -4308,6 +4120,7 @@ expand_divmod (int rem_flag, enum tree_code code, machine_mode mode,
   else
     tquotient = gen_reg_rtx (compute_mode);
 
+  size = GET_MODE_BITSIZE (compute_mode);
 #if 0
   /* It should be possible to restrict the precision to GET_MODE_BITSIZE
      (mode), and thereby get better code when OP1 is a constant.  Do that
@@ -4380,14 +4193,12 @@ expand_divmod (int rem_flag, enum tree_code code, machine_mode mode,
       case TRUNC_DIV_EXPR:
 	if (op1_is_constant)
 	  {
-	    scalar_int_mode int_mode = as_a <scalar_int_mode> (compute_mode);
-	    int size = GET_MODE_BITSIZE (int_mode);
 	    if (unsignedp)
 	      {
 		unsigned HOST_WIDE_INT mh, ml;
 		int pre_shift, post_shift;
 		int dummy;
-		wide_int wd = rtx_mode_t (op1, int_mode);
+		wide_int wd = rtx_mode_t (op1, compute_mode);
 		unsigned HOST_WIDE_INT d = wd.to_uhwi ();
 
 		if (wi::popcount (wd) == 1)
@@ -4398,14 +4209,14 @@ expand_divmod (int rem_flag, enum tree_code code, machine_mode mode,
 			unsigned HOST_WIDE_INT mask
 			  = (HOST_WIDE_INT_1U << pre_shift) - 1;
 			remainder
-			  = expand_binop (int_mode, and_optab, op0,
-					  gen_int_mode (mask, int_mode),
+			  = expand_binop (compute_mode, and_optab, op0,
+					  gen_int_mode (mask, compute_mode),
 					  remainder, 1,
 					  OPTAB_LIB_WIDEN);
 			if (remainder)
 			  return gen_lowpart (mode, remainder);
 		      }
-		    quotient = expand_shift (RSHIFT_EXPR, int_mode, op0,
+		    quotient = expand_shift (RSHIFT_EXPR, compute_mode, op0,
 					     pre_shift, tquotient, 1);
 		  }
 		else if (size <= HOST_BITS_PER_WIDE_INT)
@@ -4415,7 +4226,7 @@ expand_divmod (int rem_flag, enum tree_code code, machine_mode mode,
 			/* Most significant bit of divisor is set; emit an scc
 			   insn.  */
 			quotient = emit_store_flag_force (tquotient, GEU, op0, op1,
-							  int_mode, 1, 1);
+							  compute_mode, 1, 1);
 		      }
 		    else
 		      {
@@ -4447,24 +4258,25 @@ expand_divmod (int rem_flag, enum tree_code code, machine_mode mode,
 			      goto fail1;
 
 			    extra_cost
-			      = (shift_cost (speed, int_mode, post_shift - 1)
-				 + shift_cost (speed, int_mode, 1)
-				 + 2 * add_cost (speed, int_mode));
+			      = (shift_cost (speed, compute_mode, post_shift - 1)
+				 + shift_cost (speed, compute_mode, 1)
+				 + 2 * add_cost (speed, compute_mode));
 			    t1 = expmed_mult_highpart
-			      (int_mode, op0, gen_int_mode (ml, int_mode),
+			      (compute_mode, op0,
+			       gen_int_mode (ml, compute_mode),
 			       NULL_RTX, 1, max_cost - extra_cost);
 			    if (t1 == 0)
 			      goto fail1;
-			    t2 = force_operand (gen_rtx_MINUS (int_mode,
+			    t2 = force_operand (gen_rtx_MINUS (compute_mode,
 							       op0, t1),
 						NULL_RTX);
-			    t3 = expand_shift (RSHIFT_EXPR, int_mode,
+			    t3 = expand_shift (RSHIFT_EXPR, compute_mode,
 					       t2, 1, NULL_RTX, 1);
-			    t4 = force_operand (gen_rtx_PLUS (int_mode,
+			    t4 = force_operand (gen_rtx_PLUS (compute_mode,
 							      t1, t3),
 						NULL_RTX);
 			    quotient = expand_shift
-			      (RSHIFT_EXPR, int_mode, t4,
+			      (RSHIFT_EXPR, compute_mode, t4,
 			       post_shift - 1, tquotient, 1);
 			  }
 			else
@@ -4476,19 +4288,19 @@ expand_divmod (int rem_flag, enum tree_code code, machine_mode mode,
 			      goto fail1;
 
 			    t1 = expand_shift
-			      (RSHIFT_EXPR, int_mode, op0,
+			      (RSHIFT_EXPR, compute_mode, op0,
 			       pre_shift, NULL_RTX, 1);
 			    extra_cost
-			      = (shift_cost (speed, int_mode, pre_shift)
-				 + shift_cost (speed, int_mode, post_shift));
+			      = (shift_cost (speed, compute_mode, pre_shift)
+				 + shift_cost (speed, compute_mode, post_shift));
 			    t2 = expmed_mult_highpart
-			      (int_mode, t1,
-			       gen_int_mode (ml, int_mode),
+			      (compute_mode, t1,
+			       gen_int_mode (ml, compute_mode),
 			       NULL_RTX, 1, max_cost - extra_cost);
 			    if (t2 == 0)
 			      goto fail1;
 			    quotient = expand_shift
-			      (RSHIFT_EXPR, int_mode, t2,
+			      (RSHIFT_EXPR, compute_mode, t2,
 			       post_shift, tquotient, 1);
 			  }
 		      }
@@ -4499,7 +4311,7 @@ expand_divmod (int rem_flag, enum tree_code code, machine_mode mode,
 		insn = get_last_insn ();
 		if (insn != last)
 		  set_dst_reg_note (insn, REG_EQUAL,
-				    gen_rtx_UDIV (int_mode, op0, op1),
+				    gen_rtx_UDIV (compute_mode, op0, op1),
 				    quotient);
 	      }
 	    else		/* TRUNC_DIV, signed */
@@ -4526,58 +4338,59 @@ expand_divmod (int rem_flag, enum tree_code code, machine_mode mode,
 		if (rem_flag && d < 0)
 		  {
 		    d = abs_d;
-		    op1 = gen_int_mode (abs_d, int_mode);
+		    op1 = gen_int_mode (abs_d, compute_mode);
 		  }
 
 		if (d == 1)
 		  quotient = op0;
 		else if (d == -1)
-		  quotient = expand_unop (int_mode, neg_optab, op0,
+		  quotient = expand_unop (compute_mode, neg_optab, op0,
 					  tquotient, 0);
 		else if (size <= HOST_BITS_PER_WIDE_INT
 			 && abs_d == HOST_WIDE_INT_1U << (size - 1))
 		  {
 		    /* This case is not handled correctly below.  */
 		    quotient = emit_store_flag (tquotient, EQ, op0, op1,
-						int_mode, 1, 1);
+						compute_mode, 1, 1);
 		    if (quotient == 0)
 		      goto fail1;
 		  }
 		else if (EXACT_POWER_OF_2_OR_ZERO_P (d)
 			 && (size <= HOST_BITS_PER_WIDE_INT || d >= 0)
 			 && (rem_flag
-			     ? smod_pow2_cheap (speed, int_mode)
-			     : sdiv_pow2_cheap (speed, int_mode))
+			     ? smod_pow2_cheap (speed, compute_mode)
+			     : sdiv_pow2_cheap (speed, compute_mode))
 			 /* We assume that cheap metric is true if the
 			    optab has an expander for this mode.  */
 			 && ((optab_handler ((rem_flag ? smod_optab
 					      : sdiv_optab),
-					     int_mode)
+					     compute_mode)
 			      != CODE_FOR_nothing)
-			     || (optab_handler (sdivmod_optab, int_mode)
+			     || (optab_handler (sdivmod_optab,
+						compute_mode)
 				 != CODE_FOR_nothing)))
 		  ;
 		else if (EXACT_POWER_OF_2_OR_ZERO_P (abs_d))
 		  {
 		    if (rem_flag)
 		      {
-			remainder = expand_smod_pow2 (int_mode, op0, d);
+			remainder = expand_smod_pow2 (compute_mode, op0, d);
 			if (remainder)
 			  return gen_lowpart (mode, remainder);
 		      }
 
-		    if (sdiv_pow2_cheap (speed, int_mode)
-			&& ((optab_handler (sdiv_optab, int_mode)
+		    if (sdiv_pow2_cheap (speed, compute_mode)
+			&& ((optab_handler (sdiv_optab, compute_mode)
 			     != CODE_FOR_nothing)
-			    || (optab_handler (sdivmod_optab, int_mode)
+			    || (optab_handler (sdivmod_optab, compute_mode)
 				!= CODE_FOR_nothing)))
 		      quotient = expand_divmod (0, TRUNC_DIV_EXPR,
-						int_mode, op0,
+						compute_mode, op0,
 						gen_int_mode (abs_d,
-							      int_mode),
+							      compute_mode),
 						NULL_RTX, 0);
 		    else
-		      quotient = expand_sdiv_pow2 (int_mode, op0, abs_d);
+		      quotient = expand_sdiv_pow2 (compute_mode, op0, abs_d);
 
 		    /* We have computed OP0 / abs(OP1).  If OP1 is negative,
 		       negate the quotient.  */
@@ -4588,13 +4401,13 @@ expand_divmod (int rem_flag, enum tree_code code, machine_mode mode,
 			    && abs_d < (HOST_WIDE_INT_1U
 					<< (HOST_BITS_PER_WIDE_INT - 1)))
 			  set_dst_reg_note (insn, REG_EQUAL,
-					    gen_rtx_DIV (int_mode, op0,
+					    gen_rtx_DIV (compute_mode, op0,
 							 gen_int_mode
 							   (abs_d,
-							    int_mode)),
+							    compute_mode)),
 					    quotient);
 
-			quotient = expand_unop (int_mode, neg_optab,
+			quotient = expand_unop (compute_mode, neg_optab,
 						quotient, quotient, 0);
 		      }
 		  }
@@ -4610,27 +4423,29 @@ expand_divmod (int rem_flag, enum tree_code code, machine_mode mode,
 			    || size - 1 >= BITS_PER_WORD)
 			  goto fail1;
 
-			extra_cost = (shift_cost (speed, int_mode, post_shift)
-				      + shift_cost (speed, int_mode, size - 1)
-				      + add_cost (speed, int_mode));
+			extra_cost = (shift_cost (speed, compute_mode, post_shift)
+				      + shift_cost (speed, compute_mode, size - 1)
+				      + add_cost (speed, compute_mode));
 			t1 = expmed_mult_highpart
-			  (int_mode, op0, gen_int_mode (ml, int_mode),
+			  (compute_mode, op0, gen_int_mode (ml, compute_mode),
 			   NULL_RTX, 0, max_cost - extra_cost);
 			if (t1 == 0)
 			  goto fail1;
 			t2 = expand_shift
-			  (RSHIFT_EXPR, int_mode, t1,
+			  (RSHIFT_EXPR, compute_mode, t1,
 			   post_shift, NULL_RTX, 0);
 			t3 = expand_shift
-			  (RSHIFT_EXPR, int_mode, op0,
+			  (RSHIFT_EXPR, compute_mode, op0,
 			   size - 1, NULL_RTX, 0);
 			if (d < 0)
 			  quotient
-			    = force_operand (gen_rtx_MINUS (int_mode, t3, t2),
+			    = force_operand (gen_rtx_MINUS (compute_mode,
+							    t3, t2),
 					     tquotient);
 			else
 			  quotient
-			    = force_operand (gen_rtx_MINUS (int_mode, t2, t3),
+			    = force_operand (gen_rtx_MINUS (compute_mode,
+							    t2, t3),
 					     tquotient);
 		      }
 		    else
@@ -4642,30 +4457,33 @@ expand_divmod (int rem_flag, enum tree_code code, machine_mode mode,
 			  goto fail1;
 
 			ml |= HOST_WIDE_INT_M1U << (size - 1);
-			mlr = gen_int_mode (ml, int_mode);
-			extra_cost = (shift_cost (speed, int_mode, post_shift)
-				      + shift_cost (speed, int_mode, size - 1)
-				      + 2 * add_cost (speed, int_mode));
-			t1 = expmed_mult_highpart (int_mode, op0, mlr,
+			mlr = gen_int_mode (ml, compute_mode);
+			extra_cost = (shift_cost (speed, compute_mode, post_shift)
+				      + shift_cost (speed, compute_mode, size - 1)
+				      + 2 * add_cost (speed, compute_mode));
+			t1 = expmed_mult_highpart (compute_mode, op0, mlr,
 						   NULL_RTX, 0,
 						   max_cost - extra_cost);
 			if (t1 == 0)
 			  goto fail1;
-			t2 = force_operand (gen_rtx_PLUS (int_mode, t1, op0),
+			t2 = force_operand (gen_rtx_PLUS (compute_mode,
+							  t1, op0),
 					    NULL_RTX);
 			t3 = expand_shift
-			  (RSHIFT_EXPR, int_mode, t2,
+			  (RSHIFT_EXPR, compute_mode, t2,
 			   post_shift, NULL_RTX, 0);
 			t4 = expand_shift
-			  (RSHIFT_EXPR, int_mode, op0,
+			  (RSHIFT_EXPR, compute_mode, op0,
 			   size - 1, NULL_RTX, 0);
 			if (d < 0)
 			  quotient
-			    = force_operand (gen_rtx_MINUS (int_mode, t4, t3),
+			    = force_operand (gen_rtx_MINUS (compute_mode,
+							    t4, t3),
 					     tquotient);
 			else
 			  quotient
-			    = force_operand (gen_rtx_MINUS (int_mode, t3, t4),
+			    = force_operand (gen_rtx_MINUS (compute_mode,
+							    t3, t4),
 					     tquotient);
 		      }
 		  }
@@ -4675,7 +4493,7 @@ expand_divmod (int rem_flag, enum tree_code code, machine_mode mode,
 		insn = get_last_insn ();
 		if (insn != last)
 		  set_dst_reg_note (insn, REG_EQUAL,
-				    gen_rtx_DIV (int_mode, op0, op1),
+				    gen_rtx_DIV (compute_mode, op0, op1),
 				    quotient);
 	      }
 	    break;
@@ -4687,10 +4505,8 @@ expand_divmod (int rem_flag, enum tree_code code, machine_mode mode,
       case FLOOR_DIV_EXPR:
       case FLOOR_MOD_EXPR:
       /* We will come here only for signed operations.  */
-	if (op1_is_constant && HWI_COMPUTABLE_MODE_P (compute_mode))
+	if (op1_is_constant && size <= HOST_BITS_PER_WIDE_INT)
 	  {
-	    scalar_int_mode int_mode = as_a <scalar_int_mode> (compute_mode);
-	    int size = GET_MODE_BITSIZE (int_mode);
 	    unsigned HOST_WIDE_INT mh, ml;
 	    int pre_shift, lgup, post_shift;
 	    HOST_WIDE_INT d = INTVAL (op1);
@@ -4707,14 +4523,14 @@ expand_divmod (int rem_flag, enum tree_code code, machine_mode mode,
 			unsigned HOST_WIDE_INT mask
 			  = (HOST_WIDE_INT_1U << pre_shift) - 1;
 			remainder = expand_binop
-			  (int_mode, and_optab, op0,
-			   gen_int_mode (mask, int_mode),
+			  (compute_mode, and_optab, op0,
+			   gen_int_mode (mask, compute_mode),
 			   remainder, 0, OPTAB_LIB_WIDEN);
 			if (remainder)
 			  return gen_lowpart (mode, remainder);
 		      }
 		    quotient = expand_shift
-		      (RSHIFT_EXPR, int_mode, op0,
+		      (RSHIFT_EXPR, compute_mode, op0,
 		       pre_shift, tquotient, 0);
 		  }
 		else
@@ -4729,22 +4545,22 @@ expand_divmod (int rem_flag, enum tree_code code, machine_mode mode,
 			&& size - 1 < BITS_PER_WORD)
 		      {
 			t1 = expand_shift
-			  (RSHIFT_EXPR, int_mode, op0,
+			  (RSHIFT_EXPR, compute_mode, op0,
 			   size - 1, NULL_RTX, 0);
-			t2 = expand_binop (int_mode, xor_optab, op0, t1,
+			t2 = expand_binop (compute_mode, xor_optab, op0, t1,
 					   NULL_RTX, 0, OPTAB_WIDEN);
-			extra_cost = (shift_cost (speed, int_mode, post_shift)
-				      + shift_cost (speed, int_mode, size - 1)
-				      + 2 * add_cost (speed, int_mode));
+			extra_cost = (shift_cost (speed, compute_mode, post_shift)
+				      + shift_cost (speed, compute_mode, size - 1)
+				      + 2 * add_cost (speed, compute_mode));
 			t3 = expmed_mult_highpart
-			  (int_mode, t2, gen_int_mode (ml, int_mode),
+			  (compute_mode, t2, gen_int_mode (ml, compute_mode),
 			   NULL_RTX, 1, max_cost - extra_cost);
 			if (t3 != 0)
 			  {
 			    t4 = expand_shift
-			      (RSHIFT_EXPR, int_mode, t3,
+			      (RSHIFT_EXPR, compute_mode, t3,
 			       post_shift, NULL_RTX, 1);
-			    quotient = expand_binop (int_mode, xor_optab,
+			    quotient = expand_binop (compute_mode, xor_optab,
 						     t4, t1, tquotient, 0,
 						     OPTAB_WIDEN);
 			  }
@@ -4754,22 +4570,23 @@ expand_divmod (int rem_flag, enum tree_code code, machine_mode mode,
 	    else
 	      {
 		rtx nsign, t1, t2, t3, t4;
-		t1 = force_operand (gen_rtx_PLUS (int_mode,
+		t1 = force_operand (gen_rtx_PLUS (compute_mode,
 						  op0, constm1_rtx), NULL_RTX);
-		t2 = expand_binop (int_mode, ior_optab, op0, t1, NULL_RTX,
+		t2 = expand_binop (compute_mode, ior_optab, op0, t1, NULL_RTX,
 				   0, OPTAB_WIDEN);
-		nsign = expand_shift (RSHIFT_EXPR, int_mode, t2,
+		nsign = expand_shift (RSHIFT_EXPR, compute_mode, t2,
 				      size - 1, NULL_RTX, 0);
-		t3 = force_operand (gen_rtx_MINUS (int_mode, t1, nsign),
+		t3 = force_operand (gen_rtx_MINUS (compute_mode, t1, nsign),
 				    NULL_RTX);
-		t4 = expand_divmod (0, TRUNC_DIV_EXPR, int_mode, t3, op1,
+		t4 = expand_divmod (0, TRUNC_DIV_EXPR, compute_mode, t3, op1,
 				    NULL_RTX, 0);
 		if (t4)
 		  {
 		    rtx t5;
-		    t5 = expand_unop (int_mode, one_cmpl_optab, nsign,
+		    t5 = expand_unop (compute_mode, one_cmpl_optab, nsign,
 				      NULL_RTX, 0);
-		    quotient = force_operand (gen_rtx_PLUS (int_mode, t4, t5),
+		    quotient = force_operand (gen_rtx_PLUS (compute_mode,
+							    t4, t5),
 					      tquotient);
 		  }
 	      }
@@ -4869,31 +4686,31 @@ expand_divmod (int rem_flag, enum tree_code code, machine_mode mode,
 	  {
 	    if (op1_is_constant
 		&& EXACT_POWER_OF_2_OR_ZERO_P (INTVAL (op1))
-		&& (HWI_COMPUTABLE_MODE_P (compute_mode)
+		&& (size <= HOST_BITS_PER_WIDE_INT
 		    || INTVAL (op1) >= 0))
 	      {
-		scalar_int_mode int_mode
-		  = as_a <scalar_int_mode> (compute_mode);
 		rtx t1, t2, t3;
 		unsigned HOST_WIDE_INT d = INTVAL (op1);
-		t1 = expand_shift (RSHIFT_EXPR, int_mode, op0,
+		t1 = expand_shift (RSHIFT_EXPR, compute_mode, op0,
 				   floor_log2 (d), tquotient, 1);
-		t2 = expand_binop (int_mode, and_optab, op0,
-				   gen_int_mode (d - 1, int_mode),
+		t2 = expand_binop (compute_mode, and_optab, op0,
+				   gen_int_mode (d - 1, compute_mode),
 				   NULL_RTX, 1, OPTAB_LIB_WIDEN);
-		t3 = gen_reg_rtx (int_mode);
-		t3 = emit_store_flag (t3, NE, t2, const0_rtx, int_mode, 1, 1);
+		t3 = gen_reg_rtx (compute_mode);
+		t3 = emit_store_flag (t3, NE, t2, const0_rtx,
+				      compute_mode, 1, 1);
 		if (t3 == 0)
 		  {
 		    rtx_code_label *lab;
 		    lab = gen_label_rtx ();
-		    do_cmp_and_jump (t2, const0_rtx, EQ, int_mode, lab);
+		    do_cmp_and_jump (t2, const0_rtx, EQ, compute_mode, lab);
 		    expand_inc (t1, const1_rtx);
 		    emit_label (lab);
 		    quotient = t1;
 		  }
 		else
-		  quotient = force_operand (gen_rtx_PLUS (int_mode, t1, t3),
+		  quotient = force_operand (gen_rtx_PLUS (compute_mode,
+							  t1, t3),
 					    tquotient);
 		break;
 	      }
@@ -5083,10 +4900,8 @@ expand_divmod (int rem_flag, enum tree_code code, machine_mode mode,
 	break;
 
       case EXACT_DIV_EXPR:
-	if (op1_is_constant && HWI_COMPUTABLE_MODE_P (compute_mode))
+	if (op1_is_constant && size <= HOST_BITS_PER_WIDE_INT)
 	  {
-	    scalar_int_mode int_mode = as_a <scalar_int_mode> (compute_mode);
-	    int size = GET_MODE_BITSIZE (int_mode);
 	    HOST_WIDE_INT d = INTVAL (op1);
 	    unsigned HOST_WIDE_INT ml;
 	    int pre_shift;
@@ -5094,15 +4909,16 @@ expand_divmod (int rem_flag, enum tree_code code, machine_mode mode,
 
 	    pre_shift = ctz_or_zero (d);
 	    ml = invert_mod2n (d >> pre_shift, size);
-	    t1 = expand_shift (RSHIFT_EXPR, int_mode, op0,
+	    t1 = expand_shift (RSHIFT_EXPR, compute_mode, op0,
 			       pre_shift, NULL_RTX, unsignedp);
-	    quotient = expand_mult (int_mode, t1, gen_int_mode (ml, int_mode),
+	    quotient = expand_mult (compute_mode, t1,
+				    gen_int_mode (ml, compute_mode),
 				    NULL_RTX, 1);
 
 	    insn = get_last_insn ();
 	    set_dst_reg_note (insn, REG_EQUAL,
 			      gen_rtx_fmt_ee (unsignedp ? UDIV : DIV,
-					      int_mode, op0, op1),
+					      compute_mode, op0, op1),
 			      quotient);
 	  }
 	break;
@@ -5111,63 +4927,60 @@ expand_divmod (int rem_flag, enum tree_code code, machine_mode mode,
       case ROUND_MOD_EXPR:
 	if (unsignedp)
 	  {
-	    scalar_int_mode int_mode = as_a <scalar_int_mode> (compute_mode);
 	    rtx tem;
 	    rtx_code_label *label;
 	    label = gen_label_rtx ();
-	    quotient = gen_reg_rtx (int_mode);
-	    remainder = gen_reg_rtx (int_mode);
+	    quotient = gen_reg_rtx (compute_mode);
+	    remainder = gen_reg_rtx (compute_mode);
 	    if (expand_twoval_binop (udivmod_optab, op0, op1, quotient, remainder, 1) == 0)
 	      {
 		rtx tem;
-		quotient = expand_binop (int_mode, udiv_optab, op0, op1,
+		quotient = expand_binop (compute_mode, udiv_optab, op0, op1,
 					 quotient, 1, OPTAB_LIB_WIDEN);
-		tem = expand_mult (int_mode, quotient, op1, NULL_RTX, 1);
-		remainder = expand_binop (int_mode, sub_optab, op0, tem,
+		tem = expand_mult (compute_mode, quotient, op1, NULL_RTX, 1);
+		remainder = expand_binop (compute_mode, sub_optab, op0, tem,
 					  remainder, 1, OPTAB_LIB_WIDEN);
 	      }
-	    tem = plus_constant (int_mode, op1, -1);
-	    tem = expand_shift (RSHIFT_EXPR, int_mode, tem, 1, NULL_RTX, 1);
-	    do_cmp_and_jump (remainder, tem, LEU, int_mode, label);
+	    tem = plus_constant (compute_mode, op1, -1);
+	    tem = expand_shift (RSHIFT_EXPR, compute_mode, tem, 1, NULL_RTX, 1);
+	    do_cmp_and_jump (remainder, tem, LEU, compute_mode, label);
 	    expand_inc (quotient, const1_rtx);
 	    expand_dec (remainder, op1);
 	    emit_label (label);
 	  }
 	else
 	  {
-	    scalar_int_mode int_mode = as_a <scalar_int_mode> (compute_mode);
-	    int size = GET_MODE_BITSIZE (int_mode);
 	    rtx abs_rem, abs_op1, tem, mask;
 	    rtx_code_label *label;
 	    label = gen_label_rtx ();
-	    quotient = gen_reg_rtx (int_mode);
-	    remainder = gen_reg_rtx (int_mode);
+	    quotient = gen_reg_rtx (compute_mode);
+	    remainder = gen_reg_rtx (compute_mode);
 	    if (expand_twoval_binop (sdivmod_optab, op0, op1, quotient, remainder, 0) == 0)
 	      {
 		rtx tem;
-		quotient = expand_binop (int_mode, sdiv_optab, op0, op1,
+		quotient = expand_binop (compute_mode, sdiv_optab, op0, op1,
 					 quotient, 0, OPTAB_LIB_WIDEN);
-		tem = expand_mult (int_mode, quotient, op1, NULL_RTX, 0);
-		remainder = expand_binop (int_mode, sub_optab, op0, tem,
+		tem = expand_mult (compute_mode, quotient, op1, NULL_RTX, 0);
+		remainder = expand_binop (compute_mode, sub_optab, op0, tem,
 					  remainder, 0, OPTAB_LIB_WIDEN);
 	      }
-	    abs_rem = expand_abs (int_mode, remainder, NULL_RTX, 1, 0);
-	    abs_op1 = expand_abs (int_mode, op1, NULL_RTX, 1, 0);
-	    tem = expand_shift (LSHIFT_EXPR, int_mode, abs_rem,
+	    abs_rem = expand_abs (compute_mode, remainder, NULL_RTX, 1, 0);
+	    abs_op1 = expand_abs (compute_mode, op1, NULL_RTX, 1, 0);
+	    tem = expand_shift (LSHIFT_EXPR, compute_mode, abs_rem,
 				1, NULL_RTX, 1);
-	    do_cmp_and_jump (tem, abs_op1, LTU, int_mode, label);
-	    tem = expand_binop (int_mode, xor_optab, op0, op1,
+	    do_cmp_and_jump (tem, abs_op1, LTU, compute_mode, label);
+	    tem = expand_binop (compute_mode, xor_optab, op0, op1,
 				NULL_RTX, 0, OPTAB_WIDEN);
-	    mask = expand_shift (RSHIFT_EXPR, int_mode, tem,
+	    mask = expand_shift (RSHIFT_EXPR, compute_mode, tem,
 				 size - 1, NULL_RTX, 0);
-	    tem = expand_binop (int_mode, xor_optab, mask, const1_rtx,
+	    tem = expand_binop (compute_mode, xor_optab, mask, const1_rtx,
 				NULL_RTX, 0, OPTAB_WIDEN);
-	    tem = expand_binop (int_mode, sub_optab, tem, mask,
+	    tem = expand_binop (compute_mode, sub_optab, tem, mask,
 				NULL_RTX, 0, OPTAB_WIDEN);
 	    expand_inc (quotient, tem);
-	    tem = expand_binop (int_mode, xor_optab, mask, op1,
+	    tem = expand_binop (compute_mode, xor_optab, mask, op1,
 				NULL_RTX, 0, OPTAB_WIDEN);
-	    tem = expand_binop (int_mode, sub_optab, tem, mask,
+	    tem = expand_binop (compute_mode, sub_optab, tem, mask,
 				NULL_RTX, 0, OPTAB_WIDEN);
 	    expand_dec (remainder, tem);
 	    emit_label (label);
@@ -5319,20 +5132,20 @@ make_tree (tree type, rtx x)
 
     case CONST_VECTOR:
       {
-	unsigned int npatterns = CONST_VECTOR_NPATTERNS (x);
-	unsigned int nelts_per_pattern = CONST_VECTOR_NELTS_PER_PATTERN (x);
+	int units = CONST_VECTOR_NUNITS (x);
 	tree itype = TREE_TYPE (type);
+	tree *elts;
+	int i;
 
 	/* Build a tree with vector elements.  */
-	tree_vector_builder elts (type, npatterns, nelts_per_pattern);
-	unsigned int count = elts.encoded_nelts ();
-	for (unsigned int i = 0; i < count; ++i)
+	elts = XALLOCAVEC (tree, units);
+	for (i = units - 1; i >= 0; --i)
 	  {
 	    rtx elt = CONST_VECTOR_ELT (x, i);
-	    elts.quick_push (make_tree (itype, elt));
+	    elts[i] = make_tree (itype, elt);
 	  }
 
-	return elts.build ();
+	return build_vector (type, elts);
       }
 
     case PLUS:
@@ -5397,16 +5210,13 @@ make_tree (tree type, rtx x)
       /* fall through.  */
 
     default:
-      if (CONST_POLY_INT_P (x))
-	return wide_int_to_tree (t, const_poly_int_value (x));
-
       t = build_decl (RTL_LOCATION (x), VAR_DECL, NULL_TREE, type);
 
       /* If TYPE is a POINTER_TYPE, we might need to convert X from
 	 address mode to pointer mode.  */
       if (POINTER_TYPE_P (type))
 	x = convert_memory_address_addr_space
-	  (SCALAR_INT_TYPE_MODE (type), x, TYPE_ADDR_SPACE (TREE_TYPE (type)));
+	      (TYPE_MODE (type), x, TYPE_ADDR_SPACE (TREE_TYPE (type)));
 
       /* Note that we do *not* use SET_DECL_RTL here, because we do not
 	 want set_decl_rtl to go adjusting REG_ATTRS for this temporary.  */
@@ -5448,8 +5258,7 @@ emit_cstore (rtx target, enum insn_code icode, enum rtx_code code,
   struct expand_operand ops[4];
   rtx op0, comparison, subtarget;
   rtx_insn *last;
-  scalar_int_mode result_mode = targetm.cstore_mode (icode);
-  scalar_int_mode int_target_mode;
+  machine_mode result_mode = targetm.cstore_mode (icode);
 
   last = get_last_insn ();
   x = prepare_operand (icode, x, 2, mode, compare_mode, unsignedp);
@@ -5461,11 +5270,9 @@ emit_cstore (rtx target, enum insn_code icode, enum rtx_code code,
     }
 
   if (target_mode == VOIDmode)
-    int_target_mode = result_mode;
-  else
-    int_target_mode = as_a <scalar_int_mode> (target_mode);
+    target_mode = result_mode;
   if (!target)
-    target = gen_reg_rtx (int_target_mode);
+    target = gen_reg_rtx (target_mode);
 
   comparison = gen_rtx_fmt_ee (code, result_mode, x, y);
 
@@ -5481,20 +5288,20 @@ emit_cstore (rtx target, enum insn_code icode, enum rtx_code code,
   subtarget = ops[0].value;
 
   /* If we are converting to a wider mode, first convert to
-     INT_TARGET_MODE, then normalize.  This produces better combining
+     TARGET_MODE, then normalize.  This produces better combining
      opportunities on machines that have a SIGN_EXTRACT when we are
      testing a single bit.  This mostly benefits the 68k.
 
      If STORE_FLAG_VALUE does not have the sign bit set when
      interpreted in MODE, we can do this conversion as unsigned, which
      is usually more efficient.  */
-  if (GET_MODE_SIZE (int_target_mode) > GET_MODE_SIZE (result_mode))
+  if (GET_MODE_SIZE (target_mode) > GET_MODE_SIZE (result_mode))
     {
       convert_move (target, subtarget,
 		    val_signbit_known_clear_p (result_mode,
 					       STORE_FLAG_VALUE));
       op0 = target;
-      result_mode = int_target_mode;
+      result_mode = target_mode;
     }
   else
     op0 = subtarget;
@@ -5530,7 +5337,7 @@ emit_cstore (rtx target, enum insn_code icode, enum rtx_code code,
     }
 
   /* If we were converting to a smaller mode, do the conversion now.  */
-  if (int_target_mode != result_mode)
+  if (target_mode != result_mode)
     {
       convert_move (target, op0, 0);
       return target;
@@ -5607,9 +5414,8 @@ emit_store_flag_1 (rtx target, enum rtx_code code, rtx op0, rtx op1,
 
   /* If we are comparing a double-word integer with zero or -1, we can
      convert the comparison into one involving a single word.  */
-  scalar_int_mode int_mode;
-  if (is_int_mode (mode, &int_mode)
-      && GET_MODE_BITSIZE (int_mode) == BITS_PER_WORD * 2
+  if (GET_MODE_BITSIZE (mode) == BITS_PER_WORD * 2
+      && GET_MODE_CLASS (mode) == MODE_INT
       && (!MEM_P (op0) || ! MEM_VOLATILE_P (op0)))
     {
       rtx tem;
@@ -5620,8 +5426,8 @@ emit_store_flag_1 (rtx target, enum rtx_code code, rtx op0, rtx op1,
 
 	  /* Do a logical OR or AND of the two words and compare the
 	     result.  */
-	  op00 = simplify_gen_subreg (word_mode, op0, int_mode, 0);
-	  op01 = simplify_gen_subreg (word_mode, op0, int_mode, UNITS_PER_WORD);
+	  op00 = simplify_gen_subreg (word_mode, op0, mode, 0);
+	  op01 = simplify_gen_subreg (word_mode, op0, mode, UNITS_PER_WORD);
 	  tem = expand_binop (word_mode,
 			      op1 == const0_rtx ? ior_optab : and_optab,
 			      op00, op01, NULL_RTX, unsignedp,
@@ -5636,9 +5442,9 @@ emit_store_flag_1 (rtx target, enum rtx_code code, rtx op0, rtx op1,
 	  rtx op0h;
 
 	  /* If testing the sign bit, can just test on high word.  */
-	  op0h = simplify_gen_subreg (word_mode, op0, int_mode,
+	  op0h = simplify_gen_subreg (word_mode, op0, mode,
 				      subreg_highpart_offset (word_mode,
-							      int_mode));
+							      mode));
 	  tem = emit_store_flag (NULL_RTX, code, op0h, op1, word_mode,
 				 unsignedp, normalizep);
 	}
@@ -5663,33 +5469,29 @@ emit_store_flag_1 (rtx target, enum rtx_code code, rtx op0, rtx op1,
   /* If this is A < 0 or A >= 0, we can do this by taking the ones
      complement of A (for GE) and shifting the sign bit to the low bit.  */
   if (op1 == const0_rtx && (code == LT || code == GE)
-      && is_int_mode (mode, &int_mode)
+      && GET_MODE_CLASS (mode) == MODE_INT
       && (normalizep || STORE_FLAG_VALUE == 1
-	  || val_signbit_p (int_mode, STORE_FLAG_VALUE)))
+	  || val_signbit_p (mode, STORE_FLAG_VALUE)))
     {
-      scalar_int_mode int_target_mode;
       subtarget = target;
 
       if (!target)
-	int_target_mode = int_mode;
-      else
+	target_mode = mode;
+
+      /* If the result is to be wider than OP0, it is best to convert it
+	 first.  If it is to be narrower, it is *incorrect* to convert it
+	 first.  */
+      else if (GET_MODE_SIZE (target_mode) > GET_MODE_SIZE (mode))
 	{
-	  /* If the result is to be wider than OP0, it is best to convert it
-	     first.  If it is to be narrower, it is *incorrect* to convert it
-	     first.  */
-	  int_target_mode = as_a <scalar_int_mode> (target_mode);
-	  if (GET_MODE_SIZE (int_target_mode) > GET_MODE_SIZE (int_mode))
-	    {
-	      op0 = convert_modes (int_target_mode, int_mode, op0, 0);
-	      int_mode = int_target_mode;
-	    }
+	  op0 = convert_modes (target_mode, mode, op0, 0);
+	  mode = target_mode;
 	}
 
-      if (int_target_mode != int_mode)
+      if (target_mode != mode)
 	subtarget = 0;
 
       if (code == GE)
-	op0 = expand_unop (int_mode, one_cmpl_optab, op0,
+	op0 = expand_unop (mode, one_cmpl_optab, op0,
 			   ((STORE_FLAG_VALUE == 1 || normalizep)
 			    ? 0 : subtarget), 0);
 
@@ -5697,18 +5499,19 @@ emit_store_flag_1 (rtx target, enum rtx_code code, rtx op0, rtx op1,
 	/* If we are supposed to produce a 0/1 value, we want to do
 	   a logical shift from the sign bit to the low-order bit; for
 	   a -1/0 value, we do an arithmetic shift.  */
-	op0 = expand_shift (RSHIFT_EXPR, int_mode, op0,
-			    GET_MODE_BITSIZE (int_mode) - 1,
+	op0 = expand_shift (RSHIFT_EXPR, mode, op0,
+			    GET_MODE_BITSIZE (mode) - 1,
 			    subtarget, normalizep != -1);
 
-      if (int_mode != int_target_mode)
-	op0 = convert_modes (int_target_mode, int_mode, op0, 0);
+      if (mode != target_mode)
+	op0 = convert_modes (target_mode, mode, op0, 0);
 
       return op0;
     }
 
   mclass = GET_MODE_CLASS (mode);
-  FOR_EACH_MODE_FROM (compare_mode, mode)
+  for (compare_mode = mode; compare_mode != VOIDmode;
+       compare_mode = GET_MODE_WIDER_MODE (compare_mode))
     {
      machine_mode optab_mode = mclass == MODE_CC ? CCmode : compare_mode;
      icode = optab_handler (cstore_optab, optab_mode);
@@ -5734,18 +5537,155 @@ emit_store_flag_1 (rtx target, enum rtx_code code, rtx op0, rtx op1,
   return 0;
 }
 
-/* Subroutine of emit_store_flag that handles cases in which the operands
-   are scalar integers.  SUBTARGET is the target to use for temporary
-   operations and TRUEVAL is the value to store when the condition is
-   true.  All other arguments are as for emit_store_flag.  */
+/* Emit a store-flags instruction for comparison CODE on OP0 and OP1
+   and storing in TARGET.  Normally return TARGET.
+   Return 0 if that cannot be done.
+
+   MODE is the mode to use for OP0 and OP1 should they be CONST_INTs.  If
+   it is VOIDmode, they cannot both be CONST_INT.
+
+   UNSIGNEDP is for the case where we have to widen the operands
+   to perform the operation.  It says to use zero-extension.
+
+   NORMALIZEP is 1 if we should convert the result to be either zero
+   or one.  Normalize is -1 if we should convert the result to be
+   either zero or -1.  If NORMALIZEP is zero, the result will be left
+   "raw" out of the scc insn.  */
 
 rtx
-emit_store_flag_int (rtx target, rtx subtarget, enum rtx_code code, rtx op0,
-		     rtx op1, scalar_int_mode mode, int unsignedp,
-		     int normalizep, rtx trueval)
+emit_store_flag (rtx target, enum rtx_code code, rtx op0, rtx op1,
+		 machine_mode mode, int unsignedp, int normalizep)
 {
   machine_mode target_mode = target ? GET_MODE (target) : VOIDmode;
-  rtx_insn *last = get_last_insn ();
+  enum rtx_code rcode;
+  rtx subtarget;
+  rtx tem, trueval;
+  rtx_insn *last;
+
+  /* If we compare constants, we shouldn't use a store-flag operation,
+     but a constant load.  We can get there via the vanilla route that
+     usually generates a compare-branch sequence, but will in this case
+     fold the comparison to a constant, and thus elide the branch.  */
+  if (CONSTANT_P (op0) && CONSTANT_P (op1))
+    return NULL_RTX;
+
+  tem = emit_store_flag_1 (target, code, op0, op1, mode, unsignedp, normalizep,
+			   target_mode);
+  if (tem)
+    return tem;
+
+  /* If we reached here, we can't do this with a scc insn, however there
+     are some comparisons that can be done in other ways.  Don't do any
+     of these cases if branches are very cheap.  */
+  if (BRANCH_COST (optimize_insn_for_speed_p (), false) == 0)
+    return 0;
+
+  /* See what we need to return.  We can only return a 1, -1, or the
+     sign bit.  */
+
+  if (normalizep == 0)
+    {
+      if (STORE_FLAG_VALUE == 1 || STORE_FLAG_VALUE == -1)
+	normalizep = STORE_FLAG_VALUE;
+
+      else if (val_signbit_p (mode, STORE_FLAG_VALUE))
+	;
+      else
+	return 0;
+    }
+
+  last = get_last_insn ();
+
+  /* If optimizing, use different pseudo registers for each insn, instead
+     of reusing the same pseudo.  This leads to better CSE, but slows
+     down the compiler, since there are more pseudos */
+  subtarget = (!optimize
+	       && (target_mode == mode)) ? target : NULL_RTX;
+  trueval = GEN_INT (normalizep ? normalizep : STORE_FLAG_VALUE);
+
+  /* For floating-point comparisons, try the reverse comparison or try
+     changing the "orderedness" of the comparison.  */
+  if (GET_MODE_CLASS (mode) == MODE_FLOAT)
+    {
+      enum rtx_code first_code;
+      bool and_them;
+
+      rcode = reverse_condition_maybe_unordered (code);
+      if (can_compare_p (rcode, mode, ccp_store_flag)
+          && (code == ORDERED || code == UNORDERED
+	      || (! HONOR_NANS (mode) && (code == LTGT || code == UNEQ))
+	      || (! HONOR_SNANS (mode) && (code == EQ || code == NE))))
+	{
+          int want_add = ((STORE_FLAG_VALUE == 1 && normalizep == -1)
+		          || (STORE_FLAG_VALUE == -1 && normalizep == 1));
+
+	  /* For the reverse comparison, use either an addition or a XOR.  */
+          if (want_add
+	      && rtx_cost (GEN_INT (normalizep), mode, PLUS, 1,
+			   optimize_insn_for_speed_p ()) == 0)
+	    {
+	      tem = emit_store_flag_1 (subtarget, rcode, op0, op1, mode, 0,
+				       STORE_FLAG_VALUE, target_mode);
+	      if (tem)
+                return expand_binop (target_mode, add_optab, tem,
+				     gen_int_mode (normalizep, target_mode),
+				     target, 0, OPTAB_WIDEN);
+	    }
+          else if (!want_add
+	           && rtx_cost (trueval, mode, XOR, 1,
+			        optimize_insn_for_speed_p ()) == 0)
+	    {
+	      tem = emit_store_flag_1 (subtarget, rcode, op0, op1, mode, 0,
+				       normalizep, target_mode);
+	      if (tem)
+                return expand_binop (target_mode, xor_optab, tem, trueval,
+				     target, INTVAL (trueval) >= 0, OPTAB_WIDEN);
+	    }
+	}
+
+      delete_insns_since (last);
+
+      /* Cannot split ORDERED and UNORDERED, only try the above trick.   */
+      if (code == ORDERED || code == UNORDERED)
+	return 0;
+
+      and_them = split_comparison (code, mode, &first_code, &code);
+
+      /* If there are no NaNs, the first comparison should always fall through.
+         Effectively change the comparison to the other one.  */
+      if (!HONOR_NANS (mode))
+	{
+          gcc_assert (first_code == (and_them ? ORDERED : UNORDERED));
+	  return emit_store_flag_1 (target, code, op0, op1, mode, 0, normalizep,
+				    target_mode);
+	}
+
+      if (!HAVE_conditional_move)
+	return 0;
+
+      /* Try using a setcc instruction for ORDERED/UNORDERED, followed by a
+	 conditional move.  */
+      tem = emit_store_flag_1 (subtarget, first_code, op0, op1, mode, 0,
+			       normalizep, target_mode);
+      if (tem == 0)
+	return 0;
+
+      if (and_them)
+        tem = emit_conditional_move (target, code, op0, op1, mode,
+				     tem, const0_rtx, GET_MODE (tem), 0);
+      else
+        tem = emit_conditional_move (target, code, op0, op1, mode,
+				     trueval, tem, GET_MODE (tem), 0);
+
+      if (tem == 0)
+        delete_insns_since (last);
+      return tem;
+    }
+
+  /* The remaining tricks only apply to integer comparisons.  */
+
+  if (GET_MODE_CLASS (mode) != MODE_INT)
+    return 0;
 
   /* If this is an equality comparison of integers, we can try to exclusive-or
      (or subtract) the two operands and use a recursive call to try the
@@ -5754,8 +5694,8 @@ emit_store_flag_int (rtx target, rtx subtarget, enum rtx_code code, rtx op0,
 
   if ((code == EQ || code == NE) && op1 != const0_rtx)
     {
-      rtx tem = expand_binop (mode, xor_optab, op0, op1, subtarget, 1,
-			      OPTAB_WIDEN);
+      tem = expand_binop (mode, xor_optab, op0, op1, subtarget, 1,
+			  OPTAB_WIDEN);
 
       if (tem == 0)
 	tem = expand_binop (mode, sub_optab, op0, op1, subtarget, 1,
@@ -5772,7 +5712,7 @@ emit_store_flag_int (rtx target, rtx subtarget, enum rtx_code code, rtx op0,
   /* For integer comparisons, try the reverse comparison.  However, for
      small X and if we'd have anyway to extend, implementing "X != 0"
      as "-(int)X >> 31" is still cheaper than inverting "(int)X == 0".  */
-  rtx_code rcode = reverse_condition (code);
+  rcode = reverse_condition (code);
   if (can_compare_p (rcode, mode, ccp_store_flag)
       && ! (optab_handler (cstore_optab, mode) == CODE_FOR_nothing
 	    && code == NE
@@ -5787,28 +5727,26 @@ emit_store_flag_int (rtx target, rtx subtarget, enum rtx_code code, rtx op0,
 	  && rtx_cost (GEN_INT (normalizep), mode, PLUS, 1,
 		       optimize_insn_for_speed_p ()) == 0)
 	{
-	  rtx tem = emit_store_flag_1 (subtarget, rcode, op0, op1, mode, 0,
-				       STORE_FLAG_VALUE, target_mode);
+	  tem = emit_store_flag_1 (subtarget, rcode, op0, op1, mode, 0,
+				   STORE_FLAG_VALUE, target_mode);
 	  if (tem != 0)
-	    tem = expand_binop (target_mode, add_optab, tem,
+            tem = expand_binop (target_mode, add_optab, tem,
 				gen_int_mode (normalizep, target_mode),
 				target, 0, OPTAB_WIDEN);
-	  if (tem != 0)
-	    return tem;
 	}
       else if (!want_add
 	       && rtx_cost (trueval, mode, XOR, 1,
 			    optimize_insn_for_speed_p ()) == 0)
 	{
-	  rtx tem = emit_store_flag_1 (subtarget, rcode, op0, op1, mode, 0,
-				       normalizep, target_mode);
+	  tem = emit_store_flag_1 (subtarget, rcode, op0, op1, mode, 0,
+				   normalizep, target_mode);
 	  if (tem != 0)
-	    tem = expand_binop (target_mode, xor_optab, tem, trueval, target,
+            tem = expand_binop (target_mode, xor_optab, tem, trueval, target,
 				INTVAL (trueval) >= 0, OPTAB_WIDEN);
-	  if (tem != 0)
-	    return tem;
 	}
 
+      if (tem != 0)
+	return tem;
       delete_insns_since (last);
     }
 
@@ -5826,7 +5764,7 @@ emit_store_flag_int (rtx target, rtx subtarget, enum rtx_code code, rtx op0,
   /* Try to put the result of the comparison in the sign bit.  Assume we can't
      do the necessary operation below.  */
 
-  rtx tem = 0;
+  tem = 0;
 
   /* To see if A <= 0, compute (A | (A - 1)).  A <= 0 iff that result has
      the sign bit set.  */
@@ -5904,7 +5842,7 @@ emit_store_flag_int (rtx target, rtx subtarget, enum rtx_code code, rtx op0,
       if (tem == 0
 	  && (code == NE
 	      || BRANCH_COST (optimize_insn_for_speed_p (),
-			      false) > 1))
+		      	      false) > 1))
 	{
 	  if (rtx_equal_p (subtarget, op0))
 	    subtarget = 0;
@@ -5926,7 +5864,7 @@ emit_store_flag_int (rtx target, rtx subtarget, enum rtx_code code, rtx op0,
   if (tem)
     {
       if (!target)
-	;
+        ;
       else if (GET_MODE (tem) != target_mode)
 	{
 	  convert_move (target, tem, 0);
@@ -5942,167 +5880,6 @@ emit_store_flag_int (rtx target, rtx subtarget, enum rtx_code code, rtx op0,
     delete_insns_since (last);
 
   return tem;
-}
-
-/* Emit a store-flags instruction for comparison CODE on OP0 and OP1
-   and storing in TARGET.  Normally return TARGET.
-   Return 0 if that cannot be done.
-
-   MODE is the mode to use for OP0 and OP1 should they be CONST_INTs.  If
-   it is VOIDmode, they cannot both be CONST_INT.
-
-   UNSIGNEDP is for the case where we have to widen the operands
-   to perform the operation.  It says to use zero-extension.
-
-   NORMALIZEP is 1 if we should convert the result to be either zero
-   or one.  Normalize is -1 if we should convert the result to be
-   either zero or -1.  If NORMALIZEP is zero, the result will be left
-   "raw" out of the scc insn.  */
-
-rtx
-emit_store_flag (rtx target, enum rtx_code code, rtx op0, rtx op1,
-		 machine_mode mode, int unsignedp, int normalizep)
-{
-  machine_mode target_mode = target ? GET_MODE (target) : VOIDmode;
-  enum rtx_code rcode;
-  rtx subtarget;
-  rtx tem, trueval;
-  rtx_insn *last;
-
-  /* If we compare constants, we shouldn't use a store-flag operation,
-     but a constant load.  We can get there via the vanilla route that
-     usually generates a compare-branch sequence, but will in this case
-     fold the comparison to a constant, and thus elide the branch.  */
-  if (CONSTANT_P (op0) && CONSTANT_P (op1))
-    return NULL_RTX;
-
-  tem = emit_store_flag_1 (target, code, op0, op1, mode, unsignedp, normalizep,
-			   target_mode);
-  if (tem)
-    return tem;
-
-  /* If we reached here, we can't do this with a scc insn, however there
-     are some comparisons that can be done in other ways.  Don't do any
-     of these cases if branches are very cheap.  */
-  if (BRANCH_COST (optimize_insn_for_speed_p (), false) == 0)
-    return 0;
-
-  /* See what we need to return.  We can only return a 1, -1, or the
-     sign bit.  */
-
-  if (normalizep == 0)
-    {
-      if (STORE_FLAG_VALUE == 1 || STORE_FLAG_VALUE == -1)
-	normalizep = STORE_FLAG_VALUE;
-
-      else if (val_signbit_p (mode, STORE_FLAG_VALUE))
-	;
-      else
-	return 0;
-    }
-
-  last = get_last_insn ();
-
-  /* If optimizing, use different pseudo registers for each insn, instead
-     of reusing the same pseudo.  This leads to better CSE, but slows
-     down the compiler, since there are more pseudos.  */
-  subtarget = (!optimize
-	       && (target_mode == mode)) ? target : NULL_RTX;
-  trueval = GEN_INT (normalizep ? normalizep : STORE_FLAG_VALUE);
-
-  /* For floating-point comparisons, try the reverse comparison or try
-     changing the "orderedness" of the comparison.  */
-  if (GET_MODE_CLASS (mode) == MODE_FLOAT)
-    {
-      enum rtx_code first_code;
-      bool and_them;
-
-      rcode = reverse_condition_maybe_unordered (code);
-      if (can_compare_p (rcode, mode, ccp_store_flag)
-	  && (code == ORDERED || code == UNORDERED
-	      || (! HONOR_NANS (mode) && (code == LTGT || code == UNEQ))
-	      || (! HONOR_SNANS (mode) && (code == EQ || code == NE))))
-	{
-	  int want_add = ((STORE_FLAG_VALUE == 1 && normalizep == -1)
-			  || (STORE_FLAG_VALUE == -1 && normalizep == 1));
-
-	  /* For the reverse comparison, use either an addition or a XOR.  */
-	  if (want_add
-	      && rtx_cost (GEN_INT (normalizep), mode, PLUS, 1,
-			   optimize_insn_for_speed_p ()) == 0)
-	    {
-	      tem = emit_store_flag_1 (subtarget, rcode, op0, op1, mode, 0,
-				       STORE_FLAG_VALUE, target_mode);
-	      if (tem)
-		return expand_binop (target_mode, add_optab, tem,
-				     gen_int_mode (normalizep, target_mode),
-				     target, 0, OPTAB_WIDEN);
-	    }
-	  else if (!want_add
-		   && rtx_cost (trueval, mode, XOR, 1,
-				optimize_insn_for_speed_p ()) == 0)
-	    {
-	      tem = emit_store_flag_1 (subtarget, rcode, op0, op1, mode, 0,
-				       normalizep, target_mode);
-	      if (tem)
-		return expand_binop (target_mode, xor_optab, tem, trueval,
-				     target, INTVAL (trueval) >= 0,
-				     OPTAB_WIDEN);
-	    }
-	}
-
-      delete_insns_since (last);
-
-      /* Cannot split ORDERED and UNORDERED, only try the above trick.  */
-      if (code == ORDERED || code == UNORDERED)
-	return 0;
-
-      and_them = split_comparison (code, mode, &first_code, &code);
-
-      /* If there are no NaNs, the first comparison should always fall through.
-	 Effectively change the comparison to the other one.  */
-      if (!HONOR_NANS (mode))
-	{
-	  gcc_assert (first_code == (and_them ? ORDERED : UNORDERED));
-	  return emit_store_flag_1 (target, code, op0, op1, mode, 0, normalizep,
-				    target_mode);
-	}
-
-      if (!HAVE_conditional_move)
-	return 0;
-
-      /* Do not turn a trapping comparison into a non-trapping one.  */
-      if ((code != EQ && code != NE && code != UNEQ && code != LTGT)
-	  && flag_trapping_math)
-	return 0;
-
-      /* Try using a setcc instruction for ORDERED/UNORDERED, followed by a
-	 conditional move.  */
-      tem = emit_store_flag_1 (subtarget, first_code, op0, op1, mode, 0,
-			       normalizep, target_mode);
-      if (tem == 0)
-	return 0;
-
-      if (and_them)
-	tem = emit_conditional_move (target, code, op0, op1, mode,
-				     tem, const0_rtx, GET_MODE (tem), 0);
-      else
-	tem = emit_conditional_move (target, code, op0, op1, mode,
-				     trueval, tem, GET_MODE (tem), 0);
-
-      if (tem == 0)
-	delete_insns_since (last);
-      return tem;
-    }
-
-  /* The remaining tricks only apply to integer comparisons.  */
-
-  scalar_int_mode int_mode;
-  if (is_int_mode (mode, &int_mode))
-    return emit_store_flag_int (target, subtarget, code, op0, op1, int_mode,
-				unsignedp, normalizep, trueval);
-
-  return 0;
 }
 
 /* Like emit_store_flag, but always succeeds.  */
@@ -6122,6 +5899,7 @@ emit_store_flag_force (rtx target, enum rtx_code code, rtx op0, rtx op1,
 
   /* If one operand is constant, make it the second one.  Only do this
      if the other operand is not constant as well.  */
+
   if (swap_commutative_operands_p (op0, op1))
     {
       std::swap (op0, op1);
@@ -6145,8 +5923,7 @@ emit_store_flag_force (rtx target, enum rtx_code code, rtx op0, rtx op1,
     {
       label = gen_label_rtx ();
       do_compare_rtx_and_jump (target, const0_rtx, EQ, unsignedp, mode,
-			       NULL_RTX, NULL, label,
-			       profile_probability::uninitialized ());
+			       NULL_RTX, NULL, label, -1);
       emit_move_insn (target, trueval);
       emit_label (label);
       return target;
@@ -6184,7 +5961,7 @@ emit_store_flag_force (rtx target, enum rtx_code code, rtx op0, rtx op1,
   emit_move_insn (target, trueval);
   label = gen_label_rtx ();
   do_compare_rtx_and_jump (op0, op1, code, unsignedp, mode, NULL_RTX, NULL,
-			   label, profile_probability::uninitialized ());
+			   label, -1);
 
   emit_move_insn (target, falseval);
   emit_label (label);
@@ -6202,5 +5979,5 @@ do_cmp_and_jump (rtx arg1, rtx arg2, enum rtx_code op, machine_mode mode,
 {
   int unsignedp = (op == LTU || op == LEU || op == GTU || op == GEU);
   do_compare_rtx_and_jump (arg1, arg2, op, unsignedp, mode, NULL_RTX,
-			   NULL, label, profile_probability::uninitialized ());
+			   NULL, label, -1);
 }

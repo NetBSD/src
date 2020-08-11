@@ -26,6 +26,7 @@ struct Flags : DDFlags {
   void ParseFromString(const char *str);
 };
 
+Flags *flags();
 void InitializeFlags(Flags *flags, const char *env);
 }  // namespace __tsan
 

@@ -1,5 +1,5 @@
 /* Tree based alias analysis and alias oracle.
-   Copyright (C) 2008-2018 Free Software Foundation, Inc.
+   Copyright (C) 2008-2017 Free Software Foundation, Inc.
    Contributed by Richard Guenther  <rguenther@suse.de>
 
    This file is part of GCC.
@@ -80,11 +80,11 @@ struct ao_ref
      the following fields are not yet computed.  */
   tree base;
   /* The offset relative to the base.  */
-  poly_int64 offset;
+  HOST_WIDE_INT offset;
   /* The size of the access.  */
-  poly_int64 size;
+  HOST_WIDE_INT size;
   /* The maximum possible extent of the access or -1 if unconstrained.  */
-  poly_int64 max_size;
+  HOST_WIDE_INT max_size;
 
   /* The alias set of the access or -1 if not yet computed.  */
   alias_set_type ref_alias_set;
@@ -94,18 +94,8 @@ struct ao_ref
 
   /* Whether the memory is considered a volatile access.  */
   bool volatile_p;
-
-  bool max_size_known_p () const;
 };
 
-/* Return true if the maximum size is known, rather than the special -1
-   marker.  */
-
-inline bool
-ao_ref::max_size_known_p () const
-{
-  return known_size_p (max_size);
-}
 
 /* In tree-ssa-alias.c  */
 extern void ao_ref_init (ao_ref *, tree);
@@ -181,8 +171,6 @@ ranges_overlap_p (HOST_WIDE_INT pos1,
 		  HOST_WIDE_INT pos2,
 		  unsigned HOST_WIDE_INT size2)
 {
-  if (size1 == 0 || size2 == 0)
-    return false;
   if (pos1 >= pos2
       && (size2 == (unsigned HOST_WIDE_INT)-1
 	  || pos1 < (pos2 + (HOST_WIDE_INT) size2)))

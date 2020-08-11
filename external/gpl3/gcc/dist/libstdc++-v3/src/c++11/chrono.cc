@@ -1,6 +1,6 @@
 // chrono -*- C++ -*-
 
-// Copyright (C) 2008-2018 Free Software Foundation, Inc.
+// Copyright (C) 2008-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -41,10 +41,10 @@
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {
-_GLIBCXX_BEGIN_NAMESPACE_VERSION
-
   namespace chrono
   {
+  _GLIBCXX_BEGIN_NAMESPACE_VERSION
+
     // XXX GLIBCXX_ABI Deprecated
     inline namespace _V2 {
 
@@ -97,9 +97,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     }
 
   } // end inline namespace _V2
-  } // namespace chrono
 
-_GLIBCXX_END_NAMESPACE_VERSION
+  _GLIBCXX_END_NAMESPACE_VERSION
+  } // namespace chrono
 } // namespace std
 
 #endif // _GLIBCXX_USE_C99_STDINT_TR1

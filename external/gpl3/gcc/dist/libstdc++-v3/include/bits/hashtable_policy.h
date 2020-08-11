@@ -1,6 +1,6 @@
 // Internal policy header for unordered_set and unordered_map -*- C++ -*-
 
-// Copyright (C) 2010-2018 Free Software Foundation, Inc.
+// Copyright (C) 2010-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -31,9 +31,7 @@
 #ifndef _HASHTABLE_POLICY_H
 #define _HASHTABLE_POLICY_H 1
 
-#include <tuple>		// for std::tuple, std::forward_as_tuple
-#include <cstdint>		// for std::uint_fast64_t
-#include <bits/stl_algobase.h>	// for std::min.
+#include <bits/stl_algobase.h> // for std::min.
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {
@@ -45,8 +43,12 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	   typename _RehashPolicy, typename _Traits>
     class _Hashtable;
 
+_GLIBCXX_END_NAMESPACE_VERSION
+
 namespace __detail
 {
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
+
   /**
    *  @defgroup hashtable-detail Base and Implementation Classes
    *  @ingroup unordered_associative_containers
@@ -58,12 +60,12 @@ namespace __detail
     struct _Hashtable_base;
 
   // Helper function: return distance(first, last) for forward
-  // iterators, or 0/1 for input iterators.
+  // iterators, or 0 for input iterators.
   template<class _Iterator>
     inline typename std::iterator_traits<_Iterator>::difference_type
     __distance_fw(_Iterator __first, _Iterator __last,
 		  std::input_iterator_tag)
-    { return __first != __last ? 1 : 0; }
+    { return 0; }
 
   template<class _Iterator>
     inline typename std::iterator_traits<_Iterator>::difference_type
@@ -74,8 +76,16 @@ namespace __detail
   template<class _Iterator>
     inline typename std::iterator_traits<_Iterator>::difference_type
     __distance_fw(_Iterator __first, _Iterator __last)
-    { return __distance_fw(__first, __last,
-			   std::__iterator_category(__first)); }
+    {
+      typedef typename std::iterator_traits<_Iterator>::iterator_category _Tag;
+      return __distance_fw(__first, __last, _Tag());
+    }
+
+  // Helper type used to detect whether the hash functor is noexcept.
+  template <typename _Key, typename _Hash>
+    struct __is_noexcept_hash : std::__bool_constant<
+	noexcept(declval<const _Hash&>()(declval<const _Key&>()))>
+    { };
 
   struct _Identity
   {
@@ -105,6 +115,9 @@ namespace __detail
     private:
       using __node_alloc_type = _NodeAlloc;
       using __hashtable_alloc = _Hashtable_alloc<__node_alloc_type>;
+      using __value_alloc_type = typename __hashtable_alloc::__value_alloc_type;
+      using __value_alloc_traits =
+	typename __hashtable_alloc::__value_alloc_traits;
       using __node_alloc_traits =
 	typename __hashtable_alloc::__node_alloc_traits;
       using __node_type = typename __hashtable_alloc::__node_type;
@@ -126,17 +139,18 @@ namespace __detail
 	      __node_type* __node = _M_nodes;
 	      _M_nodes = _M_nodes->_M_next();
 	      __node->_M_nxt = nullptr;
-	      auto& __a = _M_h._M_node_allocator();
-	      __node_alloc_traits::destroy(__a, __node->_M_valptr());
+	      __value_alloc_type __a(_M_h._M_node_allocator());
+	      __value_alloc_traits::destroy(__a, __node->_M_valptr());
 	      __try
 		{
-		  __node_alloc_traits::construct(__a, __node->_M_valptr(),
-						 std::forward<_Arg>(__arg));
+		  __value_alloc_traits::construct(__a, __node->_M_valptr(),
+						  std::forward<_Arg>(__arg));
 		}
 	      __catch(...)
 		{
 		  __node->~__node_type();
-		  __node_alloc_traits::deallocate(__a, __node, 1);
+		  __node_alloc_traits::deallocate(_M_h._M_node_allocator(),
+						  __node, 1);
 		  __throw_exception_again;
 		}
 	      return __node;
@@ -818,12 +832,7 @@ namespace __detail
       template<typename _InputIterator, typename _NodeGetter>
 	void
 	_M_insert_range(_InputIterator __first, _InputIterator __last,
-			const _NodeGetter&, true_type);
-
-      template<typename _InputIterator, typename _NodeGetter>
-	void
-	_M_insert_range(_InputIterator __first, _InputIterator __last,
-			const _NodeGetter&, false_type);
+			const _NodeGetter&);
 
     public:
       __ireturn_type
@@ -852,7 +861,7 @@ namespace __detail
 	{
 	  __hashtable& __h = _M_conjure_hashtable();
 	  __node_gen_type __node_gen(__h);
-	  return _M_insert_range(__first, __last, __node_gen, __unique_keys());
+	  return _M_insert_range(__first, __last, __node_gen);
 	}
     };
 
@@ -865,41 +874,13 @@ namespace __detail
       _Insert_base<_Key, _Value, _Alloc, _ExtractKey, _Equal, _H1, _H2, _Hash,
 		    _RehashPolicy, _Traits>::
       _M_insert_range(_InputIterator __first, _InputIterator __last,
-		      const _NodeGetter& __node_gen, true_type)
-      {
-	size_type __n_elt = __detail::__distance_fw(__first, __last);
-	if (__n_elt == 0)
-	  return;
-
-	__hashtable& __h = _M_conjure_hashtable();
-	for (; __first != __last; ++__first)
-	  {
-	    if (__h._M_insert(*__first, __node_gen, __unique_keys(),
-			      __n_elt).second)
-	      __n_elt = 1;
-	    else if (__n_elt != 1)
-	      --__n_elt;
-	  }
-      }
-
-  template<typename _Key, typename _Value, typename _Alloc,
-	   typename _ExtractKey, typename _Equal,
-	   typename _H1, typename _H2, typename _Hash,
-	   typename _RehashPolicy, typename _Traits>
-    template<typename _InputIterator, typename _NodeGetter>
-      void
-      _Insert_base<_Key, _Value, _Alloc, _ExtractKey, _Equal, _H1, _H2, _Hash,
-		    _RehashPolicy, _Traits>::
-      _M_insert_range(_InputIterator __first, _InputIterator __last,
-		      const _NodeGetter& __node_gen, false_type)
+		      const _NodeGetter& __node_gen)
       {
 	using __rehash_type = typename __hashtable::__rehash_type;
 	using __rehash_state = typename __hashtable::__rehash_state;
 	using pair_type = std::pair<bool, std::size_t>;
 
 	size_type __n_elt = __detail::__distance_fw(__first, __last);
-	if (__n_elt == 0)
-	  return;
 
 	__hashtable& __h = _M_conjure_hashtable();
 	__rehash_type& __rehash = __h._M_rehash_policy;
@@ -1296,11 +1277,7 @@ namespace __detail
 
       __hash_code
       _M_hash_code(const _Key& __k) const
-      {
-	static_assert(__is_invocable<const _H1&, const _Key&>{},
-	    "hash function must be invocable with an argument of key type");
-	return _M_h1()(__k);
-      }
+      { return _M_h1()(__k); }
 
       std::size_t
       _M_bucket_index(const _Key&, __hash_code __c, std::size_t __n) const
@@ -1388,11 +1365,7 @@ namespace __detail
 
       __hash_code
       _M_hash_code(const _Key& __k) const
-      {
-	static_assert(__is_invocable<const _H1&, const _Key&>{},
-	    "hash function must be invocable with an argument of key type");
-	return _M_h1()(__k);
-      }
+      { return _M_h1()(__k); }
 
       std::size_t
       _M_bucket_index(const _Key&, __hash_code __c,
@@ -1838,9 +1811,6 @@ namespace __detail
     bool
     _M_equals(const _Key& __k, __hash_code __c, __node_type* __n) const
     {
-      static_assert(__is_invocable<const _Equal&, const _Key&, const _Key&>{},
-	  "key equality predicate must be invocable with two arguments of "
-	  "key type");
       return _EqualHelper::_S_equals(_M_eq(), this->_M_extract(),
 				     __k, __c, __n);
     }
@@ -2034,8 +2004,10 @@ namespace __detail
       // Use __gnu_cxx to benefit from _S_always_equal and al.
       using __node_alloc_traits = __gnu_cxx::__alloc_traits<__node_alloc_type>;
 
-      using __value_alloc_traits = typename __node_alloc_traits::template
-	rebind_traits<typename __node_type::value_type>;
+      using __value_type = typename __node_type::value_type;
+      using __value_alloc_type =
+	__alloc_rebind<__node_alloc_type, __value_type>;
+      using __value_alloc_traits = std::allocator_traits<__value_alloc_type>;
 
       using __node_base = __detail::_Hash_node_base;
       using __bucket_type = __node_base*;      
@@ -2086,13 +2058,13 @@ namespace __detail
       _Hashtable_alloc<_NodeAlloc>::_M_allocate_node(_Args&&... __args)
       {
 	auto __nptr = __node_alloc_traits::allocate(_M_node_allocator(), 1);
-	__node_type* __n = std::__to_address(__nptr);
+	__node_type* __n = std::__addressof(*__nptr);
 	__try
 	  {
+	    __value_alloc_type __a(_M_node_allocator());
 	    ::new ((void*)__n) __node_type;
-	    __node_alloc_traits::construct(_M_node_allocator(),
-					   __n->_M_valptr(),
-					   std::forward<_Args>(__args)...);
+	    __value_alloc_traits::construct(__a, __n->_M_valptr(),
+					    std::forward<_Args>(__args)...);
 	    return __n;
 	  }
 	__catch(...)
@@ -2108,7 +2080,8 @@ namespace __detail
     {
       typedef typename __node_alloc_traits::pointer _Ptr;
       auto __ptr = std::pointer_traits<_Ptr>::pointer_to(*__n);
-      __node_alloc_traits::destroy(_M_node_allocator(), __n->_M_valptr());
+      __value_alloc_type __a(_M_node_allocator());
+      __value_alloc_traits::destroy(__a, __n->_M_valptr());
       __n->~__node_type();
       __node_alloc_traits::deallocate(_M_node_allocator(), __ptr, 1);
     }
@@ -2132,7 +2105,7 @@ namespace __detail
       __bucket_alloc_type __alloc(_M_node_allocator());
 
       auto __ptr = __bucket_alloc_traits::allocate(__alloc, __n);
-      __bucket_type* __p = std::__to_address(__ptr);
+      __bucket_type* __p = std::__addressof(*__ptr);
       __builtin_memset(__p, 0, __n * sizeof(__bucket_type));
       return __p;
     }
@@ -2149,8 +2122,8 @@ namespace __detail
     }
 
  //@} hashtable-detail
-} // namespace __detail
 _GLIBCXX_END_NAMESPACE_VERSION
+} // namespace __detail
 } // namespace std
 
 #endif // _HASHTABLE_POLICY_H
