@@ -1,4 +1,4 @@
-/*	$NetBSD: abandon.c,v 1.1.1.8 2020/08/11 13:12:05 christos Exp $	*/
+/*	$NetBSD: abandon.c,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
 
 /* abandon.c */
 /* $OpenLDAP$ */
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: abandon.c,v 1.1.1.8 2020/08/11 13:12:05 christos Exp $");
+__RCSID("$NetBSD: abandon.c,v 1.2 2020/08/11 13:15:37 christos Exp $");
 
 #include "portable.h"
 

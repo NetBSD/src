@@ -1,4 +1,4 @@
-/*	$NetBSD: ldif-filter.c,v 1.1.1.6 2020/08/11 13:12:11 christos Exp $	*/
+/*	$NetBSD: ldif-filter.c,v 1.2 2020/08/11 13:15:42 christos Exp $	*/
 
 /* ldif-filter -- clean up LDIF testdata from stdin */
 /* $OpenLDAP$ */
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ldif-filter.c,v 1.1.1.6 2020/08/11 13:12:11 christos Exp $");
+__RCSID("$NetBSD: ldif-filter.c,v 1.2 2020/08/11 13:15:42 christos Exp $");
 
 #include "portable.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.1.1.8 2020/08/11 13:12:16 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.2 2020/08/11 13:15:40 christos Exp $	*/
 
 /* config.c - DNS SRV backend configuration file routine */
 /* $OpenLDAP$ */
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: config.c,v 1.1.1.8 2020/08/11 13:12:16 christos Exp $");
+__RCSID("$NetBSD: config.c,v 1.2 2020/08/11 13:15:40 christos Exp $");
 
 #include "portable.h"
 

@@ -1,6 +1,6 @@
 .lf 1 stdin
-.TH SLAPO-RWM 5 "2014/01/26" "OpenLDAP 2.4.39"
-.\" Copyright 1998-2014 The OpenLDAP Foundation, All Rights Reserved.
+.TH SLAPO-RWM 5 "2020/04/28" "OpenLDAP 2.4.50"
+.\" Copyright 1998-2020 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" Copyright 2004, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
 .\" $OpenLDAP$
@@ -116,7 +116,7 @@ and
 .BR slapd\-meta (5),
 or with the relay backend, 
 .BR slapd\-relay (5),
-allows to create virtual views of databases.
+allows one to create virtual views of databases.
 A distinguishing feature of this overlay is that, when instantiated
 before any database, it can modify the DN of requests
 .I before
@@ -177,7 +177,7 @@ a
 and a set of actions, described by a set of 
 .IR "optional flags" .
 In case of match, string rewriting is performed according to the
-substitution pattern that allows to refer to substrings matched in the
+substitution pattern that allows one to refer to substrings matched in the
 incoming string.
 The actions, if any, are finally performed.
 Each rule is executed recursively, unless altered by specific action 
@@ -422,7 +422,7 @@ Examples are reported below.
 .SH "Additional Configuration Syntax"
 .TP
 .B rwm\-rewriteMap "<map type>" "<map name>" "[ <map attrs> ]"
-Allows to define a map that transforms substring rewriting into
+Allows one to define a map that transforms substring rewriting into
 something else.
 The map is referenced inside the substitution pattern of a rule.
 .TP

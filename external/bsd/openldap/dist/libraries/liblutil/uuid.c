@@ -1,4 +1,4 @@
-/*	$NetBSD: uuid.c,v 1.1.1.8 2020/08/11 13:12:05 christos Exp $	*/
+/*	$NetBSD: uuid.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
 
 /* uuid.c -- Universally Unique Identifier routines */
 /* $OpenLDAP$ */
@@ -33,7 +33,7 @@
  * in string form.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: uuid.c,v 1.1.1.8 2020/08/11 13:12:05 christos Exp $");
+__RCSID("$NetBSD: uuid.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
 
 #include "portable.h"
 

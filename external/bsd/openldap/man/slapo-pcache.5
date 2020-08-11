@@ -1,6 +1,6 @@
 .lf 1 stdin
-.TH SLAPO-PCACHE 5 "2014/01/26" "OpenLDAP 2.4.39"
-.\" Copyright 1998-2014 The OpenLDAP Foundation, All Rights Reserved.
+.TH SLAPO-PCACHE 5 "2020/04/28" "OpenLDAP 2.4.50"
+.\" Copyright 1998-2020 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" Copyright 2001, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
 .\" $OpenLDAP$
@@ -67,7 +67,7 @@ returned is less than <entry_limit>. Consistency check is performed every
 "time to live(\fBTTL\fP)" are removed. A sample cache configuration is: 
 .LP
 .RS
-pcache \fBbdb 10000 1 50 100\fP
+pcache \fBmdb 10000 1 50 100\fP
 .RE
 
 .TP

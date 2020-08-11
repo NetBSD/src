@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb_copy.c,v 1.1.1.5 2020/08/11 13:12:05 christos Exp $	*/
+/*	$NetBSD: mdb_copy.c,v 1.2 2020/08/11 13:15:38 christos Exp $	*/
 
 /* mdb_copy.c - memory-mapped database backup tool */
 /*

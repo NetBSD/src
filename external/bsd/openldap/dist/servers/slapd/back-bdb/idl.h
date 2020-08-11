@@ -1,4 +1,4 @@
-/*	$NetBSD: idl.h,v 1.1.1.8 2020/08/11 13:12:15 christos Exp $	*/
+/*	$NetBSD: idl.h,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
 
 /* idl.h - ldap bdb back-end ID list header file */
 /* $OpenLDAP$ */

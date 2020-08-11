@@ -1,4 +1,4 @@
-/*	$NetBSD: ldapwhoami.c,v 1.1.1.8 2020/08/11 13:12:03 christos Exp $	*/
+/*	$NetBSD: ldapwhoami.c,v 1.2 2020/08/11 13:15:34 christos Exp $	*/
 
 /* ldapwhoami.c -- a tool for asking the directory "Who Am I?" */
 /* $OpenLDAP$ */
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ldapwhoami.c,v 1.1.1.8 2020/08/11 13:12:03 christos Exp $");
+__RCSID("$NetBSD: ldapwhoami.c,v 1.2 2020/08/11 13:15:34 christos Exp $");
 
 #include "portable.h"
 

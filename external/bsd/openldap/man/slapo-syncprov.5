@@ -1,6 +1,6 @@
 .lf 1 stdin
-.TH SLAPO-SYNCPROV 5 "2014/01/26" "OpenLDAP 2.4.39"
-.\" Copyright 2004-2014 The OpenLDAP Foundation All Rights Reserved.
+.TH SLAPO-SYNCPROV 5 "2020/04/28" "OpenLDAP 2.4.50"
+.\" Copyright 2004-2020 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -22,7 +22,7 @@ memory on startup, and maintained in memory thereafter. Checkpoints may be
 configured to write the contextCSN into the underlying database to minimize
 recovery time after an unclean shutdown.
 
-On databases that support inequality indexing, it is helpful to set an
+On databases that support inequality indexing, it is mandatory to set an
 eq index on the entryCSN attribute when using this overlay.
 .SH CONFIGURATION
 These
@@ -58,11 +58,9 @@ The default is FALSE.
 .TP
 .B syncprov\-reloadhint TRUE | FALSE
 Specify that the overlay should honor the reloadHint flag in the Sync
-Control. In OpenLDAP releases 2.3.11 and earlier the syncrepl consumer did
-not properly set this flag, so the overlay must ignore it. This option
-should be set TRUE when working with newer releases that properly support
-this flag. It must be set TRUE when using the accesslog overlay for
-delta-based syncrepl replication support.  The default is FALSE.
+Control. It must be set TRUE when using the accesslog overlay for
+delta-based syncrepl replication support.
+The default is FALSE.
 .SH FILES
 .TP
 /etc/openldap/slapd.conf
@@ -78,5 +76,5 @@ OpenLDAP Administrator's Guide.
 .B "OpenLDAP Software"
 is developed and maintained by The OpenLDAP Project <http://www.openldap.org/>.
 .B "OpenLDAP Software"
-is derived from University of Michigan LDAP 3.3 Release.  
-.lf 76 stdin
+is derived from the University of Michigan LDAP 3.3 Release.  
+.lf 74 stdin

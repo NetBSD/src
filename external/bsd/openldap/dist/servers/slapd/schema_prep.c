@@ -1,4 +1,4 @@
-/*	$NetBSD: schema_prep.c,v 1.1.1.9 2020/08/11 13:12:14 christos Exp $	*/
+/*	$NetBSD: schema_prep.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
 
 /* schema_prep.c - load builtin schema */
 /* $OpenLDAP$ */
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: schema_prep.c,v 1.1.1.9 2020/08/11 13:12:14 christos Exp $");
+__RCSID("$NetBSD: schema_prep.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
 
 #include "portable.h"
 

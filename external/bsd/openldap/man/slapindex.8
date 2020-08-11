@@ -1,6 +1,6 @@
 .lf 1 stdin
-.TH SLAPINDEX 8C "2014/01/26" "OpenLDAP 2.4.39"
-.\" Copyright 1998-2014 The OpenLDAP Foundation All Rights Reserved.
+.TH SLAPINDEX 8C "2020/04/28" "OpenLDAP 2.4.50"
+.\" Copyright 1998-2020 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -139,7 +139,8 @@ interruptions occur.
 .TP
 .B \-t
 enable truncate mode. Truncates (empties) an index database before indexing
-any entries. May only be used with Quick mode.
+any entries. For back-bdb/hdb, may only be used with quick mode. For back-mdb
+it is usable with and without quick mode.
 .TP
 .B \-v
 enable verbose mode.
@@ -181,5 +182,5 @@ give the command:
 .B "OpenLDAP Software"
 is developed and maintained by The OpenLDAP Project <http://www.openldap.org/>.
 .B "OpenLDAP Software"
-is derived from University of Michigan LDAP 3.3 Release.  
-.lf 179 stdin
+is derived from the University of Michigan LDAP 3.3 Release.  
+.lf 180 stdin

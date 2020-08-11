@@ -1,4 +1,4 @@
-/*	$NetBSD: ldapmodify.c,v 1.1.1.8 2020/08/11 13:12:03 christos Exp $	*/
+/*	$NetBSD: ldapmodify.c,v 1.2 2020/08/11 13:15:34 christos Exp $	*/
 
 /* ldapmodify.c - generic program to modify or add entries using LDAP */
 /* $OpenLDAP$ */
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ldapmodify.c,v 1.1.1.8 2020/08/11 13:12:03 christos Exp $");
+__RCSID("$NetBSD: ldapmodify.c,v 1.2 2020/08/11 13:15:34 christos Exp $");
 
 #include "portable.h"
 

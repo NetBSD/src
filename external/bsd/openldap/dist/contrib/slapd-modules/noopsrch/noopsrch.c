@@ -1,4 +1,4 @@
-/*	$NetBSD: noopsrch.c,v 1.1.1.5 2020/08/11 13:12:02 christos Exp $	*/
+/*	$NetBSD: noopsrch.c,v 1.2 2020/08/11 13:15:35 christos Exp $	*/
 
 /* noopsrch.c - LDAP Control that counts entries a search would return */
 /* $OpenLDAP$ */
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: noopsrch.c,v 1.1.1.5 2020/08/11 13:12:02 christos Exp $");
+__RCSID("$NetBSD: noopsrch.c,v 1.2 2020/08/11 13:15:35 christos Exp $");
 
 #include "portable.h"
 

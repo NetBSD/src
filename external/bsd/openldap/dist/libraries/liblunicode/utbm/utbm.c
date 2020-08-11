@@ -1,4 +1,4 @@
-/*	$NetBSD: utbm.c,v 1.1.1.8 2020/08/11 13:12:04 christos Exp $	*/
+/*	$NetBSD: utbm.c,v 1.2 2020/08/11 13:15:38 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.

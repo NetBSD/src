@@ -1,4 +1,4 @@
-/*	$NetBSD: nssov.h,v 1.1.1.8 2020/08/11 13:12:02 christos Exp $	*/
+/*	$NetBSD: nssov.h,v 1.2 2020/08/11 13:15:36 christos Exp $	*/
 
 /* nssov.h - NSS overlay header file */
 /* $OpenLDAP$ */
@@ -43,7 +43,7 @@
 #undef PACKAGE_VERSION
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nssov.h,v 1.1.1.8 2020/08/11 13:12:02 christos Exp $");
+__RCSID("$NetBSD: nssov.h,v 1.2 2020/08/11 13:15:36 christos Exp $");
 
 #include "portable.h"
 #include "slap.h"

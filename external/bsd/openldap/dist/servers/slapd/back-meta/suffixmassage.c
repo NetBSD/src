@@ -1,4 +1,4 @@
-/*	$NetBSD: suffixmassage.c,v 1.1.1.8 2020/08/11 13:12:15 christos Exp $	*/
+/*	$NetBSD: suffixmassage.c,v 1.2 2020/08/11 13:15:40 christos Exp $	*/
 
 /* suffixmassage.c - massages ldap backend dns */
 /* $OpenLDAP$ */
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: suffixmassage.c,v 1.1.1.8 2020/08/11 13:12:15 christos Exp $");
+__RCSID("$NetBSD: suffixmassage.c,v 1.2 2020/08/11 13:15:40 christos Exp $");
 
 #include "portable.h"
 

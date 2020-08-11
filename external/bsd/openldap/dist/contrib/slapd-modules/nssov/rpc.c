@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.c,v 1.1.1.8 2020/08/11 13:12:02 christos Exp $	*/
+/*	$NetBSD: rpc.c,v 1.2 2020/08/11 13:15:36 christos Exp $	*/
 
 /* rpc.c - rpc lookup routines */
 /* $OpenLDAP$ */

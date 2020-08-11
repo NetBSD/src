@@ -1,4 +1,4 @@
-/*	$NetBSD: dupent.c,v 1.1.1.5 2020/08/11 13:12:02 christos Exp $	*/
+/*	$NetBSD: dupent.c,v 1.2 2020/08/11 13:15:35 christos Exp $	*/
 
 /* dupent.c - LDAP Control for a Duplicate Entry Representation of Search Results */
 /* $OpenLDAP$ */
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dupent.c,v 1.1.1.5 2020/08/11 13:12:02 christos Exp $");
+__RCSID("$NetBSD: dupent.c,v 1.2 2020/08/11 13:15:35 christos Exp $");
 
 #include "portable.h"
 

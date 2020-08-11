@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb_load.c,v 1.1.1.4 2020/08/11 13:12:04 christos Exp $	*/
+/*	$NetBSD: mdb_load.c,v 1.2 2020/08/11 13:15:38 christos Exp $	*/
 
 /* mdb_load.c - memory-mapped database load tool */
 /*

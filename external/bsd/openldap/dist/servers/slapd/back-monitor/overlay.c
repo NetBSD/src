@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay.c,v 1.1.1.8 2020/08/11 13:12:15 christos Exp $	*/
+/*	$NetBSD: overlay.c,v 1.2 2020/08/11 13:15:41 christos Exp $	*/
 
 /* overlay.c - deals with overlay subsystem */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
@@ -22,7 +22,7 @@
 
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: overlay.c,v 1.1.1.8 2020/08/11 13:12:15 christos Exp $");
+__RCSID("$NetBSD: overlay.c,v 1.2 2020/08/11 13:15:41 christos Exp $");
 
 #include "portable.h"
 

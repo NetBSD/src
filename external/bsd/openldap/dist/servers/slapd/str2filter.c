@@ -1,4 +1,4 @@
-/*	$NetBSD: str2filter.c,v 1.1.1.8 2020/08/11 13:12:13 christos Exp $	*/
+/*	$NetBSD: str2filter.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
 
 /* str2filter.c - parse an RFC 4515 string filter */
 /* $OpenLDAP$ */
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: str2filter.c,v 1.1.1.8 2020/08/11 13:12:13 christos Exp $");
+__RCSID("$NetBSD: str2filter.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
 
 #include "portable.h"
 

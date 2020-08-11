@@ -1,4 +1,4 @@
-/*	$NetBSD: cloak.c,v 1.1.1.7 2020/08/11 13:12:01 christos Exp $	*/
+/*	$NetBSD: cloak.c,v 1.2 2020/08/11 13:15:35 christos Exp $	*/
 
 /* cloak.c - Overlay to hide some attribute except if explicitely requested */
 /* $OpenLDAP$ */
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cloak.c,v 1.1.1.7 2020/08/11 13:12:01 christos Exp $");
+__RCSID("$NetBSD: cloak.c,v 1.2 2020/08/11 13:15:35 christos Exp $");
 
 #include "portable.h"
 
