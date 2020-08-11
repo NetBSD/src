@@ -8,10 +8,8 @@ Known issues in NVMM, low priority in most cases.
 
  * AMD: we don't support VCPU_CONF_TPR, would be nice to.
 
- * AMD: need to do comprehensive CPUID filtering.
-
- * Intel: we have comprehensive CPUID filtering, but should we limit the highest
-   leaf?
+ * AMD: need to do comprehensive CPUID filtering, like we already do on
+   Intel.
 
 ====== LIBNVMM ======
 
