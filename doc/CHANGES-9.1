@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.92 2020/08/11 17:07:09 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.93 2020/08/11 19:12:33 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -4041,4 +4041,14 @@ sys/dev/pci/mpii.c				1.25
 
 	mpii(4): make it compilable without bio(4).
 	[jnemeth, ticket #1044]
+
+sys/dev/ic/dwc_gmac.c				1.66-1.70
+sys/dev/ic/dwc_gmac_reg.h			1.20
+sys/kern/uipc_mbuf.c				1.235
+
+	awge(4): fix issue that caused rx packets to be corrupt with
+	DIAGNOSTIC kernel, avoid cache line alignement issues.
+	Some optimizations and bug fixes.
+	Mask all the MMC counter interrupts if the MMC module is present.
+	[mrg, ticket #1045]
 
