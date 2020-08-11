@@ -1,5 +1,5 @@
 ;; Machine description for AArch64 processor synchronization primitives.
-;; Copyright (C) 2009-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2018 Free Software Foundation, Inc.
 ;; Contributed by ARM Ltd.
 ;;
 ;; This file is part of GCC.
@@ -25,7 +25,7 @@
    (match_operand:ALLI 1 "register_operand" "")			;; val out
    (match_operand:ALLI 2 "aarch64_sync_memory_operand" "")	;; memory
    (match_operand:ALLI 3 "general_operand" "")			;; expected
-   (match_operand:ALLI 4 "register_operand" "")			;; desired
+   (match_operand:ALLI 4 "aarch64_reg_or_zero" "")			;; desired
    (match_operand:SI 5 "const_int_operand")			;; is_weak
    (match_operand:SI 6 "const_int_operand")			;; mod_s
    (match_operand:SI 7 "const_int_operand")]			;; mod_f
@@ -45,7 +45,7 @@
    (set (match_dup 1)
     (unspec_volatile:SHORT
       [(match_operand:SI 2 "aarch64_plus_operand" "rI")	;; expected
-       (match_operand:SHORT 3 "register_operand" "r")	;; desired
+       (match_operand:SHORT 3 "aarch64_reg_or_zero" "rZ")	;; desired
        (match_operand:SI 4 "const_int_operand")		;; is_weak
        (match_operand:SI 5 "const_int_operand")		;; mod_s
        (match_operand:SI 6 "const_int_operand")]	;; mod_f
@@ -53,7 +53,7 @@
    (clobber (match_scratch:SI 7 "=&r"))]
   ""
   "#"
-  "&& reload_completed"
+  "&& epilogue_completed"
   [(const_int 0)]
   {
     aarch64_split_compare_and_swap (operands);
@@ -69,7 +69,7 @@
    (set (match_dup 1)
     (unspec_volatile:GPI
       [(match_operand:GPI 2 "aarch64_plus_operand" "rI")	;; expect
-       (match_operand:GPI 3 "register_operand" "r")		;; desired
+       (match_operand:GPI 3 "aarch64_reg_or_zero" "rZ")		;; desired
        (match_operand:SI 4 "const_int_operand")			;; is_weak
        (match_operand:SI 5 "const_int_operand")			;; mod_s
        (match_operand:SI 6 "const_int_operand")]		;; mod_f
@@ -77,7 +77,7 @@
    (clobber (match_scratch:SI 7 "=&r"))]
   ""
   "#"
-  "&& reload_completed"
+  "&& epilogue_completed"
   [(const_int 0)]
   {
     aarch64_split_compare_and_swap (operands);
@@ -94,7 +94,7 @@
    (set (match_dup 1)
     (unspec_volatile:SHORT
       [(match_operand:SI 2 "aarch64_plus_operand" "rI")	;; expected
-       (match_operand:SHORT 3 "register_operand" "r")	;; desired
+       (match_operand:SHORT 3 "aarch64_reg_or_zero" "rZ")	;; desired
        (match_operand:SI 4 "const_int_operand")		;; is_weak
        (match_operand:SI 5 "const_int_operand")		;; mod_s
        (match_operand:SI 6 "const_int_operand")]	;; mod_f
@@ -119,7 +119,7 @@
    (set (match_dup 1)
     (unspec_volatile:GPI
       [(match_operand:GPI 2 "aarch64_plus_operand" "rI")	;; expect
-       (match_operand:GPI 3 "register_operand" "r")		;; desired
+       (match_operand:GPI 3 "aarch64_reg_or_zero" "rZ")		;; desired
        (match_operand:SI 4 "const_int_operand")			;; is_weak
        (match_operand:SI 5 "const_int_operand")			;; mod_s
        (match_operand:SI 6 "const_int_operand")]		;; mod_f
@@ -169,7 +169,7 @@
    (clobber (match_scratch:SI 4 "=&r"))]
   ""
   "#"
-  "&& reload_completed"
+  "&& epilogue_completed"
   [(const_int 0)]
   {
     aarch64_split_atomic_op (SET, operands[0], NULL, operands[1],
@@ -230,7 +230,7 @@
   (clobber (match_scratch:SI 4 "=&r"))]
   ""
   "#"
-  "&& reload_completed"
+  "&& epilogue_completed"
   [(const_int 0)]
   {
     aarch64_split_atomic_op (<CODE>, NULL, operands[3], operands[0],
@@ -271,7 +271,7 @@
    (clobber (match_scratch:SI 4 "=&r"))]
   ""
   "#"
-  "&& reload_completed"
+  "&& epilogue_completed"
   [(const_int 0)]
   {
      aarch64_split_atomic_op (NOT, NULL, operands[3], operands[0],
@@ -317,7 +317,7 @@
    (clobber (match_scratch:SI 5 "=&r"))]
   ""
   "#"
-  "&& reload_completed"
+  "&& epilogue_completed"
   [(const_int 0)]
   {
     aarch64_split_atomic_op (<CODE>, operands[0], operands[4], operands[1],
@@ -361,7 +361,7 @@
    (clobber (match_scratch:SI 5 "=&r"))]
   ""
   "#"
-  "&& reload_completed"
+  "&& epilogue_completed"
   [(const_int 0)]
   {
     aarch64_split_atomic_op (NOT, operands[0], operands[4], operands[1],
@@ -408,7 +408,7 @@
    (clobber (match_scratch:SI 4 "=&r"))]
   ""
   "#"
-  "&& reload_completed"
+  "&& epilogue_completed"
   [(const_int 0)]
   {
     aarch64_split_atomic_op (<CODE>, NULL, operands[0], operands[1],
@@ -455,7 +455,7 @@
    (clobber (match_scratch:SI 4 "=&r"))]
   ""
   "#"
-  "&& reload_completed"
+  "&& epilogue_completed"
   [(const_int 0)]
   {
     aarch64_split_atomic_op (NOT, NULL, operands[0], operands[1],
@@ -534,7 +534,7 @@
     (unspec_volatile:SI [(const_int 0)] UNSPECV_SX))
    (set (match_operand:ALLI 1 "aarch64_sync_memory_operand" "=Q")
     (unspec_volatile:ALLI
-      [(match_operand:ALLI 2 "register_operand" "r")
+      [(match_operand:ALLI 2 "aarch64_reg_or_zero" "rZ")
        (match_operand:SI 3 "const_int_operand")]
       UNSPECV_SX))]
   ""
@@ -616,7 +616,7 @@
   (set (match_dup 1)
    (unspec_volatile:SHORT
     [(match_dup 0)
-     (match_operand:SHORT 2 "register_operand" "r")	;; value.
+     (match_operand:SHORT 2 "aarch64_reg_or_zero" "rZ")	;; value.
      (match_operand:SI 3 "const_int_operand" "")]	;; model.
     UNSPECV_ATOMIC_CAS))]
  "TARGET_LSE && reload_completed"
@@ -640,7 +640,7 @@
   (set (match_dup 1)
    (unspec_volatile:GPI
     [(match_dup 0)
-     (match_operand:GPI 2 "register_operand" "r")	;; value.
+     (match_operand:GPI 2 "aarch64_reg_or_zero" "rZ")	;; value.
      (match_operand:SI 3 "const_int_operand" "")]	;; model.
     UNSPECV_ATOMIC_CAS))]
   "TARGET_LSE && reload_completed"

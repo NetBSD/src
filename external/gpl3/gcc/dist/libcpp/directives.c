@@ -1,5 +1,5 @@
 /* CPP Library. (Directive handling.)
-   Copyright (C) 1986-2017 Free Software Foundation, Inc.
+   Copyright (C) 1986-2018 Free Software Foundation, Inc.
    Contributed by Per Bothner, 1994-95.
    Based on CCCP program by Paul Rubin, June 1986
    Adapted to ANSI C, Richard Stallman, Jan 1987
@@ -527,10 +527,10 @@ _cpp_handle_directive (cpp_reader *pfile, int indented)
 	      source_range misspelled_token_range
 		= get_range_from_loc (pfile->line_table, dname->src_loc);
 	      richloc.add_fixit_replace (misspelled_token_range, hint);
-	      cpp_error_at_richloc (pfile, CPP_DL_ERROR, &richloc,
-				    "invalid preprocessing directive #%s;"
-				    " did you mean #%s?",
-				    unrecognized, hint);
+	      cpp_error_at (pfile, CPP_DL_ERROR, &richloc,
+			    "invalid preprocessing directive #%s;"
+			    " did you mean #%s?",
+			    unrecognized, hint);
 	    }
 	  else
 	    cpp_error (pfile, CPP_DL_ERROR,
@@ -1574,6 +1574,8 @@ do_pragma_push_macro (cpp_reader *pfile)
   node = _cpp_lex_identifier (pfile, c->name);
   if (node->type == NT_VOID)
     c->is_undef = 1;
+  else if (node->type == NT_MACRO && (node->flags & NODE_BUILTIN))
+    c->is_builtin = 1;
   else
     {
       defn = cpp_macro_definition (pfile, node);
@@ -2504,6 +2506,11 @@ cpp_pop_definition (cpp_reader *pfile, struct def_pragma_macro *c)
   cpp_hashnode *node = _cpp_lex_identifier (pfile, c->name);
   if (node == NULL)
     return;
+  if (c->is_builtin)
+    {
+      _cpp_restore_special_builtin (pfile, c);
+      return;
+    }
 
   if (pfile->cb.before_define)
     pfile->cb.before_define (pfile);

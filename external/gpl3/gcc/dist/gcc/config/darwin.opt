@@ -1,6 +1,6 @@
 ; Processor-independent options for Darwin.
 
-; Copyright (C) 2005-2017 Free Software Foundation, Inc.
+; Copyright (C) 2005-2018 Free Software Foundation, Inc.
 ;
 ; This file is part of GCC.
 ;
@@ -189,7 +189,7 @@ Driver RejectNegative
 Used for generating code for some older kernel revisions.
 
 gfull
-Driver
+Driver RejectNegative
 Abbreviation for \"-g -fno-eliminate-unused-debug-symbols\"
 
 gused

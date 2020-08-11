@@ -1,5 +1,5 @@
 ;; GCC machine description for MMX and 3dNOW! instructions
-;; Copyright (C) 2005-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2005-2018 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -112,7 +112,7 @@
 	return "movdq2q\t{%1, %0|%0, %1}";
 
     case TYPE_SSELOG1:
-      return standard_sse_constant_opcode (insn, operands[1]);
+      return standard_sse_constant_opcode (insn, operands);
 
     case TYPE_SSEMOV:
       switch (get_attr_mode (insn))
@@ -608,13 +608,13 @@
 (define_insn "*vec_extractv2sf_1"
   [(set (match_operand:SF 0 "nonimmediate_operand"     "=y,x,x,y,x,f,r")
 	(vec_select:SF
-	  (match_operand:V2SF 1 "nonimmediate_operand" " 0,x,x,o,o,o,o")
+	  (match_operand:V2SF 1 "nonimmediate_operand" " 0,x,0,o,o,o,o")
 	  (parallel [(const_int 1)])))]
   "TARGET_MMX && !(MEM_P (operands[0]) && MEM_P (operands[1]))"
   "@
    punpckhdq\t%0, %0
    %vmovshdup\t{%1, %0|%0, %1}
-   shufps\t{$0xe5, %1, %0|%0, %1, 0xe5}
+   shufps\t{$0xe5, %0, %0|%0, %0, 0xe5}
    #
    #
    #
@@ -641,7 +641,7 @@
   [(set (match_dup 0) (match_dup 1))]
   "operands[1] = adjust_address (operands[1], SFmode, 4);")
 
-(define_expand "vec_extractv2sf"
+(define_expand "vec_extractv2sfsf"
   [(match_operand:SF 0 "register_operand")
    (match_operand:V2SF 1 "register_operand")
    (match_operand 2 "const_int_operand")]
@@ -652,7 +652,7 @@
   DONE;
 })
 
-(define_expand "vec_initv2sf"
+(define_expand "vec_initv2sfsf"
   [(match_operand:V2SF 0 "register_operand")
    (match_operand 1)]
   "TARGET_SSE"
@@ -1302,13 +1302,13 @@
 (define_insn "*vec_extractv2si_1"
   [(set (match_operand:SI 0 "nonimmediate_operand"     "=y,x,x,y,x,r")
 	(vec_select:SI
-	  (match_operand:V2SI 1 "nonimmediate_operand" " 0,x,x,o,o,o")
+	  (match_operand:V2SI 1 "nonimmediate_operand" " 0,x,0,o,o,o")
 	  (parallel [(const_int 1)])))]
   "TARGET_MMX && !(MEM_P (operands[0]) && MEM_P (operands[1]))"
   "@
    punpckhdq\t%0, %0
    %vpshufd\t{$0xe5, %1, %0|%0, %1, 0xe5}
-   shufps\t{$0xe5, %1, %0|%0, %1, 0xe5}
+   shufps\t{$0xe5, %0, %0|%0, %0, 0xe5}
    #
    #
    #"
@@ -1344,7 +1344,7 @@
   operands[1] = adjust_address (operands[1], SImode, INTVAL (operands[2]) * 4);
 })
 
-(define_expand "vec_extractv2si"
+(define_expand "vec_extractv2sisi"
   [(match_operand:SI 0 "register_operand")
    (match_operand:V2SI 1 "register_operand")
    (match_operand 2 "const_int_operand")]
@@ -1355,7 +1355,7 @@
   DONE;
 })
 
-(define_expand "vec_initv2si"
+(define_expand "vec_initv2sisi"
   [(match_operand:V2SI 0 "register_operand")
    (match_operand 1)]
   "TARGET_SSE"
@@ -1375,7 +1375,7 @@
   DONE;
 })
 
-(define_expand "vec_extractv4hi"
+(define_expand "vec_extractv4hihi"
   [(match_operand:HI 0 "register_operand")
    (match_operand:V4HI 1 "register_operand")
    (match_operand 2 "const_int_operand")]
@@ -1386,7 +1386,7 @@
   DONE;
 })
 
-(define_expand "vec_initv4hi"
+(define_expand "vec_initv4hihi"
   [(match_operand:V4HI 0 "register_operand")
    (match_operand 1)]
   "TARGET_SSE"
@@ -1406,7 +1406,7 @@
   DONE;
 })
 
-(define_expand "vec_extractv8qi"
+(define_expand "vec_extractv8qiqi"
   [(match_operand:QI 0 "register_operand")
    (match_operand:V8QI 1 "register_operand")
    (match_operand 2 "const_int_operand")]
@@ -1417,7 +1417,7 @@
   DONE;
 })
 
-(define_expand "vec_initv8qi"
+(define_expand "vec_initv8qiqi"
   [(match_operand:V8QI 0 "register_operand")
    (match_operand 1)]
   "TARGET_SSE"

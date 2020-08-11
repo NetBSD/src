@@ -1,7 +1,7 @@
 /* Bits of OpenMP and OpenACC handling that is specific to device offloading
    and a lowering pass for OpenACC device directives.
 
-   Copyright (C) 2005-2017 Free Software Foundation, Inc.
+   Copyright (C) 2005-2018 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -49,6 +49,9 @@ along with GCC; see the file COPYING3.  If not see
 #include "gomp-constants.h"
 #include "gimple-pretty-print.h"
 #include "intl.h"
+#include "stringpool.h"
+#include "attribs.h"
+#include "cfgloop.h"
 
 /* Describe the OpenACC looping structure of a function.  The entire
    function is held in a 'NULL' loop.  */
@@ -368,6 +371,30 @@ oacc_xform_loop (gcall *call)
       break;
 
     case IFN_GOACC_LOOP_OFFSET:
+      /* Enable vectorization on non-SIMT targets.  */
+      if (!targetm.simt.vf
+	  && outer_mask == GOMP_DIM_MASK (GOMP_DIM_VECTOR)
+	  /* If not -fno-tree-loop-vectorize, hint that we want to vectorize
+	     the loop.  */
+	  && (flag_tree_loop_vectorize
+	      || !global_options_set.x_flag_tree_loop_vectorize))
+	{
+	  basic_block bb = gsi_bb (gsi);
+	  struct loop *parent = bb->loop_father;
+	  struct loop *body = parent->inner;
+
+	  parent->force_vectorize = true;
+	  parent->safelen = INT_MAX;
+
+	  /* "Chunking loops" may have inner loops.  */
+	  if (parent->inner)
+	    {
+	      body->force_vectorize = true;
+	      body->safelen = INT_MAX;
+	    }
+
+	  cfun->has_force_vectorize_loops = true;
+	}
       if (striding)
 	{
 	  r = oacc_thread_numbers (true, mask, &seq);
@@ -619,7 +646,6 @@ oacc_validate_dims (tree fn, tree attrs, int *dims, int level, unsigned used)
   tree purpose[GOMP_DIM_MAX];
   unsigned ix;
   tree pos = TREE_VALUE (attrs);
-  bool is_kernel = oacc_fn_attrib_kernels_p (attrs);
 
   /* Make sure the attribute creator attached the dimension
      information.  */
@@ -666,13 +692,8 @@ oacc_validate_dims (tree fn, tree attrs, int *dims, int level, unsigned used)
       /* Replace the attribute with new values.  */
       pos = NULL_TREE;
       for (ix = GOMP_DIM_MAX; ix--;)
-	{
-	  pos = tree_cons (purpose[ix],
-			   build_int_cst (integer_type_node, dims[ix]),
-			   pos);
-	  if (is_kernel)
-	    TREE_PUBLIC (pos) = 1;
-	}
+	pos = tree_cons (purpose[ix],
+			 build_int_cst (integer_type_node, dims[ix]), pos);
       oacc_replace_fn_attrib (fn, pos);
     }
 }
@@ -794,7 +815,7 @@ dump_oacc_loop_part (FILE *file, gcall *from, int depth,
 	  if (k == kind && stmt != from)
 	    break;
 	}
-      print_gimple_stmt (file, stmt, depth * 2 + 2, 0);
+      print_gimple_stmt (file, stmt, depth * 2 + 2);
 
       gsi_next (&gsi);
       while (gsi_end_p (gsi))
@@ -814,7 +835,7 @@ dump_oacc_loop (FILE *file, oacc_loop *loop, int depth)
 	   LOCATION_FILE (loop->loc), LOCATION_LINE (loop->loc));
 
   if (loop->marker)
-    print_gimple_stmt (file, loop->marker, depth * 2, 0);
+    print_gimple_stmt (file, loop->marker, depth * 2);
 
   if (loop->routine)
     fprintf (file, "%*sRoutine %s:%u:%s\n",
@@ -1450,20 +1471,51 @@ execute_oacc_device_lower ()
       flag_openacc_dims = (char *)&flag_openacc_dims;
     }
 
+  bool is_oacc_kernels
+    = (lookup_attribute ("oacc kernels",
+			 DECL_ATTRIBUTES (current_function_decl)) != NULL);
+  bool is_oacc_kernels_parallelized
+    = (lookup_attribute ("oacc kernels parallelized",
+			 DECL_ATTRIBUTES (current_function_decl)) != NULL);
+
+  /* Unparallelized OpenACC kernels constructs must get launched as 1 x 1 x 1
+     kernels, so remove the parallelism dimensions function attributes
+     potentially set earlier on.  */
+  if (is_oacc_kernels && !is_oacc_kernels_parallelized)
+    {
+      oacc_set_fn_attrib (current_function_decl, NULL, NULL);
+      attrs = oacc_get_fn_attrib (current_function_decl);
+    }
+
   /* Discover, partition and process the loops.  */
   oacc_loop *loops = oacc_loop_discovery ();
   int fn_level = oacc_fn_attrib_level (attrs);
 
   if (dump_file)
-    fprintf (dump_file, oacc_fn_attrib_kernels_p (attrs)
-	     ? "Function is kernels offload\n"
-	     : fn_level < 0 ? "Function is parallel offload\n"
-	     : "Function is routine level %d\n", fn_level);
+    {
+      if (fn_level >= 0)
+	fprintf (dump_file, "Function is OpenACC routine level %d\n",
+		 fn_level);
+      else if (is_oacc_kernels)
+	fprintf (dump_file, "Function is %s OpenACC kernels offload\n",
+		 (is_oacc_kernels_parallelized
+		  ? "parallelized" : "unparallelized"));
+      else
+	fprintf (dump_file, "Function is OpenACC parallel offload\n");
+    }
 
   unsigned outer_mask = fn_level >= 0 ? GOMP_DIM_MASK (fn_level) - 1 : 0;
   unsigned used_mask = oacc_loop_partition (loops, outer_mask);
-  int dims[GOMP_DIM_MAX];
+  /* OpenACC kernels constructs are special: they currently don't use the
+     generic oacc_loop infrastructure and attribute/dimension processing.  */
+  if (is_oacc_kernels && is_oacc_kernels_parallelized)
+    {
+      /* Parallelized OpenACC kernels constructs use gang parallelism.  See
+	 also tree-parloops.c:create_parallel_loop.  */
+      used_mask |= GOMP_DIM_MASK (GOMP_DIM_GANG);
+    }
 
+  int dims[GOMP_DIM_MAX];
   oacc_validate_dims (current_function_decl, attrs, dims, fn_level, used_mask);
 
   if (dump_file)
@@ -1915,9 +1967,7 @@ public:
   virtual bool gate (function *fun)
     {
 #ifdef ACCEL_COMPILER
-      tree attrs = DECL_ATTRIBUTES (fun->decl);
-      return lookup_attribute ("omp declare target", attrs)
-	     || lookup_attribute ("omp target entrypoint", attrs);
+      return offloading_function_p (fun->decl);
 #else
       (void) fun;
       return false;

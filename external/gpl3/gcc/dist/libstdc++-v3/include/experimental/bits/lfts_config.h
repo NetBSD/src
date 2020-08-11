@@ -1,6 +1,6 @@
 // Namespace declarations for Library Fundamentals TS -*- C++ -*-
 
-// Copyright (C) 2016-2017 Free Software Foundation, Inc.
+// Copyright (C) 2016-2018 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -33,30 +33,25 @@
 #if _GLIBCXX_INLINE_VERSION
 namespace std _GLIBCXX_VISIBILITY(default)
 {
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
+
 namespace chrono
 {
 namespace experimental
 {
-inline namespace fundamentals_v1 { inline namespace __7 { } }
-inline namespace fundamentals_v2 { inline namespace __7 { } }
+inline namespace fundamentals_v1 { }
+inline namespace fundamentals_v2 { }
 } // namespace experimental
 } // namespace chrono
 
 namespace experimental
 {
-inline namespace fundamentals_v1 {
-  inline namespace __7 { }
-  namespace __detail { inline namespace __7 { } }
-}
-inline namespace fundamentals_v2 {
-  inline namespace __7 { }
-  namespace pmr { inline namespace __7 { } }
-  namespace __detail { inline namespace __7 { } }
-} // namespace fundamentals_v2
-inline namespace literals { inline namespace string_view_literals {
-  inline namespace __7 { }
-} } // namespace literals::string_view_literals
+inline namespace fundamentals_v1 { }
+inline namespace fundamentals_v2 { }
+inline namespace literals { inline namespace string_view_literals { } }
 } // namespace experimental
+
+_GLIBCXX_END_NAMESPACE_VERSION
 } // namespace std
 #endif
 #endif

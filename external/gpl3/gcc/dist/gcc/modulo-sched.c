@@ -1,5 +1,5 @@
 /* Swing Modulo Scheduling implementation.
-   Copyright (C) 2004-2017 Free Software Foundation, Inc.
+   Copyright (C) 2004-2018 Free Software Foundation, Inc.
    Contributed by Ayal Zaks and Mustafa Hagog <zaks,mustafa@il.ibm.com>
 
 This file is part of GCC.
@@ -687,9 +687,9 @@ schedule_reg_moves (partial_schedule_ptr ps)
       rtx set = single_set (u->insn);
       
       /* Skip instructions that do not set a register.  */
-      if ((set && !REG_P (SET_DEST (set))))
+      if (set && !REG_P (SET_DEST (set)))
         continue;
- 
+
       /* Compute the number of reg_moves needed for u, by looking at life
 	 ranges started at u (excluding self-loops).  */
       distances[0] = distances[1] = false;
@@ -743,7 +743,10 @@ schedule_reg_moves (partial_schedule_ptr ps)
       first_move += ps->g->num_nodes;
 
       /* Generate each move.  */
-      old_reg = prev_reg = SET_DEST (single_set (u->insn));
+      old_reg = prev_reg = SET_DEST (set);
+      if (HARD_REGISTER_P (old_reg))
+	return false;
+
       for (i_reg_move = 0; i_reg_move < nreg_moves; i_reg_move++)
 	{
 	  ps_reg_move_info *move = ps_reg_move (ps, first_move + i_reg_move);
@@ -1346,7 +1349,7 @@ sms_schedule (void)
   struct loop *loop;
   basic_block condition_bb = NULL;
   edge latch_edge;
-  gcov_type trip_count = 0;
+  HOST_WIDE_INT trip_count, max_trip_count;
 
   loop_optimizer_init (LOOPS_HAVE_PREHEADERS
 		       | LOOPS_HAVE_RECORDED_EXITS);
@@ -1422,13 +1425,15 @@ sms_schedule (void)
       get_ebb_head_tail (bb, bb, &head, &tail);
       latch_edge = loop_latch_edge (loop);
       gcc_assert (single_exit (loop));
-      if (single_exit (loop)->count)
-	trip_count = latch_edge->count / single_exit (loop)->count;
+      trip_count = get_estimated_loop_iterations_int (loop);
+      max_trip_count = get_max_loop_iterations_int (loop);
 
       /* Perform SMS only on loops that their average count is above threshold.  */
 
-      if ( latch_edge->count
-          && (latch_edge->count < single_exit (loop)->count * SMS_LOOP_AVERAGE_COUNT_THRESHOLD))
+      if ( latch_edge->count () > profile_count::zero ()
+          && (latch_edge->count()
+	      < single_exit (loop)->count ().apply_scale
+				 (SMS_LOOP_AVERAGE_COUNT_THRESHOLD, 1)))
 	{
 	  if (dump_file)
 	    {
@@ -1438,11 +1443,11 @@ sms_schedule (void)
 	    	{
 	      	  fprintf (dump_file, "SMS loop-count ");
 	      	  fprintf (dump_file, "%" PRId64,
-	             	   (int64_t) bb->count);
+	             	   (int64_t) bb->count.to_gcov_type ());
 	      	  fprintf (dump_file, "\n");
                   fprintf (dump_file, "SMS trip-count ");
-                  fprintf (dump_file, "%" PRId64,
-                           (int64_t) trip_count);
+                  fprintf (dump_file, "%" PRId64 "max %" PRId64,
+                           (int64_t) trip_count, (int64_t) max_trip_count);
                   fprintf (dump_file, "\n");
 	      	  fprintf (dump_file, "SMS profile-sum-max ");
 	      	  fprintf (dump_file, "%" PRId64,
@@ -1549,8 +1554,8 @@ sms_schedule (void)
 
       latch_edge = loop_latch_edge (loop);
       gcc_assert (single_exit (loop));
-      if (single_exit (loop)->count)
-	trip_count = latch_edge->count / single_exit (loop)->count;
+      trip_count = get_estimated_loop_iterations_int (loop);
+      max_trip_count = get_max_loop_iterations_int (loop);
 
       if (dump_file)
 	{
@@ -1560,7 +1565,7 @@ sms_schedule (void)
 	    {
 	      fprintf (dump_file, "SMS loop-count ");
 	      fprintf (dump_file, "%" PRId64,
-	               (int64_t) bb->count);
+	               (int64_t) bb->count.to_gcov_type ());
 	      fprintf (dump_file, "\n");
 	      fprintf (dump_file, "SMS profile-sum-max ");
 	      fprintf (dump_file, "%" PRId64,
@@ -1600,6 +1605,7 @@ sms_schedule (void)
       mii = 1; /* Need to pass some estimate of mii.  */
       rec_mii = sms_order_nodes (g, mii, node_order, &max_asap);
       mii = MAX (res_MII (g), rec_mii);
+      mii = MAX (mii, 1);
       maxii = MAX (max_asap, MAXII_FACTOR * mii);
 
       if (dump_file)
@@ -1644,7 +1650,8 @@ sms_schedule (void)
 	     we let the scheduling passes do the job in this case.  */
 	  if (stage_count < PARAM_VALUE (PARAM_SMS_MIN_SC)
 	      || (count_init && (loop_count <= stage_count))
-	      || (flag_branch_probabilities && (trip_count <= stage_count)))
+	      || (max_trip_count >= 0 && max_trip_count <= stage_count)
+	      || (trip_count >= 0 && trip_count <= stage_count))
 	    {
 	      if (dump_file)
 		{
@@ -1653,7 +1660,8 @@ sms_schedule (void)
 			   " loop-count=", stage_count);
 		  fprintf (dump_file, "%" PRId64, loop_count);
 		  fprintf (dump_file, ", trip-count=");
-		  fprintf (dump_file, "%" PRId64, trip_count);
+		  fprintf (dump_file, "%" PRId64 "max %" PRId64,
+			   (int64_t) trip_count, (int64_t) max_trip_count);
 		  fprintf (dump_file, ")\n");
 		}
 	      break;
@@ -1709,13 +1717,12 @@ sms_schedule (void)
 	      rtx comp_rtx = gen_rtx_GT (VOIDmode, count_reg,
 					 gen_int_mode (stage_count,
 						       GET_MODE (count_reg)));
-	      unsigned prob = (PROB_SMS_ENOUGH_ITERATIONS
-			       * REG_BR_PROB_BASE) / 100;
+	      profile_probability prob = profile_probability::guessed_always ()
+				.apply_scale (PROB_SMS_ENOUGH_ITERATIONS, 100);
 
 	      loop_version (loop, comp_rtx, &condition_bb,
-	  		    prob, REG_BR_PROB_BASE - prob,
-			    prob, REG_BR_PROB_BASE - prob,
-			    true);
+	  		    prob, prob.invert (),
+			    prob, prob.invert (), true);
 	     }
 
 	  /* Set new iteration count of loop kernel.  */
@@ -2998,9 +3005,7 @@ ps_insn_find_column (partial_schedule_ptr ps, ps_insn_ptr ps_i,
             last_must_precede = next_ps_i;
         }
       /* The closing branch must be the last in the row.  */
-      if (must_precede 
-	  && bitmap_bit_p (must_precede, next_ps_i->id)
-	  && JUMP_P (ps_rtl_insn (ps, next_ps_i->id)))
+      if (JUMP_P (ps_rtl_insn (ps, next_ps_i->id)))
 	return false;
              
        last_in_row = next_ps_i;
@@ -3204,7 +3209,7 @@ ps_add_node_check_conflicts (partial_schedule_ptr ps, int n,
    			     int c, sbitmap must_precede,
 			     sbitmap must_follow)
 {
-  int has_conflicts = 0;
+  int i, first, amount, has_conflicts = 0;
   ps_insn_ptr ps_i;
 
   /* First add the node to the PS, if this succeeds check for
@@ -3212,23 +3217,32 @@ ps_add_node_check_conflicts (partial_schedule_ptr ps, int n,
   if (! (ps_i = add_node_to_ps (ps, n, c, must_precede, must_follow)))
     return NULL; /* Failed to insert the node at the given cycle.  */
 
-  has_conflicts = ps_has_conflicts (ps, c, c)
-		  || (ps->history > 0
-		      && ps_has_conflicts (ps,
-					   c - ps->history,
-					   c + ps->history));
-
-  /* Try different issue slots to find one that the given node can be
-     scheduled in without conflicts.  */
-  while (has_conflicts)
+  while (1)
     {
+      has_conflicts = ps_has_conflicts (ps, c, c);
+      if (ps->history > 0 && !has_conflicts)
+	{
+	  /* Check all 2h+1 intervals, starting from c-2h..c up to c..2h,
+	     but not more than ii intervals.  */
+	  first = c - ps->history;
+	  amount = 2 * ps->history + 1;
+	  if (amount > ps->ii)
+	    amount = ps->ii;
+	  for (i = first; i < first + amount; i++)
+	    {
+	      has_conflicts = ps_has_conflicts (ps,
+						i - ps->history,
+						i + ps->history);
+	      if (has_conflicts)
+		break;
+	    }
+	}
+      if (!has_conflicts)
+	break;
+      /* Try different issue slots to find one that the given node can be
+	 scheduled in without conflicts.  */
       if (! ps_insn_advance_column (ps, ps_i, must_follow))
 	break;
-      has_conflicts = ps_has_conflicts (ps, c, c)
-		      || (ps->history > 0
-			  && ps_has_conflicts (ps,
-					       c - ps->history,
-					       c + ps->history));
     }
 
   if (has_conflicts)

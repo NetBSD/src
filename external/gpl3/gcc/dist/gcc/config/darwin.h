@@ -1,5 +1,5 @@
 /* Target definitions for Darwin (Mac OS X) systems.
-   Copyright (C) 1989-2017 Free Software Foundation, Inc.
+   Copyright (C) 1989-2018 Free Software Foundation, Inc.
    Contributed by Apple Computer Inc.
 
 This file is part of GCC.
@@ -125,7 +125,9 @@ extern GTY(()) int darwin_ms_struct;
   "%{gfull:-g -fno-eliminate-unused-debug-symbols} %<gfull",	\
   "%{gused:-g -feliminate-unused-debug-symbols} %<gused",	\
   "%{fapple-kext|mkernel:-static}",				\
-  "%{shared:-Zdynamiclib} %<shared"
+  "%{shared:-Zdynamiclib} %<shared",                            \
+  "%{gsplit-dwarf:%ngsplit-dwarf is not supported on this platform } \
+     %<gsplit-dwarf"
 
 #if LD64_HAS_EXPORT_DYNAMIC
 #define DARWIN_RDYNAMIC "%{rdynamic:-export_dynamic}"
@@ -214,7 +216,6 @@ extern GTY(()) int darwin_ms_struct;
     %{L*} %(link_libgcc) %o %{fprofile-arcs|fprofile-generate*|coverage:-lgcov} \
     %{fopenacc|fopenmp|%:gt(%{ftree-parallelize-loops=*:%*} 1): \
       %{static|static-libgcc|static-libstdc++|static-libgfortran: libgomp.a%s; : -lgomp } } \
-    %{fcilkplus:%:include(libcilkrts.spec)%(link_cilkrts)}\
     %{fgnu-tm: \
       %{static|static-libgcc|static-libstdc++|static-libgfortran: libitm.a%s; : -litm } } \
     %{!nostdlib:%{!nodefaultlibs:\
@@ -394,9 +395,7 @@ extern GTY(()) int darwin_ms_struct;
 #undef  STARTFILE_SPEC
 #define STARTFILE_SPEC							    \
 "%{Zdynamiclib: %(darwin_dylib1) %{fgnu-tm: -lcrttms.o}}		    \
- %{!Zdynamiclib:%{Zbundle:%{!static:					    \
-	%:version-compare(< 10.6 mmacosx-version-min= -lbundle1.o)	    \
-	%{fgnu-tm: -lcrttms.o}}}					    \
+ %{!Zdynamiclib:%{Zbundle:%(darwin_bundle1)}				    \
      %{!Zbundle:%{pg:%{static:-lgcrt0.o}				    \
                      %{!static:%{object:-lgcrt0.o}			    \
                                %{!object:%{preload:-lgcrt0.o}		    \
@@ -418,7 +417,8 @@ extern GTY(()) int darwin_ms_struct;
   { "darwin_crt1", DARWIN_CRT1_SPEC },					\
   { "darwin_crt2", DARWIN_CRT2_SPEC },					\
   { "darwin_crt3", DARWIN_CRT3_SPEC },					\
-  { "darwin_dylib1", DARWIN_DYLIB1_SPEC },
+  { "darwin_dylib1", DARWIN_DYLIB1_SPEC },				\
+  { "darwin_bundle1", DARWIN_BUNDLE1_SPEC },
 
 #define DARWIN_CRT1_SPEC						\
   "%:version-compare(!> 10.5 mmacosx-version-min= -lcrt1.o)		\
@@ -439,6 +439,10 @@ extern GTY(()) int darwin_ms_struct;
 #define DARWIN_DYLIB1_SPEC						\
   "%:version-compare(!> 10.5 mmacosx-version-min= -ldylib1.o)		\
    %:version-compare(>< 10.5 10.6 mmacosx-version-min= -ldylib1.10.5.o)"
+
+#define DARWIN_BUNDLE1_SPEC \
+"%{!static:%:version-compare(< 10.6 mmacosx-version-min= -lbundle1.o)	\
+	   %{fgnu-tm: -lcrttms.o}}"
 
 #ifdef HAVE_AS_MMACOSX_VERSION_MIN_OPTION
 /* Emit macosx version (but only major).  */
@@ -466,6 +470,8 @@ extern GTY(()) int darwin_ms_struct;
    debugging data.  */
 
 #define ASM_DEBUG_SPEC  "%{g*:%{%:debug-level-gt(0):%{!gdwarf*:--gstabs}}}"
+#define ASM_FINAL_SPEC \
+  "%{gsplit-dwarf:%ngsplit-dwarf is not supported on this platform } %<gsplit-dwarf"
 
 /* We still allow output of STABS if the assembler supports it.  */
 #ifdef HAVE_AS_STABS_DIRECTIVE
@@ -489,6 +495,13 @@ extern GTY(()) int darwin_ms_struct;
 #define DEBUG_RANGES_SECTION	  "__DWARF,__debug_ranges,regular,debug"
 #define DEBUG_RNGLISTS_SECTION    "__DWARF,__debug_rnglists,regular,debug"
 #define DEBUG_MACRO_SECTION       "__DWARF,__debug_macro,regular,debug"
+
+#define DEBUG_LTO_INFO_SECTION	  "__GNU_DWARF_LTO,__debug_info,regular,debug"
+#define DEBUG_LTO_ABBREV_SECTION  "__GNU_DWARF_LTO,__debug_abbrev,regular,debug"
+#define DEBUG_LTO_MACINFO_SECTION "__GNU_DWARF_LTO,__debug_macinfo,regular,debug"
+#define DEBUG_LTO_LINE_SECTION	  "__GNU_DWARF_LTO,__debug_line,regular,debug"
+#define DEBUG_LTO_STR_SECTION	  "__GNU_DWARF_LTO,__debug_str,regular,debug"
+#define DEBUG_LTO_MACRO_SECTION   "__GNU_DWARF_LTO,__debug_macro,regular,debug"
 
 #define TARGET_WANT_DEBUG_PUB_SECTIONS true
 #define DEBUG_PUBNAMES_SECTION   ((debug_generate_pub_sections == 2) \
@@ -775,12 +788,12 @@ extern GTY(()) section * darwin_sections[NUM_DARWIN_SECTIONS];
 
 /* Extra attributes for Darwin.  */
 #define SUBTARGET_ATTRIBUTE_TABLE					     \
-  /* { name, min_len, max_len, decl_req, type_req, fn_type_req, handler,     \
-       affects_type_identity } */						     \
-  { "apple_kext_compatibility", 0, 0, false, true, false,		     \
-    darwin_handle_kext_attribute, false },				     \
-  { "weak_import", 0, 0, true, false, false,				     \
-    darwin_handle_weak_import_attribute, false }
+  /* { name, min_len, max_len, decl_req, type_req, fn_type_req,		     \
+       affects_type_identity, handler, exclude } */			     \
+  { "apple_kext_compatibility", 0, 0, false, true, false, false,	     \
+    darwin_handle_kext_attribute, NULL },				     \
+  { "weak_import", 0, 0, true, false, false, false,			     \
+    darwin_handle_weak_import_attribute, NULL }
 
 /* Make local constant labels linker-visible, so that if one follows a
    weak_global constant, ld64 will be able to separate the atoms.  */
