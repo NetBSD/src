@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.64 2019/07/21 08:24:32 mrg Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.64.2.1 2020/08/11 17:14:21 martin Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.64 2019/07/21 08:24:32 mrg Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.64.2.1 2020/08/11 17:14:21 martin Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -253,6 +253,16 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, int phy_id, uint32_t mii_clk)
 		sc->sc_descm = &desc_methods_enhanced;
 	} else {
 		sc->sc_descm = &desc_methods_standard;
+	}
+	if (hwft & GMAC_DMA_FEAT_RMON) {
+		uint32_t val;
+
+		/* Mask all MMC interrupts */
+		val = 0xffffffff;
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh,
+		    GMAC_MMC_RX_INT_MSK, val);
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh,
+		    GMAC_MMC_TX_INT_MSK, val);
 	}
 
 	/*
@@ -499,15 +509,22 @@ dwc_gmac_alloc_rx_ring(struct dwc_gmac_softc *sc,
 			error = ENOMEM;
 			goto fail;
 		}
+		data->rd_m->m_len = data->rd_m->m_pkthdr.len
+		    = data->rd_m->m_ext.ext_size;
+		if (data->rd_m->m_len > AWGE_MAX_PACKET) {
+			data->rd_m->m_len = data->rd_m->m_pkthdr.len
+			    = AWGE_MAX_PACKET;
+		}
 
-		error = bus_dmamap_load(sc->sc_dmat, data->rd_map,
-		    mtod(data->rd_m, void *), MCLBYTES, NULL,
-		    BUS_DMA_READ | BUS_DMA_NOWAIT);
+		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->rd_map,
+		    data->rd_m, BUS_DMA_READ | BUS_DMA_NOWAIT);
 		if (error != 0) {
 			aprint_error_dev(sc->sc_dev,
 			    "could not load rx buf DMA map #%d", i);
 			goto fail;
 		}
+		bus_dmamap_sync(sc->sc_dmat, data->rd_map, 0,
+		    data->rd_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 		physaddr = data->rd_map->dm_segs[0].ds_addr;
 
 		desc = &sc->sc_rxq.r_desc[i];
@@ -516,7 +533,7 @@ dwc_gmac_alloc_rx_ring(struct dwc_gmac_softc *sc,
 		desc->ddesc_next = htole32(ring->r_physaddr
 		    + next * sizeof(*desc));
 		sc->sc_descm->rx_init_flags(desc);
-		sc->sc_descm->rx_set_len(desc, AWGE_MAX_PACKET);
+		sc->sc_descm->rx_set_len(desc, data->rd_m->m_len);
 		sc->sc_descm->rx_set_owned_by_dev(desc);
 	}
 
@@ -538,13 +555,15 @@ dwc_gmac_reset_rx_ring(struct dwc_gmac_softc *sc,
 	struct dwc_gmac_rx_ring *ring)
 {
 	struct dwc_gmac_dev_dmadesc *desc;
+	struct dwc_gmac_rx_data *data;
 	int i;
 
 	mutex_enter(&ring->r_mtx);
 	for (i = 0; i < AWGE_RX_RING_COUNT; i++) {
 		desc = &sc->sc_rxq.r_desc[i];
+		data = &sc->sc_rxq.r_data[i];
 		sc->sc_descm->rx_init_flags(desc);
-		sc->sc_descm->rx_set_len(desc, AWGE_MAX_PACKET);
+		sc->sc_descm->rx_set_len(desc, data->rd_m->m_len);
 		sc->sc_descm->rx_set_owned_by_dev(desc);
 	}
 
@@ -1264,6 +1283,10 @@ dwc_gmac_rx_intr(struct dwc_gmac_softc *sc)
 			ifp->if_ierrors++;
 			goto skip;
 		}
+		mnew->m_len = mnew->m_pkthdr.len = mnew->m_ext.ext_size;
+		if (mnew->m_len > AWGE_MAX_PACKET) {
+			mnew->m_len = mnew->m_pkthdr.len = AWGE_MAX_PACKET;
+		}
 
 		/* unload old DMA map */
 		bus_dmamap_sync(sc->sc_dmat, data->rd_map, 0,
@@ -1271,15 +1294,13 @@ dwc_gmac_rx_intr(struct dwc_gmac_softc *sc)
 		bus_dmamap_unload(sc->sc_dmat, data->rd_map);
 
 		/* and reload with new mbuf */
-		error = bus_dmamap_load(sc->sc_dmat, data->rd_map,
-		    mtod(mnew, void*), MCLBYTES, NULL,
-		    BUS_DMA_READ | BUS_DMA_NOWAIT);
+		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->rd_map,
+		    mnew, BUS_DMA_READ | BUS_DMA_NOWAIT);
 		if (error != 0) {
 			m_freem(mnew);
 			/* try to reload old mbuf */
-			error = bus_dmamap_load(sc->sc_dmat, data->rd_map,
-			    mtod(data->rd_m, void*), MCLBYTES, NULL,
-			    BUS_DMA_READ | BUS_DMA_NOWAIT);
+			error = bus_dmamap_load_mbuf(sc->sc_dmat, data->rd_map,
+			    data->rd_m, BUS_DMA_READ | BUS_DMA_NOWAIT);
 			if (error != 0) {
 				panic("%s: could not load old rx mbuf",
 				    device_xname(sc->sc_dev));
@@ -1308,7 +1329,7 @@ skip:
 		    data->rd_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 
 		sc->sc_descm->rx_init_flags(desc);
-		sc->sc_descm->rx_set_len(desc, AWGE_MAX_PACKET);
+		sc->sc_descm->rx_set_len(desc, data->rd_m->m_len);
 		sc->sc_descm->rx_set_owned_by_dev(desc);
 
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_ring_map,
