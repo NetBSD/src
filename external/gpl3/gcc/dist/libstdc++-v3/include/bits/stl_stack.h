@@ -1,6 +1,6 @@
 // Stack implementation -*- C++ -*-
 
-// Copyright (C) 2001-2017 Free Software Foundation, Inc.
+// Copyright (C) 2001-2018 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -275,6 +275,18 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       }
 #endif // __cplusplus >= 201103L
     };
+
+#if __cpp_deduction_guides >= 201606
+  template<typename _Container,
+	   typename = enable_if_t<!__is_allocator<_Container>::value>>
+    stack(_Container) -> stack<typename _Container::value_type, _Container>;
+
+  template<typename _Container, typename _Allocator,
+	   typename = enable_if_t<!__is_allocator<_Container>::value>,
+	   typename = enable_if_t<__is_allocator<_Allocator>::value>>
+    stack(_Container, _Allocator)
+    -> stack<typename _Container::value_type, _Container>;
+#endif
 
   /**
    *  @brief  Stack equality comparison.

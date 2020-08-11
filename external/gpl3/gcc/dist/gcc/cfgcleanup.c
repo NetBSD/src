@@ -1,5 +1,5 @@
 /* Control flow optimization code for GNU compiler.
-   Copyright (C) 1987-2017 Free Software Foundation, Inc.
+   Copyright (C) 1987-2018 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -53,6 +53,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "dce.h"
 #include "dbgcnt.h"
 #include "rtl-iter.h"
+#include "regs.h"
 
 #define FORWARDER_BLOCK_P(BB) ((BB)->flags & BB_FORWARDER_BLOCK)
 
@@ -394,19 +395,6 @@ try_forward_edges (int mode, basic_block b)
   edge_iterator ei;
   edge e, *threaded_edges = NULL;
 
-  /* If we are partitioning hot/cold basic blocks, we don't want to
-     mess up unconditional or indirect jumps that cross between hot
-     and cold sections.
-
-     Basic block partitioning may result in some jumps that appear to
-     be optimizable (or blocks that appear to be mergeable), but which really
-     must be left untouched (they are required to make it safely across
-     partition boundaries).  See the comments at the top of
-     bb-reorder.c:partition_hot_cold_basic_blocks for complete details.  */
-
-  if (JUMP_P (BB_END (b)) && CROSSING_JUMP_P (BB_END (b)))
-    return false;
-
   for (ei = ei_start (b->succs); (e = ei_safe_edge (ei)); )
     {
       basic_block target, first;
@@ -415,6 +403,7 @@ try_forward_edges (int mode, basic_block b)
       bool threaded = false;
       int nthreaded_edges = 0;
       bool may_thread = first_pass || (b->flags & BB_MODIFIED) != 0;
+      bool new_target_threaded = false;
 
       /* Skip complex edges because we don't know how to update them.
 
@@ -431,29 +420,12 @@ try_forward_edges (int mode, basic_block b)
       counter = NUM_FIXED_BLOCKS;
       goto_locus = e->goto_locus;
 
-      /* If we are partitioning hot/cold basic_blocks, we don't want to mess
-	 up jumps that cross between hot/cold sections.
-
-	 Basic block partitioning may result in some jumps that appear
-	 to be optimizable (or blocks that appear to be mergeable), but which
-	 really must be left untouched (they are required to make it safely
-	 across partition boundaries).  See the comments at the top of
-	 bb-reorder.c:partition_hot_cold_basic_blocks for complete
-	 details.  */
-
-      if (first != EXIT_BLOCK_PTR_FOR_FN (cfun)
-	  && JUMP_P (BB_END (first))
-	  && CROSSING_JUMP_P (BB_END (first)))
-	return changed;
-
       while (counter < n_basic_blocks_for_fn (cfun))
 	{
 	  basic_block new_target = NULL;
-	  bool new_target_threaded = false;
 	  may_thread |= (target->flags & BB_MODIFIED) != 0;
 
 	  if (FORWARDER_BLOCK_P (target)
-	      && !(single_succ_edge (target)->flags & EDGE_CROSSING)
 	      && single_succ (target) != EXIT_BLOCK_PTR_FOR_FN (cfun))
 	    {
 	      /* Bypass trivial infinite loops.  */
@@ -543,8 +515,14 @@ try_forward_edges (int mode, basic_block b)
 	    break;
 
 	  counter++;
-	  target = new_target;
-	  threaded |= new_target_threaded;
+	  /* Do not turn non-crossing jump to crossing.  Depending on target
+	     it may require different instruction pattern.  */
+	  if ((e->flags & EDGE_CROSSING)
+	      || BB_PARTITION (first) == BB_PARTITION (new_target))
+	    {
+	      target = new_target;
+	      threaded |= new_target_threaded;
+	    }
 	}
 
       if (counter >= n_basic_blocks_for_fn (cfun))
@@ -558,9 +536,7 @@ try_forward_edges (int mode, basic_block b)
       else
 	{
 	  /* Save the values now, as the edge may get removed.  */
-	  gcov_type edge_count = e->count;
-	  int edge_probability = e->probability;
-	  int edge_frequency;
+	  profile_count edge_count = e->count ();
 	  int n = 0;
 
 	  e->goto_locus = goto_locus;
@@ -585,8 +561,6 @@ try_forward_edges (int mode, basic_block b)
 	  /* We successfully forwarded the edge.  Now update profile
 	     data: for each edge we traversed in the chain, remove
 	     the original edge's execution count.  */
-	  edge_frequency = apply_probability (b->frequency, edge_probability);
-
 	  do
 	    {
 	      edge t;
@@ -596,18 +570,12 @@ try_forward_edges (int mode, basic_block b)
 		  gcc_assert (n < nthreaded_edges);
 		  t = threaded_edges [n++];
 		  gcc_assert (t->src == first);
-		  update_bb_profile_for_threading (first, edge_frequency,
-						   edge_count, t);
+		  update_bb_profile_for_threading (first, edge_count, t);
 		  update_br_prob_note (first);
 		}
 	      else
 		{
 		  first->count -= edge_count;
-		  if (first->count < 0)
-		    first->count = 0;
-		  first->frequency -= edge_frequency;
-		  if (first->frequency < 0)
-		    first->frequency = 0;
 		  /* It is possible that as the result of
 		     threading we've removed edge as it is
 		     threaded to the fallthru edge.  Avoid
@@ -618,9 +586,6 @@ try_forward_edges (int mode, basic_block b)
 		  t = single_succ_edge (first);
 		}
 
-	      t->count -= edge_count;
-	      if (t->count < 0)
-		t->count = 0;
 	      first = t->dest;
 	    }
 	  while (first != target);
@@ -877,8 +842,6 @@ merge_memattrs (rtx x, rtx y)
 	MEM_ATTRS (x) = 0;
       else
 	{
-	  HOST_WIDE_INT mem_size;
-
 	  if (MEM_ALIAS_SET (x) != MEM_ALIAS_SET (y))
 	    {
 	      set_mem_alias_set (x, 0);
@@ -894,20 +857,23 @@ merge_memattrs (rtx x, rtx y)
 	    }
 	  else if (MEM_OFFSET_KNOWN_P (x) != MEM_OFFSET_KNOWN_P (y)
 		   || (MEM_OFFSET_KNOWN_P (x)
-		       && MEM_OFFSET (x) != MEM_OFFSET (y)))
+		       && maybe_ne (MEM_OFFSET (x), MEM_OFFSET (y))))
 	    {
 	      clear_mem_offset (x);
 	      clear_mem_offset (y);
 	    }
 
-	  if (MEM_SIZE_KNOWN_P (x) && MEM_SIZE_KNOWN_P (y))
-	    {
-	      mem_size = MAX (MEM_SIZE (x), MEM_SIZE (y));
-	      set_mem_size (x, mem_size);
-	      set_mem_size (y, mem_size);
-	    }
+	  if (!MEM_SIZE_KNOWN_P (x))
+	    clear_mem_size (y);
+	  else if (!MEM_SIZE_KNOWN_P (y))
+	    clear_mem_size (x);
+	  else if (known_le (MEM_SIZE (x), MEM_SIZE (y)))
+	    set_mem_size (x, MEM_SIZE (y));
+	  else if (known_le (MEM_SIZE (y), MEM_SIZE (x)))
+	    set_mem_size (y, MEM_SIZE (x));
 	  else
 	    {
+	      /* The sizes aren't ordered, so we can't merge them.  */
 	      clear_mem_size (x);
 	      clear_mem_size (y);
 	    }
@@ -1185,7 +1151,7 @@ old_insns_match_p (int mode ATTRIBUTE_UNUSED, rtx_insn *i1, rtx_insn *i2)
       /* ??? Worse, this adjustment had better be constant lest we
          have differing incoming stack levels.  */
       if (!frame_pointer_needed
-          && find_args_size_adjust (i1) == HOST_WIDE_INT_MIN)
+	  && known_eq (find_args_size_adjust (i1), HOST_WIDE_INT_MIN))
 	return dir_none;
     }
   else if (p1 || p2)
@@ -1252,6 +1218,14 @@ old_insns_match_p (int mode ATTRIBUTE_UNUSED, rtx_insn *i1, rtx_insn *i2)
 		}
 	    }
 	}
+
+      HARD_REG_SET i1_used, i2_used;
+
+      get_call_reg_set_usage (i1, &i1_used, call_used_reg_set);
+      get_call_reg_set_usage (i2, &i2_used, call_used_reg_set);
+
+      if (!hard_reg_set_equal_p (i1_used, i2_used))
+        return dir_none;
     }
 
   /* If both i1 and i2 are frame related, verify all the CFA notes
@@ -1437,6 +1411,13 @@ flow_find_cross_jump (basic_block bb1, basic_block bb2, rtx_insn **f1,
         dir = dir_forward;
 
       if (i1 == BB_HEAD (bb1) || i2 == BB_HEAD (bb2))
+	break;
+
+      /* Do not turn corssing edge to non-crossing or vice versa after
+	 reload. */
+      if (BB_PARTITION (BLOCK_FOR_INSN (i1))
+	  != BB_PARTITION (BLOCK_FOR_INSN (i2))
+	  && reload_completed)
 	break;
 
       dir = merge_dir (dir, old_insns_match_p (0, i1, i2));
@@ -1717,24 +1698,28 @@ outgoing_edges_match (int mode, basic_block bb1, basic_block bb2)
 	  && optimize_bb_for_speed_p (bb1)
 	  && optimize_bb_for_speed_p (bb2))
 	{
-	  int prob2;
+	  profile_probability prob2;
 
 	  if (b1->dest == b2->dest)
 	    prob2 = b2->probability;
 	  else
 	    /* Do not use f2 probability as f2 may be forwarded.  */
-	    prob2 = REG_BR_PROB_BASE - b2->probability;
+	    prob2 = b2->probability.invert ();
 
 	  /* Fail if the difference in probabilities is greater than 50%.
 	     This rules out two well-predicted branches with opposite
 	     outcomes.  */
-	  if (abs (b1->probability - prob2) > REG_BR_PROB_BASE / 2)
+	  if (b1->probability.differs_lot_from_p (prob2))
 	    {
 	      if (dump_file)
-		fprintf (dump_file,
-			 "Outcomes of branch in bb %i and %i differ too much (%i %i)\n",
-			 bb1->index, bb2->index, b1->probability, prob2);
-
+		{
+		  fprintf (dump_file,
+			   "Outcomes of branch in bb %i and %i differ too"
+			   " much (", bb1->index, bb2->index);
+		  b1->probability.dump (dump_file);
+		  prob2.dump (dump_file);
+		  fprintf (dump_file, ")\n");
+		}
 	      return false;
 	    }
 	}
@@ -1961,18 +1946,6 @@ try_crossjump_to_edge (int mode, edge e1, edge e2,
 
   newpos1 = newpos2 = NULL;
 
-  /* If we have partitioned hot/cold basic blocks, it is a bad idea
-     to try this optimization.
-
-     Basic block partitioning may result in some jumps that appear to
-     be optimizable (or blocks that appear to be mergeable), but which really
-     must be left untouched (they are required to make it safely across
-     partition boundaries).  See the comments at the top of
-     bb-reorder.c:partition_hot_cold_basic_blocks for complete details.  */
-
-  if (crtl->has_bb_partition && reload_completed)
-    return false;
-
   /* Search backward through forwarder blocks.  We don't need to worry
      about multiple entry or chained forwarders, as they will be optimized
      away.  We do this to look past the unconditional jump following a
@@ -2006,6 +1979,11 @@ try_crossjump_to_edge (int mode, edge e1, edge e2,
   if (EDGE_COUNT (src1->preds) == 0 || EDGE_COUNT (src2->preds) == 0)
     return false;
 
+  /* Do not turn corssing edge to non-crossing or vice versa after reload.  */
+  if (BB_PARTITION (src1) != BB_PARTITION (src2)
+      && reload_completed)
+    return false;
+
   /* Look for the common insn sequence, part the first ...  */
   if (!outgoing_edges_match (mode, src1, src2))
     return false;
@@ -2027,12 +2005,10 @@ try_crossjump_to_edge (int mode, edge e1, edge e2,
 
   if (dir == dir_backward)
     {
-#define SWAP(T, X, Y) do { T tmp = (X); (X) = (Y); (Y) = tmp; } while (0)
-      SWAP (basic_block, osrc1, osrc2);
-      SWAP (basic_block, src1, src2);
-      SWAP (edge, e1, e2);
-      SWAP (rtx_insn *, newpos1, newpos2);
-#undef SWAP
+      std::swap (osrc1, osrc2);
+      std::swap (src1, src2);
+      std::swap (e1, e2);
+      std::swap (newpos1, newpos2);
     }
 
   /* Don't proceed with the crossjump unless we found a sufficient number
@@ -2115,7 +2091,7 @@ try_crossjump_to_edge (int mode, edge e1, edge e2,
   else
     redirect_edges_to = osrc2;
 
-  /* Recompute the frequencies and counts of outgoing edges.  */
+  /* Recompute the counts of destinations of outgoing edges.  */
   FOR_EACH_EDGE (s, ei, redirect_edges_to->succs)
     {
       edge s2;
@@ -2134,41 +2110,21 @@ try_crossjump_to_edge (int mode, edge e1, edge e2,
 	    break;
 	}
 
-      s->count += s2->count;
-
       /* Take care to update possible forwarder blocks.  We verified
 	 that there is no more than one in the chain, so we can't run
 	 into infinite loop.  */
       if (FORWARDER_BLOCK_P (s->dest))
-	{
-	  single_succ_edge (s->dest)->count += s2->count;
-	  s->dest->count += s2->count;
-	  s->dest->frequency += EDGE_FREQUENCY (s);
-	}
+	s->dest->count += s->count ();
 
       if (FORWARDER_BLOCK_P (s2->dest))
-	{
-	  single_succ_edge (s2->dest)->count -= s2->count;
-	  if (single_succ_edge (s2->dest)->count < 0)
-	    single_succ_edge (s2->dest)->count = 0;
-	  s2->dest->count -= s2->count;
-	  s2->dest->frequency -= EDGE_FREQUENCY (s);
-	  if (s2->dest->frequency < 0)
-	    s2->dest->frequency = 0;
-	  if (s2->dest->count < 0)
-	    s2->dest->count = 0;
-	}
+	s2->dest->count -= s->count ();
 
-      if (!redirect_edges_to->frequency && !src1->frequency)
-	s->probability = (s->probability + s2->probability) / 2;
-      else
-	s->probability
-	  = ((s->probability * redirect_edges_to->frequency +
-	      s2->probability * src1->frequency)
-	     / (redirect_edges_to->frequency + src1->frequency));
+      s->probability = s->probability.combine_with_count
+			  (redirect_edges_to->count,
+			   s2->probability, src1->count);
     }
 
-  /* Adjust count and frequency for the block.  An earlier jump
+  /* Adjust count for the block.  An earlier jump
      threading pass may have left the profile in an inconsistent
      state (see update_bb_profile_for_threading) so we must be
      prepared for overflows.  */
@@ -2176,9 +2132,6 @@ try_crossjump_to_edge (int mode, edge e1, edge e2,
   do
     {
       tmp->count += src1->count;
-      tmp->frequency += src1->frequency;
-      if (tmp->frequency > BB_FREQ_MAX)
-        tmp->frequency = BB_FREQ_MAX;
       if (tmp == redirect_edges_to)
         break;
       tmp = find_fallthru_edge (tmp->succs)->dest;
@@ -2484,9 +2437,7 @@ try_head_merge_bb (basic_block bb)
       max_match--;
       if (max_match == 0)
 	return false;
-      do
-	e0_last_head = prev_real_insn (e0_last_head);
-      while (DEBUG_INSN_P (e0_last_head));
+      e0_last_head = prev_real_nondebug_insn (e0_last_head);
     }
 
   if (max_match == 0)
@@ -2669,7 +2620,7 @@ trivially_empty_bb_p (basic_block bb)
 
 /* Return true if BB contains just a return and possibly a USE of the
    return value.  Fill in *RET and *USE with the return and use insns
-   if any found, otherwise NULL.  */
+   if any found, otherwise NULL.  All CLOBBERs are ignored.  */
 
 static bool
 bb_is_just_return (basic_block bb, rtx_insn **ret, rtx_insn **use)
@@ -2683,13 +2634,15 @@ bb_is_just_return (basic_block bb, rtx_insn **ret, rtx_insn **use)
   FOR_BB_INSNS (bb, insn)
     if (NONDEBUG_INSN_P (insn))
       {
-	if (!*ret && ANY_RETURN_P (PATTERN (insn)))
+	rtx pat = PATTERN (insn);
+
+	if (!*ret && ANY_RETURN_P (pat))
 	  *ret = insn;
-	else if (!*ret && !*use && GET_CODE (PATTERN (insn)) == USE
-	    && REG_P (XEXP (PATTERN (insn), 0))
-	    && REG_FUNCTION_VALUE_P (XEXP (PATTERN (insn), 0)))
+	else if (!*ret && !*use && GET_CODE (pat) == USE
+	    && REG_P (XEXP (pat, 0))
+	    && REG_FUNCTION_VALUE_P (XEXP (pat, 0)))
 	  *use = insn;
-	else
+	else if (GET_CODE (pat) != CLOBBER)
 	  return false;
       }
 
@@ -2761,23 +2714,23 @@ try_optimize_cfg (int mode)
 
 		      if (current_ir_type () == IR_RTL_CFGLAYOUT)
 			{
-			  if (BB_FOOTER (b)
-			      && BARRIER_P (BB_FOOTER (b)))
+			  rtx_insn *insn;
+			  for (insn = BB_FOOTER (b);
+			       insn; insn = NEXT_INSN (insn))
+			    if (BARRIER_P (insn))
+			      break;
+			  if (insn)
 			    FOR_EACH_EDGE (e, ei, b->preds)
-			      if ((e->flags & EDGE_FALLTHRU)
-				  && BB_FOOTER (e->src) == NULL)
+			      if ((e->flags & EDGE_FALLTHRU))
 				{
-				  if (BB_FOOTER (b))
+				  if (BB_FOOTER (b)
+				      && BB_FOOTER (e->src) == NULL)
 				    {
 				      BB_FOOTER (e->src) = BB_FOOTER (b);
 				      BB_FOOTER (b) = NULL;
 				    }
 				  else
-				    {
-				      start_sequence ();
-				      BB_FOOTER (e->src) = emit_barrier ();
-				      end_sequence ();
-				    }
+				    emit_barrier_after_bb (e->src);
 				}
 			}
 		      else
@@ -3044,8 +2997,11 @@ try_optimize_cfg (int mode)
                  to detect and fix during edge forwarding, and in some cases
                  is only visible after newly unreachable blocks are deleted,
                  which will be done in fixup_partitions.  */
-	      fixup_partitions ();
-	      checking_verify_flow_info ();
+	      if ((mode & CLEANUP_NO_PARTITIONING) == 0)
+		{
+		  fixup_partitions ();
+	          checking_verify_flow_info ();
+		}
             }
 
 	  changed_overall |= changed;
@@ -3070,13 +3026,13 @@ delete_unreachable_blocks (void)
 
   find_unreachable_blocks ();
 
-  /* When we're in GIMPLE mode and there may be debug insns, we should
-     delete blocks in reverse dominator order, so as to get a chance
-     to substitute all released DEFs into debug stmts.  If we don't
-     have dominators information, walking blocks backward gets us a
-     better chance of retaining most debug information than
+  /* When we're in GIMPLE mode and there may be debug bind insns, we
+     should delete blocks in reverse dominator order, so as to get a
+     chance to substitute all released DEFs into debug bind stmts.  If
+     we don't have dominators information, walking blocks backward
+     gets us a better chance of retaining most debug information than
      otherwise.  */
-  if (MAY_HAVE_DEBUG_INSNS && current_ir_type () == IR_GIMPLE
+  if (MAY_HAVE_DEBUG_BIND_INSNS && current_ir_type () == IR_GIMPLE
       && dom_info_available_p (CDI_DOMINATORS))
     {
       for (b = EXIT_BLOCK_PTR_FOR_FN (cfun)->prev_bb;
