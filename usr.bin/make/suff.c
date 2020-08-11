@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.95 2020/08/10 19:53:19 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.96 2020/08/11 18:44:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.95 2020/08/10 19:53:19 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.96 2020/08/11 18:44:52 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.95 2020/08/10 19:53:19 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.96 2020/08/11 18:44:52 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -150,16 +150,19 @@ static Lst       transforms;	/* Lst of transformation rules */
 
 static int        sNum = 0;	/* Counter for assigning suffix numbers */
 
+typedef enum {
+    SUFF_INCLUDE	= 0x01,	/* One which is #include'd */
+    SUFF_LIBRARY	= 0x02,	/* One which contains a library */
+    SUFF_NULL		= 0x04	/* The empty suffix */
+} SuffFlags;
+
 /*
  * Structure describing an individual suffix.
  */
-typedef struct _Suff {
+typedef struct Suff {
     char         *name;	    	/* The suffix itself */
     int		 nameLen;	/* Length of the suffix */
-    short	 flags;      	/* Type of suffix */
-#define SUFF_INCLUDE	  0x01	    /* One which is #include'd */
-#define SUFF_LIBRARY	  0x02	    /* One which contains a library */
-#define SUFF_NULL 	  0x04	    /* The empty suffix */
+    SuffFlags	 flags;      	/* Type of suffix */
     Lst    	 searchPath;	/* The path along which files of this suffix
 				 * may be found */
     int          sNum;	      	/* The suffix number */
