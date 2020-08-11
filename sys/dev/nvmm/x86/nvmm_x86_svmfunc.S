@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svmfunc.S,v 1.4 2020/07/19 06:36:37 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svmfunc.S,v 1.5 2020/08/11 15:48:42 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -75,10 +75,10 @@
 
 #define HOST_SAVE_TR		\
 	strw	%ax		;\
-	pushw	%ax
+	pushq	%rax
 
 #define HOST_RESTORE_TR				\
-	popw	%ax				;\
+	popq	%rax				;\
 	movzwq	%ax,%rdx			;\
 	movq	CPUVAR(GDT),%rax		;\
 	andq	$~0x0200,4(%rax,%rdx, 1)	;\
@@ -86,10 +86,10 @@
 
 #define HOST_SAVE_LDT		\
 	sldtw	%ax		;\
-	pushw	%ax
+	pushq	%rax
 
 #define HOST_RESTORE_LDT	\
-	popw	%ax		;\
+	popq	%rax		;\
 	lldtw	%ax
 
 /*
