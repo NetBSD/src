@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.70 2020/07/20 03:22:39 simonb Exp $
+#	$NetBSD: genassym.cf,v 1.71 2020/08/12 08:57:03 skrll Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -184,8 +184,6 @@ define	V_MIPS3_PG_HVPN		ilog2(__LOWEST_SET_BIT(MIPS3_PG_HVPN))
 define	V_MIPS3_PG_ASID		ilog2(__LOWEST_SET_BIT(MIPS3_PG_ASID))
 define	S_MIPS3_PG_ASID		ilog2(MIPS3_PG_ASID+1)
 endif
-
-define	MIPS_EBASE_CPUNUM	MIPS_EBASE_CPUNUM
 
 define	TF_SIZ			sizeof(struct trapframe)
 define	TF_REG_ZERO		offsetof(struct trapframe, tf_regs[_R_ZERO])
