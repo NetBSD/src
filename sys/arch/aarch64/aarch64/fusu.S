@@ -1,4 +1,4 @@
-/*	$NetBSD: fusu.S,v 1.9 2020/08/06 06:49:55 ryo Exp $	*/
+/*	$NetBSD: fusu.S,v 1.10 2020/08/12 13:19:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <aarch64/asm.h>
 #include "assym.h"
 
-RCSID("$NetBSD: fusu.S,v 1.9 2020/08/06 06:49:55 ryo Exp $");
+RCSID("$NetBSD: fusu.S,v 1.10 2020/08/12 13:19:35 skrll Exp $");
 
 #ifdef ARMV81_PAN
 #define PAN_ENABLE	\
@@ -73,8 +73,7 @@ RCSID("$NetBSD: fusu.S,v 1.9 2020/08/06 06:49:55 ryo Exp $");
 
 	.macro exit_cpu_onfault
 	/* curlwp->l_md.md_onfault = NULL */
-	mrs	x1, tpidr_el1			/* curcpu */
-	ldr	x1, [x1, #CI_CURLWP]		/* x1 = curlwp */
+	mrs	x1, tpidr_el1			/* x1 = curlwp */
 	str	xzr, [x1, #L_MD_ONFAULT]	/* lwp->l_md_onfault = NULL */
 9:
 	PAN_ENABLE				/* enable PAN */

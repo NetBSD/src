@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.69 2020/08/02 06:58:16 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.70 2020/08/12 13:19:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.69 2020/08/02 06:58:16 maxv Exp $")
+RCSID("$NetBSD: locore.S,v 1.70 2020/08/12 13:19:35 skrll Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_STRONGLY_ORDERED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -176,9 +176,9 @@ vstart:
 	msr	tpidrro_el0, xzr
 
 	/* set curcpu() */
-	adrl	x0, cpu_info_store	/* cpu_info_store is cpu_info[0] */
-	msr	tpidr_el1, x0		/* curcpu is cpu_info[0] */
-	DPRINTREG("curcpu           = ", x0);
+	adrl	x0, lwp0		/* curlwp is lwp0 */
+	msr	tpidr_el1, x0
+	DPRINTREG("curlwp           = ", x0);
 
 	/* init PAN if supported */
 	mov	x0, #1
@@ -195,8 +195,8 @@ vstart:
 1:
 
 	/* set topology information */
-	mrs	x0, tpidr_el1		/* curcpu */
-	mrs     x1, mpidr_el1
+	adrl	x0, cpu_info_store	/* curcpu */
+	mrs	x1, mpidr_el1
 	mov	x2, #0
 	bl	arm_cpu_topology_set
 
@@ -459,7 +459,7 @@ mp_vstart:
 	mul	x0, x27, x0
 	adrl	x1, _C_LABEL(cpu_info_store)
 	add	x0, x0, x1		/* x0 = &cpu_info_store[cpuindex] */
-	msr	tpidr_el1, x0		/* tpidr_el1 = curcpu() = x0 */
+	msr	tpidr_el1, x0		/* tpidr_el1 = curcpu = x0 */
 
 	mrs	x1, midr_el1
 	str	x1, [x0, #CI_MIDR]	/* curcpu()->ci_cpuid = midr_el1 */
@@ -509,9 +509,9 @@ mp_vstart:
 9:
 
 	/* fill my cpu_info */
-	mrs	x0, tpidr_el1		/* curcpu() */
-
-	ldr	x1, [x0, #CI_IDLELWP]	/* x1 = curcpu()->ci_data.cpu_idlelwp */
+	mrs	x0, tpidr_el1		/* curcpu */
+	ldr	x1, [x0, #CI_IDLELWP]	/* x0 = curcpu()->ci_idlelwp */
+	msr	tpidr_el1, x1		/* tpidr_el1 = curlwp = x1 */
 	str	x1, [x0, #CI_CURLWP]	/* curlwp is idlelwp */
 
 	/* get my stack from lwp */
@@ -534,7 +534,8 @@ mp_vstart:
 1:
 
 	mov	fp, xzr			/* trace back starts here */
-	mrs	x0, tpidr_el1		/* curcpu() */
+	mrs	x0, tpidr_el1		/* curlwp */
+	ldr	x0, [x0, #L_CPU]	/* curlwp->l_cpu */
 	bl	_C_LABEL(cpu_hatch)
 	mov	x0, xzr
 	b	_C_LABEL(idle_loop)	/* never to return */

@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.29 2020/08/06 06:49:55 ryo Exp $
+# $NetBSD: genassym.cf,v 1.30 2020/08/12 13:19:35 skrll Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -154,6 +154,7 @@ define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
 define	L_MD_UTF		offsetof(struct lwp, l_md.md_utf)
 define	L_MD_CPACR		offsetof(struct lwp, l_md.md_cpacr)
 define	L_MD_ONFAULT		offsetof(struct lwp, l_md.md_onfault)
+define	L_MD_ASTPENDING		offsetof(struct lwp, l_md.md_astpending)
 define	L_MD_IA_KERN		offsetof(struct lwp, l_md.md_ia_kern)
 define	L_MD_IA_USER		offsetof(struct lwp, l_md.md_ia_user)
 define	L_MD_IB_USER		offsetof(struct lwp, l_md.md_ib_user)
@@ -288,7 +289,6 @@ define	CI_CPL			offsetof(struct cpu_info, ci_cpl)
 define	CI_CPUID		offsetof(struct cpu_info, ci_cpuid)
 define	CI_MIDR			offsetof(struct cpu_info, ci_id.ac_midr)
 define	CI_MPIDR		offsetof(struct cpu_info, ci_id.ac_mpidr)
-define	CI_ASTPENDING		offsetof(struct cpu_info, ci_astpending)
 define	CI_WANT_RESCHED		offsetof(struct cpu_info, ci_want_resched)
 define	CI_INTR_DEPTH		offsetof(struct cpu_info, ci_intr_depth)
 define	CI_MTX_COUNT		offsetof(struct cpu_info, ci_mtx_count)
