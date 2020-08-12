@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.310 2020/06/15 21:52:03 christos Exp $
+$NetBSD: UPDATING,v 1.311 2020/08/12 06:48:50 mrg Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,9 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20200811:
+	GCC updates may require cleaning the objdir.
 
 20200614:
 	blacklist* has been renamed to blocklist*. postinstall(8)
