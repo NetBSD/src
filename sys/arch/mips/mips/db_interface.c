@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.87 2020/08/01 09:29:18 skrll Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.88 2020/08/12 07:37:39 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.87 2020/08/01 09:29:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.88 2020/08/12 07:37:39 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.87 2020/08/01 09:29:18 skrll Exp 
 
 #include <uvm/uvm_extern.h>
 
-#include <mips/asm.h>
 #include <mips/regnum.h>
 #include <mips/cache.h>
 #include <mips/pcb.h>
