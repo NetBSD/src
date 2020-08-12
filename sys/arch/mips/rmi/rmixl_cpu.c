@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpu.c,v 1.11 2019/12/03 05:07:48 riastradh Exp $	*/
+/*	$NetBSD: rmixl_cpu.c,v 1.12 2020/08/12 07:37:39 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.11 2019/12/03 05:07:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.12 2020/08/12 07:37:39 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.11 2019/12/03 05:07:48 riastradh Exp
 #include <uvm/uvm_pglist.h>
 #include <uvm/uvm_extern.h>
 #include <mips/regnum.h>
-#include <mips/asm.h> 
 #include <mips/pmap.h>
 #include <mips/rmi/rmixlreg.h>
 #include <mips/rmi/rmixlvar.h>
