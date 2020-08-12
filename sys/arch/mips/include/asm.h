@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.60 2020/08/10 14:37:38 skrll Exp $	*/
+/*	$NetBSD: asm.h,v 1.61 2020/08/12 08:56:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,6 +56,13 @@
 
 #include <sys/cdefs.h>		/* for API selection */
 #include <mips/regdef.h>
+
+#define	__BIT(n)	(1 << (n))
+#define	__BITS(hi,lo)	((~((~0)<<((hi)+1)))&((~0)<<(lo)))
+
+#define	__LOWEST_SET_BIT(__mask) ((((__mask) - 1) & (__mask)) ^ (__mask))
+#define	__SHIFTOUT(__x, __mask) (((__x) & (__mask)) / __LOWEST_SET_BIT(__mask))
+#define	__SHIFTIN(__x, __mask) ((__x) * __LOWEST_SET_BIT(__mask))
 
 /*
  * Define -pg profile entry code.
