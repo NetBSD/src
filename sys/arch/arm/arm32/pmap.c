@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.420 2020/08/11 07:03:33 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.421 2020/08/12 18:30:46 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -192,7 +192,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.420 2020/08/11 07:03:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.421 2020/08/12 18:30:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -5178,7 +5178,7 @@ pmap_remove_all(pmap_t pm)
 {
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(maphist, "(pm=%#jx)", (uintptr_t)pmap, 0, 0, 0);
+	UVMHIST_CALLARGS(maphist, "(pm=%#jx)", (uintptr_t)pm, 0, 0, 0);
 
 	KASSERT(pm != pmap_kernel());
 
