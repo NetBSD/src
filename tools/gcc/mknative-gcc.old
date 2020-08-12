@@ -1,10 +1,10 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc.old,v 1.6 2018/09/05 01:20:20 mrg Exp $
+#	$NetBSD: mknative-gcc.old,v 1.7 2020/08/12 08:53:20 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
 #
-# This version is for GCC 6.4
+# This version is for GCC 7.5
 
 # initialise
 
@@ -24,8 +24,8 @@ fi
 
 . $_TOP/tools/gcc/mknative.common
 
-_OUTDIR="$_TOP/external/gpl3/gcc.old"
-_OUTDIRBASE="external/gpl3/gcc.old"
+_OUTDIR="$_TOP/external/gpl3/gcc"
+_OUTDIRBASE="external/gpl3/gcc"
 
 sanitise_includes () {
 	sed \
@@ -82,9 +82,17 @@ get_libgcc () {
 			SHLIB_MAPFILES SHLIB_NM_FLAGS
 		getvars gcc/Makefile \
 			NOEXCEPTION_FLAGS EXTRA_HEADERS
-		getlinks config.status libgcc
 	}	| sanitise_includes \
 		| write_mk $_OUTDIRBASE/lib/lib$_subdir/arch/$MACHINE_ARCH/defs.mk
+
+	cd $_TMPDIR/$_PLATFORM/libgcc
+	{
+		getvars $_PLATFORM/libgcc/Makefile \
+			enable_execute_stack \
+			unwind_header md_unwind_header \
+			sfp_machine_header thread_header
+	}	| sanitise_includes \
+		| write_mk $_OUTDIRBASE/lib/lib$_subdir/arch/$MACHINE_ARCH/gthr-defs.mk
 
 	if [ "${MACHINE_ARCH}" = "m68000" ]
 	then
@@ -152,6 +160,11 @@ get_libgomp () {
 	_subdir="$1"
 
 	mkdir -p $_OUTDIR/lib/$_subdir/arch/$MACHINE_ARCH
+
+	getvars $_PLATFORM/libgomp/Makefile \
+		libgomp_la_SOURCES \
+		| write_mk $_OUTDIRBASE/lib/$_subdir/defs.mk
+
 	write_c $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/config.h \
 		<$_TMPDIR/$_PLATFORM/libgomp/config.h
 	write_c $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/libgomp_f.h \
@@ -169,9 +182,9 @@ get_libbacktrace () {
 
 	mkdir -p $_OUTDIR/lib/$_subdir/arch/$MACHINE_ARCH
 	write_c $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/config.h \
-		<$_TMPDIR/$_subdir/config.h
+		<$_TMPDIR/$_PLATFORM/$_subdir/config.h
 	write_c $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/backtrace-supported.h \
-		<$_TMPDIR/$_subdir/backtrace-supported.h
+		<$_TMPDIR/$_PLATFORM/$_subdir/backtrace-supported.h
 }
 
 ##### lib/libobjc #####
@@ -189,7 +202,6 @@ get_libobjc () {
 		getvars $_PLATFORM/libobjc/Makefile \
 			ALL_CFLAGS INCLUDES OBJC_SOURCE_FILES C_SOURCE_FILES OBJC_H \
 			| sed "s,$_GNU_DIST,\${GNUHOSTDIST},g"
-		getlinks $_TMPDIR/$_PLATFORM/libgcc/config.status libgcc
 	} | sanitise_includes \
 	  | write_mk $_OUTDIRBASE/lib/$_subdir/defs.mk
 
@@ -205,7 +217,7 @@ get_libstdcxx_v3 () {
 
 	mkdir -p $_OUTDIR/lib/$_subdir/arch/$MACHINE_ARCH
 
-	_build_headers="c++config.h cxxabi_tweaks.h gthr-posix.h gthr-single.h gthr.h"
+	_build_headers="c++config.h cxxabi_tweaks.h"
 	_headers1="c_base_headers_extra_install"
 	_headers1="$_headers1 tr1_headers tr2_headers decimal_headers c_compatibility_headers_install"
 	_headers1="$_headers1 debug_headers parallel_headers"
@@ -221,10 +233,15 @@ get_libstdcxx_v3 () {
 
 	write_c $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/gstdint.h \
 		<$_TMPDIR/$_PLATFORM/libstdc++-v3/include/gstdint.h
+	write_c $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/symver-config.h \
+		<$_TMPDIR/$_PLATFORM/libstdc++-v3/config.h
 
 	{
 		getvars $_PLATFORM/libstdc++-v3/Makefile \
 			port_specific_symbol_files
+		getvars $_PLATFORM/libstdc++-v3/src/Makefile \
+			cxx11_sources \
+			cxx98_sources
 
 		# libsupc++
 		getvars $_PLATFORM/libstdc++-v3/libsupc++/Makefile \
@@ -247,6 +264,9 @@ get_libstdcxx_v3 () {
 			GLIBCXX_ABI_FLAGS libc__98convenience_la_SOURCES | \
 			sed -e 's/^G_libc__98convenience_la_SOURCES=/G_CPP98_SOURCES=/' \
 			    -e 's/codecvt.cc/c98-codecvt.cc/'
+		getvars $_PLATFORM/libstdc++-v3/src/filesystem/Makefile \
+			libstdc__fs_la_SOURCES | \
+			sed -e 's/^G_libstdc__fs_la_SOURCES=/G_FILESYSTEM_SOURCES=/'
 		getvars $_PLATFORM/libstdc++-v3/Makefile ATOMICITY_SRCDIR \
 			BASIC_FILE_CC CLOCALE_CC CCODECVT_CC CCOLLATE_CC \
 			CCTYPE_CC  CMESSAGES_CC CMONEY_CC CNUMERIC_CC CTIME_CC \
@@ -263,7 +283,6 @@ get_libstdcxx_v3 () {
 			$_pf_headers | sed -e 's#\${GNUHOSTDIST}/libstdc++-v3/include/profile/##g'
 		getvars $_PLATFORM/libstdc++-v3/include/Makefile \
 			BASIC_FILE_H ALLOCATOR_H CSTDIO_H CLOCALE_H CMESSAGES_H CTIME_H
-		getlinks $_TMPDIR/$_PLATFORM/libgcc/config.status libgcc
 	} | sanitise_includes \
 	  | write_mk $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/defs.mk
 }
@@ -288,6 +307,7 @@ get_gcc () {
 	mkdir -p $_OUTDIR/usr.bin/$_subdir/arch/$MACHINE_ARCH
 	mkdir -p $_OUTDIR/usr.bin/libcpp/arch/$MACHINE_ARCH
 	mkdir -p $_OUTDIR/usr.bin/include/arch
+	mkdir -p $_OUTDIR/usr.bin/common-target/arch
 	_buildname="BUILD_"
 	_libcppsubdir=""
 	_extravars="TM_H ALL_OPT_FILES"
@@ -337,6 +357,13 @@ get_gcc () {
 	getvars gcc/Makefile \
 		EXTRA_HEADERS \
 			| write_mk $_OUTDIRBASE/usr.bin/include/arch/$MACHINE_ARCH.mk
+
+	getvars gcc/Makefile \
+		OBJS-libcommon \
+			| write_mk $_OUTDIRBASE/usr.bin/common/defs.mk
+	getvars gcc/Makefile \
+		OBJS-libcommon-target \
+			| write_mk $_OUTDIRBASE/usr.bin/common-target/arch/$MACHINE_ARCH.mk
 
 	write_c $_OUTDIRBASE/usr.bin/libcpp/arch/$MACHINE_ARCH/config.h <$_TMPDIR/libcpp/config.h
 	hfiles='auto-host configargs config bconfig bversion plugin-version multilib tm'
