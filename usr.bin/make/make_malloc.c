@@ -1,4 +1,4 @@
-/*	$NetBSD: make_malloc.c,v 1.13 2020/08/12 03:27:29 rillig Exp $	*/
+/*	$NetBSD: make_malloc.c,v 1.14 2020/08/12 18:47:21 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #ifdef MAKE_NATIVE
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: make_malloc.c,v 1.13 2020/08/12 03:27:29 rillig Exp $");
+__RCSID("$NetBSD: make_malloc.c,v 1.14 2020/08/12 18:47:21 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -91,9 +91,6 @@ bmake_strndup(const char *str, size_t max_len)
 {
 	size_t len;
 	char *p;
-
-	if (str == NULL)
-		return NULL;
 
 	for (len = 0; len < max_len; len++)
 	    if (str[len] == '\0')
