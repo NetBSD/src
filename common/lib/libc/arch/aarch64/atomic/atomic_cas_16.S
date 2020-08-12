@@ -1,4 +1,4 @@
-/* $NetBSD: atomic_cas_16.S,v 1.1 2014/08/10 05:47:35 matt Exp $ */
+/* $NetBSD: atomic_cas_16.S,v 1.2 2020/08/12 12:59:57 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,9 +37,9 @@ ENTRY_NP(_atomic_cas_16)
 	cmp	w0, w1			/*   compare? */
 	b.ne	2f
 	stxrh	w3, w2, [x4]		/* store new value */
-	cbnz	w3, 1b			/*   succeed? nope, try again. */
-	dmb	st			/* data memory barrier */
+	cbnz	w3, 3f			/*   succeed? nope, try again. */
 2:	ret				/* return. */
+3:	b	1b
 END(_atomic_cas_16)
 
 ATOMIC_OP_ALIAS(atomic_cas_16,_atomic_cas_16)
