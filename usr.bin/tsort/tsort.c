@@ -1,4 +1,4 @@
-/*	$NetBSD: tsort.c,v 1.23 2011/09/06 18:34:37 joerg Exp $	*/
+/*	$NetBSD: tsort.c,v 1.24 2020/08/12 23:23:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)tsort.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: tsort.c,v 1.23 2011/09/06 18:34:37 joerg Exp $");
+__RCSID("$NetBSD: tsort.c,v 1.24 2020/08/12 23:23:04 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: tsort.c,v 1.23 2011/09/06 18:34:37 joerg Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 /*
  *  Topological sort.  Input is a list of pairs of strings separated by
@@ -85,27 +86,26 @@ struct node_str {
 	NODE **n_prevp;			/* pointer to previous node's n_next */
 	NODE *n_next;			/* next node in graph */
 	NODE **n_arcs;			/* array of arcs to other nodes */
-	int n_narcs;			/* number of arcs in n_arcs[] */
-	int n_arcsize;			/* size of n_arcs[] array */
-	int n_refcnt;			/* # of arcs pointing to this node */
+	size_t n_narcs;			/* number of arcs in n_arcs[] */
+	size_t n_arcsize;		/* size of n_arcs[] array */
+	size_t n_refcnt;		/* # of arcs pointing to this node */
 	int n_flags;			/* NF_* */
 	char n_name[1];			/* name of this node */
 };
 
 typedef struct _buf {
 	char *b_buf;
-	int b_bsize;
+	size_t b_bsize;
 } BUF;
 
 static DB *db;
 static NODE *graph, **cycle_buf, **longest_cycle;
-static int debug, longest, quiet;
+static int debug, longest, quiet, reverse;
 
-static void	 add_arc(char *, char *);
+static void	 add_arc(const char *, const char *);
 static void	 clear_cycle(void);
-static int	 find_cycle(NODE *, NODE *, int, int);
-static NODE	*get_node(char *);
-static void	*grow_buf(void *, int);
+static size_t	 find_cycle(NODE *, NODE *, size_t, size_t);
+static NODE	*get_node(const char *);
 static void	 remove_node(NODE *);
 static void	 tsort(void);
 __dead static void	 usage(void);
@@ -114,15 +114,15 @@ int
 main(int argc, char *argv[])
 {
 	BUF *b;
-	int c, n;
+	int c, n, ch;
 	FILE *fp;
-	int bsize, ch, nused;
+	size_t bsize, nused;
 	BUF bufs[2];
 
 	setprogname(argv[0]);
 
 	fp = NULL;
-	while ((ch = getopt(argc, argv, "dlq")) != -1)
+	while ((ch = getopt(argc, argv, "dlqr")) != -1)
 		switch (ch) {
 		case 'd':
 			debug = 1;
@@ -132,6 +132,9 @@ main(int argc, char *argv[])
 			break;
 		case 'q':
 			quiet = 1;
+			break;
+		case 'r':
+			reverse = 1;
 			break;
 		case '?':
 		default:
@@ -146,14 +149,14 @@ main(int argc, char *argv[])
 		break;
 	case 1:
 		if ((fp = fopen(*argv, "r")) == NULL)
-			err(1, "%s", *argv);
+			err(EXIT_FAILURE, "%s", *argv);
 		break;
 	default:
 		usage();
 	}
 
-	for (b = bufs, n = 2; --n >= 0; b++)
-		b->b_buf = grow_buf(NULL, b->b_bsize = 1024);
+	for (b = bufs, n = 2; n-- > 0; b++)
+		b->b_buf = erealloc(NULL, b->b_bsize = 1024);
 
 	/* parse input and build the graph */
 	for (n = 0, c = getc(fp);;) {
@@ -166,37 +169,29 @@ main(int argc, char *argv[])
 		b = &bufs[n];
 		bsize = b->b_bsize;
 		do {
-			b->b_buf[nused++] = c;
+			b->b_buf[nused++] = (char)c;
 			if (nused == bsize)
-				b->b_buf = grow_buf(b->b_buf, bsize *= 2);
+				b->b_buf = erealloc(b->b_buf, bsize *= 2);
 			c = getc(fp);
 		} while (c != EOF && !isspace(c));
 
 		b->b_buf[nused] = '\0';
 		b->b_bsize = bsize;
-		if (n)
-			add_arc(bufs[0].b_buf, bufs[1].b_buf);
+		if (n) {
+			if (reverse)
+				add_arc(bufs[1].b_buf, bufs[0].b_buf);
+			else
+				add_arc(bufs[0].b_buf, bufs[1].b_buf);
+		}
 		n = !n;
 	}
 	(void)fclose(fp);
 	if (n)
-		errx(1, "odd data count");
+		errx(EXIT_FAILURE, "odd data count");
 
 	/* do the sort */
 	tsort();
-	return(0);
-}
-
-/* double the size of oldbuf and return a pointer to the new buffer. */
-static void *
-grow_buf(void *bp, int size)
-{
-	void *n;
-
-	if ((n = realloc(bp, (u_int)size)) == NULL)
-		err(1, "realloc");
-	bp = n;
-	return (bp);
+	return EXIT_SUCCESS;
 }
 
 /*
@@ -204,15 +199,15 @@ grow_buf(void *bp, int size)
  * the graph, then add them.
  */
 static void
-add_arc(char *s1, char *s2)
+add_arc(const char *s1, const char *s2)
 {
 	NODE *n1;
 	NODE *n2;
-	int bsize, i;
+	size_t bsize, i;
 
 	n1 = get_node(s1);
 
-	if (!strcmp(s1, s2))
+	if (strcmp(s1, s2) == 0)
 		return;
 
 	n2 = get_node(s2);
@@ -230,7 +225,7 @@ add_arc(char *s1, char *s2)
 		if (!n1->n_arcsize)
 			n1->n_arcsize = 10;
 		bsize = n1->n_arcsize * sizeof(*n1->n_arcs) * 2;
-		n1->n_arcs = grow_buf(n1->n_arcs, bsize);
+		n1->n_arcs = erealloc(n1->n_arcs, bsize);
 		n1->n_arcsize = bsize / sizeof(*n1->n_arcs);
 	}
 	n1->n_arcs[n1->n_narcs++] = n2;
@@ -239,31 +234,30 @@ add_arc(char *s1, char *s2)
 
 /* Find a node in the graph (insert if not found) and return a pointer to it. */
 static NODE *
-get_node(char *name)
+get_node(const char *name)
 {
 	DBT data, key;
 	NODE *n;
 
 	if (db == NULL &&
 	    (db = dbopen(NULL, O_RDWR, 0, DB_HASH, NULL)) == NULL)
-		err(1, "db: %s", name);
+		err(EXIT_FAILURE, "db: %s", name);
 
-	key.data = name;
+	key.data = __UNCONST(name);
 	key.size = strlen(name) + 1;
 
 	switch ((*db->get)(db, &key, &data, 0)) {
 	case 0:
 		(void)memmove(&n, data.data, sizeof(n));
-		return (n);
+		return n;
 	case 1:
 		break;
 	default:
 	case -1:
-		err(1, "db: %s", name);
+		err(EXIT_FAILURE, "db: %s", name);
 	}
 
-	if ((n = malloc(sizeof(NODE) + key.size)) == NULL)
-		err(1, "malloc");
+	n = emalloc(sizeof(NODE) + key.size);
 
 	n->n_narcs = 0;
 	n->n_arcsize = 0;
@@ -282,8 +276,8 @@ get_node(char *name)
 	data.data = &n;
 	data.size = sizeof(n);
 	if ((*db->put)(db, &key, &data, 0))
-		err(1, "db: %s", name);
-	return (n);
+		err(EXIT_FAILURE, "db: %s", name);
+	return n;
 }
 
 
@@ -304,7 +298,7 @@ static void
 tsort(void)
 {
 	NODE *n, *next;
-	int cnt, i;
+	size_t cnt, i;
 
 	while (graph != NULL) {
 		/*
@@ -333,10 +327,8 @@ tsort(void)
 			 */
 			for (cnt = 0, n = graph; n != NULL; n = n->n_next)
 				++cnt;
-			cycle_buf = malloc((u_int)sizeof(NODE *) * cnt);
-			longest_cycle = malloc((u_int)sizeof(NODE *) * cnt);
-			if (cycle_buf == NULL || longest_cycle == NULL)
-				err(1, "malloc");
+			cycle_buf = ecalloc(cnt, sizeof(*cycle_buf));
+			longest_cycle = ecalloc(cnt, sizeof(*longest_cycle));
 		}
 		for (n = graph; n != NULL; n = n->n_next) {
 			if (!(n->n_flags & NF_ACYCLIC)) {
@@ -367,10 +359,10 @@ static void
 remove_node(NODE *n)
 {
 	NODE **np;
-	int i;
+	size_t i;
 
 	(void)printf("%s\n", n->n_name);
-	for (np = n->n_arcs, i = n->n_narcs; --i >= 0; np++)
+	for (np = n->n_arcs, i = n->n_narcs; i-- > 0; np++)
 		--(*np)->n_refcnt;
 	n->n_narcs = 0;
 	*n->n_prevp = n->n_next;
@@ -380,21 +372,21 @@ remove_node(NODE *n)
 
 
 /* look for the longest? cycle from node from to node to. */
-static int
-find_cycle(NODE *from, NODE *to, int longest_len, int depth)
+static size_t
+find_cycle(NODE *from, NODE *to, size_t longest_len, size_t depth)
 {
 	NODE **np;
-	int i, len;
+	size_t i, len;
 
 	/*
 	 * avoid infinite loops and ignore portions of the graph known
 	 * to be acyclic
 	 */
 	if (from->n_flags & (NF_NODEST|NF_MARK|NF_ACYCLIC))
-		return (0);
+		return 0;
 	from->n_flags |= NF_MARK;
 
-	for (np = from->n_arcs, i = from->n_narcs; --i >= 0; np++) {
+	for (np = from->n_arcs, i = from->n_narcs; i-- > 0; np++) {
 		cycle_buf[depth] = *np;
 		if (*np == to) {
 			if (depth + 1 > longest_len) {
@@ -408,7 +400,7 @@ find_cycle(NODE *from, NODE *to, int longest_len, int depth)
 			len = find_cycle(*np, to, longest_len, depth + 1);
 
 			if (debug)
-				(void)printf("%*s %s->%s %d\n", depth, "",
+				(void)printf("%*s %s->%s %zu\n", (int)depth, "",
 				    from->n_name, to->n_name, len);
 
 			if (len == 0)
@@ -422,12 +414,12 @@ find_cycle(NODE *from, NODE *to, int longest_len, int depth)
 		}
 	}
 	from->n_flags &= ~NF_MARK;
-	return (longest_len);
+	return longest_len;
 }
 
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: tsort [-lq] [file]\n");
-	exit(1);
+	(void)fprintf(stderr, "Usage: %s [-dlqr] [file]\n", getprogname());
+	exit(EXIT_FAILURE);
 }
