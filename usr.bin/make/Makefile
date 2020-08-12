@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.86 2020/08/10 18:40:24 rillig Exp $
+#	$NetBSD: Makefile,v 1.87 2020/08/12 18:48:36 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -44,7 +44,8 @@ HDRS+=  trace.h
 # Whether to generate a coverage report after running the tests.
 USE_COVERAGE?=	no		# works only with gcc; clang9 fails to link
 .if ${USE_COVERAGE} == "yes"
-COPTS+=		--coverage -O0 -ggdb
+GCOV?=		gcov
+COPTS+=		--coverage -O2 -ggdb
 LDADD+=		--coverage
 .endif
 CLEANFILES+=	*.gcda *.gcno *.gcov
@@ -54,6 +55,18 @@ USE_UBSAN?=	no
 .if ${USE_UBSAN} == "yes"
 COPTS+=		-fsanitize=undefined
 LDADD+=		-fsanitize=undefined
+.endif
+
+# Whether to compile with GCC 10 from pkgsrc, during development.
+USE_GCC10?=	no
+.if ${USE_GCC10} == "yes"
+# CC is set further down in this file
+COPTS+=		-Wno-attributes	# for abs and labs
+COPTS.arch.c+=	-Wno-error=format-truncation
+COPTS.dir.c+=	-Wno-error=format-truncation
+COPTS.main.c+=	-Wno-error=format-truncation
+COPTS.meta.c+=	-Wno-error=format-truncation
+COPTS.parse.c+=	-Wno-error=format-truncation
 .endif
 
 # Whether to compile with GCC 9 from pkgsrc, during development.
@@ -66,6 +79,17 @@ COPTS.dir.c+=	-Wno-error=format-truncation
 COPTS.main.c+=	-Wno-error=format-truncation
 COPTS.meta.c+=	-Wno-error=format-truncation
 COPTS.parse.c+=	-Wno-error=format-truncation
+.endif
+
+# Whether to compile with GCC 8 from pkgsrc, during development.
+USE_GCC8?=	no
+.if ${USE_GCC8} == "yes"
+# CC is set further down in this file
+COPTS+=		-Wno-attributes	# for abs and labs
+COPTS.arch.c+=	-Wno-error=format-truncation
+COPTS.dir.c+=	-Wno-error=format-truncation
+COPTS.main.c+=	-Wno-error=format-truncation
+COPTS.meta.c+=	-Wno-error=format-truncation
 .endif
 
 USE_META?=	yes
@@ -108,8 +132,22 @@ COPTS.job.c+=	-Wno-format-nonliteral
 COPTS.parse.c+=	-Wno-format-nonliteral
 COPTS.var.c+=	-Wno-format-nonliteral
 
+.if ${USE_GCC10} == "yes"
+GCC9BASE?=	/usr/pkg/gcc10
+CC=		${GCC10BASE}/bin/gcc
+GCOV=		${GCC10BASE}/bin/gcov
+.endif
+
 .if ${USE_GCC9} == "yes"
-CC=		/usr/pkg/gcc9/bin/gcc
+GCC9BASE?=	/usr/pkg/gcc9
+CC=		${GCC9BASE}/bin/gcc
+GCOV=		${GCC9BASE}/bin/gcov
+.endif
+
+.if ${USE_GCC8} == "yes"
+GCC8BASE?=	/usr/pkg/gcc8
+CC=		${GCC8BASE}/bin/gcc
+GCOV=		${GCC8BASE}/bin/gcov
 .endif
 
 .if defined(TOOLDIR)
@@ -132,7 +170,7 @@ test: .MAKE
 	cd ${.CURDIR}/unit-tests \
 	&& MAKEFLAGS= ${.MAKE} -r -m / TEST_MAKE=${TEST_MAKE:U${.OBJDIR}/${PROG:T}} ${.TARGET}
 .if ${USE_COVERAGE} == yes
-	gcov ${GCOV_OPTS} ${SRCS}
+	${GCOV} ${GCOV_OPTS} ${SRCS}
 	sed -i 's,^\([^:]*\): *[0-9]*:,\1: ,' *.gcov
 .endif
 
