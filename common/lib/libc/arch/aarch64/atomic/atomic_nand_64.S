@@ -1,4 +1,4 @@
-/* $NetBSD: atomic_nand_64.S,v 1.1 2014/08/10 05:47:35 matt Exp $ */
+/* $NetBSD: atomic_nand_64.S,v 1.2 2020/08/12 12:59:57 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,9 +37,9 @@ ENTRY_NP(_atomic_nand_64)
 	mvn	x2, x0			/* complement source */
 	and	x2, x2, x1		/* calculate new value */
 	stxr	w3, x2, [x4]		/* try to store */
-	cbnz	w3, 1b			/*   succeed? no, try again */
-	dmb	st
+	cbnz	w3, 2f			/*   succeed? no, try again */
 	ret				/* return old value */
+2:	b	1b
 END(_atomic_nand_64)
 
 ATOMIC_OP_ALIAS(atomic_nand_64,_atomic_nand_64)
@@ -53,9 +53,9 @@ ENTRY_NP(_atomic_nand_64_nv)
 	mvn	x0, x0			/* complement source */
 	and	x0, x0, x1		/* calculate new value (return value) */
 	stxr	w3, x0, [x4]		/* try to store */
-	cbnz	w3, 1b			/*   succeed? no, try again? */
-	dmb	st
+	cbnz	w3, 2f			/*   succeed? no, try again? */
 	ret				/* return new value */
+2:	b	1b
 END(_atomic_nand_64_nv)
 
 ATOMIC_OP_ALIAS(atomic_nand_64_nv,_atomic_nand_64_nv)

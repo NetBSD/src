@@ -1,4 +1,4 @@
-/* $NetBSD: atomic_cas_64.S,v 1.3 2019/02/19 12:51:44 rin Exp $ */
+/* $NetBSD: atomic_cas_64.S,v 1.4 2020/08/12 12:59:57 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,9 +37,9 @@ ENTRY_NP(_atomic_cas_64)
 	cmp	x0, x1			/*   compare? */
 	b.ne	2f			/*     return if different */
 	stxr	w3, x2, [x4]		/* store new value */
-	cbnz	w3, 1b			/*   succeed? nope, try again. */
-	dmb	st
+	cbnz	w3, 3f			/*   succeed? nope, try again. */
 2:	ret				/* return. */
+3:	b	1b
 END(_atomic_cas_64)
 
 ATOMIC_OP_ALIAS(atomic_cas_64,_atomic_cas_64)
