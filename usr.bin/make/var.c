@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.446 2020/08/10 20:07:14 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.447 2020/08/12 18:53:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.446 2020/08/10 20:07:14 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.447 2020/08/12 18:53:59 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.446 2020/08/10 20:07:14 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.447 2020/08/12 18:53:59 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3026,17 +3026,19 @@ ApplyModifiers(
 	     * we are not interested.
 	     */
 	    int c;
-	    if (rval != NULL && *rval &&
+	    assert(rval != NULL);
+	    if (rval[0] != '\0' &&
 		(c = p[rlen]) != '\0' && c != ':' && c != st.endc) {
 		free(freeIt);
 		goto apply_mods;
 	    }
 
-	    VAR_DEBUG("Indirect modifier \"%s\" from \"%.*s\"\n", rval, rlen, p);
+	    VAR_DEBUG("Indirect modifier \"%s\" from \"%.*s\"\n",
+		      rval, rlen, p);
 
 	    p += rlen;
 
-	    if (rval != NULL && *rval) {
+	    if (rval[0] != '\0') {
 		const char *rval_pp = rval;
 		st.val = ApplyModifiers(&rval_pp, st.val, '\0', '\0', v,
 					ctxt, eflags, freePtr);
@@ -3549,11 +3551,12 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
     if (strchr(nstr, '$') != NULL && (eflags & VARE_WANTRES) != 0) {
 	nstr = Var_Subst(nstr, ctxt, eflags);
 	*freePtr = nstr;
+	assert(nstr != NULL);
     }
 
     v->flags &= ~VAR_IN_USE;
 
-    if (nstr != NULL && (haveModifier || extramodifiers != NULL)) {
+    if (haveModifier || extramodifiers != NULL) {
 	void *extraFree;
 
 	extraFree = NULL;
