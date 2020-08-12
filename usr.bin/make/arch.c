@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.82 2020/08/11 18:41:46 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.83 2020/08/12 19:36:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.82 2020/08/11 18:41:46 rillig Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.83 2020/08/12 19:36:14 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.82 2020/08/11 18:41:46 rillig Exp $");
+__RCSID("$NetBSD: arch.c,v 1.83 2020/08/12 19:36:14 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1050,7 +1050,7 @@ Arch_TouchLib(GNode *gn)
     struct ar_hdr   arh;      	/* Header describing table of contents */
     struct utimbuf  times;	/* Times for utime() call */
 
-    arch = ArchFindMember(gn->path, UNCONST(RANLIBMAG), &arh, "r+");
+    arch = ArchFindMember(gn->path, RANLIBMAG, &arh, "r+");
     snprintf(arh.ar_date, sizeof(arh.ar_date), "%-12ld", (long) now);
 
     if (arch != NULL) {
@@ -1264,7 +1264,7 @@ Arch_LibOODate(GNode *gn)
 	struct ar_hdr  	*arhPtr;    /* Header for __.SYMDEF */
 	int 	  	modTimeTOC; /* The table-of-contents's mod time */
 
-	arhPtr = ArchStatMember(gn->path, UNCONST(RANLIBMAG), FALSE);
+	arhPtr = ArchStatMember(gn->path, RANLIBMAG, FALSE);
 
 	if (arhPtr != NULL) {
 	    modTimeTOC = (int)strtol(arhPtr->ar_date, NULL, 10);
