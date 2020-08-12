@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.87 2020/08/10 19:53:19 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.88 2020/08/12 03:05:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.87 2020/08/10 19:53:19 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.88 2020/08/12 03:05:57 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.87 2020/08/10 19:53:19 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.88 2020/08/12 03:05:57 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1723,26 +1723,22 @@ Dir_CopyDir(void *p)
 char *
 Dir_MakeFlags(const char *flag, Lst path)
 {
-    char *str;			/* the string which will be returned */
-    char *s1, *s2;		/* the current directory preceded by 'flag' */
+    Buffer buf;
     LstNode ln;			/* the node of the current directory */
-    Path *p;			/* the structure describing the current
-				 * directory */
 
-    str = bmake_strdup("");
+    Buf_Init(&buf, 0);
 
     if (Lst_Open(path) == SUCCESS) {
 	while ((ln = Lst_Next(path)) != NULL) {
-	    p = (Path *)Lst_Datum(ln);
-	    s2 = str_concat2(flag, p->name);
-	    str = str_concat3(s1 = str, " ", s2);
-	    free(s1);
-	    free(s2);
+	    Path *p = (Path *)Lst_Datum(ln);
+	    Buf_AddStr(&buf, " ");
+	    Buf_AddStr(&buf, flag);
+	    Buf_AddStr(&buf, p->name);
 	}
 	Lst_Close(path);
     }
 
-    return str;
+    return Buf_Destroy(&buf, FALSE);
 }
 
 /*-
