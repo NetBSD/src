@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.S,v 1.17 2020/05/23 18:08:59 ryo Exp $	*/
+/*	$NetBSD: vectors.S,v 1.18 2020/08/12 13:19:35 skrll Exp $	*/
 
 #include <aarch64/asm.h>
 #include "assym.h"
@@ -81,8 +81,7 @@ ENTRY_NBTI(\func)
 
 	.if \el == 0
 	/* curlwp->l_private = tpidr{,ro}_el0 */
-	mrs	x1, tpidr_el1		/* curcpu() */
-	ldr	x1, [x1, #CI_CURLWP]	/* x1 = curcpu()->ci_curlwp */
+	mrs	x1, tpidr_el1		/* x1 = curlwp */
 	mrs	x0, tpidr\tpidr\()_el0
 	str	x0, [x1, #L_PRIVATE]	/* curlwp->l_private = tpidr{,ro}_el0 */
 

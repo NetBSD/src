@@ -1,7 +1,7 @@
-/* $NetBSD: cpu.h,v 1.25 2020/07/01 08:01:07 ryo Exp $ */
+/* $NetBSD: cpu.h,v 1.26 2020/08/12 13:19:35 skrll Exp $ */
 
 /*-
- * Copyright (c) 2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -75,19 +75,33 @@ struct cpu_info {
 	struct cpu_data ci_data;
 	device_t ci_dev;
 	cpuid_t ci_cpuid;
-	struct lwp *ci_curlwp;
+
+	/*
+	 * the following are in their own cache line, as they are stored to
+	 * regularly by remote CPUs; when they were mixed with other fields
+	 * we observed frequent cache misses.
+	 */
+	int ci_want_resched __aligned(COHERENCY_UNIT);
+	/* XXX pending IPIs? */
+
+	/*
+	 * this is stored frequently, and is fetched by remote CPUs.
+	 */
+	struct lwp *ci_curlwp __aligned(COHERENCY_UNIT);
 	struct lwp *ci_onproc;
-	struct lwp *ci_softlwps[SOFTINT_COUNT];
+
+	/*
+	 * largely CPU-private.
+	 */
+	struct lwp *ci_softlwps[SOFTINT_COUNT] __aligned(COHERENCY_UNIT);
 
 	uint64_t ci_lastintr;
 
 	int ci_mtx_oldspl;
 	int ci_mtx_count;
 
-	int ci_want_resched;
 	int ci_cpl;
 	volatile u_int ci_softints;
-	volatile u_int ci_astpending;
 	volatile u_int ci_intr_depth;
 
 	int ci_kfpu_spl;
@@ -117,18 +131,23 @@ struct cpu_info {
 } __aligned(COHERENCY_UNIT);
 
 #ifdef _KERNEL
-static inline struct cpu_info *
-curcpu(void)
+static inline struct lwp * __attribute__ ((const))
+aarch64_curlwp(void)
 {
-	struct cpu_info *ci;
-	__asm __volatile ("mrs %0, tpidr_el1" : "=r"(ci));
-	return ci;
+	struct lwp *l;
+	__asm("mrs %0, tpidr_el1" : "=r"(l));
+	return l;
 }
-#define curlwp			(curcpu()->ci_curlwp)
 
-#define setsoftast(ci)		atomic_or_uint(&(ci)->ci_astpending, __BIT(0))
-#define cpu_signotify(l)	setsoftast((l)->l_cpu)
+/* forward declaration; defined in sys/lwp.h. */
+static __inline struct cpu_info *lwp_getcpu(struct lwp *);
 
+#define	curcpu()		(lwp_getcpu(aarch64_curlwp()))
+#define	setsoftast(ci)		(cpu_signotify((ci)->ci_onproc))
+#undef curlwp
+#define	curlwp			(aarch64_curlwp())
+
+void	cpu_signotify(struct lwp *l);
 void	cpu_need_proftick(struct lwp *l);
 
 void	cpu_hatch(struct cpu_info *);
@@ -151,6 +170,7 @@ extern struct cpu_info cpu_info_store[];
 	cii = 0, __USE(cii), ci = curcpu(); ci != NULL; ci = NULL
 #endif /* MULTIPROCESSOR */
 
+#define	LWP0_CPU_INFO	(&cpu_info_store[0])
 
 static inline void
 cpu_dosoftints(void)

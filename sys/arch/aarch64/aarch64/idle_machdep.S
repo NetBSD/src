@@ -1,4 +1,4 @@
-/* $NetBSD: idle_machdep.S,v 1.5 2019/01/27 04:48:09 dholland Exp $ */
+/* $NetBSD: idle_machdep.S,v 1.6 2020/08/12 13:19:35 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_arm_intr_impl.h"
 #include "opt_ddb.h"
 
-RCSID("$NetBSD: idle_machdep.S,v 1.5 2019/01/27 04:48:09 dholland Exp $");
+RCSID("$NetBSD: idle_machdep.S,v 1.6 2020/08/12 13:19:35 skrll Exp $");
 
 #ifdef ARM_INTR_IMPL
 #include ARM_INTR_IMPL
@@ -74,7 +74,8 @@ ENTRY(cpu_idle)
 	adr	x0, 1f
 	str	x0, [sp, #TF_PC]		/* CLKF_PC refer to tf_pc */
 
-	mrs	x1, tpidr_el1			/* get curcpu() */
+	mrs	x1, tpidr_el1			/* get curlwp */
+	ldr	x1, [x1, #L_CPU]		/* get curcpu */
 	ldr	w28, [x1, #CI_INTR_DEPTH]	/* w28 = ci->ci_intr_depth */
 	add	w2, w28, #1			/* w2 = intr_depth + 1 */
 
@@ -86,7 +87,8 @@ ENTRY(cpu_idle)
 	str	w2, [x1, #CI_INTR_DEPTH]	/* ci->ci_intr_depth++ */
 	bl	ARM_IRQ_HANDLER			/* irqhandler(trapframe) */
 1:
-	mrs	x1, tpidr_el1			/* get curcpu() */
+	mrs	x1, tpidr_el1			/* get curlwp */
+	ldr	x1, [x1, #L_CPU]		/* get curcpu */
 	str	w28, [x1, #CI_INTR_DEPTH]	/* ci->ci_intr_depth = old */
 
 #if defined(__HAVE_FAST_SOFTINTS) && !defined(__HAVE_PIC_FAST_SOFTINTS)
