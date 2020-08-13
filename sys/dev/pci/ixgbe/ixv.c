@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.151 2020/06/25 07:53:02 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.152 2020/08/13 08:38:50 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -787,7 +787,7 @@ ixv_init_locked(struct adapter *adapter)
 
 	/* Start watchdog */
 	callout_reset(&adapter->timer, hz, ixv_local_timer, adapter);
-	atomic_and_uint(&adapter->timer_pending, ~1);
+	atomic_store_relaxed(&adapter->timer_pending, 0);
 
 	/* OK to schedule workqueues. */
 	adapter->schedule_wqs_ok = true;
@@ -1063,11 +1063,9 @@ static void
 ixv_schedule_admin_tasklet(struct adapter *adapter)
 {
 	if (adapter->schedule_wqs_ok) {
-		if (!adapter->admin_pending) {
-			atomic_or_uint(&adapter->admin_pending, 1);
+		if (atomic_cas_uint(&adapter->admin_pending, 0, 1) == 0)
 			workqueue_enqueue(adapter->admin_wq,
 			    &adapter->admin_wc, NULL);
-		}
 	}
 }
 
@@ -1252,11 +1250,9 @@ ixv_local_timer(void *arg)
 	struct adapter *adapter = arg;
 
 	if (adapter->schedule_wqs_ok) {
-		if (!adapter->timer_pending) {
-			atomic_or_uint(&adapter->timer_pending, 1);
+		if (atomic_cas_uint(&adapter->timer_pending, 0, 1) == 0)
 			workqueue_enqueue(adapter->timer_wq,
 			    &adapter->timer_wc, NULL);
-		}
 	}
 }
 
@@ -1348,7 +1344,7 @@ ixv_handle_timer(struct work *wk, void *context)
 	}
 #endif
 
-	atomic_and_uint(&adapter->timer_pending, ~1);
+	atomic_store_relaxed(&adapter->timer_pending, 0);
 	IXGBE_CORE_UNLOCK(adapter);
 	callout_reset(&adapter->timer, hz, ixv_local_timer, adapter);
 
@@ -1443,9 +1439,9 @@ ixv_ifstop(struct ifnet *ifp, int disable)
 	IXGBE_CORE_UNLOCK(adapter);
 
 	workqueue_wait(adapter->admin_wq, &adapter->admin_wc);
-	atomic_and_uint(&adapter->admin_pending, ~1);
+	atomic_store_relaxed(&adapter->admin_pending, 0);
 	workqueue_wait(adapter->timer_wq, &adapter->timer_wc);
-	atomic_and_uint(&adapter->timer_pending, ~1);
+	atomic_store_relaxed(&adapter->timer_pending, 0);
 }
 
 static void
@@ -3492,7 +3488,7 @@ ixv_handle_admin(struct work *wk, void *context)
 	ixv_update_link_status(adapter);
 
 	adapter->task_requests = 0;
-	atomic_and_uint(&adapter->admin_pending, ~1);
+	atomic_store_relaxed(&adapter->admin_pending, 0);
 
 	/* Re-enable interrupts */
 	IXGBE_WRITE_REG(hw, IXGBE_VTEIMS, (1 << adapter->vector));

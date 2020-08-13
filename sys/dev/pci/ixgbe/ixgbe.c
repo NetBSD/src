@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.233 2020/06/25 07:53:01 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.234 2020/08/13 08:38:50 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -1512,11 +1512,9 @@ static void
 ixgbe_schedule_admin_tasklet(struct adapter *adapter)
 {
 	if (adapter->schedule_wqs_ok) {
-		if (!adapter->admin_pending) {
-			atomic_or_uint(&adapter->admin_pending, 1);
+		if (atomic_cas_uint(&adapter->admin_pending, 0, 1) == 0)
 			workqueue_enqueue(adapter->admin_wq,
 			    &adapter->admin_wc, NULL);
-		}
 	}
 }
 
@@ -4063,7 +4061,7 @@ ixgbe_init_locked(struct adapter *adapter)
 	ixgbe_enable_rx_dma(hw, rxctrl);
 
 	callout_reset(&adapter->timer, hz, ixgbe_local_timer, adapter);
-	atomic_and_uint(&adapter->timer_pending, ~1);
+	atomic_store_relaxed(&adapter->timer_pending, 0);
 	if (adapter->feat_en & IXGBE_FEATURE_RECOVERY_MODE)
 		callout_reset(&adapter->recovery_mode_timer, hz,
 		    ixgbe_recovery_mode_timer, adapter);
@@ -4446,11 +4444,9 @@ ixgbe_local_timer(void *arg)
 	struct adapter *adapter = arg;
 
 	if (adapter->schedule_wqs_ok) {
-		if (!adapter->timer_pending) {
-			atomic_or_uint(&adapter->timer_pending, 1);
+		if (atomic_cas_uint(&adapter->timer_pending, 0, 1) == 0)
 			workqueue_enqueue(adapter->timer_wq,
 			    &adapter->timer_wc, NULL);
-		}
 	}
 }
 
@@ -4549,7 +4545,7 @@ ixgbe_handle_timer(struct work *wk, void *context)
 #endif
 
 out:
-	atomic_and_uint(&adapter->timer_pending, ~1);
+	atomic_store_relaxed(&adapter->timer_pending, 0);
 	IXGBE_CORE_UNLOCK(adapter);
 	callout_reset(&adapter->timer, hz, ixgbe_local_timer, adapter);
 	return;
@@ -4570,8 +4566,8 @@ ixgbe_recovery_mode_timer(void *arg)
 {
 	struct adapter *adapter = arg;
 
-	if (!adapter->recovery_mode_timer_pending) {
-		atomic_or_uint(&adapter->recovery_mode_timer_pending, 1);
+	if (atomic_cas_uint(&adapter->recovery_mode_timer_pending, 0, 1) == 0)
+	{
 		workqueue_enqueue(adapter->recovery_mode_timer_wq,
 		    &adapter->recovery_mode_timer_wc, NULL);
 	}
@@ -4595,7 +4591,7 @@ ixgbe_handle_recovery_mode_timer(struct work *wk, void *context)
 	} else
 		atomic_cas_uint(&adapter->recovery_mode, 1, 0);
 
-	atomic_and_uint(&adapter->recovery_mode_timer_pending, ~1);
+	atomic_store_relaxed(&adapter->recovery_mode_timer_pending, 0);
 	callout_reset(&adapter->recovery_mode_timer, hz,
 	    ixgbe_recovery_mode_timer, adapter);
 	IXGBE_CORE_UNLOCK(adapter);
@@ -4808,7 +4804,7 @@ ixgbe_handle_admin(struct work *wk, void *context)
 		}
 #endif
 	}
-	atomic_and_uint(&adapter->admin_pending, ~1);
+	atomic_store_relaxed(&adapter->admin_pending, 0);
 	if ((adapter->feat_en & IXGBE_FEATURE_MSIX) != 0) {
 		/* Re-enable other interrupts */
 		IXGBE_WRITE_REG(hw, IXGBE_EIMS, IXGBE_EIMS_OTHER);
@@ -4829,9 +4825,9 @@ ixgbe_ifstop(struct ifnet *ifp, int disable)
 	IXGBE_CORE_UNLOCK(adapter);
 
 	workqueue_wait(adapter->admin_wq, &adapter->admin_wc);
-	atomic_and_uint(&adapter->admin_pending, ~1);
+	atomic_store_relaxed(&adapter->admin_pending, 0);
 	workqueue_wait(adapter->timer_wq, &adapter->timer_wc);
-	atomic_and_uint(&adapter->timer_pending, ~1);
+	atomic_store_relaxed(&adapter->timer_pending, 0);
 }
 
 /************************************************************************
