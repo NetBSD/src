@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.89 2020/08/13 02:53:15 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.90 2020/08/13 03:00:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.89 2020/08/13 02:53:15 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.90 2020/08/13 03:00:44 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.89 2020/08/13 02:53:15 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.90 2020/08/13 03:00:44 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -732,22 +732,13 @@ concat3(const char *a, size_t a_len, const char *b, size_t b_len,
 static void
 DirExpandCurly(const char *word, const char *brace, Lst path, Lst expansions)
 {
+    const char *prefix, *middle, *piece, *middle_end, *suffix;
+    size_t prefix_len, suffix_len;
+
     /* Split the word into prefix '{' middle '}' suffix. */
 
-    const char *middle = brace + 1;
-    const char *middle_end = closing_brace(middle);
-    size_t middle_len = (size_t)(middle_end - middle);
-    const char *prefix;
-    size_t prefix_len;
-    const char *suffix;
-    size_t suffix_len;
-    const char *piece;
-
-    if (DEBUG(DIR)) {
-	fprintf(debug_file, "%s: word=\"%s\" middle=\"%.*s\"\n",
-		__func__, word, (int)middle_len, middle);
-    }
-
+    middle = brace + 1;
+    middle_end = closing_brace(middle);
     if (*middle_end == '\0') {
 	Error("Unterminated {} clause \"%s\"", middle);
 	return;
@@ -767,12 +758,6 @@ DirExpandCurly(const char *word, const char *brace, Lst path, Lst expansions)
 
 	char *file = concat3(prefix, prefix_len, piece, piece_len,
 			     suffix, suffix_len);
-
-	if (DEBUG(DIR)) {
-	    fprintf(debug_file, "%s: \"%.*s\" + \"%.*s\" + \"%s\" = \"%s\"\n",
-		    __func__, (int)prefix_len, prefix, (int)piece_len, piece,
-		    suffix, file);
-	}
 
 	if (contains_wildcard(file)) {
 	    Dir_Expand(file, path, expansions);
