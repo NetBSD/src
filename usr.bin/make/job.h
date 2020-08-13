@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.43 2020/07/03 08:13:23 rillig Exp $	*/
+/*	$NetBSD: job.h,v 1.44 2020/08/13 03:54:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -77,8 +77,8 @@
  * job.h --
  *	Definitions pertaining to the running of jobs in parallel mode.
  */
-#ifndef _JOB_H_
-#define _JOB_H_
+#ifndef MAKE_JOB_H
+#define MAKE_JOB_H
 
 #define TMPPAT	"makeXXXXXX"		/* relative to tmpdir */
 
@@ -271,4 +271,4 @@ void Job_ServerStart(int, int, int);
 void Job_SetPrefix(void);
 Boolean Job_RunTarget(const char *, const char *);
 
-#endif /* _JOB_H_ */
+#endif /* MAKE_JOB_H */
