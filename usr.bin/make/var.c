@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.448 2020/08/12 19:14:38 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.449 2020/08/13 04:12:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.448 2020/08/12 19:14:38 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.449 2020/08/13 04:12:13 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.448 2020/08/12 19:14:38 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.449 2020/08/13 04:12:13 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1474,7 +1474,7 @@ ModifyWord_Loop(const char *word, SepBuf *buf, void *data)
  * to scan the list backwards if first > last.
  */
 static char *
-VarSelectWords(Byte sep, Boolean oneBigWord, const char *str, int first,
+VarSelectWords(char sep, Boolean oneBigWord, const char *str, int first,
 	       int last)
 {
     char **av;			/* word list */
@@ -1561,7 +1561,7 @@ ModifyWord_Realpath(const char *word, SepBuf *buf, void *data MAKE_ATTR_UNUSED)
  *-----------------------------------------------------------------------
  */
 static char *
-ModifyWords(GNode *ctx, Byte sep, Boolean oneBigWord,
+ModifyWords(GNode *ctx, char sep, Boolean oneBigWord,
 	    const char *str, ModifyWordsCallback modifyWord, void *data)
 {
     SepBuf result;
@@ -1927,7 +1927,7 @@ typedef struct {
 				 * to the expression */
     char missing_delim;		/* For error reporting */
 
-    Byte sep;			/* Word separator in expansions
+    char sep;			/* Word separator in expansions
 				 * (see the :ts modifier) */
     Boolean oneBigWord;		/* TRUE if the variable value is treated as a
 				 * single big word, even if it contains
@@ -2487,7 +2487,7 @@ ApplyModifier_ToSep(const char **pp, ApplyModifiersState *st)
 	get_numeric:
 	    {
 		char *end;
-		st->sep = (Byte)strtoul(xp, &end, base);
+		st->sep = (char)strtoul(xp, &end, base);
 		if (*end != ':' && *end != st->endc)
 		    return AMR_BAD;
 		*pp = end;
