@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.115 2020/08/11 18:44:52 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.116 2020/08/13 03:54:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -77,8 +77,8 @@
  *	The global definitions for pmake
  */
 
-#ifndef _MAKE_H_
-#define _MAKE_H_
+#ifndef MAKE_MAKE_H
+#define MAKE_MAKE_H
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -524,4 +524,4 @@ int cached_stat(const char *, void *);
 #define KILLPG(pid, sig)	killpg((pid), (sig))
 #endif
 
-#endif /* _MAKE_H_ */
+#endif /* MAKE_MAKE_H */

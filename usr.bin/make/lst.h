@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.20 2014/09/07 20:55:34 joerg Exp $	*/
+/*	$NetBSD: lst.h,v 1.21 2020/08/13 03:54:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -77,8 +77,8 @@
  * lst.h --
  *	Header for using the list library
  */
-#ifndef _LST_H_
-#define _LST_H_
+#ifndef MAKE_LST_H
+#define MAKE_LST_H
 
 #include	<sys/param.h>
 #include	<stdlib.h>
@@ -186,4 +186,4 @@ ReturnStatus	Lst_EnQueue(Lst, void *);
 /* Remove an element from head of queue */
 void		*Lst_DeQueue(Lst);
 
-#endif /* _LST_H_ */
+#endif /* MAKE_LST_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.17 2020/08/06 17:22:15 rillig Exp $	*/
+/*	$NetBSD: hash.h,v 1.18 2020/08/13 03:54:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -78,8 +78,8 @@
  * 	which maintains hash tables.
  */
 
-#ifndef	_HASH_H
-#define	_HASH_H
+#ifndef	MAKE_HASH_H
+#define	MAKE_HASH_H
 
 /*
  * The following defines one entry in the hash table.
@@ -143,4 +143,4 @@ Hash_Entry *Hash_EnumNext(Hash_Search *);
 void Hash_ForEach(Hash_Table *, void (*)(void *, void *), void *);
 void Hash_DebugStats(Hash_Table *, const char *);
 
-#endif /* _HASH_H */
+#endif /* MAKE_HASH_H */
