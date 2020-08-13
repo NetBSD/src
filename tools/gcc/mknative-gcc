@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.104 2020/08/12 08:53:20 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.105 2020/08/13 01:52:37 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -24,8 +24,15 @@ fi
 
 . $_TOP/tools/gcc/mknative.common
 
-_OUTDIR="$_TOP/external/gpl3/gcc"
-_OUTDIRBASE="external/gpl3/gcc"
+case $0 in
+	*mknative-gcc.old)
+		_OUTDIRBASE="external/gpl3/gcc.old"
+		;;
+	*)
+		_OUTDIRBASE="external/gpl3/gcc"
+		;;
+esac
+_OUTDIR="$_TOP/$_OUTDIRBASE"
 
 sanitise_includes () {
 	sed \
