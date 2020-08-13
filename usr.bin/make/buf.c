@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.34 2020/08/09 19:51:02 rillig Exp $	*/
+/*	$NetBSD: buf.c,v 1.35 2020/08/13 04:12:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: buf.c,v 1.34 2020/08/09 19:51:02 rillig Exp $";
+static char rcsid[] = "$NetBSD: buf.c,v 1.35 2020/08/13 04:12:13 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)buf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: buf.c,v 1.34 2020/08/09 19:51:02 rillig Exp $");
+__RCSID("$NetBSD: buf.c,v 1.35 2020/08/13 04:12:13 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -104,10 +104,10 @@ Buf_Expand_1(Buffer *bp)
 
 /* Add the given bytes to the buffer. */
 void
-Buf_AddBytes(Buffer *bp, const Byte *bytesPtr, size_t numBytes)
+Buf_AddBytes(Buffer *bp, const char *bytesPtr, size_t numBytes)
 {
     size_t count = bp->count;
-    Byte *ptr;
+    char *ptr;
 
     if (__predict_false(count + numBytes >= bp->size)) {
 	bp->size += max(bp->size, numBytes + 16);
@@ -159,7 +159,7 @@ Buf_AddInt(Buffer *bp, int n)
  *
  * Returns the pointer to the data and optionally the length of the
  * data in the buffer. */
-Byte *
+char *
 Buf_GetAll(Buffer *bp, size_t *numBytesPtr)
 {
     if (numBytesPtr != NULL)
@@ -192,10 +192,10 @@ Buf_Init(Buffer *bp, size_t size)
 /* Reset the buffer.
  * If freeData is TRUE, the data from the buffer is freed as well.
  * Otherwise it is kept and returned. */
-Byte *
+char *
 Buf_Destroy(Buffer *buf, Boolean freeData)
 {
-    Byte *data = buf->buffer;
+    char *data = buf->buffer;
     if (freeData) {
 	free(data);
 	data = NULL;
@@ -216,13 +216,13 @@ Buf_Destroy(Buffer *buf, Boolean freeData)
  *
  * If the buffer size is much greater than its content,
  * a new buffer will be allocated and the old one freed. */
-Byte *
+char *
 Buf_DestroyCompact(Buffer *buf)
 {
 #if BUF_COMPACT_LIMIT > 0
     if (buf->size - buf->count >= BUF_COMPACT_LIMIT) {
 	/* We trust realloc to be smart */
-	Byte *data = bmake_realloc(buf->buffer, buf->count + 1);
+	char *data = bmake_realloc(buf->buffer, buf->count + 1);
 	data[buf->count] = 0;
 	Buf_Destroy(buf, FALSE);
 	return data;
