@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.91 2020/08/13 03:07:49 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.92 2020/08/13 03:33:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.91 2020/08/13 03:07:49 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.92 2020/08/13 03:33:56 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.91 2020/08/13 03:07:49 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.92 2020/08/13 03:33:56 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -146,6 +146,17 @@ __RCSID("$NetBSD: dir.c,v 1.91 2020/08/13 03:07:49 rillig Exp $");
 #include "hash.h"
 #include "dir.h"
 #include "job.h"
+
+
+#define DIR_DEBUG0(fmt) \
+    if (!DEBUG(DIR)) (void) 0; else fprintf(debug_file, fmt)
+
+#define DIR_DEBUG1(fmt, arg1) \
+    if (!DEBUG(DIR)) (void) 0; else fprintf(debug_file, fmt, arg1)
+
+#define DIR_DEBUG2(fmt, arg1, arg2) \
+    if (!DEBUG(DIR)) (void) 0; else fprintf(debug_file, fmt, arg1, arg2)
+
 
 /*
  *	A search path consists of a Lst of Path structures. A Path structure
@@ -296,10 +307,8 @@ cached_stats(Hash_Table *htp, const char *pathname, struct stat *st,
 	st->st_mode = cst->mode;
 	st->st_mtime = (flags & CST_LSTAT) ? cst->lmtime : cst->mtime;
 	if (st->st_mtime) {
-	    if (DEBUG(DIR)) {
-		fprintf(debug_file, "Using cached time %s for %s\n",
-			Targ_FmtTime(st->st_mtime), pathname);
-	    }
+	    DIR_DEBUG2("Using cached time %s for %s\n",
+		       Targ_FmtTime(st->st_mtime), pathname);
 	    return 0;
 	}
     }
@@ -324,10 +333,8 @@ cached_stats(Hash_Table *htp, const char *pathname, struct stat *st,
 	cst->mtime = st->st_mtime;
     }
     cst->mode = st->st_mode;
-    if (DEBUG(DIR)) {
-	fprintf(debug_file, "   Caching %s for %s\n",
-		Targ_FmtTime(st->st_mtime), pathname);
-    }
+    DIR_DEBUG2("   Caching %s for %s\n",
+	       Targ_FmtTime(st->st_mtime), pathname);
 
     return 0;
 }
@@ -814,20 +821,8 @@ DirExpandInt(const char *word, Lst path, Lst expansions)
     }
 }
 
-/*-
- *-----------------------------------------------------------------------
- * DirPrintWord --
- *	Print a word in the list of expansions. Callback for Dir_Expand
- *	when DEBUG(DIR), via Lst_ForEach.
- *
- * Results:
- *	=== 0
- *
- * Side Effects:
- *	The passed word is printed, followed by a space.
- *
- *-----------------------------------------------------------------------
- */
+/* Print a word in the list of expansions.
+ * Callback for Dir_Expand when DEBUG(DIR), via Lst_ForEach. */
 static int
 DirPrintWord(void *word, void *dummy MAKE_ATTR_UNUSED)
 {
@@ -862,9 +857,7 @@ Dir_Expand(const char *word, Lst path, Lst expansions)
 {
     const char *cp;
 
-    if (DEBUG(DIR)) {
-	fprintf(debug_file, "Expanding \"%s\"... ", word);
-    }
+    DIR_DEBUG1("Expanding \"%s\"... ", word);
 
     cp = strchr(word, '{');
     if (cp) {
@@ -891,13 +884,12 @@ Dir_Expand(const char *word, Lst path, Lst expansions)
 		/*
 		 * Back up to the start of the component
 		 */
-		char *dirpath;
-
 		while (cp > word && *cp != '/') {
 		    cp--;
 		}
 		if (cp != word) {
 		    char sc;
+		    char *dirpath;
 		    /*
 		     * If the glob isn't in the first component, try and find
 		     * all the components up to the one with a wildcard.
@@ -971,17 +963,13 @@ DirLookup(Path *p, const char *name MAKE_ATTR_UNUSED, const char *cp,
 {
     char *file;			/* the current filename to check */
 
-    if (DEBUG(DIR)) {
-	fprintf(debug_file, "   %s ...\n", p->name);
-    }
+    DIR_DEBUG1("   %s ...\n", p->name);
 
     if (Hash_FindEntry(&p->files, cp) == NULL)
 	return NULL;
 
     file = str_concat3(p->name, "/", cp);
-    if (DEBUG(DIR)) {
-	fprintf(debug_file, "   returning %s\n", file);
-    }
+    DIR_DEBUG1("   returning %s\n", file);
     p->hits += 1;
     hits += 1;
     return file;
@@ -1017,9 +1005,7 @@ DirLookupSubdir(Path *p, const char *name)
 	file = bmake_strdup(name);
     }
 
-    if (DEBUG(DIR)) {
-	fprintf(debug_file, "checking %s ...\n", file);
-    }
+    DIR_DEBUG1("checking %s ...\n", file);
 
     if (cached_stat(file, &stb) == 0) {
 	nearmisses += 1;
@@ -1050,9 +1036,7 @@ DirLookupAbs(Path *p, const char *name, const char *cp)
     char *p1;			/* pointer into p->name */
     const char *p2;		/* pointer into name */
 
-    if (DEBUG(DIR)) {
-	fprintf(debug_file, "   %s ...\n", p->name);
-    }
+    DIR_DEBUG1("   %s ...\n", p->name);
 
     /*
      * If the file has a leading path component and that component
@@ -1068,18 +1052,14 @@ DirLookupAbs(Path *p, const char *name, const char *cp)
     }
 
     if (Hash_FindEntry(&p->files, cp) == NULL) {
-	if (DEBUG(DIR)) {
-	    fprintf(debug_file, "   must be here but isn't -- returning\n");
-	}
+	DIR_DEBUG0("   must be here but isn't -- returning\n");
 	/* Return empty string: terminates search */
 	return bmake_strdup("");
     }
 
     p->hits += 1;
     hits += 1;
-    if (DEBUG(DIR)) {
-	fprintf(debug_file, "   returning %s\n", name);
-    }
+    DIR_DEBUG1("   returning %s\n", name);
     return bmake_strdup(name);
 }
 
@@ -1101,17 +1081,13 @@ DirFindDot(Boolean hasSlash MAKE_ATTR_UNUSED, const char *name, const char *cp)
 {
 
     if (Hash_FindEntry(&dot->files, cp) != NULL) {
-	if (DEBUG(DIR)) {
-	    fprintf(debug_file, "   in '.'\n");
-	}
+	DIR_DEBUG0("   in '.'\n");
 	hits += 1;
 	dot->hits += 1;
 	return bmake_strdup(name);
     }
     if (cur && Hash_FindEntry(&cur->files, cp) != NULL) {
-	if (DEBUG(DIR)) {
-	    fprintf(debug_file, "   in ${.CURDIR} = %s\n", cur->name);
-	}
+	DIR_DEBUG1("   in ${.CURDIR} = %s\n", cur->name);
 	hits += 1;
 	cur->hits += 1;
 	return str_concat3(cur->name, "/", cp);
@@ -1167,14 +1143,10 @@ Dir_FindFile(const char *name, Lst path)
 	cp = name;
     }
 
-    if (DEBUG(DIR)) {
-	fprintf(debug_file, "Searching for %s ...", name);
-    }
+    DIR_DEBUG1("Searching for %s ...", name);
 
     if (Lst_Open(path) == FAILURE) {
-	if (DEBUG(DIR)) {
-	    fprintf(debug_file, "couldn't open path, file not found\n");
-	}
+	DIR_DEBUG0("couldn't open path, file not found\n");
 	misses += 1;
 	return NULL;
     }
@@ -1183,13 +1155,10 @@ Dir_FindFile(const char *name, Lst path)
 	p = (Path *)Lst_Datum(ln);
 	if (p == dotLast) {
 	    hasLastDot = TRUE;
-	    if (DEBUG(DIR))
-		fprintf(debug_file, "[dot last]...");
+	    DIR_DEBUG0("[dot last]...");
 	}
     }
-    if (DEBUG(DIR)) {
-	fprintf(debug_file, "\n");
-    }
+    DIR_DEBUG0("\n");
 
     /*
      * If there's no leading directory components or if the leading
@@ -1248,9 +1217,7 @@ Dir_FindFile(const char *name, Lst path)
      * This phase is only performed if the file is *not* absolute.
      */
     if (!hasSlash) {
-	if (DEBUG(DIR)) {
-	    fprintf(debug_file, "   failed.\n");
-	}
+	DIR_DEBUG0("   failed.\n");
 	misses += 1;
 	return NULL;
     }
@@ -1263,9 +1230,7 @@ Dir_FindFile(const char *name, Lst path)
     if (name[0] != '/') {
 	Boolean checkedDot = FALSE;
 
-	if (DEBUG(DIR)) {
-	    fprintf(debug_file, "   Trying subdirectories...\n");
-	}
+	DIR_DEBUG0("   Trying subdirectories...\n");
 
 	if (!hasLastDot) {
 	    if (dot) {
@@ -1309,9 +1274,7 @@ Dir_FindFile(const char *name, Lst path)
 	     * Already checked by the given name, since . was in the path,
 	     * so no point in proceeding...
 	     */
-	    if (DEBUG(DIR)) {
-		fprintf(debug_file, "   Checked . already, returning NULL\n");
-	    }
+	    DIR_DEBUG0("   Checked . already, returning NULL\n");
 	    return NULL;
 	}
 
@@ -1326,9 +1289,7 @@ Dir_FindFile(const char *name, Lst path)
 	 * file does not exist at all.  This is signified by DirLookupAbs()
 	 * returning an empty string.
 	 */
-	if (DEBUG(DIR)) {
-	    fprintf(debug_file, "   Trying exact path matches...\n");
-	}
+	DIR_DEBUG0("   Trying exact path matches...\n");
 
 	if (!hasLastDot && cur &&
 	    ((file = DirLookupAbs(cur, name, cp)) != NULL)) {
@@ -1405,18 +1366,14 @@ Dir_FindFile(const char *name, Lst path)
 	return NULL;
     }
 #else /* !notdef */
-    if (DEBUG(DIR)) {
-	fprintf(debug_file, "   Looking for \"%s\" ...\n", name);
-    }
+    DIR_DEBUG1("   Looking for \"%s\" ...\n", name);
 
     bigmisses += 1;
     if (cached_stat(name, &stb) == 0) {
 	return bmake_strdup(name);
     }
 
-    if (DEBUG(DIR)) {
-	fprintf(debug_file, "   failed. Returning NULL\n");
-    }
+    DIR_DEBUG0("   failed. Returning NULL\n");
     return NULL;
 #endif /* notdef */
 }
@@ -1562,9 +1519,8 @@ Dir_MTime(GNode *gn, Boolean recheck)
 		    }
 		}
 	    }
-	    if (DEBUG(DIR))
-		fprintf(debug_file, "Found '%s' as '%s'\n",
-			gn->name, fullName ? fullName : "(not found)");
+	    DIR_DEBUG2("Found '%s' as '%s'\n",
+		       gn->name, fullName ? fullName : "(not found)");
 	}
     } else {
 	fullName = gn->path;
@@ -1639,9 +1595,7 @@ Dir_AddDir(Lst path, const char *name)
 	    (void)Lst_AtEnd(path, p);
 	}
     } else {
-	if (DEBUG(DIR)) {
-	    fprintf(debug_file, "Caching %s ...", name);
-	}
+	DIR_DEBUG1("Caching %s ...", name);
 
 	if ((d = opendir(name)) != NULL) {
 	    p = bmake_malloc(sizeof(Path));
@@ -1668,9 +1622,7 @@ Dir_AddDir(Lst path, const char *name)
 	    if (path != NULL)
 		(void)Lst_AtEnd(path, p);
 	}
-	if (DEBUG(DIR)) {
-	    fprintf(debug_file, "done\n");
-	}
+	DIR_DEBUG0("done\n");
     }
     return p;
 }
