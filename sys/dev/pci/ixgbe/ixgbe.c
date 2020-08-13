@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.234 2020/08/13 08:38:50 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.235 2020/08/13 08:42:18 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -1228,6 +1228,8 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 		/* Set up the timer callout */
 		callout_init(&adapter->recovery_mode_timer,
 		    IXGBE_CALLOUT_FLAGS);
+		snprintf(wqname, sizeof(wqname), "%s-recovery",
+		    device_xname(dev));
 		error = workqueue_create(&adapter->recovery_mode_timer_wq,
 		    wqname, ixgbe_handle_recovery_mode_timer, adapter,
 		    IXGBE_WORKQUEUE_PRI, IPL_NET, IXGBE_TASKLET_WQ_FLAGS);
