@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.286 2020/02/23 15:46:42 ad Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.287 2020/08/13 17:26:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.286 2020/02/23 15:46:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.287 2020/08/13 17:26:43 riastradh Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -487,7 +487,7 @@ lfs_writevnodes_selector(void *cl, struct vnode *vp)
 	KASSERT(mutex_owned(vp->v_interlock));
 
 	ip = VTOI(vp);
-	if (ip == NULL || vp->v_type == VNON)
+	if (ip == NULL || vp->v_type == VNON || ip->i_nlink <= 0)
 		return false;
 	if ((op == VN_DIROP && !(vp->v_uflag & VU_DIROP)) ||
 	    (op != VN_DIROP && op != VN_CLEAN && (vp->v_uflag & VU_DIROP))) {
