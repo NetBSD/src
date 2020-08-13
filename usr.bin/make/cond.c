@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.93 2020/08/09 19:51:02 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.94 2020/08/13 19:30:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.93 2020/08/09 19:51:02 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.94 2020/08/13 19:30:37 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.93 2020/08/09 19:51:02 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.94 2020/08/13 19:30:37 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -395,7 +395,7 @@ CondGetString(Boolean doEval, Boolean *quoted, void **freeIt, Boolean strictLHS)
     const char *cp;
     const char *str;
     int len;
-    int qt;
+    Boolean qt;
     const char *start;
 
     Buf_Init(&buf, 0);
