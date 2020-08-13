@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.88 2020/08/12 03:05:57 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.89 2020/08/13 02:53:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.88 2020/08/12 03:05:57 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.89 2020/08/13 02:53:15 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.88 2020/08/12 03:05:57 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.89 2020/08/13 02:53:15 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -259,7 +259,7 @@ static char *DirLookupAbs(Path *, const char *, const char *);
 
 
 /*
- * We use stat(2) a lot, cache the results
+ * We use stat(2) a lot, cache the results.
  * mtime and mode are all we care about.
  */
 struct cache_st {
@@ -269,11 +269,16 @@ struct cache_st {
 };
 
 /* minimize changes below */
-#define CST_LSTAT 1
-#define CST_UPDATE 2
+typedef enum {
+    CST_LSTAT = 0x01,		/* call lstat(2) instead of stat(2) */
+    CST_UPDATE = 0x02		/* ignore existing cached entry */
+} CachedStatsFlags;
 
+/* Returns 0 and the result of stat(2) or lstat(2) in *st, or -1 on error.
+ * Only st->st_mode and st->st_mtime are filled. */
 static int
-cached_stats(Hash_Table *htp, const char *pathname, struct stat *st, int flags)
+cached_stats(Hash_Table *htp, const char *pathname, struct stat *st,
+	     CachedStatsFlags flags)
 {
     Hash_Entry *entry;
     struct cache_st *cst;
@@ -284,7 +289,7 @@ cached_stats(Hash_Table *htp, const char *pathname, struct stat *st, int flags)
 
     entry = Hash_FindEntry(htp, pathname);
 
-    if (entry && (flags & CST_UPDATE) == 0) {
+    if (entry && !(flags & CST_UPDATE)) {
 	cst = entry->clientPtr;
 
 	memset(st, 0, sizeof(*st));
@@ -313,7 +318,7 @@ cached_stats(Hash_Table *htp, const char *pathname, struct stat *st, int flags)
 	memset(entry->clientPtr, 0, sizeof(*cst));
     }
     cst = entry->clientPtr;
-    if ((flags & CST_LSTAT)) {
+    if (flags & CST_LSTAT) {
 	cst->lmtime = st->st_mtime;
     } else {
 	cst->mtime = st->st_mtime;
