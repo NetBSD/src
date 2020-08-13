@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.94 2020/08/13 19:30:37 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.95 2020/08/13 20:13:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.94 2020/08/13 19:30:37 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.95 2020/08/13 20:13:46 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.94 2020/08/13 19:30:37 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.95 2020/08/13 20:13:46 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -531,7 +531,7 @@ compare_expression(Boolean doEval)
 
     t = TOK_ERROR;
     rhs = NULL;
-    lhsFree = rhsFree = FALSE;
+    lhsFree = rhsFree = NULL;
     lhsQuoted = rhsQuoted = FALSE;
 
     /*
