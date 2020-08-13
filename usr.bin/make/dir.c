@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.90 2020/08/13 03:00:44 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.91 2020/08/13 03:07:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.90 2020/08/13 03:00:44 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.91 2020/08/13 03:07:49 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.90 2020/08/13 03:00:44 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.91 2020/08/13 03:07:49 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -651,11 +651,15 @@ DirMatchFiles(const char *pattern, Path *p, Lst expansions)
     return 0;
 }
 
+/* Find the next closing brace in the string, taking nested braces into
+ * account. */
 static const char *
 closing_brace(const char *p)
 {
     int nest = 0;
-    while (*p != '\0' && !(*p == '}' && nest == 0)) {
+    while (*p != '\0') {
+        if (*p == '}' && nest == 0)
+	    break;
 	if (*p == '{')
 	    nest++;
 	if (*p == '}')
@@ -665,11 +669,15 @@ closing_brace(const char *p)
     return p;
 }
 
+/* Find the next closing brace or comma in the string, taking nested braces
+ * into account. */
 static const char *
 separator_comma(const char *p)
 {
     int nest = 0;
-    while (*p != '\0' && !((*p == '}' || *p == ',') && nest == 0)) {
+    while (*p != '\0') {
+        if ((*p == '}' || *p == ',') && nest == 0)
+	    break;
 	if (*p == '{')
 	    nest++;
 	if (*p == '}')
