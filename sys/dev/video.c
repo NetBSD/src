@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.38 2020/08/10 19:27:27 rjs Exp $ */
+/* $NetBSD: video.c,v 1.39 2020/08/13 16:45:58 riastradh Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.38 2020/08/10 19:27:27 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.39 2020/08/13 16:45:58 riastradh Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -140,7 +140,7 @@ struct video_stream {
 					      * sequence, wraps around */
 	bool			vs_drop; /* drop payloads from current
 					  * frameno? */
-	
+
 	enum v4l2_buf_type	vs_type;
 	uint8_t			vs_nbufs;
 	struct video_buffer	**vs_buf;
@@ -325,7 +325,7 @@ static void	video_stream_sample_done(struct video_stream *);
 static const char *	video_ioctl_str(u_long);
 #endif
 
-	
+
 static int
 video_match(device_t parent, cfdata_t match, void *aux)
 {
@@ -347,7 +347,7 @@ video_attach(device_t parent, device_t self, void *aux)
 
 	sc = device_private(self);
 	args = aux;
-	
+
 	sc->sc_dev = self;
 	sc->hw_dev = parent;
 	sc->hw_if = args->hw_if;
@@ -398,7 +398,7 @@ video_detach(device_t self, int flags)
 	sc->sc_dying = true;
 
 	pmf_device_deregister(self);
-	
+
 	maj = cdevsw_lookup_major(&video_cdevsw);
 	mn = device_unit(self);
 	/* close open instances */
@@ -495,7 +495,7 @@ v4l2id_to_control_id(uint32_t v4l2id)
 	case V4L2_CID_AUDIO_TREBLE:	return VIDEO_CONTROL_UNDEFINED;
 	case V4L2_CID_AUDIO_MUTE:	return VIDEO_CONTROL_UNDEFINED;
 	case V4L2_CID_AUDIO_LOUDNESS:	return VIDEO_CONTROL_UNDEFINED;
-		
+
 	case V4L2_CID_AUTO_WHITE_BALANCE:
 		return VIDEO_CONTROL_WHITE_BALANCE_AUTO;
 	case V4L2_CID_DO_WHITE_BALANCE:
@@ -571,7 +571,7 @@ video_query_control(struct video_softc *sc,
 		desc_group.group_id = desc.group_id;
 		desc_group.length = 1;
 		desc_group.desc = &desc;
-		
+
 		err = hw->get_control_desc_group(sc->hw_softc, &desc_group);
 		if (err != 0)
 			return err;
@@ -618,7 +618,7 @@ video_get_control(struct video_softc *sc,
 		err = hw->get_control_group(sc->hw_softc, &group);
 		if (err != 0)
 			return err;
-		
+
 		vcontrol->value = control.value;
 		return 0;
 	} else {
@@ -641,7 +641,7 @@ video_format_to_v4l2_format(const struct video_format *src,
 	dest->fmt.pix.bytesperline = src->stride;
 	dest->fmt.pix.sizeimage = src->sample_size;
 	dest->fmt.pix.priv = src->priv;
-	
+
 	switch (src->color.primaries) {
 	case VIDEO_COLOR_PRIMARIES_SMPTE_170M:
 		dest->fmt.pix.colorspace = V4L2_COLORSPACE_SMPTE170M;
@@ -828,7 +828,7 @@ video_enum_framesizes(struct video_softc *sc, struct v4l2_frmsizeenum *frmdesc)
 		printf("video_enum_framesizes: type mismatch %x %x\n",
 		    fmt.fmt.pix.pixelformat, frmdesc->pixel_format);
 	}
-	
+
 	frmdesc->type = V4L2_FRMSIZE_TYPE_DISCRETE; /* TODO: only one type for now */
 	frmdesc->discrete.width = vfmt.width;
 	frmdesc->discrete.height = vfmt.height;
@@ -867,7 +867,7 @@ video_get_format(struct video_softc *sc,
 		return err;
 
 	video_format_to_v4l2_format(&vfmt, format);
-	
+
 	return 0;
 }
 
@@ -890,7 +890,7 @@ video_set_format(struct video_softc *sc, struct v4l2_format *fmt)
 
 	video_format_to_v4l2_format(&vfmt, fmt);
 	sc->sc_stream_in.vs_format = vfmt;
-	
+
 	return 0;
 }
 
@@ -1049,7 +1049,7 @@ video_get_standard(struct video_softc *sc, v4l2_std_id *stdid)
 
 	video_standard_to_v4l2_standard(vstd, &std);
 	*stdid = std.id;
-	
+
 	return 0;
 }
 
@@ -1472,7 +1472,7 @@ video_set_control(struct video_softc *sc,
 		group.group_id = control.group_id;
 		group.length = 1;
 		group.control = &control;
-		
+
 		return (hw->set_control_group(sc->hw_softc, &group));
 	} else {
 		return EINVAL;
@@ -1529,7 +1529,7 @@ video_query_buf(struct video_softc *sc,
 		return EINVAL;
 	if (buf->index >= vs->vs_nbufs)
 		return EINVAL;
-	
+
 	memcpy(buf, vs->vs_buf[buf->index]->vb_buf, sizeof(*buf));
 
 	return 0;
@@ -1543,7 +1543,7 @@ video_queue_buf(struct video_softc *sc, struct v4l2_buffer *userbuf)
 	struct video_stream *vs = &sc->sc_stream_in;
 	struct video_buffer *vb;
 	struct v4l2_buffer *driverbuf;
-	
+
 	if (userbuf->type != vs->vs_type) {
 		DPRINTF(("video_queue_buf: expected type=%d got type=%d\n",
 			 userbuf->type, vs->vs_type));
@@ -1562,9 +1562,9 @@ video_queue_buf(struct video_softc *sc, struct v4l2_buffer *userbuf)
 				 userbuf->memory));
 			return EINVAL;
 		}
-		
+
 		mutex_enter(&vs->vs_lock);
-		
+
 		vb = vs->vs_buf[userbuf->index];
 		driverbuf = vb->vb_buf;
 		if (driverbuf->flags & V4L2_BUF_FLAG_QUEUED) {
@@ -1575,7 +1575,7 @@ video_queue_buf(struct video_softc *sc, struct v4l2_buffer *userbuf)
 		}
 		video_stream_enqueue(vs, vb);
 		memcpy(userbuf, driverbuf, sizeof(*driverbuf));
-		
+
 		mutex_exit(&vs->vs_lock);
 		break;
 	default:
@@ -1593,14 +1593,14 @@ video_dequeue_buf(struct video_softc *sc, struct v4l2_buffer *buf)
 	struct video_stream *vs = &sc->sc_stream_in;
 	struct video_buffer *vb;
 	int err;
-	
+
 	if (buf->type != vs->vs_type) {
 		aprint_debug_dev(sc->sc_dev,
 		    "requested type %d (expected %d)\n",
 		    buf->type, vs->vs_type);
 		return EINVAL;
 	}
-	
+
 	switch (vs->vs_method) {
 	case VIDEO_STREAM_METHOD_MMAP:
 		if (buf->memory != V4L2_MEMORY_MMAP) {
@@ -1609,7 +1609,7 @@ video_dequeue_buf(struct video_softc *sc, struct v4l2_buffer *buf)
 			    buf->memory, V4L2_MEMORY_MMAP);
 			return EINVAL;
 		}
-		
+
 		mutex_enter(&vs->vs_lock);
 
 		if (vs->vs_flags & O_NONBLOCK) {
@@ -1635,7 +1635,7 @@ video_dequeue_buf(struct video_softc *sc, struct v4l2_buffer *buf)
 		}
 
 		memcpy(buf, vb->vb_buf, sizeof(*buf));
-		
+
 		mutex_exit(&vs->vs_lock);
 		break;
 	default:
@@ -1653,7 +1653,7 @@ video_stream_on(struct video_softc *sc, enum v4l2_buf_type type)
 	int err;
 	struct video_stream *vs = &sc->sc_stream_in;
 	const struct video_hw_if *hw;
-	
+
 	if (vs->vs_streaming)
 		return 0;
 	if (type != vs->vs_type)
@@ -1678,7 +1678,7 @@ video_stream_off(struct video_softc *sc, enum v4l2_buf_type type)
 	int err;
 	struct video_stream *vs = &sc->sc_stream_in;
 	const struct video_hw_if *hw;
-	
+
 	if (!vs->vs_streaming)
 		return 0;
 	if (type != vs->vs_type)
@@ -1695,7 +1695,7 @@ video_stream_off(struct video_softc *sc, enum v4l2_buf_type type)
 	vs->vs_frameno = -1;
 	vs->vs_sequence = 0;
 	vs->vs_streaming = false;
-	
+
 	return 0;
 }
 
@@ -1715,7 +1715,7 @@ videoopen(dev_t dev, int flags, int ifmt, struct lwp *l)
 			VIDEOUNIT(dev)));
 		return ENXIO;
 	}
-	
+
 	if (sc->sc_dying) {
 		DPRINTF(("videoopen: dying\n"));
 		return EIO;
@@ -1778,10 +1778,10 @@ videoclose(dev_t dev, int flags, int ifmt, struct lwp *l)
 		hw->close(sc->hw_softc);
 
 	video_stream_teardown_bufs(&sc->sc_stream_in);
-	
+
 	sc->sc_open = 0;
 	sc->sc_opencnt--;
-	
+
 	return 0;
 }
 
@@ -1822,14 +1822,14 @@ videoread(dev_t dev, struct uio *uio, int ioflag)
 	}
 
 	mutex_enter(&vs->vs_lock);
-	
+
 retry:
 	if (SIMPLEQ_EMPTY(&vs->vs_egress)) {
 		if (vs->vs_flags & O_NONBLOCK) {
 			mutex_exit(&vs->vs_lock);
 			return EAGAIN;
 		}
-		
+
 		/* Block until we have a sample */
 		while (SIMPLEQ_EMPTY(&vs->vs_egress)) {
 			err = cv_wait_sig(&vs->vs_sample_cv,
@@ -1854,7 +1854,7 @@ retry:
 	}
 
 	mutex_exit(&vs->vs_lock);
-	
+
 	len = uimin(uio->uio_resid, vb->vb_buf->bytesused - vs->vs_bytesread);
 	offset = vb->vb_buf->m.offset + vs->vs_bytesread;
 
@@ -1866,7 +1866,7 @@ retry:
 	} else {
 		DPRINTF(("video: invalid read\n"));
 	}
-	
+
 	/* Move the sample to the ingress queue if everything has
 	 * been read */
 	if (vs->vs_bytesread >= vb->vb_buf->bytesused) {
@@ -1874,7 +1874,7 @@ retry:
 		vb = video_stream_dequeue(vs);
 		video_stream_enqueue(vs, vb);
 		mutex_exit(&vs->vs_lock);
-		
+
 		vs->vs_bytesread = 0;
 	}
 
@@ -2140,7 +2140,7 @@ static const char *
 video_ioctl_str(u_long cmd)
 {
 	const char *str;
-	
+
 	switch (cmd) {
 	case VIDIOC_QUERYCAP:
 		str = "VIDIOC_QUERYCAP";
@@ -2372,7 +2372,7 @@ videommap(dev_t dev, off_t off, int prot)
 		return -1;
 
 	vs = &sc->sc_stream_in;
-	
+
 	return scatter_buf_map(&vs->vs_data, off);
 }
 
@@ -2390,9 +2390,9 @@ video_stream_init(struct video_stream *vs)
 	vs->vs_nbufs = 0;
 	vs->vs_buf = NULL;
 	vs->vs_streaming = false;
-	
+
 	memset(&vs->vs_format, 0, sizeof(vs->vs_format));
-	
+
 	SIMPLEQ_INIT(&vs->vs_ingress);
 	SIMPLEQ_INIT(&vs->vs_egress);
 
@@ -2411,7 +2411,7 @@ video_stream_fini(struct video_stream *vs)
 		SIMPLEQ_REMOVE_HEAD(&vs->vs_ingress, entries);
 	while (SIMPLEQ_FIRST(&vs->vs_egress) != NULL)
 	SIMPLEQ_REMOVE_HEAD(&vs->vs_egress, entries); */
-	
+
 	mutex_destroy(&vs->vs_lock);
 	cv_destroy(&vs->vs_sample_cv);
 	seldestroy(&vs->vs_sel);
@@ -2425,7 +2425,7 @@ video_stream_setup_bufs(struct video_stream *vs,
 			uint8_t nbufs)
 {
 	int i, err;
-	
+
 	mutex_enter(&vs->vs_lock);
 
 	/* Ensure that all allocated buffers are queued and not under
@@ -2454,7 +2454,7 @@ video_stream_setup_bufs(struct video_stream *vs,
 
 	vs->vs_method = method;
 	mutex_exit(&vs->vs_lock);
-	
+
 	return 0;
 }
 
@@ -2479,7 +2479,7 @@ video_stream_teardown_bufs(struct video_stream *vs)
 		SIMPLEQ_REMOVE_HEAD(&vs->vs_ingress, entries);
 	while (SIMPLEQ_FIRST(&vs->vs_egress) != NULL)
 		SIMPLEQ_REMOVE_HEAD(&vs->vs_egress, entries);
-	
+
 	err = video_stream_free_bufs(vs);
 	if (err != 0) {
 		DPRINTF(("video_stream_teardown_bufs: "
@@ -2649,7 +2649,7 @@ video_stream_write(struct video_stream *vs,
 		video_stream_sample_done(vs);
 
 	vs->vs_frameno = payload->frameno;
-	
+
 	if (vs->vs_drop || SIMPLEQ_EMPTY(&vs->vs_ingress)) {
 		/* DPRINTF(("video_stream_write: dropping sample %d\n",
 		   vs->vs_sequence)); */
@@ -2754,7 +2754,7 @@ scatter_buf_set_size(struct scatter_buf *sb, size_t sz)
 	uint8_t **old_ary;
 
 	npages = (sz >> PAGE_SHIFT) + ((sz & PAGE_MASK) > 0);
-	
+
 	if (sb->sb_npages == npages) {
 		return 0;
 	}
@@ -2785,7 +2785,7 @@ scatter_buf_set_size(struct scatter_buf *sb, size_t sz)
 		kmem_free(old_ary, sizeof(uint8_t *) * oldnpages);
 
 	sb->sb_size = sb->sb_npages << PAGE_SHIFT;
-	
+
 	return 0;
 }
 
@@ -2795,7 +2795,7 @@ scatter_buf_map(struct scatter_buf *sb, off_t off)
 {
 	size_t pg;
 	paddr_t pa;
-	
+
 	pg = off >> PAGE_SHIFT;
 
 	if (pg >= sb->sb_npages)
@@ -2837,7 +2837,7 @@ scatter_io_next(struct scatter_io *sio, void **p, size_t *sz)
 
 	if (sio->sio_resid == 0)
 		return false;
-	
+
 	pg = sio->sio_offset >> PAGE_SHIFT;
 	pgo = sio->sio_offset & PAGE_MASK;
 
@@ -2898,7 +2898,7 @@ scatter_io_uiomove(struct scatter_io *sio, struct uio *uio)
 	size_t sz;
 	bool first = true;
 	int err;
-	
+
 	while(scatter_io_next(sio, &p, &sz)) {
 		err = uiomove(p, sz, uio);
 		if (err == EFAULT) {
