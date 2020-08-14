@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xxboot,v 1.14 2020/08/14 03:25:39 isaki Exp $
+#	$NetBSD: Makefile.xxboot,v 1.15 2020/08/14 03:29:23 isaki Exp $
 
 NOMAN=		# defined
 
@@ -52,7 +52,10 @@ LDLIBS+=  -L${LIBIOCS} -liocs
 .PATH: $S/lib/libsa
 CPPFLAGS+= -DLIBSA_SINGLE_FILESYSTEM=$(FS)
 CPPFLAGS+= -DLIBSA_SINGLE_DEVICE=$(DEV)
-CPPFLAGS+= -DLIBSA_NO_TWIDDLE -DLIBSA_NO_FD_CHECKING -DLIBSA_NO_RAW_ACCESS -DLIBSA_NO_FS_WRITE
+CPPFLAGS+= -DLIBSA_NO_FD_CHECKING
+CPPFLAGS+= -DLIBSA_NO_FS_WRITE
+CPPFLAGS+= -DLIBSA_NO_RAW_ACCESS
+CPPFLAGS+= -DLIBSA_NO_TWIDDLE
 SRCS+=	open.c close.c read.c lseek.c loadfile.c loadfile_aout.c alloc.c
 SRCS+=  $(FS).c
 
