@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.93 2019/03/19 05:55:00 mrg Exp $
+#	$NetBSD: Makefile,v 1.93.2.1 2020/08/14 11:02:42 martin Exp $
 
 .include <bsd.hostinit.mk>
 
 GCC_LANGUAGES=c c++ objc
-MODULE=			gcc4
+MODULE=		${EXTERNAL_GCC_SUBDIR}
 
 GCCDIST=	${.CURDIR}/../../external/gpl3/${EXTERNAL_GCC_SUBDIR}/dist
 GNUHOSTDIST=	${GCCDIST}
