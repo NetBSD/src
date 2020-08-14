@@ -1,3 +1,202 @@
+2019-11-14  Release Manager
+
+	* GCC 7.5.0 released.
+
+2019-09-05  Iain Sandoe  <iain@sandoe.co.uk>
+
+	Backported from mainline
+	2019-08-23  Iain Sandoe  <iain@sandoe.co.uk>
+
+	PR pch/61250
+	* parser.c (cp_parser_initial_pragma): Call c_common_no_more_pch ()
+	after determining that the first token is not
+	PRAGMA_GCC_PCH_PREPROCESS.
+
+2019-09-02  Richard Biener  <rguenther@suse.de>
+
+	Backport from mainline
+	2019-02-21  Richard Biener  <rguenther@suse.de>
+
+	PR middle-end/89392
+	* vtable-class-hierarchy.c (vtv_generate_init_routine): Do not
+	make symtab process new functions here.
+
+2019-08-30  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from mainline
+	2019-06-21  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/90950
+	* semantics.c (finish_omp_clauses): Don't reject references to
+	incomplete types if processing_template_decl.
+
+	2019-05-10  Jakub Jelinek  <jakub@redhat.com>
+
+	PR pch/90326
+	* config-lang.in (gtfiles): Remove c-family/c-lex.c, add
+	c-family/c-cppbuiltin.c.
+
+	2019-04-19  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/90108
+	* decl.c (duplicate_decls): If remove is main variant and
+	DECL_ORIGINAL_TYPE is some other type, remove a DECL_ORIGINAL_TYPE
+	variant that has newdecl as TYPE_NAME if any.
+
+	2019-04-12  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c/89933
+	* decl.c (duplicate_decls): When newdecl's type is its main variant,
+	don't try to remove it from the variant list, but instead assert
+	it has no variants.
+
+	2019-03-29  Jakub Jelinek  <jakub@redhat.com>
+
+	PR sanitizer/89869
+	* typeck.c: Include gimplify.h.
+	(cp_build_modify_expr) <case COND_EXPR>: Unshare rhs before using it
+	for second time.  Formatting fixes.
+
+	2019-03-26  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/89796
+	* semantics.c (finish_omp_atomic): Add warning_sentinel for
+	-Wunused-value around finish_expr_stmt call.
+
+	2019-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/60702
+	* cp-tree.h (get_tls_wrapper_fn): Remove declaration.
+	(maybe_get_tls_wrapper_call): Declare.
+	* decl2.c (get_tls_wrapper_fn): Make static.
+	(maybe_get_tls_wrapper_call): New function.
+	* typeck.c (build_class_member_access_expr): Handle accesses to TLS
+	variables.
+	* semantics.c (finish_qualified_id_expr): Likewise.
+	(finish_id_expression_1): Use maybe_get_tls_wrapper_call.
+	* pt.c (tsubst_copy_and_build): Likewise.
+
+	2019-03-21  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/89767
+	* parser.c (cp_parser_lambda_introducer): Add ids and first_capture_id
+	variables, check for duplicates in this function.
+	* lambda.c (add_capture): Don't check for duplicates nor use
+	IDENTIFIER_MARKED.
+	(register_capture_members): Don't clear IDENTIFIER_MARKED here.
+
+	2019-03-14  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/89512
+	* semantics.c (finish_qualified_id_expr): Reject variable templates.
+
+	2019-03-06  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/87148
+	* init.c (build_value_init_noctor): Ignore flexible array members.
+
+	2019-02-20  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/89403
+	* decl2.c (c_parse_final_cleanups): Move TREE_ASM_WRITTEN setting
+	for flag_syntax_only from here...
+	* semantics.c (expand_or_defer_fn_1): ... here.
+
+	2019-02-05  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/89187
+	* optimize.c (maybe_thunk_body): Clear TREE_ADDRESSABLE on
+	PARM_DECLs of the thunk.
+	* lambda.c (maybe_add_lambda_conv_op): Likewise.
+
+	2019-01-24  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/88976
+	* semantics.c (finish_omp_cancel): Use maybe_convert_cond when not in
+	template or build_x_binary_op otherwise.
+
+	2019-01-21  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/88949
+	* optimize.c (cxx_copy_decl): New function.
+	(clone_body): Use it instead of copy_decl_no_change.
+
+	2018-12-07  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/86669
+	* call.c (make_temporary_var_for_ref_to_temp): Call pushdecl even for
+	automatic vars.
+
+	PR c++/87506
+	* constexpr.c (adjust_temp_type): Handle EMPTY_CLASS_EXPR.
+
+	2018-12-04  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/88103
+	* typeck.c (build_class_member_access_expr): If unary_complex_lvalue
+	turned xvalue_p into non-xvalue_p, call move on it.
+
+	2018-11-27  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/88181
+	* class.c (fixup_attribute_variants): Also propagate TYPE_PACKED
+	to variants.
+
+2019-04-10  Matthias Klose  <doko@ubuntu.com>
+
+	Backport from the gcc-8 branch
+	2019-03-07  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/89585
+	* parser.c (cp_parser_asm_definition): Parse asm qualifiers even
+	at toplevel, but diagnose them.
+
+2018-01-02  Segher Boessenkool  <segher@kernel.crashing.org>
+
+	Backport from trunk
+	2018-12-06  Segher Boessenkool  <segher@kernel.crashing.org>
+
+	PR inline-asm/55681
+	* parser.c (cp_parser_asm_definition): Update grammar.  Allow any
+	combination of volatile and goto, in any order, without repetitions.
+
+	Backport from trunk
+	2018-12-06  Segher Boessenkool  <segher@kernel.crashing.org>
+
+	* cp-tree.h (finish_asm_stmt): Update declaration.
+	* parser.c (cp_parser_asm_definition): Detect the inline keyword
+	after asm.  Pass a flag for it to finish_asm_stmt.
+	* pt.c (tsubst_expr): Pass the ASM_INLINE_P flag to finish_asm_stmt.
+	* semantics.c (finish_asm_stmt): Add inline_p parameter.  Use it to
+	set ASM_INLINE_P.
+
+	Backport from trunk
+	2018-12-19  Segher Boessenkool  <segher@kernel.crashing.org>
+
+	* parser.c (cp_parser_asm_definition): Rewrite the loop to work without
+	"done" boolean variable.
+
+	Backport from trunk
+	2018-12-19  Segher Boessenkool  <segher@kernel.crashing.org>
+
+	* parser.c (cp_parser_asm_definition): Rewrite the loop to work without
+	"done" boolean variable.
+	* parser.c (cp_parser_asm_definition): Keep track of the location each
+	asm qualifier is first seen; use that to give nicer "duplicate asm
+	qualifier" messages.
+
+	Backport from trunk
+	2018-12-19  Segher Boessenkool  <segher@kernel.crashing.org>
+
+	* parser.c (cp_parser_asm_definition) <RID_CONST, RID_RESTRICT>: Give
+	a more specific error message (instead of just falling through).
+
+	Backport from trunk
+	2018-12-10  Segher Boessenkool  <segher@kernel.crashing.org>
+
+	* parser.c (cp_parser_asm_definition): Do not allow any asm qualifiers
+	on top-level asm.
+
 2018-12-06  Release Manager
 
 	* GCC 7.4.0 released.

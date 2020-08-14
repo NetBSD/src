@@ -10010,6 +10010,11 @@ cp_parser_lambda_introducer (cp_parser* parser, tree lambda_expr)
       first = false;
     }
 
+  hash_set<tree> *ids = NULL;
+#if GCC_VERSION >= 7000
+  char ids_buf[sizeof (hash_set<tree>) + __alignof__ (hash_set<tree>) - 1];
+#endif
+  tree first_capture_id = NULL_TREE;
   while (cp_lexer_next_token_is_not (parser->lexer, CPP_CLOSE_SQUARE))
     {
       cp_token* capture_token;
@@ -10044,11 +10049,14 @@ cp_parser_lambda_introducer (cp_parser* parser, tree lambda_expr)
 	    pedwarn (loc, 0, "explicit by-copy capture of %<this%> redundant "
 		     "with by-copy capture default");
 	  cp_lexer_consume_token (parser->lexer);
-	  add_capture (lambda_expr,
-		       /*id=*/this_identifier,
-		       /*initializer=*/finish_this_expr (),
-		       /*by_reference_p=*/true,
-		       explicit_init_p);
+	  if (LAMBDA_EXPR_THIS_CAPTURE (lambda_expr))
+	    pedwarn (input_location, 0,
+		     "already captured %qD in lambda expression",
+		     this_identifier);
+	  else
+	    add_capture (lambda_expr, /*id=*/this_identifier,
+			 /*initializer=*/finish_this_expr (),
+			 /*by_reference_p=*/true, explicit_init_p);
 	  continue;
 	}
 
@@ -10062,11 +10070,14 @@ cp_parser_lambda_introducer (cp_parser* parser, tree lambda_expr)
 			     "-std=c++1z or -std=gnu++1z");
 	  cp_lexer_consume_token (parser->lexer);
 	  cp_lexer_consume_token (parser->lexer);
-	  add_capture (lambda_expr,
-		       /*id=*/this_identifier,
-		       /*initializer=*/finish_this_expr (),
-		       /*by_reference_p=*/false,
-		       explicit_init_p);
+	  if (LAMBDA_EXPR_THIS_CAPTURE (lambda_expr))
+	    pedwarn (input_location, 0,
+		     "already captured %qD in lambda expression",
+		     this_identifier);
+	  else
+	    add_capture (lambda_expr, /*id=*/this_identifier,
+			 /*initializer=*/finish_this_expr (),
+			 /*by_reference_p=*/false, explicit_init_p);
 	  continue;
 	}
 
@@ -10190,12 +10201,43 @@ cp_parser_lambda_introducer (cp_parser* parser, tree lambda_expr)
 		     "default", capture_id);
 	}
 
-      add_capture (lambda_expr,
-		   capture_id,
-		   capture_init_expr,
-		   /*by_reference_p=*/capture_kind == BY_REFERENCE,
-		   explicit_init_p);
+      /* Check for duplicates.
+	 Optimize for the zero or one explicit captures cases and only create
+	 the hash_set after adding second capture.  */
+      bool found = false;
+      if (ids && ids->elements ())
+	found = ids->add (capture_id);
+      else if (first_capture_id == NULL_TREE)
+	first_capture_id = capture_id;
+      else if (capture_id == first_capture_id)
+	found = true;
+      else
+	{
+#if GCC_VERSION >= 7000
+	  ids = new (ids_buf
+		     + (-(uintptr_t) ids_buf
+			& (__alignof__ (hash_set <tree>) - 1))) hash_set <tree>;
+#else
+	  ids = new hash_set <tree>;
+#endif
+	  ids->add (first_capture_id);
+	  ids->add (capture_id);
+	}
+      if (found)
+	pedwarn (input_location, 0,
+		 "already captured %qD in lambda expression", capture_id);
+      else
+	add_capture (lambda_expr, capture_id, capture_init_expr,
+		     /*by_reference_p=*/capture_kind == BY_REFERENCE,
+		     explicit_init_p);
     }
+
+  if (ids)
+#if GCC_VERSION >= 7000
+    ids->~hash_set <tree> ();
+#else
+    delete ids;
+#endif
 
   cp_parser_require (parser, CPP_CLOSE_SQUARE, RT_CLOSE_SQUARE);
 }
@@ -18789,22 +18831,35 @@ cp_parser_using_directive (cp_parser* parser)
 
 /* Parse an asm-definition.
 
+  asm-qualifier:
+    volatile
+    inline
+    goto
+
+  asm-qualifier-list:
+    asm-qualifier
+    asm-qualifier-list asm-qualifier
+
    asm-definition:
      asm ( string-literal ) ;
 
    GNU Extension:
 
    asm-definition:
-     asm volatile [opt] ( string-literal ) ;
-     asm volatile [opt] ( string-literal : asm-operand-list [opt] ) ;
-     asm volatile [opt] ( string-literal : asm-operand-list [opt]
-			  : asm-operand-list [opt] ) ;
-     asm volatile [opt] ( string-literal : asm-operand-list [opt]
-			  : asm-operand-list [opt]
+     asm asm-qualifier-list [opt] ( string-literal ) ;
+     asm asm-qualifier-list [opt] ( string-literal : asm-operand-list [opt] ) ;
+     asm asm-qualifier-list [opt] ( string-literal : asm-operand-list [opt]
+				    : asm-operand-list [opt] ) ;
+     asm asm-qualifier-list [opt] ( string-literal : asm-operand-list [opt]
+				    : asm-operand-list [opt]
 			  : asm-clobber-list [opt] ) ;
-     asm volatile [opt] goto ( string-literal : : asm-operand-list [opt]
-			       : asm-clobber-list [opt]
-			       : asm-goto-list ) ;  */
+     asm asm-qualifier-list [opt] ( string-literal : : asm-operand-list [opt]
+				    : asm-clobber-list [opt]
+				    : asm-goto-list ) ;
+
+  The form with asm-goto-list is valid if and only if the asm-qualifier-list
+  contains goto, and is the only allowed form in that case.  No duplicates are
+  allowed in an asm-qualifier-list.  */
 
 static void
 cp_parser_asm_definition (cp_parser* parser)
@@ -18815,11 +18870,9 @@ cp_parser_asm_definition (cp_parser* parser)
   tree clobbers = NULL_TREE;
   tree labels = NULL_TREE;
   tree asm_stmt;
-  bool volatile_p = false;
   bool extended_p = false;
   bool invalid_inputs_p = false;
   bool invalid_outputs_p = false;
-  bool goto_p = false;
   required_token missing = RT_NONE;
 
   /* Look for the `asm' keyword.  */
@@ -18832,24 +18885,78 @@ cp_parser_asm_definition (cp_parser* parser)
       cp_function_chain->invalid_constexpr = true;
     }
 
-  /* See if the next token is `volatile'.  */
-  if (cp_parser_allow_gnu_extensions_p (parser)
-      && cp_lexer_next_token_is_keyword (parser->lexer, RID_VOLATILE))
+  /* Handle the asm-qualifier-list.  */
+  location_t volatile_loc = UNKNOWN_LOCATION;
+  location_t inline_loc = UNKNOWN_LOCATION;
+  location_t goto_loc = UNKNOWN_LOCATION;
+  location_t first_loc = UNKNOWN_LOCATION;
+
+  if (cp_parser_allow_gnu_extensions_p (parser))
+    for (;;)
+      {
+	cp_token *token = cp_lexer_peek_token (parser->lexer);
+	location_t loc = token->location;
+	switch (cp_lexer_peek_token (parser->lexer)->keyword)
+	  {
+	  case RID_VOLATILE:
+	    if (volatile_loc)
+	      {
+		error_at (loc, "duplicate asm qualifier %qT", token->u.value);
+		inform (volatile_loc, "first seen here");
+	      }
+	    else
+	      volatile_loc = loc;
+	    cp_lexer_consume_token (parser->lexer);
+	    continue;
+
+	  case RID_INLINE:
+	    if (inline_loc)
+	      {
+		error_at (loc, "duplicate asm qualifier %qT", token->u.value);
+		inform (inline_loc, "first seen here");
+	      }
+	    else
+	      inline_loc = loc;
+	    if (!first_loc)
+	      first_loc = loc;
+	    cp_lexer_consume_token (parser->lexer);
+	    continue;
+
+	  case RID_GOTO:
+	    if (goto_loc)
+	      {
+		error_at (loc, "duplicate asm qualifier %qT", token->u.value);
+		inform (goto_loc, "first seen here");
+	      }
+	    else
+	      goto_loc = loc;
+	    if (!first_loc)
+	      first_loc = loc;
+	    cp_lexer_consume_token (parser->lexer);
+	    continue;
+
+	  case RID_CONST:
+	  case RID_RESTRICT:
+	    error_at (loc, "%qT is not an asm qualifier", token->u.value);
+	    cp_lexer_consume_token (parser->lexer);
+	    continue;
+
+	  default:
+	    break;
+	  }
+	break;
+      }
+
+  bool volatile_p = (volatile_loc != UNKNOWN_LOCATION);
+  bool inline_p = (inline_loc != UNKNOWN_LOCATION);
+  bool goto_p = (goto_loc != UNKNOWN_LOCATION);
+
+  if (!parser->in_function_body && (inline_p || goto_p))
     {
-      /* Remember that we saw the `volatile' keyword.  */
-      volatile_p = true;
-      /* Consume the token.  */
-      cp_lexer_consume_token (parser->lexer);
+      error_at (first_loc, "asm qualifier outside of function body");
+      inline_p = goto_p = false;
     }
-  if (cp_parser_allow_gnu_extensions_p (parser)
-      && parser->in_function_body
-      && cp_lexer_next_token_is_keyword (parser->lexer, RID_GOTO))
-    {
-      /* Remember that we saw the `goto' keyword.  */
-      goto_p = true;
-      /* Consume the token.  */
-      cp_lexer_consume_token (parser->lexer);
-    }
+
   /* Look for the opening `('.  */
   if (!cp_parser_require (parser, CPP_OPEN_PAREN, RT_OPEN_PAREN))
     return;
@@ -18941,8 +19048,7 @@ cp_parser_asm_definition (cp_parser* parser)
 					     CPP_CLOSE_PAREN))
 	    clobbers = cp_parser_asm_clobber_list (parser);
 	}
-      else if (goto_p
-	       && cp_lexer_next_token_is (parser->lexer, CPP_SCOPE))
+      else if (goto_p && cp_lexer_next_token_is (parser->lexer, CPP_SCOPE))
 	/* The labels are coming next.  */
 	labels_p = true;
 
@@ -18976,7 +19082,7 @@ cp_parser_asm_definition (cp_parser* parser)
       if (parser->in_function_body)
 	{
 	  asm_stmt = finish_asm_stmt (volatile_p, string, outputs,
-				      inputs, clobbers, labels);
+				      inputs, clobbers, labels, inline_p);
 	  /* If the extended syntax was not used, mark the ASM_EXPR.  */
 	  if (!extended_p)
 	    {
@@ -38126,7 +38232,10 @@ cp_parser_initial_pragma (cp_token *first_token)
 
   cp_lexer_get_preprocessor_token (NULL, first_token);
   if (cp_parser_pragma_kind (first_token) != PRAGMA_GCC_PCH_PREPROCESS)
-    return;
+    {
+      c_common_no_more_pch ();
+      return;
+    }
 
   cp_lexer_get_preprocessor_token (NULL, first_token);
   if (first_token->type == CPP_STRING)

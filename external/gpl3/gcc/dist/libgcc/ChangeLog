@@ -1,3 +1,47 @@
+2019-11-14  Release Manager
+
+	* GCC 7.5.0 released.
+
+2019-11-01  Iain Sandoe  <iain@sandoe.co.uk>
+
+	Backport from mainline.
+	2019-07-03  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* config.host (powerpc-*-darwin*,powerpc64-*-darwin*): Revise crt
+	list.
+	* config/rs6000/t-darwin: Build crt3_2 for older systems.  Revise
+	mmacosx-version-min for crts to run across all system versions.
+	* config/rs6000/t-darwin64 (LIB2ADD): Remove.
+	* config/t-darwin: Revise mmacosx-version-min for crts to run across
+	system versions >= 10.4.
+
+2019-11-01  Iain Sandoe  <iain@sandoe.co.uk>
+
+	Backport from mainline.
+	2019-06-25  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* config.host: Add libef_ppc.a to the extra files for powerpc-darwin.
+	* config/rs6000/t-darwin: (PPC_ENDFILE_SRC, PPC_ENDFILE_OBJS): New.
+	Build objects for the out of line save/restore register functions
+	so that they can be used for any supported Darwin version.
+	* config/t-darwin: Default the build Darwin version to Darwin8
+	(MacOS 10.4).
+
+2019-09-04  Iain Sandoe  <iain@sandoe.co.uk>
+
+	Backport from mainline.
+	2019-06-06  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* config/rs6000/t-darwin: Ensure that the unwinder is built with
+	altivec enabled.
+
+2019-09-03  Iain Sandoe  <iain@sandoe.co.uk>
+
+	Backport from mainline.
+	2019-05-12  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* config/rs6000/darwin-vecsave.S: Set .machine appropriately.
+
 2018-12-06  Release Manager
 
 	* GCC 7.4.0 released.

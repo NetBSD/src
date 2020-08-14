@@ -5962,7 +5962,7 @@ extern tree cp_build_parm_decl			(tree, tree);
 extern tree get_guard				(tree);
 extern tree get_guard_cond			(tree, bool);
 extern tree set_guard				(tree);
-extern tree get_tls_wrapper_fn			(tree);
+extern tree maybe_get_tls_wrapper_call		(tree);
 extern void mark_needed				(tree);
 extern bool decl_needed_p			(tree);
 extern void note_vague_linkage_fn		(tree);
@@ -6455,7 +6455,7 @@ extern tree begin_compound_stmt			(unsigned int);
 
 extern void finish_compound_stmt		(tree);
 extern tree finish_asm_stmt			(int, tree, tree, tree, tree,
-						 tree);
+						 tree, bool);
 extern tree finish_label_stmt			(tree);
 extern void finish_label_decl			(tree);
 extern cp_expr finish_parenthesized_expr	(cp_expr);

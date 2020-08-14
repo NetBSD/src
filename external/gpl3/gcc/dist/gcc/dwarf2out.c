@@ -12495,6 +12495,8 @@ modified_type_die (tree type, int cv_quals, bool reverse,
 	       && TYPE_PRECISION (sizetype) == TYPE_PRECISION (size_type_node)
 	       && TYPE_UNSIGNED (sizetype) == TYPE_UNSIGNED (size_type_node))
 	qualified_type = size_type_node;
+      if (type == sizetype)
+	type = qualified_type;
     }
 
 
@@ -18677,6 +18679,9 @@ add_const_value_attribute (dw_die_ref die, rtx rtl)
 
     case HIGH:
     case CONST_FIXED:
+    case MINUS:
+    case SIGN_EXTEND:
+    case ZERO_EXTEND:
       return false;
 
     case MEM:
@@ -21207,7 +21212,10 @@ gen_formal_parameter_die (tree node, tree origin, bool emit_name_p,
 
       /* If the contexts differ, we may not be talking about the same
 	 thing.  */
-      if (parm_die && parm_die->die_parent != context_die)
+      if (parm_die
+	  && parm_die->die_parent != context_die
+	  && (parm_die->die_parent->die_tag != DW_TAG_GNU_formal_parameter_pack
+	      || parm_die->die_parent->die_parent != context_die))
 	{
 	  if (!DECL_ABSTRACT_P (node))
 	    {

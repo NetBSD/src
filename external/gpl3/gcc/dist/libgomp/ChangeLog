@@ -1,3 +1,28 @@
+2019-11-14  Release Manager
+
+	* GCC 7.5.0 released.
+
+2019-08-30  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from mainline
+	2019-05-24  Jakub Jelinek  <jakub@redhat.com>
+
+	PR libgomp/90585
+	* plugin/plugin-hsa.c (print_kernel_dispatch, run_kernel): Use PRIu64
+	macro instead of "lu".
+	(release_kernel_dispatch): Likewise.  Cast shadow->debug to uintptr_t
+	before casting to void *.
+
+	2019-06-11  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/90811
+	* testsuite/libgomp.c/pr90811.c: New test.
+
+	2019-01-28  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/89002
+	* testsuite/libgomp.c/pr89002.c: New test.
+
 2018-12-06  Release Manager
 
 	* GCC 7.4.0 released.

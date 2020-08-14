@@ -1,3 +1,40 @@
+2019-11-14  Release Manager
+
+	* GCC 7.5.0 released.
+
+2019-09-05  Iain Sandoe  <iain@sandoe.co.uk>
+
+	Backport from mainline
+	2019-08-23  Iain Sandoe  <iain@sandoe.co.uk>
+
+	PR pch/61250
+	* c-lex.c (c_lex_with_flags):  Don't call
+	c_common_no_more_pch () from here.
+
+2019-08-30  Richard Biener  <rguenther@suse.de>
+
+	Backport from mainline
+	2019-05-15  Richard Biener  <rguenther@suse.de>
+
+	PR c/90474
+	* c-common.c (c_common_mark_addressable_vec): Also mark
+	a COMPOUND_LITERAL_EXPR_DECL addressable similar to
+	c_mark_addressable.
+
+2019-08-30  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from mainline
+	2019-06-25  Jakub Jelinek  <jakub@redhat.com>
+
+	PR sanitizer/90954
+	* c-omp.c (c_finish_omp_atomic): Allow tree_invariant_p in addition
+	to SAVE_EXPR in first operand of a COMPOUND_EXPR.
+
+2019-04-09  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* c-ada-spec.c (print_destructor): Deal with deleting destructors.
+	(dump_ada_declaration) <FUNCTION_DECL>: Likewise.
+
 2018-12-06  Release Manager
 
 	* GCC 7.4.0 released.

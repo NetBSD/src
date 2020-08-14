@@ -280,6 +280,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "params.h"
 #include "tree-ssa-propagate.h"
 #include "gimple-fold.h"
+#include "tree-into-ssa.h"
 
 static tree analyze_scalar_evolution_1 (struct loop *, tree, tree);
 static tree analyze_scalar_evolution_for_address_of (struct loop *loop,
@@ -866,7 +867,7 @@ get_loop_exit_condition (const struct loop *loop)
       gimple *stmt;
 
       stmt = last_stmt (exit_edge->src);
-      if (gcond *cond_stmt = dyn_cast <gcond *> (stmt))
+      if (gcond *cond_stmt = safe_dyn_cast <gcond *> (stmt))
 	res = cond_stmt;
     }
 
@@ -1412,6 +1413,11 @@ simplify_peeled_chrec (struct loop *loop, tree arg, tree init_cond)
       return build_polynomial_chrec (loop->num, init_cond, right);
     }
 
+  /* The affine code only deals with pointer and integer types.  */
+  if (!POINTER_TYPE_P (type)
+      && !INTEGRAL_TYPE_P (type))
+    return chrec_dont_know;
+
   /* Try harder to check if they are equal.  */
   tree_to_aff_combination_expand (left, type, &aff1, &peeled_chrec_map);
   tree_to_aff_combination_expand (step_val, type, &aff2, &peeled_chrec_map);
@@ -1532,7 +1538,10 @@ static tree
 follow_copies_to_constant (tree var)
 {
   tree res = var;
-  while (TREE_CODE (res) == SSA_NAME)
+  while (TREE_CODE (res) == SSA_NAME
+	 /* We face not updated SSA form in multiple places and this walk
+	    may end up in sibling loops so we have to guard it.  */
+	 && !name_registered_for_update_p (res))
     {
       gimple *def = SSA_NAME_DEF_STMT (res);
       if (gphi *phi = dyn_cast <gphi *> (def))

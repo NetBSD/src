@@ -267,6 +267,7 @@ VTV_CXXLINKFLAGS = @VTV_CXXLINKFLAGS@
 VTV_PCH_CXXFLAGS = @VTV_PCH_CXXFLAGS@
 WARN_FLAGS = @WARN_FLAGS@
 WERROR = @WERROR@
+XMLCATALOG = @XMLCATALOG@
 XMLLINT = @XMLLINT@
 XSLTPROC = @XSLTPROC@
 XSL_STYLE_DIR = @XSL_STYLE_DIR@
@@ -992,7 +993,7 @@ libstdc++convenience.la: $(toolexeclib_LTLIBRARIES)
 	fi; \
 	echo `date` > stamp-libstdc++convenience;
 stamp-debug:
-	if test ! -d ${debugdir}; then \
+	if test ! -d ${debugdir} || test ! -f ${debugdir}/Makefile ; then \
 	  mkdir -p ${debugdir}; \
 	  for d in $(SUBDIRS); do mkdir -p  ${debugdir}/$$d; done; \
 	  (cd ${debugdir}; \
