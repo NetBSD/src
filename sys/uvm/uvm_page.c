@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.244 2020/07/09 05:57:15 skrll Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.245 2020/08/14 09:06:15 chs Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.244 2020/07/09 05:57:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.245 2020/08/14 09:06:15 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -240,15 +240,17 @@ uvm_pageinsert_tree(struct uvm_object *uobj, struct vm_page *pg)
 	const uint64_t idx = pg->offset >> PAGE_SHIFT;
 	int error;
 
+	KASSERT(rw_write_held(uobj->vmobjlock));
+
 	error = radix_tree_insert_node(&uobj->uo_pages, idx, pg);
 	if (error != 0) {
 		return error;
 	}
 	if ((pg->flags & PG_CLEAN) == 0) {
-		radix_tree_set_tag(&uobj->uo_pages, idx, UVM_PAGE_DIRTY_TAG);
+		uvm_obj_page_set_dirty(pg);
 	}
 	KASSERT(((pg->flags & PG_CLEAN) == 0) ==
-	    radix_tree_get_tag(&uobj->uo_pages, idx, UVM_PAGE_DIRTY_TAG));
+		uvm_obj_page_dirty_p(pg));
 	return 0;
 }
 
@@ -296,6 +298,8 @@ static inline void
 uvm_pageremove_tree(struct uvm_object *uobj, struct vm_page *pg)
 {
 	struct vm_page *opg __unused;
+
+	KASSERT(rw_write_held(uobj->vmobjlock));
 
 	opg = radix_tree_remove_node(&uobj->uo_pages, pg->offset >> PAGE_SHIFT);
 	KASSERT(pg == opg);
@@ -1363,11 +1367,9 @@ uvm_pagereplace(struct vm_page *oldpg, struct vm_page *newpg)
 	KASSERT(pg == oldpg);
 	if (((oldpg->flags ^ newpg->flags) & PG_CLEAN) != 0) {
 		if ((newpg->flags & PG_CLEAN) != 0) {
-			radix_tree_clear_tag(&uobj->uo_pages, idx,
-			    UVM_PAGE_DIRTY_TAG);
+			uvm_obj_page_clear_dirty(newpg);
 		} else {
-			radix_tree_set_tag(&uobj->uo_pages, idx,
-			    UVM_PAGE_DIRTY_TAG);
+			uvm_obj_page_set_dirty(newpg);
 		}
 	}
 	/*
@@ -1788,8 +1790,13 @@ struct vm_page *
 uvm_pagelookup(struct uvm_object *obj, voff_t off)
 {
 	struct vm_page *pg;
+	bool ddb = false;
+#ifdef DDB
+	extern int db_active;
+	ddb = db_active != 0;
+#endif
 
-	/* No - used from DDB. KASSERT(rw_lock_held(obj->vmobjlock)); */
+	KASSERT(ddb || rw_lock_held(obj->vmobjlock));
 
 	pg = radix_tree_lookup_node(&obj->uo_pages, off >> PAGE_SHIFT);
 
