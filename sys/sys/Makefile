@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.175 2020/06/08 16:36:18 maxv Exp $
+#	$NetBSD: Makefile,v 1.176 2020/08/14 00:53:16 riastradh Exp $
 
 .include <bsd.own.mk>
 
@@ -34,7 +34,7 @@ INCS=	acct.h acl.h agpio.h aio.h ansi.h aout_mids.h ataio.h atomic.h \
 	param.h pcu.h pipe.h pmf.h poll.h pool.h power.h proc.h \
 	protosw.h pset.h psref.h ptrace.h ptree.h \
 	queue.h quota.h quotactl.h \
-	radixtree.h ras.h rbtree.h reboot.h radioio.h resource.h \
+	radioio.h radixtree.h random.h ras.h rbtree.h reboot.h resource.h \
 	resourcevar.h rmd160.h rnd.h rndio.h rwlock.h \
 	scanio.h sched.h scsiio.h sdt.h select.h selinfo.h sem.h semaphore.h \
 	sha1.h sha2.h sha3.h shm.h siginfo.h signal.h signalvar.h sigtypes.h \

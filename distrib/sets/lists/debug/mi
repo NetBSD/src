@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.326 2020/07/25 22:53:38 riastradh Exp $
+# $NetBSD: mi,v 1.327 2020/08/14 00:53:16 riastradh Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -2141,6 +2141,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_getitimer.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_getlogin.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_getpid.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_getrandom.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_getrusage.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_getsid.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_getsockname.debug		tests-lib-debug		debug,atf,compattestfile
