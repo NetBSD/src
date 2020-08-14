@@ -8,6 +8,8 @@ SECTIONS
 {
   . = TEXTADDR;
   .text :
+  ALIGN(2)
+  SUBALIGN(2)
   {
     CREATE_OBJECT_SYMBOLS
     *(.text)
@@ -24,6 +26,8 @@ SECTIONS
     _etext = .;
   }
   .data :
+  ALIGN(2)
+  SUBALIGN(2)
   {
     /* The first three sections are for SunOS dynamic linking.  */
     *(.dynamic)
