@@ -1,4 +1,4 @@
-#	$NetBSD: std.generic,v 1.7 2020/01/25 18:10:11 skrll Exp $
+#	$NetBSD: std.generic,v 1.8 2020/08/14 16:18:37 skrll Exp $
 #
 # 	generic NetBSD/evbarm with FDT support
 
@@ -22,7 +22,7 @@ options 	FPU_VFP
 options 	MODULAR
 options 	MODULAR_DEFAULT_AUTOLOAD
 options 	PCI_NETBSD_CONFIGURE
-options 	TPIDRPRW_IS_CURCPU
+options 	TPIDRPRW_IS_CURLWP
 options 	__BUS_SPACE_HAS_STREAM_METHODS
 options 	__HAVE_CPU_COUNTER
 options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP

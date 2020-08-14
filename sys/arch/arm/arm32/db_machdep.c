@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.34 2020/07/03 10:19:18 jmcneill Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.35 2020/08/14 16:18:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.34 2020/07/03 10:19:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.35 2020/08/14 16:18:36 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -521,8 +521,6 @@ show_cpuinfo(struct cpu_info *kci)
 	    &ci->ci_cpl, cpuid, ci->ci_cpl);
 	db_printf("%p cpu[%lu].ci_softints     = 0x%08x\n",
 	    &ci->ci_softints, cpuid, ci->ci_softints);
-	db_printf("%p cpu[%lu].ci_astpending   = 0x%08x\n",
-	    &ci->ci_astpending, cpuid, ci->ci_astpending);
 	db_printf("%p cpu[%lu].ci_intr_depth   = %u\n",
 	    &ci->ci_intr_depth, cpuid, ci->ci_intr_depth);
 

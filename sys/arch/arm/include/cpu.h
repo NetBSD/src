@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.111 2020/06/29 23:54:06 riastradh Exp $	*/
+/*	$NetBSD: cpu.h,v 1.112 2020/08/14 16:18:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -154,6 +154,7 @@ static inline void cpu_dosoftints(void);
 #include <sys/cpu_data.h>
 #include <sys/device_if.h>
 #include <sys/evcnt.h>
+#include <sys/param.h>
 
 struct cpu_info {
 	struct cpu_data	ci_data;	/* MI per-cpu data */
@@ -163,22 +164,32 @@ struct cpu_info {
 	uint32_t	ci_arm_cputype;	/* CPU type */
 	uint32_t	ci_arm_cpurev;	/* CPU revision */
 	uint32_t	ci_ctrl;	/* The CPU control register */
-	int		ci_cpl;		/* current processor level (spl) */
-	volatile int	ci_astpending;	/* */
-	int		ci_want_resched;/* resched() was called */
-	int		ci_intr_depth;	/* */
 
-	int ci_kfpu_spl;
+	/*
+	 * the following are in their own cache line, as they are stored to
+	 * regularly by remote CPUs; when they were mixed with other fields
+	 * we observed frequent cache misses.
+	 */
+	int		ci_want_resched __aligned(COHERENCY_UNIT);
+					/* resched() was called */
+	lwp_t *		ci_curlwp __aligned(COHERENCY_UNIT);
+					/* current lwp */
+	lwp_t *		ci_onproc;	/* current user LWP / kthread */
+
+	/*
+	 * largely CPU-private.
+	 */
+	lwp_t *		ci_softlwps[SOFTINT_COUNT] __aligned(COHERENCY_UNIT);
 
 	struct cpu_softc *
 			ci_softc;	/* platform softc */
 
-	lwp_t *		ci_softlwps[SOFTINT_COUNT];
-	volatile uint32_t
-			ci_softints;
+	int		ci_cpl;		/* current processor level (spl) */
+	int		ci_kfpu_spl;
 
-	lwp_t *		ci_curlwp;	/* current lwp */
-	lwp_t *		ci_onproc;	/* current user LWP / kthread */
+	volatile u_int	ci_intr_depth;	/* */
+	volatile u_int	ci_softints;
+
 	lwp_t *		ci_lastlwp;	/* last lwp */
 
 	struct evcnt	ci_arm700bugcount;
@@ -315,19 +326,8 @@ cpu_dosoftints(void)
 /*
  * Scheduling glue
  */
-
-#ifdef __HAVE_PREEMPTION
-#define setsoftast(ci)		atomic_or_uint(&(ci)->ci_astpending, __BIT(0))
-#else
-#define setsoftast(ci)		((ci)->ci_astpending = __BIT(0))
-#endif
-
-/*
- * Notify the current process (p) that it has a signal pending,
- * process as soon as possible.
- */
-
-#define cpu_signotify(l)		setsoftast((l)->l_cpu)
+void cpu_signotify(struct lwp *);
+#define	setsoftast(ci)		(cpu_signotify((ci)->ci_onproc))
 
 /*
  * Give a profiling tick to the current process when the user profiling
@@ -335,7 +335,7 @@ cpu_dosoftints(void)
  * through trap(), marking the proc as needing a profiling tick.
  */
 #define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, \
-				 setsoftast((l)->l_cpu))
+				 setsoftast(lwp_getcpu(l)))
 
 /*
  * We've already preallocated the stack for the idlelwps for additional CPUs.

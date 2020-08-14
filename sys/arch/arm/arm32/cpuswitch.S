@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.101 2020/07/10 12:25:09 skrll Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.102 2020/08/14 16:18:36 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -87,7 +87,7 @@
 #include <arm/asm.h>
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.101 2020/07/10 12:25:09 skrll Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.102 2020/08/14 16:18:36 skrll Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 
@@ -191,6 +191,7 @@ ENTRY(cpu_switchto)
 
 	/* We have a new curlwp now so make a note of it */
 	str	r6, [r5, #(CI_CURLWP)]
+	dmb					/* see comments in kern_mutex.c */
 
 	/* Get the new pcb */
 	ldr	r7, [r6, #(L_PCB)]
@@ -388,6 +389,7 @@ ENTRY_NP(softint_switch)
 	mcr	p15, 0, r5, c13, c0, 4	/* save new lwp */
 #endif
 	str	r5, [r7, #(CI_CURLWP)]	/* save new lwp */
+	dmb				/* see comments in kern_mutex.c */
 
 #ifdef KASAN
 	mov	r0, r5
