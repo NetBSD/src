@@ -170,7 +170,7 @@ SRCDIR/gcc/cp/typeck2.c
 SRCDIR/gcc/c-family/c-common.c
 SRCDIR/gcc/c-family/c-common.h
 SRCDIR/gcc/c-family/c-objc.h
-SRCDIR/gcc/c-family/c-lex.c
+SRCDIR/gcc/c-family/c-cppbuiltin.c
 SRCDIR/gcc/c-family/c-pragma.h
 SRCDIR/gcc/c-family/c-pragma.c
 SRCDIR/gcc/cp/class.c
@@ -228,7 +228,6 @@ SRCDIR/gcc/cp/typeck2.c
 SRCDIR/gcc/c-family/c-common.c
 SRCDIR/gcc/c-family/c-common.h
 SRCDIR/gcc/c-family/c-objc.h
-SRCDIR/gcc/c-family/c-lex.c
 SRCDIR/gcc/c-family/c-pragma.h
 SRCDIR/gcc/c-family/c-pragma.c
 SRCDIR/gcc/cp/class.c

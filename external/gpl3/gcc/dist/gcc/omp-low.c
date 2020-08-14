@@ -853,6 +853,7 @@ new_omp_context (gimple *stmt, omp_context *outer_ctx)
       ctx->cb.copy_decl = omp_copy_decl;
       ctx->cb.eh_lp_nr = 0;
       ctx->cb.transform_call_graph_edges = CB_CGE_MOVE;
+      ctx->cb.dont_remap_vla_if_no_change = true;
       ctx->depth = 1;
     }
 
@@ -2888,12 +2889,23 @@ check_omp_nesting_restrictions (gimple *stmt, omp_context *ctx)
 	  case GIMPLE_OMP_FOR:
 	    if (gimple_omp_for_kind (ctx->stmt) == GF_OMP_FOR_KIND_TASKLOOP)
 	      goto ordered_in_taskloop;
-	    if (omp_find_clause (gimple_omp_for_clauses (ctx->stmt),
-				 OMP_CLAUSE_ORDERED) == NULL)
+	    tree o;
+	    o = omp_find_clause (gimple_omp_for_clauses (ctx->stmt),
+				 OMP_CLAUSE_ORDERED);
+	    if (o == NULL)
 	      {
 		error_at (gimple_location (stmt),
 			  "%<ordered%> region must be closely nested inside "
 			  "a loop region with an %<ordered%> clause");
+		return false;
+	      }
+	    if (OMP_CLAUSE_ORDERED_EXPR (o) != NULL_TREE
+		&& omp_find_clause (c, OMP_CLAUSE_DEPEND) == NULL_TREE)
+	      {
+		error_at (gimple_location (stmt),
+			  "%<ordered%> region without %<depend%> clause may "
+			  "not be closely nested inside a loop region with "
+			  "an %<ordered%> clause with a parameter");
 		return false;
 	      }
 	    return true;

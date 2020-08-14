@@ -5,12 +5,12 @@
 #include "configargs.h"
 
 #define GCCPLUGIN_VERSION_MAJOR   7
-#define GCCPLUGIN_VERSION_MINOR   4
+#define GCCPLUGIN_VERSION_MINOR   5
 #define GCCPLUGIN_VERSION_PATCHLEVEL   0
 #define GCCPLUGIN_VERSION  (GCCPLUGIN_VERSION_MAJOR*1000 + GCCPLUGIN_VERSION_MINOR)
 
-static char basever[] = "7.4.0";
-static char datestamp[] = "20181206";
+static char basever[] = "7.5.0";
+static char datestamp[] = "20191114";
 static char devphase[] = "";
 static char revision[] = "";
 

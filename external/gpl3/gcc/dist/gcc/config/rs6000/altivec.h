@@ -388,6 +388,11 @@
 #define vec_vsubuqm __builtin_vec_vsubuqm
 #define vec_vupkhsw __builtin_vec_vupkhsw
 #define vec_vupklsw __builtin_vec_vupklsw
+#define vec_sbox_be __builtin_crypto_vsbox_be
+#define vec_cipher_be __builtin_crypto_vcipher_be
+#define vec_cipherlast_be __builtin_crypto_vcipherlast_be
+#define vec_ncipher_be __builtin_crypto_vncipher_be
+#define vec_ncipherlast_be __builtin_crypto_vncipherlast_be
 #endif
 
 #ifdef __POWER9_VECTOR__
@@ -420,6 +425,11 @@
 #define vec_extract_sig __builtin_vec_extract_sig
 #define vec_insert_exp __builtin_vec_insert_exp
 #define vec_test_data_class __builtin_vec_test_data_class
+
+#define vec_extract_fp_from_shorth __builtin_vec_vextract_fp_from_shorth
+#define vec_extract_fp_from_shortl __builtin_vec_vextract_fp_from_shortl
+#define vec_extract_fp32_from_shorth __builtin_vec_vextract_fp_from_shorth
+#define vec_extract_fp32_from_shortl __builtin_vec_vextract_fp_from_shortl
 
 #define scalar_extract_exp __builtin_vec_scalar_extract_exp
 #define scalar_extract_sig __builtin_vec_scalar_extract_sig

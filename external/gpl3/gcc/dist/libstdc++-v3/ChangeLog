@@ -1,3 +1,282 @@
+2019-11-14  Release Manager
+
+	* GCC 7.5.0 released.
+
+2019-10-24  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2019-10-18  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/92143
+	* libsupc++/new_opa.cc (operator new) [__APPLE__]: Increase alignment
+	to at least sizeof(void*).
+
+	Backport from mainline
+	2019-10-08  Jonathan Wakely  <jwakely@redhat.com>
+
+	* doc/Makefile.am (doc-html-docbook-regenerate): New target.
+	(${docbook_outdir}/html): Do not create unused 'html/ext' directory.
+	* doc/Makefile.in: Regenerate.
+	* doc/xml/manual/documentation_hacking.xml: Document new target.
+	* doc/html/*: Regenerate.
+
+	* doc/xml/manual/allocator.xml: Use archived copy of CUJ article.
+
+	Backport from mainline
+	2019-05-31  Gerald Pfeifer  <gerald@pfeifer.com>
+
+	* doc/xml/manual/allocator.xml: Move hoard.org back to http.
+
+2019-09-11  Jonathan Wakely  <jwakely@redhat.com>
+
+	* python/libstdcxx/v6/xmethods.py (SharedPtrUseCountWorker.__call__):
+	Fix syntax error.
+
+2019-09-02  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR middle-end/89303
+	* testsuite/20_util/enable_shared_from_this/89303.cc: New test.
+
+2019-09-02  Jonathan Wakely  <jwakely@redhat.com>
+
+	* testsuite/20_util/unique_ptr/assign/48635_neg.cc: Replace dg-error
+	with dg-prune-output for enable_if failure.
+	* testsuite/20_util/unique_ptr/cons/cv_qual_neg.cc: Add
+	dg-prune-output for enable_if failure.
+
+	Backport from mainline
+	2019-07-31  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/91308
+	* include/bits/unique_ptr.h (unique_ptr::__safe_conversion_up): Remove
+	constraints on deleter that should only apply to the constructor.
+	(unique_ptr<T[], D>::__safe_conversion_up): Likewise.
+	(unique_ptr<T[], D>::unique_ptr(unique_ptr<U, D>&&)): Restore
+	constraints on deleter here.
+	* testsuite/20_util/unique_ptr/assign/91308.cc: New test.
+
+2019-09-02  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2019-07-29  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/51333
+	* libsupc++/cxxabi.h (__gnu_cxx::recursive_init_error): Do not define
+	constructor inline.
+	* libsupc++/guard_error.cc (__gnu_cxx::recursive_init_error): Define
+	constructor.
+	* testsuite/18_support/51333.cc: New test.
+
+2019-09-02  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2019-06-07  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/90770
+	* src/Makefile.am (stamp-debug): Also test for missing makefile.
+	* src/Makefile.in: Regenerate.
+
+2019-09-02  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2019-05-23  Jonathan Wakely  <jwakely@redhat.com>
+
+	* doc/xml/manual/status_cxx2017.xml: Add feature test macro for
+	P0040R3.
+	* doc/html/*: Regenerate.
+
+	Backport from mainline
+	2019-06-20  Jonathan Wakely  <jwakely@redhat.com>
+
+	* doc/xml/manual/status_cxx2017.xml: Fix outdated reference to
+	C++17 working draft.
+
+	Backport from mainline
+	2019-05-21  Jonathan Wakely  <jwakely@redhat.com>
+
+	* doc/xml/manual/shared_ptr.xml: Fix names of lock policy constants.
+
+2019-09-02  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2019-05-17  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/bits/random.h (seed_seq::param): Fix non-reserved name.
+	* include/experimental/type_traits (is_detected_exact)
+	(is_detected_exact_v): Likewise.
+	* testsuite/17_intro/names.cc: Check for more non-reserved names.
+	* testsuite/experimental/names.cc: New test.
+
+2019-06-26  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2019-05-28  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/90634
+	* include/experimental/bits/fs_path.h (path::path(path&&)): Only call
+	_M_split_cmpts() for a path with multiple components.
+	(path::_S_is_dir_sep()): Add missing 'static' keyword to function.
+	* src/filesystem/path.cc (path::_M_split_cmpts()): Count number of
+	components and reserve space in vector. Return early when there is
+	only one component.
+	* testsuite/experimental/filesystem/path/construct/90634.cc: New test.
+
+2019-05-23  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2019-02-27  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/89466
+	* acinclude.m4 (GLIBCXX_CONFIGURE_DOCBOOK): Reorder check for local
+	stylesheet directories before check for xsltproc. Try to use
+	xmlcatalog to find local stylesheet directory before trying hardcoded
+	paths. Add path used by suse to hardcoded paths. Adjust xsltproc
+	check to look for the same stylesheet as doc/Makefile.am uses. Don't
+	use xsltproc if xmlcatalog fails to find a local stylesheet.
+	* configure.ac: Check for xmlcatalog.
+	* Makefile.in: Regenerate.
+	* configure: Likewise.
+	* doc/Makefile.in: Likewise.
+	* include/Makefile.in: Likewise.
+	* libsupc++/Makefile.in: Likewise.
+	* po/Makefile.in: Likewise.
+	* python/Makefile.in: Likewise.
+	* src/Makefile.in: Likewise.
+	* src/c++11/Makefile.in: Likewise.
+	* src/c++17/Makefile.in: Likewise.
+	* src/c++98/Makefile.in: Likewise.
+	* src/filesystem/Makefile.in: Likewise.
+	* testsuite/Makefile.in: Likewise.
+
+2019-05-23  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2019-01-22  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/88740
+	* testsuite/util/testsuite_hooks.h [stderr] (VERIFY): Use fprintf to
+	write to stderr instead of using printf.
+
+2019-05-23  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2019-05-23  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/experimental/any (__any_caster): Use RTTI if comparing
+	addresses fails, to support non-unique addresses in shared libraries.
+	* include/std/any (__any_caster): Likewise.
+	* testsuite/experimental/any/misc/any_cast_neg.cc: Use 0 for dg-error
+	line number.
+
+2019-05-23  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2019-05-23  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/90220
+	* include/experimental/any (__any_caster): Constrain to only be
+	callable for object types. Use remove_cv_t instead of decay_t.
+	If the type decays or isn't copy constructible, compare the manager
+	function to a dummy specialization.
+	(__any_caster): Add overload constrained for non-object types.
+	(any::_Manager_internal<_Op>): Add dummy specialization.
+	* testsuite/experimental/any/misc/any_cast.cc: Test function types
+	and array types.
+
+	Backport from mainline
+	2019-04-24  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/90220
+	* include/std/any (__any_caster): Use remove_cv_t instead of decay_t.
+	Avoid a runtime check for types that can never be stored in std::any.
+	* testsuite/20_util/any/misc/any_cast.cc: Test std::any_cast with
+	array types.
+
+	Backport from mainline
+	2019-04-24  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/90220 (partial)
+	* include/std/any (any_cast<T>(any*), any_cast<T>(const any*)): Do
+	not attempt ill-formed static_cast to pointers to non-object types.
+	* testsuite/20_util/any/misc/any_cast.cc: Test std::any_cast with
+	function types.
+
+2019-05-23  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from mainline
+	2019-01-15  Jonathan Wakely  <jwakely@redhat.com>
+
+	* doc/xml/manual/status_cxx2017.xml: Document P0032R3 and P0307R2
+	status.
+	* include/bits/stl_uninitialized.h (__cpp_lib_raw_memory_algorithms):
+	Define.
+	* include/std/any (__cpp_lib_any): Define as 201606L, because P0032R3
+	changes are supported.
+	* include/std/optional (__cpp_lib_optional): Likewise.
+	* include/std/variant (__cpp_lib_variant): Likewise.
+
+2019-05-08  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2019-04-17  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/90105
+	* include/bits/forward_list.tcc (operator==): Do not use operator!= to
+	compare elements.
+	(forward_list<T, A>::sort(Comp)): When elements are equal take the one
+	earlier in the list, so that sort is stable.
+	* testsuite/23_containers/forward_list/operations/90105.cc: New test.
+	* testsuite/23_containers/forward_list/comparable.cc: Test with
+	types that meet the minimum EqualityComparable and LessThanComparable
+	requirements. Remove irrelevant comment.
+
+	Backport from mainline
+	2019-03-11  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/89629
+	* libsupc++/hash_bytes.cc [__SIZEOF_SIZE_T__ == 8] (_Hash_bytes):
+	Use correct type for len_aligned.
+	* testsuite/20_util/hash/89629.cc: New test.
+
+2019-02-22  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/89446
+	* include/bits/char_traits.h (__constant_char_array): Check index is
+	in range before dereferencing.
+	* testsuite/21_strings/basic_string_view/operators/char/89446.cc:
+	New test.
+
+2018-12-24  Iain Sandoe  <iain@sandoe.co.uk>
+
+	Backport from mainline
+	2018-12-06  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* scripts/make_exports.pl (check names): Don’t try to export
+	construction vtable symbols.
+
+2018-12-24  Iain Sandoe  <iain@sandoe.co.uk>
+
+	Backport from mainline
+	2018-12-06  Jonathan Wakely  <jwakely@redhat.com>
+		    Iain Sandoe  <iain@sandoe.co.uk>
+
+	PR libstdc++/64883
+	* testsuite/17_intro/headers/c++1998/all_attributes.cc: Don't test
+	always_inline on Darwin.
+	* testsuite/17_intro/headers/c++2011/all_attributes.cc: Likewise.
+	* testsuite/17_intro/headers/c++2014/all_attributes.cc: Likewise.
+	* testsuite/17_intro/headers/c++2017/all_attributes.cc: Likewise.
+	* testsuite/17_intro/headers/c++2020/all_attributes.cc: Likewise.
+
+2018-12-24  Iain Sandoe  <iain@sandoe.co.uk>
+
+	Backport from mainline
+	2018-08-25  Iain Sandoe  <iain@sandoe.co.uk>
+
+	PR libstdc++/70694
+	* configure.host (OPT_LDFLAGS): Don't append
+	-fvisibility-inlines-hidden for newer Darwin.
+
 2018-12-06  Release Manager
 
 	* GCC 7.4.0 released.
