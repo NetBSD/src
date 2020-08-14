@@ -48,6 +48,4 @@ SECTIONS
 }
 
 ASSERT(first_kbyte - TEXTADDR <= 1024, "Error: first_kbyte exceeds 1KB");
-ASSERT(_edata - TEXTADDR <= TEXTDATASIZE,
-    "Error: text+data is too large to bootarea");
 ASSERT(_end <= BOOT_TEXTADDR, "Error: _end conflicts BOOT_TEXT");
