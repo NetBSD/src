@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xxboot,v 1.13 2020/08/10 07:00:49 rin Exp $
+#	$NetBSD: Makefile.xxboot,v 1.14 2020/08/14 03:25:39 isaki Exp $
 
 NOMAN=		# defined
 
@@ -61,10 +61,19 @@ SRCS+=	exec_image.S
 
 .include "${.CURDIR}/../../Makefile.booters"
 
+CLEANFILES+=	${PROG}.map
+
 
 ${PROG}: $(OBJS)
 	${_MKTARGET_LINK}
-	$(LD) $(LINKFLAGS) -o ${PROG} $(OBJS) $(LDLIBS)
+	$(LD) $(LINKFLAGS) -Map=${PROG}.map -o ${PROG} $(OBJS) $(LDLIBS)
+	: Print some addresses for convenience
+	@${TOOL_AWK} '/first_kbyte$$/ { print "\t\t" $$2 "\t" $$1 }' ${PROG}.map
+	@echo "		filesize	"`${TOOL_STAT} -f %z ${PROG}`
+	@if [ `${TOOL_STAT} -f %z ${PROG}` -gt 8192 ]; then \
+	    echo "${PROG} filesize exceeds 8192 bytes"; \
+		exit 1; \
+	fi
 	${TOUCHPROG}
 
 .include <bsd.prog.mk>
