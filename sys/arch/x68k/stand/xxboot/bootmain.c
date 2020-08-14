@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmain.c,v 1.4 2012/11/17 19:10:46 tsutsui Exp $	*/
+/*	$NetBSD: bootmain.c,v 1.5 2020/08/14 02:51:48 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Takumi Nakamura.
@@ -135,7 +135,8 @@ bootmain(void)
 		/* floppy */
 #ifdef XXBOOT_DEBUG
 		*(uint32_t *)bootdevstr =
-		    ('f' << 24 | 'd' << 16 | '@' << 8 | '0' + (BOOT_INFO & 3));
+		    ('f' << 24) | ('d' << 16) | ('@' << 8) |
+		    ('0' + (BOOT_INFO & 3));
 		bootdevstr[4] = '\0';
 #endif
 		/* fdNa for 1024 bytes/sector, fdNc for 512 bytes/sector */
