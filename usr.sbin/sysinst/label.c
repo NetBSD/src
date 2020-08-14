@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.20 2020/01/27 21:21:22 martin Exp $	*/
+/*	$NetBSD: label.c,v 1.21 2020/08/14 08:46:54 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.20 2020/01/27 21:21:22 martin Exp $");
+__RCSID("$NetBSD: label.c,v 1.21 2020/08/14 08:46:54 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -356,7 +356,7 @@ edit_fs_mountpt(menudesc *m, void *arg)
 	if (last != NULL)
 		last[1] = 0;
 
-	if (*first == 0 || strcmp(first, "none") == 0) {
+	if (first == NULL || *first == 0 || strcmp(first, "none") == 0) {
 		edit->wanted->mount[0] = 0;
 		edit->wanted->instflags &= ~PUIINST_MOUNT;
 		return 0;
