@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmain.c,v 1.6 2020/08/14 03:34:22 isaki Exp $	*/
+/*	$NetBSD: bootmain.c,v 1.7 2020/08/14 03:43:28 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Takumi Nakamura.
@@ -163,5 +163,5 @@ devopen(struct open_file *f, const char *fname, char **file)
 {
 
 	*file = __UNCONST(fname);
-	return xxopen(f);
+	return DEV_OPEN()(f);
 }
