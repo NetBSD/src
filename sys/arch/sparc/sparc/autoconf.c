@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.260 2020/06/08 02:27:08 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.261 2020/08/14 10:34:22 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.260 2020/06/08 02:27:08 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.261 2020/08/14 10:34:22 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1636,7 +1636,7 @@ set_network_props(device_t dev, void *aux)
 
 	prom_getether(ofnode, eaddr);
 	dict = device_properties(dev);
-	blob = prop_data_create_data(eaddr, ETHER_ADDR_LEN);
+	blob = prop_data_create_copy(eaddr, ETHER_ADDR_LEN);
 	prop_dictionary_set(dict, "mac-address", blob);
 	prop_object_release(blob);
 }

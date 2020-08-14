@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.32 2019/04/25 10:08:46 msaitoh Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.33 2020/08/14 10:31:40 martin Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.32 2019/04/25 10:08:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.33 2020/08/14 10:31:40 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -559,7 +559,7 @@ ie_vme_attach(device_t parent, device_t self, void *aux)
 
 	eaddrprop = prop_dictionary_get(device_properties(self), "mac-address");
 	if (eaddrprop != NULL && prop_data_size(eaddrprop) == ETHER_ADDR_LEN)
-		memcpy(myaddr, prop_data_data_nocopy(eaddrprop),
+		memcpy(myaddr, prop_data_value(eaddrprop),
 			ETHER_ADDR_LEN);
 
 	i82586_attach(sc, "multibus/vme", myaddr, media, NMEDIA, media[0]);
