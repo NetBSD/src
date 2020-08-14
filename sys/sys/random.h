@@ -1,7 +1,7 @@
-/*	$NetBSD: entropy.h,v 1.4 2020/08/14 00:53:16 riastradh Exp $	*/
+/*	$NetBSD: random.h,v 1.1 2020/08/14 00:53:16 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -29,32 +29,41 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_SYS_ENTROPY_H
-#define	_SYS_ENTROPY_H
+#ifndef	_SYS_RANDOM_H
+#define	_SYS_RANDOM_H
+
+#include <sys/cdefs.h>
+
+#include <machine/ansi.h>	/* _BSD_SIZE_T_ */
+
+#define	GRND_NONBLOCK	(1u << 0)
+#define	GRND_RANDOM	(1u << 1)
+#define	GRND_INSECURE	(1u << 2)
+
+#ifdef _KERNEL
+
+struct uio;
+
+int	dogetrandom(struct uio *, unsigned int);
+
+#endif	/* _KERNEL */
 
 #ifndef _KERNEL
-#error This header is known to the state of California to cause cancer in users.
+__BEGIN_DECLS
+
+#ifdef	_BSD_SIZE_T_
+typedef	_BSD_SIZE_T_	size_t;
+#undef	_BSD_SIZE_T_
 #endif
 
-#include <sys/types.h>
+#ifdef	_BSD_SSIZE_T_
+typedef	_BSD_SSIZE_T_	ssize_t;
+#undef	_BSD_SSIZE_T_
+#endif
 
-#include <lib/libkern/entpool.h>
+ssize_t	getrandom(void *, size_t, unsigned int);
 
-struct knote;
+__END_DECLS
+#endif	/* !_KERNEL */
 
-#define	ENTROPY_CAPACITY	ENTPOOL_CAPACITY	/* bytes */
-
-#define	ENTROPY_WAIT		0x01
-#define	ENTROPY_SIG		0x02
-#define	ENTROPY_HARDFAIL	0x04
-
-void	entropy_bootrequest(void);
-void	entropy_consolidate(void);
-unsigned entropy_epoch(void);
-bool	entropy_ready(void);
-int	entropy_extract(void *, size_t, int);
-int	entropy_poll(int);
-int	entropy_kqfilter(struct knote *);
-int	entropy_ioctl(unsigned long, void *);
-
-#endif	/* _SYS_ENTROPY_H */
+#endif	/* _SYS_RANDOM_H */
