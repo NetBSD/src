@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.244 2020/07/17 15:34:17 kamil Exp $
+#	$NetBSD: Makefile.inc,v 1.245 2020/08/14 00:53:16 riastradh Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -115,7 +115,7 @@ ASM=\
 		__fstatvfs190.S fstatat.S  __futimes50.S futimens.S \
 	__getcwd.S __getdents30.S __getfh30.S __getvfsstat90.S getgroups.S\
 		__getitimer50.S __getlogin.S getpeername.S getpgid.S getpgrp.S \
-		getpriority.S getrlimit.S __getrusage50.S getsid.S \
+		getpriority.S getrandom.S getrlimit.S __getrusage50.S getsid.S \
 		getsockname.S getsockopt.S getsockopt2.S __gettimeofday50.S \
 	ioctl.S \
 	kqueue.S kqueue1.S ktrace.S \
@@ -256,8 +256,9 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	flock.2 fork.2 fsync.2 getcontext.2 getdents.2 \
 	getfh.2 getvfsstat.2 getgid.2 getgroups.2 \
 	getitimer.2 getlogin.2 getpeername.2 getpgrp.2 getpid.2 \
-	getpriority.2 getrlimit.2 getrusage.2 getsid.2 getsockname.2 \
-	getsockopt.2 gettimeofday.2 getuid.2 intro.2 ioctl.2 issetugid.2 \
+	getpriority.2 getrandom.2 getrlimit.2 getrusage.2 getsid.2 \
+	getsockname.2 getsockopt.2 gettimeofday.2 getuid.2\
+	intro.2 ioctl.2 issetugid.2 \
 	kill.2 kqueue.2 ktrace.2 _ksem.2 \
 	lfs_bmapv.2 lfs_markv.2 lfs_segclean.2 lfs_segwait.2 \
 	link.2 listen.2 lseek.2 \

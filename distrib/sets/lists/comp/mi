@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2342 2020/08/11 13:19:15 christos Exp $
+#	$NetBSD: mi,v 1.2343 2020/08/14 00:53:15 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3137,6 +3137,7 @@
 ./usr/include/sys/quotactl.h			comp-c-include
 ./usr/include/sys/radioio.h			comp-c-include
 ./usr/include/sys/radixtree.h			comp-c-include
+./usr/include/sys/random.h			comp-c-include
 ./usr/include/sys/ras.h				comp-c-include
 ./usr/include/sys/rb.h				comp-obsolete		obsolete
 ./usr/include/sys/rbtree.h			comp-c-include
@@ -12742,6 +12743,7 @@
 ./usr/share/man/html2/getpid.html		comp-c-htmlman		html
 ./usr/share/man/html2/getppid.html		comp-c-htmlman		html
 ./usr/share/man/html2/getpriority.html		comp-c-htmlman		html
+./usr/share/man/html2/getrandom.html		comp-c-htmlman		html
 ./usr/share/man/html2/getrlimit.html		comp-c-htmlman		html
 ./usr/share/man/html2/getrusage.html		comp-c-htmlman		html
 ./usr/share/man/html2/getsid.html		comp-c-htmlman		html
@@ -20862,6 +20864,7 @@
 ./usr/share/man/man2/getpid.2			comp-c-man		.man
 ./usr/share/man/man2/getppid.2			comp-c-man		.man
 ./usr/share/man/man2/getpriority.2		comp-c-man		.man
+./usr/share/man/man2/getrandom.2		comp-c-man		.man
 ./usr/share/man/man2/getrlimit.2		comp-c-man		.man
 ./usr/share/man/man2/getrusage.2		comp-c-man		.man
 ./usr/share/man/man2/getsid.2			comp-c-man		.man

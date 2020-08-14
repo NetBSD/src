@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.888 2020/08/09 16:32:28 rillig Exp $
+# $NetBSD: mi,v 1.889 2020/08/14 00:53:16 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3142,6 +3142,7 @@
 ./usr/tests/lib/libc/sys/t_getitimer		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_getlogin		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_getpid		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/sys/t_getrandom		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_getrusage		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_getsid		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_getsockname		tests-lib-tests		compattestfile,atf
