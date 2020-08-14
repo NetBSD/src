@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmain.c,v 1.5 2020/08/14 02:51:48 isaki Exp $	*/
+/*	$NetBSD: bootmain.c,v 1.6 2020/08/14 03:34:22 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Takumi Nakamura.
@@ -39,25 +39,12 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/loadfile.h>
 
+#include "xxboot.h"
 #include "libx68k.h"
 #include "iocs.h"
 #include "exec_image.h"
 
 #define EXSCSI_BDID	((void *)0x00ea0001)
-#define BINF_ISFD(pbinf)	(*((uint8_t *)(pbinf) + 1) == 0)
-
-/* boot.S */
-extern int badbaddr(volatile void *);
-extern unsigned int ID;		/* target SCSI ID */
-extern unsigned int BOOT_INFO;	/* result of IOCS(__BOOTINF) */
-extern struct {
-	struct fdfmt{
-		uint8_t	N;	/* sector length 0: 128, ..., 3: 1K */
-		uint8_t	C;	/* cylinder # */
-		uint8_t	H;	/* head # */
-		uint8_t	R;	/* sector # */
-	} minsec, maxsec;
-} FDSECMINMAX;			/* FD format type of the first track */
 
 /* for debug */
 unsigned int startregs[16];
@@ -106,8 +93,6 @@ get_scsi_host_adapter(char *devstr)
 
 	return ha;
 }
-
-extern const char bootprog_name[], bootprog_rev[];
 
 void
 bootmain(void)
