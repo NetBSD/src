@@ -1,4 +1,4 @@
-# $NetBSD: t_cpuctl.sh,v 1.4 2020/07/13 13:16:07 jruoho Exp $
+# $NetBSD: t_cpuctl.sh,v 1.5 2020/08/14 05:22:25 martin Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,14 +39,14 @@ setcpu() {
 
 	while [ $ncpu -gt 1 ]; do
 
-		cpuid=$(expr $ncpu - 1)
+		cpuid=$(( $ncpu - 1 ))
 		cpuctl $1 $cpuid >/dev/null 2>&1
 
 		if [ ! $? -eq 0 ]; then
 			$2 $3
 		fi
 
-		ncpu=$(expr $ncpu - 1)
+		ncpu=$(( $ncpu - 1 ))
 	done
 
 	# Additional check that interrupts cannot be
@@ -65,7 +65,7 @@ clean() {
 
 	while read line; do
 
-		i=$(expr $i + 1)
+		i=$(( $i + 1 ))
 
 		if [ $i -lt 3 ]; then
 			continue
@@ -95,7 +95,7 @@ ncpu_head() {
 ncpu_body() {
 
 	lst=$(cpuctl list | wc -l)
-	ncpu=$(expr $lst - 2)
+	ncpu=$(( $lst - 2 ))
 
 	if [ $ncpu -eq 1 ]; then
 		atf_pass
@@ -132,13 +132,13 @@ err_body() {
 		-o empty -x cpuctl nointr -1
 
 	atf_check -s exit:1 -e ignore \
-		-o empty -x cpuctl identify $(expr ncpu + 1)
+		-o empty -x cpuctl identify $(( $ncpu + 1 ))
 
 	atf_check -s exit:1 -e ignore \
-		  -o empty -x cpuctl offline $(expr ncpu + 1)
+		  -o empty -x cpuctl offline $(( $ncpu + 1 ))
 
 	atf_check -s exit:1 -e ignore \
-		-o empty -x cpuctl nointr $(expr ncpu + 1)
+		-o empty -x cpuctl nointr $(( $ncpu + 1 ))
 }
 
 err_cleanup() {
@@ -159,9 +159,9 @@ identify_body() {
 	ncpu=$(sysctl -n hw.ncpu)
 
 	while [ $ncpu -gt 0 ]; do
-		cpuid=$(expr $ncpu - 1)
+		cpuid=$(( $ncpu - 1 ))
 		atf_check -s exit:0 -o not-empty -x cpuctl identify $cpuid
-		ncpu=$(expr $ncpu - 1)
+		ncpu=$(( $ncpu - 1 ))
 	done
 
 	atf_pass
