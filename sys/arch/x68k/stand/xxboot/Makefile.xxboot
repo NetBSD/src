@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xxboot,v 1.16 2020/08/14 03:40:47 isaki Exp $
+#	$NetBSD: Makefile.xxboot,v 1.17 2020/08/14 03:54:46 isaki Exp $
 
 NOMAN=		# defined
 
@@ -40,6 +40,7 @@ CPPFLAGS+= -DHEAP_START=0x00100000
 CPPFLAGS+= -nostdinc -I${.OBJDIR} -I${S}
 CPPFLAGS+= -I$M/stand/libiocs -I$M/stand/libsa -I$M/stand/common
 AFLAGS=	   ${CFLAGS:M-[ID]*}
+AFLAGS+=   -Wa,-l
 LINKFLAGS=   -n -Bstatic -T ${.CURDIR}/../xxboot.ldscript
 LINKFLAGS+=  --defsym=TEXTADDR=$(TEXT)
 LINKFLAGS+=  --defsym=BOOT_TEXTADDR=$(BOOT_TEXT)
