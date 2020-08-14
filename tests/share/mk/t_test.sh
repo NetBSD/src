@@ -77,7 +77,7 @@ EOF
 
 atf_test_case one_cxx
 one_cxx_body() {
-	cat >t_fake.cpp <<EOF
+	cat >t_fake.cc <<EOF
 #include <atf-c++.hpp>
 ATF_TEST_CASE_WITHOUT_HEAD(one_tc);
 ATF_TEST_CASE_BODY(one_tc)
