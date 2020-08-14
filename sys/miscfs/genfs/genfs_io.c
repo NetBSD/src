@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.99 2020/08/10 11:09:15 rin Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.100 2020/08/14 09:06:14 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.99 2020/08/10 11:09:15 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.100 2020/08/14 09:06:14 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -913,8 +913,7 @@ retry:
 	 * shortcut if we have no pages to process.
 	 */
 
-	nodirty = radix_tree_empty_tagged_tree_p(&uobj->uo_pages,
-            UVM_PAGE_DIRTY_TAG);
+	nodirty = uvm_obj_clean_p(uobj);
 #ifdef DIAGNOSTIC
 	mutex_enter(vp->v_interlock);
 	KASSERT((vp->v_iflag & VI_ONWORKLST) != 0 || nodirty);
@@ -922,9 +921,8 @@ retry:
 #endif
 	if (uobj->uo_npages == 0 || (dirtyonly && nodirty)) {
 		mutex_enter(vp->v_interlock);
-		if (vp->v_iflag & VI_ONWORKLST) {
-			if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL)
-				vn_syncer_remove_from_worklist(vp);
+		if (vp->v_iflag & VI_ONWORKLST && LIST_EMPTY(&vp->v_dirtyblkhd)) {
+			vn_syncer_remove_from_worklist(vp);
 		}
 		mutex_exit(vp->v_interlock);
 		if (trans_mp) {
@@ -978,8 +976,7 @@ retry:
 	}
 
 	error = 0;
-	wasclean = radix_tree_empty_tagged_tree_p(&uobj->uo_pages,
-            UVM_PAGE_WRITEBACK_TAG);
+	wasclean = uvm_obj_nowriteback_p(uobj);
 	nextoff = startoff;
 	if (endoff == 0 || flags & PGO_ALLPAGES) {
 		endoff = trunc_page(LLONG_MAX);
@@ -1030,8 +1027,7 @@ retry:
 		KASSERT(pg->offset >= nextoff);
 		KASSERT(!dirtyonly ||
 		    uvm_pagegetdirty(pg) != UVM_PAGE_STATUS_CLEAN ||
-		    radix_tree_get_tag(&uobj->uo_pages,
-			pg->offset >> PAGE_SHIFT, UVM_PAGE_WRITEBACK_TAG));
+		    uvm_obj_page_writeback_p(pg));
 
 		if (pg->offset >= endoff) {
 			break;
@@ -1245,9 +1241,7 @@ retry:
 				 * mark pages as WRITEBACK so that concurrent
 				 * fsync can find and wait for our activities.
 				 */
-				radix_tree_set_tag(&uobj->uo_pages,
-				    pgs[i]->offset >> PAGE_SHIFT,
-				    UVM_PAGE_WRITEBACK_TAG);
+				uvm_obj_page_set_writeback(pgs[i]);
 			}
 			if (tpg->offset < startoff || tpg->offset >= endoff)
 				continue;
@@ -1332,11 +1326,9 @@ retry:
 	 * syncer list.
 	 */
 
-	if ((vp->v_iflag & VI_ONWORKLST) != 0 &&
-	    radix_tree_empty_tagged_tree_p(&uobj->uo_pages,
-	    UVM_PAGE_DIRTY_TAG)) {
-		if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL)
-			vn_syncer_remove_from_worklist(vp);
+	if ((vp->v_iflag & VI_ONWORKLST) != 0 && uvm_obj_clean_p(uobj) &&
+	    LIST_EMPTY(&vp->v_dirtyblkhd)) {
+		vn_syncer_remove_from_worklist(vp);
 	}
 
 #if !defined(DEBUG)
