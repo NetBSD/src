@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.93 2020/07/08 10:18:00 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.94 2020/08/14 16:18:36 skrll Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -166,6 +166,7 @@ define	L_CPU			offsetof(struct lwp, l_cpu)
 define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_PRIVATE		offsetof(struct lwp, l_private)
 define	L_FLAG			offsetof(struct lwp, l_flag)
+define	L_MD_ASTPENDING		offsetof(struct lwp, l_md.md_astpending)
 define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
 define	L_MD_TF			offsetof(struct lwp, l_md.md_tf)
 define	MDLWP_NOALIGNFLT	MDLWP_NOALIGNFLT
@@ -225,7 +226,6 @@ define	CF_CONTROL		offsetof(struct cpu_functions, cf_control)
 
 define	CPU_INFO_SIZE		sizeof(struct cpu_info)
 define	CI_ARM_CPUID		offsetof(struct cpu_info, ci_arm_cpuid)
-define	CI_ASTPENDING		offsetof(struct cpu_info, ci_astpending)
 define	CI_CPL			offsetof(struct cpu_info, ci_cpl)
 define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CI_INTR_DEPTH		offsetof(struct cpu_info, ci_intr_depth)
