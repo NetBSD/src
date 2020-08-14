@@ -43,6 +43,7 @@
 81   sys_getpgrp            getpgrp            rump___sysimpl_getpgrp
 82   sys_setpgid            setpgid            rump___sysimpl_setpgid
 90   sys_dup2               dup2               rump___sysimpl_dup2
+91   sys_getrandom          getrandom          rump___sysimpl_getrandom
 92   sys_fcntl              fcntl              rump___sysimpl_fcntl
 93   sys_nomodule           select             rump___sysimpl_select
 95   sys_fsync              fsync              rump___sysimpl_fsync
