@@ -1,7 +1,5 @@
-#	$NetBSD: Makefile,v 1.4 2012/11/17 19:10:47 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.5 2020/08/14 03:40:47 isaki Exp $
 
-DEV=		xx
-DEVDRV=		xx
 FS=		lfsv2
 BOOTCPPFLAGS=	-DSDBOOT -DFDBOOT
 

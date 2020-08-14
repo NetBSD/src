@@ -1,7 +1,5 @@
-#	$NetBSD: Makefile,v 1.2 2012/11/17 19:10:46 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.3 2020/08/14 03:40:47 isaki Exp $
 
-DEV=		xx
-DEVDRV=		xx
 FS=		cd9660
 BOOTCPPFLAGS=	-DCDBOOT
 

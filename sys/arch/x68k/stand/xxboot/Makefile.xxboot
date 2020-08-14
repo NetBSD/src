@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.xxboot,v 1.15 2020/08/14 03:29:23 isaki Exp $
+#	$NetBSD: Makefile.xxboot,v 1.16 2020/08/14 03:40:47 isaki Exp $
 
 NOMAN=		# defined
 
 .include <bsd.own.mk>
 
-BOOT=	$(DEV)boot_$(FS)
+BOOT=	xxboot_$(FS)
 VERSIONFILE=	${.CURDIR}/../version
 VERSION!=	${TOOL_AWK} -F: '$$1 ~ /^[0-9.]*$$/ { it = $$1; } \
 			END { print it }' ${VERSIONFILE}
@@ -25,7 +25,7 @@ BINMODE=	444
 S=		${.CURDIR}/../../../../..
 M=		$S/arch/x68k
 .PATH:		${.CURDIR}/..
-SRCS=	boot.S bootmain.c conf.c consio1.c $(DEVDRV).c
+SRCS=	boot.S bootmain.c conf.c consio1.c xx.c
 
 .include "${S}/conf/newvers_stand.mk"
 
@@ -51,7 +51,7 @@ LDLIBS+=  -L${LIBIOCS} -liocs
 
 .PATH: $S/lib/libsa
 CPPFLAGS+= -DLIBSA_SINGLE_FILESYSTEM=$(FS)
-CPPFLAGS+= -DLIBSA_SINGLE_DEVICE=$(DEV)
+CPPFLAGS+= -DLIBSA_SINGLE_DEVICE=xx
 CPPFLAGS+= -DLIBSA_NO_FD_CHECKING
 CPPFLAGS+= -DLIBSA_NO_FS_WRITE
 CPPFLAGS+= -DLIBSA_NO_RAW_ACCESS
