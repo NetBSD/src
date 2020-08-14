@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.7 2020/05/08 16:05:36 riastradh Exp $	*/
+/*	$NetBSD: random.c,v 1.8 2020/08/14 00:53:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: random.c,v 1.7 2020/05/08 16:05:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: random.c,v 1.8 2020/08/14 00:53:16 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -62,12 +62,11 @@ __KERNEL_RCSID(0, "$NetBSD: random.c,v 1.7 2020/05/08 16:05:36 riastradh Exp $")
 #include <sys/kmem.h>
 #include <sys/lwp.h>
 #include <sys/poll.h>
+#include <sys/random.h>
 #include <sys/rnd.h>
 #include <sys/rndsource.h>
 #include <sys/signalvar.h>
 #include <sys/systm.h>
-
-#include <crypto/nist_hash_drbg/nist_hash_drbg.h>
 
 #include "ioconf.h"
 
@@ -209,138 +208,26 @@ random_kqfilter(dev_t dev, struct knote *kn)
 static int
 random_read(dev_t dev, struct uio *uio, int flags)
 {
-	uint8_t seed[NIST_HASH_DRBG_SEEDLEN_BYTES] = {0};
-	struct nist_hash_drbg drbg;
-	uint8_t *buf;
-	int extractflags;
-	int error;
+	int gflags;
 
-	/* Get a buffer for transfers.  */
-	buf = kmem_alloc(RANDOM_BUFSIZE, KM_SLEEP);
-
-	/*
-	 * If it's a short read from /dev/urandom, just generate the
-	 * output directly with per-CPU cprng_strong.
-	 */
-	if (minor(dev) == RND_DEV_URANDOM &&
-	    uio->uio_resid <= RANDOM_BUFSIZE) {
-		/* Generate data and transfer it out.  */
-		cprng_strong(user_cprng, buf, uio->uio_resid, 0);
-		error = uiomove(buf, uio->uio_resid, uio);
-		goto out;
+	/* Set the appropriate GRND_* mode.  */
+	switch (minor(dev)) {
+	case RND_DEV_RANDOM:
+		gflags = GRND_RANDOM;
+		break;
+	case RND_DEV_URANDOM:
+		gflags = GRND_INSECURE;
+		break;
+	default:
+		return ENXIO;
 	}
 
-	/*
-	 * If we're doing a blocking read from /dev/random, wait
-	 * interruptibly.  Otherwise, don't wait.
-	 */
-	if (minor(dev) == RND_DEV_RANDOM && !ISSET(flags, FNONBLOCK))
-		extractflags = ENTROPY_WAIT|ENTROPY_SIG;
-	else
-		extractflags = 0;
+	/* Set GRND_NONBLOCK if the user requested FNONBLOCK.  */
+	if (flags & FNONBLOCK)
+		gflags |= GRND_NONBLOCK;
 
-	/*
-	 * Query the entropy pool.  For /dev/random, stop here if this
-	 * fails.  For /dev/urandom, go on either way --
-	 * entropy_extract will always fill the buffer with what we
-	 * have from the global pool.
-	 */
-	error = entropy_extract(seed, sizeof seed, extractflags);
-	if (minor(dev) == RND_DEV_RANDOM && error)
-		goto out;
-
-	/* Instantiate the DRBG.  */
-	if (nist_hash_drbg_instantiate(&drbg, seed, sizeof seed, NULL, 0,
-		NULL, 0))
-		panic("nist_hash_drbg_instantiate");
-
-	/* Promptly zero the seed.  */
-	explicit_memset(seed, 0, sizeof seed);
-
-	/* Generate data.  */
-	error = 0;
-	while (uio->uio_resid) {
-		size_t n = MIN(uio->uio_resid, RANDOM_BUFSIZE);
-
-		/*
-		 * Clamp /dev/random output to the entropy capacity and
-		 * seed size.  Programs can't rely on long reads.
-		 */
-		if (minor(dev) == RND_DEV_RANDOM) {
-			n = MIN(n, ENTROPY_CAPACITY);
-			n = MIN(n, sizeof seed);
-			/*
-			 * Guarantee never to return more than one
-			 * buffer in this case to minimize bookkeeping.
-			 */
-			CTASSERT(ENTROPY_CAPACITY <= RANDOM_BUFSIZE);
-			CTASSERT(sizeof seed <= RANDOM_BUFSIZE);
-		}
-
-		/*
-		 * Try to generate a block of data, but if we've hit
-		 * the DRBG reseed interval, reseed.
-		 */
-		if (nist_hash_drbg_generate(&drbg, buf, n, NULL, 0)) {
-			/*
-			 * Get a fresh seed without blocking -- we have
-			 * already generated some output so it is not
-			 * useful to block.  This can fail only if the
-			 * request is obscenely large, so it is OK for
-			 * either /dev/random or /dev/urandom to fail:
-			 * we make no promises about gigabyte-sized
-			 * reads happening all at once.
-			 */
-			error = entropy_extract(seed, sizeof seed, 0);
-			if (error)
-				break;
-
-			/* Reseed and try again.  */
-			if (nist_hash_drbg_reseed(&drbg, seed, sizeof seed,
-				NULL, 0))
-				panic("nist_hash_drbg_reseed");
-
-			/* Promptly zero the seed.  */
-			explicit_memset(seed, 0, sizeof seed);
-
-			/* If it fails now, that's a bug.  */
-			if (nist_hash_drbg_generate(&drbg, buf, n, NULL, 0))
-				panic("nist_hash_drbg_generate");
-		}
-
-		/* Transfer n bytes out.  */
-		error = uiomove(buf, n, uio);
-		if (error)
-			break;
-
-		/*
-		 * If this is /dev/random, stop here, return what we
-		 * have, and force the next read to reseed.  Programs
-		 * can't rely on /dev/random for long reads.
-		 */
-		if (minor(dev) == RND_DEV_RANDOM) {
-			error = 0;
-			break;
-		}
-
-		/* Yield if requested.  */
-		if (curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
-			preempt();
-
-		/* Check for interruption after at least 256 bytes.  */
-		CTASSERT(RANDOM_BUFSIZE >= 256);
-		if (__predict_false(curlwp->l_flag & LW_PENDSIG) &&
-		    sigispending(curlwp, 0)) {
-			error = EINTR;
-			break;
-		}
-	}
-
-out:	/* Zero the buffer and free it.  */
-	explicit_memset(buf, 0, RANDOM_BUFSIZE);
-	kmem_free(buf, RANDOM_BUFSIZE);
-
-	return error;
+	/* Defer to getrandom.  */
+	return dogetrandom(uio, gflags);
 }
 
 /*

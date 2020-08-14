@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.184 2020/07/28 20:15:07 riastradh Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.185 2020/08/14 00:53:16 riastradh Exp $
 #
 
 IOCONFDIR:=	${.PARSEDIR}
@@ -130,6 +130,7 @@ SRCS+=	init_sysctl_base.c	\
 	subr_xcall.c		\
 	sys_descrip.c		\
 	sys_generic.c		\
+	sys_getrandom.c		\
 	sys_module.c		\
 	sys_pipe.c		\
 	sys_select.c		\

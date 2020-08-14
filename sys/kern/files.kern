@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.50 2020/07/28 20:15:07 riastradh Exp $
+#	$NetBSD: files.kern,v 1.51 2020/08/14 00:53:16 riastradh Exp $
 
 #
 # kernel sources
@@ -157,6 +157,7 @@ file	kern/sys_aio.c			aio
 file	kern/sys_descrip.c		kern
 file	kern/sys_futex.c		kern
 file	kern/sys_generic.c		kern
+file	kern/sys_getrandom.c		kern
 file	kern/sys_module.c		kern
 file	kern/sys_mqueue.c		mqueue
 file	kern/sys_lwp.c			kern

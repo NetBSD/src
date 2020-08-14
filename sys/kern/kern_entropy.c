@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.22 2020/05/12 20:50:17 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.23 2020/08/14 00:53:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.22 2020/05/12 20:50:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.23 2020/08/14 00:53:16 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -609,6 +609,18 @@ entropy_epoch(void)
 	 * make sure we read it afresh each time.
 	 */
 	return atomic_load_relaxed(&E->epoch);
+}
+
+/*
+ * entropy_ready()
+ *
+ *	True if the entropy pool has full entropy.
+ */
+bool
+entropy_ready(void)
+{
+
+	return atomic_load_relaxed(&E->needed) == 0;
 }
 
 /*
@@ -1231,6 +1243,8 @@ sysctl_entropy_gather(SYSCTLFN_ARGS)
  *
  *		ENTROPY_WAIT	Wait for entropy if not available yet.
  *		ENTROPY_SIG	Allow interruption by a signal during wait.
+ *		ENTROPY_HARDFAIL Either fill the buffer with full entropy,
+ *				or fail without filling it at all.
  *
  *	Return zero on success, or error on failure:
  *
@@ -1292,9 +1306,15 @@ entropy_extract(void *buf, size_t len, int flags)
 		}
 	}
 
-	/* Count failure -- but fill the buffer nevertheless.  */
-	if (error)
+	/*
+	 * Count failure -- but fill the buffer nevertheless, unless
+	 * the caller specified ENTROPY_HARDFAIL.
+	 */
+	if (error) {
+		if (ISSET(flags, ENTROPY_HARDFAIL))
+			goto out;
 		entropy_extract_fail_evcnt.ev_count++;
+	}
 
 	/*
 	 * Report a warning if we have never yet reached full entropy.
@@ -1324,7 +1344,7 @@ entropy_extract(void *buf, size_t len, int flags)
 		entropy_deplete_evcnt.ev_count++;
 	}
 
-	/* Release the global lock and return the error.  */
+out:	/* Release the global lock and return the error.  */
 	if (E->stage >= ENTROPY_WARM)
 		mutex_exit(&E->lock);
 	return error;
