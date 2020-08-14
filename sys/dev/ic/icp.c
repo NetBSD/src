@@ -1,4 +1,4 @@
-/*	$NetBSD: icp.c,v 1.33 2019/11/10 21:16:35 chs Exp $	*/
+/*	$NetBSD: icp.c,v 1.34 2020/08/14 09:26:40 chs Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.33 2019/11/10 21:16:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.34 2020/08/14 09:26:40 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,6 +179,7 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 	 * Allocate and initialize the command control blocks.
 	 */
 	ic = malloc(sizeof(*ic) * ICP_NCCBS, M_DEVBUF, M_WAITOK | M_ZERO);
+	icp->icp_ccbs = ic;
 	state++;
 
 	for (i = 0; i < ICP_NCCBS; i++, ic++) {
