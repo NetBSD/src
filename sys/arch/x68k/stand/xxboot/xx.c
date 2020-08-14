@@ -1,4 +1,4 @@
-/*	$NetBSD: xx.c,v 1.2 2012/11/17 16:02:00 tsutsui Exp $	*/
+/*	$NetBSD: xx.c,v 1.3 2020/08/14 03:34:22 isaki Exp $	*/
 
 /*
  * Copyright (c) 2010 MINOURA Makoto.
@@ -28,7 +28,7 @@
 #include <sys/param.h>
 #include <lib/libsa/stand.h>
 
-extern void RAW_READ(void *buf, uint32_t blkpos, size_t bytelen);
+#include "xxboot.h"
 
 int
 xxopen(struct open_file *f, ...)
