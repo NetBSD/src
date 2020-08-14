@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.198 2019/04/06 03:06:27 thorpej Exp $ */
+/*	$NetBSD: trap.c,v 1.199 2020/08/14 13:45:44 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.198 2019/04/06 03:06:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.199 2020/08/14 13:45:44 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_sunos.h"
@@ -606,7 +606,6 @@ trap(unsigned type, int psr, int pc, struct trapframe *tf)
 		break;
 
 	case T_CPDISABLED:
-		uprintf("coprocessor instruction\n");	/* XXX */
 		sig = SIGILL;
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_trap = type;
