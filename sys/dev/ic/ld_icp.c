@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_icp.c,v 1.31 2017/02/27 21:32:33 jdolecek Exp $	*/
+/*	$NetBSD: ld_icp.c,v 1.32 2020/08/14 09:28:29 chs Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.31 2017/02/27 21:32:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.32 2020/08/14 09:28:29 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,11 +167,12 @@ ld_icp_attach(device_t parent, device_t self, void *aux)
 static int
 ld_icp_detach(device_t dv, int flags)
 {
+	struct ld_softc *ldsc = device_private(dv);
 	int rv;
 
-	if ((rv = ldbegindetach((struct ld_softc *)dv, flags)) != 0)
+	if ((rv = ldbegindetach(ldsc, flags)) != 0)
 		return (rv);
-	ldenddetach((struct ld_softc *) dv);
+	ldenddetach(ldsc);
 
 	return (0);
 }
@@ -345,7 +346,7 @@ static void
 ld_icp_adjqparam(device_t dv, int openings)
 {
 
-	ldadjqparam((struct ld_softc *) dv, openings);
+	ldadjqparam(device_private(dv), openings);
 }
 
 MODULE(MODULE_CLASS_DRIVER, ld_icp, "ld");	/* no icp module yet */
