@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.63 2020/02/15 08:16:10 skrll Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.64 2020/08/14 16:18:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.63 2020/02/15 08:16:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.64 2020/08/14 16:18:36 skrll Exp $");
 
 #include <sys/atomic.h>
 #include <sys/cpu.h>
@@ -241,17 +241,39 @@ cpu_need_resched(struct cpu_info *ci, struct lwp *l, int flags)
 		if (flags & RESCHED_REMOTE) {
 			intr_ipi_send(ci->ci_kcpuset, IPI_KPREEMPT);
 		} else {
-			atomic_or_uint(&ci->ci_astpending, __BIT(1));
+			l->l_md.md_astpending |= __BIT(1);
 		}
 #endif /* __HAVE_PREEMPTION */
 		return;
 	}
+
+	KASSERT((flags & RESCHED_UPREEMPT) != 0);
 	if (flags & RESCHED_REMOTE) {
 #ifdef MULTIPROCESSOR
 		intr_ipi_send(ci->ci_kcpuset, IPI_AST);
 #endif /* MULTIPROCESSOR */
 	} else {
-		setsoftast(ci);
+		l->l_md.md_astpending |= __BIT(0);
+	}
+}
+
+
+/*
+ * Notify the current lwp (l) that it has a signal pending,
+ * process as soon as possible.
+ */
+void
+cpu_signotify(struct lwp *l)
+{
+
+	KASSERT(kpreempt_disabled());
+
+	if (l->l_cpu != curcpu()) {
+#ifdef MULTIPROCESSOR
+		intr_ipi_send(l->l_cpu->ci_kcpuset, IPI_AST);
+#endif
+	} else {
+		l->l_md.md_astpending |= __BIT(0);
 	}
 }
 
