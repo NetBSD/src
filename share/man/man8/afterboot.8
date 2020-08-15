@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.63 2020/08/15 13:25:14 nia Exp $
+.\"	$NetBSD: afterboot.8,v 1.64 2020/08/15 13:32:26 nia Exp $
 .\"	$OpenBSD: afterboot.8,v 1.72 2002/02/22 02:02:33 miod Exp $
 .\"
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -877,8 +877,18 @@ The
 packages collection, pkgsrc, includes a large set of third-party software.
 A lot of it is available as binary packages that you can download from
 .Lk https://ftp.netbsd.org/pub/pkgsrc/packages/NetBSD/
-or a mirror, and install using
-.Xr pkg_add 1 .
+or a mirror.
+.Pp
+For most users, using pkgin to manage binary packages is recommended.
+.Pp
+To install pkgin, if it was not done by the installer:
+.Bd -literal -offset indent
+.Ic export PKG_PATH=https://ftp.netbsd.org/pub/pkgsrc/packages/NetBSD/9.0/amd64/All
+.Ic pkg_add pkgin
+.Ic pkgin update
+.Ic pkgin install bash mpg123 fluxbox ...
+.Ed
+.Pp
 See
 .Lk https://www.NetBSD.org/docs/pkgsrc/
 and
