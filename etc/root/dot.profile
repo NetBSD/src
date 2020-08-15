@@ -1,11 +1,11 @@
-#	$NetBSD: dot.profile,v 1.30 2018/03/01 06:12:09 snj Exp $
+#	$NetBSD: dot.profile,v 1.31 2020/08/15 14:47:28 nia Exp $
 
 export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/pkg/sbin:/usr/pkg/bin
 export PATH=${PATH}:/usr/X11R7/bin:/usr/local/sbin:/usr/local/bin
 
 # Uncomment the following line(s) to install binary packages
 # from cdn.NetBSD.org via pkg_add.  (See also pkg_install.conf)
-#export PKG_PATH="http://cdn.NetBSD.org/pub/pkgsrc/packages/NetBSD/$(uname -p)/$(uname -r|cut -f '1 2' -d.|cut -f 1 -d_)/All"
+#export PKG_PATH="https://cdn.NetBSD.org/pub/pkgsrc/packages/NetBSD/$(sysctl -n hw.machine_arch)/$(uname -r|cut -f '1 2' -d.|cut -f 1 -d_)/All"
 
 export BLOCKSIZE=1k
 
