@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.113 2020/07/31 08:54:09 simonb Exp $ */
+/* $NetBSD: locore.h,v 1.114 2020/08/15 07:42:07 mrg Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -667,7 +667,6 @@ int32_t kfetch_32(volatile uint32_t *, uint32_t);
 
 /* trap.c */
 void	netintr(void);
-bool	kdbpeek(vaddr_t, int *);
 
 /* mips_dsp.c */
 void	dsp_init(void);
