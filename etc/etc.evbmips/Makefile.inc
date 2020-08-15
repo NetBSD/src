@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.24 2020/07/17 15:16:34 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.25 2020/08/15 05:03:06 simonb Exp $
 #
 #	etc.evbmips/Makefile.inc -- evbmips-specific etc Makefile targets
 #
@@ -15,7 +15,7 @@ BUILD_KERNELS=		INSTALL_CI20 INSTALL_OMSAL400 INSTALL_MALTA
 
 KERNEL_SETS+=		P4032 P5064 P6032
 
-. elif ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
+.elif ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
 KERNEL_SETS=		MALTA32 MALTA64 XLSATX32 XLSATX64
 BUILD_KERNELS=		INSTALL_MALTA32 INSTALL_MALTA64
 BUILD_KERNELS+=		INSTALL_XLSATX32 INSTALL_XLSATX64
