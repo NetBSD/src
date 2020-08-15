@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_opcode.h,v 1.22 2020/07/26 08:08:41 simonb Exp $	*/
+/*	$NetBSD: mips_opcode.h,v 1.23 2020/08/15 04:27:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -316,8 +316,8 @@ typedef union {
 #define	OP_CACHEE	033		/* EVA */
 #define	OP_SBE		034		/* EVA */
 #define	OP_SHE		035		/* EVA */
-#define	OP_SCE		035		/* EVA */
-#define	OP_SWE		035		/* EVA */
+#define	OP_SCE		036		/* EVA */
+#define	OP_SWE		037		/* EVA */
 #define	OP_BSHFL	040		/* MIPS32/64 r2 */
 #define	OP_SWLE		041		/* EVA */
 #define	OP_SWRE		042		/* EVA */
