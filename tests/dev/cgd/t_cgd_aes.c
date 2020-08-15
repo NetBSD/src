@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cgd_aes.c,v 1.7 2019/07/10 06:21:40 martin Exp $	*/
+/*	$NetBSD: t_cgd_aes.c,v 1.8 2020/08/15 10:03:10 mlelstv Exp $	*/
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
  * Copyright (c) 2007 The Institute of Electrical and Electronics Engineers, Inc
@@ -89,7 +89,7 @@ static const char aes_cbc_256_key[33] = {
 	0
 };
 
-static const uint8_t aes_cbc_ptxt[SECSIZE] =
+static const uint8_t aes_cbc_ptxt[SECSIZE] __aligned(4) =
 	"                abcdefghijklmnop"
 	"                abcdefghijklmnop"
 	"                abcdefghijklmnop"
@@ -1954,7 +1954,7 @@ static const char aes_xts_512_key[65] = {
 /*
  * Vector 4 from IEEE 1619/D16, blkno 0.
  */
-static const uint8_t aes_xts_256_vec4_ptxt[SECSIZE] = {
+static const uint8_t aes_xts_256_vec4_ptxt[SECSIZE] __aligned(4) = {
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 	0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
 	0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
@@ -2091,7 +2091,7 @@ static const uint8_t aes_xts_256_vec4_ctxt[SECSIZE] = {
 /*
  * Vector 5 from IEEE 1619/D16, blkno 1.
  */
-static const uint8_t aes_xts_256_vec5_ptxt[SECSIZE] = {
+static const uint8_t aes_xts_256_vec5_ptxt[SECSIZE] __aligned(4) = {
 	0x27, 0xa7, 0x47, 0x9b, 0xef, 0xa1, 0xd4, 0x76,
 	0x48, 0x9f, 0x30, 0x8c, 0xd4, 0xcf, 0xa6, 0xe2,
 	0xa9, 0x6e, 0x4b, 0xbe, 0x32, 0x08, 0xff, 0x25,
@@ -2228,7 +2228,7 @@ static const uint8_t aes_xts_256_vec5_ctxt[SECSIZE] = {
 /*
  * Vector 6 from IEEE 1619/D16, blkno 2.
  */
-static const uint8_t aes_xts_256_vec6_ptxt[SECSIZE] = {
+static const uint8_t aes_xts_256_vec6_ptxt[SECSIZE] __aligned(4) = {
 	0x26, 0x4d, 0x3c, 0xa8, 0x51, 0x21, 0x94, 0xfe,
 	0xc3, 0x12, 0xc8, 0xc9, 0x89, 0x1f, 0x27, 0x9f,
 	0xef, 0xdd, 0x60, 0x8d, 0x0c, 0x02, 0x7b, 0x60,
@@ -2365,7 +2365,7 @@ static const uint8_t aes_xts_256_vec6_ctxt[SECSIZE] = {
 /*
  * Vector 7 from IEEE 1619/D16, blkno 0xfd.
  */
-static const uint8_t aes_xts_256_vec7_ptxt[SECSIZE] = {
+static const uint8_t aes_xts_256_vec7_ptxt[SECSIZE] __aligned(4) = {
 	0x8e, 0x41, 0xb7, 0x8c, 0x39, 0x0b, 0x5a, 0xf9,
 	0xd7, 0x58, 0xbb, 0x21, 0x4a, 0x67, 0xe9, 0xf6,
 	0xbf, 0x77, 0x27, 0xb0, 0x9a, 0xc6, 0x12, 0x40,
@@ -2502,7 +2502,7 @@ static const uint8_t aes_xts_256_vec7_ctxt[SECSIZE] = {
 /*
  * Vector 8 from IEEE 1619/D16, blkno 0xfe.
  */
-static const uint8_t aes_xts_256_vec8_ptxt[SECSIZE] = {
+static const uint8_t aes_xts_256_vec8_ptxt[SECSIZE] __aligned(4) = {
 	0xd5, 0x5f, 0x68, 0x4f, 0x81, 0xf4, 0x42, 0x6e,
 	0x9f, 0xde, 0x92, 0xa5, 0xff, 0x02, 0xdf, 0x2a,
 	0xc8, 0x96, 0xaf, 0x63, 0x96, 0x28, 0x88, 0xa9,
@@ -2639,7 +2639,7 @@ static const uint8_t aes_xts_256_vec8_ctxt[SECSIZE] = {
 /*
  * Vector 9 from IEEE 1619/D16, blkno 0xff.
  */
-static const uint8_t aes_xts_256_vec9_ptxt[SECSIZE] = {
+static const uint8_t aes_xts_256_vec9_ptxt[SECSIZE] __aligned(4) = {
 	0x72, 0xef, 0xc1, 0xeb, 0xfe, 0x1e, 0xe2, 0x59,
 	0x75, 0xa6, 0xeb, 0x3a, 0xa8, 0x58, 0x9d, 0xda,
 	0x2b, 0x26, 0x1f, 0x1c, 0x85, 0xbd, 0xab, 0x44,
