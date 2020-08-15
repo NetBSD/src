@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.c,v 1.24 2020/08/14 09:06:15 chs Exp $	*/
+/*	$NetBSD: uvm_object.c,v 1.25 2020/08/15 07:24:09 chs Exp $	*/
 
 /*
  * Copyright (c) 2006, 2010, 2019 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.24 2020/08/14 09:06:15 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.25 2020/08/15 07:24:09 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -259,7 +259,7 @@ static inline bool
 uvm_obj_page_tag_p(struct vm_page *pg, int tag)
 {
 	struct uvm_object *uobj = pg->uobject;
-	int pgidx = pg->offset >> PAGE_SHIFT;
+	uint64_t pgidx = pg->offset >> PAGE_SHIFT;
 
 	KASSERT(uobj != NULL);
 	KASSERT(rw_lock_held(uobj->vmobjlock));
@@ -270,7 +270,7 @@ static inline void
 uvm_obj_page_set_tag(struct vm_page *pg, int tag)
 {
 	struct uvm_object *uobj = pg->uobject;
-	int pgidx = pg->offset >> PAGE_SHIFT;
+	uint64_t pgidx = pg->offset >> PAGE_SHIFT;
 
 	KASSERT(uobj != NULL);
 	KASSERT(rw_write_held(uobj->vmobjlock));
@@ -281,7 +281,7 @@ static inline void
 uvm_obj_page_clear_tag(struct vm_page *pg, int tag)
 {
 	struct uvm_object *uobj = pg->uobject;
-	int pgidx = pg->offset >> PAGE_SHIFT;
+	uint64_t pgidx = pg->offset >> PAGE_SHIFT;
 
 	KASSERT(uobj != NULL);
 	KASSERT(rw_write_held(uobj->vmobjlock));
