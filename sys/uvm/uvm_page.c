@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.245 2020/08/14 09:06:15 chs Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.246 2020/08/15 01:27:22 tnn Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.245 2020/08/14 09:06:15 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.246 2020/08/15 01:27:22 tnn Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -1790,7 +1790,7 @@ struct vm_page *
 uvm_pagelookup(struct uvm_object *obj, voff_t off)
 {
 	struct vm_page *pg;
-	bool ddb = false;
+	bool ddb __diagused = false;
 #ifdef DDB
 	extern int db_active;
 	ddb = db_active != 0;
