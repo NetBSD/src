@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.66 2020/08/15 13:44:14 nia Exp $
+.\"	$NetBSD: afterboot.8,v 1.67 2020/08/15 13:49:09 nia Exp $
 .\"	$OpenBSD: afterboot.8,v 1.72 2002/02/22 02:02:33 miod Exp $
 .\"
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -400,6 +400,16 @@ By default, it will query
 .Pa /etc/hosts
 first, and then the DNS resolver specified in
 .Pa /etc/resolv.conf .
+.Pp
+Multicast DNS and DNS Service Discovery are usually not enabled by
+default on a fresh NetBSD system, and can be enabled by setting
+.Dq mdnsd=YES
+in
+.Pa /etc/rc.conf ,
+and either rebooting or running the following command:
+.Bd -literal -offset indent
+.Ic service mdnsd start
+.Ed
 .Pp
 If your network does not have a usable DNS resolver, e.g. one provided
 by DHCP, you can run a local caching recursive resolver by setting
