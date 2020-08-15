@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.62 2019/06/18 23:11:05 nia Exp $
+.\"	$NetBSD: afterboot.8,v 1.63 2020/08/15 13:25:14 nia Exp $
 .\"	$OpenBSD: afterboot.8,v 1.72 2002/02/22 02:02:33 miod Exp $
 .\"
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -59,7 +59,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 18, 2019
+.Dd August 15, 2020
 .Dt AFTERBOOT 8
 .Os
 .Sh NAME
@@ -414,6 +414,18 @@ To connect to a wireless network using WPA and DHCP:
 .Ic wpa_passphrase networkname password >> /etc/wpa_supplicant.conf
 .Ic service wpa_supplicant onestart
 .Ic service dhcpcd onestart
+.Ed
+.Pp
+To connect to an open wireless network with no password, edit
+.Pa /etc/wpa_supplicant.conf
+instead of using
+.Xr wpa_passphrase 8 :
+.Bd -literal -offset indent
+network={
+	ssid="Public-WiFi"
+	key_mgmt=NONE
+	priority=100
+}
 .Ed
 .Pp
 To automatically connect at boot, add the following to
