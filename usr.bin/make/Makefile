@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.88 2020/08/12 19:21:05 rillig Exp $
+#	$NetBSD: Makefile,v 1.89 2020/08/15 01:49:07 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -173,7 +173,7 @@ test: .MAKE
 	sed -i 's,^\([^:]*\): *[0-9]*:,\1: ,' *.gcov
 .endif
 
-accept: .MAKE
+accept sync-mi: .MAKE
 	cd ${.CURDIR}/unit-tests && ${.MAKE} ${.TARGET}
 
 retest:
