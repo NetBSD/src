@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.43 2015/06/06 22:19:07 matt Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.44 2020/08/15 07:42:07 mrg Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.43 2015/06/06 22:19:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.44 2020/08/15 07:42:07 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -38,8 +38,10 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.43 2015/06/06 22:19:07 matt Exp $");
 #include <sys/cpu.h>
 
 #include <mips/mips_opcode.h>
+#include <mips/stacktrace.h>
 
 #include <machine/db_machdep.h>
+#include <machine/locore.h>
 
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>
@@ -68,11 +70,6 @@ db_sym_t localsym(db_sym_t sym, bool isreg, int *lex_level);
  * Machine register set.
  */
 struct mips_saved_state *db_cur_exc_frame = 0;
-
-/*XXX*/
-void	stacktrace_subr(mips_reg_t, mips_reg_t, mips_reg_t, mips_reg_t,
-	    vaddr_t, vaddr_t, vaddr_t, vaddr_t,
-	    void (*)(const char*, ...));
 
 /*
  * Stack trace helper.
