@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.65 2020/08/15 13:35:12 nia Exp $
+.\"	$NetBSD: afterboot.8,v 1.66 2020/08/15 13:44:14 nia Exp $
 .\"	$OpenBSD: afterboot.8,v 1.72 2002/02/22 02:02:33 miod Exp $
 .\"
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -357,6 +357,24 @@ As an alternative, compile a new kernel with the
 .Dq GATEWAY
 option.
 Packets are not forwarded by default, due to RFC requirements.
+.Ss Device nodes
+By default, nodes are created in
+.Pa /dev
+for a fairly typical number of devices.
+.Pp
+However, if this system has a large number of devices connected
+(e.g. for large scale storage), you may want to enable
+.Xr devpubd 8
+to ensure a sufficient number of nodes are available.
+Set
+.Dq Va devpubd=YES
+in
+.Pa /etc/rc.conf
+to create nodes automatically during system runtime.
+You can also run the node creation script by hand:
+.Bd -literal -offset indent
+.Ic cd /dev && sh MAKEDEV
+.Ed
 .Ss Secure Shell (SSH)
 By default, all services are disabled in a fresh
 .Nx
