@@ -1,4 +1,4 @@
-# $NetBSD: README.models,v 1.5 2016/06/19 10:49:34 rkujawa Exp $
+# $NetBSD: README.models,v 1.6 2020/08/15 05:41:57 mrg Exp $
 
 MIPS models and architecture levels
 -----------------------------------
@@ -26,7 +26,6 @@ These architecture levels exist:
         MIPS32     MIPS64
         MIPS32r2   MIPS64r2
         MIPS32r3   MIPS64r3
-        MIPS32r4   MIPS64r4
         MIPS32r5   MIPS64r5
         MIPS32r6   MIPS64r6
 
