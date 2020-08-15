@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cgd_3des.c,v 1.2 2017/01/13 21:30:39 christos Exp $	*/
+/*	$NetBSD: t_cgd_3des.c,v 1.3 2020/08/15 10:03:10 mlelstv Exp $	*/
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -68,7 +68,7 @@ static const char c3des_cbc_192_key[25] = {
 	0
 };
 
-static const uint8_t c3des_cbc_ptxt[SECSIZE] =
+static const uint8_t c3des_cbc_ptxt[SECSIZE] __aligned(4) =
 	"                abcdefghijklmnop"
 	"                abcdefghijklmnop"
 	"                abcdefghijklmnop"
