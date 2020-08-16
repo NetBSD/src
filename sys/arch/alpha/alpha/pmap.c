@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.266 2020/01/17 22:03:56 skrll Exp $ */
+/* $NetBSD: pmap.c,v 1.267 2020/08/16 20:04:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.266 2020/01/17 22:03:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.267 2020/08/16 20:04:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,7 +219,7 @@ static pt_entry_t *VPT;
 static struct {
 	struct pmap k_pmap;
 	struct pmap_asn_info k_asni[ALPHA_MAXPROCS];
-} kernel_pmap_store;
+} kernel_pmap_store __cacheline_aligned;
 
 struct pmap *const kernel_pmap_ptr = &kernel_pmap_store.k_pmap;
 
@@ -384,17 +384,18 @@ static krwlock_t pmap_growkernel_lock;
 #define	PMAP_HEAD_TO_MAP_LOCK()		rw_enter(&pmap_main_lock, RW_WRITER)
 #define	PMAP_HEAD_TO_MAP_UNLOCK()	rw_exit(&pmap_main_lock)
 
-struct {
-	kmutex_t lock;
-} __aligned(64) static pmap_pvh_locks[64] __aligned(64);
+static union {
+	kmutex_t	lock;
+	uint8_t		pad[COHERENCY_UNIT];
+} pmap_pvh_locks[64] __cacheline_aligned;
+
+#define	PVH_LOCK_HASH(pg)						\
+	((((uintptr_t)(pg)) >> 6) & 63)
 
 static inline kmutex_t *
 pmap_pvh_lock(struct vm_page *pg)
 {
-
-	/* Cut bits 11-6 out of page address and use directly as offset. */
-	return (kmutex_t *)((uintptr_t)&pmap_pvh_locks +
-	    ((uintptr_t)pg & (63 << 6)));
+	return &pmap_pvh_locks[PVH_LOCK_HASH(pg)].lock;
 }
 
 #if defined(MULTIPROCESSOR)
@@ -498,31 +499,12 @@ static int	pmap_physpage_addref(void *);
 static int	pmap_physpage_delref(void *);
 
 /*
- * PMAP_ISACTIVE{,_TEST}:
+ * PMAP_ISACTIVE:
  *
  *	Check to see if a pmap is active on the current processor.
  */
-#define	PMAP_ISACTIVE_TEST(pm, cpu_id)					\
-	(((pm)->pm_cpus & (1UL << (cpu_id))) != 0)
-
-#if defined(DEBUG) && !defined(MULTIPROCESSOR)
 #define	PMAP_ISACTIVE(pm, cpu_id)					\
-({									\
-	/*								\
-	 * XXX This test is not MP-safe.				\
-	 */								\
-	int isactive_ = PMAP_ISACTIVE_TEST(pm, cpu_id);			\
-									\
-	if ((curlwp->l_flag & LW_IDLE) != 0 &&				\
-	    curproc->p_vmspace != NULL &&				\
-	   ((curproc->p_sflag & PS_WEXIT) == 0) &&			\
-	   (isactive_ ^ ((pm) == curproc->p_vmspace->vm_map.pmap)))	\
-		panic("PMAP_ISACTIVE");					\
-	(isactive_);							\
-})
-#else
-#define	PMAP_ISACTIVE(pm, cpu_id)	PMAP_ISACTIVE_TEST(pm, cpu_id)
-#endif /* DEBUG && !MULTIPROCESSOR */
+	(((pm)->pm_cpus & (1UL << (cpu_id))) != 0)
 
 /*
  * PMAP_ACTIVATE_ASN_SANITY:
@@ -542,65 +524,15 @@ do {									\
 		 * ASN to prevent the PALcode from servicing a TLB	\
 		 * miss	with the wrong PTE.				\
 		 */							\
-		if (__pma->pma_asn != PMAP_ASN_RESERVED) {		\
-			printf("kernel_lev1map with non-reserved ASN "	\
-			    "(line %d)\n", __LINE__);			\
-			panic("PMAP_ACTIVATE_ASN_SANITY");		\
-		}							\
+		KASSERT(__pma->pma_asn == PMAP_ASN_RESERVED);		\
 	} else {							\
-		if (__pma->pma_asngen != __cpma->pma_asngen) {		\
-			/*						\
-			 * ASN generation number isn't valid!		\
-			 */						\
-			printf("pmap asngen %lu, current %lu "		\
-			    "(line %d)\n",				\
-			    __pma->pma_asngen,				\
-			    __cpma->pma_asngen,				\
-			    __LINE__);					\
-			panic("PMAP_ACTIVATE_ASN_SANITY");		\
-		}							\
-		if (__pma->pma_asn == PMAP_ASN_RESERVED) {		\
-			/*						\
-			 * DANGER WILL ROBINSON!  We're going to	\
-			 * pollute the VPT TLB entries!			\
-			 */						\
-			printf("Using reserved ASN! (line %d)\n",	\
-			    __LINE__);					\
-			panic("PMAP_ACTIVATE_ASN_SANITY");		\
-		}							\
+		KASSERT(__pma->pma_asngen == __cpma->pma_asngen);	\
+		KASSERT(__pma->pma_asn != PMAP_ASN_RESERVED);		\
 	}								\
 } while (/*CONSTCOND*/0)
 #else
 #define	PMAP_ACTIVATE_ASN_SANITY(pmap, cpu_id)	/* nothing */
 #endif
-
-/*
- * PMAP_ACTIVATE:
- *
- *	This is essentially the guts of pmap_activate(), without
- *	ASN allocation.  This is used by pmap_activate(),
- *	pmap_lev1map_create(), and pmap_lev1map_destroy().
- *
- *	This is called only when it is known that a pmap is "active"
- *	on the current processor; the ASN must already be valid.
- */
-#define	PMAP_ACTIVATE(pmap, l, cpu_id)					\
-do {									\
-	struct pcb *pcb = lwp_getpcb(l);				\
-	PMAP_ACTIVATE_ASN_SANITY(pmap, cpu_id);				\
-									\
-	pcb->pcb_hw.apcb_ptbr =				\
-	    ALPHA_K0SEG_TO_PHYS((vaddr_t)(pmap)->pm_lev1map) >> PGSHIFT; \
-	pcb->pcb_hw.apcb_asn = (pmap)->pm_asni[(cpu_id)].pma_asn;	\
-									\
-	if ((l) == curlwp) {						\
-		/*							\
-		 * Page table base register has changed; switch to	\
-		 * our own context again so that it will take effect.	\
-		 */							\
-		(void) alpha_pal_swpctx((u_long)l->l_md.md_pcbpaddr);	\
-	}								\
-} while (/*CONSTCOND*/0)
 
 /*
  * PMAP_SET_NEEDISYNC:
@@ -1133,11 +1065,7 @@ pmap_create(void)
 	pmap = pool_cache_get(&pmap_pmap_cache, PR_WAITOK);
 	memset(pmap, 0, sizeof(*pmap));
 
-	/*
-	 * Defer allocation of a new level 1 page table until
-	 * the first new mapping is entered; just take a reference
-	 * to the kernel kernel_lev1map.
-	 */
+	/* Reference the kernel_lev1map until we allocate our own below. */
 	pmap->pm_lev1map = kernel_lev1map;
 
 	pmap->pm_count = 1;
@@ -1196,13 +1124,6 @@ pmap_destroy(pmap_t pmap)
 	pmap_lev1map_destroy(pmap, cpu_number());
 
 	rw_exit(&pmap_growkernel_lock);
-
-	/*
-	 * Since the pmap is supposed to contain no valid
-	 * mappings at this point, we should always see
-	 * kernel_lev1map here.
-	 */
-	KASSERT(pmap->pm_lev1map == kernel_lev1map);
 
 	mutex_destroy(&pmap->pm_lock);
 	pool_cache_put(&pmap_pmap_cache, pmap);
@@ -1292,12 +1213,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	PMAP_MAP_TO_HEAD_LOCK();
 	PMAP_LOCK(pmap);
 
-	/*
-	 * If we're already referencing the kernel_lev1map, there
-	 * is no work for us to do.
-	 */
-	if (pmap->pm_lev1map == kernel_lev1map)
-		goto out;
+	KASSERT(pmap->pm_lev1map != kernel_lev1map);
 
 	saved_l1pte = l1pte = pmap_l1pte(pmap, sva);
 
@@ -1377,7 +1293,6 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	if (needisync)
 		PMAP_SYNC_ISTREAM_USER(pmap);
 
- out:
 	PMAP_UNLOCK(pmap);
 	PMAP_MAP_TO_HEAD_UNLOCK();
 }
@@ -2114,13 +2029,14 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
  * pmap_activate:		[ INTERFACE ]
  *
  *	Activate the pmap used by the specified process.  This includes
- *	reloading the MMU context if the current process, and marking
+ *	reloading the MMU context of the current process, and marking
  *	the pmap in use by the processor.
  */
 void
 pmap_activate(struct lwp *l)
 {
 	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
+	struct pcb *pcb = lwp_getpcb(l);
 	long cpu_id = cpu_number();
 
 #ifdef DEBUG
@@ -2128,23 +2044,34 @@ pmap_activate(struct lwp *l)
 		printf("pmap_activate(%p)\n", l);
 #endif
 
-	/*
-	 * Lock the pmap across the work we do here; although the
-	 * in-use mask is manipulated with an atomic op and the
-	 * ASN info is per-cpu, the lev1map pointer needs to remain
-	 * consistent across the entire call.
-	 */
-	PMAP_LOCK(pmap);
+	KASSERT(kpreempt_disabled());
+	KASSERT(l == curlwp);
 
 	/* Mark the pmap in use by this processor. */
 	atomic_or_ulong(&pmap->pm_cpus, (1UL << cpu_id));
 
 	/* Allocate an ASN. */
 	pmap_asn_alloc(pmap, cpu_id);
+	PMAP_ACTIVATE_ASN_SANITY(pmap, cpu_id);
 
-	PMAP_ACTIVATE(pmap, l, cpu_id);
+	u_long const old_ptbr = pcb->pcb_hw.apcb_ptbr;
+	u_int const old_asn = pcb->pcb_hw.apcb_asn;
 
-	PMAP_UNLOCK(pmap);
+	pcb->pcb_hw.apcb_ptbr =
+	    ALPHA_K0SEG_TO_PHYS((vaddr_t)pmap->pm_lev1map) >> PGSHIFT;
+	pcb->pcb_hw.apcb_asn = (pmap)->pm_asni[cpu_id].pma_asn;
+
+	/*
+	 * Check to see if the ASN or page table base has changed; if
+	 * so, switch to our own context again so that it will take
+	 * effect.
+	 *
+	 * We test ASN first because it's the most likely value to change.
+	 */
+	if (old_asn != pcb->pcb_hw.apcb_asn ||
+	    old_ptbr != pcb->pcb_hw.apcb_ptbr) {
+		(void) alpha_pal_swpctx((u_long)l->l_md.md_pcbpaddr);
+	}
 }
 
 /*
@@ -2163,11 +2090,17 @@ pmap_deactivate(struct lwp *l)
 		printf("pmap_deactivate(%p)\n", l);
 #endif
 
-	/*
-	 * Mark the pmap no longer in use by this processor.  Because
-	 * this is all we're doing, no need to take the pmap lock.
-	 */
+	KASSERT(kpreempt_disabled());
+	KASSERT(l == curlwp);
+
 	atomic_and_ulong(&pmap->pm_cpus, ~(1UL << cpu_number()));
+
+	/*
+	 * There is no need to switch to a different PTBR here,
+	 * because a pmap_activate() or SWPCTX is guaranteed
+	 * before whatever lev1map we're on now is invalidated
+	 * or before user space is accessed again.
+	 */
 }
 
 /*
@@ -3006,6 +2939,23 @@ pmap_physpage_delref(void *kva)
 
 /******************** page table page management ********************/
 
+static bool
+pmap_kptpage_alloc(paddr_t *pap)
+{
+	if (uvm.page_init_done == false) {
+		/*
+		 * We're growing the kernel pmap early (from
+		 * uvm_pageboot_alloc()).  This case must
+		 * be handled a little differently.
+		 */
+		*pap = ALPHA_K0SEG_TO_PHYS(
+		    pmap_steal_memory(PAGE_SIZE, NULL, NULL));
+		return true;
+	}
+
+	return pmap_physpage_alloc(PGU_NORMAL, pap);
+}
+
 /*
  * pmap_growkernel:		[ INTERFACE ]
  *
@@ -3036,19 +2986,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		 */
 		l1pte = pmap_l1pte(kpm, va);
 		if (pmap_pte_v(l1pte) == 0) {
-			/*
-			 * XXX PGU_NORMAL?  It's not a "traditional" PT page.
-			 */
-			if (uvm.page_init_done == false) {
-				/*
-				 * We're growing the kernel pmap early (from
-				 * uvm_pageboot_alloc()).  This case must
-				 * be handled a little differently.
-				 */
-				ptaddr = ALPHA_K0SEG_TO_PHYS(
-				    pmap_steal_memory(PAGE_SIZE, NULL, NULL));
-			} else if (pmap_physpage_alloc(PGU_NORMAL,
-				   &ptaddr) == false)
+			if (!pmap_kptpage_alloc(&ptaddr))
 				goto die;
 			pte = (atop(ptaddr) << PG_SHIFT) |
 			    PG_V | PG_ASM | PG_KRE | PG_KWE | PG_WIRED;
@@ -3064,11 +3002,13 @@ pmap_growkernel(vaddr_t maxkvaddr)
 				if (pm == pmap_kernel())
 					continue;
 
+				/*
+				 * Any pmaps published on the global list
+				 * should never be referencing kernel_lev1map.
+				 */
+				KASSERT(pm->pm_lev1map != kernel_lev1map);
+
 				PMAP_LOCK(pm);
-				if (pm->pm_lev1map == kernel_lev1map) {
-					PMAP_UNLOCK(pm);
-					continue;
-				}
 				pm->pm_lev1map[l1idx] = pte;
 				PMAP_UNLOCK(pm);
 			}
@@ -3080,13 +3020,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		 */
 		l2pte = pmap_l2pte(kpm, va, l1pte);
 		KASSERT(pmap_pte_v(l2pte) == 0);
-		if (uvm.page_init_done == false) {
-			/*
-			 * See above.
-			 */
-			ptaddr = ALPHA_K0SEG_TO_PHYS(
-			    pmap_steal_memory(PAGE_SIZE, NULL, NULL));
-		} else if (pmap_physpage_alloc(PGU_NORMAL, &ptaddr) == false)
+		if (!pmap_kptpage_alloc(&ptaddr))
 			goto die;
 		*l2pte = (atop(ptaddr) << PG_SHIFT) |
 		    PG_V | PG_ASM | PG_KRE | PG_KWE | PG_WIRED;
@@ -3419,42 +3353,14 @@ pmap_asn_alloc(pmap_t pmap, long cpu_id)
 		printf("pmap_asn_alloc(%p)\n", pmap);
 #endif
 
-	/*
-	 * If the pmap is still using the global kernel_lev1map, there
-	 * is no need to assign an ASN at this time, because only
-	 * kernel mappings exist in that map, and all kernel mappings
-	 * have PG_ASM set.  If the pmap eventually gets its own
-	 * lev1map, an ASN will be allocated at that time.
-	 *
-	 * Only the kernel pmap will reference kernel_lev1map.  Do the
-	 * same old fixups, but note that we no longer need the pmap
-	 * to be locked if we're in this mode, since pm_lev1map will
-	 * never change.
-	 * #endif
-	 */
-	if (pmap->pm_lev1map == kernel_lev1map) {
-#ifdef DEBUG
-		if (pmapdebug & PDB_ASN)
-			printf("pmap_asn_alloc: still references "
-			    "kernel_lev1map\n");
-#endif
-#if defined(MULTIPROCESSOR)
-		/*
-		 * In a multiprocessor system, it's possible to
-		 * get here without having PMAP_ASN_RESERVED in
-		 * pmap->pm_asni[cpu_id].pma_asn; see pmap_lev1map_destroy().
-		 *
-		 * So, what we do here, is simply assign the reserved
-		 * ASN for kernel_lev1map users and let things
-		 * continue on.  We do, however, let uniprocessor
-		 * configurations continue to make its assertion.
-		 */
-		pma->pma_asn = PMAP_ASN_RESERVED;
-#else
-		KASSERT(pma->pma_asn == PMAP_ASN_RESERVED);
-#endif /* MULTIPROCESSOR */
+	/* No work to do for kernel pmap; all kernel mappings have ASM. */
+	if (pmap == pmap_kernel())
 		return;
-	}
+
+	/* No user pmaps should reference the kernel_lev1map. */
+	KASSERT(pmap->pm_lev1map != kernel_lev1map);
+
+	KASSERT(kpreempt_disabled());
 
 	/*
 	 * On processors which do not implement ASNs, the swpctx PALcode
@@ -3505,27 +3411,21 @@ pmap_asn_alloc(pmap_t pmap, long cpu_id)
 
 		cpma->pma_asn = 1;
 		cpma->pma_asngen++;
-#ifdef DIAGNOSTIC
-		if (cpma->pma_asngen == 0) {
-			/*
-			 * The generation number has wrapped.  We could
-			 * handle this scenario by traversing all of
-			 * the pmaps, and invalidating the generation
-			 * number on those which are not currently
-			 * in use by this processor.
-			 *
-			 * However... considering that we're using
-			 * an unsigned 64-bit integer for generation
-			 * numbers, on non-ASN CPUs, we won't wrap
-			 * for approx. 585 million years, or 75 billion
-			 * years on a 128-ASN CPU (assuming 1000 switch
-			 * operations per second).
-			 *
-			 * So, we don't bother.
-			 */
-			panic("pmap_asn_alloc: too much uptime");
-		}
-#endif
+
+		/*
+		 * Make sure the generation number doesn't wrap.  We could
+		 * handle this scenario by traversing all of the pmaps,
+		 * and invalidating the generation number on those which
+		 * are not currently in use by this processor.
+		 *
+		 * However... considering that we're using an unsigned 64-bit
+		 * integer for generation numbers, on non-ASN CPUs, we won't
+		 * wrap for approximately 75 billion years on a 128-ASN CPU
+		 * (assuming 1000 switch * operations per second).
+		 *
+		 * So, we don't bother.
+		 */
+		KASSERT(cpma->pma_asngen != 0);
 #ifdef DEBUG
 		if (pmapdebug & PDB_ASN)
 			printf("pmap_asn_alloc: generation bumped to %lu\n",
