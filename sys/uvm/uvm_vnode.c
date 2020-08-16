@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.116 2020/08/14 09:06:15 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.117 2020/08/16 00:24:41 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.116 2020/08/14 09:06:15 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.117 2020/08/16 00:24:41 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -313,12 +313,13 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 		 */
 		pg = uvm_page_array_fill_and_peek(a, offset, nleft);
 		if (pg != NULL && pg->offset != offset) {
+			struct vm_page __diagused *tpg;
 			KASSERT(
 			    ((a->ar_flags & UVM_PAGE_ARRAY_FILL_BACKWARD) != 0)
 			    == (pg->offset < offset));
-			KASSERT(uvm_pagelookup(uobj, offset) == NULL ||
+			KASSERT((tpg = uvm_pagelookup(uobj, offset)) == NULL ||
 				((a->ar_flags & UVM_PAGE_ARRAY_FILL_DIRTY) != 0 &&
-				 !uvm_obj_page_dirty_p(pg)));
+				 !uvm_obj_page_dirty_p(tpg)));
 			pg = NULL;
 			if ((a->ar_flags & UVM_PAGE_ARRAY_FILL_DENSE) != 0) {
 				UVMHIST_LOG(ubchist, "dense", 0,0,0,0);
