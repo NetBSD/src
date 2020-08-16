@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.93 2020/08/16 12:07:51 rillig Exp $
+# $NetBSD: Makefile,v 1.94 2020/08/16 12:30:45 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -320,8 +320,8 @@ FLAGS.recursive=	-dL -r
 FLAGS.vardebug=		-k -dv FROM_CMDLINE=
 
 # Some tests need extra post-processing.
-SED_CMDS.moderrs+=	-e 's,\(Regex compilation error:\).*,\1 (details omitted),'
-SED_CMDS.modmisc+=	-e 's,\(Regex compilation error:\).*,\1 (details omitted),'
+SED_CMDS.varmod-subst-regex+= \
+			-e 's,\(Regex compilation error:\).*,\1 (details omitted),'
 SED_CMDS.varmod-edge+=	-e 's, line [0-9]*:, line omitted:,'
 SED_CMDS.varshell+=	-e 's,^[a-z]*sh: ,,'
 SED_CMDS.varshell+=	-e '/command/s,No such.*,not found,'
@@ -440,7 +440,7 @@ sync-mi:
 	cvs diff "$$mi" || true
 
 .if exists(${TEST_MAKE})
-${TESTS:=.rawout}: ${TEST_MAKE}
+${TESTS:=.rawout}: ${TEST_MAKE} ${.PARSEDIR}/Makefile
 .endif
 
 .-include <bsd.obj.mk>
