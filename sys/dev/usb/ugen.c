@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.155 2020/08/16 02:37:19 riastradh Exp $	*/
+/*	$NetBSD: ugen.c,v 1.156 2020/08/16 06:17:31 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.155 2020/08/16 02:37:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.156 2020/08/16 06:17:31 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -175,7 +175,7 @@ compare_ugen_key(void *cookie, const void *vsc, const void *vk)
 static const rb_tree_ops_t ugenif_tree_ops = {
 	.rbto_compare_nodes = compare_ugen,
 	.rbto_compare_key = compare_ugen_key,
-	.rbto_node_offset = offsetof(struct ugen_softc, sc_unit),
+	.rbto_node_offset = offsetof(struct ugen_softc, sc_node),
 };
 
 static void
@@ -215,17 +215,18 @@ ugenif_acquire(unsigned unit)
 
 	mutex_enter(&ugenif.lock);
 	sc = rb_tree_find_node(&ugenif.tree, &unit);
-	if (sc) {
-		mutex_enter(&sc->sc_lock);
-		if (sc->sc_dying) {
-			sc = NULL;
-		} else {
-			KASSERT(sc->sc_refcnt < INT_MAX);
-			sc->sc_refcnt++;
-		}
+	if (sc == NULL)
+		goto out;
+	mutex_enter(&sc->sc_lock);
+	if (sc->sc_dying) {
 		mutex_exit(&sc->sc_lock);
+		sc = NULL;
+		goto out;
 	}
-	mutex_exit(&ugenif.lock);
+	KASSERT(sc->sc_refcnt < INT_MAX);
+	sc->sc_refcnt++;
+	mutex_exit(&sc->sc_lock);
+out:	mutex_exit(&ugenif.lock);
 
 	return sc;
 }
@@ -608,8 +609,10 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 				goto out;
 			}
 			isize = UGETW(edesc->wMaxPacketSize);
-			if (isize == 0)	/* shouldn't happen */
-				return EINVAL;
+			if (isize == 0) {	/* shouldn't happen */
+				error = EINVAL;
+				goto out;
+			}
 			sce->ibuf = kmem_alloc(isize * UGEN_NISOFRAMES,
 				KM_SLEEP);
 			sce->cur = sce->fill = sce->ibuf;
