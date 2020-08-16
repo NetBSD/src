@@ -1,4 +1,4 @@
-# $NetBSD: MODULAR,v 1.15 2020/03/25 17:06:18 jdolecek Exp $
+# $NetBSD: MODULAR,v 1.16 2020/08/16 10:27:47 jdolecek Exp $
 #
 # Try to exclude all the drivers in GENERIC that have been modularized
 # XXX: incomplete
@@ -30,8 +30,6 @@ options 	MODULAR_DEFAULT_AUTOLOAD
 
 -no options 	COMPAT_OSSAUDIO
 -no options 	COMPAT_NETBSD32
--no options 	COMPAT_LINUX
--no options 	COMPAT_LINUX32	# req. COMPAT_LINUX and COMPAT_NETBSD32
 -no options 	EXEC_ELF32
 -no options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
