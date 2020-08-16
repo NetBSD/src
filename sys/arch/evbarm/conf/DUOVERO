@@ -1,5 +1,5 @@
 #
-#	$NetBSD: DUOVERO,v 1.19 2020/08/01 08:20:48 maxv Exp $
+#	$NetBSD: DUOVERO,v 1.20 2020/08/16 10:27:47 jdolecek Exp $
 #
 #	DUOOVERO -- Gumstix. Inc. DuoVero COMS platforms kernel
 #
@@ -101,7 +101,6 @@ include 	"conf/compat_netbsd30.config"
 options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 
 options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
-options 	COMPAT_LINUX	# binary compatibility with Linux
 
 # Shared memory options
 

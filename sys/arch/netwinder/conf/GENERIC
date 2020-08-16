@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.140 2020/08/01 08:20:50 maxv Exp $
+# $NetBSD: GENERIC,v 1.141 2020/08/16 10:27:47 jdolecek Exp $
 #
 # GENERIC machine description file
 #
@@ -113,8 +113,6 @@ options 	NFS_BOOT_DHCP
 
 options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 include 	"conf/compat_netbsd14.config"
-
-options 	COMPAT_LINUX	# binary compatibility with Linux
 
 # Shared memory options
 

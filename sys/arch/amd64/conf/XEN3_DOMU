@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.94 2020/08/01 08:20:47 maxv Exp $
+# $NetBSD: XEN3_DOMU,v 1.95 2020/08/16 10:27:47 jdolecek Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -11,7 +11,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOMU-$Revision: 1.94 $"
+#ident		"XEN3_DOMU-$Revision: 1.95 $"
 
 maxusers	32		# estimated number of users
 
@@ -61,8 +61,6 @@ include 	"conf/compat_netbsd15.config"
 
 options 	COMPAT_OSSAUDIO
 options 	COMPAT_NETBSD32
-options 	COMPAT_LINUX
-options 	COMPAT_LINUX32	# req. COMPAT_LINUX and COMPAT_NETBSD32
 options 	EXEC_ELF32
 
 # Wedge support
