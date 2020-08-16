@@ -1,4 +1,4 @@
-# $NetBSD: md.x68k,v 1.46 2013/08/11 22:29:02 joerg Exp $
+# $NetBSD: md.x68k,v 1.47 2020/08/16 07:03:45 isaki Exp $
 ./dev/pow0					base-obsolete		obsolete
 ./dev/pow1					base-obsolete		obsolete
 ./usr/bin/bellctrl				base-util-bin
@@ -9,7 +9,7 @@
 ./usr/bin/tvctrl				base-util-bin
 ./usr/mdec/boot					base-sysutil-bin
 ./usr/mdec/fdboot_ufs				base-sysutil-bin
-./usr/mdec/fdboot_ustar				base-sysutil-bin
+./usr/mdec/fdboot_ustar				base-obsolete		obsolete
 ./usr/mdec/installboot				base-sysutil-bin
 ./usr/mdec/installboot.new			base-obsolete		obsolete
 ./usr/mdec/loadbsd.x				base-sysutil-bin
@@ -24,6 +24,7 @@
 ./usr/mdec/xxboot_lfsv1				base-sysutil-bin
 ./usr/mdec/xxboot_lfsv2				base-sysutil-bin
 ./usr/mdec/xxboot_ufs				base-sysutil-bin
+./usr/mdec/xxboot_ustarfs			base-sysutil-bin
 ./usr/sbin/memswitch				base-sysutil-bin
 ./usr/sbin/poffd				base-obsolete		obsolete
 ./usr/share/keymaps/x68k/ascii_kmap		base-sys-share
