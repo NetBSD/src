@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.96 2020/08/16 18:04:33 rillig Exp $
+# $NetBSD: Makefile,v 1.97 2020/08/16 18:17:17 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -310,13 +310,13 @@ ENV.varmisc+=		FROM_ENV_BEFORE=env
 ENV.varmisc+=		FROM_ENV_AFTER=env
 
 # Override make flags for some of the tests; default is -k.
-FLAGS.counter=		-r -dv
+FLAGS.counter=		-dv
 FLAGS.doterror=		# none
 FLAGS.envfirst=		-e
-FLAGS.export=		-r
+FLAGS.export=		# none
 FLAGS.lint=		-dL -k
 FLAGS.order=		-j1
-FLAGS.recursive=	-dL -r
+FLAGS.recursive=	-dL
 FLAGS.vardebug=		-k -dv FROM_CMDLINE=
 
 # Some tests need extra post-processing.
@@ -369,7 +369,7 @@ LANG=		C
 	@set -eu; \
 	cd ${.OBJDIR}; \
 	env ${ENV.${.TARGET:R}} ${TEST_MAKE} -C ${.CURDIR} \
-	  ${FLAGS.${.TARGET:R}:U-k} -f ${.IMPSRC} \
+	  -r ${FLAGS.${.TARGET:R}:U-k} -f ${.IMPSRC} \
 	  > ${.TARGET}.tmp 2>&1 \
 	&& status=$$? || status=$$?; \
 	echo $$status > ${.TARGET:R}.status
