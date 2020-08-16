@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.151 2020/03/21 06:54:56 skrll Exp $	*/
+/*	$NetBSD: ugen.c,v 1.152 2020/08/16 02:33:17 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.151 2020/03/21 06:54:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.152 2020/08/16 02:33:17 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -97,7 +97,6 @@ struct ugen_endpoint {
 	usb_endpoint_descriptor_t *edesc;
 	struct usbd_interface *iface;
 	int state;
-#define	UGEN_ASLP	0x02	/* waiting for data */
 #define UGEN_SHORT_OK	0x04	/* short xfers are OK */
 #define UGEN_BULK_RA	0x08	/* in bulk read-ahead mode */
 #define UGEN_BULK_WB	0x10	/* in bulk write-behind mode */
@@ -649,7 +648,6 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 				mutex_exit(&sc->sc_lock);
 				return EWOULDBLOCK;
 			}
-			sce->state |= UGEN_ASLP;
 			DPRINTFN(5, ("ugenread: sleep on %p\n", sce));
 			/* "ugenri" */
 			error = cv_timedwait_sig(&sce->cv, &sc->sc_lock,
@@ -657,10 +655,8 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 			DPRINTFN(5, ("ugenread: woke, error=%d\n", error));
 			if (sc->sc_dying)
 				error = EIO;
-			if (error) {
-				sce->state &= ~UGEN_ASLP;
+			if (error)
 				break;
-			}
 		}
 		mutex_exit(&sc->sc_lock);
 
@@ -693,7 +689,6 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 			}
 			while (uio->uio_resid > 0 && !error) {
 				while (sce->ra_wb_used == 0) {
-					sce->state |= UGEN_ASLP;
 					DPRINTFN(5,
 						 ("ugenread: sleep on %p\n",
 						  sce));
@@ -705,10 +700,8 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 						  error));
 					if (sc->sc_dying)
 						error = EIO;
-					if (error) {
-						sce->state &= ~UGEN_ASLP;
+					if (error)
 						break;
-					}
 				}
 
 				/* Copy data to the process. */
@@ -786,7 +779,6 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 				mutex_exit(&sc->sc_lock);
 				return EWOULDBLOCK;
 			}
-			sce->state |= UGEN_ASLP;
 			/* "ugenri" */
 			DPRINTFN(5, ("ugenread: sleep on %p\n", sce));
 			error = cv_timedwait_sig(&sce->cv, &sc->sc_lock,
@@ -794,10 +786,8 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 			DPRINTFN(5, ("ugenread: woke, error=%d\n", error));
 			if (sc->sc_dying)
 				error = EIO;
-			if (error) {
-				sce->state &= ~UGEN_ASLP;
+			if (error)
 				break;
-			}
 		}
 
 		while (sce->cur != sce->fill && uio->uio_resid > 0 && !error) {
@@ -895,7 +885,6 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio,
 			while (uio->uio_resid > 0 && !error) {
 				while (sce->ra_wb_used ==
 				       sce->limit - sce->ibuf) {
-					sce->state |= UGEN_ASLP;
 					DPRINTFN(5,
 						 ("ugenwrite: sleep on %p\n",
 						  sce));
@@ -907,10 +896,8 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio,
 						  error));
 					if (sc->sc_dying)
 						error = EIO;
-					if (error) {
-						sce->state &= ~UGEN_ASLP;
+					if (error)
 						break;
-					}
 				}
 
 				/* Copy data from the process. */
@@ -1136,14 +1123,9 @@ ugenintr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 	DPRINTFN(5, ("          data = %02x %02x %02x\n",
 		     ibuf[0], ibuf[1], ibuf[2]));
 
-	(void)b_to_q(ibuf, count, &sce->q);
-
 	mutex_enter(&sc->sc_lock);
-	if (sce->state & UGEN_ASLP) {
-		sce->state &= ~UGEN_ASLP;
-		DPRINTFN(5, ("ugen_intr: waking %p\n", sce));
-		cv_signal(&sce->cv);
-	}
+	(void)b_to_q(ibuf, count, &sce->q);
+	cv_signal(&sce->cv);
 	mutex_exit(&sc->sc_lock);
 	selnotify(&sce->rsel, 0, 0);
 }
@@ -1166,10 +1148,12 @@ ugen_isoc_rintr(struct usbd_xfer *xfer, void *addr,
 	DPRINTFN(5,("ugen_isoc_rintr: xfer %ld, count=%d\n",
 	    (long)(req - sce->isoreqs), count));
 
+	mutex_enter(&sc->sc_lock);
+
 	/* throw away oldest input if the buffer is full */
-	if(sce->fill < sce->cur && sce->cur <= sce->fill + count) {
+	if (sce->fill < sce->cur && sce->cur <= sce->fill + count) {
 		sce->cur += count;
-		if(sce->cur >= sce->limit)
+		if (sce->cur >= sce->limit)
 			sce->cur = sce->ibuf + (sce->limit - sce->cur);
 		DPRINTFN(5, ("ugen_isoc_rintr: throwing away %d bytes\n",
 			     count));
@@ -1188,7 +1172,7 @@ ugen_isoc_rintr(struct usbd_xfer *xfer, void *addr,
 			tbuf += n;
 			actlen -= n;
 			sce->fill += n;
-			if(sce->fill == sce->limit)
+			if (sce->fill == sce->limit)
 				sce->fill = sce->ibuf;
 		}
 
@@ -1200,12 +1184,7 @@ ugen_isoc_rintr(struct usbd_xfer *xfer, void *addr,
 	    ugen_isoc_rintr);
 	(void)usbd_transfer(xfer);
 
-	mutex_enter(&sc->sc_lock);
-	if (sce->state & UGEN_ASLP) {
-		sce->state &= ~UGEN_ASLP;
-		DPRINTFN(5, ("ugen_isoc_rintr: waking %p\n", sce));
-		cv_signal(&sce->cv);
-	}
+	cv_signal(&sce->cv);
 	mutex_exit(&sc->sc_lock);
 	selnotify(&sce->rsel, 0, 0);
 }
@@ -1233,6 +1212,8 @@ ugen_bulkra_intr(struct usbd_xfer *xfer, void *addr,
 	}
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &count, NULL);
+
+	mutex_enter(&sc->sc_lock);
 
 	/* Keep track of how much is in the buffer. */
 	sce->ra_wb_used += count;
@@ -1269,12 +1250,7 @@ ugen_bulkra_intr(struct usbd_xfer *xfer, void *addr,
 	else
 		sce->state |= UGEN_RA_WB_STOP;
 
-	mutex_enter(&sc->sc_lock);
-	if (sce->state & UGEN_ASLP) {
-		sce->state &= ~UGEN_ASLP;
-		DPRINTFN(5, ("ugen_bulkra_intr: waking %p\n", sce));
-		cv_signal(&sce->cv);
-	}
+	cv_signal(&sce->cv);
 	mutex_exit(&sc->sc_lock);
 	selnotify(&sce->rsel, 0, 0);
 }
@@ -1302,6 +1278,8 @@ ugen_bulkwb_intr(struct usbd_xfer *xfer, void *addr,
 	}
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &count, NULL);
+
+	mutex_enter(&sc->sc_lock);
 
 	/* Keep track of how much is in the buffer. */
 	sce->ra_wb_used -= count;
@@ -1337,12 +1315,7 @@ ugen_bulkwb_intr(struct usbd_xfer *xfer, void *addr,
 	else
 		sce->state |= UGEN_RA_WB_STOP;
 
-	mutex_enter(&sc->sc_lock);
-	if (sce->state & UGEN_ASLP) {
-		sce->state &= ~UGEN_ASLP;
-		DPRINTFN(5, ("ugen_bulkwb_intr: waking %p\n", sce));
-		cv_signal(&sce->cv);
-	}
+	cv_signal(&sce->cv);
 	mutex_exit(&sc->sc_lock);
 	selnotify(&sce->rsel, 0, 0);
 }
