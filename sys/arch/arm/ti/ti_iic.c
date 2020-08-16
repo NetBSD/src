@@ -1,4 +1,4 @@
-/* $NetBSD: ti_iic.c,v 1.6 2020/06/03 16:00:00 jmcneill Exp $ */
+/* $NetBSD: ti_iic.c,v 1.7 2020/08/16 03:48:59 riastradh Exp $ */
 
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.6 2020/06/03 16:00:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.7 2020/08/16 03:48:59 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,6 +265,7 @@ ti_iic_attach(device_t parent, device_t self, void *opaque)
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NET);
 	cv_init(&sc->sc_cv, "tiiic");
+	iic_tag_init(&sc->sc_ic);
 	sc->sc_ic.ic_cookie = sc;
 	sc->sc_ic.ic_acquire_bus = ti_iic_acquire_bus;
 	sc->sc_ic.ic_release_bus = ti_iic_release_bus;
