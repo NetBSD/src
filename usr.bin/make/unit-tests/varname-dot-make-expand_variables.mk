@@ -1,6 +1,6 @@
-# $NetBSD: varname-dot-make-expand_variables.mk,v 1.1 2020/08/16 12:07:52 rillig Exp $
+# $NetBSD: varname-dot-make-expand_variables.mk,v 1.2 2020/08/16 14:25:16 rillig Exp $
 #
-# TODO: Description
+# Tests for the special .MAKE.EXPAND_VARIABLES variable.
 
 # TODO: Implementation
 

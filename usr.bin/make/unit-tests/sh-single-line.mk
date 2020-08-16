@@ -1,6 +1,10 @@
-# $NetBSD: sh-single-line.mk,v 1.1 2020/08/16 12:07:51 rillig Exp $
+# $NetBSD: sh-single-line.mk,v 1.2 2020/08/16 14:25:16 rillig Exp $
 #
-# TODO: Description
+# Tests for running single-line shell commands.
+#
+# In jobs mode, the shell commands are combined into a single shell
+# program, as described in the manual page, section "Shell Commands",
+# "the entire script".
 
 # TODO: Implementation
 

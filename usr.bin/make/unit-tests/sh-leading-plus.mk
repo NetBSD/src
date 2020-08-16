@@ -1,6 +1,7 @@
-# $NetBSD: sh-leading-plus.mk,v 1.1 2020/08/16 12:07:51 rillig Exp $
+# $NetBSD: sh-leading-plus.mk,v 1.2 2020/08/16 14:25:16 rillig Exp $
 #
-# TODO: Description
+# Tests for shell commands preceded by a '+', to run them even if
+# the command line option -n is given.
 
 # TODO: Implementation
 
