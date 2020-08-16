@@ -1,4 +1,4 @@
-# $NetBSD: XEN3PAE_DOMU,v 1.14 2020/08/01 08:20:49 maxv Exp $
+# $NetBSD: XEN3PAE_DOMU,v 1.15 2020/08/16 10:27:47 jdolecek Exp $
 
 include 	"arch/i386/conf/std.xen"
 
@@ -67,8 +67,6 @@ options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
 options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
-options 	COMPAT_LINUX	# binary compatibility with Linux
-#options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
 
 # Wedge support
 options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances

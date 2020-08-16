@@ -1,4 +1,4 @@
-#	$NetBSD: MARVELL_NAS,v 1.39 2020/08/01 08:20:48 maxv Exp $
+#	$NetBSD: MARVELL_NAS,v 1.40 2020/08/16 10:27:47 jdolecek Exp $
 #
 #  This configuration supports for generically Marvell NAS.
 
@@ -87,8 +87,6 @@ options 	NFS_BOOT_DHCP
 
 include 	"conf/compat_netbsd16.config"
 options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
-
-options 	COMPAT_LINUX	# binary compatibility with Linux
 
 # Shared memory options
 

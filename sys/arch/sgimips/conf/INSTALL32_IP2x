@@ -27,7 +27,6 @@ no options	COMPAT_16
 no options	COMPAT_20
 no options	COMPAT_30
 no options	COMPAT_40
-no options	COMPAT_LINUX
 
 no file-system	EXT2FS
 no file-system	LFS

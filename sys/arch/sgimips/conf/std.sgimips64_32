@@ -1,4 +1,4 @@
-#	$NetBSD: std.sgimips64_32,v 1.4 2015/02/18 11:15:19 macallan Exp $
+#	$NetBSD: std.sgimips64_32,v 1.5 2020/08/16 10:27:47 jdolecek Exp $
 # this is for building n32 kernels
 
 no makeoptions	MACHINE_ARCH
@@ -11,5 +11,3 @@ makeoptions	LP64="no"
 # for some reason this kicks in for n32 binaries as well, causing problems
 # with pkgsrc ( MACHINE_ARCH vs. uname -p mismatch )
 #options 	COMPAT_NETBSD32
-
-no options 	COMPAT_LINUX

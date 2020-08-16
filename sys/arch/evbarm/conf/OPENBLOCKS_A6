@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_A6,v 1.40 2020/08/01 08:20:48 maxv Exp $
+#	$NetBSD: OPENBLOCKS_A6,v 1.41 2020/08/16 10:27:47 jdolecek Exp $
 #
 #	OPENBLOCKS_A6 -- Plat'Home. OpenBlockS A6 kernel
 #
@@ -91,7 +91,6 @@ include 	"conf/compat_netbsd50.config"
 options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 
 options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
-options 	COMPAT_LINUX	# binary compatibility with Linux
 
 # Shared memory options
 

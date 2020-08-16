@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.135 2020/04/18 11:00:42 skrll Exp $
+#	$NetBSD: GENERIC,v 1.136 2020/08/16 10:27:47 jdolecek Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.135 $"
+#ident		"GENERIC-$Revision: 1.136 $"
 
 # estimated number of users
 maxusers	32
@@ -102,8 +102,6 @@ options 	NFS_BOOT_DHCP	# use NetBSD standard DHCP/NFS boot code
 
 include 	"conf/compat_netbsd12.config"
 options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
-
-options 	COMPAT_LINUX	# Linux compatibility.
 
 # Shared memory options
 

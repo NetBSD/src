@@ -1,4 +1,4 @@
-#	$NetBSD: SHEEVAPLUG,v 1.70 2020/08/01 08:20:48 maxv Exp $
+#	$NetBSD: SHEEVAPLUG,v 1.71 2020/08/16 10:27:47 jdolecek Exp $
 #
 #  This configuration supports for generically Marvell SheevaPlug
 #
@@ -98,7 +98,6 @@ include 	"conf/compat_netbsd50.config"
 options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 
 options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
-options 	COMPAT_LINUX	# binary compatibility with Linux
 
 # Shared memory options
 
