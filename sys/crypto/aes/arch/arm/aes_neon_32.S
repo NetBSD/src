@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_neon_32.S,v 1.5 2020/08/08 14:47:01 riastradh Exp $	*/
+/*	$NetBSD: aes_neon_32.S,v 1.6 2020/08/16 18:02:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <arm/asm.h>
 
-RCSID("$NetBSD: aes_neon_32.S,v 1.5 2020/08/08 14:47:01 riastradh Exp $")
+RCSID("$NetBSD: aes_neon_32.S,v 1.6 2020/08/16 18:02:03 riastradh Exp $")
 
 	.fpu	neon
 
@@ -228,15 +228,19 @@ END(dsbo_1)
  * aes_neon_enc1(const struct aesenc *enc@r0, uint8x16_t x@q0,
  *     unsigned nrounds@r1)
  *
- *	With -mfloat-abi=soft(fp) (here spelled `#ifdef _KERNEL'):
+ *	With -mfloat-abi=soft(fp) (i.e., __SOFTFP__):
  *
  * uint8x16_t@(r0,r1,r2,r3)
  * aes_neon_enc1(const struct aesenc *enc@r0,
  *     uint8x16_t x@(r2,r3,sp[0],sp[4]), nrounds@sp[8])
  */
 ENTRY(aes_neon_enc1)
-#ifdef _KERNEL
+#ifdef __SOFTFP__
+#ifdef __ARM_BIG_ENDIAN
+	vmov	d0, r3, r2		/* d0 := x lo */
+#else
 	vmov	d0, r2, r3		/* d0 := x lo */
+#endif
 	vldr	d1, [sp]		/* d1 := x hi */
 	ldr	r1, [sp, #8]		/* r1 := nrounds */
 #endif
@@ -434,9 +438,14 @@ ENTRY(aes_neon_enc1)
 
 	vpop	{d8-d15}
 	pop	{r4, r5, r6, r7, r8, r10, r11, lr}
-#ifdef _KERNEL
+#ifdef __SOFTFP__
+#ifdef __ARM_BIG_ENDIAN
+	vmov	r1, r0, d0
+	vmov	r3, r2, d1
+#else
 	vmov	r0, r1, d0
 	vmov	r2, r3, d1
+#endif
 #endif
 	bx	lr
 END(aes_neon_enc1)
@@ -457,8 +466,12 @@ END(aes_neon_enc1)
  *     uint8x16_t x@(r2,r3,sp[0],sp[4]), nrounds@sp[8])
  */
 ENTRY(aes_neon_dec1)
-#ifdef _KERNEL
+#ifdef __SOFTFP__
+#ifdef __ARM_BIG_ENDIAN
+	vmov	d0, r3, r2		/* d0 := x lo */
+#else
 	vmov	d0, r2, r3		/* d0 := x lo */
+#endif
 	vldr	d1, [sp]		/* d1 := x hi */
 	ldr	r1, [sp, #8]		/* r1 := nrounds */
 #endif
@@ -669,9 +682,14 @@ ENTRY(aes_neon_dec1)
 
 	vpop	{d8-d15}
 	pop	{r4, r5, r6, r7, r8, r10, r11, lr}
-#ifdef _KERNEL
+#ifdef __SOFTFP__
+#ifdef __ARM_BIG_ENDIAN
+	vmov	r1, r0, d0
+	vmov	r3, r2, d1
+#else
 	vmov	r0, r1, d0
 	vmov	r2, r3, d1
+#endif
 #endif
 	bx	lr
 END(aes_neon_dec1)
