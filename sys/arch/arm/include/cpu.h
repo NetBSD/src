@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.112 2020/08/14 16:18:36 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.113 2020/08/16 16:01:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -219,10 +219,6 @@ struct cpu_info {
 
 	struct arm_cache_info *
 			ci_cacheinfo;
-
-#if defined(MP_CPU_INFO_MEMBERS)
-	MP_CPU_INFO_MEMBERS
-#endif
 };
 
 extern struct cpu_info cpu_info_store[];
