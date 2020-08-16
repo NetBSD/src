@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.97 2020/08/16 18:17:17 rillig Exp $
+# $NetBSD: Makefile,v 1.98 2020/08/16 18:40:13 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -297,14 +297,9 @@ TESTS+=		varparse-dynamic
 TESTS+=		varquote
 TESTS+=		varshell
 
-# Override environment variables for some of the tests.
-ENV.counter=		-i
+# Additional environment variables for some of the tests.
+# The base environment is -i PATH="$PATH".
 ENV.envfirst=		FROM_ENV=value-from-env
-ENV.export=		-i PATH=${PATH:Q}
-ENV.export-variants=	-i PATH=${PATH:Q}
-ENV.lint=		-i
-ENV.make-exported=	-i PATH=${PATH:Q}
-ENV.recursive=		-i
 ENV.varmisc=		FROM_ENV=env
 ENV.varmisc+=		FROM_ENV_BEFORE=env
 ENV.varmisc+=		FROM_ENV_AFTER=env
@@ -368,9 +363,11 @@ LANG=		C
 	@${_MKMSG_TEST:Uecho '#      test '} ${.PREFIX}
 	@set -eu; \
 	cd ${.OBJDIR}; \
-	env ${ENV.${.TARGET:R}} ${TEST_MAKE} -C ${.CURDIR} \
-	  -r ${FLAGS.${.TARGET:R}:U-k} -f ${.IMPSRC} \
-	  > ${.TARGET}.tmp 2>&1 \
+	env -i PATH="$$PATH" ${ENV.${.TARGET:R}} \
+	  ${TEST_MAKE} \
+	    -r -C ${.CURDIR} -f ${.IMPSRC} \
+	    ${FLAGS.${.TARGET:R}:U-k} \
+	    > ${.TARGET}.tmp 2>&1 \
 	&& status=$$? || status=$$?; \
 	echo $$status > ${.TARGET:R}.status
 	@mv ${.TARGET}.tmp ${.TARGET}
