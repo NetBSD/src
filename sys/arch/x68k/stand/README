@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.1 2020/01/18 04:42:29 isaki Exp $
+$NetBSD: README,v 1.2 2020/08/16 07:03:45 isaki Exp $
 
 Primary bootloaders:
 	boot_ufs/
@@ -9,15 +9,14 @@ Primary bootloaders:
 		and can recognize Human68k partition table.
 		(See #ifdef SCSI_ADHOC_BOOTPART part for details)
 
-	boot_ustar/
-		is placed in floppy's sector#0 and loads secondary bootloader
-		from subsequent USTARFS.
-
 	xxboot/
 		contains following variants.
 		* cdboot_cd9660
 			is placed in CD and loads secondary bootloader
 			from cd9660 filesystem.
+		* fdboot_ustarfs
+			is placed in floppy's sector#0 and loads secondary
+			bootloader from subsequent USTARFS.
 		* xxboot_ffsv1
 		* xxboot_ffsv2
 		* xxboot_lfsv1
