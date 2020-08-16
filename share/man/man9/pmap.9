@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.9,v 1.47 2020/03/14 14:05:42 ad Exp $
+.\"	$NetBSD: pmap.9,v 1.48 2020/08/16 16:48:08 thorpej Exp $
 .\"
 .\" Copyright (c) 2000, 2001, 2002, 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 14, 2020
+.Dd August 16, 2020
 .Dt PMAP 9
 .Os
 .Sh NAME
@@ -766,18 +766,16 @@ In this case, the call may be deleted using a C pre-processor macro in
 .It void Fn "pmap_activate" "struct lwp *l"
 Activate the physical map used by the process behind lwp
 .Fa l .
+on the current CPU.
 This is called by the virtual memory system when the
 virtual memory context for a process is changed, and is also
-often used by machine-dependent context switch code to program
-the memory management hardware with the process's page table
-base, etc.
-Note that
+used by the context switch code to program the memory management hardware
+with the process's page table base, etc.
+All calls to
 .Fn pmap_activate
-may not always be called when
+from machine-independent code are made with preemption disabled and with
 .Fa l
-is the current lwp.
-.Fn pmap_activate
-must be able to handle this scenario.
+as the current lwp.
 .Pp
 The
 .Fn pmap_activate
@@ -792,9 +790,9 @@ It is generally used in conjunction with
 Like
 .Fn pmap_activate ,
 .Fn pmap_deactivate
-may not always be called when
+is called by machine-independent code with preemption disabled and with
 .Fa l
-is the current lwp.
+as the current lwp.
 .Pp
 As above,
 .Fn pmap_deactivate
