@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.94 2020/08/16 12:30:45 rillig Exp $
+# $NetBSD: Makefile,v 1.95 2020/08/16 17:58:48 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -345,16 +345,14 @@ OUTFILES=	${TESTS:=.out}
 
 all: ${OUTFILES}
 
-CLEANFILES+=		*.rawout *.out *.status *.tmp *.core *.tmp
+CLEANFILES=		*.rawout *.out *.status *.tmp *.core *.tmp
 CLEANFILES+=		obj*.[och] lib*.a	# posix1.mk
 CLEANFILES+=		issue* .[ab]*		# suffixes.mk
-CLEANRECURSIVE+=	dir dummy		# posix1.mk
+CLEANDIRS=		dir dummy		# posix1.mk
 
 clean:
 	rm -f ${CLEANFILES}
-.if !empty(CLEANRECURSIVE)
-	rm -rf ${CLEANRECURSIVE}
-.endif
+	rm -rf ${CLEANDIRS}
 
 TEST_MAKE?=	${.MAKE}
 TOOL_SED?=	sed
