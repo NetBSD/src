@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.42 2020/08/16 12:30:45 rillig Exp $
+# $Id: modmisc.mk,v 1.43 2020/08/16 12:48:55 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -16,14 +16,10 @@ MOD_OPT=@d@$${exists($$d):?$$d:$${d:S,/usr,/opt,}}@
 MOD_SEP=S,:, ,g
 
 all:	modvar modvarloop modsysv mod-HTE emptyvar undefvar
-all:	mod-assign
-all:	mod-assign-nested
 all:	mod-tu-space
 all:	mod-quote
 all:	mod-break-many-words
 all:	mod-remember
-all:	mod-gmtime
-all:	mod-gmtime-indirect
 all:	mod-localtime
 all:	mod-hash
 all:	mod-range
@@ -72,24 +68,6 @@ undefvar:
 	@echo C:${:U:C,^$,empty,}
 	@echo @:${:U:@var@empty@}
 
-# Just a bit of basic code coverage for the obscure ::= assignment modifiers.
-mod-assign:
-	@echo $@: ${1 2 3:L:@i@${FIRST::?=$i}@} first=${FIRST}.
-	@echo $@: ${1 2 3:L:@i@${LAST::=$i}@} last=${LAST}.
-	@echo $@: ${1 2 3:L:@i@${APPENDED::+=$i}@} appended=${APPENDED}.
-	@echo $@: ${echo.1 echo.2 echo.3:L:@i@${RAN::!=${i:C,.*,&; & 1>\&2,:S,., ,g}}@} ran:${RAN}.
-	# The assignments happen in the global scope and thus are
-	# preserved even after the shell command has been run.
-	@echo $@: global: ${FIRST:Q}, ${LAST:Q}, ${APPENDED:Q}, ${RAN:Q}.
-
-mod-assign-nested:
-	@echo $@: ${1:?${THEN1::=then1${IT1::=t1}}:${ELSE1::=else1${IE1::=e1}}}${THEN1}${ELSE1}${IT1}${IE1}
-	@echo $@: ${0:?${THEN2::=then2${IT2::=t2}}:${ELSE2::=else2${IE2::=e2}}}${THEN2}${ELSE2}${IT2}${IE2}
-	@echo $@: ${SINK3:Q}
-	@echo $@: ${SINK4:Q}
-SINK3:=	${1:?${THEN3::=then3${IT3::=t3}}:${ELSE3::=else3${IE3::=e3}}}${THEN3}${ELSE3}${IT3}${IE3}
-SINK4:=	${0:?${THEN4::=then4${IT4::=t4}}:${ELSE4::=else4${IE4::=e4}}}${THEN4}${ELSE4}${IT4}${IE4}
-
 mod-tu-space:
 	# The :tu and :tl modifiers operate on the variable value
 	# as a single string, not as a list of words. Therefore,
@@ -110,23 +88,6 @@ mod-break-many-words:
 mod-remember:
 	@echo $@: ${1 2 3:L:_:@var@${_}@}
 	@echo $@: ${1 2 3:L:@var@${var:_=SAVED:}@}, SAVED=${SAVED}
-
-mod-gmtime:
-	@echo $@:
-	@echo ${%Y:L:gmtim=1593536400}		# modifier name too short
-	@echo ${%Y:L:gmtime=1593536400}		# 2020-07-01T00:00:00Z
-	@echo ${%Y:L:gmtimer=1593536400}	# modifier name too long
-	@echo ${%Y:L:gm=gm:M*}
-
-mod-gmtime-indirect:
-	@echo $@:
-	# It's not possible to pass the seconds via a variable expression.
-	# Parsing of the :gmtime modifier stops at the '$' and returns to
-	# ApplyModifiers.  There, a colon would be skipped but not a dollar.
-	# Parsing continues by looking at the next modifier.  Now the ${:U}
-	# is expanded and interpreted as a variable modifier, which results
-	# in the error message "Unknown modifier '1'".
-	@echo ${%Y:L:gmtime=${:U1593536400}}
 
 mod-localtime:
 	@echo $@:
@@ -175,28 +136,3 @@ mod-range:
 .warning unexpected
 .endif
 
-# begin mod-shell
-
-.if ${:!echo hello | tr 'l' 'l'!} != "hello"
-.warning unexpected
-.endif
-
-# The output is truncated at the first null byte.
-# Cmd_Exec returns only a string pointer without length information.
-.if ${:!echo hello | tr 'l' '\0'!} != "he"
-.warning unexpected
-.endif
-
-.if ${:!echo!} != ""
-.warning A newline at the end of the output must be stripped.
-.endif
-
-.if ${:!echo;echo!} != " "
-.warning Only a single newline at the end of the output is stripped.
-.endif
-
-.if ${:!echo;echo;echo;echo!} != "   "
-.warning Other newlines in the output are converted to spaces.
-.endif
-
-# end mod-shell
