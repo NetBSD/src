@@ -1,6 +1,7 @@
-# $NetBSD: varmod-tail.mk,v 1.1 2020/08/16 12:07:51 rillig Exp $
+# $NetBSD: varmod-tail.mk,v 1.2 2020/08/16 14:25:16 rillig Exp $
 #
-# TODO: Description
+# Tests for the :T variable modifier, which returns the basename of each of
+# the words in the variable value.
 
 # TODO: Implementation
 

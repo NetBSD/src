@@ -1,6 +1,7 @@
-# $NetBSD: sh-leading-at.mk,v 1.1 2020/08/16 12:07:51 rillig Exp $
+# $NetBSD: sh-leading-at.mk,v 1.2 2020/08/16 14:25:16 rillig Exp $
 #
-# TODO: Description
+# Tests for shell commands preceded by an '@', to suppress printing
+# the command to stdout.
 
 # TODO: Implementation
 

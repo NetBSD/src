@@ -1,6 +1,9 @@
-# $NetBSD: varmod-undefined.mk,v 1.1 2020/08/16 12:07:51 rillig Exp $
+# $NetBSD: varmod-undefined.mk,v 1.2 2020/08/16 14:25:16 rillig Exp $
 #
-# TODO: Description
+# Tests for the :U variable modifier, which returns the given string
+# if the variable is undefined.
+#
+# This modifier is heavily used when expanding .for loops.
 
 # TODO: Implementation
 
