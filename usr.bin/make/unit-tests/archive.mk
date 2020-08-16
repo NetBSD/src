@@ -1,4 +1,4 @@
-# $NetBSD: archive.mk,v 1.2 2020/08/15 01:49:07 rillig Exp $
+# $NetBSD: archive.mk,v 1.3 2020/08/16 14:39:50 rillig Exp $
 #
 # Very basic demonstration of handling archives, based on the description
 # in PSD.doc/tutorial.ms.
@@ -35,4 +35,4 @@ depend-on-nonexistent-member: ${ARCHIVE}(nonexistent.mk)
 	${RUN} echo $@
 
 remove-archive:
-	rm ${ARCHIVE}
+	rm -f ${ARCHIVE}
