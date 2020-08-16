@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.152 2020/08/16 02:33:17 riastradh Exp $	*/
+/*	$NetBSD: ugen.c,v 1.153 2020/08/16 02:34:20 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.152 2020/08/16 02:33:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.153 2020/08/16 02:34:20 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1964,12 +1964,18 @@ filt_ugenread_intr(struct knote *kn, long hint)
 {
 	struct ugen_endpoint *sce = kn->kn_hook;
 	struct ugen_softc *sc = sce->sc;
+	int ret;
 
-	if (sc->sc_dying)
-		return 0;
+	mutex_enter(&sc->sc_lock);
+	if (sc->sc_dying) {
+		ret = 0;
+	} else {
+		kn->kn_data = sce->q.c_cc;
+		ret = kn->kn_data > 0;
+	}
+	mutex_exit(&sc->sc_lock);
 
-	kn->kn_data = sce->q.c_cc;
-	return kn->kn_data > 0;
+	return ret;
 }
 
 static int
@@ -1977,20 +1983,24 @@ filt_ugenread_isoc(struct knote *kn, long hint)
 {
 	struct ugen_endpoint *sce = kn->kn_hook;
 	struct ugen_softc *sc = sce->sc;
+	int ret;
 
-	if (sc->sc_dying)
-		return 0;
-
-	if (sce->cur == sce->fill)
-		return 0;
-
-	if (sce->cur < sce->fill)
+	mutex_enter(&sc->sc_lock);
+	if (sc->sc_dying) {
+		ret = 0;
+	} else if (sce->cur == sce->fill) {
+		ret = 0;
+	} else if (sce->cur < sce->fill) {
 		kn->kn_data = sce->fill - sce->cur;
-	else
+		ret = 1;
+	} else {
 		kn->kn_data = (sce->limit - sce->cur) +
 		    (sce->fill - sce->ibuf);
+		ret = 1;
+	}
+	mutex_exit(&sc->sc_lock);
 
-	return 1;
+	return ret;
 }
 
 static int
@@ -1998,24 +2008,27 @@ filt_ugenread_bulk(struct knote *kn, long hint)
 {
 	struct ugen_endpoint *sce = kn->kn_hook;
 	struct ugen_softc *sc = sce->sc;
+	int ret;
 
-	if (sc->sc_dying)
-		return 0;
-
-	if (!(sce->state & UGEN_BULK_RA))
+	mutex_enter(&sc->sc_lock);
+	if (sc->sc_dying) {
+		ret = 0;
+	} else if (!(sce->state & UGEN_BULK_RA)) {
 		/*
 		 * We have no easy way of determining if a read will
 		 * yield any data or a write will happen.
 		 * So, emulate "seltrue".
 		 */
-		return filt_seltrue(kn, hint);
+		ret = filt_seltrue(kn, hint);
+	} else if (sce->ra_wb_used == 0) {
+		ret = 0;
+	} else {
+		kn->kn_data = sce->ra_wb_used;
+		ret = 1;
+	}
+	mutex_exit(&sc->sc_lock);
 
-	if (sce->ra_wb_used == 0)
-		return 0;
-
-	kn->kn_data = sce->ra_wb_used;
-
-	return 1;
+	return ret;
 }
 
 static int
@@ -2023,24 +2036,27 @@ filt_ugenwrite_bulk(struct knote *kn, long hint)
 {
 	struct ugen_endpoint *sce = kn->kn_hook;
 	struct ugen_softc *sc = sce->sc;
+	int ret;
 
-	if (sc->sc_dying)
-		return 0;
-
-	if (!(sce->state & UGEN_BULK_WB))
+	mutex_enter(&sc->sc_lock);
+	if (sc->sc_dying) {
+		ret = 0;
+	} else if (!(sce->state & UGEN_BULK_WB)) {
 		/*
 		 * We have no easy way of determining if a read will
 		 * yield any data or a write will happen.
 		 * So, emulate "seltrue".
 		 */
-		return filt_seltrue(kn, hint);
+		ret = filt_seltrue(kn, hint);
+	} else if (sce->ra_wb_used == sce->limit - sce->ibuf) {
+		ret = 0;
+	} else {
+		kn->kn_data = (sce->limit - sce->ibuf) - sce->ra_wb_used;
+		ret = 1;
+	}
+	mutex_exit(&sc->sc_lock);
 
-	if (sce->ra_wb_used == sce->limit - sce->ibuf)
-		return 0;
-
-	kn->kn_data = (sce->limit - sce->ibuf) - sce->ra_wb_used;
-
-	return 1;
+	return ret;
 }
 
 static const struct filterops ugenread_intr_filtops = {
