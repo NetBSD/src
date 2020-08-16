@@ -1,6 +1,7 @@
-# $NetBSD: varmod-path.mk,v 1.1 2020/08/16 12:07:51 rillig Exp $
+# $NetBSD: varmod-path.mk,v 1.2 2020/08/16 14:25:16 rillig Exp $
 #
-# TODO: Description
+# Tests for the :P variable modifier, which looks up the path for a given
+# target.
 
 # TODO: Implementation
 

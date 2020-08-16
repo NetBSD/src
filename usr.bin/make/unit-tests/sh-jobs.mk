@@ -1,6 +1,7 @@
-# $NetBSD: sh-jobs.mk,v 1.1 2020/08/16 12:07:51 rillig Exp $
+# $NetBSD: sh-jobs.mk,v 1.2 2020/08/16 14:25:16 rillig Exp $
 #
-# TODO: Description
+# Tests for the "run in jobs mode" part of the "Shell Commands" section
+# from the manual page.
 
 # TODO: Implementation
 

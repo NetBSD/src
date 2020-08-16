@@ -1,6 +1,7 @@
-# $NetBSD: varmod-to-separator.mk,v 1.1 2020/08/16 12:07:51 rillig Exp $
+# $NetBSD: varmod-to-separator.mk,v 1.2 2020/08/16 14:25:16 rillig Exp $
 #
-# TODO: Description
+# Tests for the :ts variable modifier, which joins the words of the variable
+# using an arbitrary character as word separator.
 
 # TODO: Implementation
 

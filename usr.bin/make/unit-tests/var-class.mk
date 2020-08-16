@@ -1,6 +1,7 @@
-# $NetBSD: var-class.mk,v 1.1 2020/08/16 12:07:51 rillig Exp $
+# $NetBSD: var-class.mk,v 1.2 2020/08/16 14:25:16 rillig Exp $
 #
-# TODO: Description
+# Tests for the different variable classes (local, command-line, global,
+# environment), and which of them takes precedence over the others.
 
 # TODO: Implementation
 
