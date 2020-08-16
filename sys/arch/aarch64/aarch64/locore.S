@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.70 2020/08/12 13:19:35 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.71 2020/08/16 10:08:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.70 2020/08/12 13:19:35 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.71 2020/08/16 10:08:42 skrll Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_STRONGLY_ORDERED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -454,13 +454,15 @@ mp_vstart:
 	msr	tpidr_el0, xzr
 	msr	tpidrro_el0, xzr
 
-	/* set curcpu(), and fill curcpu()->ci_{midr,mpidr} */
 	mov	x0, #CPU_INFO_SIZE
 	mul	x0, x27, x0
 	adrl	x1, _C_LABEL(cpu_info_store)
 	add	x0, x0, x1		/* x0 = &cpu_info_store[cpuindex] */
+
+	/* temporarily set tpidr_el1 to curcpu until the idle lwp is setup */
 	msr	tpidr_el1, x0		/* tpidr_el1 = curcpu = x0 */
 
+	/* fill curcpu()->ci_{midr,mpidr} */
 	mrs	x1, midr_el1
 	str	x1, [x0, #CI_MIDR]	/* curcpu()->ci_cpuid = midr_el1 */
 	mrs	x1, mpidr_el1
@@ -508,8 +510,11 @@ mp_vstart:
 	b	1b
 9:
 
-	/* fill my cpu_info */
-	mrs	x0, tpidr_el1		/* curcpu */
+	/*
+	 * set curlwp (tpidr_el1 and curcpu()->ci_curlwp) now we know the
+	 * idle lwp from curcpu()->ci_idlelwp
+	 */
+	mrs	x0, tpidr_el1		/* curcpu (temporarily) */
 	ldr	x1, [x0, #CI_IDLELWP]	/* x0 = curcpu()->ci_idlelwp */
 	msr	tpidr_el1, x1		/* tpidr_el1 = curlwp = x1 */
 	str	x1, [x0, #CI_CURLWP]	/* curlwp is idlelwp */
