@@ -1,8 +1,4 @@
-| file: boot.S
-| author: chapuni(webmaster@chapuni.com)
-|         ITOH Yasufumi
-|
-| $NetBSD: boot.S,v 1.12 2020/01/28 12:02:02 isaki Exp $
+| $NetBSD: boot.S,v 1.13 2020/08/16 06:43:43 isaki Exp $
 
 |
 | (1) IPL (or previous stage loader) loads first 1KB of this primary
@@ -13,9 +9,6 @@
 |
 | (3) The full primary bootloader loads the secondary bootloader known as
 |     /boot from its filesystem to 0x6000.  And jump to there.
-|
-| Therefore, The first 1KB must be relocatable.
-| The first 1KB must be smaller than or equal to 1024 bytes.
 |
 |       (1)         ->        (2)         ->        (3)
 |  +------------+        +------------+        +------------+    0x000000
@@ -29,6 +22,7 @@
 |  :            :        |boot loader |        |boot loader |
 |  :            :        |(text+data) |        |(text+data) |
 |  :            :        +------------+        +------------+    0x005000
+|  :            :        |(startregs) |        |(startregs) |
 |  :            :        |(bss)       |        |(bss)       |
 |  :            :        +------------+        +------------+    0x006000
 |  :            :        :            :        | /boot      |
@@ -40,141 +34,323 @@
 |  :            :        :(heap)      :        :(heap)      :
 |  :            :        :            :        :            :
 |
+| The program code before first_kbyte
+| - must not access any text/data labels after first_kbyte
+|   (because it may not be loaded yet).
+| - must access any labels before first_kbyte by PC relative addressing
+|   (because this loader is assembled as starting from 0x3000 but is loaded
+|   at 0x2000 or 0x2400).
+| - must use RELOC() macro to access bss section (and first_kbyte as a jump
+|   destination address).
+|
+| The program code after first_kbyte can access any labels in all sections
+| directly.
 
 #include <machine/asm.h>
 #include "iocscall.h"
 
-#define SCSI_ADHOC_BOOTPART
-
-#define SRAM		0x00ED0000	/* SRAM stat addr */
-#define SRAM_MEMSZ	(SRAM + 8)	/* (L) size of main memory */
-#define MINMEM		0x00400000	/* at least 4MB required */
+#define RELOC(var)	%a5@(((var)-top):W)
 
 #define BOOT_ERROR(s)	jbsr boot_error; .asciz s; .even
 
-	.globl	_C_LABEL(bootmain)
-	.text
+#define minN	(0)
+#define minC	(1)
+#define minH	(2)
+#define minR	(3)
+#define maxN	(4)
+#define maxC	(5)
+#define maxH	(6)
+#define maxR	(7)
+
+		.globl	_C_LABEL(bootmain)
+		.globl	_C_LABEL(startregs)
+		.text
+
 ASENTRY_NOPROFILE(start)
 ASENTRY_NOPROFILE(top)
-		bras	_ASM_LABEL(entry0)
+		bras	entry
 		.ascii	"SHARP/"
 		.ascii	"X680x0"
 		.word	0x8199,0x94e6,0x82ea,0x82bd
 		.word	0x8e9e,0x82c9,0x82cd,0x8cbb
 		.word	0x8ec0,0x93a6,0x94f0,0x8149
-		.word	0
-| d4 にはすでに SCSI ID が入っている
-ASENTRY_NOPROFILE(entry0)
-		moveml	%d0-%d7/%a0-%a7,_C_LABEL(startregs)
-		lea	TEXTADDR:W,%a5	| set base ptr
-#define _RELOC(adr)	%a5@(((adr)-top):W)
-#define ASRELOC(var)	_RELOC(_ASM_LABEL(var))
-#define RELOC(var)	_RELOC(_C_LABEL(var))
+msg_progname:
+		| This will be printed on boot_error.  And it also roles
+		| a signature in binary dump.
+		| Max length of PROG(without \0) is 14 ("fdboot_ustarfs").
+		.ascii	"\r\n\n"		| 3
+		.ascii	PROG			| 14
+		.asciz	": "			| 2+1
+		.org	msg_progname + 20
+entry:
+		jbra	disklabel_end
 
-		lea	RELOC(__bss_start),%a1
-		bra	_ASM_LABEL(entry)
-
-|	Disklabel= 404bytes
-|	Since LABELOFFSET in <machine/disklabel.h> is 0x40,
-|	entry must be after 0x000001d4 (0x000f01d4)
+		| Disklabel must be placed at 0x40 and the size is 404 bytes.
+		| (See LABELOFFSET in <machine/disklabel.h>)
 		.org	0x40
 disklabel:
 		.space	404
+disklabel_end:
+		| At first save all initial registers for observing traces
+		| of the IPL (or the previous bootloader).  At this point
+		| we cannot use RELOC() yet so that use absolute addressing.
+		| To prevent startregs from being cleared by subsequent bss
+		| initialization, we place it out of bss area.
+		moveml	%d0-%d7/%a0-%a7,startregs:W
 
-ASENTRY_NOPROFILE(entry)
-		movew	#_end-1,%d0	| bss end (low word only)
+		| Initialize the screen.  Some IPL (060turbo ROM or genuine
+		| boot selector) don't initialize the screen.  It should be
+		| done as early as possible.
+		moveql	#0x10,%d1
+		IOCS(__CRTMOD)
 
-		| clear out bss  (must be <= 64KB)
-		subw	%a1,%d0
-clrbss:		clrb	%a1@+
+		| Set system stack
+		swap	%d1			| %d1 = 0x0010_0000
+		moveal	%d1,%sp
+
+		| Set base pointer.  Now we can use RELOC() macro.
+		leal	TEXTADDR:W,%a5
+
+		| Initialize bss.
+		| This code limits bss less than 64KB but it's no matter.
+		| The bss cannot grow more than 4KB.  See xxboot.ldscript.
+		leal	RELOC(__bss_start),%a1
+		movew	#_end - 1,%d0		| bss end
+
+		subw	%a1,%d0			| don't change this op!!
+clrbss:						|  see chkmpu below
+		clrb	%a1@+
 		dbra	%d0,clrbss
 
-		movel	%d4,RELOC(ID)	| SCSI ID (if booted from SCSI)
+		| If it boots from SCSI, %d4 has SCSI ID.
+		movel	%d4,RELOC(SCSI_ID)
 
-		lea	0x00100000,%sp	| set system stack
-		lea	%a5@,%a1	| set load address
-					| a1 will be used later for IOCS calls
-
-		| we use 68020 instructions, and check MPU beforehand
+chkmpu:
+		| Check MPU beforehand since we want to use 68020 instructions.
+		| Here the above "subw %a1,%d0" = 0x9049 and %d0.w = -1 at this
+		| point, so that subsequent moveb loads
+		|   0x49 if MPU <= 010 (clrbss + %d0.w)
+		|   0x90 if MPU >= 020 (clrbss + %d0.w*2).
+		| This is a MOVE op, not a TST op because TST with pc-relative
+		| is not available on 000/010.
+		moveb	%pc@(clrbss-chkmpu-2:B,%d0:W:2),%d0
+		jmi	mpuok
+		BOOT_ERROR("MPU 68000?");
+mpuok:
 		|
-		| here d0.w = -1, and the above "subw a1,d0" = 0x9049, and
-		|	if MPU <= 010	loads 0x49,
-		|	if MPU >= 020	loads 0x90.
-		| This is a move, not a tst instruction
-		| because pc-relative tsts are not available on 000/010.
-chkmpu:		moveb	%pc@(clrbss-chkmpu-2:B,%d0:W:2),%d0	| 103B 02xx
-		jmi	mpuok		| MC68020 or later
-		BOOT_ERROR("MPU 68000?")
-mpuok:		| XXX check for MMU?
-
+		| Check where did I boot from.
+		|
 		IOCS(__BOOTINF)
-		lsll	#8,%d0		| clear MSByte
-		lsrl	#8,%d0		|
-		movel	%d0,RELOC(BOOT_INFO)
+		movel	%d0,RELOC(BOOT_INFO)	| save whole result
+
+		| %d0 = 0xHHWWWWWW
+		|
+		| HH:     how did I boot (powersw or alarm etc)
+		| WWWWWW: where did I boot from
+		|  0x80...0x8f		SASI
+		|  0x90...0x93		Floppy
+		|  0xed0000...0xed3ffe	SRAM
+		|  others		ROM (maybe SCSI)
+
+		bfextu	%d0{#8:#8},%d1
+		jne	boot_rom_ram		| ROM or SRAM
+		| FALLTHROUGH			| SASI or Floppy
+
+boot_sasi_floppy:
+		| Floppy or SASI
+		cmpiw	#0x90,%d0
+		jlt	boot_dev_not_supp	| SASI
 
 		|
-		| 0x80...0x8F		SASI
-		| 0x90...0x93		Floppy
-		| 0xED0000...0xED3FFE	SRAM
-		| others		ROM (SCSI?)
+		| Boot from floppy
 		|
-		movel	%d0,%d1
-		clrb	%d1
-		tstl	%d1
-		jne	boot_ram_rom
-		|
-		| SASI or Floppy
-		|
-		movel	%d0,%d2
-		andib	#0xFC,%d0
-		cmpib	#0x90,%d0
-		jne	boot_dev_unsupported	| boot from SASI?
-		|
-		| Floppy
-		|
-		moveb	%d2,%d0
-		andib	#0x03,%d0		| drive # (head=0)
-		jbsr	check_fd_format
-		moveml	%d0-%d1,RELOC(FDSECMINMAX) | min and max sec #
-		lslw	#8,%d2
-		moveq	#0x70,%d1
-		orw	%d2,%d1		| PDA*256 + MODE
+boot_floppy:
+		| Make PDA+MODE
+		lslw	#8,%d0			| %d0=$00009X00 (X is unit#)
+		moveql	#0x70,%d1
+		orw	%d0,%d1			| %d1=$00009X70 = (PDA<<8)+MODE
 		movel	%d1,RELOC(FDMODE)
-		movel	%d0,%d2		| read position (first sector)
-		movel	#8192,%d3	| read bytes
+check_fd_format:
+		| Check fd format.
+		| Obtain min & max sector # of track(cylinder) 0.
+		| On x68k, we can consider only double-sided floppy.
+		moveql	#0,%d2
+init_loop:
+		| On 1st time, clear %d3-%d5 with zero.
+		| On 2nd time, initialize %d3-%d5 with first %d2.
+		movel	%d2,%d3			| %d3: initial NCHR
+		movel	%d2,%d4			| %d4: minimum NCHR
+		movel	%d2,%d5			| %d5: maximum NCHR
+loop:
+		| B_READID with MSB of %d2 set obtains detected CHRN to %d2.
+		moveql	#1,%d2			| %d2 = 0x00000001
+		rorl	#1,%d2			| %d2 = 0x80000000
+		IOCS(__B_READID)
+						| %d2 = 0xCCHHRRNN
+		rorl	#8,%d2			| %d2 = 0xNNCCHHRR
+
+		| On 1st time, goto init_loop with %d2 (%d2 is not zero).
+		| On 2nd time, fall through because %d3 is not zero.
+		tstl	%d3
+		jeq	init_loop
+
+		cmpl	%d4,%d2			| if (%d2 < %d4)
+		jge	1f			|
+		movel	%d2,%d4			|  min = %d2
+1:
+		cmpl	%d5,%d2			| if (%d2 > %d5)
+		jle	1f			|
+		movel	%d2,%d5			|  max = %d2
+1:
+		cmpl	%d3,%d2			| if (%d2 == %d3) break
+		jne	loop
+
+		| Assume 2HD
+		oriw	#0x0100,%d5		| FDSEC.maxsec.H = 1
+		moveml	%d4-%d5,RELOC(FDSEC)	| Store
+		| end of check_fd_format
+
+		| read 8KB myself from floppy
+						| %d1: (PDA<<8)+MODE already
+		movel	%d4,%d2			| %d2: read pos = first sector
+		moveql	#0x20,%d3		| %d3: read bytes = (0x20 << 8)
+		lsll	#8,%d3			|  = 0x2000 = 8192
+		leal	%a5@,%a1		| %a1: dest buffer
 		IOCS(__B_READ)
-		jra	boot_read_done
 
-#include "chkfmt.s"
+		| Jump to full parimary loader
+		jmp	RELOC(first_kbyte)
 
-boot_ram_rom:
-		movel	%d0,%d1
-		swap	%d1
-		cmpiw	#0x00ED,%d1
-		jne	boot_SCSI
-		| boot from SRAM?
+boot_rom_ram:
+		| ROM(SCSI) or SRAM
+		cmpib	#0xed,%d1
+		jeq	boot_dev_not_supp	| SRAM
 
-boot_dev_unsupported:
-		BOOT_ERROR("unsupported boot device")
+		|
+		| Boot from SCSI
+		|
+boot_scsi:
+		| get block length of the SCSI disk
+		leal	RELOC(SCSI_CAP),%a1
+		SCSIIOCS(__S_READCAP)
+		tstl	%d0
+		jeq	boot_scsi1
+		BOOT_ERROR("READCAP failed")
+boot_scsi1:
+		movel	RELOC(SCSI_CAP+4),%d0	| %d0 = blocksize in bytes
+		lsrl	#2,%d0			| %d0 = blocksize in longword
+		moveql	#25,%d5
+		bfffo	%d0{#0:#32},%d1		| 25:256 24:512 23:1024 22:2048
+		subl	%d1,%d5			|  0:256  1:512  2:1024  3:2048
+		movel	%d5,RELOC(SCSI_BLKLEN)	| %d5 = sector length index
+
+		| Find out the start position of the boot partition.
+		| There seems to be no interface or consensus about this and
+		| so that we would have to do it heuristicly.
+		|
+		| ROM firmware:
+		|	pass read pos (in block #, aka sector #) in %d2.
+		|	Human68k-style partition table does not exist.
+		|	%d2 is 4 at the maximum.
+		| SCSI IPLs (genuine and SxSI):
+		|	pass read pos (in kilobytes) in %d2.
+		|	%d2 is bigger than 0x20.
+		|	partition table on the memory is destroyed.
+		| BOOT MENU Ver.2.22:
+		|	passes partition table entry address in %a0.
+		|	%d2 is cleared to zero
+		| No other IPLs are supported.
+
+		tstl	%d2
+		jne	1f
+		| If no information in %d2, probably from BOOT MENU.
+		| %a0 points the on-memory partition table entry.
+		movel	%a0@(0x0008),%d2	| %d2 = pos in kbyte
+1:
+		moveql	#0x20,%d3
+		cmpl	%d3,%d2
+		jcs	1f			| jump if %d2 > 0x20
+		| SCSI IPL or BOOT MENU.
+		| At this point, %d2 is pos in kbyte in all cases.
+		lsll	#8,%d2			| %d2 = pos in longword
+		divul	%d0,%d2			| %d2 = pos in sector
+1:
+		| At this point, %d2 is pos in sector in all cases.
+		| TDSIZE = 8192, TDSIZE / 4 = 0x800 = (0x20 << 6).
+		lsll	#6,%d3			| %d3 = TDSIZE in longword
+		divul	%d0,%d3			| %d0 = TDSIZE in sector
+		| Read full primary bootloader
+		moveal	%a5,%a1			| %a1 = dest buffer
+		jbsr	scsiread
+
+		| Selected start sector should not <= 4.  There should be
+		| partition table.  If so, repoints to zero(?).
+		moveql	#5,%d0
+		cmpl	%d0,%d2
+		bcc	1f
+		moveql	#0,%d2
+1:
+		movel	%d2,RELOC(SCSI_PARTTOP)
+
+		| Jump to full parimary loader
+		jmp	RELOC(first_kbyte)
 
 |
-| volatile void BOOT_ERROR(const char *msg);
-|	print error message, wait for key press and reboot
-|
-booterr_msg:	.asciz	"\r\n\n"
-reboot_msg:	.asciz	"\r\n[Hit key to reboot]"
-		.even
+| scsiread
+|	Read SCSI disk using __S_READ as possible.  If __S_READ cannot be
+|	used (due to read length or offset), use __S_READEXT instead.
+| input:
+|	%d2.l: pos in sector
+|	%d3.l: len in sector (must be < 65536)
+|	%d4.l: target SCSI ID
+|	%d5.l: sector length index (0:256, 1:512, 2:1024, 3:2048, ...)
+|	%a1.l: buffer address
+| destroy:
+|	%d0,%d1
+scsiread:
+		| if (len >= 256 || pos + len >= 0x200000)
+		|   use READEXT
+		| else
+		|   use READ
 
+		moveql	#__S_READEXT,%d1
+
+		cmpiw	#256,%d3
+		jge	scsiread_core		| if (d3 >= 256) use READEXT
+
+		movel	%d2,%d0
+		addl	%d3,%d0			| %d0 = pos + len
+		jcs	scsiread_core		| if overflow, use READEXT
+		bftst	%d0{#0:#11}		| if (pos + len >= 0x200000)
+		jne	scsiread_core		|  use REAEXT
+
+		moveql	#__S_READ,%d1		| else use READ
+scsiread_core:
+		IOCS(__SCSIDRV)
+		rts
+
+boot_dev_not_supp:
+		BOOT_ERROR("not supported device");
+
+|
+| void __dead BOOT_ERROR(const char *msg);
+|	Print an error message, wait for key press, and reboot.
+|	Called from C.
 ENTRY_NOPROFILE(BOOT_ERROR)
-		addql	#4,%sp
-
-boot_error:	lea	%pc@(booterr_msg),%a1
+		addql	#4,%sp			| throw away return address
+		| FALLTHROUGH
+|
+| BOOT_ERROR(msg)
+|	Print an error message, wait for key press, and reboot.
+|	Called from asm.
+boot_error:
+		leal	%pc@(msg_progname),%a1
 		IOCS(__B_PRINT)
 		moveal	%sp@+,%a1
 		IOCS(__B_PRINT)
 ENTRY_NOPROFILE(exit)
 ENTRY_NOPROFILE(_rtt)
-		lea	%pc@(reboot_msg),%a1
+		leal	%pc@(msg_reboot),%a1
 		IOCS(__B_PRINT)
 
 		| wait for a key press (or release of a modifier)
@@ -183,167 +359,32 @@ ENTRY_NOPROFILE(_rtt)
 		| issue software reset
 		trap	#10
 		| NOTREACHED
+msg_reboot:
+		.asciz	"\r\n[Hit key to reboot]"
+		.even
 
-
-		|
-		| ROM boot ... probably from SCSI
-		|
-boot_SCSI:
-#ifdef SCSI_ADHOC_BOOTPART
-		|
-		| Find out boot partition in an ad hoc manner.
-		|
-
-		| get block length of the SCSI disk
-		SCSIIOCS(__S_READCAP)	| using buffer at a1
-		tstl	%d0
-		jeq	1f
-		BOOT_ERROR("READCAP failed")
-1:		moveq	#0,%d5
-		moveb	%a1@(6),%d5	| 1: 256, 2: 512, 4: 1024, 8: 2048
-		lsrb	#1,%d5		| 0: 256, 1: 512, 2: 1024, 4: 2048
-		movel	%d5,RELOC(SCSI_BLKLEN)
-
-		| find out the start position of the boot partition
-		| XXX VERY AD HOC
-		|
-		| ROM firmware:
-		|	pass read pos (in block #) in d2
-		|	Human68k-style partition table does not exist
-		|	d2 is 4 at the maximum
-		| SCSI IPLs (genuine and SxSI):
-		|	pass read pos (in kilobytes) in d2
-		|	d2 is bigger than 0x20
-		|	partition table on the memory is destroyed
-		| BOOT MENU Ver.2.22:
-		|	passes partition table entry address in a0
-		|	d2 is cleared to zero
-		| No other IPL is supported.  XXX FIXME
-		tstl	%d2
-		jne	sc1
-		| no information in d2 -- probably from BOOT MENU
-		| a0 points the partiion table entry
-		movel	%a0@(0x0008),%d2 | in KByte
-sc1:		cmpl	#0x20,%d2
-		jcs	sc2
-		lsll	#8,%d2		| clear MSByte
-		lsrl	#7,%d2		| in 512 byte block
-		divul	%d5,%d2		| in sector
-sc2:
-		| read entire boot
-		moveq	#TDSIZE/512,%d3	| size is TDSIZE byte
-		divul	%d5,%d3		| in sector
-		jbsr	scsiread	| read at  %a1
-
-		cmpil	#5,%d2
-		bcc	sc3
-		movql	#0,%d2
-sc3:		movel	%d2,RELOC(SCSI_PARTTOP)
-#else
-		moveq	#1,%d5		| 512bytes/sec
-		movel	%d5,%sp@-
-		moveq	#8192/512,%d3	| 読み込める最大サイズ
-		moveq	#0x40,%d2	| いわゆる決め打ち(sd*a のみ)
-		SCSIIOCS(__S_READ)
-#endif
-
-boot_read_done:
-		jmp	first_kbyte
-
-read_error:	BOOT_ERROR("read error")
-
-#undef RELOC	/* base register  a5  is no longer available */
-#undef ASRELOC
-#undef _RELOC
-
-|
-|	read SCSI
-|
-|	input:	d2.l: pos in sector
-|		d3.l: len in sector
-|		d4: target SCSI ID
-|		d5: sector length (1: 512, 2: 1024, 4: 2048)
-|		a1: buffer address
-|	destroy:
-|		d0, d1, a1
-|
-scsiread:
-		moveml	%d2-%d3/%d6-%d7/%a2,%sp@-
-		| if (pos >= 0x200000 || (len > 255 && pos + len >= 0x200000))
-		|	use READEXT
-		| else
-		|	use READ
-		moveq	#0x20,%d0
-		swap	%d0		| d0.l = 0x00200000
-		moveq	#0,%d6
-		subqb	#1,%d6		| d6.l = 255
-		movel	%d5,%d7
-		lsll	#8,%d7
-		lsll	#1,%d7		| d7 = sector length (byte)
-		cmpl	%d0,%d2
-		jcc	scsiread_ext
-		moveq	#__S_READ,%d1
-		cmpl	%d3,%d6
-		jcc	scsiread_noext
-		subl	%d2,%d0		| d0.0 = 0x200000 - pos
-		cmpl	%d0,%d3		|	<= len
-		jcs	scsiread_noext	| no
-
-scsiread_ext:	| use READEXT
-		extw	%d6		| d6.l = 65535
-		moveq	#__S_READEXT,%d1
-
-scsiread_noext:	| use READ
-loop_scsiread:
-		| d1: SCSI IOCS call #
-		| d6: max sector count at a time
-		movel	%d3,%a2		| save original len in a2
-		cmpl	%d3,%d6
-		jcc	1f
-		movel	%d6,%d3
-1:		IOCS(__SCSIDRV)		| SCSIIOCS(d1)
-		tstl	%d0
-		jne	read_error
-		movel	%d3,%d0
-		mulul	%d7,%d0
-		addl	%d0,%a1
-		exg	%d3,%a2		| restore original len to d3
-		addl	%a2,%d2		| pos += read count
-		subl	%a2,%d3		| len -= read count
-		jne	loop_scsiread
-		moveml	%sp@+,%d2-%d3/%d6-%d7/%a2
-		rts
-
-|
-|	The former part must reside in the first 1KB.
-|
 		.globl	first_kbyte
 first_kbyte:
 |--------------------------------------------------------------------------
 |
-|	The latter text+data part is not accessible at the first boot time.
-|	PC-relative can be used from here.
+#if defined(SELFTEST)
+		jbsr	selftest_ashldi3
+		jbsr	selftest_ashrdi3
+		jbsr	selftest_memcmp
+		jbsr	selftest_memmove
+		jbsr	selftest_memset
+#endif
+
+		jmp	_C_LABEL(bootmain)
+		| NOTREACHED
+
 |
-		| Initialize the screen here.  Some IPL (060turbo ROM or
-		| genuine boot selector) don't initialize the screen.
-		| Such initialization should be done as early as possible
-		| but it's too severe to place it in first_kbyte area.
-		| Therefore do it here.
-		moveq	#0x10,%d1
-		IOCS(__CRTMOD)
-
-		jmp	_C_LABEL(bootmain)	| 0x0Fxxxx に飛んでゆく
-
-		.word	0
-
-| int badbaddr __P((void *adr));
-|	check if the given address is valid for byte read
-|	return: 0: valid, 1: not valid
-
+| uint32_t badbadd(void *addr)
+|	returns 1 if reading addr occurs bus error.  Otherwise it returns 0.
 ENTRY_NOPROFILE(badbaddr)
-		lea	0x0008:W,%a1		| MPU Bus Error vector
-		moveq	#1,%d0
-		lea	%pc@(badr1),%a0
+		leal	0x0008:W,%a1		| bus error vector
+		moveql	#1,%d0
+		leal	%pc@(badbaddr1),%a0
 		movew	%sr,%sp@-
 		oriw	#0x0700,%sr		| keep out interrupts
 		movel	%a1@,%sp@-
@@ -351,163 +392,118 @@ ENTRY_NOPROFILE(badbaddr)
 		movel	%sp,%d1			| save sp
 		moveal	%sp@(10),%a0
 		tstb	%a0@			| try read...
-		moveq	#0,%d0			| this is skipped on bus error
-badr1:		moveal	%d1,%sp			| restore sp
+		moveql	#0,%d0			| this is skipped on bus error
+badbaddr1:
+		moveal	%d1,%sp			| restore sp
 		movel	%sp@+,%a1@
 		movew	%sp@+,%sr
 		rts
 
-| void RAW_READ __P((void *buf, u_int32_t blkpos, size_t bytelen));
-| inputs:
-|	buf:	 input buffer address
-|	blkpos:	 read start position in the partition in 512byte-blocks
-|	bytelen: read length in bytes
-
-Lraw_read_buf=4+(4*11)
-Lraw_read_pos_=Lraw_read_buf+4
-Lraw_read_len=Lraw_read_buf+8
-
-#ifdef SCSI_ADHOC_BOOTPART
-|	RAW_READ of physical disk
-ENTRY_NOPROFILE(RAW_READ0)
-		moveq	#0,%d0
-		jra	raw_read1
-#endif
-
-ENTRY_NOPROFILE(RAW_READ)
-#ifdef SCSI_ADHOC_BOOTPART
-		movel	_C_LABEL(SCSI_PARTTOP),%d0
-raw_read1:
-#endif
+|
+| int raw_read(uint32_t blkpos, uint32_t bytelen, void *buf)
+|	blkpos:  read start position in 512 byte block unit (always?).
+|	bytelen: read length in bytes.
+|	         caller already avoids bytelen == 0 so that no checks here.
+|	         must be a multiple of sector size on scsi.
+|	buf:     destination buffer address
+|
+ENTRY_NOPROFILE(raw_read)
+		moveal	%sp,%a1
 		moveml	%d2-%d7/%a2-%a6,%sp@-
-		moveml	%sp@(Lraw_read_buf),%d1-%d3
-		movel	%d1,%a1
-		| d2.l:		pos in 512byte-blocks
-		| d3.l:		length in bytes
-		| a1 (=d1):	buffer address
-
-		lea	TEXTADDR:W,%a5	| set base ptr
-#define _RELOC(adr)	%a5@(((adr)-top):W)
-#define ASRELOC(var)	_RELOC(_ASM_LABEL(var))
-#define RELOC(var)	_RELOC(_C_LABEL(var))
-
-		tstb	_RELOC(_C_LABEL(BOOT_INFO)+1) | simple check.  may be incorrect!
-		beqs	raw_read_floppy
+		moveml	%a1@,%d0/%d2-%d3/%a1	| %d0 (return address)
+						| %d2 blkpos
+						| %d3 bytelen
+						| %a1 buf
+		| At this point boot device is either floppy or SCSI.
+		tstb	%pc@(BOOT_INFO+1)
+		jeq	raw_read_floppy
+		| FALLTHROUGH
 
 raw_read_scsi:
-		movel	RELOC(ID),%d4	| SCSI ID
-#ifdef SCSI_ADHOC_BOOTPART
-		movel	RELOC(SCSI_BLKLEN),%d5 | sector size: 0-2
-		| XXX length must be sector aligned
-		lsrl	#8,%d3		| size in 256byte-blocks
-		lsrl	#1,%d3
-		divul	%d5,%d3		| size in sector
-		beqs	read_half	| minimal error check
-		divul	%d5,%d2		| pos in sector
-		addl	%d0,%d2		| physical pos in sector
-#else
-		moveq	#1,%d5		| 512bytes/sec
-		moveq	#9,%d0		| shift count
-		addl	#511,%d3
-		lsrl	%d0,%d3
-		bcss	read_half	| minimal error check
+						| %d2 = pos from device top
+						|  in 512 bytes/block
+		lsll	#1,%d2			| %d2 = in 256 bytes/block
+		movel	%pc@(SCSI_BLKLEN),%d5	| %d5 = sector length index
+		lsrl	%d5,%d2			| %d2 = pos from device top
+						|  in media sector size
 
-		addl	#0x40,%d2	| 'a' partition starts here
-#endif
-|		jcc	1f
-|		BOOT_ERROR("out of seek")	| pos exceeds 32bit
-|1:
+		divull	%pc@(SCSI_CAP+4),%d0:%d3| %d3 = bytelen / sectsize
+						| %d0 = bytelen % sectsize
+		tstl	%d0
+		jeq	.Lraw1
+		BOOT_ERROR("Err1")		| ASSERT(bytelen%sectsize==0)
+.Lraw1:
+		movel	%pc@(SCSI_ID),%d4	| %d4 = SCSI ID
 		jbsr	scsiread
-		bras	raw_read_end
+
+raw_read_exit:
+		moveml	%sp@+,%d2-%d7/%a2-%a6
+		rts
 
 raw_read_floppy:
+		| nhead = FDSEC.maxsec.H - FDSEC.minsec.H + 1
+		|       = 2;
+		| nsect = FDSEC.maxsec.R - FDSEC.minsec.R + 1;
 		|
-		| Floppy read routine
+		| sect = (blkpos % nsect) + FDSEC.minsec.R;
+		| head = ((blkpos / nsect) % nhead) + FDSEC.minsec.H;
+		| cyl  = ((blkpos / nsect) / nhead) + FDSEC.minsec.C;
 		|
+		| NCHR = (FDSEC.minsec.N << 24) |
+		|      (cyl << 16) |
+		|      (head << 8) |
+		|      sect;
 
-		| convert to seek position
+		| calc nsect.
+		moveql	#1,%d0			| %d0 = 1
+		addb	%pc@(FDSEC+maxR),%d0	| %d0 = 1 + maxsec.R
+		subb	%pc@(FDSEC+minR),%d0	| %d0 = 1 + maxsec.R - minsec.R
+						|     = nsect
 
-		asll	#2,%d2		| size in 128byte-blocks
+		| Convert blkpos to N/C/H/R.
+		divuw	%d0,%d2			| %d2.hw = blkpos % nsect
+						| %d2.lw = blkpos / nsect
+		| Here, %d2.hw becomes sector number and .lw becomes cyl+head.
+		| %d2.lw = %0000_0000_CCCC_CCCH in binary form.  LSB of
+		| (blkpos / nsect) is head number because we support only
+		| double-sided floppy here.
+						| %d2.w = %0000_0000_CCCC_CCCH
+		lslw	#7,%d2			| %d2.w = %0CCC_CCCC_H000_0000
+		lsrb	#7,%d2			| %d2.w = %0CCC_CCCC_0000_000H
+						| i.e,
+						| %d2 = $00rrCCHH
+		swap	%d2			| %d2 = $CCHH00rr
+		lslw	#8,%d2			| %d2 = $CCHHrr00
+		| two bytes from odd FDSEC+minR is (minR << 8 | maxN) and
+		| minN == maxN always.
+		addw	%pc@(FDSEC+minR),%d2	| %d2 = $CCHHRRNN
+		rorl	#8,%d2			| %d2 = $NNCCHHRR
 
-		| sec = raw_read_pos	(d2)
-		| sec >>= 7 + (sector length: 0-3)
-
-		lea	RELOC(FDSECMINMAX),%a0
-		moveq	#0,%d1
-		moveb	%a0@,%d1	| d1: sector length (0-3)
-		lsrl	%d1,%d2		| d2: pos in sector
-		bcss	read_half	| error check
-
-		| trk = sec / (# sectors)
-		| sec = sec % (# sectors)
-
-		moveb	%a0@(7),%d1	| d1: max sector #
-		subb	%a0@(3),%d1	|   - min sector #
-		addqb	#1,%d1		| d1: # sectors
-		divu	%d1,%d2		| d2: (sec << 16) | track
-
-		| position = (sec length << 24) | (track/2 << 16)
-		|		| (track%2 << 8) | (min sec # + sec)
-
-		movel	%a0@,%d0	| d0: (sec len << 24) | min sec #
-		lsrw	#1,%d2		| d2: (sec << 16) | (track / 2)
-		jcc	1f
-		bset	#8,%d0		| |= (track % 2) << 8
-1:		swap	%d2		| d2: ((track / 2) << 16) | sec
-		addl	%d0,%d2		| d2: position
-
-		| read
-		movel	RELOC(FDMODE),%d1	| PDA*256 + MODE
-
-		| B_READ (for floppy)
-		|  d1.w: PDA x 256 + MODE
-		|	PDA: 0x90 (drive 0) ... 0x93 (drive 3)
-		|	MODE:	bit6: MFM
-		|		bit5: retry
-		|		bit4: seek
-		|  d2.l: position
-		|	bit31-24: sector length (0: 128, 1: 256, 2: 512, 3: 1K)
-		|	bit23-16: track # (0-79)
-		|	bit15-08: side (0 or 1)
-		|	bit07-00: sector # (1-)
-		|  d3.l: read bytes
-		|  a1:   read address
-		| return:
-		|  d0:	bit 31-24	ST0
-		|	bit 23-16	ST1
-		|	bit 15- 8	ST2
-		|	bit  7- 0	C
-		|	-1 on parameter error
-		| destroy: d0, d2, d3, a1
+		movel	%pc@(FDMODE),%d1	| %d1 = PDA+MODE
 		IOCS(__B_READ)
-		andil	#0xf8ffff00,%d0		| check status (must be zero)
-		jne	read_error
-
-raw_read_end:
-		moveml	%sp@+,%a2-%a6/%d2-%d7
-		rts
-#undef _RELOC	/* base register  a5  is no longer available */
-#undef ASRELOC
-#undef RELOC
-
-read_half:	BOOT_ERROR("read half of block")
-
+		andil	#0xf8ffff00,%d0		| Check status (must be zero)
+		jeq	raw_read_exit
+		BOOT_ERROR("B_READ failed");
 
 |
-|	global variables
+| BSS
 |
-	BSS(ID, 4)			| SCSI ID
-	BSS(BOOT_INFO, 4)		| result of IOCS(__BOOTINF)
-	BSS(FDMODE, 4)			| Floppy access mode: PDA x 256 + MODE
-	BSS(FDSECMINMAX, 8)		| +0: (min sector) sector length
-					| +1: (min sector) track #
-					| +2: (min sector) side
-					| +3: (min sector) sector #
-					| +4: (max sector) sector length
-					| +5: (max sector) track #
-					| +6: (max sector) side
-					| +7: (max sector) sector #
-#ifdef SCSI_ADHOC_BOOTPART
-	BSS(SCSI_PARTTOP, 4)		| start sector of boot partition
-	BSS(SCSI_BLKLEN ,4)		| sector len 0: 256, 1: 512, 2: 1024
-#endif
+		BSS(BOOT_INFO, 4)	| whole result of IOCS BOOTINF
+
+		BSS(FDMODE, 4)
+		BSS(FDSEC, 8)		| +0: (minN) sector length
+					| +1: (minC) track number
+					| +2: (minH) head
+					| +3: (minR) sector number
+					| +4: (maxN) sector length
+					| +5: (maxC) track number
+					| +6: (maxH) head
+					| +7: (maxR) sector number
+
+		BSS(SCSI_ID, 4)		| SCSI ID, if booted from SCSI
+		BSS(SCSI_CAP, 8)	| result of SCSI READCAP
+					|  +0.L: total number of logical blocks
+					|  +4.L: block length in bytes
+		BSS(SCSI_PARTTOP, 4)	| top sector # of this partition
+		BSS(SCSI_BLKLEN ,4)	| sector length index
+					|  0:256, 1:512, 2:1024, 3:2048, ..
