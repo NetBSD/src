@@ -40,6 +40,11 @@ SECTIONS
     _edata  =  .;
   }
   . = TEXTADDR + TEXTDATASIZE;
+
+  /* Place uint32_t startregs[16] out of bss */
+  PROVIDE(startregs = .);
+  . += 0x40/* sizeof(startregs) */;
+
   .bss :
   {
     __bss_start = .;
