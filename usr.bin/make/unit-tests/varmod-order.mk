@@ -1,9 +1,13 @@
-# $NetBSD: varmod-order.mk,v 1.2 2020/08/16 14:25:16 rillig Exp $
+# $NetBSD: varmod-order.mk,v 1.3 2020/08/16 20:13:10 rillig Exp $
 #
-# Tests for the :Or variable modifier, which returns the words, sorted in
+# Tests for the :O variable modifier, which returns the words, sorted in
 # ascending order.
 
-# TODO: Implementation
+NUMBERS=	one two three four five six seven eight nine ten
+
+.if ${NUMBERS:O} != "eight five four nine one seven six ten three two"
+.error ${NUMBERS:O}
+.endif
 
 all:
 	@:;
