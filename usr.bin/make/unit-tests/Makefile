@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.99 2020/08/16 20:03:53 rillig Exp $
+# $NetBSD: Makefile,v 1.100 2020/08/16 20:43:01 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -151,7 +151,6 @@ TESTS+=		misc
 TESTS+=		moderrs
 TESTS+=		modmatch
 TESTS+=		modmisc
-TESTS+=		modorder
 TESTS+=		modts
 TESTS+=		modword
 TESTS+=		opt
