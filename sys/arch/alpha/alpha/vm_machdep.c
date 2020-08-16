@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.114 2018/03/19 10:31:56 martin Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.115 2020/08/16 18:05:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.114 2018/03/19 10:31:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.115 2020/08/16 18:05:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,9 +109,15 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		pcb2->pcb_hw.apcb_usp = alpha_pal_rdusp();
 
 	/*
-	 * Arrange for a non-local goto when the new process
-	 * is started, to resume here, returning nonzero from setjmp.
+	 * Put l2's lev1map into its PTBR so that it will be on its
+	 * own page tables as the SWPCTX to its PCB is made.  ASN
+	 * doesn't matter at this point; that will be handled on l2's
+	 * first pmap_activate() call.
 	 */
+	pmap_t const pmap2 = l2->l_proc->p_vmspace->vm_map.pmap;
+	pcb2->pcb_hw.apcb_ptbr =
+	    ALPHA_K0SEG_TO_PHYS((vaddr_t)pmap2->pm_lev1map) >> PGSHIFT;
+
 #ifdef DIAGNOSTIC
 	/*
 	 * If l1 != curlwp && l1 == &lwp0, we are creating a kernel
