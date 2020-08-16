@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.153 2020/08/16 02:34:20 riastradh Exp $	*/
+/*	$NetBSD: ugen.c,v 1.154 2020/08/16 02:34:54 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.153 2020/08/16 02:34:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.154 2020/08/16 02:34:54 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -555,12 +555,7 @@ ugenclose(dev_t dev, int flag, int mode, struct lwp *l)
 	DPRINTFN(5, ("ugenclose: flag=%d, mode=%d, unit=%d, endpt=%d\n",
 		     flag, mode, UGENUNIT(dev), endpt));
 
-#ifdef DIAGNOSTIC
-	if (!sc->sc_is_open[endpt]) {
-		printf("ugenclose: not open\n");
-		return EINVAL;
-	}
-#endif
+	KASSERT(sc->sc_is_open[endpt]);
 
 	if (endpt == USB_CONTROL_ENDPOINT) {
 		DPRINTFN(5, ("ugenclose: close control\n"));
@@ -628,16 +623,8 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 	if (endpt == USB_CONTROL_ENDPOINT)
 		return ENODEV;
 
-#ifdef DIAGNOSTIC
-	if (sce->edesc == NULL) {
-		printf("ugenread: no edesc\n");
-		return EIO;
-	}
-	if (sce->pipeh == NULL) {
-		printf("ugenread: no pipe\n");
-		return EIO;
-	}
-#endif
+	KASSERT(sce->edesc);
+	KASSERT(sce->pipeh);
 
 	switch (sce->edesc->bmAttributes & UE_XFERTYPE) {
 	case UE_INTERRUPT:
@@ -858,16 +845,8 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio,
 	if (endpt == USB_CONTROL_ENDPOINT)
 		return ENODEV;
 
-#ifdef DIAGNOSTIC
-	if (sce->edesc == NULL) {
-		printf("ugenwrite: no edesc\n");
-		return EIO;
-	}
-	if (sce->pipeh == NULL) {
-		printf("ugenwrite: no pipe\n");
-		return EIO;
-	}
-#endif
+	KASSERT(sce->edesc);
+	KASSERT(sce->pipeh);
 
 	switch (sce->edesc->bmAttributes & UE_XFERTYPE) {
 	case UE_BULK:
@@ -1868,19 +1847,8 @@ ugenpoll(dev_t dev, int events, struct lwp *l)
 
 	sce_in = &sc->sc_endpoints[UGENENDPOINT(dev)][IN];
 	sce_out = &sc->sc_endpoints[UGENENDPOINT(dev)][OUT];
-	if (sce_in == NULL && sce_out == NULL)
-		return POLLERR;
-#ifdef DIAGNOSTIC
-	if (!sce_in->edesc && !sce_out->edesc) {
-		printf("ugenpoll: no edesc\n");
-		return POLLERR;
-	}
-	/* It's possible to have only one pipe open. */
-	if (!sce_in->pipeh && !sce_out->pipeh) {
-		printf("ugenpoll: no pipe\n");
-		return POLLERR;
-	}
-#endif
+	KASSERT(sce_in->edesc || sce_out->edesc);
+	KASSERT(sce_in->pipeh || sce_out->pipeh);
 
 	mutex_enter(&sc->sc_lock);
 	if (sce_in && sce_in->pipeh && (events & (POLLIN | POLLRDNORM)))
