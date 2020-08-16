@@ -1,4 +1,4 @@
-/*	$NetBSD: xxboot.h,v 1.3 2020/08/14 03:34:22 isaki Exp $	*/
+/*	$NetBSD: xxboot.h,v 1.4 2020/08/16 06:43:43 isaki Exp $	*/
 
 /*
  * Copyright (C) 2020 Tetsuya Isaki. All rights reserved.
@@ -28,23 +28,40 @@
 #define BINF_ISFD(pbinf)	(*((uint8_t *)(pbinf) + 1) == 0)
 
 /* boot.S */
-extern void RAW_READ(void *, uint32_t, size_t);
+extern int raw_read(uint32_t, uint32_t, void *);
 extern int badbaddr(volatile void *);
-extern unsigned int BOOT_INFO;	/* result of IOCS(__BOOTINF) */
-extern unsigned int ID;		/* target SCSI ID */
+extern void BOOT_ERROR(const char *) __dead;
+extern uint32_t BOOT_INFO;	/* result of IOCS(__BOOTINF) */
+extern uint32_t SCSI_ID;	/* target SCSI ID */
+extern uint32_t SCSI_PARTTOP;	/* top sector # of this partition */
+extern uint32_t SCSI_BLKLEN;	/* sector length index */
+extern struct {
+	uint32_t total_blocks;
+	uint32_t blocksize;
+} SCSI_CAP;
 extern struct {
 	struct fdfmt{
-		uint8_t	N;	/* sector length 0: 128, ..., 3: 1K */
+		uint8_t	N;	/* sector length 1:256, 2:512, 3:1024 */
 		uint8_t	C;	/* cylinder # */
 		uint8_t	H;	/* head # */
 		uint8_t	R;	/* sector # */
 	} minsec, maxsec;
-} FDSECMINMAX;			/* FD format type of the first track */
+} FDSEC;			/* FD format type of the first track */
+
+/* bootmain.c */
+extern void print_hex(u_int, int);
+
+/* consio1.c */
+extern int getchar(void);
+extern void putchar(int);
 
 /* xx.c */
 extern int xxopen(struct open_file *, ...);
 extern int xxclose(struct open_file *);
 extern int xxstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+
+/* xxboot.ldscript */
+extern uint32_t startregs[16];
 
 /* vers.c */
 extern const char bootprog_name[];

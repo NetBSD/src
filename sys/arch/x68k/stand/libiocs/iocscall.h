@@ -1,4 +1,4 @@
-/*	$NetBSD: iocscall.h,v 1.2 2020/01/18 05:07:34 isaki Exp $	*/
+/*	$NetBSD: iocscall.h,v 1.3 2020/08/16 06:43:43 isaki Exp $	*/
 
 /*
  *	IOCS call macros for X680x0
@@ -30,6 +30,7 @@
 #define __B_CLR_ST	0x2A
 #define __B_READ	0x46
 #define __B_RECALI	0x47
+#define __B_READID	0x4A
 #define __B_DRVCHK	0x4E
 #define __BOOTINF	0xFFFFFF8E
 #define __JISSFT	0xFFFFFFA1

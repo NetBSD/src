@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 2020/08/14 03:40:47 isaki Exp $
+#	$NetBSD: Makefile,v 1.6 2020/08/16 06:43:44 isaki Exp $
 
 FS=		lfsv2
-BOOTCPPFLAGS=	-DSDBOOT -DFDBOOT
 
 TOUCHPROG=	@true
 

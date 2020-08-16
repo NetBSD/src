@@ -1,4 +1,4 @@
-/*	$NetBSD: consio1.c,v 1.1 2012/03/20 13:01:32 minoura Exp $	*/
+/*	$NetBSD: consio1.c,v 1.2 2020/08/16 06:43:43 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001,2010 MINOURA Makoto.
@@ -29,10 +29,8 @@
 #include <lib/libkern/libkern.h>
 #include <lib/libsa/stand.h>
 
-#include "libx68k.h"
-
+#include "xxboot.h"
 #include "iocs.h"
-#include "consio.h"
 
 int
 getchar(void)
