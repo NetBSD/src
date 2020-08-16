@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.95 2020/08/16 17:58:48 rillig Exp $
+# $NetBSD: Makefile,v 1.96 2020/08/16 18:04:33 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -365,7 +365,7 @@ LANG=		C
 # the tests are actually done with sub-makes.
 .SUFFIXES: .mk .rawout .out
 .mk.rawout:
-	@echo testing ${.IMPSRC}
+	@${_MKMSG_TEST:Uecho '#      test '} ${.PREFIX}
 	@set -eu; \
 	cd ${.OBJDIR}; \
 	env ${ENV.${.TARGET:R}} ${TEST_MAKE} -C ${.CURDIR} \
@@ -387,7 +387,6 @@ _SED_CMDS+=	-e 's,${.CURDIR:S,.,\\.,g}/,,g'
 _SED_CMDS+=	-e 's,${UNIT_TESTS:S,.,\\.,g}/,,g'
 
 .rawout.out:
-	@echo postprocess ${.TARGET}
 	@${TOOL_SED} ${_SED_CMDS} ${SED_CMDS.${.TARGET:R}} \
 	  < ${.IMPSRC} > ${.TARGET}.tmp1
 	@${POSTPROC.${.TARGET:R}:Ucat} < ${.TARGET}.tmp1 > ${.TARGET}.tmp2
