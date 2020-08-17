@@ -1,4 +1,4 @@
-/*	$NetBSD: iobusvar.h,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: iobusvar.h,v 1.2 2020/08/17 21:25:12 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2007
@@ -43,6 +43,8 @@ struct iobus_unit {
 
 struct iobus_dev {
 	const char	*name;
+	int		flags;
+#define	IOBUS_DEV_FDT	0x01
 	int		nunits;
 	const struct iobus_unit *units;
 };
