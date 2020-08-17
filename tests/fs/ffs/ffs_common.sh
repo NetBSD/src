@@ -1,4 +1,4 @@
-# $NetBSD: ffs_common.sh,v 1.3 2016/10/08 13:23:53 gson Exp $ 
+# $NetBSD: ffs_common.sh,v 1.4 2020/08/17 06:18:39 gson Exp $ 
 
 create_ffs()
 {
@@ -21,17 +21,6 @@ create_ffs_server()
 	create_ffs $*
 	atf_check -o ignore -e ignore $(atf_get_srcdir)/h_ffs_server \
 		${sarg} ${IMG} ${RUMP_SERVER}
-}
-
-rump_shutdown()
-{
-	for s in ${RUMP_SOCKETS_LIST}; do
-		atf_check -s exit:0 env RUMP_SERVER=unix://${s} rump.halt;
-	done
-# check that the quota inode creation didn't corrupt the filesystem
-	atf_check -s exit:0 -o "match:already clean" \
-		-o "match:Phase 6 - Check Quotas" \
-		fsck_ffs -nf -F ${IMG}
 }
 
 # from tests/ipf/h_common.sh via tests/sbin/resize_ffs
