@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.89 2020/08/15 07:42:07 mrg Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.90 2020/08/17 03:19:35 mrg Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,12 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.89 2020/08/15 07:42:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.90 2020/08/17 03:19:35 mrg Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#endif
 
 #define __PMAP_PRIVATE
 
@@ -57,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.89 2020/08/15 07:42:07 mrg Exp $"
 #include <machine/int_fmtio.h>
 #include <machine/db_machdep.h>
 #include <ddb/db_access.h>
+#include <ddb/db_user.h>
 #ifndef KGDB
 #include <ddb/db_command.h>
 #include <ddb/db_output.h>
@@ -92,6 +95,7 @@ void db_mtcr_cmd(db_expr_t, bool, db_expr_t, const char *);
 
 paddr_t kvtophys(vaddr_t);
 
+#ifdef _KERNEL
 CTASSERT(sizeof(ddb_regs) == sizeof(struct reg));
 
 #ifndef KGDB
@@ -1041,3 +1045,5 @@ db_mach_cpu_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *mod
 	}
 }
 #endif	/* MULTIPROCESSOR */
+
+#endif	/* _KERNEL */

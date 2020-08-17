@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_stacktrace.c,v 1.1 2020/08/15 07:42:07 mrg Exp $	*/
+/*	$NetBSD: mips_stacktrace.c,v 1.2 2020/08/17 03:19:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_stacktrace.c,v 1.1 2020/08/15 07:42:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_stacktrace.c,v 1.2 2020/08/17 03:19:35 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: mips_stacktrace.c,v 1.1 2020/08/15 07:42:07 mrg Exp 
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #endif
+#include <ddb/db_user.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -122,7 +123,8 @@ int main(void *);	/* XXX */
  * Functions ``special'' enough to print by name
  */
 #define Name(_fn)  { (void*)_fn, # _fn }
-const static struct { void *addr; const char *name;} names[] = {
+static const struct { void *addr; const char *name;} names[] = {
+#ifdef _KERNEL
 	Name(stacktrace),
 	Name(stacktrace_subr),
 	Name(main),
@@ -178,12 +180,13 @@ const static struct { void *addr; const char *name;} names[] = {
 
 	Name(cpu_idle),
 	Name(cpu_switchto),
+#endif /* _KERNEL */
 	{0, 0}
 };
 
 
-bool
-static kdbpeek(vaddr_t addr, int *valp)
+static bool
+kdbpeek(vaddr_t addr, unsigned *valp)
 {
 	if (addr & 3) {
 		printf("kdbpeek: unaligned address %#"PRIxVADDR"\n", addr);
@@ -193,7 +196,7 @@ static kdbpeek(vaddr_t addr, int *valp)
 		printf("kdbpeek: NULL\n");
 		return false;
 	} else {
-		*valp = *(int *)addr;
+		*valp = *(unsigned *)addr;
 		return true;
 	}
 }
@@ -312,7 +315,7 @@ loop:
 	sym = db_search_symbol(pc, DB_STGY_ANY, &diff);
 	if (sym != DB_SYM_NULL && diff == 0) {
 		/* check func(foo) __attribute__((__noreturn__)) case */
-		if (!kdbpeek(pc - 2 * sizeof(int), &instr))
+		if (!kdbpeek(pc - 2 * sizeof(unsigned), &instr))
 			return;
 		i.word = instr;
 		if (i.JType.op == OP_JAL) {
@@ -494,8 +497,12 @@ done:
 		}
 	} else {
 finish:
+#ifdef _KERNEL
 		(*printfn)("User-level: pid %d.%d\n",
 		    curlwp->l_proc->p_pid, curlwp->l_lid);
+#else
+		(*printfn)("User-level: FIXME\n");
+#endif
 	}
 }
 
