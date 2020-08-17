@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 2020/07/28 00:35:38 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23 2020/08/17 07:50:42 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -114,7 +114,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2020/07/28 00:35:38 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2020/08/17 07:50:42 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,6 +187,9 @@ struct octeon_btdesc octeon_btdesc;
 struct octeon_btinfo octeon_btinfo;
 
 char octeon_nmi_stack[PAGE_SIZE] __section(".data1") __aligned(PAGE_SIZE);
+
+/* Currently the OCTEON kernels only support big endian boards */
+CTASSERT(_BYTE_ORDER == _BIG_ENDIAN);
 
 /*
  * Do all the stuff that locore normally does before calling main().

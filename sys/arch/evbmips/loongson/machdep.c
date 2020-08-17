@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 2016/12/22 14:47:57 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 2020/08/17 07:50:42 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2016/12/22 14:47:57 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2020/08/17 07:50:42 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -241,6 +241,9 @@ struct consdev pmoncons = {
 	makedev(0, 0),
 	CN_DEAD
 };
+
+/* The LOONGSON kernels only support little endian */
+CTASSERT(_BYTE_ORDER == _LITTLE_ENDIAN);
 
 /*
  * Do all the stuff that locore normally does before calling main().
