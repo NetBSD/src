@@ -1,4 +1,4 @@
-.\" $NetBSD: cgd.4,v 1.23 2020/08/17 00:43:15 riastradh Exp $
+.\" $NetBSD: cgd.4,v 1.24 2020/08/17 17:18:02 riastradh Exp $
 .\"
 .\" Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -131,8 +131,7 @@ The
 initialization vector for each disk sector is chosen to be the
 encryption under
 .Tn 3DES
-of the little-endian encoding of the disk sector number, which has no
-impact on security but reduces performance.
+of the little-endian encoding of the disk sector number.
 .Pp
 Note: Internally, the
 .Sq parity bits
@@ -146,6 +145,11 @@ key.
 Blowfish in
 .Tn CBC
 mode.
+The
+.Tn CBC
+initialization vector for each disk sector is chosen to be the
+encryption under Blowfish of the little-endian encoding of the disk
+sector number.
 It is strongly encouraged that keys be at least 128 bits long.
 There are no performance advantages of using shorter keys.
 The default key length is 128 bits.
@@ -165,7 +169,8 @@ the
 initialization vector was chosen to be the
 .Em eight-fold
 encryption under the block cipher of the little-endian encoding of the
-disk sector number.
+disk sector number, which has no impact on security but reduces
+performance.
 For compatibility with such disks, the
 .Sq IV method
 must be set to
