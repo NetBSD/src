@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.32 2019/04/06 03:06:26 thorpej Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.33 2020/08/17 03:14:08 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.32 2019/04/06 03:06:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.33 2020/08/17 03:14:08 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.32 2019/04/06 03:06:26 thorpej Exp $
 
 #include <machine/db_machdep.h>
 
+#include <ddb/db_user.h>
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>
 #include <ddb/db_extern.h>
@@ -131,6 +132,7 @@ static const char * const spec3_name[64] = {
 	[OP_SWRE] = "swre",
 	[OP_PREFE] = "prefe",
 	[OP_DBSHFL] = "dbshfl",
+	[OP_CACHE_R6] = "cache",
 	[OP_LBUE] = "lbue",
 	[OP_LHUE] = "lhue",
 	[OP_LBE] = "lbe",
@@ -225,11 +227,15 @@ db_disasm(db_addr_t loc, bool altfmt)
 	 * Take some care with addresses to not UTLB here as it
 	 * loses the current debugging context.  KSEG2 not checked.
 	 */
-	if (loc < MIPS_KSEG0_START) {
+	if (loc < (db_addr_t)MIPS_KSEG0_START) {
+#ifdef _KERNEL
 		if (ufetch_32((void *)loc, &instr) != 0) {
 			db_printf("invalid address.\n");
 			return loc;
 		}
+#else
+		return loc;
+#endif
 	} else {
 		instr =  *(uint32_t *)loc;
 	}
@@ -507,10 +513,37 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 			}
 			break;
 		}
-		db_printf("%s\t%s,%s",
-			spec3_name[i.RType.func],
-	    		reg_name[i.RType.rs],
-	    		reg_name[i.RType.rt]);
+		switch (i.RType.func) {
+		case OP_LWLE:
+		case OP_LWRE:
+		case OP_CACHEE:
+		case OP_SBE:
+		case OP_SHE:
+		case OP_SCE:
+		case OP_SWE:
+		case OP_SWLE:
+		case OP_SWRE:
+		case OP_PREFE:
+		case OP_CACHE_R6:
+		case OP_LBUE:
+		case OP_LHUE:
+		case OP_LBE:
+		case OP_LHE:
+		case OP_LLE:
+		case OP_LWE:
+			db_printf("%s\t%s,%d(%s)",
+				spec3_name[i.RType.func],
+				reg_name[i.RType.rs],
+				i.S3OType.offset > 255 ?
+				  -i.S3OType.offset : i.S3OType.offset,
+				reg_name[i.RType.rt]);
+			break;
+		default:
+			db_printf("%s\t%s,%s",
+				spec3_name[i.RType.func],
+				reg_name[i.RType.rs],
+				reg_name[i.RType.rt]);
+		}
 		break;
 
 	case OP_REGIMM:
