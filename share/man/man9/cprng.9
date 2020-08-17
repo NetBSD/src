@@ -1,4 +1,4 @@
-.\"	$NetBSD: cprng.9,v 1.12 2020/08/17 00:49:53 riastradh Exp $
+.\"	$NetBSD: cprng.9,v 1.13 2020/08/17 00:55:05 riastradh Exp $
 .\"
 .\" Copyright (c) 2011-2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -137,33 +137,7 @@ and must be no higher than
 .Pp
 The
 .Fa flags
-argument controls the behavior of the generator:
-.Bl -tag -width CPRNG_REKEY_ANY
-.It Dv CPRNG_INIT_ANY
-Suppress a warning message to the console if, during
-.Fn cprng_strong_create ,
-only partial entropy for the generator is available from the entropy
-pool.
-.It Dv CPRNG_REKEY_ANY
-Suppress a warning message to the console if, during
-.Fn cprng_strong
-after the generator has been exhausted and must be reseeded, only
-partial entropy for the generator is available from the entropy pool.
-.It Dv CPRNG_USE_CV
-Make
-.Fn cprng_strong
-sleep if the generator has not been seeded with full entropy until full
-entropy is available.
-Otherwise,
-.Fn cprng_strong
-will never sleep when passed this generator.
-.It Dv CPRNG_HARD
-Limit the number of bits of output from the generator before reseeding
-to the number of bits in its seed, so that it approximates the
-information-theoretic entropy of its seed.
-Otherwise, the generator may provide many more bits of output than it
-was seeded with.
-.El
+argument must be zero.
 .Pp
 Creation will succeed even if full entropy for the generator is not
 available.
@@ -189,43 +163,8 @@ and return the number of bytes.
 .Fa len
 must be at most
 .Dv CPRNG_MAX_LEN .
-.Pp
-If
-.Fa cprng
-was created with the
-.Dv CPRNG_USE_CV
-flag and has been exhausted, then
-.Fn cprng_strong
-may sleep until full entropy can be obtained from the entropy pool to
-reseed it.
-However, if
 .Fa flags
-includes the
-.Dv FNONBLOCK
-flag, then
-.Fn cprng_strong
-will immediately return zero in this case instead.
-.Pp
-If
-.Fa cprng
-was created with the
-.Dv CPRNG_HARD
-flag, then
-.Fn cprng_strong
-will return at most as many bytes as are left from its seed size since
-the last reseeding.
-.Pp
-If
-.Fa cprng
-was created with neither the
-.Dv CPRNG_USE_CV
-flag nor the
-.Dv CPRNG_HARD
-flag, then
-.Fn cprng_strong
-is guaranteed to return as many bytes as requested, up to
-.Dv CPRNG_MAX_LEN ,
-without sleeping.
+must be zero.
 .It Fn cprng_strong32
 Generate 32 bits using the
 .Dv kern_cprng
