@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_opcode.h,v 1.23 2020/08/15 04:27:28 simonb Exp $	*/
+/*	$NetBSD: mips_opcode.h,v 1.24 2020/08/17 03:14:08 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -79,6 +79,16 @@ typedef union {
 		unsigned : 1;		/* always '1' */
 		unsigned op: 6;		/* always '0x11' */
 	} FRType;
+
+	struct {
+		unsigned func: 6;
+		unsigned zero: 1;	/* always '0' */
+		unsigned offset: 9;
+		unsigned rt: 5;
+		unsigned rs: 5;
+		unsigned op: 6;
+	} S3OType; /* has "special3 offset" type */
+
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
 	struct {
@@ -111,6 +121,16 @@ typedef union {
 		unsigned fd: 5;
 		unsigned func: 6;
 	} FRType;
+
+	struct {
+		unsigned op: 6;
+		unsigned rs: 5;
+		unsigned rt: 5;
+		unsigned offset: 9;
+		unsigned zero: 1;	/* always '0' */
+		unsigned func: 6;
+	} S3OType; /* has "special3 offset" type */
+
 #endif
 } InstFmt;
 
@@ -323,6 +343,7 @@ typedef union {
 #define	OP_SWRE		042		/* EVA */
 #define	OP_PREFE	043		/* EVA */
 #define	OP_DBSHFL	044		/* MIPS32/64 r2 */
+#define	OP_CACHE_R6	045		/* MIPS32/64 r6 */
 #define	OP_LBUE		050		/* EVA */
 #define	OP_LHUE		051		/* EVA */
 #define	OP_LBE		054		/* EVA */
