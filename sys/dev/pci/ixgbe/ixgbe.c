@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.238 2020/08/17 07:59:06 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.239 2020/08/17 08:23:30 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -4465,7 +4465,6 @@ ixgbe_handle_timer(struct work *wk, void *context)
 	u64		v0, v1, v2, v3, v4, v5, v6, v7;
 	int		hung = 0;
 	int		i;
-	bool		do_probe = false;
 
 	IXGBE_CORE_LOCK(adapter);
 
@@ -4475,12 +4474,11 @@ ixgbe_handle_timer(struct work *wk, void *context)
 		bool is_full = ixgbe_sfp_cage_full(hw);
 
 		/* do probe if cage state changed */
-		if (was_full ^ is_full)
-			do_probe = true;
-	}
-	if (do_probe) {
-		atomic_or_32(&adapter->task_requests, IXGBE_REQUEST_TASK_MOD);
-		ixgbe_schedule_admin_tasklet(adapter);
+		if (was_full ^ is_full) {
+			atomic_or_32(&adapter->task_requests,
+			    IXGBE_REQUEST_TASK_MOD);
+			ixgbe_schedule_admin_tasklet(adapter);
+		}
 	}
 
 	ixgbe_update_link_status(adapter);
