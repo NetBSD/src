@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_securelevel.c,v 1.32 2018/07/15 05:16:45 maxv Exp $ */
+/* $NetBSD: secmodel_securelevel.c,v 1.32.4.1 2020/08/17 11:27:33 martin Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.32 2018/07/15 05:16:45 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.32.4.1 2020/08/17 11:27:33 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -596,7 +596,7 @@ secmodel_securelevel_device_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 
 	case KAUTH_DEVICE_RND_ADDDATA_ESTIMATE:
-		if (securelevel > 0)
+		if (securelevel > 1)
 			result = KAUTH_RESULT_DENY;
 		break;
 
