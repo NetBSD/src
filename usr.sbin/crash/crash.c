@@ -1,4 +1,4 @@
-/*	$NetBSD: crash.c,v 1.13 2020/03/27 00:17:08 ad Exp $	*/
+/*	$NetBSD: crash.c,v 1.14 2020/08/17 04:15:33 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crash.c,v 1.13 2020/03/27 00:17:08 ad Exp $");
+__RCSID("$NetBSD: crash.c,v 1.14 2020/08/17 04:15:33 mrg Exp $");
 #endif /* not lint */
 
 #include <ddb/ddb.h>
@@ -41,7 +41,9 @@ __RCSID("$NetBSD: crash.c,v 1.13 2020/03/27 00:17:08 ad Exp $");
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 
+#ifndef __mips__
 #include <machine/frame.h>
+#endif
 
 #include <stdarg.h>
 #include <stdlib.h>

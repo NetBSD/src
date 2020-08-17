@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.25 2020/08/17 03:19:35 mrg Exp $	*/
+/*	$NetBSD: pcb.h,v 1.26 2020/08/17 04:15:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -76,4 +76,10 @@ struct md_coredump {
 #ifdef _KERNEL
 #define	PCB_FSR(pcb)	((pcb)->pcb_fpregs.r_regs[_R_FSR - _FPBASE])
 #endif
+
+#ifndef _KERNEL
+/* Connect the dots for crash(8). */
+vaddr_t db_mach_addr_cpuswitch(void);
+#endif
+
 #endif /*_MIPS_PCB_H_*/
