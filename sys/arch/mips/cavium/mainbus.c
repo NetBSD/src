@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.3 2020/07/16 16:40:28 jmcneill Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.4 2020/08/17 21:25:12 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2007
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3 2020/07/16 16:40:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4 2020/08/17 21:25:12 jmcneill Exp $");
 
 #define	_MIPS_BUS_DMA_PRIVATE
 
@@ -115,6 +115,10 @@ mainbus_attach_devicetree(device_t self)
 	u_int uart_freq;
 
 	aa.aa_name = "cpunode";
+	config_found_sm_loc(self, "mainbus", NULL, &aa, mainbus_print,
+	    mainbus_submatch);
+
+	aa.aa_name = "iobus";
 	config_found_sm_loc(self, "mainbus", NULL, &aa, mainbus_print,
 	    mainbus_submatch);
 

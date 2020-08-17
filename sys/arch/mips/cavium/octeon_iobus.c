@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_iobus.c,v 1.4 2020/06/23 05:14:18 simonb Exp $	*/
+/*	$NetBSD: octeon_iobus.c,v 1.5 2020/08/17 21:25:12 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2007
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_iobus.c,v 1.4 2020/06/23 05:14:18 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_iobus.c,v 1.5 2020/08/17 21:25:12 jmcneill Exp $");
 
 #include "locators.h"
 
@@ -39,6 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_iobus.c,v 1.4 2020/06/23 05:14:18 simonb Exp 
 #include <sys/bus.h>
 
 #include <mips/cavium/include/iobusvar.h>
+
+#include <dev/fdt/fdtvar.h>
 
 struct iobus_softc {
 	device_t		sc_dev;
@@ -88,6 +90,7 @@ iobus_attach(device_t parent, device_t self, void *aux)
 	struct iobus_softc *sc = device_private(self);
 	const struct iobus_dev *dev;
 	struct iobus_attach_args aa;
+	const bool fdt_p = fdtbus_get_data() != NULL;
 	int i, j;
 
 	sc->sc_dev = self;
@@ -100,6 +103,9 @@ iobus_attach(device_t parent, device_t self, void *aux)
 	for (i = 0; i < (int)iobus_ndevs; i++) {
 		dev = iobus_devs[i];
 		for (j = 0; j < dev->nunits; j++) {
+			if (fdt_p && (dev->flags & IOBUS_DEV_FDT) == 0)
+				continue;
+
 			aa.aa_name = dev->name;
 			aa.aa_unitno = j;
 			aa.aa_unit = &dev->units[j];
