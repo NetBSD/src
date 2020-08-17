@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.267 2020/08/16 20:04:36 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.268 2020/08/17 00:57:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.267 2020/08/16 20:04:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.268 2020/08/17 00:57:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2035,9 +2035,8 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 void
 pmap_activate(struct lwp *l)
 {
-	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
-	struct pcb *pcb = lwp_getpcb(l);
-	long cpu_id = cpu_number();
+	struct pmap * const pmap = l->l_proc->p_vmspace->vm_map.pmap;
+	struct pcb * const pcb = lwp_getpcb(l);
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -2045,21 +2044,24 @@ pmap_activate(struct lwp *l)
 #endif
 
 	KASSERT(kpreempt_disabled());
-	KASSERT(l == curlwp);
+
+	struct cpu_info * const ci = curcpu();
+
+	KASSERT(l == ci->ci_curlwp);
 
 	/* Mark the pmap in use by this processor. */
-	atomic_or_ulong(&pmap->pm_cpus, (1UL << cpu_id));
+	atomic_or_ulong(&pmap->pm_cpus, (1UL << ci->ci_cpuid));
 
 	/* Allocate an ASN. */
-	pmap_asn_alloc(pmap, cpu_id);
-	PMAP_ACTIVATE_ASN_SANITY(pmap, cpu_id);
+	pmap_asn_alloc(pmap, ci->ci_cpuid);
+	PMAP_ACTIVATE_ASN_SANITY(pmap, ci->ci_cpuid);
 
 	u_long const old_ptbr = pcb->pcb_hw.apcb_ptbr;
 	u_int const old_asn = pcb->pcb_hw.apcb_asn;
 
 	pcb->pcb_hw.apcb_ptbr =
 	    ALPHA_K0SEG_TO_PHYS((vaddr_t)pmap->pm_lev1map) >> PGSHIFT;
-	pcb->pcb_hw.apcb_asn = (pmap)->pm_asni[cpu_id].pma_asn;
+	pcb->pcb_hw.apcb_asn = (pmap)->pm_asni[ci->ci_cpuid].pma_asn;
 
 	/*
 	 * Check to see if the ASN or page table base has changed; if
@@ -2072,6 +2074,8 @@ pmap_activate(struct lwp *l)
 	    old_ptbr != pcb->pcb_hw.apcb_ptbr) {
 		(void) alpha_pal_swpctx((u_long)l->l_md.md_pcbpaddr);
 	}
+
+	ci->ci_pmap = pmap;
 }
 
 /*
@@ -2083,7 +2087,7 @@ pmap_activate(struct lwp *l)
 void
 pmap_deactivate(struct lwp *l)
 {
-	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
+	struct pmap * const pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -2091,16 +2095,24 @@ pmap_deactivate(struct lwp *l)
 #endif
 
 	KASSERT(kpreempt_disabled());
-	KASSERT(l == curlwp);
 
-	atomic_and_ulong(&pmap->pm_cpus, ~(1UL << cpu_number()));
+	struct cpu_info * const ci = curcpu();
+
+	KASSERT(l == ci->ci_curlwp);
+
+	atomic_and_ulong(&pmap->pm_cpus, ~(1UL << ci->ci_cpuid));
 
 	/*
 	 * There is no need to switch to a different PTBR here,
 	 * because a pmap_activate() or SWPCTX is guaranteed
 	 * before whatever lev1map we're on now is invalidated
 	 * or before user space is accessed again.
+	 *
+	 * Because only kernel mappings will be accessed before the
+	 * next pmap_activate() call, we consider our CPU to be on
+	 * the kernel pmap.
 	 */
+	ci->ci_pmap = pmap_kernel();
 }
 
 /*
