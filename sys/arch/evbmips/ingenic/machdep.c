@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 2020/07/22 01:24:39 msaitoh Exp $ */
+/*	$NetBSD: machdep.c,v 1.16 2020/08/17 07:50:42 simonb Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2020/07/22 01:24:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2020/08/17 07:50:42 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -85,6 +85,9 @@ void	ingenic_com_cnattach(void);
 #ifdef MULTIPROCESSOR
 kmutex_t ingenic_ipi_lock;
 #endif
+
+/* Currently the Ingenic kernels (CI20) only support little endian boards */
+CTASSERT(_BYTE_ORDER == _LITTLE_ENDIAN);
 
 static void
 cal_timer(void)
