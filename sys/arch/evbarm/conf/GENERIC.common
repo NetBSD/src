@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.37 2020/06/13 16:51:25 ad Exp $
+#	$NetBSD: GENERIC.common,v 1.38 2020/08/17 09:03:03 mrg Exp $
 #
 #	GENERIC evbarm kernel config (template)
 #
@@ -131,6 +131,17 @@ pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	drvctl			# driver control
 pseudo-device	cgd			# cryptographic disk devices
+pseudo-device	raid			# RAIDframe disk driver
+options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+#Options to enable various other RAIDframe RAID types.
+#options 	RF_INCLUDE_EVENODD=1
+#options 	RF_INCLUDE_RAID5_RS=1
+#options 	RF_INCLUDE_PARITYLOGGING=1
+#options 	RF_INCLUDE_CHAINDECLUSTER=1
+#options 	RF_INCLUDE_INTERDECLUSTER=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+pseudo-device	fss			# file system snapshot device
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
