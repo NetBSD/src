@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20 2016/12/22 14:47:56 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21 2020/08/17 07:50:42 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2016/12/22 14:47:56 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2020/08/17 07:50:42 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -136,6 +136,9 @@ int mem_cluster_cnt;
 
 void	configure(void);
 void	mach_init(int, char **, char **, void *);
+
+/* The GDIUM kernels only support little endian */
+CTASSERT(_BYTE_ORDER == _LITTLE_ENDIAN);
 
 /*
  * For some reason, PMON doesn't assign a real address to the Ralink's BAR.
