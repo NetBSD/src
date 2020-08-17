@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.86 2019/12/01 15:34:44 ad Exp $ */
+/* $NetBSD: cpu.h,v 1.87 2020/08/17 00:57:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -127,6 +127,12 @@ struct cpu_info {
 	u_long ci_intrdepth;		/* interrupt trap depth */
 	struct trapframe *ci_db_regs;	/* registers for debuggers */
 	uint64_t ci_pcc_freq;		/* cpu cycles/second */
+
+#define	CPU_INFO_PMAP_DATA_NQWORDS	16
+
+	struct pmap *ci_pmap;		/* currently-activated pmap */
+					/* data used by pmap module */
+	u_long ci_pmap_data[CPU_INFO_PMAP_DATA_NQWORDS];
 
 #if defined(MULTIPROCESSOR)
 	volatile u_long ci_flags;	/* flags; see below */
