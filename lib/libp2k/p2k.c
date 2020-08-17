@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.70 2017/04/26 03:02:48 riastradh Exp $	*/
+/*	$NetBSD: p2k.c,v 1.70.14.1 2020/08/17 10:30:22 martin Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -789,7 +789,7 @@ do_makenode(struct puffs_usermount *pu, struct p2k_node *p2n_dir,
 	struct p2k_node *p2n;
 	struct componentname *cn;
 	struct vattr *va_x;
-	struct vnode *vp;
+	struct vnode *vp = NULL;
 	int rv;
 
 	p2n = malloc(sizeof(*p2n));

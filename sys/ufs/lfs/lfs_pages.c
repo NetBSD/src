@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_pages.c,v 1.15 2017/08/19 14:22:49 maya Exp $	*/
+/*	$NetBSD: lfs_pages.c,v 1.15.8.1 2020/08/17 10:30:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.15 2017/08/19 14:22:49 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.15.8.1 2020/08/17 10:30:22 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -710,29 +710,30 @@ retry:
 	    (vp->v_uflag & VU_DIROP)) {
 		DLOG((DLOG_PAGE, "lfs_putpages: flushing VU_DIROP\n"));
 
- 		lfs_writer_enter(fs, "ppdirop");
+		/*
+		 * NB: lfs_flush_fs can recursively call lfs_putpages,
+		 * but it won't reach this branch because it passes
+		 * PGO_LOCKED.
+		 */
 
-		/* Note if we hold the vnode locked */
-		if (VOP_ISLOCKED(vp) == LK_EXCLUSIVE)
-		{
-		    DLOG((DLOG_PAGE, "lfs_putpages: dirop inode already locked\n"));
-		} else {
-		    DLOG((DLOG_PAGE, "lfs_putpages: dirop inode not locked\n"));
-		}
 		mutex_exit(vp->v_interlock);
-
 		mutex_enter(&lfs_lock);
 		lfs_flush_fs(fs, sync ? SEGM_SYNC : 0);
 		mutex_exit(&lfs_lock);
-
 		mutex_enter(vp->v_interlock);
-		lfs_writer_leave(fs);
 
 		/*
 		 * The flush will have cleaned out this vnode as well,
 		 *  no need to do more to it.
 		 *  XXX then why are we falling through and continuing?
 		 */
+
+		/*
+		 * XXX State may have changed while we dropped the
+		 * lock; start over just in case.  The above comment
+		 * suggests this should maybe instead be goto out.
+		 */
+		goto retry;
 	}
 
 	/*
