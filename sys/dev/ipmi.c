@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.4 2019/05/18 08:38:00 mlelstv Exp $ */
+/*	$NetBSD: ipmi.c,v 1.5 2020/08/17 08:34:36 nonaka Exp $ */
 
 /*
  * Copyright (c) 2019 Michael van Elst
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.4 2019/05/18 08:38:00 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.5 2020/08/17 08:34:36 nonaka Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1632,13 +1632,13 @@ ipmi_sensor_status(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 		    edata->value_cur > psensor->i_limits.sel_warnmax)
 			return ENVSYS_SWARNOVER;
 
-		if (psensor->i_props & PROP_WARNMIN &&
-		    edata->value_cur < psensor->i_limits.sel_warnmin)
-			return ENVSYS_SWARNUNDER;
-
 		if (psensor->i_props & PROP_CRITMIN &&
 		    edata->value_cur < psensor->i_limits.sel_critmin)
 			return ENVSYS_SCRITUNDER;
+
+		if (psensor->i_props & PROP_WARNMIN &&
+		    edata->value_cur < psensor->i_limits.sel_warnmin)
+			return ENVSYS_SWARNUNDER;
 
 		break;
 
