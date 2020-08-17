@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.237 2020/08/17 07:26:55 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.238 2020/08/17 07:59:06 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -3173,9 +3173,10 @@ ixgbe_msix_admin(void *arg)
 	}
 
 	if (task_requests != 0) {
+		/* Re-enabling other interrupts is done in the admin task */
+		task_requests |= IXGBE_REQUEST_TASK_NEED_ACKINTR;
 		atomic_or_32(&adapter->task_requests, task_requests);
 		ixgbe_schedule_admin_tasklet(adapter);
-		/* Re-enabling other interrupts is done in the admin task */
 	} else {
 		/* Re-enable other interrupts */
 		IXGBE_WRITE_REG(hw, IXGBE_EIMS, IXGBE_EIMS_OTHER);
@@ -4802,11 +4803,13 @@ ixgbe_handle_admin(struct work *wk, void *context)
 #endif
 	}
 	atomic_store_relaxed(&adapter->admin_pending, 0);
-	if ((adapter->feat_en & IXGBE_FEATURE_MSIX) != 0) {
-		/* Re-enable other interrupts */
-		IXGBE_WRITE_REG(hw, IXGBE_EIMS, IXGBE_EIMS_OTHER);
-	} else
-		ixgbe_enable_intr(adapter);
+	if ((req & IXGBE_REQUEST_TASK_NEED_ACKINTR) != 0) {
+		if ((adapter->feat_en & IXGBE_FEATURE_MSIX) != 0) {
+			/* Re-enable other interrupts */
+			IXGBE_WRITE_REG(hw, IXGBE_EIMS, IXGBE_EIMS_OTHER);
+		} else
+			ixgbe_enable_intr(adapter);
+	}
 
 	IXGBE_CORE_UNLOCK(adapter);
 	IFNET_UNLOCK(ifp);
@@ -5210,6 +5213,8 @@ ixgbe_legacy_irq(void *arg)
 		reenable_intr = false;
 	}
 	if (task_requests != 0) {
+		/* Re-enabling other interrupts is done in the admin task */
+		task_requests |= IXGBE_REQUEST_TASK_NEED_ACKINTR;
 		atomic_or_32(&adapter->task_requests, task_requests);
 		ixgbe_schedule_admin_tasklet(adapter);
 		reenable_intr = false;
