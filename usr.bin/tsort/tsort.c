@@ -1,4 +1,4 @@
-/*	$NetBSD: tsort.c,v 1.24 2020/08/12 23:23:04 christos Exp $	*/
+/*	$NetBSD: tsort.c,v 1.25 2020/08/17 16:26:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)tsort.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: tsort.c,v 1.24 2020/08/12 23:23:04 christos Exp $");
+__RCSID("$NetBSD: tsort.c,v 1.25 2020/08/17 16:26:03 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -56,7 +56,9 @@ __RCSID("$NetBSD: tsort.c,v 1.24 2020/08/12 23:23:04 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#if !HAVE_NBTOOL_CONFIG_H
 #include <util.h>
+#endif
 
 /*
  *  Topological sort.  Input is a list of pairs of strings separated by
