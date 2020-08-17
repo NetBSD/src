@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.157 2017/06/10 05:29:36 maya Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.157.10.1 2020/08/17 10:30:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.157 2017/06/10 05:29:36 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.157.10.1 2020/08/17 10:30:22 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -133,6 +133,7 @@ lfs_update(struct vnode *vp, const struct timespec *acc,
 	struct inode *ip;
 	struct lfs *fs = VFSTOULFS(vp->v_mount)->um_lfs;
 	int flags;
+	int error;
 
 	ASSERT_NO_SEGLOCK(fs);
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
@@ -175,7 +176,7 @@ lfs_update(struct vnode *vp, const struct timespec *acc,
 			      vp->v_iflag | vp->v_vflag | vp->v_uflag,
 			      ip->i_state));
 			if (fs->lfs_dirops == 0)
-				lfs_flush_fs(fs, SEGM_SYNC);
+				break;
 			else
 				mtsleep(&fs->lfs_writer, PRIBIO+1, "lfs_fsync",
 					0, &lfs_lock);
@@ -183,8 +184,18 @@ lfs_update(struct vnode *vp, const struct timespec *acc,
 			twice? */
 		}
 		--fs->lfs_diropwait;
+		fs->lfs_writer++;
+		if (vp->v_uflag & VU_DIROP) {
+			KASSERT(fs->lfs_dirops == 0);
+			lfs_flush_fs(fs, SEGM_SYNC);
+		}
 		mutex_exit(&lfs_lock);
-		return lfs_vflush(vp);
+		error = lfs_vflush(vp);
+		mutex_enter(&lfs_lock);
+		if (--fs->lfs_writer == 0)
+			cv_broadcast(&fs->lfs_diropscv);
+		mutex_exit(&lfs_lock);
+		return error;
 	}
 	return 0;
 }
