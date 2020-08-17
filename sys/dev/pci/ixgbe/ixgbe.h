@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.68 2020/08/17 07:26:55 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.69 2020/08/17 07:59:06 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -768,6 +768,7 @@ bool ixgbe_rxeof(struct ix_queue *);
 #define IXGBE_REQUEST_TASK_FDIR		0x08
 #define IXGBE_REQUEST_TASK_PHY		0x10
 #define IXGBE_REQUEST_TASK_LSC		0x20
+#define IXGBE_REQUEST_TASK_NEED_ACKINTR	0x80
 
 /* For NetBSD */
 const struct sysctlnode *ixgbe_sysctl_instance(struct adapter *);
