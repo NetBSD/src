@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.235 2020/08/13 08:42:18 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.236 2020/08/17 06:30:25 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -3522,6 +3522,13 @@ ixgbe_free_workqueue(struct adapter *adapter)
 		adapter->timer_wq = NULL;
 	}
 	if (adapter->recovery_mode_timer_wq != NULL) {
+		/*
+		 * ixgbe_ifstop() doesn't call the workqueue_wait() for
+		 * the recovery_mode_timer workqueue, so call it here.
+		 */
+		workqueue_wait(adapter->recovery_mode_timer_wq,
+		    &adapter->recovery_mode_timer_wc);
+		atomic_store_relaxed(&adapter->recovery_mode_timer_pending, 0);
 		workqueue_destroy(adapter->recovery_mode_timer_wq);
 		adapter->recovery_mode_timer_wq = NULL;
 	}
