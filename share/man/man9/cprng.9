@@ -1,4 +1,4 @@
-.\"	$NetBSD: cprng.9,v 1.11 2020/03/24 08:48:31 skrll Exp $
+.\"	$NetBSD: cprng.9,v 1.12 2020/08/17 00:49:53 riastradh Exp $
 .\"
 .\" Copyright (c) 2011-2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 24, 2020
+.Dd August 16, 2020
 .Dt CPRNG 9
 .Os
 .Sh NAME
@@ -116,14 +116,14 @@ functions.
 .Bl -tag -width abcd
 .It Fn cprng_strong_create "name" "ipl" "flags"
 Create an instance of the cprng_strong generator.
-This generator currently implements the NIST SP 800-90A CTR_DRBG with
-AES-128 as the block transform.
+This generator currently implements the NIST SP 800-90A Hash_DRBG with
+SHA-256 as the hash function.
 .Pp
 The
 .Fa name
 argument is used to
 .Dq personalize
-the CTR_DRBG according to the standard, so that its initial state will
+the Hash_DRBG according to the standard, so that its initial state will
 depend both on seed material from the entropy pool and also on the
 personalization string (name).
 .Pp
@@ -296,8 +296,8 @@ The
 .Nm cprng_strong
 functions are implemented in
 .Pa sys/kern/subr_cprng.c ,
-and use the NIST SP 800-90A CTR_DRBG implementation in
-.Pa sys/crypto/nist_ctr_drbg .
+and use the NIST SP 800-90A Hash_DRBG implementation in
+.Pa sys/crypto/nist_hash_drbg .
 The
 .Nm cprng_fast
 functions are implemented in
