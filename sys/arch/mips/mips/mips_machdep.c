@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.298 2020/07/31 08:06:33 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.299 2020/08/17 03:22:13 mrg Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.298 2020/07/31 08:06:33 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.299 2020/08/17 03:22:13 mrg Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -1820,9 +1820,7 @@ u_int32_t dumpmag = 0x8fca0101;	/* magic number */
 int	dumpsize = 0;		/* pages */
 long	dumplo = 0;		/* blocks */
 
-#if 0
 struct pcb dumppcb;
-#endif
 
 /*
  * cpu_dumpsize: calculate size of machine-dependent kernel core dump headers.
@@ -1968,10 +1966,8 @@ dumpsys(void)
 	int (*dump)(dev_t, daddr_t, void *, size_t);
 	int error;
 
-#if 0
 	/* Save registers. */
 	savectx(&dumppcb);
-#endif
 
 	if (dumpdev == NODEV)
 		return;
