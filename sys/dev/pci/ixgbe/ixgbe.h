@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.67 2020/06/25 07:53:01 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.68 2020/08/17 07:26:55 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -514,9 +514,6 @@ struct adapter {
 	u32			rx_mbuf_sz;
 
 	bool			schedule_wqs_ok;
-
-	/* Support for pluggable optics */
-	bool			sfp_probe;
 
 	/* Flow Director */
 	int			fdir_reinit;
