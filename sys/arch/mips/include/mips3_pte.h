@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_pte.h,v 1.30 2020/07/26 08:08:41 simonb Exp $	*/
+/*	$NetBSD: mips3_pte.h,v 1.31 2020/08/17 03:19:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -174,6 +174,7 @@ unsigned int 	pg_g:1,			/* HW: ignore asid bit */
 #define	MIPS3_PG_SIZE_64M	0x07ffe000
 #define	MIPS3_PG_SIZE_256M	0x1fffe000
 
+#ifdef _KERNEL
 #define	MIPS3_PG_SIZE_MASK_TO_SIZE(pg_mask)	\
     ((((pg_mask) | 0x00001fff) + 1) / 2)
 
@@ -182,6 +183,7 @@ unsigned int 	pg_g:1,			/* HW: ignore asid bit */
 
 CTASSERT(MIPS3_PG_SIZE_TO_MASK(4096) == MIPS3_PG_SIZE_4K);
 CTASSERT(MIPS3_PG_SIZE_TO_MASK(8192) == MIPS3_PG_SIZE_4K);
+#endif
 
 /* NEC Vr41xx uses different pagemask values. */
 #define	MIPS4100_PG_SIZE_1K	0x00000000

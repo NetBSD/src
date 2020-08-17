@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.32 2020/07/26 08:08:41 simonb Exp $ */
+/* $NetBSD: db_machdep.h,v 1.33 2020/08/17 03:19:35 mrg Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -34,7 +34,11 @@
 #ifndef	_MIPS_DB_MACHDEP_H_
 #define	_MIPS_DB_MACHDEP_H_
 
+#include <sys/types.h>
+#include <sys/stdbool.h>
+
 #include <uvm/uvm_param.h>		/* XXX  boolean_t */
+
 #include <mips/trap.h>			/* T_BREAK */
 #include <mips/reg.h>			/* register state */
 #include <mips/regnum.h>		/* symbolic register indices */
@@ -126,9 +130,11 @@ void db_resume_others(void);
 
 extern void (*cpu_reset_address)(void);
 
+#ifdef _KERNEL
 /*
  * We have machine-dependent commands.
  */
 #define	DB_MACHINE_COMMANDS
+#endif
 
 #endif	/* _MIPS_DB_MACHDEP_H_ */
