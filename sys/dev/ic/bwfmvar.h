@@ -1,4 +1,4 @@
-/* $NetBSD: bwfmvar.h,v 1.3.6.1 2020/02/25 18:40:43 martin Exp $ */
+/* $NetBSD: bwfmvar.h,v 1.3.6.2 2020/08/17 11:22:45 martin Exp $ */
 /* $OpenBSD: bwfmvar.h,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -17,7 +17,25 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/pcq.h>
+#ifndef        _DEV_IC_BWFMVAR_H
+#define        _DEV_IC_BWFMVAR_H
+
+#include <sys/types.h>
+
+#include <sys/cdefs.h>
+#include <sys/device_if.h>
+#include <sys/queue.h>
+#include <sys/workqueue.h>
+
+#include <net/if_ether.h>
+
+#include <net80211/ieee80211.h>
+#include <net80211/ieee80211_proto.h>
+#include <net80211/ieee80211_var.h>
+
+struct ieee80211_key;
+struct mbuf;
+struct pool_cache;
 
 /* Chipcommon Core Chip IDs */
 #define BRCM_CC_43143_CHIP_ID		43143
@@ -163,8 +181,7 @@ struct bwfm_softc {
 	int			 sc_tx_timer;
 
 	bool			 sc_if_attached;
-	struct bwfm_task	 sc_task[BWFM_TASK_COUNT];
-	pcq_t			*sc_freetask;
+	struct pool_cache	*sc_freetask;
 	struct workqueue	*sc_taskq;
 
 	int			(*sc_newstate)(struct ieee80211com *,
@@ -187,3 +204,5 @@ int bwfm_chip_sr_capable(struct bwfm_softc *);
 struct bwfm_core *bwfm_chip_get_core(struct bwfm_softc *, int);
 struct bwfm_core *bwfm_chip_get_pmu(struct bwfm_softc *);
 void bwfm_rx(struct bwfm_softc *, struct mbuf *m);
+
+#endif /* _DEV_IC_BWFMVAR_H */
