@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon1p_iobus.c,v 1.5 2020/06/23 05:18:02 simonb Exp $	*/
+/*	$NetBSD: octeon1p_iobus.c,v 1.6 2020/08/17 21:25:12 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon1p_iobus.c,v 1.5 2020/06/23 05:18:02 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon1p_iobus.c,v 1.6 2020/08/17 21:25:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,7 @@ static const struct iobus_unit iobus_units_octrnm[] = {
 
 static const struct iobus_dev iobus_dev_octrnm = {
 	.name = "octrnm",
+	.flags = IOBUS_DEV_FDT,
 	.nunits = RNM_NUNITS,
 	.units = iobus_units_octrnm
 };
