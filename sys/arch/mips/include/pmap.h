@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.73 2020/08/07 07:19:45 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.74 2020/08/17 03:19:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -175,6 +175,7 @@ struct tlbmask {
 #define	PMAP_SEGTABSIZE		(1 << (31 - SEGSHIFT))
 #endif
 
+#include <uvm/uvm_pmap.h>
 #include <uvm/pmap/vmpagemd.h>
 #include <uvm/pmap/pmap.h>
 #include <uvm/pmap/pmap_tlb.h>

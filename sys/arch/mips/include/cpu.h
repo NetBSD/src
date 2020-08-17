@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.130 2020/08/09 06:26:49 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.131 2020/08/17 03:19:35 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #error Use assym.h to get definitions from <mips/cpu.h>
 #endif
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_KMEMUSER)
 
 #if defined(_KERNEL_OPT)
 #include "opt_cputype.h"
@@ -57,6 +57,7 @@
 #include <sys/device_if.h>
 #include <sys/evcnt.h>
 #include <sys/kcpuset.h>
+#include <sys/intr.h>
 
 typedef struct cpu_watchpoint {
 	register_t	cw_addr;
@@ -158,6 +159,9 @@ struct cpu_info {
 #endif
 
 };
+#endif /* _KERNEL || _KMEMUSER */
+
+#ifdef _KERNEL
 
 #ifdef MULTIPROCESSOR
 #define	CPU_INFO_ITERATOR		int
