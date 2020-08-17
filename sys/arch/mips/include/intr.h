@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.11 2020/07/26 08:08:41 simonb Exp $ */
+/* $NetBSD: intr.h,v 1.12 2020/08/17 14:17:49 skrll Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -112,9 +112,11 @@ typedef struct {
 
 #ifdef _KERNEL
 
+#if 0
 #if defined(MULTIPROCESSOR) && defined(__HAVE_FAST_SOFTINTS)
 #define	__HAVE_PREEMPTION	1
 #define	SOFTINT_KPREEMPT	(SOFTINT_COUNT+0)
+#endif
 #endif
 
 #ifdef __INTR_PRIVATE
