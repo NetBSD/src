@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.57 2020/08/09 06:26:49 skrll Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.58 2020/08/17 15:22:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.57 2020/08/09 06:26:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.58 2020/08/17 15:22:51 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -852,8 +852,7 @@ cpu_debug_dump(void)
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
 	char running, hatched, paused, resumed, halted;
-
-	db_printf("CPU CPUID STATE CPUINFO            CPL INT MTX IPIS\n");
+	db_printf("CPU CPUID STATE CPUINFO            CPL INT MTX IPIS(A/R)\n");
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		hatched = (kcpuset_isset(cpus_hatched, cpu_index(ci)) ? 'H' : '-');
 		running = (kcpuset_isset(cpus_running, cpu_index(ci)) ? 'R' : '-');
