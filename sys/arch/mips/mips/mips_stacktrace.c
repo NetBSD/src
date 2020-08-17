@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_stacktrace.c,v 1.2 2020/08/17 03:19:35 mrg Exp $	*/
+/*	$NetBSD: mips_stacktrace.c,v 1.3 2020/08/17 04:15:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_stacktrace.c,v 1.2 2020/08/17 03:19:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_stacktrace.c,v 1.3 2020/08/17 04:15:34 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -55,11 +55,16 @@ __KERNEL_RCSID(0, "$NetBSD: mips_stacktrace.c,v 1.2 2020/08/17 03:19:35 mrg Exp 
 #include <mips/mips_opcode.h>
 #include <mips/stacktrace.h>
 
+#if defined(_KMEMUSER) && !defined(DDB)
+#define DDB 1
+#endif
+
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #endif
 #include <ddb/db_user.h>
+#include <ddb/db_access.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -196,7 +201,7 @@ kdbpeek(vaddr_t addr, unsigned *valp)
 		printf("kdbpeek: NULL\n");
 		return false;
 	} else {
-		*valp = *(unsigned *)addr;
+		db_read_bytes((db_addr_t)addr, sizeof(unsigned), (char *)valp);
 		return true;
 	}
 }
@@ -204,7 +209,7 @@ kdbpeek(vaddr_t addr, unsigned *valp)
 static mips_reg_t
 kdbrpeek(vaddr_t addr, size_t n)
 {
-	mips_reg_t rc;
+	mips_reg_t rc = 0;
 
 	if (addr & (n - 1)) {
 		printf("kdbrpeek: unaligned address %#"PRIxVADDR"\n", addr);
@@ -212,15 +217,15 @@ kdbrpeek(vaddr_t addr, size_t n)
 		/* We might have been called from DDB, so do not go there. */
 		stacktrace();
 #endif
-		rc = -1 ;
+		rc = -1;
 	} else if (addr == 0) {
 		printf("kdbrpeek: NULL\n");
 		rc = 0xdeadfeed;
 	} else {
 		if (sizeof(mips_reg_t) == 8 && n == 8)
-			rc = *(int64_t *)addr;
+			db_read_bytes((db_addr_t)addr, sizeof(int64_t), (char *)&rc);
 		else
-			rc = *(int32_t *)addr;
+			db_read_bytes((db_addr_t)addr, sizeof(int32_t), (char *)&rc);
 	}
 	return rc;
 }
