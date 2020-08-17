@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2020/08/16 15:52:14 martin Exp $
+#	$NetBSD: Makefile,v 1.5 2020/08/17 16:26:02 riastradh Exp $
 
 .include <bsd.own.mk>
 
@@ -19,7 +19,7 @@ SRCS.t_aes+=	aes_ct_dec.c
 SRCS.t_aes+=	aes_ct_enc.c
 SRCS.t_aes+=	aes_selftest.c
 
-.if !empty(MACHINE_ARCH:Mearmv7hf*) || !empty(MACHINE_ARCH:Maarch64*)
+.if !empty(MACHINE_ARCH:Mearmv7*) || !empty(MACHINE_ARCH:Maarch64*)
 
 .PATH:	${NETBSDSRCDIR}/sys/crypto/aes/arch/arm
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/crypto/aes/arch/arm
@@ -32,8 +32,14 @@ SRCS.t_aes+=	aes_armv8_64.S
 SRCS.t_aes+=	aes_neon.c
 SRCS.t_aes+=	aes_neon_impl.c
 SRCS.t_aes+=	aes_neon_subr.c
-.if !empty(MACHINE_ARCH:Mearmv7hf*)
+.if !empty(MACHINE_ARCH:Mearmv7*)
 SRCS.t_aes+=	aes_neon_32.S
+.endif
+
+.if !empty(MACHINE_ARCH:Mearmv7*) && empty(MACHINE_ARCH:Mearmv7hf*)
+COPTS.aes_neon.c+=	-mfloat-abi=softfp -mfpu=neon
+COPTS.aes_neon_subr.c+=	-mfloat-abi=softfp -mfpu=neon
+AOPTS.aes_neon_32.S+=	-D__SOFTFP__
 .endif
 
 .endif				# earmv7/aarch64
