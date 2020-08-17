@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 2020/06/23 05:19:12 simonb Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.9 2020/08/17 06:23:01 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2020/06/23 05:19:12 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9 2020/08/17 06:23:01 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,12 +95,24 @@ findroot(void)
 		return;
 
 	if (rootspec && *rootspec) {
+		/* if we get passed root=octethN, convert to cnmacN */
+		if (strncmp(rootspec, "octeth", 6) == 0) {
+			/* allow for up to 100 interfaces */
+			static char buf[sizeof("cnmacXX")];
+			const char *cp = &rootspec[strlen("octeth")];
+
+			KASSERT(strlen(cp) < sizeof("XX"));
+			snprintf(buf, sizeof(buf), "cnmac%s", cp);
+			rootspec = buf;
+		}
+
 		/* XXX hard coded "cnmac" for network boot */
 		if (strncmp(rootspec, "cnmac", 5) == 0) {
 			rootfstype = "nfs";
 			netboot = 1;
 			return;
 		}
+
 		/*
 		 * XXX
 		 * Assume that if the root spec is not a cnmac, it'll
