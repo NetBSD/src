@@ -1,4 +1,4 @@
-/* $NetBSD: mtx-1.c,v 1.8 2015/06/09 22:49:55 matt Exp $ */
+/* $NetBSD: mtx-1.c,v 1.9 2020/08/17 07:50:41 simonb Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtx-1.c,v 1.8 2015/06/09 22:49:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtx-1.c,v 1.9 2020/08/17 07:50:41 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -71,6 +71,9 @@ static struct alchemy_board mtx1_info = {
 	mtx1_reboot,
 	NULL,	/* poweroff */
 };
+
+/* The MTX-1 kernels only support little endian */
+CTASSERT(_BYTE_ORDER == _LITTLE_ENDIAN);
 
 const struct alchemy_board *
 board_info(void)

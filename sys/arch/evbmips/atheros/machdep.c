@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.32 2020/07/22 01:24:39 msaitoh Exp $ */
+/* $NetBSD: machdep.c,v 1.33 2020/08/17 07:50:42 simonb Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.32 2020/07/22 01:24:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33 2020/08/17 07:50:42 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -153,6 +153,9 @@ int mem_cluster_cnt;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 
 void	mach_init(void); /* XXX */
+
+/* Currently the Atheros kernels only support big endian boards */
+CTASSERT(_BYTE_ORDER == _BIG_ENDIAN);
 
 static void
 cal_timer(void)
