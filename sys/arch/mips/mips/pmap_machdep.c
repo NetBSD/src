@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.28 2020/07/30 07:31:30 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.29 2020/08/18 11:21:25 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.28 2020/07/30 07:31:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.29 2020/08/18 11:21:25 simonb Exp $");
 
 /*
  *	Manages physical address maps.
@@ -704,10 +704,10 @@ struct vm_page *
 pmap_md_alloc_poolpage(int flags)
 {
 	/*
-	 * The VM_FREELIST used for pool pages is only set on 32bit kernels.
-	 * This is to must make sure that we only allocate pages that
-	 * can be mapped via KSEG0.  On 64bit kernels, all memory can be
-	 * mapped via XKPHYS so just use the default freelist.
+	 * The VM_FREELIST used for pool pages is only set on 32bit
+	 * kernels.  This is to make sure that we only allocate pages
+	 * that can be mapped via KSEG0.  On 64bit kernels, all memory
+	 * can be mapped via XKPHYS so just use the default freelist.
 	 */
 	if (mips_poolpage_vmfreelist != VM_FREELIST_DEFAULT)
 		return uvm_pagealloc_strat(NULL, 0, NULL, flags,
