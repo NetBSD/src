@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.73 2020/05/16 18:31:50 christos Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.74 2020/08/18 09:44:07 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.73 2020/05/16 18:31:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.74 2020/08/18 09:44:07 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1493,13 +1493,29 @@ union_readdir(void *v)
 		int a_ncookies;
 	} */ *ap = v;
 	struct union_node *un = VTOUNION(ap->a_vp);
-	struct vnode *uvp = un->un_uppervp;
+	struct vnode *vp;
+	int dolock, error;
 
-	if (uvp == NULLVP)
-		return (0);
+	if (un->un_hooknode) {
+		KASSERT(un->un_uppervp == NULLVP);
+		KASSERT(un->un_lowervp != NULLVP);
+		vp = un->un_lowervp;
+		dolock = 1;
+	} else {
+		vp = un->un_uppervp;
+		dolock = 0;
+	}
+	if (vp == NULLVP)
+		return 0;
 
-	ap->a_vp = uvp;
-	return (VCALL(uvp, VOFFSET(vop_readdir), ap));
+	if (dolock)
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	ap->a_vp = vp;
+	error = VCALL(vp, VOFFSET(vop_readdir), ap);
+	if (dolock)
+		VOP_UNLOCK(vp);
+
+	return error;
 }
 
 int
