@@ -1,4 +1,4 @@
-/*	$NetBSD: mdconfig.c,v 1.6 2018/01/23 21:06:25 sevan Exp $	*/
+/*	$NetBSD: mdconfig.c,v 1.7 2020/08/18 19:26:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdconfig.c,v 1.6 2018/01/23 21:06:25 sevan Exp $");
+__RCSID("$NetBSD: mdconfig.c,v 1.7 2020/08/18 19:26:29 christos Exp $");
 #endif
 
 /*
@@ -37,58 +37,62 @@ __RCSID("$NetBSD: mdconfig.c,v 1.6 2018/01/23 21:06:25 sevan Exp $");
  * (But this design allows any filesystem format!)
  */
 
-#include <sys/types.h>
+#include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/param.h>
+#include <sys/types.h>
 
 #include <dev/md.h>
 
+#include <assert.h>
+#include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <util.h>
 
 int
 main(int argc, char *argv[])
 {
 	struct md_conf md;
-	size_t nblks;
+	char fname[MAXPATHLEN];
+	int64_t num;
+	size_t blks, bytes;
 	int fd;
 
-	if (argc <= 2) {
-		fprintf(stderr, "usage: mdconfig <device> <%d-byte-blocks>\n",
-				DEV_BSIZE);
-		exit(1);
+	setprogname(argv[0]);
+
+	if (argc != 3) {
+		(void)fprintf(stderr, "Usage: %s <device> <%d-byte-blocks>\n",
+		    getprogname(), DEV_BSIZE);
+		return EXIT_FAILURE;
 	}
 
-	nblks = (size_t)strtoul(argv[2], NULL, 0);
-	if (nblks == 0) {
-		fprintf(stderr, "invalid number of blocks\n");
-		exit(1);
-	}
-	md.md_size = nblks << DEV_BSHIFT;
+	if (dehumanize_number(argv[2], &num) == -1)
+		goto bad_num;
 
-	fd = open(argv[1], O_RDWR, 0);
-	if (fd < 0) {
-		perror(argv[1]);
-		exit(1);
+	blks = (size_t)num;
+	bytes = blks << DEV_BSHIFT;
+	if (num <= 0 || bytes >> DEV_BSHIFT != blks) {
+bad_num:	err(EXIT_FAILURE, "blocks: `%s'", argv[2]);
 	}
+	md.md_size = bytes;
 
-	md.md_addr = mmap(NULL, md.md_size,
-				PROT_READ | PROT_WRITE,
-				MAP_ANON | MAP_PRIVATE,
-				-1, 0);
-	if (md.md_addr == MAP_FAILED) {
-		perror("mmap");
-		exit(1);
-	}
+	fd = opendisk(argv[1], O_RDWR, fname, sizeof(fname), 0);
+	if (fd == -1)
+		err(EXIT_FAILURE, "Can't open `%s'", argv[1]);
+
+	md.md_addr = mmap(NULL, md.md_size, PROT_READ | PROT_WRITE,
+	    MAP_ANON | MAP_PRIVATE, -1, 0);
+	if (md.md_addr == MAP_FAILED)
+		err(EXIT_FAILURE, "mmap");
 
 	/* Become server! */
 	md.md_type = MD_UMEM_SERVER;
-	if (ioctl(fd, MD_SETCONF, &md)) {
-		perror("ioctl");
-		exit(1);
-	}
+	if (ioctl(fd, MD_SETCONF, &md) == -1)
+		err(EXIT_FAILURE, "ioctl");
 
-	exit(0);
+	return EXIT_SUCCESS;
 }
