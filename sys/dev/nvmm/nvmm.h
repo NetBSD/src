@@ -1,7 +1,7 @@
-/*	$NetBSD: nvmm.h,v 1.10.4.1 2019/11/10 12:58:30 martin Exp $	*/
+/*	$NetBSD: nvmm.h,v 1.10.4.2 2020/08/18 09:29:52 martin Exp $	*/
 
 /*
- * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -44,7 +44,7 @@ typedef uint64_t	gvaddr_t;
 typedef uint32_t	nvmm_machid_t;
 typedef uint32_t	nvmm_cpuid_t;
 
-#ifdef __x86_64__
+#if defined(__x86_64__)
 #include <dev/nvmm/x86/nvmm_x86.h>
 #endif
 
@@ -95,5 +95,10 @@ struct nvmm_comm_page {
 
 #define NVMM_COMM_CPUID(off)		\
 	((off >> 12) & 0xFF)
+
+#ifdef _KERNEL
+/* At most one page, for the NVMM_COMM_* macros. */
+CTASSERT(sizeof(struct nvmm_comm_page) <= PAGE_SIZE);
+#endif
 
 #endif

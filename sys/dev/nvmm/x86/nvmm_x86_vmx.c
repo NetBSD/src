@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.36.2.9 2020/08/05 15:18:24 martin Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.36.2.10 2020/08/18 09:29:52 martin Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.36.2.9 2020/08/05 15:18:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.36.2.10 2020/08/18 09:29:52 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,11 +211,16 @@ vmx_vmclear(paddr_t *pa)
 #define MSR_IA32_VMX_CR4_FIXED1			0x0489
 
 #define MSR_IA32_VMX_EPT_VPID_CAP	0x048C
+#define		IA32_VMX_EPT_VPID_XO			__BIT(0)
 #define		IA32_VMX_EPT_VPID_WALKLENGTH_4		__BIT(6)
 #define		IA32_VMX_EPT_VPID_UC			__BIT(8)
 #define		IA32_VMX_EPT_VPID_WB			__BIT(14)
+#define		IA32_VMX_EPT_VPID_2MB			__BIT(16)
+#define		IA32_VMX_EPT_VPID_1GB			__BIT(17)
 #define		IA32_VMX_EPT_VPID_INVEPT		__BIT(20)
 #define		IA32_VMX_EPT_VPID_FLAGS_AD		__BIT(21)
+#define		IA32_VMX_EPT_VPID_ADVANCED_VMEXIT_INFO	__BIT(22)
+#define		IA32_VMX_EPT_VPID_SHSTK			__BIT(23)
 #define		IA32_VMX_EPT_VPID_INVEPT_CONTEXT	__BIT(25)
 #define		IA32_VMX_EPT_VPID_INVEPT_ALL		__BIT(26)
 #define		IA32_VMX_EPT_VPID_INVVPID		__BIT(32)
@@ -269,6 +274,7 @@ vmx_vmclear(paddr_t *pa)
 #define			EPTP_TYPE_WB		6
 #define		EPTP_WALKLEN			__BITS(5,3)
 #define		EPTP_FLAGS_AD			__BIT(6)
+#define		EPTP_SSS			__BIT(7)
 #define		EPTP_PHYSADDR			__BITS(63,12)
 #define VMCS_EOI_EXIT0				0x0000201C
 #define VMCS_EOI_EXIT1				0x0000201E
@@ -282,6 +288,7 @@ vmx_vmclear(paddr_t *pa)
 #define VMCS_ENCLS_EXIT_BITMAP			0x0000202E
 #define VMCS_SUBPAGE_PERM_TABLE_PTR		0x00002030
 #define VMCS_TSC_MULTIPLIER			0x00002032
+#define VMCS_ENCLV_EXIT_BITMAP			0x00002036
 /* 64-bit read-only fields */
 #define VMCS_GUEST_PHYSICAL_ADDRESS		0x00002400
 /* 64-bit guest-state fields */
@@ -295,10 +302,13 @@ vmx_vmclear(paddr_t *pa)
 #define VMCS_GUEST_PDPTE2			0x0000280E
 #define VMCS_GUEST_PDPTE3			0x00002810
 #define VMCS_GUEST_BNDCFGS			0x00002812
+#define VMCS_GUEST_RTIT_CTL			0x00002814
+#define VMCS_GUEST_PKRS				0x00002818
 /* 64-bit host-state fields */
 #define VMCS_HOST_IA32_PAT			0x00002C00
 #define VMCS_HOST_IA32_EFER			0x00002C02
 #define VMCS_HOST_IA32_PERF_GLOBAL_CTRL		0x00002C04
+#define VMCS_HOST_IA32_PKRS			0x00002C06
 /* 32-bit control fields */
 #define VMCS_PINBASED_CTLS			0x00004000
 #define		PIN_CTLS_INT_EXITING		__BIT(0)
@@ -344,6 +354,9 @@ vmx_vmclear(paddr_t *pa)
 #define		EXIT_CTLS_SAVE_PREEMPT_TIMER	__BIT(22)
 #define		EXIT_CTLS_CLEAR_BNDCFGS		__BIT(23)
 #define		EXIT_CTLS_CONCEAL_PT		__BIT(24)
+#define		EXIT_CTLS_CLEAR_RTIT_CTL	__BIT(25)
+#define		EXIT_CTLS_LOAD_CET		__BIT(28)
+#define		EXIT_CTLS_LOAD_PKRS		__BIT(29)
 #define VMCS_EXIT_MSR_STORE_COUNT		0x0000400E
 #define VMCS_EXIT_MSR_LOAD_COUNT		0x00004010
 #define VMCS_ENTRY_CTLS				0x00004012
@@ -356,6 +369,9 @@ vmx_vmclear(paddr_t *pa)
 #define		ENTRY_CTLS_LOAD_EFER		__BIT(15)
 #define		ENTRY_CTLS_LOAD_BNDCFGS		__BIT(16)
 #define		ENTRY_CTLS_CONCEAL_PT		__BIT(17)
+#define		ENTRY_CTLS_LOAD_RTIT_CTL	__BIT(18)
+#define		ENTRY_CTLS_LOAD_CET		__BIT(20)
+#define		ENTRY_CTLS_LOAD_PKRS		__BIT(22)
 #define VMCS_ENTRY_MSR_LOAD_COUNT		0x00004014
 #define VMCS_ENTRY_INTR_INFO			0x00004016
 #define		INTR_INFO_VECTOR		__BITS(7,0)
@@ -396,7 +412,9 @@ vmx_vmclear(paddr_t *pa)
 #define		PROC_CTLS2_XSAVES_ENABLE	__BIT(20)
 #define		PROC_CTLS2_MODE_BASED_EXEC_EPT	__BIT(22)
 #define		PROC_CTLS2_SUBPAGE_PERMISSIONS	__BIT(23)
+#define		PROC_CTLS2_PT_USES_GPA		__BIT(24)
 #define		PROC_CTLS2_USE_TSC_SCALING	__BIT(25)
+#define		PROC_CTLS2_WAIT_PAUSE_ENABLE	__BIT(26)
 #define		PROC_CTLS2_ENCLV_EXITING	__BIT(28)
 #define VMCS_PLE_GAP				0x00004020
 #define VMCS_PLE_WINDOW				0x00004022
@@ -477,6 +495,9 @@ vmx_vmclear(paddr_t *pa)
 #define VMCS_GUEST_PENDING_DBG_EXCEPTIONS	0x00006822
 #define VMCS_GUEST_IA32_SYSENTER_ESP		0x00006824
 #define VMCS_GUEST_IA32_SYSENTER_EIP		0x00006826
+#define VMCS_GUEST_IA32_S_CET			0x00006828
+#define VMCS_GUEST_SSP				0x0000682A
+#define VMCS_GUEST_IA32_INTR_SSP_TABLE		0x0000682C
 /* Natural-Width host-state fields */
 #define VMCS_HOST_CR0				0x00006C00
 #define VMCS_HOST_CR3				0x00006C02
@@ -490,6 +511,9 @@ vmx_vmclear(paddr_t *pa)
 #define VMCS_HOST_IA32_SYSENTER_EIP		0x00006C12
 #define VMCS_HOST_RSP				0x00006C14
 #define VMCS_HOST_RIP				0x00006C16
+#define VMCS_HOST_IA32_S_CET			0x00006C18
+#define VMCS_HOST_SSP				0x00006C1A
+#define VMCS_HOST_IA32_INTR_SSP_TABLE		0x00006C1C
 
 /* VMX basic exit reasons. */
 #define VMCS_EXITCODE_EXC_NMI			0
@@ -554,6 +578,9 @@ vmx_vmclear(paddr_t *pa)
 #define VMCS_EXITCODE_PAGE_LOG_FULL		62
 #define VMCS_EXITCODE_XSAVES			63
 #define VMCS_EXITCODE_XRSTORS			64
+#define VMCS_EXITCODE_SPP			66
+#define VMCS_EXITCODE_UMWAIT			67
+#define VMCS_EXITCODE_TPAUSE			68
 
 /* -------------------------------------------------------------------------- */
 
