@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_internal.h,v 1.12.2.4 2020/08/02 11:19:09 martin Exp $	*/
+/*	$NetBSD: nvmm_internal.h,v 1.12.2.5 2020/08/18 09:29:52 martin Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -119,8 +119,10 @@ struct nvmm_impl {
 	    struct nvmm_vcpu_exit *);
 };
 
+#if defined(__x86_64__)
 extern const struct nvmm_impl nvmm_x86_svm;
 extern const struct nvmm_impl nvmm_x86_vmx;
+#endif
 
 static inline bool
 nvmm_return_needed(void)

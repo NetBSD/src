@@ -1,7 +1,7 @@
-/*	$NetBSD: nvmm_x86.c,v 1.7.4.2 2020/05/21 10:52:58 martin Exp $	*/
+/*	$NetBSD: nvmm_x86.c,v 1.7.4.3 2020/08/18 09:29:52 martin Exp $	*/
 
 /*
- * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86.c,v 1.7.4.2 2020/05/21 10:52:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86.c,v 1.7.4.3 2020/08/18 09:29:52 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,85 +233,191 @@ const struct nvmm_x86_cpuid_mask nvmm_cpuid_00000001 = {
 	.eax = ~0,
 	.ebx = ~0,
 	.ecx =
-	    /* Excluded: MONITOR, VMX, SMX, EST, TM2, PDCM, PCID, DCA, X2APIC,
-	     * DEADLINE, RAZ. */
-	    CPUID2_SSE3 | CPUID2_PCLMUL |
-	    CPUID2_DTES64 | CPUID2_DS_CPL |
-	    CPUID2_SSSE3 | CPUID2_CID |
-	    CPUID2_SDBG | CPUID2_FMA |
-	    CPUID2_CX16 | CPUID2_xTPR |
-	    CPUID2_SSE41 | CPUID2_SSE42 |
-	    CPUID2_MOVBE | CPUID2_POPCNT |
-	    CPUID2_AES | CPUID2_XSAVE |
-	    CPUID2_OSXSAVE | CPUID2_F16C |
+	    CPUID2_SSE3 |
+	    CPUID2_PCLMUL |
+	    CPUID2_DTES64 |
+	    /* CPUID2_MONITOR excluded */
+	    CPUID2_DS_CPL |
+	    /* CPUID2_VMX excluded */
+	    /* CPUID2_SMX excluded */
+	    /* CPUID2_EST excluded */
+	    /* CPUID2_TM2 excluded */
+	    CPUID2_SSSE3 |
+	    CPUID2_CID |
+	    CPUID2_SDBG |
+	    CPUID2_FMA |
+	    CPUID2_CX16 |
+	    CPUID2_xTPR |
+	    /* CPUID2_PDCM excluded */
+	    /* CPUID2_PCID excluded, but re-included in VMX */
+	    /* CPUID2_DCA excluded */
+	    CPUID2_SSE41 |
+	    CPUID2_SSE42 |
+	    /* CPUID2_X2APIC excluded */
+	    CPUID2_MOVBE |
+	    CPUID2_POPCNT |
+	    /* CPUID2_DEADLINE excluded */
+	    CPUID2_AES |
+	    CPUID2_XSAVE |
+	    CPUID2_OSXSAVE |
+	    /* CPUID2_AVX excluded */
+	    CPUID2_F16C |
 	    CPUID2_RDRAND,
+	    /* CPUID2_RAZ excluded */
 	.edx =
-	    /* Excluded: MCE, MTRR, MCA, DS, ACPI, TM. */
-	    CPUID_FPU | CPUID_VME |
-	    CPUID_DE | CPUID_PSE |
-	    CPUID_TSC | CPUID_MSR |
-	    CPUID_PAE | CPUID_CX8 |
-	    CPUID_APIC | CPUID_B10 |	
-	    CPUID_SEP | CPUID_PGE |
-	    CPUID_CMOV | CPUID_PAT |
-	    CPUID_PSE36 | CPUID_PN |
-	    CPUID_CFLUSH | CPUID_B20 |
-	    CPUID_MMX | CPUID_FXSR |
-	    CPUID_SSE | CPUID_SSE2 |
-	    CPUID_SS | CPUID_HTT |
-	    CPUID_IA64 | CPUID_SBF
+	    CPUID_FPU |
+	    CPUID_VME |
+	    CPUID_DE |
+	    CPUID_PSE |
+	    CPUID_TSC |
+	    CPUID_MSR |
+	    CPUID_PAE |
+	    /* CPUID_MCE excluded */
+	    CPUID_CX8 |
+	    CPUID_APIC |
+	    CPUID_B10 |	
+	    CPUID_SEP |
+	    /* CPUID_MTRR excluded */
+	    CPUID_PGE |
+	    /* CPUID_MCA excluded */
+	    CPUID_CMOV |
+	    CPUID_PAT |
+	    CPUID_PSE36 |
+	    CPUID_PN |
+	    CPUID_CFLUSH |
+	    CPUID_B20 |
+	    /* CPUID_DS excluded */
+	    /* CPUID_ACPI excluded */
+	    CPUID_MMX |
+	    CPUID_FXSR |
+	    CPUID_SSE |
+	    CPUID_SSE2 |
+	    CPUID_SS |
+	    CPUID_HTT |
+	    /* CPUID_TM excluded */
+	    CPUID_IA64 |
+	    CPUID_SBF
 };
 
 const struct nvmm_x86_cpuid_mask nvmm_cpuid_00000007 = {
 	.eax = ~0,
 	.ebx =
-	    /* Excluded: TSC_ADJUST, AVX2, INVPCID, QM, AVX512*, PT, SHA. */
 	    CPUID_SEF_FSGSBASE |
-	    CPUID_SEF_SGX | CPUID_SEF_BMI1 |
-	    CPUID_SEF_HLE | CPUID_SEF_FDPEXONLY |
-	    CPUID_SEF_SMEP | CPUID_SEF_BMI2 |
-	    CPUID_SEF_ERMS | CPUID_SEF_RTM |
-	    CPUID_SEF_FPUCSDS | CPUID_SEF_PQE |
-	    CPUID_SEF_RDSEED | CPUID_SEF_ADX |
-	    CPUID_SEF_SMAP | CPUID_SEF_CLFLUSHOPT |
+	    /* CPUID_SEF_TSC_ADJUST excluded */
+	    CPUID_SEF_SGX |
+	    CPUID_SEF_BMI1 |
+	    CPUID_SEF_HLE |
+	    /* CPUID_SEF_AVX2 excluded */
+	    CPUID_SEF_FDPEXONLY |
+	    CPUID_SEF_SMEP |
+	    CPUID_SEF_BMI2 |
+	    CPUID_SEF_ERMS |
+	    /* CPUID_SEF_INVPCID excluded, but re-included in VMX */
+	    CPUID_SEF_RTM |
+	    /* CPUID_SEF_QM excluded */
+	    CPUID_SEF_FPUCSDS |
+	    /* CPUID_SEF_MPX excluded */
+	    CPUID_SEF_PQE |
+	    /* CPUID_SEF_AVX512F excluded */
+	    /* CPUID_SEF_AVX512DQ excluded */
+	    CPUID_SEF_RDSEED |
+	    CPUID_SEF_ADX |
+	    CPUID_SEF_SMAP |
+	    /* CPUID_SEF_AVX512_IFMA excluded */
+	    CPUID_SEF_CLFLUSHOPT |
 	    CPUID_SEF_CLWB,
+	    /* CPUID_SEF_PT excluded */
+	    /* CPUID_SEF_AVX512PF excluded */
+	    /* CPUID_SEF_AVX512ER excluded */
+	    /* CPUID_SEF_AVX512CD excluded */
+	    /* CPUID_SEF_SHA excluded */
+	    /* CPUID_SEF_AVX512BW excluded */
+	    /* CPUID_SEF_AVX512VL excluded */
 	.ecx =
-	    /* Excluded: AVX512*, MAWAU, RDPID. */
-	    CPUID_SEF_PREFETCHWT1 | CPUID_SEF_UMIP |
-	    CPUID_SEF_PKU | CPUID_SEF_OSPKE |
-	    CPUID_SEF_WAITPKG | CPUID_SEF_GFNI |
-	    CPUID_SEF_VAES | CPUID_SEF_VPCLMULQDQ |
-	    CPUID_SEF_CLDEMOTE | CPUID_SEF_MOVDIRI |
-	    CPUID_SEF_MOVDIR64B | CPUID_SEF_SGXLC,
+	    CPUID_SEF_PREFETCHWT1 |
+	    /* CPUID_SEF_AVX512_VBMI excluded */
+	    CPUID_SEF_UMIP |
+	    CPUID_SEF_PKU |
+	    CPUID_SEF_OSPKE |
+	    CPUID_SEF_WAITPKG |
+	    /* CPUID_SEF_AVX512_VBMI2 excluded */
+	    /* CPUID_SEF_CET_SS excluded */
+	    CPUID_SEF_GFNI |
+	    CPUID_SEF_VAES |
+	    CPUID_SEF_VPCLMULQDQ |
+	    /* CPUID_SEF_AVX512_VNNI excluded */
+	    /* CPUID_SEF_AVX512_BITALG excluded */
+	    /* CPUID_SEF_AVX512_VPOPCNTDQ excluded */
+	    /* CPUID_SEF_MAWAU excluded */
+	    /* CPUID_SEF_RDPID excluded */
+	    CPUID_SEF_CLDEMOTE |
+	    CPUID_SEF_MOVDIRI |
+	    CPUID_SEF_MOVDIR64B |
+	    CPUID_SEF_SGXLC,
+	    /* CPUID_SEF_PKS excluded */
 	.edx =
-	    /* Excluded: all except MD_CLEAR and ARCH_CAP. */
-	    CPUID_SEF_MD_CLEAR | CPUID_SEF_ARCH_CAP
+	    /* CPUID_SEF_AVX512_4VNNIW excluded */
+	    /* CPUID_SEF_AVX512_4FMAPS excluded */
+	    /* CPUID_SEF_FSREP_MOV excluded */
+	    /* CPUID_SEF_AVX512_VP2INTERSECT excluded */
+	    /* CPUID_SEF_SRBDS_CTRL excluded */
+	    CPUID_SEF_MD_CLEAR |
+	    /* CPUID_SEF_TSX_FORCE_ABORT excluded */
+	    /* CPUID_SEF_SERIALIZE excluded */
+	    /* CPUID_SEF_HYBRID excluded */
+	    /* CPUID_SEF_TSXLDTRK excluded */
+	    /* CPUID_SEF_CET_IBT excluded */
+	    /* CPUID_SEF_IBRS excluded */
+	    /* CPUID_SEF_STIBP excluded */
+	    /* CPUID_SEF_L1D_FLUSH excluded */
+	    CPUID_SEF_ARCH_CAP
+	    /* CPUID_SEF_CORE_CAP excluded */
+	    /* CPUID_SEF_SSBD excluded */
 };
 
 const struct nvmm_x86_cpuid_mask nvmm_cpuid_80000001 = {
 	.eax = ~0,
 	.ebx = ~0,
 	.ecx =
-	    /* Excluded: SVM, EAPIC, OSVW, MWAITX. */
-	    CPUID_LAHF | CPUID_CMPLEGACY |
-	    CPUID_ALTMOVCR0 | CPUID_LZCNT |
-	    CPUID_SSE4A | CPUID_MISALIGNSSE |
-	    CPUID_3DNOWPF | CPUID_IBS |
-	    CPUID_XOP | CPUID_SKINIT |
-	    CPUID_WDT | CPUID_LWP |
-	    CPUID_FMA4 | CPUID_TCE |
-	    CPUID_NODEID | CPUID_TBM |
-	    CPUID_TOPOEXT | CPUID_PCEC |
-	    CPUID_PCENB | CPUID_SPM |
-	    CPUID_DBE | CPUID_PTSC |
+	    CPUID_LAHF |
+	    CPUID_CMPLEGACY |
+	    /* CPUID_SVM excluded */
+	    /* CPUID_EAPIC excluded */
+	    CPUID_ALTMOVCR0 |
+	    CPUID_LZCNT |
+	    CPUID_SSE4A |
+	    CPUID_MISALIGNSSE |
+	    CPUID_3DNOWPF |
+	    /* CPUID_OSVW excluded */
+	    CPUID_IBS |
+	    CPUID_XOP |
+	    CPUID_SKINIT |
+	    CPUID_WDT |
+	    CPUID_LWP |
+	    CPUID_FMA4 |
+	    CPUID_TCE |
+	    CPUID_NODEID |
+	    CPUID_TBM |
+	    CPUID_TOPOEXT |
+	    CPUID_PCEC |
+	    CPUID_PCENB |
+	    CPUID_SPM |
+	    CPUID_DBE |
+	    CPUID_PTSC |
 	    CPUID_L2IPERFC,
+	    /* CPUID_MWAITX excluded */
 	.edx =
-	    /* Excluded: RDTSCP. */
-	    CPUID_SYSCALL | CPUID_MPC |
-	    CPUID_XD | CPUID_MMXX |
-	    CPUID_MMX | CPUID_FXSR |
-	    CPUID_FFXSR | CPUID_P1GB |
-	    CPUID_EM64T | CPUID_3DNOW2 |
+	    CPUID_SYSCALL |
+	    CPUID_MPC |
+	    CPUID_XD |
+	    CPUID_MMXX |
+	    CPUID_MMX | 
+	    CPUID_FXSR |
+	    CPUID_FFXSR |
+	    CPUID_P1GB |
+	    /* CPUID_RDTSCP excluded */
+	    CPUID_EM64T |
+	    CPUID_3DNOW2 |
 	    CPUID_3DNOW
 };
 
