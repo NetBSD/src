@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.1.1.7 2019/09/26 05:45:53 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.8 2020/08/18 23:31:49 mrg Exp $
 
 # build GCC's libgomp, so that -fopenmp works.
 
 # XXX
 NOLINT=	# defined
+
+UNSUPPORTED_COMPILER.clang=	# defined
 
 .include <bsd.own.mk>
 
@@ -28,8 +30,6 @@ CPPFLAGS+= \
 	-I${DIST}/include \
 	-I${ARCHDIR}
 CFLAGS+=-pthread
-
-CWARNFLAGS.clang+=	-Wno-conversion
 
 SHLIB_MAJOR=	2
 SHLIB_MINOR=	0

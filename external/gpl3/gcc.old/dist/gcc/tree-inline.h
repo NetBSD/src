@@ -1,5 +1,5 @@
 /* Tree inlining hooks and declarations.
-   Copyright (C) 2001-2017 Free Software Foundation, Inc.
+   Copyright (C) 2001-2018 Free Software Foundation, Inc.
    Contributed by Alexandre Oliva  <aoliva@redhat.com>
 
 This file is part of GCC.
@@ -119,6 +119,13 @@ struct copy_body_data
   /* > 0 if we are remapping a type currently.  */
   int remapping_type_depth;
 
+  /* Usually copy_decl callback always creates new decls, in that case
+     we want to remap all variably_modified_type_p types.  If this flag
+     is set, remap_type will do further checks to see if remap_decl
+     of any decls mentioned in the type will remap to anything but itself
+     and only in that case will actually remap the type.  */
+  bool dont_remap_vla_if_no_change;
+
   /* A function to be called when duplicating BLOCK nodes.  */
   void (*transform_lang_insert_block) (tree);
 
@@ -148,10 +155,6 @@ struct copy_body_data
   /* A list of addressable local variables remapped into the caller
      when inlining a call within an OpenMP SIMD-on-SIMT loop.  */
   vec<tree> *dst_simt_vars;
-
-  /* Cilk keywords currently need to replace some variables that
-     ordinary nested functions do not.  */
-  bool remap_var_for_cilk;
 
   /* Do not create new declarations when within type remapping.  */
   bool prevent_decl_creation_for_types;

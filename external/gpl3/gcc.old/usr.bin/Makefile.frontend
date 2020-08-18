@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.frontend,v 1.1.1.4 2019/09/26 05:45:54 mrg Exp $
+#	$NetBSD: Makefile.frontend,v 1.1.1.5 2020/08/18 23:31:50 mrg Exp $
 
 BINDIR=		/usr/bin
 
@@ -14,8 +14,8 @@ DPADD+=			${FRONTENDOBJ}/libfrontend.a
 LDADD+=			-L${FRONTENDOBJ} -lfrontend
 .endif
 
-.include "../Makefile.common"
 .include "../Makefile.common-target"
+.include "../Makefile.common"
 .include "../Makefile.libcpp"
 .include "../Makefile.backtrace"
 .include "../Makefile.libiberty"

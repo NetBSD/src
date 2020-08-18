@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.4 2017/07/23 01:05:10 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.5 2020/08/18 23:31:50 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -28,5 +28,7 @@ COPTS += -Wno-missing-prototypes
 CWARNFLAGS.clang+=	-Wno-unused-value
 
 .PATH: ${DIST}/libiberty
+
+COPTS.dyn-string.c+=	${GCC_NO_STRINGOP_TRUNCATION}
 
 .include <bsd.lib.mk>

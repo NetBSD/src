@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.3 2019/09/26 05:45:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.4 2020/08/18 23:31:50 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -21,6 +21,7 @@ CPPFLAGS+=	-I${GCCARCH} -I${BACKENDOBJ} -I. \
 COPTS.prefix.c+=	-Wno-stack-protector
 COPTS.opts-common.c+=	-Wno-stack-protector
 COPTS.rs6000-common.c+=	-Wno-stack-protector
+COPTS.arm-common.c+=	-Wno-stack-protector
 
 GENPROG_ERROR_DEPENDS=errors.lo
 

@@ -1,6 +1,6 @@
 /* Definitions of target machine for GNU compiler,
    for PowerPC NetBSD systems.
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2018 Free Software Foundation, Inc.
    Contributed by Wasabi Systems, Inc.
 
    This file is part of GCC.
@@ -137,10 +137,6 @@
 #undef TRAMPOLINE_SIZE
 #define TRAMPOLINE_SIZE 48
 #endif
-
-/* Override STACK_BOUNDARY to use Altivec compliant one.  */
-#undef STACK_BOUNDARY
-#define STACK_BOUNDARY	128
 
 /* Use standard DWARF numbering for DWARF debugging information.  */
 #define RS6000_USE_DWARF_NUMBERING

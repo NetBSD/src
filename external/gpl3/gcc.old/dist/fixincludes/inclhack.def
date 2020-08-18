@@ -195,6 +195,33 @@ fix = {
 };
 
 /*
+ *  SDKs for 10.13 and 10.14 omit the definitions for API_AVAILABLE where
+ *  __attribute__((availability)) is not supported.
+ */
+fix = {
+    hackname  = darwin_api_availability;
+    mach      = "*-*-darwin*";
+    files     = os/availability.h;
+    bypass    = "__IPHONE_OS_VERSION_MIN_REQUIRED";
+    select    =
+    " *#define __API_AVAILABLE.*\n"
+    " *#define __API_DEPRECATED.*\n"
+    " *#define __API_DEPRECATED_WITH_REPLACEMENT.*\n"
+    " *#define __API_UNAVAILABLE.*\n";
+    c_fix     = format;
+    c_fix_arg =
+    "    #define API_AVAILABLE(...)\n"
+    "    #define API_DEPRECATED(...)\n"
+    "    #define API_DEPRECATED_WITH_REPLACEMENT(...)\n"
+    "    #define API_UNAVAILABLE(...)\n";
+    test_text =
+    "#define __API_AVAILABLE(...)\n"
+    "#define __API_DEPRECATED(...)\n"
+    "#define __API_DEPRECATED_WITH_REPLACEMENT(...)\n"
+    "#define __API_UNAVAILABLE(...)\n";
+};
+
+/*
  *  This fixes __FD_ZERO bug for linux 2.x.y (x <= 2 && y <= some n)
  */
 fix = {
@@ -422,122 +449,6 @@ fix = {
 	#define _REGS_H
 	#include <types/vxTypesOld.h>
 	#include_next <arch/../regs.h>
-	#endif
-	_EndOfHeader_;
-};
-
-/*
- * Make VxWorks stdint.h a bit more compliant - add typedefs
- */
-fix = {
-    hackname    = AAB_vxworks_stdint;
-    files       = stdint.h;
-    mach        = "*-*-vxworks*";
-        
-    replace     = <<- _EndOfHeader_
-	#ifndef _STDINT_H
-	#define _STDINT_H
-	/* get int*_t, uint*_t */
-	#include <types/vxTypes.h>
-	
-	/* get legacy vxworks types for compatibility */
-	#include <types/vxTypesOld.h>
-	
-	typedef long intptr_t;
-	typedef unsigned long uintptr_t;
-	
-	typedef int64_t intmax_t;
-	typedef uint64_t uintmax_t;
-	
-	typedef int8_t int_least8_t;
-	typedef int16_t int_least16_t;
-	typedef int32_t int_least32_t;
-	typedef int64_t int_least64_t;
-	
-	typedef uint8_t uint_least8_t;
-	typedef uint16_t uint_least16_t;
-	typedef uint32_t uint_least32_t;
-	typedef uint64_t uint_least64_t;
-	
-	typedef int8_t int_fast8_t;
-	typedef int int_fast16_t;
-	typedef int32_t int_fast32_t;
-	typedef int64_t int_fast64_t;
-	
-	typedef uint8_t uint_fast8_t;
-	typedef unsigned int uint_fast16_t;
-	typedef uint32_t uint_fast32_t;
-	typedef uint64_t uint_fast64_t;
-	
-	/* Ranges */
-	#define UINT8_MAX (~(uint8_t)0)
-	#define UINT8_MIN 0
-	#define UINT16_MAX (~(uint16_t)0)
-	#define UINT16_MIN 0
-	#define UINT32_MAX (~(uint32_t)0)
-	#define UINT32_MIN 0
-	#define UINT64_MAX (~(uint64_t)0)
-	#define UINT64_MIN 0
-	
-	#define UINTPTR_MAX (~(uintptr_t)0)
-	#define UINTPTR_MIN 0
-	
-	/* Need to do int_fast16_t as well, as type
-	   size may be architecture dependent */
-	#define UINT_FAST16_MAX (~(uint_fast16_t)0)
-	#define UINT_FAST16_MAX 0
-	
-	#define INT8_MAX (UINT8_MAX>>1)
-	#define INT8_MIN (INT8_MAX+1)
-	#define INT16_MAX (UINT16_MAX>>1)
-	#define INT16_MIN (INT16_MAX+1)
-	#define INT32_MAX (UINT32_MAX>>1)
-	#define INT32_MIN (INT32_MAX+1)
-	#define INT64_MAX (UINT64_MAX>>1)
-	#define INT64_MIN (INT64_MAX+1)
-	
-	#define INTPTR_MAX (UINTPTR_MAX>>1)
-	#define INTPTR_MIN (INTPTR_MAX+1)	
-	
-	#define INT_FAST16_MAX (UINT_FAST16_MAX>>1)
-	#define INT_FAST16_MIN (INT_FAST16_MAX+1)
-	
-	/* now define equiv. constants */
-	#define UINT_FAST8_MAX UINT8_MAX
-	#define UINT_FAST8_MIN UINT_FAST8_MIN
-	#define INT_FAST8_MAX INT8_MAX
-	#define INT_FAST8_MIN INT8_MIN
-	#define UINT_FAST32_MAX UINT32_MAX
-	#define UINT_FAST32_MIN UINT32_MIN
-	#define INT_FAST32_MAX INT32_MAX
-	#define INT_FAST32_MIN INT32_MIN
-	#define UINT_FAST64_MAX UINT64_MAX
-	#define UINT_FAST64_MIN UINT64_MIN
-	#define INT_FAST64_MAX INT64_MAX
-	#define INT_FAST64_MIN INT64_MIN
-	
-	#define UINT_LEAST8_MAX UINT8_MAX
-	#define UINT_LEAST8_MIN UINT8_MIN
-	#define INT_LEAST8_MAX INT8_MAX
-	#define INT_LEAST8_MIN INT8_MIN
-	#define UINT_LEAST16_MAX UINT16_MAX
-	#define UINT_LEAST16_MIN UINT16_MIN
-	#define INT_LEAST16_MAX INT16_MAX
-	#define INT_LEAST16_MIN INT16_MIN
-	#define UINT_LEAST32_MAX UINT32_MAX
-	#define UINT_LEAST32_MIN UINT32_MIN
-	#define INT_LEAST32_MAX INT32_MAX
-	#define INT_LEAST32_MIN INT32_MIN
-	#define UINT_LEAST64_MAX UINT64_MAX
-	#define UINT_LEAST64_MIN UINT64_MIN
-	#define INT_LEAST64_MAX INT64_MAX
-	#define INT_LEAST64_MIN INT64_MIN
-	
-	#define UINTMAX_MAX UINT64_MAX
-	#define UINTMAX_MIN UINT64_MIN
-	#define INTMAX_MAX INT64_MAX
-	#define INTMAX_MIN INT64_MIN
-	
 	#endif
 	_EndOfHeader_;
 };
@@ -954,6 +865,26 @@ fix = {
     test_text = "#define valloc __linux_valloc";
 };
 
+fix = {
+    hackname  = aix_stdlib_vec_malloc;
+    mach      = "*-*-aix*";
+    files     = stdlib.h;
+    select    = "#define[ \t]+malloc[ \t]+vec_malloc";
+    c_fix     = format;
+    c_fix_arg = "extern void *malloc(size_t) __asm__(\"vec_malloc\");";
+    test_text = "#define malloc vec_malloc";
+};
+
+fix = {
+    hackname  = aix_stdlib_vec_calloc;
+    mach      = "*-*-aix*";
+    files     = stdlib.h;
+    select    = "#define[ \t]+calloc[ \t]+vec_calloc";
+    c_fix     = format;
+    c_fix_arg = "extern void *calloc(size_t, size_t) __asm__(\"vec_calloc\");";
+    test_text = "#define calloc vec_calloc";
+};
+
 /*
  * stdlib.h on AIX 4.3 declares strtof() with a non-const first argument.
  */
@@ -1364,12 +1295,12 @@ fix = {
 };
 
 /*
- *  For the AAB_darwin7_9_long_double_funcs fix to be useful,
- *  you have to not use "" includes.
+ *  For the AAB_darwin7_9_long_double_funcs fix (and later fixes for long long)
+ *  to be useful, the main math.h must use <> and not "" includes.
  */
 fix = {
     hackname  = darwin_9_long_double_funcs_2;
-    mach      = "*-*-darwin7.9*";
+    mach      = "*-*-darwin*";
     files     = math.h;
     select    = '#include[ \t]+\"';
     c_fix     = format;
@@ -1377,7 +1308,7 @@ fix = {
   
     c_fix_arg = '([ \t]*#[ \t]*include[ \t]+)"([a-z0-9/]+)\.h"';
   
-    test_text = '#include "architecture/ppc/math.h"';
+    test_text = '#include <architecture/ppc/math.h>';
 };
 
 /*
@@ -1418,6 +1349,22 @@ fix = {
   c_fix_arg = "((__GNUC__ >= 4) || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1))";
   test_text = "#if defined(__GNUC__) && (__GNUC__ >= 3) && "
   	      "(__GNUC_MINOR__ >= 1)\n";
+};
+
+/*
+ * math.h hides the long long functions that are available on the system for
+ * 10.5 and 10.6 SDKs, we expect to use them in G++ without specifying a value
+ * for __STDC_VERSION__, or switching __STRICT_ANSI__ off.
+ */
+fix = {
+  hackname  = darwin_ll_funcs_avail;
+  mach      = "*-*-darwin*";
+  files     = architecture/ppc/math.h, architecture/i386/math.h;
+  select    = "#if[^_]*__STDC_VERSION__[^_]*__STDC_VERSION__[^1]*199901L[^_]*"
+	      "__STRICT_ANSI__[^_]*__GNUC__[^\)]*";
+  sed       = "s/#if[^_]*__STDC_VERSION__[^_]*__STDC_VERSION__[^_]*199901L[^_]*"
+	      "__STRICT_ANSI__[^_]*__GNUC__[^\\)]*\)/#if\ !\(__DARWIN_NO_LONG_LONG\)/";
+  test_text = "#if\ !(__DARWIN_NO_LONG_LONG)";
 };
 
 /*
@@ -1489,6 +1436,49 @@ fix = {
 	void
 	_os_trace_internal(void *dso, uint8_t type, const char *format, const uint8_t *buf, size_t buf_size, os_trace_payload_t payload);
 	_EOText_;
+};
+
+/*
+ *  In macOS 10.10 <os/base.h>, doesn't have __has_extension guarded.
+ */
+fix = {
+  hackname  = darwin_os_base_1;
+  mach      = "*-*-darwin*";
+  files     = os/base.h;
+  select    = <<- OS_BASE_1_SEL
+#define __has_attribute.*
+#endif
+OS_BASE_1_SEL;
+  c_fix     = format;
+  c_fix_arg = <<- OS_BASE_1_FIX
+%0
+#ifndef __has_extension
+#define __has_extension(x) 0
+#endif
+OS_BASE_1_FIX;
+  test_text = <<- OS_BASE_1_TEST
+#define __has_attribute(x) 0
+#endif
+
+#if __GNUC__
+OS_BASE_1_TEST;
+};
+
+/*
+ *  In macOS 10.10 <dispatch/object.h>, has unguarded block syntax.
+ */
+fix = {
+  hackname  = darwin_dispatch_object_1;
+  mach      = "*-*-darwin*";
+  files     = dispatch/object.h;
+  select    = "typedef void.*\\^dispatch_block_t.*";
+  c_fix     = format;
+  c_fix_arg = "#if __BLOCKS__\n%0\n#endif";
+  test_text = <<- DISPATCH_OBJECT_1_TEST
+typedef void (^dispatch_block_t)(void);
+
+__BEGIN_DECLS
+DISPATCH_OBJECT_1_TEST;
 };
 
 /*
@@ -1686,6 +1676,25 @@ fix = {
 		"#define UINTMAX_C\\(v\\)[ \t]+\\(v ## ULL\\)";
     test_text = "#define INTMAX_C(v)  (v ## LL)\n"
 		"#define UINTMAX_C(v) (v ## ULL)";
+};
+
+/*  The SDK included with XCode 10.2 has the file <sys/ucred.h> that uses the
+    C11 _Atomic keyword (exposing it to C++ code).  The work-around here follows
+    the header in declaring the entity volatile when _Atomic is not available.
+*/
+fix = {
+    hackname  = darwin_ucred__Atomic;
+    mach      = "*-*-darwin*";
+    files     = sys/ucred.h;
+    select    = "_Atomic";
+    c_fix     = wrap;
+    c_fix_arg = "#if (__STDC_VERSION__ < 201112L) || defined(__cplusplus)\n"
+		"# define _Atomic volatile\n"
+		"#endif\n";
+    c_fix_arg = "#if (__STDC_VERSION__ < 201112L) || defined(__cplusplus)\n"
+		"# undef _Atomic\n"
+		"#endif\n";
+    test_text = ""; /* Don't provide this for wrap fixes.  */
 };
 
 /*
@@ -2546,6 +2555,32 @@ fix = {
                 "#  define      UINT8_C(__c)    ((unsigned char)(__c))\n"
 		"#  define      INT16_C(__c)    ((short)(__c))\n"
 		"#  define	UINT16_C(__c)	((unsigned short)(__c))\n";
+};
+
+/*
+ * Fix broken and missing defines in inttypes.h
+ */
+fix = {
+    hackname  = hpux_c99_inttypes3;
+    mach      = "hppa*-hp-hpux11*";
+    files     = inttypes.h;
+    select    = "#define[ \t]INTPTR_MAX[ \t]*\n"
+		"#define[ \t]UINTPTR_MAX[ \t]*\n";
+    c_fix     = format;
+    c_fix_arg = "#undef SIZE_MAX\n"
+		"#define SIZE_MAX __SIZE_MAX__\n"
+		"#ifdef __INTPTR_MAX__\n"
+		"# undef INTPTR_MAX\n"
+		"# define INTPTR_MAX __INTPTR_MAX__\n"
+		"# undef INTPTR_MIN\n"
+		"# define INTPTR_MIN (-INTPTR_MAX - 1)\n"
+		"#endif\n"
+		"#ifdef __UINTPTR_MAX__\n"
+		"# undef UINTPTR_MAX\n"
+		"# define UINTPTR_MAX __UINTPTR_MAX__\n"
+		"#endif\n";
+    test_text = "#define INTPTR_MAX\n"
+		"#define UINTPTR_MAX\n";
 };
 
 /*

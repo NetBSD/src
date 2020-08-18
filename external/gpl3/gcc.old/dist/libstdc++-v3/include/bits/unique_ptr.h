@@ -1,6 +1,6 @@
 // unique_ptr implementation -*- C++ -*-
 
-// Copyright (C) 2008-2017 Free Software Foundation, Inc.
+// Copyright (C) 2008-2018 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -48,7 +48,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
    */
 
 #if _GLIBCXX_USE_DEPRECATED
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
   template<typename> class auto_ptr;
+#pragma GCC diagnostic pop
 #endif
 
   /// Primary template of default_delete, used by unique_ptr
@@ -148,6 +151,14 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       _Dp&       _M_deleter() { return std::get<1>(_M_t); }
       const _Dp& _M_deleter() const { return std::get<1>(_M_t); }
 
+      void
+      swap(__uniq_ptr_impl& __rhs) noexcept
+      {
+	using std::swap;
+	swap(this->_M_ptr(), __rhs._M_ptr());
+	swap(this->_M_deleter(), __rhs._M_deleter());
+      }
+
     private:
       tuple<pointer, _Dp> _M_t;
     };
@@ -171,14 +182,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       // unique_ptr
       template<typename _Up, typename _Ep>
 	using __safe_conversion_up = __and_<
-	        is_convertible<typename unique_ptr<_Up, _Ep>::pointer, pointer>,
-                __not_<is_array<_Up>>,
-                __or_<__and_<is_reference<deleter_type>,
-                             is_same<deleter_type, _Ep>>,
-                      __and_<__not_<is_reference<deleter_type>>,
-                             is_convertible<_Ep, deleter_type>>
-                >
-              >;
+	  is_convertible<typename unique_ptr<_Up, _Ep>::pointer, pointer>,
+	  __not_<is_array<_Up>>
+        >;
 
       // Constructors.
 
@@ -254,10 +260,13 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	{ }
 
 #if _GLIBCXX_USE_DEPRECATED
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
       /// Converting constructor from @c auto_ptr
       template<typename _Up, typename = _Require<
 	       is_convertible<_Up*, _Tp*>, is_same<_Dp, default_delete<_Tp>>>>
 	unique_ptr(auto_ptr<_Up>&& __u) noexcept;
+#pragma GCC diagnostic pop
 #endif
 
       /// Destructor, invokes the deleter if the stored pointer is not null.
@@ -380,8 +389,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       void
       swap(unique_ptr& __u) noexcept
       {
-	using std::swap;
-	swap(_M_t, __u._M_t);
+	static_assert(__is_swappable<_Dp>::value, "deleter must be swappable");
+	_M_t.swap(__u._M_t);
       }
 
       // Disable copy from lvalue.
@@ -419,16 +428,14 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       // helper template for detecting a safe conversion from another
       // unique_ptr
       template<typename _Up, typename _Ep,
-               typename _Up_up = unique_ptr<_Up, _Ep>,
-	       typename _Up_element_type = typename _Up_up::element_type>
+               typename _UPtr = unique_ptr<_Up, _Ep>,
+	       typename _UP_pointer = typename _UPtr::pointer,
+	       typename _UP_element_type = typename _UPtr::element_type>
 	using __safe_conversion_up = __and_<
           is_array<_Up>,
           is_same<pointer, element_type*>,
-          is_same<typename _Up_up::pointer, _Up_element_type*>,
-          is_convertible<_Up_element_type(*)[], element_type(*)[]>,
-          __or_<__and_<is_reference<deleter_type>, is_same<deleter_type, _Ep>>,
-                __and_<__not_<is_reference<deleter_type>>,
-                       is_convertible<_Ep, deleter_type>>>
+          is_same<_UP_pointer, _UP_element_type*>,
+          is_convertible<_UP_element_type(*)[], element_type(*)[]>
         >;
 
       // helper template for detecting a safe conversion from a raw pointer
@@ -513,8 +520,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		typename = _DeleterConstraint<_Up>>
 	constexpr unique_ptr(nullptr_t) noexcept : _M_t() { }
 
-      template<typename _Up, typename _Ep,
-	       typename = _Require<__safe_conversion_up<_Up, _Ep>>>
+      template<typename _Up, typename _Ep, typename = _Require<
+	       __safe_conversion_up<_Up, _Ep>,
+	       typename conditional<is_reference<_Dp>::value,
+				    is_same<_Ep, _Dp>,
+				    is_convertible<_Ep, _Dp>>::type>>
 	unique_ptr(unique_ptr<_Up, _Ep>&& __u) noexcept
 	: _M_t(__u.release(), std::forward<_Ep>(__u.get_deleter()))
 	{ }
@@ -649,8 +659,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       void
       swap(unique_ptr& __u) noexcept
       {
-	using std::swap;
-	swap(_M_t, __u._M_t);
+	static_assert(__is_swappable<_Dp>::value, "deleter must be swappable");
+	_M_t.swap(__u._M_t);
       }
 
       // Disable copy from lvalue.

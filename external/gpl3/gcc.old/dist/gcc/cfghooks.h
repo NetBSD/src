@@ -1,5 +1,5 @@
 /* Hooks for cfg representation specific functions.
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2018 Free Software Foundation, Inc.
    Contributed by Sebastian Pop <s.pop@laposte.net>
 
 This file is part of GCC.
@@ -54,6 +54,19 @@ struct profile_record
   bool run;
 };
 
+typedef int_hash <unsigned short, 0> dependence_hash;
+
+/* Optional data for duplicate_block.   */
+
+struct copy_bb_data
+{
+  copy_bb_data() : dependence_map (NULL) {}
+  ~copy_bb_data () { delete dependence_map; }
+
+  /* A map from the copied BBs dependence info cliques to
+     equivalents in the BBs duplicated to.  */
+  hash_map<dependence_hash, unsigned short> *dependence_map;
+};
 
 struct cfg_hooks
 {
@@ -62,7 +75,7 @@ struct cfg_hooks
 
   /* Debugging.  */
   int (*verify_flow_info) (void);
-  void (*dump_bb) (FILE *, basic_block, int, int);
+  void (*dump_bb) (FILE *, basic_block, int, dump_flags_t);
   void (*dump_bb_for_graph) (pretty_printer *, basic_block);
 
   /* Basic CFG manipulation.  */
@@ -112,7 +125,7 @@ struct cfg_hooks
   bool (*can_duplicate_block_p) (const_basic_block a);
 
   /* Duplicate block A.  */
-  basic_block (*duplicate_block) (basic_block a);
+  basic_block (*duplicate_block) (basic_block a, copy_bb_data *);
 
   /* Higher level functions representable by primitive operations above if
      we didn't have some oddities in RTL and Tree representations.  */
@@ -198,9 +211,9 @@ checking_verify_flow_info (void)
     verify_flow_info ();
 }
 
-extern void dump_bb (FILE *, basic_block, int, int);
+extern void dump_bb (FILE *, basic_block, int, dump_flags_t);
 extern void dump_bb_for_graph (pretty_printer *, basic_block);
-extern void dump_flow_info (FILE *, int);
+extern void dump_flow_info (FILE *, dump_flags_t);
 
 extern edge redirect_edge_and_branch (edge, basic_block);
 extern basic_block redirect_edge_and_branch_force (edge, basic_block);
@@ -227,7 +240,8 @@ extern void tidy_fallthru_edges (void);
 extern void predict_edge (edge e, enum br_predictor predictor, int probability);
 extern bool predicted_by_p (const_basic_block bb, enum br_predictor predictor);
 extern bool can_duplicate_block_p (const_basic_block);
-extern basic_block duplicate_block (basic_block, edge, basic_block);
+extern basic_block duplicate_block (basic_block, edge, basic_block,
+				    copy_bb_data * = NULL);
 extern bool block_ends_with_call_p (basic_block bb);
 extern bool empty_block_p (basic_block);
 extern basic_block split_block_before_cond_jump (basic_block);

@@ -1,5 +1,5 @@
 /* Backward propagation of indirect loads through PHIs.
-   Copyright (C) 2007-2017 Free Software Foundation, Inc.
+   Copyright (C) 2007-2018 Free Software Foundation, Inc.
    Contributed by Richard Guenther <rguenther@suse.de>
 
 This file is part of GCC.
@@ -150,7 +150,7 @@ phiprop_insert_phi (basic_block bb, gphi *phi, gimple *use_stmt,
   if (dump_file && (dump_flags & TDF_DETAILS))
     {
       fprintf (dump_file, "Inserting PHI for result of load ");
-      print_gimple_stmt (dump_file, use_stmt, 0, 0);
+      print_gimple_stmt (dump_file, use_stmt, 0);
     }
 
   /* Add PHI arguments for each edge inserting loads of the
@@ -177,10 +177,10 @@ phiprop_insert_phi (basic_block bb, gphi *phi, gimple *use_stmt,
 	  if (dump_file && (dump_flags & TDF_DETAILS))
 	    {
 	      fprintf (dump_file, "  for edge defining ");
-	      print_generic_expr (dump_file, PHI_ARG_DEF_FROM_EDGE (phi, e), 0);
+	      print_generic_expr (dump_file, PHI_ARG_DEF_FROM_EDGE (phi, e));
 	      fprintf (dump_file, " reusing PHI result ");
 	      print_generic_expr (dump_file,
-				  phivn[SSA_NAME_VERSION (old_arg)].value, 0);
+				  phivn[SSA_NAME_VERSION (old_arg)].value);
 	      fprintf (dump_file, "\n");
 	    }
 	  /* Reuse a formerly created dereference.  */
@@ -210,9 +210,9 @@ phiprop_insert_phi (basic_block bb, gphi *phi, gimple *use_stmt,
 	  if (dump_file && (dump_flags & TDF_DETAILS))
 	    {
 	      fprintf (dump_file, "  for edge defining ");
-	      print_generic_expr (dump_file, PHI_ARG_DEF_FROM_EDGE (phi, e), 0);
+	      print_generic_expr (dump_file, PHI_ARG_DEF_FROM_EDGE (phi, e));
 	      fprintf (dump_file, " inserting load ");
-	      print_gimple_stmt (dump_file, tmp, 0, 0);
+	      print_gimple_stmt (dump_file, tmp, 0);
 	    }
 	}
 
@@ -225,7 +225,7 @@ phiprop_insert_phi (basic_block bb, gphi *phi, gimple *use_stmt,
       update_stmt (new_phi);
 
       if (dump_file && (dump_flags & TDF_DETAILS))
-	print_gimple_stmt (dump_file, new_phi, 0, 0);
+	print_gimple_stmt (dump_file, new_phi, 0);
     }
 
   return res;
@@ -338,8 +338,15 @@ propagate_with_phi (basic_block bb, gphi *phi, struct phiprop_d *phivn,
 	    && (!type
 		|| types_compatible_p
 		     (TREE_TYPE (gimple_assign_lhs (use_stmt)), type))
-	    /* We cannot replace a load that may throw or is volatile.  */
-	    && !stmt_can_throw_internal (use_stmt)))
+	    /* We cannot replace a load that may throw or is volatile.
+	       For volatiles the transform can change the number of
+	       executions if the load is inside a loop but the address
+	       computations outside (PR91812).  We could relax this
+	       if we guard against that appropriately.  For loads that can
+	       throw we could relax things if the moved loads all are
+	       known to not throw.  */
+	    && !stmt_can_throw_internal (use_stmt)
+	    && !gimple_has_volatile_ops (use_stmt)))
 	continue;
 
       /* Check if we can move the loads.  The def stmt of the virtual use
@@ -495,8 +502,14 @@ pass_phiprop::execute (function *fun)
   bbs = get_all_dominated_blocks (CDI_DOMINATORS,
 				  single_succ (ENTRY_BLOCK_PTR_FOR_FN (fun)));
   FOR_EACH_VEC_ELT (bbs, i, bb)
-    for (gsi = gsi_start_phis (bb); !gsi_end_p (gsi); gsi_next (&gsi))
-      did_something |= propagate_with_phi (bb, gsi.phi (), phivn, n);
+    {
+      /* Since we're going to move dereferences across predecessor
+         edges avoid blocks with abnormal predecessors.  */
+      if (bb_has_abnormal_pred (bb))
+	continue;
+      for (gsi = gsi_start_phis (bb); !gsi_end_p (gsi); gsi_next (&gsi))
+	did_something |= propagate_with_phi (bb, gsi.phi (), phivn, n);
+    }
 
   if (did_something)
     gsi_commit_edge_inserts ();

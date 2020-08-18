@@ -1,5 +1,5 @@
 /* Lower complex number operations to scalar operations.
-   Copyright (C) 2004-2017 Free Software Foundation, Inc.
+   Copyright (C) 2004-2018 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -60,6 +60,11 @@ typedef int complex_lattice_t;
 
 #define PAIR(a, b)  ((a) << 2 | (b))
 
+class complex_propagate : public ssa_propagation_engine
+{
+  enum ssa_prop_result visit_stmt (gimple *, edge *, tree *) FINAL OVERRIDE;
+  enum ssa_prop_result visit_phi (gphi *) FINAL OVERRIDE;
+};
 
 static vec<complex_lattice_t> complex_lattice_values;
 
@@ -74,6 +79,9 @@ static vec<tree> complex_ssa_name_components;
    imag PHIs if real and/or imag PHIs contain temporarily
    non-SSA_NAME/non-invariant args that need to be replaced by SSA_NAMEs.  */
 static vec<gphi *> phis_to_revisit;
+
+/* BBs that need EH cleanup.  */
+static bitmap need_eh_cleanup;
 
 /* Lookup UID in the complex_variable_components hashtable and return the
    associated tree.  */
@@ -300,9 +308,9 @@ init_dont_simulate_again (void)
 
 /* Evaluate statement STMT against the complex lattice defined above.  */
 
-static enum ssa_prop_result
-complex_visit_stmt (gimple *stmt, edge *taken_edge_p ATTRIBUTE_UNUSED,
-		    tree *result_p)
+enum ssa_prop_result
+complex_propagate::visit_stmt (gimple *stmt, edge *taken_edge_p ATTRIBUTE_UNUSED,
+			       tree *result_p)
 {
   complex_lattice_t new_l, old_l, op1_l, op2_l;
   unsigned int ver;
@@ -395,8 +403,8 @@ complex_visit_stmt (gimple *stmt, edge *taken_edge_p ATTRIBUTE_UNUSED,
 
 /* Evaluate a PHI node against the complex lattice defined above.  */
 
-static enum ssa_prop_result
-complex_visit_phi (gphi *phi)
+enum ssa_prop_result
+complex_propagate::visit_phi (gphi *phi)
 {
   complex_lattice_t new_l, old_l;
   unsigned int ver;
@@ -690,13 +698,12 @@ update_complex_components_on_edge (edge e, tree lhs, tree r, tree i)
 static void
 update_complex_assignment (gimple_stmt_iterator *gsi, tree r, tree i)
 {
-  gimple *stmt;
-
+  gimple *old_stmt = gsi_stmt (*gsi);
   gimple_assign_set_rhs_with_ops (gsi, COMPLEX_EXPR, r, i);
-  stmt = gsi_stmt (*gsi);
+  gimple *stmt = gsi_stmt (*gsi);
   update_stmt (stmt);
-  if (maybe_clean_eh_stmt (stmt))
-    gimple_purge_dead_eh_edges (gimple_bb (stmt));
+  if (maybe_clean_or_replace_eh_stmt (old_stmt, stmt))
+    bitmap_set_bit (need_eh_cleanup, gimple_bb (stmt)->index);
 
   if (gimple_in_ssa_p (cfun))
     update_complex_components (gsi, gsi_stmt (*gsi), r, i);
@@ -1186,13 +1193,19 @@ expand_complex_div_wide (gimple_stmt_iterator *gsi, tree inner_type,
       bb_join = e->dest;
       bb_true = create_empty_bb (bb_cond);
       bb_false = create_empty_bb (bb_true);
+      bb_true->count = bb_false->count
+	 = bb_cond->count.apply_probability (profile_probability::even ());
 
       /* Wire the blocks together.  */
       e->flags = EDGE_TRUE_VALUE;
+      /* TODO: With value profile we could add an historgram to determine real
+	 branch outcome.  */
+      e->probability = profile_probability::even ();
       redirect_edge_succ (e, bb_true);
-      make_edge (bb_cond, bb_false, EDGE_FALSE_VALUE);
-      make_edge (bb_true, bb_join, EDGE_FALLTHRU);
-      make_edge (bb_false, bb_join, EDGE_FALLTHRU);
+      edge e2 = make_edge (bb_cond, bb_false, EDGE_FALSE_VALUE);
+      e2->probability = profile_probability::even ();
+      make_single_succ_edge (bb_true, bb_join, EDGE_FALLTHRU);
+      make_single_succ_edge (bb_false, bb_join, EDGE_FALLTHRU);
       add_bb_to_loop (bb_true, bb_cond->loop_father);
       add_bb_to_loop (bb_false, bb_cond->loop_father);
 
@@ -1451,6 +1464,8 @@ expand_complex_comparison (gimple_stmt_iterator *gsi, tree ar, tree ai,
     }
 
   update_stmt (stmt);
+  if (maybe_clean_eh_stmt (stmt))
+    bitmap_set_bit (need_eh_cleanup, gimple_bb (stmt)->index);
 }
 
 /* Expand inline asm that sets some complex SSA_NAMEs.  */
@@ -1666,7 +1681,10 @@ tree_lower_complex (void)
   complex_lattice_values.safe_grow_cleared (num_ssa_names);
 
   init_parameter_lattice_values ();
-  ssa_propagate (complex_visit_stmt, complex_visit_phi);
+  class complex_propagate complex_propagate;
+  complex_propagate.ssa_propagate ();
+
+  need_eh_cleanup = BITMAP_ALLOC (NULL);
 
   complex_variable_components = new int_tree_htab_type (10);
 
@@ -1680,6 +1698,8 @@ tree_lower_complex (void)
   for (i = 0; i < n_bbs; i++)
     {
       bb = BASIC_BLOCK_FOR_FN (cfun, rpo[i]);
+      if (!bb)
+	continue;
       update_phi_components (bb);
       for (gsi = gsi_start_bb (bb); !gsi_end_p (gsi); gsi_next (&gsi))
 	expand_complex_operations_1 (&gsi);
@@ -1711,11 +1731,15 @@ tree_lower_complex (void)
 
   gsi_commit_edge_inserts ();
 
+  unsigned todo
+    = gimple_purge_all_dead_eh_edges (need_eh_cleanup) ? TODO_cleanup_cfg : 0;
+  BITMAP_FREE (need_eh_cleanup);
+
   delete complex_variable_components;
   complex_variable_components = NULL;
   complex_ssa_name_components.release ();
   complex_lattice_values.release ();
-  return 0;
+  return todo;
 }
 
 namespace {

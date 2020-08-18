@@ -1,5 +1,5 @@
 /* Loop header copying on trees.
-   Copyright (C) 2004-2017 Free Software Foundation, Inc.
+   Copyright (C) 2004-2018 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -99,7 +99,7 @@ should_duplicate_loop_header_p (basic_block header, struct loop *loop,
     }
 
   last = last_stmt (header);
-  if (gimple_code (last) != GIMPLE_COND)
+  if (!last || gimple_code (last) != GIMPLE_COND)
     {
       if (dump_file && (dump_flags & TDF_DETAILS))
 	fprintf (dump_file,
@@ -120,7 +120,10 @@ should_duplicate_loop_header_p (basic_block header, struct loop *loop,
 	continue;
 
       if (gimple_code (last) == GIMPLE_CALL
-	  && !gimple_inexpensive_call_p (as_a <gcall *> (last)))
+	  && (!gimple_inexpensive_call_p (as_a <gcall *> (last))
+	      /* IFN_LOOP_DIST_ALIAS means that inner loop is distributed
+		 at current loop's header.  Don't copy in this case.  */
+	      || gimple_call_internal_p (last, IFN_LOOP_DIST_ALIAS)))
 	{
 	  if (dump_file && (dump_flags & TDF_DETAILS))
 	    fprintf (dump_file,
@@ -373,11 +376,23 @@ ch_base::copy_headers (function *fun)
 		{
 		  gimple *stmt = gsi_stmt (bsi);
 		  if (gimple_code (stmt) == GIMPLE_COND)
-		    gimple_set_no_warning (stmt, true);
+		    {
+		      tree lhs = gimple_cond_lhs (stmt);
+		      if (gimple_cond_code (stmt) != EQ_EXPR
+			  && gimple_cond_code (stmt) != NE_EXPR
+			  && INTEGRAL_TYPE_P (TREE_TYPE (lhs))
+			  && TYPE_OVERFLOW_UNDEFINED (TREE_TYPE (lhs)))
+			gimple_set_no_warning (stmt, true);
+		    }
 		  else if (is_gimple_assign (stmt))
 		    {
 		      enum tree_code rhs_code = gimple_assign_rhs_code (stmt);
-		      if (TREE_CODE_CLASS (rhs_code) == tcc_comparison)
+		      tree rhs1 = gimple_assign_rhs1 (stmt);
+		      if (TREE_CODE_CLASS (rhs_code) == tcc_comparison
+			  && rhs_code != EQ_EXPR
+			  && rhs_code != NE_EXPR
+			  && INTEGRAL_TYPE_P (TREE_TYPE (rhs1))
+			  && TYPE_OVERFLOW_UNDEFINED (TREE_TYPE (rhs1)))
 			gimple_set_no_warning (stmt, true);
 		    }
 		}
@@ -437,7 +452,7 @@ pass_ch::process_loop_p (struct loop *loop)
 bool
 pass_ch_vect::process_loop_p (struct loop *loop)
 {
-  if (!flag_tree_vectorize && !loop->force_vectorize)
+  if (!flag_tree_loop_vectorize && !loop->force_vectorize)
     return false;
 
   if (loop->dont_vectorize)

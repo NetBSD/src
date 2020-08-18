@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.1.4 2019/09/26 05:45:54 mrg Exp $
+# $NetBSD: Makefile,v 1.1.1.5 2020/08/18 23:31:50 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -7,9 +7,11 @@
 
 .PATH: ${SANITIZER}/tsan
 
+# XXXmknative
 TSAN_SRCS= \
 	tsan_clock.cc \
 	tsan_debugging.cc \
+	tsan_external.cc \
 	tsan_fd.cc \
 	tsan_flags.cc \
 	tsan_ignoreset.cc \

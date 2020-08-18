@@ -617,7 +617,7 @@ namespace std
 #define _GLIBCXX_HAVE_ENOSTR 1
 
 /* Define if ENOTRECOVERABLE exists. */
-/* #undef _GLIBCXX_HAVE_ENOTRECOVERABLE */
+#define _GLIBCXX_HAVE_ENOTRECOVERABLE 1
 
 /* Define if ENOTSUP exists. */
 #define _GLIBCXX_HAVE_ENOTSUP 1
@@ -626,7 +626,7 @@ namespace std
 #define _GLIBCXX_HAVE_EOVERFLOW 1
 
 /* Define if EOWNERDEAD exists. */
-/* #undef _GLIBCXX_HAVE_EOWNERDEAD */
+#define _GLIBCXX_HAVE_EOWNERDEAD 1
 
 /* Define if EPERM exists. */
 #define _GLIBCXX_HAVE_EPERM 1
@@ -1206,7 +1206,7 @@ namespace std
 #define _GLIBCXX_HAVE___CXA_THREAD_ATEXIT_IMPL 1
 
 /* Define as const if the declaration of iconv() needs const. */
-#define _GLIBCXX_ICONV_CONST const
+#define _GLIBCXX_ICONV_CONST
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */

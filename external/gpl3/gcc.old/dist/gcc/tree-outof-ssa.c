@@ -1,5 +1,5 @@
 /* Convert a program in SSA form into Normal form.
-   Copyright (C) 2004-2017 Free Software Foundation, Inc.
+   Copyright (C) 2004-2018 Free Software Foundation, Inc.
    Contributed by Andrew Macleod <amacleod@redhat.com>
 
 This file is part of GCC.
@@ -651,6 +651,8 @@ get_temp_reg (tree name)
   tree type = TREE_TYPE (name);
   int unsignedp;
   machine_mode reg_mode = promote_ssa_mode (name, &unsignedp);
+  if (reg_mode == BLKmode)
+    return assign_temp (type, 0, 0);
   rtx x = gen_reg_rtx (reg_mode);
   if (POINTER_TYPE_P (type))
     mark_reg_pointer (x, TYPE_ALIGN (TREE_TYPE (type)));
@@ -969,6 +971,7 @@ remove_ssa_form (bool perform_ter, struct ssaexpand *sa)
   sa->map = map;
   sa->values = values;
   sa->partitions_for_parm_default_defs = get_parm_default_def_partitions (map);
+  sa->partitions_for_undefined_values = get_undefined_value_partitions (map);
 }
 
 
@@ -1144,6 +1147,7 @@ finish_out_of_ssa (struct ssaexpand *sa)
     BITMAP_FREE (sa->values);
   delete_var_map (sa->map);
   BITMAP_FREE (sa->partitions_for_parm_default_defs);
+  BITMAP_FREE (sa->partitions_for_undefined_values);
   memset (sa, 0, sizeof *sa);
 }
 
