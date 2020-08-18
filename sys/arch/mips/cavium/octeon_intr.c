@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_intr.c,v 1.23 2020/08/17 21:00:29 jmcneill Exp $	*/
+/*	$NetBSD: octeon_intr.c,v 1.24 2020/08/18 07:41:41 skrll Exp $	*/
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.23 2020/08/17 21:00:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.24 2020/08/18 07:41:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -166,7 +166,7 @@ struct octeon_intrhand {
 static int octeon_send_ipi(struct cpu_info *, int);
 static int octeon_ipi_intr(void *);
 
-static struct octeon_intrhand ipi_intrhands[1] = {
+static struct octeon_intrhand ipi_intrhands[2] = {
 	[0] = {
 		.ih_func = octeon_ipi_intr,
 		.ih_arg = (void *)(uintptr_t)__BITS(15,0),
