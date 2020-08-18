@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.18 2020/05/30 14:16:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.19 2020/08/18 07:53:24 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pf.h"
@@ -268,15 +268,21 @@ npf_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 	case IOC_NPF_VERSION:
 		*(int *)data = NPF_VERSION;
 		return 0;
-
 	case IOC_NPF_SWITCH:
 		return npfctl_switch(data);
-
 	case IOC_NPF_TABLE:
 		return npfctl_table(npf, data);
-
 	case IOC_NPF_STATS:
 		return npf_stats_export(npf, data);
+	case IOC_NPF_LOAD:
+	case IOC_NPF_SAVE:
+	case IOC_NPF_RULE:
+	case IOC_NPF_CONN_LOOKUP:
+	case IOC_NPF_TABLE_REPLACE:
+		/* nvlist_ref_t argument, handled below */
+		break;
+	default:
+		return EINVAL;
 	}
 
 	error = nvlist_copyin(data, &req, NPF_IOCTL_DATA_LIMIT);
