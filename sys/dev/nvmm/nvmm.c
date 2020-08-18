@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.c,v 1.34 2020/08/18 17:03:58 maxv Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.35 2020/08/18 17:04:37 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.34 2020/08/18 17:03:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.35 2020/08/18 17:04:37 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1218,7 +1218,7 @@ nvmm_attach(device_t parent, device_t self, void *aux)
 static int
 nvmm_detach(device_t self, int flags)
 {
-	if (nmachines > 0)
+	if (atomic_load_relaxed(&nmachines) > 0)
 		return EBUSY;
 	nvmm_fini();
 	return 0;
