@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.68 2020/08/18 17:03:10 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.69 2020/08/18 17:08:05 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.68 2020/08/18 17:03:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.69 2020/08/18 17:08:05 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -793,7 +793,21 @@ svm_inkernel_advance(struct vmcb *vmcb)
 	vmcb->ctrl.intr &= ~VMCB_CTRL_INTR_SHADOW;
 }
 
+#define SVM_CPUID_MAX_BASIC		0xD
 #define SVM_CPUID_MAX_HYPERVISOR	0x40000000
+static uint32_t svm_cpuid_max_basic __read_mostly;
+
+static void
+svm_inkernel_exec_cpuid(struct svm_cpudata *cpudata, uint64_t eax, uint64_t ecx)
+{
+	u_int descs[4];
+
+	x86_cpuid2(eax, ecx, descs);
+	cpudata->vmcb->state.rax = descs[0];
+	cpudata->gprs[NVMM_X64_GPR_RBX] = descs[1];
+	cpudata->gprs[NVMM_X64_GPR_RCX] = descs[2];
+	cpudata->gprs[NVMM_X64_GPR_RDX] = descs[3];
+}
 
 static void
 svm_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
@@ -801,7 +815,22 @@ svm_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 	struct svm_cpudata *cpudata = vcpu->cpudata;
 	uint64_t cr4;
 
+	if (eax < 0x40000000) {
+		if (__predict_false(eax > svm_cpuid_max_basic)) {
+			eax = svm_cpuid_max_basic;
+			svm_inkernel_exec_cpuid(cpudata, eax, ecx);
+		}
+	} else if (eax < 0x80000000) {
+		if (__predict_false(eax > SVM_CPUID_MAX_HYPERVISOR)) {
+			eax = svm_cpuid_max_basic;
+			svm_inkernel_exec_cpuid(cpudata, eax, ecx);
+		}
+	}
+
 	switch (eax) {
+	case 0x00000000:
+		cpudata->vmcb->state.rax = svm_cpuid_max_basic;
+		break;
 	case 0x00000001:
 		cpudata->vmcb->state.rax &= nvmm_cpuid_00000001.eax;
 
@@ -831,10 +860,20 @@ svm_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 		cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
 		break;
 	case 0x00000007: /* Structured Extended Features */
-		cpudata->vmcb->state.rax &= nvmm_cpuid_00000007.eax;
-		cpudata->gprs[NVMM_X64_GPR_RBX] &= nvmm_cpuid_00000007.ebx;
-		cpudata->gprs[NVMM_X64_GPR_RCX] &= nvmm_cpuid_00000007.ecx;
-		cpudata->gprs[NVMM_X64_GPR_RDX] &= nvmm_cpuid_00000007.edx;
+		switch (ecx) {
+		case 0:
+			cpudata->vmcb->state.rax = 0;
+			cpudata->gprs[NVMM_X64_GPR_RBX] &= nvmm_cpuid_00000007.ebx;
+			cpudata->gprs[NVMM_X64_GPR_RCX] &= nvmm_cpuid_00000007.ecx;
+			cpudata->gprs[NVMM_X64_GPR_RDX] &= nvmm_cpuid_00000007.edx;
+			break;
+		default:
+			cpudata->vmcb->state.rax = 0;
+			cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
+			cpudata->gprs[NVMM_X64_GPR_RCX] = 0;
+			cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
+			break;
+		}
 		break;
 	case 0x00000008: /* Empty */
 	case 0x00000009: /* Empty */
@@ -2417,6 +2456,9 @@ svm_init(void)
 
 	/* Init the XCR0 mask. */
 	svm_xcr0_mask = SVM_XCR0_MASK_DEFAULT & x86_xsave_features;
+
+	/* Init the max basic CPUID leaf. */
+	svm_cpuid_max_basic = uimin(cpuid_level, SVM_CPUID_MAX_BASIC);
 
 	memset(hsave, 0, sizeof(hsave));
 	for (CPU_INFO_FOREACH(cii, ci)) {
