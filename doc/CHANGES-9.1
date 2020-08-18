@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.97 2020/08/17 14:38:32 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.98 2020/08/18 09:37:41 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -4757,4 +4757,19 @@ sys/dev/pci/cmdide.c				1.46
 	Also reclassify the "bogus intr" as aprint_verbose() to avoid noise
 	on boot.
 	[jdolecek, ticket #1054]
+
+sys/dev/nvmm/nvmm.c				1.33
+sys/dev/nvmm/nvmm.h				1.13,1.14
+sys/dev/nvmm/nvmm_internal.h			1.17
+sys/dev/nvmm/x86/nvmm_x86.c			1.10
+sys/dev/nvmm/x86/nvmm_x86_svm.c			1.67
+sys/dev/nvmm/x86/nvmm_x86_vmx.c			1.67
+
+	nvmm(4): reduce the diff against -current, no functional change.
+	[maxv, ticket #1055]
+
+sys/dev/ipmi.c					1.5
+
+	ipmi(4): Fix critical/warning threshold confusion.
+	[nonaka, ticket #1056]
 
