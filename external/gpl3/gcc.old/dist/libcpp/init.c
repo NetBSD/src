@@ -1,5 +1,5 @@
 /* CPP Library.
-   Copyright (C) 1986-2017 Free Software Foundation, Inc.
+   Copyright (C) 1986-2018 Free Software Foundation, Inc.
    Contributed by Per Bothner, 1994-95.
    Based on CCCP program by Paul Rubin, June 1986
    Adapted to ANSI C, Richard Stallman, Jan 1987
@@ -91,26 +91,31 @@ struct lang_flags
   char digit_separators;
   char trigraphs;
   char utf8_char_literals;
+  char va_opt;
 };
 
 static const struct lang_flags lang_defaults[] =
-{ /*              c99 c++ xnum xid c11 std digr ulit rlit udlit bincst digsep trig u8chlit */
-  /* GNUC89   */  { 0,  0,  1,  0,  0,  0,  1,   0,   0,   0,    0,     0,     0,   0 },
-  /* GNUC99   */  { 1,  0,  1,  1,  0,  0,  1,   1,   1,   0,    0,     0,     0,   0 },
-  /* GNUC11   */  { 1,  0,  1,  1,  1,  0,  1,   1,   1,   0,    0,     0,     0,   0 },
-  /* STDC89   */  { 0,  0,  0,  0,  0,  1,  0,   0,   0,   0,    0,     0,     1,   0 },
-  /* STDC94   */  { 0,  0,  0,  0,  0,  1,  1,   0,   0,   0,    0,     0,     1,   0 },
-  /* STDC99   */  { 1,  0,  1,  1,  0,  1,  1,   0,   0,   0,    0,     0,     1,   0 },
-  /* STDC11   */  { 1,  0,  1,  1,  1,  1,  1,   1,   0,   0,    0,     0,     1,   0 },
-  /* GNUCXX   */  { 0,  1,  1,  1,  0,  0,  1,   0,   0,   0,    0,     0,     0,   0 },
-  /* CXX98    */  { 0,  1,  0,  1,  0,  1,  1,   0,   0,   0,    0,     0,     1,   0 },
-  /* GNUCXX11 */  { 1,  1,  1,  1,  1,  0,  1,   1,   1,   1,    0,     0,     0,   0 },
-  /* CXX11    */  { 1,  1,  0,  1,  1,  1,  1,   1,   1,   1,    0,     0,     1,   0 },
-  /* GNUCXX14 */  { 1,  1,  1,  1,  1,  0,  1,   1,   1,   1,    1,     1,     0,   0 },
-  /* CXX14    */  { 1,  1,  0,  1,  1,  1,  1,   1,   1,   1,    1,     1,     1,   0 },
-  /* GNUCXX1Z */  { 1,  1,  1,  1,  1,  0,  1,   1,   1,   1,    1,     1,     0,   1 },
-  /* CXX1Z    */  { 1,  1,  1,  1,  1,  1,  1,   1,   1,   1,    1,     1,     0,   1 },
-  /* ASM      */  { 0,  0,  1,  0,  0,  0,  0,   0,   0,   0,    0,     0,     0,   0 }
+{ /*              c99 c++ xnum xid c11 std digr ulit rlit udlit bincst digsep trig u8chlit vaopt */
+  /* GNUC89   */  { 0,  0,  1,  0,  0,  0,  1,   0,   0,   0,    0,     0,     0,   0,      1 },
+  /* GNUC99   */  { 1,  0,  1,  1,  0,  0,  1,   1,   1,   0,    0,     0,     0,   0,      1 },
+  /* GNUC11   */  { 1,  0,  1,  1,  1,  0,  1,   1,   1,   0,    0,     0,     0,   0,      1 },
+  /* GNUC17   */  { 1,  0,  1,  1,  1,  0,  1,   1,   1,   0,    0,     0,     0,   0,      1 },
+  /* STDC89   */  { 0,  0,  0,  0,  0,  1,  0,   0,   0,   0,    0,     0,     1,   0,      0 },
+  /* STDC94   */  { 0,  0,  0,  0,  0,  1,  1,   0,   0,   0,    0,     0,     1,   0,      0 },
+  /* STDC99   */  { 1,  0,  1,  1,  0,  1,  1,   0,   0,   0,    0,     0,     1,   0,      0 },
+  /* STDC11   */  { 1,  0,  1,  1,  1,  1,  1,   1,   0,   0,    0,     0,     1,   0,      0 },
+  /* STDC17   */  { 1,  0,  1,  1,  1,  1,  1,   1,   0,   0,    0,     0,     1,   0,      0 },
+  /* GNUCXX   */  { 0,  1,  1,  1,  0,  0,  1,   0,   0,   0,    0,     0,     0,   0,      1 },
+  /* CXX98    */  { 0,  1,  0,  1,  0,  1,  1,   0,   0,   0,    0,     0,     1,   0,      0 },
+  /* GNUCXX11 */  { 1,  1,  1,  1,  1,  0,  1,   1,   1,   1,    0,     0,     0,   0,      1 },
+  /* CXX11    */  { 1,  1,  0,  1,  1,  1,  1,   1,   1,   1,    0,     0,     1,   0,      0 },
+  /* GNUCXX14 */  { 1,  1,  1,  1,  1,  0,  1,   1,   1,   1,    1,     1,     0,   0,      1 },
+  /* CXX14    */  { 1,  1,  0,  1,  1,  1,  1,   1,   1,   1,    1,     1,     1,   0,      0 },
+  /* GNUCXX17 */  { 1,  1,  1,  1,  1,  0,  1,   1,   1,   1,    1,     1,     0,   1,      1 },
+  /* CXX17    */  { 1,  1,  1,  1,  1,  1,  1,   1,   1,   1,    1,     1,     0,   1,      0 },
+  /* GNUCXX2A */  { 1,  1,  1,  1,  1,  0,  1,   1,   1,   1,    1,     1,     0,   1,      1 },
+  /* CXX2A    */  { 1,  1,  1,  1,  1,  1,  1,   1,   1,   1,    1,     1,     0,   1,      1 },
+  /* ASM      */  { 0,  0,  1,  0,  0,  0,  0,   0,   0,   0,    0,     0,     0,   0,      0 }
 };
 
 /* Sets internal flags correctly for a given language.  */
@@ -135,6 +140,7 @@ cpp_set_lang (cpp_reader *pfile, enum c_lang lang)
   CPP_OPTION (pfile, digit_separators)		 = l->digit_separators;
   CPP_OPTION (pfile, trigraphs)			 = l->trigraphs;
   CPP_OPTION (pfile, utf8_char_literals)	 = l->utf8_char_literals;
+  CPP_OPTION (pfile, va_opt)			 = l->va_opt;
 }
 
 /* Initialize library global state.  */
@@ -482,6 +488,26 @@ cpp_init_special_builtins (cpp_reader *pfile)
     }
 }
 
+/* Restore macro C to builtin macro definition.  */
+
+void
+_cpp_restore_special_builtin (cpp_reader *pfile, struct def_pragma_macro *c)
+{
+  size_t len = strlen (c->name);
+
+  for (const struct builtin_macro *b = builtin_array;
+       b < builtin_array + ARRAY_SIZE (builtin_array); b++)
+    if (b->len == len && memcmp (c->name, b->name, len + 1) == 0)
+      {
+	cpp_hashnode *hp = cpp_lookup (pfile, b->name, b->len);
+	hp->type = NT_MACRO;
+	hp->flags |= NODE_BUILTIN;
+	if (b->always_warn_if_redefined)
+	  hp->flags |= NODE_WARN;
+	hp->value.builtin = (enum cpp_builtin_type) b->value;
+      }
+}
+
 /* Read the builtins table above and enter them, and language-specific
    macros, into the hash table.  HOSTED is true if this is a hosted
    environment.  */
@@ -497,8 +523,11 @@ cpp_init_builtins (cpp_reader *pfile, int hosted)
 
   if (CPP_OPTION (pfile, cplusplus))
     {
-      if (CPP_OPTION (pfile, lang) == CLK_CXX1Z
-	  || CPP_OPTION (pfile, lang) == CLK_GNUCXX1Z)
+      if (CPP_OPTION (pfile, lang) == CLK_CXX2A
+	  || CPP_OPTION (pfile, lang) == CLK_GNUCXX2A)
+	_cpp_define_builtin (pfile, "__cplusplus 201709L");
+      else if (CPP_OPTION (pfile, lang) == CLK_CXX17
+	  || CPP_OPTION (pfile, lang) == CLK_GNUCXX17)
 	_cpp_define_builtin (pfile, "__cplusplus 201703L");
       else if (CPP_OPTION (pfile, lang) == CLK_CXX14
 	  || CPP_OPTION (pfile, lang) == CLK_GNUCXX14)
@@ -513,6 +542,9 @@ cpp_init_builtins (cpp_reader *pfile, int hosted)
     _cpp_define_builtin (pfile, "__ASSEMBLER__ 1");
   else if (CPP_OPTION (pfile, lang) == CLK_STDC94)
     _cpp_define_builtin (pfile, "__STDC_VERSION__ 199409L");
+  else if (CPP_OPTION (pfile, lang) == CLK_STDC17
+	   || CPP_OPTION (pfile, lang) == CLK_GNUC17)
+    _cpp_define_builtin (pfile, "__STDC_VERSION__ 201710L");
   else if (CPP_OPTION (pfile, lang) == CLK_STDC11
 	   || CPP_OPTION (pfile, lang) == CLK_GNUC11)
     _cpp_define_builtin (pfile, "__STDC_VERSION__ 201112L");

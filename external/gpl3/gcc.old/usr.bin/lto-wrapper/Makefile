@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1.1.3 2019/09/26 05:45:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.4 2020/08/18 23:31:50 mrg Exp $
 
 NOMAN=1
 PROG=		lto-wrapper
 # XXX pullout from LTO_WRAPPER_OBJS
 SRCS=		lto-wrapper.c \
 		collect-utils.c \
-		ggc-none.o
+		ggc-none.c
 
 BINDIR=		/usr/libexec
 

@@ -1,6 +1,6 @@
 /* Command line option handling.  Code involving global state that
    should not be shared with the driver.
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2018 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -35,7 +35,10 @@ along with GCC; see the file COPYING3.  If not see
 #include "plugin.h"
 #include "toplev.h"
 #include "context.h"
+#include "stringpool.h"
+#include "attribs.h"
 #include "asan.h"
+#include "file-prefix-map.h" /* add_*_prefix_map()  */
 
 typedef const char *const_char_p; /* For DEF_VEC_P.  */
 
@@ -100,10 +103,14 @@ complain_wrong_lang (const struct cl_decoded_option *decoded,
 	   text, bad_lang);
   else if (lang_mask == CL_DRIVER)
     gcc_unreachable ();
-  else
+  else if (ok_langs[0] != '\0')
     /* Eventually this should become a hard error IMO.  */
     warning (0, "command line option %qs is valid for %s but not for %s",
 	     text, ok_langs, bad_lang);
+  else
+    /* Happens for -Werror=warning_name.  */
+    warning (0, "%<-Werror=%> argument %qs is not valid for %s",
+	     text, bad_lang);
 
   free (ok_langs);
   free (bad_lang);
@@ -365,6 +372,10 @@ handle_common_deferred_options (void)
 
 	case OPT_fdebug_regex_map_:
 	  add_debug_regex_map (opt->arg);
+	  break;
+
+	case OPT_ffile_prefix_map_:
+	  add_file_prefix_map (opt->arg);
 	  break;
 
 	case OPT_fdump_:

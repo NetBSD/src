@@ -1,6 +1,6 @@
 // unordered_map implementation -*- C++ -*-
 
-// Copyright (C) 2010-2017 Free Software Foundation, Inc.
+// Copyright (C) 2010-2018 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -32,6 +32,7 @@
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 
   /// Base types for unordered_map.
@@ -94,10 +95,10 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
    *  Base is _Hashtable, dispatched at compile time via template
    *  alias __umap_hashtable.
    */
-  template<class _Key, class _Tp,
-	   class _Hash = hash<_Key>,
-	   class _Pred = std::equal_to<_Key>,
-	   class _Alloc = std::allocator<std::pair<const _Key, _Tp> > >
+  template<typename _Key, typename _Tp,
+	   typename _Hash = hash<_Key>,
+	   typename _Pred = equal_to<_Key>,
+	   typename _Alloc = allocator<std::pair<const _Key, _Tp>>>
     class unordered_map
     {
       typedef __umap_hashtable<_Key, _Tp, _Hash, _Pred, _Alloc>  _Hashtable;
@@ -858,7 +859,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 
 #if __cplusplus > 201402L
       template<typename, typename, typename>
-	friend class _Hash_merge_helper;
+	friend class std::_Hash_merge_helper;
 
       template<typename _H2, typename _P2>
 	void
@@ -1126,6 +1127,82 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 		   const unordered_map<_Key1, _Tp1, _Hash1, _Pred1, _Alloc1>&);
     };
 
+#if __cpp_deduction_guides >= 201606
+
+  template<typename _InputIterator,
+	   typename _Hash = hash<__iter_key_t<_InputIterator>>,
+	   typename _Pred = equal_to<__iter_key_t<_InputIterator>>,
+	   typename _Allocator = allocator<__iter_to_alloc_t<_InputIterator>>,
+	   typename = _RequireInputIter<_InputIterator>,
+	   typename = _RequireAllocator<_Allocator>>
+    unordered_map(_InputIterator, _InputIterator,
+		  typename unordered_map<int, int>::size_type = {},
+		  _Hash = _Hash(), _Pred = _Pred(), _Allocator = _Allocator())
+    -> unordered_map<__iter_key_t<_InputIterator>,
+		     __iter_val_t<_InputIterator>,
+		     _Hash, _Pred, _Allocator>;
+
+  template<typename _Key, typename _Tp, typename _Hash = hash<_Key>,
+	   typename _Pred = equal_to<_Key>,
+	   typename _Allocator = allocator<pair<const _Key, _Tp>>,
+	   typename = _RequireAllocator<_Allocator>>
+    unordered_map(initializer_list<pair<_Key, _Tp>>,
+		  typename unordered_map<int, int>::size_type = {},
+		  _Hash = _Hash(), _Pred = _Pred(), _Allocator = _Allocator())
+    -> unordered_map<_Key, _Tp, _Hash, _Pred, _Allocator>;
+
+  template<typename _InputIterator, typename _Allocator,
+	   typename = _RequireInputIter<_InputIterator>,
+	   typename = _RequireAllocator<_Allocator>>
+    unordered_map(_InputIterator, _InputIterator,
+		  typename unordered_map<int, int>::size_type, _Allocator)
+    -> unordered_map<__iter_key_t<_InputIterator>,
+		     __iter_val_t<_InputIterator>,
+		     hash<__iter_key_t<_InputIterator>>,
+		     equal_to<__iter_key_t<_InputIterator>>,
+		     _Allocator>;
+
+  template<typename _InputIterator, typename _Allocator,
+	   typename = _RequireInputIter<_InputIterator>,
+	   typename = _RequireAllocator<_Allocator>>
+    unordered_map(_InputIterator, _InputIterator, _Allocator)
+    -> unordered_map<__iter_key_t<_InputIterator>,
+		     __iter_val_t<_InputIterator>,
+		     hash<__iter_key_t<_InputIterator>>,
+		     equal_to<__iter_key_t<_InputIterator>>,
+		     _Allocator>;
+
+  template<typename _InputIterator, typename _Hash, typename _Allocator,
+	   typename = _RequireInputIter<_InputIterator>,
+	   typename = _RequireAllocator<_Allocator>>
+    unordered_map(_InputIterator, _InputIterator,
+		  typename unordered_map<int, int>::size_type,
+		  _Hash, _Allocator)
+    -> unordered_map<__iter_key_t<_InputIterator>,
+		     __iter_val_t<_InputIterator>, _Hash,
+		     equal_to<__iter_key_t<_InputIterator>>, _Allocator>;
+
+  template<typename _Key, typename _Tp, typename _Allocator,
+	   typename = _RequireAllocator<_Allocator>>
+    unordered_map(initializer_list<pair<_Key, _Tp>>,
+		  typename unordered_map<int, int>::size_type,
+		  _Allocator)
+    -> unordered_map<_Key, _Tp, hash<_Key>, equal_to<_Key>, _Allocator>;
+
+  template<typename _Key, typename _Tp, typename _Allocator,
+	   typename = _RequireAllocator<_Allocator>>
+    unordered_map(initializer_list<pair<_Key, _Tp>>, _Allocator)
+    -> unordered_map<_Key, _Tp, hash<_Key>, equal_to<_Key>, _Allocator>;
+
+  template<typename _Key, typename _Tp, typename _Hash, typename _Allocator,
+	   typename = _RequireAllocator<_Allocator>>
+    unordered_map(initializer_list<pair<_Key, _Tp>>,
+		  typename unordered_map<int, int>::size_type,
+		  _Hash, _Allocator)
+    -> unordered_map<_Key, _Tp, _Hash, equal_to<_Key>, _Allocator>;
+
+#endif
+
   /**
    *  @brief A standard container composed of equivalent keys
    *  (possibly containing multiple of each key value) that associates
@@ -1149,10 +1226,10 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
    *  Base is _Hashtable, dispatched at compile time via template
    *  alias __ummap_hashtable.
    */
-  template<class _Key, class _Tp,
-	   class _Hash = hash<_Key>,
-	   class _Pred = std::equal_to<_Key>,
-	   class _Alloc = std::allocator<std::pair<const _Key, _Tp> > >
+  template<typename _Key, typename _Tp,
+	   typename _Hash = hash<_Key>,
+	   typename _Pred = equal_to<_Key>,
+	   typename _Alloc = allocator<std::pair<const _Key, _Tp>>>
     class unordered_multimap
     {
       typedef __ummap_hashtable<_Key, _Tp, _Hash, _Pred, _Alloc>  _Hashtable;
@@ -1658,7 +1735,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 
 #if __cplusplus > 201402L
       template<typename, typename, typename>
-	friend class _Hash_merge_helper;
+	friend class std::_Hash_merge_helper;
 
       template<typename _H2, typename _P2>
 	void
@@ -1885,6 +1962,82 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 					    _Hash1, _Pred1, _Alloc1>&);
     };
 
+#if __cpp_deduction_guides >= 201606
+
+  template<typename _InputIterator,
+	   typename _Hash = hash<__iter_key_t<_InputIterator>>,
+	   typename _Pred = equal_to<__iter_key_t<_InputIterator>>,
+	   typename _Allocator = allocator<__iter_to_alloc_t<_InputIterator>>,
+	   typename = _RequireInputIter<_InputIterator>,
+	   typename = _RequireAllocator<_Allocator>>
+    unordered_multimap(_InputIterator, _InputIterator,
+		       unordered_multimap<int, int>::size_type = {},
+		       _Hash = _Hash(), _Pred = _Pred(),
+		       _Allocator = _Allocator())
+    -> unordered_multimap<__iter_key_t<_InputIterator>,
+			  __iter_val_t<_InputIterator>, _Hash, _Pred,
+			  _Allocator>;
+
+  template<typename _Key, typename _Tp, typename _Hash = hash<_Key>,
+	   typename _Pred = equal_to<_Key>,
+	   typename _Allocator = allocator<pair<const _Key, _Tp>>,
+	   typename = _RequireAllocator<_Allocator>>
+    unordered_multimap(initializer_list<pair<_Key, _Tp>>,
+		       unordered_multimap<int, int>::size_type = {},
+		       _Hash = _Hash(), _Pred = _Pred(),
+		       _Allocator = _Allocator())
+    -> unordered_multimap<_Key, _Tp, _Hash, _Pred, _Allocator>;
+
+  template<typename _InputIterator, typename _Allocator,
+	   typename = _RequireInputIter<_InputIterator>,
+	   typename = _RequireAllocator<_Allocator>>
+    unordered_multimap(_InputIterator, _InputIterator,
+		       unordered_multimap<int, int>::size_type, _Allocator)
+    -> unordered_multimap<__iter_key_t<_InputIterator>,
+			  __iter_val_t<_InputIterator>,
+			  hash<__iter_key_t<_InputIterator>>,
+			  equal_to<__iter_key_t<_InputIterator>>, _Allocator>;
+
+  template<typename _InputIterator, typename _Allocator,
+	   typename = _RequireInputIter<_InputIterator>,
+	   typename = _RequireAllocator<_Allocator>>
+    unordered_multimap(_InputIterator, _InputIterator, _Allocator)
+    -> unordered_multimap<__iter_key_t<_InputIterator>,
+			  __iter_val_t<_InputIterator>,
+			  hash<__iter_key_t<_InputIterator>>,
+			  equal_to<__iter_key_t<_InputIterator>>, _Allocator>;
+
+  template<typename _InputIterator, typename _Hash, typename _Allocator,
+	   typename = _RequireInputIter<_InputIterator>,
+	   typename = _RequireAllocator<_Allocator>>
+    unordered_multimap(_InputIterator, _InputIterator,
+		       unordered_multimap<int, int>::size_type, _Hash,
+		       _Allocator)
+    -> unordered_multimap<__iter_key_t<_InputIterator>,
+			  __iter_val_t<_InputIterator>, _Hash,
+			  equal_to<__iter_key_t<_InputIterator>>, _Allocator>;
+
+  template<typename _Key, typename _Tp, typename _Allocator,
+	   typename = _RequireAllocator<_Allocator>>
+    unordered_multimap(initializer_list<pair<_Key, _Tp>>,
+		       unordered_multimap<int, int>::size_type,
+		       _Allocator)
+    -> unordered_multimap<_Key, _Tp, hash<_Key>, equal_to<_Key>, _Allocator>;
+
+  template<typename _Key, typename _Tp, typename _Allocator,
+	   typename = _RequireAllocator<_Allocator>>
+    unordered_multimap(initializer_list<pair<_Key, _Tp>>, _Allocator)
+    -> unordered_multimap<_Key, _Tp, hash<_Key>, equal_to<_Key>, _Allocator>;
+
+  template<typename _Key, typename _Tp, typename _Hash, typename _Allocator,
+	   typename = _RequireAllocator<_Allocator>>
+    unordered_multimap(initializer_list<pair<_Key, _Tp>>,
+		       unordered_multimap<int, int>::size_type,
+		       _Hash, _Allocator)
+    -> unordered_multimap<_Key, _Tp, _Hash, equal_to<_Key>, _Allocator>;
+
+#endif
+
   template<class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
     inline void
     swap(unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>& __x,
@@ -1926,7 +2079,6 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 _GLIBCXX_END_NAMESPACE_CONTAINER
 
 #if __cplusplus > 201402L
-_GLIBCXX_BEGIN_NAMESPACE_VERSION
   // Allow std::unordered_map access to internals of compatible maps.
   template<typename _Key, typename _Val, typename _Hash1, typename _Eq1,
 	   typename _Alloc, typename _Hash2, typename _Eq2>
@@ -1974,9 +2126,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       _S_get_table(unordered_multimap<_Key, _Val, _Hash2, _Eq2, _Alloc>& __map)
       { return __map._M_h; }
     };
-_GLIBCXX_END_NAMESPACE_VERSION
 #endif // C++17
 
+_GLIBCXX_END_NAMESPACE_VERSION
 } // namespace std
 
 #endif /* _UNORDERED_MAP_H */
