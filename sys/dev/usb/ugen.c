@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.156 2020/08/16 06:17:31 riastradh Exp $	*/
+/*	$NetBSD: ugen.c,v 1.157 2020/08/18 14:32:34 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.156 2020/08/16 06:17:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.157 2020/08/18 14:32:34 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -139,6 +139,7 @@ struct ugen_softc {
 	int sc_refcnt;
 	char sc_buffer[UGEN_BBSIZE];
 	u_char sc_dying;
+	u_char sc_attached;
 };
 
 static struct {
@@ -379,6 +380,9 @@ ugenif_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	if (uiaa->uiaa_ifaceno < 0) {
 		/*
 		 * If we attach the whole device,
@@ -388,7 +392,6 @@ ugenif_attach(device_t parent, device_t self, void *aux)
 		if (err) {
 			aprint_error_dev(self,
 			    "setting configuration index 0 failed\n");
-			sc->sc_dying = 1;
 			return;
 		}
 	}
@@ -401,16 +404,12 @@ ugenif_attach(device_t parent, device_t self, void *aux)
 	if (err) {
 		aprint_error_dev(self, "setting configuration %d failed\n",
 		    conf);
-		sc->sc_dying = 1;
 		return;
 	}
 
 	ugenif_get_unit(sc);
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
-
-	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error_dev(self, "couldn't establish power handler\n");
-
+	sc->sc_attached = 1;
 }
 
 Static void
@@ -1143,6 +1142,10 @@ ugen_detach(device_t self, int flags)
 
 	sc->sc_dying = 1;
 	pmf_device_deregister(self);
+
+	if (!sc->sc_attached)
+		goto out;
+
 	/* Abort all pipes.  Causes processes waiting for transfer to wake. */
 	for (i = 0; i < USB_MAX_ENDPOINTS; i++) {
 		for (dir = OUT; dir <= IN; dir++) {
@@ -1173,7 +1176,7 @@ ugen_detach(device_t self, int flags)
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 	ugenif_put_unit(sc);
 
-	for (i = 0; i < USB_MAX_ENDPOINTS; i++) {
+out:	for (i = 0; i < USB_MAX_ENDPOINTS; i++) {
 		for (dir = OUT; dir <= IN; dir++) {
 			sce = &sc->sc_endpoints[i][dir];
 			seldestroy(&sce->rsel);
