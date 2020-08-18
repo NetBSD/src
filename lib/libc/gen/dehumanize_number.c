@@ -1,4 +1,4 @@
-/*	$NetBSD: dehumanize_number.c,v 1.7 2014/10/01 13:53:04 apb Exp $	*/
+/*	$NetBSD: dehumanize_number.c,v 1.8 2020/08/18 19:18:06 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: dehumanize_number.c,v 1.7 2014/10/01 13:53:04 apb Exp $");
+__RCSID("$NetBSD: dehumanize_number.c,v 1.8 2020/08/18 19:18:06 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -104,8 +104,10 @@ dehumanize_number(const char *str, int64_t *size)
 
 	errno = 0;
 	tmp = strtoll(str, &ep, 10);
-	if (str[0] == '\0' || (ep != delimit && *ep != '\0'))
+	if (str[0] == '\0' || (ep != delimit && *ep != '\0')) {
+		errno = EINVAL;
 		return -1; /* Not a number. */
+	}
 	else if (errno == ERANGE && (tmp == LLONG_MAX || tmp == LLONG_MIN))
 		return -1; /* Out of range. */
 
