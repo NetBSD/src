@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.784 2020/07/04 08:05:26 ryoon Exp $
+$NetBSD: usbdevs,v 1.785 2020/08/18 02:53:01 simonb Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2649,6 +2649,8 @@ product PEGATRON RT3072		0x0011	RT3072
 
 /* Future Bits products */
 product FUTUREBITS 4PI		0x6019	4Pi reprap
+/* Moonbase Otago share vendor ID with Future Bits products */
+product	FUTUREBITS ONERNG	0x6086	OneRNG Random Number Generator
 
 /* Pen Driver */
 product PEN USBDISKPRO		0x0120	USB Disk Pro
