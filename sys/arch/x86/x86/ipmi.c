@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.64 2016/07/07 06:55:40 msaitoh Exp $ */
+/*	$NetBSD: ipmi.c,v 1.64.10.1 2020/08/18 09:41:10 martin Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.64 2016/07/07 06:55:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.64.10.1 2020/08/18 09:41:10 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1667,13 +1667,13 @@ ipmi_sensor_status(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 		    edata->value_cur > psensor->i_limits.sel_warnmax)
 			return ENVSYS_SWARNOVER;
 
-		if (psensor->i_props & PROP_WARNMIN &&
-		    edata->value_cur < psensor->i_limits.sel_warnmin)
-			return ENVSYS_SWARNUNDER;
-
 		if (psensor->i_props & PROP_CRITMIN &&
 		    edata->value_cur < psensor->i_limits.sel_critmin)
 			return ENVSYS_SCRITUNDER;
+
+		if (psensor->i_props & PROP_WARNMIN &&
+		    edata->value_cur < psensor->i_limits.sel_warnmin)
+			return ENVSYS_SWARNUNDER;
 
 		break;
 
