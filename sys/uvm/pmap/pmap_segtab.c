@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.17 2020/08/18 07:25:46 skrll Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.18 2020/08/18 11:48:21 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.17 2020/08/18 07:25:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.18 2020/08/18 11:48:21 simonb Exp $");
 
 /*
  *	Manages physical address maps.
@@ -237,7 +237,7 @@ pmap_segtab_release(pmap_t pmap, pmap_segtab_t **stp_p, bool free_stp,
 			continue;
 
 		/*
-		 * If our caller want a callback, do so.
+		 * If our caller wants a callback, do so.
 		 */
 		if (callback != NULL) {
 			(*callback)(pmap, va, va + vinc, pte, flags);
