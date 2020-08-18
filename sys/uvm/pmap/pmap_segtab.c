@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.16 2020/08/17 08:56:27 mrg Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.17 2020/08/18 07:25:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.16 2020/08/17 08:56:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.17 2020/08/18 07:25:46 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -245,7 +245,7 @@ pmap_segtab_release(pmap_t pmap, pmap_segtab_t **stp_p, bool free_stp,
 #ifdef DEBUG
 		for (size_t j = 0; j < NPTEPG; j++) {
 			if (!pte_zero_p(pte[j]))
-				panic("%s: pte entry %p not 0 (%#"PRIxPTE")",
+				panic("%s: pte entry at %p not 0 (%#"PRIxPTE")",
 				    __func__, &pte[j], pte_value(pte[j]));
 		}
 #endif
