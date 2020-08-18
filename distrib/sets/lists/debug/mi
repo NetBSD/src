@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.327 2020/08/14 00:53:16 riastradh Exp $
+# $NetBSD: mi,v 1.328 2020/08/18 03:02:50 perseant Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1666,6 +1666,7 @@
 ./usr/libdata/debug/usr/tests/fs/hfs/t_pathconvert.debug		tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/kernfs/t_basic.debug			tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/lfs/t_pr.debug				tests-fs-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/fs/lfs/t_rfw.debug			tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/msdosfs/t_snapshot.debug		tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/nfs/nfsservice/rumpnfsd.debug			tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/nfs/t_mountd.debug			tests-fs-debug		debug,atf,rump
