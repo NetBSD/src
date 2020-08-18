@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.c,v 1.33 2020/08/01 08:18:36 maxv Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.34 2020/08/18 17:03:58 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.33 2020/08/01 08:18:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.34 2020/08/18 17:03:58 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1040,7 +1040,7 @@ static int nvmm_close(file_t *);
 static int nvmm_mmap(file_t *, off_t *, size_t, int, int *, int *,
     struct uvm_object **, int *);
 
-const struct fileops nvmm_fileops = {
+static const struct fileops nvmm_fileops = {
 	.fo_read = fbadop_read,
 	.fo_write = fbadop_write,
 	.fo_ioctl = nvmm_ioctl,
