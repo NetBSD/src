@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.29 2020/08/11 17:08:36 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.30 2020/08/18 09:42:00 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -997,5 +997,9 @@ sys/dev/pci/mpii.c				1.25
 	mpii(4): make it compilable without bio(4).
 	[jnemeth, ticket #1596]
 
+sys/dev/ipmi.c					1.5
+	(applied to sys/arch/x86/x86/ipmi.c)
 
+	ipmi(4): Fix critical/warning threshold confusion.
+	[nonaka, ticket #1597]
 
