@@ -1,4 +1,4 @@
-# $NetBSD: varmod-subst.mk,v 1.2 2020/08/16 12:30:45 rillig Exp $
+# $NetBSD: varmod-subst.mk,v 1.3 2020/08/19 06:10:06 rillig Exp $
 #
 # Tests for the :S,from,to, variable modifier.
 
@@ -13,6 +13,10 @@ WORDS=		sequences of letters
 .endif
 .if ${WORDS:S,e,*,1} != "s*quences of letters"
 .warning The :S modifier flag '1' is not applied exactly once.
+.endif
+.if ${WORDS:S,f,*,1} != "sequences o* letters"
+.warning The :S modifier flag '1' is only applied to the first word,\
+	 not to the first occurrence.
 .endif
 .if ${WORDS:S,e,*,} != "s*quences of l*tters"
 .warning The :S modifier does not replace every first match per word.
