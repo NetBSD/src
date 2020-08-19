@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.149 2020/07/09 05:57:15 skrll Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.150 2020/08/19 07:29:00 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.149 2020/07/09 05:57:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.150 2020/08/19 07:29:00 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -957,7 +957,7 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 		/* out of RAM? */
 		if (ptmp == NULL) {
 			rw_exit(uobj->vmobjlock);
-			UVMHIST_LOG(pdhist, "sleeping, ptmp == NULL\n",0,0,0,0);
+			UVMHIST_LOG(pdhist, "sleeping, ptmp == NULL",0,0,0,0);
 			uvm_wait("uao_getpage");
 			rw_enter(uobj->vmobjlock, RW_WRITER);
 			uvm_page_array_clear(&a);

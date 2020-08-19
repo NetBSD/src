@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.53 2020/08/11 06:09:44 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.54 2020/08/19 07:29:01 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.53 2020/08/11 06:09:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.54 2020/08/19 07:29:01 simonb Exp $");
 
 /*
  *	Manages physical address maps.
@@ -405,13 +405,13 @@ pmap_page_syncicache(struct vm_page *pg)
 	VM_PAGEMD_PVLIST_READLOCK(mdpg);
 	pmap_pvlist_check(mdpg);
 
-	UVMHIST_LOG(pmaphist, "pv %jx pv_pmap %jx\n", (uintptr_t)pv,
+	UVMHIST_LOG(pmaphist, "pv %jx pv_pmap %jx", (uintptr_t)pv,
 	     (uintptr_t)pv->pv_pmap, 0, 0);
 
 	if (pv->pv_pmap != NULL) {
 		for (; pv != NULL; pv = pv->pv_next) {
 #ifdef MULTIPROCESSOR
-			UVMHIST_LOG(pmaphist, "pv %jx pv_pmap %jx\n",
+			UVMHIST_LOG(pmaphist, "pv %jx pv_pmap %jx",
 			    (uintptr_t)pv, (uintptr_t)pv->pv_pmap, 0, 0);
 			kcpuset_merge(onproc, pv->pv_pmap->pm_onproc);
 			if (kcpuset_match(onproc, kcpuset_running)) {
