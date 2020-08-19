@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.37 2020/08/19 06:07:03 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.38 2020/08/19 06:08:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.37 2020/08/19 06:07:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.38 2020/08/19 06:08:27 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -551,8 +551,7 @@ pmap_tlb_shootdown_process(void)
 #endif
 
 	KASSERT(cpu_intr_p());
-	KASSERTMSG(ci->ci_cpl >= IPL_SCHED,
-	    "%s: cpl (%d) < IPL_SCHED (%d)",
+	KASSERTMSG(ci->ci_cpl >= IPL_SCHED, "%s: cpl (%d) < IPL_SCHED (%d)",
 	    __func__, ci->ci_cpl, IPL_SCHED);
 
 	TLBINFO_LOCK(ti);
