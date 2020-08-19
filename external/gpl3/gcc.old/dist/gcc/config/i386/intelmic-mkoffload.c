@@ -1,6 +1,6 @@
 /* Offload image generation tool for Intel MIC devices.
 
-   Copyright (C) 2014-2017 Free Software Foundation, Inc.
+   Copyright (C) 2014-2018 Free Software Foundation, Inc.
 
    Contributed by Ilya Verbin <ilya.verbin@intel.com>.
 
@@ -19,6 +19,8 @@
    You should have received a copy of the GNU General Public License
    along with GCC; see the file COPYING3.  If not see
    <http://www.gnu.org/licenses/>.  */
+
+#define IN_TARGET_CODE 1
 
 #include "config.h"
 #include <libgen.h>
@@ -451,8 +453,6 @@ prepare_target_image (const char *target_compiler, int argc, char **argv)
   if (verbose)
     obstack_ptr_grow (&argv_obstack, "-v");
   obstack_ptr_grow (&argv_obstack, "-xlto");
-  obstack_ptr_grow (&argv_obstack, "-shared");
-  obstack_ptr_grow (&argv_obstack, "-fPIC");
   obstack_ptr_grow (&argv_obstack, opt1);
   for (int i = 1; i < argc; i++)
     {
@@ -464,6 +464,9 @@ prepare_target_image (const char *target_compiler, int argc, char **argv)
   if (!out_obj_filename)
     fatal_error (input_location, "output file not specified");
   obstack_ptr_grow (&argv_obstack, opt2);
+  /* NB: Put -fPIC and -shared the last to create shared library.  */
+  obstack_ptr_grow (&argv_obstack, "-fPIC");
+  obstack_ptr_grow (&argv_obstack, "-shared");
   obstack_ptr_grow (&argv_obstack, "-o");
   obstack_ptr_grow (&argv_obstack, target_so_filename);
   compile_for_target (&argv_obstack);

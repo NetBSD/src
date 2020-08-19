@@ -1,5 +1,5 @@
 /* Prototypes.
-   Copyright (C) 2001-2017 Free Software Foundation, Inc.
+   Copyright (C) 2001-2018 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -52,8 +52,6 @@ extern void darwin_encode_section_info (tree, rtx, int);
 extern void darwin_set_default_type_attributes (tree);
 
 #endif /* TREE_CODE */
-
-extern void machopic_finish (FILE *);
 
 extern int machopic_reloc_rw_mask (void);
 extern section *machopic_select_section (tree, int, unsigned HOST_WIDE_INT);

@@ -84,6 +84,10 @@
    don't. */
 #define HAVE_DECL_SNPRINTF 1
 
+/* Define to 1 if you have the declaration of `strnlen', and to 0 if you
+   don't. */
+#define HAVE_DECL_STRNLEN 1
+
 /* Define to 1 if you have the declaration of `strtol', and to 0 if you don't.
    */
 #define HAVE_DECL_STRTOL 1

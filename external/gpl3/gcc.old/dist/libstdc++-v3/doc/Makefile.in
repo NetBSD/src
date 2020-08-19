@@ -76,7 +76,7 @@ am__aclocal_m4_deps = $(top_srcdir)/../config/acx.m4 \
 	$(top_srcdir)/linkage.m4 $(top_srcdir)/acinclude.m4 \
 	$(top_srcdir)/../config/gc++filt.m4 \
 	$(top_srcdir)/../config/tls.m4 $(top_srcdir)/../config/gthr.m4 \
-	$(top_srcdir)/configure.ac
+	$(top_srcdir)/../config/cet.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 CONFIG_HEADER = $(top_builddir)/config.h
@@ -145,6 +145,7 @@ ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 ERROR_CONSTANTS_SRCDIR = @ERROR_CONSTANTS_SRCDIR@
 EXEEXT = @EXEEXT@
+EXTRA_CFLAGS = @EXTRA_CFLAGS@
 EXTRA_CXX_FLAGS = @EXTRA_CXX_FLAGS@
 FGREP = @FGREP@
 GLIBCXX_INCLUDES = @GLIBCXX_INCLUDES@
@@ -204,6 +205,7 @@ VTV_CXXLINKFLAGS = @VTV_CXXLINKFLAGS@
 VTV_PCH_CXXFLAGS = @VTV_PCH_CXXFLAGS@
 WARN_FLAGS = @WARN_FLAGS@
 WERROR = @WERROR@
+XMLCATALOG = @XMLCATALOG@
 
 # Validate existing XML structure.
 XMLLINT = xmllint
@@ -925,7 +927,6 @@ ${docbook_outdir}/fo:
 
 ${docbook_outdir}/html:
 	mkdir -p ${docbook_outdir}/html
-	mkdir -p ${docbook_outdir}/html/ext
 	mkdir -p ${docbook_outdir}/html/images
 	mkdir -p ${docbook_outdir}/html/manual
 
@@ -977,6 +978,12 @@ stamp-html-docbook: $(xml_sources) ${docbook_outdir}/html
 	$(STAMP) stamp-html-docbook
 
 doc-html-docbook: stamp-html-docbook-data
+
+# Generate the HTML pages and copy them back to the source tree.
+doc-html-docbook-regenerate: doc-html-docbook
+	$(INSTALL_DATA) ${docbook_outdir}/html/*.html ${top_srcdir}/doc/html
+	$(INSTALL_DATA) ${docbook_outdir}/html/images/* ${top_srcdir}/doc/html/images
+	$(INSTALL_DATA) ${docbook_outdir}/html/manual/*.html ${top_srcdir}/doc/html/manual
 stamp-html-single-docbook: $(xml_sources) ${docbook_outdir}/html
 	@echo "Generating html single file..."
 	$(XSLTPROC) $(XSLT_PARAM) $(XSLT_FLAGS) -o ${manual_html} \

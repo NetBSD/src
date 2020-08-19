@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.8 2019/09/26 08:03:59 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2020/08/19 07:48:02 mrg Exp $
 
 PROG=		cc1
-SRCS=		${G_C_OBJS:S,c-family/,,:S,c/,,:Nlibcpp.a:.o=.c} main.c ${PROG}-checksum.c
+SRCS=		${G_C_OBJS:S,c-family/,,:S,c/,,:S,known-headers.o,known-headers.cc,:S,c-spellcheck.o,c-spellcheck.cc,:Nlibcpp.a:.o=.c}
+SRCS+=		main.c ${PROG}-checksum.c
 CPPFLAGS+=	-DPREFIX=\"/usr\"
 
 .include "../Makefile.backend"
@@ -42,6 +43,9 @@ COPTS.c-ppoutput.c=	-Wno-stack-protector
 COPTS.c-pragma.c=	-Wno-stack-protector
 COPTS.c-typeck.c=	-Wno-stack-protector
 
+COPTS.c-cppbuiltin.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} == 8:? -Wno-error=format-overflow :}
+COPTS.c-typeck.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} == 8:? -Wno-error=format-overflow :}
+
 CPPFLAGS.default-c.c+=	-I${BACKENDOBJ}
 
 .if ${MACHINE_CPU} == "sh3"
@@ -57,6 +61,10 @@ COPTS.c-ada-spec.c+=-O0
 COPTS.cilk.c+=-O0
 COPTS.c-ubsan.c+=-O0
 COPTS.cc1-checksum.c+=-O0
+.endif
+
+.if ${MACHINE_ARCH} == "mipseb" || ${MACHINE_ARCH} == "mipsel"
+COPTS.c-common.c+=-O3
 .endif
 
 LDADD+=	${LIBMPC} ${LIBMPFR} ${LIBGMP} -lintl -lz -lm

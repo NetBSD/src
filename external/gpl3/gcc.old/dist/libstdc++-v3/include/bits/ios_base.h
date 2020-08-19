@@ -1,6 +1,6 @@
 // Iostreams base classes -*- C++ -*-
 
-// Copyright (C) 1997-2017 Free Software Foundation, Inc.
+// Copyright (C) 1997-2018 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -445,7 +445,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     /// Open for output.  Default for @c ofstream and fstream.
     static const openmode out =		_S_out;
 
-    /// Open for input.  Default for @c ofstream.
+    /// Truncate an existing stream when opening.  Default for @c ofstream.
     static const openmode trunc =	_S_trunc;
 
     // 27.4.2.1.5  Type ios_base::seekdir
@@ -469,13 +469,15 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     /// Request a seek relative to the current end of the sequence.
     static const seekdir end =		_S_end;
 
-    // Annex D.6
+#if __cplusplus <= 201402L
+    // Annex D.6 (removed in C++17)
     typedef int io_state;
     typedef int open_mode;
     typedef int seek_dir;
 
     typedef std::streampos streampos;
     typedef std::streamoff streamoff;
+#endif
 
     // Callbacks;
     /**

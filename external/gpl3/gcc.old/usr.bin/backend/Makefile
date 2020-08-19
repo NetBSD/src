@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2019/09/26 08:03:59 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 2020/08/19 07:48:02 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -71,7 +71,7 @@ COPTS.varasm.c=			-Wno-error
 
 # Headers that host objects depend on (except gen*rtl*)
 HH_NORTL=	${G_tm_file_list} ${G_build_xm_include_list}
-HH=		${HH_NORTL} genrtl.h insn-modes.h
+HH=		${HH_NORTL} genrtl.h insn-modes.h insn-modes-inline.h
 
 #
 # Generate the various header files we need.
@@ -161,12 +161,15 @@ insn-modes.h-test: genmodes
 min-insn-modes.c: genmodes
 	${_MKTARGET_CREATE}
 	./genmodes -m >${.TARGET}
+insn-modes-inline.h: genmodes
+	${_MKTARGET_CREATE}
+	./genmodes -i >${.TARGET}
 genmodes.lo: ${HH_NORTL}
 genmodes: genmodes.lo build-errors.lo
 	${_MKTARGET_LINK}
 	${HOST_LINK.cc} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY}
 
-CLEANFILES+=	genmodes insn-modes.c insn-modes.h-test min-insn-modes.c
+CLEANFILES+=	genmodes insn-modes.c insn-modes.h-test min-insn-modes.c insn-modes-inline.h
 
 gimple-match.c: genmatch cfn-operators.pd
 	./genmatch --gimple ${GNUHOSTDIST}/gcc/match.pd > gimple-match.c.tmp
@@ -257,7 +260,7 @@ build-print-rtl.c: print-rtl.c \
 		${GNUHOSTDIST}/gcc/print-rtl.c >${.TARGET}
 build-print-rtl.lo: ${HH}
 build-print-rtl.o: print-rtl.c $(BCONFIG_H) $(SYSTEM_H) coretypes.h     \
-  $(GTM_H) $(RTL_BASE_H)
+  ${GTM_H} ${G_RTL_BASE_H}
 CLEANFILES+=	build-print-rtl.c
 
 build-bitmap.c: bitmap.c \
@@ -313,7 +316,7 @@ build-genattrtab.o: ${G_GGC_H}
 #
 # The normal insn-foo generators
 #
-.for f in gensupport.c read-rtl.c dummy-conditions.c
+.for f in gensupport.c read-rtl.c dummy-conditions.c read-md.c
 ${f:R}.lo: ${HH}
 .endfor
 
@@ -531,14 +534,17 @@ COPTS.builtins.c+=-O0
 COPTS.calls.c+=-O0
 COPTS.convert.c+=-O0
 COPTS.data-streamer-out.c+=-O0
-COPTS.dwarf2out.c+=-O0
 COPTS.dse.c+=-O0					# XXX port-vax/51967
+COPTS.dwarf2out.c+=-O0
 COPTS.expmed.c+=-O0
 COPTS.expr.c+=-O0 -Wno-error=tautological-compare
 COPTS.fixed-value.c+=-O0
 COPTS.fold-const.c+=-O0
+COPTS.generic-match.c+=-O0
 COPTS.gimple-fold.c+=-O0
+COPTS.gimple-match.c+=-O0
 COPTS.gimple-ssa-strength-reduction.c+=-O0
+COPTS.gimple-ssa-warn-restrict.c+=-O0
 COPTS.gimple.c+=-O0
 COPTS.internal-fn.c+=-O0
 COPTS.lto-streamer-out.c+=-O0
@@ -551,13 +557,13 @@ COPTS.stor-layout.c+=-O0
 COPTS.targhooks.c+=-O0
 COPTS.tree-affine.c+=-O0
 COPTS.tree-cfg.c+=-O0
+COPTS.tree-data-ref.c+=-O0
 COPTS.tree-eh.c+=-O0
 COPTS.tree-if-conv.c+=-O0
 COPTS.tree-object-size.c+=-O0
 COPTS.tree-parloops.c+=-O0
 COPTS.tree-predcom.c+=-O0
 COPTS.tree-pretty-print.c+=-O0
-COPTS.tree-ssa.c+=-O0
 COPTS.tree-ssa-alias.c+=-O0
 COPTS.tree-ssa-ccp.c+=-O0
 COPTS.tree-ssa-forwprop.c+=-O0
@@ -567,24 +573,29 @@ COPTS.tree-ssa-loop-niter.c+=-O0
 COPTS.tree-ssa-math-opts.c+=-O0
 COPTS.tree-ssa-pre.c+=-O0
 COPTS.tree-ssa-reassoc.c+=-O0
+COPTS.tree-ssa-strlen.c+=-O0
 COPTS.tree-ssa-uninit.c+=-O0
+COPTS.tree-ssa.c+=-O0
 COPTS.tree-switch-conversion.c+=-O0
 COPTS.tree-vect-data-refs.c+=-O0
-COPTS.tree-vect-loop.c+=-O0
 COPTS.tree-vect-loop-manip.c+=-O0
+COPTS.tree-vect-loop.c+=-O0
 COPTS.tree-vect-patterns.c+=-O0
 COPTS.tree-vect-stmts.c+=-O0
 COPTS.tree-vrp.c+=-O0
 COPTS.tree.c+=-O0
 COPTS.ubsan.c+=-O0
-COPTS.web.c+=-O0
 COPTS.varasm.c+=-O0
+COPTS.vr-values.c+=-O0
+COPTS.web.c+=-O0
 COPTS.wide-int.cc+=-O0
 .else
 COPTS.tree.c=	${${ACTIVE_CC} == "clang" :? -O0 :}
 .endif
 
 CFLAGS+=	-Wno-stack-protector
+
+COPTS.dwarf2out.c+=-Wno-error=maybe-uninitialized
 
 .if ${GCC_MACHINE_ARCH} == "m68000" || ${GCC_MACHINE_ARCH} == "m68k" || \
 	${GCC_MACHINE_ARCH} == "coldfire"

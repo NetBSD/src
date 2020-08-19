@@ -1,5 +1,5 @@
 /* Base configuration file for all NetBSD targets.
-   Copyright (C) 1997-2017 Free Software Foundation, Inc.
+   Copyright (C) 1997-2018 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -63,7 +63,7 @@ along with GCC; see the file COPYING3.  If not see
  * XXX figure out a better way to do this
  */
 #undef GCC_INCLUDE_DIR
-#define GCC_INCLUDE_DIR "/usr/include/gcc-7"
+#define GCC_INCLUDE_DIR "/usr/include/gcc-8"
 
 /* Under NetBSD, the normal location of the various *crt*.o files is the
    /usr/lib directory.  */
@@ -99,24 +99,17 @@ along with GCC; see the file COPYING3.  If not see
    1. Select the appropriate set of libs, depending on whether we're
       profiling.
 
-   2. Include the pthread library if -pthread is specified (only
-      if threads are enabled).
+   2. Include the pthread library if -pthread is specified.
 
-   3. Include the posix library if -posix is specified.
+   3. Include the posix library if -posix is specified. */
 
-   FIXME: Could eliminate the duplication here if we were allowed to
-   use string concatenation.  */
-
-#define NETBSD_LIB_SPEC_PTHREAD \
+#define NETBSD_LIB_SPEC		\
   "%{pthread:			\
      %{!p:			\
        %{!pg:-lpthread}}	\
      %{p:-lpthread_p}		\
-     %{pg:-lpthread_p}}"
-
-#define NETBSD_LIB_SPEC		\
-  NETBSD_LIB_SPEC_PTHREAD       \
-  "%{posix:			\
+     %{pg:-lpthread_p}}		\
+   %{posix:			\
      %{!p:			\
        %{!pg:-lposix}}		\
      %{p:-lposix_p}		\
@@ -164,7 +157,7 @@ along with GCC; see the file COPYING3.  If not see
 #define CC1PLUS_SPEC NETBSD_CC1_AND_CC1PLUS_SPEC
 
 #if defined(HAVE_LD_EH_FRAME_HDR)
-#define LINK_EH_SPEC "%{!static:--eh-frame-hdr} "
+#define LINK_EH_SPEC "%{!static|static-pie:--eh-frame-hdr} "
 #endif
 
 #undef TARGET_LIBC_HAS_FUNCTION
