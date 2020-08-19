@@ -1,4 +1,4 @@
-#	$NetBSD: history,v 1.5 2011/06/30 20:09:17 wiz Exp $
+#	$NetBSD: history,v 1.6 2020/08/19 02:19:07 msaitoh Exp $
 ---------------------------------------------------------------------------
 This document is more included as a historical reference and nostalgia :)
 rather than a still worked on list.
@@ -351,7 +351,7 @@ rather than a still worked on list.
 	- new function arm_fpe_copycontext created
 	- fixed the use of FP instructions in sfas.c
 	- fixed errors in the softint code
-	- netns support can be be compiled in the kernel
+	- netns support can be compiled in the kernel
 	- fixed warnings in fpe-sp/fpe.c and mainbus/cpu.c
 
 10/01/96

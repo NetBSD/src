@@ -1,4 +1,4 @@
-.\"	$NetBSD: 1.t,v 1.3 2003/08/07 10:30:44 agc Exp $
+.\"	$NetBSD: 1.t,v 1.4 2020/08/19 02:19:07 msaitoh Exp $
 .\"
 .\" Copyright (c) 1986 The Regents of the University of California.
 .\" All rights reserved.
@@ -154,7 +154,7 @@ be governed by the amount of physical memory.
 .PP
 Another effect of the current technology is that the latency and overhead
 associated with accessing the file system is considerably higher
-since the access must be be over the network
+since the access must be over the network
 rather than to a locally-attached disk.
 One use of the surplus memory would be to
 maintain a cache of recently used files;
