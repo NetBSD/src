@@ -1,4 +1,4 @@
-# $NetBSD: cond-short.mk,v 1.8 2020/07/19 21:03:55 rillig Exp $
+# $NetBSD: cond-short.mk,v 1.9 2020/08/19 22:47:09 rillig Exp $
 #
 # Demonstrates that in conditions, the right-hand side of an && or ||
 # is only evaluated if it can actually influence the result.
@@ -123,6 +123,7 @@ x=Ok
 x=Fail
 .endif
 x!= echo 'defined(V42) && ${V42} > 0: $x' >&2; echo
+
 # this one throws both String comparison operator and
 # Malformed conditional with cond.c 1.78
 # indirect iV2 would expand to "" and treated as 0
@@ -132,6 +133,7 @@ x=Fail
 x=Ok
 .endif
 x!= echo 'defined(V66) && ( "${iV2}" < ${V42} ): $x' >&2; echo
+
 # next two thow String comparison operator with cond.c 1.78
 # indirect iV1 would expand to 42
 .if 1 || ${iV1} < ${V42}
@@ -140,12 +142,14 @@ x=Ok
 x=Fail
 .endif
 x!= echo '1 || ${iV1} < ${V42}: $x' >&2; echo
+
 .if 1 || ${iV2:U2} < ${V42}
 x=Ok
 .else
 x=Fail
 .endif
 x!= echo '1 || ${iV2:U2} < ${V42}: $x' >&2; echo
+
 # the same expressions are fine when the lhs is expanded
 # ${iV1} expands to 42
 .if 0 || ${iV1} <= ${V42}
@@ -154,6 +158,7 @@ x=Ok
 x=Fail
 .endif
 x!= echo '0 || ${iV1} <= ${V42}: $x' >&2; echo
+
 # ${iV2:U2} expands to 2
 .if 0 || ${iV2:U2} < ${V42}
 x=Ok
