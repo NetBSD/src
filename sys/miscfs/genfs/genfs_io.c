@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.100 2020/08/14 09:06:14 chs Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.101 2020/08/19 07:29:00 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.100 2020/08/14 09:06:14 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.101 2020/08/19 07:29:00 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -689,7 +689,7 @@ genfs_getpages_read(struct vnode *vp, struct vm_page **pgs, int npages,
 		lbn = offset >> fs_bshift;
 		error = VOP_BMAP(vp, lbn, &devvp, &blkno, &run);
 		if (error) {
-			UVMHIST_LOG(ubchist, "VOP_BMAP lbn 0x%jx -> %jd\n",
+			UVMHIST_LOG(ubchist, "VOP_BMAP lbn 0x%jx -> %jd",
 			    lbn,error,0,0);
 			skipbytes += bytes;
 			bytes = 0;
@@ -1516,7 +1516,7 @@ genfs_do_io(struct vnode *vp, off_t off, vaddr_t kva, size_t len, int flags,
 		lbn = offset >> fs_bshift;
 		error = VOP_BMAP(vp, lbn, &devvp, &blkno, &run);
 		if (error) {
-			UVMHIST_LOG(ubchist, "VOP_BMAP lbn 0x%jx -> %jd\n",
+			UVMHIST_LOG(ubchist, "VOP_BMAP lbn 0x%jx -> %jd",
 			    lbn, error, 0, 0);
 			skipbytes += bytes;
 			bytes = 0;
