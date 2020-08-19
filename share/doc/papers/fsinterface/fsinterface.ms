@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsinterface.ms,v 1.4 2003/08/07 10:30:42 agc Exp $
+.\"	$NetBSD: fsinterface.ms,v 1.5 2020/08/19 02:19:07 msaitoh Exp $
 .\"
 .\" Copyright (c) 1986 The Regents of the University of California.
 .\" All rights reserved.
@@ -576,7 +576,7 @@ and they may be accessed using short offsets from a base pointer
 .PP
 The proposed filesystem interface is described very tersely here.
 For the most part, data structures and procedures are analogous
-to those used by VFS, and only the changes will be be treated here.
+to those used by VFS, and only the changes will be treated here.
 See [Kleiman86] for complete descriptions of the vfs and vnode operations
 in Sun's interface.
 .PP
