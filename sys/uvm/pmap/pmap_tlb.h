@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.h,v 1.14 2020/08/01 07:14:05 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.h,v 1.15 2020/08/19 06:11:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -104,11 +104,11 @@ struct pmap_asid_info {
 	    - offsetof(struct pmap, pm_pai[tlbinfo_index(ti)])))
 
 enum tlb_invalidate_op {
-	TLBINV_NOBODY=0,
-	TLBINV_ONE=1,
-	TLBINV_ALLUSER=2,
-	TLBINV_ALLKERNEL=3,
-	TLBINV_ALL=4
+	TLBINV_NOBODY = 0,
+	TLBINV_ONE = 1,
+	TLBINV_ALLUSER = 2,
+	TLBINV_ALLKERNEL = 3,
+	TLBINV_ALL = 4
 };
 
 struct pmap_tlb_info {
