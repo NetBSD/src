@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.113 2020/05/25 21:15:10 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.114 2020/08/19 07:29:00 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2020 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.113 2020/05/25 21:15:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.114 2020/08/19 07:29:00 simonb Exp $");
 
 #include "opt_cputype.h"
 
@@ -877,7 +877,7 @@ pmap_bootstrap(vaddr_t vstart)
 		pmap_hpt = addr;
 		addr += pmap_hptsize;
 
-		UVMHIST_LOG(maphist, "hpt_table %#jx @ %#jx\n",
+		UVMHIST_LOG(maphist, "hpt_table %#jx @ %#jx",
 		    pmap_hptsize, addr, 0, 0);
 
 		if ((error = (cpu_hpt_init)(pmap_hpt, pmap_hptsize)) < 0) {
