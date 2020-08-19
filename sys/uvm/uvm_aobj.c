@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.150 2020/08/19 07:29:00 simonb Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.151 2020/08/19 15:36:41 chs Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.150 2020/08/19 07:29:00 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.151 2020/08/19 15:36:41 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -982,6 +982,7 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 			 * unlock object for i/o, relock when done.
 			 */
 
+			uvm_page_array_clear(&a);
 			rw_exit(uobj->vmobjlock);
 			error = uvm_swap_get(ptmp, swslot, PGO_SYNCIO);
 			rw_enter(uobj->vmobjlock, RW_WRITER);
@@ -1015,6 +1016,7 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 					uvm_page_unbusy(pps, lcv);
 				}
 				memset(pps, 0, maxpages * sizeof(pps[0]));
+				uvm_page_array_fini(&a);
 				return error;
 			}
 #else /* defined(VMSWAP) */
