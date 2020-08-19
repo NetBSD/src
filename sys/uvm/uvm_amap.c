@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.109 2018/08/12 09:29:16 maxv Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.109.4.1 2020/08/19 18:36:59 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.109 2018/08/12 09:29:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.109.4.1 2020/08/19 18:36:59 martin Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -317,7 +317,7 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize, int flags)
 	struct vm_amap *amap = entry->aref.ar_amap;
 	int slotoff = entry->aref.ar_pageoff;
 	int slotmapped, slotadd, slotneed, slotadded, slotalloc;
-	int slotadj, slotarea;
+	int slotadj, slotarea, slotendoff;
 	int oldnslots;
 #ifdef UVM_AMAP_PPREF
 	int *newppref, *oldppref;
@@ -353,6 +353,36 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize, int flags)
 		slotarea = amap->am_maxslot - slotmapped;
 	}
 	tofree = NULL;
+
+	/*
+	 * Because this amap only has 1 ref, we know that there is
+	 * only one vm_map_entry pointing to it, and the one entry is
+	 * using slots between slotoff and slotoff + slotmapped.  If
+	 * we have been using ppref then we know that only slots in
+	 * the one map entry's range can have anons, since ppref
+	 * allowed us to free any anons outside that range as other map
+	 * entries which used this amap were removed. But without ppref,
+	 * we couldn't know which slots were still needed by other map
+	 * entries, so we couldn't free any anons as we removed map
+	 * entries, and so any slot from 0 to am_nslot can have an
+	 * anon.  But now that we know there is only one map entry
+	 * left and we know its range, we can free up any anons
+	 * outside that range.  This is necessary because the rest of
+	 * this function assumes that there are no anons in the amap
+	 * outside of the one map entry's range.
+	 */
+
+	slotendoff = slotoff + slotmapped;
+	if (amap->am_ppref == PPREF_NONE) {
+		amap_wiperange(amap, 0, slotoff, &tofree);
+		amap_wiperange(amap, slotendoff, amap->am_nslot - slotendoff, &tofree);
+	}
+	for (i = 0; i < slotoff; i++) {
+		KASSERT(amap->am_anon[i] == NULL);
+	}
+	for (i = slotendoff; i < amap->am_nslot - slotendoff; i++) {
+		KASSERT(amap->am_anon[i] == NULL);
+	}
 
 	/*
 	 * case 1: we already have enough slots in the map and thus
