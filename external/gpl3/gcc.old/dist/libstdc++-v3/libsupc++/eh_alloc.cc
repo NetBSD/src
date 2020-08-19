@@ -1,5 +1,5 @@
 // -*- C++ -*- Allocate exception objects.
-// Copyright (C) 2001-2017 Free Software Foundation, Inc.
+// Copyright (C) 2001-2018 Free Software Foundation, Inc.
 //
 // This file is part of GCC.
 //
@@ -162,7 +162,7 @@ namespace
       allocated_entry *x;
       if ((*e)->size - size >= sizeof (free_entry))
 	{
-	  // Slit block if it is too large.
+	  // Split block if it is too large.
 	  free_entry *f = reinterpret_cast <free_entry *>
 	      (reinterpret_cast <char *> (*e) + size);
 	  std::size_t sz = (*e)->size;

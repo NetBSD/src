@@ -4,7 +4,7 @@
    targets, if a frame header is required, it is allocated by the callee.
 
 
-   Copyright (C) 2015-2017 Free Software Foundation, Inc.
+   Copyright (C) 2015-2018 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -23,6 +23,8 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 
+#define IN_TARGET_CODE 1
+
 #include "config.h"
 #include "system.h"
 #include "context.h"
@@ -32,6 +34,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-pass.h"
 #include "target.h"
 #include "target-globals.h"
+#include "profile-count.h"
 #include "cfg.h"
 #include "cgraph.h"
 #include "function.h"

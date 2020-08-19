@@ -1,6 +1,6 @@
 // <range_access.h> -*- C++ -*-
 
-// Copyright (C) 2010-2017 Free Software Foundation, Inc.
+// Copyright (C) 2010-2018 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -257,7 +257,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
    *  @param  __cont  Container.
    */
   template <typename _Container>
-    constexpr auto
+    [[nodiscard]] constexpr auto
     empty(const _Container& __cont) noexcept(noexcept(__cont.empty()))
     -> decltype(__cont.empty())
     { return __cont.empty(); }
@@ -267,7 +267,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
    *  @param  __array  Container.
    */
   template <typename _Tp, size_t _Nm>
-    constexpr bool
+    [[nodiscard]] constexpr bool
     empty(const _Tp (&/*__array*/)[_Nm]) noexcept
     { return false; }
 
@@ -276,7 +276,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
    *  @param  __il  Initializer list.
    */
   template <typename _Tp>
-    constexpr bool
+    [[nodiscard]] constexpr bool
     empty(initializer_list<_Tp> __il) noexcept
     { return __il.size() == 0;}
 

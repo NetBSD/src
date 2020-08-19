@@ -1,4 +1,4 @@
-// Copyright (C) 1997-2017 Free Software Foundation, Inc.
+// Copyright (C) 1997-2018 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -296,7 +296,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   locale::classic()
   {
     _S_initialize();
-    return *(new (&c_locale) locale(_S_classic));
+    return *(const locale*)c_locale;
   }
 
   void
@@ -306,6 +306,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     // One reference for _S_classic, one for _S_global
     _S_classic = new (&c_locale_impl) _Impl(2);
     _S_global = _S_classic;
+    new (&c_locale) locale(_S_classic);
   }
 
   void

@@ -1,5 +1,5 @@
 /* RTL utility routines.
-   Copyright (C) 1987-2017 Free Software Foundation, Inc.
+   Copyright (C) 1987-2018 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -89,7 +89,8 @@ const char * const rtx_format[NUM_RTX_CODE] = {
      "b" is a pointer to a bitmap header.
      "B" is a basic block pointer.
      "t" is a tree pointer.
-     "r" a register.  */
+     "r" a register.
+     "p" is a poly_uint16 offset.  */
 
 #define DEF_RTL_EXPR(ENUM, NAME, FORMAT, CLASS)   FORMAT ,
 #include "rtl.def"		/* rtl expressions are defined here */
@@ -189,6 +190,10 @@ rtx_size (const_rtx x)
 	    + sizeof (struct hwivec_def)
 	    + ((CONST_WIDE_INT_NUNITS (x) - 1)
 	       * sizeof (HOST_WIDE_INT)));
+  if (CONST_POLY_INT_P (x))
+    return (RTX_HDR_SIZE
+	    + sizeof (struct const_poly_int_def)
+	    + CONST_POLY_INT_COEFFS (x).extra_size ());
   if (GET_CODE (x) == SYMBOL_REF && SYMBOL_REF_HAS_BLOCK_INFO_P (x))
     return RTX_HDR_SIZE + sizeof (struct block_symbol);
   return RTX_CODE_SIZE (GET_CODE (x));
@@ -223,7 +228,7 @@ rtx_alloc_stat_v (RTX_CODE code MEM_STAT_DECL, int extra)
    all the rest is initialized to zero.  */
 
 rtx
-rtx_alloc_stat (RTX_CODE code MEM_STAT_DECL)
+rtx_alloc (RTX_CODE code MEM_STAT_DECL)
 {
   return rtx_alloc_stat_v (code PASS_MEM_STAT, 0);
 }
@@ -254,9 +259,10 @@ shared_const_p (const_rtx orig)
 
   /* CONST can be shared if it contains a SYMBOL_REF.  If it contains
      a LABEL_REF, it isn't sharable.  */
+  poly_int64 offset;
   return (GET_CODE (XEXP (orig, 0)) == PLUS
 	  && GET_CODE (XEXP (XEXP (orig, 0), 0)) == SYMBOL_REF
-	  && CONST_INT_P (XEXP (XEXP (orig, 0), 1)));
+	  && poly_int_rtx_p (XEXP (XEXP (orig, 0), 1), &offset));
 }
 
 
@@ -341,6 +347,7 @@ copy_rtx (rtx orig)
       case 't':
       case 'w':
       case 'i':
+      case 'p':
       case 's':
       case 'S':
       case 'T':
@@ -359,7 +366,7 @@ copy_rtx (rtx orig)
 /* Create a new copy of an rtx.  Only copy just one level.  */
 
 rtx
-shallow_copy_rtx_stat (const_rtx orig MEM_STAT_DECL)
+shallow_copy_rtx (const_rtx orig MEM_STAT_DECL)
 {
   const unsigned int size = rtx_size (orig);
   rtx const copy = ggc_alloc_rtx_def_stat (size PASS_MEM_STAT);
@@ -493,6 +500,11 @@ rtx_equal_p_cb (const_rtx x, const_rtx y, rtx_equal_p_callback_function cb)
 #endif
 	      return 0;
 	    }
+	  break;
+
+	case 'p':
+	  if (maybe_ne (SUBREG_BYTE (x), SUBREG_BYTE (y)))
+	    return 0;
 	  break;
 
 	case 'V':
@@ -632,6 +644,11 @@ rtx_equal_p (const_rtx x, const_rtx y)
 	    }
 	  break;
 
+	case 'p':
+	  if (maybe_ne (SUBREG_BYTE (x), SUBREG_BYTE (y)))
+	    return 0;
+	  break;
+
 	case 'V':
 	case 'E':
 	  /* Two vectors must have the same length.  */
@@ -714,6 +731,8 @@ classify_insn (rtx x)
     return CALL_INSN;
   if (ANY_RETURN_P (x))
     return JUMP_INSN;
+  if (GET_CODE (x) == ASM_OPERANDS && ASM_OPERANDS_LABEL_VEC (x))
+    return JUMP_INSN;
   if (GET_CODE (x) == SET)
     {
       if (GET_CODE (SET_DEST (x)) == PC)
@@ -739,6 +758,9 @@ classify_insn (rtx x)
 		 && GET_CODE (SET_SRC (XVECEXP (x, 0, j))) == CALL)
 	  return CALL_INSN;
       if (has_return_p)
+	return JUMP_INSN;
+      if (GET_CODE (XVECEXP (x, 0, 0)) == ASM_OPERANDS
+	  && ASM_OPERANDS_LABEL_VEC (XVECEXP (x, 0, 0)))
 	return JUMP_INSN;
     }
 #ifdef GENERATOR_FILE
