@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.8 2016/05/30 02:32:19 dholland Exp $	*/
+/*	$NetBSD: boot.c,v 1.9 2020/08/19 02:19:07 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -278,7 +278,7 @@ getbootfile(int try)
 
 /*
  * Try to find the /etc/fstab file on the filesystem (rootdev),
- * which should be be the root filesystem, and parse it to find 
+ * which should be the root filesystem, and parse it to find 
  * out what the kernel ought to think the root filesystem is.
  *
  * If we're successful, set vfs.root.mountfrom to <vfstype>:<path>

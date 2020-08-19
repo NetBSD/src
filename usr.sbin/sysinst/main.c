@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25 2020/05/12 17:26:43 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.26 2020/08/19 02:19:07 msaitoh Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -510,7 +510,7 @@ ttysighandler(int signo)
 	 * This functionality is used when setting up and displaying child
 	 * output so that the child gets the signal and presumably dies,
 	 * but sysinst continues.  We use this rather than actually ignoring
-	 * the signals, because that will be be passed on to a child
+	 * the signals, because that will be passed on to a child
 	 * through fork/exec, whereas special handlers get reset on exec..
 	 */
 	if (ttysig_ignore)

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_tpublic.h,v 1.19 2010/01/03 02:47:09 mjacob Exp $ */
+/* $NetBSD: isp_tpublic.h,v 1.20 2020/08/19 02:19:07 msaitoh Exp $ */
 /*-
  *  Copyright (c) 1997-2008 by Matthew Jacob
  *  All rights reserved.
@@ -359,12 +359,12 @@ struct tmd_cmd {
  * Inner Layer Handler Function.
  *
  * The inner layer target handler function (the outer layer calls this)
- * should be be prototyped like so:
+ * should be prototyped like so:
  *
  *    void target_action(qact_e, void *arg)
  *
  * The outer layer target handler function (the inner layer calls this)
- * should be be prototyped like:
+ * should be prototyped like:
  *
  *    void scsi_target_handler(tact_e, void *arg)
  */

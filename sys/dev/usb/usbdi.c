@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.203 2020/07/13 05:43:38 mrg Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.204 2020/08/19 02:19:07 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.203 2020/07/13 05:43:38 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.204 2020/08/19 02:19:07 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1788,7 +1788,7 @@ usbd_xfer_cancel_timeout_async(struct usbd_xfer *xfer)
 		 * is therefore no longer set -- the next resubmission
 		 * of the xfer must schedule a new timeout.
 		 *
-		 * The callout should not be be pending at this point:
+		 * The callout should not be pending at this point:
 		 * it is scheduled only under the lock, and only when
 		 * xfer->ux_timeout_set is false, or by the callout or
 		 * task itself when xfer->ux_timeout_reset is true.
