@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.89 2020/08/15 01:49:07 rillig Exp $
+#	$NetBSD: Makefile,v 1.90 2020/08/19 06:30:37 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -45,7 +45,7 @@ HDRS+=  trace.h
 USE_COVERAGE?=	no		# works only with gcc; clang9 fails to link
 .if ${USE_COVERAGE} == "yes"
 GCOV?=		gcov
-COPTS+=		--coverage -O2 -ggdb
+COPTS+=		--coverage -O0 -ggdb
 LDADD+=		--coverage
 .endif
 CLEANFILES+=	*.gcda *.gcno *.gcov
