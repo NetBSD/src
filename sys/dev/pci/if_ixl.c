@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.71 2020/07/31 09:34:33 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.72 2020/08/19 09:03:50 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.71 2020/07/31 09:34:33 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.72 2020/08/19 09:03:50 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -4399,7 +4399,7 @@ ixl_phy_mask_ints(struct ixl_softc *sc)
 }
 
 static int
-ixl_get_phy_abilities(struct ixl_softc *sc,struct ixl_dmamem *idm)
+ixl_get_phy_abilities(struct ixl_softc *sc, struct ixl_dmamem *idm)
 {
 	struct ixl_aq_desc iaq;
 	int rv;
@@ -4840,7 +4840,7 @@ ixl_register_rss_key(struct ixl_softc *sc)
 
 	ixl_get_default_rss_key(rss_seed, sizeof(rss_seed));
 
-	if (ISSET(sc->sc_aq_flags, IXL_SC_AQ_FLAG_RSS)){
+	if (ISSET(sc->sc_aq_flags, IXL_SC_AQ_FLAG_RSS)) {
 		rv = ixl_set_rss_key(sc, (uint8_t*)rss_seed,
 		    sizeof(rss_seed));
 	} else {
@@ -5874,7 +5874,7 @@ ixl_establish_msix(struct ixl_softc *sc)
 		}
 
 		aprint_normal_dev(sc->sc_dev,
-		    "for TXRX%d interrupt at %s",i , intrstr);
+		    "for TXRX%d interrupt at %s", i, intrstr);
 
 		kcpuset_zero(affinity);
 		kcpuset_set(affinity, affinity_to);
