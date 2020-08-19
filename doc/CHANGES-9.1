@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.98 2020/08/18 09:37:41 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.99 2020/08/19 18:38:02 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -4772,4 +4772,10 @@ sys/dev/ipmi.c					1.5
 
 	ipmi(4): Fix critical/warning threshold confusion.
 	[nonaka, ticket #1056]
+
+sys/uvm/uvm_amap.c				1.123 (patch)
+
+	fix amap_extend() to handle amaps where we previously failed
+	to allocate the ppref memory.
+	[chs, ticket #1057]
 
