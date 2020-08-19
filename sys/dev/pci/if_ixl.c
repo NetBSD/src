@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.73 2020/08/19 09:07:57 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.74 2020/08/19 09:22:05 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.73 2020/08/19 09:07:57 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.74 2020/08/19 09:22:05 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -907,7 +907,6 @@ static void	ixl_stats_update(void *);
 static int	ixl_setup_sysctls(struct ixl_softc *);
 static void	ixl_teardown_sysctls(struct ixl_softc *);
 static int	ixl_sysctl_itr_handler(SYSCTLFN_PROTO);
-static int	ixl_sysctl_ndescs_handler(SYSCTLFN_PROTO);
 static int	ixl_queue_pairs_alloc(struct ixl_softc *);
 static void	ixl_queue_pairs_free(struct ixl_softc *);
 
@@ -6656,10 +6655,9 @@ ixl_setup_sysctls(struct ixl_softc *sc)
 		goto out;
 
 	error = sysctl_createv(log, 0, &rxnode, NULL,
-	    CTLFLAG_READWRITE, CTLTYPE_INT, "descriptor_num",
+	    CTLFLAG_READONLY, CTLTYPE_INT, "descriptor_num",
 	    SYSCTL_DESCR("the number of rx descriptors"),
-	    ixl_sysctl_ndescs_handler, 0,
-	    (void *)sc, 0, CTL_CREATE, CTL_EOL);
+	    NULL, 0, &sc->sc_rx_ring_ndescs, 0, CTL_CREATE, CTL_EOL);
 	if (error)
 		goto out;
 
@@ -6695,10 +6693,9 @@ ixl_setup_sysctls(struct ixl_softc *sc)
 		goto out;
 
 	error = sysctl_createv(log, 0, &txnode, NULL,
-	    CTLFLAG_READWRITE, CTLTYPE_INT, "descriptor_num",
+	    CTLFLAG_READONLY, CTLTYPE_INT, "descriptor_num",
 	    SYSCTL_DESCR("the number of tx descriptors"),
-	    ixl_sysctl_ndescs_handler, 0,
-	    (void *)sc, 0, CTL_CREATE, CTL_EOL);
+	    NULL, 0, &sc->sc_tx_ring_ndescs, 0, CTL_CREATE, CTL_EOL);
 	if (error)
 		goto out;
 
@@ -6777,45 +6774,6 @@ ixl_sysctl_itr_handler(SYSCTLFN_ARGS)
 		return EINVAL;
 
 	*itrptr = newitr;
-
-	return 0;
-}
-
-static int
-ixl_sysctl_ndescs_handler(SYSCTLFN_ARGS)
-{
-	struct sysctlnode node = *rnode;
-	struct ixl_softc *sc = (struct ixl_softc *)node.sysctl_data;
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
-	unsigned int *ndescs_ptr, ndescs, n;
-	int error;
-
-	if (ixl_sysctlnode_is_rx(&node)) {
-		ndescs_ptr = &sc->sc_rx_ring_ndescs;
-	} else {
-		ndescs_ptr = &sc->sc_tx_ring_ndescs;
-	}
-
-	ndescs = *ndescs_ptr;
-	node.sysctl_data = &ndescs;
-	node.sysctl_size = sizeof(ndescs);
-
-	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-
-	if (error || newp == NULL)
-		return error;
-
-	if (ISSET(ifp->if_flags, IFF_RUNNING))
-		return EBUSY;
-
-	if (ndescs < 8 || 0xffff < ndescs)
-		return EINVAL;
-
-	n = 1U << (fls32(ndescs) - 1);
-	if (n != ndescs)
-		return EINVAL;
-
-	*ndescs_ptr = ndescs;
 
 	return 0;
 }
