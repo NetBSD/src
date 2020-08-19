@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for the HP Spectrum.
-   Copyright (C) 1992-2017 Free Software Foundation, Inc.
+   Copyright (C) 1992-2018 Free Software Foundation, Inc.
    Contributed by Michael Tiemann (tiemann@cygnus.com) of Cygnus Support
    and Tim Moore (moore@defmacro.cs.utah.edu) of the Center for
    Software Science at the University of Utah.
@@ -177,6 +177,8 @@ do {								\
        builtin_define("_PA_RISC1_1");				\
      else							\
        builtin_define("_PA_RISC1_0");				\
+     if (HPUX_LONG_DOUBLE_LIBRARY)				\
+       builtin_define("__SIZEOF_FLOAT128__=16");		\
 } while (0)
 
 /* An old set of OS defines for various BSD-like systems.  */
@@ -307,12 +309,7 @@ typedef struct GTY(()) machine_function
    POSIX types such as pthread_mutex_t require 16-byte alignment.  Again,
    this is non critical since 16-byte alignment is no longer needed for
    atomic operations.  */
-#define MALLOC_ABI_ALIGNMENT (TARGET_SOM ? 64 : 128)
-
-/* Get around hp-ux assembler bug, and make strcpy of constants fast.  */
-#define CONSTANT_ALIGNMENT(EXP, ALIGN)		\
-  (TREE_CODE (EXP) == STRING_CST		\
-   && (ALIGN) < BITS_PER_WORD ? BITS_PER_WORD : (ALIGN))
+#define MALLOC_ABI_ALIGNMENT (TARGET_64BIT ? 128 : 64)
 
 /* Make arrays of chars word-aligned for the same reasons.  */
 #define DATA_ALIGNMENT(TYPE, ALIGN)		\
@@ -323,13 +320,6 @@ typedef struct GTY(()) machine_function
 /* Set this nonzero if move instructions will actually fail to work
    when given unaligned data.  */
 #define STRICT_ALIGNMENT 1
-
-/* Value is 1 if it is a good idea to tie two pseudo registers
-   when one has mode MODE1 and one has mode MODE2.
-   If HARD_REGNO_MODE_OK could produce different values for MODE1 and MODE2,
-   for any hard reg, then this must be 0 for correct output.  */
-#define MODES_TIEABLE_P(MODE1, MODE2) \
-  pa_modes_tieable_p (MODE1, MODE2)
 
 /* Specify the registers used for certain standard purposes.
    The values of these macros are register numbers.  */
@@ -506,17 +496,6 @@ extern rtx hppa_pic_save_rtx (void);
    goes at a more negative offset in the frame.  */
 #define FRAME_GROWS_DOWNWARD 0
 
-/* Offset within stack frame to start allocating local variables at.
-   If FRAME_GROWS_DOWNWARD, this is the offset to the END of the
-   first local allocated.  Otherwise, it is the offset to the BEGINNING
-   of the first local allocated.
-
-   On the 32-bit ports, we reserve one slot for the previous frame
-   pointer and one fill slot.  The fill slot is for compatibility
-   with HP compiled programs.  On the 64-bit ports, we reserve one
-   slot for the previous frame pointer.  */
-#define STARTING_FRAME_OFFSET 8
-
 /* Define STACK_ALIGNMENT_NEEDED to zero to disable final alignment
    of the stack.  The default is to align it to STACK_BOUNDARY.  */
 #define STACK_ALIGNMENT_NEEDED 0
@@ -558,7 +537,7 @@ extern rtx hppa_pic_save_rtx (void);
    marker, although the runtime documentation only describes a 16
    byte marker.  For compatibility, we allocate 48 bytes.  */
 #define STACK_POINTER_OFFSET \
-  (TARGET_64BIT ? -(crtl->outgoing_args_size + 48): -32)
+  (TARGET_64BIT ? -(crtl->outgoing_args_size + 48) : poly_int64 (-32))
 
 #define STACK_DYNAMIC_OFFSET(FNDECL)	\
   (TARGET_64BIT				\
@@ -615,15 +594,6 @@ struct hppa_args {int words, nargs_prototype, incoming, indirect; };
   (CUM).indirect = 0,				\
   (CUM).nargs_prototype = 1000
 
-/* Figure out the size in words of the function argument.  The size
-   returned by this macro should always be greater than zero because
-   we pass variable and zero sized objects by reference.  */
-
-#define FUNCTION_ARG_SIZE(MODE, TYPE)	\
-  ((((MODE) != BLKmode \
-     ? (HOST_WIDE_INT) GET_MODE_SIZE (MODE) \
-     : int_size_in_bytes (TYPE)) + UNITS_PER_WORD - 1) / UNITS_PER_WORD)
-
 /* Determine where to put an argument to a function.
    Value is zero to push the argument on the stack,
    or a hard register in which to store the argument.
@@ -670,11 +640,6 @@ struct hppa_args {int words, nargs_prototype, incoming, indirect; };
   the standard parameter passing conventions on the RS6000.  That's why
   you'll see lots of similar code in rs6000.h.  */
 
-/* If defined, a C expression which determines whether, and in which
-   direction, to pad out an argument with extra space.  */
-#define FUNCTION_ARG_PADDING(MODE, TYPE) \
-  pa_function_arg_padding ((MODE), (TYPE))
-
 /* Specify padding for the last element of a block move between registers
    and memory.
 
@@ -685,7 +650,7 @@ struct hppa_args {int words, nargs_prototype, incoming, indirect; };
    so that there is only one element.  This allows the object to be
    correctly padded.  */
 #define BLOCK_REG_PADDING(MODE, TYPE, FIRST) \
-  pa_function_arg_padding ((MODE), (TYPE))
+  targetm.calls.function_arg_padding ((MODE), (TYPE))
 
 
 /* On HPPA, we emit profiling code as rtl via PROFILE_HOOK rather than
@@ -719,12 +684,12 @@ void hppa_profile_hook (int label_no);
 extern int may_call_alloca;
 
 #define EXIT_IGNORE_STACK	\
- (get_frame_size () != 0	\
-  || cfun->calls_alloca || crtl->outgoing_args_size)
+ (maybe_ne (get_frame_size (), 0)	\
+  || cfun->calls_alloca || maybe_ne (crtl->outgoing_args_size, 0))
 
 /* Length in units of the trampoline for entering a nested function.  */
 
-#define TRAMPOLINE_SIZE (TARGET_64BIT ? 72 : 52)
+#define TRAMPOLINE_SIZE (TARGET_64BIT ? 72 : 64)
 
 /* Alignment required by the trampoline.  */
 
@@ -1031,10 +996,6 @@ do {									     \
 /* Nonzero if access to memory by bytes is slow and undesirable.  */
 #define SLOW_BYTE_ACCESS 1
 
-/* Value is 1 if truncating an integer of INPREC bits to OUTPREC bits
-   is done just by pretending it is already truncated.  */
-#define TRULY_NOOP_TRUNCATION(OUTPREC, INPREC) 1
-
 /* Specify the machine mode that pointers have.
    After generation of rtl, the compiler makes no further distinction
    between pointers and any other objects of this machine mode.  */
@@ -1332,10 +1293,14 @@ do {									     \
 #endif
 
 /* The maximum offset in bytes for a PA 1.X pc-relative call to the
-   head of the preceding stub table.  The selected offsets have been
-   chosen so that approximately one call stub is allocated for every
-   86.7 instructions.  A long branch stub is two instructions when
-   not generating PIC code.  For HP-UX and ELF targets, PIC stubs are
-   seven and four instructions, respectively.  */  
-#define MAX_PCREL17F_OFFSET \
-  (flag_pic ? (TARGET_HPUX ? 198164 : 221312) : 240000)
+   head of the preceding stub table.  A long branch stub is two or three
+   instructions for non-PIC and PIC, respectively.  Import stubs are
+   seven and five instructions for HP-UX and ELF targets, respectively.
+   The default stub group size for ELF targets is 217856 bytes.
+   FIXME: We need an option to set the maximum offset.  */  
+#define MAX_PCREL17F_OFFSET (TARGET_HPUX ? 198164 : 217856)
+
+#define NEED_INDICATE_EXEC_STACK 0
+
+/* Output default function prologue for hpux.  */
+#define TARGET_ASM_FUNCTION_PROLOGUE pa_output_function_prologue

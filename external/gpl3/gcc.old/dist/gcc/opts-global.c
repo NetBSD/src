@@ -1,6 +1,6 @@
 /* Command line option handling.  Code involving global state that
    should not be shared with the driver.
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2018 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -35,7 +35,10 @@ along with GCC; see the file COPYING3.  If not see
 #include "plugin.h"
 #include "toplev.h"
 #include "context.h"
+#include "stringpool.h"
+#include "attribs.h"
 #include "asan.h"
+#include "file-prefix-map.h" /* add_*_prefix_map()  */
 
 typedef const char *const_char_p; /* For DEF_VEC_P.  */
 
@@ -369,6 +372,10 @@ handle_common_deferred_options (void)
 
 	case OPT_fdebug_regex_map_:
 	  add_debug_regex_map (opt->arg);
+	  break;
+
+	case OPT_ffile_prefix_map_:
+	  add_file_prefix_map (opt->arg);
 	  break;
 
 	case OPT_fdump_:

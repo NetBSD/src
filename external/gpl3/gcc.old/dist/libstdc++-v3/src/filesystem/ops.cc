@@ -1,6 +1,6 @@
-// Filesystem operations -*- C++ -*-
+// Filesystem TS operations -*- C++ -*-
 
-// Copyright (C) 2014-2017 Free Software Foundation, Inc.
+// Copyright (C) 2014-2018 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -26,6 +26,7 @@
 # define _GLIBCXX_USE_CXX11_ABI 1
 #endif
 
+#include <bits/largefile-config.h>
 #include <experimental/filesystem>
 #include <functional>
 #include <ostream>
@@ -35,25 +36,23 @@
 #include <stdio.h>
 #include <errno.h>
 #include <limits.h>  // PATH_MAX
-#ifdef _GLIBCXX_HAVE_UNISTD_H
-# include <unistd.h>
-# if defined(_GLIBCXX_HAVE_SYS_STAT_H) && defined(_GLIBCXX_HAVE_SYS_TYPES_H)
-#  include <sys/types.h>
-#  include <sys/stat.h>
-# endif
-#endif
 #ifdef _GLIBCXX_HAVE_FCNTL_H
-# include <fcntl.h>
+# include <fcntl.h>  // AT_FDCWD, AT_SYMLINK_NOFOLLOW
+#endif
+#ifdef _GLIBCXX_HAVE_SYS_STAT_H
+#  include <sys/stat.h>   // stat, utimensat, fchmodat
 #endif
 #ifdef _GLIBCXX_HAVE_SYS_STATVFS_H
-# include <sys/statvfs.h>
+# include <sys/statvfs.h> // statvfs
 #endif
-#ifdef _GLIBCXX_USE_SENDFILE
-# include <sys/sendfile.h>
+#if !_GLIBCXX_USE_UTIMENSAT && _GLIBCXX_HAVE_UTIME_H
+# include <utime.h> // utime
 #endif
-#if _GLIBCXX_HAVE_UTIME_H
-# include <utime.h>
-#endif
+
+#define _GLIBCXX_BEGIN_NAMESPACE_FILESYSTEM \
+  namespace experimental { namespace filesystem {
+#define _GLIBCXX_END_NAMESPACE_FILESYSTEM } }
+#include "ops-common.h"
 
 #ifdef _GLIBCXX_FILESYSTEM_IS_WINDOWS
 # undef utime
@@ -240,274 +239,16 @@ fs::copy(const path& from, const path& to, copy_options options)
 
 namespace
 {
-  template<typename Bitmask>
-    inline bool is_set(Bitmask obj, Bitmask bits)
-    {
-      return (obj & bits) != Bitmask::none;
-    }
-}
+  using std::filesystem::is_set;
 
 #ifdef _GLIBCXX_HAVE_SYS_STAT_H
-namespace
-{
   typedef struct ::stat stat_type;
 
-  inline fs::file_type
-  make_file_type(const stat_type& st) noexcept
-  {
-    using fs::file_type;
-#ifdef _GLIBCXX_HAVE_S_ISREG
-    if (S_ISREG(st.st_mode))
-      return file_type::regular;
-    else if (S_ISDIR(st.st_mode))
-      return file_type::directory;
-    else if (S_ISCHR(st.st_mode))
-      return file_type::character;
-    else if (S_ISBLK(st.st_mode))
-      return file_type::block;
-    else if (S_ISFIFO(st.st_mode))
-      return file_type::fifo;
-    else if (S_ISLNK(st.st_mode))
-      return file_type::symlink;
-    else if (S_ISSOCK(st.st_mode))
-      return file_type::socket;
-#endif
-    return file_type::unknown;
-
-  }
-
-  inline fs::file_status
-  make_file_status(const stat_type& st) noexcept
-  {
-    return fs::file_status{
-	make_file_type(st),
-	static_cast<fs::perms>(st.st_mode) & fs::perms::mask
-    };
-  }
-
-  inline bool
-  is_not_found_errno(int err) noexcept
-  {
-    return err == ENOENT || err == ENOTDIR;
-  }
-
-  inline fs::file_time_type
-  file_time(const stat_type& st, std::error_code& ec) noexcept
-  {
-    using namespace std::chrono;
-#ifdef _GLIBCXX_USE_ST_MTIM
-    time_t s = st.st_mtim.tv_sec;
-    nanoseconds ns{st.st_mtim.tv_nsec};
-#else
-    time_t s = st.st_mtime;
-    nanoseconds ns{};
-#endif
-
-    if (s >= (nanoseconds::max().count() / 1e9))
-      {
-	ec = std::make_error_code(std::errc::value_too_large); // EOVERFLOW
-	return fs::file_time_type::min();
-      }
-    ec.clear();
-    return fs::file_time_type{seconds{s} + ns};
-  }
-
-  bool
-  do_copy_file(const fs::path& from, const fs::path& to,
-	       fs::copy_options option,
-	       stat_type* from_st, stat_type* to_st,
-	       std::error_code& ec) noexcept
-  {
-    stat_type st1, st2;
-    fs::file_status t, f;
-
-    if (to_st == nullptr)
-      {
-	if (::stat(to.c_str(), &st1))
-	  {
-	    int err = errno;
-	    if (!is_not_found_errno(err))
-	      {
-		ec.assign(err, std::generic_category());
-		return false;
-	      }
-	  }
-	else
-	  to_st = &st1;
-      }
-    else if (to_st == from_st)
-      to_st = nullptr;
-
-    if (to_st == nullptr)
-      t = fs::file_status{fs::file_type::not_found};
-    else
-      t = make_file_status(*to_st);
-
-    if (from_st == nullptr)
-      {
-	if (::stat(from.c_str(), &st2))
-	  {
-	    ec.assign(errno, std::generic_category());
-	    return false;
-	  }
-	else
-	  from_st = &st2;
-      }
-    f = make_file_status(*from_st);
-    // _GLIBCXX_RESOLVE_LIB_DEFECTS
-    // 2712. copy_file() has a number of unspecified error conditions
-    if (!is_regular_file(f))
-      {
-	ec = std::make_error_code(std::errc::not_supported);
-	return false;
-      }
-
-    using opts = fs::copy_options;
-
-    if (exists(t))
-      {
-	if (!is_regular_file(t))
-	  {
-	    ec = std::make_error_code(std::errc::not_supported);
-	    return false;
-	  }
-
-	if (to_st->st_dev == from_st->st_dev
-	    && to_st->st_ino == from_st->st_ino)
-	  {
-	    ec = std::make_error_code(std::errc::file_exists);
-	    return false;
-	  }
-
-	if (is_set(option, opts::skip_existing))
-	  {
-	    ec.clear();
-	    return false;
-	  }
-	else if (is_set(option, opts::update_existing))
-	  {
-	    const auto from_mtime = file_time(*from_st, ec);
-	    if (ec)
-	      return false;
-	    if ((from_mtime <= file_time(*to_st, ec)) || ec)
-	      return false;
-	  }
-	else if (!is_set(option, opts::overwrite_existing))
-	  {
-	    ec = std::make_error_code(std::errc::file_exists);
-	    return false;
-	  }
-	else if (!is_regular_file(t))
-	  {
-	    ec = std::make_error_code(std::errc::not_supported);
-	    return false;
-	  }
-      }
-
-    struct CloseFD {
-      ~CloseFD() { if (fd != -1) ::close(fd); }
-      bool close() { return ::close(std::exchange(fd, -1)) == 0; }
-      int fd;
-    };
-
-    CloseFD in = { ::open(from.c_str(), O_RDONLY) };
-    if (in.fd == -1)
-      {
-	ec.assign(errno, std::generic_category());
-	return false;
-      }
-    int oflag = O_WRONLY|O_CREAT;
-    if (is_set(option, opts::overwrite_existing|opts::update_existing))
-      oflag |= O_TRUNC;
-    else
-      oflag |= O_EXCL;
-    CloseFD out = { ::open(to.c_str(), oflag, S_IWUSR) };
-    if (out.fd == -1)
-      {
-	if (errno == EEXIST && is_set(option, opts::skip_existing))
-	  ec.clear();
-	else
-	  ec.assign(errno, std::generic_category());
-	return false;
-      }
-
-#ifdef _GLIBCXX_USE_FCHMOD
-    if (::fchmod(out.fd, from_st->st_mode))
-#elif defined _GLIBCXX_USE_FCHMODAT
-    if (::fchmodat(AT_FDCWD, to.c_str(), from_st->st_mode, 0))
-#else
-    if (::chmod(to.c_str(), from_st->st_mode))
-#endif
-      {
-	ec.assign(errno, std::generic_category());
-	return false;
-      }
-
-    size_t count = from_st->st_size;
-#ifdef _GLIBCXX_USE_SENDFILE
-    off_t offset = 0;
-    ssize_t n = ::sendfile(out.fd, in.fd, &offset, count);
-    if (n < 0 && errno != ENOSYS && errno != EINVAL)
-      {
-	ec.assign(errno, std::generic_category());
-	return false;
-      }
-    if ((size_t)n == count)
-      {
-	if (!out.close() || !in.close())
-	  {
-	    ec.assign(errno, std::generic_category());
-	    return false;
-	  }
-	ec.clear();
-	return true;
-      }
-    else if (n > 0)
-      count -= n;
-#endif // _GLIBCXX_USE_SENDFILE
-
-    using std::ios;
-    __gnu_cxx::stdio_filebuf<char> sbin(in.fd, ios::in|ios::binary);
-    __gnu_cxx::stdio_filebuf<char> sbout(out.fd, ios::out|ios::binary);
-
-    if (sbin.is_open())
-      in.fd = -1;
-    if (sbout.is_open())
-      out.fd = -1;
-
-#ifdef _GLIBCXX_USE_SENDFILE
-    if (n != 0)
-      {
-	if (n < 0)
-	  n = 0;
-
-	const auto p1 = sbin.pubseekoff(n, ios::beg, ios::in);
-	const auto p2 = sbout.pubseekoff(n, ios::beg, ios::out);
-
-	const std::streampos errpos(std::streamoff(-1));
-	if (p1 == errpos || p2 == errpos)
-	  {
-	    ec = std::make_error_code(std::errc::io_error);
-	    return false;
-	  }
-      }
-#endif
-
-    if (count && !(std::ostream(&sbout) << &sbin))
-      {
-	ec = std::make_error_code(std::errc::io_error);
-	return false;
-      }
-    if (!sbout.close() || !sbin.close())
-      {
-	ec.assign(errno, std::generic_category());
-	return false;
-      }
-    ec.clear();
-    return true;
-  }
-}
-#endif
+  using std::filesystem::is_not_found_errno;
+  using std::filesystem::file_time;
+  using std::filesystem::do_copy_file;
+#endif // _GLIBCXX_HAVE_SYS_STAT_H
+} // namespace
 
 void
 fs::copy(const path& from, const path& to, copy_options options,
@@ -581,11 +322,13 @@ fs::copy(const path& from, const path& to, copy_options options,
       else if (is_set(options, copy_options::create_hard_links))
 	create_hard_link(from, to, ec);
       else if (is_directory(t))
-	do_copy_file(from, to / from.filename(), options, &from_st, 0, ec);
+	do_copy_file(from.c_str(), (to / from.filename()).c_str(),
+		     copy_file_options(options), &from_st, nullptr, ec);
       else
 	{
 	  auto ptr = exists(t) ? &to_st : &from_st;
-	  do_copy_file(from, to, options, &from_st, ptr,  ec);
+	  do_copy_file(from.c_str(), to.c_str(), copy_file_options(options),
+		       &from_st, ptr,  ec);
 	}
     }
   // _GLIBCXX_RESOLVE_LIB_DEFECTS
@@ -622,11 +365,12 @@ fs::copy_file(const path& from, const path& to, copy_options option)
 }
 
 bool
-fs::copy_file(const path& from, const path& to, copy_options option,
+fs::copy_file(const path& from, const path& to, copy_options options,
 	      error_code& ec) noexcept
 {
 #ifdef _GLIBCXX_HAVE_SYS_STAT_H
-  return do_copy_file(from, to, option, nullptr, nullptr, ec);
+  return do_copy_file(from.c_str(), to.c_str(), copy_file_options(options),
+		      nullptr, nullptr, ec);
 #else
   ec = std::make_error_code(std::errc::not_supported);
   return false;
@@ -681,6 +425,19 @@ fs::create_directories(const path& p, error_code& ec) noexcept
       ec = std::make_error_code(errc::invalid_argument);
       return false;
     }
+
+  file_status st = symlink_status(p, ec);
+  if (is_directory(st))
+    return false;
+  else if (ec && !status_known(st))
+    return false;
+  else if (exists(st))
+    {
+      if (!ec)
+	ec = std::make_error_code(std::errc::not_a_directory);
+      return false;
+    }
+
   std::stack<path> missing;
   path pp = p;
 
@@ -689,24 +446,29 @@ fs::create_directories(const path& p, error_code& ec) noexcept
       ec.clear();
       const auto& filename = pp.filename();
       if (!is_dot(filename) && !is_dotdot(filename))
-	missing.push(pp);
-      pp.remove_filename();
+	{
+	  missing.push(std::move(pp));
+	  pp = missing.top().parent_path();
+	}
+      else
+	pp = pp.parent_path();
     }
 
   if (ec || missing.empty())
     return false;
 
+  bool created;
   do
     {
       const path& top = missing.top();
-      create_directory(top, ec);
-      if (ec && is_directory(top))
-	ec.clear();
+      created = create_directory(top, ec);
+      if (ec)
+	return false;
       missing.pop();
     }
-  while (!missing.empty() && !ec);
+  while (!missing.empty());
 
-  return missing.empty();
+  return created;
 }
 
 namespace
@@ -1034,7 +796,7 @@ fs::file_size(const path& p, error_code& ec) noexcept
     S(const stat_type& st) : type(make_file_type(st)), size(st.st_size) { }
     S() : type(file_type::not_found) { }
     file_type type;
-    size_t size;
+    uintmax_t size;
   };
   auto s = do_stat(p, ec, [](const auto& st) { return S{st}; }, S{});
   if (s.type == file_type::regular)
@@ -1228,7 +990,7 @@ fs::path fs::read_symlink(const path& p, error_code& ec)
   std::string buf(st.st_size ? st.st_size + 1 : 128, '\0');
   do
     {
-      ssize_t len = ::readlink(p.c_str(), &buf.front(), buf.size());
+      ssize_t len = ::readlink(p.c_str(), buf.data(), buf.size());
       if (len == -1)
 	{
 	  ec.assign(errno, std::generic_category());
@@ -1309,12 +1071,17 @@ fs::remove_all(const path& p, error_code& ec) noexcept
   uintmax_t count = 0;
   if (s.type() == file_type::directory)
     {
-      for (directory_iterator d(p, ec), end; !ec && d != end; d.increment(ec))
-	count += fs::remove_all(d->path(), ec);
-      if (ec.value() == ENOENT)
-	ec.clear();
-      else if (ec)
-	return -1;
+      directory_iterator d(p, ec), end;
+      while (!ec && d != end)
+	{
+	  const auto removed = fs::remove_all(d->path(), ec);
+	  if (removed == numeric_limits<uintmax_t>::max())
+	    return -1;
+	  count += removed;
+	  d.increment(ec);
+	  if (ec)
+	    return -1;
+	}
     }
 
   if (fs::remove(p, ec))

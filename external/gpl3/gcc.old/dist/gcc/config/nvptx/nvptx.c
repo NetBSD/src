@@ -1,5 +1,5 @@
 /* Target code for NVPTX.
-   Copyright (C) 2014-2017 Free Software Foundation, Inc.
+   Copyright (C) 2014-2018 Free Software Foundation, Inc.
    Contributed by Bernd Schmidt <bernds@codesourcery.com>
 
    This file is part of GCC.
@@ -17,6 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with GCC; see the file COPYING3.  If not see
    <http://www.gnu.org/licenses/>.  */
+
+#define IN_TARGET_CODE 1
 
 #include "config.h"
 #include <sstream>
@@ -62,6 +64,7 @@
 #include "internal-fn.h"
 #include "gimple-iterator.h"
 #include "stringpool.h"
+#include "attribs.h"
 #include "tree-vrp.h"
 #include "tree-ssa-operands.h"
 #include "tree-ssanames.h"
@@ -73,6 +76,9 @@
 
 /* This file should be included last.  */
 #include "target-def.h"
+
+#define WORKAROUND_PTXJIT_BUG 1
+#define WORKAROUND_PTXJIT_BUG_2 1
 
 /* The various PTX memory areas an object might reside in.  */
 enum nvptx_data_area
@@ -172,11 +178,17 @@ nvptx_option_override (void)
   if (!global_options_set.x_flag_toplevel_reorder)
     flag_toplevel_reorder = 1;
 
+  debug_nonbind_markers_p = 0;
+
   /* Set flag_no_common, unless explicitly disabled.  We fake common
      using .weak, and that's not entirely accurate, so avoid it
      unless forced.  */
   if (!global_options_set.x_flag_no_common)
     flag_no_common = 1;
+
+  /* The patch area requires nops, which we don't have.  */
+  if (function_entry_patch_area_size > 0)
+    sorry ("not generating patch area, nops not supported");
 
   /* Assumes that it will see only hard registers.  */
   flag_var_tracking = 0;
@@ -213,26 +225,31 @@ nvptx_ptx_type_from_mode (machine_mode mode, bool promote)
 {
   switch (mode)
     {
-    case BLKmode:
+    case E_BLKmode:
       return ".b8";
-    case BImode:
+    case E_BImode:
       return ".pred";
-    case QImode:
+    case E_QImode:
       if (promote)
 	return ".u32";
       else
 	return ".u8";
-    case HImode:
+    case E_HImode:
       return ".u16";
-    case SImode:
+    case E_SImode:
       return ".u32";
-    case DImode:
+    case E_DImode:
       return ".u64";
 
-    case SFmode:
+    case E_SFmode:
       return ".f32";
-    case DFmode:
+    case E_DFmode:
       return ".f64";
+
+    case E_V2SImode:
+      return ".v2.u32";
+    case E_V2DImode:
+      return ".v2.u64";
 
     default:
       gcc_unreachable ();
@@ -328,6 +345,14 @@ maybe_split_mode (machine_mode mode)
   return VOIDmode;
 }
 
+/* Return true if mode should be treated as two registers.  */
+
+static bool
+split_mode_p (machine_mode mode)
+{
+  return maybe_split_mode (mode) != VOIDmode;
+}
+
 /* Output a register, subreg, or register pair (with optional
    enclosing braces).  */
 
@@ -374,8 +399,7 @@ nvptx_emit_forking (unsigned mask, bool is_call)
 	 it creates a block with a single successor before entering a
 	 partitooned region.  That is a good candidate for the end of
 	 an SESE region.  */
-      if (!is_call)
-	emit_insn (gen_nvptx_fork (op));
+      emit_insn (gen_nvptx_fork (op));
       emit_insn (gen_nvptx_forked (op));
     }
 }
@@ -394,8 +418,7 @@ nvptx_emit_joining (unsigned mask, bool is_call)
       /* Emit joining for all non-call pars to ensure there's a single
 	 predecessor for the block the join insn ends up in.  This is
 	 needed for skipping entire loops.  */
-      if (!is_call)
-	emit_insn (gen_nvptx_joining (op));
+      emit_insn (gen_nvptx_joining (op));
       emit_insn (gen_nvptx_join (op));
     }
 }
@@ -1277,7 +1300,7 @@ nvptx_declare_function_name (FILE *file, const char *name, const_tree decl)
 	  machine_mode mode = PSEUDO_REGNO_MODE (i);
 	  machine_mode split = maybe_split_mode (mode);
 
-	  if (split != VOIDmode)
+	  if (split_mode_p (mode))
 	    mode = split;
 	  fprintf (file, "\t.reg%s ", nvptx_ptx_type_from_mode (mode, true));
 	  output_reg (file, i, split, -2);
@@ -1354,7 +1377,7 @@ nvptx_output_softstack_switch (FILE *file, bool entering,
       fputs (";\n", file);
       if (!CONST_INT_P (size) || UINTVAL (align) > GET_MODE_SIZE (DImode))
 	fprintf (file,
-		 "\t\tand.u%d %%r%d, %%r%d, -" HOST_WIDE_INT_PRINT_DEC ";\n",
+		 "\t\tand.b%d %%r%d, %%r%d, -" HOST_WIDE_INT_PRINT_DEC ";\n",
 		 bits, regno, regno, UINTVAL (align));
     }
   if (cfun->machine->has_softstack)
@@ -1618,10 +1641,10 @@ nvptx_gen_unpack (rtx dst0, rtx dst1, rtx src)
   
   switch (GET_MODE (src))
     {
-    case DImode:
+    case E_DImode:
       res = gen_unpackdisi2 (dst0, dst1, src);
       break;
-    case DFmode:
+    case E_DFmode:
       res = gen_unpackdfsi2 (dst0, dst1, src);
       break;
     default: gcc_unreachable ();
@@ -1639,10 +1662,10 @@ nvptx_gen_pack (rtx dst, rtx src0, rtx src1)
   
   switch (GET_MODE (dst))
     {
-    case DImode:
+    case E_DImode:
       res = gen_packsidi2 (dst, src0, src1);
       break;
-    case DFmode:
+    case E_DFmode:
       res = gen_packsidf2 (dst, src0, src1);
       break;
     default: gcc_unreachable ();
@@ -1660,14 +1683,14 @@ nvptx_gen_shuffle (rtx dst, rtx src, rtx idx, nvptx_shuffle_kind kind)
 
   switch (GET_MODE (dst))
     {
-    case SImode:
+    case E_SImode:
       res = gen_nvptx_shufflesi (dst, src, idx, GEN_INT (kind));
       break;
-    case SFmode:
+    case E_SFmode:
       res = gen_nvptx_shufflesf (dst, src, idx, GEN_INT (kind));
       break;
-    case DImode:
-    case DFmode:
+    case E_DImode:
+    case E_DFmode:
       {
 	rtx tmp0 = gen_reg_rtx (SImode);
 	rtx tmp1 = gen_reg_rtx (SImode);
@@ -1681,7 +1704,7 @@ nvptx_gen_shuffle (rtx dst, rtx src, rtx idx, nvptx_shuffle_kind kind)
 	end_sequence ();
       }
       break;
-    case BImode:
+    case E_BImode:
       {
 	rtx tmp = gen_reg_rtx (SImode);
 	
@@ -1693,8 +1716,8 @@ nvptx_gen_shuffle (rtx dst, rtx src, rtx idx, nvptx_shuffle_kind kind)
 	end_sequence ();
       }
       break;
-    case QImode:
-    case HImode:
+    case E_QImode:
+    case E_HImode:
       {
 	rtx tmp = gen_reg_rtx (SImode);
 
@@ -1756,7 +1779,7 @@ nvptx_gen_wcast (rtx reg, propagate_mask pm, unsigned rep, wcast_data_t *data)
 
   switch (mode)
     {
-    case BImode:
+    case E_BImode:
       {
 	rtx tmp = gen_reg_rtx (SImode);
 	
@@ -1996,6 +2019,30 @@ nvptx_output_ascii (FILE *, const char *str, unsigned HOST_WIDE_INT size)
     nvptx_assemble_value (str[i], 1);
 }
 
+/* Return true if TYPE is a record type where the last field is an array without
+   given dimension.  */
+
+static bool
+flexible_array_member_type_p (const_tree type)
+{
+  if (TREE_CODE (type) != RECORD_TYPE)
+    return false;
+
+  const_tree last_field = NULL_TREE;
+  for (const_tree f = TYPE_FIELDS (type); f; f = TREE_CHAIN (f))
+    last_field = f;
+
+  if (!last_field)
+    return false;
+
+  const_tree last_field_type = TREE_TYPE (last_field);
+  if (TREE_CODE (last_field_type) != ARRAY_TYPE)
+    return false;
+
+  return (! TYPE_DOMAIN (last_field_type)
+	  || ! TYPE_MAX_VALUE (TYPE_DOMAIN (last_field_type)));
+}
+
 /* Emit a PTX variable decl and prepare for emission of its
    initializer.  NAME is the symbol name and SETION the PTX data
    area. The type is TYPE, object size SIZE and alignment is ALIGN.
@@ -2006,10 +2053,17 @@ nvptx_output_ascii (FILE *, const char *str, unsigned HOST_WIDE_INT size)
 
 static void
 nvptx_assemble_decl_begin (FILE *file, const char *name, const char *section,
-			   const_tree type, HOST_WIDE_INT size, unsigned align)
+			   const_tree type, HOST_WIDE_INT size, unsigned align,
+			   bool undefined = false)
 {
   bool atype = (TREE_CODE (type) == ARRAY_TYPE)
     && (TYPE_DOMAIN (type) == NULL_TREE);
+
+  if (undefined && flexible_array_member_type_p (type))
+    {
+      size = 0;
+      atype = true;
+    }
 
   while (TREE_CODE (type) == ARRAY_TYPE)
     type = TREE_TYPE (type);
@@ -2147,7 +2201,7 @@ nvptx_assemble_undefined_decl (FILE *file, const char *name, const_tree decl)
   tree size = DECL_SIZE_UNIT (decl);
   nvptx_assemble_decl_begin (file, name, section_for_decl (decl),
 			     TREE_TYPE (decl), size ? tree_to_shwi (size) : 0,
-			     DECL_ALIGN (decl));
+			     DECL_ALIGN (decl), true);
   nvptx_assemble_decl_end ();
 }
 
@@ -2181,7 +2235,20 @@ nvptx_output_mov_insn (rtx dst, rtx src)
 	    ? "%.\tmov%t0\t%0, %1;" : "%.\tmov.b%T0\t%0, %1;");
 
   if (GET_MODE_SIZE (dst_inner) == GET_MODE_SIZE (src_inner))
-    return "%.\tmov.b%T0\t%0, %1;";
+    {
+      if (GET_MODE_BITSIZE (dst_mode) == 128
+	  && GET_MODE_BITSIZE (GET_MODE (src)) == 128)
+	{
+	  /* mov.b128 is not supported.  */
+	  if (dst_inner == V2DImode && src_inner == TImode)
+	    return "%.\tmov.u64\t%0.x, %L1;\n\t%.\tmov.u64\t%0.y, %H1;";
+	  else if (dst_inner == TImode && src_inner == V2DImode)
+	    return "%.\tmov.u64\t%L0, %1.x;\n\t%.\tmov.u64\t%H0, %1.y;";
+
+	  gcc_unreachable ();
+	}
+      return "%.\tmov.b%T0\t%0, %1;";
+    }
 
   return "%.\tcvt%t0%t1\t%0, %1;";
 }
@@ -2282,11 +2349,14 @@ nvptx_output_call_insn (rtx_insn *insn, rtx result, rtx callee)
   fprintf (asm_out_file, ";\n");
 
   if (find_reg_note (insn, REG_NORETURN, NULL))
-    /* No return functions confuse the PTX JIT, as it doesn't realize
-       the flow control barrier they imply.  It can seg fault if it
-       encounters what looks like an unexitable loop.  Emit a trailing
-       trap, which it does grok.  */
-    fprintf (asm_out_file, "\t\ttrap; // (noreturn)\n");
+    {
+      /* No return functions confuse the PTX JIT, as it doesn't realize
+	 the flow control barrier they imply.  It can seg fault if it
+	 encounters what looks like an unexitable loop.  Emit a trailing
+	 trap and exit, which it does grok.  */
+      fprintf (asm_out_file, "\t\ttrap; // (noreturn)\n");
+      fprintf (asm_out_file, "\t\texit; // (noreturn)\n");
+    }
 
   if (result)
     {
@@ -2406,13 +2476,31 @@ nvptx_print_operand (FILE *file, rtx x, int code)
     case 'u':
       if (x_code == SUBREG)
 	{
-	  mode = GET_MODE (SUBREG_REG (x));
-	  if (mode == TImode)
-	    mode = DImode;
-	  else if (COMPLEX_MODE_P (mode))
-	    mode = GET_MODE_INNER (mode);
+	  machine_mode inner_mode = GET_MODE (SUBREG_REG (x));
+	  if (VECTOR_MODE_P (inner_mode)
+	      && (GET_MODE_SIZE (mode)
+		  <= GET_MODE_SIZE (GET_MODE_INNER (inner_mode))))
+	    mode = GET_MODE_INNER (inner_mode);
+	  else if (split_mode_p (inner_mode))
+	    mode = maybe_split_mode (inner_mode);
+	  else
+	    mode = inner_mode;
 	}
       fprintf (file, "%s", nvptx_ptx_type_from_mode (mode, code == 't'));
+      break;
+
+    case 'H':
+    case 'L':
+      {
+	rtx inner_x = SUBREG_REG (x);
+	machine_mode inner_mode = GET_MODE (inner_x);
+	machine_mode split = maybe_split_mode (inner_mode);
+
+	output_reg (file, REGNO (inner_x), split,
+		    (code == 'H'
+		     ? GET_MODE_SIZE (inner_mode) / 2
+		     : 0));
+      }
       break;
 
     case 'S':
@@ -2511,7 +2599,14 @@ nvptx_print_operand (FILE *file, rtx x, int code)
 	    machine_mode inner_mode = GET_MODE (inner_x);
 	    machine_mode split = maybe_split_mode (inner_mode);
 
-	    if (split != VOIDmode
+	    if (VECTOR_MODE_P (inner_mode)
+		&& (GET_MODE_SIZE (mode)
+		    <= GET_MODE_SIZE (GET_MODE_INNER (inner_mode))))
+	      {
+		output_reg (file, REGNO (inner_x), VOIDmode);
+		fprintf (file, ".%s", SUBREG_BYTE (x) == 0 ? "x" : "y");
+	      }
+	    else if (split_mode_p (inner_mode)
 		&& (GET_MODE_SIZE (inner_mode) == GET_MODE_SIZE (mode)))
 	      output_reg (file, REGNO (inner_x), split);
 	    else
@@ -2551,6 +2646,22 @@ nvptx_print_operand (FILE *file, rtx x, int code)
 	    fprintf (file, "0f%08lx", vals[0]);
 	  else
 	    fprintf (file, "0d%08lx%08lx", vals[1], vals[0]);
+	  break;
+
+	case CONST_VECTOR:
+	  {
+	    unsigned n = CONST_VECTOR_NUNITS (x);
+	    fprintf (file, "{ ");
+	    for (unsigned i = 0; i < n; ++i)
+	      {
+		if (i != 0)
+		  fprintf (file, ", ");
+
+		rtx elem = CONST_VECTOR_ELT (x, i);
+		output_addr_const (file, elem);
+	      }
+	    fprintf (file, " }");
+	  }
 	  break;
 
 	default:
@@ -2973,8 +3084,7 @@ nvptx_find_par (bb_insn_map_t *map, parallel *par, basic_block block)
 	    par = new parallel (par, mask);
 	    par->forked_block = block;
 	    par->forked_insn = end;
-	    if (!(mask & GOMP_DIM_MASK (GOMP_DIM_MAX))
-		&& (mask & GOMP_DIM_MASK (GOMP_DIM_WORKER)))
+	    if (mask & GOMP_DIM_MASK (GOMP_DIM_WORKER))
 	      par->fork_insn
 		= nvptx_discover_pre (block, CODE_FOR_nvptx_fork);
 	  }
@@ -2989,8 +3099,7 @@ nvptx_find_par (bb_insn_map_t *map, parallel *par, basic_block block)
 	    gcc_assert (par->mask == mask);
 	    par->join_block = block;
 	    par->join_insn = end;
-	    if (!(mask & GOMP_DIM_MASK (GOMP_DIM_MAX))
-		&& (mask & GOMP_DIM_MASK (GOMP_DIM_WORKER)))
+	    if (mask & GOMP_DIM_MASK (GOMP_DIM_WORKER))
 	      par->joining_insn
 		= nvptx_discover_pre (block, CODE_FOR_nvptx_joining);
 	    par = par->parent;
@@ -3669,29 +3778,34 @@ nvptx_find_sese (auto_vec<basic_block> &blocks, bb_pair_vec_t &regions)
 #undef BB_SET_SESE
 #undef BB_GET_SESE
 
-/* Propagate live state at the start of a partitioned region.  BLOCK
-   provides the live register information, and might not contain
-   INSN. Propagation is inserted just after INSN. RW indicates whether
-   we are reading and/or writing state.  This
+/* Propagate live state at the start of a partitioned region.  IS_CALL
+   indicates whether the propagation is for a (partitioned) call
+   instruction.  BLOCK provides the live register information, and
+   might not contain INSN. Propagation is inserted just after INSN. RW
+   indicates whether we are reading and/or writing state.  This
    separation is needed for worker-level proppagation where we
    essentially do a spill & fill.  FN is the underlying worker
    function to generate the propagation instructions for single
    register.  DATA is user data.
 
-   We propagate the live register set and the entire frame.  We could
-   do better by (a) propagating just the live set that is used within
-   the partitioned regions and (b) only propagating stack entries that
-   are used.  The latter might be quite hard to determine.  */
+   Returns true if we didn't emit any instructions.
+
+   We propagate the live register set for non-calls and the entire
+   frame for calls and non-calls.  We could do better by (a)
+   propagating just the live set that is used within the partitioned
+   regions and (b) only propagating stack entries that are used.  The
+   latter might be quite hard to determine.  */
 
 typedef rtx (*propagator_fn) (rtx, propagate_mask, unsigned, void *);
 
-static void
-nvptx_propagate (basic_block block, rtx_insn *insn, propagate_mask rw,
-		 propagator_fn fn, void *data)
+static bool
+nvptx_propagate (bool is_call, basic_block block, rtx_insn *insn,
+		 propagate_mask rw, propagator_fn fn, void *data)
 {
   bitmap live = DF_LIVE_IN (block);
   bitmap_iterator iterator;
   unsigned ix;
+  bool empty = true;
 
   /* Copy the frame array.  */
   HOST_WIDE_INT fs = get_frame_size ();
@@ -3703,6 +3817,7 @@ nvptx_propagate (basic_block block, rtx_insn *insn, propagate_mask rw,
       rtx pred = NULL_RTX;
       rtx_code_label *label = NULL;
 
+      empty = false;
       /* The frame size might not be DImode compatible, but the frame
 	 array's declaration will be.  So it's ok to round up here.  */
       fs = (fs + GET_MODE_SIZE (DImode) - 1) / GET_MODE_SIZE (DImode);
@@ -3749,18 +3864,21 @@ nvptx_propagate (basic_block block, rtx_insn *insn, propagate_mask rw,
       insn = emit_insn_after (cpy, insn);
     }
 
-  /* Copy live registers.  */
-  EXECUTE_IF_SET_IN_BITMAP (live, 0, ix, iterator)
-    {
-      rtx reg = regno_reg_rtx[ix];
+  if (!is_call)
+    /* Copy live registers.  */
+    EXECUTE_IF_SET_IN_BITMAP (live, 0, ix, iterator)
+      {
+	rtx reg = regno_reg_rtx[ix];
 
-      if (REGNO (reg) >= FIRST_PSEUDO_REGISTER)
-	{
-	  rtx bcast = fn (reg, rw, 0, data);
+	if (REGNO (reg) >= FIRST_PSEUDO_REGISTER)
+	  {
+	    rtx bcast = fn (reg, rw, 0, data);
 
-	  insn = emit_insn_after (bcast, insn);
-	}
-    }
+	    insn = emit_insn_after (bcast, insn);
+	    empty = false;
+	  }
+      }
+  return empty;
 }
 
 /* Worker for nvptx_vpropagate.  */
@@ -3776,12 +3894,13 @@ vprop_gen (rtx reg, propagate_mask pm,
 }
 
 /* Propagate state that is live at start of BLOCK across the vectors
-   of a single warp.  Propagation is inserted just after INSN.   */
+   of a single warp.  Propagation is inserted just after INSN.
+   IS_CALL and return as for nvptx_propagate.  */
 
-static void
-nvptx_vpropagate (basic_block block, rtx_insn *insn)
+static bool
+nvptx_vpropagate (bool is_call, basic_block block, rtx_insn *insn)
 {
-  nvptx_propagate (block, insn, PM_read_write, vprop_gen, 0);
+  return nvptx_propagate (is_call, block, insn, PM_read_write, vprop_gen, 0);
 }
 
 /* Worker for nvptx_wpropagate.  */
@@ -3817,10 +3936,10 @@ wprop_gen (rtx reg, propagate_mask pm, unsigned rep, void *data_)
 /* Spill or fill live state that is live at start of BLOCK.  PRE_P
    indicates if this is just before partitioned mode (do spill), or
    just after it starts (do fill). Sequence is inserted just after
-   INSN.  */
+   INSN.  IS_CALL and return as for nvptx_propagate.  */
 
-static void
-nvptx_wpropagate (bool pre_p, basic_block block, rtx_insn *insn)
+static bool
+nvptx_wpropagate (bool pre_p, bool is_call, basic_block block, rtx_insn *insn)
 {
   wcast_data_t data;
 
@@ -3828,7 +3947,9 @@ nvptx_wpropagate (bool pre_p, basic_block block, rtx_insn *insn)
   data.offset = 0;
   data.ptr = NULL_RTX;
 
-  nvptx_propagate (block, insn, pre_p ? PM_read : PM_write, wprop_gen, &data);
+  bool empty = nvptx_propagate (is_call, block, insn,
+				pre_p ? PM_read : PM_write, wprop_gen, &data);
+  gcc_assert (empty == !data.offset);
   if (data.offset)
     {
       /* Stuff was emitted, initialize the base pointer now.  */
@@ -3838,6 +3959,7 @@ nvptx_wpropagate (bool pre_p, basic_block block, rtx_insn *insn)
       if (worker_bcast_size < data.offset)
 	worker_bcast_size = data.offset;
     }
+  return empty;
 }
 
 /* Emit a worker-level synchronization barrier.  We use different
@@ -3848,6 +3970,24 @@ nvptx_wsync (bool after)
 {
   return gen_nvptx_barsync (GEN_INT (after));
 }
+
+#if WORKAROUND_PTXJIT_BUG
+/* Return first real insn in BB, or return NULL_RTX if BB does not contain
+   real insns.  */
+
+static rtx_insn *
+bb_first_real_insn (basic_block bb)
+{
+  rtx_insn *insn;
+
+  /* Find first insn of from block.  */
+  FOR_BB_INSNS (bb, insn)
+    if (INSN_P (insn))
+      return insn;
+
+  return 0;
+}
+#endif
 
 /* Single neutering according to MASK.  FROM is the incoming block and
    TO is the outgoing block.  These may be the same block. Insert at
@@ -3874,7 +4014,9 @@ nvptx_single (unsigned mask, basic_block from, basic_block to)
   while (true)
     {
       /* Find first insn of from block.  */
-      while (head != BB_END (from) && !INSN_P (head))
+      while (head != BB_END (from)
+	     && (!INSN_P (head)
+		 || recog_memoized (head) == CODE_FOR_nvptx_barsync))
 	head = NEXT_INSN (head);
 
       if (from == to)
@@ -3923,6 +4065,7 @@ nvptx_single (unsigned mask, basic_block from, basic_block to)
 	{
 	default:
 	  break;
+	case CODE_FOR_nvptx_barsync:
 	case CODE_FOR_nvptx_fork:
 	case CODE_FOR_nvptx_forked:
 	case CODE_FOR_nvptx_joining:
@@ -3945,6 +4088,7 @@ nvptx_single (unsigned mask, basic_block from, basic_block to)
   /* Insert the vector test inside the worker test.  */
   unsigned mode;
   rtx_insn *before = tail;
+  rtx_insn *neuter_start = NULL;
   for (mode = GOMP_DIM_WORKER; mode <= GOMP_DIM_VECTOR; mode++)
     if (GOMP_DIM_MASK (mode) & skip_mask)
       {
@@ -3962,13 +4106,21 @@ nvptx_single (unsigned mask, basic_block from, basic_block to)
 	  br = gen_br_true (pred, label);
 	else
 	  br = gen_br_true_uni (pred, label);
-	emit_insn_before (br, head);
+	if (neuter_start)
+	  neuter_start = emit_insn_after (br, neuter_start);
+	else
+	  neuter_start = emit_insn_before (br, head);
 
 	LABEL_NUSES (label)++;
 	if (tail_branch)
 	  before = emit_label_before (label, before);
 	else
-	  emit_label_after (label, tail);
+	  {
+	    rtx_insn *label_insn = emit_label_after (label, tail);
+	    if ((mode == GOMP_DIM_VECTOR || mode == GOMP_DIM_WORKER)
+		&& CALL_P (tail) && find_reg_note (tail, REG_NORETURN, NULL))
+	      emit_insn_after (gen_exit (), label_insn);
+	  }
       }
 
   /* Now deal with propagating the branch condition.  */
@@ -3979,6 +4131,63 @@ nvptx_single (unsigned mask, basic_block from, basic_block to)
       if (GOMP_DIM_MASK (GOMP_DIM_VECTOR) == mask)
 	{
 	  /* Vector mode only, do a shuffle.  */
+#if WORKAROUND_PTXJIT_BUG
+	  /* The branch condition %rcond is propagated like this:
+
+		{
+		    .reg .u32 %x;
+		    mov.u32 %x,%tid.x;
+		    setp.ne.u32 %rnotvzero,%x,0;
+		 }
+
+		 @%rnotvzero bra Lskip;
+		 setp.<op>.<type> %rcond,op1,op2;
+		 Lskip:
+		 selp.u32 %rcondu32,1,0,%rcond;
+		 shfl.idx.b32 %rcondu32,%rcondu32,0,31;
+		 setp.ne.u32 %rcond,%rcondu32,0;
+
+	     There seems to be a bug in the ptx JIT compiler (observed at driver
+	     version 381.22, at -O1 and higher for sm_61), that drops the shfl
+	     unless %rcond is initialized to something before 'bra Lskip'.  The
+	     bug is not observed with ptxas from cuda 8.0.61.
+
+	     It is true that the code is non-trivial: at Lskip, %rcond is
+	     uninitialized in threads 1-31, and after the selp the same holds
+	     for %rcondu32.  But shfl propagates the defined value in thread 0
+	     to threads 1-31, so after the shfl %rcondu32 is defined in threads
+	     0-31, and after the setp.ne %rcond is defined in threads 0-31.
+
+	     There is nothing in the PTX spec to suggest that this is wrong, or
+	     to explain why the extra initialization is needed.  So, we classify
+	     it as a JIT bug, and the extra initialization as workaround:
+
+		{
+		    .reg .u32 %x;
+		    mov.u32 %x,%tid.x;
+		    setp.ne.u32 %rnotvzero,%x,0;
+		}
+
+		+.reg .pred %rcond2;
+		+setp.eq.u32 %rcond2, 1, 0;
+
+		 @%rnotvzero bra Lskip;
+		 setp.<op>.<type> %rcond,op1,op2;
+		+mov.pred %rcond2, %rcond;
+		 Lskip:
+		+mov.pred %rcond, %rcond2;
+		 selp.u32 %rcondu32,1,0,%rcond;
+		 shfl.idx.b32 %rcondu32,%rcondu32,0,31;
+		 setp.ne.u32 %rcond,%rcondu32,0;
+	  */
+	  rtx_insn *label = PREV_INSN (tail);
+	  gcc_assert (label && LABEL_P (label));
+	  rtx tmp = gen_reg_rtx (BImode);
+	  emit_insn_before (gen_movbi (tmp, const0_rtx),
+			    bb_first_real_insn (from));
+	  emit_insn_before (gen_rtx_SET (tmp, pvar), label);
+	  emit_insn_before (gen_rtx_SET (pvar, tmp), tail);
+#endif
 	  emit_insn_before (nvptx_gen_vcast (pvar), tail);
 	}
       else
@@ -4111,18 +4320,23 @@ nvptx_process_pars (parallel *par)
       inner_mask |= par->inner_mask;
     }
 
-  if (par->mask & GOMP_DIM_MASK (GOMP_DIM_MAX))
-    /* No propagation needed for a call.  */;
-  else if (par->mask & GOMP_DIM_MASK (GOMP_DIM_WORKER))
+  bool is_call = (par->mask & GOMP_DIM_MASK (GOMP_DIM_MAX)) != 0;
+
+  if (par->mask & GOMP_DIM_MASK (GOMP_DIM_WORKER))
     {
-      nvptx_wpropagate (false, par->forked_block, par->forked_insn);
-      nvptx_wpropagate (true, par->forked_block, par->fork_insn);
-      /* Insert begin and end synchronizations.  */
-      emit_insn_after (nvptx_wsync (false), par->forked_insn);
-      emit_insn_before (nvptx_wsync (true), par->joining_insn);
+      nvptx_wpropagate (false, is_call, par->forked_block, par->forked_insn);
+      bool empty = nvptx_wpropagate (true, is_call,
+				     par->forked_block, par->fork_insn);
+
+      if (!empty || !is_call)
+	{
+	  /* Insert begin and end synchronizations.  */
+	  emit_insn_before (nvptx_wsync (false), par->forked_insn);
+	  emit_insn_before (nvptx_wsync (true), par->join_insn);
+	}
     }
   else if (par->mask & GOMP_DIM_MASK (GOMP_DIM_VECTOR))
-    nvptx_vpropagate (par->forked_block, par->forked_insn);
+    nvptx_vpropagate (is_call, par->forked_block, par->forked_insn);
 
   /* Now do siblings.  */
   if (par->next)
@@ -4207,6 +4421,94 @@ nvptx_neuter_pars (parallel *par, unsigned modes, unsigned outer)
     nvptx_neuter_pars (par->next, modes, outer);
 }
 
+#if WORKAROUND_PTXJIT_BUG_2
+/* Variant of pc_set that only requires JUMP_P (INSN) if STRICT.  This variant
+   is needed in the nvptx target because the branches generated for
+   parititioning are NONJUMP_INSN_P, not JUMP_P.  */
+
+static rtx
+nvptx_pc_set (const rtx_insn *insn, bool strict = true)
+{
+  rtx pat;
+  if ((strict && !JUMP_P (insn))
+      || (!strict && !INSN_P (insn)))
+    return NULL_RTX;
+  pat = PATTERN (insn);
+
+  /* The set is allowed to appear either as the insn pattern or
+     the first set in a PARALLEL.  */
+  if (GET_CODE (pat) == PARALLEL)
+    pat = XVECEXP (pat, 0, 0);
+  if (GET_CODE (pat) == SET && GET_CODE (SET_DEST (pat)) == PC)
+    return pat;
+
+  return NULL_RTX;
+}
+
+/* Variant of condjump_label that only requires JUMP_P (INSN) if STRICT.  */
+
+static rtx
+nvptx_condjump_label (const rtx_insn *insn, bool strict = true)
+{
+  rtx x = nvptx_pc_set (insn, strict);
+
+  if (!x)
+    return NULL_RTX;
+  x = SET_SRC (x);
+  if (GET_CODE (x) == LABEL_REF)
+    return x;
+  if (GET_CODE (x) != IF_THEN_ELSE)
+    return NULL_RTX;
+  if (XEXP (x, 2) == pc_rtx && GET_CODE (XEXP (x, 1)) == LABEL_REF)
+    return XEXP (x, 1);
+  if (XEXP (x, 1) == pc_rtx && GET_CODE (XEXP (x, 2)) == LABEL_REF)
+    return XEXP (x, 2);
+  return NULL_RTX;
+}
+
+/* Insert a dummy ptx insn when encountering a branch to a label with no ptx
+   insn inbetween the branch and the label.  This works around a JIT bug
+   observed at driver version 384.111, at -O0 for sm_50.  */
+
+static void
+prevent_branch_around_nothing (void)
+{
+  rtx_insn *seen_label = NULL;
+    for (rtx_insn *insn = get_insns (); insn; insn = NEXT_INSN (insn))
+      {
+	if (INSN_P (insn) && condjump_p (insn))
+	  {
+	    seen_label = label_ref_label (nvptx_condjump_label (insn, false));
+	    continue;
+	  }
+
+	if (seen_label == NULL)
+	  continue;
+
+	if (NOTE_P (insn) || DEBUG_INSN_P (insn))
+	  continue;
+
+	if (INSN_P (insn))
+	  switch (recog_memoized (insn))
+	    {
+	    case CODE_FOR_nvptx_fork:
+	    case CODE_FOR_nvptx_forked:
+	    case CODE_FOR_nvptx_joining:
+	    case CODE_FOR_nvptx_join:
+	      continue;
+	    default:
+	      seen_label = NULL;
+	      continue;
+	    }
+
+	if (LABEL_P (insn) && insn == seen_label)
+	  emit_insn_before (gen_fake_nop (), insn);
+
+	seen_label = NULL;
+      }
+  }
+#endif
+
 /* PTX-specific reorganization
    - Split blocks at fork and join instructions
    - Compute live registers
@@ -4286,6 +4588,10 @@ nvptx_reorg (void)
   if (TARGET_UNIFORM_SIMT)
     nvptx_reorg_uniform_simt ();
 
+#if WORKAROUND_PTXJIT_BUG_2
+  prevent_branch_around_nothing ();
+#endif
+
   regstat_free_n_sets_and_refs ();
 
   df_finish_pass (true);
@@ -4340,11 +4646,13 @@ nvptx_handle_shared_attribute (tree *node, tree name, tree ARG_UNUSED (args),
 /* Table of valid machine attributes.  */
 static const struct attribute_spec nvptx_attribute_table[] =
 {
-  /* { name, min_len, max_len, decl_req, type_req, fn_type_req, handler,
-       affects_type_identity } */
-  { "kernel", 0, 0, true, false,  false, nvptx_handle_kernel_attribute, false },
-  { "shared", 0, 0, true, false,  false, nvptx_handle_shared_attribute, false },
-  { NULL, 0, 0, false, false, false, NULL, false }
+  /* { name, min_len, max_len, decl_req, type_req, fn_type_req,
+       affects_type_identity, handler, exclude } */
+  { "kernel", 0, 0, true, false,  false, false, nvptx_handle_kernel_attribute,
+    NULL },
+  { "shared", 0, 0, true, false,  false, false, nvptx_handle_shared_attribute,
+    NULL },
+  { NULL, 0, 0, false, false, false, false, NULL, NULL }
 };
 
 /* Limit vector alignments to BIGGEST_ALIGNMENT.  */
@@ -4952,7 +5260,9 @@ nvptx_lockless_update (location_t loc, gimple_stmt_iterator *gsi,
   *gsi = gsi_for_stmt (gsi_stmt (*gsi));
 
   post_edge->flags ^= EDGE_TRUE_VALUE | EDGE_FALLTHRU;
+  post_edge->probability = profile_probability::even ();
   edge loop_edge = make_edge (loop_bb, loop_bb, EDGE_FALSE_VALUE);
+  loop_edge->probability = profile_probability::even ();
   set_immediate_dominator (CDI_DOMINATORS, loop_bb, pre_bb);
   set_immediate_dominator (CDI_DOMINATORS, post_bb, loop_bb);
 
@@ -5025,7 +5335,9 @@ nvptx_lockfull_update (location_t loc, gimple_stmt_iterator *gsi,
   
   /* Create the lock loop ... */
   locked_edge->flags ^= EDGE_TRUE_VALUE | EDGE_FALLTHRU;
-  make_edge (lock_bb, lock_bb, EDGE_FALSE_VALUE);
+  locked_edge->probability = profile_probability::even ();
+  edge loop_edge = make_edge (lock_bb, lock_bb, EDGE_FALSE_VALUE);
+  loop_edge->probability = profile_probability::even ();
   set_immediate_dominator (CDI_DOMINATORS, lock_bb, entry_bb);
   set_immediate_dominator (CDI_DOMINATORS, update_bb, lock_bb);
 
@@ -5164,6 +5476,7 @@ nvptx_goacc_reduction_init (gcall *call)
 
       /* Fixup flags from call_bb to init_bb.  */
       init_edge->flags ^= EDGE_FALLTHRU | EDGE_TRUE_VALUE;
+      init_edge->probability = profile_probability::even ();
       
       /* Set the initialization stmts.  */
       gimple_seq init_seq = NULL;
@@ -5179,6 +5492,7 @@ nvptx_goacc_reduction_init (gcall *call)
       
       /* Create false edge from call_bb to dst_bb.  */
       edge nop_edge = make_edge (call_bb, dst_bb, EDGE_FALSE_VALUE);
+      nop_edge->probability = profile_probability::even ();
 
       /* Create phi node in dst block.  */
       gphi *phi = create_phi_node (lhs, dst_bb);
@@ -5349,6 +5663,74 @@ nvptx_goacc_reduction (gcall *call)
     }
 }
 
+static bool
+nvptx_cannot_force_const_mem (machine_mode mode ATTRIBUTE_UNUSED,
+			      rtx x ATTRIBUTE_UNUSED)
+{
+  return true;
+}
+
+static bool
+nvptx_vector_mode_supported (machine_mode mode)
+{
+  return (mode == V2SImode
+	  || mode == V2DImode);
+}
+
+/* Return the preferred mode for vectorizing scalar MODE.  */
+
+static machine_mode
+nvptx_preferred_simd_mode (scalar_mode mode)
+{
+  switch (mode)
+    {
+    case E_DImode:
+      return V2DImode;
+    case E_SImode:
+      return V2SImode;
+
+    default:
+      return default_preferred_simd_mode (mode);
+    }
+}
+
+unsigned int
+nvptx_data_alignment (const_tree type, unsigned int basic_align)
+{
+  if (TREE_CODE (type) == INTEGER_TYPE)
+    {
+      unsigned HOST_WIDE_INT size = tree_to_uhwi (TYPE_SIZE_UNIT (type));
+      if (size == GET_MODE_SIZE (TImode))
+	return GET_MODE_BITSIZE (maybe_split_mode (TImode));
+    }
+
+  return basic_align;
+}
+
+/* Implement TARGET_MODES_TIEABLE_P.  */
+
+static bool
+nvptx_modes_tieable_p (machine_mode, machine_mode)
+{
+  return false;
+}
+
+/* Implement TARGET_HARD_REGNO_NREGS.  */
+
+static unsigned int
+nvptx_hard_regno_nregs (unsigned int, machine_mode)
+{
+  return 1;
+}
+
+/* Implement TARGET_CAN_CHANGE_MODE_CLASS.  */
+
+static bool
+nvptx_can_change_mode_class (machine_mode, machine_mode, reg_class_t)
+{
+  return false;
+}
+
 #undef TARGET_OPTION_OVERRIDE
 #define TARGET_OPTION_OVERRIDE nvptx_option_override
 
@@ -5462,6 +5844,25 @@ nvptx_goacc_reduction (gcall *call)
 
 #undef TARGET_GOACC_REDUCTION
 #define TARGET_GOACC_REDUCTION nvptx_goacc_reduction
+
+#undef TARGET_CANNOT_FORCE_CONST_MEM
+#define TARGET_CANNOT_FORCE_CONST_MEM nvptx_cannot_force_const_mem
+
+#undef TARGET_VECTOR_MODE_SUPPORTED_P
+#define TARGET_VECTOR_MODE_SUPPORTED_P nvptx_vector_mode_supported
+
+#undef TARGET_VECTORIZE_PREFERRED_SIMD_MODE
+#define TARGET_VECTORIZE_PREFERRED_SIMD_MODE \
+    nvptx_preferred_simd_mode
+
+#undef TARGET_MODES_TIEABLE_P
+#define TARGET_MODES_TIEABLE_P nvptx_modes_tieable_p
+
+#undef TARGET_HARD_REGNO_NREGS
+#define TARGET_HARD_REGNO_NREGS nvptx_hard_regno_nregs
+
+#undef TARGET_CAN_CHANGE_MODE_CLASS
+#define TARGET_CAN_CHANGE_MODE_CLASS nvptx_can_change_mode_class
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 
