@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.30 2020/08/18 09:42:00 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.31 2020/08/19 18:40:09 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1002,4 +1002,10 @@ sys/dev/ipmi.c					1.5
 
 	ipmi(4): Fix critical/warning threshold confusion.
 	[nonaka, ticket #1597]
+
+sys/uvm/uvm_amap.c				1.123 (patch)
+
+	fix amap_extend() to handle amaps where we previously failed
+	to allocate the ppref memory.
+	[chs, ticket #1598]
 
