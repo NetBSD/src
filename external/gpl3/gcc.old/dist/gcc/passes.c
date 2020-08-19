@@ -1,5 +1,5 @@
 /* Top level of GCC compilers (cc1, cc1plus, etc.)
-   Copyright (C) 1987-2017 Free Software Foundation, Inc.
+   Copyright (C) 1987-2018 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -60,6 +60,9 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-ssa-live.h"  /* For remove_unused_locals.  */
 #include "tree-cfgcleanup.h"
 #include "insn-addr.h" /* for INSN_ADDRESSES_ALLOC.  */
+#include "diagnostic-core.h" /* for fnotice */
+#include "stringpool.h"
+#include "attribs.h"
 
 using namespace gcc;
 
@@ -194,7 +197,9 @@ rest_of_decl_compilation (tree decl,
 
   /* Can't defer this, because it needs to happen before any
      later function definitions are processed.  */
-  if (DECL_ASSEMBLER_NAME_SET_P (decl) && DECL_REGISTER (decl))
+  if (HAS_DECL_ASSEMBLER_NAME_P (decl)
+      && DECL_ASSEMBLER_NAME_SET_P (decl)
+      && DECL_REGISTER (decl))
     make_decl_rtl (decl);
 
   /* Forward declarations for nested functions are not "external",
@@ -261,17 +266,18 @@ rest_of_decl_compilation (tree decl,
      finalize_compilation_unit (and by consequence, locally scoped
      symbols), or by rest_of_type_compilation below.
 
-     Also, pick up function prototypes, which will be mostly ignored
-     by the different early_global_decl() hooks, but will at least be
-     used by Go's hijack of the debug_hooks to implement
-     -fdump-go-spec.  */
+     For Go's hijack of the debug_hooks to implement -fdump-go-spec, pick up
+     function prototypes.  Go's debug_hooks will not forward them to the
+     wrapped hooks.  */
   if (!in_lto_p
       && (TREE_CODE (decl) != FUNCTION_DECL
 	  /* This will pick up function prototypes with no bodies,
 	     which are not visible in finalize_compilation_unit()
 	     while iterating with FOR_EACH_*_FUNCTION through the
 	     symbol table.  */
-	  || !DECL_SAVED_TREE (decl))
+	  || (flag_dump_go_spec != NULL
+	      && !DECL_SAVED_TREE (decl)
+	      && DECL_STRUCT_FUNCTION (decl) == NULL))
 
       /* We need to check both decl_function_context and
 	 current_function_decl here to make sure local extern
@@ -357,9 +363,9 @@ finish_optimization_passes (void)
 
   if (optimize > 0)
     {
-      dumps->dump_start (pass_profile_1->static_pass_number, NULL);
+      dumps->dump_start (pass_combine_1->static_pass_number, NULL);
       print_combine_total_stats ();
-      dumps->dump_finish (pass_profile_1->static_pass_number);
+      dumps->dump_finish (pass_combine_1->static_pass_number);
     }
 
   /* Do whatever is necessary to finish printing the graphs.  */
@@ -776,7 +782,8 @@ pass_manager::register_one_dump_file (opt_pass *pass)
 
   /* Buffer big enough to format a 32-bit UINT_MAX into.  */
   char num[11];
-  int flags, id;
+  dump_kind dkind;
+  int id;
   int optgroup_flags = OPTGROUP_NONE;
   gcc::dump_manager *dumps = m_ctxt->get_dumps ();
 
@@ -797,18 +804,18 @@ pass_manager::register_one_dump_file (opt_pass *pass)
   if (pass->type == SIMPLE_IPA_PASS || pass->type == IPA_PASS)
     {
       prefix = "ipa-";
-      flags = TDF_IPA;
+      dkind = DK_ipa;
       optgroup_flags |= OPTGROUP_IPA;
     }
   else if (pass->type == GIMPLE_PASS)
     {
       prefix = "tree-";
-      flags = TDF_TREE;
+      dkind = DK_tree;
     }
   else
     {
       prefix = "rtl-";
-      flags = TDF_RTL;
+      dkind = DK_rtl;
     }
 
   flag_name = concat (prefix, name, num, NULL);
@@ -819,7 +826,7 @@ pass_manager::register_one_dump_file (opt_pass *pass)
      any dump messages are emitted properly under -fopt-info(-optall).  */
   if (optgroup_flags == OPTGROUP_NONE)
     optgroup_flags = OPTGROUP_OTHER;
-  id = dumps->dump_register (dot_name, flag_name, glob_name, flags,
+  id = dumps->dump_register (dot_name, flag_name, glob_name, dkind,
 			     optgroup_flags,
 			     true);
   set_pass_for_id (id, pass);
@@ -1528,26 +1535,28 @@ pass_manager::register_pass (struct register_pass_info *pass_info)
 				        -> all_passes
 */
 
-void *
-pass_manager::operator new (size_t sz)
-{
-  /* Ensure that all fields of the pass manager are zero-initialized.  */
-  return xcalloc (1, sz);
-}
-
-void
-pass_manager::operator delete (void *ptr)
-{
-  free (ptr);
-}
-
 pass_manager::pass_manager (context *ctxt)
 : all_passes (NULL), all_small_ipa_passes (NULL), all_lowering_passes (NULL),
   all_regular_ipa_passes (NULL),
   all_late_ipa_passes (NULL), passes_by_id (NULL), passes_by_id_size (0),
-  m_ctxt (ctxt)
+  m_ctxt (ctxt), m_name_to_pass_map (NULL)
 {
   opt_pass **p;
+
+  /* Zero-initialize pass members.  */
+#define INSERT_PASSES_AFTER(PASS)
+#define PUSH_INSERT_PASSES_WITHIN(PASS)
+#define POP_INSERT_PASSES()
+#define NEXT_PASS(PASS, NUM) PASS ## _ ## NUM = NULL
+#define NEXT_PASS_WITH_ARG(PASS, NUM, ARG) NEXT_PASS (PASS, NUM)
+#define TERMINATE_PASS_LIST(PASS)
+#include "pass-instances.def"
+#undef INSERT_PASSES_AFTER
+#undef PUSH_INSERT_PASSES_WITHIN
+#undef POP_INSERT_PASSES
+#undef NEXT_PASS
+#undef NEXT_PASS_WITH_ARG
+#undef TERMINATE_PASS_LIST
 
   /* Initialize the pass_lists array.  */
 #define DEF_PASS_LIST(LIST) pass_lists[PASS_LIST_NO_##LIST] = &LIST;
@@ -1575,7 +1584,7 @@ pass_manager::pass_manager (context *ctxt)
 
 #define NEXT_PASS(PASS, NUM) \
   do { \
-    gcc_assert (NULL == PASS ## _ ## NUM); \
+    gcc_assert (PASS ## _ ## NUM == NULL); \
     if ((NUM) == 1)                              \
       PASS ## _1 = make_##PASS (m_ctxt);          \
     else                                         \
@@ -1776,6 +1785,25 @@ execute_function_dump (function *fn, void *data)
     }
 }
 
+/* This function is called when an internal compiler error is encountered.
+   Ensure that function dump is made available before compiler is aborted.  */
+
+void
+emergency_dump_function ()
+{
+  if (!current_pass)
+    return;
+  enum opt_pass_type pt = current_pass->type;
+  fnotice (stderr, "during %s pass: %s\n",
+	   pt == GIMPLE_PASS ? "GIMPLE" : pt == RTL_PASS ? "RTL" : "IPA",
+	   current_pass->name);
+  if (!dump_file || !cfun)
+    return;
+  fnotice (stderr, "dump file: %s\n", dump_file_name);
+  fprintf (dump_file, "\n\n\nEMERGENCY DUMP:\n\n");
+  execute_function_dump (cfun, current_pass);
+}
+
 static struct profile_record *profile_record;
 
 /* Do profile consistency book-keeping for the pass with static number INDEX.
@@ -1916,7 +1944,7 @@ execute_function_todo (function *fn, void *data)
   /* Always cleanup the CFG before trying to update SSA.  */
   if (flags & TODO_cleanup_cfg)
     {
-      cleanup_tree_cfg ();
+      cleanup_tree_cfg (flags & TODO_update_ssa_any);
 
       /* When cleanup_tree_cfg merges consecutive blocks, it may
 	 perform some simplistic propagation when removing single
@@ -1977,8 +2005,12 @@ execute_function_todo (function *fn, void *data)
 	      && !from_ipa_pass)
 	    verify_flow_info ();
 	  if (current_loops
-	      && loops_state_satisfies_p (LOOP_CLOSED_SSA))
-	    verify_loop_closed_ssa (false);
+	      && ! loops_state_satisfies_p (LOOPS_NEED_FIXUP))
+	    {
+	      verify_loop_structure ();
+	      if (loops_state_satisfies_p (LOOP_CLOSED_SSA))
+		verify_loop_closed_ssa (false);
+	    }
 	  if (cfun->curr_properties & PROP_rtl)
 	    verify_rtl_sharing ();
 	}
@@ -2033,7 +2065,7 @@ execute_todo (unsigned int flags)
   if ((flags & TODO_dump_symtab) && dump_file && !current_function_decl)
     {
       gcc_assert (!cfun);
-      symtab_node::dump_table (dump_file);
+      symtab->dump (dump_file);
       /* Flush the file.  If verification fails, we won't be able to
 	 close the file before aborting.  */
       fflush (dump_file);

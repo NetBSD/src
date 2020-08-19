@@ -1,5 +1,5 @@
 /* Definitions for SOM assembler support.
-   Copyright (C) 1999-2017 Free Software Foundation, Inc.
+   Copyright (C) 1999-2018 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -98,8 +98,8 @@ do {								\
 
 
 #define ASM_DECLARE_FUNCTION_NAME(FILE, NAME, DECL) \
-    do { tree fntype = TREE_TYPE (TREE_TYPE (DECL));			\
-	 tree tree_type = TREE_TYPE (DECL);				\
+    do { tree tree_type = TREE_TYPE (DECL);				\
+	 tree fntype = TREE_TYPE (tree_type);				\
 	 tree parm;							\
 	 int i;								\
 	 if (TREE_PUBLIC (DECL) || TARGET_GAS)				\
@@ -119,11 +119,13 @@ do {								\
 	     for (parm = DECL_ARGUMENTS (DECL), i = 0; parm && i < 4;	\
 		  parm = DECL_CHAIN (parm))				\
 	       {							\
-		 if (TYPE_MODE (DECL_ARG_TYPE (parm)) == SFmode		\
-		     && ! TARGET_SOFT_FLOAT)				\
+		 tree type = DECL_ARG_TYPE (parm);			\
+		 machine_mode mode = TYPE_MODE (type);			\
+		 if (!AGGREGATE_TYPE_P (type)				\
+		     && mode == SFmode && ! TARGET_SOFT_FLOAT)		\
 		   fprintf (FILE, ",ARGW%d=FR", i++);			\
-		 else if (TYPE_MODE (DECL_ARG_TYPE (parm)) == DFmode	\
-			  && ! TARGET_SOFT_FLOAT)			\
+		 else if (!AGGREGATE_TYPE_P (type)			\
+			  && mode == DFmode && ! TARGET_SOFT_FLOAT)	\
 		   {							\
 		     if (i <= 2)					\
 		       {						\
@@ -135,13 +137,10 @@ do {								\
 		   }							\
 		 else							\
 		   {							\
-		     int arg_size =					\
-		       FUNCTION_ARG_SIZE (TYPE_MODE (DECL_ARG_TYPE (parm)),\
-					  DECL_ARG_TYPE (parm));	\
+		     int arg_size = pa_function_arg_size (mode, type);	\
 		     /* Passing structs by invisible reference uses	\
 			one general register.  */			\
-		     if (arg_size > 2					\
-			 || TREE_ADDRESSABLE (DECL_ARG_TYPE (parm)))	\
+		     if (arg_size > 2 || TREE_ADDRESSABLE (type))	\
 		       arg_size = 1;					\
 		     if (arg_size == 2 && i <= 2)			\
 		       {						\
@@ -161,9 +160,13 @@ do {								\
 		 for (; i < 4; i++)					\
 		   fprintf (FILE, ",ARGW%d=GR", i);			\
 	       }							\
-	     if (TYPE_MODE (fntype) == DFmode && ! TARGET_SOFT_FLOAT)	\
+	     if (!AGGREGATE_TYPE_P (fntype)				\
+		 && TYPE_MODE (fntype) == DFmode			\
+		 && ! TARGET_SOFT_FLOAT)				\
 	       fputs (DFMODE_RETURN_STRING, FILE);			\
-	     else if (TYPE_MODE (fntype) == SFmode && ! TARGET_SOFT_FLOAT) \
+	     else if (!AGGREGATE_TYPE_P (fntype)			\
+		      && TYPE_MODE (fntype) == SFmode			\
+		      && ! TARGET_SOFT_FLOAT)				\
 	       fputs (SFMODE_RETURN_STRING, FILE);			\
 	     else if (fntype != void_type_node)				\
 	       fputs (",RTNVAL=GR", FILE);				\

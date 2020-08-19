@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sanitizer,v 1.3 2019/09/26 08:03:20 mrg Exp $
+#	$NetBSD: Makefile.sanitizer,v 1.4 2020/08/19 07:47:30 mrg Exp $
 
 SANITIZER=${GCCDIST}/libsanitizer
 .PATH: ${SANITIZER}/interception ${SANITIZER}/sanitizer_common
@@ -9,14 +9,18 @@ interception_mac.cc \
 interception_type_test.cc \
 interception_win.cc
 
+# XXXmknative
 SANITIZER_SRCS+= \
+	sancov_flags.cc \
 	sanitizer_allocator.cc \
+	sanitizer_allocator_checks.cc \
 	sanitizer_common.cc \
 	sanitizer_common_libcdep.cc \
-	sanitizer_coverage_libcdep.cc \
-	sanitizer_coverage_mapping_libcdep.cc \
+	sanitizer_coverage_libcdep_new.cc \
 	sanitizer_deadlock_detector1.cc \
 	sanitizer_deadlock_detector2.cc \
+	sanitizer_errno.cc \
+	sanitizer_file.cc \
 	sanitizer_flags.cc \
 	sanitizer_flag_parser.cc \
 	sanitizer_libc.cc \
@@ -27,13 +31,12 @@ SANITIZER_SRCS+= \
 	sanitizer_mac.cc \
 	sanitizer_persistent_allocator.cc \
 	sanitizer_platform_limits_linux.cc \
-	sanitizer_platform_limits_posix.cc \
+	sanitizer_platform_limits_netbsd.cc \
 	sanitizer_posix.cc \
 	sanitizer_posix_libcdep.cc \
 	sanitizer_printf.cc \
 	sanitizer_procmaps_common.cc \
 	sanitizer_procmaps_freebsd.cc \
-	sanitizer_procmaps_netbsd.cc \
 	sanitizer_procmaps_linux.cc \
 	sanitizer_procmaps_mac.cc \
 	sanitizer_stackdepot.cc \

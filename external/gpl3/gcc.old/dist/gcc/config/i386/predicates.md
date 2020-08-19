@@ -1,5 +1,5 @@
 ;; Predicate definitions for IA-32 and x86-64.
-;; Copyright (C) 2004-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2018 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -182,7 +182,7 @@
 	  rtx op1 = XEXP (XEXP (op, 0), 0);
 	  rtx op2 = XEXP (XEXP (op, 0), 1);
 
-	  if (ix86_cmodel == CM_LARGE)
+	  if (ix86_cmodel == CM_LARGE && GET_CODE (op1) != UNSPEC)
 	    return false;
 	  if (!CONST_INT_P (op2))
 	    return false;
@@ -360,6 +360,31 @@
 	      && x86_64_immediate_operand (GEN_INT (CONST_WIDE_INT_ELT (op,
 									1)),
 					   DImode));
+
+    default:
+      gcc_unreachable ();
+    }
+})
+
+;; Return true if VALUE is a constant integer whose value is
+;; x86_64_immediate_operand value zero extended from word mode to mode.
+(define_predicate "x86_64_dwzext_immediate_operand"
+  (match_code "const_int,const_wide_int")
+{
+  switch (GET_CODE (op))
+    {
+    case CONST_INT:
+      if (!TARGET_64BIT)
+	return UINTVAL (op) <= HOST_WIDE_INT_UC (0xffffffff);
+      return UINTVAL (op) <= HOST_WIDE_INT_UC (0x7fffffff);
+
+    case CONST_WIDE_INT:
+      if (!TARGET_64BIT)
+	return false;
+      return (CONST_WIDE_INT_NUNITS (op) == 2
+	      && CONST_WIDE_INT_ELT (op, 1) == 0
+	      && (trunc_int_for_mode (CONST_WIDE_INT_ELT (op, 0), SImode)
+		  == (HOST_WIDE_INT) CONST_WIDE_INT_ELT (op, 0)));
 
     default:
       gcc_unreachable ();
@@ -567,11 +592,16 @@
   (and (match_code "symbol_ref")
        (match_test "op == ix86_tls_module_base ()")))
 
+(define_predicate "tls_address_pattern"
+  (and (match_code "set,parallel,unspec,unspec_volatile")
+       (match_test "ix86_tls_address_pattern_p (op)")))
+
 ;; Test for a pc-relative call operand
 (define_predicate "constant_call_address_operand"
   (match_code "symbol_ref")
 {
-  if (ix86_cmodel == CM_LARGE || ix86_cmodel == CM_LARGE_PIC)
+  if (ix86_cmodel == CM_LARGE || ix86_cmodel == CM_LARGE_PIC
+      || flag_force_indirect_call)
     return false;
   if (TARGET_DLLIMPORT_DECL_ATTRIBUTES && SYMBOL_REF_DLLIMPORT_P (op))
     return false;
@@ -1041,7 +1071,7 @@
 (define_predicate "SImode_address_operand"
   (match_code "subreg,zero_extend,and"))
 
-;; Return true if op if a valid address for LEA, and does not contain
+;; Return true if op is a valid address for LEA, and does not contain
 ;; a segment override.  Defined as a special predicate to allow
 ;; mode-less const_int operands pass to address_operand.
 (define_special_predicate "address_no_seg_operand"
@@ -1275,7 +1305,7 @@
   machine_mode inmode = GET_MODE (XEXP (op, 0));
   enum rtx_code code = GET_CODE (op);
 
-  if (inmode == CCFPmode || inmode == CCFPUmode)
+  if (inmode == CCFPmode)
     {
       if (!ix86_trivial_fp_comparison_operator (op, mode))
 	return false;
@@ -1285,8 +1315,7 @@
   switch (code)
     {
     case LTU: case GTU: case LEU: case GEU:
-      if (inmode == CCmode || inmode == CCFPmode || inmode == CCFPUmode
-	  || inmode == CCCmode)
+      if (inmode == CCmode || inmode == CCFPmode || inmode == CCCmode)
 	return true;
       return false;
     case ORDERED: case UNORDERED:
@@ -1322,20 +1351,26 @@
   machine_mode inmode = GET_MODE (XEXP (op, 0));
   enum rtx_code code = GET_CODE (op);
 
-  if (inmode == CCFPmode || inmode == CCFPUmode)
+  if (inmode == CCFPmode)
     return ix86_trivial_fp_comparison_operator (op, mode);
 
   switch (code)
     {
     case EQ: case NE:
+      if (inmode == CCGZmode)
+	return false;
       return true;
-    case LT: case GE:
+    case GE: case LT:
       if (inmode == CCmode || inmode == CCGCmode
-	  || inmode == CCGOCmode || inmode == CCNOmode)
+	  || inmode == CCGOCmode || inmode == CCNOmode || inmode == CCGZmode)
 	return true;
       return false;
-    case LTU: case GTU: case LEU: case GEU:
-      if (inmode == CCmode || inmode == CCCmode)
+    case GEU: case LTU:
+      if (inmode == CCGZmode)
+	return true;
+      /* FALLTHRU */
+    case GTU: case LEU:
+      if (inmode == CCmode || inmode == CCCmode || inmode == CCGZmode)
 	return true;
       return false;
     case ORDERED: case UNORDERED:
@@ -1359,7 +1394,7 @@
   machine_mode inmode = GET_MODE (XEXP (op, 0));
   enum rtx_code code = GET_CODE (op);
 
-  if (inmode == CCFPmode || inmode == CCFPUmode)
+  if (inmode == CCFPmode)
     {
       if (!ix86_trivial_fp_comparison_operator (op, mode))
 	return false;
@@ -1386,19 +1421,6 @@
                (match_operand 0 "comparison_operator")
                (match_operand 0 "ix86_trivial_fp_comparison_operator")))
 
-;; Same as above, but for swapped comparison used in *jcc<fp>_<int>_i387.
-(define_predicate "ix86_swapped_fp_comparison_operator"
-  (match_operand 0 "comparison_operator")
-{
-  enum rtx_code code = GET_CODE (op);
-  bool ret;
-
-  PUT_CODE (op, swap_condition (code));
-  ret = ix86_fp_comparison_operator (op, mode);
-  PUT_CODE (op, code);
-  return ret;
-})
-
 ;; Nearly general operand, but accept any const_double, since we wish
 ;; to be able to drop them into memory rather than have them get pulled
 ;; into registers.
@@ -1421,10 +1443,6 @@
 ;; Return true if this is a plus, minus, and, ior or xor operation.
 (define_predicate "plusminuslogic_operator"
   (match_code "plus,minus,and,ior,xor"))
-
-;; Return true if this is a float extend operation.
-(define_predicate "float_operator"
-  (match_code "float"))
 
 ;; Return true for ARITHMETIC_P.
 (define_predicate "arith_or_logical_operator"
@@ -1660,3 +1678,84 @@
   (ior (match_operand 0 "register_operand")
        (and (match_code "const_int")
 	    (match_test "op == constm1_rtx"))))
+
+;; Return true if the vector ends with between 12 and 18 register saves using
+;; RAX as the base address.
+(define_predicate "save_multiple"
+  (match_code "parallel")
+{
+  const unsigned len = XVECLEN (op, 0);
+  unsigned i;
+
+  /* Starting from end of vector, count register saves.  */
+  for (i = 0; i < len; ++i)
+    {
+      rtx src, dest, addr;
+      rtx e = XVECEXP (op, 0, len - 1 - i);
+
+      if (GET_CODE (e) != SET)
+	break;
+
+      src  = SET_SRC (e);
+      dest = SET_DEST (e);
+
+      if (!REG_P (src) || !MEM_P (dest))
+	break;
+
+      addr = XEXP (dest, 0);
+
+      /* Good if dest address is in RAX.  */
+      if (REG_P (addr) && REGNO (addr) == AX_REG)
+	continue;
+
+      /* Good if dest address is offset of RAX.  */
+      if (GET_CODE (addr) == PLUS
+	  && REG_P (XEXP (addr, 0))
+	  && REGNO (XEXP (addr, 0)) == AX_REG)
+	continue;
+
+      break;
+    }
+  return (i >= 12 && i <= 18);
+})
+
+
+;; Return true if the vector ends with between 12 and 18 register loads using
+;; RSI as the base address.
+(define_predicate "restore_multiple"
+  (match_code "parallel")
+{
+  const unsigned len = XVECLEN (op, 0);
+  unsigned i;
+
+  /* Starting from end of vector, count register restores.  */
+  for (i = 0; i < len; ++i)
+    {
+      rtx src, dest, addr;
+      rtx e = XVECEXP (op, 0, len - 1 - i);
+
+      if (GET_CODE (e) != SET)
+	break;
+
+      src  = SET_SRC (e);
+      dest = SET_DEST (e);
+
+      if (!MEM_P (src) || !REG_P (dest))
+	break;
+
+      addr = XEXP (src, 0);
+
+      /* Good if src address is in RSI.  */
+      if (REG_P (addr) && REGNO (addr) == SI_REG)
+	continue;
+
+      /* Good if src address is offset of RSI.  */
+      if (GET_CODE (addr) == PLUS
+	  && REG_P (XEXP (addr, 0))
+	  && REGNO (XEXP (addr, 0)) == SI_REG)
+	continue;
+
+      break;
+    }
+  return (i >= 12 && i <= 18);
+})

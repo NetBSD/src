@@ -1,6 +1,6 @@
 // <experimental/memory> -*- C++ -*-
 
-// Copyright (C) 2015-2017 Free Software Foundation, Inc.
+// Copyright (C) 2015-2018 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -45,12 +45,12 @@
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
+
 namespace experimental
 {
 inline namespace fundamentals_v2
 {
-_GLIBCXX_BEGIN_NAMESPACE_VERSION
-
 #define __cpp_lib_experimental_observer_ptr 201411
 
   template <typename _Tp>
@@ -229,8 +229,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     {
       return !(__p1 < __p2);
     }
-
-_GLIBCXX_END_NAMESPACE_VERSION
 } // namespace fundamentals_v2
 } // namespace experimental
 
@@ -248,6 +246,8 @@ template <typename _Tp>
     }
   };
 
+
+_GLIBCXX_END_NAMESPACE_VERSION
 } // namespace std
 
 #endif // __cplusplus <= 201103L

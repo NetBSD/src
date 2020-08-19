@@ -1,6 +1,6 @@
 // Character Traits for use by standard string and iostream -*- C++ -*-
 
-// Copyright (C) 1997-2017 Free Software Foundation, Inc.
+// Copyright (C) 1997-2018 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -183,6 +183,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     char_traits<_CharT>::
     move(char_type* __s1, const char_type* __s2, std::size_t __n)
     {
+      if (__n == 0)
+	return __s1;
       return static_cast<_CharT*>(__builtin_memmove(__s1, __s2,
 						    __n * sizeof(char_type)));
     }
@@ -246,7 +248,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     __constant_char_array_p(const _CharT* __a, size_t __n)
     {
       size_t __i = 0;
-      while (__builtin_constant_p(__a[__i]) && __i < __n)
+      while (__i < __n && __builtin_constant_p(__a[__i]))
 	__i++;
       return __i == __n;
     }
@@ -586,7 +588,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
       static constexpr int_type
       to_int_type(const char_type& __c) noexcept
-      { return int_type(__c); }
+      { return __c == eof() ? int_type(0xfffd) : int_type(__c); }
 
       static constexpr bool
       eq_int_type(const int_type& __c1, const int_type& __c2) noexcept

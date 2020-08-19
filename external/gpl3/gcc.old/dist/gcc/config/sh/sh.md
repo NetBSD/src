@@ -1,5 +1,5 @@
 ;;- Machine description for Renesas / SuperH SH.
-;;  Copyright (C) 1993-2017 Free Software Foundation, Inc.
+;;  Copyright (C) 1993-2018 Free Software Foundation, Inc.
 ;;  Contributed by Steve Chamberlain (sac@cygnus.com).
 ;;  Improved by Jim Wilson (wilson@cygnus.com).
 
@@ -848,7 +848,7 @@
   /* FIXME: Maybe also search the predecessor basic blocks to catch
      more cases.  */
   set_of_reg op = sh_find_set_of_reg (operands[0], curr_insn,
-				      prev_nonnote_insn_bb);
+				      prev_nonnote_nondebug_insn_bb);
 
   if (op.set_src != NULL && GET_CODE (op.set_src) == AND
       && !sh_insn_operands_modified_between_p (op.insn, op.insn, curr_insn))
@@ -939,7 +939,7 @@
   if (dump_file)
     fprintf (dump_file, "cmpgesi_t: trying to optimize for const_int 0\n");
 
-  rtx_insn* i = next_nonnote_insn_bb (curr_insn);
+  rtx_insn* i = next_nonnote_nondebug_insn_bb (curr_insn);
 
   if (dump_file)
     {
@@ -1188,7 +1188,7 @@
    (clobber (reg:SI T_REG))]
   "can_create_pseudo_p ()"
 {
-  expand_cbranchsi4 (operands, LAST_AND_UNUSED_RTX_CODE, -1);
+  expand_cbranchsi4 (operands, LAST_AND_UNUSED_RTX_CODE);
   DONE;
 })
 
@@ -3094,7 +3094,7 @@
 	  && ! sh_dynamicalize_shift_p (shift_count))
 	{
 	  if (prev_set_t_insn == NULL)
-	    prev_set_t_insn = prev_nonnote_insn_bb (curr_insn);
+	    prev_set_t_insn = prev_nonnote_nondebug_insn_bb (curr_insn);
 
 	  /* Skip the nott insn, which was probably inserted by the splitter
 	     of *rotcr_neg_t.  Don't use one of the recog functions
@@ -3106,7 +3106,8 @@
 	      if (GET_CODE (pat) == SET
 		  && t_reg_operand (XEXP (pat, 0), SImode)
 		  && negt_reg_operand (XEXP (pat, 1), SImode))
-	      prev_set_t_insn = prev_nonnote_insn_bb (prev_set_t_insn);
+		prev_set_t_insn = prev_nonnote_nondebug_insn_bb
+		  (prev_set_t_insn);
 	    }
 
 	  if (! (prev_set_t_insn != NULL_RTX
@@ -3194,7 +3195,7 @@
       if (sh_ashlsi_clobbers_t_reg_p (shift_count)
 	  && ! sh_dynamicalize_shift_p (shift_count))
 	{
-	  prev_set_t_insn = prev_nonnote_insn_bb (curr_insn);
+	  prev_set_t_insn = prev_nonnote_nondebug_insn_bb (curr_insn);
 
 	  /* Skip the nott insn, which was probably inserted by the splitter
 	     of *rotcl_neg_t.  Don't use one of the recog functions
@@ -3206,7 +3207,8 @@
 	      if (GET_CODE (pat) == SET
 		  && t_reg_operand (XEXP (pat, 0), SImode)
 		  && negt_reg_operand (XEXP (pat, 1), SImode))
-	      prev_set_t_insn = prev_nonnote_insn_bb (prev_set_t_insn);
+		prev_set_t_insn = prev_nonnote_nondebug_insn_bb
+		  (prev_set_t_insn);
 	    }
 
 	  if (! (prev_set_t_insn != NULL_RTX
@@ -4423,7 +4425,7 @@
    When we're here, the not:SI pattern obviously has been matched already
    and we only have to see whether the following insn is the left shift.  */
 
-  rtx_insn *i = next_nonnote_insn_bb (curr_insn);
+  rtx_insn *i = next_nonnote_nondebug_insn_bb (curr_insn);
   if (i == NULL_RTX || !NONJUMP_INSN_P (i))
     FAIL;
 
@@ -7975,13 +7977,13 @@
 
   switch (GET_MODE (diff_vec))
     {
-    case SImode:
+    case E_SImode:
       return   "shll2	%1"	"\n"
 	     "	mov.l	@(r0,%1),%0";
-    case HImode:
+    case E_HImode:
       return   "add	%1,%1"	"\n"
 	     "	mov.w	@(r0,%1),%0";
-    case QImode:
+    case E_QImode:
       if (ADDR_DIFF_VEC_FLAGS (diff_vec).offset_unsigned)
 	return         "mov.b	@(r0,%1),%0"	"\n"
 	       "	extu.b	%0,%0";
@@ -8010,17 +8012,17 @@
 
   switch (GET_MODE (diff_vec))
     {
-    case SImode:
+    case E_SImode:
       return   "shll2	%1"		"\n"
 	     "	add	r0,%1"		"\n"
 	     "	mova	%O3,r0"		"\n"
 	     "  mov.l	@(r0,%1),%0";
-    case HImode:
+    case E_HImode:
       return   "add	%1,%1"		"\n"
 	     "	add	r0,%1"		"\n"
 	     "	mova	%O3,r0"		"\n"
 	     "	mov.w	@(r0,%1),%0";
-    case QImode:
+    case E_QImode:
       if (ADDR_DIFF_VEC_FLAGS (diff_vec).offset_unsigned)
 	return	       "add	r0,%1"		"\n"
 		"	mova	%O3,r0"		"\n"
@@ -9161,7 +9163,7 @@
 	(xor:SI (reg:SI FPSCR_REG) (const_int FPSCR_PR)))
    (set (reg:SI FPSCR_MODES_REG)
 	(unspec_volatile:SI [(const_int 0)] UNSPECV_FPSCR_MODES))]
-  "TARGET_SH4A_FP"
+  "TARGET_SH4A_FP || TARGET_FPU_SH4_300"
   "fpchg"
   [(set_attr "type" "fpscr_toggle")])
 
@@ -9389,14 +9391,30 @@
 (define_expand "negsf2"
   [(set (match_operand:SF 0 "fp_arith_reg_operand")
 	(neg:SF (match_operand:SF 1 "fp_arith_reg_operand")))]
-  "TARGET_SH2E")
+  "TARGET_FPU_ANY"
+{
+  if (TARGET_FPU_SH4_300)
+    emit_insn (gen_negsf2_fpscr (operands[0], operands[1]));
+  else
+    emit_insn (gen_negsf2_no_fpscr (operands[0], operands[1]));
+  DONE;
+})
 
-(define_insn "*negsf2_i"
+(define_insn "negsf2_no_fpscr"
   [(set (match_operand:SF 0 "fp_arith_reg_operand" "=f")
 	(neg:SF (match_operand:SF 1 "fp_arith_reg_operand" "0")))]
-  "TARGET_SH2E"
+  "TARGET_FPU_ANY && !TARGET_FPU_SH4_300"
   "fneg	%0"
   [(set_attr "type" "fmove")])
+
+(define_insn "negsf2_fpscr"
+  [(set (match_operand:SF 0 "fp_arith_reg_operand" "=f")
+	(neg:SF (match_operand:SF 1 "fp_arith_reg_operand" "0")))
+   (use (reg:SI FPSCR_MODES_REG))]
+  "TARGET_FPU_SH4_300"
+  "fneg	%0"
+  [(set_attr "type" "fmove")
+   (set_attr "fp_mode" "single")])
 
 (define_expand "sqrtsf2"
   [(set (match_operand:SF 0 "fp_arith_reg_operand" "")
@@ -9487,14 +9505,30 @@
 (define_expand "abssf2"
   [(set (match_operand:SF 0 "fp_arith_reg_operand")
 	(abs:SF (match_operand:SF 1 "fp_arith_reg_operand")))]
-  "TARGET_SH2E")
+  "TARGET_FPU_ANY"
+{
+  if (TARGET_FPU_SH4_300)
+    emit_insn (gen_abssf2_fpscr (operands[0], operands[1]));
+  else
+    emit_insn (gen_abssf2_no_fpscr (operands[0], operands[1]));
+  DONE;
+})
 
-(define_insn "*abssf2_i"
+(define_insn "abssf2_no_fpscr"
   [(set (match_operand:SF 0 "fp_arith_reg_operand" "=f")
 	(abs:SF (match_operand:SF 1 "fp_arith_reg_operand" "0")))]
-  "TARGET_SH2E"
+  "TARGET_FPU_ANY && !TARGET_FPU_SH4_300"
   "fabs	%0"
   [(set_attr "type" "fmove")])
+
+(define_insn "abssf2_fpscr"
+  [(set (match_operand:SF 0 "fp_arith_reg_operand" "=f")
+	(abs:SF (match_operand:SF 1 "fp_arith_reg_operand" "0")))
+   (use (reg:SI FPSCR_MODES_REG))]
+  "TARGET_FPU_SH4_300"
+  "fabs	%0"
+  [(set_attr "type" "fmove")
+   (set_attr "fp_mode" "single")])
 
 (define_expand "adddf3"
   [(set (match_operand:DF 0 "fp_arith_reg_operand" "")
@@ -9671,12 +9705,28 @@
 (define_expand "negdf2"
   [(set (match_operand:DF 0 "fp_arith_reg_operand")
 	(neg:DF (match_operand:DF 1 "fp_arith_reg_operand")))]
-  "TARGET_FPU_DOUBLE")
+  "TARGET_FPU_DOUBLE"
+{
+  if (TARGET_FPU_SH4_300)
+    emit_insn (gen_negdf2_fpscr (operands[0], operands[1]));
+  else
+    emit_insn (gen_negdf2_no_fpscr (operands[0], operands[1]));
+  DONE;
+})
 
-(define_insn "*negdf2_i"
+(define_insn "negdf2_fpscr"
+  [(set (match_operand:DF 0 "fp_arith_reg_operand" "=f")
+	(neg:DF (match_operand:DF 1 "fp_arith_reg_operand" "0")))
+   (use (reg:SI FPSCR_MODES_REG))]
+  "TARGET_FPU_SH4_300"
+  "fneg	%0"
+  [(set_attr "type" "fmove")
+   (set_attr "fp_mode" "double")])
+
+(define_insn "negdf2_no_fpscr"
   [(set (match_operand:DF 0 "fp_arith_reg_operand" "=f")
 	(neg:DF (match_operand:DF 1 "fp_arith_reg_operand" "0")))]
-  "TARGET_FPU_DOUBLE"
+  "TARGET_FPU_DOUBLE && !TARGET_FPU_SH4_300"
   "fneg	%0"
   [(set_attr "type" "fmove")])
 
@@ -9702,14 +9752,30 @@
 (define_expand "absdf2"
   [(set (match_operand:DF 0 "fp_arith_reg_operand")
 	(abs:DF (match_operand:DF 1 "fp_arith_reg_operand")))]
-  "TARGET_FPU_DOUBLE")
+  "TARGET_FPU_DOUBLE"
+{
+  if (TARGET_FPU_SH4_300)
+    emit_insn (gen_absdf2_fpscr (operands[0], operands[1]));
+  else
+    emit_insn (gen_absdf2_no_fpscr (operands[0], operands[1]));
+  DONE;
+})
 
-(define_insn "*absdf2_i"
+(define_insn "absdf2_no_fpscr"
   [(set (match_operand:DF 0 "fp_arith_reg_operand" "=f")
 	(abs:DF (match_operand:DF 1 "fp_arith_reg_operand" "0")))]
-  "TARGET_FPU_DOUBLE"
+  "TARGET_FPU_DOUBLE && !TARGET_FPU_SH4_300"
   "fabs	%0"
   [(set_attr "type" "fmove")])
+
+(define_insn "absdf2_fpscr"
+  [(set (match_operand:DF 0 "fp_arith_reg_operand" "=f")
+	(abs:DF (match_operand:DF 1 "fp_arith_reg_operand" "0")))
+   (use (reg:SI FPSCR_MODES_REG))]
+  "TARGET_FPU_SH4_300"
+  "fabs	%0"
+  [(set_attr "type" "fmove")
+   (set_attr "fp_mode" "double")])
 
 (define_expand "extendsfdf2"
   [(set (match_operand:DF 0 "fp_arith_reg_operand" "")
@@ -10751,8 +10817,8 @@
 {
   rtx t_reg = get_t_reg_rtx ();
 
-  for (rtx_insn* i = prev_nonnote_insn_bb (curr_insn); i != NULL;
-       i = prev_nonnote_insn_bb (i))
+  for (rtx_insn* i = prev_nonnote_nondebug_insn_bb (curr_insn); i != NULL;
+       i = prev_nonnote_nondebug_insn_bb (i))
     {
       if (!INSN_P (i) || DEBUG_INSN_P (i))
 	continue;

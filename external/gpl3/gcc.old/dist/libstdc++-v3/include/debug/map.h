@@ -1,6 +1,6 @@
 // Debugging map implementation -*- C++ -*-
 
-// Copyright (C) 2003-2017 Free Software Foundation, Inc.
+// Copyright (C) 2003-2018 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -105,6 +105,7 @@ namespace __debug
       : _Base(__m, __a) { }
 
       map(map&& __m, const allocator_type& __a)
+      noexcept( noexcept(_Base(std::move(__m._M_base()), __a)) )
       : _Safe(std::move(__m._M_safe()), __a),
 	_Base(std::move(__m._M_base()), __a) { }
 
@@ -419,13 +420,7 @@ namespace __debug
 
 #if __cplusplus > 201402L
       using node_type = typename _Base::node_type;
-
-      struct insert_return_type
-      {
-	bool inserted;
-	iterator position;
-	node_type node;
-      };
+      using insert_return_type = _Node_insert_return<iterator, node_type>;
 
       node_type
       extract(const_iterator __position)
@@ -449,7 +444,7 @@ namespace __debug
       {
 	auto __ret = _Base::insert(std::move(__nh));
 	iterator __pos = iterator(__ret.position, this);
-	return { __ret.inserted, __pos, std::move(__ret.node) };
+	return { __pos, __ret.inserted, std::move(__ret.node) };
       }
 
       iterator
@@ -684,6 +679,39 @@ namespace __debug
       const _Base&
       _M_base() const _GLIBCXX_NOEXCEPT	{ return *this; }
     };
+
+#if __cpp_deduction_guides >= 201606
+
+ template<typename _InputIterator,
+	  typename _Compare = less<__iter_key_t<_InputIterator>>,
+	  typename _Allocator = allocator<__iter_to_alloc_t<_InputIterator>>,
+	  typename = _RequireInputIter<_InputIterator>,
+	  typename = _RequireAllocator<_Allocator>>
+  map(_InputIterator, _InputIterator,
+      _Compare = _Compare(), _Allocator = _Allocator())
+  -> map<__iter_key_t<_InputIterator>, __iter_val_t<_InputIterator>,
+	 _Compare, _Allocator>;
+
+ template<typename _Key, typename _Tp, typename _Compare = less<_Key>,
+	  typename _Allocator = allocator<pair<const _Key, _Tp>>,
+	  typename = _RequireAllocator<_Allocator>>
+   map(initializer_list<pair<_Key, _Tp>>,
+       _Compare = _Compare(), _Allocator = _Allocator())
+   -> map<_Key, _Tp, _Compare, _Allocator>;
+
+ template <typename _InputIterator, typename _Allocator,
+	   typename = _RequireInputIter<_InputIterator>,
+	   typename = _RequireAllocator<_Allocator>>
+   map(_InputIterator, _InputIterator, _Allocator)
+   -> map<__iter_key_t<_InputIterator>, __iter_val_t<_InputIterator>,
+	  less<__iter_key_t<_InputIterator>>, _Allocator>;
+
+ template<typename _Key, typename _Tp, typename _Allocator,
+	  typename = _RequireAllocator<_Allocator>>
+   map(initializer_list<pair<_Key, _Tp>>, _Allocator)
+   -> map<_Key, _Tp, less<_Key>, _Allocator>;
+
+#endif
 
   template<typename _Key, typename _Tp,
 	   typename _Compare, typename _Allocator>

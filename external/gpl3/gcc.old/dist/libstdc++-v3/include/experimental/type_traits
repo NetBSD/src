@@ -1,6 +1,6 @@
 // Variable Templates For Type Traits -*- C++ -*-
 
-// Copyright (C) 2014-2017 Free Software Foundation, Inc.
+// Copyright (C) 2014-2018 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -42,12 +42,12 @@
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
+
 namespace experimental
 {
 inline namespace fundamentals_v1
 {
-_GLIBCXX_BEGIN_NAMESPACE_VERSION
-
 #define __cpp_lib_experimental_type_trait_variable_templates 201402
 
 // See C++14 §20.10.4.1, primary type categories
@@ -216,13 +216,10 @@ template <typename _From, typename _To>
   // raw_invocation_type (still unimplemented)
   // invocation_type_t (still unimplemented)
   // raw_invocation_type_t (still unimplemented)
-_GLIBCXX_END_NAMESPACE_VERSION
 } // namespace fundamentals_v1
 
 inline namespace fundamentals_v2
 {
-_GLIBCXX_BEGIN_NAMESPACE_VERSION
-
 #define __cpp_lib_experimental_detect 201505
 
 // [meta.detect]
@@ -254,12 +251,12 @@ template<typename _Default, template<typename...> class _Op, typename... _Args>
 template<typename _Default, template<typename...> class _Op, typename... _Args>
   using detected_or_t = typename detected_or<_Default, _Op, _Args...>::type;
 
-template<typename Expected, template<typename...> class _Op, typename... _Args>
-  using is_detected_exact = is_same<Expected, detected_t<_Op, _Args...>>;
+template<typename _Expected, template<typename...> class _Op, typename... _Args>
+  using is_detected_exact = is_same<_Expected, detected_t<_Op, _Args...>>;
 
-template<typename Expected, template<typename...> class _Op, typename... _Args>
+template<typename _Expected, template<typename...> class _Op, typename... _Args>
   constexpr bool is_detected_exact_v
-    = is_detected_exact<Expected, _Op, _Args...>::value;
+    = is_detected_exact<_Expected, _Op, _Args...>::value;
 
 template<typename _To, template<typename...> class _Op, typename... _Args>
   using is_detected_convertible
@@ -297,10 +294,10 @@ template<typename... _Bn>
 template<typename _Pp>
   constexpr bool negation_v
     = negation<_Pp>::value;
-
-_GLIBCXX_END_NAMESPACE_VERSION
 } // namespace fundamentals_v2
 } // namespace experimental
+
+_GLIBCXX_END_NAMESPACE_VERSION
 } // namespace std
 
 #endif // __cplusplus <= 201103L

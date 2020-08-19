@@ -381,10 +381,15 @@
       </p><p>
       </p><pre class="screen"><strong class="userinput"><code>make doc-xml-single-docbook</code></strong></pre><p>
       </p><p>
-	Generated files are output into separate sub directores of
+	Generated files are output into separate sub-directores of
 	<code class="filename">doc/docbook/</code> in the
 	build directory, based on the output format. For instance, the
 	HTML docs will be in <code class="filename">doc/docbook/html</code>.
+      </p><p>
+	The </p><pre class="screen">doc-html-docbook-regenerate</pre><p> target will generate
+	the HTML files and copy them back to the libstdc++ source tree.
+	This can be used to update the HTML files that are checked in to
+	version control.
       </p><p>
 	If the Docbook stylesheets are installed in a custom location,
 	one can use the variable <code class="literal">XSL_STYLE_DIR</code> to
@@ -527,7 +532,7 @@ make <code class="literal">XSL_STYLE_DIR="/usr/share/xml/docbook/stylesheet/nwal
       &lt;/set&gt;<br />
     </p></div></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="docbook.markup"></a>Markup By Example</h4></div></div></div><p>
 	Complete details on Docbook markup can be found in the
-	<a class="link" href="http://tdg.docbook.org/tdg/5.0/ref-elements.html" target="_top">DocBook Element Reference</a>.
+	<a class="link" href="https://tdg.docbook.org/tdg/5.0/ref-elements.html" target="_top">DocBook Element Reference</a>.
 	An incomplete reference for HTML to Docbook conversion is
 	detailed in the table below.
       </p><div class="table"><a id="table.docbook_cmp"></a><p class="title"><strong>Table B.4. HTML to Docbook XML Markup Comparison</strong></p><div class="table-contents"><table class="table" summary="HTML to Docbook XML Markup Comparison" border="1"><colgroup><col align="left" class="c1" /><col align="left" class="c2" /></colgroup><thead><tr><th align="left">HTML</th><th align="left">Docbook</th></tr></thead><tbody><tr><td align="left">&lt;p&gt;</td><td align="left">&lt;para&gt;</td></tr><tr><td align="left">&lt;pre&gt;</td><td align="left">&lt;computeroutput&gt;, &lt;programlisting&gt;,

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2019/09/26 08:03:21 mrg Exp $
+# $NetBSD: Makefile,v 1.8 2020/08/19 07:47:30 mrg Exp $
 
 UNSUPPORTED_COMPILER.clang=	# defined
 NOSANITIZER=	# defined
@@ -10,6 +10,7 @@ NOSANITIZER=	# defined
 
 .PATH: ${SANITIZER}/asan ${SANITIZER}/lsan
 
+# XXXmknative
 ASAN_SRCS= \
 	asan_activation.cc \
 	asan_allocator.cc \
@@ -20,6 +21,7 @@ ASAN_SRCS= \
 	asan_flags.cc \
 	asan_globals.cc \
 	asan_interceptors.cc \
+	asan_interceptors_memintrinsics.cc \
 	asan_linux.cc \
 	asan_mac.cc \
 	asan_malloc_linux.cc \
@@ -31,6 +33,7 @@ ASAN_SRCS= \
 	asan_posix.cc \
 	asan_report.cc \
 	asan_rtl.cc \
+	asan_shadow_setup.cc \
 	asan_stack.cc \
 	asan_stats.cc \
 	asan_suppressions.cc \
@@ -42,11 +45,13 @@ ASAN_SRCS= \
 LIB=	asan
 SRCS+=	${ASAN_SRCS} lsan_common.cc lsan_common_linux.cc
 LIBDPLIBS+= rt ${NETBSDSRCDIR}/lib/librt
+LIBDPLIBS+= m  ${NETBSDSRCDIR}/lib/libm
 CPPFLAGS+=-DCAN_SANITIZE_UB=0
 
 .if ${MACHINE_ARCH} == "vax"
 COPTS.asan_allocator.cc += -O1
 COPTS.asan_report.cc += -O1
+COPTS.sanitizer_file.cc += -O1
 COPTS.ubsan_diag.cc += -O1
 COPTS.ubsan_init.cc += -O1
 .endif

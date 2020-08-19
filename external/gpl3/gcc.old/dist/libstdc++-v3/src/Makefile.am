@@ -1,6 +1,6 @@
 ## Makefile for the C++11 sources of the GNU C++ Standard library.
 ##
-## Copyright (C) 1997-2017 Free Software Foundation, Inc.
+## Copyright (C) 1997-2018 Free Software Foundation, Inc.
 ##
 ## This file is part of the libstdc++ version 3 distribution.
 ## Process this file with automake to produce Makefile.in.
@@ -321,7 +321,7 @@ endif
 # Take care to fix all possibly-relative paths.
 debugdir = ${glibcxx_builddir}/src/debug
 stamp-debug:
-	if test ! -d ${debugdir}; then \
+	if test ! -d ${debugdir} || test ! -f ${debugdir}/Makefile ; then \
 	  mkdir -p ${debugdir}; \
 	  for d in $(SUBDIRS); do mkdir -p  ${debugdir}/$$d; done; \
 	  (cd ${debugdir}; \

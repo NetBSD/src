@@ -1,6 +1,6 @@
 // Class filesystem::path -*- C++ -*-
 
-// Copyright (C) 2014-2017 Free Software Foundation, Inc.
+// Copyright (C) 2014-2018 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -55,13 +55,14 @@
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
+
 namespace experimental
 {
 namespace filesystem
 {
 inline namespace v1
 {
-_GLIBCXX_BEGIN_NAMESPACE_VERSION
 _GLIBCXX_BEGIN_NAMESPACE_CXX11
 
 #if __cplusplus == 201402L
@@ -71,7 +72,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
 #endif
 
   /**
-   * @ingroup filesystem
+   * @ingroup filesystem-ts
    * @{
    */
 
@@ -119,9 +120,12 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
       : decltype(__is_path_src(std::declval<_Source>(), 0))
       { };
 
-    template<typename _Tp1, typename _Tp2 = void>
+    template<typename _Tp1, typename _Tp2 = void,
+	     typename _Tp1_nocv = typename remove_cv<_Tp1>::type,
+	     typename _Tp1_noptr = typename remove_pointer<_Tp1>::type>
       using _Path = typename
-	std::enable_if<__and_<__not_<is_same<_Tp1, path>>,
+	std::enable_if<__and_<__not_<is_same<_Tp1_nocv, path>>,
+			      __not_<is_void<_Tp1_noptr>>,
 			      __constructible_from<_Tp1, _Tp2>>::value,
 		       path>::type;
 
@@ -182,7 +186,8 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
     path(path&& __p) noexcept
     : _M_pathname(std::move(__p._M_pathname)), _M_type(__p._M_type)
     {
-      _M_split_cmpts();
+      if (_M_type == _Type::_Multi)
+	_M_split_cmpts();
       __p.clear();
     }
 
@@ -367,7 +372,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
     bool has_filename() const;
     bool has_stem() const;
     bool has_extension() const;
-    bool is_absolute() const;
+    bool is_absolute() const { return has_root_directory(); }
     bool is_relative() const { return !is_absolute(); }
 
     // iterators
@@ -456,7 +461,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
 	return _S_convert_loc(__tmp.data(), __tmp.data()+__tmp.size(), __loc);
       }
 
-    bool _S_is_dir_sep(value_type __ch)
+    static bool _S_is_dir_sep(value_type __ch)
     {
 #ifdef _GLIBCXX_FILESYSTEM_IS_WINDOWS
       return __ch == L'/' || __ch == preferred_separator;
@@ -998,16 +1003,6 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
     return ext.first && ext.second != string_type::npos;
   }
 
-  inline bool
-  path::is_absolute() const
-  {
-#ifdef _GLIBCXX_FILESYSTEM_IS_WINDOWS
-    return has_root_name();
-#else
-    return has_root_directory();
-#endif
-  }
-
   inline path::iterator
   path::begin() const
   {
@@ -1082,12 +1077,13 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
     return _M_at_end == __rhs._M_at_end;
   }
 
-  // @} group filesystem
+  // @} group filesystem-ts
 _GLIBCXX_END_NAMESPACE_CXX11
-_GLIBCXX_END_NAMESPACE_VERSION
 } // namespace v1
 } // namespace filesystem
 } // namespace experimental
+
+_GLIBCXX_END_NAMESPACE_VERSION
 } // namespace std
 
 #endif // C++11

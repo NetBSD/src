@@ -1,4 +1,9 @@
+// The content of this file is x86_64-only:
+#if defined(__x86_64__)
+
 #include "sanitizer_common/sanitizer_asm.h"
+#include "cet.h"
+
 #if !defined(__APPLE__)
 .section .text
 #else
@@ -9,6 +14,7 @@ ASM_HIDDEN(__tsan_trace_switch)
 .globl ASM_TSAN_SYMBOL(__tsan_trace_switch_thunk)
 ASM_TSAN_SYMBOL(__tsan_trace_switch_thunk):
   CFI_STARTPROC
+  _CET_ENDBR
   # Save scratch registers.
   push %rax
   CFI_ADJUST_CFA_OFFSET(8)
@@ -93,6 +99,7 @@ ASM_HIDDEN(__tsan_report_race)
 .globl ASM_TSAN_SYMBOL(__tsan_report_race_thunk)
 ASM_TSAN_SYMBOL(__tsan_report_race_thunk):
   CFI_STARTPROC
+  _CET_ENDBR
   # Save scratch registers.
   push %rax
   CFI_ADJUST_CFA_OFFSET(8)
@@ -181,6 +188,7 @@ ASM_HIDDEN(__tsan_setjmp)
 ASM_TYPE_FUNCTION(ASM_TSAN_SYMBOL_INTERCEPTOR(setjmp))
 ASM_TSAN_SYMBOL_INTERCEPTOR(setjmp):
   CFI_STARTPROC
+  _CET_ENDBR
   // save env parameter
   push %rdi
   CFI_ADJUST_CFA_OFFSET(8)
@@ -222,6 +230,7 @@ ASM_SIZE(ASM_TSAN_SYMBOL_INTERCEPTOR(setjmp))
 ASM_TYPE_FUNCTION(ASM_TSAN_SYMBOL_INTERCEPTOR(_setjmp))
 ASM_TSAN_SYMBOL_INTERCEPTOR(_setjmp):
   CFI_STARTPROC
+  _CET_ENDBR
   // save env parameter
   push %rdi
   CFI_ADJUST_CFA_OFFSET(8)
@@ -263,6 +272,7 @@ ASM_SIZE(ASM_TSAN_SYMBOL_INTERCEPTOR(_setjmp))
 ASM_TYPE_FUNCTION(ASM_TSAN_SYMBOL_INTERCEPTOR(sigsetjmp))
 ASM_TSAN_SYMBOL_INTERCEPTOR(sigsetjmp):
   CFI_STARTPROC
+  _CET_ENDBR
   // save env parameter
   push %rdi
   CFI_ADJUST_CFA_OFFSET(8)
@@ -319,6 +329,7 @@ ASM_SIZE(ASM_TSAN_SYMBOL_INTERCEPTOR(sigsetjmp))
 ASM_TYPE_FUNCTION(ASM_TSAN_SYMBOL_INTERCEPTOR(__sigsetjmp))
 ASM_TSAN_SYMBOL_INTERCEPTOR(__sigsetjmp):
   CFI_STARTPROC
+  _CET_ENDBR
   // save env parameter
   push %rdi
   CFI_ADJUST_CFA_OFFSET(8)
@@ -364,4 +375,6 @@ ASM_SIZE(ASM_TSAN_SYMBOL_INTERCEPTOR(__sigsetjmp))
 #if defined(__FreeBSD__) || defined(__linux__) || defined(__NetBSD__)
 /* We do not need executable stack.  */
 .section        .note.GNU-stack,"",@progbits
+#endif
+
 #endif

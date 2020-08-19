@@ -13,17 +13,17 @@
 
 #ifndef CAN_SANITIZE_UB
 // Other platforms should be easy to add, and probably work as-is.
-#if (defined(__linux__) || defined(__FreeBSD__) || defined(__NetBSD__) || \
-     defined(__APPLE__)) && \
-    (defined(__x86_64__) || defined(__i386__) || defined(__arm__) || \
-     defined(__aarch64__) || defined(__mips__) || defined(__powerpc64__) || \
+#if (defined(__linux__) || defined(__FreeBSD__) || defined(__APPLE__) ||       \
+     defined(__NetBSD__)) &&                                                   \
+    (defined(__x86_64__) || defined(__i386__) || defined(__arm__) ||           \
+     defined(__aarch64__) || defined(__mips__) || defined(__powerpc64__) ||    \
      defined(__powerpc__) || defined(__hppa__) || defined(__m68k__) || \
      defined(__mc68010__) || defined(__powerpc64__) || defined(__sparc__) || \
      defined(__alpha__) || defined(__vax__) || defined(__sh3__) || \
      defined(__ia64__) || \
      defined(__s390__))
 # define CAN_SANITIZE_UB 1
-#elif defined(_WIN32)
+#elif defined(_WIN32) || defined(__Fuchsia__)
 # define CAN_SANITIZE_UB 1
 #else
 # define CAN_SANITIZE_UB 0

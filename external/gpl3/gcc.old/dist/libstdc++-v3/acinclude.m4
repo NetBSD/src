@@ -642,34 +642,43 @@ dnl  XSL_STYLE_DIR
 dnl
 AC_DEFUN([GLIBCXX_CONFIGURE_DOCBOOK], [
 
-AC_MSG_CHECKING([for docbook stylesheets for documentation creation])
-glibcxx_stylesheets=no
-if test x${XSLTPROC} = xyes && echo '<title/>' | xsltproc --noout --nonet --xinclude http://docbook.sourceforge.net/release/xsl-ns/current/xhtml-1_1/docbook.xsl - 2>/dev/null; then
-  glibcxx_stylesheets=yes
-fi
-AC_MSG_RESULT($glibcxx_stylesheets)
+glibcxx_docbook_url=http://docbook.sourceforge.net/release/xsl-ns/current/
 
 AC_MSG_CHECKING([for local stylesheet directory])
 glibcxx_local_stylesheets=no
-if test x"$glibcxx_stylesheets" = x"yes"; then
-  if test -d /usr/share/sgml/docbook/xsl-ns-stylesheets; then
-    glibcxx_local_stylesheets=yes
-    XSL_STYLE_DIR=/usr/share/sgml/docbook/xsl-ns-stylesheets
-  fi
-  if test -d /usr/share/xml/docbook/stylesheet/docbook-xsl-ns; then
-    glibcxx_local_stylesheets=yes
-    XSL_STYLE_DIR=/usr/share/xml/docbook/stylesheet/docbook-xsl-ns
-  fi
-  if test -d /usr/share/xml/docbook/stylesheet/nwalsh5/current; then
-    glibcxx_local_stylesheets=yes
-    XSL_STYLE_DIR=/usr/share/xml/docbook/stylesheet/nwalsh5/current
-  fi
+if test x${XMLCATALOG} = xyes && xsl_style_dir=`xmlcatalog "" $glibcxx_docbook_url 2>/dev/null`
+then
+  XSL_STYLE_DIR=`echo $xsl_style_dir | sed -n 's;^file://;;p'`
+  glibcxx_local_stylesheets=yes
+else
+  for dir in \
+    /usr/share/sgml/docbook/xsl-ns-stylesheets \
+    /usr/share/xml/docbook/stylesheet/docbook-xsl-ns \
+    /usr/share/xml/docbook/stylesheet/nwalsh5/current \
+    /usr/share/xml/docbook/stylesheet/nwalsh/current
+  do
+    if test -d $dir; then
+      glibcxx_local_stylesheets=yes
+      XSL_STYLE_DIR=$dir
+      break
+    fi
+  done
 fi
 AC_MSG_RESULT($glibcxx_local_stylesheets)
 
 if test x"$glibcxx_local_stylesheets" = x"yes"; then
   AC_SUBST(XSL_STYLE_DIR)
   AC_MSG_NOTICE($XSL_STYLE_DIR)
+
+  AC_MSG_CHECKING([for docbook stylesheets for documentation creation])
+  glibcxx_stylesheets=no
+  if test x${XMLCATALOG} = xno || xmlcatalog "" $glibcxx_docbook_url/xhtml/docbook.xsl >/dev/null 2>&1; then
+    if test x${XSLTPROC} = xyes && echo '<title/>' | xsltproc --noout --nonet --xinclude $glibcxx_docbook_url/xhtml/docbook.xsl - 2>/dev/null; then
+      glibcxx_stylesheets=yes
+    fi
+  fi
+  AC_MSG_RESULT($glibcxx_stylesheets)
+
 else
   glibcxx_stylesheets=no
 fi
@@ -1404,25 +1413,19 @@ AC_DEFUN([GLIBCXX_ENABLE_LIBSTDCXX_TIME], [
         ac_has_sched_yield=yes
         ;;
       gnu* | linux* | kfreebsd*-gnu | knetbsd*-gnu)
-        AC_MSG_CHECKING([for at least GNU libc 2.17])
-        AC_TRY_COMPILE(
-          [#include <features.h>],
-          [
-          #if ! __GLIBC_PREREQ(2, 17)
-          #error 
-          #endif
-          ],
-          [glibcxx_glibc217=yes], [glibcxx_glibc217=no])
-        AC_MSG_RESULT($glibcxx_glibc217)
-
-        if test x"$glibcxx_glibc217" = x"yes"; then
-          ac_has_clock_monotonic=yes
-          ac_has_clock_realtime=yes
+        # Don't use link test for freestanding library, in case gcc_no_link=yes
+        if test x"$is_hosted" = xyes; then
+          # Versions of glibc before 2.17 needed -lrt for clock_gettime.
+          AC_SEARCH_LIBS(clock_gettime, [rt])
+          if test x"$ac_cv_search_clock_gettime" = x"none required"; then
+            ac_has_clock_monotonic=yes
+            ac_has_clock_realtime=yes
+          fi
         fi
         ac_has_nanosleep=yes
         ac_has_sched_yield=yes
         ;;
-      freebsd*|netbsd*|dragonfly*)
+      freebsd*|netbsd*|dragonfly*|rtems*)
         ac_has_clock_monotonic=yes
         ac_has_clock_realtime=yes
         ac_has_nanosleep=yes
@@ -3749,7 +3752,7 @@ changequote([,])dnl
 fi
 
 # For libtool versioning info, format is CURRENT:REVISION:AGE
-libtool_VERSION=6:24:0
+libtool_VERSION=6:25:0
 
 # Everything parsed; figure out what files and settings to use.
 case $enable_symvers in
@@ -3762,7 +3765,7 @@ case $enable_symvers in
 	      [Define to use GNU versioning in the shared library.])
     ;;
   gnu-versioned-namespace)
-    libtool_VERSION=7:0:0
+    libtool_VERSION=8:0:0
     SYMVER_FILE=config/abi/pre/gnu-versioned-namespace.ver
     AC_DEFINE(_GLIBCXX_SYMVER_GNU_NAMESPACE, 1,
 	      [Define to use GNU namespace versioning in the shared library.])
@@ -4293,6 +4296,9 @@ AC_DEFUN([GLIBCXX_ENABLE_FILESYSTEM_TS], [
       gnu* | linux* | kfreebsd*-gnu | knetbsd*-gnu)
         enable_libstdcxx_filesystem_ts=yes
         ;;
+      rtems*)
+        enable_libstdcxx_filesystem_ts=yes
+        ;;
       solaris*)
         enable_libstdcxx_filesystem_ts=yes
         ;;
@@ -4518,3 +4524,4 @@ AC_DEFUN([GLIBCXX_CHECK_EXCEPTION_PTR_SYMVER], [
 m4_include([../config/gc++filt.m4])
 m4_include([../config/tls.m4])
 m4_include([../config/gthr.m4])
+m4_include([../config/cet.m4])

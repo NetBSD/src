@@ -1,6 +1,6 @@
 ## Makefile for the include subdirectory of the GNU C++ Standard library.
 ##
-## Copyright (C) 2001-2017 Free Software Foundation, Inc.
+## Copyright (C) 2001-2018 Free Software Foundation, Inc.
 ##
 ## This file is part of the libstdc++ version 3 distribution.
 ## Process this file with automake to produce Makefile.in.
@@ -31,11 +31,13 @@ std_headers = \
 	${std_srcdir}/array \
 	${std_srcdir}/atomic \
 	${std_srcdir}/bitset \
+	${std_srcdir}/charconv \
 	${std_srcdir}/chrono \
 	${std_srcdir}/codecvt \
 	${std_srcdir}/complex \
 	${std_srcdir}/condition_variable \
 	${std_srcdir}/deque \
+	${std_srcdir}/filesystem \
 	${std_srcdir}/forward_list \
 	${std_srcdir}/fstream \
 	${std_srcdir}/functional \
@@ -103,6 +105,10 @@ bits_headers = \
 	${bits_srcdir}/enable_special_members.h \
 	${bits_srcdir}/forward_list.h \
 	${bits_srcdir}/forward_list.tcc \
+	${bits_srcdir}/fs_dir.h \
+	${bits_srcdir}/fs_fwd.h \
+	${bits_srcdir}/fs_ops.h \
+	${bits_srcdir}/fs_path.h \
 	${bits_srcdir}/fstream.tcc \
 	${bits_srcdir}/functexcept.h \
 	${bits_srcdir}/functional_hash.h \
@@ -124,7 +130,6 @@ bits_headers = \
 	${bits_srcdir}/locale_facets_nonio.tcc \
 	${bits_srcdir}/localefwd.h \
 	${bits_srcdir}/mask_array.h \
-	${bits_srcdir}/specfun.h \
 	${bits_srcdir}/memoryfwd.h \
 	${bits_srcdir}/move.h \
 	${bits_srcdir}/node_handle.h \
@@ -155,6 +160,7 @@ bits_headers = \
 	${bits_srcdir}/shared_ptr_atomic.h \
 	${bits_srcdir}/shared_ptr_base.h \
 	${bits_srcdir}/slice_array.h \
+	${bits_srcdir}/specfun.h \
 	${bits_srcdir}/sstream.tcc \
 	${bits_srcdir}/std_abs.h \
 	${bits_srcdir}/std_function.h \
@@ -1004,6 +1010,7 @@ allstamped = \
 # catenation.
 allcreated = \
 	${host_builddir}/c++config.h \
+	${host_builddir}/largefile-config.h \
 	${thread_host_headers} \
 	${pch_build}
 
@@ -1025,7 +1032,7 @@ stamp-bits: ${bits_headers}
 	@$(STAMP) stamp-bits
 
 stamp-bits-sup: stamp-bits ${bits_sup_headers}
-	@-cd ${bits_builddir} && $(LN_S) $? . 2>/dev/null
+	@-cd ${bits_builddir} && $(LN_S) ${bits_sup_headers} . 2>/dev/null
 	@$(STAMP) stamp-bits-sup
 
 stamp-c_base: ${c_base_headers}
@@ -1232,10 +1239,19 @@ stamp-float128:
 	echo 'undef _GLIBCXX_USE_FLOAT128' > stamp-float128
 endif
 
+# This header is not installed, it's only used to build libstdc++ itself.
+${host_builddir}/largefile-config.h: ${CONFIG_HEADER}
+	@rm -f $@.tmp
+	@-grep 'define _DARWIN_USE_64_BIT_INODE' ${CONFIG_HEADER} >> $@.tmp
+	@-grep 'define _FILE_OFFSET_BITS' ${CONFIG_HEADER} >> $@.tmp
+	@-grep 'define _LARGE_FILES' ${CONFIG_HEADER} >> $@.tmp
+	@mv $@.tmp $@
+
 # NB: The non-empty default ldbl_compat works around an AIX sed
 # oddity, see libstdc++/31957 for details.
 ${host_builddir}/c++config.h: ${CONFIG_HEADER} \
 			      ${glibcxx_srcdir}/include/bits/c++config \
+			      ${host_builddir}/largefile-config.h \
 			      stamp-${host_alias} \
 			      ${toplevel_srcdir}/gcc/DATESTAMP \
 			      stamp-namespace-version \
@@ -1273,6 +1289,9 @@ ${host_builddir}/c++config.h: ${CONFIG_HEADER} \
 	    -e 's/PACKAGE/_GLIBCXX_PACKAGE/g' \
 	    -e 's/VERSION/_GLIBCXX_VERSION/g' \
 	    -e 's/WORDS_/_GLIBCXX_WORDS_/g' \
+	    -e 's/_DARWIN_USE_64_BIT_INODE/_GLIBCXX_DARWIN_USE_64_BIT_INODE/g' \
+	    -e 's/_FILE_OFFSET_BITS/_GLIBCXX_FILE_OFFSET_BITS/g' \
+	    -e 's/_LARGE_FILES/_GLIBCXX_LARGE_FILES/g' \
 	    -e 's/ICONV_CONST/_GLIBCXX_ICONV_CONST/g' \
 	    -e '/[	 ]_GLIBCXX_LONG_DOUBLE_COMPAT[	 ]/d' \
 	    < ${CONFIG_HEADER} >> $@ ;\

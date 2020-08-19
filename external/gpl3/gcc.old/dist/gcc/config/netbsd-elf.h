@@ -1,5 +1,5 @@
 /* Common configuration file for NetBSD ELF targets.
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2018 Free Software Foundation, Inc.
    Contributed by Wasabi Systems, Inc.
 
 This file is part of GCC.
@@ -39,12 +39,12 @@ along with GCC; see the file COPYING3.  If not see
        %{p:gcrt0%O%s}		\
        %{!p:crt0%O%s}}}		\
    %:if-exists(crti%O%s)	\
-   %{static:%:if-exists-else(crtbeginT%O%s crtbegin%O%s)} \
-   %{!static:                   \
-     %{!shared:                 \
-       %{!pie:crtbegin%O%s}     \
-       %{pie:crtbeginS%O%s}}    \
-     %{shared:crtbeginS%O%s}}"
+   %{pie:crtbeginS%O%s}		\
+   %{!pie:			\
+     %{static:%:if-exists-else(crtbeginT%O%s crtbegin%O%s)} \
+     %{!static:                 \
+       %{shared:crtbeginS%O%s}	\
+       %{!shared:crtbegin%O%s}}}"
 
 #undef STARTFILE_SPEC
 #define STARTFILE_SPEC NETBSD_STARTFILE_SPEC
@@ -55,10 +55,10 @@ along with GCC; see the file COPYING3.  If not see
    C++ file-scope static objects deconstructed after exiting "main".  */
 
 #define NETBSD_ENDFILE_SPEC	\
-  "%{!shared:                   \
-    %{!pie:crtend%O%s}          \
-    %{pie:crtendS%O%s}}         \
-   %{shared:crtendS%O%s}        \
+  "%{pie:crtendS%O%s}		\
+   %{!pie:			\
+     %{shared:crtendS%O%s}	\
+     %{!shared:crtend%O%s}}	\
    %:if-exists(crtn%O%s)"
 
 #undef ENDFILE_SPEC
@@ -85,11 +85,12 @@ along with GCC; see the file COPYING3.  If not see
      %{!nostdlib: \
        %{!r: \
 	 %{!e*:-e %(netbsd_entry_point)}}} \
+     %{pie:-pie} \
      %{!static: \
        %{rdynamic:-export-dynamic} \
        %(netbsd_link_ld_elf_so)} \
      %{static:-static \
-       %{pie: --no-dynamic-linker}}} \
+       %{pie:--no-dynamic-linker}}} \
    %{!shared:%{!nostdlib:%{!nodefaultlibs:\
      %{%:sanitize(address): -lasan } \
      %{%:sanitize(undefined): -lubsan}}}}"

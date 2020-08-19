@@ -1,6 +1,6 @@
 // Queue implementation -*- C++ -*-
 
-// Copyright (C) 2001-2017 Free Software Foundation, Inc.
+// Copyright (C) 2001-2018 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -302,6 +302,18 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 #endif // __cplusplus >= 201103L
     };
 
+#if __cpp_deduction_guides >= 201606
+  template<typename _Container,
+	   typename = enable_if_t<!__is_allocator<_Container>::value>>
+    queue(_Container) -> queue<typename _Container::value_type, _Container>;
+
+  template<typename _Container, typename _Allocator,
+	   typename = enable_if_t<!__is_allocator<_Container>::value>,
+	   typename = enable_if_t<__is_allocator<_Allocator>::value>>
+    queue(_Container, _Allocator)
+    -> queue<typename _Container::value_type, _Container>;
+#endif
+
   /**
    *  @brief  Queue equality comparison.
    *  @param  __x  A %queue.
@@ -492,14 +504,18 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	priority_queue(const _Compare& __x, const _Alloc& __a)
 	: c(__a), comp(__x) { }
 
+      // _GLIBCXX_RESOLVE_LIB_DEFECTS
+      // 2537. Constructors [...] taking allocators should call make_heap
       template<typename _Alloc, typename _Requires = _Uses<_Alloc>>
 	priority_queue(const _Compare& __x, const _Sequence& __c,
 		       const _Alloc& __a)
-	: c(__c, __a), comp(__x) { }
+	: c(__c, __a), comp(__x)
+	{ std::make_heap(c.begin(), c.end(), comp); }
 
       template<typename _Alloc, typename _Requires = _Uses<_Alloc>>
 	priority_queue(const _Compare& __x, _Sequence&& __c, const _Alloc& __a)
-	: c(std::move(__c), __a), comp(__x) { }
+	: c(std::move(__c), __a), comp(__x)
+	{ std::make_heap(c.begin(), c.end(), comp); }
 
       template<typename _Alloc, typename _Requires = _Uses<_Alloc>>
 	priority_queue(const priority_queue& __q, const _Alloc& __a)
@@ -652,6 +668,32 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       }
 #endif // __cplusplus >= 201103L
     };
+
+#if __cpp_deduction_guides >= 201606
+  template<typename _Compare, typename _Container,
+	   typename = enable_if_t<!__is_allocator<_Compare>::value>,
+	   typename = enable_if_t<!__is_allocator<_Container>::value>>
+    priority_queue(_Compare, _Container)
+    -> priority_queue<typename _Container::value_type, _Container, _Compare>;
+
+  template<typename _InputIterator, typename _ValT
+	   = typename iterator_traits<_InputIterator>::value_type,
+	   typename _Compare = less<_ValT>,
+	   typename _Container = vector<_ValT>,
+	   typename = _RequireInputIter<_InputIterator>,
+	   typename = enable_if_t<!__is_allocator<_Compare>::value>,
+	   typename = enable_if_t<!__is_allocator<_Container>::value>>
+    priority_queue(_InputIterator, _InputIterator, _Compare = _Compare(),
+		   _Container = _Container())
+    -> priority_queue<_ValT, _Container, _Compare>;
+
+  template<typename _Compare, typename _Container, typename _Allocator,
+	   typename = enable_if_t<!__is_allocator<_Compare>::value>,
+	   typename = enable_if_t<!__is_allocator<_Container>::value>,
+	   typename = enable_if_t<__is_allocator<_Allocator>::value>>
+    priority_queue(_Compare, _Container, _Allocator)
+    -> priority_queue<typename _Container::value_type, _Container, _Compare>;
+#endif
 
   // No equality/comparison operators are provided for priority_queue.
 

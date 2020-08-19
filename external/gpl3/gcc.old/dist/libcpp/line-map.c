@@ -1,5 +1,5 @@
 /* Map (unsigned int) keys to (source file, line, column) triples.
-   Copyright (C) 2001-2017 Free Software Foundation, Inc.
+   Copyright (C) 2001-2018 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -25,11 +25,6 @@ along with this program; see the file COPYING3.  If not see
 #include "cpplib.h"
 #include "internal.h"
 #include "hashtab.h"
-
-/* Do not track column numbers higher than this one.  As a result, the
-   range of column_bits is [12, 18] (or 0 if column numbers are
-   disabled).  */
-const unsigned int LINE_MAP_MAX_COLUMN_NUMBER = (1U << 12);
 
 /* Highest possible source location encoded within an ordinary or
    macro map.  */
@@ -62,7 +57,8 @@ extern unsigned num_macro_tokens_counter;
 
 line_maps::~line_maps ()
 {
-  htab_delete (location_adhoc_data_map.htab);
+  if (location_adhoc_data_map.htab)
+    htab_delete (location_adhoc_data_map.htab);
 }
 
 /* Hash function for location_adhoc_data hashtable.  */
@@ -98,7 +94,8 @@ location_adhoc_data_eq (const void *l1, const void *l2)
 static int
 location_adhoc_data_update (void **slot, void *data)
 {
-  *((char **) slot) += *((int64_t *) data);
+  *((char **) slot)
+    = (char *) ((uintptr_t) *((char **) slot) + *((ptrdiff_t *) data));
   return 1;
 }
 
@@ -220,7 +217,7 @@ get_combined_adhoc_loc (struct line_maps *set,
 	  set->location_adhoc_data_map.allocated)
 	{
 	  char *orig_data = (char *) set->location_adhoc_data_map.data;
-	  int64_t offset;
+	  ptrdiff_t offset;
 	  /* Cast away extern "C" from the type of xrealloc.  */
 	  line_map_realloc reallocator = (set->reallocator
 					  ? set->reallocator
@@ -347,7 +344,12 @@ void
 linemap_init (struct line_maps *set,
 	      source_location builtin_location)
 {
+#if __GNUC__ == 4 && __GNUC_MINOR__ == 2 && !defined (__clang__)
+  /* PR33916, needed to fix PR82939.  */
   memset (set, 0, sizeof (struct line_maps));
+#else
+  *set = line_maps ();
+#endif
   set->highest_location = RESERVED_LOCATION_COUNT - 1;
   set->highest_line = RESERVED_LOCATION_COUNT - 1;
   set->location_adhoc_data_map.htab =
@@ -753,6 +755,11 @@ linemap_line_start (struct line_maps *set, linenum_type to_line,
       if (line_delta < 0
 	  || last_line != ORDINARY_MAP_STARTING_LINE_NUMBER (map)
 	  || SOURCE_COLUMN (map, highest) >= (1U << (column_bits - range_bits))
+	  || ( /* We can't reuse the map if the line offset is sufficiently
+		  large to cause overflow when computing location_t values.  */
+	      (to_line - ORDINARY_MAP_STARTING_LINE_NUMBER (map))
+	      >= (((uint64_t) 1)
+		  << (CHAR_BIT * sizeof (linenum_type) - column_bits)))
 	  || range_bits < map->m_range_bits)
 	map = linemap_check_ordinary
 	        (const_cast <line_map *>
@@ -881,8 +888,7 @@ linemap_position_for_loc_and_offset (struct line_maps *set,
     loc = set->location_adhoc_data_map.data[loc & MAX_SOURCE_LOCATION].locus;
 
   /* This function does not support virtual locations yet.  */
-  if (linemap_assert_fails
-      (!linemap_location_from_macro_expansion_p (set, loc)))
+  if (linemap_location_from_macro_expansion_p (set, loc))
     return loc;
 
   if (column_offset == 0
@@ -1439,21 +1445,23 @@ linemap_macro_loc_to_def_point (struct line_maps *set,
 {
   struct line_map *map;
 
-  if (IS_ADHOC_LOC (location))
-    location = set->location_adhoc_data_map.data[location
-						 & MAX_SOURCE_LOCATION].locus;
-
   linemap_assert (set && location >= RESERVED_LOCATION_COUNT);
 
   while (true)
     {
-      map = const_cast <line_map *> (linemap_lookup (set, location));
+      source_location caret_loc;
+      if (IS_ADHOC_LOC (location))
+	caret_loc = get_location_from_adhoc_loc (set, location);
+      else
+	caret_loc = location;
+
+      map = const_cast <line_map *> (linemap_lookup (set, caret_loc));
       if (!linemap_macro_expansion_map_p (map))
 	break;
 
       location =
 	linemap_macro_map_loc_to_def_point (linemap_check_macro (map),
-					    location);
+					    caret_loc);
     }
 
   if (original_map)
@@ -2003,28 +2011,6 @@ line_table_dump (FILE *stream, struct line_maps *set, unsigned int num_ordinary,
     }
 }
 
-/* struct source_range.  */
-
-/* Is there any part of this range on the given line?  */
-
-bool
-source_range::intersects_line_p (const char *file, int line) const
-{
-  expanded_location exploc_start
-    = linemap_client_expand_location_to_spelling_point (m_start);
-  if (file != exploc_start.file)
-    return false;
-  if (line < exploc_start.line)
-      return false;
-  expanded_location exploc_finish
-    = linemap_client_expand_location_to_spelling_point (m_finish);
-  if (file != exploc_finish.file)
-    return false;
-  if (line > exploc_finish.line)
-      return false;
-  return true;
-}
-
 /* class rich_location.  */
 
 /* Construct a rich_location with location LOC as its initial range.  */
@@ -2035,7 +2021,8 @@ rich_location::rich_location (line_maps *set, source_location loc) :
   m_column_override (0),
   m_have_expanded_location (false),
   m_fixit_hints (),
-  m_seen_impossible_fixit (false)
+  m_seen_impossible_fixit (false),
+  m_fixits_cannot_be_auto_applied (false)
 {
   add_range (loc, true);
 }
@@ -2086,7 +2073,8 @@ rich_location::get_expanded_location (unsigned int idx)
      if (!m_have_expanded_location)
        {
 	  m_expanded_location
-	    = linemap_client_expand_location_to_spelling_point (get_loc (0));
+	    = linemap_client_expand_location_to_spelling_point
+		(get_loc (0), LOCATION_ASPECT_CARET);
 	  if (m_column_override)
 	    m_expanded_location.column = m_column_override;
 	  m_have_expanded_location = true;
@@ -2095,7 +2083,8 @@ rich_location::get_expanded_location (unsigned int idx)
      return m_expanded_location;
    }
   else
-    return linemap_client_expand_location_to_spelling_point (get_loc (idx));
+    return linemap_client_expand_location_to_spelling_point
+	     (get_loc (idx), LOCATION_ASPECT_CARET);
 }
 
 /* Set the column of the primary location, with 0 meaning
@@ -2173,16 +2162,7 @@ rich_location::add_fixit_insert_before (source_location where,
 					const char *new_content)
 {
   source_location start = get_range_from_loc (m_line_table, where).m_start;
-
-  if (reject_impossible_fixit (start))
-    return;
-  /* We do not yet support newlines within fix-it hints.  */
-  if (strchr (new_content, '\n'))
-    {
-      stop_supporting_fixits ();
-      return;
-    }
-  add_fixit (new fixit_insert (start, new_content));
+  maybe_add_fixit (start, start, new_content);
 }
 
 /* Add a fixit-hint, suggesting insertion of NEW_CONTENT
@@ -2202,10 +2182,6 @@ rich_location::add_fixit_insert_after (source_location where,
 				       const char *new_content)
 {
   source_location finish = get_range_from_loc (m_line_table, where).m_finish;
-
-  if (reject_impossible_fixit (finish))
-    return;
-
   source_location next_loc
     = linemap_position_for_loc_and_offset (m_line_table, finish, 1);
 
@@ -2217,7 +2193,7 @@ rich_location::add_fixit_insert_after (source_location where,
       return;
     }
 
-  add_fixit (new fixit_insert (next_loc, new_content));
+  maybe_add_fixit (next_loc, next_loc, new_content);
 }
 
 /* Methods for adding removal fix-it hints.  */
@@ -2250,44 +2226,6 @@ rich_location::add_fixit_remove (source_range src_range)
   add_fixit_replace (src_range, "");
 }
 
-/* Return true iff A is in the column directly before B, on the
-   same line of the same source file.  */
-
-static bool
-column_before_p (line_maps *set, source_location a, source_location b)
-{
-  if (IS_ADHOC_LOC (a))
-    a = get_location_from_adhoc_loc (set, a);
-  if (IS_ADHOC_LOC (b))
-    b = get_location_from_adhoc_loc (set, b);
-
-  /* They must both be in ordinary maps.  */
-  const struct line_map *linemap_a = linemap_lookup (set, a);
-  if (linemap_macro_expansion_map_p (linemap_a))
-    return false;
-  const struct line_map *linemap_b = linemap_lookup (set, b);
-  if (linemap_macro_expansion_map_p (linemap_b))
-    return false;
-
-  /* To be on the same line, they must be in the same ordinary map.  */
-  if (linemap_a != linemap_b)
-    return false;
-
-  linenum_type line_a
-    = SOURCE_LINE (linemap_check_ordinary (linemap_a), a);
-  linenum_type line_b
-    = SOURCE_LINE (linemap_check_ordinary (linemap_b), b);
-  if (line_a != line_b)
-    return false;
-
-  linenum_type column_a
-    = SOURCE_COLUMN (linemap_check_ordinary (linemap_a), a);
-  linenum_type column_b
-    = SOURCE_COLUMN (linemap_check_ordinary (linemap_b), b);
-
-  return column_b == column_a + 1;
-}
-
 /* Add a fixit-hint, suggesting replacement of the content covered
    by range 0 with NEW_CONTENT.  */
 
@@ -2317,28 +2255,22 @@ void
 rich_location::add_fixit_replace (source_range src_range,
 				  const char *new_content)
 {
-  src_range.m_start = get_pure_location (m_line_table, src_range.m_start);
-  src_range.m_finish = get_pure_location (m_line_table, src_range.m_finish);
+  source_location start = get_pure_location (m_line_table, src_range.m_start);
+  source_location finish = get_pure_location (m_line_table, src_range.m_finish);
 
-  if (reject_impossible_fixit (src_range.m_start))
-    return;
-  if (reject_impossible_fixit (src_range.m_finish))
-    return;
-
-  /* We do not yet support newlines within fix-it hints.  */
-  if (strchr (new_content, '\n'))
+  /* Fix-it hints use half-closed ranges, so attempt to offset the endpoint.  */
+  source_location next_loc
+    = linemap_position_for_loc_and_offset (m_line_table, finish, 1);
+  /* linemap_position_for_loc_and_offset can fail, if so, it returns
+     its input value.  */
+  if (next_loc == finish)
     {
       stop_supporting_fixits ();
       return;
     }
+  finish = next_loc;
 
-  /* Consolidate neighboring fixits.  */
-  fixit_hint *prev = get_last_fixit_hint ();
-  if (prev)
-    if (prev->maybe_append_replace (m_line_table, src_range, new_content))
-      return;
-
-  add_fixit (new fixit_replace (src_range, new_content));
+  maybe_add_fixit (start, finish, new_content);
 }
 
 /* Get the last fix-it hint within this rich_location, or NULL if none.  */
@@ -2392,93 +2324,156 @@ rich_location::stop_supporting_fixits ()
   m_fixit_hints.truncate (0);
 }
 
-/* Add HINT to the fix-it hints in this rich_location.  */
+/* Add HINT to the fix-it hints in this rich_location,
+   consolidating into the prior fixit if possible.  */
 
 void
-rich_location::add_fixit (fixit_hint *hint)
+rich_location::maybe_add_fixit (source_location start,
+				source_location next_loc,
+				const char *new_content)
 {
-  m_fixit_hints.push (hint);
+  if (reject_impossible_fixit (start))
+    return;
+  if (reject_impossible_fixit (next_loc))
+    return;
+
+  /* Only allow fix-it hints that affect a single line in one file.
+     Compare the end-points.  */
+  expanded_location exploc_start
+    = linemap_client_expand_location_to_spelling_point (start,
+							LOCATION_ASPECT_START);
+  expanded_location exploc_next_loc
+    = linemap_client_expand_location_to_spelling_point (next_loc,
+							LOCATION_ASPECT_START);
+  /* They must be within the same file...  */
+  if (exploc_start.file != exploc_next_loc.file)
+    {
+      stop_supporting_fixits ();
+      return;
+    }
+  /* ...and on the same line.  */
+  if (exploc_start.line != exploc_next_loc.line)
+    {
+      stop_supporting_fixits ();
+      return;
+    }
+  /* The columns must be in the correct order.  This can fail if the
+     endpoints straddle the boundary for which the linemap can represent
+     columns (PR c/82050).  */
+  if (exploc_start.column > exploc_next_loc.column)
+    {
+      stop_supporting_fixits ();
+      return;
+    }
+
+  const char *newline = strchr (new_content, '\n');
+  if (newline)
+    {
+      /* For now, we can only support insertion of whole lines
+	 i.e. starts at start of line, and the newline is at the end of
+	 the insertion point.  */
+
+      /* It must be an insertion, not a replacement/deletion.  */
+      if (start != next_loc)
+	{
+	  stop_supporting_fixits ();
+	  return;
+	}
+
+      /* The insertion must be at the start of a line.  */
+      if (exploc_start.column != 1)
+	{
+	  stop_supporting_fixits ();
+	  return;
+	}
+
+      /* The newline must be at end of NEW_CONTENT.
+	 We could eventually split up fix-its at newlines if we wanted
+	 to allow more generality (e.g. to allow adding multiple lines
+	 with one add_fixit call.  */
+      if (newline[1] != '\0')
+	{
+	  stop_supporting_fixits ();
+	  return;
+	}
+    }
+
+  /* Consolidate neighboring fixits.
+     Don't consolidate into newline-insertion fixits.  */
+  fixit_hint *prev = get_last_fixit_hint ();
+  if (prev && !prev->ends_with_newline_p ())
+    if (prev->maybe_append (start, next_loc, new_content))
+      return;
+
+  m_fixit_hints.push (new fixit_hint (start, next_loc, new_content));
 }
 
-/* class fixit_insert.  */
+/* class fixit_hint.  */
 
-fixit_insert::fixit_insert (source_location where,
-			    const char *new_content)
-: m_where (where),
+fixit_hint::fixit_hint (source_location start,
+			source_location next_loc,
+			const char *new_content)
+: m_start (start),
+  m_next_loc (next_loc),
   m_bytes (xstrdup (new_content)),
   m_len (strlen (new_content))
 {
 }
 
-fixit_insert::~fixit_insert ()
-{
-  free (m_bytes);
-}
-
-/* Implementation of fixit_hint::affects_line_p for fixit_insert.  */
+/* Does this fix-it hint affect the given line?  */
 
 bool
-fixit_insert::affects_line_p (const char *file, int line) const
+fixit_hint::affects_line_p (const char *file, int line) const
 {
-  expanded_location exploc
-    = linemap_client_expand_location_to_spelling_point (m_where);
-  if (file == exploc.file)
-    if (line == exploc.line)
-      return true;
-  return false;
+  expanded_location exploc_start
+    = linemap_client_expand_location_to_spelling_point (m_start,
+							LOCATION_ASPECT_START);
+  if (file != exploc_start.file)
+    return false;
+  if (line < exploc_start.line)
+      return false;
+  expanded_location exploc_next_loc
+    = linemap_client_expand_location_to_spelling_point (m_next_loc,
+							LOCATION_ASPECT_START);
+  if (file != exploc_next_loc.file)
+    return false;
+  if (line > exploc_next_loc.line)
+      return false;
+  return true;
 }
 
-/* Implementation of maybe_append_replace for fixit_insert.  Reject
-   the attempt to consolidate fix-its.  */
-
-bool
-fixit_insert::maybe_append_replace (line_maps *, source_range, const char *)
-{
-  return false;
-}
-
-/* class fixit_replace.  */
-
-fixit_replace::fixit_replace (source_range src_range,
-			      const char *new_content)
-: m_src_range (src_range),
-  m_bytes (xstrdup (new_content)),
-  m_len (strlen (new_content))
-{
-}
-
-fixit_replace::~fixit_replace ()
-{
-  free (m_bytes);
-}
-
-/* Implementation of fixit_hint::affects_line_p for fixit_replace.  */
-
-bool
-fixit_replace::affects_line_p (const char *file, int line) const
-{
-  return m_src_range.intersects_line_p (file, line);
-}
-
-/* Implementation of maybe_append_replace for fixit_replace.  If
-   possible, merge the new replacement into this one and return true.
+/* Method for consolidating fix-it hints, for use by
+   rich_location::maybe_add_fixit.
+   If possible, merge a pending fix-it hint with the given params
+   into this one and return true.
    Otherwise return false.  */
 
 bool
-fixit_replace::maybe_append_replace (line_maps *set,
-				     source_range src_range,
-				     const char *new_content)
+fixit_hint::maybe_append (source_location start,
+			  source_location next_loc,
+			  const char *new_content)
 {
-  /* Does SRC_RANGE start immediately after this one finishes?  */
-  if (!column_before_p (set, m_src_range.m_finish, src_range.m_start))
+  /* For consolidation to be possible, START must be at this hint's
+     m_next_loc.  */
+  if (start != m_next_loc)
     return false;
 
-  /* We have neighboring replacements; merge them.  */
-  m_src_range.m_finish = src_range.m_finish;
+  /* If so, we have neighboring replacements; merge them.  */
+  m_next_loc = next_loc;
   size_t extra_len = strlen (new_content);
   m_bytes = (char *)xrealloc (m_bytes, m_len + extra_len + 1);
   memcpy (m_bytes + m_len, new_content, extra_len);
   m_len += extra_len;
   m_bytes[m_len] = '\0';
   return true;
+}
+
+/* Return true iff this hint's content ends with a newline.  */
+
+bool
+fixit_hint::ends_with_newline_p () const
+{
+  if (m_len == 0)
+    return false;
+  return m_bytes[m_len - 1] == '\n';
 }

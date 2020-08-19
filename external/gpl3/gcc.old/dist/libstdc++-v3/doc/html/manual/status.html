@@ -5,7 +5,7 @@
 </th><td width="20%" align="right"> <a accesskey="n" href="license.html">Next</a></td></tr></table><hr /></div><div class="chapter"><div class="titlepage"><div><div><h2 class="title"><a id="manual.intro.status"></a>Chapter 1. Status</h2></div></div></div><div class="toc"><p><strong>Table of Contents</strong></p><dl class="toc"><dt><span class="section"><a href="status.html#manual.intro.status.iso">Implementation Status</a></span></dt><dd><dl><dt><span class="section"><a href="status.html#status.iso.1998">C++ 1998/2003</a></span></dt><dd><dl><dt><span class="section"><a href="status.html#iso.1998.status">Implementation Status</a></span></dt><dt><span class="section"><a href="status.html#iso.1998.specific">Implementation Specific Behavior</a></span></dt></dl></dd><dt><span class="section"><a href="status.html#status.iso.2011">C++ 2011</a></span></dt><dd><dl><dt><span class="section"><a href="status.html#iso.2011.specific">Implementation Specific Behavior</a></span></dt></dl></dd><dt><span class="section"><a href="status.html#status.iso.2014">C++ 2014</a></span></dt><dt><span class="section"><a href="status.html#status.iso.2017">C++ 2017</a></span></dt><dd><dl><dt><span class="section"><a href="status.html#iso.2017.specific">Implementation Specific Behavior</a></span></dt></dl></dd><dt><span class="section"><a href="status.html#status.iso.tr1">C++ TR1</a></span></dt><dd><dl><dt><span class="section"><a href="status.html#iso.tr1.specific">Implementation Specific Behavior</a></span></dt></dl></dd><dt><span class="section"><a href="status.html#status.iso.tr24733">C++ TR 24733</a></span></dt><dt><span class="section"><a href="status.html#status.iso.specfun">C++ IS 29124</a></span></dt><dd><dl><dt><span class="section"><a href="status.html#iso.specfun.specific">Implementation Specific Behavior</a></span></dt></dl></dd></dl></dd><dt><span class="section"><a href="license.html">License</a></span></dt><dd><dl><dt><span class="section"><a href="license.html#manual.intro.status.license.gpl">The Code: GPL</a></span></dt><dt><span class="section"><a href="license.html#manual.intro.status.license.fdl">The Documentation: GPL, FDL</a></span></dt></dl></dd><dt><span class="section"><a href="bugs.html">Bugs</a></span></dt><dd><dl><dt><span class="section"><a href="bugs.html#manual.intro.status.bugs.impl">Implementation Bugs</a></span></dt><dt><span class="section"><a href="bugs.html#manual.intro.status.bugs.iso">Standard Bugs</a></span></dt></dl></dd></dl></div><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="manual.intro.status.iso"></a>Implementation Status</h2></div></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="status.iso.1998"></a>C++ 1998/2003</h3></div></div></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="iso.1998.status"></a>Implementation Status</h4></div></div></div><p>
 This status table is based on the table of contents of ISO/IEC 14882:2003.
 </p><p>
-This page describes the C++ support in the GCC 7 series.
+This page describes the C++ support in the GCC 8 series.
 </p><div class="table"><a id="table.cxx98_status"></a><p class="title"><strong>Table 1.1. C++ 1998/2003 Implementation Status</strong></p><div class="table-contents"><table class="table" summary="C++ 1998/2003 Implementation Status" border="1"><colgroup><col align="left" class="c1" /><col align="left" class="c2" /><col align="left" class="c3" /><col align="left" class="c4" /></colgroup><thead><tr><th align="left">Section</th><th align="left">Description</th><th align="left">Status</th><th align="left">Comments</th></tr></thead><tbody><tr><td align="left">
 	<span class="emphasis"><em>18</em></span>
       </td><td colspan="3" align="left">
@@ -154,7 +154,7 @@ options. The pre-defined symbol
 <code class="constant">__cplusplus</code> is used to check for the
 presence of the required flag.
 </p><p>
-This page describes the C++11 support in the GCC 7 series.
+This page describes the C++11 support in the GCC 8 series.
 </p><div class="table"><a id="table.cxx11_status"></a><p class="title"><strong>Table 1.2. C++ 2011 Implementation Status</strong></p><div class="table-contents"><table class="table" summary="C++ 2011 Implementation Status" border="1"><colgroup><col align="left" class="c1" /><col align="left" class="c2" /><col align="left" class="c3" /><col align="left" class="c4" /></colgroup><thead><tr><th align="left">Section</th><th align="left">Description</th><th align="left">Status</th><th align="left">Comments</th></tr></thead><tbody><tr><td align="left">
 	<span class="emphasis"><em>18</em></span>
       </td><td colspan="3" align="left">
@@ -265,6 +265,10 @@ This page describes the C++11 support in the GCC 7 series.
       <code class="classname">u32streampos</code> are both synonyms for
       <code class="classname">fpos&lt;mbstate_t&gt;</code>.
       The function <code class="function">eof</code> returns <code class="code">int_type(-1)</code>.
+      <code class="function">char_traits&lt;char16_t&gt;::to_int_type</code> will
+      transform the "noncharacter" U+FFFF to U+FFFD (REPLACEMENT CHARACTER).
+      This is done to ensure that <code class="function">to_int_type</code> never
+      returns the same value as <code class="function">eof</code>, which is U+FFFF.
    </p><p>
       <span class="emphasis"><em>22.3.1 [locale]</em></span>
       There is one global locale for the whole program, not per-thread.
@@ -382,7 +386,7 @@ options. The pre-defined symbol
 <code class="constant">__cplusplus</code> is used to check for the
 presence of the required flag.
 </p><p>
-This page describes the C++14 and library TS support in the GCC 7 series.
+This page describes the C++14 and library TS support in the GCC 8 series.
 </p><div class="table"><a id="table.cxx14_status"></a><p class="title"><strong>Table 1.3. C++ 2014 Implementation Status</strong></p><div class="table-contents"><table class="table" summary="C++ 2014 Implementation Status" border="1"><colgroup><col align="left" class="c1" /><col align="left" class="c2" /><col align="left" class="c3" /><col align="left" class="c4" /></colgroup><thead><tr><th align="left">Paper</th><th align="left">Title</th><th align="left">Status</th><th align="left">Comments</th></tr></thead><tbody><tr><td align="left">
 	<a class="link" href="http://www.open-std.org/JTC1/sc22/WG21/docs/papers/2013/n3669.pdf" target="_top">
 	  N3669
@@ -516,10 +520,10 @@ options. The pre-defined symbol
 <code class="constant">__cplusplus</code> is used to check for the
 presence of the required flag.
 </p><p>
-This section describes the C++17 and library TS support in the GCC 7 series.
+This section describes the C++17 and library TS support in the GCC 8 series.
 </p><p>
-The following table lists new library features that have been accepted into
-the C++17 working draft. The "Proposal" column provides a link to the
+The following table lists new library features that are included in
+the C++17 standard. The "Proposal" column provides a link to the
 ISO C++ committee proposal that describes the feature, while the "Status"
 column indicates the first version of GCC that contains an implementation of
 this feature (if it has been implemented).
@@ -613,7 +617,7 @@ Feature-testing recommendations for C++</a>.
 	<a class="link" href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0174r2.html" target="_top">
 	P0174R2
 	</a>
-      </td><td align="center"> No </td><td align="left"> </td></tr><tr><td align="left"> Making <code class="code">std::owner_less</code> more flexible </td><td align="left">
+      </td><td align="center"> No  (kept for backwards compatibility)</td><td align="left"> </td></tr><tr><td align="left"> Making <code class="code">std::owner_less</code> more flexible </td><td align="left">
 	<a class="link" href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0074r0.html" target="_top">
 	P0074R0
 	</a>
@@ -657,7 +661,7 @@ Feature-testing recommendations for C++</a>.
 	<a class="link" href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0040r3.html" target="_top">
 	P0040R3
 	</a>
-      </td><td align="center"> 7.1 </td><td align="left"><code class="code"> </code></td></tr><tr><td align="left"> <code class="code">shared_ptr::weak_type</code></td><td align="left">
+      </td><td align="center"> 7.1 </td><td align="left"><code class="code">__cpp_lib_raw_memory_algorithms &gt;= 201606L</code></td></tr><tr><td align="left"> <code class="code">shared_ptr::weak_type</code></td><td align="left">
 	<a class="link" href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0163r0.html" target="_top">
 	P0163R0
 	</a>
@@ -703,7 +707,7 @@ Feature-testing recommendations for C++</a>.
 	<a class="link" href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0426r1.html" target="_top">
 	P0426R1
 	</a>
-      </td><td align="center"> 7.3 </td><td align="left"><code class="code"> __cpp_lib_constexpr_char_traits &gt;= 201611 </code></td></tr><tr><td align="left"> Integrating <code class="code">std::string_view</code> and <code class="code">std::string</code> </td><td align="left">
+      </td><td align="center"> 8 </td><td align="left"><code class="code"> __cpp_lib_constexpr_char_traits &gt;= 201611 </code></td></tr><tr><td align="left"> Integrating <code class="code">std::string_view</code> and <code class="code">std::string</code> </td><td align="left">
 	<a class="link" href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0254r2.pdf" target="_top">
 	P0254R2
 	</a>
@@ -772,24 +776,26 @@ Feature-testing recommendations for C++</a>.
 	</a>
       </td><td align="center"> 7.1 </td><td align="left"><code class="code"> __cpp_lib_math_special_functions &gt;= 201603 </code>
 	     (see Note 3)
-      </td></tr><tr bgcolor="#C8B0B0"><td align="left">Adopt the File System TS for C++17	 </td><td align="left">
+      </td></tr><tr><td align="left">Adopt the File System TS for C++17	 </td><td align="left">
 	<a class="link" href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0218r1.html" target="_top">
 	P0218R1
 	</a>
-      </td><td align="center"> No </td><td align="left"><code class="code"> __has_include(&lt;filesystem&gt;) </code>,
-	     <code class="code"> __cpp_lib_filesystem &gt;= 201603 </code></td></tr><tr bgcolor="#C8B0B0"><td align="left"> Relative Paths for Filesystem</td><td align="left">
+      </td><td align="center"> 8 </td><td align="left"><code class="code"> __has_include(&lt;filesystem&gt;) </code>,
+	     <code class="code"> __cpp_lib_filesystem &gt;= 201603 </code>
+	     (requires linking with <code class="code">-lstdc++fs</code>)
+      </td></tr><tr><td align="left"> Relative Paths for Filesystem</td><td align="left">
 	<a class="link" href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0219r1.html" target="_top">
 	P0219R1
 	</a>
-      </td><td align="center"> No </td><td align="left"><code class="code"> __cpp_lib_filesystem &gt;= 201606 </code></td></tr><tr bgcolor="#C8B0B0"><td align="left"> Adapting string_view by filesystem paths </td><td align="left">
+      </td><td align="center"> 8 </td><td align="left"><code class="code"> __cpp_lib_filesystem &gt;= 201606 </code></td></tr><tr><td align="left"> Adapting string_view by filesystem paths </td><td align="left">
 	<a class="link" href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0392r0.pdf" target="_top">
 	P0392R0
 	</a>
-      </td><td align="center"> No </td><td align="left"><code class="code"> __cpp_lib_filesystem &gt;= 201606 </code></td></tr><tr bgcolor="#C8B0B0"><td align="left"> Directory Entry Caching for Filesystem </td><td align="left">
+      </td><td align="center"> 8 </td><td align="left"><code class="code"> __cpp_lib_filesystem &gt;= 201606 </code></td></tr><tr><td align="left"> Directory Entry Caching for Filesystem </td><td align="left">
        <a class="link" href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0317r1.html" target="_top">
        P0317R1
        </a>
-      </td><td align="center"> No </td><td align="left"><code class="code"> __cpp_lib_filesystem &gt;= 201703 </code></td></tr><tr><td align="left"> constexpr <code class="code">atomic&lt;T&gt;::is_always_lock_free</code>	 </td><td align="left">
+      </td><td align="center"> 8 </td><td align="left"><code class="code"> __cpp_lib_filesystem &gt;= 201703 </code></td></tr><tr><td align="left"> constexpr <code class="code">atomic&lt;T&gt;::is_always_lock_free</code>	 </td><td align="left">
 	<a class="link" href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0152r1.html" target="_top">
 	P0152R1
 	</a>
@@ -811,7 +817,19 @@ Feature-testing recommendations for C++</a>.
 	P0067R5
 	</a>
       </td><td align="center"> 8 (only integral types supported) </td><td align="left"><code class="code"> __has_include(&lt;charconv&gt;) </code>
-             <code class="code"> __cpp_lib_to_chars &gt;= 201611 </code></td></tr></tbody></table></div></div><br class="table-break" /><p>
+             <code class="code"> __cpp_lib_to_chars &gt;= 201611 </code></td></tr><tr><td align="left"> Homogeneous interface for variant, any and optional </td><td align="left">
+	<a class="link" href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0032r3.pdf" target="_top">
+	P0032R3
+	</a>
+      </td><td align="center"> 7.1  </td><td align="left">
+             <code class="code"> __cpp_lib_any &gt;= 201606 </code>,
+             <code class="code"> __cpp_lib_optional &gt;= 201606 </code>,
+             <code class="code"> __cpp_lib_variant &gt;= 201606 </code>
+      </td></tr><tr><td align="left"> Making Optional Greater Equal Again </td><td align="left">
+	<a class="link" href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0307r2.pdf" target="_top">
+	P0307R2
+	</a>
+      </td><td align="center"> 7.1  </td><td align="left"> <code class="code"> __cpp_lib_optional &gt;= 201606 </code> </td></tr></tbody></table></div></div><br class="table-break" /><p>
 Note 1: This feature is supported in GCC 7.1 and 7.2 but before GCC 7.3 the
 <code class="code">__cpp_lib</code> macro is not defined, and compilation will fail if the
 header is included without using <code class="option">-std</code> to enable C++17 support.
@@ -929,7 +947,7 @@ and test for <code class="code">__STDCPP_MATH_SPEC_FUNCS__ &gt;= 201003L</code>.
    </p><p>
       <span class="emphasis"><em>30.10.2.1 [fs.conform.9945]</em></span>
       The behavior of the filesystem library implementation will depend on
-      the target operating system. Some features will not be not supported
+      the target operating system. Some features will not be supported
       on some targets.
    </p><p>
       <span class="emphasis"><em>30.10.5 [fs.filesystem.syn]</em></span>
@@ -947,7 +965,7 @@ In this implementation the header names are prefixed by
 <code class="code">tr1/</code>, for instance <code class="code">&lt;tr1/functional&gt;</code>,
 <code class="code">&lt;tr1/memory&gt;</code>, and so on.
 </p><p>
-This page describes the TR1 support in the GCC 7 series.
+This page describes the TR1 support in the GCC 8 series.
 </p><div class="table"><a id="table.tr1_status"></a><p class="title"><strong>Table 1.7. C++ TR1 Implementation Status</strong></p><div class="table-contents"><table class="table" summary="C++ TR1 Implementation Status" border="1"><colgroup><col align="left" class="c1" /><col align="left" class="c2" /><col align="left" class="c3" /><col align="left" class="c4" /></colgroup><thead><tr><th align="left">Section</th><th align="left">Description</th><th align="left">Status</th><th align="left">Comments</th></tr></thead><tbody><tr><td align="left"><span class="emphasis"><em>2</em></span></td><td colspan="3" align="left"><span class="emphasis"><em>General Utilities</em></span></td></tr><tr><td align="left">2.1</td><td align="left">Reference wrappers</td><td align="left"> </td><td align="left"> </td></tr><tr><td align="left">2.1.1</td><td align="left">Additions to header <code class="code">&lt;functional&gt;</code> synopsis</td><td align="left">Y</td><td align="left"> </td></tr><tr><td align="left">2.1.2</td><td align="left">Class template <code class="code">reference_wrapper</code></td><td align="left"> </td><td align="left"> </td></tr><tr><td align="left">2.1.2.1</td><td align="left"><code class="code">reference_wrapper</code> construct/copy/destroy</td><td align="left">Y</td><td align="left"> </td></tr><tr><td align="left">2.1.2.2</td><td align="left"><code class="code">reference_wrapper</code> assignment</td><td align="left">Y</td><td align="left"> </td></tr><tr><td align="left">2.1.2.3</td><td align="left"><code class="code">reference_wrapper</code> access</td><td align="left">Y</td><td align="left"> </td></tr><tr><td align="left">2.1.2.4</td><td align="left"><code class="code">reference_wrapper</code> invocation</td><td align="left">Y</td><td align="left"> </td></tr><tr><td align="left">2.1.2.5</td><td align="left"><code class="code">reference_wrapper</code> helper functions</td><td align="left">Y</td><td align="left"> </td></tr><tr><td align="left">2.2</td><td align="left">Smart pointers</td><td align="left"> </td><td align="left"> </td></tr><tr><td align="left">2.2.1</td><td align="left">Additions to header <code class="code">&lt;memory&gt;</code> synopsis</td><td align="left">Y</td><td align="left"> </td></tr><tr><td align="left">2.2.2</td><td align="left">Class <code class="code">bad_weak_ptr</code></td><td align="left">Y</td><td align="left"> </td></tr><tr><td align="left">2.2.3</td><td align="left">Class template <code class="code">shared_ptr</code></td><td align="left"> </td><td align="left">
 	<p>
 	  Uses code from
@@ -967,7 +985,7 @@ ISO/IEC TR 24733 Date: 2009-08-28
 Extension for the programming language C++ to support
 decimal floating-point arithmetic
 </p><p>
-This page describes the TR 24733 support in the GCC 7 series.
+This page describes the TR 24733 support in the GCC 8 series.
 </p><div class="table"><a id="table.decfp_status"></a><p class="title"><strong>Table 1.8. C++ TR 24733 Implementation Status</strong></p><div class="table-contents"><table class="table" summary="C++ TR 24733 Implementation Status" border="1"><colgroup><col align="left" class="c1" /><col align="left" class="c2" /><col align="left" class="c3" /><col align="left" class="c4" /></colgroup><thead><tr><th align="left">Section</th><th align="left">Description</th><th align="left">Status</th><th align="left">Comments</th></tr></thead><tbody><tr><td align="left">
 	<span class="emphasis"><em>0</em></span>
       </td><td colspan="3" align="left">
