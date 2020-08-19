@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.116 2020/03/05 15:56:20 msaitoh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.117 2020/08/19 13:11:42 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.116 2020/03/05 15:56:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.117 2020/08/19 13:11:42 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -2145,6 +2145,12 @@ void
 pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	mmu_short_pte_t	*pte;
+	u_int mapflags;
+
+	/* XXX: MD PMAP_NC should be replaced by MI PMAP_NOCACHE in flags. */
+	mapflags = (pa & ~MMU_PAGE_MASK);
+	if ((mapflags & PMAP_NC) != 0)
+		flags |= PMAP_NOCACHE;
 
 	/* This array is traditionally named "Sysmap" */
 	pte = &kernCbase[(u_long)m68k_btop(va - KERNBASE3X)];
@@ -2153,6 +2159,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	pte->attr.raw = MMU_DT_INVALID | MMU_DT_PAGE | (pa & MMU_PAGE_MASK);
 	if (!(prot & VM_PROT_WRITE))
 		pte->attr.raw |= MMU_SHORT_PTE_WP;
+	if ((flags & PMAP_NOCACHE) != 0)
+		pte->attr.raw |= MMU_SHORT_PTE_CI;
 }
 
 void
