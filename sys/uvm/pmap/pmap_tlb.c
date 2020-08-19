@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.36 2020/08/11 06:54:14 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.37 2020/08/19 06:07:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.36 2020/08/11 06:54:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.37 2020/08/19 06:07:03 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -564,7 +564,7 @@ pmap_tlb_shootdown_process(void)
 		 */
 		struct pmap_asid_info * const pai = PMAP_PAI(ti->ti_victim, ti);
 		KASSERT(ti->ti_victim != pmap_kernel());
-		if (!pmap_tlb_intersecting_onproc_p(ti->ti_victim, ti)) {
+		if (pmap_tlb_intersecting_onproc_p(ti->ti_victim, ti)) {
 			/*
 			 * The victim is an active pmap so we will just
 			 * invalidate its TLB entries.
