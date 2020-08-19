@@ -1,8 +1,23 @@
-# $NetBSD: varname-dot-newline.mk,v 1.2 2020/08/16 14:25:16 rillig Exp $
+# $NetBSD: varname-dot-newline.mk,v 1.3 2020/08/19 05:51:18 rillig Exp $
 #
 # Tests for the special .newline variable.
+#
+# Contrary to the special variable named "" that is used in expressions like
+# ${:Usome-value}, the variable ".newline" is not protected against
+# modification.  Nobody exploits that though.
 
-# TODO: Implementation
+NEWLINE:=	${.newline}
+
+.newline=	overwritten
+
+.if ${.newline} == ${NEWLINE}
+.info The .newline variable cannot be overwritten.  Good.
+.else
+.info The .newline variable can be overwritten.  Just don't do that.
+.endif
+
+# Restore the original value.
+.newline=	${NEWLINE}
 
 all:
-	@:;
+	@echo 'first${.newline}second'
