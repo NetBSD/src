@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cgd_adiantum.c,v 1.4 2020/08/15 10:03:10 mlelstv Exp $	*/
+/*	$NetBSD: t_cgd_adiantum.c,v 1.5 2020/08/20 13:33:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -47,6 +47,9 @@
 #define	MAXSECSIZE	512	/* for now; should be cgd parameter */
 #define	IMGSIZE		0x101*512
 
+/* Used as buffer for cgd device I/O, must be at least 32-bit aligned.  */
+static const uint8_t zerosector[512] __aligned(4);
+
 static const struct {
 	uint8_t		key[32];
 	uint64_t	blkno;
@@ -58,7 +61,7 @@ static const struct {
 		.key = {0},
 		.blkno = 0,
 		.secsize = 512,
-		.ptxt = (const __aligned(4) uint8_t[512]) {0},
+		.ptxt = zerosector,
 		.ctxt = (const uint8_t[512]) {
 			0x51,0x6d,0xe2,0x81, 0x26,0xd5,0xc8,0xd7,
 			0xff,0xc6,0xc2,0xff, 0x39,0xbf,0x15,0x15,
@@ -130,7 +133,7 @@ static const struct {
 		.key = {0},
 		.blkno = 1,
 		.secsize = 512,
-		.ptxt = (const __aligned(4) uint8_t[512]) {0},
+		.ptxt = zerosector,
 		.ctxt = (const uint8_t[512]) {
 			0xf2,0x23,0x68,0x5a, 0x15,0x11,0x56,0xa1,
 			0x71,0x57,0x5c,0x5e, 0x32,0xd4,0xdd,0xbb,
@@ -202,7 +205,7 @@ static const struct {
 		.key = {0},
 		.blkno = 0x100,
 		.secsize = 512,
-		.ptxt = (const __aligned(4) uint8_t[512]) {0},
+		.ptxt = zerosector,
 		.ctxt = (const uint8_t[512]) {
 			0x32,0x26,0xaf,0x56, 0xbc,0x43,0xac,0x37,
 			0xb2,0x8d,0xa4,0xfb, 0x32,0xdc,0x09,0x03,
