@@ -1,0 +1,3 @@
+#	$NetBSD: files.sodium,v 1.1 2020/08/20 21:20:16 riastradh Exp $
+
+include "external/isc/libsodium/conf/files.libsodium"
