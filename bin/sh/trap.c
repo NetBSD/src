@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.53 2019/12/09 00:14:30 kre Exp $	*/
+/*	$NetBSD: trap.c,v 1.54 2020/08/20 16:15:50 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.53 2019/12/09 00:14:30 kre Exp $");
+__RCSID("$NetBSD: trap.c,v 1.54 2020/08/20 16:15:50 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,7 +115,7 @@ signame_to_signum(const char *p)
 
 	if (strcasecmp(p, "exit") == 0 )
 		return 0;
-	
+
 	i = signalnumber(p);
 	if (i == 0)
 		i = -1;
@@ -153,7 +153,7 @@ printsignals(struct output *out, int len)
 		outc(' ', out);
 	for (n = 1; n < NSIG; n++) {
 		outfmt(out, "%s", trap_signame(n));
-		if ((n == NSIG/2) ||  n == (NSIG - 1))
+		if ((n == NSIG/2) || n == (NSIG - 1))
 			outstr("\n", out);
 		else
 			outc(' ', out);
@@ -580,7 +580,7 @@ setsignal(int signo, int vforked)
 
 	switch (action) {
 		case S_DFL:	sigact = SIG_DFL;	break;
-		case S_CATCH:  	sigact = onsig;		break;
+		case S_CATCH:	sigact = onsig;		break;
 		case S_IGN:	sigact = SIG_IGN;	break;
 	}
 
@@ -694,7 +694,7 @@ onsig(int signo)
 
 	if (signo == SIGINT && (traps_invalid || trap[SIGINT] == NULL)) {
 		VTRACE(DBG_SIG, ("onsig(SIGINT), doing it now\n"));
-		if (suppressint && !in_dotrap)	
+		if (suppressint && !in_dotrap)
 			intpending = 1;
 		else
 			onint();
@@ -841,7 +841,7 @@ exitshell_savedstatus(void)
 	sigset_t sigs;
 
 	CTRACE(DBG_ERRS|DBG_PROCS|DBG_CMDS|DBG_TRAP,
-         ("pid %d: exitshell_savedstatus()%s $?=%d xs=%d dt=%d ts=%d\n",
+	  ("pid %d: exitshell_savedstatus()%s $?=%d xs=%d dt=%d ts=%d\n",
 	    getpid(), exiting ? " exiting" : "", exitstatus,
 	    exiting_status, in_dotrap, last_trapsig));
 
