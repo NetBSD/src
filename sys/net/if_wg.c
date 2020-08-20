@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.14 2020/08/20 21:35:01 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.15 2020/08/20 21:35:13 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.14 2020/08/20 21:35:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.15 2020/08/20 21:35:13 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1073,19 +1073,18 @@ wg_algo_xaead_dec(uint8_t out[], const size_t expected_outsize,
 }
 
 static void
-wg_algo_tai64n(wg_timestamp_t _timestamp)
+wg_algo_tai64n(wg_timestamp_t timestamp)
 {
 	struct timespec ts;
-	uint32_t *timestamp = (uint32_t *)_timestamp;
 
 	/* FIXME strict TAI64N (https://cr.yp.to/libtai/tai64.html) */
 	getnanotime(&ts);
 	/* TAI64 label in external TAI64 format */
-	timestamp[0] = htonl(0x40000000L + (ts.tv_sec >> 32));
+	be32enc(timestamp, 0x40000000UL + (ts.tv_sec >> 32));
 	/* second beginning from 1970 TAI */
-	timestamp[1] = htonl((long)ts.tv_sec);
+	be32enc(timestamp + 4, ts.tv_sec & 0xffffffffU);
 	/* nanosecond in big-endian format */
-	timestamp[2] = htonl(ts.tv_nsec);
+	be32enc(timestamp + 8, ts.tv_nsec);
 }
 
 static struct wg_session *
