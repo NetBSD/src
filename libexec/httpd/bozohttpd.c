@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.117 2020/07/13 09:38:57 jruoho Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.118 2020/08/20 05:46:31 spz Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -1912,6 +1912,8 @@ bozo_process_request(bozo_httpreq_t *request)
  cleanup:
 	close(fd);
  cleanup_nofd:
+	/* If SSL enabled send close_notify. */
+	bozo_ssl_shutdown(request->hr_httpd);
 	close(STDIN_FILENO);
 	close(STDOUT_FILENO);
 	/*close(STDERR_FILENO);*/
