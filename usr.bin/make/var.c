@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.451 2020/08/20 06:48:18 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.452 2020/08/20 07:01:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.451 2020/08/20 06:48:18 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.452 2020/08/20 07:01:39 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.451 2020/08/20 06:48:18 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.452 2020/08/20 07:01:39 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -277,9 +277,8 @@ typedef enum {
 typedef enum {
     VARP_SUB_GLOBAL	= 0x01,	/* Apply substitution globally */
     VARP_SUB_ONE	= 0x02,	/* Apply substitution to one word */
-    VARP_SUB_MATCHED	= 0x04,	/* There was a match */
-    VARP_ANCHOR_START	= 0x08,	/* Match at start of word */
-    VARP_ANCHOR_END	= 0x10	/* Match at end of word */
+    VARP_ANCHOR_START	= 0x04,	/* Match at start of word */
+    VARP_ANCHOR_END	= 0x08	/* Match at end of word */
 } VarPatternFlags;
 
 typedef enum {
@@ -1269,6 +1268,7 @@ typedef struct {
     const char	*rhs;
     size_t	rhsLen;
     VarPatternFlags pflags;
+    Boolean	matched;
 } ModifyWord_SubstArgs;
 
 /* Callback for ModifyWords to implement the :S,from,to, modifier.
@@ -1280,7 +1280,7 @@ ModifyWord_Subst(const char *word, SepBuf *buf, void *data)
     ModifyWord_SubstArgs *args = data;
     const char *match;
 
-    if ((args->pflags & VARP_SUB_ONE) && (args->pflags & VARP_SUB_MATCHED))
+    if ((args->pflags & VARP_SUB_ONE) && args->matched)
 	goto nosub;
 
     if (args->pflags & VARP_ANCHOR_START) {
@@ -1293,11 +1293,11 @@ ModifyWord_Subst(const char *word, SepBuf *buf, void *data)
 		goto nosub;
 
 	    SepBuf_AddBytes(buf, args->rhs, args->rhsLen);
-	    args->pflags |= VARP_SUB_MATCHED;
+	    args->matched = TRUE;
 	} else {
 	    SepBuf_AddBytes(buf, args->rhs, args->rhsLen);
 	    SepBuf_AddBytes(buf, word + args->lhsLen, wordLen - args->lhsLen);
-	    args->pflags |= VARP_SUB_MATCHED;
+	    args->matched = TRUE;
 	}
 	return;
     }
@@ -1314,7 +1314,7 @@ ModifyWord_Subst(const char *word, SepBuf *buf, void *data)
 
 	SepBuf_AddBytesBetween(buf, word, start);
 	SepBuf_AddBytes(buf, args->rhs, args->rhsLen);
-	args->pflags |= VARP_SUB_MATCHED;
+	args->matched = TRUE;
 	return;
     }
 
@@ -1322,7 +1322,7 @@ ModifyWord_Subst(const char *word, SepBuf *buf, void *data)
     while ((match = Str_FindSubstring(word, args->lhs)) != NULL) {
 	SepBuf_AddBytesBetween(buf, word, match);
 	SepBuf_AddBytes(buf, args->rhs, args->rhsLen);
-	args->pflags |= VARP_SUB_MATCHED;
+	args->matched = TRUE;
 	wordLen -= (size_t)(match - word) + args->lhsLen;
 	word += (size_t)(match - word) + args->lhsLen;
 	if (wordLen == 0 || !(args->pflags & VARP_SUB_GLOBAL))
@@ -1349,6 +1349,7 @@ typedef struct {
     size_t	   nsub;
     char 	  *replace;
     VarPatternFlags pflags;
+    Boolean	   matched;
 } ModifyWord_SubstRegexArgs;
 
 /* Callback for ModifyWords to implement the :C/from/to/ modifier.
@@ -1363,7 +1364,7 @@ ModifyWord_SubstRegex(const char *word, SepBuf *buf, void *data)
     int flags = 0;
     regmatch_t m[10];
 
-    if ((args->pflags & VARP_SUB_ONE) && (args->pflags & VARP_SUB_MATCHED))
+    if ((args->pflags & VARP_SUB_ONE) && args->matched)
 	goto nosub;
 
 tryagain:
@@ -1371,7 +1372,7 @@ tryagain:
 
     switch (xrv) {
     case 0:
-	args->pflags |= VARP_SUB_MATCHED;
+	args->matched = TRUE;
 	SepBuf_AddBytes(buf, wp, (size_t)m[0].rm_so);
 
 	for (rp = args->replace; *rp; rp++) {
@@ -2316,6 +2317,7 @@ ApplyModifier_Subst(const char **pp, ApplyModifiersState *st)
     *pp += 2;
 
     args.pflags = 0;
+    args.matched = FALSE;
 
     /*
      * If pattern begins with '^', it is anchored to the
@@ -2401,6 +2403,7 @@ ApplyModifier_Regex(const char **pp, ApplyModifiersState *st)
     }
 
     args.pflags = 0;
+    args.matched = FALSE;
     oneBigWord = st->oneBigWord;
     for (;; (*pp)++) {
 	switch (**pp) {
