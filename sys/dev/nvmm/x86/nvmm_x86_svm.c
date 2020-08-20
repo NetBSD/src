@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.69 2020/08/18 17:08:05 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.70 2020/08/20 11:09:56 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.69 2020/08/18 17:08:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.70 2020/08/20 11:09:56 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -795,7 +795,9 @@ svm_inkernel_advance(struct vmcb *vmcb)
 
 #define SVM_CPUID_MAX_BASIC		0xD
 #define SVM_CPUID_MAX_HYPERVISOR	0x40000000
+#define SVM_CPUID_MAX_EXTENDED		0x8000001F
 static uint32_t svm_cpuid_max_basic __read_mostly;
+static uint32_t svm_cpuid_max_extended __read_mostly;
 
 static void
 svm_inkernel_exec_cpuid(struct svm_cpudata *cpudata, uint64_t eax, uint64_t ecx)
@@ -822,6 +824,11 @@ svm_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 		}
 	} else if (eax < 0x80000000) {
 		if (__predict_false(eax > SVM_CPUID_MAX_HYPERVISOR)) {
+			eax = svm_cpuid_max_basic;
+			svm_inkernel_exec_cpuid(cpudata, eax, ecx);
+		}
+	} else {
+		if (__predict_false(eax > svm_cpuid_max_extended)) {
 			eax = svm_cpuid_max_basic;
 			svm_inkernel_exec_cpuid(cpudata, eax, ecx);
 		}
@@ -928,12 +935,74 @@ svm_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 		memcpy(&cpudata->gprs[NVMM_X64_GPR_RDX], " ___", 4);
 		break;
 
+	case 0x80000000:
+		cpudata->vmcb->state.rax = svm_cpuid_max_extended;
+		break;
 	case 0x80000001:
 		cpudata->vmcb->state.rax &= nvmm_cpuid_80000001.eax;
 		cpudata->gprs[NVMM_X64_GPR_RBX] &= nvmm_cpuid_80000001.ebx;
 		cpudata->gprs[NVMM_X64_GPR_RCX] &= nvmm_cpuid_80000001.ecx;
 		cpudata->gprs[NVMM_X64_GPR_RDX] &= nvmm_cpuid_80000001.edx;
 		break;
+	case 0x80000002: /* Extended Processor Name String */
+	case 0x80000003: /* Extended Processor Name String */
+	case 0x80000004: /* Extended Processor Name String */
+	case 0x80000005: /* L1 Cache and TLB Information */
+	case 0x80000006: /* L2 Cache and TLB and L3 Cache Information */
+		break;
+	case 0x80000007: /* Processor Power Management and RAS Capabilities */
+		cpudata->vmcb->state.rax &= nvmm_cpuid_80000007.eax;
+		cpudata->gprs[NVMM_X64_GPR_RBX] &= nvmm_cpuid_80000007.ebx;
+		cpudata->gprs[NVMM_X64_GPR_RCX] &= nvmm_cpuid_80000007.ecx;
+		cpudata->gprs[NVMM_X64_GPR_RDX] &= nvmm_cpuid_80000007.edx;
+		break;
+	case 0x80000008: /* Processor Capacity Parameters and Ext Feat Ident */
+		cpudata->vmcb->state.rax &= nvmm_cpuid_80000008.eax;
+		cpudata->gprs[NVMM_X64_GPR_RBX] &= nvmm_cpuid_80000008.ebx;
+		cpudata->gprs[NVMM_X64_GPR_RCX] &= nvmm_cpuid_80000008.ecx;
+		cpudata->gprs[NVMM_X64_GPR_RDX] &= nvmm_cpuid_80000008.edx;
+		break;
+	case 0x80000009: /* Empty */
+	case 0x8000000A: /* SVM Features */
+	case 0x8000000B: /* Empty */
+	case 0x8000000C: /* Empty */
+	case 0x8000000D: /* Empty */
+	case 0x8000000E: /* Empty */
+	case 0x8000000F: /* Empty */
+	case 0x80000010: /* Empty */
+	case 0x80000011: /* Empty */
+	case 0x80000012: /* Empty */
+	case 0x80000013: /* Empty */
+	case 0x80000014: /* Empty */
+	case 0x80000015: /* Empty */
+	case 0x80000016: /* Empty */
+	case 0x80000017: /* Empty */
+	case 0x80000018: /* Empty */
+		cpudata->vmcb->state.rax = 0;
+		cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RCX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
+		break;
+	case 0x80000019: /* TLB Characteristics for 1GB pages */
+	case 0x8000001A: /* Instruction Optimizations */
+		break;
+	case 0x8000001B: /* Instruction-Based Sampling Capabilities */
+	case 0x8000001C: /* Lightweight Profiling Capabilities */
+		cpudata->vmcb->state.rax = 0;
+		cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RCX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
+		break;
+	case 0x8000001D: /* Cache Topology Information */
+	case 0x8000001E: /* Processor Topology Information */
+		break; /* TODO? */
+	case 0x8000001F: /* Encrypted Memory Capabilities */
+		cpudata->vmcb->state.rax = 0;
+		cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RCX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
+		break;
+
 	default:
 		break;
 	}
@@ -2459,6 +2528,10 @@ svm_init(void)
 
 	/* Init the max basic CPUID leaf. */
 	svm_cpuid_max_basic = uimin(cpuid_level, SVM_CPUID_MAX_BASIC);
+
+	/* Init the max extended CPUID leaf. */
+	x86_cpuid(0x80000000, descs);
+	svm_cpuid_max_extended = uimin(descs[0], SVM_CPUID_MAX_EXTENDED);
 
 	memset(hsave, 0, sizeof(hsave));
 	for (CPU_INFO_FOREACH(cii, ci)) {
