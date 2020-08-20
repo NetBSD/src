@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.96 2020/08/20 17:06:26 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.97 2020/08/20 17:11:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.96 2020/08/20 17:06:26 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.97 2020/08/20 17:11:47 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.96 2020/08/20 17:06:26 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.97 2020/08/20 17:11:47 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -494,7 +494,7 @@ cleanup:
 /* The different forms of #if's. */
 static const struct If {
     const char *form;		/* Form of if */
-    int formlen;		/* Length of form */
+    size_t formlen;		/* Length of form */
     Boolean doNot;		/* TRUE if default function should be negated */
     Boolean (*defProc)(int, const char *); /* Default function to apply */
 } ifs[] = {
@@ -731,7 +731,7 @@ compare_function(Boolean doEval)
 {
     static const struct fn_def {
 	const char *fn_name;
-	int fn_name_len;
+	size_t fn_name_len;
 	int (*fn_getarg)(Boolean, const char **, char **, const char *);
 	Boolean (*fn_proc)(int, const char *);
     } fn_defs[] = {
