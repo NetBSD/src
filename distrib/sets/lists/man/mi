@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1697 2020/07/26 15:13:09 jdolecek Exp $
+# $NetBSD: mi,v 1.1698 2020/08/20 21:28:01 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3277,6 +3277,9 @@
 ./usr/share/man/cat8/walnut/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/walnut/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/wdogctl.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/wg-keygen.0		man-netutil-catman	.cat
+./usr/share/man/cat8/wg-userspace.0		man-netutil-catman	.cat
+./usr/share/man/cat8/wgconfig.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/wiconfig.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/wire-test.0		man-netutil-catman	.cat
 ./usr/share/man/cat8/wizd.0			man-sysutil-catman	.cat
@@ -6184,6 +6187,9 @@
 ./usr/share/man/html8/wake.html			man-obsolete		obsolete
 ./usr/share/man/html8/wakeonlan.html		man-netutil-htmlman	html
 ./usr/share/man/html8/wdogctl.html		man-sysutil-htmlman	html
+./usr/share/man/html8/wg-keygen.html		man-netutil-htmlman	html
+./usr/share/man/html8/wg-userspace.html		man-netutil-htmlman	html
+./usr/share/man/html8/wgconfig.html		man-netutil-htmlman	html
 ./usr/share/man/html8/wiconfig.html		man-netutil-htmlman	html
 ./usr/share/man/html8/wire-test.html		man-netutil-htmlman	html
 ./usr/share/man/html8/wizd.html			man-sysutil-htmlman	html
@@ -9466,6 +9472,9 @@
 ./usr/share/man/man8/walnut/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/walnut/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/wdogctl.8			man-sysutil-man		.man
+./usr/share/man/man8/wg-keygen.8		man-netutil-man		.man
+./usr/share/man/man8/wg-userspace.8		man-netutil-man		.man
+./usr/share/man/man8/wgconfig.8			man-netutil-man		.man
 ./usr/share/man/man8/wiconfig.8			man-netutil-man		.man
 ./usr/share/man/man8/wire-test.8		man-netutil-man		.man
 ./usr/share/man/man8/wizd.8			man-sysutil-man		.man

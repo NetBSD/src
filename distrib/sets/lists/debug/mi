@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.328 2020/08/18 03:02:50 perseant Exp $
+# $NetBSD: mi,v 1.329 2020/08/20 21:28:01 riastradh Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -237,6 +237,7 @@
 ./usr/lib/librumpnet_tun_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpnet_virtif_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpnet_vlan_g.a			comp-c-debuglib		debuglib,rump
+./usr/lib/librumpnet_wireguard_g.a		comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpres_g.a			comp-c-debuglib		debuglib,compatfile,rump
 ./usr/lib/librumpuser_g.a			comp-c-debuglib		debuglib,compatfile,rump
 ./usr/lib/librumpvfs_aio_g.a			comp-c-debuglib		debuglib,rump
@@ -1349,6 +1350,8 @@
 ./usr/libdata/debug/usr/sbin/vnconfig.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/wake.debug		comp-obsolete		obsolete,compatfile
 ./usr/libdata/debug/usr/sbin/wakeonlan.debug	comp-netutil-debug	debug
+./usr/libdata/debug/usr/sbin/wg-keygen.debug	comp-netutil-debug	debug
+./usr/libdata/debug/usr/sbin/wgconfig.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/wiconfig.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/wire-test.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/wlanctl.debug	comp-sysutil-debug	debug
