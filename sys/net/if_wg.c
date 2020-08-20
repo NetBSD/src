@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.2 2020/08/20 21:29:44 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.3 2020/08/20 21:30:56 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.2 2020/08/20 21:29:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.3 2020/08/20 21:30:56 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -813,7 +813,7 @@ wg_algo_generate_keypair(uint8_t pubkey[WG_EPHEMERAL_KEY_LEN],
 
 	CTASSERT(WG_EPHEMERAL_KEY_LEN == crypto_scalarmult_curve25519_BYTES);
 
-	cprng_fast(privkey, WG_EPHEMERAL_KEY_LEN);
+	cprng_strong(kern_cprng, privkey, WG_EPHEMERAL_KEY_LEN, 0);
 	crypto_scalarmult_base(pubkey, privkey);
 }
 
