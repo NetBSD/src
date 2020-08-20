@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.95 2020/08/13 20:13:46 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.96 2020/08/20 17:06:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.95 2020/08/13 20:13:46 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.96 2020/08/20 17:06:26 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.95 2020/08/13 20:13:46 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.96 2020/08/20 17:06:26 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -121,8 +121,7 @@ __RCSID("$NetBSD: cond.c,v 1.95 2020/08/13 20:13:46 rillig Exp $");
  *	T -> ! T
  *	op -> == | != | > | < | >= | <=
  *
- * 'symbol' is some other symbol to which the default function (condDefProc)
- * is applied.
+ * 'symbol' is some other symbol to which the default function is applied.
  *
  * Tokens are scanned from the 'condExpr' string. The scanner (CondToken)
  * will return TOK_AND for '&' and '&&', TOK_OR for '|' and '||',
@@ -141,10 +140,6 @@ typedef enum {
     TOK_LPAREN, TOK_RPAREN, TOK_EOF, TOK_NONE, TOK_ERROR
 } Token;
 
-/*-
- * Structures to handle elegantly the different forms of #if's. The
- * last two fields are stored in condInvert and condDefProc, respectively.
- */
 static Token CondE(Boolean);
 static CondEvalResult do_Cond_EvalExpression(Boolean *);
 
@@ -496,6 +491,7 @@ cleanup:
     return str;
 }
 
+/* The different forms of #if's. */
 static const struct If {
     const char *form;		/* Form of if */
     int formlen;		/* Length of form */
