@@ -1,4 +1,4 @@
-/*	$NetBSD: wgconfig.c,v 1.1 2020/08/20 21:28:02 riastradh Exp $	*/
+/*	$NetBSD: wgconfig.c,v 1.2 2020/08/20 21:31:26 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: wgconfig.c,v 1.1 2020/08/20 21:28:02 riastradh Exp $");
+__RCSID("$NetBSD: wgconfig.c,v 1.2 2020/08/20 21:31:26 riastradh Exp $");
 
 #include <sys/ioctl.h>
 
@@ -729,7 +729,10 @@ main(int argc, char *argv[])
 	const char *command;
 	const char *target;
 
-	if (argc < 2) {
+	if (argc < 2 ||
+	    strcmp(argv[1], "-h") == 0 ||
+	    strcmp(argv[1], "-?") == 0 ||
+	    strcmp(argv[1], "--help") == 0) {
 		usage();
 	}
 
