@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.18 2020/08/18 11:48:21 simonb Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.19 2020/08/20 05:54:32 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.18 2020/08/18 11:48:21 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.19 2020/08/20 05:54:32 mrg Exp $");
 
 /*
  *	Manages physical address maps.
@@ -131,21 +131,62 @@ struct pmap_segtab_info {
 
 kmutex_t pmap_segtab_lock __cacheline_aligned;
 
+/*
+ * Check that a seg_tab[] array is empty.  
+ *
+ * This is used when allocating or freeing a pmap_segtab_t.  The stp
+ * should be unused -- meaning, none of the seg_tab[] pointers are
+ * not NULL, as it transitions from either freshly allocated segtab from
+ * pmap pool, an unused allocated page segtab alloc from the SMP case,
+ * where two CPUs attempt to allocate the same underlying segtab, the
+ * release of a segtab entry to the freelist, or for SMP, where reserve
+ * also frees a freshly allocated but unused entry.
+ */
 static void
 pmap_check_stp(pmap_segtab_t *stp, const char *caller, const char *why)
 {
 #ifdef DEBUG
 	for (size_t i = 0; i < PMAP_SEGTABSIZE; i++) {
-		if (stp->seg_tab[i] != 0) {
+		if (stp->seg_tab[i] != NULL) {
+#define DEBUG_NOISY
 #ifdef DEBUG_NOISY
+			UVMHIST_FUNC(__func__);
+			UVMHIST_CALLARGS(pmapsegtabhist, "stp=%#jx",
+			    (uintptr_t)stp, 0, 0, 0);
 			for (size_t j = i; j < PMAP_SEGTABSIZE; j++)
-				printf("%s: pm_segtab.seg_tab[%zu] = %p\n",
-				    caller, j, stp->seg_tab[j]);
+				if (stp->seg_tab[j] != NULL)
+					printf("%s: stp->seg_tab[%zu] = %p\n",
+					    caller, j, stp->seg_tab[j]);
 #endif
 			panic("%s: pm_segtab.seg_tab[%zu] != 0 (%p): %s",
 			    caller, i, stp->seg_tab[i], why);
 		}
 	}
+#endif
+}
+
+/*
+ * Check that an array of ptes is actually zero.
+ */
+static void
+pmap_check_ptes(pt_entry_t *pte, const char *caller)
+{
+#ifdef DEBUG
+	for (size_t i = 0; i < NPTEPG; i++)
+		if (!pte_zero_p(pte[i])) {
+#ifdef DEBUG_NOISY
+			UVMHIST_FUNC(__func__);
+			UVMHIST_CALLARGS(pmapsegtabhist, "pte=%#jx",
+			    (uintptr_t)pte, 0, 0, 0);
+			for (size_t j = i + 1; j < NPTEPG; j++)
+				if (!pte_zero_p(pte[j]))
+					UVMHIST_LOG(pmapsegtabhist,
+					    "pte[%zu] = %#"PRIxPTE,
+					    j, pte_value(pte[j]), 0, 0); 
+#endif
+			panic("%s: pte[%ju] entry at %pu not 0 (%#"PRIxPTE")",
+			      caller, i, &pte[i], pte_value(pte[i]));
+		}
 #endif
 }
 
@@ -190,12 +231,16 @@ pmap_pte_lookup(pmap_t pmap, vaddr_t va)
 	return pte + ((va >> PGSHIFT) & (NPTEPG - 1));
 }
 
+/*
+ * Insert the segtab into the segtab freelist.
+ */
 static void
 pmap_segtab_free(pmap_segtab_t *stp)
 {
-	/*
-	 * Insert the segtab into the segtab freelist.
-	 */
+	UVMHIST_FUNC(__func__);
+
+	UVMHIST_CALLARGS(pmapsegtabhist, "stp=%#jx", stp, 0, 0, 0);
+
 	mutex_spin_enter(&pmap_segtab_lock);
 	stp->seg_seg[0] = pmap_segtab_info.free_segtab;
 	pmap_segtab_info.free_segtab = stp;
@@ -211,9 +256,9 @@ pmap_segtab_release(pmap_t pmap, pmap_segtab_t **stp_p, bool free_stp,
 	pmap_segtab_t *stp = *stp_p;
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(pmaphist, "pm=%#jx stpp=%#jx free=%jd",
+	UVMHIST_CALLARGS(pmapsegtabhist, "pm=%#jx stpp=%#jx free=%jd",
 	    (uintptr_t)pmap, (uintptr_t)stp_p, free_stp, 0);
-	UVMHIST_LOG(pmaphist, " callback=%jx flags=%jx va=%jx vinc=%jx",
+	UVMHIST_LOG(pmapsegtabhist, " callback=%jx flags=%jx va=%jx vinc=%jx",
 	    (uintptr_t)callback, flags, (uintptr_t)va, (uintptr_t)vinc);
 	for (size_t i = (va / vinc) & (PMAP_SEGTABSIZE - 1);
 	     i < PMAP_SEGTABSIZE;
@@ -221,7 +266,8 @@ pmap_segtab_release(pmap_t pmap, pmap_segtab_t **stp_p, bool free_stp,
 #ifdef _LP64
 		if (vinc > NBSEG) {
 			if (stp->seg_seg[i] != NULL) {
-				UVMHIST_LOG(pmaphist, " recursing", 0, 0, 0, 0);
+				UVMHIST_LOG(pmapsegtabhist,
+				    " recursing %jd", i, 0, 0, 0);
 				pmap_segtab_release(pmap, &stp->seg_seg[i],
 				    true, callback, flags, va, vinc / NSEGPG);
 				KASSERT(stp->seg_seg[i] == NULL);
@@ -235,6 +281,18 @@ pmap_segtab_release(pmap_t pmap, pmap_segtab_t **stp_p, bool free_stp,
 		pt_entry_t *pte = stp->seg_tab[i];
 		if (pte == NULL)
 			continue;
+		pmap_check_ptes(pte, __func__); 
+
+#if defined(__mips_n64) && PAGE_SIZE == 8192
+		/*
+		 * XXX This is evil.  If vinc is 1000000 we are in
+		 * the last level, and this pte should be page aligned.
+		 */
+		if (vinc == 0x1000000 && ((uintptr_t)pte & PAGE_MASK) != 0) {
+			panic("%s: pte entry at %p not page aligned",
+			    __func__, pte);
+		}
+#endif
 
 		/*
 		 * If our caller wants a callback, do so.
@@ -242,13 +300,7 @@ pmap_segtab_release(pmap_t pmap, pmap_segtab_t **stp_p, bool free_stp,
 		if (callback != NULL) {
 			(*callback)(pmap, va, va + vinc, pte, flags);
 		}
-#ifdef DEBUG
-		for (size_t j = 0; j < NPTEPG; j++) {
-			if (!pte_zero_p(pte[j]))
-				panic("%s: pte entry at %p not 0 (%#"PRIxPTE")",
-				    __func__, &pte[j], pte_value(pte[j]));
-		}
-#endif
+
 		// PMAP_UNMAP_POOLPAGE should handle any VCA issues itself
 		paddr_t pa = PMAP_UNMAP_POOLPAGE((vaddr_t)pte);
 		struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
@@ -261,7 +313,7 @@ pmap_segtab_release(pmap_t pmap, pmap_segtab_t **stp_p, bool free_stp,
 #endif
 
 		stp->seg_tab[i] = NULL;
-		UVMHIST_LOG(pmaphist, " zeroing tab[%jd]", i, 0, 0, 0);
+		UVMHIST_LOG(pmapsegtabhist, " zeroing tab[%jd]", i, 0, 0, 0);
 	}
 
 	if (free_stp) {
@@ -290,6 +342,7 @@ pmap_segtab_alloc(void)
 	pmap_segtab_t *stp;
 	bool found_on_freelist = false;
 
+	UVMHIST_FUNC(__func__);
  again:
 	mutex_spin_enter(&pmap_segtab_lock);
 	if (__predict_true((stp = pmap_segtab_info.free_segtab) != NULL)) {
@@ -297,6 +350,7 @@ pmap_segtab_alloc(void)
 		stp->seg_seg[0] = NULL;
 		SEGTAB_ADD(nget, 1);
 		found_on_freelist = true;
+		UVMHIST_CALLARGS(pmapsegtabhist, "freelist stp=%#jx", stp, 0, 0, 0);
 	}
 	mutex_spin_exit(&pmap_segtab_lock);
 
@@ -314,6 +368,7 @@ pmap_segtab_alloc(void)
 		const paddr_t stp_pa = VM_PAGE_TO_PHYS(stp_pg);
 
 		stp = (pmap_segtab_t *)PMAP_MAP_POOLPAGE(stp_pa);
+		UVMHIST_CALLARGS(pmapsegtabhist, "new stp=%#jx", stp, 0, 0, 0);
 		const size_t n = NBPG / sizeof(*stp);
 		if (n > 1) {
 			/*
@@ -454,10 +509,7 @@ pmap_pte_reserve(pmap_t pmap, vaddr_t va, int flags)
 {
 	pmap_segtab_t *stp = pmap->pm_segtab;
 	pt_entry_t *pte;
-
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(pmaphist, "pm=%#jx va=%#jx flags=%jx",
-	    (uintptr_t)pmap, (uintptr_t)va, flags, 0);
 
 	pte = pmap_pte_lookup(pmap, va);
 	if (__predict_false(pte == NULL)) {
@@ -524,16 +576,11 @@ pmap_pte_reserve(pmap_t pmap, vaddr_t va, int flags)
 		*pte_p = pte;
 #endif
 		KASSERT(pte == stp->seg_tab[(va >> SEGSHIFT) & (PMAP_SEGTABSIZE - 1)]);
-		UVMHIST_LOG(pmaphist, " set tab[%jd]=%jx",
-		    (va >> SEGSHIFT) & (PMAP_SEGTABSIZE - 1), pte, 0, 0);
+		UVMHIST_CALLARGS(pmapsegtabhist, "pm=%#jx va=%#jx -> tab[%jd]=%jx",
+		    (uintptr_t)pmap, (uintptr_t)va,
+		    (va >> SEGSHIFT) & (PMAP_SEGTABSIZE - 1), pte);
 
-#ifdef DEBUG
-		for (size_t i = 0; i < NPTEPG; i++) {
-			if (!pte_zero_p(pte[i]))
-				panic("%s: new segmap %p not empty @ %zu",
-				    __func__, pte, i);
-		}
-#endif
+		pmap_check_ptes(pte, __func__);
 		pte += (va >> PGSHIFT) & (NPTEPG - 1);
 	}
 
