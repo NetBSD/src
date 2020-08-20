@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.9 2020/08/20 21:34:03 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.10 2020/08/20 21:34:13 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.9 2020/08/20 21:34:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.10 2020/08/20 21:34:13 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2736,32 +2736,32 @@ wg_worker(void *arg)
 {
 	struct wg_softc *wg = arg;
 	struct wg_worker *wgw = wg->wg_worker;
-	int bound = curlwp_bind();
+	bool todie = false;
 
 	KASSERT(wg != NULL);
 	KASSERT(wgw != NULL);
 
-	while (!wgw->wgw_todie) {
+	while (!todie) {
 		int reasons;
+		int bound;
 
 		mutex_enter(&wgw->wgw_lock);
 		/* New tasks may come during task handling */
-		if (wgw->wgw_wakeup_reasons == 0)
+		while ((reasons = wgw->wgw_wakeup_reasons) == 0 &&
+		    !(todie = wgw->wgw_todie))
 			cv_wait(&wgw->wgw_cv, &wgw->wgw_lock);
-		reasons = wgw->wgw_wakeup_reasons;
 		wgw->wgw_wakeup_reasons = 0;
 		mutex_exit(&wgw->wgw_lock);
 
+		bound = curlwp_bind();
 		if (ISSET(reasons, WG_WAKEUP_REASON_RECEIVE_PACKETS_IPV4))
 			wg_receive_packets(wg, AF_INET);
 		if (ISSET(reasons, WG_WAKEUP_REASON_RECEIVE_PACKETS_IPV6))
 			wg_receive_packets(wg, AF_INET6);
-		if (!ISSET(reasons, WG_WAKEUP_REASON_PEER))
-			continue;
-
-		wg_process_peer_tasks(wg);
+		if (ISSET(reasons, WG_WAKEUP_REASON_PEER))
+			wg_process_peer_tasks(wg);
+		curlwp_bindx(bound);
 	}
-	curlwp_bindx(bound);
 	kthread_exit(0);
 }
 
