@@ -1,4 +1,10 @@
-$NetBSD: CHANGES,v 1.40 2019/02/28 09:16:42 mrg Exp $
+$NetBSD: CHANGES,v 1.41 2020/08/20 07:55:10 mrg Exp $
+
+changes in bozohttpd 20200820:
+	o  make this work on sun2 by reducing mmap window there.
+	o  fix SSL shutdown sequence.  from spz@netbsd.org.
+	o  add readme support to directory indexing.  from jmcneill@netbsd.org
+	o  add blocklist(8) support.  from jruoho@netbsd.org.
 
 changes in bozohttpd 20190228:
 	o  extend timeout facility to ssl and stop servers hanging forever
