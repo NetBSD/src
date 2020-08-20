@@ -374,6 +374,9 @@ ctf_fdopen(int fd, int *errp)
 		strs_map = mmap64(NULL, strs_mapsz, PROT_READ, MAP_PRIVATE,
 		    fd, sp[shstrndx].sh_offset & _PAGEMASK);
 
+		if (strs_map == MAP_FAILED)
+			return (ctf_set_open_errno(errp, errno));
+
 		strs = (char *)strs_map +
 		    (sp[shstrndx].sh_offset & ~_PAGEMASK);
 
