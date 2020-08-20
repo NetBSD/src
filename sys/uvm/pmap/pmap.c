@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.54 2020/08/19 07:29:01 simonb Exp $	*/
+/*	$NetBSD: pmap.c,v 1.55 2020/08/20 05:54:32 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.54 2020/08/19 07:29:01 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.55 2020/08/20 05:54:32 mrg Exp $");
 
 /*
  *	Manages physical address maps.
@@ -217,8 +217,10 @@ struct pmap_limits pmap_limits = {	/* VA and PA limits */
 #ifdef UVMHIST
 static struct kern_history_ent pmapexechistbuf[10000];
 static struct kern_history_ent pmaphistbuf[10000];
+static struct kern_history_ent pmapsegtabhistbuf[1000];
 UVMHIST_DEFINE(pmapexechist);
 UVMHIST_DEFINE(pmaphist);
+UVMHIST_DEFINE(pmapsegtabhist);
 #endif
 
 /*
@@ -587,6 +589,7 @@ pmap_init(void)
 {
 	UVMHIST_INIT_STATIC(pmapexechist, pmapexechistbuf);
 	UVMHIST_INIT_STATIC(pmaphist, pmaphistbuf);
+	UVMHIST_INIT_STATIC(pmapsegtabhist, pmapsegtabhistbuf);
 
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLED(pmaphist);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16 2020/08/07 07:19:45 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.17 2020/08/20 05:54:32 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,6 +78,7 @@
 #ifdef UVMHIST
 UVMHIST_DECL(pmapexechist);
 UVMHIST_DECL(pmaphist);
+UVMHIST_DECL(pmapsegtabhist);
 #endif
 
 /*
