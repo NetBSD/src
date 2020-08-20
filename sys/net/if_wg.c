@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.16 2020/08/20 21:35:24 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.17 2020/08/20 21:35:33 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.16 2020/08/20 21:35:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.17 2020/08/20 21:35:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1235,7 +1235,7 @@ wg_fill_msg_init(struct wg_softc *wg, struct wg_peer *wgp,
 	/* [W] 5.4.4 Cookie MACs */
 	wg_algo_mac_mac1(wgmi->wgmi_mac1, sizeof(wgmi->wgmi_mac1),
 	    wgp->wgp_pubkey, sizeof(wgp->wgp_pubkey),
-	    (uint8_t *)wgmi, offsetof(struct wg_msg_init, wgmi_mac1));
+	    (const uint8_t *)wgmi, offsetof(struct wg_msg_init, wgmi_mac1));
 	/* Need mac1 to decrypt a cookie from a cookie message */
 	memcpy(wgp->wgp_last_sent_mac1, wgmi->wgmi_mac1,
 	    sizeof(wgp->wgp_last_sent_mac1));
@@ -1247,7 +1247,8 @@ wg_fill_msg_init(struct wg_softc *wg, struct wg_peer *wgp,
 	else {
 		wg_algo_mac(wgmi->wgmi_mac2, sizeof(wgmi->wgmi_mac2),
 		    wgp->wgp_latest_cookie, WG_COOKIE_LEN,
-		    (uint8_t *)wgmi, offsetof(struct wg_msg_init, wgmi_mac2),
+		    (const uint8_t *)wgmi,
+		    offsetof(struct wg_msg_init, wgmi_mac2),
 		    NULL, 0);
 	}
 
@@ -1646,7 +1647,7 @@ wg_fill_msg_resp(struct wg_softc *wg, struct wg_peer *wgp,
 	/* msg.mac1 := MAC(HASH(LABEL-MAC1 || Sm'^pub), msg_a) */
 	wg_algo_mac_mac1(wgmr->wgmr_mac1, sizeof(wgmi->wgmi_mac1),
 	    wgp->wgp_pubkey, sizeof(wgp->wgp_pubkey),
-	    (uint8_t *)wgmr, offsetof(struct wg_msg_resp, wgmr_mac1));
+	    (const uint8_t *)wgmr, offsetof(struct wg_msg_resp, wgmr_mac1));
 	/* Need mac1 to decrypt a cookie from a cookie message */
 	memcpy(wgp->wgp_last_sent_mac1, wgmr->wgmr_mac1,
 	    sizeof(wgp->wgp_last_sent_mac1));
@@ -1660,7 +1661,8 @@ wg_fill_msg_resp(struct wg_softc *wg, struct wg_peer *wgp,
 		/* msg.mac2 := MAC(Lm, msg_b) */
 		wg_algo_mac(wgmr->wgmr_mac2, sizeof(wgmi->wgmi_mac2),
 		    wgp->wgp_latest_cookie, WG_COOKIE_LEN,
-		    (uint8_t *)wgmr, offsetof(struct wg_msg_resp, wgmr_mac2),
+		    (const uint8_t *)wgmr,
+		    offsetof(struct wg_msg_resp, wgmr_mac2),
 		    NULL, 0);
 	}
 
@@ -1953,8 +1955,8 @@ wg_fill_msg_cookie(struct wg_softc *wg, struct wg_peer *wgp,
 	}
 
 	wg_algo_mac(cookie, sizeof(cookie),
-	    (uint8_t *)&wgp->wgp_randval, sizeof(wgp->wgp_randval),
-	    addr, addrlen, (uint8_t *)&uh_sport, sizeof(uh_sport));
+	    (const uint8_t *)&wgp->wgp_randval, sizeof(wgp->wgp_randval),
+	    addr, addrlen, (const uint8_t *)&uh_sport, sizeof(uh_sport));
 	wg_algo_mac_cookie(key, sizeof(key), wg->wg_pubkey,
 	    sizeof(wg->wg_pubkey));
 	wg_algo_xaead_enc(wgmc->wgmc_cookie, sizeof(wgmc->wgmc_cookie), key,
@@ -2133,15 +2135,15 @@ wg_change_endpoint(struct wg_peer *wgp, const struct sockaddr *new)
 }
 
 static bool
-wg_validate_inner_packet(char *packet, size_t decrypted_len, int *af)
+wg_validate_inner_packet(const char *packet, size_t decrypted_len, int *af)
 {
 	uint16_t packet_len;
-	struct ip *ip;
+	const struct ip *ip;
 
 	if (__predict_false(decrypted_len < sizeof(struct ip)))
 		return false;
 
-	ip = (struct ip *)packet;
+	ip = (const struct ip *)packet;
 	if (ip->ip_v == 4)
 		*af = AF_INET;
 	else if (ip->ip_v == 6)
@@ -2154,12 +2156,12 @@ wg_validate_inner_packet(char *packet, size_t decrypted_len, int *af)
 	if (*af == AF_INET) {
 		packet_len = ntohs(ip->ip_len);
 	} else {
-		struct ip6_hdr *ip6;
+		const struct ip6_hdr *ip6;
 
 		if (__predict_false(decrypted_len < sizeof(struct ip6_hdr)))
 			return false;
 
-		ip6 = (struct ip6_hdr *)packet;
+		ip6 = (const struct ip6_hdr *)packet;
 		packet_len = sizeof(struct ip6_hdr) + ntohs(ip6->ip6_plen);
 	}
 
@@ -2188,13 +2190,13 @@ wg_validate_route(struct wg_softc *wg, struct wg_peer *wgp_expected,
 	 */
 
 	if (af == AF_INET) {
-		struct ip *ip = (struct ip *)packet;
+		const struct ip *ip = (const struct ip *)packet;
 		struct sockaddr_in *sin = (struct sockaddr_in *)&ss;
 		sockaddr_in_init(sin, &ip->ip_src, 0);
 		sa = sintosa(sin);
 #ifdef INET6
 	} else {
-		struct ip6_hdr *ip6 = (struct ip6_hdr *)packet;
+		const struct ip6_hdr *ip6 = (const struct ip6_hdr *)packet;
 		struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)&ss;
 		sockaddr_in6_init(sin6, &ip6->ip6_src, 0, 0, 0);
 		sa = sin6tosa(sin6);
@@ -3757,9 +3759,9 @@ wg_handle_prop_peer(struct wg_softc *wg, prop_dictionary_t peer,
 	case AF_INET: {
 		struct sockaddr_in sin;
 		sockaddr_copy(sintosa(&sin), sizeof(sin),
-		    (struct sockaddr *)&sockaddr);
+		    (const struct sockaddr *)&sockaddr);
 		sockaddr_copy(sintosa(&wgp->wgp_sin),
-		    sizeof(wgp->wgp_sin), (struct sockaddr *)&sockaddr);
+		    sizeof(wgp->wgp_sin), (const struct sockaddr *)&sockaddr);
 		char addrstr[128];
 		sockaddr_format(sintosa(&sin), addrstr, sizeof(addrstr));
 		WG_DLOG("addr=%s\n", addrstr);
@@ -3770,11 +3772,11 @@ wg_handle_prop_peer(struct wg_softc *wg, prop_dictionary_t peer,
 		struct sockaddr_in6 sin6;
 		char addrstr[128];
 		sockaddr_copy(sintosa(&sin6), sizeof(sin6),
-		    (struct sockaddr *)&sockaddr);
+		    (const struct sockaddr *)&sockaddr);
 		sockaddr_format(sintosa(&sin6), addrstr, sizeof(addrstr));
 		WG_DLOG("addr=%s\n", addrstr);
 		sockaddr_copy(sin6tosa(&wgp->wgp_sin6),
-		    sizeof(wgp->wgp_sin6), (struct sockaddr *)&sockaddr);
+		    sizeof(wgp->wgp_sin6), (const struct sockaddr *)&sockaddr);
 		break;
 	    }
 #endif
@@ -4288,7 +4290,7 @@ wg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	switch (cmd) {
 	case SIOCAIFADDR:
 	case SIOCDIFADDR: {
-		struct in_aliasreq _ifra = *(struct in_aliasreq *)data;
+		struct in_aliasreq _ifra = *(const struct in_aliasreq *)data;
 		struct in_aliasreq *ifra = &_ifra;
 		KASSERT(error == ENOTTY);
 		strncpy(ifra->ifra_name, rumpuser_wg_get_tunname(wg->wg_user),
@@ -4301,7 +4303,7 @@ wg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 #ifdef INET6
 	case SIOCAIFADDR_IN6:
 	case SIOCDIFADDR_IN6: {
-		struct in6_aliasreq _ifra = *(struct in6_aliasreq *)data;
+		struct in6_aliasreq _ifra = *(const struct in6_aliasreq *)data;
 		struct in6_aliasreq *ifra = &_ifra;
 		KASSERT(error == ENOTTY);
 		strncpy(ifra->ifra_name, rumpuser_wg_get_tunname(wg->wg_user),
