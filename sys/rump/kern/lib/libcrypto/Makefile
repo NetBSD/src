@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2020/08/20 21:30:32 riastradh Exp $
+#	$NetBSD: Makefile,v 1.16 2020/08/20 21:33:43 riastradh Exp $
 #
 
 SODIUM_IMPORTDIR=${.CURDIR}/../../../../external/isc/libsodium
@@ -6,6 +6,7 @@ SODIUM_DIR=${.CURDIR}/../../../../external/isc/libsodium/dist/src/libsodium
 
 .PATH:	${.CURDIR}/../../../../crypto/adiantum				\
 	${.CURDIR}/../../../../crypto/aes				\
+	${.CURDIR}/../../../../crypto/blake2				\
 	${.CURDIR}/../../../../crypto/blowfish				\
 	${.CURDIR}/../../../../crypto/camellia				\
 	${.CURDIR}/../../../../crypto/cast128				\
