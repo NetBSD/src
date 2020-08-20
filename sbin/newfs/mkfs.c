@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.129 2020/04/17 09:33:37 jdolecek Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.130 2020/08/20 15:54:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.129 2020/04/17 09:33:37 jdolecek Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.130 2020/08/20 15:54:11 riastradh Exp $");
 #endif
 #endif /* not lint */
 
@@ -1668,7 +1668,8 @@ mkfs_malloc(size_t size)
 	/* try to map something extra */
 	extra = mmap(0, exsize, PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE,
 	    -1, 0);
-	munmap(extra, exsize);
+	if (extra != MAP_FAILED)
+		munmap(extra, exsize);
 
 	/* if extra memory couldn't be mapped, reduce original request accordingly */
 	if (extra == MAP_FAILED) {

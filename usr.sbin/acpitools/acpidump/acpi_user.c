@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_user.c,v 1.4 2017/08/04 06:30:36 msaitoh Exp $ */
+/* $NetBSD: acpi_user.c,v 1.5 2020/08/20 15:54:12 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1999 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi_user.c,v 1.4 2017/08/04 06:30:36 msaitoh Exp $");
+__RCSID("$NetBSD: acpi_user.c,v 1.5 2020/08/20 15:54:12 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -204,7 +204,7 @@ dsdt_load_file(char *infile)
 		errx(EXIT_FAILURE, "fstat %s", infile);
 
 	dp = mmap(0, sb.st_size, PROT_READ, MAP_PRIVATE, acpi_mem_fd, 0);
-	if (dp == NULL)
+	if (dp == MAP_FAILED)
 		errx(EXIT_FAILURE, "mmap %s", infile);
 
 	sdt = (ACPI_TABLE_HEADER *)dp;
