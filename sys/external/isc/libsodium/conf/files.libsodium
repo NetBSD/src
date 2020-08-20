@@ -1,0 +1,35 @@
+#	$NetBSD: files.libsodium,v 1.1 2020/08/20 21:20:16 riastradh Exp $
+
+define		libsodium
+
+makeoptions libsodium SODIUM_CPPFLAGS+="-I$S/external/isc/libsodium/include"
+makeoptions libsodium SODIUM_CPPFLAGS+="-I$S/external/isc/libsodium/dist/src/libsodium/include/sodium"
+makeoptions libsodium SODIUM_CPPFLAGS+="-Wno-unused-function -Wno-unused-variable -DHAVE_TI_MODE"
+
+makeoptions libsodium "CPPFLAGS.x25519_ref10.c"+="${SODIUM_CPPFLAGS}"
+makeoptions libsodium "CPPFLAGS.scalarmult_curve25519.c"+="${SODIUM_CPPFLAGS}"
+makeoptions libsodium "CPPFLAGS.crypto_scalarmult.c"+="${SODIUM_CPPFLAGS}"
+makeoptions libsodium "CPPFLAGS.poly1305_donna.c"+="${SODIUM_CPPFLAGS}"
+makeoptions libsodium "CPPFLAGS.onetimeauth_poly1305.c"+="${SODIUM_CPPFLAGS}"
+makeoptions libsodium "CPPFLAGS.crypto_onetimeauth.c"+="${SODIUM_CPPFLAGS}"
+makeoptions libsodium "CPPFLAGS.chacha20_ref.c"+="${SODIUM_CPPFLAGS}"
+makeoptions libsodium "CPPFLAGS.stream_chacha20.c"+="${SODIUM_CPPFLAGS}"
+makeoptions libsodium "CPPFLAGS.aead_xchacha20poly1305.c"+="${SODIUM_CPPFLAGS}"
+makeoptions libsodium "CPPFLAGS.aead_chacha20poly1305.c"+="${SODIUM_CPPFLAGS}"
+makeoptions libsodium "CPPFLAGS.core_hchacha20.c"+="${SODIUM_CPPFLAGS}"
+makeoptions libsodium "CPPFLAGS.ed25519_ref10.c"+="${SODIUM_CPPFLAGS}"
+
+file	external/isc/libsodium/src/glue.c	libsodium
+
+file	external/isc/libsodium/dist/src/libsodium/crypto_scalarmult/curve25519/ref10/x25519_ref10.c	libsodium
+file	external/isc/libsodium/dist/src/libsodium/crypto_scalarmult/curve25519/scalarmult_curve25519.c	libsodium
+file	external/isc/libsodium/dist/src/libsodium/crypto_scalarmult/crypto_scalarmult.c	libsodium
+file	external/isc/libsodium/dist/src/libsodium/crypto_onetimeauth/poly1305/donna/poly1305_donna.c	libsodium
+file	external/isc/libsodium/dist/src/libsodium/crypto_onetimeauth/poly1305/onetimeauth_poly1305.c	libsodium
+file	external/isc/libsodium/dist/src/libsodium/crypto_onetimeauth/crypto_onetimeauth.c	libsodium
+file	external/isc/libsodium/dist/src/libsodium/crypto_stream/chacha20/ref/chacha20_ref.c	libsodium
+file	external/isc/libsodium/dist/src/libsodium/crypto_stream/chacha20/stream_chacha20.c	libsodium
+file	external/isc/libsodium/dist/src/libsodium/crypto_aead/xchacha20poly1305/sodium/aead_xchacha20poly1305.c	libsodium
+file	external/isc/libsodium/dist/src/libsodium/crypto_aead/chacha20poly1305/sodium/aead_chacha20poly1305.c	libsodium
+file	external/isc/libsodium/dist/src/libsodium/crypto_core/hchacha20/core_hchacha20.c	libsodium
+file	external/isc/libsodium/dist/src/libsodium/crypto_core/ed25519/ref10/ed25519_ref10.c	libsodium
