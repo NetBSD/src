@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.311 2020/08/12 06:48:50 mrg Exp $
+$NetBSD: UPDATING,v 1.312 2020/08/20 03:09:34 mrg Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -20,7 +20,9 @@ Recent changes:
 ^^^^^^^^^^^^^^^
 
 20200811:
-	GCC updates may require cleaning the objdir.
+	GCC updates may require cleaning the objdir.  This may occur
+	due to GCC 7.5 update, GCC 8.4 move to gcc.old, or the upcoming
+	GCC 9 upgrade.
 
 20200614:
 	blacklist* has been renamed to blocklist*. postinstall(8)
