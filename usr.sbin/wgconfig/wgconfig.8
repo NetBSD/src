@@ -1,4 +1,4 @@
-.\"	$NetBSD: wgconfig.8,v 1.4 2020/08/20 23:01:20 riastradh Exp $
+.\"	$NetBSD: wgconfig.8,v 1.5 2020/08/20 23:03:08 riastradh Exp $
 .\"
 .\" Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
 .\" All rights reserved.
@@ -90,6 +90,11 @@ option to
 .It Cm "show private-key"
 Show the private key that was set with
 .Nm Ar wgN Cm "set private-key" .
+.It Cm "set private-key" Ar filename
+Set the private key of
+.Ar wgN
+to the base64-encoded private key in the file at
+.Ar filename .
 .It Cm "set listen-port" Ar port
 Set the UDP port number that
 .Ar wgN
