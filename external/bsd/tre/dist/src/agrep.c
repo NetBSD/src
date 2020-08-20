@@ -336,6 +336,10 @@ isbinaryfile(const char *filename)
 	} else {
 		size = (size_t)st.st_size;
 		mapped = mmap(NULL, size, PROT_READ, MAP_SHARED, fileno(fp), 0);
+		if (mapped == MAP_FAILED) {
+			fclose(fp);
+			return 1;
+		}
 		for (i = 0 ; !isbin && i < size ; i++) {
 			if (mapped[i] == 0x0) {
 				isbin = 1;
