@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.62 2020/07/11 08:10:52 jruoho Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.63 2020/08/20 05:46:31 spz Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -312,6 +312,7 @@ char	*bozostrdup(bozohttpd_t *, bozo_httpreq_t *, const char *);
 #define bozo_ssl_set_ciphers(w, x)			bozo_noop
 #define bozo_ssl_init(x)				bozo_noop
 #define bozo_ssl_accept(x)				(0)
+#define bozo_ssl_shutdown(x)				bozo_noop
 #define bozo_ssl_destroy(x)				bozo_noop
 #define have_ssl					(0)
 #else
@@ -319,6 +320,7 @@ void	bozo_ssl_set_opts(bozohttpd_t *, const char *, const char *);
 void	bozo_ssl_set_ciphers(bozohttpd_t *, const char *);
 void	bozo_ssl_init(bozohttpd_t *);
 int	bozo_ssl_accept(bozohttpd_t *);
+void	bozo_ssl_shutdown(bozohttpd_t *);
 void	bozo_ssl_destroy(bozohttpd_t *);
 #define have_ssl					(1)
 #endif
