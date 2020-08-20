@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2016/08/14 03:43:04 mrg Exp $
+#	$NetBSD: Makefile,v 1.7.16.1 2020/08/20 16:15:43 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,11 @@ FILESDIR=	${X11USRLIBDIR}/X11/doc
 
 MAN=	Xorg.1 xorg.conf.5
 # xorg.conf.d.5?
+
+X11EXTRAMANTRANSFORMS_BOTH+= \
+	xconfigdir		xorg.conf.d \
+	xkbdir			${X11LIBDIR}/xkb \
+	modulepath		${X11ROOTDIR}/modules
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
