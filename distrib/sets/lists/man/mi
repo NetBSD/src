@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1698 2020/08/20 21:28:01 riastradh Exp $
+# $NetBSD: mi,v 1.1699 2020/08/20 21:35:59 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2032,6 +2032,7 @@
 ./usr/share/man/cat4/wds.0			man-sys-catman		.cat
 ./usr/share/man/cat4/we.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wedge.0			man-sys-catman		.cat
+./usr/share/man/cat4/wg.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wmidell.0			man-sys-catman		.cat
@@ -5165,6 +5166,7 @@
 ./usr/share/man/html4/wds.html			man-sys-htmlman		html
 ./usr/share/man/html4/we.html			man-sys-htmlman		html
 ./usr/share/man/html4/wedge.html		man-sys-htmlman		html
+./usr/share/man/html4/wg.html			man-sys-htmlman		html
 ./usr/share/man/html4/wi.html			man-sys-htmlman		html
 ./usr/share/man/html4/wm.html			man-sys-htmlman		html
 ./usr/share/man/html4/wmidell.html		man-sys-htmlman		html
@@ -8230,6 +8232,7 @@
 ./usr/share/man/man4/wds.4			man-sys-man		.man
 ./usr/share/man/man4/we.4			man-sys-man		.man
 ./usr/share/man/man4/wedge.4			man-sys-man		.man
+./usr/share/man/man4/wg.4			man-sys-man		.man
 ./usr/share/man/man4/wi.4			man-sys-man		.man
 ./usr/share/man/man4/wm.4			man-sys-man		.man
 ./usr/share/man/man4/wmidell.4			man-sys-man		.man
