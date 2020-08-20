@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1742 2020/08/11 13:18:04 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1743 2020/08/20 21:59:54 riastradh Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -2204,45 +2204,58 @@ Date:		2019-11-27
 Mailing List:	bug-ncurses@gnu.org
 Responsible:
 License:	none
-Location:	sys/external/bsd/ena-com
+Location:	share/terminfo
 Notes:
 Use the import script in /usr/src/share/terminfo
 
 Package:	libcbor
-Version:	20200302
-Current Vers:	20200302
+Version:	0.7.0
+Current Vers:	0.5.0-119-g3b41770 (3b41770ab0ca408d242041dddb3b75811345573f)
 Maintainer:	Pavel Kalvoda
-Archive Site:	https://github.com/PJK/libcbor.git
-Home Page:	
+Archive Site:	https://github.com/PJK/libcbor
+Home Page:
 Date:		2020-03-02
-Mailing List:	christos
-Responsible:
+Mailing List:
+Responsible:	christos
 License:	mit
-Location:	sys/external/mit/libcbor
+Location:	external/mit/libcbor
 Notes:
 
 Package:	pam-u2f
-Version:	1.0.8
+Version:	1.0.8-73-gd10f843 (d10f84314c55f10d244bc275794e783dc408e45c)
 Current Vers:	1.0.8
 Maintainer:	Yubico
-Archive Site:	https://github.com/Yubico/pam-u2f.git
+Archive Site:	https://github.com/Yubico/pam-u2f
 Home Page:	https://developers.yubico.com/pam-u2f/
 Date:		2020-06-13
-Mailing List:	christos
-Responsible:
+Mailing List:
+Responsible:	christos
 License:	bsd
-Location:	sys/external/bsd/pam-u2f
+Location:	external/bsd/pam-u2f
 Notes:
 
 Package:	libfido2
-Version:	0.5.0
+Version:	1.3.0-155-gf6ab2ce (f6ab2ce65745f7f3b1bee7481623de5eaac28bb0)
 Current Vers:	1.4.0
 Maintainer:	Yubico
-Archive Site:	https://github.com/Yubico/libfido2.git
-Home Page:	https://developers.yubico.com/libfido2/Manuals/
+Archive Site:	https://github.com/Yubico/libfido2
+Home Page:	https://developers.yubico.com/libfido2/
 Date:		2020-06-13
-Mailing List:	christos
-Responsible:
+Mailing List:
+Responsible:	christos
 License:	bsd
-Location:	sys/external/bsd/libfido2
+Location:	external/bsd/libfido2
+Notes:
+
+Package:	libsodium
+Version:	1.0.16
+Current Vers:	1.0.18
+Maintainer:	Frank Denis
+Archive Site:	https://github.com/jedisct1/libsodium
+Home Page:	https://libsodium.org/
+Date:		2020-08-20
+Mailing List:	sodium-subscribe@pureftpd.org
+Responsible:	riastradh
+License:	bsd
+Location:	sys/external/bsd/libsodium
 Notes:
