@@ -1,4 +1,4 @@
-/*	$NetBSD: wgconfig.c,v 1.2 2020/08/20 21:31:26 riastradh Exp $	*/
+/*	$NetBSD: wgconfig.c,v 1.3 2020/08/20 21:34:51 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: wgconfig.c,v 1.2 2020/08/20 21:31:26 riastradh Exp $");
+__RCSID("$NetBSD: wgconfig.c,v 1.3 2020/08/20 21:34:51 riastradh Exp $");
 
 #include <sys/ioctl.h>
 
@@ -80,15 +80,16 @@ static const char *
 format_key(prop_object_t key_prop)
 {
 	int error;
-	unsigned char *key;
+	const void *key;
 	size_t key_len;
 	static char key_b64[KEY_BASE64_LEN + 1];
-	static const char *none = "(none)";
 
 	if (key_prop == NULL)
-		return none;
+		return "(none)";
+	if (prop_object_type(key_prop) != PROP_TYPE_DATA)
+		errx(EXIT_FAILURE, "invalid key");
 
-	key = prop_data_data(key_prop);
+	key = prop_data_value(key_prop);
 	key_len = prop_data_size(key_prop);
 	if (key_len != KEY_LEN)
 		errx(EXIT_FAILURE, "invalid key len: %lu", key_len);
@@ -106,10 +107,13 @@ format_endpoint(prop_object_t endpoint_prop)
 	int error;
 	static char buf[INET6_ADDRSTRLEN];
 	struct sockaddr_storage sockaddr;
-	char *addr;
+	const void *addr;
 	size_t addr_len;
 
-	addr = prop_data_data(endpoint_prop);
+	if (prop_object_type(endpoint_prop) != PROP_TYPE_DATA)
+		errx(EXIT_FAILURE, "invalid endpoint");
+
+	addr = prop_data_value(endpoint_prop);
 	addr_len = prop_data_size(endpoint_prop);
 	memcpy(&sockaddr, addr, addr_len);
 
@@ -124,48 +128,68 @@ format_endpoint(prop_object_t endpoint_prop)
 static void
 handle_allowed_ips(prop_dictionary_t peer, const char *prefix)
 {
+	prop_object_t prop_obj;
 	prop_array_t allowedips;
 	prop_object_iterator_t it;
 	prop_dictionary_t allowedip;
 	bool first = true;
 
-	allowedips = prop_dictionary_get(peer, "allowedips");
-	if (allowedips == NULL)
+	prop_obj = prop_dictionary_get(peer, "allowedips");
+	if (prop_obj == NULL)
 		return;
+	if (prop_object_type(prop_obj) != PROP_TYPE_ARRAY)
+		errx(EXIT_FAILURE, "invalid allowedips");
+	allowedips = prop_obj;
 
 	printf("%sallowed-ips: ", prefix);
 
 	it = prop_array_iterator(allowedips);
-	while ((allowedip = prop_object_iterator_next(it)) != NULL) {
-		prop_object_t prop_obj;
+	while ((prop_obj = prop_object_iterator_next(it)) != NULL) {
 		uint8_t family;
 		uint8_t cidr;
-		char *addr;
+		const void *addr;
+		size_t addrlen, famaddrlen;
 		char ntopbuf[INET6_ADDRSTRLEN];
 		const char *ntopret;
 
-		prop_obj = prop_dictionary_get(allowedip, "family");
-		if (prop_obj == NULL) {
+		if (prop_object_type(prop_obj) != PROP_TYPE_DICTIONARY) {
+			warnx("invalid allowedip");
+			continue;
+		}
+		allowedip = prop_obj;
+
+		if (!prop_dictionary_get_uint8(allowedip, "family", &family)) {
 			warnx("allowed-ip without family");
 			continue;
 		}
 
-		family = (uint8_t)prop_number_unsigned_integer_value(prop_obj);
-
-		prop_obj = prop_dictionary_get(allowedip, "cidr");
-		if (prop_obj == NULL) {
+		if (!prop_dictionary_get_uint8(allowedip, "cidr", &cidr)) {
 			warnx("allowed-ip without cidr");
 			continue;
 		}
-		cidr = (uint8_t)prop_number_unsigned_integer_value(prop_obj);
 
-		prop_obj = prop_dictionary_get(allowedip, "ip");
-		if (prop_obj == NULL) {
+		if (!prop_dictionary_get_data(allowedip, "ip",
+			&addr, &addrlen)) {
 			warnx("allowed-ip without ip");
 			continue;
 		}
 
-		addr = prop_data_data(prop_obj);
+		switch (family) {
+		case AF_INET:
+			famaddrlen = sizeof(struct in_addr);
+			break;
+		case AF_INET6:
+			famaddrlen = sizeof(struct in6_addr);
+			break;
+		default:
+			warnx("unknown family %d", family);
+			continue;
+		}
+		if (addrlen != famaddrlen) {
+			warnx("allowed-ip bad ip length");
+			continue;
+		}
+
 		ntopret = inet_ntop(family, addr, ntopbuf, sizeof(ntopbuf));
 		if (ntopret == NULL)
 			errx(EXIT_FAILURE, "inet_ntop failed");
@@ -217,6 +241,7 @@ static void
 show_peer(prop_dictionary_t peer, const char *prefix, bool show_psk)
 {
 	prop_object_t prop_obj;
+	uint64_t sec;
 
 	prop_obj = prop_dictionary_get(peer, "public_key");
 	if (prop_obj == NULL) {
@@ -240,15 +265,10 @@ show_peer(prop_dictionary_t peer, const char *prefix, bool show_psk)
 
 	handle_allowed_ips(peer, prefix);
 
-	prop_obj = prop_dictionary_get(peer, "last_handshake_time_sec");
-	if (prop_obj != NULL) {
-		uint64_t sec = prop_number_unsigned_integer_value(prop_obj);
+	if (prop_dictionary_get_uint64(peer, "last_handshake_time_sec", &sec))
 		printf("%slatest-handshake: %"PRIu64"\n", prefix, sec);
-	} else
+	else
 		printf("%slatest-handshake: (none)\n", prefix);
-#if 0
-	prop_obj = prop_dictionary_get(peer, "last_handshake_time_nsec");
-#endif
 }
 
 static int
@@ -256,6 +276,8 @@ cmd_show_all(const char *interface, int argc, char *argv[])
 {
 	prop_dictionary_t prop_dict;
 	prop_object_t prop_obj;
+	uint16_t port;
+	prop_array_t peers;
 
 	prop_dict = ioctl_get(interface);
 
@@ -268,26 +290,28 @@ cmd_show_all(const char *interface, int argc, char *argv[])
 	printf("\tprivate-key: (hidden)\n");
 #endif
 
-	prop_obj = prop_dictionary_get(prop_dict, "listen_port");
-	if (prop_obj != NULL) {
-		uint64_t port = prop_number_unsigned_integer_value(prop_obj);
-		if (port != (uint64_t)(uint16_t)port)
-			errx(EXIT_FAILURE, "invalid port: %" PRIu64, port);
-		printf("\tlisten-port: %u\n", (uint16_t)port);
+	if (prop_dictionary_get_uint16(prop_dict, "listen_port", &port)) {
+		printf("\tlisten-port: %u\n", port);
 	} else {
 		printf("\tlisten-port: (none)\n");
 	}
 
-	prop_array_t peers = prop_dictionary_get(prop_dict, "peers");
-	if (peers == NULL)
+	prop_obj = prop_dictionary_get(prop_dict, "peers");
+	if (prop_obj == NULL)
 		return EXIT_SUCCESS;
+	if (prop_object_type(prop_obj) != PROP_TYPE_ARRAY)
+		errx(EXIT_FAILURE, "invalid peers");
+	peers = prop_obj;
 
 	prop_object_iterator_t it = prop_array_iterator(peers);
-	prop_dictionary_t peer;
-	while ((peer = prop_object_iterator_next(it)) != NULL) {
-		prop_obj = prop_dictionary_get(peer, "name");
-		if (prop_obj != NULL) {
-			const char *name = prop_string_cstring_nocopy(prop_obj);
+	while ((prop_obj = prop_object_iterator_next(it)) != NULL) {
+		const char *name;
+
+		if (prop_object_type(prop_obj) != PROP_TYPE_DICTIONARY)
+			errx(EXIT_FAILURE, "invalid peer");
+		prop_dictionary_t peer = prop_obj;
+
+		if (prop_dictionary_get_string(peer, "name", &name)) {
 			printf("\tpeer: %s\n", name);
 		} else
 			printf("\tpeer: (none)\n");
@@ -302,6 +326,7 @@ static int
 cmd_show_peer(const char *interface, int argc, char *argv[])
 {
 	prop_dictionary_t prop_dict;
+	prop_object_t prop_obj;
 	const char *target;
 	const char *opt = "--show-preshared-key";
 	bool show_psk = false;
@@ -317,26 +342,31 @@ cmd_show_peer(const char *interface, int argc, char *argv[])
 
 	prop_dict = ioctl_get(interface);
 
-	prop_array_t peers = prop_dictionary_get(prop_dict, "peers");
-	if (peers == NULL)
+	prop_obj = prop_dictionary_get(prop_dict, "peers");
+	if (prop_obj == NULL)
 		return EXIT_SUCCESS;
+	if (prop_object_type(prop_obj) != PROP_TYPE_ARRAY)
+		errx(EXIT_FAILURE, "invalid peers");
 
+	prop_array_t peers = prop_obj;
 	prop_object_iterator_t it = prop_array_iterator(peers);
-	prop_dictionary_t peer;
-	while ((peer = prop_object_iterator_next(it)) != NULL) {
-		prop_object_t prop_obj;
-		prop_obj = prop_dictionary_get(peer, "name");
-		if (prop_obj == NULL)
+	while ((prop_obj = prop_object_iterator_next(it)) != NULL) {
+		const char *name;
+
+		if (prop_object_type(prop_obj) != PROP_TYPE_DICTIONARY)
+			errx(EXIT_FAILURE, "invalid peer");
+		prop_dictionary_t peer = prop_obj;
+
+		if (!prop_dictionary_get_string(peer, "name", &name))
 			continue;
-		const char *name = prop_string_cstring_nocopy(prop_obj);
 		if (strcmp(name, target) == 0) {
 			printf("peer: %s\n", name);
 			show_peer(peer, "\t", show_psk);
-			break;
+			return EXIT_SUCCESS;
 		}
 	}
 
-	return EXIT_SUCCESS;
+	return EXIT_FAILURE;
 }
 
 static int
@@ -413,9 +443,12 @@ cmd_set_private_key(const char *interface, int argc, char *argv[])
 
 	prop_dictionary_t prop_dict;
 	prop_dict = prop_dictionary_create();
-	prop_data_t privkey = prop_data_create_data(keybuf, sizeof(keybuf));
-	prop_dictionary_set(prop_dict, "private_key", privkey);
-	prop_object_release(privkey);
+	if (prop_dict == NULL)
+		errx(EXIT_FAILURE, "prop_dictionary_create");
+
+	if (!prop_dictionary_set_data(prop_dict, "private_key",
+		keybuf, sizeof(keybuf)))
+		errx(EXIT_FAILURE, "prop_dictionary_set_data");
 
 	char *buf = prop_dictionary_externalize(prop_dict);
 	if (buf == NULL)
@@ -459,9 +492,11 @@ cmd_set_listen_port(const char *interface, int argc, char *argv[])
 
 	prop_dictionary_t prop_dict;
 	prop_dict = prop_dictionary_create();
-	prop_number_t prop_port = prop_number_create_unsigned_integer(port);
-	prop_dictionary_set(prop_dict, "listen_port", prop_port);
-	prop_object_release(prop_port);
+	if (prop_dict == NULL)
+		errx(EXIT_FAILURE, "prop_dictionary_create");
+
+	if (!prop_dictionary_set_uint16(prop_dict, "listen_port", port))
+		errx(EXIT_FAILURE, "prop_dictionary_set_uint16");
 
 	char *buf = prop_dictionary_externalize(prop_dict);
 	if (buf == NULL)
@@ -475,7 +510,6 @@ static void
 handle_option_endpoint(const char *_addr_port, prop_dictionary_t prop_dict)
 {
 	int error;
-	prop_data_t prop_addr;
 	char *port;
 	struct addrinfo hints, *res;
 	char *addr_port, *addr;
@@ -524,12 +558,12 @@ handle_option_endpoint(const char *_addr_port, prop_dictionary_t prop_dict)
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_flags = AI_NUMERICHOST;
 	error = getaddrinfo(addr, port, &hints, &res);
-	if (error != 0)
-		err(EXIT_FAILURE, "getaddrinfo");
+	if (error)
+		errx(EXIT_FAILURE, "getaddrinfo: %s", gai_strerror(error));
 
-	prop_addr = prop_data_create_data(res->ai_addr, res->ai_addrlen);
-	prop_dictionary_set(prop_dict, "endpoint", prop_addr);
-	prop_object_release(prop_addr);
+	if (!prop_dictionary_set_data(prop_dict, "endpoint",
+		res->ai_addr, res->ai_addrlen))
+		errx(EXIT_FAILURE, "prop_dictionary_set_data");
 
 	freeaddrinfo(res);
 	free(addr_port);
@@ -543,16 +577,23 @@ handle_option_allowed_ips(const char *_allowed_ips, prop_dictionary_t prop_dict)
 	char *allowed_ips, *ip;
 
 	allowed_ips = strdup(_allowed_ips);
+	if (allowed_ips == NULL)
+		errx(EXIT_FAILURE, "strdup");
 
 	allowedips = prop_array_create();
-	i = 0;
-	while ((ip = strsep(&allowed_ips, ",")) != NULL) {
+	if (allowedips == NULL)
+		errx(EXIT_FAILURE, "prop_array_create");
+
+	for (i = 0; (ip = strsep(&allowed_ips, ",")) != NULL; i++) {
 		prop_dictionary_t prop_allowedip;
-		prop_allowedip = prop_dictionary_create();
 		uint16_t cidr;
 		char *cidrp;
 		struct addrinfo hints, *res;
 		int error;
+
+		prop_allowedip = prop_dictionary_create();
+		if (prop_allowedip == NULL)
+			errx(EXIT_FAILURE, "prop_dictionary_create");
 
 		cidrp = strchr(ip, '/');
 		if (cidrp == NULL)
@@ -566,35 +607,46 @@ handle_option_allowed_ips(const char *_allowed_ips, prop_dictionary_t prop_dict)
 		hints.ai_family = AF_UNSPEC;
 		hints.ai_flags = AI_NUMERICHOST;
 		error = getaddrinfo(ip, 0, &hints, &res);
-		if (error != 0)
-			err(EXIT_FAILURE, "getaddrinfo");
+		if (error)
+			errx(EXIT_FAILURE, "getaddrinfo: %s",
+			    gai_strerror(errno));
 
 		sa_family_t family = res->ai_addr->sa_family;
-		prop_number_t prop_family = prop_number_create_unsigned_integer(family);
-		prop_dictionary_set(prop_allowedip, "family", prop_family);
-		prop_object_release(prop_family);
+		if (!prop_dictionary_set_uint8(prop_allowedip, "family",
+			family))
+			errx(EXIT_FAILURE, "prop_dictionary_set_uint8");
 
-		prop_data_t addr;
-		if (family == AF_INET) {
-			struct sockaddr_in *sin = (struct sockaddr_in *)res->ai_addr;
-			addr = prop_data_create_data(&sin->sin_addr, sizeof(sin->sin_addr));
-		} else if (family == AF_INET6) {
-			struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)res->ai_addr;
-			addr = prop_data_create_data(&sin6->sin6_addr, sizeof(sin6->sin6_addr));
-		} else
+		const void *addr;
+		size_t addrlen;
+		switch (family) {
+		case AF_INET: {
+			const struct sockaddr_in *sin =
+			    (const struct sockaddr_in *)res->ai_addr;
+			addr = &sin->sin_addr;
+			addrlen = sizeof(sin->sin_addr);
+			break;
+		}
+		case AF_INET6: {
+			const struct sockaddr_in6 *sin6 =
+			    (const struct sockaddr_in6 *)res->ai_addr;
+			addr = &sin6->sin6_addr;
+			addrlen = sizeof(sin6->sin6_addr);
+			break;
+		}
+		default:
 			errx(EXIT_FAILURE, "invalid family: %d", family);
-		prop_dictionary_set(prop_allowedip, "ip", addr);
-		prop_object_release(addr);
-
-		prop_number_t prop_cidr = prop_number_create_unsigned_integer(cidr);
-		prop_dictionary_set(prop_allowedip, "cidr", prop_cidr);
-		prop_object_release(prop_cidr);
+		}
+		if (!prop_dictionary_set_data(prop_allowedip, "ip",
+			addr, addrlen))
+			errx(EXIT_FAILURE, "prop_dictionary_set_data");
+		if (!prop_dictionary_set_uint16(prop_allowedip, "cidr", cidr))
+			errx(EXIT_FAILURE, "prop_dictionary_set_uint16");
 
 		freeaddrinfo(res);
 		prop_array_set(allowedips, i, prop_allowedip);
-		i++;
 	}
 	prop_dictionary_set(prop_dict, "allowedips", allowedips);
+	prop_object_release(allowedips);
 
 	free(allowed_ips);
 }
@@ -603,12 +655,11 @@ static void
 handle_option_preshared_key(const char *path, prop_dictionary_t prop_dict)
 {
 	unsigned char keybuf[KEY_LEN];
-	prop_data_t psk;
 
 	read_key(path, keybuf);
-	psk = prop_data_create_data(keybuf, sizeof(keybuf));
-	prop_dictionary_set(prop_dict, "preshared_key", psk);
-	prop_object_release(psk);
+	if (!prop_dictionary_set_data(prop_dict, "preshared_key",
+		keybuf, sizeof(keybuf)))
+		errx(EXIT_FAILURE, "prop_dictionary_set_data");
 }
 
 static const struct option {
@@ -652,21 +703,22 @@ cmd_add_peer(const char *interface, int argc, char *argv[])
 
 	prop_dictionary_t prop_dict;
 	prop_dict = prop_dictionary_create();
+	if (prop_dict == NULL)
+		errx(EXIT_FAILURE, "prop_dictionary_create");
 
 	name = argv[0];
 	if (strlen(name) > WG_PEER_NAME_MAXLEN)
 		errx(EXIT_FAILURE, "peer name too long");
 	if (strnlen(argv[1], KEY_BASE64_LEN + 1) != KEY_BASE64_LEN)
-		errx(EXIT_FAILURE, "invalid public-key length: %lu", strlen(argv[1]));
+		errx(EXIT_FAILURE, "invalid public-key length: %zu",
+		    strlen(argv[1]));
 	base64_decode(argv[1], keybuf);
 
-	prop_string_t prop_name = prop_string_create_cstring(name);
-	prop_dictionary_set(prop_dict, "name", prop_name);
-	prop_object_release(prop_name);
-
-	prop_data_t pubkey = prop_data_create_data(keybuf, sizeof(keybuf));
-	prop_dictionary_set(prop_dict, "public_key", pubkey);
-	prop_object_release(pubkey);
+	if (!prop_dictionary_set_string(prop_dict, "name", name))
+		errx(EXIT_FAILURE, "prop_dictionary_set_string");
+	if (!prop_dictionary_set_data(prop_dict, "public_key",
+		keybuf, sizeof(keybuf)))
+		errx(EXIT_FAILURE, "prop_dictionary_set_data");
 
 	argc -= 2;
 	argv += 2;
@@ -691,14 +743,15 @@ cmd_delete_peer(const char *interface, int argc, char *argv[])
 
 	prop_dictionary_t prop_dict;
 	prop_dict = prop_dictionary_create();
+	if (prop_dict == NULL)
+		errx(EXIT_FAILURE, "prop_dictionary_create");
 
 	name = argv[0];
 	if (strlen(name) > WG_PEER_NAME_MAXLEN)
 		errx(EXIT_FAILURE, "peer name too long");
 
-	prop_string_t prop_name = prop_string_create_cstring(name);
-	prop_dictionary_set(prop_dict, "name", prop_name);
-	prop_object_release(prop_name);
+	if (!prop_dictionary_set_string(prop_dict, "name", name))
+		errx(EXIT_FAILURE, "prop_dictionary_set_string");
 
 	char *buf = prop_dictionary_externalize(prop_dict);
 	if (buf == NULL)
