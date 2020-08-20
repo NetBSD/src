@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl-bozo.c,v 1.26 2019/02/28 08:28:21 mrg Exp $	*/
+/*	$NetBSD: ssl-bozo.c,v 1.27 2020/08/20 05:46:31 spz Exp $	*/
 
 /*	$eterna: ssl-bozo.c,v 1.15 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -284,6 +284,15 @@ bozo_ssl_accept(bozohttpd_t *httpd)
 	}
 
 	return ret != 1;
+}
+
+void
+bozo_ssl_shutdown(bozohttpd_t *httpd)
+{
+	const sslinfo_t *sslinfo = httpd->sslinfo;
+
+	if (sslinfo && sslinfo->bozossl)
+		SSL_shutdown(sslinfo->bozossl);
 }
 
 void
