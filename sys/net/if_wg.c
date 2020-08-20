@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.10 2020/08/20 21:34:13 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.11 2020/08/20 21:34:23 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.10 2020/08/20 21:34:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.11 2020/08/20 21:34:23 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2633,6 +2633,86 @@ wg_put_peer(struct wg_peer *wgp, struct psref *psref)
 }
 
 static void
+wg_task_send_init_message(struct wg_softc *wg, struct wg_peer *wgp)
+{
+	struct psref psref;
+	struct wg_session *wgs;
+
+	WG_TRACE("WGP_TASK_SEND_INIT_MESSAGE");
+
+	if (!wgp->wgp_endpoint_available) {
+		WGLOG(LOG_DEBUG, "No endpoint available\n");
+		/* XXX should do something? */
+		return;
+	}
+
+	wgs = wg_get_stable_session(wgp, &psref);
+	if (wgs->wgs_state == WGS_STATE_UNKNOWN) {
+		wg_put_session(wgs, &psref);
+		wg_send_handshake_msg_init(wg, wgp);
+	} else {
+		wg_put_session(wgs, &psref);
+		/* rekey */
+		wgs = wg_get_unstable_session(wgp, &psref);
+		if (wgs->wgs_state != WGS_STATE_INIT_ACTIVE)
+			wg_send_handshake_msg_init(wg, wgp);
+		wg_put_session(wgs, &psref);
+	}
+}
+
+static void
+wg_task_endpoint_changed(struct wg_softc *wg, struct wg_peer *wgp)
+{
+
+	WG_TRACE("WGP_TASK_ENDPOINT_CHANGED");
+
+	mutex_enter(wgp->wgp_lock);
+	if (wgp->wgp_endpoint_changing) {
+		pserialize_perform(wgp->wgp_psz);
+		psref_target_destroy(&wgp->wgp_endpoint0->wgsa_psref,
+		    wg_psref_class);
+		psref_target_init(&wgp->wgp_endpoint0->wgsa_psref,
+		    wg_psref_class);
+		wgp->wgp_endpoint_changing = false;
+	}
+	mutex_exit(wgp->wgp_lock);
+}
+
+static void
+wg_task_send_keepalive_message(struct wg_softc *wg, struct wg_peer *wgp)
+{
+	struct psref psref;
+	struct wg_session *wgs;
+
+	WG_TRACE("WGP_TASK_SEND_KEEPALIVE_MESSAGE");
+
+	wgs = wg_get_stable_session(wgp, &psref);
+	wg_send_keepalive_msg(wgp, wgs);
+	wg_put_session(wgs, &psref);
+}
+
+static void
+wg_task_destroy_prev_session(struct wg_softc *wg, struct wg_peer *wgp)
+{
+	struct wg_session *wgs;
+
+	WG_TRACE("WGP_TASK_DESTROY_PREV_SESSION");
+
+	mutex_enter(wgp->wgp_lock);
+	wgs = wgp->wgp_session_unstable;
+	mutex_enter(wgs->wgs_lock);
+	if (wgs->wgs_state == WGS_STATE_DESTROYING) {
+		pserialize_perform(wgp->wgp_psz);
+		psref_target_destroy(&wgs->wgs_psref, wg_psref_class);
+		psref_target_init(&wgs->wgs_psref, wg_psref_class);
+		wg_clear_states(wgs);
+		wgs->wgs_state = WGS_STATE_UNKNOWN;
+	}
+	mutex_exit(wgs->wgs_lock);
+	mutex_exit(wgp->wgp_lock);
+}
+
+static void
 wg_process_peer_tasks(struct wg_softc *wg)
 {
 	struct wg_peer *wgp;
@@ -2656,69 +2736,14 @@ wg_process_peer_tasks(struct wg_softc *wg)
 
 		WG_DLOG("tasks=%x\n", tasks);
 
-		if (ISSET(tasks, WGP_TASK_SEND_INIT_MESSAGE)) {
-			struct psref _psref;
-			struct wg_session *wgs;
-
-			WG_TRACE("WGP_TASK_SEND_INIT_MESSAGE");
-			if (!wgp->wgp_endpoint_available) {
-				WGLOG(LOG_DEBUG, "No endpoint available\n");
-				/* XXX should do something? */
-				goto skip_init_message;
-			}
-			wgs = wg_get_stable_session(wgp, &_psref);
-			if (wgs->wgs_state == WGS_STATE_UNKNOWN) {
-				wg_put_session(wgs, &_psref);
-				wg_send_handshake_msg_init(wg, wgp);
-			} else {
-				wg_put_session(wgs, &_psref);
-				/* rekey */
-				wgs = wg_get_unstable_session(wgp, &_psref);
-				if (wgs->wgs_state != WGS_STATE_INIT_ACTIVE)
-					wg_send_handshake_msg_init(wg, wgp);
-				wg_put_session(wgs, &_psref);
-			}
-		}
-	skip_init_message:
-		if (ISSET(tasks, WGP_TASK_ENDPOINT_CHANGED)) {
-			WG_TRACE("WGP_TASK_ENDPOINT_CHANGED");
-			mutex_enter(wgp->wgp_lock);
-			if (wgp->wgp_endpoint_changing) {
-				pserialize_perform(wgp->wgp_psz);
-				psref_target_destroy(&wgp->wgp_endpoint0->wgsa_psref,
-				    wg_psref_class);
-				psref_target_init(&wgp->wgp_endpoint0->wgsa_psref,
-				    wg_psref_class);
-				wgp->wgp_endpoint_changing = false;
-			}
-			mutex_exit(wgp->wgp_lock);
-		}
-		if (ISSET(tasks, WGP_TASK_SEND_KEEPALIVE_MESSAGE)) {
-			struct psref _psref;
-			struct wg_session *wgs;
-
-			WG_TRACE("WGP_TASK_SEND_KEEPALIVE_MESSAGE");
-			wgs = wg_get_stable_session(wgp, &_psref);
-			wg_send_keepalive_msg(wgp, wgs);
-			wg_put_session(wgs, &_psref);
-		}
-		if (ISSET(tasks, WGP_TASK_DESTROY_PREV_SESSION)) {
-			struct wg_session *wgs;
-
-			WG_TRACE("WGP_TASK_DESTROY_PREV_SESSION");
-			mutex_enter(wgp->wgp_lock);
-			wgs = wgp->wgp_session_unstable;
-			mutex_enter(wgs->wgs_lock);
-			if (wgs->wgs_state == WGS_STATE_DESTROYING) {
-				pserialize_perform(wgp->wgp_psz);
-				psref_target_destroy(&wgs->wgs_psref, wg_psref_class);
-				psref_target_init(&wgs->wgs_psref, wg_psref_class);
-				wg_clear_states(wgs);
-				wgs->wgs_state = WGS_STATE_UNKNOWN;
-			}
-			mutex_exit(wgs->wgs_lock);
-			mutex_exit(wgp->wgp_lock);
-		}
+		if (ISSET(tasks, WGP_TASK_SEND_INIT_MESSAGE))
+			wg_task_send_init_message(wg, wgp);
+		if (ISSET(tasks, WGP_TASK_ENDPOINT_CHANGED))
+			wg_task_endpoint_changed(wg, wgp);
+		if (ISSET(tasks, WGP_TASK_SEND_KEEPALIVE_MESSAGE))
+			wg_task_send_keepalive_message(wg, wgp);
+		if (ISSET(tasks, WGP_TASK_DESTROY_PREV_SESSION))
+			wg_task_destroy_prev_session(wg, wgp);
 
 		/* New tasks may be scheduled during processing tasks */
 		WG_DLOG("wgp_tasks=%d\n", wgp->wgp_tasks);
