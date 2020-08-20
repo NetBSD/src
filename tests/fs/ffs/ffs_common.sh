@@ -1,4 +1,4 @@
-# $NetBSD: ffs_common.sh,v 1.4 2020/08/17 06:18:39 gson Exp $ 
+# $NetBSD: ffs_common.sh,v 1.5 2020/08/20 07:23:20 gson Exp $ 
 
 create_ffs()
 {
@@ -30,7 +30,7 @@ test_case()
 	local check_function="${1}"; shift
 	local descr="${1}"; shift
 	
-	atf_test_case "${name}" cleanup
+	atf_test_case "${name}"
 
 	eval "${name}_head() { \
 		atf_set "descr" "${descr}"
@@ -41,12 +41,6 @@ test_case()
 		export RUMP_SERVER=unix://\${RUMP_SOCKET}; \
 		${check_function} " "${@}" "; \
 	}"
-	eval "${name}_cleanup() { \
-		for s in \${RUMP_SOCKETS_LIST}; do \
-			export RUMP_SERVER=unix://\${s}; \
-			atf_check -s exit:1 -o ignore -e ignore rump.halt; \
-		done; \
-	}"
 	tests="${tests} ${name}"
 }
 
@@ -56,7 +50,7 @@ test_case_root()
 	local check_function="${1}"; shift
 	local descr="${1}"; shift
 	
-	atf_test_case "${name}" cleanup
+	atf_test_case "${name}"
 
 	eval "${name}_head() { \
 		atf_set "descr" "${descr}"
@@ -67,12 +61,6 @@ test_case_root()
 		RUMP_SOCKETS_LIST=\${RUMP_SOCKET}; \
 		export RUMP_SERVER=unix://\${RUMP_SOCKET}; \
 		${check_function} " "${@}" "; \
-	}"
-	eval "${name}_cleanup() { \
-		for s in \${RUMP_SOCKETS_LIST}; do \
-			export RUMP_SERVER=unix://\${s}; \
-			atf_check -s exit:1 -o ignore -e ignore rump.halt; \
-		done; \
 	}"
 	tests="${tests} ${name}"
 }
