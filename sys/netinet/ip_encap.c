@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.72 2020/01/23 09:09:59 knakahara Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.73 2020/08/20 21:21:32 riastradh Exp $	*/
 /*	$KAME: ip_encap.c,v 1.73 2001/10/02 08:30:58 itojun Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.72 2020/01/23 09:09:59 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.73 2020/08/20 21:21:32 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -126,7 +126,7 @@ static struct encaptab *encap6_lookup(struct mbuf *, int, int, enum direction,
 #endif
 static int encap_add(struct encaptab *);
 static int encap_remove(struct encaptab *);
-static int encap_afcheck(int, const struct sockaddr *, const struct sockaddr *);
+static void encap_afcheck(int, const struct sockaddr *, const struct sockaddr *);
 #ifdef USE_RADIX
 static struct radix_node_head *encap_rnh(int);
 static int mask_matchlen(const struct sockaddr *);
@@ -601,39 +601,16 @@ encap_remove(struct encaptab *ep)
 	return error;
 }
 
-static int
+static void
 encap_afcheck(int af, const struct sockaddr *sp, const struct sockaddr *dp)
 {
-	if (sp && dp) {
-		if (sp->sa_len != dp->sa_len)
-			return EINVAL;
-		if (af != sp->sa_family || af != dp->sa_family)
-			return EINVAL;
-	} else if (!sp && !dp)
-		;
-	else
-		return EINVAL;
 
-	switch (af) {
-	case AF_INET:
-		if (sp && sp->sa_len != sizeof(struct sockaddr_in))
-			return EINVAL;
-		if (dp && dp->sa_len != sizeof(struct sockaddr_in))
-			return EINVAL;
-		break;
-#ifdef INET6
-	case AF_INET6:
-		if (sp && sp->sa_len != sizeof(struct sockaddr_in6))
-			return EINVAL;
-		if (dp && dp->sa_len != sizeof(struct sockaddr_in6))
-			return EINVAL;
-		break;
-#endif
-	default:
-		return EAFNOSUPPORT;
-	}
+	KASSERT(sp != NULL && dp != NULL);
+	KASSERT(sp->sa_len == dp->sa_len);
+	KASSERT(af == sp->sa_family && af == dp->sa_family);
 
-	return 0;
+	socklen_t len = sockaddr_getsize_by_family(af);
+	KASSERT(len != 0 && len == sp->sa_len && len == dp->sa_len);
 }
 
 /*
@@ -660,10 +637,11 @@ encap_attach(int af, int proto,
 
 	s = splsoftnet();
 #endif
+
+	ASSERT_SLEEPABLE();
+
 	/* sanity check on args */
-	error = encap_afcheck(af, sp, dp);
-	if (error)
-		goto fail;
+	encap_afcheck(af, sp, dp);
 
 	/* check if anyone have already attached with exactly same config */
 	pss = pserialize_read_enter();
@@ -709,21 +687,9 @@ encap_attach(int af, int proto,
 	}
 
 	/* M_NETADDR ok? */
-	ep = kmem_zalloc(sizeof(*ep), KM_NOSLEEP);
-	if (ep == NULL) {
-		error = ENOBUFS;
-		goto fail;
-	}
-	ep->addrpack = kmem_zalloc(l, KM_NOSLEEP);
-	if (ep->addrpack == NULL) {
-		error = ENOBUFS;
-		goto gc;
-	}
-	ep->maskpack = kmem_zalloc(l, KM_NOSLEEP);
-	if (ep->maskpack == NULL) {
-		error = ENOBUFS;
-		goto gc;
-	}
+	ep = kmem_zalloc(sizeof(*ep), KM_SLEEP);
+	ep->addrpack = kmem_zalloc(l, KM_SLEEP);
+	ep->maskpack = kmem_zalloc(l, KM_SLEEP);
 
 	ep->af = af;
 	ep->proto = proto;
@@ -794,21 +760,18 @@ encap_attach_func(int af, int proto,
 
 	s = splsoftnet();
 #endif
+
+	ASSERT_SLEEPABLE();
+
 	/* sanity check on args */
-	if (!func) {
-		error = EINVAL;
-		goto fail;
-	}
+	KASSERT(func != NULL);
+	KASSERT(af == AF_INET
+#ifdef INET6
+	    || af == AF_INET6
+#endif
+	);
 
-	error = encap_afcheck(af, NULL, NULL);
-	if (error)
-		goto fail;
-
-	ep = kmem_alloc(sizeof(*ep), KM_NOSLEEP);	/*XXX*/
-	if (ep == NULL) {
-		error = ENOBUFS;
-		goto fail;
-	}
+	ep = kmem_alloc(sizeof(*ep), KM_SLEEP);
 	memset(ep, 0, sizeof(*ep));
 
 	ep->af = af;
@@ -830,7 +793,6 @@ encap_attach_func(int af, int proto,
 
 gc:
 	kmem_free(ep, sizeof(*ep));
-fail:
 #ifndef ENCAP_MPSAFE
 	splx(s);
 #endif

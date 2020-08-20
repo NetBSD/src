@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.109 2019/12/18 00:49:16 roy Exp $	*/
+/*	$NetBSD: in.h,v 1.110 2020/08/20 21:21:32 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -436,6 +436,8 @@ int	in_cksum(struct mbuf *, int);
 int	in4_cksum(struct mbuf *, u_int8_t, int, int);
 int	in_localaddr(struct in_addr);
 void	in_socktrim(struct sockaddr_in *);
+
+void	in_len2mask(struct in_addr *, u_int);
 
 void	in_if_link_up(struct ifnet *);
 void	in_if_link_down(struct ifnet *);
