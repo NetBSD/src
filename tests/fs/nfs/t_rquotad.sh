@@ -1,4 +1,4 @@
-# $NetBSD: t_rquotad.sh,v 1.7 2019/05/13 17:55:07 bad Exp $ 
+# $NetBSD: t_rquotad.sh,v 1.8 2020/08/20 07:32:40 gson Exp $ 
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -24,10 +24,42 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #  POSSIBILITY OF SUCH DAMAGE.
 #
+
+# Like test_case_root() in ../ffs/ffs_common.sh, plus cleanup of both
+# rump servers.
+
+test_case_rquotad()
+{
+	local name="${1}"; shift
+	local check_function="${1}"; shift
+	local descr="${1}"; shift
+	
+	atf_test_case "${name}" cleanup
+
+	eval "${name}_head() { \
+		atf_set "descr" "${descr}"
+		atf_set "require.user" "root"
+		atf_set "timeout" "360"
+	}"
+	eval "${name}_body() { \
+		RUMP_SOCKETS_LIST=\${RUMP_SOCKET}; \
+		export RUMP_SERVER=unix://\${RUMP_SOCKET}; \
+		${check_function} " "${@}" "; \
+	}"
+	# Can't use RUMP_SOCKETS_LIST here because it is not set in
+        # the cleanup shell.
+	eval "${name}_cleanup() { \
+		for s in \${RUMP_SOCKET} clientsock; do \
+			RUMP_SERVER=unix://\${s} rump.halt 2>/dev/null || true; \
+		done; \
+	}"
+	tests="${tests} ${name}"
+}
+
 for e in le be; do
   for v in 1; do
     for q in "user" "group" "both"; do
-	test_case_root get_nfs_${e}_${v}_${q} get_nfs_quota \
+	test_case_rquotad get_nfs_${e}_${v}_${q} get_nfs_quota \
 		"get NFS quota with ${q} enabled" ${e} ${v} ${q}
     done
   done
