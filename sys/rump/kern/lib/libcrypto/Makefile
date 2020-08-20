@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2020/08/20 21:21:32 riastradh Exp $
+#	$NetBSD: Makefile,v 1.15 2020/08/20 21:30:32 riastradh Exp $
 #
 
 SODIUM_IMPORTDIR=${.CURDIR}/../../../../external/isc/libsodium
@@ -11,7 +11,6 @@ SODIUM_DIR=${.CURDIR}/../../../../external/isc/libsodium/dist/src/libsodium
 	${.CURDIR}/../../../../crypto/cast128				\
 	${.CURDIR}/../../../../crypto/des				\
 	${.CURDIR}/../../../../crypto/skipjack				\
-	${.CURDIR}/../../../../external/cc0/libb2/dist/src		\
 	${SODIUM_DIR}/crypto_scalarmult/curve25519/ref10		\
 	${SODIUM_DIR}/crypto_scalarmult/curve25519			\
 	${SODIUM_DIR}/crypto_scalarmult					\
@@ -58,9 +57,7 @@ SRCS+=	des_ecb.c des_setkey.c des_enc.c des_cbc.c des_module.c
 SRCS+=	skipjack.c
 
 # BLAKE2
-SRCS+=	blake2s-ref.c
-CPPFLAGS.blake2s-ref.c+= -I${.CURDIR}/../../../../external/cc0/libb2/include \
-    -Wno-cast-qual -DSUFFIX=
+SRCS+=	blake2s.c
 
 # Various cryptography functions
 SODIUM_CPPFLAGS=
