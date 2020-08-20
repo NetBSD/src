@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.54 2020/08/20 16:15:50 kre Exp $	*/
+/*	$NetBSD: trap.c,v 1.55 2020/08/20 23:09:56 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.54 2020/08/20 16:15:50 kre Exp $");
+__RCSID("$NetBSD: trap.c,v 1.55 2020/08/20 23:09:56 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -232,6 +232,8 @@ trapcmd(int argc, char **argv)
 	ap = argv + 1;
 
 	CTRACE(DBG_TRAP, ("trapcmd: "));
+	if (argc == 3 && strcmp(ap[1], "--") == 0)
+		argc--;
 	if (argc == 2 && strcmp(*ap, "-l") == 0) {
 		CTRACE(DBG_TRAP, ("-l\n"));
 		out1str("EXIT");
@@ -253,9 +255,9 @@ trapcmd(int argc, char **argv)
 		traps_invalid = 0;
 		return 0;
 	}
-	if (argc >= 2 && strcmp(*ap, "-p") == 0) {
-		CTRACE(DBG_TRAP, ("-p "));
-		printonly = 1;
+	if (argc >= 2 && (strcmp(*ap, "-p") == 0 || strcmp(*ap, "-P") == 0)) {
+		CTRACE(DBG_TRAP, ("%s ", *ap));
+		printonly = 1 + (ap[0][1] == 'p');
 		ap++;
 		argc--;
 	}
@@ -264,6 +266,9 @@ trapcmd(int argc, char **argv)
 		argc--;
 		ap++;
 	}
+
+	if (printonly == 1 && argc < 2)
+		goto usage;
 
 	if (argc <= 1) {
 		int count;
@@ -339,8 +344,10 @@ trapcmd(int argc, char **argv)
 	}
 
 	if (argc < 2) {		/* there must be at least 1 condition */
+ usage:
 		out2str("Usage: trap [-l]\n"
 			"       trap -p [condition ...]\n"
+			"       trap -P  condition ...\n"
 			"       trap action condition ...\n"
 			"       trap N condition ...\n");
 		return 2;
@@ -365,12 +372,17 @@ trapcmd(int argc, char **argv)
 			 * (action will always be "-") here, if someone
 			 * really wants to get that particular output
 			 */
-			out1str("trap -- ");
-			if (trap[signo] == NULL)
-				out1str("-");
-			else
-				print_quoted(trap[signo]);
-			out1fmt(" %s\n", trap_signame(signo));
+			if (printonly == 1) {
+				if (trap[signo] != NULL)
+					out1fmt("%s\n", trap[signo]);
+			} else {
+				out1str("trap -- ");
+				if (trap[signo] == NULL)
+					out1str("-");
+				else
+					print_quoted(trap[signo]);
+				out1fmt(" %s\n", trap_signame(signo));
+			}
 			continue;
 		}
 
