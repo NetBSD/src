@@ -1,8 +1,8 @@
-# $NetBSD: t_rquotad.sh,v 1.8 2020/08/20 07:32:40 gson Exp $ 
+# $NetBSD: t_rquotad.sh,v 1.9 2020/08/20 13:58:30 riastradh Exp $
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
-# 
+#
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions
 #  are met:
@@ -11,7 +11,7 @@
 #  2. Redistributions in binary form must reproduce the above copyright
 #     notice, this list of conditions and the following disclaimer in the
 #     documentation and/or other materials provided with the distribution.
-# 
+#
 #  THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 #  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 #  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -33,7 +33,7 @@ test_case_rquotad()
 	local name="${1}"; shift
 	local check_function="${1}"; shift
 	local descr="${1}"; shift
-	
+
 	atf_test_case "${name}" cleanup
 
 	eval "${name}_head() { \
