@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.18 2020/08/20 21:35:44 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.19 2020/08/20 21:36:21 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.18 2020/08/20 21:35:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.19 2020/08/20 21:36:21 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -907,7 +907,7 @@ wg_algo_dh(uint8_t out[WG_DH_OUTPUT_LEN],
 
 	CTASSERT(WG_STATIC_KEY_LEN == crypto_scalarmult_curve25519_BYTES);
 
-	int ret = crypto_scalarmult(out, privkey, pubkey);
+	int ret __diagused = crypto_scalarmult(out, privkey, pubkey);
 	KASSERT(ret == 0);
 }
 
