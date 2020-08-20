@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.449 2020/08/13 04:12:13 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.450 2020/08/20 06:35:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.449 2020/08/13 04:12:13 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.450 2020/08/20 06:35:14 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.449 2020/08/13 04:12:13 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.450 2020/08/20 06:35:14 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2280,7 +2280,7 @@ ApplyModifier_Match(const char **pp, ApplyModifiersState *st)
 	 * Either Var_Subst or ModifyWords will need a
 	 * nul-terminated string soon, so construct one now.
 	 */
-	pattern = bmake_strndup(mod + 1, (size_t)(endpat - (mod + 1)));
+	pattern = bmake_strldup(mod + 1, (size_t)(endpat - (mod + 1)));
     }
 
     if (needSubst) {
@@ -2894,7 +2894,7 @@ ApplyModifier_Remember(const char **pp, ApplyModifiersState *st)
 
     if (mod[1] == '=') {
 	size_t n = strcspn(mod + 2, ":)}");
-	char *name = bmake_strndup(mod + 2, n);
+	char *name = bmake_strldup(mod + 2, n);
 	Var_Set(name, st->val, st->ctxt);
 	free(name);
 	*pp = mod + 2 + n;
@@ -3510,7 +3510,7 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
 		 */
 		*lengthPtr = (int)(size_t)(tstr - str) + 1;
 		if (dynamic) {
-		    char *pstr = bmake_strndup(str, (size_t)*lengthPtr);
+		    char *pstr = bmake_strldup(str, (size_t)*lengthPtr);
 		    *freePtr = pstr;
 		    Buf_Destroy(&namebuf, TRUE);
 		    return pstr;
@@ -3605,7 +3605,7 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
 		*freePtr = NULL;
 	    }
 	    if (dynamic) {
-		nstr = bmake_strndup(str, (size_t)*lengthPtr);
+		nstr = bmake_strldup(str, (size_t)*lengthPtr);
 		*freePtr = nstr;
 	    } else {
 		nstr = (eflags & VARE_UNDEFERR) ? var_Error : varNoError;
