@@ -1,0 +1,157 @@
+.\"	$NetBSD: wg.4,v 1.1 2020/08/20 21:36:00 riastradh Exp $
+.\"
+.\" Copyright (c) 2020 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd August 20, 2020
+.Dt WG 4
+.Os
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh NAME
+.Nm wg
+.Nd WireGuard virtual private network
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh SYNOPSIS
+.Cd pseudo-device wg
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh DESCRIPTION
+The
+.Nm
+interface implements the WireGuard point-to-point roaming-capable
+virtual private network tunnel, configured with
+.Xr ifconfig 8
+and
+.Xr wgconfig 8 .
+.Pp
+Packets exchanged on a
+.Nm
+interface are authenticated and encrypted with a secret key negotiated
+with the peer, and the encapsulation is exchanged over IP or IPv6 using
+UDP.
+.Pp
+Every
+.Xr wg 4
+interface can be configured with an IP address using
+.Xr ifconfig 8 ,
+a private key generated with
+.Xr wg-keygen 8 ,
+an optional listen port,
+and a collection of peers.
+.Pp
+Each peer configured on an
+.Nm
+interface has a public key and a range of IP addresses the peer is
+allowed to use for its
+.Nm
+interface inside the tunnel.
+Each peer may also optionally have a preshared secret key and a fixed
+endpoint IP address outside the tunnel.
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh EXAMPLES
+Typical network topology:
+.Bd -literal
+wm0 = 1.2.3.4                               bge0 = 4.3.2.1
+
+Stationary server:                         Roaming client:
++---------+                                    +---------+
+|    A    |                                    |    B    |
+|---------|                                    |---------|
+|        [wm0]-------------internet--------[bge0]        |
+|    [wg0] port 1234 - - - (tunnel) - - - - - - [wg0]    |
+|   10.0.1.0                  |               10.0.1.1   |
+|         |                   |                |         |
++--[wm1]--+          +-----------------+       +---------+
+     |               | VPN 10.0.1.0/24 |
+     |               +-----------------+
++-----------------+
+| LAN 10.0.0.0/24 |
++-----------------+
+.Ed
+.Pp
+Generate key pairs on A and B:
+.Bd -literal
+A# wg-keygen > /etc/wireguard/wg0
+A# wg-keygen --pub < /etc/wireguard/wg0 > /etc/wireguard/wg0.pub
+A# cat /etc/wireguard/wg0.pub
+N+B4Nelg+4ysvbLW3qenxIwrJVE9MdjMyqrIisH7V0Y=
+
+B# wg-keygen > /etc/wireguard/wg0
+B# wg-keygen --pub < /etc/wireguard/wg0 > /etc/wireguard/wg0.pub
+B# cat /etc/wireguard/wg0.pub
+X7EGm3T3IfodBcyilkaC89j0SH3XD6+/pwvp7Dgp5SU=
+.Ed
+.Pp
+Configure A to listen on port 1234 and allow connections from B to
+appear in the 10.0.1.0/24 subnet:
+.Bd -literal
+A# ifconfig wg0 create 10.0.1.0/24
+A# wgconfig wg0 set private-key /etc/wireguard/wg0
+A# wgconfig wg0 set listen-port 1234
+A# wgconfig wg0 add peer B \e
+    X7EGm3T3IfodBcyilkaC89j0SH3XD6+/pwvp7Dgp5SU= \e
+    --allowed-ips=10.0.1.1/32
+A# ifconfig wg0 up
+A# ifconfig wg0
+wg0: flags=0x51<UP,POINTOPOINT,RUNNING> mtu 1420
+        inet 10.0.1.0/24 ->  flags 0
+.Ed
+.Pp
+Configure B to connect to A at 1.2.3.4 on port 1234 and the packets can
+begin to flow:
+.Bd -literal
+B# ifconfig wg0 create 10.0.1.1/24
+B# wgconfig wg0 set private-key /etc/wireguard/wg0
+B# wgconfig wg0 add peer A \e
+    N+B4Nelg+4ysvbLW3qenxIwrJVE9MdjMyqrIisH7V0Y= \e
+    --allowed-ips=10.0.1.0/32 \e
+    --endpoint=1.2.3.4:1234
+B# ifconfig wg0 up
+B# ifconfig wg0
+wg0: flags=0x51<UP,POINTOPOINT,RUNNING> mtu 1420
+        inet 10.0.1.1/24 ->  flags 0
+B# ping -n 10.0.1.0
+PING 10.0.1.0 (10.0.1.0): 56 data bytes
+64 bytes from 10.0.1.0: icmp_seq=0 ttl=255 time=2.721110 ms
+...
+.Ed
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh SEE ALSO
+.Xr wg-keygen 8 ,
+.Xr wgconfig 8
+.Rs
+.%T WireGuard: fast, modern, secure VPN tunnel
+.%U https://www.wireguard.com/
+.Re
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh HISTORY
+The
+.Nm
+interface first appeared in
+.Nx 10.0 .
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh AUTHORS
+The
+.Nm
+interface was implemented by
+.An Ryota Ozaki Aq Mt ozaki.ryota@gmail.com .
