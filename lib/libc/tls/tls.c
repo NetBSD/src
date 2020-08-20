@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.13 2019/11/21 23:06:15 nakayama Exp $	*/
+/*	$NetBSD: tls.c,v 1.14 2020/08/20 15:54:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.13 2019/11/21 23:06:15 nakayama Exp $");
+__RCSID("$NetBSD: tls.c,v 1.14 2020/08/20 15:54:11 riastradh Exp $");
 
 #include "namespace.h"
 
@@ -94,6 +94,8 @@ _rtld_tls_allocate(void)
 		initial_thread_tcb = p = mmap(NULL,
 		    tls_allocation + sizeof(*tcb), PROT_READ | PROT_WRITE,
 		    MAP_ANON, -1, 0);
+		if (p == MAP_FAILED)
+			initial_thread_tcb = p = NULL;
 	} else {
 		p = calloc(1, tls_allocation + sizeof(*tcb));
 	}

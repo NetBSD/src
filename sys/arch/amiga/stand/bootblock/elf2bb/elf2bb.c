@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2bb.c,v 1.16 2011/07/11 01:24:34 mrg Exp $	*/
+/*	$NetBSD: elf2bb.c,v 1.17 2020/08/20 15:54:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996,2006 The NetBSD Foundation, Inc.
@@ -141,7 +141,7 @@ main(int argc, char *argv[])
 		err(1, "Can't open %s", argv[0]);
 
 	image = mmap(0, 65536, PROT_READ, MAP_FILE|MAP_PRIVATE, ifd, 0);
-	if (image == 0)
+	if (image == MAP_FAILED)
 		err(1, "Can't mmap %s", argv[1]);
 
 	eh = (Elf32_Ehdr *)image; /* XXX endianness */

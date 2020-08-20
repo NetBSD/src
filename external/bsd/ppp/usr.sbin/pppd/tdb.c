@@ -222,6 +222,8 @@ static int tdb_oob(TDB_CONTEXT *tdb, tdb_off offset)
 	tdb->map_ptr = (void *)mmap(NULL, tdb->map_size, 
 				    tdb->read_only?PROT_READ:PROT_READ|PROT_WRITE,
 				    MAP_SHARED | MAP_FILE, tdb->fd, 0);
+	if (tdb->map_ptr == MAP_FAILED)
+		tdb->map_ptr = NULL;
 #endif	
 	return 0;
 }
@@ -389,6 +391,8 @@ static int tdb_expand(TDB_CONTEXT *tdb, tdb_off length)
             tdb->map_ptr = (void *)mmap(NULL, tdb->map_size, 
                                         PROT_READ|PROT_WRITE,
                                         MAP_SHARED | MAP_FILE, tdb->fd, 0);
+	    if (tdb->map_ptr == MAP_FAILED)
+		    tdb->map_ptr = NULL;
         }
 #endif
 
@@ -1194,6 +1198,8 @@ TDB_CONTEXT *tdb_open(char *name, int hash_size, int tdb_flags,
             tdb.map_ptr = (void *)mmap(NULL, st.st_size, 
                                        tdb.read_only? PROT_READ : PROT_READ|PROT_WRITE,
                                        MAP_SHARED | MAP_FILE, tdb.fd, 0);
+	    if (tdb->map_ptr == MAP_FAILED)
+		    tdb->map_ptr = NULL;
         }
 #endif
 

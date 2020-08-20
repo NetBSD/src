@@ -814,7 +814,7 @@ ctf_dup(ctf_file_t *ofp)
 	 */
 	bcopy(&ofp->ctf_data, &ctfsect, sizeof (ctf_sect_t));
 	cbuf = ctf_data_alloc(ctfsect.cts_size);
-	if (cbuf == NULL) {
+	if (cbuf == MAP_FAILED) {
 		(void) ctf_set_errno(ofp, ECTF_MMAP);
 		return (NULL);
 	}
@@ -828,7 +828,7 @@ ctf_dup(ctf_file_t *ofp)
 	if (ofp->ctf_symtab.cts_data != NULL) {
 		bcopy(&ofp->ctf_symtab, &symsect, sizeof (ctf_sect_t));
 		symbuf = ctf_data_alloc(symsect.cts_size);
-		if (symbuf == NULL) {
+		if (symbuf == MAP_FAILED) {
 			(void) ctf_set_errno(ofp, ECTF_MMAP);
 			goto err;
 		}
@@ -844,7 +844,7 @@ ctf_dup(ctf_file_t *ofp)
 	if (ofp->ctf_strtab.cts_data != NULL) {
 		bcopy(&ofp->ctf_strtab, &strsect, sizeof (ctf_sect_t));
 		strbuf = ctf_data_alloc(strsect.cts_size);
-		if (strbuf == NULL) {
+		if (strbuf == MAP_FAILED) {
 			(void) ctf_set_errno(ofp, ECTF_MMAP);
 			goto err;
 		}

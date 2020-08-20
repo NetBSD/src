@@ -1,4 +1,4 @@
-/*	$NetBSD: amldb.c,v 1.4 2018/10/14 12:43:58 jmcneill Exp $	*/
+/*	$NetBSD: amldb.c,v 1.5 2020/08/20 15:54:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -29,7 +29,7 @@
  *	$FreeBSD: src/usr.sbin/acpi/amldb/amldb.c,v 1.3 2001/10/22 17:25:32 iwasaki Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: amldb.c,v 1.4 2018/10/14 12:43:58 jmcneill Exp $");
+__RCSID("$NetBSD: amldb.c,v 1.5 2020/08/20 15:54:12 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -91,7 +91,8 @@ load_dsdt(const char *dsdtfile)
 		perror("fstat");
 		exit(-1);
 	}
-	if ((code = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0)) == NULL) {
+	if ((code = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0)) ==
+	    MAP_FAILED) {
 		perror("mmap");
 		exit(-1);
 	}
