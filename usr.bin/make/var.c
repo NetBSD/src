@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.453 2020/08/20 07:09:06 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.454 2020/08/20 07:15:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.453 2020/08/20 07:09:06 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.454 2020/08/20 07:15:52 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.453 2020/08/20 07:09:06 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.454 2020/08/20 07:15:52 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1921,19 +1921,18 @@ typedef struct {
     GNode * const ctxt;
     const VarEvalFlags eflags;
 
-    char *val;			/* The value of the expression before the
-				 * modifier is applied */
-    char *newVal;		/* The new value after applying the modifier
-				 * to the expression */
+    char *val;			/* The old value of the expression,
+				 * before applying the modifier */
+    char *newVal;		/* The new value of the expression,
+				 * after applying the modifier */
     char missing_delim;		/* For error reporting */
 
     char sep;			/* Word separator in expansions
 				 * (see the :ts modifier) */
-    Boolean oneBigWord;		/* TRUE if the variable value is treated as a
-				 * single big word, even if it contains
-				 * embedded spaces (as opposed to the
-				 * usual behaviour of treating it as
-				 * several space-separated words). */
+    Boolean oneBigWord;		/* TRUE if some modifiers that otherwise split
+				 * the variable value into words, like :S and
+				 * :C, treat the variable value as a single big
+				 * word, possibly containing spaces. */
 } ApplyModifiersState;
 
 typedef enum {
