@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.179 2020/06/12 11:04:45 roy Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.180 2020/08/20 11:01:02 roy Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.179 2020/06/12 11:04:45 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.180 2020/08/20 11:01:02 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -389,13 +389,14 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 void
 nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
     const struct in6_addr *taddr6,
-    struct in6_addr *hsrc,
-    uint8_t *nonce		/* duplicate address detection */)
+    const struct in6_addr *hsrc,
+    const uint8_t *nonce	/* duplicate address detection */)
 {
 	struct mbuf *m;
 	struct ip6_hdr *ip6;
 	struct nd_neighbor_solicit *nd_ns;
-	struct in6_addr *src, src_in;
+	const struct in6_addr *src;
+	struct in6_addr src_in;
 	struct ip6_moptions im6o;
 	int icmp6len;
 	int maxlen;
