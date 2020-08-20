@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.452 2020/08/20 07:01:39 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.453 2020/08/20 07:09:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.452 2020/08/20 07:01:39 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.453 2020/08/20 07:09:06 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.452 2020/08/20 07:01:39 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.453 2020/08/20 07:09:06 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1031,7 +1031,7 @@ Var_Value(const char *name, GNode *ctxt, char **freeIt)
 typedef struct {
     Buffer buf;
     Boolean needSep;
-    char sep;
+    char sep;			/* usually ' ', but see the :ts modifier */
 } SepBuf;
 
 static void
@@ -1554,15 +1554,15 @@ ModifyWord_Realpath(const char *word, SepBuf *buf, void *data MAKE_ATTR_UNUSED)
  * Input:
  *	str		String whose words should be modified
  *	modifyWord	Function that modifies a single word
- *	data		Custom data for modifyWord
+ *	modifyWord_args Custom arguments for modifyWord
  *
  * Results:
  *	A string of all the words modified appropriately.
  *-----------------------------------------------------------------------
  */
 static char *
-ModifyWords(GNode *ctx, char sep, Boolean oneBigWord,
-	    const char *str, ModifyWordsCallback modifyWord, void *data)
+ModifyWords(GNode *ctx, char sep, Boolean oneBigWord, const char *str,
+	    ModifyWordsCallback modifyWord, void *modifyWord_args)
 {
     SepBuf result;
     char **av;			/* word list */
@@ -1572,7 +1572,7 @@ ModifyWords(GNode *ctx, char sep, Boolean oneBigWord,
 
     if (oneBigWord) {
 	SepBuf_Init(&result, sep);
-	modifyWord(str, &result, data);
+	modifyWord(str, &result, modifyWord_args);
 	return SepBuf_Destroy(&result, FALSE);
     }
 
@@ -1583,7 +1583,7 @@ ModifyWords(GNode *ctx, char sep, Boolean oneBigWord,
     VAR_DEBUG("ModifyWords: split \"%s\" into %d words\n", str, ac);
 
     for (i = 0; i < ac; i++) {
-	modifyWord(av[i], &result, data);
+	modifyWord(av[i], &result, modifyWord_args);
 	if (result.buf.count > 0)
 	    SepBuf_Sep(&result);
     }
