@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.99 2020/08/19 18:38:02 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.100 2020/08/20 16:16:33 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -4778,4 +4778,11 @@ sys/uvm/uvm_amap.c				1.123 (patch)
 	fix amap_extend() to handle amaps where we previously failed
 	to allocate the ppref memory.
 	[chs, ticket #1057]
+
+external/mit/xorg/server/xorg-server/doc/Makefile 1.6
+external/mit/xorg/server/xorg-server/hw/xfree86/doc/Makefile 1.8
+share/mk/bsd.x11.mk				1.133,1.136
+
+	Fix unexpanded @foo@ tags in X11 manual pages.
+	[kim, ticket #1059]
 
