@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.118 2020/08/20 05:46:31 spz Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.119 2020/08/20 07:56:26 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -914,7 +914,7 @@ mmap_and_write_part(bozohttpd_t *httpd, int fd, off_t first_byte_pos, size_t sz)
 	wroffset = (size_t)(first_byte_pos - mappedoffset);
 
 	addr = mmap(0, mappedsz, PROT_READ, MAP_SHARED, fd, mappedoffset);
-	if (addr == (char *)-1) {
+	if (addr == MAP_FAILED) {
 		bozowarn(httpd, "mmap failed: %s", strerror(errno));
 		return -1;
 	}
@@ -1201,7 +1201,7 @@ check_remap(bozo_httpreq_t *request)
 	}
 
 	fmap = mmap(NULL, st.st_size, PROT_READ, MAP_SHARED, mapfile, 0);
-	if (fmap == NULL) {
+	if (fmap == MAP_FAILED) {
 		bozowarn(httpd, "could not mmap " REMAP_FILE ", error %d",
 		    errno);
 		goto out;
