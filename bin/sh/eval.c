@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.180 2020/05/14 08:34:17 msaitoh Exp $	*/
+/*	$NetBSD: eval.c,v 1.181 2020/08/20 23:09:56 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.180 2020/05/14 08:34:17 msaitoh Exp $");
+__RCSID("$NetBSD: eval.c,v 1.181 2020/08/20 23:09:56 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -280,8 +280,10 @@ evaltree(union node *n, int flags)
 		next = NULL;
 		CTRACE(DBG_EVAL, ("pid %d, evaltree(%p: %s(%d), %#x) called\n",
 		    getpid(), n, NODETYPENAME(n->type), n->type, flags));
+	/*
 		if (n->type != NCMD && traps_invalid)
 			free_traps();
+	*/
 		switch (n->type) {
 		case NSEMI:
 			evaltree(n->nbinary.ch1, sflags);
@@ -302,6 +304,8 @@ evaltree(union node *n, int flags)
 			next = n->nbinary.ch2;
 			break;
 		case NREDIR:
+			if (traps_invalid)
+				free_traps();
 			evalredir(n, flags);
 			break;
 		case NSUBSHELL:
@@ -309,9 +313,13 @@ evaltree(union node *n, int flags)
 			do_etest = !(flags & EV_TESTED);
 			break;
 		case NBACKGND:
+			if (traps_invalid)
+				free_traps();
 			evalsubshell(n, flags);
 			break;
 		case NIF: {
+			if (traps_invalid)
+				free_traps();
 			evaltree(n->nif.test, EV_TESTED);
 			if (nflag || evalskip)
 				goto out1;
@@ -325,15 +333,23 @@ evaltree(union node *n, int flags)
 		}
 		case NWHILE:
 		case NUNTIL:
+			if (traps_invalid)
+				free_traps();
 			evalloop(n, sflags);
 			break;
 		case NFOR:
+			if (traps_invalid)
+				free_traps();
 			evalfor(n, sflags);
 			break;
 		case NCASE:
+			if (traps_invalid)
+				free_traps();
 			evalcase(n, sflags);
 			break;
 		case NDEFUN:
+			if (traps_invalid)
+				free_traps();
 			CTRACE(DBG_EVAL, ("Defining fn %s @%d%s\n",
 			    n->narg.text, n->narg.lineno,
 			    fnline1 ? " LINENO=1" : ""));
@@ -350,6 +366,8 @@ evaltree(union node *n, int flags)
 				exitstatus = 1;
 			break;
 		case NPIPE:
+			if (traps_invalid)
+				free_traps();
 			evalpipe(n);
 			do_etest = !(flags & EV_TESTED);
 			break;
@@ -1043,6 +1061,10 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 	 *	command eval trap
 	 *	eval command trap
 	 * without zapping the traps completely, in all other cases we do.
+	 * Function calls also do not zap the traps (but commands they execute
+	 * probably will) - this allows a function like
+	 *	trapstate() { trap -p; }
+	 * called as save_traps=$(trapstate).
 	 *
 	 * The test here permits eval "anything" but when evalstring() comes
 	 * back here again, the "anything" will be validated.
@@ -1055,6 +1077,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 	 * trapcmd() takes care of doing free_traps() if it is needed there.
 	 */
 	if (traps_invalid &&
+	    cmdentry.cmdtype != CMDFUNCTION &&
 	    ((cmdentry.cmdtype!=CMDSPLBLTIN && cmdentry.cmdtype!=CMDBUILTIN) ||
 	     (cmdentry.u.bltin != trapcmd && cmdentry.u.bltin != evalcmd)))
 		free_traps();
