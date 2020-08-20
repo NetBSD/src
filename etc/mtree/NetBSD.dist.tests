@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.174 2020/07/26 05:06:29 riastradh Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.175 2020/08/20 21:28:01 riastradh Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -367,6 +367,7 @@
 ./usr/tests/net/npf
 ./usr/tests/net/route
 ./usr/tests/net/sys
+./usr/tests/net/wireguard
 ./usr/tests/rump
 ./usr/tests/rump/modautoload
 ./usr/tests/rump/rumpkern
