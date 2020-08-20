@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.13 2020/08/20 21:34:42 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.14 2020/08/20 21:35:01 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.13 2020/08/20 21:34:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.14 2020/08/20 21:35:01 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -143,27 +143,30 @@ __KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.13 2020/08/20 21:34:42 riastradh Exp $")
  *   - Data messages are always sent via a stable session
  *
  * Locking notes:
- * - wg interfaces (struct wg_softc, wg) is listed in wg_softcs.list and protected
- *   by wg_softcs.lock
+ * - wg interfaces (struct wg_softc, wg) is listed in wg_softcs.list and
+ *   protected by wg_softcs.lock
  * - Each wg has a mutex(9) and a rwlock(9)
  *   - The mutex (wg_lock) protects its peer list (wg_peers)
- *   - A peer on the list of a wg is also protected by pserialize(9) or psref(9)
+ *   - A peer on the list is also protected by pserialize(9) or psref(9)
  *   - The rwlock (wg_rwlock) protects the routing tables (wg_rtable_ipv[46])
  * - Each peer (struct wg_peer, wgp) has a mutex
  *   - The mutex (wgp_lock) protects wgp_session_unstable and wgp_state
  * - Each session (struct wg_session, wgs) has a mutex
  *   - The mutex (wgs_lock) protects its state (wgs_state) and its handshake
  *     states
- *   - wgs_state of a unstable session can be changed while it never be changed
- *     on a stable session, so once get a session instace via wgp_session_stable
- *     we can safely access wgs_state without holding wgs_lock
+ *   - wgs_state of a unstable session can be changed while it never be
+ *     changed on a stable session, so once get a session instace via
+ *     wgp_session_stable we can safely access wgs_state without
+ *     holding wgs_lock
  *   - A session is protected by pserialize or psref like wgp
- *     - On a session swap, we must wait for all readers to release a reference
- *       to a stable session before changing wgs_state and session states
+ *     - On a session swap, we must wait for all readers to release a
+ *       reference to a stable session before changing wgs_state and
+ *       session states
  */
 
 
-#define WGLOG(level, fmt, args...)	log(level, "%s: " fmt, __func__, ##args)
+#define WGLOG(level, fmt, args...)					      \
+	log(level, "%s: " fmt, __func__, ##args)
 
 /* Debug options */
 #ifdef WG_DEBUG
@@ -186,7 +189,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.13 2020/08/20 21:34:42 riastradh Exp $")
 #endif
 
 #ifdef WG_DEBUG_TRACE
-#define WG_TRACE(msg)	log(LOG_DEBUG, "%s:%d: %s\n", __func__, __LINE__, (msg))
+#define WG_TRACE(msg)							      \
+	log(LOG_DEBUG, "%s:%d: %s\n", __func__, __LINE__, (msg))
 #else
 #define WG_TRACE(msg)	__nothing
 #endif
@@ -292,7 +296,7 @@ wg_dump_hash(const uint8_t *func, const uint8_t *name, const uint8_t *hash,
 /*
  * The protocol messages
  */
-struct wg_msg{
+struct wg_msg {
 	uint32_t	wgm_type;
 } __packed;
 
@@ -550,7 +554,7 @@ struct wg_peer {
 
 	time_t			wgp_handshake_start_time;
 
-	int			wgp_n_allowedips;;
+	int			wgp_n_allowedips;
 	struct wg_allowedip	wgp_allowedips[WG_ALLOWEDIPS];
 
 	time_t			wgp_latest_cookie_time;
@@ -952,8 +956,8 @@ wg_algo_kdf(uint8_t out1[WG_KDF_OUTPUT_LEN], uint8_t out2[WG_KDF_OUTPUT_LEN],
 	uint8_t one[1];
 
 	/*
-	 * [N] 4.3: "an input_key_material byte sequence with length either zero
-	 * bytes, 32 bytes, or DHLEN bytes."
+	 * [N] 4.3: "an input_key_material byte sequence with length
+	 * either zero bytes, 32 bytes, or DHLEN bytes."
 	 */
 	KASSERT(inputlen == 0 || inputlen == 32 || inputlen == NOISE_DHLEN);
 
@@ -1045,8 +1049,8 @@ wg_algo_xaead_enc(uint8_t out[], const size_t expected_outsize,
 	int error __diagused;
 
 	CTASSERT(WG_SALT_LEN == crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
-	error = crypto_aead_xchacha20poly1305_ietf_encrypt(out, &outsize, plain,
-	    plainsize, auth, authlen, NULL, nonce, key);
+	error = crypto_aead_xchacha20poly1305_ietf_encrypt(out, &outsize,
+	    plain, plainsize, auth, authlen, NULL, nonce, key);
 	KASSERT(error == 0);
 	KASSERT(outsize == expected_outsize);
 }
@@ -1414,9 +1418,9 @@ wg_handle_msg_init(struct wg_softc *wg, const struct wg_msg_init *wgmi,
 	wg_algo_hash(hash, wgmi->wgmi_timestamp, sizeof(wgmi->wgmi_timestamp));
 
 	/*
-	 * [W] 5.1 "The responder keeps track of the greatest timestamp received per
-	 *      peer and discards packets containing timestamps less than or
-	 *      equal to it."
+	 * [W] 5.1 "The responder keeps track of the greatest timestamp
+	 *      received per peer and discards packets containing
+	 *      timestamps less than or equal to it."
 	 */
 	ret = memcmp(timestamp, wgp->wgp_timestamp_latest_init,
 	    sizeof(timestamp));
@@ -1632,8 +1636,8 @@ wg_fill_msg_resp(struct wg_softc *wg, struct wg_peer *wgp,
     }
 
 	/* msg.empty := AEAD(k, 0, e, Hr) */
-	wg_algo_aead_enc(wgmr->wgmr_empty, sizeof(wgmr->wgmr_empty), cipher_key,
-	    0, NULL, 0, hash, sizeof(hash));
+	wg_algo_aead_enc(wgmr->wgmr_empty, sizeof(wgmr->wgmr_empty),
+	    cipher_key, 0, NULL, 0, hash, sizeof(hash));
 	/* Hr := HASH(Hr || msg.empty) */
 	wg_algo_hash(hash, wgmr->wgmr_empty, sizeof(wgmr->wgmr_empty));
 
@@ -1920,7 +1924,8 @@ wg_fill_msg_cookie(struct wg_softc *wg, struct wg_peer *wgp,
 
 	/*
 	 * [W] 5.4.7: Under Load: Cookie Reply Message
-	 * "The secret variable, Rm , changes every two minutes to a random value"
+	 * "The secret variable, Rm, changes every two minutes to a
+	 * random value"
 	 */
 	if ((time_uptime - wgp->wgp_last_genrandval_time) > WG_RANDVAL_TIME) {
 		wgp->wgp_randval = cprng_strong32();
@@ -2004,7 +2009,9 @@ static void
 wg_calculate_keys(struct wg_session *wgs, const bool initiator)
 {
 
-	/* [W] 5.4.5: Ti^send = Tr^recv, Ti^recv = Tr^send := KDF2(Ci = Cr, e) */
+	/*
+	 * [W] 5.4.5: Ti^send = Tr^recv, Ti^recv = Tr^send := KDF2(Ci = Cr, e)
+	 */
 	if (initiator) {
 		wg_algo_kdf(wgs->wgs_tkey_send, wgs->wgs_tkey_recv, NULL,
 		    wgs->wgs_chaining_key, NULL, 0);
@@ -2176,8 +2183,9 @@ wg_validate_route(struct wg_softc *wg, struct wg_peer *wgp_expected,
 
 	/*
 	 * II CRYPTOKEY ROUTING
-	 * "it will only accept it if its source IP resolves in the table to the
-	 *  public key used in the secure session for decrypting it."
+	 * "it will only accept it if its source IP resolves in the
+	 *  table to the public key used in the secure session for
+	 *  decrypting it."
 	 */
 
 	if (af == AF_INET) {
@@ -2349,7 +2357,8 @@ wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
 		goto out;
 	}
 
-	n = wg_get_mbuf(0, decrypted_len + WG_AUTHTAG_LEN); /* To avoid zero length */
+	/* To avoid zero length */
+	n = wg_get_mbuf(0, decrypted_len + WG_AUTHTAG_LEN);
 	if (n == NULL) {
 		WG_DLOG("wg_get_mbuf failed\n");
 		goto out;
@@ -2463,7 +2472,8 @@ wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
 			 * a deadlock;  we already hold the solock of a socket
 			 * that is used to send the message.
 			 */
-			wg_schedule_peer_task(wgp, WGP_TASK_SEND_KEEPALIVE_MESSAGE);
+			wg_schedule_peer_task(wgp,
+			    WGP_TASK_SEND_KEEPALIVE_MESSAGE);
 		}
 	}
 out:
@@ -2559,7 +2569,8 @@ wg_validate_msg_length(struct wg_softc *wg, const struct mbuf *m)
 }
 
 static void
-wg_handle_packet(struct wg_softc *wg, struct mbuf *m, const struct sockaddr *src)
+wg_handle_packet(struct wg_softc *wg, struct mbuf *m,
+    const struct sockaddr *src)
 {
 	struct wg_msg *wgm;
 	bool valid;
@@ -2594,7 +2605,7 @@ static void
 wg_receive_packets(struct wg_softc *wg, const int af)
 {
 
-	while (true) {
+	for (;;) {
 		int error, flags;
 		struct socket *so;
 		struct mbuf *m = NULL;
@@ -2606,7 +2617,8 @@ wg_receive_packets(struct wg_softc *wg, const int af)
 		flags = MSG_DONTWAIT;
 		dummy_uio.uio_resid = 1000000000;
 
-		error = so->so_receive(so, &paddr, &dummy_uio, &m, NULL, &flags);
+		error = so->so_receive(so, &paddr, &dummy_uio, &m, NULL,
+		    &flags);
 		if (error || m == NULL) {
 			//if (error == EWOULDBLOCK)
 			return;
@@ -3126,8 +3138,10 @@ wg_alloc_peer(struct wg_softc *wg)
 	psref_target_init(&wgp->wgp_endpoint0->wgsa_psref, wg_psref_class);
 
 	struct wg_session *wgs;
-	wgp->wgp_session_stable = kmem_zalloc(sizeof(struct wg_session), KM_SLEEP);
-	wgp->wgp_session_unstable = kmem_zalloc(sizeof(struct wg_session), KM_SLEEP);
+	wgp->wgp_session_stable =
+	    kmem_zalloc(sizeof(*wgp->wgp_session_stable), KM_SLEEP);
+	wgp->wgp_session_unstable =
+	    kmem_zalloc(sizeof(*wgp->wgp_session_unstable), KM_SLEEP);
 	wgs = wgp->wgp_session_stable;
 	wgs->wgs_peer = wgp;
 	wgs->wgs_state = WGS_STATE_UNKNOWN;
@@ -3594,7 +3608,8 @@ wg_send_data_msg(struct wg_peer *wgp, struct wg_session *wgs,
 		struct ifnet *ifp = &wg->wg_if;
 		if_statadd(ifp, if_obytes, mlen);
 		if_statinc(ifp, if_opackets);
-		if (wgs->wgs_is_initiator && wgs->wgs_time_last_data_sent == 0) {
+		if (wgs->wgs_is_initiator &&
+		    wgs->wgs_time_last_data_sent == 0) {
 			/*
 			 * [W] 6.2 Transport Message Limits
 			 * "if a peer is the initiator of a current secure
@@ -4191,8 +4206,7 @@ wg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			ifp->if_flags |= IFF_UP;
 			error = ifp->if_init(ifp);
 		}
-		break;
-
+		return error;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		switch (ifr->ifr_addr.sa_family) {
@@ -4206,8 +4220,7 @@ wg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = EAFNOSUPPORT;
 			break;
 		}
-		break;
-
+		return error;
 	case SIOCSDRVSPEC:
 		switch (ifd->ifd_cmd) {
 		case WG_IOCTL_SET_PRIVATE_KEY:
@@ -4226,11 +4239,9 @@ wg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = EINVAL;
 			break;
 		}
-		break;
+		return error;
 	case SIOCGDRVSPEC:
-		error = wg_ioctl_get(wg, ifd);
-		break;
-
+		return wg_ioctl_get(wg, ifd);
 	case SIOCSIFFLAGS:
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
 			break;
@@ -4252,55 +4263,58 @@ wg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		default:
 			break;
 		}
-		break;
-
+		return error;
 #ifdef WG_RUMPKERNEL
 	case SIOCSLINKSTR:
 		error = wg_ioctl_linkstr(wg, ifd);
 		if (error == 0)
 			wg->wg_ops = &wg_ops_rumpuser;
-		break;
+		return error;
 #endif
-
 	default:
-		error = ifioctl_common(ifp, cmd, data);
+		break;
+	}
+
+	error = ifioctl_common(ifp, cmd, data);
 
 #ifdef WG_RUMPKERNEL
-		if (!wg_user_mode(wg))
-			break;
-		/* Do the same to the corresponding tun device on the host */
-		/*
-		 * XXX Actually the command has not been handled yet.  It
-		 *     will be handled via pr_ioctl form doifioctl later.
-		 */
-		switch (cmd) {
-		case SIOCAIFADDR:
-		case SIOCDIFADDR: {
-			struct in_aliasreq _ifra = *(struct in_aliasreq *)data;
-			struct in_aliasreq *ifra = &_ifra;
-			KASSERT(error == ENOTTY);
-			strncpy(ifra->ifra_name, rumpuser_wg_get_tunname(wg->wg_user), IFNAMSIZ);
-			error = rumpuser_wg_ioctl(wg->wg_user, cmd, ifra, AF_INET);
-			if (error == 0)
-				error = ENOTTY;
-			break;
-		    }
-#ifdef INET6
-		case SIOCAIFADDR_IN6:
-		case SIOCDIFADDR_IN6: {
-			struct in6_aliasreq _ifra = *(struct in6_aliasreq *)data;
-			struct in6_aliasreq *ifra = &_ifra;
-			KASSERT(error == ENOTTY);
-			strncpy(ifra->ifra_name, rumpuser_wg_get_tunname(wg->wg_user), IFNAMSIZ);
-			error = rumpuser_wg_ioctl(wg->wg_user, cmd, ifra, AF_INET6);
-			if (error == 0)
-				error = ENOTTY;
-			break;
-		    }
-#endif
-		}
-#endif /* WG_RUMPKERNEL */
+	if (!wg_user_mode(wg))
+		return error;
+
+	/* Do the same to the corresponding tun device on the host */
+	/*
+	 * XXX Actually the command has not been handled yet.  It
+	 *     will be handled via pr_ioctl form doifioctl later.
+	 */
+	switch (cmd) {
+	case SIOCAIFADDR:
+	case SIOCDIFADDR: {
+		struct in_aliasreq _ifra = *(struct in_aliasreq *)data;
+		struct in_aliasreq *ifra = &_ifra;
+		KASSERT(error == ENOTTY);
+		strncpy(ifra->ifra_name, rumpuser_wg_get_tunname(wg->wg_user),
+		    IFNAMSIZ);
+		error = rumpuser_wg_ioctl(wg->wg_user, cmd, ifra, AF_INET);
+		if (error == 0)
+			error = ENOTTY;
+		break;
 	}
+#ifdef INET6
+	case SIOCAIFADDR_IN6:
+	case SIOCDIFADDR_IN6: {
+		struct in6_aliasreq _ifra = *(struct in6_aliasreq *)data;
+		struct in6_aliasreq *ifra = &_ifra;
+		KASSERT(error == ENOTTY);
+		strncpy(ifra->ifra_name, rumpuser_wg_get_tunname(wg->wg_user),
+		    IFNAMSIZ);
+		error = rumpuser_wg_ioctl(wg->wg_user, cmd, ifra, AF_INET6);
+		if (error == 0)
+			error = ENOTTY;
+		break;
+	}
+#endif
+	}
+#endif /* WG_RUMPKERNEL */
 
 	return error;
 }
