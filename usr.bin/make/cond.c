@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.97 2020/08/20 17:11:47 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.98 2020/08/20 18:47:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.97 2020/08/20 17:11:47 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.98 2020/08/20 18:47:57 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.97 2020/08/20 17:11:47 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.98 2020/08/20 18:47:57 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -392,6 +392,7 @@ CondGetString(Boolean doEval, Boolean *quoted, void **freeIt, Boolean strictLHS)
     int len;
     Boolean qt;
     const char *start;
+    VarEvalFlags eflags;
 
     Buf_Init(&buf, 0);
     str = NULL;
@@ -428,9 +429,9 @@ CondGetString(Boolean doEval, Boolean *quoted, void **freeIt, Boolean strictLHS)
 	    break;
 	case '$':
 	    /* if we are in quotes, then an undefined variable is ok */
-	    str = Var_Parse(condExpr, VAR_CMD,
-			    ((!qt && doEval) ? VARE_UNDEFERR : 0) |
-			    (doEval ? VARE_WANTRES : 0), &len, freeIt);
+	    eflags = ((!qt && doEval) ? VARE_UNDEFERR : 0) |
+		     (doEval ? VARE_WANTRES : 0);
+	    str = Var_Parse(condExpr, VAR_CMD, eflags, &len, freeIt);
 	    if (str == var_Error) {
 		if (*freeIt) {
 		    free(*freeIt);
