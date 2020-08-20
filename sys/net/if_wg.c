@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.7 2020/08/20 21:31:47 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.8 2020/08/20 21:33:52 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.7 2020/08/20 21:31:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.8 2020/08/20 21:33:52 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -676,8 +676,6 @@ static void	wg_stop(struct ifnet *, int);
 static int	wg_clone_create(struct if_clone *, int);
 static int	wg_clone_destroy(struct ifnet *);
 
-static void	wg_setup_sysctl(void);
-
 struct wg_ops {
 	int (*send_hs_msg)(struct wg_peer *, struct mbuf *);
 	int (*send_data_msg)(struct wg_peer *, struct mbuf *);
@@ -770,8 +768,6 @@ wgattach(int count)
 static void
 wginit(void)
 {
-
-	wg_setup_sysctl();
 
 	wg_psref_class = psref_class_create("wg", IPL_SOFTNET);
 
@@ -4366,60 +4362,49 @@ wg_stop(struct ifnet *ifp, int disable)
 	/* Need to do something? */
 }
 
-static struct sysctllog *wg_sysctllog;
-static void
-wg_setup_sysctl(void)
-{
 #ifdef WG_DEBUG_PARAMS
+SYSCTL_SETUP(sysctl_net_wireguard_setup, "sysctl net.wireguard setup")
+{
 	const struct sysctlnode *node = NULL;
 
-	sysctl_createv(&wg_sysctllog, 0, NULL, &node,
-		CTLFLAG_PERMANENT, CTLTYPE_NODE, "wireguard",
-		SYSCTL_DESCR("WireGuard"),
-		NULL, 0, NULL, 0, CTL_NET, CTL_CREATE, CTL_EOL);
-	if (node != NULL) {
-		sysctl_createv(&wg_sysctllog, 0, NULL, NULL,
-			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			CTLTYPE_LONG, "rekey_after_messages",
-			SYSCTL_DESCR("session liftime by messages"),
-			NULL, 0, &wg_rekey_after_messages, 0,
-			CTL_NET, node->sysctl_num, CTL_CREATE, CTL_EOL);
-		sysctl_createv(&wg_sysctllog, 0, NULL, NULL,
-			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			CTLTYPE_LONG, "rekey_after_time",
-			SYSCTL_DESCR("session liftime"),
-			NULL, 0, &wg_rekey_after_time, 0,
-			CTL_NET, node->sysctl_num, CTL_CREATE, CTL_EOL);
-		sysctl_createv(&wg_sysctllog, 0, NULL, NULL,
-			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			CTLTYPE_LONG, "rekey_timeout",
-			SYSCTL_DESCR("session handshake retry time"),
-			NULL, 0, &wg_rekey_timeout, 0,
-			CTL_NET, node->sysctl_num, CTL_CREATE, CTL_EOL);
-		sysctl_createv(&wg_sysctllog, 0, NULL, NULL,
-			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			CTLTYPE_LONG, "rekey_attempt_time",
-			SYSCTL_DESCR("session handshake timeout"),
-			NULL, 0, &wg_rekey_attempt_time, 0,
-			CTL_NET, node->sysctl_num, CTL_CREATE, CTL_EOL);
-		sysctl_createv(&wg_sysctllog, 0, NULL, NULL,
-			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			CTLTYPE_LONG, "keepalive_timeout",
-			SYSCTL_DESCR("keepalive timeout"),
-			NULL, 0, &wg_keepalive_timeout, 0,
-			CTL_NET, node->sysctl_num, CTL_CREATE, CTL_EOL);
-
-		sysctl_createv(&wg_sysctllog, 0, NULL, NULL,
-			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			CTLTYPE_BOOL, "force_underload",
-			SYSCTL_DESCR("force to detemine under load"),
-			NULL, 0, &wg_force_underload, 0,
-			CTL_NET, node->sysctl_num, CTL_CREATE, CTL_EOL);
-	}
-#else
-	(void)wg_sysctllog;
-#endif
+	sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "wireguard",
+	    SYSCTL_DESCR("WireGuard"),
+	    NULL, 0, NULL, 0,
+	    CTL_NET, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &node, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_LONG, "rekey_after_messages",
+	    SYSCTL_DESCR("session liftime by messages"),
+	    NULL, 0, &wg_rekey_after_messages, 0, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &node, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_LONG, "rekey_after_time",
+	    SYSCTL_DESCR("session liftime"),
+	    NULL, 0, &wg_rekey_after_time, 0, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &node, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_LONG, "rekey_timeout",
+	    SYSCTL_DESCR("session handshake retry time"),
+	    NULL, 0, &wg_rekey_timeout, 0, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &node, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_LONG, "rekey_attempt_time",
+	    SYSCTL_DESCR("session handshake timeout"),
+	    NULL, 0, &wg_rekey_attempt_time, 0, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &node, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_LONG, "keepalive_timeout",
+	    SYSCTL_DESCR("keepalive timeout"),
+	    NULL, 0, &wg_keepalive_timeout, 0, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &node, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_BOOL, "force_underload",
+	    SYSCTL_DESCR("force to detemine under load"),
+	    NULL, 0, &wg_force_underload, 0, CTL_CREATE, CTL_EOL);
 }
+#endif
 
 #ifdef WG_RUMPKERNEL
 static bool
