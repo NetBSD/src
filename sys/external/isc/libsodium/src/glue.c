@@ -1,0 +1,1 @@
+int libsodium_errno;
