@@ -1,4 +1,4 @@
-/*	$NetBSD: make_malloc.h,v 1.6 2020/08/01 14:47:49 rillig Exp $	*/
+/*	$NetBSD: make_malloc.h,v 1.7 2020/08/20 06:35:14 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,13 +30,13 @@
 void *bmake_malloc(size_t);
 void *bmake_realloc(void *, size_t);
 char *bmake_strdup(const char *);
-char *bmake_strndup(const char *, size_t);
+char *bmake_strldup(const char *, size_t);
 #else
 #include <util.h>
 #define bmake_malloc(x)         emalloc(x)
 #define bmake_realloc(x,y)      erealloc(x,y)
 #define bmake_strdup(x)         estrdup(x)
-#define bmake_strndup(x,y)      estrndup(x,y)
+#define bmake_strldup(x,y)      estrndup(x,y)
 #endif
 
 /* Thin wrapper around free(3) to avoid the extra function call in case

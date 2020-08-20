@@ -1,4 +1,4 @@
-/*	$NetBSD: make_malloc.c,v 1.14 2020/08/12 18:47:21 rillig Exp $	*/
+/*	$NetBSD: make_malloc.c,v 1.15 2020/08/20 06:35:14 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #ifdef MAKE_NATIVE
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: make_malloc.c,v 1.14 2020/08/12 18:47:21 rillig Exp $");
+__RCSID("$NetBSD: make_malloc.c,v 1.15 2020/08/20 06:35:14 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -82,23 +82,13 @@ bmake_strdup(const char *str)
 	return memcpy(p, str, len);
 }
 
-/*
- * bmake_strndup --
- *	strndup, but die on error.
- */
+/* Allocate a string starting from str with exactly len characters. */
 char *
-bmake_strndup(const char *str, size_t max_len)
+bmake_strldup(const char *str, size_t len)
 {
-	size_t len;
-	char *p;
-
-	for (len = 0; len < max_len; len++)
-	    if (str[len] == '\0')
-		break;
-	p = bmake_malloc(len + 1);
+	char *p = bmake_malloc(len + 1);
 	memcpy(p, str, len);
 	p[len] = '\0';
-
 	return p;
 }
 
