@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.895 2020/08/03 17:30:17 christos Exp $
+# $NetBSD: shl.mi,v 1.896 2020/08/20 21:28:00 riastradh Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -832,6 +832,9 @@
 ./usr/lib/librumpnet_vlan.so			base-rump-shlib		rump
 ./usr/lib/librumpnet_vlan.so.0			base-rump-shlib		rump
 ./usr/lib/librumpnet_vlan.so.0.0		base-rump-shlib		rump
+./usr/lib/librumpnet_wireguard.so		base-rump-shlib		rump
+./usr/lib/librumpnet_wireguard.so.0		base-rump-shlib		rump
+./usr/lib/librumpnet_wireguard.so.0.0		base-rump-shlib		rump
 ./usr/lib/librumpres.so				base-rumpclient-shlib	compatfile,rump
 ./usr/lib/librumpres.so.0			base-rumpclient-shlib	compatfile,rump
 ./usr/lib/librumpres.so.0.0			base-rumpclient-shlib	compatfile,rump
