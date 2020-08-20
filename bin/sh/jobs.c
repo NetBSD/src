@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.107 2020/02/07 02:06:12 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.108 2020/08/20 23:03:17 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.107 2020/02/07 02:06:12 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.108 2020/08/20 23:03:17 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -380,6 +380,18 @@ restartjob(struct job *jp)
 		return;
 	INTOFF;
 	for (e = i = 0; i < jp->nprocs; i++) {
+		/*
+		 * Don't touch a process we already waited for and collected
+		 * exit status, that pid may have been reused for something
+		 * else - even another of our jobs
+		 */
+		if (jp->ps[i].status != -1 && !WIFSTOPPED(jp->ps[i].status))
+			continue;
+
+		/*
+		 * Otherwise tell it to continue, if it worked, we're done
+		 * (we signal the whole process group)
+		 */
 		if (killpg(jp->ps[i].pid, SIGCONT) != -1)
 			break;
 		if (e == 0 && errno != ESRCH)
@@ -387,6 +399,11 @@ restartjob(struct job *jp)
 	}
 	if (i >= jp->nprocs)
 		error("Cannot continue job (%s)", strerror(e ? e : ESRCH));
+
+	/*
+	 * Now change state of all stopped processes in the job to running
+	 * If there were any, the job is now running as well.
+	 */
 	for (ps = jp->ps, i = jp->nprocs ; --i >= 0 ; ps++) {
 		if (WIFSTOPPED(ps->status)) {
 			VTRACE(DBG_JOBS, (
@@ -570,10 +587,10 @@ showjobs(struct output *out, int mode)
 
 	CTRACE(DBG_JOBS, ("showjobs(%x) called\n", mode));
 
-	/* If not even one one job changed, there is nothing to do */
-	gotpid = dowait(WSILENT, NULL, NULL);
-	while (dowait(WSILENT, NULL, NULL) > 0)
-		continue;
+	/*  Collect everything pending in the kernel */
+	if ((gotpid = dowait(WSILENT, NULL, NULL)) > 0)
+		while (dowait(WSILENT, NULL, NULL) > 0)
+			continue;
 #ifdef JOBS
 	/*
 	 * Check if we are not in our foreground group, and if not
@@ -813,19 +830,25 @@ waitcmd(int argc, char **argv)
 
 		/*
 		 * There is at least 1 job running, so we can
-		 * safely wait() for something to exit.
+		 * safely wait() (blocking) for something to exit.
 		 */
 		if (jp->state == JOBRUNNING) {
 			job = NULL;
 			if ((i = dowait(WBLOCK|WNOFREE, NULL, &job)) == -1)
 			       return 128 + lastsig();
 
-			if (job == NULL)	/* an interloper */
+			/*
+			 * This happens if an interloper has died
+			 * (eg: a child of the executable that exec'd us)
+			 * Simply go back and start all over again
+			 * (this is rare).
+			 */ 
+			if (job == NULL)
 				continue;
 
 			/*
-			 * one of the job's processes exited,
-			 * but there are more
+			 * one of the reported job's processes exited,
+			 * but there are more still running, back for more
 			 */
 			if (job->state == JOBRUNNING)
 				continue;
@@ -1314,7 +1337,17 @@ waitforjob(struct job *jp)
 
 
 /*
- * Wait for a process to terminate.
+ * Wait for a process (any process) to terminate.
+ *
+ * If "job" is given (not NULL), then its jobcontrol status (and mflag)
+ * are used to determine if we wait for stopping/continuing processes or
+ * only terminating ones, and the decision whether to report to stdout
+ * or not varies depending what happened, and whether the affected job
+ * is the one that was requested or not.
+ *
+ * If "changed" is not NULL, then the job which changed because a
+ * process terminated/stopped will be reported by setting *changed,
+ * if there is any such job, otherwise we set *changed = NULL.
  */
 
 STATIC int
@@ -1327,53 +1360,123 @@ dowait(int flags, struct job *job, struct job **changed)
 	struct job *thisjob;
 	int done;
 	int stopped;
+	int err;
 
-	VTRACE(DBG_JOBS|DBG_PROCS, ("dowait(%x) called\n", flags));
+	VTRACE(DBG_JOBS|DBG_PROCS, ("dowait(%x) called for job %d%s\n",
+	    flags, (job ? job-jobtab+1 : 0), changed ? " [report change]":""));
 
 	if (changed != NULL)
 		*changed = NULL;
 
+	/*
+	 * First deal with the kernel, collect info on any (one) of our
+	 * children that has changed state since we last asked.
+	 * (loop if we're interrupted by a signal that we aren't processing)
+	 */
 	do {
+		err = 0;
 		pid = waitproc(flags & WBLOCK, job, &status);
-		VTRACE(DBG_JOBS|DBG_PROCS, ("wait returns pid %d, status %#x\n",
-		    pid, status));
-	} while (pid == -1 && errno == EINTR && pendingsigs == 0);
+		if (pid == -1)
+			err = errno;
+		VTRACE(DBG_JOBS|DBG_PROCS,
+		    ("wait returns pid %d (e:%d), status %#x (ps=%d)\n",
+		    pid, err, status, pendingsigs));
+	} while (pid == -1 && err == EINTR && pendingsigs == 0);
+
+	/*
+	 * if nothing exited/stopped/..., we have nothing else to do
+	 */
 	if (pid <= 0)
 		return pid;
+
+	/*
+	 * Otherwise, try to find the process, somewhere in our job table
+	 */
 	INTOFF;
 	thisjob = NULL;
 	for (jp = jobtab ; jp < jobtab + njobs ; jp++) {
 		if (jp->used) {
-			done = 1;
-			stopped = 1;
+			/*
+			 * For each job that is in use (this is one)
+			 */
+			done = 1;	/* assume it is finished */
+			stopped = 1;	/* and has stopped */
+
+			/*
+			 * Now scan all our child processes of the job
+			 */
 			for (sp = jp->ps ; sp < jp->ps + jp->nprocs ; sp++) {
 				if (sp->pid == -1)
 					continue;
+				/*
+				 * If the process that changed is the one
+				 * we're looking at, and it was previously
+				 * running (-1) or was stopped (anything else
+				 * and it must have already finished earlier,
+				 * so cannot be the process that just changed)
+				 * then we update its status
+				 */
 				if (sp->pid == pid &&
 				  (sp->status==-1 || WIFSTOPPED(sp->status))) {
 					VTRACE(DBG_JOBS | DBG_PROCS,
 			("Job %d: changing status of proc %d from %#x to %#x\n",
 						jp - jobtab + 1, pid,
 						sp->status, status));
+
+					/*
+					 * If the process continued,
+					 * then update its status to running
+					 * and mark the job running as well.
+					 *
+					 * If it was anything but running
+					 * before, flag it as a change for
+					 * reporting purposes later
+					 */
 					if (WIFCONTINUED(status)) {
 						if (sp->status != -1)
 							jp->flags |= JOBCHANGED;
 						sp->status = -1;
 						jp->state = 0;
-					} else
+					} else {
+						/* otherwise update status */
 						sp->status = status;
+					}
+
+					/*
+					 * We now know the affected job
+					 */
 					thisjob = jp;
 					if (changed != NULL)
 						*changed = jp;
 				}
+				/*
+				 * After any update that might have just
+				 * happened, if this process is running,
+				 * the job is not stopped, or if the process
+				 * simply stopped (not terminated) then the
+				 * job is certainly not completed (done).
+				 */
 				if (sp->status == -1)
 					stopped = 0;
 				else if (WIFSTOPPED(sp->status))
 					done = 0;
 			}
+
+			/*
+			 * Once we have examined all processes for the
+			 * job, if we still show it as stopped, then...
+			 */
 			if (stopped) {		/* stopped or done */
+				/*
+				 * it might be stopped, or finished, decide:
+				 */
 				int state = done ? JOBDONE : JOBSTOPPED;
 
+				/*
+				 * If that wasn't the same as it was before
+				 * then update its state, and if it just
+				 * completed, make it be the current job (%%)
+				 */
 				if (jp->state != state) {
 					VTRACE(DBG_JOBS,
 				("Job %d: changing state from %d to %d\n",
@@ -1388,6 +1491,15 @@ dowait(int flags, struct job *job, struct job **changed)
 		}
 	}
 
+	/*
+	 * Now we have scanned all jobs.   If we found the job that
+	 * the process that changed state belonged to (we occasionally
+	 * fork processes without associating them with a job, when one
+	 * of those finishes, we simply ignore it, the zombie has been
+	 * cleaned up, which is all that matters) then we need to
+	 * determine if we should say something about it to stdout
+	 */
+
 	if (thisjob &&
 	    (thisjob->state != JOBRUNNING || thisjob->flags & JOBCHANGED)) {
 		int mode = 0;
@@ -1401,13 +1513,21 @@ dowait(int flags, struct job *job, struct job **changed)
 			showjob(out2, thisjob, mode);
 		else {
 			VTRACE(DBG_JOBS,
-			    ("Not printing status, rootshell=%d, job=%p\n",
-			    rootshell, job));
+			    ("Not printing status for %p [%d], "
+			     "mode=%#x rootshell=%d, job=%p [%d]\n",
+			    thisjob, (thisjob ? (thisjob-jobtab+1) : 0),
+			    mode, rootshell, job, (job ? (job-jobtab+1) : 0)));
 			thisjob->flags |= JOBCHANGED;
 		}
 	}
 
 	INTON;
+	/*
+	 * Finally tell our caller that something happened (in general all
+	 * anyone tests for is <= 0 (or >0) so the actual pid value here
+	 * doesn't matter much, but we know it is >0 and we may as well
+	 * give back something meaningful
+	 */
 	return pid;
 }
 
