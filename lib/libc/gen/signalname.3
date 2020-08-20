@@ -1,4 +1,4 @@
-.\" $NetBSD: signalname.3,v 1.2 2017/05/14 12:35:46 wiz Exp $
+.\" $NetBSD: signalname.3,v 1.3 2020/08/20 22:56:56 kre Exp $
 .\"
 .\" Available to all and sundry, without restriction on use, or other
 .\" limitations, and without fee.   Also without any warranty of fitness
@@ -76,6 +76,17 @@ prefix in
 .Fa name
 is ignored.
 .Pp
+This implementation also accepts
+.Dv rtmax Ns \&[\-n]
+and
+.Dv rtmin Ns \&[+n]
+.Po
+where the optional
+.Ar n
+is a decimal integer between 0 and SIGRTMAX\-SIGRTMIN
+.Pc
+to refer to the real time signals.
+.Pp
 The
 .Fn signalnumber
 function returns the signal number,
@@ -93,7 +104,8 @@ signal number.
 .Pp
 The
 .Fn signalnext
-function returns minus one (\-1) on error, if the given signal
+function returns minus one (\-1) on error,
+that is, if the given signal
 .Fa sig
 is neither a valid signal number nor zero.
 It returns zero when the input signal number,
