@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.283 2020/01/19 06:55:24 thorpej Exp $
+#	$NetBSD: Makefile,v 1.284 2020/08/20 21:21:32 riastradh Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -30,8 +30,8 @@ SUBDIR=	ac accton acpitools altq apm apmd arp autofs \
 	tadpolectl tcpdchk tcpdmatch tcpdrop timed tpctl tprof traceroute trpt \
 	unlink usbdevs user \
 	videomode vipw veriexecgen vnconfig \
-	wakeonlan wiconfig wlanctl wsconscfg wsfontload wsmoused wsmuxctl \
-	zdump zic
+	wakeonlan wg-keygen wgconfig wiconfig wlanctl wsconscfg wsfontload wsmoused \
+	wsmuxctl zdump zic
 
 .if ${MKMAKEMANDB} != "no"
 SUBDIR+= makemandb

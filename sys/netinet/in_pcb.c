@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.183 2019/05/15 02:59:18 ozaki-r Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.184 2020/08/20 21:21:32 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.183 2019/05/15 02:59:18 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.184 2020/08/20 21:21:32 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -205,6 +205,8 @@ in_pcballoc(struct socket *so, void *v)
 	inp->inp_portalgo = PORTALGO_DEFAULT;
 	inp->inp_bindportonsend = false;
 	inp->inp_prefsrcip.s_addr = INADDR_ANY;
+	inp->inp_overudp_cb = NULL;
+	inp->inp_overudp_arg = NULL;
 #if defined(IPSEC)
 	if (ipsec_enabled) {
 		int error = ipsec_init_pcbpolicy(so, &inp->inp_sp);

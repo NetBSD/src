@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1274 2020/08/01 08:20:52 maxv Exp $
+#	$NetBSD: files,v 1.1275 2020/08/20 21:21:31 riastradh Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -216,6 +216,12 @@ include "crypto/nist_hash_drbg/files.nist_hash_drbg"
 
 # ChaCha-based fast PRNG
 include "crypto/cprng_fast/files.cprng_fast"
+
+# BLAKE2s, a cryptographic hash function optimized for 8- to 32-bit
+include "crypto/blake2/files.blake2s"
+
+# Various cryptography functions
+include "crypto/sodium/files.sodium"
 
 #
 # Kernel history/tracing. Old UVMHIST depends upon this.
@@ -1427,6 +1433,7 @@ defpseudo carp:		ifnet, ether, arp
 defpseudodev l2tp:	ifnet, ether, arp
 defpseudo canloop:	ifnet
 defpseudo ipsecif:	ifnet		# avoid to confuse ipsec itself option
+defpseudo wg:		ifnet, blake2s, libsodium
 
 defpseudo sequencer
 defpseudo clockctl

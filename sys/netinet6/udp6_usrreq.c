@@ -1,4 +1,4 @@
-/* $NetBSD: udp6_usrreq.c,v 1.147 2019/02/25 07:31:32 maxv Exp $ */
+/* $NetBSD: udp6_usrreq.c,v 1.148 2020/08/20 21:21:32 riastradh Exp $ */
 /* $KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $ */
 /* $KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $ */
 
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.147 2019/02/25 07:31:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.148 2020/08/20 21:21:32 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -546,6 +546,30 @@ udp6_realinput(int af, struct sockaddr_in6 *src, struct sockaddr_in6 *dst,
 			}
 		}
 #endif
+
+		if (in6p->in6p_overudp_cb != NULL) {
+			int ret;
+			ret = in6p->in6p_overudp_cb(mp, off, in6p->in6p_socket,
+			    sin6tosa(src), in6p->in6p_overudp_arg);
+			switch (ret) {
+			case -1: /* Error, m was freed */
+				rcvcnt = -1;
+				goto bad;
+
+			case 1: /* Foo over UDP */
+				KASSERT(*mp == NULL);
+				rcvcnt++;
+				goto bad;
+
+			case 0: /* plain UDP */
+			default: /* Unexpected */
+				/*
+				 * Normal UDP processing will take place,
+				 * m may have changed.
+				 */
+				break;
+			}
+		}
 
 		udp6_sendup(m, off, sin6tosa(src), in6p->in6p_socket);
 		rcvcnt++;

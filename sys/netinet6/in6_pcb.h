@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.h,v 1.50 2018/11/22 04:48:34 knakahara Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.51 2020/08/20 21:21:32 riastradh Exp $	*/
 /*	$KAME: in6_pcb.h,v 1.45 2001/02/09 05:59:46 itojun Exp $	*/
 
 /*
@@ -102,6 +102,8 @@ struct	in6pcb {
 	int	in6p_cksum;		/* IPV6_CHECKSUM setsockopt */
 	bool    in6p_bindportonsend;
 	struct ip_moptions *in6p_v4moptions;/* IP4 multicast options */
+	pcb_overudp_cb_t in6p_overudp_cb;
+	void      *in6p_overudp_arg;
 };
 
 #define in6p_faddr	in6p_ip6.ip6_dst
@@ -192,6 +194,14 @@ extern struct in6pcb *in6_pcblookup_connect(struct inpcbtable *,
 					    struct vestigial_inpcb *);
 extern struct in6pcb *in6_pcblookup_bind(struct inpcbtable *,
 	const struct in6_addr *, u_int, int);
+
+static inline void
+in6_pcb_register_overudp_cb(struct in6pcb *in6p, pcb_overudp_cb_t cb, void *arg)
+{
+
+	in6p->in6p_overudp_cb = cb;
+	in6p->in6p_overudp_arg = arg;
+}
 #endif /* _KERNEL */
 
 #endif /* !_NETINET6_IN6_PCB_H_ */
