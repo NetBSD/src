@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.11 2020/08/20 21:34:23 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.12 2020/08/20 21:34:32 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.11 2020/08/20 21:34:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.12 2020/08/20 21:34:32 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3693,34 +3693,29 @@ wg_handle_prop_peer(struct wg_softc *wg, prop_dictionary_t peer,
     struct wg_peer **wgpp)
 {
 	int error = 0;
-	prop_object_t prop_obj;
-	const char *pubkey;
+	const void *pubkey;
 	size_t pubkey_len;
+	const void *psk;
+	size_t psk_len;
 	const char *name = NULL;
 
-	prop_obj = prop_dictionary_get(peer, "name");
-	if (prop_obj != NULL) {
-		name = prop_string_value(prop_obj);
+	if (prop_dictionary_get_string(peer, "name", &name)) {
 		if (strlen(name) > WG_PEER_NAME_MAXLEN) {
 			error = EINVAL;
 			goto out;
 		}
 	}
 
-	prop_obj = prop_dictionary_get(peer, "public_key");
-	if (prop_obj == NULL) {
+	if (!prop_dictionary_get_data(peer, "public_key",
+		&pubkey, &pubkey_len)) {
 		error = EINVAL;
 		goto out;
 	}
-	pubkey = prop_data_value(prop_obj);
-	pubkey_len = prop_data_size(prop_obj);
 #ifdef WG_DEBUG_DUMP
 	log(LOG_DEBUG, "pubkey=%p, pubkey_len=%lu\n", pubkey, pubkey_len);
 	for (int _i = 0; _i < pubkey_len; _i++)
-		log(LOG_DEBUG, "%c", pubkey[_i]);
+		log(LOG_DEBUG, "%c", ((const char *)pubkey)[_i]);
 	log(LOG_DEBUG, "\n");
-#else
-	(void)pubkey_len; /* XXX gcc */
 #endif
 
 	struct wg_peer *wgp = wg_alloc_peer(wg);
@@ -3728,11 +3723,7 @@ wg_handle_prop_peer(struct wg_softc *wg, prop_dictionary_t peer,
 	if (name != NULL)
 		strncpy(wgp->wgp_name, name, sizeof(wgp->wgp_name));
 
-	prop_obj = prop_dictionary_get(peer, "preshared_key");
-	if (prop_obj != NULL) {
-		const char *psk = prop_data_value(prop_obj);
-		size_t psk_len = prop_data_size(prop_obj);
-
+	if (prop_dictionary_get_data(peer, "preshared_key", &psk, &psk_len)) {
 		if (psk_len != sizeof(wgp->wgp_psk)) {
 			error = EINVAL;
 			goto out;
@@ -3741,15 +3732,11 @@ wg_handle_prop_peer(struct wg_softc *wg, prop_dictionary_t peer,
 	}
 
 	struct sockaddr_storage sockaddr;
-	const char *addr;
+	const void *addr;
 	size_t addr_len;
 
-	prop_obj = prop_dictionary_get(peer, "endpoint");
-	if (prop_obj == NULL)
+	if (!prop_dictionary_get_data(peer, "endpoint", &addr, &addr_len))
 		goto skip_endpoint;
-
-	addr = prop_data_value(prop_obj);
-	addr_len = prop_data_size(prop_obj);
 	memcpy(&sockaddr, addr, addr_len);
 	switch (sockaddr.ss_family) {
 	case AF_INET: {
@@ -3793,21 +3780,15 @@ skip_endpoint:
 	while ((prop_allowedip = prop_object_iterator_next(_it)) != NULL) {
 		struct wg_allowedip *wga = &wgp->wgp_allowedips[j];
 
-		prop_obj = prop_dictionary_get(prop_allowedip, "family");
-		if (prop_obj == NULL)
+		if (!prop_dictionary_get_int(prop_allowedip, "family",
+			&wga->wga_family))
 			continue;
-		wga->wga_family = prop_number_unsigned_value(prop_obj);
-
-		prop_obj = prop_dictionary_get(prop_allowedip, "ip");
-		if (prop_obj == NULL)
+		if (!prop_dictionary_get_data(prop_allowedip, "ip",
+			&addr, &addr_len))
 			continue;
-		addr = prop_data_value(prop_obj);
-		addr_len = prop_data_size(prop_obj);
-
-		prop_obj = prop_dictionary_get(prop_allowedip, "cidr");
-		if (prop_obj == NULL)
+		if (!prop_dictionary_get_uint8(prop_allowedip, "cidr",
+			&wga->wga_cidr))
 			continue;
-		wga->wga_cidr = prop_number_unsigned_value(prop_obj);
 
 		switch (wga->wga_family) {
 		case AF_INET: {
@@ -3909,9 +3890,8 @@ wg_ioctl_set_private_key(struct wg_softc *wg, struct ifdrv *ifd)
 {
 	int error;
 	prop_dictionary_t prop_dict;
-	prop_object_t prop_obj;
 	char *buf = NULL;
-	const char *privkey;
+	const void *privkey;
 	size_t privkey_len;
 
 	error = wg_alloc_prop_buf(&buf, ifd);
@@ -3921,16 +3901,13 @@ wg_ioctl_set_private_key(struct wg_softc *wg, struct ifdrv *ifd)
 	prop_dict = prop_dictionary_internalize(buf);
 	if (prop_dict == NULL)
 		goto out;
-	prop_obj = prop_dictionary_get(prop_dict, "private_key");
-	if (prop_obj == NULL)
+	if (!prop_dictionary_get_data(prop_dict, "private_key",
+		&privkey, &privkey_len))
 		goto out;
-
-	privkey = prop_data_value(prop_obj);
-	privkey_len = prop_data_size(prop_obj);
 #ifdef WG_DEBUG_DUMP
 	log(LOG_DEBUG, "privkey=%p, privkey_len=%lu\n", privkey, privkey_len);
 	for (int i = 0; i < privkey_len; i++)
-		log(LOG_DEBUG, "%c", privkey[i]);
+		log(LOG_DEBUG, "%c", ((const char *)privkey)[i]);
 	log(LOG_DEBUG, "\n");
 #endif
 	if (privkey_len != WG_STATIC_KEY_LEN)
@@ -3949,9 +3926,8 @@ wg_ioctl_set_listen_port(struct wg_softc *wg, struct ifdrv *ifd)
 {
 	int error;
 	prop_dictionary_t prop_dict;
-	prop_object_t prop_obj;
 	char *buf = NULL;
-	uint64_t port;
+	uint16_t port;
 
 	error = wg_alloc_prop_buf(&buf, ifd);
 	if (error != 0)
@@ -3960,13 +3936,9 @@ wg_ioctl_set_listen_port(struct wg_softc *wg, struct ifdrv *ifd)
 	prop_dict = prop_dictionary_internalize(buf);
 	if (prop_dict == NULL)
 		goto out;
-	prop_obj = prop_dictionary_get(prop_dict, "listen_port");
-	if (prop_obj == NULL)
+	if (!prop_dictionary_get_uint16(prop_dict, "listen_port", &port))
 		goto out;
 
-	port = prop_number_unsigned_value(prop_obj);
-	if (port != (uint64_t)(uint16_t)port)
-		goto out;
 	error = wg->wg_ops->bind_port(wg, (uint16_t)port);
 
 out:
@@ -4009,7 +3981,6 @@ wg_ioctl_delete_peer(struct wg_softc *wg, struct ifdrv *ifd)
 {
 	int error;
 	prop_dictionary_t prop_dict;
-	prop_object_t prop_obj;
 	char *buf = NULL;
 	const char *name;
 
@@ -4021,11 +3992,8 @@ wg_ioctl_delete_peer(struct wg_softc *wg, struct ifdrv *ifd)
 	if (prop_dict == NULL)
 		goto out;
 
-	prop_obj = prop_dictionary_get(prop_dict, "name");
-	if (prop_obj == NULL)
+	if (!prop_dictionary_get_string(prop_dict, "name", &name))
 		goto out;
-
-	name = prop_string_value(prop_obj);
 	if (strlen(name) > WG_PEER_NAME_MAXLEN)
 		goto out;
 
@@ -4049,26 +4017,23 @@ wg_ioctl_get(struct wg_softc *wg, struct ifdrv *ifd)
 	if (prop_dict == NULL)
 		goto error;
 
-    {
-	prop_data_t privkey;
-	privkey = prop_data_create_copy(wg->wg_privkey, WG_STATIC_KEY_LEN);
-	prop_dictionary_set(prop_dict, "private_key", privkey);
-	prop_object_release(privkey);
-    }
+	if (!prop_dictionary_set_data(prop_dict, "private_key", wg->wg_privkey,
+		WG_STATIC_KEY_LEN))
+		goto error;
 
 	if (wg->wg_listen_port != 0) {
-		prop_number_t port;
-		port = prop_number_create_unsigned(wg->wg_listen_port);
-		if (port == NULL)
+		if (!prop_dictionary_set_uint16(prop_dict, "listen_port",
+			wg->wg_listen_port))
 			goto error;
-		prop_dictionary_set(prop_dict, "listen_port", port);
-		prop_object_release(port);
 	}
 
 	if (wg->wg_npeers == 0)
 		goto skip_peers;
 
 	peers = prop_array_create();
+	if (peers == NULL)
+		goto error;
+
 	s = pserialize_read_enter();
 	i = 0;
 	WG_PEER_READER_FOREACH(wgp, wg) {
@@ -4079,121 +4044,85 @@ wg_ioctl_get(struct wg_softc *wg, struct ifdrv *ifd)
 		pserialize_read_exit(s);
 
 		prop_peer = prop_dictionary_create();
+		if (prop_peer == NULL)
+			goto next;
 
 		if (strlen(wgp->wgp_name) > 0) {
-			prop_string_t name;
-			name = prop_string_create_copy(wgp->wgp_name);
-			prop_dictionary_set(prop_peer, "name", name);
-			prop_object_release(name);
+			if (!prop_dictionary_set_string(prop_peer, "name",
+				wgp->wgp_name))
+				goto next;
 		}
 
-	    {
-		prop_data_t pubkey;
-		pubkey = prop_data_create_copy(wgp->wgp_pubkey,
-		    sizeof(wgp->wgp_pubkey));
-		if (pubkey == NULL)
+		if (!prop_dictionary_set_data(prop_peer, "public_key",
+			wgp->wgp_pubkey, sizeof(wgp->wgp_pubkey)))
 			goto next;
-		prop_dictionary_set(prop_peer, "public_key", pubkey);
-		prop_object_release(pubkey);
-	    }
 
 		uint8_t psk_zero[WG_PRESHARED_KEY_LEN] = {0};
 		if (memcmp(wgp->wgp_psk, psk_zero, sizeof(wgp->wgp_psk) != 0)) {
-			prop_data_t psk = prop_data_create_copy(wgp->wgp_psk,
-			    sizeof(wgp->wgp_psk));
-			if (psk == NULL)
+			if (!prop_dictionary_set_data(prop_peer,
+				"preshared_key",
+				wgp->wgp_psk, sizeof(wgp->wgp_psk)))
 				goto next;
-			prop_dictionary_set(prop_peer, "preshared_key", psk);
-			prop_object_release(psk);
 		}
 
 		switch (wgp->wgp_sa.sa_family) {
-		case AF_INET: {
-			prop_data_t addr;
-			addr = prop_data_create_copy(&wgp->wgp_sin,
-			    sizeof(wgp->wgp_sin));
-			if (addr == NULL)
+		case AF_INET:
+			if (!prop_dictionary_set_data(prop_peer, "endpoint",
+				&wgp->wgp_sin, sizeof(wgp->wgp_sin)))
 				goto next;
-			prop_dictionary_set(prop_peer, "endpoint", addr);
-			prop_object_release(addr);
 			break;
-		    }
-		case AF_INET6: {
-			prop_data_t addr;
-			addr = prop_data_create_copy(&wgp->wgp_sin6,
-			    sizeof(wgp->wgp_sin6));
-			if (addr == NULL)
+#ifdef INET6
+		case AF_INET6:
+			if (!prop_dictionary_set_data(prop_peer, "endpoint",
+				&wgp->wgp_sin6, sizeof(wgp->wgp_sin6)))
 				goto next;
-			prop_dictionary_set(prop_peer, "endpoint", addr);
-			prop_object_release(addr);
 			break;
-		    }
+#endif
 		}
 
-	    {
-		prop_number_t sec, nsec;
 		const struct timespec *t = &wgp->wgp_last_handshake_time;
 
-		sec = prop_number_create_unsigned(t->tv_sec);
-		if (sec == NULL)
+		if (!prop_dictionary_set_uint64(prop_peer,
+			"last_handshake_time_sec", t->tv_sec))
 			goto next;
-		prop_dictionary_set(prop_peer, "last_handshake_time_sec", sec);
-		prop_object_release(sec);
-
-		nsec = prop_number_create_unsigned(t->tv_nsec);
-		if (nsec == NULL)
+		if (!prop_dictionary_set_uint32(prop_peer,
+			"last_handshake_time_nsec", t->tv_nsec))
 			goto next;
-		prop_dictionary_set(prop_peer, "last_handshake_time_nsec",
-		    nsec);
-		prop_object_release(nsec);
-	    }
 
 		if (wgp->wgp_n_allowedips == 0)
 			goto skip_allowedips;
 
 		prop_array_t allowedips = prop_array_create();
+		if (allowedips == NULL)
+			goto next;
 		for (int j = 0; j < wgp->wgp_n_allowedips; j++) {
 			struct wg_allowedip *wga = &wgp->wgp_allowedips[j];
 			prop_dictionary_t prop_allowedip;
-			prop_number_t family;
-			prop_number_t cidr;
-			prop_data_t prop_addr;
 
 			prop_allowedip = prop_dictionary_create();
 			if (prop_allowedip == NULL)
 				break;
 
-			family = prop_number_create_unsigned(wga->wga_family);
-			if (family == NULL)
+			if (!prop_dictionary_set_int(prop_allowedip, "family",
+				wga->wga_family))
 				goto _next;
-			prop_dictionary_set(prop_allowedip, "family", family);
-			prop_object_release(family);
-
-			cidr = prop_number_create_unsigned(wga->wga_cidr);
-			if (cidr == NULL)
+			if (!prop_dictionary_set_uint8(prop_allowedip, "cidr",
+				wga->wga_cidr))
 				goto _next;
-			prop_dictionary_set(prop_allowedip, "cidr", cidr);
-			prop_object_release(cidr);
 
 			switch (wga->wga_family) {
 			case AF_INET:
-				prop_addr = prop_data_create_copy(
-				    &wga->wga_addr4, sizeof(wga->wga_addr4));
-				if (prop_addr == NULL)
+				if (!prop_dictionary_set_data(prop_allowedip,
+					"ip", &wga->wga_addr4,
+					sizeof(wga->wga_addr4)))
 					goto _next;
-				prop_dictionary_set(prop_allowedip, "ip",
-				    prop_addr);
-				prop_object_release(prop_addr);
 				break;
 #ifdef INET6
 			case AF_INET6:
-				prop_addr = prop_data_create_copy(
-				    &wga->wga_addr6, sizeof(wga->wga_addr6));
-				if (prop_addr == NULL)
+				if (!prop_dictionary_set_data(prop_allowedip,
+					"ip", &wga->wga_addr6,
+					sizeof(wga->wga_addr6)))
 					goto _next;
-				prop_dictionary_set(prop_allowedip, "ip",
-				    prop_addr);
-				prop_object_release(prop_addr);
 				break;
 #endif
 			default:
@@ -4210,7 +4139,8 @@ wg_ioctl_get(struct wg_softc *wg, struct ifdrv *ifd)
 
 		prop_array_set(peers, i, prop_peer);
 	next:
-		prop_object_release(prop_peer);
+		if (prop_peer)
+			prop_object_release(prop_peer);
 		i++;
 
 		s = pserialize_read_enter();
