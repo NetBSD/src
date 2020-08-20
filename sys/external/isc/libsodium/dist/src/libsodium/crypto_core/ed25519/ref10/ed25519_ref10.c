@@ -748,18 +748,11 @@ ge25519_double_scalarmult_vartime(ge25519_p2 *r, const unsigned char *a,
  p is public
  */
 
-void
-ge25519_scalarmult(ge25519_p3 *h, const unsigned char *a, const ge25519_p3 *p)
+static void __noinline
+ge25519_scalarmult_cache(ge25519_cached pi[static 8], const ge25519_p3 *p)
 {
-    signed char     e[64];
-    signed char     carry;
-    ge25519_p1p1    r;
-    ge25519_p2      s;
     ge25519_p1p1    t1;
     ge25519_p3      p2, p3, p4, pt;
-    ge25519_cached  pi[8];
-    ge25519_cached  t;
-    int             i;
 
     ge25519_p3_to_cached(&pi[1 - 1], p);   /* p */
 
@@ -790,6 +783,18 @@ ge25519_scalarmult(ge25519_p3 *h, const unsigned char *a, const ge25519_p3 *p)
     ge25519_p3_dbl(&t1, &p4);
     ge25519_p1p1_to_p3(&pt, &t1);
     ge25519_p3_to_cached(&pi[8 - 1], &pt); /* 8p = 2*4p */
+}
+
+static void __noinline
+ge25519_scalarmult_cached(ge25519_p3 *h, const unsigned char *a,
+    const ge25519_p3 *p, const ge25519_cached pi[static 8])
+{
+    signed char     e[64];
+    signed char     carry;
+    ge25519_p1p1    r;
+    ge25519_p2      s;
+    ge25519_cached  t;
+    int             i;
 
     for (i = 0; i < 32; ++i) {
         e[2 * i + 0] = (a[i] >> 0) & 15;
@@ -829,6 +834,15 @@ ge25519_scalarmult(ge25519_p3 *h, const unsigned char *a, const ge25519_p3 *p)
     ge25519_add(&r, h, &t);
 
     ge25519_p1p1_to_p3(h, &r);
+}
+
+void
+ge25519_scalarmult(ge25519_p3 *h, const unsigned char *a, const ge25519_p3 *p)
+{
+    ge25519_cached  pi[8];
+
+    ge25519_scalarmult_cache(pi, p);
+    ge25519_scalarmult_cached(h, a, p, pi);
 }
 
 /*
