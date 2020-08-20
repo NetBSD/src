@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.371 2020/07/05 20:37:40 christos Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.372 2020/08/20 20:28:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.371 2020/07/05 20:37:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.372 2020/08/20 20:28:13 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -2139,7 +2139,7 @@ ffs_loadvnode(struct mount *mp, struct vnode *vp,
 		ip->i_gid = ip->i_ffs1_ogid;			/* XXX */
 	}							/* XXX */
 	uvm_vnp_setsize(vp, ip->i_size);
-	cache_enter_id(vp, ip->i_mode, ip->i_uid, ip->i_gid, true);
+	cache_enter_id(vp, ip->i_mode, ip->i_uid, ip->i_gid, !HAS_ACLS(ip));
 	*new_key = &ip->i_number;
 	return 0;
 }
@@ -2261,7 +2261,7 @@ ffs_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
 	}
 
 	uvm_vnp_setsize(vp, ip->i_size);
-	cache_enter_id(vp, ip->i_mode, ip->i_uid, ip->i_gid, true);
+	cache_enter_id(vp, ip->i_mode, ip->i_uid, ip->i_gid, !HAS_ACLS(ip));
 	*new_key = &ip->i_number;
 	return 0;
 }
