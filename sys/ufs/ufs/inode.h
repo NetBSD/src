@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.77 2020/04/18 19:18:34 christos Exp $	*/
+/*	$NetBSD: inode.h,v 1.78 2020/08/20 20:28:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -236,6 +236,14 @@ struct inode {
 /*	unused		0x4000 */	/* was LFS-only IN_CDIROP */
 
 #if defined(_KERNEL)
+
+/*
+ * This macro does not differentiate between having extattrs and having
+ * extattrs containing ACLS, but that's ok since it is only used to
+ * determine if we are eligible for namei cache and we can be pessimistic
+ */
+#define HAS_ACLS(ip) \
+    ((ip)->i_ump->um_fstype == UFS2 && (ip)->i_ffs2_extsize > 0)
 
 /*
  * The DIP macro is used to access fields in the dinode that are
