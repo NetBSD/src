@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.4 2020/08/20 21:31:06 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.5 2020/08/20 21:31:16 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.4 2020/08/20 21:31:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.5 2020/08/20 21:31:16 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2351,8 +2351,9 @@ wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
 		mutex_exit(wgs_prev->wgs_lock);
 
 		/* Anyway run a softint to flush pending packets */
-		KASSERT(cpu_softintr_p());
+		kpreempt_disable();
 		softint_schedule(wgp->wgp_si);
+		kpreempt_enable();
 	} else {
 		if (__predict_false(wg_need_to_send_init_message(wgs))) {
 			wg_schedule_peer_task(wgp, WGP_TASK_SEND_INIT_MESSAGE);
