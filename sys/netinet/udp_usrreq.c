@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.258 2018/12/27 16:59:17 maxv Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.259 2020/08/20 21:21:32 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.258 2018/12/27 16:59:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.259 2020/08/20 21:21:32 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -597,6 +597,30 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 			}
 		}
 #endif
+		if (inp->inp_overudp_cb != NULL) {
+			int ret;
+			ret = inp->inp_overudp_cb(mp, off, inp->inp_socket,
+			    sintosa(src), inp->inp_overudp_arg);
+			switch (ret) {
+			case -1: /* Error, m was freed */
+				rcvcnt = -1;
+				goto bad;
+
+			case 1: /* Foo over UDP */
+				KASSERT(*mp == NULL);
+				rcvcnt++;
+				goto bad;
+
+			case 0: /* plain UDP */
+			default: /* Unexpected */
+				/*
+				 * Normal UDP processing will take place,
+				 * m may have changed.
+				 */
+				m = *mp;
+				break;
+			}
+		}
 
 		/*
 		 * Check the minimum TTL for socket.
@@ -1048,7 +1072,7 @@ udp_recvoob(struct socket *so, struct mbuf *m, int flags)
 	return EOPNOTSUPP;
 }
 
-static int
+int
 udp_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
     struct mbuf *control, struct lwp *l)
 {
