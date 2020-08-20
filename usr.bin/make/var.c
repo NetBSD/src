@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.450 2020/08/20 06:35:14 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.451 2020/08/20 06:48:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.450 2020/08/20 06:35:14 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.451 2020/08/20 06:48:18 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.450 2020/08/20 06:35:14 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.451 2020/08/20 06:48:18 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1278,10 +1278,9 @@ ModifyWord_Subst(const char *word, SepBuf *buf, void *data)
 {
     size_t wordLen = strlen(word);
     ModifyWord_SubstArgs *args = data;
-    const VarPatternFlags pflags = args->pflags;
     const char *match;
 
-    if ((pflags & VARP_SUB_ONE) && (pflags & VARP_SUB_MATCHED))
+    if ((args->pflags & VARP_SUB_ONE) && (args->pflags & VARP_SUB_MATCHED))
 	goto nosub;
 
     if (args->pflags & VARP_ANCHOR_START) {
