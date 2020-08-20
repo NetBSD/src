@@ -1,7 +1,7 @@
-/*	$NetBSD: nvmm_x86.h,v 1.18 2019/10/28 08:30:49 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86.h,v 1.19 2020/08/20 11:09:56 maxv Exp $	*/
 
 /*
- * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -320,6 +320,8 @@ extern const struct nvmm_x64_state nvmm_x86_reset_state;
 extern const struct nvmm_x86_cpuid_mask nvmm_cpuid_00000001;
 extern const struct nvmm_x86_cpuid_mask nvmm_cpuid_00000007;
 extern const struct nvmm_x86_cpuid_mask nvmm_cpuid_80000001;
+extern const struct nvmm_x86_cpuid_mask nvmm_cpuid_80000007;
+extern const struct nvmm_x86_cpuid_mask nvmm_cpuid_80000008;
 bool nvmm_x86_pat_validate(uint64_t);
 #endif
 
