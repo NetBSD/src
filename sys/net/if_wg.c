@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.19 2020/08/20 21:36:21 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.20 2020/08/21 07:05:25 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.19 2020/08/20 21:36:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.20 2020/08/21 07:05:25 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -372,8 +372,10 @@ sliwin_check_fast(const volatile struct sliwin *W, uint64_t S)
 	 * If it's more than one window older than the highest sequence
 	 * number we've seen, reject.
 	 */
+#ifdef __HAVE_ATOMIC64_LOADSTORE
 	if (S + SLIWIN_NPKT < atomic_load_relaxed(&W->T))
 		return EAUTH;
+#endif
 
 	/*
 	 * Otherwise, we need to take the lock to decide, so don't
@@ -406,7 +408,11 @@ sliwin_update(struct sliwin *W, uint64_t S)
 
 		for (k = 0; k < MIN(j - i, SLIWIN_WORDS); k++)
 			W->B[(i + k + 1) % SLIWIN_WORDS] = 0;
+#ifdef __HAVE_ATOMIC64_LOADSTORE
 		atomic_store_relaxed(&W->T, S);
+#else
+		W->T = S;
+#endif
 	}
 
 	/* Test and set the bit -- if already set, reject.  */
