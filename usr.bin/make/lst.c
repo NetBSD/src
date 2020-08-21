@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.6 2020/08/21 02:56:25 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.7 2020/08/21 03:03:45 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -36,27 +36,23 @@
 #include "make_malloc.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.6 2020/08/21 02:56:25 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.7 2020/08/21 03:03:45 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.6 2020/08/21 02:56:25 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.7 2020/08/21 03:03:45 rillig Exp $");
 #endif /* not lint */
 #endif
 
 typedef struct ListNode {
     struct ListNode *prevPtr;	/* previous element in list */
     struct ListNode *nextPtr;	/* next in list */
-    unsigned int useCount: 8,	/* Count of functions using the node.
+    uint8_t useCount;		/* Count of functions using the node.
 				 * node may not be deleted until count
 				 * goes to 0 */
-    		 flags: 8;	/* Node status flags */
+    Boolean deleted;		/* List node should be removed when done */
     void *datum;		/* datum associated with this element */
 } *ListNode;
-/*
- * Flags required for synchronization
- */
-#define LN_DELETED	0x0001	/* List node should be removed when done */
 
 typedef enum {
     Head, Middle, Tail, Unknown
@@ -272,7 +268,8 @@ Lst_InsertBefore(Lst l, LstNode ln, void *d)
     PAlloc (nLNode, ListNode);
 
     nLNode->datum = d;
-    nLNode->useCount = nLNode->flags = 0;
+    nLNode->useCount = 0;
+    nLNode->deleted = FALSE;
 
     if (ln == NULL) {
 	nLNode->prevPtr = nLNode->nextPtr = NULL;
@@ -336,7 +333,8 @@ Lst_InsertAfter(Lst l, LstNode ln, void *d)
 
     PAlloc (nLNode, ListNode);
     nLNode->datum = d;
-    nLNode->useCount = nLNode->flags = 0;
+    nLNode->useCount = 0;
+    nLNode->deleted = FALSE;
 
     if (lNode == NULL) {
 	nLNode->nextPtr = nLNode->prevPtr = NULL;
@@ -473,7 +471,7 @@ Lst_Remove(Lst l, LstNode ln)
     if (lNode->useCount == 0) {
 	free(ln);
     } else {
-	lNode->flags |= LN_DELETED;
+	lNode->deleted = TRUE;
     }
 
     return SUCCESS;
@@ -793,7 +791,7 @@ Lst_ForEachFrom(Lst l, LstNode ln, int (*proc)(void *, void *),
 	    done = 0;
 	}
 
-	if (tln->flags & LN_DELETED) {
+	if (tln->deleted) {
 	    free((char *)tln);
 	}
 	tln = next;
@@ -884,7 +882,8 @@ Lst_Concat(Lst l1, Lst l2, int flags)
 		list1->firstPtr = nln;
 	    }
 	    nln->prevPtr = last;
-	    nln->flags = nln->useCount = 0;
+	    nln->useCount = 0;
+	    nln->deleted = FALSE;
 	    last = nln;
 	}
 
