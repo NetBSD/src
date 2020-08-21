@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.21 2020/08/13 03:54:57 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.22 2020/08/21 02:20:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -102,7 +102,7 @@ typedef void		FreeProc(void *);
  * Creation/destruction functions
  */
 /* Create a new list */
-Lst		Lst_Init(Boolean);
+Lst		Lst_Init(void);
 /* Duplicate an existing list */
 Lst		Lst_Duplicate(Lst, DuplicateProc *);
 /* Destroy an old one */
@@ -171,10 +171,8 @@ int		Lst_ForEachFrom(Lst, LstNode, int (*)(void *, void *),
  */
 /* Open the list */
 ReturnStatus	Lst_Open(Lst);
-/* Next element please */
+/* Next element please, or NULL */
 LstNode		Lst_Next(Lst);
-/* Done yet? */
-Boolean		Lst_IsAtEnd(Lst);
 /* Finish table access */
 void		Lst_Close(Lst);
 

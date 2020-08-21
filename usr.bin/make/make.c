@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.103 2020/08/01 09:55:00 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.104 2020/08/21 02:20:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.103 2020/08/01 09:55:00 rillig Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.104 2020/08/21 02:20:47 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.103 2020/08/01 09:55:00 rillig Exp $");
+__RCSID("$NetBSD: make.c,v 1.104 2020/08/21 02:20:47 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1424,7 +1424,7 @@ Make_ProcessWait(Lst targs)
     /* Start building with the 'dummy' .MAIN' node */
     MakeBuildChild(pgn, NULL);
 
-    examine = Lst_Init(FALSE);
+    examine = Lst_Init();
     Lst_AtEnd(examine, pgn);
 
     while (!Lst_IsEmpty (examine)) {
@@ -1493,7 +1493,7 @@ Make_Run(Lst targs)
     int	    	    errors; 	/* Number of errors the Job module reports */
 
     /* Start trying to make the current targets... */
-    toBeMade = Lst_Init(FALSE);
+    toBeMade = Lst_Init();
 
     Make_ExpandUse(targs);
     Make_ProcessWait(targs);
