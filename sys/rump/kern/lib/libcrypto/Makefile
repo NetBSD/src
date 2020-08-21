@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2020/08/21 06:30:46 riastradh Exp $
+#	$NetBSD: Makefile,v 1.19 2020/08/21 06:37:30 riastradh Exp $
 #
 
 SODIUM_IMPORTDIR=${.CURDIR}/../../../../external/isc/libsodium
@@ -65,7 +65,7 @@ SODIUM_CPPFLAGS=
 SODIUM_CPPFLAGS+=	-I${SODIUM_IMPORTDIR}/include
 SODIUM_CPPFLAGS+=	-I${SODIUM_IMPORTDIR}/dist/src/libsodium/include/sodium
 
-SODIUM_CPPFLAGS+=	-DHAVE_TI_MODE
+#SODIUM_CPPFLAGS+=	-DHAVE_TI_MODE
 
 SODIUM_CPPFLAGS+=	-Wno-shadow
 SODIUM_CPPFLAGS+=	-Wno-unused-function
