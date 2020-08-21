@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.206 2020/08/10 19:53:19 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.207 2020/08/21 02:20:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.206 2020/08/10 19:53:19 rillig Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.207 2020/08/21 02:20:47 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.206 2020/08/10 19:53:19 rillig Exp $");
+__RCSID("$NetBSD: job.c,v 1.207 2020/08/21 02:20:47 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1971,7 +1971,7 @@ JobRun(GNode *targ)
      * and .INTERRUPT job in the parallel job module. This has
      * the nice side effect that it avoids a lot of other problems.
      */
-    Lst lst = Lst_Init(FALSE);
+    Lst lst = Lst_Init();
     Lst_AtEnd(lst, targ);
     (void)Make_Run(lst);
     Lst_Destroy(lst, NULL);

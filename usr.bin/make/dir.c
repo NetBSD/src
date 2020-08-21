@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.92 2020/08/13 03:33:56 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.93 2020/08/21 02:20:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.92 2020/08/13 03:33:56 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.93 2020/08/21 02:20:47 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.92 2020/08/13 03:33:56 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.93 2020/08/21 02:20:47 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -367,8 +367,8 @@ void
 Dir_Init(const char *cdname)
 {
     if (!cdname) {
-	dirSearchPath = Lst_Init(FALSE);
-	openDirectories = Lst_Init(FALSE);
+	dirSearchPath = Lst_Init();
+	openDirectories = Lst_Init();
 	Hash_InitTable(&mtimes, 0);
 	Hash_InitTable(&lmtimes, 0);
 	return;
@@ -909,7 +909,7 @@ Dir_Expand(const char *word, Lst path, Lst expansions)
 			char *dp = &dirpath[strlen(dirpath) - 1];
 			if (*dp == '/')
 			    *dp = '\0';
-			path = Lst_Init(FALSE);
+			path = Lst_Init();
 			(void)Dir_AddDir(path, dirpath);
 			DirExpandInt(cp + 1, path, expansions);
 			Lst_Destroy(path, NULL);

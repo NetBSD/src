@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.96 2020/08/11 18:44:52 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.97 2020/08/21 02:20:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.96 2020/08/11 18:44:52 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.97 2020/08/21 02:20:48 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.96 2020/08/11 18:44:52 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.97 2020/08/21 02:20:48 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -555,7 +555,7 @@ Suff_ClearSuffixes(void)
 #ifdef CLEANUP
     Lst_Concat(suffClean, sufflist, LST_CONCLINK);
 #endif
-    sufflist = Lst_Init(FALSE);
+    sufflist = Lst_Init();
     sNum = 0;
     if (suffNull)
 	SuffFree(suffNull);
@@ -563,11 +563,11 @@ Suff_ClearSuffixes(void)
 
     suffNull->name =   	    bmake_strdup("");
     suffNull->nameLen =     0;
-    suffNull->searchPath =  Lst_Init(FALSE);
+    suffNull->searchPath =  Lst_Init();
     Dir_Concat(suffNull->searchPath, dirSearchPath);
-    suffNull->children =    Lst_Init(FALSE);
-    suffNull->parents =	    Lst_Init(FALSE);
-    suffNull->ref =	    Lst_Init(FALSE);
+    suffNull->children =    Lst_Init();
+    suffNull->parents =	    Lst_Init();
+    suffNull->ref =	    Lst_Init();
     suffNull->sNum =   	    sNum++;
     suffNull->flags =  	    SUFF_NULL;
     suffNull->refCount =    1;
@@ -723,8 +723,8 @@ Suff_AddTransform(char *line)
 	gn = (GNode *)Lst_Datum(ln);
 	Lst_Destroy(gn->commands, NULL);
 	Lst_Destroy(gn->children, NULL);
-	gn->commands = Lst_Init(FALSE);
-	gn->children = Lst_Init(FALSE);
+	gn->commands = Lst_Init();
+	gn->children = Lst_Init();
     }
 
     gn->type = OP_TRANSFORM;
@@ -940,7 +940,7 @@ SuffScanTargets(void *targetp, void *gsp)
 	    Targ_SetMain(NULL);
 	}
 	Lst_Destroy(target->children, NULL);
-	target->children = Lst_Init(FALSE);
+	target->children = Lst_Init();
 	target->type = OP_TRANSFORM;
 	/*
 	 * link the two together in the proper relationship and order
@@ -987,10 +987,10 @@ Suff_AddSuffix(char *str, GNode **gn)
 
 	s->name =   	bmake_strdup(str);
 	s->nameLen = 	strlen(s->name);
-	s->searchPath = Lst_Init(FALSE);
-	s->children = 	Lst_Init(FALSE);
-	s->parents = 	Lst_Init(FALSE);
-	s->ref = 	Lst_Init(FALSE);
+	s->searchPath = Lst_Init();
+	s->children = 	Lst_Init();
+	s->parents = 	Lst_Init();
+	s->ref = 	Lst_Init();
 	s->sNum =   	sNum++;
 	s->flags =  	0;
 	s->refCount =	1;
@@ -1073,8 +1073,8 @@ Suff_DoPaths(void)
 	return;
     }
 
-    inIncludes = Lst_Init(FALSE);
-    inLibs = Lst_Init(FALSE);
+    inIncludes = Lst_Init();
+    inLibs = Lst_Init();
 
     while ((ln = Lst_Next(sufflist)) != NULL) {
 	s = (Suff *)Lst_Datum(ln);
@@ -1217,7 +1217,7 @@ SuffAddSrc(void *sp, void *lsp)
 	targ->children += 1;
 	(void)Lst_AtEnd(ls->l, s2);
 #ifdef DEBUG_SRC
-	s2->cp = Lst_Init(FALSE);
+	s2->cp = Lst_Init();
 	Lst_AtEnd(targ->cp, s2);
 	fprintf(debug_file, "1 add %p %p to %p:", targ, s2, ls->l);
 	Lst_ForEach(ls->l, PrintAddr, NULL);
@@ -1235,7 +1235,7 @@ SuffAddSrc(void *sp, void *lsp)
     targ->children += 1;
     (void)Lst_AtEnd(ls->l, s2);
 #ifdef DEBUG_SRC
-    s2->cp = Lst_Init(FALSE);
+    s2->cp = Lst_Init();
     Lst_AtEnd(targ->cp, s2);
     fprintf(debug_file, "2 add %p %p to %p:", targ, s2, ls->l);
     Lst_ForEach(ls->l, PrintAddr, NULL);
@@ -1500,7 +1500,7 @@ SuffFindCmds(Src *targ, Lst slst)
     ret->children = 0;
     targ->children += 1;
 #ifdef DEBUG_SRC
-    ret->cp = Lst_Init(FALSE);
+    ret->cp = Lst_Init();
     fprintf(debug_file, "3 add %p %p\n", targ, ret);
     Lst_AtEnd(targ->cp, ret);
 #endif
@@ -1563,7 +1563,7 @@ SuffExpandChildren(LstNode cln, GNode *pgn)
     cp = Var_Subst(cgn->name, pgn, VARE_UNDEFERR|VARE_WANTRES);
 
     if (cp != NULL) {
-	Lst	    members = Lst_Init(FALSE);
+	Lst	    members = Lst_Init();
 
 	if (cgn->type & OP_ARCHV) {
 	    /*
@@ -1692,7 +1692,7 @@ SuffExpandWildcards(LstNode cln, GNode *pgn)
     /*
      * Expand the word along the chosen path
      */
-    explist = Lst_Init(FALSE);
+    explist = Lst_Init();
     Dir_Expand(cgn->name, Suff_FindPath(cgn), explist);
 
     while (!Lst_IsEmpty(explist)) {
@@ -2075,8 +2075,8 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
      * Begin at the beginning...
      */
     ln = Lst_First(sufflist);
-    srcs = Lst_Init(FALSE);
-    targs = Lst_Init(FALSE);
+    srcs = Lst_Init();
+    targs = Lst_Init();
 
     /*
      * We're caught in a catch-22 here. On the one hand, we want to use any
@@ -2121,7 +2121,7 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
 		targ->parent = NULL;
 		targ->children = 0;
 #ifdef DEBUG_SRC
-		targ->cp = Lst_Init(FALSE);
+		targ->cp = Lst_Init();
 #endif
 
 		/*
@@ -2168,7 +2168,7 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
 	    targ->children = 0;
 	    targ->pref = bmake_strdup(sopref);
 #ifdef DEBUG_SRC
-	    targ->cp = Lst_Init(FALSE);
+	    targ->cp = Lst_Init();
 #endif
 
 	    /*
@@ -2563,10 +2563,10 @@ void
 Suff_Init(void)
 {
 #ifdef CLEANUP
-    suffClean = Lst_Init(FALSE);
+    suffClean = Lst_Init();
 #endif
-    srclist = Lst_Init(FALSE);
-    transforms = Lst_Init(FALSE);
+    srclist = Lst_Init();
+    transforms = Lst_Init();
 
     /*
      * Create null suffix for single-suffix rules (POSIX). The thing doesn't

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.304 2020/08/11 18:52:03 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.305 2020/08/21 02:20:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.304 2020/08/11 18:52:03 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.305 2020/08/21 02:20:47 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.304 2020/08/11 18:52:03 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.305 2020/08/21 02:20:47 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1082,11 +1082,11 @@ main(int argc, char **argv)
 		VAR_GLOBAL);
 	Var_Set(MAKE_DEPENDFILE, ".depend", VAR_GLOBAL);
 
-	create = Lst_Init(FALSE);
-	makefiles = Lst_Init(FALSE);
+	create = Lst_Init();
+	makefiles = Lst_Init();
 	printVars = 0;
 	debugVflag = FALSE;
-	variables = Lst_Init(FALSE);
+	variables = Lst_Init();
 	beSilent = FALSE;		/* Print commands as executed */
 	ignoreErrors = FALSE;		/* Pay attention to non-zero returns */
 	noExecute = FALSE;		/* Execute all commands */
@@ -1328,7 +1328,7 @@ main(int argc, char **argv)
 	if (!noBuiltins) {
 		LstNode ln;
 
-		sysMkPath = Lst_Init(FALSE);
+		sysMkPath = Lst_Init();
 		Dir_Expand(_PATH_DEFSYSMK,
 			   Lst_IsEmpty(sysIncPath) ? defIncPath : sysIncPath,
 			   sysMkPath);
