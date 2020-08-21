@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.225 2020/08/20 23:19:34 kre Exp $
+.\"	$NetBSD: sh.1,v 1.226 2020/08/21 08:14:45 wiz Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -1133,7 +1133,6 @@ implicitly by an empty directory name, or explicitly by a single period.
 If a directory searched contains an executable file with the same
 name as the command given,
 the search terminates, and that program is executed.
-.El
 .Ss Command Exit Status
 Each command has an exit status that can influence the behavior
 of other shell commands.
@@ -3584,7 +3583,9 @@ command, or function, upon receiving signal INT.
 .Pp
 .Dl Ic eval Qo \&$( trap -P QUIT \&) Qc
 .Pp
-Parse and execute the action that would be invoked were a SIGQUIT received.
+Parse and execute the action that would be invoked were a
+.Dv SIGQUIT
+received.
 .Pp
 .Dl trap 1 2
 .Pp
