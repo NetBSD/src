@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.21 2020/08/21 15:48:13 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.22 2020/08/21 20:21:36 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.21 2020/08/21 15:48:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.22 2020/08/21 20:21:36 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -457,8 +457,13 @@ struct wg_session {
 
 	uint32_t	wgs_sender_index;
 	uint32_t	wgs_receiver_index;
+#ifdef __HAVE_ATOMIC64_LOADSTORE
 	volatile uint64_t
 			wgs_send_counter;
+#else
+	kmutex_t	wgs_send_counter_lock;
+	uint64_t	wgs_send_counter;
+#endif
 
 	struct {
 		kmutex_t	lock;
@@ -2031,6 +2036,38 @@ wg_calculate_keys(struct wg_session *wgs, const bool initiator)
 	WG_DUMP_HASH("wgs_tkey_recv", wgs->wgs_tkey_recv);
 }
 
+static uint64_t
+wg_session_get_send_counter(struct wg_session *wgs)
+{
+#ifdef __HAVE_ATOMIC64_LOADSTORE
+	return atomic_load_relaxed(&wgs->wgs_send_counter);
+#else
+	uint64_t send_counter;
+
+	mutex_enter(&wgs->wgs_send_counter_lock);
+	send_counter = wgs->wgs_send_counter;
+	mutex_exit(&wgs->wgs_send_counter_lock);
+
+	return send_counter;
+#endif
+}
+
+static uint64_t
+wg_session_inc_send_counter(struct wg_session *wgs)
+{
+#ifdef __HAVE_ATOMIC64_LOADSTORE
+	return atomic_inc_64_nv(&wgs->wgs_send_counter) - 1;
+#else
+	uint64_t send_counter;
+
+	mutex_enter(&wgs->wgs_send_counter_lock);
+	send_counter = wgs->wgs_send_counter++;
+	mutex_exit(&wgs->wgs_send_counter_lock);
+
+	return send_counter;
+#endif
+}
+
 static void
 wg_clear_states(struct wg_session *wgs)
 {
@@ -3010,7 +3047,8 @@ wg_session_hit_limits(struct wg_session *wgs)
 	if ((time_uptime - wgs->wgs_time_established) > wg_reject_after_time) {
 		WG_DLOG("The session hits REJECT_AFTER_TIME\n");
 		return true;
-	} else if (wgs->wgs_send_counter > wg_reject_after_messages) {
+	} else if (wg_session_get_send_counter(wgs) >
+	    wg_reject_after_messages) {
 		WG_DLOG("The session hits REJECT_AFTER_MESSAGES\n");
 		return true;
 	}
@@ -3155,6 +3193,9 @@ wg_alloc_peer(struct wg_softc *wg)
 	wgs->wgs_state = WGS_STATE_UNKNOWN;
 	psref_target_init(&wgs->wgs_psref, wg_psref_class);
 	wgs->wgs_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+#ifndef __HAVE_ATOMIC64_LOADSTORE
+	mutex_init(&wgs->wgs_send_counter_lock, MUTEX_DEFAULT, IPL_SOFTNET);
+#endif
 	wgs->wgs_recvwin = kmem_zalloc(sizeof(*wgs->wgs_recvwin), KM_SLEEP);
 	mutex_init(&wgs->wgs_recvwin->lock, MUTEX_DEFAULT, IPL_NONE);
 
@@ -3163,6 +3204,9 @@ wg_alloc_peer(struct wg_softc *wg)
 	wgs->wgs_state = WGS_STATE_UNKNOWN;
 	psref_target_init(&wgs->wgs_psref, wg_psref_class);
 	wgs->wgs_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+#ifndef __HAVE_ATOMIC64_LOADSTORE
+	mutex_init(&wgs->wgs_send_counter_lock, MUTEX_DEFAULT, IPL_SOFTNET);
+#endif
 	wgs->wgs_recvwin = kmem_zalloc(sizeof(*wgs->wgs_recvwin), KM_SLEEP);
 	mutex_init(&wgs->wgs_recvwin->lock, MUTEX_DEFAULT, IPL_NONE);
 
@@ -3203,12 +3247,18 @@ wg_destroy_peer(struct wg_peer *wgp)
 	mutex_obj_free(wgs->wgs_lock);
 	mutex_destroy(&wgs->wgs_recvwin->lock);
 	kmem_free(wgs->wgs_recvwin, sizeof(*wgs->wgs_recvwin));
+#ifndef __HAVE_ATOMIC64_LOADSTORE
+	mutex_destroy(&wgs->wgs_send_counter_lock);
+#endif
 	kmem_free(wgs, sizeof(*wgs));
 	wgs = wgp->wgp_session_stable;
 	psref_target_destroy(&wgs->wgs_psref, wg_psref_class);
 	mutex_obj_free(wgs->wgs_lock);
 	mutex_destroy(&wgs->wgs_recvwin->lock);
 	kmem_free(wgs->wgs_recvwin, sizeof(*wgs->wgs_recvwin));
+#ifndef __HAVE_ATOMIC64_LOADSTORE
+	mutex_destroy(&wgs->wgs_send_counter_lock);
+#endif
 	kmem_free(wgs, sizeof(*wgs));
 
 	psref_target_destroy(&wgp->wgp_endpoint->wgsa_psref, wg_psref_class);
@@ -3441,7 +3491,7 @@ wg_fill_msg_data(struct wg_softc *wg, struct wg_peer *wgp,
 	wgmd->wgmd_receiver = wgs->wgs_receiver_index;
 	/* [W] 5.4.6: msg.counter := Nm^send */
 	/* [W] 5.4.6: Nm^send := Nm^send + 1 */
-	wgmd->wgmd_counter = atomic_inc_64_nv(&wgs->wgs_send_counter) - 1;
+	wgmd->wgmd_counter = wg_session_inc_send_counter(wgs);
 	WG_DLOG("counter=%"PRIu64"\n", wgmd->wgmd_counter);
 }
 
@@ -3629,7 +3679,8 @@ wg_send_data_msg(struct wg_peer *wgp, struct wg_session *wgs,
 			wg_schedule_rekey_timer(wgp);
 		}
 		wgs->wgs_time_last_data_sent = time_uptime;
-		if (wgs->wgs_send_counter >= wg_rekey_after_messages) {
+		if (wg_session_get_send_counter(wgs) >=
+		    wg_rekey_after_messages) {
 			/*
 			 * [W] 6.2 Transport Message Limits
 			 * "WireGuard will try to create a new session, by
