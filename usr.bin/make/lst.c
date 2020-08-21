@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.14 2020/08/21 06:28:38 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.15 2020/08/21 06:38:29 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -38,17 +38,17 @@
 #include "make_malloc.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.14 2020/08/21 06:28:38 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.15 2020/08/21 06:38:29 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.14 2020/08/21 06:28:38 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.15 2020/08/21 06:38:29 rillig Exp $");
 #endif /* not lint */
 #endif
 
 struct ListNode {
-    struct ListNode *prevPtr;	/* previous element in list */
-    struct ListNode *nextPtr;	/* next in list */
+    struct ListNode *prev;	/* previous element in list */
+    struct ListNode *next;	/* next in list */
     uint8_t useCount;		/* Count of functions using the node.
 				 * node may not be deleted until count
 				 * goes to 0 */
@@ -61,16 +61,16 @@ typedef enum {
 } Where;
 
 struct List {
-    LstNode firstPtr;		/* first node in list */
-    LstNode lastPtr;		/* last node in list */
+    LstNode first;		/* first node in list */
+    LstNode last;		/* last node in list */
 /*
  * fields for sequential access
  */
-    Where atEnd;		/* Where in the list the last access was */
+    Where lastAccess;		/* Where in the list the last access was */
     Boolean isOpen;		/* true if list has been Lst_Open'ed */
-    LstNode curPtr;		/* current node, if open. NULL if
+    LstNode curr;		/* current node, if open. NULL if
 				 * *just* opened */
-    LstNode prevPtr;		/* Previous node, if open. Used by
+    LstNode prev;		/* Previous node, if open. Used by
 				 * Lst_Remove */
 };
 
@@ -92,8 +92,8 @@ static LstNode
 LstNodeNew(void *datum)
 {
     LstNode ln = bmake_malloc(sizeof *ln);
-    /* prevPtr will be initialized by the calling code. */
-    /* nextPtr will be initialized by the calling code. */
+    /* prev will be initialized by the calling code. */
+    /* next will be initialized by the calling code. */
     ln->useCount = 0;
     ln->deleted = FALSE;
     ln->datum = datum;
@@ -104,7 +104,7 @@ LstNodeNew(void *datum)
 static Boolean
 LstIsEmpty(Lst l)
 {
-    return l->firstPtr == NULL;
+    return l->first == NULL;
 }
 
 /* Create and initialize a new, empty list. */
@@ -113,10 +113,10 @@ Lst_Init(void)
 {
     Lst nList = bmake_malloc(sizeof *nList);
 
-    nList->firstPtr = NULL;
-    nList->lastPtr = NULL;
+    nList->first = NULL;
+    nList->last = NULL;
     nList->isOpen = FALSE;
-    nList->atEnd = Unknown;
+    nList->lastAccess = Unknown;
 
     return nList;
 }
@@ -141,7 +141,7 @@ Lst_Duplicate(Lst l, DuplicateProc *copyProc)
 	return NULL;
     }
 
-    ln = list->firstPtr;
+    ln = list->first;
     while (ln != NULL) {
 	if (copyProc != NULL) {
 	    if (Lst_AtEnd(nl, copyProc(ln->datum)) == FAILURE) {
@@ -151,7 +151,7 @@ Lst_Duplicate(Lst l, DuplicateProc *copyProc)
 	    return NULL;
 	}
 
-	ln = ln->nextPtr;
+	ln = ln->next;
     }
 
     return nl;
@@ -169,22 +169,22 @@ Lst_Destroy(Lst list, FreeProc *freeProc)
 	return;
 
     /* To ease scanning */
-    if (list->lastPtr != NULL)
-	list->lastPtr->nextPtr = NULL;
+    if (list->last != NULL)
+	list->last->next = NULL;
     else {
 	free(list);
 	return;
     }
 
     if (freeProc) {
-	for (ln = list->firstPtr; ln != NULL; ln = tln) {
-	    tln = ln->nextPtr;
+	for (ln = list->first; ln != NULL; ln = tln) {
+	    tln = ln->next;
 	    freeProc(ln->datum);
 	    free(ln);
 	}
     } else {
-	for (ln = list->firstPtr; ln != NULL; ln = tln) {
-	    tln = ln->nextPtr;
+	for (ln = list->first; ln != NULL; ln = tln) {
+	    tln = ln->next;
 	    free(ln);
 	}
     }
@@ -220,19 +220,19 @@ Lst_InsertBefore(Lst l, LstNode ln, void *d)
     nLNode = LstNodeNew(d);
 
     if (ln == NULL) {
-	nLNode->prevPtr = nLNode->nextPtr = NULL;
-	list->firstPtr = list->lastPtr = nLNode;
+	nLNode->prev = nLNode->next = NULL;
+	list->first = list->last = nLNode;
     } else {
-	nLNode->prevPtr = lNode->prevPtr;
-	nLNode->nextPtr = lNode;
+	nLNode->prev = lNode->prev;
+	nLNode->next = lNode;
 
-	if (nLNode->prevPtr != NULL) {
-	    nLNode->prevPtr->nextPtr = nLNode;
+	if (nLNode->prev != NULL) {
+	    nLNode->prev->next = nLNode;
 	}
-	lNode->prevPtr = nLNode;
+	lNode->prev = nLNode;
 
-	if (lNode == list->firstPtr) {
-	    list->firstPtr = nLNode;
+	if (lNode == list->first) {
+	    list->first = nLNode;
 	}
     }
 
@@ -263,19 +263,19 @@ Lst_InsertAfter(Lst l, LstNode ln, void *d)
     nLNode = LstNodeNew(d);
 
     if (lNode == NULL) {
-	nLNode->nextPtr = nLNode->prevPtr = NULL;
-	list->firstPtr = list->lastPtr = nLNode;
+	nLNode->next = nLNode->prev = NULL;
+	list->first = list->last = nLNode;
     } else {
-	nLNode->prevPtr = lNode;
-	nLNode->nextPtr = lNode->nextPtr;
+	nLNode->prev = lNode;
+	nLNode->next = lNode->next;
 
-	lNode->nextPtr = nLNode;
-	if (nLNode->nextPtr != NULL) {
-	    nLNode->nextPtr->prevPtr = nLNode;
+	lNode->next = nLNode;
+	if (nLNode->next != NULL) {
+	    nLNode->next->prev = nLNode;
 	}
 
-	if (lNode == list->lastPtr) {
-	    list->lastPtr = nLNode;
+	if (lNode == list->last) {
+	    list->last = nLNode;
 	}
     }
 
@@ -316,34 +316,34 @@ Lst_RemoveS(Lst l, LstNode ln)
     /*
      * unlink it from the list
      */
-    if (lNode->nextPtr != NULL) {
-	lNode->nextPtr->prevPtr = lNode->prevPtr;
+    if (lNode->next != NULL) {
+	lNode->next->prev = lNode->prev;
     }
-    if (lNode->prevPtr != NULL) {
-	lNode->prevPtr->nextPtr = lNode->nextPtr;
+    if (lNode->prev != NULL) {
+	lNode->prev->next = lNode->next;
     }
 
     /*
-     * if either the firstPtr or lastPtr of the list point to this node,
+     * if either the first or last of the list point to this node,
      * adjust them accordingly
      */
-    if (list->firstPtr == lNode) {
-	list->firstPtr = lNode->nextPtr;
+    if (list->first == lNode) {
+	list->first = lNode->next;
     }
-    if (list->lastPtr == lNode) {
-	list->lastPtr = lNode->prevPtr;
+    if (list->last == lNode) {
+	list->last = lNode->prev;
     }
 
     /*
      * Sequential access stuff. If the node we're removing is the current
      * node in the list, reset the current node to the previous one. If the
-     * previous one was non-existent (prevPtr == NULL), we set the
+     * previous one was non-existent (prev == NULL), we set the
      * end to be Unknown, since it is.
      */
-    if (list->isOpen && (list->curPtr == lNode)) {
-	list->curPtr = list->prevPtr;
-	if (list->curPtr == NULL) {
-	    list->atEnd = Unknown;
+    if (list->isOpen && (list->curr == lNode)) {
+	list->curr = list->prev;
+	if (list->curr == NULL) {
+	    list->lastAccess = Unknown;
 	}
     }
 
@@ -378,7 +378,7 @@ Lst_First(Lst l)
     if (!LstValid(l) || LstIsEmpty(l)) {
 	return NULL;
     } else {
-	return l->firstPtr;
+	return l->first;
     }
 }
 
@@ -390,7 +390,7 @@ Lst_Last(Lst l)
     if (!LstValid(l) || LstIsEmpty(l)) {
 	return NULL;
     } else {
-	return l->lastPtr;
+	return l->last;
     }
 }
 
@@ -401,7 +401,7 @@ Lst_Succ(LstNode ln)
     if (ln == NULL) {
 	return NULL;
     } else {
-	return ln->nextPtr;
+	return ln->next;
     }
 }
 
@@ -412,7 +412,7 @@ Lst_Prev(LstNode ln)
     if (ln == NULL) {
 	return NULL;
     } else {
-	return ln->prevPtr;
+	return ln->prev;
     }
 }
 
@@ -465,7 +465,7 @@ Lst_FindFrom(Lst l, LstNode ln, const void *d,
     do {
 	if ((*cProc)(tln->datum, d) == 0)
 	    return tln;
-	tln = tln->nextPtr;
+	tln = tln->next;
     } while (tln != ln && tln != NULL);
 
     return NULL;
@@ -481,7 +481,7 @@ Lst_Member(Lst l, void *d)
     if (list == NULL) {
 	return NULL;
     }
-    lNode = list->firstPtr;
+    lNode = list->first;
     if (lNode == NULL) {
 	return NULL;
     }
@@ -490,8 +490,8 @@ Lst_Member(Lst l, void *d)
 	if (lNode->datum == d) {
 	    return lNode;
 	}
-	lNode = lNode->nextPtr;
-    } while (lNode != NULL && lNode != list->firstPtr);
+	lNode = lNode->next;
+    } while (lNode != NULL && lNode != list->first);
 
     return NULL;
 }
@@ -528,7 +528,7 @@ Lst_ForEachFrom(Lst l, LstNode ln, int (*proc)(void *, void *),
 	 * us.
 	 */
 
-	next = tln->nextPtr;
+	next = tln->next;
 
 	/*
 	 * We're done with the traversal if
@@ -537,7 +537,7 @@ Lst_ForEachFrom(Lst l, LstNode ln, int (*proc)(void *, void *),
 	 *  - nothing's been added after the current node (check this
 	 *    after proc() has been called).
 	 */
-	done = (next == NULL || next == list->firstPtr);
+	done = (next == NULL || next == list->first);
 
 	(void)tln->useCount++;
 	result = (*proc)(tln->datum, d);
@@ -548,8 +548,8 @@ Lst_ForEachFrom(Lst l, LstNode ln, int (*proc)(void *, void *),
 	 * Note: this doesn't work if this node was deleted before
 	 *       the new node was added.
 	 */
-	if (next != tln->nextPtr) {
-	    next = tln->nextPtr;
+	if (next != tln->next) {
+	    next = tln->next;
 	    done = 0;
 	}
 
@@ -590,7 +590,7 @@ Lst_Concat(Lst l1, Lst l2, int flags)
     }
 
     if (flags == LST_CONCLINK) {
-	if (list2->firstPtr != NULL) {
+	if (list2->first != NULL) {
 	    /*
 	     * So long as the second list isn't empty, we just link the
 	     * first element of the second list to the last element of the
@@ -599,21 +599,21 @@ Lst_Concat(Lst l1, Lst l2, int flags)
 	     * The last element of the second list, if it exists, then becomes
 	     * the last element of the first list.
 	     */
-	    list2->firstPtr->prevPtr = list1->lastPtr;
-	    if (list1->lastPtr != NULL) {
-		list1->lastPtr->nextPtr = list2->firstPtr;
+	    list2->first->prev = list1->last;
+	    if (list1->last != NULL) {
+		list1->last->next = list2->first;
 	    } else {
-		list1->firstPtr = list2->firstPtr;
+		list1->first = list2->first;
 	    }
-	    list1->lastPtr = list2->lastPtr;
+	    list1->last = list2->last;
 	}
 	free(l2);
-    } else if (list2->firstPtr != NULL) {
+    } else if (list2->first != NULL) {
 	/*
-	 * We set the nextPtr of the last element of list 2 to be nil to make
+	 * We set the 'next' of the last element of list 2 to be nil to make
 	 * the loop less difficult. The loop simply goes through the entire
-	 * second list creating new LstNodes and filling in the nextPtr, and
-	 * prevPtr to fit into l1 and its datum field from the
+	 * second list creating new LstNodes and filling in the 'next', and
+	 * 'prev' to fit into l1 and its datum field from the
 	 * datum field of the corresponding element in l2. The 'last' node
 	 * follows the last of the new nodes along until the entire l2 has
 	 * been appended. Only then does the bookkeeping catch up with the
@@ -621,18 +621,15 @@ Lst_Concat(Lst l1, Lst l2, int flags)
 	 * the first list must have been empty so the newly-created node is
 	 * made the first node of the list.
 	 */
-	list2->lastPtr->nextPtr = NULL;
-	for (last = list1->lastPtr, ln = list2->firstPtr;
-	     ln != NULL;
-	     ln = ln->nextPtr)
-	{
+	list2->last->next = NULL;
+	for (last = list1->last, ln = list2->first; ln != NULL; ln = ln->next) {
 	    nln = LstNodeNew(ln->datum);
 	    if (last != NULL) {
-		last->nextPtr = nln;
+		last->next = nln;
 	    } else {
-		list1->firstPtr = nln;
+		list1->first = nln;
 	    }
-	    nln->prevPtr = last;
+	    nln->prev = last;
 	    last = nln;
 	}
 
@@ -640,8 +637,8 @@ Lst_Concat(Lst l1, Lst l2, int flags)
 	 * Finish bookkeeping. The last new element becomes the last element
 	 * of list one.
 	 */
-	list1->lastPtr = last;
-	last->nextPtr = NULL;
+	list1->last = last;
+	last->next = NULL;
     }
 
     return SUCCESS;
@@ -667,8 +664,8 @@ Lst_Open(Lst l)
 	return FAILURE;
     }
     l->isOpen = TRUE;
-    l->atEnd = LstIsEmpty(l) ? Head : Unknown;
-    l->curPtr = NULL;
+    l->lastAccess = LstIsEmpty(l) ? Head : Unknown;
+    l->curr = NULL;
 
     return SUCCESS;
 }
@@ -682,8 +679,8 @@ Lst_OpenS(Lst l)
     assert(!l->isOpen);
 
     l->isOpen = TRUE;
-    l->atEnd = LstIsEmpty(l) ? Head : Unknown;
-    l->curPtr = NULL;
+    l->lastAccess = LstIsEmpty(l) ? Head : Unknown;
+    l->curr = NULL;
 }
 
 /* Return the next node for the given list, or NULL if the end has been
@@ -697,35 +694,35 @@ Lst_NextS(Lst l)
     assert(LstValid(l));
     assert(list->isOpen);
 
-    list->prevPtr = list->curPtr;
+    list->prev = list->curr;
 
-    if (list->curPtr == NULL) {
-	if (list->atEnd == Unknown) {
+    if (list->curr == NULL) {
+	if (list->lastAccess == Unknown) {
 	    /*
-	     * If we're just starting out, atEnd will be Unknown.
+	     * If we're just starting out, lastAccess will be Unknown.
 	     * Then we want to start this thing off in the right
-	     * direction -- at the start with atEnd being Middle.
+	     * direction -- at the start with lastAccess being Middle.
 	     */
-	    list->curPtr = tln = list->firstPtr;
-	    list->atEnd = Middle;
+	    list->curr = tln = list->first;
+	    list->lastAccess = Middle;
 	} else {
 	    tln = NULL;
-	    list->atEnd = Tail;
+	    list->lastAccess = Tail;
 	}
     } else {
-	tln = list->curPtr->nextPtr;
-	list->curPtr = tln;
+	tln = list->curr->next;
+	list->curr = tln;
 
-	if (tln == list->firstPtr || tln == NULL) {
+	if (tln == list->first || tln == NULL) {
 	    /*
 	     * If back at the front, then we've hit the end...
 	     */
-	    list->atEnd = Tail;
+	    list->lastAccess = Tail;
 	} else {
 	    /*
 	     * Reset to Middle if gone past first.
 	     */
-	    list->atEnd = Middle;
+	    list->lastAccess = Middle;
 	}
     }
 
@@ -741,7 +738,7 @@ Lst_CloseS(Lst l)
     assert(LstValid(l));
     assert(list->isOpen);
     list->isOpen = FALSE;
-    list->atEnd = Unknown;
+    list->lastAccess = Unknown;
 }
 
 
