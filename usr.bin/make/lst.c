@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.11 2020/08/21 04:57:56 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.12 2020/08/21 05:19:48 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -38,11 +38,11 @@
 #include "make_malloc.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.11 2020/08/21 04:57:56 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.12 2020/08/21 05:19:48 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.11 2020/08/21 04:57:56 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.12 2020/08/21 05:19:48 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -92,6 +92,18 @@ static Boolean
 LstNodeValid(LstNode ln)
 {
     return ln != NULL;
+}
+
+static LstNode
+LstNodeNew(void *datum)
+{
+    ListNode ln = bmake_malloc(sizeof *ln);
+    /* prevPtr will be initialized by the calling code. */
+    /* nextPtr will be initialized by the calling code. */
+    ln->useCount = 0;
+    ln->deleted = FALSE;
+    ln->datum = datum;
+    return ln;
 }
 
 /*
@@ -260,11 +272,7 @@ Lst_InsertBefore(Lst l, LstNode ln, void *d)
     }
 
     ok:
-    nLNode = bmake_malloc(sizeof *nLNode);
-
-    nLNode->datum = d;
-    nLNode->useCount = 0;
-    nLNode->deleted = FALSE;
+    nLNode = LstNodeNew(d);
 
     if (ln == NULL) {
 	nLNode->prevPtr = nLNode->nextPtr = NULL;
@@ -326,10 +334,7 @@ Lst_InsertAfter(Lst l, LstNode ln, void *d)
     list = l;
     lNode = ln;
 
-    nLNode = bmake_malloc(sizeof *nLNode);
-    nLNode->datum = d;
-    nLNode->useCount = 0;
-    nLNode->deleted = FALSE;
+    nLNode = LstNodeNew(d);
 
     if (lNode == NULL) {
 	nLNode->nextPtr = nLNode->prevPtr = NULL;
@@ -836,16 +841,13 @@ Lst_Concat(Lst l1, Lst l2, int flags)
 	     ln != NULL;
 	     ln = ln->nextPtr)
 	{
-	    nln = bmake_malloc(sizeof *nln);
-	    nln->datum = ln->datum;
+	    nln = LstNodeNew(ln->datum);
 	    if (last != NULL) {
 		last->nextPtr = nln;
 	    } else {
 		list1->firstPtr = nln;
 	    }
 	    nln->prevPtr = last;
-	    nln->useCount = 0;
-	    nln->deleted = FALSE;
 	    last = nln;
 	}
 
