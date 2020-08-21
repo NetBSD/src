@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.8 2020/08/21 03:36:03 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.9 2020/08/21 04:09:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -38,11 +38,11 @@
 #include "make_malloc.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.8 2020/08/21 03:36:03 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.9 2020/08/21 04:09:12 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.8 2020/08/21 03:36:03 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.9 2020/08/21 04:09:12 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -922,15 +922,13 @@ Lst_Open(Lst l)
  *-----------------------------------------------------------------------
  */
 LstNode
-Lst_Next(Lst l)
+Lst_NextS(Lst l)
 {
     ListNode tln;
     List list = l;
 
-    if ((LstValid(l) == FALSE) ||
-	(list->isOpen == FALSE)) {
-	return NULL;
-    }
+    assert(LstValid(l));
+    assert(list->isOpen);
 
     list->prevPtr = list->curPtr;
 

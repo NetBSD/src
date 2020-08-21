@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.84 2020/08/21 02:20:47 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.85 2020/08/21 04:09:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.84 2020/08/21 02:20:47 rillig Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.85 2020/08/21 04:09:12 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.84 2020/08/21 02:20:47 rillig Exp $");
+__RCSID("$NetBSD: arch.c,v 1.85 2020/08/21 04:09:12 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1130,7 +1130,7 @@ Arch_MemMTime(GNode *gn)
 	gn->mtime = 0;
 	return 0;
     }
-    while ((ln = Lst_Next(gn->parents)) != NULL) {
+    while ((ln = Lst_NextS(gn->parents)) != NULL) {
 	pgn = (GNode *)Lst_Datum(ln);
 
 	if (pgn->type & OP_ARCHV) {
