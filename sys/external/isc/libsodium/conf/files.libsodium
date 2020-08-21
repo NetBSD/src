@@ -1,10 +1,10 @@
-#	$NetBSD: files.libsodium,v 1.1 2020/08/20 21:20:16 riastradh Exp $
+#	$NetBSD: files.libsodium,v 1.2 2020/08/21 06:27:41 riastradh Exp $
 
 define		libsodium
 
 makeoptions libsodium SODIUM_CPPFLAGS+="-I$S/external/isc/libsodium/include"
 makeoptions libsodium SODIUM_CPPFLAGS+="-I$S/external/isc/libsodium/dist/src/libsodium/include/sodium"
-makeoptions libsodium SODIUM_CPPFLAGS+="-Wno-unused-function -Wno-unused-variable -DHAVE_TI_MODE"
+makeoptions libsodium SODIUM_CPPFLAGS+="-Wno-shadow -Wno-unused-function -Wno-unused-variable -DHAVE_TI_MODE"
 
 makeoptions libsodium "CPPFLAGS.x25519_ref10.c"+="${SODIUM_CPPFLAGS}"
 makeoptions libsodium "CPPFLAGS.scalarmult_curve25519.c"+="${SODIUM_CPPFLAGS}"
