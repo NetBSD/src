@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.5 2020/08/21 02:20:47 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.6 2020/08/21 02:56:25 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -36,11 +36,11 @@
 #include "make_malloc.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.5 2020/08/21 02:20:47 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.6 2020/08/21 02:56:25 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.5 2020/08/21 02:20:47 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.6 2020/08/21 02:56:25 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -467,15 +467,6 @@ Lst_Remove(Lst l, LstNode ln)
     }
 
     /*
-     * the only way firstPtr can still point to ln is if ln is the last
-     * node on the list (the list is circular, so lNode->nextptr == lNode in
-     * this case). The list is, therefore, empty and is marked as such
-     */
-    if (list->firstPtr == lNode) {
-	list->firstPtr = NULL;
-    }
-
-    /*
      * note that the datum is unmolested. The caller must free it as
      * necessary and as expected.
      */
@@ -563,21 +554,7 @@ Lst_Last(Lst l)
     }
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Lst_Succ --
- *	Return the successor to the given node on its list.
- *
- * Results:
- *	The successor of the node, if it exists (note that on a circular
- *	list, if the node is the only one in the list, it is its own
- *	successor).
- *
- * Side Effects:
- *	None.
- *
- *-----------------------------------------------------------------------
- */
+/* Return the successor to the given node on its list, or NULL. */
 LstNode
 Lst_Succ(LstNode ln)
 {
@@ -588,21 +565,7 @@ Lst_Succ(LstNode ln)
     }
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Lst_Prev --
- *	Return the predecessor to the given node on its list.
- *
- * Results:
- *	The predecessor of the node, if it exists (note that on a circular
- *	list, if the node is the only one in the list, it is its own
- *	predecessor).
- *
- * Side Effects:
- *	None.
- *
- *-----------------------------------------------------------------------
- */
+/* Return the predecessor to the given node on its list, or NULL. */
 LstNode
 Lst_Prev(LstNode ln)
 {
@@ -773,9 +736,6 @@ Lst_ForEach(Lst l, int (*proc)(void *, void *), void *d)
  *	Apply the given function to each element of the given list,
  *	starting from a given point.
  *
- *	If the list is circular, the application will wrap around to the
- *	beginning of the list again.
- *
  *	The function should return 0 if traversal should continue, and
  *	non-zero if it should abort.
  *
@@ -882,15 +842,6 @@ Lst_Concat(Lst l1, Lst l2, int flags)
     if (flags == LST_CONCLINK) {
 	if (list2->firstPtr != NULL) {
 	    /*
-	     * We set the nextPtr of the
-	     * last element of list two to be NIL to make the loop easier and
-	     * so we don't need an extra case should the first list turn
-	     * out to be non-circular -- the final element will already point
-	     * to NIL space and the first element will be untouched if it
-	     * existed before and will also point to NIL space if it didn't.
-	     */
-	    list2->lastPtr->nextPtr = NULL;
-	    /*
 	     * So long as the second list isn't empty, we just link the
 	     * first element of the second list to the last element of the
 	     * first list. If the first list isn't empty, we then link the
@@ -957,9 +908,6 @@ Lst_Concat(Lst l1, Lst l2, int flags)
  * The sequential functions access the list in a slightly different way.
  * CurPtr points to their idea of the current node in the list and they
  * access the list based on it.
- *
- * If the list is circular, Lst_Next and Lst_Prev will go around the list
- * forever. Lst_IsAtEnd must be used to determine when to stop.
  */
 
 /*-
@@ -998,8 +946,7 @@ Lst_Open(Lst l)
  *
  * Results:
  *	The next node or NULL if the list has yet to be opened. Also
- *	if the list is non-circular and the end has been reached, NULL
- *	is returned.
+ *	if the end has been reached, NULL is returned.
  *
  * Side Effects:
  *	the curPtr field is updated.
