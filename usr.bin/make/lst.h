@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.22 2020/08/21 02:20:47 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.23 2020/08/21 02:56:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -157,11 +157,7 @@ LstNode		Lst_FindFrom(Lst, LstNode, const void *,
 LstNode		Lst_Member(Lst, void *);
 /* Apply a function to all elements of a lst */
 int		Lst_ForEach(Lst, int (*)(void *, void *), void *);
-/*
- * Apply a function to all elements of a lst starting from a certain point.
- * If the list is circular, the application will wrap around to the
- * beginning of the list again.
- */
+/* Apply a function to all elements of a lst starting from a certain point. */
 int		Lst_ForEachFrom(Lst, LstNode, int (*)(void *, void *),
 				void *);
 /*
