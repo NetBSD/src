@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.132 2020/06/06 08:56:30 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.133 2020/08/21 20:16:39 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.132 2020/06/06 08:56:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.133 2020/08/21 20:16:39 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -323,7 +323,7 @@ xhci_op_read_8(const struct xhci_softc * const sc, bus_size_t offset)
 {
 	uint64_t value;
 
-	if (sc->sc_ac64) {
+	if (XHCI_HCC_AC64(sc->sc_hcc)) {
 #ifdef XHCI_USE_BUS_SPACE_8
 		value = bus_space_read_8(sc->sc_iot, sc->sc_obh, offset);
 #else
@@ -342,7 +342,7 @@ static inline void
 xhci_op_write_8(const struct xhci_softc * const sc, bus_size_t offset,
     uint64_t value)
 {
-	if (sc->sc_ac64) {
+	if (XHCI_HCC_AC64(sc->sc_hcc)) {
 #ifdef XHCI_USE_BUS_SPACE_8
 		bus_space_write_8(sc->sc_iot, sc->sc_obh, offset, value);
 #else
@@ -382,7 +382,7 @@ xhci_rt_read_8(const struct xhci_softc * const sc, bus_size_t offset)
 {
 	uint64_t value;
 
-	if (sc->sc_ac64) {
+	if (XHCI_HCC_AC64(sc->sc_hcc)) {
 #ifdef XHCI_USE_BUS_SPACE_8
 		value = bus_space_read_8(sc->sc_iot, sc->sc_rbh, offset);
 #else
@@ -402,7 +402,7 @@ static inline void
 xhci_rt_write_8(const struct xhci_softc * const sc, bus_size_t offset,
     uint64_t value)
 {
-	if (sc->sc_ac64) {
+	if (XHCI_HCC_AC64(sc->sc_hcc)) {
 #ifdef XHCI_USE_BUS_SPACE_8
 		bus_space_write_8(sc->sc_iot, sc->sc_rbh, offset, value);
 #else
@@ -826,11 +826,11 @@ xhci_id_protocols(struct xhci_softc *sc, bus_size_t ecp)
 
 /* Process extended capabilities */
 static void
-xhci_ecp(struct xhci_softc *sc, uint32_t hcc)
+xhci_ecp(struct xhci_softc *sc)
 {
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
-	bus_size_t ecp = XHCI_HCC_XECP(hcc) * 4;
+	bus_size_t ecp = XHCI_HCC_XECP(sc->sc_hcc) * 4;
 	while (ecp != 0) {
 		uint32_t ecr = xhci_read_4(sc, ecp);
 		aprint_debug_dev(sc->sc_dev, "ECR: 0x%08x\n", ecr);
@@ -944,7 +944,7 @@ int
 xhci_init(struct xhci_softc *sc)
 {
 	bus_size_t bsz;
-	uint32_t hcs1, hcs2, hcs3, hcc, dboff, rtsoff, hcc2;
+	uint32_t hcs1, hcs2, hcs3, dboff, rtsoff;
 	uint32_t pagesize, config;
 	int i = 0;
 	uint16_t hciversion;
@@ -993,21 +993,20 @@ xhci_init(struct xhci_softc *sc)
 	aprint_debug_dev(sc->sc_dev,
 	    "hcs1=%"PRIx32" hcs2=%"PRIx32" hcs3=%"PRIx32"\n", hcs1, hcs2, hcs3);
 
-	hcc = xhci_cap_read_4(sc, XHCI_HCCPARAMS);
-	sc->sc_ac64 = XHCI_HCC_AC64(hcc);
-	sc->sc_ctxsz = XHCI_HCC_CSZ(hcc) ? 64 : 32;
+	sc->sc_hcc = xhci_cap_read_4(sc, XHCI_HCCPARAMS);
+	sc->sc_ctxsz = XHCI_HCC_CSZ(sc->sc_hcc) ? 64 : 32;
 
 	char sbuf[128];
 	if (hciversion < XHCI_HCIVERSION_1_0)
-		snprintb(sbuf, sizeof(sbuf), XHCI_HCCPREV1_BITS, hcc);
+		snprintb(sbuf, sizeof(sbuf), XHCI_HCCPREV1_BITS, sc->sc_hcc);
 	else
-		snprintb(sbuf, sizeof(sbuf), XHCI_HCCV1_x_BITS, hcc);
+		snprintb(sbuf, sizeof(sbuf), XHCI_HCCV1_x_BITS, sc->sc_hcc);
 	aprint_debug_dev(sc->sc_dev, "hcc=%s\n", sbuf);
 	aprint_debug_dev(sc->sc_dev, "xECP %" __PRIxBITS "\n",
-	    XHCI_HCC_XECP(hcc) * 4);
+	    XHCI_HCC_XECP(sc->sc_hcc) * 4);
 	if (hciversion >= XHCI_HCIVERSION_1_1) {
-		hcc2 = xhci_cap_read_4(sc, XHCI_HCCPARAMS2);
-		snprintb(sbuf, sizeof(sbuf), XHCI_HCC2_BITS, hcc2);
+		sc->sc_hcc2 = xhci_cap_read_4(sc, XHCI_HCCPARAMS2);
+		snprintb(sbuf, sizeof(sbuf), XHCI_HCC2_BITS, sc->sc_hcc2);
 		aprint_debug_dev(sc->sc_dev, "hcc2=%s\n", sbuf);
 	}
 
@@ -1024,7 +1023,7 @@ xhci_init(struct xhci_softc *sc)
 	/*
 	 * Process all Extended Capabilities
 	 */
-	xhci_ecp(sc, hcc);
+	xhci_ecp(sc);
 
 	bsz = XHCI_PORTSC(sc->sc_maxports);
 	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, caplength, bsz,

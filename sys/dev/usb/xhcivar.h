@@ -1,4 +1,4 @@
-/*	$NetBSD: xhcivar.h,v 1.15 2020/05/21 13:47:10 jakllsch Exp $	*/
+/*	$NetBSD: xhcivar.h,v 1.16 2020/08/21 20:16:39 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -127,7 +127,6 @@ struct xhci_softc {
 	struct xhci_soft_trb sc_result_trb;
 	bool sc_resultpending;
 
-	bool sc_ac64;
 	bool sc_dying;
 
 	void (*sc_vendor_init)(struct xhci_softc *);
@@ -136,6 +135,8 @@ struct xhci_softc {
 	int sc_quirks;
 #define XHCI_QUIRK_INTEL	__BIT(0) /* Intel xhci chip */
 #define XHCI_DEFERRED_START	__BIT(1)
+	uint32_t sc_hcc;		/* copy of HCCPARAMS1 */
+	uint32_t sc_hcc2;		/* copy of HCCPARAMS2 */
 };
 
 int	xhci_init(struct xhci_softc *);
