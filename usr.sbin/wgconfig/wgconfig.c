@@ -1,4 +1,4 @@
-/*	$NetBSD: wgconfig.c,v 1.3 2020/08/20 21:34:51 riastradh Exp $	*/
+/*	$NetBSD: wgconfig.c,v 1.4 2020/08/21 17:51:31 martin Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: wgconfig.c,v 1.3 2020/08/20 21:34:51 riastradh Exp $");
+__RCSID("$NetBSD: wgconfig.c,v 1.4 2020/08/21 17:51:31 martin Exp $");
 
 #include <sys/ioctl.h>
 
@@ -92,7 +92,7 @@ format_key(prop_object_t key_prop)
 	key = prop_data_value(key_prop);
 	key_len = prop_data_size(key_prop);
 	if (key_len != KEY_LEN)
-		errx(EXIT_FAILURE, "invalid key len: %lu", key_len);
+		errx(EXIT_FAILURE, "invalid key len: %zu", key_len);
 	error = b64_ntop(key, key_len, key_b64, KEY_BASE64_LEN + 1);
 	if (error == -1)
 		errx(EXIT_FAILURE, "b64_ntop failed");
@@ -425,7 +425,7 @@ read_key(const char *path, unsigned char keybuf[KEY_LEN])
 
 	n = fread(keyb64buf, 1, KEY_BASE64_LEN, fp);
 	if (n != KEY_BASE64_LEN)
-		errx(EXIT_FAILURE, "base64 key len is short: %lu", n);
+		errx(EXIT_FAILURE, "base64 key len is short: %zu", n);
 	keyb64buf[KEY_BASE64_LEN] = '\0';
 
 	base64_decode(keyb64buf, keybuf);
