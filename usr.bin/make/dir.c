@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.93 2020/08/21 02:20:47 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.94 2020/08/21 03:36:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.93 2020/08/21 02:20:47 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.94 2020/08/21 03:36:03 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.93 2020/08/21 02:20:47 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.94 2020/08/21 03:36:03 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -429,7 +429,7 @@ Dir_InitDot(void)
 
 	/* Remove old entry from openDirectories, but do not destroy. */
 	ln = Lst_Member(openDirectories, dot);
-	(void)Lst_Remove(openDirectories, ln);
+	Lst_RemoveS(openDirectories, ln);
     }
 
     dot = Dir_AddDir(NULL, ".");
@@ -1719,7 +1719,7 @@ Dir_Destroy(void *pp)
 	LstNode ln;
 
 	ln = Lst_Member(openDirectories, p);
-	(void)Lst_Remove(openDirectories, ln);
+	Lst_RemoveS(openDirectories, ln);
 
 	Hash_DeleteTable(&p->files);
 	free(p->name);
