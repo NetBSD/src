@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2020/08/21 06:27:41 riastradh Exp $
+#	$NetBSD: Makefile,v 1.18 2020/08/21 06:30:46 riastradh Exp $
 #
 
 SODIUM_IMPORTDIR=${.CURDIR}/../../../../external/isc/libsodium
@@ -64,7 +64,12 @@ SRCS+=	blake2s.c
 SODIUM_CPPFLAGS=
 SODIUM_CPPFLAGS+=	-I${SODIUM_IMPORTDIR}/include
 SODIUM_CPPFLAGS+=	-I${SODIUM_IMPORTDIR}/dist/src/libsodium/include/sodium
-SODIUM_CPPFLAGS+=	-Wno-shadow -Wno-unused-function -Wno-unused-variable -DHAVE_TI_MODE
+
+SODIUM_CPPFLAGS+=	-DHAVE_TI_MODE
+
+SODIUM_CPPFLAGS+=	-Wno-shadow
+SODIUM_CPPFLAGS+=	-Wno-unused-function
+SODIUM_CPPFLAGS+=	-Wno-unused-variable
 
 CPPFLAGS.x25519_ref10.c+=		${SODIUM_CPPFLAGS}
 CPPFLAGS.scalarmult_curve25519.c+=	${SODIUM_CPPFLAGS}
