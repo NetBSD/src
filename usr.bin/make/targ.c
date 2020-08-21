@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.64 2020/07/20 18:12:48 sjg Exp $	*/
+/*	$NetBSD: targ.c,v 1.65 2020/08/21 02:20:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.64 2020/07/20 18:12:48 sjg Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.65 2020/08/21 02:20:48 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.64 2020/07/20 18:12:48 sjg Exp $");
+__RCSID("$NetBSD: targ.c,v 1.65 2020/08/21 02:20:48 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -167,7 +167,7 @@ static int TargPropagateNode(void *, void *);
 void
 Targ_Init(void)
 {
-    allTargets = Lst_Init(FALSE);
+    allTargets = Lst_Init();
     Hash_InitTable(&targets, HTSIZE);
 }
 
@@ -258,21 +258,21 @@ Targ_NewGN(const char *name)
     gn->checked =	0;
     gn->mtime =		0;
     gn->cmgn =		NULL;
-    gn->iParents =  	Lst_Init(FALSE);
-    gn->cohorts =   	Lst_Init(FALSE);
-    gn->parents =   	Lst_Init(FALSE);
-    gn->children =  	Lst_Init(FALSE);
-    gn->order_pred =  	Lst_Init(FALSE);
-    gn->order_succ =  	Lst_Init(FALSE);
+    gn->iParents =  	Lst_Init();
+    gn->cohorts =   	Lst_Init();
+    gn->parents =   	Lst_Init();
+    gn->children =  	Lst_Init();
+    gn->order_pred =  	Lst_Init();
+    gn->order_succ =  	Lst_Init();
     Hash_InitTable(&gn->context, 0);
-    gn->commands =  	Lst_Init(FALSE);
+    gn->commands =  	Lst_Init();
     gn->suffix =	NULL;
     gn->lineno =	0;
     gn->fname = 	NULL;
 
 #ifdef CLEANUP
     if (allGNs == NULL)
-	allGNs = Lst_Init(FALSE);
+	allGNs = Lst_Init();
     Lst_AtEnd(allGNs, gn);
 #endif
 
@@ -393,7 +393,7 @@ Targ_FindList(Lst names, int flags)
     GNode	   *gn;		/* node in tLn */
     char    	   *name;
 
-    nodes = Lst_Init(FALSE);
+    nodes = Lst_Init();
 
     if (Lst_Open(names) == FAILURE) {
 	return nodes;

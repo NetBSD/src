@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.4 2020/08/09 20:49:15 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.5 2020/08/21 02:20:47 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -36,11 +36,11 @@
 #include "make_malloc.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.4 2020/08/09 20:49:15 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.5 2020/08/21 02:20:47 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.4 2020/08/09 20:49:15 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.5 2020/08/21 02:20:47 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -65,8 +65,6 @@ typedef enum {
 typedef struct List {
     ListNode firstPtr;		/* first node in list */
     ListNode lastPtr;		/* last node in list */
-    Boolean isCirc;		/* true if the list should be considered
-				 * circular */
 /*
  * fields for sequential access
  */
@@ -115,24 +113,9 @@ LstIsEmpty(Lst l)
     return l->firstPtr == NULL;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Lst_Init --
- *	Create and initialize a new list.
- *
- * Input:
- *	circ		TRUE if the list should be made circular
- *
- * Results:
- *	The created list.
- *
- * Side Effects:
- *	A list is created, what else?
- *
- *-----------------------------------------------------------------------
- */
+/* Create and initialize a new, empty list. */
 Lst
-Lst_Init(Boolean circ)
+Lst_Init(void)
 {
     List nList;
 
@@ -141,7 +124,6 @@ Lst_Init(Boolean circ)
     nList->firstPtr = NULL;
     nList->lastPtr = NULL;
     nList->isOpen = FALSE;
-    nList->isCirc = circ;
     nList->atEnd = Unknown;
 
     return nList;
@@ -175,7 +157,7 @@ Lst_Duplicate(Lst l, DuplicateProc *copyProc)
 	return NULL;
     }
 
-    nl = Lst_Init(list->isCirc);
+    nl = Lst_Init();
     if (nl == NULL) {
 	return NULL;
     }
@@ -190,11 +172,7 @@ Lst_Duplicate(Lst l, DuplicateProc *copyProc)
 	    return NULL;
 	}
 
-	if (list->isCirc && ln == list->lastPtr) {
-	    ln = NULL;
-	} else {
-	    ln = ln->nextPtr;
-	}
+	ln = ln->nextPtr;
     }
 
     return nl;
@@ -297,11 +275,7 @@ Lst_InsertBefore(Lst l, LstNode ln, void *d)
     nLNode->useCount = nLNode->flags = 0;
 
     if (ln == NULL) {
-	if (list->isCirc) {
-	    nLNode->prevPtr = nLNode->nextPtr = nLNode;
-	} else {
-	    nLNode->prevPtr = nLNode->nextPtr = NULL;
-	}
+	nLNode->prevPtr = nLNode->nextPtr = NULL;
 	list->firstPtr = list->lastPtr = nLNode;
     } else {
 	nLNode->prevPtr = lNode->prevPtr;
@@ -365,11 +339,7 @@ Lst_InsertAfter(Lst l, LstNode ln, void *d)
     nLNode->useCount = nLNode->flags = 0;
 
     if (lNode == NULL) {
-	if (list->isCirc) {
-	    nLNode->nextPtr = nLNode->prevPtr = nLNode;
-	} else {
-	    nLNode->nextPtr = nLNode->prevPtr = NULL;
-	}
+	nLNode->nextPtr = nLNode->prevPtr = NULL;
 	list->firstPtr = list->lastPtr = nLNode;
     } else {
 	nLNode->prevPtr = lNode;
@@ -936,15 +906,6 @@ Lst_Concat(Lst l1, Lst l2, int flags)
 	    }
 	    list1->lastPtr = list2->lastPtr;
 	}
-	if (list1->isCirc && list1->firstPtr != NULL) {
-	    /*
-	     * If the first list is supposed to be circular and it is (now)
-	     * non-empty, we must make sure it's circular by linking the
-	     * first element to the last and vice versa
-	     */
-	    list1->firstPtr->prevPtr = list1->lastPtr;
-	    list1->lastPtr->nextPtr = list1->firstPtr;
-	}
 	free(l2);
     } else if (list2->firstPtr != NULL) {
 	/*
@@ -981,23 +942,7 @@ Lst_Concat(Lst l1, Lst l2, int flags)
 	 * of list one.
 	 */
 	list1->lastPtr = last;
-
-	/*
-	 * The circularity of both list one and list two must be corrected
-	 * for -- list one because of the new nodes added to it; list two
-	 * because of the alteration of list2->lastPtr's nextPtr to ease the
-	 * above for loop.
-	 */
-	if (list1->isCirc) {
-	    list1->lastPtr->nextPtr = list1->firstPtr;
-	    list1->firstPtr->prevPtr = list1->lastPtr;
-	} else {
-	    last->nextPtr = NULL;
-	}
-
-	if (list2->isCirc) {
-	    list2->lastPtr->nextPtr = list2->firstPtr;
-	}
+	last->nextPtr = NULL;
     }
 
     return SUCCESS;
@@ -1105,34 +1050,6 @@ Lst_Next(Lst l)
     }
 
     return tln;
-}
-
-/*-
- *-----------------------------------------------------------------------
- * Lst_IsAtEnd --
- *	Return true if have reached the end of the given list.
- *
- * Results:
- *	TRUE if at the end of the list (this includes the list not being
- *	open or being invalid) or FALSE if not. We return TRUE if the list
- *	is invalid or unopend so as to cause the caller to exit its loop
- *	asap, the assumption being that the loop is of the form
- *	    while (!Lst_IsAtEnd (l)) {
- *	    	  ...
- *	    }
- *
- * Side Effects:
- *	None.
- *
- *-----------------------------------------------------------------------
- */
-Boolean
-Lst_IsAtEnd(Lst l)
-{
-    List list = l;
-
-    return !LstValid(l) || !list->isOpen ||
-	   list->atEnd == Head || list->atEnd == Tail;
 }
 
 /*-

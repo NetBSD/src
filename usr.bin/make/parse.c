@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.251 2020/08/10 19:53:19 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.252 2020/08/21 02:20:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.251 2020/08/10 19:53:19 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.252 2020/08/21 02:20:47 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.251 2020/08/10 19:53:19 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.252 2020/08/21 02:20:47 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1206,7 +1206,7 @@ ParseDoDependency(char *line)
     specType = Not;
     paths = NULL;
 
-    curTargs = Lst_Init(FALSE);
+    curTargs = Lst_Init();
 
     /*
      * First, grind through the targets.
@@ -1354,7 +1354,7 @@ ParseDoDependency(char *line)
 		switch (specType) {
 		case ExPath:
 		    if (paths == NULL) {
-			paths = Lst_Init(FALSE);
+			paths = Lst_Init();
 		    }
 		    (void)Lst_AtEnd(paths, dirSearchPath);
 		    break;
@@ -1412,7 +1412,7 @@ ParseDoDependency(char *line)
 		    goto out;
 		} else {
 		    if (paths == NULL) {
-			paths = Lst_Init(FALSE);
+			paths = Lst_Init();
 		    }
 		    (void)Lst_AtEnd(paths, path);
 		}
@@ -1431,7 +1431,7 @@ ParseDoDependency(char *line)
 		 * use Dir_Destroy in the destruction of the path as the
 		 * Dir module could have added a directory to the path...
 		 */
-		Lst	    emptyPath = Lst_Init(FALSE);
+		Lst	    emptyPath = Lst_Init();
 
 		Dir_Expand(line, emptyPath, curTargs);
 
@@ -1714,7 +1714,7 @@ ParseDoDependency(char *line)
 	    }
 
 	    if (*cp == LPAREN) {
-		sources = Lst_Init(FALSE);
+		sources = Lst_Init();
 		if (Arch_ParseArchive(&line, sources, VAR_CMD) != SUCCESS) {
 		    Parse_Error(PARSE_FATAL,
 				 "Error in source archive spec \"%s\"", line);
@@ -3242,7 +3242,7 @@ Parse_File(const char *name, int fd)
 	    if (targets)
 		Lst_Destroy(targets, NULL);
 
-	    targets = Lst_Init(FALSE);
+	    targets = Lst_Init();
 	    inLine = TRUE;
 
 	    ParseDoDependency(line);
@@ -3284,12 +3284,12 @@ void
 Parse_Init(void)
 {
     mainNode = NULL;
-    parseIncPath = Lst_Init(FALSE);
-    sysIncPath = Lst_Init(FALSE);
-    defIncPath = Lst_Init(FALSE);
-    includes = Lst_Init(FALSE);
+    parseIncPath = Lst_Init();
+    sysIncPath = Lst_Init();
+    defIncPath = Lst_Init();
+    includes = Lst_Init();
 #ifdef CLEANUP
-    targCmds = Lst_Init(FALSE);
+    targCmds = Lst_Init();
 #endif
 }
 
@@ -3327,7 +3327,7 @@ Parse_MainName(void)
 {
     Lst           mainList;	/* result list */
 
-    mainList = Lst_Init(FALSE);
+    mainList = Lst_Init();
 
     if (mainNode == NULL) {
 	Punt("no target to make.");
