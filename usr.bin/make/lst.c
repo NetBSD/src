@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.12 2020/08/21 05:19:48 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.13 2020/08/21 05:28:41 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -38,15 +38,15 @@
 #include "make_malloc.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.12 2020/08/21 05:19:48 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.13 2020/08/21 05:28:41 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.12 2020/08/21 05:19:48 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.13 2020/08/21 05:28:41 rillig Exp $");
 #endif /* not lint */
 #endif
 
-typedef struct ListNode {
+struct ListNode {
     struct ListNode *prevPtr;	/* previous element in list */
     struct ListNode *nextPtr;	/* next in list */
     uint8_t useCount;		/* Count of functions using the node.
@@ -54,25 +54,25 @@ typedef struct ListNode {
 				 * goes to 0 */
     Boolean deleted;		/* List node should be removed when done */
     void *datum;		/* datum associated with this element */
-} *ListNode;
+};
 
 typedef enum {
     Head, Middle, Tail, Unknown
 } Where;
 
-typedef struct List {
-    ListNode firstPtr;		/* first node in list */
-    ListNode lastPtr;		/* last node in list */
+struct List {
+    LstNode firstPtr;		/* first node in list */
+    LstNode lastPtr;		/* last node in list */
 /*
  * fields for sequential access
  */
     Where atEnd;		/* Where in the list the last access was */
     Boolean isOpen;		/* true if list has been Lst_Open'ed */
-    ListNode curPtr;		/* current node, if open. NULL if
+    LstNode curPtr;		/* current node, if open. NULL if
 				 * *just* opened */
-    ListNode prevPtr;		/* Previous node, if open. Used by
+    LstNode prevPtr;		/* Previous node, if open. Used by
 				 * Lst_Remove */
-} *List;
+};
 
 /*
  * LstValid --
@@ -97,7 +97,7 @@ LstNodeValid(LstNode ln)
 static LstNode
 LstNodeNew(void *datum)
 {
-    ListNode ln = bmake_malloc(sizeof *ln);
+    LstNode ln = bmake_malloc(sizeof *ln);
     /* prevPtr will be initialized by the calling code. */
     /* nextPtr will be initialized by the calling code. */
     ln->useCount = 0;
@@ -120,9 +120,7 @@ LstIsEmpty(Lst l)
 Lst
 Lst_Init(void)
 {
-    List nList;
-
-    nList = bmake_malloc(sizeof *nList);
+    Lst nList = bmake_malloc(sizeof *nList);
 
     nList->firstPtr = NULL;
     nList->lastPtr = NULL;
@@ -153,8 +151,8 @@ Lst
 Lst_Duplicate(Lst l, DuplicateProc *copyProc)
 {
     Lst nl;
-    ListNode ln;
-    List list = l;
+    LstNode ln;
+    Lst list = l;
 
     if (!LstValid(l)) {
 	return NULL;
@@ -199,8 +197,8 @@ Lst_Duplicate(Lst l, DuplicateProc *copyProc)
 void
 Lst_Destroy(Lst list, FreeProc *freeProc)
 {
-    ListNode ln;
-    ListNode tln = NULL;
+    LstNode ln;
+    LstNode tln = NULL;
 
     if (list == NULL)
 	return;
@@ -256,9 +254,9 @@ Lst_Destroy(Lst list, FreeProc *freeProc)
 ReturnStatus
 Lst_InsertBefore(Lst l, LstNode ln, void *d)
 {
-    ListNode nLNode;		/* new lnode for d */
-    ListNode lNode = ln;
-    List list = l;
+    LstNode nLNode;		/* new lnode for d */
+    LstNode lNode = ln;
+    Lst list = l;
 
 
     /*
@@ -318,9 +316,9 @@ Lst_InsertBefore(Lst l, LstNode ln, void *d)
 ReturnStatus
 Lst_InsertAfter(Lst l, LstNode ln, void *d)
 {
-    List list;
-    ListNode lNode;
-    ListNode nLNode;
+    Lst list;
+    LstNode lNode;
+    LstNode nLNode;
 
     if (LstValid(l) && (ln == NULL && LstIsEmpty(l))) {
 	goto ok;
@@ -410,8 +408,8 @@ Lst_AtEnd(Lst l, void *d)
 void
 Lst_RemoveS(Lst l, LstNode ln)
 {
-    List list = l;
-    ListNode lNode = ln;
+    Lst list = l;
+    LstNode lNode = ln;
 
     assert(LstValid(l));
     assert(LstNodeValid(ln));
@@ -629,7 +627,7 @@ LstNode
 Lst_FindFrom(Lst l, LstNode ln, const void *d,
 	     int (*cProc)(const void *, const void *))
 {
-    ListNode tln;
+    LstNode tln;
 
     if (!LstValid(l) || LstIsEmpty(l) || !LstNodeValid(ln)) {
 	return NULL;
@@ -652,8 +650,8 @@ Lst_FindFrom(Lst l, LstNode ln, const void *d,
 LstNode
 Lst_Member(Lst l, void *d)
 {
-    List list = l;
-    ListNode lNode;
+    Lst list = l;
+    LstNode lNode;
 
     if (list == NULL) {
 	return NULL;
@@ -717,9 +715,9 @@ int
 Lst_ForEachFrom(Lst l, LstNode ln, int (*proc)(void *, void *),
 		void *d)
 {
-    ListNode tln = ln;
-    List list = l;
-    ListNode next;
+    LstNode tln = ln;
+    Lst list = l;
+    LstNode next;
     Boolean done;
     int result;
 
@@ -793,12 +791,12 @@ Lst_ForEachFrom(Lst l, LstNode ln, int (*proc)(void *, void *),
 ReturnStatus
 Lst_Concat(Lst l1, Lst l2, int flags)
 {
-    ListNode ln;     /* original LstNode */
-    ListNode nln;    /* new LstNode */
-    ListNode last;   /* the last element in the list. Keeps
+    LstNode ln;     /* original LstNode */
+    LstNode nln;    /* new LstNode */
+    LstNode last;   /* the last element in the list. Keeps
 				 * bookkeeping until the end */
-    List list1 = l1;
-    List list2 = l2;
+    Lst list1 = l1;
+    Lst list2 = l2;
 
     if (!LstValid(l1) || !LstValid(l2)) {
 	return FAILURE;
@@ -920,8 +918,8 @@ Lst_OpenS(Lst l)
 LstNode
 Lst_NextS(Lst l)
 {
-    ListNode tln;
-    List list = l;
+    LstNode tln;
+    Lst list = l;
 
     assert(LstValid(l));
     assert(list->isOpen);
@@ -965,7 +963,7 @@ Lst_NextS(Lst l)
 void
 Lst_CloseS(Lst l)
 {
-    List list = l;
+    Lst list = l;
 
     assert(LstValid(l));
     assert(list->isOpen);
@@ -1020,7 +1018,7 @@ void *
 Lst_DeQueue(Lst l)
 {
     void *rd;
-    ListNode tln;
+    LstNode tln;
 
     tln = Lst_First(l);
     if (tln == NULL) {
