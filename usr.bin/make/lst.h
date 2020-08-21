@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.23 2020/08/21 02:56:25 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.24 2020/08/21 03:36:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -122,9 +122,9 @@ ReturnStatus	Lst_AtFront(Lst, void *);
 /* Place an element at the end of a lst. */
 ReturnStatus	Lst_AtEnd(Lst, void *);
 /* Remove an element */
-ReturnStatus	Lst_Remove(Lst, LstNode);
+void		Lst_RemoveS(Lst, LstNode);
 /* Replace a node with a new value */
-ReturnStatus	Lst_Replace(LstNode, void *);
+void		Lst_ReplaceS(LstNode, void *);
 /* Concatenate two lists */
 ReturnStatus	Lst_Concat(Lst, Lst, int);
 

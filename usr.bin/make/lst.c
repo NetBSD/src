@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.7 2020/08/21 03:03:45 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.8 2020/08/21 03:36:03 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -32,15 +32,17 @@
  * SUCH DAMAGE.
  */
 
+#include <assert.h>
+
 #include "lst.h"
 #include "make_malloc.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.7 2020/08/21 03:03:45 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.8 2020/08/21 03:36:03 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.7 2020/08/21 03:03:45 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.8 2020/08/21 03:36:03 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -405,30 +407,16 @@ Lst_AtEnd(Lst l, void *d)
     return Lst_InsertAfter(l, end, d);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Lst_Remove --
- *	Remove the given node from the given list.
- *
- * Results:
- *	SUCCESS or FAILURE.
- *
- * Side Effects:
- *	The list's firstPtr will be set to NULL if ln is the last
- *	node on the list. firsPtr and lastPtr will be altered if ln is
- *	either the first or last node, respectively, on the list.
- *
- *-----------------------------------------------------------------------
- */
-ReturnStatus
-Lst_Remove(Lst l, LstNode ln)
+/* Remove the given node from the given list.
+ * The datum stored in the node must be freed by the caller, if necessary. */
+void
+Lst_RemoveS(Lst l, LstNode ln)
 {
     List list = l;
     ListNode lNode = ln;
 
-    if (!LstValid(l) || !LstNodeValid(ln)) {
-	return FAILURE;
-    }
+    assert(LstValid(l));
+    assert(LstNodeValid(ln));
 
     /*
      * unlink it from the list
@@ -473,32 +461,13 @@ Lst_Remove(Lst l, LstNode ln)
     } else {
 	lNode->deleted = TRUE;
     }
-
-    return SUCCESS;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Lst_Replace --
- *	Replace the datum in the given node with the new datum
- *
- * Results:
- *	SUCCESS or FAILURE.
- *
- * Side Effects:
- *	The datum field fo the node is altered.
- *
- *-----------------------------------------------------------------------
- */
-ReturnStatus
-Lst_Replace(LstNode ln, void *d)
+/* Replace the datum in the given node with the new datum. */
+void
+Lst_ReplaceS(LstNode ln, void *d)
 {
-    if (ln == NULL) {
-	return FAILURE;
-    } else {
-	(ln)->datum = d;
-	return SUCCESS;
-    }
+    ln->datum = d;
 }
 
 
@@ -1080,9 +1049,6 @@ Lst_DeQueue(Lst l)
     }
 
     rd = tln->datum;
-    if (Lst_Remove(l, tln) == FAILURE) {
-	return NULL;
-    } else {
-	return rd;
-    }
+    Lst_RemoveS(l, tln);
+    return rd;
 }
