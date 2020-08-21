@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.20 2020/08/21 07:05:25 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.21 2020/08/21 15:48:13 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.20 2020/08/21 07:05:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.21 2020/08/21 15:48:13 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -614,9 +614,9 @@ struct wg_softc {
 #endif
 };
 
-
-#define WG_REKEY_AFTER_MESSAGES		(ULONG_MAX - (1 << 16) - 1)
-#define WG_REJECT_AFTER_MESSAGES	(ULONG_MAX - (1 <<  4) - 1)
+/* [W] 6.1 Preliminaries */
+#define WG_REKEY_AFTER_MESSAGES		(1ULL << 60)
+#define WG_REJECT_AFTER_MESSAGES	(UINT64_MAX - (1 << 13))
 #define WG_REKEY_AFTER_TIME		120
 #define WG_REJECT_AFTER_TIME		180
 #define WG_REKEY_ATTEMPT_TIME		 90
@@ -628,11 +628,11 @@ struct wg_softc {
 
 static uint64_t wg_rekey_after_messages = WG_REKEY_AFTER_MESSAGES;
 static uint64_t wg_reject_after_messages = WG_REJECT_AFTER_MESSAGES;
-static time_t wg_rekey_after_time = WG_REKEY_AFTER_TIME;
-static time_t wg_reject_after_time = WG_REJECT_AFTER_TIME;
-static time_t wg_rekey_attempt_time = WG_REKEY_ATTEMPT_TIME;
-static time_t wg_rekey_timeout = WG_REKEY_TIMEOUT;
-static time_t wg_keepalive_timeout = WG_KEEPALIVE_TIMEOUT;
+static unsigned wg_rekey_after_time = WG_REKEY_AFTER_TIME;
+static unsigned wg_reject_after_time = WG_REJECT_AFTER_TIME;
+static unsigned wg_rekey_attempt_time = WG_REKEY_ATTEMPT_TIME;
+static unsigned wg_rekey_timeout = WG_REKEY_TIMEOUT;
+static unsigned wg_keepalive_timeout = WG_KEEPALIVE_TIMEOUT;
 
 static struct mbuf *
 		wg_get_mbuf(size_t, size_t);
@@ -1472,7 +1472,7 @@ wg_schedule_handshake_timeout_timer(struct wg_peer *wgp)
 	mutex_enter(wgp->wgp_lock);
 	if (__predict_true(wgp->wgp_state != WGP_STATE_DESTROYING)) {
 		callout_schedule(&wgp->wgp_handshake_timeout_timer,
-		    wg_rekey_timeout * hz);
+		    MIN(wg_rekey_timeout, INT_MAX/hz) * hz);
 	}
 	mutex_exit(wgp->wgp_lock);
 }
@@ -2079,7 +2079,7 @@ wg_lookup_session_by_index(struct wg_softc *wg, const uint32_t index,
 static void
 wg_schedule_rekey_timer(struct wg_peer *wgp)
 {
-	int timeout = wg_rekey_after_time;
+	int timeout = MIN(wg_rekey_after_time, INT_MAX/hz);
 
 	callout_schedule(&wgp->wgp_rekey_timer, timeout * hz);
 }
@@ -4360,27 +4360,27 @@ SYSCTL_SETUP(sysctl_net_wireguard_setup, "sysctl net.wireguard setup")
 	    CTL_NET, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &node, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-	    CTLTYPE_LONG, "rekey_after_messages",
+	    CTLTYPE_QUAD, "rekey_after_messages",
 	    SYSCTL_DESCR("session liftime by messages"),
 	    NULL, 0, &wg_rekey_after_messages, 0, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &node, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-	    CTLTYPE_LONG, "rekey_after_time",
+	    CTLTYPE_INT, "rekey_after_time",
 	    SYSCTL_DESCR("session liftime"),
 	    NULL, 0, &wg_rekey_after_time, 0, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &node, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-	    CTLTYPE_LONG, "rekey_timeout",
+	    CTLTYPE_INT, "rekey_timeout",
 	    SYSCTL_DESCR("session handshake retry time"),
 	    NULL, 0, &wg_rekey_timeout, 0, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &node, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-	    CTLTYPE_LONG, "rekey_attempt_time",
+	    CTLTYPE_INT, "rekey_attempt_time",
 	    SYSCTL_DESCR("session handshake timeout"),
 	    NULL, 0, &wg_rekey_attempt_time, 0, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &node, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-	    CTLTYPE_LONG, "keepalive_timeout",
+	    CTLTYPE_INT, "keepalive_timeout",
 	    SYSCTL_DESCR("keepalive timeout"),
 	    NULL, 0, &wg_keepalive_timeout, 0, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &node, NULL,
