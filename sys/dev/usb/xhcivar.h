@@ -1,4 +1,4 @@
-/*	$NetBSD: xhcivar.h,v 1.16 2020/08/21 20:16:39 jakllsch Exp $	*/
+/*	$NetBSD: xhcivar.h,v 1.17 2020/08/21 20:46:03 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -31,7 +31,6 @@
 
 #include <sys/pool.h>
 
-#define XHCI_XFER_NTRB	20
 #define XHCI_MAX_DCI	31
 
 struct xhci_soft_trb {
@@ -44,6 +43,7 @@ struct xhci_xfer {
 	struct usbd_xfer xx_xfer;
 	struct xhci_soft_trb *xx_trb;
 	u_int xx_ntrb;
+	u_int xx_isoc_done;
 };
 
 #define XHCI_BUS2SC(bus)	((bus)->ub_hcpriv)
