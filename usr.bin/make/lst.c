@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.10 2020/08/21 04:42:02 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.11 2020/08/21 04:57:56 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -38,11 +38,11 @@
 #include "make_malloc.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.10 2020/08/21 04:42:02 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.11 2020/08/21 04:57:56 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.10 2020/08/21 04:42:02 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.11 2020/08/21 04:57:56 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -73,13 +73,6 @@ typedef struct List {
     ListNode prevPtr;		/* Previous node, if open. Used by
 				 * Lst_Remove */
 } *List;
-
-/*
- * PAlloc (var, ptype) --
- *	Allocate a pointer-typedef structure 'ptype' into the variable 'var'
- */
-#define PAlloc(var, ptype) \
-    var = (ptype) bmake_malloc(sizeof *(var))
 
 /*
  * LstValid --
@@ -117,7 +110,7 @@ Lst_Init(void)
 {
     List nList;
 
-    PAlloc (nList, List);
+    nList = bmake_malloc(sizeof *nList);
 
     nList->firstPtr = NULL;
     nList->lastPtr = NULL;
@@ -267,7 +260,7 @@ Lst_InsertBefore(Lst l, LstNode ln, void *d)
     }
 
     ok:
-    PAlloc (nLNode, ListNode);
+    nLNode = bmake_malloc(sizeof *nLNode);
 
     nLNode->datum = d;
     nLNode->useCount = 0;
@@ -333,7 +326,7 @@ Lst_InsertAfter(Lst l, LstNode ln, void *d)
     list = l;
     lNode = ln;
 
-    PAlloc (nLNode, ListNode);
+    nLNode = bmake_malloc(sizeof *nLNode);
     nLNode->datum = d;
     nLNode->useCount = 0;
     nLNode->deleted = FALSE;
@@ -843,7 +836,7 @@ Lst_Concat(Lst l1, Lst l2, int flags)
 	     ln != NULL;
 	     ln = ln->nextPtr)
 	{
-	    PAlloc (nln, ListNode);
+	    nln = bmake_malloc(sizeof *nln);
 	    nln->datum = ln->datum;
 	    if (last != NULL) {
 		last->nextPtr = nln;
