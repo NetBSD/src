@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.13 2020/08/21 05:28:41 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.14 2020/08/21 06:28:38 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -38,11 +38,11 @@
 #include "make_malloc.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.13 2020/08/21 05:28:41 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.14 2020/08/21 06:28:38 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.13 2020/08/21 05:28:41 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.14 2020/08/21 06:28:38 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -74,20 +74,14 @@ struct List {
 				 * Lst_Remove */
 };
 
-/*
- * LstValid --
- *	Return TRUE if the list is valid
- */
+/* Return TRUE if the list is valid. */
 static Boolean
 LstValid(Lst l)
 {
     return l != NULL;
 }
 
-/*
- * LstNodeValid --
- *	Return TRUE if the list node is valid
- */
+/* Return TRUE if the list node is valid. */
 static Boolean
 LstNodeValid(LstNode ln)
 {
@@ -106,10 +100,7 @@ LstNodeNew(void *datum)
     return ln;
 }
 
-/*
- * LstIsEmpty (l) --
- *	TRUE if the list l is empty.
- */
+/* Return TRUE if the list is empty. */
 static Boolean
 LstIsEmpty(Lst l)
 {
@@ -130,23 +121,10 @@ Lst_Init(void)
     return nList;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Lst_Duplicate --
- *	Duplicate an entire list. If a function to copy a void *is
- *	given, the individual client elements will be duplicated as well.
- *
- * Input:
- *	l		the list to duplicate
- *	copyProc	A function to duplicate each void *
- *
- * Results:
- *	The new Lst structure or NULL if failure.
- *
- * Side Effects:
- *	A new list is created.
- *-----------------------------------------------------------------------
- */
+/* Duplicate an entire list, usually by copying the datum pointers.
+ * If copyProc is given, that function is used to create the new datum from the
+ * old datum, usually by creating a copy of it.
+ * Return the new list, or NULL on failure. */
 Lst
 Lst_Duplicate(Lst l, DuplicateProc *copyProc)
 {
@@ -179,21 +157,8 @@ Lst_Duplicate(Lst l, DuplicateProc *copyProc)
     return nl;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Lst_Destroy --
- *	Destroy a list and free all its resources. If the freeProc is
- *	given, it is called with the datum from each node in turn before
- *	the node is freed.
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	The given list is freed in its entirety.
- *
- *-----------------------------------------------------------------------
- */
+/* Destroy a list and free all its resources. If the freeProc is given, it is
+ * called with the datum from each node in turn before the node is freed. */
 void
 Lst_Destroy(Lst list, FreeProc *freeProc)
 {
@@ -231,26 +196,8 @@ Lst_Destroy(Lst list, FreeProc *freeProc)
  * Functions to modify a list
  */
 
-/*-
- *-----------------------------------------------------------------------
- * Lst_InsertBefore --
- *	Insert a new node with the given piece of data before the given
- *	node in the given list.
- *
- * Input:
- *	l		list to manipulate
- *	ln		node before which to insert d
- *	d		datum to be inserted
- *
- * Results:
- *	SUCCESS or FAILURE.
- *
- * Side Effects:
- *	the firstPtr field will be changed if ln is the first node in the
- *	list.
- *
- *-----------------------------------------------------------------------
- */
+/* Insert a new node with the given piece of data before the given node in the
+ * given list. */
 ReturnStatus
 Lst_InsertBefore(Lst l, LstNode ln, void *d)
 {
@@ -292,27 +239,8 @@ Lst_InsertBefore(Lst l, LstNode ln, void *d)
     return SUCCESS;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Lst_InsertAfter --
- *	Create a new node and add it to the given list after the given node.
- *
- * Input:
- *	l		affected list
- *	ln		node after which to append the datum
- *	d		said datum
- *
- * Results:
- *	SUCCESS if all went well.
- *
- * Side Effects:
- *	A new ListNode is created and linked in to the List. The lastPtr
- *	field of the List will be altered if ln is the last node in the
- *	list. lastPtr and firstPtr will alter if the list was empty and
- *	ln was NULL.
- *
- *-----------------------------------------------------------------------
- */
+/* Insert a new node with the given piece of data after the given node in the
+ * given list. */
 ReturnStatus
 Lst_InsertAfter(Lst l, LstNode ln, void *d)
 {
@@ -354,20 +282,7 @@ Lst_InsertAfter(Lst l, LstNode ln, void *d)
     return SUCCESS;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Lst_AtFront --
- *	Place a piece of data at the front of a list
- *
- * Results:
- *	SUCCESS or FAILURE
- *
- * Side Effects:
- *	A new ListNode is created and stuck at the front of the list.
- *	hence, firstPtr (and possible lastPtr) in the list are altered.
- *
- *-----------------------------------------------------------------------
- */
+/* Add a piece of data at the front of the given list. */
 ReturnStatus
 Lst_AtFront(Lst l, void *d)
 {
@@ -377,23 +292,7 @@ Lst_AtFront(Lst l, void *d)
     return Lst_InsertBefore(l, front, d);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Lst_AtEnd --
- *	Add a node to the end of the given list
- *
- * Input:
- *	l		List to which to add the datum
- *	d		Datum to add
- *
- * Results:
- *	SUCCESS if life is good.
- *
- * Side Effects:
- *	A new ListNode is created and added to the list.
- *
- *-----------------------------------------------------------------------
- */
+/* Add a piece of data at the end of the given list. */
 ReturnStatus
 Lst_AtEnd(Lst l, void *d)
 {
@@ -471,19 +370,8 @@ Lst_ReplaceS(LstNode ln, void *d)
  * Node-specific functions
  */
 
-/*-
- *-----------------------------------------------------------------------
- * Lst_First --
- *	Return the first node on the given list.
- *
- * Results:
- *	The first node or NULL if the list is empty.
- *
- * Side Effects:
- *	None.
- *
- *-----------------------------------------------------------------------
- */
+/* Return the first node from the given list, or NULL if the list is empty or
+ * invalid. */
 LstNode
 Lst_First(Lst l)
 {
@@ -494,19 +382,8 @@ Lst_First(Lst l)
     }
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Lst_Last --
- *	Return the last node on the list l.
- *
- * Results:
- *	The requested node or NULL if the list is empty.
- *
- * Side Effects:
- *	None.
- *
- *-----------------------------------------------------------------------
- */
+/* Return the last node from the given list, or NULL if the list is empty or
+ * invalid. */
 LstNode
 Lst_Last(Lst l)
 {
@@ -539,19 +416,7 @@ Lst_Prev(LstNode ln)
     }
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Lst_Datum --
- *	Return the datum stored in the given node.
- *
- * Results:
- *	The datum or NULL if the node is invalid.
- *
- * Side Effects:
- *	None.
- *
- *-----------------------------------------------------------------------
- */
+/* Return the datum stored in the given node, or NULL if the node is invalid. */
 void *
 Lst_Datum(LstNode ln)
 {
@@ -567,62 +432,24 @@ Lst_Datum(LstNode ln)
  * Functions for entire lists
  */
 
-/*-
- *-----------------------------------------------------------------------
- * Lst_IsEmpty --
- *	Return TRUE if the given list is empty.
- *
- * Results:
- *	TRUE if the list is empty, FALSE otherwise.
- *
- * Side Effects:
- *	None.
- *
- *	A list is considered empty if its firstPtr == NULL (or if
- *	the list itself is NULL).
- *-----------------------------------------------------------------------
- */
+/* Return TRUE if the given list is empty or invalid. */
 Boolean
 Lst_IsEmpty(Lst l)
 {
     return !LstValid(l) || LstIsEmpty(l);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Lst_Find --
- *	Find a node on the given list using the given comparison function
- *	and the given datum.
- *
- * Results:
- *	The found node or NULL if none matches.
- *
- * Side Effects:
- *	None.
- *
- *-----------------------------------------------------------------------
- */
+/* Return the first node from the given list for which the given comparison
+ * function returns 0, or NULL if none of the nodes matches. */
 LstNode
 Lst_Find(Lst l, const void *d, int (*cProc)(const void *, const void *))
 {
     return Lst_FindFrom(l, Lst_First(l), d, cProc);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Lst_FindFrom --
- *	Search for a node starting and ending with the given one on the
- *	given list using the passed datum and comparison function to
- *	determine when it has been found.
- *
- * Results:
- *	The found node or NULL
- *
- * Side Effects:
- *	None.
- *
- *-----------------------------------------------------------------------
- */
+/* Return the first node from the given list, starting at the given node, for
+ * which the given comparison function returns 0, or NULL if none of the nodes
+ * matches. */
 LstNode
 Lst_FindFrom(Lst l, LstNode ln, const void *d,
 	     int (*cProc)(const void *, const void *))
@@ -644,9 +471,7 @@ Lst_FindFrom(Lst l, LstNode ln, const void *d,
     return NULL;
 }
 
-/*-
- * See if a given datum is on a given list.
- */
+/* Return the first node that contains the given datum, or NULL. */
 LstNode
 Lst_Member(Lst l, void *d)
 {
@@ -671,46 +496,18 @@ Lst_Member(Lst l, void *d)
     return NULL;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Lst_ForEach --
- *	Apply the given function to each element of the given list. The
- *	function should return 0 if Lst_ForEach should continue and non-
- *	zero if it should abort.
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	Only those created by the passed-in function.
- *
- *-----------------------------------------------------------------------
- */
-/*VARARGS2*/
+/* Apply the given function to each element of the given list. The function
+ * should return 0 if traversal should continue and non-zero if it should
+ * abort. */
 int
 Lst_ForEach(Lst l, int (*proc)(void *, void *), void *d)
 {
     return Lst_ForEachFrom(l, Lst_First(l), proc, d);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Lst_ForEachFrom --
- *	Apply the given function to each element of the given list,
- *	starting from a given point.
- *
- *	The function should return 0 if traversal should continue, and
- *	non-zero if it should abort.
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	Only those created by the passed-in function.
- *
- *-----------------------------------------------------------------------
- */
-/*VARARGS2*/
+/* Apply the given function to each element of the given list, starting from
+ * the given node. The function should return 0 if traversal should continue,
+ * and non-zero if it should abort. */
 int
 Lst_ForEachFrom(Lst l, LstNode ln, int (*proc)(void *, void *),
 		void *d)
@@ -765,28 +562,18 @@ Lst_ForEachFrom(Lst l, LstNode ln, int (*proc)(void *, void *),
     return result;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Lst_Concat --
- *	Concatenate two lists. New elements are created to hold the data
- *	elements, if specified, but the elements themselves are not copied.
- *	If the elements should be duplicated to avoid confusion with another
- *	list, the Lst_Duplicate function should be called first.
- *	If LST_CONCLINK is specified, the second list is destroyed since
- *	its pointers have been corrupted and the list is no longer useable.
+/* Concatenate two lists. New nodes are created to hold the data elements,
+ * if specified, but the data themselves are not copied. If the data
+ * should be duplicated to avoid confusion with another list, the Lst_Duplicate
+ * function should be called first. If LST_CONCLINK is specified, the second
+ * list is destroyed since its pointers have been corrupted and the list is no
+ * longer usable.
  *
  * Input:
  *	l1		The list to which l2 is to be appended
  *	l2		The list to append to l1
- *	flags		LST_CONCNEW if LstNode's should be duplicated
- *			LST_CONCLINK if should just be relinked
- *
- * Results:
- *	SUCCESS if all went well. FAILURE otherwise.
- *
- * Side Effects:
- *	New elements are created and appended the first list.
- *-----------------------------------------------------------------------
+ *	flags		LST_CONCNEW if the list nodes should be duplicated
+ *			LST_CONCLINK if the list nodes should just be relinked
  */
 ReturnStatus
 Lst_Concat(Lst l1, Lst l2, int flags)
@@ -871,22 +658,8 @@ Lst_Concat(Lst l1, Lst l2, int flags)
  * access the list based on it.
  */
 
-/*-
- *-----------------------------------------------------------------------
- * Lst_Open --
- *	Open a list for sequential access. A list can still be searched,
- *	etc., without confusing these functions.
- *
- * Results:
- *	SUCCESS or FAILURE.
- *
- * Side Effects:
- *	isOpen is set TRUE and curPtr is set to NULL so the
- *	other sequential functions know it was just opened and can choose
- *	the first element accessed based on this.
- *
- *-----------------------------------------------------------------------
- */
+/* Open a list for sequential access. A list can still be searched, etc.,
+ * without confusing these functions. */
 ReturnStatus
 Lst_Open(Lst l)
 {
@@ -976,20 +749,7 @@ Lst_CloseS(Lst l)
  * for using the list as a queue
  */
 
-/*-
- *-----------------------------------------------------------------------
- * Lst_EnQueue --
- *	Add the datum to the tail of the given list.
- *
- * Results:
- *	SUCCESS or FAILURE as returned by Lst_InsertAfter.
- *
- * Side Effects:
- *	the lastPtr field is altered all the time and the firstPtr field
- *	will be altered if the list used to be empty.
- *
- *-----------------------------------------------------------------------
- */
+/* Add the datum to the tail of the given list. */
 ReturnStatus
 Lst_EnQueue(Lst l, void *d)
 {
@@ -1000,20 +760,8 @@ Lst_EnQueue(Lst l, void *d)
     return Lst_InsertAfter(l, Lst_Last(l), d);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Lst_DeQueue --
- *	Remove and return the datum at the head of the given list.
- *
- * Results:
- *	The datum in the node at the head or NULL if the list
- *	is empty.
- *
- * Side Effects:
- *	The head node is removed from the list.
- *
- *-----------------------------------------------------------------------
- */
+/* Remove and return the datum at the head of the given list, or NULL if the
+ * list is empty. */
 void *
 Lst_DeQueue(Lst l)
 {
