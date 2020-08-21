@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.104 2020/08/21 02:20:47 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.105 2020/08/21 03:36:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.104 2020/08/21 02:20:47 rillig Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.105 2020/08/21 03:36:03 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.104 2020/08/21 02:20:47 rillig Exp $");
+__RCSID("$NetBSD: make.c,v 1.105 2020/08/21 03:36:03 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -548,7 +548,7 @@ MakeHandleUse(void *cgnp, void *pgnp)
      * whether to queue the parent or examine its children...
      */
     if ((ln = Lst_Member(pgn->children, cgn)) != NULL) {
-	Lst_Remove(pgn->children, ln);
+	Lst_RemoveS(pgn->children, ln);
 	pgn->unmade--;
     }
     return 0;

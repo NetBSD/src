@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.97 2020/08/21 02:20:48 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.98 2020/08/21 03:36:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.97 2020/08/21 02:20:48 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.98 2020/08/21 03:36:03 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.97 2020/08/21 02:20:48 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.98 2020/08/21 03:36:03 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -409,7 +409,7 @@ SuffUnRef(void *lp, void *sp)
 
     LstNode ln = Lst_Member(l, sp);
     if (ln != NULL) {
-	Lst_Remove(l, ln);
+	Lst_RemoveS(l, ln);
 	((Suff *)sp)->refCount--;
     }
 }
@@ -1311,7 +1311,7 @@ SuffRemoveSrc(Lst l)
 #ifdef DEBUG_SRC
 		LstNode ln2 = Lst_Member(s->parent->cp, s);
 		if (ln2 != NULL)
-		    Lst_Remove(s->parent->cp, ln2);
+		    Lst_RemoveS(s->parent->cp, ln2);
 #endif
 		--s->parent->children;
 	    }
@@ -1319,7 +1319,7 @@ SuffRemoveSrc(Lst l)
 	    fprintf(debug_file, "free: [l=%p] p=%p %d\n", l, s, s->children);
 	    Lst_Destroy(s->cp, NULL);
 #endif
-	    Lst_Remove(l, ln);
+	    Lst_RemoveS(l, ln);
 	    free(s);
 	    t |= 1;
 	    Lst_Close(l);
@@ -1674,8 +1674,8 @@ SuffExpandChildren(LstNode cln, GNode *pgn)
      * keep it from being processed.
      */
     pgn->unmade--;
-    Lst_Remove(pgn->children, cln);
-    Lst_Remove(cgn->parents, Lst_Member(cgn->parents, pgn));
+    Lst_RemoveS(pgn->children, cln);
+    Lst_RemoveS(cgn->parents, Lst_Member(cgn->parents, pgn));
 }
 
 static void
@@ -1726,8 +1726,8 @@ SuffExpandWildcards(LstNode cln, GNode *pgn)
      * keep it from being processed.
      */
     pgn->unmade--;
-    Lst_Remove(pgn->children, cln);
-    Lst_Remove(cgn->parents, Lst_Member(cgn->parents, pgn));
+    Lst_RemoveS(pgn->children, cln);
+    Lst_RemoveS(cgn->parents, Lst_Member(cgn->parents, pgn));
 }
 
 /*-
