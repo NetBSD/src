@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.94 2020/08/11 18:41:46 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.95 2020/08/21 23:28:11 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -123,7 +123,6 @@ char *cached_realpath(const char *, char *);
 
 /* parse.c */
 void Parse_Error(int, const char *, ...) MAKE_ATTR_PRINTFLIKE(2, 3);
-Boolean Parse_AnyExport(void);
 Boolean Parse_IsVar(char *);
 void Parse_DoVar(char *, GNode *);
 void Parse_AddIncludeDir(char *);
@@ -176,7 +175,6 @@ char *Targ_FmtTime(time_t);
 void Targ_PrintType(int);
 void Targ_PrintGraph(int);
 void Targ_Propagate(void);
-void Targ_Propagate_Wait(void);
 
 /* var.c */
 
@@ -195,8 +193,6 @@ Boolean Var_Exists(const char *, GNode *);
 const char *Var_Value(const char *, GNode *, char **);
 const char *Var_Parse(const char *, GNode *, VarEvalFlags, int *, void **);
 char *Var_Subst(const char *, GNode *, VarEvalFlags);
-char *Var_GetTail(const char *);
-char *Var_GetHead(const char *);
 void Var_Init(void);
 void Var_End(void);
 void Var_Stats(void);
