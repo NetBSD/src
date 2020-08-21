@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.65 2020/08/21 02:20:48 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.66 2020/08/21 04:09:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.65 2020/08/21 02:20:48 rillig Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.66 2020/08/21 04:09:12 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.65 2020/08/21 02:20:48 rillig Exp $");
+__RCSID("$NetBSD: targ.c,v 1.66 2020/08/21 04:09:12 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -398,7 +398,7 @@ Targ_FindList(Lst names, int flags)
     if (Lst_Open(names) == FAILURE) {
 	return nodes;
     }
-    while ((ln = Lst_Next(names)) != NULL) {
+    while ((ln = Lst_NextS(names)) != NULL) {
 	name = (char *)Lst_Datum(ln);
 	gn = Targ_FindNode(name, flags);
 	if (gn != NULL) {

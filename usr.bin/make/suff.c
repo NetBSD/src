@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.98 2020/08/21 03:36:03 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.99 2020/08/21 04:09:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.98 2020/08/21 03:36:03 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.99 2020/08/21 04:09:12 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.98 2020/08/21 03:36:03 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.99 2020/08/21 04:09:12 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -502,7 +502,7 @@ SuffInsert(Lst l, Suff *s)
     if (Lst_Open(l) == FAILURE) {
 	return;
     }
-    while ((ln = Lst_Next(l)) != NULL) {
+    while ((ln = Lst_NextS(l)) != NULL) {
 	s2 = (Suff *)Lst_Datum(ln);
 	if (s2->sNum >= s->sNum) {
 	    break;
@@ -1076,7 +1076,7 @@ Suff_DoPaths(void)
     inIncludes = Lst_Init();
     inLibs = Lst_Init();
 
-    while ((ln = Lst_Next(sufflist)) != NULL) {
+    while ((ln = Lst_NextS(sufflist)) != NULL) {
 	s = (Suff *)Lst_Datum(ln);
 	if (!Lst_IsEmpty (s->searchPath)) {
 #ifdef INCLUDES
@@ -1301,7 +1301,7 @@ SuffRemoveSrc(Lst l)
 #endif
 
 
-    while ((ln = Lst_Next(l)) != NULL) {
+    while ((ln = Lst_NextS(l)) != NULL) {
 	s = (Src *)Lst_Datum(ln);
 	if (s->children == 0) {
 	    free(s->file);
@@ -1439,7 +1439,7 @@ SuffFindCmds(Src *targ, Lst slst)
     prefLen = strlen(targ->pref);
 
     for (;;) {
-	ln = Lst_Next(t->children);
+	ln = Lst_NextS(t->children);
 	if (ln == NULL) {
 	    Lst_Close(t->children);
 	    return NULL;
