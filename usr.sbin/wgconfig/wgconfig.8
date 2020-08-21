@@ -1,4 +1,4 @@
-.\"	$NetBSD: wgconfig.8,v 1.6 2020/08/21 01:36:04 riastradh Exp $
+.\"	$NetBSD: wgconfig.8,v 1.7 2020/08/21 02:45:33 uwe Exp $
 .\"
 .\" Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
 .\" All rights reserved.
@@ -36,24 +36,31 @@
 .Nd configure WireGuard interface parameters
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh SYNOPSIS
-.Nm Ar wgN
+.Nm
+.Ar wgN
 .Op Cm "show all"
 .\"
-.Nm Ar wgN Cm "show peer" Ar name
+.Nm
+.Ar wgN Cm "show peer" Ar name
 .Op Fl Fl show-preshared-key
 .\"
-.Nm Ar wgN Cm "show private-key"
+.Nm
+.Ar wgN Cm "show private-key"
 .\"
-.Nm Ar wgN Cm "set private-key" Ar "filename"
+.Nm
+.Ar wgN Cm "set private-key" Ar "filename"
 .\"
-.Nm Ar wgN Cm "set listen-port" Ar port
+.Nm
+.Ar wgN Cm "set listen-port" Ar port
 .\"
-.Nm Ar wgN Cm "add peer" Ar name Ar pubkey
+.Nm
+.Ar wgN Cm "add peer" Ar name Ar pubkey
 .Op Fl Fl preshared-key Ns = Ns Ar filename
 .Op Fl Fl endpoint Ns = Ns Ar ip : Ns Ar port
 .Op Fl Fl allowed-ips Ns = Ns Ar ip1 Ns / Ns Ar cidr1 Ns Op , Ns Ar ip2 Ns / Ns Ar cidr2 Ns ,...
 .\"
-.Nm Ar wgN Cm "delete peer" Ar name
+.Nm
+.Ar wgN Cm "delete peer" Ar name
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh DESCRIPTION
 The
