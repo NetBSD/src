@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.95 2020/08/21 04:09:12 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.96 2020/08/21 04:42:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.95 2020/08/21 04:09:12 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.96 2020/08/21 04:42:02 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.95 2020/08/21 04:09:12 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.96 2020/08/21 04:42:02 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -524,7 +524,7 @@ Dir_SetPATH(void)
 	    if (cur)
 		Var_Append(".PATH", cur->name, VAR_GLOBAL);
 	}
-	Lst_Close(dirSearchPath);
+	Lst_CloseS(dirSearchPath);
     }
 }
 
@@ -817,7 +817,7 @@ DirExpandInt(const char *word, Lst path, Lst expansions)
 	    p = (Path *)Lst_Datum(ln);
 	    DirMatchFiles(word, p, expansions);
 	}
-	Lst_Close(path);
+	Lst_CloseS(path);
     }
 }
 
@@ -1181,7 +1181,7 @@ Dir_FindFile(const char *name, Lst path)
 	 * specifies (fish.c) and what pmake finds (./fish.c).
 	 */
 	if (!hasLastDot && (file = DirFindDot(hasSlash, name, cp)) != NULL) {
-	    Lst_Close(path);
+	    Lst_CloseS(path);
 	    return file;
 	}
 
@@ -1190,17 +1190,17 @@ Dir_FindFile(const char *name, Lst path)
 	    if (p == dotLast)
 		continue;
 	    if ((file = DirLookup(p, name, cp, hasSlash)) != NULL) {
-		Lst_Close(path);
+		Lst_CloseS(path);
 		return file;
 	    }
 	}
 
 	if (hasLastDot && (file = DirFindDot(hasSlash, name, cp)) != NULL) {
-	    Lst_Close(path);
+	    Lst_CloseS(path);
 	    return file;
 	}
     }
-    Lst_Close(path);
+    Lst_CloseS(path);
 
     /*
      * We didn't find the file on any directory in the search path.
@@ -1242,7 +1242,7 @@ Dir_FindFile(const char *name, Lst path)
 		return file;
 	}
 
-	(void)Lst_Open(path);
+	Lst_OpenS(path);
 	while ((ln = Lst_NextS(path)) != NULL) {
 	    p = (Path *)Lst_Datum(ln);
 	    if (p == dotLast)
@@ -1253,11 +1253,11 @@ Dir_FindFile(const char *name, Lst path)
 		checkedDot = TRUE;
 	    }
 	    if ((file = DirLookupSubdir(p, name)) != NULL) {
-		Lst_Close(path);
+		Lst_CloseS(path);
 		return file;
 	    }
 	}
-	Lst_Close(path);
+	Lst_CloseS(path);
 
 	if (hasLastDot) {
 	    if (dot && !checkedDot) {
@@ -1300,13 +1300,13 @@ Dir_FindFile(const char *name, Lst path)
 	    return file;
 	}
 
-	(void)Lst_Open(path);
+	Lst_OpenS(path);
 	while ((ln = Lst_NextS(path)) != NULL) {
 	    p = (Path *)Lst_Datum(ln);
 	    if (p == dotLast)
 		continue;
 	    if ((file = DirLookupAbs(p, name, cp)) != NULL) {
-		Lst_Close(path);
+		Lst_CloseS(path);
 		if (file[0] == '\0') {
 		    free(file);
 		    return NULL;
@@ -1314,7 +1314,7 @@ Dir_FindFile(const char *name, Lst path)
 		return file;
 	    }
 	}
-	Lst_Close(path);
+	Lst_CloseS(path);
 
 	if (hasLastDot && cur &&
 	    ((file = DirLookupAbs(cur, name, cp)) != NULL)) {
@@ -1685,7 +1685,7 @@ Dir_MakeFlags(const char *flag, Lst path)
 	    Buf_AddStr(&buf, flag);
 	    Buf_AddStr(&buf, p->name);
 	}
-	Lst_Close(path);
+	Lst_CloseS(path);
     }
 
     return Buf_Destroy(&buf, FALSE);
@@ -1808,7 +1808,7 @@ Dir_PrintDirectories(void)
 	    fprintf(debug_file, "# %-20s %10d\t%4d\n", p->name, p->refCount,
 		    p->hits);
 	}
-	Lst_Close(openDirectories);
+	Lst_CloseS(openDirectories);
     }
 }
 
