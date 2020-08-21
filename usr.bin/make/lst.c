@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.16 2020/08/21 07:00:32 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.17 2020/08/21 07:04:31 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -38,11 +38,11 @@
 #include "make_malloc.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.16 2020/08/21 07:00:32 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.17 2020/08/21 07:04:31 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.16 2020/08/21 07:00:32 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.17 2020/08/21 07:04:31 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -136,9 +136,6 @@ Lst_Duplicate(Lst list, DuplicateProc *copyProc)
     }
 
     newList = Lst_Init();
-    if (newList == NULL) {
-	return NULL;
-    }
 
     node = list->first;
     while (node != NULL) {
@@ -240,7 +237,7 @@ Lst_InsertBefore(Lst list, LstNode node, void *datum)
 ReturnStatus
 Lst_InsertAfter(Lst list, LstNode node, void *datum)
 {
-    LstNode nLNode;
+    LstNode newNode;
 
     if (LstValid(list) && (node == NULL && LstIsEmpty(list))) {
 	goto ok;
@@ -251,22 +248,22 @@ Lst_InsertAfter(Lst list, LstNode node, void *datum)
     }
     ok:
 
-    nLNode = LstNodeNew(datum);
+    newNode = LstNodeNew(datum);
 
     if (node == NULL) {
-	nLNode->next = nLNode->prev = NULL;
-	list->first = list->last = nLNode;
+	newNode->next = newNode->prev = NULL;
+	list->first = list->last = newNode;
     } else {
-	nLNode->prev = node;
-	nLNode->next = node->next;
+	newNode->prev = node;
+	newNode->next = node->next;
 
-	node->next = nLNode;
-	if (nLNode->next != NULL) {
-	    nLNode->next->prev = nLNode;
+	node->next = newNode;
+	if (newNode->next != NULL) {
+	    newNode->next->prev = newNode;
 	}
 
 	if (node == list->last) {
-	    list->last = nLNode;
+	    list->last = newNode;
 	}
     }
 
@@ -521,9 +518,9 @@ Lst_ForEachFrom(Lst list, LstNode node,
 	 */
 	done = (next == NULL || next == list->first);
 
-	(void)tln->useCount++;
+	tln->useCount++;
 	result = (*proc)(tln->datum, procData);
-	(void)tln->useCount--;
+	tln->useCount--;
 
 	/*
 	 * Now check whether a node has been added.
