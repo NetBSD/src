@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.96 2020/08/21 16:40:02 ryo Exp $ */
+/*	$NetBSD: df.c,v 1.97 2020/08/21 16:41:06 ryo Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.96 2020/08/21 16:40:02 ryo Exp $");
+__RCSID("$NetBSD: df.c,v 1.97 2020/08/21 16:41:06 ryo Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,8 +79,9 @@ static int	 aflag, gflag, hflag, iflag, lflag, nflag, Pflag, Wflag;
 static long	 usize;
 static char	**typelist;
 
-#define WIDTH_INODE	8
-#define WIDTH_BLKSIZE	10
+#define WIDTH_INODE	10
+#define WIDTH_BLKSIZE	12
+static int blksize_width = WIDTH_BLKSIZE;
 
 int
 main(int argc, char *argv[])
@@ -346,9 +347,9 @@ static void
 prthuman(const struct statvfs *sfsp, int64_t used, int64_t bavail)
 {
 
-	prthumanval((int64_t)(sfsp->f_blocks * sfsp->f_frsize), WIDTH_BLKSIZE);
-	prthumanval((int64_t)(used * sfsp->f_frsize), 1 + WIDTH_BLKSIZE);
-	prthumanval((int64_t)(bavail * sfsp->f_frsize), 1 + WIDTH_BLKSIZE);
+	prthumanval((int64_t)(sfsp->f_blocks * sfsp->f_frsize), blksize_width);
+	prthumanval((int64_t)(used * sfsp->f_frsize), 1 + blksize_width);
+	prthumanval((int64_t)(bavail * sfsp->f_frsize), 1 + blksize_width);
 }
 
 /*
@@ -447,10 +448,19 @@ prtstat(const struct statvfs *sfsp, int maxwidth)
 			if (hflag) {
 				header = "Size";
 				headerlen = (int)strlen(header);
+				blksize_width = 6;
 			} else
 				header = getbsize(&headerlen, &blocksize);
 			break;
 		}
+
+		if (blocksize >= 1024 * 1024)
+			blksize_width -= 3;
+		if (blocksize >= 1024 * 1024 * 1024)
+			blksize_width -= 3;
+		if (blksize_width < headerlen)
+			blksize_width = headerlen;
+
 		if (Pflag) {
 			/*
 			 * either:
@@ -466,9 +476,9 @@ prtstat(const struct statvfs *sfsp, int maxwidth)
 		} else {
 			(void)printf("%-*.*s %*s %*s %*s %%Cap",
 			    maxwidth, maxwidth, "Filesystem",
-			    WIDTH_BLKSIZE, header,
-			    WIDTH_BLKSIZE, "Used",
-			    WIDTH_BLKSIZE, "Avail");
+			    blksize_width, header,
+			    blksize_width, "Used",
+			    blksize_width, "Avail");
 			if (iflag) {
 				(void)printf(" %*s %*s %%iCap",
 				    WIDTH_INODE, "iUsed",
@@ -510,10 +520,10 @@ prtstat(const struct statvfs *sfsp, int maxwidth)
 		prthuman(sfsp, used, bavail);
 	else
 		(void)printf("%*" PRId64 " %*" PRId64 " %*" PRId64,
-		    WIDTH_BLKSIZE,
+		    blksize_width,
 		    fsbtoblk(sfsp->f_blocks, sfsp->f_frsize, blocksize),
-		    WIDTH_BLKSIZE, fsbtoblk(used, sfsp->f_frsize, blocksize),
-		    WIDTH_BLKSIZE, fsbtoblk(bavail, sfsp->f_frsize, blocksize));
+		    blksize_width, fsbtoblk(used, sfsp->f_frsize, blocksize),
+		    blksize_width, fsbtoblk(bavail, sfsp->f_frsize, blocksize));
 	(void)printf(" %3s%%",
 	    availblks == 0 ? full :
 	    strspct(pb, sizeof(pb), used, availblks, 0));
