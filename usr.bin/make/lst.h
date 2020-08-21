@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.25 2020/08/21 04:09:12 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.26 2020/08/21 04:42:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -167,10 +167,11 @@ int		Lst_ForEachFrom(Lst, LstNode, int (*)(void *, void *),
  */
 /* Open the list */
 ReturnStatus	Lst_Open(Lst);
+void		Lst_OpenS(Lst);
 /* Next element please, or NULL */
 LstNode		Lst_NextS(Lst);
 /* Finish table access */
-void		Lst_Close(Lst);
+void		Lst_CloseS(Lst);
 
 /*
  * for using the list as a queue

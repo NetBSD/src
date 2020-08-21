@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.9 2020/08/21 04:09:12 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.10 2020/08/21 04:42:02 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -38,11 +38,11 @@
 #include "make_malloc.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.9 2020/08/21 04:09:12 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.10 2020/08/21 04:42:02 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.9 2020/08/21 04:09:12 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.10 2020/08/21 04:42:02 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -907,20 +907,21 @@ Lst_Open(Lst l)
     return SUCCESS;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Lst_Next --
- *	Return the next node for the given list.
- *
- * Results:
- *	The next node or NULL if the list has yet to be opened. Also
- *	if the end has been reached, NULL is returned.
- *
- * Side Effects:
- *	the curPtr field is updated.
- *
- *-----------------------------------------------------------------------
- */
+/* Open a list for sequential access. A list can still be searched, etc.,
+ * without confusing these functions. */
+void
+Lst_OpenS(Lst l)
+{
+    assert(LstValid(l));
+    assert(!l->isOpen);
+
+    l->isOpen = TRUE;
+    l->atEnd = LstIsEmpty(l) ? Head : Unknown;
+    l->curPtr = NULL;
+}
+
+/* Return the next node for the given list, or NULL if the end has been
+ * reached. */
 LstNode
 Lst_NextS(Lst l)
 {
@@ -965,31 +966,16 @@ Lst_NextS(Lst l)
     return tln;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Lst_Close --
- *	Close a list which was opened for sequential access.
- *
- * Input:
- *	l		The list to close
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	The list is closed.
- *
- *-----------------------------------------------------------------------
- */
+/* Close a list which was opened for sequential access. */
 void
-Lst_Close(Lst l)
+Lst_CloseS(Lst l)
 {
     List list = l;
 
-    if (LstValid(l) == TRUE) {
-	list->isOpen = FALSE;
-	list->atEnd = Unknown;
-    }
+    assert(LstValid(l));
+    assert(list->isOpen);
+    list->isOpen = FALSE;
+    list->atEnd = Unknown;
 }
 
 
