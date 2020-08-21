@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.35 2019/12/23 14:41:41 thorpej Exp $	*/
+/*	$NetBSD: lm75.c,v 1.36 2020/08/21 20:41:43 macallan Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.35 2019/12/23 14:41:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.36 2020/08/21 20:41:43 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,18 +49,11 @@ __KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.35 2019/12/23 14:41:41 thorpej Exp $");
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/lm75reg.h>
 
-#ifdef macppc
-#define HAVE_OF 1
-#endif
-
-#ifdef HAVE_OF
-#include <dev/ofw/openfirm.h>
-#endif
-
 struct lmtemp_softc {
 	device_t sc_dev;
 	i2c_tag_t sc_tag;
 	int sc_address;
+	prop_dictionary_t sc_prop;
 
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t sc_sensor;
@@ -174,6 +167,7 @@ lmtemp_attach(device_t parent, device_t self, void *aux)
 	struct lmtemp_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
 	char name[64];
+	const char *desc;
 	int i;
 
 	sc->sc_dev = self;
@@ -193,6 +187,7 @@ lmtemp_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_address = ia->ia_addr;
+	sc->sc_prop = ia->ia_prop;
 
 	aprint_naive(": Temperature Sensor\n");
 	if (ia->ia_name) {
@@ -261,13 +256,11 @@ lmtemp_attach(device_t parent, device_t self, void *aux)
 	(void)strlcpy(name,
 	    ia->ia_name? ia->ia_name : device_xname(self),
 	    sizeof(sc->sc_sensor.desc));
-#ifdef HAVE_OF
-	int ch;
-	ch = OF_child(ia->ia_cookie);
-	if (ch != 0) {
-		OF_getprop(ch, "location", name, 64);
+
+	if (prop_dictionary_get_cstring_nocopy(sc->sc_prop, "s00", &desc)) {
+		strncpy(name, desc, 64);
 	}
-#endif
+
 	(void)strlcpy(sc->sc_sensor.desc, name,
 	    sizeof(sc->sc_sensor.desc));
 	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor)) {
