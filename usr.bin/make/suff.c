@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.99 2020/08/21 04:09:12 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.100 2020/08/21 04:42:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.99 2020/08/21 04:09:12 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.100 2020/08/21 04:42:02 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.99 2020/08/21 04:09:12 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.100 2020/08/21 04:42:02 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -499,17 +499,15 @@ SuffInsert(Lst l, Suff *s)
     LstNode 	  ln;		/* current element in l we're examining */
     Suff          *s2 = NULL;	/* the suffix descriptor in this element */
 
-    if (Lst_Open(l) == FAILURE) {
-	return;
-    }
+    Lst_OpenS(l);
     while ((ln = Lst_NextS(l)) != NULL) {
 	s2 = (Suff *)Lst_Datum(ln);
 	if (s2->sNum >= s->sNum) {
 	    break;
 	}
     }
+    Lst_CloseS(l);
 
-    Lst_Close(l);
     if (DEBUG(SUFF)) {
 	fprintf(debug_file, "inserting %s(%d)...", s->name, s->sNum);
     }
@@ -1069,13 +1067,11 @@ Suff_DoPaths(void)
     Lst	    	    	inIncludes; /* Cumulative .INCLUDES path */
     Lst	    	    	inLibs;	    /* Cumulative .LIBS path */
 
-    if (Lst_Open(sufflist) == FAILURE) {
-	return;
-    }
 
     inIncludes = Lst_Init();
     inLibs = Lst_Init();
 
+    Lst_OpenS(sufflist);
     while ((ln = Lst_NextS(sufflist)) != NULL) {
 	s = (Suff *)Lst_Datum(ln);
 	if (!Lst_IsEmpty (s->searchPath)) {
@@ -1095,6 +1091,7 @@ Suff_DoPaths(void)
 	    s->searchPath = Lst_Duplicate(dirSearchPath, Dir_CopyDir);
 	}
     }
+    Lst_CloseS(sufflist);
 
     Var_Set(".INCLUDES", ptr = Dir_MakeFlags("-I", inIncludes), VAR_GLOBAL);
     free(ptr);
@@ -1103,8 +1100,6 @@ Suff_DoPaths(void)
 
     Lst_Destroy(inIncludes, Dir_Destroy);
     Lst_Destroy(inLibs, Dir_Destroy);
-
-    Lst_Close(sufflist);
 }
 
 /*-
@@ -1291,9 +1286,8 @@ SuffRemoveSrc(Lst l)
     Src *s;
     int t = 0;
 
-    if (Lst_Open(l) == FAILURE) {
-	return 0;
-    }
+    Lst_OpenS(l);
+
 #ifdef DEBUG_SRC
     fprintf(debug_file, "cleaning %lx: ", (unsigned long) l);
     Lst_ForEach(l, PrintAddr, NULL);
@@ -1322,7 +1316,7 @@ SuffRemoveSrc(Lst l)
 	    Lst_RemoveS(l, ln);
 	    free(s);
 	    t |= 1;
-	    Lst_Close(l);
+	    Lst_CloseS(l);
 	    return TRUE;
 	}
 #ifdef DEBUG_SRC
@@ -1334,7 +1328,7 @@ SuffRemoveSrc(Lst l)
 #endif
     }
 
-    Lst_Close(l);
+    Lst_CloseS(l);
 
     return t;
 }
@@ -1435,13 +1429,13 @@ SuffFindCmds(Src *targ, Lst slst)
     char    	  	*cp;
 
     t = targ->node;
-    (void)Lst_Open(t->children);
+    Lst_OpenS(t->children);
     prefLen = strlen(targ->pref);
 
     for (;;) {
 	ln = Lst_NextS(t->children);
 	if (ln == NULL) {
-	    Lst_Close(t->children);
+	    Lst_CloseS(t->children);
 	    return NULL;
 	}
 	s = (GNode *)Lst_Datum(ln);

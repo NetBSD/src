@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.106 2020/08/21 04:09:12 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.107 2020/08/21 04:42:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.106 2020/08/21 04:09:12 rillig Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.107 2020/08/21 04:42:02 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.106 2020/08/21 04:09:12 rillig Exp $");
+__RCSID("$NetBSD: make.c,v 1.107 2020/08/21 04:42:02 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -496,7 +496,7 @@ Make_HandleUse(GNode *cgn, GNode *pgn)
 	    (void)Lst_AtEnd(gn->parents, pgn);
 	    pgn->unmade += 1;
 	}
-	Lst_Close(cgn->children);
+	Lst_CloseS(cgn->children);
     }
 
     pgn->type |= cgn->type & ~(OP_OPMASK|OP_USE|OP_USEBEFORE|OP_TRANSFORM);
@@ -818,7 +818,7 @@ Make_Update(GNode *cgn)
 	    pgn->made = REQUESTED;
 	    (void)Lst_EnQueue(toBeMade, pgn);
 	}
-	Lst_Close(parents);
+	Lst_CloseS(parents);
     }
 
     /*
@@ -837,7 +837,7 @@ Make_Update(GNode *cgn)
 	    }
 	}
 	bmake_free(p1);
-	Lst_Close(cgn->iParents);
+	Lst_CloseS(cgn->iParents);
     }
 }
 
@@ -1446,7 +1446,7 @@ Make_ProcessWait(Lst targs)
 	}
 
 	owln = Lst_First(pgn->children);
-	Lst_Open(pgn->children);
+	Lst_OpenS(pgn->children);
 	for (; (ln = Lst_NextS(pgn->children)) != NULL; ) {
 	    cgn = Lst_Datum(ln);
 	    if (cgn->type & OP_WAIT) {
@@ -1457,7 +1457,7 @@ Make_ProcessWait(Lst targs)
 		Lst_AtEnd(examine, cgn);
 	    }
 	}
-	Lst_Close(pgn->children);
+	Lst_CloseS(pgn->children);
     }
 
     Lst_Destroy(examine, NULL);
