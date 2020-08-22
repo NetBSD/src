@@ -1,4 +1,4 @@
-# $NetBSD: varname-empty.mk,v 1.4 2020/08/22 21:12:29 rillig Exp $
+# $NetBSD: varname-empty.mk,v 1.5 2020/08/22 21:22:24 rillig Exp $
 #
 # Tests for the special variable with the empty name.
 #
@@ -12,7 +12,7 @@
 =	assigned	# undefined behavior until 2020-08-22
 +=	appended
 :=	subst
-!=	echo 'value'
+!=	echo 'shell-output'
 
 # The .for loop expands the expression ${i} to ${:U1}, ${:U2} and so on.
 # This only works if the variable with the empty name is guaranteed to
@@ -22,5 +22,5 @@ NUMBERS+=	${i}
 .endfor
 
 all:
-	@echo ${:Ufallback}
-	@echo ${NUMBERS}
+	@echo out: ${:Ufallback}
+	@echo out: ${NUMBERS}
