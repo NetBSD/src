@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.120 2020/08/22 08:01:34 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.121 2020/08/22 10:07:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.120 2020/08/22 08:01:34 rillig Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.121 2020/08/22 10:07:29 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.120 2020/08/22 08:01:34 rillig Exp $");
+__RCSID("$NetBSD: compat.c,v 1.121 2020/08/22 10:07:29 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -223,8 +223,6 @@ CompatRunCommand(void *cmdp, void *gnp)
     char	** volatile mav;/* Copy of the argument vector for freeing */
     int	    	  argc;	    	/* Number of arguments in av or 0 if not
 				 * dynamically allocated */
-    Boolean 	  local;    	/* TRUE if command should be executed
-				 * locally */
     Boolean 	  useShell;    	/* TRUE if command should be executed
 				 * using a shell */
     char	  * volatile cmd = (char *)cmdp;
@@ -367,8 +365,6 @@ again:
 	av = (void *)mav;
     }
 
-    local = TRUE;
-
 #ifdef USE_META
     if (useMeta) {
 	meta_compat_start();
@@ -389,10 +385,7 @@ again:
 	    meta_compat_child();
 	}
 #endif
-	if (local)
-	    (void)execvp(av[0], (char *const *)UNCONST(av));
-	else
-	    (void)execv(av[0], (char *const *)UNCONST(av));
+	(void)execvp(av[0], (char *const *)UNCONST(av));
 	execError("exec", av[0]);
 	_exit(1);
     }
