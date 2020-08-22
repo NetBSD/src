@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.121 2020/08/22 18:47:31 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.122 2020/08/22 19:27:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -298,8 +298,8 @@ typedef struct GNode {
      * list */
     struct GNode *centurion;
 
-    /* Last time we tried to make this node */
-    unsigned int checked;	/* XXX: year 2038 */
+    /* Last time (sequence number) we tried to make this node */
+    unsigned int checked;
 
     /* The "local" variables that are specific to this target and this target
      * only, such as $@, $<, $?. */
