@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.70 2020/08/20 11:09:56 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.71 2020/08/22 10:59:05 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.70 2020/08/20 11:09:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.71 2020/08/22 10:59:05 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1022,18 +1022,11 @@ svm_exit_cpuid(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	struct svm_cpudata *cpudata = vcpu->cpudata;
 	struct nvmm_vcpu_conf_cpuid *cpuid;
 	uint64_t eax, ecx;
-	u_int descs[4];
 	size_t i;
 
 	eax = cpudata->vmcb->state.rax;
 	ecx = cpudata->gprs[NVMM_X64_GPR_RCX];
-	x86_cpuid2(eax, ecx, descs);
-
-	cpudata->vmcb->state.rax = descs[0];
-	cpudata->gprs[NVMM_X64_GPR_RBX] = descs[1];
-	cpudata->gprs[NVMM_X64_GPR_RCX] = descs[2];
-	cpudata->gprs[NVMM_X64_GPR_RDX] = descs[3];
-
+	svm_inkernel_exec_cpuid(cpudata, eax, ecx);
 	svm_inkernel_handle_cpuid(vcpu, eax, ecx);
 
 	for (i = 0; i < SVM_NCPUIDS; i++) {
