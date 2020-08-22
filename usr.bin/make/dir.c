@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.98 2020/08/22 09:03:53 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.99 2020/08/22 09:40:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.98 2020/08/22 09:03:53 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.99 2020/08/22 09:40:18 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.98 2020/08/22 09:03:53 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.99 2020/08/22 09:40:18 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -768,7 +768,7 @@ DirExpandCurly(const char *word, const char *brace, Lst path, Lst expansions)
 	    Dir_Expand(file, path, expansions);
 	    free(file);
 	} else {
-	    (void)Lst_AtEnd(expansions, file);
+	    Lst_AppendS(expansions, file);
 	}
 
 	piece = piece_end + 1;	/* skip over the comma or closing brace */
