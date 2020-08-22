@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.94 2020/08/22 05:32:11 simonb Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.95 2020/08/22 05:52:00 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,7 +57,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: locore_mips1.S,v 1.94 2020/08/22 05:32:11 simonb Exp $")
+RCSID("$NetBSD: locore_mips1.S,v 1.95 2020/08/22 05:52:00 simonb Exp $")
 
 #include "assym.h"
 
@@ -73,8 +73,8 @@ RCSID("$NetBSD: locore_mips1.S,v 1.94 2020/08/22 05:32:11 simonb Exp $")
 #define	_MFC0	mfc0
 #define	_MTC0	mtc0
 
-#ifdef _LP64
-#error MIPS1 does not support LP64.
+#if defined(__mips_n32) || defined(__mips_n64)
+#error MIPS1 does not support N32/N64.
 #endif
 
 #define MIPSX(name)	__CONCAT(mips1_,name)
