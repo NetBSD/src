@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.96 2020/08/21 04:42:02 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.97 2020/08/22 00:48:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.96 2020/08/21 04:42:02 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.97 2020/08/22 00:48:02 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.96 2020/08/21 04:42:02 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.97 2020/08/22 00:48:02 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -351,28 +351,23 @@ cached_lstat(const char *pathname, void *st)
     return cached_stats(&lmtimes, pathname, st, CST_LSTAT);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Dir_Init --
- *	initialize things for this module
- *
- * Results:
- *	none
+/* Initialize things for this module.
  *
  * Side Effects:
  *	some directories may be opened.
- *-----------------------------------------------------------------------
  */
 void
-Dir_Init(const char *cdname)
+Dir_Init(void)
 {
-    if (!cdname) {
-	dirSearchPath = Lst_Init();
-	openDirectories = Lst_Init();
-	Hash_InitTable(&mtimes, 0);
-	Hash_InitTable(&lmtimes, 0);
-	return;
-    }
+    dirSearchPath = Lst_Init();
+    openDirectories = Lst_Init();
+    Hash_InitTable(&mtimes, 0);
+    Hash_InitTable(&lmtimes, 0);
+}
+
+void
+Dir_InitDir(const char *cdname)
+{
     Dir_InitCur(cdname);
 
     dotLast = bmake_malloc(sizeof(Path));
@@ -383,7 +378,7 @@ Dir_Init(const char *cdname)
 }
 
 /*
- * Called by Dir_Init() and whenever .CURDIR is assigned to.
+ * Called by Dir_InitDir and whenever .CURDIR is assigned to.
  */
 void
 Dir_InitCur(const char *cdname)
