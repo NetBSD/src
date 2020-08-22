@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.252 2020/08/21 02:20:47 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.253 2020/08/22 11:35:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.252 2020/08/21 02:20:47 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.253 2020/08/22 11:35:00 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.252 2020/08/21 02:20:47 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.253 2020/08/22 11:35:00 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -856,9 +856,9 @@ ParseLinkSrc(void *pgnp, void *cgnp)
 
     if ((pgn->type & OP_DOUBLEDEP) && !Lst_IsEmpty (pgn->cohorts))
 	pgn = (GNode *)Lst_Datum(Lst_Last(pgn->cohorts));
-    (void)Lst_AtEnd(pgn->children, cgn);
+    Lst_AppendS(pgn->children, cgn);
     if (specType == Not)
-	    (void)Lst_AtEnd(cgn->parents, pgn);
+	Lst_AppendS(cgn->parents, pgn);
     pgn->unmade += 1;
     if (DEBUG(PARSE)) {
 	fprintf(debug_file, "# %s: added child %s - %s\n", __func__,
@@ -934,7 +934,7 @@ ParseDoOp(void *gnp, void *opp)
 	 * traversals will no longer see this node anyway. -mycroft)
 	 */
 	cohort->type = op | OP_INVISIBLE;
-	(void)Lst_AtEnd(gn->cohorts, cohort);
+	Lst_AppendS(gn->cohorts, cohort);
 	cohort->centurion = gn;
 	gn->unmade_cohorts += 1;
 	snprintf(cohort->cohort_num, sizeof cohort->cohort_num, "#%d",
@@ -1017,7 +1017,7 @@ ParseDoSrc(int tOp, const char *src)
 	 * invoked if the user didn't specify a target on the command
 	 * line. This is to allow #ifmake's to succeed, or something...
 	 */
-	(void)Lst_AtEnd(create, bmake_strdup(src));
+	Lst_AppendS(create, bmake_strdup(src));
 	/*
 	 * Add the name to the .TARGETS variable as well, so the user can
 	 * employ that, if desired.
@@ -1034,8 +1034,8 @@ ParseDoSrc(int tOp, const char *src)
 	if (doing_depend)
 	    ParseMark(gn);
 	if (predecessor != NULL) {
-	    (void)Lst_AtEnd(predecessor->order_succ, gn);
-	    (void)Lst_AtEnd(gn->order_pred, predecessor);
+	    Lst_AppendS(predecessor->order_succ, gn);
+	    Lst_AppendS(gn->order_pred, predecessor);
 	    if (DEBUG(PARSE)) {
 		fprintf(debug_file, "# %s: added Order dependency %s - %s\n",
 		    __func__, predecessor->name, gn->name);
@@ -1356,7 +1356,7 @@ ParseDoDependency(char *line)
 		    if (paths == NULL) {
 			paths = Lst_Init();
 		    }
-		    (void)Lst_AtEnd(paths, dirSearchPath);
+		    Lst_AppendS(paths, dirSearchPath);
 		    break;
 		case Main:
 		    if (!Lst_IsEmpty(create)) {
@@ -1372,12 +1372,12 @@ ParseDoDependency(char *line)
 		    if (doing_depend)
 			ParseMark(gn);
 		    gn->type |= OP_NOTMAIN|OP_SPECIAL;
-		    (void)Lst_AtEnd(targets, gn);
+		    Lst_AppendS(targets, gn);
 		    break;
 		case Default:
 		    gn = Targ_NewGN(".DEFAULT");
 		    gn->type |= (OP_NOTMAIN|OP_TRANSFORM);
-		    (void)Lst_AtEnd(targets, gn);
+		    Lst_AppendS(targets, gn);
 		    DEFAULT = gn;
 		    break;
 		case DeleteOnError:
@@ -1414,7 +1414,7 @@ ParseDoDependency(char *line)
 		    if (paths == NULL) {
 			paths = Lst_Init();
 		    }
-		    (void)Lst_AtEnd(paths, path);
+		    Lst_AppendS(paths, path);
 		}
 	    }
 	}
@@ -1441,7 +1441,7 @@ ParseDoDependency(char *line)
 		 * No wildcards, but we want to avoid code duplication,
 		 * so create a list with the word on it.
 		 */
-		(void)Lst_AtEnd(curTargs, line);
+		Lst_AppendS(curTargs, line);
 	    }
 
 	    /* Apply the targets. */
@@ -1457,7 +1457,7 @@ ParseDoDependency(char *line)
 		if (doing_depend)
 		    ParseMark(gn);
 
-		(void)Lst_AtEnd(targets, gn);
+		Lst_AppendS(targets, gn);
 	    }
 	} else if (specType == ExPath && *line != '.' && *line != '\0') {
 	    Parse_Error(PARSE_WARNING, "Extra target (%s) ignored", line);
@@ -2088,14 +2088,14 @@ ParseAddCmd(void *gnp, void *cmd)
 
     /* if target already supplied, ignore commands */
     if (!(gn->type & OP_HAS_COMMANDS)) {
-	(void)Lst_AtEnd(gn->commands, cmd);
+	Lst_AppendS(gn->commands, cmd);
 	if (ParseMaybeSubMake(cmd))
 	    gn->type |= OP_SUBMAKE;
 	ParseMark(gn);
     } else {
 #ifdef notyet
 	/* XXX: We cannot do this until we fix the tree */
-	(void)Lst_AtEnd(gn->commands, cmd);
+	Lst_AppendS(gn->commands, cmd);
 	Parse_Error(PARSE_WARNING,
 		     "overriding commands for target \"%s\"; "
 		     "previous commands defined at %s: %d ignored",
@@ -3333,11 +3333,11 @@ Parse_MainName(void)
 	Punt("no target to make.");
 	/*NOTREACHED*/
     } else if (mainNode->type & OP_DOUBLEDEP) {
-	(void)Lst_AtEnd(mainList, mainNode);
+	Lst_AppendS(mainList, mainNode);
 	Lst_Concat(mainList, mainNode->cohorts, LST_CONCNEW);
     }
     else
-	(void)Lst_AtEnd(mainList, mainNode);
+	Lst_AppendS(mainList, mainNode);
     Var_Append(".TARGETS", mainNode->name, VAR_GLOBAL);
     return mainList;
 }
