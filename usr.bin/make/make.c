@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.109 2020/08/22 08:40:03 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.110 2020/08/22 11:35:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.109 2020/08/22 08:40:03 rillig Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.110 2020/08/22 11:35:00 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.109 2020/08/22 08:40:03 rillig Exp $");
+__RCSID("$NetBSD: make.c,v 1.110 2020/08/22 11:35:00 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -479,8 +479,8 @@ Make_HandleUse(GNode *cgn, GNode *pgn)
 		    gn = tgn;
 	    }
 
-	    (void)Lst_AtEnd(pgn->children, gn);
-	    (void)Lst_AtEnd(gn->parents, pgn);
+	    Lst_AppendS(pgn->children, gn);
+	    Lst_AppendS(gn->parents, pgn);
 	    pgn->unmade += 1;
 	}
 	Lst_CloseS(cgn->children);

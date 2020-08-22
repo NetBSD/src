@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.209 2020/08/22 09:51:57 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.210 2020/08/22 11:35:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.209 2020/08/22 09:51:57 rillig Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.210 2020/08/22 11:35:00 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.209 2020/08/22 09:51:57 rillig Exp $");
+__RCSID("$NetBSD: job.c,v 1.210 2020/08/22 11:35:00 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -918,7 +918,7 @@ static int
 JobSaveCommand(void *cmd, void *gn)
 {
     cmd = Var_Subst((char *)cmd, (GNode *)gn, VARE_WANTRES);
-    (void)Lst_AtEnd(postCommands->commands, cmd);
+    Lst_AppendS(postCommands->commands, cmd);
     return 0;
 }
 
