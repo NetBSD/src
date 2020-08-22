@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.104 2020/08/22 15:43:32 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.105 2020/08/22 15:55:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.104 2020/08/22 15:43:32 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.105 2020/08/22 15:55:22 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.104 2020/08/22 15:43:32 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.105 2020/08/22 15:55:22 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1771,6 +1771,12 @@ Dir_Concat(Lst path1, Lst path2)
     }
 }
 
+static int
+percentage(int num, int den)
+{
+    return den != 0 ? num * 100 / den : 0;
+}
+
 /********** DEBUG INFO **********/
 void
 Dir_PrintDirectories(void)
@@ -1782,8 +1788,7 @@ Dir_PrintDirectories(void)
     fprintf(debug_file,
 	    "# Stats: %d hits %d misses %d near misses %d losers (%d%%)\n",
 	    hits, misses, nearmisses, bigmisses,
-	    (hits + bigmisses + nearmisses ?
-	     hits * 100 / (hits + bigmisses + nearmisses) : 0));
+	    percentage(hits, hits + bigmisses + nearmisses));
     fprintf(debug_file, "# %-20s referenced\thits\n", "directory");
     if (Lst_Open(openDirectories) == SUCCESS) {
 	while ((ln = Lst_NextS(openDirectories)) != NULL) {
