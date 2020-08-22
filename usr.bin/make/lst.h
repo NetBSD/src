@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.37 2020/08/22 22:41:42 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.38 2020/08/22 22:57:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -101,7 +101,7 @@ typedef void		FreeProc(void *);
 /* Create a new list */
 Lst		Lst_Init(void);
 /* Duplicate an existing list */
-Lst		Lst_Duplicate(Lst, DuplicateProc *);
+Lst		Lst_CopyS(Lst, DuplicateProc *);
 /* Destroy an old one */
 void		Lst_Destroy(Lst, FreeProc *);
 /* True if list is empty */

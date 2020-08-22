@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.120 2020/08/22 22:41:42 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.121 2020/08/22 22:57:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.120 2020/08/22 22:41:42 rillig Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.121 2020/08/22 22:57:53 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.120 2020/08/22 22:41:42 rillig Exp $");
+__RCSID("$NetBSD: make.c,v 1.121 2020/08/22 22:57:53 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1258,7 +1258,7 @@ Make_ExpandUse(Lst targs)
     GNode  *gn;		/* a temporary pointer */
     Lst    examine; 	/* List of targets to examine */
 
-    examine = Lst_Duplicate(targs, NULL);
+    examine = Lst_CopyS(targs, NULL);
 
     /*
      * Make an initial downward pass over the graph, marking nodes to be made

@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.107 2020/08/22 19:57:43 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.108 2020/08/22 22:57:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.107 2020/08/22 19:57:43 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.108 2020/08/22 22:57:53 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.107 2020/08/22 19:57:43 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.108 2020/08/22 22:57:53 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1613,15 +1613,11 @@ Dir_AddDir(Lst path, const char *name)
 /*-
  *-----------------------------------------------------------------------
  * Dir_CopyDir --
- *	Callback function for duplicating a search path via Lst_Duplicate.
+ *	Callback function for duplicating a search path via Lst_CopyS.
  *	Ups the reference count for the directory.
  *
  * Results:
  *	Returns the Path it was given.
- *
- * Side Effects:
- *	The refCount of the path is incremented.
- *
  *-----------------------------------------------------------------------
  */
 void *
