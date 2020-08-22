@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.104 2020/08/22 14:39:12 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.105 2020/08/22 14:54:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.104 2020/08/22 14:39:12 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.105 2020/08/22 14:54:48 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.104 2020/08/22 14:39:12 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.105 2020/08/22 14:54:48 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -522,7 +522,7 @@ SuffInsert(Lst l, Suff *s)
 	if (DEBUG(SUFF)) {
 	    fprintf(debug_file, "before %s(%d)\n", s2->name, s2->sNum);
 	}
-	(void)Lst_InsertBefore(l, ln, s);
+	Lst_InsertBeforeS(l, ln, s);
 	s->refCount++;
 	Lst_AppendS(s->ref, l);
     } else if (DEBUG(SUFF)) {
@@ -1646,7 +1646,7 @@ SuffExpandChildren(LstNode cln, GNode *pgn)
 		fprintf(debug_file, "%s...", gn->name);
 	    }
 	    /* Add gn to the parents child list before the original child */
-	    (void)Lst_InsertBefore(pgn->children, cln, gn);
+	    Lst_InsertBeforeS(pgn->children, cln, gn);
 	    Lst_AppendS(gn->parents, pgn);
 	    pgn->unmade++;
 	    /* Expand wildcards on new node */
@@ -1701,7 +1701,7 @@ SuffExpandWildcards(LstNode cln, GNode *pgn)
 	gn = Targ_FindNode(cp, TARG_CREATE);
 
 	/* Add gn to the parents child list before the original child */
-	(void)Lst_InsertBefore(pgn->children, cln, gn);
+	Lst_InsertBeforeS(pgn->children, cln, gn);
 	Lst_AppendS(gn->parents, pgn);
 	pgn->unmade++;
     }
