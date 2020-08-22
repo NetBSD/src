@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.256 2020/08/22 14:39:12 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.257 2020/08/22 15:17:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.256 2020/08/22 14:39:12 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.257 2020/08/22 15:17:09 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.256 2020/08/22 14:39:12 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.257 2020/08/22 15:17:09 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -854,8 +854,8 @@ ParseLinkSrc(void *pgnp, void *cgnp)
     GNode          *pgn = (GNode *)pgnp;
     GNode          *cgn = (GNode *)cgnp;
 
-    if ((pgn->type & OP_DOUBLEDEP) && !Lst_IsEmpty (pgn->cohorts))
-	pgn = (GNode *)Lst_Datum(Lst_Last(pgn->cohorts));
+    if ((pgn->type & OP_DOUBLEDEP) && !Lst_IsEmpty(pgn->cohorts))
+	pgn = Lst_DatumS(Lst_Last(pgn->cohorts));
     Lst_AppendS(pgn->children, cgn);
     if (specType == Not)
 	Lst_AppendS(cgn->parents, pgn);
@@ -2083,8 +2083,8 @@ ParseAddCmd(void *gnp, void *cmd)
     GNode *gn = (GNode *)gnp;
 
     /* Add to last (ie current) cohort for :: targets */
-    if ((gn->type & OP_DOUBLEDEP) && !Lst_IsEmpty (gn->cohorts))
-	gn = (GNode *)Lst_Datum(Lst_Last(gn->cohorts));
+    if ((gn->type & OP_DOUBLEDEP) && !Lst_IsEmpty(gn->cohorts))
+	gn = Lst_DatumS(Lst_Last(gn->cohorts));
 
     /* if target already supplied, ignore commands */
     if (!(gn->type & OP_HAS_COMMANDS)) {
