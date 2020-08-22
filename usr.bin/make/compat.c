@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.124 2020/08/22 15:43:32 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.125 2020/08/22 19:53:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.124 2020/08/22 15:43:32 rillig Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.125 2020/08/22 19:53:22 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.124 2020/08/22 15:43:32 rillig Exp $");
+__RCSID("$NetBSD: compat.c,v 1.125 2020/08/22 19:53:22 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -99,6 +99,7 @@ __RCSID("$NetBSD: compat.c,v 1.124 2020/08/22 15:43:32 rillig Exp $");
 #include    <sys/stat.h>
 #include    <sys/wait.h>
 
+#include    <assert.h>
 #include    <ctype.h>
 #include    <errno.h>
 #include    <signal.h>
@@ -250,6 +251,7 @@ CompatRunCommand(void *cmdp, void *gnp)
     Lst_ReplaceS(cmdNode, cmdStart);
 
     if ((gn->type & OP_SAVE_CMDS) && (gn != ENDNode)) {
+        assert(ENDNode != NULL);
 	Lst_AppendS(ENDNode->commands, cmdStart);
 	return 0;
     }
