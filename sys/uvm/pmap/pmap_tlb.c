@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.39 2020/08/19 06:11:49 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.40 2020/08/22 14:51:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.39 2020/08/19 06:11:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.40 2020/08/22 14:51:44 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -629,7 +629,7 @@ pmap_tlb_shootdown_process(void)
 	((((   (nobody) << 3 * TLBINV_NOBODY)			\
 	 | (      (one) << 3 * TLBINV_ONE)			\
 	 | (  (alluser) << 3 * TLBINV_ALLUSER)			\
-	 | ((allkernel) << 3 * TLBINV_ALLKERNEL)			\
+	 | ((allkernel) << 3 * TLBINV_ALLKERNEL)		\
 	 | (      (all) << 3 * TLBINV_ALL)) >> 3 * (op)) & 7)
 
 #define	TLBINV_USER_MAP(op)	\
