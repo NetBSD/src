@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.25 2020/08/22 14:39:12 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.26 2020/08/22 14:54:48 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,11 +37,11 @@
 #include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.25 2020/08/22 14:39:12 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.26 2020/08/22 14:54:48 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.25 2020/08/22 14:39:12 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.26 2020/08/22 14:54:48 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -192,7 +192,7 @@ Lst_Destroy(Lst list, FreeProc *freeProc)
 
 /* Insert a new node with the given piece of data before the given node in the
  * given list. */
-ReturnStatus
+static ReturnStatus
 Lst_InsertBefore(Lst list, LstNode node, void *datum)
 {
     LstNode newNode;
@@ -228,6 +228,32 @@ Lst_InsertBefore(Lst list, LstNode node, void *datum)
     }
 
     return SUCCESS;
+}
+
+/* Insert a new node with the given piece of data before the given node in the
+ * given list. */
+void
+Lst_InsertBeforeS(Lst list, LstNode node, void *datum)
+{
+    LstNode newNode;
+
+    assert(LstIsValid(list));
+    assert(!LstIsEmpty(list));
+    assert(LstNodeIsValid(node));
+    assert(datum != NULL);
+
+    newNode = LstNodeNew(datum);
+    newNode->prev = node->prev;
+    newNode->next = node;
+
+    if (node->prev != NULL) {
+	node->prev->next = newNode;
+    }
+    node->prev = newNode;
+
+    if (node == list->first) {
+	list->first = newNode;
+    }
 }
 
 /* Insert a new node with the given piece of data after the given node in the
