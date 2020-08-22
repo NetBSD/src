@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.111 2020/08/22 20:50:43 sjg Exp $
+# $NetBSD: Makefile,v 1.112 2020/08/22 21:22:24 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -323,6 +323,7 @@ FLAGS.order=		-j1
 FLAGS.recursive=	-dL
 FLAGS.vardebug=		-k -dv FROM_CMDLINE=
 FLAGS.varmod-match-escape= -dv
+FLAGS.varname-empty=	-dv '$${:U}=cmdline-u' '=cmline-plain'
 
 # Some tests need extra post-processing.
 SED_CMDS.sh-dots+=	-e 's,^${.SHELL}: ,,'
@@ -336,6 +337,7 @@ SED_CMDS.varshell+=	-e '/command/s,No such.*,not found,'
 POSTPROC.counter=	${TOOL_SED} -n -e '/:RELEVANT = yes/,/:RELEVANT = no/p'
 POSTPROC.vardebug=	${TOOL_SED} -n -e '/:RELEVANT = yes/,/:RELEVANT = no/p'
 POSTPROC.varmod-match-escape= ${TOOL_SED} -n -e '/^Pattern/p'
+POSTPROC.varname-empty=	${TOOL_SED} -n -e '/^Var_Set/p' -e '/^out:/p'
 
 # Some tests reuse other tests, which makes them unnecessarily fragile.
 export-all.rawout: export.mk
