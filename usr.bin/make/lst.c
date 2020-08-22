@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.29 2020/08/22 15:43:32 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.30 2020/08/22 16:00:52 skrll Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -33,15 +33,16 @@
  */
 
 #include <assert.h>
+#include <stdint.h>
 
 #include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.29 2020/08/22 15:43:32 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.30 2020/08/22 16:00:52 skrll Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.29 2020/08/22 15:43:32 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.30 2020/08/22 16:00:52 skrll Exp $");
 #endif /* not lint */
 #endif
 
