@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.100 2020/08/22 11:35:00 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.101 2020/08/22 14:04:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.100 2020/08/22 11:35:00 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.101 2020/08/22 14:04:22 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.100 2020/08/22 11:35:00 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.101 2020/08/22 14:04:22 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -143,7 +143,6 @@ __RCSID("$NetBSD: dir.c,v 1.100 2020/08/22 11:35:00 rillig Exp $");
 #include <stdio.h>
 
 #include "make.h"
-#include "hash.h"
 #include "dir.h"
 #include "job.h"
 
@@ -350,11 +349,7 @@ cached_lstat(const char *pathname, void *st)
     return cached_stats(&lmtimes, pathname, st, CST_LSTAT);
 }
 
-/* Initialize things for this module.
- *
- * Side Effects:
- *	some directories may be opened.
- */
+/* Initialize things for this module. */
 void
 Dir_Init(void)
 {
