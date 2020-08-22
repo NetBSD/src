@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.108 2020/08/22 18:44:22 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.109 2020/08/22 21:42:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.108 2020/08/22 18:44:22 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.109 2020/08/22 21:42:38 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.108 2020/08/22 18:44:22 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.109 2020/08/22 21:42:38 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -135,10 +135,7 @@ __RCSID("$NetBSD: suff.c,v 1.108 2020/08/22 18:44:22 rillig Exp $");
  *				order to find the node.
  */
 
-#include    	  <assert.h>
-#include    	  <stdio.h>
 #include	  "make.h"
-#include	  "hash.h"
 #include	  "dir.h"
 
 static Lst       sufflist;	/* Lst of suffixes */

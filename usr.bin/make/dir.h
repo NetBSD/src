@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.19 2020/08/22 00:48:02 rillig Exp $	*/
+/*	$NetBSD: dir.h,v 1.20 2020/08/22 21:42:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,9 +70,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dir.h	8.1 (Berkeley) 6/6/93
- */
-
-/* dir.h --
  */
 
 #ifndef	MAKE_DIR_H

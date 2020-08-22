@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.458 2020/08/22 20:31:50 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.459 2020/08/22 21:42:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.458 2020/08/22 20:31:50 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.459 2020/08/22 21:42:38 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.458 2020/08/22 20:31:50 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.459 2020/08/22 21:42:38 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -124,15 +124,11 @@ __RCSID("$NetBSD: var.c,v 1.458 2020/08/22 20:31:50 rillig Exp $");
 #include    <sys/types.h>
 #include    <regex.h>
 #endif
-#include    <assert.h>
-#include    <ctype.h>
 #include    <inttypes.h>
 #include    <limits.h>
-#include    <stdlib.h>
 #include    <time.h>
 
 #include    "make.h"
-#include    "buf.h"
 #include    "enum.h"
 #include    "dir.h"
 #include    "job.h"

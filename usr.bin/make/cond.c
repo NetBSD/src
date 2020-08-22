@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.98 2020/08/20 18:47:57 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.99 2020/08/22 21:42:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.98 2020/08/20 18:47:57 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.99 2020/08/22 21:42:38 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.98 2020/08/20 18:47:57 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.99 2020/08/22 21:42:38 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -91,14 +91,10 @@ __RCSID("$NetBSD: cond.c,v 1.98 2020/08/20 18:47:57 rillig Exp $");
  *
  */
 
-#include    <assert.h>
-#include    <ctype.h>
-#include    <errno.h>
+#include <errno.h>
 
-#include    "make.h"
-#include    "hash.h"
-#include    "dir.h"
-#include    "buf.h"
+#include "make.h"
+#include "dir.h"
 
 /*
  * The parsing of conditional expressions is based on this grammar:

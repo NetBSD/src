@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.122 2020/08/22 19:27:22 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.123 2020/08/22 21:42:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -83,6 +83,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <fcntl.h>
 #include <stdio.h>
