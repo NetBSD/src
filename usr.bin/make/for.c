@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.63 2020/08/09 19:51:02 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.64 2020/08/22 21:42:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.63 2020/08/09 19:51:02 rillig Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.64 2020/08/22 21:42:38 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.63 2020/08/09 19:51:02 rillig Exp $");
+__RCSID("$NetBSD: for.c,v 1.64 2020/08/22 21:42:38 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -52,13 +52,7 @@ __RCSID("$NetBSD: for.c,v 1.63 2020/08/09 19:51:02 rillig Exp $");
  *
  */
 
-#include    <assert.h>
-#include    <ctype.h>
-
 #include    "make.h"
-#include    "hash.h"
-#include    "dir.h"
-#include    "buf.h"
 #include    "strlist.h"
 
 #define FOR_SUB_ESCAPE_CHAR  1
