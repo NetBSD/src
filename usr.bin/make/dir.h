@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.18 2017/05/31 22:02:06 maya Exp $	*/
+/*	$NetBSD: dir.h,v 1.19 2020/08/22 00:48:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -86,7 +86,8 @@ typedef struct Path {
     Hash_Table    files;    	/* Hash table of files in directory */
 } Path;
 
-void Dir_Init(const char *);
+void Dir_Init(void);
+void Dir_InitDir(const char *);
 void Dir_InitCur(const char *);
 void Dir_InitDot(void);
 void Dir_End(void);

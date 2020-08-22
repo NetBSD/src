@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.305 2020/08/21 02:20:47 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.306 2020/08/22 00:48:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.305 2020/08/21 02:20:47 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.306 2020/08/22 00:48:02 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.305 2020/08/21 02:20:47 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.306 2020/08/22 00:48:02 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1168,7 +1168,7 @@ main(int argc, char **argv)
 #ifdef USE_META
 	meta_init();
 #endif
-	Dir_Init(NULL);		/* Dir_* safe to call from MainParseArgs */
+	Dir_Init();
 
 	/*
 	 * First snag any flags out of the MAKE environment variable.
@@ -1249,7 +1249,7 @@ main(int argc, char **argv)
 	 * and * finally _PATH_OBJDIRPREFIX`pwd`, in that order.  If none
 	 * of these paths exist, just use .CURDIR.
 	 */
-	Dir_Init(curdir);
+	Dir_InitDir(curdir);
 	(void)Main_SetObjdir("%s", curdir);
 
 	if (!Main_SetVarObjdir("MAKEOBJDIRPREFIX", curdir) &&
