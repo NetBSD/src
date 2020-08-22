@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.309 2020/08/22 17:34:25 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.310 2020/08/22 18:47:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.309 2020/08/22 17:34:25 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.310 2020/08/22 18:47:31 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.309 2020/08/22 17:34:25 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.310 2020/08/22 18:47:31 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -176,7 +176,6 @@ Boolean			beSilent;	/* -s flag */
 Boolean			oldVars;	/* variable substitution style */
 Boolean			checkEnvFirst;	/* -e flag */
 Boolean			parseWarnFatal;	/* -W flag */
-Boolean			jobServer; 	/* -J flag */
 static int jp_0 = -1, jp_1 = -1;	/* ends of parent job pipe */
 Boolean			varNoExportEnv;	/* -X flag */
 Boolean			doing_depend;	/* Set while reading .depend */
@@ -521,7 +520,6 @@ rearg:
 			} else {
 			    Var_Append(MAKEFLAGS, "-J", VAR_GLOBAL);
 			    Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
-			    jobServer = TRUE;
 			}
 			break;
 		case 'N':
