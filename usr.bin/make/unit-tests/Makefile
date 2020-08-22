@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.113 2020/08/22 21:30:52 sjg Exp $
+# $NetBSD: Makefile,v 1.114 2020/08/22 21:55:54 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -111,6 +111,7 @@ TESTS+=		deptgt-silent
 TESTS+=		deptgt-stale
 TESTS+=		deptgt-suffixes
 TESTS+=		dir
+TESTS+=		dir-expand-path
 TESTS+=		directive
 TESTS+=		directive-elif
 TESTS+=		directive-elifdef
