@@ -1,4 +1,4 @@
-# $NetBSD: varname-empty.mk,v 1.1 2020/08/22 20:23:14 rillig Exp $
+# $NetBSD: varname-empty.mk,v 1.2 2020/08/22 20:31:50 rillig Exp $
 #
 # Tests for the special variable with the empty name.
 #
@@ -6,7 +6,8 @@
 # This is because it is heavily used in the .for loop expansion,
 # as well as to generate arbitrary strings, as in ${:Ufallback}.
 
-# Oops.
+# Until 2020-08-22 it was possible to assign a value to the variable with
+# the empty name, leading to all kinds of unexpected effects.
 !=	echo 'value'
 
 # The .for loop expands the expression ${i} to ${:U1}, ${:U2} and so on.
