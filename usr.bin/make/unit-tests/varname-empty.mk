@@ -1,4 +1,4 @@
-# $NetBSD: varname-empty.mk,v 1.2 2020/08/22 20:31:50 rillig Exp $
+# $NetBSD: varname-empty.mk,v 1.3 2020/08/22 21:02:56 rillig Exp $
 #
 # Tests for the special variable with the empty name.
 #
@@ -8,6 +8,10 @@
 
 # Until 2020-08-22 it was possible to assign a value to the variable with
 # the empty name, leading to all kinds of unexpected effects.
+?=	default
+#=	assigned	# XXX: probably undefined behavior
++=	appended
+:=	subst
 !=	echo 'value'
 
 # The .for loop expands the expression ${i} to ${:U1}, ${:U2} and so on.
