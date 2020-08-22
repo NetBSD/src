@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.89 2020/08/22 15:17:09 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.90 2020/08/22 15:46:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.89 2020/08/22 15:17:09 rillig Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.90 2020/08/22 15:46:28 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.89 2020/08/22 15:17:09 rillig Exp $");
+__RCSID("$NetBSD: arch.c,v 1.90 2020/08/22 15:46:28 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1038,11 +1038,7 @@ Arch_Touch(GNode *gn)
  *-----------------------------------------------------------------------
  */
 void
-#if !defined(RANLIBMAG)
-Arch_TouchLib(GNode *gn MAKE_ATTR_UNUSED)
-#else
 Arch_TouchLib(GNode *gn)
-#endif
 {
 #ifdef RANLIBMAG
     FILE *	    arch;	/* Stream open to archive */
@@ -1059,6 +1055,8 @@ Arch_TouchLib(GNode *gn)
 	times.actime = times.modtime = now;
 	utime(gn->path, &times);
     }
+#else
+    (void)gn;
 #endif
 }
 
