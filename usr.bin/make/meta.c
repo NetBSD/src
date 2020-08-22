@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.95 2020/08/22 13:28:20 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.96 2020/08/22 15:17:09 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1340,7 +1340,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 			    do {
 				nln = Lst_FindFrom(missingFiles, Lst_Succ(ln),
 						   p, path_match);
-				tp = Lst_Datum(ln);
+				tp = Lst_DatumS(ln);
 				Lst_RemoveS(missingFiles, ln);
 				free(tp);
 			    } while ((ln = nln) != NULL);
@@ -1519,7 +1519,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 			fprintf(debug_file, "%s: %d: there were more build commands in the meta data file than there are now...\n", fname, lineno);
 		    oodate = TRUE;
 		} else {
-		    char *cmd = (char *)Lst_Datum(ln);
+		    char *cmd = Lst_DatumS(ln);
 		    Boolean hasOODATE = FALSE;
 
 		    if (strstr(cmd, "$?"))
@@ -1596,7 +1596,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 	if (!Lst_IsEmpty(missingFiles)) {
 	    if (DEBUG(META))
 		fprintf(debug_file, "%s: missing files: %s...\n",
-			fname, (char *)Lst_Datum(Lst_First(missingFiles)));
+			fname, (char *)Lst_DatumS(Lst_First(missingFiles)));
 	    oodate = TRUE;
 	}
 	if (!oodate && !have_filemon && filemonMissing) {
