@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.899 2020/08/22 16:51:25 rillig Exp $
+# $NetBSD: mi,v 1.900 2020/08/22 20:23:14 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5051,6 +5051,8 @@
 ./usr/tests/usr.bin/make/unit-tests/varname-dot-path.mk	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varname-dot-targets.exp	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varname-dot-targets.mk	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/varname-empty.exp	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/varname-empty.mk	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varname-make.exp	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varname-make.mk	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varname-make_print_var_on_error.exp	tests-usr.bin-tests	compattestfile,atf
