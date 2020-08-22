@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.18 2020/08/21 14:33:32 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.19 2020/08/22 00:13:16 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -34,15 +34,14 @@
 
 #include <assert.h>
 
-#include "lst.h"
-#include "make_malloc.h"
+#include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.18 2020/08/21 14:33:32 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.19 2020/08/22 00:13:16 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.18 2020/08/21 14:33:32 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.19 2020/08/22 00:13:16 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -643,10 +642,7 @@ Lst_Open(Lst list)
     if (!LstValid(list)) {
 	return FAILURE;
     }
-    list->isOpen = TRUE;
-    list->lastAccess = LstIsEmpty(list) ? Head : Unknown;
-    list->curr = NULL;
-
+    Lst_OpenS(list);
     return SUCCESS;
 }
 
@@ -656,6 +652,14 @@ void
 Lst_OpenS(Lst list)
 {
     assert(LstValid(list));
+#if 0
+    /* XXX: This assertion fails for NetBSD's "build.sh -j1 tools", somewhere
+     * between "dependall ===> compat" and "dependall ===> binstall".
+     * Building without the "-j1" succeeds though. */
+    if (list->isOpen)
+	Parse_Error(PARSE_WARNING, "Internal inconsistency: list opened twice");
+    assert(!list->isOpen);
+#endif
 
     list->isOpen = TRUE;
     list->lastAccess = LstIsEmpty(list) ? Head : Unknown;
