@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.208 2020/08/22 08:01:34 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.209 2020/08/22 09:51:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.208 2020/08/22 08:01:34 rillig Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.209 2020/08/22 09:51:57 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.208 2020/08/22 08:01:34 rillig Exp $");
+__RCSID("$NetBSD: job.c,v 1.209 2020/08/22 09:51:57 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -300,7 +300,7 @@ const char *shellPath = NULL,		  	  /* full pathname of
 						   * executable image */
 	   *shellName = NULL;		      	  /* last component of shell */
 char *shellErrFlag = NULL;
-static const char *shellArgv = NULL;		  /* Custom shell args */
+static char *shellArgv = NULL;	/* Custom shell args */
 
 
 STATIC Job	*job_table;	/* The structures that describe them */
@@ -2458,7 +2458,7 @@ Job_ParseShell(char *line)
 	line++;
     }
 
-    free(UNCONST(shellArgv));
+    free(shellArgv);
 
     memset(&newShell, 0, sizeof(newShell));
 
