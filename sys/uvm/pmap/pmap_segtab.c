@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.20 2020/08/20 23:36:45 mrg Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.21 2020/08/22 13:59:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.20 2020/08/20 23:36:45 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.21 2020/08/22 13:59:16 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -132,7 +132,7 @@ struct pmap_segtab_info {
 kmutex_t pmap_segtab_lock __cacheline_aligned;
 
 /*
- * Check that a seg_tab[] array is empty.  
+ * Check that a seg_tab[] array is empty.
  *
  * This is used when allocating or freeing a pmap_segtab_t.  The stp
  * should be unused -- meaning, none of the seg_tab[] pointers are
@@ -182,7 +182,7 @@ pmap_check_ptes(pt_entry_t *pte, const char *caller)
 				if (!pte_zero_p(pte[j]))
 					UVMHIST_LOG(pmapsegtabhist,
 					    "pte[%zu] = %#"PRIxPTE,
-					    j, pte_value(pte[j]), 0, 0); 
+					    j, pte_value(pte[j]), 0, 0);
 #endif
 			panic("%s: pte[%zu] entry at %p not 0 (%#"PRIxPTE")",
 			      caller, i, &pte[i], pte_value(pte[i]));
@@ -281,7 +281,7 @@ pmap_segtab_release(pmap_t pmap, pmap_segtab_t **stp_p, bool free_stp,
 		pt_entry_t *pte = stp->seg_tab[i];
 		if (pte == NULL)
 			continue;
-		pmap_check_ptes(pte, __func__); 
+		pmap_check_ptes(pte, __func__);
 
 #if defined(__mips_n64) && PAGE_SIZE == 8192
 		/*
