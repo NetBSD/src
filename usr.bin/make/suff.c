@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.102 2020/08/22 11:35:00 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.103 2020/08/22 13:28:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.102 2020/08/22 11:35:00 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.103 2020/08/22 13:28:20 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.102 2020/08/22 11:35:00 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.103 2020/08/22 13:28:20 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1213,7 +1213,7 @@ SuffAddSrc(void *sp, void *lsp)
 	Lst_AppendS(ls->l, s2);
 #ifdef DEBUG_SRC
 	s2->cp = Lst_Init();
-	Lst_AtEnd(targ->cp, s2);
+	Lst_AppendS(targ->cp, s2);
 	fprintf(debug_file, "1 add %p %p to %p:", targ, s2, ls->l);
 	Lst_ForEach(ls->l, PrintAddr, NULL);
 	fprintf(debug_file, "\n");
@@ -1231,7 +1231,7 @@ SuffAddSrc(void *sp, void *lsp)
     Lst_AppendS(ls->l, s2);
 #ifdef DEBUG_SRC
     s2->cp = Lst_Init();
-    Lst_AtEnd(targ->cp, s2);
+    Lst_AppendS(targ->cp, s2);
     fprintf(debug_file, "2 add %p %p to %p:", targ, s2, ls->l);
     Lst_ForEach(ls->l, PrintAddr, NULL);
     fprintf(debug_file, "\n");
@@ -1390,7 +1390,7 @@ SuffFindThem(Lst srcs, Lst slst)
 	}
 
 	SuffAddLevel(srcs, s);
-	Lst_AtEnd(slst, s);
+	Lst_AppendS(slst, s);
     }
 
     if (DEBUG(SUFF) && rs) {
@@ -1496,9 +1496,9 @@ SuffFindCmds(Src *targ, Lst slst)
 #ifdef DEBUG_SRC
     ret->cp = Lst_Init();
     fprintf(debug_file, "3 add %p %p\n", targ, ret);
-    Lst_AtEnd(targ->cp, ret);
+    Lst_AppendS(targ->cp, ret);
 #endif
-    Lst_AtEnd(slst, ret);
+    Lst_AppendS(slst, ret);
     if (DEBUG(SUFF)) {
 	fprintf(debug_file, "\tusing existing source %s\n", s->name);
     }
@@ -2312,7 +2312,7 @@ sfnd_abort:
 	     */
 	    while (bottom && bottom->parent != NULL) {
 		if (Lst_Member(slst, bottom) == NULL) {
-		    Lst_AtEnd(slst, bottom);
+		    Lst_AppendS(slst, bottom);
 		}
 		bottom = bottom->parent;
 	    }
@@ -2388,7 +2388,7 @@ sfnd_abort:
 sfnd_return:
     if (bottom)
 	if (Lst_Member(slst, bottom) == NULL)
-	    Lst_AtEnd(slst, bottom);
+	    Lst_AppendS(slst, bottom);
 
     while (SuffRemoveSrc(srcs) || SuffRemoveSrc(targs))
 	continue;

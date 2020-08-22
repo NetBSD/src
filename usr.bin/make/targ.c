@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.68 2020/08/22 11:35:00 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.69 2020/08/22 13:28:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.68 2020/08/22 11:35:00 rillig Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.69 2020/08/22 13:28:20 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.68 2020/08/22 11:35:00 rillig Exp $");
+__RCSID("$NetBSD: targ.c,v 1.69 2020/08/22 13:28:20 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -273,7 +273,7 @@ Targ_NewGN(const char *name)
 #ifdef CLEANUP
     if (allGNs == NULL)
 	allGNs = Lst_Init();
-    Lst_AtEnd(allGNs, gn);
+    Lst_AppendS(allGNs, gn);
 #endif
 
     return gn;
@@ -401,7 +401,7 @@ Targ_FindList(Lst names, int flags)
 	gn = Targ_FindNode(name, flags);
 	if (gn != NULL) {
 	    /*
-	     * Note: Lst_AtEnd must come before the Lst_Concat so the nodes
+	     * Note: Lst_Append must come before the Lst_Concat so the nodes
 	     * are added to the list in the order in which they were
 	     * encountered in the makefile.
 	     */
