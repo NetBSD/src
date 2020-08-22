@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.110 2020/08/22 20:23:14 rillig Exp $
+# $NetBSD: Makefile,v 1.111 2020/08/22 20:50:43 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -325,11 +325,11 @@ FLAGS.vardebug=		-k -dv FROM_CMDLINE=
 FLAGS.varmod-match-escape= -dv
 
 # Some tests need extra post-processing.
-SED_CMDS.sh-dots+=	-e '/not found/s,^.*sh: ,,'
+SED_CMDS.sh-dots+=	-e 's,^${.SHELL}: ,,'
 SED_CMDS.varmod-subst-regex+= \
 			-e 's,\(Regex compilation error:\).*,\1 (details omitted),'
 SED_CMDS.varmod-edge+=	-e 's, line [0-9]*:, line omitted:,'
-SED_CMDS.varshell+=	-e 's,^[a-z]*sh: ,,'
+SED_CMDS.varshell+=	-e 's,^${.SHELL:T}: ,,'
 SED_CMDS.varshell+=	-e '/command/s,No such.*,not found,'
 
 # Some tests need an additional round of postprocessing.
