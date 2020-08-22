@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.115 2020/08/22 14:39:12 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.116 2020/08/22 14:54:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.115 2020/08/22 14:39:12 rillig Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.116 2020/08/22 14:54:48 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.115 2020/08/22 14:39:12 rillig Exp $");
+__RCSID("$NetBSD: make.c,v 1.116 2020/08/22 14:54:48 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1015,7 +1015,7 @@ MakeBuildChild(void *v_cn, void *toBeMade_next)
     if (toBeMade_next == NULL)
 	Lst_AppendS(toBeMade, cn);
     else
-	Lst_InsertBefore(toBeMade, toBeMade_next, cn);
+	Lst_InsertBeforeS(toBeMade, toBeMade_next, cn);
 
     if (cn->unmade_cohorts != 0)
 	Lst_ForEach(cn->cohorts, MakeBuildChild, toBeMade_next);
