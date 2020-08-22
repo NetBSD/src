@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.111 2020/08/22 11:57:18 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.112 2020/08/22 13:06:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.111 2020/08/22 11:57:18 rillig Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.112 2020/08/22 13:06:39 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.111 2020/08/22 11:57:18 rillig Exp $");
+__RCSID("$NetBSD: make.c,v 1.112 2020/08/22 13:06:39 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -439,21 +439,11 @@ Make_HandleUse(GNode *cgn, GNode *pgn)
 
     if ((cgn->type & (OP_USE|OP_USEBEFORE)) || Lst_IsEmpty(pgn->commands)) {
 	    if (cgn->type & OP_USEBEFORE) {
-		/*
-		 * .USEBEFORE --
-		 *	prepend the child's commands to the parent.
-		 */
-		LstNode node;
-		for (node = Lst_Last(cgn->commands);
-		     node != NULL;
-		     node = Lst_Prev(node))
-		    Lst_AtFront(pgn->commands, Lst_Datum(node));
+		/* .USEBEFORE */
+		Lst_PrependAllS(pgn->commands, cgn->commands);
 	    } else {
-		/*
-		 * .USE or target has no commands --
-		 *	append the child's commands to the parent.
-		 */
-		(void)Lst_Concat(pgn->commands, cgn->commands, LST_CONCNEW);
+		/* .USE, or target has no commands */
+		Lst_AppendAllS(pgn->commands, cgn->commands);
 	    }
     }
 
