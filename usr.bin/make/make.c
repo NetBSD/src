@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.107 2020/08/21 04:42:02 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.108 2020/08/22 08:01:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.107 2020/08/21 04:42:02 rillig Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.108 2020/08/22 08:01:34 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.107 2020/08/21 04:42:02 rillig Exp $");
+__RCSID("$NetBSD: make.c,v 1.108 2020/08/22 08:01:34 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -189,7 +189,7 @@ MakeTimeStamp(void *pgn, void *cgn)
 {
     return Make_TimeStamp((GNode *)pgn, (GNode *)cgn);
 }
-
+
 /*-
  *-----------------------------------------------------------------------
  * Make_OODate --
@@ -350,7 +350,7 @@ Make_OODate(GNode *gn)
 
     return oodate;
 }
-
+
 /*-
  *-----------------------------------------------------------------------
  * MakeAddChild  --
@@ -382,7 +382,7 @@ MakeAddChild(void *gnp, void *lp)
     }
     return 0;
 }
-
+
 /*-
  *-----------------------------------------------------------------------
  * MakeFindChild  --
@@ -412,7 +412,7 @@ MakeFindChild(void *gnp, void *pgnp)
 
     return 0;
 }
-
+
 /*-
  *-----------------------------------------------------------------------
  * Make_HandleUse --
@@ -840,7 +840,7 @@ Make_Update(GNode *cgn)
 	Lst_CloseS(cgn->iParents);
     }
 }
-
+
 /*-
  *-----------------------------------------------------------------------
  * MakeAddAllSrc --
@@ -934,7 +934,7 @@ MakeAddAllSrc(void *cgnp, void *pgnp)
     }
     return 0;
 }
-
+
 /*-
  *-----------------------------------------------------------------------
  * Make_DoAllVar --
@@ -980,7 +980,7 @@ Make_DoAllVar(GNode *gn)
     }
     gn->flags |= DONE_ALLSRC;
 }
-
+
 /*-
  *-----------------------------------------------------------------------
  * MakeStartJobs --
@@ -1147,7 +1147,7 @@ MakeStartJobs(void)
 
     return FALSE;
 }
-
+
 /*-
  *-----------------------------------------------------------------------
  * MakePrintStatus --
@@ -1262,7 +1262,7 @@ MakePrintStatus(void *gnp, void *v_errors)
     Lst_ForEach(gn->children, MakePrintStatus, errors);
     return 0;
 }
-
+
 
 /*-
  *-----------------------------------------------------------------------
