@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.94 2020/08/21 03:36:03 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.95 2020/08/22 13:28:20 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1410,7 +1410,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 			(link_src == NULL && cached_stat(p, &fs) < 0)) {
 			if (!meta_ignore(gn, p)) {
 			    if (Lst_Find(missingFiles, p, string_match) == NULL)
-				Lst_AtEnd(missingFiles, bmake_strdup(p));
+				Lst_AppendS(missingFiles, bmake_strdup(p));
 			}
 		    }
 		    break;
@@ -1496,7 +1496,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 			     * We cannot catch every eventuality here...
 			     */
 			    if (Lst_Find(missingFiles, p, string_match) == NULL)
-				    Lst_AtEnd(missingFiles, bmake_strdup(p));
+				Lst_AppendS(missingFiles, bmake_strdup(p));
 			}
 		    }
 		    if (buf[0] == 'E') {

@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.112 2020/08/22 13:06:39 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.113 2020/08/22 13:28:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.112 2020/08/22 13:06:39 rillig Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.113 2020/08/22 13:28:20 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.112 2020/08/22 13:06:39 rillig Exp $");
+__RCSID("$NetBSD: make.c,v 1.113 2020/08/22 13:28:20 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1013,7 +1013,7 @@ MakeBuildChild(void *v_cn, void *toBeMade_next)
 
     cn->made = REQUESTED;
     if (toBeMade_next == NULL)
-	Lst_AtEnd(toBeMade, cn);
+	Lst_AppendS(toBeMade, cn);
     else
 	Lst_InsertBefore(toBeMade, toBeMade_next, cn);
 
@@ -1347,8 +1347,8 @@ link_parent(void *cnp, void *pnp)
     GNode *cn = cnp;
     GNode *pn = pnp;
 
-    Lst_AtEnd(pn->children, cn);
-    Lst_AtEnd(cn->parents, pn);
+    Lst_AppendS(pn->children, cn);
+    Lst_AppendS(cn->parents, pn);
     pn->unmade++;
     return 0;
 }
@@ -1370,9 +1370,9 @@ add_wait_dep(void *v_cn, void *v_wn)
 	 fprintf(debug_file, ".WAIT: add dependency %s%s -> %s\n",
 		cn->name, cn->cohort_num, wn->name);
 
-    Lst_AtEnd(wn->children, cn);
+    Lst_AppendS(wn->children, cn);
     wn->unmade++;
-    Lst_AtEnd(cn->parents, wn);
+    Lst_AppendS(cn->parents, wn);
     return 0;
 }
 
@@ -1403,7 +1403,7 @@ Make_ProcessWait(Lst targs)
     MakeBuildChild(pgn, NULL);
 
     examine = Lst_Init();
-    Lst_AtEnd(examine, pgn);
+    Lst_AppendS(examine, pgn);
 
     while (!Lst_IsEmpty (examine)) {
 	pgn = Lst_DeQueue(examine);
@@ -1432,7 +1432,7 @@ Make_ProcessWait(Lst targs)
 		Lst_ForEachFrom(pgn->children, owln, add_wait_dep, cgn);
 		owln = ln;
 	    } else {
-		Lst_AtEnd(examine, cgn);
+		Lst_AppendS(examine, cgn);
 	    }
 	}
 	Lst_CloseS(pgn->children);
