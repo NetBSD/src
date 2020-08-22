@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.118 2020/08/20 17:13:05 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.119 2020/08/22 18:20:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -134,101 +134,105 @@
 #include "buf.h"
 #include "make_malloc.h"
 
-/*-
- * The structure for an individual graph node. Each node has several
- * pieces of data associated with it.
- *	1) the name of the target it describes
- *	2) the location of the target file in the file system.
- *	3) the type of operator used to define its sources (qv. parse.c)
- *	4) whether it is involved in this invocation of make
- *	5) whether the target has been remade
- *	6) whether any of its children has been remade
- *	7) the number of its children that are, as yet, unmade
- *	8) its modification time
- *	9) the modification time of its youngest child (qv. make.c)
- *	10) a list of nodes for which this is a source (parents)
- *	11) a list of nodes on which this depends (children)
- *	12) a list of nodes that depend on this, as gleaned from the
- *	    transformation rules (iParents)
- *	13) a list of ancestor nodes, which includes parents, iParents,
- *	    and recursive parents of parents
- *	14) a list of nodes of the same name created by the :: operator
- *	15) a list of nodes that must be made (if they're made) before
- *	    this node can be, but that do not enter into the datedness of
- *	    this node.
- *	16) a list of nodes that must be made (if they're made) before
- *	    this node or any child of this node can be, but that do not
- *	    enter into the datedness of this node.
- *	17) a list of nodes that must be made (if they're made) after
- *	    this node is, but that do not depend on this node, in the
- *	    normal sense.
- *	18) a Lst of ``local'' variables that are specific to this target
- *	   and this target only (qv. var.c [$@ $< $?, etc.])
- *	19) a Lst of strings that are commands to be given to a shell
- *	   to create this target.
- */
+typedef enum  {
+    UNMADE,			/* Not examined yet */
+    DEFERRED,			/* Examined once (building child) */
+    REQUESTED,			/* on toBeMade list */
+    BEINGMADE,			/* Target is already being made.
+				 * Indicates a cycle in the graph. */
+    MADE,			/* Was out-of-date and has been made */
+    UPTODATE,			/* Was already up-to-date */
+    ERROR,			/* An error occurred while it was being
+				 * made (used only in compat mode) */
+    ABORTED			/* The target was aborted due to an error
+				 * making an inferior (compat). */
+} GNodeMade;
+
+typedef enum {
+    REMAKE	= 0x0001,	/* this target needs to be (re)made */
+    CHILDMADE	= 0x0002,	/* children of this target were made */
+    FORCE	= 0x0004,	/* children don't exist, and we pretend made */
+    DONE_WAIT	= 0x0008,	/* Set by Make_ProcessWait() */
+    DONE_ORDER	= 0x0010,	/* Build requested by .ORDER processing */
+    FROM_DEPEND	= 0x0020,	/* Node created from .depend */
+    DONE_ALLSRC	= 0x0040,	/* We do it once only */
+    CYCLE	= 0x1000,	/* Used by MakePrintStatus */
+    DONECYCLE	= 0x2000,	/* Used by MakePrintStatus */
+    INTERNAL	= 0x4000	/* Internal use only */
+} GNodeFlags;
+
+/* A graph node represents a target that can possibly be made, including its
+ * relation to other targets and a lot of other details. */
 typedef struct GNode {
-    char            *name;     	/* The target's name */
-    char            *uname;    	/* The unexpanded name of a .USE node */
-    char    	    *path;     	/* The full pathname of the file */
-    int             type;      	/* Its type (see the OP flags, below) */
+    /* The target's name, such as "clean" or "make.c" */
+    char *name;
+    /* The unexpanded name of a .USE node */
+    char *uname;
+    /* The full pathname of the file belonging to the target.
+     * XXX: What about .PHONY targets? These don't have an associated path. */
+    char *path;
 
-    int             flags;
-#define REMAKE		0x1    	/* this target needs to be (re)made */
-#define	CHILDMADE	0x2	/* children of this target were made */
-#define FORCE		0x4	/* children don't exist, and we pretend made */
-#define DONE_WAIT	0x8	/* Set by Make_ProcessWait() */
-#define DONE_ORDER	0x10	/* Build requested by .ORDER processing */
-#define FROM_DEPEND	0x20	/* Node created from .depend */
-#define DONE_ALLSRC	0x40	/* We do it once only */
-#define CYCLE		0x1000  /* Used by MakePrintStatus */
-#define DONECYCLE	0x2000  /* Used by MakePrintStatus */
-#define INTERNAL	0x4000	/* Internal use only */
-    enum enum_made {
-	UNMADE, DEFERRED, REQUESTED, BEINGMADE,
-	MADE, UPTODATE, ERROR, ABORTED
-    }	    	    made;    	/* Set to reflect the state of processing
-				 * on this node:
-				 *  UNMADE - Not examined yet
-				 *  DEFERRED - Examined once (building child)
-				 *  REQUESTED - on toBeMade list
-				 *  BEINGMADE - Target is already being made.
-				 *  	Indicates a cycle in the graph.
-				 *  MADE - Was out-of-date and has been made
-				 *  UPTODATE - Was already up-to-date
-				 *  ERROR - An error occurred while it was being
-				 *  	made (used only in compat mode)
-				 *  ABORTED - The target was aborted due to
-				 *  	an error making an inferior (compat).
-				 */
-    int             unmade;    	/* The number of unmade children */
+    /* The type of operator used to define the sources (see the OP flags below).
+     * XXX: This looks like a wild mixture of type and flags. */
+    int type;
+    /* whether it is involved in this invocation of make */
+    GNodeFlags flags;
 
-    time_t          mtime;     	/* Its modification time */
-    struct GNode    *cmgn;    	/* The youngest child */
+    /* The state of processing on this node */
+    GNodeMade made;
+    int unmade;			/* The number of unmade children */
 
-    Lst     	    iParents;  	/* Links to parents for which this is an
-				 * implied source, if any */
-    Lst	    	    cohorts;  	/* Other nodes for the :: operator */
-    Lst             parents;   	/* Nodes that depend on this one */
-    Lst             children;  	/* Nodes on which this one depends */
-    Lst             order_pred;	/* .ORDER nodes we need made */
-    Lst             order_succ;	/* .ORDER nodes who need us */
+    time_t mtime;		/* Its modification time */
+    struct GNode *cmgn;		/* The youngest child */
 
-    char	    cohort_num[8]; /* #n for this cohort */
-    int		    unmade_cohorts;/* # of unmade instances on the
-				      cohorts list */
-    struct GNode    *centurion;	/* Pointer to the first instance of a ::
-				   node; only set when on a cohorts list */
-    unsigned int    checked;    /* Last time we tried to makle this node */
+    /* Links to parents for which this is an implied source. May be empty.
+     * Nodes that depend on this, as gleaned from the transformation rules. */
+    Lst iParents;
 
-    Hash_Table      context;	/* The local variables */
-    Lst             commands;  	/* Creation commands */
+    /* Other nodes of the same name for the :: operator. */
+    Lst cohorts;
 
-    struct Suff     *suffix;	/* Suffix for the node (determined by
-				 * Suff_FindDeps and opaque to everyone
-				 * but the Suff module) */
-    const char	    *fname;	/* filename where the GNode got defined */
-    int		     lineno;	/* line number where the GNode got defined */
+    /* The nodes that depend on this one, or in other words, the nodes for
+     * which this is a source. */
+    Lst parents;
+    /* The nodes on which this one depends. */
+    Lst children;
+
+    /* .ORDER nodes we need made. The nodes that must be made (if they're
+     * made) before this node can be made, but that do not enter into the
+     * datedness of this node. */
+    Lst order_pred;
+    /* .ORDER nodes who need us. The nodes that must be made (if they're made
+     * at all) after this node is made, but that do not depend on this node,
+     * in the normal sense. */
+    Lst order_succ;
+
+    /* #n for this cohort */
+    char cohort_num[8];
+    /* The number of unmade instances on the cohorts list */
+    int unmade_cohorts;
+    /* Pointer to the first instance of a :: node; only set when on a cohorts
+     * list */
+    struct GNode *centurion;
+
+    /* Last time we tried to make this node */
+    unsigned int checked;	/* XXX: year 2038 */
+
+    /* The "local" variables that are specific to this target and this target
+     * only, such as $@, $<, $?. */
+    Hash_Table context;
+
+    /* The commands to be given to a shell to create this target. */
+    Lst commands;
+
+    /* Suffix for the node (determined by Suff_FindDeps and opaque to everyone
+     * but the Suff module) */
+    struct Suff *suffix;
+
+    /* filename where the GNode got defined */
+    const char *fname;
+    /* line number where the GNode got defined */
+    int lineno;
 } GNode;
 
 /*
