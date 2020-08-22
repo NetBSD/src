@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.30 2020/08/22 16:00:52 skrll Exp $ */
+/* $NetBSD: lst.c,v 1.31 2020/08/22 17:34:25 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -38,11 +38,11 @@
 #include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.30 2020/08/22 16:00:52 skrll Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.31 2020/08/22 17:34:25 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.30 2020/08/22 16:00:52 skrll Exp $");
+__RCSID("$NetBSD: lst.c,v 1.31 2020/08/22 17:34:25 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -690,7 +690,7 @@ Lst_PrependAllS(Lst dst, Lst src)
 {
     LstNode node;
     for (node = src->last; node != NULL; node = node->prev)
-        Lst_PrependS(dst, node->datum);
+	Lst_PrependS(dst, node->datum);
 }
 
 /* Copy the element data from src to the end of dst. */
@@ -699,7 +699,7 @@ Lst_AppendAllS(Lst dst, Lst src)
 {
     LstNode node;
     for (node = src->first; node != NULL; node = node->next)
-        Lst_AppendS(dst, node->datum);
+	Lst_AppendS(dst, node->datum);
 }
 
 /*

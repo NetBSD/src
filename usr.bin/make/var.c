@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.455 2020/08/22 17:32:55 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.456 2020/08/22 17:34:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.455 2020/08/22 17:32:55 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.456 2020/08/22 17:34:25 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.455 2020/08/22 17:32:55 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.456 2020/08/22 17:34:25 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -920,7 +920,7 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
     Var *v;
 
     if (strchr(name, '$') != NULL) {
-        const char *unexpanded_name = name;
+	const char *unexpanded_name = name;
 	name = name_freeIt = Var_Subst(name, ctxt, VARE_WANTRES);
 	if (name[0] == '\0') {
 	    VAR_DEBUG("Var_Append(\"%s\", \"%s\", ...) "
@@ -3071,7 +3071,7 @@ ApplyModifiers(
 	    char eflags_str[VarEvalFlags_ToStringSize];
 	    char vflags_str[VarFlags_ToStringSize];
 	    Boolean is_single_char = mod[0] != '\0' &&
-	        (mod[1] == endc || mod[1] == ':');
+		(mod[1] == endc || mod[1] == ':');
 
 	    /* At this point, only the first character of the modifier can
 	     * be used since the end of the modifier is not yet known. */

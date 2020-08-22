@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.257 2020/08/22 15:17:09 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.258 2020/08/22 17:34:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.257 2020/08/22 15:17:09 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.258 2020/08/22 17:34:25 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.257 2020/08/22 15:17:09 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.258 2020/08/22 17:34:25 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2746,7 +2746,7 @@ ParseEOF(void)
     free(curFile);
 
     if (Lst_IsEmpty(includes)) {
-        curFile = NULL;
+	curFile = NULL;
 	/* We've run out of input */
 	Var_Delete(".PARSEDIR", VAR_GLOBAL);
 	Var_Delete(".PARSEFILE", VAR_GLOBAL);
