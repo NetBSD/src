@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.456 2020/08/22 17:34:25 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.457 2020/08/22 19:30:58 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.456 2020/08/22 17:34:25 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.457 2020/08/22 19:30:58 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.456 2020/08/22 17:34:25 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.457 2020/08/22 19:30:58 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -229,7 +229,8 @@ typedef enum {
      * variable can then be resolved. */
     VAR_REEXPORT = 0x20,
     /* The variable came from command line. */
-    VAR_FROM_CMD = 0x40
+    VAR_FROM_CMD = 0x40,
+    VAR_READONLY = 0x80
 } VarFlags;
 
 ENUM_RTTI_7(VarFlags,
@@ -280,10 +281,6 @@ typedef enum {
     VARP_ANCHOR_START	= 0x04,	/* Match at start of word */
     VARP_ANCHOR_END	= 0x08	/* Match at end of word */
 } VarPatternFlags;
-
-typedef enum {
-    VAR_NO_EXPORT	= 0x01	/* do not export */
-} VarSet_Flags;
 
 #define BROPEN	'{'
 #define BRCLOSE	'}'
@@ -345,6 +342,12 @@ VarFind(const char *name, GNode *ctxt, VarFindFlags flags)
 	case 'P':
 	    if (strcmp(name, ".PREFIX") == 0)
 		name = PREFIX;
+	    break;
+	case 'S':
+	    if (strcmp(name, ".SHELL") == 0 ) {
+		if (!shellPath)
+		    Shell_Init();
+	    }
 	    break;
 	case 'T':
 	    if (strcmp(name, ".TARGET") == 0)
@@ -771,7 +774,7 @@ Var_UnExport(const char *str)
 }
 
 /* See Var_Set for documentation. */
-static void
+void
 Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
 		   VarSet_Flags flags)
 {
@@ -817,7 +820,16 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
 	    Var_Delete(name, VAR_GLOBAL);
 	}
 	VarAdd(name, val, ctxt);
+	if (flags & VAR_SET_READONLY) {
+	    v = VarFind(name, ctxt, 0);
+	    v->flags |= VAR_READONLY;
+	}
     } else {
+	if ((v->flags & VAR_READONLY) && !(flags & VAR_SET_READONLY)) {
+	    VAR_DEBUG("%s:%s = %s ignored (read-only)\n",
+	      ctxt->name, name, val);
+	    goto out;
+	}	    
 	Buf_Empty(&v->val);
 	if (val)
 	    Buf_AddStr(&v->val, val);
@@ -830,8 +842,9 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
     /*
      * Any variables given on the command line are automatically exported
      * to the environment (as per POSIX standard)
+     * Other than internals.
      */
-    if (ctxt == VAR_CMD && !(flags & VAR_NO_EXPORT)) {
+    if (ctxt == VAR_CMD && !(flags & VAR_NO_EXPORT) && name[0] != '.') {
 	if (v == NULL) {
 	    /* we just added it */
 	    v = VarFind(name, ctxt, 0);
