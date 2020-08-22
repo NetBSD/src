@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.119 2020/08/22 18:20:31 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.120 2020/08/22 18:44:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -148,6 +148,89 @@ typedef enum  {
 				 * making an inferior (compat). */
 } GNodeMade;
 
+/* The OP_ constants are used when parsing a dependency line as a way of
+ * communicating to other parts of the program the way in which a target
+ * should be made.
+ *
+ * These constants are bitwise-OR'ed together and placed in the 'type' field
+ * of each node. Any node that has a 'type' field which satisfies the OP_NOP
+ * function was never never on the left-hand side of an operator, though it
+ * may have been on the right-hand side... */
+typedef enum {
+    /* Execution of commands depends on children (:) */
+    OP_DEPENDS		= 1 << 0,
+    /* Always execute commands (!) */
+    OP_FORCE		= 1 << 1,
+    /* Execution of commands depends on children per line (::) */
+    OP_DOUBLEDEP	= 1 << 2,
+
+    OP_OPMASK		= OP_DEPENDS|OP_FORCE|OP_DOUBLEDEP,
+
+    /* Don't care if the target doesn't exist and can't be created */
+    OP_OPTIONAL		= 1 << 3,
+    /* Use associated commands for parents */
+    OP_USE		= 1 << 4,
+    /* Target is never out of date, but always execute commands anyway.
+     * Its time doesn't matter, so it has none...sort of */
+    OP_EXEC	  	= 1 << 5,
+    /* Ignore errors when creating the node */
+    OP_IGNORE		= 1 << 6,
+    /* Don't remove the target when interrupted */
+    OP_PRECIOUS		= 1 << 7,
+    /* Don't echo commands when executed */
+    OP_SILENT		= 1 << 8,
+    /* Target is a recursive make so its commands should always be executed
+     * when it is out of date, regardless of the state of the -n or -t flags */
+    OP_MAKE		= 1 << 9,
+    /* Target is out-of-date only if any of its children was out-of-date */
+    OP_JOIN		= 1 << 10,
+    /* Assume the children of the node have been already made */
+    OP_MADE		= 1 << 11,
+    /* Special .BEGIN, .END, .INTERRUPT */
+    OP_SPECIAL		= 1 << 12,
+    /* Like .USE, only prepend commands */
+    OP_USEBEFORE	= 1 << 13,
+    /* The node is invisible to its parents. I.e. it doesn't show up in the
+     * parents' local variables. */
+    OP_INVISIBLE	= 1 << 14,
+    /* The node is exempt from normal 'main target' processing in parse.c */
+    OP_NOTMAIN		= 1 << 15,
+    /* Not a file target; run always */
+    OP_PHONY		= 1 << 16,
+    /* Don't search for file in the path */
+    OP_NOPATH		= 1 << 17,
+    /* .WAIT phony node */
+    OP_WAIT		= 1 << 18,
+    /* .NOMETA do not create a .meta file */
+    OP_NOMETA		= 1 << 19,
+    /* .META we _do_ want a .meta file */
+    OP_META		= 1 << 20,
+    /* Do not compare commands in .meta file */
+    OP_NOMETA_CMP	= 1 << 21,
+    /* Possibly a submake node */
+    OP_SUBMAKE		= 1 << 22,
+
+    /* Attributes applied by PMake */
+
+    /* The node is a transformation rule */
+    OP_TRANSFORM	= 1 << 31,
+    /* Target is a member of an archive */
+    OP_MEMBER		= 1 << 30,
+    /* Target is a library */
+    OP_LIB		= 1 << 29,
+    /* Target is an archive construct */
+    OP_ARCHV		= 1 << 28,
+    /* Target has all the commands it should. Used when parsing to catch
+     * multiple commands for a target. */
+    OP_HAS_COMMANDS	= 1 << 27,
+    /* Saving commands on .END (Compat) */
+    OP_SAVE_CMDS	= 1 << 26,
+    /* Already processed by Suff_FindDeps */
+    OP_DEPS_FOUND	= 1 << 25,
+    /* Node found while expanding .ALLSRC */
+    OP_MARK		= 1 << 24
+} GNodeType;
+
 typedef enum {
     REMAKE	= 0x0001,	/* this target needs to be (re)made */
     CHILDMADE	= 0x0002,	/* children of this target were made */
@@ -234,67 +317,6 @@ typedef struct GNode {
     /* line number where the GNode got defined */
     int lineno;
 } GNode;
-
-/*
- * The OP_ constants are used when parsing a dependency line as a way of
- * communicating to other parts of the program the way in which a target
- * should be made. These constants are bitwise-OR'ed together and
- * placed in the 'type' field of each node. Any node that has
- * a 'type' field which satisfies the OP_NOP function was never never on
- * the lefthand side of an operator, though it may have been on the
- * righthand side...
- */
-#define OP_DEPENDS	0x00000001  /* Execution of commands depends on
-				     * kids (:) */
-#define OP_FORCE	0x00000002  /* Always execute commands (!) */
-#define OP_DOUBLEDEP	0x00000004  /* Execution of commands depends on kids
-				     * per line (::) */
-#define OP_OPMASK	(OP_DEPENDS|OP_FORCE|OP_DOUBLEDEP)
-
-#define OP_OPTIONAL	0x00000008  /* Don't care if the target doesn't
-				     * exist and can't be created */
-#define OP_USE		0x00000010  /* Use associated commands for parents */
-#define OP_EXEC	  	0x00000020  /* Target is never out of date, but always
-				     * execute commands anyway. Its time
-				     * doesn't matter, so it has none...sort
-				     * of */
-#define OP_IGNORE	0x00000040  /* Ignore errors when creating the node */
-#define OP_PRECIOUS	0x00000080  /* Don't remove the target when
-				     * interrupted */
-#define OP_SILENT	0x00000100  /* Don't echo commands when executed */
-#define OP_MAKE		0x00000200  /* Target is a recursive make so its
-				     * commands should always be executed when
-				     * it is out of date, regardless of the
-				     * state of the -n or -t flags */
-#define OP_JOIN 	0x00000400  /* Target is out-of-date only if any of its
-				     * children was out-of-date */
-#define	OP_MADE		0x00000800  /* Assume the children of the node have
-				     * been already made */
-#define OP_SPECIAL	0x00001000  /* Special .BEGIN, .END, .INTERRUPT */
-#define	OP_USEBEFORE	0x00002000  /* Like .USE, only prepend commands */
-#define OP_INVISIBLE	0x00004000  /* The node is invisible to its parents.
-				     * I.e. it doesn't show up in the parents's
-				     * local variables. */
-#define OP_NOTMAIN	0x00008000  /* The node is exempt from normal 'main
-				     * target' processing in parse.c */
-#define OP_PHONY	0x00010000  /* Not a file target; run always */
-#define OP_NOPATH	0x00020000  /* Don't search for file in the path */
-#define OP_WAIT 	0x00040000  /* .WAIT phony node */
-#define OP_NOMETA	0x00080000  /* .NOMETA do not create a .meta file */
-#define OP_META		0x00100000  /* .META we _do_ want a .meta file */
-#define OP_NOMETA_CMP	0x00200000  /* Do not compare commands in .meta file */
-#define OP_SUBMAKE	0x00400000  /* Possibly a submake node */
-/* Attributes applied by PMake */
-#define OP_TRANSFORM	0x80000000  /* The node is a transformation rule */
-#define OP_MEMBER 	0x40000000  /* Target is a member of an archive */
-#define OP_LIB	  	0x20000000  /* Target is a library */
-#define OP_ARCHV  	0x10000000  /* Target is an archive construct */
-#define OP_HAS_COMMANDS	0x08000000  /* Target has all the commands it should.
-				     * Used when parsing to catch multiple
-				     * commands for a target */
-#define OP_SAVE_CMDS	0x04000000  /* Saving commands on .END (Compat) */
-#define OP_DEPS_FOUND	0x02000000  /* Already processed by Suff_FindDeps */
-#define	OP_MARK		0x01000000  /* Node found while expanding .ALLSRC */
 
 #define NoExecute(gn) ((gn->type & OP_MAKE) ? noRecursiveExecute : noExecute)
 /*
