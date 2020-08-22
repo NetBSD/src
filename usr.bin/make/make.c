@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.118 2020/08/22 15:43:32 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.119 2020/08/22 20:03:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.118 2020/08/22 15:43:32 rillig Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.119 2020/08/22 20:03:41 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.118 2020/08/22 15:43:32 rillig Exp $");
+__RCSID("$NetBSD: make.c,v 1.119 2020/08/22 20:03:41 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -447,35 +447,34 @@ Make_HandleUse(GNode *cgn, GNode *pgn)
 	    }
     }
 
-    if (Lst_Open(cgn->children) == SUCCESS) {
-	while ((ln = Lst_NextS(cgn->children)) != NULL) {
-	    GNode *tgn, *gn = Lst_DatumS(ln);
+    Lst_OpenS(cgn->children);
+    while ((ln = Lst_NextS(cgn->children)) != NULL) {
+	GNode *gn = Lst_DatumS(ln);
 
-	    /*
-	     * Expand variables in the .USE node's name
-	     * and save the unexpanded form.
-	     * We don't need to do this for commands.
-	     * They get expanded properly when we execute.
-	     */
-	    if (gn->uname == NULL) {
-		gn->uname = gn->name;
-	    } else {
-		free(gn->name);
-	    }
-	    gn->name = Var_Subst(gn->uname, pgn, VARE_WANTRES);
-	    if (gn->name && gn->uname && strcmp(gn->name, gn->uname) != 0) {
-		/* See if we have a target for this node. */
-		tgn = Targ_FindNode(gn->name, TARG_NOCREATE);
-		if (tgn != NULL)
-		    gn = tgn;
-	    }
-
-	    Lst_AppendS(pgn->children, gn);
-	    Lst_AppendS(gn->parents, pgn);
-	    pgn->unmade += 1;
+	/*
+	 * Expand variables in the .USE node's name
+	 * and save the unexpanded form.
+	 * We don't need to do this for commands.
+	 * They get expanded properly when we execute.
+	 */
+	if (gn->uname == NULL) {
+	    gn->uname = gn->name;
+	} else {
+	    free(gn->name);
 	}
-	Lst_CloseS(cgn->children);
+	gn->name = Var_Subst(gn->uname, pgn, VARE_WANTRES);
+	if (gn->name && gn->uname && strcmp(gn->name, gn->uname) != 0) {
+	    /* See if we have a target for this node. */
+	    GNode *tgn = Targ_FindNode(gn->name, TARG_NOCREATE);
+	    if (tgn != NULL)
+		gn = tgn;
+	}
+
+	Lst_AppendS(pgn->children, gn);
+	Lst_AppendS(gn->parents, pgn);
+	pgn->unmade += 1;
     }
+    Lst_CloseS(cgn->children);
 
     pgn->type |= cgn->type & ~(OP_OPMASK|OP_USE|OP_USEBEFORE|OP_TRANSFORM);
 }
@@ -702,108 +701,108 @@ Make_Update(GNode *cgn)
     Lst_ForEach(centurion->order_succ, MakeBuildParent, Lst_First(toBeMade));
 
     /* Now mark all the parents as having one less unmade child */
-    if (Lst_Open(parents) == SUCCESS) {
-	while ((ln = Lst_NextS(parents)) != NULL) {
-	    pgn = Lst_DatumS(ln);
+    Lst_OpenS(parents);
+    while ((ln = Lst_NextS(parents)) != NULL) {
+	pgn = Lst_DatumS(ln);
+	if (DEBUG(MAKE))
+	    fprintf(debug_file, "inspect parent %s%s: flags %x, "
+			"type %x, made %d, unmade %d ",
+		    pgn->name, pgn->cohort_num, pgn->flags,
+		    pgn->type, pgn->made, pgn->unmade-1);
+
+	if (!(pgn->flags & REMAKE)) {
+	    /* This parent isn't needed */
 	    if (DEBUG(MAKE))
-		fprintf(debug_file, "inspect parent %s%s: flags %x, "
-			    "type %x, made %d, unmade %d ",
-			pgn->name, pgn->cohort_num, pgn->flags,
-			pgn->type, pgn->made, pgn->unmade-1);
-
-	    if (!(pgn->flags & REMAKE)) {
-		/* This parent isn't needed */
-		if (DEBUG(MAKE))
-		    fprintf(debug_file, "- not needed\n");
-		continue;
-	    }
-	    if (mtime == 0 && !(cgn->type & OP_WAIT))
-		pgn->flags |= FORCE;
-
-	    /*
-	     * If the parent has the .MADE attribute, its timestamp got
-	     * updated to that of its newest child, and its unmake
-	     * child count got set to zero in Make_ExpandUse().
-	     * However other things might cause us to build one of its
-	     * children - and so we mustn't do any processing here when
-	     * the child build finishes.
-	     */
-	    if (pgn->type & OP_MADE) {
-		if (DEBUG(MAKE))
-		    fprintf(debug_file, "- .MADE\n");
-		continue;
-	    }
-
-	    if ( ! (cgn->type & (OP_EXEC|OP_USE|OP_USEBEFORE))) {
-		if (cgn->made == MADE)
-		    pgn->flags |= CHILDMADE;
-		(void)Make_TimeStamp(pgn, cgn);
-	    }
-
-	    /*
-	     * A parent must wait for the completion of all instances
-	     * of a `::' dependency.
-	     */
-	    if (centurion->unmade_cohorts != 0 || centurion->made < MADE) {
-		if (DEBUG(MAKE))
-		    fprintf(debug_file,
-			    "- centurion made %d, %d unmade cohorts\n",
-			    centurion->made, centurion->unmade_cohorts);
-		continue;
-	    }
-
-	    /* One more child of this parent is now made */
-	    pgn->unmade -= 1;
-	    if (pgn->unmade < 0) {
-		if (DEBUG(MAKE)) {
-		    fprintf(debug_file, "Graph cycles through %s%s\n",
-			pgn->name, pgn->cohort_num);
-		    Targ_PrintGraph(2);
-		}
-		Error("Graph cycles through %s%s", pgn->name, pgn->cohort_num);
-	    }
-
-	    /* We must always rescan the parents of .WAIT and .ORDER nodes. */
-	    if (pgn->unmade != 0 && !(centurion->type & OP_WAIT)
-		    && !(centurion->flags & DONE_ORDER)) {
-		if (DEBUG(MAKE))
-		    fprintf(debug_file, "- unmade children\n");
-		continue;
-	    }
-	    if (pgn->made != DEFERRED) {
-		/*
-		 * Either this parent is on a different branch of the tree,
-		 * or it on the RHS of a .WAIT directive
-		 * or it is already on the toBeMade list.
-		 */
-		if (DEBUG(MAKE))
-		    fprintf(debug_file, "- not deferred\n");
-		continue;
-	    }
-	    if (pgn->order_pred
-		    && Lst_ForEach(pgn->order_pred, MakeCheckOrder, 0)) {
-		/* A .ORDER rule stops us building this */
-		continue;
-	    }
-	    if (DEBUG(MAKE)) {
-		static int two = 2;
-		fprintf(debug_file, "- %s%s made, schedule %s%s (made %d)\n",
-			cgn->name, cgn->cohort_num,
-			pgn->name, pgn->cohort_num, pgn->made);
-		Targ_PrintNode(pgn, &two);
-	    }
-	    /* Ok, we can schedule the parent again */
-	    pgn->made = REQUESTED;
-	    Lst_EnqueueS(toBeMade, pgn);
+		fprintf(debug_file, "- not needed\n");
+	    continue;
 	}
-	Lst_CloseS(parents);
+	if (mtime == 0 && !(cgn->type & OP_WAIT))
+	    pgn->flags |= FORCE;
+
+	/*
+	 * If the parent has the .MADE attribute, its timestamp got
+	 * updated to that of its newest child, and its unmake
+	 * child count got set to zero in Make_ExpandUse().
+	 * However other things might cause us to build one of its
+	 * children - and so we mustn't do any processing here when
+	 * the child build finishes.
+	 */
+	if (pgn->type & OP_MADE) {
+	    if (DEBUG(MAKE))
+		fprintf(debug_file, "- .MADE\n");
+	    continue;
+	}
+
+	if ( ! (cgn->type & (OP_EXEC|OP_USE|OP_USEBEFORE))) {
+	    if (cgn->made == MADE)
+		pgn->flags |= CHILDMADE;
+	    (void)Make_TimeStamp(pgn, cgn);
+	}
+
+	/*
+	 * A parent must wait for the completion of all instances
+	 * of a `::' dependency.
+	 */
+	if (centurion->unmade_cohorts != 0 || centurion->made < MADE) {
+	    if (DEBUG(MAKE))
+		fprintf(debug_file,
+			"- centurion made %d, %d unmade cohorts\n",
+			centurion->made, centurion->unmade_cohorts);
+	    continue;
+	}
+
+	/* One more child of this parent is now made */
+	pgn->unmade -= 1;
+	if (pgn->unmade < 0) {
+	    if (DEBUG(MAKE)) {
+		fprintf(debug_file, "Graph cycles through %s%s\n",
+		    pgn->name, pgn->cohort_num);
+		Targ_PrintGraph(2);
+	    }
+	    Error("Graph cycles through %s%s", pgn->name, pgn->cohort_num);
+	}
+
+	/* We must always rescan the parents of .WAIT and .ORDER nodes. */
+	if (pgn->unmade != 0 && !(centurion->type & OP_WAIT)
+		&& !(centurion->flags & DONE_ORDER)) {
+	    if (DEBUG(MAKE))
+		fprintf(debug_file, "- unmade children\n");
+	    continue;
+	}
+	if (pgn->made != DEFERRED) {
+	    /*
+	     * Either this parent is on a different branch of the tree,
+	     * or it on the RHS of a .WAIT directive
+	     * or it is already on the toBeMade list.
+	     */
+	    if (DEBUG(MAKE))
+		fprintf(debug_file, "- not deferred\n");
+	    continue;
+	}
+	if (pgn->order_pred
+		&& Lst_ForEach(pgn->order_pred, MakeCheckOrder, 0)) {
+	    /* A .ORDER rule stops us building this */
+	    continue;
+	}
+	if (DEBUG(MAKE)) {
+	    static int two = 2;
+	    fprintf(debug_file, "- %s%s made, schedule %s%s (made %d)\n",
+		    cgn->name, cgn->cohort_num,
+		    pgn->name, pgn->cohort_num, pgn->made);
+	    Targ_PrintNode(pgn, &two);
+	}
+	/* Ok, we can schedule the parent again */
+	pgn->made = REQUESTED;
+	Lst_EnqueueS(toBeMade, pgn);
     }
+    Lst_CloseS(parents);
 
     /*
      * Set the .PREFIX and .IMPSRC variables for all the implied parents
      * of this node.
      */
-    if (Lst_Open(cgn->iParents) == SUCCESS) {
+    Lst_OpenS(cgn->iParents);
+    {
 	const char *cpref = Var_Value(PREFIX, cgn, &p1);
 
 	while ((ln = Lst_NextS(cgn->iParents)) != NULL) {
