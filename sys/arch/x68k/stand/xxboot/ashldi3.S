@@ -1,4 +1,4 @@
-/*	$NetBSD: ashldi3.S,v 1.1 2020/08/16 06:43:43 isaki Exp $	*/
+/*	$NetBSD: ashldi3.S,v 1.2 2020/08/22 10:05:04 isaki Exp $	*/
 
 /*
  * Copyright (C) 2020 Tetsuya Isaki. All rights reserved.
@@ -37,8 +37,8 @@ ASENTRY_NOPROFILE(__ashldi3)
 						| %a0     = shift count
 		jbra	start
 loop:
-		lsll	#1,%d1			| X:%d1 =<< 1
-		roxll	#1,%d0			| %d0:X =<< 1
+		lsll	#1,%d1			| X:%d1 <<= 1
+		roxll	#1,%d0			| %d0:X <<= 1
 start:
 		subql	#1,%a0			| sub %a0 doesn't affect ccr,
 		tstl	%a0			|  but this extra TST op is
