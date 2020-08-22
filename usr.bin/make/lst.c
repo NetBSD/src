@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.32 2020/08/22 21:42:38 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.33 2020/08/22 22:00:50 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,11 +37,11 @@
 #include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.32 2020/08/22 21:42:38 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.33 2020/08/22 22:00:50 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.32 2020/08/22 21:42:38 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.33 2020/08/22 22:00:50 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -456,13 +456,10 @@ Lst_Succ(LstNode node)
 
 /* Return the predecessor to the given node on its list, or NULL. */
 LstNode
-Lst_Prev(LstNode node)
+Lst_PrevS(LstNode node)
 {
-    if (node == NULL) {
-	return NULL;
-    } else {
-	return node->prev;
-    }
+    assert(LstNodeIsValid(node));
+    return node->prev;
 }
 
 /* Return the datum stored in the given node. */
