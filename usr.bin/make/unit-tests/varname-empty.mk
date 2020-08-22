@@ -1,4 +1,4 @@
-# $NetBSD: varname-empty.mk,v 1.3 2020/08/22 21:02:56 rillig Exp $
+# $NetBSD: varname-empty.mk,v 1.4 2020/08/22 21:12:29 rillig Exp $
 #
 # Tests for the special variable with the empty name.
 #
@@ -9,7 +9,7 @@
 # Until 2020-08-22 it was possible to assign a value to the variable with
 # the empty name, leading to all kinds of unexpected effects.
 ?=	default
-#=	assigned	# XXX: probably undefined behavior
+=	assigned	# undefined behavior until 2020-08-22
 +=	appended
 :=	subst
 !=	echo 'value'
