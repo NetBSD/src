@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.22 2020/08/22 15:32:36 skrll Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.23 2020/08/22 15:34:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.22 2020/08/22 15:32:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.23 2020/08/22 15:34:51 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -180,13 +180,13 @@ pmap_check_ptes(pt_entry_t *pte, const char *caller)
 
 #ifdef DEBUG
 	for (size_t i = 0; i < NPTEPG; i++)
-		if (!pte_zero_p(pte[i])) {
+		if (pte[i] != 0) {
 #ifdef DEBUG_NOISY
 			UVMHIST_FUNC(__func__);
 			UVMHIST_CALLARGS(pmapsegtabhist, "pte=%#jx",
 			    (uintptr_t)pte, 0, 0, 0);
 			for (size_t j = i + 1; j < NPTEPG; j++)
-				if (!pte_zero_p(pte[j]))
+				if (pte[j] != 0)
 					UVMHIST_LOG(pmapsegtabhist,
 					    "pte[%zu] = %#"PRIxPTE,
 					    j, pte_value(pte[j]), 0, 0);
