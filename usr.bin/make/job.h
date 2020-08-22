@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.44 2020/08/13 03:54:57 rillig Exp $	*/
+/*	$NetBSD: job.h,v 1.45 2020/08/22 08:01:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -110,7 +110,6 @@ emul_poll(struct pollfd *fd, int nfd, int timeout);
  */
 #define POLL_MSEC	5000
 
-
 /*-
  * Job Table definitions.
  *
@@ -179,7 +178,6 @@ typedef struct Job {
 #define inPipe jobPipe[0]
 #define outPipe jobPipe[1]
 
-
 /*-
  * Shell Specifications:
  * Each shell type has associated with it the following information:

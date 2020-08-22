@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.100 2020/08/21 04:42:02 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.101 2020/08/22 08:01:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.100 2020/08/21 04:42:02 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.101 2020/08/22 08:01:34 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.100 2020/08/21 04:42:02 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.101 2020/08/22 08:01:34 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -475,7 +475,7 @@ SuffRemove(Lst l, Suff *s)
 	SuffFree(s);
     }
 }
-
+
 /*-
  *-----------------------------------------------------------------------
  * SuffInsert  --
