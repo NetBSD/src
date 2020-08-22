@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.26 2020/07/26 08:08:41 simonb Exp $	*/
+/*	$NetBSD: pte.h,v 1.27 2020/08/22 15:34:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -303,12 +303,6 @@ static inline bool
 pte_readonly_p(pt_entry_t pte)
 {
 	return (pte & MIPS_MMU(PG_RO)) != 0;
-}
-
-static inline bool
-pte_zero_p(pt_entry_t pte)
-{
-	return pte == 0;
 }
 
 static inline bool

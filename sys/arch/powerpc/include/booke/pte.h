@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.10 2018/04/19 21:50:07 christos Exp $	*/
+/*	$NetBSD: pte.h,v 1.11 2020/08/22 15:34:51 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -99,12 +99,6 @@ static __inline bool
 pte_valid_p(pt_entry_t pt_entry)
 {
 	return pt_entry != 0;
-}
-
-static __inline bool
-pte_zero_p(pt_entry_t pt_entry)
-{
-	return pt_entry == 0;
 }
 
 static __inline bool
