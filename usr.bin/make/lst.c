@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.21 2020/08/22 09:40:18 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.22 2020/08/22 13:06:39 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,11 +37,11 @@
 #include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.21 2020/08/22 09:40:18 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.22 2020/08/22 13:06:39 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.21 2020/08/22 09:40:18 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.22 2020/08/22 13:06:39 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -83,12 +83,14 @@ LstNodeIsValid(LstNode node)
     return node != NULL;
 }
 
+/* Allocate and initialize a list node.
+ *
+ * The fields 'prev' and 'next' must be initialized by the caller.
+ */
 static LstNode
 LstNodeNew(void *datum)
 {
     LstNode node = bmake_malloc(sizeof *node);
-    /* prev will be initialized by the calling code. */
-    /* next will be initialized by the calling code. */
     node->useCount = 0;
     node->deleted = FALSE;
     node->datum = datum;
@@ -278,6 +280,28 @@ Lst_AtEnd(Lst list, void *datum)
 {
     LstNode end = Lst_Last(list);
     return Lst_InsertAfter(list, end, datum);
+}
+
+/* Add a piece of data at the start of the given list. */
+void
+Lst_PrependS(Lst list, void *datum)
+{
+    LstNode node;
+
+    assert(LstIsValid(list));
+    assert(datum != NULL);
+
+    node = LstNodeNew(datum);
+    node->prev = NULL;
+    node->next = list->first;
+
+    if (list->first == NULL) {
+	list->first = node;
+	list->last = node;
+    } else {
+	list->first->prev = node;
+	list->first = node;
+    }
 }
 
 /* Add a piece of data at the end of the given list. */
@@ -640,6 +664,23 @@ Lst_Concat(Lst list1, Lst list2, int flags)
     return SUCCESS;
 }
 
+/* Copy the element data from src to the start of dst. */
+void
+Lst_PrependAllS(Lst dst, Lst src)
+{
+    LstNode node;
+    for (node = src->last; node != NULL; node = node->prev)
+        Lst_PrependS(dst, node->datum);
+}
+
+/* Copy the element data from src to the end of dst. */
+void
+Lst_AppendAllS(Lst dst, Lst src)
+{
+    LstNode node;
+    for (node = src->first; node != NULL; node = node->next)
+        Lst_AppendS(dst, node->datum);
+}
 
 /*
  * these functions are for dealing with a list as a table, of sorts.
