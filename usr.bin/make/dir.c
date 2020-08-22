@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.108 2020/08/22 22:57:53 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.109 2020/08/22 23:06:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.108 2020/08/22 22:57:53 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.109 2020/08/22 23:06:51 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.108 2020/08/22 22:57:53 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.109 2020/08/22 23:06:51 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1564,8 +1564,11 @@ Dir_AddDir(Lst path, const char *name)
 	if (ln != NULL)
 	    return Lst_DatumS(ln);
 	else {
+	    /* XXX: It is wrong to increment the refCount if dotLast is not
+	     * used afterwards. */
 	    dotLast->refCount += 1;
-	    (void)Lst_AtFront(path, dotLast);
+	    if (path != NULL)
+		Lst_PrependS(path, dotLast);
 	}
     }
 

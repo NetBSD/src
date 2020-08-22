@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.35 2020/08/22 22:57:53 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.36 2020/08/22 23:06:51 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,11 +37,11 @@
 #include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.35 2020/08/22 22:57:53 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.36 2020/08/22 23:06:51 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.35 2020/08/22 22:57:53 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.36 2020/08/22 23:06:51 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -179,46 +179,6 @@ Lst_Destroy(Lst list, FreeProc *freeProc)
 
 /* Insert a new node with the given piece of data before the given node in the
  * given list. */
-static ReturnStatus
-LstInsertBefore(Lst list, LstNode node, void *datum)
-{
-    LstNode newNode;
-
-    /*
-     * check validity of arguments
-     */
-    if (LstIsValid(list) && (LstIsEmpty(list) && node == NULL))
-	goto ok;
-
-    if (!LstIsValid(list) || LstIsEmpty(list) || !LstNodeIsValid(node)) {
-	return FAILURE;
-    }
-
-    ok:
-    newNode = LstNodeNew(datum);
-
-    if (node == NULL) {
-	newNode->prev = newNode->next = NULL;
-	list->first = list->last = newNode;
-    } else {
-	newNode->prev = node->prev;
-	newNode->next = node;
-
-	if (newNode->prev != NULL) {
-	    newNode->prev->next = newNode;
-	}
-	node->prev = newNode;
-
-	if (node == list->first) {
-	    list->first = newNode;
-	}
-    }
-
-    return SUCCESS;
-}
-
-/* Insert a new node with the given piece of data before the given node in the
- * given list. */
 void
 Lst_InsertBeforeS(Lst list, LstNode node, void *datum)
 {
@@ -241,14 +201,6 @@ Lst_InsertBeforeS(Lst list, LstNode node, void *datum)
     if (node == list->first) {
 	list->first = newNode;
     }
-}
-
-/* Add a piece of data at the front of the given list. */
-ReturnStatus
-Lst_AtFront(Lst list, void *datum)
-{
-    LstNode front = Lst_First(list);
-    return LstInsertBefore(list, front, datum);
 }
 
 /* Add a piece of data at the start of the given list. */
