@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.101 2020/08/22 08:01:34 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.102 2020/08/22 11:35:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.101 2020/08/22 08:01:34 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.102 2020/08/22 11:35:00 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.101 2020/08/22 08:01:34 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.102 2020/08/22 11:35:00 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -515,16 +515,16 @@ SuffInsert(Lst l, Suff *s)
 	if (DEBUG(SUFF)) {
 	    fprintf(debug_file, "at end of list\n");
 	}
-	(void)Lst_AtEnd(l, s);
+	Lst_AppendS(l, s);
 	s->refCount++;
-	(void)Lst_AtEnd(s->ref, l);
+	Lst_AppendS(s->ref, l);
     } else if (s2->sNum != s->sNum) {
 	if (DEBUG(SUFF)) {
 	    fprintf(debug_file, "before %s(%d)\n", s2->name, s2->sNum);
 	}
 	(void)Lst_InsertBefore(l, ln, s);
 	s->refCount++;
-	(void)Lst_AtEnd(s->ref, l);
+	Lst_AppendS(s->ref, l);
     } else if (DEBUG(SUFF)) {
 	fprintf(debug_file, "already there\n");
     }
@@ -710,7 +710,7 @@ Suff_AddTransform(char *line)
 	 * by the Parse module.
 	 */
 	gn = Targ_NewGN(line);
-	(void)Lst_AtEnd(transforms, gn);
+	Lst_AppendS(transforms, gn);
     } else {
 	/*
 	 * New specification for transformation rule. Just nuke the old list
@@ -993,7 +993,7 @@ Suff_AddSuffix(char *str, GNode **gn)
 	s->flags =  	0;
 	s->refCount =	1;
 
-	(void)Lst_AtEnd(sufflist, s);
+	Lst_AppendS(sufflist, s);
 	/*
 	 * We also look at our existing targets list to see if adding
 	 * this suffix will make one of our current targets mutate into
@@ -1210,7 +1210,7 @@ SuffAddSrc(void *sp, void *lsp)
 	s->refCount++;
 	s2->children =	0;
 	targ->children += 1;
-	(void)Lst_AtEnd(ls->l, s2);
+	Lst_AppendS(ls->l, s2);
 #ifdef DEBUG_SRC
 	s2->cp = Lst_Init();
 	Lst_AtEnd(targ->cp, s2);
@@ -1228,7 +1228,7 @@ SuffAddSrc(void *sp, void *lsp)
     s->refCount++;
     s2->children =  0;
     targ->children += 1;
-    (void)Lst_AtEnd(ls->l, s2);
+    Lst_AppendS(ls->l, s2);
 #ifdef DEBUG_SRC
     s2->cp = Lst_Init();
     Lst_AtEnd(targ->cp, s2);
@@ -1589,7 +1589,7 @@ SuffExpandChildren(LstNode cln, GNode *pgn)
 		     */
 		    *cp++ = '\0';
 		    gn = Targ_FindNode(start, TARG_CREATE);
-		    (void)Lst_AtEnd(members, gn);
+		    Lst_AppendS(members, gn);
 		    while (*cp == ' ' || *cp == '\t') {
 			cp++;
 		    }
@@ -1627,7 +1627,7 @@ SuffExpandChildren(LstNode cln, GNode *pgn)
 		 * Stuff left over -- add it to the list too
 		 */
 		gn = Targ_FindNode(start, TARG_CREATE);
-		(void)Lst_AtEnd(members, gn);
+		Lst_AppendS(members, gn);
 	    }
 	    /*
 	     * Point cp back at the beginning again so the variable value
@@ -1647,7 +1647,7 @@ SuffExpandChildren(LstNode cln, GNode *pgn)
 	    }
 	    /* Add gn to the parents child list before the original child */
 	    (void)Lst_InsertBefore(pgn->children, cln, gn);
-	    (void)Lst_AtEnd(gn->parents, pgn);
+	    Lst_AppendS(gn->parents, pgn);
 	    pgn->unmade++;
 	    /* Expand wildcards on new node */
 	    SuffExpandWildcards(Lst_Prev(cln), pgn);
@@ -1702,7 +1702,7 @@ SuffExpandWildcards(LstNode cln, GNode *pgn)
 
 	/* Add gn to the parents child list before the original child */
 	(void)Lst_InsertBefore(pgn->children, cln, gn);
-	(void)Lst_AtEnd(gn->parents, pgn);
+	Lst_AppendS(gn->parents, pgn);
 	pgn->unmade++;
     }
 
@@ -1811,8 +1811,8 @@ SuffApplyTransform(GNode *tGn, GNode *sGn, Suff *t, Suff *s)
     /*
      * Form the proper links between the target and source.
      */
-    (void)Lst_AtEnd(tGn->children, sGn);
-    (void)Lst_AtEnd(sGn->parents, tGn);
+    Lst_AppendS(tGn->children, sGn);
+    Lst_AppendS(sGn->parents, tGn);
     tGn->unmade += 1;
 
     /*
@@ -1859,7 +1859,7 @@ SuffApplyTransform(GNode *tGn, GNode *sGn, Suff *t, Suff *s)
      * Keep track of another parent to which this beast is transformed so
      * the .IMPSRC variable can be set correctly for the parent.
      */
-    (void)Lst_AtEnd(sGn->iParents, tGn);
+    Lst_AppendS(sGn->iParents, tGn);
 
     return TRUE;
 }
@@ -1929,8 +1929,8 @@ SuffFindArchiveDeps(GNode *gn, Lst slst)
     /*
      * Create the link between the two nodes right off
      */
-    (void)Lst_AtEnd(gn->children, mem);
-    (void)Lst_AtEnd(mem->parents, gn);
+    Lst_AppendS(gn->children, mem);
+    Lst_AppendS(mem->parents, gn);
     gn->unmade += 1;
 
     /*
@@ -2136,7 +2136,7 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
 		/*
 		 * Record the target so we can nuke it
 		 */
-		(void)Lst_AtEnd(targs, targ);
+		Lst_AppendS(targs, targ);
 
 		/*
 		 * Search from this suffix's successor...
@@ -2181,7 +2181,7 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
 	    if (DEBUG(SUFF))
 		fprintf(debug_file, "adding suffix rules\n");
 
-	    (void)Lst_AtEnd(targs, targ);
+	    Lst_AppendS(targs, targ);
 	}
 
 	/*
