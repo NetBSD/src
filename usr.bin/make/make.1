@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.287 2020/08/19 06:10:06 rillig Exp $
+.\"	$NetBSD: make.1,v 1.288 2020/08/22 19:30:58 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd August 19, 2020
+.Dd August 22, 2020
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1140,6 +1140,9 @@ is set to the value of
 for all programs which
 .Nm
 executes.
+.It Ev .SHELL
+The pathname of the shell used to run target scripts.
+It is read-only.
 .It Ev .TARGETS
 The list of targets explicitly specified on the command line, if any.
 .It Ev VPATH
