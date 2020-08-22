@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.260 2020/08/22 21:42:38 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.261 2020/08/22 22:41:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.260 2020/08/22 21:42:38 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.261 2020/08/22 22:41:42 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.260 2020/08/22 21:42:38 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.261 2020/08/22 22:41:42 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3332,7 +3332,7 @@ Parse_MainName(void)
 	/*NOTREACHED*/
     } else if (mainNode->type & OP_DOUBLEDEP) {
 	Lst_AppendS(mainList, mainNode);
-	Lst_Concat(mainList, mainNode->cohorts, LST_CONCNEW);
+	Lst_AppendAllS(mainList, mainNode->cohorts);
     }
     else
 	Lst_AppendS(mainList, mainNode);
