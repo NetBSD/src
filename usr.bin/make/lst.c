@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.24 2020/08/22 13:49:40 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.25 2020/08/22 14:39:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,11 +37,11 @@
 #include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.24 2020/08/22 13:49:40 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.25 2020/08/22 14:39:12 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.24 2020/08/22 13:49:40 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.25 2020/08/22 14:39:12 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -786,30 +786,23 @@ Lst_CloseS(Lst list)
  */
 
 /* Add the datum to the tail of the given list. */
-ReturnStatus
-Lst_EnQueue(Lst list, void *datum)
+void
+Lst_EnqueueS(Lst list, void *datum)
 {
-    if (!LstIsValid(list)) {
-	return FAILURE;
-    }
-
-    return Lst_InsertAfter(list, Lst_Last(list), datum);
+    Lst_AppendS(list, datum);
 }
 
-/* Remove and return the datum at the head of the given list, or NULL if the
- * list is empty. */
+/* Remove and return the datum at the head of the given list. */
 void *
-Lst_DeQueue(Lst list)
+Lst_DequeueS(Lst list)
 {
-    LstNode head;
     void *datum;
 
-    head = Lst_First(list);
-    if (head == NULL) {
-	return NULL;
-    }
+    assert(LstIsValid(list));
+    assert(!LstIsEmpty(list));
 
-    datum = head->datum;
-    Lst_RemoveS(list, head);
+    datum = list->first->datum;
+    Lst_RemoveS(list, list->first);
+    assert(datum != NULL);
     return datum;
 }
