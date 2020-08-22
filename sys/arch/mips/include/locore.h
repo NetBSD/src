@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.115 2020/08/17 03:19:35 mrg Exp $ */
+/* $NetBSD: locore.h,v 1.116 2020/08/22 09:08:21 simonb Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -89,8 +89,8 @@ typedef uint32_t pt_entry_t;
 #undef MIPS3_PLUS
 #endif
 
-#if !defined(MIPS3_PLUS) && (ENABLE_MIPS_8KB_PAGE + ENABLE_MIPS_16KB_PAGE) > 0
-#error MIPS1 does not support non-4KB page sizes.
+#if defined(MIPS1) && (ENABLE_MIPS_8KB_PAGE + ENABLE_MIPS_16KB_PAGE) > 0
+#error MIPS1 only supports a 4kB page size.
 #endif
 
 /* XXX some .S files look for MIPS3_PLUS */
