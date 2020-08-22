@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.308 2020/08/22 15:17:09 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.309 2020/08/22 17:34:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.308 2020/08/22 15:17:09 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.309 2020/08/22 17:34:25 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.308 2020/08/22 15:17:09 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.309 2020/08/22 17:34:25 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1529,7 +1529,7 @@ ReadMakefile(const void *p, const void *q MAKE_ATTR_UNUSED)
 				fname = path;
 				goto found;
 			}
-		    	free(path);
+			free(path);
 
 			/* If curdir failed, try objdir (ala .depend) */
 			path = str_concat3(objdir, "/", fname);

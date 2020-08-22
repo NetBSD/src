@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.96 2020/08/22 15:17:09 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.97 2020/08/22 17:34:25 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1010,8 +1010,8 @@ meta_ignore(GNode *gn, const char *p)
     }
 
     if (metaIgnorePatterns) {
-        const char *expr;
-        char *pm;
+	const char *expr;
+	char *pm;
 
 	Var_Set(".p.", p, gn);
 	expr = "${" MAKE_META_IGNORE_PATTERNS ":@m@${.p.:M$m}@}";
