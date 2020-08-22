@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.105 2020/08/22 15:55:22 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.106 2020/08/22 17:34:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.105 2020/08/22 15:55:22 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.106 2020/08/22 17:34:25 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.105 2020/08/22 15:55:22 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.106 2020/08/22 17:34:25 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -650,7 +650,7 @@ closing_brace(const char *p)
 {
     int nest = 0;
     while (*p != '\0') {
-        if (*p == '}' && nest == 0)
+	if (*p == '}' && nest == 0)
 	    break;
 	if (*p == '{')
 	    nest++;
@@ -668,7 +668,7 @@ separator_comma(const char *p)
 {
     int nest = 0;
     while (*p != '\0') {
-        if ((*p == '}' || *p == ',') && nest == 0)
+	if ((*p == '}' || *p == ',') && nest == 0)
 	    break;
 	if (*p == '{')
 	    nest++;
