@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.108 2020/08/02 23:04:23 simonb Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.109 2020/08/22 03:41:33 simonb Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -615,7 +615,6 @@
 #define	MIPS_COP_0_ERROR_PC	_(30)
 
 /* MIPS32/64 */
-#define	MIPS_COP_0_CONTEXT	_(4)
 #define	MIPS_COP_0_CTXCONFIG	_(4), 1
 #define	MIPS_COP_0_USERLOCAL	_(4), 2
 #define	MIPS_COP_0_XCTXCONFIG	_(4), 3		/* MIPS64 */
