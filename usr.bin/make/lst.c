@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.20 2020/08/22 07:26:34 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.21 2020/08/22 09:40:18 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,11 +37,11 @@
 #include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.20 2020/08/22 07:26:34 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.21 2020/08/22 09:40:18 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.20 2020/08/22 07:26:34 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.21 2020/08/22 09:40:18 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -64,8 +64,8 @@ struct List {
     LstNode last;		/* last node in list */
 
     /* fields for sequential access */
-    Where lastAccess;		/* Where in the list the last access was */
     Boolean isOpen;		/* true if list has been Lst_Open'ed */
+    Where lastAccess;		/* Where in the list the last access was */
     LstNode curr;		/* current node, if open. NULL if
 				 * *just* opened */
     LstNode prev;		/* Previous node, if open. Used by Lst_Remove */
@@ -278,6 +278,28 @@ Lst_AtEnd(Lst list, void *datum)
 {
     LstNode end = Lst_Last(list);
     return Lst_InsertAfter(list, end, datum);
+}
+
+/* Add a piece of data at the end of the given list. */
+void
+Lst_AppendS(Lst list, void *datum)
+{
+    LstNode node;
+
+    assert(LstIsValid(list));
+    assert(datum != NULL);
+
+    node = LstNodeNew(datum);
+    node->prev = list->last;
+    node->next = NULL;
+
+    if (list->last == NULL) {
+	list->first = node;
+	list->last = node;
+    } else {
+	list->last->next = node;
+	list->last = node;
+    }
 }
 
 /* Remove the given node from the given list.
