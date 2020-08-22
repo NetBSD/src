@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.71 2020/08/20 11:09:56 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.72 2020/08/22 11:01:10 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.71 2020/08/20 11:09:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.72 2020/08/22 11:01:10 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3192,11 +3192,8 @@ vmx_ident(void)
 	}
 
 	msr = rdmsr(MSR_IA32_FEATURE_CONTROL);
-	if ((msr & IA32_FEATURE_CONTROL_LOCK) == 0) {
-		printf("NVMM: VMX disabled in BIOS\n");
-		return false;
-	}
-	if ((msr & IA32_FEATURE_CONTROL_OUT_SMX) == 0) {
+	if ((msr & IA32_FEATURE_CONTROL_LOCK) != 0 &&
+	    (msr & IA32_FEATURE_CONTROL_OUT_SMX) == 0) {
 		printf("NVMM: VMX disabled in BIOS\n");
 		return false;
 	}
@@ -3322,7 +3319,17 @@ vmx_change_cpu(void *arg1, void *arg2)
 {
 	struct cpu_info *ci = curcpu();
 	bool enable = arg1 != NULL;
-	uint64_t cr4;
+	uint64_t msr, cr4;
+
+	if (enable) {
+		msr = rdmsr(MSR_IA32_FEATURE_CONTROL);
+		if ((msr & IA32_FEATURE_CONTROL_LOCK) == 0) {
+			/* Lock now, with VMX-outside-SMX enabled. */
+			wrmsr(MSR_IA32_FEATURE_CONTROL, msr |
+			    IA32_FEATURE_CONTROL_LOCK |
+			    IA32_FEATURE_CONTROL_OUT_SMX);
+		}
+	}
 
 	if (!enable) {
 		vmx_vmxoff();
