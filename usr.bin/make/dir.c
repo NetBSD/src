@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.97 2020/08/22 00:48:02 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.98 2020/08/22 09:03:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.97 2020/08/22 00:48:02 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.98 2020/08/22 09:03:53 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.97 2020/08/22 00:48:02 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.98 2020/08/22 09:03:53 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -258,7 +258,6 @@ static Hash_Table mtimes;
 static Hash_Table lmtimes;	/* same as mtimes but for lstat */
 
 static int DirFindName(const void *, const void *);
-static int DirMatchFiles(const char *, Path *, Lst);
 static void DirExpandCurly(const char *, const char *, Lst, Lst);
 static void DirExpandInt(const char *, Lst, Lst);
 static int DirPrintWord(void *, void *);
@@ -614,15 +613,12 @@ Dir_HasWildcards(char *name)
  *	p		Directory to search
  *	expansion	Place to store the results
  *
- * Results:
- *	Always returns 0
- *
  * Side Effects:
  *	File names are added to the expansions lst. The directory will be
  *	fully hashed when this is done.
  *-----------------------------------------------------------------------
  */
-static int
+static void
 DirMatchFiles(const char *pattern, Path *p, Lst expansions)
 {
     Hash_Search search;		/* Index into the directory's table */
@@ -650,7 +646,6 @@ DirMatchFiles(const char *pattern, Path *p, Lst expansions)
 			     str_concat3(p->name, "/", entry->name)));
 	}
     }
-    return 0;
 }
 
 /* Find the next closing brace in the string, taking nested braces into
