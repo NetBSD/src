@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.21 2020/08/22 13:59:16 skrll Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.22 2020/08/22 15:32:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.21 2020/08/22 13:59:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.22 2020/08/22 15:32:36 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -171,6 +171,13 @@ pmap_check_stp(pmap_segtab_t *stp, const char *caller, const char *why)
 static void
 pmap_check_ptes(pt_entry_t *pte, const char *caller)
 {
+	/*
+	 * All pte arrays should be page aligned.
+	 */
+	if (((uintptr_t)pte & PAGE_MASK) != 0) {
+		panic("%s: pte entry at %p not page aligned", caller, pte);
+	}
+
 #ifdef DEBUG
 	for (size_t i = 0; i < NPTEPG; i++)
 		if (!pte_zero_p(pte[i])) {
@@ -282,17 +289,6 @@ pmap_segtab_release(pmap_t pmap, pmap_segtab_t **stp_p, bool free_stp,
 		if (pte == NULL)
 			continue;
 		pmap_check_ptes(pte, __func__);
-
-#if defined(__mips_n64) && PAGE_SIZE == 8192
-		/*
-		 * XXX This is evil.  If vinc is 1000000 we are in
-		 * the last level, and this pte should be page aligned.
-		 */
-		if (vinc == 0x1000000 && ((uintptr_t)pte & PAGE_MASK) != 0) {
-			panic("%s: pte entry at %p not page aligned",
-			    __func__, pte);
-		}
-#endif
 
 		/*
 		 * If our caller wants a callback, do so.
