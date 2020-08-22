@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.103 2020/08/22 15:17:09 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.104 2020/08/22 15:43:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.103 2020/08/22 15:17:09 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.104 2020/08/22 15:43:32 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.103 2020/08/22 15:17:09 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.104 2020/08/22 15:43:32 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -417,7 +417,7 @@ Dir_InitDot(void)
 	LstNode ln;
 
 	/* Remove old entry from openDirectories, but do not destroy. */
-	ln = Lst_Member(openDirectories, dot);
+	ln = Lst_MemberS(openDirectories, dot);
 	Lst_RemoveS(openDirectories, ln);
     }
 
@@ -1574,7 +1574,7 @@ Dir_AddDir(Lst path, const char *name)
 	ln = Lst_Find(openDirectories, name, DirFindName);
     if (ln != NULL) {
 	p = Lst_DatumS(ln);
-	if (path && Lst_Member(path, p) == NULL) {
+	if (path && Lst_MemberS(path, p) == NULL) {
 	    p->refCount += 1;
 	    Lst_AppendS(path, p);
 	}
@@ -1702,7 +1702,7 @@ Dir_Destroy(void *pp)
     if (p->refCount == 0) {
 	LstNode ln;
 
-	ln = Lst_Member(openDirectories, p);
+	ln = Lst_MemberS(openDirectories, p);
 	Lst_RemoveS(openDirectories, ln);
 
 	Hash_DeleteTable(&p->files);
@@ -1764,7 +1764,7 @@ Dir_Concat(Lst path1, Lst path2)
 
     for (ln = Lst_First(path2); ln != NULL; ln = Lst_Succ(ln)) {
 	p = Lst_DatumS(ln);
-	if (Lst_Member(path1, p) == NULL) {
+	if (Lst_MemberS(path1, p) == NULL) {
 	    p->refCount += 1;
 	    Lst_AppendS(path1, p);
 	}

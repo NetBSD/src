@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.34 2020/08/22 15:17:09 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.35 2020/08/22 15:43:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -155,7 +155,7 @@ LstNode		Lst_FindFrom(Lst, LstNode, const void *,
  * See if the given datum is on the list. Returns the LstNode containing
  * the datum
  */
-LstNode		Lst_Member(Lst, void *);
+LstNode		Lst_MemberS(Lst, void *);
 /* Apply a function to all elements of a lst */
 int		Lst_ForEach(Lst, int (*)(void *, void *), void *);
 /* Apply a function to all elements of a lst starting from a certain point. */

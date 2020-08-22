@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.106 2020/08/22 15:17:09 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.107 2020/08/22 15:43:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.106 2020/08/22 15:17:09 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.107 2020/08/22 15:43:32 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.106 2020/08/22 15:17:09 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.107 2020/08/22 15:43:32 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -407,7 +407,7 @@ SuffUnRef(void *lp, void *sp)
 {
     Lst l = (Lst) lp;
 
-    LstNode ln = Lst_Member(l, sp);
+    LstNode ln = Lst_MemberS(l, sp);
     if (ln != NULL) {
 	Lst_RemoveS(l, ln);
 	((Suff *)sp)->refCount--;
@@ -1303,7 +1303,7 @@ SuffRemoveSrc(Lst l)
 		free(s->pref);
 	    else {
 #ifdef DEBUG_SRC
-		LstNode ln2 = Lst_Member(s->parent->cp, s);
+		LstNode ln2 = Lst_MemberS(s->parent->cp, s);
 		if (ln2 != NULL)
 		    Lst_RemoveS(s->parent->cp, ln2);
 #endif
@@ -1474,7 +1474,9 @@ SuffFindCmds(Src *targ, Lst slst)
 	 */
 	suff = Lst_DatumS(ln);
 
-	if (Lst_Member(suff->parents, targ->suff) != NULL)
+	/* XXX: Can targ->suff be NULL here? */
+	if (targ->suff != NULL &&
+	    Lst_MemberS(suff->parents, targ->suff) != NULL)
 	    break;
     }
 
@@ -1669,7 +1671,7 @@ SuffExpandChildren(LstNode cln, GNode *pgn)
      */
     pgn->unmade--;
     Lst_RemoveS(pgn->children, cln);
-    Lst_RemoveS(cgn->parents, Lst_Member(cgn->parents, pgn));
+    Lst_RemoveS(cgn->parents, Lst_MemberS(cgn->parents, pgn));
 }
 
 static void
@@ -1721,7 +1723,7 @@ SuffExpandWildcards(LstNode cln, GNode *pgn)
      */
     pgn->unmade--;
     Lst_RemoveS(pgn->children, cln);
-    Lst_RemoveS(cgn->parents, Lst_Member(cgn->parents, pgn));
+    Lst_RemoveS(cgn->parents, Lst_MemberS(cgn->parents, pgn));
 }
 
 /*-
@@ -2311,7 +2313,7 @@ sfnd_abort:
 	     * up to, but not including, the parent node.
 	     */
 	    while (bottom && bottom->parent != NULL) {
-		if (Lst_Member(slst, bottom) == NULL) {
+		if (Lst_MemberS(slst, bottom) == NULL) {
 		    Lst_AppendS(slst, bottom);
 		}
 		bottom = bottom->parent;
@@ -2387,7 +2389,7 @@ sfnd_abort:
      */
 sfnd_return:
     if (bottom)
-	if (Lst_Member(slst, bottom) == NULL)
+	if (Lst_MemberS(slst, bottom) == NULL)
 	    Lst_AppendS(slst, bottom);
 
     while (SuffRemoveSrc(srcs) || SuffRemoveSrc(targs))
