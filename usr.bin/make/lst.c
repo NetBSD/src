@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.34 2020/08/22 22:41:42 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.35 2020/08/22 22:57:53 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,11 +37,11 @@
 #include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.34 2020/08/22 22:41:42 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.35 2020/08/22 22:57:53 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.34 2020/08/22 22:41:42 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.35 2020/08/22 22:57:53 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -70,8 +70,6 @@ struct List {
 				 * *just* opened */
     LstNode prev;		/* Previous node, if open. Used by Lst_Remove */
 };
-
-static ReturnStatus Lst_AtEnd(Lst, void *);
 
 static Boolean
 LstIsValid(Lst list)
@@ -121,31 +119,20 @@ Lst_Init(void)
 
 /* Duplicate an entire list, usually by copying the datum pointers.
  * If copyProc is given, that function is used to create the new datum from the
- * old datum, usually by creating a copy of it.
- * Return the new list, or NULL on failure. */
+ * old datum, usually by creating a copy of it. */
 Lst
-Lst_Duplicate(Lst list, DuplicateProc *copyProc)
+Lst_CopyS(Lst list, DuplicateProc *copyProc)
 {
     Lst newList;
     LstNode node;
 
-    if (!LstIsValid(list)) {
-	return NULL;
-    }
+    assert(LstIsValid(list));
 
     newList = Lst_Init();
 
-    node = list->first;
-    while (node != NULL) {
-	if (copyProc != NULL) {
-	    if (Lst_AtEnd(newList, copyProc(node->datum)) == FAILURE) {
-		return NULL;
-	    }
-	} else if (Lst_AtEnd(newList, node->datum) == FAILURE) {
-	    return NULL;
-	}
-
-	node = node->next;
+    for (node = list->first; node != NULL; node = node->next) {
+	void *datum = copyProc != NULL ? copyProc(node->datum) : node->datum;
+	Lst_AppendS(newList, datum);
     }
 
     return newList;
@@ -256,58 +243,12 @@ Lst_InsertBeforeS(Lst list, LstNode node, void *datum)
     }
 }
 
-/* Insert a new node with the given piece of data after the given node in the
- * given list. */
-static ReturnStatus
-LstInsertAfter(Lst list, LstNode node, void *datum)
-{
-    LstNode newNode;
-
-    if (LstIsValid(list) && (node == NULL && LstIsEmpty(list))) {
-	goto ok;
-    }
-
-    if (!LstIsValid(list) || LstIsEmpty(list) || !LstNodeIsValid(node)) {
-	return FAILURE;
-    }
-    ok:
-
-    newNode = LstNodeNew(datum);
-
-    if (node == NULL) {
-	newNode->next = newNode->prev = NULL;
-	list->first = list->last = newNode;
-    } else {
-	newNode->prev = node;
-	newNode->next = node->next;
-
-	node->next = newNode;
-	if (newNode->next != NULL) {
-	    newNode->next->prev = newNode;
-	}
-
-	if (node == list->last) {
-	    list->last = newNode;
-	}
-    }
-
-    return SUCCESS;
-}
-
 /* Add a piece of data at the front of the given list. */
 ReturnStatus
 Lst_AtFront(Lst list, void *datum)
 {
     LstNode front = Lst_First(list);
     return LstInsertBefore(list, front, datum);
-}
-
-/* Add a piece of data at the end of the given list. */
-ReturnStatus
-Lst_AtEnd(Lst list, void *datum)
-{
-    LstNode end = Lst_Last(list);
-    return LstInsertAfter(list, end, datum);
 }
 
 /* Add a piece of data at the start of the given list. */
