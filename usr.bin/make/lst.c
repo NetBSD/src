@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.19 2020/08/22 00:13:16 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.20 2020/08/22 07:26:34 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,11 +37,11 @@
 #include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.19 2020/08/22 00:13:16 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.20 2020/08/22 07:26:34 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.19 2020/08/22 00:13:16 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.20 2020/08/22 07:26:34 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -62,27 +62,23 @@ typedef enum {
 struct List {
     LstNode first;		/* first node in list */
     LstNode last;		/* last node in list */
-/*
- * fields for sequential access
- */
+
+    /* fields for sequential access */
     Where lastAccess;		/* Where in the list the last access was */
     Boolean isOpen;		/* true if list has been Lst_Open'ed */
     LstNode curr;		/* current node, if open. NULL if
 				 * *just* opened */
-    LstNode prev;		/* Previous node, if open. Used by
-				 * Lst_Remove */
+    LstNode prev;		/* Previous node, if open. Used by Lst_Remove */
 };
 
-/* Return TRUE if the list is valid. */
 static Boolean
-LstValid(Lst list)
+LstIsValid(Lst list)
 {
     return list != NULL;
 }
 
-/* Return TRUE if the list node is valid. */
 static Boolean
-LstNodeValid(LstNode node)
+LstNodeIsValid(LstNode node)
 {
     return node != NULL;
 }
@@ -99,7 +95,6 @@ LstNodeNew(void *datum)
     return node;
 }
 
-/* Return TRUE if the list is empty. */
 static Boolean
 LstIsEmpty(Lst list)
 {
@@ -130,7 +125,7 @@ Lst_Duplicate(Lst list, DuplicateProc *copyProc)
     Lst newList;
     LstNode node;
 
-    if (!LstValid(list)) {
+    if (!LstIsValid(list)) {
 	return NULL;
     }
 
@@ -201,10 +196,10 @@ Lst_InsertBefore(Lst list, LstNode node, void *datum)
     /*
      * check validity of arguments
      */
-    if (LstValid(list) && (LstIsEmpty(list) && node == NULL))
+    if (LstIsValid(list) && (LstIsEmpty(list) && node == NULL))
 	goto ok;
 
-    if (!LstValid(list) || LstIsEmpty(list) || !LstNodeValid(node)) {
+    if (!LstIsValid(list) || LstIsEmpty(list) || !LstNodeIsValid(node)) {
 	return FAILURE;
     }
 
@@ -238,11 +233,11 @@ Lst_InsertAfter(Lst list, LstNode node, void *datum)
 {
     LstNode newNode;
 
-    if (LstValid(list) && (node == NULL && LstIsEmpty(list))) {
+    if (LstIsValid(list) && (node == NULL && LstIsEmpty(list))) {
 	goto ok;
     }
 
-    if (!LstValid(list) || LstIsEmpty(list) || !LstNodeValid(node)) {
+    if (!LstIsValid(list) || LstIsEmpty(list) || !LstNodeIsValid(node)) {
 	return FAILURE;
     }
     ok:
@@ -290,8 +285,8 @@ Lst_AtEnd(Lst list, void *datum)
 void
 Lst_RemoveS(Lst list, LstNode node)
 {
-    assert(LstValid(list));
-    assert(LstNodeValid(node));
+    assert(LstIsValid(list));
+    assert(LstNodeIsValid(node));
 
     /*
      * unlink it from the list
@@ -355,7 +350,7 @@ Lst_ReplaceS(LstNode node, void *datum)
 LstNode
 Lst_First(Lst list)
 {
-    if (!LstValid(list) || LstIsEmpty(list)) {
+    if (!LstIsValid(list) || LstIsEmpty(list)) {
 	return NULL;
     } else {
 	return list->first;
@@ -367,7 +362,7 @@ Lst_First(Lst list)
 LstNode
 Lst_Last(Lst list)
 {
-    if (!LstValid(list) || LstIsEmpty(list)) {
+    if (!LstIsValid(list) || LstIsEmpty(list)) {
 	return NULL;
     } else {
 	return list->last;
@@ -416,7 +411,7 @@ Lst_Datum(LstNode node)
 Boolean
 Lst_IsEmpty(Lst list)
 {
-    return !LstValid(list) || LstIsEmpty(list);
+    return !LstIsValid(list) || LstIsEmpty(list);
 }
 
 /* Return the first node from the given list for which the given comparison
@@ -436,7 +431,7 @@ Lst_FindFrom(Lst list, LstNode node, const void *cmpData,
 {
     LstNode tln;
 
-    if (!LstValid(list) || LstIsEmpty(list) || !LstNodeValid(node)) {
+    if (!LstIsValid(list) || LstIsEmpty(list) || !LstNodeIsValid(node)) {
 	return NULL;
     }
 
@@ -496,7 +491,7 @@ Lst_ForEachFrom(Lst list, LstNode node,
     Boolean done;
     int result;
 
-    if (!LstValid(list) || LstIsEmpty(list)) {
+    if (!LstIsValid(list) || LstIsEmpty(list)) {
 	return 0;
     }
 
@@ -561,7 +556,7 @@ Lst_Concat(Lst list1, Lst list2, int flags)
     LstNode last;	/* the last element in the list.
 			 * Keeps bookkeeping until the end */
 
-    if (!LstValid(list1) || !LstValid(list2)) {
+    if (!LstIsValid(list1) || !LstIsValid(list2)) {
 	return FAILURE;
     }
 
@@ -639,7 +634,7 @@ Lst_Concat(Lst list1, Lst list2, int flags)
 ReturnStatus
 Lst_Open(Lst list)
 {
-    if (!LstValid(list)) {
+    if (!LstIsValid(list)) {
 	return FAILURE;
     }
     Lst_OpenS(list);
@@ -651,7 +646,7 @@ Lst_Open(Lst list)
 void
 Lst_OpenS(Lst list)
 {
-    assert(LstValid(list));
+    assert(LstIsValid(list));
 #if 0
     /* XXX: This assertion fails for NetBSD's "build.sh -j1 tools", somewhere
      * between "dependall ===> compat" and "dependall ===> binstall".
@@ -673,7 +668,7 @@ Lst_NextS(Lst list)
 {
     LstNode node;
 
-    assert(LstValid(list));
+    assert(LstIsValid(list));
     assert(list->isOpen);
 
     list->prev = list->curr;
@@ -715,7 +710,7 @@ Lst_NextS(Lst list)
 void
 Lst_CloseS(Lst list)
 {
-    assert(LstValid(list));
+    assert(LstIsValid(list));
     assert(list->isOpen);
 
     list->isOpen = FALSE;
@@ -731,7 +726,7 @@ Lst_CloseS(Lst list)
 ReturnStatus
 Lst_EnQueue(Lst list, void *datum)
 {
-    if (!LstValid(list)) {
+    if (!LstIsValid(list)) {
 	return FAILURE;
     }
 
