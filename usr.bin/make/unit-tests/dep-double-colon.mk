@@ -1,8 +1,11 @@
-# $NetBSD: dep-double-colon.mk,v 1.2 2020/08/16 14:25:16 rillig Exp $
+# $NetBSD: dep-double-colon.mk,v 1.3 2020/08/22 12:42:32 rillig Exp $
 #
 # Tests for the :: operator in dependency declarations.
 
-# TODO: Implementation
+all::
+	@echo 'command 1a'
+	@echo 'command 1b'
 
-all:
-	@:;
+all::
+	@echo 'command 2a'
+	@echo 'command 2b'
