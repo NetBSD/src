@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.306 2020/08/22 00:48:02 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.307 2020/08/22 11:35:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.306 2020/08/22 00:48:02 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.307 2020/08/22 11:35:00 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.306 2020/08/22 00:48:02 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.307 2020/08/22 11:35:00 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -543,7 +543,7 @@ rearg:
 		case 'v':
 			if (argvalue == NULL) goto noarg;
 			printVars = c == 'v' ? EXPAND_VARS : COMPAT_VARS;
-			(void)Lst_AtEnd(variables, argvalue);
+			Lst_AppendS(variables, argvalue);
 			Var_Append(MAKEFLAGS, "-V", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
 			break;
@@ -571,7 +571,7 @@ rearg:
 			break;
 		case 'f':
 			if (argvalue == NULL) goto noarg;
-			(void)Lst_AtEnd(makefiles, argvalue);
+			Lst_AppendS(makefiles, argvalue);
 			break;
 		case 'i':
 			ignoreErrors = TRUE;
@@ -660,7 +660,7 @@ rearg:
 				Punt("illegal (null) argument.");
 			if (*argv[1] == '-' && !dashDash)
 				goto rearg;
-			(void)Lst_AtEnd(create, bmake_strdup(argv[1]));
+			Lst_AppendS(create, bmake_strdup(argv[1]));
 		}
 
 	return;
@@ -810,7 +810,7 @@ str2Lst_Append(Lst lp, char *str, const char *sep)
 	sep = " \t";
 
     for (n = 0, cp = strtok(str, sep); cp; cp = strtok(NULL, sep)) {
-	(void)Lst_AtEnd(lp, cp);
+	Lst_AppendS(lp, cp);
 	n++;
     }
     return n;

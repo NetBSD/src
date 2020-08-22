@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.99 2020/08/22 09:40:18 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.100 2020/08/22 11:35:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.99 2020/08/22 09:40:18 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.100 2020/08/22 11:35:00 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.99 2020/08/22 09:40:18 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.100 2020/08/22 11:35:00 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -641,9 +641,9 @@ DirMatchFiles(const char *pattern, Path *p, Lst expansions)
 	    ((entry->name[0] != '.') ||
 	     (pattern[0] == '.')))
 	{
-	    (void)Lst_AtEnd(expansions,
-			    (isDot ? bmake_strdup(entry->name) :
-			     str_concat3(p->name, "/", entry->name)));
+	    Lst_AppendS(expansions,
+			(isDot ? bmake_strdup(entry->name) :
+			 str_concat3(p->name, "/", entry->name)));
 	}
     }
 }
@@ -1582,7 +1582,7 @@ Dir_AddDir(Lst path, const char *name)
 	p = (Path *)Lst_Datum(ln);
 	if (path && Lst_Member(path, p) == NULL) {
 	    p->refCount += 1;
-	    (void)Lst_AtEnd(path, p);
+	    Lst_AppendS(path, p);
 	}
     } else {
 	DIR_DEBUG1("Caching %s ...", name);
@@ -1608,9 +1608,9 @@ Dir_AddDir(Lst path, const char *name)
 		(void)Hash_CreateEntry(&p->files, dp->d_name, NULL);
 	    }
 	    (void)closedir(d);
-	    (void)Lst_AtEnd(openDirectories, p);
+	    Lst_AppendS(openDirectories, p);
 	    if (path != NULL)
-		(void)Lst_AtEnd(path, p);
+		Lst_AppendS(path, p);
 	}
 	DIR_DEBUG0("done\n");
     }
@@ -1773,7 +1773,7 @@ Dir_Concat(Lst path1, Lst path2)
 	p = (Path *)Lst_Datum(ln);
 	if (Lst_Member(path1, p) == NULL) {
 	    p->refCount += 1;
-	    (void)Lst_AtEnd(path1, p);
+	    Lst_AppendS(path1, p);
 	}
     }
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.67 2020/08/21 04:42:02 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.68 2020/08/22 11:35:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.67 2020/08/21 04:42:02 rillig Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.68 2020/08/22 11:35:00 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.67 2020/08/21 04:42:02 rillig Exp $");
+__RCSID("$NetBSD: targ.c,v 1.68 2020/08/22 11:35:00 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -360,7 +360,7 @@ Targ_FindNode(const char *name, int flags)
     if (!(flags & TARG_NOHASH))
 	Hash_SetValue(he, gn);
     Var_Append(".ALLTARGETS", name, VAR_GLOBAL);
-    (void)Lst_AtEnd(allTargets, gn);
+    Lst_AppendS(allTargets, gn);
     if (doing_depend)
 	gn->flags |= FROM_DEPEND;
     return gn;
@@ -405,7 +405,7 @@ Targ_FindList(Lst names, int flags)
 	     * are added to the list in the order in which they were
 	     * encountered in the makefile.
 	     */
-	    (void)Lst_AtEnd(nodes, gn);
+	    Lst_AppendS(nodes, gn);
 	} else if (flags == TARG_NOCREATE) {
 	    Error("\"%s\" -- target unknown.", name);
 	}
