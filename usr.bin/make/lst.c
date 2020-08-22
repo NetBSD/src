@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.26 2020/08/22 14:54:48 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.27 2020/08/22 14:56:45 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,11 +37,11 @@
 #include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.26 2020/08/22 14:54:48 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.27 2020/08/22 14:56:45 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.26 2020/08/22 14:54:48 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.27 2020/08/22 14:56:45 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -193,7 +193,7 @@ Lst_Destroy(Lst list, FreeProc *freeProc)
 /* Insert a new node with the given piece of data before the given node in the
  * given list. */
 static ReturnStatus
-Lst_InsertBefore(Lst list, LstNode node, void *datum)
+LstInsertBefore(Lst list, LstNode node, void *datum)
 {
     LstNode newNode;
 
@@ -258,8 +258,8 @@ Lst_InsertBeforeS(Lst list, LstNode node, void *datum)
 
 /* Insert a new node with the given piece of data after the given node in the
  * given list. */
-ReturnStatus
-Lst_InsertAfter(Lst list, LstNode node, void *datum)
+static ReturnStatus
+LstInsertAfter(Lst list, LstNode node, void *datum)
 {
     LstNode newNode;
 
@@ -299,7 +299,7 @@ ReturnStatus
 Lst_AtFront(Lst list, void *datum)
 {
     LstNode front = Lst_First(list);
-    return Lst_InsertBefore(list, front, datum);
+    return LstInsertBefore(list, front, datum);
 }
 
 /* Add a piece of data at the end of the given list. */
@@ -307,7 +307,7 @@ ReturnStatus
 Lst_AtEnd(Lst list, void *datum)
 {
     LstNode end = Lst_Last(list);
-    return Lst_InsertAfter(list, end, datum);
+    return LstInsertAfter(list, end, datum);
 }
 
 /* Add a piece of data at the start of the given list. */
