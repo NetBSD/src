@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.120 2020/08/22 18:44:22 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.121 2020/08/22 18:47:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -403,7 +403,6 @@ extern Boolean	doing_depend;	/* TRUE if processing .depend */
 
 extern Boolean	checkEnvFirst;	/* TRUE if environment should be searched for
 				 * variables before the global context */
-extern Boolean	jobServer;	/* a jobServer already exists */
 
 extern Boolean	parseWarnFatal;	/* TRUE if makefile parsing warnings are
 				 * treated as errors */
