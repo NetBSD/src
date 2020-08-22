@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.896 2020/08/20 21:28:01 riastradh Exp $
+# $NetBSD: mi,v 1.897 2020/08/22 08:29:13 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4627,6 +4627,8 @@
 ./usr/tests/usr.bin/make/unit-tests/depsrc-silent.mk	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/depsrc-use.exp	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/depsrc-use.mk	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/depsrc-usebefore-double-colon.exp	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/depsrc-usebefore-double-colon.mk	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/depsrc-usebefore.exp	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/depsrc-usebefore.mk	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/depsrc-wait.exp	tests-usr.bin-tests	compattestfile,atf
@@ -4771,8 +4773,6 @@
 ./usr/tests/usr.bin/make/unit-tests/modmatch.mk	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/modmisc.exp	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/modmisc.mk	tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/modorder.exp	tests-obsolete	obsolete
-./usr/tests/usr.bin/make/unit-tests/modorder.mk	tests-obsolete	obsolete
 ./usr/tests/usr.bin/make/unit-tests/modts.exp	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/modts.mk	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/modword.exp	tests-usr.bin-tests	compattestfile,atf

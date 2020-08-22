@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.104 2020/08/20 18:05:57 rillig Exp $
+# $NetBSD: Makefile,v 1.105 2020/08/22 08:29:13 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -83,6 +83,7 @@ TESTS+=		depsrc-recursive
 TESTS+=		depsrc-silent
 TESTS+=		depsrc-use
 TESTS+=		depsrc-usebefore
+TESTS+=		depsrc-usebefore-double-colon
 TESTS+=		depsrc-wait
 TESTS+=		deptgt
 TESTS+=		deptgt-begin
@@ -436,6 +437,7 @@ sync-mi:
 	@set -eu;							\
 	cd "${MAKEFILE:tA:H}/../../..";					\
 	mi="distrib/sets/lists/tests/mi";				\
+	cvs update "$$mi";						\
 	awk ${SYNC_MI_AWK:Q} < "$$mi" > "$$mi.$@";			\
 	mv -f "$$mi.$@" "$$mi";						\
 	cvs diff "$$mi" || true
