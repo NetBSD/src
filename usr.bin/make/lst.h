@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.30 2020/08/22 13:28:20 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.31 2020/08/22 14:39:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -180,8 +180,8 @@ void		Lst_CloseS(Lst);
  * for using the list as a queue
  */
 /* Place an element at tail of queue */
-ReturnStatus	Lst_EnQueue(Lst, void *);
+void		Lst_EnqueueS(Lst, void *);
 /* Remove an element from head of queue */
-void		*Lst_DeQueue(Lst);
+void		*Lst_DequeueS(Lst);
 
 #endif /* MAKE_LST_H */

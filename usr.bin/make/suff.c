@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.103 2020/08/22 13:28:20 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.104 2020/08/22 14:39:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.103 2020/08/22 13:28:20 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.104 2020/08/22 14:39:12 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.103 2020/08/22 13:28:20 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.104 2020/08/22 14:39:12 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1358,7 +1358,7 @@ SuffFindThem(Lst srcs, Lst slst)
     rs = NULL;
 
     while (!Lst_IsEmpty (srcs)) {
-	s = (Src *)Lst_DeQueue(srcs);
+	s = Lst_DequeueS(srcs);
 
 	if (DEBUG(SUFF)) {
 	    fprintf(debug_file, "\ttrying %s...", s->file);
@@ -1640,7 +1640,7 @@ SuffExpandChildren(LstNode cln, GNode *pgn)
 	 * Add all elements of the members list to the parent node.
 	 */
 	while(!Lst_IsEmpty(members)) {
-	    gn = (GNode *)Lst_DeQueue(members);
+	    gn = Lst_DequeueS(members);
 
 	    if (DEBUG(SUFF)) {
 		fprintf(debug_file, "%s...", gn->name);
@@ -1693,7 +1693,7 @@ SuffExpandWildcards(LstNode cln, GNode *pgn)
 	/*
 	 * Fetch next expansion off the list and find its GNode
 	 */
-	cp = (char *)Lst_DeQueue(explist);
+	cp = Lst_DequeueS(explist);
 
 	if (DEBUG(SUFF)) {
 	    fprintf(debug_file, "%s...", cp);

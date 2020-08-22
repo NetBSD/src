@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.101 2020/08/22 14:04:22 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.102 2020/08/22 14:39:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.101 2020/08/22 14:04:22 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.102 2020/08/22 14:39:12 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.101 2020/08/22 14:04:22 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.102 2020/08/22 14:39:12 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1732,9 +1732,8 @@ Dir_Destroy(void *pp)
 void
 Dir_ClearPath(Lst path)
 {
-    Path *p;
     while (!Lst_IsEmpty(path)) {
-	p = (Path *)Lst_DeQueue(path);
+	Path *p = Lst_DequeueS(path);
 	Dir_Destroy(p);
     }
 }

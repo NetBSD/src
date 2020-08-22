@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.87 2020/08/22 11:35:00 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.88 2020/08/22 14:39:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.87 2020/08/22 11:35:00 rillig Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.88 2020/08/22 14:39:12 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.87 2020/08/22 11:35:00 rillig Exp $");
+__RCSID("$NetBSD: arch.c,v 1.88 2020/08/22 14:39:12 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -393,13 +393,12 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 	    free(buf);
 	} else if (Dir_HasWildcards(memName)) {
 	    Lst	  members = Lst_Init();
-	    char  *member;
 	    size_t sz = MAXPATHLEN, nsz;
 	    nameBuf = bmake_malloc(sz);
 
 	    Dir_Expand(memName, dirSearchPath, members);
 	    while (!Lst_IsEmpty(members)) {
-		member = (char *)Lst_DeQueue(members);
+		char *member = Lst_DequeueS(members);
 		nsz = strlen(libName) + strlen(member) + 3;
 		if (sz > nsz)
 		    nameBuf = bmake_realloc(nameBuf, sz = nsz * 2);
