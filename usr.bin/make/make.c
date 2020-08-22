@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.113 2020/08/22 13:28:20 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.114 2020/08/22 13:44:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.113 2020/08/22 13:28:20 rillig Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.114 2020/08/22 13:44:17 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.113 2020/08/22 13:28:20 rillig Exp $");
+__RCSID("$NetBSD: make.c,v 1.114 2020/08/22 13:44:17 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1395,7 +1395,7 @@ Make_ProcessWait(Lst targs)
     pgn->flags = REMAKE;
     pgn->type = OP_PHONY | OP_DEPENDS;
     /* Get it displayed in the diag dumps */
-    Lst_AtFront(Targ_List(), pgn);
+    Lst_PrependS(Targ_List(), pgn);
 
     Lst_ForEach(targs, link_parent, pgn);
 
