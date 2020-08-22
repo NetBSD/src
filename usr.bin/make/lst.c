@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.33 2020/08/22 22:00:50 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.34 2020/08/22 22:41:42 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,11 +37,11 @@
 #include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.33 2020/08/22 22:00:50 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.34 2020/08/22 22:41:42 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.33 2020/08/22 22:00:50 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.34 2020/08/22 22:41:42 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -597,87 +597,24 @@ Lst_ForEachFrom(Lst list, LstNode node,
     return result;
 }
 
-/* Concatenate two lists. New nodes are created to hold the data elements,
- * if specified, but the data themselves are not copied. If the data
- * should be duplicated to avoid confusion with another list, the Lst_Duplicate
- * function should be called first. If LST_CONCLINK is specified, the second
- * list is destroyed since its pointers have been corrupted and the list is no
- * longer usable.
- *
- * Input:
- *	list1		The list to which list2 is to be appended
- *	list2		The list to append to list1
- *	flags		LST_CONCNEW if the list nodes should be duplicated
- *			LST_CONCLINK if the list nodes should just be relinked
- */
-ReturnStatus
-Lst_Concat(Lst list1, Lst list2, int flags)
+/* Move all nodes from list2 to the end of list1.
+ * List2 is destroyed and freed. */
+void
+Lst_MoveAllS(Lst list1, Lst list2)
 {
-    LstNode node;	/* original node */
-    LstNode newNode;
-    LstNode last;	/* the last element in the list.
-			 * Keeps bookkeeping until the end */
+    assert(LstIsValid(list1));
+    assert(LstIsValid(list2));
 
-    if (!LstIsValid(list1) || !LstIsValid(list2)) {
-	return FAILURE;
-    }
-
-    if (flags == LST_CONCLINK) {
-	if (list2->first != NULL) {
-	    /*
-	     * So long as the second list isn't empty, we just link the
-	     * first element of the second list to the last element of the
-	     * first list. If the first list isn't empty, we then link the
-	     * last element of the list to the first element of the second list
-	     * The last element of the second list, if it exists, then becomes
-	     * the last element of the first list.
-	     */
-	    list2->first->prev = list1->last;
-	    if (list1->last != NULL) {
-		list1->last->next = list2->first;
-	    } else {
-		list1->first = list2->first;
-	    }
-	    list1->last = list2->last;
+    if (list2->first != NULL) {
+	list2->first->prev = list1->last;
+	if (list1->last != NULL) {
+	    list1->last->next = list2->first;
+	} else {
+	    list1->first = list2->first;
 	}
-	free(list2);
-    } else if (list2->first != NULL) {
-	/*
-	 * We set the 'next' of the last element of list 2 to be nil to make
-	 * the loop less difficult. The loop simply goes through the entire
-	 * second list creating new LstNodes and filling in the 'next', and
-	 * 'prev' to fit into list1 and its datum field from the
-	 * datum field of the corresponding element in list2. The 'last' node
-	 * follows the last of the new nodes along until the entire list2 has
-	 * been appended. Only then does the bookkeeping catch up with the
-	 * changes. During the first iteration of the loop, if 'last' is nil,
-	 * the first list must have been empty so the newly-created node is
-	 * made the first node of the list.
-	 */
-	list2->last->next = NULL;
-	for (last = list1->last, node = list2->first;
-	     node != NULL;
-	     node = node->next)
-	{
-	    newNode = LstNodeNew(node->datum);
-	    if (last != NULL) {
-		last->next = newNode;
-	    } else {
-		list1->first = newNode;
-	    }
-	    newNode->prev = last;
-	    last = newNode;
-	}
-
-	/*
-	 * Finish bookkeeping. The last new element becomes the last element
-	 * of list one.
-	 */
-	list1->last = last;
-	last->next = NULL;
+	list1->last = list2->last;
     }
-
-    return SUCCESS;
+    free(list2);
 }
 
 /* Copy the element data from src to the start of dst. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.119 2020/08/22 20:03:41 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.120 2020/08/22 22:41:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.119 2020/08/22 20:03:41 rillig Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.120 2020/08/22 22:41:42 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.119 2020/08/22 20:03:41 rillig Exp $");
+__RCSID("$NetBSD: make.c,v 1.120 2020/08/22 22:41:42 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1279,13 +1279,8 @@ Make_ExpandUse(Lst targs)
 	    fprintf(debug_file, "Make_ExpandUse: examine %s%s\n",
 		    gn->name, gn->cohort_num);
 
-	if ((gn->type & OP_DOUBLEDEP) && !Lst_IsEmpty (gn->cohorts)) {
-	    /* Append all the 'cohorts' to the list of things to examine */
-	    Lst new;
-	    new = Lst_Duplicate(gn->cohorts, NULL);
-	    Lst_Concat(new, examine, LST_CONCLINK);
-	    examine = new;
-	}
+	if (gn->type & OP_DOUBLEDEP)
+	    Lst_PrependAllS(examine, gn->cohorts);
 
 	/*
 	 * Apply any .USE rules before looking for implicit dependencies
@@ -1414,13 +1409,8 @@ Make_ProcessWait(Lst targs)
 	if (DEBUG(MAKE))
 	    fprintf(debug_file, "Make_ProcessWait: examine %s\n", pgn->name);
 
-	if ((pgn->type & OP_DOUBLEDEP) && !Lst_IsEmpty (pgn->cohorts)) {
-	    /* Append all the 'cohorts' to the list of things to examine */
-	    Lst new;
-	    new = Lst_Duplicate(pgn->cohorts, NULL);
-	    Lst_Concat(new, examine, LST_CONCLINK);
-	    examine = new;
-	}
+	if (pgn->type & OP_DOUBLEDEP)
+	    Lst_PrependAllS(examine, pgn->cohorts);
 
 	owln = Lst_First(pgn->children);
 	Lst_OpenS(pgn->children);

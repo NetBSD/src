@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.36 2020/08/22 22:00:50 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.37 2020/08/22 22:41:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,9 +95,6 @@ typedef	struct ListNode	*LstNode;
 typedef void		*DuplicateProc(void *);
 typedef void		FreeProc(void *);
 
-#define LST_CONCNEW	0   /* create new LstNode's when using Lst_Concat */
-#define LST_CONCLINK	1   /* relink LstNode's when using Lst_Concat */
-
 /*
  * Creation/destruction functions
  */
@@ -124,10 +121,9 @@ void		Lst_AppendS(Lst, void *);
 void		Lst_RemoveS(Lst, LstNode);
 /* Replace a node with a new value */
 void		Lst_ReplaceS(LstNode, void *);
-/* Concatenate two lists */
-ReturnStatus	Lst_Concat(Lst, Lst, int);
 void		Lst_PrependAllS(Lst, Lst);
 void		Lst_AppendAllS(Lst, Lst);
+void		Lst_MoveAllS(Lst, Lst);
 
 /*
  * Node-specific functions
