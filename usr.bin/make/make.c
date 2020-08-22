@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.108 2020/08/22 08:01:34 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.109 2020/08/22 08:40:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.108 2020/08/22 08:01:34 rillig Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.109 2020/08/22 08:40:03 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.108 2020/08/22 08:01:34 rillig Exp $");
+__RCSID("$NetBSD: make.c,v 1.109 2020/08/22 08:40:03 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -413,30 +413,17 @@ MakeFindChild(void *gnp, void *pgnp)
     return 0;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Make_HandleUse --
- *	Function called by Make_Run and SuffApplyTransform on the downward
- *	pass to handle .USE and transformation nodes. It implements the
- *	.USE and transformation functionality by copying the node's commands,
- *	type flags and children to the parent node.
+/* Called by Make_Run and SuffApplyTransform on the downward pass to handle
+ * .USE and transformation nodes, by copying the child node's commands, type
+ * flags and children to the parent node.
  *
- *	A .USE node is much like an explicit transformation rule, except
- *	its commands are always added to the target node, even if the
- *	target already has commands.
+ * A .USE node is much like an explicit transformation rule, except its
+ * commands are always added to the target node, even if the target already
+ * has commands.
  *
  * Input:
  *	cgn		The .USE node
  *	pgn		The target of the .USE node
- *
- * Results:
- *	none
- *
- * Side Effects:
- *	Children and commands may be added to the parent and the parent's
- *	type may be changed.
- *
- *-----------------------------------------------------------------------
  */
 void
 Make_HandleUse(GNode *cgn, GNode *pgn)
