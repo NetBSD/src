@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.255 2020/08/22 13:44:17 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.256 2020/08/22 14:39:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.255 2020/08/22 13:44:17 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.256 2020/08/22 14:39:12 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.255 2020/08/22 13:44:17 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.256 2020/08/22 14:39:12 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1447,7 +1447,7 @@ ParseDoDependency(char *line)
 	    /* Apply the targets. */
 
 	    while(!Lst_IsEmpty(curTargs)) {
-		char	*targName = (char *)Lst_DeQueue(curTargs);
+		char *targName = Lst_DequeueS(curTargs);
 
 		if (!Suff_IsTransform (targName)) {
 		    gn = Targ_FindNode(targName, TARG_CREATE);
@@ -1721,8 +1721,8 @@ ParseDoDependency(char *line)
 		    goto out;
 		}
 
-		while (!Lst_IsEmpty (sources)) {
-		    gn = (GNode *)Lst_DeQueue(sources);
+		while (!Lst_IsEmpty(sources)) {
+		    gn = Lst_DequeueS(sources);
 		    ParseDoSrc(tOp, gn->name);
 		}
 		Lst_Destroy(sources, NULL);
@@ -2745,9 +2745,8 @@ ParseEOF(void)
     free(curFile->P_str);
     free(curFile);
 
-    curFile = Lst_DeQueue(includes);
-
-    if (curFile == NULL) {
+    if (Lst_IsEmpty(includes)) {
+        curFile = NULL;
 	/* We've run out of input */
 	Var_Delete(".PARSEDIR", VAR_GLOBAL);
 	Var_Delete(".PARSEFILE", VAR_GLOBAL);
@@ -2756,6 +2755,7 @@ ParseEOF(void)
 	return DONE;
     }
 
+    curFile = Lst_DequeueS(includes);
     if (DEBUG(PARSE))
 	fprintf(debug_file, "ParseEOF: returning to file %s, line %d\n",
 	    curFile->fname, curFile->lineno);

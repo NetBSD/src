@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.114 2020/08/22 13:44:17 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.115 2020/08/22 14:39:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.114 2020/08/22 13:44:17 rillig Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.115 2020/08/22 14:39:12 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.114 2020/08/22 13:44:17 rillig Exp $");
+__RCSID("$NetBSD: make.c,v 1.115 2020/08/22 14:39:12 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -378,7 +378,7 @@ MakeAddChild(void *gnp, void *lp)
 	if (DEBUG(MAKE))
 	    fprintf(debug_file, "MakeAddChild: need to examine %s%s\n",
 		gn->name, gn->cohort_num);
-	(void)Lst_EnQueue(l, gn);
+	Lst_EnqueueS(l, gn);
     }
     return 0;
 }
@@ -794,7 +794,7 @@ Make_Update(GNode *cgn)
 	    }
 	    /* Ok, we can schedule the parent again */
 	    pgn->made = REQUESTED;
-	    (void)Lst_EnQueue(toBeMade, pgn);
+	    Lst_EnqueueS(toBeMade, pgn);
 	}
 	Lst_CloseS(parents);
     }
@@ -1050,13 +1050,13 @@ MakeStartJobs(void)
     GNode	*gn;
     int		have_token = 0;
 
-    while (!Lst_IsEmpty (toBeMade)) {
+    while (!Lst_IsEmpty(toBeMade)) {
 	/* Get token now to avoid cycling job-list when we only have 1 token */
 	if (!have_token && !Job_TokenWithdraw())
 	    break;
 	have_token = 1;
 
-	gn = (GNode *)Lst_DeQueue(toBeMade);
+	gn = Lst_DequeueS(toBeMade);
 	if (DEBUG(MAKE))
 	    fprintf(debug_file, "Examining %s%s...\n",
 		    gn->name, gn->cohort_num);
@@ -1269,8 +1269,8 @@ Make_ExpandUse(Lst targs)
      * be looked at in a minute, otherwise we add its children to our queue
      * and go on about our business.
      */
-    while (!Lst_IsEmpty (examine)) {
-	gn = (GNode *)Lst_DeQueue(examine);
+    while (!Lst_IsEmpty(examine)) {
+	gn = Lst_DequeueS(examine);
 
 	if (gn->flags & REMAKE)
 	    /* We've looked at this one already */
@@ -1405,8 +1405,8 @@ Make_ProcessWait(Lst targs)
     examine = Lst_Init();
     Lst_AppendS(examine, pgn);
 
-    while (!Lst_IsEmpty (examine)) {
-	pgn = Lst_DeQueue(examine);
+    while (!Lst_IsEmpty(examine)) {
+	pgn = Lst_DequeueS(examine);
 
 	/* We only want to process each child-list once */
 	if (pgn->flags & DONE_WAIT)
