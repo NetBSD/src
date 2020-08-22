@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.254 2020/08/22 13:28:20 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.255 2020/08/22 13:44:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.254 2020/08/22 13:28:20 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.255 2020/08/22 13:44:17 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.254 2020/08/22 13:28:20 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.255 2020/08/22 13:44:17 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2479,7 +2479,7 @@ Parse_SetInput(const char *name, int line, int fd,
 
     if (curFile != NULL)
 	/* Save exiting file info */
-	Lst_AtFront(includes, curFile);
+	Lst_PrependS(includes, curFile);
 
     /* Allocate and fill in new structure */
     curFile = bmake_malloc(sizeof *curFile);
