@@ -1,4 +1,4 @@
-/*	$NetBSD: ashldi3.s,v 1.2 2008/04/28 20:23:13 martin Exp $ */
+/*	$NetBSD: ashldi3.s,v 1.3 2020/08/22 05:09:02 isaki Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,8 +36,8 @@ ENTRY_NOPROFILE(__ashldi3)
 	movml %sp@(8),%d0-%d2
 	jra L2
 L1:
-	asll #1,%d0
-	roxll #1,%d1
+	asll #1,%d1
+	roxll #1,%d0
 L2:
 	dbra %d2,L1
 
