@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.454 2020/08/20 07:15:52 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.455 2020/08/22 17:32:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.454 2020/08/20 07:15:52 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.455 2020/08/22 17:32:55 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.454 2020/08/20 07:15:52 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.455 2020/08/22 17:32:55 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3323,12 +3323,14 @@ VarIsDynamic(GNode *ctxt, const char *varname, size_t namelen)
  *	freePtr		OUT: Non-NULL if caller should free *freePtr
  *
  * Results:
- *	The value of the variable expression or var_Error if the
- *	specification is invalid. The length of the specification is
- *	placed in *lengthPtr (for invalid specifications, this is just
- *	2...?).
- *	If *freePtr is non-NULL then it's a pointer that the caller
- *	should pass to free() to free memory used by the result.
+ *	Returns the value of the variable expression.
+ *	var_Error if there was a parse error and VARE_UNDEFERR was set.
+ *	varNoError if there was a parse error and VARE_UNDEFERR was not set.
+ *
+ *	Parsing should continue at str + *lengthPtr.
+ *
+ *	After using the returned value, *freePtr must be freed, preferably
+ *	using bmake_free since it is NULL in most cases.
  *
  * Side Effects:
  *	Any effects from the modifiers, such as :!cmd! or ::=value.
@@ -3686,12 +3688,6 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags)
 	    void *freeIt;
 	    const char *val = Var_Parse(str, ctxt, eflags, &length, &freeIt);
 
-	    /*
-	     * When we come down here, val should either point to the
-	     * value of this variable, suitably modified, or be NULL.
-	     * Length should be the total length of the potential
-	     * variable invocation (from $ to end character...)
-	     */
 	    if (val == var_Error || val == varNoError) {
 		/*
 		 * If performing old-time variable substitution, skip over
