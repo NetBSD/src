@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.73 2020/08/20 21:21:32 riastradh Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.74 2020/08/22 01:43:07 riastradh Exp $	*/
 /*	$KAME: ip_encap.c,v 1.73 2001/10/02 08:30:58 itojun Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.73 2020/08/20 21:21:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.74 2020/08/22 01:43:07 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -609,7 +609,7 @@ encap_afcheck(int af, const struct sockaddr *sp, const struct sockaddr *dp)
 	KASSERT(sp->sa_len == dp->sa_len);
 	KASSERT(af == sp->sa_family && af == dp->sa_family);
 
-	socklen_t len = sockaddr_getsize_by_family(af);
+	socklen_t len __diagused = sockaddr_getsize_by_family(af);
 	KASSERT(len != 0 && len == sp->sa_len && len == dp->sa_len);
 }
 
