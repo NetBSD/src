@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.70 2020/08/22 15:17:09 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.71 2020/08/22 18:20:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.70 2020/08/22 15:17:09 rillig Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.71 2020/08/22 18:20:31 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.70 2020/08/22 15:17:09 rillig Exp $");
+__RCSID("$NetBSD: targ.c,v 1.71 2020/08/22 18:20:31 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -605,7 +605,7 @@ Targ_PrintType(int type)
 }
 
 static const char *
-made_name(enum enum_made made)
+made_name(GNodeMade made)
 {
     switch (made) {
     case UNMADE:     return "unmade";
