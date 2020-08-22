@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.900 2020/08/22 20:23:14 rillig Exp $
+# $NetBSD: mi,v 1.901 2020/08/22 21:55:54 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4685,6 +4685,8 @@
 ./usr/tests/usr.bin/make/unit-tests/deptgt-suffixes.mk	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/deptgt.exp	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/deptgt.mk	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/dir-expand-path.exp	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/dir-expand-path.mk	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/dir.exp	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/dir.mk	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/directive-elif.exp	tests-usr.bin-tests	compattestfile,atf
