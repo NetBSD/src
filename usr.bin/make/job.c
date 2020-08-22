@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.207 2020/08/21 02:20:47 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.208 2020/08/22 08:01:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.207 2020/08/21 02:20:47 rillig Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.208 2020/08/22 08:01:34 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.207 2020/08/21 02:20:47 rillig Exp $");
+__RCSID("$NetBSD: job.c,v 1.208 2020/08/22 08:01:34 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2771,7 +2771,6 @@ Job_AbortAll(void)
 	continue;
 }
 
-
 /*-
  *-----------------------------------------------------------------------
  * JobRestartJobs --

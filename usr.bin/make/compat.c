@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.119 2020/08/21 03:36:03 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.120 2020/08/22 08:01:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.119 2020/08/21 03:36:03 rillig Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.120 2020/08/22 08:01:34 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.119 2020/08/21 03:36:03 rillig Exp $");
+__RCSID("$NetBSD: compat.c,v 1.120 2020/08/22 08:01:34 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -187,7 +187,7 @@ CompatInterrupt(int signo)
 	kill(myPid, signo);
     }
 }
-
+
 /*-
  *-----------------------------------------------------------------------
  * CompatRunCommand --
@@ -499,7 +499,7 @@ again:
 
     return status;
 }
-
+
 /*-
  *-----------------------------------------------------------------------
  * Compat_Make --
@@ -680,7 +680,7 @@ cohorts:
     Lst_ForEach(gn->cohorts, Compat_Make, pgnp);
     return 0;
 }
-
+
 /*-
  *-----------------------------------------------------------------------
  * Compat_Run --
