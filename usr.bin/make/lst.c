@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.36 2020/08/22 23:06:51 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.37 2020/08/23 10:53:27 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,11 +37,11 @@
 #include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.36 2020/08/22 23:06:51 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.37 2020/08/23 10:53:27 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.36 2020/08/22 23:06:51 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.37 2020/08/23 10:53:27 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -302,9 +302,21 @@ Lst_RemoveS(Lst list, LstNode node)
 
 /* Replace the datum in the given node with the new datum. */
 void
-Lst_ReplaceS(LstNode node, void *datum)
+LstNode_SetS(LstNode node, void *datum)
 {
+    assert(LstNodeIsValid(node));
+    assert(datum != NULL);
+
     node->datum = datum;
+}
+
+/* Replace the datum in the given node to NULL. */
+void
+LstNode_SetNullS(LstNode node)
+{
+    assert(LstNodeIsValid(node));
+
+    node->datum = NULL;
 }
 
 
