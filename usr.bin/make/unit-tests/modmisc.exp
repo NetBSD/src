@@ -8,10 +8,6 @@ path_/usr/xbin=/opt/xbin/
 paths=/bin /tmp / /no/such/dir /opt/xbin
 PATHS=/BIN /TMP / /NO/SUCH/DIR /OPT/XBIN
 The answer is 42
-dirname of 'a/b/c def a.b.c a.b/c a a.a .gitignore a a.a' is 'a/b . . a.b . . . . .'
-basename of 'a/b/c def a.b.c a.b/c a a.a .gitignore a a.a' is 'c def a.b.c c a a.a .gitignore a a.a'
-suffix of 'a/b/c def a.b.c a.b/c a a.a .gitignore a a.a' is 'c b/c a gitignore a'
-root of 'a/b/c def a.b.c a.b/c a a.a .gitignore a a.a' is 'a/b/c def a.b a a a a a'
 S:
 C:
 @:
