@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.61 2020/08/23 18:03:35 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.62 2020/08/23 18:26:35 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: str.c,v 1.61 2020/08/23 18:03:35 rillig Exp $";
+static char rcsid[] = "$NetBSD: str.c,v 1.62 2020/08/23 18:26:35 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: str.c,v 1.61 2020/08/23 18:03:35 rillig Exp $");
+__RCSID("$NetBSD: str.c,v 1.62 2020/08/23 18:26:35 rillig Exp $");
 #endif
 #endif				/* not lint */
 #endif
@@ -142,8 +142,8 @@ str_concat4(const char *s1, const char *s2, const char *s3, const char *s4)
  *	Number of words in *out_words_len.
  */
 char **
-brk_string(const char *str, int *out_words_len, Boolean expand,
-	   char **out_words_buf)
+brk_string(const char *str, Boolean expand,
+	   size_t *out_words_len, char **out_words_buf)
 {
 	size_t str_len;
 	char *words_buf;
