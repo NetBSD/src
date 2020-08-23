@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.39 2020/08/23 10:53:27 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.40 2020/08/23 16:43:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -92,8 +92,10 @@
 typedef	struct List	*Lst;
 typedef	struct ListNode	*LstNode;
 
-typedef void		*DuplicateProc(void *);
-typedef void		FreeProc(void *);
+typedef void *LstCopyProc(void *);
+typedef void LstFreeProc(void *);
+typedef int LstFindProc(const void *, const void *);
+typedef int LstActionProc(void *, void *);
 
 /*
  * Creation/destruction functions
@@ -101,9 +103,9 @@ typedef void		FreeProc(void *);
 /* Create a new list */
 Lst		Lst_Init(void);
 /* Duplicate an existing list */
-Lst		Lst_CopyS(Lst, DuplicateProc *);
+Lst		Lst_CopyS(Lst, LstCopyProc);
 /* Destroy an old one */
-void		Lst_Destroy(Lst, FreeProc *);
+void		Lst_Destroy(Lst, LstFreeProc);
 /* True if list is empty */
 Boolean		Lst_IsEmpty(Lst);
 
@@ -144,20 +146,18 @@ void		*Lst_DatumS(LstNode);
  * Functions for entire lists
  */
 /* Find an element in a list */
-LstNode		Lst_Find(Lst, const void *, int (*)(const void *, const void *));
+LstNode		Lst_Find(Lst, const void *, LstFindProc);
 /* Find an element starting from somewhere */
-LstNode		Lst_FindFrom(Lst, LstNode, const void *,
-			     int (*cmp)(const void *, const void *));
+LstNode		Lst_FindFrom(Lst, LstNode, const void *, LstFindProc);
 /*
  * See if the given datum is on the list. Returns the LstNode containing
  * the datum
  */
 LstNode		Lst_MemberS(Lst, void *);
 /* Apply a function to all elements of a lst */
-int		Lst_ForEach(Lst, int (*)(void *, void *), void *);
+int		Lst_ForEach(Lst, LstActionProc, void *);
 /* Apply a function to all elements of a lst starting from a certain point. */
-int		Lst_ForEachFrom(Lst, LstNode, int (*)(void *, void *),
-				void *);
+int		Lst_ForEachFrom(Lst, LstNode, LstActionProc, void *);
 /*
  * these functions are for dealing with a list as a table, of sorts.
  * An idea of the "current element" is kept and used by all the functions

@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.39 2020/08/23 16:18:12 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.40 2020/08/23 16:43:34 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,11 +37,11 @@
 #include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.39 2020/08/23 16:18:12 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.40 2020/08/23 16:43:34 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.39 2020/08/23 16:18:12 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.40 2020/08/23 16:43:34 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -125,7 +125,7 @@ Lst_Init(void)
  * If copyProc is given, that function is used to create the new datum from the
  * old datum, usually by creating a copy of it. */
 Lst
-Lst_CopyS(Lst list, DuplicateProc *copyProc)
+Lst_CopyS(Lst list, LstCopyProc copyProc)
 {
     Lst newList;
     LstNode node;
@@ -145,7 +145,7 @@ Lst_CopyS(Lst list, DuplicateProc *copyProc)
 /* Destroy a list and free all its resources. If the freeProc is given, it is
  * called with the datum from each node in turn before the node is freed. */
 void
-Lst_Destroy(Lst list, FreeProc *freeProc)
+Lst_Destroy(Lst list, LstFreeProc freeProc)
 {
     LstNode node;
     LstNode next = NULL;

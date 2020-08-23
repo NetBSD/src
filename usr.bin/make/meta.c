@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.97 2020/08/22 17:34:25 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.98 2020/08/23 16:43:34 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1623,7 +1623,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 	}
     }
 
-    Lst_Destroy(missingFiles, (FreeProc *)free);
+    Lst_Destroy(missingFiles, free);
 
     if (oodate && needOODATE) {
 	/*
