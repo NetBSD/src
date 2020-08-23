@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.94 2020/08/23 18:53:13 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.95 2020/08/23 18:57:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.94 2020/08/23 18:53:13 rillig Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.95 2020/08/23 18:57:32 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.94 2020/08/23 18:53:13 rillig Exp $");
+__RCSID("$NetBSD: arch.c,v 1.95 2020/08/23 18:57:32 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -528,7 +528,7 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
 {
 #define AR_MAX_NAME_LEN	    (sizeof(arh.ar_name)-1)
     FILE *	  arch;	      /* Stream to archive */
-    int		  size;       /* Size of archive member */
+    size_t	  size;       /* Size of archive member */
     char	  magic[SARMAG];
     LstNode	  ln;	      /* Lst member containing archive descriptor */
     Arch	  *ar;	      /* Archive descriptor */
@@ -634,7 +634,7 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
 	     * 'size' field of the header and round it up during the seek.
 	     */
 	    arh.ar_size[sizeof(arh.ar_size)-1] = '\0';
-	    size = (int)strtol(arh.ar_size, NULL, 10);
+	    size = (size_t)strtol(arh.ar_size, NULL, 10);
 
 	    memcpy(memName, arh.ar_name, sizeof(arh.ar_name));
 	    nameend = memName + AR_MAX_NAME_LEN;
@@ -674,11 +674,11 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
 	    if (strncmp(memName, AR_EFMT1, sizeof(AR_EFMT1) - 1) == 0 &&
 		isdigit((unsigned char)memName[sizeof(AR_EFMT1) - 1])) {
 
-		unsigned int elen = atoi(&memName[sizeof(AR_EFMT1)-1]);
+		int elen = atoi(&memName[sizeof(AR_EFMT1)-1]);
 
-		if (elen > MAXPATHLEN)
+		if ((unsigned int)elen > MAXPATHLEN)
 			goto badarch;
-		if (fread(memName, elen, 1, arch) != 1)
+		if (fread(memName, (size_t)elen, 1, arch) != 1)
 			goto badarch;
 		memName[elen] = '\0';
 		if (fseek(arch, -elen, SEEK_CUR) != 0)
@@ -693,7 +693,7 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
 	    Hash_SetValue(he, bmake_malloc(sizeof(struct ar_hdr)));
 	    memcpy(Hash_GetValue(he), &arh, sizeof(struct ar_hdr));
 	}
-	if (fseek(arch, (size + 1) & ~1, SEEK_CUR) != 0)
+	if (fseek(arch, ((long)size + 1) & ~1, SEEK_CUR) != 0)
 	    goto badarch;
     }
 
