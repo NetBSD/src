@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.77 2020/08/23 04:14:57 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.78 2020/08/23 04:20:01 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.77 2020/08/23 04:14:57 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.78 2020/08/23 04:20:01 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2498,7 +2498,7 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag,
 	if (track->mmapped)
 		return EPERM;
 
-	TRACET(2, track, "resid=%zd", uio->uio_resid);
+	TRACET(2, track, "resid=%zd ioflag=0x%x", uio->uio_resid, ioflag);
 
 #ifdef AUDIO_PM_IDLE
 	error = audio_exlock_mutex_enter(sc);
@@ -6082,7 +6082,7 @@ audio_softintr_wr(void *cookie)
 		if (track == NULL)
 			continue;
 
-		TRACET(4, track, "broadcast; trseq=%d out=%d/%d/%d",
+		TRACET(4, track, "broadcast; trkseq=%d out=%d/%d/%d",
 		    (int)track->seq,
 		    track->outbuf.head,
 		    track->outbuf.used,
