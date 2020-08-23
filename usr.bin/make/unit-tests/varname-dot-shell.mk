@@ -1,4 +1,4 @@
-# $NetBSD: varname-dot-shell.mk,v 1.1 2020/08/23 09:18:25 rillig Exp $
+# $NetBSD: varname-dot-shell.mk,v 1.2 2020/08/23 09:28:52 rillig Exp $
 #
 # Tests for the special .SHELL variable, which contains the shell used for
 # running the commands.
@@ -22,5 +22,4 @@ ORIG_SHELL:=	${.SHELL}
 .endif
 
 all:
-# Cannot be activated yet because VAR_READONLY is not in the debug info.
-#	@echo ${.SHELL:M*}
+	@echo ${.SHELL:M*}

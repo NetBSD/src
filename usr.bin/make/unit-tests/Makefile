@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.115 2020/08/23 09:18:25 rillig Exp $
+# $NetBSD: Makefile,v 1.116 2020/08/23 09:28:52 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -335,7 +335,9 @@ SED_CMDS.varmod-subst-regex+= \
 SED_CMDS.varmod-edge+=	-e 's, line [0-9]*:, line omitted:,'
 SED_CMDS.varshell+=	-e 's,^${.SHELL:T}: ,,'
 SED_CMDS.varshell+=	-e '/command/s,No such.*,not found,'
-SED_CMDS.varname-dot-shell= -e 's, = /.*, = (details omitted),'
+SED_CMDS.varname-dot-shell=	-e 's, = /.*, = (details omitted),'
+SED_CMDS.varname-dot-shell+=	-e 's,"/[^"]*","(details omitted)",'
+SED_CMDS.varname-dot-shell+=	-e 's,\[/[^]]*\],[(details omitted)],'
 
 # Some tests need an additional round of postprocessing.
 POSTPROC.counter=	${TOOL_SED} -n -e '/:RELEVANT = yes/,/:RELEVANT = no/p'

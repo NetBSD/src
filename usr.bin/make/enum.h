@@ -1,4 +1,4 @@
-/*	$NetBSD: enum.h,v 1.5 2020/08/09 09:44:14 rillig Exp $	*/
+/*	$NetBSD: enum.h,v 1.6 2020/08/23 09:28:52 rillig Exp $	*/
 
 /*
  Copyright (c) 2020 Roland Illig <rillig@NetBSD.org>
@@ -59,6 +59,8 @@ const char *Enum_ToString(char *, size_t, int, const EnumToStringSpec *);
 	#v1 ENUM__SEP ENUM__JOIN_5(v2, v3, v4, v5, v6)
 #define ENUM__JOIN_7(v1, v2, v3, v4, v5, v6, v7) \
 	#v1 ENUM__SEP ENUM__JOIN_6(v2, v3, v4, v5, v6, v7)
+#define ENUM__JOIN_8(v1, v2, v3, v4, v5, v6, v7, v8) \
+	#v1 ENUM__SEP ENUM__JOIN_7(v2, v3, v4, v5, v6, v7, v8)
 
 #define ENUM__RTTI(typnam, specs, joined) \
 	static const EnumToStringSpec typnam ## _ ## ToStringSpecs[] = specs; \
@@ -72,7 +74,7 @@ const char *Enum_ToString(char *, size_t, int, const EnumToStringSpec *);
 	ENUM__SPEC(v3), \
 	{ 0, "" } }
 
-#define ENUM__SPEC_7(v1, v2, v3, v4, v5, v6, v7) { \
+#define ENUM__SPEC_8(v1, v2, v3, v4, v5, v6, v7, v8) { \
 	ENUM__SPEC(v1), \
 	ENUM__SPEC(v2), \
 	ENUM__SPEC(v3), \
@@ -80,6 +82,7 @@ const char *Enum_ToString(char *, size_t, int, const EnumToStringSpec *);
 	ENUM__SPEC(v5), \
 	ENUM__SPEC(v6), \
 	ENUM__SPEC(v7), \
+	ENUM__SPEC(v8), \
 	{ 0, "" } }
 
 #define ENUM_RTTI_3(typnam, v1, v2, v3) \
@@ -87,9 +90,9 @@ const char *Enum_ToString(char *, size_t, int, const EnumToStringSpec *);
 		  ENUM__SPEC_3(v1, v2, v3), \
 		  ENUM__JOIN_3(v1, v2, v3))
 
-#define ENUM_RTTI_7(typnam, v1, v2, v3, v4, v5, v6, v7) \
+#define ENUM_RTTI_8(typnam, v1, v2, v3, v4, v5, v6, v7, v8) \
 	ENUM__RTTI(typnam, \
-		  ENUM__SPEC_7(v1, v2, v3, v4, v5, v6, v7), \
-		  ENUM__JOIN_7(v1, v2, v3, v4, v5, v6, v7))
+		  ENUM__SPEC_8(v1, v2, v3, v4, v5, v6, v7, v8), \
+		  ENUM__JOIN_8(v1, v2, v3, v4, v5, v6, v7, v8))
 
 #endif
