@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.75 2020/05/29 03:09:14 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.76 2020/08/23 04:07:23 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.75 2020/05/29 03:09:14 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.76 2020/08/23 04:07:23 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -901,13 +901,15 @@ audioattach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	if (has_playback) {
-		if ((hw_if->start_output == NULL && hw_if->trigger_output == NULL) ||
+		if ((hw_if->start_output == NULL &&
+		     hw_if->trigger_output == NULL) ||
 		    hw_if->halt_output == NULL) {
 			aprint_error(": missing playback method\n");
 		}
 	}
 	if (has_capture) {
-		if ((hw_if->start_input == NULL && hw_if->trigger_input == NULL) ||
+		if ((hw_if->start_input == NULL &&
+		     hw_if->trigger_input == NULL) ||
 		    hw_if->halt_input == NULL) {
 			aprint_error(": missing capture method\n");
 		}
@@ -6129,7 +6131,7 @@ audio_check_params(audio_format2_t *p)
 
 	/*
 	 * Convert obsolete AUDIO_ENCODING_PCM encodings.
-	 * 
+	 *
 	 * AUDIO_ENCODING_PCM16 == AUDIO_ENCODING_LINEAR
 	 * So, it's always signed, as in SunOS.
 	 *
@@ -6432,7 +6434,7 @@ audio_hw_probe(struct audio_softc *sc, audio_format2_t *cand, int mode)
  * If fmt is included in the result of query_format, returns 0.
  * Otherwise returns EINVAL.
  * Must be called without sc_lock held.
- */ 
+ */
 static int
 audio_hw_validate_format(struct audio_softc *sc, int mode,
 	const audio_format2_t *fmt)
