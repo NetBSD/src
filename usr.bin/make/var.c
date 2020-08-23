@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.467 2020/08/23 21:40:30 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.468 2020/08/23 22:13:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.467 2020/08/23 21:40:30 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.468 2020/08/23 22:13:38 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.467 2020/08/23 21:40:30 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.468 2020/08/23 22:13:38 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2498,52 +2498,58 @@ ApplyModifier_ToSep(const char **pp, ApplyModifiersState *st)
     /* XXX: pp points to the 's', for historic reasons only.
      * Changing this will influence the error messages. */
     const char *sep = *pp + 1;
+
+    /* ":ts<any><endc>" or ":ts<any>:" */
     if (sep[0] != st->endc && (sep[1] == st->endc || sep[1] == ':')) {
-	/* ":ts<any><endc>" or ":ts<any>:" */
 	st->sep = sep[0];
 	*pp = sep + 1;
-    } else if (sep[0] == st->endc || sep[0] == ':') {
-	/* ":ts<endc>" or ":ts:" */
-	st->sep = '\0';		/* no separator */
-	*pp = sep;
-    } else if (sep[0] == '\\') {
-	const char *xp = sep + 1;
-	int base = 8;		/* assume octal */
-
-	switch (sep[1]) {
-	case 'n':
-	    st->sep = '\n';
-	    *pp = sep + 2;
-	    break;
-	case 't':
-	    st->sep = '\t';
-	    *pp = sep + 2;
-	    break;
-	case 'x':
-	    base = 16;
-	    xp++;
-	    goto get_numeric;
-	case '0':
-	    base = 0;
-	    goto get_numeric;
-	default:
-	    if (!isdigit((unsigned char)sep[1]))
-		return AMR_BAD;	/* ":ts<backslash><unrecognised>". */
-
-	get_numeric:
-	    {
-		char *end;
-		st->sep = (char)strtoul(xp, &end, base);
-		if (*end != ':' && *end != st->endc)
-		    return AMR_BAD;
-		*pp = end;
-	    }
-	    break;
-	}
-    } else {
-	return AMR_BAD;		/* Found ":ts<unrecognised><unrecognised>". */
+	goto ok;
     }
 
+    /* ":ts<endc>" or ":ts:" */
+    if (sep[0] == st->endc || sep[0] == ':') {
+	st->sep = '\0';		/* no separator */
+	*pp = sep;
+	goto ok;
+    }
+
+    /* ":ts<unrecognised><unrecognised>". */
+    if (sep[0] != '\\')
+	return AMR_BAD;
+
+    /* ":ts\n" */
+    if (sep[1] == 'n') {
+	st->sep = '\n';
+	*pp = sep + 2;
+	goto ok;
+    }
+
+    /* ":ts\t" */
+    if (sep[1] == 't') {
+	st->sep = '\t';
+	*pp = sep + 2;
+	goto ok;
+    }
+
+    /* ":ts\x40" or ":ts\100" */
+    {
+	const char *numStart = sep + 1;
+	int base = 8;		/* assume octal */
+	char *end;
+
+	if (sep[1] == 'x') {
+	    base = 16;
+	    numStart++;
+	} else if (!isdigit((unsigned char)sep[1]))
+	    return AMR_BAD;	/* ":ts<backslash><unrecognised>". */
+
+	st->sep = (char)strtoul(numStart, &end, base);
+	if (*end != ':' && *end != st->endc)
+	    return AMR_BAD;
+	*pp = end;
+    }
+
+ok:
     st->newVal = ModifyWords(st->ctxt, st->sep, st->oneBigWord, st->val,
 			     ModifyWord_Copy, NULL);
     return AMR_OK;
