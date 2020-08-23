@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.90 2020/08/17 03:19:35 mrg Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.91 2020/08/23 03:21:57 simonb Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.90 2020/08/17 03:19:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.91 2020/08/23 03:21:57 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
@@ -229,6 +229,10 @@ db_tlbdump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	       const char *modif)
 {
 	struct tlbmask tlb;
+	bool valid_only = false;
+
+	if (modif[0] == 'v')
+		valid_only = true;
 
 #ifdef MIPS1
 	if (!MIPS_HAS_R4K_MMU) {
@@ -236,6 +240,8 @@ db_tlbdump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 
 		for (i = 0; i < mips_options.mips_num_tlb_entries; i++) {
 			tlb_read_entry(i, &tlb);
+			if (valid_only && !(tlb.tlb_lo1 & MIPS1_PG_V))
+				continue;	/* skip invalid TLBs */
 			db_printf("TLB%c%2d Hi 0x%08x Lo 0x%08x",
 				(tlb.tlb_lo1 & MIPS1_PG_V) ? ' ' : '*',
 				i, tlb.tlb_hi,
@@ -250,12 +256,18 @@ db_tlbdump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 #ifdef MIPS3_PLUS
 	if (MIPS_HAS_R4K_MMU) {
 		int i;
+		const int tlb_count_width =
+		    mips_options.mips_num_tlb_entries > 100 ? 3 : 2;
 
 		for (i = 0; i < mips_options.mips_num_tlb_entries; i++) {
 			tlb_read_entry(i, &tlb);
-			db_printf("TLB%c%2d Hi 0x%08"PRIxVADDR" ",
-			(tlb.tlb_lo0 | tlb.tlb_lo1) & MIPS3_PG_V ? ' ' : '*',
-				i, tlb.tlb_hi);
+			if (valid_only &&
+			    !((tlb.tlb_lo0 | tlb.tlb_lo1) & MIPS3_PG_V))
+				continue;	/* skip invalid TLBs */
+
+			db_printf("TLB%c%*d Hi 0x%08"PRIxVADDR" ",
+			    (tlb.tlb_lo0 | tlb.tlb_lo1) & MIPS3_PG_V ? ' ' : '*',
+			    tlb_count_width, i, tlb.tlb_hi);
 			db_printf("Lo0=0x%09" PRIx64 " %c%c attr %x ",
 				(uint64_t)mips_tlbpfn_to_paddr(tlb.tlb_lo0),
 				(tlb.tlb_lo0 & MIPS3_PG_D) ? 'D' : ' ',
@@ -784,21 +796,10 @@ const struct db_command db_machine_command_table[] = {
 	{ DDB_ADD_CMD("cp0",	db_cp0dump_cmd,	0,
 		"Dump CP0 registers.",
 		NULL, NULL) },
-#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
-	{ DDB_ADD_CMD("watch",	db_watch_cmd,		CS_MORE,
-		"set cp0 watchpoint",
-		"address <mask> <asid> </rwxma>", NULL) },
-	{ DDB_ADD_CMD("unwatch",db_unwatch_cmd,		0,
-		"delete cp0 watchpoint",
-		"address", NULL) },
-#endif	/* (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0 */
 	{ DDB_ADD_CMD("kvtop",	db_kvtophys_cmd,	0,
 		"Print the physical address for a given kernel virtual address",
 		"address",
 		"   address:\tvirtual address to look up") },
-	{ DDB_ADD_CMD("tlb",	db_tlbdump_cmd,		0,
-		"Print out TLB entries. (only works with options DEBUG)",
-		NULL, NULL) },
 #ifdef MIPS64_XLS
 	{ DDB_ADD_CMD("mfcr", 	db_mfcr_cmd,		CS_NOREPEAT,
 		"Dump processor control register",
@@ -815,6 +816,17 @@ const struct db_command db_machine_command_table[] = {
 	{ DDB_ADD_CMD("reset", 	db_mach_reset_cmd,	CS_NOREPEAT,
 		"Initiate hardware reset",
 		NULL, NULL) },
+	{ DDB_ADD_CMD("tlb",	db_tlbdump_cmd,		0,
+		"Print out TLB entries. (only works with options DEBUG)",
+		NULL, NULL) },
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
+	{ DDB_ADD_CMD("watch",	db_watch_cmd,		CS_MORE,
+		"set cp0 watchpoint",
+		"address <mask> <asid> </rwxma>", NULL) },
+	{ DDB_ADD_CMD("unwatch",db_unwatch_cmd,		0,
+		"delete cp0 watchpoint",
+		"address", NULL) },
+#endif	/* (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0 */
 	{ DDB_ADD_CMD(NULL,     NULL,               0,  NULL,NULL,NULL) }
 };
 #endif	/* !KGDB */
