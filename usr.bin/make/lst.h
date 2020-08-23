@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.42 2020/08/23 16:59:44 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.43 2020/08/23 17:04:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -115,7 +115,6 @@ Boolean		Lst_IsEmpty(Lst);
 /* Insert an element before another */
 void		Lst_InsertBeforeS(Lst, LstNode, void *);
 /* Place an element at the front of a lst. */
-ReturnStatus	Lst_AtFront(Lst, void *);
 void		Lst_PrependS(Lst, void *);
 /* Place an element at the end of a lst. */
 void		Lst_AppendS(Lst, void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.124 2020/08/23 08:26:03 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.125 2020/08/23 17:04:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -420,7 +420,6 @@ extern GNode	*VAR_INTERNAL;	/* Variables defined internally by make
 extern GNode    *VAR_GLOBAL;   	/* Variables defined in a global context, e.g
 				 * in the Makefile itself */
 extern GNode    *VAR_CMD;    	/* Variables defined on the command line */
-extern GNode	*VAR_FOR;	/* Iteration variables */
 extern char    	var_Error[];   	/* Value returned by Var_Parse when an error
 				 * is encountered. It actually points to
 				 * an empty string, so naive callers needn't

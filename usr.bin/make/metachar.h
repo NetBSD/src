@@ -1,4 +1,4 @@
-/*	$NetBSD: metachar.h,v 1.5 2020/08/13 03:54:57 rillig Exp $	*/
+/*	$NetBSD: metachar.h,v 1.6 2020/08/23 17:04:21 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -36,15 +36,6 @@
 extern unsigned char _metachar[];
 
 #define ismeta(c)	_metachar[(c) & 0x7f]
-
-static inline int
-hasmeta(const char *cmd)
-{
-	while (!ismeta(*cmd))
-		cmd++;
-
-	return *cmd != '\0';
-}
 
 static inline int
 needshell(const char *cmd, int white)
