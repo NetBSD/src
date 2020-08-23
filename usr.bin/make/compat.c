@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.128 2020/08/23 18:26:35 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.129 2020/08/23 19:00:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.128 2020/08/23 18:26:35 rillig Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.129 2020/08/23 19:00:19 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.128 2020/08/23 18:26:35 rillig Exp $");
+__RCSID("$NetBSD: compat.c,v 1.129 2020/08/23 19:00:19 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -535,7 +535,7 @@ Compat_Make(void *gnp, void *pgnp)
 	Lst_ForEach(gn->children, Compat_Make, gn);
 	if ((gn->flags & REMAKE) == 0) {
 	    gn->made = ABORTED;
-	    pgn->flags &= ~REMAKE;
+	    pgn->flags &= ~(unsigned)REMAKE;
 	    goto cohorts;
 	}
 
@@ -631,7 +631,7 @@ Compat_Make(void *gnp, void *pgnp)
 		Make_TimeStamp(pgn, gn);
 	    }
 	} else if (keepgoing) {
-	    pgn->flags &= ~REMAKE;
+	    pgn->flags &= ~(unsigned)REMAKE;
 	} else {
 	    PrintOnError(gn, "\nStop.");
 	    exit(1);
@@ -641,7 +641,7 @@ Compat_Make(void *gnp, void *pgnp)
 	 * Already had an error when making this beastie. Tell the parent
 	 * to abort.
 	 */
-	pgn->flags &= ~REMAKE;
+	pgn->flags &= ~(unsigned)REMAKE;
     } else {
 	if (Lst_MemberS(gn->iParents, pgn) != NULL) {
 	    char *p1;
@@ -652,7 +652,7 @@ Compat_Make(void *gnp, void *pgnp)
 	    case BEINGMADE:
 		Error("Graph cycles through %s", gn->name);
 		gn->made = ERROR;
-		pgn->flags &= ~REMAKE;
+		pgn->flags &= ~(unsigned)REMAKE;
 		break;
 	    case MADE:
 		if ((gn->type & OP_EXEC) == 0) {
