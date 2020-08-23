@@ -1,4 +1,4 @@
-# $NetBSD: archive.mk,v 1.4 2020/08/23 17:34:46 rillig Exp $
+# $NetBSD: archive.mk,v 1.5 2020/08/23 17:51:24 rillig Exp $
 #
 # Very basic demonstration of handling archives, based on the description
 # in PSD.doc/tutorial.ms.
@@ -31,8 +31,8 @@ list-archive: ${ARCHIVE}
 
 # XXX: I had expected that this dependency would select all *.mk files from
 # the archive.  Instead, the globbing is done in the current directory.
-# To prevent an overly long file list, the pattern is restricted to ar*.mk.
-list-archive-wildcard: ${ARCHIVE}(ar*.mk)
+# To prevent an overly long file list, the pattern is restricted to [at]*.mk.
+list-archive-wildcard: ${ARCHIVE}([at]*.mk)
 	${RUN} printf '%s\n' ${.ALLSRC:O:@member@${.TARGET:Q}': '${member:Q}@}
 
 depend-on-existing-member: ${ARCHIVE}(archive.mk)
