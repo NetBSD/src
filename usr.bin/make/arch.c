@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.95 2020/08/23 18:57:32 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.96 2020/08/23 18:59:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.95 2020/08/23 18:57:32 rillig Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.96 2020/08/23 18:59:01 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.95 2020/08/23 18:57:32 rillig Exp $");
+__RCSID("$NetBSD: arch.c,v 1.96 2020/08/23 18:59:01 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -912,7 +912,7 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *arhPtr,
 		 * the file at the actual member, rather than its header, but
 		 * not here...
 		 */
-		if (fseek(arch, -sizeof(struct ar_hdr), SEEK_CUR) != 0) {
+		if (fseek(arch, -(long)sizeof(struct ar_hdr), SEEK_CUR) != 0) {
 		    fclose(arch);
 		    return NULL;
 		}
@@ -928,14 +928,14 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *arhPtr,
 					sizeof(AR_EFMT1) - 1) == 0 &&
 		isdigit((unsigned char)arhPtr->ar_name[sizeof(AR_EFMT1) - 1])) {
 
-		unsigned int elen = atoi(&arhPtr->ar_name[sizeof(AR_EFMT1)-1]);
+		int elen = atoi(&arhPtr->ar_name[sizeof(AR_EFMT1)-1]);
 		char ename[MAXPATHLEN + 1];
 
-		if (elen > MAXPATHLEN) {
+		if ((unsigned int)elen > MAXPATHLEN) {
 			fclose(arch);
 			return NULL;
 		}
-		if (fread(ename, elen, 1, arch) != 1) {
+		if (fread(ename, (size_t)elen, 1, arch) != 1) {
 			fclose(arch);
 			return NULL;
 		}
@@ -945,7 +945,7 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *arhPtr,
 		}
 		if (strncmp(ename, member, len) == 0) {
 			/* Found as extended name */
-			if (fseek(arch, -sizeof(struct ar_hdr) - elen,
+			if (fseek(arch, -(long)sizeof(struct ar_hdr) - elen,
 				SEEK_CUR) != 0) {
 			    fclose(arch);
 			    return NULL;
