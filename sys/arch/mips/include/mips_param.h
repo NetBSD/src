@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.45 2020/07/26 08:08:41 simonb Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.46 2020/08/23 10:23:38 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -117,12 +117,18 @@
 #endif
 #define	NSEGPG		(1 << SEGLENGTH)
 
-#if PGSHIFT >= 13
-#define	UPAGES		1		/* pages of u-area */
+#ifdef _LP64
+#define	__MIN_USPACE	16384		/* LP64 needs a 16kB stack */
 #else
-#define	UPAGES		2		/* pages of u-area */
+/*
+ * Note for the non-LP64 case, cpu_switch_resume has the assumption
+ * that UPAGES == 2.  For MIPS-I we wire USPACE in TLB #0 and #1.
+ * For MIPS3+ we wire USPACE in the the TLB #0 pair.
+ */
+#define	__MIN_USPACE	8192		/* otherwise use an 8kB stack */
 #endif
-#define	USPACE		(UPAGES*NBPG)	/* size of u-area in bytes */
+#define	USPACE		MAX(__MIN_USPACE, PAGE_SIZE)
+#define	UPAGES		(USPACE / PAGE_SIZE) /* number of pages for u-area */
 #define	USPACE_ALIGN	USPACE		/* make sure it starts on a even VA */
 
 /*

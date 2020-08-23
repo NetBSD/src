@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.161 2020/08/09 07:09:35 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.162 2020/08/23 10:23:38 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.161 2020/08/09 07:09:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.162 2020/08/23 10:23:38 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -120,11 +120,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		l2->l_md.md_upte[i] = 0;
 	}
 	if (!pmap_md_direct_mapped_vaddr_p(ua2)) {
-		/*
-		 * UPAGES has to be 2 for 4KB PAGE_SIZE
-		 * UPAGES has to be 1 for >= 8KB PAGE_SIZE
-		 */
-		CTASSERT((PGSHIFT == 12) == (UPAGES == 2));
 		pt_entry_t * const pte = pmap_pte_lookup(pmap_kernel(), ua2);
 		const uint32_t x = MIPS_HAS_R4K_MMU
 		    ? (MIPS3_PG_RO | MIPS3_PG_WIRED)
