@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.126 2020/08/22 21:42:38 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.127 2020/08/23 10:53:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.126 2020/08/22 21:42:38 rillig Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.127 2020/08/23 10:53:27 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.126 2020/08/22 21:42:38 rillig Exp $");
+__RCSID("$NetBSD: compat.c,v 1.127 2020/08/23 10:53:27 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -247,7 +247,7 @@ CompatRunCommand(void *cmdp, void *gnp)
 	return 0;
     }
     cmd = cmdStart;
-    Lst_ReplaceS(cmdNode, cmdStart);
+    LstNode_SetS(cmdNode, cmdStart);
 
     if ((gn->type & OP_SAVE_CMDS) && (gn != ENDNode)) {
         assert(ENDNode != NULL);
@@ -394,7 +394,9 @@ again:
     free(mav);
     free(bp);
 
-    Lst_ReplaceS(cmdNode, NULL);
+    /* XXX: Memory management looks suspicious here. */
+    /* XXX: Setting a list item to NULL is unexpected. */
+    LstNode_SetNullS(cmdNode);
 
 #ifdef USE_META
     if (useMeta) {
