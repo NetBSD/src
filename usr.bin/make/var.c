@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.459 2020/08/22 21:42:38 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.460 2020/08/23 08:29:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.459 2020/08/22 21:42:38 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.460 2020/08/23 08:29:18 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.459 2020/08/22 21:42:38 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.460 2020/08/23 08:29:18 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -778,6 +778,8 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
     char *name_freeIt = NULL;
     Var *v;
 
+    assert(val != NULL);
+
     /*
      * We only look for a variable in the given context since anything set
      * here will override anything in a lower context, so there's not much
@@ -927,6 +929,8 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 {
     char *name_freeIt = NULL;
     Var *v;
+
+    assert(val != NULL);
 
     if (strchr(name, '$') != NULL) {
 	const char *unexpanded_name = name;
@@ -1931,9 +1935,9 @@ typedef struct {
     const VarEvalFlags eflags;
 
     char *val;			/* The old value of the expression,
-				 * before applying the modifier */
+				 * before applying the modifier, never NULL */
     char *newVal;		/* The new value of the expression,
-				 * after applying the modifier */
+				 * after applying the modifier, never NULL */
     char missing_delim;		/* For error reporting */
 
     char sep;			/* Word separator in expansions
@@ -3010,7 +3014,7 @@ ApplyModifiers(
 ) {
     ApplyModifiersState st = {
 	startc, endc, v, ctxt, eflags, val,
-	NULL,			/* .newVal */
+	var_Error,		/* .newVal */
 	'\0',			/* .missing_delim */
 	' ',			/* .sep */
 	FALSE			/* .oneBigWord */
@@ -3021,6 +3025,7 @@ ApplyModifiers(
 
     assert(startc == '(' || startc == '{' || startc == '\0');
     assert(endc == ')' || endc == '}' || endc == '\0');
+    assert(val != NULL);
 
     p = *pp;
     while (*p != '\0' && *p != endc) {
@@ -3259,6 +3264,7 @@ ApplyModifiers(
     }
 out:
     *pp = p;
+    assert(st.val != NULL);	/* Use var_Error or varNoError instead. */
     return st.val;
 
 bad_modifier:
