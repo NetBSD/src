@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.108 2020/06/13 12:53:42 simonb Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.109 2020/08/23 10:23:38 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2707,12 +2707,14 @@ END(MIPSX(lwp_trampoline))
  * Disable the optimisation for PGSHIFT == 14 (aka ENABLE_MIPS_16KB_PAGE)
  * as the code needs fixing for this case
  *
- * _LP64 with UPAGES == 1 is always direct mappable; everything else can have
- * non-direct mappable USPACE.
+ * A TLB entry isn't used for the following cases:
+ *  - 16kB USPACE
+ *  - LP64 - USPACE is always accessed directly via XKPHYS
  */
 
 LEAF_NOPROFILE(MIPSX(cpu_switch_resume))
-#if (PGSHIFT < 14)
+#if !defined(_LP64)
+#if (PAGE_SIZE < 16384)
 #if (USPACE > PAGE_SIZE) || !defined(_LP64)
 	INT_L	a1, L_MD_UPTE_0(a0)		# a1 = upte[0]
 #if (PGSHIFT & 1)
@@ -2789,7 +2791,8 @@ MIPSX(entry0set):
 	COP0_SYNC
 MIPSX(resume):
 #endif /* (USPACE > PAGE_SIZE) || !defined(_LP64) */
-#endif /* PGSHIFT < 14 */
+#endif /* PAGE_SIZE < 16384 */
+#endif /* ! LP64 */
 #ifdef MIPSNNR2
 	PTR_L	v0, L_PRIVATE(a0)		# get lwp private
 	_MTC0	v0, MIPS_COP_0_USERLOCAL	# make available for rdhwr
