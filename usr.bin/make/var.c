@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.464 2020/08/23 10:27:22 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.465 2020/08/23 18:26:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.464 2020/08/23 10:27:22 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.465 2020/08/23 18:26:35 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.464 2020/08/23 10:27:22 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.465 2020/08/23 18:26:35 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -608,10 +608,10 @@ Var_ExportVars(void)
     if (*val) {
 	char **av;
 	char *as;
-	int ac;
-	int i;
+	size_t ac;
+	size_t i;
 
-	av = brk_string(val, &ac, FALSE, &as);
+	av = brk_string(val, FALSE, &ac, &as);
 	for (i = 0; i < ac; i++)
 	    Var_Export1(av[i], 0);
 	free(as);
@@ -652,10 +652,10 @@ Var_Export(const char *str, Boolean isExport)
     val = Var_Subst(str, VAR_GLOBAL, VARE_WANTRES);
     if (val[0] != '\0') {
 	char *as;
-	int ac;
-	char **av = brk_string(val, &ac, FALSE, &as);
+	size_t ac;
+	char **av = brk_string(val, FALSE, &ac, &as);
 
-	int i;
+	size_t i;
 	for (i = 0; i < ac; i++) {
 	    const char *name = av[i];
 	    if (Var_Export1(name, flags)) {
@@ -731,10 +731,10 @@ Var_UnExport(const char *str)
 	Var *v;
 	char **av;
 	char *as;
-	int ac;
-	int i;
+	size_t ac;
+	size_t i;
 
-	av = brk_string(varnames, &ac, FALSE, &as);
+	av = brk_string(varnames, FALSE, &ac, &as);
 	for (i = 0; i < ac; i++) {
 	    v = VarFind(av[i], VAR_GLOBAL, 0);
 	    if (v == NULL) {
@@ -1490,7 +1490,7 @@ VarSelectWords(char sep, Boolean oneBigWord, const char *str, int first,
 {
     char **av;			/* word list */
     char *as;			/* word list memory */
-    int ac;
+    size_t ac;
     int start, end, step;
     int i;
 
@@ -1500,12 +1500,12 @@ VarSelectWords(char sep, Boolean oneBigWord, const char *str, int first,
     if (oneBigWord) {
 	/* fake what brk_string() would do if there were only one word */
 	ac = 1;
-	av = bmake_malloc((size_t)(ac + 1) * sizeof(char *));
+	av = bmake_malloc((ac + 1) * sizeof(char *));
 	as = bmake_strdup(str);
 	av[0] = as;
 	av[1] = NULL;
     } else {
-	av = brk_string(str, &ac, FALSE, &as);
+	av = brk_string(str, FALSE, &ac, &as);
     }
 
     /*
@@ -1514,20 +1514,20 @@ VarSelectWords(char sep, Boolean oneBigWord, const char *str, int first,
      * (-1 gets converted to ac, -2 gets converted to (ac - 1), etc.).
      */
     if (first < 0)
-	first += ac + 1;
+	first += (int)ac + 1;
     if (last < 0)
-	last += ac + 1;
+	last += (int)ac + 1;
 
     /*
      * We avoid scanning more of the list than we need to.
      */
     if (first > last) {
-	start = MIN(ac, first) - 1;
+	start = MIN((int)ac, first) - 1;
 	end = MAX(0, last - 1);
 	step = -1;
     } else {
 	start = MAX(0, first - 1);
-	end = MIN(ac, last);
+	end = MIN((int)ac, last);
 	step = 1;
     }
 
@@ -1578,8 +1578,8 @@ ModifyWords(GNode *ctx, char sep, Boolean oneBigWord, const char *str,
     SepBuf result;
     char **av;			/* word list */
     char *as;			/* word list memory */
-    int ac;
-    int i;
+    size_t ac;
+    size_t i;
 
     if (oneBigWord) {
 	SepBuf_Init(&result, sep);
@@ -1589,9 +1589,9 @@ ModifyWords(GNode *ctx, char sep, Boolean oneBigWord, const char *str,
 
     SepBuf_Init(&result, sep);
 
-    av = brk_string(str, &ac, FALSE, &as);
+    av = brk_string(str, FALSE, &ac, &as);
 
-    VAR_DEBUG("ModifyWords: split \"%s\" into %d words\n", str, ac);
+    VAR_DEBUG("ModifyWords: split \"%s\" into %zu words\n", str, ac);
 
     for (i = 0; i < ac; i++) {
 	modifyWord(av[i], &result, modifyWord_args);
@@ -1607,10 +1607,10 @@ ModifyWords(GNode *ctx, char sep, Boolean oneBigWord, const char *str,
 
 
 static char *
-WordList_JoinFree(char **av, int ac, char *as)
+WordList_JoinFree(char **av, size_t ac, char *as)
 {
     Buffer buf;
-    int i;
+    size_t i;
 
     Buf_Init(&buf, 0);
 
@@ -1631,11 +1631,11 @@ static char *
 VarUniq(const char *str)
 {
     char *as;			/* Word list memory */
-    int ac;
-    char **av = brk_string(str, &ac, FALSE, &as);
+    size_t ac;
+    char **av = brk_string(str, FALSE, &ac, &as);
 
     if (ac > 1) {
-	int i, j;
+	size_t i, j;
 	for (j = 0, i = 1; i < ac; i++)
 	    if (strcmp(av[i], av[j]) != 0 && (++j != i))
 		av[j] = av[i];
@@ -2196,9 +2196,9 @@ ApplyModifier_Exclam(const char **pp, ApplyModifiersState *st)
 static ApplyModifierResult
 ApplyModifier_Range(const char **pp, ApplyModifiersState *st)
 {
-    int n;
+    size_t n;
     Buffer buf;
-    int i;
+    size_t i;
 
     const char *mod = *pp;
     if (!ModMatchEq(mod, "range", st->endc))
@@ -2206,7 +2206,7 @@ ApplyModifier_Range(const char **pp, ApplyModifiersState *st)
 
     if (mod[5] == '=') {
 	char *ep;
-	n = (int)strtoul(mod + 6, &ep, 10);
+	n = (size_t)strtoul(mod + 6, &ep, 10);
 	*pp = ep;
     } else {
 	n = 0;
@@ -2215,7 +2215,7 @@ ApplyModifier_Range(const char **pp, ApplyModifiersState *st)
 
     if (n == 0) {
 	char *as;
-	char **av = brk_string(st->val, &n, FALSE, &as);
+	char **av = brk_string(st->val, FALSE, &n, &as);
 	free(as);
 	free(av);
     }
@@ -2225,7 +2225,7 @@ ApplyModifier_Range(const char **pp, ApplyModifiersState *st)
     for (i = 0; i < n; i++) {
 	if (i != 0)
 	    Buf_AddByte(&buf, ' ');	/* XXX: st->sep, for consistency */
-	Buf_AddInt(&buf, 1 + i);
+	Buf_AddInt(&buf, 1 + (int)i);
     }
 
     st->newVal = Buf_Destroy(&buf, FALSE);
@@ -2599,13 +2599,13 @@ ApplyModifier_Words(const char **pp, ApplyModifiersState *st)
 	    /* XXX: brk_string() is a rather expensive
 	     * way of counting words. */
 	    char *as;
-	    int ac;
-	    char **av = brk_string(st->val, &ac, FALSE, &as);
+	    size_t ac;
+	    char **av = brk_string(st->val, FALSE, &ac, &as);
 	    free(as);
 	    free(av);
 
 	    Buf_Init(&buf, 4);	/* 3 digits + '\0' */
-	    Buf_AddInt(&buf, ac);
+	    Buf_AddInt(&buf, (int)ac);
 	    st->newVal = Buf_Destroy(&buf, FALSE);
 	}
 	goto ok;
@@ -2690,12 +2690,12 @@ ApplyModifier_Order(const char **pp, ApplyModifiersState *st)
     const char *mod = (*pp)++;	/* skip past the 'O' in any case */
 
     char *as;			/* word list memory */
-    int ac;
-    char **av = brk_string(st->val, &ac, FALSE, &as);
+    size_t ac;
+    char **av = brk_string(st->val, FALSE, &ac, &as);
 
     if (mod[1] == st->endc || mod[1] == ':') {
 	/* :O sorts ascending */
-	qsort(av, (size_t)ac, sizeof(char *), str_cmp_asc);
+	qsort(av, ac, sizeof(char *), str_cmp_asc);
 
     } else if ((mod[1] == 'r' || mod[1] == 'x') &&
 	       (mod[2] == st->endc || mod[2] == ':')) {
@@ -2703,7 +2703,7 @@ ApplyModifier_Order(const char **pp, ApplyModifiersState *st)
 
 	if (mod[1] == 'r') {
 	    /* :Or sorts descending */
-	    qsort(av, (size_t)ac, sizeof(char *), str_cmp_desc);
+	    qsort(av, ac, sizeof(char *), str_cmp_desc);
 
 	} else {
 	    /* :Ox shuffles
@@ -2713,9 +2713,9 @@ ApplyModifier_Order(const char **pp, ApplyModifiersState *st)
 	     * reasonable value for mod factor is 2 (the mod 1 will produce
 	     * 0 with probability 1).
 	     */
-	    int i;
+	    size_t i;
 	    for (i = ac - 1; i > 0; i--) {
-		long rndidx = random() % (i + 1);
+		size_t rndidx = (size_t)random() % (i + 1);
 		char *t = av[i];
 		av[i] = av[rndidx];
 		av[rndidx] = t;
