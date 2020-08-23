@@ -1,4 +1,4 @@
-/*	$NetBSD: t_getrandom.c,v 1.1 2020/08/14 00:53:16 riastradh Exp $	*/
+/*	$NetBSD: t_getrandom.c,v 1.2 2020/08/23 17:50:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_getrandom.c,v 1.1 2020/08/14 00:53:16 riastradh Exp $");
+__RCSID("$NetBSD: t_getrandom.c,v 1.2 2020/08/23 17:50:19 riastradh Exp $");
 
 #include <sys/random.h>
 
@@ -47,13 +47,6 @@ alarm_handler(int signo)
 {
 }
 
-ATF_TC(getrandom);
-ATF_TC_HEAD(getrandom, tc)
-{
-
-	atf_tc_set_md_var(tc, "descr", "getrandom(2)");
-}
-
 /*
  * Probability of spurious failure is 1/2^192 for each of the memcmps.
  * As long as there are fewer than 2^64 of them, the probability of
@@ -61,7 +54,12 @@ ATF_TC_HEAD(getrandom, tc)
  * don't care about it.
  */
 
-ATF_TC_BODY(getrandom, tc)
+ATF_TC(getrandom_default);
+ATF_TC_HEAD(getrandom_default, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "getrandom(..., 0)");
+}
+ATF_TC_BODY(getrandom_default, tc)
 {
 	ssize_t n;
 
@@ -79,6 +77,16 @@ ATF_TC_BODY(getrandom, tc)
 		ATF_CHECK(memcmp(buf + sizeof buf - 24, zero24, 24) != 0);
 	}
 	alarm(0);
+}
+
+ATF_TC(getrandom_nonblock);
+ATF_TC_HEAD(getrandom_nonblock, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "getrandom(..., GRND_NONBLOCK)");
+}
+ATF_TC_BODY(getrandom_nonblock, tc)
+{
+	ssize_t n;
 
 	/* default, nonblocking */
 	memset(buf, 0, sizeof buf);
@@ -90,6 +98,16 @@ ATF_TC_BODY(getrandom, tc)
 		ATF_CHECK(memcmp(buf, zero24, 24) != 0);
 		ATF_CHECK(memcmp(buf + sizeof buf - 24, zero24, 24) != 0);
 	}
+}
+
+ATF_TC(getrandom_insecure);
+ATF_TC_HEAD(getrandom_insecure, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "getrandom(..., GRND_INSECURE)");
+}
+ATF_TC_BODY(getrandom_insecure, tc)
+{
+	ssize_t n;
 
 	/* insecure */
 	memset(buf, 0, sizeof buf);
@@ -98,6 +116,17 @@ ATF_TC_BODY(getrandom, tc)
 	ATF_CHECK_EQ((size_t)n, sizeof buf);
 	ATF_CHECK(memcmp(buf, zero24, 24) != 0);
 	ATF_CHECK(memcmp(buf + sizeof buf - 24, zero24, 24) != 0);
+}
+
+ATF_TC(getrandom_insecure_nonblock);
+ATF_TC_HEAD(getrandom_insecure_nonblock, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "getrandom(..., GRND_INSECURE|GRND_NONBLOCK)");
+}
+ATF_TC_BODY(getrandom_insecure_nonblock, tc)
+{
+	ssize_t n;
 
 	/* insecure, nonblocking -- same as mere insecure */
 	memset(buf, 0, sizeof buf);
@@ -106,6 +135,18 @@ ATF_TC_BODY(getrandom, tc)
 	ATF_CHECK_EQ((size_t)n, sizeof buf);
 	ATF_CHECK(memcmp(buf, zero24, 24) != 0);
 	ATF_CHECK(memcmp(buf + sizeof buf - 24, zero24, 24) != 0);
+}
+
+ATF_TC(getrandom_random);
+ATF_TC_HEAD(getrandom_random, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "getrandom(..., GRND_RANDOM)");
+}
+ATF_TC_BODY(getrandom_random, tc)
+{
+	ssize_t n;
+
+	ATF_REQUIRE(signal(SIGALRM, &alarm_handler) != SIG_ERR);
 
 	/* `random' (hokey) */
 	alarm(1);
@@ -122,6 +163,17 @@ ATF_TC_BODY(getrandom, tc)
 		}
 	}
 	alarm(0);
+}
+
+ATF_TC(getrandom_random_nonblock);
+ATF_TC_HEAD(getrandom_random_nonblock, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "getrandom(..., GRND_RANDOM|GRND_NONBLOCK)");
+}
+ATF_TC_BODY(getrandom_random_nonblock, tc)
+{
+	ssize_t n;
 
 	/* `random' (hokey), nonblocking */
 	memset(buf, 0, sizeof buf);
@@ -136,17 +188,49 @@ ATF_TC_BODY(getrandom, tc)
 			ATF_CHECK(memcmp(buf + n - 24, zero24, 24) != 0);
 		}
 	}
+}
+
+ATF_TC(getrandom_random_insecure);
+ATF_TC_HEAD(getrandom_random_insecure, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "getrandom(..., GRND_RANDOM|GRND_INSECURE)");
+}
+ATF_TC_BODY(getrandom_random_insecure, tc)
+{
+	ssize_t n;
 
 	/* random and insecure -- nonsensical */
 	n = getrandom(buf, sizeof buf, GRND_RANDOM|GRND_INSECURE);
 	ATF_CHECK_EQ(n, -1);
 	ATF_CHECK_EQ(errno, EINVAL);
+}
+
+ATF_TC(getrandom_random_insecure_nonblock);
+ATF_TC_HEAD(getrandom_random_insecure_nonblock, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "getrandom(..., GRND_RANDOM|GRND_INSECURE|GRND_NONBLOCK)");
+}
+ATF_TC_BODY(getrandom_random_insecure_nonblock, tc)
+{
+	ssize_t n;
 
 	/* random and insecure, nonblocking -- nonsensical */
 	n = getrandom(buf, sizeof buf,
 	    GRND_RANDOM|GRND_INSECURE|GRND_NONBLOCK);
 	ATF_CHECK_EQ(n, -1);
 	ATF_CHECK_EQ(errno, EINVAL);
+}
+
+ATF_TC(getrandom_invalid);
+ATF_TC_HEAD(getrandom_invalid, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "getrandom(..., <invalid>)");
+}
+ATF_TC_BODY(getrandom_invalid, tc)
+{
+	ssize_t n;
 
 	/* invalid flags */
 	__CTASSERT(~(GRND_RANDOM|GRND_INSECURE|GRND_NONBLOCK));
@@ -154,6 +238,16 @@ ATF_TC_BODY(getrandom, tc)
 	    ~(GRND_RANDOM|GRND_INSECURE|GRND_NONBLOCK));
 	ATF_CHECK_EQ(n, -1);
 	ATF_CHECK_EQ(errno, EINVAL);
+}
+
+ATF_TC(getrandom_fault);
+ATF_TC_HEAD(getrandom_fault, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "getrandom(NULL, ...)");
+}
+ATF_TC_BODY(getrandom_fault, tc)
+{
+	ssize_t n;
 
 	/* unmapped */
 	n = getrandom(NULL, sizeof buf, GRND_INSECURE|GRND_NONBLOCK);
@@ -164,7 +258,16 @@ ATF_TC_BODY(getrandom, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, getrandom);
+	ATF_TP_ADD_TC(tp, getrandom_default);
+	ATF_TP_ADD_TC(tp, getrandom_nonblock);
+	ATF_TP_ADD_TC(tp, getrandom_insecure);
+	ATF_TP_ADD_TC(tp, getrandom_insecure_nonblock);
+	ATF_TP_ADD_TC(tp, getrandom_random);
+	ATF_TP_ADD_TC(tp, getrandom_random_nonblock);
+	ATF_TP_ADD_TC(tp, getrandom_random_insecure);
+	ATF_TP_ADD_TC(tp, getrandom_random_insecure_nonblock);
+	ATF_TP_ADD_TC(tp, getrandom_invalid);
+	ATF_TP_ADD_TC(tp, getrandom_fault);
 
 	return atf_no_error();
 }
