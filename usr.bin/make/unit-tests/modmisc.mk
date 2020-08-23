@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.43 2020/08/16 12:48:55 rillig Exp $
+# $Id: modmisc.mk,v 1.44 2020/08/23 15:09:15 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -15,7 +15,7 @@ MOD_HOMES=S,/home/,/homes/,
 MOD_OPT=@d@$${exists($$d):?$$d:$${d:S,/usr,/opt,}}@
 MOD_SEP=S,:, ,g
 
-all:	modvar modvarloop modsysv mod-HTE emptyvar undefvar
+all:	modvar modvarloop modsysv emptyvar undefvar
 all:	mod-tu-space
 all:	mod-quote
 all:	mod-break-many-words
@@ -45,13 +45,6 @@ modvarloop:
 	@echo "path_/usr/xbin=${path_/usr/xbin}"
 	@echo "paths=${paths}"
 	@echo "PATHS=${paths:tu}"
-
-PATHNAMES=	a/b/c def a.b.c a.b/c a a.a .gitignore a a.a
-mod-HTE:
-	@echo "dirname of '"${PATHNAMES:Q}"' is '"${PATHNAMES:H:Q}"'"
-	@echo "basename of '"${PATHNAMES:Q}"' is '"${PATHNAMES:T:Q}"'"
-	@echo "suffix of '"${PATHNAMES:Q}"' is '"${PATHNAMES:E:Q}"'"
-	@echo "root of '"${PATHNAMES:Q}"' is '"${PATHNAMES:R:Q}"'"
 
 # When a modifier is applied to the "" variable, the result is discarded.
 emptyvar:
