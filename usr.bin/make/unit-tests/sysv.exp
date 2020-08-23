@@ -12,11 +12,4 @@ asam.c.c
 asam.c
 a.c.c
 
-ax:Q b c d eb
-bcd.e
-&
-anchor-dollar: value
-anchor-dollar: valux
-mismatch: file.cpp file.h
-mismatch: renamed.c other.c
 exit status 0
