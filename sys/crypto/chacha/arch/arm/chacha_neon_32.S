@@ -1,4 +1,4 @@
-/*	$NetBSD: chacha_neon_32.S,v 1.3 2020/08/08 14:47:01 riastradh Exp $	*/
+/*	$NetBSD: chacha_neon_32.S,v 1.4 2020/08/23 16:39:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: chacha_neon_32.S,v 1.3 2020/08/08 14:47:01 riastradh Exp $")
+RCSID("$NetBSD: chacha_neon_32.S,v 1.4 2020/08/23 16:39:06 riastradh Exp $")
 
 	.fpu	neon
 
@@ -54,7 +54,7 @@ RCSID("$NetBSD: chacha_neon_32.S,v 1.3 2020/08/08 14:47:01 riastradh Exp $")
  */
 
 .macro	ROUNDLD	a0,a1,a2,a3, b0,b1,b2,b3, c0,c1,c2,c3, d0,d1,d2,d3
-	vld1.8		{\c2-\c3}, [fp, :256]
+	vld1.8		{\c2-\c3}, [sp, :256]
 .endm
 
 .macro	ROUND	a0,a1,a2,a3, b0,b1,b2,b3, c0,c1,c2,c3, d0,d1,d2,d3, c0l, d0l,d0h,d1l,d1h,d2l,d2h,d3l,d3h
@@ -80,7 +80,7 @@ RCSID("$NetBSD: chacha_neon_32.S,v 1.3 2020/08/08 14:47:01 riastradh Exp $")
 	vadd.u32	\c2, \c2, \d2
 	vadd.u32	\c3, \c3, \d3
 
-	vst1.8		{\c0-\c1}, [fp, :256]	/* free c0 and c1 as temps */
+	vst1.8		{\c0-\c1}, [sp, :256]	/* free c0 and c1 as temps */
 
 	veor		\c0, \b0, \c0
 	veor		\c1, \b1, \c1
@@ -118,7 +118,7 @@ RCSID("$NetBSD: chacha_neon_32.S,v 1.3 2020/08/08 14:47:01 riastradh Exp $")
 	vtbl.8		\d3l, {\d3l}, \c0l
 	vtbl.8		\d3h, {\d3h}, \c0l
 
-	vld1.8		{\c0-\c1}, [fp, :256]	/* restore c0 and c1 */
+	vld1.8		{\c0-\c1}, [sp, :256]	/* restore c0 and c1 */
 
 	/* c += d; b ^= c; b <<<= 7 */
 	vadd.u32	\c2, \c2, \d2
@@ -126,7 +126,7 @@ RCSID("$NetBSD: chacha_neon_32.S,v 1.3 2020/08/08 14:47:01 riastradh Exp $")
 	vadd.u32	\c0, \c0, \d0
 	vadd.u32	\c1, \c1, \d1
 
-	vst1.8		{\c2-\c3}, [fp, :256]	/* free c2 and c3 as temps */
+	vst1.8		{\c2-\c3}, [sp, :256]	/* free c2 and c3 as temps */
 
 	veor		\c2, \b2, \c2
 	veor		\c3, \b3, \c3
@@ -160,17 +160,18 @@ ENTRY(chacha_stream256_neon)
 	/* save callee-saves registers */
 	push	{r4, r5, r6, r7, r8, r10, fp, lr}
 	vpush	{d8-d15}
+	mov	fp, sp
 
 	/* r7 := .Lconstants - .Lconstants_addr, r6 := .Lconstants_addr */
 	ldr	r7, .Lconstants_addr
 	adr	r6, .Lconstants_addr
 
 	/* reserve space for two 128-bit/16-byte q registers */
-	sub	fp, sp, #0x20
-	bic	fp, fp, #0x1f	/* align */
+	sub	sp, sp, #0x20
+	bic	sp, sp, #0x1f	/* align */
 
 	/* get parameters */
-	add	ip, sp, #96
+	add	ip, fp, #96
 	add	r7, r7, r6	/* r7 := .Lconstants (= v0123) */
 	ldm	ip, {r4, r5}	/* r4 := const, r5 := nr */
 	ldm	r2, {r6, r8, r10}	/* (r6, r8, r10) := nonce[0:12) */
@@ -311,7 +312,7 @@ ENTRY(chacha_stream256_neon)
 	vadd.u32 q3, q3, q8
 	vadd.u32 q7, q7, q8
 
-	vld1.8	{q8-q9}, [fp, :256]	/* restore q8-q9 */
+	vld1.8	{q8-q9}, [sp, :256]	/* restore q8-q9 */
 
 	vst1.8	{q0-q1}, [r0]!
 	vld1.8	{q0}, [r3]	/* q0 := key[16:32) */
@@ -354,9 +355,10 @@ ENTRY(chacha_stream256_neon)
 	/* zero temporary space on the stack */
 	vmov.i32 q0, #0
 	vmov.i32 q1, #0
-	vst1.8	{q0-q1}, [fp, :256]
+	vst1.8	{q0-q1}, [sp, :256]
 
 	/* restore callee-saves registers and stack */
+	mov	sp, fp
 	vpop	{d8-d15}
 	pop	{r4, r5, r6, r7, r8, r10, fp, lr}
 	bx	lr
@@ -374,17 +376,18 @@ ENTRY(chacha_stream_xor256_neon)
 	/* save callee-saves registers */
 	push	{r4, r5, r6, r7, r8, r10, fp, lr}
 	vpush	{d8-d15}
+	mov	fp, sp
 
 	/* r7 := .Lconstants - .Lconstants_addr, r6 := .Lconstants_addr */
 	ldr	r7, .Lconstants_addr
 	adr	r6, .Lconstants_addr
 
 	/* reserve space for two 128-bit/16-byte q registers */
-	sub	fp, sp, #0x20
-	bic	fp, fp, #0x1f	/* align */
+	sub	sp, sp, #0x20
+	bic	sp, sp, #0x1f	/* align */
 
 	/* get parameters */
-	add	ip, sp, #96
+	add	ip, fp, #96
 	add	r7, r7, r6	/* r7 := .Lconstants (= v0123) */
 	ldm	ip, {r4, r5, ip}	/* r4 := key, r5 := const, ip := nr */
 	ldm	r3, {r6, r8, r10}	/* (r6, r8, r10) := nonce[0:12) */
@@ -475,7 +478,7 @@ ENTRY(chacha_stream_xor256_neon)
 	veor	q0, q0, q8	/* compute ciphertext bytes [0:32) */
 	veor	q1, q1, q9
 
-	vld1.8	{q8-q9}, [fp, :256]	/* restore q8-q9 */
+	vld1.8	{q8-q9}, [sp, :256]	/* restore q8-q9 */
 
 	vst1.8	{q0-q1}, [r0]!	/* store ciphertext bytes [0:32) */
 	vld1.8	{q0}, [r4]	/* q0 := key[16:32) */
@@ -552,9 +555,10 @@ ENTRY(chacha_stream_xor256_neon)
 	/* zero temporary space on the stack */
 	vmov.i32 q0, #0
 	vmov.i32 q1, #0
-	vst1.8	{q0-q1}, [fp, :256]
+	vst1.8	{q0-q1}, [sp, :256]
 
 	/* restore callee-saves registers and stack */
+	mov	sp, fp
 	vpop	{d8-d15}
 	pop	{r4, r5, r6, r7, r8, r10, fp, lr}
 	bx	lr
