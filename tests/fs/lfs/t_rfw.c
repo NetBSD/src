@@ -1,11 +1,11 @@
-/*	$NetBSD: t_rfw.c,v 1.1 2020/08/18 03:02:50 perseant Exp $	*/
+/*	$NetBSD: t_rfw.c,v 1.2 2020/08/23 16:03:54 perseant Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
-#include <sys/sysctl.h>
 #include <sys/wait.h>
 
 #include <atf-c.h>
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -25,13 +25,18 @@
 
 /* Debugging conditions */
 /* #define FORCE_SUCCESS */ /* Don't actually revert, everything worked */
-/* #define FORCE_SYSCTL */ /* Don't check - necessary for FORCE_SUCCESS */
 
 /* Write a well-known byte pattern into a file, appending if it exists */
 int write_file(const char *, int);
 
 /* Check the byte pattern and size of the file */
 int check_file(const char *, int);
+
+/* Check the file system for consistency */
+int fsck(void);
+
+/* Actually run the test, differentiating the orphaned delete problem */
+void test(int);
 
 ATF_TC(rfw);
 ATF_TC_HEAD(rfw, tc)
@@ -41,42 +46,39 @@ ATF_TC_HEAD(rfw, tc)
 	atf_tc_set_md_var(tc, "timeout", "20");
 }
 
+#define MAXLINE 132
+#define CHUNKSIZE 300
+
 #define IMGNAME "disk.img"
 #define FAKEBLK "/dev/blk"
 #define LOGFILE "newfs.log"
 #define SBLOCK0_COPY "sb0.dd"
 #define SBLOCK1_COPY "sb1.dd"
-#define MAXLINE 132
-#define CHUNKSIZE 300
+
+#define MP "/mp"
+#define UNCHANGED_CONTROL MP "/3-unchanged-control"
+#define TO_BE_DELETED     MP "/4-to-be-deleted"
+#define TO_BE_APPENDED    MP "/5-to-be-appended"
+#define NEWLY_CREATED     MP "/6-newly-created"
+
+long long sbaddr[2] = { -1, -1 };
+const char *sblock[2] = { SBLOCK0_COPY, SBLOCK1_COPY };
+
 ATF_TC_BODY(rfw, tc)
 {
 	struct ufs_args args;
 	FILE *pipe;
-#if (!defined FORCE_SUCCESS && !defined FORCE_SYSCTL)
-	int o_sysctl_rfw;
-	int n_sysctl_rfw;
-	int mib[3];
-	size_t len;
-#endif
 	char buf[MAXLINE];
-	long long sb0addr = -1, sb1addr = -1;
+	int i;
+
+	setvbuf(stdout, NULL, _IONBF, 0);
 
 	/*
 	 * Initialize.
 	 */
-#if (!defined FORCE_SUCCESS && !defined FORCE_SYSCTL)
-	/* Set sysctl to allow roll-forward */
-	fprintf(stderr, "* Set sysctl\n");
-	mib[0] = CTL_VFS;
-	mib[1] = 5; /* LFS */
-	mib[2] = LFS_DO_RFW;
-	len = sizeof(o_sysctl_rfw);
-	if (sysctl(mib, 3, &o_sysctl_rfw, &len,
-		&n_sysctl_rfw, sizeof(n_sysctl_rfw)) < 0)
-		atf_tc_skip("roll-forward not enabled in kernel");
-#endif /* !FORCE_SUCCESS && !FORCE_SYSCTL */
+	atf_tc_expect_fail("roll-forward not yet implemented");
 
-	/* Create filesystem */
+	/* Create filesystem, note superblock locations */
 	fprintf(stderr, "* Create file system\n");
 	if (system("newfs_lfs -D -F -s 10000 ./" IMGNAME " > " LOGFILE) == -1)
 		atf_tc_fail_errno("newfs failed");
@@ -84,20 +86,20 @@ ATF_TC_BODY(rfw, tc)
 	if (pipe == NULL)
 		atf_tc_fail_errno("newfs failed to execute");
 	while (fgets(buf, MAXLINE, pipe) != NULL) {
-		if (sscanf(buf, "%lld,%lld", &sb0addr, &sb1addr) == 2)
+		if (sscanf(buf, "%lld,%lld", sbaddr, sbaddr + 1) == 2)
 			break;
 	}
 	while (fgets(buf, MAXLINE, pipe) != NULL)
 		;
 	fclose(pipe);
-	if (sb0addr < 0 || sb1addr < 0)
+	if (sbaddr[0] < 0 || sbaddr[1] < 0)
 		atf_tc_fail("superblock not found");
 	fprintf(stderr, "* Superblocks at %lld and %lld\n",
-		sb0addr, sb1addr);
+		sbaddr[0], sbaddr[1]);
 
 	/* Set up rump */
 	rump_init();
-	if (rump_sys_mkdir("/mp", 0777) == -1)
+	if (rump_sys_mkdir(MP, 0777) == -1)
 		atf_tc_fail_errno("cannot create mountpoint");
 	rump_pub_etfs_register(FAKEBLK, IMGNAME, RUMP_ETFS_BLK);
 
@@ -107,61 +109,63 @@ ATF_TC_BODY(rfw, tc)
 	 */
 
 	/* Mount filesystem */
-	fprintf(stderr, "* Mount fs [1]\n");
+	fprintf(stderr, "* Mount fs [1, initial]\n");
 	memset(&args, 0, sizeof(args));
 	args.fspec = __UNCONST(FAKEBLK);
-	if (rump_sys_mount(MOUNT_LFS, "/mp", 0, &args, sizeof(args)) == -1)
+	if (rump_sys_mount(MOUNT_LFS, MP, 0, &args, sizeof(args)) == -1)
 		atf_tc_fail_errno("rump_sys_mount failed");
 
 	/* Payload */
 	fprintf(stderr, "* Initial payload\n");
-	write_file("/mp/to_be_deleted", CHUNKSIZE);
-	write_file("/mp/to_be_appended", CHUNKSIZE);
-
-	/* Unmount */
-	rump_sys_unmount("/mp", 0);
+	write_file(UNCHANGED_CONTROL, CHUNKSIZE);
+	write_file(TO_BE_DELETED, CHUNKSIZE);
+	write_file(TO_BE_APPENDED, CHUNKSIZE);
+	rump_sys_sync();
+	rump_sys_sync();
+	sleep(1); /* XXX yuck - but we need the superblocks dirty */
 
 	/* Make copies of superblocks */
-	sprintf(buf, "dd if=%s of=%s bs=512 iseek=%lld count=16 conv=sync",
-		IMGNAME, SBLOCK0_COPY, sb0addr);
-	system(buf);
-	sprintf(buf, "dd if=%s of=%s bs=512 iseek=%lld count=16 conv=sync",
-		IMGNAME, SBLOCK1_COPY, sb1addr);
-	system(buf);
+	for (i = 0; i < 2; i++) {
+		sprintf(buf, "dd if=%s of=%s bs=512 iseek=%lld"
+			" count=16 conv=sync", IMGNAME, sblock[i], sbaddr[i]);
+		system(buf);
+	}
+
+	/* Unmount */
+	rump_sys_unmount(MP, 0);
 
 	/*
 	 * Make changes which we will attempt to roll forward.
 	 */
 
 	/* Reconfigure and mount filesystem again */
-	fprintf(stderr, "* Mount fs [2]\n");
-	if (rump_sys_mount(MOUNT_LFS, "/mp", 0, &args, sizeof(args)) == -1)
+	fprintf(stderr, "* Mount fs [2, after changes]\n");
+	if (rump_sys_mount(MOUNT_LFS, MP, 0, &args, sizeof(args)) == -1)
 		atf_tc_fail_errno("rump_sys_mount failed [2]");
 
 	/* Add new file */
-	write_file("/mp/newly_created", CHUNKSIZE);
+	write_file(NEWLY_CREATED, CHUNKSIZE);
 
 	/* Append to existing file */
-	write_file("/mp/to_be_appended", CHUNKSIZE);
+	write_file(TO_BE_APPENDED, CHUNKSIZE);
 
 	/* Delete file */
-	rump_sys_unlink("/mp/to_be_deleted");
+	rump_sys_unlink(TO_BE_DELETED);
 
 	/* Done with payload, unmount fs */
-	rump_sys_unmount("/mp", 0);
+	rump_sys_unmount(MP, 0);
 
 #ifndef FORCE_SUCCESS
 	/*
 	 * Copy back old superblocks, reverting FS to old state
 	 */
-	sprintf(buf, "dd of=%s if=%s bs=512 oseek=%lld count=16 conv=sync,notrunc",
-		IMGNAME, SBLOCK0_COPY, sb0addr);
-	system(buf);
-	sprintf(buf, "dd of=%s if=%s bs=512 oseek=%lld count=16 conv=sync,notrunc",
-		IMGNAME, SBLOCK1_COPY, sb1addr);
-	system(buf);
+	for (i = 0; i < 2; i++) {
+		sprintf(buf, "dd of=%s if=%s bs=512 oseek=%lld count=16"
+			" conv=sync,notrunc", IMGNAME, sblock[i], sbaddr[i]);
+		system(buf);
+	}
 
-	if (system("fsck_lfs -n -f " IMGNAME))
+	if (fsck())
 		atf_tc_fail_errno("fsck found errors with old superblocks");
 #endif
 
@@ -170,40 +174,55 @@ ATF_TC_BODY(rfw, tc)
 	 */
 
 	/* Mount filesystem; this will roll forward. */
-	fprintf(stderr, "* Mount fs [3]\n");
-	if (rump_sys_mount(MOUNT_LFS, "/mp", 0, &args, sizeof(args)) == -1)
+	fprintf(stderr, "* Mount fs [3, to roll forward]\n");
+	if (rump_sys_mount(MOUNT_LFS, MP, 0, &args, sizeof(args)) == -1)
 		atf_tc_fail_errno("rump_sys_mount failed [3]");
 
 	/* Unmount filesystem */
-	rump_sys_unmount("/mp", 0);
+	if (rump_sys_unmount(MP, 0) != 0)
+		atf_tc_fail_errno("rump_sys_umount failed after roll-forward");
 
 	/*
-	 * Use fsck_lfs to look for consistency errors
+	 * Use fsck_lfs to look for consistency errors.
 	 */
 
-	if (system("fsck_lfs -n -f " IMGNAME))
-		atf_tc_fail_errno("fsck found errors");
+	if (fsck()) {
+		fprintf(stderr, "*** FAILED FSCK ***\n");
+		atf_tc_fail("fsck found errors after roll forward");
+	}
 
 	/*
 	 * Check file system contents
 	 */
 
 	/* Mount filesystem one last time */
-	fprintf(stderr, "* Mount fs [4]\n");
-	if (rump_sys_mount(MOUNT_LFS, "/mp", 0, &args, sizeof(args)) == -1)
+	fprintf(stderr, "* Mount fs [4, after roll forward complete]\n");
+	if (rump_sys_mount(MOUNT_LFS, MP, 0, &args, sizeof(args)) == -1)
 		atf_tc_fail_errno("rump_sys_mount failed [4]");
 
-	if (check_file("/mp/newly_created", CHUNKSIZE) != 0)
-		atf_tc_fail("Newly added file differs");
+	if (check_file(UNCHANGED_CONTROL, CHUNKSIZE) != 0)
+		atf_tc_fail("Unchanged control file differs(!)");
 
-	if (check_file("/mp/to_be_appended", 2 * CHUNKSIZE) != 0)
+	if (check_file(TO_BE_APPENDED, 2 * CHUNKSIZE) != 0)
 		atf_tc_fail("Appended file differs");
 
-	if (rump_sys_access("/mp/to_be_deleted", F_OK) == 0)
+	if (rump_sys_access(NEWLY_CREATED, F_OK) != 0)
+		atf_tc_fail("Newly added file missing");
+
+	if (check_file(NEWLY_CREATED, CHUNKSIZE) != 0)
+		atf_tc_fail("Newly added file differs");
+
+	if (rump_sys_access(TO_BE_DELETED, F_OK) == 0)
 		atf_tc_fail("Removed file still present");
 
-	/* Umount filesystem, test completed */
-	rump_sys_unmount("/mp", 0);
+	/* Umount filesystem */
+	rump_sys_unmount(MP, 0);
+
+	/* Final fsck to double check */
+	if (fsck()) {
+		fprintf(stderr, "*** FAILED FSCK ***\n");
+		atf_tc_fail("fsck found errors after final unmount");
+	}
 }
 
 ATF_TP_ADD_TCS(tp)
@@ -231,7 +250,7 @@ int write_file(const char *filename, int add)
 	fd = rump_sys_open(filename, flags);
 
 	for (i = 0; i < add; i++) {
-		b = (size + i) & 0xff;
+		b = ((unsigned)(size + i)) & 0xff;
 		rump_sys_write(fd, &b, 1);
 	}
 	rump_sys_close(fd);
@@ -245,7 +264,7 @@ int check_file(const char *filename, int size)
 	int fd, i;
 	struct stat statbuf;
 	unsigned char b;
-
+	
 	if (rump_sys_stat(filename, &statbuf) < 0) {
 		fprintf(stderr, "%s: stat failed\n", filename);
 		return 1;
@@ -257,16 +276,49 @@ int check_file(const char *filename, int size)
 	}
 
 	fd = rump_sys_open(filename, O_RDONLY);
-
 	for (i = 0; i < size; i++) {
 		rump_sys_read(fd, &b, 1);
-		if (b != (i & 0xff)) {
+		if (b != (((unsigned)i) & 0xff)) {
 			fprintf(stderr, "%s: byte %d: expected %x found %x\n",
-				filename, i, (unsigned)(i & 0xff), b);
+				filename, i, ((unsigned)(i)) & 0xff, b);
+			rump_sys_close(fd);
 			return 3;
 		}
 	}
 	rump_sys_close(fd);
-
+	fprintf(stderr, "%s: no problem\n", filename);
 	return 0;
+}
+
+/* Run a file system consistency check */
+int fsck(void)
+{
+	char s[MAXLINE];
+	int i, errors = 0;
+	FILE *pipe;
+	char cmd[MAXLINE];
+
+	for (i = 0; i < 2; i++) {
+		sprintf(cmd, "fsck_lfs -n -b %jd -f " IMGNAME,
+			(intmax_t)sbaddr[i]);
+		pipe = popen(cmd, "r");
+		while (fgets(s, MAXLINE, pipe) != NULL) {
+			if (isdigit((int)s[0])) /* "5 files ... " */
+				continue;
+			if (isspace((int)s[0]) || s[0] == '*')
+				continue;
+			if (strncmp(s, "Alternate", 9) == 0)
+				continue;
+			if (strncmp(s, "ROLL ", 5) == 0)
+				continue;
+			fprintf(stderr, "FSCK[sb@%lld]: %s", sbaddr[i], s);
+			++errors;
+		}
+		pclose(pipe);
+		if (errors) {
+			break;
+		}
+	}
+
+	return errors;
 }
