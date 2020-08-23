@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.37 2020/08/23 10:53:27 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.38 2020/08/23 11:13:08 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,11 +37,11 @@
 #include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.37 2020/08/23 10:53:27 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.38 2020/08/23 11:13:08 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.37 2020/08/23 10:53:27 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.38 2020/08/23 11:13:08 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -472,12 +472,11 @@ Lst_ForEachFrom(Lst list, LstNode node,
 
 	/*
 	 * We're done with the traversal if
-	 *  - the next node to examine is the first in the queue or
-	 *    doesn't exist and
+	 *  - the next node to examine doesn't exist and
 	 *  - nothing's been added after the current node (check this
 	 *    after proc() has been called).
 	 */
-	done = (next == NULL || next == list->first);
+	done = next == NULL;
 
 	tln->useCount++;
 	result = (*proc)(tln->datum, procData);
