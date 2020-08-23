@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.116 2020/08/23 09:28:52 rillig Exp $
+# $NetBSD: Makefile,v 1.117 2020/08/23 13:50:17 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -39,6 +39,12 @@ TESTS+=		# archive	# broken on FreeBSD, enabled in t_make.sh
 TESTS+=		cmdline
 TESTS+=		comment
 TESTS+=		cond-cmp-numeric
+TESTS+=		cond-cmp-numeric-eq
+TESTS+=		cond-cmp-numeric-ge
+TESTS+=		cond-cmp-numeric-gt
+TESTS+=		cond-cmp-numeric-le
+TESTS+=		cond-cmp-numeric-lt
+TESTS+=		cond-cmp-numeric-ne
 TESTS+=		cond-cmp-string
 TESTS+=		cond-func
 TESTS+=		cond-func-commands
