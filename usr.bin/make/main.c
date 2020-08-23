@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.310 2020/08/22 18:47:31 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.311 2020/08/23 16:58:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.310 2020/08/22 18:47:31 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.311 2020/08/23 16:58:02 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.310 2020/08/22 18:47:31 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.311 2020/08/23 16:58:02 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1331,7 +1331,7 @@ main(int argc, char **argv)
 		if (Lst_IsEmpty(sysMkPath))
 			Fatal("%s: no system rules (%s).", progname,
 			    _PATH_DEFSYSMK);
-		ln = Lst_Find(sysMkPath, NULL, ReadMakefile);
+		ln = Lst_Find(sysMkPath, ReadMakefile, NULL);
 		if (ln == NULL)
 			Fatal("%s: cannot open %s.", progname,
 			    (char *)Lst_DatumS(ln));
@@ -1340,7 +1340,7 @@ main(int argc, char **argv)
 	if (!Lst_IsEmpty(makefiles)) {
 		LstNode ln;
 
-		ln = Lst_Find(makefiles, NULL, ReadAllMakefiles);
+		ln = Lst_Find(makefiles, ReadAllMakefiles, NULL);
 		if (ln != NULL)
 			Fatal("%s: cannot open %s.", progname,
 			    (char *)Lst_DatumS(ln));
@@ -1349,7 +1349,7 @@ main(int argc, char **argv)
 		VAR_CMD, VARE_WANTRES);
 	    if (p1) {
 		(void)str2Lst_Append(makefiles, p1, NULL);
-		(void)Lst_Find(makefiles, NULL, ReadMakefile);
+		(void)Lst_Find(makefiles, ReadMakefile, NULL);
 		free(p1);
 	    }
 	}

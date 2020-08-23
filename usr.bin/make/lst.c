@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.40 2020/08/23 16:43:34 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.41 2020/08/23 16:58:02 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,11 +37,11 @@
 #include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.40 2020/08/23 16:43:34 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.41 2020/08/23 16:58:02 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.40 2020/08/23 16:43:34 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.41 2020/08/23 16:58:02 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -394,19 +394,20 @@ Lst_IsEmpty(Lst list)
 /* Return the first node from the given list for which the given comparison
  * function returns 0, or NULL if none of the nodes matches. */
 LstNode
-Lst_Find(Lst list, const void *cmpData, int (*cmp)(const void *, const void *))
+Lst_Find(Lst list, LstFindProc cmp, const void *cmpData)
 {
-    return Lst_FindFrom(list, Lst_First(list), cmpData, cmp);
+    return Lst_FindFrom(list, Lst_First(list), cmp, cmpData);
 }
 
 /* Return the first node from the given list, starting at the given node, for
  * which the given comparison function returns 0, or NULL if none of the nodes
  * matches. */
 LstNode
-Lst_FindFrom(Lst list, LstNode node, const void *cmpData,
-	     int (*cmp)(const void *, const void *))
+Lst_FindFrom(Lst list, LstNode node, LstFindProc cmp, const void *cmpData)
 {
     LstNode tln;
+
+    assert(cmp != NULL);
 
     if (!LstIsValid(list) || LstIsEmpty(list) || !LstNodeIsValid(node)) {
 	return NULL;
@@ -415,7 +416,7 @@ Lst_FindFrom(Lst list, LstNode node, const void *cmpData,
     tln = node;
 
     do {
-	if ((*cmp)(tln->datum, cmpData) == 0)
+	if (cmp(tln->datum, cmpData) == 0)
 	    return tln;
 	tln = tln->next;
     } while (tln != node && tln != NULL);
