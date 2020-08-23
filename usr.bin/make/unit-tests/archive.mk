@@ -1,4 +1,4 @@
-# $NetBSD: archive.mk,v 1.3 2020/08/16 14:39:50 rillig Exp $
+# $NetBSD: archive.mk,v 1.4 2020/08/23 17:34:46 rillig Exp $
 #
 # Very basic demonstration of handling archives, based on the description
 # in PSD.doc/tutorial.ms.
@@ -16,6 +16,7 @@ all:
 	${RUN} ${MAKE_CMD} remove-archive
 	${RUN} ${MAKE_CMD} create-archive
 	${RUN} ${MAKE_CMD} list-archive
+	${RUN} ${MAKE_CMD} list-archive-wildcard
 	${RUN} ${MAKE_CMD} depend-on-existing-member
 	${RUN} ${MAKE_CMD} depend-on-nonexistent-member
 	${RUN} ${MAKE_CMD} remove-archive
@@ -27,6 +28,12 @@ ${ARCHIVE}: ${ARCHIVE}(${FILES})
 
 list-archive: ${ARCHIVE}
 	ar t ${.ALLSRC}
+
+# XXX: I had expected that this dependency would select all *.mk files from
+# the archive.  Instead, the globbing is done in the current directory.
+# To prevent an overly long file list, the pattern is restricted to ar*.mk.
+list-archive-wildcard: ${ARCHIVE}(ar*.mk)
+	${RUN} printf '%s\n' ${.ALLSRC:O:@member@${.TARGET:Q}': '${member:Q}@}
 
 depend-on-existing-member: ${ARCHIVE}(archive.mk)
 	${RUN} echo $@
