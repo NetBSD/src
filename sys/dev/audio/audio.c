@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.76 2020/08/23 04:07:23 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.77 2020/08/23 04:14:57 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.76 2020/08/23 04:07:23 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.77 2020/08/23 04:14:57 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -4233,8 +4233,9 @@ audio_track_init_freq(audio_track_t *track, audio_ring_t **last_dstp)
 
 /*
  * Set the userland format of this track.
- * usrfmt argument should be parameter verified with audio_check_params().
- * It will release and reallocate all internal conversion buffers.
+ * usrfmt argument should have been previously verified by
+ * audio_track_setinfo_check().
+ * This function may release and reallocate all internal conversion buffers.
  * It returns 0 if successful.  Otherwise it returns errno with clearing all
  * internal buffers.
  * It must be called without sc_intr_lock since uvm_* routines require non
@@ -7295,7 +7296,7 @@ abort:
  * - pfil and rfil must be zero-filled.
  * If successful,
  * - pfil, rfil will be filled with filter information specified by the
- *   hardware driver.
+ *   hardware driver if necessary.
  * and then returns 0.  Otherwise returns errno.
  * Must be called without sc_lock held.
  */
