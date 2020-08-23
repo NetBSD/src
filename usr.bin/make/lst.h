@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.40 2020/08/23 16:43:34 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.41 2020/08/23 16:58:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -146,9 +146,9 @@ void		*Lst_DatumS(LstNode);
  * Functions for entire lists
  */
 /* Find an element in a list */
-LstNode		Lst_Find(Lst, const void *, LstFindProc);
+LstNode		Lst_Find(Lst, LstFindProc, const void *);
 /* Find an element starting from somewhere */
-LstNode		Lst_FindFrom(Lst, LstNode, const void *, LstFindProc);
+LstNode		Lst_FindFrom(Lst, LstNode, LstFindProc, const void *);
 /*
  * See if the given datum is on the list. Returns the LstNode containing
  * the datum

@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.113 2020/08/23 06:54:01 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.114 2020/08/23 16:58:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.113 2020/08/23 06:54:01 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.114 2020/08/23 16:58:02 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.113 2020/08/23 06:54:01 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.114 2020/08/23 16:58:02 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -609,10 +609,10 @@ SuffParseTransform(char *str, Suff **srcPtr, Suff **targPtr)
      */
     for (;;) {
 	if (srcLn == NULL) {
-	    srcLn = Lst_Find(sufflist, str, SuffSuffIsPrefix);
+	    srcLn = Lst_Find(sufflist, SuffSuffIsPrefix, str);
 	} else {
-	    srcLn = Lst_FindFrom(sufflist, Lst_Succ(srcLn), str,
-				  SuffSuffIsPrefix);
+	    srcLn = Lst_FindFrom(sufflist, Lst_Succ(srcLn),
+				 SuffSuffIsPrefix, str);
 	}
 	if (srcLn == NULL) {
 	    /*
@@ -640,7 +640,7 @@ SuffParseTransform(char *str, Suff **srcPtr, Suff **targPtr)
 	    single = src;
 	    singleLn = srcLn;
 	} else {
-	    targLn = Lst_Find(sufflist, str2, SuffSuffHasNameP);
+	    targLn = Lst_Find(sufflist, SuffSuffHasNameP, str2);
 	    if (targLn != NULL) {
 		*srcPtr = src;
 		*targPtr = Lst_DatumS(targLn);
@@ -700,7 +700,7 @@ Suff_AddTransform(char *line)
 		  *t;		/* target suffix */
     LstNode 	  ln;	    	/* Node for existing transformation */
 
-    ln = Lst_Find(transforms, line, SuffGNHasNameP);
+    ln = Lst_Find(transforms, SuffGNHasNameP, line);
     if (ln == NULL) {
 	/*
 	 * Make a new graph node for the transformation. It will be filled in
@@ -849,7 +849,7 @@ SuffRebuildGraph(void *transformp, void *sp)
      */
     cp = UNCONST(SuffStrIsPrefix(s->name, transform->name));
     if (cp != NULL) {
-	ln = Lst_Find(sufflist, cp, SuffSuffHasNameP);
+	ln = Lst_Find(sufflist, SuffSuffHasNameP, cp);
 	if (ln != NULL) {
 	    /*
 	     * Found target. Link in and return, since it can't be anything
@@ -873,7 +873,7 @@ SuffRebuildGraph(void *transformp, void *sp)
 	 * Null-terminate the source suffix in order to find it.
 	 */
 	cp[1] = '\0';
-	ln = Lst_Find(sufflist, transform->name, SuffSuffHasNameP);
+	ln = Lst_Find(sufflist, SuffSuffHasNameP, transform->name);
 	/*
 	 * Replace the start of the target suffix
 	 */
@@ -976,7 +976,7 @@ Suff_AddSuffix(char *str, GNode **gn)
     LstNode 	  ln;
     GNodeSuff	  gs;
 
-    ln = Lst_Find(sufflist, str, SuffSuffHasNameP);
+    ln = Lst_Find(sufflist, SuffSuffHasNameP, str);
     if (ln == NULL) {
 	s = bmake_malloc(sizeof(Suff));
 
@@ -1028,7 +1028,7 @@ Suff_GetPath(char *sname)
     LstNode   	  ln;
     Suff    	  *s;
 
-    ln = Lst_Find(sufflist, sname, SuffSuffHasNameP);
+    ln = Lst_Find(sufflist, SuffSuffHasNameP, sname);
     if (ln == NULL) {
 	return NULL;
     } else {
@@ -1123,7 +1123,7 @@ Suff_AddInclude(char *sname)
     LstNode	  ln;
     Suff	  *s;
 
-    ln = Lst_Find(sufflist, sname, SuffSuffHasNameP);
+    ln = Lst_Find(sufflist, SuffSuffHasNameP, sname);
     if (ln != NULL) {
 	s = Lst_DatumS(ln);
 	s->flags |= SUFF_INCLUDE;
@@ -1155,7 +1155,7 @@ Suff_AddLib(char *sname)
     LstNode	  ln;
     Suff	  *s;
 
-    ln = Lst_Find(sufflist, sname, SuffSuffHasNameP);
+    ln = Lst_Find(sufflist, SuffSuffHasNameP, sname);
     if (ln != NULL) {
 	s = Lst_DatumS(ln);
 	s->flags |= SUFF_LIBRARY;
@@ -1460,7 +1460,7 @@ SuffFindCmds(Src *targ, Lst slst)
 	 * The node matches the prefix ok, see if it has a known
 	 * suffix.
 	 */
-	ln = Lst_Find(sufflist, &cp[prefLen], SuffSuffHasNameP);
+	ln = Lst_Find(sufflist, SuffSuffHasNameP, &cp[prefLen]);
 	if (ln == NULL)
 	    continue;
 	/*
@@ -1753,7 +1753,7 @@ Suff_FindPath(GNode* gn)
 	LstNode ln;
 	sd.len = strlen(gn->name);
 	sd.ename = gn->name + sd.len;
-	ln = Lst_Find(sufflist, &sd, SuffSuffIsSuffixP);
+	ln = Lst_Find(sufflist, SuffSuffIsSuffixP, &sd);
 
 	if (DEBUG(SUFF)) {
 	    fprintf(debug_file, "Wildcard expanding \"%s\"...", gn->name);
@@ -1818,7 +1818,7 @@ SuffApplyTransform(GNode *tGn, GNode *sGn, Suff *t, Suff *s)
      * Locate the transformation rule itself
      */
     tname = str_concat2(s->name, t->name);
-    ln = Lst_Find(transforms, tname, SuffGNHasNameP);
+    ln = Lst_Find(transforms, SuffGNHasNameP, tname);
     free(tname);
 
     if (ln == NULL) {
@@ -1983,7 +1983,7 @@ SuffFindArchiveDeps(GNode *gn, Lst slst)
 	 */
 	sd.len = eoarch - gn->name;
 	sd.ename = eoarch;
-	ln = Lst_Find(ms->parents, &sd, SuffSuffIsSuffixP);
+	ln = Lst_Find(ms->parents, SuffSuffIsSuffixP, &sd);
 
 	if (ln != NULL) {
 	    /*
@@ -2093,7 +2093,7 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
 	    /*
 	     * Look for next possible suffix...
 	     */
-	    ln = Lst_FindFrom(sufflist, ln, &sd, SuffSuffIsSuffixP);
+	    ln = Lst_FindFrom(sufflist, ln, SuffSuffIsSuffixP, &sd);
 
 	    if (ln != NULL) {
 		int	    prefLen;	    /* Length of the prefix */
@@ -2470,7 +2470,7 @@ SuffFindDeps(GNode *gn, Lst slst)
 	LstNode	ln;
 	Suff	*s;
 
-	ln = Lst_Find(sufflist, LIBSUFF, SuffSuffHasNameP);
+	ln = Lst_Find(sufflist, SuffSuffHasNameP, LIBSUFF);
 	if (gn->suffix)
 	    gn->suffix->refCount--;
 	if (ln != NULL) {
@@ -2518,7 +2518,7 @@ Suff_SetNull(char *name)
     Suff    *s;
     LstNode ln;
 
-    ln = Lst_Find(sufflist, name, SuffSuffHasNameP);
+    ln = Lst_Find(sufflist, SuffSuffHasNameP, name);
     if (ln != NULL) {
 	s = Lst_DatumS(ln);
 	if (suffNull != NULL) {
