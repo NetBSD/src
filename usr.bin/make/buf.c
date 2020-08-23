@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.36 2020/08/23 06:12:52 rillig Exp $	*/
+/*	$NetBSD: buf.c,v 1.37 2020/08/23 08:21:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,19 +70,19 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: buf.c,v 1.36 2020/08/23 06:12:52 rillig Exp $";
+static char rcsid[] = "$NetBSD: buf.c,v 1.37 2020/08/23 08:21:50 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)buf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: buf.c,v 1.36 2020/08/23 06:12:52 rillig Exp $");
+__RCSID("$NetBSD: buf.c,v 1.37 2020/08/23 08:21:50 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
 
-/* Functions for automatically-expanded NUL-terminated buffers. */
+/* Functions for automatically-expanded null-terminated buffers. */
 
 #include <limits.h>
 #include "make.h"
@@ -131,14 +131,12 @@ Buf_AddStr(Buffer *bp, const char *str)
 void
 Buf_AddInt(Buffer *bp, int n)
 {
-    /*
-     * We need enough space for the decimal representation of an int.
-     * We calculate the space needed for the octal representation, and
-     * add enough slop to cope with a '-' sign and a trailing '\0'.
-     */
     enum {
 	bits = sizeof(int) * CHAR_BIT,
-	buf_size = 1 + (bits + 2) / 3 + 1
+	max_octal_digits = (bits + 2) / 3,
+	max_decimal_digits = /* at most */ max_octal_digits,
+	max_sign_chars = 1,
+	buf_size = max_sign_chars + max_decimal_digits + 1
     };
     char buf[buf_size];
 
@@ -179,7 +177,7 @@ Buf_Init(Buffer *bp, size_t size)
     bp->size = size;
     bp->count = 0;
     bp->buffer = bmake_malloc(size);
-    *bp->buffer = 0;
+    bp->buffer[0] = '\0';
 }
 
 /* Reset the buffer.
@@ -216,7 +214,7 @@ Buf_DestroyCompact(Buffer *buf)
     if (buf->size - buf->count >= BUF_COMPACT_LIMIT) {
 	/* We trust realloc to be smart */
 	char *data = bmake_realloc(buf->buffer, buf->count + 1);
-	data[buf->count] = 0;
+	data[buf->count] = '\0';
 	Buf_Destroy(buf, FALSE);
 	return data;
     }
