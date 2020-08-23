@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.91 2020/08/22 20:50:43 sjg Exp $
+#	$NetBSD: Makefile,v 1.92 2020/08/23 17:22:52 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -168,7 +168,7 @@ COPTS+=		-Wdeclaration-after-statement
 TEST_MAKE ?= ${.OBJDIR}/${PROG:T}
 test: .MAKE
 	cd ${.CURDIR}/unit-tests \
-	&& MAKEFLAGS= ${TEST_MAKE} -r -m / TEST_MAKE=${TEST_MAKE} ${.TARGET}
+	&& MAKEFLAGS= ${TEST_MAKE} -r -m / TEST_MAKE=${TEST_MAKE} ${TESTS:DTESTS=${TESTS:Q}} ${.TARGET}
 .if ${USE_COVERAGE} == yes
 	${GCOV} ${GCOV_OPTS} ${SRCS}
 	sed -i 's,^\([^:]*\): *[0-9]*:,\1: ,' *.gcov
