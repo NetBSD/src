@@ -6,6 +6,7 @@ archive.mk
 modmisc.mk
 varmisc.mk
 list-archive-wildcard: archive.mk
+list-archive-wildcard: ternary.mk
 depend-on-existing-member
 `depend-on-nonexistent-member' is up to date.
 rm -f libprog.a
