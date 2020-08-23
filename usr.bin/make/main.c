@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.311 2020/08/23 16:58:02 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.312 2020/08/23 18:26:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.311 2020/08/23 16:58:02 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.312 2020/08/23 18:26:35 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.311 2020/08/23 16:58:02 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.312 2020/08/23 18:26:35 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -690,7 +690,7 @@ void
 Main_ParseArgLine(const char *line)
 {
 	char **argv;			/* Manufactured argument vector */
-	int argc;			/* Number of arguments in argv */
+	size_t argc;			/* Number of arguments in argv */
 	char *args;			/* Space used by the args */
 	char *p1;
 	const char *argv0 = Var_Value(".MAKE", VAR_GLOBAL, &p1);
@@ -706,14 +706,14 @@ Main_ParseArgLine(const char *line)
 	buf = str_concat3(argv0, " ", line);
 	free(p1);
 
-	argv = brk_string(buf, &argc, TRUE, &args);
+	argv = brk_string(buf, TRUE, &argc, &args);
 	if (argv == NULL) {
 		Error("Unterminated quoted string [%s]", buf);
 		free(buf);
 		return;
 	}
 	free(buf);
-	MainParseArgs(argc, argv);
+	MainParseArgs((int)argc, argv);
 
 	free(args);
 	free(argv);

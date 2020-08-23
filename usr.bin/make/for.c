@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.64 2020/08/22 21:42:38 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.65 2020/08/23 18:26:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.64 2020/08/22 21:42:38 rillig Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.65 2020/08/23 18:26:35 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.64 2020/08/22 21:42:38 rillig Exp $");
+__RCSID("$NetBSD: for.c,v 1.65 2020/08/23 18:26:35 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -141,11 +141,11 @@ For_Eval(char *line)
 {
     For *new_for;
     char *ptr = line, *sub;
-    int len;
+    size_t len;
     int escapes;
     unsigned char ch;
     char **words, *word_buf;
-    int n, nwords;
+    size_t nwords;
 
     /* Skip the '.' and any following whitespace */
     for (ptr++; *ptr && isspace((unsigned char)*ptr); ptr++)
@@ -214,11 +214,13 @@ For_Eval(char *line)
     /*
      * Split into words allowing for quoted strings.
      */
-    words = brk_string(sub, &nwords, FALSE, &word_buf);
+    words = brk_string(sub, FALSE, &nwords, &word_buf);
 
     free(sub);
 
     if (words != NULL) {
+        size_t n;
+
 	for (n = 0; n < nwords; n++) {
 	    ptr = words[n];
 	    if (!*ptr)
@@ -252,8 +254,8 @@ For_Eval(char *line)
 	if ((len = strlist_num(&new_for->items)) > 0 &&
 	    len % (n = strlist_num(&new_for->vars))) {
 	    Parse_Error(PARSE_FATAL,
-			"Wrong number of words (%d) in .for substitution list"
-			" with %d vars", len, n);
+			"Wrong number of words (%zu) in .for substitution list"
+			" with %zu vars", len, n);
 	    /*
 	     * Return 'success' so that the body of the .for loop is
 	     * accumulated.

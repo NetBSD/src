@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.127 2020/08/23 10:53:27 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.128 2020/08/23 18:26:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.127 2020/08/23 10:53:27 rillig Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.128 2020/08/23 18:26:35 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.127 2020/08/23 10:53:27 rillig Exp $");
+__RCSID("$NetBSD: compat.c,v 1.128 2020/08/23 18:26:35 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -221,8 +221,6 @@ CompatRunCommand(void *cmdp, void *gnp)
     LstNode 	  cmdNode;  	/* Node where current command is located */
     const char  ** volatile av;	/* Argument vector for thing to exec */
     char	** volatile mav;/* Copy of the argument vector for freeing */
-    int	    	  argc;	    	/* Number of arguments in av or 0 if not
-				 * dynamically allocated */
     Boolean 	  useShell;    	/* TRUE if command should be executed
 				 * using a shell */
     char	  * volatile cmd = (char *)cmdp;
@@ -350,15 +348,15 @@ again:
 	shargv[shargc++] = cmd;
 	shargv[shargc++] = NULL;
 	av = shargv;
-	argc = 0;
 	bp = NULL;
 	mav = NULL;
     } else {
+        size_t argc;
 	/*
 	 * No meta-characters, so no need to exec a shell. Break the command
 	 * into words to form an argument vector we can execute.
 	 */
-	mav = brk_string(cmd, &argc, TRUE, &bp);
+	mav = brk_string(cmd, TRUE, &argc, &bp);
 	if (mav == NULL) {
 		useShell = 1;
 		goto again;
