@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.117 2020/08/23 13:50:17 rillig Exp $
+# $NetBSD: Makefile,v 1.118 2020/08/23 14:28:04 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -325,8 +325,13 @@ FLAGS.doterror=		# none
 FLAGS.envfirst=		-e
 FLAGS.export=		# none
 FLAGS.lint=		-dL -k
+FLAGS.opt-ignore=	-i
+FLAGS.opt-keep-going=	-k
 FLAGS.opt-no-action=	-n
 FLAGS.opt-query=	-q
+FLAGS.opt-var-expanded=	-v VAR -v VALUE
+FLAGS.opt-var-literal=	-V VAR -V VALUE
+FLAGS.opt-warnings-as-errors= -W
 FLAGS.order=		-j1
 FLAGS.recursive=	-dL
 FLAGS.vardebug=		-k -dv FROM_CMDLINE=
