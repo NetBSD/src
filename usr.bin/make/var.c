@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.461 2020/08/23 08:31:07 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.462 2020/08/23 08:32:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.461 2020/08/23 08:31:07 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.462 2020/08/23 08:32:57 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.461 2020/08/23 08:31:07 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.462 2020/08/23 08:32:57 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3234,12 +3234,12 @@ ApplyModifiers(
 	if (DEBUG(VAR)) {
 	    char eflags_str[VarEvalFlags_ToStringSize];
 	    char vflags_str[VarFlags_ToStringSize];
-	    const char *q = st.newVal == var_Error ? "" : "\"";
+	    const char *quot = st.newVal == var_Error ? "" : "\"";
 	    const char *newVal = st.newVal == var_Error ? "error" : st.newVal;
 
 	    VAR_DEBUG("Result of ${%s:%.*s} is %s%s%s "
 		      "(eflags = %s, vflags = %s)\n",
-		      st.v->name, (int)(p - mod), mod, q, newVal, q,
+		      st.v->name, (int)(p - mod), mod, quot, newVal, quot,
 		      Enum_ToString(eflags_str, sizeof eflags_str, st.eflags,
 				    VarEvalFlags_ToStringSpecs),
 		      Enum_ToString(vflags_str, sizeof vflags_str, st.v->flags,
