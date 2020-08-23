@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.92 2020/08/23 16:58:02 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.93 2020/08/23 17:49:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.92 2020/08/23 16:58:02 rillig Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.93 2020/08/23 17:49:37 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.92 2020/08/23 16:58:02 rillig Exp $");
+__RCSID("$NetBSD: arch.c,v 1.93 2020/08/23 17:49:37 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -241,7 +241,6 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
     GNode	    *gn;     	    /* New node */
     char	    *libName;  	    /* Library-part of specification */
     char	    *memName;  	    /* Member-part of specification */
-    char	    *nameBuf;	    /* temporary place for node name */
     char	    saveChar;  	    /* Ending delimiter of member-name */
     Boolean 	    subLibName;	    /* TRUE if libName should have/had
 				     * variable substitution performed on it */
@@ -393,21 +392,23 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 	    free(buf);
 	} else if (Dir_HasWildcards(memName)) {
 	    Lst	  members = Lst_Init();
-	    size_t sz = MAXPATHLEN, nsz;
-	    nameBuf = bmake_malloc(sz);
+	    Buffer nameBuf;
 
+	    Buf_Init(&nameBuf, 0);
 	    Dir_Expand(memName, dirSearchPath, members);
 	    while (!Lst_IsEmpty(members)) {
 		char *member = Lst_DequeueS(members);
-		nsz = strlen(libName) + strlen(member) + 3;
-		if (sz > nsz)
-		    nameBuf = bmake_realloc(nameBuf, sz = nsz * 2);
 
-		snprintf(nameBuf, sz, "%s(%s)", libName, member);
+		Buf_Empty(&nameBuf);
+		Buf_AddStr(&nameBuf, libName);
+		Buf_AddStr(&nameBuf, "(");
+		Buf_AddStr(&nameBuf, member);
+		Buf_AddStr(&nameBuf, ")");
 		free(member);
-		gn = Targ_FindNode(nameBuf, TARG_CREATE);
+
+		gn = Targ_FindNode(Buf_GetAll(&nameBuf, NULL), TARG_CREATE);
 		if (gn == NULL) {
-		    free(nameBuf);
+		    Buf_Destroy(&nameBuf, TRUE);
 		    return FAILURE;
 		} else {
 		    /*
@@ -422,13 +423,18 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 		}
 	    }
 	    Lst_Destroy(members, NULL);
-	    free(nameBuf);
+	    Buf_Destroy(&nameBuf, TRUE);
 	} else {
-	    size_t	sz = strlen(libName) + strlen(memName) + 3;
-	    nameBuf = bmake_malloc(sz);
-	    snprintf(nameBuf, sz, "%s(%s)", libName, memName);
-	    gn = Targ_FindNode(nameBuf, TARG_CREATE);
-	    free(nameBuf);
+	    Buffer nameBuf;
+
+	    Buf_Init(&nameBuf, 0);
+	    Buf_AddStr(&nameBuf, libName);
+	    Buf_AddStr(&nameBuf, "(");
+	    Buf_AddStr(&nameBuf, memName);
+	    Buf_AddStr(&nameBuf, ")");
+
+	    gn = Targ_FindNode(Buf_GetAll(&nameBuf, NULL), TARG_CREATE);
+	    Buf_Destroy(&nameBuf, TRUE);
 	    if (gn == NULL) {
 		return FAILURE;
 	    } else {
