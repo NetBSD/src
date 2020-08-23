@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.109 2020/08/22 23:06:51 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.110 2020/08/23 16:58:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.109 2020/08/22 23:06:51 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.110 2020/08/23 16:58:02 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.109 2020/08/22 23:06:51 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.110 2020/08/23 16:58:02 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1560,7 +1560,7 @@ Dir_AddDir(Lst path, const char *name)
     struct dirent *dp;		/* entry in directory */
 
     if (strcmp(name, ".DOTLAST") == 0) {
-	ln = Lst_Find(path, name, DirFindName);
+	ln = Lst_Find(path, DirFindName, name);
 	if (ln != NULL)
 	    return Lst_DatumS(ln);
 	else {
@@ -1573,7 +1573,7 @@ Dir_AddDir(Lst path, const char *name)
     }
 
     if (path)
-	ln = Lst_Find(openDirectories, name, DirFindName);
+	ln = Lst_Find(openDirectories, DirFindName, name);
     if (ln != NULL) {
 	p = Lst_DatumS(ln);
 	if (path && Lst_MemberS(path, p) == NULL) {
