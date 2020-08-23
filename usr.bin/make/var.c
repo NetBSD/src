@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.460 2020/08/23 08:29:18 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.461 2020/08/23 08:31:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.460 2020/08/23 08:29:18 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.461 2020/08/23 08:31:07 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.460 2020/08/23 08:29:18 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.461 2020/08/23 08:31:07 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2139,20 +2139,23 @@ static ApplyModifierResult
 ApplyModifier_Path(const char **pp, ApplyModifiersState *st)
 {
     GNode *gn;
+    char *path;
 
     if (st->v->flags & VAR_JUNK)
 	st->v->flags |= VAR_KEEP;
 
     gn = Targ_FindNode(st->v->name, TARG_NOCREATE);
     if (gn == NULL || gn->type & OP_NOPATH) {
-	st->newVal = NULL;
+	path = NULL;
     } else if (gn->path) {
-	st->newVal = bmake_strdup(gn->path);
+	path = bmake_strdup(gn->path);
     } else {
-	st->newVal = Dir_FindFile(st->v->name, Suff_FindPath(gn));
+	Lst searchPath = Suff_FindPath(gn);
+	path = Dir_FindFile(st->v->name, searchPath);
     }
-    if (st->newVal == NULL)
-	st->newVal = bmake_strdup(st->v->name);
+    if (path == NULL)
+	path = bmake_strdup(st->v->name);
+    st->newVal = path;
 
     (*pp)++;
     return AMR_OK;
