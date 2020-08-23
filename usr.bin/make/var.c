@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.465 2020/08/23 18:26:35 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.466 2020/08/23 20:57:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.465 2020/08/23 18:26:35 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.466 2020/08/23 20:57:02 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.465 2020/08/23 18:26:35 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.466 2020/08/23 20:57:02 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2031,25 +2031,22 @@ ApplyModifier_Defined(const char **pp, ApplyModifiersState *st)
 	    eflags |= VARE_WANTRES;
     }
 
-    /*
-     * Pass through mod looking for 1) escaped delimiters,
-     * '$'s and backslashes (place the escaped character in
-     * uninterpreted) and 2) unescaped $'s that aren't before
-     * the delimiter (expand the variable substitution).
-     * The result is left in the Buffer buf.
-     */
     Buf_Init(&buf, 0);
     p = *pp + 1;
     while (*p != st->endc && *p != ':' && *p != '\0') {
-	if (*p == '\\' &&
-	    (p[1] == ':' || p[1] == '$' || p[1] == st->endc || p[1] == '\\')) {
-	    Buf_AddByte(&buf, p[1]);
-	    p += 2;
-	} else if (*p == '$') {
-	    /*
-	     * If unescaped dollar sign, assume it's a
-	     * variable substitution and recurse.
-	     */
+
+        /* Escaped delimiter or other special character */
+	if (*p == '\\') {
+	    char c = p[1];
+	    if (c == st->endc || c == ':' || c == '$' || c == '\\') {
+		Buf_AddByte(&buf, c);
+		p += 2;
+		continue;
+	    }
+	}
+
+	/* Nested variable expressions */
+	if (*p == '$') {
 	    const char *cp2;
 	    int len;
 	    void *freeIt;
@@ -2058,10 +2055,12 @@ ApplyModifier_Defined(const char **pp, ApplyModifiersState *st)
 	    Buf_AddStr(&buf, cp2);
 	    free(freeIt);
 	    p += len;
-	} else {
-	    Buf_AddByte(&buf, *p);
-	    p++;
+	    continue;
 	}
+
+	/* Ordinary text */
+	Buf_AddByte(&buf, *p);
+	p++;
     }
     *pp = p;
 
