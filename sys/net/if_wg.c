@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.22 2020/08/21 20:21:36 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.23 2020/08/23 18:52:53 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.22 2020/08/21 20:21:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.23 2020/08/23 18:52:53 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -4083,7 +4083,7 @@ wg_ioctl_get(struct wg_softc *wg, struct ifdrv *ifd)
 {
 	int error = ENOMEM;
 	prop_dictionary_t prop_dict;
-	prop_array_t peers;
+	prop_array_t peers = NULL;
 	char *buf;
 	struct wg_peer *wgp;
 	int s, i;
