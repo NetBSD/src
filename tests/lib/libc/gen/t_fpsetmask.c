@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fpsetmask.c,v 1.20 2019/04/25 20:48:54 kamil Exp $ */
+/*	$NetBSD: t_fpsetmask.c,v 1.21 2020/08/23 11:04:58 gson Exp $ */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -311,7 +311,7 @@ sigfpe(int s, siginfo_t *si, void *c)
 									\
 		FPU_PREREQ();						\
 									\
-		if (isQEMU())						\
+		if (isQEMU_TCG())					\
 			atf_tc_expect_fail("PR misc/44767");		\
 									\
 		m(t##_ops);						\
