@@ -1,8 +1,6 @@
-# $NetBSD: opt-var-literal.mk,v 1.2 2020/08/16 14:25:16 rillig Exp $
+# $NetBSD: opt-var-literal.mk,v 1.3 2020/08/23 14:28:04 rillig Exp $
 #
 # Tests for the -V command line option.
 
-# TODO: Implementation
-
-all:
-	@:;
+VAR=	other ${VALUE} $$$$
+VALUE=	value
