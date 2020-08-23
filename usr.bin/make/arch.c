@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.93 2020/08/23 17:49:37 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.94 2020/08/23 18:53:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.93 2020/08/23 17:49:37 rillig Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.94 2020/08/23 18:53:13 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.93 2020/08/23 17:49:37 rillig Exp $");
+__RCSID("$NetBSD: arch.c,v 1.94 2020/08/23 18:53:13 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1126,8 +1126,6 @@ Arch_MemMTime(GNode *gn)
 {
     LstNode 	  ln;
     GNode   	  *pgn;
-    char    	  *nameStart,
-		  *nameEnd;
 
     Lst_OpenS(gn->parents);
     while ((ln = Lst_NextS(gn->parents)) != NULL) {
@@ -1141,12 +1139,13 @@ Arch_MemMTime(GNode *gn)
 	     * child. We keep searching its parents in case some other
 	     * parent requires this child to exist...
 	     */
-	    nameStart = strchr(pgn->name, '(') + 1;
-	    nameEnd = strchr(nameStart, ')');
+	    const char *nameStart = strchr(pgn->name, '(') + 1;
+	    const char *nameEnd = strchr(nameStart, ')');
+	    size_t nameLen = (size_t)(nameEnd - nameStart);
 
 	    if ((pgn->flags & REMAKE) &&
-		strncmp(nameStart, gn->name, nameEnd - nameStart) == 0) {
-				     gn->mtime = Arch_MTime(pgn);
+		strncmp(nameStart, gn->name, nameLen) == 0) {
+		gn->mtime = Arch_MTime(pgn);
 	    }
 	} else if (pgn->flags & REMAKE) {
 	    /*
