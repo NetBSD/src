@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.463 2020/08/23 09:28:52 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.464 2020/08/23 10:27:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.463 2020/08/23 09:28:52 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.464 2020/08/23 10:27:22 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.463 2020/08/23 09:28:52 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.464 2020/08/23 10:27:22 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -441,17 +441,18 @@ VarFreeEnv(Var *v, Boolean destroy)
 /* Add a new variable of the given name and value to the given context.
  * The name and val arguments are duplicated so they may safely be freed. */
 static void
-VarAdd(const char *name, const char *val, GNode *ctxt)
+VarAdd(const char *name, const char *val, GNode *ctxt, VarSet_Flags flags)
 {
     Var *v = bmake_malloc(sizeof(Var));
-
-    size_t len = val != NULL ? strlen(val) : 0;
+    size_t len = strlen(val);
     Hash_Entry *he;
 
     Buf_Init(&v->val, len + 1);
     Buf_AddBytes(&v->val, val, len);
 
     v->flags = 0;
+    if (flags & VAR_SET_READONLY)
+	v->flags |= VAR_READONLY;
 
     he = Hash_CreateEntry(&ctxt->context, name, NULL);
     Hash_SetValue(he, v);
@@ -818,11 +819,7 @@ Var_Set_with_flags(const char *name, const char *val, GNode *ctxt,
 	     */
 	    Var_Delete(name, VAR_GLOBAL);
 	}
-	VarAdd(name, val, ctxt);
-	if (flags & VAR_SET_READONLY) {
-	    v = VarFind(name, ctxt, 0);
-	    v->flags |= VAR_READONLY;
-	}
+	VarAdd(name, val, ctxt, flags);
     } else {
 	if ((v->flags & VAR_READONLY) && !(flags & VAR_SET_READONLY)) {
 	    VAR_DEBUG("%s:%s = %s ignored (read-only)\n",
