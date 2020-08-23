@@ -1,4 +1,4 @@
-/*	$NetBSD: t_rfw.c,v 1.2 2020/08/23 16:03:54 perseant Exp $	*/
+/*	$NetBSD: t_rfw.c,v 1.3 2020/08/23 22:34:29 riastradh Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -264,7 +264,7 @@ int check_file(const char *filename, int size)
 	int fd, i;
 	struct stat statbuf;
 	unsigned char b;
-	
+
 	if (rump_sys_stat(filename, &statbuf) < 0) {
 		fprintf(stderr, "%s: stat failed\n", filename);
 		return 1;
