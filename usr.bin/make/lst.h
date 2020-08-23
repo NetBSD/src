@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.41 2020/08/23 16:58:02 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.42 2020/08/23 16:59:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -122,8 +122,8 @@ void		Lst_AppendS(Lst, void *);
 /* Remove an element */
 void		Lst_RemoveS(Lst, LstNode);
 /* Replace a node with a new value */
-void		LstNode_SetS(LstNode node, void *datum);
-void		LstNode_SetNullS(LstNode node);
+void		LstNode_SetS(LstNode, void *);
+void		LstNode_SetNullS(LstNode);
 void		Lst_PrependAllS(Lst, Lst);
 void		Lst_AppendAllS(Lst, Lst);
 void		Lst_MoveAllS(Lst, Lst);
