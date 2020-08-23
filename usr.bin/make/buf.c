@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.35 2020/08/13 04:12:13 rillig Exp $	*/
+/*	$NetBSD: buf.c,v 1.36 2020/08/23 06:12:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: buf.c,v 1.35 2020/08/13 04:12:13 rillig Exp $";
+static char rcsid[] = "$NetBSD: buf.c,v 1.36 2020/08/23 06:12:52 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)buf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: buf.c,v 1.35 2020/08/13 04:12:13 rillig Exp $");
+__RCSID("$NetBSD: buf.c,v 1.36 2020/08/23 06:12:52 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -86,19 +86,12 @@ __RCSID("$NetBSD: buf.c,v 1.35 2020/08/13 04:12:13 rillig Exp $");
 
 #include <limits.h>
 #include "make.h"
-#include "buf.h"
-
-#ifndef max
-#define max(a, b)  ((a) > (b) ? (a) : (b))
-#endif
-
-#define BUF_DEF_SIZE	256 	/* Default buffer size */
 
 /* Extend the buffer for adding a single byte. */
 void
 Buf_Expand_1(Buffer *bp)
 {
-    bp->size += max(bp->size, 16);
+    bp->size += MAX(bp->size, 16);
     bp->buffer = bmake_realloc(bp->buffer, bp->size);
 }
 
@@ -110,7 +103,7 @@ Buf_AddBytes(Buffer *bp, const char *bytesPtr, size_t numBytes)
     char *ptr;
 
     if (__predict_false(count + numBytes >= bp->size)) {
-	bp->size += max(bp->size, numBytes + 16);
+	bp->size += MAX(bp->size, numBytes + 16);
 	bp->buffer = bmake_realloc(bp->buffer, bp->size);
     }
 
@@ -181,7 +174,7 @@ void
 Buf_Init(Buffer *bp, size_t size)
 {
     if (size <= 0) {
-	size = BUF_DEF_SIZE;
+	size = 256;
     }
     bp->size = size;
     bp->count = 0;
