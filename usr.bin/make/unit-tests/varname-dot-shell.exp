@@ -1,0 +1,14 @@
+ParseReadLine (8): 'ORIG_SHELL:=	${.SHELL}'
+Var_Parse: ${.SHELL} with VARE_WANTRES|VARE_ASSIGN
+Global:delete .SHELL (not found)
+Command:.SHELL = (details omitted)
+ParseReadLine (10): '.SHELL=		overwritten'
+Global:.SHELL = overwritten
+Var_Parse: ${.SHELL} != ${ORIG_SHELL} with VARE_UNDEFERR|VARE_WANTRES
+ParseReadLine (18): '.undef .SHELL'
+Global:delete .SHELL
+ParseReadLine (19): '.SHELL=		newly overwritten'
+Global:.SHELL = newly overwritten
+Var_Parse: ${.SHELL} != ${ORIG_SHELL} with VARE_UNDEFERR|VARE_WANTRES
+ParseReadLine (24): 'all:'
+exit status 0
