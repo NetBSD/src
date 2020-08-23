@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.38 2020/08/23 11:13:08 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.39 2020/08/23 16:18:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,11 +37,11 @@
 #include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.38 2020/08/23 11:13:08 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.39 2020/08/23 16:18:12 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.38 2020/08/23 11:13:08 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.39 2020/08/23 16:18:12 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -52,7 +52,11 @@ struct ListNode {
 				 * node may not be deleted until count
 				 * goes to 0 */
     Boolean deleted;		/* List node should be removed when done */
-    void *datum;		/* datum associated with this element */
+    union {
+	void *datum;		/* datum associated with this element */
+	const GNode *gnode;	/* alias, just for debugging */
+	const char *str;	/* alias, just for debugging */
+    };
 };
 
 typedef enum {
