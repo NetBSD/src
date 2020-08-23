@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.462 2020/08/23 08:32:57 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.463 2020/08/23 09:28:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.462 2020/08/23 08:32:57 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.463 2020/08/23 09:28:52 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.462 2020/08/23 08:32:57 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.463 2020/08/23 09:28:52 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -229,14 +229,15 @@ typedef enum {
     VAR_READONLY = 0x80
 } VarFlags;
 
-ENUM_RTTI_7(VarFlags,
-	   VAR_IN_USE,
-	   VAR_FROM_ENV,
-	   VAR_JUNK,
-	   VAR_KEEP,
-	   VAR_EXPORTED,
-	   VAR_REEXPORT,
-	   VAR_FROM_CMD);
+ENUM_RTTI_8(VarFlags,
+	    VAR_IN_USE,
+	    VAR_FROM_ENV,
+	    VAR_JUNK,
+	    VAR_KEEP,
+	    VAR_EXPORTED,
+	    VAR_REEXPORT,
+	    VAR_FROM_CMD,
+	    VAR_READONLY);
 
 typedef struct Var {
     char          *name;	/* the variable's name; it is allocated for
