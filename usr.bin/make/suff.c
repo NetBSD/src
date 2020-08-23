@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.112 2020/08/22 22:57:53 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.113 2020/08/23 06:54:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.112 2020/08/22 22:57:53 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.113 2020/08/23 06:54:01 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.112 2020/08/22 22:57:53 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.113 2020/08/23 06:54:01 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1886,13 +1886,7 @@ SuffFindArchiveDeps(GNode *gn, Lst slst)
     char    	*eoarch;    /* End of archive portion */
     char    	*eoname;    /* End of member portion */
     GNode   	*mem;	    /* Node for member */
-    static const char	*copy[] = {
-	/* Variables to be copied from the member node */
-	TARGET,	    	    /* Must be first */
-	PREFIX,	    	    /* Must be second */
-    };
     LstNode 	ln, nln;    /* Next suffix node to check */
-    int	    	i;  	    /* Index into copy and vals */
     Suff    	*ms;	    /* Suffix descriptor for member */
     char    	*name;	    /* Start of member's name */
 
@@ -1935,11 +1929,12 @@ SuffFindArchiveDeps(GNode *gn, Lst slst)
     /*
      * Copy in the variables from the member node to this one.
      */
-    for (i = (sizeof(copy)/sizeof(copy[0]))-1; i >= 0; i--) {
-	char *p1;
-	Var_Set(copy[i], Var_Value(copy[i], mem, &p1), gn);
-	bmake_free(p1);
-
+    {
+	char *freeIt;
+	Var_Set(PREFIX, Var_Value(PREFIX, mem, &freeIt), gn);
+	bmake_free(freeIt);
+	Var_Set(TARGET, Var_Value(TARGET, mem, &freeIt), gn);
+	bmake_free(freeIt);
     }
 
     ms = mem->suffix;
