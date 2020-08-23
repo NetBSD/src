@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.192 2020/07/13 08:58:48 wiz Exp $
+.\"	$NetBSD: ddb.4,v 1.193 2020/08/23 03:17:00 simonb Exp $
 .\"
 .\" Copyright (c) 1997 - 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1009,9 +1009,9 @@ Some of these commands are:
 .Ss AARCH64
 .Bl -tag -width "traptrace" -compact
 .It Ic cpu
-Switch to another cpu.
+Switch to another CPU.
 .It Ic cpuinfo
-Print cpu information about the ``struct cpuinfo''.
+Print CPU information about the ``struct cpuinfo''.
 .It Ic frame
 Given a trap frame address, print out the trap frame.
 .It Ic lwp
@@ -1050,7 +1050,7 @@ for 64 bit.
 .Ss ALPHA
 .Bl -tag -width "traptrace" -compact
 .It Ic cpu
-Switch to another cpu.
+Switch to another CPU.
 .\" .It Ic halt
 .\" Call the PROM monitor to halt the CPU.
 .\" .It Ic reboot
@@ -1059,7 +1059,7 @@ Switch to another cpu.
 .Ss AMD64
 .Bl -tag -width "traptrace" -compact
 .It Ic cpu
-Switch to another cpu.
+Switch to another CPU.
 .El
 .Ss ARM32
 .Bl -tag -width "traptrace" -compact
@@ -1079,7 +1079,7 @@ modifier is used, an LWP address.
 .Ss I386
 .Bl -tag -width "traptrace" -compact
 .It Ic cpu
-Switch to another cpu.
+Switch to another CPU.
 .El
 .Ss IA64
 .Bl -tag -width "traptrace" -compact
@@ -1151,7 +1151,7 @@ option.
 .Ss SPARC
 .Bl -tag -width "traptrace" -compact
 .It Ic cpu
-Switch to another cpu.
+Switch to another CPU.
 .It Ic prom
 Enter the Sun PROM monitor.
 .It Ic proc
@@ -1170,7 +1170,7 @@ for this physical address.
 .It Ic ctx
 Print process context information.
 .It Ic cpu
-Switch to another cpu.
+Switch to another CPU.
 .It Ic dtlb
 Print data translation look-aside buffer context information.
 .It Ic dtsb
@@ -1274,7 +1274,7 @@ Page Table Entry (PTE).
 .Ss VAX
 .Bl -tag -width "traptrace" -compact
 .It Ic cpu
-Switch to another cpu.
+Switch to another CPU.
 .El
 .Sh VARIABLES
 .Nm
