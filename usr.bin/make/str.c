@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.60 2020/08/11 18:41:46 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.61 2020/08/23 18:03:35 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: str.c,v 1.60 2020/08/11 18:41:46 rillig Exp $";
+static char rcsid[] = "$NetBSD: str.c,v 1.61 2020/08/23 18:03:35 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: str.c,v 1.60 2020/08/11 18:41:46 rillig Exp $");
+__RCSID("$NetBSD: str.c,v 1.61 2020/08/23 18:03:35 rillig Exp $");
 #endif
 #endif				/* not lint */
 #endif
@@ -147,9 +147,9 @@ brk_string(const char *str, int *out_words_len, Boolean expand,
 {
 	size_t str_len;
 	char *words_buf;
-	int words_cap;
+	size_t words_cap;
 	char **words;
-	int words_len;
+	size_t words_len;
 	char inquote;
 	char *word_start;
 	char *word_end;
@@ -282,7 +282,7 @@ brk_string(const char *str, int *out_words_len, Boolean expand,
 	}
 done:
 	words[words_len] = NULL;
-	*out_words_len = words_len;
+	*out_words_len = (int)words_len;
 	*out_words_buf = words_buf;
 	return words;
 }
