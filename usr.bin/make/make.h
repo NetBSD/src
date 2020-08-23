@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.123 2020/08/22 21:42:38 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.124 2020/08/23 08:26:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -258,7 +258,7 @@ typedef struct GNode {
 
     /* The type of operator used to define the sources (see the OP flags below).
      * XXX: This looks like a wild mixture of type and flags. */
-    int type;
+    GNodeType type;
     /* whether it is involved in this invocation of make */
     GNodeFlags flags;
 
