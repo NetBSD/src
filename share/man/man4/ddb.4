@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.193 2020/08/23 03:17:00 simonb Exp $
+.\"	$NetBSD: ddb.4,v 1.194 2020/08/23 03:23:53 simonb Exp $
 .\"
 .\" Copyright (c) 1997 - 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd July 13, 2020
+.Dd August 23, 2020
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -208,7 +208,7 @@ is entered by using
 or by setting
 .Ar ddb.commandonenter
 with
-.Xr sysctl 8 .
+2Xr sysctl 8 .
 Multiple commands can be separated by a semi-colon.
 .Sh COMMAND SYNTAX
 The general command syntax is:
@@ -1091,18 +1091,48 @@ Otherwise, the given vector is shown.
 .Bl -tag -width "traptrace" -compact
 .It Ic cp0
 Dump CP0 (coprocessor 0) register values.
+.It Ic cpu
+Switch to another CPU.
 .It Ic kvtop
 Print the physical address for a given kernel virtual address.
+.\" .It Ic mfcr -- document this!
+.\" .It Ic mtcr -- document this!
+.It Ic nmi
+Send an NMI to a different CPU.
+This DDB command is currently only implemented for Cavium
+Octeon CPUs.
 .It Ic reset
 Reset the system.
 Not implemented for many CPUs and/or systems.
 .It Ic tlb
 Print out the Translation Lookaside Buffer (TLB).
-Only works in
-.Nx
-kernels compiled with
-.Dv DEBUG
-option.
+Use the
+.Cm /v
+modifier to show only valid TLB entries.
+.It Ic watch
+Set a hardware watchpoint on an address or a TLB ASID.
+Pass the address to be watched.
+If no address is specified, show a list of active watchpoints.
+The modifiers are
+.Cm /m
+i for trap on an instruction fetch,
+.Cm /r
+for trap on a read,
+.Cm /w
+for trap on a write,
+.Cm /m
+for a mask on the address to match,
+.Cm /a
+for trap on a TLB ASID match.
+The
+.Cm /m
+and
+.Cm /a
+modifiers require an extra argument for the mask and ASID respectively.
+.It Ic unwatch
+Clear a hardware watchpoint.
+If an address is specified, clear watchpoints that match that address.
+If no address is specified, clear all watchpoints.
 .El
 .Ss POWERPC 4xx
 .Bl -tag -width "traptrace" -compact
