@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.466 2020/08/23 20:57:02 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.467 2020/08/23 21:40:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.466 2020/08/23 20:57:02 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.467 2020/08/23 21:40:30 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.466 2020/08/23 20:57:02 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.467 2020/08/23 21:40:30 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -162,8 +162,10 @@ char var_Error[] = "";
 
 /*
  * Similar to var_Error, but returned when the 'VARE_UNDEFERR' flag for
- * Var_Parse is not set. Why not just use a constant? Well, GCC likes
- * to condense identical string instances...
+ * Var_Parse is not set.
+ *
+ * Why not just use a constant? Well, GCC likes to condense identical string
+ * instances...
  */
 static char varNoError[] = "";
 
@@ -1897,32 +1899,62 @@ VarStrftime(const char *fmt, Boolean zulu, time_t tim)
 
 /* The ApplyModifier functions all work in the same way.  They get the
  * current parsing position (pp) and parse the modifier from there.  The
- * modifier typically lasts until the next ':', or a closing '}', ')'
+ * modifier typically lasts until the next ':', or a closing '}' or ')'
  * (taken from st->endc), or the end of the string (parse error).
  *
- * After parsing, no matter whether successful or not, they set the parsing
- * position to the character after the modifier, or in case of parse errors,
- * just increment the parsing position.  (That's how it is right now, it
- * shouldn't hurt to keep the parsing position as-is in case of parse errors.)
+ * The high-level behavior of these functions is:
  *
- * On success, an ApplyModifier function:
- *	* sets the parsing position *pp to the first character following the
- *	  current modifier
- *	* processes the current variable value from st->val to produce the
- *	  modified variable value and stores it in st->newVal
- *	* returns AMR_OK
+ * 1. parse the modifier
+ * 2. evaluate the modifier
+ * 3. housekeeping
  *
- * On parse errors, an ApplyModifier function:
- *	* either issues a custom error message and then returns AMR_CLEANUP
- *	* or returns AMR_BAD to issue the standard "Bad modifier" error message
- *	In both of these cases, it updates the parsing position.
- *	Modifiers that use ParseModifierPart typically set st->missing_delim
- *	and then return AMR_CLEANUP to issue the standard error message.
+ * Parsing the modifier
  *
- * If the expected modifier was not found, several modifiers return AMR_UNKNOWN
- * to fall back to the SysV modifier ${VAR:from=to}.  This is especially
- * useful for newly added long-name modifiers, to avoid breaking any existing
- * code.  In such a case the parsing position must not be changed.
+ * If parsing succeeds, the parsing position *pp is updated to point to the
+ * first character following the modifier, which typically is either ':' or
+ * st->endc.
+ *
+ * If parsing fails because of a missing delimiter (as in the :S, :C or :@
+ * modifiers), set st->missing_delim and return AMR_CLEANUP.
+ *
+ * If parsing fails because the modifier is unknown, return AMR_UNKNOWN to
+ * try the SysV modifier ${VAR:from=to} as fallback.  This should only be
+ * done as long as there have been no side effects from evaluating nested
+ * variables, to avoid evaluating them more than once.  In this case, the
+ * parsing position must not be updated.  (XXX: Why not? The original parsing
+ * position is well-known in ApplyModifiers.)
+ *
+ * If parsing fails and the SysV modifier ${VAR:from=to} should not be used
+ * as a fallback, either issue an error message using Error or Parse_Error
+ * and then return AMR_CLEANUP, or return AMR_BAD for the default error
+ * message.  Both of these return values will stop processing the variable
+ * expression.  (XXX: As of 2020-08-23, evaluation of the whole string
+ * continues nevertheless after skipping a few bytes, which essentially is
+ * undefined behavior.  Not in the sense of C, but still it's impossible to
+ * predict what happens in the parser.)
+ *
+ * Evaluating the modifier
+ *
+ * After parsing, the modifier is evaluated.  The side effects from evaluating
+ * nested variable expressions in the modifier text often already happen
+ * during parsing though.
+ *
+ * Evaluating the modifier usually takes the current value of the variable
+ * expression from st->val, or the variable name from st->v->name and stores
+ * the result in st->newVal.
+ *
+ * If evaluating fails (as of 2020-08-23), an error message is printed using
+ * Error.  This function has no side-effects, it really just prints the error
+ * message.  Processing the expression continues as if everything were ok.
+ * XXX: This should be fixed by adding proper error handling to Var_Subst,
+ * Var_Parse, ApplyModifiers and ModifyWords.
+ *
+ * Housekeeping
+ *
+ * Some modifiers such as :D and :U turn undefined variables into useful
+ * variables (VAR_JUNK, VAR_KEEP).
+ *
+ * Some modifiers need to free some memory.
  */
 
 typedef struct {
@@ -2022,7 +2054,7 @@ ApplyModifier_Loop(const char **pp, ApplyModifiersState *st)
 static ApplyModifierResult
 ApplyModifier_Defined(const char **pp, ApplyModifiersState *st)
 {
-    Buffer buf;			/* Buffer for patterns */
+    Buffer buf;
     const char *p;
 
     VarEvalFlags eflags = st->eflags & ~(unsigned)VARE_WANTRES;
@@ -2045,7 +2077,7 @@ ApplyModifier_Defined(const char **pp, ApplyModifiersState *st)
 	    }
 	}
 
-	/* Nested variable expressions */
+	/* Nested variable expression */
 	if (*p == '$') {
 	    const char *cp2;
 	    int len;
@@ -2894,7 +2926,9 @@ ApplyModifier_Assign(const char **pp, ApplyModifiersState *st)
 	}
     }
     free(val);
-    st->newVal = varNoError;
+    st->newVal = varNoError;	/* XXX: varNoError is kind of an error,
+				 * the intention here is to just return
+				 * an empty string. */
     return AMR_OK;
 }
 
