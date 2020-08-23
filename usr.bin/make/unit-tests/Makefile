@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.118 2020/08/23 14:28:04 rillig Exp $
+# $NetBSD: Makefile,v 1.119 2020/08/23 14:46:33 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -334,6 +334,7 @@ FLAGS.opt-var-literal=	-V VAR -V VALUE
 FLAGS.opt-warnings-as-errors= -W
 FLAGS.order=		-j1
 FLAGS.recursive=	-dL
+FLAGS.sh-leading-plus=	-n
 FLAGS.vardebug=		-k -dv FROM_CMDLINE=
 FLAGS.varmod-match-escape= -dv
 FLAGS.varname-dot-shell= -dpv
