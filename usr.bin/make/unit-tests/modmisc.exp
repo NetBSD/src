@@ -14,11 +14,8 @@ C:
 S:empty
 C:empty
 @:
-mod-tu-space: A   B
 mod-quote: new
 
 line
 mod-break-many-words: 500
-mod-remember: 1 2 3 1 2 3 1 2 3
-mod-remember: 1 2 3, SAVED=3
 exit status 0
