@@ -1,4 +1,4 @@
-# $Id: modmisc.mk,v 1.44 2020/08/23 15:09:15 rillig Exp $
+# $Id: modmisc.mk,v 1.45 2020/08/23 15:13:21 rillig Exp $
 #
 # miscellaneous modifier tests
 
@@ -20,9 +20,6 @@ all:	mod-tu-space
 all:	mod-quote
 all:	mod-break-many-words
 all:	mod-remember
-all:	mod-localtime
-all:	mod-hash
-all:	mod-range
 
 # See also sysv.mk.
 modsysv:
@@ -81,27 +78,6 @@ mod-break-many-words:
 mod-remember:
 	@echo $@: ${1 2 3:L:_:@var@${_}@}
 	@echo $@: ${1 2 3:L:@var@${var:_=SAVED:}@}, SAVED=${SAVED}
-
-mod-localtime:
-	@echo $@:
-	@echo ${%Y:L:localtim=1593536400}	# modifier name too short
-	@echo ${%Y:L:localtime=1593536400}	# 2020-07-01T00:00:00Z
-	@echo ${%Y:L:localtimer=1593536400}	# modifier name too long
-
-mod-hash:
-	@echo $@:
-	@echo ${12345:L:has}			# modifier name too short
-	@echo ${12345:L:hash}			# ok
-	@echo ${12345:L:hash=SHA-256}		# :hash does not accept '='
-	@echo ${12345:L:hasX}			# misspelled
-	@echo ${12345:L:hashed}			# modifier name too long
-
-mod-range:
-	@echo $@:
-	@echo ${a b c:L:rang}			# modifier name too short
-	@echo ${a b c:L:range}			# ok
-	@echo ${a b c:L:rango}			# misspelled
-	@echo ${a b c:L:ranger}			# modifier name too long
 
 # To apply a modifier indirectly via another variable, the whole
 # modifier must be put into a single variable.
