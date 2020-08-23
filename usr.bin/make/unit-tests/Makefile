@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.114 2020/08/22 21:55:54 rillig Exp $
+# $NetBSD: Makefile,v 1.115 2020/08/23 09:18:25 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -293,6 +293,7 @@ TESTS+=		varname-dot-objdir
 TESTS+=		varname-dot-parsedir
 TESTS+=		varname-dot-parsefile
 TESTS+=		varname-dot-path
+TESTS+=		varname-dot-shell
 TESTS+=		varname-dot-targets
 TESTS+=		varname-empty
 TESTS+=		varname-make
@@ -324,6 +325,7 @@ FLAGS.order=		-j1
 FLAGS.recursive=	-dL
 FLAGS.vardebug=		-k -dv FROM_CMDLINE=
 FLAGS.varmod-match-escape= -dv
+FLAGS.varname-dot-shell= -dpv
 FLAGS.varname-empty=	-dv '$${:U}=cmdline-u' '=cmline-plain'
 
 # Some tests need extra post-processing.
@@ -333,11 +335,14 @@ SED_CMDS.varmod-subst-regex+= \
 SED_CMDS.varmod-edge+=	-e 's, line [0-9]*:, line omitted:,'
 SED_CMDS.varshell+=	-e 's,^${.SHELL:T}: ,,'
 SED_CMDS.varshell+=	-e '/command/s,No such.*,not found,'
+SED_CMDS.varname-dot-shell= -e 's, = /.*, = (details omitted),'
 
 # Some tests need an additional round of postprocessing.
 POSTPROC.counter=	${TOOL_SED} -n -e '/:RELEVANT = yes/,/:RELEVANT = no/p'
 POSTPROC.vardebug=	${TOOL_SED} -n -e '/:RELEVANT = yes/,/:RELEVANT = no/p'
 POSTPROC.varmod-match-escape= ${TOOL_SED} -n -e '/^Pattern/p'
+POSTPROC.varname-dot-shell= \
+			awk '/\.SHELL/ || /^ParseReadLine/'
 POSTPROC.varname-empty=	${TOOL_SED} -n -e '/^Var_Set/p' -e '/^out:/p'
 
 # Some tests reuse other tests, which makes them unnecessarily fragile.
