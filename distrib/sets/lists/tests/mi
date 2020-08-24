@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.903 2020/08/23 13:50:17 rillig Exp $
+# $NetBSD: mi,v 1.904 2020/08/24 18:18:51 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4791,6 +4791,8 @@
 ./usr/tests/usr.bin/make/unit-tests/modmatch.mk	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/modmisc.exp	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/modmisc.mk	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/modorder.exp	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/modorder.mk	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/modts.exp	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/modts.mk	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/modword.exp	tests-usr.bin-tests	compattestfile,atf
