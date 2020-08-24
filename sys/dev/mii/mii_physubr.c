@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.91 2020/07/07 08:44:12 msaitoh Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.92 2020/08/24 04:23:41 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.91 2020/07/07 08:44:12 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.92 2020/08/24 04:23:41 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -198,6 +198,7 @@ mii_phy_setmedia(struct mii_softc *sc)
 		PHY_WRITE(sc, MII_BMCR, bmcr);
 }
 
+/* Setup autonegotiation and start it. */
 int
 mii_phy_auto(struct mii_softc *sc)
 {
@@ -283,6 +284,20 @@ mii_phy_auto(struct mii_softc *sc)
 	return EJUSTRETURN;
 }
 
+/* Just restart autonegotiation without changing any setting */
+int
+mii_phy_auto_restart(struct mii_softc *sc)
+{
+	uint16_t reg;
+
+	PHY_READ(sc, MII_BMCR, &reg);
+	reg |= BMCR_STARTNEG;
+	PHY_WRITE(sc, MII_BMCR, reg);
+	sc->mii_ticks = 0;
+
+	return EJUSTRETURN;
+}
+
 static void
 mii_phy_auto_timeout_locked(struct mii_softc *sc)
 {
@@ -365,9 +380,7 @@ mii_phy_tick(struct mii_softc *sc)
 	if (sc->mii_ticks <= sc->mii_anegticks)
 		return EJUSTRETURN;
 
-	PHY_RESET(sc);
-
-	if (mii_phy_auto(sc) == EJUSTRETURN)
+	if (mii_phy_auto_restart(sc) == EJUSTRETURN)
 		return EJUSTRETURN;
 
 	/*
