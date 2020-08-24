@@ -1,4 +1,4 @@
-/*	$NetBSD: enum.c,v 1.3 2020/08/09 09:44:14 rillig Exp $	*/
+/*	$NetBSD: enum.c,v 1.4 2020/08/24 20:15:51 rillig Exp $	*/
 
 /*
  Copyright (c) 2020 Roland Illig <rillig@NetBSD.org>
@@ -28,11 +28,11 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: enum.c,v 1.3 2020/08/09 09:44:14 rillig Exp $";
+static char rcsid[] = "$NetBSD: enum.c,v 1.4 2020/08/24 20:15:51 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: enum.c,v 1.3 2020/08/09 09:44:14 rillig Exp $");
+__RCSID("$NetBSD: enum.c,v 1.4 2020/08/24 20:15:51 rillig Exp $");
 #endif
 #endif
 
@@ -44,8 +44,8 @@ __RCSID("$NetBSD: enum.c,v 1.3 2020/08/09 09:44:14 rillig Exp $");
 /* Convert a bitset into a string representation showing the names of the
  * individual bits, or optionally shortcuts for groups of bits. */
 const char *
-Enum_ToString(char *buf, size_t buf_size, int value,
-	      const EnumToStringSpec *spec)
+Enum_FlagsToString(char *buf, size_t buf_size,
+		   int value, const EnumToStringSpec *spec)
 {
 	const char *buf_start = buf;
 	const char *sep = "";
@@ -80,4 +80,15 @@ Enum_ToString(char *buf, size_t buf_size, int value,
 	assert(buf_size >= 1);
 	buf[0] = '\0';
 	return buf_start;
+}
+
+/* Convert a fixed-value enum into a string representation. */
+const char *
+Enum_ValueToString(int value, const EnumToStringSpec *spec)
+{
+	for (; spec->es_name[0] != '\0'; spec++) {
+	    if (value == spec->es_value)
+	        return spec->es_name;
+	}
+	assert(!"unknown enum value");
 }
