@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.40 2020/06/20 07:30:09 rin Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.41 2020/08/24 06:55:16 gson Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -495,7 +495,7 @@ ATF_TC_BODY(sigbus_adraln, tc)
 	addr = calloc(2, sizeof(int));
 	ATF_REQUIRE(addr != NULL);
 
-	if (isQEMU())
+	if (isQEMU_TCG())
 		atf_tc_expect_fail("QEMU fails to trap unaligned accesses");
 
 	/* Force an unaligned access */
