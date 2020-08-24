@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_pnpbios.c,v 1.33 2017/10/20 07:06:06 jdolecek Exp $	*/
+/*	$NetBSD: pciide_pnpbios.c,v 1.34 2020/08/24 05:37:40 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1999 Soren S. Jorvang.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.33 2017/10/20 07:06:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.34 2020/08/24 05:37:40 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,7 @@ pciide_pnpbios_attach(device_t parent, device_t self, void *aux)
 	for (drive = 0; drive < cp->ata_channel.ch_ndrives; drive++) {
 		/*
 		 * we have not probed the drives yet,
-		 * allocate ressources for all of them.
+		 * allocate resources for all of them.
 		 */
 		if (pciide_dma_table_setup(sc, 0, drive) != 0) {
 			/* Abort DMA setup */

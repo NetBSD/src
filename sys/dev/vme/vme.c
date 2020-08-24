@@ -1,4 +1,4 @@
-/* $NetBSD: vme.c,v 1.26 2012/10/27 17:18:38 chs Exp $ */
+/* $NetBSD: vme.c,v 1.27 2020/08/24 05:37:41 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.26 2012/10/27 17:18:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.27 2020/08/24 05:37:41 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,7 +222,7 @@ vmedetach(device_t dev)
 	struct vmebus_softc *sc = device_private(dev);
 
 	if (sc->slaveconfig) {
-		/* allow bus master to free its bus ressources */
+		/* allow bus master to free its bus resources */
 		(*sc->slaveconfig)(device_parent(dev), 0);
 	}
 

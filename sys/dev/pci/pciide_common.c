@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.66 2018/09/03 16:29:32 riastradh Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.67 2020/08/24 05:37:41 msaitoh Exp $	*/
 
 
 /*
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.66 2018/09/03 16:29:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.67 2020/08/24 05:37:41 msaitoh Exp $");
 
 #include <sys/param.h>
 
@@ -1073,7 +1073,7 @@ next:
 		for (drive = 0; drive < sc->sc_wdcdev.wdc_maxdrives; drive++) {
 			/*
 			 * we have not probed the drives yet, allocate
-			 * ressources for all of them.
+			 * resources for all of them.
 			 */
 			if (pciide_dma_table_setup(sc, channel, drive) != 0) {
 				/* Abort DMA setup */

@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_i2c.c,v 1.7 2020/06/11 02:39:30 thorpej Exp $ */
+/* $NetBSD: acpi_i2c.c,v 1.8 2020/08/24 05:37:41 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.7 2020/06/11 02:39:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.8 2020/08/24 05:37:41 msaitoh Exp $");
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -152,7 +152,7 @@ acpi_i2c_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 	case ACPI_RESOURCE_TYPE_EXTENDED_IRQ:
 		break;
 	default:
-		printf("ressource type 0x%x ignored\n", res->Type);
+		printf("resource type 0x%x ignored\n", res->Type);
 	}
 	return_ACPI_STATUS(AE_OK);
 }
