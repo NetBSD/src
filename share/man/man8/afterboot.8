@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.70 2020/08/24 12:29:30 nia Exp $
+.\"	$NetBSD: afterboot.8,v 1.71 2020/08/24 12:35:48 nia Exp $
 .\"	$OpenBSD: afterboot.8,v 1.72 2002/02/22 02:02:33 miod Exp $
 .\"
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -431,14 +431,14 @@ Then, to make the system use it, put the following in
 nameserver 127.0.0.1
 .Ed
 .Ss Wireless networking
-To connect to a wireless network using WPA and DHCP:
+To configure the system to connect to a wireless network with a password
+using WPA:
 .Bd -literal -offset indent
 .Ic wpa_passphrase networkname password >> /etc/wpa_supplicant.conf
-.Ic service wpa_supplicant onestart
-.Ic service dhcpcd onestart
 .Ed
 .Pp
-To connect to an open wireless network with no password, edit
+To to configure the system to connect to an open wireless network with
+no password, edit
 .Pa /etc/wpa_supplicant.conf
 instead of using
 .Xr wpa_passphrase 8 :
@@ -450,6 +450,12 @@ network={
 }
 .Ed
 .Pp
+Then start the necessary daemons:
+.Bd -literal -offset indent
+.Ic service wpa_supplicant onestart
+.Ic service dhcpcd onestart
+.Ed
+.Pp
 To automatically connect at boot, add the following to
 .Pa /etc/rc.conf :
 .Pp
@@ -458,7 +464,7 @@ To automatically connect at boot, add the following to
 .Pp
 While using
 .Xr wpa_supplicant 8 ,
-you can easily retrieve network scan with
+you can easily retrieve network scan results with
 .Xr wpa_cli 8 :
 .Bd -literal -offset indent
 .Ic wpa_cli scan_results
