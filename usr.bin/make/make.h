@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.125 2020/08/23 17:04:21 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.126 2020/08/24 20:15:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -513,6 +513,7 @@ int mkTempFile(const char *, char **);
 int str2Lst_Append(Lst, char *, const char *);
 int cached_lstat(const char *, void *);
 int cached_stat(const char *, void *);
+void GNode_FprintDetails(FILE *, const char *, const GNode *, const char *);
 
 #ifdef __GNUC__
 #define UNCONST(ptr)	({ 		\
