@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.121 2020/08/22 22:57:53 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.122 2020/08/24 20:15:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.121 2020/08/22 22:57:53 rillig Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.122 2020/08/24 20:15:51 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.121 2020/08/22 22:57:53 rillig Exp $");
+__RCSID("$NetBSD: make.c,v 1.122 2020/08/24 20:15:51 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -116,7 +116,7 @@ __RCSID("$NetBSD: make.c,v 1.121 2020/08/22 22:57:53 rillig Exp $");
  */
 
 #include    "make.h"
-#include    "hash.h"
+#include    "enum.h"
 #include    "dir.h"
 #include    "job.h"
 
@@ -149,6 +149,42 @@ make_abort(GNode *gn, int line)
     Lst_ForEach(toBeMade, Targ_PrintNode, &two);
     Targ_PrintGraph(3);
     abort();
+}
+
+ENUM_RTTI_8(GNodeMade,
+	    UNMADE, DEFERRED, REQUESTED, BEINGMADE,
+	    MADE, UPTODATE, ERROR, ABORTED);
+
+ENUM_RTTI_32(GNodeType,
+	     OP_DEPENDS, OP_FORCE, OP_DOUBLEDEP, OP_OPMASK,
+	     OP_OPTIONAL, OP_USE, OP_EXEC, OP_IGNORE,
+	     OP_PRECIOUS, OP_SILENT, OP_MAKE, OP_JOIN,
+	     OP_MADE, OP_SPECIAL, OP_USEBEFORE, OP_INVISIBLE,
+	     OP_NOTMAIN, OP_PHONY, OP_NOPATH, OP_WAIT,
+	     OP_NOMETA, OP_META, OP_NOMETA_CMP, OP_SUBMAKE,
+	     OP_TRANSFORM, OP_MEMBER, OP_LIB, OP_ARCHV,
+	     OP_HAS_COMMANDS, OP_SAVE_CMDS, OP_DEPS_FOUND, OP_MARK);
+
+ENUM_RTTI_10(GNodeFlags,
+	     REMAKE, CHILDMADE, FORCE, DONE_WAIT,
+	     DONE_ORDER, FROM_DEPEND, DONE_ALLSRC, CYCLE,
+	     DONECYCLE, INTERNAL);
+
+void
+GNode_FprintDetails(FILE *f, const char *prefix, const GNode *gn,
+		    const char *suffix)
+{
+    char type_buf[GNodeType_ToStringSize];
+    char flags_buf[GNodeFlags_ToStringSize];
+
+    fprintf(f, "%smade %s, type %s, flags %s%s",
+	    prefix,
+	    Enum_ValueToString(gn->made, GNodeMade_ToStringSpecs),
+	    Enum_FlagsToString(type_buf, sizeof type_buf,
+			       gn->type, GNodeType_ToStringSpecs),
+	    Enum_FlagsToString(flags_buf, sizeof flags_buf,
+			       gn->flags, GNodeFlags_ToStringSpecs),
+	    suffix);
 }
 
 /*-
@@ -1156,15 +1192,15 @@ MakePrintStatusOrder(void *ognp, void *gnp)
 	/* not waiting for this one */
 	return 0;
 
-    printf("    `%s%s' has .ORDER dependency against %s%s "
-		"(made %d, flags %x, type %x)\n",
-	    gn->name, gn->cohort_num,
-	    ogn->name, ogn->cohort_num, ogn->made, ogn->flags, ogn->type);
-    if (DEBUG(MAKE) && debug_file != stdout)
-	fprintf(debug_file, "    `%s%s' has .ORDER dependency against %s%s "
-		    "(made %d, flags %x, type %x)\n",
-		gn->name, gn->cohort_num,
-		ogn->name, ogn->cohort_num, ogn->made, ogn->flags, ogn->type);
+    printf("    `%s%s' has .ORDER dependency against %s%s ",
+	    gn->name, gn->cohort_num, ogn->name, ogn->cohort_num);
+    GNode_FprintDetails(stdout, "(", ogn, ")\n");
+
+    if (DEBUG(MAKE) && debug_file != stdout) {
+	fprintf(debug_file, "    `%s%s' has .ORDER dependency against %s%s ",
+		gn->name, gn->cohort_num, ogn->name, ogn->cohort_num);
+	GNode_FprintDetails(debug_file, "(", ogn, ")\n");
+    }
     return 0;
 }
 
@@ -1191,12 +1227,13 @@ MakePrintStatus(void *gnp, void *v_errors)
 	case REQUESTED:
 	case BEINGMADE:
 	    (*errors)++;
-	    printf("`%s%s' was not built (made %d, flags %x, type %x)!\n",
-		    gn->name, gn->cohort_num, gn->made, gn->flags, gn->type);
-	    if (DEBUG(MAKE) && debug_file != stdout)
-		fprintf(debug_file,
-			"`%s%s' was not built (made %d, flags %x, type %x)!\n",
-			gn->name, gn->cohort_num, gn->made, gn->flags, gn->type);
+	    printf("`%s%s' was not built", gn->name, gn->cohort_num);
+	    GNode_FprintDetails(stdout, " (", gn, ")!\n");
+	    if (DEBUG(MAKE) && debug_file != stdout) {
+		fprintf(debug_file, "`%s%s' was not built",
+			gn->name, gn->cohort_num);
+		GNode_FprintDetails(debug_file, " (", gn, ")!\n");
+	    }
 	    /* Most likely problem is actually caused by .ORDER */
 	    Lst_ForEach(gn->order_pred, MakePrintStatusOrder, gn);
 	    break;

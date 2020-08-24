@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.71 2020/08/22 18:20:31 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.72 2020/08/24 20:15:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.71 2020/08/22 18:20:31 rillig Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.72 2020/08/24 20:15:51 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.71 2020/08/22 18:20:31 rillig Exp $");
+__RCSID("$NetBSD: targ.c,v 1.72 2020/08/24 20:15:51 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -632,8 +632,8 @@ Targ_PrintNode(void *gnp, void *passp)
     GNode         *gn = (GNode *)gnp;
     int	    	  pass = passp ? *(int *)passp : 0;
 
-    fprintf(debug_file, "# %s%s, flags %x, type %x, made %d\n",
-	    gn->name, gn->cohort_num, gn->flags, gn->type, gn->made);
+    fprintf(debug_file, "# %s%s", gn->name, gn->cohort_num);
+    GNode_FprintDetails(debug_file, ", ", gn, "\n");
     if (gn->flags == 0)
 	return 0;
 
