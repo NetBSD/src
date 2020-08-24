@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.69 2020/08/15 14:45:31 nia Exp $
+.\"	$NetBSD: afterboot.8,v 1.70 2020/08/24 12:29:30 nia Exp $
 .\"	$OpenBSD: afterboot.8,v 1.72 2002/02/22 02:02:33 miod Exp $
 .\"
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -59,7 +59,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 15, 2020
+.Dd August 24, 2020
 .Dt AFTERBOOT 8
 .Os
 .Sh NAME
@@ -431,12 +431,6 @@ Then, to make the system use it, put the following in
 nameserver 127.0.0.1
 .Ed
 .Ss Wireless networking
-You can scan for nearby wireless networks using:
-.Bd -literal -offset indent
-.Ic ifconfig iwm0 up list scan
-.Ic ifconfig iwm0 down
-.Ed
-.Pp
 To connect to a wireless network using WPA and DHCP:
 .Bd -literal -offset indent
 .Ic wpa_passphrase networkname password >> /etc/wpa_supplicant.conf
@@ -461,6 +455,19 @@ To automatically connect at boot, add the following to
 .Pp
 .Dl dhcpcd=YES
 .Dl wpa_supplicant=YES
+.Pp
+While using
+.Xr wpa_supplicant 8 ,
+you can easily retrieve network scan with
+.Xr wpa_cli 8 :
+.Bd -literal -offset indent
+.Ic wpa_cli scan_results
+.Ed
+.Pp
+Or trigger a rescan:
+.Bd -literal -offset indent
+.Ic wpa_cli scan
+.Ed
 .Ss RPC-based network services
 Several services depend on the RPC portmapper
 .Xr rpcbind 8
@@ -1068,6 +1075,7 @@ for details on how to do so.
 .Xr amd 8 ,
 .Xr ccdconfig 8 ,
 .Xr chown 8 ,
+.Xr devpubd 8 ,
 .Xr dhcpcd 8 ,
 .Xr dhcpd 8 ,
 .Xr dmesg 8 ,
@@ -1076,6 +1084,7 @@ for details on how to do so.
 .Xr inetd 8 ,
 .Xr kerberos 8 ,
 .Xr lpd 8 ,
+.Xr mdnsd 8 ,
 .Xr mount 8 ,
 .Xr mrouted 8 ,
 .Xr mtree 8 ,
@@ -1095,6 +1104,7 @@ for details on how to do so.
 .Xr umount 8 ,
 .Xr useradd 8 ,
 .Xr vipw 8 ,
+.Xr wpa_cli 8 ,
 .Xr wpa_supplicant 8 ,
 .Xr yp 8 ,
 .Xr ypbind 8
