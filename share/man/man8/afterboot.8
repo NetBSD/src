@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.71 2020/08/24 12:35:48 nia Exp $
+.\"	$NetBSD: afterboot.8,v 1.72 2020/08/24 12:45:48 nia Exp $
 .\"	$OpenBSD: afterboot.8,v 1.72 2002/02/22 02:02:33 miod Exp $
 .\"
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -924,7 +924,7 @@ For most users, using pkgin to manage binary packages is recommended.
 .Pp
 To install pkgin, if it was not done by the installer:
 .Bd -literal -offset indent
-.Ic export PKG_PATH=https://cdn.netbsd.org/pub/pkgsrc/packages/NetBSD/$(sysctl -n hw.machine_arch)/$(uname -r | cut -d_ -f1)/All
+.Ic export PKG_PATH=https://cdn.netbsd.org/pub/pkgsrc/packages/NetBSD/$(uname -p)/$(uname -r | cut -d_ -f1)/All
 .Ic pkg_add pkgin
 .Ic pkgin update
 .Ic pkgin install bash mpg123 fluxbox ...
