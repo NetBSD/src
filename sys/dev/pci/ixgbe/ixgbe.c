@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.242 2020/08/24 18:31:14 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.243 2020/08/24 18:42:17 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -1507,11 +1507,10 @@ ixgbe_is_sfp(struct ixgbe_hw *hw)
 static void
 ixgbe_schedule_admin_tasklet(struct adapter *adapter)
 {
-	if (adapter->schedule_wqs_ok) {
-		if (atomic_cas_uint(&adapter->admin_pending, 0, 1) == 0)
-			workqueue_enqueue(adapter->admin_wq,
-			    &adapter->admin_wc, NULL);
-	}
+
+	if (atomic_cas_uint(&adapter->admin_pending, 0, 1) == 0)
+		workqueue_enqueue(adapter->admin_wq,
+		    &adapter->admin_wc, NULL);
 }
 
 /************************************************************************
@@ -4841,8 +4840,6 @@ ixgbe_ifstop(struct ifnet *ifp, int disable)
 	ixgbe_stop(adapter);
 	IXGBE_CORE_UNLOCK(adapter);
 
-	workqueue_wait(adapter->admin_wq, &adapter->admin_wc);
-	atomic_store_relaxed(&adapter->admin_pending, 0);
 	workqueue_wait(adapter->timer_wq, &adapter->timer_wc);
 	atomic_store_relaxed(&adapter->timer_pending, 0);
 }
