@@ -1,4 +1,4 @@
-.\"	$NetBSD: viomb.4,v 1.3 2012/03/08 22:52:22 wiz Exp $
+.\"	$NetBSD: viomb.4,v 1.4 2020/08/24 19:27:36 ryoon Exp $
 .\"
 .\" Copyright (C) 2011 Minoura Makoto.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 26, 2011
+.Dd August 25, 2020
 .Dt VIOMB 4
 .Os
 .Sh NAME
@@ -69,7 +69,8 @@ shows the requested number of memory pages to return to the hypervisor, while
 shows the actual number of memory pages that are already returned to the hypervisor.
 .Sh SEE ALSO
 .Xr virtio 4 ,
-.Xr sysctl 8
+.Xr sysctl 8 ,
+.Xr x86/balloon 4
 .Pp
 .Rs
 .%A Rusty Russell, IBM Corporation
