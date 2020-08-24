@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.685 2020/08/05 03:17:18 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.686 2020/08/24 05:34:00 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.685 2020/08/05 03:17:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.686 2020/08/24 05:34:00 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -10958,7 +10958,7 @@ wm_gmii_i82544_writereg_locked(device_t dev, int phy, int reg, uint16_t val)
  *
  *	Read a PHY register on the kumeran
  * This could be handled by the PHY layer if we didn't have to lock the
- * ressource ...
+ * resource ...
  */
 static int
 wm_gmii_i80003_readreg(device_t dev, int phy, int reg, uint16_t *val)
@@ -11017,7 +11017,7 @@ out:
  *
  *	Write a PHY register on the kumeran.
  * This could be handled by the PHY layer if we didn't have to lock the
- * ressource ...
+ * resource ...
  */
 static int
 wm_gmii_i80003_writereg(device_t dev, int phy, int reg, uint16_t val)
@@ -11075,7 +11075,7 @@ out:
  *
  *	Read a PHY register on the kumeran
  * This could be handled by the PHY layer if we didn't have to lock the
- * ressource ...
+ * resource ...
  */
 static int
 wm_gmii_bm_readreg(device_t dev, int phy, int reg, uint16_t *val)
@@ -11122,7 +11122,7 @@ release:
  *
  *	Write a PHY register on the kumeran.
  * This could be handled by the PHY layer if we didn't have to lock the
- * ressource ...
+ * resource ...
  */
 static int
 wm_gmii_bm_writereg(device_t dev, int phy, int reg, uint16_t val)
@@ -11333,7 +11333,7 @@ wm_access_phy_wakeup_reg_bm(device_t dev, int offset, int16_t *val, int rd,
  *
  *	Read a PHY register on the kumeran
  * This could be handled by the PHY layer if we didn't have to lock the
- * ressource ...
+ * resource ...
  */
 static int
 wm_gmii_hv_readreg(device_t dev, int phy, int reg, uint16_t *val)
@@ -11397,7 +11397,7 @@ wm_gmii_hv_readreg_locked(device_t dev, int phy, int reg, uint16_t *val)
  *
  *	Write a PHY register on the kumeran.
  * This could be handled by the PHY layer if we didn't have to lock the
- * ressource ...
+ * resource ...
  */
 static int
 wm_gmii_hv_writereg(device_t dev, int phy, int reg, uint16_t val)
@@ -11483,7 +11483,7 @@ wm_gmii_hv_writereg_locked(device_t dev, int phy, int reg, uint16_t val)
  *
  *	Read a PHY register on the 82580 and I350.
  * This could be handled by the PHY layer if we didn't have to lock the
- * ressource ...
+ * resource ...
  */
 static int
 wm_gmii_82580_readreg(device_t dev, int phy, int reg, uint16_t *val)
@@ -11514,7 +11514,7 @@ wm_gmii_82580_readreg(device_t dev, int phy, int reg, uint16_t *val)
  *
  *	Write a PHY register on the 82580 and I350.
  * This could be handled by the PHY layer if we didn't have to lock the
- * ressource ...
+ * resource ...
  */
 static int
 wm_gmii_82580_writereg(device_t dev, int phy, int reg, uint16_t val)
@@ -11545,7 +11545,7 @@ wm_gmii_82580_writereg(device_t dev, int phy, int reg, uint16_t val)
  *
  *	Read a PHY register on the I2100 and I211.
  * This could be handled by the PHY layer if we didn't have to lock the
- * ressource ...
+ * resource ...
  */
 static int
 wm_gmii_gs40g_readreg(device_t dev, int phy, int reg, uint16_t *val)
@@ -11580,7 +11580,7 @@ release:
  *
  *	Write a PHY register on the I210 and I211.
  * This could be handled by the PHY layer if we didn't have to lock the
- * ressource ...
+ * resource ...
  */
 static int
 wm_gmii_gs40g_writereg(device_t dev, int phy, int reg, uint16_t val)
@@ -11867,7 +11867,7 @@ wm_sgmii_sfp_preconfig(struct wm_softc *sc)
  *
  *	Read a PHY register on the SGMII
  * This could be handled by the PHY layer if we didn't have to lock the
- * ressource ...
+ * resource ...
  */
 static int
 wm_sgmii_readreg(device_t dev, int phy, int reg, uint16_t *val)
@@ -11924,7 +11924,7 @@ wm_sgmii_readreg_locked(device_t dev, int phy, int reg, uint16_t *val)
  *
  *	Write a PHY register on the SGMII.
  * This could be handled by the PHY layer if we didn't have to lock the
- * ressource ...
+ * resource ...
  */
 static int
 wm_sgmii_writereg(device_t dev, int phy, int reg, uint16_t val)
