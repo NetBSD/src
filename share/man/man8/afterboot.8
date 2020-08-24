@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.72 2020/08/24 12:45:48 nia Exp $
+.\"	$NetBSD: afterboot.8,v 1.73 2020/08/24 12:58:16 nia Exp $
 .\"	$OpenBSD: afterboot.8,v 1.72 2002/02/22 02:02:33 miod Exp $
 .\"
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -961,71 +961,6 @@ Other tools you may find useful are
 .Xr systat 1
 and
 .Xr top 1 .
-.Sh COMPILING A KERNEL
-Note:
-The standard
-.Nx
-kernel configuration (GENERIC) is suitable for most purposes.
-.Pp
-First, review the system message buffer in
-.Pa /var/run/dmesg.boot
-and by using the
-.Xr dmesg 8
-command to find out information on your system's devices as probed by the
-kernel at boot.
-In particular, note which devices were not configured.
-This information will prove useful when editing kernel configuration files.
-.Pp
-To compile a kernel inside a writable source tree, do the following:
-.Bd -literal -offset indent
-$ cd /usr/src/sys/arch/SOMEARCH/conf
-$ cp GENERIC SOMEFILE (only the first time)
-$ vi SOMEFILE (adapt to your needs)
-$ config SOMEFILE
-$ cd ../compile/SOMEFILE
-$ make depend
-$ make
-.Ed
-.Pp
-where
-.Ar SOMEARCH
-is the architecture (e.g., i386), and
-.Ar SOMEFILE
-should be a name indicative of a particular configuration (often
-that of the hostname).
-.Pp
-If you are building your kernel again, before you do a
-.Ic make
-you should do a
-.Ic make clean
-after making changes to your kernel options.
-.Pp
-After either of these two methods, you can place the new kernel (called
-.Pa netbsd )
-in
-.Pa /
-(i.e.,
-.Pa /netbsd )
-by issuing
-.Ic make install
-and the system will boot it next time.
-The old kernel is stored as
-.Pa /onetbsd
-so you can boot it in case of failure.
-.Pp
-If you are using toolchain to build your kernel, you will also need to
-build a new set of toolchain binaries.
-You can do it by changing into
-.Pa /usr/src
-and issuing:
-.Bd -literal -offset indent
-$ cd /usr/src
-$ K=sys/arch/`uname -m`/conf
-$ cp $K/GENERIC $K/SOMEFILE
-$ vi $K/SOMEFILE (adapt to your needs)
-$ ./build.sh tools
-$ ./build.sh kernel=SOMEFILE
-.Ed
 .Sh SYSTEM TESTING
 At this point, the system should be fully configured to your liking.
 It is now a good time to ensure that the system behaves according to
