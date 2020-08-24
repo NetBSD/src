@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.239 2020/08/17 08:23:30 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.240 2020/08/24 18:16:04 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -4801,7 +4801,9 @@ ixgbe_handle_admin(struct work *wk, void *context)
 #endif
 	}
 	atomic_store_relaxed(&adapter->admin_pending, 0);
-	if ((req & IXGBE_REQUEST_TASK_NEED_ACKINTR) != 0) {
+	if ((adapter->task_requests & IXGBE_REQUEST_TASK_NEED_ACKINTR) != 0) {
+		atomic_and_32(&adapter->task_requests,
+		    ~IXGBE_REQUEST_TASK_NEED_ACKINTR);
 		if ((adapter->feat_en & IXGBE_FEATURE_MSIX) != 0) {
 			/* Re-enable other interrupts */
 			IXGBE_WRITE_REG(hw, IXGBE_EIMS, IXGBE_EIMS_OTHER);
