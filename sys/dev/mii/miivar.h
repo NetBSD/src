@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.72 2020/07/07 08:44:12 msaitoh Exp $	*/
+/*	$NetBSD: miivar.h,v 1.73 2020/08/24 04:23:41 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2020 The NetBSD Foundation, Inc.
@@ -332,6 +332,7 @@ void	mii_phy_delete_media(struct mii_softc *);
 /* MII must be LOCKED */
 void	mii_phy_setmedia(struct mii_softc *);
 int	mii_phy_auto(struct mii_softc *);
+int	mii_phy_auto_restart(struct mii_softc *);
 void	mii_phy_reset(struct mii_softc *);
 void	mii_phy_down(struct mii_softc *);
 int	mii_phy_tick(struct mii_softc *);
