@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.469 2020/08/23 22:49:45 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.470 2020/08/24 20:15:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.469 2020/08/23 22:49:45 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.470 2020/08/24 20:15:51 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.469 2020/08/23 22:49:45 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.470 2020/08/24 20:15:51 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3130,10 +3130,10 @@ ApplyModifiers(
 	    VAR_DEBUG("Applying ${%s:%c%s} to \"%s\" "
 		      "(eflags = %s, vflags = %s)\n",
 		      st.v->name, mod[0], is_single_char ? "" : "...", st.val,
-		      Enum_ToString(eflags_str, sizeof eflags_str, st.eflags,
-				    VarEvalFlags_ToStringSpecs),
-		      Enum_ToString(vflags_str, sizeof vflags_str, st.v->flags,
-				    VarFlags_ToStringSpecs));
+		      Enum_FlagsToString(eflags_str, sizeof eflags_str,
+					 st.eflags, VarEvalFlags_ToStringSpecs),
+		      Enum_FlagsToString(vflags_str, sizeof vflags_str,
+					 st.v->flags, VarFlags_ToStringSpecs));
 	}
 
 	switch (*mod) {
@@ -3275,10 +3275,10 @@ ApplyModifiers(
 	    VAR_DEBUG("Result of ${%s:%.*s} is %s%s%s "
 		      "(eflags = %s, vflags = %s)\n",
 		      st.v->name, (int)(p - mod), mod, quot, newVal, quot,
-		      Enum_ToString(eflags_str, sizeof eflags_str, st.eflags,
-				    VarEvalFlags_ToStringSpecs),
-		      Enum_ToString(vflags_str, sizeof vflags_str, st.v->flags,
-				    VarFlags_ToStringSpecs));
+		      Enum_FlagsToString(eflags_str, sizeof eflags_str,
+					 st.eflags, VarEvalFlags_ToStringSpecs),
+		      Enum_FlagsToString(vflags_str, sizeof vflags_str,
+					 st.v->flags, VarFlags_ToStringSpecs));
 	}
 
 	if (st.newVal != st.val) {
@@ -3410,8 +3410,8 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
     char eflags_str[VarEvalFlags_ToStringSize];
 
     VAR_DEBUG("%s: %s with %s\n", __func__, str,
-	      Enum_ToString(eflags_str, sizeof eflags_str, eflags,
-			    VarEvalFlags_ToStringSpecs));
+	      Enum_FlagsToString(eflags_str, sizeof eflags_str, eflags,
+				 VarEvalFlags_ToStringSpecs));
 
     *freePtr = NULL;
     extramodifiers = NULL;	/* extra modifiers to apply first */
