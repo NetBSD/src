@@ -1,4 +1,4 @@
-/* $NetBSD: btvmei.c,v 1.32 2019/11/10 21:16:36 chs Exp $ */
+/* $NetBSD: btvmei.c,v 1.33 2020/08/24 05:37:41 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.32 2019/11/10 21:16:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.33 2020/08/24 05:37:41 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ void b3_617_slaveconfig(device_t, struct vme_attach_args *);
 static void b3_617_vmeintr(struct b3_617_softc *, unsigned char);
 
 /*
- * mapping ressources, needed for deallocation
+ * mapping resources, needed for deallocation
  */
 struct b3_617_vmeresc {
 	bus_space_handle_t handle;
@@ -336,7 +336,7 @@ b3_617_halt(struct b3_617_softc *sc)
 {
 	/*
 	 * because detach code checks for existence of children,
-	 * all ressources (mappings, VME IRQs, DMA requests)
+	 * all resources (mappings, VME IRQs, DMA requests)
 	 * should be deallocated at this point
 	 */
 
