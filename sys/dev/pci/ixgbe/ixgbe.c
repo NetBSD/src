@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.241 2020/08/24 18:21:59 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.242 2020/08/24 18:31:14 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -4624,13 +4624,20 @@ static bool
 ixgbe_sfp_cage_full(struct ixgbe_hw *hw)
 {
 	uint32_t mask;
+	int rv;
 
 	if (hw->mac.type >= ixgbe_mac_X540)
 		mask = IXGBE_ESDP_SDP0;
 	else
 		mask = IXGBE_ESDP_SDP2;
 
-	return IXGBE_READ_REG(hw, IXGBE_ESDP) & mask;
+	rv = IXGBE_READ_REG(hw, IXGBE_ESDP) & mask;
+	if (hw->mac.type == ixgbe_mac_X550EM_a) {
+		/* It seems X550EM_a's SDP0 is inverted than others... */
+		return (rv == 0);
+	}
+
+	return rv;
 } /* ixgbe_sfp_cage_full */
 
 /************************************************************************
@@ -4653,6 +4660,10 @@ ixgbe_handle_mod(void *context)
 			break;
 		case ixgbe_mac_X550EM_x:
 		case ixgbe_mac_X550EM_a:
+			/*
+			 * XXX See ixgbe_sfp_cage_full(). It seems the bit is
+			 * inverted on X550EM_a, so I think this is incorrect.
+			 */
 			cage_full = IXGBE_READ_REG(hw, IXGBE_ESDP) &
 			    IXGBE_ESDP_SDP0;
 			break;
