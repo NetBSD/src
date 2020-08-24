@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.7 2008/12/14 18:46:33 christos Exp $	*/
+/*	$NetBSD: am7990.c,v 1.8 2020/08/24 05:37:40 msaitoh Exp $	*/
 
 /* mostly from netbsd:sys/arch/i386/netboot/ne2100.c
  memory allocation now 1 chunk, added deallocation
@@ -157,7 +157,7 @@ am7990_init(void)
 }
 
 /*
- * Stop ethernet board and free ressources
+ * Stop ethernet board and free resources
  */
 void
 EtherStop(void)

@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.74 2019/11/10 21:16:28 chs Exp $ */
+/* $NetBSD: pnpbios.c,v 1.75 2020/08/24 05:37:40 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.74 2019/11/10 21:16:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.75 2020/08/24 05:37:40 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,7 @@ static int pnp_debugdump(struct pnpresources *, const void *, size_t);
 #endif
 
 /*
- * small ressource types (beginning with 1)
+ * small resource types (beginning with 1)
  */
 static const struct{
 	int (*handler)(struct pnpresources *, const void *, size_t);
