@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.243 2020/08/24 18:42:17 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.244 2020/08/24 19:03:27 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -4782,7 +4782,9 @@ ixgbe_handle_admin(struct work *wk, void *context)
 	 */
 	IFNET_LOCK(ifp);
 	IXGBE_CORE_LOCK(adapter);
-	while ((req = adapter->task_requests) != 0) {
+	while ((req =
+		(adapter->task_requests & ~IXGBE_REQUEST_TASK_NEED_ACKINTR))
+	    != 0) {
 		if ((req & IXGBE_REQUEST_TASK_LSC) != 0) {
 			ixgbe_handle_link(adapter);
 			atomic_and_32(&adapter->task_requests,
