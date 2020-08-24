@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.240 2020/08/24 18:16:04 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.241 2020/08/24 18:21:59 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -3558,13 +3558,6 @@ ixgbe_detach(device_t dev, int flags)
 		return (EBUSY);
 	}
 
-	/*
-	 * Stop the interface. ixgbe_setup_low_power_mode() calls ixgbe_stop(),
-	 * so it's not required to call ixgbe_stop() directly.
-	 */
-	IXGBE_CORE_LOCK(adapter);
-	ixgbe_setup_low_power_mode(adapter);
-	IXGBE_CORE_UNLOCK(adapter);
 #if NVLAN > 0
 	/* Make sure VLANs are not using driver */
 	if (!VLAN_ATTACHED(&adapter->osdep.ec))
@@ -3577,6 +3570,25 @@ ixgbe_detach(device_t dev, int flags)
 	}
 #endif
 
+	/*
+	 * Stop the interface. ixgbe_setup_low_power_mode() calls ixgbe_stop(),
+	 * so it's not required to call ixgbe_stop() directly.
+	 */
+	IXGBE_CORE_LOCK(adapter);
+	ixgbe_setup_low_power_mode(adapter);
+	IXGBE_CORE_UNLOCK(adapter);
+
+	callout_halt(&adapter->timer, NULL);
+	if (adapter->feat_en & IXGBE_FEATURE_RECOVERY_MODE) {
+		callout_stop(&adapter->recovery_mode_timer);
+		callout_halt(&adapter->recovery_mode_timer, NULL);
+	}
+
+	workqueue_wait(adapter->admin_wq, &adapter->admin_wc);
+	atomic_store_relaxed(&adapter->admin_pending, 0);
+	workqueue_wait(adapter->timer_wq, &adapter->timer_wc);
+	atomic_store_relaxed(&adapter->timer_pending, 0);
+
 	pmf_device_deregister(dev);
 
 	ether_ifdetach(adapter->ifp);
@@ -3587,12 +3599,6 @@ ixgbe_detach(device_t dev, int flags)
 	ctrl_ext = IXGBE_READ_REG(&adapter->hw, IXGBE_CTRL_EXT);
 	ctrl_ext &= ~IXGBE_CTRL_EXT_DRV_LOAD;
 	IXGBE_WRITE_REG(&adapter->hw, IXGBE_CTRL_EXT, ctrl_ext);
-
-	callout_halt(&adapter->timer, NULL);
-	if (adapter->feat_en & IXGBE_FEATURE_RECOVERY_MODE) {
-		callout_stop(&adapter->recovery_mode_timer);
-		callout_halt(&adapter->recovery_mode_timer, NULL);
-	}
 
 	if (adapter->feat_en & IXGBE_FEATURE_NETMAP)
 		netmap_detach(adapter->ifp);
