@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.471 2020/08/25 16:27:24 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.472 2020/08/25 21:16:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.471 2020/08/25 16:27:24 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.472 2020/08/25 21:16:53 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.471 2020/08/25 16:27:24 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.472 2020/08/25 21:16:53 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2906,7 +2906,7 @@ ApplyModifier_Assign(const char **pp, ApplyModifiersState *st)
 	    const char *errfmt;
 	    char *cmd_output = Cmd_Exec(val, &errfmt);
 	    if (errfmt)
-		Error(errfmt, st->val);
+		Error(errfmt, val);
 	    else
 		Var_Set(st->v->name, cmd_output, v_ctxt);
 	    free(cmd_output);

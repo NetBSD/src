@@ -21,6 +21,6 @@ sysv:y
 make: Unfinished modifier for ASSIGN ('}' missing)
 
 ok=word
-make: "previous" returned non-zero status
+make: " echo word; false " returned non-zero status
 err=previous
 exit status 0
