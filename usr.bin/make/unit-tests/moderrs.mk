@@ -1,4 +1,4 @@
-# $Id: moderrs.mk,v 1.14 2020/08/09 15:15:29 rillig Exp $
+# $Id: moderrs.mk,v 1.15 2020/08/25 20:49:40 rillig Exp $
 #
 # various modifier error tests
 
@@ -20,7 +20,6 @@ all:	mod-regex-undefined-subexpression
 all:	mod-ts-parse
 all:	mod-t-parse
 all:	mod-ifelse-parse
-all:	mod-assign-parse
 all:	mod-remember-parse
 all:	mod-sysv-parse
 
@@ -163,12 +162,6 @@ mod-ifelse-parse:
 	@echo ${FIB:?then:
 	@echo ${FIB:?then:else
 	@echo ${FIB:?then:else}
-
-mod-assign-parse:
-	@echo $@:
-	@echo ${ASSIGN::x}	# 'x' is an unknown assignment operator
-	@echo ${::=value}	# trying to set the empty variable
-	@echo ${ASSIGN::=value	# missing closing brace
 
 mod-remember-parse:
 	@echo $@:
