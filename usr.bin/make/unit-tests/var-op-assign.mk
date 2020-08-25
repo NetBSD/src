@@ -1,4 +1,4 @@
-# $NetBSD: var-op-assign.mk,v 1.3 2020/08/25 16:07:39 rillig Exp $
+# $NetBSD: var-op-assign.mk,v 1.4 2020/08/25 16:20:32 rillig Exp $
 #
 # Tests for the = variable assignment operator, which overwrites an existing
 # variable or creates it.
@@ -46,6 +46,44 @@ VAR=	${:! echo 'this will be evaluated later' 1>&2 !}
 # This outputs the line to stderr.
 .if ${VAR}
 .endif
+
+# In a variable assignment, the variable name must consist of a single word.
+#
+VARIABLE NAME=	variable value
+
+# But if the whitespace appears inside parentheses or braces, everything is
+# fine.
+#
+# XXX: This was not an intentional decision, as variable names typically
+# neither contain parentheses nor braces.  This is only a side-effect from
+# the implementation of the parser, which cheats when parsing a variable
+# name.  It only counts parentheses and braces instead of properly parsing
+# nested variable expressions such as VAR.${param}.
+#
+VAR(spaces in parentheses)=	()
+VAR{spaces in braces}=		{}
+
+# Be careful and use indirect variable names here, to prevent accidentally
+# accepting the test in case the parser just uses "VAR" as the variable name,
+# ignoring all the rest.
+#
+VARNAME_PAREN=	VAR(spaces in parentheses)
+VARNAME_BRACES=	VAR{spaces in braces}
+
+.if ${${VARNAME_PAREN}} != "()"
+.error
+.endif
+
+.if ${${VARNAME_BRACES}} != "{}"
+.error
+.endif
+
+# In safe mode, parsing would stop immediately after the "VARIABLE NAME="
+# line, since any commands run after that are probably working with
+# unexpected variable values.
+#
+# Therefore, just output an info message.
+.info Parsing still continues until here.
 
 all:
 	@:;
