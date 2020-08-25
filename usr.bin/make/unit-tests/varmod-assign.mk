@@ -1,4 +1,4 @@
-# $NetBSD: varmod-assign.mk,v 1.5 2020/08/25 21:07:39 rillig Exp $
+# $NetBSD: varmod-assign.mk,v 1.6 2020/08/25 21:16:53 rillig Exp $
 #
 # Tests for the obscure ::= variable modifiers, which perform variable
 # assignments during evaluation, just like the = operator in C.
@@ -73,9 +73,9 @@ mod-assign-parse:
 
 mod-assign-shell-error:
 	# If the command succeeds, the variable is assigned.
-	@${SH_OK::!= echo word; true} echo ok=${SH_OK}
+	@${SH_OK::!= echo word; true } echo ok=${SH_OK}
 
 	# If the command fails, the variable keeps its previous value.
 	# FIXME: the error message says: "previous" returned non-zero status
 	@${SH_ERR::=previous}
-	@${SH_ERR::!= echo word; false} echo err=${SH_ERR}
+	@${SH_ERR::!= echo word; false } echo err=${SH_ERR}
