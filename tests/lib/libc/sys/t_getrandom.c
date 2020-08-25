@@ -1,4 +1,4 @@
-/*	$NetBSD: t_getrandom.c,v 1.2 2020/08/23 17:50:19 riastradh Exp $	*/
+/*	$NetBSD: t_getrandom.c,v 1.3 2020/08/25 01:37:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,13 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_getrandom.c,v 1.2 2020/08/23 17:50:19 riastradh Exp $");
+__RCSID("$NetBSD: t_getrandom.c,v 1.3 2020/08/25 01:37:38 riastradh Exp $");
 
 #include <sys/random.h>
 
 #include <atf-c.h>
 #include <errno.h>
 #include <signal.h>
+#include <stdio.h>
 #include <unistd.h>
 
 static uint8_t buf[65536];
@@ -45,6 +46,22 @@ static uint8_t zero24[24];
 static void
 alarm_handler(int signo)
 {
+
+	fprintf(stderr, "timeout\n");
+}
+
+static void
+install_alarm_handler(void)
+{
+	struct sigaction sa;
+
+	memset(&sa, 0, sizeof sa);
+	sa.sa_handler = alarm_handler;
+	sigfillset(&sa.sa_mask);
+	sa.sa_flags = 0;	/* no SA_RESTART */
+
+	ATF_CHECK_MSG(sigaction(SIGALRM, &sa, NULL) != -1,
+	    "sigaction(SIGALRM): %s", strerror(errno));
 }
 
 /*
@@ -58,14 +75,14 @@ ATF_TC(getrandom_default);
 ATF_TC_HEAD(getrandom_default, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "getrandom(..., 0)");
+	atf_tc_set_md_var(tc, "timeout", "2");
 }
 ATF_TC_BODY(getrandom_default, tc)
 {
 	ssize_t n;
 
-	ATF_REQUIRE(signal(SIGALRM, &alarm_handler) != SIG_ERR);
-
 	/* default */
+	install_alarm_handler();
 	alarm(1);
 	memset(buf, 0, sizeof buf);
 	n = getrandom(buf, sizeof buf, 0);
@@ -141,14 +158,14 @@ ATF_TC(getrandom_random);
 ATF_TC_HEAD(getrandom_random, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "getrandom(..., GRND_RANDOM)");
+	atf_tc_set_md_var(tc, "timeout", "2");
 }
 ATF_TC_BODY(getrandom_random, tc)
 {
 	ssize_t n;
 
-	ATF_REQUIRE(signal(SIGALRM, &alarm_handler) != SIG_ERR);
-
 	/* `random' (hokey) */
+	install_alarm_handler();
 	alarm(1);
 	memset(buf, 0, sizeof buf);
 	n = getrandom(buf, sizeof buf, GRND_RANDOM);
