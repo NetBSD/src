@@ -1,10 +1,12 @@
-# $NetBSD: varmod-assign.mk,v 1.3 2020/08/25 18:59:30 rillig Exp $
+# $NetBSD: varmod-assign.mk,v 1.4 2020/08/25 20:49:40 rillig Exp $
 #
 # Tests for the obscure ::= variable modifiers, which perform variable
 # assignments during evaluation, just like the = operator in C.
 
 all:	mod-assign
 all:	mod-assign-nested
+all:	mod-assign-empty
+all:	mod-assign-parse
 
 mod-assign:
 	# The ::?= modifier applies the ?= assignment operator 3 times.
@@ -46,3 +48,24 @@ mod-assign-nested:
 	@echo $@: ${SINK4:Q}
 SINK3:=	${1:?${THEN3::=then3${IT3::=t3}}:${ELSE3::=else3${IE3::=e3}}}${THEN3}${ELSE3}${IT3}${IE3}
 SINK4:=	${0:?${THEN4::=then4${IT4::=t4}}:${ELSE4::=else4${IE4::=e4}}}${THEN4}${ELSE4}${IT4}${IE4}
+
+mod-assign-empty:
+	# Assigning to the empty variable would obviously not work since that variable
+	# is write-protected.  Therefore it is rejected early as a "bad modifier".
+	@echo ${::=value}
+	@echo $@: ${:Uvalue::=overwritten}
+
+	# The :L modifier sets the variable's value to its name.
+	# Since the name is still "VAR", assigning to that variable works.
+	@echo $@: ${VAR:L::=overwritten} VAR=${VAR}
+
+mod-assign-parse:
+	# The modifier for assignment operators starts with a ':'.
+	# An 'x' after that is an invalid modifier.
+	@echo ${ASSIGN::x}	# 'x' is an unknown assignment operator
+
+	# When parsing an assignment operator fails because the operator is
+	# incomplete, make falls back to the SysV modifier.
+	@echo ${SYSV::=sysv\:x}${SYSV::x=:y}
+
+	@echo ${ASSIGN::=value	# missing closing brace

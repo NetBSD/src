@@ -10,4 +10,14 @@ mod-assign-nested: then1t1
 mod-assign-nested: else2e2
 mod-assign-nested: then3t3
 mod-assign-nested: else4e4
+make: Bad modifier `:' for 
+value}
+make: Bad modifier `:' for 
+mod-assign-empty: overwritten}
+mod-assign-empty: VAR=overwritten
+make: Unknown modifier ':'
+
+sysv:y
+make: Unfinished modifier for ASSIGN ('}' missing)
+
 exit status 0
