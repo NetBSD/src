@@ -1,4 +1,4 @@
-/* $NetBSD: t_fmod.c,v 1.3 2015/01/03 14:23:53 gson Exp $ */
+/* $NetBSD: t_fmod.c,v 1.4 2020/08/25 13:39:16 gson Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ ATF_TC_HEAD(fmod, tc)
 
 ATF_TC_BODY(fmod, tc)
 {
-	if (isQEMU())
+	if (isQEMU_TCG())
 		atf_tc_expect_fail("PR misc/44767");
 
 	ATF_CHECK(fmodf(2.0, 1.0) == 0);
