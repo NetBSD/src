@@ -123,13 +123,6 @@ make: Unfinished modifier for FIB ('}' missing)
 make: Unfinished modifier for FIB ('}' missing)
 
 then
-mod-assign-parse:
-make: Unknown modifier ':'
-
-make: Bad modifier `:' for 
-value}
-make: Unfinished modifier for ASSIGN ('}' missing)
-
 mod-remember-parse:
 1 1 2 3 5 8 13 21 34
 make: Unknown modifier '_'
