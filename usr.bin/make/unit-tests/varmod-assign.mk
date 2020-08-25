@@ -1,4 +1,4 @@
-# $NetBSD: varmod-assign.mk,v 1.4 2020/08/25 20:49:40 rillig Exp $
+# $NetBSD: varmod-assign.mk,v 1.5 2020/08/25 21:07:39 rillig Exp $
 #
 # Tests for the obscure ::= variable modifiers, which perform variable
 # assignments during evaluation, just like the = operator in C.
@@ -7,6 +7,7 @@ all:	mod-assign
 all:	mod-assign-nested
 all:	mod-assign-empty
 all:	mod-assign-parse
+all:	mod-assign-shell-error
 
 mod-assign:
 	# The ::?= modifier applies the ?= assignment operator 3 times.
@@ -69,3 +70,12 @@ mod-assign-parse:
 	@echo ${SYSV::=sysv\:x}${SYSV::x=:y}
 
 	@echo ${ASSIGN::=value	# missing closing brace
+
+mod-assign-shell-error:
+	# If the command succeeds, the variable is assigned.
+	@${SH_OK::!= echo word; true} echo ok=${SH_OK}
+
+	# If the command fails, the variable keeps its previous value.
+	# FIXME: the error message says: "previous" returned non-zero status
+	@${SH_ERR::=previous}
+	@${SH_ERR::!= echo word; false} echo err=${SH_ERR}
