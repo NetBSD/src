@@ -1,4 +1,4 @@
-/*	$NetBSD: make_malloc.h,v 1.7 2020/08/20 06:35:14 rillig Exp $	*/
+/*	$NetBSD: make_malloc.h,v 1.8 2020/08/25 17:37:09 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@ char *bmake_strldup(const char *, size_t);
  *
  * The case of a NULL pointer happens especially often after Var_Value,
  * since only environment variables need to be freed, but not others. */
-static inline void
+static inline void MAKE_ATTR_UNUSED
 bmake_free(void *p)
 {
     if (p != NULL)
