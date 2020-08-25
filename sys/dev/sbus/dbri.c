@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.42 2020/02/29 06:06:29 isaki Exp $	*/
+/*	$NetBSD: dbri.c,v 1.43 2020/08/25 13:36:41 skrll Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.42 2020/02/29 06:06:29 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.43 2020/08/25 13:36:41 skrll Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -372,7 +372,7 @@ dbri_attach_sbus(device_t parent, device_t self, void *aux)
 	sc->sc_playing = 0;
 	sc->sc_recording = 0;
 	sc->sc_init_done = 0;
-	config_finalize_register(self, &dbri_config_interrupts);
+	config_finalize_register(self, dbri_config_interrupts);
 
 	return;
 }
