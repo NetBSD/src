@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.4 2019/08/18 04:13:24 kamil Exp $
+#	$NetBSD: Makefile,v 1.5 2020/08/25 14:05:17 christos Exp $
 
 .include <bsd.own.mk>
 
 RUMPPRG=	sockstat
+BINGRP= kmem
+BINMODE=2555
 
 .PATH:  ${.CURDIR}/../../lib/libc/gen
 CPPFLAGS+= -DRUMP_ACTION
