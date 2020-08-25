@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.21 2020/07/19 11:47:47 skrll Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.22 2020/08/25 15:03:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -467,9 +467,13 @@ generic_startv7:
 	b	armv7_mmuinit
 
 generic_vstartv7:
+	VPRINTF("virtual\n\r")
+
 #ifdef KASAN
 	ldr	r0, =start_stacks_bottom
 	bl	_C_LABEL(kasan_early_init)
+
+	VPRINTF("kasan\n\r")
 #endif
 
 	/* r0 = &cpu_info_store[0] */
@@ -518,9 +522,13 @@ generic_startv6:
 	b	armv6_mmuinit
 
 generic_vstartv6:
+	VPRINTF("virtual\n\r")
+
 #ifdef KASAN
 	ldr	r0, =start_stacks_bottom
 	bl	_C_LABEL(kasan_early_init)
+
+	VPRINTF("kasan\n\r")
 #endif
 
 	VPRINTF("go\n\r")
@@ -878,7 +886,7 @@ armv7_mpcontinuation:
 	// Adjust stack back to KVA address
 	add	sp, sp, R_VTOPDIFF
 
-	VPRINTF("go\n\r")
+	VPRINTF("virtual\n\r")
 
 	// index into cpu_mpidr[] or cpu_number if not found
 	mov	r0, R_INDEX
