@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.114 2020/08/23 16:58:02 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.115 2020/08/25 16:50:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.114 2020/08/23 16:58:02 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.115 2020/08/25 16:50:02 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.114 2020/08/23 16:58:02 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.115 2020/08/25 16:50:02 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -548,7 +548,7 @@ void
 Suff_ClearSuffixes(void)
 {
 #ifdef CLEANUP
-    Lst_Concat(suffClean, sufflist, LST_CONCLINK);
+    Lst_MoveAllS(suffClean, sufflist);
 #endif
     sufflist = Lst_Init();
     sNum = 0;
@@ -2552,6 +2552,7 @@ Suff_Init(void)
 {
 #ifdef CLEANUP
     suffClean = Lst_Init();
+    sufflist = Lst_Init();
 #endif
     srclist = Lst_Init();
     transforms = Lst_Init();
