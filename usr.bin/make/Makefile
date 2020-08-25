@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.92 2020/08/23 17:22:52 rillig Exp $
+#	$NetBSD: Makefile,v 1.93 2020/08/25 16:39:19 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -163,6 +163,11 @@ COPTS.meta.c+=	${GCC_NO_FORMAT_TRUNCATION}
 COPTS.parse.c+=	${GCC_NO_FORMAT_TRUNCATION}
 
 COPTS+=		-Wdeclaration-after-statement
+
+# For -DCLEANUP and similar feature toggles.
+CPPFLAGS+=	${USER_CPPFLAGS}
+# For overriding -std=gnu99 or similar options.
+CFLAGS+=	${USER_CFLAGS}
 
 # A simple unit-test driver to help catch regressions
 TEST_MAKE ?= ${.OBJDIR}/${PROG:T}
