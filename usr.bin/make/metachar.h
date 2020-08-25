@@ -1,4 +1,4 @@
-/*	$NetBSD: metachar.h,v 1.6 2020/08/23 17:04:21 rillig Exp $	*/
+/*	$NetBSD: metachar.h,v 1.7 2020/08/25 17:37:09 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -31,13 +31,13 @@
 #ifndef MAKE_METACHAR_H
 #define MAKE_METACHAR_H
 
-#include <ctype.h>
+#include "make.h"
 
 extern unsigned char _metachar[];
 
 #define ismeta(c)	_metachar[(c) & 0x7f]
 
-static inline int
+static inline int MAKE_ATTR_UNUSED
 needshell(const char *cmd, int white)
 {
 	while (!ismeta(*cmd) && *cmd != ':' && *cmd != '=') {
