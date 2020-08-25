@@ -1,4 +1,4 @@
-/* $NetBSD: tegra124_cpu.c,v 1.4 2017/06/02 00:09:56 jmcneill Exp $ */
+/* $NetBSD: tegra124_cpu.c,v 1.5 2020/08/25 13:33:43 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra124_cpu.c,v 1.4 2017/06/02 00:09:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra124_cpu.c,v 1.5 2020/08/25 13:33:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -140,9 +140,14 @@ tegra124_cpu_attach(device_t parent, device_t self, void *aux)
 	config_finalize_register(self, tegra124_cpu_init_cpufreq);
 }
 
+static bool tegra124_cpu_init_done = false;
+
 static int
 tegra124_cpu_init_cpufreq(device_t dev)
 {
+	if (tegra124_cpu_init_done)
+		return 0;
+
 	tegra124_speedo_init();
 
 	int cpu_node = OF_finddevice("/cpus/cpu@0");
@@ -161,6 +166,8 @@ tegra124_cpu_init_cpufreq(device_t dev)
 	}
 
 	tegra_cpufreq_register(&tegra124_cpufreq_func);
+
+	tegra124_cpu_init_done = true;
 
 	return 0;
 }
