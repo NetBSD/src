@@ -1,2 +1,6 @@
 this will be evaluated later
-exit status 0
+make: "var-op-assign.mk" line 52: Need an operator
+make: "var-op-assign.mk" line 86: Parsing still continues until here.
+make: Fatal errors encountered -- cannot continue
+make: stopped in unit-tests
+exit status 1
