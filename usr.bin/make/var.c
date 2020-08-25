@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.470 2020/08/24 20:15:51 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.471 2020/08/25 16:27:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.470 2020/08/24 20:15:51 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.471 2020/08/25 16:27:24 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.470 2020/08/24 20:15:51 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.471 2020/08/25 16:27:24 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -142,10 +142,8 @@ __RCSID("$NetBSD: var.c,v 1.470 2020/08/24 20:15:51 rillig Exp $");
 
 #define VAR_DEBUG(fmt, ...) VAR_DEBUG_IF(TRUE, fmt, __VA_ARGS__)
 
-ENUM_RTTI_3(VarEvalFlags,
-	   VARE_UNDEFERR,
-	   VARE_WANTRES,
-	   VARE_ASSIGN);
+ENUM_FLAGS_RTTI_3(VarEvalFlags,
+		  VARE_UNDEFERR, VARE_WANTRES, VARE_ASSIGN);
 
 /*
  * This lets us tell if we have replaced the original environ
@@ -231,15 +229,9 @@ typedef enum {
     VAR_READONLY = 0x80
 } VarFlags;
 
-ENUM_RTTI_8(VarFlags,
-	    VAR_IN_USE,
-	    VAR_FROM_ENV,
-	    VAR_JUNK,
-	    VAR_KEEP,
-	    VAR_EXPORTED,
-	    VAR_REEXPORT,
-	    VAR_FROM_CMD,
-	    VAR_READONLY);
+ENUM_FLAGS_RTTI_8(VarFlags,
+		  VAR_IN_USE, VAR_FROM_ENV, VAR_JUNK, VAR_KEEP,
+		  VAR_EXPORTED, VAR_REEXPORT, VAR_FROM_CMD, VAR_READONLY);
 
 typedef struct Var {
     char          *name;	/* the variable's name; it is allocated for

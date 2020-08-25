@@ -1,4 +1,4 @@
-/*	$NetBSD: enum.h,v 1.7 2020/08/24 20:15:51 rillig Exp $	*/
+/*	$NetBSD: enum.h,v 1.8 2020/08/25 16:27:24 rillig Exp $	*/
 
 /*
  Copyright (c) 2020 Roland Illig <rillig@NetBSD.org>
@@ -44,36 +44,39 @@ typedef struct {
 const char *Enum_FlagsToString(char *, size_t, int, const EnumToStringSpec *);
 const char *Enum_ValueToString(int, const EnumToStringSpec *);
 
+/* For Enum_FlagsToString, the separator between flags. */
 #define ENUM__SEP "|"
 
-#define ENUM__JOIN_1(v1) \
+/* Generate the string that joins all possible flags, to see how large the
+ * buffer must be. */
+#define ENUM__JOIN_STR_1(v1) \
 	#v1
-#define ENUM__JOIN_2(v1, v2) \
-	#v1 ENUM__SEP #v2
-#define ENUM__JOIN_4(v1, v2, v3, v4) \
-	ENUM__JOIN_2(v1, v2) ENUM__SEP ENUM__JOIN_2(v3, v4)
-#define ENUM__JOIN_8(v1, v2, v3, v4, v5, v6, v7, v8) \
-	ENUM__JOIN_4(v1, v2, v3, v4) ENUM__SEP ENUM__JOIN_4(v5, v6, v7, v8)
-#define ENUM__JOIN_16(v01, v02, v03, v04, v05, v06, v07, v08, \
-		      v09, v10, v11, v12, v13, v14, v15, v16) \
-	ENUM__JOIN_8(v01, v02, v03, v04, v05, v06, v07, v08) ENUM__SEP \
-	ENUM__JOIN_8(v09, v10, v11, v12, v13, v14, v15, v16)
-#define ENUM__JOIN_32(v01, v02, v03, v04, v05, v06, v07, v08, \
-		      v09, v10, v11, v12, v13, v14, v15, v16, \
-		      v17, v18, v19, v20, v21, v22, v23, v24, \
-		      v25, v26, v27, v28, v29, v30, v31, v32) \
-	ENUM__JOIN_16(v01, v02, v03, v04, v05, v06, v07, v08, \
-		      v09, v10, v11, v12, v13, v14, v15, v16) ENUM__SEP \
-	ENUM__JOIN_16(v17, v18, v19, v20, v21, v22, v23, v24, \
-		      v25, v26, v27, v28, v29, v30, v31, v32)
-#define ENUM__JOIN(part1, part2) \
+#define ENUM__JOIN_STR_2(v1, v2) \
+	ENUM__JOIN_STR_1(v1) ENUM__SEP \
+	ENUM__JOIN_STR_1(v2)
+#define ENUM__JOIN_STR_4(v1, v2, v3, v4) \
+	ENUM__JOIN_STR_2(v1, v2) ENUM__SEP \
+	ENUM__JOIN_STR_2(v3, v4)
+#define ENUM__JOIN_STR_8(v1, v2, v3, v4, v5, v6, v7, v8) \
+	ENUM__JOIN_STR_4(v1, v2, v3, v4) ENUM__SEP \
+	ENUM__JOIN_STR_4(v5, v6, v7, v8)
+#define ENUM__JOIN_STR_16(v01, v02, v03, v04, v05, v06, v07, v08, \
+			  v09, v10, v11, v12, v13, v14, v15, v16) \
+	ENUM__JOIN_STR_8(v01, v02, v03, v04, v05, v06, v07, v08) ENUM__SEP \
+	ENUM__JOIN_STR_8(v09, v10, v11, v12, v13, v14, v15, v16)
+
+#define ENUM__JOIN_2(part1, part2) \
 	part1 ENUM__SEP part2
+#define ENUM__JOIN_3(part1, part2, part3) \
+	part1 ENUM__SEP part2 ENUM__SEP part3
+#define ENUM__JOIN_4(part1, part2, part3, part4) \
+	part1 ENUM__SEP part2 ENUM__SEP part3 ENUM__SEP part4
+#define ENUM__JOIN_5(part1, part2, part3, part4, part5) \
+	part1 ENUM__SEP part2 ENUM__SEP part3 ENUM__SEP part4 ENUM__SEP part5
 
-#define ENUM__RTTI(typnam, specs, joined) \
-	static const EnumToStringSpec typnam ## _ ## ToStringSpecs[] = specs; \
-	enum { typnam ## _ ## ToStringSize = sizeof joined }
-
-#define ENUM__SPEC_1(v1) { v1, #v1 }
+/* List the pairs of enum value and corresponding name. */
+#define ENUM__SPEC_1(v1) \
+	{ v1, #v1 }
 #define ENUM__SPEC_2(v1, v2) \
 	ENUM__SPEC_1(v1), \
 	ENUM__SPEC_1(v2)
@@ -87,49 +90,106 @@ const char *Enum_ValueToString(int, const EnumToStringSpec *);
 		      v09, v10, v11, v12, v13, v14, v15, v16) \
 	ENUM__SPEC_8(v01, v02, v03, v04, v05, v06, v07, v08), \
 	ENUM__SPEC_8(v09, v10, v11, v12, v13, v14, v15, v16)
-#define ENUM__SPEC(part1, part2) \
+
+#define ENUM__SPECS_2(part1, part2) \
 	{ part1, part2, { 0, "" } }
+#define ENUM__SPECS_3(part1, part2, part3) \
+	{ part1, part2, part3, { 0, "" } }
+#define ENUM__SPECS_4(part1, part2, part3, part4) \
+	{ part1, part2, part3, part4, { 0, "" } }
+#define ENUM__SPECS_5(part1, part2, part3, part4, part5) \
+	{ part1, part2, part3, part4, part5, { 0, "" } }
 
-#define ENUM_RTTI_3(typnam, v1, v2, v3) \
-	ENUM__RTTI(typnam, \
-	    ENUM__SPEC(ENUM__SPEC_2(v1, v2), ENUM__SPEC_1(v3)), \
-	    ENUM__JOIN_2(ENUM__JOIN_2(v1, v2), ENUM__JOIN_1(v3)))
+/* Declare the necessary data structures for calling Enum_ValueToString. */
+#define ENUM__VALUE_RTTI(typnam, specs) \
+	static const EnumToStringSpec typnam ## _ ## ToStringSpecs[] = specs
 
-#define ENUM_RTTI_8(typnam, v1, v2, v3, v4, v5, v6, v7, v8) \
-	ENUM__RTTI(typnam, \
-	    ENUM__SPEC( \
+/* Declare the necessary data structures for calling Enum_FlagsToString. */
+#define ENUM__FLAGS_RTTI(typnam, specs, joined) \
+	static const EnumToStringSpec typnam ## _ ## ToStringSpecs[] = specs; \
+	enum { typnam ## _ ## ToStringSize = sizeof joined }
+
+/* Declare the necessary data structures for calling Enum_FlagsToString
+ * for an enum with 3 flags. */
+#define ENUM_FLAGS_RTTI_3(typnam, v1, v2, v3) \
+	ENUM__FLAGS_RTTI(typnam, \
+	    ENUM__SPECS_2( \
+	    	ENUM__SPEC_2(v1, v2), \
+	    	ENUM__SPEC_1(v3)), \
+	    ENUM__JOIN_2( \
+	    	ENUM__JOIN_STR_2(v1, v2), \
+	    	ENUM__JOIN_STR_1(v3)))
+
+/* Declare the necessary data structures for calling Enum_FlagsToString
+ * for an enum with 8 flags. */
+#define ENUM_FLAGS_RTTI_8(typnam, v1, v2, v3, v4, v5, v6, v7, v8) \
+	ENUM__FLAGS_RTTI(typnam, \
+	    ENUM__SPECS_2( \
 		ENUM__SPEC_4(v1, v2, v3, v4), \
 		ENUM__SPEC_4(v5, v6, v7, v8)), \
-	    ENUM__JOIN( \
-		ENUM__JOIN_4(v1, v2, v3, v4), \
-		ENUM__JOIN_4(v5, v6, v7, v8)))
+	    ENUM__JOIN_2( \
+		ENUM__JOIN_STR_4(v1, v2, v3, v4), \
+		ENUM__JOIN_STR_4(v5, v6, v7, v8)))
 
-#define ENUM_RTTI_10(typnam, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10) \
-	ENUM__RTTI(typnam, \
-	    ENUM__SPEC( \
+/* Declare the necessary data structures for calling Enum_ValueToString
+ * for an enum with 8 constants. */
+#define ENUM_VALUE_RTTI_8(typnam, v1, v2, v3, v4, v5, v6, v7, v8) \
+	ENUM__VALUE_RTTI(typnam, \
+	    ENUM__SPECS_2( \
+		ENUM__SPEC_4(v1, v2, v3, v4), \
+		ENUM__SPEC_4(v5, v6, v7, v8)))
+
+/* Declare the necessary data structures for calling Enum_FlagsToString
+ * for an enum with 10 flags. */
+#define ENUM_FLAGS_RTTI_10(typnam, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10) \
+	ENUM__FLAGS_RTTI(typnam, \
+	    ENUM__SPECS_2( \
 		ENUM__SPEC_8(v1, v2, v3, v4, v5, v6, v7, v8), \
 		ENUM__SPEC_2(v9, v10)), \
-	    ENUM__JOIN( \
-		ENUM__JOIN_8(v1, v2, v3, v4, v5, v6, v7, v8), \
-		ENUM__JOIN_2(v9, v10)))
+	    ENUM__JOIN_2( \
+		ENUM__JOIN_STR_8(v1, v2, v3, v4, v5, v6, v7, v8), \
+		ENUM__JOIN_STR_2(v9, v10)))
 
-#define ENUM_RTTI_32( \
-    typnam, \
-    v01, v02, v03, v04, v05, v06, v07, v08, v09, v10, \
-    v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, \
-    v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, \
-    v31, v32) \
-    ENUM__RTTI( \
-	typnam, \
-        ENUM__SPEC( \
-        ENUM__SPEC_16(v01, v02, v03, v04, v05, v06, v07, v08, \
-		      v09, v10, v11, v12, v13, v14, v15, v16), \
-        ENUM__SPEC_16(v17, v18, v19, v20, v21, v22, v23, v24, \
-        	      v25, v26, v27, v28, v29, v30, v31, v32)), \
-	ENUM__JOIN_32( \
-	    v01, v02, v03, v04, v05, v06, v07, v08, \
-	    v09, v10, v11, v12, v13, v14, v15, v16, \
-	    v17, v18, v19, v20, v21, v22, v23, v24, \
-	    v25, v26, v27, v28, v29, v30, v31, v32))
+/* Declare the necessary data structures for calling Enum_FlagsToString
+ * for an enum with 31 flags. */
+#define ENUM_FLAGS_RTTI_31(typnam, \
+		     v01, v02, v03, v04, v05, v06, v07, v08, \
+		     v09, v10, v11, v12, v13, v14, v15, v16, \
+		     v17, v18, v19, v20, v21, v22, v23, v24, \
+		     v25, v26, v27, v28, v29, v30, v31) \
+    ENUM__FLAGS_RTTI(typnam, \
+        ENUM__SPECS_5( \
+            ENUM__SPEC_16(v01, v02, v03, v04, v05, v06, v07, v08, \
+			  v09, v10, v11, v12, v13, v14, v15, v16), \
+	    ENUM__SPEC_8(v17, v18, v19, v20, v21, v22, v23, v24), \
+	    ENUM__SPEC_4(v25, v26, v27, v28), \
+	    ENUM__SPEC_2(v29, v30), \
+	    ENUM__SPEC_1(v31)), \
+	ENUM__JOIN_5( \
+	    ENUM__JOIN_STR_16(v01, v02, v03, v04, v05, v06, v07, v08, \
+			      v09, v10, v11, v12, v13, v14, v15, v16), \
+	    ENUM__JOIN_STR_8(v17, v18, v19, v20, v21, v22, v23, v24), \
+	    ENUM__JOIN_STR_4(v25, v26, v27, v28), \
+	    ENUM__JOIN_STR_2(v29, v30), \
+	    ENUM__JOIN_STR_1(v31)))
+
+/* Declare the necessary data structures for calling Enum_FlagsToString
+ * for an enum with 32 flags. */
+#define ENUM_FLAGS_RTTI_32(typnam, \
+		     v01, v02, v03, v04, v05, v06, v07, v08, \
+		     v09, v10, v11, v12, v13, v14, v15, v16, \
+		     v17, v18, v19, v20, v21, v22, v23, v24, \
+		     v25, v26, v27, v28, v29, v30, v31, v32) \
+    ENUM__FLAGS_RTTI(typnam, \
+        ENUM__SPECS_2( \
+            ENUM__SPEC_16(v01, v02, v03, v04, v05, v06, v07, v08, \
+			  v09, v10, v11, v12, v13, v14, v15, v16), \
+	    ENUM__SPEC_16(v17, v18, v19, v20, v21, v22, v23, v24, \
+			  v25, v26, v27, v28, v29, v30, v31, v32)), \
+	ENUM__JOIN_2( \
+	    ENUM__JOIN_STR_16(v01, v02, v03, v04, v05, v06, v07, v08, \
+			      v09, v10, v11, v12, v13, v14, v15, v16), \
+	    ENUM__JOIN_STR_16(v17, v18, v19, v20, v21, v22, v23, v24, \
+	    		      v25, v26, v27, v28, v29, v30, v31, v32)))
 
 #endif
