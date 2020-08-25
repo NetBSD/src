@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.122 2020/08/24 20:15:51 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.123 2020/08/25 16:27:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.122 2020/08/24 20:15:51 rillig Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.123 2020/08/25 16:27:24 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.122 2020/08/24 20:15:51 rillig Exp $");
+__RCSID("$NetBSD: make.c,v 1.123 2020/08/25 16:27:24 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -151,24 +151,25 @@ make_abort(GNode *gn, int line)
     abort();
 }
 
-ENUM_RTTI_8(GNodeMade,
-	    UNMADE, DEFERRED, REQUESTED, BEINGMADE,
-	    MADE, UPTODATE, ERROR, ABORTED);
+ENUM_VALUE_RTTI_8(GNodeMade,
+		  UNMADE, DEFERRED, REQUESTED, BEINGMADE,
+		  MADE, UPTODATE, ERROR, ABORTED);
 
-ENUM_RTTI_32(GNodeType,
-	     OP_DEPENDS, OP_FORCE, OP_DOUBLEDEP, OP_OPMASK,
-	     OP_OPTIONAL, OP_USE, OP_EXEC, OP_IGNORE,
-	     OP_PRECIOUS, OP_SILENT, OP_MAKE, OP_JOIN,
-	     OP_MADE, OP_SPECIAL, OP_USEBEFORE, OP_INVISIBLE,
-	     OP_NOTMAIN, OP_PHONY, OP_NOPATH, OP_WAIT,
-	     OP_NOMETA, OP_META, OP_NOMETA_CMP, OP_SUBMAKE,
-	     OP_TRANSFORM, OP_MEMBER, OP_LIB, OP_ARCHV,
-	     OP_HAS_COMMANDS, OP_SAVE_CMDS, OP_DEPS_FOUND, OP_MARK);
+ENUM_FLAGS_RTTI_31(GNodeType,
+		   OP_DEPENDS, OP_FORCE, OP_DOUBLEDEP,
+		   /* OP_OPMASK is omitted since it combines other flags */
+		   OP_OPTIONAL, OP_USE, OP_EXEC, OP_IGNORE,
+		   OP_PRECIOUS, OP_SILENT, OP_MAKE, OP_JOIN,
+		   OP_MADE, OP_SPECIAL, OP_USEBEFORE, OP_INVISIBLE,
+		   OP_NOTMAIN, OP_PHONY, OP_NOPATH, OP_WAIT,
+		   OP_NOMETA, OP_META, OP_NOMETA_CMP, OP_SUBMAKE,
+		   OP_TRANSFORM, OP_MEMBER, OP_LIB, OP_ARCHV,
+		   OP_HAS_COMMANDS, OP_SAVE_CMDS, OP_DEPS_FOUND, OP_MARK);
 
-ENUM_RTTI_10(GNodeFlags,
-	     REMAKE, CHILDMADE, FORCE, DONE_WAIT,
-	     DONE_ORDER, FROM_DEPEND, DONE_ALLSRC, CYCLE,
-	     DONECYCLE, INTERNAL);
+ENUM_FLAGS_RTTI_10(GNodeFlags,
+		   REMAKE, CHILDMADE, FORCE, DONE_WAIT,
+		   DONE_ORDER, FROM_DEPEND, DONE_ALLSRC, CYCLE,
+		   DONECYCLE, INTERNAL);
 
 void
 GNode_FprintDetails(FILE *f, const char *prefix, const GNode *gn,
