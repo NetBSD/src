@@ -1,10 +1,10 @@
--- $NetBSD: printenv.lua,v 1.3 2015/12/07 03:11:48 kamil Exp $
+-- $NetBSD: printenv.lua,v 1.4 2020/08/25 20:02:33 leot Exp $
 
 -- this small Lua script demonstrates the use of Lua in (bozo)httpd
 -- it will simply output the "environment"
 
 -- Keep in mind that bozohttpd forks for each request when started in
--- daemon mode, you can set global veriables here, but they will have
+-- daemon mode, you can set global variables here, but they will have
 -- the same value on each invocation.  You can not keep state between
 -- two calls.
 
