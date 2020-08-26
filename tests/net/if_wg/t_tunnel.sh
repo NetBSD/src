@@ -1,4 +1,4 @@
-#	$NetBSD: t_tunnel.sh,v 1.1 2020/08/20 21:28:01 riastradh Exp $
+#	$NetBSD: t_tunnel.sh,v 1.1 2020/08/26 16:03:42 riastradh Exp $
 #
 # Copyright (c) 2018 Ryota Ozaki <ozaki.ryota@gmail.com>
 # All rights reserved.
@@ -45,11 +45,11 @@ setup_servers()
 	rump_server_start $SOCK_LOCAL netinet6
 	rump_server_add_iface $SOCK_LOCAL shmif0 $BUS_LOCAL
 
-	rump_server_crypto_start $SOCK_TUN_LOCAL netinet6 wireguard
+	rump_server_crypto_start $SOCK_TUN_LOCAL netinet6 wg
 	rump_server_add_iface $SOCK_TUN_LOCAL shmif0 $BUS_LOCAL
 	rump_server_add_iface $SOCK_TUN_LOCAL shmif1 $BUS_TUN
 
-	rump_server_crypto_start $SOCK_TUN_PEER netinet6 wireguard
+	rump_server_crypto_start $SOCK_TUN_PEER netinet6 wg
 	rump_server_add_iface $SOCK_TUN_PEER shmif0 $BUS_PEER
 	rump_server_add_iface $SOCK_TUN_PEER shmif1 $BUS_TUN
 
@@ -300,7 +300,7 @@ add_tunnel_test()
 	local ipv6=inet6
 
 	name="wg_tunnel_${inner}_over_${outer}"
-	fulldesc="Test WireGuard with ${inner} over ${outer}"
+	fulldesc="Test wg(4) with ${inner} over ${outer}"
 
 	eval inner=\$$inner
 	eval outer=\$$outer

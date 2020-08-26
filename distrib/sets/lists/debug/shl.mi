@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.258 2020/08/20 21:28:01 riastradh Exp $
+# $NetBSD: shl.mi,v 1.259 2020/08/26 16:03:41 riastradh Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
@@ -290,7 +290,8 @@
 ./usr/libdata/debug/usr/lib/librumpnet_tun.so.0.0.debug		comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpnet_virtif.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpnet_vlan.so.0.0.debug	comp-rump-debug	debug,rump
-./usr/libdata/debug/usr/lib/librumpnet_wireguard.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpnet_wg.so.0.0.debug		comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpnet_wireguard.so.0.0.debug	comp-obsolete	obsolete
 ./usr/libdata/debug/usr/lib/librumpres.so.0.0.debug		comp-rump-debug	debug,compatfile,rump
 ./usr/libdata/debug/usr/lib/librumpuser.so.0.1.debug		comp-rump-debug	debug,compatfile,rump
 ./usr/libdata/debug/usr/lib/librumpvfs.so.0.0.debug		comp-rump-debug	debug,compatfile,rump
