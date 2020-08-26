@@ -1,4 +1,4 @@
-/*	$NetBSD: vsaudio.c,v 1.5 2019/05/08 13:40:16 isaki Exp $	*/
+/*	$NetBSD: vsaudio.c,v 1.6 2020/08/26 12:59:28 isaki Exp $	*/
 /*	$OpenBSD: vsaudio.c,v 1.4 2013/05/15 21:21:11 ratchov Exp $	*/
 
 /*
@@ -271,7 +271,7 @@ vsaudio_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	sc->sc_bt = va->va_memt;
-	sc->sc_am7930.sc_dev = device_private(self);
+	sc->sc_am7930.sc_dev = self;
 	sc->sc_am7930.sc_glue = &vsaudio_glue;
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
 	am7930_init(&sc->sc_am7930, AUDIOAMD_POLL_MODE);
