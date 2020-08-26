@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.72 2020/08/26 16:29:19 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.73 2020/08/26 16:32:02 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.72 2020/08/26 16:29:19 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.73 2020/08/26 16:32:02 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -676,8 +676,22 @@ svm_event_waitexit_disable(struct nvmm_cpu *vcpu, bool nmi)
 	svm_vmcb_cache_flush(vmcb, VMCB_CTRL_VMCB_CLEAN_I);
 }
 
+static inline bool
+svm_excp_has_rf(uint8_t vector)
+{
+	switch (vector) {
+	case 1:		/* #DB */
+	case 4:		/* #OF */
+	case 8:		/* #DF */
+	case 18:	/* #MC */
+		return false;
+	default:
+		return true;
+	}
+}
+
 static inline int
-svm_event_has_error(uint8_t vector)
+svm_excp_has_error(uint8_t vector)
 {
 	switch (vector) {
 	case 8:		/* #DF */
@@ -717,7 +731,10 @@ svm_vcpu_inject(struct nvmm_cpu *vcpu)
 			return EINVAL;
 		if (vector == 3 || vector == 0)
 			return EINVAL;
-		err = svm_event_has_error(vector);
+		if (svm_excp_has_rf(vector)) {
+			vmcb->state.rflags |= PSL_RF;
+		}
+		err = svm_excp_has_error(vector);
 		break;
 	case NVMM_VCPU_EVENT_INTR:
 		type = SVM_EVENT_TYPE_HW_INT;
@@ -790,6 +807,7 @@ svm_inkernel_advance(struct vmcb *vmcb)
 	 * debugger.
 	 */
 	vmcb->state.rip = vmcb->ctrl.nrip;
+	vmcb->state.rflags &= ~PSL_RF;
 	vmcb->ctrl.intr &= ~VMCB_CTRL_INTR_SHADOW;
 }
 
@@ -1473,11 +1491,12 @@ svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	uint64_t machgen;
 	int hcpu;
 
+	svm_vcpu_state_commit(vcpu);
+	comm->state_cached = 0;
+
 	if (__predict_false(svm_vcpu_event_commit(vcpu) != 0)) {
 		return EINVAL;
 	}
-	svm_vcpu_state_commit(vcpu);
-	comm->state_cached = 0;
 
 	kpreempt_disable();
 	hcpu = cpu_number();

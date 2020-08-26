@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.73 2020/08/26 16:30:50 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.74 2020/08/26 16:32:02 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.73 2020/08/26 16:30:50 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.74 2020/08/26 16:32:02 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1038,8 +1038,22 @@ vmx_event_waitexit_disable(struct nvmm_cpu *vcpu, bool nmi)
 	vmx_vmwrite(VMCS_PROCBASED_CTLS, ctls1);
 }
 
+static inline bool
+vmx_excp_has_rf(uint8_t vector)
+{
+	switch (vector) {
+	case 1:		/* #DB */
+	case 4:		/* #OF */
+	case 8:		/* #DF */
+	case 18:	/* #MC */
+		return false;
+	default:
+		return true;
+	}
+}
+
 static inline int
-vmx_event_has_error(uint8_t vector)
+vmx_excp_has_error(uint8_t vector)
 {
 	switch (vector) {
 	case 8:		/* #DF */
@@ -1062,9 +1076,9 @@ vmx_vcpu_inject(struct nvmm_cpu *vcpu)
 	struct nvmm_comm_page *comm = vcpu->comm;
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
 	int type = 0, err = 0, ret = EINVAL;
+	uint64_t rflags, info, error;
 	u_int evtype;
 	uint8_t vector;
-	uint64_t info, error;
 
 	evtype = comm->event.type;
 	vector = comm->event.vector;
@@ -1079,8 +1093,12 @@ vmx_vcpu_inject(struct nvmm_cpu *vcpu)
 			goto out;
 		if (vector == 3 || vector == 0)
 			goto out;
+		if (vmx_excp_has_rf(vector)) {
+			rflags = vmx_vmread(VMCS_GUEST_RFLAGS);
+			vmx_vmwrite(VMCS_GUEST_RFLAGS, rflags | PSL_RF);
+		}
 		type = INTR_TYPE_HW_EXC;
-		err = vmx_event_has_error(vector);
+		err = vmx_excp_has_error(vector);
 		break;
 	case NVMM_VCPU_EVENT_INTR:
 		type = INTR_TYPE_EXT_INT;
@@ -1151,16 +1169,21 @@ vmx_vcpu_event_commit(struct nvmm_cpu *vcpu)
 static inline void
 vmx_inkernel_advance(void)
 {
-	uint64_t rip, inslen, intstate;
+	uint64_t rip, inslen, intstate, rflags;
 
 	/*
 	 * Maybe we should also apply single-stepping and debug exceptions.
 	 * Matters for guest-ring3, because it can execute 'cpuid' under a
 	 * debugger.
 	 */
+
 	inslen = vmx_vmread(VMCS_EXIT_INSTRUCTION_LENGTH);
 	rip = vmx_vmread(VMCS_GUEST_RIP);
 	vmx_vmwrite(VMCS_GUEST_RIP, rip + inslen);
+
+	rflags = vmx_vmread(VMCS_GUEST_RFLAGS);
+	vmx_vmwrite(VMCS_GUEST_RFLAGS, rflags & ~PSL_RF);
+
 	intstate = vmx_vmread(VMCS_GUEST_INTERRUPTIBILITY);
 	vmx_vmwrite(VMCS_GUEST_INTERRUPTIBILITY,
 	    intstate & ~(INT_STATE_STI|INT_STATE_MOVSS));
@@ -2160,12 +2183,13 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 
 	vmx_vmcs_enter(vcpu);
 
+	vmx_vcpu_state_commit(vcpu);
+	comm->state_cached = 0;
+
 	if (__predict_false(vmx_vcpu_event_commit(vcpu) != 0)) {
 		vmx_vmcs_leave(vcpu);
 		return EINVAL;
 	}
-	vmx_vcpu_state_commit(vcpu);
-	comm->state_cached = 0;
 
 	ci = curcpu();
 	hcpu = cpu_number();
