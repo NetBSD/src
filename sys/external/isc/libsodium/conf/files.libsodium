@@ -1,28 +1,15 @@
-#	$NetBSD: files.libsodium,v 1.4 2020/08/21 06:37:30 riastradh Exp $
+#	$NetBSD: files.libsodium,v 1.5 2020/08/26 15:49:56 riastradh Exp $
 
 define		libsodium
 
-makeoptions libsodium SODIUM_CPPFLAGS+="-I$S/external/isc/libsodium/include"
-makeoptions libsodium SODIUM_CPPFLAGS+="-I$S/external/isc/libsodium/dist/src/libsodium/include/sodium"
+makeoptions libsodium "CPPFLAGS.libsodium"+="-I$S/external/isc/libsodium/include"
+makeoptions libsodium "CPPFLAGS.libsodium"+="-I$S/external/isc/libsodium/dist/src/libsodium/include/sodium"
 
-#makeoptions libsodium SODIUM_CPPFLAGS+="-DHAVE_TI_MODE"
+#makeoptions libsodium "CPPFLAGS.libsodium"+="-DHAVE_TI_MODE"
 
-makeoptions libsodium SODIUM_CPPFLAGS+="-Wno-shadow"
-makeoptions libsodium SODIUM_CPPFLAGS+="-Wno-unused-function"
-makeoptions libsodium SODIUM_CPPFLAGS+="-Wno-unused-variable"
-
-makeoptions libsodium "CPPFLAGS.x25519_ref10.c"+="${SODIUM_CPPFLAGS}"
-makeoptions libsodium "CPPFLAGS.scalarmult_curve25519.c"+="${SODIUM_CPPFLAGS}"
-makeoptions libsodium "CPPFLAGS.crypto_scalarmult.c"+="${SODIUM_CPPFLAGS}"
-makeoptions libsodium "CPPFLAGS.poly1305_donna.c"+="${SODIUM_CPPFLAGS}"
-makeoptions libsodium "CPPFLAGS.onetimeauth_poly1305.c"+="${SODIUM_CPPFLAGS}"
-makeoptions libsodium "CPPFLAGS.crypto_onetimeauth.c"+="${SODIUM_CPPFLAGS}"
-makeoptions libsodium "CPPFLAGS.chacha20_ref.c"+="${SODIUM_CPPFLAGS}"
-makeoptions libsodium "CPPFLAGS.stream_chacha20.c"+="${SODIUM_CPPFLAGS}"
-makeoptions libsodium "CPPFLAGS.aead_xchacha20poly1305.c"+="${SODIUM_CPPFLAGS}"
-makeoptions libsodium "CPPFLAGS.aead_chacha20poly1305.c"+="${SODIUM_CPPFLAGS}"
-makeoptions libsodium "CPPFLAGS.core_hchacha20.c"+="${SODIUM_CPPFLAGS}"
-makeoptions libsodium "CPPFLAGS.ed25519_ref10.c"+="${SODIUM_CPPFLAGS}"
+makeoptions libsodium "CWARNFLAGS.libsodium"+="-Wno-shadow"
+makeoptions libsodium "CWARNFLAGS.libsodium"+="-Wno-unused-function"
+makeoptions libsodium "CWARNFLAGS.libsodium"+="-Wno-unused-variable"
 
 file	external/isc/libsodium/src/glue.c	libsodium
 
