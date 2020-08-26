@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.43 2020/08/23 17:04:21 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.44 2020/08/26 22:55:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -105,9 +105,11 @@ Lst		Lst_Init(void);
 /* Duplicate an existing list */
 Lst		Lst_CopyS(Lst, LstCopyProc);
 /* Destroy an old one */
-void		Lst_Destroy(Lst, LstFreeProc);
+void		Lst_FreeS(Lst);
+void		Lst_DestroyS(Lst, LstFreeProc);
 /* True if list is empty */
 Boolean		Lst_IsEmpty(Lst);
+Boolean		Lst_IsEmptyS(Lst);
 
 /*
  * Functions to modify a list
@@ -123,6 +125,7 @@ void		Lst_RemoveS(Lst, LstNode);
 /* Replace a node with a new value */
 void		LstNode_SetS(LstNode, void *);
 void		LstNode_SetNullS(LstNode);
+
 void		Lst_PrependAllS(Lst, Lst);
 void		Lst_AppendAllS(Lst, Lst);
 void		Lst_MoveAllS(Lst, Lst);
@@ -132,10 +135,13 @@ void		Lst_MoveAllS(Lst, Lst);
  */
 /* Return first element in list */
 LstNode		Lst_First(Lst);
+LstNode		Lst_FirstS(Lst);
 /* Return last element in list */
 LstNode		Lst_Last(Lst);
+LstNode		Lst_LastS(Lst);
 /* Return successor to given element */
 LstNode		Lst_Succ(LstNode);
+LstNode		Lst_SuccS(LstNode);
 /* Return predecessor to given element */
 LstNode		Lst_PrevS(LstNode);
 /* Get datum from LstNode */
@@ -146,8 +152,10 @@ void		*Lst_DatumS(LstNode);
  */
 /* Find an element in a list */
 LstNode		Lst_Find(Lst, LstFindProc, const void *);
+LstNode		Lst_FindS(Lst, LstFindProc, const void *);
 /* Find an element starting from somewhere */
 LstNode		Lst_FindFrom(Lst, LstNode, LstFindProc, const void *);
+LstNode		Lst_FindFromS(Lst, LstNode, LstFindProc, const void *);
 /*
  * See if the given datum is on the list. Returns the LstNode containing
  * the datum
@@ -155,8 +163,10 @@ LstNode		Lst_FindFrom(Lst, LstNode, LstFindProc, const void *);
 LstNode		Lst_MemberS(Lst, void *);
 /* Apply a function to all elements of a lst */
 int		Lst_ForEach(Lst, LstActionProc, void *);
+int		Lst_ForEachS(Lst, LstActionProc, void *);
 /* Apply a function to all elements of a lst starting from a certain point. */
 int		Lst_ForEachFrom(Lst, LstNode, LstActionProc, void *);
+int		Lst_ForEachFromS(Lst, LstNode, LstActionProc, void *);
 /*
  * these functions are for dealing with a list as a table, of sorts.
  * An idea of the "current element" is kept and used by all the functions

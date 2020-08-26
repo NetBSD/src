@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.96 2020/08/23 18:59:01 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.97 2020/08/26 22:55:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.96 2020/08/23 18:59:01 rillig Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.97 2020/08/26 22:55:46 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.96 2020/08/23 18:59:01 rillig Exp $");
+__RCSID("$NetBSD: arch.c,v 1.97 2020/08/26 22:55:46 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -391,7 +391,7 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 	     */
 	    free(buf);
 	} else if (Dir_HasWildcards(memName)) {
-	    Lst	  members = Lst_Init();
+	    Lst members = Lst_Init();
 	    Buffer nameBuf;
 
 	    Buf_Init(&nameBuf, 0);
@@ -422,7 +422,7 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 		    Lst_AppendS(nodeLst, gn);
 		}
 	    }
-	    Lst_Destroy(members, NULL);
+	    Lst_FreeS(members);
 	    Buf_Destroy(&nameBuf, TRUE);
 	} else {
 	    Buffer nameBuf;
@@ -1288,45 +1288,19 @@ Arch_LibOODate(GNode *gn)
     return oodate;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Arch_Init --
- *	Initialize things for this module.
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	The 'archives' list is initialized.
- *
- *-----------------------------------------------------------------------
- */
+/* Initialize things for this module. */
 void
 Arch_Init(void)
 {
     archives = Lst_Init();
 }
 
-
-
-/*-
- *-----------------------------------------------------------------------
- * Arch_End --
- *	Cleanup things for this module.
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	The 'archives' list is freed
- *
- *-----------------------------------------------------------------------
- */
+/* Clean up things for this module. */
 void
 Arch_End(void)
 {
 #ifdef CLEANUP
-    Lst_Destroy(archives, ArchFree);
+    Lst_DestroyS(archives, ArchFree);
 #endif
 }
 
