@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.36.2.10 2020/08/18 09:29:52 martin Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.36.2.11 2020/08/26 17:55:49 martin Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.36.2.10 2020/08/18 09:29:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.36.2.11 2020/08/26 17:55:49 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1162,6 +1162,7 @@ error:
 #define VMX_CPUID_MAX_HYPERVISOR	0x40000000
 #define VMX_CPUID_MAX_EXTENDED		0x80000008
 static uint32_t vmx_cpuid_max_basic __read_mostly;
+static uint32_t vmx_cpuid_max_extended __read_mostly;
 
 static void
 vmx_inkernel_exec_cpuid(struct vmx_cpudata *cpudata, uint64_t eax, uint64_t ecx)
@@ -1190,6 +1191,11 @@ vmx_inkernel_handle_cpuid(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		}
 	} else if (eax < 0x80000000) {
 		if (__predict_false(eax > VMX_CPUID_MAX_HYPERVISOR)) {
+			eax = vmx_cpuid_max_basic;
+			vmx_inkernel_exec_cpuid(cpudata, eax, ecx);
+		}
+	} else {
+		if (__predict_false(eax > vmx_cpuid_max_extended)) {
 			eax = vmx_cpuid_max_basic;
 			vmx_inkernel_exec_cpuid(cpudata, eax, ecx);
 		}
@@ -1238,12 +1244,22 @@ vmx_inkernel_handle_cpuid(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
 		break;
 	case 0x00000007: /* Structured Extended Feature Flags Enumeration */
-		cpudata->gprs[NVMM_X64_GPR_RAX] &= nvmm_cpuid_00000007.eax;
-		cpudata->gprs[NVMM_X64_GPR_RBX] &= nvmm_cpuid_00000007.ebx;
-		cpudata->gprs[NVMM_X64_GPR_RCX] &= nvmm_cpuid_00000007.ecx;
-		cpudata->gprs[NVMM_X64_GPR_RDX] &= nvmm_cpuid_00000007.edx;
-		if (vmx_procbased_ctls2 & PROC_CTLS2_INVPCID_ENABLE) {
-			cpudata->gprs[NVMM_X64_GPR_RBX] |= CPUID_SEF_INVPCID;
+		switch (ecx) {
+		case 0:
+			cpudata->gprs[NVMM_X64_GPR_RAX] = 0;
+			cpudata->gprs[NVMM_X64_GPR_RBX] &= nvmm_cpuid_00000007.ebx;
+			cpudata->gprs[NVMM_X64_GPR_RCX] &= nvmm_cpuid_00000007.ecx;
+			cpudata->gprs[NVMM_X64_GPR_RDX] &= nvmm_cpuid_00000007.edx;
+			if (vmx_procbased_ctls2 & PROC_CTLS2_INVPCID_ENABLE) {
+				cpudata->gprs[NVMM_X64_GPR_RBX] |= CPUID_SEF_INVPCID;
+			}
+			break;
+		default:
+			cpudata->gprs[NVMM_X64_GPR_RAX] = 0;
+			cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
+			cpudata->gprs[NVMM_X64_GPR_RCX] = 0;
+			cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
+			break;
 		}
 		break;
 	case 0x00000008: /* Empty */
@@ -1355,6 +1371,9 @@ vmx_inkernel_handle_cpuid(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		memcpy(&cpudata->gprs[NVMM_X64_GPR_RDX], " ___", 4);
 		break;
 
+	case 0x80000000:
+		cpudata->gprs[NVMM_X64_GPR_RAX] = vmx_cpuid_max_extended;
+		break;
 	case 0x80000001:
 		cpudata->gprs[NVMM_X64_GPR_RAX] &= nvmm_cpuid_80000001.eax;
 		cpudata->gprs[NVMM_X64_GPR_RBX] &= nvmm_cpuid_80000001.ebx;
@@ -1366,8 +1385,18 @@ vmx_inkernel_handle_cpuid(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	case 0x80000004: /* Processor Brand String */
 	case 0x80000005: /* Reserved Zero */
 	case 0x80000006: /* Cache Information */
+		break;
 	case 0x80000007: /* TSC Information */
+		cpudata->gprs[NVMM_X64_GPR_RAX] &= nvmm_cpuid_80000007.eax;
+		cpudata->gprs[NVMM_X64_GPR_RBX] &= nvmm_cpuid_80000007.ebx;
+		cpudata->gprs[NVMM_X64_GPR_RCX] &= nvmm_cpuid_80000007.ecx;
+		cpudata->gprs[NVMM_X64_GPR_RDX] &= nvmm_cpuid_80000007.edx;
+		break;
 	case 0x80000008: /* Address Sizes */
+		cpudata->gprs[NVMM_X64_GPR_RAX] &= nvmm_cpuid_80000008.eax;
+		cpudata->gprs[NVMM_X64_GPR_RBX] &= nvmm_cpuid_80000008.ebx;
+		cpudata->gprs[NVMM_X64_GPR_RCX] &= nvmm_cpuid_80000008.ecx;
+		cpudata->gprs[NVMM_X64_GPR_RDX] &= nvmm_cpuid_80000008.edx;
 		break;
 
 	default:
@@ -3323,6 +3352,7 @@ vmx_init(void)
 	uint64_t xc, msr;
 	struct vmxon *vmxon;
 	uint32_t revision;
+	u_int descs[4];
 	paddr_t pa;
 	vaddr_t va;
 	int error;
@@ -3333,8 +3363,12 @@ vmx_init(void)
 	/* Init the XCR0 mask. */
 	vmx_xcr0_mask = VMX_XCR0_MASK_DEFAULT & x86_xsave_features;
 
-	/* Init the max CPUID leaves. */
+	/* Init the max basic CPUID leaf. */
 	vmx_cpuid_max_basic = uimin(cpuid_level, VMX_CPUID_MAX_BASIC);
+
+	/* Init the max extended CPUID leaf. */
+	x86_cpuid(0x80000000, descs);
+	vmx_cpuid_max_extended = uimin(descs[0], VMX_CPUID_MAX_EXTENDED);
 
 	/* Init the TLB flush op, the EPT flush op and the EPTP type. */
 	msr = rdmsr(MSR_IA32_VMX_EPT_VPID_CAP);
