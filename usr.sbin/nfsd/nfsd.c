@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.70 2020/08/26 13:32:56 gson Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.71 2020/08/26 13:33:42 gson Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.70 2020/08/26 13:32:56 gson Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.71 2020/08/26 13:33:42 gson Exp $");
 #endif
 #endif /* not lint */
 
@@ -284,7 +284,7 @@ out:
  * is called to complete the daemonization and signal the parent
  * process to exit.
  *
- * These functions could potentially be moved to a library and 
+ * These functions could potentially be moved to a library and
  * shared by other daemons.
  *
  * The return value from daemon2_fork() is a file descriptor to
