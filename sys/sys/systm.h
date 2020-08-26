@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.295 2020/06/30 16:20:03 maxv Exp $	*/
+/*	$NetBSD: systm.h,v 1.296 2020/08/26 22:56:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -190,13 +190,43 @@ enum hashtype {
 };
 
 #ifdef _KERNEL
+#define COND_SET_STRUCT(dst, src, allow) \
+	do { \
+		CTASSERT(sizeof(src) < 32); \
+		if (allow) \
+			dst = src; \
+		else \
+			hash_value(&dst, sizeof(dst), &src, sizeof(src)); \
+	} while (/*CONSTCOND*/0)
+
+#define COND_SET_CPTR(dst, src, allow) \
+	do { \
+		void *__v; \
+		if (allow) \
+			dst = src; \
+		else \
+			hash_value(&__v, sizeof(__v), &src, sizeof(src)); \
+		dst = __v; \
+	} while (/*CONSTCOND*/0)
+
+#define COND_SET_PTR(dst, src, allow) \
+	do { \
+		if (allow) \
+			dst = src; \
+		else \
+			hash_value(&dst, sizeof(dst), &src, sizeof(src)); \
+	} while (/*CONSTCOND*/0)
+
 #define COND_SET_VALUE(dst, src, allow)	\
-	do {				\
-		if (allow)		\
-			dst = src;	\
-	} while (/*CONSTCOND*/0);
-
-
+	do { \
+		uint64_t __v = src; \
+		if (allow) \
+			dst = src; \
+		else \
+			hash_value(&dst, sizeof(dst), &__v, sizeof(__v)); \
+	} while (/*CONSTCOND*/0)
+	
+void	hash_value(void *, size_t, const void *, size_t);
 bool	get_expose_address(struct proc *);
 void	*hashinit(u_int, enum hashtype, bool, u_long *);
 void	hashdone(void *, enum hashtype, u_long);
