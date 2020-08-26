@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.69 2020/06/17 00:16:22 kamil Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.70 2020/08/26 13:32:56 gson Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.69 2020/06/17 00:16:22 kamil Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.70 2020/08/26 13:32:56 gson Exp $");
 #endif
 #endif /* not lint */
 
@@ -548,7 +548,6 @@ main(int argc, char *argv[])
 		setupsock(&cfg[i], &set[i], i);
 		if (set[i].fd != -1)
 			connect_type_cnt++;
-
 	}
 
 	pthread_setname_np(pthread_self(), "master", NULL);
