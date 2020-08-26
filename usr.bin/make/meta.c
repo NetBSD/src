@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.99 2020/08/23 16:58:02 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.100 2020/08/26 22:55:46 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -889,9 +889,11 @@ meta_job_finish(Job *job)
 void
 meta_finish(void)
 {
-    Lst_Destroy(metaBailiwick, NULL);
+    if (metaBailiwick != NULL)
+	Lst_FreeS(metaBailiwick);
     free(metaBailiwickStr);
-    Lst_Destroy(metaIgnorePaths, NULL);
+    if (metaIgnorePaths != NULL)
+	Lst_FreeS(metaIgnorePaths);
     free(metaIgnorePathsStr);
 }
 
@@ -1623,7 +1625,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 	}
     }
 
-    Lst_Destroy(missingFiles, free);
+    Lst_DestroyS(missingFiles, free);
 
     if (oodate && needOODATE) {
 	/*

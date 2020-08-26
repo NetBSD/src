@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.41 2020/08/23 16:58:02 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.42 2020/08/26 22:55:46 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,11 +37,11 @@
 #include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.41 2020/08/23 16:58:02 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.42 2020/08/26 22:55:46 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.41 2020/08/23 16:58:02 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.42 2020/08/26 22:55:46 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -142,36 +142,38 @@ Lst_CopyS(Lst list, LstCopyProc copyProc)
     return newList;
 }
 
+/* Free a list and all its nodes. The list data itself are not freed though. */
+void
+Lst_FreeS(Lst list)
+{
+    LstNode node;
+    LstNode next;
+
+    assert(LstIsValid(list));
+
+    for (node = list->first; node != NULL; node = next) {
+	next = node->next;
+	free(node);
+    }
+
+    free(list);
+}
+
 /* Destroy a list and free all its resources. If the freeProc is given, it is
  * called with the datum from each node in turn before the node is freed. */
 void
-Lst_Destroy(Lst list, LstFreeProc freeProc)
+Lst_DestroyS(Lst list, LstFreeProc freeProc)
 {
     LstNode node;
-    LstNode next = NULL;
+    LstNode next;
 
-    if (list == NULL)
-	return;
+    assert(LstIsValid(list));
+    assert(freeProc != NULL);
 
-    /* To ease scanning */
-    if (list->last != NULL)
-	list->last->next = NULL;
-    else {
-	free(list);
-	return;
-    }
-
-    if (freeProc) {
-	for (node = list->first; node != NULL; node = next) {
-	    next = node->next;
-	    freeProc(node->datum);
-	    free(node);
-	}
-    } else {
-	for (node = list->first; node != NULL; node = next) {
-	    next = node->next;
-	    free(node);
-	}
+    for (node = list->first; node != NULL; node = next) {
+	next = node->next;
+	freeProc(node->datum);
+	free(node);
     }
 
     free(list);
@@ -340,6 +342,15 @@ Lst_First(Lst list)
     }
 }
 
+/* Return the first node from the given list, or NULL if the list is empty. */
+LstNode
+Lst_FirstS(Lst list)
+{
+    assert(LstIsValid(list));
+
+    return list->first;
+}
+
 /* Return the last node from the given list, or NULL if the list is empty or
  * invalid. */
 LstNode
@@ -352,6 +363,15 @@ Lst_Last(Lst list)
     }
 }
 
+/* Return the last node from the given list, or NULL if the list is empty. */
+LstNode
+Lst_LastS(Lst list)
+{
+    assert(LstIsValid(list));
+
+    return list->last;
+}
+
 /* Return the successor to the given node on its list, or NULL. */
 LstNode
 Lst_Succ(LstNode node)
@@ -361,6 +381,15 @@ Lst_Succ(LstNode node)
     } else {
 	return node->next;
     }
+}
+
+/* Return the successor to the given node on its list, or NULL. */
+LstNode
+Lst_SuccS(LstNode node)
+{
+    assert(LstNodeIsValid(node));
+
+    return node->next;
 }
 
 /* Return the predecessor to the given node on its list, or NULL. */
@@ -391,6 +420,15 @@ Lst_IsEmpty(Lst list)
     return !LstIsValid(list) || LstIsEmpty(list);
 }
 
+/* Return TRUE if the given list is empty. */
+Boolean
+Lst_IsEmptyS(Lst list)
+{
+    assert(LstIsValid(list));
+
+    return LstIsEmpty(list);
+}
+
 /* Return the first node from the given list for which the given comparison
  * function returns 0, or NULL if none of the nodes matches. */
 LstNode
@@ -399,27 +437,45 @@ Lst_Find(Lst list, LstFindProc cmp, const void *cmpData)
     return Lst_FindFrom(list, Lst_First(list), cmp, cmpData);
 }
 
+/* Return the first node from the given list for which the given comparison
+ * function returns 0, or NULL if none of the nodes matches. */
+LstNode
+Lst_FindS(Lst list, LstFindProc cmp, const void *cmpData)
+{
+    if (LstIsEmpty(list))
+	return NULL;
+    return Lst_FindFromS(list, Lst_FirstS(list), cmp, cmpData);
+}
+
 /* Return the first node from the given list, starting at the given node, for
  * which the given comparison function returns 0, or NULL if none of the nodes
  * matches. */
 LstNode
 Lst_FindFrom(Lst list, LstNode node, LstFindProc cmp, const void *cmpData)
 {
-    LstNode tln;
-
-    assert(cmp != NULL);
-
     if (!LstIsValid(list) || LstIsEmpty(list) || !LstNodeIsValid(node)) {
 	return NULL;
     }
 
-    tln = node;
+    return Lst_FindFromS(list, node, cmp, cmpData);
+}
 
-    do {
+/* Return the first node from the given list, starting at the given node, for
+ * which the given comparison function returns 0, or NULL if none of the nodes
+ * matches. */
+LstNode
+Lst_FindFromS(Lst list, LstNode node, LstFindProc cmp, const void *cmpData)
+{
+    LstNode tln;
+
+    assert(LstIsValid(list));
+    assert(LstNodeIsValid(node));
+    assert(cmp != NULL);
+
+    for (tln = node; tln != NULL; tln = tln->next) {
 	if (cmp(tln->datum, cmpData) == 0)
 	    return tln;
-	tln = tln->next;
-    } while (tln != node && tln != NULL);
+    }
 
     return NULL;
 }
@@ -446,9 +502,20 @@ Lst_MemberS(Lst list, void *datum)
  * should return 0 if traversal should continue and non-zero if it should
  * abort. */
 int
-Lst_ForEach(Lst list, int (*proc)(void *, void *), void *procData)
+Lst_ForEach(Lst list, LstActionProc proc, void *procData)
 {
     return Lst_ForEachFrom(list, Lst_First(list), proc, procData);
+}
+
+/* Apply the given function to each element of the given list. The function
+ * should return 0 if traversal should continue and non-zero if it should
+ * abort. */
+int
+Lst_ForEachS(Lst list, LstActionProc proc, void *procData)
+{
+    if (LstIsEmpty(list))
+	return 0;		/* XXX: Document what this value means. */
+    return Lst_ForEachFromS(list, Lst_First(list), proc, procData);
 }
 
 /* Apply the given function to each element of the given list, starting from
@@ -456,16 +523,30 @@ Lst_ForEach(Lst list, int (*proc)(void *, void *), void *procData)
  * and non-zero if it should abort. */
 int
 Lst_ForEachFrom(Lst list, LstNode node,
-		int (*proc)(void *, void *), void *procData)
+		LstActionProc proc, void *procData)
+{
+    if (!LstIsValid(list) || LstIsEmpty(list)) {
+	return 0;
+    }
+
+    return Lst_ForEachFromS(list, node, proc, procData);
+}
+
+/* Apply the given function to each element of the given list, starting from
+ * the given node. The function should return 0 if traversal should continue,
+ * and non-zero if it should abort. */
+int
+Lst_ForEachFromS(Lst list, LstNode node,
+		 LstActionProc proc, void *procData)
 {
     LstNode tln = node;
     LstNode next;
     Boolean done;
     int result;
 
-    if (!LstIsValid(list) || LstIsEmpty(list)) {
-	return 0;
-    }
+    assert(LstIsValid(list));
+    assert(LstNodeIsValid(node));
+    assert(proc != NULL);
 
     do {
 	/*

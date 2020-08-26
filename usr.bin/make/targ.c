@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.72 2020/08/24 20:15:51 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.73 2020/08/26 22:55:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.72 2020/08/24 20:15:51 rillig Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.73 2020/08/26 22:55:46 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.72 2020/08/24 20:15:51 rillig Exp $");
+__RCSID("$NetBSD: targ.c,v 1.73 2020/08/26 22:55:46 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -188,9 +188,9 @@ Targ_End(void)
 {
     Targ_Stats();
 #ifdef CLEANUP
-    Lst_Destroy(allTargets, NULL);
-    if (allGNs)
-	Lst_Destroy(allGNs, TargFreeGN);
+    Lst_FreeS(allTargets);
+    if (allGNs != NULL)
+	Lst_DestroyS(allGNs, TargFreeGN);
     Hash_DeleteTable(&targets);
 #endif
 }
@@ -303,14 +303,14 @@ TargFreeGN(void *gnp)
     free(gn->path);
     /* gn->fname points to name allocated when file was opened, don't free */
 
-    Lst_Destroy(gn->iParents, NULL);
-    Lst_Destroy(gn->cohorts, NULL);
-    Lst_Destroy(gn->parents, NULL);
-    Lst_Destroy(gn->children, NULL);
-    Lst_Destroy(gn->order_succ, NULL);
-    Lst_Destroy(gn->order_pred, NULL);
+    Lst_FreeS(gn->iParents);
+    Lst_FreeS(gn->cohorts);
+    Lst_FreeS(gn->parents);
+    Lst_FreeS(gn->children);
+    Lst_FreeS(gn->order_succ);
+    Lst_FreeS(gn->order_pred);
     Hash_DeleteTable(&gn->context);
-    Lst_Destroy(gn->commands, NULL);
+    Lst_FreeS(gn->commands);
     free(gn);
 }
 #endif
