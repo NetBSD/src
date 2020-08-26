@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.113 2019/09/06 17:08:22 christos Exp $	*/
+/*	$NetBSD: fstat.c,v 1.114 2020/08/26 23:08:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.113 2019/09/06 17:08:22 christos Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.114 2020/08/26 23:08:29 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -181,6 +181,7 @@ static void	vtrans(struct file *, struct vnode *, int, int, long);
 static void	ftrans(fdfile_t *, int);
 static void	ptrans(struct file *, struct pipe *, int);
 static void	kdriver_init(void);
+static void	check_privs(void);
 
 int
 main(int argc, char **argv)
@@ -243,6 +244,8 @@ main(int argc, char **argv)
 		default:
 			usage();
 		}
+
+	check_privs();
 
 	kdriver_init();
 
@@ -307,6 +310,23 @@ main(int argc, char **argv)
 		dofiles(p);
 	}
 	return 0;
+}
+
+static void
+check_privs(void)
+{
+	int expaddr;
+	size_t expsize = sizeof(expaddr);
+	const char *expname = "kern.expose_address";
+
+	if (geteuid() == 0)
+		return;
+
+	if (sysctlbyname(expname, &expaddr, &expsize, NULL, 0) == -1)
+		err(EXIT_FAILURE, "Can't get sysctl `%s'", expname);
+	if (expaddr == 0)
+		errx(EXIT_FAILURE, "This program does not work without "
+		    "sysctl `%s' being set", expname);
 }
 
 static const	char *Uname, *Comm;
