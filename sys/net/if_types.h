@@ -1,4 +1,4 @@
-/*	$NetBSD: if_types.h,v 1.30 2020/08/20 21:21:32 riastradh Exp $	*/
+/*	$NetBSD: if_types.h,v 1.31 2020/08/26 16:03:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -267,6 +267,5 @@
 #define IFT_CARP	0xf8		/* Common Address Redundancy Protocol */
 #define IFT_IPSEC	0xf9		/* IPsec I/F */
 #define IFT_MBIM	0xfa		/* Mobile Broadband Interface Model */
-#define IFT_WIREGUARD	0xfb		/* WireGuard */
 
 #endif /* !_NET_IF_TYPES_H_ */

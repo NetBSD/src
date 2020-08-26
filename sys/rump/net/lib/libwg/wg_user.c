@@ -1,4 +1,4 @@
-/*	$NetBSD: wg_user.c,v 1.1 2020/08/20 21:28:01 riastradh Exp $	*/
+/*	$NetBSD: wg_user.c,v 1.1 2020/08/26 16:03:42 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wg_user.c,v 1.1 2020/08/20 21:28:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wg_user.c,v 1.1 2020/08/26 16:03:42 riastradh Exp $");
 
 #ifndef _KERNEL
 #include <sys/types.h>

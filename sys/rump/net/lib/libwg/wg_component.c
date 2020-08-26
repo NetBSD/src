@@ -1,7 +1,7 @@
-/*	$NetBSD: wg_user.h,v 1.1 2020/08/20 21:28:01 riastradh Exp $	*/
+/*	$NetBSD: wg_component.c,v 1.1 2020/08/26 16:03:42 riastradh Exp $	*/
 
 /*
- * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
+ * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,27 +26,17 @@
  * SUCH DAMAGE.
  */
 
-struct wg_user;
-struct wg_softc;
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wg_component.c,v 1.1 2020/08/26 16:03:42 riastradh Exp $");
 
-/*
- * Defined in wg_user.c and called from if_wg.c.
- */
-int	rumpuser_wg_create(const char *tun_name, struct wg_softc *,
-	    struct wg_user **);
-void	rumpuser_wg_destroy(struct wg_user *);
+#include <sys/param.h>
 
-void	rumpuser_wg_send_user(struct wg_user *, struct iovec *, size_t);
-int	rumpuser_wg_send_peer(struct wg_user *, struct sockaddr *,
-	    struct iovec *, size_t);
+#include <rump-sys/kern.h>
 
-int	rumpuser_wg_ioctl(struct wg_user *, u_long, void *, int);
-int	rumpuser_wg_sock_bind(struct wg_user *, const uint16_t);
+int wgattach(int);
 
-char *	rumpuser_wg_get_tunname(struct wg_user *);
+RUMP_COMPONENT(RUMP_COMPONENT_NET_IF)
+{
 
-/*
- * Defined in if_wg.c and called from wg_user.c.
- */
-void	rumpkern_wg_recv_user(struct wg_softc *, struct iovec *, size_t);
-void	rumpkern_wg_recv_peer(struct wg_softc *, struct iovec *, size_t);
+	wgattach(0);
+}

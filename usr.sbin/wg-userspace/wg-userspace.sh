@@ -2,7 +2,7 @@
 
 RUMPLIBS="-lrumpnet -lrumpnet_net -lrumpnet_netinet \
     -lrumpdev -lrumpvfs -lrumpdev_opencrypto -lrumpkern_z \
-    -lrumpkern_crypto -lrumpnet_wireguard -lrumpnet_netinet6"
+    -lrumpkern_crypto -lrumpnet_wg -lrumpnet_netinet6"
 HIJACKING="env LD_PRELOAD=/usr/lib/librumphijack.so \
     RUMPHIJACK=path=/rump,socket=all:nolocal,sysctl=yes"
 
