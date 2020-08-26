@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist.c,v 1.27 2016/11/28 08:19:23 rin Exp $	*/
+/*	$NetBSD: nlist.c,v 1.28 2020/08/26 10:54:12 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: nlist.c,v 1.27 2016/11/28 08:19:23 rin Exp $");
+__RCSID("$NetBSD: nlist.c,v 1.28 2020/08/26 10:54:12 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -113,9 +113,7 @@ int	uspace;				/* kernel USPACE value */
 #ifndef MAXSLP
 #define MAXSLP		20
 #endif
-#ifndef USPACE
-#define USPACE		(getpagesize())
-#endif
+#define DEF_USPACE	(getpagesize())
 
 #define	kread(x, v) \
 	kvm_read(kd, psnl[x].n_value, (char *)&v, sizeof v) != sizeof(v)
@@ -177,7 +175,7 @@ donlist_sysctl(void)
 	mib[1] = KERN_FSCALE;
 	size = sizeof(fscale);
 	if (sysctl(mib, 2, &fscale, &size, NULL, 0)) {
-		warn("fscale");
+		warn("sysctl kern.fscale");
 		eval = 1;
 		fscale = FSCALE;
 	}
@@ -186,7 +184,7 @@ donlist_sysctl(void)
 	mib[1] = HW_PHYSMEM64;
 	size = sizeof(memsize);
 	if (sysctl(mib, 2, &memsize, &size, NULL, 0)) {
-		warn("avail_start");
+		warn("sysctl hw.avail_start");
 		eval = 1;
 		mempages = MEMPAGES;
 	} else
@@ -196,7 +194,7 @@ donlist_sysctl(void)
 	mib[1] = KERN_CCPU;
 	size = sizeof(xccpu);
 	if (sysctl(mib, 2, &xccpu, &size, NULL, 0)) {
-		warn("ccpu");
+		warn("sysctl kern.ccpu");
 		eval = 1;
 		log_ccpu = LOG_CCPU;
 	} else
@@ -206,7 +204,7 @@ donlist_sysctl(void)
 	mib[1] = VM_MAXSLP;
 	size = sizeof(maxslp);
 	if (sysctl(mib, 2, &maxslp, &size, NULL, 0)) {
-		warn("maxslp");
+		warn("sysctl vm.maxslp");
 		eval = 1;
 		maxslp = MAXSLP;
 	}
@@ -215,9 +213,9 @@ donlist_sysctl(void)
 	mib[1] = VM_USPACE;
 	size = sizeof(uspace);
 	if (sysctl(mib, 2, &uspace, &size, NULL, 0)) {
-		warn("uspace");
+		warn("sysctl vm.uspace");
 		eval = 1;
-		uspace = USPACE;
+		uspace = DEF_USPACE;
 	}
 }
 
