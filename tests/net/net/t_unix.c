@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unix.c,v 1.19 2020/07/06 16:24:06 christos Exp $	*/
+/*	$NetBSD: t_unix.c,v 1.20 2020/08/26 22:52:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$Id: t_unix.c,v 1.19 2020/07/06 16:24:06 christos Exp $");
+__RCSID("$Id: t_unix.c,v 1.20 2020/08/26 22:52:58 christos Exp $");
 #else
 #define getprogname() argv[0]
 #endif
@@ -52,6 +52,7 @@ __RCSID("$Id: t_unix.c,v 1.19 2020/07/06 16:24:06 christos Exp $");
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #include <stdio.h>
 #include <err.h>
 #include <errno.h>
@@ -146,13 +147,40 @@ peercred(int s, uid_t *euid, gid_t *egid, pid_t *pid)
 }
 
 static int
-test(bool forkit, bool closeit, size_t len)
+check_cred(int fd, bool statit, pid_t checkpid, const char *s)
+{
+	pid_t pid;
+	uid_t euid;
+	gid_t egid;
+
+	if (statit) {
+		struct stat st;
+		if (fstat(fd, &st) == -1)
+			FAIL("fstat (%s)", s);
+		euid = st.st_uid;
+		egid = st.st_gid;
+		pid = checkpid;
+	} else {
+		if (peercred(fd, &euid, &egid, &pid) == -1)
+			FAIL("peercred (%s)", s);
+	}
+	printf("%s(%s) euid=%jd egid=%jd pid=%jd\n",
+	    statit ? "fstat" : "peercred", s,
+	    (intmax_t)euid, (intmax_t)egid, (intmax_t)pid);
+	CHECK_EQUAL(euid, geteuid(), s);
+	CHECK_EQUAL(egid, getegid(), s);
+	CHECK_EQUAL(pid, checkpid, s);
+	return 0;
+fail:
+	return -1;
+}
+
+static int
+test(bool forkit, bool closeit, bool statit, size_t len)
 {
 	size_t slen;
 	socklen_t sl;
 	int srvr = -1, clnt = -1, acpt = -1;
-	uid_t euid;
-	gid_t egid;
 	pid_t srvrpid, clntpid;
 	struct sockaddr_un *sock_addr = NULL, *sun = NULL;
 	socklen_t sock_addrlen;
@@ -204,26 +232,18 @@ test(bool forkit, bool closeit, size_t len)
 	}
 
 	if (clntpid == getpid()) {
-		pid_t pid = srvrpid;
 		clnt = socket(AF_UNIX, SOCK_STREAM, 0);
 		if (clnt == -1)
 			FAIL("socket(client)");
 
 		if (connect(clnt, (const struct sockaddr *)sun, sl) == -1)
 			FAIL("connect");
+		check_cred(clnt, statit, srvrpid, "client");
 
-		if (peercred(clnt, &euid, &egid, &pid) == -1)
-			FAIL("peercred (client)");
-		printf("peercred(client) euid=%jd egid=%jd pid=%jd\n",
-			(intmax_t)euid, (intmax_t)egid, (intmax_t)pid);
-		CHECK_EQUAL(euid, geteuid(), "client");
-		CHECK_EQUAL(egid, getegid(), "client");
-		CHECK_EQUAL(pid, srvrpid, "client");
 	}
 
 	if (srvrpid == getpid()) {
 		acpt = acc(srvr);
-
 		peer_addrlen = sizeof(peer_addr);
 		memset(&peer_addr, 0, sizeof(peer_addr));
 		if (getpeername(acpt, (struct sockaddr *)&peer_addr,
@@ -241,15 +261,7 @@ test(bool forkit, bool closeit, size_t len)
 	}
 
 	if (srvrpid == getpid()) {
-		pid_t pid = clntpid;
-		if (peercred(acpt, &euid, &egid, &pid) == -1)
-			FAIL("peercred (server)");
-		printf("peercred(server) euid=%jd egid=%jd pid=%jd\n",
-			(intmax_t)euid, (intmax_t)egid, (intmax_t)pid);
-		CHECK_EQUAL(euid, geteuid(), "server");
-		CHECK_EQUAL(egid, getegid(), "server");
-		CHECK_EQUAL(pid, clntpid, "server");
-
+		check_cred(acpt, statit, clntpid, "server");
 		if ((sock_addr = calloc(1, slen)) == NULL)
 			FAIL("calloc");
 		sock_addrlen = slen;
@@ -322,8 +334,8 @@ ATF_TC_HEAD(sockaddr_un_len_exceed, tc)
 
 ATF_TC_BODY(sockaddr_un_len_exceed, tc)
 {
-	ATF_REQUIRE_MSG(test(false, false, 254) == -1,
-	    "test(false, false, 254): %s", strerror(errno));
+	ATF_REQUIRE_MSG(test(false, false, false, 254) == -1,
+	    "test(false, false, false, 254): %s", strerror(errno));
 }
 
 ATF_TC(sockaddr_un_len_max);
@@ -337,8 +349,8 @@ ATF_TC_HEAD(sockaddr_un_len_max, tc)
 
 ATF_TC_BODY(sockaddr_un_len_max, tc)
 {
-	ATF_REQUIRE_MSG(test(false, false, 253) == 0,
-	    "test(false, false, 253): %s", strerror(errno));
+	ATF_REQUIRE_MSG(test(false, false, false, 253) == 0,
+	    "test(false, false, false, 253): %s", strerror(errno));
 }
 
 ATF_TC(sockaddr_un_closed);
@@ -351,8 +363,8 @@ ATF_TC_HEAD(sockaddr_un_closed, tc)
 
 ATF_TC_BODY(sockaddr_un_closed, tc)
 {
-	ATF_REQUIRE_MSG(test(false, true, 100) == 0,
-	    "test(false, true, 100): %s", strerror(errno));
+	ATF_REQUIRE_MSG(test(false, true, false, 100) == 0,
+	    "test(false, true, false, 100): %s", strerror(errno));
 }
 
 ATF_TC(sockaddr_un_local_peereid);
@@ -365,8 +377,22 @@ ATF_TC_HEAD(sockaddr_un_local_peereid, tc)
 
 ATF_TC_BODY(sockaddr_un_local_peereid, tc)
 {
-	ATF_REQUIRE_MSG(test(true, true, 100) == 0,
-	    "test(true, true, 100): %s", strerror(errno));
+	ATF_REQUIRE_MSG(test(true, true, false, 100) == 0,
+	    "test(true, true, false, 100): %s", strerror(errno));
+}
+
+ATF_TC(sockaddr_un_fstat);
+ATF_TC_HEAD(sockaddr_un_fstat, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Check that we get the right information"
+	    " from fstat");
+}
+
+ATF_TC_BODY(sockaddr_un_fstat, tc)
+{
+	ATF_REQUIRE_MSG(test(true, true, true, 100) == 0,
+	    "test(true, true, true, 100): %s", strerror(errno));
 }
 
 ATF_TP_ADD_TCS(tp)
@@ -376,6 +402,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, sockaddr_un_len_max);
 	ATF_TP_ADD_TC(tp, sockaddr_un_closed);
 	ATF_TP_ADD_TC(tp, sockaddr_un_local_peereid);
+	ATF_TP_ADD_TC(tp, sockaddr_un_fstat);
 	return atf_no_error();
 }
 #else
@@ -388,9 +415,10 @@ main(int argc, char *argv[])
 		fprintf(stderr, "Usage: %s <len>\n", getprogname());
 		return EXIT_FAILURE;
 	}
-	test(false, false, atoi(argv[1]));
-	test(false, true, atoi(argv[1]));
-	test(true, false, atoi(argv[1]));
-	test(true, true, atoi(argv[1]));
+	test(false, false, false, atoi(argv[1]));
+	test(false, true, false, atoi(argv[1]));
+	test(true, false, false, atoi(argv[1]));
+	test(true, true, false, atoi(argv[1]));
+	test(true, true, true, atoi(argv[1]));
 }
 #endif
