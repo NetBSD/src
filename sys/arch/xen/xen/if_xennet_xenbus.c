@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.127 2020/06/24 14:33:08 jdolecek Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.128 2020/08/26 15:54:10 riastradh Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.127 2020/06/24 14:33:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.128 2020/08/26 15:54:10 riastradh Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -177,7 +177,7 @@ struct xennet_xenbus_softc {
 
 	unsigned int sc_evtchn;
 	struct intrhand *sc_ih;
-	
+
 	grant_ref_t sc_tx_ring_gntref;
 	grant_ref_t sc_rx_ring_gntref;
 
@@ -320,7 +320,7 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 	SLIST_INIT(&sc->sc_txreq_head);
 	for (i = 0; i < NET_TX_RING_SIZE; i++) {
 		struct xennet_txreq *txreq = &sc->sc_txreqs[i];
-	
+
 		txreq->txreq_id = i;
 		if (bus_dmamap_create(sc->sc_xbusd->xbusd_dmat, maxsz, nsegs,
 		    PAGE_SIZE, PAGE_SIZE, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
@@ -387,7 +387,7 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 		| IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_TCPv4_Tx
 		| IFCAP_CSUM_UDPv6_Rx
 		| IFCAP_CSUM_TCPv6_Rx;
-#define XN_M_CSUM_SUPPORTED 						\
+#define XN_M_CSUM_SUPPORTED						\
 	(M_CSUM_TCPv4 | M_CSUM_UDPv4 | M_CSUM_TCPv6 | M_CSUM_UDPv6)
 
 	if (sc->sc_features & FEATURE_IPV6CSUM) {
@@ -781,7 +781,7 @@ xennet_alloc_rx_buffer(struct xennet_xenbus_softc *sc)
 			printf("%s: rx no mbuf\n", ifp->if_xname);
 			break;
 		}
- 
+
 		va = (vaddr_t)pool_cache_get_paddr(
 		    if_xennetrxbuf_cache, PR_NOWAIT, &pa);
 		if (__predict_false(va == 0)) {
@@ -790,11 +790,11 @@ xennet_alloc_rx_buffer(struct xennet_xenbus_softc *sc)
 			break;
 		}
 
- 		MEXTADD(m, va, PAGE_SIZE,
- 		    M_DEVBUF, xennet_rx_mbuf_free, NULL);
+		MEXTADD(m, va, PAGE_SIZE,
+		    M_DEVBUF, xennet_rx_mbuf_free, NULL);
 		m->m_len = m->m_pkthdr.len = PAGE_SIZE;
- 		m->m_ext.ext_paddr = pa;
- 		m->m_flags |= M_EXT_RW; /* we own the buffer */
+		m->m_ext.ext_paddr = pa;
+		m->m_flags |= M_EXT_RW; /* we own the buffer */
 
 		/* Set M_EXT_CLUSTER so that load_mbuf uses m_ext.ext_paddr */
 		m->m_flags |= M_EXT_CLUSTER;
@@ -1232,10 +1232,10 @@ xennet_start(struct ifnet *ifp)
 
 #ifdef XENNET_DEBUG_DUMP
 		xennet_hex_dump(mtod(m, u_char *), m->m_pkthdr.len, "s",
-			       	req->txreq_id);
+		    req->txreq_id);
 #endif
 
-		if (!xennet_submit_tx_request(sc, m, req, &req_prod)) {	
+		if (!xennet_submit_tx_request(sc, m, req, &req_prod)) {
 			/* Grant failed, postpone */
 			sc->sc_cnt_tx_drop.ev_count++;
 			bus_dmamap_unload(sc->sc_xbusd->xbusd_dmat,
