@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.73 2020/08/26 16:32:02 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.74 2020/08/26 16:33:03 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.73 2020/08/26 16:32:02 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.74 2020/08/26 16:33:03 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1170,6 +1170,12 @@ svm_inkernel_handle_msr(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	size_t i;
 
 	if (exit->reason == NVMM_VCPU_EXIT_RDMSR) {
+		if (exit->u.rdmsr.msr == MSR_EFER) {
+			val = vmcb->state.efer & ~EFER_SVME;
+			vmcb->state.rax = (val & 0xFFFFFFFF);
+			cpudata->gprs[NVMM_X64_GPR_RDX] = (val >> 32);
+			goto handled;
+		}
 		if (exit->u.rdmsr.msr == MSR_NB_CFG) {
 			val = NB_CFG_INITAPICCPUIDLO;
 			vmcb->state.rax = (val & 0xFFFFFFFF);
@@ -2195,7 +2201,6 @@ svm_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 
 	/* Allow direct access to certain MSRs. */
 	memset(cpudata->msrbm, 0xFF, MSRBM_SIZE);
-	svm_vcpu_msr_allow(cpudata->msrbm, MSR_EFER, true, false);
 	svm_vcpu_msr_allow(cpudata->msrbm, MSR_STAR, true, true);
 	svm_vcpu_msr_allow(cpudata->msrbm, MSR_LSTAR, true, true);
 	svm_vcpu_msr_allow(cpudata->msrbm, MSR_CSTAR, true, true);
