@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.116 2020/08/26 22:55:46 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.117 2020/08/26 23:08:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.116 2020/08/26 22:55:46 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.117 2020/08/26 23:08:26 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.116 2020/08/26 22:55:46 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.117 2020/08/26 23:08:26 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -527,6 +527,24 @@ SuffInsert(Lst l, Suff *s)
     }
 }
 
+static Suff *
+SuffNew(const char *name)
+{
+    Suff *s = bmake_malloc(sizeof(Suff));
+
+    s->name =   	bmake_strdup(name);
+    s->nameLen = 	strlen(s->name);
+    s->searchPath = Lst_Init();
+    s->children = 	Lst_Init();
+    s->parents = 	Lst_Init();
+    s->ref = 	Lst_Init();
+    s->sNum =   	sNum++;
+    s->flags =  	0;
+    s->refCount =	1;
+
+    return s;
+}
+
 /*-
  *-----------------------------------------------------------------------
  * Suff_ClearSuffixes --
@@ -554,18 +572,10 @@ Suff_ClearSuffixes(void)
     sNum = 0;
     if (suffNull)
 	SuffFree(suffNull);
-    emptySuff = suffNull = bmake_malloc(sizeof(Suff));
+    emptySuff = suffNull = SuffNew("");
 
-    suffNull->name =   	    bmake_strdup("");
-    suffNull->nameLen =     0;
-    suffNull->searchPath =  Lst_Init();
     Dir_Concat(suffNull->searchPath, dirSearchPath);
-    suffNull->children =    Lst_Init();
-    suffNull->parents =	    Lst_Init();
-    suffNull->ref =	    Lst_Init();
-    suffNull->sNum =   	    sNum++;
     suffNull->flags =  	    SUFF_NULL;
-    suffNull->refCount =    1;
 }
 
 /*-
@@ -978,17 +988,7 @@ Suff_AddSuffix(char *str, GNode **gn)
 
     ln = Lst_FindS(sufflist, SuffSuffHasNameP, str);
     if (ln == NULL) {
-	s = bmake_malloc(sizeof(Suff));
-
-	s->name =   	bmake_strdup(str);
-	s->nameLen = 	strlen(s->name);
-	s->searchPath = Lst_Init();
-	s->children = 	Lst_Init();
-	s->parents = 	Lst_Init();
-	s->ref = 	Lst_Init();
-	s->sNum =   	sNum++;
-	s->flags =  	0;
-	s->refCount =	1;
+        s = SuffNew(str);
 
 	Lst_AppendS(sufflist, s);
 	/*
