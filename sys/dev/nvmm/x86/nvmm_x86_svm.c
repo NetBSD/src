@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.71 2020/08/22 10:59:05 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.72 2020/08/26 16:29:19 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.71 2020/08/22 10:59:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.72 2020/08/26 16:29:19 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2118,7 +2118,6 @@ svm_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	 *  - POPF [popf instruction]
 	 *  - IRET [iret instruction]
 	 *  - INTN [int $n instructions]
-	 *  - INVD [invd instruction]
 	 *  - PAUSE [pause instruction]
 	 *  - INVLPG [invplg instruction]
 	 *  - TASKSW [task switches]
@@ -2132,6 +2131,7 @@ svm_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	    VMCB_CTRL_INTERCEPT_RDPMC |
 	    VMCB_CTRL_INTERCEPT_CPUID |
 	    VMCB_CTRL_INTERCEPT_RSM |
+	    VMCB_CTRL_INTERCEPT_INVD |
 	    VMCB_CTRL_INTERCEPT_HLT |
 	    VMCB_CTRL_INTERCEPT_INVLPGA |
 	    VMCB_CTRL_INTERCEPT_IOIO_PROT |
