@@ -1,5 +1,5 @@
-#	$NetBSD: files.blake2s,v 1.1 2020/08/20 21:21:05 riastradh Exp $
+#	$NetBSD: files.blake2s,v 1.2 2020/08/26 22:56:55 christos Exp $
 
 define	blake2s
 
-file	crypto/blake2/blake2s.c		blake2s
+file	crypto/blake2/blake2s.c
