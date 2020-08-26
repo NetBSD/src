@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.26 2020/08/01 14:47:49 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.27 2020/08/26 23:00:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: hash.c,v 1.26 2020/08/01 14:47:49 rillig Exp $";
+static char rcsid[] = "$NetBSD: hash.c,v 1.27 2020/08/26 23:00:47 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)hash.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: hash.c,v 1.26 2020/08/01 14:47:49 rillig Exp $");
+__RCSID("$NetBSD: hash.c,v 1.27 2020/08/26 23:00:47 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -89,9 +89,7 @@ __RCSID("$NetBSD: hash.c,v 1.26 2020/08/01 14:47:49 rillig Exp $");
  * 	table.  Hash tables grow automatically as the amount of
  * 	information increases.
  */
-#include "sprite.h"
 #include "make.h"
-#include "hash.h"
 
 /*
  * Forward references to local procedures that are used before they're

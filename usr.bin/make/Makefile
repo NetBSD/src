@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.93 2020/08/25 16:39:19 rillig Exp $
+#	$NetBSD: Makefile,v 1.94 2020/08/26 23:00:47 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -37,7 +37,6 @@ HDRS+=  meta.h
 HDRS+=  metachar.h
 HDRS+=  nonints.h
 HDRS+=  pathnames.h
-HDRS+=  sprite.h
 HDRS+=  strlist.h
 HDRS+=  trace.h
 

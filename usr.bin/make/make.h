@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.126 2020/08/24 20:15:51 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.127 2020/08/26 23:00:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,37 @@
 #define MAKE_ATTR_PRINTFLIKE(fmtarg, firstvararg)	/* delete */
 #endif
 
-#include "sprite.h"
+/*
+ * A boolean type is defined as an integer, not an enum. This allows a
+ * boolean argument to be an expression that isn't strictly 0 or 1 valued.
+ */
+
+typedef int Boolean;
+#ifndef TRUE
+#define TRUE	1
+#endif /* TRUE */
+#ifndef FALSE
+#define FALSE	0
+#endif /* FALSE */
+
+/*
+ * Functions that must return a status can return a ReturnStatus to
+ * indicate success or type of failure.
+ */
+
+typedef int  ReturnStatus;
+
+/*
+ * The following statuses overlap with the first 2 generic statuses
+ * defined in status.h:
+ *
+ * SUCCESS			There was no error.
+ * FAILURE			There was a general error.
+ */
+
+#define	SUCCESS			0x00000000
+#define	FAILURE			0x00000001
+
 #include "lst.h"
 #include "hash.h"
 #include "config.h"
