@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.110 2020/08/23 16:58:02 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.111 2020/08/26 22:55:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.110 2020/08/23 16:58:02 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.111 2020/08/26 22:55:46 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.110 2020/08/23 16:58:02 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.111 2020/08/26 22:55:46 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -461,9 +461,9 @@ Dir_End(void)
     Dir_Destroy(dotLast);
     Dir_Destroy(dot);
     Dir_ClearPath(dirSearchPath);
-    Lst_Destroy(dirSearchPath, NULL);
+    Lst_FreeS(dirSearchPath);
     Dir_ClearPath(openDirectories);
-    Lst_Destroy(openDirectories, NULL);
+    Lst_FreeS(openDirectories);
     Hash_DeleteTable(&mtimes);
 #endif
 }
@@ -895,7 +895,7 @@ Dir_Expand(const char *word, Lst path, Lst expansions)
 			path = Lst_Init();
 			(void)Dir_AddDir(path, dirpath);
 			DirExpandInt(cp + 1, path, expansions);
-			Lst_Destroy(path, NULL);
+			Lst_FreeS(path);
 		    }
 		} else {
 		    /*

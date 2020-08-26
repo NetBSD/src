@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.313 2020/08/25 16:50:02 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.314 2020/08/26 22:55:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.313 2020/08/25 16:50:02 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.314 2020/08/26 22:55:46 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.313 2020/08/25 16:50:02 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.314 2020/08/26 22:55:46 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -905,7 +905,7 @@ runTargets(void)
 	 * we consult the parsing module to find the main target(s)
 	 * to create.
 	 */
-	if (Lst_IsEmpty(create))
+	if (Lst_IsEmptyS(create))
 		targs = Parse_MainName();
 	else
 		targs = Targ_FindList(create, TARG_CREATE);
@@ -933,7 +933,7 @@ runTargets(void)
 		Compat_Run(targs);
 		outOfDate = FALSE;
 	}
-	Lst_Destroy(targs, NULL);
+	Lst_FreeS(targs);
 	return outOfDate;
 }
 
@@ -1467,9 +1467,9 @@ main(int argc, char **argv)
 	}
 
 #ifdef CLEANUP
-	Lst_Destroy(variables, NULL);
-	Lst_Destroy(makefiles, NULL);
-	Lst_Destroy(create, free);
+	Lst_FreeS(variables);
+	Lst_FreeS(makefiles);
+	Lst_DestroyS(create, free);
 #endif
 
 	/* print the graph now it's been processed if the user requested it */
