@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2020/08/21 06:37:30 riastradh Exp $
+#	$NetBSD: Makefile,v 1.20 2020/08/26 15:49:56 riastradh Exp $
 #
 
 SODIUM_IMPORTDIR=${.CURDIR}/../../../../external/isc/libsodium
@@ -60,35 +60,35 @@ SRCS+=	skipjack.c
 # BLAKE2
 SRCS+=	blake2s.c
 
-# Various cryptography functions
-SODIUM_CPPFLAGS=
+# libsodium
 SODIUM_CPPFLAGS+=	-I${SODIUM_IMPORTDIR}/include
 SODIUM_CPPFLAGS+=	-I${SODIUM_IMPORTDIR}/dist/src/libsodium/include/sodium
 
 #SODIUM_CPPFLAGS+=	-DHAVE_TI_MODE
 
-SODIUM_CPPFLAGS+=	-Wno-shadow
-SODIUM_CPPFLAGS+=	-Wno-unused-function
-SODIUM_CPPFLAGS+=	-Wno-unused-variable
+SODIUM_CWARNFLAGS+=	-Wno-shadow
+SODIUM_CWARNFLAGS+=	-Wno-unused-function
+SODIUM_CWARNFLAGS+=	-Wno-unused-variable
 
-CPPFLAGS.x25519_ref10.c+=		${SODIUM_CPPFLAGS}
-CPPFLAGS.scalarmult_curve25519.c+=	${SODIUM_CPPFLAGS}
-CPPFLAGS.crypto_scalarmult.c+=		${SODIUM_CPPFLAGS}
-CPPFLAGS.poly1305_donna.c+=		${SODIUM_CPPFLAGS}
-CPPFLAGS.onetimeauth_poly1305.c+=	${SODIUM_CPPFLAGS}
-CPPFLAGS.crypto_onetimeauth.c+=		${SODIUM_CPPFLAGS}
-CPPFLAGS.chacha20_ref.c+=		${SODIUM_CPPFLAGS}
-CPPFLAGS.stream_chacha20.c+=		${SODIUM_CPPFLAGS}
-CPPFLAGS.aead_xchacha20poly1305.c+=	${SODIUM_CPPFLAGS}
-CPPFLAGS.aead_chacha20poly1305.c+=	${SODIUM_CPPFLAGS}
-CPPFLAGS.core_hchacha20.c+=		${SODIUM_CPPFLAGS}
-CPPFLAGS.ed25519_ref10.c+=		${SODIUM_CPPFLAGS}
+SODIUM_SRCS+=	x25519_ref10.c
+SODIUM_SRCS+=	scalarmult_curve25519.c
+SODIUM_SRCS+=	crypto_scalarmult.c
+SODIUM_SRCS+=	poly1305_donna.c
+SODIUM_SRCS+=	onetimeauth_poly1305.c
+SODIUM_SRCS+=	crypto_onetimeauth.c
+SODIUM_SRCS+=	chacha20_ref.c
+SODIUM_SRCS+=	stream_chacha20.c
+SODIUM_SRCS+=	aead_xchacha20poly1305.c
+SODIUM_SRCS+=	aead_chacha20poly1305.c
+SODIUM_SRCS+=	core_hchacha20.c
+SODIUM_SRCS+=	ed25519_ref10.c
 
-SRCS+=	x25519_ref10.c scalarmult_curve25519.c crypto_scalarmult.c
-SRCS+=	poly1305_donna.c onetimeauth_poly1305.c
-SRCS+=	crypto_onetimeauth.c chacha20_ref.c stream_chacha20.c
-SRCS+=	aead_xchacha20poly1305.c aead_chacha20poly1305.c
-SRCS+=	core_hchacha20.c ed25519_ref10.c
+SRCS+=	${SODIUM_SRCS}
+
+.for _s_ in ${SODIUM_SRCS}
+CPPFLAGS.${_s_}+=	${SODIUM_CPPFLAGS}
+COPTS.${_s_}+=		${SODIUM_CWARNFLAGS}
+.endfor
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>
