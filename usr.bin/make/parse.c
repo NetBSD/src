@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.262 2020/08/25 16:50:02 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.263 2020/08/26 22:55:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.262 2020/08/25 16:50:02 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.263 2020/08/26 22:55:46 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.262 2020/08/25 16:50:02 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.263 2020/08/26 22:55:46 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -853,7 +853,7 @@ ParseLinkSrc(void *pgnp, void *cgnp)
     GNode          *cgn = (GNode *)cgnp;
 
     if ((pgn->type & OP_DOUBLEDEP) && !Lst_IsEmpty(pgn->cohorts))
-	pgn = Lst_DatumS(Lst_Last(pgn->cohorts));
+	pgn = Lst_DatumS(Lst_LastS(pgn->cohorts));
     Lst_AppendS(pgn->children, cgn);
     if (specType == Not)
 	Lst_AppendS(cgn->parents, pgn);
@@ -1433,7 +1433,7 @@ ParseDoDependency(char *line)
 
 		Dir_Expand(line, emptyPath, curTargs);
 
-		Lst_Destroy(emptyPath, Dir_Destroy);
+		Lst_DestroyS(emptyPath, Dir_Destroy);
 	    } else {
 		/*
 		 * No wildcards, but we want to avoid code duplication,
@@ -1494,7 +1494,7 @@ ParseDoDependency(char *line)
     /*
      * Don't need the list of target names anymore...
      */
-    Lst_Destroy(curTargs, NULL);
+    Lst_FreeS(curTargs);
     curTargs = NULL;
 
     if (!Lst_IsEmpty(targets)) {
@@ -1686,7 +1686,7 @@ ParseDoDependency(char *line)
 	    line = cp;
 	}
 	if (paths) {
-	    Lst_Destroy(paths, NULL);
+	    Lst_FreeS(paths);
 	    paths = NULL;
 	}
 	if (specType == ExPath)
@@ -1723,7 +1723,7 @@ ParseDoDependency(char *line)
 		    gn = Lst_DequeueS(sources);
 		    ParseDoSrc(tOp, gn->name);
 		}
-		Lst_Destroy(sources, NULL);
+		Lst_FreeS(sources);
 		cp = line;
 	    } else {
 		if (*cp) {
@@ -1751,10 +1751,10 @@ ParseDoDependency(char *line)
     }
 
 out:
-    if (paths)
-	Lst_Destroy(paths, NULL);
-    if (curTargs)
-	    Lst_Destroy(curTargs, NULL);
+    if (paths != NULL)
+	Lst_FreeS(paths);
+    if (curTargs != NULL)
+	Lst_FreeS(curTargs);
 }
 
 /*-
@@ -3018,8 +3018,10 @@ static void
 ParseFinishLine(void)
 {
     if (inLine) {
-	Lst_ForEach(targets, Suff_EndTransform, NULL);
-	Lst_Destroy(targets, ParseHasCommands);
+        if (targets != NULL) {
+	    Lst_ForEach(targets, Suff_EndTransform, NULL);
+	    Lst_DestroyS(targets, ParseHasCommands);
+	}
 	targets = NULL;
 	inLine = FALSE;
     }
@@ -3237,8 +3239,8 @@ Parse_File(const char *name, int fd)
 	    /*
 	     * Need a non-circular list for the target nodes
 	     */
-	    if (targets)
-		Lst_Destroy(targets, NULL);
+	    if (targets != NULL)
+		Lst_FreeS(targets);
 
 	    targets = Lst_Init();
 	    inLine = TRUE;
@@ -3295,13 +3297,13 @@ void
 Parse_End(void)
 {
 #ifdef CLEANUP
-    Lst_Destroy(targCmds, free);
+    Lst_DestroyS(targCmds, free);
     if (targets)
-	Lst_Destroy(targets, NULL);
-    Lst_Destroy(defIncPath, Dir_Destroy);
-    Lst_Destroy(sysIncPath, Dir_Destroy);
-    Lst_Destroy(parseIncPath, Dir_Destroy);
-    Lst_Destroy(includes, NULL);	/* Should be empty now */
+	Lst_FreeS(targets);
+    Lst_DestroyS(defIncPath, Dir_Destroy);
+    Lst_DestroyS(sysIncPath, Dir_Destroy);
+    Lst_DestroyS(parseIncPath, Dir_Destroy);
+    Lst_FreeS(includes);	/* Should be empty now */
 #endif
 }
 

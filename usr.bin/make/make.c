@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.123 2020/08/25 16:27:24 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.124 2020/08/26 22:55:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.123 2020/08/25 16:27:24 rillig Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.124 2020/08/26 22:55:46 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.123 2020/08/25 16:27:24 rillig Exp $");
+__RCSID("$NetBSD: make.c,v 1.124 2020/08/26 22:55:46 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1306,7 +1306,7 @@ Make_ExpandUse(Lst targs)
      * be looked at in a minute, otherwise we add its children to our queue
      * and go on about our business.
      */
-    while (!Lst_IsEmpty(examine)) {
+    while (!Lst_IsEmptyS(examine)) {
 	gn = Lst_DequeueS(examine);
 
 	if (gn->flags & REMAKE)
@@ -1359,7 +1359,7 @@ Make_ExpandUse(Lst targs)
 	    Lst_ForEach(gn->children, MakeAddChild, examine);
     }
 
-    Lst_Destroy(examine, NULL);
+    Lst_FreeS(examine);
 }
 
 /*-
@@ -1465,7 +1465,7 @@ Make_ProcessWait(Lst targs)
 	Lst_CloseS(pgn->children);
     }
 
-    Lst_Destroy(examine, NULL);
+    Lst_FreeS(examine);
 }
 
 /*-
