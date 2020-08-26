@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.44 2020/08/26 22:55:46 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.45 2020/08/26 23:00:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -82,8 +82,6 @@
 
 #include	<sys/param.h>
 #include	<stdlib.h>
-
-#include	"sprite.h"
 
 /*
  * basic typedef. This is what the Lst_ functions handle
