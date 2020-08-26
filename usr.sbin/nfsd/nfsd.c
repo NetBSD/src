@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.71 2020/08/26 13:33:42 gson Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.72 2020/08/26 13:35:12 gson Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.71 2020/08/26 13:33:42 gson Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.72 2020/08/26 13:35:12 gson Exp $");
 #endif
 #endif /* not lint */
 
@@ -329,7 +329,7 @@ daemon2_fork(void)
 		/* child */
 		(void)close(detach_msg_pipe[0]);
 		(void)write(detach_msg_pipe[1], "", 1);
-		 return detach_msg_pipe[1];
+		return detach_msg_pipe[1];
 	 default:
 		break;
 	}
