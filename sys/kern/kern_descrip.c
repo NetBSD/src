@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.246 2020/05/23 23:42:43 ad Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.247 2020/08/26 22:56:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.246 2020/05/23 23:42:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.247 2020/08/26 22:56:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2305,11 +2305,11 @@ fill_file(struct file *fp, const struct file *fpsrc)
 	memset(fp, 0, sizeof(*fp));
 
 	fp->f_offset = fpsrc->f_offset;
-	COND_SET_VALUE(fp->f_cred, fpsrc->f_cred, allowaddr);
-	COND_SET_VALUE(fp->f_ops, fpsrc->f_ops, allowaddr);
-	COND_SET_VALUE(fp->f_undata, fpsrc->f_undata, allowaddr);
-	COND_SET_VALUE(fp->f_list, fpsrc->f_list, allowaddr);
-	COND_SET_VALUE(fp->f_lock, fpsrc->f_lock, allowaddr);
+	COND_SET_PTR(fp->f_cred, fpsrc->f_cred, allowaddr);
+	COND_SET_CPTR(fp->f_ops, fpsrc->f_ops, allowaddr);
+	COND_SET_STRUCT(fp->f_undata, fpsrc->f_undata, allowaddr);
+	COND_SET_STRUCT(fp->f_list, fpsrc->f_list, allowaddr);
+	COND_SET_STRUCT(fp->f_lock, fpsrc->f_lock, allowaddr);
 	fp->f_flag = fpsrc->f_flag;
 	fp->f_marker = fpsrc->f_marker;
 	fp->f_type = fpsrc->f_type;
@@ -2317,7 +2317,7 @@ fill_file(struct file *fp, const struct file *fpsrc)
 	fp->f_count = fpsrc->f_count;
 	fp->f_msgcount = fpsrc->f_msgcount;
 	fp->f_unpcount = fpsrc->f_unpcount;
-	COND_SET_VALUE(fp->f_unplist, fpsrc->f_unplist, allowaddr);
+	COND_SET_STRUCT(fp->f_unplist, fpsrc->f_unplist, allowaddr);
 }
 
 static void
