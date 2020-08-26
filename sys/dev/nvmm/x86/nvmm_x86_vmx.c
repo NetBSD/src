@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.72 2020/08/22 11:01:10 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.73 2020/08/26 16:30:50 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.72 2020/08/22 11:01:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.73 2020/08/26 16:30:50 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -728,6 +728,33 @@ static uint64_t vmx_xcr0_mask __read_mostly;
 
 #define MSRBM_NPAGES	1
 #define MSRBM_SIZE	(MSRBM_NPAGES * PAGE_SIZE)
+
+#define CR4_VALID \
+	(CR4_VME |			\
+	 CR4_PVI |			\
+	 CR4_TSD |			\
+	 CR4_DE |			\
+	 CR4_PSE |			\
+	 CR4_PAE |			\
+	 CR4_MCE |			\
+	 CR4_PGE |			\
+	 CR4_PCE |			\
+	 CR4_OSFXSR |			\
+	 CR4_OSXMMEXCPT |		\
+	 CR4_UMIP |			\
+	 /* CR4_LA57 excluded */	\
+	 /* CR4_VMXE excluded */	\
+	 /* CR4_SMXE excluded */	\
+	 CR4_FSGSBASE |			\
+	 CR4_PCIDE |			\
+	 CR4_OSXSAVE |			\
+	 CR4_SMEP |			\
+	 CR4_SMAP			\
+	 /* CR4_PKE excluded */		\
+	 /* CR4_CET excluded */		\
+	 /* CR4_PKS excluded */)
+#define CR4_INVALID \
+	(0xFFFFFFFFFFFFFFFFULL & ~CR4_VALID)
 
 #define EFER_TLB_FLUSH \
 	(EFER_NXE|EFER_LMA|EFER_LME)
@@ -1589,10 +1616,16 @@ vmx_inkernel_handle_cr4(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		gpr = cpudata->gprs[gpr];
 	}
 
+	if (gpr & CR4_INVALID) {
+		return -1;
+	}
 	cr4 = gpr | CR4_VMXE;
-
 	if (vmx_check_cr(cr4, vmx_cr4_fixed0, vmx_cr4_fixed1) == -1) {
 		return -1;
+	}
+
+	if ((vmx_vmread(VMCS_GUEST_CR4) ^ cr4) & CR4_TLB_FLUSH) {
+		cpudata->gtlb_want_flush = true;
 	}
 
 	vmx_vmwrite(VMCS_GUEST_CR4, cr4);
@@ -2514,7 +2547,7 @@ vmx_vcpu_setstate(struct nvmm_cpu *vcpu)
 		cpudata->gcr2 = state->crs[NVMM_X64_CR_CR2];
 		vmx_vmwrite(VMCS_GUEST_CR3, state->crs[NVMM_X64_CR_CR3]); // XXX PDPTE?
 		vmx_vmwrite(VMCS_GUEST_CR4,
-		    state->crs[NVMM_X64_CR_CR4] | CR4_VMXE);
+		    (state->crs[NVMM_X64_CR_CR4] & CR4_VALID) | CR4_VMXE);
 		cpudata->gcr8 = state->crs[NVMM_X64_CR_CR8];
 
 		if (vmx_xcr0_mask != 0) {
@@ -2839,8 +2872,9 @@ vmx_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	vmx_vmwrite(VMCS_CR0_MASK, CR0_NW|CR0_CD|CR0_ET);
 	vmx_vmwrite(VMCS_CR0_SHADOW, CR0_ET);
 
-	/* Force CR4_VMXE to zero. */
-	vmx_vmwrite(VMCS_CR4_MASK, CR4_VMXE);
+	/* Force unsupported CR4 fields to zero. */
+	vmx_vmwrite(VMCS_CR4_MASK, CR4_INVALID);
+	vmx_vmwrite(VMCS_CR4_SHADOW, 0);
 
 	/* Set the Host state for resuming. */
 	vmx_vmwrite(VMCS_HOST_RIP, (uint64_t)&vmx_resume_rip);
