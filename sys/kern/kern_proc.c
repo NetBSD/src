@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.255 2020/06/11 19:20:46 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.256 2020/08/26 22:56:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.255 2020/06/11 19:20:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.256 2020/08/26 22:56:55 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -2575,23 +2575,23 @@ done:
 static void
 fill_proc(const struct proc *psrc, struct proc *p, bool allowaddr)
 {
-	COND_SET_VALUE(p->p_list, psrc->p_list, allowaddr);
-	COND_SET_VALUE(p->p_auxlock, psrc->p_auxlock, allowaddr);
-	COND_SET_VALUE(p->p_lock, psrc->p_lock, allowaddr);
-	COND_SET_VALUE(p->p_stmutex, psrc->p_stmutex, allowaddr);
-	COND_SET_VALUE(p->p_reflock, psrc->p_reflock, allowaddr);
-	COND_SET_VALUE(p->p_waitcv, psrc->p_waitcv, allowaddr);
-	COND_SET_VALUE(p->p_lwpcv, psrc->p_lwpcv, allowaddr);
-	COND_SET_VALUE(p->p_cred, psrc->p_cred, allowaddr);
-	COND_SET_VALUE(p->p_fd, psrc->p_fd, allowaddr);
-	COND_SET_VALUE(p->p_cwdi, psrc->p_cwdi, allowaddr);
-	COND_SET_VALUE(p->p_stats, psrc->p_stats, allowaddr);
-	COND_SET_VALUE(p->p_limit, psrc->p_limit, allowaddr);
-	COND_SET_VALUE(p->p_vmspace, psrc->p_vmspace, allowaddr);
-	COND_SET_VALUE(p->p_sigacts, psrc->p_sigacts, allowaddr);
-	COND_SET_VALUE(p->p_aio, psrc->p_aio, allowaddr);
+	COND_SET_STRUCT(p->p_list, psrc->p_list, allowaddr);
+	COND_SET_STRUCT(p->p_auxlock, psrc->p_auxlock, allowaddr);
+	COND_SET_STRUCT(p->p_lock, psrc->p_lock, allowaddr);
+	COND_SET_STRUCT(p->p_stmutex, psrc->p_stmutex, allowaddr);
+	COND_SET_STRUCT(p->p_reflock, psrc->p_reflock, allowaddr);
+	COND_SET_STRUCT(p->p_waitcv, psrc->p_waitcv, allowaddr);
+	COND_SET_STRUCT(p->p_lwpcv, psrc->p_lwpcv, allowaddr);
+	COND_SET_PTR(p->p_cred, psrc->p_cred, allowaddr);
+	COND_SET_PTR(p->p_fd, psrc->p_fd, allowaddr);
+	COND_SET_PTR(p->p_cwdi, psrc->p_cwdi, allowaddr);
+	COND_SET_PTR(p->p_stats, psrc->p_stats, allowaddr);
+	COND_SET_PTR(p->p_limit, psrc->p_limit, allowaddr);
+	COND_SET_PTR(p->p_vmspace, psrc->p_vmspace, allowaddr);
+	COND_SET_PTR(p->p_sigacts, psrc->p_sigacts, allowaddr);
+	COND_SET_PTR(p->p_aio, psrc->p_aio, allowaddr);
 	p->p_mqueue_cnt = psrc->p_mqueue_cnt;
-	COND_SET_VALUE(p->p_specdataref, psrc->p_specdataref, allowaddr);
+	COND_SET_STRUCT(p->p_specdataref, psrc->p_specdataref, allowaddr);
 	p->p_exitsig = psrc->p_exitsig;
 	p->p_flag = psrc->p_flag;
 	p->p_sflag = psrc->p_sflag;
@@ -2601,12 +2601,12 @@ fill_proc(const struct proc *psrc, struct proc *p, bool allowaddr)
 	p->p_stat = psrc->p_stat;
 	p->p_trace_enabled = psrc->p_trace_enabled;
 	p->p_pid = psrc->p_pid;
-	COND_SET_VALUE(p->p_pglist, psrc->p_pglist, allowaddr);
-	COND_SET_VALUE(p->p_pptr, psrc->p_pptr, allowaddr);
-	COND_SET_VALUE(p->p_sibling, psrc->p_sibling, allowaddr);
-	COND_SET_VALUE(p->p_children, psrc->p_children, allowaddr);
-	COND_SET_VALUE(p->p_lwps, psrc->p_lwps, allowaddr);
-	COND_SET_VALUE(p->p_raslist, psrc->p_raslist, allowaddr);
+	COND_SET_STRUCT(p->p_pglist, psrc->p_pglist, allowaddr);
+	COND_SET_PTR(p->p_pptr, psrc->p_pptr, allowaddr);
+	COND_SET_STRUCT(p->p_sibling, psrc->p_sibling, allowaddr);
+	COND_SET_STRUCT(p->p_children, psrc->p_children, allowaddr);
+	COND_SET_STRUCT(p->p_lwps, psrc->p_lwps, allowaddr);
+	COND_SET_PTR(p->p_raslist, psrc->p_raslist, allowaddr);
 	p->p_nlwps = psrc->p_nlwps;
 	p->p_nzlwps = psrc->p_nzlwps;
 	p->p_nrlwps = psrc->p_nrlwps;
@@ -2614,15 +2614,15 @@ fill_proc(const struct proc *psrc, struct proc *p, bool allowaddr)
 	p->p_ndlwps = psrc->p_ndlwps;
 	p->p_nstopchild = psrc->p_nstopchild;
 	p->p_waited = psrc->p_waited;
-	COND_SET_VALUE(p->p_zomblwp, psrc->p_zomblwp, allowaddr);
-	COND_SET_VALUE(p->p_vforklwp, psrc->p_vforklwp, allowaddr);
-	COND_SET_VALUE(p->p_sched_info, psrc->p_sched_info, allowaddr);
+	COND_SET_PTR(p->p_zomblwp, psrc->p_zomblwp, allowaddr);
+	COND_SET_PTR(p->p_vforklwp, psrc->p_vforklwp, allowaddr);
+	COND_SET_PTR(p->p_sched_info, psrc->p_sched_info, allowaddr);
 	p->p_estcpu = psrc->p_estcpu;
 	p->p_estcpu_inherited = psrc->p_estcpu_inherited;
 	p->p_forktime = psrc->p_forktime;
 	p->p_pctcpu = psrc->p_pctcpu;
-	COND_SET_VALUE(p->p_opptr, psrc->p_opptr, allowaddr);
-	COND_SET_VALUE(p->p_timers, psrc->p_timers, allowaddr);
+	COND_SET_PTR(p->p_opptr, psrc->p_opptr, allowaddr);
+	COND_SET_PTR(p->p_timers, psrc->p_timers, allowaddr);
 	p->p_rtime = psrc->p_rtime;
 	p->p_uticks = psrc->p_uticks;
 	p->p_sticks = psrc->p_sticks;
@@ -2630,30 +2630,32 @@ fill_proc(const struct proc *psrc, struct proc *p, bool allowaddr)
 	p->p_xutime = psrc->p_xutime;
 	p->p_xstime = psrc->p_xstime;
 	p->p_traceflag = psrc->p_traceflag;
-	COND_SET_VALUE(p->p_tracep, psrc->p_tracep, allowaddr);
-	COND_SET_VALUE(p->p_textvp, psrc->p_textvp, allowaddr);
-	COND_SET_VALUE(p->p_emul, psrc->p_emul, allowaddr);
-	COND_SET_VALUE(p->p_emuldata, psrc->p_emuldata, allowaddr);
-	COND_SET_VALUE(p->p_execsw, psrc->p_execsw, allowaddr);
-	COND_SET_VALUE(p->p_klist, psrc->p_klist, allowaddr);
-	COND_SET_VALUE(p->p_sigwaiters, psrc->p_sigwaiters, allowaddr);
-	COND_SET_VALUE(p->p_sigpend, psrc->p_sigpend, allowaddr);
-	COND_SET_VALUE(p->p_lwpctl, psrc->p_lwpctl, allowaddr);
+	COND_SET_PTR(p->p_tracep, psrc->p_tracep, allowaddr);
+	COND_SET_PTR(p->p_textvp, psrc->p_textvp, allowaddr);
+	COND_SET_PTR(p->p_emul, psrc->p_emul, allowaddr);
+	COND_SET_PTR(p->p_emuldata, psrc->p_emuldata, allowaddr);
+	COND_SET_CPTR(p->p_execsw, psrc->p_execsw, allowaddr);
+	COND_SET_STRUCT(p->p_klist, psrc->p_klist, allowaddr);
+	COND_SET_STRUCT(p->p_sigwaiters, psrc->p_sigwaiters, allowaddr);
+	COND_SET_STRUCT(p->p_sigpend.sp_info, psrc->p_sigpend.sp_info,
+	    allowaddr);
+	p->p_sigpend.sp_set = psrc->p_sigpend.sp_set;
+	COND_SET_PTR(p->p_lwpctl, psrc->p_lwpctl, allowaddr);
 	p->p_ppid = psrc->p_ppid;
 	p->p_oppid = psrc->p_oppid;
-	COND_SET_VALUE(p->p_path, psrc->p_path, allowaddr);
-	COND_SET_VALUE(p->p_sigctx, psrc->p_sigctx, allowaddr);
+	COND_SET_PTR(p->p_path, psrc->p_path, allowaddr);
+	p->p_sigctx = psrc->p_sigctx;
 	p->p_nice = psrc->p_nice;
 	memcpy(p->p_comm, psrc->p_comm, sizeof(p->p_comm));
-	COND_SET_VALUE(p->p_pgrp, psrc->p_pgrp, allowaddr);
+	COND_SET_PTR(p->p_pgrp, psrc->p_pgrp, allowaddr);
 	COND_SET_VALUE(p->p_psstrp, psrc->p_psstrp, allowaddr);
 	p->p_pax = psrc->p_pax;
 	p->p_xexit = psrc->p_xexit;
 	p->p_xsig = psrc->p_xsig;
 	p->p_acflag = psrc->p_acflag;
-	COND_SET_VALUE(p->p_md, psrc->p_md, allowaddr);
+	COND_SET_STRUCT(p->p_md, psrc->p_md, allowaddr);
 	p->p_stackbase = psrc->p_stackbase;
-	COND_SET_VALUE(p->p_dtrace, psrc->p_dtrace, allowaddr);
+	COND_SET_PTR(p->p_dtrace, psrc->p_dtrace, allowaddr);
 }
 
 /*
@@ -2668,8 +2670,8 @@ fill_eproc(struct proc *p, struct eproc *ep, bool zombie, bool allowaddr)
 	KASSERT(mutex_owned(&proc_lock));
 	KASSERT(mutex_owned(p->p_lock));
 
-	COND_SET_VALUE(ep->e_paddr, p, allowaddr);
-	COND_SET_VALUE(ep->e_sess, p->p_session, allowaddr);
+	COND_SET_PTR(ep->e_paddr, p, allowaddr);
+	COND_SET_PTR(ep->e_sess, p->p_session, allowaddr);
 	if (p->p_cred) {
 		kauth_cred_topcred(p->p_cred, &ep->e_pcred);
 		kauth_cred_toucred(p->p_cred, &ep->e_ucred);
@@ -2700,7 +2702,7 @@ fill_eproc(struct proc *p, struct eproc *ep, bool zombie, bool allowaddr)
 		    (tp = p->p_session->s_ttyp)) {
 			ep->e_tdev = tp->t_dev;
 			ep->e_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PGID;
-			COND_SET_VALUE(ep->e_tsess, tp->t_session, allowaddr);
+			COND_SET_PTR(ep->e_tsess, tp->t_session, allowaddr);
 		} else
 			ep->e_tdev = (uint32_t)NODEV;
 		ep->e_flag = p->p_session->s_ttyvp ? EPROC_CTTY : 0;
