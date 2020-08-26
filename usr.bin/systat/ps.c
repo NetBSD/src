@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.c,v 1.38 2019/02/03 10:48:47 mrg Exp $  */
+/*      $NetBSD: ps.c,v 1.39 2020/08/26 10:56:01 simonb Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ps.c,v 1.38 2019/02/03 10:48:47 mrg Exp $");
+__RCSID("$NetBSD: ps.c,v 1.39 2020/08/26 10:56:01 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -297,14 +297,30 @@ double
 pmem2float(struct kinfo_proc2 *kp)
 {	                       
 	double fracmem;
-	int szptudot = 0;
+	static int szptudot = -1;
 
-#ifdef USPACE
-	/* XXX want pmap ptpages, segtab, etc. (per architecture) */
-	szptudot = USPACE/getpagesize();
-#endif
+	/*
+	 * XXX want pmap ptpages, segtab, etc. (per architecture),
+	 * not just the uarea.
+	 */
+	if (szptudot < 0) {
+		int mib[2];
+		size_t size;
+		int uspace;
+
+		mib[0] = CTL_VM;
+		mib[1] = VM_USPACE;
+		size = sizeof(uspace);
+		if (sysctl(mib, 2, &uspace, &size, NULL, 0) == 0) {
+			szptudot = uspace / getpagesize();
+		} else {
+			/* pick a vaguely useful default */
+			szptudot = getpagesize();
+		}
+	}
+
 	/* XXX don't have info about shared */
-	fracmem = ((double)kp->p_vm_rssize + szptudot)/mempages;
+	fracmem = ((double)kp->p_vm_rssize + szptudot) / mempages;
 	return (fracmem >= 0) ? 100.0 * fracmem : 0;
 }
 
