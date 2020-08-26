@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.329 2020/08/20 21:28:01 riastradh Exp $
+# $NetBSD: mi,v 1.330 2020/08/26 16:03:41 riastradh Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -237,7 +237,8 @@
 ./usr/lib/librumpnet_tun_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpnet_virtif_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpnet_vlan_g.a			comp-c-debuglib		debuglib,rump
-./usr/lib/librumpnet_wireguard_g.a		comp-c-debuglib		debuglib,rump
+./usr/lib/librumpnet_wg_g.a			comp-c-debuglib		debuglib,rump
+./usr/lib/librumpnet_wireguard_g.a		comp-obsolete		obsolete
 ./usr/lib/librumpres_g.a			comp-c-debuglib		debuglib,compatfile,rump
 ./usr/lib/librumpuser_g.a			comp-c-debuglib		debuglib,compatfile,rump
 ./usr/lib/librumpvfs_aio_g.a			comp-c-debuglib		debuglib,rump

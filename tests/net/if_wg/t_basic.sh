@@ -1,4 +1,4 @@
-#	$NetBSD: t_basic.sh,v 1.1 2020/08/20 21:28:01 riastradh Exp $
+#	$NetBSD: t_basic.sh,v 1.1 2020/08/26 16:03:42 riastradh Exp $
 #
 # Copyright (c) 2018 Ryota Ozaki <ozaki.ryota@gmail.com>
 # All rights reserved.
@@ -118,14 +118,14 @@ atf_test_case wg_create_destroy cleanup
 wg_create_destroy_head()
 {
 
-	atf_set "descr" "tests to create/destroy WireGuard interfaces"
+	atf_set "descr" "tests to create/destroy wg(4) interfaces"
 	atf_set "require.progs" "rump_server" "wgconfig" "wg-keygen"
 }
 
 wg_create_destroy_body()
 {
 
-	rump_server_crypto_start $SOCK_LOCAL netinet6 wireguard
+	rump_server_crypto_start $SOCK_LOCAL netinet6 wg
 
 	test_create_destroy_common $SOCK_LOCAL wg0 true
 }
@@ -167,7 +167,7 @@ wg_create_destroy_peers_common()
 		inner_prefixall=128
 	fi
 
-	rump_server_crypto_start $SOCK_LOCAL netinet6 wireguard
+	rump_server_crypto_start $SOCK_LOCAL netinet6 wg
 	rump_server_add_iface $SOCK_LOCAL shmif0 $BUS
 
 	# It sets key_priv_local key_pub_local key_priv_peer key_pub_peer
@@ -232,7 +232,7 @@ add_basic_test()
 	local ipv6=inet6
 
 	name="wg_basic_${inner}_over_${outer}"
-	fulldesc="Test WireGuard with ${inner} over ${outer}"
+	fulldesc="Test wg(4) with ${inner} over ${outer}"
 
 	eval inner=\$$inner
 	eval outer=\$$outer
@@ -262,7 +262,7 @@ add_payload_sizes_test()
 	local ipv6=inet6
 
 	name="wg_payload_sizes_${inner}_over_${outer}"
-	fulldesc="Test WireGuard with ${inner} over ${outer} with various payload sizes"
+	fulldesc="Test wg(4) with ${inner} over ${outer} with various payload sizes"
 
 	eval inner=\$$inner
 	eval outer=\$$outer
@@ -288,7 +288,7 @@ atf_test_case wg_multiple_interfaces cleanup
 wg_multiple_interfaces_head()
 {
 
-	atf_set "descr" "tests multiple WireGuard interfaces"
+	atf_set "descr" "tests multiple wg(4) interfaces"
 	atf_set "require.progs" "rump_server" "wgconfig" "wg-keygen"
 }
 
@@ -314,7 +314,7 @@ wg_multiple_interfaces_body()
 	setup_servers
 	rump_server_add_iface $SOCK_LOCAL shmif1 $BUS
 
-	rump_server_crypto_start $SOCK_PEER2 netinet6 wireguard
+	rump_server_crypto_start $SOCK_PEER2 netinet6 wg
 	rump_server_add_iface $SOCK_PEER2 shmif0 $BUS
 
 	# It sets key_priv_local key_pub_local key_priv_peer key_pub_peer
@@ -381,7 +381,7 @@ atf_test_case wg_multiple_peers cleanup
 wg_multiple_peers_head()
 {
 
-	atf_set "descr" "tests multiple WireGuard peers"
+	atf_set "descr" "tests multiple wg(4) peers"
 	atf_set "require.progs" "rump_server" "wgconfig" "wg-keygen"
 }
 
@@ -404,7 +404,7 @@ wg_multiple_peers_body()
 	setup_servers
 	rump_server_add_iface $SOCK_LOCAL shmif1 $BUS
 
-	rump_server_crypto_start $SOCK_PEER2 netinet6 wireguard
+	rump_server_crypto_start $SOCK_PEER2 netinet6 wg
 	rump_server_add_iface $SOCK_PEER2 shmif0 $BUS
 
 	# It sets key_priv_local key_pub_local key_priv_peer key_pub_peer

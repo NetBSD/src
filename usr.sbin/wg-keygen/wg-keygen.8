@@ -1,4 +1,4 @@
-.\"	$NetBSD: wg-keygen.8,v 1.2 2020/08/20 21:36:00 riastradh Exp $
+.\"	$NetBSD: wg-keygen.8,v 1.3 2020/08/26 16:03:42 riastradh Exp $
 .\"
 .\" Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh NAME
 .Nm wg-keygen
-.Nd generate keys for WireGuard interfaces
+.Nd generate keys for wg interfaces
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh SYNOPSIS
 .Nm
@@ -42,7 +42,8 @@
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh DESCRIPTION
 .Nm
-generates keys for WireGuard.
+generates keys for
+.Xr wg 4 .
 .Bl -tag -width abcd
 .It Nm
 Generate a private key and print it to standard output.

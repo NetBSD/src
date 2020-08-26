@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2732 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2733 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -273,4 +273,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	kernel: Add getrandom system call. [riastradh 20200813]
 	kernel: Disable COMPAT_LINUX by default [jdolecek 20200816]
 	mips: Port crash(8) to mips.  [mrg 20200816]
-	wg(4): Add support for WireGuard. [ozaki-r 20200820]
+	wg(4): Add implementation of WireGuard protocol. [ozaki-r 20200820]

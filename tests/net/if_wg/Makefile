@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.1 2020/08/20 21:28:01 riastradh Exp $
+# $NetBSD: Makefile,v 1.1 2020/08/26 16:03:42 riastradh Exp $
 #
 
 .include <bsd.own.mk>
 
-TESTSDIR=	${TESTSBASE}/net/wireguard
+TESTSDIR=	${TESTSBASE}/net/if_wg
 
 .for name in basic interoperability misc tunnel
 TESTS_SH+=		t_${name}

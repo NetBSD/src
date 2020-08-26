@@ -1,4 +1,4 @@
-.\"	$NetBSD: wg.4,v 1.4 2020/08/21 08:09:55 wiz Exp $
+.\"	$NetBSD: wg.4,v 1.5 2020/08/26 16:03:41 riastradh Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh NAME
 .Nm wg
-.Nd WireGuard virtual private network
+.Nd virtual private network tunnel (EXPERIMENTAL)
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh SYNOPSIS
 .Cd pseudo-device wg
@@ -38,11 +38,15 @@
 .Sh DESCRIPTION
 The
 .Nm
-interface implements the WireGuard point-to-point roaming-capable
-virtual private network tunnel, configured with
+interface implements a point-to-point roaming-capable virtual private
+network tunnel, configured with
 .Xr ifconfig 8
 and
 .Xr wgconfig 8 .
+.Pp
+.Sy WARNING:
+.Nm
+is experimental.
 .Pp
 Packets exchanged on a
 .Nm
@@ -91,14 +95,14 @@ Stationary server:                         Roaming client:
 .Pp
 Generate key pairs on A and B:
 .Bd -literal -offset abcd
-A# wg-keygen > /etc/wireguard/wg0
-A# wg-keygen --pub < /etc/wireguard/wg0 > /etc/wireguard/wg0.pub
-A# cat /etc/wireguard/wg0.pub
+A# wg-keygen > /etc/wg/wg0
+A# wg-keygen --pub < /etc/wg/wg0 > /etc/wg/wg0.pub
+A# cat /etc/wg/wg0.pub
 N+B4Nelg+4ysvbLW3qenxIwrJVE9MdjMyqrIisH7V0Y=
 
-B# wg-keygen > /etc/wireguard/wg0
-B# wg-keygen --pub < /etc/wireguard/wg0 > /etc/wireguard/wg0.pub
-B# cat /etc/wireguard/wg0.pub
+B# wg-keygen > /etc/wg/wg0
+B# wg-keygen --pub < /etc/wg/wg0 > /etc/wg/wg0.pub
+B# cat /etc/wg/wg0.pub
 X7EGm3T3IfodBcyilkaC89j0SH3XD6+/pwvp7Dgp5SU=
 .Ed
 .Pp
@@ -106,7 +110,7 @@ Configure A to listen on port 1234 and allow connections from B to
 appear in the 10.0.1.0/24 subnet:
 .Bd -literal -offset abcd
 A# ifconfig wg0 create 10.0.1.0/24
-A# wgconfig wg0 set private-key /etc/wireguard/wg0
+A# wgconfig wg0 set private-key /etc/wg/wg0
 A# wgconfig wg0 set listen-port 1234
 A# wgconfig wg0 add peer B \e
     X7EGm3T3IfodBcyilkaC89j0SH3XD6+/pwvp7Dgp5SU= \e
@@ -121,7 +125,7 @@ Configure B to connect to A at 1.2.3.4 on port 1234 and the packets can
 begin to flow:
 .Bd -literal -offset abcd
 B# ifconfig wg0 create 10.0.1.1/24
-B# wgconfig wg0 set private-key /etc/wireguard/wg0
+B# wgconfig wg0 set private-key /etc/wg/wg0
 B# wgconfig wg0 add peer A \e
     N+B4Nelg+4ysvbLW3qenxIwrJVE9MdjMyqrIisH7V0Y= \e
     --allowed-ips=10.0.1.0/32 \e
@@ -139,9 +143,19 @@ PING 10.0.1.0 (10.0.1.0): 56 data bytes
 .Sh SEE ALSO
 .Xr wg-keygen 8 ,
 .Xr wgconfig 8
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh COMPATIBILITY
+The
+.Nm
+interface aims to be compatible with the WireGuard protocol, as
+described in:
+.Pp
 .Rs
-.%T WireGuard: fast, modern, secure VPN tunnel
-.%U https://www.wireguard.com/
+.%A Jason A. Donenfeld
+.%T WireGuard: Next Generation Kernel Network Tunnel
+.%U https://web.archive.org/web/20180805103233/https://www.wireguard.com/papers/wireguard.pdf
+.%O Document ID: 4846ada1492f5d92198df154f48c3d54205657bc
+.%D 2018-06-30
 .Re
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh HISTORY

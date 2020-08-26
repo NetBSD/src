@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.23 2020/08/23 18:52:53 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.24 2020/08/26 16:03:41 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -30,20 +30,18 @@
  */
 
 /*
- * This is an implementation of WireGuard, a fast, modern, secure VPN protocol,
- * for the NetBSD kernel and rump kernels.
- *
- * The implementation is based on the paper of WireGuard as of 2018-06-30 [1].
- * The paper is referred in the source code with label [W].  Also the
- * specification of the Noise protocol framework as of 2018-07-11 [2] is
- * referred with label [N].
+ * This network interface aims to implement the WireGuard protocol.
+ * The implementation is based on the paper of WireGuard as of
+ * 2018-06-30 [1].  The paper is referred in the source code with label
+ * [W].  Also the specification of the Noise protocol framework as of
+ * 2018-07-11 [2] is referred with label [N].
  *
  * [1] https://www.wireguard.com/papers/wireguard.pdf
  * [2] http://noiseprotocol.org/noise.pdf
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.23 2020/08/23 18:52:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.24 2020/08/26 16:03:41 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -120,7 +118,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.23 2020/08/23 18:52:53 riastradh Exp $")
  * Data structures
  * - struct wg_softc is an instance of wg interfaces
  *   - It has a list of peers (struct wg_peer)
- *   - It has a kthread that sends/receives WireGuard handshake messages and
+ *   - It has a kthread that sends/receives handshake messages and
  *     runs event handlers
  *   - It has its own two routing tables: one is for IPv4 and the other IPv6
  * - struct wg_peer is a representative of a peer
@@ -3346,7 +3344,7 @@ wg_if_attach(struct wg_softc *wg)
 	wg->wg_if.if_output = wg_output;
 	wg->wg_if.if_init = wg_init;
 	wg->wg_if.if_stop = wg_stop;
-	wg->wg_if.if_type = IFT_WIREGUARD;
+	wg->wg_if.if_type = IFT_OTHER;
 	wg->wg_if.if_dlt = DLT_NULL;
 	wg->wg_if.if_softc = wg;
 	IFQ_SET_READY(&wg->wg_if.if_snd);
@@ -4399,14 +4397,14 @@ wg_stop(struct ifnet *ifp, int disable)
 }
 
 #ifdef WG_DEBUG_PARAMS
-SYSCTL_SETUP(sysctl_net_wireguard_setup, "sysctl net.wireguard setup")
+SYSCTL_SETUP(sysctl_net_wg_setup, "sysctl net.wg setup")
 {
 	const struct sysctlnode *node = NULL;
 
 	sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT,
-	    CTLTYPE_NODE, "wireguard",
-	    SYSCTL_DESCR("WireGuard"),
+	    CTLTYPE_NODE, "wg",
+	    SYSCTL_DESCR("wg(4)"),
 	    NULL, 0, NULL, 0,
 	    CTL_NET, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &node, NULL,

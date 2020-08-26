@@ -1,4 +1,4 @@
-#	$NetBSD: t_interoperability.sh,v 1.1 2020/08/20 21:28:01 riastradh Exp $
+#	$NetBSD: t_interoperability.sh,v 1.1 2020/08/26 16:03:42 riastradh Exp $
 #
 # Copyright (c) 2018 Ryota Ozaki <ozaki.ryota@gmail.com>
 # All rights reserved.
@@ -34,12 +34,12 @@ atf_test_case wg_interoperability_basic cleanup
 wg_interoperability_basic_head()
 {
 
-	atf_set "descr" "tests of interoperability messages of the WireGuard protocol"
+	atf_set "descr" "tests of interoperability with the WireGuard protocol"
 	atf_set "require.progs" "rump_server" "wgconfig" "wg-keygen"
 }
 
 #
-# Set ATF_WIREGUARD_INTEROPERABILITY=yes to run the test.
+# Set ATF_NET_IF_WG_INTEROPERABILITY=yes to run the test.
 # Also to run the test, the following setups are required on the host and a peer.
 #
 # [Host]
@@ -78,12 +78,12 @@ wg_interoperability_basic_body()
 	local port=52428
 	local outfile=./out
 
-	if [ "$ATF_WIREGUARD_INTEROPERABILITY" != yes ]; then
-		atf_skip "set ATF_WIREGUARD_INTEROPERABILITY=yes to run the test"
+	if [ "$ATF_NET_IF_WG_INTEROPERABILITY" != yes ]; then
+		atf_skip "set ATF_NET_IF_WG_INTEROPERABILITY=yes to run the test"
 	fi
 
 	export RUMP_SERVER=$SOCK_LOCAL
-	rump_server_crypto_start $SOCK_LOCAL virtif wireguard netinet6
+	rump_server_crypto_start $SOCK_LOCAL virtif wg netinet6
 	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.dad_count=0
 	atf_check -s exit:0 rump.ifconfig virt0 create
 	atf_check -s exit:0 rump.ifconfig virt0 $ip_local/24
@@ -116,7 +116,7 @@ atf_test_case wg_interoperability_cookie cleanup
 wg_interoperability_cookie_head()
 {
 
-	atf_set "descr" "tests of interoperability messages of the WireGuard protocol"
+	atf_set "descr" "tests of interoperability with the WireGuard protocol"
 	atf_set "require.progs" "rump_server" "wgconfig" "wg-keygen"
 }
 
@@ -137,12 +137,12 @@ wg_interoperability_cookie_body()
 	local outfile=./out
 	local rekey_timeout=5 # default
 
-	if [ "$ATF_WIREGUARD_INTEROPERABILITY" != yes ]; then
-		atf_skip "set ATF_WIREGUARD_INTEROPERABILITY=yes to run the test"
+	if [ "$ATF_NET_IF_WG_INTEROPERABILITY" != yes ]; then
+		atf_skip "set ATF_NET_IF_WG_INTEROPERABILITY=yes to run the test"
 	fi
 
 	export RUMP_SERVER=$SOCK_LOCAL
-	rump_server_crypto_start $SOCK_LOCAL virtif wireguard netinet6
+	rump_server_crypto_start $SOCK_LOCAL virtif wg netinet6
 	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.dad_count=0
 	atf_check -s exit:0 rump.ifconfig virt0 create
 	atf_check -s exit:0 rump.ifconfig virt0 $ip_local/24
@@ -159,7 +159,7 @@ wg_interoperability_cookie_body()
 
 	# Emulate load to send back a cookie on receiving a response message
 	atf_check -s exit:0 -o ignore \
-	    rump.sysctl -w net.wireguard.force_underload=1
+	    rump.sysctl -w net.wg.force_underload=1
 
 	add_peer wg0 peer0 $key_pub_peer $ip_peer:$port $ip_wg_peer/32
 
@@ -188,12 +188,12 @@ atf_test_case wg_userspace_basic cleanup
 wg_userspace_basic_head()
 {
 
-	atf_set "descr" "tests of userspace implementation of WireGuard"
+	atf_set "descr" "tests of userspace implementation of wg(4)"
 	atf_set "require.progs" "rump_server" "wgconfig" "wg-keygen"
 }
 
 #
-# Set ATF_WIREGUARD_USERSPACE=yes to run the test.
+# Set ATF_NET_IF_WG_USERSPACE=yes to run the test.
 # Also to run the test, the following setups are required on the host and a peer.
 #
 # [Host]
@@ -233,12 +233,12 @@ wg_userspace_basic_body()
 	local port_peer=52428
 	local outfile=./out
 
-	if [ "$ATF_WIREGUARD_USERSPACE" != yes ]; then
-		atf_skip "set ATF_WIREGUARD_USERSPACE=yes to run the test"
+	if [ "$ATF_NET_IF_WG_USERSPACE" != yes ]; then
+		atf_skip "set ATF_NET_IF_WG_USERSPACE=yes to run the test"
 	fi
 
 	export RUMP_SERVER=$SOCK_LOCAL
-	rump_server_crypto_start $SOCK_LOCAL virtif wireguard netinet6
+	rump_server_crypto_start $SOCK_LOCAL virtif wg netinet6
 	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.dad_count=0
 
 	$DEBUG && netstat -nr -f inet

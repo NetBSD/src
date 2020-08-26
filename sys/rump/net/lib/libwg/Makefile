@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2020/08/20 21:28:01 riastradh Exp $
+#	$NetBSD: Makefile,v 1.1 2020/08/26 16:03:42 riastradh Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../net ${.CURDIR}/../../../../netinet	\
 	${.CURDIR}/../../../../netinet6
 
-LIB=	rumpnet_wireguard
-COMMENT= WireGuard
+LIB=	rumpnet_wg
+COMMENT= virtual private network tunnel
 
 IOCONF=	WG.ioconf
 SRCS=	if_wg.c

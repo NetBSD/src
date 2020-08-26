@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2344 2020/08/20 21:28:00 riastradh Exp $
+#	$NetBSD: mi,v 1.2345 2020/08/26 16:03:40 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3867,8 +3867,10 @@
 ./usr/lib/librumpnet_virtif_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpnet_vlan.a			comp-c-lib		rump
 ./usr/lib/librumpnet_vlan_p.a			comp-c-proflib		rump,profile
-./usr/lib/librumpnet_wireguard.a		comp-c-lib		rump
-./usr/lib/librumpnet_wireguard_p.a		comp-c-proflib		rump,profile
+./usr/lib/librumpnet_wg.a			comp-c-lib		rump
+./usr/lib/librumpnet_wg_p.a			comp-c-proflib		rump,profile
+./usr/lib/librumpnet_wireguard.a		comp-obsolete		obsolete
+./usr/lib/librumpnet_wireguard_p.a		comp-obsolete		obsolete
 ./usr/lib/librumpres.a				comp-c-lib		compatfile,rump
 ./usr/lib/librumpres_p.a			comp-c-proflib		compatfile,rump,profile
 ./usr/lib/librumpuser.a				comp-c-lib		compatfile,rump

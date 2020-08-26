@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.906 2020/08/24 18:41:22 riastradh Exp $
+# $NetBSD: mi,v 1.907 2020/08/26 16:03:41 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3866,13 +3866,20 @@
 ./usr/tests/net/if_vlan/Kyuafile		tests-net-tests		atf,rump,kyua
 ./usr/tests/net/if_vlan/siocXmulti		tests-net-tests		atf,rump
 ./usr/tests/net/if_vlan/t_vlan			tests-net-tests		atf,rump
-./usr/tests/net/wireguard			tests-net-tests		compattestfile,atf
-./usr/tests/net/wireguard/Atffile		tests-net-tests		atf,rump
-./usr/tests/net/wireguard/Kyuafile		tests-net-tests		atf,rump,kyua
-./usr/tests/net/wireguard/t_basic		tests-net-tests		atf,rump
-./usr/tests/net/wireguard/t_interoperability	tests-net-tests		atf,rump
-./usr/tests/net/wireguard/t_misc		tests-net-tests		atf,rump
-./usr/tests/net/wireguard/t_tunnel		tests-net-tests		atf,rump
+./usr/tests/net/if_wg				tests-net-tests		compattestfile,atf
+./usr/tests/net/if_wg/Atffile			tests-net-tests		atf,rump
+./usr/tests/net/if_wg/Kyuafile			tests-net-tests		atf,rump,kyua
+./usr/tests/net/if_wg/t_basic			tests-net-tests		atf,rump
+./usr/tests/net/if_wg/t_interoperability	tests-net-tests		atf,rump
+./usr/tests/net/if_wg/t_misc			tests-net-tests		atf,rump
+./usr/tests/net/if_wg/t_tunnel			tests-net-tests		atf,rump
+./usr/tests/net/wireguard			tests-obsolete		obsolete
+./usr/tests/net/wireguard/Atffile		tests-obsolete		obsolete
+./usr/tests/net/wireguard/Kyuafile		tests-obsolete		obsolete
+./usr/tests/net/wireguard/t_basic		tests-obsolete		obsolete
+./usr/tests/net/wireguard/t_interoperability	tests-obsolete		obsolete
+./usr/tests/net/wireguard/t_misc		tests-obsolete		obsolete
+./usr/tests/net/wireguard/t_tunnel		tests-obsolete		obsolete
 ./usr/tests/net/in_cksum			tests-net-tests		compattestfile,atf
 ./usr/tests/net/in_cksum/Atffile		tests-net-tests		compattestfile,atf
 ./usr/tests/net/in_cksum/Kyuafile		tests-net-tests		compattestfile,atf,kyua
@@ -3953,10 +3960,14 @@
 ./usr/tests/net/sys/t_listen			tests-obsolete		obsolete
 ./usr/tests/net/sys/t_rfc6056			tests-net-tests		compattestfile,atf
 ./usr/tests/net/sys/t_socketpair		tests-obsolete		obsolete
-./usr/tests/net/wireguard			tests-net-tests		compattestfile,atf
-./usr/tests/net/wireguard/Atffile		tests-net-tests		compattestfile,atf
-./usr/tests/net/wireguard/Kyuafile		tests-net-tests		compattestfile,atf,kyua
-./usr/tests/net/wireguard/t_basic		tests-net-tests		atf,rump
+./usr/tests/net/if_wg				tests-net-tests		compattestfile,atf
+./usr/tests/net/if_wg/Atffile			tests-net-tests		compattestfile,atf
+./usr/tests/net/if_wg/Kyuafile			tests-net-tests		compattestfile,atf,kyua
+./usr/tests/net/if_wg/t_basic			tests-net-tests		atf,rump
+./usr/tests/net/wireguard			tests-obsolete		obsolete
+./usr/tests/net/wireguard/Atffile		tests-obsolete		obsolete
+./usr/tests/net/wireguard/Kyuafile		tests-obsolete		obsolete
+./usr/tests/net/wireguard/t_basic		tests-obsolete		obsolete
 ./usr/tests/opencrypto				tests-obsolete		obsolete
 ./usr/tests/rump				tests-rump-tests	compattestfile,atf
 ./usr/tests/rump/Atffile			tests-rump-tests	atf,rump

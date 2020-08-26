@@ -1,4 +1,4 @@
-#	$NetBSD: common.sh,v 1.1 2020/08/20 21:28:01 riastradh Exp $
+#	$NetBSD: common.sh,v 1.1 2020/08/26 16:03:42 riastradh Exp $
 #
 # Copyright (c) 2018 Ryota Ozaki <ozaki.ryota@gmail.com>
 # All rights reserved.
@@ -34,10 +34,10 @@ escape_key()
 setup_servers()
 {
 
-	rump_server_crypto_start $SOCK_LOCAL netinet6 wireguard
+	rump_server_crypto_start $SOCK_LOCAL netinet6 wg
 	rump_server_add_iface $SOCK_LOCAL shmif0 $BUS
 
-	rump_server_crypto_start $SOCK_PEER netinet6 wireguard
+	rump_server_crypto_start $SOCK_PEER netinet6 wg
 	rump_server_add_iface $SOCK_PEER shmif0 $BUS
 }
 

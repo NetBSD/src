@@ -1,4 +1,4 @@
-#	$NetBSD: t_misc.sh,v 1.1 2020/08/20 21:28:01 riastradh Exp $
+#	$NetBSD: t_misc.sh,v 1.1 2020/08/26 16:03:42 riastradh Exp $
 #
 # Copyright (c) 2018 Ryota Ozaki <ozaki.ryota@gmail.com>
 # All rights reserved.
@@ -34,7 +34,7 @@ atf_test_case wg_rekey cleanup
 wg_rekey_head()
 {
 
-	atf_set "descr" "tests of rekeying of WireGuard"
+	atf_set "descr" "tests of rekeying of wg(4)"
 	atf_set "require.progs" "rump_server" "wgconfig" "wg-keygen"
 }
 
@@ -54,10 +54,10 @@ wg_rekey_body()
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 -o ignore \
-	    rump.sysctl -w net.wireguard.rekey_after_time=$rekey_after_time
+	    rump.sysctl -w net.wg.rekey_after_time=$rekey_after_time
 	export RUMP_SERVER=$SOCK_PEER
 	atf_check -s exit:0 -o ignore \
-	    rump.sysctl -w net.wireguard.rekey_after_time=$rekey_after_time
+	    rump.sysctl -w net.wg.rekey_after_time=$rekey_after_time
 
 	# It sets key_priv_local key_pub_local key_priv_peer key_pub_peer
 	generate_keys
@@ -128,7 +128,7 @@ atf_test_case wg_handshake_timeout cleanup
 wg_handshake_timeout_head()
 {
 
-	atf_set "descr" "tests of handshake timeout of WireGuard"
+	atf_set "descr" "tests of handshake timeout of wg(4)"
 	atf_set "require.progs" "rump_server" "wgconfig" "wg-keygen"
 }
 
@@ -152,14 +152,14 @@ wg_handshake_timeout_body()
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 -o ignore \
-	    rump.sysctl -w net.wireguard.rekey_timeout=$rekey_timeout
+	    rump.sysctl -w net.wg.rekey_timeout=$rekey_timeout
 	atf_check -s exit:0 -o ignore \
-	    rump.sysctl -w net.wireguard.rekey_attempt_time=$rekey_attempt_time
+	    rump.sysctl -w net.wg.rekey_attempt_time=$rekey_attempt_time
 	export RUMP_SERVER=$SOCK_PEER
 	atf_check -s exit:0 -o ignore \
-	    rump.sysctl -w net.wireguard.rekey_timeout=$rekey_timeout
+	    rump.sysctl -w net.wg.rekey_timeout=$rekey_timeout
 	atf_check -s exit:0 -o ignore \
-	    rump.sysctl -w net.wireguard.rekey_attempt_time=$rekey_attempt_time
+	    rump.sysctl -w net.wg.rekey_attempt_time=$rekey_attempt_time
 
 	# It sets key_priv_local key_pub_local key_priv_peer key_pub_peer
 	generate_keys
@@ -220,7 +220,7 @@ atf_test_case wg_cookie cleanup
 wg_cookie_head()
 {
 
-	atf_set "descr" "tests of cookie messages of the WireGuard protocol"
+	atf_set "descr" "tests of cookie messages of the wg(4) protocol"
 	atf_set "require.progs" "rump_server" "wgconfig" "wg-keygen"
 }
 
@@ -259,7 +259,7 @@ wg_cookie_body()
 	export RUMP_SERVER=$SOCK_PEER
 	# Emulate load on the peer
 	atf_check -s exit:0 -o ignore \
-	    rump.sysctl -w net.wireguard.force_underload=1
+	    rump.sysctl -w net.wg.force_underload=1
 
 	export RUMP_SERVER=$SOCK_LOCAL
 
@@ -306,7 +306,7 @@ atf_test_case wg_mobility cleanup
 wg_mobility_head()
 {
 
-	atf_set "descr" "tests of the mobility of WireGuard"
+	atf_set "descr" "tests of the mobility of wg(4)"
 	atf_set "require.progs" "rump_server" "wgconfig" "wg-keygen"
 }
 
@@ -441,7 +441,7 @@ wg_keepalive_body()
 
 	# Shorten keepalive_timeout of the peer
 	atf_check -s exit:0 -o ignore \
-	    rump.sysctl -w net.wireguard.keepalive_timeout=$keepalive_timeout
+	    rump.sysctl -w net.wg.keepalive_timeout=$keepalive_timeout
 
 	export RUMP_SERVER=$SOCK_LOCAL
 
@@ -505,10 +505,10 @@ wg_psk_body()
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 -o ignore \
-	    rump.sysctl -w net.wireguard.rekey_after_time=$rekey_after_time
+	    rump.sysctl -w net.wg.rekey_after_time=$rekey_after_time
 	export RUMP_SERVER=$SOCK_PEER
 	atf_check -s exit:0 -o ignore \
-	    rump.sysctl -w net.wireguard.rekey_after_time=$rekey_after_time
+	    rump.sysctl -w net.wg.rekey_after_time=$rekey_after_time
 
 	# It sets key_priv_local key_pub_local key_priv_peer key_pub_peer
 	generate_keys

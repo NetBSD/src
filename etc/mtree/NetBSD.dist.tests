@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.175 2020/08/20 21:28:01 riastradh Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.176 2020/08/26 16:03:41 riastradh Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -358,6 +358,7 @@
 ./usr/tests/net/if_tap
 ./usr/tests/net/if_tun
 ./usr/tests/net/if_vlan
+./usr/tests/net/if_wg
 ./usr/tests/net/in_cksum
 ./usr/tests/net/ipsec
 ./usr/tests/net/mcast
@@ -367,7 +368,6 @@
 ./usr/tests/net/npf
 ./usr/tests/net/route
 ./usr/tests/net/sys
-./usr/tests/net/wireguard
 ./usr/tests/rump
 ./usr/tests/rump/modautoload
 ./usr/tests/rump/rumpkern
