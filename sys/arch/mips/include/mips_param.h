@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.46 2020/08/23 10:23:38 simonb Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.47 2020/08/26 10:51:45 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -130,6 +130,7 @@
 #define	USPACE		MAX(__MIN_USPACE, PAGE_SIZE)
 #define	UPAGES		(USPACE / PAGE_SIZE) /* number of pages for u-area */
 #define	USPACE_ALIGN	USPACE		/* make sure it starts on a even VA */
+#define	UPAGES_MAX	8		/* a (constant) max for userland use */
 
 /*
  * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
