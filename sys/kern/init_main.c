@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.528 2020/08/26 22:56:55 christos Exp $	*/
+/*	$NetBSD: init_main.c,v 1.529 2020/08/27 14:01:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.528 2020/08/26 22:56:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.529 2020/08/27 14:01:36 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -227,8 +227,6 @@ extern void *_binary_splash_image_end;
 #include <net/if_llatbl.h>
 
 #include <prop/proplib.h>
-
-#include <crypto/blake2/blake2s.h>
 
 #include <sys/userconf.h>
 
@@ -730,24 +728,6 @@ main(void)
 	/* The scheduler is an infinite loop. */
 	uvm_scheduler();
 	/* NOTREACHED */
-}
-
-static uint8_t address_key[32];	/* key used in address hashing */
-static ONCE_DECL(random_inithook);
-
-static int
-random_address_init(void)
-{
-	cprng_strong(kern_cprng, address_key, sizeof(address_key), 0);
-	return 0;
-}
-
-void
-hash_value(void *d, size_t ds, const void *s, size_t ss)
-{       
-
-	RUN_ONCE(&random_inithook, random_address_init);
-	blake2s(d, ds, address_key, sizeof(address_key), s, ss);
 }
 
 /*
