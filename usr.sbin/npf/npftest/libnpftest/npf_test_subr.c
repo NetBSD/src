@@ -71,7 +71,6 @@ npf_test_init(int (*pton_func)(int, const char *, void *),
 		npf_worker_sysfini();
 	}
 #endif
-	npfk_sysinit(0);
 	npf = npfk_create(0, &npftest_mbufops, &npftest_ifops, NULL);
 	npfk_thread_register(npf);
 	npf_setkernctx(npf);
@@ -88,9 +87,9 @@ void
 npf_test_fini(void)
 {
 	npf_t *npf = npf_getkernctx();
+
 	npfk_thread_unregister(npf);
 	npfk_destroy(npf);
-	npfk_sysfini();
 }
 
 int

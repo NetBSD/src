@@ -472,6 +472,9 @@ bool		npf_state_tcp(npf_cache_t *, npf_state_t *, npf_flow_t);
 int		npf_state_tcp_timeout(npf_t *, const npf_state_t *);
 
 /* Portmap. */
+void		npf_portmap_sysinit(void);
+void		npf_portmap_sysfini(void);
+
 void		npf_portmap_init(npf_t *);
 void		npf_portmap_fini(npf_t *);
 

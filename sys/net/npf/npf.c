@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.43 2020/05/30 14:16:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.44 2020/08/27 18:50:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -52,16 +52,20 @@ static __read_mostly npf_t *	npf_kernel_ctx = NULL;
 __dso_public int
 npfk_sysinit(unsigned nworkers)
 {
+
 	npf_bpf_sysinit();
 	npf_tableset_sysinit();
 	npf_nat_sysinit();
+	npf_portmap_sysinit();
 	return npf_worker_sysinit(nworkers);
 }
 
 __dso_public void
 npfk_sysfini(void)
 {
+
 	npf_worker_sysfini();
+	npf_portmap_sysfini();
 	npf_nat_sysfini();
 	npf_tableset_sysfini();
 	npf_bpf_sysfini();
