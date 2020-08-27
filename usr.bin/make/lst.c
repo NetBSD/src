@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.43 2020/08/27 06:28:44 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.44 2020/08/27 06:53:57 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,11 +37,11 @@
 #include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.43 2020/08/27 06:28:44 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.44 2020/08/27 06:53:57 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.43 2020/08/27 06:28:44 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.44 2020/08/27 06:53:57 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -502,34 +502,11 @@ Lst_MemberS(Lst list, void *datum)
  * should return 0 if traversal should continue and non-zero if it should
  * abort. */
 int
-Lst_ForEach(Lst list, LstActionProc proc, void *procData)
-{
-    return Lst_ForEachFrom(list, Lst_First(list), proc, procData);
-}
-
-/* Apply the given function to each element of the given list. The function
- * should return 0 if traversal should continue and non-zero if it should
- * abort. */
-int
 Lst_ForEachS(Lst list, LstActionProc proc, void *procData)
 {
     if (LstIsEmpty(list))
 	return 0;		/* XXX: Document what this value means. */
     return Lst_ForEachFromS(list, Lst_First(list), proc, procData);
-}
-
-/* Apply the given function to each element of the given list, starting from
- * the given node. The function should return 0 if traversal should continue,
- * and non-zero if it should abort. */
-int
-Lst_ForEachFrom(Lst list, LstNode node,
-		LstActionProc proc, void *procData)
-{
-    if (!LstIsValid(list) || LstIsEmpty(list)) {
-	return 0;
-    }
-
-    return Lst_ForEachFromS(list, node, proc, procData);
 }
 
 /* Apply the given function to each element of the given list, starting from
