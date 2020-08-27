@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.266 2020/08/27 07:03:48 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.267 2020/08/27 19:15:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.266 2020/08/27 07:03:48 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.267 2020/08/27 19:15:35 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.266 2020/08/27 07:03:48 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.267 2020/08/27 19:15:35 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -852,7 +852,7 @@ ParseLinkSrc(void *pgnp, void *cgnp)
     GNode          *pgn = (GNode *)pgnp;
     GNode          *cgn = (GNode *)cgnp;
 
-    if ((pgn->type & OP_DOUBLEDEP) && !Lst_IsEmpty(pgn->cohorts))
+    if ((pgn->type & OP_DOUBLEDEP) && !Lst_IsEmptyS(pgn->cohorts))
 	pgn = Lst_DatumS(Lst_LastS(pgn->cohorts));
     Lst_AppendS(pgn->children, cgn);
     if (specType == Not)
@@ -1360,7 +1360,7 @@ ParseDoDependency(char *line)
 		    Lst_AppendS(paths, dirSearchPath);
 		    break;
 		case Main:
-		    if (!Lst_IsEmpty(create)) {
+		    if (!Lst_IsEmptyS(create)) {
 			specType = Not;
 		    }
 		    break;
@@ -1447,7 +1447,7 @@ ParseDoDependency(char *line)
 
 	    /* Apply the targets. */
 
-	    while(!Lst_IsEmpty(curTargs)) {
+	    while(!Lst_IsEmptyS(curTargs)) {
 		char *targName = Lst_DequeueS(curTargs);
 
 		if (!Suff_IsTransform (targName)) {
@@ -1500,7 +1500,7 @@ ParseDoDependency(char *line)
     Lst_FreeS(curTargs);
     curTargs = NULL;
 
-    if (!Lst_IsEmpty(targets)) {
+    if (targets != NULL && !Lst_IsEmptyS(targets)) {
 	switch(specType) {
 	    default:
 		Parse_Error(PARSE_WARNING, "Special and mundane targets don't mix. Mundane ones ignored");
@@ -1725,7 +1725,7 @@ ParseDoDependency(char *line)
 		    goto out;
 		}
 
-		while (!Lst_IsEmpty(sources)) {
+		while (!Lst_IsEmptyS(sources)) {
 		    gn = Lst_DequeueS(sources);
 		    ParseDoSrc(tOp, gn->name);
 		}
@@ -2087,7 +2087,7 @@ ParseAddCmd(void *gnp, void *cmd)
     GNode *gn = (GNode *)gnp;
 
     /* Add to last (ie current) cohort for :: targets */
-    if ((gn->type & OP_DOUBLEDEP) && !Lst_IsEmpty(gn->cohorts))
+    if ((gn->type & OP_DOUBLEDEP) && !Lst_IsEmptyS(gn->cohorts))
 	gn = Lst_DatumS(Lst_LastS(gn->cohorts));
 
     /* if target already supplied, ignore commands */
@@ -2139,7 +2139,7 @@ static void
 ParseHasCommands(void *gnp)
 {
     GNode *gn = (GNode *)gnp;
-    if (!Lst_IsEmpty(gn->commands)) {
+    if (!Lst_IsEmptyS(gn->commands)) {
 	gn->type |= OP_HAS_COMMANDS;
     }
 }
@@ -2262,7 +2262,7 @@ Parse_include_file(char *file, Boolean isSystem, Boolean depinc, int silent)
 	 * Look for it on the system path
 	 */
 	fullname = Dir_FindFile(file,
-		    Lst_IsEmpty(sysIncPath) ? defIncPath : sysIncPath);
+		    Lst_IsEmptyS(sysIncPath) ? defIncPath : sysIncPath);
     }
 
     if (fullname == NULL) {
@@ -2749,7 +2749,7 @@ ParseEOF(void)
     free(curFile->P_str);
     free(curFile);
 
-    if (Lst_IsEmpty(includes)) {
+    if (Lst_IsEmptyS(includes)) {
 	curFile = NULL;
 	/* We've run out of input */
 	Var_Delete(".PARSEDIR", VAR_GLOBAL);
