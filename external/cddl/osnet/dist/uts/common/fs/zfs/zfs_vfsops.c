@@ -1517,7 +1517,7 @@ zfs_domount(vfs_t *vfsp, char *osname)
 #endif
 #ifdef __NetBSD__
 	vfsp->mnt_flag |= MNT_LOCAL;
-	vfsp->mnt_iflag |= IMNT_MPSAFE;
+	vfsp->mnt_iflag |= IMNT_MPSAFE | IMNT_NCLOOKUP;
 #endif
 
 	/*
@@ -2078,7 +2078,7 @@ zfs_mount(vfs_t *vfsp, const char *path, void *data, size_t *data_len)
 	vfsp->vfs_flag |= MNT_NFS4ACLS;
 #endif
 #ifdef __NetBSD__
-	vfsp->mnt_iflag |= IMNT_MPSAFE;
+	vfsp->mnt_iflag |= IMNT_MPSAFE | IMNT_NCLOOKUP;
 #endif
 
 	/*
