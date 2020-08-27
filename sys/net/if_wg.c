@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.26 2020/08/27 02:53:47 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.27 2020/08/27 02:54:31 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.26 2020/08/27 02:53:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.27 2020/08/27 02:54:31 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1570,7 +1570,6 @@ wg_send_handshake_msg_init(struct wg_softc *wg, struct wg_peer *wgp)
 	m = m_gethdr(M_WAIT, MT_DATA);
 	m->m_pkthdr.len = m->m_len = sizeof(*wgmi);
 	wgmi = mtod(m, struct wg_msg_init *);
-
 	wg_fill_msg_init(wg, wgp, wgs, wgmi);
 
 	error = wg->wg_ops->send_hs_msg(wgp, m);
@@ -2387,6 +2386,7 @@ wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
 		free_encrypted_buf = true;
 	}
 	/* m_ensure_contig may change m regardless of its result */
+	KASSERT(m->m_len >= sizeof(*wgmd));
 	wgmd = mtod(m, struct wg_msg_data *);
 
 	decrypted_len = encrypted_len - WG_AUTHTAG_LEN;
@@ -2683,6 +2683,7 @@ wg_receive_packets(struct wg_softc *wg, const int af)
 		}
 
 		KASSERT(paddr != NULL);
+		KASSERT(paddr->m_len >= sizeof(struct sockaddr));
 		src = mtod(paddr, struct sockaddr *);
 
 		wg_handle_packet(wg, m, src);
@@ -3683,6 +3684,7 @@ wg_send_data_msg(struct wg_peer *wgp, struct wg_session *wgs,
 		error = ENOBUFS;
 		goto end;
 	}
+	KASSERT(n->m_len >= sizeof(*wgmd));
 	wgmd = mtod(n, struct wg_msg_data *);
 	wg_fill_msg_data(wg, wgp, wgs, wgmd);
 	/* [W] 5.4.6: AEAD(Tm^send, Nm^send, P, e) */
@@ -4553,11 +4555,15 @@ wg_input_user(struct ifnet *ifp, struct mbuf *m, const int af)
 	if (af == AF_INET) {
 		struct sockaddr_in *sin = (struct sockaddr_in *)&ss;
 		struct ip *ip;
+
+		KASSERT(m->m_len >= sizeof(struct ip));
 		ip = mtod(m, struct ip *);
 		sockaddr_in_init(sin, &ip->ip_dst, 0);
 	} else {
 		struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)&ss;
 		struct ip6_hdr *ip6;
+
+		KASSERT(m->m_len >= sizeof(struct ip6_hdr));
 		ip6 = mtod(m, struct ip6_hdr *);
 		sockaddr_in6_init(sin6, &ip6->ip6_dst, 0, 0, 0);
 	}
