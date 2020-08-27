@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.909 2020/08/27 15:32:37 riastradh Exp $
+# $NetBSD: mi,v 1.910 2020/08/27 19:00:17 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4804,6 +4804,8 @@
 ./usr/tests/usr.bin/make/unit-tests/opt-backwards.mk	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/opt-chdir.exp	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/opt-chdir.mk	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/opt-debug-g1.exp	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/opt-debug-g1.mk	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/opt-debug.exp	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/opt-debug.mk	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/opt-define.exp	tests-usr.bin-tests	compattestfile,atf
