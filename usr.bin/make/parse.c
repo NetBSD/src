@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.263 2020/08/26 22:55:46 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.264 2020/08/27 06:13:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.263 2020/08/26 22:55:46 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.264 2020/08/27 06:13:53 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.263 2020/08/26 22:55:46 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.264 2020/08/27 06:13:53 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1254,7 +1254,7 @@ ParseDoDependency(char *line)
 	     * went well and FAILURE if there was an error in the
 	     * specification. On error, line should remain untouched.
 	     */
-	    if (Arch_ParseArchive(&line, targets, VAR_CMD) != SUCCESS) {
+	    if (!Arch_ParseArchive(&line, targets, VAR_CMD)) {
 		Parse_Error(PARSE_FATAL,
 			     "Error in archive specification: \"%s\"", line);
 		goto out;
@@ -1713,7 +1713,7 @@ ParseDoDependency(char *line)
 
 	    if (*cp == LPAREN) {
 		sources = Lst_Init();
-		if (Arch_ParseArchive(&line, sources, VAR_CMD) != SUCCESS) {
+		if (!Arch_ParseArchive(&line, sources, VAR_CMD)) {
 		    Parse_Error(PARSE_FATAL,
 				 "Error in source archive spec \"%s\"", line);
 		    goto out;
