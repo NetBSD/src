@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.101 2020/08/27 09:16:52 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.102 2020/08/27 14:16:50 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -4850,4 +4850,10 @@ bin/sh/exec.c					1.54
 
 	PR bin/55526: fix "command foo" when a function "foo" exists.
 	[kre, ticket #1064]
+
+sys/dev/usb/ugen.c				1.152-1.157 (1.155 via patch)
+sys/dev/usb/usbdevices.config			1.41 (via patch)
+
+	Expose Yubikey CCID interface to userland via ugenif.
+	[riastradh, ticket #1065]
 
