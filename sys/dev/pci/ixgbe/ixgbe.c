@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.247 2020/08/27 04:49:52 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.248 2020/08/27 04:54:43 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -768,19 +768,26 @@ static void
 ixgbe_quirks(struct adapter *adapter)
 {
 	device_t dev = adapter->dev;
+	struct ixgbe_hw *hw = &adapter->hw;
 	const char *vendor, *product;
 
-	/* Quirk for inverted logic of SFP+'s MOD_ABS */
-	vendor = pmf_get_platform("system-vendor");
-	product = pmf_get_platform("system-product");
+	if (hw->device_id == IXGBE_DEV_ID_X550EM_A_SFP_N) {
+		/*
+		 * Quirk for inverted logic of SFP+'s MOD_ABS on GIGABYTE
+		 * MA10-ST0.
+		 */
+		vendor = pmf_get_platform("system-vendor");
+		product = pmf_get_platform("system-product");
 
-	if ((vendor == NULL) || (product == NULL))
-		return;
+		if ((vendor == NULL) || (product == NULL))
+			return;
 
-	if ((strcmp(vendor, "GIGABYTE") == 0) &&
-	    (strcmp(product, "MA10-ST0") == 0)) {
-		aprint_verbose_dev(dev, "Enable SFP+ MOD_ABS inverse quirk\n");
-		adapter->quirks |= IXGBE_QUIRK_MOD_ABS_INVERT;
+		if ((strcmp(vendor, "GIGABYTE") == 0) &&
+		    (strcmp(product, "MA10-ST0") == 0)) {
+			aprint_verbose_dev(dev,
+			    "Enable SFP+ MOD_ABS inverse quirk\n");
+			adapter->quirks |= IXGBE_QUIRK_MOD_ABS_INVERT;
+		}
 	}
 }
 
@@ -831,9 +838,6 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	aprint_normal(": %s, Version - %s\n",
 	    ixgbe_strings[ent->index], ixgbe_driver_version);
 
-	/* Set quirk flags */
-	ixgbe_quirks(adapter);
-
 	/* Core Lock Init */
 	IXGBE_CORE_LOCK_INIT(adapter, device_xname(dev));
 
@@ -859,6 +863,9 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	    PCI_REVISION(pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CLASS_REG));
 	hw->subsystem_vendor_id = PCI_SUBSYS_VENDOR(subid);
 	hw->subsystem_device_id = PCI_SUBSYS_ID(subid);
+
+	/* Set quirk flags */
+	ixgbe_quirks(adapter);
 
 	/*
 	 * Make sure BUSMASTER is set
