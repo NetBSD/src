@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.45 2020/08/22 08:01:34 rillig Exp $	*/
+/*	$NetBSD: job.h,v 1.46 2020/08/27 06:18:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -163,7 +163,7 @@ typedef struct Job {
 				 * commands */
 #define JOB_TRACED	0x400	/* we've sent 'set -x' */
 
-    int	  	 jobPipe[2];	/* Pipe for readind output from job */
+    int	  	 jobPipe[2];	/* Pipe for reading output from job */
     struct pollfd *inPollfd;	/* pollfd associated with inPipe */
     char  	outBuf[JOB_BUFSIZE + 1];
 				/* Buffer for storing the output of the
@@ -250,19 +250,16 @@ void Shell_Init(void);
 const char *Shell_GetNewline(void);
 void Job_Touch(GNode *, Boolean);
 Boolean Job_CheckCommands(GNode *, void (*abortProc )(const char *, ...));
-#define CATCH_BLOCK	1
 void Job_CatchChildren(void);
 void Job_CatchOutput(void);
 void Job_Make(GNode *);
 void Job_Init(void);
-Boolean Job_Full(void);
 Boolean Job_Empty(void);
 ReturnStatus Job_ParseShell(char *);
 int Job_Finish(void);
 void Job_End(void);
 void Job_Wait(void);
 void Job_AbortAll(void);
-void JobFlagForMigration(int);
 void Job_TokenReturn(void);
 Boolean Job_TokenWithdraw(void);
 void Job_ServerStart(int, int, int);
