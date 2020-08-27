@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.264 2020/08/27 06:13:53 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.265 2020/08/27 06:53:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.264 2020/08/27 06:13:53 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.265 2020/08/27 06:53:57 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.264 2020/08/27 06:13:53 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.265 2020/08/27 06:53:57 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -981,7 +981,8 @@ ParseDoSrc(int tOp, const char *src)
 	if (keywd != -1) {
 	    int op = parseKeywords[keywd].op;
 	    if (op != 0) {
-		Lst_ForEach(targets, ParseDoOp, &op);
+		if (targets != NULL)
+		    Lst_ForEachS(targets, ParseDoOp, &op);
 		return;
 	    }
 	    if (parseKeywords[keywd].spec == Wait) {
@@ -999,7 +1000,8 @@ ParseDoSrc(int tOp, const char *src)
 		if (doing_depend)
 		    ParseMark(gn);
 		gn->type = OP_WAIT | OP_PHONY | OP_DEPENDS | OP_NOTMAIN;
-		Lst_ForEach(targets, ParseLinkSrc, gn);
+		if (targets != NULL)
+		    Lst_ForEachS(targets, ParseLinkSrc, gn);
 		return;
 	    }
 	}
@@ -1067,7 +1069,8 @@ ParseDoSrc(int tOp, const char *src)
 	if (tOp) {
 	    gn->type |= tOp;
 	} else {
-	    Lst_ForEach(targets, ParseLinkSrc, gn);
+	    if (targets != NULL)
+		Lst_ForEachS(targets, ParseLinkSrc, gn);
 	}
 	break;
     }
@@ -1547,7 +1550,8 @@ ParseDoDependency(char *line)
      * operator a target was defined with. It fails if the operator
      * used isn't consistent across all references.
      */
-    Lst_ForEach(targets, ParseDoOp, &op);
+    if (targets != NULL)
+	Lst_ForEachS(targets, ParseDoOp, &op);
 
     /*
      * Onward to the sources.
@@ -1584,7 +1588,8 @@ ParseDoDependency(char *line)
 		beSilent = TRUE;
 		break;
 	    case ExPath:
-		Lst_ForEach(paths, ParseClearPath, NULL);
+		if (paths != NULL)
+		    Lst_ForEachS(paths, ParseClearPath, NULL);
 		Dir_SetPATH();
 		break;
 #ifdef POSIX
@@ -1659,7 +1664,8 @@ ParseDoDependency(char *line)
 		    Suff_AddSuffix(line, &mainNode);
 		    break;
 		case ExPath:
-		    Lst_ForEach(paths, ParseAddDir, line);
+		    if (paths != NULL)
+			Lst_ForEachS(paths, ParseAddDir, line);
 		    break;
 		case Includes:
 		    Suff_AddInclude(line);
@@ -1740,14 +1746,14 @@ ParseDoDependency(char *line)
 	}
     }
 
-    if (mainNode == NULL) {
+    if (mainNode == NULL && targets != NULL) {
 	/*
 	 * If we have yet to decide on a main target to make, in the
 	 * absence of any user input, we want the first target on
 	 * the first dependency line that is actually a real target
 	 * (i.e. isn't a .USE or .EXEC rule) to be made.
 	 */
-	Lst_ForEach(targets, ParseFindMain, NULL);
+	Lst_ForEachS(targets, ParseFindMain, NULL);
     }
 
 out:
@@ -3019,7 +3025,7 @@ ParseFinishLine(void)
 {
     if (inLine) {
         if (targets != NULL) {
-	    Lst_ForEach(targets, Suff_EndTransform, NULL);
+	    Lst_ForEachS(targets, Suff_EndTransform, NULL);
 	    Lst_DestroyS(targets, ParseHasCommands);
 	}
 	targets = NULL;
@@ -3133,7 +3139,7 @@ Parse_File(const char *name, int fd)
 		     */
 		    if (targets) {
 			cp = bmake_strdup(cp);
-			Lst_ForEach(targets, ParseAddCmd, cp);
+			Lst_ForEachS(targets, ParseAddCmd, cp);
 #ifdef CLEANUP
 			Lst_AppendS(targCmds, cp);
 #endif

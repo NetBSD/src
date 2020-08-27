@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.112 2020/08/27 06:28:44 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.113 2020/08/27 06:53:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.112 2020/08/27 06:28:44 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.113 2020/08/27 06:53:57 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.112 2020/08/27 06:28:44 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.113 2020/08/27 06:53:57 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -924,7 +924,7 @@ Dir_Expand(const char *word, Lst path, Lst expansions)
 	}
     }
     if (DEBUG(DIR)) {
-	Lst_ForEach(expansions, DirPrintWord, NULL);
+	Lst_ForEachS(expansions, DirPrintWord, NULL);
 	fprintf(debug_file, "\n");
     }
 }
@@ -1811,5 +1811,5 @@ DirPrintDir(void *p, void *dummy MAKE_ATTR_UNUSED)
 void
 Dir_PrintPath(Lst path)
 {
-    Lst_ForEach(path, DirPrintDir, NULL);
+    Lst_ForEachS(path, DirPrintDir, NULL);
 }

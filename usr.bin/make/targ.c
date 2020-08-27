@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.73 2020/08/26 22:55:46 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.74 2020/08/27 06:53:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.73 2020/08/26 22:55:46 rillig Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.74 2020/08/27 06:53:57 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.73 2020/08/26 22:55:46 rillig Exp $");
+__RCSID("$NetBSD: targ.c,v 1.74 2020/08/27 06:53:57 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -662,7 +662,7 @@ Targ_PrintNode(void *gnp, void *passp)
 	    }
 	    if (!Lst_IsEmpty (gn->iParents)) {
 		fprintf(debug_file, "# implicit parents: ");
-		Lst_ForEach(gn->iParents, TargPrintName, NULL);
+		Lst_ForEachS(gn->iParents, TargPrintName, NULL);
 		fprintf(debug_file, "\n");
 	    }
 	} else {
@@ -671,17 +671,17 @@ Targ_PrintNode(void *gnp, void *passp)
 	}
 	if (!Lst_IsEmpty (gn->parents)) {
 	    fprintf(debug_file, "# parents: ");
-	    Lst_ForEach(gn->parents, TargPrintName, NULL);
+	    Lst_ForEachS(gn->parents, TargPrintName, NULL);
 	    fprintf(debug_file, "\n");
 	}
 	if (!Lst_IsEmpty (gn->order_pred)) {
 	    fprintf(debug_file, "# order_pred: ");
-	    Lst_ForEach(gn->order_pred, TargPrintName, NULL);
+	    Lst_ForEachS(gn->order_pred, TargPrintName, NULL);
 	    fprintf(debug_file, "\n");
 	}
 	if (!Lst_IsEmpty (gn->order_succ)) {
 	    fprintf(debug_file, "# order_succ: ");
-	    Lst_ForEach(gn->order_succ, TargPrintName, NULL);
+	    Lst_ForEachS(gn->order_succ, TargPrintName, NULL);
 	    fprintf(debug_file, "\n");
 	}
 
@@ -695,12 +695,12 @@ Targ_PrintNode(void *gnp, void *passp)
 		fprintf(debug_file, ":: "); break;
 	}
 	Targ_PrintType(gn->type);
-	Lst_ForEach(gn->children, TargPrintName, NULL);
+	Lst_ForEachS(gn->children, TargPrintName, NULL);
 	fprintf(debug_file, "\n");
-	Lst_ForEach(gn->commands, Targ_PrintCmd, NULL);
+	Lst_ForEachS(gn->commands, Targ_PrintCmd, NULL);
 	fprintf(debug_file, "\n\n");
 	if (gn->type & OP_DOUBLEDEP) {
-	    Lst_ForEach(gn->cohorts, Targ_PrintNode, &pass);
+	    Lst_ForEachS(gn->cohorts, Targ_PrintNode, &pass);
 	}
     }
     return 0;
@@ -754,10 +754,10 @@ void
 Targ_PrintGraph(int pass)
 {
     fprintf(debug_file, "#*** Input graph:\n");
-    Lst_ForEach(allTargets, Targ_PrintNode, &pass);
+    Lst_ForEachS(allTargets, Targ_PrintNode, &pass);
     fprintf(debug_file, "\n\n");
     fprintf(debug_file, "#\n#   Files that are only sources:\n");
-    Lst_ForEach(allTargets, TargPrintOnlySrc, NULL);
+    Lst_ForEachS(allTargets, TargPrintOnlySrc, NULL);
     fprintf(debug_file, "#*** Global Variables:\n");
     Var_Dump(VAR_GLOBAL);
     fprintf(debug_file, "#*** Command-line Variables:\n");
@@ -798,7 +798,7 @@ TargPropagateNode(void *gnp, void *junk MAKE_ATTR_UNUSED)
     GNode	  *gn = (GNode *)gnp;
 
     if (gn->type & OP_DOUBLEDEP)
-	Lst_ForEach(gn->cohorts, TargPropagateCohort, gnp);
+	Lst_ForEachS(gn->cohorts, TargPropagateCohort, gnp);
     return 0;
 }
 
@@ -847,5 +847,5 @@ TargPropagateCohort(void *cgnp, void *pgnp)
 void
 Targ_Propagate(void)
 {
-    Lst_ForEach(allTargets, TargPropagateNode, NULL);
+    Lst_ForEachS(allTargets, TargPropagateNode, NULL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.314 2020/08/26 22:55:46 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.315 2020/08/27 06:53:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.314 2020/08/26 22:55:46 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.315 2020/08/27 06:53:57 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.314 2020/08/26 22:55:46 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.315 2020/08/27 06:53:57 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2041,7 +2041,7 @@ PrintOnError(GNode *gn, const char *s)
 	 */
 	Var_Set(".ERROR_TARGET", gn->name, VAR_GLOBAL);
 	Var_Delete(".ERROR_CMD", VAR_GLOBAL);
-	Lst_ForEach(gn->commands, addErrorCMD, gn);
+	Lst_ForEachS(gn->commands, addErrorCMD, gn);
     }
     expr = "${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'\n@}";
     cp = Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES);
