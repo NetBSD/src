@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.265 2020/08/27 06:53:57 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.266 2020/08/27 07:03:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.265 2020/08/27 06:53:57 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.266 2020/08/27 07:03:48 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.265 2020/08/27 06:53:57 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.266 2020/08/27 07:03:48 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2088,7 +2088,7 @@ ParseAddCmd(void *gnp, void *cmd)
 
     /* Add to last (ie current) cohort for :: targets */
     if ((gn->type & OP_DOUBLEDEP) && !Lst_IsEmpty(gn->cohorts))
-	gn = Lst_DatumS(Lst_Last(gn->cohorts));
+	gn = Lst_DatumS(Lst_LastS(gn->cohorts));
 
     /* if target already supplied, ignore commands */
     if (!(gn->type & OP_HAS_COMMANDS)) {
