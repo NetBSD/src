@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.29 2020/08/27 03:05:34 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.30 2020/08/27 13:44:41 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.29 2020/08/27 03:05:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.30 2020/08/27 13:44:41 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3636,6 +3636,9 @@ static struct mbuf *
 wg_get_mbuf(size_t leading_len, size_t len)
 {
 	struct mbuf *m;
+
+	KASSERT(leading_len <= MCLBYTES);
+	KASSERT(len <= MCLBYTES - leading_len);
 
 	m = m_gethdr(M_DONTWAIT, MT_DATA);
 	if (m == NULL)
