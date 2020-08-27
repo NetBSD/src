@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gpio.c,v 1.27 2019/10/01 23:32:52 jmcneill Exp $ */
+/* $NetBSD: sunxi_gpio.c,v 1.28 2020/08/27 16:35:13 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.27 2019/10/01 23:32:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.28 2020/08/27 16:35:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -54,17 +54,17 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.27 2019/10/01 23:32:52 jmcneill Exp
 
 #define	SUNXI_GPIO_PORT(port)		(0x24 * (port))
 #define SUNXI_GPIO_CFG(port, pin)	(SUNXI_GPIO_PORT(port) + 0x00 + (0x4 * ((pin) / 8)))
-#define  SUNXI_GPIO_CFG_PINMASK(pin)	(0x7 << (((pin) % 8) * 4))
+#define  SUNXI_GPIO_CFG_PINMASK(pin)	(0x7U << (((pin) % 8) * 4))
 #define	SUNXI_GPIO_DATA(port)		(SUNXI_GPIO_PORT(port) + 0x10)
 #define	SUNXI_GPIO_DRV(port, pin)	(SUNXI_GPIO_PORT(port) + 0x14 + (0x4 * ((pin) / 16)))
-#define  SUNXI_GPIO_DRV_PINMASK(pin)	(0x3 << (((pin) % 16) * 2))
+#define  SUNXI_GPIO_DRV_PINMASK(pin)	(0x3U << (((pin) % 16) * 2))
 #define	SUNXI_GPIO_PULL(port, pin)	(SUNXI_GPIO_PORT(port) + 0x1c + (0x4 * ((pin) / 16)))
 #define	 SUNXI_GPIO_PULL_DISABLE	0
 #define	 SUNXI_GPIO_PULL_UP		1
 #define	 SUNXI_GPIO_PULL_DOWN		2
-#define  SUNXI_GPIO_PULL_PINMASK(pin)	(0x3 << (((pin) % 16) * 2))
+#define  SUNXI_GPIO_PULL_PINMASK(pin)	(0x3U << (((pin) % 16) * 2))
 #define	SUNXI_GPIO_INT_CFG(bank, eint)	(0x200 + (0x20 * (bank)) + (0x4 * ((eint) / 8)))
-#define	 SUNXI_GPIO_INT_MODEMASK(eint)	(0xf << (((eint) % 8) * 4))
+#define	 SUNXI_GPIO_INT_MODEMASK(eint)	(0xfU << (((eint) % 8) * 4))
 #define	  SUNXI_GPIO_INT_MODE_POS_EDGE		0x0
 #define	  SUNXI_GPIO_INT_MODE_NEG_EDGE		0x1
 #define	  SUNXI_GPIO_INT_MODE_HIGH_LEVEL	0x2
