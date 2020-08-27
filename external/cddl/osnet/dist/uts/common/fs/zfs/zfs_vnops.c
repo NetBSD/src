@@ -1354,6 +1354,10 @@ zfs_write(vnode_t *vp, uio_t *uio, int ioflag, cred_t *cr, caller_context_t *ct)
 			newmode = zp->z_mode;
 			(void) sa_update(zp->z_sa_hdl, SA_ZPL_MODE(zfsvfs),
 			    (void *)&newmode, sizeof (uint64_t), tx);
+#ifdef __NetBSD__
+			cache_enter_id(vp, zp->z_mode, zp->z_uid, zp->z_gid,
+			    true);
+#endif
 		}
 		mutex_exit(&zp->z_acl_lock);
 
@@ -5645,8 +5649,11 @@ zfs_netbsd_setattr(void *v)
 	}
 
 	error = zfs_setattr(vp, (vattr_t *)&xvap, flags, cred, NULL);
-	if (error == 0)
-		VN_KNOTE(vp, NOTE_ATTRIB);
+	if (error)
+		return error;
+
+	VN_KNOTE(vp, NOTE_ATTRIB);
+	cache_enter_id(vp, zp->z_mode, zp->z_uid, zp->z_gid, true);
 
 	return error;
 }
