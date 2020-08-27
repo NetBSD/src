@@ -1,4 +1,4 @@
-.\"	$NetBSD: timecounter.9,v 1.9 2010/06/08 05:50:01 jruoho Exp $
+.\"	$NetBSD: timecounter.9,v 1.10 2020/08/27 14:14:00 fcambus Exp $
 .\"	$OpenBSD: tc_init.9,v 1.4 2007/05/31 19:20:01 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -163,7 +163,7 @@ The
 .Va bintime
 format is a binary number, not a pseudo-decimal number,
 so it can be used as a simple binary counter
-without expensive 64 bit arithmetics.
+without expensive 64 bit arithmetic.
 .Sh CODE REFERENCES
 The timecounter framework is implemented in the file
 .Pa sys/kern/kern_tc.c .
