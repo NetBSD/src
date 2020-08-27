@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.296 2020/08/26 22:56:55 christos Exp $	*/
+/*	$NetBSD: systm.h,v 1.297 2020/08/27 14:11:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -225,7 +225,7 @@ enum hashtype {
 		else \
 			hash_value(&dst, sizeof(dst), &__v, sizeof(__v)); \
 	} while (/*CONSTCOND*/0)
-	
+
 void	hash_value(void *, size_t, const void *, size_t);
 bool	get_expose_address(struct proc *);
 void	*hashinit(u_int, enum hashtype, bool, u_long *);
