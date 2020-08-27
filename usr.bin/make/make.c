@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.124 2020/08/26 22:55:46 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.125 2020/08/27 06:31:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.124 2020/08/26 22:55:46 rillig Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.125 2020/08/27 06:31:46 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.124 2020/08/26 22:55:46 rillig Exp $");
+__RCSID("$NetBSD: make.c,v 1.125 2020/08/27 06:31:46 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1456,7 +1456,7 @@ Make_ProcessWait(Lst targs)
 	    cgn = Lst_DatumS(ln);
 	    if (cgn->type & OP_WAIT) {
 		/* Make the .WAIT node depend on the previous children */
-		Lst_ForEachFrom(pgn->children, owln, add_wait_dep, cgn);
+		Lst_ForEachFromS(pgn->children, owln, add_wait_dep, cgn);
 		owln = ln;
 	    } else {
 		Lst_AppendS(examine, cgn);
