@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.119 2020/08/27 07:00:29 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.120 2020/08/27 07:03:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.119 2020/08/27 07:00:29 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.120 2020/08/27 07:03:48 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.119 2020/08/27 07:00:29 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.120 2020/08/27 07:03:48 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -776,7 +776,7 @@ Suff_EndTransform(void *gnp, void *dummy MAKE_ATTR_UNUSED)
     GNode *gn = (GNode *)gnp;
 
     if ((gn->type & OP_DOUBLEDEP) && !Lst_IsEmpty(gn->cohorts))
-	gn = Lst_DatumS(Lst_Last(gn->cohorts));
+	gn = Lst_DatumS(Lst_LastS(gn->cohorts));
     if ((gn->type & OP_TRANSFORM) && Lst_IsEmpty(gn->commands) &&
 	Lst_IsEmpty(gn->children))
     {
@@ -1836,7 +1836,7 @@ SuffApplyTransform(GNode *tGn, GNode *sGn, Suff *t, Suff *s)
     /*
      * Record last child for expansion purposes
      */
-    ln = Lst_Last(tGn->children);
+    ln = Lst_LastS(tGn->children);
 
     /*
      * Pass the buck to Make_HandleUse to apply the rule
