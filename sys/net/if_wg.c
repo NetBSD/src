@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.28 2020/08/27 02:55:04 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.29 2020/08/27 03:05:34 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.28 2020/08/27 02:55:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.29 2020/08/27 03:05:34 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2955,6 +2955,11 @@ wg_overudp_cb(struct mbuf **mp, int offset, struct socket *so,
 	case WG_MSG_TYPE_DATA:
 		/* handle immediately */
 		m_adj(m, offset);
+		if (__predict_false(m->m_len < sizeof(struct wg_msg_data))) {
+			m = m_pullup(m, sizeof(struct wg_msg_data));
+			if (m == NULL)
+				return -1;
+		}
 		wg_handle_msg_data(wg, m, src);
 		*mp = NULL;
 		return 1;
