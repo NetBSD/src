@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.30 2020/08/27 13:44:41 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.31 2020/08/27 19:21:14 tih Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.30 2020/08/27 13:44:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.31 2020/08/27 19:21:14 tih Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3381,7 +3381,7 @@ wg_if_attach(struct wg_softc *wg)
 
 	wg->wg_if.if_addrlen = 0;
 	wg->wg_if.if_mtu = WG_MTU;
-	wg->wg_if.if_flags = IFF_POINTOPOINT;
+	wg->wg_if.if_flags = IFF_POINTOPOINT | IFF_MULTICAST;
 	wg->wg_if.if_extflags = IFEF_NO_LINK_STATE_CHANGE;
 	wg->wg_if.if_extflags |= IFEF_MPSAFE;
 	wg->wg_if.if_ioctl = wg_ioctl;
