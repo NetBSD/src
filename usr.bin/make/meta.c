@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.100 2020/08/26 22:55:46 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.101 2020/08/27 06:53:57 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -424,7 +424,7 @@ meta_needed(GNode *gn, const char *dname, const char *tname,
     }
     if ((gn->type & (OP_META|OP_SUBMAKE)) == OP_SUBMAKE) {
 	/* OP_SUBMAKE is a bit too aggressive */
-	if (Lst_ForEach(gn->commands, is_submake, gn)) {
+	if (Lst_ForEachS(gn->commands, is_submake, gn)) {
 	    if (DEBUG(META))
 		fprintf(debug_file, "Skipping meta for %s: .SUBMAKE\n",
 			gn->name);
@@ -517,7 +517,7 @@ meta_create(BuildMon *pbm, GNode *gn)
 
     mf.gn = gn;
 
-    Lst_ForEach(gn->commands, printCMD, &mf);
+    Lst_ForEachS(gn->commands, printCMD, &mf);
 
     fprintf(mf.fp, "CWD %s\n", getcwd(buf, sizeof(buf)));
     fprintf(mf.fp, "TARGET %s\n", tname);
@@ -1001,7 +1001,7 @@ meta_ignore(GNode *gn, const char *p)
 
     if (*p == '/') {
 	cached_realpath(p, fname); /* clean it up */
-	if (Lst_ForEach(metaIgnorePaths, prefix_match, fname)) {
+	if (Lst_ForEachS(metaIgnorePaths, prefix_match, fname)) {
 #ifdef DEBUG_META_MODE
 	    if (DEBUG(META))
 		fprintf(debug_file, "meta_oodate: ignoring path: %s\n",
@@ -1397,7 +1397,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    if (strncmp(p, cwd, cwdlen) == 0)
 			break;
 
-		    if (!Lst_ForEach(metaBailiwick, prefix_match, p))
+		    if (!Lst_ForEachS(metaBailiwick, prefix_match, p))
 			break;
 
 		    /* tmpdir might be within */

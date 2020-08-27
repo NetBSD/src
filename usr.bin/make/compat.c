@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.129 2020/08/23 19:00:19 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.130 2020/08/27 06:53:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.129 2020/08/23 19:00:19 rillig Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.130 2020/08/27 06:53:57 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.129 2020/08/23 19:00:19 rillig Exp $");
+__RCSID("$NetBSD: compat.c,v 1.130 2020/08/27 06:53:57 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -532,7 +532,7 @@ Compat_Make(void *gnp, void *pgnp)
 	gn->made = BEINGMADE;
 	if ((gn->type & OP_MADE) == 0)
 	    Suff_FindDeps(gn);
-	Lst_ForEach(gn->children, Compat_Make, gn);
+	Lst_ForEachS(gn->children, Compat_Make, gn);
 	if ((gn->flags & REMAKE) == 0) {
 	    gn->made = ABORTED;
 	    pgn->flags &= ~(unsigned)REMAKE;
@@ -602,7 +602,7 @@ Compat_Make(void *gnp, void *pgnp)
 		    meta_job_start(NULL, gn);
 		}
 #endif
-		Lst_ForEach(gn->commands, CompatRunCommand, gn);
+		Lst_ForEachS(gn->commands, CompatRunCommand, gn);
 		curTarg = NULL;
 	    } else {
 		Job_Touch(gn, gn->type & OP_SILENT);
@@ -671,7 +671,7 @@ Compat_Make(void *gnp, void *pgnp)
     }
 
 cohorts:
-    Lst_ForEach(gn->cohorts, Compat_Make, pgnp);
+    Lst_ForEachS(gn->cohorts, Compat_Make, pgnp);
     return 0;
 }
 
