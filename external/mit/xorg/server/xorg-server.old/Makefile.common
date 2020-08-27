@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.2 2016/08/19 03:59:31 mrg Exp $
+#	$NetBSD: Makefile.common,v 1.2.16.1 2020/08/27 09:05:37 martin Exp $
 
 # These define parts of the Xserver tree that are to be
 # conditionally compiled for different platforms.  See
@@ -42,9 +42,9 @@ XSERVER_XPMAX=		no # XXX should be yes but may be obsoleted
 .endif
 
 .if ${MACHINE} == "sparc" || ${MACHINE} == "sparc64"
-XSERVER_XSUN=		yes
-XSERVER_XSUNMONO=	yes
-XSERVER_XSUN24=		yes
+#XSERVER_XSUN=		yes
+#XSERVER_XSUNMONO=	yes
+#XSERVER_XSUN24=		yes
 .endif
 
 .if ${MACHINE} == "sun3"

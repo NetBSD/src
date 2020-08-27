@@ -1,0 +1,7 @@
+# $NetBSD: md.sun3,v 1.17.2.2 2020/08/27 09:05:37 martin Exp $
+./usr/X11R7/bin/X					-unknown-	xorg
+./usr/X11R7/bin/Xsun					-unknown-	xorg
+./usr/X11R7/bin/XsunMono				-unknown-	xorg
+./usr/X11R7/man/cat1/Xsun.0				-unknown-	.cat,xorg
+./usr/X11R7/man/html1/Xsun.html				-unknown-	html,xorg
+./usr/X11R7/man/man1/Xsun.1				-unknown-	.man,xorg
