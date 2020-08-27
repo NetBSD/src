@@ -1,4 +1,4 @@
-/*	$NetBSD: wg_user.c,v 1.2 2020/08/27 02:50:44 riastradh Exp $	*/
+/*	$NetBSD: wg_user.c,v 1.3 2020/08/27 02:51:15 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wg_user.c,v 1.2 2020/08/27 02:50:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wg_user.c,v 1.3 2020/08/27 02:51:15 riastradh Exp $");
 
 #ifndef _KERNEL
 #include <sys/types.h>
@@ -277,13 +277,13 @@ rumpuser_wg_create(const char *tun_name, struct wg_softc *wg,
 	return 0;
 
  oerr5:
-	close(wgu->wgu_pipe[0]);
-	close(wgu->wgu_pipe[1]);
- oerr4:
 	if (wgu->wgu_sock4 != -1)
 		close(wgu->wgu_sock4);
 	if (wgu->wgu_sock6 != -1)
 		close(wgu->wgu_sock6);
+ oerr4:
+	close(wgu->wgu_pipe[0]);
+	close(wgu->wgu_pipe[1]);
  oerr3:
 	close_tun(wgu);
  oerr2:
