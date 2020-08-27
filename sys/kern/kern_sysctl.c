@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.264 2019/07/03 17:31:32 maxv Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.265 2020/08/27 14:01:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.264 2019/07/03 17:31:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.265 2020/08/27 14:01:36 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_defcorename.h"
@@ -84,10 +84,14 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.264 2019/07/03 17:31:32 maxv Exp $
 #include <sys/ksyms.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
+#include <sys/cprng.h>
+#include <sys/once.h>
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 #include <sys/ktrace.h>
 #include <sys/rndsource.h>
+
+#include <crypto/blake2/blake2s.h>
 
 #define	MAXDESCLEN	1024
 MALLOC_DEFINE(M_SYSCTLNODE, "sysctlnode", "sysctl node structures");
@@ -2815,4 +2819,22 @@ sysctl_cvt_out(struct lwp *l, int v, const struct sysctlnode *i,
 		*szp = sz;
 
 	return (0);
+}
+
+static uint8_t address_key[32];	/* key used in address hashing */
+static ONCE_DECL(random_inithook);
+
+static int
+random_address_init(void)
+{
+	cprng_strong(kern_cprng, address_key, sizeof(address_key), 0);
+	return 0;
+}
+
+void
+hash_value(void *d, size_t ds, const void *s, size_t ss)
+{       
+
+	RUN_ONCE(&random_inithook, random_address_init);
+	blake2s(d, ds, address_key, sizeof(address_key), s, ss);
 }

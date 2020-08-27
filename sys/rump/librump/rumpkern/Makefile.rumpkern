@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.185 2020/08/14 00:53:16 riastradh Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.186 2020/08/27 14:01:36 riastradh Exp $
 #
 
 IOCONFDIR:=	${.PARSEDIR}
@@ -16,6 +16,7 @@ MAN=		rump.3 rump_lwproc.3
 	${RUMPTOP}/../conf					\
 	${RUMPTOP}/../dev					\
 	${RUMPTOP}/../crypto/nist_hash_drbg			\
+	${RUMPTOP}/../crypto/blake2				\
 	${RUMPTOP}/../crypto/cprng_fast				\
 	${RUMPTOP}/../crypto/chacha				\
 	${RUMPTOP}/../secmodel					\
@@ -161,6 +162,10 @@ SRCS+=	cprng_fast.c
 SRCS+=	chacha_impl.c
 SRCS+=	chacha_ref.c
 SRCS+=	chacha_selftest.c
+
+# BLAKE2
+# for hash_address
+SRCS+=	blake2s.c
 
 .include "${RUMPTOP}/Makefile.rump"
 .include <bsd.own.mk>

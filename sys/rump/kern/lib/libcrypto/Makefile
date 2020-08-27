@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2020/08/26 15:49:56 riastradh Exp $
+#	$NetBSD: Makefile,v 1.21 2020/08/27 14:01:36 riastradh Exp $
 #
 
 SODIUM_IMPORTDIR=${.CURDIR}/../../../../external/isc/libsodium
@@ -6,7 +6,6 @@ SODIUM_DIR=${.CURDIR}/../../../../external/isc/libsodium/dist/src/libsodium
 
 .PATH:	${.CURDIR}/../../../../crypto/adiantum				\
 	${.CURDIR}/../../../../crypto/aes				\
-	${.CURDIR}/../../../../crypto/blake2				\
 	${.CURDIR}/../../../../crypto/blowfish				\
 	${.CURDIR}/../../../../crypto/camellia				\
 	${.CURDIR}/../../../../crypto/cast128				\
@@ -56,9 +55,6 @@ SRCS+=	des_ecb.c des_setkey.c des_enc.c des_cbc.c des_module.c
 
 # skipjack
 SRCS+=	skipjack.c
-
-# BLAKE2
-SRCS+=	blake2s.c
 
 # libsodium
 SODIUM_CPPFLAGS+=	-I${SODIUM_IMPORTDIR}/include
