@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.45 2020/08/27 07:00:29 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.46 2020/08/27 07:03:48 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,11 +37,11 @@
 #include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.45 2020/08/27 07:00:29 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.46 2020/08/27 07:03:48 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.45 2020/08/27 07:00:29 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.46 2020/08/27 07:03:48 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -349,18 +349,6 @@ Lst_FirstS(Lst list)
     assert(LstIsValid(list));
 
     return list->first;
-}
-
-/* Return the last node from the given list, or NULL if the list is empty or
- * invalid. */
-LstNode
-Lst_Last(Lst list)
-{
-    if (!LstIsValid(list) || LstIsEmpty(list)) {
-	return NULL;
-    } else {
-	return list->last;
-    }
 }
 
 /* Return the last node from the given list, or NULL if the list is empty. */
