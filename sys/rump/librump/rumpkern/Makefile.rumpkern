@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.186 2020/08/27 14:01:36 riastradh Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.187 2020/08/27 14:11:57 riastradh Exp $
 #
 
 IOCONFDIR:=	${.PARSEDIR}
@@ -15,17 +15,17 @@ MAN=		rump.3 rump_lwproc.3
 	${RUMPTOP}/../uvm					\
 	${RUMPTOP}/../conf					\
 	${RUMPTOP}/../dev					\
-	${RUMPTOP}/../crypto/nist_hash_drbg			\
 	${RUMPTOP}/../crypto/blake2				\
-	${RUMPTOP}/../crypto/cprng_fast				\
 	${RUMPTOP}/../crypto/chacha				\
+	${RUMPTOP}/../crypto/cprng_fast				\
+	${RUMPTOP}/../crypto/nist_hash_drbg			\
 	${RUMPTOP}/../secmodel					\
 	${RUMPTOP}/../secmodel/suser				\
 	${RUMPTOP}/../compat/common
 
 #
 # Source modules, first the ones specifically implemented for librump.
-# 
+#
 SRCS+=	rump.c rumpcopy.c cons.c emul.c etfs_wrap.c intr.c	\
 	lwproc.c klock.c kobj_rename.c ltsleep.c scheduler.c	\
 	signals.c sleepq.c threads.c vm.c hyperentropy.c	\
@@ -154,7 +154,7 @@ SRCS+=	vnode_if.c
 # sys/dev
 SRCS+=	clock_subr.c
 
-# sys/dev/crypto
+# sys/crypto
 # Note: these are here only for cprng.  More crypto algos for drivers
 # are available from the rumpkern_crypto component
 SRCS+=	nist_hash_drbg.c
