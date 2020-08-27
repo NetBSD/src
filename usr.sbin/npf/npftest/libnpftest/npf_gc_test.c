@@ -222,7 +222,7 @@ run_worker_tests(npf_t *npf)
 		/* Wait for the task to be done. */
 		while (!atomic_load_acquire(&task_done) && retry--) {
 			npf_worker_signal(test_npf);
-			kpause("gctest", false, mstohz(1), NULL);
+			kpause("gctest", false, MAX(1, mstohz(1)), NULL);
 		}
 
 		CHECK_TRUE(atomic_load_acquire(&task_done));
