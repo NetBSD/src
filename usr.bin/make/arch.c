@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.97 2020/08/26 22:55:46 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.98 2020/08/27 06:13:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.97 2020/08/26 22:55:46 rillig Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.98 2020/08/27 06:13:53 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.97 2020/08/26 22:55:46 rillig Exp $");
+__RCSID("$NetBSD: arch.c,v 1.98 2020/08/27 06:13:53 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -225,7 +225,7 @@ ArchFree(void *ap)
  *	ctxt		Context in which to expand variables
  *
  * Results:
- *	SUCCESS if it was a valid specification. The linePtr is updated
+ *	TRUE if it was a valid specification. The linePtr is updated
  *	to point to the first non-space after the archive spec. The
  *	nodes for the members are placed on the given list.
  *
@@ -234,7 +234,7 @@ ArchFree(void *ap)
  *
  *-----------------------------------------------------------------------
  */
-ReturnStatus
+Boolean
 Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 {
     char	    *cp;	    /* Pointer into line */
@@ -264,7 +264,7 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 	    free(freeIt);
 
 	    if (result == var_Error) {
-		return FAILURE;
+		return FALSE;
 	    } else {
 		subLibName = TRUE;
 	    }
@@ -306,7 +306,7 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 		free(freeIt);
 
 		if (result == var_Error) {
-		    return FAILURE;
+		    return FALSE;
 		} else {
 		    doSubst = TRUE;
 		}
@@ -324,7 +324,7 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 	 */
 	if (*cp == '\0') {
 	    printf("No closing parenthesis in archive specification\n");
-	    return FAILURE;
+	    return FALSE;
 	}
 
 	/*
@@ -373,18 +373,18 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 
 		if (gn == NULL) {
 		    free(buf);
-		    return FAILURE;
+		    return FALSE;
 		} else {
 		    gn->type |= OP_ARCHV;
 		    Lst_AppendS(nodeLst, gn);
 		}
-	    } else if (Arch_ParseArchive(&sacrifice, nodeLst, ctxt)!=SUCCESS) {
+	    } else if (!Arch_ParseArchive(&sacrifice, nodeLst, ctxt)) {
 		/*
 		 * Error in nested call -- free buffer and return FAILURE
 		 * ourselves.
 		 */
 		free(buf);
-		return FAILURE;
+		return FALSE;
 	    }
 	    /*
 	     * Free buffer and continue with our work.
@@ -409,7 +409,7 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 		gn = Targ_FindNode(Buf_GetAll(&nameBuf, NULL), TARG_CREATE);
 		if (gn == NULL) {
 		    Buf_Destroy(&nameBuf, TRUE);
-		    return FAILURE;
+		    return FALSE;
 		} else {
 		    /*
 		     * We've found the node, but have to make sure the rest of
@@ -436,7 +436,7 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 	    gn = Targ_FindNode(Buf_GetAll(&nameBuf, NULL), TARG_CREATE);
 	    Buf_Destroy(&nameBuf, TRUE);
 	    if (gn == NULL) {
-		return FAILURE;
+		return FALSE;
 	    } else {
 		/*
 		 * We've found the node, but have to make sure the rest of the
@@ -473,7 +473,7 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
     } while (*cp != '\0' && isspace ((unsigned char)*cp));
 
     *linePtr = cp;
-    return SUCCESS;
+    return TRUE;
 }
 
 /*-
