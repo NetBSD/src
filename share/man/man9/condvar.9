@@ -1,4 +1,4 @@
-.\"	$NetBSD: condvar.9,v 1.29 2020/08/19 02:19:07 msaitoh Exp $
+.\"	$NetBSD: condvar.9,v 1.30 2020/08/27 14:14:00 fcambus Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -310,7 +310,7 @@ Consuming a resource:
 	/*
 	 * Wait for the resource to become available.  Timeout after
 	 * five seconds.  If the resource is not available within the
-	 * alloted time, return an error.
+	 * allotted time, return an error.
 	 */
 	struct bintime timeout = { .sec = 5, .frac = 0 };
 	while (res->state == BUSY) {
