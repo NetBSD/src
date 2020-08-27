@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.118 2020/08/27 06:53:57 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.119 2020/08/27 07:00:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.118 2020/08/27 06:53:57 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.119 2020/08/27 07:00:29 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.118 2020/08/27 06:53:57 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.119 2020/08/27 07:00:29 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -621,7 +621,7 @@ SuffParseTransform(char *str, Suff **srcPtr, Suff **targPtr)
 	if (srcLn == NULL) {
 	    srcLn = Lst_FindS(sufflist, SuffSuffIsPrefix, str);
 	} else {
-	    srcLn = Lst_FindFrom(sufflist, Lst_Succ(srcLn),
+	    srcLn = Lst_FindFrom(sufflist, Lst_SuccS(srcLn),
 				 SuffSuffIsPrefix, str);
 	}
 	if (srcLn == NULL) {
@@ -1846,8 +1846,8 @@ SuffApplyTransform(GNode *tGn, GNode *sGn, Suff *t, Suff *s)
     /*
      * Deal with wildcards and variables in any acquired sources
      */
-    for (ln = Lst_Succ(ln); ln != NULL; ln = nln) {
-	nln = Lst_Succ(ln);
+    for (ln = ln != NULL ? Lst_SuccS(ln) : NULL; ln != NULL; ln = nln) {
+	nln = Lst_SuccS(ln);
 	SuffExpandChildren(ln, tGn);
     }
 
@@ -2132,7 +2132,7 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
 		/*
 		 * Search from this suffix's successor...
 		 */
-		ln = Lst_Succ(ln);
+		ln = Lst_SuccS(ln);
 	    }
 	}
 
@@ -2211,7 +2211,7 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
      * that still contain variables or wildcards in their names.
      */
     for (ln = Lst_First(gn->children); ln != NULL; ln = nln) {
-	nln = Lst_Succ(ln);
+	nln = Lst_SuccS(ln);
 	SuffExpandChildren(ln, gn);
     }
 
