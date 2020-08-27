@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.45 2020/08/26 23:00:47 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.46 2020/08/27 06:28:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -171,7 +171,6 @@ int		Lst_ForEachFromS(Lst, LstNode, LstActionProc, void *);
  * between Lst_Open() and Lst_Close().
  */
 /* Open the list */
-ReturnStatus	Lst_Open(Lst);
 void		Lst_OpenS(Lst);
 /* Next element please, or NULL */
 LstNode		Lst_NextS(Lst);

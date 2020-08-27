@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.42 2020/08/26 22:55:46 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.43 2020/08/27 06:28:44 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,11 +37,11 @@
 #include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.42 2020/08/26 22:55:46 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.43 2020/08/27 06:28:44 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.42 2020/08/26 22:55:46 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.43 2020/08/27 06:28:44 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -634,18 +634,6 @@ Lst_AppendAllS(Lst dst, Lst src)
  * CurPtr points to their idea of the current node in the list and they
  * access the list based on it.
  */
-
-/* Open a list for sequential access. A list can still be searched, etc.,
- * without confusing these functions. */
-ReturnStatus
-Lst_Open(Lst list)
-{
-    if (!LstIsValid(list)) {
-	return FAILURE;
-    }
-    Lst_OpenS(list);
-    return SUCCESS;
-}
 
 /* Open a list for sequential access. A list can still be searched, etc.,
  * without confusing these functions. */
