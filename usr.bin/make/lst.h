@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.46 2020/08/27 06:28:44 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.47 2020/08/27 06:53:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -160,10 +160,8 @@ LstNode		Lst_FindFromS(Lst, LstNode, LstFindProc, const void *);
  */
 LstNode		Lst_MemberS(Lst, void *);
 /* Apply a function to all elements of a lst */
-int		Lst_ForEach(Lst, LstActionProc, void *);
 int		Lst_ForEachS(Lst, LstActionProc, void *);
 /* Apply a function to all elements of a lst starting from a certain point. */
-int		Lst_ForEachFrom(Lst, LstNode, LstActionProc, void *);
 int		Lst_ForEachFromS(Lst, LstNode, LstActionProc, void *);
 /*
  * these functions are for dealing with a list as a table, of sorts.

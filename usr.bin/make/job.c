@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.216 2020/08/27 06:31:46 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.217 2020/08/27 06:53:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.216 2020/08/27 06:31:46 rillig Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.217 2020/08/27 06:53:57 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.216 2020/08/27 06:31:46 rillig Exp $");
+__RCSID("$NetBSD: job.c,v 1.217 2020/08/27 06:53:57 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1655,7 +1655,7 @@ JobStart(GNode *gn, int flags)
 	 * We can do all the commands at once. hooray for sanity
 	 */
 	numCommands = 0;
-	Lst_ForEach(gn->commands, JobPrintCommand, job);
+	Lst_ForEachS(gn->commands, JobPrintCommand, job);
 
 	/*
 	 * If we didn't print out any commands to the shell script,
@@ -1682,7 +1682,7 @@ JobStart(GNode *gn, int flags)
 	 * doesn't do any harm in this case and may do some good.
 	 */
 	if (cmdsOK) {
-	    Lst_ForEach(gn->commands, JobPrintCommand, job);
+	    Lst_ForEachS(gn->commands, JobPrintCommand, job);
 	}
 	/*
 	 * Don't execute the shell, thank you.
