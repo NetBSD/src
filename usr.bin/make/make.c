@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.126 2020/08/27 06:53:57 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.127 2020/08/27 19:15:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.126 2020/08/27 06:53:57 rillig Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.127 2020/08/27 19:15:35 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.126 2020/08/27 06:53:57 rillig Exp $");
+__RCSID("$NetBSD: make.c,v 1.127 2020/08/27 19:15:35 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -474,7 +474,7 @@ Make_HandleUse(GNode *cgn, GNode *pgn)
     }
 #endif
 
-    if ((cgn->type & (OP_USE|OP_USEBEFORE)) || Lst_IsEmpty(pgn->commands)) {
+    if ((cgn->type & (OP_USE|OP_USEBEFORE)) || Lst_IsEmptyS(pgn->commands)) {
 	    if (cgn->type & OP_USEBEFORE) {
 		/* .USEBEFORE */
 		Lst_PrependAllS(pgn->commands, cgn->commands);
@@ -614,7 +614,7 @@ Make_Recheck(GNode *gn)
      * To force things that depend on FRC to be made, so we have to
      * check for gn->children being empty as well...
      */
-    if (!Lst_IsEmpty(gn->commands) || Lst_IsEmpty(gn->children)) {
+    if (!Lst_IsEmptyS(gn->commands) || Lst_IsEmptyS(gn->children)) {
 	gn->mtime = now;
     }
 #else
@@ -724,7 +724,7 @@ Make_Update(GNode *cgn)
      * which is where all parents are linked.
      */
     if ((centurion = cgn->centurion) != NULL) {
-	if (!Lst_IsEmpty(cgn->parents))
+	if (!Lst_IsEmptyS(cgn->parents))
 		Punt("%s%s: cohort has parents", cgn->name, cgn->cohort_num);
 	centurion->unmade_cohorts -= 1;
 	if (centurion->unmade_cohorts < 0)
@@ -1087,7 +1087,7 @@ MakeStartJobs(void)
     GNode	*gn;
     int		have_token = 0;
 
-    while (!Lst_IsEmpty(toBeMade)) {
+    while (!Lst_IsEmptyS(toBeMade)) {
 	/* Get token now to avoid cycling job-list when we only have 1 token */
 	if (!have_token && !Job_TokenWithdraw())
 	    break;
@@ -1438,7 +1438,7 @@ Make_ProcessWait(Lst targs)
     examine = Lst_Init();
     Lst_AppendS(examine, pgn);
 
-    while (!Lst_IsEmpty(examine)) {
+    while (!Lst_IsEmptyS(examine)) {
 	pgn = Lst_DequeueS(examine);
 
 	/* We only want to process each child-list once */
@@ -1536,7 +1536,7 @@ Make_Run(Lst targs)
      * Note that the Job module will exit if there were any errors unless the
      * keepgoing flag was given.
      */
-    while (!Lst_IsEmpty(toBeMade) || jobTokensRunning > 0) {
+    while (!Lst_IsEmptyS(toBeMade) || jobTokensRunning > 0) {
 	Job_CatchOutput();
 	(void)MakeStartJobs();
     }

@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.98 2020/08/27 06:13:53 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.99 2020/08/27 19:15:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.98 2020/08/27 06:13:53 rillig Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.99 2020/08/27 19:15:35 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.98 2020/08/27 06:13:53 rillig Exp $");
+__RCSID("$NetBSD: arch.c,v 1.99 2020/08/27 19:15:35 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -396,7 +396,7 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 
 	    Buf_Init(&nameBuf, 0);
 	    Dir_Expand(memName, dirSearchPath, members);
-	    while (!Lst_IsEmpty(members)) {
+	    while (!Lst_IsEmptyS(members)) {
 		char *member = Lst_DequeueS(members);
 
 		Buf_Empty(&nameBuf);
@@ -1252,9 +1252,9 @@ Arch_LibOODate(GNode *gn)
 
     if (gn->type & OP_PHONY) {
 	oodate = TRUE;
-    } else if (OP_NOP(gn->type) && Lst_IsEmpty(gn->children)) {
+    } else if (OP_NOP(gn->type) && Lst_IsEmptyS(gn->children)) {
 	oodate = FALSE;
-    } else if ((!Lst_IsEmpty(gn->children) && gn->cmgn == NULL) ||
+    } else if ((!Lst_IsEmptyS(gn->children) && gn->cmgn == NULL) ||
 	       (gn->mtime > now) ||
 	       (gn->cmgn != NULL && gn->mtime < gn->cmgn->mtime)) {
 	oodate = TRUE;
