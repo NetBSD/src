@@ -29,7 +29,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_worker.c,v 1.9 2020/05/30 20:54:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_worker.c,v 1.10 2020/08/27 18:49:36 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -271,7 +271,7 @@ npf_worker(void *arg)
 	npf_t *npf;
 
 	mutex_enter(&winfo->lock);
-	while (!winfo->exit) {
+	for (;;) {
 		unsigned wait_time = NPF_GC_MAXWAIT;
 
 		/*
