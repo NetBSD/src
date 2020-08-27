@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbdi.9,v 1.34 2018/09/04 00:00:47 mrg Exp $
+.\"	$NetBSD: usbdi.9,v 1.35 2020/08/27 14:14:00 fcambus Exp $
 .\"
 .\" Copyright (c) 2012 Matthew R. Green
 .\" All rights reserved.
@@ -603,7 +603,7 @@ function is called, which takes the completed
 .Fa xfer ,
 the private data
 .Fa priv
-originally assocated with this transfer, and
+originally associated with this transfer, and
 .Fa status
 the status of this transfer.
 .Pp
@@ -930,7 +930,7 @@ The
 .Fn usb_init_task
 function takes a pointer to a
 .Ft struct usb_task
-that will be initalised, a function to call for this task
+that will be initialised, a function to call for this task
 .Fa func ,
 the argument to pass to
 .Fa func ,
