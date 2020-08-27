@@ -1,4 +1,4 @@
-/*	$NetBSD: column.c,v 1.21 2008/07/21 14:19:21 lukem Exp $	*/
+/*	$NetBSD: column.c,v 1.22 2020/08/27 01:52:04 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)column.c	8.4 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: column.c,v 1.21 2008/07/21 14:19:21 lukem Exp $");
+__RCSID("$NetBSD: column.c,v 1.22 2020/08/27 01:52:04 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -246,7 +246,7 @@ maketbl(void)
 		}
 	}
 	for (cnt = 0, t = tbl; cnt < entries; ++cnt, ++t) {
-		for (coloff = 0; coloff < t->cols  - 1; ++coloff)
+		for (coloff = 0; coloff < t->cols - 1; ++coloff)
 			(void)printf("%s%*s", t->list[coloff],
 			    lens[coloff] - t->len[coloff] + 2, " ");
 		(void)printf("%s\n", t->list[coloff]);
