@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.246 2020/08/27 03:57:52 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.247 2020/08/27 04:49:52 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -4500,7 +4500,7 @@ ixgbe_handle_timer(struct work *wk, void *context)
 	/* Check for pluggable optics */
 	if (ixgbe_is_sfp(hw)) {
 		bool was_full = hw->phy.sfp_type != ixgbe_sfp_type_not_present;
-		bool is_full = ixgbe_sfp_cage_full(hw);
+		bool is_full = ixgbe_sfp_cage_full(adapter);
 
 		/* do probe if cage state changed */
 		if (was_full ^ is_full) {
