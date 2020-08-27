@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.94 2020/08/26 23:00:47 rillig Exp $
+#	$NetBSD: Makefile,v 1.95 2020/08/27 19:09:37 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -179,7 +179,7 @@ test: .MAKE
 .endif
 
 accept sync-mi: .MAKE
-	cd ${.CURDIR}/unit-tests && ${.MAKE} ${.TARGET}
+	cd ${.CURDIR}/unit-tests && ${.MAKE} ${MAKEFLAGS} ${.TARGET}
 
 retest:
 	${.MAKE} -C ${.CURDIR}/unit-tests cleandir
