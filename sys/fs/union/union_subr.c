@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.77 2018/01/28 15:48:44 christos Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.77.8.1 2020/08/27 09:08:39 martin Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.77 2018/01/28 15:48:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.77.8.1 2020/08/27 09:08:39 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -479,6 +479,7 @@ found:
 	un->un_dircache = 0;
 	un->un_openl = 0;
 	un->un_cflags = 0;
+	un->un_hooknode = false;
 
 	un->un_uppersz = VNOVAL;
 	un->un_lowersz = VNOVAL;
@@ -1065,7 +1066,7 @@ union_dircache(struct vnode *vp, struct lwp *l)
 	} else {
 		vpp = dircache;
 		do {
-			if (*vpp++ == VTOUNION(vp)->un_uppervp)
+			if (*vpp++ == VTOUNION(vp)->un_lowervp)
 				break;
 		} while (*vpp != NULLVP);
 	}
@@ -1074,10 +1075,12 @@ union_dircache(struct vnode *vp, struct lwp *l)
 		goto out;
 
 	vref(*vpp);
-	error = union_allocvp(&nvp, vp->v_mount, NULLVP, NULLVP, 0, *vpp, NULLVP, 0);
+	error = union_allocvp(&nvp, vp->v_mount, NULLVP, NULLVP, 0,
+	    NULLVP, *vpp, 0);
 	if (!error) {
 		vn_lock(nvp, LK_EXCLUSIVE | LK_RETRY);
 		VTOUNION(vp)->un_dircache = 0;
+		VTOUNION(nvp)->un_hooknode = true;
 		VTOUNION(nvp)->un_dircache = dircache;
 	}
 
