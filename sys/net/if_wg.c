@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.24 2020/08/26 16:03:41 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.25 2020/08/27 02:52:33 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.24 2020/08/26 16:03:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.25 2020/08/27 02:52:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2915,9 +2915,25 @@ wg_overudp_cb(struct mbuf **mp, int offset, struct socket *so,
 
 	WG_TRACE("enter");
 
+	/* Verify the mbuf chain is long enough to have a wg msg header.  */
+	KASSERT(offset <= m_length(m));
+	if (__predict_false(m_length(m) - offset < sizeof(struct wg_msg))) {
+		m_freem(m);
+		return -1;
+	}
+
+	/*
+	 * Copy the message header (32-bit message type) out -- we'll
+	 * worry about contiguity and alignment later.
+	 */
 	m_copydata(m, offset, sizeof(struct wg_msg), &wgm);
 	WG_DLOG("type=%d\n", wgm.wgm_type);
 
+	/*
+	 * Handle DATA packets promptly as they arrive.  Other packets
+	 * may require expensive public-key crypto and are not as
+	 * sensitive to latency, so defer them to the worker thread.
+	 */
 	switch (wgm.wgm_type) {
 	case WG_MSG_TYPE_DATA:
 		m_adj(m, offset);
