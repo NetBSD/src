@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.907 2020/08/26 16:03:41 riastradh Exp $
+# $NetBSD: mi,v 1.908 2020/08/27 15:32:00 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -125,8 +125,8 @@
 ./usr/libdata/debug/usr/tests/lib/libdes				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libevent				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libexecinfo				tests-lib-debug		compattestfile,atf
-./usr/libdata/debug/usr/tests/lib/liblutok				tests-lutok-debug	compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libi386				tests-lib-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/lib/liblutok				tests-lutok-debug	compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libm					tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libnvmm				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libobjc				tests-lib-debug		compattestfile,atf
@@ -2207,8 +2207,8 @@
 ./usr/tests/kernel/t_lock			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_lockf			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_lwpctl			tests-obsolete		obsolete
-./usr/tests/kernel/t_mkdir			tests-obsolete		obsolete
 ./usr/tests/kernel/t_magic_symlinks		tests-kernel-tests	compattestfile,atf
+./usr/tests/kernel/t_mkdir			tests-obsolete		obsolete
 ./usr/tests/kernel/t_mqueue			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_nointerpreter		tests-kernel-tests	atf
 ./usr/tests/kernel/t_origin			tests-kernel-tests	compattestfile,atf
@@ -3868,18 +3868,13 @@
 ./usr/tests/net/if_vlan/t_vlan			tests-net-tests		atf,rump
 ./usr/tests/net/if_wg				tests-net-tests		compattestfile,atf
 ./usr/tests/net/if_wg/Atffile			tests-net-tests		atf,rump
+./usr/tests/net/if_wg/Atffile			tests-net-tests		compattestfile,atf
 ./usr/tests/net/if_wg/Kyuafile			tests-net-tests		atf,rump,kyua
+./usr/tests/net/if_wg/Kyuafile			tests-net-tests		compattestfile,atf,kyua
 ./usr/tests/net/if_wg/t_basic			tests-net-tests		atf,rump
 ./usr/tests/net/if_wg/t_interoperability	tests-net-tests		atf,rump
 ./usr/tests/net/if_wg/t_misc			tests-net-tests		atf,rump
 ./usr/tests/net/if_wg/t_tunnel			tests-net-tests		atf,rump
-./usr/tests/net/wireguard			tests-obsolete		obsolete
-./usr/tests/net/wireguard/Atffile		tests-obsolete		obsolete
-./usr/tests/net/wireguard/Kyuafile		tests-obsolete		obsolete
-./usr/tests/net/wireguard/t_basic		tests-obsolete		obsolete
-./usr/tests/net/wireguard/t_interoperability	tests-obsolete		obsolete
-./usr/tests/net/wireguard/t_misc		tests-obsolete		obsolete
-./usr/tests/net/wireguard/t_tunnel		tests-obsolete		obsolete
 ./usr/tests/net/in_cksum			tests-net-tests		compattestfile,atf
 ./usr/tests/net/in_cksum/Atffile		tests-net-tests		compattestfile,atf
 ./usr/tests/net/in_cksum/Kyuafile		tests-net-tests		compattestfile,atf,kyua
@@ -3960,14 +3955,13 @@
 ./usr/tests/net/sys/t_listen			tests-obsolete		obsolete
 ./usr/tests/net/sys/t_rfc6056			tests-net-tests		compattestfile,atf
 ./usr/tests/net/sys/t_socketpair		tests-obsolete		obsolete
-./usr/tests/net/if_wg				tests-net-tests		compattestfile,atf
-./usr/tests/net/if_wg/Atffile			tests-net-tests		compattestfile,atf
-./usr/tests/net/if_wg/Kyuafile			tests-net-tests		compattestfile,atf,kyua
-./usr/tests/net/if_wg/t_basic			tests-net-tests		atf,rump
 ./usr/tests/net/wireguard			tests-obsolete		obsolete
 ./usr/tests/net/wireguard/Atffile		tests-obsolete		obsolete
 ./usr/tests/net/wireguard/Kyuafile		tests-obsolete		obsolete
 ./usr/tests/net/wireguard/t_basic		tests-obsolete		obsolete
+./usr/tests/net/wireguard/t_interoperability	tests-obsolete		obsolete
+./usr/tests/net/wireguard/t_misc		tests-obsolete		obsolete
+./usr/tests/net/wireguard/t_tunnel		tests-obsolete		obsolete
 ./usr/tests/opencrypto				tests-obsolete		obsolete
 ./usr/tests/rump				tests-rump-tests	compattestfile,atf
 ./usr/tests/rump/Atffile			tests-rump-tests	atf,rump

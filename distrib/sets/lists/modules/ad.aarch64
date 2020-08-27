@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.6 2020/03/12 15:04:13 pgoyette Exp $
+# $NetBSD: ad.aarch64,v 1.7 2020/08/27 15:32:00 riastradh Exp $
 ./@MODULEDIR@/bpfjit				modules-base-kernel	kmod,sljit
 ./@MODULEDIR@/bpfjit/bpfjit.kmod		modules-base-kernel	kmod,sljit
 ./@MODULEDIR@/compat_netbsd32			modules-base-kernel	kmod
@@ -31,20 +31,18 @@
 ./@MODULEDIR@/compat_netbsd32_80/compat_netbsd32_80.kmod modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_90		modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_90/compat_netbsd32_90.kmod modules-base-kernel	kmod
-#./@MODULEDIR@/compat_netbsd32_43		modules-base-kernel	kmod
-#./@MODULEDIR@/compat_netbsd32_43/compat_netbsd32_43.kmod modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_mqueue		modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_mqueue/compat_netbsd32_mqueue.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_nfssrv		modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_nfssrv/compat_netbsd32_nfssrv.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_ptrace		modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_ptrace/compat_netbsd32_ptrace.kmod	modules-base-kernel	kmod
-./@MODULEDIR@/compat_netbsd32_raid		modules-base-kernel	kmod
-./@MODULEDIR@/compat_netbsd32_raid/compat_netbsd32_raid.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_quota		modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_quota/compat_netbsd32_quota.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_quota_50		modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_quota_50/compat_netbsd32_quota_50.kmod	modules-base-kernel	kmod
+./@MODULEDIR@/compat_netbsd32_raid		modules-base-kernel	kmod
+./@MODULEDIR@/compat_netbsd32_raid/compat_netbsd32_raid.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_sysvipc		modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_sysvipc/compat_netbsd32_sysvipc.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_sysvipc_10	modules-base-kernel	kmod
@@ -59,4 +57,3 @@
 ./@MODULEDIR@/exec_elf64/exec_elf64.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/sljit				modules-base-kernel	kmod,sljit
 ./@MODULEDIR@/sljit/sljit.kmod			modules-base-kernel	kmod,sljit
-
