@@ -1,4 +1,4 @@
-#	$NetBSD: t_misc.sh,v 1.2 2020/08/27 02:51:49 riastradh Exp $
+#	$NetBSD: t_misc.sh,v 1.3 2020/08/27 02:52:33 riastradh Exp $
 #
 # Copyright (c) 2018 Ryota Ozaki <ozaki.ryota@gmail.com>
 # All rights reserved.
@@ -588,6 +588,78 @@ wg_psk_cleanup()
 	cleanup
 }
 
+atf_test_case wg_malformed cleanup
+wg_malformed_head()
+{
+
+	atf_set "descr" "tests malformed packet headers"
+	atf_set "require.progs" "nc" "rump_server" "wgconfig" "wg-keygen"
+	atf_set "timeout" "10"
+}
+
+wg_malformed_body()
+{
+	local ifconfig="atf_check -s exit:0 rump.ifconfig"
+	local ping="atf_check -s exit:0 -o ignore rump.ping -n -c 1 -w 1"
+	local ip_local=192.168.1.1
+	local ip_peer=192.168.1.2
+	local ip_wg_local=10.0.0.1
+	local ip_wg_peer=10.0.0.2
+	local port=51820
+	setup_servers
+
+	# It sets key_priv_local key_pub_local key_priv_peer key_pub_peer
+	generate_keys
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	setup_common shmif0 inet $ip_local 24
+	setup_wg_common wg0 inet $ip_wg_local 24 $port "$key_priv_local"
+
+	export RUMP_SERVER=$SOCK_PEER
+	setup_common shmif0 inet $ip_peer 24
+	setup_wg_common wg0 inet $ip_wg_peer 24 $port "$key_priv_peer"
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	add_peer wg0 peer0 $key_pub_peer $ip_peer:$port $ip_wg_peer/32
+
+	export RUMP_SERVER=$SOCK_PEER
+	add_peer wg0 peer0 $key_pub_local $ip_local:$port $ip_wg_local/32
+
+	export RUMP_SERVER=$SOCK_LOCAL
+
+	$ping $ip_wg_peer
+
+	printf 'send malformed packets\n'
+
+	$HIJACKING ping -c 1 -n $ip_peer
+
+	printf 'x' | $HIJACKING nc -Nu -w 0 $ip_peer $port
+	printf 'xy' | $HIJACKING nc -Nu -w 0 $ip_peer $port
+	printf 'xyz' | $HIJACKING nc -Nu -w 0 $ip_peer $port
+	printf 'xyzw' | $HIJACKING nc -Nu -w 0 $ip_peer $port
+	printf '\x00\x00\x00\x00' | $HIJACKING nc -Nu -w 0 $ip_peer $port
+	printf '\x00\x00\x00\x00z' | $HIJACKING nc -Nu -w 0 $ip_peer $port
+	printf '\x01\x00\x00\x00' | $HIJACKING nc -Nu -w 0 $ip_peer $port
+	printf '\x01\x00\x00\x00z' | $HIJACKING nc -Nu -w 0 $ip_peer $port
+	printf '\x02\x00\x00\x00' | $HIJACKING nc -Nu -w 0 $ip_peer $port
+	printf '\x02\x00\x00\x00z' | $HIJACKING nc -Nu -w 0 $ip_peer $port
+	printf '\x03\x00\x00\x00' | $HIJACKING nc -Nu -w 0 $ip_peer $port
+	printf '\x03\x00\x00\x00z' | $HIJACKING nc -Nu -w 0 $ip_peer $port
+	printf '\x04\x00\x00\x00' | $HIJACKING nc -Nu -w 0 $ip_peer $port
+	printf '\x04\x00\x00\x00z' | $HIJACKING nc -Nu -w 0 $ip_peer $port
+
+	printf 'done sending malformed packets\n'
+
+	$ping $ip_wg_peer
+}
+
+wg_malformed_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
 atf_init_test_cases()
 {
 
@@ -597,4 +669,5 @@ atf_init_test_cases()
 	atf_add_test_case wg_mobility
 	atf_add_test_case wg_keepalive
 	atf_add_test_case wg_psk
+	atf_add_test_case wg_malformed
 }
