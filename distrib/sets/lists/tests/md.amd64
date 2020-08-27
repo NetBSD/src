@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.12 2020/05/17 15:28:27 martin Exp $
+# $NetBSD: md.amd64,v 1.13 2020/08/27 15:32:00 riastradh Exp $
 ./usr/tests/kernel/arch/x86/Atffile		tests-obsolete	obsolete
 ./usr/tests/kernel/arch/x86/Kyuafile		tests-obsolete	obsolete
 ./usr/tests/kernel/arch/x86/t_ptrace_wait	tests-obsolete	obsolete
@@ -9,8 +9,8 @@
 ./usr/tests/kernel/arch/x86/t_ptrace_waitpid	tests-obsolete	obsolete
 ./usr/tests/lib/libi386/t_user_ldt		tests-lib-tests	compattestfile,atf,compat
 ./usr/tests/lib/libnvmm/h_io_assist		tests-lib-tests	compattestfile,atf
-./usr/tests/lib/libnvmm/t_io_assist		tests-lib-tests	compattestfile,atf
 ./usr/tests/lib/libnvmm/h_mem_assist		tests-lib-tests	compattestfile,atf
+./usr/tests/lib/libnvmm/t_io_assist		tests-lib-tests	compattestfile,atf
 ./usr/tests/lib/libnvmm/t_mem_assist		tests-lib-tests	compattestfile,atf
 ./usr/tests/modules/t_x86_pte			tests-sys-tests	atf,kmod,rump
 ./usr/tests/modules/x86_pte_tester		tests-sys-tests	atf,kmod,rump

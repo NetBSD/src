@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1257 2020/08/20 21:28:00 riastradh Exp $
+# $NetBSD: mi,v 1.1258 2020/08/27 15:31:59 riastradh Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -150,13 +150,13 @@
 ./libdata/firmware/if_bwfm/brcmfmac43236b.bin	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43242a.bin	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac4350-pcie.bin	base-firmware-root	firmware
-./libdata/firmware/if_bwfm/brcmfmac4356-pcie.bin	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac4350c2-pcie.bin	base-firmware-root	firmware
+./libdata/firmware/if_bwfm/brcmfmac4356-pcie.bin	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43569.bin	base-firmware-root	firmware
-./libdata/firmware/if_bwfm/brcmfmac43602-pcie.bin	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43570-pcie.bin	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac4358-pcie.bin	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43602-pcie.ap.bin	base-firmware-root	firmware
+./libdata/firmware/if_bwfm/brcmfmac43602-pcie.bin	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac4366b-pcie.bin	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac4366c-pcie.bin	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac4371-pcie.bin	base-firmware-root	firmware
@@ -500,6 +500,7 @@
 ./libexec/resolvconf/pdnsd			base-resolvconf-root
 ./libexec/resolvconf/unbound			base-resolvconf-root
 ./mnt						base-sys-root
+./netbsd					base-sys-root		kernel_dir
 ./rescue					base-sys-root
 ./root						base-sys-root
 ./sbin						base-sys-root
@@ -509,8 +510,8 @@
 ./sbin/badsect					base-sysutil-root
 ./sbin/bioctl					base-sysutil-root
 ./sbin/blacklistctl				base-obsolete		obsolete
-./sbin/blocklistctl				base-sysutil-root
 ./sbin/blacklistd				base-obsolete		obsolete
+./sbin/blocklistctl				base-sysutil-root
 ./sbin/blocklistd				base-sysutil-root
 ./sbin/brconfig					base-netutil-root
 ./sbin/canconfig				base-netutil-root
@@ -668,7 +669,6 @@
 ./sbin/zfs					base-zfs-bin            zfs
 ./sbin/zpool					base-zfs-bin            zfs
 ./stand						base-sys-root
-./netbsd					base-sys-root		kernel_dir
 ./tmp						base-sys-root
 ./usr						base-sys-root
 ./usr/bin					base-sys-usr
@@ -1308,8 +1308,8 @@
 ./usr/include/ufs/lfs				base-c-usr
 ./usr/include/ufs/mfs				base-c-usr
 ./usr/include/ufs/ufs				base-c-usr
-./usr/include/uvm				base-c-usr
 ./usr/include/uv				base-obsolete		obsolete
+./usr/include/uvm				base-c-usr
 ./usr/include/vm				base-obsolete		obsolete
 ./usr/lib					base-sys-usr		compatdir
 ./usr/lib/clang					base-sys-usr
@@ -5695,7 +5695,6 @@
 ./usr/share/zoneinfo/Asia/Riyadh87		base-obsolete		obsolete
 ./usr/share/zoneinfo/Asia/Riyadh88		base-obsolete		obsolete
 ./usr/share/zoneinfo/Asia/Riyadh89		base-obsolete		obsolete
-./usr/share/zoneinfo/Asia/Qostanay		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Saigon		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Sakhalin		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Samarkand		base-sys-share		share
@@ -6071,9 +6070,9 @@
 ./var/chroot/dhcpcd				base-dhcpcd-root
 ./var/chroot/dhcpcd/etc				base-obsolete		obsolete
 ./var/chroot/dhcpcd/var				base-obsolete		obsolete
-./var/chroot/dhcpcd/var/run			base-obsolete		obsolete
 ./var/chroot/dhcpcd/var/db			base-obsolete		obsolete
 ./var/chroot/dhcpcd/var/db/dhcpcd		base-obsolete		obsolete
+./var/chroot/dhcpcd/var/run			base-obsolete		obsolete
 ./var/chroot/ftp-proxy				base-sys-root
 ./var/chroot/named				base-bind-root
 ./var/chroot/named/dev				base-bind-root
@@ -6123,8 +6122,8 @@
 ./var/cron					base-cron-root
 ./var/cron/tabs					base-cron-root
 ./var/db					base-sys-root
-./var/db/ns					base-sys-root
 ./var/db/dhcpcd					base-dhcpcd-root
+./var/db/ns					base-sys-root
 ./var/db/obsolete				base-sys-root
 ./var/db/obsolete/base				base-sys-root
 ./var/db/postfix				base-postfix-root

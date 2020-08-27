@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.197 2020/07/24 06:12:21 jdolecek Exp $
+# $NetBSD: md.i386,v 1.198 2020/08/27 15:32:00 riastradh Exp $
 ./usr/include/clang-3.4/__wmmintrin_aes.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/__wmmintrin_pclmul.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/ammintrin.h		comp-obsolete		obsolete
@@ -100,8 +100,8 @@
 ./usr/include/clang-3.6/xopintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.8/__wmmintrin_aes.h	comp-obsolete		obsolete
 ./usr/include/clang-3.8/__wmmintrin_pclmul.h	comp-obsolete		obsolete
-./usr/include/clang-3.8/ammintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.8/adxintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.8/ammintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.8/avx2intrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.8/avx512bwintrin.h	comp-obsolete		obsolete
 ./usr/include/clang-3.8/avx512cdintrin.h	comp-obsolete		obsolete
@@ -261,6 +261,8 @@
 ./usr/include/clang-5.0/xsaveoptintrin.h	comp-obsolete		obsolete
 ./usr/include/clang-5.0/xsavesintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-5.0/xtestintrin.h		comp-obsolete		obsolete
+./usr/include/clang-7.0/__wmmintrin_aes.h	comp-obsolete		obsolete
+./usr/include/clang-7.0/__wmmintrin_pclmul.h	comp-obsolete		obsolete
 ./usr/include/clang-7.0/adxintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-7.0/ammintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-7.0/avx2intrin.h		comp-obsolete		obsolete
@@ -307,8 +309,8 @@
 ./usr/include/clang-7.0/lwpintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-7.0/lzcntintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-7.0/mm3dnow.h		comp-obsolete		obsolete
-./usr/include/clang-7.0/mmintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-7.0/mm_malloc.h		comp-obsolete		obsolete
+./usr/include/clang-7.0/mmintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-7.0/movdirintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-7.0/mwaitxintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-7.0/nmmintrin.h		comp-obsolete		obsolete
@@ -329,9 +331,7 @@
 ./usr/include/clang-7.0/vpclmulqdqintrin.h	comp-obsolete		obsolete
 ./usr/include/clang-7.0/waitpkgintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-7.0/wbnoinvdintrin.h	comp-obsolete		obsolete
-./usr/include/clang-7.0/__wmmintrin_aes.h	comp-obsolete		obsolete
 ./usr/include/clang-7.0/wmmintrin.h		comp-obsolete		obsolete
-./usr/include/clang-7.0/__wmmintrin_pclmul.h	comp-obsolete		obsolete
 ./usr/include/clang-7.0/x86intrin.h		comp-obsolete		obsolete
 ./usr/include/clang-7.0/xmmintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-7.0/xopintrin.h		comp-obsolete		obsolete
@@ -340,6 +340,8 @@
 ./usr/include/clang-7.0/xsaveoptintrin.h	comp-obsolete		obsolete
 ./usr/include/clang-7.0/xsavesintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-7.0/xtestintrin.h		comp-obsolete		obsolete
+./usr/include/clang-9.0/__wmmintrin_aes.h	comp-c-include		llvm
+./usr/include/clang-9.0/__wmmintrin_pclmul.h	comp-c-include		llvm
 ./usr/include/clang-9.0/adxintrin.h		comp-c-include		llvm
 ./usr/include/clang-9.0/ammintrin.h		comp-c-include		llvm
 ./usr/include/clang-9.0/avx2intrin.h		comp-c-include		llvm
@@ -391,8 +393,8 @@
 ./usr/include/clang-9.0/lwpintrin.h		comp-c-include		llvm
 ./usr/include/clang-9.0/lzcntintrin.h		comp-c-include		llvm
 ./usr/include/clang-9.0/mm3dnow.h		comp-c-include		llvm
-./usr/include/clang-9.0/mmintrin.h		comp-c-include		llvm
 ./usr/include/clang-9.0/mm_malloc.h		comp-c-include		llvm
+./usr/include/clang-9.0/mmintrin.h		comp-c-include		llvm
 ./usr/include/clang-9.0/movdirintrin.h		comp-c-include		llvm
 ./usr/include/clang-9.0/mwaitxintrin.h		comp-c-include		llvm
 ./usr/include/clang-9.0/nmmintrin.h		comp-c-include		llvm
@@ -413,9 +415,7 @@
 ./usr/include/clang-9.0/vpclmulqdqintrin.h	comp-c-include		llvm
 ./usr/include/clang-9.0/waitpkgintrin.h		comp-c-include		llvm
 ./usr/include/clang-9.0/wbnoinvdintrin.h	comp-c-include		llvm
-./usr/include/clang-9.0/__wmmintrin_aes.h	comp-c-include		llvm
 ./usr/include/clang-9.0/wmmintrin.h		comp-c-include		llvm
-./usr/include/clang-9.0/__wmmintrin_pclmul.h	comp-c-include		llvm
 ./usr/include/clang-9.0/x86intrin.h		comp-c-include		llvm
 ./usr/include/clang-9.0/xmmintrin.h		comp-c-include		llvm
 ./usr/include/clang-9.0/xopintrin.h		comp-c-include		llvm

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.37 2019/10/22 06:28:18 uki Exp $
+# $NetBSD: mi,v 1.38 2020/08/27 15:32:01 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -61,8 +61,8 @@
 ./etc/fonts/conf.avail/70-yes-bitmaps.conf		xetc-fontconfig-etc	xorg
 ./etc/fonts/conf.avail/80-delicious.conf		xetc-fontconfig-etc	xorg
 ./etc/fonts/conf.avail/90-synthetic.conf		xetc-fontconfig-etc	xorg
-./etc/fonts/conf.d/10-scale-bitmap-fonts.conf		xetc-fontconfig-etc	xorg
 ./etc/fonts/conf.d/10-hinting-slight.conf		xetc-fontconfig-etc	xorg
+./etc/fonts/conf.d/10-scale-bitmap-fonts.conf		xetc-fontconfig-etc	xorg
 ./etc/fonts/conf.d/20-fix-globaladvance.conf		xetc-obsolete	obsolete
 ./etc/fonts/conf.d/20-unhint-small-vera.conf		xetc-fontconfig-etc	xorg
 ./etc/fonts/conf.d/30-metric-aliases.conf		xetc-fontconfig-etc	xorg

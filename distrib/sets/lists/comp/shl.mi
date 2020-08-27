@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.338 2020/08/26 16:03:40 riastradh Exp $
+# $NetBSD: shl.mi,v 1.339 2020/08/27 15:32:00 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -122,10 +122,10 @@
 ./usr/lib/libntp_pic.a				comp-obsolete		obsolete
 ./usr/lib/libnvpair_pic.a			comp-zfs-piclib		compatfile,picinstall,zfs
 ./usr/lib/libobjc_pic.a				comp-objc-piclib	compatfile,picinstall,gcccmds
-./usr/lib/libopcodes.so.9			comp-c-shlib		compatfile,binutils=231
-./usr/lib/libopcodes.so.9.0			comp-c-shlib		compatfile,binutils=231
 ./usr/lib/libopcodes.so.10			comp-c-shlib		compatfile,binutils=234
 ./usr/lib/libopcodes.so.10.0			comp-c-shlib		compatfile,binutils=234
+./usr/lib/libopcodes.so.9			comp-c-shlib		compatfile,binutils=231
+./usr/lib/libopcodes.so.9.0			comp-c-shlib		compatfile,binutils=231
 ./usr/lib/libopenpgpsdk_pic.a			comp-obsolete		obsolete
 ./usr/lib/libossaudio_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libp2k_pic.a				comp-puffs-piclib	compatfile,picinstall,rump
@@ -282,8 +282,8 @@
 ./usr/lib/libusb_pic.a				comp-obsolete		obsolete
 ./usr/lib/libusbhid_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libutil_pic.a				comp-c-piclib		compatfile,picinstall
-./usr/lib/libuv_pic.a				comp-obsolete		obsolete
 ./usr/lib/libuutil_pic.a			comp-zfs-piclib		compatfile,picinstall,zfs
+./usr/lib/libuv_pic.a				comp-obsolete		obsolete
 ./usr/lib/libwind_pic.a				comp-c-piclib		compatfile,picinstall,kerberos
 ./usr/lib/libwrap_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/libz_pic.a				comp-c-piclib		compatfile,picinstall

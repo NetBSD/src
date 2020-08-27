@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.261 2020/07/22 16:50:41 martin Exp $
+# $NetBSD: mi,v 1.262 2020/08/27 15:32:00 riastradh Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -178,6 +178,7 @@
 ./etc/rc.d/DAEMON				etc-sys-rc
 ./etc/rc.d/DISKS				etc-sys-rc
 ./etc/rc.d/LOGIN				etc-sys-rc
+./etc/rc.d/MOUNTCRITLOCAL			etc-sys-rc
 ./etc/rc.d/NETWORK				etc-obsolete		obsolete
 ./etc/rc.d/NETWORKING				etc-sys-rc
 ./etc/rc.d/SERVERS				etc-sys-rc
@@ -256,7 +257,6 @@
 ./etc/rc.d/motd					etc-sys-rc
 ./etc/rc.d/mountall				etc-sys-rc
 ./etc/rc.d/mountcritlocal			etc-sys-rc
-./etc/rc.d/MOUNTCRITLOCAL			etc-sys-rc
 ./etc/rc.d/mountcritremote			etc-sys-rc
 ./etc/rc.d/mountd				etc-nfsserver-rc
 ./etc/rc.d/moused				etc-sysutil-rc

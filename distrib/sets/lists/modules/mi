@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.138 2020/06/27 05:39:07 rin Exp $
+# $NetBSD: mi,v 1.139 2020/08/27 15:32:00 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -61,10 +61,6 @@
 ./@MODULEDIR@/coda5/coda5.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/compat				base-obsolete		obsolete
 ./@MODULEDIR@/compat/compat.kmod		base-obsolete		obsolete
-./@MODULEDIR@/compat_util			modules-base-kernel	kmod
-./@MODULEDIR@/compat_util/compat_util.kmod	modules-base-kernel	kmod
-./@MODULEDIR@/compat_sysctl_09_43		modules-base-kernel	kmod
-./@MODULEDIR@/compat_sysctl_09_43/compat_sysctl_09_43.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/compat_09				modules-base-kernel	kmod
 ./@MODULEDIR@/compat_09/compat_09.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/compat_10				modules-base-kernel	kmod
@@ -97,22 +93,26 @@
 ./@MODULEDIR@/compat_80/compat_80.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/compat_90				modules-base-kernel	kmod
 ./@MODULEDIR@/compat_90/compat_90.kmod		modules-base-kernel	kmod
-./@MODULEDIR@/compat_ossaudio			modules-base-kernel	kmod
-./@MODULEDIR@/compat_ossaudio/compat_ossaudio.kmod modules-base-kernel	kmod
 ./@MODULEDIR@/compat_crypto_50			modules-base-kernel	kmod
 ./@MODULEDIR@/compat_crypto_50/compat_crypto_50.kmod modules-base-kernel kmod
+./@MODULEDIR@/compat_ossaudio			modules-base-kernel	kmod
+./@MODULEDIR@/compat_ossaudio/compat_ossaudio.kmod modules-base-kernel	kmod
 ./@MODULEDIR@/compat_raid_50			modules-base-kernel	kmod
 ./@MODULEDIR@/compat_raid_50/compat_raid_50.kmod modules-base-kernel	kmod
 ./@MODULEDIR@/compat_raid_80			modules-base-kernel	kmod
 ./@MODULEDIR@/compat_raid_80/compat_raid_80.kmod modules-base-kernel	kmod
+./@MODULEDIR@/compat_sysctl_09_43		modules-base-kernel	kmod
+./@MODULEDIR@/compat_sysctl_09_43/compat_sysctl_09_43.kmod	modules-base-kernel	kmod
+./@MODULEDIR@/compat_sysv			base-obsolete		obsolete
+./@MODULEDIR@/compat_sysv/compat_sysv.kmod	base-obsolete		obsolete
 ./@MODULEDIR@/compat_sysv_10			modules-base-kernel	kmod
 ./@MODULEDIR@/compat_sysv_10/compat_sysv_10.kmod modules-base-kernel	kmod
 ./@MODULEDIR@/compat_sysv_14			modules-base-kernel	kmod
 ./@MODULEDIR@/compat_sysv_14/compat_sysv_14.kmod modules-base-kernel	kmod
 ./@MODULEDIR@/compat_sysv_50			modules-base-kernel	kmod
 ./@MODULEDIR@/compat_sysv_50/compat_sysv_50.kmod modules-base-kernel	kmod
-./@MODULEDIR@/compat_sysv			base-obsolete		obsolete
-./@MODULEDIR@/compat_sysv/compat_sysv.kmod	base-obsolete		obsolete
+./@MODULEDIR@/compat_util			modules-base-kernel	kmod
+./@MODULEDIR@/compat_util/compat_util.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/coredump				modules-base-kernel	kmod
 ./@MODULEDIR@/coredump/coredump.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/crypto				modules-base-kernel	kmod
@@ -427,12 +427,12 @@
 ./@MODULEDIR@/sysv_ipc/sysv_ipc.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/sysvbfs				modules-base-kernel	kmod
 ./@MODULEDIR@/sysvbfs/sysvbfs.kmod		modules-base-kernel	kmod
+./@MODULEDIR@/tap				modules-base-kernel	kmod
+./@MODULEDIR@/tap/tap.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/tmpfs				modules-base-kernel	kmod
 ./@MODULEDIR@/tmpfs/tmpfs.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/tprof				modules-base-kernel	kmod
 ./@MODULEDIR@/tprof/tprof.kmod			modules-base-kernel	kmod
-./@MODULEDIR@/tap				modules-base-kernel	kmod
-./@MODULEDIR@/tap/tap.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/tun				modules-base-kernel	kmod
 ./@MODULEDIR@/tun/tun.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/twa				base-obsolete		obsolete
@@ -474,6 +474,6 @@
 ./@MODULEDIR@/zlib				modules-base-kernel     kmod
 ./@MODULEDIR@/zlib/zlib.kmod			modules-base-kernel     kmod
 ./etc/mtree/set.modules				modules-sys-root	kmod
+./netbsd					-unknown-		kmod,kernel_dir
 ./stand/@MACHINE@				modules-base-kernel	kmod,!kernel_dir
 ./stand/@MACHINE@/@OSRELEASE@			modules-base-kernel	kmod,!kernel_dir
-./netbsd					-unknown-		kmod,kernel_dir

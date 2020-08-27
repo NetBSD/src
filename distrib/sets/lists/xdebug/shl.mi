@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.54 2019/12/31 05:01:49 uki Exp $
+# $NetBSD: shl.mi,v 1.55 2020/08/27 15:32:00 riastradh Exp $
 ./usr/libdata/debug/usr/X11R7/lib	base-sys-usr		xorg,debug,compatx11dir
 ./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib/common/libximcp.so.2.0.debug	xorg,obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib/common/libxlcDef.so.2.0.debug	xorg,obsolete		xorg,obsolete
@@ -35,8 +35,8 @@
 ./usr/libdata/debug/usr/X11R7/lib/libXevie.so.2.0.debug	xdebug-libXevie-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libXext.so.7.1.debug	xdebug-libXext-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libXfixes.so.4.0.debug	xdebug-libXfixes-debug		xorg,debug,compatx11file
-./usr/libdata/debug/usr/X11R7/lib/libXfont2.so.2.0.debug	xdebug-libXfont2-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libXfont.so.3.0.debug	xdebug-libXfont-debug		xorg,debug,compatx11file
+./usr/libdata/debug/usr/X11R7/lib/libXfont2.so.2.0.debug	xdebug-libXfont2-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libXfontcache.so.2.0.debug	xdebug-obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/libXft.so.3.0.debug	xdebug-libXft-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libXi.so.7.1.debug	xdebug-libXi-debug		xorg,debug,compatx11file
@@ -105,15 +105,15 @@
 ./usr/libdata/debug/usr/X11R7/lib/libxkbfile.so.2.0.debug	xdebug-libxkbfile-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libxkbui.so.2.0.debug		xdebug-libxkbui-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libxshmfence.so.1.0.debug	xdebug-libxshmfence-debug		xorg,debug,compatx11file
-./usr/libdata/debug/usr/X11R7/lib/modules/libglamoregl.so.0.debug	xdebug-xorg-server-debug		xorg,debug,xorg_glamor
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/gallium_dri.so.0.debug	xdebug-gallium-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/kms_swrast_dri.so.0.debug	xdebug-MesaLib-debug	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/dri/libmesa_dri.so.0.debug	xdebug-MesaLib-debug	xorg,debug,machine=amd64,mesa_ver=10
+./usr/libdata/debug/usr/X11R7/lib/modules/dri/libmesa_dri.so.0.debug	xdebug-MesaLib-debug	xorg,debug,machine=i386,mesa_ver=10
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libmesa_dri.so.0.debug	xdebug-obsolete	xorg,obsolete,machine=amd64,mesa_ver=18
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libmesa_dri.so.0.debug	xdebug-obsolete	xorg,obsolete,machine=i386,mesa_ver=18
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libmesa_dri.so.0.debug	xorg,obsolete	obsolete,!machine=i386,!machine=amd64
-./usr/libdata/debug/usr/X11R7/lib/modules/dri/libmesa_dri.so.0.debug	xdebug-MesaLib-debug	xorg,debug,machine=amd64,mesa_ver=10
-./usr/libdata/debug/usr/X11R7/lib/modules/dri/libmesa_dri.so.0.debug	xdebug-MesaLib-debug	xorg,debug,machine=i386,mesa_ver=10
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libswrast_dri.so.0.debug	xorg,obsolete	obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/nouveau_dri.so.0.debug	xdebug-xf86-video-nouveau-debug	xorg,debug,machine=amd64
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/nouveau_dri.so.0.debug	xdebug-xf86-video-nouveau-debug	xorg,debug,machine=i386
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/swrast_dri.so.0.debug	xdebug-MesaLib-debug	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/libglamoregl.so.0.debug	xdebug-xorg-server-debug		xorg,debug,xorg_glamor

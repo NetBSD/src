@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.259 2020/08/26 16:03:41 riastradh Exp $
+# $NetBSD: shl.mi,v 1.260 2020/08/27 15:32:00 riastradh Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
@@ -174,8 +174,8 @@
 ./usr/libdata/debug/usr/lib/libns.so.15.0.debug			comp-bind-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libnvpair.so.0.0.debug		comp-zfs-debug	debug,compatfile,zfs
 ./usr/libdata/debug/usr/lib/libobjc.so.4.0.debug		comp-sys-debug	debug,compatfile,gcc
-./usr/libdata/debug/usr/lib/libopcodes.so.9.0.debug		comp-c-debug	debug,compatfile,binutils=231
 ./usr/libdata/debug/usr/lib/libopcodes.so.10.0.debug		comp-c-debug	debug,compatfile,binutils=234
+./usr/libdata/debug/usr/lib/libopcodes.so.9.0.debug		comp-c-debug	debug,compatfile,binutils=231
 ./usr/libdata/debug/usr/lib/libossaudio.so.1.1.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libp2k.so.2.0.debug			comp-puffs-debug	debug,compatfile,rump
 ./usr/libdata/debug/usr/lib/libpam.so.4.1.debug			comp-sys-debug	debug,compatfile,pam
@@ -323,8 +323,8 @@
 ./usr/libdata/debug/usr/lib/libusbhid.so.1.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libutil.so.7.23.debug		comp-obsolete	debug,compatfile,obsolete
 ./usr/libdata/debug/usr/lib/libutil.so.7.24.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libuv.so.1.0.debug			comp-obsolete	debug,compatfile,obsolete
 ./usr/libdata/debug/usr/lib/libuutil.so.0.0.debug		comp-zfs-debug	debug,compatfile,zfs
+./usr/libdata/debug/usr/lib/libuv.so.1.0.debug			comp-obsolete	debug,compatfile,obsolete
 ./usr/libdata/debug/usr/lib/libwind.so.1.0.debug		comp-krb5-debug	debug,compatfile,kerberos
 ./usr/libdata/debug/usr/lib/libwrap.so.1.0.debug		comp-net-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libz.so.1.0.debug			comp-sys-debug	debug,compatfile

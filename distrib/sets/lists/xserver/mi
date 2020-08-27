@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.43 2019/10/26 07:31:39 uki Exp $
+# $NetBSD: mi,v 1.44 2020/08/27 15:32:01 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9,16 +9,16 @@
 ./usr/X11R7/lib/modules/dri/gallium_dri.so.0		xserver-gallium-drivers	xorg
 ./usr/X11R7/lib/modules/dri/kms_swrast_dri.so		xserver-MesaLib-drivers	xorg
 ./usr/X11R7/lib/modules/dri/kms_swrast_dri.so.0		xserver-MesaLib-drivers	xorg
+./usr/X11R7/lib/modules/dri/libmesa_dri.so		xserver-MesaLib-drivers	xorg,machine=amd64,mesa_ver=10
+./usr/X11R7/lib/modules/dri/libmesa_dri.so		xserver-MesaLib-drivers	xorg,machine=i386,mesa_ver=10
 ./usr/X11R7/lib/modules/dri/libmesa_dri.so		xserver-obsolete	obsolete,!machine=amd64,!machine=i386
 ./usr/X11R7/lib/modules/dri/libmesa_dri.so		xserver-obsolete	obsolete,machine=amd64,mesa_ver=18
 ./usr/X11R7/lib/modules/dri/libmesa_dri.so		xserver-obsolete	obsolete,machine=i386,mesa_ver=18
-./usr/X11R7/lib/modules/dri/libmesa_dri.so		xserver-MesaLib-drivers	xorg,machine=amd64,mesa_ver=10
-./usr/X11R7/lib/modules/dri/libmesa_dri.so		xserver-MesaLib-drivers	xorg,machine=i386,mesa_ver=10
+./usr/X11R7/lib/modules/dri/libmesa_dri.so.0		xserver-MesaLib-drivers	xorg,machine=amd64,mesa_ver=10
+./usr/X11R7/lib/modules/dri/libmesa_dri.so.0		xserver-MesaLib-drivers	xorg,machine=i386,mesa_ver=10
 ./usr/X11R7/lib/modules/dri/libmesa_dri.so.0		xserver-obsolete	obsolete,!machine=amd64,!machine=i386
 ./usr/X11R7/lib/modules/dri/libmesa_dri.so.0		xserver-obsolete	obsolete,machine=amd64,mesa_ver=18
 ./usr/X11R7/lib/modules/dri/libmesa_dri.so.0		xserver-obsolete	obsolete,machine=i386,mesa_ver=18
-./usr/X11R7/lib/modules/dri/libmesa_dri.so.0		xserver-MesaLib-drivers	xorg,machine=amd64,mesa_ver=10
-./usr/X11R7/lib/modules/dri/libmesa_dri.so.0		xserver-MesaLib-drivers	xorg,machine=i386,mesa_ver=10
 ./usr/X11R7/lib/modules/dri/swrast_dri.so		xserver-MesaLib-drivers	xorg
 ./usr/X11R7/lib/modules/dri/swrast_dri.so.0		xserver-MesaLib-drivers	xorg
 ./usr/X11R7/lib/modules/libglamoregl.so			xserver-xorg-server-drivers	xorg,xorg_glamor

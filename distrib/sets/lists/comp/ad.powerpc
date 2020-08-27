@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.97 2019/11/11 22:44:56 joerg Exp $
+# $NetBSD: ad.powerpc,v 1.98 2020/08/27 15:32:00 riastradh Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/bin/psim					comp-debug-bin		gdb
 ./usr/include/altivec.h				comp-obsolete		obsolete
@@ -78,8 +78,8 @@
 ./usr/include/gcc-7/spu2vmx.h			comp-c-include		gcc=7
 ./usr/include/gcc-7/tgmath.h			comp-c-include		gcc=7
 ./usr/include/gcc-7/vec_types.h			comp-c-include		gcc=7
-./usr/include/gcc-8/amo.h			comp-c-include		gcc=8
 ./usr/include/gcc-8/altivec.h			comp-c-include		gcc=8
+./usr/include/gcc-8/amo.h			comp-c-include		gcc=8
 ./usr/include/gcc-8/bmi2intrin.h		comp-c-include		gcc=8
 ./usr/include/gcc-8/bmiintrin.h			comp-c-include		gcc=8
 ./usr/include/gcc-8/emmintrin.h			comp-c-include		gcc=8

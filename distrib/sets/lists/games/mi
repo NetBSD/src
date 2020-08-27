@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.55 2018/06/10 17:17:46 kamil Exp $
+# $NetBSD: mi,v 1.56 2020/08/27 15:32:00 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -104,7 +104,6 @@
 ./usr/share/doc/usd/30.rogue/Makefile		games-obsolete		obsolete
 ./usr/share/doc/usd/30.rogue/rogue.me		games-obsolete		obsolete
 ./usr/share/doc/usd/31.trek/Makefile		games-obsolete		obsolete
-./usr/share/doc/usd/31.trek/trek.me		games-obsolete		obsolete
 ./usr/share/doc/usd/31.trek/trek.me		games-obsolete		obsolete
 ./usr/share/games/atc/ATC_scores		games-obsolete		obsolete
 ./usr/share/games/atc/Atlantis			games-games-share	share

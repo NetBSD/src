@@ -1,4 +1,4 @@
-# $NetBSD: md.evbarm,v 1.18 2020/03/27 04:31:18 thorpej Exp $
+# $NetBSD: md.evbarm,v 1.19 2020/08/27 15:31:59 riastradh Exp $
 ./libdata/firmware/if_bwfm/brcmfmac43143-sdio.bin	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43241b0-sdio.bin	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43241b4-sdio.bin	base-firmware-root	firmware
@@ -12,8 +12,8 @@
 ./libdata/firmware/if_bwfm/brcmfmac43362-sdio.cubietech,cubietruck.txt	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43362-sdio.lemaker,bananapro.txt	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac4339-sdio.bin	base-firmware-root	firmware
-./libdata/firmware/if_bwfm/brcmfmac43430-sdio.bin	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43430-sdio.AP6212.txt	base-firmware-root	firmware
+./libdata/firmware/if_bwfm/brcmfmac43430-sdio.bin	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43430-sdio.raspberrypi,3-model-b.txt	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43430-sdio.raspberrypi,model-zero-w.txt	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43430-sdio.sinovoip,bpi-m2-zero.txt	base-firmware-root	firmware
