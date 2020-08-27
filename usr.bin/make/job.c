@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.215 2020/08/23 18:26:35 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.216 2020/08/27 06:31:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.215 2020/08/23 18:26:35 rillig Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.216 2020/08/27 06:31:46 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.215 2020/08/23 18:26:35 rillig Exp $");
+__RCSID("$NetBSD: job.c,v 1.216 2020/08/27 06:31:46 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1101,9 +1101,9 @@ JobFinish(Job *job, int status)
 	 * on the .END target.
 	 */
 	if (job->tailCmds != NULL) {
-	    Lst_ForEachFrom(job->node->commands, job->tailCmds,
+	    Lst_ForEachFromS(job->node->commands, job->tailCmds,
 			     JobSaveCommand,
-			    job->node);
+			     job->node);
 	}
 	job->node->made = MADE;
 	if (!(job->flags & JOB_SPECIAL))
@@ -1724,9 +1724,9 @@ JobStart(GNode *gn, int flags)
 	 */
 	if (cmdsOK && aborting == 0) {
 	    if (job->tailCmds != NULL) {
-		Lst_ForEachFrom(job->node->commands, job->tailCmds,
-				JobSaveCommand,
-			       job->node);
+		Lst_ForEachFromS(job->node->commands, job->tailCmds,
+				 JobSaveCommand,
+				 job->node);
 	    }
 	    job->node->made = MADE;
 	    Make_Update(job->node);
