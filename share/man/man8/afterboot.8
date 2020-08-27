@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.62 2019/06/18 23:11:05 nia Exp $
+.\"	$NetBSD: afterboot.8,v 1.62.2.1 2020/08/27 09:12:52 martin Exp $
 .\"	$OpenBSD: afterboot.8,v 1.72 2002/02/22 02:02:33 miod Exp $
 .\"
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -59,7 +59,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 18, 2019
+.Dd August 24, 2020
 .Dt AFTERBOOT 8
 .Os
 .Sh NAME
@@ -109,7 +109,7 @@ and
 .Xr security.conf 5
 for more details.
 .Ss Login
-Login as
+On a fresh install with no other user accounts, login as
 .Dq Ic root .
 You can do so on the console, or over the network using
 .Xr ssh 1 .
@@ -357,6 +357,24 @@ As an alternative, compile a new kernel with the
 .Dq GATEWAY
 option.
 Packets are not forwarded by default, due to RFC requirements.
+.Ss Device nodes
+By default, nodes are created in
+.Pa /dev
+for a fairly typical number of devices.
+.Pp
+However, if this system has a large number of devices connected
+(e.g. for large scale storage), you may want to enable
+.Xr devpubd 8
+to ensure a sufficient number of nodes are available.
+Set
+.Dq Va devpubd=YES
+in
+.Pa /etc/rc.conf
+to create nodes automatically during system runtime.
+You can also run the node creation script by hand:
+.Bd -literal -offset indent
+.Ic cd /dev && sh MAKEDEV
+.Ed
 .Ss Secure Shell (SSH)
 By default, all services are disabled in a fresh
 .Nx
@@ -383,6 +401,16 @@ By default, it will query
 first, and then the DNS resolver specified in
 .Pa /etc/resolv.conf .
 .Pp
+Multicast DNS and DNS Service Discovery are usually not enabled by
+default on a fresh NetBSD system, and can be enabled by setting
+.Dq mdnsd=YES
+in
+.Pa /etc/rc.conf ,
+and either rebooting or running the following command:
+.Bd -literal -offset indent
+.Ic service mdnsd start
+.Ed
+.Pp
 If your network does not have a usable DNS resolver, e.g. one provided
 by DHCP, you can run a local caching recursive resolver by setting
 .Dq named=YES
@@ -403,15 +431,27 @@ Then, to make the system use it, put the following in
 nameserver 127.0.0.1
 .Ed
 .Ss Wireless networking
-You can scan for nearby wireless networks using:
-.Bd -literal -offset indent
-.Ic ifconfig iwm0 up list scan
-.Ic ifconfig iwm0 down
-.Ed
-.Pp
-To connect to a wireless network using WPA and DHCP:
+To configure the system to connect to a wireless network with a password
+using WPA:
 .Bd -literal -offset indent
 .Ic wpa_passphrase networkname password >> /etc/wpa_supplicant.conf
+.Ed
+.Pp
+To to configure the system to connect to an open wireless network with
+no password, edit
+.Pa /etc/wpa_supplicant.conf
+instead of using
+.Xr wpa_passphrase 8 :
+.Bd -literal -offset indent
+network={
+	ssid="Public-WiFi"
+	key_mgmt=NONE
+	priority=100
+}
+.Ed
+.Pp
+Then start the necessary daemons:
+.Bd -literal -offset indent
 .Ic service wpa_supplicant onestart
 .Ic service dhcpcd onestart
 .Ed
@@ -421,6 +461,19 @@ To automatically connect at boot, add the following to
 .Pp
 .Dl dhcpcd=YES
 .Dl wpa_supplicant=YES
+.Pp
+While using
+.Xr wpa_supplicant 8 ,
+you can easily retrieve network scan results with
+.Xr wpa_cli 8 :
+.Bd -literal -offset indent
+.Ic wpa_cli scan_results
+.Ed
+.Pp
+Or trigger a rescan:
+.Bd -literal -offset indent
+.Ic wpa_cli scan
+.Ed
 .Ss RPC-based network services
 Several services depend on the RPC portmapper
 .Xr rpcbind 8
@@ -864,9 +917,19 @@ The
 .Nx
 packages collection, pkgsrc, includes a large set of third-party software.
 A lot of it is available as binary packages that you can download from
-.Lk https://ftp.netbsd.org/pub/pkgsrc/packages/NetBSD/
-or a mirror, and install using
-.Xr pkg_add 1 .
+.Lk https://cdn.netbsd.org/pub/pkgsrc/packages/NetBSD/
+or a mirror.
+.Pp
+For most users, using pkgin to manage binary packages is recommended.
+.Pp
+To install pkgin, if it was not done by the installer:
+.Bd -literal -offset indent
+.Ic export PKG_PATH=https://cdn.netbsd.org/pub/pkgsrc/packages/NetBSD/$(uname -p)/$(uname -r | cut -d_ -f1)/All
+.Ic pkg_add pkgin
+.Ic pkgin update
+.Ic pkgin install bash mpg123 fluxbox ...
+.Ed
+.Pp
 See
 .Lk https://www.NetBSD.org/docs/pkgsrc/
 and
@@ -898,71 +961,6 @@ Other tools you may find useful are
 .Xr systat 1
 and
 .Xr top 1 .
-.Sh COMPILING A KERNEL
-Note:
-The standard
-.Nx
-kernel configuration (GENERIC) is suitable for most purposes.
-.Pp
-First, review the system message buffer in
-.Pa /var/run/dmesg.boot
-and by using the
-.Xr dmesg 8
-command to find out information on your system's devices as probed by the
-kernel at boot.
-In particular, note which devices were not configured.
-This information will prove useful when editing kernel configuration files.
-.Pp
-To compile a kernel inside a writable source tree, do the following:
-.Bd -literal -offset indent
-$ cd /usr/src/sys/arch/SOMEARCH/conf
-$ cp GENERIC SOMEFILE (only the first time)
-$ vi SOMEFILE (adapt to your needs)
-$ config SOMEFILE
-$ cd ../compile/SOMEFILE
-$ make depend
-$ make
-.Ed
-.Pp
-where
-.Ar SOMEARCH
-is the architecture (e.g., i386), and
-.Ar SOMEFILE
-should be a name indicative of a particular configuration (often
-that of the hostname).
-.Pp
-If you are building your kernel again, before you do a
-.Ic make
-you should do a
-.Ic make clean
-after making changes to your kernel options.
-.Pp
-After either of these two methods, you can place the new kernel (called
-.Pa netbsd )
-in
-.Pa /
-(i.e.,
-.Pa /netbsd )
-by issuing
-.Ic make install
-and the system will boot it next time.
-The old kernel is stored as
-.Pa /onetbsd
-so you can boot it in case of failure.
-.Pp
-If you are using toolchain to build your kernel, you will also need to
-build a new set of toolchain binaries.
-You can do it by changing into
-.Pa /usr/src
-and issuing:
-.Bd -literal -offset indent
-$ cd /usr/src
-$ K=sys/arch/`uname -m`/conf
-$ cp $K/GENERIC $K/SOMEFILE
-$ vi $K/SOMEFILE (adapt to your needs)
-$ ./build.sh tools
-$ ./build.sh kernel=SOMEFILE
-.Ed
 .Sh SYSTEM TESTING
 At this point, the system should be fully configured to your liking.
 It is now a good time to ensure that the system behaves according to
@@ -1018,6 +1016,7 @@ for details on how to do so.
 .Xr amd 8 ,
 .Xr ccdconfig 8 ,
 .Xr chown 8 ,
+.Xr devpubd 8 ,
 .Xr dhcpcd 8 ,
 .Xr dhcpd 8 ,
 .Xr dmesg 8 ,
@@ -1026,6 +1025,7 @@ for details on how to do so.
 .Xr inetd 8 ,
 .Xr kerberos 8 ,
 .Xr lpd 8 ,
+.Xr mdnsd 8 ,
 .Xr mount 8 ,
 .Xr mrouted 8 ,
 .Xr mtree 8 ,
@@ -1045,6 +1045,7 @@ for details on how to do so.
 .Xr umount 8 ,
 .Xr useradd 8 ,
 .Xr vipw 8 ,
+.Xr wpa_cli 8 ,
 .Xr wpa_supplicant 8 ,
 .Xr yp 8 ,
 .Xr ypbind 8
