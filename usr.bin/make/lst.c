@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.46 2020/08/27 07:03:48 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.47 2020/08/27 19:15:35 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,11 +37,11 @@
 #include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.46 2020/08/27 07:03:48 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.47 2020/08/27 19:15:35 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.46 2020/08/27 07:03:48 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.47 2020/08/27 19:15:35 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -389,13 +389,6 @@ Lst_DatumS(LstNode node)
 /*
  * Functions for entire lists
  */
-
-/* Return TRUE if the given list is empty or invalid. */
-Boolean
-Lst_IsEmpty(Lst list)
-{
-    return !LstIsValid(list) || LstIsEmpty(list);
-}
 
 /* Return TRUE if the given list is empty. */
 Boolean

@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.48 2020/08/27 07:00:29 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.49 2020/08/27 19:15:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -106,7 +106,6 @@ Lst		Lst_CopyS(Lst, LstCopyProc);
 void		Lst_FreeS(Lst);
 void		Lst_DestroyS(Lst, LstFreeProc);
 /* True if list is empty */
-Boolean		Lst_IsEmpty(Lst);
 Boolean		Lst_IsEmptyS(Lst);
 
 /*

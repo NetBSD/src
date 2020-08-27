@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.120 2020/08/27 07:03:48 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.121 2020/08/27 19:15:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.120 2020/08/27 07:03:48 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.121 2020/08/27 19:15:35 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.120 2020/08/27 07:03:48 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.121 2020/08/27 19:15:35 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -229,7 +229,6 @@ static int SuffScanTargets(void *, void *);
 static int SuffAddSrc(void *, void *);
 static int SuffRemoveSrc(Lst);
 static void SuffAddLevel(Lst, Src *);
-static Src *SuffFindThem(Lst, Lst);
 static Src *SuffFindCmds(Src *, Lst);
 static void SuffExpandChildren(LstNode, GNode *);
 static void SuffExpandWildcards(LstNode, GNode *);
@@ -775,10 +774,10 @@ Suff_EndTransform(void *gnp, void *dummy MAKE_ATTR_UNUSED)
 {
     GNode *gn = (GNode *)gnp;
 
-    if ((gn->type & OP_DOUBLEDEP) && !Lst_IsEmpty(gn->cohorts))
+    if ((gn->type & OP_DOUBLEDEP) && !Lst_IsEmptyS(gn->cohorts))
 	gn = Lst_DatumS(Lst_LastS(gn->cohorts));
-    if ((gn->type & OP_TRANSFORM) && Lst_IsEmpty(gn->commands) &&
-	Lst_IsEmpty(gn->children))
+    if ((gn->type & OP_TRANSFORM) && Lst_IsEmptyS(gn->commands) &&
+	Lst_IsEmptyS(gn->children))
     {
 	Suff	*s, *t;
 
@@ -1071,7 +1070,7 @@ Suff_DoPaths(void)
     Lst_OpenS(sufflist);
     while ((ln = Lst_NextS(sufflist)) != NULL) {
 	s = Lst_DatumS(ln);
-	if (!Lst_IsEmpty (s->searchPath)) {
+	if (!Lst_IsEmptyS(s->searchPath)) {
 #ifdef INCLUDES
 	    if (s->flags & SUFF_INCLUDE) {
 		Dir_Concat(inIncludes, s->searchPath);
@@ -1354,7 +1353,7 @@ SuffFindThem(Lst srcs, Lst slst)
 
     rs = NULL;
 
-    while (!Lst_IsEmpty (srcs)) {
+    while (!Lst_IsEmptyS(srcs)) {
 	s = Lst_DequeueS(srcs);
 
 	if (DEBUG(SUFF)) {
@@ -1437,7 +1436,7 @@ SuffFindCmds(Src *targ, Lst slst)
 	}
 	s = Lst_DatumS(ln);
 
-	if (s->type & OP_OPTIONAL && Lst_IsEmpty(t->commands)) {
+	if (s->type & OP_OPTIONAL && Lst_IsEmptyS(t->commands)) {
 	    /*
 	     * We haven't looked to see if .OPTIONAL files exist yet, so
 	     * don't use one as the implicit source.
@@ -1531,7 +1530,7 @@ SuffExpandChildren(LstNode cln, GNode *pgn)
     GNode	*gn;	    /* New source 8) */
     char	*cp;	    /* Expanded value */
 
-    if (!Lst_IsEmpty(cgn->order_pred) || !Lst_IsEmpty(cgn->order_succ))
+    if (!Lst_IsEmptyS(cgn->order_pred) || !Lst_IsEmptyS(cgn->order_succ))
 	/* It is all too hard to process the result of .ORDER */
 	return;
 
@@ -1638,7 +1637,7 @@ SuffExpandChildren(LstNode cln, GNode *pgn)
 	/*
 	 * Add all elements of the members list to the parent node.
 	 */
-	while(!Lst_IsEmpty(members)) {
+	while(!Lst_IsEmptyS(members)) {
 	    gn = Lst_DequeueS(members);
 
 	    if (DEBUG(SUFF)) {
@@ -1688,7 +1687,7 @@ SuffExpandWildcards(LstNode cln, GNode *pgn)
     explist = Lst_Init();
     Dir_Expand(cgn->name, Suff_FindPath(cgn), explist);
 
-    while (!Lst_IsEmpty(explist)) {
+    while (!Lst_IsEmptyS(explist)) {
 	/*
 	 * Fetch next expansion off the list and find its GNode
 	 */
@@ -2139,7 +2138,7 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
 	/*
 	 * Handle target of unknown suffix...
 	 */
-	if (Lst_IsEmpty(targs) && suffNull != NULL) {
+	if (Lst_IsEmptyS(targs) && suffNull != NULL) {
 	    if (DEBUG(SUFF)) {
 		fprintf(debug_file, "\tNo known suffix on %s. Using .NULL suffix\n", gn->name);
 	    }
@@ -2162,7 +2161,7 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
 	     * not define suffix rules if the gnode had children but we
 	     * don't do this anymore.
 	     */
-	    if (Lst_IsEmpty(gn->commands))
+	    if (Lst_IsEmptyS(gn->commands))
 		SuffAddLevel(srcs, targ);
 	    else {
 		if (DEBUG(SUFF))
@@ -2186,7 +2185,7 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
 	     * No known transformations -- use the first suffix found
 	     * for setting the local variables.
 	     */
-	    if (!Lst_IsEmpty(targs)) {
+	    if (!Lst_IsEmptyS(targs)) {
 		targ = Lst_DatumS(Lst_First(targs));
 	    } else {
 		targ = NULL;
@@ -2293,7 +2292,7 @@ sfnd_abort:
     /*
      * Check for overriding transformation rule implied by sources
      */
-    if (!Lst_IsEmpty(gn->children)) {
+    if (!Lst_IsEmptyS(gn->children)) {
 	src = SuffFindCmds(targ, slst);
 
 	if (src != NULL) {

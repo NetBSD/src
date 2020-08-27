@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.74 2020/08/27 06:53:57 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.75 2020/08/27 19:15:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.74 2020/08/27 06:53:57 rillig Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.75 2020/08/27 19:15:35 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.74 2020/08/27 06:53:57 rillig Exp $");
+__RCSID("$NetBSD: targ.c,v 1.75 2020/08/27 19:15:35 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -660,7 +660,7 @@ Targ_PrintNode(void *gnp, void *passp)
 		    fprintf(debug_file, "# unmade\n");
 		}
 	    }
-	    if (!Lst_IsEmpty (gn->iParents)) {
+	    if (!Lst_IsEmptyS(gn->iParents)) {
 		fprintf(debug_file, "# implicit parents: ");
 		Lst_ForEachS(gn->iParents, TargPrintName, NULL);
 		fprintf(debug_file, "\n");
@@ -669,17 +669,17 @@ Targ_PrintNode(void *gnp, void *passp)
 	    if (gn->unmade)
 		fprintf(debug_file, "# %d unmade children\n", gn->unmade);
 	}
-	if (!Lst_IsEmpty (gn->parents)) {
+	if (!Lst_IsEmptyS(gn->parents)) {
 	    fprintf(debug_file, "# parents: ");
 	    Lst_ForEachS(gn->parents, TargPrintName, NULL);
 	    fprintf(debug_file, "\n");
 	}
-	if (!Lst_IsEmpty (gn->order_pred)) {
+	if (!Lst_IsEmptyS(gn->order_pred)) {
 	    fprintf(debug_file, "# order_pred: ");
 	    Lst_ForEachS(gn->order_pred, TargPrintName, NULL);
 	    fprintf(debug_file, "\n");
 	}
-	if (!Lst_IsEmpty (gn->order_succ)) {
+	if (!Lst_IsEmptyS(gn->order_succ)) {
 	    fprintf(debug_file, "# order_succ: ");
 	    Lst_ForEachS(gn->order_succ, TargPrintName, NULL);
 	    fprintf(debug_file, "\n");

@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.102 2020/08/27 07:00:29 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.103 2020/08/27 19:15:35 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -416,7 +416,7 @@ meta_needed(GNode *gn, const char *dname, const char *tname,
     }
 
     /* Check if there are no commands to execute. */
-    if (Lst_IsEmpty(gn->commands)) {
+    if (Lst_IsEmptyS(gn->commands)) {
 	if (verbose)
 	    fprintf(debug_file, "Skipping meta for %s: no commands\n",
 		    gn->name);
@@ -1332,7 +1332,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    DEQUOTE(move_target);
 		    /* FALLTHROUGH */
 		case 'D':		/* unlink */
-		    if (*p == '/' && !Lst_IsEmpty(missingFiles)) {
+		    if (*p == '/' && !Lst_IsEmptyS(missingFiles)) {
 			/* remove any missingFiles entries that match p */
 			ln = Lst_Find(missingFiles, path_match, p);
 			if (ln != NULL) {
@@ -1390,7 +1390,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    if (*p != '/')
 			break;
 
-		    if (Lst_IsEmpty(metaBailiwick))
+		    if (Lst_IsEmptyS(metaBailiwick))
 			break;
 
 		    /* ignore cwd - normal dependencies handle those */
@@ -1595,7 +1595,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 	}
 
 	fclose(fp);
-	if (!Lst_IsEmpty(missingFiles)) {
+	if (!Lst_IsEmptyS(missingFiles)) {
 	    if (DEBUG(META))
 		fprintf(debug_file, "%s: missing files: %s...\n",
 			fname, (char *)Lst_DatumS(Lst_First(missingFiles)));

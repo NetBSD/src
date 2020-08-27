@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.316 2020/08/27 07:00:29 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.317 2020/08/27 19:15:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.316 2020/08/27 07:00:29 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.317 2020/08/27 19:15:35 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.316 2020/08/27 07:00:29 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.317 2020/08/27 19:15:35 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1275,7 +1275,7 @@ main(int argc, char **argv)
 	 * created. If none specified, make the variable empty -- the parser
 	 * will fill the thing in with the default or .MAIN target.
 	 */
-	if (!Lst_IsEmpty(create)) {
+	if (!Lst_IsEmptyS(create)) {
 		LstNode ln;
 
 		for (ln = Lst_First(create); ln != NULL; ln = Lst_SuccS(ln)) {
@@ -1325,9 +1325,9 @@ main(int argc, char **argv)
 
 		sysMkPath = Lst_Init();
 		Dir_Expand(_PATH_DEFSYSMK,
-			   Lst_IsEmpty(sysIncPath) ? defIncPath : sysIncPath,
+			   Lst_IsEmptyS(sysIncPath) ? defIncPath : sysIncPath,
 			   sysMkPath);
-		if (Lst_IsEmpty(sysMkPath))
+		if (Lst_IsEmptyS(sysMkPath))
 			Fatal("%s: no system rules (%s).", progname,
 			    _PATH_DEFSYSMK);
 		ln = Lst_Find(sysMkPath, ReadMakefile, NULL);
@@ -1336,7 +1336,7 @@ main(int argc, char **argv)
 			    (char *)Lst_DatumS(ln));
 	}
 
-	if (!Lst_IsEmpty(makefiles)) {
+	if (!Lst_IsEmptyS(makefiles)) {
 		LstNode ln;
 
 		ln = Lst_Find(makefiles, ReadAllMakefiles, NULL);
@@ -1544,7 +1544,7 @@ ReadMakefile(const void *p, const void *q MAKE_ATTR_UNUSED)
 		name = Dir_FindFile(fname, parseIncPath);
 		if (!name)
 			name = Dir_FindFile(fname,
-				Lst_IsEmpty(sysIncPath) ? defIncPath : sysIncPath);
+				Lst_IsEmptyS(sysIncPath) ? defIncPath : sysIncPath);
 		if (!name || (fd = open(name, O_RDONLY)) == -1) {
 			free(name);
 			free(path);

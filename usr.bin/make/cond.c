@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.100 2020/08/23 16:58:02 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.101 2020/08/27 19:15:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.100 2020/08/23 16:58:02 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.101 2020/08/27 19:15:35 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.100 2020/08/23 16:58:02 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.101 2020/08/27 19:15:35 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -326,7 +326,7 @@ CondDoCommands(int argLen MAKE_ATTR_UNUSED, const char *arg)
     GNode *gn;
 
     gn = Targ_FindNode(arg, TARG_NOCREATE);
-    return gn != NULL && !OP_NOP(gn->type) && !Lst_IsEmpty(gn->commands);
+    return gn != NULL && !OP_NOP(gn->type) && !Lst_IsEmptyS(gn->commands);
 }
 
 /*-
