@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.51 2020/01/31 20:56:03 jmcneill Exp $
+# $NetBSD: md.amd64,v 1.52 2020/08/27 15:32:00 riastradh Exp $
 ./usr/X11R7/lib/libI810XvMC_g.a				xdebug-libI810XvMC-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libIntelXvMC_g.a			xdebug-libIntelXvMC-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libchromeXvMCPro_g.a			xdebug-libchromeXvMCPro-debuglib	xorg,debuglib,compatx11file
@@ -78,10 +78,10 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/trident_dri.so.0.debug	xdebug-obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/unichrome_dri.so.0.debug	xdebug-obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/amdgpu_drv.so.19.debug	xdebug-xf86-video-amdgpu-debug		xorg,debug,xorg_server_ver=120
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/apm_drv.so.1.debug	xdebug-xf86-video-apm-debug		xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/apm_drv.so.1.debug	xdebug-obsolete		xorg,obsolete,xorg_server_ver=120
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ark_drv.so.0.debug	xdebug-xf86-video-ark-debug		xorg,debug,xorg_server_ver=110
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/apm_drv.so.1.debug	xdebug-xf86-video-apm-debug		xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ark_drv.so.0.debug	xdebug-obsolete		xorg,obsolete,xorg_server_ver=120
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ark_drv.so.0.debug	xdebug-xf86-video-ark-debug		xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ast_drv.so.1.debug	xdebug-xf86-video-ast-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ati_drv.so.6.debug	xdebug-xf86-video-ati-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ch7017_drv.so.2.debug	-unknown-		xorg,debug,xorg_server_ver=110
@@ -92,13 +92,13 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_alpine.so.1.debug	xdebug-xf86-video-cirrus_alpine-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_drv.so.1.debug	xdebug-xf86-video-cirrus-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_laguna.so.1.debug	xdebug-xf86-video-cirrus_laguna-debug		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/glint_drv.so.1.debug	xdebug-xf86-video-glint-debug		xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/glint_drv.so.1.debug	xdebug-obsolete		xorg,obsolete,xorg_server_ver=120
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/glint_drv.so.1.debug	xdebug-xf86-video-glint-debug		xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/i128_drv.so.1.debug	xdebug-xf86-video-i128-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/i740_drv.so.1.debug	xdebug-xf86-video-i740-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/intel_drv.so.2.debug	xdebug-xf86-video-intel-debug		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/intel_drv_old.so.2.debug	xdebug-xf86-video-intel-debug		xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/intel_drv_old.so.2.debug	xdebug-obsolete		xorg,obsolete,xorg_server_ver=120
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/intel_drv_old.so.2.debug	xdebug-xf86-video-intel-debug		xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ivch_drv.so.2.debug	-unknown-		xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ivch_drv.so.2.debug	xdebug-obsolete		xorg,obsolete,xorg_server_ver=120
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.1.debug	xdebug-xf86-input-keyboard-debug		xorg,debug
@@ -155,8 +155,8 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/nv_drv.so.2.debug	xdebug-xf86-video-nv-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/openchrome_drv.so.0.debug	xdebug-xf86-video-openchrome-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/r128_drv.so.6.debug	xdebug-xf86-video-r128-debug		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/radeon_drv.so.6.debug	xdebug-obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/radeon_drv.so.19.debug	xdebug-xf86-video-radeon-kms-debug		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/radeon_drv.so.6.debug	xdebug-obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/radeon_drv_old.so.6.debug	xdebug-xf86-video-radeon-kms-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/radeonhd_drv.so.1.debug	xdebug-obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/s3_drv.so.0.debug	xdebug-xf86-video-s3-debug		xorg,debug
@@ -180,8 +180,8 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/void_drv.so.1.debug	xdebug-obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ws_drv.so.1.debug	xdebug-xf86-input-ws-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/wsfb_drv.so.0.debug	xdebug-xf86-video-wsfb-debug		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/xgi_drv.so.1.debug	xdebug-xf86-video-xgi-debug		xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/xgi_drv.so.1.debug	xdebug-obsolete		xorg,obsolete,xorg_server_ver=120
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/xgi_drv.so.1.debug	xdebug-xf86-video-xgi-debug		xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdbe.so.0.debug	-unknown-	xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdri.so.0.debug	xdebug-dri-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdri2.so.0.debug	xdebug-dri2-debug	xorg,debug

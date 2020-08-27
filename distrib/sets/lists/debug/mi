@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.330 2020/08/26 16:03:41 riastradh Exp $
+# $NetBSD: mi,v 1.331 2020/08/27 15:32:00 riastradh Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -268,8 +268,8 @@
 ./usr/lib/libunbound_g.a			comp-c-debuglib		debuglib,compatfile,unbound
 ./usr/lib/libusbhid_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libutil_g.a				comp-c-debuglib		debuglib,compatfile
-./usr/lib/libuv_g.a				comp-obsolete		obsolete,compatfile
 ./usr/lib/libuutil_g.a				comp-c-debuglib		debuglib,compatfile,zfs
+./usr/lib/libuv_g.a				comp-obsolete		obsolete,compatfile
 ./usr/lib/libvers_g.a				comp-c-debuglib		debuglib,compatfile,kerberos
 ./usr/lib/libwind_g.a				comp-c-debuglib		debuglib,compatfile,kerberos
 ./usr/lib/libwrap_g.a				comp-c-debuglib		debuglib,compatfile
