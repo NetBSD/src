@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.119 2020/08/23 14:46:33 rillig Exp $
+# $NetBSD: Makefile,v 1.120 2020/08/27 19:00:17 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -168,6 +168,7 @@ TESTS+=		opt
 TESTS+=		opt-backwards
 TESTS+=		opt-chdir
 TESTS+=		opt-debug
+TESTS+=		opt-debug-g1
 TESTS+=		opt-define
 TESTS+=		opt-env
 TESTS+=		opt-file
@@ -325,6 +326,7 @@ FLAGS.doterror=		# none
 FLAGS.envfirst=		-e
 FLAGS.export=		# none
 FLAGS.lint=		-dL -k
+FLAGS.opt-debug-g1=	-dg1
 FLAGS.opt-ignore=	-i
 FLAGS.opt-keep-going=	-k
 FLAGS.opt-no-action=	-n
@@ -341,6 +343,9 @@ FLAGS.varname-dot-shell= -dpv
 FLAGS.varname-empty=	-dv '$${:U}=cmdline-u' '=cmline-plain'
 
 # Some tests need extra post-processing.
+SED_CMDS.opt-debug-g1=	-e 's,${.CURDIR},CURDIR,'
+SED_CMDS.opt-debug-g1+=	-e 's,[/[a-z]*/share/mk,/.../share/mk,'
+SED_CMDS.opt-debug-g1+=	-e '/Global Variables/,/Directory Cache/d'
 SED_CMDS.sh-dots+=	-e 's,^${.SHELL}: ,,' -e '/not found/s,command ,,'
 SED_CMDS.varmod-subst-regex+= \
 			-e 's,\(Regex compilation error:\).*,\1 (details omitted),'
