@@ -1,4 +1,4 @@
-#	$NetBSD: t_misc.sh,v 1.1 2020/08/26 16:03:42 riastradh Exp $
+#	$NetBSD: t_misc.sh,v 1.2 2020/08/27 02:51:49 riastradh Exp $
 #
 # Copyright (c) 2018 Ryota Ozaki <ozaki.ryota@gmail.com>
 # All rights reserved.
@@ -277,7 +277,7 @@ wg_cookie_body()
 	    -o match:"$ip_peer.$port > $ip_local.$port: UDP, length 64" \
 	    cat $outfile
 
-	$DEBUG && $HIJACKING wgconfig wg0 show
+	$DEBUG && $HIJACKING wgconfig wg0 show all
 	atf_check -s exit:0 -o match:"latest-handshake: 0" \
 	    $HIJACKING wgconfig wg0
 
@@ -288,7 +288,7 @@ wg_cookie_body()
 	# a valid cookie.
 	$ping $ip_wg_peer
 
-	$DEBUG && $HIJACKING wgconfig wg0 show
+	$DEBUG && $HIJACKING wgconfig wg0 show all
 	atf_check -s exit:0 -o not-match:"latest-handshake: 0" \
 	    $HIJACKING wgconfig wg0
 
