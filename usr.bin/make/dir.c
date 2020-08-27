@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.111 2020/08/26 22:55:46 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.112 2020/08/27 06:28:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.111 2020/08/26 22:55:46 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.112 2020/08/27 06:28:44 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.111 2020/08/26 22:55:46 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.112 2020/08/27 06:28:44 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -795,13 +795,12 @@ DirExpandInt(const char *word, Lst path, Lst expansions)
 {
     LstNode ln;			/* Current node */
 
-    if (Lst_Open(path) == SUCCESS) {
-	while ((ln = Lst_NextS(path)) != NULL) {
-	    Path *p = Lst_DatumS(ln);
-	    DirMatchFiles(word, p, expansions);
-	}
-	Lst_CloseS(path);
+    Lst_OpenS(path);
+    while ((ln = Lst_NextS(path)) != NULL) {
+	Path *p = Lst_DatumS(ln);
+	DirMatchFiles(word, p, expansions);
     }
+    Lst_CloseS(path);
 }
 
 /* Print a word in the list of expansions.
@@ -839,6 +838,9 @@ void
 Dir_Expand(const char *word, Lst path, Lst expansions)
 {
     const char *cp;
+
+    assert(path != NULL);
+    assert(expansions != NULL);
 
     DIR_DEBUG1("Expanding \"%s\"... ", word);
 
@@ -1128,12 +1130,13 @@ Dir_FindFile(const char *name, Lst path)
 
     DIR_DEBUG1("Searching for %s ...", name);
 
-    if (Lst_Open(path) == FAILURE) {
+    if (path == NULL) {
 	DIR_DEBUG0("couldn't open path, file not found\n");
 	misses += 1;
 	return NULL;
     }
 
+    Lst_OpenS(path);
     if ((ln = Lst_First(path)) != NULL) {
 	p = Lst_DatumS(ln);
 	if (p == dotLast) {
@@ -1660,7 +1663,8 @@ Dir_MakeFlags(const char *flag, Lst path)
 
     Buf_Init(&buf, 0);
 
-    if (Lst_Open(path) == SUCCESS) {
+    if (path != NULL) {
+	Lst_OpenS(path);
 	while ((ln = Lst_NextS(path)) != NULL) {
 	    Path *p = Lst_DatumS(ln);
 	    Buf_AddStr(&buf, " ");
@@ -1780,7 +1784,6 @@ void
 Dir_PrintDirectories(void)
 {
     LstNode ln;
-    Path *p;
 
     fprintf(debug_file, "#*** Directory Cache:\n");
     fprintf(debug_file,
@@ -1788,14 +1791,14 @@ Dir_PrintDirectories(void)
 	    hits, misses, nearmisses, bigmisses,
 	    percentage(hits, hits + bigmisses + nearmisses));
     fprintf(debug_file, "# %-20s referenced\thits\n", "directory");
-    if (Lst_Open(openDirectories) == SUCCESS) {
-	while ((ln = Lst_NextS(openDirectories)) != NULL) {
-	    p = Lst_DatumS(ln);
-	    fprintf(debug_file, "# %-20s %10d\t%4d\n", p->name, p->refCount,
-		    p->hits);
-	}
-	Lst_CloseS(openDirectories);
+
+    Lst_OpenS(openDirectories);
+    while ((ln = Lst_NextS(openDirectories)) != NULL) {
+	Path *p = Lst_DatumS(ln);
+	fprintf(debug_file, "# %-20s %10d\t%4d\n", p->name, p->refCount,
+		p->hits);
     }
+    Lst_CloseS(openDirectories);
 }
 
 static int
