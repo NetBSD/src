@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.279 2020/07/24 06:12:21 jdolecek Exp $
+# $NetBSD: md.amd64,v 1.280 2020/08/27 15:32:00 riastradh Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -411,6 +411,8 @@
 ./usr/include/clang-7.0/xsaveoptintrin.h	comp-obsolete		obsolete
 ./usr/include/clang-7.0/xsavesintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-7.0/xtestintrin.h		comp-obsolete		obsolete
+./usr/include/clang-9.0/__wmmintrin_aes.h	comp-c-include		llvm
+./usr/include/clang-9.0/__wmmintrin_pclmul.h	comp-c-include		llvm
 ./usr/include/clang-9.0/adxintrin.h		comp-c-include		llvm
 ./usr/include/clang-9.0/ammintrin.h		comp-c-include		llvm
 ./usr/include/clang-9.0/avx2intrin.h		comp-c-include		llvm
@@ -462,8 +464,8 @@
 ./usr/include/clang-9.0/lwpintrin.h		comp-c-include		llvm
 ./usr/include/clang-9.0/lzcntintrin.h		comp-c-include		llvm
 ./usr/include/clang-9.0/mm3dnow.h		comp-c-include		llvm
-./usr/include/clang-9.0/mmintrin.h		comp-c-include		llvm
 ./usr/include/clang-9.0/mm_malloc.h		comp-c-include		llvm
+./usr/include/clang-9.0/mmintrin.h		comp-c-include		llvm
 ./usr/include/clang-9.0/movdirintrin.h		comp-c-include		llvm
 ./usr/include/clang-9.0/mwaitxintrin.h		comp-c-include		llvm
 ./usr/include/clang-9.0/nmmintrin.h		comp-c-include		llvm
@@ -484,9 +486,7 @@
 ./usr/include/clang-9.0/vpclmulqdqintrin.h	comp-c-include		llvm
 ./usr/include/clang-9.0/waitpkgintrin.h		comp-c-include		llvm
 ./usr/include/clang-9.0/wbnoinvdintrin.h	comp-c-include		llvm
-./usr/include/clang-9.0/__wmmintrin_aes.h	comp-c-include		llvm
 ./usr/include/clang-9.0/wmmintrin.h		comp-c-include		llvm
-./usr/include/clang-9.0/__wmmintrin_pclmul.h	comp-c-include		llvm
 ./usr/include/clang-9.0/x86intrin.h		comp-c-include		llvm
 ./usr/include/clang-9.0/xmmintrin.h		comp-c-include		llvm
 ./usr/include/clang-9.0/xopintrin.h		comp-c-include		llvm

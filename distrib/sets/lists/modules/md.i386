@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.87 2020/07/04 21:02:16 chs Exp $
+# $NetBSD: md.i386,v 1.88 2020/08/27 15:32:00 riastradh Exp $
 #
 ./@MODULEDIR@/acpiacad				modules-base-kernel	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		modules-base-kernel	kmod
@@ -70,10 +70,10 @@
 ./@MODULEDIR@/drm/drm.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/drmkms				modules-base-kernel	kmod
 ./@MODULEDIR@/drmkms/drmkms.kmod		modules-base-kernel	kmod
-./@MODULEDIR@/drmkms_linux			modules-base-kernel	kmod
-./@MODULEDIR@/drmkms_linux/drmkms_linux.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/drmkms_agp			modules-base-kernel	kmod
 ./@MODULEDIR@/drmkms_agp/drmkms_agp.kmod	modules-base-kernel	kmod
+./@MODULEDIR@/drmkms_linux			modules-base-kernel	kmod
+./@MODULEDIR@/drmkms_linux/drmkms_linux.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/drmkms_pci			modules-base-kernel	kmod
 ./@MODULEDIR@/drmkms_pci/drmkms_pci.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/dtrace_syscall_linux		modules-base-kernel	kmod,dtrace
@@ -106,6 +106,10 @@
 ./@MODULEDIR@/hpet/hpet.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/hpqlb				modules-base-kernel	kmod
 ./@MODULEDIR@/hpqlb/hpqlb.kmod			modules-base-kernel	kmod
+./@MODULEDIR@/i915drm				modules-base-kernel	kmod
+./@MODULEDIR@/i915drm/i915drm.kmod		modules-base-kernel	kmod
+./@MODULEDIR@/i915drmkms			modules-base-kernel	kmod
+./@MODULEDIR@/i915drmkms/i915drmkms.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/ichsmb				modules-base-kernel     kmod
 ./@MODULEDIR@/ichsmb/ichsmb.kmod		modules-base-kernel     kmod
 ./@MODULEDIR@/if_ixl				modules-base-kernel	kmod
@@ -114,10 +118,6 @@
 ./@MODULEDIR@/imc/imc.kmod			modules-base-kernel     kmod
 ./@MODULEDIR@/imcsmb				modules-base-kernel     kmod
 ./@MODULEDIR@/imcsmb/imcsmb.kmod		modules-base-kernel     kmod
-./@MODULEDIR@/i915drm				modules-base-kernel	kmod
-./@MODULEDIR@/i915drm/i915drm.kmod		modules-base-kernel	kmod
-./@MODULEDIR@/i915drmkms			modules-base-kernel	kmod
-./@MODULEDIR@/i915drmkms/i915drmkms.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/itesio				modules-base-kernel	kmod
 ./@MODULEDIR@/itesio/itesio.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/ld_nvme				base-obsolete		obsolete

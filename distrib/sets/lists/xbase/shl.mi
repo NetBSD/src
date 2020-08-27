@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.88 2019/08/12 03:51:23 uki Exp $
+# $NetBSD: shl.mi,v 1.89 2020/08/27 15:32:00 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -92,12 +92,12 @@
 ./usr/X11R7/lib/libXfixes.so			xbase-libXfixes-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXfixes.so.4			xbase-libXfixes-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXfixes.so.4.0		xbase-libXfixes-lib		xorg,compatx11file
-./usr/X11R7/lib/libXfont2.so			xbase-libXfont2-lib		xorg,compatx11file
-./usr/X11R7/lib/libXfont2.so.2			xbase-libXfont2-lib		xorg,compatx11file
-./usr/X11R7/lib/libXfont2.so.2.0		xbase-libXfont2-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXfont.so			xbase-libXfont-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXfont.so.3			xbase-libXfont-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXfont.so.3.0			xbase-libXfont-lib		xorg,compatx11file
+./usr/X11R7/lib/libXfont2.so			xbase-libXfont2-lib		xorg,compatx11file
+./usr/X11R7/lib/libXfont2.so.2			xbase-libXfont2-lib		xorg,compatx11file
+./usr/X11R7/lib/libXfont2.so.2.0		xbase-libXfont2-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXft.so			xbase-libXft-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXft.so.3			xbase-libXft-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXft.so.3.0			xbase-libXft-lib		xorg,compatx11file
