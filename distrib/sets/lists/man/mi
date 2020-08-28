@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1699 2020/08/20 21:35:59 riastradh Exp $
+# $NetBSD: mi,v 1.1700 2020/08/28 12:15:05 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2488,6 +2488,7 @@
 ./usr/share/man/cat8/cobalt/boot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/cobalt/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/compat_30.0		man-sys-catman		.cat
+./usr/share/man/cat8/compat_bsdos.0		man-sys-catman		.cat
 ./usr/share/man/cat8/compat_darwin.0		man-obsolete		obsolete
 ./usr/share/man/cat8/compat_freebsd.0		man-sys-catman		.cat
 ./usr/share/man/cat8/compat_hpux.0		man-obsolete		obsolete
@@ -5562,6 +5563,7 @@
 ./usr/share/man/html8/cnwctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/cobalt/boot.html		man-sys-htmlman		html
 ./usr/share/man/html8/compat_30.html		man-sys-htmlman		html
+./usr/share/man/html8/compat_bsdos.html		man-sys-htmlman		html
 ./usr/share/man/html8/compat_darwin.html	man-obsolete		obsolete
 ./usr/share/man/html8/compat_freebsd.html	man-sys-htmlman		html
 ./usr/share/man/html8/compat_ibcs2.html		man-obsolete		obsolete
@@ -8687,6 +8689,7 @@
 ./usr/share/man/man8/cobalt/boot.8		man-sys-man		.man
 ./usr/share/man/man8/cobalt/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/compat_30.8		man-sys-man		.man
+./usr/share/man/man8/compat_bsdos.8		man-sys-man		.man
 ./usr/share/man/man8/compat_darwin.8		man-obsolete		obsolete
 ./usr/share/man/man8/compat_freebsd.8		man-sys-man		.man
 ./usr/share/man/man8/compat_hpux.8		man-obsolete		obsolete
