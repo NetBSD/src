@@ -1,4 +1,4 @@
-/*	$NetBSD: in_systm.h,v 1.13 2005/12/10 23:36:23 elad Exp $	*/
+/*	$NetBSD: in_systm.h,v 1.14 2020/08/28 07:01:57 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -38,6 +38,8 @@
  * Miscellaneous internetwork
  * definitions for kernel.
  */
+
+#include <sys/types.h>
 
 /*
  * Network types.
