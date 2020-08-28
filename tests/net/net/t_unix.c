@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unix.c,v 1.21 2020/08/27 14:00:01 christos Exp $	*/
+/*	$NetBSD: t_unix.c,v 1.22 2020/08/28 11:46:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #define _GNU_SOURCE
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$Id: t_unix.c,v 1.21 2020/08/27 14:00:01 christos Exp $");
+__RCSID("$Id: t_unix.c,v 1.22 2020/08/28 11:46:05 christos Exp $");
 #else
 #define getprogname() argv[0]
 #endif
@@ -251,8 +251,6 @@ test(bool forkit, bool closeit, bool statit, size_t len)
 #endif
 	sun->sun_family = AF_UNIX;
 
-	unlink(sun->sun_path);
-
 	if (bind(srvr, (struct sockaddr *)sun, sl) == -1) {
 		if (errno == EINVAL && sl >= 256) {
 			close(srvr);
@@ -272,23 +270,19 @@ test(bool forkit, bool closeit, bool statit, size_t len)
 			srvrpid = getppid();
 			clntpid = getpid();
 			if (srvruid == 0) {
-				clntuid = UID;
-				clntgid = GID;
-				setgid(clntgid);
-				setegid(clntgid);
-				setuid(clntuid);
-				seteuid(clntuid);
+				setgid(clntgid = GID);
+				setuid(clntuid = UID);
 			} else {
-				clntuid = srvruid;
 				clntgid = srvrgid;
+				clntuid = srvruid;
 			}
 			break;
 		case -1:
 			FAIL("fork");
 		default:
 			if (srvruid == 0) {
-				clntuid = UID;
 				clntgid = GID;
+				clntuid = UID;
 			}
 			break;
 		}
