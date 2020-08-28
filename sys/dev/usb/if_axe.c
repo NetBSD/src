@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.82.6.4 2018/08/08 10:28:35 martin Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.82.6.5 2020/08/28 19:44:22 martin Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.82.6.4 2018/08/08 10:28:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.82.6.5 2020/08/28 19:44:22 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1382,7 +1382,8 @@ axe_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 		}
 
 		if (pktlen > MHLEN - ETHER_ALIGN) {
-			MCLGET(m, M_DONTWAIT);
+			if (pktlen <= MCLBYTES)
+				MCLGET(m, M_DONTWAIT);
 			if ((m->m_flags & M_EXT) == 0) {
 				m_freem(m);
 				ifp->if_ierrors++;
