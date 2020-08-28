@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.127 2020/08/26 23:00:47 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.128 2020/08/28 03:35:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -160,6 +160,7 @@ typedef int  ReturnStatus;
 #define	FAILURE			0x00000001
 
 #include "lst.h"
+#include "enum.h"
 #include "hash.h"
 #include "config.h"
 #include "buf.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.121 2020/08/27 19:15:35 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.122 2020/08/28 03:35:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.121 2020/08/27 19:15:35 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.122 2020/08/28 03:35:45 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.121 2020/08/27 19:15:35 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.122 2020/08/28 03:35:45 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -151,14 +151,18 @@ typedef enum {
     SUFF_INCLUDE	= 0x01,	/* One which is #include'd */
     SUFF_LIBRARY	= 0x02,	/* One which contains a library */
     SUFF_NULL		= 0x04	/* The empty suffix */
+    /* XXX: Why is SUFF_NULL needed? Wouldn't nameLen == 0 mean the same? */
 } SuffFlags;
+
+ENUM_FLAGS_RTTI_3(SuffFlags,
+		  SUFF_INCLUDE, SUFF_LIBRARY, SUFF_NULL);
 
 /*
  * Structure describing an individual suffix.
  */
 typedef struct Suff {
-    char         *name;	    	/* The suffix itself */
-    int		 nameLen;	/* Length of the suffix */
+    char         *name;	    	/* The suffix itself, such as ".c" */
+    int		 nameLen;	/* Length of the name, to avoid strlen calls */
     SuffFlags	 flags;      	/* Type of suffix */
     Lst    	 searchPath;	/* The path along which files of this suffix
 				 * may be found */
@@ -2602,30 +2606,15 @@ static int
 SuffPrintSuff(void *sp, void *dummy MAKE_ATTR_UNUSED)
 {
     Suff    *s = (Suff *)sp;
-    int	    flags;
-    int	    flag;
 
     fprintf(debug_file, "# `%s' [%d] ", s->name, s->refCount);
 
-    flags = s->flags;
-    if (flags) {
-	fputs(" (", debug_file);
-	while (flags) {
-	    flag = 1 << (ffs(flags) - 1);
-	    flags &= ~flag;
-	    switch (flag) {
-		case SUFF_NULL:
-		    fprintf(debug_file, "NULL");
-		    break;
-		case SUFF_INCLUDE:
-		    fprintf(debug_file, "INCLUDE");
-		    break;
-		case SUFF_LIBRARY:
-		    fprintf(debug_file, "LIBRARY");
-		    break;
-	    }
-	    fputc(flags ? '|' : ')', debug_file);
-	}
+    if (s->flags != 0) {
+	char flags_buf[SuffFlags_ToStringSize];
+
+	fprintf(debug_file, " (%s)",
+		Enum_FlagsToString(flags_buf, sizeof flags_buf,
+				   s->flags, SuffFlags_ToStringSpecs));
     }
     fputc('\n', debug_file);
     fprintf(debug_file, "#\tTo: ");
