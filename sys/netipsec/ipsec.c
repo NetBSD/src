@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.171 2020/08/28 06:19:13 ozaki-r Exp $ */
+/* $NetBSD: ipsec.c,v 1.172 2020/08/28 06:20:44 ozaki-r Exp $ */
 /* $FreeBSD: ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.171 2020/08/28 06:19:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.172 2020/08/28 06:20:44 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -705,7 +705,7 @@ ipsec4_output(struct mbuf *m, struct inpcb *inp, int flags,
 }
 
 int
-ipsec_ip_input(struct mbuf *m, bool forward)
+ipsec_ip_input_checkpolicy(struct mbuf *m, bool forward)
 {
 	struct secpolicy *sp;
 	int error, s;
