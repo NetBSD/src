@@ -1,0 +1,17 @@
+make  -r -k  -f cmd-interrupt.mk cmd-interrupt-ordinary || true
+> cmd-interrupt-ordinary
+kill -INT $$
+*** Signal 2 (continuing)
+
+Stop.
+make: stopped in unit-tests
+ok
+make  -r -k  -f cmd-interrupt.mk cmd-interrupt-phony || true
+> cmd-interrupt-phony
+kill -INT $$
+*** Signal 2 (continuing)
+
+Stop.
+make: stopped in unit-tests
+ok
+exit status 0
