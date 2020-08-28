@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.286 2020/08/28 06:25:52 ozaki-r Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.287 2020/08/28 06:27:16 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.286 2020/08/28 06:25:52 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.287 2020/08/28 06:27:16 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -620,6 +620,7 @@ ether_input_llc(struct ifnet *ifp, struct mbuf *m, struct ether_header *eh)
 
 drop:
 	m_freem(m);
+	if_statinc(ifp, if_ierrors); /* XXX should have a dedicated counter? */
 	return;
 }
 #endif /* defined (LLC) || defined (NETATALK) */
@@ -644,14 +645,12 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	KASSERT(!cpu_intr_p());
 	KASSERT((m->m_flags & M_PKTHDR) != 0);
 
-	if ((ifp->if_flags & IFF_UP) == 0) {
-		m_freem(m);
-		return;
-	}
+	if ((ifp->if_flags & IFF_UP) == 0)
+		goto drop;
 	if (m->m_len < sizeof(*eh)) {
 		m = m_pullup(m, sizeof(*eh));
 		if (m == NULL)
-			return;
+			goto dropped;
 	}
 
 #ifdef MBUFTRACE
@@ -682,9 +681,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		}
 		mutex_exit(&bigpktpps_lock);
 #endif
-		if_statinc(ifp, if_iqdrops);
-		m_freem(m);
-		return;
+		goto drop;
 	}
 
 	if (ETHER_IS_MULTICAST(eh->ether_dhost)) {
@@ -695,8 +692,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		if ((ifp->if_flags & IFF_SIMPLEX) == 0 &&
 		    memcmp(CLLADDR(ifp->if_sadl), eh->ether_shost,
 		    ETHER_ADDR_LEN) == 0) {
-			m_freem(m);
-			return;
+			goto drop;
 		}
 
 		if (memcmp(etherbroadcastaddr,
@@ -766,10 +762,10 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		 * or drop the packet.
 		 */
 		vlan_input(ifp, m);
-#else
-		m_freem(m);
-#endif
 		return;
+#else
+		goto drop;
+#endif
 	}
 
 	/*
@@ -800,13 +796,12 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		 * vlan_input() will either recursively call ether_input()
 		 * or drop the packet.
 		 */
-		if (ec->ec_nvlans != 0)
+		if (ec->ec_nvlans != 0) {
 			vlan_input(ifp, m);
-		else
+			return;
+		} else
 #endif
-			m_freem(m);
-
-		return;
+			goto drop;
 	}
 
 #if NPPPOE > 0
@@ -822,10 +817,8 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	case ETHERTYPE_SLOWPROTOCOLS: {
 		uint8_t subtype;
 
-		if (m->m_pkthdr.len < sizeof(*eh) + sizeof(subtype)) {
-			m_freem(m);
-			return;
-		}
+		if (m->m_pkthdr.len < sizeof(*eh) + sizeof(subtype))
+			goto drop;
 
 		m_copydata(m, sizeof(*eh), sizeof(subtype), &subtype);
 		switch (subtype) {
@@ -848,8 +841,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		default:
 			if (subtype == 0 || subtype > 10) {
 				/* illegal value */
-				m_freem(m);
-				return;
+				goto drop;
 			}
 			/* unknown subtype */
 			break;
@@ -857,10 +849,8 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	}
 	/* FALLTHROUGH */
 	default:
-		if (m->m_flags & M_PROMISC) {
-			m_freem(m);
-			return;
-		}
+		if (m->m_flags & M_PROMISC)
+			goto drop;
 	}
 
 	/* If the CRC is still on the packet, trim it off. */
@@ -876,8 +866,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		ether_input_llc(ifp, m, eh);
 		return;
 #else
-		m_freem(m);
-		return;
+		goto drop;
 #endif
 	}
 
@@ -906,10 +895,8 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 
 #ifdef INET6
 	case ETHERTYPE_IPV6:
-		if (__predict_false(!in6_present)) {
-			m_freem(m);
-			return;
-		}
+		if (__predict_false(!in6_present))
+			goto drop;
 #ifdef GATEWAY
 		if (ip6flow_fastforward(&m))
 			return;
@@ -937,8 +924,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 #endif
 
 	default:
-		m_freem(m);
-		return;
+		goto drop;
 	}
 
 	if (__predict_true(pktq)) {
@@ -955,11 +941,16 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 
 	if (__predict_false(!inq)) {
 		/* Should not happen. */
-		m_freem(m);
-		return;
+		goto drop;
 	}
 
 	IFQ_ENQUEUE_ISR(inq, m, isr);
+	return;
+
+drop:
+	m_freem(m);
+dropped:
+	if_statinc(ifp, if_ierrors); /* XXX should have a dedicated counter? */
 }
 
 /*
