@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.64 2020/07/10 12:25:09 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.65 2020/08/28 13:36:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -127,7 +127,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.64 2020/07/10 12:25:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.65 2020/08/28 13:36:52 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -184,6 +184,7 @@ vaddr_t kasan_kernelstart;
 vaddr_t kasan_kernelsize;
 
 #define	KERNEL_L2PT_KASAN_NUM	howmany(VM_KERNEL_KASAN_SIZE, L2_S_SEGSIZE)
+bool kasan_l2pts_created  __attribute__((__section__(".data"))) = false;
 pv_addr_t kasan_l2pt[KERNEL_L2PT_KASAN_NUM];
 #else
 #define KERNEL_L2PT_KASAN_NUM	0
@@ -741,6 +742,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 		    __func__, kasan_l2pt[idx].pv_va, kasan_l2pt[idx].pv_pa,
 		    va, "(kasan)");
 	}
+	kasan_l2pts_created = true;
 #endif
 
 	/* update the top of the kernel VM */

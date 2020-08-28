@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.94 2020/08/14 16:18:36 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.95 2020/08/28 13:36:52 skrll Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -58,6 +58,7 @@ include <arm/locore.h>
 include <arm/vfpreg.h>
 include <arm/undefined.h>
 
+include <arm/arm32/machdep.h>
 include <arm/arm32/pte.h>
 
 include <machine/pmap.h>
@@ -159,6 +160,10 @@ define	MAXCPUS			MAXCPUS
 #define	PSR_MODE		PSR_MODE
 #define	CPU_CONTROL_DC_ENABLE	CPU_CONTROL_DC_ENABLE
 #define	TTBCR_S_PD0		TTBCR_S_PD0
+
+define	INIT_ARM_STACK_SHIFT	INIT_ARM_STACK_SHIFT
+define	INIT_ARM_STACK_SIZE	INIT_ARM_STACK_SIZE
+define	INIT_ARM_TOTAL_STACK	INIT_ARM_TOTAL_STACK
 
 # Important offsets into the lwp and proc structs & associated constants
 define	L_PCB			offsetof(struct lwp, l_addr)

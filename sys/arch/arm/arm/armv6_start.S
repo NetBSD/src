@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.26 2020/08/28 13:15:05 skrll Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.27 2020/08/28 13:36:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -42,9 +42,6 @@
 #include <arm/asm.h>
 #include <arm/armreg.h>
 #include "assym.h"
-
-#define INIT_ARM_STACK_SHIFT	10
-#define INIT_ARM_STACK_SIZE	(1 << INIT_ARM_STACK_SHIFT)
 
 #if defined(CONSADDR) && defined(CONADDR)
 #error Only one of CONSADDR and CONADDR should be defined
@@ -234,7 +231,7 @@ generic_savevars:
 	.global start_stacks_bottom
 	.global start_stacks_top
 start_stacks_bottom:
-	.space	INIT_ARM_STACK_SIZE * MAXCPUS
+	.space	INIT_ARM_TOTAL_STACK
 start_stacks_top:
 
 	.section "_init_memory", "aw", %nobits
