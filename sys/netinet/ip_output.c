@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.316 2020/08/28 06:19:13 ozaki-r Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.317 2020/08/28 06:22:25 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.316 2020/08/28 06:19:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.317 2020/08/28 06:22:25 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -252,6 +252,7 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 	struct psref psref, psref_ia;
 	int bound;
 	bool bind_need_restore = false;
+	const struct sockaddr *sa;
 
 	len = 0;
 
@@ -679,59 +680,59 @@ sendit:
 	}
 	sw_csum = m->m_pkthdr.csum_flags & ~ifp->if_csum_flags_tx;
 
-	/*
-	 * If small enough for mtu of path, or if using TCP segmentation
-	 * offload, can just send directly.
-	 */
-	if (ntohs(ip->ip_len) <= mtu ||
-	    (m->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0) {
-		const struct sockaddr *sa;
+	sa = (m->m_flags & M_MCAST) ? sintocsa(rdst) : sintocsa(dst);
 
-#if IFA_STATS
-		if (ia)
-			ia->ia_ifa.ifa_data.ifad_outbytes += ntohs(ip->ip_len);
-#endif
-		/*
-		 * Always initialize the sum to 0!  Some HW assisted
-		 * checksumming requires this.
-		 */
-		ip->ip_sum = 0;
-
-		if ((m->m_pkthdr.csum_flags & M_CSUM_TSOv4) == 0) {
-			/*
-			 * Perform any checksums that the hardware can't do
-			 * for us.
-			 *
-			 * XXX Does any hardware require the {th,uh}_sum
-			 * XXX fields to be 0?
-			 */
-			if (sw_csum & M_CSUM_IPv4) {
-				KASSERT(IN_NEED_CHECKSUM(ifp, M_CSUM_IPv4));
-				ip->ip_sum = in_cksum(m, hlen);
-				m->m_pkthdr.csum_flags &= ~M_CSUM_IPv4;
-			}
-			if (sw_csum & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
-				if (IN_NEED_CHECKSUM(ifp,
-				    sw_csum & (M_CSUM_TCPv4|M_CSUM_UDPv4))) {
-					in_undefer_cksum_tcpudp(m);
-				}
-				m->m_pkthdr.csum_flags &=
-				    ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
-			}
-		}
-
-		sa = (m->m_flags & M_MCAST) ? sintocsa(rdst) : sintocsa(dst);
-		if (__predict_false(sw_csum & M_CSUM_TSOv4)) {
-			/*
-			 * TSO4 is required by a packet, but disabled for
-			 * the interface.
-			 */
-			error = ip_tso_output(ifp, m, sa, rt);
-		} else
-			error = ip_if_output(ifp, m, sa, rt);
-		goto done;
+	/* Need to fragment the packet */
+	if (ntohs(ip->ip_len) > mtu &&
+	    (m->m_pkthdr.csum_flags & M_CSUM_TSOv4) == 0) {
+		goto fragment;
 	}
 
+#if IFA_STATS
+	if (ia)
+		ia->ia_ifa.ifa_data.ifad_outbytes += ntohs(ip->ip_len);
+#endif
+	/*
+	 * Always initialize the sum to 0!  Some HW assisted
+	 * checksumming requires this.
+	 */
+	ip->ip_sum = 0;
+
+	if ((m->m_pkthdr.csum_flags & M_CSUM_TSOv4) == 0) {
+		/*
+		 * Perform any checksums that the hardware can't do
+		 * for us.
+		 *
+		 * XXX Does any hardware require the {th,uh}_sum
+		 * XXX fields to be 0?
+		 */
+		if (sw_csum & M_CSUM_IPv4) {
+			KASSERT(IN_NEED_CHECKSUM(ifp, M_CSUM_IPv4));
+			ip->ip_sum = in_cksum(m, hlen);
+			m->m_pkthdr.csum_flags &= ~M_CSUM_IPv4;
+		}
+		if (sw_csum & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
+			if (IN_NEED_CHECKSUM(ifp,
+			    sw_csum & (M_CSUM_TCPv4|M_CSUM_UDPv4))) {
+				in_undefer_cksum_tcpudp(m);
+			}
+			m->m_pkthdr.csum_flags &=
+			    ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
+		}
+	}
+
+	/* Send it */
+	if (__predict_false(sw_csum & M_CSUM_TSOv4)) {
+		/*
+		 * TSO4 is required by a packet, but disabled for
+		 * the interface.
+		 */
+		error = ip_tso_output(ifp, m, sa, rt);
+	} else
+		error = ip_if_output(ifp, m, sa, rt);
+	goto done;
+
+fragment:
 	/*
 	 * We can't use HW checksumming if we're about to fragment the packet.
 	 *
@@ -789,9 +790,7 @@ sendit:
 		} else {
 			KASSERT((m->m_pkthdr.csum_flags &
 			    (M_CSUM_UDPv4 | M_CSUM_TCPv4)) == 0);
-			error = ip_if_output(ifp, m,
-			    (m->m_flags & M_MCAST) ?
-			    sintocsa(rdst) : sintocsa(dst), rt);
+			error = ip_if_output(ifp, m, sa, rt);
 		}
 	}
 	if (error == 0) {
