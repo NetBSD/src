@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.395 2020/08/28 06:20:44 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.396 2020/08/28 06:30:08 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.395 2020/08/28 06:20:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.396 2020/08/28 06:30:08 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -243,7 +243,7 @@ struct mowner ip_tx_mowner = MOWNER_INIT("internet", "tx");
 #endif
 
 static void		ipintr(void *);
-static void		ip_input(struct mbuf *);
+static void		ip_input(struct mbuf *, struct ifnet *);
 static void		ip_forward(struct mbuf *, int, struct ifnet *);
 static bool		ip_dooptions(struct mbuf *);
 static struct in_ifaddr *ip_rtaddr(struct in_addr, struct psref *);
@@ -399,7 +399,18 @@ ipintr(void *arg __unused)
 
 	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
 	while ((m = pktq_dequeue(ip_pktq)) != NULL) {
-		ip_input(m);
+		struct ifnet *ifp;
+		struct psref psref;
+
+		ifp = m_get_rcvif_psref(m, &psref);
+		if (__predict_false(ifp == NULL)) {
+			m_freem(m);
+			continue;
+		}
+
+		ip_input(m, ifp);
+
+		m_put_rcvif_psref(ifp, &psref);
 	}
 	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 }
@@ -409,15 +420,13 @@ ipintr(void *arg __unused)
  * try to reassemble.  Process options.  Pass to next level.
  */
 static void
-ip_input(struct mbuf *m)
+ip_input(struct mbuf *m, struct ifnet *ifp)
 {
 	struct ip *ip = NULL;
 	struct in_ifaddr *ia = NULL;
 	int hlen = 0, len;
 	int downmatch;
 	int srcrt = 0;
-	ifnet_t *ifp;
-	struct psref psref;
 	int s;
 
 	KASSERTMSG(cpu_softintr_p(), "ip_input: not in the software "
@@ -425,10 +434,6 @@ ip_input(struct mbuf *m)
 
 	MCLAIM(m, &ip_rx_mowner);
 	KASSERT((m->m_flags & M_PKTHDR) != 0);
-
-	ifp = m_get_rcvif_psref(m, &psref);
-	if (__predict_false(ifp == NULL))
-		goto out;
 
 	/*
 	 * If no IP addresses have been set yet but the interfaces
@@ -721,7 +726,6 @@ ip_input(struct mbuf *m)
 	 * Not for us; forward if possible and desirable.
 	 */
 	if (ipforwarding == 0) {
-		m_put_rcvif_psref(ifp, &psref);
 		IP_STATINC(IP_STAT_CANTFORWARD);
 		m_freem(m);
 	} else {
@@ -732,7 +736,6 @@ ip_input(struct mbuf *m)
 		 * forwarding loop till TTL goes to 0.
 		 */
 		if (downmatch) {
-			m_put_rcvif_psref(ifp, &psref);
 			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_HOST, 0, 0);
 			IP_STATINC(IP_STAT_CANTFORWARD);
 			return;
@@ -747,14 +750,10 @@ ip_input(struct mbuf *m)
 		}
 #endif
 		ip_forward(m, srcrt, ifp);
-		m_put_rcvif_psref(ifp, &psref);
 	}
 	return;
 
 ours:
-	m_put_rcvif_psref(ifp, &psref);
-	ifp = NULL;
-
 	/*
 	 * If offset or IP_MF are set, must reassemble.
 	 */
@@ -819,7 +818,6 @@ ours:
 	return;
 
 out:
-	m_put_rcvif_psref(ifp, &psref);
 	if (m != NULL)
 		m_freem(m);
 }
