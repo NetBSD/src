@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.102 2020/08/27 14:16:50 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.103 2020/08/28 18:18:31 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -4856,4 +4856,9 @@ sys/dev/usb/usbdevices.config			1.41 (via patch)
 
 	Expose Yubikey CCID interface to userland via ugenif.
 	[riastradh, ticket #1065]
+
+external/cddl/osnet/sys/kern/policy.c		1.9
+
+	PR 55602: fix zpool panic on mounting zfs filesystem.
+	[hannken, ticket #1066]
 
