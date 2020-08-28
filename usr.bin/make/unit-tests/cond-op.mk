@@ -1,4 +1,4 @@
-# $NetBSD: cond-op.mk,v 1.3 2020/08/28 13:50:48 rillig Exp $
+# $NetBSD: cond-op.mk,v 1.4 2020/08/28 14:07:51 rillig Exp $
 #
 # Tests for operators like &&, ||, ! in .if conditions.
 #
@@ -37,6 +37,24 @@
 # TODO: Demonstrate that the precedence of the ! and == operators actually
 # makes a difference.  There is a simple example for sure, I just cannot
 # wrap my head around it.
+
+# This condition is malformed because the '!' on the right-hand side must not
+# appear unquoted.  If any, it must be enclosed in quotes.
+# In any case, it is not interpreted as a negation of an unquoted string.
+# See CondGetString.
+.if "!word" == !word
+.error
+.endif
+
+# Surprisingly, the ampersand and pipe are allowed in bare strings.
+# That's another opportunity for writing confusing code.
+# See CondGetString, which only has '!' in the list of stop characters.
+.if "a&&b||c" != a&&b||c
+.error
+.endif
+
+# Just in case that parsing should ever stop on the first error.
+.info Parsing continues until here.
 
 all:
 	@:;
