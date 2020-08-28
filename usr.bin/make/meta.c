@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.104 2020/08/28 04:14:31 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.105 2020/08/28 04:28:45 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1334,13 +1334,13 @@ meta_oodate(GNode *gn, Boolean oodate)
 		case 'D':		/* unlink */
 		    if (*p == '/' && !Lst_IsEmptyS(missingFiles)) {
 			/* remove any missingFiles entries that match p */
-			ln = Lst_Find(missingFiles, path_match, p);
+			ln = Lst_FindS(missingFiles, path_match, p);
 			if (ln != NULL) {
 			    LstNode nln;
 			    char *tp;
 
 			    do {
-				nln = Lst_FindFrom(missingFiles, Lst_SuccS(ln),
+				nln = Lst_FindFromS(missingFiles, Lst_SuccS(ln),
 						   path_match, p);
 				tp = Lst_DatumS(ln);
 				Lst_RemoveS(missingFiles, ln);
@@ -1411,7 +1411,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    if ((link_src != NULL && cached_lstat(p, &fs) < 0) ||
 			(link_src == NULL && cached_stat(p, &fs) < 0)) {
 			if (!meta_ignore(gn, p)) {
-			    if (Lst_Find(missingFiles, string_match, p) == NULL)
+			    if (Lst_FindS(missingFiles, string_match, p) == NULL)
 				Lst_AppendS(missingFiles, bmake_strdup(p));
 			}
 		    }
@@ -1497,7 +1497,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 			     * A referenced file outside of CWD is missing.
 			     * We cannot catch every eventuality here...
 			     */
-			    if (Lst_Find(missingFiles, string_match, p) == NULL)
+			    if (Lst_FindS(missingFiles, string_match, p) == NULL)
 				Lst_AppendS(missingFiles, bmake_strdup(p));
 			}
 		    }
