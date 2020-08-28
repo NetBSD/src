@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.76 2020/08/28 06:34:17 ozaki-r Exp $	*/
+/*	$NetBSD: inet6.c,v 1.77 2020/08/28 07:23:48 ozaki-r Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.76 2020/08/28 06:34:17 ozaki-r Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.77 2020/08/28 07:23:48 ozaki-r Exp $");
 #endif
 #endif /* not lint */
 
@@ -417,7 +417,7 @@ tcp6_stats(u_long off, const char *name)
 		size_t size = sizeof(tcp6stat);
 
 		if (prog_sysctlbyname("net.inet6.tcp6.stats", &tcp6stat, &size,
-		    NULL, 0) == -1)
+		    NULL, 0) == -1 && errno != ENOMEM)
 			return;
 	} else {
 		warnx("%s stats not available via KVM.", name);
@@ -503,7 +503,7 @@ udp6_stats(u_long off, const char *name)
 		size_t size = sizeof(udp6stat);
 
 		if (prog_sysctlbyname("net.inet6.udp6.stats", udp6stat, &size,
-		    NULL, 0) == -1)
+		    NULL, 0) == -1 && errno != ENOMEM)
 			return;
 	} else {
 		warnx("%s stats not available via KVM.", name);
@@ -647,7 +647,7 @@ ip6_stats(u_long off, const char *name)
 		size_t size = sizeof(ip6stat);
 
 		if (prog_sysctlbyname("net.inet6.ip6.stats", ip6stat, &size,
-		    NULL, 0) == -1)
+		    NULL, 0) == -1 && errno != ENOMEM)
 			return;
 	} else {
 		warnx("%s stats not available via KVM.", name);
@@ -1141,7 +1141,7 @@ icmp6_stats(u_long off, const char *name)
 		size_t size = sizeof(icmp6stat);
 
 		if (prog_sysctlbyname("net.inet6.icmp6.stats", icmp6stat, &size,
-		    NULL, 0) == -1)
+		    NULL, 0) == -1 && errno != ENOMEM)
 			return;
 	} else {
 		warnx("%s stats not available via KVM.", name);
@@ -1289,7 +1289,7 @@ pim6_stats(u_long off, const char *name)
 		size_t size = sizeof(pim6stat);
 
 		if (prog_sysctlbyname("net.inet6.pim6.stats", pim6stat, &size,
-		    NULL, 0) == -1)
+		    NULL, 0) == -1 && errno != ENOMEM)
 			return;
         } else {
 		warnx("%s stats not available via KVM.", name);
@@ -1322,7 +1322,7 @@ rip6_stats(u_long off, const char *name)
 		size_t size = sizeof(rip6stat);
 
 		if (prog_sysctlbyname("net.inet6.raw6.stats", rip6stat, &size,
-		    NULL, 0) == -1)
+		    NULL, 0) == -1 && errno != ENOMEM)
 			return;
 	} else {
 		warnx("%s stats not available via KVM.", name);
