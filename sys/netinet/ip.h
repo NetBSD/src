@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.h,v 1.34 2012/11/02 21:07:07 christos Exp $	*/
+/*	$NetBSD: ip.h,v 1.35 2020/08/28 07:01:57 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -34,7 +34,11 @@
 #ifndef _NETINET_IP_H_
 #define _NETINET_IP_H_
 
+#include <sys/types.h>
+
+#include <netinet/in.h>
 #include <netinet/in_systm.h>	/* for n_time */
+
 /*
  * Definitions for internet protocol version 4.
  * Per RFC 791, September 1981.
@@ -243,4 +247,5 @@ struct ippseudo {
 	u_int8_t	ippseudo_p;	/* protocol */
 	u_int16_t	ippseudo_len;	/* protocol length */
 } __packed;
-#endif /* !_NETINET_IP_H_ */
+
+#endif	/* !_NETINET_IP_H_ */
