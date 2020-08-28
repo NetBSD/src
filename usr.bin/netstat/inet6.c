@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.75 2020/08/06 07:38:54 knakahara Exp $	*/
+/*	$NetBSD: inet6.c,v 1.76 2020/08/28 06:34:17 ozaki-r Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.75 2020/08/06 07:38:54 knakahara Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.76 2020/08/28 06:34:17 ozaki-r Exp $");
 #endif
 #endif /* not lint */
 
@@ -801,6 +801,13 @@ ip6_stats(u_long off, const char *name)
 	p1(IP6_STAT_FORWARD_CACHEMISS, "\t%llu forward cache miss\n");
 	p(IP6_STAT_PFILDROP_IN, "\t%llu input packet%s dropped by pfil\n");
 	p(IP6_STAT_PFILDROP_OUT, "\t%llu output packet%s dropped by pfil\n");
+	p(IP6_STAT_IPSECDROP_IN, "\t%llu input packet%s dropped by IPsec\n");
+	p(IP6_STAT_IPSECDROP_OUT, "\t%llu output packet%s dropped by IPsec\n");
+	p(IP6_STAT_IFDROP, "\t%llu input packet%s dropped due to interface state\n");
+	p(IP6_STAT_IDROPPED, "\t%llu input packet%s dropped due to no bufs, etc.\n");
+	p(IP6_STAT_TIMXCEED, "\t%llu packet%s dropped due to hop limit exceeded\n");
+	p(IP6_STAT_TOOBIG, "\t%llu packet%s dropped (too big)\n");
+	p(IP6_STAT_RTREJECT, "\t%llu output packet%s discarded due to reject route\n");
 #undef p
 #undef p1
 }
