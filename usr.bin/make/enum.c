@@ -1,4 +1,4 @@
-/*	$NetBSD: enum.c,v 1.4 2020/08/24 20:15:51 rillig Exp $	*/
+/*	$NetBSD: enum.c,v 1.5 2020/08/28 19:46:04 rillig Exp $	*/
 
 /*
  Copyright (c) 2020 Roland Illig <rillig@NetBSD.org>
@@ -28,15 +28,16 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: enum.c,v 1.4 2020/08/24 20:15:51 rillig Exp $";
+static char rcsid[] = "$NetBSD: enum.c,v 1.5 2020/08/28 19:46:04 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: enum.c,v 1.4 2020/08/24 20:15:51 rillig Exp $");
+__RCSID("$NetBSD: enum.c,v 1.5 2020/08/28 19:46:04 rillig Exp $");
 #endif
 #endif
 
 #include <assert.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "enum.h"
@@ -90,5 +91,5 @@ Enum_ValueToString(int value, const EnumToStringSpec *spec)
 	    if (value == spec->es_value)
 	        return spec->es_name;
 	}
-	assert(!"unknown enum value");
+	abort(/* unknown enum value */);
 }
