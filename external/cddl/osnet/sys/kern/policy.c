@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.c,v 1.8 2020/05/16 18:31:46 christos Exp $	*/
+/*	$NetBSD: policy.c,v 1.9 2020/08/28 16:13:48 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@ secpolicy_fs_mount(cred_t *cred, vnode_t *mvp, struct mount *vfsp)
 {
 
 	return kauth_authorize_system(cred, KAUTH_SYSTEM_MOUNT,
-	    KAUTH_REQ_SYSTEM_MOUNT_NEW, vfsp, NULL, NULL);
+	    KAUTH_REQ_SYSTEM_MOUNT_NEW, mvp, KAUTH_ARG(vfsp->mnt_flag), NULL);
 }
 
 int
