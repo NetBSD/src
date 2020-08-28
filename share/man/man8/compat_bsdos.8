@@ -1,4 +1,4 @@
-.\"
+.\" $NetBSD: compat_bsdos.8,v 1.3 2020/08/28 17:13:13 wiz Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,13 +28,12 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd August 27, 2020
-.Dt COMPAT_BSDOS 8 amd64,i386,sparc,sparc64
+.Dt COMPAT_BSDOS 8
 .Os
 .Sh NAME
 .Nm compat_bsdos
 .Nd binary compatibility for BSDi releases
 .Sh DESCRIPTION
-.Pp
 The
 .Dv COMPAT_NOMID
 kernel option provides compatibility with
@@ -79,7 +78,6 @@ compatibility layers currently available on
 .Xr compat_netbsd32 8 ,
 .Xr ldconfig 8
 .Sh HISTORY
-.Pp
 .Tn BSD/386 Ns No \ 1.0\|\(en\|1.1
 was derived from
 .Bx 4.3 Tn Reno
@@ -106,7 +104,6 @@ under the
 .Dv COMPAT_BSDOS
 kernel option.
 .Sh BUGS
-.Pp
 .Bsx
 compatibility was broken on
 .Nx 5\|\(en\|6
