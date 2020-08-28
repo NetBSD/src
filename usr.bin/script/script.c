@@ -1,4 +1,4 @@
-/*	$NetBSD: script.c,v 1.26 2020/08/08 16:01:35 christos Exp $	*/
+/*	$NetBSD: script.c,v 1.27 2020/08/28 17:10:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: script.c,v 1.26 2020/08/08 16:01:35 christos Exp $");
+__RCSID("$NetBSD: script.c,v 1.27 2020/08/28 17:10:15 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -92,6 +92,7 @@ static void	finish(int);
 static void	scriptflush(int);
 static void	record(FILE *, char *, size_t, int);
 static void	consume(FILE *, off_t, char *, int);
+static void	childwait(void);
 __dead static void	playback(FILE *);
 
 int
@@ -204,9 +205,18 @@ main(int argc, char *argv[])
 			record(fscript, ibuf, cc, 'i');
 		(void)write(master, ibuf, cc);
 	}
-	done();
+	childwait();
 	/* NOTREACHED */
 	return EXIT_SUCCESS;
+}
+
+static void
+childwait(void)
+{
+	sigset_t set;
+
+	sigemptyset(&set);
+	sigsuspend(&set);
 }
 
 static void
@@ -249,7 +259,7 @@ dooutput(void)
 		if (scc <= 0)
 			break;
 		cc = (size_t)scc;
-		(void)write(1, obuf, cc);
+		(void)write(STDOUT_FILENO, obuf, cc);
 		if (rawout)
 			record(fscript, obuf, cc, 'o');
 		else
@@ -258,7 +268,7 @@ dooutput(void)
 		if (flush)
 			(void)fflush(fscript);
 	}
-	done();
+	childwait();
 }
 
 static void
