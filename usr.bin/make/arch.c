@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.100 2020/08/28 04:28:45 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.101 2020/08/28 04:48:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.100 2020/08/28 04:28:45 rillig Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.101 2020/08/28 04:48:56 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.100 2020/08/28 04:28:45 rillig Exp $");
+__RCSID("$NetBSD: arch.c,v 1.101 2020/08/28 04:48:56 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -376,7 +376,7 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 		    return FALSE;
 		} else {
 		    gn->type |= OP_ARCHV;
-		    Lst_AppendS(nodeLst, gn);
+		    Lst_Append(nodeLst, gn);
 		}
 	    } else if (!Arch_ParseArchive(&sacrifice, nodeLst, ctxt)) {
 		/*
@@ -396,8 +396,8 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 
 	    Buf_Init(&nameBuf, 0);
 	    Dir_Expand(memName, dirSearchPath, members);
-	    while (!Lst_IsEmptyS(members)) {
-		char *member = Lst_DequeueS(members);
+	    while (!Lst_IsEmpty(members)) {
+		char *member = Lst_Dequeue(members);
 
 		Buf_Empty(&nameBuf);
 		Buf_AddStr(&nameBuf, libName);
@@ -419,10 +419,10 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 		     * end of the provided list.
 		     */
 		    gn->type |= OP_ARCHV;
-		    Lst_AppendS(nodeLst, gn);
+		    Lst_Append(nodeLst, gn);
 		}
 	    }
-	    Lst_FreeS(members);
+	    Lst_Free(members);
 	    Buf_Destroy(&nameBuf, TRUE);
 	} else {
 	    Buffer nameBuf;
@@ -446,7 +446,7 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 		 * provided list.
 		 */
 		gn->type |= OP_ARCHV;
-		Lst_AppendS(nodeLst, gn);
+		Lst_Append(nodeLst, gn);
 	    }
 	}
 	if (doSubst) {
@@ -548,9 +548,9 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
 	member = base + 1;
     }
 
-    ln = Lst_FindS(archives, ArchFindArchive, archive);
+    ln = Lst_Find(archives, ArchFindArchive, archive);
     if (ln != NULL) {
-	ar = Lst_DatumS(ln);
+	ar = Lst_Datum(ln);
 
 	he = Hash_FindEntry(&ar->members, member);
 
@@ -699,7 +699,7 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
 
     fclose(arch);
 
-    Lst_AppendS(archives, ar);
+    Lst_Append(archives, ar);
 
     /*
      * Now that the archive has been read and cached, we can look into
@@ -1127,9 +1127,9 @@ Arch_MemMTime(GNode *gn)
     LstNode 	  ln;
     GNode   	  *pgn;
 
-    Lst_OpenS(gn->parents);
-    while ((ln = Lst_NextS(gn->parents)) != NULL) {
-	pgn = Lst_DatumS(ln);
+    Lst_Open(gn->parents);
+    while ((ln = Lst_Next(gn->parents)) != NULL) {
+	pgn = Lst_Datum(ln);
 
 	if (pgn->type & OP_ARCHV) {
 	    /*
@@ -1157,7 +1157,7 @@ Arch_MemMTime(GNode *gn)
 	}
     }
 
-    Lst_CloseS(gn->parents);
+    Lst_Close(gn->parents);
 
     return gn->mtime;
 }
@@ -1252,9 +1252,9 @@ Arch_LibOODate(GNode *gn)
 
     if (gn->type & OP_PHONY) {
 	oodate = TRUE;
-    } else if (OP_NOP(gn->type) && Lst_IsEmptyS(gn->children)) {
+    } else if (OP_NOP(gn->type) && Lst_IsEmpty(gn->children)) {
 	oodate = FALSE;
-    } else if ((!Lst_IsEmptyS(gn->children) && gn->cmgn == NULL) ||
+    } else if ((!Lst_IsEmpty(gn->children) && gn->cmgn == NULL) ||
 	       (gn->mtime > now) ||
 	       (gn->cmgn != NULL && gn->mtime < gn->cmgn->mtime)) {
 	oodate = TRUE;
@@ -1300,7 +1300,7 @@ void
 Arch_End(void)
 {
 #ifdef CLEANUP
-    Lst_DestroyS(archives, ArchFree);
+    Lst_Destroy(archives, ArchFree);
 #endif
 }
 
