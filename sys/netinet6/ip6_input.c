@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.219 2020/08/28 06:19:13 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.220 2020/08/28 06:20:44 ozaki-r Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.219 2020/08/28 06:19:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.220 2020/08/28 06:20:44 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -755,7 +755,7 @@ hbhcheck:
 			    & PR_LASTHDR) != 0) {
 				int error;
 
-				error = ipsec_ip_input(m, false);
+				error = ipsec_ip_input_checkpolicy(m, false);
 				if (error) {
 					IP6_STATINC(IP6_STAT_IPSECDROP_IN);
 					goto bad;
