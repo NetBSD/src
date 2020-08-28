@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.90 2020/08/28 06:19:13 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.91 2020/08/28 06:20:44 ozaki-r Exp $	*/
 /*	$FreeBSD: ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -277,7 +277,7 @@ void ipsec_invalpcbcacheall(void);
 struct inpcb;
 int ipsec4_output(struct mbuf *, struct inpcb *, int, u_long *, bool *, bool *, bool *);
 
-int ipsec_ip_input(struct mbuf *, bool);
+int ipsec_ip_input_checkpolicy(struct mbuf *, bool);
 void ipsec_mtu(struct mbuf *, int *);
 #ifdef INET6
 void ipsec6_udp_cksum(struct mbuf *);
