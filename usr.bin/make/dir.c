@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.115 2020/08/27 19:15:35 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.116 2020/08/28 04:14:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.115 2020/08/27 19:15:35 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.116 2020/08/28 04:14:31 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.115 2020/08/27 19:15:35 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.116 2020/08/28 04:14:31 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -483,7 +483,7 @@ Dir_SetPATH(void)
     Var_Delete(".PATH", VAR_GLOBAL);
 
     Lst_OpenS(dirSearchPath);
-    if ((ln = Lst_First(dirSearchPath)) != NULL) {
+    if ((ln = Lst_FirstS(dirSearchPath)) != NULL) {
 	p = Lst_DatumS(ln);
 	if (p == dotLast) {
 	    hasLastDot = TRUE;
@@ -1137,7 +1137,7 @@ Dir_FindFile(const char *name, Lst path)
     }
 
     Lst_OpenS(path);
-    if ((ln = Lst_First(path)) != NULL) {
+    if ((ln = Lst_FirstS(path)) != NULL) {
 	p = Lst_DatumS(ln);
 	if (p == dotLast) {
 	    hasLastDot = TRUE;
@@ -1764,7 +1764,7 @@ Dir_Concat(Lst path1, Lst path2)
     LstNode ln;
     Path *p;
 
-    for (ln = Lst_First(path2); ln != NULL; ln = Lst_SuccS(ln)) {
+    for (ln = Lst_FirstS(path2); ln != NULL; ln = Lst_SuccS(ln)) {
 	p = Lst_DatumS(ln);
 	if (Lst_MemberS(path1, p) == NULL) {
 	    p->refCount += 1;

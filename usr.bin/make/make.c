@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.127 2020/08/27 19:15:35 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.128 2020/08/28 04:14:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.127 2020/08/27 19:15:35 rillig Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.128 2020/08/28 04:14:31 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.127 2020/08/27 19:15:35 rillig Exp $");
+__RCSID("$NetBSD: make.c,v 1.128 2020/08/28 04:14:31 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -735,7 +735,7 @@ Make_Update(GNode *cgn)
     parents = centurion->parents;
 
     /* If this was a .ORDER node, schedule the RHS */
-    Lst_ForEachS(centurion->order_succ, MakeBuildParent, Lst_First(toBeMade));
+    Lst_ForEachS(centurion->order_succ, MakeBuildParent, Lst_FirstS(toBeMade));
 
     /* Now mark all the parents as having one less unmade child */
     Lst_OpenS(parents);
@@ -1121,7 +1121,7 @@ MakeStartJobs(void)
 	     * just before the current first element.
 	     */
 	    gn->made = DEFERRED;
-	    Lst_ForEachS(gn->children, MakeBuildChild, Lst_First(toBeMade));
+	    Lst_ForEachS(gn->children, MakeBuildChild, Lst_FirstS(toBeMade));
 	    /* and drop this node on the floor */
 	    if (DEBUG(MAKE))
 		fprintf(debug_file, "dropped %s%s\n", gn->name, gn->cohort_num);
@@ -1451,7 +1451,7 @@ Make_ProcessWait(Lst targs)
 	if (pgn->type & OP_DOUBLEDEP)
 	    Lst_PrependAllS(examine, pgn->cohorts);
 
-	owln = Lst_First(pgn->children);
+	owln = Lst_FirstS(pgn->children);
 	Lst_OpenS(pgn->children);
 	for (; (ln = Lst_NextS(pgn->children)) != NULL; ) {
 	    cgn = Lst_DatumS(ln);

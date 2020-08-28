@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.103 2020/08/27 19:15:35 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.104 2020/08/28 04:14:31 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1167,7 +1167,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 	/* we want to track all the .meta we read */
 	Var_Append(".MAKE.META.FILES", fname, VAR_GLOBAL);
 
-	ln = Lst_First(gn->commands);
+	ln = Lst_FirstS(gn->commands);
 	while (!oodate && (x = fgetLine(&buf, &bufsz, 0, fp)) > 0) {
 	    lineno++;
 	    if (buf[x - 1] == '\n')
@@ -1598,7 +1598,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 	if (!Lst_IsEmptyS(missingFiles)) {
 	    if (DEBUG(META))
 		fprintf(debug_file, "%s: missing files: %s...\n",
-			fname, (char *)Lst_DatumS(Lst_First(missingFiles)));
+			fname, (char *)Lst_DatumS(Lst_FirstS(missingFiles)));
 	    oodate = TRUE;
 	}
 	if (!oodate && !have_filemon && filemonMissing) {
