@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.123 2020/08/28 04:05:35 rillig Exp $
+# $NetBSD: Makefile,v 1.124 2020/08/28 15:40:53 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -36,6 +36,7 @@
 # Any test that is commented out must be ignored in
 # src/tests/usr.bin/make/t_make.sh as well.
 TESTS+=		# archive	# broken on FreeBSD, enabled in t_make.sh
+TESTS+=		cmd-interrupt
 TESTS+=		cmdline
 TESTS+=		comment
 TESTS+=		cond-cmp-numeric
