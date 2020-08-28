@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.24 2020/08/28 12:56:19 skrll Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.25 2020/08/28 13:00:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -467,6 +467,9 @@ generic_startv7:
 	b	armv7_mmuinit
 
 generic_vstartv7:
+	// Stack to KVA address
+	add	sp, sp, R_VTOPDIFF
+
 	VPRINTF("virtual\n\r")
 
 #if defined(KASAN)
@@ -521,6 +524,9 @@ generic_startv6:
 	b	armv6_mmuinit
 
 generic_vstartv6:
+	// Stack to KVA address
+	add	sp, sp, R_VTOPDIFF
+
 	VPRINTF("virtual\n\r")
 
 #if defined(KASAN)
@@ -882,7 +888,7 @@ ASEND(cpu_mpstart)
  * Now running with real kernel VA via bootstrap tables
  */
 armv7_mpcontinuation:
-	// Adjust stack back to KVA address
+	// Stack to KVA address
 	add	sp, sp, R_VTOPDIFF
 
 	VPRINTF("virtual\n\r")
