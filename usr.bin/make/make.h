@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.128 2020/08/28 03:35:45 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.129 2020/08/28 19:14:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -326,8 +326,8 @@ typedef struct GNode {
     char cohort_num[8];
     /* The number of unmade instances on the cohorts list */
     int unmade_cohorts;
-    /* Pointer to the first instance of a :: node; only set when on a cohorts
-     * list */
+    /* Pointer to the first instance of a '::' node; only set when on a
+     * cohorts list */
     struct GNode *centurion;
 
     /* Last time (sequence number) we tried to make this node */
