@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.72 2020/03/15 23:04:50 thorpej Exp $ */
+/*	$NetBSD: if_atu.c,v 1.73 2020/08/28 19:02:19 riastradh Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.72 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.73 2020/08/28 19:02:19 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1677,6 +1677,10 @@ atu_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	if (len <= 1) {
 		DPRINTF(("%s: atu_rxeof: too short\n",
+		    device_xname(sc->atu_dev)));
+		goto done;
+	} else if (len > MCLBYTES) {
+		DPRINTF(("%s: atu_rxeof: too long\n",
 		    device_xname(sc->atu_dev)));
 		goto done;
 	}
