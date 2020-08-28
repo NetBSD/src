@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.127 2020/08/28 17:27:21 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.128 2020/08/28 19:21:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.127 2020/08/28 17:27:21 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.128 2020/08/28 19:21:00 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.127 2020/08/28 17:27:21 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.128 2020/08/28 19:21:00 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -174,14 +174,6 @@ typedef struct Suff {
 } Suff;
 
 /*
- * for SuffSuffIsSuffix
- */
-typedef struct {
-    char	*ename;		/* The end of the name */
-    int		 len;		/* Length of the name */
-} SuffixCmpData;
-
-/*
  * Structure used in the search for implied sources.
  */
 typedef struct _Src {
@@ -218,7 +210,6 @@ static Suff 	    *emptySuff;	/* The empty suffix required for POSIX
 
 
 static const char *SuffStrIsPrefix(const char *, const char *);
-static char *SuffSuffIsSuffix(const Suff *, const SuffixCmpData *);
 static int SuffSuffIsSuffixP(const void *, const void *);
 static int SuffSuffHasNameP(const void *, const void *);
 static int SuffSuffIsPrefix(const void *, const void *);
@@ -272,6 +263,11 @@ SuffStrIsPrefix(const char *pref, const char *str)
     return *pref ? NULL : str;
 }
 
+typedef struct {
+    char	*ename;		/* The end of the name */
+    int		 len;		/* Length of the name */
+} SuffSuffIsSuffixArgs;
+
 /*-
  *-----------------------------------------------------------------------
  * SuffSuffIsSuffix  --
@@ -291,7 +287,7 @@ SuffStrIsPrefix(const char *pref, const char *str)
  *-----------------------------------------------------------------------
  */
 static char *
-SuffSuffIsSuffix(const Suff *s, const SuffixCmpData *sd)
+SuffSuffIsSuffix(const Suff *s, const SuffSuffIsSuffixArgs *sd)
 {
     char  *p1;	    	/* Pointer into suffix name */
     char  *p2;	    	/* Pointer into string being examined */
@@ -857,7 +853,7 @@ SuffRebuildGraph(void *transformp, void *sp)
     char 	*cp;
     LstNode	ln;
     Suff  	*s2;
-    SuffixCmpData sd;
+    SuffSuffIsSuffixArgs sd;
 
     /*
      * First see if it is a transformation from this suffix.
@@ -1751,7 +1747,7 @@ Suff_FindPath(GNode* gn)
     Suff *suff = gn->suffix;
 
     if (suff == NULL) {
-	SuffixCmpData sd;   /* Search string data */
+	SuffSuffIsSuffixArgs sd;   /* Search string data */
 	LstNode ln;
 	sd.len = strlen(gn->name);
 	sd.ename = gn->name + sd.len;
@@ -1978,7 +1974,7 @@ SuffFindArchiveDeps(GNode *gn, Lst slst)
 	 * through the entire list, we just look at suffixes to which the
 	 * member's suffix may be transformed...
 	 */
-	SuffixCmpData	sd;		/* Search string data */
+	SuffSuffIsSuffixArgs sd;	/* Search string data */
 
 	/*
 	 * Use first matching suffix...
@@ -2053,7 +2049,7 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
     Src 	*src;	    /* General Src pointer */
     char    	*pref;	    /* Prefix to use */
     Src	    	*targ;	    /* General Src target pointer */
-    SuffixCmpData sd;	    /* Search string data */
+    SuffSuffIsSuffixArgs sd; /* Search string data */
 
 
     sd.len = strlen(gn->name);
