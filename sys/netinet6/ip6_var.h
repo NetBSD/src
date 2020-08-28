@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.85 2020/08/28 06:19:13 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.86 2020/08/28 06:28:58 ozaki-r Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -295,7 +295,7 @@ void	ip6_notify_pmtu(struct in6pcb *, const struct sockaddr_in6 *,
 		u_int32_t *);
 int	ip6_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
-void	ip6_forward(struct mbuf *, int);
+void	ip6_forward(struct mbuf *, int, struct ifnet *);
 
 void	ip6_mloopback(struct ifnet *, struct mbuf *,
 	              const struct sockaddr_in6 *);
