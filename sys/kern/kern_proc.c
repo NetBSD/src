@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.258 2020/08/28 21:39:56 riastradh Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.259 2020/08/28 22:27:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.258 2020/08/28 21:39:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.259 2020/08/28 22:27:51 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -2576,10 +2576,10 @@ static void
 fill_proc(const struct proc *psrc, struct proc *p, bool allowaddr)
 {
 	COND_SET_STRUCT(p->p_list, psrc->p_list, allowaddr);
-	memset(&p->p_auxlock, 0, allowaddr);
+	memset(&p->p_auxlock, 0, sizeof(p->p_auxlock));
 	COND_SET_STRUCT(p->p_lock, psrc->p_lock, allowaddr);
-	memset(&p->p_stmutex, 0, allowaddr);
-	memset(&p->p_reflock, 0, allowaddr);
+	memset(&p->p_stmutex, 0, sizeof(p->p_stmutex));
+	memset(&p->p_reflock, 0, sizeof(p->p_reflock));
 	COND_SET_STRUCT(p->p_waitcv, psrc->p_waitcv, allowaddr);
 	COND_SET_STRUCT(p->p_lwpcv, psrc->p_lwpcv, allowaddr);
 	COND_SET_PTR(p->p_cred, psrc->p_cred, allowaddr);
@@ -2591,7 +2591,7 @@ fill_proc(const struct proc *psrc, struct proc *p, bool allowaddr)
 	COND_SET_PTR(p->p_sigacts, psrc->p_sigacts, allowaddr);
 	COND_SET_PTR(p->p_aio, psrc->p_aio, allowaddr);
 	p->p_mqueue_cnt = psrc->p_mqueue_cnt;
-	memset(&p->p_specdataref, 0, allowaddr);
+	memset(&p->p_specdataref, 0, sizeof(p->p_specdataref));
 	p->p_exitsig = psrc->p_exitsig;
 	p->p_flag = psrc->p_flag;
 	p->p_sflag = psrc->p_sflag;
