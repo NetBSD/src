@@ -1,4 +1,4 @@
-#       $NetBSD: t_libarchive.sh,v 1.6 2020/06/16 09:47:11 sevan Exp $
+#       $NetBSD: t_libarchive.sh,v 1.7 2020/08/28 18:46:05 christos Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -26,6 +26,8 @@
 #
 
 atf_test_case libarchive
+
+export TMPDIR=$PWD
 
 libarchive_head()
 {
