@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.123 2020/08/28 04:14:31 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.124 2020/08/28 04:28:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.123 2020/08/28 04:14:31 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.124 2020/08/28 04:28:45 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.123 2020/08/28 04:14:31 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.124 2020/08/28 04:28:45 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -624,7 +624,7 @@ SuffParseTransform(char *str, Suff **srcPtr, Suff **targPtr)
 	if (srcLn == NULL) {
 	    srcLn = Lst_FindS(sufflist, SuffSuffIsPrefix, str);
 	} else {
-	    srcLn = Lst_FindFrom(sufflist, Lst_SuccS(srcLn),
+	    srcLn = Lst_FindFromS(sufflist, Lst_SuccS(srcLn),
 				 SuffSuffIsPrefix, str);
 	}
 	if (srcLn == NULL) {
@@ -713,7 +713,7 @@ Suff_AddTransform(char *line)
 		  *t;		/* target suffix */
     LstNode 	  ln;	    	/* Node for existing transformation */
 
-    ln = Lst_Find(transforms, SuffGNHasNameP, line);
+    ln = Lst_FindS(transforms, SuffGNHasNameP, line);
     if (ln == NULL) {
 	/*
 	 * Make a new graph node for the transformation. It will be filled in
@@ -1818,7 +1818,7 @@ SuffApplyTransform(GNode *tGn, GNode *sGn, Suff *t, Suff *s)
      * Locate the transformation rule itself
      */
     tname = str_concat2(s->name, t->name);
-    ln = Lst_Find(transforms, SuffGNHasNameP, tname);
+    ln = Lst_FindS(transforms, SuffGNHasNameP, tname);
     free(tname);
 
     if (ln == NULL) {
@@ -1983,7 +1983,7 @@ SuffFindArchiveDeps(GNode *gn, Lst slst)
 	 */
 	sd.len = eoarch - gn->name;
 	sd.ename = eoarch;
-	ln = Lst_Find(ms->parents, SuffSuffIsSuffixP, &sd);
+	ln = Lst_FindS(ms->parents, SuffSuffIsSuffixP, &sd);
 
 	if (ln != NULL) {
 	    /*
@@ -2093,7 +2093,7 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
 	    /*
 	     * Look for next possible suffix...
 	     */
-	    ln = Lst_FindFrom(sufflist, ln, SuffSuffIsSuffixP, &sd);
+	    ln = Lst_FindFromS(sufflist, ln, SuffSuffIsSuffixP, &sd);
 
 	    if (ln != NULL) {
 		int	    prefLen;	    /* Length of the prefix */

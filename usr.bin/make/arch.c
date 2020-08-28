@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.99 2020/08/27 19:15:35 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.100 2020/08/28 04:28:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.99 2020/08/27 19:15:35 rillig Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.100 2020/08/28 04:28:45 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.99 2020/08/27 19:15:35 rillig Exp $");
+__RCSID("$NetBSD: arch.c,v 1.100 2020/08/28 04:28:45 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -548,7 +548,7 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
 	member = base + 1;
     }
 
-    ln = Lst_Find(archives, ArchFindArchive, archive);
+    ln = Lst_FindS(archives, ArchFindArchive, archive);
     if (ln != NULL) {
 	ar = Lst_DatumS(ln);
 
