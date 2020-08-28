@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.317 2020/08/27 19:15:35 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.318 2020/08/28 04:14:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.317 2020/08/27 19:15:35 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.318 2020/08/28 04:14:31 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.317 2020/08/27 19:15:35 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.318 2020/08/28 04:14:31 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -869,7 +869,7 @@ doPrintVars(void)
 	else
 		expandVars = getBoolean(".MAKE.EXPAND_VARIABLES", FALSE);
 
-	for (ln = Lst_First(variables); ln != NULL; ln = Lst_SuccS(ln)) {
+	for (ln = Lst_FirstS(variables); ln != NULL; ln = Lst_SuccS(ln)) {
 		char *var = Lst_DatumS(ln);
 		const char *value;
 		char *p1;
@@ -1278,7 +1278,7 @@ main(int argc, char **argv)
 	if (!Lst_IsEmptyS(create)) {
 		LstNode ln;
 
-		for (ln = Lst_First(create); ln != NULL; ln = Lst_SuccS(ln)) {
+		for (ln = Lst_FirstS(create); ln != NULL; ln = Lst_SuccS(ln)) {
 			char *name = Lst_DatumS(ln);
 			Var_Append(".TARGETS", name, VAR_GLOBAL);
 		}

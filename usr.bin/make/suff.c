@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.122 2020/08/28 03:35:45 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.123 2020/08/28 04:14:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.122 2020/08/28 03:35:45 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.123 2020/08/28 04:14:31 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.122 2020/08/28 03:35:45 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.123 2020/08/28 04:14:31 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2062,7 +2062,7 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
     /*
      * Begin at the beginning...
      */
-    ln = Lst_First(sufflist);
+    ln = Lst_FirstS(sufflist);
     srcs = Lst_Init();
     targs = Lst_Init();
 
@@ -2190,7 +2190,7 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
 	     * for setting the local variables.
 	     */
 	    if (!Lst_IsEmptyS(targs)) {
-		targ = Lst_DatumS(Lst_First(targs));
+		targ = Lst_DatumS(Lst_FirstS(targs));
 	    } else {
 		targ = NULL;
 	    }
@@ -2213,7 +2213,7 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
      * Now we've got the important local variables set, expand any sources
      * that still contain variables or wildcards in their names.
      */
-    for (ln = Lst_First(gn->children); ln != NULL; ln = nln) {
+    for (ln = Lst_FirstS(gn->children); ln != NULL; ln = nln) {
 	nln = Lst_SuccS(ln);
 	SuffExpandChildren(ln, gn);
     }
