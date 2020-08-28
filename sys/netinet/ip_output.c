@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.318 2020/08/28 06:31:42 ozaki-r Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.319 2020/08/28 17:01:48 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.318 2020/08/28 06:31:42 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.319 2020/08/28 17:01:48 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -690,8 +690,6 @@ sendit:
 	}
 	sw_csum = m->m_pkthdr.csum_flags & ~ifp->if_csum_flags_tx;
 
-	sa = (m->m_flags & M_MCAST) ? sintocsa(rdst) : sintocsa(dst);
-
 	/* Need to fragment the packet */
 	if (ntohs(ip->ip_len) > mtu &&
 	    (m->m_pkthdr.csum_flags & M_CSUM_TSOv4) == 0) {
@@ -730,6 +728,8 @@ sendit:
 			    ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
 		}
 	}
+
+	sa = (m->m_flags & M_MCAST) ? sintocsa(rdst) : sintocsa(dst);
 
 	/* Send it */
 	if (__predict_false(sw_csum & M_CSUM_TSOv4)) {
@@ -800,7 +800,8 @@ fragment:
 		} else {
 			KASSERT((m->m_pkthdr.csum_flags &
 			    (M_CSUM_UDPv4 | M_CSUM_TCPv4)) == 0);
-			error = ip_if_output(ifp, m, sa, rt);
+			error = ip_if_output(ifp, m, (m->m_flags & M_MCAST) ?
+			    sintocsa(rdst) : sintocsa(dst), rt);
 		}
 	}
 	if (error == 0) {
