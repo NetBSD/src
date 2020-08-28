@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.103 2020/08/28 18:18:31 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.104 2020/08/28 19:37:37 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -4861,4 +4861,11 @@ external/cddl/osnet/sys/kern/policy.c		1.9
 
 	PR 55602: fix zpool panic on mounting zfs filesystem.
 	[hannken, ticket #1066]
+
+sys/dev/usb/if_atu.c				1.73
+sys/dev/usb/usbnet.c				1.39
+
+	atu(4) and all usb network drivers using usbnet:
+	Reject packets larger than MCLBYTES.
+	[riastradh, ticket #1067]
 
