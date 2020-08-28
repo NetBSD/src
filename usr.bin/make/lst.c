@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.47 2020/08/27 19:15:35 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.48 2020/08/28 04:14:31 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,11 +37,11 @@
 #include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.47 2020/08/27 19:15:35 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.48 2020/08/28 04:14:31 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.47 2020/08/27 19:15:35 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.48 2020/08/28 04:14:31 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -332,7 +332,7 @@ LstNode_SetNullS(LstNode node)
 
 /* Return the first node from the given list, or NULL if the list is empty or
  * invalid. */
-LstNode
+static LstNode
 Lst_First(Lst list)
 {
     if (!LstIsValid(list) || LstIsEmpty(list)) {
@@ -476,7 +476,7 @@ Lst_ForEachS(Lst list, LstActionProc proc, void *procData)
 {
     if (LstIsEmpty(list))
 	return 0;		/* XXX: Document what this value means. */
-    return Lst_ForEachFromS(list, Lst_First(list), proc, procData);
+    return Lst_ForEachFromS(list, Lst_FirstS(list), proc, procData);
 }
 
 /* Apply the given function to each element of the given list, starting from
