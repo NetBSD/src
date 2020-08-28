@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.317 2020/08/28 06:22:25 ozaki-r Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.318 2020/08/28 06:31:42 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.317 2020/08/28 06:22:25 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.318 2020/08/28 06:31:42 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -202,6 +202,7 @@ ip_if_output(struct ifnet * const ifp, struct mbuf * const m,
 	if (rt != NULL) {
 		error = rt_check_reject_route(rt, ifp);
 		if (error != 0) {
+			IP_STATINC(IP_STAT_RTREJECT);
 			m_freem(m);
 			return error;
 		}
@@ -312,8 +313,10 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 	    (rt = rtcache_update(ro, 1)) == NULL) {
 		dst = &udst.sin;
 		error = rtcache_setdst(ro, &udst.sa);
-		if (error != 0)
+		if (error != 0) {
+			IP_STATINC(IP_STAT_ODROPPED);
 			goto bad;
+		}
 	}
 
 	/*
@@ -346,6 +349,7 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 		mtu = ifp->if_mtu;
 		ia = in_get_ia_from_ifp_psref(ifp, &psref_ia);
 		if (ia == NULL) {
+			IP_STATINC(IP_STAT_IFNOADDR);
 			error = EADDRNOTAVAIL;
 			goto bad;
 		}
@@ -451,6 +455,7 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 
 			xia = in_get_ia_from_ifp_psref(ifp, &_psref);
 			if (!xia) {
+				IP_STATINC(IP_STAT_IFNOADDR);
 				error = EADDRNOTAVAIL;
 				goto bad;
 			}
@@ -460,6 +465,7 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 				/* FIXME ifa_getifa is NOMPSAFE */
 				xia = ifatoia((*xifa->ifa_getifa)(xifa, rdst));
 				if (xia == NULL) {
+					IP_STATINC(IP_STAT_IFNOADDR);
 					error = EADDRNOTAVAIL;
 					goto bad;
 				}
@@ -511,6 +517,7 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 		 * destination group on the loopback interface.
 		 */
 		if (ip->ip_ttl == 0 || (ifp->if_flags & IFF_LOOPBACK) != 0) {
+			IP_STATINC(IP_STAT_ODROPPED);
 			m_freem(m);
 			goto done;
 		}
@@ -554,15 +561,18 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 	 */
 	if (isbroadcast) {
 		if ((ifp->if_flags & IFF_BROADCAST) == 0) {
+			IP_STATINC(IP_STAT_BCASTDENIED);
 			error = EADDRNOTAVAIL;
 			goto bad;
 		}
 		if ((flags & IP_ALLOWBROADCAST) == 0) {
+			IP_STATINC(IP_STAT_BCASTDENIED);
 			error = EACCES;
 			goto bad;
 		}
 		/* don't allow broadcast messages to be fragmented */
 		if (ntohs(ip->ip_len) > ifp->if_mtu) {
+			IP_STATINC(IP_STAT_BCASTDENIED);
 			error = EMSGSIZE;
 			goto bad;
 		}
@@ -840,6 +850,7 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 
 	len = (mtu - hlen) &~ 7;
 	if (len < 8) {
+		IP_STATINC(IP_STAT_CANTFRAG);
 		m_freem(m);
 		return EMSGSIZE;
 	}
