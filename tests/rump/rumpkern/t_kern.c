@@ -1,4 +1,4 @@
-/*	$NetBSD: t_kern.c,v 1.5 2017/05/03 12:09:41 pgoyette Exp $	*/
+/*	$NetBSD: t_kern.c,v 1.6 2020/08/28 19:29:58 martin Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@ LOCKFUN(DESTROYHELD, "destroy lock while held", 0,
 LOCKFUN(DOUBLEFREE, "free lock twice", 0,
     "panic: mutex_destroy,.*: uninitialized lock");
 LOCKFUN(DOUBLEINIT, "init lock twice", 1,
-    "mutex error: mutex_init,.*: already initialized");
+    "mutex error: .*mutex_init,.*: already initialized");
 LOCKFUN(MEMFREE, "free memory active lock is in", 1,
     "mutex error: kmem_intr_free,.*: allocation contains active lock");
 LOCKFUN(MTX, "locking-against-self mutex", 0,
