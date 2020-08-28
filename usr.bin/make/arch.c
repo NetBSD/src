@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.101 2020/08/28 04:48:56 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.102 2020/08/28 18:34:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.101 2020/08/28 04:48:56 rillig Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.102 2020/08/28 18:34:45 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.101 2020/08/28 04:48:56 rillig Exp $");
+__RCSID("$NetBSD: arch.c,v 1.102 2020/08/28 18:34:45 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -165,9 +165,6 @@ typedef struct Arch {
 } Arch;
 
 static int ArchFindArchive(const void *, const void *);
-#ifdef CLEANUP
-static void ArchFree(void *);
-#endif
 static struct ar_hdr *ArchStatMember(const char *, const char *, Boolean);
 static FILE *ArchFindMember(const char *, const char *,
 			    struct ar_hdr *, const char *);
@@ -177,19 +174,6 @@ static int ArchSVR4Entry(Arch *, char *, size_t, FILE *);
 #endif
 
 #ifdef CLEANUP
-/*-
- *-----------------------------------------------------------------------
- * ArchFree --
- *	Free memory used by an archive
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	None.
- *
- *-----------------------------------------------------------------------
- */
 static void
 ArchFree(void *ap)
 {
@@ -211,7 +195,6 @@ ArchFree(void *ap)
 #endif
 
 
-
 /*-
  *-----------------------------------------------------------------------
  * Arch_ParseArchive --
@@ -228,10 +211,6 @@ ArchFree(void *ap)
  *	TRUE if it was a valid specification. The linePtr is updated
  *	to point to the first non-space after the archive spec. The
  *	nodes for the members are placed on the given list.
- *
- * Side Effects:
- *	Some nodes may be created. The given list is extended.
- *
  *-----------------------------------------------------------------------
  */
 Boolean
@@ -488,10 +467,6 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
  *
  * Results:
  *	0 if it is, non-zero if it isn't.
- *
- * Side Effects:
- *	None.
- *
  *-----------------------------------------------------------------------
  */
 static int
@@ -518,9 +493,6 @@ ArchFindArchive(const void *ar, const void *archName)
  *	archive members. This is mostly because we have no assurances that
  *	The archive will remain constant after we read all the headers, so
  *	there's not much point in remembering the position...
- *
- * Side Effects:
- *
  *-----------------------------------------------------------------------
  */
 static struct ar_hdr *
@@ -729,17 +701,14 @@ badarch:
  *	If it is "//", then load the table of filenames
  *	If it is "/<offset>", then try to substitute the long file name
  *	from offset of a table previously read.
+ *	If a table is read, the file pointer is moved to the next archive
+ *	member.
  *
  * Results:
  *	-1: Bad data in archive
  *	 0: A table was loaded from the file
  *	 1: Name was successfully substituted from table
  *	 2: Name was not successfully substituted from table
- *
- * Side Effects:
- *	If a table is read, the file pointer is moved to the next archive
- *	member
- *
  *-----------------------------------------------------------------------
  */
 static int
@@ -828,6 +797,7 @@ ArchSVR4Entry(Arch *ar, char *name, size_t size, FILE *arch)
  *	Locate a member of an archive, given the path of the archive and
  *	the path of the desired member. If the archive is to be modified,
  *	the mode should be "r+", if not, it should be "r".
+ *	The passed struct ar_hdr structure is filled in.
  *
  * Input:
  *	archive		Path to the archive
@@ -840,10 +810,6 @@ ArchSVR4Entry(Arch *ar, char *name, size_t size, FILE *arch)
  *	An FILE *, opened for reading and writing, positioned at the
  *	start of the member's struct ar_hdr, or NULL if the member was
  *	nonexistent. The current struct ar_hdr for member.
- *
- * Side Effects:
- *	The passed struct ar_hdr structure is filled in.
- *
  *-----------------------------------------------------------------------
  */
 static FILE *
@@ -989,18 +955,15 @@ skip:
  *-----------------------------------------------------------------------
  * Arch_Touch --
  *	Touch a member of an archive.
+ *	The modification time of the entire archive is also changed.
+ *	For a library, this could necessitate the re-ranlib'ing of the
+ *	whole thing.
  *
  * Input:
  *	gn		Node of member to touch
  *
  * Results:
  *	The 'time' field of the member's header is updated.
- *
- * Side Effects:
- *	The modification time of the entire archive is also changed.
- *	For a library, this could necessitate the re-ranlib'ing of the
- *	whole thing.
- *
  *-----------------------------------------------------------------------
  */
 void
@@ -1025,23 +988,14 @@ Arch_Touch(GNode *gn)
     }
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Arch_TouchLib --
- *	Given a node which represents a library, touch the thing, making
- *	sure that the table of contents also is touched.
+/* Given a node which represents a library, touch the thing, making sure that
+ * the table of contents also is touched.
+ *
+ * Both the modification time of the library and of the RANLIBMAG member are
+ * set to 'now'.
  *
  * Input:
  *	gn		The node of the library to touch
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	Both the modification time of the library and of the RANLIBMAG
- *	member are set to 'now'.
- *
- *-----------------------------------------------------------------------
  */
 void
 Arch_TouchLib(GNode *gn)
@@ -1066,22 +1020,11 @@ Arch_TouchLib(GNode *gn)
 #endif
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Arch_MTime --
- *	Return the modification time of a member of an archive.
+/* Return the modification time of a member of an archive. The mtime field
+ * of the given node is filled in with the value returned by the function.
  *
  * Input:
  *	gn		Node describing archive member
- *
- * Results:
- *	The modification time(seconds).
- *
- * Side Effects:
- *	The mtime field of the given node is filled in with the value
- *	returned by the function.
- *
- *-----------------------------------------------------------------------
  */
 time_t
 Arch_MTime(GNode *gn)
@@ -1107,20 +1050,8 @@ Arch_MTime(GNode *gn)
     return modTime;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Arch_MemMTime --
- *	Given a non-existent archive member's node, get its modification
- *	time from its archived form, if it exists.
- *
- * Results:
- *	The modification time.
- *
- * Side Effects:
- *	The mtime field is filled in.
- *
- *-----------------------------------------------------------------------
- */
+/* Given a non-existent archive member's node, get its modification time from
+ * its archived form, if it exists. gn->mtime is filled in as well. */
 time_t
 Arch_MemMTime(GNode *gn)
 {
@@ -1162,29 +1093,20 @@ Arch_MemMTime(GNode *gn)
     return gn->mtime;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Arch_FindLib --
- *	Search for a library along the given search path.
+/* Search for a library along the given search path.
+ *
+ * The node's 'path' field is set to the found path (including the
+ * actual file name, not -l...). If the system can handle the -L
+ * flag when linking (or we cannot find the library), we assume that
+ * the user has placed the .LIBS variable in the final linking
+ * command (or the linker will know where to find it) and set the
+ * TARGET variable for this node to be the node's name. Otherwise,
+ * we set the TARGET variable to be the full path of the library,
+ * as returned by Dir_FindFile.
  *
  * Input:
  *	gn		Node of library to find
  *	path		Search path
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	The node's 'path' field is set to the found path (including the
- *	actual file name, not -l...). If the system can handle the -L
- *	flag when linking (or we cannot find the library), we assume that
- *	the user has placed the .LIBRARIES variable in the final linking
- *	command (or the linker will know where to find it) and set the
- *	TARGET variable for this node to be the node's name. Otherwise,
- *	we set the TARGET variable to be the full path of the library,
- *	as returned by Dir_FindFile.
- *
- *-----------------------------------------------------------------------
  */
 void
 Arch_FindLib(GNode *gn, Lst path)
@@ -1206,44 +1128,38 @@ Arch_FindLib(GNode *gn, Lst path)
 #endif /* LIBRARIES */
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Arch_LibOODate --
- *	Decide if a node with the OP_LIB attribute is out-of-date. Called
- *	from Make_OODate to make its life easier.
+/* Decide if a node with the OP_LIB attribute is out-of-date. Called from
+ * Make_OODate to make its life easier.
+ * The library will be hashed if it hasn't been already.
  *
- *	There are several ways for a library to be out-of-date that are
- *	not available to ordinary files. In addition, there are ways
- *	that are open to regular files that are not available to
- *	libraries. A library that is only used as a source is never
- *	considered out-of-date by itself. This does not preclude the
- *	library's modification time from making its parent be out-of-date.
- *	A library will be considered out-of-date for any of these reasons,
- *	given that it is a target on a dependency line somewhere:
- *	    Its modification time is less than that of one of its
- *	    	  sources (gn->mtime < gn->cmgn->mtime).
- *	    Its modification time is greater than the time at which the
- *	    	  make began (i.e. it's been modified in the course
- *	    	  of the make, probably by archiving).
- *	    The modification time of one of its sources is greater than
- *		  the one of its RANLIBMAG member (i.e. its table of contents
- *	    	  is out-of-date). We don't compare of the archive time
- *		  vs. TOC time because they can be too close. In my
- *		  opinion we should not bother with the TOC at all since
- *		  this is used by 'ar' rules that affect the data contents
- *		  of the archive, not by ranlib rules, which affect the
- *		  TOC.
+ * There are several ways for a library to be out-of-date that are
+ * not available to ordinary files. In addition, there are ways
+ * that are open to regular files that are not available to
+ * libraries. A library that is only used as a source is never
+ * considered out-of-date by itself. This does not preclude the
+ * library's modification time from making its parent be out-of-date.
+ * A library will be considered out-of-date for any of these reasons,
+ * given that it is a target on a dependency line somewhere:
+ *
+ *	Its modification time is less than that of one of its sources
+ *	(gn->mtime < gn->cmgn->mtime).
+ *
+ *	Its modification time is greater than the time at which the make
+ *	began (i.e. it's been modified in the course of the make, probably
+ *	by archiving).
+ *
+ *	The modification time of one of its sources is greater than the one
+ *	of its RANLIBMAG member (i.e. its table of contents is out-of-date).
+ *	We don't compare of the archive time vs. TOC time because they can be
+ *	too close. In my opinion we should not bother with the TOC at all
+ *	since this is used by 'ar' rules that affect the data contents of the
+ *	archive, not by ranlib rules, which affect the TOC.
  *
  * Input:
  *	gn		The library's graph node
  *
  * Results:
  *	TRUE if the library is out-of-date. FALSE otherwise.
- *
- * Side Effects:
- *	The library will be hashed if it hasn't been already.
- *
- *-----------------------------------------------------------------------
  */
 Boolean
 Arch_LibOODate(GNode *gn)
@@ -1304,35 +1220,22 @@ Arch_End(void)
 #endif
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Arch_IsLib --
- *	Check if the node is a library
- *
- * Results:
- *	True or False.
- *
- * Side Effects:
- *	None.
- *
- *-----------------------------------------------------------------------
- */
-int
+Boolean
 Arch_IsLib(GNode *gn)
 {
     static const char armag[] = "!<arch>\n";
-    char buf[sizeof(armag)-1];
+    char buf[sizeof armag - 1];
     int fd;
 
     if ((fd = open(gn->path, O_RDONLY)) == -1)
 	return FALSE;
 
-    if (read(fd, buf, sizeof(buf)) != sizeof(buf)) {
+    if (read(fd, buf, sizeof buf) != sizeof buf) {
 	(void)close(fd);
 	return FALSE;
     }
 
     (void)close(fd);
 
-    return memcmp(buf, armag, sizeof(buf)) == 0;
+    return memcmp(buf, armag, sizeof buf) == 0;
 }
