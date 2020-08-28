@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.220 2020/08/28 04:48:57 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.221 2020/08/28 20:23:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.220 2020/08/28 04:48:57 rillig Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.221 2020/08/28 20:23:20 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.220 2020/08/28 04:48:57 rillig Exp $");
+__RCSID("$NetBSD: job.c,v 1.221 2020/08/28 20:23:20 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -167,7 +167,6 @@ static int    	aborting = 0;	    /* why is the make aborting? */
  * this tracks the number of tokens currently "out" to build jobs.
  */
 int jobTokensRunning = 0;
-int not_parallel = 0;		    /* set if .NOT_PARALLEL */
 
 /*
  * XXX: Avoid SunOS bug... FILENO() is fp->_file, and file
@@ -353,7 +352,7 @@ static void JobSigLock(sigset_t *);
 static void JobSigUnlock(sigset_t *);
 static void JobSigReset(void);
 
-const char *malloc_options="A";
+const char *malloc_options MAKE_ATTR_UNUSED = "A"; /* see jemalloc(3) */
 
 static unsigned
 nfds_per_job(void)
@@ -906,7 +905,7 @@ JobPrintCommand(void *cmdp, void *jobp)
  *	Always returns 0
  *
  * Side Effects:
- *	The command is tacked onto the end of postCommands's commands list.
+ *	The command is tacked onto the end of postCommands' commands list.
  *
  *-----------------------------------------------------------------------
  */
