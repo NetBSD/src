@@ -40,6 +40,16 @@ DEFINE_TEST(test_write_disk_secure)
 	struct archive *a;
 	struct archive_entry *ae;
 	struct stat st;
+	char tmp[2048];
+	const char *tmpdir;
+	const char *lname =
+	    "libarchive_test-test_write_disk_secure-absolute_symlink";
+#if 0
+	const char *fname =
+	    "libarchive_test-test_write_disk_secure-absolute_symlink_path.tmp";
+#endif
+	const char *pname =
+	    "libarchive_test-test_write_disk_secure-absolute_path.tmp";
 
 	/* Start with a known umask. */
 	assertUmask(UMASK);
@@ -86,12 +96,15 @@ DEFINE_TEST(test_write_disk_secure)
 	assert(0 == archive_write_finish_entry(a));
 #endif
 
-	/* Write an absolute symlink to /tmp. */
+	/* Write an absolute symlink to $TMPDIR. */
 	archive_write_disk_set_options(a, ARCHIVE_EXTRACT_SECURE_SYMLINKS);
 	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_copy_pathname(ae, "/tmp/libarchive_test-test_write_disk_secure-absolute_symlink");
+	if ((tmpdir = getenv("TMPDIR")) == NULL)
+		tmpdir = "/tmp";
+	snprintf(tmp, sizeof(tmp), "%s/%s", tmpdir, lname);
+	archive_entry_copy_pathname(ae, tmp);
 	archive_entry_set_mode(ae, S_IFLNK | 0777);
-	archive_entry_set_symlink(ae, "/tmp");
+	archive_entry_set_symlink(ae, tmpdir);
 	archive_write_disk_set_options(a, 0);
 	assert(0 == archive_write_header(a, ae));
 	assert(0 == archive_write_finish_entry(a));
@@ -99,15 +112,18 @@ DEFINE_TEST(test_write_disk_secure)
 #if 0
 	/* With security checks enabled, this should fail. */
 	assert(archive_entry_clear(ae) != NULL);
-	archive_entry_copy_pathname(ae, "/tmp/libarchive_test-test_write_disk_secure-absolute_symlink/libarchive_test-test_write_disk_secure-absolute_symlink_path.tmp");
+	snprintf(tmp, sizeof(tmp), "%s/%s/%s", tmpdir, lname, fname);
+	archive_entry_copy_pathname(ae, tmp);
 	archive_entry_set_mode(ae, S_IFREG | 0777);
 	archive_write_disk_set_options(a, ARCHIVE_EXTRACT_SECURE_SYMLINKS);
 	failure("Extracting a file through an absolute symlink should fail here.");
 	assertEqualInt(ARCHIVE_FAILED, archive_write_header(a, ae));
 	archive_entry_free(ae);
-	assertFileNotExists("/tmp/libarchive_test-test_write_disk_secure-absolute_symlink/libarchive_test-test_write_disk_secure-absolute_symlink_path.tmp");
-	assert(0 == unlink("/tmp/libarchive_test-test_write_disk_secure-absolute_symlink"));
-	unlink("/tmp/libarchive_test-test_write_disk_secure-absolute_symlink_path.tmp");
+	assertFileNotExists(tmp);
+	snprintf(tmp, sizeof(tmp), "%s/%s", tmpdir, lname);
+	assert(0 == unlink(tmp));
+	snprintf(tmp, sizeof(tmp), "%s/%s", tmpdir, fname);
+	unlink(tmp);
 #endif
 
 	/* Create another link. */
@@ -230,23 +246,24 @@ DEFINE_TEST(test_write_disk_secure)
 	 * extract an absolute path.
 	 */
 	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_copy_pathname(ae, "/tmp/libarchive_test-test_write_disk_secure-absolute_path.tmp");
+	snprintf(tmp, sizeof(tmp), "%s/%s", tmpdir, pname);
+	archive_entry_copy_pathname(ae, tmp);
 	archive_entry_set_mode(ae, S_IFREG | 0777);
 	assert(0 == archive_write_header(a, ae));
 	assert(0 == archive_write_finish_entry(a));
-	assertFileExists("/tmp/libarchive_test-test_write_disk_secure-absolute_path.tmp");
-	assert(0 == unlink("/tmp/libarchive_test-test_write_disk_secure-absolute_path.tmp"));
+	assertFileExists(tmp);
+	assert(0 == unlink(tmp));
 
 	/* But with security checks enabled, this should fail. */
 	assert(archive_entry_clear(ae) != NULL);
-	archive_entry_copy_pathname(ae, "/tmp/libarchive_test-test_write_disk_secure-absolute_path.tmp");
+	archive_entry_copy_pathname(ae, tmp);
 	archive_entry_set_mode(ae, S_IFREG | 0777);
 	archive_write_disk_set_options(a, ARCHIVE_EXTRACT_SECURE_NOABSOLUTEPATHS);
 	failure("Extracting an absolute path should fail here.");
 	assertEqualInt(ARCHIVE_FAILED, archive_write_header(a, ae));
 	archive_entry_free(ae);
 	assert(0 == archive_write_finish_entry(a));
-	assertFileNotExists("/tmp/libarchive_test-test_write_disk_secure-absolute_path.tmp");
+	assertFileNotExists(tmp);
 
 	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
 
