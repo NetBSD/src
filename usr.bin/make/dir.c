@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.119 2020/08/28 04:48:57 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.120 2020/08/28 04:59:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.119 2020/08/28 04:48:57 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.120 2020/08/28 04:59:17 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.119 2020/08/28 04:48:57 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.120 2020/08/28 04:59:17 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1564,57 +1564,54 @@ Dir_AddDir(Lst path, const char *name)
     DIR *d;			/* for reading directory */
     struct dirent *dp;		/* entry in directory */
 
-    if (strcmp(name, ".DOTLAST") == 0) {
-	ln = path != NULL ? Lst_Find(path, DirFindName, name) : NULL;
+    if (path != NULL && strcmp(name, ".DOTLAST") == 0) {
+	ln = Lst_Find(path, DirFindName, name);
 	if (ln != NULL)
 	    return Lst_Datum(ln);
-	else {
-	    /* XXX: It is wrong to increment the refCount if dotLast is not
-	     * used afterwards. */
-	    dotLast->refCount += 1;
-	    if (path != NULL)
-		Lst_Prepend(path, dotLast);
-	}
+
+	dotLast->refCount++;
+	Lst_Prepend(path, dotLast);
     }
 
-    if (path)
+    if (path != NULL)
 	ln = Lst_Find(openDirectories, DirFindName, name);
     if (ln != NULL) {
 	p = Lst_Datum(ln);
-	if (path && Lst_Member(path, p) == NULL) {
+	if (Lst_Member(path, p) == NULL) {
 	    p->refCount += 1;
 	    Lst_Append(path, p);
 	}
-    } else {
-	DIR_DEBUG1("Caching %s ...", name);
-
-	if ((d = opendir(name)) != NULL) {
-	    p = bmake_malloc(sizeof(Path));
-	    p->name = bmake_strdup(name);
-	    p->hits = 0;
-	    p->refCount = 1;
-	    Hash_InitTable(&p->files, -1);
-
-	    while ((dp = readdir(d)) != NULL) {
-#if defined(sun) && defined(d_ino) /* d_ino is a sunos4 #define for d_fileno */
-		/*
-		 * The sun directory library doesn't check for a 0 inode
-		 * (0-inode slots just take up space), so we have to do
-		 * it ourselves.
-		 */
-		if (dp->d_fileno == 0) {
-		    continue;
-		}
-#endif /* sun && d_ino */
-		(void)Hash_CreateEntry(&p->files, dp->d_name, NULL);
-	    }
-	    (void)closedir(d);
-	    Lst_Append(openDirectories, p);
-	    if (path != NULL)
-		Lst_Append(path, p);
-	}
-	DIR_DEBUG0("done\n");
+	return p;
     }
+
+    DIR_DEBUG1("Caching %s ...", name);
+
+    if ((d = opendir(name)) != NULL) {
+	p = bmake_malloc(sizeof(Path));
+	p->name = bmake_strdup(name);
+	p->hits = 0;
+	p->refCount = 1;
+	Hash_InitTable(&p->files, -1);
+
+	while ((dp = readdir(d)) != NULL) {
+#if defined(sun) && defined(d_ino) /* d_ino is a sunos4 #define for d_fileno */
+	    /*
+	     * The sun directory library doesn't check for a 0 inode
+	     * (0-inode slots just take up space), so we have to do
+	     * it ourselves.
+	     */
+	    if (dp->d_fileno == 0) {
+		continue;
+	    }
+#endif /* sun && d_ino */
+	    (void)Hash_CreateEntry(&p->files, dp->d_name, NULL);
+	}
+	(void)closedir(d);
+	Lst_Append(openDirectories, p);
+	if (path != NULL)
+	    Lst_Append(path, p);
+    }
+    DIR_DEBUG0("done\n");
     return p;
 }
 
