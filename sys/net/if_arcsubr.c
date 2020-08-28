@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.81 2020/01/29 04:11:35 thorpej Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.82 2020/08/28 06:23:42 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.81 2020/01/29 04:11:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.82 2020/08/28 06:23:42 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -580,16 +580,7 @@ arc_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	}
 
-	IFQ_LOCK(inq);
-	if (IF_QFULL(inq)) {
-		IF_DROP(inq);
-		IFQ_UNLOCK(inq);
-		m_freem(m);
-	} else {
-		IF_ENQUEUE(inq, m);
-		IFQ_UNLOCK(inq);
-		schednetisr(isr);
-	}
+	IFQ_ENQUEUE_ISR(inq, m, isr);
 }
 
 /*
