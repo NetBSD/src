@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_emmc.c,v 1.37 2020/05/31 23:52:19 thorpej Exp $	*/
+/*	$NetBSD: bcm2835_emmc.c,v 1.38 2020/08/28 13:13:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.37 2020/05/31 23:52:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.38 2020/08/28 13:13:55 skrll Exp $");
 
 #include "bcmdmac.h"
 
@@ -118,10 +118,7 @@ bcmemmc_attach(device_t parent, device_t self, void *aux)
 	struct bcmemmc_softc *sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
-	enum bcmemmc_type type;
 	int error;
-
-	type = of_search_compatible(phandle, compat_data)->data;
 
 	sc->sc.sc_dev = self;
 	sc->sc.sc_dmat = faa->faa_dmat;
@@ -186,6 +183,8 @@ bcmemmc_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 #if NBCMDMAC > 0
+	enum bcmemmc_type type = of_search_compatible(phandle, compat_data)->data;
+
 	if (type != BCM2835_SDHCI)
 		goto done;
 
