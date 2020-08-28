@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unix.c,v 1.22 2020/08/28 11:46:05 christos Exp $	*/
+/*	$NetBSD: t_unix.c,v 1.23 2020/08/28 13:56:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #define _GNU_SOURCE
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$Id: t_unix.c,v 1.22 2020/08/28 11:46:05 christos Exp $");
+__RCSID("$Id: t_unix.c,v 1.23 2020/08/28 13:56:29 christos Exp $");
 #else
 #define getprogname() argv[0]
 #endif
@@ -241,6 +241,12 @@ test(bool forkit, bool closeit, bool statit, size_t len)
 	if ((sun = calloc(1, slen)) == NULL)
 		FAIL("calloc");
 
+	if (mkdir("sock", 0777) == -1)
+		FAIL("mkdir");
+
+	if (chdir("sock") == -1)
+		FAIL("chdir");
+
 	memset(sun->sun_path, 'a', len);
 	sun->sun_path[len] = '\0';
 	(void)unlink(sun->sun_path);
@@ -250,6 +256,8 @@ test(bool forkit, bool closeit, bool statit, size_t len)
 	sun->sun_len = sl;
 #endif
 	sun->sun_family = AF_UNIX;
+
+	unlink(sun->sun_path);
 
 	if (bind(srvr, (struct sockaddr *)sun, sl) == -1) {
 		if (errno == EINVAL && sl >= 256) {
