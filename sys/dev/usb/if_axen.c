@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.11.8.8 2019/05/13 12:40:13 martin Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.11.8.9 2020/08/28 19:44:22 martin Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.11.8.8 2019/05/13 12:40:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.11.8.9 2020/08/28 19:44:22 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1095,6 +1095,12 @@ axen_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 			    device_xname(sc->axen_dev),
 			    (pkt_hdr & AXEN_RXHDR_CRC_ERR) ? "crc" : "drop",
 			    pkt_count));
+			goto nextpkt;
+		}
+		if (pkt_len > MCLBYTES) {
+			ifp->if_ierrors++;
+			DPRINTF(("%s: oversize frame %d\n",
+			    device_xname(sc->axen_dev), pkt_len));
 			goto nextpkt;
 		}
 
