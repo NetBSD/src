@@ -1,4 +1,4 @@
-/*	$NetBSD: wgconfig.c,v 1.4 2020/08/21 17:51:31 martin Exp $	*/
+/*	$NetBSD: wgconfig.c,v 1.5 2020/08/28 17:17:53 tih Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: wgconfig.c,v 1.4 2020/08/21 17:51:31 martin Exp $");
+__RCSID("$NetBSD: wgconfig.c,v 1.5 2020/08/28 17:17:53 tih Exp $");
 
 #include <sys/ioctl.h>
 
@@ -241,7 +241,7 @@ static void
 show_peer(prop_dictionary_t peer, const char *prefix, bool show_psk)
 {
 	prop_object_t prop_obj;
-	uint64_t sec;
+	time_t sec;
 
 	prop_obj = prop_dictionary_get(peer, "public_key");
 	if (prop_obj == NULL) {
@@ -265,10 +265,14 @@ show_peer(prop_dictionary_t peer, const char *prefix, bool show_psk)
 
 	handle_allowed_ips(peer, prefix);
 
-	if (prop_dictionary_get_uint64(peer, "last_handshake_time_sec", &sec))
-		printf("%slatest-handshake: %"PRIu64"\n", prefix, sec);
-	else
+	if (prop_dictionary_get_int64(peer, "last_handshake_time_sec", &sec)) {
+		if (sec > 0)
+			printf("%slatest-handshake: %s", prefix, ctime(&sec));
+		else
+			printf("%slatest-handshake: (never)\n", prefix);
+	} else {
 		printf("%slatest-handshake: (none)\n", prefix);
+	}
 }
 
 static int
