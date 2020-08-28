@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.219 2020/08/27 19:15:35 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.220 2020/08/28 04:48:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.219 2020/08/27 19:15:35 rillig Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.220 2020/08/28 04:48:57 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.219 2020/08/27 19:15:35 rillig Exp $");
+__RCSID("$NetBSD: job.c,v 1.220 2020/08/28 04:48:57 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -710,8 +710,8 @@ JobPrintCommand(void *cmdp, void *jobp)
     if (strcmp(cmd, "...") == 0) {
 	job->node->type |= OP_SAVE_CMDS;
 	if ((job->flags & JOB_IGNDOTS) == 0) {
-	    LstNode dotsNode = Lst_MemberS(job->node->commands, cmd);
-	    job->tailCmds = dotsNode != NULL ? Lst_SuccS(dotsNode) : NULL;
+	    LstNode dotsNode = Lst_Member(job->node->commands, cmd);
+	    job->tailCmds = dotsNode != NULL ? Lst_Succ(dotsNode) : NULL;
 	    return 1;
 	}
 	return 0;
@@ -914,7 +914,7 @@ static int
 JobSaveCommand(void *cmd, void *gn)
 {
     cmd = Var_Subst((char *)cmd, (GNode *)gn, VARE_WANTRES);
-    Lst_AppendS(postCommands->commands, cmd);
+    Lst_Append(postCommands->commands, cmd);
     return 0;
 }
 
@@ -1101,7 +1101,7 @@ JobFinish(Job *job, int status)
 	 * on the .END target.
 	 */
 	if (job->tailCmds != NULL) {
-	    Lst_ForEachFromS(job->node->commands, job->tailCmds,
+	    Lst_ForEachFrom(job->node->commands, job->tailCmds,
 			     JobSaveCommand,
 			     job->node);
 	}
@@ -1234,13 +1234,13 @@ Job_Touch(GNode *gn, Boolean silent)
 Boolean
 Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
 {
-    if (OP_NOP(gn->type) && Lst_IsEmptyS(gn->commands) &&
-	((gn->type & OP_LIB) == 0 || Lst_IsEmptyS(gn->children))) {
+    if (OP_NOP(gn->type) && Lst_IsEmpty(gn->commands) &&
+	((gn->type & OP_LIB) == 0 || Lst_IsEmpty(gn->children))) {
 	/*
 	 * No commands. Look for .DEFAULT rule from which we might infer
 	 * commands
 	 */
-	if ((DEFAULT != NULL) && !Lst_IsEmptyS(DEFAULT->commands) &&
+	if ((DEFAULT != NULL) && !Lst_IsEmpty(DEFAULT->commands) &&
 		(gn->type & OP_SPECIAL) == 0) {
 	    char *p1;
 	    /*
@@ -1655,7 +1655,7 @@ JobStart(GNode *gn, int flags)
 	 * We can do all the commands at once. hooray for sanity
 	 */
 	numCommands = 0;
-	Lst_ForEachS(gn->commands, JobPrintCommand, job);
+	Lst_ForEach(gn->commands, JobPrintCommand, job);
 
 	/*
 	 * If we didn't print out any commands to the shell script,
@@ -1682,7 +1682,7 @@ JobStart(GNode *gn, int flags)
 	 * doesn't do any harm in this case and may do some good.
 	 */
 	if (cmdsOK) {
-	    Lst_ForEachS(gn->commands, JobPrintCommand, job);
+	    Lst_ForEach(gn->commands, JobPrintCommand, job);
 	}
 	/*
 	 * Don't execute the shell, thank you.
@@ -1724,7 +1724,7 @@ JobStart(GNode *gn, int flags)
 	 */
 	if (cmdsOK && aborting == 0) {
 	    if (job->tailCmds != NULL) {
-		Lst_ForEachFromS(job->node->commands, job->tailCmds,
+		Lst_ForEachFrom(job->node->commands, job->tailCmds,
 				 JobSaveCommand,
 				 job->node);
 	    }
@@ -1968,7 +1968,7 @@ JobRun(GNode *targ)
      * the nice side effect that it avoids a lot of other problems.
      */
     Lst lst = Lst_Init();
-    Lst_AppendS(lst, targ);
+    Lst_Append(lst, targ);
     (void)Make_Run(lst);
     Lst_Destroy(lst, NULL);
     JobStart(targ, JOB_SPECIAL);
@@ -2671,8 +2671,8 @@ int
 Job_Finish(void)
 {
     if (postCommands != NULL &&
-	(!Lst_IsEmptyS(postCommands->commands) ||
-	 !Lst_IsEmptyS(postCommands->children))) {
+	(!Lst_IsEmpty(postCommands->commands) ||
+	 !Lst_IsEmpty(postCommands->children))) {
 	if (errors) {
 	    Error("Errors reported so .END ignored");
 	} else {

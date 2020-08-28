@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.105 2020/08/28 04:28:45 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.106 2020/08/28 04:48:57 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -416,7 +416,7 @@ meta_needed(GNode *gn, const char *dname, const char *tname,
     }
 
     /* Check if there are no commands to execute. */
-    if (Lst_IsEmptyS(gn->commands)) {
+    if (Lst_IsEmpty(gn->commands)) {
 	if (verbose)
 	    fprintf(debug_file, "Skipping meta for %s: no commands\n",
 		    gn->name);
@@ -424,7 +424,7 @@ meta_needed(GNode *gn, const char *dname, const char *tname,
     }
     if ((gn->type & (OP_META|OP_SUBMAKE)) == OP_SUBMAKE) {
 	/* OP_SUBMAKE is a bit too aggressive */
-	if (Lst_ForEachS(gn->commands, is_submake, gn)) {
+	if (Lst_ForEach(gn->commands, is_submake, gn)) {
 	    if (DEBUG(META))
 		fprintf(debug_file, "Skipping meta for %s: .SUBMAKE\n",
 			gn->name);
@@ -517,7 +517,7 @@ meta_create(BuildMon *pbm, GNode *gn)
 
     mf.gn = gn;
 
-    Lst_ForEachS(gn->commands, printCMD, &mf);
+    Lst_ForEach(gn->commands, printCMD, &mf);
 
     fprintf(mf.fp, "CWD %s\n", getcwd(buf, sizeof(buf)));
     fprintf(mf.fp, "TARGET %s\n", tname);
@@ -890,10 +890,10 @@ void
 meta_finish(void)
 {
     if (metaBailiwick != NULL)
-	Lst_FreeS(metaBailiwick);
+	Lst_Free(metaBailiwick);
     free(metaBailiwickStr);
     if (metaIgnorePaths != NULL)
-	Lst_FreeS(metaIgnorePaths);
+	Lst_Free(metaIgnorePaths);
     free(metaIgnorePathsStr);
 }
 
@@ -1001,7 +1001,7 @@ meta_ignore(GNode *gn, const char *p)
 
     if (*p == '/') {
 	cached_realpath(p, fname); /* clean it up */
-	if (Lst_ForEachS(metaIgnorePaths, prefix_match, fname)) {
+	if (Lst_ForEach(metaIgnorePaths, prefix_match, fname)) {
 #ifdef DEBUG_META_MODE
 	    if (DEBUG(META))
 		fprintf(debug_file, "meta_oodate: ignoring path: %s\n",
@@ -1167,7 +1167,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 	/* we want to track all the .meta we read */
 	Var_Append(".MAKE.META.FILES", fname, VAR_GLOBAL);
 
-	ln = Lst_FirstS(gn->commands);
+	ln = Lst_First(gn->commands);
 	while (!oodate && (x = fgetLine(&buf, &bufsz, 0, fp)) > 0) {
 	    lineno++;
 	    if (buf[x - 1] == '\n')
@@ -1332,18 +1332,18 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    DEQUOTE(move_target);
 		    /* FALLTHROUGH */
 		case 'D':		/* unlink */
-		    if (*p == '/' && !Lst_IsEmptyS(missingFiles)) {
+		    if (*p == '/' && !Lst_IsEmpty(missingFiles)) {
 			/* remove any missingFiles entries that match p */
-			ln = Lst_FindS(missingFiles, path_match, p);
+			ln = Lst_Find(missingFiles, path_match, p);
 			if (ln != NULL) {
 			    LstNode nln;
 			    char *tp;
 
 			    do {
-				nln = Lst_FindFromS(missingFiles, Lst_SuccS(ln),
+				nln = Lst_FindFrom(missingFiles, Lst_Succ(ln),
 						   path_match, p);
-				tp = Lst_DatumS(ln);
-				Lst_RemoveS(missingFiles, ln);
+				tp = Lst_Datum(ln);
+				Lst_Remove(missingFiles, ln);
 				free(tp);
 			    } while ((ln = nln) != NULL);
 			}
@@ -1390,14 +1390,14 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    if (*p != '/')
 			break;
 
-		    if (Lst_IsEmptyS(metaBailiwick))
+		    if (Lst_IsEmpty(metaBailiwick))
 			break;
 
 		    /* ignore cwd - normal dependencies handle those */
 		    if (strncmp(p, cwd, cwdlen) == 0)
 			break;
 
-		    if (!Lst_ForEachS(metaBailiwick, prefix_match, p))
+		    if (!Lst_ForEach(metaBailiwick, prefix_match, p))
 			break;
 
 		    /* tmpdir might be within */
@@ -1411,8 +1411,8 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    if ((link_src != NULL && cached_lstat(p, &fs) < 0) ||
 			(link_src == NULL && cached_stat(p, &fs) < 0)) {
 			if (!meta_ignore(gn, p)) {
-			    if (Lst_FindS(missingFiles, string_match, p) == NULL)
-				Lst_AppendS(missingFiles, bmake_strdup(p));
+			    if (Lst_Find(missingFiles, string_match, p) == NULL)
+				Lst_Append(missingFiles, bmake_strdup(p));
 			}
 		    }
 		    break;
@@ -1497,8 +1497,8 @@ meta_oodate(GNode *gn, Boolean oodate)
 			     * A referenced file outside of CWD is missing.
 			     * We cannot catch every eventuality here...
 			     */
-			    if (Lst_FindS(missingFiles, string_match, p) == NULL)
-				Lst_AppendS(missingFiles, bmake_strdup(p));
+			    if (Lst_Find(missingFiles, string_match, p) == NULL)
+				Lst_Append(missingFiles, bmake_strdup(p));
 			}
 		    }
 		    if (buf[0] == 'E') {
@@ -1521,7 +1521,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 			fprintf(debug_file, "%s: %d: there were more build commands in the meta data file than there are now...\n", fname, lineno);
 		    oodate = TRUE;
 		} else {
-		    char *cmd = Lst_DatumS(ln);
+		    char *cmd = Lst_Datum(ln);
 		    Boolean hasOODATE = FALSE;
 
 		    if (strstr(cmd, "$?"))
@@ -1573,7 +1573,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 			    oodate = TRUE;
 		    }
 		    free(cmd);
-		    ln = Lst_SuccS(ln);
+		    ln = Lst_Succ(ln);
 		}
 	    } else if (strcmp(buf, "CWD") == 0) {
 		/*
@@ -1595,10 +1595,10 @@ meta_oodate(GNode *gn, Boolean oodate)
 	}
 
 	fclose(fp);
-	if (!Lst_IsEmptyS(missingFiles)) {
+	if (!Lst_IsEmpty(missingFiles)) {
 	    if (DEBUG(META))
 		fprintf(debug_file, "%s: missing files: %s...\n",
-			fname, (char *)Lst_DatumS(Lst_FirstS(missingFiles)));
+			fname, (char *)Lst_Datum(Lst_First(missingFiles)));
 	    oodate = TRUE;
 	}
 	if (!oodate && !have_filemon && filemonMissing) {
@@ -1625,7 +1625,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 	}
     }
 
-    Lst_DestroyS(missingFiles, free);
+    Lst_Destroy(missingFiles, free);
 
     if (oodate && needOODATE) {
 	/*
