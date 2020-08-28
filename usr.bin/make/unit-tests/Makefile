@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.120 2020/08/27 19:00:17 rillig Exp $
+# $NetBSD: Makefile,v 1.121 2020/08/28 02:45:51 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -466,6 +466,9 @@ SYNC_MI_AWK= \
 	$$1 == linestart "/Makefile" { system(cmd) }
 
 sync-mi:
+	# Obsolete entries in the mi file must be marked as obsolete,
+	# the lines must be preserved instead of just being deleted.
+	@echo "$@: Doesn't work right now." 1>&2; exit 1
 	@set -eu;							\
 	cd "${MAKEFILE:tA:H}/../../..";					\
 	mi="distrib/sets/lists/tests/mi";				\
