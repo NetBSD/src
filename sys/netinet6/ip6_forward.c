@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.100 2020/08/28 06:19:13 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.101 2020/08/28 06:28:58 ozaki-r Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.100 2020/08/28 06:19:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.101 2020/08/28 06:28:58 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -116,7 +116,7 @@ ip6_cantforward(const struct ip6_hdr *ip6, const struct ifnet *srcifp,
  * protocol deal with that.
  */
 void
-ip6_forward(struct mbuf *m, int srcrt)
+ip6_forward(struct mbuf *m, int srcrt, struct ifnet *rcvif)
 {
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	const struct sockaddr_in6 *dst;
@@ -126,8 +126,6 @@ ip6_forward(struct mbuf *m, int srcrt)
 	struct ifnet *origifp;	/* maybe unnecessary */
 	uint32_t inzone, outzone;
 	struct in6_addr src_in6, dst_in6;
-	struct ifnet *rcvif = NULL;
-	struct psref psref;
 	struct route *ro = NULL;
 #ifdef IPSEC
 	int needipsec = 0;
@@ -138,10 +136,6 @@ ip6_forward(struct mbuf *m, int srcrt)
 	 * Clear any in-bound checksum flags for this packet.
 	 */
 	m->m_pkthdr.csum_flags = 0;
-
-	rcvif = m_get_rcvif_psref(m, &psref);
-	if (__predict_false(rcvif == NULL))
-		goto drop;
 
 	/*
 	 * Do not forward packets to multicast destination (should be handled
@@ -469,7 +463,5 @@ out:
 	rtcache_unref(rt, ro);
 	if (ro != NULL)
 		rtcache_percpu_putref(ip6_forward_rt_percpu);
-	if (rcvif != NULL)
-		m_put_rcvif_psref(rcvif, &psref);
 	return;
 }
