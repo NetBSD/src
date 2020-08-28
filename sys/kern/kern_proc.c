@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.257 2020/08/28 21:39:28 riastradh Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.258 2020/08/28 21:39:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.257 2020/08/28 21:39:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.258 2020/08/28 21:39:56 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -1766,7 +1766,7 @@ proc_vmspace_getref(struct proc *p, struct vmspace **vm)
 /*
  * Acquire a write lock on the process credential.
  */
-void 
+void
 proc_crmod_enter(void)
 {
 	struct lwp *l = curlwp;
@@ -1999,7 +1999,7 @@ static struct lwp *
 proc_active_lwp(struct proc *p)
 {
 	static const int ostat[] = {
-		0,	
+		0,
 		2,	/* LSIDL */
 		6,	/* LSRUN */
 		5,	/* LSSLEEP */
@@ -2186,7 +2186,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 		/*
 		 * Grab a hold on the process.
 		 */
-		if (mmmbrains) { 
+		if (mmmbrains) {
 			zombie = true;
 		} else {
 			zombie = !rw_tryenter(&p->p_reflock, RW_READER);
