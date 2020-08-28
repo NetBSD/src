@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.65 2018/12/22 14:28:56 maxv Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.66 2020/08/28 06:23:42 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.65 2018/12/22 14:28:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.66 2020/08/28 06:23:42 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -404,16 +404,7 @@ ieee1394_input(struct ifnet *ifp, struct mbuf *m, uint16_t src)
 		return;
 	}
 
-	IFQ_LOCK(inq);
-	if (IF_QFULL(inq)) {
-		IF_DROP(inq);
-		IFQ_UNLOCK(inq);
-		m_freem(m);
-	} else {
-		IF_ENQUEUE(inq, m);
-		IFQ_UNLOCK(inq);
-		schednetisr(isr);
-	}
+	IFQ_ENQUEUE_ISR(inq, m, isr);
 }
 
 static struct mbuf *
