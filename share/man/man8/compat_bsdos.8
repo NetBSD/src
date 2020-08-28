@@ -1,0 +1,125 @@
+.\"
+.\"
+.\" Copyright (c) 2020 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Dan Plassche.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd August 27, 2020
+.Dt compat_bsdos 8 amd64,i386,sparc,sparc64
+.Os
+.Sh NAME
+.Nm compat_bsdos
+.Nd binary compatibility for BSDi releases
+.Sh DESCRIPTION
+.Pp
+The
+.Cd COMPAT_NOMID
+kernel option provides compatibility with BSDi 1-3
+.Xr a.out 5
+binaries on
+.Tn Nx Ns /i386
+and
+.Tn Nx Ns /amd64 .
+The option is included in the
+.Li GENERIC
+kernel on
+.Em i386 ,
+but needs to be enabled along with
+.Cd EXEC_AOUT
+on
+.Em amd64 .
+.Pp
+Null memory protection must be disabled with the
+.Xr sysctl 7
+option
+.Va vm.user_va0_disable
+set to
+.Li 0
+for the binaries to run successfully.
+.Pp
+.Bsx 2.0+
+binaries also require an
+.Xr ldconfig 8
+configuration or a symbolic link
+pointing to the
+.Pa /emul/bsdos/shlib
+directory to run outside of a chroot.
+.Pp
+.Bsx 4.0
+switched to ELF binaries that do not run under the
+compatibility layers currently available on
+.Nx .
+.Sh SEE ALSO
+.Xr options 4 ,
+.Xr a.out 5 ,
+.Xr elf 5 ,
+.Xr sysctl 7 ,
+.Xr compat_netbsd32 8
+.Sh HISTORY
+.Pp
+.Tn Bsx "(BSD/386)"
+1.0-1.1 was derived from
+.Bx 4.3 Reno
+code in the
+.Tn Net/2
+release.
+.Pp
+.Bsx 2.0
+was based on
+.Bx 4.4 Lite ,
+but introduced new static shared libraries
+compiled into binary objects under
+.Pa /shlib .
+The build system included the
+.Li shlicc
+command with the
+.Fl Bstatic
+flag that allowed reverting to the standard
+library archive format.
+.Pp
+.Ox 2.2-4.7
+included a different compatibility implementation
+under the
+.Li COMPAT_BSDOS
+kernel option.
+.Sh BUGS
+.Pp
+.Bsx
+compatibility was broken on
+.Nx
+5-6.
+.Pp
+.Bsx
+added
+.Tn SPARC
+support with release 3.0,
+but the binaries are incorrectly recognized
+and fail as
+.Li sunos
+executables on
+.Tn Nx Ns /sparc
+and
+.Tn Nx Ns /sparc64 .
