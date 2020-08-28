@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.76 2020/08/28 04:48:57 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.77 2020/08/28 19:14:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.76 2020/08/28 04:48:57 rillig Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.77 2020/08/28 19:14:07 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.76 2020/08/28 04:48:57 rillig Exp $");
+__RCSID("$NetBSD: targ.c,v 1.77 2020/08/28 19:14:07 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -84,8 +84,7 @@ __RCSID("$NetBSD: targ.c,v 1.76 2020/08/28 04:48:57 rillig Exp $");
 /*-
  * targ.c --
  *	Functions for maintaining the Lst allTargets. Target nodes are
- * kept in two structures: a Lst, maintained by the list library, and a
- * hash table, maintained by the hash library.
+ *	kept in two structures: a Lst and a hash table.
  *
  * Interface:
  *	Targ_Init 	    	Initialization procedure.
@@ -133,7 +132,6 @@ __RCSID("$NetBSD: targ.c,v 1.76 2020/08/28 04:48:57 rillig Exp $");
 #include	  <time.h>
 
 #include	  "make.h"
-#include	  "hash.h"
 #include	  "dir.h"
 
 static Lst        allTargets;	/* the list of all targets found so far */
@@ -152,18 +150,6 @@ static void TargFreeGN(void *);
 static int TargPropagateCohort(void *, void *);
 static int TargPropagateNode(void *, void *);
 
-/*-
- *-----------------------------------------------------------------------
- * Targ_Init --
- *	Initialize this module
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	The allTargets list and the targets hash table are initialized
- *-----------------------------------------------------------------------
- */
 void
 Targ_Init(void)
 {
@@ -171,18 +157,6 @@ Targ_Init(void)
     Hash_InitTable(&targets, HTSIZE);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Targ_End --
- *	Finalize this module
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	All lists and gnodes are cleared
- *-----------------------------------------------------------------------
- */
 void
 Targ_End(void)
 {
@@ -201,39 +175,18 @@ Targ_Stats(void)
     Hash_DebugStats(&targets, "targets");
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Targ_List --
- *	Return the list of all targets
- *
- * Results:
- *	The list of all targets.
- *
- * Side Effects:
- *	None
- *-----------------------------------------------------------------------
- */
+/* Return the list of all targets. */
 Lst
 Targ_List(void)
 {
     return allTargets;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Targ_NewGN  --
- *	Create and initialize a new graph node
+/* Create and initialize a new graph node. The gnode is added to the list of
+ * all gnodes.
  *
  * Input:
- *	name		the name to stick in the new node
- *
- * Results:
- *	An initialized graph node with the name field filled with a copy
- *	of the passed name
- *
- * Side Effects:
- *	The gnode is added to the list of all gnodes.
- *-----------------------------------------------------------------------
+ *	name		the name of the node, such as "clean", "src.c"
  */
 GNode *
 Targ_NewGN(const char *name)
@@ -244,11 +197,7 @@ Targ_NewGN(const char *name)
     gn->name = bmake_strdup(name);
     gn->uname = NULL;
     gn->path = NULL;
-    if (name[0] == '-' && name[1] == 'l') {
-	gn->type = OP_LIB;
-    } else {
-	gn->type = 0;
-    }
+    gn->type = name[0] == '-' && name[1] == 'l' ? OP_LIB : 0;
     gn->unmade =    	0;
     gn->unmade_cohorts = 0;
     gn->cohort_num[0] = 0;
@@ -267,8 +216,8 @@ Targ_NewGN(const char *name)
     Hash_InitTable(&gn->context, 0);
     gn->commands =  	Lst_Init();
     gn->suffix =	NULL;
-    gn->lineno =	0;
     gn->fname = 	NULL;
+    gn->lineno =	0;
 
 #ifdef CLEANUP
     if (allGNs == NULL)
@@ -280,28 +229,14 @@ Targ_NewGN(const char *name)
 }
 
 #ifdef CLEANUP
-/*-
- *-----------------------------------------------------------------------
- * TargFreeGN  --
- *	Destroy a GNode
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	None.
- *-----------------------------------------------------------------------
- */
 static void
 TargFreeGN(void *gnp)
 {
     GNode *gn = (GNode *)gnp;
 
-
     free(gn->name);
     free(gn->uname);
     free(gn->path);
-    /* gn->fname points to name allocated when file was opened, don't free */
 
     Lst_Free(gn->iParents);
     Lst_Free(gn->cohorts);
@@ -311,29 +246,26 @@ TargFreeGN(void *gnp)
     Lst_Free(gn->order_pred);
     Hash_DeleteTable(&gn->context);
     Lst_Free(gn->commands);
+
+    /* XXX: does gn->suffix need to be freed? It is reference-counted. */
+    /* gn->fname points to name allocated when file was opened, don't free */
+
     free(gn);
 }
 #endif
 
 
-/*-
- *-----------------------------------------------------------------------
- * Targ_FindNode  --
- *	Find a node in the list using the given name for matching
+/* Find a node in the list using the given name for matching.
+ * If the node is created, it is added to the .ALLTARGETS list.
  *
  * Input:
  *	name		the name to find
- *	flags		flags governing events when target not
- *			found
+ *	flags		flags governing events when target not found
  *
  * Results:
- *	The node in the list if it was. If it wasn't, return NULL of
+ *	The node in the list if it was. If it wasn't, return NULL if
  *	flags was TARG_NOCREATE or the newly created and initialized node
  *	if it was TARG_CREATE
- *
- * Side Effects:
- *	Sometimes a node is created and added to the list
- *-----------------------------------------------------------------------
  */
 GNode *
 Targ_FindNode(const char *name, int flags)
@@ -366,10 +298,10 @@ Targ_FindNode(const char *name, int flags)
     return gn;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Targ_FindList --
- *	Make a complete list of GNodes from the given list of names
+/* Make a complete list of GNodes from the given list of names.
+ * If flags is TARG_CREATE, nodes will be created for all names in
+ * names which do not yet have graph nodes. If flags is TARG_NOCREATE,
+ * an error message will be printed for each name which can't be found.
  *
  * Input:
  *	name		list of names to find
@@ -378,12 +310,6 @@ Targ_FindNode(const char *name, int flags)
  * Results:
  *	A complete list of graph nodes corresponding to all instances of all
  *	the names in names.
- *
- * Side Effects:
- *	If flags is TARG_CREATE, nodes will be created for all names in
- *	names which do not yet have graph nodes. If flags is TARG_NOCREATE,
- *	an error message will be printed for each name which can't be found.
- * -----------------------------------------------------------------------
  */
 Lst
 Targ_FindList(Lst names, int flags)
@@ -414,100 +340,33 @@ Targ_FindList(Lst names, int flags)
     return nodes;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Targ_Ignore  --
- *	Return true if should ignore errors when creating gn
- *
- * Input:
- *	gn		node to check for
- *
- * Results:
- *	TRUE if should ignore errors
- *
- * Side Effects:
- *	None
- *-----------------------------------------------------------------------
- */
+/* Return true if should ignore errors when creating gn. */
 Boolean
 Targ_Ignore(GNode *gn)
 {
-    if (ignoreErrors || gn->type & OP_IGNORE) {
-	return TRUE;
-    } else {
-	return FALSE;
-    }
+    return ignoreErrors || gn->type & OP_IGNORE;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Targ_Silent  --
- *	Return true if be silent when creating gn
- *
- * Input:
- *	gn		node to check for
- *
- * Results:
- *	TRUE if should be silent
- *
- * Side Effects:
- *	None
- *-----------------------------------------------------------------------
- */
+/* Return true if be silent when creating gn. */
 Boolean
 Targ_Silent(GNode *gn)
 {
-    if (beSilent || gn->type & OP_SILENT) {
-	return TRUE;
-    } else {
-	return FALSE;
-    }
+    return beSilent || gn->type & OP_SILENT;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Targ_Precious --
- *	See if the given target is precious
- *
- * Input:
- *	gn		the node to check
- *
- * Results:
- *	TRUE if it is precious. FALSE otherwise
- *
- * Side Effects:
- *	None
- *-----------------------------------------------------------------------
- */
+/* See if the given target is precious. */
 Boolean
 Targ_Precious(GNode *gn)
 {
-    if (allPrecious || (gn->type & (OP_PRECIOUS|OP_DOUBLEDEP))) {
-	return TRUE;
-    } else {
-	return FALSE;
-    }
+    return allPrecious || gn->type & (OP_PRECIOUS | OP_DOUBLEDEP);
 }
 
 /******************* DEBUG INFO PRINTING ****************/
 
 static GNode	  *mainTarg;	/* the main target, as set by Targ_SetMain */
-/*-
- *-----------------------------------------------------------------------
- * Targ_SetMain --
- *	Set our idea of the main target we'll be creating. Used for
- *	debugging output.
- *
- * Input:
- *	gn		The main target we'll create
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	"mainTarg" is set to the main target's node.
- *-----------------------------------------------------------------------
- */
+
+/* Set our idea of the main target we'll be creating. Used for debugging
+ * output. */
 void
 Targ_SetMain(GNode *gn)
 {
@@ -532,20 +391,8 @@ Targ_PrintCmd(void *cmd, void *dummy MAKE_ATTR_UNUSED)
     return 0;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Targ_FmtTime --
- *	Format a modification time in some reasonable way and return it.
- *
- * Results:
- *	The time reformatted.
- *
- * Side Effects:
- *	The time is placed in a static area, so it is overwritten
- *	with each call.
- *
- *-----------------------------------------------------------------------
- */
+/* Format a modification time in some reasonable way and return it.
+ * The time is placed in a static area, so it is overwritten with each call. */
 char *
 Targ_FmtTime(time_t tm)
 {
@@ -557,18 +404,7 @@ Targ_FmtTime(time_t tm)
     return buf;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Targ_PrintType --
- *	Print out a type field giving only those attributes the user can
- *	set.
- *
- * Results:
- *
- * Side Effects:
- *
- *-----------------------------------------------------------------------
- */
+/* Print out a type field giving only those attributes the user can set. */
 void
 Targ_PrintType(int type)
 {
@@ -620,12 +456,7 @@ made_name(GNodeMade made)
     }
 }
 
-/*-
- *-----------------------------------------------------------------------
- * TargPrintNode --
- *	print the contents of a node
- *-----------------------------------------------------------------------
- */
+/* Print the contents of a node. */
 int
 Targ_PrintNode(void *gnp, void *passp)
 {
@@ -706,19 +537,8 @@ Targ_PrintNode(void *gnp, void *passp)
     return 0;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * TargPrintOnlySrc --
- *	Print only those targets that are just a source.
- *
- * Results:
- *	0.
- *
- * Side Effects:
- *	The name of each file is printed preceded by #\t
- *
- *-----------------------------------------------------------------------
- */
+/* Print only those targets that are just a source.
+ * The name of each file is printed, preceded by #\t. */
 static int
 TargPrintOnlySrc(void *gnp, void *dummy MAKE_ATTR_UNUSED)
 {
@@ -734,21 +554,10 @@ TargPrintOnlySrc(void *gnp, void *dummy MAKE_ATTR_UNUSED)
     return 0;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Targ_PrintGraph --
- *	print the entire graph. heh heh
- *
- * Input:
- *	pass		Which pass this is. 1 => no processing
- *			2 => processing done
- *
- * Results:
- *	none
- *
- * Side Effects:
- *	lots o' output
- *-----------------------------------------------------------------------
+/* Input:
+ *	pass		1 => before processing
+ *			2 => after processing
+ *			3 => after processing, an error occurred
  */
 void
 Targ_PrintGraph(int pass)
@@ -768,29 +577,18 @@ Targ_PrintGraph(int pass)
     Suff_PrintAll();
 }
 
-/*-
- *-----------------------------------------------------------------------
- * TargPropagateNode --
- *	Propagate information from a single node to related nodes if
- *	appropriate.
+/* Propagate information from a single node to related nodes if appropriate.
+ *
+ * Information is propagated from this node to cohort nodes.
+ *
+ * If the node was defined with "::", then TargPropagateCohort() will be
+ * called for each cohort node.
  *
  * Input:
  *	gnp		The node that we are processing.
  *
  * Results:
  *	Always returns 0, for the benefit of Lst_ForEach().
- *
- * Side Effects:
- *	Information is propagated from this node to cohort or child
- *	nodes.
- *
- *	If the node was defined with "::", then TargPropagateCohort()
- *	will be called for each cohort node.
- *
- *	If the node has recursive predecessors, then
- *	TargPropagateRecpred() will be called for each recursive
- *	predecessor.
- *-----------------------------------------------------------------------
  */
 static int
 TargPropagateNode(void *gnp, void *junk MAKE_ATTR_UNUSED)
@@ -802,11 +600,9 @@ TargPropagateNode(void *gnp, void *junk MAKE_ATTR_UNUSED)
     return 0;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * TargPropagateCohort --
- *	Propagate some bits in the type mask from a node to
- *	a related cohort node.
+/* Propagate some bits in the type mask from a node to a related cohort node.
+ * cnp's type bitmask is modified to incorporate some of the bits from gnp's
+ * type bitmask.  (XXX need a better explanation.)
  *
  * Input:
  *	cnp		The node that we are processing.
@@ -814,11 +610,6 @@ TargPropagateNode(void *gnp, void *junk MAKE_ATTR_UNUSED)
  *
  * Results:
  *	Always returns 0, for the benefit of Lst_ForEach().
- *
- * Side Effects:
- *	cnp's type bitmask is modified to incorporate some of the
- *	bits from gnp's type bitmask.  (XXX need a better explanation.)
- *-----------------------------------------------------------------------
  */
 static int
 TargPropagateCohort(void *cgnp, void *pgnp)
@@ -830,20 +621,10 @@ TargPropagateCohort(void *cgnp, void *pgnp)
     return 0;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Targ_Propagate --
- *	Propagate information between related nodes.  Should be called
- *	after the makefiles are parsed but before any action is taken.
+/* Propagate information between related nodes.  Should be called after the
+ * makefiles are parsed but before any action is taken.
  *
- * Results:
- *	none
- *
- * Side Effects:
- *	Information is propagated between related nodes throughout the
- *	graph.
- *-----------------------------------------------------------------------
- */
+ * Information is propagated between related nodes throughout the graph. */
 void
 Targ_Propagate(void)
 {
