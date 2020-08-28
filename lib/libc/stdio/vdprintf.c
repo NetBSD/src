@@ -1,4 +1,4 @@
-/*	$NetBSD: vdprintf.c,v 1.5 2017/01/10 17:45:12 christos Exp $	*/
+/*	$NetBSD: vdprintf.c,v 1.6 2020/08/28 22:02:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,12 +34,11 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vdprintf.c,v 1.5 2017/01/10 17:45:12 christos Exp $");
+__RCSID("$NetBSD: vdprintf.c,v 1.6 2020/08/28 22:02:24 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
-#include <sys/stat.h>
 
 #include <assert.h>
 #include <errno.h>
@@ -87,16 +86,6 @@ vdprintf_l(int fd, locale_t loc, const char * __restrict fmt, va_list ap)
 	if (tmp != O_RDWR && tmp != O_WRONLY) {
 		errno = EINVAL;
 		return EOF;
-	}
-
-	if (fdflags & O_NONBLOCK) {
-		struct stat st;
-		if (fstat(fd, &st) == -1)
-			return -1;
-		if (!S_ISREG(st.st_mode)) {
-			errno = EFTYPE;
-			return EOF;
-		}
 	}
 
 	_FILEEXT_SETUP(&f, &fext);
