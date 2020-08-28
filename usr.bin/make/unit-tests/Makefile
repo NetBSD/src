@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.121 2020/08/28 02:45:51 rillig Exp $
+# $NetBSD: Makefile,v 1.122 2020/08/28 03:51:06 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -272,8 +272,10 @@ TESTS+=		varname
 TESTS+=		varname-dollar
 TESTS+=		varname-dot-alltargets
 TESTS+=		varname-dot-curdir
+TESTS+=		varname-dot-includes
 TESTS+=		varname-dot-includedfromdir
 TESTS+=		varname-dot-includedfromfile
+TESTS+=		varname-dot-libs
 TESTS+=		varname-dot-make-dependfile
 TESTS+=		varname-dot-make-expand_variables
 TESTS+=		varname-dot-make-exported
