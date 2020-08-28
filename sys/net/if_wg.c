@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.31 2020/08/27 19:21:14 tih Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.32 2020/08/28 07:03:08 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,72 +41,73 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.31 2020/08/27 19:21:14 tih Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.32 2020/08/28 07:03:08 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/mbuf.h>
-#include <sys/socket.h>
-#include <sys/sockio.h>
-#include <sys/errno.h>
-#include <sys/ioctl.h>
-#include <sys/time.h>
-#include <sys/timespec.h>
-#include <sys/socketvar.h>
-#include <sys/syslog.h>
+#include <sys/types.h>
+
+#include <sys/atomic.h>
+#include <sys/callout.h>
+#include <sys/cprng.h>
 #include <sys/cpu.h>
-#include <sys/intr.h>
-#include <sys/kmem.h>
 #include <sys/device.h>
+#include <sys/domain.h>
+#include <sys/errno.h>
+#include <sys/intr.h>
+#include <sys/ioctl.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/kthread.h>
+#include <sys/mbuf.h>
 #include <sys/module.h>
 #include <sys/mutex.h>
-#include <sys/rwlock.h>
+#include <sys/pcq.h>
+#include <sys/percpu.h>
 #include <sys/pserialize.h>
 #include <sys/psref.h>
-#include <sys/kthread.h>
-#include <sys/cprng.h>
-#include <sys/atomic.h>
-#include <sys/sysctl.h>
-#include <sys/domain.h>
-#include <sys/pcq.h>
 #include <sys/queue.h>
-#include <sys/percpu.h>
-#include <sys/callout.h>
+#include <sys/rwlock.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/sockio.h>
+#include <sys/sysctl.h>
+#include <sys/syslog.h>
+#include <sys/systm.h>
+#include <sys/time.h>
+#include <sys/timespec.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
 #include <net/if_types.h>
+#include <net/if_wg.h>
 #include <net/route.h>
 
 #include <netinet/in.h>
+#include <netinet/in_pcb.h>
+#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
-#include <netinet/in_var.h>
-#include <netinet/in_pcb.h>
 
 #ifdef INET6
-#include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
-#include <netinet6/ip6_var.h>
 #include <netinet6/in6_pcb.h>
+#include <netinet6/in6_var.h>
+#include <netinet6/ip6_var.h>
 #include <netinet6/udp6_var.h>
 #endif /* INET6 */
-
-#include <net/if_wg.h>
 
 #include <prop/proplib.h>
 
 #include <crypto/blake2/blake2s.h>
-#include <crypto/sodium/crypto_scalarmult.h>
 #include <crypto/sodium/crypto_aead_chacha20poly1305.h>
 #include <crypto/sodium/crypto_aead_xchacha20poly1305.h>
+#include <crypto/sodium/crypto_scalarmult.h>
 
 #include "ioconf.h"
 
