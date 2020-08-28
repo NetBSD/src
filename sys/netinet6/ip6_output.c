@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.224 2020/08/28 06:19:13 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.225 2020/08/28 06:32:24 ozaki-r Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.224 2020/08/28 06:19:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.225 2020/08/28 06:32:24 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -165,6 +165,7 @@ ip6_if_output(struct ifnet * const ifp, struct ifnet * const origifp,
 	if (rt != NULL) {
 		error = rt_check_reject_route(rt, ifp);
 		if (error != 0) {
+			IP6_STATINC(IP6_STAT_RTREJECT);
 			m_freem(m);
 			return error;
 		}
@@ -313,6 +314,7 @@ ip6_output(
 	 */
 	if ((needipsec || optlen) && !hdrsplit) {
 		if ((error = ip6_splithdr(m, &exthdrs)) != 0) {
+			IP6_STATINC(IP6_STAT_ODROPPED);
 			m = NULL;
 			goto freehdrs;
 		}
@@ -331,6 +333,7 @@ ip6_output(
 	if (plen > IPV6_MAXPACKET) {
 		if (!hdrsplit) {
 			if ((error = ip6_splithdr(m, &exthdrs)) != 0) {
+				IP6_STATINC(IP6_STAT_ODROPPED);
 				m = NULL;
 				goto freehdrs;
 			}
@@ -339,8 +342,10 @@ ip6_output(
 		}
 		/* adjust pointer */
 		ip6 = mtod(m, struct ip6_hdr *);
-		if ((error = ip6_insert_jumboopt(&exthdrs, plen)) != 0)
+		if ((error = ip6_insert_jumboopt(&exthdrs, plen)) != 0) {
+			IP6_STATINC(IP6_STAT_ODROPPED);
 			goto freehdrs;
+		}
 		optlen += 8; /* XXX JUMBOOPTLEN */
 		ip6->ip6_plen = 0;
 	} else
@@ -418,8 +423,10 @@ ip6_output(
 		rh = mtod(exthdrs.ip6e_rthdr, struct ip6_rthdr *);
 
 		error = ip6_handle_rthdr(rh, ip6);
-		if (error != 0)
+		if (error != 0) {
+			IP6_STATINC(IP6_STAT_ODROPPED);
 			goto bad;
+		}
 	}
 
 	/* Source address validation */
@@ -530,6 +537,7 @@ ip6_output(
 		 */
 		error = rtcache_setdst(ro, sin6tosa(&dst_sa));
 		if (error) {
+			IP6_STATINC(IP6_STAT_ODROPPED);
 			goto bad;
 		}
 	}
@@ -553,8 +561,10 @@ ip6_output(
 	 */
 	if (ia != NULL) {
 		origifp = ia->ia_ifp;
-		if (if_is_deactivated(origifp))
+		if (if_is_deactivated(origifp)) {
+			IP6_STATINC(IP6_STAT_ODROPPED);
 			goto bad;
+		}
 		if_acquire(origifp, &psref_ia);
 		release_psref_ia = true;
 	} else
@@ -699,8 +709,7 @@ ip6_output(
 	error = ip6_getpmtu(rt_pmtu, ifp, &mtu, &alwaysfrag);
 	if (rt_pmtu != NULL && rt_pmtu != rt)
 		rtcache_unref(rt_pmtu, ro_pmtu);
-	if (error != 0)
-		goto bad;
+	KASSERT(error == 0); /* ip6_getpmtu never fail if ifp is passed */
 
 	/*
 	 * The caller of this function may specify to use the minimum MTU
@@ -792,6 +801,7 @@ ip6_output(
 
 	if (dontfrag && alwaysfrag) {	/* case 4 */
 		/* conflicting request - can't transmit */
+		IP6_STATINC(IP6_STAT_CANTFRAG);
 		error = EMSGSIZE;
 		goto bad;
 	}
@@ -813,6 +823,7 @@ ip6_output(
 		pfctlinput2(PRC_MSGSIZE,
 		    rtcache_getdst(ro_pmtu), &ip6cp);
 
+		IP6_STATINC(IP6_STAT_CANTFRAG);
 		error = EMSGSIZE;
 		goto bad;
 	}
@@ -857,6 +868,7 @@ ip6_output(
 	}
 
 	if (tso) {
+		IP6_STATINC(IP6_STAT_CANTFRAG); /* XXX */
 		error = EINVAL; /* XXX */
 		goto bad;
 	}
@@ -866,11 +878,13 @@ ip6_output(
 	 */
 	if (mtu < IPV6_MMTU) {
 		/* path MTU cannot be less than IPV6_MMTU */
+		IP6_STATINC(IP6_STAT_CANTFRAG);
 		error = EMSGSIZE;
 		in6_ifstat_inc(ifp, ifs6_out_fragfail);
 		goto bad;
 	} else if (ip6->ip6_plen == 0) {
 		/* jumbo payload cannot be fragmented */
+		IP6_STATINC(IP6_STAT_CANTFRAG);
 		error = EMSGSIZE;
 		in6_ifstat_inc(ifp, ifs6_out_fragfail);
 		goto bad;
@@ -889,6 +903,7 @@ ip6_output(
 		 */
 		len = (mtu - hlen - sizeof(struct ip6_frag)) & ~7;
 		if (len < 8) {
+			IP6_STATINC(IP6_STAT_CANTFRAG);
 			error = EMSGSIZE;
 			in6_ifstat_inc(ifp, ifs6_out_fragfail);
 			goto bad;

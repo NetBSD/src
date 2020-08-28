@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.101 2020/08/28 06:28:58 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.102 2020/08/28 06:32:24 ozaki-r Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.101 2020/08/28 06:28:58 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.102 2020/08/28 06:32:24 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -287,6 +287,7 @@ ip6_forward(struct mbuf *m, int srcrt, struct ifnet *rcvif)
 	}
 
 	if (m->m_pkthdr.len > rt->rt_ifp->if_mtu) {
+		IP6_STATINC(IP6_STAT_TOOBIG);
 		in6_ifstat_inc(rt->rt_ifp, ifs6_in_toobig);
 		if (mcopy)
 			icmp6_error(mcopy, ICMP6_PACKET_TOO_BIG, 0,
