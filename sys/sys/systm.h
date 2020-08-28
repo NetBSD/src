@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.297 2020/08/27 14:11:57 riastradh Exp $	*/
+/*	$NetBSD: systm.h,v 1.298 2020/08/28 12:43:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -201,12 +201,13 @@ enum hashtype {
 
 #define COND_SET_CPTR(dst, src, allow) \
 	do { \
-		void *__v; \
 		if (allow) \
 			dst = src; \
-		else \
+		else { \
+			void *__v; \
 			hash_value(&__v, sizeof(__v), &src, sizeof(src)); \
-		dst = __v; \
+			dst = __v; \
+		} \
 	} while (/*CONSTCOND*/0)
 
 #define COND_SET_PTR(dst, src, allow) \
@@ -219,11 +220,12 @@ enum hashtype {
 
 #define COND_SET_VALUE(dst, src, allow)	\
 	do { \
-		uint64_t __v = src; \
 		if (allow) \
 			dst = src; \
-		else \
+		else { \
+			uint64_t __v = src; \
 			hash_value(&dst, sizeof(dst), &__v, sizeof(__v)); \
+		} \
 	} while (/*CONSTCOND*/0)
 
 void	hash_value(void *, size_t, const void *, size_t);
