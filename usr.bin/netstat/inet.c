@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.112 2020/08/28 06:34:17 ozaki-r Exp $	*/
+/*	$NetBSD: inet.c,v 1.113 2020/08/28 07:23:48 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.112 2020/08/28 06:34:17 ozaki-r Exp $");
+__RCSID("$NetBSD: inet.c,v 1.113 2020/08/28 07:23:48 ozaki-r Exp $");
 #endif
 #endif /* not lint */
 
@@ -404,7 +404,7 @@ tcp_stats(u_long off, const char *name)
 		size_t size = sizeof(tcpstat);
 
 		if (prog_sysctlbyname("net.inet.tcp.stats", tcpstat, &size,
-				 NULL, 0) == -1)
+				 NULL, 0) == -1 && errno != ENOMEM)
 			return;
 	} else {
 		warnx("%s stats not available via KVM.", name);
@@ -531,7 +531,7 @@ udp_stats(u_long off, const char *name)
 		size_t size = sizeof(udpstat);
 
 		if (prog_sysctlbyname("net.inet.udp.stats", udpstat, &size,
-				 NULL, 0) == -1)
+				 NULL, 0) == -1 && errno != ENOMEM)
 			return;
 	} else {
 		warnx("%s stats not available via KVM.", name);
@@ -584,7 +584,7 @@ ip_stats(u_long off, const char *name)
 		size_t size = sizeof(ipstat);
 
 		if (prog_sysctlbyname("net.inet.ip.stats", ipstat, &size,
-				 NULL, 0) == -1)
+				 NULL, 0) == -1 && errno != ENOMEM)
 			return;
 	} else {
 		warnx("%s stats not available via KVM.", name);
@@ -657,7 +657,7 @@ icmp_stats(u_long off, const char *name)
 		size_t size = sizeof(icmpstat);
 
 		if (prog_sysctlbyname("net.inet.icmp.stats", icmpstat, &size,
-				 NULL, 0) == -1)
+				 NULL, 0) == -1 && errno != ENOMEM)
 			return;
 	} else {
 		warnx("%s stats not available via KVM.", name);
@@ -713,7 +713,7 @@ igmp_stats(u_long off, const char *name)
 		size_t size = sizeof(igmpstat);
 
 		if (prog_sysctlbyname("net.inet.igmp.stats", igmpstat, &size,
-				 NULL, 0) == -1)
+				 NULL, 0) == -1 && errno != ENOMEM)
 			return;
 	} else {
 		warnx("%s stats not available via KVM.", name);
@@ -751,7 +751,7 @@ carp_stats(u_long off, const char *name)
 		size_t size = sizeof(carpstat);
 
 		if (prog_sysctlbyname("net.inet.carp.stats", carpstat, &size,
-				 NULL, 0) == -1)
+				 NULL, 0) == -1 && errno != ENOMEM)
 			return;
 	} else {
 		warnx("%s stats not available via KVM.", name);
@@ -837,7 +837,7 @@ arp_stats(u_long off, const char *name)
 		size_t size = sizeof(arpstat);
 
 		if (prog_sysctlbyname("net.inet.arp.stats", arpstat, &size,
-				 NULL, 0) == -1)
+				 NULL, 0) == -1 && errno != ENOMEM)
 			return;
 	} else {
 		warnx("%s stats not available via KVM.", name);

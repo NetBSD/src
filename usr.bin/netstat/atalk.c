@@ -1,4 +1,4 @@
-/*	$NetBSD: atalk.c,v 1.18 2020/04/23 00:23:31 joerg Exp $	*/
+/*	$NetBSD: atalk.c,v 1.19 2020/08/28 07:23:48 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from @(#)atalk.c	1.1 (Whistle) 6/6/96";
 #else
-__RCSID("$NetBSD: atalk.c,v 1.18 2020/04/23 00:23:31 joerg Exp $");
+__RCSID("$NetBSD: atalk.c,v 1.19 2020/08/28 07:23:48 ozaki-r Exp $");
 #endif
 #endif /* not lint */
 
@@ -291,7 +291,7 @@ ddp_stats(u_long off, const char *name)
 		size_t size = sizeof(ddpstat);
 
 		if (prog_sysctlbyname("net.atalk.ddp.stats", ddpstat, &size,
-				 NULL, 0) == -1)
+				 NULL, 0) == -1 && errno != ENOMEM)
 			return;
 	} else {
 		warnx("%s stats not available via KVM.", name);

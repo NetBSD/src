@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.14 2019/08/18 04:14:40 kamil Exp $	*/
+/*	$NetBSD: bpf.c,v 1.15 2020/08/28 07:23:48 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -53,7 +53,8 @@ bpf_stats(void)
 	size_t len = sizeof(bpf_s);
 
 	if (use_sysctl) {
-		if (prog_sysctlbyname("net.bpf.stats", &bpf_s, &len, NULL, 0) == -1)
+		if (prog_sysctlbyname("net.bpf.stats", &bpf_s, &len, NULL, 0) == -1 &&
+		    errno != ENOMEM)
 			err(1, "net.bpf.stats");
 	
 		printf("bpf:\n");

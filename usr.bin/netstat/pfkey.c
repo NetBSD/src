@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.2 2019/08/18 04:14:40 kamil Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.3 2020/08/28 07:23:48 ozaki-r Exp $	*/
 /*	$KAME: ipsec.c,v 1.33 2003/07/25 09:54:32 itojun Exp $	*/
 
 /*
@@ -65,7 +65,7 @@
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
 #ifdef __NetBSD__
-__RCSID("$NetBSD: pfkey.c,v 1.2 2019/08/18 04:14:40 kamil Exp $");
+__RCSID("$NetBSD: pfkey.c,v 1.3 2020/08/28 07:23:48 ozaki-r Exp $");
 #endif
 #endif
 #endif /* not lint */
@@ -80,6 +80,7 @@ __RCSID("$NetBSD: pfkey.c,v 1.2 2019/08/18 04:14:40 kamil Exp $");
 #endif
 
 #include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -121,7 +122,7 @@ pfkey_stats(u_long off, const char *name)
 		size_t size = sizeof(pfkeystat);
 
 		if (prog_sysctlbyname("net.key.stats", pfkeystat, &size,
-				 NULL, 0) == -1)
+				 NULL, 0) == -1 && errno != ENOMEM)
 			return;
 	} else {
 		warnx("%s stats not available via KVM.", name);
