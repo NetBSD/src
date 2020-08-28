@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.27 2020/08/26 23:00:47 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.28 2020/08/28 20:16:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: hash.c,v 1.27 2020/08/26 23:00:47 rillig Exp $";
+static char rcsid[] = "$NetBSD: hash.c,v 1.28 2020/08/28 20:16:19 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)hash.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: hash.c,v 1.27 2020/08/26 23:00:47 rillig Exp $");
+__RCSID("$NetBSD: hash.c,v 1.28 2020/08/28 20:16:19 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -116,29 +116,15 @@ static void RebuildTable(Hash_Table *);
 
 #endif
 
-/*
- *---------------------------------------------------------
- *
- * Hash_InitTable --
- *
- *	This routine just sets up the hash table.
+/* Sets up the hash table.
  *
  * Input:
- *	t		Structure to to hold table.
+ *	t		Structure to to hold the table.
  *	numBuckets	How many buckets to create for starters. This
  *			number is rounded up to a power of two.   If
  *			<= 0, a reasonable default is chosen. The
  *			table will grow in size later as needed.
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	Memory is allocated for the initial bucket area.
- *
- *---------------------------------------------------------
  */
-
 void
 Hash_InitTable(Hash_Table *t, int numBuckets)
 {
@@ -163,24 +149,8 @@ Hash_InitTable(Hash_Table *t, int numBuckets)
 		*hp++ = NULL;
 }
 
-/*
- *---------------------------------------------------------
- *
- * Hash_DeleteTable --
- *
- *	This routine removes everything from a hash table
- *	and frees up the memory space it occupied (except for
- *	the space in the Hash_Table structure).
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	Lots of memory is freed up.
- *
- *---------------------------------------------------------
- */
-
+/* Removes everything from the hash table and frees up the memory space it
+ * occupied (except for the space in the Hash_Table structure). */
 void
 Hash_DeleteTable(Hash_Table *t)
 {
@@ -202,28 +172,16 @@ Hash_DeleteTable(Hash_Table *t)
 	t->bucketPtr = NULL;
 }
 
-/*
- *---------------------------------------------------------
- *
- * Hash_FindEntry --
- *
- * 	Searches a hash table for an entry corresponding to key.
+/* Searches the hash table for an entry corresponding to the key.
  *
  * Input:
  *	t		Hash table to search.
  *	key		A hash key.
  *
  * Results:
- *	The return value is a pointer to the entry for key,
- *	if key was present in the table.  If key was not
- *	present, NULL is returned.
- *
- * Side Effects:
- *	None.
- *
- *---------------------------------------------------------
+ *	Returns a pointer to the entry for key, or NULL if the table contains
+ *	no entry for the key.
  */
-
 Hash_Entry *
 Hash_FindEntry(Hash_Table *t, const char *key)
 {
@@ -253,31 +211,15 @@ Hash_FindEntry(Hash_Table *t, const char *key)
 	return e;
 }
 
-/*
- *---------------------------------------------------------
- *
- * Hash_CreateEntry --
- *
- *	Searches a hash table for an entry corresponding to
- *	key.  If no entry is found, then one is created.
+/* Searches the hash table for an entry corresponding to the key.
+ * If no entry is found, then one is created.
  *
  * Input:
  *	t		Hash table to search.
  *	key		A hash key.
- *	newPtr		Filled in with TRUE if new entry created,
+ *	newPtr		Filled with TRUE if new entry created,
  *			FALSE otherwise.
- *
- * Results:
- *	The return value is a pointer to the entry.  If *newPtr
- *	isn't NULL, then *newPtr is filled in with TRUE if a
- *	new entry was created, and FALSE if an entry already existed
- *	with the given key.
- *
- * Side Effects:
- *	Memory may be allocated, and the hash buckets may be modified.
- *---------------------------------------------------------
  */
-
 Hash_Entry *
 Hash_CreateEntry(Hash_Table *t, const char *key, Boolean *newPtr)
 {
@@ -335,23 +277,7 @@ Hash_CreateEntry(Hash_Table *t, const char *key, Boolean *newPtr)
 	return e;
 }
 
-/*
- *---------------------------------------------------------
- *
- * Hash_DeleteEntry --
- *
- * 	Delete the given hash table entry and free memory associated with
- *	it.
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	Hash chain that entry lives in is modified and memory is freed.
- *
- *---------------------------------------------------------
- */
-
+/* Delete the given hash table entry and free memory associated with it. */
 void
 Hash_DeleteEntry(Hash_Table *t, Hash_Entry *e)
 {
@@ -372,12 +298,7 @@ Hash_DeleteEntry(Hash_Table *t, Hash_Entry *e)
 	abort();
 }
 
-/*
- *---------------------------------------------------------
- *
- * Hash_EnumFirst --
- *	This procedure sets things up for a complete search
- *	of all entries recorded in the hash table.
+/* Sets things up for enumerating all entries in the hash table.
  *
  * Input:
  *	t		Table to be searched.
@@ -386,15 +307,7 @@ Hash_DeleteEntry(Hash_Table *t, Hash_Entry *e)
  * Results:
  *	The return value is the address of the first entry in
  *	the hash table, or NULL if the table is empty.
- *
- * Side Effects:
- *	The information in searchPtr is initialized so that successive
- *	calls to Hash_Next will return successive HashEntry's
- *	from the table.
- *
- *---------------------------------------------------------
  */
-
 Hash_Entry *
 Hash_EnumFirst(Hash_Table *t, Hash_Search *searchPtr)
 {
@@ -404,27 +317,12 @@ Hash_EnumFirst(Hash_Table *t, Hash_Search *searchPtr)
 	return Hash_EnumNext(searchPtr);
 }
 
-/*
- *---------------------------------------------------------
- *
- * Hash_EnumNext --
- *    This procedure returns successive entries in the hash table.
+/* Returns the next entry in the hash table, or NULL if the end of the table
+ * is reached.
  *
  * Input:
  *	searchPtr	Area used to keep state about search.
- *
- * Results:
- *    The return value is a pointer to the next HashEntry
- *    in the table, or NULL when the end of the table is
- *    reached.
- *
- * Side Effects:
- *    The information in searchPtr is modified to advance to the
- *    next entry.
- *
- *---------------------------------------------------------
  */
-
 Hash_Entry *
 Hash_EnumNext(Hash_Search *searchPtr)
 {
@@ -452,23 +350,8 @@ Hash_EnumNext(Hash_Search *searchPtr)
 	return e;
 }
 
-/*
- *---------------------------------------------------------
- *
- * RebuildTable --
- *	This local routine makes a new hash table that
- *	is larger than the old one.
- *
- * Results:
- * 	None.
- *
- * Side Effects:
- *	The entire hash table is moved, so any bucket numbers
- *	from the old table are invalid.
- *
- *---------------------------------------------------------
- */
-
+/* Makes a new hash table that is larger than the old one. The entire hash
+ * table is moved, so any bucket numbers from the old table become invalid. */
 static void
 RebuildTable(Hash_Table *t)
 {
@@ -500,7 +383,8 @@ RebuildTable(Hash_Table *t)
 	t->maxchain = 0;
 }
 
-void Hash_ForEach(Hash_Table *t, void (*action)(void *, void *), void *data)
+void
+Hash_ForEach(Hash_Table *t, void (*action)(void *, void *), void *data)
 {
 	Hash_Search search;
 	Hash_Entry *e;
