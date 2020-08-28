@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.48 2020/08/28 04:14:31 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.49 2020/08/28 04:28:45 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,11 +37,11 @@
 #include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.48 2020/08/28 04:14:31 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.49 2020/08/28 04:28:45 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.48 2020/08/28 04:14:31 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.49 2020/08/28 04:28:45 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -330,18 +330,6 @@ LstNode_SetNullS(LstNode node)
  * Node-specific functions
  */
 
-/* Return the first node from the given list, or NULL if the list is empty or
- * invalid. */
-static LstNode
-Lst_First(Lst list)
-{
-    if (!LstIsValid(list) || LstIsEmpty(list)) {
-	return NULL;
-    } else {
-	return list->first;
-    }
-}
-
 /* Return the first node from the given list, or NULL if the list is empty. */
 LstNode
 Lst_FirstS(Lst list)
@@ -402,32 +390,11 @@ Lst_IsEmptyS(Lst list)
 /* Return the first node from the given list for which the given comparison
  * function returns 0, or NULL if none of the nodes matches. */
 LstNode
-Lst_Find(Lst list, LstFindProc cmp, const void *cmpData)
-{
-    return Lst_FindFrom(list, Lst_First(list), cmp, cmpData);
-}
-
-/* Return the first node from the given list for which the given comparison
- * function returns 0, or NULL if none of the nodes matches. */
-LstNode
 Lst_FindS(Lst list, LstFindProc cmp, const void *cmpData)
 {
     if (LstIsEmpty(list))
 	return NULL;
     return Lst_FindFromS(list, Lst_FirstS(list), cmp, cmpData);
-}
-
-/* Return the first node from the given list, starting at the given node, for
- * which the given comparison function returns 0, or NULL if none of the nodes
- * matches. */
-LstNode
-Lst_FindFrom(Lst list, LstNode node, LstFindProc cmp, const void *cmpData)
-{
-    if (!LstIsValid(list) || LstIsEmpty(list) || !LstNodeIsValid(node)) {
-	return NULL;
-    }
-
-    return Lst_FindFromS(list, node, cmp, cmpData);
 }
 
 /* Return the first node from the given list, starting at the given node, for

@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.117 2020/08/28 04:16:57 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.118 2020/08/28 04:28:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.117 2020/08/28 04:16:57 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.118 2020/08/28 04:28:45 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.117 2020/08/28 04:16:57 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.118 2020/08/28 04:28:45 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1544,6 +1544,8 @@ Dir_MTime(GNode *gn, Boolean recheck)
  * Input:
  *	path		the path to which the directory should be
  *			added
+ *			XXX: Why would this ever be NULL, and what does
+ *			that mean?
  *	name		the name of the directory to add
  *
  * Results:
@@ -1563,7 +1565,7 @@ Dir_AddDir(Lst path, const char *name)
     struct dirent *dp;		/* entry in directory */
 
     if (strcmp(name, ".DOTLAST") == 0) {
-	ln = Lst_Find(path, DirFindName, name);
+	ln = path != NULL ? Lst_FindS(path, DirFindName, name) : NULL;
 	if (ln != NULL)
 	    return Lst_DatumS(ln);
 	else {
@@ -1576,7 +1578,7 @@ Dir_AddDir(Lst path, const char *name)
     }
 
     if (path)
-	ln = Lst_Find(openDirectories, DirFindName, name);
+	ln = Lst_FindS(openDirectories, DirFindName, name);
     if (ln != NULL) {
 	p = Lst_DatumS(ln);
 	if (path && Lst_MemberS(path, p) == NULL) {
