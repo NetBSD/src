@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.136 2020/07/10 12:25:09 skrll Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.137 2020/08/28 13:15:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.136 2020/07/10 12:25:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.137 2020/08/28 13:15:05 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_arm_start.h"
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.136 2020/07/10 12:25:09 skrll Ex
 
 #include <arm/locore.h>
 
+#include <arm/cpu_topology.h>
 #include <arm/arm32/machdep.h>
 
 #include <machine/bootconfig.h>
@@ -771,13 +772,25 @@ cpu_init_secondary_processor(int cpuindex)
 	VPRINTS(")");
 #endif
 
+	struct cpu_info * ci = &cpu_info_store[cpuindex];
+
+	VPRINTS(" ci = ");
+	VPRINTX((int)ci);
+
+	ci->ci_midr = armreg_midr_read();
+	ci->ci_mpidr = armreg_mpidr_read();
+
+	arm_cpu_topology_set(ci, ci->ci_mpidr);
+
 	VPRINTS(" hatched|=");
 	VPRINTX(__BIT(cpuindex));
 	VPRINTS("\n\r");
 
 	cpu_set_hatched(cpuindex);
 
-	/* return to assembly to wait for cpu_boot_secondary_processors */
+	/*
+	 * return to assembly to wait for cpu_boot_secondary_processors
+	 */
 }
 
 void

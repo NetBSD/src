@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.25 2020/08/28 13:00:29 skrll Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.26 2020/08/28 13:15:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -896,21 +896,6 @@ armv7_mpcontinuation:
 	// index into cpu_mpidr[] or cpu_number if not found
 	mov	r0, R_INDEX
 	bl	cpu_init_secondary_processor
-
-	/* r0 = &cpu_info_store[0] */
-	movw	r0, #:lower16:cpu_info_store
-	movt	r0, #:upper16:cpu_info_store
-
-	mov	r4, #CPU_INFO_SIZE
-	mul	r5, r4, R_INDEX
-	add	r0, r5
-
-	mrc	p15, 0, r1, c0, c0, 0	// MIDR get
-	str	r1, [r0, #CI_MIDR]
-	mrc	p15, 0, r1, c0, c0, 5	// MPIDR get
-	str	r1, [r0, #CI_MPIDR]
-
-	bl	arm_cpu_topology_set
 
 	/*
 	 * Wait for cpu_boot_secondary_processors
