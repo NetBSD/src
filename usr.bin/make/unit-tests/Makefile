@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.122 2020/08/28 03:51:06 rillig Exp $
+# $NetBSD: Makefile,v 1.123 2020/08/28 04:05:35 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -322,6 +322,8 @@ ENV.varmisc+=		FROM_ENV_BEFORE=env
 ENV.varmisc+=		FROM_ENV_AFTER=env
 
 # Override make flags for some of the tests; default is -k.
+# If possible, write ".MAKEFLAGS: -dv" in the test .mk file instead of
+# settings FLAGS.test=-dv here, since that is closer to the test code.
 FLAGS.archive=		-dA
 FLAGS.counter=		-dv
 FLAGS.doterror=		# none
@@ -360,6 +362,8 @@ SED_CMDS.varname-dot-shell+=	-e 's,\[/[^]]*\],[(details omitted)],'
 
 # Some tests need an additional round of postprocessing.
 POSTPROC.counter=	${TOOL_SED} -n -e '/:RELEVANT = yes/,/:RELEVANT = no/p'
+POSTPROC.deptgt-suffixes= \
+			${TOOL_SED} -n -e '/^\#\*\*\* Suffixes/,/^\#\*/p'
 POSTPROC.vardebug=	${TOOL_SED} -n -e '/:RELEVANT = yes/,/:RELEVANT = no/p'
 POSTPROC.varmod-match-escape= ${TOOL_SED} -n -e '/^Pattern/p'
 POSTPROC.varname-dot-shell= \
