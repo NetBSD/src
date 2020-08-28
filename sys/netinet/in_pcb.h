@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.67 2020/08/20 21:21:32 riastradh Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.68 2020/08/28 07:01:57 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -63,9 +63,16 @@
 #ifndef _NETINET_IN_PCB_H_
 #define _NETINET_IN_PCB_H_
 
-#include <sys/queue.h>
+#include <sys/types.h>
+
 #include <net/route.h>
+
+#include <netinet/in.h>
 #include <netinet/in_pcb_hdr.h>
+#include <netinet/ip.h>
+
+struct ip_moptions;
+struct mbuf;
 
 /*
  * Common structure pcb for internet protocol implementation.
@@ -133,6 +140,17 @@ struct inpcb {
 #define	inp_locked(inp)		solocked((inp)->inp_socket)
 
 #ifdef _KERNEL
+
+#include <sys/kauth.h>
+#include <sys/queue.h>
+
+struct inpcbtable;
+struct lwp;
+struct rtentry;
+struct sockaddr_in;
+struct socket;
+struct vestigial_inpcb;
+
 void	in_losing(struct inpcb *);
 int	in_pcballoc(struct socket *, void *);
 int	in_pcbbindableaddr(struct sockaddr_in *, kauth_cred_t);
@@ -173,6 +191,7 @@ in_pcb_register_overudp_cb(struct inpcb *inp, pcb_overudp_cb_t cb, void *arg)
 	inp->inp_overudp_cb = cb;
 	inp->inp_overudp_arg = arg;
 }
-#endif
 
-#endif /* !_NETINET_IN_PCB_H_ */
+#endif	/* _KERNEL */
+
+#endif	/* !_NETINET_IN_PCB_H_ */
