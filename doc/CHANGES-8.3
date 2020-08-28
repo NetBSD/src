@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.31 2020/08/19 18:40:09 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.32 2020/08/28 19:45:21 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1008,4 +1008,11 @@ sys/uvm/uvm_amap.c				1.123 (patch)
 	fix amap_extend() to handle amaps where we previously failed
 	to allocate the ppref memory.
 	[chs, ticket #1598]
+
+sys/dev/usb/if_atu.c				1.73
+sys/dev/usb/if_axe.c				(apply patch)
+sys/dev/usb/if_axen.c				(apply patch)
+
+	atu(4), axe(4), axen(4): reject packets larger than MCLBYTES.
+	[riastradh, ticket #1599]
 
