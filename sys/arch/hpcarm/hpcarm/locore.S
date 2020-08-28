@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.19 2019/07/14 09:29:21 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.20 2020/08/28 12:41:17 skrll Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -42,7 +42,7 @@
 #endif
 
 
-/* What size should this really be ? It is only used by init_arm() */
+/* What size should this really be ? It is only used by initarm() */
 #define INIT_ARM_STACK_SIZE	2048
 
 /*
