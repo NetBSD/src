@@ -1,9 +1,8 @@
-# $NetBSD: cond-func-exists.mk,v 1.3 2020/08/23 14:07:20 rillig Exp $
+# $NetBSD: cond-func-exists.mk,v 1.4 2020/08/28 12:59:36 rillig Exp $
 #
 # Tests for the exists() function in .if conditions.
 
-.if exists(.)
-.else
+.if !exists(.)
 .error
 .endif
 
@@ -24,15 +23,18 @@
 .error
 .endif
 
-.if exists(${:U.})
-.else
+.if !exists(${:U.})
 .error
 .endif
 
 # The argument to the function can have several variable expressions.
 # See cond-func.mk for the characters that cannot be used directly.
-.if exists(${.PARSEDIR}/${.PARSEFILE})
-.else
+.if !exists(${.PARSEDIR}/${.PARSEFILE})
+.error
+.endif
+
+# Whitespace is trimmed on both sides of the function argument.
+.if !exists(	.	)
 .error
 .endif
 
