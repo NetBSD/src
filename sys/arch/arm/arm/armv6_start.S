@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.22 2020/08/25 15:03:48 skrll Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.23 2020/08/28 11:15:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -485,7 +485,6 @@ generic_vstartv7:
 	mrc	p15, 0, r1, c0, c0, 5	// MPIDR get
 	str	r1, [r0, #CI_MPIDR]
 
-	mov	r2, #0
 	bl	arm_cpu_topology_set
 
 	VPRINTF("go\n\r")
@@ -905,7 +904,6 @@ armv7_mpcontinuation:
 	mrc	p15, 0, r1, c0, c0, 5	// MPIDR get
 	str	r1, [r0, #CI_MPIDR]
 
-	mov	r2, #0
 	bl	arm_cpu_topology_set
 
 	/*
