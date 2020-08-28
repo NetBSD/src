@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.223 2020/06/12 11:04:45 roy Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.224 2020/08/28 06:19:13 ozaki-r Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.223 2020/06/12 11:04:45 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.224 2020/08/28 06:19:13 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -295,6 +295,7 @@ ip6_output(
 			 */
 			if (error == -EINVAL)
 				error = 0;
+			IP6_STATINC(IP6_STAT_IPSECDROP_OUT);
 			goto freehdrs;
 		}
 	}
