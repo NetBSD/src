@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.285 2020/08/28 06:23:42 ozaki-r Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.286 2020/08/28 06:25:52 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.285 2020/08/28 06:23:42 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.286 2020/08/28 06:25:52 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -563,6 +563,67 @@ bad:
 }
 #endif /* ALTQ */
 
+#if defined (LLC) || defined (NETATALK)
+static void
+ether_input_llc(struct ifnet *ifp, struct mbuf *m, struct ether_header *eh)
+{
+	struct ifqueue *inq = NULL;
+	int isr = 0;
+	struct llc *l;
+
+	if (m->m_len < sizeof(*eh) + sizeof(struct llc))
+		goto drop;
+
+	l = (struct llc *)(eh+1);
+	switch (l->llc_dsap) {
+#ifdef NETATALK
+	case LLC_SNAP_LSAP:
+		switch (l->llc_control) {
+		case LLC_UI:
+			if (l->llc_ssap != LLC_SNAP_LSAP)
+				goto drop;
+
+			if (memcmp(&(l->llc_snap_org_code)[0],
+			    at_org_code, sizeof(at_org_code)) == 0 &&
+			    ntohs(l->llc_snap_ether_type) ==
+			    ETHERTYPE_ATALK) {
+				inq = &atintrq2;
+				m_adj(m, sizeof(struct ether_header)
+				    + sizeof(struct llc));
+				isr = NETISR_ATALK;
+				break;
+			}
+
+			if (memcmp(&(l->llc_snap_org_code)[0],
+			    aarp_org_code,
+			    sizeof(aarp_org_code)) == 0 &&
+			    ntohs(l->llc_snap_ether_type) ==
+			    ETHERTYPE_AARP) {
+				m_adj(m, sizeof(struct ether_header)
+				    + sizeof(struct llc));
+				aarpinput(ifp, m); /* XXX queue? */
+				return;
+			}
+
+		default:
+			goto drop;
+		}
+		break;
+#endif
+	default:
+		goto drop;
+	}
+
+	KASSERT(inq != NULL);
+	IFQ_ENQUEUE_ISR(inq, m, isr);
+	return;
+
+drop:
+	m_freem(m);
+	return;
+}
+#endif /* defined (LLC) || defined (NETATALK) */
+
 /*
  * Process a received Ethernet packet;
  * the packet is in the mbuf chain m with
@@ -579,9 +640,6 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	size_t ehlen;
 	static int earlypkts;
 	int isr = 0;
-#if defined (LLC) || defined(NETATALK)
-	struct llc *l;
-#endif
 
 	KASSERT(!cpu_intr_p());
 	KASSERT((m->m_flags & M_PKTHDR) != 0);
@@ -811,119 +869,76 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		m->m_flags &= ~M_HASFCS;
 	}
 
-	if (etype > ETHERMTU + sizeof(struct ether_header)) {
-		/* Strip off the Ethernet header. */
-		m_adj(m, ehlen);
-
-		switch (etype) {
-#ifdef INET
-		case ETHERTYPE_IP:
-#ifdef GATEWAY
-			if (ipflow_fastforward(m))
-				return;
+	/* etype represents the size of the payload in this case */
+	if (etype <= ETHERMTU + sizeof(struct ether_header)) {
+		KASSERT(ehlen == sizeof(*eh));
+#if defined (LLC) || defined (NETATALK)
+		ether_input_llc(ifp, m, eh);
+		return;
+#else
+		m_freem(m);
+		return;
 #endif
-			pktq = ip_pktq;
-			break;
+	}
 
-		case ETHERTYPE_ARP:
-			isr = NETISR_ARP;
-			inq = &arpintrq;
-			break;
+	/* Strip off the Ethernet header. */
+	m_adj(m, ehlen);
 
-		case ETHERTYPE_REVARP:
-			revarpinput(m);	/* XXX queue? */
+	switch (etype) {
+#ifdef INET
+	case ETHERTYPE_IP:
+#ifdef GATEWAY
+		if (ipflow_fastforward(m))
 			return;
+#endif
+		pktq = ip_pktq;
+		break;
+
+	case ETHERTYPE_ARP:
+		isr = NETISR_ARP;
+		inq = &arpintrq;
+		break;
+
+	case ETHERTYPE_REVARP:
+		revarpinput(m);	/* XXX queue? */
+		return;
 #endif
 
 #ifdef INET6
-		case ETHERTYPE_IPV6:
-			if (__predict_false(!in6_present)) {
-				m_freem(m);
-				return;
-			}
+	case ETHERTYPE_IPV6:
+		if (__predict_false(!in6_present)) {
+			m_freem(m);
+			return;
+		}
 #ifdef GATEWAY
-			if (ip6flow_fastforward(&m))
-				return;
+		if (ip6flow_fastforward(&m))
+			return;
 #endif
-			pktq = ip6_pktq;
-			break;
+		pktq = ip6_pktq;
+		break;
 #endif
 
 #ifdef NETATALK
-		case ETHERTYPE_ATALK:
-			isr = NETISR_ATALK;
-			inq = &atintrq1;
-			break;
+	case ETHERTYPE_ATALK:
+		isr = NETISR_ATALK;
+		inq = &atintrq1;
+		break;
 
-		case ETHERTYPE_AARP:
-			aarpinput(ifp, m); /* XXX queue? */
-			return;
+	case ETHERTYPE_AARP:
+		aarpinput(ifp, m); /* XXX queue? */
+		return;
 #endif
 
 #ifdef MPLS
-		case ETHERTYPE_MPLS:
-			isr = NETISR_MPLS;
-			inq = &mplsintrq;
-			break;
+	case ETHERTYPE_MPLS:
+		isr = NETISR_MPLS;
+		inq = &mplsintrq;
+		break;
 #endif
 
-		default:
-			m_freem(m);
-			return;
-		}
-	} else {
-		KASSERT(ehlen == sizeof(*eh));
-#if defined (LLC) || defined (NETATALK)
-		if (m->m_len < sizeof(*eh) + sizeof(struct llc)) {
-			goto dropanyway;
-		}
-		l = (struct llc *)(eh+1);
-
-		switch (l->llc_dsap) {
-#ifdef NETATALK
-		case LLC_SNAP_LSAP:
-			switch (l->llc_control) {
-			case LLC_UI:
-				if (l->llc_ssap != LLC_SNAP_LSAP) {
-					goto dropanyway;
-				}
-
-				if (memcmp(&(l->llc_snap_org_code)[0],
-				    at_org_code, sizeof(at_org_code)) == 0 &&
-				    ntohs(l->llc_snap_ether_type) ==
-				    ETHERTYPE_ATALK) {
-					inq = &atintrq2;
-					m_adj(m, sizeof(struct ether_header)
-					    + sizeof(struct llc));
-					isr = NETISR_ATALK;
-					break;
-				}
-
-				if (memcmp(&(l->llc_snap_org_code)[0],
-				    aarp_org_code,
-				    sizeof(aarp_org_code)) == 0 &&
-				    ntohs(l->llc_snap_ether_type) ==
-				    ETHERTYPE_AARP) {
-					m_adj(m, sizeof(struct ether_header)
-					    + sizeof(struct llc));
-					aarpinput(ifp, m); /* XXX queue? */
-					return;
-				}
-
-			default:
-				goto dropanyway;
-			}
-			break;
-#endif
-		dropanyway:
-		default:
-			m_freem(m);
-			return;
-		}
-#else /* LLC || NETATALK */
+	default:
 		m_freem(m);
 		return;
-#endif /* LLC || NETATALK */
 	}
 
 	if (__predict_true(pktq)) {
