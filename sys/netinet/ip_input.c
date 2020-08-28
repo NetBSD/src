@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.396 2020/08/28 06:30:08 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.397 2020/08/28 06:31:42 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.396 2020/08/28 06:30:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.397 2020/08/28 06:31:42 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -404,6 +404,7 @@ ipintr(void *arg __unused)
 
 		ifp = m_get_rcvif_psref(m, &psref);
 		if (__predict_false(ifp == NULL)) {
+			IP_STATINC(IP_STAT_IFDROP);
 			m_freem(m);
 			continue;
 		}
@@ -440,8 +441,11 @@ ip_input(struct mbuf *m, struct ifnet *ifp)
 	 * are receiving, can't do anything with incoming packets yet.
 	 * Note: we pre-check without locks held.
 	 */
-	if (IN_ADDRLIST_READER_EMPTY())
+	if (IN_ADDRLIST_READER_EMPTY()) {
+		IP_STATINC(IP_STAT_IFDROP);
 		goto out;
+	}
+
 	IP_STATINC(IP_STAT_TOTAL);
 
 	/*
@@ -1363,6 +1367,7 @@ ip_forward(struct mbuf *m, int srcrt, struct ifnet *rcvif)
 	}
 
 	if (ip->ip_ttl <= IPTTLDEC) {
+		IP_STATINC(IP_STAT_TIMXCEED);
 		icmp_error(m, ICMP_TIMXCEED, ICMP_TIMXCEED_INTRANS, dest, 0);
 		return;
 	}
@@ -1373,6 +1378,7 @@ ip_forward(struct mbuf *m, int srcrt, struct ifnet *rcvif)
 	rt = rtcache_lookup(ro, &u.dst);
 	if (rt == NULL) {
 		rtcache_percpu_putref(ipforward_rt_percpu);
+		IP_STATINC(IP_STAT_NOROUTE);
 		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_NET, dest, 0);
 		return;
 	}
