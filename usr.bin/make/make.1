@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.288 2020/08/22 19:30:58 sjg Exp $
+.\"	$NetBSD: make.1,v 1.289 2020/08/28 17:15:04 rillig Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd August 22, 2020
+.Dd August 28, 2020
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1310,15 +1310,15 @@ in each word of the variable's value, replacing it with
 .Ar new_string .
 If a
 .Ql g
-is appended to the last slash of the pattern, all occurrences
+is appended to the last delimiter of the pattern, all occurrences
 in each word are replaced.
 If a
 .Ql 1
-is appended to the last slash of the pattern, only the first occurrence
+is appended to the last delimiter of the pattern, only the first occurrence
 is affected.
 If a
 .Ql W
-is appended to the last slash of the pattern,
+is appended to the last delimiter of the pattern,
 then the value is treated as a single word
 (possibly containing embedded white space).
 If
@@ -1387,13 +1387,6 @@ as occur in the word or words it is found in; the
 .Ql W
 modifier causes the value to be treated as a single word
 (possibly containing embedded white space).
-Note that
-.Ql 1
-and
-.Ql g
-are orthogonal; the former specifies whether multiple words are
-potentially affected, the latter whether multiple substitutions can
-potentially occur within each affected word.
 .Pp
 As for the
 .Cm \&:S

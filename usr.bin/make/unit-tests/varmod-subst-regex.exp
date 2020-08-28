@@ -1,12 +1,5 @@
-mod-regex:
-:a b b c:
-:a b b c:
-: b c:
 make: Regex compilation error: (details omitted)
-:C,word,____,:Q}:
-:a c:
-:x__ 3 x__ 3:
-mod-regex-limits:00-ok:1 2323 45456
+mod-regex-compile-error: C,word,____,:Q}.
 make: No subexpression \1
 make: No subexpression \1
 make: No subexpression \1
