@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_portmap.c,v 1.6 2020/08/27 18:50:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_portmap.c,v 1.7 2020/08/28 06:35:50 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -113,7 +113,6 @@ npf_portmap_sysinit(void)
 {
 
 	mutex_init(&portmap_lock, MUTEX_DEFAULT, IPL_SOFTNET);
-	__insn_barrier();
 }
 
 void
@@ -121,7 +120,6 @@ npf_portmap_sysfini(void)
 {
 
 	mutex_destroy(&portmap_lock);
-	__insn_barrier();
 }
 
 void
