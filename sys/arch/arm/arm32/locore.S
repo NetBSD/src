@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.41 2020/07/08 10:18:00 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.42 2020/08/28 12:31:44 skrll Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -40,10 +40,10 @@
 #include <arm/asm.h>
 #include <arm/locore.h>
 
-/* What size should this really be ? It is only used by init_arm() */
+/* What size should this really be ? It is only used by initarm() */
 #define INIT_ARM_STACK_SIZE	2048
 
-	RCSID("$NetBSD: locore.S,v 1.41 2020/07/08 10:18:00 skrll Exp $")
+	RCSID("$NetBSD: locore.S,v 1.42 2020/08/28 12:31:44 skrll Exp $")
 
 /*
  * This is for kvm_mkdb, and should be the address of the beginning
