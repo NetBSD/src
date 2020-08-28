@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.23 2020/08/28 11:15:08 skrll Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.24 2020/08/28 12:56:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 ENTRY_NP(generic_start)
 
 	// ARMv7 only?!?
-#ifdef __ARMEB__
+#if defined(__ARMEB__)
 	setend	be			/* force big endian */
 #endif
 
@@ -143,7 +143,7 @@ ENTRY_NP(generic_start)
 	VPRINTX(r6)
 #endif
 
-#ifdef VERBOSE_INIT_ARM
+#if defined(VERBOSE_INIT_ARM)
 	VPRINTF("\n\rmidr  : ")
 	mrc	p15, 0, r0, c0, c0, 0	// MIDR
 	VPRINTX(r0)
@@ -469,7 +469,7 @@ generic_startv7:
 generic_vstartv7:
 	VPRINTF("virtual\n\r")
 
-#ifdef KASAN
+#if defined(KASAN)
 	ldr	r0, =start_stacks_bottom
 	bl	_C_LABEL(kasan_early_init)
 
@@ -503,7 +503,7 @@ generic_startv6:
 	bl	armv6_init
 	bl	generic_savevars
 
-#ifdef ARM_MMU_EXTENDED
+#if defined(ARM_MMU_EXTENDED)
 	mov	R_DEVATTR, #L1_S_V6_XN
 #else
 	mov	R_DEVATTR, #0
@@ -523,7 +523,7 @@ generic_startv6:
 generic_vstartv6:
 	VPRINTF("virtual\n\r")
 
-#ifdef KASAN
+#if defined(KASAN)
 	ldr	r0, =start_stacks_bottom
 	bl	_C_LABEL(kasan_early_init)
 
@@ -547,13 +547,13 @@ generic_vstartv6:
 //
 // SCTLR register initialization values
 //
-#ifdef __ARMEL__
+#if defined(__ARMEL__)
 #define CPU_CONTROL_EX_BEND_SET		0
 #else
 #define CPU_CONTROL_EX_BEND_SET		CPU_CONTROL_EX_BEND
 #endif
 
-#ifdef ARM32_DISABLE_ALIGNMENT_FAULTS
+#if defined(ARM32_DISABLE_ALIGNMENT_FAULTS)
 #define CPU_CONTROL_AFLT_ENABLE_CLR	CPU_CONTROL_AFLT_ENABLE
 #define CPU_CONTROL_AFLT_ENABLE_SET	0
 #else
@@ -561,7 +561,7 @@ generic_vstartv6:
 #define CPU_CONTROL_AFLT_ENABLE_SET	CPU_CONTROL_AFLT_ENABLE
 #endif
 
-#ifdef ARM_MMU_EXTENDED
+#if defined(ARM_MMU_EXTENDED)
 #define CPU_CONTROL_XP_ENABLE_CLR	0
 #define CPU_CONTROL_XP_ENABLE_SET	CPU_CONTROL_XP_ENABLE
 #else
@@ -678,7 +678,7 @@ armv7_init:
 	dsb
 	isb
 
-#ifdef VERBOSE_INIT_ARM
+#if defined(VERBOSE_INIT_ARM)
 	XPUTC(#'B')
 
 	VPRINTF(" sctlr:")
@@ -810,7 +810,7 @@ ENTRY_NP(cpu_mpstart)
 3:	wfi
 	b	3b
 #else
-#ifdef __ARMEB__
+#if defined(__ARMEB__)
 	setend	be				// switch to BE now
 #endif
 
@@ -848,7 +848,7 @@ ENTRY_NP(cpu_mpstart)
 	lsl	r5, #INIT_ARM_STACK_SHIFT
 	sub	sp, sp, r5
 
-#ifdef VERBOSE_INIT_ARM
+#if defined(VERBOSE_INIT_ARM)
 	VPRINTF("\n\rmidr  : ")
 	mrc	p15, 0, r0, c0, c0, 0		// MIDR
 	VPRINTX(r0)
@@ -930,7 +930,7 @@ armv7_mpcontinuation:
 	ldr	r6, [r5, #CI_IDLELWP]		// get the idlelwp
 	ldr	r7, [r6, #L_PCB]		// now get its pcb
 	ldr	sp, [r7, #PCB_KSP]		// finally, we can load our SP
-#ifdef TPIDRPRW_IS_CURCPU
+#if defined(TPIDRPRW_IS_CURCPU)
 	mcr	p15, 0, r5, c13, c0, 4		// squirrel away curcpu()
 #elif defined(TPIDRPRW_IS_CURLWP)
 	mcr	p15, 0, r6, c13, c0, 4		// squirrel away curlwp()
@@ -989,7 +989,7 @@ ENTRY_NP(armv6_init)
 
 	mcr	p15, 0, r0, c7, c10, 4	/* Drain the write buffers. */
 
-#ifdef VERBOSE_INIT_ARM
+#if defined(VERBOSE_INIT_ARM)
 	XPUTC(#'B')
 
 	VPRINTF(" sctlr:")
@@ -1044,7 +1044,7 @@ armv6_mmuinit:
 	 * Enable the MMU, etc.
 	 */
 
-#ifdef VERBOSE_INIT_ARM
+#if defined(VERBOSE_INIT_ARM)
 	VPRINTF(" sctlr:")
 	mrc     p15, 0, r0, c1, c0, 0
 	VPRINTX(r0)
@@ -1087,7 +1087,7 @@ armv6_mmuinit:
 
 	/* bits to set in the Control Register */
 Lcontrol_set:
-#ifdef ARM_MMU_EXTENDED
+#if defined(ARM_MMU_EXTENDED)
 #define	CPU_CONTROL_EXTRA	CPU_CONTROL_XP_ENABLE
 #else
 #define	CPU_CONTROL_EXTRA	CPU_CONTROL_SYST_ENABLE
