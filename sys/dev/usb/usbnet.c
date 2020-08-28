@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.38 2020/03/15 23:04:51 thorpej Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.39 2020/08/28 17:05:32 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.38 2020/03/15 23:04:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.39 2020/08/28 17:05:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -238,6 +238,9 @@ static struct mbuf *
 usbnet_newbuf(size_t buflen)
 {
 	struct mbuf *m;
+
+	if (buflen > MCLBYTES)
+		return NULL;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
