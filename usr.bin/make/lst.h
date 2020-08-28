@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.52 2020/08/28 04:28:45 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.53 2020/08/28 04:48:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -101,80 +101,80 @@ typedef int LstActionProc(void *, void *);
 /* Create a new list */
 Lst		Lst_Init(void);
 /* Duplicate an existing list */
-Lst		Lst_CopyS(Lst, LstCopyProc);
+Lst		Lst_Copy(Lst, LstCopyProc);
 /* Destroy an old one */
-void		Lst_FreeS(Lst);
-void		Lst_DestroyS(Lst, LstFreeProc);
+void		Lst_Free(Lst);
+void		Lst_Destroy(Lst, LstFreeProc);
 /* True if list is empty */
-Boolean		Lst_IsEmptyS(Lst);
+Boolean		Lst_IsEmpty(Lst);
 
 /*
  * Functions to modify a list
  */
 /* Insert an element before another */
-void		Lst_InsertBeforeS(Lst, LstNode, void *);
+void		Lst_InsertBefore(Lst, LstNode, void *);
 /* Place an element at the front of a lst. */
-void		Lst_PrependS(Lst, void *);
+void		Lst_Prepend(Lst, void *);
 /* Place an element at the end of a lst. */
-void		Lst_AppendS(Lst, void *);
+void		Lst_Append(Lst, void *);
 /* Remove an element */
-void		Lst_RemoveS(Lst, LstNode);
+void		Lst_Remove(Lst, LstNode);
 /* Replace a node with a new value */
-void		LstNode_SetS(LstNode, void *);
-void		LstNode_SetNullS(LstNode);
+void		LstNode_Set(LstNode, void *);
+void		LstNode_SetNull(LstNode);
 
-void		Lst_PrependAllS(Lst, Lst);
-void		Lst_AppendAllS(Lst, Lst);
-void		Lst_MoveAllS(Lst, Lst);
+void		Lst_PrependAll(Lst, Lst);
+void		Lst_AppendAll(Lst, Lst);
+void		Lst_MoveAll(Lst, Lst);
 
 /*
  * Node-specific functions
  */
 /* Return first element in list */
-LstNode		Lst_FirstS(Lst);
+LstNode		Lst_First(Lst);
 /* Return last element in list */
-LstNode		Lst_LastS(Lst);
+LstNode		Lst_Last(Lst);
 /* Return successor to given element */
-LstNode		Lst_SuccS(LstNode);
+LstNode		Lst_Succ(LstNode);
 /* Return predecessor to given element */
-LstNode		Lst_PrevS(LstNode);
+LstNode		Lst_Prev(LstNode);
 /* Get datum from LstNode */
-void		*Lst_DatumS(LstNode);
+void		*Lst_Datum(LstNode);
 
 /*
  * Functions for entire lists
  */
 /* Find an element in a list */
-LstNode		Lst_FindS(Lst, LstFindProc, const void *);
+LstNode		Lst_Find(Lst, LstFindProc, const void *);
 /* Find an element starting from somewhere */
-LstNode		Lst_FindFromS(Lst, LstNode, LstFindProc, const void *);
+LstNode		Lst_FindFrom(Lst, LstNode, LstFindProc, const void *);
 /*
  * See if the given datum is on the list. Returns the LstNode containing
  * the datum
  */
-LstNode		Lst_MemberS(Lst, void *);
+LstNode		Lst_Member(Lst, void *);
 /* Apply a function to all elements of a lst */
-int		Lst_ForEachS(Lst, LstActionProc, void *);
+int		Lst_ForEach(Lst, LstActionProc, void *);
 /* Apply a function to all elements of a lst starting from a certain point. */
-int		Lst_ForEachFromS(Lst, LstNode, LstActionProc, void *);
+int		Lst_ForEachFrom(Lst, LstNode, LstActionProc, void *);
 /*
  * these functions are for dealing with a list as a table, of sorts.
  * An idea of the "current element" is kept and used by all the functions
  * between Lst_Open() and Lst_Close().
  */
 /* Open the list */
-void		Lst_OpenS(Lst);
+void		Lst_Open(Lst);
 /* Next element please, or NULL */
-LstNode		Lst_NextS(Lst);
+LstNode		Lst_Next(Lst);
 /* Finish table access */
-void		Lst_CloseS(Lst);
+void		Lst_Close(Lst);
 
 /*
  * for using the list as a queue
  */
 /* Place an element at tail of queue */
-void		Lst_EnqueueS(Lst, void *);
+void		Lst_Enqueue(Lst, void *);
 /* Remove an element from head of queue */
-void		*Lst_DequeueS(Lst);
+void		*Lst_Dequeue(Lst);
 
 #endif /* MAKE_LST_H */
