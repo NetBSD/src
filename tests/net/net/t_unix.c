@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unix.c,v 1.23 2020/08/28 13:56:29 christos Exp $	*/
+/*	$NetBSD: t_unix.c,v 1.24 2020/08/28 14:18:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #define _GNU_SOURCE
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$Id: t_unix.c,v 1.23 2020/08/28 13:56:29 christos Exp $");
+__RCSID("$Id: t_unix.c,v 1.24 2020/08/28 14:18:29 riastradh Exp $");
 #else
 #define getprogname() argv[0]
 #endif
@@ -208,7 +208,7 @@ check_cred(int fd, bool statit, pid_t checkpid, pid_t otherpid, const char *s)
 		}
 	}
 	fflush(stdout);
-	
+
 	CHECK_EQUAL(euid, uid, s);
 	CHECK_EQUAL(egid, gid, s);
 	CHECK_EQUAL(pid, checkpid, s);
@@ -237,7 +237,7 @@ test(bool forkit, bool closeit, bool statit, size_t len)
 		FAIL("socket(server)");
 
 	slen = len + OF + 1;
-	
+
 	if ((sun = calloc(1, slen)) == NULL)
 		FAIL("calloc");
 
@@ -351,7 +351,7 @@ test(bool forkit, bool closeit, bool statit, size_t len)
 		for (size_t i = 0; i < slen - OF; i++)
 			if (sock_addr->sun_path[i] != sun->sun_path[i])
 				FAIL("sock_addr.sun_path[%zu] %d != "
-				    "sun->sun_path[%zu] %d\n", i, 
+				    "sun->sun_path[%zu] %d\n", i,
 				    sock_addr->sun_path[i], i,
 				    sun->sun_path[i]);
 
