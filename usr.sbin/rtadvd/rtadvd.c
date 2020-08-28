@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.78 2020/05/14 23:42:18 christos Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.79 2020/08/28 00:19:37 rjs Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -1614,7 +1614,7 @@ rtsock_open(void)
 		exit(EXIT_FAILURE);
 	}
 #ifdef RO_MSGFILTER
-	if (setsockopt(rtsock, PF_ROUTE, RO_MSGFILTER,
+	if (prog_setsockopt(rtsock, PF_ROUTE, RO_MSGFILTER,
 	    &msgfilter, sizeof(msgfilter) == -1))
 		logit(LOG_ERR, "%s: RO_MSGFILTER: %m", __func__);
 #endif
