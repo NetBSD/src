@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.126 2020/08/28 06:37:21 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.127 2020/08/28 17:27:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.126 2020/08/28 06:37:21 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.127 2020/08/28 17:27:21 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.126 2020/08/28 06:37:21 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.127 2020/08/28 17:27:21 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2432,22 +2432,13 @@ Suff_FindDeps(GNode *gn)
 }
 
 
-/*
- * Input:
- *	gn		node we're dealing with
- *
- */
 static void
 SuffFindDeps(GNode *gn, Lst slst)
 {
-    if (gn->type & OP_DEPS_FOUND) {
-	/*
-	 * If dependencies already found, no need to do it again...
-	 */
+    if (gn->type & OP_DEPS_FOUND)
 	return;
-    } else {
-	gn->type |= OP_DEPS_FOUND;
-    }
+    gn->type |= OP_DEPS_FOUND;
+
     /*
      * Make sure we have these set, may get revised below.
      */
@@ -2502,16 +2493,12 @@ SuffFindDeps(GNode *gn, Lst slst)
  * Input:
  *	name		Name of null suffix
  *
- * Results:
- *	None.
- *
  * Side Effects:
  *	'suffNull' is altered.
  *
  * Notes:
  *	Need to handle the changing of the null suffix gracefully so the
  *	old transformation rules don't just go away.
- *
  *-----------------------------------------------------------------------
  */
 void
@@ -2537,18 +2524,7 @@ Suff_SetNull(char *name)
     }
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Suff_Init --
- *	Initialize suffixes module
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	Many
- *-----------------------------------------------------------------------
- */
+/* Initialize the suffixes module. */
 void
 Suff_Init(void)
 {
@@ -2568,19 +2544,7 @@ Suff_Init(void)
 }
 
 
-/*-
- *----------------------------------------------------------------------
- * Suff_End --
- *	Cleanup the this module
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	The memory is free'd.
- *----------------------------------------------------------------------
- */
-
+/* Clean up the suffixes module. */
 void
 Suff_End(void)
 {
