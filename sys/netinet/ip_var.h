@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.128 2019/05/13 07:47:59 ozaki-r Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.129 2020/08/28 06:19:13 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -149,8 +149,10 @@ struct ip_pktopts {
 #define	IP_STAT_NOIPSEC		31	/* no match ipsec(4) found */
 #define	IP_STAT_PFILDROP_IN	32	/* dropped by pfil (PFIL_IN) */
 #define	IP_STAT_PFILDROP_OUT	33	/* dropped by pfil (PFIL_OUT) */
+#define	IP_STAT_IPSECDROP_IN	34	/* dropped by IPsec SP check */
+#define	IP_STAT_IPSECDROP_OUT	35	/* dropped by IPsec SP check */
 
-#define	IP_NSTATS		34
+#define	IP_NSTATS		36
 
 #ifdef _KERNEL
 

@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.170 2019/08/07 10:10:00 knakahara Exp $ */
+/* $NetBSD: ipsec.c,v 1.171 2020/08/28 06:19:13 ozaki-r Exp $ */
 /* $FreeBSD: ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.170 2019/08/07 10:10:00 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.171 2020/08/28 06:19:13 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -616,7 +616,7 @@ ipsec_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
 
 int
 ipsec4_output(struct mbuf *m, struct inpcb *inp, int flags,
-    u_long *mtu, bool *natt_frag, bool *done)
+    u_long *mtu, bool *natt_frag, bool *done, bool *count_drop)
 {
 	struct secpolicy *sp = NULL;
 	u_long _mtu = 0;
@@ -660,6 +660,7 @@ ipsec4_output(struct mbuf *m, struct inpcb *inp, int flags,
 				error = 0;
 			m_freem(m);
 			*done = true;
+			*count_drop = true;
 			return error;
 		}
 		/* No IPsec processing for this packet. */

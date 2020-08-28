@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.315 2019/12/27 10:17:56 msaitoh Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.316 2020/08/28 06:19:13 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.315 2019/12/27 10:17:56 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.316 2020/08/28 06:19:13 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -609,10 +609,13 @@ sendit:
 #ifdef IPSEC
 	if (ipsec_used) {
 		bool ipsec_done = false;
+		bool count_drop = false;
 
 		/* Perform IPsec processing, if any. */
 		error = ipsec4_output(m, inp, flags, &mtu, &natt_frag,
-		    &ipsec_done);
+		    &ipsec_done, &count_drop);
+		if (count_drop)
+			IP_STATINC(IP_STAT_IPSECDROP_OUT);
 		if (error || ipsec_done)
 			goto done;
 	}

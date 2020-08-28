@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.393 2019/11/13 02:51:22 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.394 2020/08/28 06:19:13 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.393 2019/11/13 02:51:22 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.394 2020/08/28 06:19:13 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -741,6 +741,7 @@ ip_input(struct mbuf *m)
 		/* Check the security policy (SP) for the packet */
 		if (ipsec_used) {
 			if (ipsec_ip_input(m, true) != 0) {
+				IP_STATINC(IP_STAT_IPSECDROP_IN);
 				goto out;
 			}
 		}
@@ -788,6 +789,7 @@ ours:
 	if (ipsec_used &&
 	    (inetsw[ip_protox[ip->ip_p]].pr_flags & PR_LASTHDR) != 0) {
 		if (ipsec_ip_input(m, false) != 0) {
+			IP_STATINC(IP_STAT_IPSECDROP_IN);
 			goto out;
 		}
 	}
