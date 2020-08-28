@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.31 2020/07/07 12:01:21 simonb Exp $
+# $NetBSD: postinstall.in,v 1.32 2020/08/28 15:25:16 christos Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -859,7 +859,11 @@ fixblock() {
 		else
 			local p=$(${STAT} -f %Lp "${target}")
 			chmod u+w "${target}" || return 1
-			${SED} -i -e 's/\([bB]\)lack/\1lock/g' "${target}"
+			if [ "$2" = "/etc/npf.conf" ]; then
+				${SED} -i -e 's/"blacklistd/"blocklistd"/g' "${target}"
+			else
+				${SED} -i -e 's/\([bB]\)lacklist/\1locklist/g' "${target}"
+			fi
 			chmod "${p}" "${target}"
 		fi
 	fi
