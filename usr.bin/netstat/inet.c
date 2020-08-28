@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.111 2020/08/06 07:38:54 knakahara Exp $	*/
+/*	$NetBSD: inet.c,v 1.112 2020/08/28 06:34:17 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.111 2020/08/06 07:38:54 knakahara Exp $");
+__RCSID("$NetBSD: inet.c,v 1.112 2020/08/28 06:34:17 ozaki-r Exp $");
 #endif
 #endif /* not lint */
 
@@ -633,6 +633,13 @@ ip_stats(u_long off, const char *name)
 	p(IP_STAT_BADADDR, "\t%" PRIu64 " datagram%s with bad address in header\n");
 	p(IP_STAT_PFILDROP_IN, "\t%" PRIu64 " input packet%s dropped by pfil\n");
 	p(IP_STAT_PFILDROP_OUT, "\t%" PRIu64 " output packet%s dropped by pfil\n");
+	p(IP_STAT_IPSECDROP_IN, "\t%" PRIu64 " input packet%s dropped by IPsec\n");
+	p(IP_STAT_IPSECDROP_OUT, "\t%" PRIu64 " output packet%s dropped by IPsec\n");
+	p(IP_STAT_IFDROP, "\t%" PRIu64 " input packet%s dropped due to interface state\n");
+	p(IP_STAT_TIMXCEED, "\t%" PRIu64 " packet%s dropped due to TTL exceeded\n");
+	p(IP_STAT_IFNOADDR, "\t%" PRIu64 " output packet%s dropped (no IP address)\n");
+	p(IP_STAT_RTREJECT, "\t%" PRIu64 " output packet%s discarded due to reject route\n");
+	p(IP_STAT_BCASTDENIED, "\t%" PRIu64 " output packet%s dropped (broadcast prohibited)\n");
 #undef ps
 #undef p
 }
