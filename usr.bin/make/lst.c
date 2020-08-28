@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.49 2020/08/28 04:28:45 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.50 2020/08/28 04:48:57 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,11 +37,11 @@
 #include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.49 2020/08/28 04:28:45 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.50 2020/08/28 04:48:57 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.49 2020/08/28 04:28:45 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.50 2020/08/28 04:48:57 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -125,7 +125,7 @@ Lst_Init(void)
  * If copyProc is given, that function is used to create the new datum from the
  * old datum, usually by creating a copy of it. */
 Lst
-Lst_CopyS(Lst list, LstCopyProc copyProc)
+Lst_Copy(Lst list, LstCopyProc copyProc)
 {
     Lst newList;
     LstNode node;
@@ -136,7 +136,7 @@ Lst_CopyS(Lst list, LstCopyProc copyProc)
 
     for (node = list->first; node != NULL; node = node->next) {
 	void *datum = copyProc != NULL ? copyProc(node->datum) : node->datum;
-	Lst_AppendS(newList, datum);
+	Lst_Append(newList, datum);
     }
 
     return newList;
@@ -144,7 +144,7 @@ Lst_CopyS(Lst list, LstCopyProc copyProc)
 
 /* Free a list and all its nodes. The list data itself are not freed though. */
 void
-Lst_FreeS(Lst list)
+Lst_Free(Lst list)
 {
     LstNode node;
     LstNode next;
@@ -162,7 +162,7 @@ Lst_FreeS(Lst list)
 /* Destroy a list and free all its resources. If the freeProc is given, it is
  * called with the datum from each node in turn before the node is freed. */
 void
-Lst_DestroyS(Lst list, LstFreeProc freeProc)
+Lst_Destroy(Lst list, LstFreeProc freeProc)
 {
     LstNode node;
     LstNode next;
@@ -186,7 +186,7 @@ Lst_DestroyS(Lst list, LstFreeProc freeProc)
 /* Insert a new node with the given piece of data before the given node in the
  * given list. */
 void
-Lst_InsertBeforeS(Lst list, LstNode node, void *datum)
+Lst_InsertBefore(Lst list, LstNode node, void *datum)
 {
     LstNode newNode;
 
@@ -211,7 +211,7 @@ Lst_InsertBeforeS(Lst list, LstNode node, void *datum)
 
 /* Add a piece of data at the start of the given list. */
 void
-Lst_PrependS(Lst list, void *datum)
+Lst_Prepend(Lst list, void *datum)
 {
     LstNode node;
 
@@ -233,7 +233,7 @@ Lst_PrependS(Lst list, void *datum)
 
 /* Add a piece of data at the end of the given list. */
 void
-Lst_AppendS(Lst list, void *datum)
+Lst_Append(Lst list, void *datum)
 {
     LstNode node;
 
@@ -256,7 +256,7 @@ Lst_AppendS(Lst list, void *datum)
 /* Remove the given node from the given list.
  * The datum stored in the node must be freed by the caller, if necessary. */
 void
-Lst_RemoveS(Lst list, LstNode node)
+Lst_Remove(Lst list, LstNode node)
 {
     assert(LstIsValid(list));
     assert(LstNodeIsValid(node));
@@ -308,7 +308,7 @@ Lst_RemoveS(Lst list, LstNode node)
 
 /* Replace the datum in the given node with the new datum. */
 void
-LstNode_SetS(LstNode node, void *datum)
+LstNode_Set(LstNode node, void *datum)
 {
     assert(LstNodeIsValid(node));
     assert(datum != NULL);
@@ -318,7 +318,7 @@ LstNode_SetS(LstNode node, void *datum)
 
 /* Replace the datum in the given node to NULL. */
 void
-LstNode_SetNullS(LstNode node)
+LstNode_SetNull(LstNode node)
 {
     assert(LstNodeIsValid(node));
 
@@ -332,7 +332,7 @@ LstNode_SetNullS(LstNode node)
 
 /* Return the first node from the given list, or NULL if the list is empty. */
 LstNode
-Lst_FirstS(Lst list)
+Lst_First(Lst list)
 {
     assert(LstIsValid(list));
 
@@ -341,7 +341,7 @@ Lst_FirstS(Lst list)
 
 /* Return the last node from the given list, or NULL if the list is empty. */
 LstNode
-Lst_LastS(Lst list)
+Lst_Last(Lst list)
 {
     assert(LstIsValid(list));
 
@@ -350,7 +350,7 @@ Lst_LastS(Lst list)
 
 /* Return the successor to the given node on its list, or NULL. */
 LstNode
-Lst_SuccS(LstNode node)
+Lst_Succ(LstNode node)
 {
     assert(LstNodeIsValid(node));
 
@@ -359,7 +359,7 @@ Lst_SuccS(LstNode node)
 
 /* Return the predecessor to the given node on its list, or NULL. */
 LstNode
-Lst_PrevS(LstNode node)
+Lst_Prev(LstNode node)
 {
     assert(LstNodeIsValid(node));
     return node->prev;
@@ -367,7 +367,7 @@ Lst_PrevS(LstNode node)
 
 /* Return the datum stored in the given node. */
 void *
-Lst_DatumS(LstNode node)
+Lst_Datum(LstNode node)
 {
     assert(LstNodeIsValid(node));
     return node->datum;
@@ -380,7 +380,7 @@ Lst_DatumS(LstNode node)
 
 /* Return TRUE if the given list is empty. */
 Boolean
-Lst_IsEmptyS(Lst list)
+Lst_IsEmpty(Lst list)
 {
     assert(LstIsValid(list));
 
@@ -390,18 +390,18 @@ Lst_IsEmptyS(Lst list)
 /* Return the first node from the given list for which the given comparison
  * function returns 0, or NULL if none of the nodes matches. */
 LstNode
-Lst_FindS(Lst list, LstFindProc cmp, const void *cmpData)
+Lst_Find(Lst list, LstFindProc cmp, const void *cmpData)
 {
     if (LstIsEmpty(list))
 	return NULL;
-    return Lst_FindFromS(list, Lst_FirstS(list), cmp, cmpData);
+    return Lst_FindFrom(list, Lst_First(list), cmp, cmpData);
 }
 
 /* Return the first node from the given list, starting at the given node, for
  * which the given comparison function returns 0, or NULL if none of the nodes
  * matches. */
 LstNode
-Lst_FindFromS(Lst list, LstNode node, LstFindProc cmp, const void *cmpData)
+Lst_FindFrom(Lst list, LstNode node, LstFindProc cmp, const void *cmpData)
 {
     LstNode tln;
 
@@ -419,7 +419,7 @@ Lst_FindFromS(Lst list, LstNode node, LstFindProc cmp, const void *cmpData)
 
 /* Return the first node that contains the given datum, or NULL. */
 LstNode
-Lst_MemberS(Lst list, void *datum)
+Lst_Member(Lst list, void *datum)
 {
     LstNode node;
 
@@ -439,18 +439,18 @@ Lst_MemberS(Lst list, void *datum)
  * should return 0 if traversal should continue and non-zero if it should
  * abort. */
 int
-Lst_ForEachS(Lst list, LstActionProc proc, void *procData)
+Lst_ForEach(Lst list, LstActionProc proc, void *procData)
 {
     if (LstIsEmpty(list))
 	return 0;		/* XXX: Document what this value means. */
-    return Lst_ForEachFromS(list, Lst_FirstS(list), proc, procData);
+    return Lst_ForEachFrom(list, Lst_First(list), proc, procData);
 }
 
 /* Apply the given function to each element of the given list, starting from
  * the given node. The function should return 0 if traversal should continue,
  * and non-zero if it should abort. */
 int
-Lst_ForEachFromS(Lst list, LstNode node,
+Lst_ForEachFrom(Lst list, LstNode node,
 		 LstActionProc proc, void *procData)
 {
     LstNode tln = node;
@@ -504,7 +504,7 @@ Lst_ForEachFromS(Lst list, LstNode node,
 /* Move all nodes from list2 to the end of list1.
  * List2 is destroyed and freed. */
 void
-Lst_MoveAllS(Lst list1, Lst list2)
+Lst_MoveAll(Lst list1, Lst list2)
 {
     assert(LstIsValid(list1));
     assert(LstIsValid(list2));
@@ -523,20 +523,20 @@ Lst_MoveAllS(Lst list1, Lst list2)
 
 /* Copy the element data from src to the start of dst. */
 void
-Lst_PrependAllS(Lst dst, Lst src)
+Lst_PrependAll(Lst dst, Lst src)
 {
     LstNode node;
     for (node = src->last; node != NULL; node = node->prev)
-	Lst_PrependS(dst, node->datum);
+	Lst_Prepend(dst, node->datum);
 }
 
 /* Copy the element data from src to the end of dst. */
 void
-Lst_AppendAllS(Lst dst, Lst src)
+Lst_AppendAll(Lst dst, Lst src)
 {
     LstNode node;
     for (node = src->first; node != NULL; node = node->next)
-	Lst_AppendS(dst, node->datum);
+	Lst_Append(dst, node->datum);
 }
 
 /*
@@ -552,7 +552,7 @@ Lst_AppendAllS(Lst dst, Lst src)
 /* Open a list for sequential access. A list can still be searched, etc.,
  * without confusing these functions. */
 void
-Lst_OpenS(Lst list)
+Lst_Open(Lst list)
 {
     assert(LstIsValid(list));
 
@@ -570,7 +570,7 @@ Lst_OpenS(Lst list)
 /* Return the next node for the given list, or NULL if the end has been
  * reached. */
 LstNode
-Lst_NextS(Lst list)
+Lst_Next(Lst list)
 {
     LstNode node;
 
@@ -614,7 +614,7 @@ Lst_NextS(Lst list)
 
 /* Close a list which was opened for sequential access. */
 void
-Lst_CloseS(Lst list)
+Lst_Close(Lst list)
 {
     assert(LstIsValid(list));
     assert(list->isOpen);
@@ -630,14 +630,14 @@ Lst_CloseS(Lst list)
 
 /* Add the datum to the tail of the given list. */
 void
-Lst_EnqueueS(Lst list, void *datum)
+Lst_Enqueue(Lst list, void *datum)
 {
-    Lst_AppendS(list, datum);
+    Lst_Append(list, datum);
 }
 
 /* Remove and return the datum at the head of the given list. */
 void *
-Lst_DequeueS(Lst list)
+Lst_Dequeue(Lst list)
 {
     void *datum;
 
@@ -645,7 +645,7 @@ Lst_DequeueS(Lst list)
     assert(!LstIsEmpty(list));
 
     datum = list->first->datum;
-    Lst_RemoveS(list, list->first);
+    Lst_Remove(list, list->first);
     assert(datum != NULL);
     return datum;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.131 2020/08/27 19:15:35 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.132 2020/08/28 04:48:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.131 2020/08/27 19:15:35 rillig Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.132 2020/08/28 04:48:56 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.131 2020/08/27 19:15:35 rillig Exp $");
+__RCSID("$NetBSD: compat.c,v 1.132 2020/08/28 04:48:56 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -230,7 +230,7 @@ CompatRunCommand(void *cmdp, void *gnp)
     errCheck = !(gn->type & OP_IGNORE);
     doIt = FALSE;
 
-    cmdNode = Lst_MemberS(gn->commands, cmd);
+    cmdNode = Lst_Member(gn->commands, cmd);
     cmdStart = Var_Subst(cmd, gn, VARE_WANTRES);
 
     /*
@@ -245,11 +245,11 @@ CompatRunCommand(void *cmdp, void *gnp)
 	return 0;
     }
     cmd = cmdStart;
-    LstNode_SetS(cmdNode, cmdStart);
+    LstNode_Set(cmdNode, cmdStart);
 
     if ((gn->type & OP_SAVE_CMDS) && (gn != ENDNode)) {
         assert(ENDNode != NULL);
-	Lst_AppendS(ENDNode->commands, cmdStart);
+	Lst_Append(ENDNode->commands, cmdStart);
 	return 0;
     }
     if (strcmp(cmdStart, "...") == 0) {
@@ -394,7 +394,7 @@ again:
 
     /* XXX: Memory management looks suspicious here. */
     /* XXX: Setting a list item to NULL is unexpected. */
-    LstNode_SetNullS(cmdNode);
+    LstNode_SetNull(cmdNode);
 
 #ifdef USE_META
     if (useMeta) {
@@ -532,14 +532,14 @@ Compat_Make(void *gnp, void *pgnp)
 	gn->made = BEINGMADE;
 	if ((gn->type & OP_MADE) == 0)
 	    Suff_FindDeps(gn);
-	Lst_ForEachS(gn->children, Compat_Make, gn);
+	Lst_ForEach(gn->children, Compat_Make, gn);
 	if ((gn->flags & REMAKE) == 0) {
 	    gn->made = ABORTED;
 	    pgn->flags &= ~(unsigned)REMAKE;
 	    goto cohorts;
 	}
 
-	if (Lst_MemberS(gn->iParents, pgn) != NULL) {
+	if (Lst_Member(gn->iParents, pgn) != NULL) {
 	    char *p1;
 	    Var_Set(IMPSRC, Var_Value(TARGET, gn, &p1), pgn);
 	    bmake_free(p1);
@@ -602,7 +602,7 @@ Compat_Make(void *gnp, void *pgnp)
 		    meta_job_start(NULL, gn);
 		}
 #endif
-		Lst_ForEachS(gn->commands, CompatRunCommand, gn);
+		Lst_ForEach(gn->commands, CompatRunCommand, gn);
 		curTarg = NULL;
 	    } else {
 		Job_Touch(gn, gn->type & OP_SILENT);
@@ -643,7 +643,7 @@ Compat_Make(void *gnp, void *pgnp)
 	 */
 	pgn->flags &= ~(unsigned)REMAKE;
     } else {
-	if (Lst_MemberS(gn->iParents, pgn) != NULL) {
+	if (Lst_Member(gn->iParents, pgn) != NULL) {
 	    char *p1;
 	    Var_Set(IMPSRC, Var_Value(TARGET, gn, &p1), pgn);
 	    bmake_free(p1);
@@ -671,7 +671,7 @@ Compat_Make(void *gnp, void *pgnp)
     }
 
 cohorts:
-    Lst_ForEachS(gn->cohorts, Compat_Make, pgnp);
+    Lst_ForEach(gn->cohorts, Compat_Make, pgnp);
     return 0;
 }
 
@@ -747,8 +747,8 @@ Compat_Run(Lst targs)
      *	    	  	    could not be made due to errors.
      */
     errors = 0;
-    while (!Lst_IsEmptyS(targs)) {
-	gn = Lst_DequeueS(targs);
+    while (!Lst_IsEmpty(targs)) {
+	gn = Lst_Dequeue(targs);
 	Compat_Make(gn, gn);
 
 	if (gn->made == UPTODATE) {

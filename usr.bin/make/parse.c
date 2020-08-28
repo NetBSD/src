@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.267 2020/08/27 19:15:35 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.268 2020/08/28 04:48:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.267 2020/08/27 19:15:35 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.268 2020/08/28 04:48:57 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.267 2020/08/27 19:15:35 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.268 2020/08/28 04:48:57 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -852,11 +852,11 @@ ParseLinkSrc(void *pgnp, void *cgnp)
     GNode          *pgn = (GNode *)pgnp;
     GNode          *cgn = (GNode *)cgnp;
 
-    if ((pgn->type & OP_DOUBLEDEP) && !Lst_IsEmptyS(pgn->cohorts))
-	pgn = Lst_DatumS(Lst_LastS(pgn->cohorts));
-    Lst_AppendS(pgn->children, cgn);
+    if ((pgn->type & OP_DOUBLEDEP) && !Lst_IsEmpty(pgn->cohorts))
+	pgn = Lst_Datum(Lst_Last(pgn->cohorts));
+    Lst_Append(pgn->children, cgn);
     if (specType == Not)
-	Lst_AppendS(cgn->parents, pgn);
+	Lst_Append(cgn->parents, pgn);
     pgn->unmade += 1;
     if (DEBUG(PARSE)) {
 	fprintf(debug_file, "# %s: added child %s - %s\n", __func__,
@@ -932,7 +932,7 @@ ParseDoOp(void *gnp, void *opp)
 	 * traversals will no longer see this node anyway. -mycroft)
 	 */
 	cohort->type = op | OP_INVISIBLE;
-	Lst_AppendS(gn->cohorts, cohort);
+	Lst_Append(gn->cohorts, cohort);
 	cohort->centurion = gn;
 	gn->unmade_cohorts += 1;
 	snprintf(cohort->cohort_num, sizeof cohort->cohort_num, "#%d",
@@ -982,7 +982,7 @@ ParseDoSrc(int tOp, const char *src)
 	    int op = parseKeywords[keywd].op;
 	    if (op != 0) {
 		if (targets != NULL)
-		    Lst_ForEachS(targets, ParseDoOp, &op);
+		    Lst_ForEach(targets, ParseDoOp, &op);
 		return;
 	    }
 	    if (parseKeywords[keywd].spec == Wait) {
@@ -1001,7 +1001,7 @@ ParseDoSrc(int tOp, const char *src)
 		    ParseMark(gn);
 		gn->type = OP_WAIT | OP_PHONY | OP_DEPENDS | OP_NOTMAIN;
 		if (targets != NULL)
-		    Lst_ForEachS(targets, ParseLinkSrc, gn);
+		    Lst_ForEach(targets, ParseLinkSrc, gn);
 		return;
 	    }
 	}
@@ -1017,7 +1017,7 @@ ParseDoSrc(int tOp, const char *src)
 	 * invoked if the user didn't specify a target on the command
 	 * line. This is to allow #ifmake's to succeed, or something...
 	 */
-	Lst_AppendS(create, bmake_strdup(src));
+	Lst_Append(create, bmake_strdup(src));
 	/*
 	 * Add the name to the .TARGETS variable as well, so the user can
 	 * employ that, if desired.
@@ -1034,8 +1034,8 @@ ParseDoSrc(int tOp, const char *src)
 	if (doing_depend)
 	    ParseMark(gn);
 	if (predecessor != NULL) {
-	    Lst_AppendS(predecessor->order_succ, gn);
-	    Lst_AppendS(gn->order_pred, predecessor);
+	    Lst_Append(predecessor->order_succ, gn);
+	    Lst_Append(gn->order_pred, predecessor);
 	    if (DEBUG(PARSE)) {
 		fprintf(debug_file, "# %s: added Order dependency %s - %s\n",
 		    __func__, predecessor->name, gn->name);
@@ -1070,7 +1070,7 @@ ParseDoSrc(int tOp, const char *src)
 	    gn->type |= tOp;
 	} else {
 	    if (targets != NULL)
-		Lst_ForEachS(targets, ParseLinkSrc, gn);
+		Lst_ForEach(targets, ParseLinkSrc, gn);
 	}
 	break;
     }
@@ -1357,10 +1357,10 @@ ParseDoDependency(char *line)
 		    if (paths == NULL) {
 			paths = Lst_Init();
 		    }
-		    Lst_AppendS(paths, dirSearchPath);
+		    Lst_Append(paths, dirSearchPath);
 		    break;
 		case Main:
-		    if (!Lst_IsEmptyS(create)) {
+		    if (!Lst_IsEmpty(create)) {
 			specType = Not;
 		    }
 		    break;
@@ -1373,12 +1373,12 @@ ParseDoDependency(char *line)
 		    if (doing_depend)
 			ParseMark(gn);
 		    gn->type |= OP_NOTMAIN|OP_SPECIAL;
-		    Lst_AppendS(targets, gn);
+		    Lst_Append(targets, gn);
 		    break;
 		case Default:
 		    gn = Targ_NewGN(".DEFAULT");
 		    gn->type |= (OP_NOTMAIN|OP_TRANSFORM);
-		    Lst_AppendS(targets, gn);
+		    Lst_Append(targets, gn);
 		    DEFAULT = gn;
 		    break;
 		case DeleteOnError:
@@ -1415,7 +1415,7 @@ ParseDoDependency(char *line)
 		    if (paths == NULL) {
 			paths = Lst_Init();
 		    }
-		    Lst_AppendS(paths, path);
+		    Lst_Append(paths, path);
 		}
 	    }
 	}
@@ -1436,19 +1436,19 @@ ParseDoDependency(char *line)
 
 		Dir_Expand(line, emptyPath, curTargs);
 
-		Lst_DestroyS(emptyPath, Dir_Destroy);
+		Lst_Destroy(emptyPath, Dir_Destroy);
 	    } else {
 		/*
 		 * No wildcards, but we want to avoid code duplication,
 		 * so create a list with the word on it.
 		 */
-		Lst_AppendS(curTargs, line);
+		Lst_Append(curTargs, line);
 	    }
 
 	    /* Apply the targets. */
 
-	    while(!Lst_IsEmptyS(curTargs)) {
-		char *targName = Lst_DequeueS(curTargs);
+	    while(!Lst_IsEmpty(curTargs)) {
+		char *targName = Lst_Dequeue(curTargs);
 
 		if (!Suff_IsTransform (targName)) {
 		    gn = Targ_FindNode(targName, TARG_CREATE);
@@ -1458,7 +1458,7 @@ ParseDoDependency(char *line)
 		if (doing_depend)
 		    ParseMark(gn);
 
-		Lst_AppendS(targets, gn);
+		Lst_Append(targets, gn);
 	    }
 	} else if (specType == ExPath && *line != '.' && *line != '\0') {
 	    Parse_Error(PARSE_WARNING, "Extra target (%s) ignored", line);
@@ -1497,10 +1497,10 @@ ParseDoDependency(char *line)
     /*
      * Don't need the list of target names anymore...
      */
-    Lst_FreeS(curTargs);
+    Lst_Free(curTargs);
     curTargs = NULL;
 
-    if (targets != NULL && !Lst_IsEmptyS(targets)) {
+    if (targets != NULL && !Lst_IsEmpty(targets)) {
 	switch(specType) {
 	    default:
 		Parse_Error(PARSE_WARNING, "Special and mundane targets don't mix. Mundane ones ignored");
@@ -1551,7 +1551,7 @@ ParseDoDependency(char *line)
      * used isn't consistent across all references.
      */
     if (targets != NULL)
-	Lst_ForEachS(targets, ParseDoOp, &op);
+	Lst_ForEach(targets, ParseDoOp, &op);
 
     /*
      * Onward to the sources.
@@ -1589,7 +1589,7 @@ ParseDoDependency(char *line)
 		break;
 	    case ExPath:
 		if (paths != NULL)
-		    Lst_ForEachS(paths, ParseClearPath, NULL);
+		    Lst_ForEach(paths, ParseClearPath, NULL);
 		Dir_SetPATH();
 		break;
 #ifdef POSIX
@@ -1665,7 +1665,7 @@ ParseDoDependency(char *line)
 		    break;
 		case ExPath:
 		    if (paths != NULL)
-			Lst_ForEachS(paths, ParseAddDir, line);
+			Lst_ForEach(paths, ParseAddDir, line);
 		    break;
 		case Includes:
 		    Suff_AddInclude(line);
@@ -1692,7 +1692,7 @@ ParseDoDependency(char *line)
 	    line = cp;
 	}
 	if (paths) {
-	    Lst_FreeS(paths);
+	    Lst_Free(paths);
 	    paths = NULL;
 	}
 	if (specType == ExPath)
@@ -1725,11 +1725,11 @@ ParseDoDependency(char *line)
 		    goto out;
 		}
 
-		while (!Lst_IsEmptyS(sources)) {
-		    gn = Lst_DequeueS(sources);
+		while (!Lst_IsEmpty(sources)) {
+		    gn = Lst_Dequeue(sources);
 		    ParseDoSrc(tOp, gn->name);
 		}
-		Lst_FreeS(sources);
+		Lst_Free(sources);
 		cp = line;
 	    } else {
 		if (*cp) {
@@ -1753,14 +1753,14 @@ ParseDoDependency(char *line)
 	 * the first dependency line that is actually a real target
 	 * (i.e. isn't a .USE or .EXEC rule) to be made.
 	 */
-	Lst_ForEachS(targets, ParseFindMain, NULL);
+	Lst_ForEach(targets, ParseFindMain, NULL);
     }
 
 out:
     if (paths != NULL)
-	Lst_FreeS(paths);
+	Lst_Free(paths);
     if (curTargs != NULL)
-	Lst_FreeS(curTargs);
+	Lst_Free(curTargs);
 }
 
 /*-
@@ -2087,19 +2087,19 @@ ParseAddCmd(void *gnp, void *cmd)
     GNode *gn = (GNode *)gnp;
 
     /* Add to last (ie current) cohort for :: targets */
-    if ((gn->type & OP_DOUBLEDEP) && !Lst_IsEmptyS(gn->cohorts))
-	gn = Lst_DatumS(Lst_LastS(gn->cohorts));
+    if ((gn->type & OP_DOUBLEDEP) && !Lst_IsEmpty(gn->cohorts))
+	gn = Lst_Datum(Lst_Last(gn->cohorts));
 
     /* if target already supplied, ignore commands */
     if (!(gn->type & OP_HAS_COMMANDS)) {
-	Lst_AppendS(gn->commands, cmd);
+	Lst_Append(gn->commands, cmd);
 	if (ParseMaybeSubMake(cmd))
 	    gn->type |= OP_SUBMAKE;
 	ParseMark(gn);
     } else {
 #ifdef notyet
 	/* XXX: We cannot do this until we fix the tree */
-	Lst_AppendS(gn->commands, cmd);
+	Lst_Append(gn->commands, cmd);
 	Parse_Error(PARSE_WARNING,
 		     "overriding commands for target \"%s\"; "
 		     "previous commands defined at %s: %d ignored",
@@ -2139,7 +2139,7 @@ static void
 ParseHasCommands(void *gnp)
 {
     GNode *gn = (GNode *)gnp;
-    if (!Lst_IsEmptyS(gn->commands)) {
+    if (!Lst_IsEmpty(gn->commands)) {
 	gn->type |= OP_HAS_COMMANDS;
     }
 }
@@ -2262,7 +2262,7 @@ Parse_include_file(char *file, Boolean isSystem, Boolean depinc, int silent)
 	 * Look for it on the system path
 	 */
 	fullname = Dir_FindFile(file,
-		    Lst_IsEmptyS(sysIncPath) ? defIncPath : sysIncPath);
+		    Lst_IsEmpty(sysIncPath) ? defIncPath : sysIncPath);
     }
 
     if (fullname == NULL) {
@@ -2483,7 +2483,7 @@ Parse_SetInput(const char *name, int line, int fd,
 
     if (curFile != NULL)
 	/* Save exiting file info */
-	Lst_PrependS(includes, curFile);
+	Lst_Prepend(includes, curFile);
 
     /* Allocate and fill in new structure */
     curFile = bmake_malloc(sizeof *curFile);
@@ -2749,7 +2749,7 @@ ParseEOF(void)
     free(curFile->P_str);
     free(curFile);
 
-    if (Lst_IsEmptyS(includes)) {
+    if (Lst_IsEmpty(includes)) {
 	curFile = NULL;
 	/* We've run out of input */
 	Var_Delete(".PARSEDIR", VAR_GLOBAL);
@@ -2759,7 +2759,7 @@ ParseEOF(void)
 	return DONE;
     }
 
-    curFile = Lst_DequeueS(includes);
+    curFile = Lst_Dequeue(includes);
     if (DEBUG(PARSE))
 	fprintf(debug_file, "ParseEOF: returning to file %s, line %d\n",
 	    curFile->fname, curFile->lineno);
@@ -3025,8 +3025,8 @@ ParseFinishLine(void)
 {
     if (inLine) {
         if (targets != NULL) {
-	    Lst_ForEachS(targets, Suff_EndTransform, NULL);
-	    Lst_DestroyS(targets, ParseHasCommands);
+	    Lst_ForEach(targets, Suff_EndTransform, NULL);
+	    Lst_Destroy(targets, ParseHasCommands);
 	}
 	targets = NULL;
 	inLine = FALSE;
@@ -3139,9 +3139,9 @@ Parse_File(const char *name, int fd)
 		     */
 		    if (targets) {
 			cp = bmake_strdup(cp);
-			Lst_ForEachS(targets, ParseAddCmd, cp);
+			Lst_ForEach(targets, ParseAddCmd, cp);
 #ifdef CLEANUP
-			Lst_AppendS(targCmds, cp);
+			Lst_Append(targCmds, cp);
 #endif
 		    }
 		}
@@ -3246,7 +3246,7 @@ Parse_File(const char *name, int fd)
 	     * Need a non-circular list for the target nodes
 	     */
 	    if (targets != NULL)
-		Lst_FreeS(targets);
+		Lst_Free(targets);
 
 	    targets = Lst_Init();
 	    inLine = TRUE;
@@ -3303,13 +3303,13 @@ void
 Parse_End(void)
 {
 #ifdef CLEANUP
-    Lst_DestroyS(targCmds, free);
+    Lst_Destroy(targCmds, free);
     if (targets)
-	Lst_FreeS(targets);
-    Lst_DestroyS(defIncPath, Dir_Destroy);
-    Lst_DestroyS(sysIncPath, Dir_Destroy);
-    Lst_DestroyS(parseIncPath, Dir_Destroy);
-    Lst_FreeS(includes);	/* Should be empty now */
+	Lst_Free(targets);
+    Lst_Destroy(defIncPath, Dir_Destroy);
+    Lst_Destroy(sysIncPath, Dir_Destroy);
+    Lst_Destroy(parseIncPath, Dir_Destroy);
+    Lst_Free(includes);	/* Should be empty now */
 #endif
 }
 
@@ -3339,11 +3339,11 @@ Parse_MainName(void)
 	Punt("no target to make.");
 	/*NOTREACHED*/
     } else if (mainNode->type & OP_DOUBLEDEP) {
-	Lst_AppendS(mainList, mainNode);
-	Lst_AppendAllS(mainList, mainNode->cohorts);
+	Lst_Append(mainList, mainNode);
+	Lst_AppendAll(mainList, mainNode->cohorts);
     }
     else
-	Lst_AppendS(mainList, mainNode);
+	Lst_Append(mainList, mainNode);
     Var_Append(".TARGETS", mainNode->name, VAR_GLOBAL);
     return mainList;
 }

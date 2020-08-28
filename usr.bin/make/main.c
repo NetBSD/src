@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.319 2020/08/28 04:28:45 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.320 2020/08/28 04:48:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.319 2020/08/28 04:28:45 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.320 2020/08/28 04:48:57 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.319 2020/08/28 04:28:45 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.320 2020/08/28 04:48:57 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -541,7 +541,7 @@ rearg:
 		case 'v':
 			if (argvalue == NULL) goto noarg;
 			printVars = c == 'v' ? EXPAND_VARS : COMPAT_VARS;
-			Lst_AppendS(variables, argvalue);
+			Lst_Append(variables, argvalue);
 			Var_Append(MAKEFLAGS, "-V", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
 			break;
@@ -569,7 +569,7 @@ rearg:
 			break;
 		case 'f':
 			if (argvalue == NULL) goto noarg;
-			Lst_AppendS(makefiles, argvalue);
+			Lst_Append(makefiles, argvalue);
 			break;
 		case 'i':
 			ignoreErrors = TRUE;
@@ -658,7 +658,7 @@ rearg:
 				Punt("illegal (null) argument.");
 			if (*argv[1] == '-' && !dashDash)
 				goto rearg;
-			Lst_AppendS(create, bmake_strdup(argv[1]));
+			Lst_Append(create, bmake_strdup(argv[1]));
 		}
 
 	return;
@@ -808,7 +808,7 @@ str2Lst_Append(Lst lp, char *str, const char *sep)
 	sep = " \t";
 
     for (n = 0, cp = strtok(str, sep); cp; cp = strtok(NULL, sep)) {
-	Lst_AppendS(lp, cp);
+	Lst_Append(lp, cp);
 	n++;
     }
     return n;
@@ -869,8 +869,8 @@ doPrintVars(void)
 	else
 		expandVars = getBoolean(".MAKE.EXPAND_VARIABLES", FALSE);
 
-	for (ln = Lst_FirstS(variables); ln != NULL; ln = Lst_SuccS(ln)) {
-		char *var = Lst_DatumS(ln);
+	for (ln = Lst_First(variables); ln != NULL; ln = Lst_Succ(ln)) {
+		char *var = Lst_Datum(ln);
 		const char *value;
 		char *p1;
 
@@ -904,7 +904,7 @@ runTargets(void)
 	 * we consult the parsing module to find the main target(s)
 	 * to create.
 	 */
-	if (Lst_IsEmptyS(create))
+	if (Lst_IsEmpty(create))
 		targs = Parse_MainName();
 	else
 		targs = Targ_FindList(create, TARG_CREATE);
@@ -932,7 +932,7 @@ runTargets(void)
 		Compat_Run(targs);
 		outOfDate = FALSE;
 	}
-	Lst_FreeS(targs);
+	Lst_Free(targs);
 	return outOfDate;
 }
 
@@ -1275,11 +1275,11 @@ main(int argc, char **argv)
 	 * created. If none specified, make the variable empty -- the parser
 	 * will fill the thing in with the default or .MAIN target.
 	 */
-	if (!Lst_IsEmptyS(create)) {
+	if (!Lst_IsEmpty(create)) {
 		LstNode ln;
 
-		for (ln = Lst_FirstS(create); ln != NULL; ln = Lst_SuccS(ln)) {
-			char *name = Lst_DatumS(ln);
+		for (ln = Lst_First(create); ln != NULL; ln = Lst_Succ(ln)) {
+			char *name = Lst_Datum(ln);
 			Var_Append(".TARGETS", name, VAR_GLOBAL);
 		}
 	} else
@@ -1325,30 +1325,30 @@ main(int argc, char **argv)
 
 		sysMkPath = Lst_Init();
 		Dir_Expand(_PATH_DEFSYSMK,
-			   Lst_IsEmptyS(sysIncPath) ? defIncPath : sysIncPath,
+			   Lst_IsEmpty(sysIncPath) ? defIncPath : sysIncPath,
 			   sysMkPath);
-		if (Lst_IsEmptyS(sysMkPath))
+		if (Lst_IsEmpty(sysMkPath))
 			Fatal("%s: no system rules (%s).", progname,
 			    _PATH_DEFSYSMK);
-		ln = Lst_FindS(sysMkPath, ReadMakefile, NULL);
+		ln = Lst_Find(sysMkPath, ReadMakefile, NULL);
 		if (ln == NULL)
 			Fatal("%s: cannot open %s.", progname,
-			    (char *)Lst_DatumS(ln));
+			    (char *)Lst_Datum(ln));
 	}
 
-	if (!Lst_IsEmptyS(makefiles)) {
+	if (!Lst_IsEmpty(makefiles)) {
 		LstNode ln;
 
-		ln = Lst_FindS(makefiles, ReadAllMakefiles, NULL);
+		ln = Lst_Find(makefiles, ReadAllMakefiles, NULL);
 		if (ln != NULL)
 			Fatal("%s: cannot open %s.", progname,
-			    (char *)Lst_DatumS(ln));
+			    (char *)Lst_Datum(ln));
 	} else {
 	    p1 = Var_Subst("${" MAKEFILE_PREFERENCE "}",
 		VAR_CMD, VARE_WANTRES);
 	    if (p1) {
 		(void)str2Lst_Append(makefiles, p1, NULL);
-		(void)Lst_FindS(makefiles, ReadMakefile, NULL);
+		(void)Lst_Find(makefiles, ReadMakefile, NULL);
 		free(p1);
 	    }
 	}
@@ -1466,9 +1466,9 @@ main(int argc, char **argv)
 	}
 
 #ifdef CLEANUP
-	Lst_FreeS(variables);
-	Lst_FreeS(makefiles);
-	Lst_DestroyS(create, free);
+	Lst_Free(variables);
+	Lst_Free(makefiles);
+	Lst_Destroy(create, free);
 #endif
 
 	/* print the graph now it's been processed if the user requested it */
@@ -1544,7 +1544,7 @@ ReadMakefile(const void *p, const void *q MAKE_ATTR_UNUSED)
 		name = Dir_FindFile(fname, parseIncPath);
 		if (!name)
 			name = Dir_FindFile(fname,
-				Lst_IsEmptyS(sysIncPath) ? defIncPath : sysIncPath);
+				Lst_IsEmpty(sysIncPath) ? defIncPath : sysIncPath);
 		if (!name || (fd = open(name, O_RDONLY)) == -1) {
 			free(name);
 			free(path);
@@ -2040,7 +2040,7 @@ PrintOnError(GNode *gn, const char *s)
 	 */
 	Var_Set(".ERROR_TARGET", gn->name, VAR_GLOBAL);
 	Var_Delete(".ERROR_CMD", VAR_GLOBAL);
-	Lst_ForEachS(gn->commands, addErrorCMD, gn);
+	Lst_ForEach(gn->commands, addErrorCMD, gn);
     }
     expr = "${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'\n@}";
     cp = Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES);
