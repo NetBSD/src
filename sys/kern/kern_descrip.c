@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.247 2020/08/26 22:56:55 christos Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.248 2020/08/28 06:47:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.247 2020/08/26 22:56:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.248 2020/08/28 06:47:18 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2309,7 +2309,7 @@ fill_file(struct file *fp, const struct file *fpsrc)
 	COND_SET_CPTR(fp->f_ops, fpsrc->f_ops, allowaddr);
 	COND_SET_STRUCT(fp->f_undata, fpsrc->f_undata, allowaddr);
 	COND_SET_STRUCT(fp->f_list, fpsrc->f_list, allowaddr);
-	COND_SET_STRUCT(fp->f_lock, fpsrc->f_lock, allowaddr);
+	memset(&fp->f_lock, 0, sizeof(fp->f_lock));
 	fp->f_flag = fpsrc->f_flag;
 	fp->f_marker = fpsrc->f_marker;
 	fp->f_type = fpsrc->f_type;
