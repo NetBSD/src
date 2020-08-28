@@ -1,9 +1,19 @@
-# $NetBSD: varmod-to-lower.mk,v 1.2 2020/08/16 14:25:16 rillig Exp $
+# $NetBSD: varmod-to-lower.mk,v 1.3 2020/08/28 17:21:02 rillig Exp $
 #
 # Tests for the :tl variable modifier, which returns the words in the
 # variable value, converted to lowercase.
 
-# TODO: Implementation
+.if ${:UUPPER:tl} != "upper"
+.error
+.endif
+
+.if ${:Ulower:tl} != "lower"
+.error
+.endif
+
+.if ${:UMixeD case.:tl} != "mixed case."
+.error
+.endif
 
 all:
 	@:;
