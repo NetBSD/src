@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.51 2020/08/28 19:46:04 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.52 2020/08/28 19:52:14 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,11 +37,11 @@
 #include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.51 2020/08/28 19:46:04 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.52 2020/08/28 19:52:14 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.51 2020/08/28 19:46:04 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.52 2020/08/28 19:52:14 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -74,18 +74,6 @@ struct List {
 				 * *just* opened */
     LstNode prev;		/* Previous node, if open. Used by Lst_Remove */
 };
-
-static Boolean MAKE_ATTR_UNUSED
-LstIsValid(Lst list)
-{
-    return list != NULL;
-}
-
-static Boolean MAKE_ATTR_UNUSED
-LstNodeIsValid(LstNode node)
-{
-    return node != NULL;
-}
 
 /* Allocate and initialize a list node.
  *
@@ -130,7 +118,7 @@ Lst_Copy(Lst list, LstCopyProc copyProc)
     Lst newList;
     LstNode node;
 
-    assert(LstIsValid(list));
+    assert(list != NULL);
 
     newList = Lst_Init();
 
@@ -149,7 +137,7 @@ Lst_Free(Lst list)
     LstNode node;
     LstNode next;
 
-    assert(LstIsValid(list));
+    assert(list != NULL);
 
     for (node = list->first; node != NULL; node = next) {
 	next = node->next;
@@ -167,7 +155,7 @@ Lst_Destroy(Lst list, LstFreeProc freeProc)
     LstNode node;
     LstNode next;
 
-    assert(LstIsValid(list));
+    assert(list != NULL);
     assert(freeProc != NULL);
 
     for (node = list->first; node != NULL; node = next) {
@@ -190,9 +178,9 @@ Lst_InsertBefore(Lst list, LstNode node, void *datum)
 {
     LstNode newNode;
 
-    assert(LstIsValid(list));
+    assert(list != NULL);
     assert(!LstIsEmpty(list));
-    assert(LstNodeIsValid(node));
+    assert(node != NULL);
     assert(datum != NULL);
 
     newNode = LstNodeNew(datum);
@@ -215,7 +203,7 @@ Lst_Prepend(Lst list, void *datum)
 {
     LstNode node;
 
-    assert(LstIsValid(list));
+    assert(list != NULL);
     assert(datum != NULL);
 
     node = LstNodeNew(datum);
@@ -237,7 +225,7 @@ Lst_Append(Lst list, void *datum)
 {
     LstNode node;
 
-    assert(LstIsValid(list));
+    assert(list != NULL);
     assert(datum != NULL);
 
     node = LstNodeNew(datum);
@@ -258,8 +246,8 @@ Lst_Append(Lst list, void *datum)
 void
 Lst_Remove(Lst list, LstNode node)
 {
-    assert(LstIsValid(list));
-    assert(LstNodeIsValid(node));
+    assert(list != NULL);
+    assert(node != NULL);
 
     /*
      * unlink it from the list
@@ -310,7 +298,7 @@ Lst_Remove(Lst list, LstNode node)
 void
 LstNode_Set(LstNode node, void *datum)
 {
-    assert(LstNodeIsValid(node));
+    assert(node != NULL);
     assert(datum != NULL);
 
     node->datum = datum;
@@ -320,7 +308,7 @@ LstNode_Set(LstNode node, void *datum)
 void
 LstNode_SetNull(LstNode node)
 {
-    assert(LstNodeIsValid(node));
+    assert(node != NULL);
 
     node->datum = NULL;
 }
@@ -334,7 +322,7 @@ LstNode_SetNull(LstNode node)
 LstNode
 Lst_First(Lst list)
 {
-    assert(LstIsValid(list));
+    assert(list != NULL);
 
     return list->first;
 }
@@ -343,7 +331,7 @@ Lst_First(Lst list)
 LstNode
 Lst_Last(Lst list)
 {
-    assert(LstIsValid(list));
+    assert(list != NULL);
 
     return list->last;
 }
@@ -352,7 +340,7 @@ Lst_Last(Lst list)
 LstNode
 Lst_Succ(LstNode node)
 {
-    assert(LstNodeIsValid(node));
+    assert(node != NULL);
 
     return node->next;
 }
@@ -361,7 +349,7 @@ Lst_Succ(LstNode node)
 LstNode
 Lst_Prev(LstNode node)
 {
-    assert(LstNodeIsValid(node));
+    assert(node != NULL);
     return node->prev;
 }
 
@@ -369,7 +357,7 @@ Lst_Prev(LstNode node)
 void *
 Lst_Datum(LstNode node)
 {
-    assert(LstNodeIsValid(node));
+    assert(node != NULL);
     return node->datum;
 }
 
@@ -382,7 +370,7 @@ Lst_Datum(LstNode node)
 Boolean
 Lst_IsEmpty(Lst list)
 {
-    assert(LstIsValid(list));
+    assert(list != NULL);
 
     return LstIsEmpty(list);
 }
@@ -405,8 +393,8 @@ Lst_FindFrom(Lst list, LstNode node, LstFindProc cmp, const void *cmpData)
 {
     LstNode tln;
 
-    assert(LstIsValid(list));
-    assert(LstNodeIsValid(node));
+    assert(list != NULL);
+    assert(node != NULL);
     assert(cmp != NULL);
 
     for (tln = node; tln != NULL; tln = tln->next) {
@@ -423,7 +411,7 @@ Lst_Member(Lst list, void *datum)
 {
     LstNode node;
 
-    assert(LstIsValid(list));
+    assert(list != NULL);
     assert(datum != NULL);
 
     for (node = list->first; node != NULL; node = node->next) {
@@ -458,8 +446,8 @@ Lst_ForEachFrom(Lst list, LstNode node,
     Boolean done;
     int result;
 
-    assert(LstIsValid(list));
-    assert(LstNodeIsValid(node));
+    assert(list != NULL);
+    assert(node != NULL);
     assert(proc != NULL);
 
     do {
@@ -506,8 +494,8 @@ Lst_ForEachFrom(Lst list, LstNode node,
 void
 Lst_MoveAll(Lst list1, Lst list2)
 {
-    assert(LstIsValid(list1));
-    assert(LstIsValid(list2));
+    assert(list1 != NULL);
+    assert(list2 != NULL);
 
     if (list2->first != NULL) {
 	list2->first->prev = list1->last;
@@ -554,7 +542,7 @@ Lst_AppendAll(Lst dst, Lst src)
 void
 Lst_Open(Lst list)
 {
-    assert(LstIsValid(list));
+    assert(list != NULL);
 
     /* XXX: This assertion fails for NetBSD's "build.sh -j1 tools", somewhere
      * between "dependall ===> compat" and "dependall ===> binstall".
@@ -574,7 +562,7 @@ Lst_Next(Lst list)
 {
     LstNode node;
 
-    assert(LstIsValid(list));
+    assert(list != NULL);
     assert(list->isOpen);
 
     list->prev = list->curr;
@@ -616,7 +604,7 @@ Lst_Next(Lst list)
 void
 Lst_Close(Lst list)
 {
-    assert(LstIsValid(list));
+    assert(list != NULL);
     assert(list->isOpen);
 
     list->isOpen = FALSE;
@@ -641,7 +629,7 @@ Lst_Dequeue(Lst list)
 {
     void *datum;
 
-    assert(LstIsValid(list));
+    assert(list != NULL);
     assert(!LstIsEmpty(list));
 
     datum = list->first->datum;
