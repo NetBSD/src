@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.283 2020/05/05 08:05:03 jdolecek Exp $	*/
+/*	$NetBSD: if.h,v 1.284 2020/08/28 06:23:42 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -1068,6 +1068,20 @@ do {									\
 #define	IFQ_DEC_LEN(ifq)		(--(ifq)->ifq_len)
 #define	IFQ_INC_DROPS(ifq)		((ifq)->ifq_drops++)
 #define	IFQ_SET_MAXLEN(ifq, len)	((ifq)->ifq_maxlen = (len))
+
+#define	IFQ_ENQUEUE_ISR(ifq, m, isr)					\
+do {									\
+	IFQ_LOCK(inq);							\
+	if (IF_QFULL(inq)) {						\
+		IF_DROP(inq);						\
+		IFQ_UNLOCK(inq);					\
+		m_freem(m);						\
+	} else {							\
+		IF_ENQUEUE(inq, m);					\
+		IFQ_UNLOCK(inq);					\
+		schednetisr(isr);					\
+	}								\
+} while (/*CONSTCOND*/ 0)
 
 #include <sys/mallocvar.h>
 MALLOC_DECLARE(M_IFADDR);
