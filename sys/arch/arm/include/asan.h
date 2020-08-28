@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.h,v 1.3 2020/07/19 11:47:48 skrll Exp $	*/
+/*	$NetBSD: asan.h,v 1.4 2020/08/28 13:36:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -62,9 +62,24 @@ kasan_md_unsupported(vaddr_t addr)
  * that VA = PA + KERNEL_BASE.
  */
 
-#define KASAN_NEARLYPAGES	3
+/*
+ * KASAN_NEARLYPAGES is hard to work out.
+ *
+ * The INIT_ARM_TOTAL_STACK shadow is reduced by the KASAN_SHADOW_SCALE_SIZE
+ * factor. This shadow mapping is likely to span more than one L2 page tables
+ * and, as a result, more than one PAGE_SIZE block. The L2 page tables might
+ * span more than one L1 page table entry as well.
+ *
+ * To ensure we have enough start with the assumption of 1 L1 page table, and
+ * the number of pages to map the shadow... then double for the spanning as
+ * described above
+ */
+
+#define KASAN_NEARLYPAGES	\
+    (2 * (1 + howmany(INIT_ARM_TOTAL_STACK / KASAN_SHADOW_SCALE_SIZE, PAGE_SIZE)))
 
 static bool __md_early __read_mostly;
+static size_t __md_nearlyl1pts __attribute__((__section__(".data"))) = 0;
 static size_t __md_nearlypages __attribute__((__section__(".data")));
 static uint8_t __md_earlypages[KASAN_NEARLYPAGES * PAGE_SIZE]
     __aligned(PAGE_SIZE)  __attribute__((__section__(".data")));
@@ -115,22 +130,9 @@ kasan_md_shadow_map_page(vaddr_t va)
 	vaddr_t l2ptva;
 
 	KASSERT((va & PAGE_MASK) == 0);
-	KASSERT(__md_early || l1pte_page_p(pdep[l1slot]));
 
-	if (!l1pte_page_p(pdep[l1slot])) {
-		KASSERT(__md_early);
-		const paddr_t l2ptpa = __md_palloc();
-		const vaddr_t segl2va = va & -L2_S_SEGSIZE;
-		const size_t segl1slot = l1pte_index(segl2va);
-
-		const pd_entry_t npde =
-		    L1_C_PROTO | l2ptpa | L1_C_DOM(PMAP_DOMAIN_KERNEL);
-
-		l1pte_set(pdep + segl1slot, npde);
-		PDE_SYNC_RANGE(pdep, PAGE_SIZE / L2_T_SIZE);
-
-		l2ptva = KERN_PHYSTOV(l1pte_pa(pdep[l1slot]));
-	} else {
+	extern bool kasan_l2pts_created;
+	if (__predict_true(kasan_l2pts_created)) {
 		/*
 		 * The shadow map area L2PTs were allocated and mapped
 		 * by arm32_kernel_vm_init.  Use the array of pv_addr_t
@@ -142,6 +144,29 @@ kasan_md_shadow_map_page(vaddr_t va)
 		const size_t idx = off / L2_S_SEGSIZE;
 		const vaddr_t segl2ptva = kasan_l2pt[idx].pv_va;
 		l2ptva = segl2ptva + l1pte_index(segoff) * L2_TABLE_SIZE_REAL;
+	} else {
+		/*
+		 * An L1PT entry is/may be required for bootstrap tables.  As a
+		 * page gives enough space to multiple L2PTs the previous call
+		 * might have already created the L2PT.
+		 */
+		if (!l1pte_page_p(pdep[l1slot])) {
+			const paddr_t l2ptpa = __md_palloc();
+			const vaddr_t segl2va = va & -L2_S_SEGSIZE;
+			const size_t segl1slot = l1pte_index(segl2va);
+
+			__md_nearlyl1pts++;
+
+			const pd_entry_t npde =
+			    L1_C_PROTO | l2ptpa | L1_C_DOM(PMAP_DOMAIN_KERNEL);
+
+			l1pte_set(pdep + segl1slot, npde);
+			/*
+			 * No need for PDE_SYNC_RANGE here as we're creating
+			 * the bootstrap tables
+			*/
+		}
+		l2ptva = KERN_PHYSTOV(l1pte_pa(pdep[l1slot]));
 	}
 
 	pt_entry_t * l2pt = (pt_entry_t *)l2ptva;
@@ -153,11 +178,13 @@ kasan_md_shadow_map_page(vaddr_t va)
 		pt_entry_t npte =
 		    L2_S_PROTO |
 		    pa |
-		    pte_l2_s_cache_mode_pt |
+		    (__md_early ? 0 : pte_l2_s_cache_mode_pt) |
 		    L2_S_PROT(PTE_KERNEL, prot);
-
 		l2pte_set(ptep, npte, 0);
-		PTE_SYNC(ptep);
+
+		if (!__md_early)
+			PTE_SYNC(ptep);
+
 		__builtin_memset((void *)va, 0, PAGE_SIZE);
 	}
 }
@@ -165,16 +192,22 @@ kasan_md_shadow_map_page(vaddr_t va)
 /*
  * Map the init stacks of the BP and APs. We will map the rest in kasan_init.
  */
-#define INIT_ARM_STACK_SHIFT	10
-#define INIT_ARM_STACK_SIZE	(1 << INIT_ARM_STACK_SHIFT)
-
 static void
 kasan_md_early_init(void *stack)
 {
 
+	/*
+	 * We come through here twice.  The first time is for generic_start
+	 * and the bootstrap tables.  The second is for arm32_kernel_vm_init
+	 * and the real tables.
+	 *
+	 * In the first we have to create L1PT entries, whereas in the
+	 * second arm32_kernel_vm_init has setup kasan_l1pts (and the L1PT
+	 * entries for them
+	 */
 	__md_early = true;
-	__md_nearlypages = 0;
-	kasan_shadow_map(stack, INIT_ARM_STACK_SIZE * MAXCPUS);
+	__md_nearlypages = __md_nearlyl1pts;
+	kasan_shadow_map(stack, INIT_ARM_TOTAL_STACK);
 	__md_early = false;
 }
 
