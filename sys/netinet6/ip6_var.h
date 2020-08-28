@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.84 2020/06/19 16:08:06 maxv Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.85 2020/08/28 06:19:13 ozaki-r Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -188,8 +188,10 @@ struct	ip6_pktopts {
 #define	IP6_STAT_NOIPSEC	402	/* no match ipsec(4) found */
 #define	IP6_STAT_PFILDROP_IN	403	/* dropped by pfil (PFIL_IN) */
 #define	IP6_STAT_PFILDROP_OUT	404	/* dropped by pfil (PFIL_OUT) */
+#define	IP6_STAT_IPSECDROP_IN	405	/* dropped by IPsec SP check */
+#define	IP6_STAT_IPSECDROP_OUT	406	/* dropped by IPsec SP check */
 
-#define	IP6_NSTATS		405
+#define	IP6_NSTATS		407
 
 #define IP6FLOW_HASHBITS         6 /* should not be a multiple of 8 */
 

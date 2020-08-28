@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.99 2020/06/12 11:04:45 roy Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.100 2020/08/28 06:19:13 ozaki-r Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.99 2020/06/12 11:04:45 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.100 2020/08/28 06:19:13 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -192,6 +192,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 			if (error == -EINVAL)
 				error = 0;
 			m_freem(m);
+			IP6_STATINC(IP6_STAT_IPSECDROP_OUT);
 			goto freecopy;
 		}
 	}
