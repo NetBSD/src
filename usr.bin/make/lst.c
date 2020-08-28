@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.50 2020/08/28 04:48:57 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.51 2020/08/28 19:46:04 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,11 +37,11 @@
 #include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.50 2020/08/28 04:48:57 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.51 2020/08/28 19:46:04 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.50 2020/08/28 04:48:57 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.51 2020/08/28 19:46:04 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -75,13 +75,13 @@ struct List {
     LstNode prev;		/* Previous node, if open. Used by Lst_Remove */
 };
 
-static Boolean
+static Boolean MAKE_ATTR_UNUSED
 LstIsValid(Lst list)
 {
     return list != NULL;
 }
 
-static Boolean
+static Boolean MAKE_ATTR_UNUSED
 LstNodeIsValid(LstNode node)
 {
     return node != NULL;
