@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.123 2020/08/29 10:41:12 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.124 2020/08/29 12:39:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.123 2020/08/29 10:41:12 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.124 2020/08/29 12:39:32 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.123 2020/08/29 10:41:12 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.124 2020/08/29 12:39:32 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -397,18 +397,8 @@ Dir_InitCur(const char *cdname)
     }
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Dir_InitDot --
- *	(re)initialize "dot" (current/object directory) path hash
- *
- * Results:
- *	none
- *
- * Side Effects:
- *	some directories may be opened.
- *-----------------------------------------------------------------------
- */
+/* (Re)initialize "dot" (current/object directory) path hash.
+ * Some directories may be opened. */
 void
 Dir_InitDot(void)
 {
@@ -435,18 +425,7 @@ Dir_InitDot(void)
     Dir_SetPATH();		/* initialize */
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Dir_End --
- *	cleanup things for this module
- *
- * Results:
- *	none
- *
- * Side Effects:
- *	none
- *-----------------------------------------------------------------------
- */
+/* Clean up things for this module. */
 void
 Dir_End(void)
 {
@@ -524,25 +503,18 @@ DirFindName(const void *p, const void *desiredName)
     return strcmp(((const Path *)p)->name, desiredName) == 0;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Dir_HasWildcards  --
- *	see if the given name has any wildcard characters in it
- *	be careful not to expand unmatching brackets or braces.
- *	XXX: This code is not 100% correct. ([^]] fails etc.)
- *	I really don't think that make(1) should be expanding
- *	patterns, because then you have to set a mechanism for
- *	escaping the expansion!
+/* See if the given name has any wildcard characters in it. Be careful not to
+ * expand unmatching brackets or braces.
+ *
+ * XXX: This code is not 100% correct ([^]] fails etc.). I really don't think
+ * that make(1) should be expanding patterns, because then you have to set a
+ * mechanism for escaping the expansion!
  *
  * Input:
  *	name		name to check
  *
  * Results:
  *	returns TRUE if the word should be expanded, FALSE otherwise
- *
- * Side Effects:
- *	none
- *-----------------------------------------------------------------------
  */
 Boolean
 Dir_HasWildcards(char *name)
