@@ -11,12 +11,5 @@
 #
 #   Files that are only sources:
 #	unmade-sources [unmade-sources] 
-# Stats: 0 hits 2 misses 0 near misses 0 losers (0%)
-# directory            referenced	hits
-# CURDIR          2	   0
-# .                             2	   0
-# /.../share/mk                 1	   0
-
-#*** Suffixes:
 #*** Transformations:
 exit status 0
