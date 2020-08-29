@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.103 2020/08/29 09:30:10 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.104 2020/08/29 10:12:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.103 2020/08/29 09:30:10 rillig Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.104 2020/08/29 10:12:06 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.103 2020/08/29 09:30:10 rillig Exp $");
+__RCSID("$NetBSD: arch.c,v 1.104 2020/08/29 10:12:06 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -455,7 +455,7 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 }
 
 /* See if the given archive is the one we are looking for.
- * Called via Lst_FindB. */
+ * Called via Lst_Find. */
 static Boolean
 ArchFindArchive(const void *ar, const void *desiredName)
 {
@@ -507,7 +507,7 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
 	member = base + 1;
     }
 
-    ln = Lst_FindB(archives, ArchFindArchive, archive);
+    ln = Lst_Find(archives, ArchFindArchive, archive);
     if (ln != NULL) {
 	ar = Lst_Datum(ln);
 
