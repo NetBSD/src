@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.221 2020/08/28 20:23:20 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.222 2020/08/29 10:35:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.221 2020/08/28 20:23:20 rillig Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.222 2020/08/29 10:35:03 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.221 2020/08/28 20:23:20 rillig Exp $");
+__RCSID("$NetBSD: job.c,v 1.222 2020/08/29 10:35:03 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -702,7 +702,6 @@ JobPrintCommand(void *cmdp, void *jobp)
     char	  *escCmd = NULL;    /* Command with quotes/backticks escaped */
     char     	  *cmd = (char *)cmdp;
     Job           *job = (Job *)jobp;
-    int           i, j;
 
     noSpecials = NoExecute(job->node);
 
@@ -764,15 +763,17 @@ JobPrintCommand(void *cmdp, void *jobp)
      */
 
     if (!commandShell->hasErrCtl) {
+	int i, j;
+
 	/* Worst that could happen is every char needs escaping. */
 	escCmd = bmake_malloc((strlen(cmd) * 2) + 1);
-	for (i = 0, j= 0; cmd[i] != '\0'; i++, j++) {
-		if (cmd[i] == '$' || cmd[i] == '`' || cmd[i] == '\\' ||
-			cmd[i] == '"')
-			escCmd[j++] = '\\';
-		escCmd[j] = cmd[i];
+	for (i = 0, j = 0; cmd[i] != '\0'; i++, j++) {
+	    if (cmd[i] == '$' || cmd[i] == '`' || cmd[i] == '\\' ||
+		cmd[i] == '"')
+		escCmd[j++] = '\\';
+	    escCmd[j] = cmd[i];
 	}
-	escCmd[j] = 0;
+	escCmd[j] = '\0';
     }
 
     if (shutUp) {
@@ -2230,14 +2231,12 @@ Shell_Init(void)
 const char *
 Shell_GetNewline(void)
 {
-
     return commandShell->newline;
 }
 
 void
 Job_SetPrefix(void)
 {
-
     if (targPrefix) {
 	free(targPrefix);
     } else if (!Var_Exists(MAKE_JOB_PREFIX, VAR_GLOBAL)) {
@@ -2248,20 +2247,7 @@ Job_SetPrefix(void)
 			   VAR_GLOBAL, VARE_WANTRES);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Job_Init --
- *	Initialize the process module
- *
- * Input:
- *
- * Results:
- *	none
- *
- * Side Effects:
- *	lists and counters are initialized
- *-----------------------------------------------------------------------
- */
+/* Initialize the process module. */
 void
 Job_Init(void)
 {
@@ -2367,19 +2353,7 @@ static void JobSigReset(void)
     (void)bmake_signal(SIGCHLD, SIG_DFL);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * JobMatchShell --
- *	Find a shell in 'shells' given its name.
- *
- * Results:
- *	A pointer to the Shell structure.
- *
- * Side Effects:
- *	None.
- *
- *-----------------------------------------------------------------------
- */
+/* Find a shell in 'shells' given its name, or return NULL. */
 static Shell *
 JobMatchShell(const char *name)
 {
