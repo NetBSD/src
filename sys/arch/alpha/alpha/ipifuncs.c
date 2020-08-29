@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.51 2020/08/15 16:09:07 thorpej Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.52 2020/08/29 20:06:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.51 2020/08/15 16:09:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.52 2020/08/29 20:06:59 thorpej Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -62,21 +62,15 @@ typedef void (*ipifunc_t)(struct cpu_info *, struct trapframe *);
 
 static void	alpha_ipi_halt(struct cpu_info *, struct trapframe *);
 static void	alpha_ipi_microset(struct cpu_info *, struct trapframe *);
-static void	alpha_ipi_imb(struct cpu_info *, struct trapframe *);
 static void	alpha_ipi_ast(struct cpu_info *, struct trapframe *);
 static void	alpha_ipi_pause(struct cpu_info *, struct trapframe *);
 static void	alpha_ipi_xcall(struct cpu_info *, struct trapframe *);
 static void	alpha_ipi_generic(struct cpu_info *, struct trapframe *);
 
-/*
- * NOTE: This table must be kept in order with the bit definitions
- * in <machine/intr.h>.
- */
 const ipifunc_t ipifuncs[ALPHA_NIPIS] = {
 	[ilog2(ALPHA_IPI_HALT)] =	alpha_ipi_halt,
 	[ilog2(ALPHA_IPI_MICROSET)] =	alpha_ipi_microset,
-	[ilog2(ALPHA_IPI_SHOOTDOWN)] =	pmap_do_tlb_shootdown,
-	[ilog2(ALPHA_IPI_IMB)] =	alpha_ipi_imb,
+	[ilog2(ALPHA_IPI_SHOOTDOWN)] =	pmap_tlb_shootdown_ipi,
 	[ilog2(ALPHA_IPI_AST)] =	alpha_ipi_ast,
 	[ilog2(ALPHA_IPI_PAUSE)] =	alpha_ipi_pause,
 	[ilog2(ALPHA_IPI_XCALL)] =	alpha_ipi_xcall,
@@ -87,7 +81,6 @@ const char * const ipinames[ALPHA_NIPIS] = {
 	[ilog2(ALPHA_IPI_HALT)] =	"halt ipi",
 	[ilog2(ALPHA_IPI_MICROSET)] =	"microset ipi",
 	[ilog2(ALPHA_IPI_SHOOTDOWN)] =	"shootdown ipi",
-	[ilog2(ALPHA_IPI_IMB)] =	"imb ipi",
 	[ilog2(ALPHA_IPI_AST)] =	"ast ipi",
 	[ilog2(ALPHA_IPI_PAUSE)] =	"pause ipi",
 	[ilog2(ALPHA_IPI_XCALL)] =	"xcall ipi",
@@ -156,7 +149,7 @@ alpha_ipi_process(struct cpu_info *ci, struct trapframe *framep)
  * Send an interprocessor interrupt.
  */
 void
-alpha_send_ipi(u_long cpu_id, u_long ipimask)
+alpha_send_ipi(u_long const cpu_id, u_long const ipimask)
 {
 
 	KASSERT(cpu_id < hwrpb->rpb_pcs_cnt);
@@ -171,14 +164,13 @@ alpha_send_ipi(u_long cpu_id, u_long ipimask)
  * Broadcast an IPI to all but ourselves.
  */
 void
-alpha_broadcast_ipi(u_long ipimask)
+alpha_broadcast_ipi(u_long const ipimask)
 {
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
-	u_long cpu_id = cpu_number();
-	u_long cpumask;
 
-	cpumask = cpus_running & ~(1UL << cpu_id);
+	const u_long cpu_id = cpu_number();
+	const u_long cpumask = cpus_running & ~(1UL << cpu_id);
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		if ((cpumask & (1UL << ci->ci_cpuid)) == 0)
@@ -191,7 +183,7 @@ alpha_broadcast_ipi(u_long ipimask)
  * Send an IPI to all in the list but ourselves.
  */
 void
-alpha_multicast_ipi(u_long cpumask, u_long ipimask)
+alpha_multicast_ipi(u_long cpumask, u_long const ipimask)
 {
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
@@ -209,10 +201,11 @@ alpha_multicast_ipi(u_long cpumask, u_long ipimask)
 }
 
 static void
-alpha_ipi_halt(struct cpu_info *ci, struct trapframe *framep)
+alpha_ipi_halt(struct cpu_info * const ci,
+    struct trapframe * const framep __unused)
 {
-	u_long cpu_id = ci->ci_cpuid;
-	u_long wait_mask = (1UL << cpu_id);
+	const u_long cpu_id = ci->ci_cpuid;
+	const u_long wait_mask = (1UL << cpu_id);
 
 	/* Disable interrupts. */
 	(void) splhigh();
@@ -242,21 +235,16 @@ alpha_ipi_halt(struct cpu_info *ci, struct trapframe *framep)
 }
 
 static void
-alpha_ipi_microset(struct cpu_info *ci, struct trapframe *framep)
+alpha_ipi_microset(struct cpu_info * const ci,
+    struct trapframe * const framep __unused)
 {
 
 	cc_calibrate_cpu(ci);
 }
 
 static void
-alpha_ipi_imb(struct cpu_info *ci, struct trapframe *framep)
-{
-
-	alpha_pal_imb();
-}
-
-static void
-alpha_ipi_ast(struct cpu_info *ci, struct trapframe *framep)
+alpha_ipi_ast(struct cpu_info * const ci,
+    struct trapframe * const framep __unused)
 {
 
 	if (ci->ci_onproc != ci->ci_data.cpu_idlelwp)
@@ -264,16 +252,16 @@ alpha_ipi_ast(struct cpu_info *ci, struct trapframe *framep)
 }
 
 static void
-alpha_ipi_pause(struct cpu_info *ci, struct trapframe *framep)
+alpha_ipi_pause(struct cpu_info * const ci, struct trapframe * const framep)
 {
-	u_long cpumask = (1UL << ci->ci_cpuid);
+	const u_long cpumask = (1UL << ci->ci_cpuid);
 	int s;
 
 	s = splhigh();
 
 	/* Point debuggers at our trapframe for register state. */
 	ci->ci_db_regs = framep;
-
+	alpha_wmb();
 	atomic_or_ulong(&ci->ci_flags, CPUF_PAUSED);
 
 	/* Spin with interrupts disabled until we're resumed. */
@@ -282,12 +270,13 @@ alpha_ipi_pause(struct cpu_info *ci, struct trapframe *framep)
 	} while (cpus_paused & cpumask);
 
 	atomic_and_ulong(&ci->ci_flags, ~CPUF_PAUSED);
-
+	alpha_wmb();
 	ci->ci_db_regs = NULL;
 
 	splx(s);
 
-	/* Do an IMB on the way out, in case the kernel text was changed. */
+	/* Do a TBIA+IMB on the way out, in case things have changed. */
+	ALPHA_TBIA();
 	alpha_pal_imb();
 }
 
@@ -296,13 +285,14 @@ alpha_ipi_pause(struct cpu_info *ci, struct trapframe *framep)
  */
 
 static void
-alpha_ipi_xcall(struct cpu_info *ci, struct trapframe *framep)
+alpha_ipi_xcall(struct cpu_info * const ci __unused,
+    struct trapframe * const framep __unused)
 {
 	xc_ipi_handler();
 }
 
 void
-xc_send_ipi(struct cpu_info *ci)
+xc_send_ipi(struct cpu_info * const ci)
 {
 	KASSERT(kpreempt_disabled());
 	KASSERT(curcpu() != ci);
@@ -317,13 +307,14 @@ xc_send_ipi(struct cpu_info *ci)
 }
 
 static void
-alpha_ipi_generic(struct cpu_info *ci, struct trapframe *framep)
+alpha_ipi_generic(struct cpu_info * const ci __unused,
+    struct trapframe * const framep __unused)
 {
 	ipi_cpu_handler();
 }
 
 void
-cpu_ipi(struct cpu_info *ci)
+cpu_ipi(struct cpu_info * const ci)
 {
 	KASSERT(kpreempt_disabled());
 	KASSERT(curcpu() != ci);

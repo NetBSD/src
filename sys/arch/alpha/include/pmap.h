@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.82 2020/07/23 19:23:27 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.83 2020/08/29 20:07:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -123,35 +123,41 @@
  *
  * Note pm_asn and pm_asngen are arrays allocated in pmap_create().
  * Their size is based on the PCS count from the HWRPB, and indexed
- * by processor ID (from `whami').
+ * by processor ID (from `whami').  This is all padded to COHERENCY_UNIT
+ * to avoid false sharing.
  *
- * The kernel pmap is a special case; it gets statically-allocated
+ * The kernel pmap is a special case; since the kernel uses only ASM
+ * mappings and uses a reserved ASN to keep the TLB clean, we don't
+ * allocate any ASN info for the kernel pmap at all.
  * arrays which hold enough for ALPHA_MAXPROCS.
  */
 struct pmap_asn_info {
 	unsigned int		pma_asn;	/* address space number */
+	unsigned int		pma_pad0;
 	unsigned long		pma_asngen;	/* ASN generation number */
+	unsigned long		pma_padN[(COHERENCY_UNIT / 8) - 2];
 };
 
-struct pmap {
-	TAILQ_ENTRY(pmap)	pm_list;	/* list of all pmaps */
-	pt_entry_t		*pm_lev1map;	/* level 1 map */
-	int			pm_count;	/* pmap reference count */
-	kmutex_t		pm_lock;	/* lock on pmap */
-	struct pmap_statistics	pm_stats;	/* pmap statistics */
-	unsigned long		pm_cpus;	/* mask of CPUs using pmap */
-	unsigned long		pm_needisync;	/* mask of CPUs needing isync */
-	struct pmap_asn_info	pm_asni[];	/* ASN information */
+struct pmap {	/* pmaps are aligned to COHERENCY_UNIT boundaries */
+		/* pmaps are locked by hashed mutexes */
+	pt_entry_t		*pm_lev1map;	/* [ 0] level 1 map */
+	unsigned long		pm_cpus;	/* [ 8] CPUs using pmap */
+	unsigned long		pm_needisync;	/* [16] CPUs needing isync */
+	struct pmap_statistics	pm_stats;	/* [32] statistics */
+	long			pm_count;	/* [40] reference count */
+	TAILQ_ENTRY(pmap)	pm_list;	/* [48] list of all pmaps */
+	/* -- COHERENCY_UNIT boundary -- */
+	struct pmap_asn_info	pm_asni[];	/* [64] ASN information */
 			/*	variable length		*/
 };
 
-/*
- * Compute the sizeof of a pmap structure.
- */
 #define	PMAP_SIZEOF(x)							\
 	(ALIGN(offsetof(struct pmap, pm_asni[(x)])))
 
-#define	PMAP_ASN_RESERVED	0	/* reserved for Lev1map users */
+#define	PMAP_ASN_KERNEL		0	/* kernel-reserved ASN */
+#define	PMAP_ASN_FIRST_USER	1	/* first user ASN */
+#define	PMAP_ASNGEN_INVALID	0	/* reserved (invalid) ASN generation */
+#define	PMAP_ASNGEN_INITIAL	1	/* first valid generatation */
 
 /*
  * For each struct vm_page, there is a list of all currently valid virtual
@@ -188,22 +194,12 @@ typedef struct pv_entry {
 #define	_PMAP_MAY_USE_PROM_CONSOLE
 #endif
 
-#if defined(MULTIPROCESSOR)
 struct cpu_info;
 struct trapframe;
 
-void	pmap_tlb_shootdown(pmap_t, vaddr_t, pt_entry_t, u_long *);
-void	pmap_tlb_shootnow(u_long);
-void	pmap_do_tlb_shootdown(struct cpu_info *, struct trapframe *);
-#define	PMAP_TLB_SHOOTDOWN_CPUSET_DECL		u_long shootset = 0;
-#define	PMAP_TLB_SHOOTDOWN(pm, va, pte)					\
-	pmap_tlb_shootdown((pm), (va), (pte), &shootset)
-#define	PMAP_TLB_SHOOTNOW()						\
-	pmap_tlb_shootnow(shootset)
-#else
-#define	PMAP_TLB_SHOOTDOWN_CPUSET_DECL		/* nothing */
-#define	PMAP_TLB_SHOOTDOWN(pm, va, pte)		/* nothing */
-#define	PMAP_TLB_SHOOTNOW()			/* nothing */
+void	pmap_init_cpu(struct cpu_info *);
+#if defined(MULTIPROCESSOR)
+void	pmap_tlb_shootdown_ipi(struct cpu_info *, struct trapframe *);
 #endif /* MULTIPROCESSOR */
 
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
@@ -329,17 +325,6 @@ pmap_l3pte(pmap_t pmap, vaddr_t v, pt_entry_t *l2pte)
 	lev3map = (pt_entry_t *)ALPHA_PHYS_TO_K0SEG(pmap_pte_pa(l2pte));
 	return (&lev3map[l3pte_index(v)]);
 }
-
-/*
- * Macros for locking pmap structures.
- *
- * Note that we if we access the kernel pmap in interrupt context, it
- * is only to update statistics.  Since stats are updated using atomic
- * operations, locking the kernel pmap is not necessary.  Therefore,
- * it is not necessary to block interrupts when locking pmap strucutres.
- */
-#define	PMAP_LOCK(pmap)		mutex_enter(&(pmap)->pm_lock)
-#define	PMAP_UNLOCK(pmap)	mutex_exit(&(pmap)->pm_lock)
 
 /*
  * Macro for processing deferred I-stream synchronization.
