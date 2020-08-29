@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.18 2020/08/13 03:54:57 rillig Exp $	*/
+/*	$NetBSD: hash.h,v 1.19 2020/08/29 11:13:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -91,7 +91,7 @@ typedef struct Hash_Entry {
 					 * bucket. */
     void	      *clientPtr;	/* Arbitrary pointer */
     unsigned	      namehash;		/* hash value of key */
-    char	      name[1];		/* key string */
+    char	      name[1];		/* key string, variable length */
 } Hash_Entry;
 
 typedef struct Hash_Table {
