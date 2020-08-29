@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.1 2018/04/01 04:35:03 ryo Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.2 2020/08/29 07:17:23 maxv Exp $	*/
 /*-
  * Copyright (c) 2013, 2014 Andrew Turner
  * All rights reserved.
@@ -36,18 +36,18 @@
  */
 
 /*
- * Architecture feature trap register
+ * Architectural Feature Trap Register (CPTR_EL2)
  */
 #define	CPTR_RES0	0x7fefc800
 #define	CPTR_RES1	0x000033ff
 #define	CPTR_TFP	0x00000400
 #define	CPTR_TTA	0x00100000
+#define	CPTR_TAM	0x40000000
 #define	CPTR_TCPAC	0x80000000
 
 /*
- * Hypervisor Config Register
+ * Hypervisor Configuration Register (HCR_EL2)
  */
-
 #define	HCR_VM		0x0000000000000001
 #define	HCR_SWIO	0x0000000000000002
 #define	HCR_PTW		0x0000000000000004
@@ -81,6 +81,12 @@
 #define	HCR_RW		0x0000000080000000
 #define	HCR_CD		0x0000000100000000
 #define	HCR_ID		0x0000000200000000
+#define	HCR_ATA		0x0100000000000000
+
+/*
+ * Hypervisor System Trap Register (HSTR_EL2)
+ */
+#define	HSTR_T(n)	(1 << (n))
 
 #endif
 
