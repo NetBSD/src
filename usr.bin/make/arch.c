@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.105 2020/08/29 12:20:17 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.106 2020/08/29 13:38:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.105 2020/08/29 12:20:17 rillig Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.106 2020/08/29 13:38:48 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.105 2020/08/29 12:20:17 rillig Exp $");
+__RCSID("$NetBSD: arch.c,v 1.106 2020/08/29 13:38:48 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -234,20 +234,19 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 	     * so we can safely advance beyond it...
 	     */
 	    int 	length;
-	    void	*freeIt;
+	    void	*result_freeIt;
 	    const char	*result;
+	    Boolean isError;
 
 	    result = Var_Parse(cp, ctxt, VARE_UNDEFERR|VARE_WANTRES,
-			       &length, &freeIt);
-	    free(freeIt);
-
-	    if (result == var_Error) {
+			       &length, &result_freeIt);
+	    isError = result == var_Error;
+	    free(result_freeIt);
+	    if (isError)
 		return FALSE;
-	    } else {
-		subLibName = TRUE;
-	    }
 
-	    cp += length-1;
+	    subLibName = TRUE;
+	    cp += length - 1;
 	}
     }
 
@@ -278,17 +277,17 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 		int 	length;
 		void	*freeIt;
 		const char *result;
+		Boolean isError;
 
 		result = Var_Parse(cp, ctxt, VARE_UNDEFERR|VARE_WANTRES,
 				   &length, &freeIt);
+		isError = result == var_Error;
 		free(freeIt);
 
-		if (result == var_Error) {
+		if (isError)
 		    return FALSE;
-		} else {
-		    doSubst = TRUE;
-		}
 
+		doSubst = TRUE;
 		cp += length;
 	    } else {
 		cp++;
