@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.474 2020/08/29 11:24:54 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.475 2020/08/29 12:27:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.474 2020/08/29 11:24:54 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.475 2020/08/29 12:27:10 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.474 2020/08/29 11:24:54 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.475 2020/08/29 12:27:10 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2563,29 +2563,38 @@ ApplyModifier_To(const char **pp, ApplyModifiersState *st)
 	st->newVal = ModifyWords(st->ctxt, st->sep, st->oneBigWord, st->val,
 				 ModifyWord_Realpath, NULL);
 	*pp = mod + 2;
-    } else if (mod[1] == 'u') {
+	return AMR_OK;
+    }
+
+    if (mod[1] == 'u') {
 	size_t i;
 	size_t len = strlen(st->val);
 	st->newVal = bmake_malloc(len + 1);
 	for (i = 0; i < len + 1; i++)
 	    st->newVal[i] = (char)toupper((unsigned char)st->val[i]);
 	*pp = mod + 2;
-    } else if (mod[1] == 'l') {
+	return AMR_OK;
+    }
+
+    if (mod[1] == 'l') {
 	size_t i;
 	size_t len = strlen(st->val);
 	st->newVal = bmake_malloc(len + 1);
 	for (i = 0; i < len + 1; i++)
 	    st->newVal[i] = (char)tolower((unsigned char)st->val[i]);
 	*pp = mod + 2;
-    } else if (mod[1] == 'W' || mod[1] == 'w') {
+	return AMR_OK;
+    }
+
+    if (mod[1] == 'W' || mod[1] == 'w') {
 	st->oneBigWord = mod[1] == 'W';
 	st->newVal = st->val;
 	*pp = mod + 2;
-    } else {
-	/* Found ":t<unrecognised>:" or ":t<unrecognised><endc>". */
-	return AMR_BAD;
+	return AMR_OK;
     }
-    return AMR_OK;
+
+    /* Found ":t<unrecognised>:" or ":t<unrecognised><endc>". */
+    return AMR_BAD;
 }
 
 /* :[#], :[1], etc. */
