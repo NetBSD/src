@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.325 2020/08/29 09:30:10 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.326 2020/08/29 10:12:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.325 2020/08/29 09:30:10 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.326 2020/08/29 10:12:06 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.325 2020/08/29 09:30:10 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.326 2020/08/29 10:12:06 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -787,7 +787,7 @@ Main_SetVarObjdir(const char *var, const char *suffix)
 }
 
 /* Read and parse the makefile.
- * Return TRUE if reading the makefile succeeded, for Lst_FindB. */
+ * Return TRUE if reading the makefile succeeded, for Lst_Find. */
 static Boolean
 ReadMakefileSucceeded(const void *fname, const void *unused)
 {
@@ -795,7 +795,7 @@ ReadMakefileSucceeded(const void *fname, const void *unused)
 }
 
 /* Read and parse the makefile.
- * Return TRUE if reading the makefile failed, for Lst_FindB. */
+ * Return TRUE if reading the makefile failed, for Lst_Find. */
 static Boolean
 ReadMakefileFailed(const void *fname, const void *unused)
 {
@@ -1335,7 +1335,7 @@ main(int argc, char **argv)
 		if (Lst_IsEmpty(sysMkPath))
 			Fatal("%s: no system rules (%s).", progname,
 			    _PATH_DEFSYSMK);
-		ln = Lst_FindB(sysMkPath, ReadMakefileSucceeded, NULL);
+		ln = Lst_Find(sysMkPath, ReadMakefileSucceeded, NULL);
 		if (ln == NULL)
 			Fatal("%s: cannot open %s.", progname,
 			    (char *)Lst_Datum(Lst_First(sysMkPath)));
@@ -1344,7 +1344,7 @@ main(int argc, char **argv)
 	if (!Lst_IsEmpty(makefiles)) {
 		LstNode ln;
 
-		ln = Lst_FindB(makefiles, ReadMakefileFailed, NULL);
+		ln = Lst_Find(makefiles, ReadMakefileFailed, NULL);
 		if (ln != NULL)
 			Fatal("%s: cannot open %s.", progname,
 			    (char *)Lst_Datum(ln));
@@ -1353,7 +1353,7 @@ main(int argc, char **argv)
 		VAR_CMD, VARE_WANTRES);
 	    if (p1) {
 		(void)str2Lst_Append(makefiles, p1, NULL);
-		(void)Lst_FindB(makefiles, ReadMakefileSucceeded, NULL);
+		(void)Lst_Find(makefiles, ReadMakefileSucceeded, NULL);
 		free(p1);
 	    }
 	}

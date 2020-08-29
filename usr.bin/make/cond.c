@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.104 2020/08/29 09:30:10 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.105 2020/08/29 10:12:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.104 2020/08/29 09:30:10 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.105 2020/08/29 10:12:06 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.104 2020/08/29 09:30:10 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.105 2020/08/29 10:12:06 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -272,7 +272,7 @@ CondDoDefined(int argLen MAKE_ATTR_UNUSED, const char *arg)
     return result;
 }
 
-/* Wrapper around Str_Match, to be used by Lst_FindB. */
+/* Wrapper around Str_Match, to be used by Lst_Find. */
 static Boolean
 CondFindStrMatch(const void *string, const void *pattern)
 {
@@ -283,7 +283,7 @@ CondFindStrMatch(const void *string, const void *pattern)
 static Boolean
 CondDoMake(int argLen MAKE_ATTR_UNUSED, const char *arg)
 {
-    return Lst_FindB(create, CondFindStrMatch, arg) != NULL;
+    return Lst_Find(create, CondFindStrMatch, arg) != NULL;
 }
 
 /* See if the given file exists. */

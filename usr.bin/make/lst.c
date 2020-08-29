@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.54 2020/08/29 10:06:23 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.55 2020/08/29 10:12:06 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,11 +37,11 @@
 #include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.54 2020/08/29 10:06:23 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.55 2020/08/29 10:12:06 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.54 2020/08/29 10:06:23 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.55 2020/08/29 10:12:06 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -378,9 +378,9 @@ Lst_IsEmpty(Lst list)
 /* Return the first node from the list for which the match function returns
  * TRUE, or NULL if none of the nodes matched. */
 LstNode
-Lst_FindB(Lst list, LstFindBProc match, const void *matchArgs)
+Lst_Find(Lst list, LstFindProc match, const void *matchArgs)
 {
-    return Lst_FindFromB(list, Lst_First(list), match, matchArgs);
+    return Lst_FindFrom(list, Lst_First(list), match, matchArgs);
 }
 
 /* Return the first node from the list, starting at the given node, for which
@@ -389,7 +389,7 @@ Lst_FindB(Lst list, LstFindBProc match, const void *matchArgs)
  * The start node may be NULL, in which case nothing is found. This allows
  * for passing Lst_First or Lst_Succ as the start node. */
 LstNode
-Lst_FindFromB(Lst list, LstNode node, LstFindBProc match, const void *matchArgs)
+Lst_FindFrom(Lst list, LstNode node, LstFindProc match, const void *matchArgs)
 {
     LstNode tln;
 
