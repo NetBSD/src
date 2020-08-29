@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.81 2016/01/17 10:44:57 martin Exp $ */
+/* $NetBSD: interrupt.c,v 1.82 2020/08/29 15:29:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.81 2016/01/17 10:44:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.82 2020/08/29 15:29:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -530,7 +530,7 @@ const static uint8_t ipl2psl_table[] = {
 	[IPL_NONE] = ALPHA_PSL_IPL_0,
 	[IPL_SOFTCLOCK] = ALPHA_PSL_IPL_SOFT,
 	[IPL_VM] = ALPHA_PSL_IPL_IO,
-	[IPL_CLOCK] = ALPHA_PSL_IPL_CLOCK,
+	[IPL_SCHED] = ALPHA_PSL_IPL_CLOCK,	/* also IPIs */
 	[IPL_HIGH] = ALPHA_PSL_IPL_HIGH,
 };
 
