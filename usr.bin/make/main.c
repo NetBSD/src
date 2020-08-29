@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.321 2020/08/29 07:05:12 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.322 2020/08/29 07:13:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.321 2020/08/29 07:05:12 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.322 2020/08/29 07:13:17 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.321 2020/08/29 07:05:12 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.322 2020/08/29 07:13:17 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -158,7 +158,8 @@ static Lst		makefiles;	/* ordered list of makefiles to read */
 static int		printVars;	/* -[vV] argument */
 #define COMPAT_VARS 1
 #define EXPAND_VARS 2
-static Lst		variables;	/* list of variables to print */
+static Lst		variables;	/* list of variables to print
+					 * (for -v and -V) */
 int			maxJobs;	/* -j argument */
 static int		maxJobTokens;	/* -j argument */
 Boolean			compatMake;	/* -B argument */
@@ -405,7 +406,7 @@ static void
 MainParseArgs(int argc, char **argv)
 {
 	char *p;
-	int c = '?';
+	char c = '?';
 	int arginc;
 	char *argvalue;
 	const char *getopt_def;
@@ -830,13 +831,13 @@ siginfo(int signo MAKE_ATTR_UNUSED)
 void
 MakeMode(const char *mode)
 {
-    char *mp = NULL;
+    char *mode_freeIt = NULL;
 
-    if (!mode)
-	mode = mp = Var_Subst("${" MAKE_MODE ":tl}",
-			      VAR_GLOBAL, VARE_WANTRES);
+    if (mode == NULL)
+	mode = mode_freeIt = Var_Subst("${" MAKE_MODE ":tl}",
+				       VAR_GLOBAL, VARE_WANTRES);
 
-    if (mode && *mode) {
+    if (mode[0] != '\0') {
 	if (strstr(mode, "compat")) {
 	    compatMake = TRUE;
 	    forceJobs = FALSE;
@@ -847,7 +848,7 @@ MakeMode(const char *mode)
 #endif
     }
 
-    free(mp);
+    free(mode_freeIt);
 }
 
 static void
@@ -1285,7 +1286,8 @@ main(int argc, char **argv)
 	 * add the directories from the DEFSYSPATH (more than one may be given
 	 * as dir1:...:dirn) to the system include path.
 	 */
-	if (syspath == NULL || *syspath == '\0')
+	/* XXX: mismatch: the -m option sets sysIncPath, not syspath */
+	if (syspath == NULL || syspath[0] == '\0')
 		syspath = defsyspath;
 	else
 		syspath = bmake_strdup(syspath);
@@ -2053,17 +2055,17 @@ PrintOnError(GNode *gn, const char *s)
 void
 Main_ExportMAKEFLAGS(Boolean first)
 {
-    static int once = 1;
+    static Boolean once = TRUE;
     const char *expr;
     char *s;
 
     if (once != first)
 	return;
-    once = 0;
+    once = FALSE;
 
     expr = "${.MAKEFLAGS} ${.MAKEOVERRIDES:O:u:@v@$v=${$v:Q}@}";
     s = Var_Subst(expr, VAR_CMD, VARE_WANTRES);
-    if (s != NULL && s[0] != '\0') {
+    if (s[0] != '\0') {
 #ifdef POSIX
 	setenv("MAKEFLAGS", s, 1);
 #else
