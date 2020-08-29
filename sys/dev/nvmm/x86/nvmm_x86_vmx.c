@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.36.2.11 2020/08/26 17:55:49 martin Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.36.2.12 2020/08/29 17:00:28 martin Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.36.2.11 2020/08/26 17:55:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.36.2.12 2020/08/29 17:00:28 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -722,7 +722,7 @@ static uint64_t vmx_xcr0_mask __read_mostly;
 #define CR0_TLB_FLUSH \
 	(CR0_PG|CR0_WP|CR0_CD|CR0_NW)
 #define CR4_TLB_FLUSH \
-	(CR4_PGE|CR4_PAE|CR4_PSE)
+	(CR4_PSE|CR4_PAE|CR4_PGE|CR4_PCIDE|CR4_SMEP)
 
 /* -------------------------------------------------------------------------- */
 

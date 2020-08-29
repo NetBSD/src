@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.c,v 1.22.2.6 2020/08/18 09:29:52 martin Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.22.2.7 2020/08/29 17:00:28 martin Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,12 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.22.2.6 2020/08/18 09:29:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.22.2.7 2020/08/29 17:00:28 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 
+#include <sys/atomic.h>
 #include <sys/cpu.h>
 #include <sys/conf.h>
 #include <sys/kmem.h>
@@ -112,17 +113,17 @@ nvmm_machine_get(struct nvmm_owner *owner, nvmm_machid_t machid,
 	struct nvmm_machine *mach;
 	krw_t op = writer ? RW_WRITER : RW_READER;
 
-	if (machid >= NVMM_MAX_MACHINES) {
+	if (__predict_false(machid >= NVMM_MAX_MACHINES)) {
 		return EINVAL;
 	}
 	mach = &machines[machid];
 
 	rw_enter(&mach->lock, op);
-	if (!mach->present) {
+	if (__predict_false(!mach->present)) {
 		rw_exit(&mach->lock);
 		return ENOENT;
 	}
-	if (owner != &root_owner && mach->owner != owner) {
+	if (__predict_false(mach->owner != owner && owner != &root_owner)) {
 		rw_exit(&mach->lock);
 		return EPERM;
 	}
@@ -179,13 +180,13 @@ nvmm_vcpu_get(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
 {
 	struct nvmm_cpu *vcpu;
 
-	if (cpuid >= NVMM_MAX_VCPUS) {
+	if (__predict_false(cpuid >= NVMM_MAX_VCPUS)) {
 		return EINVAL;
 	}
 	vcpu = &mach->cpus[cpuid];
 
 	mutex_enter(&vcpu->lock);
-	if (!vcpu->present) {
+	if (__predict_false(!vcpu->present)) {
 		mutex_exit(&vcpu->lock);
 		return ENOENT;
 	}
@@ -227,6 +228,7 @@ nvmm_kill_machines(struct nvmm_owner *owner)
 			(*nvmm_impl->vcpu_destroy)(mach, vcpu);
 			nvmm_vcpu_free(mach, vcpu);
 			nvmm_vcpu_put(vcpu);
+			atomic_dec_uint(&mach->ncpus);
 		}
 		(*nvmm_impl->machine_destroy)(mach);
 		uvmspace_free(mach->vm);
@@ -314,6 +316,7 @@ nvmm_machine_destroy(struct nvmm_owner *owner,
 		(*nvmm_impl->vcpu_destroy)(mach, vcpu);
 		nvmm_vcpu_free(mach, vcpu);
 		nvmm_vcpu_put(vcpu);
+		atomic_dec_uint(&mach->ncpus);
 	}
 
 	(*nvmm_impl->machine_destroy)(mach);
@@ -414,7 +417,6 @@ nvmm_vcpu_create(struct nvmm_owner *owner, struct nvmm_ioc_vcpu_create *args)
 	}
 
 	nvmm_vcpu_put(vcpu);
-
 	atomic_inc_uint(&mach->ncpus);
 
 out:
@@ -440,7 +442,6 @@ nvmm_vcpu_destroy(struct nvmm_owner *owner, struct nvmm_ioc_vcpu_destroy *args)
 	(*nvmm_impl->vcpu_destroy)(mach, vcpu);
 	nvmm_vcpu_free(mach, vcpu);
 	nvmm_vcpu_put(vcpu);
-
 	atomic_dec_uint(&mach->ncpus);
 
 out:
@@ -907,7 +908,6 @@ nvmm_ctl_mach_info(struct nvmm_owner *owner, struct nvmm_ioc_ctl *args)
 {
 	struct nvmm_ctl_mach_info ctl;
 	struct nvmm_machine *mach;
-	struct nvmm_cpu *vcpu;
 	int error;
 	size_t i;
 
@@ -921,14 +921,7 @@ nvmm_ctl_mach_info(struct nvmm_owner *owner, struct nvmm_ioc_ctl *args)
 	if (error)
 		return error;
 
-	ctl.nvcpus = 0;
-	for (i = 0; i < NVMM_MAX_VCPUS; i++) {
-		error = nvmm_vcpu_get(mach, i, &vcpu);
-		if (error)
-			continue;
-		ctl.nvcpus++;
-		nvmm_vcpu_put(vcpu);
-	}
+	ctl.nvcpus = mach->ncpus;
 
 	ctl.nram = 0;
 	for (i = 0; i < NVMM_MAX_HMAPPINGS; i++) {
@@ -1040,7 +1033,7 @@ static int nvmm_close(file_t *);
 static int nvmm_mmap(file_t *, off_t *, size_t, int, int *, int *,
     struct uvm_object **, int *);
 
-const struct fileops nvmm_fileops = {
+static const struct fileops nvmm_fileops = {
 	.fo_read = fbadop_read,
 	.fo_write = fbadop_write,
 	.fo_ioctl = nvmm_ioctl,
@@ -1218,7 +1211,7 @@ nvmm_attach(device_t parent, device_t self, void *aux)
 static int
 nvmm_detach(device_t self, int flags)
 {
-	if (nmachines > 0)
+	if (atomic_load_relaxed(&nmachines) > 0)
 		return EBUSY;
 	nvmm_fini();
 	return 0;
