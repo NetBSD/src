@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.131 2020/08/29 10:41:12 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.132 2020/08/29 11:13:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.131 2020/08/29 10:41:12 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.132 2020/08/29 11:13:43 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.131 2020/08/29 10:41:12 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.132 2020/08/29 11:13:43 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2020,7 +2020,7 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
 	    ln = Lst_FindFrom(sufflist, ln, SuffSuffIsSuffix, &sd);
 
 	    if (ln != NULL) {
-		int	    prefLen;	    /* Length of the prefix */
+	        const char *eopref;
 
 		/*
 		 * Allocate a Src structure to which things can be transformed
@@ -2036,15 +2036,8 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
 		targ->cp = Lst_Init();
 #endif
 
-		/*
-		 * Allocate room for the prefix, whose end is found by
-		 * subtracting the length of the suffix from
-		 * the end of the name.
-		 */
-		prefLen = (eoname - targ->suff->nameLen) - sopref;
-		targ->pref = bmake_malloc(prefLen + 1);
-		memcpy(targ->pref, sopref, prefLen);
-		targ->pref[prefLen] = '\0';
+		eopref = eoname - targ->suff->nameLen;
+		targ->pref = bmake_strldup(sopref, (size_t)(eopref - sopref));
 
 		/*
 		 * Add nodes from which the target can be made
