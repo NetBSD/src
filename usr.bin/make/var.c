@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.475 2020/08/29 12:27:10 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.476 2020/08/29 12:48:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.475 2020/08/29 12:27:10 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.476 2020/08/29 12:48:17 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.475 2020/08/29 12:27:10 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.476 2020/08/29 12:48:17 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1297,9 +1297,11 @@ ModifyWord_Subst(const char *word, SepBuf *buf, void *data)
 	    if (wordLen != args->lhsLen)
 		goto nosub;
 
+	    /* :S,^whole$,replacement, */
 	    SepBuf_AddBytes(buf, args->rhs, args->rhsLen);
 	    args->matched = TRUE;
 	} else {
+	    /* :S,^prefix,replacement, */
 	    SepBuf_AddBytes(buf, args->rhs, args->rhsLen);
 	    SepBuf_AddBytes(buf, word + args->lhsLen, wordLen - args->lhsLen);
 	    args->matched = TRUE;
@@ -1317,6 +1319,7 @@ ModifyWord_Subst(const char *word, SepBuf *buf, void *data)
 	if (memcmp(start, args->lhs, args->lhsLen) != 0)
 	    goto nosub;
 
+	/* :S,suffix$,replacement, */
 	SepBuf_AddBytesBetween(buf, word, start);
 	SepBuf_AddBytes(buf, args->rhs, args->rhsLen);
 	args->matched = TRUE;
