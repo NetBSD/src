@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.127 2020/08/29 18:50:25 rillig Exp $
+# $NetBSD: Makefile,v 1.128 2020/08/29 19:07:32 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -329,6 +329,7 @@ ENV.varmisc+=		FROM_ENV_AFTER=env
 # settings FLAGS.test=-dv here, since that is closer to the test code.
 FLAGS.archive=		-dA
 FLAGS.counter=		-dv
+FLAGS.directive-ifmake=	first second
 FLAGS.doterror=		# none
 FLAGS.envfirst=		-e
 FLAGS.export=		# none
