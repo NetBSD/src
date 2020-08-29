@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.107 2020/08/28 06:47:14 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.108 2020/08/29 10:06:23 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -955,39 +955,23 @@ prefix_match(void *p, void *q)
     return strncmp(path, prefix, n) == 0;
 }
 
-/*
- * looking for exact or prefix/ match to
- * Lst_Find wants 0 to stop search
- */
-static int
+/* See if the path equals prefix or starts with "prefix/". */
+static Boolean
 path_match(const void *p, const void *q)
 {
-    const char *prefix = q;
     const char *path = p;
+    const char *prefix = q;
     size_t n = strlen(prefix);
-    int rc;
 
-    if ((rc = strncmp(path, prefix, n)) == 0) {
-	switch (path[n]) {
-	case '\0':
-	case '/':
-	    break;
-	default:
-	    rc = 1;
-	    break;
-	}
-    }
-    return rc;
+    if (strncmp(path, prefix, n) != 0)
+        return FALSE;
+    return path[n] == '\0' || path[n] == '/';
 }
 
-/* Lst_Find wants 0 to stop search */
-static int
+static Boolean
 string_match(const void *p, const void *q)
 {
-    const char *p1 = p;
-    const char *p2 = q;
-
-    return strcmp(p1, p2);
+    return strcmp(p, q) == 0;
 }
 
 
@@ -1334,17 +1318,14 @@ meta_oodate(GNode *gn, Boolean oodate)
 		case 'D':		/* unlink */
 		    if (*p == '/' && !Lst_IsEmpty(missingFiles)) {
 			/* remove any missingFiles entries that match p */
-			ln = Lst_Find(missingFiles, path_match, p);
+			ln = Lst_FindB(missingFiles, path_match, p);
 			if (ln != NULL) {
 			    LstNode nln;
 			    char *tp;
 
 			    do {
-				LstNode succ = Lst_Succ(ln);
-				nln = succ != NULL
-				      ? Lst_FindFrom(missingFiles, succ,
-						     path_match, p)
-				      : NULL;
+				nln = Lst_FindFromB(missingFiles, Lst_Succ(ln),
+						    path_match, p);
 				tp = Lst_Datum(ln);
 				Lst_Remove(missingFiles, ln);
 				free(tp);
@@ -1414,7 +1395,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    if ((link_src != NULL && cached_lstat(p, &fs) < 0) ||
 			(link_src == NULL && cached_stat(p, &fs) < 0)) {
 			if (!meta_ignore(gn, p)) {
-			    if (Lst_Find(missingFiles, string_match, p) == NULL)
+			    if (Lst_FindB(missingFiles, string_match, p) == NULL)
 				Lst_Append(missingFiles, bmake_strdup(p));
 			}
 		    }
@@ -1500,7 +1481,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 			     * A referenced file outside of CWD is missing.
 			     * We cannot catch every eventuality here...
 			     */
-			    if (Lst_Find(missingFiles, string_match, p) == NULL)
+			    if (Lst_FindB(missingFiles, string_match, p) == NULL)
 				Lst_Append(missingFiles, bmake_strdup(p));
 			}
 		    }
