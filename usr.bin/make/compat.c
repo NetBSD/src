@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.133 2020/08/29 08:09:07 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.134 2020/08/29 12:36:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.133 2020/08/29 08:09:07 rillig Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.134 2020/08/29 12:36:20 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.133 2020/08/29 08:09:07 rillig Exp $");
+__RCSID("$NetBSD: compat.c,v 1.134 2020/08/29 12:36:20 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -137,23 +137,13 @@ CompatDeleteTarget(GNode *gn)
     }
 }
 
-/*-
- *-----------------------------------------------------------------------
- * CompatInterrupt --
- *	Interrupt the creation of the current target and remove it if
- *	it ain't precious.
+/* Interrupt the creation of the current target and remove it if it ain't
+ * precious. Then exit.
  *
- * Results:
- *	None.
- *
- * Side Effects:
- *	The target is removed and the process exits. If .INTERRUPT exists,
- *	its commands are run first WITH INTERRUPTS IGNORED..
+ * If .INTERRUPT exists, its commands are run first WITH INTERRUPTS IGNORED.
  *
  * XXX: is .PRECIOUS supposed to inhibit .INTERRUPT? I doubt it, but I've
  * left the logic alone for now. - dholland 20160826
- *
- *-----------------------------------------------------------------------
  */
 static void
 CompatInterrupt(int signo)
@@ -675,21 +665,10 @@ cohorts:
     return 0;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Compat_Run --
- *	Initialize this mode and start making.
+/* Initialize this module and start making.
  *
  * Input:
- *	targs		List of target nodes to re-create
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	Guess what?
- *
- *-----------------------------------------------------------------------
+ *	targs		The target nodes to re-create
  */
 void
 Compat_Run(Lst targs)
