@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.327 2020/08/29 10:41:12 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.328 2020/08/29 13:04:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.327 2020/08/29 10:41:12 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.328 2020/08/29 13:04:30 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.327 2020/08/29 10:41:12 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.328 2020/08/29 13:04:30 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2183,18 +2183,12 @@ s2Boolean(const char *s, Boolean bf)
  * is FALSE, otherwise TRUE.
  */
 Boolean
-getBoolean(const char *name, Boolean bf)
+getBoolean(const char *name, Boolean fallback)
 {
-    char tmp[64];
-    char *cp;
-
-    if (snprintf(tmp, sizeof(tmp), "${%s:U:tl}", name) < (int)(sizeof(tmp))) {
-	cp = Var_Subst(tmp, VAR_GLOBAL, VARE_WANTRES);
-
-	if (cp) {
-	    bf = s2Boolean(cp, bf);
-	    free(cp);
-	}
-    }
-    return bf;
+    char *expr = str_concat3("${", name, ":U:tl}");
+    char *value = Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES);
+    Boolean res = s2Boolean(value, fallback);
+    free(value);
+    free(expr);
+    return res;
 }
