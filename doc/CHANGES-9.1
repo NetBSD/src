@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.104 2020/08/28 19:37:37 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.105 2020/08/29 17:03:39 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -4868,4 +4868,21 @@ sys/dev/usb/usbnet.c				1.39
 	atu(4) and all usb network drivers using usbnet:
 	Reject packets larger than MCLBYTES.
 	[riastradh, ticket #1067]
+
+sys/dev/nvmm/nvmm.c				1.34-1.37
+sys/dev/nvmm/nvmm_ioctl.h			1.10
+sys/dev/nvmm/x86/nvmm_x86.c			1.15
+sys/dev/nvmm/x86/nvmm_x86_svm.c			1.68,1.71,1.72
+sys/dev/nvmm/x86/nvmm_x86_svmfunc.S		1.5
+sys/dev/nvmm/x86/nvmm_x86_vmx.c			1.70
+sys/dev/nvmm/x86/nvmm_x86_vmxfunc.S		1.5
+
+	nvmm(4): miscellaneous improvements, for slightly more performance
+	and correctness.
+	[maxv, ticket #1068]
+
+sys/arch/alpha/alpha/prom.c			1.52
+
+	Make sure init_prom_interface() only runs once.
+	[thorpej, ticket #1069]
 
