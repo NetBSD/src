@@ -1,8 +1,12 @@
-# $NetBSD: depsrc-silent.mk,v 1.2 2020/08/16 14:25:16 rillig Exp $
+# $NetBSD: depsrc-silent.mk,v 1.3 2020/08/29 17:34:21 rillig Exp $
 #
-# Tests for the special source .SILENT in dependency declarations.
+# Tests for the special source .SILENT in dependency declarations,
+# which hides the commands, no matter whether they are prefixed with
+# '@' or not.
 
-# TODO: Implementation
-
-all:
-	@:;
+# Without the .SILENT, the commands 'echo one' and 'echo two' would be
+# written to stdout.
+all: .SILENT
+	echo one
+	echo two
+	@echo three
