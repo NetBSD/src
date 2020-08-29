@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.53 2020/08/28 04:48:57 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.54 2020/08/29 09:30:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,6 +93,7 @@ typedef	struct ListNode	*LstNode;
 typedef void *LstCopyProc(void *);
 typedef void LstFreeProc(void *);
 typedef int LstFindProc(const void *, const void *);
+typedef Boolean LstFindBProc(const void *, const void *);
 typedef int LstActionProc(void *, void *);
 
 /*
@@ -146,8 +147,10 @@ void		*Lst_Datum(LstNode);
  */
 /* Find an element in a list */
 LstNode		Lst_Find(Lst, LstFindProc, const void *);
+LstNode		Lst_FindB(Lst, LstFindBProc, const void *);
 /* Find an element starting from somewhere */
 LstNode		Lst_FindFrom(Lst, LstNode, LstFindProc, const void *);
+LstNode		Lst_FindFromB(Lst, LstNode, LstFindBProc, const void *);
 /*
  * See if the given datum is on the list. Returns the LstNode containing
  * the datum

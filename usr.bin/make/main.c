@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.324 2020/08/29 08:59:08 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.325 2020/08/29 09:30:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.324 2020/08/29 08:59:08 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.325 2020/08/29 09:30:10 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.324 2020/08/29 08:59:08 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.325 2020/08/29 09:30:10 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -183,7 +183,7 @@ Boolean			doing_depend;	/* Set while reading .depend */
 static Boolean		jobsRunning;	/* TRUE if the jobs might be running */
 static const char *	tracefile;
 static void		MainParseArgs(int, char **);
-static int		ReadMakefile(const void *, const void *);
+static int		ReadMakefile(const char *);
 static void		usage(void) MAKE_ATTR_DEAD;
 static void		purge_cached_realpaths(void);
 
@@ -786,11 +786,20 @@ Main_SetVarObjdir(const char *var, const char *suffix)
 	return TRUE;
 }
 
-/* Return 0 if reading the makefile failed, for Lst_Find. */
-static int
-ReadMakefileFailed(const void *p, const void *q)
+/* Read and parse the makefile.
+ * Return TRUE if reading the makefile succeeded, for Lst_FindB. */
+static Boolean
+ReadMakefileSucceeded(const void *fname, const void *unused)
 {
-	return ReadMakefile(p, q) == 0;
+	return ReadMakefile(fname) == 0;
+}
+
+/* Read and parse the makefile.
+ * Return TRUE if reading the makefile failed, for Lst_FindB. */
+static Boolean
+ReadMakefileFailed(const void *fname, const void *unused)
+{
+	return ReadMakefile(fname) != 0;
 }
 
 int
@@ -1313,8 +1322,8 @@ main(int argc, char **argv)
 
 	/*
 	 * Read in the built-in rules first, followed by the specified
-	 * makefile, if it was (makefile != NULL), or the default
-	 * makefile and Makefile, in that order, if it wasn't.
+	 * makefiles, or the default makefile and Makefile, in that order,
+	 * if no makefiles were given on the command line.
 	 */
 	if (!noBuiltins) {
 		LstNode ln;
@@ -1326,7 +1335,7 @@ main(int argc, char **argv)
 		if (Lst_IsEmpty(sysMkPath))
 			Fatal("%s: no system rules (%s).", progname,
 			    _PATH_DEFSYSMK);
-		ln = Lst_Find(sysMkPath, ReadMakefile, NULL);
+		ln = Lst_FindB(sysMkPath, ReadMakefileSucceeded, NULL);
 		if (ln == NULL)
 			Fatal("%s: cannot open %s.", progname,
 			    (char *)Lst_Datum(Lst_First(sysMkPath)));
@@ -1335,7 +1344,7 @@ main(int argc, char **argv)
 	if (!Lst_IsEmpty(makefiles)) {
 		LstNode ln;
 
-		ln = Lst_Find(makefiles, ReadMakefileFailed, NULL);
+		ln = Lst_FindB(makefiles, ReadMakefileFailed, NULL);
 		if (ln != NULL)
 			Fatal("%s: cannot open %s.", progname,
 			    (char *)Lst_Datum(ln));
@@ -1344,7 +1353,7 @@ main(int argc, char **argv)
 		VAR_CMD, VARE_WANTRES);
 	    if (p1) {
 		(void)str2Lst_Append(makefiles, p1, NULL);
-		(void)Lst_Find(makefiles, ReadMakefile, NULL);
+		(void)Lst_FindB(makefiles, ReadMakefileSucceeded, NULL);
 		free(p1);
 	    }
 	}
@@ -1354,7 +1363,7 @@ main(int argc, char **argv)
 	    makeDependfile = Var_Subst("${.MAKE.DEPENDFILE:T}",
 		VAR_CMD, VARE_WANTRES);
 	    doing_depend = TRUE;
-	    (void)ReadMakefile(makeDependfile, NULL);
+	    (void)ReadMakefile(makeDependfile);
 	    doing_depend = FALSE;
 	}
 
@@ -1500,9 +1509,8 @@ main(int argc, char **argv)
  *	0 if ok. -1 if couldn't open file.
  */
 static int
-ReadMakefile(const void *p, const void *q MAKE_ATTR_UNUSED)
+ReadMakefile(const char *fname)
 {
-	const char *fname = p;		/* makefile to read */
 	int fd;
 	char *name, *path = NULL;
 

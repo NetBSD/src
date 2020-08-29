@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.102 2020/08/28 18:34:45 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.103 2020/08/29 09:30:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.102 2020/08/28 18:34:45 rillig Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.103 2020/08/29 09:30:10 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.102 2020/08/28 18:34:45 rillig Exp $");
+__RCSID("$NetBSD: arch.c,v 1.103 2020/08/29 09:30:10 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -164,7 +164,6 @@ typedef struct Arch {
     size_t	  fnamesize;  /* Size of the string table */
 } Arch;
 
-static int ArchFindArchive(const void *, const void *);
 static struct ar_hdr *ArchStatMember(const char *, const char *, Boolean);
 static FILE *ArchFindMember(const char *, const char *,
 			    struct ar_hdr *, const char *);
@@ -455,24 +454,12 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
     return TRUE;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * ArchFindArchive --
- *	See if the given archive is the one we are looking for. Called
- *	From ArchStatMember and ArchFindMember via Lst_Find.
- *
- * Input:
- *	ar		Current list element
- *	archName	Name we want
- *
- * Results:
- *	0 if it is, non-zero if it isn't.
- *-----------------------------------------------------------------------
- */
-static int
-ArchFindArchive(const void *ar, const void *archName)
+/* See if the given archive is the one we are looking for.
+ * Called via Lst_FindB. */
+static Boolean
+ArchFindArchive(const void *ar, const void *desiredName)
 {
-    return strcmp(archName, ((const Arch *)ar)->name);
+    return strcmp(((const Arch *)ar)->name, desiredName) == 0;
 }
 
 /*-
@@ -520,7 +507,7 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
 	member = base + 1;
     }
 
-    ln = Lst_Find(archives, ArchFindArchive, archive);
+    ln = Lst_FindB(archives, ArchFindArchive, archive);
     if (ln != NULL) {
 	ar = Lst_Datum(ln);
 
