@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.50 2016/04/04 07:37:07 ozaki-r Exp $	*/
+/*	$NetBSD: show.c,v 1.51 2020/08/29 19:28:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: show.c,v 1.50 2016/04/04 07:37:07 ozaki-r Exp $");
+__RCSID("$NetBSD: show.c,v 1.51 2020/08/29 19:28:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -132,8 +132,10 @@ void
 show(int argc, char *const *argv, int flags)
 {
 	int af, rflags;
-	static int interesting = RTF_UP | RTF_GATEWAY | RTF_HOST |
-	    RTF_REJECT | RTF_LOCAL | RTF_BROADCAST;
+	static int interesting = RTF_ANNOUNCE | RTF_BLACKHOLE | RTF_BROADCAST |
+	    RTF_CONNECTED | RTF_DYNAMIC | RTF_GATEWAY | RTF_HOST | RTF_LLDATA |
+	    RTF_LOCAL | RTF_MODIFIED | RTF_PROTO1 | RTF_PROTO2 | RTF_REJECT |
+	    RTF_STATIC | RTF_UP;
 
 	parse_show_opts(argc, argv, &af, &rflags, NULL, true);
 	p_rttables(af, flags, rflags, interesting);
