@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.65 2020/08/23 18:26:35 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.66 2020/08/29 10:32:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.65 2020/08/23 18:26:35 rillig Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.66 2020/08/29 10:32:00 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.65 2020/08/23 18:26:35 rillig Exp $");
+__RCSID("$NetBSD: for.c,v 1.66 2020/08/29 10:32:00 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -93,17 +93,6 @@ typedef struct {
 
 static For *accumFor;		/* Loop being accumulated */
 
-
-static char *
-make_str(const char *ptr, int len)
-{
-    char *new_ptr;
-
-    new_ptr = bmake_malloc(len + 1);
-    memcpy(new_ptr, ptr, len);
-    new_ptr[len] = 0;
-    return new_ptr;
-}
 
 static void
 For_Free(For *arg)
@@ -189,7 +178,7 @@ For_Eval(char *line)
 	}
 	if (len == 1)
 	    new_for->short_var = 1;
-	strlist_add_str(&new_for->vars, make_str(ptr, len), len);
+	strlist_add_str(&new_for->vars, bmake_strldup(ptr, len), len);
     }
 
     if (strlist_num(&new_for->vars) == 0) {
