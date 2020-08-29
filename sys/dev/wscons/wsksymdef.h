@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.73 2020/07/13 09:50:12 nia Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.74 2020/08/29 22:42:53 macallan Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -644,6 +644,7 @@
 #define KB_IOPENER		0x0040	/* f1-f12 -> ESC,f1-f11 */
 #define KB_MACHDEP		0x0080	/* machine dependent */
 #define KB_COLEMAK	    0x00010000	/* Colemak layout */
+#define KB_APPLE	    0x00020000	/* Apple USB layout */
 
 /*
  * Define keyboard type and texts all in one table.
@@ -699,6 +700,7 @@ enum { KB_ENC_FUN(KBF_ENUM) KB_NEXT=0x1800 };
 	{ KB_METAESC,	"metaesc" }, \
 	{ KB_IOPENER,	"iopener" }, \
 	{ KB_MACHDEP,	"machdep" }, \
-	{ KB_COLEMAK,	"colemak" }
+	{ KB_COLEMAK,	"colemak" }, \
+	{ KB_APPLE,	"apple" }
 
 #endif /* !_DEV_WSCONS_WSKSYMDEF_H_ */

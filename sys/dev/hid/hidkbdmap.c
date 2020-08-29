@@ -1,4 +1,4 @@
-/*	$NetBSD: hidkbdmap.c,v 1.11 2020/08/26 10:34:03 jdolecek Exp $	*/
+/*	$NetBSD: hidkbdmap.c,v 1.12 2020/08/29 22:42:53 macallan Exp $	*/
 
 /*
  * Copyright (c) 1999,2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hidkbdmap.c,v 1.11 2020/08/26 10:34:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hidkbdmap.c,v 1.12 2020/08/29 22:42:53 macallan Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -282,6 +282,14 @@ Static const keysym_t hidkbd_keydesc_swapctrlcaps[] = {
 /*  pos      command		normal		shifted */
     KC(57),  KS_Cmd1,		KS_Control_L,
     KC(224), 			KS_Caps_Lock,
+};
+
+/* switch screens using Command-F* as on ADB keyboards */
+Static const keysym_t hidkbd_keydesc_apple[] = {
+/*  pos      command		normal		shifted */
+    KC(224),			KS_Control_L,
+    KC(226),			KS_Alt_L,
+    KC(227),  KS_Cmd,		KS_Meta_L,
 };
 
 Static const keysym_t hidkbd_keydesc_de[] = {
@@ -813,6 +821,7 @@ const struct wscons_keydesc hidkbd_keydesctab[] = {
 	KBD_MAP(KB_US | KB_DVORAK | KB_SWAPCTRLCAPS,	KB_US| KB_DVORAK,
 		hidkbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_US | KB_COLEMAK,	KB_US,	hidkbd_keydesc_us_colemak),
+	KBD_MAP(KB_US | KB_APPLE,	KB_US,	hidkbd_keydesc_apple),
 	KBD_MAP(KB_JP,			KB_US,	hidkbd_keydesc_jp),
 	KBD_MAP(KB_JP | KB_SWAPCTRLCAPS,KB_JP,	hidkbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_DE,			KB_US,	hidkbd_keydesc_de),
