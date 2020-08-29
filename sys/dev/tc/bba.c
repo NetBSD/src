@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.44 2019/06/08 08:02:38 isaki Exp $ */
+/* $NetBSD: bba.c,v 1.45 2020/08/29 03:24:31 isaki Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 /* maxine/alpha baseboard audio (bba) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.44 2019/06/08 08:02:38 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.45 2020/08/29 03:24:31 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,7 +230,7 @@ bba_attach(device_t parent, device_t self, void *aux)
 
 	printf("\n");
 
-	bba_reset(sc,1);
+	bba_reset(sc, 1);
 
 	/*
 	 * Set up glue for MI code early; we use some of it here.
@@ -285,7 +285,6 @@ bba_reset(struct bba_softc *sc, int reset)
 		ssr |= IOASIC_CSR_ISDN_ENABLE;
 		bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_CSR, ssr);
 	}
-
 }
 
 
@@ -468,7 +467,7 @@ bba_trigger_output(void *addr, void *start, void *end, int blksize,
 
 	if (bus_dmamap_load(sc->sc_dmat, d->dmam, start,
 	    (char *)end - (char *)start, NULL, BUS_DMA_WRITE|BUS_DMA_NOWAIT)) {
-	    printf("bba_trigger_output: can't load DMA map\n");
+		printf("bba_trigger_output: can't load DMA map\n");
 		goto bad;
 	}
 	state |= 2;
