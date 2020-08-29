@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.129 2020/08/28 19:14:07 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.130 2020/08/29 07:52:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -133,7 +133,11 @@
  * boolean argument to be an expression that isn't strictly 0 or 1 valued.
  */
 
+#ifdef USE_DOUBLE_BOOLEAN	/* Just to find type mismatches. */
+typedef double Boolean;
+#else
 typedef int Boolean;
+#endif
 #ifndef TRUE
 #define TRUE	1
 #endif /* TRUE */
