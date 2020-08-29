@@ -1,4 +1,4 @@
-#       $NetBSD: t_exec.sh,v 1.10 2019/05/13 17:55:08 bad Exp $
+#       $NetBSD: t_exec.sh,v 1.11 2020/08/29 05:46:34 martin Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -135,6 +135,7 @@ threxec_head()
 
 threxec_body()
 {
+	atf_skip "PR 55338: triggers a scheduler bug"
 	atf_check -s exit:0 rump_server ${RUMP_SERVER}
 	atf_check -s exit:0 $(atf_get_srcdir)/h_execthr
 }
