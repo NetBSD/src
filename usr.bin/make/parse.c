@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.271 2020/08/29 11:24:54 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.272 2020/08/29 12:20:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.271 2020/08/29 11:24:54 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.272 2020/08/29 12:20:17 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.271 2020/08/29 11:24:54 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.272 2020/08/29 12:20:17 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -425,17 +425,17 @@ loadedfile_nextbuf(void *x, size_t *len)
 /*
  * Try to get the size of a file.
  */
-static ReturnStatus
+static Boolean
 load_getsize(int fd, size_t *ret)
 {
 	struct stat st;
 
 	if (fstat(fd, &st) < 0) {
-		return FAILURE;
+		return FALSE;
 	}
 
 	if (!S_ISREG(st.st_mode)) {
-		return FAILURE;
+		return FALSE;
 	}
 
 	/*
@@ -448,11 +448,11 @@ load_getsize(int fd, size_t *ret)
 	 * While we're at it reject negative sizes too, just in case.
 	 */
 	if (st.st_size < 0 || st.st_size > 0x7fffffff) {
-		return FAILURE;
+		return FALSE;
 	}
 
 	*ret = (size_t) st.st_size;
-	return SUCCESS;
+	return TRUE;
 }
 
 /*
@@ -489,7 +489,7 @@ loadfile(const char *path, int fd)
 #endif
 	}
 
-	if (load_getsize(fd, &lf->len) == SUCCESS) {
+	if (load_getsize(fd, &lf->len)) {
 		/* found a size, try mmap */
 		if (pagesize == 0)
 			pagesize = sysconf(_SC_PAGESIZE);
@@ -1253,8 +1253,8 @@ ParseDoDependency(char *line)
 	     * things like "archive(file1.o file2.o file3.o)" are permissible.
 	     * Arch_ParseArchive will set 'line' to be the first non-blank
 	     * after the archive-spec. It creates/finds nodes for the members
-	     * and places them on the given list, returning SUCCESS if all
-	     * went well and FAILURE if there was an error in the
+	     * and places them on the given list, returning TRUE if all
+	     * went well and FALSE if there was an error in the
 	     * specification. On error, line should remain untouched.
 	     */
 	    if (!Arch_ParseArchive(&line, targets, VAR_CMD)) {
@@ -1609,7 +1609,7 @@ ParseDoDependency(char *line)
 	Main_ParseArgLine(line);
 	*line = '\0';
     } else if (specType == ExShell) {
-	if (Job_ParseShell(line) != SUCCESS) {
+	if (!Job_ParseShell(line)) {
 	    Parse_Error(PARSE_FATAL, "improper shell specification");
 	    goto out;
 	}

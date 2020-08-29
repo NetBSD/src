@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.104 2020/08/29 10:12:06 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.105 2020/08/29 12:20:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.104 2020/08/29 10:12:06 rillig Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.105 2020/08/29 12:20:17 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.104 2020/08/29 10:12:06 rillig Exp $");
+__RCSID("$NetBSD: arch.c,v 1.105 2020/08/29 12:20:17 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -94,7 +94,7 @@ __RCSID("$NetBSD: arch.c,v 1.104 2020/08/29 10:12:06 rillig Exp $");
  * The interface to this module is:
  *	Arch_ParseArchive   	Given an archive specification, return a list
  *	    	  	    	of GNode's, one for each member in the spec.
- *	    	  	    	FAILURE is returned if the specification is
+ *	    	  	    	FALSE is returned if the specification is
  *	    	  	    	invalid for some reason.
  *
  *	Arch_Touch	    	Alter the modification time of the archive
@@ -358,7 +358,7 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 		}
 	    } else if (!Arch_ParseArchive(&sacrifice, nodeLst, ctxt)) {
 		/*
-		 * Error in nested call -- free buffer and return FAILURE
+		 * Error in nested call -- free buffer and return FALSE
 		 * ourselves.
 		 */
 		free(buf);

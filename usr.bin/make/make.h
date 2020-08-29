@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.131 2020/08/29 08:09:07 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.132 2020/08/29 12:20:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -151,24 +151,6 @@ typedef int Boolean;
 #ifndef FALSE
 #define FALSE	0
 #endif /* FALSE */
-
-/*
- * Functions that must return a status can return a ReturnStatus to
- * indicate success or type of failure.
- */
-
-typedef int  ReturnStatus;
-
-/*
- * The following statuses overlap with the first 2 generic statuses
- * defined in status.h:
- *
- * SUCCESS			There was no error.
- * FAILURE			There was a general error.
- */
-
-#define	SUCCESS			0x00000000
-#define	FAILURE			0x00000001
 
 #include "lst.h"
 #include "enum.h"
