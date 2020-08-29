@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.51 2020/02/21 13:33:07 skrll Exp $ */
+/* $NetBSD: prom.c,v 1.52 2020/08/29 15:16:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.51 2020/02/21 13:33:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.52 2020/08/29 15:16:12 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -83,6 +83,11 @@ prom_lev1map(void)
 void
 init_prom_interface(struct rpb *rpb)
 {
+	static bool prom_interface_initialized;
+
+	if (prom_interface_initialized)
+		return;
+
 	struct crb *c;
 
 	c = (struct crb *)((char *)rpb + rpb->rpb_crb_off);
@@ -91,6 +96,7 @@ init_prom_interface(struct rpb *rpb)
 	prom_dispatch_v.routine = c->crb_v_dispatch->entry_va;
 
 	mutex_init(&prom_lock, MUTEX_DEFAULT, IPL_HIGH);
+	prom_interface_initialized = true;
 }
 
 void
