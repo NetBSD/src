@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.237 2020/08/20 21:21:32 riastradh Exp $	*/
+/*	$NetBSD: in.c,v 1.238 2020/08/29 17:41:14 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.237 2020/08/20 21:21:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.238 2020/08/29 17:41:14 christos Exp $");
 
 #include "arp.h"
 
@@ -1231,11 +1231,9 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 		ia->ia_dstaddr = ia->ia_addr;
 		flags |= RTF_HOST;
 	} else if (ifp->if_flags & IFF_POINTOPOINT) {
-		if (in_mask2len(&ia->ia_sockmask.sin_addr) == 32) {
-			if (ia->ia_dstaddr.sin_family != AF_INET)
-				return (0);
-			flags |= RTF_HOST;
-		}
+		if (ia->ia_dstaddr.sin_family != AF_INET)
+			return (0);
+		flags |= RTF_HOST;
 	}
 
 	/* Add the local route to the address */
