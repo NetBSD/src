@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_keymap.h,v 1.6 2016/06/20 00:05:58 jakllsch Exp $	*/
+/*	$NetBSD: adb_keymap.h,v 1.7 2020/08/29 22:33:53 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -90,10 +90,10 @@ static const keysym_t akbd_keydesc_us[] = {
     KC(52),			KS_KP_Enter,    /* Pretend this is alt-R ? */
     KC(53),			KS_Escape,
     KC(54),			KS_Control_L,
-    KC(55),  KS_Cmd,				/* Command */
+    KC(55),  KS_Cmd,		KS_Meta_L,	/* Command */
     KC(56),			KS_Shift_L,
     KC(57),			KS_Caps_Lock,
-    KC(58),  KS_Cmd1,				/* Option */
+    KC(58),			KS_Alt_L,	/* Option */
     KC(59),			KS_Left,
     KC(60),			KS_Right,
     KC(61), KS_Cmd_ScrollSlowDown, KS_Down,
@@ -120,13 +120,13 @@ static const keysym_t akbd_keydesc_us[] = {
     KC(92), KS_Cmd_ScrollFastUp, KS_KP_Prior,	KS_KP_9,
 
     KC(95),			KS_KP_Delete,	KS_KP_Decimal,
-    KC(96),	KS_Cmd_Screen4,		KS_f5,
-    KC(97),	KS_Cmd_Screen5,		KS_f6,
-    KC(98),	KS_Cmd_Screen6,		KS_f7,
-    KC(99),	KS_Cmd_Screen2,		KS_f3,
-    KC(100),KS_Cmd_Screen7,		KS_f8,
+    KC(96), KS_Cmd_Screen4,	KS_f5,
+    KC(97), KS_Cmd_Screen5,	KS_f6,
+    KC(98), KS_Cmd_Screen6,	KS_f7,
+    KC(99), KS_Cmd_Screen2,	KS_f3,
 
-    KC(101),KS_Cmd_Screen8,		KS_f9,
+    KC(100), KS_Cmd_Screen7,	KS_f8,
+    KC(101), KS_Cmd_Screen8,	KS_f9,
 
     KC(103),			KS_f11,
 
@@ -134,7 +134,7 @@ static const keysym_t akbd_keydesc_us[] = {
     KC(106),			KS_KP_Enter,
     KC(107),			KS_Hold_Screen,
 
-    KC(109),KS_Cmd_Screen9,	KS_f10,
+    KC(109), KS_Cmd_Screen9,	KS_f10,
 
     KC(111),			KS_f12,
 
@@ -143,11 +143,11 @@ static const keysym_t akbd_keydesc_us[] = {
     KC(115),			KS_Home,
     KC(116), KS_Cmd_ScrollFastUp, KS_Prior,
     KC(117),			KS_Delete,	/* BackSpace */
-    KC(118),KS_Cmd_Screen3,	KS_f4,
+    KC(118), KS_Cmd_Screen3,	KS_f4,
     KC(119),			KS_End,
-    KC(120),KS_Cmd_Screen1,	KS_f2,
-    KC(121),KS_Cmd_ScrollFastDown, KS_Next,
-    KC(122),KS_Cmd_Screen0,	KS_f1,
+    KC(120), KS_Cmd_Screen1,	KS_f2,
+    KC(121), KS_Cmd_ScrollFastDown, KS_Next,
+    KC(122), KS_Cmd_Screen0,	KS_f1,
     KC(123),			KS_Shift_R,
     KC(124),			KS_Alt_R,
     KC(125),			KS_Control_R,
