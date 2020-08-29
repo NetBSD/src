@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.115 2020/08/16 18:05:52 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.116 2020/08/29 20:06:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.115 2020/08/16 18:05:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.116 2020/08/29 20:06:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,14 +109,12 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		pcb2->pcb_hw.apcb_usp = alpha_pal_rdusp();
 
 	/*
-	 * Put l2's lev1map into its PTBR so that it will be on its
-	 * own page tables as the SWPCTX to its PCB is made.  ASN
-	 * doesn't matter at this point; that will be handled on l2's
-	 * first pmap_activate() call.
+	 * Put l2 on the kernel's page tables until its first trip
+	 * through pmap_activate().
 	 */
-	pmap_t const pmap2 = l2->l_proc->p_vmspace->vm_map.pmap;
 	pcb2->pcb_hw.apcb_ptbr =
-	    ALPHA_K0SEG_TO_PHYS((vaddr_t)pmap2->pm_lev1map) >> PGSHIFT;
+	    ALPHA_K0SEG_TO_PHYS((vaddr_t)pmap_kernel()->pm_lev1map) >> PGSHIFT;
+	pcb2->pcb_hw.apcb_asn = PMAP_ASN_KERNEL;
 
 #ifdef DIAGNOSTIC
 	/*

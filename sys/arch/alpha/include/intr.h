@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.72 2017/01/14 00:35:37 christos Exp $ */
+/* $NetBSD: intr.h,v 1.73 2020/08/29 20:07:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -160,13 +160,12 @@ _splraise(int s)
 #define	ALPHA_IPI_HALT			(1UL << 0)
 #define	ALPHA_IPI_MICROSET		(1UL << 1)
 #define	ALPHA_IPI_SHOOTDOWN		(1UL << 2)
-#define	ALPHA_IPI_IMB			(1UL << 3)
-#define	ALPHA_IPI_AST			(1UL << 4)
-#define	ALPHA_IPI_PAUSE			(1UL << 5)
-#define	ALPHA_IPI_XCALL			(1UL << 6)
-#define	ALPHA_IPI_GENERIC		(1UL << 7)
+#define	ALPHA_IPI_AST			(1UL << 3)
+#define	ALPHA_IPI_PAUSE			(1UL << 4)
+#define	ALPHA_IPI_XCALL			(1UL << 5)
+#define	ALPHA_IPI_GENERIC		(1UL << 6)
 
-#define	ALPHA_NIPIS			8	/* must not exceed 64 */
+#define	ALPHA_NIPIS			7	/* must not exceed 64 */
 
 struct cpu_info;
 struct trapframe;
