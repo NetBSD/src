@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_el2.S,v 1.3 2018/07/17 00:33:02 christos Exp $	*/
+/*	$NetBSD: locore_el2.S,v 1.4 2020/08/29 07:17:23 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
@@ -32,68 +32,73 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore_el2.S,v 1.3 2018/07/17 00:33:02 christos Exp $")
+RCSID("$NetBSD: locore_el2.S,v 1.4 2020/08/29 07:17:23 maxv Exp $")
 
+/*
+ * For use in #include "locore_el2.S".
+ */
 
-/* for use in #include "locore_el2.S" */
+	.global drop_to_el1
 	.text
+
 drop_to_el1_inline:
 	mov	x8, lr
 	bl	drop_to_el1
 	mov	lr, x8
 	b	drop_to_el1_inline_done
 
-	.text
-	.global drop_to_el1
-/*
- * If we are started in EL2, configure the required hypervisor
- * registers and drop to EL1.
- */
+	/*
+	 * If we are started in EL2, configure the required hypervisor
+	 * registers and drop to EL1.
+	 */
 drop_to_el1:
 	mrs	x1, CurrentEL
 	lsr	x1, x1, #2
 	cmp	x1, #0x2
-	b.eq	1f
+	b.eq	in_el2
+
+	/* Not in EL2, nothing to do, leave. */
 	ret
-1:
-	/* Configure the Hypervisor */
+
+in_el2:
+	/* EL1 will be AArch64. */
 	mov	x2, #(HCR_RW)
 	msr	hcr_el2, x2
 
-	/* Load the Virtualization Process ID Register */
+	/* Mirror the Virtualization Process ID Register. */
 	mrs	x2, midr_el1
 	msr	vpidr_el2, x2
 
-	/* Load the Virtualization Multiprocess ID Register */
+	/* Mirror the Virtualization Multiprocess ID Register. */
 	mrs	x2, mpidr_el1
 	msr	vmpidr_el2, x2
 
-	/* Set the bits that need to be 1 in sctlr_el1 */
+	/* Set the bits that need to be 1 in SCTLR_EL1. */
 	ldr	x2, .Lsctlr_res1
 	msr	sctlr_el1, x2
 
-	/* enable FP */
+	/* Don't trap to EL2 on FP instructions. */
 	mrs	x2, cpacr_el1
 	bic	x2, x2, #CPACR_FPEN
 	orr	x2, x2, #CPACR_FPEN_ALL
 	msr	cpacr_el1, x2
 
-	/* Don't trap to EL2 for exceptions */
+	/* Don't trap to EL2 on access to various registers. */
 	mov	x2, #CPTR_RES1
 	msr	cptr_el2, x2
 
-	/* Don't trap to EL2 for CP15 traps */
+	/* Don't trap to EL2 on CP15 traps. */
 	msr	hstr_el2, xzr
 
-	/* Enable access to the physical timers at EL1 */
+	/* Enable access to the physical timers at EL1. */
 	mrs	x2, cnthctl_el2
 	orr	x2, x2, #(CNTHCTL_EL1PCTEN | CNTHCTL_EL1PCEN)
 	msr	cnthctl_el2, x2
 
-	/* Set the counter offset to a known value */
+	/* Set the counter offset to a known value. */
 	msr	cntvoff_el2, xzr
 
-	/* Hypervisor trap functions */
+	/* Set the hypervisor trap vectors. */
 	adr	x2, hyp_vectors
 	msr	vbar_el2, x2
 
@@ -120,12 +125,12 @@ drop_to_el1:
 	msr	ICC_SRE_EL2, x2
 2:
 
-	/* keep stack pointer */
+	/* Keep the stack pointer. */
 	mov	x0, sp
 	msr	sp_el1, x0
 
-	/* Set the address to return to our return address */
-	msr	elr_el2, x30
+	/* Set the address to return to. */
+	msr	elr_el2, lr
 	isb
 
 	eret
