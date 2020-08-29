@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.473 2020/08/29 07:52:55 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.474 2020/08/29 11:24:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.473 2020/08/29 07:52:55 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.474 2020/08/29 11:24:54 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.473 2020/08/29 07:52:55 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.474 2020/08/29 11:24:54 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2312,11 +2312,7 @@ ApplyModifier_Match(const char **pp, ApplyModifiersState *st)
 	*dst = '\0';
 	endpat = dst;
     } else {
-	/*
-	 * Either Var_Subst or ModifyWords will need a
-	 * nul-terminated string soon, so construct one now.
-	 */
-	pattern = bmake_strldup(mod + 1, (size_t)(endpat - (mod + 1)));
+	pattern = bmake_strsedup(mod + 1, endpat);
     }
 
     if (needSubst) {
