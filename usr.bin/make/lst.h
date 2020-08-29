@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.56 2020/08/29 10:12:06 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.57 2020/08/29 10:41:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -135,9 +135,9 @@ LstNode		Lst_First(Lst);
 /* Return last element in list */
 LstNode		Lst_Last(Lst);
 /* Return successor to given element */
-LstNode		Lst_Succ(LstNode);
+LstNode		LstNode_Next(LstNode);
 /* Return predecessor to given element */
-LstNode		Lst_Prev(LstNode);
+LstNode		LstNode_Prev(LstNode);
 /* Get datum from LstNode */
 void		*Lst_Datum(LstNode);
 
