@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.38 2012/12/10 16:12:19 chs Exp $ */
+/* $NetBSD: vmparam.h,v 1.39 2020/08/29 20:08:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,6 +56,17 @@
 #define	PAGE_SHIFT	13
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
+
+/*
+ * Defaults for Unified Buffer Cache parameters.
+ */
+
+#ifndef UBC_WINSHIFT
+#define	UBC_WINSHIFT	16	/* 64KB */
+#endif
+#ifndef	UBC_NWINS
+#define	UBC_NWINS	4096	/* for a total of 256MB */
+#endif
 
 /*
  * USRSTACK is the top (end) of the user stack.
