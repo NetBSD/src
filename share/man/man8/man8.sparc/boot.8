@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.32 2017/07/03 21:31:00 wiz Exp $
+.\"	$NetBSD: boot.8,v 1.33 2020/08/29 13:32:27 fcambus Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -226,7 +226,7 @@ For SCSI disk and tape devices, the boot device is specified as
 .Sq device(controller,unit,partition) ,
 where
 .Sq unit
-is the hexidecimal value of the SCSI id of the target multiplied
+is the hexadecimal value of the SCSI id of the target multiplied
 by eight plus the lun, and
 .Sq partition
 is the partition number, starting from 0.

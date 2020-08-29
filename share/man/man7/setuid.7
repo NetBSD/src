@@ -1,4 +1,4 @@
-.\" $NetBSD: setuid.7,v 1.8 2020/01/20 13:08:40 nia Exp $
+.\" $NetBSD: setuid.7,v 1.9 2020/08/29 13:32:27 fcambus Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -214,7 +214,7 @@ They also have some nasty problems like trying to run a
 when run under a suitable name.
 They are terminally insecure, and must be avoided.
 .It
-Relying on the contents of files placed in publically-writable
+Relying on the contents of files placed in publicly-writable
 directories, such as
 .Pa /tmp ,
 is a nearly-incurable security problem.
@@ -227,7 +227,7 @@ but is not a complete solution.
 .It
 A related problem is that
 spool directories, holding information that the program will trust
-later, must never be publically writable even if the files in the
+later, must never be publicly writable even if the files in the
 directory are protected.
 Among other sinister manipulations that can be performed, note that
 on many Unixes, a core dump of a setuid program is owned
