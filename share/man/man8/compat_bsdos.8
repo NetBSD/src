@@ -1,4 +1,4 @@
-.\" $NetBSD: compat_bsdos.8,v 1.3 2020/08/28 17:13:13 wiz Exp $
+.\" $NetBSD: compat_bsdos.8,v 1.4 2020/08/29 21:42:25 uwe Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,17 +36,17 @@
 .Sh DESCRIPTION
 The
 .Dv COMPAT_NOMID
-kernel option provides compatibility with
+kernel option includes compatibility with
 .Tn BSDi Ns No \ 1. Ns Em \^x Ns \|\(en\|3. Ns Em \^x
 .Xr a.out 5
 binaries on
 .Nx Ns Tn /i386
 and
 .Nx Ns Tn /amd64 .
-The option is included in the
+The option is enabled by default in the
 .Li GENERIC
 kernel on i386,
-but needs to be enabled along with
+but needs to be set along with
 .Dv EXEC_AOUT
 on amd64.
 .Pp
@@ -67,7 +67,8 @@ pointing to the
 directory to run outside of a chroot.
 .Pp
 .Bsx 4.0
-switched to ELF binaries that do not run under the
+switched to an ELF binary executable format
+that does not run under the
 compatibility layers currently available on
 .Nx .
 .Sh SEE ALSO
