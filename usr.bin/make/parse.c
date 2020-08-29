@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.268 2020/08/28 04:48:57 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.269 2020/08/29 07:52:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.268 2020/08/28 04:48:57 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.269 2020/08/29 07:52:55 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.268 2020/08/28 04:48:57 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.269 2020/08/29 07:52:55 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2541,7 +2541,7 @@ IsInclude(const char *line, Boolean sysv)
 	static const size_t inclen = sizeof(inc) - 1;
 
 	/* 'd' is not valid for sysv */
-	int o = strchr(&("ds-"[sysv]), *line) != NULL;
+	int o = strchr(sysv ? "s-" : "ds-", *line) != NULL;
 
 	if (strncmp(line + o, inc, inclen) != 0)
 		return FALSE;
