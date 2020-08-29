@@ -1,4 +1,4 @@
-/*	$NetBSD: make_malloc.h,v 1.9 2020/08/29 11:24:54 rillig Exp $	*/
+/*	$NetBSD: make_malloc.h,v 1.10 2020/08/29 16:47:45 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,6 @@ void *bmake_malloc(size_t);
 void *bmake_realloc(void *, size_t);
 char *bmake_strdup(const char *);
 char *bmake_strldup(const char *, size_t);
-char *bmake_strsedup(const char *, const char *);
 #else
 #include <util.h>
 #define bmake_malloc(x)         emalloc(x)
@@ -39,6 +38,7 @@ char *bmake_strsedup(const char *, const char *);
 #define bmake_strdup(x)         estrdup(x)
 #define bmake_strldup(x,y)      estrndup(x,y)
 #endif
+char *bmake_strsedup(const char *, const char *);
 
 /* Thin wrapper around free(3) to avoid the extra function call in case
  * p is NULL, which on x86_64 costs about 12 machine instructions.
