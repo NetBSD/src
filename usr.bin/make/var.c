@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.477 2020/08/29 13:16:54 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.478 2020/08/29 13:38:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.477 2020/08/29 13:16:54 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.478 2020/08/29 13:38:48 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.477 2020/08/29 13:16:54 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.478 2020/08/29 13:38:48 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3079,7 +3079,6 @@ ApplyModifiers(
 	     * we are not interested.
 	     */
 	    int c;
-	    assert(rval != NULL);
 	    if (rval[0] != '\0' &&
 		(c = p[rlen]) != '\0' && c != ':' && c != st.endc) {
 		free(freeIt);
@@ -3374,7 +3373,7 @@ VarIsDynamic(GNode *ctxt, const char *varname, size_t namelen)
  *	freePtr		OUT: Non-NULL if caller should free *freePtr
  *
  * Results:
- *	Returns the value of the variable expression.
+ *	Returns the value of the variable expression, never NULL.
  *	var_Error if there was a parse error and VARE_UNDEFERR was set.
  *	varNoError if there was a parse error and VARE_UNDEFERR was not set.
  *
@@ -3499,8 +3498,7 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
 		void *freeIt;
 		const char *rval = Var_Parse(tstr, ctxt, eflags, &rlen,
 					     &freeIt);
-		if (rval != NULL)
-		    Buf_AddStr(&namebuf, rval);
+		Buf_AddStr(&namebuf, rval);
 		free(freeIt);
 		tstr += rlen - 1;
 	    } else

@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.135 2020/08/29 13:16:54 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.136 2020/08/29 13:38:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.135 2020/08/29 13:16:54 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.136 2020/08/29 13:38:48 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.135 2020/08/29 13:16:54 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.136 2020/08/29 13:38:48 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1333,7 +1333,7 @@ SuffExpandChildren(LstNode cln, GNode *pgn)
 		    void	*freeIt;
 
 		    junk = Var_Parse(cp, pgn, VARE_UNDEFERR|VARE_WANTRES,
-			&len, &freeIt);
+				     &len, &freeIt);
 		    if (junk != var_Error) {
 			cp += len - 1;
 		    }
