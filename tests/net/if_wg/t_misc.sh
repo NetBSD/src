@@ -1,4 +1,4 @@
-#	$NetBSD: t_misc.sh,v 1.3 2020/08/27 02:52:33 riastradh Exp $
+#	$NetBSD: t_misc.sh,v 1.4 2020/08/29 07:22:49 tih Exp $
 #
 # Copyright (c) 2018 Ryota Ozaki <ozaki.ryota@gmail.com>
 # All rights reserved.
@@ -81,7 +81,7 @@ wg_rekey_body()
 	$ping $ip_wg_peer
 
 	latest_handshake=$($HIJACKING wgconfig wg0 show peer peer0 \
-	    | awk -F : '/latest-handshake/ {print $2;}')
+	    | awk -F ': ' '/latest-handshake/ {print $2;}')
 	$DEBUG && echo $latest_handshake
 
 	sleep 1
@@ -102,7 +102,7 @@ wg_rekey_body()
 	    $HIJACKING wgconfig wg0 show peer peer0
 
 	latest_handshake=$($HIJACKING wgconfig wg0 show peer peer0 \
-	    | awk -F : '/latest-handshake/ {print $2;}')
+	    | awk -F ': ' '/latest-handshake/ {print $2;}')
 	$DEBUG && echo $latest_handshake
 
 	# Wait for a reinitiation to be performed again
@@ -142,7 +142,6 @@ wg_handshake_timeout_body()
 	local ip_wg_peer=10.0.0.2
 	local port=51820
 	local rekey_after_time=3
-	local latest_handshake=
 	local outfile=./out
 	local rekey_timeout=3
 	local rekey_attempt_time=8
@@ -278,7 +277,7 @@ wg_cookie_body()
 	    cat $outfile
 
 	$DEBUG && $HIJACKING wgconfig wg0 show all
-	atf_check -s exit:0 -o match:"latest-handshake: 0" \
+	atf_check -s exit:0 -o match:"latest-handshake: \(never\)" \
 	    $HIJACKING wgconfig wg0
 
 	# Wait for restarting a session
@@ -289,7 +288,7 @@ wg_cookie_body()
 	$ping $ip_wg_peer
 
 	$DEBUG && $HIJACKING wgconfig wg0 show all
-	atf_check -s exit:0 -o not-match:"latest-handshake: 0" \
+	atf_check -s exit:0 -o not-match:"latest-handshake: \(never\)" \
 	    $HIJACKING wgconfig wg0
 
 	destroy_wg_interfaces

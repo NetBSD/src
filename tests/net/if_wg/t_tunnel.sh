@@ -1,4 +1,4 @@
-#	$NetBSD: t_tunnel.sh,v 1.1 2020/08/26 16:03:42 riastradh Exp $
+#	$NetBSD: t_tunnel.sh,v 1.2 2020/08/29 07:22:49 tih Exp $
 #
 # Copyright (c) 2018 Ryota Ozaki <ozaki.ryota@gmail.com>
 # All rights reserved.
@@ -267,14 +267,14 @@ wg_tunnel_common()
 	    $ip_wg_local/$inner_prefixall,$subnet_local
 
 	export RUMP_SERVER=$SOCK_TUN_LOCAL
-	atf_check -s exit:0 -o match:"latest-handshake: 0" \
+	atf_check -s exit:0 -o match:"latest-handshake: \(never\)" \
 	    $HIJACKING wgconfig wg0 show peer peer0
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	check_ping $inner_proto $ip_peer
 
 	export RUMP_SERVER=$SOCK_TUN_LOCAL
-	atf_check -s exit:0 -o not-match:"latest-handshake: 0" \
+	atf_check -s exit:0 -o not-match:"latest-handshake: \(never\)" \
 	    $HIJACKING wgconfig wg0 show peer peer0
 
 	export RUMP_SERVER=$SOCK_LOCAL
