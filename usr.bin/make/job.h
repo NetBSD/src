@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.46 2020/08/27 06:18:22 rillig Exp $	*/
+/*	$NetBSD: job.h,v 1.47 2020/08/29 12:20:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -255,7 +255,7 @@ void Job_CatchOutput(void);
 void Job_Make(GNode *);
 void Job_Init(void);
 Boolean Job_Empty(void);
-ReturnStatus Job_ParseShell(char *);
+Boolean Job_ParseShell(char *);
 int Job_Finish(void);
 void Job_End(void);
 void Job_Wait(void);
