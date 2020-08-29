@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.472 2020/08/25 21:16:53 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.473 2020/08/29 07:52:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.472 2020/08/25 21:16:53 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.473 2020/08/29 07:52:55 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.472 2020/08/25 21:16:53 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.473 2020/08/29 07:52:55 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3408,6 +3408,12 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
     *freePtr = NULL;
     extramodifiers = NULL;	/* extra modifiers to apply first */
     dynamic = FALSE;
+
+#ifdef USE_DOUBLE_BOOLEAN
+    /* Appease GCC 5.5.0, which thinks that the variable might not be
+     * initialized. */
+    endc = '\0';
+#endif
 
     startc = str[1];
     if (startc != PROPEN && startc != BROPEN) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.322 2020/08/29 07:13:17 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.323 2020/08/29 07:52:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.322 2020/08/29 07:13:17 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.323 2020/08/29 07:52:55 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.322 2020/08/29 07:13:17 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.323 2020/08/29 07:52:55 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1399,8 +1399,9 @@ main(int argc, char **argv)
 	if (!compatMake)
 	    Job_ServerStart(maxJobTokens, jp_0, jp_1);
 	if (DEBUG(JOB))
-	    fprintf(debug_file, "job_pipe %d %d, maxjobs %d, tokens %d, compat %d\n",
-		jp_0, jp_1, maxJobs, maxJobTokens, compatMake);
+	    fprintf(debug_file,
+		    "job_pipe %d %d, maxjobs %d, tokens %d, compat %d\n",
+		    jp_0, jp_1, maxJobs, maxJobTokens, compatMake ? 1 : 0);
 
 	if (!printVars)
 	    Main_ExportMAKEFLAGS(TRUE);	/* initial export */
