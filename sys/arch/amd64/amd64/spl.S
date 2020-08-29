@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.46 2020/05/17 12:11:11 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.47 2020/08/29 07:16:03 maxv Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -331,9 +331,7 @@ IDTVEC(doreti)
 5:
 	testb	$SEL_RPL,TF_CS(%rsp)
 	jz	6f
-
-	.type	_C_LABEL(doreti_checkast), @function
-LABEL(doreti_checkast)
+.Ldoreti_checkast:
 	movq	CPUVAR(CURLWP),%r14
 	CHECK_ASTPENDING(%r14)
 	je	3f
@@ -345,7 +343,7 @@ LABEL(doreti_checkast)
 	KMSAN_INIT_ARG(8)
 	call	_C_LABEL(trap)
 	CLI(si)
-	jmp	doreti_checkast
+	jmp	.Ldoreti_checkast
 3:
 	CHECK_DEFERRED_SWITCH
 	jnz	9f
@@ -356,6 +354,5 @@ LABEL(doreti_checkast)
 	STI(si)
 	call	_C_LABEL(do_pmap_load)
 	CLI(si)
-	jmp	doreti_checkast		/* recheck ASTs */
-END(doreti_checkast)
+	jmp	.Ldoreti_checkast		/* recheck ASTs */
 IDTVEC_END(doreti)
