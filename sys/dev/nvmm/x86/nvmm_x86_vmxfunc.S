@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmxfunc.S,v 1.3 2019/04/27 08:16:19 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmxfunc.S,v 1.3.4.1 2020/08/29 17:00:28 martin Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -100,10 +100,10 @@ END(_vmx_vmxoff)
 
 #define HOST_SAVE_LDT		\
 	sldtw	%ax		;\
-	pushw	%ax
+	pushq	%rax
 
 #define HOST_RESTORE_LDT	\
-	popw	%ax		;\
+	popq	%rax		;\
 	lldtw	%ax
 
 /*

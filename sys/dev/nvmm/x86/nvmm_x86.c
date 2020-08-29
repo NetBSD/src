@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86.c,v 1.7.4.4 2020/08/26 17:55:49 martin Exp $	*/
+/*	$NetBSD: nvmm_x86.c,v 1.7.4.5 2020/08/29 17:00:28 martin Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86.c,v 1.7.4.4 2020/08/26 17:55:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86.c,v 1.7.4.5 2020/08/29 17:00:28 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -389,22 +389,22 @@ const struct nvmm_x86_cpuid_mask nvmm_cpuid_80000001 = {
 	    CPUID_MISALIGNSSE |
 	    CPUID_3DNOWPF |
 	    /* CPUID_OSVW excluded */
-	    CPUID_IBS |
+	    /* CPUID_IBS excluded */
 	    CPUID_XOP |
 	    /* CPUID_SKINIT excluded */
-	    CPUID_WDT |
-	    CPUID_LWP |
+	    /* CPUID_WDT excluded */
+	    /* CPUID_LWP excluded */
 	    CPUID_FMA4 |
 	    CPUID_TCE |
-	    CPUID_NODEID |
+	    /* CPUID_NODEID excluded */
 	    CPUID_TBM |
-	    CPUID_TOPOEXT |
-	    CPUID_PCEC |
-	    CPUID_PCENB |
-	    CPUID_SPM |
-	    CPUID_DBE |
-	    CPUID_PTSC |
-	    CPUID_L2IPERFC,
+	    CPUID_TOPOEXT,
+	    /* CPUID_PCEC excluded */
+	    /* CPUID_PCENB excluded */
+	    /* CPUID_SPM excluded */
+	    /* CPUID_DBE excluded */
+	    /* CPUID_PTSC excluded */
+	    /* CPUID_L2IPERFC excluded */
 	    /* CPUID_MWAITX excluded */
 	.edx =
 	    CPUID_SYSCALL |

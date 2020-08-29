@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.46.4.9 2020/08/26 17:55:48 martin Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.46.4.10 2020/08/29 17:00:28 martin Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.46.4.9 2020/08/26 17:55:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.46.4.10 2020/08/29 17:00:28 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -509,7 +509,7 @@ static uint64_t svm_xcr0_mask __read_mostly;
 #define CR0_TLB_FLUSH \
 	(CR0_PG|CR0_WP|CR0_CD|CR0_NW)
 #define CR4_TLB_FLUSH \
-	(CR4_PGE|CR4_PAE|CR4_PSE)
+	(CR4_PSE|CR4_PAE|CR4_PGE|CR4_PCIDE|CR4_SMEP)
 
 /* -------------------------------------------------------------------------- */
 
@@ -1012,18 +1012,11 @@ svm_exit_cpuid(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	struct svm_cpudata *cpudata = vcpu->cpudata;
 	struct nvmm_vcpu_conf_cpuid *cpuid;
 	uint64_t eax, ecx;
-	u_int descs[4];
 	size_t i;
 
 	eax = cpudata->vmcb->state.rax;
 	ecx = cpudata->gprs[NVMM_X64_GPR_RCX];
-	x86_cpuid2(eax, ecx, descs);
-
-	cpudata->vmcb->state.rax = descs[0];
-	cpudata->gprs[NVMM_X64_GPR_RBX] = descs[1];
-	cpudata->gprs[NVMM_X64_GPR_RCX] = descs[2];
-	cpudata->gprs[NVMM_X64_GPR_RDX] = descs[3];
-
+	svm_inkernel_exec_cpuid(cpudata, eax, ecx);
 	svm_inkernel_handle_cpuid(vcpu, eax, ecx);
 
 	for (i = 0; i < SVM_NCPUIDS; i++) {
@@ -2118,7 +2111,6 @@ svm_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	 *  - POPF [popf instruction]
 	 *  - IRET [iret instruction]
 	 *  - INTN [int $n instructions]
-	 *  - INVD [invd instruction]
 	 *  - PAUSE [pause instruction]
 	 *  - INVLPG [invplg instruction]
 	 *  - TASKSW [task switches]
@@ -2132,6 +2124,7 @@ svm_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	    VMCB_CTRL_INTERCEPT_RDPMC |
 	    VMCB_CTRL_INTERCEPT_CPUID |
 	    VMCB_CTRL_INTERCEPT_RSM |
+	    VMCB_CTRL_INTERCEPT_INVD |
 	    VMCB_CTRL_INTERCEPT_HLT |
 	    VMCB_CTRL_INTERCEPT_INVLPGA |
 	    VMCB_CTRL_INTERCEPT_IOIO_PROT |

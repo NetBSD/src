@@ -1,7 +1,7 @@
-/*	$NetBSD: nvmm_ioctl.h,v 1.7.4.1 2019/11/10 12:58:30 martin Exp $	*/
+/*	$NetBSD: nvmm_ioctl.h,v 1.7.4.2 2020/08/29 17:00:28 martin Exp $	*/
 
 /*
- * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -121,7 +121,9 @@ struct nvmm_ioc_gpa_unmap {
 };
 
 struct nvmm_ctl_mach_info {
+	/* input */
 	nvmm_machid_t machid;
+	/* output */
 	uint32_t nvcpus;
 	uint64_t nram;
 	pid_t pid;
@@ -151,7 +153,6 @@ struct nvmm_ioc_ctl {
 #define NVMM_IOC_GPA_UNMAP		_IOW ('N', 12, struct nvmm_ioc_gpa_unmap)
 #define NVMM_IOC_HVA_MAP		_IOW ('N', 13, struct nvmm_ioc_hva_map)
 #define NVMM_IOC_HVA_UNMAP		_IOW ('N', 14, struct nvmm_ioc_hva_unmap)
-
 #define NVMM_IOC_CTL			_IOW ('N', 20, struct nvmm_ioc_ctl)
 
 #endif /* _NVMM_IOCTL_H_ */
