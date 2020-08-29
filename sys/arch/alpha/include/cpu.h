@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.88 2020/08/29 19:06:33 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.89 2020/08/29 20:07:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -128,11 +128,9 @@ struct cpu_info {
 	struct trapframe *ci_db_regs;	/* registers for debuggers */
 	uint64_t ci_pcc_freq;		/* cpu cycles/second */
 
-#define	CPU_INFO_PMAP_DATA_NQWORDS	16
-
 	struct pmap *ci_pmap;		/* currently-activated pmap */
-					/* data used by pmap module */
-	u_long ci_pmap_data[CPU_INFO_PMAP_DATA_NQWORDS];
+	u_int ci_next_asn;		/* next ASN to assign */
+	u_long ci_asn_gen;		/* current ASN generation */
 
 #if defined(MULTIPROCESSOR)
 	volatile u_long ci_flags;	/* flags; see below */
