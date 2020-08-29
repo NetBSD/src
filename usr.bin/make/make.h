@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.130 2020/08/29 07:52:55 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.131 2020/08/29 08:09:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -133,8 +133,15 @@
  * boolean argument to be an expression that isn't strictly 0 or 1 valued.
  */
 
-#ifdef USE_DOUBLE_BOOLEAN	/* Just to find type mismatches. */
+#ifdef USE_DOUBLE_BOOLEAN
+/* During development, to find type mismatches in function declarations. */
 typedef double Boolean;
+#elif defined(USE_UCHAR_BOOLEAN)
+/* During development, to find code that depends on the exact value of TRUE or
+ * that stores other values in Boolean variables. */
+typedef unsigned char Boolean;
+#define TRUE ((unsigned char)0xFF)
+#define FALSE ((unsigned char)0x00)
 #else
 typedef int Boolean;
 #endif

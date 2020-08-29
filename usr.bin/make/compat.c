@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.132 2020/08/28 04:48:56 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.133 2020/08/29 08:09:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.132 2020/08/28 04:48:56 rillig Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.133 2020/08/29 08:09:07 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.132 2020/08/28 04:48:56 rillig Exp $");
+__RCSID("$NetBSD: compat.c,v 1.133 2020/08/29 08:09:07 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -226,7 +226,7 @@ CompatRunCommand(void *cmdp, void *gnp)
     char	  * volatile cmd = (char *)cmdp;
     GNode	  *gn = (GNode *)gnp;
 
-    silent = gn->type & OP_SILENT;
+    silent = (gn->type & OP_SILENT) != 0;
     errCheck = !(gn->type & OP_IGNORE);
     doIt = FALSE;
 
@@ -260,7 +260,7 @@ CompatRunCommand(void *cmdp, void *gnp)
     while ((*cmd == '@') || (*cmd == '-') || (*cmd == '+')) {
 	switch (*cmd) {
 	case '@':
-	    silent = DEBUG(LOUD) ? FALSE : TRUE;
+	    silent = !DEBUG(LOUD);
 	    break;
 	case '-':
 	    errCheck = FALSE;
@@ -605,7 +605,7 @@ Compat_Make(void *gnp, void *pgnp)
 		Lst_ForEach(gn->commands, CompatRunCommand, gn);
 		curTarg = NULL;
 	    } else {
-		Job_Touch(gn, gn->type & OP_SILENT);
+		Job_Touch(gn, (gn->type & OP_SILENT) != 0);
 	    }
 	} else {
 	    gn->made = ERROR;
