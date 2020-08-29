@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.305 2020/08/09 13:48:00 christos Exp $
+$NetBSD: acronyms,v 1.306 2020/08/29 18:54:33 christos Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -610,6 +610,7 @@ WDYMBT	what do you mean by that
 WELC	working effectively with legacy code
 WFH	working from home
 WFM	works for me
+WGACA	what goes around comes around
 WIBNI	wouldn't it be nice if
 WIP	work in progress
 WLW	women-loving women
