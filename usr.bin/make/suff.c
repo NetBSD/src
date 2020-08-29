@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.132 2020/08/29 11:13:43 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.133 2020/08/29 11:24:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.132 2020/08/29 11:13:43 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.133 2020/08/29 11:24:54 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.132 2020/08/29 11:13:43 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.133 2020/08/29 11:24:54 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2037,7 +2037,7 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
 #endif
 
 		eopref = eoname - targ->suff->nameLen;
-		targ->pref = bmake_strldup(sopref, (size_t)(eopref - sopref));
+		targ->pref = bmake_strsedup(sopref, eopref);
 
 		/*
 		 * Add nodes from which the target can be made

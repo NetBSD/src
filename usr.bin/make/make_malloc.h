@@ -1,4 +1,4 @@
-/*	$NetBSD: make_malloc.h,v 1.8 2020/08/25 17:37:09 rillig Exp $	*/
+/*	$NetBSD: make_malloc.h,v 1.9 2020/08/29 11:24:54 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -31,6 +31,7 @@ void *bmake_malloc(size_t);
 void *bmake_realloc(void *, size_t);
 char *bmake_strdup(const char *);
 char *bmake_strldup(const char *, size_t);
+char *bmake_strsedup(const char *, const char *);
 #else
 #include <util.h>
 #define bmake_malloc(x)         emalloc(x)
