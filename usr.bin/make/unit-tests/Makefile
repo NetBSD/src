@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.128 2020/08/29 19:07:32 rillig Exp $
+# $NetBSD: Makefile,v 1.129 2020/08/29 19:35:38 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -352,9 +352,8 @@ FLAGS.varname-empty=	-dv '$${:U}=cmdline-u' '=cmline-plain'
 
 # Some tests need extra post-processing.
 SED_CMDS.opt-debug-g1=	-e 's,${.CURDIR},CURDIR,'
-SED_CMDS.opt-debug-g1+=	-e 's,[/[a-z]*/share/mk,/.../share/mk,'
 SED_CMDS.opt-debug-g1+=	-e '/Global Variables:/,/Suffixes:/d'
-SED_CMDS.sh-dots+=	-e 's,^${.SHELL}: ,,' -e '/not found/s,command ,,'
+SED_CMDS.sh-dots=	-e 's,^.*\.\.\.:.*,<normalized: ...: not found>,'
 SED_CMDS.varmod-subst-regex+= \
 			-e 's,\(Regex compilation error:\).*,\1 (details omitted),'
 SED_CMDS.varmod-edge+=	-e 's, line [0-9]*:, line omitted:,'

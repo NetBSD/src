@@ -6,7 +6,7 @@ repeated repeated
 commented commented
 *** Error code 1 (ignored)
 ...	# Run the below commands later
-...: not found
+<normalized: ...: not found>
 commented delayed commented
 first delayed first
 repeated delayed repeated
