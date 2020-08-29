@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.320 2020/08/28 04:48:57 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.321 2020/08/29 07:05:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.320 2020/08/28 04:48:57 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.321 2020/08/29 07:05:12 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.320 2020/08/28 04:48:57 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.321 2020/08/29 07:05:12 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -785,15 +785,9 @@ Main_SetVarObjdir(const char *var, const char *suffix)
 	return TRUE;
 }
 
-/*-
- * ReadAllMakefiles --
- *	wrapper around ReadMakefile() to read all.
- *
- * Results:
- *	TRUE if ok, FALSE on error
- */
+/* Return 0 if reading the makefile failed, for Lst_Find. */
 static int
-ReadAllMakefiles(const void *p, const void *q)
+ReadMakefileFailed(const void *p, const void *q)
 {
 	return ReadMakefile(p, q) == 0;
 }
@@ -1339,7 +1333,7 @@ main(int argc, char **argv)
 	if (!Lst_IsEmpty(makefiles)) {
 		LstNode ln;
 
-		ln = Lst_Find(makefiles, ReadAllMakefiles, NULL);
+		ln = Lst_Find(makefiles, ReadMakefileFailed, NULL);
 		if (ln != NULL)
 			Fatal("%s: cannot open %s.", progname,
 			    (char *)Lst_Datum(ln));
@@ -1497,15 +1491,10 @@ main(int argc, char **argv)
 	return outOfDate ? 1 : 0;
 }
 
-/*-
- * ReadMakefile  --
- *	Open and parse the given makefile.
+/* Open and parse the given makefile, with all its side effects.
  *
  * Results:
  *	0 if ok. -1 if couldn't open file.
- *
- * Side Effects:
- *	lots
  */
 static int
 ReadMakefile(const void *p, const void *q MAKE_ATTR_UNUSED)
