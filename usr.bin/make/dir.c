@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.121 2020/08/29 09:30:10 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.122 2020/08/29 10:12:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.121 2020/08/29 09:30:10 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.122 2020/08/29 10:12:06 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.121 2020/08/29 09:30:10 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.122 2020/08/29 10:12:06 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -517,7 +517,7 @@ Dir_SetPATH(void)
 
 /* See if the Path structure describes the same directory as the
  * given one by comparing their names. Called from Dir_AddDir via
- * Lst_FindB when searching the list of open directories. */
+ * Lst_Find when searching the list of open directories. */
 static Boolean
 DirFindName(const void *p, const void *desiredName)
 {
@@ -1549,7 +1549,7 @@ Dir_AddDir(Lst path, const char *name)
     struct dirent *dp;		/* entry in directory */
 
     if (path != NULL && strcmp(name, ".DOTLAST") == 0) {
-	ln = Lst_FindB(path, DirFindName, name);
+	ln = Lst_Find(path, DirFindName, name);
 	if (ln != NULL)
 	    return Lst_Datum(ln);
 
@@ -1558,7 +1558,7 @@ Dir_AddDir(Lst path, const char *name)
     }
 
     if (path != NULL)
-	ln = Lst_FindB(openDirectories, DirFindName, name);
+	ln = Lst_Find(openDirectories, DirFindName, name);
     if (ln != NULL) {
 	p = Lst_Datum(ln);
 	if (Lst_Member(path, p) == NULL) {
