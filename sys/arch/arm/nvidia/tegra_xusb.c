@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_xusb.c,v 1.19 2019/10/13 06:11:31 skrll Exp $ */
+/* $NetBSD: tegra_xusb.c,v 1.20 2020/08/29 19:06:17 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -30,7 +30,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.19 2019/10/13 06:11:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.20 2020/08/29 19:06:17 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -74,13 +74,29 @@ static void	tegra_xusb_mountroot(device_t);
 static int	tegra_xusb_intr_mbox(void *);
 
 #ifdef TEGRA124_XUSB_BIN_STATIC
-extern const char _binary_tegra124_xusb_bin_size[];
 extern const char _binary_tegra124_xusb_bin_start[];
+extern const char _binary_tegra124_xusb_bin_end[];
+__asm__(
+".section \".rodata\"\n"
+"_binary_tegra124_xusb_bin_start:\n"
+".incbin \"../external/nvidia-firmware/tegra/dist/tegra124/xusb.bin\"\n"
+".size _binary_tegra124_xusb_bin_start, . - _binary_tegra124_xusb_bin_start\n"
+"_binary_tegra124_xusb_bin_end:\n"
+".previous\n"
+);
 #endif
 
 #ifdef TEGRA210_XUSB_BIN_STATIC
-extern const char _binary_tegra210_xusb_bin_size[];
 extern const char _binary_tegra210_xusb_bin_start[];
+extern const char _binary_tegra210_xusb_bin_end[];
+__asm__(
+".section \".rodata\"\n"
+"_binary_tegra210_xusb_bin_start:\n"
+".incbin \"../external/nvidia-firmware/tegra/dist/tegra210/xusb.bin\"\n"
+".size _binary_tegra210_xusb_bin_start, . - _binary_tegra210_xusb_bin_start\n"
+"_binary_tegra210_xusb_bin_end:\n"
+".previous\n"
+);
 #endif
 
 enum xusb_type {
@@ -729,7 +745,8 @@ tegra_xusb_open_fw(struct tegra_xusb_softc * const psc)
 	switch (psc->sc_txd->txd_type) {
 	case XUSB_T124:
 #if defined(TEGRA124_XUSB_BIN_STATIC)
-		firmware_size = (uintptr_t)&_binary_tegra124_xusb_bin_size;
+		firmware_size = (uintptr_t)&_binary_tegra124_xusb_bin_end
+		    - (uintptr_t)&_binary_tegra124_xusb_bin_start;
 		fw_static = __UNCONST(_binary_tegra124_xusb_bin_start);
 #else
 		fw_path = "nvidia/tegra124";
@@ -737,7 +754,8 @@ tegra_xusb_open_fw(struct tegra_xusb_softc * const psc)
 		break;
 	case XUSB_T210:
 #if defined(TEGRA210_XUSB_BIN_STATIC)
-		firmware_size = (uintptr_t)&_binary_tegra210_xusb_bin_size;
+		firmware_size = (uintptr_t)&_binary_tegra210_xusb_bin_end
+		    - (uintptr_t)&_binary_tegra210_xusb_bin_start;
 		fw_static = __UNCONST(_binary_tegra210_xusb_bin_start);
 #else
 		fw_path = "nvidia/tegra210";
