@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.122 2020/08/29 10:12:06 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.123 2020/08/29 10:41:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.122 2020/08/29 10:12:06 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.123 2020/08/29 10:41:12 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.122 2020/08/29 10:12:06 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.123 2020/08/29 10:41:12 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1747,7 +1747,7 @@ Dir_Concat(Lst path1, Lst path2)
     LstNode ln;
     Path *p;
 
-    for (ln = Lst_First(path2); ln != NULL; ln = Lst_Succ(ln)) {
+    for (ln = Lst_First(path2); ln != NULL; ln = LstNode_Next(ln)) {
 	p = Lst_Datum(ln);
 	if (Lst_Member(path1, p) == NULL) {
 	    p->refCount += 1;

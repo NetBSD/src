@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.55 2020/08/29 10:12:06 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.56 2020/08/29 10:41:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,11 +37,11 @@
 #include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.55 2020/08/29 10:12:06 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.56 2020/08/29 10:41:12 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.55 2020/08/29 10:12:06 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.56 2020/08/29 10:41:12 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -338,7 +338,7 @@ Lst_Last(Lst list)
 
 /* Return the successor to the given node on its list, or NULL. */
 LstNode
-Lst_Succ(LstNode node)
+LstNode_Next(LstNode node)
 {
     assert(node != NULL);
 
@@ -347,7 +347,7 @@ Lst_Succ(LstNode node)
 
 /* Return the predecessor to the given node on its list, or NULL. */
 LstNode
-Lst_Prev(LstNode node)
+LstNode_Prev(LstNode node)
 {
     assert(node != NULL);
     return node->prev;
@@ -387,7 +387,7 @@ Lst_Find(Lst list, LstFindProc match, const void *matchArgs)
  * the match function returns TRUE, or NULL if none of the nodes matches.
  *
  * The start node may be NULL, in which case nothing is found. This allows
- * for passing Lst_First or Lst_Succ as the start node. */
+ * for passing Lst_First or LstNode_Next as the start node. */
 LstNode
 Lst_FindFrom(Lst list, LstNode node, LstFindProc match, const void *matchArgs)
 {
