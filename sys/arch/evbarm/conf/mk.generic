@@ -1,6 +1,4 @@
-#	$NetBSD: mk.generic,v 1.9 2019/12/16 11:00:30 skrll Exp $
-
-.include "$S/arch/arm/nvidia/tegra_xusb-fw.mk"
+#	$NetBSD: mk.generic,v 1.10 2020/08/29 19:06:18 jakllsch Exp $
 
 .if !empty(MACHINE_ARCH:M*eb)
 EXTRA_LINKFLAGS+=	--be8
