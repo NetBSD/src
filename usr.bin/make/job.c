@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.223 2020/08/29 10:41:12 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.224 2020/08/29 12:20:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.223 2020/08/29 10:41:12 rillig Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.224 2020/08/29 12:20:17 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.223 2020/08/29 10:41:12 rillig Exp $");
+__RCSID("$NetBSD: job.c,v 1.224 2020/08/29 12:20:17 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -112,7 +112,7 @@ __RCSID("$NetBSD: job.c,v 1.223 2020/08/29 10:41:12 rillig Exp $");
  *
  *	Job_ParseShell	    	Given the line following a .SHELL target, parse
  *	    	  	    	the line as a shell specification. Returns
- *	    	  	    	FAILURE if the spec was incorrect.
+ *	    	  	    	FALSE if the spec was incorrect.
  *
  *	Job_Finish	    	Perform any final processing which needs doing.
  *	    	  	    	This includes the execution of any commands
@@ -2376,7 +2376,7 @@ JobMatchShell(const char *name)
  *	line		The shell spec
  *
  * Results:
- *	FAILURE if the specification was incorrect.
+ *	FALSE if the specification was incorrect.
  *
  * Side Effects:
  *	commandShell points to a Shell structure (either predefined or
@@ -2413,7 +2413,7 @@ JobMatchShell(const char *name)
  *
  *-----------------------------------------------------------------------
  */
-ReturnStatus
+Boolean
 Job_ParseShell(char *line)
 {
     char	**words;
@@ -2438,7 +2438,7 @@ Job_ParseShell(char *line)
     words = brk_string(line, TRUE, &argc, &path);
     if (words == NULL) {
 	Error("Unterminated quoted string [%s]", line);
-	return FAILURE;
+	return FALSE;
     }
     shellArgv = path;
 
@@ -2477,7 +2477,7 @@ Job_ParseShell(char *line)
 		    Parse_Error(PARSE_FATAL, "Unknown keyword \"%s\"",
 				*argv);
 		    free(words);
-		    return FAILURE;
+		    return FALSE;
 		}
 		fullSpec = TRUE;
 	    }
@@ -2493,13 +2493,13 @@ Job_ParseShell(char *line)
 	if (newShell.name == NULL) {
 	    Parse_Error(PARSE_FATAL, "Neither path nor name specified");
 	    free(words);
-	    return FAILURE;
+	    return FALSE;
 	} else {
 	    if ((sh = JobMatchShell(newShell.name)) == NULL) {
 		    Parse_Error(PARSE_WARNING, "%s: No matching shell",
 				newShell.name);
 		    free(words);
-		    return FAILURE;
+		    return FALSE;
 	    }
 	    commandShell = sh;
 	    shellName = newShell.name;
@@ -2535,7 +2535,7 @@ Job_ParseShell(char *line)
 		    Parse_Error(PARSE_WARNING, "%s: No matching shell",
 				shellName);
 		    free(words);
-		    return FAILURE;
+		    return FALSE;
 	    }
 	    commandShell = sh;
 	} else {
@@ -2564,7 +2564,7 @@ Job_ParseShell(char *line)
      * shell specification.
      */
     free(words);
-    return SUCCESS;
+    return TRUE;
 }
 
 /*-
