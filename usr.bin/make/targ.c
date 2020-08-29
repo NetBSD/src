@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.77 2020/08/28 19:14:07 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.78 2020/08/29 20:20:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.77 2020/08/28 19:14:07 rillig Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.78 2020/08/29 20:20:44 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.77 2020/08/28 19:14:07 rillig Exp $");
+__RCSID("$NetBSD: targ.c,v 1.78 2020/08/29 20:20:44 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -147,8 +147,6 @@ static int TargPrintName(void *, void *);
 #ifdef CLEANUP
 static void TargFreeGN(void *);
 #endif
-static int TargPropagateCohort(void *, void *);
-static int TargPropagateNode(void *, void *);
 
 void
 Targ_Init(void)
@@ -577,56 +575,26 @@ Targ_PrintGraph(int pass)
     Suff_PrintAll();
 }
 
-/* Propagate information from a single node to related nodes if appropriate.
+/* Propagate some type information to cohort nodes (those from the ::
+ * dependency operator).
  *
- * Information is propagated from this node to cohort nodes.
- *
- * If the node was defined with "::", then TargPropagateCohort() will be
- * called for each cohort node.
- *
- * Input:
- *	gnp		The node that we are processing.
- *
- * Results:
- *	Always returns 0, for the benefit of Lst_ForEach().
- */
-static int
-TargPropagateNode(void *gnp, void *junk MAKE_ATTR_UNUSED)
-{
-    GNode	  *gn = (GNode *)gnp;
-
-    if (gn->type & OP_DOUBLEDEP)
-	Lst_ForEach(gn->cohorts, TargPropagateCohort, gnp);
-    return 0;
-}
-
-/* Propagate some bits in the type mask from a node to a related cohort node.
- * cnp's type bitmask is modified to incorporate some of the bits from gnp's
- * type bitmask.  (XXX need a better explanation.)
- *
- * Input:
- *	cnp		The node that we are processing.
- *	gnp		Another node that has cnp as a cohort.
- *
- * Results:
- *	Always returns 0, for the benefit of Lst_ForEach().
- */
-static int
-TargPropagateCohort(void *cgnp, void *pgnp)
-{
-    GNode	  *cgn = (GNode *)cgnp;
-    GNode	  *pgn = (GNode *)pgnp;
-
-    cgn->type |= pgn->type & ~OP_OPMASK;
-    return 0;
-}
-
-/* Propagate information between related nodes.  Should be called after the
- * makefiles are parsed but before any action is taken.
- *
- * Information is propagated between related nodes throughout the graph. */
+ * Should be called after the makefiles are parsed but before any action is
+ * taken. */
 void
 Targ_Propagate(void)
 {
-    Lst_ForEach(allTargets, TargPropagateNode, NULL);
+    LstNode pn, cn;
+
+    for (pn = Lst_First(allTargets); pn != NULL; pn = LstNode_Next(pn)) {
+	GNode *pgn = Lst_Datum(pn);
+
+	if (!(pgn->type & OP_DOUBLEDEP))
+	    continue;
+
+	for (cn = Lst_First(pgn->cohorts); cn != NULL; cn = LstNode_Next(cn)) {
+	    GNode *cgn = Lst_Datum(cn);
+
+	    cgn->type |= pgn->type & ~OP_OPMASK;
+	}
+    }
 }
