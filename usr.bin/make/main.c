@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.328 2020/08/29 13:04:30 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.329 2020/08/29 13:16:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.328 2020/08/29 13:04:30 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.329 2020/08/29 13:16:54 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.328 2020/08/29 13:04:30 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.329 2020/08/29 13:16:54 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1349,13 +1349,11 @@ main(int argc, char **argv)
 			Fatal("%s: cannot open %s.", progname,
 			    (char *)Lst_Datum(ln));
 	} else {
-	    p1 = Var_Subst("${" MAKEFILE_PREFERENCE "}",
-		VAR_CMD, VARE_WANTRES);
-	    if (p1) {
+		p1 = Var_Subst("${" MAKEFILE_PREFERENCE "}",
+			       VAR_CMD, VARE_WANTRES);
 		(void)str2Lst_Append(makefiles, p1, NULL);
 		(void)Lst_Find(makefiles, ReadMakefileSucceeded, NULL);
 		free(p1);
-	    }
 	}
 
 	/* In particular suppress .depend for '-r -V .OBJDIR -f /dev/null' */
@@ -2044,11 +2042,8 @@ PrintOnError(GNode *gn, const char *s)
     }
     expr = "${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'\n@}";
     cp = Var_Subst(expr, VAR_GLOBAL, VARE_WANTRES);
-    if (cp) {
-	if (*cp)
-	    printf("%s", cp);
-	free(cp);
-    }
+    printf("%s", cp);
+    free(cp);
     fflush(stdout);
 
     /*

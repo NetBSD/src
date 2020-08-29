@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.110 2020/08/29 10:41:12 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.111 2020/08/29 13:16:54 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -368,13 +368,13 @@ printCMD(void *cmdp, void *mfpp)
 {
     meta_file_t *mfp = mfpp;
     char *cmd = cmdp;
-    char *cp = NULL;
+    char *cmd_freeIt = NULL;
 
     if (strchr(cmd, '$')) {
-	cmd = cp = Var_Subst(cmd, mfp->gn, VARE_WANTRES);
+	cmd = cmd_freeIt = Var_Subst(cmd, mfp->gn, VARE_WANTRES);
     }
     fprintf(mfp->fp, "CMD %s\n", cmd);
-    free(cp);
+    free(cmd_freeIt);
     return 0;
 }
 
@@ -628,9 +628,7 @@ meta_mode_init(const char *make_mode)
     metaBailiwick = Lst_Init();
     metaBailiwickStr = Var_Subst("${.MAKE.META.BAILIWICK:O:u:tA}",
 	VAR_GLOBAL, VARE_WANTRES);
-    if (metaBailiwickStr) {
-	str2Lst_Append(metaBailiwick, metaBailiwickStr, NULL);
-    }
+    str2Lst_Append(metaBailiwick, metaBailiwickStr, NULL);
     /*
      * We ignore any paths that start with ${.MAKE.META.IGNORE_PATHS}
      */
@@ -639,9 +637,7 @@ meta_mode_init(const char *make_mode)
 	       "/dev /etc /proc /tmp /var/run /var/tmp ${TMPDIR}", VAR_GLOBAL);
     metaIgnorePathsStr = Var_Subst("${" MAKE_META_IGNORE_PATHS ":O:u:tA}",
 				   VAR_GLOBAL, VARE_WANTRES);
-    if (metaIgnorePathsStr) {
-	str2Lst_Append(metaIgnorePaths, metaIgnorePathsStr, NULL);
-    }
+    str2Lst_Append(metaIgnorePaths, metaIgnorePathsStr, NULL);
 
     /*
      * We ignore any paths that match ${.MAKE.META.IGNORE_PATTERNS}

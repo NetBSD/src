@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.476 2020/08/29 12:48:17 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.477 2020/08/29 13:16:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.476 2020/08/29 12:48:17 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.477 2020/08/29 13:16:54 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.476 2020/08/29 12:48:17 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.477 2020/08/29 13:16:54 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -721,7 +721,7 @@ Var_UnExport(const char *str)
 					       VAR_GLOBAL, VARE_WANTRES);
     }
 
-    if (TRUE) {
+    {
 	Var *v;
 	char **av;
 	char *as;
@@ -1464,14 +1464,12 @@ ModifyWord_Loop(const char *word, SepBuf *buf, void *data)
 
     VAR_DEBUG("ModifyWord_Loop: in \"%s\", replace \"%s\" with \"%s\" "
 	      "to \"%s\"\n",
-	      word, args->tvar, args->str, s ? s : "(null)");
+	      word, args->tvar, args->str, s);
 
-    if (s != NULL && s[0] != '\0') {
-	if (s[0] == '\n' || (buf->buf.count > 0 &&
-			     buf->buf.buffer[buf->buf.count - 1] == '\n'))
-	    buf->needSep = FALSE;
-	SepBuf_AddStr(buf, s);
-    }
+    if (s[0] == '\n' || (buf->buf.count > 0 &&
+			 buf->buf.buffer[buf->buf.count - 1] == '\n'))
+	buf->needSep = FALSE;
+    SepBuf_AddStr(buf, s);
     free(s);
 }
 
@@ -3615,7 +3613,6 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
     if (strchr(nstr, '$') != NULL && (eflags & VARE_WANTRES) != 0) {
 	nstr = Var_Subst(nstr, ctxt, eflags);
 	*freePtr = nstr;
-	assert(nstr != NULL);
     }
 
     v->flags &= ~(unsigned)VAR_IN_USE;
