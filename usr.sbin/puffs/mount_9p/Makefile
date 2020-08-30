@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.5 2020/06/19 01:19:50 uwe Exp $
+#	$NetBSD: Makefile,v 1.6 2020/08/30 21:12:45 christos Exp $
 #
+
+.include <bsd.init.mk>
 
 PROG=	mount_9p
 SRCS=	ninepuffs.c ninebuf.c nineproto.c fs.c node.c subr.c
