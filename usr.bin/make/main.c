@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.329 2020/08/29 13:16:54 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.330 2020/08/30 11:15:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.329 2020/08/29 13:16:54 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.330 2020/08/30 11:15:05 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.329 2020/08/29 13:16:54 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.330 2020/08/30 11:15:05 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -874,7 +874,7 @@ doPrintVars(void)
 		expandVars = getBoolean(".MAKE.EXPAND_VARIABLES", FALSE);
 
 	for (ln = Lst_First(variables); ln != NULL; ln = LstNode_Next(ln)) {
-		char *var = Lst_Datum(ln);
+		char *var = LstNode_Datum(ln);
 		const char *value;
 		char *p1;
 
@@ -1283,7 +1283,7 @@ main(int argc, char **argv)
 		LstNode ln;
 
 		for (ln = Lst_First(create); ln != NULL; ln = LstNode_Next(ln)) {
-			char *name = Lst_Datum(ln);
+			char *name = LstNode_Datum(ln);
 			Var_Append(".TARGETS", name, VAR_GLOBAL);
 		}
 	} else
@@ -1338,7 +1338,7 @@ main(int argc, char **argv)
 		ln = Lst_Find(sysMkPath, ReadMakefileSucceeded, NULL);
 		if (ln == NULL)
 			Fatal("%s: cannot open %s.", progname,
-			    (char *)Lst_Datum(Lst_First(sysMkPath)));
+			    (char *)LstNode_Datum(Lst_First(sysMkPath)));
 	}
 
 	if (!Lst_IsEmpty(makefiles)) {
@@ -1347,7 +1347,7 @@ main(int argc, char **argv)
 		ln = Lst_Find(makefiles, ReadMakefileFailed, NULL);
 		if (ln != NULL)
 			Fatal("%s: cannot open %s.", progname,
-			    (char *)Lst_Datum(ln));
+			    (char *)LstNode_Datum(ln));
 	} else {
 		p1 = Var_Subst("${" MAKEFILE_PREFERENCE "}",
 			       VAR_CMD, VARE_WANTRES);
