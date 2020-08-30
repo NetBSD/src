@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.125 2020/08/30 11:12:05 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.126 2020/08/30 11:15:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.125 2020/08/30 11:12:05 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.126 2020/08/30 11:15:05 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.125 2020/08/30 11:12:05 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.126 2020/08/30 11:15:05 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -462,7 +462,7 @@ Dir_SetPATH(void)
 
     Lst_Open(dirSearchPath);
     if ((ln = Lst_First(dirSearchPath)) != NULL) {
-	p = Lst_Datum(ln);
+	p = LstNode_Datum(ln);
 	if (p == dotLast) {
 	    hasLastDot = TRUE;
 	    Var_Append(".PATH", dotLast->name, VAR_GLOBAL);
@@ -477,7 +477,7 @@ Dir_SetPATH(void)
     }
 
     while ((ln = Lst_Next(dirSearchPath)) != NULL) {
-	p = Lst_Datum(ln);
+	p = LstNode_Datum(ln);
 	if (p == dotLast)
 	    continue;
 	if (p == dot && hasLastDot)
@@ -753,7 +753,7 @@ DirExpandInt(const char *word, Lst path, Lst expansions)
 
     Lst_Open(path);
     while ((ln = Lst_Next(path)) != NULL) {
-	Path *p = Lst_Datum(ln);
+	Path *p = LstNode_Datum(ln);
 	DirMatchFiles(word, p, expansions);
     }
     Lst_Close(path);
@@ -1094,7 +1094,7 @@ Dir_FindFile(const char *name, Lst path)
 
     Lst_Open(path);
     if ((ln = Lst_First(path)) != NULL) {
-	p = Lst_Datum(ln);
+	p = LstNode_Datum(ln);
 	if (p == dotLast) {
 	    hasLastDot = TRUE;
 	    DIR_DEBUG0("[dot last]...");
@@ -1128,7 +1128,7 @@ Dir_FindFile(const char *name, Lst path)
 	}
 
 	while ((ln = Lst_Next(path)) != NULL) {
-	    p = Lst_Datum(ln);
+	    p = LstNode_Datum(ln);
 	    if (p == dotLast)
 		continue;
 	    if ((file = DirLookup(p, name, cp, hasSlash)) != NULL) {
@@ -1186,7 +1186,7 @@ Dir_FindFile(const char *name, Lst path)
 
 	Lst_Open(path);
 	while ((ln = Lst_Next(path)) != NULL) {
-	    p = Lst_Datum(ln);
+	    p = LstNode_Datum(ln);
 	    if (p == dotLast)
 		continue;
 	    if (p == dot) {
@@ -1244,7 +1244,7 @@ Dir_FindFile(const char *name, Lst path)
 
 	Lst_Open(path);
 	while ((ln = Lst_Next(path)) != NULL) {
-	    p = Lst_Datum(ln);
+	    p = LstNode_Datum(ln);
 	    if (p == dotLast)
 		continue;
 	    if ((file = DirLookupAbs(p, name, cp)) != NULL) {
@@ -1299,7 +1299,7 @@ Dir_FindFile(const char *name, Lst path)
     if (ln == NULL) {
 	return NULL;
     } else {
-	p = Lst_Datum(ln);
+	p = LstNode_Datum(ln);
     }
 
     if (Hash_FindEntry(&p->files, cp) != NULL) {
@@ -1523,7 +1523,7 @@ Dir_AddDir(Lst path, const char *name)
     if (path != NULL && strcmp(name, ".DOTLAST") == 0) {
 	ln = Lst_Find(path, DirFindName, name);
 	if (ln != NULL)
-	    return Lst_Datum(ln);
+	    return LstNode_Datum(ln);
 
 	dotLast->refCount++;
 	Lst_Prepend(path, dotLast);
@@ -1532,7 +1532,7 @@ Dir_AddDir(Lst path, const char *name)
     if (path != NULL)
 	ln = Lst_Find(openDirectories, DirFindName, name);
     if (ln != NULL) {
-	p = Lst_Datum(ln);
+	p = LstNode_Datum(ln);
 	if (Lst_FindDatum(path, p) == NULL) {
 	    p->refCount += 1;
 	    Lst_Append(path, p);
@@ -1621,7 +1621,7 @@ Dir_MakeFlags(const char *flag, Lst path)
     if (path != NULL) {
 	Lst_Open(path);
 	while ((ln = Lst_Next(path)) != NULL) {
-	    Path *p = Lst_Datum(ln);
+	    Path *p = LstNode_Datum(ln);
 	    Buf_AddStr(&buf, " ");
 	    Buf_AddStr(&buf, flag);
 	    Buf_AddStr(&buf, p->name);
@@ -1720,7 +1720,7 @@ Dir_Concat(Lst path1, Lst path2)
     Path *p;
 
     for (ln = Lst_First(path2); ln != NULL; ln = LstNode_Next(ln)) {
-	p = Lst_Datum(ln);
+	p = LstNode_Datum(ln);
 	if (Lst_FindDatum(path1, p) == NULL) {
 	    p->refCount += 1;
 	    Lst_Append(path1, p);
@@ -1749,7 +1749,7 @@ Dir_PrintDirectories(void)
 
     Lst_Open(openDirectories);
     while ((ln = Lst_Next(openDirectories)) != NULL) {
-	Path *p = Lst_Datum(ln);
+	Path *p = LstNode_Datum(ln);
 	fprintf(debug_file, "# %-20s %10d\t%4d\n", p->name, p->refCount,
 		p->hits);
     }
