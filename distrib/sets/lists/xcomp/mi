@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.216 2020/02/06 12:13:45 uki Exp $
+#	 $NetBSD: mi,v 1.217 2020/08/30 04:51:03 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1319,6 +1319,8 @@
 ./usr/X11R7/lib/pkgconfig/bigreqsproto.pc		xcomp-xorgproto-lib	xorg
 ./usr/X11R7/lib/pkgconfig/compositeproto.pc		xcomp-xorgproto-lib	xorg
 ./usr/X11R7/lib/pkgconfig/damageproto.pc		xcomp-xorgproto-lib	xorg
+./usr/X11R7/lib/pkgconfig/dmxproto.pc			xcomp-xorgproto-lib	xorg
+./usr/X11R7/lib/pkgconfig/dpmsproto.pc			xcomp-xorgproto-lib	xorg
 ./usr/X11R7/lib/pkgconfig/dri.pc			xcomp-dri-lib	xorg
 ./usr/X11R7/lib/pkgconfig/dri2proto.pc			xcomp-xorgproto-lib	xorg
 ./usr/X11R7/lib/pkgconfig/dri3proto.pc			xcomp-xorgproto-lib	xorg

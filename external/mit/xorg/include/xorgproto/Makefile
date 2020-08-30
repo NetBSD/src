@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2019/03/03 22:32:27 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2020/08/30 04:51:03 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -7,6 +7,8 @@ SUBDIR=	GL X11
 PKGCONFIG= bigreqsproto \
 	compositeproto \
 	damageproto \
+	dmxproto \
+	dpmsproto \
 	dri2proto \
 	dri3proto \
 	evieproto \
