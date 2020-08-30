@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.139 2020/08/30 14:11:42 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.140 2020/08/30 18:26:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.139 2020/08/30 14:11:42 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.140 2020/08/30 18:26:41 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.139 2020/08/30 14:11:42 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.140 2020/08/30 18:26:41 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -137,6 +137,18 @@ __RCSID("$NetBSD: suff.c,v 1.139 2020/08/30 14:11:42 rillig Exp $");
 
 #include	  "make.h"
 #include	  "dir.h"
+
+#define SUFF_DEBUG0(fmt) \
+    if (!DEBUG(SUFF)) (void) 0; else fprintf(debug_file, fmt)
+
+#define SUFF_DEBUG1(fmt, arg1) \
+    if (!DEBUG(SUFF)) (void) 0; else fprintf(debug_file, fmt, arg1)
+
+#define SUFF_DEBUG2(fmt, arg1, arg2) \
+    if (!DEBUG(SUFF)) (void) 0; else fprintf(debug_file, fmt, arg1, arg2)
+
+#define SUFF_DEBUG3(fmt, arg1, arg2, arg3) \
+    if (!DEBUG(SUFF)) (void) 0; else fprintf(debug_file, fmt, arg1, arg2, arg3)
 
 static Lst       sufflist;	/* Lst of suffixes */
 #ifdef CLEANUP
@@ -397,25 +409,20 @@ SuffInsert(Lst l, Suff *s)
     }
     Lst_Close(l);
 
-    if (DEBUG(SUFF)) {
-	fprintf(debug_file, "inserting %s(%d)...", s->name, s->sNum);
-    }
+    SUFF_DEBUG2("inserting %s(%d)...", s->name, s->sNum);
+
     if (ln == NULL) {
-	if (DEBUG(SUFF)) {
-	    fprintf(debug_file, "at end of list\n");
-	}
+	SUFF_DEBUG0("at end of list\n");
 	Lst_Append(l, s);
 	s->refCount++;
 	Lst_Append(s->ref, l);
     } else if (s2->sNum != s->sNum) {
-	if (DEBUG(SUFF)) {
-	    fprintf(debug_file, "before %s(%d)\n", s2->name, s2->sNum);
-	}
+	SUFF_DEBUG2("before %s(%d)\n", s2->name, s2->sNum);
 	Lst_InsertBefore(l, ln, s);
 	s->refCount++;
 	Lst_Append(s->ref, l);
-    } else if (DEBUG(SUFF)) {
-	fprintf(debug_file, "already there\n");
+    } else {
+	SUFF_DEBUG0("already there\n");
     }
 }
 
@@ -591,10 +598,8 @@ Suff_AddTransform(char *line)
     /*
      * link the two together in the proper relationship and order
      */
-    if (DEBUG(SUFF)) {
-	fprintf(debug_file, "defining transformation from `%s' to `%s'\n",
+    SUFF_DEBUG2("defining transformation from `%s' to `%s'\n",
 		s->name, t->name);
-    }
     SuffInsert(t->children, s);
     SuffInsert(s->parents, t);
 
@@ -633,10 +638,8 @@ Suff_EndTransform(void *gnp, void *dummy MAKE_ATTR_UNUSED)
 	if (SuffParseTransform(gn->name, &s, &t)) {
 	    Lst	 p;
 
-	    if (DEBUG(SUFF)) {
-		fprintf(debug_file, "deleting transformation from `%s' to `%s'\n",
-		s->name, t->name);
-	    }
+	    SUFF_DEBUG2("deleting transformation from `%s' to `%s'\n",
+			s->name, t->name);
 
 	    /*
 	     * Store s->parents because s could be deleted in SuffRemove
@@ -658,8 +661,8 @@ Suff_EndTransform(void *gnp, void *dummy MAKE_ATTR_UNUSED)
 	     */
 	    SuffRemove(p, t);
 	}
-    } else if ((gn->type & OP_TRANSFORM) && DEBUG(SUFF)) {
-	fprintf(debug_file, "transformation %s complete\n", gn->name);
+    } else if (gn->type & OP_TRANSFORM) {
+        SUFF_DEBUG1("transformation %s complete\n", gn->name);
     }
 
     return 0;
@@ -781,10 +784,8 @@ SuffScanTargets(void *targetp, void *gsp)
 	/*
 	 * link the two together in the proper relationship and order
 	 */
-	if (DEBUG(SUFF)) {
-	    fprintf(debug_file, "defining transformation from `%s' to `%s'\n",
-		s->name, t->name);
-	}
+	SUFF_DEBUG2("defining transformation from `%s' to `%s'\n",
+		    s->name, t->name);
 	SuffInsert(t->children, s);
 	SuffInsert(s->parents, t);
     }
@@ -1101,9 +1102,7 @@ SuffFindThem(Lst srcs, Lst slst)
     while (!Lst_IsEmpty(srcs)) {
 	s = Lst_Dequeue(srcs);
 
-	if (DEBUG(SUFF)) {
-	    fprintf(debug_file, "\ttrying %s...", s->file);
-	}
+	SUFF_DEBUG1("\ttrying %s...", s->file);
 
 	/*
 	 * A file is considered to exist if either a node exists in the
@@ -1126,16 +1125,14 @@ SuffFindThem(Lst srcs, Lst slst)
 	    break;
 	}
 
-	if (DEBUG(SUFF)) {
-	    fprintf(debug_file, "not there\n");
-	}
+	SUFF_DEBUG0("not there\n");
 
 	SuffAddLevel(srcs, s);
 	Lst_Append(slst, s);
     }
 
-    if (DEBUG(SUFF) && rs) {
-	fprintf(debug_file, "got it\n");
+    if (rs) {
+	SUFF_DEBUG0("got it\n");
     }
     return rs;
 }
@@ -1234,9 +1231,7 @@ SuffFindCmds(Src *targ, Lst slst)
     Lst_Append(targ->cp, ret);
 #endif
     Lst_Append(slst, ret);
-    if (DEBUG(SUFF)) {
-	fprintf(debug_file, "\tusing existing source %s\n", s->name);
-    }
+    SUFF_DEBUG1("\tusing existing source %s\n", s->name);
     return ret;
 }
 
@@ -1276,9 +1271,7 @@ SuffExpandChildren(LstNode cln, GNode *pgn)
 	return;
     }
 
-    if (DEBUG(SUFF)) {
-	fprintf(debug_file, "Expanding \"%s\"...", cgn->name);
-    }
+    SUFF_DEBUG1("Expanding \"%s\"...", cgn->name);
     cp = Var_Subst(cgn->name, pgn, VARE_UNDEFERR|VARE_WANTRES);
 
     {
@@ -1367,9 +1360,7 @@ SuffExpandChildren(LstNode cln, GNode *pgn)
 	while(!Lst_IsEmpty(members)) {
 	    gn = Lst_Dequeue(members);
 
-	    if (DEBUG(SUFF)) {
-		fprintf(debug_file, "%s...", gn->name);
-	    }
+	    SUFF_DEBUG1("%s...", gn->name);
 	    /* Add gn to the parents child list before the original child */
 	    Lst_InsertBefore(pgn->children, cln, gn);
 	    Lst_Append(gn->parents, pgn);
@@ -1385,9 +1376,7 @@ SuffExpandChildren(LstNode cln, GNode *pgn)
 	free(cp);
     }
 
-    if (DEBUG(SUFF)) {
-	fprintf(debug_file, "\n");
-    }
+    SUFF_DEBUG0("\n");
 
     /*
      * Now the source is expanded, remove it from the list of children to
@@ -1421,9 +1410,7 @@ SuffExpandWildcards(LstNode cln, GNode *pgn)
 	 */
 	cp = Lst_Dequeue(explist);
 
-	if (DEBUG(SUFF)) {
-	    fprintf(debug_file, "%s...", cp);
-	}
+	SUFF_DEBUG1("%s...", cp);
 	gn = Targ_FindNode(cp, TARG_CREATE);
 
 	/* Add gn to the parents child list before the original child */
@@ -1434,9 +1421,7 @@ SuffExpandWildcards(LstNode cln, GNode *pgn)
 
     Lst_Free(explist);
 
-    if (DEBUG(SUFF)) {
-	fprintf(debug_file, "\n");
-    }
+    SUFF_DEBUG0("\n");
 
     /*
      * Now the source is expanded, remove it from the list of children to
@@ -1470,18 +1455,14 @@ Suff_FindPath(GNode* gn)
 	sd.ename = gn->name + sd.len;
 	ln = Lst_Find(sufflist, SuffSuffIsSuffix, &sd);
 
-	if (DEBUG(SUFF)) {
-	    fprintf(debug_file, "Wildcard expanding \"%s\"...", gn->name);
-	}
+	SUFF_DEBUG1("Wildcard expanding \"%s\"...", gn->name);
 	if (ln != NULL)
 	    suff = LstNode_Datum(ln);
 	/* XXX: Here we can save the suffix so we don't have to do this again */
     }
 
     if (suff != NULL) {
-	if (DEBUG(SUFF)) {
-	    fprintf(debug_file, "suffix is \"%s\"...", suff->name);
-	}
+	SUFF_DEBUG1("suffix is \"%s\"...", suff->name);
 	return suff->searchPath;
     } else {
 	/*
@@ -1542,9 +1523,7 @@ SuffApplyTransform(GNode *tGn, GNode *sGn, Suff *t, Suff *s)
 
     gn = LstNode_Datum(ln);
 
-    if (DEBUG(SUFF)) {
-	fprintf(debug_file, "\tapplying %s -> %s to \"%s\"\n", s->name, t->name, tGn->name);
-    }
+    SUFF_DEBUG3("\tapplying %s -> %s to \"%s\"\n", s->name, t->name, tGn->name);
 
     /*
      * Record last child for expansion purposes
@@ -1644,9 +1623,7 @@ SuffFindArchiveDeps(GNode *gn, Lst slst)
 	/*
 	 * Didn't know what it was -- use .NULL suffix if not in make mode
 	 */
-	if (DEBUG(SUFF)) {
-	    fprintf(debug_file, "using null suffix\n");
-	}
+	SUFF_DEBUG0("using null suffix\n");
 	ms = suffNull;
     }
 
@@ -1691,11 +1668,10 @@ SuffFindArchiveDeps(GNode *gn, Lst slst)
 	    /*
 	     * Got one -- apply it
 	     */
-	    if (!SuffApplyTransform(gn, mem, (Suff *)LstNode_Datum(ln), ms) &&
-		DEBUG(SUFF))
-	    {
-		fprintf(debug_file, "\tNo transformation from %s -> %s\n",
-		       ms->name, ((Suff *)LstNode_Datum(ln))->name);
+	    Suff *suff = LstNode_Datum(ln);
+	    if (!SuffApplyTransform(gn, mem, suff, ms)) {
+		SUFF_DEBUG2("\tNo transformation from %s -> %s\n",
+			    ms->name, suff->name);
 	    }
 	}
     }
@@ -1830,9 +1806,8 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
 	 * Handle target of unknown suffix...
 	 */
 	if (Lst_IsEmpty(targs) && suffNull != NULL) {
-	    if (DEBUG(SUFF)) {
-		fprintf(debug_file, "\tNo known suffix on %s. Using .NULL suffix\n", gn->name);
-	    }
+	    SUFF_DEBUG1("\tNo known suffix on %s. Using .NULL suffix\n",
+			gn->name);
 
 	    targ = bmake_malloc(sizeof(Src));
 	    targ->file = bmake_strdup(gn->name);
@@ -1855,12 +1830,10 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
 	    if (Lst_IsEmpty(gn->commands))
 		SuffAddLevel(srcs, targ);
 	    else {
-		if (DEBUG(SUFF))
-		    fprintf(debug_file, "not ");
+		SUFF_DEBUG0("not ");
 	    }
 
-	    if (DEBUG(SUFF))
-		fprintf(debug_file, "adding suffix rules\n");
+	    SUFF_DEBUG0("adding suffix rules\n");
 
 	    Lst_Append(targs, targ);
 	}
@@ -1906,9 +1879,7 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
     }
 
     if (targ == NULL) {
-	if (DEBUG(SUFF)) {
-	    fprintf(debug_file, "\tNo valid suffix on %s\n", gn->name);
-	}
+	SUFF_DEBUG1("\tNo valid suffix on %s\n", gn->name);
 
 sfnd_abort:
 	/*
@@ -2115,9 +2086,7 @@ SuffFindDeps(GNode *gn, Lst slst)
     Var_Set(TARGET, gn->path ? gn->path : gn->name, gn);
     Var_Set(PREFIX, gn->name, gn);
 
-    if (DEBUG(SUFF)) {
-	fprintf(debug_file, "SuffFindDeps (%s)\n", gn->name);
-    }
+    SUFF_DEBUG1("SuffFindDeps (%s)\n", gn->name);
 
     if (gn->type & OP_ARCHV) {
 	SuffFindArchiveDeps(gn, slst);
