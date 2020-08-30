@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.577 2020/08/17 20:43:13 christos Exp $
+# $NetBSD: GENERIC,v 1.578 2020/08/30 11:16:17 dholland Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.577 $"
+#ident		"GENERIC-$Revision: 1.578 $"
 
 maxusers	64		# estimated number of users
 
@@ -78,7 +78,7 @@ options 	USER_LDT	# User-settable LDT, used by Wine
 options 	SVS		# Separate Virtual Space
 options 	PCPU_IDT	# Per CPU IDTs
 
-# GCC Spectre variant 2 migitation
+# GCC Spectre variant 2 mitigation
 makeoptions	SPECTRE_V2_GCC_MITIGATION=1
 options 	SPECTRE_V2_GCC_MITIGATION
 
