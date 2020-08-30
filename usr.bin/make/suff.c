@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.138 2020/08/30 11:15:05 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.139 2020/08/30 14:11:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.138 2020/08/30 11:15:05 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.139 2020/08/30 14:11:42 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.138 2020/08/30 11:15:05 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.139 2020/08/30 14:11:42 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1568,7 +1568,7 @@ SuffApplyTransform(GNode *tGn, GNode *sGn, Suff *t, Suff *s)
      * Keep track of another parent to which this beast is transformed so
      * the .IMPSRC variable can be set correctly for the parent.
      */
-    Lst_Append(sGn->iParents, tGn);
+    Lst_Append(sGn->implicitParents, tGn);
 
     return TRUE;
 }
