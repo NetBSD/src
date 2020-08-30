@@ -3,6 +3,8 @@ make: "directive-ifmake.mk" line 19: ok: negation works
 make: "directive-ifmake.mk" line 25: ok: double negation works
 make: "directive-ifmake.mk" line 32: ok: both mentioned
 make: "directive-ifmake.mk" line 39: ok: only those mentioned
+make: "directive-ifmake.mk" line 49: Targets can even be added at parse time.
 : first
 : second
+: late-target
 exit status 0
