@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.132 2020/08/29 12:20:17 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.133 2020/08/30 14:11:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -293,9 +293,10 @@ typedef struct GNode {
     time_t mtime;		/* Its modification time */
     struct GNode *cmgn;		/* The youngest child */
 
-    /* Links to parents for which this is an implied source. May be empty.
-     * Nodes that depend on this, as gleaned from the transformation rules. */
-    Lst iParents;
+    /* The GNodes for which this node is an implied source. May be empty.
+     * For example, when there is an inference rule for .c.o, the node for
+     * file.c has the node for file.o in this list. */
+    Lst implicitParents;
 
     /* Other nodes of the same name for the :: operator. */
     Lst cohorts;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.126 2020/08/30 11:15:05 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.127 2020/08/30 14:11:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.126 2020/08/30 11:15:05 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.127 2020/08/30 14:11:42 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.126 2020/08/30 11:15:05 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.127 2020/08/30 14:11:42 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1434,7 +1434,7 @@ Dir_MTime(GNode *gn, Boolean recheck)
 	else {
 	    fullName = Dir_FindFile(gn->name, Suff_FindPath(gn));
 	    if (fullName == NULL && gn->flags & FROM_DEPEND &&
-		!Lst_IsEmpty(gn->iParents)) {
+		!Lst_IsEmpty(gn->implicitParents)) {
 		char *cp;
 
 		cp = strrchr(gn->name, '/');

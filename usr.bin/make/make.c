@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.132 2020/08/30 11:15:05 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.133 2020/08/30 14:11:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.132 2020/08/30 11:15:05 rillig Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.133 2020/08/30 14:11:42 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.132 2020/08/30 11:15:05 rillig Exp $");
+__RCSID("$NetBSD: make.c,v 1.133 2020/08/30 14:11:42 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -695,7 +695,7 @@ Make_Update(GNode *cgn)
 {
     GNode 	*pgn;	/* the parent node */
     const char	*cname;	/* the child's name */
-    LstNode	ln; 	/* Element in parents and iParents lists */
+    LstNode	ln; 	/* Element in parents and implicitParents lists */
     time_t	mtime = -1;
     char	*p1;
     Lst		parents;
@@ -838,11 +838,11 @@ Make_Update(GNode *cgn)
      * Set the .PREFIX and .IMPSRC variables for all the implied parents
      * of this node.
      */
-    Lst_Open(cgn->iParents);
+    Lst_Open(cgn->implicitParents);
     {
 	const char *cpref = Var_Value(PREFIX, cgn, &p1);
 
-	while ((ln = Lst_Next(cgn->iParents)) != NULL) {
+	while ((ln = Lst_Next(cgn->implicitParents)) != NULL) {
 	    pgn = LstNode_Datum(ln);
 	    if (pgn->flags & REMAKE) {
 		Var_Set(IMPSRC, cname, pgn);
@@ -851,7 +851,7 @@ Make_Update(GNode *cgn)
 	    }
 	}
 	bmake_free(p1);
-	Lst_Close(cgn->iParents);
+	Lst_Close(cgn->implicitParents);
     }
 }
 

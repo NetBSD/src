@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.79 2020/08/30 11:15:05 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.80 2020/08/30 14:11:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.79 2020/08/30 11:15:05 rillig Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.80 2020/08/30 14:11:42 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.79 2020/08/30 11:15:05 rillig Exp $");
+__RCSID("$NetBSD: targ.c,v 1.80 2020/08/30 14:11:42 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -205,7 +205,7 @@ Targ_NewGN(const char *name)
     gn->checked =	0;
     gn->mtime =		0;
     gn->cmgn =		NULL;
-    gn->iParents =  	Lst_Init();
+    gn->implicitParents = Lst_Init();
     gn->cohorts =   	Lst_Init();
     gn->parents =   	Lst_Init();
     gn->children =  	Lst_Init();
@@ -236,7 +236,7 @@ TargFreeGN(void *gnp)
     free(gn->uname);
     free(gn->path);
 
-    Lst_Free(gn->iParents);
+    Lst_Free(gn->implicitParents);
     Lst_Free(gn->cohorts);
     Lst_Free(gn->parents);
     Lst_Free(gn->children);
@@ -489,9 +489,9 @@ Targ_PrintNode(void *gnp, void *passp)
 		    fprintf(debug_file, "# unmade\n");
 		}
 	    }
-	    if (!Lst_IsEmpty(gn->iParents)) {
+	    if (!Lst_IsEmpty(gn->implicitParents)) {
 		fprintf(debug_file, "# implicit parents: ");
-		Lst_ForEach(gn->iParents, TargPrintName, NULL);
+		Lst_ForEach(gn->implicitParents, TargPrintName, NULL);
 		fprintf(debug_file, "\n");
 	    }
 	} else {
