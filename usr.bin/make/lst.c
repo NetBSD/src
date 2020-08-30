@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.58 2020/08/30 11:15:05 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.59 2020/08/30 21:20:06 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,11 +37,11 @@
 #include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.58 2020/08/30 11:15:05 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.59 2020/08/30 21:20:06 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.58 2020/08/30 11:15:05 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.59 2020/08/30 21:20:06 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -147,8 +147,8 @@ Lst_Free(Lst list)
     free(list);
 }
 
-/* Destroy a list and free all its resources. If the freeProc is given, it is
- * called with the datum from each node in turn before the node is freed. */
+/* Destroy a list and free all its resources. The freeProc is called with the
+ * datum from each node in turn before the node is freed. */
 void
 Lst_Destroy(Lst list, LstFreeProc freeProc)
 {
