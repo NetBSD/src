@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.478 2020/08/29 13:38:48 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.479 2020/08/30 19:56:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.478 2020/08/29 13:38:48 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.479 2020/08/30 19:56:02 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.478 2020/08/29 13:38:48 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.479 2020/08/30 19:56:02 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -600,16 +600,12 @@ Var_ExportVars(void)
 
     val = Var_Subst("${" MAKE_EXPORTED ":O:u}", VAR_GLOBAL, VARE_WANTRES);
     if (*val) {
-	char **av;
-	char *as;
-	size_t ac;
+        Words words = Str_Words(val, FALSE);
 	size_t i;
 
-	av = brk_string(val, FALSE, &ac, &as);
-	for (i = 0; i < ac; i++)
-	    Var_Export1(av[i], 0);
-	free(as);
-	free(av);
+	for (i = 0; i < words.len; i++)
+	    Var_Export1(words.words[i], 0);
+	Words_Free(words);
     }
     free(val);
 }
@@ -645,13 +641,11 @@ Var_Export(const char *str, Boolean isExport)
 
     val = Var_Subst(str, VAR_GLOBAL, VARE_WANTRES);
     if (val[0] != '\0') {
-	char *as;
-	size_t ac;
-	char **av = brk_string(val, FALSE, &ac, &as);
+        Words words = Str_Words(val, FALSE);
 
 	size_t i;
-	for (i = 0; i < ac; i++) {
-	    const char *name = av[i];
+	for (i = 0; i < words.len; i++) {
+	    const char *name = words.words[i];
 	    if (Var_Export1(name, flags)) {
 		if (var_exportedVars != VAR_EXPORTED_ALL)
 		    var_exportedVars = VAR_EXPORTED_YES;
@@ -660,8 +654,7 @@ Var_Export(const char *str, Boolean isExport)
 		}
 	    }
 	}
-	free(as);
-	free(av);
+	Words_Free(words);
     }
     free(val);
 }
@@ -723,20 +716,18 @@ Var_UnExport(const char *str)
 
     {
 	Var *v;
-	char **av;
-	char *as;
-	size_t ac;
 	size_t i;
 
-	av = brk_string(varnames, FALSE, &ac, &as);
-	for (i = 0; i < ac; i++) {
-	    v = VarFind(av[i], VAR_GLOBAL, 0);
+	Words words = Str_Words(varnames, FALSE);
+	for (i = 0; i < words.len; i++) {
+	    const char *varname = words.words[i];
+	    v = VarFind(varname, VAR_GLOBAL, 0);
 	    if (v == NULL) {
-		VAR_DEBUG("Not unexporting \"%s\" (not found)\n", av[i]);
+		VAR_DEBUG("Not unexporting \"%s\" (not found)\n", varname);
 		continue;
 	    }
 
-	    VAR_DEBUG("Unexporting \"%s\"\n", av[i]);
+	    VAR_DEBUG("Unexporting \"%s\"\n", varname);
 	    if (!unexport_env && (v->flags & VAR_EXPORTED) &&
 		!(v->flags & VAR_REEXPORT))
 		unsetenv(v->name);
@@ -756,8 +747,7 @@ Var_UnExport(const char *str)
 		free(expr);
 	    }
 	}
-	free(as);
-	free(av);
+	Words_Free(words);
 	if (varnames != str) {
 	    Var_Delete(MAKE_EXPORTED, VAR_GLOBAL);
 	    free(varnames_freeIt);
@@ -1483,9 +1473,7 @@ static char *
 VarSelectWords(char sep, Boolean oneBigWord, const char *str, int first,
 	       int last)
 {
-    char **av;			/* word list */
-    char *as;			/* word list memory */
-    size_t ac;
+    Words words;
     int start, end, step;
     int i;
 
@@ -1493,14 +1481,14 @@ VarSelectWords(char sep, Boolean oneBigWord, const char *str, int first,
     SepBuf_Init(&buf, sep);
 
     if (oneBigWord) {
-	/* fake what brk_string() would do if there were only one word */
-	ac = 1;
-	av = bmake_malloc((ac + 1) * sizeof(char *));
-	as = bmake_strdup(str);
-	av[0] = as;
-	av[1] = NULL;
+	/* fake what Str_Words() would do if there were only one word */
+	words.len = 1;
+	words.words = bmake_malloc((words.len + 1) * sizeof(char *));
+	words.freeIt = bmake_strdup(str);
+	words.words[0] = words.freeIt;
+	words.words[1] = NULL;
     } else {
-	av = brk_string(str, FALSE, &ac, &as);
+	words = Str_Words(str, FALSE);
     }
 
     /*
@@ -1509,30 +1497,29 @@ VarSelectWords(char sep, Boolean oneBigWord, const char *str, int first,
      * (-1 gets converted to ac, -2 gets converted to (ac - 1), etc.).
      */
     if (first < 0)
-	first += (int)ac + 1;
+	first += (int)words.len + 1;
     if (last < 0)
-	last += (int)ac + 1;
+	last += (int)words.len + 1;
 
     /*
      * We avoid scanning more of the list than we need to.
      */
     if (first > last) {
-	start = MIN((int)ac, first) - 1;
+	start = MIN((int)words.len, first) - 1;
 	end = MAX(0, last - 1);
 	step = -1;
     } else {
 	start = MAX(0, first - 1);
-	end = MIN((int)ac, last);
+	end = MIN((int)words.len, last);
 	step = 1;
     }
 
     for (i = start; (step < 0) == (i >= end); i += step) {
-	SepBuf_AddStr(&buf, av[i]);
+	SepBuf_AddStr(&buf, words.words[i]);
 	SepBuf_Sep(&buf);
     }
 
-    free(as);
-    free(av);
+    Words_Free(words);
 
     return SepBuf_Destroy(&buf, FALSE);
 }
@@ -1571,9 +1558,7 @@ ModifyWords(GNode *ctx, char sep, Boolean oneBigWord, const char *str,
 	    ModifyWordsCallback modifyWord, void *modifyWord_args)
 {
     SepBuf result;
-    char **av;			/* word list */
-    char *as;			/* word list memory */
-    size_t ac;
+    Words words;
     size_t i;
 
     if (oneBigWord) {
@@ -1584,39 +1569,37 @@ ModifyWords(GNode *ctx, char sep, Boolean oneBigWord, const char *str,
 
     SepBuf_Init(&result, sep);
 
-    av = brk_string(str, FALSE, &ac, &as);
+    words = Str_Words(str, FALSE);
 
-    VAR_DEBUG("ModifyWords: split \"%s\" into %zu words\n", str, ac);
+    VAR_DEBUG("ModifyWords: split \"%s\" into %zu words\n", str, words.len);
 
-    for (i = 0; i < ac; i++) {
-	modifyWord(av[i], &result, modifyWord_args);
+    for (i = 0; i < words.len; i++) {
+	modifyWord(words.words[i], &result, modifyWord_args);
 	if (result.buf.count > 0)
 	    SepBuf_Sep(&result);
     }
 
-    free(as);
-    free(av);
+    Words_Free(words);
 
     return SepBuf_Destroy(&result, FALSE);
 }
 
 
 static char *
-WordList_JoinFree(char **av, size_t ac, char *as)
+Words_JoinFree(Words words)
 {
     Buffer buf;
     size_t i;
 
     Buf_Init(&buf, 0);
 
-    for (i = 0; i < ac; i++) {
+    for (i = 0; i < words.len; i++) {
 	if (i != 0)
 	    Buf_AddByte(&buf, ' ');	/* XXX: st->sep, for consistency */
-	Buf_AddStr(&buf, av[i]);
+	Buf_AddStr(&buf, words.words[i]);
     }
 
-    free(av);
-    free(as);
+    Words_Free(words);
 
     return Buf_Destroy(&buf, FALSE);
 }
@@ -1625,9 +1608,9 @@ WordList_JoinFree(char **av, size_t ac, char *as)
 static char *
 VarUniq(const char *str)
 {
-    char *as;			/* Word list memory */
-    size_t ac;
-    char **av = brk_string(str, FALSE, &ac, &as);
+    Words words = Str_Words(str, FALSE);
+    size_t ac = words.len;
+    char **av = words.words;
 
     if (ac > 1) {
 	size_t i, j;
@@ -1637,7 +1620,7 @@ VarUniq(const char *str)
 	ac = j + 1;
     }
 
-    return WordList_JoinFree(av, ac, as);
+    return Words_JoinFree(words);
 }
 
 
@@ -2238,10 +2221,9 @@ ApplyModifier_Range(const char **pp, ApplyModifiersState *st)
     }
 
     if (n == 0) {
-	char *as;
-	char **av = brk_string(st->val, FALSE, &n, &as);
-	free(as);
-	free(av);
+        Words words = Str_Words(st->val, FALSE);
+        n = words.len;
+        Words_Free(words);
     }
 
     Buf_Init(&buf, 0);
@@ -2629,15 +2611,11 @@ ApplyModifier_Words(const char **pp, ApplyModifiersState *st)
 	} else {
 	    Buffer buf;
 
-	    /* XXX: brk_string() is a rather expensive
-	     * way of counting words. */
-	    char *as;
-	    size_t ac;
-	    char **av = brk_string(st->val, FALSE, &ac, &as);
-	    free(as);
-	    free(av);
-
-	    Buf_Init(&buf, 4);	/* 3 digits + '\0' */
+	    Words words = Str_Words(st->val, FALSE);
+	    size_t ac = words.len;
+	    Words_Free(words);
+	    	
+	    Buf_Init(&buf, 4);	/* 3 digits + '\0' is usually enough */
 	    Buf_AddInt(&buf, (int)ac);
 	    st->newVal = Buf_Destroy(&buf, FALSE);
 	}
@@ -2722,13 +2700,11 @@ ApplyModifier_Order(const char **pp, ApplyModifiersState *st)
 {
     const char *mod = (*pp)++;	/* skip past the 'O' in any case */
 
-    char *as;			/* word list memory */
-    size_t ac;
-    char **av = brk_string(st->val, FALSE, &ac, &as);
+    Words words = Str_Words(st->val, FALSE);
 
     if (mod[1] == st->endc || mod[1] == ':') {
 	/* :O sorts ascending */
-	qsort(av, ac, sizeof(char *), str_cmp_asc);
+	qsort(words.words, words.len, sizeof(char *), str_cmp_asc);
 
     } else if ((mod[1] == 'r' || mod[1] == 'x') &&
 	       (mod[2] == st->endc || mod[2] == ':')) {
@@ -2736,7 +2712,7 @@ ApplyModifier_Order(const char **pp, ApplyModifiersState *st)
 
 	if (mod[1] == 'r') {
 	    /* :Or sorts descending */
-	    qsort(av, ac, sizeof(char *), str_cmp_desc);
+	    qsort(words.words, words.len, sizeof(char *), str_cmp_desc);
 
 	} else {
 	    /* :Ox shuffles
@@ -2747,20 +2723,19 @@ ApplyModifier_Order(const char **pp, ApplyModifiersState *st)
 	     * 0 with probability 1).
 	     */
 	    size_t i;
-	    for (i = ac - 1; i > 0; i--) {
+	    for (i = words.len - 1; i > 0; i--) {
 		size_t rndidx = (size_t)random() % (i + 1);
-		char *t = av[i];
-		av[i] = av[rndidx];
-		av[rndidx] = t;
+		char *t = words.words[i];
+		words.words[i] = words.words[rndidx];
+		words.words[rndidx] = t;
 	    }
 	}
     } else {
-	free(as);
-	free(av);
+	Words_Free(words);
 	return AMR_BAD;
     }
 
-    st->newVal = WordList_JoinFree(av, ac, as);
+    st->newVal = Words_JoinFree(words);
     return AMR_OK;
 }
 
