@@ -1,4 +1,4 @@
-# $NetBSD: directive-ifmake.mk,v 1.3 2020/08/29 19:07:32 rillig Exp $
+# $NetBSD: directive-ifmake.mk,v 1.4 2020/08/30 14:25:45 rillig Exp $
 #
 # Tests for the .ifmake directive, which provides a shortcut for asking
 # whether a certain target is requested to be made from the command line.
@@ -41,5 +41,15 @@
 .warning && with ! does not work as expected
 .endif
 
-first second unmentioned:
+# Using the .MAKEFLAGS special dependency target, arbitrary command
+# line options can be added at parse time.  This means that it is
+# possible to extend the targets to be made.
+.MAKEFLAGS: late-target
+.ifmake late-target
+.info Targets can even be added at parse time.
+.else
+.info No, targets cannot be added at parse time anymore.
+.endif
+
+first second unmentioned late-target:
 	: $@
