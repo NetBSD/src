@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.136 2020/08/29 13:38:48 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.137 2020/08/30 11:12:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.136 2020/08/29 13:38:48 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.137 2020/08/30 11:12:06 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.136 2020/08/29 13:38:48 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.137 2020/08/30 11:12:06 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -330,7 +330,7 @@ SuffUnRef(void *lp, void *sp)
 {
     Lst l = (Lst) lp;
 
-    LstNode ln = Lst_Member(l, sp);
+    LstNode ln = Lst_FindDatum(l, sp);
     if (ln != NULL) {
 	Lst_Remove(l, ln);
 	((Suff *)sp)->refCount--;
@@ -1052,7 +1052,7 @@ SuffRemoveSrc(Lst l)
 		free(s->pref);
 	    else {
 #ifdef DEBUG_SRC
-		LstNode ln2 = Lst_Member(s->parent->cp, s);
+		LstNode ln2 = Lst_FindDatum(s->parent->cp, s);
 		if (ln2 != NULL)
 		    Lst_Remove(s->parent->cp, ln2);
 #endif
@@ -1209,7 +1209,7 @@ SuffFindCmds(Src *targ, Lst slst)
 
 	/* XXX: Can targ->suff be NULL here? */
 	if (targ->suff != NULL &&
-	    Lst_Member(suff->parents, targ->suff) != NULL)
+	    Lst_FindDatum(suff->parents, targ->suff) != NULL)
 	    break;
     }
 
@@ -1395,7 +1395,7 @@ SuffExpandChildren(LstNode cln, GNode *pgn)
      */
     pgn->unmade--;
     Lst_Remove(pgn->children, cln);
-    Lst_Remove(cgn->parents, Lst_Member(cgn->parents, pgn));
+    Lst_Remove(cgn->parents, Lst_FindDatum(cgn->parents, pgn));
 }
 
 static void
@@ -1444,7 +1444,7 @@ SuffExpandWildcards(LstNode cln, GNode *pgn)
      */
     pgn->unmade--;
     Lst_Remove(pgn->children, cln);
-    Lst_Remove(cgn->parents, Lst_Member(cgn->parents, pgn));
+    Lst_Remove(cgn->parents, Lst_FindDatum(cgn->parents, pgn));
 }
 
 /* Find a path along which to expand the node.
@@ -1992,7 +1992,7 @@ sfnd_abort:
 	     * up to, but not including, the parent node.
 	     */
 	    while (bottom && bottom->parent != NULL) {
-		if (Lst_Member(slst, bottom) == NULL) {
+		if (Lst_FindDatum(slst, bottom) == NULL) {
 		    Lst_Append(slst, bottom);
 		}
 		bottom = bottom->parent;
@@ -2068,7 +2068,7 @@ sfnd_abort:
      */
 sfnd_return:
     if (bottom)
-	if (Lst_Member(slst, bottom) == NULL)
+	if (Lst_FindDatum(slst, bottom) == NULL)
 	    Lst_Append(slst, bottom);
 
     while (SuffRemoveSrc(srcs) || SuffRemoveSrc(targs))

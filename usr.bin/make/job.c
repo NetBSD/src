@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.224 2020/08/29 12:20:17 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.225 2020/08/30 11:12:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.224 2020/08/29 12:20:17 rillig Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.225 2020/08/30 11:12:05 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.224 2020/08/29 12:20:17 rillig Exp $");
+__RCSID("$NetBSD: job.c,v 1.225 2020/08/30 11:12:05 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -708,7 +708,7 @@ JobPrintCommand(void *cmdp, void *jobp)
     if (strcmp(cmd, "...") == 0) {
 	job->node->type |= OP_SAVE_CMDS;
 	if ((job->flags & JOB_IGNDOTS) == 0) {
-	    LstNode dotsNode = Lst_Member(job->node->commands, cmd);
+	    LstNode dotsNode = Lst_FindDatum(job->node->commands, cmd);
 	    job->tailCmds = dotsNode != NULL ? LstNode_Next(dotsNode) : NULL;
 	    return 1;
 	}
