@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.52 2020/08/29 15:16:12 thorpej Exp $ */
+/* $NetBSD: prom.c,v 1.53 2020/08/30 16:26:56 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.52 2020/08/29 15:16:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.53 2020/08/30 16:26:56 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -59,6 +59,8 @@ int		alpha_console;
 
 extern struct prom_vec prom_dispatch_v;
 
+static int	prom_is_qemu;		/* XXX */
+
 static kmutex_t	prom_lock;
 
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
@@ -80,6 +82,19 @@ prom_lev1map(void)
 }
 #endif /* _PMAP_MAY_USE_PROM_CONSOLE */
 
+static void
+prom_check_qemu(const struct rpb * const rpb)
+{
+	if (!prom_is_qemu) {
+		if (rpb->rpb_ssn[0] == 'Q' &&
+		    rpb->rpb_ssn[1] == 'E' &&
+		    rpb->rpb_ssn[2] == 'M' &&
+		    rpb->rpb_ssn[3] == 'U') {
+			prom_is_qemu = 1;
+		}
+	}
+}
+
 void
 init_prom_interface(struct rpb *rpb)
 {
@@ -89,6 +104,8 @@ init_prom_interface(struct rpb *rpb)
 		return;
 
 	struct crb *c;
+
+	prom_check_qemu(rpb);
 
 	c = (struct crb *)((char *)rpb + rpb->rpb_crb_off);
 
@@ -192,6 +209,10 @@ promcnputc(dev_t dev, int c)
 	prom_return_t ret;
 	unsigned char *to = (unsigned char *)0x20000000;
 
+	/* XXX */
+	if (prom_is_qemu)
+		return;
+
 	prom_enter();
 	*to = c;
 
@@ -212,6 +233,10 @@ promcngetc(dev_t dev)
 {
 	prom_return_t ret;
 
+	/* XXX */
+	if (prom_is_qemu)
+		return 0;
+
 	for (;;) {
 		prom_enter();
 	        ret.bits = prom_getc(alpha_console);
@@ -231,6 +256,10 @@ promcnlookc(dev_t dev, char *cp)
 {
 	prom_return_t ret;
 
+	/* XXX */
+	if (prom_is_qemu)
+		return 0;
+
 	prom_enter();
 	ret.bits = prom_getc(alpha_console);
 	prom_leave();
@@ -246,6 +275,10 @@ prom_getenv(int id, char *buf, int len)
 {
 	unsigned char *to = (unsigned char *)0x20000000;
 	prom_return_t ret;
+
+	/* XXX */
+	if (prom_is_qemu)
+		return 0;
 
 	prom_enter();
 	ret.bits = prom_getenv_disp(id, to, len);
