@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.101 2020/08/29 12:01:46 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.102 2020/08/30 19:56:02 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -133,10 +133,22 @@ void Parse_SetInput(const char *, int, int, char *(*)(void *, size_t *), void *)
 Lst Parse_MainName(void);
 
 /* str.c */
+typedef struct {
+    char **words;
+    size_t len;
+    void *freeIt;
+} Words;
+
+Words Str_Words(const char *, Boolean);
+static inline void MAKE_ATTR_UNUSED
+Words_Free(Words w) {
+    free(w.words);
+    free(w.freeIt);
+}
+
 char *str_concat2(const char *, const char *);
 char *str_concat3(const char *, const char *, const char *);
 char *str_concat4(const char *, const char *, const char *, const char *);
-char **brk_string(const char *, Boolean, size_t *, char **);
 char *Str_FindSubstring(const char *, const char *);
 Boolean Str_Match(const char *, const char *);
 
