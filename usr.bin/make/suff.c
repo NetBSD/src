@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.137 2020/08/30 11:12:06 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.138 2020/08/30 11:15:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.137 2020/08/30 11:12:06 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.138 2020/08/30 11:15:05 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.137 2020/08/30 11:12:06 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.138 2020/08/30 11:15:05 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -390,7 +390,7 @@ SuffInsert(Lst l, Suff *s)
 
     Lst_Open(l);
     while ((ln = Lst_Next(l)) != NULL) {
-	s2 = Lst_Datum(ln);
+	s2 = LstNode_Datum(ln);
 	if (s2->sNum >= s->sNum) {
 	    break;
 	}
@@ -516,7 +516,7 @@ SuffParseTransform(char *str, Suff **out_src, Suff **out_targ)
 	    }
 	    return FALSE;
 	}
-	src = Lst_Datum(srcLn);
+	src = LstNode_Datum(srcLn);
 	str2 = str + src->nameLen;
 	if (*str2 == '\0') {
 	    single = src;
@@ -525,7 +525,7 @@ SuffParseTransform(char *str, Suff **out_src, Suff **out_targ)
 	    targLn = Lst_Find(sufflist, SuffSuffHasName, str2);
 	    if (targLn != NULL) {
 		*out_src = src;
-		*out_targ = Lst_Datum(targLn);
+		*out_targ = LstNode_Datum(targLn);
 		return TRUE;
 	    }
 	}
@@ -577,7 +577,7 @@ Suff_AddTransform(char *line)
 	 * free the commands themselves, because a given command can be
 	 * attached to several different transformations.
 	 */
-	gn = Lst_Datum(ln);
+	gn = LstNode_Datum(ln);
 	Lst_Free(gn->commands);
 	Lst_Free(gn->children);
 	gn->commands = Lst_Init();
@@ -620,7 +620,7 @@ Suff_EndTransform(void *gnp, void *dummy MAKE_ATTR_UNUSED)
     GNode *gn = (GNode *)gnp;
 
     if ((gn->type & OP_DOUBLEDEP) && !Lst_IsEmpty(gn->cohorts))
-	gn = Lst_Datum(Lst_Last(gn->cohorts));
+	gn = LstNode_Datum(Lst_Last(gn->cohorts));
     if ((gn->type & OP_TRANSFORM) && Lst_IsEmpty(gn->commands) &&
 	Lst_IsEmpty(gn->children))
     {
@@ -702,7 +702,7 @@ SuffRebuildGraph(void *transformp, void *sp)
 	     * Found target. Link in and return, since it can't be anything
 	     * else.
 	     */
-	    s2 = Lst_Datum(ln);
+	    s2 = LstNode_Datum(ln);
 	    SuffInsert(s2->children, s);
 	    SuffInsert(s->parents, s2);
 	    return 0;
@@ -729,7 +729,7 @@ SuffRebuildGraph(void *transformp, void *sp)
 	    /*
 	     * Found it -- establish the proper relationship
 	     */
-	    s2 = Lst_Datum(ln);
+	    s2 = LstNode_Datum(ln);
 	    SuffInsert(s->children, s2);
 	    SuffInsert(s2->parents, s);
 	}
@@ -843,7 +843,7 @@ Suff_GetPath(char *sname)
     if (ln == NULL) {
 	return NULL;
     } else {
-	s = Lst_Datum(ln);
+	s = LstNode_Datum(ln);
 	return s->searchPath;
     }
 }
@@ -872,7 +872,7 @@ Suff_DoPaths(void)
 
     Lst_Open(sufflist);
     while ((ln = Lst_Next(sufflist)) != NULL) {
-	s = Lst_Datum(ln);
+	s = LstNode_Datum(ln);
 	if (!Lst_IsEmpty(s->searchPath)) {
 #ifdef INCLUDES
 	    if (s->flags & SUFF_INCLUDE) {
@@ -917,7 +917,7 @@ Suff_AddInclude(char *sname)
 
     ln = Lst_Find(sufflist, SuffSuffHasName, sname);
     if (ln != NULL) {
-	s = Lst_Datum(ln);
+	s = LstNode_Datum(ln);
 	s->flags |= SUFF_INCLUDE;
     }
 }
@@ -938,7 +938,7 @@ Suff_AddLib(const char *sname)
 
     ln = Lst_Find(sufflist, SuffSuffHasName, sname);
     if (ln != NULL) {
-	s = Lst_Datum(ln);
+	s = LstNode_Datum(ln);
 	s->flags |= SUFF_LIBRARY;
     }
 }
@@ -1045,7 +1045,7 @@ SuffRemoveSrc(Lst l)
 #endif
 
     while ((ln = Lst_Next(l)) != NULL) {
-	s = Lst_Datum(ln);
+	s = LstNode_Datum(ln);
 	if (s->children == 0) {
 	    free(s->file);
 	    if (!s->parent)
@@ -1171,7 +1171,7 @@ SuffFindCmds(Src *targ, Lst slst)
 	    Lst_Close(t->children);
 	    return NULL;
 	}
-	s = Lst_Datum(ln);
+	s = LstNode_Datum(ln);
 
 	if (s->type & OP_OPTIONAL && Lst_IsEmpty(t->commands)) {
 	    /*
@@ -1205,7 +1205,7 @@ SuffFindCmds(Src *targ, Lst slst)
 	 *
 	 * XXX: Handle multi-stage transformations here, too.
 	 */
-	suff = Lst_Datum(ln);
+	suff = LstNode_Datum(ln);
 
 	/* XXX: Can targ->suff be NULL here? */
 	if (targ->suff != NULL &&
@@ -1253,7 +1253,7 @@ SuffFindCmds(Src *targ, Lst slst)
 static void
 SuffExpandChildren(LstNode cln, GNode *pgn)
 {
-    GNode   	*cgn = Lst_Datum(cln);
+    GNode   	*cgn = LstNode_Datum(cln);
     GNode	*gn;	    /* New source 8) */
     char	*cp;	    /* Expanded value */
 
@@ -1401,7 +1401,7 @@ SuffExpandChildren(LstNode cln, GNode *pgn)
 static void
 SuffExpandWildcards(LstNode cln, GNode *pgn)
 {
-    GNode   	*cgn = Lst_Datum(cln);
+    GNode   	*cgn = LstNode_Datum(cln);
     GNode	*gn;	    /* New source 8) */
     char	*cp;	    /* Expanded value */
     Lst 	explist;    /* List of expansions */
@@ -1474,7 +1474,7 @@ Suff_FindPath(GNode* gn)
 	    fprintf(debug_file, "Wildcard expanding \"%s\"...", gn->name);
 	}
 	if (ln != NULL)
-	    suff = Lst_Datum(ln);
+	    suff = LstNode_Datum(ln);
 	/* XXX: Here we can save the suffix so we don't have to do this again */
     }
 
@@ -1540,7 +1540,7 @@ SuffApplyTransform(GNode *tGn, GNode *sGn, Suff *t, Suff *s)
 	return FALSE;
     }
 
-    gn = Lst_Datum(ln);
+    gn = LstNode_Datum(ln);
 
     if (DEBUG(SUFF)) {
 	fprintf(debug_file, "\tapplying %s -> %s to \"%s\"\n", s->name, t->name, tGn->name);
@@ -1691,11 +1691,11 @@ SuffFindArchiveDeps(GNode *gn, Lst slst)
 	    /*
 	     * Got one -- apply it
 	     */
-	    if (!SuffApplyTransform(gn, mem, (Suff *)Lst_Datum(ln), ms) &&
+	    if (!SuffApplyTransform(gn, mem, (Suff *)LstNode_Datum(ln), ms) &&
 		DEBUG(SUFF))
 	    {
 		fprintf(debug_file, "\tNo transformation from %s -> %s\n",
-		       ms->name, ((Suff *)Lst_Datum(ln))->name);
+		       ms->name, ((Suff *)LstNode_Datum(ln))->name);
 	    }
 	}
     }
@@ -1797,7 +1797,7 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
 		 */
 		targ = bmake_malloc(sizeof(Src));
 		targ->file = bmake_strdup(gn->name);
-		targ->suff = Lst_Datum(ln);
+		targ->suff = LstNode_Datum(ln);
 		targ->suff->refCount++;
 		targ->node = gn;
 		targ->parent = NULL;
@@ -1877,7 +1877,7 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
 	     * for setting the local variables.
 	     */
 	    if (!Lst_IsEmpty(targs)) {
-		targ = Lst_Datum(Lst_First(targs));
+		targ = LstNode_Datum(Lst_First(targs));
 	    } else {
 		targ = NULL;
 	    }
@@ -2137,7 +2137,7 @@ SuffFindDeps(GNode *gn, Lst slst)
 	if (gn->suffix)
 	    gn->suffix->refCount--;
 	if (ln != NULL) {
-	    gn->suffix = s = Lst_Datum(ln);
+	    gn->suffix = s = LstNode_Datum(ln);
 	    gn->suffix->refCount++;
 	    Arch_FindLib(gn, s->searchPath);
 	} else {
@@ -2171,7 +2171,7 @@ Suff_SetNull(char *name)
 
     ln = Lst_Find(sufflist, SuffSuffHasName, name);
     if (ln != NULL) {
-	s = Lst_Datum(ln);
+	s = LstNode_Datum(ln);
 	if (suffNull != NULL) {
 	    suffNull->flags &= ~SUFF_NULL;
 	}

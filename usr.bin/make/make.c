@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.131 2020/08/30 11:12:06 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.132 2020/08/30 11:15:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.131 2020/08/30 11:12:06 rillig Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.132 2020/08/30 11:15:05 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.131 2020/08/30 11:12:06 rillig Exp $");
+__RCSID("$NetBSD: make.c,v 1.132 2020/08/30 11:15:05 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -486,7 +486,7 @@ Make_HandleUse(GNode *cgn, GNode *pgn)
 
     Lst_Open(cgn->children);
     while ((ln = Lst_Next(cgn->children)) != NULL) {
-	GNode *gn = Lst_Datum(ln);
+	GNode *gn = LstNode_Datum(ln);
 
 	/*
 	 * Expand variables in the .USE node's name
@@ -740,7 +740,7 @@ Make_Update(GNode *cgn)
     /* Now mark all the parents as having one less unmade child */
     Lst_Open(parents);
     while ((ln = Lst_Next(parents)) != NULL) {
-	pgn = Lst_Datum(ln);
+	pgn = LstNode_Datum(ln);
 	if (DEBUG(MAKE))
 	    fprintf(debug_file, "inspect parent %s%s: flags %x, "
 			"type %x, made %d, unmade %d ",
@@ -843,7 +843,7 @@ Make_Update(GNode *cgn)
 	const char *cpref = Var_Value(PREFIX, cgn, &p1);
 
 	while ((ln = Lst_Next(cgn->iParents)) != NULL) {
-	    pgn = Lst_Datum(ln);
+	    pgn = LstNode_Datum(ln);
 	    if (pgn->flags & REMAKE) {
 		Var_Set(IMPSRC, cname, pgn);
 		if (cpref != NULL)
@@ -1454,7 +1454,7 @@ Make_ProcessWait(Lst targs)
 	owln = Lst_First(pgn->children);
 	Lst_Open(pgn->children);
 	for (; (ln = Lst_Next(pgn->children)) != NULL; ) {
-	    cgn = Lst_Datum(ln);
+	    cgn = LstNode_Datum(ln);
 	    if (cgn->type & OP_WAIT) {
 		/* Make the .WAIT node depend on the previous children */
 		Lst_ForEachFrom(pgn->children, owln, add_wait_dep, cgn);
