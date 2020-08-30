@@ -1,4 +1,4 @@
-/* $NetBSD: kill.c,v 1.30 2018/12/12 20:22:43 kre Exp $ */
+/* $NetBSD: kill.c,v 1.31 2020/08/30 16:10:40 kre Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)kill.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kill.c,v 1.30 2018/12/12 20:22:43 kre Exp $");
+__RCSID("$NetBSD: kill.c,v 1.31 2020/08/30 16:10:40 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -267,7 +267,9 @@ printsignals(FILE *fp, int len)
 	int nl, pad;
 	const char *name;
 	int termwidth = 80;
+	int posix;
 
+	posix = getenv("POSIXLY_CORRECT") != 0;
 	if ((name = getenv("COLUMNS")) != 0)
 		termwidth = atoi(name);
 	else if (isatty(fileno(fp))) {
@@ -278,6 +280,8 @@ printsignals(FILE *fp, int len)
 	}
 
 	pad = (len | 7) + 1 - len;
+	if (posix && pad)
+		pad = 1;
 
 	for (sig = 0; (sig = signalnext(sig)) != 0; ) {
 		name = signalname(sig);
@@ -297,6 +301,8 @@ printsignals(FILE *fp, int len)
 
 		len += nl + pad;
 		pad = (nl | 7) + 1 - nl;
+		if (posix && pad)
+			pad = 1;
 
 		fprintf(fp, "%s", name);
 	}
