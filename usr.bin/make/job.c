@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.225 2020/08/30 11:12:05 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.226 2020/08/30 13:53:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.225 2020/08/30 11:12:05 rillig Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.226 2020/08/30 13:53:02 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.225 2020/08/30 11:12:05 rillig Exp $");
+__RCSID("$NetBSD: job.c,v 1.226 2020/08/30 13:53:02 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -351,8 +351,6 @@ static void JobTokenAdd(void);
 static void JobSigLock(sigset_t *);
 static void JobSigUnlock(sigset_t *);
 static void JobSigReset(void);
-
-const char *malloc_options MAKE_ATTR_UNUSED = "A"; /* see jemalloc(3) */
 
 static unsigned
 nfds_per_job(void)
