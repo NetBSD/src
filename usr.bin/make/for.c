@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.66 2020/08/29 10:32:00 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.67 2020/08/30 19:56:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.66 2020/08/29 10:32:00 rillig Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.67 2020/08/30 19:56:02 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.66 2020/08/29 10:32:00 rillig Exp $");
+__RCSID("$NetBSD: for.c,v 1.67 2020/08/30 19:56:02 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -133,8 +133,7 @@ For_Eval(char *line)
     size_t len;
     int escapes;
     unsigned char ch;
-    char **words, *word_buf;
-    size_t nwords;
+    Words words;
 
     /* Skip the '.' and any following whitespace */
     for (ptr++; *ptr && isspace((unsigned char)*ptr); ptr++)
@@ -203,15 +202,15 @@ For_Eval(char *line)
     /*
      * Split into words allowing for quoted strings.
      */
-    words = brk_string(sub, FALSE, &nwords, &word_buf);
+    words = Str_Words(sub, FALSE);
 
     free(sub);
 
-    if (words != NULL) {
+    {
         size_t n;
 
-	for (n = 0; n < nwords; n++) {
-	    ptr = words[n];
+	for (n = 0; n < words.len; n++) {
+	    ptr = words.words[n];
 	    if (!*ptr)
 		continue;
 	    escapes = 0;
@@ -234,11 +233,11 @@ For_Eval(char *line)
 	     * We have to dup words[n] to maintain the semantics of
 	     * strlist.
 	     */
-	    strlist_add_str(&new_for->items, bmake_strdup(words[n]), escapes);
+	    strlist_add_str(&new_for->items, bmake_strdup(words.words[n]),
+			    escapes);
 	}
 
-	free(words);
-	free(word_buf);
+	Words_Free(words);
 
 	if ((len = strlist_num(&new_for->items)) > 0 &&
 	    len % (n = strlist_num(&new_for->vars))) {

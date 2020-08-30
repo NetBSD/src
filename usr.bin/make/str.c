@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.63 2020/08/29 07:52:55 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.64 2020/08/30 19:56:02 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: str.c,v 1.63 2020/08/29 07:52:55 rillig Exp $";
+static char rcsid[] = "$NetBSD: str.c,v 1.64 2020/08/30 19:56:02 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: str.c,v 1.63 2020/08/29 07:52:55 rillig Exp $");
+__RCSID("$NetBSD: str.c,v 1.64 2020/08/30 19:56:02 rillig Exp $");
 #endif
 #endif				/* not lint */
 #endif
@@ -125,25 +125,19 @@ str_concat4(const char *s1, const char *s2, const char *s3, const char *s4)
 	return result;
 }
 
-/*-
- * brk_string --
- *	Fracture a string into an array of words (as delineated by tabs or
- *	spaces) taking quotation marks into account.  Leading tabs/spaces
- *	are ignored.
+/* Fracture a string into an array of words (as delineated by tabs or spaces)
+ * taking quotation marks into account.  Leading tabs/spaces are ignored.
  *
- *	If expand is TRUE, quotes are removed and escape sequences
- *	such as \r, \t, etc... are expanded. In this case, the return value
- *	is NULL on parse errors.
+ * If expand is TRUE, quotes are removed and escape sequences such as \r, \t,
+ * etc... are expanded. In this case, the return value is NULL on parse
+ * errors.
  *
- * returns --
- *	Pointer to the array of pointers to the words.
- *	Memory containing the actual words in *out_words_buf.
- *	Both of these must be free'd by the caller.
- *	Number of words in *out_words_len.
+ * Returns the fractured words, which must be freed later using Words_Free.
+ * If expand was TRUE and there was a parse error, words is NULL, and in that
+ * case, nothing needs to be freed.
  */
-char **
-brk_string(const char *str, Boolean expand,
-	   size_t *out_words_len, char **out_words_buf)
+Words
+Str_Words(const char *str, Boolean expand)
 {
 	size_t str_len;
 	char *words_buf;
@@ -233,8 +227,7 @@ brk_string(const char *str, Boolean expand,
 				if (expand && inquote) {
 					free(words);
 					free(words_buf);
-					*out_words_buf = NULL;
-					return NULL;
+					return (Words){ NULL, 0, NULL };
 				}
 				goto done;
 			}
@@ -282,9 +275,7 @@ brk_string(const char *str, Boolean expand,
 	}
 done:
 	words[words_len] = NULL;
-	*out_words_len = (int)words_len;
-	*out_words_buf = words_buf;
-	return words;
+	return (Words){ words, words_len, words_buf };
 }
 
 /*
