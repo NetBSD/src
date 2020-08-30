@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.56 2020/08/29 10:41:12 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.57 2020/08/30 11:12:05 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,11 +37,11 @@
 #include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.56 2020/08/29 10:41:12 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.57 2020/08/30 11:12:05 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.56 2020/08/29 10:41:12 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.57 2020/08/30 11:12:05 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -406,7 +406,7 @@ Lst_FindFrom(Lst list, LstNode node, LstFindProc match, const void *matchArgs)
 
 /* Return the first node that contains the given datum, or NULL. */
 LstNode
-Lst_Member(Lst list, void *datum)
+Lst_FindDatum(Lst list, const void *datum)
 {
     LstNode node;
 
