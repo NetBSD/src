@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.78 2020/08/29 20:20:44 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.79 2020/08/30 11:15:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.78 2020/08/29 20:20:44 rillig Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.79 2020/08/30 11:15:05 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.78 2020/08/29 20:20:44 rillig Exp $");
+__RCSID("$NetBSD: targ.c,v 1.79 2020/08/30 11:15:05 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -321,7 +321,7 @@ Targ_FindList(Lst names, int flags)
 
     Lst_Open(names);
     while ((ln = Lst_Next(names)) != NULL) {
-	name = Lst_Datum(ln);
+	name = LstNode_Datum(ln);
 	gn = Targ_FindNode(name, flags);
 	if (gn != NULL) {
 	    /*
@@ -586,13 +586,13 @@ Targ_Propagate(void)
     LstNode pn, cn;
 
     for (pn = Lst_First(allTargets); pn != NULL; pn = LstNode_Next(pn)) {
-	GNode *pgn = Lst_Datum(pn);
+	GNode *pgn = LstNode_Datum(pn);
 
 	if (!(pgn->type & OP_DOUBLEDEP))
 	    continue;
 
 	for (cn = Lst_First(pgn->cohorts); cn != NULL; cn = LstNode_Next(cn)) {
-	    GNode *cgn = Lst_Datum(cn);
+	    GNode *cgn = LstNode_Datum(cn);
 
 	    cgn->type |= pgn->type & ~OP_OPMASK;
 	}
