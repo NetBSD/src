@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.481 2020/08/31 19:05:53 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.482 2020/08/31 19:09:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.481 2020/08/31 19:05:53 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.482 2020/08/31 19:09:19 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.481 2020/08/31 19:05:53 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.482 2020/08/31 19:09:19 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1609,13 +1609,12 @@ static char *
 VarUniq(const char *str)
 {
     Words words = Str_Words(str, FALSE);
-    char **av = words.words;
 
     if (words.len > 1) {
 	size_t i, j;
 	for (j = 0, i = 1; i < words.len; i++)
-	    if (strcmp(av[i], av[j]) != 0 && (++j != i))
-		av[j] = av[i];
+	    if (strcmp(words.words[i], words.words[j]) != 0 && (++j != i))
+		words.words[j] = words.words[i];
 	words.len = j + 1;
     }
 
