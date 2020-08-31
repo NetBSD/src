@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.26 2020/08/25 17:37:09 rillig Exp $	*/
+/*	$NetBSD: buf.h,v 1.27 2020/08/31 16:42:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -83,9 +83,9 @@
 #include <stddef.h>
 
 typedef struct Buffer {
-    size_t size;	/* Current size of the buffer */
-    size_t count;	/* Number of bytes in buffer */
-    char *buffer;	/* The buffer itself (zero terminated) */
+    size_t size;	/* Allocated size of the buffer, including the null */
+    size_t count;	/* Number of bytes in buffer, excluding the null */
+    char *buffer;	/* The buffer itself (null-terminated) */
 } Buffer;
 
 /* If we aren't on NetBSD, __predict_false() might not be defined. */
