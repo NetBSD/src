@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.40 2020/08/31 20:25:11 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.41 2020/08/31 20:25:33 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.40 2020/08/31 20:25:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.41 2020/08/31 20:25:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -587,7 +587,7 @@ struct wg_peer {
 	volatile unsigned int	wgp_tasks;
 #define WGP_TASK_SEND_INIT_MESSAGE		__BIT(0)
 #define WGP_TASK_ENDPOINT_CHANGED		__BIT(1)
-#define WGP_TASK_SEND_KEEPALIVE_MESSAGE	__BIT(2)
+#define WGP_TASK_SEND_KEEPALIVE_MESSAGE		__BIT(2)
 #define WGP_TASK_DESTROY_PREV_SESSION		__BIT(3)
 };
 
