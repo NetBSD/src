@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.42 2020/08/31 20:26:21 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.43 2020/08/31 20:26:46 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.42 2020/08/31 20:26:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.43 2020/08/31 20:26:46 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1329,7 +1329,6 @@ wg_handle_msg_init(struct wg_softc *wg, const struct wg_msg_init *wgmi,
 	uint8_t peer_pubkey[WG_STATIC_KEY_LEN];
 	struct wg_peer *wgp;
 	struct wg_session *wgs;
-	bool reset_state_on_error = false;
 	int error, ret;
 	struct psref psref_peer;
 	struct psref psref_session;
@@ -1409,7 +1408,6 @@ wg_handle_msg_init(struct wg_softc *wg, const struct wg_msg_init *wgmi,
 		wg_clear_states(wgs);
 	}
 	wgs->wgs_state = WGS_STATE_INIT_PASSIVE;
-	reset_state_on_error = true;
 	wg_get_session(wgs, &psref_session);
 	mutex_exit(wgs->wgs_lock);
 
@@ -1509,12 +1507,10 @@ wg_handle_msg_init(struct wg_softc *wg, const struct wg_msg_init *wgmi,
 	return;
 
 out:
-	if (reset_state_on_error) {
-		mutex_enter(wgs->wgs_lock);
-		KASSERT(wgs->wgs_state == WGS_STATE_INIT_PASSIVE);
-		wgs->wgs_state = WGS_STATE_UNKNOWN;
-		mutex_exit(wgs->wgs_lock);
-	}
+	mutex_enter(wgs->wgs_lock);
+	KASSERT(wgs->wgs_state == WGS_STATE_INIT_PASSIVE);
+	wgs->wgs_state = WGS_STATE_UNKNOWN;
+	mutex_exit(wgs->wgs_lock);
 	wg_put_session(wgs, &psref_session);
 out_wgp:
 	wg_put_peer(wgp, &psref_peer);
