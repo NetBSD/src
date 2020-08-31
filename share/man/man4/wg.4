@@ -1,4 +1,4 @@
-.\"	$NetBSD: wg.4,v 1.5 2020/08/26 16:03:41 riastradh Exp $
+.\"	$NetBSD: wg.4,v 1.6 2020/08/31 20:20:22 riastradh Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,8 +38,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-interface implements a point-to-point roaming-capable virtual private
-network tunnel, configured with
+interface implements a roaming-capable virtual private network tunnel,
+configured with
 .Xr ifconfig 8
 and
 .Xr wgconfig 8 .
@@ -117,8 +117,9 @@ A# wgconfig wg0 add peer B \e
     --allowed-ips=10.0.1.1/32
 A# ifconfig wg0 up
 A# ifconfig wg0
-wg0: flags=0x51<UP,POINTOPOINT,RUNNING> mtu 1420
-        inet 10.0.1.0/24 ->  flags 0
+wg0: flags=0x8041<UP,RUNNING,MULTICAST> mtu 1420
+        inet 10.0.1.0/24 flags 0
+        inet6 fe80::22f7:d6ff:fe3a:1e60%wg0/64 flags 0 scopeid 0x3
 .Ed
 .Pp
 Configure B to connect to A at 1.2.3.4 on port 1234 and the packets can
@@ -132,8 +133,9 @@ B# wgconfig wg0 add peer A \e
     --endpoint=1.2.3.4:1234
 B# ifconfig wg0 up
 B# ifconfig wg0
-wg0: flags=0x51<UP,POINTOPOINT,RUNNING> mtu 1420
-        inet 10.0.1.1/24 ->  flags 0
+wg0: flags=0x8041<UP,RUNNING,MULTICAST> mtu 1420
+        inet 10.0.1.1/24 flags 0
+        inet6 fe80::56eb:59ff:fe3d:d413%wg0/64 flags 0 scopeid 0x3
 B# ping -n 10.0.1.0
 PING 10.0.1.0 (10.0.1.0): 56 data bytes
 64 bytes from 10.0.1.0: icmp_seq=0 ttl=255 time=2.721110 ms
