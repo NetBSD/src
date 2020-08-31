@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.152 2020/08/13 08:38:50 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.153 2020/08/31 14:12:50 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -90,7 +90,7 @@ static int	ixv_ioctl(struct ifnet *, u_long, void *);
 static int	ixv_init(struct ifnet *);
 static void	ixv_init_locked(struct adapter *);
 static void	ixv_ifstop(struct ifnet *, int);
-static void	ixv_stop(void *);
+static void	ixv_stop_locked(void *);
 static void	ixv_init_device_features(struct adapter *);
 static void	ixv_media_status(struct ifnet *, struct ifmediareq *);
 static int	ixv_media_change(struct ifnet *);
@@ -329,7 +329,7 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	hw = &adapter->hw;
 
 	adapter->init_locked = ixv_init_locked;
-	adapter->stop_locked = ixv_stop;
+	adapter->stop_locked = ixv_stop_locked;
 
 	adapter->osdep.pc = pa->pa_pc;
 	adapter->osdep.tag = pa->pa_tag;
@@ -723,7 +723,7 @@ ixv_init_locked(struct adapter *adapter)
 	/* Prepare transmit descriptors and buffers */
 	if (ixgbe_setup_transmit_structures(adapter)) {
 		aprint_error_dev(dev, "Could not setup transmit structures\n");
-		ixv_stop(adapter);
+		ixv_stop_locked(adapter);
 		return;
 	}
 
@@ -752,7 +752,7 @@ ixv_init_locked(struct adapter *adapter)
 	/* Prepare receive descriptors and buffers */
 	if (ixgbe_setup_receive_structures(adapter)) {
 		device_printf(dev, "Could not setup receive structures\n");
-		ixv_stop(adapter);
+		ixv_stop_locked(adapter);
 		return;
 	}
 
@@ -1435,7 +1435,7 @@ ixv_ifstop(struct ifnet *ifp, int disable)
 	struct adapter *adapter = ifp->if_softc;
 
 	IXGBE_CORE_LOCK(adapter);
-	ixv_stop(adapter);
+	ixv_stop_locked(adapter);
 	IXGBE_CORE_UNLOCK(adapter);
 
 	workqueue_wait(adapter->admin_wq, &adapter->admin_wc);
@@ -1445,7 +1445,7 @@ ixv_ifstop(struct ifnet *ifp, int disable)
 }
 
 static void
-ixv_stop(void *arg)
+ixv_stop_locked(void *arg)
 {
 	struct ifnet	*ifp;
 	struct adapter	*adapter = arg;
@@ -1455,7 +1455,7 @@ ixv_stop(void *arg)
 
 	KASSERT(mutex_owned(&adapter->core_mtx));
 
-	INIT_DEBUGOUT("ixv_stop: begin\n");
+	INIT_DEBUGOUT("ixv_stop_locked: begin\n");
 	ixv_disable_intr(adapter);
 
 	/* Tell the stack that the interface is no longer active */
@@ -1473,7 +1473,7 @@ ixv_stop(void *arg)
 	hw->mac.ops.set_rar(hw, 0, hw->mac.addr, 0, IXGBE_RAH_AV);
 
 	return;
-} /* ixv_stop */
+} /* ixv_stop_locked */
 
 
 /************************************************************************
@@ -2978,7 +2978,7 @@ ixv_shutdown(device_t dev)
 {
 	struct adapter *adapter = device_private(dev);
 	IXGBE_CORE_LOCK(adapter);
-	ixv_stop(adapter);
+	ixv_stop_locked(adapter);
 	IXGBE_CORE_UNLOCK(adapter);
 
 	return (0);

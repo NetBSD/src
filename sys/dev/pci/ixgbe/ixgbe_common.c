@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_common.c,v 1.29 2020/08/31 11:19:54 msaitoh Exp $ */
+/* $NetBSD: ixgbe_common.c,v 1.30 2020/08/31 14:12:50 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -1138,7 +1138,7 @@ s32 ixgbe_stop_adapter_generic(struct ixgbe_hw *hw)
 	 * This function is called in the state of both interrupt disabled
 	 * and interrupt enabled, e.g.
 	 * + interrupt disabled case:
-	 *   - ixgbe_stop()
+	 *   - ixgbe_stop_locked()
 	 *     - ixgbe_disable_intr() // interrupt disabled here
 	 *     - ixgbe_stop_adapter()
 	 *       - hw->mac.ops.stop_adapter()
