@@ -1,5 +1,5 @@
 # 
-#	$NetBSD: files.adb,v 1.9 2019/09/08 05:55:15 macallan Exp $
+#	$NetBSD: files.adb,v 1.10 2020/08/31 17:54:18 macallan Exp $
 #
 # Apple Desktop Bus protocol and drivers
 
@@ -21,6 +21,7 @@ attach adbkbd at nadb
 file dev/adb/adb_kbd.c		adbkbd needs-flag
 file dev/adb/adb_usb_map.c	adbkbd
 defflag	opt_adbkbd.h	ADBKBD_EMUL_USB
+defparam opt_adbkbd.h	ADBKBD_LAYOUT
 
 device adbbt : wskbddev
 attach adbbt at nadb

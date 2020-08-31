@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_kbd.c,v 1.29 2019/06/09 14:18:29 christos Exp $	*/
+/*	$NetBSD: adb_kbd.c,v 1.30 2020/08/31 17:54:18 macallan Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.29 2019/06/09 14:18:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.30 2020/08/31 17:54:18 macallan Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -139,10 +139,10 @@ struct wskbd_consops adbkbd_consops = {
 
 struct wskbd_mapdata adbkbd_keymapdata = {
 	akbd_keydesctab,
-#ifdef AKBD_LAYOUT
-	AKBD_LAYOUT,
+#ifdef ADBKBD_LAYOUT
+	ADBKBD_LAYOUT,
 #else
-	KB_US,
+	KB_US | KB_APPLE,
 #endif
 };
 
