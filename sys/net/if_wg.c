@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.37 2020/08/31 20:23:56 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.38 2020/08/31 20:24:19 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.37 2020/08/31 20:23:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.38 2020/08/31 20:24:19 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2683,11 +2683,13 @@ wg_handle_packet(struct wg_softc *wg, struct mbuf *m,
 		break;
 	case WG_MSG_TYPE_DATA:
 		wg_handle_msg_data(wg, m, src);
-		break;
+		/* wg_handle_msg_data frees m for us */
+		return;
 	default:
-		/* wg_validate_msg_header should already reject this case */
-		break;
+		panic("invalid message type: %d", wgm->wgm_type);
 	}
+
+	m_freem(m);
 }
 
 static void
@@ -3313,6 +3315,9 @@ wg_destroy_peer(struct wg_peer *wgp)
 	}
 	rw_exit(wg->wg_rwlock);
 
+	/* Purge pending packets.  */
+	wg_purge_pending_packets(wgp);
+
 	/* Halt all packet processing and timeouts.  */
 	softint_disestablish(wgp->wgp_si);
 	callout_halt(&wgp->wgp_rekey_timer, NULL);
@@ -3704,6 +3709,7 @@ wg_send_udp(struct wg_peer *wgp, struct mbuf *m)
 		error = udp6_output(sotoin6pcb(so), m, wgsatosin6(wgsa),
 		    NULL, curlwp);
 #else
+		m_freem(m);
 		error = EPROTONOSUPPORT;
 #endif
 	}
@@ -4653,6 +4659,8 @@ wg_send_user(struct wg_peer *wgp, struct mbuf *m)
 
 	wg_put_sa(wgp, wgsa, &psref);
 
+	m_freem(m);
+
 	return error;
 }
 
@@ -4692,6 +4700,8 @@ wg_input_user(struct ifnet *ifp, struct mbuf *m, const int af)
 
 	/* Send decrypted packets to users via a tun. */
 	rumpuser_wg_send_user(wg->wg_user, iov, 2);
+
+	m_freem(m);
 }
 
 static int
