@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.39 2020/08/31 20:24:49 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.40 2020/08/31 20:25:11 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.39 2020/08/31 20:24:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.40 2020/08/31 20:25:11 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -673,7 +673,6 @@ static void	wg_update_endpoint_if_necessary(struct wg_peer *,
 
 static void	wg_schedule_rekey_timer(struct wg_peer *);
 static void	wg_schedule_session_dtor_timer(struct wg_peer *);
-static void	wg_stop_session_dtor_timer(struct wg_peer *);
 
 static bool	wg_is_underload(struct wg_softc *, struct wg_peer *, int);
 static void	wg_calculate_keys(struct wg_session *, const bool);
@@ -1394,7 +1393,7 @@ wg_handle_msg_init(struct wg_softc *wg, const struct wg_msg_init *wgmi,
 		 * session, so clear it now.
 		 */
 		WG_TRACE("Session destroying, but force to clear");
-		wg_stop_session_dtor_timer(wgp);
+		callout_halt(&wgp->wgp_session_dtor_timer, NULL);
 		wg_clear_states(wgs);
 		wgs->wgs_state = WGS_STATE_UNKNOWN;
 	}
@@ -1529,13 +1528,6 @@ wg_schedule_handshake_timeout_timer(struct wg_peer *wgp)
 		    MIN(wg_rekey_timeout, INT_MAX/hz) * hz);
 	}
 	mutex_exit(wgp->wgp_lock);
-}
-
-static void
-wg_stop_handshake_timeout_timer(struct wg_peer *wgp)
-{
-
-	callout_halt(&wgp->wgp_handshake_timeout_timer, NULL);
 }
 
 static struct socket *
@@ -1887,7 +1879,7 @@ wg_handle_msg_resp(struct wg_softc *wg, const struct wg_msg_resp *wgmr,
 	wg_clear_states(wgs);
 	WG_TRACE("WGS_STATE_ESTABLISHED");
 
-	wg_stop_handshake_timeout_timer(wgp);
+	callout_halt(&wgp->wgp_handshake_timeout_timer, NULL);
 
 	mutex_enter(wgp->wgp_lock);
 	wg_swap_sessions(wgp);
@@ -2306,13 +2298,6 @@ wg_schedule_session_dtor_timer(struct wg_peer *wgp)
 
 	/* 1 second grace period */
 	callout_schedule(&wgp->wgp_session_dtor_timer, hz);
-}
-
-static void
-wg_stop_session_dtor_timer(struct wg_peer *wgp)
-{
-
-	callout_halt(&wgp->wgp_session_dtor_timer, NULL);
 }
 
 static bool
