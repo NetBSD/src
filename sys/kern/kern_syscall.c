@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_syscall.c,v 1.20 2020/05/23 23:42:43 ad Exp $	*/
+/*	$NetBSD: kern_syscall.c,v 1.21 2020/08/31 19:51:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.20 2020/05/23 23:42:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.21 2020/08/31 19:51:30 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -236,11 +236,16 @@ int
 trace_enter(register_t code, const struct sysent *sy, const void *args)
 {
 	int error = 0;
+#if defined(PTRACE) || defined(KDTRACE_HOOKS)
+	struct proc *p = curlwp->l_proc;
+#endif
 
 #ifdef KDTRACE_HOOKS
 	if (sy->sy_entry) {
-		struct emul *e = curlwp->l_proc->p_emul;
-		(*e->e_dtrace_syscall)(sy->sy_entry, code, sy, args, NULL, 0);
+		struct emul *e = p->p_emul;
+		if (e->e_dtrace_syscall)
+			(*e->e_dtrace_syscall)(sy->sy_entry, code, sy, args,
+			    NULL, 0);
 	}
 #endif
 
@@ -251,7 +256,7 @@ trace_enter(register_t code, const struct sysent *sy, const void *args)
 	ktrsyscall(code, args, sy->sy_narg);
 
 #ifdef PTRACE
-	if ((curlwp->l_proc->p_slflag & (PSL_SYSCALL|PSL_TRACED)) ==
+	if ((p->p_slflag & (PSL_SYSCALL|PSL_TRACED)) ==
 	    (PSL_SYSCALL|PSL_TRACED)) {
 		proc_stoptrace(TRAP_SCE, code, args, NULL, 0);
 		if (curlwp->l_proc->p_slflag & PSL_SYSCALLEMU) {
@@ -280,8 +285,10 @@ trace_exit(register_t code, const struct sysent *sy, const void *args,
 
 #ifdef KDTRACE_HOOKS
 	if (sy->sy_return) {
-		(*p->p_emul->e_dtrace_syscall)(sy->sy_return, code, sy, args,
-		    rval, error);
+		struct emul *e = p->p_emul;
+		if (e->e_dtrace_syscall)
+			(*p->p_emul->e_dtrace_syscall)(sy->sy_return, code, sy,
+			    args, rval, error);
 	}
 #endif
 
