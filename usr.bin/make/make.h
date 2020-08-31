@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.133 2020/08/30 14:11:42 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.134 2020/08/31 06:21:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -552,10 +552,10 @@ void GNode_FprintDetails(FILE *, const char *, const GNode *, const char *);
 #endif
 
 #ifndef MIN
-#define MIN(a, b) ((a < b) ? a : b)
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #endif
 #ifndef MAX
-#define MAX(a, b) ((a > b) ? a : b)
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
 #endif
 
 /* At least GNU/Hurd systems lack hardcoded MAXPATHLEN/PATH_MAX */
