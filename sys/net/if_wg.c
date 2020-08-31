@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.49 2020/08/31 20:33:58 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.50 2020/08/31 20:34:18 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.49 2020/08/31 20:33:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.50 2020/08/31 20:34:18 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2568,8 +2568,9 @@ wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
 		 *  itself to send back for KEEPALIVE-TIMEOUT seconds, it sends
 		 *  a keepalive message."
 		 */
-		WG_DLOG("time_uptime=%lu wgs_time_last_data_sent=%lu\n",
-		    time_uptime, wgs->wgs_time_last_data_sent);
+		WG_DLOG("time_uptime=%ju wgs_time_last_data_sent=%ju\n",
+		    (uintmax_t)time_uptime,
+		    (uintmax_t)wgs->wgs_time_last_data_sent);
 		if ((time_uptime - wgs->wgs_time_last_data_sent) >=
 		    wg_keepalive_timeout) {
 			WG_TRACE("Schedule sending keepalive message");
