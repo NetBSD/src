@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.140 2020/08/30 18:26:41 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.141 2020/08/31 05:56:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.140 2020/08/30 18:26:41 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.141 2020/08/31 05:56:02 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.140 2020/08/30 18:26:41 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.141 2020/08/31 05:56:02 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -230,7 +230,6 @@ static int SuffRebuildGraph(void *, void *);
 static int SuffScanTargets(void *, void *);
 static int SuffAddSrc(void *, void *);
 static void SuffAddLevel(Lst, Src *);
-static Src *SuffFindCmds(Src *, Lst);
 static void SuffExpandChildren(LstNode, GNode *);
 static void SuffExpandWildcards(LstNode, GNode *);
 static Boolean SuffApplyTransform(GNode *, GNode *, Suff *, Suff *);
@@ -1232,6 +1231,7 @@ SuffFindCmds(Src *targ, Lst slst)
 #endif
     Lst_Append(slst, ret);
     SUFF_DEBUG1("\tusing existing source %s\n", s->name);
+    Lst_Close(t->children);
     return ret;
 }
 
