@@ -404,9 +404,12 @@ Awkfloat getfval(Cell *vp)	/* get float val of a Cell */
 	else if (isrec(vp) && !donerec)
 		recbld();
 	if (!isnum(vp)) {	/* not a number */
-		vp->fval = atof(vp->sval);	/* best guess */
-		if (is_number(vp->sval) && !(vp->tval&CON))
+		if (is_number(vp->sval) && !(vp->tval&CON)) {
+			vp->fval = atof(vp->sval);	/* best guess */
 			vp->tval |= NUM;	/* make NUM only sparingly */
+		} else {
+			vp->fval = 0;
+		}
 	}
 	   dprintf( ("getfval %p: %s = %g, t=%o\n",
 		(void*)vp, NN(vp->nval), vp->fval, vp->tval) );
