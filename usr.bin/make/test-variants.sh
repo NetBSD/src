@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: test-variants.sh,v 1.1 2020/08/31 16:51:17 rillig Exp $
+# $NetBSD: test-variants.sh,v 1.2 2020/08/31 17:25:29 rillig Exp $
 #
 # Build several variants of make and run the tests on them.
 #
@@ -19,8 +19,6 @@ fail() {
 testcase() {
 	echo "===> Running $*"
 
-case "$*" in **O3*|*NDEB*) ;; *) return ;; esac
-
 	env -i PATH="$PATH" USETOOLS="no" "$@" \
 		sh -ce "make -s cleandir" \
 	&& env -i PATH="$PATH" USETOOLS="no" "$@" \
@@ -34,10 +32,21 @@ case "$*" in **O3*|*NDEB*) ;; *) return ;; esac
 
 testcase # just the plain default options
 
+# See whether the Boolean type is only used as a single-bit type.
+# By default it is aliased to int, and int is already used for any other
+# purpose.
+#
 testcase USER_CPPFLAGS="-DUSE_DOUBLE_BOOLEAN"
 
+# Ensure that variables of type Boolean are not assigned integers.
+# The only valid values are TRUE and FALSE.
+#
 testcase USER_CPPFLAGS="-DUSE_UCHAR_BOOLEAN"
 
+# Try a different compiler, with slightly different warnings and error
+# messages.  One feature that is missing from GCC is a little stricter
+# checks for enums.
+#
 testcase HAVE_LLVM="yes"
 
 testcase USE_GCC8="yes"
@@ -45,8 +54,6 @@ testcase USE_GCC8="yes"
 testcase USE_GCC9="yes"
 
 testcase USE_GCC10="yes" GCC10BASE="$HOME/pkg/gcc10"
-
-testcase USE_COVERAGE="yes"
 
 # for selecting emalloc
 testcase TOOLDIR=""
@@ -67,7 +74,7 @@ testcase USER_CPPFLAGS="-DDEBUG_REALPATH_CACHE"
 
 testcase USER_CPPFLAGS="-DDEBUG_SRC"
 
-testcase USER_CPPFLAGS="-UGMAKEEXPORT"
+#testcase USER_CPPFLAGS="-UGMAKEEXPORT"
 
 # NetBSD 8.0 x86_64
 # In file included from arch.c:135:0:
@@ -90,8 +97,9 @@ testcase USER_CPPFLAGS="-DNO_REGEX"
 # config.h:115:0: error: "RECHECK" redefined [-Werror]
 #testcase USER_CPPFLAGS="-DRECHECK"
 
-# May trigger additional "may be used uninitialized" errors.
-# Could be combined with other compilers as well.
+# This higher optimization level may trigger additional "may be used
+# uninitialized" errors. Could be combined with other compilers as well.
+#
 testcase USER_CFLAGS="-O3"
 
 testcase USER_CFLAGS="-O0 -ggdb"
@@ -120,6 +128,20 @@ testcase USER_CFLAGS="-ansi" USER_CPPFLAGS="-Dinline="
 
 # Ensure that there are only side-effect-free conditions in the assert
 # macro, or at least none that affect the outcome of the tests.
+#
 testcase USER_CPPFLAGS="-DNDEBUG"
+
+# Running the code coverage using gcov takes a long time.  Most of this
+# time is spent in gcov_read_unsigned because gcov_open sets the .gcda
+# file to unbuffered, which means that every single byte needs its own
+# system call to be read.
+#
+# Combining USE_COVERAGE with USE_GCC10 or HAVE_LLVM does not work since
+# these fail to link with the coverage library.
+#
+# Turning the optimization off is required because of:
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=96622
+#
+#testcase USE_COVERAGE="yes" USER_CFLAGS="-O0 -ggdb"
 
 test "$failed" = "no"
