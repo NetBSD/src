@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.47 2020/08/31 20:31:03 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.48 2020/08/31 20:31:43 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.47 2020/08/31 20:31:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.48 2020/08/31 20:31:43 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -4718,7 +4718,7 @@ rumpkern_wg_recv_user(struct wg_softc *wg, struct iovec *iov, size_t iovlen)
 
 	dst = iov[0].iov_base;
 
-	m = m_gethdr(M_NOWAIT, MT_DATA);
+	m = m_gethdr(M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return;
 	m->m_len = m->m_pkthdr.len = 0;
@@ -4743,7 +4743,7 @@ rumpkern_wg_recv_peer(struct wg_softc *wg, struct iovec *iov, size_t iovlen)
 
 	src = iov[0].iov_base;
 
-	m = m_gethdr(M_NOWAIT, MT_DATA);
+	m = m_gethdr(M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return;
 	m->m_len = m->m_pkthdr.len = 0;
