@@ -1,4 +1,4 @@
-/*	$NetBSD: script.c,v 1.27 2020/08/28 17:10:15 christos Exp $	*/
+/*	$NetBSD: script.c,v 1.28 2020/08/31 15:32:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: script.c,v 1.27 2020/08/28 17:10:15 christos Exp $");
+__RCSID("$NetBSD: script.c,v 1.28 2020/08/31 15:32:15 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -206,7 +206,6 @@ main(int argc, char *argv[])
 		(void)write(master, ibuf, cc);
 	}
 	childwait();
-	/* NOTREACHED */
 	return EXIT_SUCCESS;
 }
 
@@ -269,6 +268,7 @@ dooutput(void)
 			(void)fflush(fscript);
 	}
 	childwait();
+	exit(EXIT_SUCCESS);
 }
 
 static void
