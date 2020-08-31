@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_phy.h,v 1.11 2018/04/04 08:13:07 msaitoh Exp $ */
+/* $NetBSD: ixgbe_phy.h,v 1.12 2020/08/31 11:19:54 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -194,6 +194,7 @@ s32 ixgbe_get_phy_firmware_version_generic(struct ixgbe_hw *hw,
 
 s32 ixgbe_reset_phy_nl(struct ixgbe_hw *hw);
 s32 ixgbe_set_copper_phy_power(struct ixgbe_hw *hw, bool on);
+bool ixgbe_sfp_cage_full(struct ixgbe_hw *hw);
 s32 ixgbe_identify_module_generic(struct ixgbe_hw *hw);
 s32 ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw);
 u64 ixgbe_get_supported_phy_sfp_layer_generic(struct ixgbe_hw *hw);
