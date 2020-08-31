@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.46 2020/08/31 20:30:34 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.47 2020/08/31 20:31:03 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.46 2020/08/31 20:30:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.47 2020/08/31 20:31:03 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -491,9 +491,12 @@ struct wg_sockaddr {
 	struct psref_target	wgsa_psref;
 };
 
+#define wgsatoss(wgsa)		(&(wgsa)->_ss)
 #define wgsatosa(wgsa)		(&(wgsa)->_sa)
 #define wgsatosin(wgsa)		(&(wgsa)->_sin)
 #define wgsatosin6(wgsa)	(&(wgsa)->_sin6)
+
+#define	wgsa_family(wgsa)	(wgsatosa(wgsa)->sa_family)
 
 struct wg_peer;
 struct wg_allowedip {
@@ -533,10 +536,6 @@ struct wg_peer {
 
 	uint8_t	wgp_pubkey[WG_STATIC_KEY_LEN];
 	struct wg_sockaddr	*wgp_endpoint;
-#define wgp_ss		wgp_endpoint->_ss
-#define wgp_sa		wgp_endpoint->_sa
-#define wgp_sin		wgp_endpoint->_sin
-#define wgp_sin6	wgp_endpoint->_sin6
 	struct wg_sockaddr	*wgp_endpoint0;
 	bool			wgp_endpoint_changing;
 	bool			wgp_endpoint_available;
@@ -1536,10 +1535,10 @@ wg_get_so_by_af(struct wg_worker *wgw, const int af)
 }
 
 static struct socket *
-wg_get_so_by_peer(struct wg_peer *wgp)
+wg_get_so_by_peer(struct wg_peer *wgp, struct wg_sockaddr *wgsa)
 {
 
-	return wg_get_so_by_af(wgp->wgp_sc->wg_worker, wgp->wgp_sa.sa_family);
+	return wg_get_so_by_af(wgp->wgp_sc->wg_worker, wgsa_family(wgsa));
 }
 
 static struct wg_sockaddr *
@@ -1549,7 +1548,7 @@ wg_get_endpoint_sa(struct wg_peer *wgp, struct psref *psref)
 	int s;
 
 	s = pserialize_read_enter();
-	wgsa = wgp->wgp_endpoint;
+	wgsa = atomic_load_consume(&wgp->wgp_endpoint);
 	psref_acquire(psref, &wgsa->wgsa_psref, wg_psref_class);
 	pserialize_read_exit(s);
 
@@ -1571,8 +1570,8 @@ wg_send_so(struct wg_peer *wgp, struct mbuf *m)
 	struct psref psref;
 	struct wg_sockaddr *wgsa;
 
-	so = wg_get_so_by_peer(wgp);
 	wgsa = wg_get_endpoint_sa(wgp, &psref);
+	so = wg_get_so_by_peer(wgp, wgsa);
 	error = sosend(so, wgsatosa(wgsa), NULL, m, NULL, 0, curlwp);
 	wg_put_sa(wgp, wgsa, &psref);
 
@@ -1995,7 +1994,7 @@ wg_fill_msg_cookie(struct wg_softc *wg, struct wg_peer *wgp,
 	    }
 #endif
 	default:
-		panic("invalid af=%d", wgp->wgp_sa.sa_family);
+		panic("invalid af=%d", src->sa_family);
 	}
 
 	wg_algo_mac(cookie, sizeof(cookie),
@@ -2188,10 +2187,12 @@ wg_change_endpoint(struct wg_peer *wgp, const struct sockaddr *new)
 	WG_TRACE("Changing endpoint");
 
 	memcpy(wgp->wgp_endpoint0, new, new->sa_len);
+#ifndef __HAVE_ATOMIC_AS_MEMBAR	/* store-release */
+	membar_exit();
+#endif
 	wgp->wgp_endpoint0 = atomic_swap_ptr(&wgp->wgp_endpoint,
 	    wgp->wgp_endpoint0);
-	if (!wgp->wgp_endpoint_available)
-		wgp->wgp_endpoint_available = true;
+	wgp->wgp_endpoint_available = true;
 	wgp->wgp_endpoint_changing = true;
 	wg_schedule_peer_task(wgp, WGP_TASK_ENDPOINT_CHANGED);
 }
@@ -2318,10 +2319,14 @@ static void
 wg_update_endpoint_if_necessary(struct wg_peer *wgp,
     const struct sockaddr *src)
 {
+	struct wg_sockaddr *wgsa;
+	struct psref psref;
+
+	wgsa = wg_get_endpoint_sa(wgp, &psref);
 
 #ifdef WG_DEBUG_LOG
 	char oldaddr[128], newaddr[128];
-	sockaddr_format(&wgp->wgp_sa, oldaddr, sizeof(oldaddr));
+	sockaddr_format(wgsatosa(wgsa), oldaddr, sizeof(oldaddr));
 	sockaddr_format(src, newaddr, sizeof(newaddr));
 	WG_DLOG("old=%s, new=%s\n", oldaddr, newaddr);
 #endif
@@ -2330,8 +2335,8 @@ wg_update_endpoint_if_necessary(struct wg_peer *wgp,
 	 * III: "Since the packet has authenticated correctly, the source IP of
 	 * the outer UDP/IP packet is used to update the endpoint for peer..."
 	 */
-	if (__predict_false(sockaddr_cmp(src, &wgp->wgp_sa) != 0 ||
-	                    !sockaddr_port_match(src, &wgp->wgp_sa))) {
+	if (__predict_false(sockaddr_cmp(src, wgsatosa(wgsa)) != 0 ||
+		!sockaddr_port_match(src, wgsatosa(wgsa)))) {
 		mutex_enter(wgp->wgp_lock);
 		/* XXX We can't change the endpoint twice in a short period */
 		if (!wgp->wgp_endpoint_changing) {
@@ -2339,6 +2344,8 @@ wg_update_endpoint_if_necessary(struct wg_peer *wgp,
 		}
 		mutex_exit(wgp->wgp_lock);
 	}
+
+	wg_put_sa(wgp, wgsa, &psref);
 }
 
 static void
@@ -3681,10 +3688,11 @@ wg_send_udp(struct wg_peer *wgp, struct mbuf *m)
 	struct psref psref;
 	struct wg_sockaddr *wgsa;
 	int error;
-	struct socket *so = wg_get_so_by_peer(wgp);
+	struct socket *so;
 
-	solock(so);
 	wgsa = wg_get_endpoint_sa(wgp, &psref);
+	so = wg_get_so_by_peer(wgp, wgsa);
+	solock(so);
 	if (wgsatosa(wgsa)->sa_family == AF_INET) {
 		error = udp_send(so, m, wgsatosa(wgsa), NULL, curlwp);
 	} else {
@@ -3693,11 +3701,11 @@ wg_send_udp(struct wg_peer *wgp, struct mbuf *m)
 		    NULL, curlwp);
 #else
 		m_freem(m);
-		error = EPROTONOSUPPORT;
+		error = EPFNOSUPPORT;
 #endif
 	}
-	wg_put_sa(wgp, wgsa, &psref);
 	sounlock(so);
+	wg_put_sa(wgp, wgsa, &psref);
 
 	return error;
 }
@@ -3924,41 +3932,37 @@ wg_handle_prop_peer(struct wg_softc *wg, prop_dictionary_t peer,
 		memcpy(wgp->wgp_psk, psk, sizeof(wgp->wgp_psk));
 	}
 
-	struct sockaddr_storage sockaddr;
 	const void *addr;
 	size_t addr_len;
+	struct wg_sockaddr *wgsa = wgp->wgp_endpoint;
 
 	if (!prop_dictionary_get_data(peer, "endpoint", &addr, &addr_len))
 		goto skip_endpoint;
-	memcpy(&sockaddr, addr, addr_len);
-	switch (sockaddr.ss_family) {
-	case AF_INET: {
-		struct sockaddr_in sin;
-		sockaddr_copy(sintosa(&sin), sizeof(sin),
-		    (const struct sockaddr *)&sockaddr);
-		sockaddr_copy(sintosa(&wgp->wgp_sin),
-		    sizeof(wgp->wgp_sin), (const struct sockaddr *)&sockaddr);
-		char addrstr[128];
-		sockaddr_format(sintosa(&sin), addrstr, sizeof(addrstr));
-		WG_DLOG("addr=%s\n", addrstr);
-		break;
-	    }
-#ifdef INET6
-	case AF_INET6: {
-		struct sockaddr_in6 sin6;
-		char addrstr[128];
-		sockaddr_copy(sintosa(&sin6), sizeof(sin6),
-		    (const struct sockaddr *)&sockaddr);
-		sockaddr_format(sintosa(&sin6), addrstr, sizeof(addrstr));
-		WG_DLOG("addr=%s\n", addrstr);
-		sockaddr_copy(sin6tosa(&wgp->wgp_sin6),
-		    sizeof(wgp->wgp_sin6), (const struct sockaddr *)&sockaddr);
-		break;
-	    }
-#endif
-	default:
-		break;
+	if (addr_len < sizeof(*wgsatosa(wgsa)) ||
+	    addr_len > sizeof(*wgsatoss(wgsa))) {
+		error = EINVAL;
+		goto out;
 	}
+	memcpy(wgsatoss(wgsa), addr, addr_len);
+	switch (wgsa_family(wgsa)) {
+	case AF_INET:
+#ifdef INET6
+	case AF_INET6:
+#endif
+		break;
+	default:
+		error = EPFNOSUPPORT;
+		goto out;
+	}
+	if (addr_len != sockaddr_getsize_by_family(wgsa_family(wgsa))) {
+		error = EINVAL;
+		goto out;
+	}
+    {
+	char addrstr[128];
+	sockaddr_format(wgsatosa(wgsa), addrstr, sizeof(addrstr));
+	WG_DLOG("addr=%s\n", addrstr);
+    }
 	wgp->wgp_endpoint_available = true;
 
 	prop_array_t allowedips;
@@ -4248,10 +4252,11 @@ wg_ioctl_get(struct wg_softc *wg, struct ifdrv *ifd)
 	s = pserialize_read_enter();
 	i = 0;
 	WG_PEER_READER_FOREACH(wgp, wg) {
-		struct psref psref;
+		struct wg_sockaddr *wgsa;
+		struct psref wgp_psref, wgsa_psref;
 		prop_dictionary_t prop_peer;
 
-		wg_get_peer(wgp, &psref);
+		wg_get_peer(wgp, &wgp_psref);
 		pserialize_read_exit(s);
 
 		prop_peer = prop_dictionary_create();
@@ -4277,20 +4282,16 @@ wg_ioctl_get(struct wg_softc *wg, struct ifdrv *ifd)
 				goto next;
 		}
 
-		switch (wgp->wgp_sa.sa_family) {
-		case AF_INET:
-			if (!prop_dictionary_set_data(prop_peer, "endpoint",
-				&wgp->wgp_sin, sizeof(wgp->wgp_sin)))
-				goto next;
-			break;
-#ifdef INET6
-		case AF_INET6:
-			if (!prop_dictionary_set_data(prop_peer, "endpoint",
-				&wgp->wgp_sin6, sizeof(wgp->wgp_sin6)))
-				goto next;
-			break;
-#endif
+		wgsa = wg_get_endpoint_sa(wgp, &wgsa_psref);
+		CTASSERT(AF_UNSPEC == 0);
+		if (wgsa_family(wgsa) != 0 /*AF_UNSPEC*/ &&
+		    !prop_dictionary_set_data(prop_peer, "endpoint",
+			wgsatoss(wgsa),
+			sockaddr_getsize_by_family(wgsa_family(wgsa)))) {
+			wg_put_sa(wgp, wgsa, &wgsa_psref);
+			goto next;
 		}
+		wg_put_sa(wgp, wgsa, &wgsa_psref);
 
 		const struct timespec *t = &wgp->wgp_last_handshake_time;
 
@@ -4356,7 +4357,7 @@ wg_ioctl_get(struct wg_softc *wg, struct ifdrv *ifd)
 		i++;
 
 		s = pserialize_read_enter();
-		wg_put_peer(wgp, &psref);
+		wg_put_peer(wgp, &wgp_psref);
 	}
 	pserialize_read_exit(s);
 
