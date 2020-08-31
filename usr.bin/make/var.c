@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.480 2020/08/31 17:41:38 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.481 2020/08/31 19:05:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.480 2020/08/31 17:41:38 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.481 2020/08/31 19:05:53 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.480 2020/08/31 17:41:38 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.481 2020/08/31 19:05:53 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1624,9 +1624,10 @@ VarUniq(const char *str)
 
 
 /*-
- * Parse a text part of a modifier such as the "from" and "to" in :S/from/to/
- * or the :@ modifier, until the next unescaped delimiter.  The delimiter, as
- * well as the backslash or the dollar, can be escaped with a backslash.
+ * Parse a part of a modifier such as the "from" and "to" in :S/from/to/
+ * or the "var" or "replacement" in :@var@replacement+${var}@, up to and
+ * including the next unescaped delimiter.  The delimiter, as well as the
+ * backslash or the dollar, can be escaped with a backslash.
  *
  * Return the parsed (and possibly expanded) string, or NULL if no delimiter
  * was found.  On successful return, the parsing position pp points right
