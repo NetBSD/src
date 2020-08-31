@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_keymap.h,v 1.7 2020/08/29 22:33:53 macallan Exp $	*/
+/*	$NetBSD: adb_keymap.h,v 1.8 2020/08/31 17:51:56 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -89,11 +89,11 @@ static const keysym_t akbd_keydesc_us[] = {
     KC(51),			KS_Delete,
     KC(52),			KS_KP_Enter,    /* Pretend this is alt-R ? */
     KC(53),			KS_Escape,
-    KC(54),			KS_Control_L,
-    KC(55),  KS_Cmd,		KS_Meta_L,	/* Command */
+    KC(54),  KS_Cmd1,		KS_Control_L,
+    KC(55),			KS_Meta_L,	/* Command */
     KC(56),			KS_Shift_L,
     KC(57),			KS_Caps_Lock,
-    KC(58),			KS_Alt_L,	/* Option */
+    KC(58),  KS_Cmd2,		KS_Alt_L,	/* Option */
     KC(59),			KS_Left,
     KC(60),			KS_Right,
     KC(61), KS_Cmd_ScrollSlowDown, KS_Down,
@@ -152,6 +152,13 @@ static const keysym_t akbd_keydesc_us[] = {
     KC(124),			KS_Alt_R,
     KC(125),			KS_Control_R,
     KC(127),  KS_Cmd_Debugger,
+};
+
+static const keysym_t akbd_keydesc_apple[] = {
+/*  pos      command		normal		shifted */
+    KC(54),			KS_Control_L,
+    KC(55),  KS_Cmd,		KS_Meta_L,	/* Command */
+    KC(58),			KS_Alt_L,	/* Option */
 };
 
 static const keysym_t akbd_keydesc_us_dvorak[] = {
@@ -450,18 +457,35 @@ static const keysym_t akbd_keydesc_pt[] = {
 
 static const struct wscons_keydesc akbd_keydesctab[] = {
 	KBD_MAP(KB_US,			0,	akbd_keydesc_us),
+	KBD_MAP(KB_US | KB_APPLE,	KB_US,	akbd_keydesc_apple),
 	KBD_MAP(KB_US | KB_DVORAK,      KB_US,  akbd_keydesc_us_dvorak),
+	KBD_MAP(KB_US | KB_DVORAK | KB_APPLE, KB_US | KB_DVORAK,
+						akbd_keydesc_apple),
 	KBD_MAP(KB_FR,			KB_US,	akbd_keydesc_fr),
-	KBD_MAP(KB_JP,			KB_US,	akbd_keydesc_jp),
 	KBD_MAP(KB_FR | KB_NODEAD,	KB_FR,	akbd_keydesc_fr_nodead),
+	KBD_MAP(KB_FR | KB_APPLE,	KB_FR,	akbd_keydesc_apple),
+	KBD_MAP(KB_FR | KB_NODEAD | KB_APPLE,	KB_FR | KB_DVORAK,
+						akbd_keydesc_apple),
+	KBD_MAP(KB_JP,			KB_US,	akbd_keydesc_jp),
+	KBD_MAP(KB_JP | KB_APPLE,	KB_JP,	akbd_keydesc_apple),
 	KBD_MAP(KB_SF,			KB_US,  akbd_keydesc_sf),
+	KBD_MAP(KB_SF | KB_APPLE,	KB_SF,	akbd_keydesc_apple),
 	KBD_MAP(KB_SV,			KB_US,  akbd_keydesc_sv),
+	KBD_MAP(KB_SV | KB_APPLE,	KB_SV,	akbd_keydesc_apple),
 	KBD_MAP(KB_SV | KB_NODEAD,	KB_SV,  akbd_keydesc_sv_nodead),
+	KBD_MAP(KB_SV | KB_NODEAD | KB_APPLE,	KB_SV | KB_NODEAD,
+						akbd_keydesc_apple),
 	KBD_MAP(KB_DE,			KB_US,  akbd_keydesc_de),
+	KBD_MAP(KB_DE | KB_APPLE,	KB_DE,	akbd_keydesc_apple),
 	KBD_MAP(KB_DE | KB_NODEAD,	KB_DE,  akbd_keydesc_de_nodead),
+	KBD_MAP(KB_DE | KB_NODEAD | KB_APPLE,	KB_DE | KB_NODEAD,
+						akbd_keydesc_apple),
 	KBD_MAP(KB_UK,			KB_US,  akbd_keydesc_uk),
+	KBD_MAP(KB_UK | KB_APPLE,	KB_UK,	akbd_keydesc_apple),
 	KBD_MAP(KB_ES,			KB_US,	akbd_keydesc_es),
+	KBD_MAP(KB_ES | KB_APPLE,	KB_ES,	akbd_keydesc_apple),
 	KBD_MAP(KB_PT,                  KB_US,  akbd_keydesc_pt),
+	KBD_MAP(KB_PT | KB_APPLE,	KB_PT,	akbd_keydesc_apple),
 	{0, 0, 0, 0}
 };
 
