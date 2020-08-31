@@ -432,17 +432,11 @@ Cell *awkgetline(Node **a, int n)	/* get next line from specific input */
 		} else if (a[0] != NULL) {	/* getline var <file */
 			x = execute(a[0]);
 			setsval(x, buf);
-			if (is_number(x->sval)) {
-				x->fval = atof(x->sval);
-				x->tval |= NUM;
-			}
+			check_number(x);
 			tempfree(x);
 		} else {			/* getline <file */
 			setsval(fldtab[0], buf);
-			if (is_number(fldtab[0]->sval)) {
-				fldtab[0]->fval = atof(fldtab[0]->sval);
-				fldtab[0]->tval |= NUM;
-			}
+			check_number(fldtab[0]);
 		}
 	} else {			/* bare getline; use current input */
 		if (a[0] == NULL)	/* getline */
@@ -451,10 +445,7 @@ Cell *awkgetline(Node **a, int n)	/* get next line from specific input */
 			n = getrec(&buf, &bufsize, false);
 			x = execute(a[0]);
 			setsval(x, buf);
-			if (is_number(x->sval)) {
-				x->fval = atof(x->sval);
-				x->tval |= NUM;
-			}
+			check_number(x);
 			tempfree(x);
 		}
 	}
