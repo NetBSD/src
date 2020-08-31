@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.248 2020/08/27 04:54:43 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.249 2020/08/31 06:20:06 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -4506,11 +4506,26 @@ ixgbe_handle_timer(struct work *wk, void *context)
 
 	/* Check for pluggable optics */
 	if (ixgbe_is_sfp(hw)) {
-		bool was_full = hw->phy.sfp_type != ixgbe_sfp_type_not_present;
-		bool is_full = ixgbe_sfp_cage_full(adapter);
+		bool sched_mod_task = false;
 
-		/* do probe if cage state changed */
-		if (was_full ^ is_full) {
+		if (hw->mac.type == ixgbe_mac_82598EB) {
+			/*
+			 * On 82598EB, SFP+'s MOD_ABS pin is not connected to
+			 * any GPIP(SDP). So just schedule TASK_MOD.
+			 */
+			sched_mod_task = true;
+		} else {
+			bool was_full, is_full;
+
+			was_full =
+			    hw->phy.sfp_type != ixgbe_sfp_type_not_present;
+			is_full = ixgbe_sfp_cage_full(adapter);
+
+			/* Do probe if cage state changed */
+			if (was_full ^ is_full)
+				sched_mod_task = true;
+		}
+		if (sched_mod_task) {
 			atomic_or_32(&adapter->task_requests,
 			    IXGBE_REQUEST_TASK_MOD);
 			ixgbe_schedule_admin_tasklet(adapter);
@@ -4683,8 +4698,12 @@ ixgbe_handle_mod(void *context)
 	struct adapter	*adapter = context;
 	struct ixgbe_hw *hw = &adapter->hw;
 	device_t	dev = adapter->dev;
+	enum ixgbe_sfp_type last_sfp_type;
 	u32		err, cage_full = 0;
+	bool		last_unsupported_sfp_recovery;
 
+	last_sfp_type = hw->phy.sfp_type;
+	last_unsupported_sfp_recovery = hw->need_unsupported_sfp_recovery;
 	++adapter->mod_workev.ev_count;
 	if (adapter->hw.need_crosstalk_fix) {
 		switch (hw->mac.type) {
@@ -4711,8 +4730,9 @@ ixgbe_handle_mod(void *context)
 
 	err = hw->phy.ops.identify_sfp(hw);
 	if (err == IXGBE_ERR_SFP_NOT_SUPPORTED) {
-		device_printf(dev,
-		    "Unsupported SFP+ module type was detected.\n");
+		if (last_unsupported_sfp_recovery == false)
+			device_printf(dev,
+			    "Unsupported SFP+ module type was detected.\n");
 		goto out;
 	}
 
@@ -4726,7 +4746,10 @@ ixgbe_handle_mod(void *context)
 		 * approach.
 		 */
 		ixgbe_init_locked(adapter);
-	} else {
+	} else if ((hw->phy.sfp_type != ixgbe_sfp_type_not_present) &&
+	    (hw->phy.sfp_type != last_sfp_type)) {
+		/* A module is inserted and changed. */
+
 		if (hw->mac.type == ixgbe_mac_82598EB)
 			err = hw->phy.ops.reset(hw);
 		else {
@@ -4751,7 +4774,14 @@ out:
 	ifmedia_set(&adapter->media, IFM_ETHER | IFM_AUTO);
 	IXGBE_CORE_LOCK(adapter);
 
-	atomic_or_32(&adapter->task_requests, IXGBE_REQUEST_TASK_MSF);
+	/*
+	 * Don't shedule MSF event if the chip is 82598. 82598 doesn't support
+	 * MSF. At least, calling ixgbe_handle_msf on 82598 DA makes the link
+	 * flap because the function call setup_link().
+	 */
+	if (hw->mac.type != ixgbe_mac_82598EB)
+		atomic_or_32(&adapter->task_requests, IXGBE_REQUEST_TASK_MSF);
+
 	/*
 	 * Don't call ixgbe_schedule_admin_tasklet() because we are on
 	 * the workqueue now.
