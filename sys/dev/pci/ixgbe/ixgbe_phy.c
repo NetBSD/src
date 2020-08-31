@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_phy.c,v 1.21 2020/04/17 02:21:25 msaitoh Exp $ */
+/* $NetBSD: ixgbe_phy.c,v 1.22 2020/08/31 06:20:06 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -1356,7 +1356,8 @@ s32 ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw)
 		goto err_read_i2c_eeprom;
 
 	if (identifier != IXGBE_SFF_IDENTIFIER_SFP) {
-		hw->phy.type = ixgbe_phy_sfp_unsupported;
+		if (hw->phy.type != ixgbe_phy_nl)
+			hw->phy.type = ixgbe_phy_sfp_unsupported;
 		status = IXGBE_ERR_SFP_NOT_SUPPORTED;
 	} else {
 		status = hw->phy.ops.read_i2c_eeprom(hw,
@@ -1529,12 +1530,17 @@ s32 ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw)
 
 		/* Allow any DA cable vendor */
 		if (cable_tech & (IXGBE_SFF_DA_PASSIVE_CABLE |
-			IXGBE_SFF_DA_ACTIVE_CABLE)) {
+		    IXGBE_SFF_DA_ACTIVE_CABLE)) {
+			status = IXGBE_SUCCESS;
+
+			/* Keep phy.type for ixgbe_phy_nl */
+			if (hw->phy.type == ixgbe_phy_nl)
+				goto out;
+
 			if (cable_tech & IXGBE_SFF_DA_PASSIVE_CABLE)
 				hw->phy.type = ixgbe_phy_sfp_passive_unknown;
 			else if (cable_tech & IXGBE_SFF_DA_ACTIVE_CABLE)
 				hw->phy.type = ixgbe_phy_sfp_active_unknown;
-			status = IXGBE_SUCCESS;
 			goto out;
 		}
 
@@ -1546,7 +1552,8 @@ s32 ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw)
 		      hw->phy.sfp_type == ixgbe_sfp_type_1g_lx_core1 ||
 		      hw->phy.sfp_type == ixgbe_sfp_type_1g_sx_core0 ||
 		      hw->phy.sfp_type == ixgbe_sfp_type_1g_sx_core1)) {
-			hw->phy.type = ixgbe_phy_sfp_unsupported;
+			if (hw->phy.type != ixgbe_phy_nl)
+				hw->phy.type = ixgbe_phy_sfp_unsupported;
 			status = IXGBE_ERR_SFP_NOT_SUPPORTED;
 			goto out;
 		}
@@ -1574,8 +1581,9 @@ s32 ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw)
 					status = IXGBE_SUCCESS;
 				} else {
 					DEBUGOUT("SFP+ module not supported\n");
-					hw->phy.type =
-						ixgbe_phy_sfp_unsupported;
+					if (hw->phy.type != ixgbe_phy_nl)
+						hw->phy.type =
+						    ixgbe_phy_sfp_unsupported;
 					status = IXGBE_ERR_SFP_NOT_SUPPORTED;
 				}
 			}
@@ -1585,7 +1593,7 @@ s32 ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw)
 	}
 
 out:
-	if (hw->phy.type == ixgbe_phy_sfp_unsupported)
+	if (status == IXGBE_ERR_SFP_NOT_SUPPORTED)
 		hw->need_unsupported_sfp_recovery = true;
 	return status;
 
