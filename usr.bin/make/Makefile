@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.97 2020/08/31 06:44:12 rillig Exp $
+#	$NetBSD: Makefile,v 1.98 2020/08/31 16:41:19 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -89,6 +89,7 @@ COPTS.arch.c+=	-Wno-error=format-truncation
 COPTS.dir.c+=	-Wno-error=format-truncation
 COPTS.main.c+=	-Wno-error=format-truncation
 COPTS.meta.c+=	-Wno-error=format-truncation
+COPTS.parse.c+=	-Wno-error=format-truncation
 .endif
 
 USE_META?=	yes
