@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.45 2020/08/31 20:29:14 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.46 2020/08/31 20:30:34 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.45 2020/08/31 20:29:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.46 2020/08/31 20:30:34 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1433,6 +1433,23 @@ wg_handle_msg_init(struct wg_softc *wg, const struct wg_msg_init *wgmi,
 		WG_TRACE("under load, but continue to sending");
 	}
 
+	/* [N] 2.2: "ss" */
+	/* Ci, k := KDF2(Ci, DH(Si^priv, Sr^pub)) */
+	wg_algo_dh_kdf(ckey, cipher_key, wg->wg_privkey, wgp->wgp_pubkey);
+
+	/* msg.timestamp := AEAD(k, TIMESTAMP(), Hi) */
+	wg_timestamp_t timestamp;
+	error = wg_algo_aead_dec(timestamp, sizeof(timestamp), cipher_key, 0,
+	    wgmi->wgmi_timestamp, sizeof(wgmi->wgmi_timestamp),
+	    hash, sizeof(hash));
+	if (error != 0) {
+		WG_LOG_RATECHECK(&wgp->wgp_ppsratecheck, LOG_DEBUG,
+		    "wg_algo_aead_dec for timestamp failed\n");
+		goto out_wgp;
+	}
+	/* Hi := HASH(Hi || msg.timestamp) */
+	wg_algo_hash(hash, wgmi->wgmi_timestamp, sizeof(wgmi->wgmi_timestamp));
+
 	wgs = wg_lock_unstable_session(wgp);
 	if (wgs->wgs_state == WGS_STATE_DESTROYING) {
 		/*
@@ -1458,23 +1475,6 @@ wg_handle_msg_init(struct wg_softc *wg, const struct wg_msg_init *wgmi,
 	wgs->wgs_state = WGS_STATE_INIT_PASSIVE;
 	wg_get_session(wgs, &psref_session);
 	mutex_exit(wgs->wgs_lock);
-
-	/* [N] 2.2: "ss" */
-	/* Ci, k := KDF2(Ci, DH(Si^priv, Sr^pub)) */
-	wg_algo_dh_kdf(ckey, cipher_key, wg->wg_privkey, wgp->wgp_pubkey);
-
-	/* msg.timestamp := AEAD(k, TIMESTAMP(), Hi) */
-	wg_timestamp_t timestamp;
-	error = wg_algo_aead_dec(timestamp, sizeof(timestamp), cipher_key, 0,
-	    wgmi->wgmi_timestamp, sizeof(wgmi->wgmi_timestamp),
-	    hash, sizeof(hash));
-	if (error != 0) {
-		WG_LOG_RATECHECK(&wgp->wgp_ppsratecheck, LOG_DEBUG,
-		    "wg_algo_aead_dec for timestamp failed\n");
-		goto out;
-	}
-	/* Hi := HASH(Hi || msg.timestamp) */
-	wg_algo_hash(hash, wgmi->wgmi_timestamp, sizeof(wgmi->wgmi_timestamp));
 
 	/*
 	 * [W] 5.1 "The responder keeps track of the greatest timestamp
