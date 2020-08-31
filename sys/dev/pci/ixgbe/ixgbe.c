@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.250 2020/08/31 06:23:19 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.251 2020/08/31 11:19:54 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -70,6 +70,7 @@
 #endif
 
 #include "ixgbe.h"
+#include "ixgbe_phy.h"
 #include "ixgbe_sriov.h"
 #include "vlan.h"
 
@@ -256,9 +257,6 @@ static int	ixgbe_sysctl_eee_state(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_debug(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_wol_enable(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_wufc(SYSCTLFN_PROTO);
-
-/* Support for pluggable optic modules */
-static bool	ixgbe_sfp_cage_full(struct adapter *);
 
 /* Legacy (single vector) interrupt handler */
 static int	ixgbe_legacy_irq(void *);
@@ -786,7 +784,7 @@ ixgbe_quirks(struct adapter *adapter)
 		    (strcmp(product, "MA10-ST0") == 0)) {
 			aprint_verbose_dev(dev,
 			    "Enable SFP+ MOD_ABS inverse quirk\n");
-			adapter->quirks |= IXGBE_QUIRK_MOD_ABS_INVERT;
+			adapter->hw.quirks |= IXGBE_QUIRK_MOD_ABS_INVERT;
 		}
 	}
 }
@@ -4519,7 +4517,7 @@ ixgbe_handle_timer(struct work *wk, void *context)
 
 			was_full =
 			    hw->phy.sfp_type != ixgbe_sfp_type_not_present;
-			is_full = ixgbe_sfp_cage_full(adapter);
+			is_full = ixgbe_sfp_cage_full(hw);
 
 			/* Do probe if cage state changed */
 			if (was_full ^ is_full)
@@ -4661,35 +4659,6 @@ ixgbe_handle_recovery_mode_timer(struct work *wk, void *context)
 } /* ixgbe_handle_recovery_mode_timer */
 
 /************************************************************************
- * ixgbe_sfp_cage_full
- *
- *   Determine if a port had optics inserted.
- ************************************************************************/
-static bool
-ixgbe_sfp_cage_full(struct adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	uint32_t mask;
-	int rv;
-
-	if (hw->mac.type >= ixgbe_mac_X540)
-		mask = IXGBE_ESDP_SDP0;
-	else
-		mask = IXGBE_ESDP_SDP2;
-
-	rv = IXGBE_READ_REG(hw, IXGBE_ESDP) & mask;
-	if ((adapter->quirks & IXGBE_QUIRK_MOD_ABS_INVERT) != 0)
-		rv = !rv;
-
-	if (hw->mac.type == ixgbe_mac_X550EM_a) {
-		/* X550EM_a's SDP0 is inverted than others. */
-		return !rv;
-	}
-
-	return rv;
-} /* ixgbe_sfp_cage_full */
-
-/************************************************************************
  * ixgbe_handle_mod - Tasklet for SFP module interrupts
  ************************************************************************/
 static void
@@ -4699,32 +4668,15 @@ ixgbe_handle_mod(void *context)
 	struct ixgbe_hw *hw = &adapter->hw;
 	device_t	dev = adapter->dev;
 	enum ixgbe_sfp_type last_sfp_type;
-	u32		err, cage_full = 0;
+	u32		err;
 	bool		last_unsupported_sfp_recovery;
 
 	last_sfp_type = hw->phy.sfp_type;
 	last_unsupported_sfp_recovery = hw->need_unsupported_sfp_recovery;
 	++adapter->mod_workev.ev_count;
 	if (adapter->hw.need_crosstalk_fix) {
-		switch (hw->mac.type) {
-		case ixgbe_mac_82599EB:
-			cage_full = IXGBE_READ_REG(hw, IXGBE_ESDP) &
-			    IXGBE_ESDP_SDP2;
-			break;
-		case ixgbe_mac_X550EM_x:
-		case ixgbe_mac_X550EM_a:
-			/*
-			 * XXX See ixgbe_sfp_cage_full(). It seems the bit is
-			 * inverted on X550EM_a, so I think this is incorrect.
-			 */
-			cage_full = IXGBE_READ_REG(hw, IXGBE_ESDP) &
-			    IXGBE_ESDP_SDP0;
-			break;
-		default:
-			break;
-		}
-
-		if (!cage_full)
+		if ((hw->mac.type != ixgbe_mac_82598EB) &&
+		    !ixgbe_sfp_cage_full(hw))
 			goto out;
 	}
 
