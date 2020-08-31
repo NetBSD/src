@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_common.c,v 1.28 2020/08/27 03:57:52 msaitoh Exp $ */
+/* $NetBSD: ixgbe_common.c,v 1.29 2020/08/31 11:19:54 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -4267,25 +4267,8 @@ s32 ixgbe_check_mac_link_generic(struct ixgbe_hw *hw, ixgbe_link_speed *speed,
 	 * the SFP+ cage is full.
 	 */
 	if (ixgbe_need_crosstalk_fix(hw)) {
-		u32 sfp_cage_full;
-
-		switch (hw->mac.type) {
-		case ixgbe_mac_82599EB:
-			sfp_cage_full = IXGBE_READ_REG(hw, IXGBE_ESDP) &
-					IXGBE_ESDP_SDP2;
-			break;
-		case ixgbe_mac_X550EM_x:
-		case ixgbe_mac_X550EM_a:
-			sfp_cage_full = IXGBE_READ_REG(hw, IXGBE_ESDP) &
-					IXGBE_ESDP_SDP0;
-			break;
-		default:
-			/* sanity check - No SFP+ devices here */
-			sfp_cage_full = FALSE;
-			break;
-		}
-
-		if (!sfp_cage_full) {
+		if ((hw->mac.type != ixgbe_mac_82598EB) &&
+		    !ixgbe_sfp_cage_full(hw)) {
 			*link_up = FALSE;
 			*speed = IXGBE_LINK_SPEED_UNKNOWN;
 			return IXGBE_SUCCESS;
