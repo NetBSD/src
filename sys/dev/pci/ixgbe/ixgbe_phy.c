@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_phy.c,v 1.22 2020/08/31 06:20:06 msaitoh Exp $ */
+/* $NetBSD: ixgbe_phy.c,v 1.23 2020/08/31 11:19:54 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -1288,6 +1288,36 @@ err_eeprom:
 	return IXGBE_ERR_PHY;
 }
 
+/************************************************************************
+ * ixgbe_sfp_cage_full
+ *
+ *   Determine if an SFP+ module is inserted to the cage.
+ ************************************************************************/
+bool
+ixgbe_sfp_cage_full(struct ixgbe_hw *hw)
+{
+	uint32_t mask;
+	int rv;
+
+	KASSERT(hw->mac.type != ixgbe_mac_82598EB);
+
+	if (hw->mac.type >= ixgbe_mac_X540)
+		mask = IXGBE_ESDP_SDP0;
+	else
+		mask = IXGBE_ESDP_SDP2;
+
+	rv = IXGBE_READ_REG(hw, IXGBE_ESDP) & mask;
+	if ((hw->quirks & IXGBE_QUIRK_MOD_ABS_INVERT) != 0)
+		rv = !rv;
+
+	if (hw->mac.type == ixgbe_mac_X550EM_a) {
+		/* X550EM_a's SDP0 is inverted than others. */
+		return !rv;
+	}
+
+	return rv;
+} /* ixgbe_sfp_cage_full */
+
 /**
  *  ixgbe_identify_module_generic - Identifies module type
  *  @hw: pointer to hardware structure
@@ -1299,6 +1329,14 @@ s32 ixgbe_identify_module_generic(struct ixgbe_hw *hw)
 	s32 status = IXGBE_ERR_SFP_NOT_PRESENT;
 
 	DEBUGFUNC("ixgbe_identify_module_generic");
+
+	/* Lightweight way to check if the cage is not full. */
+	if (hw->mac.type != ixgbe_mac_82598EB) {
+		if (!ixgbe_sfp_cage_full(hw)) {
+			hw->phy.sfp_type = ixgbe_sfp_type_not_present;
+			return IXGBE_ERR_SFP_NOT_PRESENT;
+		}
+	}
 
 	switch (hw->mac.ops.get_media_type(hw)) {
 	case ixgbe_media_type_fiber:

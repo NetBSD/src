@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_type.h,v 1.44 2019/12/23 09:36:18 msaitoh Exp $ */
+/* $NetBSD: ixgbe_type.h,v 1.45 2020/08/31 11:19:54 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -4264,6 +4264,7 @@ struct ixgbe_hw {
 	bool wol_enabled;
 	bool need_crosstalk_fix;
 	bool need_unsupported_sfp_recovery;
+	u32 quirks;
 };
 
 #define ixgbe_call_func(hw, func, params, error) \
@@ -4536,5 +4537,8 @@ struct ixgbe_bypass_eeprom {
 #define IXGBE_HOST_INTERFACE_FLASH_INFO_CMD			0x37
 #define IXGBE_HOST_INTERFACE_APPLY_UPDATE_CMD			0x38
 #define IXGBE_HOST_INTERFACE_MASK_CMD				0x000000FF
+
+/* Flags for hw.quirks */
+#define IXGBE_QUIRK_MOD_ABS_INVERT	__BIT(0)
 
 #endif /* _IXGBE_TYPE_H_ */
