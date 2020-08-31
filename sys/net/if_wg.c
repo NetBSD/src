@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.34 2020/08/31 20:20:48 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.35 2020/08/31 20:21:09 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.34 2020/08/31 20:20:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.35 2020/08/31 20:21:09 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3327,6 +3327,7 @@ restart:
 	mutex_enter(wg->wg_lock);
 	WG_PEER_WRITER_FOREACH(wgp, wg) {
 		WG_PEER_WRITER_REMOVE(wgp);
+		wg->wg_npeers--;
 		mutex_enter(wgp->wgp_lock);
 		wgp->wgp_state = WGP_STATE_DESTROYING;
 		pserialize_perform(wgp->wgp_psz);
