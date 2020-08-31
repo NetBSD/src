@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.43 2020/08/31 20:26:46 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.44 2020/08/31 20:27:06 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.43 2020/08/31 20:26:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.44 2020/08/31 20:27:06 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1336,6 +1336,20 @@ wg_handle_msg_init(struct wg_softc *wg, const struct wg_msg_init *wgmi,
 
 	WG_TRACE("init msg received");
 
+	wg_algo_mac_mac1(mac1, sizeof(mac1),
+	    wg->wg_pubkey, sizeof(wg->wg_pubkey),
+	    (const uint8_t *)wgmi, offsetof(struct wg_msg_init, wgmi_mac1));
+
+	/*
+	 * [W] 5.3: Denial of Service Mitigation & Cookies
+	 * "the responder, ..., must always reject messages with an invalid
+	 *  msg.mac1"
+	 */
+	if (!consttime_memequal(mac1, wgmi->wgmi_mac1, sizeof(mac1))) {
+		WG_DLOG("mac1 is invalid\n");
+		return;
+	}
+
 	/*
 	 * [W] 5.4.2: First Message: Initiator to Responder
 	 * "When the responder receives this message, it does the same
@@ -1410,20 +1424,6 @@ wg_handle_msg_init(struct wg_softc *wg, const struct wg_msg_init *wgmi,
 	wgs->wgs_state = WGS_STATE_INIT_PASSIVE;
 	wg_get_session(wgs, &psref_session);
 	mutex_exit(wgs->wgs_lock);
-
-	wg_algo_mac_mac1(mac1, sizeof(mac1),
-	    wg->wg_pubkey, sizeof(wg->wg_pubkey),
-	    (const uint8_t *)wgmi, offsetof(struct wg_msg_init, wgmi_mac1));
-
-	/*
-	 * [W] 5.3: Denial of Service Mitigation & Cookies
-	 * "the responder, ..., must always reject messages with an invalid
-	 *  msg.mac1"
-	 */
-	if (!consttime_memequal(mac1, wgmi->wgmi_mac1, sizeof(mac1))) {
-		WG_DLOG("mac1 is invalid\n");
-		goto out;
-	}
 
 	if (__predict_false(wg_is_underload(wg, wgp, WG_MSG_TYPE_INIT))) {
 		WG_TRACE("under load");
@@ -1750,15 +1750,6 @@ wg_handle_msg_resp(struct wg_softc *wg, const struct wg_msg_resp *wgmr,
 	uint8_t mac1[WG_MAC_LEN];
 	struct wg_session *wgs_prev;
 
-	WG_TRACE("resp msg received");
-	wgs = wg_lookup_session_by_index(wg, wgmr->wgmr_receiver, &psref);
-	if (wgs == NULL) {
-		WG_TRACE("No session found");
-		return;
-	}
-
-	wgp = wgs->wgs_peer;
-
 	wg_algo_mac_mac1(mac1, sizeof(mac1),
 	    wg->wg_pubkey, sizeof(wg->wg_pubkey),
 	    (const uint8_t *)wgmr, offsetof(struct wg_msg_resp, wgmr_mac1));
@@ -1770,8 +1761,17 @@ wg_handle_msg_resp(struct wg_softc *wg, const struct wg_msg_resp *wgmr,
 	 */
 	if (!consttime_memequal(mac1, wgmr->wgmr_mac1, sizeof(mac1))) {
 		WG_DLOG("mac1 is invalid\n");
-		goto out;
+		return;
 	}
+
+	WG_TRACE("resp msg received");
+	wgs = wg_lookup_session_by_index(wg, wgmr->wgmr_receiver, &psref);
+	if (wgs == NULL) {
+		WG_TRACE("No session found");
+		return;
+	}
+
+	wgp = wgs->wgs_peer;
 
 	if (__predict_false(wg_is_underload(wg, wgp, WG_MSG_TYPE_RESP))) {
 		WG_TRACE("under load");
