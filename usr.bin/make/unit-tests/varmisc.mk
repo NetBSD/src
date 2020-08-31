@@ -1,4 +1,4 @@
-# $Id: varmisc.mk,v 1.22 2020/08/23 19:30:13 rillig Exp $
+# $Id: varmisc.mk,v 1.23 2020/08/31 16:20:00 sjg Exp $
 #
 # Miscellaneous variable tests.
 
@@ -197,6 +197,20 @@ parse-dynamic:
 
 UNCLOSED_INDIR_1=	${UNCLOSED_ORIG
 UNCLOSED_INDIR_2=	${UNCLOSED_INDIR_1}
+
+FLAGS=	one two
+FLAGS+= ${FLAGS.${.ALLSRC:M*.c:T:u}}
+FLAGS.target2.c = three four
+
+target1.c:
+target2.c:
+
+all: target1-flags target2-flags
+target1-flags: target1.c
+	@echo $@: we have: ${FLAGS}
+
+target2-flags: target2.c
+	@echo $@: we have: ${FLAGS}
 
 varerror-unclosed:
 	@echo $@:begin

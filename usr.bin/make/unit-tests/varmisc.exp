@@ -69,4 +69,6 @@ make: Unclosed variable "UNCLOSED.3"
 make: Unclosed variable "UNCLOSED_ORIG"
 
 varerror-unclosed:end
+target1-flags: we have: one two
+target2-flags: we have: one two three four
 exit status 0
