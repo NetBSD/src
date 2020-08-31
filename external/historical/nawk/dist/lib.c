@@ -191,10 +191,7 @@ int getrec(char **pbuf, int *pbufsize, bool isrecord)	/* get next input record *
 					xfree(fldtab[0]->sval);
 				fldtab[0]->sval = buf;	/* buf == record */
 				fldtab[0]->tval = REC | STR | DONTFREE;
-				if (is_number(fldtab[0]->sval)) {
-					fldtab[0]->fval = atof(fldtab[0]->sval);
-					fldtab[0]->tval |= NUM;
-				}
+				check_number(fldtab[0]);
 			}
 			setfval(nrloc, nrloc->fval+1);
 			setfval(fnrloc, fnrloc->fval+1);
@@ -306,10 +303,7 @@ void setclvar(char *s)	/* set var=value from s */
 	p = qstring(p, '\0');
 	q = setsymtab(s, p, 0.0, STR, symtab);
 	setsval(q, p);
-	if (is_number(q->sval)) {
-		q->fval = atof(q->sval);
-		q->tval |= NUM;
-	}
+	check_number(q);
 	   dprintf( ("command line set %s to |%s|\n", s, p) );
 }
 
@@ -407,10 +401,7 @@ void fldbld(void)	/* create fields from current record */
 	donefld = true;
 	for (j = 1; j <= lastfld; j++) {
 		p = fldtab[j];
-		if(is_number(p->sval)) {
-			p->fval = atof(p->sval);
-			p->tval |= NUM;
-		}
+		check_number(p);
 	}
 	setfval(nfloc, (Awkfloat) lastfld);
 	donerec = true; /* restore */
@@ -763,7 +754,8 @@ int isclvar(const char *s)	/* is s of form var=something ? */
 /* wrong: violates 4.10.1.4 of ansi C standard */
 
 #include <math.h>
-int is_number(const char *s)
+
+static int get_number(const char *s, double *res)
 {
 	double r;
 	char *ep;
@@ -773,8 +765,20 @@ int is_number(const char *s)
 		return 0;
 	while (*ep == ' ' || *ep == '\t' || *ep == '\n')
 		ep++;
-	if (*ep == '\0')
-		return 1;
-	else
+	if (*ep != '\0')
 		return 0;
+	if (res)		
+		*res = r;
+	return 1;
+}
+
+void check_number(Cell *x)
+{
+	if (get_number(x->sval, &x->fval))
+		x->tval |= NUM;
+}
+
+int is_number(const char *s)
+{
+	return get_number(s, NULL);
 }
