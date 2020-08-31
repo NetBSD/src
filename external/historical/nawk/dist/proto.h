@@ -149,6 +149,7 @@ extern	void	bclass(int);
 extern	double	errcheck(double, const char *);
 extern	int	isclvar(const char *);
 extern	int	is_number(const char *);
+extern	void	check_number(Cell *);
 
 extern	int	adjbuf(char **, int *, int, int, char **, const char *);
 extern	void	run(Node *);
