@@ -1,4 +1,4 @@
-#	$NetBSD: t_misc.sh,v 1.4 2020/08/29 07:22:49 tih Exp $
+#	$NetBSD: t_misc.sh,v 1.5 2020/08/31 20:32:58 riastradh Exp $
 #
 # Copyright (c) 2018 Ryota Ozaki <ozaki.ryota@gmail.com>
 # All rights reserved.
@@ -106,7 +106,7 @@ wg_rekey_body()
 	$DEBUG && echo $latest_handshake
 
 	# Wait for a reinitiation to be performed again
-	sleep $rekey_after_time
+	sleep $((rekey_after_time+1))
 
 	$ping $ip_wg_peer
 
