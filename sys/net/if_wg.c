@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.38 2020/08/31 20:24:19 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.39 2020/08/31 20:24:49 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.38 2020/08/31 20:24:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.39 2020/08/31 20:24:49 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1029,7 +1029,7 @@ wg_algo_aead_enc(uint8_t out[], size_t expected_outsize, const uint8_t key[],
 	long long unsigned int outsize;
 	int error __diagused;
 
-	memcpy(&nonce[4], &counter, sizeof(counter));
+	le64enc(&nonce[4], counter);
 
 	error = crypto_aead_chacha20poly1305_ietf_encrypt(out, &outsize, plain,
 	    plainsize, auth, authlen, NULL, nonce, key);
@@ -1046,7 +1046,7 @@ wg_algo_aead_dec(uint8_t out[], size_t expected_outsize, const uint8_t key[],
 	long long unsigned int outsize;
 	int error;
 
-	memcpy(&nonce[4], &counter, sizeof(counter));
+	le64enc(&nonce[4], counter);
 
 	error = crypto_aead_chacha20poly1305_ietf_decrypt(out, &outsize, NULL,
 	    encrypted, encryptedsize, auth, authlen, nonce, key);
@@ -1241,7 +1241,7 @@ wg_fill_msg_init(struct wg_softc *wg, struct wg_peer *wgp,
 	uint8_t pubkey[WG_EPHEMERAL_KEY_LEN];
 	uint8_t privkey[WG_EPHEMERAL_KEY_LEN];
 
-	wgmi->wgmi_type = WG_MSG_TYPE_INIT;
+	wgmi->wgmi_type = htole32(WG_MSG_TYPE_INIT);
 	wgmi->wgmi_sender = wg_assign_sender_index(wg, wgs);
 
 	/* [W] 5.4.2: First Message: Initiator to Responder */
@@ -1657,7 +1657,7 @@ wg_fill_msg_resp(struct wg_softc *wg, struct wg_peer *wgp,
 	memcpy(hash, wgs->wgs_handshake_hash, sizeof(hash));
 	memcpy(ckey, wgs->wgs_chaining_key, sizeof(ckey));
 
-	wgmr->wgmr_type = WG_MSG_TYPE_RESP;
+	wgmr->wgmr_type = htole32(WG_MSG_TYPE_RESP);
 	wgmr->wgmr_sender = wg_assign_sender_index(wg, wgs);
 	wgmr->wgmr_receiver = wgmi->wgmi_sender;
 
@@ -1973,7 +1973,7 @@ wg_fill_msg_cookie(struct wg_softc *wg, struct wg_peer *wgp,
 	size_t addrlen;
 	uint16_t uh_sport; /* be */
 
-	wgmc->wgmc_type = WG_MSG_TYPE_COOKIE;
+	wgmc->wgmc_type = htole32(WG_MSG_TYPE_COOKIE);
 	wgmc->wgmc_receiver = sender;
 	cprng_fast(wgmc->wgmc_salt, sizeof(wgmc->wgmc_salt));
 
@@ -2376,7 +2376,7 @@ wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
 	KASSERT(m->m_len >= sizeof(struct wg_msg_data));
 	wgmd = mtod(m, struct wg_msg_data *);
 
-	KASSERT(wgmd->wgmd_type == WG_MSG_TYPE_DATA);
+	KASSERT(wgmd->wgmd_type == htole32(WG_MSG_TYPE_DATA));
 	WG_TRACE("data");
 
 	wgs = wg_lookup_session_by_index(wg, wgmd->wgmd_receiver, &psref);
@@ -2388,11 +2388,11 @@ wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
 	wgp = wgs->wgs_peer;
 
 	error = sliwin_check_fast(&wgs->wgs_recvwin->window,
-	    wgmd->wgmd_counter);
+	    le64toh(wgmd->wgmd_counter));
 	if (error) {
 		WG_LOG_RATECHECK(&wgp->wgp_ppsratecheck, LOG_DEBUG,
 		    "out-of-window packet: %"PRIu64"\n",
-		    wgmd->wgmd_counter);
+		    le64toh(wgmd->wgmd_counter));
 		goto out;
 	}
 
@@ -2438,7 +2438,7 @@ wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
 	WG_DLOG("mlen=%lu, encrypted_len=%lu\n", mlen, encrypted_len);
 	error = wg_algo_aead_dec(decrypted_buf,
 	    encrypted_len - WG_AUTHTAG_LEN /* can be 0 */,
-	    wgs->wgs_tkey_recv, wgmd->wgmd_counter, encrypted_buf,
+	    wgs->wgs_tkey_recv, le64toh(wgmd->wgmd_counter), encrypted_buf,
 	    encrypted_len, NULL, 0);
 	if (error != 0) {
 		WG_LOG_RATECHECK(&wgp->wgp_ppsratecheck, LOG_DEBUG,
@@ -2450,12 +2450,12 @@ wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
 
 	mutex_enter(&wgs->wgs_recvwin->lock);
 	error = sliwin_update(&wgs->wgs_recvwin->window,
-	    wgmd->wgmd_counter);
+	    le64toh(wgmd->wgmd_counter));
 	mutex_exit(&wgs->wgs_recvwin->lock);
 	if (error) {
 		WG_LOG_RATECHECK(&wgp->wgp_ppsratecheck, LOG_DEBUG,
 		    "replay or out-of-window packet: %"PRIu64"\n",
-		    wgmd->wgmd_counter);
+		    le64toh(wgmd->wgmd_counter));
 		m_freem(n);
 		goto out;
 	}
@@ -2619,7 +2619,7 @@ wg_validate_msg_header(struct wg_softc *wg, struct mbuf *m)
 	 * worry about contiguity and alignment later.
 	 */
 	m_copydata(m, 0, sizeof(wgm), &wgm);
-	switch (wgm.wgm_type) {
+	switch (le32toh(wgm.wgm_type)) {
 	case WG_MSG_TYPE_INIT:
 		msglen = sizeof(struct wg_msg_init);
 		break;
@@ -2634,14 +2634,14 @@ wg_validate_msg_header(struct wg_softc *wg, struct mbuf *m)
 		break;
 	default:
 		WG_LOG_RATECHECK(&wg->wg_ppsratecheck, LOG_DEBUG,
-		    "Unexpected msg type: %u\n", wgm.wgm_type);
+		    "Unexpected msg type: %u\n", le32toh(wgm.wgm_type));
 		goto error;
 	}
 
 	/* Verify the mbuf chain is long enough for this type of message.  */
 	if (__predict_false(mbuflen < msglen)) {
 		WG_DLOG("Invalid msg size: mbuflen=%lu type=%u\n", mbuflen,
-		    wgm.wgm_type);
+		    le32toh(wgm.wgm_type));
 		goto error;
 	}
 
@@ -2671,7 +2671,7 @@ wg_handle_packet(struct wg_softc *wg, struct mbuf *m,
 
 	KASSERT(m->m_len >= sizeof(struct wg_msg));
 	wgm = mtod(m, struct wg_msg *);
-	switch (wgm->wgm_type) {
+	switch (le32toh(wgm->wgm_type)) {
 	case WG_MSG_TYPE_INIT:
 		wg_handle_msg_init(wg, (struct wg_msg_init *)wgm, src);
 		break;
@@ -2686,7 +2686,7 @@ wg_handle_packet(struct wg_softc *wg, struct mbuf *m,
 		/* wg_handle_msg_data frees m for us */
 		return;
 	default:
-		panic("invalid message type: %d", wgm->wgm_type);
+		panic("invalid message type: %d", le32toh(wgm->wgm_type));
 	}
 
 	m_freem(m);
@@ -2977,14 +2977,14 @@ wg_overudp_cb(struct mbuf **mp, int offset, struct socket *so,
 	 * worry about contiguity and alignment later.
 	 */
 	m_copydata(m, offset, sizeof(struct wg_msg), &wgm);
-	WG_DLOG("type=%d\n", wgm.wgm_type);
+	WG_DLOG("type=%d\n", le32toh(wgm.wgm_type));
 
 	/*
 	 * Handle DATA packets promptly as they arrive.  Other packets
 	 * may require expensive public-key crypto and are not as
 	 * sensitive to latency, so defer them to the worker thread.
 	 */
-	switch (wgm.wgm_type) {
+	switch (le32toh(wgm.wgm_type)) {
 	case WG_MSG_TYPE_DATA:
 		/* handle immediately */
 		m_adj(m, offset);
@@ -3616,12 +3616,12 @@ wg_fill_msg_data(struct wg_softc *wg, struct wg_peer *wgp,
 {
 
 	memset(wgmd, 0, sizeof(*wgmd));
-	wgmd->wgmd_type = WG_MSG_TYPE_DATA;
+	wgmd->wgmd_type = htole32(WG_MSG_TYPE_DATA);
 	wgmd->wgmd_receiver = wgs->wgs_receiver_index;
 	/* [W] 5.4.6: msg.counter := Nm^send */
 	/* [W] 5.4.6: Nm^send := Nm^send + 1 */
-	wgmd->wgmd_counter = wg_session_inc_send_counter(wgs);
-	WG_DLOG("counter=%"PRIu64"\n", wgmd->wgmd_counter);
+	wgmd->wgmd_counter = htole64(wg_session_inc_send_counter(wgs));
+	WG_DLOG("counter=%"PRIu64"\n", le64toh(wgmd->wgmd_counter));
 }
 
 static int
@@ -3792,7 +3792,8 @@ wg_send_data_msg(struct wg_peer *wgp, struct wg_session *wgs,
 	wg_fill_msg_data(wg, wgp, wgs, wgmd);
 	/* [W] 5.4.6: AEAD(Tm^send, Nm^send, P, e) */
 	wg_algo_aead_enc((char *)wgmd + sizeof(*wgmd), encrypted_len,
-	    wgs->wgs_tkey_send, wgmd->wgmd_counter, padded_buf, padded_len,
+	    wgs->wgs_tkey_send, le64toh(wgmd->wgmd_counter),
+	    padded_buf, padded_len,
 	    NULL, 0);
 
 	error = wg->wg_ops->send_data_msg(wgp, n);
