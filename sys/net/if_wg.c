@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.44 2020/08/31 20:27:06 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.45 2020/08/31 20:29:14 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.44 2020/08/31 20:27:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.45 2020/08/31 20:29:14 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1399,6 +1399,40 @@ wg_handle_msg_init(struct wg_softc *wg, const struct wg_msg_init *wgmi,
 		return;
 	}
 
+	if (__predict_false(wg_is_underload(wg, wgp, WG_MSG_TYPE_INIT))) {
+		WG_TRACE("under load");
+		/*
+		 * [W] 5.3: Denial of Service Mitigation & Cookies
+		 * "the responder, ..., and when under load may reject messages
+		 *  with an invalid msg.mac2.  If the responder receives a
+		 *  message with a valid msg.mac1 yet with an invalid msg.mac2,
+		 *  and is under load, it may respond with a cookie reply
+		 *  message"
+		 */
+		uint8_t zero[WG_MAC_LEN] = {0};
+		if (consttime_memequal(wgmi->wgmi_mac2, zero, sizeof(zero))) {
+			WG_TRACE("sending a cookie message: no cookie included");
+			(void)wg_send_cookie_msg(wg, wgp, wgmi->wgmi_sender,
+			    wgmi->wgmi_mac1, src);
+			goto out_wgp;
+		}
+		if (!wgp->wgp_last_sent_cookie_valid) {
+			WG_TRACE("sending a cookie message: no cookie sent ever");
+			(void)wg_send_cookie_msg(wg, wgp, wgmi->wgmi_sender,
+			    wgmi->wgmi_mac1, src);
+			goto out_wgp;
+		}
+		uint8_t mac2[WG_MAC_LEN];
+		wg_algo_mac(mac2, sizeof(mac2), wgp->wgp_last_sent_cookie,
+		    WG_COOKIE_LEN, (const uint8_t *)wgmi,
+		    offsetof(struct wg_msg_init, wgmi_mac2), NULL, 0);
+		if (!consttime_memequal(mac2, wgmi->wgmi_mac2, sizeof(mac2))) {
+			WG_DLOG("mac2 is invalid\n");
+			goto out_wgp;
+		}
+		WG_TRACE("under load, but continue to sending");
+	}
+
 	wgs = wg_lock_unstable_session(wgp);
 	if (wgs->wgs_state == WGS_STATE_DESTROYING) {
 		/*
@@ -1424,40 +1458,6 @@ wg_handle_msg_init(struct wg_softc *wg, const struct wg_msg_init *wgmi,
 	wgs->wgs_state = WGS_STATE_INIT_PASSIVE;
 	wg_get_session(wgs, &psref_session);
 	mutex_exit(wgs->wgs_lock);
-
-	if (__predict_false(wg_is_underload(wg, wgp, WG_MSG_TYPE_INIT))) {
-		WG_TRACE("under load");
-		/*
-		 * [W] 5.3: Denial of Service Mitigation & Cookies
-		 * "the responder, ..., and when under load may reject messages
-		 *  with an invalid msg.mac2.  If the responder receives a
-		 *  message with a valid msg.mac1 yet with an invalid msg.mac2,
-		 *  and is under load, it may respond with a cookie reply
-		 *  message"
-		 */
-		uint8_t zero[WG_MAC_LEN] = {0};
-		if (consttime_memequal(wgmi->wgmi_mac2, zero, sizeof(zero))) {
-			WG_TRACE("sending a cookie message: no cookie included");
-			(void)wg_send_cookie_msg(wg, wgp, wgmi->wgmi_sender,
-			    wgmi->wgmi_mac1, src);
-			goto out;
-		}
-		if (!wgp->wgp_last_sent_cookie_valid) {
-			WG_TRACE("sending a cookie message: no cookie sent ever");
-			(void)wg_send_cookie_msg(wg, wgp, wgmi->wgmi_sender,
-			    wgmi->wgmi_mac1, src);
-			goto out;
-		}
-		uint8_t mac2[WG_MAC_LEN];
-		wg_algo_mac(mac2, sizeof(mac2), wgp->wgp_last_sent_cookie,
-		    WG_COOKIE_LEN, (const uint8_t *)wgmi,
-		    offsetof(struct wg_msg_init, wgmi_mac2), NULL, 0);
-		if (!consttime_memequal(mac2, wgmi->wgmi_mac2, sizeof(mac2))) {
-			WG_DLOG("mac2 is invalid\n");
-			goto out;
-		}
-		WG_TRACE("under load, but continue to sending");
-	}
 
 	/* [N] 2.2: "ss" */
 	/* Ci, k := KDF2(Ci, DH(Si^priv, Sr^pub)) */
