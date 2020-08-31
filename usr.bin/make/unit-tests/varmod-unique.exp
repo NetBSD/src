@@ -1,1 +1,7 @@
+make: "varmod-unique.mk" line 11: warning: The :u modifier must merge adjacent duplicate words.
+make: "varmod-unique.mk" line 13: warning: FIXME
+make: "varmod-unique.mk" line 26: warning: The :u modifier must merge _all_ adjacent duplicate words.
+make: "varmod-unique.mk" line 28: warning: FIXME
+make: "varmod-unique.mk" line 33: warning: The :u modifier must normalize whitespace between the words.
+make: "varmod-unique.mk" line 35: warning: FIXME
 exit status 0
