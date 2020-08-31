@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_thmap.c,v 1.6 2020/05/23 19:52:12 rmind Exp $	*/
+/*	$NetBSD: subr_thmap.c,v 1.7 2020/08/31 20:22:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 Mindaugas Rasiukevicius <rmind at noxt eu>
@@ -96,6 +96,7 @@
 #include <sys/lock.h>
 #include <sys/atomic.h>
 #include <sys/hash.h>
+#include <sys/cprng.h>
 #define THMAP_RCSID(a) __KERNEL_RCSID(0, a)
 #else
 #include <stdio.h>
@@ -111,7 +112,9 @@
 #include "utils.h"
 #endif
 
-THMAP_RCSID("$NetBSD: subr_thmap.c,v 1.6 2020/05/23 19:52:12 rmind Exp $");
+THMAP_RCSID("$NetBSD: subr_thmap.c,v 1.7 2020/08/31 20:22:57 riastradh Exp $");
+
+#include <crypto/blake2/blake2s.h>
 
 /*
  * NetBSD kernel wrappers
@@ -135,6 +138,7 @@ THMAP_RCSID("$NetBSD: subr_thmap.c,v 1.6 2020/05/23 19:52:12 rmind Exp $");
  * The hash function produces 32-bit values.
  */
 
+#define	HASHVAL_SEEDLEN	(16)
 #define	HASHVAL_BITS	(32)
 #define	HASHVAL_MOD	(HASHVAL_BITS - 1)
 #define	HASHVAL_SHIFT	(5)
@@ -201,6 +205,7 @@ typedef struct {
 } thmap_leaf_t;
 
 typedef struct {
+	const uint8_t *	seed;		// secret seed
 	unsigned	rslot;		// root-level slot index
 	unsigned	level;		// current level in the tree
 	unsigned	hashidx;	// current hash index (block of bits)
@@ -221,6 +226,7 @@ struct thmap {
 	unsigned		flags;
 	const thmap_ops_t *	ops;
 	thmap_gc_t *		gc_list;		// C11 _Atomic
+	uint8_t			seed[HASHVAL_SEEDLEN];
 };
 
 static void	stage_mem_gc(thmap_t *, uintptr_t, size_t);
@@ -291,11 +297,41 @@ unlock_node(thmap_inode_t *node)
  * HASH VALUE AND KEY OPERATIONS.
  */
 
-static inline void
-hashval_init(thmap_query_t *query, const void * restrict key, size_t len)
+static inline uint32_t
+hash(const uint8_t seed[static HASHVAL_SEEDLEN], const void *key, size_t len,
+    uint32_t level)
 {
-	const uint32_t hashval = murmurhash3(key, len, 0);
+	struct blake2s B;
+	uint32_t h;
 
+	if (level == 0)
+		return murmurhash3(key, len, 0);
+
+	/*
+	 * Byte order is not significant here because this is
+	 * intentionally secret and independent for each thmap.
+	 *
+	 * XXX We get 32 bytes of output at a time; we could march
+	 * through them sequentially rather than throwing away 28 bytes
+	 * and recomputing BLAKE2 each time.  But the number of
+	 * iterations ought to be geometric in the collision
+	 * probability at each level which should be very small anyway.
+	 */
+	blake2s_init(&B, sizeof h, seed, HASHVAL_SEEDLEN);
+	blake2s_update(&B, &level, sizeof level);
+	blake2s_update(&B, key, len);
+	blake2s_final(&B, &h);
+
+	return h;
+}
+
+static inline void
+hashval_init(thmap_query_t *query, const uint8_t seed[static HASHVAL_SEEDLEN],
+    const void * restrict key, size_t len)
+{
+	const uint32_t hashval = hash(seed, key, len, 0);
+
+	query->seed = seed;
 	query->rslot = ((hashval >> ROOT_MSBITS) ^ len) & ROOT_MASK;
 	query->level = 0;
 	query->hashval = hashval;
@@ -315,7 +351,7 @@ hashval_getslot(thmap_query_t *query, const void * restrict key, size_t len)
 
 	if (query->hashidx != i) {
 		/* Generate a hash value for a required range. */
-		query->hashval = murmurhash3(key, len, i);
+		query->hashval = hash(query->seed, key, len, i);
 		query->hashidx = i;
 	}
 	return (query->hashval >> shift) & LEVEL_MASK;
@@ -330,7 +366,7 @@ hashval_getleafslot(const thmap_t *thmap,
 	const unsigned shift = offset & HASHVAL_MOD;
 	const unsigned i = offset >> HASHVAL_SHIFT;
 
-	return (murmurhash3(key, leaf->len, i) >> shift) & LEVEL_MASK;
+	return (hash(thmap->seed, key, leaf->len, i) >> shift) & LEVEL_MASK;
 }
 
 static inline unsigned
@@ -627,7 +663,7 @@ thmap_get(thmap_t *thmap, const void *key, size_t len)
 	thmap_leaf_t *leaf;
 	unsigned slot;
 
-	hashval_init(&query, key, len);
+	hashval_init(&query, thmap->seed, key, len);
 	parent = find_edge_node(thmap, &query, key, len, &slot);
 	if (!parent) {
 		return NULL;
@@ -664,7 +700,7 @@ thmap_put(thmap_t *thmap, const void *key, size_t len, void *val)
 	if (__predict_false(!leaf)) {
 		return NULL;
 	}
-	hashval_init(&query, key, len);
+	hashval_init(&query, thmap->seed, key, len);
 retry:
 	/*
 	 * Try to insert into the root first, if its slot is empty.
@@ -780,7 +816,7 @@ thmap_del(thmap_t *thmap, const void *key, size_t len)
 	unsigned slot;
 	void *val;
 
-	hashval_init(&query, key, len);
+	hashval_init(&query, thmap->seed, key, len);
 	parent = find_edge_node_locked(thmap, &query, key, len, &slot);
 	if (!parent) {
 		/* Root slot empty: not found. */
@@ -954,6 +990,9 @@ thmap_create(uintptr_t baseptr, const thmap_ops_t *ops, unsigned flags)
 		memset(thmap->root, 0, THMAP_ROOT_LEN);
 		atomic_thread_fence(memory_order_release); /* XXX */
 	}
+
+	cprng_strong(kern_cprng, thmap->seed, sizeof thmap->seed, 0);
+
 	return thmap;
 }
 
