@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.35 2020/08/31 20:21:09 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.36 2020/08/31 20:21:30 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.35 2020/08/31 20:21:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.36 2020/08/31 20:21:30 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1069,8 +1069,7 @@ wg_algo_xaead_enc(uint8_t out[], const size_t expected_outsize,
 
 static int
 wg_algo_xaead_dec(uint8_t out[], const size_t expected_outsize,
-    const uint8_t key[], const uint64_t counter,
-    const uint8_t encrypted[], const size_t encryptedsize,
+    const uint8_t key[], const uint8_t encrypted[], const size_t encryptedsize,
     const uint8_t auth[], size_t authlen,
     const uint8_t nonce[WG_SALT_LEN])
 {
@@ -2551,7 +2550,7 @@ wg_handle_msg_cookie(struct wg_softc *wg, const struct wg_msg_cookie *wgmc)
 
 	wg_algo_mac_cookie(key, sizeof(key), wgp->wgp_pubkey,
 	    sizeof(wgp->wgp_pubkey));
-	error = wg_algo_xaead_dec(cookie, sizeof(cookie), key, 0,
+	error = wg_algo_xaead_dec(cookie, sizeof(cookie), key,
 	    wgmc->wgmc_cookie, sizeof(wgmc->wgmc_cookie),
 	    wgp->wgp_last_sent_mac1, sizeof(wgp->wgp_last_sent_mac1),
 	    wgmc->wgmc_salt);
