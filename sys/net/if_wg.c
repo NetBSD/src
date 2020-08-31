@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.41 2020/08/31 20:25:33 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.42 2020/08/31 20:26:21 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.41 2020/08/31 20:25:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.42 2020/08/31 20:26:21 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1389,11 +1389,13 @@ wg_handle_msg_init(struct wg_softc *wg, const struct wg_msg_init *wgmi,
 	wgs = wg_lock_unstable_session(wgp);
 	if (wgs->wgs_state == WGS_STATE_DESTROYING) {
 		/*
-		 * We can assume that the peer doesn't have an established
-		 * session, so clear it now.
+		 * We can assume that the peer doesn't have an
+		 * established session, so clear it now.  If the timer
+		 * fired, tough -- it won't have any effect unless we
+		 * manage to transition back to WGS_STATE_DESTROYING.
 		 */
 		WG_TRACE("Session destroying, but force to clear");
-		callout_halt(&wgp->wgp_session_dtor_timer, NULL);
+		callout_stop(&wgp->wgp_session_dtor_timer);
 		wg_clear_states(wgs);
 		wgs->wgs_state = WGS_STATE_UNKNOWN;
 	}
