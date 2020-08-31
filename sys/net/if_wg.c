@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.33 2020/08/31 20:20:22 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.34 2020/08/31 20:20:48 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.33 2020/08/31 20:20:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.34 2020/08/31 20:20:48 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -161,6 +161,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.33 2020/08/31 20:20:22 riastradh Exp $")
  *     - On a session swap, we must wait for all readers to release a
  *       reference to a stable session before changing wgs_state and
  *       session states
+ *
+ * Lock order: wg_lock -> wgp_lock -> wgs_lock
  */
 
 
