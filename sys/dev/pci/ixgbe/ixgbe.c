@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.249 2020/08/31 06:20:06 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.250 2020/08/31 06:23:19 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -4511,7 +4511,7 @@ ixgbe_handle_timer(struct work *wk, void *context)
 		if (hw->mac.type == ixgbe_mac_82598EB) {
 			/*
 			 * On 82598EB, SFP+'s MOD_ABS pin is not connected to
-			 * any GPIP(SDP). So just schedule TASK_MOD.
+			 * any GPIO(SDP). So just schedule TASK_MOD.
 			 */
 			sched_mod_task = true;
 		} else {
@@ -4777,7 +4777,7 @@ out:
 	/*
 	 * Don't shedule MSF event if the chip is 82598. 82598 doesn't support
 	 * MSF. At least, calling ixgbe_handle_msf on 82598 DA makes the link
-	 * flap because the function call setup_link().
+	 * flap because the function calls setup_link().
 	 */
 	if (hw->mac.type != ixgbe_mac_82598EB)
 		atomic_or_32(&adapter->task_requests, IXGBE_REQUEST_TASK_MSF);
