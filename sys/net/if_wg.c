@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.50 2020/08/31 20:34:18 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.51 2020/08/31 20:34:43 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.50 2020/08/31 20:34:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.51 2020/08/31 20:34:43 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3177,7 +3177,7 @@ wg_worker_init(struct wg_softc *wg)
 	const char *ifname = wg->wg_if.if_xname;
 	struct socket *so;
 
-	wgw = kmem_zalloc(sizeof(struct wg_worker), KM_SLEEP);
+	wgw = kmem_zalloc(sizeof(*wgw), KM_SLEEP);
 
 	mutex_init(&wgw->wgw_lock, MUTEX_DEFAULT, IPL_SOFTNET);
 	cv_init(&wgw->wgw_cv, ifname);
@@ -3213,6 +3213,8 @@ error:
 		soclose(wgw->wgw_so4);
 	cv_destroy(&wgw->wgw_cv);
 	mutex_destroy(&wgw->wgw_lock);
+
+	kmem_free(wgw, sizeof(*wgw));
 
 	return error;
 }
