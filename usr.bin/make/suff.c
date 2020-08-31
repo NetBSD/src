@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.141 2020/08/31 05:56:02 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.142 2020/08/31 16:44:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.141 2020/08/31 05:56:02 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.142 2020/08/31 16:44:25 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.141 2020/08/31 05:56:02 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.142 2020/08/31 16:44:25 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -567,6 +567,7 @@ Suff_AddTransform(char *line)
     Suff          *s,		/* source suffix */
 		  *t;		/* target suffix */
     LstNode 	  ln;	    	/* Node for existing transformation */
+    Boolean ok;
 
     ln = Lst_Find(transforms, SuffGNHasName, line);
     if (ln == NULL) {
@@ -592,7 +593,9 @@ Suff_AddTransform(char *line)
 
     gn->type = OP_TRANSFORM;
 
-    (void)SuffParseTransform(line, &s, &t);
+    ok = SuffParseTransform(line, &s, &t);
+    assert(ok);
+    (void)ok;
 
     /*
      * link the two together in the proper relationship and order
