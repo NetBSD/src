@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_misc.sh,v 1.23 2019/07/23 04:31:25 ozaki-r Exp $
+#	$NetBSD: t_ipsec_misc.sh,v 1.24 2020/08/31 14:03:56 martin Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -565,6 +565,10 @@ test_spi()
 	local spistr=
 	local longtime= shorttime=
 
+	if [ $method = timeout ]; then
+		atf_skip \
+	   "PR 55632: test fails randomly, leaving spurious rump_server around"
+	fi
 	if [ $method = timeout -a $preferred = new ]; then
 		skip_if_qemu
 	fi
