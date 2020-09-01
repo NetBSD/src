@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.98 2020/08/31 16:41:19 rillig Exp $
+#	$NetBSD: Makefile,v 1.99 2020/09/01 17:12:30 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -122,6 +122,7 @@ SUBDIR+=	unit-tests
 .endif
 
 ${SRCS:M*.c:.c=.o}: ${HDRS}
+CLEANFILES+=	*.o
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
