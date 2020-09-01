@@ -1,4 +1,4 @@
-.\" $NetBSD: compat_bsdos.8,v 1.4 2020/08/29 21:42:25 uwe Exp $
+.\" $NetBSD: compat_bsdos.8,v 1.5 2020/09/01 01:15:28 uwe Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,13 +58,78 @@ set to
 .Li 0
 for the binaries to run successfully.
 .Pp
-.Bsx 2.0+
-binaries also require an
+.Bsx
+binaries may be placed under
+.Pa /emul
+directory to match the location of other
+non-native executables
+on
+.Nx ,
+but the compatibility environment
+does not automatically lookup libraries
+under
+.Pa /emul/bsdos
+as happens with the shared
+libraries
+for
+.Nx 1.0\|\(en\|1.5
+.Xr a.out 5
+binaries under
+.Pa /emul/aout .
+.Pp
+.Tn BSD/386 Ns No \ 1.0\|\(en\|1.1
+uses static binaries that do not
+dynamically load libraries at runtime.
+.Pp
+.Bsx 2.0
+introduced
+.Dq "static shared libraries"
+as the default for standard binaries.
+The shared libraries are compiled from
+.Pa /lib
+and
+.Pa /usr/lib
+to a custom format under
+.Pa /shlib .
+BSDi libraries
+under
+.Pa /shlib
+are not in the standard
+.Xr ar 5
+format and cannot be loaded by
 .Xr ldconfig 8
-configuration or a symbolic link
-pointing to the
-.Pa /emul/bsdos/shlib
-directory to run outside of a chroot.
+on
+.Nx .
+In order for BSDi executables to
+access the binary objects at the
+hardcoded
+.Pa /shlib
+path,
+the user may setup a
+symbolic link from
+.Pa /shlib
+to
+.Pa /emul/bsdos/shlib .
+.\" or run a shell under a
+.\" .Ic chroot
+.\" with the command
+.\" .Ic chroot "/emul/bsdos/shlib /bin/sh" .
+.\" One could rebuild the BSDi userland
+.\" from source using
+.\" .Pa /emul/bsdos/lib
+.\" and
+.\" .Pa /emul/bsdos/usr/lib .
+.\" Then adding
+.\" .Pa /emul/bsdos/lib
+.\" and
+.\" .Pa /emul/bsdos/usr/lib
+.\" to
+.\" .Pa /etc/ld.so.conf
+.\" and running
+.\" .Ic ldconfig
+.\" to regenerate
+.\" .Pa /var/run/ld.so.hints
+.\" for a new hybrid setup.
 .Pp
 .Bsx 4.0
 switched to an ELF binary executable format
@@ -89,15 +154,23 @@ release.
 .Bsx 2.0
 was based on
 .Bx 4.4 Tn Lite ,
-but introduced new static shared libraries
-compiled into binary objects under
-.Pa /shlib .
+but added the new static shared library
+format as the runtime default for executables.
 The build system included the
 .Li shlicc
 command with the
 .Fl Bstatic
 flag that allowed reverting to the standard
-library archive format.
+library archive format that remained available
+under
+.Pa /lib
+and
+.Pa /usr/lib .
+.Pp
+.Nx 1.0
+added shared libraries using the standard
+.Xr ar 5
+archive format.
 .Pp
 .Ox 2.2\|\(en\|4.7
 included a different compatibility implementation
@@ -107,7 +180,7 @@ kernel option.
 .Sh BUGS
 .Bsx
 compatibility was broken on
-.Nx 5\|\(en\|6
+.Nx 5\|\(en\|6 .
 .Pp
 .Bsx 3.0
 added
