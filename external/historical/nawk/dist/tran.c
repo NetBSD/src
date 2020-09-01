@@ -395,6 +395,25 @@ char *setsval(Cell *vp, const char *s)	/* set string val of a Cell */
 	return(vp->sval);
 }
 
+static int checkstr(const char *s, const char *v)
+{
+	while (*s && tolower((unsigned char)*s) == *v)
+		s++, v++;
+	return !(*s || *v);
+}
+
+static int checkinfnan(const char *s)
+{
+	switch (tolower((unsigned char)*s)) {
+	case 'i':
+		return checkstr(s, "inf") || checkstr(s, "infinity");
+	case 'n':
+		return checkstr(s, "nan");
+	default:
+		return 1;
+	}
+}
+
 Awkfloat getfval(Cell *vp)	/* get float val of a Cell */
 {
 	if ((vp->tval & (NUM | STR)) == 0)
@@ -404,11 +423,10 @@ Awkfloat getfval(Cell *vp)	/* get float val of a Cell */
 	else if (isrec(vp) && !donerec)
 		recbld();
 	if (!isnum(vp)) {	/* not a number */
-		if (is_number(vp->sval) && !(vp->tval&CON)) {
+		if (checkinfnan(vp->sval))
 			vp->fval = atof(vp->sval);	/* best guess */
+		if (is_number(vp->sval) && !(vp->tval&CON)) {
 			vp->tval |= NUM;	/* make NUM only sparingly */
-		} else {
-			vp->fval = 0;
 		}
 	}
 	   dprintf( ("getfval %p: %s = %g, t=%o\n",
