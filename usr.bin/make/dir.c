@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.127 2020/08/30 14:11:42 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.128 2020/09/01 17:56:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.127 2020/08/30 14:11:42 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.128 2020/09/01 17:56:32 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.127 2020/08/30 14:11:42 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.128 2020/09/01 17:56:32 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -517,36 +517,37 @@ DirFindName(const void *p, const void *desiredName)
  *	returns TRUE if the word should be expanded, FALSE otherwise
  */
 Boolean
-Dir_HasWildcards(char *name)
+Dir_HasWildcards(const char *name)
 {
-    char *cp;
-    int wild = 0, brace = 0, bracket = 0;
+    const char *cp;
+    Boolean wild = FALSE;
+    int braces = 0, brackets = 0;
 
     for (cp = name; *cp; cp++) {
 	switch (*cp) {
 	case '{':
-	    brace++;
-	    wild = 1;
+	    braces++;
+	    wild = TRUE;
 	    break;
 	case '}':
-	    brace--;
+	    braces--;
 	    break;
 	case '[':
-	    bracket++;
-	    wild = 1;
+	    brackets++;
+	    wild = TRUE;
 	    break;
 	case ']':
-	    bracket--;
+	    brackets--;
 	    break;
 	case '?':
 	case '*':
-	    wild = 1;
+	    wild = TRUE;
 	    break;
 	default:
 	    break;
 	}
     }
-    return wild && bracket == 0 && brace == 0;
+    return wild && brackets == 0 && braces == 0;
 }
 
 /*-
