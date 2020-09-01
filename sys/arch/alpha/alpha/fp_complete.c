@@ -1,4 +1,4 @@
-/* $NetBSD: fp_complete.c,v 1.23 2019/03/25 19:24:30 maxv Exp $ */
+/* $NetBSD: fp_complete.c,v 1.24 2020/09/01 08:22:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.23 2019/03/25 19:24:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.24 2020/09/01 08:22:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,13 +199,13 @@ ldt(unsigned int rn, t_float *v, struct lwp *l)
 static float64
 compare_lt(float64 a, float64 b)
 {
-	return CMP_RESULT(float64_lt(a, b));
+	return CMP_RESULT(float64_lt_quiet(a, b));
 }
 
 static float64
 compare_le(float64 a, float64 b)
 {
-	return CMP_RESULT(float64_le(a, b));
+	return CMP_RESULT(float64_le_quiet(a, b));
 }
 
 static float64
@@ -502,7 +502,7 @@ float64_unk(float64 a, float64 b)
  */
 
 static void
-alpha_fp_interpret(alpha_instruction *pc, struct lwp *l, uint64_t bits)
+alpha_fp_interpret(alpha_instruction *pc, struct lwp *l, uint32_t bits)
 {
 	s_float sfa, sfb, sfc;
 	t_float tfa, tfb, tfc;
@@ -634,13 +634,15 @@ alpha_fp_complete(u_long a0, u_long a1, struct lwp *l, uint64_t *ucode)
 	pc = (alpha_instruction *)l->l_md.md_tf->tf_regs[FRAME_PC];
 	trigger_pc = pc - 1;	/* for ALPHA_AMASK_PAT case */
 	if (cpu_amask & ALPHA_AMASK_PAT) {
-		if (a0 & 1 || alpha_fp_sync_complete) {
+		/* SWC | INV */
+		if (a0 & 3 || alpha_fp_sync_complete) {
 			sig = alpha_fp_complete_at(trigger_pc, l, ucode);
 			goto done;
 		}
 	}
 	*ucode = a0;
-	if (!(a0 & 1))
+	/* SWC | INV */
+	if (!(a0 & 3))
 		return sig;
 /*
  * At this point we are somewhere in the trap shadow of one or more instruc-
