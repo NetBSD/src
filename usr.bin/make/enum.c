@@ -1,4 +1,4 @@
-/*	$NetBSD: enum.c,v 1.5 2020/08/28 19:46:04 rillig Exp $	*/
+/*	$NetBSD: enum.c,v 1.6 2020/09/01 20:34:51 rillig Exp $	*/
 
 /*
  Copyright (c) 2020 Roland Illig <rillig@NetBSD.org>
@@ -28,11 +28,11 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: enum.c,v 1.5 2020/08/28 19:46:04 rillig Exp $";
+static char rcsid[] = "$NetBSD: enum.c,v 1.6 2020/09/01 20:34:51 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: enum.c,v 1.5 2020/08/28 19:46:04 rillig Exp $");
+__RCSID("$NetBSD: enum.c,v 1.6 2020/09/01 20:34:51 rillig Exp $");
 #endif
 #endif
 
@@ -42,8 +42,11 @@ __RCSID("$NetBSD: enum.c,v 1.5 2020/08/28 19:46:04 rillig Exp $");
 
 #include "enum.h"
 
-/* Convert a bitset into a string representation showing the names of the
- * individual bits, or optionally shortcuts for groups of bits. */
+/* Convert a bitset into a string representation, showing the names of the
+ * individual bits.
+ *
+ * Optionally, shortcuts for groups of bits can be added.  To have an effect,
+ * they need to be listed before their individual bits. */
 const char *
 Enum_FlagsToString(char *buf, size_t buf_size,
 		   int value, const EnumToStringSpec *spec)
@@ -73,6 +76,8 @@ Enum_FlagsToString(char *buf, size_t buf_size,
 		sep = ENUM__SEP;
 		sep_len = sizeof ENUM__SEP - 1;
 	}
+
+	/* If this assertion fails, the listed enum values are incomplete. */
 	assert(value == 0);
 
 	if (buf == buf_start)

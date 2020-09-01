@@ -1,4 +1,4 @@
-/*	$NetBSD: enum.h,v 1.8 2020/08/25 16:27:24 rillig Exp $	*/
+/*	$NetBSD: enum.h,v 1.9 2020/09/01 20:34:51 rillig Exp $	*/
 
 /*
  Copyright (c) 2020 Roland Illig <rillig@NetBSD.org>
@@ -30,9 +30,7 @@
 #ifndef MAKE_ENUM_H
 #define MAKE_ENUM_H
 
-/*
- * Generate string representation for bitmasks.
- */
+/* Generate string representations for bitmasks and simple enums. */
 
 #include <stddef.h>
 
