@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_osdep.h,v 1.27 2020/06/25 07:53:02 msaitoh Exp $ */
+/* $NetBSD: ixgbe_osdep.h,v 1.28 2020/09/01 04:19:16 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -200,6 +200,7 @@ struct ixgbe_osdep
 	int		   nintrs;
 	void               *ihs[IXG_MAX_NINTR];
 	bool		   attached;
+	bool		   detaching;
 };
 
 /* These routines need struct ixgbe_hw declared */

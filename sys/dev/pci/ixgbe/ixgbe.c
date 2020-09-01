@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.253 2020/09/01 04:06:56 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.254 2020/09/01 04:19:16 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -828,6 +828,7 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	else
 		adapter->osdep.dmat = pa->pa_dmat;
 	adapter->osdep.attached = false;
+	adapter->osdep.detaching = false;
 
 	ent = ixgbe_lookup(pa);
 
@@ -3598,6 +3599,7 @@ ixgbe_detach(device_t dev, int flags)
 	}
 #endif
 
+	adapter->osdep.detaching = true;
 	/*
 	 * Stop the interface. ixgbe_setup_low_power_mode() calls
 	 * ixgbe_ifstop(), so it's not required to call ixgbe_ifstop()
@@ -4623,10 +4625,12 @@ ixgbe_recovery_mode_timer(void *arg)
 {
 	struct adapter *adapter = arg;
 
-	if (atomic_cas_uint(&adapter->recovery_mode_timer_pending, 0, 1) == 0)
-	{
-		workqueue_enqueue(adapter->recovery_mode_timer_wq,
-		    &adapter->recovery_mode_timer_wc, NULL);
+	if (__predict_false(adapter->osdep.detaching == false)) {
+		if (atomic_cas_uint(&adapter->recovery_mode_timer_pending,
+			0, 1) == 0) {
+			workqueue_enqueue(adapter->recovery_mode_timer_wq,
+			    &adapter->recovery_mode_timer_wc, NULL);
+		}
 	}
 }
 
