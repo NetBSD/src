@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.252 2020/08/31 14:12:50 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.253 2020/09/01 04:06:56 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -3600,12 +3600,10 @@ ixgbe_detach(device_t dev, int flags)
 
 	/*
 	 * Stop the interface. ixgbe_setup_low_power_mode() calls
-	 * ixgbe_stop_locked(), so it's not required to call ixgbe_stop_locked()
+	 * ixgbe_ifstop(), so it's not required to call ixgbe_ifstop()
 	 * directly.
 	 */
-	IXGBE_CORE_LOCK(adapter);
 	ixgbe_setup_low_power_mode(adapter);
-	IXGBE_CORE_UNLOCK(adapter);
 
 	callout_halt(&adapter->timer, NULL);
 	if (adapter->feat_en & IXGBE_FEATURE_RECOVERY_MODE) {
@@ -3773,16 +3771,15 @@ ixgbe_setup_low_power_mode(struct adapter *adapter)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
 	device_t	dev = adapter->dev;
+	struct ifnet	*ifp = adapter->ifp;
 	s32		error = 0;
-
-	KASSERT(mutex_owned(&adapter->core_mtx));
 
 	/* Limit power management flow to X550EM baseT */
 	if (hw->device_id == IXGBE_DEV_ID_X550EM_X_10G_T &&
 	    hw->phy.ops.enter_lplu) {
 		/* X550EM baseT adapters need a special LPLU flow */
 		hw->phy.reset_disable = true;
-		ixgbe_stop_locked(adapter);
+		ixgbe_ifstop(ifp, 1);
 		error = hw->phy.ops.enter_lplu(hw);
 		if (error)
 			device_printf(dev,
@@ -3790,8 +3787,10 @@ ixgbe_setup_low_power_mode(struct adapter *adapter)
 		hw->phy.reset_disable = false;
 	} else {
 		/* Just stop for other adapters */
-		ixgbe_stop_locked(adapter);
+		ixgbe_ifstop(ifp, 1);
 	}
+
+	IXGBE_CORE_LOCK(adapter);
 
 	if (!hw->wol_enabled) {
 		ixgbe_set_phy_power(hw, FALSE);
@@ -3820,6 +3819,8 @@ ixgbe_setup_low_power_mode(struct adapter *adapter)
 
 	}
 
+	IXGBE_CORE_UNLOCK(adapter);
+
 	return error;
 } /* ixgbe_setup_low_power_mode */
 
@@ -3835,9 +3836,7 @@ ixgbe_shutdown(device_t dev)
 
 	INIT_DEBUGOUT("ixgbe_shutdown: begin");
 
-	IXGBE_CORE_LOCK(adapter);
 	error = ixgbe_setup_low_power_mode(adapter);
-	IXGBE_CORE_UNLOCK(adapter);
 
 	return (error);
 } /* ixgbe_shutdown */
@@ -3856,11 +3855,7 @@ ixgbe_suspend(device_t dev, const pmf_qual_t *qual)
 
 	INIT_DEBUGOUT("ixgbe_suspend: begin");
 
-	IXGBE_CORE_LOCK(adapter);
-
 	error = ixgbe_setup_low_power_mode(adapter);
-
-	IXGBE_CORE_UNLOCK(adapter);
 
 	return (error);
 } /* ixgbe_suspend */
