@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.28 2020/08/28 20:16:19 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.29 2020/09/01 21:11:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: hash.c,v 1.28 2020/08/28 20:16:19 rillig Exp $";
+static char rcsid[] = "$NetBSD: hash.c,v 1.29 2020/09/01 21:11:31 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)hash.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: hash.c,v 1.28 2020/08/28 20:16:19 rillig Exp $");
+__RCSID("$NetBSD: hash.c,v 1.29 2020/09/01 21:11:31 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -142,9 +142,9 @@ Hash_InitTable(Hash_Table *t, int numBuckets)
 	}
 	t->numEntries = 0;
 	t->maxchain = 0;
-	t->size = i;
-	t->mask = i - 1;
-	t->bucketPtr = hp = bmake_malloc(sizeof(*hp) * i);
+	t->bucketsSize = i;
+	t->bucketsMask = i - 1;
+	t->buckets = hp = bmake_malloc(sizeof(*hp) * i);
 	while (--i >= 0)
 		*hp++ = NULL;
 }
@@ -157,19 +157,19 @@ Hash_DeleteTable(Hash_Table *t)
 	struct Hash_Entry **hp, *h, *nexth = NULL;
 	int i;
 
-	for (hp = t->bucketPtr, i = t->size; --i >= 0;) {
+	for (hp = t->buckets, i = t->bucketsSize; --i >= 0;) {
 		for (h = *hp++; h != NULL; h = nexth) {
 			nexth = h->next;
 			free(h);
 		}
 	}
-	free(t->bucketPtr);
+	free(t->buckets);
 
 	/*
 	 * Set up the hash table to cause memory faults on any future access
 	 * attempts until re-initialization.
 	 */
-	t->bucketPtr = NULL;
+	t->buckets = NULL;
 }
 
 /* Searches the hash table for an entry corresponding to the key.
@@ -190,7 +190,7 @@ Hash_FindEntry(Hash_Table *t, const char *key)
 	const char *p;
 	int chainlen;
 
-	if (t == NULL || t->bucketPtr == NULL) {
+	if (t == NULL || t->buckets == NULL) {
 	    return NULL;
 	}
 	HASH(h, key, p);
@@ -201,7 +201,7 @@ Hash_FindEntry(Hash_Table *t, const char *key)
 		fprintf(debug_file, "%s: %p h=%x key=%s\n", __func__,
 		    t, h, key);
 #endif
-	for (e = t->bucketPtr[h & t->mask]; e != NULL; e = e->next) {
+	for (e = t->buckets[h & t->bucketsMask]; e != NULL; e = e->next) {
 		chainlen++;
 		if (e->namehash == h && strcmp(e->name, p) == 0)
 			break;
@@ -243,7 +243,7 @@ Hash_CreateEntry(Hash_Table *t, const char *key, Boolean *newPtr)
 		fprintf(debug_file, "%s: %p h=%x key=%s\n", __func__,
 		    t, h, key);
 #endif
-	for (e = t->bucketPtr[h & t->mask]; e != NULL; e = e->next) {
+	for (e = t->buckets[h & t->bucketsMask]; e != NULL; e = e->next) {
 		chainlen++;
 		if (e->namehash == h && strcmp(e->name, p) == 0) {
 			if (newPtr != NULL)
@@ -261,10 +261,10 @@ Hash_CreateEntry(Hash_Table *t, const char *key, Boolean *newPtr)
 	 * expand the table if necessary (and this changes the resulting
 	 * bucket chain).
 	 */
-	if (t->numEntries >= rebuildLimit * t->size)
+	if (t->numEntries >= rebuildLimit * t->bucketsSize)
 		RebuildTable(t);
 	e = bmake_malloc(sizeof(*e) + keylen);
-	hp = &t->bucketPtr[h & t->mask];
+	hp = &t->buckets[h & t->bucketsMask];
 	e->next = *hp;
 	*hp = e;
 	Hash_SetValue(e, NULL);
@@ -285,7 +285,7 @@ Hash_DeleteEntry(Hash_Table *t, Hash_Entry *e)
 
 	if (e == NULL)
 		return;
-	for (hp = &t->bucketPtr[e->namehash & t->mask];
+	for (hp = &t->buckets[e->namehash & t->bucketsMask];
 	     (p = *hp) != NULL; hp = &p->next) {
 		if (p == e) {
 			*hp = p->next;
@@ -311,9 +311,9 @@ Hash_DeleteEntry(Hash_Table *t, Hash_Entry *e)
 Hash_Entry *
 Hash_EnumFirst(Hash_Table *t, Hash_Search *searchPtr)
 {
-	searchPtr->tablePtr = t;
-	searchPtr->nextIndex = 0;
-	searchPtr->hashEntryPtr = NULL;
+	searchPtr->table = t;
+	searchPtr->nextBucket = 0;
+	searchPtr->entry = NULL;
 	return Hash_EnumNext(searchPtr);
 }
 
@@ -327,14 +327,14 @@ Hash_Entry *
 Hash_EnumNext(Hash_Search *searchPtr)
 {
 	Hash_Entry *e;
-	Hash_Table *t = searchPtr->tablePtr;
+	Hash_Table *t = searchPtr->table;
 
 	/*
-	 * The hashEntryPtr field points to the most recently returned
-	 * entry, or is nil if we are starting up.  If not nil, we have
+	 * The entry field points to the most recently returned
+	 * entry, or is NULL if we are starting up.  If not NULL, we have
 	 * to start at the next one in the chain.
 	 */
-	e = searchPtr->hashEntryPtr;
+	e = searchPtr->entry;
 	if (e != NULL)
 		e = e->next;
 	/*
@@ -342,11 +342,11 @@ Hash_EnumNext(Hash_Search *searchPtr)
 	 * find the next nonempty chain.
 	 */
 	while (e == NULL) {
-		if (searchPtr->nextIndex >= t->size)
+		if (searchPtr->nextBucket >= t->bucketsSize)
 			return NULL;
-		e = t->bucketPtr[searchPtr->nextIndex++];
+		e = t->buckets[searchPtr->nextBucket++];
 	}
-	searchPtr->hashEntryPtr = e;
+	searchPtr->entry = e;
 	return e;
 }
 
@@ -360,18 +360,18 @@ RebuildTable(Hash_Table *t)
 	Hash_Entry **oldhp;
 	int oldsize;
 
-	oldhp = t->bucketPtr;
-	oldsize = i = t->size;
+	oldhp = t->buckets;
+	oldsize = i = t->bucketsSize;
 	i <<= 1;
-	t->size = i;
-	t->mask = mask = i - 1;
-	t->bucketPtr = hp = bmake_malloc(sizeof(*hp) * i);
+	t->bucketsSize = i;
+	t->bucketsMask = mask = i - 1;
+	t->buckets = hp = bmake_malloc(sizeof(*hp) * i);
 	while (--i >= 0)
 		*hp++ = NULL;
 	for (hp = oldhp, i = oldsize; --i >= 0;) {
 		for (e = *hp++; e != NULL; e = next) {
 			next = e->next;
-			xp = &t->bucketPtr[e->namehash & mask];
+			xp = &t->buckets[e->namehash & mask];
 			e->next = *xp;
 			*xp = e;
 		}
@@ -379,7 +379,7 @@ RebuildTable(Hash_Table *t)
 	free(oldhp);
 	if (DEBUG(HASH))
 		fprintf(debug_file, "%s: %p size=%d entries=%d maxchain=%d\n",
-		    __func__, t, t->size, t->numEntries, t->maxchain);
+			__func__, t, t->bucketsSize, t->numEntries, t->maxchain);
 	t->maxchain = 0;
 }
 
@@ -400,5 +400,5 @@ Hash_DebugStats(Hash_Table *t, const char *name)
 {
     if (DEBUG(HASH))
 	fprintf(debug_file, "Hash_Table %s: size=%d numEntries=%d maxchain=%d\n",
-		name, t->size, t->numEntries, t->maxchain);
+		name, t->bucketsSize, t->numEntries, t->maxchain);
 }

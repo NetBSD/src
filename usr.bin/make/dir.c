@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.129 2020/09/01 20:17:18 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.130 2020/09/01 21:11:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.129 2020/09/01 20:17:18 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.130 2020/09/01 21:11:31 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.129 2020/09/01 20:17:18 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.130 2020/09/01 21:11:31 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -298,7 +298,7 @@ cached_stats(Hash_Table *htp, const char *pathname, struct stat *st,
     entry = Hash_FindEntry(htp, pathname);
 
     if (entry && !(flags & CST_UPDATE)) {
-	cst = entry->clientPtr;
+	cst = entry->value;
 
 	memset(st, 0, sizeof(*st));
 	st->st_mode = cst->mode;
@@ -319,11 +319,11 @@ cached_stats(Hash_Table *htp, const char *pathname, struct stat *st,
 
     if (!entry)
 	entry = Hash_CreateEntry(htp, pathname, NULL);
-    if (!entry->clientPtr) {
-	entry->clientPtr = bmake_malloc(sizeof(*cst));
-	memset(entry->clientPtr, 0, sizeof(*cst));
+    if (!entry->value) {
+	entry->value = bmake_malloc(sizeof(*cst));
+	memset(entry->value, 0, sizeof(*cst));
     }
-    cst = entry->clientPtr;
+    cst = entry->value;
     if (flags & CST_LSTAT) {
 	cst->lmtime = st->st_mtime;
     } else {
