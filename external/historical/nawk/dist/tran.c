@@ -404,6 +404,8 @@ static int checkstr(const char *s, const char *v)
 
 static int checkinfnan(const char *s)
 {
+	if (*s == '+' || *s == '-')
+		s++;
 	switch (tolower((unsigned char)*s)) {
 	case 'i':
 		return checkstr(s, "inf") || checkstr(s, "infinity");
