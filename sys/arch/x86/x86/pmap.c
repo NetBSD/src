@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.403 2020/08/04 06:23:46 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.404 2020/09/01 11:24:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.403 2020/08/04 06:23:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.404 2020/09/01 11:24:14 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -5082,7 +5082,7 @@ pmap_find_gnt(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 	headp = pmap->pm_data;
 	KASSERT(headp != NULL);
 	SLIST_FOREACH(pgnt, headp, pd_gnt_list) {
-		if (pgnt->pd_gnt_sva >= sva && pgnt->pd_gnt_sva <= eva)
+		if (pgnt->pd_gnt_sva <= sva && eva <= pgnt->pd_gnt_eva)
 			return pgnt;
 		/* check that we're not overlapping part of a region */
 		KASSERT(pgnt->pd_gnt_sva >= eva || pgnt->pd_gnt_eva <= sva);
