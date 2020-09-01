@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.19 2020/08/29 11:13:43 rillig Exp $	*/
+/*	$NetBSD: hash.h,v 1.20 2020/09/01 21:00:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -114,24 +114,17 @@ typedef struct Hash_Search {
     Hash_Entry 	*hashEntryPtr;	/* Next entry to check in current bucket. */
 } Hash_Search;
 
-/*
- * Macros.
- */
+static inline void * MAKE_ATTR_UNUSED
+Hash_GetValue(Hash_Entry *h)
+{
+    return h->clientPtr;
+}
 
-/*
- * void * Hash_GetValue(h)
- *     Hash_Entry *h;
- */
-
-#define Hash_GetValue(h) ((h)->clientPtr)
-
-/*
- * Hash_SetValue(h, val);
- *     Hash_Entry *h;
- *     char *val;
- */
-
-#define Hash_SetValue(h, val) ((h)->clientPtr = (val))
+static inline void MAKE_ATTR_UNUSED
+Hash_SetValue(Hash_Entry *h, void *datum)
+{
+    h->clientPtr = datum;
+}
 
 void Hash_InitTable(Hash_Table *, int);
 void Hash_DeleteTable(Hash_Table *);
