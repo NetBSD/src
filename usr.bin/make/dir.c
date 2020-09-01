@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.128 2020/09/01 17:56:32 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.129 2020/09/01 20:17:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.128 2020/09/01 17:56:32 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.129 2020/09/01 20:17:18 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.128 2020/09/01 17:56:32 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.129 2020/09/01 20:17:18 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1332,7 +1332,7 @@ Dir_FindFile(const char *name, Lst path)
  *	here		starting directory
  *	search_path	the path we are looking for
  *	result		the result of a successful search is placed here
- *	rlen		the length of the result buffer
+ *	result_len	the length of the result buffer
  *			(typically MAXPATHLEN + 1)
  *
  * Results:
@@ -1342,19 +1342,20 @@ Dir_FindFile(const char *name, Lst path)
  * Side Effects:
  *-----------------------------------------------------------------------
  */
-int
-Dir_FindHereOrAbove(char *here, char *search_path, char *result, int rlen)
+Boolean
+Dir_FindHereOrAbove(const char *here, const char *search_path,
+		    char *result, int result_len)
 {
     struct stat st;
-    char dirbase[MAXPATHLEN + 1], *db_end;
+    char dirbase[MAXPATHLEN + 1], *dirbase_end;
     char try[MAXPATHLEN + 1], *try_end;
 
     /* copy out our starting point */
     snprintf(dirbase, sizeof(dirbase), "%s", here);
-    db_end = dirbase + strlen(dirbase);
+    dirbase_end = dirbase + strlen(dirbase);
 
     /* loop until we determine a result */
-    while (1) {
+    while (TRUE) {
 
 	/* try and stat(2) it ... */
 	snprintf(try, sizeof(try), "%s/%s", dirbase, search_path);
@@ -1368,36 +1369,30 @@ Dir_FindHereOrAbove(char *here, char *search_path, char *result, int rlen)
 		while (try_end > try && *try_end != '/')
 		    try_end--;
 		if (try_end > try)
-		    *try_end = 0;	/* chop! */
+		    *try_end = '\0';	/* chop! */
 	    }
 
-	    /*
-	     * done!
-	     */
-	    snprintf(result, rlen, "%s", try);
-	    return 1;
+	    snprintf(result, result_len, "%s", try);
+	    return TRUE;
 	}
 
 	/*
 	 * nope, we didn't find it.  if we used up dirbase we've
 	 * reached the root and failed.
 	 */
-	if (db_end == dirbase)
+	if (dirbase_end == dirbase)
 	    break;		/* failed! */
 
 	/*
 	 * truncate dirbase from the end to move up a dir
 	 */
-	while (db_end > dirbase && *db_end != '/')
-	    db_end--;
-	*db_end = 0;		/* chop! */
+	while (dirbase_end > dirbase && *dirbase_end != '/')
+	    dirbase_end--;
+	*dirbase_end = '\0';	/* chop! */
 
-    } /* while (1) */
+    } /* while (TRUE) */
 
-    /*
-     * we failed...
-     */
-    return 0;
+    return FALSE;
 }
 
 /*-
