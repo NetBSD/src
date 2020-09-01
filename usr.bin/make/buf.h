@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.27 2020/08/31 16:42:10 rillig Exp $	*/
+/*	$NetBSD: buf.h,v 1.28 2020/09/01 17:38:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -72,20 +72,18 @@
  *	from: @(#)buf.h	8.1 (Berkeley) 6/6/93
  */
 
-/*-
- * buf.h --
- *	Automatically growing null-terminated buffer of characters.
- */
+/* Automatically growing null-terminated buffers of characters. */
 
 #ifndef MAKE_BUF_H
 #define MAKE_BUF_H
 
 #include <stddef.h>
 
+/* An automatically growing null-terminated buffer of characters. */
 typedef struct Buffer {
     size_t size;	/* Allocated size of the buffer, including the null */
     size_t count;	/* Number of bytes in buffer, excluding the null */
-    char *buffer;	/* The buffer itself (null-terminated) */
+    char *buffer;	/* The buffer itself (always null-terminated) */
 } Buffer;
 
 /* If we aren't on NetBSD, __predict_false() might not be defined. */
