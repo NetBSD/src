@@ -1,39 +1,32 @@
-/* $NetBSD: softfloat-macros.h,v 1.2 2020/09/01 15:36:53 thorpej Exp $ */
+/* $NetBSD: softfloat-macros.h,v 1.3 2020/09/01 15:45:20 thorpej Exp $ */
 
 /*============================================================================
 
-This C source fragment is part of the SoftFloat IEC/IEEE Floating-point
-Arithmetic Package, Release 2b.
-
-Written by John R. Hauser.  This work was made possible in part by the
-International Computer Science Institute, located at Suite 600, 1947 Center
-Street, Berkeley, California 94704.  Funding was partially provided by the
-National Science Foundation under grant MIP-9311980.  The original version
-of this code was written as part of a project to build a fixed-point vector
-processor in collaboration with the University of California at Berkeley,
-overseen by Profs. Nelson Morgan and John Wawrzynek.  More information
-is available through the Web page `http://www.cs.berkeley.edu/~jhauser/
-arithmetic/SoftFloat.html'.
+This C source fragment is part of the Berkeley SoftFloat IEEE Floating-Point
+Arithmetic Package, Release 2c, by John R. Hauser.
 
 THIS SOFTWARE IS DISTRIBUTED AS IS, FOR FREE.  Although reasonable effort has
 been made to avoid it, THIS SOFTWARE MAY CONTAIN FAULTS THAT WILL AT TIMES
 RESULT IN INCORRECT BEHAVIOR.  USE OF THIS SOFTWARE IS RESTRICTED TO PERSONS
-AND ORGANIZATIONS WHO CAN AND WILL TAKE FULL RESPONSIBILITY FOR ALL LOSSES,
-COSTS, OR OTHER PROBLEMS THEY INCUR DUE TO THE SOFTWARE, AND WHO FURTHERMORE
-EFFECTIVELY INDEMNIFY JOHN HAUSER AND THE INTERNATIONAL COMPUTER SCIENCE
-INSTITUTE (possibly via similar legal notice) AGAINST ALL LOSSES, COSTS, OR
-OTHER PROBLEMS INCURRED BY THEIR CUSTOMERS AND CLIENTS DUE TO THE SOFTWARE.
+AND ORGANIZATIONS WHO CAN AND WILL TOLERATE ALL LOSSES, COSTS, OR OTHER
+PROBLEMS THEY INCUR DUE TO THE SOFTWARE WITHOUT RECOMPENSE FROM JOHN HAUSER OR
+THE INTERNATIONAL COMPUTER SCIENCE INSTITUTE, AND WHO FURTHERMORE EFFECTIVELY
+INDEMNIFY JOHN HAUSER AND THE INTERNATIONAL COMPUTER SCIENCE INSTITUTE
+(possibly via similar legal notice) AGAINST ALL LOSSES, COSTS, OR OTHER
+PROBLEMS INCURRED BY THEIR CUSTOMERS AND CLIENTS DUE TO THE SOFTWARE, OR
+INCURRED BY ANYONE DUE TO A DERIVATIVE WORK THEY CREATE USING ANY PART OF THE
+SOFTWARE.
 
-Derivative works are acceptable, even for commercial purposes, so long as
-(1) the source code for the derivative work includes prominent notice that
-the work is derivative, and (2) the source code includes prominent notice with
-these four paragraphs for those parts of this code that are retained.
+Derivative works require also that (1) the source code for the derivative work
+includes prominent notice that the work is derivative, and (2) the source code
+includes prominent notice of these three paragraphs for those parts of this
+code that are retained.
 
 =============================================================================*/
 
 /*----------------------------------------------------------------------------
 | Shifts `a' right by the number of bits given in `count'.  If any nonzero
-| bits are shifted off, they are ``jammed'' into the least significant bit of
+| bits are shifted off, they are "jammed" into the least significant bit of
 | the result by setting the least significant bit to 1.  The value of `count'
 | can be arbitrarily large; in particular, if `count' is greater than 32, the
 | result will be either 0 or 1, depending on whether `a' is zero or nonzero.
@@ -59,7 +52,7 @@ INLINE void shift32RightJamming( bits32 a, int16 count, bits32 *zPtr )
 
 /*----------------------------------------------------------------------------
 | Shifts `a' right by the number of bits given in `count'.  If any nonzero
-| bits are shifted off, they are ``jammed'' into the least significant bit of
+| bits are shifted off, they are "jammed" into the least significant bit of
 | the result by setting the least significant bit to 1.  The value of `count'
 | can be arbitrarily large; in particular, if `count' is greater than 64, the
 | result will be either 0 or 1, depending on whether `a' is zero or nonzero.
@@ -153,7 +146,7 @@ INLINE void
         z0 = a0>>count;
     }
     else {
-        z1 = ( count < 64 ) ? ( a0>>( count & 63 ) ) : 0;
+        z1 = ( count < 128 ) ? ( a0>>( count & 63 ) ) : 0;
         z0 = 0;
     }
     *z1Ptr = z1;
@@ -164,7 +157,7 @@ INLINE void
 /*----------------------------------------------------------------------------
 | Shifts the 128-bit value formed by concatenating `a0' and `a1' right by the
 | number of bits given in `count'.  If any nonzero bits are shifted off, they
-| are ``jammed'' into the least significant bit of the result by setting the
+| are "jammed" into the least significant bit of the result by setting the
 | least significant bit to 1.  The value of `count' can be arbitrarily large;
 | in particular, if `count' is greater than 128, the result will be either
 | 0 or 1, depending on whether the concatenation of `a0' and `a1' is zero or
