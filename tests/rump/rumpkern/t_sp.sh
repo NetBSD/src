@@ -1,4 +1,4 @@
-#	$NetBSD: t_sp.sh,v 1.16 2020/08/28 19:35:07 martin Exp $
+#	$NetBSD: t_sp.sh,v 1.17 2020/09/01 18:40:09 gson Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -53,18 +53,18 @@ test_case_skip()
 
 test_case basic basic
 # test_case stress_short stress 1
-test_case_skip stress_short 50350 "fails after insane long time"
+test_case_skip stress_short kern/50350 "fails after insane long time"
 # test_case stress_long stress 2
-test_case_skip stress_long 50350 "leftover rump_server"
+test_case_skip stress_long kern/50350 "leftover rump_server"
 # test_case stress_killer stress 5 kill
-test_case_skip stress_killer 55356 "leftover rump_server"
+test_case_skip stress_killer kern/55356 "leftover rump_server"
 test_case fork_simple fork simple
 test_case fork_pipecomm fork pipecomm
 test_case fork_fakeauth fork fakeauth
 test_case sigsafe sigsafe sigsafe
 test_case signal signal
 # test_case reconnect reconnect
-test_case_skip reconnect 55304 "leftover rump_server"
+test_case_skip reconnect kern/55304 "leftover rump_server"
 
 basic()
 {
