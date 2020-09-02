@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.135 2020/09/02 03:28:12 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.136 2020/09/02 04:08:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -537,8 +537,6 @@ void Main_ExportMAKEFLAGS(Boolean);
 Boolean Main_SetObjdir(const char *, ...) MAKE_ATTR_PRINTFLIKE(1, 2);
 int mkTempFile(const char *, char **);
 int str2Lst_Append(Lst, char *, const char *);
-int cached_lstat(const char *, struct stat *);
-int cached_stat(const char *, struct stat *);
 void GNode_FprintDetails(FILE *, const char *, const GNode *, const char *);
 
 #ifdef __GNUC__

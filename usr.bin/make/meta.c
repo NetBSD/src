@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.112 2020/08/30 11:15:05 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.113 2020/09/02 04:08:54 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -43,6 +43,7 @@
 #endif
 
 #include "make.h"
+#include "dir.h"
 #include "job.h"
 
 #ifdef USE_FILEMON
@@ -399,7 +400,7 @@ static Boolean
 meta_needed(GNode *gn, const char *dname, const char *tname,
 	     char *objdir, int verbose)
 {
-    struct stat fs;
+    struct make_stat mst;
 
     if (verbose)
 	verbose = DEBUG(META);
@@ -433,7 +434,7 @@ meta_needed(GNode *gn, const char *dname, const char *tname,
     }
 
     /* The object directory may not exist. Check it.. */
-    if (cached_stat(dname, &fs) != 0) {
+    if (cached_stat(dname, &mst) != 0) {
 	if (verbose)
 	    fprintf(debug_file, "Skipping meta for %s: no .OBJDIR\n",
 		    gn->name);
@@ -1124,7 +1125,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 	int pid;
 	int x;
 	LstNode ln;
-	struct stat fs;
+	struct make_stat mst;
 
 	if (!buf) {
 	    bufsz = 8 * BUFSIZ;
@@ -1389,8 +1390,8 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    if ((strstr("tmp", p)))
 			break;
 
-		    if ((link_src != NULL && cached_lstat(p, &fs) < 0) ||
-			(link_src == NULL && cached_stat(p, &fs) < 0)) {
+		    if ((link_src != NULL && cached_lstat(p, &mst) < 0) ||
+			(link_src == NULL && cached_stat(p, &mst) < 0)) {
 			if (!meta_ignore(gn, p)) {
 			    if (Lst_Find(missingFiles, string_match, p) == NULL)
 				Lst_Append(missingFiles, bmake_strdup(p));
@@ -1453,7 +1454,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 			    if (DEBUG(META))
 				fprintf(debug_file, "%s: %d: looking for: %s\n", fname, lineno, *sdp);
 #endif
-			    if (cached_stat(*sdp, &fs) == 0) {
+			    if (cached_stat(*sdp, &mst) == 0) {
 				found = 1;
 				p = *sdp;
 			    }
@@ -1463,12 +1464,12 @@ meta_oodate(GNode *gn, Boolean oodate)
 			    if (DEBUG(META))
 				fprintf(debug_file, "%s: %d: found: %s\n", fname, lineno, p);
 #endif
-			    if (!S_ISDIR(fs.st_mode) &&
-				fs.st_mtime > gn->mtime) {
+			    if (!S_ISDIR(mst.mst_mode) &&
+				mst.mst_mtime > gn->mtime) {
 				if (DEBUG(META))
 				    fprintf(debug_file, "%s: %d: file '%s' is newer than the target...\n", fname, lineno, p);
 				oodate = TRUE;
-			    } else if (S_ISDIR(fs.st_mode)) {
+			    } else if (S_ISDIR(mst.mst_mode)) {
 				/* Update the latest directory. */
 				cached_realpath(p, latestdir);
 			    }
