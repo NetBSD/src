@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.88.2.40 2020/08/05 15:58:02 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.88.2.41 2020/09/02 12:24:08 martin Exp $ */
 
 /******************************************************************************
 
@@ -858,7 +858,7 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 		str = "X550";
 		break;
 	case ixgbe_mac_X550EM_x:
-		str = "X550EM";
+		str = "X550EM X";
 		break;
 	case ixgbe_mac_X550EM_a:
 		str = "X550EM A";
