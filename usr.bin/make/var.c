@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.482 2020/08/31 19:09:19 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.483 2020/09/02 06:19:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.482 2020/08/31 19:09:19 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.483 2020/09/02 06:19:11 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.482 2020/08/31 19:09:19 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.483 2020/09/02 06:19:11 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -294,9 +294,6 @@ typedef enum {
  * Results:
  *	A pointer to the structure describing the desired variable or
  *	NULL if the variable does not exist.
- *
- * Side Effects:
- *	None
  *-----------------------------------------------------------------------
  */
 static Var *
@@ -856,14 +853,13 @@ out:
  * Var_Set --
  *	Set the variable name to the value val in the given context.
  *
+ *	If the variable doesn't yet exist, it is created.
+ *	Otherwise the new value overwrites and replaces the old value.
+ *
  * Input:
  *	name		name of variable to set
  *	val		value to give to the variable
  *	ctxt		context in which to set it
- *
- * Side Effects:
- *	If the variable doesn't yet exist, it is created.
- *	Otherwise the new value overwrites and replaces the old value.
  *
  * Notes:
  *	The variable is searched for only in its context before being
@@ -888,14 +884,13 @@ Var_Set(const char *name, const char *val, GNode *ctxt)
  *	The variable of the given name has the given value appended to it in
  *	the given context.
  *
+ *	If the variable doesn't exist, it is created. Otherwise the strings
+ *	are concatenated, with a space in between.
+ *
  * Input:
  *	name		name of variable to modify
  *	val		string to append to it
  *	ctxt		context in which this should occur
- *
- * Side Effects:
- *	If the variable doesn't exist, it is created. Otherwise the strings
- *	are concatenated, with a space in between.
  *
  * Notes:
  *	Only if the variable is being sought in the global context is the
@@ -954,22 +949,12 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
     free(name_freeIt);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Var_Exists --
- *	See if the given variable exists.
+/* See if the given variable exists, in the given context or in other
+ * fallback contexts.
  *
  * Input:
  *	name		Variable to find
  *	ctxt		Context in which to start search
- *
- * Results:
- *	TRUE if it does, FALSE if it doesn't
- *
- * Side Effects:
- *	None.
- *
- *-----------------------------------------------------------------------
  */
 Boolean
 Var_Exists(const char *name, GNode *ctxt)
@@ -1755,23 +1740,12 @@ ParseModifierPart(
     return rstr;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * VarQuote --
- *	Quote shell meta-characters and space characters in the string
- *	if quoteDollar is set, also quote and double any '$' characters.
- *
- * Results:
- *	The quoted string
- *
- * Side Effects:
- *	None.
- *
- *-----------------------------------------------------------------------
- */
+/* Quote shell meta-characters and space characters in the string.
+ * If quoteDollar is set, also quote and double any '$' characters. */
 static char *
-VarQuote(char *str, Boolean quoteDollar)
+VarQuote(const char *str, Boolean quoteDollar)
 {
+    char *res;
     Buffer buf;
     Buf_Init(&buf, 0);
 
@@ -1790,9 +1764,9 @@ VarQuote(char *str, Boolean quoteDollar)
 	    Buf_AddStr(&buf, "\\$");
     }
 
-    str = Buf_Destroy(&buf, FALSE);
-    VAR_DEBUG("QuoteMeta: [%s]\n", str);
-    return str;
+    res = Buf_Destroy(&buf, FALSE);
+    VAR_DEBUG("QuoteMeta: [%s]\n", res);
+    return res;
 }
 
 /* Compute the 32-bit hash of the given string, using the MurmurHash3
