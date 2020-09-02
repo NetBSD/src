@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.483 2020/09/02 06:19:11 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.484 2020/09/02 06:25:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.483 2020/09/02 06:19:11 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.484 2020/09/02 06:25:48 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.483 2020/09/02 06:19:11 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.484 2020/09/02 06:25:48 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3624,15 +3624,15 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
     return nstr;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Var_Subst  --
- *	Substitute for all variables in the given string in the given context.
- *	If eflags & VARE_UNDEFERR, Parse_Error will be called when an undefined
- *	variable is encountered.
+/* Substitute for all variables in the given string in the given context.
+ *
+ * If eflags & VARE_UNDEFERR, Parse_Error will be called when an undefined
+ * variable is encountered.
+ *
+ * If eflags & VARE_WANTRES, any effects from the modifiers, such as ::=,
+ * :sh or !cmd! take place.
  *
  * Input:
- *	var		Named variable || NULL for all
  *	str		the string which to substitute
  *	ctxt		the context wherein to find variables
  *	eflags		VARE_UNDEFERR	if undefineds are an error
@@ -3641,11 +3641,6 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
  *
  * Results:
  *	The resulting string.
- *
- * Side Effects:
- *	Any effects from the modifiers, such as ::=, :sh or !cmd!,
- *	if eflags contains VARE_WANTRES.
- *-----------------------------------------------------------------------
  */
 char *
 Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags)
