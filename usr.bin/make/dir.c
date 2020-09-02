@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.132 2020/09/02 03:28:12 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.133 2020/09/02 04:08:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.132 2020/09/02 03:28:12 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.133 2020/09/02 04:08:54 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.132 2020/09/02 03:28:12 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.133 2020/09/02 04:08:54 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -282,13 +282,13 @@ typedef enum {
     CST_UPDATE = 0x02		/* ignore existing cached entry */
 } CachedStatsFlags;
 
-/* Returns 0 and the result of stat(2) or lstat(2) in *st, or -1 on error.
- * Only st->st_mode and st->st_mtime are filled. */
+/* Returns 0 and the result of stat(2) or lstat(2) in *mst, or -1 on error. */
 static int
-cached_stats(Hash_Table *htp, const char *pathname, struct stat *st,
+cached_stats(Hash_Table *htp, const char *pathname, struct make_stat *mst,
 	     CachedStatsFlags flags)
 {
     Hash_Entry *entry;
+    struct stat sys_st;
     struct cache_st *cst;
     int rc;
 
@@ -300,22 +300,23 @@ cached_stats(Hash_Table *htp, const char *pathname, struct stat *st,
     if (entry && !(flags & CST_UPDATE)) {
 	cst = Hash_GetValue(entry);
 
-	memset(st, 0, sizeof(*st));
-	st->st_mode = cst->mode;
-	st->st_mtime = (flags & CST_LSTAT) ? cst->lmtime : cst->mtime;
-	if (st->st_mtime) {
+	mst->mst_mode = cst->mode;
+	mst->mst_mtime = (flags & CST_LSTAT) ? cst->lmtime : cst->mtime;
+	if (mst->mst_mtime) {
 	    DIR_DEBUG2("Using cached time %s for %s\n",
-		       Targ_FmtTime(st->st_mtime), pathname);
+		       Targ_FmtTime(mst->mst_mtime), pathname);
 	    return 0;
 	}
     }
 
-    rc = (flags & CST_LSTAT) ? lstat(pathname, st) : stat(pathname, st);
+    rc = (flags & CST_LSTAT)
+	 ? lstat(pathname, &sys_st)
+	 : stat(pathname, &sys_st);
     if (rc == -1)
 	return -1;
 
-    if (st->st_mtime == 0)
-	st->st_mtime = 1;	/* avoid confusion with missing file */
+    if (sys_st.st_mtime == 0)
+	sys_st.st_mtime = 1;	/* avoid confusion with missing file */
 
     if (entry == NULL)
 	entry = Hash_CreateEntry(htp, pathname, NULL);
@@ -325,25 +326,25 @@ cached_stats(Hash_Table *htp, const char *pathname, struct stat *st,
     }
     cst = Hash_GetValue(entry);
     if (flags & CST_LSTAT) {
-	cst->lmtime = st->st_mtime;
+	cst->lmtime = sys_st.st_mtime;
     } else {
-	cst->mtime = st->st_mtime;
+	cst->mtime = sys_st.st_mtime;
     }
-    cst->mode = st->st_mode;
+    cst->mode = sys_st.st_mode;
     DIR_DEBUG2("   Caching %s for %s\n",
-	       Targ_FmtTime(st->st_mtime), pathname);
+	       Targ_FmtTime(sys_st.st_mtime), pathname);
 
     return 0;
 }
 
 int
-cached_stat(const char *pathname, struct stat *st)
+cached_stat(const char *pathname, struct make_stat *st)
 {
     return cached_stats(&mtimes, pathname, st, 0);
 }
 
 int
-cached_lstat(const char *pathname, struct stat *st)
+cached_lstat(const char *pathname, struct make_stat *st)
 {
     return cached_stats(&lmtimes, pathname, st, CST_LSTAT);
 }
@@ -935,7 +936,7 @@ DirLookup(Path *p, const char *name MAKE_ATTR_UNUSED, const char *cp,
 static char *
 DirLookupSubdir(Path *p, const char *name)
 {
-    struct stat stb;		/* Buffer for stat, if necessary */
+    struct make_stat mst;
     char *file;			/* the current filename to check */
 
     if (p != dot) {
@@ -949,7 +950,7 @@ DirLookupSubdir(Path *p, const char *name)
 
     DIR_DEBUG1("checking %s ...\n", file);
 
-    if (cached_stat(file, &stb) == 0) {
+    if (cached_stat(file, &mst) == 0) {
 	nearmisses += 1;
 	return file;
     }
@@ -1069,7 +1070,7 @@ Dir_FindFile(const char *name, Lst path)
     const char *cp;		/* Terminal name of file */
     Boolean hasLastDot = FALSE;	/* true we should search dot last */
     Boolean hasSlash;		/* true if 'name' contains a / */
-    struct stat stb;		/* Buffer for stat, if necessary */
+    struct make_stat mst;	/* Buffer for stat, if necessary */
     const char *trailing_dot = ".";
 
     /*
@@ -1312,7 +1313,7 @@ Dir_FindFile(const char *name, Lst path)
     DIR_DEBUG1("   Looking for \"%s\" ...\n", name);
 
     bigmisses += 1;
-    if (cached_stat(name, &stb) == 0) {
+    if (cached_stat(name, &mst) == 0) {
 	return bmake_strdup(name);
     }
 
@@ -1346,7 +1347,7 @@ Boolean
 Dir_FindHereOrAbove(const char *here, const char *search_path,
 		    char *result, int result_len)
 {
-    struct stat st;
+    struct make_stat mst;
     char dirbase[MAXPATHLEN + 1], *dirbase_end;
     char try[MAXPATHLEN + 1], *try_end;
 
@@ -1359,12 +1360,12 @@ Dir_FindHereOrAbove(const char *here, const char *search_path,
 
 	/* try and stat(2) it ... */
 	snprintf(try, sizeof(try), "%s/%s", dirbase, search_path);
-	if (cached_stat(try, &st) != -1) {
+	if (cached_stat(try, &mst) != -1) {
 	    /*
 	     * success!  if we found a file, chop off
 	     * the filename so we return a directory.
 	     */
-	    if ((st.st_mode & S_IFMT) != S_IFDIR) {
+	    if ((mst.mst_mode & S_IFMT) != S_IFDIR) {
 		try_end = try + strlen(try);
 		while (try_end > try && *try_end != '/')
 		    try_end--;
@@ -1417,7 +1418,7 @@ int
 Dir_MTime(GNode *gn, Boolean recheck)
 {
     char *fullName;		/* the full pathname of name */
-    struct stat stb;		/* buffer for finding the mod time */
+    struct make_stat mst;	/* buffer for finding the mod time */
 
     if (gn->type & OP_ARCHV) {
 	return Arch_MTime(gn);
@@ -1468,13 +1469,13 @@ Dir_MTime(GNode *gn, Boolean recheck)
 	fullName = bmake_strdup(gn->name);
     }
 
-    if (cached_stats(&mtimes, fullName, &stb, recheck ? CST_UPDATE : 0) < 0) {
+    if (cached_stats(&mtimes, fullName, &mst, recheck ? CST_UPDATE : 0) < 0) {
 	if (gn->type & OP_MEMBER) {
 	    if (fullName != gn->path)
 		free(fullName);
 	    return Arch_MemMTime(gn);
 	} else {
-	    stb.st_mtime = 0;
+	    mst.mst_mtime = 0;
 	}
     }
 
@@ -1482,7 +1483,7 @@ Dir_MTime(GNode *gn, Boolean recheck)
 	gn->path = fullName;
     }
 
-    gn->mtime = stb.st_mtime;
+    gn->mtime = mst.mst_mtime;
     return gn->mtime;
 }
 
