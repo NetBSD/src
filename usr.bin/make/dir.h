@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.22 2020/09/01 20:17:18 rillig Exp $	*/
+/*	$NetBSD: dir.h,v 1.23 2020/09/02 04:08:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -85,6 +85,11 @@ typedef struct {
     Hash_Table    files;    	/* Hash set of files in directory */
 } Path;
 
+struct make_stat {
+    time_t mst_mtime;
+    mode_t mst_mode;
+};
+
 void Dir_Init(void);
 void Dir_InitDir(const char *);
 void Dir_InitCur(const char *);
@@ -104,5 +109,8 @@ void Dir_PrintDirectories(void);
 void Dir_PrintPath(Lst);
 void Dir_Destroy(void *);
 void *Dir_CopyDir(void *);
+
+int cached_lstat(const char *, struct make_stat *);
+int cached_stat(const char *, struct make_stat *);
 
 #endif /* MAKE_DIR_H */
