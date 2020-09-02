@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.404 2020/09/01 11:24:14 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.405 2020/09/02 17:07:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.404 2020/09/01 11:24:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.405 2020/09/02 17:07:45 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -5255,21 +5255,20 @@ pmap_enter_gnt(struct pmap *pmap, vaddr_t va, vaddr_t sva, int nentries,
 	if (__predict_false(op->status != GNTST_okay)) {
 		printf("%s: GNTTABOP_map_grant_ref status: %d\n",
 		    __func__, op->status);
-		if (ptp != NULL) {
-			if (have_oldpa) {
-				ptp->wire_count--;
-			}
+		if (have_oldpa) {
+			ptp->wire_count--;
 		}
 	} else {
 		pgnt->pd_gnt_refs++;
-		if (ptp != NULL) {
-			if (!have_oldpa) {
-				ptp->wire_count++;
-			}
-			/* Remember minimum VA in PTP. */
-			pmap_ptp_range_set(ptp, va);
+		if (!have_oldpa) {
+			ptp->wire_count++;
 		}
+		KASSERT(ptp->wire_count >= 1);
+		/* Remember minimum VA in PTP. */
+		pmap_ptp_range_set(ptp, va);
 	}
+	if (ptp->wire_count <= 1)
+		pmap_free_ptp(pmap, ptp, va, ptes, pdes);
 
 	/*
 	 * Done with the PTEs: they can now be unmapped.
@@ -5280,7 +5279,6 @@ pmap_enter_gnt(struct pmap *pmap, vaddr_t va, vaddr_t sva, int nentries,
 	 * Update statistics and PTP's reference count.
 	 */
 	pmap_stats_update_bypte(pmap, 0, opte);
-	KASSERT(ptp == NULL || ptp->wire_count >= 1);
 
 	/*
 	 * If old page is pv-tracked, remove pv_entry from its list.
@@ -5376,7 +5374,7 @@ pmap_remove_gnt(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 		 * being used, free it!
 		 */
 
-		if (ptp && ptp->wire_count <= 1)
+		if (ptp->wire_count <= 1)
 			pmap_free_ptp(pmap, ptp, va, ptes, pdes);
 		pmap_unmap_ptes(pmap, pmap2);
 	}
