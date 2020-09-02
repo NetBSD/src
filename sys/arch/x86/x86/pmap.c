@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.405 2020/09/02 17:07:45 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.406 2020/09/02 17:37:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.405 2020/09/02 17:07:45 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.406 2020/09/02 17:37:57 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -5263,7 +5263,7 @@ pmap_enter_gnt(struct pmap *pmap, vaddr_t va, vaddr_t sva, int nentries,
 		if (!have_oldpa) {
 			ptp->wire_count++;
 		}
-		KASSERT(ptp->wire_count >= 1);
+		KASSERT(ptp->wire_count > 1);
 		/* Remember minimum VA in PTP. */
 		pmap_ptp_range_set(ptp, va);
 	}
