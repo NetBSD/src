@@ -1000,7 +1000,11 @@ aarch64*-*-netbsd*)
 	tm_file="${tm_file} aarch64/aarch64-elf.h aarch64/aarch64-netbsd.h"
 	tmake_file="${tmake_file} aarch64/t-aarch64 aarch64/t-aarch64-netbsd"
 	extra_options="${extra_options} netbsd.opt netbsd-elf.opt"
-	# XXX big endian
+	case $target in
+	aarch64_be-*)
+		tm_defines="${tm_defines} TARGET_BIG_ENDIAN_DEFAULT=1"
+		;;
+	esac
 	;;
 aarch64*-*-linux*)
 	tm_file="${tm_file} dbxelf.h elfos.h gnu-user.h linux.h glibc-stdint.h"
