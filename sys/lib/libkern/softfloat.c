@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat.c,v 1.6 2017/12/31 11:43:42 martin Exp $ */
+/* $NetBSD: softfloat.c,v 1.7 2020/09/02 03:45:54 thorpej Exp $ */
 
 /*
  * This version hacked for use with gcc -msoft-float by bjh21.
@@ -14,11 +14,10 @@
  *   properly renamed.
  */
 
-/*
-===============================================================================
+/*============================================================================
 
-This C source file is part of the SoftFloat IEC/IEEE Floating-point
-Arithmetic Package, Release 2a.
+This C source file is part of the SoftFloat IEC/IEEE Floating-point Arithmetic
+Package, Release 2b.
 
 Written by John R. Hauser.  This work was made possible in part by the
 International Computer Science Institute, located at Suite 600, 1947 Center
@@ -27,29 +26,31 @@ National Science Foundation under grant MIP-9311980.  The original version
 of this code was written as part of a project to build a fixed-point vector
 processor in collaboration with the University of California at Berkeley,
 overseen by Profs. Nelson Morgan and John Wawrzynek.  More information
-is available through the Web page `http://HTTP.CS.Berkeley.EDU/~jhauser/
+is available through the Web page `http://www.cs.berkeley.edu/~jhauser/
 arithmetic/SoftFloat.html'.
 
-THIS SOFTWARE IS DISTRIBUTED AS IS, FOR FREE.  Although reasonable effort
-has been made to avoid it, THIS SOFTWARE MAY CONTAIN FAULTS THAT WILL AT
-TIMES RESULT IN INCORRECT BEHAVIOR.  USE OF THIS SOFTWARE IS RESTRICTED TO
-PERSONS AND ORGANIZATIONS WHO CAN AND WILL TAKE FULL RESPONSIBILITY FOR ANY
-AND ALL LOSSES, COSTS, OR OTHER PROBLEMS ARISING FROM ITS USE.
+THIS SOFTWARE IS DISTRIBUTED AS IS, FOR FREE.  Although reasonable effort has
+been made to avoid it, THIS SOFTWARE MAY CONTAIN FAULTS THAT WILL AT TIMES
+RESULT IN INCORRECT BEHAVIOR.  USE OF THIS SOFTWARE IS RESTRICTED TO PERSONS
+AND ORGANIZATIONS WHO CAN AND WILL TAKE FULL RESPONSIBILITY FOR ALL LOSSES,
+COSTS, OR OTHER PROBLEMS THEY INCUR DUE TO THE SOFTWARE, AND WHO FURTHERMORE
+EFFECTIVELY INDEMNIFY JOHN HAUSER AND THE INTERNATIONAL COMPUTER SCIENCE
+INSTITUTE (possibly via similar legal warning) AGAINST ALL LOSSES, COSTS, OR
+OTHER PROBLEMS INCURRED BY THEIR CUSTOMERS AND CLIENTS DUE TO THE SOFTWARE.
 
 Derivative works are acceptable, even for commercial purposes, so long as
-(1) they include prominent notice that the work is derivative, and (2) they
-include prominent notice akin to these four paragraphs for those parts of
-this code that are retained.
+(1) the source code for the derivative work includes prominent notice that
+the work is derivative, and (2) the source code includes prominent notice with
+these four paragraphs for those parts of this code that are retained.
 
-===============================================================================
-*/
+=============================================================================*/
 
 /* If you need this in a boot program, you have bigger problems... */
 #ifndef _STANDALONE
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: softfloat.c,v 1.6 2017/12/31 11:43:42 martin Exp $");
+__RCSID("$NetBSD: softfloat.c,v 1.7 2020/09/02 03:45:54 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef SOFTFLOAT_FOR_GCC
@@ -70,13 +71,10 @@ __RCSID("$NetBSD: softfloat.c,v 1.6 2017/12/31 11:43:42 martin Exp $");
 #define FLOAT64_MANGLE(a)	(a)
 #endif
 
-/*
--------------------------------------------------------------------------------
-Floating-point rounding mode, extended double-precision rounding precision,
-and exception flags.
--------------------------------------------------------------------------------
-*/
-
+/*----------------------------------------------------------------------------
+| Floating-point rounding mode, extended double-precision rounding precision,
+| and exception flags.
+*----------------------------------------------------------------------------*/
 /*
  * XXX: This may cause options-MULTIPROCESSOR or thread problems someday.
  * 	Right now, it does not.  I've removed all other dynamic global
@@ -86,40 +84,35 @@ and exception flags.
 int8 floatx80_rounding_precision = 80;
 #endif
 
-/*
--------------------------------------------------------------------------------
-Primitive arithmetic functions, including multi-word arithmetic, and
-division and square root approximations.  (Can be specialized to target if
-desired.)
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Primitive arithmetic functions, including multi-word arithmetic, and
+| division and square root approximations.  (Can be specialized to target if
+| desired.)
+*----------------------------------------------------------------------------*/
 #include "softfloat-macros.h"
 
-/*
--------------------------------------------------------------------------------
-Functions and definitions to determine:  (1) whether tininess for underflow
-is detected before or after rounding by default, (2) what (if anything)
-happens when exceptions are raised, (3) how signaling NaNs are distinguished
-from quiet NaNs, (4) the default generated quiet NaNs, and (5) how NaNs
-are propagated from function inputs to output.  These details are target-
-specific.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Functions and definitions to determine:  (1) whether tininess for underflow
+| is detected before or after rounding by default, (2) what (if anything)
+| happens when exceptions are raised, (3) how signaling NaNs are distinguished
+| from quiet NaNs, (4) the default generated quiet NaNs, and (5) how NaNs
+| are propagated from function inputs to output.  These details are target-
+| specific.
+*----------------------------------------------------------------------------*/
 #include "softfloat-specialize.h"
 
 #ifndef SOFTFLOAT_FOR_GCC /* Not used */
-/*
--------------------------------------------------------------------------------
-Takes a 64-bit fixed-point value `absZ' with binary point between bits 6
-and 7, and returns the properly rounded 32-bit integer corresponding to the
-input.  If `zSign' is 1, the input is negated before being converted to an
-integer.  Bit 63 of `absZ' must be zero.  Ordinarily, the fixed-point input
-is simply rounded to an integer, with the inexact exception raised if the
-input cannot be represented exactly as an integer.  However, if the fixed-
-point input is too large, the invalid exception is raised and the largest
-positive or negative integer is returned.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Takes a 64-bit fixed-point value `absZ' with binary point between bits 6
+| and 7, and returns the properly rounded 32-bit integer corresponding to the
+| input.  If `zSign' is 1, the input is negated before being converted to an
+| integer.  Bit 63 of `absZ' must be zero.  Ordinarily, the fixed-point input
+| is simply rounded to an integer, with the inexact exception raised if the
+| input cannot be represented exactly as an integer.  However, if the fixed-
+| point input is too large, the invalid exception is raised and the largest
+| positive or negative integer is returned.
+*----------------------------------------------------------------------------*/
+
 static int32 roundAndPackInt32( flag zSign, bits64 absZ )
 {
     int8 roundingMode;
@@ -158,19 +151,18 @@ static int32 roundAndPackInt32( flag zSign, bits64 absZ )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Takes the 128-bit fixed-point value formed by concatenating `absZ0' and
-`absZ1', with binary point between bits 63 and 64 (between the input words),
-and returns the properly rounded 64-bit integer corresponding to the input.
-If `zSign' is 1, the input is negated before being converted to an integer.
-Ordinarily, the fixed-point input is simply rounded to an integer, with
-the inexact exception raised if the input cannot be represented exactly as
-an integer.  However, if the fixed-point input is too large, the invalid
-exception is raised and the largest positive or negative integer is
-returned.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Takes the 128-bit fixed-point value formed by concatenating `absZ0' and
+| `absZ1', with binary point between bits 63 and 64 (between the input words),
+| and returns the properly rounded 64-bit integer corresponding to the input.
+| If `zSign' is 1, the input is negated before being converted to an integer.
+| Ordinarily, the fixed-point input is simply rounded to an integer, with
+| the inexact exception raised if the input cannot be represented exactly as
+| an integer.  However, if the fixed-point input is too large, the invalid
+| exception is raised and the largest positive or negative integer is
+| returned.
+*----------------------------------------------------------------------------*/
+
 static int64 roundAndPackInt64( flag zSign, bits64 absZ0, bits64 absZ1 )
 {
     int8 roundingMode;
@@ -243,13 +235,12 @@ static uint64 roundAndPackUInt64( bits64 absZ0, bits64 absZ1 )
     return z;
 
 }
-#endif
+#endif /* SOFTFLOAT_FOR_GCC */
 
-/*
--------------------------------------------------------------------------------
-Returns the fraction bits of the single-precision floating-point value `a'.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the fraction bits of the single-precision floating-point value `a'.
+*----------------------------------------------------------------------------*/
+
 INLINE bits32 extractFloat32Frac( float32 a )
 {
 
@@ -257,11 +248,10 @@ INLINE bits32 extractFloat32Frac( float32 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the exponent bits of the single-precision floating-point value `a'.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the exponent bits of the single-precision floating-point value `a'.
+*----------------------------------------------------------------------------*/
+
 INLINE int16 extractFloat32Exp( float32 a )
 {
 
@@ -269,11 +259,10 @@ INLINE int16 extractFloat32Exp( float32 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the sign bit of the single-precision floating-point value `a'.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the sign bit of the single-precision floating-point value `a'.
+*----------------------------------------------------------------------------*/
+
 INLINE flag extractFloat32Sign( float32 a )
 {
 
@@ -281,14 +270,13 @@ INLINE flag extractFloat32Sign( float32 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Normalizes the subnormal single-precision floating-point value represented
-by the denormalized significand `aSig'.  The normalized exponent and
-significand are stored at the locations pointed to by `zExpPtr' and
-`zSigPtr', respectively.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Normalizes the subnormal single-precision floating-point value represented
+| by the denormalized significand `aSig'.  The normalized exponent and
+| significand are stored at the locations pointed to by `zExpPtr' and
+| `zSigPtr', respectively.
+*----------------------------------------------------------------------------*/
+
 static void
  normalizeFloat32Subnormal( bits32 aSig, int16 *zExpPtr, bits32 *zSigPtr )
 {
@@ -300,18 +288,17 @@ static void
 
 }
 
-/*
--------------------------------------------------------------------------------
-Packs the sign `zSign', exponent `zExp', and significand `zSig' into a
-single-precision floating-point value, returning the result.  After being
-shifted into the proper positions, the three fields are simply added
-together to form the result.  This means that any integer portion of `zSig'
-will be added into the exponent.  Since a properly normalized significand
-will have an integer portion equal to 1, the `zExp' input should be 1 less
-than the desired result exponent whenever `zSig' is a complete, normalized
-significand.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Packs the sign `zSign', exponent `zExp', and significand `zSig' into a
+| single-precision floating-point value, returning the result.  After being
+| shifted into the proper positions, the three fields are simply added
+| together to form the result.  This means that any integer portion of `zSig'
+| will be added into the exponent.  Since a properly normalized significand
+| will have an integer portion equal to 1, the `zExp' input should be 1 less
+| than the desired result exponent whenever `zSig' is a complete, normalized
+| significand.
+*----------------------------------------------------------------------------*/
+
 INLINE float32 packFloat32( flag zSign, int16 zExp, bits32 zSig )
 {
 
@@ -319,29 +306,28 @@ INLINE float32 packFloat32( flag zSign, int16 zExp, bits32 zSig )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Takes an abstract floating-point value having sign `zSign', exponent `zExp',
-and significand `zSig', and returns the proper single-precision floating-
-point value corresponding to the abstract input.  Ordinarily, the abstract
-value is simply rounded and packed into the single-precision format, with
-the inexact exception raised if the abstract input cannot be represented
-exactly.  However, if the abstract value is too large, the overflow and
-inexact exceptions are raised and an infinity or maximal finite value is
-returned.  If the abstract value is too small, the input value is rounded to
-a subnormal number, and the underflow and inexact exceptions are raised if
-the abstract input cannot be represented exactly as a subnormal single-
-precision floating-point number.
-    The input significand `zSig' has its binary point between bits 30
-and 29, which is 7 bits to the left of the usual location.  This shifted
-significand must be normalized or smaller.  If `zSig' is not normalized,
-`zExp' must be 0; in that case, the result returned is a subnormal number,
-and it must not require rounding.  In the usual case that `zSig' is
-normalized, `zExp' must be 1 less than the ``true'' floating-point exponent.
-The handling of underflow and overflow follows the IEC/IEEE Standard for
-Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Takes an abstract floating-point value having sign `zSign', exponent `zExp',
+| and significand `zSig', and returns the proper single-precision floating-
+| point value corresponding to the abstract input.  Ordinarily, the abstract
+| value is simply rounded and packed into the single-precision format, with
+| the inexact exception raised if the abstract input cannot be represented
+| exactly.  However, if the abstract value is too large, the overflow and
+| inexact exceptions are raised and an infinity or maximal finite value is
+| returned.  If the abstract value is too small, the input value is rounded to
+| a subnormal number, and the underflow and inexact exceptions are raised if
+| the abstract input cannot be represented exactly as a subnormal single-
+| precision floating-point number.
+|     The input significand `zSig' has its binary point between bits 30
+| and 29, which is 7 bits to the left of the usual location.  This shifted
+| significand must be normalized or smaller.  If `zSig' is not normalized,
+| `zExp' must be 0; in that case, the result returned is a subnormal number,
+| and it must not require rounding.  In the usual case that `zSig' is
+| normalized, `zExp' must be 1 less than the ``true'' floating-point exponent.
+| The handling of underflow and overflow follows the IEC/IEEE Standard for
+| Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 static float32 roundAndPackFloat32( flag zSign, int16 zExp, bits32 zSig )
 {
     int8 roundingMode;
@@ -394,16 +380,15 @@ static float32 roundAndPackFloat32( flag zSign, int16 zExp, bits32 zSig )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Takes an abstract floating-point value having sign `zSign', exponent `zExp',
-and significand `zSig', and returns the proper single-precision floating-
-point value corresponding to the abstract input.  This routine is just like
-`roundAndPackFloat32' except that `zSig' does not have to be normalized.
-Bit 31 of `zSig' must be zero, and `zExp' must be 1 less than the ``true''
-floating-point exponent.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Takes an abstract floating-point value having sign `zSign', exponent `zExp',
+| and significand `zSig', and returns the proper single-precision floating-
+| point value corresponding to the abstract input.  This routine is just like
+| `roundAndPackFloat32' except that `zSig' does not have to be normalized.
+| Bit 31 of `zSig' must be zero, and `zExp' must be 1 less than the ``true''
+| floating-point exponent.
+*----------------------------------------------------------------------------*/
+
 static float32
  normalizeRoundAndPackFloat32( flag zSign, int16 zExp, bits32 zSig )
 {
@@ -414,11 +399,10 @@ static float32
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the fraction bits of the double-precision floating-point value `a'.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the fraction bits of the double-precision floating-point value `a'.
+*----------------------------------------------------------------------------*/
+
 INLINE bits64 extractFloat64Frac( float64 a )
 {
 
@@ -426,23 +410,20 @@ INLINE bits64 extractFloat64Frac( float64 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the exponent bits of the double-precision floating-point value `a'.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the exponent bits of the double-precision floating-point value `a'.
+*----------------------------------------------------------------------------*/
+
 INLINE int16 extractFloat64Exp( float64 a )
 {
 
     return ( FLOAT64_DEMANGLE(a)>>52 ) & 0x7FF;
 
 }
+/*----------------------------------------------------------------------------
+| Returns the sign bit of the double-precision floating-point value `a'.
+*----------------------------------------------------------------------------*/
 
-/*
--------------------------------------------------------------------------------
-Returns the sign bit of the double-precision floating-point value `a'.
--------------------------------------------------------------------------------
-*/
 INLINE flag extractFloat64Sign( float64 a )
 {
 
@@ -450,14 +431,13 @@ INLINE flag extractFloat64Sign( float64 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Normalizes the subnormal double-precision floating-point value represented
-by the denormalized significand `aSig'.  The normalized exponent and
-significand are stored at the locations pointed to by `zExpPtr' and
-`zSigPtr', respectively.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Normalizes the subnormal double-precision floating-point value represented
+| by the denormalized significand `aSig'.  The normalized exponent and
+| significand are stored at the locations pointed to by `zExpPtr' and
+| `zSigPtr', respectively.
+*----------------------------------------------------------------------------*/
+
 static void
  normalizeFloat64Subnormal( bits64 aSig, int16 *zExpPtr, bits64 *zSigPtr )
 {
@@ -469,18 +449,17 @@ static void
 
 }
 
-/*
--------------------------------------------------------------------------------
-Packs the sign `zSign', exponent `zExp', and significand `zSig' into a
-double-precision floating-point value, returning the result.  After being
-shifted into the proper positions, the three fields are simply added
-together to form the result.  This means that any integer portion of `zSig'
-will be added into the exponent.  Since a properly normalized significand
-will have an integer portion equal to 1, the `zExp' input should be 1 less
-than the desired result exponent whenever `zSig' is a complete, normalized
-significand.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Packs the sign `zSign', exponent `zExp', and significand `zSig' into a
+| double-precision floating-point value, returning the result.  After being
+| shifted into the proper positions, the three fields are simply added
+| together to form the result.  This means that any integer portion of `zSig'
+| will be added into the exponent.  Since a properly normalized significand
+| will have an integer portion equal to 1, the `zExp' input should be 1 less
+| than the desired result exponent whenever `zSig' is a complete, normalized
+| significand.
+*----------------------------------------------------------------------------*/
+
 INLINE float64 packFloat64( flag zSign, int16 zExp, bits64 zSig )
 {
 
@@ -489,29 +468,28 @@ INLINE float64 packFloat64( flag zSign, int16 zExp, bits64 zSig )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Takes an abstract floating-point value having sign `zSign', exponent `zExp',
-and significand `zSig', and returns the proper double-precision floating-
-point value corresponding to the abstract input.  Ordinarily, the abstract
-value is simply rounded and packed into the double-precision format, with
-the inexact exception raised if the abstract input cannot be represented
-exactly.  However, if the abstract value is too large, the overflow and
-inexact exceptions are raised and an infinity or maximal finite value is
-returned.  If the abstract value is too small, the input value is rounded to
-a subnormal number, and the underflow and inexact exceptions are raised if
-the abstract input cannot be represented exactly as a subnormal double-
-precision floating-point number.
-    The input significand `zSig' has its binary point between bits 62
-and 61, which is 10 bits to the left of the usual location.  This shifted
-significand must be normalized or smaller.  If `zSig' is not normalized,
-`zExp' must be 0; in that case, the result returned is a subnormal number,
-and it must not require rounding.  In the usual case that `zSig' is
-normalized, `zExp' must be 1 less than the ``true'' floating-point exponent.
-The handling of underflow and overflow follows the IEC/IEEE Standard for
-Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Takes an abstract floating-point value having sign `zSign', exponent `zExp',
+| and significand `zSig', and returns the proper double-precision floating-
+| point value corresponding to the abstract input.  Ordinarily, the abstract
+| value is simply rounded and packed into the double-precision format, with
+| the inexact exception raised if the abstract input cannot be represented
+| exactly.  However, if the abstract value is too large, the overflow and
+| inexact exceptions are raised and an infinity or maximal finite value is
+| returned.  If the abstract value is too small, the input value is rounded
+| to a subnormal number, and the underflow and inexact exceptions are raised
+| if the abstract input cannot be represented exactly as a subnormal double-
+| precision floating-point number.
+|     The input significand `zSig' has its binary point between bits 62
+| and 61, which is 10 bits to the left of the usual location.  This shifted
+| significand must be normalized or smaller.  If `zSig' is not normalized,
+| `zExp' must be 0; in that case, the result returned is a subnormal number,
+| and it must not require rounding.  In the usual case that `zSig' is
+| normalized, `zExp' must be 1 less than the ``true'' floating-point exponent.
+| The handling of underflow and overflow follows the IEC/IEEE Standard for
+| Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 static float64 roundAndPackFloat64( flag zSign, int16 zExp, bits64 zSig )
 {
     int8 roundingMode;
@@ -566,16 +544,15 @@ static float64 roundAndPackFloat64( flag zSign, int16 zExp, bits64 zSig )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Takes an abstract floating-point value having sign `zSign', exponent `zExp',
-and significand `zSig', and returns the proper double-precision floating-
-point value corresponding to the abstract input.  This routine is just like
-`roundAndPackFloat64' except that `zSig' does not have to be normalized.
-Bit 63 of `zSig' must be zero, and `zExp' must be 1 less than the ``true''
-floating-point exponent.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Takes an abstract floating-point value having sign `zSign', exponent `zExp',
+| and significand `zSig', and returns the proper double-precision floating-
+| point value corresponding to the abstract input.  This routine is just like
+| `roundAndPackFloat64' except that `zSig' does not have to be normalized.
+| Bit 63 of `zSig' must be zero, and `zExp' must be 1 less than the ``true''
+| floating-point exponent.
+*----------------------------------------------------------------------------*/
+
 static float64
  normalizeRoundAndPackFloat64( flag zSign, int16 zExp, bits64 zSig )
 {
@@ -588,12 +565,11 @@ static float64
 
 #ifdef FLOATX80
 
-/*
--------------------------------------------------------------------------------
-Returns the fraction bits of the extended double-precision floating-point
-value `a'.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the fraction bits of the extended double-precision floating-point
+| value `a'.
+*----------------------------------------------------------------------------*/
+
 INLINE bits64 extractFloatx80Frac( floatx80 a )
 {
 
@@ -601,12 +577,11 @@ INLINE bits64 extractFloatx80Frac( floatx80 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the exponent bits of the extended double-precision floating-point
-value `a'.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the exponent bits of the extended double-precision floating-point
+| value `a'.
+*----------------------------------------------------------------------------*/
+
 INLINE int32 extractFloatx80Exp( floatx80 a )
 {
 
@@ -614,12 +589,11 @@ INLINE int32 extractFloatx80Exp( floatx80 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the sign bit of the extended double-precision floating-point value
-`a'.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the sign bit of the extended double-precision floating-point value
+| `a'.
+*----------------------------------------------------------------------------*/
+
 INLINE flag extractFloatx80Sign( floatx80 a )
 {
 
@@ -627,14 +601,13 @@ INLINE flag extractFloatx80Sign( floatx80 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Normalizes the subnormal extended double-precision floating-point value
-represented by the denormalized significand `aSig'.  The normalized exponent
-and significand are stored at the locations pointed to by `zExpPtr' and
-`zSigPtr', respectively.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Normalizes the subnormal extended double-precision floating-point value
+| represented by the denormalized significand `aSig'.  The normalized exponent
+| and significand are stored at the locations pointed to by `zExpPtr' and
+| `zSigPtr', respectively.
+*----------------------------------------------------------------------------*/
+
 static void
  normalizeFloatx80Subnormal( bits64 aSig, int32 *zExpPtr, bits64 *zSigPtr )
 {
@@ -646,12 +619,11 @@ static void
 
 }
 
-/*
--------------------------------------------------------------------------------
-Packs the sign `zSign', exponent `zExp', and significand `zSig' into an
-extended double-precision floating-point value, returning the result.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Packs the sign `zSign', exponent `zExp', and significand `zSig' into an
+| extended double-precision floating-point value, returning the result.
+*----------------------------------------------------------------------------*/
+
 INLINE floatx80 packFloatx80( flag zSign, int32 zExp, bits64 zSig )
 {
     floatx80 z;
@@ -662,31 +634,30 @@ INLINE floatx80 packFloatx80( flag zSign, int32 zExp, bits64 zSig )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Takes an abstract floating-point value having sign `zSign', exponent `zExp',
-and extended significand formed by the concatenation of `zSig0' and `zSig1',
-and returns the proper extended double-precision floating-point value
-corresponding to the abstract input.  Ordinarily, the abstract value is
-rounded and packed into the extended double-precision format, with the
-inexact exception raised if the abstract input cannot be represented
-exactly.  However, if the abstract value is too large, the overflow and
-inexact exceptions are raised and an infinity or maximal finite value is
-returned.  If the abstract value is too small, the input value is rounded to
-a subnormal number, and the underflow and inexact exceptions are raised if
-the abstract input cannot be represented exactly as a subnormal extended
-double-precision floating-point number.
-    If `roundingPrecision' is 32 or 64, the result is rounded to the same
-number of bits as single or double precision, respectively.  Otherwise, the
-result is rounded to the full precision of the extended double-precision
-format.
-    The input significand must be normalized or smaller.  If the input
-significand is not normalized, `zExp' must be 0; in that case, the result
-returned is a subnormal number, and it must not require rounding.  The
-handling of underflow and overflow follows the IEC/IEEE Standard for Binary
-Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Takes an abstract floating-point value having sign `zSign', exponent `zExp',
+| and extended significand formed by the concatenation of `zSig0' and `zSig1',
+| and returns the proper extended double-precision floating-point value
+| corresponding to the abstract input.  Ordinarily, the abstract value is
+| rounded and packed into the extended double-precision format, with the
+| inexact exception raised if the abstract input cannot be represented
+| exactly.  However, if the abstract value is too large, the overflow and
+| inexact exceptions are raised and an infinity or maximal finite value is
+| returned.  If the abstract value is too small, the input value is rounded to
+| a subnormal number, and the underflow and inexact exceptions are raised if
+| the abstract input cannot be represented exactly as a subnormal extended
+| double-precision floating-point number.
+|     If `roundingPrecision' is 32 or 64, the result is rounded to the same
+| number of bits as single or double precision, respectively.  Otherwise, the
+| result is rounded to the full precision of the extended double-precision
+| format.
+|     The input significand must be normalized or smaller.  If the input
+| significand is not normalized, `zExp' must be 0; in that case, the result
+| returned is a subnormal number, and it must not require rounding.  The
+| handling of underflow and overflow follows the IEC/IEEE Standard for Binary
+| Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 static floatx80
  roundAndPackFloatx80(
      int8 roundingPrecision, flag zSign, int32 zExp, bits64 zSig0, bits64 zSig1
@@ -846,16 +817,15 @@ static floatx80
 
 }
 
-/*
--------------------------------------------------------------------------------
-Takes an abstract floating-point value having sign `zSign', exponent
-`zExp', and significand formed by the concatenation of `zSig0' and `zSig1',
-and returns the proper extended double-precision floating-point value
-corresponding to the abstract input.  This routine is just like
-`roundAndPackFloatx80' except that the input significand does not have to be
-normalized.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Takes an abstract floating-point value having sign `zSign', exponent
+| `zExp', and significand formed by the concatenation of `zSig0' and `zSig1',
+| and returns the proper extended double-precision floating-point value
+| corresponding to the abstract input.  This routine is just like
+| `roundAndPackFloatx80' except that the input significand does not have to be
+| normalized.
+*----------------------------------------------------------------------------*/
+
 static floatx80
  normalizeRoundAndPackFloatx80(
      int8 roundingPrecision, flag zSign, int32 zExp, bits64 zSig0, bits64 zSig1
@@ -880,12 +850,11 @@ static floatx80
 
 #ifdef FLOAT128
 
-/*
--------------------------------------------------------------------------------
-Returns the least-significant 64 fraction bits of the quadruple-precision
-floating-point value `a'.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the least-significant 64 fraction bits of the quadruple-precision
+| floating-point value `a'.
+*----------------------------------------------------------------------------*/
+
 INLINE bits64 extractFloat128Frac1( float128 a )
 {
 
@@ -893,12 +862,11 @@ INLINE bits64 extractFloat128Frac1( float128 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the most-significant 48 fraction bits of the quadruple-precision
-floating-point value `a'.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the most-significant 48 fraction bits of the quadruple-precision
+| floating-point value `a'.
+*----------------------------------------------------------------------------*/
+
 INLINE bits64 extractFloat128Frac0( float128 a )
 {
 
@@ -906,12 +874,11 @@ INLINE bits64 extractFloat128Frac0( float128 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the exponent bits of the quadruple-precision floating-point value
-`a'.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the exponent bits of the quadruple-precision floating-point value
+| `a'.
+*----------------------------------------------------------------------------*/
+
 INLINE int32 extractFloat128Exp( float128 a )
 {
 
@@ -919,11 +886,11 @@ INLINE int32 extractFloat128Exp( float128 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the sign bit of the quadruple-precision floating-point value `a'.
--------------------------------------------------------------------------------
-*/
+
+/*----------------------------------------------------------------------------
+| Returns the sign bit of the quadruple-precision floating-point value `a'.
+*----------------------------------------------------------------------------*/
+
 INLINE flag extractFloat128Sign( float128 a )
 {
 
@@ -931,17 +898,16 @@ INLINE flag extractFloat128Sign( float128 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Normalizes the subnormal quadruple-precision floating-point value
-represented by the denormalized significand formed by the concatenation of
-`aSig0' and `aSig1'.  The normalized exponent is stored at the location
-pointed to by `zExpPtr'.  The most significant 49 bits of the normalized
-significand are stored at the location pointed to by `zSig0Ptr', and the
-least significant 64 bits of the normalized significand are stored at the
-location pointed to by `zSig1Ptr'.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Normalizes the subnormal quadruple-precision floating-point value
+| represented by the denormalized significand formed by the concatenation of
+| `aSig0' and `aSig1'.  The normalized exponent is stored at the location
+| pointed to by `zExpPtr'.  The most significant 49 bits of the normalized
+| significand are stored at the location pointed to by `zSig0Ptr', and the
+| least significant 64 bits of the normalized significand are stored at the
+| location pointed to by `zSig1Ptr'.
+*----------------------------------------------------------------------------*/
+
 static void
  normalizeFloat128Subnormal(
      bits64 aSig0,
@@ -973,20 +939,19 @@ static void
 
 }
 
-/*
--------------------------------------------------------------------------------
-Packs the sign `zSign', the exponent `zExp', and the significand formed
-by the concatenation of `zSig0' and `zSig1' into a quadruple-precision
-floating-point value, returning the result.  After being shifted into the
-proper positions, the three fields `zSign', `zExp', and `zSig0' are simply
-added together to form the most significant 32 bits of the result.  This
-means that any integer portion of `zSig0' will be added into the exponent.
-Since a properly normalized significand will have an integer portion equal
-to 1, the `zExp' input should be 1 less than the desired result exponent
-whenever `zSig0' and `zSig1' concatenated form a complete, normalized
-significand.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Packs the sign `zSign', the exponent `zExp', and the significand formed
+| by the concatenation of `zSig0' and `zSig1' into a quadruple-precision
+| floating-point value, returning the result.  After being shifted into the
+| proper positions, the three fields `zSign', `zExp', and `zSig0' are simply
+| added together to form the most significant 32 bits of the result.  This
+| means that any integer portion of `zSig0' will be added into the exponent.
+| Since a properly normalized significand will have an integer portion equal
+| to 1, the `zExp' input should be 1 less than the desired result exponent
+| whenever `zSig0' and `zSig1' concatenated form a complete, normalized
+| significand.
+*----------------------------------------------------------------------------*/
+
 INLINE float128
  packFloat128( flag zSign, int32 zExp, bits64 zSig0, bits64 zSig1 )
 {
@@ -998,28 +963,27 @@ INLINE float128
 
 }
 
-/*
--------------------------------------------------------------------------------
-Takes an abstract floating-point value having sign `zSign', exponent `zExp',
-and extended significand formed by the concatenation of `zSig0', `zSig1',
-and `zSig2', and returns the proper quadruple-precision floating-point value
-corresponding to the abstract input.  Ordinarily, the abstract value is
-simply rounded and packed into the quadruple-precision format, with the
-inexact exception raised if the abstract input cannot be represented
-exactly.  However, if the abstract value is too large, the overflow and
-inexact exceptions are raised and an infinity or maximal finite value is
-returned.  If the abstract value is too small, the input value is rounded to
-a subnormal number, and the underflow and inexact exceptions are raised if
-the abstract input cannot be represented exactly as a subnormal quadruple-
-precision floating-point number.
-    The input significand must be normalized or smaller.  If the input
-significand is not normalized, `zExp' must be 0; in that case, the result
-returned is a subnormal number, and it must not require rounding.  In the
-usual case that the input significand is normalized, `zExp' must be 1 less
-than the ``true'' floating-point exponent.  The handling of underflow and
-overflow follows the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Takes an abstract floating-point value having sign `zSign', exponent `zExp',
+| and extended significand formed by the concatenation of `zSig0', `zSig1',
+| and `zSig2', and returns the proper quadruple-precision floating-point value
+| corresponding to the abstract input.  Ordinarily, the abstract value is
+| simply rounded and packed into the quadruple-precision format, with the
+| inexact exception raised if the abstract input cannot be represented
+| exactly.  However, if the abstract value is too large, the overflow and
+| inexact exceptions are raised and an infinity or maximal finite value is
+| returned.  If the abstract value is too small, the input value is rounded to
+| a subnormal number, and the underflow and inexact exceptions are raised if
+| the abstract input cannot be represented exactly as a subnormal quadruple-
+| precision floating-point number.
+|     The input significand must be normalized or smaller.  If the input
+| significand is not normalized, `zExp' must be 0; in that case, the result
+| returned is a subnormal number, and it must not require rounding.  In the
+| usual case that the input significand is normalized, `zExp' must be 1 less
+| than the ``true'' floating-point exponent.  The handling of underflow and
+| overflow follows the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 static float128
  roundAndPackFloat128(
      flag zSign, int32 zExp, bits64 zSig0, bits64 zSig1, bits64 zSig2 )
@@ -1110,17 +1074,16 @@ static float128
 
 }
 
-/*
--------------------------------------------------------------------------------
-Takes an abstract floating-point value having sign `zSign', exponent `zExp',
-and significand formed by the concatenation of `zSig0' and `zSig1', and
-returns the proper quadruple-precision floating-point value corresponding
-to the abstract input.  This routine is just like `roundAndPackFloat128'
-except that the input significand has fewer bits and does not have to be
-normalized.  In all cases, `zExp' must be 1 less than the ``true'' floating-
-point exponent.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Takes an abstract floating-point value having sign `zSign', exponent `zExp',
+| and significand formed by the concatenation of `zSig0' and `zSig1', and
+| returns the proper quadruple-precision floating-point value corresponding
+| to the abstract input.  This routine is just like `roundAndPackFloat128'
+| except that the input significand has fewer bits and does not have to be
+| normalized.  In all cases, `zExp' must be 1 less than the ``true'' floating-
+| point exponent.
+*----------------------------------------------------------------------------*/
+
 static float128
  normalizeRoundAndPackFloat128(
      flag zSign, int32 zExp, bits64 zSig0, bits64 zSig1 )
@@ -1149,13 +1112,12 @@ static float128
 
 #endif
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the 32-bit two's complement integer `a'
-to the single-precision floating-point format.  The conversion is performed
-according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the 32-bit two's complement integer `a'
+| to the single-precision floating-point format.  The conversion is performed
+| according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float32 int32_to_float32( int32 a )
 {
     flag zSign;
@@ -1167,13 +1129,12 @@ float32 int32_to_float32( int32 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the 32-bit two's complement integer `a'
-to the double-precision floating-point format.  The conversion is performed
-according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the 32-bit two's complement integer `a'
+| to the double-precision floating-point format.  The conversion is performed
+| according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float64 int32_to_float64( int32 a )
 {
     flag zSign;
@@ -1192,14 +1153,13 @@ float64 int32_to_float64( int32 a )
 
 #ifdef FLOATX80
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the 32-bit two's complement integer `a'
-to the extended double-precision floating-point format.  The conversion
-is performed according to the IEC/IEEE Standard for Binary Floating-Point
-Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the 32-bit two's complement integer `a'
+| to the extended double-precision floating-point format.  The conversion
+| is performed according to the IEC/IEEE Standard for Binary Floating-Point
+| Arithmetic.
+*----------------------------------------------------------------------------*/
+
 floatx80 int32_to_floatx80( int32 a )
 {
     flag zSign;
@@ -1220,13 +1180,12 @@ floatx80 int32_to_floatx80( int32 a )
 
 #ifdef FLOAT128
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the 32-bit two's complement integer `a' to
-the quadruple-precision floating-point format.  The conversion is performed
-according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the 32-bit two's complement integer `a' to
+| the quadruple-precision floating-point format.  The conversion is performed
+| according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float128 int32_to_float128( int32 a )
 {
     flag zSign;
@@ -1246,13 +1205,12 @@ float128 int32_to_float128( int32 a )
 #endif
 
 #ifndef SOFTFLOAT_FOR_GCC /* __floatdi?f is in libgcc2.c */
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the 64-bit two's complement integer `a'
-to the single-precision floating-point format.  The conversion is performed
-according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the 64-bit two's complement integer `a'
+| to the single-precision floating-point format.  The conversion is performed
+| according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float32 int64_to_float32( int64 a )
 {
     flag zSign;
@@ -1279,13 +1237,12 @@ float32 int64_to_float32( int64 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the 64-bit two's complement integer `a'
-to the double-precision floating-point format.  The conversion is performed
-according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the 64-bit two's complement integer `a'
+| to the double-precision floating-point format.  The conversion is performed
+| according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float64 int64_to_float64( int64 a )
 {
     flag zSign;
@@ -1301,14 +1258,13 @@ float64 int64_to_float64( int64 a )
 
 #ifdef FLOATX80
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the 64-bit two's complement integer `a'
-to the extended double-precision floating-point format.  The conversion
-is performed according to the IEC/IEEE Standard for Binary Floating-Point
-Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the 64-bit two's complement integer `a'
+| to the extended double-precision floating-point format.  The conversion
+| is performed according to the IEC/IEEE Standard for Binary Floating-Point
+| Arithmetic.
+*----------------------------------------------------------------------------*/
+
 floatx80 int64_to_floatx80( int64 a )
 {
     flag zSign;
@@ -1327,13 +1283,12 @@ floatx80 int64_to_floatx80( int64 a )
 
 #ifdef FLOAT128
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the 64-bit two's complement integer `a' to
-the quadruple-precision floating-point format.  The conversion is performed
-according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the 64-bit two's complement integer `a' to
+| the quadruple-precision floating-point format.  The conversion is performed
+| according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float128 int64_to_float128( int64 a )
 {
     flag zSign;
@@ -1365,17 +1320,16 @@ float128 int64_to_float128( int64 a )
 #endif /* !SOFTFLOAT_FOR_GCC */
 
 #ifndef SOFTFLOAT_FOR_GCC /* Not needed */
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the single-precision floating-point value
-`a' to the 32-bit two's complement integer format.  The conversion is
-performed according to the IEC/IEEE Standard for Binary Floating-Point
-Arithmetic---which means in particular that the conversion is rounded
-according to the current rounding mode.  If `a' is a NaN, the largest
-positive integer is returned.  Otherwise, if the conversion overflows, the
-largest integer with the same sign as `a' is returned.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the single-precision floating-point value
+| `a' to the 32-bit two's complement integer format.  The conversion is
+| performed according to the IEC/IEEE Standard for Binary Floating-Point
+| Arithmetic---which means in particular that the conversion is rounded
+| according to the current rounding mode.  If `a' is a NaN, the largest
+| positive integer is returned.  Otherwise, if the conversion overflows, the
+| largest integer with the same sign as `a' is returned.
+*----------------------------------------------------------------------------*/
+
 int32 float32_to_int32( float32 a )
 {
     flag aSign;
@@ -1397,17 +1351,16 @@ int32 float32_to_int32( float32 a )
 }
 #endif /* !SOFTFLOAT_FOR_GCC */
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the single-precision floating-point value
-`a' to the 32-bit two's complement integer format.  The conversion is
-performed according to the IEC/IEEE Standard for Binary Floating-Point
-Arithmetic, except that the conversion is always rounded toward zero.
-If `a' is a NaN, the largest positive integer is returned.  Otherwise, if
-the conversion overflows, the largest integer with the same sign as `a' is
-returned.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the single-precision floating-point value
+| `a' to the 32-bit two's complement integer format.  The conversion is
+| performed according to the IEC/IEEE Standard for Binary Floating-Point
+| Arithmetic, except that the conversion is always rounded toward zero.
+| If `a' is a NaN, the largest positive integer is returned.  Otherwise, if
+| the conversion overflows, the largest integer with the same sign as `a' is
+| returned.
+*----------------------------------------------------------------------------*/
+
 int32 float32_to_int32_round_to_zero( float32 a )
 {
     flag aSign;
@@ -1441,17 +1394,16 @@ int32 float32_to_int32_round_to_zero( float32 a )
 }
 
 #ifndef SOFTFLOAT_FOR_GCC /* __fix?fdi provided by libgcc2.c */
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the single-precision floating-point value
-`a' to the 64-bit two's complement integer format.  The conversion is
-performed according to the IEC/IEEE Standard for Binary Floating-Point
-Arithmetic---which means in particular that the conversion is rounded
-according to the current rounding mode.  If `a' is a NaN, the largest
-positive integer is returned.  Otherwise, if the conversion overflows, the
-largest integer with the same sign as `a' is returned.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the single-precision floating-point value
+| `a' to the 64-bit two's complement integer format.  The conversion is
+| performed according to the IEC/IEEE Standard for Binary Floating-Point
+| Arithmetic---which means in particular that the conversion is rounded
+| according to the current rounding mode.  If `a' is a NaN, the largest
+| positive integer is returned.  Otherwise, if the conversion overflows, the
+| largest integer with the same sign as `a' is returned.
+*----------------------------------------------------------------------------*/
+
 int64 float32_to_int64( float32 a )
 {
     flag aSign;
@@ -1478,17 +1430,16 @@ int64 float32_to_int64( float32 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the single-precision floating-point value
-`a' to the 64-bit two's complement integer format.  The conversion is
-performed according to the IEC/IEEE Standard for Binary Floating-Point
-Arithmetic, except that the conversion is always rounded toward zero.  If
-`a' is a NaN, the largest positive integer is returned.  Otherwise, if the
-conversion overflows, the largest integer with the same sign as `a' is
-returned.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the single-precision floating-point value
+| `a' to the 64-bit two's complement integer format.  The conversion is
+| performed according to the IEC/IEEE Standard for Binary Floating-Point
+| Arithmetic, except that the conversion is always rounded toward zero.  If
+| `a' is a NaN, the largest positive integer is returned.  Otherwise, if the
+| conversion overflows, the largest integer with the same sign as `a' is
+| returned.
+*----------------------------------------------------------------------------*/
+
 int64 float32_to_int64_round_to_zero( float32 a )
 {
     flag aSign;
@@ -1526,14 +1477,13 @@ int64 float32_to_int64_round_to_zero( float32 a )
 }
 #endif /* !SOFTFLOAT_FOR_GCC */
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the single-precision floating-point value
-`a' to the double-precision floating-point format.  The conversion is
-performed according to the IEC/IEEE Standard for Binary Floating-Point
-Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the single-precision floating-point value
+| `a' to the double-precision floating-point format.  The conversion is
+| performed according to the IEC/IEEE Standard for Binary Floating-Point
+| Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float64 float32_to_float64( float32 a )
 {
     flag aSign;
@@ -1558,14 +1508,13 @@ float64 float32_to_float64( float32 a )
 
 #ifdef FLOATX80
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the single-precision floating-point value
-`a' to the extended double-precision floating-point format.  The conversion
-is performed according to the IEC/IEEE Standard for Binary Floating-Point
-Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the single-precision floating-point value
+| `a' to the extended double-precision floating-point format.  The conversion
+| is performed according to the IEC/IEEE Standard for Binary Floating-Point
+| Arithmetic.
+*----------------------------------------------------------------------------*/
+
 floatx80 float32_to_floatx80( float32 a )
 {
     flag aSign;
@@ -1592,14 +1541,13 @@ floatx80 float32_to_floatx80( float32 a )
 
 #ifdef FLOAT128
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the single-precision floating-point value
-`a' to the double-precision floating-point format.  The conversion is
-performed according to the IEC/IEEE Standard for Binary Floating-Point
-Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the single-precision floating-point value
+| `a' to the double-precision floating-point format.  The conversion is
+| performed according to the IEC/IEEE Standard for Binary Floating-Point
+| Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float128 float32_to_float128( float32 a )
 {
     flag aSign;
@@ -1625,14 +1573,13 @@ float128 float32_to_float128( float32 a )
 #endif
 
 #ifndef SOFTFLOAT_FOR_GCC /* Not needed */
-/*
--------------------------------------------------------------------------------
-Rounds the single-precision floating-point value `a' to an integer, and
-returns the result as a single-precision floating-point value.  The
-operation is performed according to the IEC/IEEE Standard for Binary
-Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Rounds the single-precision floating-point value `a' to an integer, and
+| returns the result as a single-precision floating-point value.  The
+| operation is performed according to the IEC/IEEE Standard for Binary
+| Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float32 float32_round_to_int( float32 a )
 {
     flag aSign;
@@ -1686,15 +1633,14 @@ float32 float32_round_to_int( float32 a )
 }
 #endif /* !SOFTFLOAT_FOR_GCC */
 
-/*
--------------------------------------------------------------------------------
-Returns the result of adding the absolute values of the single-precision
-floating-point values `a' and `b'.  If `zSign' is 1, the sum is negated
-before being returned.  `zSign' is ignored if the result is a NaN.
-The addition is performed according to the IEC/IEEE Standard for Binary
-Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of adding the absolute values of the single-precision
+| floating-point values `a' and `b'.  If `zSign' is 1, the sum is negated
+| before being returned.  `zSign' is ignored if the result is a NaN.
+| The addition is performed according to the IEC/IEEE Standard for Binary
+| Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 static float32 addFloat32Sigs( float32 a, float32 b, flag zSign )
 {
     int16 aExp, bExp, zExp;
@@ -1758,15 +1704,14 @@ static float32 addFloat32Sigs( float32 a, float32 b, flag zSign )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of subtracting the absolute values of the single-
-precision floating-point values `a' and `b'.  If `zSign' is 1, the
-difference is negated before being returned.  `zSign' is ignored if the
-result is a NaN.  The subtraction is performed according to the IEC/IEEE
-Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of subtracting the absolute values of the single-
+| precision floating-point values `a' and `b'.  If `zSign' is 1, the
+| difference is negated before being returned.  `zSign' is ignored if the
+| result is a NaN.  The subtraction is performed according to the IEC/IEEE
+| Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 static float32 subFloat32Sigs( float32 a, float32 b, flag zSign )
 {
     int16 aExp, bExp, zExp;
@@ -1834,13 +1779,12 @@ static float32 subFloat32Sigs( float32 a, float32 b, flag zSign )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of adding the single-precision floating-point values `a'
-and `b'.  The operation is performed according to the IEC/IEEE Standard for
-Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of adding the single-precision floating-point values `a'
+| and `b'.  The operation is performed according to the IEC/IEEE Standard for
+| Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float32 float32_add( float32 a, float32 b )
 {
     flag aSign, bSign;
@@ -1856,13 +1800,12 @@ float32 float32_add( float32 a, float32 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of subtracting the single-precision floating-point values
-`a' and `b'.  The operation is performed according to the IEC/IEEE Standard
-for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of subtracting the single-precision floating-point values
+| `a' and `b'.  The operation is performed according to the IEC/IEEE Standard
+| for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float32 float32_sub( float32 a, float32 b )
 {
     flag aSign, bSign;
@@ -1878,13 +1821,12 @@ float32 float32_sub( float32 a, float32 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of multiplying the single-precision floating-point values
-`a' and `b'.  The operation is performed according to the IEC/IEEE Standard
-for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of multiplying the single-precision floating-point values
+| `a' and `b'.  The operation is performed according to the IEC/IEEE Standard
+| for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float32 float32_mul( float32 a, float32 b )
 {
     flag aSign, bSign, zSign;
@@ -1939,13 +1881,12 @@ float32 float32_mul( float32 a, float32 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of dividing the single-precision floating-point value `a'
-by the corresponding value `b'.  The operation is performed according to the
-IEC/IEEE Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of dividing the single-precision floating-point value `a'
+| by the corresponding value `b'.  The operation is performed according to the
+| IEC/IEEE Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float32 float32_div( float32 a, float32 b )
 {
     flag aSign, bSign, zSign;
@@ -2003,13 +1944,12 @@ float32 float32_div( float32 a, float32 b )
 }
 
 #ifndef SOFTFLOAT_FOR_GCC /* Not needed */
-/*
--------------------------------------------------------------------------------
-Returns the remainder of the single-precision floating-point value `a'
-with respect to the corresponding value `b'.  The operation is performed
-according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the remainder of the single-precision floating-point value `a'
+| with respect to the corresponding value `b'.  The operation is performed
+| according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float32 float32_rem( float32 a, float32 b )
 {
     flag aSign, bSign __unused, zSign;
@@ -2106,13 +2046,13 @@ float32 float32_rem( float32 a, float32 b )
 #endif /* !SOFTFLOAT_FOR_GCC */
 
 #ifndef SOFTFLOAT_FOR_GCC /* Not needed */
-/*
--------------------------------------------------------------------------------
-Returns the square root of the single-precision floating-point value `a'.
-The operation is performed according to the IEC/IEEE Standard for Binary
-Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+
+/*----------------------------------------------------------------------------
+| Returns the square root of the single-precision floating-point value `a'.
+| The operation is performed according to the IEC/IEEE Standard for Binary
+| Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float32 float32_sqrt( float32 a )
 {
     flag aSign;
@@ -2162,13 +2102,12 @@ float32 float32_sqrt( float32 a )
 }
 #endif /* !SOFTFLOAT_FOR_GCC */
 
-/*
--------------------------------------------------------------------------------
-Returns 1 if the single-precision floating-point value `a' is equal to
-the corresponding value `b', and 0 otherwise.  The comparison is performed
-according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns 1 if the single-precision floating-point value `a' is equal to
+| the corresponding value `b', and 0 otherwise.  The comparison is performed
+| according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 flag float32_eq( float32 a, float32 b )
 {
 
@@ -2184,14 +2123,13 @@ flag float32_eq( float32 a, float32 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns 1 if the single-precision floating-point value `a' is less than
-or equal to the corresponding value `b', and 0 otherwise.  The comparison
-is performed according to the IEC/IEEE Standard for Binary Floating-Point
-Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns 1 if the single-precision floating-point value `a' is less than
+| or equal to the corresponding value `b', and 0 otherwise.  The comparison
+| is performed according to the IEC/IEEE Standard for Binary Floating-Point
+| Arithmetic.
+*----------------------------------------------------------------------------*/
+
 flag float32_le( float32 a, float32 b )
 {
     flag aSign, bSign;
@@ -2209,13 +2147,12 @@ flag float32_le( float32 a, float32 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns 1 if the single-precision floating-point value `a' is less than
-the corresponding value `b', and 0 otherwise.  The comparison is performed
-according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns 1 if the single-precision floating-point value `a' is less than
+| the corresponding value `b', and 0 otherwise.  The comparison is performed
+| according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 flag float32_lt( float32 a, float32 b )
 {
     flag aSign, bSign;
@@ -2234,14 +2171,13 @@ flag float32_lt( float32 a, float32 b )
 }
 
 #ifndef SOFTFLOAT_FOR_GCC /* Not needed */
-/*
--------------------------------------------------------------------------------
-Returns 1 if the single-precision floating-point value `a' is equal to
-the corresponding value `b', and 0 otherwise.  The invalid exception is
-raised if either operand is a NaN.  Otherwise, the comparison is performed
-according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns 1 if the single-precision floating-point value `a' is equal to
+| the corresponding value `b', and 0 otherwise.  The invalid exception is
+| raised if either operand is a NaN.  Otherwise, the comparison is performed
+| according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 flag float32_eq_signaling( float32 a, float32 b )
 {
 
@@ -2255,14 +2191,13 @@ flag float32_eq_signaling( float32 a, float32 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns 1 if the single-precision floating-point value `a' is less than or
-equal to the corresponding value `b', and 0 otherwise.  Quiet NaNs do not
-cause an exception.  Otherwise, the comparison is performed according to the
-IEC/IEEE Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns 1 if the single-precision floating-point value `a' is less than or
+| equal to the corresponding value `b', and 0 otherwise.  Quiet NaNs do not
+| cause an exception.  Otherwise, the comparison is performed according to the
+| IEC/IEEE Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 flag float32_le_quiet( float32 a, float32 b )
 {
     flag aSign, bSign;
@@ -2282,14 +2217,13 @@ flag float32_le_quiet( float32 a, float32 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns 1 if the single-precision floating-point value `a' is less than
-the corresponding value `b', and 0 otherwise.  Quiet NaNs do not cause an
-exception.  Otherwise, the comparison is performed according to the IEC/IEEE
-Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns 1 if the single-precision floating-point value `a' is less than
+| the corresponding value `b', and 0 otherwise.  Quiet NaNs do not cause an
+| exception.  Otherwise, the comparison is performed according to the IEC/IEEE
+| Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 flag float32_lt_quiet( float32 a, float32 b )
 {
     flag aSign, bSign;
@@ -2311,17 +2245,16 @@ flag float32_lt_quiet( float32 a, float32 b )
 #endif /* !SOFTFLOAT_FOR_GCC */
 
 #ifndef SOFTFLOAT_FOR_GCC /* Not needed */
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the double-precision floating-point value
-`a' to the 32-bit two's complement integer format.  The conversion is
-performed according to the IEC/IEEE Standard for Binary Floating-Point
-Arithmetic---which means in particular that the conversion is rounded
-according to the current rounding mode.  If `a' is a NaN, the largest
-positive integer is returned.  Otherwise, if the conversion overflows, the
-largest integer with the same sign as `a' is returned.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the double-precision floating-point value
+| `a' to the 32-bit two's complement integer format.  The conversion is
+| performed according to the IEC/IEEE Standard for Binary Floating-Point
+| Arithmetic---which means in particular that the conversion is rounded
+| according to the current rounding mode.  If `a' is a NaN, the largest
+| positive integer is returned.  Otherwise, if the conversion overflows, the
+| largest integer with the same sign as `a' is returned.
+*----------------------------------------------------------------------------*/
+
 int32 float64_to_int32( float64 a )
 {
     flag aSign;
@@ -2340,17 +2273,16 @@ int32 float64_to_int32( float64 a )
 }
 #endif /* !SOFTFLOAT_FOR_GCC */
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the double-precision floating-point value
-`a' to the 32-bit two's complement integer format.  The conversion is
-performed according to the IEC/IEEE Standard for Binary Floating-Point
-Arithmetic, except that the conversion is always rounded toward zero.
-If `a' is a NaN, the largest positive integer is returned.  Otherwise, if
-the conversion overflows, the largest integer with the same sign as `a' is
-returned.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the double-precision floating-point value
+| `a' to the 32-bit two's complement integer format.  The conversion is
+| performed according to the IEC/IEEE Standard for Binary Floating-Point
+| Arithmetic, except that the conversion is always rounded toward zero.
+| If `a' is a NaN, the largest positive integer is returned.  Otherwise, if
+| the conversion overflows, the largest integer with the same sign as `a' is
+| returned.
+*----------------------------------------------------------------------------*/
+
 int32 float64_to_int32_round_to_zero( float64 a )
 {
     flag aSign;
@@ -2388,17 +2320,16 @@ int32 float64_to_int32_round_to_zero( float64 a )
 }
 
 #ifndef SOFTFLOAT_FOR_GCC /* Not needed */
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the double-precision floating-point value
-`a' to the 64-bit two's complement integer format.  The conversion is
-performed according to the IEC/IEEE Standard for Binary Floating-Point
-Arithmetic---which means in particular that the conversion is rounded
-according to the current rounding mode.  If `a' is a NaN, the largest
-positive integer is returned.  Otherwise, if the conversion overflows, the
-largest integer with the same sign as `a' is returned.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the double-precision floating-point value
+| `a' to the 64-bit two's complement integer format.  The conversion is
+| performed according to the IEC/IEEE Standard for Binary Floating-Point
+| Arithmetic---which means in particular that the conversion is rounded
+| according to the current rounding mode.  If `a' is a NaN, the largest
+| positive integer is returned.  Otherwise, if the conversion overflows, the
+| largest integer with the same sign as `a' is returned.
+*----------------------------------------------------------------------------*/
+
 int64 float64_to_int64( float64 a )
 {
     flag aSign;
@@ -2469,17 +2400,16 @@ uint64 float64_to_uint64( float64 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the double-precision floating-point value
-`a' to the 64-bit two's complement integer format.  The conversion is
-performed according to the IEC/IEEE Standard for Binary Floating-Point
-Arithmetic, except that the conversion is always rounded toward zero.
-If `a' is a NaN, the largest positive integer is returned.  Otherwise, if
-the conversion overflows, the largest integer with the same sign as `a' is
-returned.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the double-precision floating-point value
+| `a' to the 64-bit two's complement integer format.  The conversion is
+| performed according to the IEC/IEEE Standard for Binary Floating-Point
+| Arithmetic, except that the conversion is always rounded toward zero.
+| If `a' is a NaN, the largest positive integer is returned.  Otherwise, if
+| the conversion overflows, the largest integer with the same sign as `a' is
+| returned.
+*----------------------------------------------------------------------------*/
+
 int64 float64_to_int64_round_to_zero( float64 a )
 {
     flag aSign;
@@ -2523,14 +2453,13 @@ int64 float64_to_int64_round_to_zero( float64 a )
 }
 #endif /* !SOFTFLOAT_FOR_GCC */
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the double-precision floating-point value
-`a' to the single-precision floating-point format.  The conversion is
-performed according to the IEC/IEEE Standard for Binary Floating-Point
-Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the double-precision floating-point value
+| `a' to the single-precision floating-point format.  The conversion is
+| performed according to the IEC/IEEE Standard for Binary Floating-Point
+| Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float32 float64_to_float32( float64 a )
 {
     flag aSign;
@@ -2557,14 +2486,13 @@ float32 float64_to_float32( float64 a )
 
 #ifdef FLOATX80
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the double-precision floating-point value
-`a' to the extended double-precision floating-point format.  The conversion
-is performed according to the IEC/IEEE Standard for Binary Floating-Point
-Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the double-precision floating-point value
+| `a' to the extended double-precision floating-point format.  The conversion
+| is performed according to the IEC/IEEE Standard for Binary Floating-Point
+| Arithmetic.
+*----------------------------------------------------------------------------*/
+
 floatx80 float64_to_floatx80( float64 a )
 {
     flag aSign;
@@ -2592,14 +2520,13 @@ floatx80 float64_to_floatx80( float64 a )
 
 #ifdef FLOAT128
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the double-precision floating-point value
-`a' to the quadruple-precision floating-point format.  The conversion is
-performed according to the IEC/IEEE Standard for Binary Floating-Point
-Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the double-precision floating-point value
+| `a' to the quadruple-precision floating-point format.  The conversion is
+| performed according to the IEC/IEEE Standard for Binary Floating-Point
+| Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float128 float64_to_float128( float64 a )
 {
     flag aSign;
@@ -2626,14 +2553,13 @@ float128 float64_to_float128( float64 a )
 #endif
 
 #ifndef SOFTFLOAT_FOR_GCC
-/*
--------------------------------------------------------------------------------
-Rounds the double-precision floating-point value `a' to an integer, and
-returns the result as a double-precision floating-point value.  The
-operation is performed according to the IEC/IEEE Standard for Binary
-Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Rounds the double-precision floating-point value `a' to an integer, and
+| returns the result as a double-precision floating-point value.  The
+| operation is performed according to the IEC/IEEE Standard for Binary
+| Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float64 float64_round_to_int( float64 a )
 {
     flag aSign;
@@ -2688,15 +2614,14 @@ float64 float64_round_to_int( float64 a )
 }
 #endif
 
-/*
--------------------------------------------------------------------------------
-Returns the result of adding the absolute values of the double-precision
-floating-point values `a' and `b'.  If `zSign' is 1, the sum is negated
-before being returned.  `zSign' is ignored if the result is a NaN.
-The addition is performed according to the IEC/IEEE Standard for Binary
-Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of adding the absolute values of the double-precision
+| floating-point values `a' and `b'.  If `zSign' is 1, the sum is negated
+| before being returned.  `zSign' is ignored if the result is a NaN.
+| The addition is performed according to the IEC/IEEE Standard for Binary
+| Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 static float64 addFloat64Sigs( float64 a, float64 b, flag zSign )
 {
     int16 aExp, bExp, zExp;
@@ -2760,15 +2685,14 @@ static float64 addFloat64Sigs( float64 a, float64 b, flag zSign )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of subtracting the absolute values of the double-
-precision floating-point values `a' and `b'.  If `zSign' is 1, the
-difference is negated before being returned.  `zSign' is ignored if the
-result is a NaN.  The subtraction is performed according to the IEC/IEEE
-Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of subtracting the absolute values of the double-
+| precision floating-point values `a' and `b'.  If `zSign' is 1, the
+| difference is negated before being returned.  `zSign' is ignored if the
+| result is a NaN.  The subtraction is performed according to the IEC/IEEE
+| Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 static float64 subFloat64Sigs( float64 a, float64 b, flag zSign )
 {
     int16 aExp, bExp, zExp;
@@ -2836,13 +2760,12 @@ static float64 subFloat64Sigs( float64 a, float64 b, flag zSign )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of adding the double-precision floating-point values `a'
-and `b'.  The operation is performed according to the IEC/IEEE Standard for
-Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of adding the double-precision floating-point values `a'
+| and `b'.  The operation is performed according to the IEC/IEEE Standard for
+| Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float64 float64_add( float64 a, float64 b )
 {
     flag aSign, bSign;
@@ -2858,13 +2781,12 @@ float64 float64_add( float64 a, float64 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of subtracting the double-precision floating-point values
-`a' and `b'.  The operation is performed according to the IEC/IEEE Standard
-for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of subtracting the double-precision floating-point values
+| `a' and `b'.  The operation is performed according to the IEC/IEEE Standard
+| for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float64 float64_sub( float64 a, float64 b )
 {
     flag aSign, bSign;
@@ -2880,13 +2802,12 @@ float64 float64_sub( float64 a, float64 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of multiplying the double-precision floating-point values
-`a' and `b'.  The operation is performed according to the IEC/IEEE Standard
-for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of multiplying the double-precision floating-point values
+| `a' and `b'.  The operation is performed according to the IEC/IEEE Standard
+| for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float64 float64_mul( float64 a, float64 b )
 {
     flag aSign, bSign, zSign;
@@ -2939,13 +2860,12 @@ float64 float64_mul( float64 a, float64 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of dividing the double-precision floating-point value `a'
-by the corresponding value `b'.  The operation is performed according to
-the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of dividing the double-precision floating-point value `a'
+| by the corresponding value `b'.  The operation is performed according to
+| the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float64 float64_div( float64 a, float64 b )
 {
     flag aSign, bSign, zSign;
@@ -3011,13 +2931,12 @@ float64 float64_div( float64 a, float64 b )
 }
 
 #ifndef SOFTFLOAT_FOR_GCC
-/*
--------------------------------------------------------------------------------
-Returns the remainder of the double-precision floating-point value `a'
-with respect to the corresponding value `b'.  The operation is performed
-according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the remainder of the double-precision floating-point value `a'
+| with respect to the corresponding value `b'.  The operation is performed
+| according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float64 float64_rem( float64 a, float64 b )
 {
     flag aSign, bSign __unused, zSign;
@@ -3097,13 +3016,12 @@ float64 float64_rem( float64 a, float64 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the square root of the double-precision floating-point value `a'.
-The operation is performed according to the IEC/IEEE Standard for Binary
-Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the square root of the double-precision floating-point value `a'.
+| The operation is performed according to the IEC/IEEE Standard for Binary
+| Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float64 float64_sqrt( float64 a )
 {
     flag aSign;
@@ -3150,13 +3068,12 @@ float64 float64_sqrt( float64 a )
 }
 #endif
 
-/*
--------------------------------------------------------------------------------
-Returns 1 if the double-precision floating-point value `a' is equal to the
-corresponding value `b', and 0 otherwise.  The comparison is performed
-according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns 1 if the double-precision floating-point value `a' is equal to the
+| corresponding value `b', and 0 otherwise.  The comparison is performed
+| according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 flag float64_eq( float64 a, float64 b )
 {
 
@@ -3173,14 +3090,13 @@ flag float64_eq( float64 a, float64 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns 1 if the double-precision floating-point value `a' is less than or
-equal to the corresponding value `b', and 0 otherwise.  The comparison is
-performed according to the IEC/IEEE Standard for Binary Floating-Point
-Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns 1 if the double-precision floating-point value `a' is less than or
+| equal to the corresponding value `b', and 0 otherwise.  The comparison is
+| performed according to the IEC/IEEE Standard for Binary Floating-Point
+| Arithmetic.
+*----------------------------------------------------------------------------*/
+
 flag float64_le( float64 a, float64 b )
 {
     flag aSign, bSign;
@@ -3202,13 +3118,12 @@ flag float64_le( float64 a, float64 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns 1 if the double-precision floating-point value `a' is less than
-the corresponding value `b', and 0 otherwise.  The comparison is performed
-according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns 1 if the double-precision floating-point value `a' is less than
+| the corresponding value `b', and 0 otherwise.  The comparison is performed
+| according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 flag float64_lt( float64 a, float64 b )
 {
     flag aSign, bSign;
@@ -3231,14 +3146,13 @@ flag float64_lt( float64 a, float64 b )
 }
 
 #ifndef SOFTFLOAT_FOR_GCC
-/*
--------------------------------------------------------------------------------
-Returns 1 if the double-precision floating-point value `a' is equal to the
-corresponding value `b', and 0 otherwise.  The invalid exception is raised
-if either operand is a NaN.  Otherwise, the comparison is performed
-according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns 1 if the double-precision floating-point value `a' is equal to the
+| corresponding value `b', and 0 otherwise.  The invalid exception is raised
+| if either operand is a NaN.  Otherwise, the comparison is performed
+| according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 flag float64_eq_signaling( float64 a, float64 b )
 {
 
@@ -3252,14 +3166,13 @@ flag float64_eq_signaling( float64 a, float64 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns 1 if the double-precision floating-point value `a' is less than or
-equal to the corresponding value `b', and 0 otherwise.  Quiet NaNs do not
-cause an exception.  Otherwise, the comparison is performed according to the
-IEC/IEEE Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns 1 if the double-precision floating-point value `a' is less than or
+| equal to the corresponding value `b', and 0 otherwise.  Quiet NaNs do not
+| cause an exception.  Otherwise, the comparison is performed according to the
+| IEC/IEEE Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 flag float64_le_quiet( float64 a, float64 b )
 {
     flag aSign, bSign;
@@ -3279,14 +3192,13 @@ flag float64_le_quiet( float64 a, float64 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns 1 if the double-precision floating-point value `a' is less than
-the corresponding value `b', and 0 otherwise.  Quiet NaNs do not cause an
-exception.  Otherwise, the comparison is performed according to the IEC/IEEE
-Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns 1 if the double-precision floating-point value `a' is less than
+| the corresponding value `b', and 0 otherwise.  Quiet NaNs do not cause an
+| exception.  Otherwise, the comparison is performed according to the IEC/IEEE
+| Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 flag float64_lt_quiet( float64 a, float64 b )
 {
     flag aSign, bSign;
@@ -3309,17 +3221,16 @@ flag float64_lt_quiet( float64 a, float64 b )
 
 #ifdef FLOATX80
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the extended double-precision floating-
-point value `a' to the 32-bit two's complement integer format.  The
-conversion is performed according to the IEC/IEEE Standard for Binary
-Floating-Point Arithmetic---which means in particular that the conversion
-is rounded according to the current rounding mode.  If `a' is a NaN, the
-largest positive integer is returned.  Otherwise, if the conversion
-overflows, the largest integer with the same sign as `a' is returned.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the extended double-precision floating-
+| point value `a' to the 32-bit two's complement integer format.  The
+| conversion is performed according to the IEC/IEEE Standard for Binary
+| Floating-Point Arithmetic---which means in particular that the conversion
+| is rounded according to the current rounding mode.  If `a' is a NaN, the
+| largest positive integer is returned.  Otherwise, if the conversion
+| overflows, the largest integer with the same sign as `a' is returned.
+*----------------------------------------------------------------------------*/
+
 int32 floatx80_to_int32( floatx80 a )
 {
     flag aSign;
@@ -3337,17 +3248,16 @@ int32 floatx80_to_int32( floatx80 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the extended double-precision floating-
-point value `a' to the 32-bit two's complement integer format.  The
-conversion is performed according to the IEC/IEEE Standard for Binary
-Floating-Point Arithmetic, except that the conversion is always rounded
-toward zero.  If `a' is a NaN, the largest positive integer is returned.
-Otherwise, if the conversion overflows, the largest integer with the same
-sign as `a' is returned.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the extended double-precision floating-
+| point value `a' to the 32-bit two's complement integer format.  The
+| conversion is performed according to the IEC/IEEE Standard for Binary
+| Floating-Point Arithmetic, except that the conversion is always rounded
+| toward zero.  If `a' is a NaN, the largest positive integer is returned.
+| Otherwise, if the conversion overflows, the largest integer with the same
+| sign as `a' is returned.
+*----------------------------------------------------------------------------*/
+
 int32 floatx80_to_int32_round_to_zero( floatx80 a )
 {
     flag aSign;
@@ -3383,17 +3293,16 @@ int32 floatx80_to_int32_round_to_zero( floatx80 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the extended double-precision floating-
-point value `a' to the 64-bit two's complement integer format.  The
-conversion is performed according to the IEC/IEEE Standard for Binary
-Floating-Point Arithmetic---which means in particular that the conversion
-is rounded according to the current rounding mode.  If `a' is a NaN,
-the largest positive integer is returned.  Otherwise, if the conversion
-overflows, the largest integer with the same sign as `a' is returned.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the extended double-precision floating-
+| point value `a' to the 64-bit two's complement integer format.  The
+| conversion is performed according to the IEC/IEEE Standard for Binary
+| Floating-Point Arithmetic---which means in particular that the conversion
+| is rounded according to the current rounding mode.  If `a' is a NaN,
+| the largest positive integer is returned.  Otherwise, if the conversion
+| overflows, the largest integer with the same sign as `a' is returned.
+*----------------------------------------------------------------------------*/
+
 int64 floatx80_to_int64( floatx80 a )
 {
     flag aSign;
@@ -3424,17 +3333,16 @@ int64 floatx80_to_int64( floatx80 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the extended double-precision floating-
-point value `a' to the 64-bit two's complement integer format.  The
-conversion is performed according to the IEC/IEEE Standard for Binary
-Floating-Point Arithmetic, except that the conversion is always rounded
-toward zero.  If `a' is a NaN, the largest positive integer is returned.
-Otherwise, if the conversion overflows, the largest integer with the same
-sign as `a' is returned.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the extended double-precision floating-
+| point value `a' to the 64-bit two's complement integer format.  The
+| conversion is performed according to the IEC/IEEE Standard for Binary
+| Floating-Point Arithmetic, except that the conversion is always rounded
+| toward zero.  If `a' is a NaN, the largest positive integer is returned.
+| Otherwise, if the conversion overflows, the largest integer with the same
+| sign as `a' is returned.
+*----------------------------------------------------------------------------*/
+
 int64 floatx80_to_int64_round_to_zero( floatx80 a )
 {
     flag aSign;
@@ -3469,14 +3377,13 @@ int64 floatx80_to_int64_round_to_zero( floatx80 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the extended double-precision floating-
-point value `a' to the single-precision floating-point format.  The
-conversion is performed according to the IEC/IEEE Standard for Binary
-Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the extended double-precision floating-
+| point value `a' to the single-precision floating-point format.  The
+| conversion is performed according to the IEC/IEEE Standard for Binary
+| Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float32 floatx80_to_float32( floatx80 a )
 {
     flag aSign;
@@ -3498,14 +3405,13 @@ float32 floatx80_to_float32( floatx80 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the extended double-precision floating-
-point value `a' to the double-precision floating-point format.  The
-conversion is performed according to the IEC/IEEE Standard for Binary
-Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the extended double-precision floating-
+| point value `a' to the double-precision floating-point format.  The
+| conversion is performed according to the IEC/IEEE Standard for Binary
+| Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float64 floatx80_to_float64( floatx80 a )
 {
     flag aSign;
@@ -3529,14 +3435,13 @@ float64 floatx80_to_float64( floatx80 a )
 
 #ifdef FLOAT128
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the extended double-precision floating-
-point value `a' to the quadruple-precision floating-point format.  The
-conversion is performed according to the IEC/IEEE Standard for Binary
-Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the extended double-precision floating-
+| point value `a' to the quadruple-precision floating-point format.  The
+| conversion is performed according to the IEC/IEEE Standard for Binary
+| Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float128 floatx80_to_float128( floatx80 a )
 {
     flag aSign;
@@ -3556,14 +3461,13 @@ float128 floatx80_to_float128( floatx80 a )
 
 #endif
 
-/*
--------------------------------------------------------------------------------
-Rounds the extended double-precision floating-point value `a' to an integer,
-and returns the result as an extended quadruple-precision floating-point
-value.  The operation is performed according to the IEC/IEEE Standard for
-Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Rounds the extended double-precision floating-point value `a' to an integer,
+| and returns the result as an extended quadruple-precision floating-point
+| value.  The operation is performed according to the IEC/IEEE Standard for
+| Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 floatx80 floatx80_round_to_int( floatx80 a )
 {
     flag aSign;
@@ -3630,15 +3534,14 @@ floatx80 floatx80_round_to_int( floatx80 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of adding the absolute values of the extended double-
-precision floating-point values `a' and `b'.  If `zSign' is 1, the sum is
-negated before being returned.  `zSign' is ignored if the result is a NaN.
-The addition is performed according to the IEC/IEEE Standard for Binary
-Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of adding the absolute values of the extended double-
+| precision floating-point values `a' and `b'.  If `zSign' is 1, the sum is
+| negated before being returned.  `zSign' is ignored if the result is a NaN.
+| The addition is performed according to the IEC/IEEE Standard for Binary
+| Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 static floatx80 addFloatx80Sigs( floatx80 a, floatx80 b, flag zSign )
 {
     int32 aExp, bExp, zExp;
@@ -3697,15 +3600,14 @@ static floatx80 addFloatx80Sigs( floatx80 a, floatx80 b, flag zSign )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of subtracting the absolute values of the extended
-double-precision floating-point values `a' and `b'.  If `zSign' is 1, the
-difference is negated before being returned.  `zSign' is ignored if the
-result is a NaN.  The subtraction is performed according to the IEC/IEEE
-Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of subtracting the absolute values of the extended
+| double-precision floating-point values `a' and `b'.  If `zSign' is 1, the
+| difference is negated before being returned.  `zSign' is ignored if the
+| result is a NaN.  The subtraction is performed according to the IEC/IEEE
+| Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 static floatx80 subFloatx80Sigs( floatx80 a, floatx80 b, flag zSign )
 {
     int32 aExp, bExp, zExp;
@@ -3766,13 +3668,12 @@ static floatx80 subFloatx80Sigs( floatx80 a, floatx80 b, flag zSign )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of adding the extended double-precision floating-point
-values `a' and `b'.  The operation is performed according to the IEC/IEEE
-Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of adding the extended double-precision floating-point
+| values `a' and `b'.  The operation is performed according to the IEC/IEEE
+| Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 floatx80 floatx80_add( floatx80 a, floatx80 b )
 {
     flag aSign, bSign;
@@ -3788,13 +3689,12 @@ floatx80 floatx80_add( floatx80 a, floatx80 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of subtracting the extended double-precision floating-
-point values `a' and `b'.  The operation is performed according to the
-IEC/IEEE Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of subtracting the extended double-precision floating-
+| point values `a' and `b'.  The operation is performed according to the
+| IEC/IEEE Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 floatx80 floatx80_sub( floatx80 a, floatx80 b )
 {
     flag aSign, bSign;
@@ -3810,13 +3710,12 @@ floatx80 floatx80_sub( floatx80 a, floatx80 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of multiplying the extended double-precision floating-
-point values `a' and `b'.  The operation is performed according to the
-IEC/IEEE Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of multiplying the extended double-precision floating-
+| point values `a' and `b'.  The operation is performed according to the
+| IEC/IEEE Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 floatx80 floatx80_mul( floatx80 a, floatx80 b )
 {
     flag aSign, bSign, zSign;
@@ -3870,13 +3769,12 @@ floatx80 floatx80_mul( floatx80 a, floatx80 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of dividing the extended double-precision floating-point
-value `a' by the corresponding value `b'.  The operation is performed
-according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of dividing the extended double-precision floating-point
+| value `a' by the corresponding value `b'.  The operation is performed
+| according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 floatx80 floatx80_div( floatx80 a, floatx80 b )
 {
     flag aSign, bSign, zSign;
@@ -3951,13 +3849,12 @@ floatx80 floatx80_div( floatx80 a, floatx80 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the remainder of the extended double-precision floating-point value
-`a' with respect to the corresponding value `b'.  The operation is performed
-according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the remainder of the extended double-precision floating-point value
+| `a' with respect to the corresponding value `b'.  The operation is performed
+| according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 floatx80 floatx80_rem( floatx80 a, floatx80 b )
 {
     flag aSign, bSign, zSign;
@@ -4049,13 +3946,12 @@ floatx80 floatx80_rem( floatx80 a, floatx80 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the square root of the extended double-precision floating-point
-value `a'.  The operation is performed according to the IEC/IEEE Standard
-for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the square root of the extended double-precision floating-point
+| value `a'.  The operation is performed according to the IEC/IEEE Standard
+| for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 floatx80 floatx80_sqrt( floatx80 a )
 {
     flag aSign;
@@ -4120,14 +4016,13 @@ floatx80 floatx80_sqrt( floatx80 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns 1 if the extended double-precision floating-point value `a' is
-equal to the corresponding value `b', and 0 otherwise.  The comparison is
-performed according to the IEC/IEEE Standard for Binary Floating-Point
-Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns 1 if the extended double-precision floating-point value `a' is
+| equal to the corresponding value `b', and 0 otherwise.  The comparison is
+| performed according to the IEC/IEEE Standard for Binary Floating-Point
+| Arithmetic.
+*----------------------------------------------------------------------------*/
+
 flag floatx80_eq( floatx80 a, floatx80 b )
 {
 
@@ -4151,14 +4046,13 @@ flag floatx80_eq( floatx80 a, floatx80 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns 1 if the extended double-precision floating-point value `a' is
-less than or equal to the corresponding value `b', and 0 otherwise.  The
-comparison is performed according to the IEC/IEEE Standard for Binary
-Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns 1 if the extended double-precision floating-point value `a' is
+| less than or equal to the corresponding value `b', and 0 otherwise.  The
+| comparison is performed according to the IEC/IEEE Standard for Binary
+| Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 flag floatx80_le( floatx80 a, floatx80 b )
 {
     flag aSign, bSign;
@@ -4185,14 +4079,13 @@ flag floatx80_le( floatx80 a, floatx80 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns 1 if the extended double-precision floating-point value `a' is
-less than the corresponding value `b', and 0 otherwise.  The comparison
-is performed according to the IEC/IEEE Standard for Binary Floating-Point
-Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns 1 if the extended double-precision floating-point value `a' is
+| less than the corresponding value `b', and 0 otherwise.  The comparison
+| is performed according to the IEC/IEEE Standard for Binary Floating-Point
+| Arithmetic.
+*----------------------------------------------------------------------------*/
+
 flag floatx80_lt( floatx80 a, floatx80 b )
 {
     flag aSign, bSign;
@@ -4219,14 +4112,13 @@ flag floatx80_lt( floatx80 a, floatx80 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns 1 if the extended double-precision floating-point value `a' is equal
-to the corresponding value `b', and 0 otherwise.  The invalid exception is
-raised if either operand is a NaN.  Otherwise, the comparison is performed
-according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns 1 if the extended double-precision floating-point value `a' is equal
+| to the corresponding value `b', and 0 otherwise.  The invalid exception is
+| raised if either operand is a NaN.  Otherwise, the comparison is performed
+| according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 flag floatx80_eq_signaling( floatx80 a, floatx80 b )
 {
 
@@ -4247,14 +4139,13 @@ flag floatx80_eq_signaling( floatx80 a, floatx80 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns 1 if the extended double-precision floating-point value `a' is less
-than or equal to the corresponding value `b', and 0 otherwise.  Quiet NaNs
-do not cause an exception.  Otherwise, the comparison is performed according
-to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns 1 if the extended double-precision floating-point value `a' is less
+| than or equal to the corresponding value `b', and 0 otherwise.  Quiet NaNs
+| do not cause an exception.  Otherwise, the comparison is performed according
+| to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 flag floatx80_le_quiet( floatx80 a, floatx80 b )
 {
     flag aSign, bSign;
@@ -4284,14 +4175,13 @@ flag floatx80_le_quiet( floatx80 a, floatx80 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns 1 if the extended double-precision floating-point value `a' is less
-than the corresponding value `b', and 0 otherwise.  Quiet NaNs do not cause
-an exception.  Otherwise, the comparison is performed according to the
-IEC/IEEE Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns 1 if the extended double-precision floating-point value `a' is less
+| than the corresponding value `b', and 0 otherwise.  Quiet NaNs do not cause
+| an exception.  Otherwise, the comparison is performed according to the
+| IEC/IEEE Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 flag floatx80_lt_quiet( floatx80 a, floatx80 b )
 {
     flag aSign, bSign;
@@ -4325,17 +4215,16 @@ flag floatx80_lt_quiet( floatx80 a, floatx80 b )
 
 #ifdef FLOAT128
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the quadruple-precision floating-point
-value `a' to the 32-bit two's complement integer format.  The conversion
-is performed according to the IEC/IEEE Standard for Binary Floating-Point
-Arithmetic---which means in particular that the conversion is rounded
-according to the current rounding mode.  If `a' is a NaN, the largest
-positive integer is returned.  Otherwise, if the conversion overflows, the
-largest integer with the same sign as `a' is returned.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the quadruple-precision floating-point
+| value `a' to the 32-bit two's complement integer format.  The conversion
+| is performed according to the IEC/IEEE Standard for Binary Floating-Point
+| Arithmetic---which means in particular that the conversion is rounded
+| according to the current rounding mode.  If `a' is a NaN, the largest
+| positive integer is returned.  Otherwise, if the conversion overflows, the
+| largest integer with the same sign as `a' is returned.
+*----------------------------------------------------------------------------*/
+
 int32 float128_to_int32( float128 a )
 {
     flag aSign;
@@ -4355,17 +4244,16 @@ int32 float128_to_int32( float128 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the quadruple-precision floating-point
-value `a' to the 32-bit two's complement integer format.  The conversion
-is performed according to the IEC/IEEE Standard for Binary Floating-Point
-Arithmetic, except that the conversion is always rounded toward zero.  If
-`a' is a NaN, the largest positive integer is returned.  Otherwise, if the
-conversion overflows, the largest integer with the same sign as `a' is
-returned.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the quadruple-precision floating-point
+| value `a' to the 32-bit two's complement integer format.  The conversion
+| is performed according to the IEC/IEEE Standard for Binary Floating-Point
+| Arithmetic, except that the conversion is always rounded toward zero.  If
+| `a' is a NaN, the largest positive integer is returned.  Otherwise, if the
+| conversion overflows, the largest integer with the same sign as `a' is
+| returned.
+*----------------------------------------------------------------------------*/
+
 int32 float128_to_int32_round_to_zero( float128 a )
 {
     flag aSign;
@@ -4404,17 +4292,16 @@ int32 float128_to_int32_round_to_zero( float128 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the quadruple-precision floating-point
-value `a' to the 64-bit two's complement integer format.  The conversion
-is performed according to the IEC/IEEE Standard for Binary Floating-Point
-Arithmetic---which means in particular that the conversion is rounded
-according to the current rounding mode.  If `a' is a NaN, the largest
-positive integer is returned.  Otherwise, if the conversion overflows, the
-largest integer with the same sign as `a' is returned.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the quadruple-precision floating-point
+| value `a' to the 64-bit two's complement integer format.  The conversion
+| is performed according to the IEC/IEEE Standard for Binary Floating-Point
+| Arithmetic---which means in particular that the conversion is rounded
+| according to the current rounding mode.  If `a' is a NaN, the largest
+| positive integer is returned.  Otherwise, if the conversion overflows, the
+| largest integer with the same sign as `a' is returned.
+*----------------------------------------------------------------------------*/
+
 int64 float128_to_int64( float128 a )
 {
     flag aSign;
@@ -4448,17 +4335,16 @@ int64 float128_to_int64( float128 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the quadruple-precision floating-point
-value `a' to the 64-bit two's complement integer format.  The conversion
-is performed according to the IEC/IEEE Standard for Binary Floating-Point
-Arithmetic, except that the conversion is always rounded toward zero.
-If `a' is a NaN, the largest positive integer is returned.  Otherwise, if
-the conversion overflows, the largest integer with the same sign as `a' is
-returned.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the quadruple-precision floating-point
+| value `a' to the 64-bit two's complement integer format.  The conversion
+| is performed according to the IEC/IEEE Standard for Binary Floating-Point
+| Arithmetic, except that the conversion is always rounded toward zero.
+| If `a' is a NaN, the largest positive integer is returned.  Otherwise, if
+| the conversion overflows, the largest integer with the same sign as `a' is
+| returned.
+*----------------------------------------------------------------------------*/
+
 int64 float128_to_int64_round_to_zero( float128 a )
 {
     flag aSign;
@@ -4510,14 +4396,13 @@ int64 float128_to_int64_round_to_zero( float128 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the quadruple-precision floating-point
-value `a' to the single-precision floating-point format.  The conversion
-is performed according to the IEC/IEEE Standard for Binary Floating-Point
-Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the quadruple-precision floating-point
+| value `a' to the single-precision floating-point format.  The conversion
+| is performed according to the IEC/IEEE Standard for Binary Floating-Point
+| Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float32 float128_to_float32( float128 a )
 {
     flag aSign;
@@ -4546,14 +4431,13 @@ float32 float128_to_float32( float128 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the quadruple-precision floating-point
-value `a' to the double-precision floating-point format.  The conversion
-is performed according to the IEC/IEEE Standard for Binary Floating-Point
-Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the quadruple-precision floating-point
+| value `a' to the double-precision floating-point format.  The conversion
+| is performed according to the IEC/IEEE Standard for Binary Floating-Point
+| Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float64 float128_to_float64( float128 a )
 {
     flag aSign;
@@ -4582,14 +4466,13 @@ float64 float128_to_float64( float128 a )
 
 #ifdef FLOATX80
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the quadruple-precision floating-point
-value `a' to the extended double-precision floating-point format.  The
-conversion is performed according to the IEC/IEEE Standard for Binary
-Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the quadruple-precision floating-point
+| value `a' to the extended double-precision floating-point format.  The
+| conversion is performed according to the IEC/IEEE Standard for Binary
+| Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 floatx80 float128_to_floatx80( float128 a )
 {
     flag aSign;
@@ -4620,14 +4503,13 @@ floatx80 float128_to_floatx80( float128 a )
 
 #endif
 
-/*
--------------------------------------------------------------------------------
-Rounds the quadruple-precision floating-point value `a' to an integer, and
-returns the result as a quadruple-precision floating-point value.  The
-operation is performed according to the IEC/IEEE Standard for Binary
-Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Rounds the quadruple-precision floating-point value `a' to an integer, and
+| returns the result as a quadruple-precision floating-point value.  The
+| operation is performed according to the IEC/IEEE Standard for Binary
+| Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float128 float128_round_to_int( float128 a )
 {
     flag aSign;
@@ -4724,15 +4606,14 @@ float128 float128_round_to_int( float128 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of adding the absolute values of the quadruple-precision
-floating-point values `a' and `b'.  If `zSign' is 1, the sum is negated
-before being returned.  `zSign' is ignored if the result is a NaN.
-The addition is performed according to the IEC/IEEE Standard for Binary
-Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of adding the absolute values of the quadruple-precision
+| floating-point values `a' and `b'.  If `zSign' is 1, the sum is negated
+| before being returned.  `zSign' is ignored if the result is a NaN.
+| The addition is performed according to the IEC/IEEE Standard for Binary
+| Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 static float128 addFloat128Sigs( float128 a, float128 b, flag zSign )
 {
     int32 aExp, bExp, zExp;
@@ -4803,15 +4684,14 @@ static float128 addFloat128Sigs( float128 a, float128 b, flag zSign )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of subtracting the absolute values of the quadruple-
-precision floating-point values `a' and `b'.  If `zSign' is 1, the
-difference is negated before being returned.  `zSign' is ignored if the
-result is a NaN.  The subtraction is performed according to the IEC/IEEE
-Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of subtracting the absolute values of the quadruple-
+| precision floating-point values `a' and `b'.  If `zSign' is 1, the
+| difference is negated before being returned.  `zSign' is ignored if the
+| result is a NaN.  The subtraction is performed according to the IEC/IEEE
+| Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 static float128 subFloat128Sigs( float128 a, float128 b, flag zSign )
 {
     int32 aExp, bExp, zExp;
@@ -4888,13 +4768,12 @@ static float128 subFloat128Sigs( float128 a, float128 b, flag zSign )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of adding the quadruple-precision floating-point values
-`a' and `b'.  The operation is performed according to the IEC/IEEE Standard
-for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of adding the quadruple-precision floating-point values
+| `a' and `b'.  The operation is performed according to the IEC/IEEE Standard
+| for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float128 float128_add( float128 a, float128 b )
 {
     flag aSign, bSign;
@@ -4910,13 +4789,12 @@ float128 float128_add( float128 a, float128 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of subtracting the quadruple-precision floating-point
-values `a' and `b'.  The operation is performed according to the IEC/IEEE
-Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of subtracting the quadruple-precision floating-point
+| values `a' and `b'.  The operation is performed according to the IEC/IEEE
+| Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float128 float128_sub( float128 a, float128 b )
 {
     flag aSign, bSign;
@@ -4932,13 +4810,12 @@ float128 float128_sub( float128 a, float128 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of multiplying the quadruple-precision floating-point
-values `a' and `b'.  The operation is performed according to the IEC/IEEE
-Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of multiplying the quadruple-precision floating-point
+| values `a' and `b'.  The operation is performed according to the IEC/IEEE
+| Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float128 float128_mul( float128 a, float128 b )
 {
     flag aSign, bSign, zSign;
@@ -4997,13 +4874,12 @@ float128 float128_mul( float128 a, float128 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of dividing the quadruple-precision floating-point value
-`a' by the corresponding value `b'.  The operation is performed according to
-the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of dividing the quadruple-precision floating-point value
+| `a' by the corresponding value `b'.  The operation is performed according to
+| the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float128 float128_div( float128 a, float128 b )
 {
     flag aSign, bSign, zSign;
@@ -5082,13 +4958,12 @@ float128 float128_div( float128 a, float128 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the remainder of the quadruple-precision floating-point value `a'
-with respect to the corresponding value `b'.  The operation is performed
-according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the remainder of the quadruple-precision floating-point value `a'
+| with respect to the corresponding value `b'.  The operation is performed
+| according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float128 float128_rem( float128 a, float128 b )
 {
     flag aSign, bSign, zSign;
@@ -5193,13 +5068,12 @@ float128 float128_rem( float128 a, float128 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the square root of the quadruple-precision floating-point value `a'.
-The operation is performed according to the IEC/IEEE Standard for Binary
-Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the square root of the quadruple-precision floating-point value `a'.
+| The operation is performed according to the IEC/IEEE Standard for Binary
+| Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 float128 float128_sqrt( float128 a )
 {
     flag aSign;
@@ -5263,13 +5137,12 @@ float128 float128_sqrt( float128 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns 1 if the quadruple-precision floating-point value `a' is equal to
-the corresponding value `b', and 0 otherwise.  The comparison is performed
-according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns 1 if the quadruple-precision floating-point value `a' is equal to
+| the corresponding value `b', and 0 otherwise.  The comparison is performed
+| according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 flag float128_eq( float128 a, float128 b )
 {
 
@@ -5293,14 +5166,13 @@ flag float128_eq( float128 a, float128 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns 1 if the quadruple-precision floating-point value `a' is less than
-or equal to the corresponding value `b', and 0 otherwise.  The comparison
-is performed according to the IEC/IEEE Standard for Binary Floating-Point
-Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns 1 if the quadruple-precision floating-point value `a' is less than
+| or equal to the corresponding value `b', and 0 otherwise.  The comparison
+| is performed according to the IEC/IEEE Standard for Binary Floating-Point
+| Arithmetic.
+*----------------------------------------------------------------------------*/
+
 flag float128_le( float128 a, float128 b )
 {
     flag aSign, bSign;
@@ -5327,13 +5199,12 @@ flag float128_le( float128 a, float128 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns 1 if the quadruple-precision floating-point value `a' is less than
-the corresponding value `b', and 0 otherwise.  The comparison is performed
-according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns 1 if the quadruple-precision floating-point value `a' is less than
+| the corresponding value `b', and 0 otherwise.  The comparison is performed
+| according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 flag float128_lt( float128 a, float128 b )
 {
     flag aSign, bSign;
@@ -5360,14 +5231,13 @@ flag float128_lt( float128 a, float128 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns 1 if the quadruple-precision floating-point value `a' is equal to
-the corresponding value `b', and 0 otherwise.  The invalid exception is
-raised if either operand is a NaN.  Otherwise, the comparison is performed
-according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns 1 if the quadruple-precision floating-point value `a' is equal to
+| the corresponding value `b', and 0 otherwise.  The invalid exception is
+| raised if either operand is a NaN.  Otherwise, the comparison is performed
+| according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 flag float128_eq_signaling( float128 a, float128 b )
 {
 
@@ -5388,14 +5258,13 @@ flag float128_eq_signaling( float128 a, float128 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns 1 if the quadruple-precision floating-point value `a' is less than
-or equal to the corresponding value `b', and 0 otherwise.  Quiet NaNs do not
-cause an exception.  Otherwise, the comparison is performed according to the
-IEC/IEEE Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns 1 if the quadruple-precision floating-point value `a' is less than
+| or equal to the corresponding value `b', and 0 otherwise.  Quiet NaNs do not
+| cause an exception.  Otherwise, the comparison is performed according to the
+| IEC/IEEE Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 flag float128_le_quiet( float128 a, float128 b )
 {
     flag aSign, bSign;
@@ -5425,14 +5294,13 @@ flag float128_le_quiet( float128 a, float128 b )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns 1 if the quadruple-precision floating-point value `a' is less than
-the corresponding value `b', and 0 otherwise.  Quiet NaNs do not cause an
-exception.  Otherwise, the comparison is performed according to the IEC/IEEE
-Standard for Binary Floating-Point Arithmetic.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns 1 if the quadruple-precision floating-point value `a' is less than
+| the corresponding value `b', and 0 otherwise.  Quiet NaNs do not cause an
+| exception.  Otherwise, the comparison is performed according to the IEC/IEEE
+| Standard for Binary Floating-Point Arithmetic.
+*----------------------------------------------------------------------------*/
+
 flag float128_lt_quiet( float128 a, float128 b )
 {
     flag aSign, bSign;
@@ -5478,16 +5346,15 @@ flag float128_lt_quiet( float128 a, float128 b )
  * float64 version overhauled for SoftFloat 2a [bjh21 2000-07-15]
  */
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the double-precision floating-point value
-`a' to the 32-bit unsigned integer format.  The conversion is
-performed according to the IEC/IEEE Standard for Binary Floating-point
-Arithmetic, except that the conversion is always rounded toward zero.  If
-`a' is a NaN, the largest positive integer is returned.  If the conversion
-overflows, the largest integer positive is returned.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the double-precision floating-point value
+| `a' to the 32-bit unsigned integer format.  The conversion is
+| performed according to the IEC/IEEE Standard for Binary Floating-point
+| Arithmetic, except that the conversion is always rounded toward zero.  If
+| `a' is a NaN, the largest positive integer is returned.  If the conversion
+| overflows, the largest integer positive is returned.
+*----------------------------------------------------------------------------*/
+
 uint32 float64_to_uint32_round_to_zero( float64 a )
 {
     flag aSign;
@@ -5524,16 +5391,15 @@ uint32 float64_to_uint32_round_to_zero( float64 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the single-precision floating-point value
-`a' to the 32-bit unsigned integer format.  The conversion is
-performed according to the IEC/IEEE Standard for Binary Floating-point
-Arithmetic, except that the conversion is always rounded toward zero.  If
-`a' is a NaN, the largest positive integer is returned.  If the conversion
-overflows, the largest positive integer is returned.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the single-precision floating-point value
+| `a' to the 32-bit unsigned integer format.  The conversion is
+| performed according to the IEC/IEEE Standard for Binary Floating-point
+| Arithmetic, except that the conversion is always rounded toward zero.  If
+| `a' is a NaN, the largest positive integer is returned.  If the conversion
+| overflows, the largest positive integer is returned.
+*----------------------------------------------------------------------------*/
+
 uint32 float32_to_uint32_round_to_zero( float32 a )
 {
     flag aSign;
