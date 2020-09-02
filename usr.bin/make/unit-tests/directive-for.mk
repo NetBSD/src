@@ -1,4 +1,4 @@
-# $NetBSD: directive-for.mk,v 1.1 2020/09/02 05:33:57 rillig Exp $
+# $NetBSD: directive-for.mk,v 1.2 2020/09/02 22:58:59 rillig Exp $
 #
 # Tests for the .for directive.
 
@@ -51,10 +51,10 @@ var2=	value before
 .for var var2 in 1 2 3 4
 .endfor
 .if ${var} != "value before"
-.  warning var must be undefined.
+.  warning After the .for loop, var must still have its original value.
 .endif
 .if ${var2} != "value before"
-.  warning var2 must be undefined.
+.  warning After the .for loop, var2 must still have its original value.
 .endif
 
 # Everything from the paragraph above also applies if the loop body is
@@ -66,10 +66,10 @@ var2=	value before
 .for var var2 in ${:U}
 .endfor
 .if ${var} != "value before"
-.  warning var must be undefined.
+.  warning After the .for loop, var must still have its original value.
 .endif
 .if ${var2} != "value before"
-.  warning var2 must be undefined.
+.  warning After the .for loop, var2 must still have its original value.
 .endif
 
 # Until 2008-12-21, the values of the iteration variables were simply
