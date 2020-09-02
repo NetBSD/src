@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.361 2020/08/29 19:06:32 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.362 2020/09/02 17:40:23 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2019 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.361 2020/08/29 19:06:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.362 2020/09/02 17:40:23 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -732,7 +732,7 @@ nobootinfo:
 		case 'Q':
 			boothowto |= AB_QUIET;
 			break;
-			
+
 		case 'v': /* verbose boot */
 		case 'V':
 			boothowto |= AB_VERBOSE;
@@ -1273,7 +1273,7 @@ dumpsys(void)
 			n = bytes - i;
 			if (n > BYTES_PER_DUMP)
 				n =  BYTES_PER_DUMP;
-	
+
 			error = (*dump)(dumpdev, blkno,
 			    (void *)ALPHA_PHYS_TO_K0SEG(maddr), n);
 			if (error)
@@ -1436,7 +1436,7 @@ getframe(const struct lwp *l, int sig, int *onstack)
 	else
 		frame = (void *)(alpha_pal_rdusp());
 	return (frame);
-}	
+}
 
 void
 buildcontext(struct lwp *l, const void *catcher, const void *tramp, const void *fp)
@@ -1514,7 +1514,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * the trampoline version numbers are coordinated with machine-
 	 * dependent code in libc.
 	 */
-	
+
 	tf->tf_regs[FRAME_A0] = sig;
 	tf->tf_regs[FRAME_A1] = (uint64_t)&fp->sf_si;
 	tf->tf_regs[FRAME_A2] = (uint64_t)&fp->sf_uc;
@@ -1905,7 +1905,7 @@ cpu_need_resched(struct cpu_info *ci, struct lwp *l, int flags)
 void
 cpu_signotify(struct lwp *l)
 {
-	
+
 	KASSERT(kpreempt_disabled());
 
 	if (l->l_cpu != curcpu()) {
