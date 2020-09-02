@@ -1,10 +1,10 @@
-/* $NetBSD: clzdi2.S,v 1.1 2014/08/10 05:47:35 matt Exp $ */
+/* $NetBSD: clzdi2.S,v 1.2 2020/09/02 15:43:06 jakllsch Exp $ */
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: clzdi2.S,v 1.1 2014/08/10 05:47:35 matt Exp $")
+RCSID("$NetBSD: clzdi2.S,v 1.2 2020/09/02 15:43:06 jakllsch Exp $")
 
 ENTRY(clzdi2)
 	clz	x0, x0
 	ret
-END(clsdi2)
+END(clzdi2)
