@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.32 2020/08/28 19:45:21 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.33 2020/09/02 12:29:26 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1015,4 +1015,22 @@ sys/dev/usb/if_axen.c				(apply patch)
 
 	atu(4), axe(4), axen(4): reject packets larger than MCLBYTES.
 	[riastradh, ticket #1599]
+
+sys/dev/pci/ixgbe/if_bypass.c			1.6
+sys/dev/pci/ixgbe/ixgbe.c			1.246
+sys/dev/pci/ixgbe/ixgbe_common.c		1.28
+
+	ixg(4): minor fixes.
+	[msaitoh, ticket #1600]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.219
+sys/dev/pci/ixgbe/ixgbe_82598.c			1.13
+sys/dev/pci/ixgbe/ixgbe_82599.c			1.22
+sys/dev/pci/ixgbe/ixgbe_phy.c			1.20
+sys/dev/pci/ixgbe/ixgbe_type.h			1.44
+sys/dev/pci/ixgbe/ixgbe_x550.c			1.17
+
+	Add recovery code for unsupported SFP+.
+	[msaitoh, ticket #1601]
+
 
