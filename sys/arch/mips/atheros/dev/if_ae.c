@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.39 2020/02/04 05:18:36 thorpej Exp $ */
+/* $NetBSD: if_ae.c,v 1.40 2020/09/02 08:26:05 msaitoh Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.39 2020/02/04 05:18:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.40 2020/09/02 08:26:05 msaitoh Exp $");
 
 
 #include <sys/param.h>
