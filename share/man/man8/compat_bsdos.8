@@ -1,4 +1,4 @@
-.\" $NetBSD: compat_bsdos.8,v 1.6 2020/09/02 00:15:15 uwe Exp $
+.\" $NetBSD: compat_bsdos.8,v 1.7 2020/09/02 23:38:11 uwe Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -89,19 +89,22 @@ The shared libraries are compiled from
 .Pa /lib
 and
 .Pa /usr/lib
-to a custom format under
+to a custom format bound to memory
+loading addresses for each library
+under
 .Pa /shlib .
 BSDi libraries
 under
 .Pa /shlib
 are not in the standard
 .Xr ar 5
-format and cannot be loaded by
+or position-independent shared object
+formats and cannot be loaded by
 .Xr ldconfig 8
 on
 .Nx .
 In order for BSDi executables to
-access the binary objects at the
+access the objects at the
 hardcoded
 .Pa /shlib
 path,
@@ -137,6 +140,7 @@ that does not run under the
 compatibility layers currently available on
 .Nx .
 .Sh SEE ALSO
+.Xr ld.aout_so 1 ,
 .Xr options 4 ,
 .Xr a.out 5 ,
 .Xr elf 5 ,
@@ -168,9 +172,13 @@ and
 .Pa /usr/lib .
 .Pp
 .Nx 1.0
-added shared libraries using the standard
+added shared libraries using a standard
+position-independent shared object
+format.
+The previous default relocatable libraries
+in the traditional
 .Xr ar 5
-archive format.
+format remained available.
 .Pp
 .Ox 2.2\|\(en\|4.7
 included a different compatibility implementation
