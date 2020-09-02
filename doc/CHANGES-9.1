@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.105 2020/08/29 17:03:39 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.106 2020/09/02 12:44:02 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -4885,4 +4885,26 @@ sys/arch/alpha/alpha/prom.c			1.52
 
 	Make sure init_prom_interface() only runs once.
 	[thorpej, ticket #1069]
+
+sys/dev/pci/ixgbe/if_bypass.c			1.6
+sys/dev/pci/ixgbe/ixgbe.c			1.246
+sys/dev/pci/ixgbe/ixgbe_common.c		1.28
+
+	ixg(4): minor fixes.
+	[msaitoh, ticket #1070]
+
+sys/arch/alpha/alpha/fp_complete.c		1.24
+
+	PR 55633: improve NAN handling on alpha.
+	[thorpej, ticket #1071]
+
+sys/kern/kern_syscall.c				1.21
+
+	PR 55629: avoid crash when an emulation does not support dtrace.
+	[christos, ticket #1072]
+
+sys/arch/x86/x86/pmap.c				1.404
+
+	Fix KASSERT when running the Xen 4.13 toolstack.
+	[bouyer, ticket #1073]
 
