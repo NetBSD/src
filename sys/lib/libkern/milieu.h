@@ -1,4 +1,4 @@
-/* $NetBSD: milieu.h,v 1.4 2018/04/19 21:50:09 christos Exp $ */
+/* $NetBSD: milieu.h,v 1.5 2020/09/02 03:43:22 thorpej Exp $ */
 
 /* This is a derivative work. */
 
@@ -31,29 +31,29 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
-===============================================================================
+/*============================================================================
 
-This C header file is part of TestFloat, Release 2a, a package of programs
-for testing the correctness of floating-point arithmetic complying to the
-IEC/IEEE Standard for Floating-Point.
+This C header file template is part of the Berkeley SoftFloat IEEE Floating-
+Point Arithmetic Package, Release 2c, by John R. Hauser.
 
-Written by John R. Hauser.  More information is available through the Web
-page `http://HTTP.CS.Berkeley.EDU/~jhauser/arithmetic/TestFloat.html'.
+THIS SOFTWARE IS DISTRIBUTED AS IS, FOR FREE.  Although reasonable effort has
+been made to avoid it, THIS SOFTWARE MAY CONTAIN FAULTS THAT WILL AT TIMES
+RESULT IN INCORRECT BEHAVIOR.  USE OF THIS SOFTWARE IS RESTRICTED TO PERSONS
+AND ORGANIZATIONS WHO CAN AND WILL TOLERATE ALL LOSSES, COSTS, OR OTHER
+PROBLEMS THEY INCUR DUE TO THE SOFTWARE WITHOUT RECOMPENSE FROM JOHN HAUSER OR
+THE INTERNATIONAL COMPUTER SCIENCE INSTITUTE, AND WHO FURTHERMORE EFFECTIVELY
+INDEMNIFY JOHN HAUSER AND THE INTERNATIONAL COMPUTER SCIENCE INSTITUTE
+(possibly via similar legal notice) AGAINST ALL LOSSES, COSTS, OR OTHER
+PROBLEMS INCURRED BY THEIR CUSTOMERS AND CLIENTS DUE TO THE SOFTWARE, OR
+INCURRED BY ANYONE DUE TO A DERIVATIVE WORK THEY CREATE USING ANY PART OF THE
+SOFTWARE.
 
-THIS SOFTWARE IS DISTRIBUTED AS IS, FOR FREE.  Although reasonable effort
-has been made to avoid it, THIS SOFTWARE MAY CONTAIN FAULTS THAT WILL AT
-TIMES RESULT IN INCORRECT BEHAVIOR.  USE OF THIS SOFTWARE IS RESTRICTED TO
-PERSONS AND ORGANIZATIONS WHO CAN AND WILL TAKE FULL RESPONSIBILITY FOR ANY
-AND ALL LOSSES, COSTS, OR OTHER PROBLEMS ARISING FROM ITS USE.
+Derivative works require also that (1) the source code for the derivative work
+includes prominent notice that the work is derivative, and (2) the source code
+includes prominent notice of these three paragraphs for those parts of this
+code that are retained.
 
-Derivative works are acceptable, even for commercial purposes, so long as
-(1) they include prominent notice that the work is derivative, and (2) they
-include prominent notice akin to these four paragraphs for those parts of
-this code that are retained.
-
-===============================================================================
-*/
+=============================================================================*/
 
 #ifndef MILIEU_H
 #define MILIEU_H
@@ -66,30 +66,29 @@ this code that are retained.
 
 #include <sys/endian.h>
 
-/*
--------------------------------------------------------------------------------
-One of the macros `BIGENDIAN' or `LITTLEENDIAN' must be defined.
--------------------------------------------------------------------------------
-*/
-
+/*----------------------------------------------------------------------------
+| One of the macros `BIGENDIAN' or `LITTLEENDIAN' must be defined.
+*----------------------------------------------------------------------------*/
 #if _BYTE_ORDER == _LITTLE_ENDIAN
 #define LITTLEENDIAN
 #else
 #define BIGENDIAN
 #endif
 
+/*----------------------------------------------------------------------------
+| The macro `BITS64' can be defined to indicate that 64-bit integer types are
+| supported by the compiler.
+*----------------------------------------------------------------------------*/
 #define BITS64
 
-/*
--------------------------------------------------------------------------------
-Each of the following `typedef's defines the most convenient type that holds
-integers of at least as many bits as specified.  For example, `uint8' should
-be the most convenient type that can hold unsigned integers of as many as
-8 bits.  The `flag' type must be able to hold either a 0 or 1.  For most
-implementations of C, `flag', `uint8', and `int8' should all be `typedef'ed
-to the same as `int'.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Each of the following `typedef's defines the most convenient type that holds
+| integers of at least as many bits as specified.  For example, `uint8' should
+| be the most convenient type that can hold unsigned integers of as many as
+| 8 bits.  The `flag' type must be able to hold either a 0 or 1.  For most
+| implementations of C, `flag', `uint8', and `int8' should all be `typedef'ed
+| to the same as `int'.
+*----------------------------------------------------------------------------*/
 typedef int flag;
 typedef unsigned int uint8;
 typedef signed int int8;
@@ -102,14 +101,12 @@ typedef uint64_t uint64;
 typedef int64_t int64;
 #endif
 
-/*
--------------------------------------------------------------------------------
-Each of the following `typedef's defines a type that holds integers
-of _exactly_ the number of bits specified.  For instance, for most
-implementation of C, `bits16' and `sbits16' should be `typedef'ed to
-`unsigned short int' and `signed short int' (or `short int'), respectively.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Each of the following `typedef's defines a type that holds integers
+| of _exactly_ the number of bits specified.  For instance, for most
+| implementation of C, `bits16' and `sbits16' should be `typedef'ed to
+| `unsigned short int' and `signed short int' (or `short int'), respectively.
+*----------------------------------------------------------------------------*/
 typedef uint8_t bits8;
 typedef int8_t sbits8;
 typedef uint16_t bits16;
@@ -122,26 +119,22 @@ typedef int64_t sbits64;
 #endif
 
 #ifdef BITS64
-/*
--------------------------------------------------------------------------------
-The `LIT64' macro takes as its argument a textual integer literal and
-if necessary ``marks'' the literal as having a 64-bit integer type.
-For example, the GNU C Compiler (`gcc') requires that 64-bit literals be
-appended with the letters `LL' standing for `long long', which is `gcc's
-name for the 64-bit integer type.  Some compilers may allow `LIT64' to be
-defined as the identity macro:  `#define LIT64( a ) a'.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| The `LIT64' macro takes as its argument a textual integer literal and
+| if necessary ``marks'' the literal as having a 64-bit integer type.
+| For example, the GNU C Compiler (`gcc') requires that 64-bit literals be
+| appended with the letters `LL' standing for `long long', which is `gcc's
+| name for the 64-bit integer type.  Some compilers may allow `LIT64' to be
+| defined as the identity macro:  `#define LIT64( a ) a'.
+*----------------------------------------------------------------------------*/
 #define LIT64( a ) a##LL
 #endif
 
-/*
--------------------------------------------------------------------------------
-The macro `INLINE' can be used before functions that should be inlined.  If
-a compiler does not support explicit inlining, this macro should be defined
-to be `static'.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| The macro `INLINE' can be used before functions that should be inlined.  If
+| a compiler does not support explicit inlining, this macro should be defined
+| to be `static'.
+*----------------------------------------------------------------------------*/
 #define INLINE static __inline
 
-#endif
+#endif /* MILIEU_H */
