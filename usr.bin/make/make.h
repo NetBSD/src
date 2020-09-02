@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.136 2020/09/02 04:08:54 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.137 2020/09/02 23:42:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,8 +130,8 @@
 #endif
 
 /*
- * A boolean type is defined as an integer, not an enum. This allows a
- * boolean argument to be an expression that isn't strictly 0 or 1 valued.
+ * A boolean type is defined as an integer, not an enum, for historic reasons.
+ * The only allowed values are the constants TRUE and FALSE (1 and 0).
  */
 
 #ifdef USE_DOUBLE_BOOLEAN
@@ -143,6 +143,8 @@ typedef double Boolean;
 typedef unsigned char Boolean;
 #define TRUE ((unsigned char)0xFF)
 #define FALSE ((unsigned char)0x00)
+#elif defined(USE_ENUM_BOOLEAN)
+typedef enum { FALSE, TRUE} Boolean;
 #else
 typedef int Boolean;
 #endif
