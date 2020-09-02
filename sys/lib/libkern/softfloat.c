@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat.c,v 1.7 2020/09/02 03:45:54 thorpej Exp $ */
+/* $NetBSD: softfloat.c,v 1.8 2020/09/02 04:06:43 thorpej Exp $ */
 
 /*
  * This version hacked for use with gcc -msoft-float by bjh21.
@@ -50,7 +50,7 @@ these four paragraphs for those parts of this code that are retained.
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: softfloat.c,v 1.7 2020/09/02 03:45:54 thorpej Exp $");
+__RCSID("$NetBSD: softfloat.c,v 1.8 2020/09/02 04:06:43 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef SOFTFLOAT_FOR_GCC
@@ -59,17 +59,6 @@ __RCSID("$NetBSD: softfloat.c,v 1.7 2020/09/02 03:45:54 thorpej Exp $");
 
 #include "milieu.h"
 #include "softfloat.h"
-
-/*
- * Conversions between floats as stored in memory and floats as
- * SoftFloat uses them
- */
-#ifndef FLOAT64_DEMANGLE
-#define FLOAT64_DEMANGLE(a)	(a)
-#endif
-#ifndef FLOAT64_MANGLE
-#define FLOAT64_MANGLE(a)	(a)
-#endif
 
 /*----------------------------------------------------------------------------
 | Floating-point rounding mode, extended double-precision rounding precision,
@@ -406,7 +395,7 @@ static float32
 INLINE bits64 extractFloat64Frac( float64 a )
 {
 
-    return FLOAT64_DEMANGLE(a) & LIT64( 0x000FFFFFFFFFFFFF );
+    return a & LIT64( 0x000FFFFFFFFFFFFF );
 
 }
 
@@ -417,7 +406,7 @@ INLINE bits64 extractFloat64Frac( float64 a )
 INLINE int16 extractFloat64Exp( float64 a )
 {
 
-    return ( FLOAT64_DEMANGLE(a)>>52 ) & 0x7FF;
+    return ( a>>52 ) & 0x7FF;
 
 }
 /*----------------------------------------------------------------------------
@@ -427,7 +416,7 @@ INLINE int16 extractFloat64Exp( float64 a )
 INLINE flag extractFloat64Sign( float64 a )
 {
 
-    return FLOAT64_DEMANGLE(a)>>63;
+    return a>>63;
 
 }
 
@@ -463,8 +452,7 @@ static void
 INLINE float64 packFloat64( flag zSign, int16 zExp, bits64 zSig )
 {
 
-    return FLOAT64_MANGLE( ( ( (bits64) zSign )<<63 ) +
-			   ( ( (bits64) zExp )<<52 ) + zSig );
+    return ( ( (bits64) zSign )<<63 ) + ( ( (bits64) zExp )<<52 ) + zSig;
 
 }
 
@@ -521,9 +509,7 @@ static float64 roundAndPackFloat64( flag zSign, int16 zExp, bits64 zSig )
                   && ( (sbits64) ( zSig + roundIncrement ) < 0 ) )
            ) {
             float_raise( float_flag_overflow | float_flag_inexact );
-            return FLOAT64_MANGLE(
-		FLOAT64_DEMANGLE(packFloat64( zSign, 0x7FF, 0 )) -
-		( roundIncrement == 0 ));
+            return packFloat64( zSign, 0x7FF, 0 ) - ( roundIncrement == 0 );
         }
         if ( zExp < 0 ) {
             isTiny =
@@ -885,7 +871,6 @@ INLINE int32 extractFloat128Exp( float128 a )
     return ( a.high>>48 ) & 0x7FFF;
 
 }
-
 
 /*----------------------------------------------------------------------------
 | Returns the sign bit of the quadruple-precision floating-point value `a'.
@@ -3085,8 +3070,7 @@ flag float64_eq( float64 a, float64 b )
         }
         return 0;
     }
-    return ( a == b ) ||
-	( (bits64) ( ( FLOAT64_DEMANGLE(a) | FLOAT64_DEMANGLE(b) )<<1 ) == 0 );
+    return ( a == b ) || ( (bits64) ( ( a | b )<<1 ) == 0 );
 
 }
 
@@ -3109,12 +3093,8 @@ flag float64_le( float64 a, float64 b )
     }
     aSign = extractFloat64Sign( a );
     bSign = extractFloat64Sign( b );
-    if ( aSign != bSign )
-	return aSign ||
-	    ( (bits64) ( ( FLOAT64_DEMANGLE(a) | FLOAT64_DEMANGLE(b) )<<1 ) ==
-	      0 );
-    return ( a == b ) ||
-	( aSign ^ ( FLOAT64_DEMANGLE(a) < FLOAT64_DEMANGLE(b) ) );
+    if ( aSign != bSign ) return aSign || ( (bits64) ( ( a | b )<<1 ) == 0 );
+    return ( a == b ) || ( aSign ^ ( a < b ) );
 
 }
 
@@ -3136,12 +3116,8 @@ flag float64_lt( float64 a, float64 b )
     }
     aSign = extractFloat64Sign( a );
     bSign = extractFloat64Sign( b );
-    if ( aSign != bSign )
-	return aSign &&
-	    ( (bits64) ( ( FLOAT64_DEMANGLE(a) | FLOAT64_DEMANGLE(b) )<<1 ) !=
-	      0 );
-    return ( a != b ) &&
-	( aSign ^ ( FLOAT64_DEMANGLE(a) < FLOAT64_DEMANGLE(b) ) );
+    if ( aSign != bSign ) return aSign && ( (bits64) ( ( a | b )<<1 ) != 0 );
+    return ( a != b ) && ( aSign ^ ( a < b ) );
 
 }
 
