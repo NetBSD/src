@@ -1,11 +1,11 @@
-#	$NetBSD: bsd.endian.mk,v 1.22 2014/09/19 17:45:42 matt Exp $
+#	$NetBSD: bsd.endian.mk,v 1.23 2020/09/02 15:17:19 jakllsch Exp $
 
 .if !defined(_BSD_ENDIAN_MK_)
 _BSD_ENDIAN_MK_=1
 
 .include <bsd.init.mk>
 
-.if ${MACHINE_ARCH} == "aarch64" || \
+.if (!empty(MACHINE_ARCH:Maarch64*) && empty(MACHINE_ARCH:Maarch64eb)) || \
     ${MACHINE_ARCH} == "alpha" || \
     ${MACHINE_ARCH} == "arm" || \
     (!empty(MACHINE_ARCH:Mearm*) && empty(MACHINE_ARCH:Mearm*eb)) || \
