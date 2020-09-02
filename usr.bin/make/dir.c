@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.133 2020/09/02 04:08:54 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.134 2020/09/02 04:19:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.133 2020/09/02 04:08:54 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.134 2020/09/02 04:19:52 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.133 2020/09/02 04:08:54 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.134 2020/09/02 04:19:52 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -314,6 +314,9 @@ cached_stats(Hash_Table *htp, const char *pathname, struct make_stat *mst,
 	 : stat(pathname, &sys_st);
     if (rc == -1)
 	return -1;
+
+    mst->mst_mode = sys_st.st_mode;
+    mst->mst_mtime = sys_st.st_mtime;
 
     if (sys_st.st_mtime == 0)
 	sys_st.st_mtime = 1;	/* avoid confusion with missing file */
