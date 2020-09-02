@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat-specialize.h,v 1.2 2008/04/28 20:24:06 martin Exp $ */
+/* $NetBSD: softfloat-specialize.h,v 1.3 2020/09/02 03:41:56 thorpej Exp $ */
 
 /* This is a derivative work. */
 
@@ -31,68 +31,55 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
-===============================================================================
+/*============================================================================
 
-This C source fragment is part of the SoftFloat IEC/IEEE Floating-point
-Arithmetic Package, Release 2a.
+This C source fragment is part of the Berkeley SoftFloat IEEE Floating-Point
+Arithmetic Package, Release 2c, by John R. Hauser.
 
-Written by John R. Hauser.  This work was made possible in part by the
-International Computer Science Institute, located at Suite 600, 1947 Center
-Street, Berkeley, California 94704.  Funding was partially provided by the
-National Science Foundation under grant MIP-9311980.  The original version
-of this code was written as part of a project to build a fixed-point vector
-processor in collaboration with the University of California at Berkeley,
-overseen by Profs. Nelson Morgan and John Wawrzynek.  More information
-is available through the Web page `http://HTTP.CS.Berkeley.EDU/~jhauser/
-arithmetic/SoftFloat.html'.
+THIS SOFTWARE IS DISTRIBUTED AS IS, FOR FREE.  Although reasonable effort has
+been made to avoid it, THIS SOFTWARE MAY CONTAIN FAULTS THAT WILL AT TIMES
+RESULT IN INCORRECT BEHAVIOR.  USE OF THIS SOFTWARE IS RESTRICTED TO PERSONS
+AND ORGANIZATIONS WHO CAN AND WILL TOLERATE ALL LOSSES, COSTS, OR OTHER
+PROBLEMS THEY INCUR DUE TO THE SOFTWARE WITHOUT RECOMPENSE FROM JOHN HAUSER OR
+THE INTERNATIONAL COMPUTER SCIENCE INSTITUTE, AND WHO FURTHERMORE EFFECTIVELY
+INDEMNIFY JOHN HAUSER AND THE INTERNATIONAL COMPUTER SCIENCE INSTITUTE
+(possibly via similar legal notice) AGAINST ALL LOSSES, COSTS, OR OTHER
+PROBLEMS INCURRED BY THEIR CUSTOMERS AND CLIENTS DUE TO THE SOFTWARE, OR
+INCURRED BY ANYONE DUE TO A DERIVATIVE WORK THEY CREATE USING ANY PART OF THE
+SOFTWARE.
 
-THIS SOFTWARE IS DISTRIBUTED AS IS, FOR FREE.  Although reasonable effort
-has been made to avoid it, THIS SOFTWARE MAY CONTAIN FAULTS THAT WILL AT
-TIMES RESULT IN INCORRECT BEHAVIOR.  USE OF THIS SOFTWARE IS RESTRICTED TO
-PERSONS AND ORGANIZATIONS WHO CAN AND WILL TAKE FULL RESPONSIBILITY FOR ANY
-AND ALL LOSSES, COSTS, OR OTHER PROBLEMS ARISING FROM ITS USE.
+Derivative works require also that (1) the source code for the derivative work
+includes prominent notice that the work is derivative, and (2) the source code
+includes prominent notice of these three paragraphs for those parts of this
+code that are retained.
 
-Derivative works are acceptable, even for commercial purposes, so long as
-(1) they include prominent notice that the work is derivative, and (2) they
-include prominent notice akin to these four paragraphs for those parts of
-this code that are retained.
+=============================================================================*/
 
-===============================================================================
-*/
-
-/*
--------------------------------------------------------------------------------
-Underflow tininess-detection mode, statically initialized to default value.
--------------------------------------------------------------------------------
-*/
-
+/*----------------------------------------------------------------------------
+| Underflow tininess-detection mode, statically initialized to default value.
+| (The declaration in `softfloat.h' must match the `int8' type here.)
+*----------------------------------------------------------------------------*/
 /* [ MP safe, does not change dynamically ] */
 int float_detect_tininess = float_tininess_after_rounding;
 
-/*
--------------------------------------------------------------------------------
-Internal canonical NaN format.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Internal canonical NaN format.
+*----------------------------------------------------------------------------*/
 typedef struct {
     flag sign;
     bits64 high, low;
 } commonNaNT;
 
-/*
--------------------------------------------------------------------------------
-The pattern for a default generated single-precision NaN.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| The pattern for a default generated single-precision NaN.
+*----------------------------------------------------------------------------*/
 #define float32_default_nan 0xFFC00000
 
-/*
--------------------------------------------------------------------------------
-Returns 1 if the single-precision floating-point value `a' is a NaN;
-otherwise returns 0.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns 1 if the single-precision floating-point value `a' is a NaN;
+| otherwise returns 0.
+*----------------------------------------------------------------------------*/
+
 static flag float32_is_nan( float32 a )
 {
 
@@ -100,12 +87,11 @@ static flag float32_is_nan( float32 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns 1 if the single-precision floating-point value `a' is a signaling
-NaN; otherwise returns 0.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns 1 if the single-precision floating-point value `a' is a signaling
+| NaN; otherwise returns 0.
+*----------------------------------------------------------------------------*/
+
 flag float32_is_signaling_nan( float32 a )
 {
 
@@ -113,13 +99,12 @@ flag float32_is_signaling_nan( float32 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the single-precision floating-point NaN
-`a' to the canonical NaN format.  If `a' is a signaling NaN, the invalid
-exception is raised.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the single-precision floating-point NaN
+| `a' to the canonical NaN format.  If `a' is a signaling NaN, the invalid
+| exception is raised.
+*----------------------------------------------------------------------------*/
+
 static commonNaNT float32ToCommonNaN( float32 a )
 {
     commonNaNT z;
@@ -132,12 +117,11 @@ static commonNaNT float32ToCommonNaN( float32 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the canonical NaN `a' to the single-
-precision floating-point format.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the canonical NaN `a' to the single-
+| precision floating-point format.
+*----------------------------------------------------------------------------*/
+
 static float32 commonNaNToFloat32( commonNaNT a )
 {
 
@@ -145,13 +129,12 @@ static float32 commonNaNToFloat32( commonNaNT a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Takes two single-precision floating-point values `a' and `b', one of which
-is a NaN, and returns the appropriate NaN result.  If either `a' or `b' is a
-signaling NaN, the invalid exception is raised.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Takes two single-precision floating-point values `a' and `b', one of which
+| is a NaN, and returns the appropriate NaN result.  If either `a' or `b' is a
+| signaling NaN, the invalid exception is raised.
+*----------------------------------------------------------------------------*/
+
 static float32 propagateFloat32NaN( float32 a, float32 b )
 {
     flag aIsNaN, aIsSignalingNaN, bIsNaN, bIsSignalingNaN;
@@ -180,14 +163,17 @@ static float32 propagateFloat32NaN( float32 a, float32 b )
 
 }
 
-
 /*
--------------------------------------------------------------------------------
-Returns the result of converting the double-precision floating-point NaN
-`a' to the canonical NaN format.  If `a' is a signaling NaN, the invalid
-exception is raised.
--------------------------------------------------------------------------------
-*/
+ * float64_default_nan, float64_is_nan(), float64_is_signaling_nan()
+ * have moved to softfloat.h.
+ */
+
+/*----------------------------------------------------------------------------
+| Returns the result of converting the double-precision floating-point NaN
+| `a' to the canonical NaN format.  If `a' is a signaling NaN, the invalid
+| exception is raised.
+*----------------------------------------------------------------------------*/
+
 static commonNaNT float64ToCommonNaN( float64 a )
 {
     commonNaNT z;
@@ -200,12 +186,11 @@ static commonNaNT float64ToCommonNaN( float64 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the canonical NaN `a' to the double-
-precision floating-point format.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the canonical NaN `a' to the double-
+| precision floating-point format.
+*----------------------------------------------------------------------------*/
+
 static float64 commonNaNToFloat64( commonNaNT a )
 {
 
@@ -216,13 +201,12 @@ static float64 commonNaNToFloat64( commonNaNT a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Takes two double-precision floating-point values `a' and `b', one of which
-is a NaN, and returns the appropriate NaN result.  If either `a' or `b' is a
-signaling NaN, the invalid exception is raised.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Takes two double-precision floating-point values `a' and `b', one of which
+| is a NaN, and returns the appropriate NaN result.  If either `a' or `b' is a
+| signaling NaN, the invalid exception is raised.
+*----------------------------------------------------------------------------*/
+
 static float64 propagateFloat64NaN( float64 a, float64 b )
 {
     flag aIsNaN, aIsSignalingNaN, bIsNaN, bIsSignalingNaN;
@@ -253,22 +237,19 @@ static float64 propagateFloat64NaN( float64 a, float64 b )
 
 #ifdef FLOATX80
 
-/*
--------------------------------------------------------------------------------
-The pattern for a default generated extended double-precision NaN.  The
-`high' and `low' values hold the most- and least-significant bits,
-respectively.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| The pattern for a default generated double-extended-precision NaN.
+| The `high' and `low' values hold the most- and least-significant bits,
+| respectively.
+*----------------------------------------------------------------------------*/
 #define floatx80_default_nan_high 0xFFFF
 #define floatx80_default_nan_low  LIT64( 0xC000000000000000 )
 
-/*
--------------------------------------------------------------------------------
-Returns 1 if the extended double-precision floating-point value `a' is a
-NaN; otherwise returns 0.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns 1 if the double-extended-precision floating-point value `a' is a
+| NaN; otherwise returns 0.
+*----------------------------------------------------------------------------*/
+
 static flag floatx80_is_nan( floatx80 a )
 {
 
@@ -276,12 +257,11 @@ static flag floatx80_is_nan( floatx80 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns 1 if the extended double-precision floating-point value `a' is a
-signaling NaN; otherwise returns 0.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns 1 if the double-extended-precision floating-point value `a' is a
+| signaling NaN; otherwise returns 0.
+*----------------------------------------------------------------------------*/
+
 flag floatx80_is_signaling_nan( floatx80 a )
 {
     bits64 aLow;
@@ -294,13 +274,12 @@ flag floatx80_is_signaling_nan( floatx80 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the extended double-precision floating-
-point NaN `a' to the canonical NaN format.  If `a' is a signaling NaN, the
-invalid exception is raised.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the double-extended-precision floating-
+| point NaN `a' to the canonical NaN format.  If `a' is a signaling NaN, the
+| invalid exception is raised.
+*----------------------------------------------------------------------------*/
+
 static commonNaNT floatx80ToCommonNaN( floatx80 a )
 {
     commonNaNT z;
@@ -313,12 +292,11 @@ static commonNaNT floatx80ToCommonNaN( floatx80 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the canonical NaN `a' to the extended
-double-precision floating-point format.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the canonical NaN `a' to the double-
+| extended-precision floating-point format.
+*----------------------------------------------------------------------------*/
+
 static floatx80 commonNaNToFloatx80( commonNaNT a )
 {
     floatx80 z;
@@ -329,13 +307,12 @@ static floatx80 commonNaNToFloatx80( commonNaNT a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Takes two extended double-precision floating-point values `a' and `b', one
-of which is a NaN, and returns the appropriate NaN result.  If either `a' or
-`b' is a signaling NaN, the invalid exception is raised.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Takes two double-extended-precision floating-point values `a' and `b', one
+| of which is a NaN, and returns the appropriate NaN result.  If either `a' or
+| `b' is a signaling NaN, the invalid exception is raised.
+*----------------------------------------------------------------------------*/
+
 static floatx80 propagateFloatx80NaN( floatx80 a, floatx80 b )
 {
     flag aIsNaN, aIsSignalingNaN, bIsNaN, bIsSignalingNaN;
@@ -368,21 +345,18 @@ static floatx80 propagateFloatx80NaN( floatx80 a, floatx80 b )
 
 #ifdef FLOAT128
 
-/*
--------------------------------------------------------------------------------
-The pattern for a default generated quadruple-precision NaN.  The `high' and
-`low' values hold the most- and least-significant bits, respectively.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| The pattern for a default generated quadruple-precision NaN.  The `high' and
+| `low' values hold the most- and least-significant bits, respectively.
+*----------------------------------------------------------------------------*/
 #define float128_default_nan_high LIT64( 0xFFFF800000000000 )
 #define float128_default_nan_low  LIT64( 0x0000000000000000 )
 
-/*
--------------------------------------------------------------------------------
-Returns 1 if the quadruple-precision floating-point value `a' is a NaN;
-otherwise returns 0.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns 1 if the quadruple-precision floating-point value `a' is a NaN;
+| otherwise returns 0.
+*----------------------------------------------------------------------------*/
+
 flag float128_is_nan( float128 a )
 {
 
@@ -392,12 +366,11 @@ flag float128_is_nan( float128 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns 1 if the quadruple-precision floating-point value `a' is a
-signaling NaN; otherwise returns 0.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns 1 if the quadruple-precision floating-point value `a' is a
+| signaling NaN; otherwise returns 0.
+*----------------------------------------------------------------------------*/
+
 flag float128_is_signaling_nan( float128 a )
 {
 
@@ -407,13 +380,12 @@ flag float128_is_signaling_nan( float128 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the quadruple-precision floating-point NaN
-`a' to the canonical NaN format.  If `a' is a signaling NaN, the invalid
-exception is raised.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the quadruple-precision floating-point NaN
+| `a' to the canonical NaN format.  If `a' is a signaling NaN, the invalid
+| exception is raised.
+*----------------------------------------------------------------------------*/
+
 static commonNaNT float128ToCommonNaN( float128 a )
 {
     commonNaNT z;
@@ -425,12 +397,11 @@ static commonNaNT float128ToCommonNaN( float128 a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Returns the result of converting the canonical NaN `a' to the quadruple-
-precision floating-point format.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Returns the result of converting the canonical NaN `a' to the quadruple-
+| precision floating-point format.
+*----------------------------------------------------------------------------*/
+
 static float128 commonNaNToFloat128( commonNaNT a )
 {
     float128 z;
@@ -441,13 +412,12 @@ static float128 commonNaNToFloat128( commonNaNT a )
 
 }
 
-/*
--------------------------------------------------------------------------------
-Takes two quadruple-precision floating-point values `a' and `b', one of
-which is a NaN, and returns the appropriate NaN result.  If either `a' or
-`b' is a signaling NaN, the invalid exception is raised.
--------------------------------------------------------------------------------
-*/
+/*----------------------------------------------------------------------------
+| Takes two quadruple-precision floating-point values `a' and `b', one of
+| which is a NaN, and returns the appropriate NaN result.  If either `a' or
+| `b' is a signaling NaN, the invalid exception is raised.
+*----------------------------------------------------------------------------*/
+
 static float128 propagateFloat128NaN( float128 a, float128 b )
 {
     flag aIsNaN, aIsSignalingNaN, bIsNaN, bIsSignalingNaN;
