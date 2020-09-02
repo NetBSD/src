@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.131 2020/09/02 03:15:21 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.132 2020/09/02 03:28:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.131 2020/09/02 03:15:21 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.132 2020/09/02 03:28:12 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.131 2020/09/02 03:15:21 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.132 2020/09/02 03:28:12 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -337,13 +337,13 @@ cached_stats(Hash_Table *htp, const char *pathname, struct stat *st,
 }
 
 int
-cached_stat(const char *pathname, void *st)
+cached_stat(const char *pathname, struct stat *st)
 {
     return cached_stats(&mtimes, pathname, st, 0);
 }
 
 int
-cached_lstat(const char *pathname, void *st)
+cached_lstat(const char *pathname, struct stat *st)
 {
     return cached_stats(&lmtimes, pathname, st, CST_LSTAT);
 }
