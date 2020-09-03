@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.50 2014/11/09 17:48:07 maxv Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.51 2020/09/03 14:26:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.50 2014/11/09 17:48:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.51 2020/09/03 14:26:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,14 +243,11 @@ void setup_linux_sigframe(struct trapframe *tf, const ksiginfo_t *ksi,
 	frametoreg(tf, (struct reg *)sigframe.sf_sc.sc_regs);
 	sigframe.sf_sc.sc_regs[R_SP] = alpha_pal_rdusp();
 
-	if (l == fpcurlwp) {
+	if (fpu_valid_p(l)) {
 		struct pcb *pcb = lwp_getpcb(l);
 
-		alpha_pal_wrfen(1);
-		savefpstate(&pcb->pcb_fp);
-		alpha_pal_wrfen(0);
+		fpu_save(l);
 		sigframe.sf_sc.sc_fpcr = pcb->pcb_fp.fpr_cr;
-		fpcurlwp = NULL;
 	}
 	/* XXX ownedfp ? etc...? */
 
@@ -393,9 +390,6 @@ linux_restore_sigcontext(struct lwp *l, struct linux_sigcontext context,
 
 	regtoframe((struct reg *)context.sc_regs, l->l_md.md_tf);
 	alpha_pal_wrusp(context.sc_regs[R_SP]);
-
-	if (l == fpcurlwp)
-	    fpcurlwp = NULL;
 
 	/* Restore fp regs and fpr_cr */
 	pcb = lwp_getpcb(l);
