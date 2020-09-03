@@ -1,4 +1,4 @@
-# $NetBSD: varmod-undefined.mk,v 1.3 2020/08/23 20:49:33 rillig Exp $
+# $NetBSD: varmod-undefined.mk,v 1.4 2020/09/03 18:52:36 rillig Exp $
 #
 # Tests for the :U variable modifier, which returns the given string
 # if the variable is undefined.
@@ -46,9 +46,19 @@
 # the .newline variable is for.
 #
 # Whitespace at the edges is preserved, on both sides of the comparison.
-
+#
 .if ${:U \: \} \$ \\ \a \b \n } != " : } \$ \\ \\a \\b \\n "
 .error
+.endif
+
+# Even after the :U modifier has been applied, the expression still remembers
+# that it originated from an undefined variable, and the :U modifier can
+# be used to overwrite the value of the expression.
+#
+.if ${UNDEF:Uvalue:S,a,X,} != "vXlue"
+.  error
+.elif ${UNDEF:Uvalue:S,a,X,:Uwas undefined} != "was undefined"
+.  error
 .endif
 
 all:
