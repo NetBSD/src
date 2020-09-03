@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.334.2.4 2020/09/02 12:40:06 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.334.2.5 2020/09/03 13:45:24 martin Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.334.2.4 2020/09/02 12:40:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.334.2.5 2020/09/03 13:45:24 martin Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -4559,28 +4559,21 @@ pmap_enter_gnt(struct pmap *pmap, vaddr_t va, vaddr_t sva, int nentries,
 	if (__predict_false(op->status != GNTST_okay)) {
 		printf("%s: GNTTABOP_map_grant_ref status: %d\n",
 		    __func__, op->status);
-		if (ptp != NULL) {
-			if (have_oldpa) {
-				ptp->wire_count--;
-			}
+		if (have_oldpa) {
+			ptp->wire_count--;
 		}
 	} else {
 		pgnt->pd_gnt_refs++;
-		if (ptp != NULL) {
-			if (!have_oldpa) {
-				ptp->wire_count++;
-			}
+		if (!have_oldpa) {
+			ptp->wire_count++;
 		}
+		KASSERT(ptp->wire_count > 1);
 	}
 
 	/*
 	 * Update statistics and PTP's reference count.
 	 */
 	pmap_stats_update_bypte(pmap, 0, opte);
-	if (ptp != NULL && !have_oldpa) {
-		ptp->wire_count++;
-	}
-	KASSERT(ptp == NULL || ptp->wire_count > 1);
 
 	/*
 	 * If old page is pv-tracked, remove pv_entry from its list.
@@ -4599,6 +4592,8 @@ pmap_enter_gnt(struct pmap *pmap, vaddr_t va, vaddr_t sva, int nentries,
 		old_pve = pmap_remove_pv(old_pp, ptp, va);
 		old_pp->pp_attrs |= pmap_pte_to_pp_attrs(opte);
 	}
+	if (ptp->wire_count <= 1)
+		pmap_free_ptp(pmap, ptp, va, ptes, pdes);
 
 	pmap_unmap_ptes(pmap, pmap2);
 
@@ -4687,7 +4682,7 @@ pmap_remove_gnt(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 		 * being used, free it!
 		 */
 
-		if (ptp && ptp->wire_count <= 1)
+		if (ptp->wire_count <= 1)
 			pmap_free_ptp(pmap, ptp, va, ptes, pdes);
 	}
 	pmap_unmap_ptes(pmap, pmap2); /* unlock pmap */
