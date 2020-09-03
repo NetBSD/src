@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.33 2020/09/02 12:29:26 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.34 2020/09/03 13:41:42 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1033,4 +1033,9 @@ sys/dev/pci/ixgbe/ixgbe_x550.c			1.17
 	Add recovery code for unsupported SFP+.
 	[msaitoh, ticket #1601]
 
+sys/netinet/tcp_input.c				1.419
+
+	PR 55567: a unidirectional sender could be slowed down to
+	1 byte every 5 or even 60 seconds.
+	[kardel, ticket #1602]
 
