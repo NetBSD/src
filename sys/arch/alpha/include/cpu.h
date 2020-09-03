@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.89 2020/08/29 20:07:00 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.90 2020/09/03 04:20:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -102,7 +102,6 @@ struct cpu_info {
 	 * Private members accessed in assembly with 8 bit offsets.
 	 */
 	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
-	paddr_t ci_curpcb;		/* PA of current HW PCB */
 
 	/*
 	 * Public members.
@@ -174,7 +173,6 @@ void	cpu_pause_resume_all(int);
 
 #define	curlwp		curcpu()->ci_curlwp
 #define	fpcurlwp	curcpu()->ci_fpcurlwp
-#define	curpcb		curcpu()->ci_curpcb
 
 /*
  * definitions of cpu-dependent requirements
