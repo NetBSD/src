@@ -1,4 +1,4 @@
-/* $NetBSD: asm.h,v 1.39 2020/08/29 22:50:27 thorpej Exp $ */
+/* $NetBSD: asm.h,v 1.40 2020/09/03 04:18:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -675,10 +675,6 @@ label:	ASCIZ msg;						\
 	call_pal PAL_OSF1_rdval					;	\
 	addq	v0, CPU_INFO_FPCURLWP, v0
 
-#define	GET_CURPCB							\
-	call_pal PAL_OSF1_rdval					;	\
-	addq	v0, CPU_INFO_CURPCB, v0
-
 #else	/* if not MULTIPROCESSOR... */
 
 IMPORT(cpu_info_primary, CPU_INFO_SIZEOF)
@@ -688,8 +684,6 @@ IMPORT(cpu_info_primary, CPU_INFO_SIZEOF)
 #define	GET_CURLWP		lda v0, cpu_info_primary + CPU_INFO_CURLWP
 
 #define	GET_FPCURLWP		lda v0, cpu_info_primary + CPU_INFO_FPCURLWP
-
-#define	GET_CURPCB		lda v0, cpu_info_primary + CPU_INFO_CURPCB
 #endif /* MULTIPROCESSOR */
 #else
 #define	RCSID(_s)		__SECTIONSTRING(.ident, _s)
