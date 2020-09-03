@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.68 2015/03/02 03:17:24 enami Exp $	*/
+/*	$NetBSD: tape.c,v 1.69 2020/09/03 19:31:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.68 2015/03/02 03:17:24 enami Exp $");
+__RCSID("$NetBSD: tape.c,v 1.69 2020/09/03 19:31:34 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -1384,6 +1384,7 @@ findinode(struct s_spcl *header)
     top:
 	do {
 		if (header->c_magic != FS_UFS2_MAGIC) {
+skip:
 			skipcnt++;
 			while (gethead(header) == FAIL ||
 			    header->c_date != dumpdate)
@@ -1438,7 +1439,8 @@ findinode(struct s_spcl *header)
 
 		default:
 			panic("unknown tape header type %d\n", spcl.c_type);
-			break;
+			fprintf(stderr, "skiping to next header\n");
+			goto skip;
 
 		}
 	} while (header->c_type == TS_ADDR);
