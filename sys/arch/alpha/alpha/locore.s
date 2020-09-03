@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.127 2020/09/03 04:18:30 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.128 2020/09/03 15:38:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2019 The NetBSD Foundation, Inc.
@@ -67,20 +67,11 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.127 2020/09/03 04:18:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.128 2020/09/03 15:38:17 thorpej Exp $");
 
 #include "assym.h"
 
 .stabs	__FILE__,132,0,0,kernel_text
-
-/*
- * Perform actions necessary to switch to a new context.  The
- * hwpcb should be in a0.  Clobbers v0, t0, t8..t11, a0.
- */
-#define	SWITCH_CONTEXT							\
-	/* Swap in the new context. */					\
-	call_pal PAL_OSF1_swpctx
-
 
 	/* don't reorder instructions; paranoia. */
 	.set noreorder
@@ -152,7 +143,7 @@ NESTED_NOPROFILE(locorestart,1,0,ra,0,0)
 	 */
 	lda	a0, lwp0
 	ldq	a0, L_MD_PCBPADDR(a0)		/* phys addr of PCB */
-	SWITCH_CONTEXT
+	call_pal PAL_OSF1_swpctx	/* clobbers a0, t0, t8-t11, a0 */
 
 	/* PROM is no longer mapped. */
 	lda	t0, prom_mapped
@@ -680,9 +671,10 @@ LEAF(cpu_switchto, 0)
 
 	mov	a0, s4				/* save old curlwp */
 	mov	a1, s2				/* save new lwp */
-	ldq	a0, L_MD_PCBPADDR(s2)		/* save new pcbpaddr */
 
-	SWITCH_CONTEXT				/* swap the context */
+	/* Switch to the new PCB. */
+	ldq	a0, L_MD_PCBPADDR(s2)
+	call_pal PAL_OSF1_swpctx	/* clobbers a0, t0, t8-t11, a0 */
 
 	GET_CPUINFO
 	stq	s2, CPU_INFO_CURLWP(v0)		/* curlwp = l */
