@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.103 2020/09/03 16:02:02 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.104 2020/09/03 18:19:15 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -214,6 +214,7 @@ void Var_Append(const char *, const char *, GNode *);
 Boolean Var_Exists(const char *, GNode *);
 const char *Var_Value(const char *, GNode *, char **);
 const char *Var_Parse(const char *, GNode *, VarEvalFlags, int *, void **);
+const char *Var_ParsePP(const char **, GNode *, VarEvalFlags, void **);
 char *Var_Subst(const char *, GNode *, VarEvalFlags);
 void Var_Init(void);
 void Var_End(void);
