@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.106 2020/08/29 13:38:48 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.107 2020/09/03 16:02:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.106 2020/08/29 13:38:48 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.107 2020/09/03 16:02:02 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.106 2020/08/29 13:38:48 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.107 2020/09/03 16:02:02 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1043,7 +1043,7 @@ do_Cond_EvalExpression(Boolean *value)
  *-----------------------------------------------------------------------
  */
 CondEvalResult
-Cond_EvalExpression(const struct If *info, char *line, Boolean *value,
+Cond_EvalExpression(const struct If *info, const char *line, Boolean *value,
 		    int eprint, Boolean strictLHS)
 {
     static const struct If *dflt_info;
@@ -1108,7 +1108,7 @@ Cond_EvalExpression(const struct If *info, char *line, Boolean *value,
  *-----------------------------------------------------------------------
  */
 CondEvalResult
-Cond_Eval(char *line)
+Cond_Eval(const char *line)
 {
     enum { MAXIF = 128 };	/* maximum depth of .if'ing */
     enum { MAXIF_BUMP = 32 };	/* how much to grow by */
