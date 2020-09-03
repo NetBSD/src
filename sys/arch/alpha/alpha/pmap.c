@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.269 2020/08/29 20:06:59 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.270 2020/09/03 02:05:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.269 2020/08/29 20:06:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.270 2020/09/03 02:05:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -951,7 +951,6 @@ pmap_tlb_shootnow(const struct pmap_tlb_context * const tlbctx)
 		TLB_COUNT(shootnow_remote);
 		tlb_context = tlbctx;
 		tlb_pending = remote_cpus;
-		alpha_wmb();
 		alpha_multicast_ipi(remote_cpus, ALPHA_IPI_SHOOTDOWN);
 	}
 #endif /* MULTIPROCESSOR */
@@ -983,7 +982,6 @@ pmap_tlb_shootnow(const struct pmap_tlb_context * const tlbctx)
 		while (atomic_load_relaxed(&tlb_context) != NULL) {
 			SPINLOCK_BACKOFF(backoff);
 			if (spins++ > 0x0fffffff) {
-				alpha_mb();
 				printf("TLB LOCAL MASK  = 0x%016lx\n",
 				    this_cpu);
 				printf("TLB REMOTE MASK = 0x%016lx\n",
@@ -996,6 +994,7 @@ pmap_tlb_shootnow(const struct pmap_tlb_context * const tlbctx)
 				panic("pmap_tlb_shootnow");
 			}
 		}
+		membar_consumer();
 	}
 	KASSERT(tlb_context == NULL);
 #endif /* MULTIPROCESSOR */
@@ -1026,7 +1025,7 @@ pmap_tlb_shootdown_ipi(struct cpu_info * const ci,
 	KASSERT(tlb_context != NULL);
 	pmap_tlb_invalidate(tlb_context, ci);
 	if (atomic_and_ulong_nv(&tlb_pending, ~(1UL << ci->ci_cpuid)) == 0) {
-		alpha_wmb();
+		membar_producer();
 		atomic_store_relaxed(&tlb_context, NULL);
 	}
 }
@@ -1614,7 +1613,7 @@ pmap_destroy(pmap_t pmap)
 		printf("pmap_destroy(%p)\n", pmap);
 #endif
 
-	PMAP_MP(alpha_mb());
+	PMAP_MP(membar_exit());
 	if (atomic_dec_ulong_nv(&pmap->pm_count) > 0)
 		return;
 
@@ -1650,7 +1649,7 @@ pmap_reference(pmap_t pmap)
 #endif
 
 	atomic_inc_ulong(&pmap->pm_count);
-	PMAP_MP(alpha_mb());
+	PMAP_MP(membar_enter());
 }
 
 /*
@@ -2306,7 +2305,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	/* Set the new PTE. */
 	const pt_entry_t opte = atomic_load_relaxed(pte);
 	atomic_store_relaxed(pte, npte);
-	PMAP_MP(alpha_mb());
+	PMAP_MP(membar_enter());
 
 	PMAP_STAT_INCR(pmap->pm_stats.resident_count, 1);
 	PMAP_STAT_INCR(pmap->pm_stats.wired_count, 1);
@@ -2369,7 +2368,6 @@ pmap_kremove(vaddr_t va, vsize_t size)
 			PMAP_STAT_DECR(pmap->pm_stats.wired_count, 1);
 		}
 	}
-	PMAP_MP(alpha_wmb());
 
 	pmap_tlb_shootnow(&tlbctx);
 	TLB_COUNT(reason_kremove);
@@ -2614,7 +2612,6 @@ pmap_deactivate(struct lwp *l)
 	 * the kernel pmap.
 	 */
 	ci->ci_pmap = pmap_kernel();
-	PMAP_MP(alpha_mb());
 	KASSERT(atomic_load_relaxed(&pmap->pm_count) > 1);
 	pmap_destroy(pmap);
 }
