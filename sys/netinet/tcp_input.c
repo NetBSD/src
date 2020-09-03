@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.414.2.2 2020/07/07 11:00:54 martin Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.414.2.3 2020/09/03 13:38:29 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.414.2.2 2020/07/07 11:00:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.414.2.3 2020/09/03 13:38:29 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1896,6 +1896,19 @@ after_listen:
 				tp->snd_fack = tp->snd_una;
 				if (SEQ_LT(tp->snd_high, tp->snd_una))
 					tp->snd_high = tp->snd_una;
+				/*
+				 * drag snd_wl2 along so only newer
+				 * ACKs can update the window size.
+				 * also avoids the state where snd_wl2
+				 * is eventually larger than th_ack and thus
+				 * blocking the window update mechanism and
+				 * the connection gets stuck for a loooong
+				 * time in the zero sized send window state.
+				 *
+				 * see PR/kern 55567
+				 */
+				tp->snd_wl2 = tp->snd_una;
+
 				m_freem(m);
 
 				/*
