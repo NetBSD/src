@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.90 2020/09/03 04:20:54 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.91 2020/09/03 14:27:47 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -99,11 +99,6 @@ struct mchkinfo {
 
 struct cpu_info {
 	/*
-	 * Private members accessed in assembly with 8 bit offsets.
-	 */
-	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
-
-	/*
 	 * Public members.
 	 */
 	struct lwp *ci_curlwp;		/* current owner of the processor */
@@ -172,7 +167,6 @@ void	cpu_pause_resume_all(int);
 #endif /* MULTIPROCESSOR */
 
 #define	curlwp		curcpu()->ci_curlwp
-#define	fpcurlwp	curcpu()->ci_fpcurlwp
 
 /*
  * definitions of cpu-dependent requirements
