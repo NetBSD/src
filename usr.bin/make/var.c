@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.485 2020/09/03 18:19:15 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.486 2020/09/03 18:53:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.485 2020/09/03 18:19:15 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.486 2020/09/03 18:53:46 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.485 2020/09/03 18:19:15 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.486 2020/09/03 18:53:46 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2029,14 +2029,12 @@ ApplyModifier_Defined(const char **pp, ApplyModifiersState *st)
 
 	/* Nested variable expression */
 	if (*p == '$') {
-	    const char *cp2;
-	    int len;
-	    void *freeIt;
+	    const char *nested_val;
+	    void *nested_val_freeIt;
 
-	    cp2 = Var_Parse(p, st->ctxt, eflags, &len, &freeIt);
-	    Buf_AddStr(&buf, cp2);
-	    free(freeIt);
-	    p += len;
+	    nested_val = Var_ParsePP(&p, st->ctxt, eflags, &nested_val_freeIt);
+	    Buf_AddStr(&buf, nested_val);
+	    free(nested_val_freeIt);
 	    continue;
 	}
 
