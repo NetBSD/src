@@ -1,4 +1,4 @@
-# $NetBSD: dep-var.mk,v 1.1 2020/08/22 16:51:26 rillig Exp $
+# $NetBSD: dep-var.mk,v 1.2 2020/09/03 19:10:56 rillig Exp $
 #
 # Tests for variable references in dependency declarations.
 #
@@ -17,7 +17,7 @@ all: ${UNDEF1}
 #
 # At the point where the expression ${DEF2} is expanded, the variable DEF2
 # is defined, so everything's fine.
-all: $${DEF2}
+all: $${DEF2} a-$${DEF2}-b
 
 # This variable is not defined at all.
 # XXX: The -dv log says:
@@ -29,5 +29,5 @@ all: $${UNDEF3}
 UNDEF1=	undef1
 DEF2=	def2
 
-undef1 def2:
+undef1 def2 a-def2-b:
 	@echo ${.TARGET}
