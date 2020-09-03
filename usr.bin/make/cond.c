@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.107 2020/09/03 16:02:02 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.108 2020/09/03 16:14:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.107 2020/09/03 16:02:02 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.108 2020/09/03 16:14:58 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.107 2020/09/03 16:02:02 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.108 2020/09/03 16:14:58 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1025,22 +1025,15 @@ do_Cond_EvalExpression(Boolean *value)
     return COND_INVALID;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Cond_EvalExpression --
- *	Evaluate an expression in the passed line. The expression
- *	consists of &&, ||, !, make(target), defined(variable)
- *	and parenthetical groupings thereof.
+/* Evaluate the condition in the passed line, including any side effects from
+ * the variable expressions in the condition. The condition consists of &&,
+ * ||, !, function(arg), comparisons and parenthetical groupings thereof.
  *
  * Results:
  *	COND_PARSE	if the condition was valid grammatically
  *	COND_INVALID  	if not a valid conditional.
  *
  *	(*value) is set to the boolean value of the condition
- *
- * Side Effects:
- *	Any effects from evaluating the variables.
- *-----------------------------------------------------------------------
  */
 CondEvalResult
 Cond_EvalExpression(const struct If *info, const char *line, Boolean *value,
@@ -1083,29 +1076,26 @@ Cond_EvalExpression(const struct If *info, const char *line, Boolean *value,
 }
 
 
-/*-
- *-----------------------------------------------------------------------
- * Cond_Eval --
- *	Evaluate the conditional in the passed line. The line
- *	looks like this:
- *	    .<cond-type> <expr>
- *	where <cond-type> is any of if, ifmake, ifnmake, ifdef,
- *	ifndef, elif, elifmake, elifnmake, elifdef, elifndef
- *	and <expr> consists of &&, ||, !, make(target), defined(variable)
- *	and parenthetical groupings thereof.
- *
- * Input:
- *	line		Line to parse
- *
- * Results:
- *	COND_PARSE	if should parse lines after the conditional
- *	COND_SKIP	if should skip lines after the conditional
- *	COND_INVALID  	if not a valid conditional.
+/* Evaluate the conditional in the passed line. The line looks like this:
+ *	.<cond-type> <expr>
+ * In this line, <cond-type> is any of if, ifmake, ifnmake, ifdef, ifndef,
+ * elif, elifmake, elifnmake, elifdef, elifndef.
+ * In this line, <expr> consists of &&, ||, !, function(arg), comparisons
+ * and parenthetical groupings thereof.
  *
  * Note that the states IF_ACTIVE and ELSE_ACTIVE are only different in order
  * to detect spurious .else lines (as are SKIP_TO_ELSE and SKIP_TO_ENDIF),
  * otherwise .else could be treated as '.elif 1'.
- *-----------------------------------------------------------------------
+ *
+ * Results:
+ *	COND_PARSE	to continue parsing the lines after the conditional
+ *			(when .if or .else returns TRUE)
+ *	COND_SKIP	to skip the lines after the conditional
+ *			(when .if or .elif returns FALSE, or when a previous
+ *			branch has already been taken)
+ *	COND_INVALID  	if the conditional was not valid, either because of
+ *			a syntax error or because some variable was undefined
+ *			or because the condition could not be evaluated
  */
 CondEvalResult
 Cond_Eval(const char *line)
