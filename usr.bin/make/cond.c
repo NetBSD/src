@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.108 2020/09/03 16:14:58 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.109 2020/09/03 17:16:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.108 2020/09/03 16:14:58 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.109 2020/09/03 17:16:01 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.108 2020/09/03 16:14:58 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.109 2020/09/03 17:16:01 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -719,6 +719,7 @@ get_mpt_arg(Boolean doEval, const char **linePtr, char **argPtr,
 static Boolean
 CondDoEmpty(int arglen, const char *arg MAKE_ATTR_UNUSED)
 {
+    /* Magic values ahead, see get_mpt_arg. */
     return arglen == 1;
 }
 
@@ -1232,7 +1233,7 @@ Cond_Eval(const char *line)
 	}
     }
 
-    /* And evaluate the conditional expresssion */
+    /* And evaluate the conditional expression */
     if (Cond_EvalExpression(ifp, line, &value, 1, TRUE) == COND_INVALID) {
 	/* Syntax error in conditional, error message already output. */
 	/* Skip everything to matching .endif */
