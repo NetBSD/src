@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.484 2020/09/02 06:25:48 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.485 2020/09/03 18:19:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.484 2020/09/02 06:25:48 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.485 2020/09/03 18:19:15 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.484 2020/09/02 06:25:48 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.485 2020/09/03 18:19:15 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1679,15 +1679,16 @@ ParseModifierPart(
 	}
 
 	if (eflags & VARE_WANTRES) {	/* Nested variable, evaluated */
-	    const char *cp2;
-	    int len;
-	    void *freeIt;
+	    const char *nested_p = p;
+	    const char *nested_val;
+	    void *nested_val_freeIt;
 	    VarEvalFlags nested_eflags = eflags & ~(unsigned)VARE_ASSIGN;
 
-	    cp2 = Var_Parse(p, ctxt, nested_eflags, &len, &freeIt);
-	    Buf_AddStr(&buf, cp2);
-	    free(freeIt);
-	    p += len;
+	    nested_val = Var_ParsePP(&nested_p, ctxt, nested_eflags,
+				     &nested_val_freeIt);
+	    Buf_AddStr(&buf, nested_val);
+	    free(nested_val_freeIt);
+	    p += nested_p - p;
 	    continue;
 	}
 
@@ -3622,6 +3623,15 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
 	free(v);
     }
     return nstr;
+}
+
+const char *
+Var_ParsePP(const char **pp, GNode *ctxt, VarEvalFlags eflags, void **freePtr)
+{
+    int len;
+    const char *val = Var_Parse(*pp, ctxt, eflags, &len, freePtr);
+    *pp += len;
+    return val;
 }
 
 /* Substitute for all variables in the given string in the given context.
