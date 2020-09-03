@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasic.c,v 1.22 2013/11/10 20:09:53 christos Exp $	*/
+/*	$NetBSD: ioasic.c,v 1.23 2020/09/03 06:42:29 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.22 2013/11/10 20:09:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.23 2020/09/03 06:42:29 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,14 @@ ioasicattach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_bst = ta->ta_memt;
-	if (bus_space_map(ta->ta_memt, ta->ta_addr,
+	/*
+	 * XXX
+	 * The TC device addresses are defined in KSEG1, but this
+	 * confuses bus_space(9) which expects bus addresses and
+	 * not kernel virtual addresses.  Pull the addresses back
+	 * to bus addresses with MIPS_KSEG1_TO_PHYS().
+	 */
+	if (bus_space_map(ta->ta_memt, MIPS_KSEG1_TO_PHYS(ta->ta_addr),
 			0x400000, 0, &sc->sc_bsh)) {
 		printf("%s: unable to map device\n", device_xname(self));
 		return;
