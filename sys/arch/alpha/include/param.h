@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.45 2019/01/07 22:00:30 jdolecek Exp $ */
+/* $NetBSD: param.h,v 1.46 2020/09/03 22:56:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -69,6 +69,13 @@
 #ifndef MSGBUFSIZE
 #define MSGBUFSIZE	NBPG		/* default message buffer size */
 #endif
+
+/*
+ * EV4 (21064) and EV5 (21164) have a 32-byte cache line size.
+ * EV6 (21264) and EV7 (21364) have a 64-byte cache line size.
+ */
+#define	COHERENCY_UNIT	64
+#define	CACHE_LINE_SIZE	64
 
 /*
  * Constants related to network buffer management.
