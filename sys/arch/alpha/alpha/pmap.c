@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.270 2020/09/03 02:05:03 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.271 2020/09/03 02:09:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.270 2020/09/03 02:05:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.271 2020/09/03 02:09:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.270 2020/09/03 02:05:03 thorpej Exp $");
 
 #include <uvm/uvm.h>
 
-#if defined(_PMAP_MAY_USE_PROM_CONSOLE) || defined(MULTIPROCESSOR)
+#if defined(MULTIPROCESSOR)
 #include <machine/rpb.h>
 #endif
 
@@ -1287,27 +1287,6 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	kernel_lev1map[l1pte_index(VPTBASE)] = pte;
 	VPT = (pt_entry_t *)VPTBASE;
 
-#ifdef _PMAP_MAY_USE_PROM_CONSOLE
-    {
-	extern pt_entry_t prom_pte;			/* XXX */
-	extern int prom_mapped;				/* XXX */
-
-	if (pmap_uses_prom_console()) {
-		/*
-		 * XXX Save old PTE so we can remap the PROM, if
-		 * XXX necessary.
-		 */
-		prom_pte = *(pt_entry_t *)ptaddr & ~PG_ASM;
-	}
-	prom_mapped = 0;
-
-	/*
-	 * Actually, this code lies.  The prom is still mapped, and will
-	 * remain so until the context switch after alpha_init() returns.
-	 */
-    }
-#endif
-
 	/*
 	 * Set up level 2 page table.
 	 */
@@ -1391,15 +1370,6 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	struct cpu_info * const ci = curcpu();
 	pmap_init_cpu(ci);
 }
-
-#ifdef _PMAP_MAY_USE_PROM_CONSOLE
-int
-pmap_uses_prom_console(void)
-{
-
-	return (cputype == ST_DEC_21000);
-}
-#endif /* _PMAP_MAY_USE_PROM_CONSOLE */
 
 /*
  * pmap_virtual_space:		[ INTERFACE ]

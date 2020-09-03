@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.53 2020/08/30 16:26:56 thorpej Exp $ */
+/* $NetBSD: prom.c,v 1.54 2020/09/03 02:09:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.53 2020/08/30 16:26:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.54 2020/09/03 02:09:09 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -54,17 +54,18 @@ struct consdev promcons = {
 	.cn_pri = 1
 };
 
-struct rpb	*hwrpb;
+struct rpb	*hwrpb __read_mostly;
 int		alpha_console;
 
 extern struct prom_vec prom_dispatch_v;
 
-static int	prom_is_qemu;		/* XXX */
+bool		prom_interface_initialized;
+int		prom_mapped = 1;	/* Is PROM still mapped? */
+static bool	prom_is_qemu;		/* XXX */
 
 static kmutex_t	prom_lock;
 
-#ifdef _PMAP_MAY_USE_PROM_CONSOLE
-int		prom_mapped = 1;	/* Is PROM still mapped? */
+#ifdef _PROM_MAY_USE_PROM_CONSOLE
 
 pt_entry_t	prom_pte, saved_pte[1];	/* XXX */
 
@@ -80,7 +81,31 @@ prom_lev1map(void)
 
 	return ((pt_entry_t *)ALPHA_PHYS_TO_K0SEG(apcb->apcb_ptbr << PGSHIFT));
 }
-#endif /* _PMAP_MAY_USE_PROM_CONSOLE */
+#endif /* _PROM_MAY_USE_PROM_CONSOLE */
+
+bool
+prom_uses_prom_console(void)
+{
+#ifdef _PROM_MAY_USE_PROM_CONSOLE
+	return (cputype == ST_DEC_21000);
+#else
+	return false;
+#endif
+}
+
+static void
+prom_init_cputype(const struct rpb * const rpb)
+{
+	cputype = rpb->rpb_type;
+	if (cputype < 0) {
+		/*
+		 * At least some white-box systems have SRM which
+		 * reports a systype that's the negative of their
+		 * blue-box counterpart.
+		 */
+		cputype = -cputype;
+	}
+}
 
 static void
 prom_check_qemu(const struct rpb * const rpb)
@@ -90,27 +115,39 @@ prom_check_qemu(const struct rpb * const rpb)
 		    rpb->rpb_ssn[1] == 'E' &&
 		    rpb->rpb_ssn[2] == 'M' &&
 		    rpb->rpb_ssn[3] == 'U') {
-			prom_is_qemu = 1;
+			prom_is_qemu = true;
 		}
 	}
 }
 
 void
-init_prom_interface(struct rpb *rpb)
+init_prom_interface(u_long ptb_pfn, struct rpb *rpb)
 {
-	static bool prom_interface_initialized;
 
 	if (prom_interface_initialized)
 		return;
 
 	struct crb *c;
 
+	prom_init_cputype(rpb);
 	prom_check_qemu(rpb);
 
 	c = (struct crb *)((char *)rpb + rpb->rpb_crb_off);
 
 	prom_dispatch_v.routine_arg = c->crb_v_dispatch;
 	prom_dispatch_v.routine = c->crb_v_dispatch->entry_va;
+
+#ifdef _PROM_MAY_USE_PROM_CONSOLE
+	if (prom_uses_prom_console()) {
+		/*
+		 * XXX Save old PTE so we can remap the PROM, if
+		 * XXX necessary.
+		 */
+		pt_entry_t * const l1pt =
+		    (pt_entry_t *)ALPHA_PHYS_TO_K0SEG(ptb_pfn << PGSHIFT);
+		prom_pte = l1pt[0] & ~PG_ASM;
+	}
+#endif /* _PROM_MAY_USE_PROM_CONSOLE */
 
 	mutex_init(&prom_lock, MUTEX_DEFAULT, IPL_HIGH);
 	prom_interface_initialized = true;
@@ -121,7 +158,10 @@ init_bootstrap_console(void)
 {
 	char buf[4];
 
-	init_prom_interface(hwrpb);
+	/* init_prom_interface() has already been called. */
+	if (! prom_interface_initialized) {
+		prom_halt(1);
+	}
 
 	prom_getenv(PROM_E_TTY_DEV, buf, sizeof(buf));
 	alpha_console = buf[0] - '0';
@@ -130,7 +170,7 @@ init_bootstrap_console(void)
 	cn_tab = &promcons;
 }
 
-#ifdef _PMAP_MAY_USE_PROM_CONSOLE
+#ifdef _PROM_MAY_USE_PROM_CONSOLE
 static void prom_cache_sync(void);
 #endif
 
@@ -140,14 +180,14 @@ prom_enter(void)
 
 	mutex_enter(&prom_lock);
 
-#ifdef _PMAP_MAY_USE_PROM_CONSOLE
+#ifdef _PROM_MAY_USE_PROM_CONSOLE
 	/*
 	 * If we have not yet switched out of the PROM's context
 	 * (i.e. the first one after alpha_init()), then the PROM
 	 * is still mapped, regardless of the `prom_mapped' setting.
 	 */
 	if (prom_mapped == 0 && curpcb != 0) {
-		if (!pmap_uses_prom_console())
+		if (!prom_uses_prom_console())
 			panic("prom_enter");
 		{
 			pt_entry_t *lev1map;
@@ -165,12 +205,12 @@ void
 prom_leave(void)
 {
 
-#ifdef _PMAP_MAY_USE_PROM_CONSOLE
+#ifdef _PROM_MAY_USE_PROM_CONSOLE
 	/*
 	 * See comment above.
 	 */
 	if (prom_mapped == 0 && curpcb != 0) {
-		if (!pmap_uses_prom_console())
+		if (!prom_uses_prom_console())
 			panic("prom_leave");
 		{
 			pt_entry_t *lev1map;
@@ -184,7 +224,7 @@ prom_leave(void)
 	mutex_exit(&prom_lock);
 }
 
-#ifdef _PMAP_MAY_USE_PROM_CONSOLE
+#ifdef _PROM_MAY_USE_PROM_CONSOLE
 static void
 prom_cache_sync(void)
 {

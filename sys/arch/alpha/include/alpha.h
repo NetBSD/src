@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.38 2019/04/06 03:06:24 thorpej Exp $ */
+/* $NetBSD: alpha.h,v 1.39 2020/09/03 02:09:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -89,7 +89,7 @@ void	do_sir(void);
 void	exception_return(void);					/* MAGIC */
 void	frametoreg(const struct trapframe *, struct reg *);
 void	init_bootstrap_console(void);
-void	init_prom_interface(struct rpb *);
+void	init_prom_interface(unsigned long, struct rpb *);
 void	interrupt(unsigned long, unsigned long, unsigned long,
 	    struct trapframe *);
 void	machine_check(unsigned long, struct trapframe *, unsigned long,
