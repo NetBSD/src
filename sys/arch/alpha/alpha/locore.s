@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.126 2020/09/03 02:09:09 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.127 2020/09/03 04:18:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2019 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.126 2020/09/03 02:09:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.127 2020/09/03 04:18:30 thorpej Exp $");
 
 #include "assym.h"
 
@@ -78,10 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.126 2020/09/03 02:09:09 thorpej Exp $")
  * hwpcb should be in a0.  Clobbers v0, t0, t8..t11, a0.
  */
 #define	SWITCH_CONTEXT							\
-	/* Make a note of the context we're running on. */		\
-	GET_CURPCB						;	\
-	stq	a0, 0(v0)					;	\
-									\
 	/* Swap in the new context. */					\
 	call_pal PAL_OSF1_swpctx
 

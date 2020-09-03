@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.22 2020/02/20 08:27:38 skrll Exp $
+# $NetBSD: genassym.cf,v 1.23 2020/09/03 04:18:30 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -187,6 +187,5 @@ define	SYS_exit		SYS_exit
 
 # CPU info
 define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
-define	CPU_INFO_CURPCB		offsetof(struct cpu_info, ci_curpcb)
 define	CPU_INFO_IDLE_LWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
 define	CPU_INFO_SIZEOF		sizeof(struct cpu_info)
