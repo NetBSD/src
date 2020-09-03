@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.125 2020/06/30 16:20:00 maxv Exp $ */
+/* $NetBSD: locore.s,v 1.126 2020/09/03 02:09:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2019 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.125 2020/06/30 16:20:00 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.126 2020/09/03 02:09:09 thorpej Exp $");
 
 #include "assym.h"
 
@@ -126,6 +126,7 @@ bootstack:
  *
  * All arguments are passed to alpha_init().
  */
+IMPORT(prom_mapped, 4)
 NESTED_NOPROFILE(locorestart,1,0,ra,0,0)
 	br	pv,1f
 1:	LDGP(pv)
@@ -156,6 +157,10 @@ NESTED_NOPROFILE(locorestart,1,0,ra,0,0)
 	lda	a0, lwp0
 	ldq	a0, L_MD_PCBPADDR(a0)		/* phys addr of PCB */
 	SWITCH_CONTEXT
+
+	/* PROM is no longer mapped. */
+	lda	t0, prom_mapped
+	stl	zero, 0(t0)
 
 	/*
 	 * We've switched to a new page table base, so invalidate the TLB
