@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2020/08/19 07:48:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2020/09/03 18:30:05 jakllsch Exp $
 
 LIBISPRIVATE=	yes
 
@@ -612,6 +612,6 @@ CFLAGS+= -fno-exceptions -fno-rtti -fasynchronous-unwind-tables
 
 .PATH: ${DIST}/gcc ${DIST}/libiberty ${GCCARCH} ${G_out_file:H} ${DIST}/include
 .PATH: ${DIST}/gcc/config
-.if ${MACHINE_ARCH} == "aarch64"
+.if ${MACHINE_CPU} == "aarch64"
 .PATH: ${DIST}/gcc/config/arm
 .endif
