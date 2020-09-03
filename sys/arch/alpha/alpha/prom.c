@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.54 2020/09/03 02:09:09 thorpej Exp $ */
+/* $NetBSD: prom.c,v 1.55 2020/09/03 04:18:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.54 2020/09/03 02:09:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.55 2020/09/03 04:18:30 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -77,7 +77,8 @@ prom_lev1map(void)
 	/*
 	 * Find the level 1 map that we're currently running on.
 	 */
-	apcb = (struct alpha_pcb *)ALPHA_PHYS_TO_K0SEG(curpcb);
+	apcb = (struct alpha_pcb *))
+	    ALPHA_PHYS_TO_K0SEG((paddr_t)curlwp->l_md.md_pcbpaddr);
 
 	return ((pt_entry_t *)ALPHA_PHYS_TO_K0SEG(apcb->apcb_ptbr << PGSHIFT));
 }
@@ -186,7 +187,7 @@ prom_enter(void)
 	 * (i.e. the first one after alpha_init()), then the PROM
 	 * is still mapped, regardless of the `prom_mapped' setting.
 	 */
-	if (prom_mapped == 0 && curpcb != 0) {
+	if (! prom_mapped) {
 		if (!prom_uses_prom_console())
 			panic("prom_enter");
 		{
@@ -209,7 +210,7 @@ prom_leave(void)
 	/*
 	 * See comment above.
 	 */
-	if (prom_mapped == 0 && curpcb != 0) {
+	if (! prom_mapped) {
 		if (!prom_uses_prom_console())
 			panic("prom_leave");
 		{
