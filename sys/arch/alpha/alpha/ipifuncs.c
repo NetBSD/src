@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.52 2020/08/29 20:06:59 thorpej Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.53 2020/09/03 02:03:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.52 2020/08/29 20:06:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.53 2020/09/03 02:03:14 thorpej Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -125,22 +125,20 @@ alpha_ipi_process(struct cpu_info *ci, struct trapframe *framep)
 	}
 #endif
 
-	pending_ipis = atomic_swap_ulong(&ci->ci_ipis, 0);
+	while ((pending_ipis = atomic_swap_ulong(&ci->ci_ipis, 0)) != 0) {
+		/*
+		 * Ensure the atomic swap is globally visible before
+		 * we do any of the work.
+		 */
+		membar_enter();
 
-	/*
-	 * For various reasons, it is possible to have spurious calls
-	 * to this routine, so just bail out now if there are none
-	 * pending.
-	 */
-	if (pending_ipis == 0)
-		return;
+		sc->sc_evcnt_ipi.ev_count++;
 
-	sc->sc_evcnt_ipi.ev_count++;
-
-	for (bit = 0; bit < ALPHA_NIPIS; bit++) {
-		if (pending_ipis & (1UL << bit)) {
-			sc->sc_evcnt_which_ipi[bit].ev_count++;
-			(*ipifuncs[bit])(ci, framep);
+		for (bit = 0; bit < ALPHA_NIPIS; bit++) {
+			if (pending_ipis & (1UL << bit)) {
+				sc->sc_evcnt_which_ipi[bit].ev_count++;
+				(*ipifuncs[bit])(ci, framep);
+			}
 		}
 	}
 }
@@ -156,7 +154,24 @@ alpha_send_ipi(u_long const cpu_id, u_long const ipimask)
 	KASSERT(cpu_info[cpu_id] != NULL);
 	KASSERT(cpus_running & (1UL << cpu_id));
 
+	/*
+	 * Make sure all loads and stores prior to calling
+	 * alpha_send_ipi() have completed before informing
+	 * the CPU of the work we are asking it to do.
+	 */
+	membar_exit();
 	atomic_or_ulong(&cpu_info[cpu_id]->ci_ipis, ipimask);
+
+	/*
+	 * Ensure that the store of ipimask completes before actually
+	 * writing to the IPIR.
+	 *
+	 * Note: we use MB rather than WMB because how the IPIR
+	 * is implemented is not architecturally specified, and
+	 * WMB is only guaranteed to provide ordering for stores
+	 * to regions of the same memory-likeness.
+	 */
+	alpha_mb();
 	alpha_pal_wripir(cpu_id);
 }
 
