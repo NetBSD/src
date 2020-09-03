@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_parse.c,v 1.22 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: refclock_parse.c,v 1.23 2020/09/03 07:26:41 kardel Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/ntpd/refclock_parse.c,v 4.81 2009/05/01 10:15:29 kardel RELEASE_20090105_A
@@ -4287,7 +4287,7 @@ mk_utcinfo(
 	}
 	else
 	{
-		snprintf( t, size, "UTC offset parameter: %is, no leap second announced.\n", dtls );
+		snprintf( t, size, "UTC offset parameter: %is, no leap second announced.", dtls );
 	}
 
 }
