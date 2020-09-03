@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.362 2020/09/02 17:40:23 riastradh Exp $ */
+/* $NetBSD: machdep.c,v 1.363 2020/09/03 02:09:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2019 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.362 2020/09/02 17:40:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.363 2020/09/03 02:09:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -299,7 +299,7 @@ alpha_init(u_long xxx_pfn __unused, u_long ptb, u_long bim, u_long bip,
 			    uimin(sizeof v1p->booted_kernel,
 			      sizeof bootinfo.booted_kernel));
 			/* booted dev not provided in bootinfo */
-			init_prom_interface((struct rpb *)
+			init_prom_interface(ptb, (struct rpb *)
 			    ALPHA_PHYS_TO_K0SEG(bootinfo.hwrpb_phys));
 	        	prom_getenv(PROM_E_BOOTED_DEV, bootinfo.booted_dev,
 			    sizeof bootinfo.booted_dev);
@@ -316,7 +316,7 @@ nobootinfo:
 		bootinfo.esym = (u_long)_end;
 		bootinfo.hwrpb_phys = ((struct rpb *)HWRPB_ADDR)->rpb_phys;
 		bootinfo.hwrpb_size = ((struct rpb *)HWRPB_ADDR)->rpb_size;
-		init_prom_interface((struct rpb *)HWRPB_ADDR);
+		init_prom_interface(ptb, (struct rpb *)HWRPB_ADDR);
 		prom_getenv(PROM_E_BOOTED_OSFLAGS, bootinfo.boot_flags,
 		    sizeof bootinfo.boot_flags);
 		prom_getenv(PROM_E_BOOTED_FILE, bootinfo.booted_kernel,
@@ -375,17 +375,10 @@ nobootinfo:
 	uvm_md_init();
 
 	/*
-	 * Find out what hardware we're on, and do basic initialization.
+	 * cputype has been initialized in init_prom_interface().
+	 * Perform basic platform initialization using this info.
 	 */
-	cputype = hwrpb->rpb_type;
-	if (cputype < 0) {
-		/*
-		 * At least some white-box systems have SRM which
-		 * reports a systype that's the negative of their
-		 * blue-box counterpart.
-		 */
-		cputype = -cputype;
-	}
+	KASSERT(prom_interface_initialized);
 	c = platform_lookup(cputype);
 	if (c == NULL) {
 		platform_not_supported();
@@ -416,12 +409,7 @@ nobootinfo:
 #endif
 
 	/* NO MORE FIRMWARE ACCESS ALLOWED */
-#ifdef _PMAP_MAY_USE_PROM_CONSOLE
-	/*
-	 * XXX (unless _PMAP_MAY_USE_PROM_CONSOLE is defined and
-	 * XXX pmap_uses_prom_console() evaluates to non-zero.)
-	 */
-#endif
+	/* XXX Unless prom_uses_prom_console() evaluates to non-zero.) */
 
 	/*
 	 * Find the beginning and end of the kernel (and leave a
@@ -507,14 +495,12 @@ nobootinfo:
 		 * software use.  We must determine if this cluster
 		 * holds the kernel.
 		 */
-#ifdef _PMAP_MAY_USE_PROM_CONSOLE
+
 		/*
 		 * XXX If the kernel uses the PROM console, we only use the
 		 * XXX memory after the kernel in the first system segment,
 		 * XXX to avoid clobbering prom mapping, data, etc.
 		 */
-	    if (!pmap_uses_prom_console() || physmem == 0) {
-#endif /* _PMAP_MAY_USE_PROM_CONSOLE */
 		physmem += memc->mddt_pg_cnt;
 		pfn0 = memc->mddt_pfn;
 		pfn1 = memc->mddt_pfn + memc->mddt_pg_cnt;
@@ -526,10 +512,7 @@ nobootinfo:
 #if 0
 			printf("Cluster %d contains kernel\n", i);
 #endif
-#ifdef _PMAP_MAY_USE_PROM_CONSOLE
-		    if (!pmap_uses_prom_console()) {
-#endif /* _PMAP_MAY_USE_PROM_CONSOLE */
-			if (pfn0 < kernstartpfn) {
+			if (pfn0 < kernstartpfn && !prom_uses_prom_console()) {
 				/*
 				 * There is a chunk before the kernel.
 				 */
@@ -540,9 +523,6 @@ nobootinfo:
 				uvm_page_physload(pfn0, kernstartpfn,
 				    pfn0, kernstartpfn, VM_FREELIST_DEFAULT);
 			}
-#ifdef _PMAP_MAY_USE_PROM_CONSOLE
-		    }
-#endif /* _PMAP_MAY_USE_PROM_CONSOLE */
 			if (kernendpfn < pfn1) {
 				/*
 				 * There is a chunk after the kernel.
@@ -565,9 +545,6 @@ nobootinfo:
 			uvm_page_physload(pfn0, pfn1, pfn0, pfn1,
 			    VM_FREELIST_DEFAULT);
 		}
-#ifdef _PMAP_MAY_USE_PROM_CONSOLE
-	    }
-#endif /* _PMAP_MAY_USE_PROM_CONSOLE */
 	}
 
 	/*
@@ -813,9 +790,9 @@ consinit(void)
 	 * Everything related to console initialization is done
 	 * in alpha_init().
 	 */
-#if defined(DIAGNOSTIC) && defined(_PMAP_MAY_USE_PROM_CONSOLE)
+#if defined(DIAGNOSTIC) && defined(_PROM_MAY_USE_PROM_CONSOLE)
 	printf("consinit: %susing prom console\n",
-	    pmap_uses_prom_console() ? "" : "not ");
+	    prom_uses_prom_console() ? "" : "not ");
 #endif
 }
 
@@ -965,15 +942,6 @@ skipMHz:
 	printf("\n");
 	printf("%ld byte page size, %d processor%s.\n",
 	    hwrpb->rpb_page_size, ncpus, ncpus == 1 ? "" : "s");
-#if 0
-	/* this isn't defined for any systems that we run on? */
-	printf("serial number 0x%lx 0x%lx\n",
-	    ((long *)hwrpb->rpb_ssn)[0], ((long *)hwrpb->rpb_ssn)[1]);
-
-	/* and these aren't particularly useful! */
-	printf("variation: 0x%lx, revision 0x%lx\n",
-	    hwrpb->rpb_variation, *(long *)hwrpb->rpb_revision);
-#endif
 }
 
 int	waittime = -1;

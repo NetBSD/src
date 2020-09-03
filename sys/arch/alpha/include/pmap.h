@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.83 2020/08/29 20:07:00 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.84 2020/09/03 02:09:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -185,15 +185,6 @@ typedef struct pv_entry {
 
 #include <sys/atomic.h>
 
-#ifdef _KERNEL_OPT
-#include "opt_dec_kn8ae.h"			/* XXX */
-#if defined(DEC_KN8AE)
-#define	_PMAP_MAY_USE_PROM_CONSOLE
-#endif
-#else
-#define	_PMAP_MAY_USE_PROM_CONSOLE
-#endif
-
 struct cpu_info;
 struct trapframe;
 
@@ -255,9 +246,6 @@ paddr_t vtophys(vaddr_t);
 /* Machine-specific functions. */
 void	pmap_bootstrap(paddr_t, u_int, u_long);
 int	pmap_emulate_reference(struct lwp *, vaddr_t, int, int);
-#ifdef _PMAP_MAY_USE_PROM_CONSOLE
-int	pmap_uses_prom_console(void);
-#endif
 
 #define	pmap_pte_pa(pte)	(PG_PFNUM(*(pte)) << PGSHIFT)
 #define	pmap_pte_prot(pte)	(*(pte) & PG_PROT)
