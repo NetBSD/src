@@ -1,4 +1,4 @@
-# $NetBSD: dep-var.mk,v 1.2 2020/09/03 19:10:56 rillig Exp $
+# $NetBSD: dep-var.mk,v 1.3 2020/09/03 19:50:14 rillig Exp $
 #
 # Tests for variable references in dependency declarations.
 #
@@ -26,8 +26,40 @@ all: $${DEF2} a-$${DEF2}-b
 # The variable expression ${UNDEF3} simply expands to an empty string.
 all: $${UNDEF3}
 
+# Try out how many levels of indirection are really expanded in dependency
+# lines.
+#
+# The first level of indirection is the $$ in the dependency line.
+# When the dependency line is parsed, it is resolved to the string
+# "${INDIRECT_1}".  At this point, the dollar is just an ordinary character,
+# waiting to be expanded at some later point.
+#
+# Later, in SuffExpandChildren, that expression is expanded again by calling
+# Var_Parse, and this time, the result is the string "1-2-${INDIRECT_2}-2-1".
+#
+# This string is not expanded anymore by Var_Parse.  But there is another
+# effect.  Now DirExpandCurly comes into play and expands the curly braces
+# in this filename pattern, resulting in the string "1-2-$INDIRECT_2-2-1".
+# As of 2020-09-03, the test dir.mk contains further details on this topic.
+#
+# Finally, this string is assigned to the local ${.TARGET} variable.  This
+# variable is expanded when the shell command is generated.  At that point,
+# the $I is expanded.  Since the variable I is not defined, it expands to
+# the empty string.  This way, the final output is the string
+# "1-2-NDIRECT_2-2-1", which differs from the actual name of the target.
+# For exactly this reason, it is not recommended to use dollar signs in
+# target names.
+#
+# The number of actual expansions is way more than one might expect,
+# therefore this feature is probably not widely used.
+#
+all: 1-$${INDIRECT_1}-1
+INDIRECT_1=	2-$${INDIRECT_2}-2
+INDIRECT_2=	3-$${INDIRECT_3}-3
+INDIRECT_3=	indirect
+
 UNDEF1=	undef1
 DEF2=	def2
 
-undef1 def2 a-def2-b:
-	@echo ${.TARGET}
+undef1 def2 a-def2-b 1-2-$$INDIRECT_2-2-1:
+	@echo ${.TARGET:Q}
