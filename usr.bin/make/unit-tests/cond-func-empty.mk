@@ -1,4 +1,4 @@
-# $NetBSD: cond-func-empty.mk,v 1.3 2020/09/03 17:13:42 rillig Exp $
+# $NetBSD: cond-func-empty.mk,v 1.4 2020/09/04 20:28:16 rillig Exp $
 #
 # Tests for the empty() function in .if conditions, which tests a variable
 # expression for emptiness.
@@ -29,6 +29,9 @@ WORD=	word
 # after that the expression is no longer empty.  Because the variable
 # was undefined in the first place, the expression has the flag VAR_JUNK
 # but not VAR_KEEP, therefore it is still considered undefined.
+# Only very few variable modifiers turn an undefined variable expression
+# into a defined variable expression.  The :U and :D modifiers belong to
+# that group, but :S doesn't (see VAR_KEEP).
 #
 # XXX: This is hard to explain to someone who doesn't know these
 # implementation details.
