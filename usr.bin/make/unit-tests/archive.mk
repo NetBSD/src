@@ -1,4 +1,4 @@
-# $NetBSD: archive.mk,v 1.5 2020/08/23 17:51:24 rillig Exp $
+# $NetBSD: archive.mk,v 1.6 2020/09/04 19:03:38 rillig Exp $
 #
 # Very basic demonstration of handling archives, based on the description
 # in PSD.doc/tutorial.ms.
@@ -13,6 +13,9 @@ MAKE_CMD=	${.MAKE} -f ${MAKEFILE}
 RUN?=		@set -eu;
 
 all:
+.if ${.PARSEDIR:tA} != ${.CURDIR:tA}
+	@cd ${MAKEFILE:H} && cp [at]*.mk ${.CURDIR}
+.endif
 	${RUN} ${MAKE_CMD} remove-archive
 	${RUN} ${MAKE_CMD} create-archive
 	${RUN} ${MAKE_CMD} list-archive
