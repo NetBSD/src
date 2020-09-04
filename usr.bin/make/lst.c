@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.60 2020/08/31 05:56:02 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.61 2020/09/04 17:59:36 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,11 +37,11 @@
 #include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.60 2020/08/31 05:56:02 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.61 2020/09/04 17:59:36 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.60 2020/08/31 05:56:02 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.61 2020/09/04 17:59:36 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -630,4 +630,40 @@ Lst_Dequeue(Lst list)
     Lst_Remove(list, list->first);
     assert(datum != NULL);
     return datum;
+}
+
+void
+Stack_Init(Stack *stack)
+{
+    stack->len = 0;
+    stack->cap = 10;
+    stack->items = bmake_malloc(stack->cap * sizeof stack->items[0]);
+}
+
+Boolean Stack_IsEmpty(Stack *stack)
+{
+    return stack->len == 0;
+}
+
+void Stack_Push(Stack *stack, void *datum)
+{
+    if (stack->len >= stack->cap) {
+        stack->cap *= 2;
+	stack->items = bmake_realloc(stack->items,
+				     stack->cap * sizeof stack->items[0]);
+    }
+    stack->items[stack->len] = datum;
+    stack->len++;
+}
+
+void *Stack_Pop(Stack *stack)
+{
+    assert(stack->len > 0);
+    stack->len--;
+    return stack->items[stack->len];
+}
+
+void Stack_Done(Stack *stack)
+{
+    free(stack->items);
 }

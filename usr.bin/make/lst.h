@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.60 2020/09/02 23:33:13 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.61 2020/09/04 17:59:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -175,5 +175,19 @@ void Lst_Close(Lst);
 void Lst_Enqueue(Lst, void *);
 /* Remove the head node of the queue and return its datum. */
 void *Lst_Dequeue(Lst);
+
+/* A stack is a very simple collection of items that only allows access to the
+ * top-most item. */
+typedef struct {
+    void **items;
+    size_t len;
+    size_t cap;
+} Stack;
+
+void Stack_Init(Stack *);
+Boolean Stack_IsEmpty(Stack *);
+void Stack_Push(Stack *, void *);
+void *Stack_Pop(Stack *);
+void Stack_Done(Stack *);
 
 #endif /* MAKE_LST_H */
