@@ -1,4 +1,4 @@
-/* $NetBSD: asm.h,v 1.40 2020/09/03 04:18:30 thorpej Exp $ */
+/* $NetBSD: asm.h,v 1.41 2020/09/04 02:54:56 thorpej Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -669,7 +669,11 @@ label:	ASCIZ msg;						\
 
 #define	GET_CURLWP							\
 	call_pal PAL_OSF1_rdval					;	\
-	addq	v0, CPU_INFO_CURLWP, v0
+	ldq	v0, CPU_INFO_CURLWP(v0)
+
+#define	SET_CURLWP(r)							\
+	call_pal PAL_OSF1_rdval					;	\
+	stq	r, CPU_INFO_CURLWP(v0)
 
 #define	GET_FPCURLWP							\
 	call_pal PAL_OSF1_rdval					;	\
@@ -681,9 +685,12 @@ IMPORT(cpu_info_primary, CPU_INFO_SIZEOF)
 
 #define	GET_CPUINFO		lda v0, cpu_info_primary
 
-#define	GET_CURLWP		lda v0, cpu_info_primary + CPU_INFO_CURLWP
+#define	GET_CURLWP		lda v0, cpu_info_primary	;	\
+				ldq v0, CPU_INFO_CURLWP(v0)
 
-#define	GET_FPCURLWP		lda v0, cpu_info_primary + CPU_INFO_FPCURLWP
+#define	SET_CURLWP(r)		lda v0, cpu_info_primary 	;	\
+				stq r, CPU_INFO_CURLWP(v0)
+
 #endif /* MULTIPROCESSOR */
 #else
 #define	RCSID(_s)		__SECTIONSTRING(.ident, _s)
