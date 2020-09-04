@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86.c,v 1.15 2020/08/22 11:00:00 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86.c,v 1.16 2020/09/04 17:09:03 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86.c,v 1.15 2020/08/22 11:00:00 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86.c,v 1.16 2020/09/04 17:09:03 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,19 +235,19 @@ const struct nvmm_x86_cpuid_mask nvmm_cpuid_00000001 = {
 	.ecx =
 	    CPUID2_SSE3 |
 	    CPUID2_PCLMUL |
-	    CPUID2_DTES64 |
+	    /* CPUID2_DTES64 excluded */
 	    /* CPUID2_MONITOR excluded */
-	    CPUID2_DS_CPL |
+	    /* CPUID2_DS_CPL excluded */
 	    /* CPUID2_VMX excluded */
 	    /* CPUID2_SMX excluded */
 	    /* CPUID2_EST excluded */
 	    /* CPUID2_TM2 excluded */
 	    CPUID2_SSSE3 |
-	    CPUID2_CID |
-	    CPUID2_SDBG |
+	    /* CPUID2_CID excluded */
+	    /* CPUID2_SDBG excluded */
 	    CPUID2_FMA |
 	    CPUID2_CX16 |
-	    CPUID2_xTPR |
+	    /* CPUID2_xTPR excluded */
 	    /* CPUID2_PDCM excluded */
 	    /* CPUID2_PCID excluded, but re-included in VMX */
 	    /* CPUID2_DCA excluded */
@@ -275,7 +275,6 @@ const struct nvmm_x86_cpuid_mask nvmm_cpuid_00000001 = {
 	    /* CPUID_MCE excluded */
 	    CPUID_CX8 |
 	    CPUID_APIC |
-	    CPUID_B10 |	
 	    CPUID_SEP |
 	    /* CPUID_MTRR excluded */
 	    CPUID_PGE |
@@ -283,9 +282,8 @@ const struct nvmm_x86_cpuid_mask nvmm_cpuid_00000001 = {
 	    CPUID_CMOV |
 	    CPUID_PAT |
 	    CPUID_PSE36 |
-	    CPUID_PN |
+	    /* CPUID_PN excluded */
 	    CPUID_CFLUSH |
-	    CPUID_B20 |
 	    /* CPUID_DS excluded */
 	    /* CPUID_ACPI excluded */
 	    CPUID_MMX |
@@ -295,7 +293,6 @@ const struct nvmm_x86_cpuid_mask nvmm_cpuid_00000001 = {
 	    CPUID_SS |
 	    CPUID_HTT |
 	    /* CPUID_TM excluded */
-	    CPUID_IA64 |
 	    CPUID_SBF
 };
 
