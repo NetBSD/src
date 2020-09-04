@@ -1,4 +1,4 @@
-# $NetBSD: cond-func-empty.mk,v 1.5 2020/09/04 20:51:01 rillig Exp $
+# $NetBSD: cond-func-empty.mk,v 1.6 2020/09/04 21:08:44 rillig Exp $
 #
 # Tests for the empty() function in .if conditions, which tests a variable
 # expression for emptiness.
@@ -90,7 +90,7 @@ WORD=	word
 # Now the variable named " " gets a non-empty value, which demonstrates that
 # neither leading nor trailing spaces are trimmed in the argument of the
 # function.  If the spaces were trimmed, the variable name would be "" and
-# that variable is indeed undefined.  Since get_mpt_arg calls Var_Parse
+# that variable is indeed undefined.  Since ParseEmptyArg calls Var_Parse
 # without VARE_UNDEFERR, the value of the undefined variable is returned as
 # an empty string.
 ${:U }=	space
