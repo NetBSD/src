@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.42 2012/02/06 02:14:10 matt Exp $ */
+/* $NetBSD: clock.c,v 1.43 2020/09/04 03:41:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,12 +39,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.42 2012/02/06 02:14:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.43 2020/09/04 03:41:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/lwp.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpuconf.h>

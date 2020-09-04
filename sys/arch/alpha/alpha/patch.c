@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.4 2008/04/28 20:23:10 martin Exp $	*/
+/*	$NetBSD: patch.c,v 1.5 2020/09/04 03:41:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -35,12 +35,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.4 2008/04/28 20:23:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.5 2020/09/04 03:41:49 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
 #include <sys/types.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 
 #include <machine/cpu.h>
 #include <machine/alpha.h>
