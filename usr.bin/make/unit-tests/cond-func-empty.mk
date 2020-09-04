@@ -1,4 +1,4 @@
-# $NetBSD: cond-func-empty.mk,v 1.4 2020/09/04 20:28:16 rillig Exp $
+# $NetBSD: cond-func-empty.mk,v 1.5 2020/09/04 20:51:01 rillig Exp $
 #
 # Tests for the empty() function in .if conditions, which tests a variable
 # expression for emptiness.
@@ -118,6 +118,18 @@ ${:U }=	space
 # The expression ${} for a variable with the empty name always evaluates
 # to an empty string (see Var_Parse, varNoError).
 .if !empty()
+.  error
+.endif
+
+# Ensure that variable expressions that appear as part of the argument are
+# properly parsed.  Typical use cases for this are .for loops, which are
+# expanded to exactly these ${:U} expressions.
+#
+# If everything goes well, the argument expands to "WORD", and that variable
+# is defined at the beginning of this file.  The surrounding 'W' and 'D'
+# ensure that the parser in ParseEmptyArg has the correct position, both
+# before and after the call to Var_ParsePP.
+.if empty(W${:UOR}D)
 .  error
 .endif
 
