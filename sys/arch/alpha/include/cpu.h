@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.93 2020/09/04 03:53:12 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.94 2020/09/04 15:50:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -99,9 +99,9 @@ struct mchkinfo {
  * Per-cpu information.  Data accessed by MI code is marked [MI].
  */
 struct cpu_info {
+	struct cpu_data ci_data;	/* [MI] general per-cpu data */
 	struct lwp *ci_curlwp;		/* [MI] current owner of the cpu */
 	struct lwp *ci_onproc;		/* [MI] current user LWP / kthread */
-	struct cpu_data ci_data;	/* [MI] general per-cpu data */
 	struct cctr_state ci_cc;	/* [MI] cycle counter state */
 
 	volatile int ci_mtx_count;	/* [MI] neg count of spin mutexes */
