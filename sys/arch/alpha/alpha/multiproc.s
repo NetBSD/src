@@ -1,4 +1,4 @@
-/* $NetBSD: multiproc.s,v 1.14 2020/09/03 15:38:17 thorpej Exp $ */
+/* $NetBSD: multiproc.s,v 1.15 2020/09/04 03:53:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(5, "$NetBSD: multiproc.s,v 1.14 2020/09/03 15:38:17 thorpej Exp $")
+__KERNEL_RCSID(5, "$NetBSD: multiproc.s,v 1.15 2020/09/04 03:53:12 thorpej Exp $")
 
 /*
  * Multiprocessor glue code.
@@ -59,15 +59,15 @@ NESTED_NOPROFILE(cpu_spinup_trampoline,0,0,ra,0,0)
 	mov	gp, a0
 	call_pal PAL_OSF1_wrkgp
 
-	/* Store our CPU info in SysValue. */
-	mov	s0, a0
-	call_pal PAL_OSF1_wrval
+	/* Make sure the cpu_info and lwp reference each other. */
+	ldq	s1, CPU_INFO_IDLE_LWP(s0)
+	stq	s0, L_CPU(s1)		/* set lwp::l_cpu */
 
 	/* Switch to this CPU's idle thread. */
-	ldq	a0, CPU_INFO_IDLE_LWP(s0)
-	stq	a0, CPU_INFO_CURLWP(s0)	/* set curlwp */
-	ldq	a0, L_MD_PCBPADDR(a0)
+	ldq	a0, L_MD_PCBPADDR(s1)
 	call_pal PAL_OSF1_swpctx
+
+	SET_CURLWP(s1)
 
 	/* Invalidate TLB and I-stream. */
 	ldiq	a0, -2			/* TBIA */
