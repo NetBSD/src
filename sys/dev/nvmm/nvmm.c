@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.c,v 1.37 2020/08/29 07:14:17 maxv Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.38 2020/09/04 17:08:01 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.37 2020/08/29 07:14:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.38 2020/09/04 17:08:01 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ static const struct nvmm_impl *nvmm_impl_list[] = {
 #endif
 };
 
-static const struct nvmm_impl *nvmm_impl = NULL;
+static const struct nvmm_impl *nvmm_impl __read_mostly = NULL;
 
 static struct nvmm_owner root_owner;
 
