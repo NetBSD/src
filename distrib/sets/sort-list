@@ -1,7 +1,9 @@
 #!/bin/sh
+set -eu
 
-for F
-do
-	{ grep '^#' "${F}"; grep -v '^#' "${F}" | LC_ALL=C sort ;} > "${F}".tmp
-	mv "${F}".tmp "${F}"
+for fname; do
+	{ grep '^#' "$fname"
+	  grep -v '^#' "$fname" | LC_ALL=C sort
+	} > "$fname.tmp"
+	mv "$fname.tmp" "$fname"
 done
