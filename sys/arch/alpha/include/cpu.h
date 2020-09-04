@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.91 2020/09/03 14:27:47 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.92 2020/09/04 01:57:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -84,10 +84,8 @@
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 #include <sys/cpu_data.h>
-#ifndef _KMEMUSER
 #include <sys/cctr.h>
 #include <machine/frame.h>
-#endif
 
 /*
  * Machine check information.
@@ -97,41 +95,50 @@ struct mchkinfo {
 	volatile int mc_received;	/* machine check was received */
 };
 
+/*
+ * Per-cpu information.  Data accessed by MI code is marked [MI].
+ */
 struct cpu_info {
-	/*
-	 * Public members.
-	 */
-	struct lwp *ci_curlwp;		/* current owner of the processor */
-	struct lwp *ci_onproc;		/* current user LWP / kthread */
-	struct cpu_data ci_data;	/* MI per-cpu data */
-#if !defined(_KMEMUSER)
-	struct cctr_state ci_cc;	/* cycle counter state */
-	struct cpu_info *ci_next;	/* next cpu_info structure */
-	int ci_mtx_count;
-	int ci_mtx_oldspl;
+	struct lwp *ci_curlwp;		/* [MI] current owner of the cpu */
+	struct lwp *ci_onproc;		/* [MI] current user LWP / kthread */
+	struct cpu_data ci_data;	/* [MI] general per-cpu data */
+	struct cctr_state ci_cc;	/* [MI] cycle counter state */
 
-	/*
-	 * Private members.
-	 */
-	struct mchkinfo ci_mcinfo;	/* machine check info */
-	cpuid_t ci_cpuid;		/* our CPU ID */
-	struct cpu_softc *ci_softc;	/* pointer to our device */
-	u_int ci_want_resched;		/* preempt current process */
-	u_int ci_unused;		/* unused */
+	volatile int ci_mtx_count;	/* [MI] neg count of spin mutexes */
+	volatile int ci_mtx_oldspl;	/* [MI] for spin mutex splx() */
+
 	u_long ci_intrdepth;		/* interrupt trap depth */
-	struct trapframe *ci_db_regs;	/* registers for debuggers */
-	uint64_t ci_pcc_freq;		/* cpu cycles/second */
+	struct cpu_softc *ci_softc;	/* pointer to our device */
 
 	struct pmap *ci_pmap;		/* currently-activated pmap */
 	u_int ci_next_asn;		/* next ASN to assign */
 	u_long ci_asn_gen;		/* current ASN generation */
 
-#if defined(MULTIPROCESSOR)
+	struct mchkinfo ci_mcinfo;	/* machine check info */
+
+	/*
+	 * The following must be in their own cache line, as they are
+	 * stored to regularly by remote CPUs.
+	 */
+	volatile u_long ci_ipis		/* interprocessor interrupts pending */
+			__aligned(64);
+	u_int	ci_want_resched;	/* [MI] preempt current process */
+
+	/*
+	 * These are largely static, and will frequently be fetched
+	 * by other CPUs.  For that reason, they get their own cache
+	 * line, too.
+	 */
+	struct cpu_info *ci_next	/* next cpu_info structure */
+			__aligned(64);
+	cpuid_t ci_cpuid;		/* [MI] our CPU ID */
 	volatile u_long ci_flags;	/* flags; see below */
-	volatile u_long ci_ipis;	/* interprocessor interrupts pending */
-#endif
-#endif /* !_KMEMUSER */
+	uint64_t ci_pcc_freq;		/* cpu cycles/second */
+	struct trapframe *ci_db_regs;	/* registers for debuggers */
 };
+
+/* Ensure cpu_info::ci_curlwp is within the signed 16-bit displacement. */
+__CTASSERT(offsetof(struct cpu_info, ci_curlwp) <= 0x7ff0);
 
 #endif /* _KERNEL || _KMEMUSER */
 
@@ -141,7 +148,6 @@ struct cpu_info {
 #define	CPUF_PRESENT	0x02		/* CPU is present */
 #define	CPUF_RUNNING	0x04		/* CPU is running */
 #define	CPUF_PAUSED	0x08		/* CPU is paused */
-#define	CPUF_FPUSAVE	0x10		/* CPU is currently in fpusave_cpu() */
 
 extern	struct cpu_info cpu_info_primary;
 extern	struct cpu_info *cpu_info_list;
