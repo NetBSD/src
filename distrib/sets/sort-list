@@ -1,8 +1,13 @@
 #!/bin/sh
 set -eu
 
+die() {
+	echo "$*" 1>&2
+	exit 1
+}
+
 for fname; do
-	{ grep '^#' "$fname"
+	{ grep '^#' "$fname" || die "Missing comment line in $fname"
 	  grep -v '^#' "$fname" | LC_ALL=C sort
 	} > "$fname.tmp"
 	mv "$fname.tmp" "$fname"
