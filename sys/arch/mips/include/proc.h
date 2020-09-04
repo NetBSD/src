@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.31 2020/08/26 10:51:45 simonb Exp $	*/
+/*	$NetBSD: proc.h,v 1.32 2020/09/04 08:17:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #define	_MIPS_PROC_H_
 
 #include <sys/param.h>
-#include <mips/vmparam.h>
+#include <machine/vmparam.h>
 
 struct lwp;
 
