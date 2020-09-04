@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.110 2020/09/04 20:32:34 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.111 2020/09/04 20:51:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.110 2020/09/04 20:32:34 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.111 2020/09/04 20:51:01 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.110 2020/09/04 20:32:34 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.111 2020/09/04 20:51:01 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -676,25 +676,16 @@ static int
 get_mpt_arg(Boolean doEval, const char **linePtr, char **argPtr,
 	    const char *func MAKE_ATTR_UNUSED)
 {
-    /*
-     * Use Var_Parse to parse the spec in parens and return
-     * TOK_TRUE if the resulting string is empty.
-     */
-    int length;
     void *val_freeIt;
     const char *val;
-    const char *cp = *linePtr;
+    int magic_res;
 
     /* We do all the work here and return the result as the length */
     *argPtr = NULL;
 
-    val = Var_Parse(cp - 1, VAR_CMD, doEval ? VARE_WANTRES : 0, &length,
-		    &val_freeIt);
-    /*
-     * Advance *linePtr to beyond the closing ). Note that
-     * we subtract one because 'length' is calculated from 'cp - 1'.
-     */
-    *linePtr = cp - 1 + length;
+    (*linePtr)--;		/* Make (*linePtr)[1] point to the '('. */
+    val = Var_ParsePP(linePtr, VAR_CMD, doEval ? VARE_WANTRES : 0, &val_freeIt);
+    /* If successful, *linePtr points beyond the closing ')' now. */
 
     if (val == var_Error) {
 	free(val_freeIt);
@@ -709,9 +700,9 @@ get_mpt_arg(Boolean doEval, const char **linePtr, char **argPtr,
      * For consistency with the other functions we can't generate the
      * true/false here.
      */
-    length = *val ? 2 : 1;
+    magic_res = *val != '\0' ? 2 : 1;
     free(val_freeIt);
-    return length;
+    return magic_res;
 }
 
 static Boolean
