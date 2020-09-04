@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.99 2020/08/29 20:06:59 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.100 2020/09/04 01:56:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.99 2020/08/29 20:06:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.100 2020/09/04 01:56:29 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.99 2020/08/29 20:06:59 thorpej Exp $");
 #include <machine/prom.h>
 #include <machine/alpha.h>
 
-struct cpu_info cpu_info_primary = {
+struct cpu_info cpu_info_primary __cacheline_aligned = {
 	.ci_curlwp = &lwp0
 };
 struct cpu_info *cpu_info_list = &cpu_info_primary;
@@ -93,9 +93,9 @@ struct cpu_info *cpu_info_list = &cpu_info_primary;
 struct cpu_info *cpu_info[ALPHA_MAXPROCS];
 
 /* Bitmask of CPUs booted, currently running, and paused. */
-volatile u_long cpus_booted;
-volatile u_long cpus_running;
-volatile u_long cpus_paused;
+volatile u_long cpus_booted __read_mostly;
+volatile u_long cpus_running __read_mostly;
+volatile u_long cpus_paused __read_mostly;
 
 void	cpu_boot_secondary(struct cpu_info *);
 #endif /* MULTIPROCESSOR */
@@ -108,7 +108,8 @@ void	cpu_boot_secondary(struct cpu_info *);
  * Note, we invert the AMASK so that if a bit is set, it means "has
  * extension".
  */
-u_long	cpu_implver, cpu_amask;
+u_long	cpu_implver __read_mostly;
+u_long	cpu_amask __read_mostly;
 
 /* Definition of the driver for autoconfig. */
 static int	cpumatch(device_t, cfdata_t, void *);
@@ -276,7 +277,12 @@ recognized:
 	if (ma->ma_slot == hwrpb->rpb_primary_cpu_id)
 		ci = &cpu_info_primary;
 	else {
+		/*
+		 * kmem_zalloc() will guarante cache line alignment for
+		 * all allocations >= CACHE_LINE_SIZE.
+		 */
 		ci = kmem_zalloc(sizeof(*ci), KM_SLEEP);
+		KASSERT(((uintptr_t)ci & (CACHE_LINE_SIZE - 1)) == 0);
 	}
 #if defined(MULTIPROCESSOR)
 	cpu_info[ma->ma_slot] = ci;
