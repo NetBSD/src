@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.128 2020/09/03 15:38:17 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.129 2020/09/04 02:54:56 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2019 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.128 2020/09/03 15:38:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.129 2020/09/04 02:54:56 thorpej Exp $");
 
 #include "assym.h"
 
@@ -258,17 +258,16 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 	beq	t0, 5f				/* no: just return */
 	/* yes */
 
-	/* GET_CPUINFO clobbers v0, t0, t8...t11. */
-3:	GET_CPUINFO
+	/* GET_CURLWP clobbers v0, t0, t8...t11. */
+3:	GET_CURLWP
 
 	/* check for AST */
-	ldq	t1, CPU_INFO_CURLWP(v0)
-	ldl	t3, L_MD_ASTPENDING(t1)		/* AST pending? */
+	ldl	t3, L_MD_ASTPENDING(v0)		/* AST pending? */
 	bne	t3, 7f				/* yes */
 	/* no: headed back to user space */
 
 	/* Enable the FPU based on whether MDLWP_FPACTIVE is set. */
-4:	ldq	t2, L_MD_FLAGS(t1)
+4:	ldq	t2, L_MD_FLAGS(v0)
 	cmplt	t2, zero, a0
 	call_pal PAL_OSF1_wrfen
 
@@ -295,7 +294,7 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 	br	2b
 
 	/* We've got an AST */
-7:	stl	zero, L_MD_ASTPENDING(t1)	/* no AST pending */
+7:	stl	zero, L_MD_ASTPENDING(v0)	/* no AST pending */
 
 	ldiq	a0, ALPHA_PSL_IPL_0		/* drop IPL to zero */
 	call_pal PAL_OSF1_swpipl
@@ -460,7 +459,7 @@ LEAF(exception_restore_regs, 0)
 	/* syscall number, passed in v0, is first arg, frame pointer second */
 	mov	v0,a1
 	GET_CURLWP
-	ldq	a0,0(v0)
+	mov	v0,a0
 	mov	sp,a2			; .loc 1 __LINE__
 	ldq	t11,L_PROC(a0)
 	ldq	t12,P_MD_SYSCALL(t11)
@@ -676,8 +675,7 @@ LEAF(cpu_switchto, 0)
 	ldq	a0, L_MD_PCBPADDR(s2)
 	call_pal PAL_OSF1_swpctx	/* clobbers a0, t0, t8-t11, a0 */
 
-	GET_CPUINFO
-	stq	s2, CPU_INFO_CURLWP(v0)		/* curlwp = l */
+	SET_CURLWP(s2)			/* curlwp = l */
 
 	/*
 	 * Now running on the new PCB.
@@ -786,15 +784,13 @@ NESTED(copyinstr, 4, 16, ra, IM_RA|IM_S0, 0)
 	mov	v0, s0
 	lda	v0, copyerr			/* set up fault handler.     */
 	.set noat
-	ldq	at_reg, 0(s0)
-	ldq	at_reg, L_PCB(at_reg)
+	ldq	at_reg, L_PCB(s0)
 	stq	v0, PCB_ONFAULT(at_reg)
 	.set at
 	CALL(alpha_copystr)			/* do the copy.		     */
 	.set noat
-	ldq	at_reg, 0(s0)			/* kill the fault handler.   */
-	ldq	at_reg, L_PCB(at_reg)
-	stq	zero, PCB_ONFAULT(at_reg)
+	ldq	at_reg, L_PCB(s0)
+	stq	zero, PCB_ONFAULT(at_reg)	/* kill the fault handler.   */
 	.set at
 	ldq	ra, (16-8)(sp)			/* restore ra.		     */
 	ldq	s0, (16-16)(sp)			/* restore s0.		     */
@@ -815,15 +811,13 @@ NESTED(copyoutstr, 4, 16, ra, IM_RA|IM_S0, 0)
 	mov	v0, s0
 	lda	v0, copyerr			/* set up fault handler.     */
 	.set noat
-	ldq	at_reg, 0(s0)
-	ldq	at_reg, L_PCB(at_reg)
+	ldq	at_reg, L_PCB(s0)
 	stq	v0, PCB_ONFAULT(at_reg)
 	.set at
 	CALL(alpha_copystr)			/* do the copy.		     */
 	.set noat
-	ldq	at_reg, 0(s0)			/* kill the fault handler.   */
-	ldq	at_reg, L_PCB(at_reg)
-	stq	zero, PCB_ONFAULT(at_reg)
+	ldq	at_reg, L_PCB(s0)
+	stq	zero, PCB_ONFAULT(at_reg)	/* kill the fault handler.   */
 	.set at
 	ldq	ra, (16-8)(sp)			/* restore ra.		     */
 	ldq	s0, (16-16)(sp)			/* restore s0.		     */
@@ -853,7 +847,7 @@ NESTED(kcopy, 3, 32, ra, IM_RA|IM_S0|IM_S1, 0)
 	mov	v0, a0
 	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
 	GET_CURLWP
-	ldq	s1, 0(v0)			/* s1 = curlwp		     */
+	mov	v0, s1				/* s1 = curlwp               */
 	lda	v0, kcopyerr			/* set up fault handler.     */
 	.set noat
 	ldq	at_reg, L_PCB(s1)
@@ -900,7 +894,7 @@ NESTED(copyin, 3, 16, ra, IM_RA|IM_S0, 0)
 	mov	v0, a0
 	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
 	GET_CURLWP
-	ldq	s0, 0(v0)			/* s0 = curlwp		     */
+	mov	v0, s0				/* s0 = curlwp               */
 	lda	v0, copyerr			/* set up fault handler.     */
 	.set noat
 	ldq	at_reg, L_PCB(s0)
@@ -932,7 +926,7 @@ NESTED(copyout, 3, 16, ra, IM_RA|IM_S0, 0)
 	mov	v0, a0
 	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
 	GET_CURLWP
-	ldq	s0, 0(v0)			/* s0 = curlwp		     */
+	mov	v0, s0				/* s0 = curlwp               */
 	lda	v0, copyerr			/* set up fault handler.     */
 	.set noat
 	ldq	at_reg, L_PCB(s0)
