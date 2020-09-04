@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.132 2020/09/04 17:05:39 rillig Exp $
+# $NetBSD: Makefile,v 1.133 2020/09/04 19:03:38 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -35,7 +35,7 @@
 # Keep the list sorted.
 # Any test that is commented out must be ignored in
 # src/tests/usr.bin/make/t_make.sh as well.
-TESTS+=		# archive	# broken on FreeBSD, enabled in t_make.sh
+TESTS+=		archive
 TESTS+=		archive-suffix
 TESTS+=		cmd-interrupt
 TESTS+=		cmdline
@@ -328,7 +328,6 @@ ENV.varmisc+=		FROM_ENV_AFTER=env
 # Override make flags for some of the tests; default is -k.
 # If possible, write ".MAKEFLAGS: -dv" in the test .mk file instead of
 # settings FLAGS.test=-dv here, since that is closer to the test code.
-FLAGS.archive=		-dA
 FLAGS.counter=		-dv
 FLAGS.directive-ifmake=	first second
 FLAGS.doterror=		# none
