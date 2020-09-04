@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.92 2020/09/04 01:57:29 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.93 2020/09/04 03:53:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -161,7 +161,8 @@ extern	volatile u_long cpus_running;
 extern	volatile u_long cpus_paused;
 extern	struct cpu_info *cpu_info[];
 
-#define	curcpu()		((struct cpu_info *)alpha_pal_rdval())
+#define	curlwp			((struct lwp *)alpha_pal_rdval())
+#define	curcpu()		curlwp->l_cpu
 #define	CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
 
 void	cpu_boot_secondary_processors(void);
@@ -170,9 +171,9 @@ void	cpu_pause_resume(unsigned long, int);
 void	cpu_pause_resume_all(int);
 #else /* ! MULTIPROCESSOR */
 #define	curcpu()	(&cpu_info_primary)
+#define	curlwp		curcpu()->ci_curlwp
 #endif /* MULTIPROCESSOR */
 
-#define	curlwp		curcpu()->ci_curlwp
 
 /*
  * definitions of cpu-dependent requirements
