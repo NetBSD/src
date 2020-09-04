@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2345 2020/08/26 16:03:40 riastradh Exp $
+#	$NetBSD: mi,v 1.2346 2020/09/04 13:39:50 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -419,7 +419,7 @@
 ./usr/include/dev/dec/lk201.h			comp-c-include
 ./usr/include/dev/dec/mcclock_pad32.h		comp-obsolete		obsolete
 ./usr/include/dev/dec/mcclockvar.h		comp-obsolete		obsolete
-./usr/include/dev/dm/netbsd-dm.h		comp-c-include		
+./usr/include/dev/dm/netbsd-dm.h		comp-c-include
 ./usr/include/dev/dmover/dmover_io.h		comp-c-include
 ./usr/include/dev/dtv/dtvio.h			comp-c-include
 ./usr/include/dev/dtv/dtvio_demux.h		comp-c-include
@@ -2171,8 +2171,8 @@
 ./usr/include/ifaddrs.h				comp-c-include
 ./usr/include/inttypes.h			comp-c-include
 ./usr/include/iscsi.h				comp-c-include		iscsi
-./usr/include/isns.h				comp-c-include	
-./usr/include/isns_defs.h			comp-c-include	
+./usr/include/isns.h				comp-c-include
+./usr/include/isns_defs.h			comp-c-include
 ./usr/include/iso646.h				comp-c-include
 ./usr/include/isofs/cd9660/cd9660_extern.h	comp-c-include
 ./usr/include/isofs/cd9660/cd9660_mount.h	comp-c-include
@@ -9017,7 +9017,7 @@
 ./usr/share/man/cat3/ppath_component_retain.0	comp-c-catman		.cat
 ./usr/share/man/cat3/ppath_copy.0		comp-c-catman		.cat
 ./usr/share/man/cat3/ppath_copydel_bool.0	comp-c-catman		.cat
-./usr/share/man/cat3/ppath_copydel_int64.0	comp-c-catman		.cat 
+./usr/share/man/cat3/ppath_copydel_int64.0	comp-c-catman		.cat
 ./usr/share/man/cat3/ppath_copydel_object.0	comp-c-catman		.cat
 ./usr/share/man/cat3/ppath_copydel_uint64.0	comp-c-catman		.cat
 ./usr/share/man/cat3/ppath_copyset_bool.0	comp-c-catman		.cat
@@ -17665,7 +17665,6 @@
 ./usr/share/man/html3/pthread_mutexattr_getpshared.html	comp-c-htmlman	html
 ./usr/share/man/html3/pthread_mutexattr_gettype.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_mutexattr_init.html	comp-c-htmlman		html
-./usr/share/man/html3/pthread_mutexattr_setprioceiling.html	comp-c-htmlman	ht	l
 ./usr/share/man/html3/pthread_mutexattr_setprioceiling.html	comp-c-htmlman	html
 ./usr/share/man/html3/pthread_mutexattr_setprotocol.html	comp-c-htmlman	html
 ./usr/share/man/html3/pthread_mutexattr_setpshared.html	comp-c-htmlman	html
