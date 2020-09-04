@@ -1,4 +1,4 @@
-/* $NetBSD: asm.h,v 1.42 2020/09/04 02:58:18 thorpej Exp $ */
+/* $NetBSD: asm.h,v 1.43 2020/09/04 02:59:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -672,10 +672,6 @@ label:	ASCIZ msg;						\
 #define	SET_CURLWP(r)							\
 	call_pal PAL_OSF1_rdval					;	\
 	stq	r, CPU_INFO_CURLWP(v0)
-
-#define	GET_FPCURLWP							\
-	call_pal PAL_OSF1_rdval					;	\
-	addq	v0, CPU_INFO_FPCURLWP, v0
 
 #else	/* if not MULTIPROCESSOR... */
 
