@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.917 2020/09/04 11:43:50 rillig Exp $
+# $NetBSD: mi,v 1.918 2020/09/04 17:05:39 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5092,6 +5092,8 @@
 ./usr/tests/usr.bin/make/unit-tests/varname-make.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varname-make_print_var_on_error.exp		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varname-make_print_var_on_error.mk		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/varname-makefile.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/varname-makefile.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varname-makeflags.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varname-makeflags.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varname-pwd.exp				tests-usr.bin-tests	compattestfile,atf
