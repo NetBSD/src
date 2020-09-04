@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.129 2020/09/04 02:54:56 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.130 2020/09/04 04:09:52 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2019 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.129 2020/09/04 02:54:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.130 2020/09/04 04:09:52 thorpej Exp $");
 
 #include "assym.h"
 
@@ -781,17 +781,11 @@ NESTED(copyinstr, 4, 16, ra, IM_RA|IM_S0, 0)
 	beq	t1, copyerr_efault		/* if it's not, error out.   */
 	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
 	GET_CURLWP
-	mov	v0, s0
+	ldq	s0, L_PCB(v0)			/* s0 = pcb                  */
 	lda	v0, copyerr			/* set up fault handler.     */
-	.set noat
-	ldq	at_reg, L_PCB(s0)
-	stq	v0, PCB_ONFAULT(at_reg)
-	.set at
+	stq	v0, PCB_ONFAULT(s0)
 	CALL(alpha_copystr)			/* do the copy.		     */
-	.set noat
-	ldq	at_reg, L_PCB(s0)
-	stq	zero, PCB_ONFAULT(at_reg)	/* kill the fault handler.   */
-	.set at
+	stq	zero, PCB_ONFAULT(s0)		/* kill the fault handler.   */
 	ldq	ra, (16-8)(sp)			/* restore ra.		     */
 	ldq	s0, (16-16)(sp)			/* restore s0.		     */
 	lda	sp, 16(sp)			/* kill stack frame.	     */
@@ -808,17 +802,11 @@ NESTED(copyoutstr, 4, 16, ra, IM_RA|IM_S0, 0)
 	beq	t1, copyerr_efault		/* if it's not, error out.   */
 	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
 	GET_CURLWP
-	mov	v0, s0
+	ldq	s0, L_PCB(v0)			/* s0 = pcb                  */
 	lda	v0, copyerr			/* set up fault handler.     */
-	.set noat
-	ldq	at_reg, L_PCB(s0)
-	stq	v0, PCB_ONFAULT(at_reg)
-	.set at
+	stq	v0, PCB_ONFAULT(s0)
 	CALL(alpha_copystr)			/* do the copy.		     */
-	.set noat
-	ldq	at_reg, L_PCB(s0)
-	stq	zero, PCB_ONFAULT(at_reg)	/* kill the fault handler.   */
-	.set at
+	stq	zero, PCB_ONFAULT(s0)		/* kill the fault handler.   */
 	ldq	ra, (16-8)(sp)			/* restore ra.		     */
 	ldq	s0, (16-16)(sp)			/* restore s0.		     */
 	lda	sp, 16(sp)			/* kill stack frame.	     */
@@ -847,18 +835,12 @@ NESTED(kcopy, 3, 32, ra, IM_RA|IM_S0|IM_S1, 0)
 	mov	v0, a0
 	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
 	GET_CURLWP
-	mov	v0, s1				/* s1 = curlwp               */
+	ldq	s1, L_PCB(v0)			/* s1 = pcb                  */
 	lda	v0, kcopyerr			/* set up fault handler.     */
-	.set noat
-	ldq	at_reg, L_PCB(s1)
-	ldq	s0, PCB_ONFAULT(at_reg)	/* save old handler.	     */
-	stq	v0, PCB_ONFAULT(at_reg)
-	.set at
+	ldq	s0, PCB_ONFAULT(s1)		/* save old handler.	     */
+	stq	v0, PCB_ONFAULT(s1)
 	CALL(memcpy)				/* do the copy.		     */
-	.set noat
-	ldq	at_reg, L_PCB(s1)		/* restore the old handler.  */
-	stq	s0, PCB_ONFAULT(at_reg)
-	.set at
+	stq	s0, PCB_ONFAULT(s1)		/* restore the old handler.  */
 	ldq	ra, (32-8)(sp)			/* restore ra.		     */
 	ldq	s0, (32-16)(sp)			/* restore s0.		     */
 	ldq	s1, (32-24)(sp)			/* restore s1.		     */
@@ -894,17 +876,11 @@ NESTED(copyin, 3, 16, ra, IM_RA|IM_S0, 0)
 	mov	v0, a0
 	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
 	GET_CURLWP
-	mov	v0, s0				/* s0 = curlwp               */
+	ldq	s0, L_PCB(v0)			/* s = pcb                   */
 	lda	v0, copyerr			/* set up fault handler.     */
-	.set noat
-	ldq	at_reg, L_PCB(s0)
-	stq	v0, PCB_ONFAULT(at_reg)
-	.set at
+	stq	v0, PCB_ONFAULT(s0)
 	CALL(memcpy)				/* do the copy.		     */
-	.set noat
-	ldq	at_reg, L_PCB(s0)		/* kill the fault handler.   */
-	stq	zero, PCB_ONFAULT(at_reg)
-	.set at
+	stq	zero, PCB_ONFAULT(s0)		/* kill the fault handler.   */
 	ldq	ra, (16-8)(sp)			/* restore ra.		     */
 	ldq	s0, (16-16)(sp)			/* restore s0.		     */
 	lda	sp, 16(sp)			/* kill stack frame.	     */
@@ -926,17 +902,11 @@ NESTED(copyout, 3, 16, ra, IM_RA|IM_S0, 0)
 	mov	v0, a0
 	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
 	GET_CURLWP
-	mov	v0, s0				/* s0 = curlwp               */
+	ldq	s0, L_PCB(v0)			/* s0 = pcb                  */
 	lda	v0, copyerr			/* set up fault handler.     */
-	.set noat
-	ldq	at_reg, L_PCB(s0)
-	stq	v0, PCB_ONFAULT(at_reg)
-	.set at
+	stq	v0, PCB_ONFAULT(s0)
 	CALL(memcpy)				/* do the copy.		     */
-	.set noat
-	ldq	at_reg, L_PCB(s0)		/* kill the fault handler.   */
-	stq	zero, PCB_ONFAULT(at_reg)
-	.set at
+	stq	zero, PCB_ONFAULT(s0)		/* kill the fault handler.   */
 	ldq	ra, (16-8)(sp)			/* restore ra.		     */
 	ldq	s0, (16-16)(sp)			/* restore s0.		     */
 	lda	sp, 16(sp)			/* kill stack frame.	     */
