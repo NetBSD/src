@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.74 2020/08/26 16:33:03 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.75 2020/09/04 17:06:23 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.74 2020/08/26 16:33:03 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.75 2020/09/04 17:06:23 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2444,6 +2444,12 @@ svm_ident(void)
 		return false;
 	}
 	x86_cpuid(0x8000000a, descs);
+
+	/* Expect revision 1. */
+	if (__SHIFTOUT(descs[0], CPUID_AMD_SVM_REV) != 1) {
+		printf("NVMM: SVM revision not supported\n");
+		return false;
+	}
 
 	/* Want Nested Paging. */
 	if (!(descs[3] & CPUID_AMD_SVM_NP)) {
