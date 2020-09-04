@@ -2,18 +2,30 @@
 /* Generated from: NetBSD: mknative-binutils,v 1.13 2020/04/04 01:34:53 christos Exp  */
 /* Generated from: NetBSD: mknative.common,v 1.16 2018/04/15 15:13:37 christos Exp  */
 
-/* gconfig.h.  Generated from gconfig.in by configure.  */
-/* gconfig.in.  Generated from configure.ac by autoheader.  */
+/* config.h.  Generated from config.h.in by configure.  */
+/* config.h.in.  Generated from configure.ac by autoheader.  */
 
-/* Define to 1 if translation of program messages to the user's native
-   language is requested. */
-#define ENABLE_NLS 1
+/* Define if building universal (internal helper macro) */
+/* #undef AC_APPLE_UNIVERSAL_BUILD */
 
-/* Is the prototype for getopt in <unistd.h> in the expected format? */
-#define HAVE_DECL_GETOPT 1
+/* Whether libbfd was configured for an ELF target. */
+/* #undef HAVE_BFD_ELF */
+
+/* Define to 1 if you have the <byteswap.h> header file. */
+/* #undef HAVE_BYTESWAP_H */
+
+/* Define to 1 if you have the declaration of `asprintf', and to 0 if you
+   don't. */
+#define HAVE_DECL_ASPRINTF 1
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
+
+/* Define to 1 if you have the <endian.h> header file. */
+#define HAVE_ENDIAN_H 1
+
+/* Define to 1 if you have the `getpagesize' function. */
+#define HAVE_GETPAGESIZE 1
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
@@ -21,8 +33,23 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
 
-/* Define to 1 if you have the `setmode' function. */
-#define HAVE_SETMODE 1
+/* Define to 1 if you have a working `mmap' system call. */
+#define HAVE_MMAP 1
+
+/* Whether the platform has a definition of O_CLOEXEC. */
+#define HAVE_O_CLOEXEC 1
+
+/* Define to 1 if you have the `pread' function. */
+#define HAVE_PREAD 1
+
+/* Define to 1 if you have the `qsort_r' function. */
+/* #undef HAVE_QSORT_R */
+
+/* Whether a qsort_r exists with a void *arg as its last arg. */
+/* #undef HAVE_QSORT_R_ARG_LAST */
+
+/* Whether a qsort_r exists with the compar function as its last arg. */
+/* #undef HAVE_QSORT_R_COMPAR_LAST */
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
@@ -36,8 +63,8 @@
 /* Define to 1 if you have the <string.h> header file. */
 #define HAVE_STRING_H 1
 
-/* Define to 1 if you have the <sys/gmon_out.h> header file. */
-/* #undef HAVE_SYS_GMON_OUT_H */
+/* Define to 1 if you have the <sys/param.h> header file. */
+#define HAVE_SYS_PARAM_H 1
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
@@ -48,33 +75,30 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
-/* Define to 1 if you have the <windows.h> header file. */
-/* #undef HAVE_WINDOWS_H */
-
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
 #define LT_OBJDIR ".libs/"
 
 /* Name of package */
-#define PACKAGE "gprof"
+#define PACKAGE "libctf-library"
 
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT ""
 
 /* Define to the full name of this package. */
-#define PACKAGE_NAME "gprof"
+#define PACKAGE_NAME "libctf library"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "gprof 2.34"
+#define PACKAGE_STRING "libctf library 1.2.0-pre"
 
 /* Define to the one symbol short name of this package. */
-#define PACKAGE_TARNAME "gprof"
+#define PACKAGE_TARNAME "libctf-library"
 
 /* Define to the home page for this package. */
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.34"
+#define PACKAGE_VERSION "1.2.0-pre"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -102,7 +126,19 @@
 
 
 /* Version number of package */
-#define VERSION "2.34"
+#define VERSION "1.2.0-pre"
+
+/* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
+   significant byte first (like Motorola and SPARC, unlike Intel). */
+#if defined AC_APPLE_UNIVERSAL_BUILD
+# if defined __BIG_ENDIAN__
+#  define WORDS_BIGENDIAN 1
+# endif
+#else
+# ifndef WORDS_BIGENDIAN
+#  define WORDS_BIGENDIAN 1
+# endif
+#endif
 
 /* Enable large inode numbers on Mac OS X 10.5.  */
 #ifndef _DARWIN_USE_64_BIT_INODE
