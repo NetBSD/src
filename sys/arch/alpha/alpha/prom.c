@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.55 2020/09/03 04:18:30 thorpej Exp $ */
+/* $NetBSD: prom.c,v 1.56 2020/09/04 03:36:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.55 2020/09/03 04:18:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.56 2020/09/04 03:36:44 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -77,7 +77,7 @@ prom_lev1map(void)
 	/*
 	 * Find the level 1 map that we're currently running on.
 	 */
-	apcb = (struct alpha_pcb *))
+	apcb = (struct alpha_pcb *)
 	    ALPHA_PHYS_TO_K0SEG((paddr_t)curlwp->l_md.md_pcbpaddr);
 
 	return ((pt_entry_t *)ALPHA_PHYS_TO_K0SEG(apcb->apcb_ptbr << PGSHIFT));
