@@ -1,4 +1,4 @@
-/* $NetBSD: timetc.h,v 1.8 2020/05/29 05:29:23 rin Exp $ */
+/* $NetBSD: timetc.h,v 1.9 2020/09/04 00:36:07 thorpej Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -14,7 +14,7 @@
 #ifndef _SYS_TIMETC_H_
 #define	_SYS_TIMETC_H_
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_KMEMUSER)
 #error "no user-serviceable parts inside"
 #endif
 
@@ -77,6 +77,7 @@ struct timecounter {
 		/* Pointer to the next timecounter. */
 };
 
+#ifdef _KERNEL
 extern struct timecounter *timecounter;
 
 uint64_t tc_getfrequency(void);
@@ -89,5 +90,6 @@ void	tc_gonebad(struct timecounter *);
 #ifdef SYSCTL_DECL
 SYSCTL_DECL(_kern_timecounter);
 #endif
+#endif /* _KERNEL */
 
 #endif /* !_SYS_TIMETC_H_ */
