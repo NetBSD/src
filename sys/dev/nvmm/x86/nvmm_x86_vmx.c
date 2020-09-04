@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.74 2020/08/26 16:32:02 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.75 2020/09/04 17:07:33 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.74 2020/08/26 16:32:02 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.75 2020/09/04 17:07:33 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -728,6 +728,9 @@ static uint64_t vmx_xcr0_mask __read_mostly;
 
 #define MSRBM_NPAGES	1
 #define MSRBM_SIZE	(MSRBM_NPAGES * PAGE_SIZE)
+
+#define CR0_STATIC \
+	(CR0_NW|CR0_CD|CR0_ET)
 
 #define CR4_VALID \
 	(CR4_VME |			\
@@ -1570,7 +1573,7 @@ vmx_inkernel_handle_cr0(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
     uint64_t qual)
 {
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
-	uint64_t type, gpr, cr0;
+	uint64_t type, gpr, oldcr0, cr0;
 	uint64_t efer, ctls1;
 
 	type = __SHIFTOUT(qual, VMX_QUAL_CR_TYPE);
@@ -1613,6 +1616,13 @@ vmx_inkernel_handle_cr0(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		vmx_vmwrite(VMCS_ENTRY_CTLS, ctls1);
 	}
 
+	oldcr0 = (vmx_vmread(VMCS_CR0_SHADOW) & CR0_STATIC) |
+	    (vmx_vmread(VMCS_GUEST_CR0) & ~CR0_STATIC);
+	if ((oldcr0 ^ gpr) & CR0_TLB_FLUSH) {
+		cpudata->gtlb_want_flush = true;
+	}
+
+	vmx_vmwrite(VMCS_CR0_SHADOW, gpr);
 	vmx_vmwrite(VMCS_GUEST_CR0, cr0);
 	vmx_inkernel_advance();
 	return 0;
@@ -1623,7 +1633,7 @@ vmx_inkernel_handle_cr4(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
     uint64_t qual)
 {
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
-	uint64_t type, gpr, cr4;
+	uint64_t type, gpr, oldcr4, cr4;
 
 	type = __SHIFTOUT(qual, VMX_QUAL_CR_TYPE);
 	if (type != CR_TYPE_WRITE) {
@@ -1647,7 +1657,8 @@ vmx_inkernel_handle_cr4(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		return -1;
 	}
 
-	if ((vmx_vmread(VMCS_GUEST_CR4) ^ cr4) & CR4_TLB_FLUSH) {
+	oldcr4 = vmx_vmread(VMCS_GUEST_CR4);
+	if ((oldcr4 ^ gpr) & CR4_TLB_FLUSH) {
 		cpudata->gtlb_want_flush = true;
 	}
 
@@ -2566,6 +2577,7 @@ vmx_vcpu_setstate(struct nvmm_cpu *vcpu)
 		/*
 		 * CR0_NE and CR4_VMXE are mandatory.
 		 */
+		vmx_vmwrite(VMCS_CR0_SHADOW, state->crs[NVMM_X64_CR_CR0]);
 		vmx_vmwrite(VMCS_GUEST_CR0,
 		    state->crs[NVMM_X64_CR_CR0] | CR0_NE);
 		cpudata->gcr2 = state->crs[NVMM_X64_CR_CR2];
@@ -2703,7 +2715,9 @@ vmx_vcpu_getstate(struct nvmm_cpu *vcpu)
 	}
 
 	if (flags & NVMM_X64_STATE_CRS) {
-		state->crs[NVMM_X64_CR_CR0] = vmx_vmread(VMCS_GUEST_CR0);
+		state->crs[NVMM_X64_CR_CR0] =
+		    (vmx_vmread(VMCS_CR0_SHADOW) & CR0_STATIC) |
+		    (vmx_vmread(VMCS_GUEST_CR0) & ~CR0_STATIC);
 		state->crs[NVMM_X64_CR_CR2] = cpudata->gcr2;
 		state->crs[NVMM_X64_CR_CR3] = vmx_vmread(VMCS_GUEST_CR3);
 		state->crs[NVMM_X64_CR_CR4] = vmx_vmread(VMCS_GUEST_CR4);
@@ -2892,9 +2906,8 @@ vmx_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	vmx_vmwrite(VMCS_ENTRY_MSR_LOAD_COUNT, vmx_msrlist_entry_nmsr);
 	vmx_vmwrite(VMCS_EXIT_MSR_STORE_COUNT, VMX_MSRLIST_EXIT_NMSR);
 
-	/* Force CR0_NW and CR0_CD to zero, CR0_ET to one. */
-	vmx_vmwrite(VMCS_CR0_MASK, CR0_NW|CR0_CD|CR0_ET);
-	vmx_vmwrite(VMCS_CR0_SHADOW, CR0_ET);
+	/* Set the CR0 mask. Any change of these bits causes a VMEXIT. */
+	vmx_vmwrite(VMCS_CR0_MASK, CR0_STATIC);
 
 	/* Force unsupported CR4 fields to zero. */
 	vmx_vmwrite(VMCS_CR4_MASK, CR4_INVALID);
