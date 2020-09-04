@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.150.2.7 2020/07/13 13:33:29 martin Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.150.2.8 2020/09/04 18:53:43 martin Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -755,6 +755,11 @@
 #define CPUID_CAPEX_VIRT_SSBD	__BIT(25)	/* Virt Spec Control SSBD */
 #define CPUID_CAPEX_SSB_NO	__BIT(26)	/* SSBD not required */
 
+/* %ecx */
+#define CPUID_CAPEX_PerfTscSize	__BITS(17,16)
+#define CPUID_CAPEX_ApicIdSize	__BITS(15,12)
+#define CPUID_CAPEX_NC		__BITS(7,0)
+
 #define CPUID_CAPEX_FLAGS	"\20"					 \
 	"\1CLZERO"	"\2IRPERF"	"\3XSAVEERPTR"			 \
 	"\5RDPRU"			"\7B6"				 \
@@ -762,6 +767,9 @@
 	"\15IBPB"	"\16B13"	"\17IBRS"	"\20STIBP"	 \
 	"\21IBRS_ALWAYSON" "\22STIBP_ALWAYSON" "\23PREFER_IBRS"	"\24B19" \
 	"\31SSBD"	"\32VIRT_SSBD"	"\33SSB_NO"
+
+/* AMD Fn8000_000a %eax (SVM Revision) */
+#define CPUID_AMD_SVM_REV		__BITS(7,0)
 
 /* AMD Fn8000_000a %edx features (SVM features) */
 #define CPUID_AMD_SVM_NP		0x00000001
