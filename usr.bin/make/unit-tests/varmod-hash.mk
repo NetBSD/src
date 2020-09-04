@@ -1,4 +1,4 @@
-# $NetBSD: varmod-hash.mk,v 1.4 2020/09/04 05:23:25 rillig Exp $
+# $NetBSD: varmod-hash.mk,v 1.5 2020/09/04 06:54:07 rillig Exp $
 #
 # Tests for the :hash variable modifier, which computes a 32-bit hash from
 # the value of the expression.
@@ -39,6 +39,7 @@ VECTORS+=	10000000 alxiatjv
 VECTORS+=	20000000 aezwuukx
 VECTORS+=	40000000 abdpnifu
 VECTORS+=	80000000 auusgoii
+VECTORS+=	ffffffff ahnvmfdw
 
 VECTORS+=	b2af338b ""
 VECTORS+=	3360ac65 a
