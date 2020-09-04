@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.363 2020/09/03 02:09:09 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.364 2020/09/04 03:53:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2019 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.363 2020/09/03 02:09:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.364 2020/09/04 03:53:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,17 +253,19 @@ alpha_init(u_long xxx_pfn __unused, u_long ptb, u_long bim, u_long bip,
 
 	cpu_id = cpu_number();
 
+	ci = &cpu_info_primary;
+	ci->ci_cpuid = cpu_id;
+
 #if defined(MULTIPROCESSOR)
 	/*
-	 * Set our SysValue to the address of our cpu_info structure.
-	 * Secondary processors do this in their spinup trampoline.
+	 * Set the SysValue to &lwp0, after making sure that lwp0
+	 * is pointing at the primary CPU.  Secondary processors do
+	 * this in their spinup trampoline.
 	 */
-	alpha_pal_wrval((u_long)&cpu_info_primary);
-	cpu_info[cpu_id] = &cpu_info_primary;
+	lwp0.l_cpu = ci;
+	cpu_info[cpu_id] = ci;
+	alpha_pal_wrval((u_long)&lwp0);
 #endif
-
-	ci = curcpu();
-	ci->ci_cpuid = cpu_id;
 
 	/*
 	 * Get critical system information (if possible, from the
