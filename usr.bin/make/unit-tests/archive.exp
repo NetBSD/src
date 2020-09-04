@@ -5,6 +5,7 @@ ar t libprog.a
 archive.mk
 modmisc.mk
 varmisc.mk
+list-archive-wildcard: archive-suffix.mk
 list-archive-wildcard: archive.mk
 list-archive-wildcard: ternary.mk
 depend-on-existing-member
