@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.108 2020/09/03 18:38:16 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.109 2020/09/04 18:54:33 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -4920,4 +4920,11 @@ sys/arch/x86/x86/pmap.c				(apply patch)
 	process exit time. Also fixes a KASSERT that could fire if
 	GNTTABOP_map_grant_ref fails, and a ptp leak.
 	[bouyer, ticket #1075]
+
+sys/arch/x86/include/specialreg.h		1.172
+sys/dev/nvmm/x86/nvmm_x86_svm.c			1.75
+sys/dev/nvmm/x86/nvmm_x86_vmx.c			1.72
+
+	nvmm(4): improve the detection of virtualization features.
+	[maxv, ticket #1076]
 
