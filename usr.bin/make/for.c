@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.67 2020/08/30 19:56:02 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.68 2020/09/04 17:35:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.67 2020/08/30 19:56:02 rillig Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.68 2020/09/04 17:35:00 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.67 2020/08/30 19:56:02 rillig Exp $");
+__RCSID("$NetBSD: for.c,v 1.68 2020/09/04 17:35:00 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -358,7 +358,7 @@ for_substitute(Buffer *cmds, strlist_t *items, unsigned int item_no, char ech)
 }
 
 static char *
-For_Iterate(void *v_arg, size_t *ret_len)
+ForIterate(void *v_arg, size_t *ret_len)
 {
     For *arg = v_arg;
     int i;
@@ -463,5 +463,5 @@ For_Run(int lineno)
 	return;
     }
 
-    Parse_SetInput(NULL, lineno, -1, For_Iterate, arg);
+    Parse_SetInput(NULL, lineno, -1, ForIterate, arg);
 }
