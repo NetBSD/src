@@ -1,4 +1,4 @@
-/* $NetBSD: asm.h,v 1.43 2020/09/04 02:59:44 thorpej Exp $ */
+/* $NetBSD: asm.h,v 1.44 2020/09/04 03:53:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -662,16 +662,18 @@ label:	ASCIZ msg;						\
 /*
  * Get various per-cpu values.  A pointer to our cpu_info structure
  * is stored in SysValue.  These macros clobber v0, t0, t8..t11.
+ * SET_CURLWP also clobbers a0.
  *
  * All return values are in v0.
  */
 #define	GET_CURLWP							\
-	call_pal PAL_OSF1_rdval					;	\
-	ldq	v0, CPU_INFO_CURLWP(v0)
+	call_pal PAL_OSF1_rdval
 
 #define	SET_CURLWP(r)							\
-	call_pal PAL_OSF1_rdval					;	\
-	stq	r, CPU_INFO_CURLWP(v0)
+	ldq	v0, L_CPU(r)					;	\
+	mov	r, a0						;	\
+	stq	r, CPU_INFO_CURLWP(v0)				;	\
+	call_pal PAL_OSF1_wrval
 
 #else	/* if not MULTIPROCESSOR... */
 
