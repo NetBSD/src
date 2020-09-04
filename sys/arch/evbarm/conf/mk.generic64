@@ -1,4 +1,8 @@
-#	$NetBSD: mk.generic64,v 1.5 2019/12/16 11:00:30 skrll Exp $
+#	$NetBSD: mk.generic64,v 1.6 2020/09/04 02:21:49 jakllsch Exp $
+
+.if !empty(MACHINE_ARCH:M*eb)
+EXTRA_LINKFLAGS+=	-EB
+.endif
 
 SYSTEM_FIRST_OBJ=	start.o
 SYSTEM_FIRST_SFILE=	${ARM}/aarch64/start.S
