@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.111 2020/09/04 20:51:01 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.112 2020/09/04 21:08:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.111 2020/09/04 20:51:01 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.112 2020/09/04 21:08:44 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.111 2020/09/04 20:51:01 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.112 2020/09/04 21:08:44 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -170,18 +170,24 @@ CondPushBack(Token t)
     condPushBack = t;
 }
 
-/*-
- * Parse the argument of a built-in function.
+/* Parse the argument of a built-in function.
  *
- * Results:
- *	The length of the argument.
- *	*argPtr receives the argument as string.
- *	*linePtr is updated to point behind the ')' of the function call.
- */
+ * Arguments:
+ *	*linePtr initially points to the '(', upon successful return points
+ *	beyond the ')'.
+ *
+ *	*out_arg receives the argument as string.
+ *
+ *	func says whether the argument belongs to an actual function, or
+ *	whether the parsed argument is passed to the default function.
+ *
+ *	XXX: This is ambiguous for the empty() function since its argument is
+ *	parsed differently.
+ *
+ * Return the length of the argument. */
 static int
-CondGetArg(Boolean doEval, const char **linePtr, char **argPtr,
-	   const char *func)
-{
+ParseFuncArg(Boolean doEval, const char **linePtr, char **out_arg,
+	     const char *func) {
     const char *cp;
     Buffer buf;
     int paren_depth;
@@ -200,7 +206,7 @@ CondGetArg(Boolean doEval, const char **linePtr, char **argPtr,
 	 * than hitting the user with a warning message every time s/he uses
 	 * the word 'make' or 'defined' at the beginning of a symbol...
 	 */
-	*argPtr = NULL;
+	*out_arg = NULL;
 	return 0;
     }
 
@@ -243,7 +249,7 @@ CondGetArg(Boolean doEval, const char **linePtr, char **argPtr,
 	cp++;
     }
 
-    *argPtr = Buf_GetAll(&buf, &argLen);
+    *out_arg = Buf_GetAll(&buf, &argLen);
     Buf_Destroy(&buf, FALSE);
 
     while (*cp == ' ' || *cp == '\t') {
@@ -673,8 +679,8 @@ done:
 }
 
 static int
-get_mpt_arg(Boolean doEval, const char **linePtr, char **argPtr,
-	    const char *func MAKE_ATTR_UNUSED)
+ParseEmptyArg(Boolean doEval, const char **linePtr, char **argPtr,
+	      const char *func MAKE_ATTR_UNUSED)
 {
     void *val_freeIt;
     const char *val;
@@ -708,7 +714,7 @@ get_mpt_arg(Boolean doEval, const char **linePtr, char **argPtr,
 static Boolean
 CondDoEmpty(int arglen, const char *arg MAKE_ATTR_UNUSED)
 {
-    /* Magic values ahead, see get_mpt_arg. */
+    /* Magic values ahead, see ParseEmptyArg. */
     return arglen == 1;
 }
 
@@ -721,12 +727,12 @@ compare_function(Boolean doEval)
 	int (*fn_getarg)(Boolean, const char **, char **, const char *);
 	Boolean (*fn_proc)(int, const char *);
     } fn_defs[] = {
-	{ "defined",  7, CondGetArg,  CondDoDefined },
-	{ "make",     4, CondGetArg,  CondDoMake },
-	{ "exists",   6, CondGetArg,  CondDoExists },
-	{ "empty",    5, get_mpt_arg, CondDoEmpty },
-	{ "target",   6, CondGetArg,  CondDoTarget },
-	{ "commands", 8, CondGetArg,  CondDoCommands },
+	{ "defined",  7, ParseFuncArg,  CondDoDefined },
+	{ "make",     4, ParseFuncArg,  CondDoMake },
+	{ "exists",   6, ParseFuncArg,  CondDoExists },
+	{ "empty",    5, ParseEmptyArg, CondDoEmpty },
+	{ "target",   6, ParseFuncArg,  CondDoTarget },
+	{ "commands", 8, ParseFuncArg,  CondDoCommands },
 	{ NULL,       0, NULL, NULL },
     };
     const struct fn_def *fn_def;
@@ -771,7 +777,7 @@ compare_function(Boolean doEval)
      * would be invalid if we did "defined(a)" - so instead treat as an
      * expression.
      */
-    arglen = CondGetArg(doEval, &cp, &arg, NULL);
+    arglen = ParseFuncArg(doEval, &cp, &arg, NULL);
     for (cp1 = cp; isspace((unsigned char)*cp1); cp1++)
 	continue;
     if (*cp1 == '=' || *cp1 == '!')
