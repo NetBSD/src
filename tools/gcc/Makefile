@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.98 2020/08/13 10:57:53 mrg Exp $
+#	$NetBSD: Makefile,v 1.99 2020/09/05 10:58:08 mrg Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -95,16 +95,20 @@ MKNATIVE_CONFIG_TARGET_LIBS=
 
 MKNATIVE_CONFIG_TARGET_LIBS+=	configure-target-libgcc
 MKNATIVE_CONFIG_TARGET_LIBS+=	configure-target-libgomp
-.if ${HAVE_GCC} == 8
-MKNATIVE_TARGET=	gcc8
-.elif ${HAVE_GCC} == 7
-MKNATIVE_TARGET=	gcc7
-.endif
+MKNATIVE_TARGET=	gcc
 
 MKNATIVE_CONFIG_TARGET_LIBS+= \
 	configure-target-libstdc++-v3 \
 	configure-target-libbacktrace \
 	configure-target-libobjc
+
+.if ${HAVE_GCC} >= 9
+# XXX needs to build libstdc++ fully, which fails
+.if 0
+MKNATIVE_CONFIG_TARGET_LIBS+= \
+	configure-target-libsanitizer
+.endif
+.endif
 
 BINENV=		/usr/bin/env -i
 
