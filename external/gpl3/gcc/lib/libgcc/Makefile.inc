@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.45 2020/09/05 09:50:15 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.46 2020/09/05 11:40:56 mrg Exp $
 
 LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 GCC_MACHINE_SUBDIR=${MACHINE_CPU:C/powerpc.*/rs6000/:C/x86_64/i386/}
@@ -106,7 +106,7 @@ LIB2FUNCS=	${LIB2FUNCS_SHORT:=.c}
 _LIB2FUNCS=	${G_LIB2FUNCS_ST}
 .for _f in ${LIB2FUNCS_EXCLUDE}
 _LIB2FUNCS=	${_LIB2FUNCS:N${_f}}
-.endif
+.endfor
 LIB2FUNCS_ST=	${_LIB2FUNCS:=.c}
 LIB2DIVMOD=	${LIB2_DIVMOD_FUNCS:=.c}
 .if ${HAVE_LIBGCC_EH} == "no"
