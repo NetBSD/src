@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.74 2020/09/05 16:29:08 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.75 2020/09/05 18:01:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -132,20 +132,12 @@ makeiplcookie(ipl_t ipl)
 
 #ifdef	_KERNEL
 
-/* Simulated software interrupt register. */
-extern volatile unsigned long ssir;
-
 /* IPL-lowering/restoring macros */
-void	spl0(void);
+void	spllower(int);
 
-static __inline void
-splx(int s)
-{
-	if (s == ALPHA_PSL_IPL_0 && ssir != 0)
-		spl0();
-	else
-		alpha_pal_swpipl(s);
-}
+#define	splx(s)		spllower(s)
+#define	spl0()		spllower(ALPHA_PSL_IPL_0)
+
 /* IPL-raising functions/macros */
 static __inline int
 _splraise(int s)
