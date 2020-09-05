@@ -1,10 +1,10 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.105 2020/08/13 01:52:37 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.106 2020/09/05 09:16:46 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
 #
-# This version is for GCC 8.4
+# This version is for GCC 9.3
 
 # initialise
 
@@ -247,6 +247,7 @@ get_libstdcxx_v3 () {
 		getvars $_PLATFORM/libstdc++-v3/Makefile \
 			port_specific_symbol_files
 		getvars $_PLATFORM/libstdc++-v3/src/Makefile \
+			cxx17_sources \
 			cxx11_sources \
 			cxx98_sources
 
@@ -263,6 +264,9 @@ get_libstdcxx_v3 () {
 		# src
 		getvars $_PLATFORM/libstdc++-v3/src/Makefile \
 			libstdc___la_SOURCES | sed 's/^G_libstdc___la_SOURCES=/G_SRC_SOURCES=/'
+		getvars $_PLATFORM/libstdc++-v3/src/c++17/Makefile \
+			libc__17convenience_la_SOURCES | \
+			sed -e 's/^G_libc__17convenience_la_SOURCES=/G_CPP17_SOURCES=/'
 		getvars $_PLATFORM/libstdc++-v3/src/c++11/Makefile \
 			libc__11convenience_la_SOURCES | \
 			sed -e 's/^G_libc__11convenience_la_SOURCES=/G_CPP11_SOURCES=/' \
@@ -290,6 +294,27 @@ get_libstdcxx_v3 () {
 			$_pf_headers | sed -e 's#\${GNUHOSTDIST}/libstdc++-v3/include/profile/##g'
 		getvars $_PLATFORM/libstdc++-v3/include/Makefile \
 			BASIC_FILE_H ALLOCATOR_H CSTDIO_H CLOCALE_H CMESSAGES_H CTIME_H
+	} | sanitise_includes \
+	  | write_mk $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/defs.mk
+}
+
+##### lib/libsanitizer #####
+
+get_libsanitizer () {
+	_subdir="$1"
+
+	mkdir -p $_OUTDIR/lib/$_subdir/arch/$MACHINE_ARCH
+
+	{
+		getvars $_PLATFORM/libsanitizer/asan/Makefile \
+			asan_files
+		getvars $_PLATFORM/libsanitizer/lsan/Makefile \
+			lsan_files
+		getvars $_PLATFORM/libsanitizer/tsan/Makefile \
+			tsan_plugin_files
+		getvars $_PLATFORM/libsanitizer/ubsan/Makefile \
+			ubsan_plugin_files
+
 	} | sanitise_includes \
 	  | write_mk $_OUTDIRBASE/lib/$_subdir/arch/$MACHINE_ARCH/defs.mk
 }
@@ -465,6 +490,7 @@ gcc*)
 	get_gcc_libiberty gcc
 	get_libobjc libobjc
 	get_libstdcxx_v3 libstdc++-v3 gcc
+	get_libsanitizer libsanitizer
 	get_libdecnumber libdecnumber
 	get_libgomp libgomp
 	get_libbacktrace libbacktrace
