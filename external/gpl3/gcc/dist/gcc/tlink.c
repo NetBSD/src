@@ -1,7 +1,7 @@
 /* Scan linker error messages for missing template instantiations and provide
    them.
 
-   Copyright (C) 1995-2018 Free Software Foundation, Inc.
+   Copyright (C) 1995-2019 Free Software Foundation, Inc.
    Contributed by Jason Merrill (jason@cygnus.com).
 
 This file is part of GCC.
@@ -490,7 +490,7 @@ recompile_files (void)
 
       if (!f->args)
 	{
-	  error ("repository file '%s' does not contain command-line "
+	  error ("repository file %qs does not contain command-line "
 		 "arguments", f->key);
 	  return 0;
 	}
@@ -616,7 +616,7 @@ start_tweaking (symbol *sym)
 {
   if (sym && sym->tweaked)
     {
-      error ("'%s' was assigned to '%s', but was not defined "
+      error ("%qs was assigned to %qs, but was not defined "
 	     "during recompilation, or vice versa",
 	     sym->key, sym->file->key);
       return 0;

@@ -1,26 +1,100 @@
-2020-03-04  Release Manager
+2020-03-12  Release Manager
 
-	* GCC 8.4.0 released.
+	* GCC 9.3.0 released.
 
-2019-04-08  Claudiu Zissulescu  <claziss@synopsys.com>
+2019-08-12  Release Manager
 
-	backport mainline
-	Vineet Gupta  <vgupta@synopsys.com>
-	PR 89877
+	* GCC 9.2.0 released.
+
+2019-05-03  Release Manager
+
+	* GCC 9.1.0 released.
+
+2019-04-03  Vineet Gupta  <vgupta@synopsys.com>
+
+	PR89877
 	* longlong.h [__arc__] (add_ssaaaa): Add cc clobber.
 	(sub_ddmmss): Likewise.
 
-2019-02-22  Release Manager
+2019-02-11  Philippe Waroquiers  <philippe.waroquiers@skynet.be>
 
-	* GCC 8.3.0 released.
+	* splay-tree.h (splay_tree_delete_key_fn): Update comment.
+	(splay_tree_delete_value_fn): Likewise.
 
-2018-07-26  Release Manager
+2019-01-09  Sandra Loosemore  <sandra@codesourcery.com>
 
-	* GCC 8.2.0 released.
+	PR other/16615
 
-2018-05-02  Release Manager
+	* libiberty.h: Mechanically replace "can not" with "cannot".
+	* plugin-api.h: Likewise.
 
-	* GCC 8.1.0 released.
+2019-01-01  Jakub Jelinek  <jakub@redhat.com>
+
+	Update copyright years.
+
+2018-12-28  Thomas Schwinge  <thomas@codesourcery.com>
+
+	* gomp-constants.h (GOACC_FLAG_HOST_FALLBACK)
+	(GOACC_FLAGS_MARSHAL_OP, GOACC_FLAGS_UNMARSHAL): Define.
+
+2018-12-22  Jason Merrill  <jason@redhat.com>
+
+	* demangle.h: Remove support for ancient GNU (pre-3.0), Lucid,
+	ARM, HP, and EDG demangling styles.
+
+2018-12-11  Nick Clifton  <nickc@redhat.com>
+
+	PR 88409
+	* demangle.h (DEMANGLE_RECURSION_LIMIT): Increase to 2048.
+
+2018-12-07  Nick Clifton  <nickc@redhat.com>
+
+	* demangle.h (DMGL_NO_RECURSE_LIMIT): Define.
+        (DEMANGLE_RECURSION_LIMIT): Define
+
+2018-11-08  Jakub Jelinek  <jakub@redhat.com>
+
+	* gomp-constants.h (GOMP_TASK_FLAG_REDUCTION,
+	GOMP_DEPEND_IN, GOMP_DEPEND_OUT, GOMP_DEPEND_INOUT,
+	GOMP_DEPEND_MUTEXINOUTSET): Define.
+
+2018-10-19  Jason Merrill  <jason@redhat.com>
+
+	* demangle.h (enum demangle_component_type): Add
+	DEMANGLE_COMPONENT_TPARM_OBJ.
+
+2018-10-29  David Malcolm  <dmalcolm@redhat.com>
+
+	* unique-ptr.h (gnu::move): Generalize so it applies to all
+	lvalue references, rather than just to unique_ptr values.
+
+2018-07-26  Martin Liska  <mliska@suse.cz>
+
+	PR lto/86548
+	* libiberty.h (make_temp_file_with_prefix): New function.
+
+2018-05-30  Jan Hubicka  <hubicka@ucw.cz>
+
+	* simple-object.h (simple_object_copy_lto_debug_sections): Add rename
+	parameter.
+
+2018-05-28  Bernd Edlinger  <bernd.edlinger@hotmail.de>
+
+	* splay-tree.h (splay_tree_compare_strings,
+	splay_tree_delete_pointers): Declare new utility functions.
+
+2018-05-24  Tom Rix  <trix@juniper.net>
+
+	* dwarf2.def (DW_FORM_strx*, DW_FORM_addrx*): New.
+
+2018-05-02  Alan Modra  <amodra@gmail.com>
+
+	* ansidecl.h (ATTRIBUTE_NONSTRING): Define.
+
+2018-05-01  Sriraman Tallam  <tmsriram@google.com>
+
+	* plugin-api.h: Add plugin API to get the list of wrap
+	symbols.
 
 2018-02-09  Alexandre Oliva <aoliva@redhat.com>
 
@@ -436,8 +510,8 @@
 	* libiberty.h (xasprintf): Declare.
 
 2014-12-11  Uros Bizjak  <ubizjak@gmail.com>
-            Ben Elliston  <bje@au.ibm.com>
-            Manuel Lopez-Ibanez  <manu@gcc.gnu.org>
+	    Ben Elliston  <bje@au.ibm.com>
+	    Manuel Lopez-Ibanez  <manu@gcc.gnu.org>
 
 	* libiberty.h (xvasprintf): Declare.
 
@@ -627,7 +701,7 @@
 	DEMANGLE_COMPONENT_TAGGED_NAME.
 
 2012-10-29  Sterling Augustine  <saugustine@google.com>
-            Cary Coutant  <ccoutant@google.com>
+	    Cary Coutant  <ccoutant@google.com>
 
 	* dwarf2.h (dwarf_location_list_entry_type): New enum with fields
 	DW_LLE_GNU_end_of_list_entry, DW_LLE_GNU_base_address_selection_entry,
@@ -1264,7 +1338,7 @@
 
 	* splay-tree.h (libi_uhostptr_t, libi_shostptr_t): New types,
 	needed for WIN64 when a long is not wide enough for a pointer.
-        (splay_tree_key, splay_tree_value): Use the new types.
+	(splay_tree_key, splay_tree_value): Use the new types.
 
 2007-05-07  Nathan Froyd  <froydnj@codesourcery.com>
 
@@ -1304,7 +1378,7 @@
 	* ansidecl.h (ATTRIBUTE_PACKED): Define.
 
 2006-11-30  Andrew Stubbs  <andrew.stubbs@st.com>
-            J"orn Rennecke <joern.rennecke@st.com>
+	    J"orn Rennecke <joern.rennecke@st.com>
 
 	PR driver/29931
 	* libiberty.h (make_relative_prefix_ignore_links): Declare.

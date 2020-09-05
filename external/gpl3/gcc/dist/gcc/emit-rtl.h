@@ -1,5 +1,5 @@
 /* Exported functions from emit-rtl.c
-   Copyright (C) 2004-2018 Free Software Foundation, Inc.
+   Copyright (C) 2004-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -75,9 +75,6 @@ struct GTY(()) rtl_data {
      result in a register, current_function_return_rtx will always be
      the hard register containing the result.  */
   rtx return_rtx;
-  /* If nonxero, an RTL expression for the lcoation at which the current
-     function returns bounds for its result.  */
-  rtx return_bnd;
 
   /* Vector of initial-value pairs.  Each pair consists of a pseudo
      register of approprite mode that stores the initial value a hard
@@ -89,6 +86,10 @@ struct GTY(()) rtl_data {
   /* A variable living at the top of the frame that holds a known value.
      Used for detecting stack clobbers.  */
   tree stack_protect_guard;
+
+  /* The __stack_chk_guard variable or expression holding the stack
+     protector canary value.  */
+  tree stack_protect_guard_decl;
 
   /* List (chain of INSN_LIST) of labels heading the current handlers for
      nonlocal gotos.  */
@@ -248,7 +249,7 @@ struct GTY(()) rtl_data {
   /* True if dbr_schedule has already been called for this function.  */
   bool dbr_scheduled_p;
 
-  /* True if current function can not throw.  Unlike
+  /* True if current function cannot throw.  Unlike
      TREE_NOTHROW (current_function_decl) it is set even for overwritable
      function where currently compiled version of it is nothrow.  */
   bool nothrow;

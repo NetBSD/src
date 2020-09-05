@@ -1,5 +1,5 @@
 /* Interprocedural Identical Code Folding pass
-   Copyright (C) 2014-2018 Free Software Foundation, Inc.
+   Copyright (C) 2014-2019 Free Software Foundation, Inc.
 
    Contributed by Jan Hubicka <hubicka@ucw.cz> and Martin Liska <mliska@suse.cz>
 
@@ -463,7 +463,7 @@ func_checker::compare_operand (tree t1, tree t2)
 	  return return_false_with_msg ("");
 
 	/* Type of the offset on MEM_REF does not matter.  */
-	return wi::to_offset  (y1) == wi::to_offset  (y2);
+	return known_eq (wi::to_poly_offset (y1), wi::to_poly_offset (y2));
       }
     case COMPONENT_REF:
       {
@@ -754,8 +754,7 @@ func_checker::compare_gimple_call (gcall *s1, gcall *s2)
       || gimple_call_return_slot_opt_p (s1) != gimple_call_return_slot_opt_p (s2)
       || gimple_call_from_thunk_p (s1) != gimple_call_from_thunk_p (s2)
       || gimple_call_va_arg_pack_p (s1) != gimple_call_va_arg_pack_p (s2)
-      || gimple_call_alloca_for_var_p (s1) != gimple_call_alloca_for_var_p (s2)
-      || gimple_call_with_bounds_p (s1) != gimple_call_with_bounds_p (s2))
+      || gimple_call_alloca_for_var_p (s1) != gimple_call_alloca_for_var_p (s2))
     return false;
 
   if (gimple_call_internal_p (s1)

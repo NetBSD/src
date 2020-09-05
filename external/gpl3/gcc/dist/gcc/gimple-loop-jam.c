@@ -1,5 +1,5 @@
 /* Loop unroll-and-jam.
-   Copyright (C) 2017-2018 Free Software Foundation, Inc.
+   Copyright (C) 2017-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -118,7 +118,7 @@ merge_loop_tree (struct loop *loop, struct loop *old)
   for (i = 0; i < n; i++)
     {
       /* If the block was direct child of OLD loop it's now part
-         of LOOP.  If it was outside OLD, then it moved into LOOP
+	 of LOOP.  If it was outside OLD, then it moved into LOOP
 	 as well.  This avoids changing the loop father for BBs
 	 in inner loops of OLD.  */
       if (bbs[i]->loop_father == old
@@ -167,7 +167,7 @@ bb_prevents_fusion_p (basic_block bb)
        * stores or unknown side-effects prevent fusion
        * loads don't
        * computations into SSA names: these aren't problematic.  Their
-         result will be unused on the exit edges of the first N-1 copies
+	 result will be unused on the exit edges of the first N-1 copies
 	 (those aren't taken after unrolling).  If they are used on the
 	 other edge (the one leading to the outer latch block) they are
 	 loop-carried (on the outer loop) and the Nth copy of BB will
@@ -282,12 +282,12 @@ unroll_jam_possible_p (struct loop *outer, struct loop *loop)
       if (!simple_iv (loop, loop, op, &iv, true))
 	return false;
       /* The inductions must be regular, loop invariant step and initial
-         value.  */
+	 value.  */
       if (!expr_invariant_in_loop_p (outer, iv.step)
 	  || !expr_invariant_in_loop_p (outer, iv.base))
 	return false;
       /* XXX With more effort we could also be able to deal with inductions
-         where the initial value is loop variant but a simple IV in the
+	 where the initial value is loop variant but a simple IV in the
 	 outer loop.  The initial value for the second body would be
 	 the original initial value plus iv.base.step.  The next value
 	 for the fused loop would be the original next value of the first
@@ -322,7 +322,7 @@ fuse_loops (struct loop *loop)
       gcc_assert (EDGE_COUNT (next->header->preds) == 1);
 
       /* The PHI nodes of the second body (single-argument now)
-         need adjustments to use the right values: either directly
+	 need adjustments to use the right values: either directly
 	 the value of the corresponding PHI in the first copy or
 	 the one leaving the first body which unrolling did for us.
 
@@ -360,16 +360,33 @@ fuse_loops (struct loop *loop)
   rewrite_into_loop_closed_ssa_1 (NULL, 0, SSA_OP_USE, loop);
 }
 
+/* Return true if any of the access functions for dataref A
+   isn't invariant with respect to loop LOOP_NEST.  */
+static bool
+any_access_function_variant_p (const struct data_reference *a,
+			       const class loop *loop_nest)
+{
+  unsigned int i;
+  vec<tree> fns = DR_ACCESS_FNS (a);
+  tree t;
+
+  FOR_EACH_VEC_ELT (fns, i, t)
+    if (!evolution_function_is_invariant_p (t, loop_nest->num))
+      return true;
+
+  return false;
+}
+
 /* Returns true if the distance in DDR can be determined and adjusts
    the unroll factor in *UNROLL to make unrolling valid for that distance.
-   Otherwise return false.
+   Otherwise return false.  DDR is with respect to the outer loop of INNER.
 
    If this data dep can lead to a removed memory reference, increment
    *REMOVED and adjust *PROFIT_UNROLL to be the necessary unroll factor
    for this to happen.  */
 
 static bool
-adjust_unroll_factor (struct data_dependence_relation *ddr,
+adjust_unroll_factor (class loop *inner, struct data_dependence_relation *ddr,
 		      unsigned *unroll, unsigned *profit_unroll,
 		      unsigned *removed)
 {
@@ -392,9 +409,59 @@ adjust_unroll_factor (struct data_dependence_relation *ddr,
 	    gcc_unreachable ();
 	  else if ((unsigned)dist >= *unroll)
 	    ;
-	  else if (lambda_vector_lexico_pos (dist_v + 1, DDR_NB_LOOPS (ddr) - 1)
-		   || (lambda_vector_zerop (dist_v + 1, DDR_NB_LOOPS (ddr) - 1)
-		       && dist > 0))
+	  else if (lambda_vector_zerop (dist_v + 1, DDR_NB_LOOPS (ddr) - 1))
+	    {
+	      /* We have (a,0) with a < N, so this will be transformed into
+	         (0,0) after unrolling by N.  This might potentially be a
+		 problem, if it's not a read-read dependency.  */
+	      if (DR_IS_READ (DDR_A (ddr)) && DR_IS_READ (DDR_B (ddr)))
+		;
+	      else
+		{
+		  /* So, at least one is a write, and we might reduce the
+		     distance vector to (0,0).  This is still no problem
+		     if both data-refs are affine with respect to the inner
+		     loops.  But if one of them is invariant with respect
+		     to an inner loop our reordering implicit in loop fusion
+		     corrupts the program, as our data dependences don't
+		     capture this.  E.g. for:
+		       for (0 <= i < n)
+		         for (0 <= j < m)
+		           a[i][0] = a[i+1][0] + 2;    // (1)
+		           b[i][j] = b[i+1][j] + 2;    // (2)
+		     the distance vector for both statements is (-1,0),
+		     but exchanging the order for (2) is okay, while
+		     for (1) it is not.  To see this, write out the original
+		     accesses (assume m is 2):
+		       a i j original
+		       0 0 0 r a[1][0] b[1][0]
+		       1 0 0 w a[0][0] b[0][0]
+		       2 0 1 r a[1][0] b[1][1]
+		       3 0 1 w a[0][0] b[0][1]
+		       4 1 0 r a[2][0] b[2][0]
+		       5 1 0 w a[1][0] b[1][0]
+		     after unroll-by-2 and fusion the accesses are done in
+		     this order (from column a): 0,1, 4,5, 2,3, i.e. this:
+		       a i j transformed
+		       0 0 0 r a[1][0] b[1][0]
+		       1 0 0 w a[0][0] b[0][0]
+		       4 1 0 r a[2][0] b[2][0]
+		       5 1 0 w a[1][0] b[1][0]
+		       2 0 1 r a[1][0] b[1][1]  
+		       3 0 1 w a[0][0] b[0][1]
+		     Note how access 2 accesses the same element as access 5
+		     for array 'a' but not for array 'b'.  */
+		  if (any_access_function_variant_p (DDR_A (ddr), inner)
+		      && any_access_function_variant_p (DDR_B (ddr), inner))
+		    ;
+		  else
+		    /* And if any dataref of this pair is invariant with
+		       respect to the inner loop, we have no chance than
+		       to reduce the unroll factor.  */
+		    *unroll = dist;
+		}
+	    }
+	  else if (lambda_vector_lexico_pos (dist_v + 1, DDR_NB_LOOPS (ddr) - 1))
 	    ;
 	  else
 	    *unroll = dist;
@@ -449,7 +516,7 @@ tree_loop_unroll_and_jam (void)
       dependences.create (10);
       datarefs.create (10);
       if (!compute_data_dependences_for_loop (outer, true, &loop_nest,
-					       &datarefs, &dependences))
+					      &datarefs, &dependences))
 	{
 	  if (dump_file && (dump_flags & TDF_DETAILS))
 	    fprintf (dump_file, "Cannot analyze data dependencies\n");
@@ -486,11 +553,11 @@ tree_loop_unroll_and_jam (void)
 	  /* Now check the distance vector, for determining a sensible
 	     outer unroll factor, and for validity of merging the inner
 	     loop copies.  */
-	  if (!adjust_unroll_factor (ddr, &unroll_factor, &profit_unroll,
+	  if (!adjust_unroll_factor (loop, ddr, &unroll_factor, &profit_unroll,
 				     &removed))
 	    {
 	      /* Couldn't get the distance vector.  For two reads that's
-	         harmless (we assume we should unroll).  For at least
+		 harmless (we assume we should unroll).  For at least
 		 one write this means we can't check the dependence direction
 		 and hence can't determine safety.  */
 
@@ -503,10 +570,10 @@ tree_loop_unroll_and_jam (void)
 	}
 
       /* We regard a user-specified minimum percentage of zero as a request
-         to ignore all profitability concerns and apply the transformation
+	 to ignore all profitability concerns and apply the transformation
 	 always.  */
       if (!PARAM_VALUE (PARAM_UNROLL_JAM_MIN_PERCENT))
-	profit_unroll = 2;
+	profit_unroll = MAX(2, profit_unroll);
       else if (removed * 100 / datarefs.length ()
 	  < (unsigned)PARAM_VALUE (PARAM_UNROLL_JAM_MIN_PERCENT))
 	profit_unroll = 1;

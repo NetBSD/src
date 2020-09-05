@@ -1,5 +1,5 @@
 /* Tree inlining hooks and declarations.
-   Copyright (C) 2001-2018 Free Software Foundation, Inc.
+   Copyright (C) 2001-2019 Free Software Foundation, Inc.
    Contributed by Alexandre Oliva  <aoliva@redhat.com>
 
 This file is part of GCC.
@@ -63,12 +63,6 @@ struct copy_body_data
   /* The VAR_DECL for the return value.  */
   tree retvar;
 
-  /* The VAR_DECL for the return bounds.  */
-  tree retbnd;
-
-  /* Assign statements that need bounds copy.  */
-  vec<gimple *> assign_stmts;
-
   /* The map from local declarations in the inlined function to
      equivalents in the function into which it is being inlined.  */
   hash_map<tree, tree> *decl_map;
@@ -82,6 +76,9 @@ struct copy_body_data
   /* GIMPLE_CALL if va arg parameter packs should be expanded or NULL
      is not.  */
   gcall *call_stmt;
+
+  /* > 0 if we are remapping a type currently.  */
+  int remapping_type_depth;
 
   /* Exception landing pad the inlined call lies in.  */
   int eh_lp_nr;
@@ -113,11 +110,21 @@ struct copy_body_data
   /* True if this statement will need to be regimplified.  */
   bool regimplify;
 
-  /* True if trees should not be unshared.  */
+  /* True if trees may not be unshared.  */
   bool do_not_unshare;
 
-  /* > 0 if we are remapping a type currently.  */
-  int remapping_type_depth;
+  /* True if trees should not be folded during the copying.  */
+  bool do_not_fold;
+
+  /* True if new declarations may not be created during type remapping.  */
+  bool prevent_decl_creation_for_types;
+
+  /* True if the location information will need to be reset.  */
+  bool reset_location;
+
+  /* Replace error_mark_node as upper bound of array types with
+     an uninitialized VAR_DECL temporary.  */
+  bool adjust_array_error_bounds;
 
   /* Usually copy_decl callback always creates new decls, in that case
      we want to remap all variably_modified_type_p types.  If this flag
@@ -156,8 +163,11 @@ struct copy_body_data
      when inlining a call within an OpenMP SIMD-on-SIMT loop.  */
   vec<tree> *dst_simt_vars;
 
-  /* Do not create new declarations when within type remapping.  */
-  bool prevent_decl_creation_for_types;
+  /* If clobbers for local variables from the inline function
+     that need to live in memory should be added to EH landing pads
+     outside of the inlined function, this should be the number
+     of basic blocks in the caller before inlining.  Zero otherwise.  */
+  int add_clobbers_to_eh_landing_pads;
 };
 
 /* Weights of constructions for estimate_num_insns.  */

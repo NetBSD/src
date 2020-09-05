@@ -1,5 +1,5 @@
 /* Support for GCC plugin mechanism.
-   Copyright (C) 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2009-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -290,7 +290,7 @@ parse_plugin_arg_opt (const char *arg)
 
   if (!key_start)
     {
-      error ("malformed option -fplugin-arg-%s (missing -<key>[=<value>])",
+      error ("malformed option %<-fplugin-arg-%s%> (missing -<key>[=<value>])",
              arg);
       return;
     }
@@ -353,7 +353,7 @@ parse_plugin_arg_opt (const char *arg)
       plugin->argv[plugin->argc - 1].value = value;
     }
   else
-    error ("plugin %s should be specified before -fplugin-arg-%s "
+    error ("plugin %s should be specified before %<-fplugin-arg-%s%> "
            "in the command line", name, arg);
 
   /* We don't need the plugin's name anymore. Just release it.  */
@@ -1003,6 +1003,6 @@ default_plugin_dir_name (void)
 {
   if (!plugindir_string)
     fatal_error (input_location,
-		 "-iplugindir <dir> option not passed from the gcc driver");
+		 "%<-iplugindir%> <dir> option not passed from the gcc driver");
   return plugindir_string;
 }

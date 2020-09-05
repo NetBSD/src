@@ -1,5 +1,5 @@
 /* Target definitions for Darwin (Mac OS X) systems.
-   Copyright (C) 1989-2018 Free Software Foundation, Inc.
+   Copyright (C) 1989-2019 Free Software Foundation, Inc.
    Contributed by Apple Computer Inc.
 
 This file is part of GCC.
@@ -42,9 +42,6 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 
 #define DARWIN_X86 0
 #define DARWIN_PPC 0
-
-/* Don't assume anything about the header files.  */
-#define NO_IMPLICIT_EXTERN_C
 
 /* Suppress g++ attempt to link in the math library automatically. */
 #define MATH_LIBRARY ""
@@ -126,7 +123,7 @@ extern GTY(()) int darwin_ms_struct;
   "%{gused:-g -feliminate-unused-debug-symbols} %<gused",	\
   "%{fapple-kext|mkernel:-static}",				\
   "%{shared:-Zdynamiclib} %<shared",                            \
-  "%{gsplit-dwarf:%ngsplit-dwarf is not supported on this platform } \
+  "%{gsplit-dwarf:%ngsplit-dwarf is not supported on this platform} \
      %<gsplit-dwarf"
 
 #if LD64_HAS_EXPORT_DYNAMIC
@@ -212,18 +209,18 @@ extern GTY(()) int darwin_ms_struct;
    "%X %{s} %{t} %{Z} %{u*} \
     %{e*} %{r} \
     %{o*}%{!o:-o a.out} \
-    %{!nostdlib:%{!nostartfiles:%S}} \
+    %{!nostdlib:%{!r:%{!nostartfiles:%S}}} \
     %{L*} %(link_libgcc) %o %{fprofile-arcs|fprofile-generate*|coverage:-lgcov} \
     %{fopenacc|fopenmp|%:gt(%{ftree-parallelize-loops=*:%*} 1): \
       %{static|static-libgcc|static-libstdc++|static-libgfortran: libgomp.a%s; : -lgomp } } \
     %{fgnu-tm: \
       %{static|static-libgcc|static-libstdc++|static-libgfortran: libitm.a%s; : -litm } } \
-    %{!nostdlib:%{!nodefaultlibs:\
+    %{!nostdlib:%{!r:%{!nodefaultlibs:\
       %{%:sanitize(address): -lasan } \
       %{%:sanitize(undefined): -lubsan } \
       %(link_ssp) \
       %(link_gcc_c_sequence) \
-    }}\
+    }}}\
     %{!nostdlib:%{!r:%{!nostartfiles:%E}}} %{T*} %{F*} "\
     DARWIN_PIE_SPEC \
     DARWIN_NOPIE_SPEC \
@@ -248,7 +245,7 @@ extern GTY(()) int darwin_ms_struct;
 /* We only want one instance of %G, since libSystem (Darwin's -lc) does not depend
    on libgcc.  */
 #undef  LINK_GCC_C_SEQUENCE_SPEC
-#define LINK_GCC_C_SEQUENCE_SPEC "%G %L"
+#define LINK_GCC_C_SEQUENCE_SPEC "%G %{!nolibc:%L}"
 
 /* ld64 supports a sysroot, it just has a different name and there's no easy
    way to check for it at config time.  */
@@ -471,7 +468,7 @@ extern GTY(()) int darwin_ms_struct;
 
 #define ASM_DEBUG_SPEC  "%{g*:%{%:debug-level-gt(0):%{!gdwarf*:--gstabs}}}"
 #define ASM_FINAL_SPEC \
-  "%{gsplit-dwarf:%ngsplit-dwarf is not supported on this platform } %<gsplit-dwarf"
+  "%{gsplit-dwarf:%ngsplit-dwarf is not supported on this platform} %<gsplit-dwarf"
 
 /* We still allow output of STABS if the assembler supports it.  */
 #ifdef HAVE_AS_STABS_DIRECTIVE

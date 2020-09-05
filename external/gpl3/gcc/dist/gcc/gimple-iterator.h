@@ -1,5 +1,5 @@
 /* Header file for gimple iterators.
-   Copyright (C) 2013-2018 Free Software Foundation, Inc.
+   Copyright (C) 2013-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -79,6 +79,7 @@ extern void gsi_insert_after (gimple_stmt_iterator *, gimple *,
 			      enum gsi_iterator_update);
 extern bool gsi_remove (gimple_stmt_iterator *, bool);
 extern gimple_stmt_iterator gsi_for_stmt (gimple *);
+extern gimple_stmt_iterator gsi_for_stmt (gimple *, gimple_seq *);
 extern gphi_iterator gsi_for_phi (gphi *);
 extern void gsi_move_after (gimple_stmt_iterator *, gimple_stmt_iterator *);
 extern void gsi_move_before (gimple_stmt_iterator *, gimple_stmt_iterator *);
