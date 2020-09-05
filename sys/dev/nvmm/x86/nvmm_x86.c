@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86.c,v 1.17 2020/09/05 07:22:26 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86.c,v 1.18 2020/09/05 07:45:44 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86.c,v 1.17 2020/09/05 07:22:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86.c,v 1.18 2020/09/05 07:45:44 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,7 +233,7 @@ const struct nvmm_x86_cpuid_mask nvmm_cpuid_00000001 = {
 	.ebx = ~0,
 	.ecx =
 	    CPUID2_SSE3 |
-	    CPUID2_PCLMUL |
+	    CPUID2_PCLMULQDQ |
 	    /* CPUID2_DTES64 excluded */
 	    /* CPUID2_MONITOR excluded */
 	    /* CPUID2_DS_CPL excluded */
@@ -242,11 +242,11 @@ const struct nvmm_x86_cpuid_mask nvmm_cpuid_00000001 = {
 	    /* CPUID2_EST excluded */
 	    /* CPUID2_TM2 excluded */
 	    CPUID2_SSSE3 |
-	    /* CPUID2_CID excluded */
+	    /* CPUID2_CNXTID excluded */
 	    /* CPUID2_SDBG excluded */
 	    CPUID2_FMA |
 	    CPUID2_CX16 |
-	    /* CPUID2_xTPR excluded */
+	    /* CPUID2_XTPR excluded */
 	    /* CPUID2_PDCM excluded */
 	    /* CPUID2_PCID excluded, but re-included in VMX */
 	    /* CPUID2_DCA excluded */
@@ -256,7 +256,7 @@ const struct nvmm_x86_cpuid_mask nvmm_cpuid_00000001 = {
 	    CPUID2_MOVBE |
 	    CPUID2_POPCNT |
 	    /* CPUID2_DEADLINE excluded */
-	    CPUID2_AES |
+	    CPUID2_AESNI |
 	    CPUID2_XSAVE |
 	    CPUID2_OSXSAVE |
 	    /* CPUID2_AVX excluded */
@@ -281,8 +281,8 @@ const struct nvmm_x86_cpuid_mask nvmm_cpuid_00000001 = {
 	    CPUID_CMOV |
 	    CPUID_PAT |
 	    CPUID_PSE36 |
-	    /* CPUID_PN excluded */
-	    CPUID_CFLUSH |
+	    /* CPUID_PSN excluded */
+	    CPUID_CLFSH |
 	    /* CPUID_DS excluded */
 	    /* CPUID_ACPI excluded */
 	    CPUID_MMX |
@@ -292,7 +292,7 @@ const struct nvmm_x86_cpuid_mask nvmm_cpuid_00000001 = {
 	    CPUID_SS |
 	    CPUID_HTT |
 	    /* CPUID_TM excluded */
-	    CPUID_SBF
+	    CPUID_PBE
 };
 
 const struct nvmm_x86_cpuid_mask nvmm_cpuid_00000007 = {
@@ -380,7 +380,7 @@ const struct nvmm_x86_cpuid_mask nvmm_cpuid_80000001 = {
 	    /* CPUID_SVM excluded */
 	    /* CPUID_EAPIC excluded */
 	    CPUID_ALTMOVCR0 |
-	    CPUID_LZCNT |
+	    CPUID_ABM |
 	    CPUID_SSE4A |
 	    CPUID_MISALIGNSSE |
 	    CPUID_3DNOWPF |
@@ -410,7 +410,7 @@ const struct nvmm_x86_cpuid_mask nvmm_cpuid_80000001 = {
 	    CPUID_MMX | 
 	    CPUID_FXSR |
 	    CPUID_FFXSR |
-	    CPUID_P1GB |
+	    CPUID_PAGE1GB |
 	    /* CPUID_RDTSCP excluded */
 	    CPUID_EM64T |
 	    CPUID_3DNOW2 |

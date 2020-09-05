@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cache.c,v 1.13 2019/01/23 19:02:49 jmcneill Exp $	*/
+/*	$NetBSD: drm_cache.c,v 1.14 2020/09/05 07:45:44 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.13 2019/01/23 19:02:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.14 2020/09/05 07:45:44 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -123,7 +123,7 @@ drm_clflush_virt_range(const void *vaddr, size_t nbytes)
 static bool
 drm_md_clflush_finegrained_p(void)
 {
-	return ISSET(cpu_info_primary.ci_feat_val[0], CPUID_CFLUSH);
+	return ISSET(cpu_info_primary.ci_feat_val[0], CPUID_CLFSH);
 }
 
 static void

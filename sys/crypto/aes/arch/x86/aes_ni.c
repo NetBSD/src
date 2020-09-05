@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_ni.c,v 1.4 2020/07/25 22:29:06 riastradh Exp $	*/
+/*	$NetBSD: aes_ni.c,v 1.5 2020/09/05 07:45:44 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_ni.c,v 1.4 2020/07/25 22:29:06 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_ni.c,v 1.5 2020/09/05 07:45:44 maxv Exp $");
 
 #ifdef _KERNEL
 #include <sys/types.h>
@@ -283,7 +283,7 @@ aesni_probe(void)
 
 	/* Verify that the CPU supports AES-NI.  */
 #ifdef _KERNEL
-	if ((cpu_feature[1] & CPUID2_AES) == 0)
+	if ((cpu_feature[1] & CPUID2_AESNI) == 0)
 		return -1;
 #else
 	unsigned eax, ebx, ecx, edx;

@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.116 2020/07/25 22:49:20 riastradh Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.117 2020/09/05 07:45:44 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.116 2020/07/25 22:49:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.117 2020/09/05 07:45:44 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -924,7 +924,7 @@ cpu_probe(struct cpu_info *ci)
 		}
 
 		/* CLFLUSH line size is next 8 bits */
-		if (ci->ci_feat_val[0] & CPUID_CFLUSH)
+		if (ci->ci_feat_val[0] & CPUID_CLFSH)
 			ci->ci_cflush_lsize
 			    = __SHIFTOUT(miscbytes, CPUID_CLFLUSH_SIZE) << 3;
 		ci->ci_initapicid = __SHIFTOUT(miscbytes, CPUID_LOCAL_APIC_ID);
@@ -1006,7 +1006,7 @@ cpu_probe(struct cpu_info *ci)
 
 		/* AES */
 #ifdef __x86_64__	/* not yet implemented on i386 */
-		if (cpu_feature[1] & CPUID2_AES)
+		if (cpu_feature[1] & CPUID2_AESNI)
 			aes_md_init(&aes_ni_impl);
 		else
 #endif
