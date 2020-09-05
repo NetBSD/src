@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.backend,v 1.8 2019/02/01 10:34:18 mrg Exp $
+#	$NetBSD: Makefile.backend,v 1.9 2020/09/05 14:24:25 mrg Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_BACKEND_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_BACKEND_=1
@@ -15,6 +15,7 @@ CPPFLAGS+=	-I${GCCARCH} -I${BACKENDOBJ} \
 DPADD+=			${BACKENDOBJ}/libbackend.a
 LDADD+=			${BACKENDOBJ}/libbackend.a
 
+.include "../Makefile.common-target"
 .include "../Makefile.common"
 .include "../Makefile.libiberty"
 .include "../Makefile.prog"

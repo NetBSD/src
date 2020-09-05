@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.60 2020/09/05 09:50:16 mrg Exp $
+#	$NetBSD: Makefile,v 1.61 2020/09/05 14:24:26 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -312,6 +312,13 @@ build-vec.c: vec.c vec.h ${G_GGC_H}
 build-vec.lo: ${HH_NORTL}
 CLEANFILES+=	build-vec.c
 
+build-sort.cc: sort.cc sort.h ${G_GGC_H}
+	${_MKTARGET_CREATE}
+	rm -f build-sort.cc
+	cat ${GNUHOSTDIST}/gcc/sort.cc >${.TARGET}
+build-sort.lo: ${HH_NORTL}
+CLEANFILES+=	build-sort.cc
+
 build-genattrtab.o: ${G_GGC_H}
 
 #
@@ -334,15 +341,13 @@ GENPROG_RTL_DEPENDS=	${G_BUILD_RTL:.o=.lo} ${GENPROG_READER_DEPENDS} ${GENPROG_E
 #
 # First we generate the rules for the generators.
 #
-GENDEPS.cfn-macros=	build-sort.lo
-
 .for f in attr attr-common attrtab automata codes conditions config emit \
 	  extract flags opinit output peep preds recog mddump condmd \
 	  target-def cfn-macros
-gen${f}.lo: ${HH} gen${f}.c ${G_RTL_BASE_H} ${GENDEPS.${f}}
+gen${f}.lo: ${HH} gen${f}.c ${G_RTL_BASE_H} build-sort.lo
 gen${f}: gen${f}.lo ${GENPROG_RTL_DEPENDS} 
 	${_MKTARGET_LINK}
-	${HOST_LINK.cc} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY} ${LDFLAGS.${.TARGET}}
+	${HOST_LINK.cc} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY} ${LDFLAGS.${.TARGET}} build-sort.lo
 CLEANFILES+=	gen${f} gen${f}.lo
 .endfor
 
@@ -489,7 +494,7 @@ gcov-io.h: gcov-iov.h
 df-scan.d df-scan.o: target-hooks-def.h
 read-md.d read-md.o read-md.lo: auto-build.h
 hash-table.d hash-table.o hash-table.lo: auto-build.h gtype-desc.h
-gencfn-macros.d gencfn-macros.o gencfn-macros.lo: gtype-desc.h case-cfn-macros.h
+gencfn-macros.d gencfn-macros.o gencfn-macros.lo: gtype-desc.h
 pass_manager.h passes.c: pass-instances.def
 context.d coverage.d lto-cgraph.d passes.d statistics.d toplev.d cgraphunit.d: pass_manager.h
 context.o coverage.o lto-cgraph.o passes.o statistics.o toplev.o cgraphunit.o: pass_manager.h
