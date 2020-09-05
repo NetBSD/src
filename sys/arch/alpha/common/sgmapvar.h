@@ -1,4 +1,4 @@
-/* $NetBSD: sgmapvar.h,v 1.17 2020/06/17 04:12:39 thorpej Exp $ */
+/* $NetBSD: sgmapvar.h,v 1.18 2020/09/05 03:47:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -44,12 +44,12 @@
 
 /*
  * An Alpha SGMAP's state information.  Nothing in the sgmap requires
- * locking[*], with the exception of the extent map.  Locking of the
- * extent map is handled within the extent manager itself.
+ * locking[*], with the exception of the vmem arena, which takes care
+ * of it on its own.
  *
  * [*] While the page table is a `global' resource, access to it is
- * controlled by the extent map; once a region has been allocated from
- * the map, that region is effectively `locked'.
+ * controlled by the arenaa; once a region has been allocated from
+ * the arena, that region is effectively `locked'.
  */
 struct alpha_sgmap {
 	vmem_t	*aps_arena;		/* arena to manage sgva space */
