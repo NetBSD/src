@@ -41,8 +41,6 @@
 #undef stat
 #endif
 
-#endif // SANITIZER_LINUX
-
 #if SANITIZER_NETBSD
 #include <lwp.h>
 #endif
@@ -980,7 +978,6 @@ ThreadLister::ThreadLister(pid_t pid) : pid_(pid), buffer_(4096) {
   if (internal_iserror(descriptor_)) {
     Report("Can't open /proc/%d/task for reading.\n", pid);
   }
-#endif
 }
 
 ThreadLister::Result ThreadLister::ListThreads(
@@ -1055,10 +1052,8 @@ bool ThreadLister::IsAlive(int tid) {
 }
 
 ThreadLister::~ThreadLister() {
-#ifndef SANITIZER_NETBSD
   if (!internal_iserror(descriptor_))
     internal_close(descriptor_);
-#endif
 }
 #endif
 

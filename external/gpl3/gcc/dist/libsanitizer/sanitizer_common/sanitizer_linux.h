@@ -69,6 +69,8 @@ uptr internal_clone(int (*fn)(void *), void *child_stack, int flags, void *arg,
 #endif
 #elif SANITIZER_FREEBSD
 void internal_sigdelset(__sanitizer_sigset_t *set, int signum);
+#elif SANITIZER_NETBSD
+uptr internal_prctl(int option, uptr arg2, uptr arg3, uptr arg4, uptr arg5);
 #endif  // SANITIZER_LINUX
 
 #ifdef SANITIZER_NETBSD

@@ -35,7 +35,6 @@
 #include <dev/dmover/dmover_io.h>
 #include <dev/dtv/dtvio_demux.h>
 #include <dev/dtv/dtvio_frontend.h>
-#include <dev/filemon/filemon.h>
 #include <dev/hdaudio/hdaudioio.h>
 #include <dev/hdmicec/hdmicecio.h>
 #include <dev/hpc/hpcfbio.h>
@@ -48,7 +47,6 @@
 #include <dev/ic/nvmeio.h>
 #include <dev/ir/irdaio.h>
 #include <dev/isa/isvio.h>
-#include <dev/isa/satlinkio.h>
 #include <dev/isa/wtreg.h>
 #include <dev/iscsi/iscsi_ioctl.h>
 #include <dev/ofw/openfirmio.h>
@@ -73,6 +71,7 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <netinet/ip_compat.h>
+#undef INLINE
 #include <netinet/ip_fil.h>
 #include <netinet/ip_mroute.h>
 #include <poll.h>
@@ -106,7 +105,6 @@
 #include <dev/sun/vuid_event.h>
 #include <dev/tc/sticio.h>
 #include <dev/usb/ukyopon.h>
-#include <dev/usb/urio.h>
 #include <dev/usb/usb.h>
 #include <dev/usb/utoppy.h>
 #include <dev/vme/xio.h>
@@ -114,7 +112,6 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplay_usl_io.h>
 #include <net/bpf.h>
-#include <net/if_atm.h>
 #include <net/if_gre.h>
 #include <net/if_ppp.h>
 #include <net/if_pppoe.h>
@@ -122,6 +119,7 @@
 #include <net/if_srt.h>
 #include <net/if_tap.h>
 #include <net/if_tun.h>
+#include <nv.h>
 #include <net/npf.h>
 #include <net/pfvar.h>
 #include <net/slip.h>
@@ -130,8 +128,6 @@
 #include <netinet/ip_proxy.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
-#include <netnatm/natm.h>
-#include <netsmb/smb_dev.h>
 #include <soundcard.h>
 #include <sys/agpio.h>
 #include <sys/ataio.h>
@@ -347,8 +343,6 @@ unsigned struct_apm_power_info_sz = sizeof(apm_power_info);
 unsigned struct_atabusiodetach_args_sz = sizeof(atabusiodetach_args);
 unsigned struct_atabusioscan_args_sz = sizeof(atabusioscan_args);
 unsigned struct_ath_diag_sz = sizeof(ath_diag);
-unsigned struct_atm_flowmap_sz = sizeof(atm_flowmap);
-unsigned struct_atm_pseudoioctl_sz = sizeof(atm_pseudoioctl);
 unsigned struct_audio_buf_info_sz = sizeof(audio_buf_info);
 unsigned struct_audio_device_sz = sizeof(audio_device);
 unsigned struct_audio_encoding_sz = sizeof(audio_encoding);
@@ -594,7 +588,6 @@ unsigned struct_priq_delete_filter_sz = sizeof(priq_delete_filter);
 unsigned struct_priq_interface_sz = sizeof(priq_interface);
 unsigned struct_priq_modify_class_sz = sizeof(priq_modify_class);
 unsigned struct_ptmget_sz = sizeof(ptmget);
-unsigned struct_pvctxreq_sz = sizeof(pvctxreq);
 unsigned struct_radio_info_sz = sizeof(radio_info);
 unsigned struct_red_conf_sz = sizeof(red_conf);
 unsigned struct_red_interface_sz = sizeof(red_interface);
@@ -606,7 +599,6 @@ unsigned struct_rf_recon_req_sz = sizeof(rf_recon_req);
 unsigned struct_rio_conf_sz = sizeof(rio_conf);
 unsigned struct_rio_interface_sz = sizeof(rio_interface);
 unsigned struct_rio_stats_sz = sizeof(rio_stats);
-unsigned struct_satlink_id_sz = sizeof(satlink_id);
 unsigned struct_scan_io_sz = sizeof(scan_io);
 unsigned struct_scbusaccel_args_sz = sizeof(scbusaccel_args);
 unsigned struct_scbusiodetach_args_sz = sizeof(scbusiodetach_args);
@@ -617,12 +609,6 @@ unsigned struct_session_op_sz = sizeof(session_op);
 unsigned struct_sgttyb_sz = sizeof(sgttyb);
 unsigned struct_sioc_sg_req_sz = sizeof(sioc_sg_req);
 unsigned struct_sioc_vif_req_sz = sizeof(sioc_vif_req);
-unsigned struct_smbioc_flags_sz = sizeof(smbioc_flags);
-unsigned struct_smbioc_lookup_sz = sizeof(smbioc_lookup);
-unsigned struct_smbioc_oshare_sz = sizeof(smbioc_oshare);
-unsigned struct_smbioc_ossn_sz = sizeof(smbioc_ossn);
-unsigned struct_smbioc_rq_sz = sizeof(smbioc_rq);
-unsigned struct_smbioc_rw_sz = sizeof(smbioc_rw);
 unsigned struct_spppauthcfg_sz = sizeof(spppauthcfg);
 unsigned struct_spppauthfailuresettings_sz = sizeof(spppauthfailuresettings);
 unsigned struct_spppauthfailurestats_sz = sizeof(spppauthfailurestats);
@@ -647,7 +633,6 @@ unsigned struct_twe_drivecommand_sz = sizeof(twe_drivecommand);
 unsigned struct_twe_paramcommand_sz = sizeof(twe_paramcommand);
 unsigned struct_twe_usercommand_sz = sizeof(twe_usercommand);
 unsigned struct_ukyopon_identify_sz = sizeof(ukyopon_identify);
-unsigned struct_urio_command_sz = sizeof(urio_command);
 unsigned struct_usb_alt_interface_sz = sizeof(usb_alt_interface);
 unsigned struct_usb_bulk_ra_wb_opt_sz = sizeof(usb_bulk_ra_wb_opt);
 unsigned struct_usb_config_desc_sz = sizeof(usb_config_desc);
@@ -949,8 +934,6 @@ unsigned IOCTL_FE_SET_VOLTAGE = FE_SET_VOLTAGE;
 unsigned IOCTL_FE_ENABLE_HIGH_LNB_VOLTAGE = FE_ENABLE_HIGH_LNB_VOLTAGE;
 unsigned IOCTL_FE_SET_FRONTEND_TUNE_MODE = FE_SET_FRONTEND_TUNE_MODE;
 unsigned IOCTL_FE_DISHNETWORK_SEND_LEGACY_CMD = FE_DISHNETWORK_SEND_LEGACY_CMD;
-unsigned IOCTL_FILEMON_SET_FD = FILEMON_SET_FD;
-unsigned IOCTL_FILEMON_SET_PID = FILEMON_SET_PID;
 unsigned IOCTL_HDAUDIO_FGRP_INFO = HDAUDIO_FGRP_INFO;
 unsigned IOCTL_HDAUDIO_FGRP_GETCONFIG = HDAUDIO_FGRP_GETCONFIG;
 unsigned IOCTL_HDAUDIO_FGRP_SETCONFIG = HDAUDIO_FGRP_SETCONFIG;
@@ -1066,9 +1049,6 @@ unsigned IOCTL_IRDA_GET_TURNAROUNDMASK = IRDA_GET_TURNAROUNDMASK;
 unsigned IOCTL_IRFRAMETTY_GET_DEVICE = IRFRAMETTY_GET_DEVICE;
 unsigned IOCTL_IRFRAMETTY_GET_DONGLE = IRFRAMETTY_GET_DONGLE;
 unsigned IOCTL_IRFRAMETTY_SET_DONGLE = IRFRAMETTY_SET_DONGLE;
-unsigned IOCTL_SATIORESET = SATIORESET;
-unsigned IOCTL_SATIOGID = SATIOGID;
-unsigned IOCTL_SATIOSBUFSIZE = SATIOSBUFSIZE;
 unsigned IOCTL_ISV_CMD = ISV_CMD;
 unsigned IOCTL_WTQICMD = WTQICMD;
 unsigned IOCTL_ISCSI_GET_VERSION = ISCSI_GET_VERSION;
@@ -1208,8 +1188,6 @@ unsigned IOCTL_STICIO_RESET = STICIO_RESET;
 unsigned IOCTL_STICIO_STARTQ = STICIO_STARTQ;
 unsigned IOCTL_STICIO_STOPQ = STICIO_STOPQ;
 unsigned IOCTL_UKYOPON_IDENTIFY = UKYOPON_IDENTIFY;
-unsigned IOCTL_URIO_SEND_COMMAND = URIO_SEND_COMMAND;
-unsigned IOCTL_URIO_RECV_COMMAND = URIO_RECV_COMMAND;
 unsigned IOCTL_USB_REQUEST = USB_REQUEST;
 unsigned IOCTL_USB_SETDEBUG = USB_SETDEBUG;
 unsigned IOCTL_USB_DISCOVER = USB_DISCOVER;
@@ -1412,13 +1390,6 @@ unsigned IOCTL_BIOCSRTIMEOUT = BIOCSRTIMEOUT;
 unsigned IOCTL_BIOCGRTIMEOUT = BIOCGRTIMEOUT;
 unsigned IOCTL_BIOCGFEEDBACK = BIOCGFEEDBACK;
 unsigned IOCTL_BIOCSFEEDBACK = BIOCSFEEDBACK;
-unsigned IOCTL_SIOCRAWATM = SIOCRAWATM;
-unsigned IOCTL_SIOCATMENA = SIOCATMENA;
-unsigned IOCTL_SIOCATMDIS = SIOCATMDIS;
-unsigned IOCTL_SIOCSPVCTX = SIOCSPVCTX;
-unsigned IOCTL_SIOCGPVCTX = SIOCGPVCTX;
-unsigned IOCTL_SIOCSPVCSIF = SIOCSPVCSIF;
-unsigned IOCTL_SIOCGPVCSIF = SIOCGPVCSIF;
 unsigned IOCTL_GRESADDRS = GRESADDRS;
 unsigned IOCTL_GRESADDRD = GRESADDRD;
 unsigned IOCTL_GREGADDRS = GREGADDRS;
@@ -1576,13 +1547,6 @@ unsigned IOCTL_SIOCPURGENAT = SIOCPURGENAT;
 unsigned IOCTL_SIOCSIFINFO_FLAGS = SIOCSIFINFO_FLAGS;
 unsigned IOCTL_SIOCAADDRCTL_POLICY = SIOCAADDRCTL_POLICY;
 unsigned IOCTL_SIOCDADDRCTL_POLICY = SIOCDADDRCTL_POLICY;
-unsigned IOCTL_SMBIOC_OPENSESSION = SMBIOC_OPENSESSION;
-unsigned IOCTL_SMBIOC_OPENSHARE = SMBIOC_OPENSHARE;
-unsigned IOCTL_SMBIOC_REQUEST = SMBIOC_REQUEST;
-unsigned IOCTL_SMBIOC_SETFLAGS = SMBIOC_SETFLAGS;
-unsigned IOCTL_SMBIOC_LOOKUP = SMBIOC_LOOKUP;
-unsigned IOCTL_SMBIOC_READ = SMBIOC_READ;
-unsigned IOCTL_SMBIOC_WRITE = SMBIOC_WRITE;
 unsigned IOCTL_AGPIOC_INFO = AGPIOC_INFO;
 unsigned IOCTL_AGPIOC_ACQUIRE = AGPIOC_ACQUIRE;
 unsigned IOCTL_AGPIOC_RELEASE = AGPIOC_RELEASE;
