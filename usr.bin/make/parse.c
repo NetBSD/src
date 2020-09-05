@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.277 2020/09/05 14:58:07 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.278 2020/09/05 15:04:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.277 2020/09/05 14:58:07 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.278 2020/09/05 15:04:09 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.277 2020/09/05 14:58:07 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.278 2020/09/05 15:04:09 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -578,6 +578,15 @@ ParseIsEscaped(const char *line, const char *c)
 	    return active;
 	active = !active;
     }
+}
+
+/* Add the filename and lineno to the GNode so that we remember where it
+ * was first defined. */
+static void
+ParseMark(GNode *gn)
+{
+    gn->fname = curFile->fname;
+    gn->lineno = curFile->lineno;
 }
 
 /*-
@@ -3310,22 +3319,4 @@ Parse_MainName(void)
 	Lst_Append(mainList, mainNode);
     Var_Append(".TARGETS", mainNode->name, VAR_GLOBAL);
     return mainList;
-}
-
-/*-
- *-----------------------------------------------------------------------
- * ParseMark --
- *	Add the filename and lineno to the GNode so that we remember
- *	where it was first defined.
- *
- * Side Effects:
- *	None.
- *
- *-----------------------------------------------------------------------
- */
-static void
-ParseMark(GNode *gn)
-{
-    gn->fname = curFile->fname;
-    gn->lineno = curFile->lineno;
 }
