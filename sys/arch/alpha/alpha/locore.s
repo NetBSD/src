@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.130 2020/09/04 04:09:52 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.131 2020/09/05 16:29:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2019 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.130 2020/09/04 04:09:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.131 2020/09/05 16:29:07 thorpej Exp $");
 
 #include "assym.h"
 
@@ -283,7 +283,7 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 	/* NOTREACHED */
 
 	/* We've got a SIR */
-6:	ldiq	a0, ALPHA_PSL_IPL_SOFT
+6:	ldiq	a0, ALPHA_PSL_IPL_SOFT_LO
 	call_pal PAL_OSF1_swpipl
 	mov	v0, s2				/* remember old IPL */
 	CALL(softintr_dispatch)
