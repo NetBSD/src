@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.106 2020/09/05 09:16:46 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.107 2020/09/05 09:49:32 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -363,10 +363,10 @@ get_gcc () {
 			GCC_OBJS GCOV_OBJS GCOV_DUMP_OBJS GXX_OBJS GTM_H PROTO_OBJS ${_extravars1} \
 			INCLUDES md_file OBJC_OBJS OBJS out_file version \
 			BUILD_PREFIX RTL_H RTL_BASE_H TREE_H ${_hconfig_h} BASIC_BLOCK_H GCC_H \
-			GGC_H \
+			D_TARGET_DEF \
 			GTFILES_SRCDIR GTFILES_FILES_FILES GTFILES_FILES_LANGS \
-			GTFILES GTFILES_LANG_DIR_NAMES NOEXCEPTION_FLAGS \
-			NATIVE_SYSTEM_HEADER_DIR \
+			GTFILES GTFILES_LANG_DIR_NAMES HASH_TABLE_H \
+			NOEXCEPTION_FLAGS NATIVE_SYSTEM_HEADER_DIR \
 			tm_defines host_xm_file host_xm_defines tm_p_file \
 			target_cpu_default ${_extravars} ${_extravars2} \
 			lang_specs_files ${_extravars3} \
