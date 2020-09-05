@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.283 2020/09/05 18:41:59 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.284 2020/09/05 19:07:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.283 2020/09/05 18:41:59 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.284 2020/09/05 19:07:25 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.283 2020/09/05 18:41:59 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.284 2020/09/05 19:07:25 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2084,25 +2084,9 @@ ParseAddCmd(void *gnp, void *cmd)
     return 0;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * ParseHasCommands --
- *	Callback procedure for Parse_File when destroying the list of
- *	targets on the last dependency line. Marks a target as already
- *	having commands if it does, to keep from having shell commands
- *	on multiple dependency lines.
- *
- * Input:
- *	gnp		Node to examine
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	OP_HAS_COMMANDS may be set for the target.
- *
- *-----------------------------------------------------------------------
- */
+/* Callback procedure for Parse_File when destroying the list of targets on
+ * the last dependency line. Marks a target as already having commands if it
+ * does, to keep from having shell commands on multiple dependency lines. */
 static void
 ParseHasCommands(void *gnp)
 {
@@ -2112,48 +2096,21 @@ ParseHasCommands(void *gnp)
     }
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Parse_AddIncludeDir --
- *	Add a directory to the path searched for included makefiles
- *	bracketed by double-quotes. Used by functions in main.c
- *
- * Input:
- *	dir		The name of the directory to add
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	The directory is appended to the list.
- *
- *-----------------------------------------------------------------------
- */
+/* Add a directory to the path searched for included makefiles bracketed
+ * by double-quotes. */
 void
 Parse_AddIncludeDir(char *dir)
 {
     (void)Dir_AddDir(parseIncPath, dir);
 }
 
-/*-
- *---------------------------------------------------------------------
- * ParseDoInclude  --
- *	Push to another file.
+/* Push to another file.
  *
- *	The input is the line minus the `.'. A file spec is a string
- *	enclosed in <> or "". The former is looked for only in sysIncPath.
- *	The latter in . and the directories specified by -I command line
- *	options
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	A structure is added to the includes Lst and readProc, lineno,
- *	fname and curFILE are altered for the new file
- *---------------------------------------------------------------------
+ * The input is the line minus the '.'. A file spec is a string enclosed in
+ * <> or "". The <> file is looked for only in sysIncPath. The "" file is
+ * first searched in the parsedir and then in the directories specified by
+ * the -I command line options.
  */
-
 static void
 Parse_include_file(char *file, Boolean isSystem, Boolean depinc, int silent)
 {
@@ -2348,14 +2305,15 @@ GetActuallyIncludingFile(void)
     /* XXX: Stack was supposed to be an opaque data structure. */
     for (i = includes.len; i > 0; i--) {
 	IFile *parent = includes.items[i - 1];
-	IFile *child = (i < includes.len) ? includes.items[i] : curFile;
+	IFile *child = i < includes.len ? includes.items[i] : curFile;
 	if (!child->fromForLoop)
 	    return parent->fname;
     }
     return NULL;
 }
 
-/* Set .PARSEDIR, .PARSEFILE, .INCLUDEDFROMDIR and .INCLUDEDFROMFILE. */
+/* Set .PARSEDIR/.PARSEFILE to the given filename, as well as
+ * .INCLUDEDFROMDIR/.INCLUDEDFROMFILE. */
 static void
 ParseSetParseFile(const char *filename)
 {
@@ -2373,10 +2331,8 @@ ParseSetParseFile(const char *filename)
     }
 }
 
-/*
- * Track the makefiles we read - so makefiles can set dependencies on them.
- * Avoid adding anything more than once.
- */
+/* Track the makefiles we read - so makefiles can set dependencies on them.
+ * Avoid adding anything more than once. */
 static void
 ParseTrackInput(const char *name)
 {
@@ -2468,19 +2424,7 @@ Parse_SetInput(const char *name, int line, int fd,
     ParseSetParseFile(name);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * IsInclude --
- *	Check if the line is an include directive
- *
- * Results:
- *	TRUE if it is.
- *
- * Side Effects:
- *	None
- *
- *-----------------------------------------------------------------------
- */
+/* Check if the line is an include directive. */
 static Boolean
 IsInclude(const char *line, Boolean sysv)
 {
@@ -2499,19 +2443,7 @@ IsInclude(const char *line, Boolean sysv)
 
 
 #ifdef SYSVINCLUDE
-/*-
- *-----------------------------------------------------------------------
- * IsSysVInclude --
- *	Check if the line is a SYSV include directive
- *
- * Results:
- *	TRUE if it is.
- *
- * Side Effects:
- *	None
- *
- *-----------------------------------------------------------------------
- */
+/* Check if the line is a SYSV include directive. */
 static Boolean
 IsSysVInclude(const char *line)
 {
@@ -2534,22 +2466,7 @@ IsSysVInclude(const char *line)
 	return TRUE;
 }
 
-/*-
- *---------------------------------------------------------------------
- * ParseTraditionalInclude  --
- *	Push to another file.
- *
- *	The input is the current line. The file name(s) are
- *	following the "include".
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	A structure is added to the includes Lst and readProc, lineno,
- *	fname and curFILE are altered for the new file
- *---------------------------------------------------------------------
- */
+/* Push to another file.  The line points to the word "include". */
 static void
 ParseTraditionalInclude(char *line)
 {
@@ -2559,9 +2476,8 @@ ParseTraditionalInclude(char *line)
     char	  *file = &line[silent + 7];
     char	  *all_files;
 
-    if (DEBUG(PARSE)) {
-	    fprintf(debug_file, "%s: %s\n", __func__, file);
-    }
+    if (DEBUG(PARSE))
+	fprintf(debug_file, "%s: %s\n", __func__, file);
 
     /*
      * Skip over whitespace
@@ -2599,29 +2515,15 @@ out:
 #endif
 
 #ifdef GMAKEEXPORT
-/*-
- *---------------------------------------------------------------------
- * ParseGmakeExport  --
- *	Parse export <variable>=<value>
- *
- *	And set the environment with it.
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	None
- *---------------------------------------------------------------------
- */
+/* Parse export <variable>=<value>, and actually export it. */
 static void
 ParseGmakeExport(char *line)
 {
     char	  *variable = &line[6];
     char	  *value;
 
-    if (DEBUG(PARSE)) {
-	    fprintf(debug_file, "%s: %s\n", __func__, variable);
-    }
+    if (DEBUG(PARSE))
+	fprintf(debug_file, "%s: %s\n", __func__, variable);
 
     /*
      * Skip over whitespace
@@ -2634,7 +2536,7 @@ ParseGmakeExport(char *line)
 
     if (*value != '=') {
 	Parse_Error(PARSE_FATAL,
-		     "Variable/Value missing from \"export\"");
+		    "Variable/Value missing from \"export\"");
 	return;
     }
     *value++ = '\0';			/* terminate variable */
@@ -2648,20 +2550,12 @@ ParseGmakeExport(char *line)
 }
 #endif
 
-/*-
- *---------------------------------------------------------------------
- * ParseEOF  --
- *	Called when EOF is reached in the current file. If we were reading
- *	an include file, the includes stack is popped and things set up
- *	to go back to reading the previous file at the previous location.
+/* Called when EOF is reached in the current file. If we were reading an
+ * include file, the includes stack is popped and things set up to go back
+ * to reading the previous file at the previous location.
  *
  * Results:
  *	CONTINUE if there's more to do. DONE if not.
- *
- * Side Effects:
- *	The old curFILE, is closed. The includes list is shortened.
- *	lineno, curFILE, and fname are changed if CONTINUE is returned.
- *---------------------------------------------------------------------
  */
 static int
 ParseEOF(void)
@@ -2711,6 +2605,7 @@ ParseEOF(void)
 	fprintf(debug_file, "ParseEOF: returning to file %s, line %d\n",
 	    curFile->fname, curFile->lineno);
 
+    /* Restore the PARSEDIR/PARSEFILE variables */
     ParseSetParseFile(curFile->fname);
     return CONTINUE;
 }
@@ -2881,17 +2776,13 @@ ParseGetLine(int flags, int *length)
     return line;
 }
 
-/*-
- *---------------------------------------------------------------------
- * ParseReadLine --
- *	Read an entire line from the input file. Called only by Parse_File.
+/* Read an entire line from the input file. Called only by Parse_File.
  *
  * Results:
- *	A line w/o its newline
+ *	A line without its newline.
  *
  * Side Effects:
  *	Only those associated with reading a character
- *---------------------------------------------------------------------
  */
 static char *
 ParseReadLine(void)
