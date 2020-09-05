@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.53 2020/05/16 18:31:53 christos Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.54 2020/09/05 16:30:13 riastradh Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.232 2016/05/19 18:32:03 riastradh Exp  */
 
 /*-
@@ -67,11 +67,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.53 2020/05/16 18:31:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.54 2020/09/05 16:30:13 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
 #include "opt_quota.h"
+#include "opt_uvmhist.h"
 #endif
 
 #include <sys/param.h>
@@ -107,7 +108,10 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.53 2020/05/16 18:31:53 christos Exp
 #include <ufs/lfs/ulfs_dirhash.h>
 #endif
 
+#ifdef UVMHIST
 #include <uvm/uvm.h>
+#endif
+#include <uvm/uvm_stat.h>
 
 static int ulfs_chmod(struct vnode *, int, kauth_cred_t, struct lwp *);
 static int ulfs_chown(struct vnode *, uid_t, gid_t, kauth_cred_t,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.132 2020/05/16 18:31:53 christos Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.133 2020/09/05 16:30:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.132 2020/05/16 18:31:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.133 2020/09/05 16:30:13 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -97,8 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.132 2020/05/16 18:31:53 christos Exp
 
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
-
-#include <uvm/uvm.h>
 
 /* Global vfs data structures for ufs. */
 int (**ffs_vnodeop_p)(void *);

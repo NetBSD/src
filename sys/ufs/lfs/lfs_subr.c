@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.102 2020/02/23 15:23:08 riastradh Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.103 2020/09/05 16:30:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.102 2020/02/23 15:23:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.103 2020/09/05 16:30:13 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,8 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.102 2020/02/23 15:23:08 riastradh Exp
 #include <ufs/lfs/lfs_accessors.h>
 #include <ufs/lfs/lfs_kernel.h>
 #include <ufs/lfs/lfs_extern.h>
-
-#include <uvm/uvm.h>
 
 #ifdef DEBUG
 const char *lfs_res_names[LFS_NB_COUNT] = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vfsops.c,v 1.21 2020/01/17 20:08:10 ad Exp $	*/
+/*	$NetBSD: chfs_vfsops.c,v 1.22 2020/09/05 16:30:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -52,8 +52,8 @@
 #include <sys/lockdebug.h>
 #include <sys/ktrace.h>
 
-#include <uvm/uvm.h>
-#include <uvm/uvm_pager.h>
+#include <uvm/uvm_extern.h>
+
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/ufs_extern.h>
 #include <miscfs/genfs/genfs.h>

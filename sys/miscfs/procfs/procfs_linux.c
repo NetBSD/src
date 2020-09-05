@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.86 2020/06/11 22:21:05 ad Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.87 2020/09/05 16:30:12 riastradh Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.86 2020/06/11 22:21:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.87 2020/09/05 16:30:12 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,8 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.86 2020/06/11 22:21:05 ad Exp $")
 #include <compat/linux/common/linux_exec.h>
 #include <compat/linux32/common/linux32_sysctl.h>
 
-#include <uvm/uvm_extern.h>
 #include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 extern struct devsw_conv *devsw_conv;
 extern int max_devsw_convs;

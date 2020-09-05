@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.h,v 1.19 2020/02/23 15:46:43 ad Exp $	*/
+/*	$NetBSD: uvm_pdaemon.h,v 1.20 2020/09/05 16:30:13 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -70,6 +70,15 @@
 
 #ifdef _KERNEL
 
+#ifdef _KERNEL_OPT
+#include "opt_vmswap.h"
+#endif
+
+#include <sys/stdbool.h>
+
+struct vm_page;
+struct krwlock;
+
 /*
  * prototypes
  */
@@ -77,7 +86,7 @@
 void uvm_wait(const char *);
 bool uvm_reclaimable(void);
 
-krwlock_t *uvmpd_trylockowner(struct vm_page *);
+struct krwlock *uvmpd_trylockowner(struct vm_page *);
 #ifdef VMSWAP
 bool uvmpd_dropswap(struct vm_page *);
 #else

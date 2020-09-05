@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.21 2020/05/04 06:52:53 tsutsui Exp $	*/
+/*	$NetBSD: sti.c,v 1.22 2020/09/05 16:30:11 riastradh Exp $	*/
 
 /*	$OpenBSD: sti.c,v 1.61 2009/09/05 14:09:35 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.21 2020/05/04 06:52:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.22 2020/09/05 16:30:11 riastradh Exp $");
 
 #include "wsdisplay.h"
 
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.21 2020/05/04 06:52:53 tsutsui Exp $");
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include <sys/bus.h>
 

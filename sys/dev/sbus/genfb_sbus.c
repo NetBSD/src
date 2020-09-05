@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_sbus.c,v 1.11 2014/07/24 21:35:13 riastradh Exp $ */
+/*	$NetBSD: genfb_sbus.c,v 1.12 2020/09/05 16:30:11 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -29,7 +29,7 @@
 /* an SBus frontend for the generic fb console driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_sbus.c,v 1.11 2014/07/24 21:35:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_sbus.c,v 1.12 2020/09/05 16:30:11 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,8 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: genfb_sbus.c,v 1.11 2014/07/24 21:35:13 riastradh Ex
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
-
-#include <uvm/uvm.h>
 
 #include <sys/bus.h>
 #include <machine/autoconf.h>

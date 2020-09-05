@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.h,v 1.25 2019/05/01 07:17:18 mlelstv Exp $	*/
+/*	$NetBSD: uvm_swap.h,v 1.26 2020/09/05 16:30:13 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -43,6 +43,7 @@ struct lwp;
 #if defined(VMSWAP)
 
 struct swapent;
+struct vm_page;
 
 int	uvm_swap_get(struct vm_page *, int, int);
 int	uvm_swap_put(int, struct vm_page **, int, int);

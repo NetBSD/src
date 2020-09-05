@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_pages.c,v 1.25 2020/03/17 18:31:38 ad Exp $	*/
+/*	$NetBSD: lfs_pages.c,v 1.26 2020/09/05 16:30:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.25 2020/03/17 18:31:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.26 2020/09/05 16:30:13 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -94,9 +94,10 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.25 2020/03/17 18:31:38 ad Exp $");
 #include <ufs/lfs/ulfs_extern.h>
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_page.h>
+#include <uvm/uvm_pager.h>
 #include <uvm/uvm_pmap.h>
 #include <uvm/uvm_stat.h>
-#include <uvm/uvm_pager.h>
 
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_accessors.h>

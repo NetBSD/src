@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_pool.c,v 1.4 2019/06/17 17:14:56 ryoon Exp $	*/
+/*	$NetBSD: chfs_pool.c,v 1.5 2020/09/05 16:30:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -39,8 +39,6 @@
 #include <sys/param.h>
 #include <sys/pool.h>
 #include <sys/atomic.h>
-
-#include <uvm/uvm.h>
 
 #include "chfs.h"
 

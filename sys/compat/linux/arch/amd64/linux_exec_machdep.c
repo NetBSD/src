@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.23 2020/01/12 18:30:58 ad Exp $ */
+/*	$NetBSD: linux_exec_machdep.c,v 1.24 2020/09/05 16:30:10 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.23 2020/01/12 18:30:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.24 2020/09/05 16:30:10 riastradh Exp $");
 
 #define ELFSIZE 64
 
@@ -54,8 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.23 2020/01/12 18:30:58 ad E
 #include <sys/cpu.h>
 #include <machine/vmparam.h>
 #include <sys/syscallargs.h>
-
-#include <uvm/uvm.h>
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>

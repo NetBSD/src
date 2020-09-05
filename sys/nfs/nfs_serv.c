@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.180 2020/04/04 07:07:20 mlelstv Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.181 2020/09/05 16:30:12 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.180 2020/04/04 07:07:20 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.181 2020/09/05 16:30:12 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,9 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.180 2020/04/04 07:07:20 mlelstv Exp $
 #include <sys/syscallargs.h>
 #include <sys/syscallvar.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
+#include <uvm/uvm_loan.h>
+#include <uvm/uvm_page.h>
 
 #include <nfs/nfsproto.h>
 #include <nfs/rpcv2.h>

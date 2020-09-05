@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.33 2020/03/26 19:42:39 ad Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.34 2020/09/05 16:30:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.33 2020/03/26 19:42:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.34 2020/09/05 16:30:12 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.33 2020/03/26 19:42:39 ad Exp $");
 #include <sys/atomic.h>
 
 #include <uvm/uvm.h>	/* uvm_idle */
-#include <uvm/uvm_extern.h>
 
 void
 idle_loop(void *dummy)

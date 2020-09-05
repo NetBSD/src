@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.168 2020/07/26 00:20:13 chs Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.169 2020/09/05 16:30:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.168 2020/07/26 00:20:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.169 2020/09/05 16:30:13 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -103,7 +103,8 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.168 2020/07/26 00:20:13 chs Exp $");
 #include <ufs/ffs/ffs_extern.h>
 
 #ifdef UVM_PAGE_TRKOWN
-#include <uvm/uvm.h>
+#include <uvm/uvm_object.h>
+#include <uvm/uvm_page.h>
 #endif
 
 static daddr_t ffs_alloccg(struct inode *, int, daddr_t, int, int, int);

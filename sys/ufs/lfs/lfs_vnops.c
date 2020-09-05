@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.335 2020/09/05 02:55:38 riastradh Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.336 2020/09/05 16:30:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.335 2020/09/05 02:55:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.336 2020/09/05 16:30:13 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -157,10 +157,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.335 2020/09/05 02:55:38 riastradh Ex
 #include <ufs/lfs/ulfs_bswap.h>
 #include <ufs/lfs/ulfs_extern.h>
 
-#include <uvm/uvm.h>
-#include <uvm/uvm_pmap.h>
-#include <uvm/uvm_stat.h>
-#include <uvm/uvm_pager.h>
+#include <uvm/uvm_extern.h>
 
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_accessors.h>
