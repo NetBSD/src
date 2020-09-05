@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.282 2020/09/05 18:31:03 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.283 2020/09/05 18:41:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.282 2020/09/05 18:31:03 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.283 2020/09/05 18:41:59 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.282 2020/09/05 18:31:03 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.283 2020/09/05 18:41:59 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2355,8 +2355,7 @@ GetActuallyIncludingFile(void)
     return NULL;
 }
 
-/* Set .PARSEDIR/.PARSEFILE to the given filename, as well as
- * .INCLUDEDFROMDIR/.INCLUDEDFROMFILE. */
+/* Set .PARSEDIR, .PARSEFILE, .INCLUDEDFROMDIR and .INCLUDEDFROMFILE. */
 static void
 ParseSetParseFile(const char *filename)
 {
@@ -2375,11 +2374,9 @@ ParseSetParseFile(const char *filename)
 }
 
 /*
- * Track the makefiles we read - so makefiles can
- * set dependencies on them.
+ * Track the makefiles we read - so makefiles can set dependencies on them.
  * Avoid adding anything more than once.
  */
-
 static void
 ParseTrackInput(const char *name)
 {
@@ -2714,7 +2711,6 @@ ParseEOF(void)
 	fprintf(debug_file, "ParseEOF: returning to file %s, line %d\n",
 	    curFile->fname, curFile->lineno);
 
-    /* Restore the PARSEDIR/PARSEFILE variables */
     ParseSetParseFile(curFile->fname);
     return CONTINUE;
 }
