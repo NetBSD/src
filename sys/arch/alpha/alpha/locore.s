@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.131 2020/09/05 16:29:07 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.132 2020/09/05 18:01:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2019 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.131 2020/09/05 16:29:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.132 2020/09/05 18:01:42 thorpej Exp $");
 
 #include "assym.h"
 
@@ -239,8 +239,6 @@ XNESTED(esigcode,0)
  * exception_return: return from trap, exception, or syscall
  */
 
-IMPORT(ssir, 8)
-
 LEAF(exception_return, 1)			/* XXX should be NESTED */
 	br	pv, 1f
 1:	LDGP(pv)
@@ -249,8 +247,13 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 	and	s1, ALPHA_PSL_IPL_MASK, t0	/* look at the saved IPL */
 	bne	t0, 5f				/* != 0: can't do AST or SIR */
 
-	/* see if we can do an SIR */
-2:	ldq	t1, ssir			/* SIR pending? */
+	/* GET_CURLWP clobbers v0, t0, t8...t11. */
+	GET_CURLWP
+	mov	v0, s0				/* s0 = curlwp */
+
+	/* see if a soft interrupt is pending. */
+2:	ldq	t1, L_CPU(s0)			/* t1 = curlwp->l_cpu */
+	ldq	t1, CPU_INFO_SSIR(t1)		/* soft int pending? */
 	bne	t1, 6f				/* yes */
 	/* no */
 
@@ -258,16 +261,13 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 	beq	t0, 5f				/* no: just return */
 	/* yes */
 
-	/* GET_CURLWP clobbers v0, t0, t8...t11. */
-3:	GET_CURLWP
-
 	/* check for AST */
-	ldl	t3, L_MD_ASTPENDING(v0)		/* AST pending? */
+3:	ldl	t3, L_MD_ASTPENDING(s0)		/* AST pending? */
 	bne	t3, 7f				/* yes */
 	/* no: headed back to user space */
 
 	/* Enable the FPU based on whether MDLWP_FPACTIVE is set. */
-4:	ldq	t2, L_MD_FLAGS(v0)
+4:	ldq	t2, L_MD_FLAGS(s0)
 	cmplt	t2, zero, a0
 	call_pal PAL_OSF1_wrfen
 
@@ -294,7 +294,7 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 	br	2b
 
 	/* We've got an AST */
-7:	stl	zero, L_MD_ASTPENDING(v0)	/* no AST pending */
+7:	stl	zero, L_MD_ASTPENDING(s0)	/* no AST pending */
 
 	ldiq	a0, ALPHA_PSL_IPL_0		/* drop IPL to zero */
 	call_pal PAL_OSF1_swpipl
