@@ -9,10 +9,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if SANITIZER_FREEBSD || SANITIZER_MAC || SANITIZER_NETBSD
-
 // NetBSD uses libc calls directly
-#ifdef SANITIZER_NETBSD
+#if SANITIZER_NETBSD
 # define SYS_stat SYS___stat50
 # define SYS_lstat SYS___lstat50
 # define SYS_fstat SYS___fstat50
