@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.120 2020/08/20 07:57:01 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.121 2020/09/05 13:38:24 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -317,7 +317,7 @@ parse_request(bozohttpd_t *httpd, char *in, char **method, char **file,
 
 	debug((httpd, DEBUG_FAT,
 		"url: method: \"%s\" file: \"%s\" query: \"%s\" proto: \"%s\"",
-		*method, *file, *query, *proto));
+		*method, *file, *query ? *query : "", *proto ? *proto : ""));
 }
 
 /*
@@ -771,7 +771,7 @@ bozo_read_request(bozohttpd_t *httpd)
 
 			val = bozostrnsep(&str, ":", &len);
 			debug((httpd, DEBUG_EXPLODING, "read_req2: after "
-			    "bozostrnsep: str `%s' val `%s'", str, val));
+			    "bozostrnsep: str `%s' val `%s'", str, val ? val : ""));
 			if (val == NULL || len == -1) {
 				bozo_http_error(httpd, 404, request, "no header");
 				goto cleanup;
