@@ -1,4 +1,4 @@
-# $NetBSD: varname-makefile.mk,v 1.1 2020/09/04 17:05:39 rillig Exp $
+# $NetBSD: varname-makefile.mk,v 1.2 2020/09/05 06:25:38 rillig Exp $
 #
 # Tests for the special MAKEFILE variable, which contains the current
 # makefile from the -f command line option.
@@ -8,7 +8,7 @@
 # Including a file via .include does not influence the MAKEFILE
 # variable though.
 
-.if ${MAKEFILE} != "varname-makefile.mk"
+.if ${MAKEFILE:T} != "varname-makefile.mk"
 .  error
 .endif
 
@@ -20,7 +20,7 @@
 # namespace.
 #
 .undef MAKEFILE
-.if ${MAKEFILE} != "varname-makefile.mk"
+.if ${MAKEFILE:T} != "varname-makefile.mk"
 .  error
 .endif
 
@@ -28,7 +28,7 @@
 # serves as a fallback for the "Global" namespace (see VarFind).
 #
 MAKEFILE=	overwritten
-.if ${MAKEFILE} != "overwritten"
+.if ${MAKEFILE:T} != "overwritten"
 .  error
 .endif
 
@@ -36,7 +36,7 @@ MAKEFILE=	overwritten
 # visible again.
 #
 .undef MAKEFILE
-.if ${MAKEFILE} != "varname-makefile.mk"
+.if ${MAKEFILE:T} != "varname-makefile.mk"
 .  error
 .endif
 
