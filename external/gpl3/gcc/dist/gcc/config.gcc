@@ -1209,7 +1209,7 @@ arm*-*-netbsdelf*)
 	    with_cpu=${with_cpu:-strongarm}
 	    ;;
 	esac
-	tm_file="${tm_file} vxworks-dummy.h arm/arm.h"
+	tm_file="${tm_file} arm/arm.h"
 	case ${target} in
 	arm*-*-netbsdelf-*eabihf*)
 	    tm_defines="${tm_defines} TARGET_DEFAULT_FLOAT_ABI=ARM_FLOAT_ABI_HARD"
