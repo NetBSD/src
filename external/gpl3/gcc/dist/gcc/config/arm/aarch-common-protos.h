@@ -1,6 +1,6 @@
 /* Functions and structures shared between arm and aarch64.
 
-   Copyright (C) 1991-2018 Free Software Foundation, Inc.
+   Copyright (C) 1991-2019 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GCC.
@@ -28,6 +28,8 @@ extern int aarch_crypto_can_dual_issue (rtx_insn *, rtx_insn *);
 extern bool aarch_rev16_p (rtx);
 extern bool aarch_rev16_shleft_mask_imm_p (rtx, machine_mode);
 extern bool aarch_rev16_shright_mask_imm_p (rtx, machine_mode);
+extern bool aarch_mm_needs_acquire (rtx);
+extern bool aarch_mm_needs_release (rtx);
 extern int arm_early_load_addr_dep (rtx, rtx);
 extern int arm_early_load_addr_dep_ptr (rtx, rtx);
 extern int arm_early_store_addr_dep (rtx, rtx);

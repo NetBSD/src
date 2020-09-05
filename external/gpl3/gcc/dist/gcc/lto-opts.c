@@ -1,6 +1,6 @@
 /* LTO IL options.
 
-   Copyright (C) 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2009-2019 Free Software Foundation, Inc.
    Contributed by Simon Baldwin <simonb@google.com>
 
 This file is part of GCC.
@@ -122,8 +122,11 @@ lto_write_options (void)
 	case OPT_dumpbase:
 	case OPT_SPECIAL_unknown:
 	case OPT_SPECIAL_ignore:
+	case OPT_SPECIAL_deprecated:
 	case OPT_SPECIAL_program_name:
 	case OPT_SPECIAL_input_file:
+	case OPT_dumpdir:
+	case OPT_fresolution_:
 	  continue;
 
 	default:

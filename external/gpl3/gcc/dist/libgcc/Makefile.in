@@ -1,6 +1,6 @@
 # Makefile.in
 
-# Copyright (C) 2005-2018 Free Software Foundation, Inc.
+# Copyright (C) 2005-2019 Free Software Foundation, Inc.
 #
 # This file is part of GCC.
 #
@@ -36,6 +36,7 @@ SHELL = @SHELL@
 
 cpu_type = @cpu_type@
 enable_shared = @enable_shared@
+enable_gcov = @enable_gcov@
 double_type_size = @double_type_size@
 long_double_type_size = @long_double_type_size@
 decimal_float = @decimal_float@
@@ -43,6 +44,7 @@ enable_vtable_verify = @enable_vtable_verify@
 enable_decimal_float = @enable_decimal_float@
 fixed_point = @fixed_point@
 with_aix_soname = @with_aix_soname@
+solaris_ld_v2_maps = @solaris_ld_v2_maps@
 enable_execute_stack = @enable_execute_stack@
 unwind_header = @unwind_header@
 md_unwind_header = @md_unwind_header@
@@ -470,6 +472,8 @@ lib2funcs := $(filter-out $(LIB2FUNCS_EXCLUDE) $(LIB1ASMFUNCS),$(lib2funcs))
 LIB2_DIVMOD_FUNCS := $(filter-out $(LIB2FUNCS_EXCLUDE) $(LIB1ASMFUNCS), \
 		       $(LIB2_DIVMOD_FUNCS))
 
+LIB2FUNCS_ST := $(filter-out $(LIB2FUNCS_EXCLUDE),$(LIB2FUNCS_ST))
+
 # Build "libgcc1" (assembly) components.
 
 lib1asmfuncs-o = $(patsubst %,%$(objext),$(LIB1ASMFUNCS))
@@ -895,7 +899,7 @@ LIBGCOV_PROFILER = _gcov_interval_profiler				\
 	_gcov_average_profiler_atomic					\
 	_gcov_ior_profiler						\
 	_gcov_ior_profiler_atomic					\
-	_gcov_indirect_call_profiler_v2					\
+	_gcov_indirect_call_profiler_v3					\
 	_gcov_time_profiler						\
 	_gcov_indirect_call_topn_profiler
 LIBGCOV_INTERFACE = _gcov_dump _gcov_flush _gcov_fork			\
@@ -941,7 +945,10 @@ libgcc.a libgcov.a libunwind.a libgcc_eh.a:
 
 	$(RANLIB) $@
 
-all: libgcc.a libgcov.a
+all: libgcc.a
+ifeq ($(enable_gcov),yes)
+all: libgcov.a
+endif
 
 ifneq ($(LIBUNWIND),)
 all: libunwind.a
@@ -1164,9 +1171,11 @@ install-leaf: $(install-shared) $(install-libunwind)
 	$(INSTALL_DATA) libgcc.a $(DESTDIR)$(inst_libdir)/
 	chmod 644 $(DESTDIR)$(inst_libdir)/libgcc.a
 	$(RANLIB) $(DESTDIR)$(inst_libdir)/libgcc.a
+ifeq ($(enable_gcov),yes)
 	$(INSTALL_DATA) libgcov.a $(DESTDIR)$(inst_libdir)/
 	chmod 644 $(DESTDIR)$(inst_libdir)/libgcov.a
 	$(RANLIB) $(DESTDIR)$(inst_libdir)/libgcov.a
+endif
 
 	parts="$(INSTALL_PARTS)";				\
 	for file in $$parts; do					\

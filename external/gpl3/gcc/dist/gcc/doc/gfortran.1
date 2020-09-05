@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "GFORTRAN 1"
-.TH GFORTRAN 1 "2020-03-04" "gcc-8.4.0" "GNU"
+.TH GFORTRAN 1 "2020-03-12" "gcc-9.3.0" "GNU"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -180,9 +180,9 @@ by type.  Explanations are in the following sections.
 \&\fB\-fall\-intrinsics \-fbackslash \-fcray\-pointer \-fd\-lines\-as\-code 
 \&\-fd\-lines\-as\-comments 
 \&\-fdec \-fdec\-structure \-fdec\-intrinsic\-ints \-fdec\-static \-fdec\-math 
-\&\-fdefault\-double\-8 \-fdefault\-integer\-8 \-fdefault\-real\-8 
+\&\-fdec\-include \-fdefault\-double\-8 \-fdefault\-integer\-8 \-fdefault\-real\-8 
 \&\-fdefault\-real\-10 \-fdefault\-real\-16 \-fdollar\-ok \-ffixed\-line\-length\-\fR\fIn\fR 
-\&\fB\-ffixed\-line\-length\-none \-ffree\-form \-ffree\-line\-length\-\fR\fIn\fR 
+\&\fB\-ffixed\-line\-length\-none \-fpad\-source \-ffree\-form \-ffree\-line\-length\-\fR\fIn\fR 
 \&\fB\-ffree\-line\-length\-none \-fimplicit\-none \-finteger\-4\-integer\-8 
 \&\-fmax\-identifier\-length \-fmodule\-private \-ffixed\-form \-fno\-range\-check 
 \&\-fopenacc \-fopenmp \-freal\-4\-real\-10 \-freal\-4\-real\-16 \-freal\-4\-real\-8 
@@ -211,7 +211,8 @@ by type.  Explanations are in the following sections.
 .IP "\fIDebugging Options\fR" 4
 .IX Item "Debugging Options"
 \&\fB\-fbacktrace \-fdump\-fortran\-optimized \-fdump\-fortran\-original 
-\&\-fdump\-parse\-tree \-ffpe\-trap=\fR\fIlist\fR \fB\-ffpe\-summary=\fR\fIlist\fR\fB \fR
+\&\-fdump\-fortran\-global \-fdump\-parse\-tree \-ffpe\-trap=\fR\fIlist\fR 
+\&\fB\-ffpe\-summary=\fR\fIlist\fR\fB \fR
 .IP "\fIDirectory Options\fR" 4
 .IX Item "Directory Options"
 \&\fB\-I\fR\fIdir\fR  \fB\-J\fR\fIdir\fR \fB\-fintrinsic\-modules\-path\fR \fIdir\fR
@@ -224,7 +225,7 @@ by type.  Explanations are in the following sections.
 \&\fB\-frecord\-marker=\fR\fIlength\fR \fB\-fsign\-zero\fR
 .IP "\fIInteroperability Options\fR" 4
 .IX Item "Interoperability Options"
-\&\fB\-fc\-prototypes\fR
+\&\fB\-fc\-prototypes \-fc\-prototypes\-external\fR
 .IP "\fICode Generation Options\fR" 4
 .IX Item "Code Generation Options"
 \&\fB\-faggressive\-function\-elimination \-fblas\-matmul\-limit=\fR\fIn\fR 
@@ -309,6 +310,11 @@ functions (e.g. \s-1TAND, ATAND,\s0 etc...) for compatability with older code.
 .IX Item "-fdec-static"
 Enable DEC-style \s-1STATIC\s0 and \s-1AUTOMATIC\s0 attributes to explicitly specify
 the storage of variables and other objects.
+.IP "\fB\-fdec\-include\fR" 4
+.IX Item "-fdec-include"
+Enable parsing of \s-1INCLUDE\s0 as a statement in addition to parsing it as
+\&\s-1INCLUDE\s0 line.  When parsed as \s-1INCLUDE\s0 statement, \s-1INCLUDE\s0 does not have to
+be on a single line and can use line continuations.
 .IP "\fB\-fdollar\-ok\fR" 4
 .IX Item "-fdollar-ok"
 Allow \fB$\fR as a valid non-first character in a symbol name. Symbols 
@@ -336,8 +342,9 @@ declared as \f(CW\*(C`PUBLIC\*(C'\fR.
 .IP "\fB\-ffixed\-line\-length\-\fR\fIn\fR" 4
 .IX Item "-ffixed-line-length-n"
 Set column after which characters are ignored in typical fixed-form
-lines in the source file, and through which spaces are assumed (as
-if padded to that length) after the ends of short fixed-form lines.
+lines in the source file, and, unless \f(CW\*(C`\-fno\-pad\-source\*(C'\fR, through which
+spaces are assumed (as if padded to that length) after the ends of short
+fixed-form lines.
 .Sp
 Popular values for \fIn\fR include 72 (the
 standard and the default), 80 (card image), and 132 (corresponding
@@ -347,6 +354,14 @@ and that continued character constants never have implicit spaces appended
 to them to fill out the line.
 \&\fB\-ffixed\-line\-length\-0\fR means the same thing as
 \&\fB\-ffixed\-line\-length\-none\fR.
+.IP "\fB\-fno\-pad\-source\fR" 4
+.IX Item "-fno-pad-source"
+By default fixed-form lines have spaces assumed (as if padded to that length)
+after the ends of short fixed-form lines.  This is not done either if
+\&\fB\-ffixed\-line\-length\-0\fR, \fB\-ffixed\-line\-length\-none\fR or
+if \fB\-fno\-pad\-source\fR option is used.  With any of those options
+continued character constants never have implicit spaces appended
+to them to fill out the line.
 .IP "\fB\-ffree\-line\-length\-\fR\fIn\fR" 4
 .IX Item "-ffree-line-length-n"
 Set column after which characters are ignored in typical free-form
@@ -409,33 +424,42 @@ also affects the kind of integer constants like \f(CW42\fR. Unlike
 kind declaration.
 .IP "\fB\-fdefault\-real\-8\fR" 4
 .IX Item "-fdefault-real-8"
-Set the default real type to an 8 byte wide type. This option also affects
-the kind of non-double real constants like \f(CW1.0\fR, and does promote
-the default width of \f(CW\*(C`DOUBLE PRECISION\*(C'\fR to 16 bytes if possible, unless
-\&\f(CW\*(C`\-fdefault\-double\-8\*(C'\fR is given, too. Unlike \fB\-freal\-4\-real\-8\fR,
-it does not promote variables with explicit kind declaration.
+Set the default real type to an 8 byte wide type.  This option also affects
+the kind of non-double real constants like \f(CW1.0\fR.  This option promotes
+the default width of \f(CW\*(C`DOUBLE PRECISION\*(C'\fR and double real constants
+like \f(CW\*(C`1.d0\*(C'\fR to 16 bytes if possible.  If \f(CW\*(C`\-fdefault\-double\-8\*(C'\fR
+is given along with \f(CW\*(C`fdefault\-real\-8\*(C'\fR, \f(CW\*(C`DOUBLE PRECISION\*(C'\fR
+and double real constants are not promoted.  Unlike \fB\-freal\-4\-real\-8\fR,
+\&\f(CW\*(C`fdefault\-real\-8\*(C'\fR does not promote variables with explicit kind
+declarations.
 .IP "\fB\-fdefault\-real\-10\fR" 4
 .IX Item "-fdefault-real-10"
-Set the default real type to a 10 byte wide type. This option also affects
-the kind of non-double real constants like \f(CW1.0\fR, and does promote
-the default width of \f(CW\*(C`DOUBLE PRECISION\*(C'\fR to 16 bytes if possible, unless
-\&\f(CW\*(C`\-fdefault\-double\-8\*(C'\fR is given. Unlike \fB\-freal\-4\-real\-10\fR,
-it does not promote variables with explicit kind declaration.
+Set the default real type to an 10 byte wide type.  This option also affects
+the kind of non-double real constants like \f(CW1.0\fR.  This option promotes
+the default width of \f(CW\*(C`DOUBLE PRECISION\*(C'\fR and double real constants
+like \f(CW\*(C`1.d0\*(C'\fR to 16 bytes if possible.  If \f(CW\*(C`\-fdefault\-double\-8\*(C'\fR
+is given along with \f(CW\*(C`fdefault\-real\-10\*(C'\fR, \f(CW\*(C`DOUBLE PRECISION\*(C'\fR
+and double real constants are not promoted.  Unlike \fB\-freal\-4\-real\-10\fR,
+\&\f(CW\*(C`fdefault\-real\-10\*(C'\fR does not promote variables with explicit kind
+declarations.
 .IP "\fB\-fdefault\-real\-16\fR" 4
 .IX Item "-fdefault-real-16"
-Set the default real type to a 16 byte wide type. This option also affects
-the kind of non-double real constants like \f(CW1.0\fR, and does promote
-the default width of \f(CW\*(C`DOUBLE PRECISION\*(C'\fR to 16 bytes if possible, unless
-\&\f(CW\*(C`\-fdefault\-double\-8\*(C'\fR is given. Unlike \fB\-freal\-4\-real\-16\fR,
-it does not promote variables with explicit kind declaration.
+Set the default real type to an 16 byte wide type.  This option also affects
+the kind of non-double real constants like \f(CW1.0\fR.  This option promotes
+the default width of \f(CW\*(C`DOUBLE PRECISION\*(C'\fR and double real constants
+like \f(CW\*(C`1.d0\*(C'\fR to 16 bytes if possible.  If \f(CW\*(C`\-fdefault\-double\-8\*(C'\fR
+is given along with \f(CW\*(C`fdefault\-real\-16\*(C'\fR, \f(CW\*(C`DOUBLE PRECISION\*(C'\fR
+and double real constants are not promoted.  Unlike \fB\-freal\-4\-real\-16\fR,
+\&\f(CW\*(C`fdefault\-real\-16\*(C'\fR does not promote variables with explicit kind
+declarations.
 .IP "\fB\-fdefault\-double\-8\fR" 4
 .IX Item "-fdefault-double-8"
-Set the \f(CW\*(C`DOUBLE PRECISION\*(C'\fR type to an 8 byte wide type.  Do nothing if this
-is already the default.  If \fB\-fdefault\-real\-8\fR is given,
-\&\f(CW\*(C`DOUBLE PRECISION\*(C'\fR would instead be promoted to 16 bytes if possible, and
-\&\fB\-fdefault\-double\-8\fR can be used to prevent this.  The kind of real
-constants like \f(CW\*(C`1.d0\*(C'\fR will not be changed by \fB\-fdefault\-real\-8\fR
-though, so also \fB\-fdefault\-double\-8\fR does not affect it.
+Set the \f(CW\*(C`DOUBLE PRECISION\*(C'\fR type and double real constants
+like \f(CW\*(C`1.d0\*(C'\fR to an 8 byte wide type.  Do nothing if this
+is already the default.  This option prevents \fB\-fdefault\-real\-8\fR,
+\&\fB\-fdefault\-real\-10\fR, and \fB\-fdefault\-real\-16\fR,
+from promoting \f(CW\*(C`DOUBLE PRECISION\*(C'\fR and double real constants like
+\&\f(CW\*(C`1.d0\*(C'\fR to 16 bytes.
 .IP "\fB\-finteger\-4\-integer\-8\fR" 4
 .IX Item "-finteger-4-integer-8"
 Promote all \f(CW\*(C`INTEGER(KIND=4)\*(C'\fR entities to an \f(CW\*(C`INTEGER(KIND=8)\*(C'\fR
@@ -485,10 +509,9 @@ conformance to the Fortran 95, Fortran 2003, Fortran 2008 and Fortran
 2018 standards, respectively; errors are given for all extensions
 beyond the relevant language standard, and warnings are given for the
 Fortran 77 features that are permitted but obsolescent in later
-standards. \fB\-std=f2008ts\fR allows the Fortran 2008 standard
-including the additions of the Technical Specification (\s-1TS\s0) 29113 on
-Further Interoperability of Fortran with C and \s-1TS 18508\s0 on Additional
-Parallel Features in Fortran.
+standards. The deprecated option \fB\-std=f2008ts\fR acts as an alias for
+\&\fB\-std=f2018\fR. It is only present for backwards compatibility with
+earlier gfortran versions and should not be used any more.
 .IP "\fB\-ftest\-forall\-temp\fR" 4
 .IX Item "-ftest-forall-temp"
 Enhance test coverage by forcing most forall assignments to use temporary.
@@ -875,7 +898,7 @@ of the Fortran Character Set.  For continuation lines, a tab followed
 by a digit between 1 and 9 is supported.  \fB\-Wtabs\fR will cause a
 warning to be issued if a tab is encountered. Note, \fB\-Wtabs\fR is
 active for \fB\-pedantic\fR, \fB\-std=f95\fR, \fB\-std=f2003\fR,
-\&\fB\-std=f2008\fR, \fB\-std=f2008ts\fR, \fB\-std=f2018\fR and
+\&\fB\-std=f2008\fR, \fB\-std=f2018\fR and
 \&\fB\-Wall\fR.
 .IP "\fB\-Wundefined\-do\-loop\fR" 4
 .IX Item "-Wundefined-do-loop"
@@ -914,8 +937,9 @@ padded for proper alignment inside a \f(CW\*(C`COMMON\*(C'\fR block. This warnin
 off via \fB\-Wno\-align\-commons\fR. See also \fB\-falign\-commons\fR.
 .IP "\fB\-Wfunction\-elimination\fR" 4
 .IX Item "-Wfunction-elimination"
-Warn if any calls to functions are eliminated by the optimizations
+Warn if any calls to impure functions are eliminated by the optimizations
 enabled by the \fB\-ffrontend\-optimize\fR option.
+This option is implied by \fB\-Wextra\fR.
 .IP "\fB\-Wrealloc\-lhs\fR" 4
 .IX Item "-Wrealloc-lhs"
 Warn when the compiler might insert code to for allocation or reallocation of
@@ -946,7 +970,7 @@ time.  This option is implied by \fB\-Wall\fR.
 .IP "\fB\-Wdo\-subscript\fR" 4
 .IX Item "-Wdo-subscript"
 Warn if an array subscript inside a \s-1DO\s0 loop could lead to an
-out-of-bounds access even if the compiler can not prove that the
+out-of-bounds access even if the compiler cannot prove that the
 statement is actually executed, in cases like
 .Sp
 .Vb 6
@@ -991,6 +1015,13 @@ Fortran compiler itself. The output generated by this option might
 change between releases. This option may also generate internal
 compiler errors for features which have only recently been added. This
 option is deprecated; use \f(CW\*(C`\-fdump\-fortran\-original\*(C'\fR instead.
+.IP "\fB\-fdump\-fortran\-global\fR" 4
+.IX Item "-fdump-fortran-global"
+Output a list of the global identifiers after translating into
+middle-end representation. Mostly useful for debugging the \s-1GNU\s0 Fortran
+compiler itself. The output generated by this option might change
+between releases.  This option may also generate internal compiler
+errors for features which have only recently been added.
 .IP "\fB\-ffpe\-trap=\fR\fIlist\fR" 4
 .IX Item "-ffpe-trap=list"
 Specify a list of floating point exception traps to enable.  On most
@@ -1013,6 +1044,12 @@ The first three exceptions (\fBinvalid\fR, \fBzero\fR, and
 has provisions for dealing with these exceptions, enabling traps for
 these three exceptions is probably a good idea.
 .Sp
+If the option is used more than once in the command line, the lists will
+be joined: '\f(CW\*(C`ffpe\-trap=\*(C'\fR\fIlist1\fR \f(CW\*(C`ffpe\-trap=\*(C'\fR\fIlist2\fR'
+is equivalent to \f(CW\*(C`ffpe\-trap=\*(C'\fR\fIlist1\fR,\fIlist2\fR.
+.Sp
+Note that once enabled an exception cannot be disabled (no negative form).
+.Sp
 Many, if not most, floating point operations incur loss of precision
 due to rounding, and hence the \f(CW\*(C`ffpe\-trap=inexact\*(C'\fR is likely to
 be uninteresting in practice.
@@ -1026,6 +1063,9 @@ to \f(CW\*(C`ERROR_UNIT\*(C'\fR when invoking \f(CW\*(C`STOP\*(C'\fR and \f(CW\*
 of the following exceptions: \fBinvalid\fR, \fBzero\fR, \fBoverflow\fR,
 \&\fBunderflow\fR, \fBinexact\fR and \fBdenormal\fR. (See
 \&\fB\-ffpe\-trap\fR for a description of the exceptions.)
+.Sp
+If the option is used more than once in the command line, only the
+last one will be used.
 .Sp
 By default, a summary for all exceptions but \fBinexact\fR is shown.
 .IP "\fB\-fno\-backtrace\fR" 4
@@ -1134,6 +1174,9 @@ provide this option under the name \fB\-static\fR or \fB\-save\fR.)
 The default, which is \fB\-fautomatic\fR, uses the stack for local
 variables smaller than the value given by \fB\-fmax\-stack\-var\-size\fR.
 Use the option \fB\-frecursive\fR to use no static memory.
+.Sp
+Local variables or arrays having an explicit \f(CW\*(C`SAVE\*(C'\fR attribute are
+silently ignored unless the \fB\-pedantic\fR option is added.
 .IP "\fB\-ff2c\fR" 4
 .IX Item "-ff2c"
 Generate code designed to be compatible with code generated
@@ -1515,6 +1558,11 @@ use \fB\-finit\-real=snan\fR; note, however, that compile-time
 optimizations may convert them into quiet NaN and that trapping
 needs to be enabled (e.g. via \fB\-ffpe\-trap\fR).
 .Sp
+The \fB\-finit\-integer\fR option will parse the value into an
+integer of type \f(CW\*(C`INTEGER(kind=C_LONG)\*(C'\fR on the host.  Said value
+is then assigned to the integer variables in the Fortran code, which
+might result in wraparound if the value is too large for the kind.
+.Sp
 Finally, note that enabling any of the \fB\-finit\-*\fR options will
 silence warnings that would have been emitted by \fB\-Wuninitialized\fR
 for the affected local variables.
@@ -1559,13 +1607,31 @@ if \fB\-ffrontend\-optimize\fR is in effect.
 .IP "\fB\-ffrontend\-optimize\fR" 4
 .IX Item "-ffrontend-optimize"
 This option performs front-end optimization, based on manipulating
-parts the Fortran parse tree.  Enabled by default by any \fB\-O\fR
-option.  Optimizations enabled by this option include inlining calls
-to \f(CW\*(C`MATMUL\*(C'\fR, elimination of identical function calls within
-expressions, removing unnecessary calls to \f(CW\*(C`TRIM\*(C'\fR in comparisons
-and assignments and replacing \f(CWTRIM(a)\fR with
-\&\f(CW\*(C`a(1:LEN_TRIM(a))\*(C'\fR.  It can be deselected by specifying
-\&\fB\-fno\-frontend\-optimize\fR.
+parts the Fortran parse tree.  Enabled by default by any \fB\-O\fR option
+except \fB\-O0\fR and \fB\-Og\fR.  Optimizations enabled by this option
+include:
+.RS 4
+.ie n .IP "*<inlining calls to ""MATMUL"",>" 4
+.el .IP "*<inlining calls to \f(CWMATMUL\fR,>" 4
+.IX Item "*<inlining calls to MATMUL,>"
+.PD 0
+.IP "*<elimination of identical function calls within expressions,>" 4
+.IX Item "*<elimination of identical function calls within expressions,>"
+.ie n .IP "*<removing unnecessary calls to ""TRIM"" in comparisons and assignments,>" 4
+.el .IP "*<removing unnecessary calls to \f(CWTRIM\fR in comparisons and assignments,>" 4
+.IX Item "*<removing unnecessary calls to TRIM in comparisons and assignments,>"
+.ie n .IP "*<replacing TRIM(a) with ""a(1:LEN_TRIM(a))"" and>" 4
+.el .IP "*<replacing \f(CWTRIM(a)\fR with \f(CWa(1:LEN_TRIM(a))\fR and>" 4
+.IX Item "*<replacing TRIM(a) with a(1:LEN_TRIM(a)) and>"
+.ie n .IP "*<short\-circuiting of logical operators ("".AND."" and "".OR."").>" 4
+.el .IP "*<short\-circuiting of logical operators (\f(CW.AND.\fR and \f(CW.OR.\fR).>" 4
+.IX Item "*<short-circuiting of logical operators (.AND. and .OR.).>"
+.RE
+.RS 4
+.PD
+.Sp
+It can be deselected by specifying \fB\-fno\-frontend\-optimize\fR.
+.RE
 .IP "\fB\-ffrontend\-loop\-interchange\fR" 4
 .IX Item "-ffrontend-loop-interchange"
 Attempt to interchange loops in the Fortran front end where
@@ -1593,7 +1659,7 @@ See the Info entry for \fBgfortran\fR for contributors to \s-1GCC\s0 and
 \&\s-1GNU\s0 Fortran.
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
-Copyright (c) 2004\-2018 Free Software Foundation, Inc.
+Copyright (c) 2004\-2019 Free Software Foundation, Inc.
 .PP
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the \s-1GNU\s0 Free Documentation License, Version 1.3 or

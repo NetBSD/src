@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, Synopsys DesignWare ARC cpu.
-   Copyright (C) 2000-2018 Free Software Foundation, Inc.
+   Copyright (C) 2000-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -33,8 +33,6 @@ extern void arc_print_operand (FILE *, rtx, int);
 extern void arc_print_operand_address (FILE *, rtx);
 extern void arc_final_prescan_insn (rtx_insn *, rtx *, int);
 extern const char *arc_output_libcall (const char *);
-extern bool prepare_extend_operands (rtx *operands, enum rtx_code code,
-				     machine_mode omode);
 extern int arc_output_addsi (rtx *operands, bool, bool);
 extern int arc_output_commutative_cond_exec (rtx *operands, bool);
 extern bool arc_expand_movmem (rtx *operands);
@@ -47,6 +45,9 @@ extern bool compact_memory_operand_p (rtx, machine_mode, bool, bool);
 extern int arc_return_address_register (unsigned int);
 extern unsigned int arc_compute_function_type (struct function *);
 extern bool arc_is_uncached_mem_p (rtx);
+extern bool gen_operands_ldd_std (rtx *operands, bool load, bool commute);
+extern bool arc_check_multi (rtx, bool);
+extern void arc_adjust_reg_alloc_order (void);
 #endif /* RTX_CODE */
 
 extern unsigned int arc_compute_frame_size (int);
@@ -65,12 +66,8 @@ extern bool arc_raw_symbolic_reference_mentioned_p (rtx, bool);
 extern bool arc_is_longcall_p (rtx);
 extern bool arc_is_shortcall_p (rtx);
 extern bool valid_brcc_with_delay_p (rtx *);
-extern bool small_data_pattern (rtx , machine_mode);
-extern rtx arc_rewrite_small_data (rtx);
 extern bool arc_ccfsm_cond_exec_p (void);
 struct secondary_reload_info;
-extern int arc_register_move_cost (machine_mode, enum reg_class,
-				   enum reg_class);
 extern rtx disi_highpart (rtx);
 extern int arc_adjust_insn_length (rtx_insn *, int, bool);
 extern int arc_corereg_hazard (rtx, rtx);

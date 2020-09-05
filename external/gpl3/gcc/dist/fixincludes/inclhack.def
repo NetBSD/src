@@ -404,11 +404,15 @@ fix = {
     mach        = "*-*-vxworks*";
         
     replace     = <<- _EndOfHeader_
-	#ifndef _ASSERT_H
+	#ifdef _ASSERT_H
+	#undef _ASSERT_H
+	#undef assert
+	#endif
+
 	#define _ASSERT_H
 
-	#ifdef assert
-	#undef assert
+	#ifdef __cplusplus
+	extern "C" {
 	#endif
 
 	#if defined(__STDC__) || defined(__cplusplus)
@@ -426,11 +430,13 @@ fix = {
 
 	#define assert(test) ((void) \
 	        ((test) ? ((void)0) : \
-	        __assert("Assertion failed: " ASSERT_STRINGIFY(test) ", file " \
+	        __assert("Assertion failed: " #test ", file " \
 	        __FILE__ ", line " ASSERT_STRINGIFY(__LINE__) "\n")))
 
 	#endif
 
+	#ifdef __cplusplus
+	}
 	#endif
 	_EndOfHeader_;
 };
@@ -447,7 +453,17 @@ fix = {
     replace     = <<- _EndOfHeader_
 	#ifndef _REGS_H
 	#define _REGS_H
+	/* regs.h depends on CPU_FAMILY being properly defined, which
+	   is done by vxCpu.h.  */
+	#include <types/vxCpu.h>
+	/* regs.h includes a CPU_FAMILY-specific header that requires
+	   vxTypesOld.h to already have been included.  Those headers
+	   contain proper _ASMLANGUAGE guards around their typedefs,
+	   but vxTypesOld.h itself does not. So we avoid including
+	   vxTypesOld.h from assembly.  */
+	#ifndef _ASMLANGUAGE
 	#include <types/vxTypesOld.h>
+	#endif
 	#include_next <arch/../regs.h>
 	#endif
 	_EndOfHeader_;
@@ -942,6 +958,20 @@ fix = {
     c_fix     = format;
     c_fix_arg = "typedef int sig_atomic_t";
     test_text = "typedef volatile int sig_atomic_t;";
+};
+
+/*
+ *  AIX unistd.h defines a static function with an empty parameter list.
+ */
+fix = {
+    hackname  = aix_unistd;
+    mach      = "*-*-aix*";
+    files     = unistd.h;
+
+    select    = "[ \t]+static[ \t]+int[ \t]+getdtablesize\\(\\)";
+    c_fix     = format;
+    c_fix_arg = "\tstatic int\t\tgetdtablesize(void)";
+    test_text = "	static int		getdtablesize()";
 };
 
 /*
@@ -5027,7 +5057,7 @@ fix = {
 
     c_fix       = format;
     c_fix_arg   = "%0\n"
-        "#define ioctl(fd, func, arg) (ioctl)(fd, func, (int)(arg))\n";
+        "#define ioctl(fd, func, arg) ioctl(fd, func, (int)(arg))\n";
     c_fix_arg   = "extern[\t ]+int[\t ]+ioctl[\t ]*\\([\t ,[:alnum:]]*\\);";
         
     test_text   = "extern int ioctl ( int asdf1234, int jkl , int qwerty ) ;";
@@ -5139,6 +5169,22 @@ fix = {
                 "[\t ]*size_t[\t ]*\\)[\t ]*;";
 
     test_text       = "extern int write ( int , char * , size_t ) ;";
+};
+
+/*
+ *  This hack ensures the include_next in the fixed unistd.h actually
+ *  finds the system's unistd.h and not the fixed unistd.h again.
+ */
+fix = {
+    hackname    = vxworks_iolib_include_unistd;
+    files       = ioLib.h;
+    mach        = "*-*-vxworks*";
+    select      = "#include \"unistd.h\"";
+
+    c_fix       = format;
+    c_fix_arg   = "#include <unistd.h>";
+
+    test_text       = "#include \"unistd.h\"";
 };
 
 /*

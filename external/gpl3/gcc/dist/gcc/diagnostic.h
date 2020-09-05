@@ -1,5 +1,5 @@
 /* Various declarations for language-independent diagnostics subroutines.
-   Copyright (C) 2000-2018 Free Software Foundation, Inc.
+   Copyright (C) 2000-2019 Free Software Foundation, Inc.
    Contributed by Gabriel Dos Reis <gdr@codesourcery.com>
 
 This file is part of GCC.
@@ -23,6 +23,17 @@ along with GCC; see the file COPYING3.  If not see
 
 #include "pretty-print.h"
 #include "diagnostic-core.h"
+
+/* Enum for overriding the standard output format.  */
+
+enum diagnostics_output_format
+{
+  /* The default: textual output.  */
+  DIAGNOSTICS_OUTPUT_FORMAT_TEXT,
+
+  /* JSON-based output.  */
+  DIAGNOSTICS_OUTPUT_FORMAT_JSON
+};
 
 /* A diagnostic is described by the MESSAGE to send, the FILE and LINE of
    its context and its KIND (ice, error, warning, note, ...)  See complete
@@ -60,7 +71,9 @@ typedef void (*diagnostic_starter_fn) (diagnostic_context *,
 typedef void (*diagnostic_start_span_fn) (diagnostic_context *,
 					  expanded_location);
 
-typedef diagnostic_starter_fn diagnostic_finalizer_fn;
+typedef void (*diagnostic_finalizer_fn) (diagnostic_context *,
+					 diagnostic_info *,
+					 diagnostic_t);
 
 class edit_context;
 
@@ -204,6 +217,17 @@ struct diagnostic_context
      a token, which would look strange).  */
   bool colorize_source_p;
 
+  /* When printing source code, should labelled ranges be printed?  */
+  bool show_labels_p;
+
+  /* When printing source code, should there be a left-hand margin
+     showing line numbers?  */
+  bool show_line_numbers_p;
+
+  /* If printing source code, what should the minimum width of the margin
+     be?  Line numbers will be right-aligned, and padded to this width.  */
+  int min_margin_width;
+
   /* Usable by plugins; if true, print a debugging ruler above the
      source output.  */
   bool show_ruler_p;
@@ -215,6 +239,26 @@ struct diagnostic_context
   /* If non-NULL, an edit_context to which fix-it hints should be
      applied, for generating patches.  */
   edit_context *edit_context_ptr;
+
+  /* How many diagnostic_group instances are currently alive.  */
+  int diagnostic_group_nesting_depth;
+
+  /* How many diagnostics have been emitted since the bottommost
+     diagnostic_group was pushed.  */
+  int diagnostic_group_emission_count;
+
+  /* Optional callbacks for handling diagnostic groups.  */
+
+  /* If non-NULL, this will be called immediately before the first
+     time a diagnostic is emitted within a stack of groups.  */
+  void (*begin_group_cb) (diagnostic_context * context);
+
+  /* If non-NULL, this will be called when a stack of groups is
+     popped if any diagnostics were emitted within that group.  */
+  void (*end_group_cb) (diagnostic_context * context);
+
+  /* Callback for final cleanup.  */
+  void (*final_cb) (diagnostic_context *context);
 };
 
 static inline void
@@ -249,6 +293,10 @@ diagnostic_inhibit_notes (diagnostic_context * context)
    diagnostic messages without going through `error', `warning',
    and similar functions.  */
 extern diagnostic_context *global_dc;
+
+/* Returns whether the diagnostic framework has been intialized already and is
+   ready for use.  */
+#define diagnostic_ready_p() (global_dc->printer != NULL)
 
 /* The total count of a KIND of diagnostics emitted so far.  */
 #define diagnostic_kind_count(DC, DK) (DC)->diagnostic_count[(int) (DK)]
@@ -309,7 +357,8 @@ extern char *diagnostic_build_prefix (diagnostic_context *, const diagnostic_inf
 void default_diagnostic_starter (diagnostic_context *, diagnostic_info *);
 void default_diagnostic_start_span_fn (diagnostic_context *,
 				       expanded_location);
-void default_diagnostic_finalizer (diagnostic_context *, diagnostic_info *);
+void default_diagnostic_finalizer (diagnostic_context *, diagnostic_info *,
+				   diagnostic_t);
 void diagnostic_set_caret_max_width (diagnostic_context *context, int value);
 void diagnostic_action_after_output (diagnostic_context *, diagnostic_t);
 void diagnostic_check_max_errors (diagnostic_context *, bool flush = false);
@@ -369,5 +418,10 @@ extern char *file_name_as_prefix (diagnostic_context *, const char *);
 
 extern char *build_message_string (const char *, ...) ATTRIBUTE_PRINTF_1;
 
+extern void diagnostic_output_format_init (diagnostic_context *,
+					   enum diagnostics_output_format);
+
+/* Compute the number of digits in the decimal representation of an integer.  */
+extern int num_digits (int);
 
 #endif /* ! GCC_DIAGNOSTIC_H */

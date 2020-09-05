@@ -1,6 +1,6 @@
 /* This file contains the definitions for timing variables used to
    measure run-time performance of the compiler.
-   Copyright (C) 2000-2018 Free Software Foundation, Inc.
+   Copyright (C) 2000-2019 Free Software Foundation, Inc.
    Contributed by Alex Samuel <samuel@codesourcery.com>
 
    This file is part of GCC.
@@ -165,7 +165,6 @@ DEFTIMEVAR (TV_TREE_SSA_THREAD_JUMPS , "backwards jump threading")
 DEFTIMEVAR (TV_TREE_SRA              , "tree SRA")
 DEFTIMEVAR (TV_ISOLATE_ERRONEOUS_PATHS    , "isolate eroneous paths")
 DEFTIMEVAR (TV_TREE_CCP		     , "tree CCP")
-DEFTIMEVAR (TV_TREE_PHI_CPROP	     , "tree PHI const/copy prop")
 DEFTIMEVAR (TV_TREE_SPLIT_EDGES      , "tree split crit edges")
 DEFTIMEVAR (TV_TREE_REASSOC          , "tree reassociation")
 DEFTIMEVAR (TV_TREE_PRE		     , "tree PRE")
@@ -234,6 +233,7 @@ DEFTIMEVAR (TV_DSE1                  , "dead store elim1")
 DEFTIMEVAR (TV_DSE2                  , "dead store elim2")
 DEFTIMEVAR (TV_LOOP                  , "loop analysis")
 DEFTIMEVAR (TV_LOOP_INIT	     , "loop init")
+DEFTIMEVAR (TV_LOOP_VERSIONING	     , "loop versioning")
 DEFTIMEVAR (TV_LOOP_MOVE_INVARIANTS  , "loop invariant motion")
 DEFTIMEVAR (TV_LOOP_UNROLL           , "loop unrolling")
 DEFTIMEVAR (TV_LOOP_DOLOOP           , "loop doloop")

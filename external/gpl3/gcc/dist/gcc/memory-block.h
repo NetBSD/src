@@ -1,5 +1,5 @@
 /* Shared pool of memory blocks for pool allocators.
-   Copyright (C) 2015-2018 Free Software Foundation, Inc.
+   Copyright (C) 2015-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -68,6 +68,11 @@ memory_block_pool::release (void *uncast_block)
   block_list *block = new (uncast_block) block_list;
   block->m_next = instance.m_blocks;
   instance.m_blocks = block;
+
+  VALGRIND_DISCARD (VALGRIND_MAKE_MEM_NOACCESS ((char *)uncast_block
+						+ sizeof (block_list),
+						block_size
+						- sizeof (block_list)));
 }
 
 extern void *mempool_obstack_chunk_alloc (size_t) ATTRIBUTE_MALLOC;

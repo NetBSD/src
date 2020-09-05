@@ -1,5 +1,5 @@
 /* Subroutines for insn-output.c for HPPA.
-   Copyright (C) 1992-2018 Free Software Foundation, Inc.
+   Copyright (C) 1992-2019 Free Software Foundation, Inc.
    Contributed by Tim Moore (moore@cs.utah.edu), based on sparc.c
 
 This file is part of GCC.
@@ -206,6 +206,7 @@ static bool pa_hard_regno_mode_ok (unsigned int, machine_mode);
 static bool pa_modes_tieable_p (machine_mode, machine_mode);
 static bool pa_can_change_mode_class (machine_mode, machine_mode, reg_class_t);
 static HOST_WIDE_INT pa_starting_frame_offset (void);
+static section* pa_elf_select_rtx_section(machine_mode, rtx, unsigned HOST_WIDE_INT) ATTRIBUTE_UNUSED;
 
 /* The following extra sections are only used for SOM.  */
 static GTY(()) section *som_readonly_data_section;
@@ -424,6 +425,9 @@ static size_t n_deferred_plabels = 0;
 #undef TARGET_STARTING_FRAME_OFFSET
 #define TARGET_STARTING_FRAME_OFFSET pa_starting_frame_offset
 
+#undef TARGET_HAVE_SPECULATION_SAFE_VALUE
+#define TARGET_HAVE_SPECULATION_SAFE_VALUE speculation_safe_value_not_needed
+
 struct gcc_target targetm = TARGET_INITIALIZER;
 
 /* Parse the -mfixed-range= option string.  */
@@ -449,7 +453,7 @@ fix_range (const char *const_str)
       dash = strchr (str, '-');
       if (!dash)
 	{
-	  warning (0, "value of -mfixed-range must have form REG1-REG2");
+	  warning (0, "value of %<-mfixed-range%> must have form REG1-REG2");
 	  return;
 	}
       *dash = '\0';
@@ -535,8 +539,8 @@ pa_option_override (void)
 
   if (! TARGET_GAS && write_symbols != NO_DEBUG)
     {
-      warning (0, "-g is only supported when using GAS on this processor,");
-      warning (0, "-g option disabled");
+      warning (0, "%<-g%> is only supported when using GAS on this processor,");
+      warning (0, "%<-g%> option disabled");
       write_symbols = NO_DEBUG;
     }
 
@@ -550,8 +554,8 @@ pa_option_override (void)
   if (flag_reorder_blocks_and_partition)
     {
       inform (input_location,
-              "-freorder-blocks-and-partition does not work "
-              "on this architecture");
+	      "%<-freorder-blocks-and-partition%> does not work "
+	      "on this architecture");
       flag_reorder_blocks_and_partition = 0;
       flag_reorder_blocks = 1;
     }
@@ -1131,8 +1135,8 @@ hppa_legitimize_address (rtx x, rtx oldx ATTRIBUTE_UNUSED,
       /* If the newoffset will not fit in 14 bits (ldo), then
 	 handling this would take 4 or 5 instructions (2 to load
 	 the SYMBOL_REF + 1 or 2 to load the newoffset + 1 to
-	 add the new offset and the SYMBOL_REF.)  Combine can
-	 not handle 4->2 or 5->2 combinations, so do not create
+	 add the new offset and the SYMBOL_REF.)  Combine cannot
+	 handle 4->2 or 5->2 combinations, so do not create
 	 them.  */
       if (! VAL_14_BITS_P (newoffset)
 	  && GET_CODE (XEXP (x, 0)) == SYMBOL_REF)
@@ -4018,7 +4022,7 @@ pa_expand_prologue (void)
 	     the callee registers.  */
 	  if (VAL_14_BITS_P (actual_fsize) && local_fsize == 0)
 	    merge_sp_adjust_with_store = 1;
-	  /* Can not optimize.  Adjust the stack frame by actual_fsize
+	  /* Cannot optimize.  Adjust the stack frame by actual_fsize
 	     bytes.  */
 	  else
 	    set_reg_plus_d (STACK_POINTER_REGNUM, STACK_POINTER_REGNUM,
@@ -9775,19 +9779,22 @@ pa_som_asm_init_sections (void)
       = get_unnamed_section (0, output_section_asm_op,
 			     "\t.SPACE $PRIVATE$\n\t.SUBSPA $TM_CLONE_TABLE$");
 
-  /* FIXME: HPUX ld generates incorrect GOT entries for "T" fixups
-     which reference data within the $TEXT$ space (for example constant
+  /* HPUX ld generates incorrect GOT entries for "T" fixups which
+     reference data within the $TEXT$ space (for example constant
      strings in the $LIT$ subspace).
 
      The assemblers (GAS and HP as) both have problems with handling
-     the difference of two symbols which is the other correct way to
+     the difference of two symbols.  This is the other correct way to
      reference constant data during PIC code generation.
 
-     So, there's no way to reference constant data which is in the
-     $TEXT$ space during PIC generation.  Instead place all constant
-     data into the $PRIVATE$ subspace (this reduces sharing, but it
-     works correctly).  */
-  readonly_data_section = flag_pic ? data_section : som_readonly_data_section;
+     Thus, we can't put constant data needing relocation in the $TEXT$
+     space during PIC generation.
+
+     Previously, we placed all constant data into the $DATA$ subspace
+     when generating PIC code.  This reduces sharing, but it works
+     correctly.  Now we rely on pa_reloc_rw_mask() for section selection.
+     This puts constant data not needing relocation into the $TEXT$ space.  */
+  readonly_data_section = som_readonly_data_section;
 
   /* We must not have a reference to an external symbol defined in a
      shared library in a readonly section, else the SOM linker will
@@ -9807,8 +9814,8 @@ pa_som_tm_clone_table_section (void)
 
 /* On hpux10, the linker will give an error if we have a reference
    in the read-only data section to a symbol defined in a shared
-   library.  Therefore, expressions that might require a reloc can
-   not be placed in the read-only data section.  */
+   library.  Therefore, expressions that might require a reloc
+   cannot be placed in the read-only data section.  */
 
 static section *
 pa_select_section (tree exp, int reloc,
@@ -9820,7 +9827,7 @@ pa_select_section (tree exp, int reloc,
       && DECL_INITIAL (exp)
       && (DECL_INITIAL (exp) == error_mark_node
           || TREE_CONSTANT (DECL_INITIAL (exp)))
-      && !reloc)
+      && !(reloc & pa_reloc_rw_mask ()))
     {
       if (TARGET_SOM
 	  && DECL_ONE_ONLY (exp)
@@ -9829,7 +9836,8 @@ pa_select_section (tree exp, int reloc,
       else
 	return readonly_data_section;
     }
-  else if (CONSTANT_CLASS_P (exp) && !reloc)
+  else if (CONSTANT_CLASS_P (exp)
+	   && !(reloc & pa_reloc_rw_mask ()))
     return readonly_data_section;
   else if (TARGET_SOM
 	   && TREE_CODE (exp) == VAR_DECL
@@ -9840,17 +9848,36 @@ pa_select_section (tree exp, int reloc,
     return data_section;
 }
 
+/* Implement pa_elf_select_rtx_section.  If X is a function label operand
+   and the function is in a COMDAT group, place the plabel reference in the
+   .data.rel.ro.local section.  The linker ignores references to symbols in
+   discarded sections from this section.  */
+   
+static section *
+pa_elf_select_rtx_section (machine_mode mode, rtx x,
+			   unsigned HOST_WIDE_INT align)
+{
+  if (function_label_operand (x, VOIDmode))
+    {
+      tree decl = SYMBOL_REF_DECL (x);
+
+      if (!decl || (DECL_P (decl) && DECL_COMDAT_GROUP (decl)))
+	return get_named_section (NULL, ".data.rel.ro.local", 1);
+    }
+
+  return default_elf_select_rtx_section (mode, x, align);
+}
+
 /* Implement pa_reloc_rw_mask.  */
 
 static int
 pa_reloc_rw_mask (void)
 {
-  /* We force (const (plus (symbol) (const_int))) to memory when the
-     const_int doesn't fit in a 14-bit integer.  The SOM linker can't
-     handle this construct in read-only memory and we want to avoid
-     this for ELF.  So, we always force an RTX needing relocation to
-     the data section.  */
-  return 3;
+  if (flag_pic || (TARGET_SOM && !TARGET_HPUX_11))
+    return 3;
+
+  /* HP linker does not support global relocs in readonly memory.  */
+  return TARGET_SOM ? 2 : 0;
 }
 
 static void

@@ -1,5 +1,5 @@
 /* Declarations for C++ name lookup routines.
-   Copyright (C) 2003-2018 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
    Contributed by Gabriel Dos Reis <gdr@integrable-solutions.net>
 
 This file is part of GCC.
@@ -112,7 +112,7 @@ enum scope_kind {
 			of an if or switch statement.  */
   sk_function_parms, /* The scope containing function parameters.  */
   sk_class,	     /* The scope containing the members of a class.  */
-  sk_scoped_enum,    /* The scope containing the enumertors of a C++0x
+  sk_scoped_enum,    /* The scope containing the enumerators of a C++11
                         scoped enumeration.  */
   sk_namespace,	     /* The scope containing the members of a
 			namespace, including the global scope.  */
@@ -204,11 +204,6 @@ struct GTY(()) cp_binding_level {
 
   /* The binding level which this one is contained in (inherits from).  */
   cp_binding_level *level_chain;
-
-  /* List of VAR_DECLS saved from a previous for statement.
-      These would be dead in ISO-conforming code, but might
-      be referenced in ARM-era code.  */
-  vec<tree, va_gc> *dead_vars_from_for;
 
   /* STATEMENT_LIST for statements in this binding contour.
       Only used at present for SK_CLEANUP temporary bindings.  */
@@ -335,5 +330,8 @@ extern void push_nested_namespace (tree);
 extern void pop_nested_namespace (tree);
 extern void push_to_top_level (void);
 extern void pop_from_top_level (void);
+extern void maybe_save_operator_binding (tree);
+extern void push_operator_bindings (void);
+extern void discard_operator_bindings (tree);
 
 #endif /* GCC_CP_NAME_LOOKUP_H */

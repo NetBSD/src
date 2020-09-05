@@ -1,5 +1,5 @@
 ;; Machine description for AArch64 architecture.
-;; Copyright (C) 2009-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2019 Free Software Foundation, Inc.
 ;; Contributed by ARM Ltd.
 ;;
 ;; This file is part of GCC.
@@ -29,6 +29,10 @@
 (define_predicate "aarch64_call_insn_operand"
   (ior (match_code "symbol_ref")
        (match_operand 0 "register_operand")))
+
+(define_predicate "aarch64_general_reg"
+  (and (match_operand 0 "register_operand")
+       (match_test "REGNO_REG_CLASS (REGNO (op)) == GENERAL_REGS")))
 
 ;; Return true if OP a (const_int 0) operand.
 (define_predicate "const0_operand"
@@ -61,6 +65,10 @@
   (ior (match_operand 0 "register_operand")
 	(and (match_code "const_double")
 	     (match_test "aarch64_float_const_zero_rtx_p (op)"))))
+
+(define_predicate "aarch64_reg_zero_or_fp_zero"
+  (ior (match_operand 0 "aarch64_reg_or_fp_zero")
+       (match_operand 0 "aarch64_reg_or_zero")))
 
 (define_predicate "aarch64_reg_zero_or_m1_or_1"
   (and (match_code "reg,subreg,const_int")
@@ -109,6 +117,18 @@
 (define_predicate "aarch64_plus_operand"
   (ior (match_operand 0 "register_operand")
        (match_operand 0 "aarch64_plus_immediate")))
+
+(define_predicate "aarch64_plushi_immediate"
+  (match_code "const_int")
+{
+  HOST_WIDE_INT val = INTVAL (op);
+  /* The HImode value must be zero-extendable to an SImode plus_operand.  */
+  return ((val & 0xfff) == val || sext_hwi (val & 0xf000, 16) == val);
+})
+
+(define_predicate "aarch64_plushi_operand"
+  (ior (match_operand 0 "register_operand")
+       (match_operand 0 "aarch64_plushi_immediate")))
 
 (define_predicate "aarch64_pluslong_immediate"
   (and (match_code "const_int")
@@ -222,8 +242,9 @@
 ;; as a 128-bit vec_concat.
 (define_predicate "aarch64_mem_pair_lanes_operand"
   (and (match_code "mem")
-       (match_test "aarch64_legitimate_address_p (DFmode, XEXP (op, 0), 1,
-						  ADDR_QUERY_LDP_STP)")))
+       (match_test "aarch64_legitimate_address_p (GET_MODE (op), XEXP (op, 0),
+						  false,
+						  ADDR_QUERY_LDP_STP_N)")))
 
 (define_predicate "aarch64_prefetch_operand"
   (match_test "aarch64_address_valid_for_prefetch_p (op, false)"))
@@ -302,6 +323,12 @@
   (ior (match_operand 0 "register_operand")
        (match_operand 0 "const_scalar_int_operand")))
 
+(define_predicate "aarch64_smin"
+  (match_code "smin"))
+
+(define_predicate "aarch64_umin"
+  (match_code "umin"))
+
 ;; True for integer comparisons and for FP comparisons other than LTGT or UNEQ.
 (define_special_predicate "aarch64_comparison_operator"
   (match_code "eq,ne,le,lt,ge,gt,geu,gtu,leu,ltu,unordered,
@@ -330,29 +357,73 @@
   (match_code "eq,ne"))
 
 (define_special_predicate "aarch64_carry_operation"
-  (match_code "ne,geu")
+  (match_code "ltu,geu")
 {
   if (XEXP (op, 1) != const0_rtx)
     return false;
-  machine_mode ccmode = (GET_CODE (op) == NE ? CC_Cmode : CCmode);
   rtx op0 = XEXP (op, 0);
-  return REG_P (op0) && REGNO (op0) == CC_REGNUM && GET_MODE (op0) == ccmode;
+  if (!REG_P (op0) || REGNO (op0) != CC_REGNUM)
+    return false;
+  machine_mode ccmode = GET_MODE (op0);
+  if (ccmode == CC_Cmode)
+    return GET_CODE (op) == LTU;
+  if (ccmode == CC_ADCmode || ccmode == CCmode)
+    return GET_CODE (op) == GEU;
+  return false;
 })
 
+; borrow is essentially the inverse of carry since the sense of the C flag
+; is inverted during subtraction.  See the note in aarch64-modes.def.
 (define_special_predicate "aarch64_borrow_operation"
-  (match_code "eq,ltu")
+  (match_code "geu,ltu")
 {
   if (XEXP (op, 1) != const0_rtx)
     return false;
-  machine_mode ccmode = (GET_CODE (op) == EQ ? CC_Cmode : CCmode);
   rtx op0 = XEXP (op, 0);
-  return REG_P (op0) && REGNO (op0) == CC_REGNUM && GET_MODE (op0) == ccmode;
+  if (!REG_P (op0) || REGNO (op0) != CC_REGNUM)
+    return false;
+  machine_mode ccmode = GET_MODE (op0);
+  if (ccmode == CC_Cmode)
+    return GET_CODE (op) == GEU;
+  if (ccmode == CC_ADCmode || ccmode == CCmode)
+    return GET_CODE (op) == LTU;
+  return false;
 })
 
 ;; True if the operand is memory reference suitable for a load/store exclusive.
 (define_predicate "aarch64_sync_memory_operand"
   (and (match_operand 0 "memory_operand")
        (match_code "reg" "0")))
+
+(define_predicate "aarch64_9bit_offset_memory_operand"
+  (and (match_operand 0 "memory_operand")
+       (ior (match_code "reg" "0")
+	    (and (match_code "plus" "0")
+		 (match_code "reg"  "00")
+		 (match_code "const_int" "01"))))
+{
+  rtx mem_op = XEXP (op, 0);
+
+  if (REG_P (mem_op))
+    return GET_MODE (mem_op) == DImode;
+
+  rtx plus_op0 = XEXP (mem_op, 0);
+  rtx plus_op1 = XEXP (mem_op, 1);
+
+  if (GET_MODE (plus_op0) != DImode)
+    return false;
+
+  poly_int64 offset;
+  if (!poly_int_rtx_p (plus_op1, &offset))
+    gcc_unreachable ();
+
+  return aarch64_offset_9bit_signed_unscaled_p (mode, offset);
+})
+
+(define_predicate "aarch64_rcpc_memory_operand"
+  (if_then_else (match_test "AARCH64_ISA_RCPC8_4")
+    (match_operand 0 "aarch64_9bit_offset_memory_operand")
+    (match_operand 0 "aarch64_sync_memory_operand")))
 
 ;; Predicates for parallel expanders based on mode.
 (define_special_predicate "vect_par_cnst_hi_half"
@@ -621,3 +692,6 @@
 ;; A special predicate that doesn't match a particular mode.
 (define_special_predicate "aarch64_any_register_operand"
   (match_code "reg"))
+
+(define_predicate "aarch64_sve_any_binary_operator"
+  (match_code "plus,minus,mult,div,udiv,smax,umax,smin,umin,and,ior,xor"))

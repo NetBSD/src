@@ -1,5 +1,5 @@
 /* Process declarations and variables for C++ compiler.
-   Copyright (C) 1988-2018 Free Software Foundation, Inc.
+   Copyright (C) 1988-2019 Free Software Foundation, Inc.
    Hacked by Michael Tiemann (tiemann@cygnus.com)
 
 This file is part of GCC.
@@ -155,36 +155,27 @@ tree
 build_memfn_type (tree fntype, tree ctype, cp_cv_quals quals,
 		  cp_ref_qualifier rqual)
 {
-  tree raises;
-  tree attrs;
-  int type_quals;
-  bool late_return_type_p;
-
   if (fntype == error_mark_node || ctype == error_mark_node)
     return error_mark_node;
 
   gcc_assert (TREE_CODE (fntype) == FUNCTION_TYPE
 	      || TREE_CODE (fntype) == METHOD_TYPE);
 
-  type_quals = quals & ~TYPE_QUAL_RESTRICT;
+  cp_cv_quals type_quals = quals & ~TYPE_QUAL_RESTRICT;
   ctype = cp_build_qualified_type (ctype, type_quals);
-  raises = TYPE_RAISES_EXCEPTIONS (fntype);
-  attrs = TYPE_ATTRIBUTES (fntype);
-  late_return_type_p = TYPE_HAS_LATE_RETURN_TYPE (fntype);
-  fntype = build_method_type_directly (ctype, TREE_TYPE (fntype),
-				       (TREE_CODE (fntype) == METHOD_TYPE
-					? TREE_CHAIN (TYPE_ARG_TYPES (fntype))
-					: TYPE_ARG_TYPES (fntype)));
-  if (attrs)
-    fntype = cp_build_type_attribute_variant (fntype, attrs);
-  if (rqual)
-    fntype = build_ref_qualified_type (fntype, rqual);
-  if (raises)
-    fntype = build_exception_variant (fntype, raises);
-  if (late_return_type_p)
-    TYPE_HAS_LATE_RETURN_TYPE (fntype) = 1;
 
-  return fntype;
+  tree newtype
+    = build_method_type_directly (ctype, TREE_TYPE (fntype),
+				  (TREE_CODE (fntype) == METHOD_TYPE
+				   ? TREE_CHAIN (TYPE_ARG_TYPES (fntype))
+				   : TYPE_ARG_TYPES (fntype)));
+  if (tree attrs = TYPE_ATTRIBUTES (fntype))
+    newtype = cp_build_type_attribute_variant (newtype, attrs);
+  newtype = build_cp_fntype_variant (newtype, rqual,
+				     TYPE_RAISES_EXCEPTIONS (fntype),
+				     TYPE_HAS_LATE_RETURN_TYPE (fntype));
+
+  return newtype;
 }
 
 /* Return a variant of FNTYPE, a FUNCTION_TYPE or METHOD_TYPE, with its
@@ -193,36 +184,28 @@ build_memfn_type (tree fntype, tree ctype, cp_cv_quals quals,
 tree
 change_return_type (tree new_ret, tree fntype)
 {
-  tree newtype;
-  tree args = TYPE_ARG_TYPES (fntype);
-  tree raises = TYPE_RAISES_EXCEPTIONS (fntype);
-  tree attrs = TYPE_ATTRIBUTES (fntype);
-  bool late_return_type_p = TYPE_HAS_LATE_RETURN_TYPE (fntype);
-
   if (new_ret == error_mark_node)
     return fntype;
 
   if (same_type_p (new_ret, TREE_TYPE (fntype)))
     return fntype;
 
+  tree newtype;
+  tree args = TYPE_ARG_TYPES (fntype);
+
   if (TREE_CODE (fntype) == FUNCTION_TYPE)
     {
       newtype = build_function_type (new_ret, args);
       newtype = apply_memfn_quals (newtype,
-				   type_memfn_quals (fntype),
-				   type_memfn_rqual (fntype));
+				   type_memfn_quals (fntype));
     }
   else
     newtype = build_method_type_directly
       (class_of_this_parm (fntype), new_ret, TREE_CHAIN (args));
-  if (FUNCTION_REF_QUALIFIED (fntype))
-    newtype = build_ref_qualified_type (newtype, type_memfn_rqual (fntype));
-  if (raises)
-    newtype = build_exception_variant (newtype, raises);
-  if (attrs)
+
+  if (tree attrs = TYPE_ATTRIBUTES (fntype))
     newtype = cp_build_type_attribute_variant (newtype, attrs);
-  if (late_return_type_p)
-    TYPE_HAS_LATE_RETURN_TYPE (newtype) = 1;
+  newtype = cxx_copy_lang_qualifiers (newtype, fntype);
 
   return newtype;
 }
@@ -326,12 +309,10 @@ maybe_retrofit_in_chrg (tree fn)
   /* And rebuild the function type.  */
   fntype = build_method_type_directly (basetype, TREE_TYPE (TREE_TYPE (fn)),
 				       arg_types);
-  if (TYPE_RAISES_EXCEPTIONS (TREE_TYPE (fn)))
-    fntype = build_exception_variant (fntype,
-				      TYPE_RAISES_EXCEPTIONS (TREE_TYPE (fn)));
   if (TYPE_ATTRIBUTES (TREE_TYPE (fn)))
     fntype = (cp_build_type_attribute_variant
 	      (fntype, TYPE_ATTRIBUTES (TREE_TYPE (fn))));
+  fntype = cxx_copy_lang_qualifiers (fntype, TREE_TYPE (fn));
   TREE_TYPE (fn) = fntype;
 
   /* Now we've got the in-charge parameter.  */
@@ -462,7 +443,7 @@ grok_array_decl (location_t loc, tree array_expr, tree index_exp,
       if (array_expr == error_mark_node || index_exp == error_mark_node)
 	error ("ambiguous conversion for array subscript");
 
-      if (TREE_CODE (TREE_TYPE (array_expr)) == POINTER_TYPE)
+      if (TYPE_PTR_P (TREE_TYPE (array_expr)))
 	array_expr = mark_rvalue_use (array_expr);
       else
 	array_expr = mark_lvalue_use_nonread (array_expr);
@@ -763,6 +744,11 @@ finish_static_data_member_decl (tree decl,
 				tree asmspec_tree,
 				int flags)
 {
+  if (DECL_TEMPLATE_INSTANTIATED (decl))
+    /* We already needed to instantiate this, so the processing in this
+       function is unnecessary/wrong.  */
+    return;
+
   DECL_CONTEXT (decl) = current_class_type;
 
   /* We cannot call pushdecl here, because that would fill in the
@@ -775,13 +761,15 @@ finish_static_data_member_decl (tree decl,
   if (LOCAL_CLASS_P (current_class_type)
       /* We already complained about the template definition.  */
       && !DECL_TEMPLATE_INSTANTIATION (decl))
-    permerror (input_location, "local class %q#T shall not have static data member %q#D",
+    permerror (DECL_SOURCE_LOCATION (decl),
+	       "local class %q#T shall not have static data member %q#D",
 	       current_class_type, decl);
   else
     for (tree t = current_class_type; TYPE_P (t);
 	 t = CP_TYPE_CONTEXT (t))
       if (TYPE_UNNAMED_P (t))
 	{
+	  auto_diagnostic_group d;
 	  if (permerror (DECL_SOURCE_LOCATION (decl),
 			 "static data member %qD in unnamed class", decl))
 	    inform (DECL_SOURCE_LOCATION (TYPE_NAME (t)),
@@ -789,7 +777,12 @@ finish_static_data_member_decl (tree decl,
 	  break;
 	}
 
-  DECL_IN_AGGR_P (decl) = 1;
+  if (DECL_INLINE_VAR_P (decl) && !DECL_TEMPLATE_INSTANTIATION (decl))
+    /* An inline variable is immediately defined, so don't set DECL_IN_AGGR_P.
+       Except that if decl is a template instantiation, it isn't defined until
+       instantiate_decl.  */;
+  else
+    DECL_IN_AGGR_P (decl) = 1;
 
   if (TREE_CODE (TREE_TYPE (decl)) == ARRAY_TYPE
       && TYPE_DOMAIN (TREE_TYPE (decl)) == NULL_TREE)
@@ -821,7 +814,6 @@ grokfield (const cp_declarator *declarator,
   tree value;
   const char *asmspec = 0;
   int flags;
-  tree name;
 
   if (init
       && TREE_CODE (init) == TREE_LIST
@@ -838,7 +830,8 @@ grokfield (const cp_declarator *declarator,
 
   if (TREE_CODE (value) == TYPE_DECL && init)
     {
-      error ("typedef %qD is initialized (use decltype instead)", value);
+      error_at (cp_expr_loc_or_loc (init, DECL_SOURCE_LOCATION (value)),
+		"typedef %qD is initialized (use decltype instead)", value);
       init = NULL_TREE;
     }
 
@@ -846,21 +839,12 @@ grokfield (const cp_declarator *declarator,
   if (value == void_type_node)
     return value;
 
-
-  name = DECL_NAME (value);
-
-  if (name != NULL_TREE)
+  if (DECL_NAME (value)
+      && TREE_CODE (DECL_NAME (value)) == TEMPLATE_ID_EXPR)
     {
-      if (TREE_CODE (name) == TEMPLATE_ID_EXPR)
-	{
-	  error ("explicit template argument list not allowed");
-	  return error_mark_node;
-	}
-
-      if (IDENTIFIER_POINTER (name)[0] == '_'
-	  && id_equal (name, "_vptr"))
-	error ("member %qD conflicts with virtual function table field name",
-	       value);
+      error_at (declarator->id_loc,
+		"explicit template argument list not allowed");
+      return error_mark_node;
     }
 
   /* Stash away type declarations.  */
@@ -951,12 +935,14 @@ grokfield (const cp_declarator *declarator,
 	  else
 	    {
 	      gcc_assert (TREE_CODE (TREE_TYPE (value)) == FUNCTION_TYPE);
+	      location_t iloc
+		= cp_expr_loc_or_loc (init, DECL_SOURCE_LOCATION (value));
 	      if (friendp)
-		error ("initializer specified for friend function %qD",
-		       value);
+		error_at (iloc, "initializer specified for friend "
+			  "function %qD", value);
 	      else
-		error ("initializer specified for static member function %qD",
-		       value);
+		error_at (iloc, "initializer specified for static "
+			  "member function %qD", value);
 	    }
 	}
       else if (TREE_CODE (value) == FIELD_DECL)
@@ -1043,24 +1029,28 @@ grokbitfield (const cp_declarator *declarator,
 
   if (value == error_mark_node)
     return NULL_TREE; /* friends went bad.  */
-  if (TREE_TYPE (value) == error_mark_node)
+
+  tree type = TREE_TYPE (value);
+  if (type == error_mark_node)
     return value;
 
   /* Pass friendly classes back.  */
   if (VOID_TYPE_P (value))
     return void_type_node;
 
-  if (!INTEGRAL_OR_ENUMERATION_TYPE_P (TREE_TYPE (value))
-      && (POINTER_TYPE_P (value)
-          || !dependent_type_p (TREE_TYPE (value))))
+  if (!INTEGRAL_OR_ENUMERATION_TYPE_P (type)
+      && (INDIRECT_TYPE_P (type) || !dependent_type_p (type)))
     {
-      error ("bit-field %qD with non-integral type", value);
+      error_at (DECL_SOURCE_LOCATION (value),
+		"bit-field %qD with non-integral type %qT",
+		value, type);
       return error_mark_node;
     }
 
   if (TREE_CODE (value) == TYPE_DECL)
     {
-      error ("cannot declare %qD to be a bit-field type", value);
+      error_at (DECL_SOURCE_LOCATION (value),
+		"cannot declare %qD to be a bit-field type", value);
       return NULL_TREE;
     }
 
@@ -1070,15 +1060,15 @@ grokbitfield (const cp_declarator *declarator,
      check here.  */
   if (TREE_CODE (value) == FUNCTION_DECL)
     {
-      error ("cannot declare bit-field %qD with function type",
-	     DECL_NAME (value));
+      error_at (DECL_SOURCE_LOCATION (value),
+		"cannot declare bit-field %qD with function type", value);
       return NULL_TREE;
     }
 
-  if (width && TYPE_WARN_IF_NOT_ALIGN (TREE_TYPE (value)))
+  if (TYPE_WARN_IF_NOT_ALIGN (type))
     {
-      error ("cannot declare bit-field %qD with %<warn_if_not_aligned%> type",
-	     DECL_NAME (value));
+      error_at (DECL_SOURCE_LOCATION (value), "cannot declare bit-field "
+		"%qD with %<warn_if_not_aligned%> type", value);
       return NULL_TREE;
     }
 
@@ -1091,7 +1081,8 @@ grokbitfield (const cp_declarator *declarator,
 
   if (TREE_STATIC (value))
     {
-      error ("static member %qD cannot be a bit-field", value);
+      error_at (DECL_SOURCE_LOCATION (value),
+		"static member %qD cannot be a bit-field", value);
       return NULL_TREE;
     }
 
@@ -1337,7 +1328,6 @@ tree
 cp_reconstruct_complex_type (tree type, tree bottom)
 {
   tree inner, outer;
-  bool late_return_type_p = false;
 
   if (TYPE_PTR_P (type))
     {
@@ -1345,7 +1335,7 @@ cp_reconstruct_complex_type (tree type, tree bottom)
       outer = build_pointer_type_for_mode (inner, TYPE_MODE (type),
 					   TYPE_REF_CAN_ALIAS_ALL (type));
     }
-  else if (TREE_CODE (type) == REFERENCE_TYPE)
+  else if (TYPE_REF_P (type))
     {
       inner = cp_reconstruct_complex_type (TREE_TYPE (type), bottom);
       outer = build_reference_type_for_mode (inner, TYPE_MODE (type),
@@ -1363,16 +1353,12 @@ cp_reconstruct_complex_type (tree type, tree bottom)
     }
   else if (TREE_CODE (type) == FUNCTION_TYPE)
     {
-      late_return_type_p = TYPE_HAS_LATE_RETURN_TYPE (type);
       inner = cp_reconstruct_complex_type (TREE_TYPE (type), bottom);
       outer = build_function_type (inner, TYPE_ARG_TYPES (type));
-      outer = apply_memfn_quals (outer,
-				 type_memfn_quals (type),
-				 type_memfn_rqual (type));
+      outer = apply_memfn_quals (outer, type_memfn_quals (type));
     }
   else if (TREE_CODE (type) == METHOD_TYPE)
     {
-      late_return_type_p = TYPE_HAS_LATE_RETURN_TYPE (type);
       inner = cp_reconstruct_complex_type (TREE_TYPE (type), bottom);
       /* The build_method_type_directly() routine prepends 'this' to argument list,
 	 so we must compensate by getting rid of it.  */
@@ -1392,9 +1378,7 @@ cp_reconstruct_complex_type (tree type, tree bottom)
   if (TYPE_ATTRIBUTES (type))
     outer = cp_build_type_attribute_variant (outer, TYPE_ATTRIBUTES (type));
   outer = cp_build_qualified_type (outer, cp_type_quals (type));
-
-  if (late_return_type_p)
-    TYPE_HAS_LATE_RETURN_TYPE (outer) = 1;
+  outer = cxx_copy_lang_qualifiers (outer, type);
 
   return outer;
 }
@@ -1402,7 +1386,7 @@ cp_reconstruct_complex_type (tree type, tree bottom)
 /* Replaces any constexpr expression that may be into the attributes
    arguments with their reduced value.  */
 
-static void
+void
 cp_check_const_attributes (tree attributes)
 {
   if (attributes == error_mark_node)
@@ -1412,7 +1396,8 @@ cp_check_const_attributes (tree attributes)
   for (attr = attributes; attr; attr = TREE_CHAIN (attr))
     {
       tree arg;
-      for (arg = TREE_VALUE (attr); arg; arg = TREE_CHAIN (arg))
+      for (arg = TREE_VALUE (attr); arg && TREE_CODE (arg) == TREE_LIST;
+	   arg = TREE_CHAIN (arg))
 	{
 	  tree expr = TREE_VALUE (arg);
 	  if (EXPR_P (expr))
@@ -1689,7 +1674,11 @@ finish_anon_union (tree anon_union_decl)
       DECL_NAME (anon_union_decl) = DECL_NAME (main_decl);
       maybe_commonize_var (anon_union_decl);
       if (TREE_STATIC (anon_union_decl) || DECL_EXTERNAL (anon_union_decl))
-	mangle_decl (anon_union_decl);
+	{
+	  if (DECL_DISCRIMINATOR_P (anon_union_decl))
+	    determine_local_discriminator (anon_union_decl);
+	  mangle_decl (anon_union_decl);
+	}
       DECL_NAME (anon_union_decl) = NULL_TREE;
     }
 
@@ -1702,7 +1691,7 @@ finish_anon_union (tree anon_union_decl)
    what compiler will be expecting.  */
 
 tree
-coerce_new_type (tree type)
+coerce_new_type (tree type, location_t loc)
 {
   int e = 0;
   tree args = TYPE_ARG_TYPES (type);
@@ -1712,7 +1701,8 @@ coerce_new_type (tree type)
   if (!same_type_p (TREE_TYPE (type), ptr_type_node))
     {
       e = 1;
-      error ("%<operator new%> must return type %qT", ptr_type_node);
+      error_at (loc, "%<operator new%> must return type %qT",
+		ptr_type_node);
     }
 
   if (args && args != void_list_node)
@@ -1723,8 +1713,8 @@ coerce_new_type (tree type)
 	     
 	     The first parameter shall not have an associated default
 	     argument.  */
-	  error ("the first parameter of %<operator new%> cannot "
-		 "have a default argument");
+	  error_at (loc, "the first parameter of %<operator new%> cannot "
+		    "have a default argument");
 	  /* Throw away the default argument.  */
 	  TREE_PURPOSE (args) = NULL_TREE;
 	}
@@ -1739,7 +1729,7 @@ coerce_new_type (tree type)
     e = 2;
 
   if (e == 2)
-    permerror (input_location, "%<operator new%> takes type %<size_t%> (%qT) "
+    permerror (loc, "%<operator new%> takes type %<size_t%> (%qT) "
 	       "as first parameter", size_type_node);
 
   switch (e)
@@ -1748,19 +1738,20 @@ coerce_new_type (tree type)
       args = tree_cons (NULL_TREE, size_type_node, args);
       /* Fall through.  */
     case 1:
-      type = build_exception_variant
+      type = (cxx_copy_lang_qualifiers
 	      (build_function_type (ptr_type_node, args),
-	       TYPE_RAISES_EXCEPTIONS (type));
+	       type));
       /* Fall through.  */
     default:;
   }
   return type;
 }
 
-tree
-coerce_delete_type (tree type)
+void
+coerce_delete_type (tree decl, location_t loc)
 {
   int e = 0;
+  tree type = TREE_TYPE (decl);
   tree args = TYPE_ARG_TYPES (type);
 
   gcc_assert (TREE_CODE (type) == FUNCTION_TYPE);
@@ -1768,32 +1759,52 @@ coerce_delete_type (tree type)
   if (!same_type_p (TREE_TYPE (type), void_type_node))
     {
       e = 1;
-      error ("%<operator delete%> must return type %qT", void_type_node);
+      error_at (loc, "%<operator delete%> must return type %qT",
+		void_type_node);
+    }
+
+  tree ptrtype = ptr_type_node;
+  if (destroying_delete_p (decl))
+    {
+      if (DECL_CLASS_SCOPE_P (decl))
+	/* If the function is a destroying operator delete declared in class
+	   type C, the type of its first parameter shall be C*.  */
+	ptrtype = build_pointer_type (DECL_CONTEXT (decl));
+      else
+	/* A destroying operator delete shall be a class member function named
+	   operator delete.  */
+	error_at (loc, "destroying operator delete must be a member function");
+      const ovl_op_info_t *op = IDENTIFIER_OVL_OP_INFO (DECL_NAME (decl));
+      if (op->flags & OVL_OP_FLAG_VEC)
+	error_at (loc, "operator delete[] cannot be a destroying delete");
+      if (!usual_deallocation_fn_p (decl))
+	error_at (loc, "destroying operator delete must be a usual "
+		  "deallocation function");
     }
 
   if (!args || args == void_list_node
-      || !same_type_p (TREE_VALUE (args), ptr_type_node))
+      || !same_type_p (TREE_VALUE (args), ptrtype))
     {
       e = 2;
       if (args && args != void_list_node)
 	args = TREE_CHAIN (args);
-      error ("%<operator delete%> takes type %qT as first parameter",
-	     ptr_type_node);
+      error_at (loc, "%<operator delete%> takes type %qT as first parameter",
+		ptrtype);
     }
   switch (e)
   {
     case 2:
-      args = tree_cons (NULL_TREE, ptr_type_node, args);
+      args = tree_cons (NULL_TREE, ptrtype, args);
       /* Fall through.  */
     case 1:
-      type = build_exception_variant
+      type = (cxx_copy_lang_qualifiers
 	      (build_function_type (void_type_node, args),
-	       TYPE_RAISES_EXCEPTIONS (type));
+	       type));
       /* Fall through.  */
     default:;
   }
 
-  return type;
+  TREE_TYPE (decl) = type;
 }
 
 /* DECL is a VAR_DECL for a vtable: walk through the entries in the vtable
@@ -1959,8 +1970,7 @@ vague_linkage_p (tree decl)
 	 maybe-in-charge 'tor variants; in that case we need to check one of
 	 the "clones" for the real linkage.  But only in that case; before
 	 maybe_clone_body we haven't yet copied the linkage to the clones.  */
-      if ((DECL_MAYBE_IN_CHARGE_DESTRUCTOR_P (decl)
-	   || DECL_MAYBE_IN_CHARGE_CONSTRUCTOR_P (decl))
+      if (DECL_MAYBE_IN_CHARGE_CDTOR_P (decl)
 	  && !DECL_ABSTRACT_P (decl)
 	  && DECL_CHAIN (decl)
 	  && DECL_CLONED_FUNCTION_P (DECL_CHAIN (decl)))
@@ -2224,6 +2234,17 @@ maybe_emit_vtables (tree ctype)
 	}
     }
 
+  /* For abstract classes, the destructor has been removed from the
+     vtable (in class.c's build_vtbl_initializer).  For a compiler-
+     generated destructor, it hence might not have been generated in
+     this translation unit - and with '#pragma interface' it might
+     never get generated.  */
+  if (CLASSTYPE_PURE_VIRTUALS (ctype)
+      && TYPE_HAS_NONTRIVIAL_DESTRUCTOR (ctype)
+      && !CLASSTYPE_LAZY_DESTRUCTOR (ctype)
+      && DECL_DEFAULTED_IN_CLASS_P (CLASSTYPE_DESTRUCTOR (ctype)))
+    note_vague_linkage_fn (CLASSTYPE_DESTRUCTOR (ctype));
+
   /* Since we're writing out the vtable here, also write the debug
      info.  */
   note_debug_info_needed (ctype);
@@ -2235,6 +2256,9 @@ maybe_emit_vtables (tree ctype)
    linkage.  */
 
 enum { VISIBILITY_ANON = VISIBILITY_INTERNAL+1 };
+
+static int expr_visibility (tree);
+static int type_visibility (tree);
 
 /* walk_tree helper function for type_visibility.  */
 
@@ -2255,7 +2279,54 @@ min_vis_r (tree *tp, int *walk_subtrees, void *data)
   else if (CLASS_TYPE_P (*tp)
 	   && CLASSTYPE_VISIBILITY (*tp) > *vis_p)
     *vis_p = CLASSTYPE_VISIBILITY (*tp);
+  else if (TREE_CODE (*tp) == ARRAY_TYPE
+	   && uses_template_parms (TYPE_DOMAIN (*tp)))
+    {
+      int evis = expr_visibility (TYPE_MAX_VALUE (TYPE_DOMAIN (*tp)));
+      if (evis > *vis_p)
+	*vis_p = evis;
+    }
   return NULL;
+}
+
+/* walk_tree helper function for expr_visibility.  */
+
+static tree
+min_vis_expr_r (tree *tp, int */*walk_subtrees*/, void *data)
+{
+  int *vis_p = (int *)data;
+  int tpvis = VISIBILITY_DEFAULT;
+
+  switch (TREE_CODE (*tp))
+    {
+    case CAST_EXPR:
+    case IMPLICIT_CONV_EXPR:
+    case STATIC_CAST_EXPR:
+    case REINTERPRET_CAST_EXPR:
+    case CONST_CAST_EXPR:
+    case DYNAMIC_CAST_EXPR:
+    case NEW_EXPR:
+    case CONSTRUCTOR:
+    case LAMBDA_EXPR:
+      tpvis = type_visibility (TREE_TYPE (*tp));
+      break;
+
+    case VAR_DECL:
+    case FUNCTION_DECL:
+      if (! TREE_PUBLIC (*tp))
+	tpvis = VISIBILITY_ANON;
+      else
+	tpvis = DECL_VISIBILITY (*tp);
+      break;
+
+    default:
+      break;
+    }
+
+  if (tpvis > *vis_p)
+    *vis_p = tpvis;
+
+  return NULL_TREE;
 }
 
 /* Returns the visibility of TYPE, which is the minimum visibility of its
@@ -2266,6 +2337,18 @@ type_visibility (tree type)
 {
   int vis = VISIBILITY_DEFAULT;
   cp_walk_tree_without_duplicates (&type, min_vis_r, &vis);
+  return vis;
+}
+
+/* Returns the visibility of an expression EXPR that appears in the signature
+   of a function template, which is the minimum visibility of names that appear
+   in its mangling.  */
+
+static int
+expr_visibility (tree expr)
+{
+  int vis = VISIBILITY_DEFAULT;
+  cp_walk_tree_without_duplicates (&expr, min_vis_expr_r, &vis);
   return vis;
 }
 
@@ -2327,21 +2410,7 @@ constrain_visibility_for_template (tree decl, tree targs)
       if (TYPE_P (arg))
 	vis = type_visibility (arg);
       else
-	{
-	  if (REFERENCE_REF_P (arg))
-	    arg = TREE_OPERAND (arg, 0);
-	  if (TREE_TYPE (arg))
-	    STRIP_NOPS (arg);
-	  if (TREE_CODE (arg) == ADDR_EXPR)
-	    arg = TREE_OPERAND (arg, 0);
-	  if (VAR_OR_FUNCTION_DECL_P (arg))
-	    {
-	      if (! TREE_PUBLIC (arg))
-		vis = VISIBILITY_ANON;
-	      else
-		vis = DECL_VISIBILITY (arg);
-	    }
-	}
+	vis = expr_visibility (arg);
       if (vis)
 	constrain_visibility (decl, vis, true);
     }
@@ -3287,15 +3356,15 @@ var_needs_tls_wrapper (tree var)
    translation unit.  */
 
 static tree
-get_local_tls_init_fn (void)
+get_local_tls_init_fn (location_t loc)
 {
   tree sname = get_identifier ("__tls_init");
   tree fn = get_global_binding (sname);
   if (!fn)
     {
-      fn = build_lang_decl (FUNCTION_DECL, sname,
-			     build_function_type (void_type_node,
-						  void_list_node));
+      fn = build_lang_decl_loc (loc, FUNCTION_DECL, sname,
+				build_function_type (void_type_node,
+						     void_list_node));
       SET_DECL_LANGUAGE (fn, lang_c);
       TREE_PUBLIC (fn) = false;
       DECL_ARTIFICIAL (fn) = true;
@@ -3325,7 +3394,7 @@ get_tls_init_fn (tree var)
   /* If the variable is internal, or if we can't generate aliases,
      call the local init function directly.  */
   if (!TREE_PUBLIC (var) || !TARGET_SUPPORTS_ALIASES)
-    return get_local_tls_init_fn ();
+    return get_local_tls_init_fn (DECL_SOURCE_LOCATION (var));
 
   tree sname = mangle_tls_init_fn (var);
   tree fn = get_global_binding (sname);
@@ -3389,7 +3458,9 @@ get_tls_wrapper_fn (tree var)
       tree type = non_reference (TREE_TYPE (var));
       type = build_reference_type (type);
       tree fntype = build_function_type (type, void_list_node);
-      fn = build_lang_decl (FUNCTION_DECL, sname, fntype);
+
+      fn = build_lang_decl_loc (DECL_SOURCE_LOCATION (var),
+				FUNCTION_DECL, sname, fntype);
       SET_DECL_LANGUAGE (fn, lang_c);
       TREE_PUBLIC (fn) = TREE_PUBLIC (var);
       DECL_ARTIFICIAL (fn) = true;
@@ -3638,8 +3709,7 @@ start_static_storage_duration_function (unsigned count)
       priority_info_map = splay_tree_new (splay_tree_compare_ints,
 					  /*delete_key_fn=*/0,
 					  /*delete_value_fn=*/
-					  (splay_tree_delete_value_fn)
-					  (void (*) (void)) free);
+					  splay_tree_delete_pointers);
 
       /* We always need to generate functions for the
 	 DEFAULT_INIT_PRIORITY so enter it now.  That way when we walk
@@ -4286,12 +4356,12 @@ decl_maybe_constant_var_p (tree decl)
   tree type = TREE_TYPE (decl);
   if (!VAR_P (decl))
     return false;
-  if (DECL_DECLARED_CONSTEXPR_P (decl))
+  if (DECL_DECLARED_CONSTEXPR_P (decl) && !TREE_THIS_VOLATILE (decl))
     return true;
   if (DECL_HAS_VALUE_EXPR_P (decl))
     /* A proxy isn't constant.  */
     return false;
-  if (TREE_CODE (type) == REFERENCE_TYPE)
+  if (TYPE_REF_P (type))
     /* References can be constant.  */;
   else if (CP_TYPE_CONST_NON_VOLATILE_P (type)
 	   && INTEGRAL_OR_ENUMERATION_TYPE_P (type))
@@ -4327,6 +4397,7 @@ no_linkage_error (tree decl)
   else if (TYPE_UNNAMED_P (t))
     {
       bool d = false;
+      auto_diagnostic_group grp;
       if (cxx_dialect >= cxx11)
 	d = permerror (DECL_SOURCE_LOCATION (decl), "%q#D, declared using "
 		       "unnamed type, is used but never defined", decl);
@@ -4407,7 +4478,7 @@ handle_tls_init (void)
   set_decl_tls_model (guard, decl_default_tls_model (guard));
   pushdecl_top_level_and_finish (guard, NULL_TREE);
 
-  tree fn = get_local_tls_init_fn ();
+  tree fn = get_local_tls_init_fn (loc);
   start_preparsed_function (fn, NULL_TREE, SF_PRE_PARSED);
   tree body = begin_function_body ();
   tree if_stmt = begin_if_stmt ();
@@ -4553,7 +4624,7 @@ record_mangling (tree decl, bool need_warning)
       inform (DECL_SOURCE_LOCATION (*slot),
 	      "previous mangling %q#D", *slot);
       inform (DECL_SOURCE_LOCATION (decl),
-	      "a later -fabi-version= (or =0)"
+	      "a later %<-fabi-version=%> (or =0)"
 	      " avoids this error with a change in mangling");
       *slot = decl;
     }
@@ -4794,13 +4865,13 @@ c_parse_final_cleanups (void)
 	     inline, with resulting performance improvements.  */
 	  tree ssdf_body;
 
+	  /* Make sure the back end knows about all the variables.  */
+	  write_out_vars (vars);
+
 	  /* Set the line and file, so that it is obviously not from
 	     the source file.  */
 	  input_location = locus_at_end_of_parsing;
 	  ssdf_body = start_static_storage_duration_function (ssdf_count);
-
-	  /* Make sure the back end knows about all the variables.  */
-	  write_out_vars (vars);
 
 	  /* First generate code to do all the initializations.  */
 	  if (vars)
@@ -4932,10 +5003,7 @@ c_parse_final_cleanups (void)
 	{
 	  if (var_finalized_p (decl) || DECL_REALLY_EXTERN (decl)
 	      /* Don't write it out if we haven't seen a definition.  */
-	      || (DECL_IN_AGGR_P (decl) && !DECL_INLINE_VAR_P (decl))
-	      /* Or haven't instantiated it.  */
-	      || (DECL_TEMPLATE_INSTANTIATION (decl)
-		  && !DECL_TEMPLATE_INSTANTIATED (decl)))
+	      || DECL_IN_AGGR_P (decl))
 	    continue;
 	  import_export_decl (decl);
 	  /* If this static data member is needed, provide it to the
@@ -4970,13 +5038,11 @@ c_parse_final_cleanups (void)
 	  /* Don't complain if the template was defined.  */
 	  && !(DECL_TEMPLATE_INSTANTIATION (decl)
 	       && DECL_INITIAL (DECL_TEMPLATE_RESULT
-				(template_for_substitution (decl)))))
-	{
-	  warning_at (DECL_SOURCE_LOCATION (decl), 0,
-		      "inline function %qD used but never defined", decl);
-	  /* Avoid a duplicate warning from check_global_declaration.  */
-	  TREE_NO_WARNING (decl) = 1;
-	}
+				(template_for_substitution (decl))))
+	  && warning_at (DECL_SOURCE_LOCATION (decl), 0,
+			 "inline function %qD used but never defined", decl))
+	/* Avoid a duplicate warning from check_global_declaration.  */
+	TREE_NO_WARNING (decl) = 1;
     }
 
   /* So must decls that use a type with no linkage.  */
@@ -5153,14 +5219,37 @@ check_default_args (tree x)
 {
   tree arg = TYPE_ARG_TYPES (TREE_TYPE (x));
   bool saw_def = false;
+  bool noted_first_def = false;
+  int idx_of_first_default_arg = 0;
+  location_t loc_of_first_default_arg = UNKNOWN_LOCATION;
   int i = 0 - (TREE_CODE (TREE_TYPE (x)) == METHOD_TYPE);
+  tree fndecl = STRIP_TEMPLATE (x);
+  auto_diagnostic_group d;
   for (; arg && arg != void_list_node; arg = TREE_CHAIN (arg), ++i)
     {
       if (TREE_PURPOSE (arg))
-	saw_def = true;
+	{
+	  if (!saw_def)
+	    {
+	      saw_def = true;
+	      idx_of_first_default_arg = i;
+	      location_t loc = get_fndecl_argument_location (fndecl, i);
+	      if (loc != DECL_SOURCE_LOCATION (x))
+		loc_of_first_default_arg = loc;
+	    }
+	}
       else if (saw_def && !PACK_EXPANSION_P (TREE_VALUE (arg)))
 	{
-	  error ("default argument missing for parameter %P of %q+#D", i, x);
+	  error_at (get_fndecl_argument_location (fndecl, i),
+		    "default argument missing for parameter %P of %q#D", i, x);
+	  if (loc_of_first_default_arg != UNKNOWN_LOCATION
+	      && !noted_first_def)
+	    {
+	      inform (loc_of_first_default_arg,
+		      "...following parameter %P which has a default argument",
+		      idx_of_first_default_arg);
+	      noted_first_def = true;
+	    }
 	  TREE_PURPOSE (arg) = error_mark_node;
 	}
     }
@@ -5212,6 +5301,63 @@ maybe_instantiate_decl (tree decl)
 			/*expl_inst_class_mem_p=*/false);
       --function_depth;
     }
+}
+
+/* Maybe warn if DECL is deprecated, subject to COMPLAIN.  Returns whether or
+   not a warning was emitted.  */
+
+bool
+cp_warn_deprecated_use (tree decl, tsubst_flags_t complain)
+{
+  if (!(complain & tf_warning) || !decl
+      || deprecated_state == DEPRECATED_SUPPRESS)
+    return false;
+
+  if (!TREE_DEPRECATED (decl))
+    {
+      /* Perhaps this is a deprecated typedef.  */
+      if (TYPE_P (decl) && TYPE_NAME (decl))
+	decl = TYPE_NAME (decl);
+
+      if (!TREE_DEPRECATED (decl))
+	return false;
+    }
+
+  /* Don't warn within members of a deprecated type.  */
+  if (TYPE_P (decl)
+      && currently_open_class (decl))
+    return false;
+
+  bool warned = false;
+  if (cxx_dialect >= cxx11
+      && DECL_P (decl)
+      && DECL_ARTIFICIAL (decl)
+      && DECL_NONSTATIC_MEMBER_FUNCTION_P (decl)
+      && copy_fn_p (decl))
+    {
+      if (warn_deprecated_copy
+	  /* Don't warn about system library classes (c++/86342).  */
+	  && (!DECL_IN_SYSTEM_HEADER (decl)
+	      || global_dc->dc_warn_system_headers))
+	{
+	  auto_diagnostic_group d;
+	  tree ctx = DECL_CONTEXT (decl);
+	  tree other = classtype_has_depr_implicit_copy (ctx);
+	  int opt = (DECL_DESTRUCTOR_P (other)
+		     ? OPT_Wdeprecated_copy_dtor
+		     : OPT_Wdeprecated_copy);
+	  warned = warning (opt, "implicitly-declared %qD is deprecated",
+			    decl);
+	  if (warned)
+	    inform (DECL_SOURCE_LOCATION (other),
+		    "because %qT has user-provided %qD",
+		    ctx, other);
+	}
+    }
+  else
+    warned = warn_deprecated_use (decl, NULL_TREE);
+
+  return warned;
 }
 
 /* Mark DECL (either a _DECL or a BASELINK) as "used" in the program.
@@ -5278,9 +5424,7 @@ mark_used (tree decl, tsubst_flags_t complain)
       return false;
     }
 
-  if (TREE_DEPRECATED (decl) && (complain & tf_warning)
-      && deprecated_state != DEPRECATED_SUPPRESS)
-    warn_deprecated_use (decl, NULL_TREE);
+  cp_warn_deprecated_use (decl, complain);
 
   /* We can only check DECL_ODR_USED on variables or functions with
      DECL_LANG_SPECIFIC set, and these are also the only decls that we
@@ -5357,8 +5501,11 @@ mark_used (tree decl, tsubst_flags_t complain)
 	vec_safe_push (no_linkage_decls, decl);
     }
 
-  if (TREE_CODE (decl) == FUNCTION_DECL && DECL_DECLARED_INLINE_P (decl)
-      && !DECL_INITIAL (decl) && !DECL_ARTIFICIAL (decl))
+  if (TREE_CODE (decl) == FUNCTION_DECL
+      && DECL_DECLARED_INLINE_P (decl)
+      && !DECL_INITIAL (decl)
+      && !DECL_ARTIFICIAL (decl)
+      && !DECL_PURE_VIRTUAL_P (decl))
     /* Remember it, so we can check it was defined.  */
     note_vague_linkage_fn (decl);
 
@@ -5389,7 +5536,7 @@ mark_used (tree decl, tsubst_flags_t complain)
 	 within the body of a function so as to avoid collecting live data
 	 on the stack (such as overload resolution candidates).
 
-         We could just let cp_write_global_declarations handle synthesizing
+         We could just let c_parse_final_cleanups handle synthesizing
          this function by adding it to deferred_fns, but doing
          it at the use site produces better error messages.  */
       ++function_depth;

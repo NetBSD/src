@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, Renesas M32R cpu.
-   Copyright (C) 1996-2018 Free Software Foundation, Inc.
+   Copyright (C) 1996-2019 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -866,7 +866,8 @@ L2:     .word STATIC
    of a loop.  */
 /* On the M32R, align loops to 32 byte boundaries (cache line size)
    if -malign-loops.  */
-#define LOOP_ALIGN(LABEL) (TARGET_ALIGN_LOOPS ? 5 : 0)
+#define LOOP_ALIGN(LABEL) ((TARGET_ALIGN_LOOPS \
+			    ? align_flags (5) : align_flags ()))
 
 /* Define this to be the maximum number of insns to move around when moving
    a loop test from the top of a loop to the bottom

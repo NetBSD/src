@@ -1,5 +1,5 @@
 /* Machine mode definitions for GCC; included by rtl.h and tree.h.
-   Copyright (C) 1991-2018 Free Software Foundation, Inc.
+   Copyright (C) 1991-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -236,9 +236,6 @@ extern const unsigned char mode_class[NUM_MACHINE_MODES];
    || CLASS == MODE_UFRACT                     \
    || CLASS == MODE_ACCUM                      \
    || CLASS == MODE_UACCUM)
-
-#define POINTER_BOUNDS_MODE_P(MODE)      \
-  (GET_MODE_CLASS (MODE) == MODE_POINTER_BOUNDS)
 
 /* An optional T (i.e. a T or nothing), where T is some form of mode class.  */
 template<typename T>
@@ -482,7 +479,6 @@ scalar_mode::includes_p (machine_mode m)
     case MODE_UACCUM:
     case MODE_FLOAT:
     case MODE_DECIMAL_FLOAT:
-    case MODE_POINTER_BOUNDS:
       return true;
     default:
       return false;
