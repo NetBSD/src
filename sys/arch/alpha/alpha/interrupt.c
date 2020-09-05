@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.83 2020/09/05 16:29:07 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.84 2020/09/05 18:01:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.83 2020/09/05 16:29:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.84 2020/09/05 18:01:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -450,24 +450,21 @@ badaddr_read(void *addr, size_t size, void *rptr)
 	return (rv);
 }
 
-volatile unsigned long ssir;
-
 /*
- * spl0:
+ * spllower:
  *
- *	Lower interrupt priority to IPL 0 -- must check for
- *	software interrupts.
+ *	Lower interrupt priority.  May need to check for software
+ *	interrupts.
  */
 void
-spl0(void)
+spllower(int ipl)
 {
 
-	if (ssir) {
+	if (ipl == ALPHA_PSL_IPL_0 && curcpu()->ci_ssir) {
 		(void) alpha_pal_swpipl(ALPHA_PSL_IPL_SOFT_LO);
 		softintr_dispatch();
 	}
-
-	(void) alpha_pal_swpipl(ALPHA_PSL_IPL_0);
+	(void) alpha_pal_swpipl(ipl);
 }
 
 /*
@@ -491,9 +488,7 @@ softintr_dispatch(void)
 void
 softint_trigger(uintptr_t machdep)
 {
-
-	/* XXX Needs to be per-CPU */
-	atomic_or_ulong(&ssir, 1 << (x))
+	atomic_or_ulong(&curcpu()->ci_ssir, 1 << (x))
 }
 #endif
 

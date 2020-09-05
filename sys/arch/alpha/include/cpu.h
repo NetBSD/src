@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.94 2020/09/04 15:50:09 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.95 2020/09/05 18:01:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -108,6 +108,7 @@ struct cpu_info {
 	volatile int ci_mtx_oldspl;	/* [MI] for spin mutex splx() */
 
 	u_long ci_intrdepth;		/* interrupt trap depth */
+	volatile u_long ci_ssir;	/* simulated software interrupt reg */
 	struct cpu_softc *ci_softc;	/* pointer to our device */
 
 	struct pmap *ci_pmap;		/* currently-activated pmap */
@@ -137,8 +138,9 @@ struct cpu_info {
 	struct trapframe *ci_db_regs;	/* registers for debuggers */
 };
 
-/* Ensure cpu_info::ci_curlwp is within the signed 16-bit displacement. */
+/* Ensure some cpu_info fields are within the signed 16-bit displacement. */
 __CTASSERT(offsetof(struct cpu_info, ci_curlwp) <= 0x7ff0);
+__CTASSERT(offsetof(struct cpu_info, ci_ssir) <= 0x7ff0);
 
 #endif /* _KERNEL || _KMEMUSER */
 
