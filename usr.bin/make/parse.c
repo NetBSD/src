@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.281 2020/09/05 18:18:05 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.282 2020/09/05 18:31:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.281 2020/09/05 18:18:05 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.282 2020/09/05 18:31:03 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.281 2020/09/05 18:18:05 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.282 2020/09/05 18:31:03 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2343,17 +2343,16 @@ SetFilenameVars(const char *filename, const char *dirvar, const char *filevar)
 static const char *
 GetActuallyIncludingFile(void)
 {
-    const char *filename = NULL;
     size_t i;
 
     /* XXX: Stack was supposed to be an opaque data structure. */
-    for (i = 0; i < includes.len; i++) {
-	IFile *parent = includes.items[i];
-	IFile *child = (i + 1 < includes.len) ? includes.items[i + 1] : curFile;
+    for (i = includes.len; i > 0; i--) {
+	IFile *parent = includes.items[i - 1];
+	IFile *child = (i < includes.len) ? includes.items[i] : curFile;
 	if (!child->fromForLoop)
-	    filename = parent->fname;
+	    return parent->fname;
     }
-    return filename;
+    return NULL;
 }
 
 /* Set .PARSEDIR/.PARSEFILE to the given filename, as well as
