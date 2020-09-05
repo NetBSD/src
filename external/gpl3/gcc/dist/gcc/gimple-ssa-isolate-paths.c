@@ -1,7 +1,7 @@
 /* Detect paths through the CFG which can never be executed in a conforming
    program and isolate them.
 
-   Copyright (C) 2013-2018 Free Software Foundation, Inc.
+   Copyright (C) 2013-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -421,14 +421,19 @@ find_implicit_erroneous_behavior (void)
 			  if (gimple_return_retval (return_stmt) != lhs)
 			    continue;
 
-			  if (warning_at (gimple_location (use_stmt),
-					  OPT_Wreturn_local_addr,
-					  "function may return address "
-					  "of local variable"))
-			    inform (DECL_SOURCE_LOCATION(valbase),
-				    "declared here");
+			  {
+			    auto_diagnostic_group d;
+			    if (warning_at (gimple_location (use_stmt),
+					      OPT_Wreturn_local_addr,
+					      "function may return address "
+					      "of local variable"))
+			      inform (DECL_SOURCE_LOCATION(valbase),
+					"declared here");
+			  }
 
-			  if (gimple_bb (use_stmt) == bb)
+			  if ((flag_isolate_erroneous_paths_dereference
+			       || flag_isolate_erroneous_paths_attribute)
+			      && gimple_bb (use_stmt) == bb)
 			    {
 			      duplicate = isolate_path (bb, duplicate, e,
 							use_stmt, lhs, true);
@@ -543,13 +548,23 @@ find_explicit_erroneous_behavior (void)
 		      else
 			msg = N_("function may return address of "
 				 "local variable");
+		      {
+			auto_diagnostic_group d;
+			if (warning_at (gimple_location (stmt),
+					  OPT_Wreturn_local_addr, msg))
+			  inform (DECL_SOURCE_LOCATION(valbase),
+				  "declared here");
+		      }
 
-		      if (warning_at (gimple_location (stmt),
-				      OPT_Wreturn_local_addr, msg))
-			inform (DECL_SOURCE_LOCATION(valbase), "declared here");
-		      tree zero = build_zero_cst (TREE_TYPE (val));
-		      gimple_return_set_retval (return_stmt, zero);
-		      update_stmt (stmt);
+		      /* Do not modify code if the user only asked for
+			 warnings.  */
+		      if (flag_isolate_erroneous_paths_dereference
+			  || flag_isolate_erroneous_paths_attribute)
+			{
+			  tree zero = build_zero_cst (TREE_TYPE (val));
+			  gimple_return_set_retval (return_stmt, zero);
+			  update_stmt (stmt);
+			}
 		    }
 		}
 	    }

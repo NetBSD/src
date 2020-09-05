@@ -1,5 +1,5 @@
 /* Data references and dependences detectors.
-   Copyright (C) 2003-2018 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
    Contributed by Sebastian Pop <pop@cri.ensmp.fr>
 
 This file is part of GCC.
@@ -95,10 +95,8 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-affine.h"
 #include "params.h"
 #include "builtins.h"
-#include "stringpool.h"
-#include "tree-vrp.h"
-#include "tree-ssanames.h"
 #include "tree-eh.h"
+#include "ssa.h"
 
 static struct datadep_stats
 {
@@ -393,7 +391,7 @@ print_lambda_vector (FILE * outfile, lambda_vector vector, int n)
   int i;
 
   for (i = 0; i < n; i++)
-    fprintf (outfile, "%3d ", vector[i]);
+    fprintf (outfile, "%3d ", (int)vector[i]);
   fprintf (outfile, "\n");
 }
 
@@ -584,6 +582,11 @@ debug_ddrs (vec<ddr_p> ddrs)
   dump_ddrs (stderr, ddrs);
 }
 
+static void
+split_constant_offset (tree exp, tree *var, tree *off,
+		       hash_map<tree, std::pair<tree, tree> > &cache,
+		       unsigned *limit);
+
 /* Helper function for split_constant_offset.  Expresses OP0 CODE OP1
    (the type of the result is TYPE) as VAR + OFF, where OFF is a nonzero
    constant of type ssizetype, and returns true.  If we cannot do this
@@ -592,7 +595,9 @@ debug_ddrs (vec<ddr_p> ddrs)
 
 static bool
 split_constant_offset_1 (tree type, tree op0, enum tree_code code, tree op1,
-			 tree *var, tree *off)
+			 tree *var, tree *off,
+			 hash_map<tree, std::pair<tree, tree> > &cache,
+			 unsigned *limit)
 {
   tree var0, var1;
   tree off0, off1;
@@ -613,8 +618,15 @@ split_constant_offset_1 (tree type, tree op0, enum tree_code code, tree op1,
       /* FALLTHROUGH */
     case PLUS_EXPR:
     case MINUS_EXPR:
-      split_constant_offset (op0, &var0, &off0);
-      split_constant_offset (op1, &var1, &off1);
+      if (TREE_CODE (op1) == INTEGER_CST)
+	{
+	  split_constant_offset (op0, &var0, &off0, cache, limit);
+	  *var = var0;
+	  *off = size_binop (ocode, off0, fold_convert (ssizetype, op1));
+	  return true;
+	}
+      split_constant_offset (op0, &var0, &off0, cache, limit);
+      split_constant_offset (op1, &var1, &off1, cache, limit);
       *var = fold_build2 (code, type, var0, var1);
       *off = size_binop (ocode, off0, off1);
       return true;
@@ -623,7 +635,7 @@ split_constant_offset_1 (tree type, tree op0, enum tree_code code, tree op1,
       if (TREE_CODE (op1) != INTEGER_CST)
 	return false;
 
-      split_constant_offset (op0, &var0, &off0);
+      split_constant_offset (op0, &var0, &off0, cache, limit);
       *var = fold_build2 (MULT_EXPR, type, var0, op1);
       *off = size_binop (MULT_EXPR, off0, fold_convert (ssizetype, op1));
       return true;
@@ -647,7 +659,7 @@ split_constant_offset_1 (tree type, tree op0, enum tree_code code, tree op1,
 
 	if (poffset)
 	  {
-	    split_constant_offset (poffset, &poffset, &off1);
+	    split_constant_offset (poffset, &poffset, &off1, cache, limit);
 	    off0 = size_binop (PLUS_EXPR, off0, off1);
 	    if (POINTER_TYPE_P (TREE_TYPE (base)))
 	      base = fold_build_pointer_plus (base, poffset);
@@ -691,18 +703,52 @@ split_constant_offset_1 (tree type, tree op0, enum tree_code code, tree op1,
 	if (gimple_code (def_stmt) != GIMPLE_ASSIGN)
 	  return false;
 
-	var0 = gimple_assign_rhs1 (def_stmt);
 	subcode = gimple_assign_rhs_code (def_stmt);
+
+	/* We are using a cache to avoid un-CSEing large amounts of code.  */
+	bool use_cache = false;
+	if (!has_single_use (op0)
+	    && (subcode == POINTER_PLUS_EXPR
+		|| subcode == PLUS_EXPR
+		|| subcode == MINUS_EXPR
+		|| subcode == MULT_EXPR
+		|| subcode == ADDR_EXPR
+		|| CONVERT_EXPR_CODE_P (subcode)))
+	  {
+	    use_cache = true;
+	    bool existed;
+	    std::pair<tree, tree> &e = cache.get_or_insert (op0, &existed);
+	    if (existed)
+	      {
+		if (integer_zerop (e.second))
+		  return false;
+		*var = e.first;
+		*off = e.second;
+		return true;
+	      }
+	    e = std::make_pair (op0, ssize_int (0));
+	  }
+
+	if (*limit == 0)
+	  return false;
+	--*limit;
+
+	var0 = gimple_assign_rhs1 (def_stmt);
 	var1 = gimple_assign_rhs2 (def_stmt);
 
-	return split_constant_offset_1 (type, var0, subcode, var1, var, off);
+	bool res = split_constant_offset_1 (type, var0, subcode, var1,
+					    var, off, cache, limit);
+	if (res && use_cache)
+	  *cache.get (op0) = std::make_pair (*var, *off);
+	return res;
       }
     CASE_CONVERT:
       {
-	/* We must not introduce undefined overflow, and we must not change the value.
-	   Hence we're okay if the inner type doesn't overflow to start with
-	   (pointer or signed), the outer type also is an integer or pointer
-	   and the outer precision is at least as large as the inner.  */
+	/* We must not introduce undefined overflow, and we must not change
+	   the value.  Hence we're okay if the inner type doesn't overflow
+	   to start with (pointer or signed), the outer type also is an
+	   integer or pointer and the outer precision is at least as large
+	   as the inner.  */
 	tree itype = TREE_TYPE (op0);
 	if ((POINTER_TYPE_P (itype)
 	     || (INTEGRAL_TYPE_P (itype) && !TYPE_OVERFLOW_TRAPS (itype)))
@@ -714,14 +760,14 @@ split_constant_offset_1 (tree type, tree op0, enum tree_code code, tree op1,
 		/* Split the unconverted operand and try to prove that
 		   wrapping isn't a problem.  */
 		tree tmp_var, tmp_off;
-		split_constant_offset (op0, &tmp_var, &tmp_off);
+		split_constant_offset (op0, &tmp_var, &tmp_off, cache, limit);
 
 		/* See whether we have an SSA_NAME whose range is known
 		   to be [A, B].  */
 		if (TREE_CODE (tmp_var) != SSA_NAME)
 		  return false;
 		wide_int var_min, var_max;
-		value_range_type vr_type = get_range_info (tmp_var, &var_min,
+		value_range_kind vr_type = get_range_info (tmp_var, &var_min,
 							   &var_max);
 		wide_int var_nonzero = get_nonzero_bits (tmp_var);
 		signop sgn = TYPE_SIGN (itype);
@@ -734,12 +780,12 @@ split_constant_offset_1 (tree type, tree op0, enum tree_code code, tree op1,
 		   is known to be [A + TMP_OFF, B + TMP_OFF], with all
 		   operations done in ITYPE.  The addition must overflow
 		   at both ends of the range or at neither.  */
-		bool overflow[2];
+		wi::overflow_type overflow[2];
 		unsigned int prec = TYPE_PRECISION (itype);
 		wide_int woff = wi::to_wide (tmp_off, prec);
 		wide_int op0_min = wi::add (var_min, woff, sgn, &overflow[0]);
 		wi::add (var_max, woff, sgn, &overflow[1]);
-		if (overflow[0] != overflow[1])
+		if ((overflow[0] != wi::OVF_NONE) != (overflow[1] != wi::OVF_NONE))
 		  return false;
 
 		/* Calculate (ssizetype) OP0 - (ssizetype) TMP_VAR.  */
@@ -749,7 +795,7 @@ split_constant_offset_1 (tree type, tree op0, enum tree_code code, tree op1,
 		*off = wide_int_to_tree (ssizetype, diff);
 	      }
 	    else
-	      split_constant_offset (op0, &var0, off);
+	      split_constant_offset (op0, &var0, off, cache, limit);
 	    *var = fold_convert (type, var0);
 	    return true;
 	  }
@@ -764,8 +810,10 @@ split_constant_offset_1 (tree type, tree op0, enum tree_code code, tree op1,
 /* Expresses EXP as VAR + OFF, where off is a constant.  The type of OFF
    will be ssizetype.  */
 
-void
-split_constant_offset (tree exp, tree *var, tree *off)
+static void
+split_constant_offset (tree exp, tree *var, tree *off,
+		       hash_map<tree, std::pair<tree, tree> > &cache,
+		       unsigned *limit)
 {
   tree type = TREE_TYPE (exp), op0, op1, e, o;
   enum tree_code code;
@@ -779,11 +827,22 @@ split_constant_offset (tree exp, tree *var, tree *off)
 
   code = TREE_CODE (exp);
   extract_ops_from_tree (exp, &code, &op0, &op1);
-  if (split_constant_offset_1 (type, op0, code, op1, &e, &o))
+  if (split_constant_offset_1 (type, op0, code, op1, &e, &o, cache, limit))
     {
       *var = e;
       *off = o;
     }
+}
+
+void
+split_constant_offset (tree exp, tree *var, tree *off)
+{
+  unsigned limit = PARAM_VALUE (PARAM_SSA_NAME_DEF_CHAIN_LIMIT);
+  static hash_map<tree, std::pair<tree, tree> > *cache;
+  if (!cache)
+    cache = new hash_map<tree, std::pair<tree, tree> > (37);
+  split_constant_offset (exp, var, off, *cache, &limit);
+  cache->empty ();
 }
 
 /* Returns the address ADDR of an object in a canonical shape (without nop
@@ -807,7 +866,8 @@ canonicalize_base_object_address (tree addr)
   return build_fold_addr_expr (TREE_OPERAND (addr, 0));
 }
 
-/* Analyze the behavior of memory reference REF.  There are two modes:
+/* Analyze the behavior of memory reference REF within STMT.
+   There are two modes:
 
    - BB analysis.  In this case we simply split the address into base,
      init and offset components, without reference to any containing loop.
@@ -827,9 +887,9 @@ canonicalize_base_object_address (tree addr)
    Return true if the analysis succeeded and store the results in DRB if so.
    BB analysis can only fail for bitfield or reversed-storage accesses.  */
 
-bool
+opt_result
 dr_analyze_innermost (innermost_loop_behavior *drb, tree ref,
-		      struct loop *loop)
+		      struct loop *loop, const gimple *stmt)
 {
   poly_int64 pbitsize, pbitpos;
   tree base, poffset;
@@ -848,18 +908,12 @@ dr_analyze_innermost (innermost_loop_behavior *drb, tree ref,
 
   poly_int64 pbytepos;
   if (!multiple_p (pbitpos, BITS_PER_UNIT, &pbytepos))
-    {
-      if (dump_file && (dump_flags & TDF_DETAILS))
-	fprintf (dump_file, "failed: bit offset alignment.\n");
-      return false;
-    }
+    return opt_result::failure_at (stmt,
+				   "failed: bit offset alignment.\n");
 
   if (preversep)
-    {
-      if (dump_file && (dump_flags & TDF_DETAILS))
-	fprintf (dump_file, "failed: reverse storage order.\n");
-      return false;
-    }
+    return opt_result::failure_at (stmt,
+				   "failed: reverse storage order.\n");
 
   /* Calculate the alignment and misalignment for the inner reference.  */
   unsigned int HOST_WIDE_INT bit_base_misalignment;
@@ -895,11 +949,8 @@ dr_analyze_innermost (innermost_loop_behavior *drb, tree ref,
   if (in_loop)
     {
       if (!simple_iv (loop, loop, base, &base_iv, true))
-        {
-	  if (dump_file && (dump_flags & TDF_DETAILS))
-	    fprintf (dump_file, "failed: evolution of base is not affine.\n");
-	  return false;
-        }
+	return opt_result::failure_at
+	  (stmt, "failed: evolution of base is not affine.\n");
     }
   else
     {
@@ -921,11 +972,8 @@ dr_analyze_innermost (innermost_loop_behavior *drb, tree ref,
           offset_iv.step = ssize_int (0);
         }
       else if (!simple_iv (loop, loop, poffset, &offset_iv, true))
-        {
-	  if (dump_file && (dump_flags & TDF_DETAILS))
-	    fprintf (dump_file, "failed: evolution of offset is not affine.\n");
-	  return false;
-        }
+	return opt_result::failure_at
+	  (stmt, "failed: evolution of offset is not affine.\n");
     }
 
   init = ssize_int (pbytepos);
@@ -981,7 +1029,7 @@ dr_analyze_innermost (innermost_loop_behavior *drb, tree ref,
   if (dump_file && (dump_flags & TDF_DETAILS))
     fprintf (dump_file, "success.\n");
 
-  return true;
+  return opt_result::success ();
 }
 
 /* Return true if OP is a valid component reference for a DR access
@@ -1205,7 +1253,7 @@ create_data_ref (edge nest, loop_p loop, tree memref, gimple *stmt,
   DR_IS_CONDITIONAL_IN_STMT (dr) = is_conditional_in_stmt;
 
   dr_analyze_innermost (&DR_INNERMOST (dr), memref,
-			nest != NULL ? loop : NULL);
+			nest != NULL ? loop : NULL, stmt);
   dr_analyze_indices (dr, nest, loop);
   dr_analyze_alias (dr);
 
@@ -1318,38 +1366,27 @@ data_ref_compare_tree (tree t1, tree t2)
 /* Return TRUE it's possible to resolve data dependence DDR by runtime alias
    check.  */
 
-bool
+opt_result
 runtime_alias_check_p (ddr_p ddr, struct loop *loop, bool speed_p)
 {
   if (dump_enabled_p ())
-    {
-      dump_printf (MSG_NOTE, "consider run-time aliasing test between ");
-      dump_generic_expr (MSG_NOTE, TDF_SLIM, DR_REF (DDR_A (ddr)));
-      dump_printf (MSG_NOTE,  " and ");
-      dump_generic_expr (MSG_NOTE, TDF_SLIM, DR_REF (DDR_B (ddr)));
-      dump_printf (MSG_NOTE, "\n");
-    }
+    dump_printf (MSG_NOTE,
+		 "consider run-time aliasing test between %T and %T\n",
+		 DR_REF (DDR_A (ddr)), DR_REF (DDR_B (ddr)));
 
   if (!speed_p)
-    {
-      if (dump_enabled_p ())
-	dump_printf (MSG_MISSED_OPTIMIZATION,
-		     "runtime alias check not supported when optimizing "
-		     "for size.\n");
-      return false;
-    }
+    return opt_result::failure_at (DR_STMT (DDR_A (ddr)),
+				   "runtime alias check not supported when"
+				   " optimizing for size.\n");
 
   /* FORNOW: We don't support versioning with outer-loop in either
      vectorization or loop distribution.  */
   if (loop != NULL && loop->inner != NULL)
-    {
-      if (dump_enabled_p ())
-	dump_printf (MSG_MISSED_OPTIMIZATION,
-		     "runtime alias check not supported for outer loop.\n");
-      return false;
-    }
+    return opt_result::failure_at (DR_STMT (DDR_A (ddr)),
+				   "runtime alias check not supported for"
+				   " outer loop.\n");
 
-  return true;
+  return opt_result::success ();
 }
 
 /* Operator == between two dr_with_seg_len objects.
@@ -1469,17 +1506,9 @@ prune_runtime_alias_test_list (vec<dr_with_seg_len_pair_t> *alias_pairs,
       if (*dr_a1 == *dr_a2 && *dr_b1 == *dr_b2)
 	{
 	  if (dump_enabled_p ())
-	    {
-	      dump_printf (MSG_NOTE, "found equal ranges ");
-	      dump_generic_expr (MSG_NOTE, TDF_SLIM, DR_REF (dr_a1->dr));
-	      dump_printf (MSG_NOTE,  ", ");
-	      dump_generic_expr (MSG_NOTE, TDF_SLIM, DR_REF (dr_b1->dr));
-	      dump_printf (MSG_NOTE,  " and ");
-	      dump_generic_expr (MSG_NOTE, TDF_SLIM, DR_REF (dr_a2->dr));
-	      dump_printf (MSG_NOTE,  ", ");
-	      dump_generic_expr (MSG_NOTE, TDF_SLIM, DR_REF (dr_b2->dr));
-	      dump_printf (MSG_NOTE, "\n");
-	    }
+	    dump_printf (MSG_NOTE, "found equal ranges %T, %T and %T, %T\n",
+			 DR_REF (dr_a1->dr), DR_REF (dr_b1->dr),
+			 DR_REF (dr_a2->dr), DR_REF (dr_b2->dr));
 	  alias_pairs->ordered_remove (i--);
 	  continue;
 	}
@@ -1576,17 +1605,9 @@ prune_runtime_alias_test_list (vec<dr_with_seg_len_pair_t> *alias_pairs,
 	      dr_a1->align = MIN (dr_a1->align, new_align);
 	    }
 	  if (dump_enabled_p ())
-	    {
-	      dump_printf (MSG_NOTE, "merging ranges for ");
-	      dump_generic_expr (MSG_NOTE, TDF_SLIM, DR_REF (dr_a1->dr));
-	      dump_printf (MSG_NOTE,  ", ");
-	      dump_generic_expr (MSG_NOTE, TDF_SLIM, DR_REF (dr_b1->dr));
-	      dump_printf (MSG_NOTE,  " and ");
-	      dump_generic_expr (MSG_NOTE, TDF_SLIM, DR_REF (dr_a2->dr));
-	      dump_printf (MSG_NOTE,  ", ");
-	      dump_generic_expr (MSG_NOTE, TDF_SLIM, DR_REF (dr_b2->dr));
-	      dump_printf (MSG_NOTE, "\n");
-	    }
+	    dump_printf (MSG_NOTE, "merging ranges for %T, %T and %T, %T\n",
+			 DR_REF (dr_a1->dr), DR_REF (dr_b1->dr),
+			 DR_REF (dr_a2->dr), DR_REF (dr_b2->dr));
 	  alias_pairs->ordered_remove (i);
 	  i--;
 	}
@@ -1925,13 +1946,9 @@ create_runtime_alias_checks (struct loop *loop,
       const dr_with_seg_len& dr_b = (*alias_pairs)[i].second;
 
       if (dump_enabled_p ())
-	{
-	  dump_printf (MSG_NOTE, "create runtime check for data references ");
-	  dump_generic_expr (MSG_NOTE, TDF_SLIM, DR_REF (dr_a.dr));
-	  dump_printf (MSG_NOTE, " and ");
-	  dump_generic_expr (MSG_NOTE, TDF_SLIM, DR_REF (dr_b.dr));
-	  dump_printf (MSG_NOTE, "\n");
-	}
+	dump_printf (MSG_NOTE,
+		     "create runtime check for data references %T and %T\n",
+		     DR_REF (dr_a.dr), DR_REF (dr_b.dr));
 
       /* Create condition expression for each pair data references.  */
       create_intersect_range_checks (loop, &part_cond_expr, dr_a, dr_b);
@@ -3447,8 +3464,9 @@ lambda_matrix_id (lambda_matrix mat, int size)
       mat[i][j] = (i == j) ? 1 : 0;
 }
 
-/* Return the first nonzero element of vector VEC1 between START and N.
-   We must have START <= N.   Returns N if VEC1 is the zero vector.  */
+/* Return the index of the first nonzero element of vector VEC1 between
+   START and N.  We must have START <= N.
+   Returns N if VEC1 is the zero vector.  */
 
 static int
 lambda_vector_first_nz (lambda_vector vec1, int n, int start)
@@ -3463,7 +3481,8 @@ lambda_vector_first_nz (lambda_vector vec1, int n, int start)
    R2 = R2 + CONST1 * R1.  */
 
 static void
-lambda_matrix_row_add (lambda_matrix mat, int n, int r1, int r2, int const1)
+lambda_matrix_row_add (lambda_matrix mat, int n, int r1, int r2,
+		       lambda_int const1)
 {
   int i;
 
@@ -3479,7 +3498,7 @@ lambda_matrix_row_add (lambda_matrix mat, int n, int r1, int r2, int const1)
 
 static void
 lambda_vector_mult_const (lambda_vector vec1, lambda_vector vec2,
-			  int size, int const1)
+			  int size, lambda_int const1)
 {
   int i;
 
@@ -3544,13 +3563,13 @@ lambda_matrix_right_hermite (lambda_matrix A, int m, int n,
 	    {
 	      while (S[i][j] != 0)
 		{
-		  int sigma, factor, a, b;
+		  lambda_int sigma, factor, a, b;
 
 		  a = S[i-1][j];
 		  b = S[i][j];
 		  sigma = (a * b < 0) ? -1: 1;
-		  a = abs (a);
-		  b = abs (b);
+		  a = abs_hwi (a);
+		  b = abs_hwi (b);
 		  factor = sigma * (a / b);
 
 		  lambda_matrix_row_add (S, n, i, i-1, -factor);
@@ -3775,10 +3794,6 @@ analyze_subscript_affine_affine (tree chrec_a,
 
 	      if (niter > 0)
 		{
-		  HOST_WIDE_INT tau2 = MIN (FLOOR_DIV (niter_a - i0, i1),
-					    FLOOR_DIV (niter_b - j0, j1));
-		  HOST_WIDE_INT last_conflict = tau2 - (x1 - i0)/i1;
-
 		  /* If the overlap occurs outside of the bounds of the
 		     loop, there is no dependence.  */
 		  if (x1 >= niter_a || y1 >= niter_b)
@@ -3788,8 +3803,20 @@ analyze_subscript_affine_affine (tree chrec_a,
 		      *last_conflicts = integer_zero_node;
 		      goto end_analyze_subs_aa;
 		    }
+
+		  /* max stmt executions can get quite large, avoid
+		     overflows by using wide ints here.  */
+		  widest_int tau2
+		    = wi::smin (wi::sdiv_floor (wi::sub (niter_a, i0), i1),
+				wi::sdiv_floor (wi::sub (niter_b, j0), j1));
+		  widest_int last_conflict = wi::sub (tau2, (x1 - i0)/i1);
+		  if (wi::min_precision (last_conflict, SIGNED)
+		      <= TYPE_PRECISION (integer_type_node))
+		    *last_conflicts
+		       = build_int_cst (integer_type_node,
+					last_conflict.to_shwi ());
 		  else
-		    *last_conflicts = build_int_cst (NULL_TREE, last_conflict);
+		    *last_conflicts = chrec_dont_know;
 		}
 	      else
 		*last_conflicts = chrec_dont_know;
@@ -4052,9 +4079,9 @@ analyze_miv_subscript (tree chrec_a,
       dependence_stats.num_miv_independent++;
     }
 
-  else if (evolution_function_is_affine_multivariate_p (chrec_a, loop_nest->num)
+  else if (evolution_function_is_affine_in_loop (chrec_a, loop_nest->num)
 	   && !chrec_contains_symbols (chrec_a, loop_nest)
-	   && evolution_function_is_affine_multivariate_p (chrec_b, loop_nest->num)
+	   && evolution_function_is_affine_in_loop (chrec_b, loop_nest->num)
 	   && !chrec_contains_symbols (chrec_b, loop_nest))
     {
       /* testsuite/.../ssa-chrec-35.c
@@ -4424,7 +4451,7 @@ add_other_self_distances (struct data_dependence_relation *ddr)
 
       if (TREE_CODE (access_fun) == POLYNOMIAL_CHREC)
 	{
-	  if (!evolution_function_is_univariate_p (access_fun))
+	  if (!evolution_function_is_univariate_p (access_fun, loop->num))
 	    {
 	      if (DDR_NUM_SUBSCRIPTS (ddr) != 1)
 		{
@@ -5106,18 +5133,18 @@ loop_nest_has_data_refs (loop_p loop)
    reference, returns false, otherwise returns true.  NEST is the outermost
    loop of the loop nest in which the references should be analyzed.  */
 
-bool
+opt_result
 find_data_references_in_stmt (struct loop *nest, gimple *stmt,
 			      vec<data_reference_p> *datarefs)
 {
   unsigned i;
   auto_vec<data_ref_loc, 2> references;
   data_ref_loc *ref;
-  bool ret = true;
   data_reference_p dr;
 
   if (get_references_in_stmt (stmt, &references))
-    return false;
+    return opt_result::failure_at (stmt, "statement clobbers memory: %G",
+				   stmt);
 
   FOR_EACH_VEC_ELT (references, i, ref)
     {
@@ -5128,7 +5155,7 @@ find_data_references_in_stmt (struct loop *nest, gimple *stmt,
       datarefs->safe_push (dr);
     }
 
-  return ret;
+  return opt_result::success ();
 }
 
 /* Stores the data references in STMT to DATAREFS.  If there is an
@@ -5493,6 +5520,8 @@ static tree
 dr_step_indicator (struct data_reference *dr, int useful_min)
 {
   tree step = DR_STEP (dr);
+  if (!step)
+    return NULL_TREE;
   STRIP_NOPS (step);
   /* Look for cases where the step is scaled by a positive constant
      integer, which will often be the access size.  If the multiplication

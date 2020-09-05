@@ -1,5 +1,5 @@
 /* Implementation of subroutines for the GNU C++ pretty-printer.
-   Copyright (C) 2003-2018 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
    Contributed by Gabriel Dos Reis <gdr@integrable-solutions.net>
 
 This file is part of GCC.
@@ -187,7 +187,13 @@ pp_cxx_unqualified_id (cxx_pretty_printer *pp, tree t)
 
     case TEMPLATE_TYPE_PARM:
     case TEMPLATE_TEMPLATE_PARM:
-      if (TYPE_IDENTIFIER (t))
+      if (template_placeholder_p (t))
+	{
+	  t = TREE_TYPE (CLASS_PLACEHOLDER_TEMPLATE (t));
+	  pp_cxx_unqualified_id (pp, TYPE_IDENTIFIER (t));
+	  pp_string (pp, "<...auto...>");
+	}
+      else if (TYPE_IDENTIFIER (t))
 	pp_cxx_unqualified_id (pp, TYPE_IDENTIFIER (t));
       else
 	pp_cxx_canonical_template_parameter (pp, t);
@@ -294,6 +300,39 @@ pp_cxx_qualified_id (cxx_pretty_printer *pp, tree t)
     }
 }
 
+/* Given a value e of ENUMERAL_TYPE:
+   Print out the first ENUMERATOR id with value e, if one is found,
+   (including nested names but excluding the enum name if unscoped)
+   else print out the value as a C-style cast (type-id)value.  */
+
+static void
+pp_cxx_enumeration_constant (cxx_pretty_printer *pp, tree e)
+{
+  tree type = TREE_TYPE (e);
+  tree value = NULL_TREE;
+
+  /* Find the name of this constant.  */
+  if ((pp->flags & pp_c_flag_gnu_v3) == 0)
+    for (value = TYPE_VALUES (type); value != NULL_TREE;
+	 value = TREE_CHAIN (value))
+      if (tree_int_cst_equal (DECL_INITIAL (TREE_VALUE (value)), e))
+	break;
+
+  if (value != NULL_TREE)
+    {
+      if (!ENUM_IS_SCOPED (type))
+	type = get_containing_scope (type);
+      pp_cxx_nested_name_specifier (pp, type);
+      pp->id_expression (TREE_PURPOSE (value));
+    }
+  else
+    {
+      /* Value must have been cast.  */
+       pp_c_type_cast (pp, type);
+       pp_c_integer_constant (pp, e);
+    }
+}
+
 
 void
 cxx_pretty_printer::constant (tree t)
@@ -315,6 +354,11 @@ cxx_pretty_printer::constant (tree t)
       if (NULLPTR_TYPE_P (TREE_TYPE (t)))
 	{
 	  pp_string (this, "nullptr");
+	  break;
+	}
+      else if (TREE_CODE (TREE_TYPE (t)) == ENUMERAL_TYPE)
+	{
+	  pp_cxx_enumeration_constant (this, t);
 	  break;
 	}
       /* fall through.  */
@@ -1702,7 +1746,7 @@ cxx_pretty_printer::abstract_declarator (tree t)
 {
   if (TYPE_PTRMEM_P (t))
     pp_cxx_right_paren (this);
-  else if (POINTER_TYPE_P (t))
+  else if (INDIRECT_TYPE_P (t))
     {
       if (TREE_CODE (TREE_TYPE (t)) == ARRAY_TYPE
 	  || TREE_CODE (TREE_TYPE (t)) == FUNCTION_TYPE)
@@ -2021,6 +2065,12 @@ cxx_pretty_printer::statement (tree t)
       pp_cxx_ws_string (this, "for");
       pp_space (this);
       pp_cxx_left_paren (this);
+      if (RANGE_FOR_INIT_STMT (t))
+	{
+	  statement (RANGE_FOR_INIT_STMT (t));
+	  pp_needs_newline (this) = false;
+	  pp_cxx_whitespace (this);
+	}
       statement (RANGE_FOR_DECL (t));
       pp_space (this);
       pp_needs_newline (this) = false;
@@ -2066,6 +2116,42 @@ cxx_pretty_printer::statement (tree t)
 
     case STATIC_ASSERT:
       declaration (t);
+      break;
+
+    case OMP_DEPOBJ:
+      pp_cxx_ws_string (this, "#pragma omp depobj");
+      pp_space (this);
+      pp_cxx_left_paren (this);
+      expression (OMP_DEPOBJ_DEPOBJ (t));
+      pp_cxx_right_paren (this);
+      if (OMP_DEPOBJ_CLAUSES (t) && OMP_DEPOBJ_CLAUSES (t) != error_mark_node)
+	{
+	  if (TREE_CODE (OMP_DEPOBJ_CLAUSES (t)) == OMP_CLAUSE)
+	    dump_omp_clauses (this, OMP_DEPOBJ_CLAUSES (t),
+			      pp_indentation (this), TDF_NONE);
+	  else
+	    switch (tree_to_uhwi (OMP_DEPOBJ_CLAUSES (t)))
+	      {
+	      case OMP_CLAUSE_DEPEND_IN:
+		pp_cxx_ws_string (this, " update(in)");
+		break;
+	      case OMP_CLAUSE_DEPEND_INOUT:
+		pp_cxx_ws_string (this, " update(inout)");
+		break;
+	      case OMP_CLAUSE_DEPEND_OUT:
+		pp_cxx_ws_string (this, " update(out)");
+		break;
+	      case OMP_CLAUSE_DEPEND_MUTEXINOUTSET:
+		pp_cxx_ws_string (this, " update(mutexinoutset)");
+		break;
+	      case OMP_CLAUSE_DEPEND_LAST:
+		pp_cxx_ws_string (this, " destroy");
+		break;
+	      default:
+		break;
+	      }
+	}
+      pp_needs_newline (this) = true;
       break;
 
     default:
@@ -2395,7 +2481,7 @@ pp_cxx_offsetof_expression_1 (cxx_pretty_printer *pp, tree t)
     {
     case ARROW_EXPR:
       if (TREE_CODE (TREE_OPERAND (t, 0)) == STATIC_CAST_EXPR
-	  && POINTER_TYPE_P (TREE_TYPE (TREE_OPERAND (t, 0))))
+	  && INDIRECT_TYPE_P (TREE_TYPE (TREE_OPERAND (t, 0))))
 	{
 	  pp->type_id (TREE_TYPE (TREE_TYPE (TREE_OPERAND (t, 0))));
 	  pp_cxx_separate_with (pp, ',');

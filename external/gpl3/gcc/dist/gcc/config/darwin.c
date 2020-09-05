@@ -1,5 +1,5 @@
 /* Functions for generic Darwin as target machine for GNU C compiler.
-   Copyright (C) 1989-2018 Free Software Foundation, Inc.
+   Copyright (C) 1989-2019 Free Software Foundation, Inc.
    Contributed by Apple Computer Inc.
 
 This file is part of GCC.
@@ -46,6 +46,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "langhooks.h"
 #include "toplev.h"
 #include "lto-section-names.h"
+#include "intl.h"
 
 /* Darwin supports a feature called fix-and-continue, which is used
    for rapid turn around debugging.  When code is compiled with the
@@ -820,8 +821,7 @@ machopic_legitimize_pic_address (rtx orig, machine_mode mode, rtx reg)
 
   /* First handle a simple SYMBOL_REF or LABEL_REF */
   if (GET_CODE (orig) == LABEL_REF
-      || (GET_CODE (orig) == SYMBOL_REF
-	  ))
+      || GET_CODE (orig) == SYMBOL_REF)
     {
       /* addr(foo) = &func+(foo-func) */
       orig = machopic_indirect_data_reference (orig, reg);
@@ -1020,10 +1020,6 @@ machopic_legitimize_pic_address (rtx orig, machine_mode mode, rtx reg)
           return pic_ref;
         }
     }
-
-  else if (GET_CODE (orig) == SYMBOL_REF)
-    return orig;
-
   else if (GET_CODE (orig) == PLUS
 	   && (GET_CODE (XEXP (orig, 0)) == MEM
 	       || GET_CODE (XEXP (orig, 0)) == SYMBOL_REF
@@ -1053,12 +1049,10 @@ machopic_legitimize_pic_address (rtx orig, machine_mode mode, rtx reg)
 	}
       /* Likewise, should we set special REG_NOTEs here?  */
     }
-
   else if (GET_CODE (orig) == CONST)
     {
       return machopic_legitimize_pic_address (XEXP (orig, 0), Pmode, reg);
     }
-
   else if (GET_CODE (orig) == MEM
 	   && GET_CODE (XEXP (orig, 0)) == SYMBOL_REF)
     {
@@ -3239,7 +3233,7 @@ darwin_override_options (void)
   if (global_options_set.x_dwarf_split_debug_info)
     {
       inform (input_location,
-	      "-gsplit-dwarf is not supported on this platform, ignored");
+	      "%<-gsplit-dwarf%> is not supported on this platform, ignored");
       dwarf_split_debug_info = 0;
       global_options_set.x_dwarf_split_debug_info = 0;
     }
@@ -3269,8 +3263,8 @@ darwin_override_options (void)
 	       && !global_options_set.x_flag_asynchronous_unwind_tables)))
     {
       inform (input_location,
-	      "-freorder-blocks-and-partition does not work with exceptions "
-	      "on this architecture");
+	      "%<-freorder-blocks-and-partition%> does not work with "
+	      "exceptions on this architecture");
       flag_reorder_blocks_and_partition = 0;
       flag_reorder_blocks = 1;
     }
@@ -3667,8 +3661,9 @@ darwin_build_constant_cfstring (tree str)
 	  for (l = 0; l < length; l++)
 	    if (!s[l] || !isascii (s[l]))
 	      {
-		warning (darwin_warn_nonportable_cfstrings, "%s in CFString literal",
-			 s[l] ? "non-ASCII character" : "embedded NUL");
+		warning (darwin_warn_nonportable_cfstrings,
+			 s[l] ? G_("non-ASCII character in CFString literal")
+			      : G_("embedded NUL in CFString literal"));
 		break;
 	      }
 	}

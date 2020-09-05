@@ -1,5 +1,5 @@
 /* Passes for transactional memory support.
-   Copyright (C) 2008-2018 Free Software Foundation, Inc.
+   Copyright (C) 2008-2019 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@redhat.com>
    and Aldy Hernandez <aldyh@redhat.com>.
 
@@ -235,8 +235,7 @@ is_tm_irrevocable (tree x)
   if (TREE_CODE (x) == ADDR_EXPR)
     x = TREE_OPERAND (x, 0);
   if (TREE_CODE (x) == FUNCTION_DECL
-      && DECL_BUILT_IN_CLASS (x) == BUILT_IN_NORMAL
-      && DECL_FUNCTION_CODE (x) == BUILT_IN_TM_IRREVOCABLE)
+      && fndecl_built_in_p (x, BUILT_IN_TM_IRREVOCABLE))
     return true;
 
   return false;
@@ -266,20 +265,7 @@ is_tm_safe (const_tree x)
 static bool
 is_tm_pure_call (gimple *call)
 {
-  if (gimple_call_internal_p (call))
-    return (gimple_call_flags (call) & (ECF_CONST | ECF_TM_PURE)) != 0;
-
-  tree fn = gimple_call_fn (call);
-
-  if (TREE_CODE (fn) == ADDR_EXPR)
-    {
-      fn = TREE_OPERAND (fn, 0);
-      gcc_assert (TREE_CODE (fn) == FUNCTION_DECL);
-    }
-  else
-    fn = TREE_TYPE (fn);
-
-  return is_tm_pure (fn);
+  return (gimple_call_flags (call) & (ECF_CONST | ECF_TM_PURE)) != 0;
 }
 
 /* Return true if X has been marked TM_CALLABLE.  */
@@ -358,7 +344,8 @@ is_tm_load (gimple *stmt)
     return false;
 
   fndecl = gimple_call_fndecl (stmt);
-  return (fndecl && DECL_BUILT_IN_CLASS (fndecl) == BUILT_IN_NORMAL
+  return (fndecl
+	  && fndecl_built_in_p (fndecl, BUILT_IN_NORMAL)
 	  && BUILTIN_TM_LOAD_P (DECL_FUNCTION_CODE (fndecl)));
 }
 
@@ -374,7 +361,7 @@ is_tm_simple_load (gimple *stmt)
     return false;
 
   fndecl = gimple_call_fndecl (stmt);
-  if (fndecl && DECL_BUILT_IN_CLASS (fndecl) == BUILT_IN_NORMAL)
+  if (fndecl && fndecl_built_in_p (fndecl, BUILT_IN_NORMAL))
     {
       enum built_in_function fcode = DECL_FUNCTION_CODE (fndecl);
       return (fcode == BUILT_IN_TM_LOAD_1
@@ -402,7 +389,8 @@ is_tm_store (gimple *stmt)
     return false;
 
   fndecl = gimple_call_fndecl (stmt);
-  return (fndecl && DECL_BUILT_IN_CLASS (fndecl) == BUILT_IN_NORMAL
+  return (fndecl
+	  && fndecl_built_in_p (fndecl, BUILT_IN_NORMAL)
 	  && BUILTIN_TM_STORE_P (DECL_FUNCTION_CODE (fndecl)));
 }
 
@@ -418,7 +406,8 @@ is_tm_simple_store (gimple *stmt)
     return false;
 
   fndecl = gimple_call_fndecl (stmt);
-  if (fndecl && DECL_BUILT_IN_CLASS (fndecl) == BUILT_IN_NORMAL)
+  if (fndecl
+      && fndecl_built_in_p (fndecl, BUILT_IN_NORMAL))
     {
       enum built_in_function fcode = DECL_FUNCTION_CODE (fndecl);
       return (fcode == BUILT_IN_TM_STORE_1
@@ -440,9 +429,7 @@ is_tm_simple_store (gimple *stmt)
 static bool
 is_tm_abort (tree fndecl)
 {
-  return (fndecl
-	  && DECL_BUILT_IN_CLASS (fndecl) == BUILT_IN_NORMAL
-	  && DECL_FUNCTION_CODE (fndecl) == BUILT_IN_TM_ABORT);
+  return (fndecl && fndecl_built_in_p (fndecl, BUILT_IN_TM_ABORT));
 }
 
 /* Build a GENERIC tree for a user abort.  This is called by front ends
@@ -2007,7 +1994,7 @@ tm_region_init_1 (struct tm_region *region, basic_block bb)
       if (gimple_code (g) == GIMPLE_CALL)
 	{
 	  tree fn = gimple_call_fndecl (g);
-	  if (fn && DECL_BUILT_IN_CLASS (fn) == BUILT_IN_NORMAL)
+	  if (fn && fndecl_built_in_p (fn, BUILT_IN_NORMAL))
 	    {
 	      if ((DECL_FUNCTION_CODE (fn) == BUILT_IN_TM_COMMIT
 		   || DECL_FUNCTION_CODE (fn) == BUILT_IN_TM_COMMIT_EH)
@@ -2582,7 +2569,7 @@ expand_call_tm (struct tm_region *region,
       gassign *assign_stmt;
 
       /* Remember if the call was going to throw.  */
-      if (stmt_can_throw_internal (stmt))
+      if (stmt_can_throw_internal (cfun, stmt))
 	{
 	  edge_iterator ei;
 	  edge e;
@@ -4859,7 +4846,7 @@ tm_mangle (tree old_asm_id)
 
   if (dc == NULL)
     {
-      char length[8];
+      char length[12];
 
     do_unencoded:
       sprintf (length, "%u", IDENTIFIER_LENGTH (old_asm_id));

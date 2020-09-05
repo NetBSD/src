@@ -1,4 +1,4 @@
-/* Copyright (C) 2012-2018 Free Software Foundation, Inc.
+/* Copyright (C) 2012-2019 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GCC.
@@ -108,10 +108,28 @@ AARCH64_OPT_EXTENSION("sm4", AARCH64_FL_SM4, AARCH64_FL_SIMD, 0, false, "sm3 sm4
 
 /* Enabling "fp16fml" also enables "fp" and "fp16".
    Disabling "fp16fml" just disables "fp16fml".  */
-AARCH64_OPT_EXTENSION("fp16fml", AARCH64_FL_F16FML, AARCH64_FL_FP | AARCH64_FL_F16, 0, false, "asimdfml")
+AARCH64_OPT_EXTENSION("fp16fml", AARCH64_FL_F16FML, AARCH64_FL_FP | AARCH64_FL_F16, 0, false, "asimdfhm")
 
 /* Enabling "sve" also enables "fp16", "fp" and "simd".
    Disabling "sve" just disables "sve".  */
 AARCH64_OPT_EXTENSION("sve", AARCH64_FL_SVE, AARCH64_FL_FP | AARCH64_FL_SIMD | AARCH64_FL_F16, 0, false, "sve")
+
+/* Enabling/Disabling "profile" does not enable/disable any other feature.  */
+AARCH64_OPT_EXTENSION("profile", AARCH64_FL_PROFILE, 0, 0, false, "")
+
+/* Enabling/Disabling "rng" only changes "rng".  */
+AARCH64_OPT_EXTENSION("rng", AARCH64_FL_RNG, 0, 0, false, "")
+
+/* Enabling/Disabling "memtag" only changes "memtag".  */
+AARCH64_OPT_EXTENSION("memtag", AARCH64_FL_MEMTAG, 0, 0, false, "")
+
+/* Enabling/Disabling "sb" only changes "sb".  */
+AARCH64_OPT_EXTENSION("sb", AARCH64_FL_SB, 0, 0, false, "")
+
+/* Enabling/Disabling "ssbs" only changes "ssbs".  */
+AARCH64_OPT_EXTENSION("ssbs", AARCH64_FL_SSBS, 0, 0, false, "")
+
+/* Enabling/Disabling "predres" only changes "predres".  */
+AARCH64_OPT_EXTENSION("predres", AARCH64_FL_PREDRES, 0, 0, false, "")
 
 #undef AARCH64_OPT_EXTENSION

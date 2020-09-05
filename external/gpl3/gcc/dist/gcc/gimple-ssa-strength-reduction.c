@@ -1,5 +1,5 @@
 /* Straight-line strength reduction.
-   Copyright (C) 2012-2018 Free Software Foundation, Inc.
+   Copyright (C) 2012-2019 Free Software Foundation, Inc.
    Contributed by Bill Schmidt, IBM <wschmidt@linux.ibm.com>
 
 This file is part of GCC.
@@ -1775,7 +1775,7 @@ find_candidates_dom_walker::before_dom_children (basic_block bb)
     {
       gimple *gs = gsi_stmt (gsi);
 
-      if (stmt_could_throw_p (gs))
+      if (stmt_could_throw_p (cfun, gs))
 	continue;
 
       if (gimple_vuse (gs) && gimple_assign_single_p (gs))
@@ -3402,7 +3402,7 @@ insert_initializers (slsr_cand_t c)
 	      fputs ("Using existing initializer: ", dump_file);
 	      print_gimple_stmt (dump_file,
 				 SSA_NAME_DEF_STMT (incr_vec[i].initializer),
-				 0, 0);
+				 0, TDF_NONE);
 	    }
 	  continue;
 	}

@@ -1,5 +1,5 @@
 /* Infrastructure to dump our HSAIL IL
-   Copyright (C) 2013-2018 Free Software Foundation, Inc.
+   Copyright (C) 2013-2019 Free Software Foundation, Inc.
    Contributed by Martin Jambor <mjambor@suse.cz> and
    Martin Liska <mliska@suse.cz>.
 
@@ -27,8 +27,8 @@ along with GCC; see the file COPYING3.  If not see
 #include "vec.h"
 #include "tree.h"
 #include "basic-block.h"
-#include "cfg.h"
 #include "function.h"
+#include "cfg.h"
 #include "dumpfile.h"
 #include "gimple-pretty-print.h"
 #include "cgraph.h"
@@ -776,11 +776,11 @@ static void
 dump_hsa_symbol (FILE *f, hsa_symbol *symbol)
 {
   const char *name;
+  char buf[64];
   if (symbol->m_name)
     name = symbol->m_name;
   else
     {
-      char buf[64];
       sprintf (buf, "__%s_%i", hsa_seg_name (symbol->m_segment),
 	       symbol->m_name_number);
 
