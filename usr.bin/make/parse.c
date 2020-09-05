@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.278 2020/09/05 15:04:09 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.279 2020/09/05 15:05:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.278 2020/09/05 15:04:09 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.279 2020/09/05 15:05:08 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.278 2020/09/05 15:04:09 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.279 2020/09/05 15:05:08 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -340,7 +340,6 @@ static const struct {
 /* local functions */
 
 static void ParseSetIncludedFile(void);
-static void ParseMark(GNode *);
 
 /* file loader */
 
@@ -555,19 +554,8 @@ done:
 
 /* old code */
 
-/*-
- *----------------------------------------------------------------------
- * ParseIsEscaped --
- *	Check if the current character is escaped on the current line
- *
- * Results:
- *	0 if the character is not backslash escaped, 1 otherwise
- *
- * Side Effects:
- *	None
- *----------------------------------------------------------------------
- */
-static int
+/* Check if the current character is escaped on the current line. */
+static Boolean
 ParseIsEscaped(const char *line, const char *c)
 {
     int active = 0;
