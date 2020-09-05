@@ -1,6 +1,6 @@
 // Support routines for the -*- C++ -*- dynamic memory management.
 
-// Copyright (C) 1997-2018 Free Software Foundation, Inc.
+// Copyright (C) 1997-2019 Free Software Foundation, Inc.
 //
 // This file is part of GCC.
 //
@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <bits/exception_defines.h>
+#include <bit>
 #include "new"
 
 #if !_GLIBCXX_HAVE_ALIGNED_ALLOC && !_GLIBCXX_HAVE__ALIGNED_MALLOC \
@@ -116,12 +117,11 @@ aligned_alloc (std::size_t al, std::size_t sz)
 _GLIBCXX_WEAK_DEFINITION void *
 operator new (std::size_t sz, std::align_val_t al)
 {
-  void *p;
   std::size_t align = (std::size_t)al;
 
   /* Alignment must be a power of two.  */
   /* XXX This should be checked by the compiler (PR 86878).  */
-  if (__builtin_expect (align & (align - 1), false))
+  if (__builtin_expect (!std::__ispow2(align), false))
     _GLIBCXX_THROW_OR_ABORT(bad_alloc());
 
   /* malloc (0) is unpredictable; avoid it.  */
@@ -137,12 +137,12 @@ operator new (std::size_t sz, std::align_val_t al)
     align = sizeof(void*);
 # endif
   /* C11: the value of size shall be an integral multiple of alignment.  */
-  if (std::size_t rem = sz & (align - 1))
-    sz += align - rem;
+  sz = (sz + align - 1) & ~(align - 1);
 #endif
 
-  using __gnu_cxx::aligned_alloc;
-  while (__builtin_expect ((p = aligned_alloc (align, sz)) == 0, false))
+  void *p;
+
+  while ((p = __gnu_cxx::aligned_alloc (align, sz)) == nullptr)
     {
       new_handler handler = std::get_new_handler ();
       if (! handler)

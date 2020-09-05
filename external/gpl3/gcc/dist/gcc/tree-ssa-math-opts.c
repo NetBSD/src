@@ -1,5 +1,5 @@
 /* Global, SSA-based optimizations using mathematical identities.
-   Copyright (C) 2005-2018 Free Software Foundation, Inc.
+   Copyright (C) 2005-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -335,12 +335,12 @@ is_division_by (gimple *use_stmt, tree def)
 	    confused later by replacing all immediate uses x in such
 	    a stmt.  */
 	 && gimple_assign_rhs1 (use_stmt) != def
-	 && !stmt_can_throw_internal (use_stmt);
+	 && !stmt_can_throw_internal (cfun, use_stmt);
 }
 
-/* Return whether USE_STMT is DEF * DEF.  */
+/* Return TRUE if USE_STMT is a multiplication of DEF by A.  */
 static inline bool
-is_square_of (gimple *use_stmt, tree def)
+is_mult_by (gimple *use_stmt, tree def, tree a)
 {
   if (gimple_code (use_stmt) == GIMPLE_ASSIGN
       && gimple_assign_rhs_code (use_stmt) == MULT_EXPR)
@@ -348,9 +348,17 @@ is_square_of (gimple *use_stmt, tree def)
       tree op0 = gimple_assign_rhs1 (use_stmt);
       tree op1 = gimple_assign_rhs2 (use_stmt);
 
-      return op0 == op1 && op0 == def;
+      return (op0 == def && op1 == a)
+	      || (op0 == a && op1 == def);
     }
   return 0;
+}
+
+/* Return whether USE_STMT is DEF * DEF.  */
+static inline bool
+is_square_of (gimple *use_stmt, tree def)
+{
+  return is_mult_by (use_stmt, def, def);
 }
 
 /* Return whether USE_STMT is a floating-point division by
@@ -361,7 +369,7 @@ is_division_by_square (gimple *use_stmt, tree def)
   if (gimple_code (use_stmt) == GIMPLE_ASSIGN
       && gimple_assign_rhs_code (use_stmt) == RDIV_EXPR
       && gimple_assign_rhs1 (use_stmt) != gimple_assign_rhs2 (use_stmt)
-      && !stmt_can_throw_internal (use_stmt))
+      && !stmt_can_throw_internal (cfun, use_stmt))
     {
       tree denominator = gimple_assign_rhs2 (use_stmt);
       if (TREE_CODE (denominator) == SSA_NAME)
@@ -526,6 +534,194 @@ free_bb (struct occurrence *occ)
     }
 }
 
+/* Transform sequences like
+   t = sqrt (a)
+   x = 1.0 / t;
+   r1 = x * x;
+   r2 = a * x;
+   into:
+   t = sqrt (a)
+   r1 = 1.0 / a;
+   r2 = t;
+   x = r1 * r2;
+   depending on the uses of x, r1, r2.  This removes one multiplication and
+   allows the sqrt and division operations to execute in parallel.
+   DEF_GSI is the gsi of the initial division by sqrt that defines
+   DEF (x in the example above).  */
+
+static void
+optimize_recip_sqrt (gimple_stmt_iterator *def_gsi, tree def)
+{
+  gimple *use_stmt;
+  imm_use_iterator use_iter;
+  gimple *stmt = gsi_stmt (*def_gsi);
+  tree x = def;
+  tree orig_sqrt_ssa_name = gimple_assign_rhs2 (stmt);
+  tree div_rhs1 = gimple_assign_rhs1 (stmt);
+
+  if (TREE_CODE (orig_sqrt_ssa_name) != SSA_NAME
+      || TREE_CODE (div_rhs1) != REAL_CST
+      || !real_equal (&TREE_REAL_CST (div_rhs1), &dconst1))
+    return;
+
+  gcall *sqrt_stmt
+    = dyn_cast <gcall *> (SSA_NAME_DEF_STMT (orig_sqrt_ssa_name));
+
+  if (!sqrt_stmt || !gimple_call_lhs (sqrt_stmt))
+    return;
+
+  switch (gimple_call_combined_fn (sqrt_stmt))
+    {
+    CASE_CFN_SQRT:
+    CASE_CFN_SQRT_FN:
+      break;
+
+    default:
+      return;
+    }
+  tree a = gimple_call_arg (sqrt_stmt, 0);
+
+  /* We have 'a' and 'x'.  Now analyze the uses of 'x'.  */
+
+  /* Statements that use x in x * x.  */
+  auto_vec<gimple *> sqr_stmts;
+  /* Statements that use x in a * x.  */
+  auto_vec<gimple *> mult_stmts;
+  bool has_other_use = false;
+  bool mult_on_main_path = false;
+
+  FOR_EACH_IMM_USE_STMT (use_stmt, use_iter, x)
+    {
+      if (is_gimple_debug (use_stmt))
+	continue;
+      if (is_square_of (use_stmt, x))
+	{
+	  sqr_stmts.safe_push (use_stmt);
+	  if (gimple_bb (use_stmt) == gimple_bb (stmt))
+	    mult_on_main_path = true;
+	}
+      else if (is_mult_by (use_stmt, x, a))
+	{
+	  mult_stmts.safe_push (use_stmt);
+	  if (gimple_bb (use_stmt) == gimple_bb (stmt))
+	    mult_on_main_path = true;
+	}
+      else
+	has_other_use = true;
+    }
+
+  /* In the x * x and a * x cases we just rewire stmt operands or
+     remove multiplications.  In the has_other_use case we introduce
+     a multiplication so make sure we don't introduce a multiplication
+     on a path where there was none.  */
+  if (has_other_use && !mult_on_main_path)
+    return;
+
+  if (sqr_stmts.is_empty () && mult_stmts.is_empty ())
+    return;
+
+  /* If x = 1.0 / sqrt (a) has uses other than those optimized here we want
+     to be able to compose it from the sqr and mult cases.  */
+  if (has_other_use && (sqr_stmts.is_empty () || mult_stmts.is_empty ()))
+    return;
+
+  if (dump_file)
+    {
+      fprintf (dump_file, "Optimizing reciprocal sqrt multiplications of\n");
+      print_gimple_stmt (dump_file, sqrt_stmt, 0, TDF_NONE);
+      print_gimple_stmt (dump_file, stmt, 0, TDF_NONE);
+      fprintf (dump_file, "\n");
+    }
+
+  bool delete_div = !has_other_use;
+  tree sqr_ssa_name = NULL_TREE;
+  if (!sqr_stmts.is_empty ())
+    {
+      /* r1 = x * x.  Transform the original
+	 x = 1.0 / t
+	 into
+	 tmp1 = 1.0 / a
+	 r1 = tmp1.  */
+
+      sqr_ssa_name
+	= make_temp_ssa_name (TREE_TYPE (a), NULL, "recip_sqrt_sqr");
+
+      if (dump_file)
+	{
+	  fprintf (dump_file, "Replacing original division\n");
+	  print_gimple_stmt (dump_file, stmt, 0, TDF_NONE);
+	  fprintf (dump_file, "with new division\n");
+	}
+      stmt
+	= gimple_build_assign (sqr_ssa_name, gimple_assign_rhs_code (stmt),
+			       gimple_assign_rhs1 (stmt), a);
+      gsi_insert_before (def_gsi, stmt, GSI_SAME_STMT);
+      gsi_remove (def_gsi, true);
+      *def_gsi = gsi_for_stmt (stmt);
+      fold_stmt_inplace (def_gsi);
+      update_stmt (stmt);
+
+      if (dump_file)
+	print_gimple_stmt (dump_file, stmt, 0, TDF_NONE);
+
+      delete_div = false;
+      gimple *sqr_stmt;
+      unsigned int i;
+      FOR_EACH_VEC_ELT (sqr_stmts, i, sqr_stmt)
+	{
+	  gimple_stmt_iterator gsi2 = gsi_for_stmt (sqr_stmt);
+	  gimple_assign_set_rhs_from_tree (&gsi2, sqr_ssa_name);
+	  update_stmt (sqr_stmt);
+	}
+    }
+  if (!mult_stmts.is_empty ())
+    {
+      /* r2 = a * x.  Transform this into:
+	 r2 = t (The original sqrt (a)).  */
+      unsigned int i;
+      gimple *mult_stmt = NULL;
+      FOR_EACH_VEC_ELT (mult_stmts, i, mult_stmt)
+	{
+	  gimple_stmt_iterator gsi2 = gsi_for_stmt (mult_stmt);
+
+	  if (dump_file)
+	    {
+	      fprintf (dump_file, "Replacing squaring multiplication\n");
+	      print_gimple_stmt (dump_file, mult_stmt, 0, TDF_NONE);
+	      fprintf (dump_file, "with assignment\n");
+	    }
+	  gimple_assign_set_rhs_from_tree (&gsi2, orig_sqrt_ssa_name);
+	  fold_stmt_inplace (&gsi2);
+	  update_stmt (mult_stmt);
+	  if (dump_file)
+	    print_gimple_stmt (dump_file, mult_stmt, 0, TDF_NONE);
+      }
+    }
+
+  if (has_other_use)
+    {
+      /* Using the two temporaries tmp1, tmp2 from above
+	 the original x is now:
+	 x = tmp1 * tmp2.  */
+      gcc_assert (orig_sqrt_ssa_name);
+      gcc_assert (sqr_ssa_name);
+
+      gimple *new_stmt
+	= gimple_build_assign (x, MULT_EXPR,
+			       orig_sqrt_ssa_name, sqr_ssa_name);
+      gsi_insert_after (def_gsi, new_stmt, GSI_NEW_STMT);
+      update_stmt (stmt);
+    }
+  else if (delete_div)
+    {
+      /* Remove the original division.  */
+      gimple_stmt_iterator gsi2 = gsi_for_stmt (stmt);
+      gsi_remove (&gsi2, true);
+      release_defs (stmt);
+    }
+  else
+    release_ssa_name (x);
+}
 
 /* Look for floating-point divisions among DEF's uses, and try to
    replace them by multiplications with the reciprocal.  Add
@@ -757,7 +953,16 @@ pass_cse_reciprocals::execute (function *fun)
 	      && (def = SINGLE_SSA_TREE_OPERAND (stmt, SSA_OP_DEF)) != NULL
 	      && FLOAT_TYPE_P (TREE_TYPE (def))
 	      && TREE_CODE (def) == SSA_NAME)
-	    execute_cse_reciprocals_1 (&gsi, def);
+	    {
+	      execute_cse_reciprocals_1 (&gsi, def);
+	      stmt = gsi_stmt (gsi);
+	      if (flag_unsafe_math_optimizations
+		  && is_gimple_assign (stmt)
+		  && gimple_assign_lhs (stmt) == def
+		  && !stmt_can_throw_internal (cfun, stmt)
+		  && gimple_assign_rhs_code (stmt) == RDIV_EXPR)
+		optimize_recip_sqrt (&gsi, def);
+	    }
 	}
 
       if (optimize_bb_for_size_p (bb))
@@ -794,7 +999,7 @@ pass_cse_reciprocals::execute (function *fun)
 		    {
 		      fndecl = gimple_call_fndecl (call);
 		      if (!fndecl
-			  || DECL_BUILT_IN_CLASS (fndecl) != BUILT_IN_MD)
+			  || !fndecl_built_in_p (fndecl, BUILT_IN_MD))
 			continue;
 		      fndecl = targetm.builtin_reciprocal (fndecl);
 		      if (!fndecl)
@@ -2651,20 +2856,20 @@ convert_mult_to_fma_1 (tree mul_result, tree op1, tree op2)
   tree type = TREE_TYPE (mul_result);
   gimple *use_stmt;
   imm_use_iterator imm_iter;
-  gassign *fma_stmt;
+  gcall *fma_stmt;
 
   FOR_EACH_IMM_USE_STMT (use_stmt, imm_iter, mul_result)
     {
       gimple_stmt_iterator gsi = gsi_for_stmt (use_stmt);
-      enum tree_code use_code;
       tree addop, mulop1 = op1, result = mul_result;
       bool negate_p = false;
+      gimple_seq seq = NULL;
 
       if (is_gimple_debug (use_stmt))
 	continue;
 
-      use_code = gimple_assign_rhs_code (use_stmt);
-      if (use_code == NEGATE_EXPR)
+      if (is_gimple_assign (use_stmt)
+	  && gimple_assign_rhs_code (use_stmt) == NEGATE_EXPR)
 	{
 	  result = gimple_assign_lhs (use_stmt);
 	  use_operand_p use_p;
@@ -2675,47 +2880,58 @@ convert_mult_to_fma_1 (tree mul_result, tree op1, tree op2)
 
 	  use_stmt = neguse_stmt;
 	  gsi = gsi_for_stmt (use_stmt);
-	  use_code = gimple_assign_rhs_code (use_stmt);
 	  negate_p = true;
 	}
 
-      if (gimple_assign_rhs1 (use_stmt) == result)
+      tree cond, else_value, ops[3];
+      tree_code code;
+      if (!can_interpret_as_conditional_op_p (use_stmt, &cond, &code,
+					      ops, &else_value))
+	gcc_unreachable ();
+      addop = ops[0] == result ? ops[1] : ops[0];
+
+      if (code == MINUS_EXPR)
 	{
-	  addop = gimple_assign_rhs2 (use_stmt);
-	  /* a * b - c -> a * b + (-c)  */
-	  if (gimple_assign_rhs_code (use_stmt) == MINUS_EXPR)
-	    addop = force_gimple_operand_gsi (&gsi,
-					      build1 (NEGATE_EXPR,
-						      type, addop),
-					      true, NULL_TREE, true,
-					      GSI_SAME_STMT);
-	}
-      else
-	{
-	  addop = gimple_assign_rhs1 (use_stmt);
-	  /* a - b * c -> (-b) * c + a */
-	  if (gimple_assign_rhs_code (use_stmt) == MINUS_EXPR)
+	  if (ops[0] == result)
+	    /* a * b - c -> a * b + (-c)  */
+	    addop = gimple_build (&seq, NEGATE_EXPR, type, addop);
+	  else
+	    /* a - b * c -> (-b) * c + a */
 	    negate_p = !negate_p;
 	}
 
       if (negate_p)
-	mulop1 = force_gimple_operand_gsi (&gsi,
-					   build1 (NEGATE_EXPR,
-						   type, mulop1),
-					   true, NULL_TREE, true,
-					   GSI_SAME_STMT);
+	mulop1 = gimple_build (&seq, NEGATE_EXPR, type, mulop1);
 
-      fma_stmt = gimple_build_assign (gimple_assign_lhs (use_stmt),
-				      FMA_EXPR, mulop1, op2, addop);
+      if (seq)
+	gsi_insert_seq_before (&gsi, seq, GSI_SAME_STMT);
+
+      if (cond)
+	fma_stmt = gimple_build_call_internal (IFN_COND_FMA, 5, cond, mulop1,
+					       op2, addop, else_value);
+      else
+	fma_stmt = gimple_build_call_internal (IFN_FMA, 3, mulop1, op2, addop);
+      gimple_set_lhs (fma_stmt, gimple_get_lhs (use_stmt));
+      gimple_call_set_nothrow (fma_stmt, !stmt_can_throw_internal (cfun,
+								   use_stmt));
+      gsi_replace (&gsi, fma_stmt, true);
+      /* Follow all SSA edges so that we generate FMS, FNMA and FNMS
+	 regardless of where the negation occurs.  */
+      gimple *orig_stmt = gsi_stmt (gsi);
+      if (fold_stmt (&gsi, follow_all_ssa_edges))
+	{
+	  if (maybe_clean_or_replace_eh_stmt (orig_stmt, gsi_stmt (gsi)))
+	    gcc_unreachable ();
+	  update_stmt (gsi_stmt (gsi));
+	}
 
       if (dump_file && (dump_flags & TDF_DETAILS))
 	{
 	  fprintf (dump_file, "Generated FMA ");
-	  print_gimple_stmt (dump_file, fma_stmt, 0, 0);
+	  print_gimple_stmt (dump_file, gsi_stmt (gsi), 0, TDF_NONE);
 	  fprintf (dump_file, "\n");
 	}
 
-      gsi_replace (&gsi, fma_stmt, true);
       widen_mul_stats.fmas_inserted++;
     }
 }
@@ -2863,7 +3079,8 @@ convert_mult_to_fma (gimple *mul_stmt, tree op1, tree op2,
 
   /* If the target doesn't support it, don't generate it.  We assume that
      if fma isn't available then fms, fnma or fnms are not either.  */
-  if (optab_handler (fma_optab, TYPE_MODE (type)) == CODE_FOR_nothing)
+  optimization_type opt_type = bb_optimization_type (gimple_bb (mul_stmt));
+  if (!direct_internal_fn_supported_p (IFN_FMA, type, opt_type))
     return false;
 
   /* If the multiplication has zero uses, it is kept around probably because
@@ -2877,13 +3094,13 @@ convert_mult_to_fma (gimple *mul_stmt, tree op1, tree op2,
        && (tree_to_shwi (TYPE_SIZE (type))
 	   <= PARAM_VALUE (PARAM_AVOID_FMA_MAX_BITS)));
   bool defer = check_defer;
+  bool seen_negate_p = false;
   /* Make sure that the multiplication statement becomes dead after
      the transformation, thus that all uses are transformed to FMAs.
      This means we assume that an FMA operation has the same cost
      as an addition.  */
   FOR_EACH_IMM_USE_FAST (use_p, imm_iter, mul_result)
     {
-      enum tree_code use_code;
       tree result = mul_result;
       bool negate_p = false;
 
@@ -2904,16 +3121,18 @@ convert_mult_to_fma (gimple *mul_stmt, tree op1, tree op2,
       if (gimple_bb (use_stmt) != gimple_bb (mul_stmt))
 	return false;
 
-      if (!is_gimple_assign (use_stmt))
-	return false;
-
-      use_code = gimple_assign_rhs_code (use_stmt);
-
       /* A negate on the multiplication leads to FNMA.  */
-      if (use_code == NEGATE_EXPR)
+      if (is_gimple_assign (use_stmt)
+	  && gimple_assign_rhs_code (use_stmt) == NEGATE_EXPR)
 	{
 	  ssa_op_iter iter;
 	  use_operand_p usep;
+
+	  /* If (due to earlier missed optimizations) we have two
+	     negates of the same value, treat them as equivalent
+	     to a single negate with multiple uses.  */
+	  if (seen_negate_p)
+	    return false;
 
 	  result = gimple_assign_lhs (use_stmt);
 
@@ -2932,17 +3151,20 @@ convert_mult_to_fma (gimple *mul_stmt, tree op1, tree op2,
 	  use_stmt = neguse_stmt;
 	  if (gimple_bb (use_stmt) != gimple_bb (mul_stmt))
 	    return false;
-	  if (!is_gimple_assign (use_stmt))
-	    return false;
 
-	  use_code = gimple_assign_rhs_code (use_stmt);
-	  negate_p = true;
+	  negate_p = seen_negate_p = true;
 	}
 
-      switch (use_code)
+      tree cond, else_value, ops[3];
+      tree_code code;
+      if (!can_interpret_as_conditional_op_p (use_stmt, &cond, &code, ops,
+					      &else_value))
+	return false;
+
+      switch (code)
 	{
 	case MINUS_EXPR:
-	  if (gimple_assign_rhs2 (use_stmt) == result)
+	  if (ops[1] == result)
 	    negate_p = !negate_p;
 	  break;
 	case PLUS_EXPR:
@@ -2952,47 +3174,50 @@ convert_mult_to_fma (gimple *mul_stmt, tree op1, tree op2,
 	  return false;
 	}
 
-      /* If the subtrahend (gimple_assign_rhs2 (use_stmt)) is computed
-	 by a MULT_EXPR that we'll visit later, we might be able to
-	 get a more profitable match with fnma.
-	 OTOH, if we don't, a negate / fma pair has likely lower latency
-	 that a mult / subtract pair.  */
-      if (use_code == MINUS_EXPR && !negate_p
-	  && gimple_assign_rhs1 (use_stmt) == result
-	  && optab_handler (fms_optab, TYPE_MODE (type)) == CODE_FOR_nothing
-	  && optab_handler (fnma_optab, TYPE_MODE (type)) != CODE_FOR_nothing)
+      if (cond)
 	{
-	  tree rhs2 = gimple_assign_rhs2 (use_stmt);
-
-	  if (TREE_CODE (rhs2) == SSA_NAME)
-	    {
-	      gimple *stmt2 = SSA_NAME_DEF_STMT (rhs2);
-	      if (has_single_use (rhs2)
-		  && is_gimple_assign (stmt2)
-		  && gimple_assign_rhs_code (stmt2) == MULT_EXPR)
-	      return false;
-	    }
+	  if (cond == result || else_value == result)
+	    return false;
+	  if (!direct_internal_fn_supported_p (IFN_COND_FMA, type, opt_type))
+	    return false;
 	}
 
-      tree use_rhs1 = gimple_assign_rhs1 (use_stmt);
-      tree use_rhs2 = gimple_assign_rhs2 (use_stmt);
+      /* If the subtrahend (OPS[1]) is computed by a MULT_EXPR that
+	 we'll visit later, we might be able to get a more profitable
+	 match with fnma.
+	 OTOH, if we don't, a negate / fma pair has likely lower latency
+	 that a mult / subtract pair.  */
+      if (code == MINUS_EXPR
+	  && !negate_p
+	  && ops[0] == result
+	  && !direct_internal_fn_supported_p (IFN_FMS, type, opt_type)
+	  && direct_internal_fn_supported_p (IFN_FNMA, type, opt_type)
+	  && TREE_CODE (ops[1]) == SSA_NAME
+	  && has_single_use (ops[1]))
+	{
+	  gimple *stmt2 = SSA_NAME_DEF_STMT (ops[1]);
+	  if (is_gimple_assign (stmt2)
+	      && gimple_assign_rhs_code (stmt2) == MULT_EXPR)
+	    return false;
+	}
+
       /* We can't handle a * b + a * b.  */
-      if (use_rhs1 == use_rhs2)
+      if (ops[0] == ops[1])
 	return false;
       /* If deferring, make sure we are not looking at an instruction that
 	 wouldn't have existed if we were not.  */
       if (state->m_deferring_p
-	  && (state->m_mul_result_set.contains (use_rhs1)
-	      || state->m_mul_result_set.contains (use_rhs2)))
+	  && (state->m_mul_result_set.contains (ops[0])
+	      || state->m_mul_result_set.contains (ops[1])))
 	return false;
 
       if (check_defer)
 	{
-	  tree use_lhs = gimple_assign_lhs (use_stmt);
+	  tree use_lhs = gimple_get_lhs (use_stmt);
 	  if (state->m_last_result)
 	    {
-	      if (use_rhs2 == state->m_last_result
-		  || use_rhs1 == state->m_last_result)
+	      if (ops[1] == state->m_last_result
+		  || ops[0] == state->m_last_result)
 		defer = true;
 	      else
 		defer = false;
@@ -3001,12 +3226,12 @@ convert_mult_to_fma (gimple *mul_stmt, tree op1, tree op2,
 	    {
 	      gcc_checking_assert (!state->m_initial_phi);
 	      gphi *phi;
-	      if (use_rhs1 == result)
-		phi = result_of_phi (use_rhs2);
+	      if (ops[0] == result)
+		phi = result_of_phi (ops[1]);
 	      else
 		{
-		  gcc_assert (use_rhs2 == result);
-		  phi = result_of_phi (use_rhs1);
+		  gcc_assert (ops[1] == result);
+		  phi = result_of_phi (ops[0]);
 		}
 
 	      if (phi)
@@ -3047,7 +3272,7 @@ convert_mult_to_fma (gimple *mul_stmt, tree op1, tree op2,
       if (dump_file && (dump_flags & TDF_DETAILS))
 	{
 	  fprintf (dump_file, "Deferred generating FMA for multiplication ");
-	  print_gimple_stmt (dump_file, mul_stmt, 0, 0);
+	  print_gimple_stmt (dump_file, mul_stmt, 0, TDF_NONE);
 	  fprintf (dump_file, "\n");
 	}
 
@@ -3330,7 +3555,7 @@ divmod_candidate_p (gassign *stmt)
 static bool
 convert_to_divmod (gassign *stmt)
 {
-  if (stmt_can_throw_internal (stmt)
+  if (stmt_can_throw_internal (cfun, stmt)
       || !divmod_candidate_p (stmt))
     return false;
 
@@ -3356,7 +3581,7 @@ convert_to_divmod (gassign *stmt)
 	  && operand_equal_p (op1, gimple_assign_rhs1 (use_stmt), 0)
 	  && operand_equal_p (op2, gimple_assign_rhs2 (use_stmt), 0))
 	{
-	  if (stmt_can_throw_internal (use_stmt))
+	  if (stmt_can_throw_internal (cfun, use_stmt))
 	    continue;
 
 	  basic_block bb = gimple_bb (use_stmt);
@@ -3394,7 +3619,7 @@ convert_to_divmod (gassign *stmt)
 	  && operand_equal_p (top_op2, gimple_assign_rhs2 (use_stmt), 0))
 	{
 	  if (use_stmt == top_stmt
-	      || stmt_can_throw_internal (use_stmt)
+	      || stmt_can_throw_internal (cfun, use_stmt)
 	      || !dominated_by_p (CDI_DOMINATORS, gimple_bb (use_stmt), top_bb))
 	    continue;
 
@@ -3615,7 +3840,7 @@ pass_optimize_widening_mul::execute (function *fun)
 
   memset (&widen_mul_stats, 0, sizeof (widen_mul_stats));
   calculate_dominance_info (CDI_DOMINATORS);
-  renumber_gimple_stmt_uids ();
+  renumber_gimple_stmt_uids (cfun);
 
   math_opts_dom_walker (&cfg_changed).walk (ENTRY_BLOCK_PTR_FOR_FN (cfun));
 

@@ -1,6 +1,6 @@
 /* Report error messages, build initializers, and perform
    some front-end optimizations for C++ compiler.
-   Copyright (C) 1987-2018 Free Software Foundation, Inc.
+   Copyright (C) 1987-2019 Free Software Foundation, Inc.
    Hacked by Michael Tiemann (tiemann@cygnus.com)
 
 This file is part of GCC.
@@ -32,9 +32,10 @@ along with GCC; see the file COPYING3.  If not see
 #include "stor-layout.h"
 #include "varasm.h"
 #include "intl.h"
+#include "gcc-rich-location.h"
 
 static tree
-process_init_constructor (tree type, tree init, int nested,
+process_init_constructor (tree type, tree init, int nested, int flags,
 			  tsubst_flags_t complain);
 
 
@@ -67,28 +68,28 @@ binfo_or_else (tree base, tree type)
    value may not be changed thereafter.  */
 
 void
-cxx_readonly_error (tree arg, enum lvalue_use errstring)
+cxx_readonly_error (location_t loc, tree arg, enum lvalue_use errstring)
 {
  
 /* This macro is used to emit diagnostics to ensure that all format
    strings are complete sentences, visible to gettext and checked at
    compile time.  */
  
-#define ERROR_FOR_ASSIGNMENT(AS, ASM, IN, DE, ARG)                      \
+#define ERROR_FOR_ASSIGNMENT(LOC, AS, ASM, IN, DE, ARG)			\
   do {                                                                  \
     switch (errstring)                                                  \
       {                                                                 \
       case lv_assign:							\
-        error(AS, ARG);                                                 \
+	error_at (LOC, AS, ARG);					\
         break;                                                          \
       case lv_asm:							\
-        error(ASM, ARG);                                                \
+	error_at (LOC, ASM, ARG);					\
         break;                                                          \
       case lv_increment:						\
-        error (IN, ARG);                                                \
+	error_at (LOC, IN, ARG);					\
         break;                                                          \
-      case lv_decrement:                                               \
-        error (DE, ARG);                                                \
+      case lv_decrement:                                                \
+	error_at (LOC, DE, ARG);					\
         break;                                                          \
       default:                                                          \
         gcc_unreachable ();                                             \
@@ -101,32 +102,25 @@ cxx_readonly_error (tree arg, enum lvalue_use errstring)
       && DECL_LANG_SPECIFIC (arg)
       && DECL_IN_AGGR_P (arg)
       && !TREE_STATIC (arg))
-    ERROR_FOR_ASSIGNMENT (G_("assignment of "
-			     "constant field %qD"),
-			  G_("constant field %qD "
-			     "used as %<asm%> output"),
-			  G_("increment of "
-			     "constant field %qD"),
-			  G_("decrement of "
-			     "constant field %qD"),
+    ERROR_FOR_ASSIGNMENT (loc,
+			  G_("assignment of constant field %qD"),
+			  G_("constant field %qD used as %<asm%> output"),
+			  G_("increment of constant field %qD"),
+			  G_("decrement of constant field %qD"),
 			  arg);
   else if (INDIRECT_REF_P (arg)
-	   && TREE_CODE (TREE_TYPE (TREE_OPERAND (arg, 0))) == REFERENCE_TYPE
+	   && TYPE_REF_P (TREE_TYPE (TREE_OPERAND (arg, 0)))
 	   && (VAR_P (TREE_OPERAND (arg, 0))
 	       || TREE_CODE (TREE_OPERAND (arg, 0)) == PARM_DECL))
-    ERROR_FOR_ASSIGNMENT (G_("assignment of "
-                             "read-only reference %qD"),
-                          G_("read-only reference %qD "
-			     "used as %<asm%> output"), 
-                          G_("increment of "
-                             "read-only reference %qD"),
-                          G_("decrement of "
-                             "read-only reference %qD"),
-                          TREE_OPERAND (arg, 0));
+    ERROR_FOR_ASSIGNMENT (loc,
+			  G_("assignment of read-only reference %qD"),
+			  G_("read-only reference %qD used as %<asm%> output"),
+			  G_("increment of read-only reference %qD"),
+			  G_("decrement of read-only reference %qD"),
+			  TREE_OPERAND (arg, 0));
   else
-    readonly_error (input_location, arg, errstring);
+    readonly_error (loc, arg, errstring);
 }
-
 
 /* Structure that holds information about declarations whose type was
    incomplete and we could not check whether it was abstract or not.  */
@@ -315,6 +309,7 @@ abstract_virtuals_error_sfinae (tree decl, tree type, abstract_class_use use,
   if (!(complain & tf_error))
     return 1;
 
+  auto_diagnostic_group d;
   if (decl)
     {
       if (VAR_P (decl))
@@ -465,14 +460,19 @@ cxx_incomplete_type_diagnostic (location_t loc, const_tree value,
   if (TREE_CODE (type) == ERROR_MARK)
     return;
 
-  if (value != 0 && (VAR_P (value)
-		     || TREE_CODE (value) == PARM_DECL
-		     || TREE_CODE (value) == FIELD_DECL))
+  if (value)
     {
-      complained = emit_diagnostic (diag_kind, DECL_SOURCE_LOCATION (value), 0,
-				    "%qD has incomplete type", value);
-      is_decl = true;
-    } 
+      STRIP_ANY_LOCATION_WRAPPER (value);
+
+      if (VAR_P (value)
+	  || TREE_CODE (value) == PARM_DECL
+	  || TREE_CODE (value) == FIELD_DECL)
+	{
+	  complained = emit_diagnostic (diag_kind, DECL_SOURCE_LOCATION (value), 0,
+					"%qD has incomplete type", value);
+	  is_decl = true;
+	}
+    }
  retry:
   /* We must print an error message.  Be clever about what it says.  */
 
@@ -513,9 +513,16 @@ cxx_incomplete_type_diagnostic (location_t loc, const_tree value,
 
 	if (DECL_FUNCTION_MEMBER_P (member)
 	    && ! flag_ms_extensions)
-	  emit_diagnostic (diag_kind, loc, 0,
-			   "invalid use of member function %qD "
-			   "(did you forget the %<()%> ?)", member);
+	  {
+	    gcc_rich_location richloc (loc);
+	    /* If "member" has no arguments (other than "this"), then
+	       add a fix-it hint.  */
+	    if (type_num_arguments (TREE_TYPE (member)) == 1)
+	      richloc.add_fixit_insert_after ("()");
+	    emit_diagnostic (diag_kind, &richloc, 0,
+			     "invalid use of member function %qD "
+			     "(did you forget the %<()%> ?)", member);
+	  }
 	else
 	  emit_diagnostic (diag_kind, loc, 0,
 			   "invalid use of member %qD "
@@ -748,7 +755,7 @@ split_nonconstant_init (tree dest, tree init)
     init = TARGET_EXPR_INITIAL (init);
   if (TREE_CODE (init) == CONSTRUCTOR)
     {
-      init = cp_fully_fold (init);
+      init = cp_fully_fold_init (init);
       code = push_stmt_list ();
       if (split_nonconstant_init_1 (dest, init))
 	init = NULL_TREE;
@@ -810,9 +817,18 @@ store_init_value (tree decl, tree init, vec<tree, va_gc>** cleanups, int flags)
   if (flags & LOOKUP_ALREADY_DIGESTED)
     value = init;
   else
-    /* Digest the specified initializer into an expression.  */
-    value = digest_init_flags (type, init, flags, tf_warning_or_error);
+    {
+      if (TREE_STATIC (decl))
+	flags |= LOOKUP_ALLOW_FLEXARRAY_INIT;
+      /* Digest the specified initializer into an expression.  */
+      value = digest_init_flags (type, init, flags, tf_warning_or_error);
+    }
 
+  /* Look for braced array initializers for character arrays and
+     recursively convert them into STRING_CSTs.  */
+  value = braced_lists_to_strings (type, value);
+
+  current_ref_temp_count = 0;
   value = extend_ref_init_temps (decl, value, cleanups);
 
   /* In C++11 constant expression is a semantic, not syntactic, property.
@@ -822,21 +838,26 @@ store_init_value (tree decl, tree init, vec<tree, va_gc>** cleanups, int flags)
   if (decl_maybe_constant_var_p (decl) || TREE_STATIC (decl))
     {
       bool const_init;
-      value = fold_non_dependent_expr (value, tf_warning_or_error);
+      tree oldval = value;
+      value = fold_non_dependent_expr (value);
       if (DECL_DECLARED_CONSTEXPR_P (decl)
 	  || (DECL_IN_AGGR_P (decl)
-	      && DECL_INITIALIZED_IN_CLASS_P (decl)
-	      && !DECL_VAR_DECLARED_INLINE_P (decl)))
+	      && DECL_INITIALIZED_IN_CLASS_P (decl)))
 	{
 	  /* Diagnose a non-constant initializer for constexpr variable or
 	     non-inline in-class-initialized static data member.  */
 	  if (!require_constant_expression (value))
 	    value = error_mark_node;
+	  else if (processing_template_decl)
+	    /* In a template we might not have done the necessary
+	       transformations to make value actually constant,
+	       e.g. extend_ref_init_temps.  */
+	    value = maybe_constant_init (value, decl, true);
 	  else
 	    value = cxx_constant_init (value, decl);
 	}
       else
-	value = maybe_constant_init (value, decl);
+	value = maybe_constant_init (value, decl, true);
       if (TREE_CODE (value) == CONSTRUCTOR && cp_has_mutable_p (type))
 	/* Poison this CONSTRUCTOR so it can't be copied to another
 	   constexpr variable.  */
@@ -845,10 +866,12 @@ store_init_value (tree decl, tree init, vec<tree, va_gc>** cleanups, int flags)
 		    || error_operand_p (value));
       DECL_INITIALIZED_BY_CONSTANT_EXPRESSION_P (decl) = const_init;
       /* FIXME setting TREE_CONSTANT on refs breaks the back end.  */
-      if (TREE_CODE (type) != REFERENCE_TYPE)
+      if (!TYPE_REF_P (type))
 	TREE_CONSTANT (decl) = const_init && decl_maybe_constant_var_p (decl);
+      if (!const_init)
+	value = oldval;
     }
-  value = cp_fully_fold (value);
+  value = cp_fully_fold_init (value);
 
   /* Handle aggregate NSDMI in non-constant initializers, too.  */
   value = replace_placeholders (value, decl);
@@ -872,10 +895,12 @@ store_init_value (tree decl, tree init, vec<tree, va_gc>** cleanups, int flags)
 }
 
 
-/* Give diagnostic about narrowing conversions within { }.  */
+/* Give diagnostic about narrowing conversions within { }, or as part of
+   a converted constant expression.  If CONST_ONLY, only check
+   constants.  */
 
 bool
-check_narrowing (tree type, tree init, tsubst_flags_t complain)
+check_narrowing (tree type, tree init, tsubst_flags_t complain, bool const_only)
 {
   tree ftype = unlowered_expr_type (init);
   bool ok = true;
@@ -883,7 +908,9 @@ check_narrowing (tree type, tree init, tsubst_flags_t complain)
 
   if (((!warn_narrowing || !(complain & tf_warning))
        && cxx_dialect == cxx98)
-      || !ARITHMETIC_TYPE_P (type))
+      || !ARITHMETIC_TYPE_P (type)
+      /* Don't emit bogus warnings with e.g. value-dependent trees.  */
+      || instantiation_dependent_expression_p (init))
     return ok;
 
   if (BRACE_ENCLOSED_INITIALIZER_P (init)
@@ -899,9 +926,13 @@ check_narrowing (tree type, tree init, tsubst_flags_t complain)
       return ok;
     }
 
-  init = fold_non_dependent_expr (init);
+  init = maybe_constant_value (init);
 
-  if (TREE_CODE (type) == INTEGER_TYPE
+  /* If we were asked to only check constants, return early.  */
+  if (const_only && !TREE_CONSTANT (init))
+    return ok;
+
+  if (CP_INTEGRAL_TYPE_P (type)
       && TREE_CODE (ftype) == REAL_TYPE)
     ok = false;
   else if (INTEGRAL_OR_ENUMERATION_TYPE_P (ftype)
@@ -959,12 +990,12 @@ check_narrowing (tree type, tree init, tsubst_flags_t complain)
 
   if (!ok)
     {
-      location_t loc = EXPR_LOC_OR_LOC (init, input_location);
+      location_t loc = cp_expr_loc_or_loc (init, input_location);
       if (cxx_dialect == cxx98)
 	{
 	  if (complain & tf_warning)
 	    warning_at (loc, OPT_Wnarrowing, "narrowing conversion of %qE "
-			"from %qH to %qI inside { } is ill-formed in C++11",
+			"from %qH to %qI is ill-formed in C++11",
 			init, ftype, type);
 	  ok = true;
 	}
@@ -972,10 +1003,10 @@ check_narrowing (tree type, tree init, tsubst_flags_t complain)
 	{
 	  if (complain & tf_warning_or_error)
 	    {
+	      auto_diagnostic_group d;
 	      if ((!almost_ok || pedantic)
 		  && pedwarn (loc, OPT_Wnarrowing,
-			      "narrowing conversion of %qE "
-			      "from %qH to %qI inside { }",
+			      "narrowing conversion of %qE from %qH to %qI",
 			      init, ftype, type)
 		  && almost_ok)
 		inform (loc, " the expression has a constant value but is not "
@@ -988,8 +1019,8 @@ check_narrowing (tree type, tree init, tsubst_flags_t complain)
 	  int savederrorcount = errorcount;
 	  global_dc->pedantic_errors = 1;
 	  pedwarn (loc, OPT_Wnarrowing,
-		   "narrowing conversion of %qE from %qH to %qI "
-		   "inside { }", init, ftype, type);
+		   "narrowing conversion of %qE from %qH to %qI",
+		   init, ftype, type);
 	  if (errorcount == savederrorcount)
 	    ok = true;
 	  global_dc->pedantic_errors = flag_pedantic_errors;
@@ -997,6 +1028,17 @@ check_narrowing (tree type, tree init, tsubst_flags_t complain)
     }
 
   return ok;
+}
+
+/* True iff TYPE is a C++2a "ordinary" character type.  */
+
+bool
+ordinary_char_type_p (tree type)
+{
+  type = TYPE_MAIN_VARIANT (type);
+  return (type == char_type_node
+	  || type == signed_char_type_node
+	  || type == unsigned_char_type_node);
 }
 
 /* Process the initializer INIT for a variable of type TYPE, emitting
@@ -1027,12 +1069,16 @@ digest_init_r (tree type, tree init, int nested, int flags,
 					complain))
     return error_mark_node;
 
+  location_t loc = cp_expr_loc_or_loc (init, input_location);
+
+  tree stripped_init = init;
+
   /* Strip NON_LVALUE_EXPRs since we aren't using as an lvalue
      (g++.old-deja/g++.law/casts2.C).  */
   if (TREE_CODE (init) == NON_LVALUE_EXPR)
-    init = TREE_OPERAND (init, 0);
+    stripped_init = TREE_OPERAND (init, 0);
 
-  location_t loc = EXPR_LOC_OR_LOC (init, input_location);
+  stripped_init = tree_strip_any_location_wrapper (stripped_init);
 
   /* Initialization of an array of chars from a string constant. The initializer
      can be optionally enclosed in braces, but reshape_init has already removed
@@ -1041,41 +1087,48 @@ digest_init_r (tree type, tree init, int nested, int flags,
     {
       if (nested && !TYPE_DOMAIN (type))
 	/* C++ flexible array members have a null domain.  */
-	pedwarn (loc, OPT_Wpedantic,
-		 "initialization of a flexible array member");
+	{
+	  if (flags & LOOKUP_ALLOW_FLEXARRAY_INIT)
+	    pedwarn (loc, OPT_Wpedantic,
+		     "initialization of a flexible array member");
+	  else
+	    {
+	      if (complain & tf_error)
+		error_at (loc, "non-static initialization of"
+			       " a flexible array member");
+	      return error_mark_node;
+	    }
+	}
 
       tree typ1 = TYPE_MAIN_VARIANT (TREE_TYPE (type));
       if (char_type_p (typ1)
-	  /*&& init */
-	  && TREE_CODE (init) == STRING_CST)
+	  && TREE_CODE (stripped_init) == STRING_CST)
 	{
 	  tree char_type = TYPE_MAIN_VARIANT (TREE_TYPE (TREE_TYPE (init)));
+	  bool incompat_string_cst = false;
 
-	  if (TYPE_PRECISION (typ1) == BITS_PER_UNIT)
+	  if (typ1 != char_type)
 	    {
-	      if (char_type != char_type_node)
-		{
-		  if (complain & tf_error)
-		    error_at (loc, "char-array initialized from wide string");
-		  return error_mark_node;
-		}
+	      /* The array element type does not match the initializing string
+	         literal element type; this is only allowed when both types are
+	         ordinary character type.  There are no string literals of
+	         signed or unsigned char type in the language, but we can get
+	         them internally from converting braced-init-lists to
+	         STRING_CST.  */
+	      if (ordinary_char_type_p (typ1)
+		  && ordinary_char_type_p (char_type))
+		/* OK */;
+	      else
+		incompat_string_cst = true;
 	    }
-	  else
+
+	  if (incompat_string_cst)
 	    {
-	      if (char_type == char_type_node)
-		{
-		  if (complain & tf_error)
-		    error_at (loc,
-			      "int-array initialized from non-wide string");
-		  return error_mark_node;
-		}
-	      else if (char_type != typ1)
-		{
-		  if (complain & tf_error)
-		    error_at (loc, "int-array initialized from incompatible "
-			      "wide string");
-		  return error_mark_node;
-		}
+	      if (complain & tf_error)
+		error_at (loc, "cannot initialize array of %qT from "
+		          "a string literal with type array of %qT",
+		          typ1, char_type);
+	      return error_mark_node;
 	    }
 
 	  if (nested == 2 && !TYPE_DOMAIN (type))
@@ -1091,6 +1144,14 @@ digest_init_r (tree type, tree init, int nested, int flags,
 	    {
 	      init = copy_node (init);
 	      TREE_TYPE (init) = type;
+	      /* If we have a location wrapper, then also copy the wrapped
+		 node, and update the copy's type.  */
+	      if (location_wrapper_p (init))
+		{
+		  stripped_init = copy_node (stripped_init);
+		  TREE_OPERAND (init, 0) = stripped_init;
+		  TREE_TYPE (stripped_init) = type;
+		}
 	    }
 	  if (TYPE_DOMAIN (type) && TREE_CONSTANT (TYPE_SIZE (type)))
 	    {
@@ -1101,16 +1162,22 @@ digest_init_r (tree type, tree init, int nested, int flags,
 		 because it's ok to ignore the terminating null char that is
 		 counted in the length of the constant, but in C++ this would
 		 be invalid.  */
-	      if (size < TREE_STRING_LENGTH (init))
-		permerror (loc, "initializer-string for array "
-			   "of chars is too long");
+	      if (size < TREE_STRING_LENGTH (stripped_init))
+		{
+		  permerror (loc, "initializer-string for array "
+			     "of chars is too long");
+
+		  init = build_string (size,
+				       TREE_STRING_POINTER (stripped_init));
+		  TREE_TYPE (init) = type;
+		}
 	    }
 	  return init;
 	}
     }
 
   /* Handle scalar types (including conversions) and references.  */
-  if ((code != COMPLEX_TYPE || BRACE_ENCLOSED_INITIALIZER_P (init))
+  if ((code != COMPLEX_TYPE || BRACE_ENCLOSED_INITIALIZER_P (stripped_init))
       && (SCALAR_TYPE_P (type) || code == REFERENCE_TYPE))
     {
       if (nested)
@@ -1133,14 +1200,13 @@ digest_init_r (tree type, tree init, int nested, int flags,
   /* "If T is a class type and the initializer list has a single
      element of type cv U, where U is T or a class derived from T,
      the object is initialized from that element."  */
-  if (flag_checking
-      && cxx_dialect >= cxx11
-      && BRACE_ENCLOSED_INITIALIZER_P (init)
-      && CONSTRUCTOR_NELTS (init) == 1
+  if (cxx_dialect >= cxx11
+      && BRACE_ENCLOSED_INITIALIZER_P (stripped_init)
+      && CONSTRUCTOR_NELTS (stripped_init) == 1
       && ((CLASS_TYPE_P (type) && !CLASSTYPE_NON_AGGREGATE (type))
 	  || VECTOR_TYPE_P (type)))
     {
-      tree elt = CONSTRUCTOR_ELT (init, 0)->value;
+      tree elt = CONSTRUCTOR_ELT (stripped_init, 0)->value;
       if (reference_related_p (type, TREE_TYPE (elt)))
 	{
 	  /* In C++17, aggregates can have bases, thus participate in
@@ -1161,18 +1227,19 @@ digest_init_r (tree type, tree init, int nested, int flags,
 			      "results in object slicing", TREE_TYPE (field)))
 		inform (loc, "remove %<{ }%> around initializer");
 	    }
-	  else
+	  else if (flag_checking)
 	    /* We should have fixed this in reshape_init.  */
 	    gcc_unreachable ();
 	}
     }
 
-  if (BRACE_ENCLOSED_INITIALIZER_P (init)
+  if (BRACE_ENCLOSED_INITIALIZER_P (stripped_init)
       && !TYPE_NON_AGGREGATE_CLASS (type))
-    return process_init_constructor (type, init, nested, complain);
+    return process_init_constructor (type, stripped_init, nested, flags,
+				     complain);
   else
     {
-      if (COMPOUND_LITERAL_P (init) && code == ARRAY_TYPE)
+      if (COMPOUND_LITERAL_P (stripped_init) && code == ARRAY_TYPE)
 	{
 	  if (complain & tf_error)
 	    error_at (loc, "cannot initialize aggregate of type %qT with "
@@ -1182,12 +1249,12 @@ digest_init_r (tree type, tree init, int nested, int flags,
 	}
 
       if (code == ARRAY_TYPE
-	  && !BRACE_ENCLOSED_INITIALIZER_P (init))
+	  && !BRACE_ENCLOSED_INITIALIZER_P (stripped_init))
 	{
 	  /* Allow the result of build_array_copy and of
 	     build_value_init_noctor.  */
-	  if ((TREE_CODE (init) == VEC_INIT_EXPR
-	       || TREE_CODE (init) == CONSTRUCTOR)
+	  if ((TREE_CODE (stripped_init) == VEC_INIT_EXPR
+	       || TREE_CODE (stripped_init) == CONSTRUCTOR)
 	      && (same_type_ignoring_top_level_qualifiers_p
 		  (type, TREE_TYPE (init))))
 	    return init;
@@ -1228,7 +1295,10 @@ digest_nsdmi_init (tree decl, tree init, tsubst_flags_t complain)
     type = DECL_BIT_FIELD_TYPE (decl);
   int flags = LOOKUP_IMPLICIT;
   if (DIRECT_LIST_INIT_P (init))
-    flags = LOOKUP_NORMAL;
+    {
+      flags = LOOKUP_NORMAL;
+      complain |= tf_no_cleanup;
+    }
   if (BRACE_ENCLOSED_INITIALIZER_P (init)
       && CP_AGGREGATE_TYPE_P (type))
     init = reshape_init (type, init, complain);
@@ -1269,16 +1339,18 @@ picflag_from_initializer (tree init)
 /* Adjust INIT for going into a CONSTRUCTOR.  */
 
 static tree
-massage_init_elt (tree type, tree init, int nested, tsubst_flags_t complain)
+massage_init_elt (tree type, tree init, int nested, int flags,
+		  tsubst_flags_t complain)
 {
-  init = digest_init_r (type, init, nested ? 2 : 1, LOOKUP_IMPLICIT, complain);
+  flags &= LOOKUP_ALLOW_FLEXARRAY_INIT;
+  flags |= LOOKUP_IMPLICIT;
+  init = digest_init_r (type, init, nested ? 2 : 1, flags, complain);
   /* Strip a simple TARGET_EXPR when we know this is an initializer.  */
   if (SIMPLE_TARGET_EXPR_P (init))
     init = TARGET_EXPR_INITIAL (init);
   /* When we defer constant folding within a statement, we may want to
      defer this folding as well.  */
-  tree t = fold_non_dependent_expr (init);
-  t = maybe_constant_init (t);
+  tree t = fold_non_dependent_init (init, complain);
   if (TREE_CONSTANT (t))
     init = t;
   return init;
@@ -1289,11 +1361,11 @@ massage_init_elt (tree type, tree init, int nested, tsubst_flags_t complain)
    which describe the initializers.  */
 
 static int
-process_init_constructor_array (tree type, tree init, int nested,
+process_init_constructor_array (tree type, tree init, int nested, int flags,
 				tsubst_flags_t complain)
 {
   unsigned HOST_WIDE_INT i, len = 0;
-  int flags = 0;
+  int picflags = 0;
   bool unbounded = false;
   constructor_elt *ce;
   vec<constructor_elt, va_gc> *v = CONSTRUCTOR_ELTS (init);
@@ -1316,7 +1388,7 @@ process_init_constructor_array (tree type, tree init, int nested,
       if (nested == 2 && !domain && !vec_safe_is_empty (v))
 	{
 	  if (complain & tf_error)
-	    error_at (EXPR_LOC_OR_LOC (init, input_location),
+	    error_at (cp_expr_loc_or_loc (init, input_location),
 		      "initialization of flexible array member "
 		      "in a nested context");
 	  return PICFLAG_ERRONEOUS;
@@ -1343,7 +1415,8 @@ process_init_constructor_array (tree type, tree init, int nested,
 	ce->index = error_mark_node;
       gcc_assert (ce->value);
       ce->value
-	= massage_init_elt (TREE_TYPE (type), ce->value, nested, complain);
+	= massage_init_elt (TREE_TYPE (type), ce->value, nested, flags,
+			    complain);
 
       gcc_checking_assert
 	(ce->value == error_mark_node
@@ -1351,7 +1424,7 @@ process_init_constructor_array (tree type, tree init, int nested,
 	     (strip_array_types (TREE_TYPE (type)),
 	      strip_array_types (TREE_TYPE (ce->value)))));
 
-      flags |= picflag_from_initializer (ce->value);
+      picflags |= picflag_from_initializer (ce->value);
     }
 
   /* No more initializers. If the array is unbounded, we are done. Otherwise,
@@ -1367,7 +1440,8 @@ process_init_constructor_array (tree type, tree init, int nested,
 	       we can't rely on the back end to do it for us, so make the
 	       initialization explicit by list-initializing from T{}.  */
 	    next = build_constructor (init_list_type_node, NULL);
-	    next = massage_init_elt (TREE_TYPE (type), next, nested, complain);
+	    next = massage_init_elt (TREE_TYPE (type), next, nested, flags,
+				     complain);
 	    if (initializer_zerop (next))
 	      /* The default zero-initialization is fine for us; don't
 		 add anything to the CONSTRUCTOR.  */
@@ -1384,8 +1458,19 @@ process_init_constructor_array (tree type, tree init, int nested,
 
 	if (next)
 	  {
-	    flags |= picflag_from_initializer (next);
-	    CONSTRUCTOR_APPEND_ELT (v, size_int (i), next);
+	    picflags |= picflag_from_initializer (next);
+	    if (len > i+1
+		&& (initializer_constant_valid_p (next, TREE_TYPE (next))
+		    == null_pointer_node))
+	      {
+		tree range = build2 (RANGE_EXPR, size_type_node,
+				     build_int_cst (size_type_node, i),
+				     build_int_cst (size_type_node, len - 1));
+		CONSTRUCTOR_APPEND_ELT (v, range, next);
+		break;
+	      }
+	    else
+	      CONSTRUCTOR_APPEND_ELT (v, size_int (i), next);
 	  }
 	else
 	  /* Don't bother checking all the other elements.  */
@@ -1393,7 +1478,7 @@ process_init_constructor_array (tree type, tree init, int nested,
       }
 
   CONSTRUCTOR_ELTS (init) = v;
-  return flags;
+  return picflags;
 }
 
 /* Subroutine of process_init_constructor, which will process an initializer
@@ -1401,7 +1486,7 @@ process_init_constructor_array (tree type, tree init, int nested,
    the initializers.  */
 
 static int
-process_init_constructor_record (tree type, tree init, int nested,
+process_init_constructor_record (tree type, tree init, int nested, int flags,
 				 tsubst_flags_t complain)
 {
   vec<constructor_elt, va_gc> *v = NULL;
@@ -1416,7 +1501,7 @@ process_init_constructor_record (tree type, tree init, int nested,
   gcc_assert (!TYPE_POLYMORPHIC_P (type));
 
  restart:
-  int flags = 0;
+  int picflags = 0;
   unsigned HOST_WIDE_INT idx = 0;
   int designator_skip = -1;
   /* Generally, we will always have an index for each initializer (which is
@@ -1484,7 +1569,7 @@ process_init_constructor_record (tree type, tree init, int nested,
 	  if (ce)
 	    {
 	      gcc_assert (ce->value);
-	      next = massage_init_elt (type, next, nested, complain);
+	      next = massage_init_elt (type, next, nested, flags, complain);
 	      ++idx;
 	    }
 	}
@@ -1513,7 +1598,8 @@ process_init_constructor_record (tree type, tree init, int nested,
 	     for us, so build up TARGET_EXPRs.  If the type in question is
 	     a class, just build one up; if it's an array, recurse.  */
 	  next = build_constructor (init_list_type_node, NULL);
-	  next = massage_init_elt (TREE_TYPE (field), next, nested, complain);
+	  next = massage_init_elt (TREE_TYPE (field), next, nested, flags,
+				   complain);
 
 	  /* Warn when some struct elements are implicitly initialized.  */
 	  if ((complain & tf_warning)
@@ -1524,7 +1610,7 @@ process_init_constructor_record (tree type, tree init, int nested,
       else
 	{
 	  const_tree fldtype = TREE_TYPE (field);
-	  if (TREE_CODE (fldtype) == REFERENCE_TYPE)
+	  if (TYPE_REF_P (fldtype))
 	    {
 	      if (complain & tf_error)
 		error ("member %qD is uninitialized reference", field);
@@ -1574,7 +1660,7 @@ process_init_constructor_record (tree type, tree init, int nested,
       /* If this is a bitfield, now convert to the lowered type.  */
       if (type != TREE_TYPE (field))
 	next = cp_convert_and_check (TREE_TYPE (field), next, complain);
-      flags |= picflag_from_initializer (next);
+      picflags |= picflag_from_initializer (next);
       CONSTRUCTOR_APPEND_ELT (v, field, next);
     }
 
@@ -1630,7 +1716,7 @@ process_init_constructor_record (tree type, tree init, int nested,
     }
 
   CONSTRUCTOR_ELTS (init) = v;
-  return flags;
+  return picflags;
 }
 
 /* Subroutine of process_init_constructor, which will process a single
@@ -1638,7 +1724,7 @@ process_init_constructor_record (tree type, tree init, int nested,
    which describe the initializer.  */
 
 static int
-process_init_constructor_union (tree type, tree init, int nested,
+process_init_constructor_union (tree type, tree init, int nested, int flags,
 				tsubst_flags_t complain)
 {
   constructor_elt *ce;
@@ -1726,7 +1812,7 @@ process_init_constructor_union (tree type, tree init, int nested,
 
   if (ce->value && ce->value != error_mark_node)
     ce->value = massage_init_elt (TREE_TYPE (ce->index), ce->value, nested,
-				  complain);
+				  flags, complain);
 
   return picflag_from_initializer (ce->value);
 }
@@ -1746,40 +1832,43 @@ process_init_constructor_union (tree type, tree init, int nested,
    of error.  */
 
 static tree
-process_init_constructor (tree type, tree init, int nested,
+process_init_constructor (tree type, tree init, int nested, int flags,
 			  tsubst_flags_t complain)
 {
-  int flags;
+  int picflags;
 
   gcc_assert (BRACE_ENCLOSED_INITIALIZER_P (init));
 
   if (TREE_CODE (type) == ARRAY_TYPE || VECTOR_TYPE_P (type))
-    flags = process_init_constructor_array (type, init, nested, complain);
+    picflags = process_init_constructor_array (type, init, nested, flags,
+					       complain);
   else if (TREE_CODE (type) == RECORD_TYPE)
-    flags = process_init_constructor_record (type, init, nested, complain);
+    picflags = process_init_constructor_record (type, init, nested, flags,
+						complain);
   else if (TREE_CODE (type) == UNION_TYPE)
-    flags = process_init_constructor_union (type, init, nested, complain);
+    picflags = process_init_constructor_union (type, init, nested, flags,
+					       complain);
   else
     gcc_unreachable ();
 
-  if (flags & PICFLAG_ERRONEOUS)
+  if (picflags & PICFLAG_ERRONEOUS)
     return error_mark_node;
 
   TREE_TYPE (init) = type;
   if (TREE_CODE (type) == ARRAY_TYPE && TYPE_DOMAIN (type) == NULL_TREE)
     cp_complete_array_type (&TREE_TYPE (init), init, /*do_default=*/0);
-  if (flags & PICFLAG_SIDE_EFFECTS)
+  if (picflags & PICFLAG_SIDE_EFFECTS)
     {
       TREE_CONSTANT (init) = false;
       TREE_SIDE_EFFECTS (init) = true;
     }
-  else if (flags & PICFLAG_NOT_ALL_CONSTANT)
+  else if (picflags & PICFLAG_NOT_ALL_CONSTANT)
     /* Make sure TREE_CONSTANT isn't set from build_constructor.  */
     TREE_CONSTANT (init) = false;
   else
     {
       TREE_CONSTANT (init) = 1;
-      if (!(flags & PICFLAG_NOT_ALL_SIMPLE))
+      if (!(picflags & PICFLAG_NOT_ALL_SIMPLE))
 	TREE_STATIC (init) = 1;
     }
   return init;
@@ -1859,7 +1948,7 @@ build_x_arrow (location_t loc, tree expr, tsubst_flags_t complain)
 
   if (processing_template_decl)
     {
-      if (type && TREE_CODE (type) == POINTER_TYPE
+      if (type && TYPE_PTR_P (type)
 	  && !dependent_scope_p (TREE_TYPE (type)))
 	/* Pointer to current instantiation, don't treat as dependent.  */;
       else if (type_dependent_expression_p (expr))
@@ -1909,7 +1998,7 @@ build_x_arrow (location_t loc, tree expr, tsubst_flags_t complain)
 	  return error_mark_node;
 	}
 
-      if (TREE_CODE (TREE_TYPE (last_rval)) == REFERENCE_TYPE)
+      if (TYPE_REF_P (TREE_TYPE (last_rval)))
 	last_rval = convert_from_reference (last_rval);
     }
   else
@@ -2001,7 +2090,7 @@ build_m_component_ref (tree datum, tree component, tsubst_flags_t complain)
 
   if (TYPE_PTRDATAMEM_P (ptrmem_type))
     {
-      cp_lvalue_kind kind = lvalue_kind (datum);
+      bool is_lval = real_lvalue_p (datum);
       tree ptype;
 
       /* Compute the type of the field, as described in [expr.ref].
@@ -2031,9 +2120,7 @@ build_m_component_ref (tree datum, tree component, tsubst_flags_t complain)
 	return error_mark_node;
 
       /* If the object expression was an rvalue, return an rvalue.  */
-      if (kind & clk_class)
-	datum = rvalue (datum);
-      else if (kind & clk_rvalueref)
+      if (!is_lval)
 	datum = move (datum);
       return datum;
     }
@@ -2100,9 +2187,7 @@ build_functional_cast (tree exp, tree parms, tsubst_flags_t complain)
     {
       type = TREE_TYPE (exp);
 
-      if (complain & tf_warning
-	  && TREE_DEPRECATED (type)
-	  && DECL_ARTIFICIAL (exp))
+      if (DECL_ARTIFICIAL (exp))
 	cp_warn_deprecated_use (type);
     }
   else
@@ -2128,9 +2213,18 @@ build_functional_cast (tree exp, tree parms, tsubst_flags_t complain)
 	}
       else if (!parms)
 	{
-	  if (complain & tf_error)
-	    error ("cannot deduce template arguments for %qT from ()", anode);
-	  return error_mark_node;
+	  /* Even if there are no parameters, we might be able to deduce from
+	     default template arguments.  Pass TF_NONE so that we don't
+	     generate redundant diagnostics.  */
+	  type = do_auto_deduction (type, parms, anode, tf_none,
+				    adc_variable_type);
+	  if (type == error_mark_node)
+	    {
+	      if (complain & tf_error)
+		error ("cannot deduce template arguments for %qT from ()",
+		       anode);
+	      return error_mark_node;
+	    }
 	}
       else
 	type = do_auto_deduction (type, parms, anode, complain,
@@ -2144,7 +2238,7 @@ build_functional_cast (tree exp, tree parms, tsubst_flags_t complain)
       /* Diagnose this even in a template.  We could also try harder
 	 to give all the usual errors when the type and args are
 	 non-dependent...  */
-      if (TREE_CODE (type) == REFERENCE_TYPE && !parms)
+      if (TYPE_REF_P (type) && !parms)
 	{
 	  if (complain & tf_error)
 	    error ("invalid value-initialization of reference type");
@@ -2226,7 +2320,7 @@ build_functional_cast (tree exp, tree parms, tsubst_flags_t complain)
    know what we're doing.  */
 
 tree
-add_exception_specifier (tree list, tree spec, int complain)
+add_exception_specifier (tree list, tree spec, tsubst_flags_t complain)
 {
   bool ok;
   tree core = spec;
@@ -2242,7 +2336,7 @@ add_exception_specifier (tree list, tree spec, int complain)
      incomplete, or pointer or ref to incomplete other than pointer
      to cv void.  */
   is_ptr = TYPE_PTR_P (core);
-  if (is_ptr || TREE_CODE (core) == REFERENCE_TYPE)
+  if (is_ptr || TYPE_REF_P (core))
     core = TREE_TYPE (core);
   if (complain < 0)
     ok = true;
@@ -2300,6 +2394,9 @@ tree
 merge_exception_specifiers (tree list, tree add)
 {
   tree noex, orig_list;
+
+  if (list == error_mark_node || add == error_mark_node)
+    return error_mark_node;
 
   /* No exception-specifier or noexcept(false) are less strict than
      anything else.  Prefer the newer variant (LIST).  */

@@ -1,5 +1,5 @@
 /* Iterator routines for GIMPLE statements.
-   Copyright (C) 2007-2018 Free Software Foundation, Inc.
+   Copyright (C) 2007-2019 Free Software Foundation, Inc.
    Contributed by Aldy Hernandez  <aldy@quesejoda.com>
 
 This file is part of GCC.
@@ -615,6 +615,18 @@ gsi_for_stmt (gimple *stmt)
   else
     i = gsi_start_bb (bb);
 
+  i.ptr = stmt;
+  return i;
+}
+
+/* Get an iterator for STMT, which is known to belong to SEQ.  This is
+   equivalent to starting at the beginning of SEQ and searching forward
+   until STMT is found.  */
+
+gimple_stmt_iterator
+gsi_for_stmt (gimple *stmt, gimple_seq *seq)
+{
+  gimple_stmt_iterator i = gsi_start_1 (seq);
   i.ptr = stmt;
   return i;
 }

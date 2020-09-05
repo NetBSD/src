@@ -1,5 +1,5 @@
 /* Subroutines for the C front end on the PowerPC architecture.
-   Copyright (C) 2002-2018 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
    Contributed by Zack Weinberg <zack@codesourcery.com>
    and Paolo Bonzini <bonzini@gnu.org>
@@ -220,21 +220,23 @@ rs6000_macro_to_expand (cpp_reader *pfile, const cpp_token *tok)
       else if (ident && (ident != C_CPP_HASHNODE (__vector_keyword)))
 	{
 	  enum rid rid_code = (enum rid)(ident->rid_code);
-	  enum node_type itype = ident->type;
+	  bool is_macro = cpp_macro_p (ident);
+
 	  /* If there is a function-like macro, check if it is going to be
 	     invoked with or without arguments.  Without following ( treat
 	     it like non-macro, otherwise the following cpp_get_token eats
 	     what should be preserved.  */
-	  if (itype == NT_MACRO && cpp_fun_like_macro_p (ident))
+	  if (is_macro && cpp_fun_like_macro_p (ident))
 	    {
 	      int idx2 = idx;
 	      do
 		tok = cpp_peek_token (pfile, idx2++);
 	      while (tok->type == CPP_PADDING);
 	      if (tok->type != CPP_OPEN_PAREN)
-		itype = NT_VOID;
+		is_macro = false;
 	    }
-	  if (itype == NT_MACRO)
+
+	  if (is_macro)
 	    {
 	      do
 		(void) cpp_get_token (pfile);
@@ -452,10 +454,9 @@ rs6000_target_modify_macros (bool define_p, HOST_WIDE_INT flags,
     rs6000_define_or_undefine_macro (define_p, "__RECIP_PRECISION__");
   /* Note that the OPTION_MASK_ALTIVEC flag is automatically turned on
      in any of the following conditions:
-     1. The command line specifies either -maltivec=le or -maltivec=be.
-     2. The operating system is Darwin and it is configured for 64
+     1. The operating system is Darwin and it is configured for 64
 	bit.  (See darwin_rs6000_override_options.)
-     3. The operating system is Darwin and the operating system
+     2. The operating system is Darwin and the operating system
 	version is 10.5 or higher and the user has not explicitly
 	disabled ALTIVEC by specifying -mcpu=G3 or -mno-altivec and
 	the compiler is not producing code for integration within the
@@ -490,21 +491,17 @@ rs6000_target_modify_macros (bool define_p, HOST_WIDE_INT flags,
      the following conditions:
      1. The operating system does not support saving of AltiVec
 	registers (OS_MISSING_ALTIVEC).
-     2. If any of the options TARGET_HARD_FLOAT, TARGET_SINGLE_FLOAT,
-	or TARGET_DOUBLE_FLOAT are turned off.  Hereafter, the
+     2. If the option TARGET_HARD_FLOAT is turned off.  Hereafter, the
 	OPTION_MASK_VSX flag is considered to have been turned off
 	explicitly.
-     3. If TARGET_PAIRED_FLOAT was enabled.  Hereafter, the
-	OPTION_MASK_VSX flag is considered to have been turned off
-	explicitly.
-     4. If TARGET_AVOID_XFORM is turned on explicitly at the outermost
+     3. If TARGET_AVOID_XFORM is turned on explicitly at the outermost
 	compilation context, or if it is turned on by any means in an
 	inner compilation context.  Hereafter, the OPTION_MASK_VSX
 	flag is considered to have been turned off explicitly.
-     5. If TARGET_ALTIVEC was explicitly disabled.  Hereafter, the
+     4. If TARGET_ALTIVEC was explicitly disabled.  Hereafter, the
 	OPTION_MASK_VSX flag is considered to have been turned off
 	explicitly.
-     6. If an inner context (as introduced by
+     5. If an inner context (as introduced by
 	__attribute__((__target__())) or #pragma GCC target()
 	requests a target that normally enables the
 	OPTION_MASK_VSX flag but the outer-most "main target"
@@ -590,10 +587,6 @@ rs6000_target_modify_macros (bool define_p, HOST_WIDE_INT flags,
     rs6000_define_or_undefine_macro (define_p, "__FLOAT128_HARDWARE__");
 
   /* options from the builtin masks.  */
-  /* Note that RS6000_BTM_PAIRED is enabled only if
-     TARGET_PAIRED_FLOAT is enabled (e.g. -mpaired).  */
-  if ((bu_mask & RS6000_BTM_PAIRED) != 0)
-    rs6000_define_or_undefine_macro (define_p, "__PAIRED__");
   /* Note that RS6000_BTM_CELL is enabled only if (rs6000_cpu ==
      PROCESSOR_CELL) (e.g. -mcpu=cell).  */
   if ((bu_mask & RS6000_BTM_CELL) != 0)
@@ -640,7 +633,7 @@ rs6000_cpu_cpp_builtins (cpp_reader *pfile)
 	  cpp_get_callbacks (pfile)->macro_to_expand = rs6000_macro_to_expand;
 	}
     }
-  if (!TARGET_HARD_FLOAT || !TARGET_DOUBLE_FLOAT)
+  if (!TARGET_HARD_FLOAT)
     builtin_define ("_SOFT_DOUBLE");
   /* Used by lwarx/stwcx. errata work-around.  */
   if (rs6000_cpu == PROCESSOR_PPC405)
@@ -756,7 +749,7 @@ rs6000_cpu_cpp_builtins (cpp_reader *pfile)
     }
 
   /* Vector element order.  */
-  if (BYTES_BIG_ENDIAN || (rs6000_altivec_element_order == 2))
+  if (BYTES_BIG_ENDIAN)
     builtin_define ("__VEC_ELEMENT_REG_ORDER__=__ORDER_BIG_ENDIAN__");
   else
     builtin_define ("__VEC_ELEMENT_REG_ORDER__=__ORDER_LITTLE_ENDIAN__");
@@ -771,26 +764,6 @@ rs6000_cpu_cpp_builtins (cpp_reader *pfile)
       || DEFAULT_ABI == ABI_ELFv2
       || (DEFAULT_ABI == ABI_AIX && !rs6000_compat_align_parm))
     builtin_define ("__STRUCT_PARM_ALIGN__=16");
-
-  /* Generate defines for Xilinx FPU. */
-  if (rs6000_xilinx_fpu) 
-    {
-      builtin_define ("_XFPU");
-      if (rs6000_single_float && ! rs6000_double_float)
-	{
-	  if (rs6000_simple_fpu) 
-	    builtin_define ("_XFPU_SP_LITE"); 
-	  else 
-	    builtin_define ("_XFPU_SP_FULL");
-	}
-      if (rs6000_double_float)
-	{
-	  if (rs6000_simple_fpu) 
-	    builtin_define ("_XFPU_DP_LITE");
-	  else
-	    builtin_define ("_XFPU_DP_FULL");
-        }
-    }
 }
 
 
@@ -1404,26 +1377,14 @@ const struct altivec_builtin_types altivec_overloaded_builtins[] = {
     RS6000_BTI_bool_V4SI, RS6000_BTI_V4SF, RS6000_BTI_V4SF, 0 },
   { ALTIVEC_BUILTIN_VEC_VCMPGTSW, ALTIVEC_BUILTIN_VCMPGTSW,
     RS6000_BTI_bool_V4SI, RS6000_BTI_V4SI, RS6000_BTI_V4SI, 0 },
-  { ALTIVEC_BUILTIN_VEC_VCMPGTSW, ALTIVEC_BUILTIN_VCMPGTSW,
-    RS6000_BTI_bool_V4SI, RS6000_BTI_V4SI, RS6000_BTI_V4SI, 0 },
-  { ALTIVEC_BUILTIN_VEC_VCMPGTUW, ALTIVEC_BUILTIN_VCMPGTUW,
-    RS6000_BTI_bool_V4SI, RS6000_BTI_unsigned_V4SI, RS6000_BTI_unsigned_V4SI, 0 },
   { ALTIVEC_BUILTIN_VEC_VCMPGTUW, ALTIVEC_BUILTIN_VCMPGTUW,
     RS6000_BTI_bool_V4SI, RS6000_BTI_unsigned_V4SI, RS6000_BTI_unsigned_V4SI, 0 },
   { ALTIVEC_BUILTIN_VEC_VCMPGTSH, ALTIVEC_BUILTIN_VCMPGTSH,
     RS6000_BTI_bool_V8HI, RS6000_BTI_V8HI, RS6000_BTI_V8HI, 0 },
-  { ALTIVEC_BUILTIN_VEC_VCMPGTSH, ALTIVEC_BUILTIN_VCMPGTSH,
-    RS6000_BTI_bool_V8HI, RS6000_BTI_V8HI, RS6000_BTI_V8HI, 0 },
-  { ALTIVEC_BUILTIN_VEC_VCMPGTUH, ALTIVEC_BUILTIN_VCMPGTUH,
-    RS6000_BTI_bool_V8HI, RS6000_BTI_unsigned_V8HI, RS6000_BTI_unsigned_V8HI, 0 },
   { ALTIVEC_BUILTIN_VEC_VCMPGTUH, ALTIVEC_BUILTIN_VCMPGTUH,
     RS6000_BTI_bool_V8HI, RS6000_BTI_unsigned_V8HI, RS6000_BTI_unsigned_V8HI, 0 },
   { ALTIVEC_BUILTIN_VEC_VCMPGTSB, ALTIVEC_BUILTIN_VCMPGTSB,
     RS6000_BTI_bool_V16QI, RS6000_BTI_V16QI, RS6000_BTI_V16QI, 0 },
-  { ALTIVEC_BUILTIN_VEC_VCMPGTSB, ALTIVEC_BUILTIN_VCMPGTSB,
-    RS6000_BTI_bool_V16QI, RS6000_BTI_V16QI, RS6000_BTI_V16QI, 0 },
-  { ALTIVEC_BUILTIN_VEC_VCMPGTUB, ALTIVEC_BUILTIN_VCMPGTUB,
-    RS6000_BTI_bool_V16QI, RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V16QI, 0 },
   { ALTIVEC_BUILTIN_VEC_VCMPGTUB, ALTIVEC_BUILTIN_VCMPGTUB,
     RS6000_BTI_bool_V16QI, RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V16QI, 0 },
   { ALTIVEC_BUILTIN_VEC_CMPLE, ALTIVEC_BUILTIN_VCMPGEFP,
@@ -4128,8 +4089,14 @@ const struct altivec_builtin_types altivec_overloaded_builtins[] = {
     RS6000_BTI_void, RS6000_BTI_unsigned_V16QI, RS6000_BTI_INTSI, ~RS6000_BTI_UINTQI },
   { VSX_BUILTIN_VEC_XST, VSX_BUILTIN_STXVD2X_V2DF,
     RS6000_BTI_void, RS6000_BTI_V2DF, RS6000_BTI_INTSI, ~RS6000_BTI_V2DF },
+  { VSX_BUILTIN_VEC_XST, VSX_BUILTIN_STXVD2X_V2DF,
+    RS6000_BTI_void, RS6000_BTI_V2DF, RS6000_BTI_INTSI, ~RS6000_BTI_double },
   { VSX_BUILTIN_VEC_XST, VSX_BUILTIN_STXVD2X_V2DI,
     RS6000_BTI_void, RS6000_BTI_V2DI, RS6000_BTI_INTSI, ~RS6000_BTI_V2DI },
+  { VSX_BUILTIN_VEC_XST, VSX_BUILTIN_STXVD2X_V2DI,
+    RS6000_BTI_void, RS6000_BTI_V2DI, RS6000_BTI_INTSI, ~RS6000_BTI_long_long },
+  { VSX_BUILTIN_VEC_XST, VSX_BUILTIN_STXVD2X_V2DI, RS6000_BTI_void,
+    RS6000_BTI_unsigned_V2DI, RS6000_BTI_INTSI, ~RS6000_BTI_unsigned_long_long },
   { VSX_BUILTIN_VEC_XST, VSX_BUILTIN_STXVD2X_V2DI,
     RS6000_BTI_void, RS6000_BTI_unsigned_V2DI, RS6000_BTI_INTSI,
     ~RS6000_BTI_unsigned_V2DI },
@@ -4295,8 +4262,6 @@ const struct altivec_builtin_types altivec_overloaded_builtins[] = {
     RS6000_BTI_V2DI, RS6000_BTI_INTSI, ~RS6000_BTI_V2DI, 0 },
   { VSX_BUILTIN_VEC_LD, VSX_BUILTIN_LXVD2X_V2DI,
     RS6000_BTI_V1TI, RS6000_BTI_INTSI, ~RS6000_BTI_INTTI, 0 },
-  { VSX_BUILTIN_VEC_LD, VSX_BUILTIN_LXVD2X_V2DI,
-    RS6000_BTI_V2DI, RS6000_BTI_INTSI, ~RS6000_BTI_long_long, 0 },
   { VSX_BUILTIN_VEC_LD, VSX_BUILTIN_LXVD2X_V2DI,
     RS6000_BTI_V2DI, RS6000_BTI_INTSI, ~RS6000_BTI_long_long, 0 },
   { VSX_BUILTIN_VEC_LD, VSX_BUILTIN_LXVD2X_V2DI,
@@ -5116,14 +5081,22 @@ const struct altivec_builtin_types altivec_overloaded_builtins[] = {
   { P9V_BUILTIN_VEC_VSIEDP, P9V_BUILTIN_VSIEQPF,
     RS6000_BTI_ieee128_float, RS6000_BTI_ieee128_float, RS6000_BTI_UINTDI, 0 },
 
-  { P9V_BUILTIN_VEC_VSCEDPGT, P9V_BUILTIN_VSCEDPGT,
+  { P9V_BUILTIN_VEC_VSCEGT, P9V_BUILTIN_VSCEDPGT,
     RS6000_BTI_INTSI, RS6000_BTI_double, RS6000_BTI_double, 0 },
-  { P9V_BUILTIN_VEC_VSCEDPLT, P9V_BUILTIN_VSCEDPLT,
+  { P9V_BUILTIN_VEC_VSCEGT, P9V_BUILTIN_VSCEQPGT,
+    RS6000_BTI_INTSI, RS6000_BTI_ieee128_float, RS6000_BTI_ieee128_float, 0 },
+  { P9V_BUILTIN_VEC_VSCELT, P9V_BUILTIN_VSCEDPLT,
     RS6000_BTI_INTSI, RS6000_BTI_double, RS6000_BTI_double, 0 },
-  { P9V_BUILTIN_VEC_VSCEDPEQ, P9V_BUILTIN_VSCEDPEQ,
+  { P9V_BUILTIN_VEC_VSCELT, P9V_BUILTIN_VSCEQPLT,
+    RS6000_BTI_INTSI, RS6000_BTI_ieee128_float, RS6000_BTI_ieee128_float, 0 },
+  { P9V_BUILTIN_VEC_VSCEEQ, P9V_BUILTIN_VSCEDPEQ,
     RS6000_BTI_INTSI, RS6000_BTI_double, RS6000_BTI_double, 0 },
-  { P9V_BUILTIN_VEC_VSCEDPUO, P9V_BUILTIN_VSCEDPUO,
+  { P9V_BUILTIN_VEC_VSCEEQ, P9V_BUILTIN_VSCEQPEQ,
+    RS6000_BTI_INTSI, RS6000_BTI_ieee128_float, RS6000_BTI_ieee128_float, 0 },
+  { P9V_BUILTIN_VEC_VSCEUO, P9V_BUILTIN_VSCEDPUO,
     RS6000_BTI_INTSI, RS6000_BTI_double, RS6000_BTI_double, 0 },
+  { P9V_BUILTIN_VEC_VSCEUO, P9V_BUILTIN_VSCEQPUO,
+    RS6000_BTI_INTSI, RS6000_BTI_ieee128_float, RS6000_BTI_ieee128_float, 0 },
 
   { P9V_BUILTIN_VEC_XL_LEN_R, P9V_BUILTIN_XL_LEN_R,
     RS6000_BTI_unsigned_V16QI, ~RS6000_BTI_UINTQI,
@@ -5669,8 +5642,6 @@ const struct altivec_builtin_types altivec_overloaded_builtins[] = {
   { P8V_BUILTIN_VEC_VMRGOW, P8V_BUILTIN_VMRGOW_V2DI,
     RS6000_BTI_V2DI, RS6000_BTI_V2DI, RS6000_BTI_V2DI, 0 },
   { P8V_BUILTIN_VEC_VMRGOW, P8V_BUILTIN_VMRGOW_V2DI,
-    RS6000_BTI_V2DI, RS6000_BTI_V2DI, RS6000_BTI_V2DI, 0 },
-  { P8V_BUILTIN_VEC_VMRGOW, P8V_BUILTIN_VMRGOW_V2DI,
     RS6000_BTI_unsigned_V2DI, RS6000_BTI_unsigned_V2DI,
     RS6000_BTI_unsigned_V2DI, 0 },
   { P8V_BUILTIN_VEC_VMRGOW, P8V_BUILTIN_VMRGOW_V2DI,
@@ -6167,11 +6138,11 @@ altivec_resolve_overloaded_builtin (location_t loc, tree fndecl,
 	     (int)fcode, IDENTIFIER_POINTER (DECL_NAME (fndecl)));
  
   /* vec_lvsl and vec_lvsr are deprecated for use with LE element order.  */
-  if (fcode == ALTIVEC_BUILTIN_VEC_LVSL && !VECTOR_ELT_ORDER_BIG)
+  if (fcode == ALTIVEC_BUILTIN_VEC_LVSL && !BYTES_BIG_ENDIAN)
     warning (OPT_Wdeprecated,
 	     "vec_lvsl is deprecated for little endian; use "
 	     "assignment for unaligned loads and stores");
-  else if (fcode == ALTIVEC_BUILTIN_VEC_LVSR && !VECTOR_ELT_ORDER_BIG)
+  else if (fcode == ALTIVEC_BUILTIN_VEC_LVSR && !BYTES_BIG_ENDIAN)
     warning (OPT_Wdeprecated,
 	     "vec_lvsr is deprecated for little endian; use "
 	     "assignment for unaligned loads and stores");
@@ -6583,17 +6554,6 @@ altivec_resolve_overloaded_builtin (location_t loc, tree fndecl,
       if (!INTEGRAL_TYPE_P (TREE_TYPE (arg2)))
 	goto bad;
 
-      /* If we are targeting little-endian, but -maltivec=be has been
-	 specified to override the element order, adjust the element
-	 number accordingly.  */
-      if (!BYTES_BIG_ENDIAN && rs6000_altivec_element_order == 2)
-	{
-	  unsigned int last_elem = TYPE_VECTOR_SUBPARTS (arg1_type) - 1;
-	  arg2 = fold_build2_loc (loc, MINUS_EXPR, TREE_TYPE (arg2),
-				  build_int_cstu (TREE_TYPE (arg2), last_elem),
-				  arg2);
-	}
-
       /* See if we can optimize vec_extracts with the current VSX instruction
 	 set.  */
       mode = TYPE_MODE (arg1_type);
@@ -6772,17 +6732,6 @@ altivec_resolve_overloaded_builtin (location_t loc, tree fndecl,
 	goto bad;
       if (!INTEGRAL_TYPE_P (TREE_TYPE (arg2)))
 	goto bad;
-
-      /* If we are targeting little-endian, but -maltivec=be has been
-	 specified to override the element order, adjust the element
-	 number accordingly.  */
-      if (!BYTES_BIG_ENDIAN && rs6000_altivec_element_order == 2)
-	{
-	  unsigned int last_elem = TYPE_VECTOR_SUBPARTS (arg1_type) - 1;
-	  arg2 = fold_build2_loc (loc, MINUS_EXPR, TREE_TYPE (arg2),
-				  build_int_cstu (TREE_TYPE (arg2), last_elem),
-				  arg2);
-	}
 
       /* If we can use the VSX xxpermdi instruction, use that for insert.  */
       mode = TYPE_MODE (arg1_type);

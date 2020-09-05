@@ -1,6 +1,6 @@
 /* Read the GIMPLE representation from a file stream.
 
-   Copyright (C) 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2009-2019 Free Software Foundation, Inc.
    Contributed by Kenneth Zadeck <zadeck@naturalbridge.com>
    Re-implemented by Diego Novillo <dnovillo@google.com>
 
@@ -1014,6 +1014,14 @@ input_struct_function_base (struct function *fn, struct data_in *data_in,
   /* Input the function start and end loci.  */
   fn->function_start_locus = stream_input_location_now (&bp, data_in);
   fn->function_end_locus = stream_input_location_now (&bp, data_in);
+
+  /* Restore the instance discriminators if present.  */
+  int instance_number = bp_unpack_value (&bp, 1);
+  if (instance_number)
+    {
+      instance_number = bp_unpack_value (&bp, sizeof (int) * CHAR_BIT);
+      maybe_create_decl_to_instance_map ()->put (fn->decl, instance_number);
+    }
 }
 
 

@@ -1,5 +1,5 @@
 /* Subroutines for insn-output.c for Matsushita MN10300 series
-   Copyright (C) 1996-2018 Free Software Foundation, Inc.
+   Copyright (C) 1996-2019 Free Software Foundation, Inc.
    Contributed by Jeff Law (law@cygnus.com).
 
    This file is part of GCC.
@@ -104,7 +104,7 @@ mn10300_option_override (void)
       else if (strcasecmp (mn10300_tune_string, "am34") == 0)
 	mn10300_tune_cpu = PROCESSOR_AM34;
       else
-	error ("-mtune= expects mn10300, am33, am33-2, or am34");
+	error ("%<-mtune=%> expects mn10300, am33, am33-2, or am34");
     }
 }
 
@@ -3436,5 +3436,8 @@ mn10300_reorg (void)
 
 #undef  TARGET_MODES_TIEABLE_P
 #define TARGET_MODES_TIEABLE_P mn10300_modes_tieable_p
+
+#undef  TARGET_HAVE_SPECULATION_SAFE_VALUE
+#define TARGET_HAVE_SPECULATION_SAFE_VALUE speculation_safe_value_not_needed
 
 struct gcc_target targetm = TARGET_INITIALIZER;

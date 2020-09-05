@@ -1,6 +1,6 @@
 // <algorithm> Forward declarations  -*- C++ -*-
 
-// Copyright (C) 2007-2018 Free Software Foundation, Inc.
+// Copyright (C) 2007-2019 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -154,7 +154,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
    */
 
   /**
-   * @defgroup set_algorithms Set Operation
+   * @defgroup set_algorithms Set Operations
    * @ingroup sorting_algorithms
    *
    * These algorithms are common set operations performed on sequences
