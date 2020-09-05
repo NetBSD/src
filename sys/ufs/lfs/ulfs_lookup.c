@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_lookup.c,v 1.45 2020/09/05 02:47:48 riastradh Exp $	*/
+/*	$NetBSD: ulfs_lookup.c,v 1.46 2020/09/05 02:55:38 riastradh Exp $	*/
 /*  from NetBSD: ufs_lookup.c,v 1.135 2015/07/11 11:04:48 mlelstv  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.45 2020/09/05 02:47:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.46 2020/09/05 02:55:38 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lfs.h"
@@ -522,7 +522,6 @@ found:
 		    results->ulr_offset + LFS_DIRSIZ(fs, ep);
 		DIP_ASSIGN(dp, size, dp->i_size);
 		dp->i_state |= IN_CHANGE | IN_UPDATE;
-		uvm_vnp_setsize(vdp, dp->i_size);
 	}
 	brelse(bp, 0);
 
@@ -847,7 +846,6 @@ ulfs_direnter(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 		dp->i_size = ulr->ulr_offset + ulr->ulr_count;
 		DIP_ASSIGN(dp, size, dp->i_size);
 		dp->i_state |= IN_CHANGE | IN_UPDATE;
-		uvm_vnp_setsize(dvp, dp->i_size);
 	}
 	/*
 	 * Get the block containing the space for the new directory entry.

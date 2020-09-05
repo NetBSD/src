@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.334 2020/09/05 02:47:48 riastradh Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.335 2020/09/05 02:55:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.334 2020/09/05 02:47:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.335 2020/09/05 02:55:38 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -989,13 +989,6 @@ lfs_mkdir(void *v)
 	if (error) {
 		vrele(*ap->a_vpp);
 		*ap->a_vpp = NULL;
-		goto out;
-	}
-	if (VTOI(*ap->a_vpp)->i_size == 0) {
-		/* directory has been rmdir'd */
-		vput(*ap->a_vpp);
-		*ap->a_vpp = NULL;
-		error = ENOENT;
 		goto out;
 	}
 
