@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.38 2020/09/05 02:47:03 riastradh Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.39 2020/09/05 02:47:49 riastradh Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -248,8 +248,6 @@ renamerace_cycle(const atf_tc_t *tc, const char *mp)
 		atf_tc_skip("directories not supported by file system");
 	if (FSTYPE_RUMPFS(tc))
 		atf_tc_skip("rename not supported by file system");
-	if (FSTYPE_P2K_FFS(tc))
-		atf_tc_expect_fail("assertion \"vp->v_size == ip->i_size\" failed");
 	if (FSTYPE_PUFFS(tc))
 		atf_tc_expect_fail("assertion \"dfd\" failed");
 	if (FSTYPE_NFS(tc))
