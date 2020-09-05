@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.73 2020/08/29 20:07:00 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.74 2020/09/05 16:29:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -92,33 +92,37 @@ struct scbvec {
 };
 
 /*
- * Alpha interrupts come in at one of 4 levels:
+ * Alpha interrupts come in at one of 3 levels:
  *
- *	software interrupt level
  *	i/o level 1
  *	i/o level 2
  *	clock level
  *
  * However, since we do not have any way to know which hardware
  * level a particular i/o interrupt comes in on, we have to
- * whittle it down to 3.
+ * whittle it down to 2.  In addition, there are 2 software interrupt
+ * levels available to system software.
  */
 
-#define	IPL_NONE	0	/* no interrupt level */
-#define	IPL_SOFTCLOCK	1	/* generic software interrupts */
-#define	IPL_SOFTBIO	1	/* generic software interrupts */
-#define	IPL_SOFTNET	1	/* generic software interrupts */
-#define	IPL_SOFTSERIAL	1	/* generic software interrupts */
-#define	IPL_VM		2	/* interrupts that can alloc mem */
-#define	IPL_SCHED	3	/* clock interrupts */
-#define	IPL_HIGH	4	/* all interrupts */
+#define	IPL_NONE	ALPHA_PSL_IPL_0
+#define	IPL_SOFTCLOCK	ALPHA_PSL_IPL_SOFT_LO
+#define	IPL_SOFTBIO	ALPHA_PSL_IPL_SOFT_LO
+#define	IPL_SOFTNET	ALPHA_PSL_IPL_SOFT_LO	/* XXX HI */
+#define	IPL_SOFTSERIAL	ALPHA_PSL_IPL_SOFT_LO	/* XXX HI */
+#define	IPL_VM		ALPHA_PSL_IPL_IO_HI
+#define	IPL_SCHED	ALPHA_PSL_IPL_CLOCK
+#define	IPL_HIGH	ALPHA_PSL_IPL_HIGH
 
 typedef int ipl_t;
 typedef struct {
 	uint8_t _psl;
 } ipl_cookie_t;
 
-ipl_cookie_t makeiplcookie(ipl_t);
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+	return (ipl_cookie_t){._psl = (uint8_t)ipl};
+}
 
 #define	IST_UNUSABLE	-1	/* interrupt cannot be used */
 #define	IST_NONE	0	/* none (dummy) */
