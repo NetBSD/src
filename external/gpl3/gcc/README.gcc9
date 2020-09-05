@@ -1,0 +1,109 @@
+$NetBSD: README.gcc9,v 1.1 2020/09/05 22:16:57 mrg Exp $
+
+new stuff:
+	cc1objcplus
+	libmpx
+	liboffloadmic
+	libvtv
+	libcet
+	libphobos
+	d
+	gfortran
+
+
+todo:
+	- audit all uses of new warning-disable variables and
+	  convert some from -Wno- to -Wno-error=
+
+arch/feature list.
+
+tools:		does build.sh tools work?
+kernels:	does a kernel run?
+libgcc:		does libgcc build?
+native-gcc:	does a full mknative-gcc complete?
+make release:	does build.sh release complete?
+runs:		does the system boot with a full world?
+atf:		does atf run / compare well
+switched:	has port switched?  y (yes), n (no/ready), ? (not ready)
+
+
+architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf	switched
+------------	-----	-------	------	----------	------------	----	---	--------
+aarch64		y	n	y	n		n		n	n	n
+alpha		y	n	y	n		n		n	n	n
+earmv4		n	n	n	n		n		n	n	n
+earmv4eb	n	n	n	n		n		n	n	n
+earm		n	n	n	n		n		n	n	n
+earmeb		n	n	n	n		n		n	n	n
+earmhf		n	n	n	n		n		n	n	n
+earmhfeb	n	n	n	n		n		n	n	n
+earmv6		n	n	n	n		n		n	n	n
+earmv6eb	n	n	n	n		n		n	n	n
+earmv6hf	n	n	n	n		n		n	n	n
+earmv6hfeb	n	n	n	n		n		n	n	n
+earmv7		n	n	n	n		n		n	n	n
+earmv7eb	n	n	n	n		n		n	n	n
+earmv7hf	n	n	n	n		n		n	n	n
+earmv7hfeb	n	n	n	n		n		n	n	n
+hppa		y	n	y	y		n		n	n	n
+i386		n	n	y	y		n		n	n	n
+ia64		y	n	y	y		n		n	n	n
+m68000		y	n	y	y		n		n	?	?
+m68k		y	n	y	y		n		n	?	?
+mipseb		y	n	y	y		n		n	n	n
+mipsel		n	n	n	n		n		n	n	n
+mips64eb	n	n	n	n		n		n	n	n
+mips64el	n	n	n	n		n		n	n	n
+powerpc		y	n	y	y		n		n	n	n
+powerpc64	n	n	n	y		n		?	n	n
+sh3eb		y	n	y	y		n		n	n	n
+sh3el		y	n	y	y		n		n	n	n
+sparc		y	n	y	y		n		n	n	n
+sparc64		y	n	y	y		n		n	n	n
+vax		y	n	y	y		n		n	n	n
+x86_64		y	n	y	y		n		n	y	n
+riscv32		y	?	y	y		n		?	?	n	
+riscv64		y	?	y	y		n		?	?	n
+--
+coldfire	?	N/A	?	?		?		N/A	N/A
+------------	-----	-------	------	----------	------------	----	---
+architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
+
+
+CPU vs platform test table (for CPUs with multiple ports).  this is "make release" or just kernels.
+values:		y (yes), k (kernels only), n (failed), r (running), ? (not attempted)
+
+CPU		platform list
+---		-------- ----
+		acorn32		cats	epoc32	evbarm-eb	evbarm-el	hpcarm		iyonix		netwinder	shark 		zaurus
+earmv4:		-		-	-	-		-		-		-		-		-		-
+earm:		-		-	-	-		-		-		-		-		-		-
+earmhf:		-		-	-	-		-		-		-		-		-		-
+earmv6:		-		-	-	-		-		-		-		-		-		-
+earmv6hf:	-		-	-	-		-		-		-		-		-		-
+earmv7:		-		-	-	-		-		-		-		-		-		-
+earmv7hf:	-		-	-	-		-		-		-		-		-		-
+
+		amiga		atari	cesfic	hp300		luna68k		mac68k		mvme68k		news68k		next68k		sun3	x68k
+m68k:		-		-	-	-		-		-		-		-		-		- 	-
+
+		evbmips		emips		ews4800mips	mipsco		newsmips	sgimips
+mipseb:		-		-		-		-		-		-
+
+		evbmips		algor		arc		cobalt		hpcmips		pmax
+mipsel:		-		-		-		-		-		-
+
+		algor		evbmips		pmax
+mips64eb:	-		-		-
+mips64el:	-		-		-
+
+		amigappc	bebox	evbppc	ibmnws		macppc		mvmeppc		ofppc		prep		rs6000		sandpoint
+powerpc:	-		-	-	-		-		-		-		-		-		-
+
+		evbppc		macppc		ofppc
+powerpc64:	-		-		-
+
+		dreamcast	evbsh3		hpcsh		landisk		mmeye
+sh3eb:		-		-		-		-		-
+sh3el:		-		-		-		-		-
+
