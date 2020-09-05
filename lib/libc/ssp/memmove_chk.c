@@ -1,4 +1,4 @@
-/*	$NetBSD: memmove_chk.c,v 1.5 2014/09/17 00:39:28 joerg Exp $	*/
+/*	$NetBSD: memmove_chk.c,v 1.6 2020/09/05 13:37:59 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: memmove_chk.c,v 1.5 2014/09/17 00:39:28 joerg Exp $");
+__RCSID("$NetBSD: memmove_chk.c,v 1.6 2020/09/05 13:37:59 mrg Exp $");
 
 /*LINTLIBRARY*/
 
@@ -38,10 +38,10 @@ __RCSID("$NetBSD: memmove_chk.c,v 1.5 2014/09/17 00:39:28 joerg Exp $");
 
 #undef memmove
 
-void *__memmove_chk(void *, void *src, size_t, size_t);
+void *__memmove_chk(void *, const void *src, size_t, size_t);
 
 void *
-__memmove_chk(void *dst, void *src, size_t len,
+__memmove_chk(void *dst, const void *src, size_t len,
     size_t slen)
 {
 	if (len > slen)
