@@ -1,4 +1,4 @@
-/* $NetBSD: sgmapvar.h,v 1.18 2020/09/05 03:47:16 thorpej Exp $ */
+/* $NetBSD: sgmapvar.h,v 1.19 2020/09/05 04:11:10 maya Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  * of it on its own.
  *
  * [*] While the page table is a `global' resource, access to it is
- * controlled by the arenaa; once a region has been allocated from
+ * controlled by the arena; once a region has been allocated from
  * the arena, that region is effectively `locked'.
  */
 struct alpha_sgmap {
