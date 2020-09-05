@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.135 2020/09/02 04:32:13 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.136 2020/09/05 13:55:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.135 2020/09/02 04:32:13 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.136 2020/09/05 13:55:08 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.135 2020/09/02 04:32:13 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.136 2020/09/05 13:55:08 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -358,8 +358,8 @@ Dir_Init(void)
 {
     dirSearchPath = Lst_Init();
     openDirectories = Lst_Init();
-    Hash_InitTable(&mtimes, 0);
-    Hash_InitTable(&lmtimes, 0);
+    Hash_InitTable(&mtimes);
+    Hash_InitTable(&lmtimes);
 }
 
 void
@@ -371,7 +371,7 @@ Dir_InitDir(const char *cdname)
     dotLast->refCount = 1;
     dotLast->hits = 0;
     dotLast->name = bmake_strdup(".DOTLAST");
-    Hash_InitTable(&dotLast->files, -1);
+    Hash_InitTable(&dotLast->files);
 }
 
 /*
@@ -1547,7 +1547,7 @@ Dir_AddDir(Lst path, const char *name)
 	p->name = bmake_strdup(name);
 	p->hits = 0;
 	p->refCount = 1;
-	Hash_InitTable(&p->files, -1);
+	Hash_InitTable(&p->files);
 
 	while ((dp = readdir(d)) != NULL) {
 #if defined(sun) && defined(d_ino) /* d_ino is a sunos4 #define for d_fileno */
