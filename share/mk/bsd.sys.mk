@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.302 2020/07/03 16:12:16 maxv Exp $
+#	$NetBSD: bsd.sys.mk,v 1.303 2020/09/05 13:38:43 mrg Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -103,7 +103,7 @@ CFLAGS+=	-Wcast-qual -Wwrite-strings
 CFLAGS+=	-Wextra -Wno-unused-parameter
 # Readd -Wno-sign-compare to override -Wextra with clang
 CFLAGS+=	-Wno-sign-compare
-.if "${ACTIVE_CC}" == "gcc" && ${HAVE_GCC} != "8"
+.if "${ACTIVE_CC}" == "gcc" && ${HAVE_GCC} < 8
 #  XXX: Won't warn about anything.  -Wabi warns about differences from
 #  the most up-to-date ABI, which in g++ 8 is used by default.
 CXXFLAGS+=	-Wabi
