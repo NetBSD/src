@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.107 2020/09/05 09:49:32 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.108 2020/09/05 10:58:08 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -490,7 +490,8 @@ gcc*)
 	get_gcc_libiberty gcc
 	get_libobjc libobjc
 	get_libstdcxx_v3 libstdc++-v3 gcc
-	get_libsanitizer libsanitizer
+	# XXX not yet
+	# get_libsanitizer libsanitizer
 	get_libdecnumber libdecnumber
 	get_libgomp libgomp
 	get_libbacktrace libbacktrace
