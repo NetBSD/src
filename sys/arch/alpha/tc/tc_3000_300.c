@@ -1,4 +1,4 @@
-/* $NetBSD: tc_3000_300.c,v 1.34 2019/11/10 21:16:22 chs Exp $ */
+/* $NetBSD: tc_3000_300.c,v 1.35 2020/09/05 16:29:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_3000_300.c,v 1.34 2019/11/10 21:16:22 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_3000_300.c,v 1.35 2020/09/05 16:29:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,9 +210,9 @@ tc_3000_300_iointr(void *arg, unsigned long vec)
 	if (vec != 0x800)
 		panic("INVALID ASSUMPTION: vec 0x%lx, not 0x800", vec);
 	s = splhigh();
-	if (s != ALPHA_PSL_IPL_IO)
+	if (s != ALPHA_PSL_IPL_IO_HI)
 		panic("INVALID ASSUMPTION: IPL %d, not %d", s,
-		    ALPHA_PSL_IPL_IO);
+		    ALPHA_PSL_IPL_IO_HI);
 	splx(s);
 #endif
 
