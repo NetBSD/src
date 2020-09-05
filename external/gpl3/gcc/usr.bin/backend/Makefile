@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.59 2020/09/03 18:30:05 jakllsch Exp $
+#	$NetBSD: Makefile,v 1.60 2020/09/05 09:50:16 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -71,7 +71,8 @@ COPTS.varasm.c=			-Wno-error
 
 # Headers that host objects depend on (except gen*rtl*)
 HH_NORTL=	${G_tm_file_list} ${G_build_xm_include_list}
-HH=		${HH_NORTL} genrtl.h insn-modes.h insn-modes-inline.h
+HH=		${HH_NORTL} genrtl.h insn-modes.h insn-modes-inline.h \
+		gensupport.h read-md.h optabs.def
 
 #
 # Generate the various header files we need.
@@ -177,8 +178,8 @@ gimple-match.c: genmatch cfn-operators.pd
 generic-match.c: genmatch cfn-operators.pd
 	./genmatch --generic ${GNUHOSTDIST}/gcc/match.pd > generic-match.c.tmp
 	mv generic-match.c.tmp generic-match.c
-genmatch.lo: ${HH_NORTL} ${G_GGC_H}
-genmatch: genmatch.lo build-errors.lo build-vec.lo build-hash-table.lo
+genmatch.lo: ${HH_NORTL} ${G_GGC_H} case-cfn-macros.h
+genmatch: genmatch.lo build-errors.lo build-vec.lo build-hash-table.lo build-sort.lo
 	${_MKTARGET_LINK}
 	${HOST_LINK.cc} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBCPP} ${HOSTLIBIBERTY}
 
@@ -333,10 +334,12 @@ GENPROG_RTL_DEPENDS=	${G_BUILD_RTL:.o=.lo} ${GENPROG_READER_DEPENDS} ${GENPROG_E
 #
 # First we generate the rules for the generators.
 #
+GENDEPS.cfn-macros=	build-sort.lo
+
 .for f in attr attr-common attrtab automata codes conditions config emit \
 	  extract flags opinit output peep preds recog mddump condmd \
 	  target-def cfn-macros
-gen${f}.lo: ${HH} gen${f}.c ${G_RTL_BASE_H}
+gen${f}.lo: ${HH} gen${f}.c ${G_RTL_BASE_H} ${GENDEPS.${f}}
 gen${f}: gen${f}.lo ${GENPROG_RTL_DEPENDS} 
 	${_MKTARGET_LINK}
 	${HOST_LINK.cc} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY} ${LDFLAGS.${.TARGET}}
@@ -486,11 +489,13 @@ gcov-io.h: gcov-iov.h
 df-scan.d df-scan.o: target-hooks-def.h
 read-md.d read-md.o read-md.lo: auto-build.h
 hash-table.d hash-table.o hash-table.lo: auto-build.h gtype-desc.h
-gencfn-macros.d gencfn-macros.o gencfn-macros.lo: gtype-desc.h
+gencfn-macros.d gencfn-macros.o gencfn-macros.lo: gtype-desc.h case-cfn-macros.h
 pass_manager.h passes.c: pass-instances.def
 context.d coverage.d lto-cgraph.d passes.d statistics.d toplev.d cgraphunit.d: pass_manager.h
 context.o coverage.o lto-cgraph.o passes.o statistics.o toplev.o cgraphunit.o: pass_manager.h
 insn-opinit.o insn-opinit.d: insn-flags.h
+gensupport.o: ${G_HASH_TABLE_H}
+vec.o: ${G_HASH_TABLE_H}
 .for _f in insn-attrtab insn-automata insn-dfatab insn-latencytab insn-output
 ${_f}.o ${_f}.d: insn-attr-common.h insn-attr.h
 .endfor
