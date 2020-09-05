@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.76 2020/09/05 07:22:26 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.77 2020/09/05 07:26:38 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.76 2020/09/05 07:22:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.77 2020/09/05 07:26:38 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1290,7 +1290,7 @@ svm_exit_npf(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	exit->reason = NVMM_VCPU_EXIT_MEMORY;
 	if (cpudata->vmcb->ctrl.exitinfo1 & PGEX_W)
 		exit->u.mem.prot = PROT_WRITE;
-	else if (cpudata->vmcb->ctrl.exitinfo1 & PGEX_X)
+	else if (cpudata->vmcb->ctrl.exitinfo1 & PGEX_I)
 		exit->u.mem.prot = PROT_EXEC;
 	else
 		exit->u.mem.prot = PROT_READ;
