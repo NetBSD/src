@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.273 2020/06/19 13:49:38 jdolecek Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.274 2020/09/05 17:33:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018,
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.273 2020/06/19 13:49:38 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.274 2020/09/05 17:33:11 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -3087,7 +3087,7 @@ pool_redzone_init(struct pool *pp, size_t requested_size)
 	} else {
 		/* No space for a red zone... snif :'( */
 		pp->pr_redzone = false;
-		printf("pool redzone disabled for '%s'\n", pp->pr_wchan);
+		aprint_debug("pool redzone disabled for '%s'\n", pp->pr_wchan);
 	}
 }
 
