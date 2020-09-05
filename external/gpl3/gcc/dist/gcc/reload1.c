@@ -1,5 +1,5 @@
 /* Reload pseudo regs into hard regs for insns that require hard regs.
-   Copyright (C) 1987-2018 Free Software Foundation, Inc.
+   Copyright (C) 1987-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -1339,6 +1339,8 @@ maybe_fix_stack_asms (void)
 	  rtx t = XVECEXP (pat, 0, i);
 	  if (GET_CODE (t) == CLOBBER && STACK_REG_P (XEXP (t, 0)))
 	    SET_HARD_REG_BIT (clobbered, REGNO (XEXP (t, 0)));
+	  /* CLOBBER_HIGH is only supported for LRA.  */
+	  gcc_assert (GET_CODE (t) != CLOBBER_HIGH);
 	}
 
       /* Get the operand values and constraints out of the insn.  */
@@ -2879,6 +2881,7 @@ eliminate_regs_1 (rtx x, machine_mode mem_mode, rtx insn,
       return x;
 
     case CLOBBER:
+    case CLOBBER_HIGH:
     case ASM_OPERANDS:
       gcc_assert (insn && DEBUG_INSN_P (insn));
       break;
@@ -3087,6 +3090,10 @@ elimination_effects (rtx x, machine_mode mem_mode)
 	  ep->can_eliminate = 0;
 
       elimination_effects (XEXP (x, 0), mem_mode);
+      return;
+
+    case CLOBBER_HIGH:
+      /* CLOBBER_HIGH is only supported for LRA.  */
       return;
 
     case SET:
@@ -3810,6 +3817,9 @@ mark_not_eliminable (rtx dest, const_rtx x, void *data ATTRIBUTE_UNUSED)
   if (dest == hard_frame_pointer_rtx)
     return;
 
+  /* CLOBBER_HIGH is only supported for LRA.  */
+  gcc_assert (GET_CODE (x) != CLOBBER_HIGH);
+
   for (i = 0; i < NUM_ELIMINABLE_REGS; i++)
     if (reg_eliminate[i].can_eliminate && dest == reg_eliminate[i].to_rtx
 	&& (GET_CODE (x) != SET
@@ -4019,8 +4029,8 @@ update_eliminables_and_spill (void)
 	did_spill = true;
 
 	/* Regardless of the state of spills, if we previously had
-	   a register that we thought we could eliminate, but now can
-	   not eliminate, we must run another pass.
+	   a register that we thought we could eliminate, but now
+	   cannot eliminate, we must run another pass.
 
 	   Consider pseudos which have an entry in reg_equiv_* which
 	   reference an eliminable register.  We must make another pass
@@ -4445,6 +4455,7 @@ scan_paradoxical_subregs (rtx x)
     case PC:
     case USE:
     case CLOBBER:
+    case CLOBBER_HIGH:
       return;
 
     case SUBREG:
@@ -4899,7 +4910,7 @@ reload_as_needed (int live_known)
    to be forgotten later.  */
 
 static void
-forget_old_reloads_1 (rtx x, const_rtx ignored ATTRIBUTE_UNUSED,
+forget_old_reloads_1 (rtx x, const_rtx setter,
 		      void *data)
 {
   unsigned int regno;
@@ -4918,6 +4929,9 @@ forget_old_reloads_1 (rtx x, const_rtx ignored ATTRIBUTE_UNUSED,
 
   if (!REG_P (x))
     return;
+
+  /* CLOBBER_HIGH is only supported for LRA.  */
+  gcc_assert (setter == NULL_RTX || GET_CODE (setter) != CLOBBER_HIGH);
 
   regno = REGNO (x);
 
@@ -6034,7 +6048,7 @@ reload_reg_free_for_value_p (int start_regno, int regno, int opnum,
    RELOADNUM is the number of the reload we want to load this value for;
    a reload does not conflict with itself.
 
-   When IGNORE_ADDRESS_RELOADS is set, we can not have conflicts with
+   When IGNORE_ADDRESS_RELOADS is set, we cannot have conflicts with
    reloads that load an address for the very reload we are considering.
 
    The caller has to make sure that there is no conflict with the return
@@ -8275,7 +8289,8 @@ emit_reload_insns (struct insn_chain *chain)
 			   : out_regno + k);
 		      reg_reloaded_insn[regno + k] = insn;
 		      SET_HARD_REG_BIT (reg_reloaded_valid, regno + k);
-		      if (targetm.hard_regno_call_part_clobbered (regno + k,
+		      if (targetm.hard_regno_call_part_clobbered (NULL,
+								  regno + k,
 								  mode))
 			SET_HARD_REG_BIT (reg_reloaded_call_part_clobbered,
 					  regno + k);
@@ -8355,7 +8370,8 @@ emit_reload_insns (struct insn_chain *chain)
 			   : in_regno + k);
 		      reg_reloaded_insn[regno + k] = insn;
 		      SET_HARD_REG_BIT (reg_reloaded_valid, regno + k);
-		      if (targetm.hard_regno_call_part_clobbered (regno + k,
+		      if (targetm.hard_regno_call_part_clobbered (NULL,
+								  regno + k,
 								  mode))
 			SET_HARD_REG_BIT (reg_reloaded_call_part_clobbered,
 					  regno + k);
@@ -8471,7 +8487,7 @@ emit_reload_insns (struct insn_chain *chain)
 		      CLEAR_HARD_REG_BIT (reg_reloaded_dead, src_regno + k);
 		      SET_HARD_REG_BIT (reg_reloaded_valid, src_regno + k);
 		      if (targetm.hard_regno_call_part_clobbered
-			  (src_regno + k, mode))
+			  (NULL, src_regno + k, mode))
 			SET_HARD_REG_BIT (reg_reloaded_call_part_clobbered,
 					  src_regno + k);
 		      else
@@ -8750,9 +8766,9 @@ gen_reload (rtx out, rtx in, int opnum, enum reload_type type)
     emit_insn (gen_rtx_SET (out, in));
 
   /* Return the first insn emitted.
-     We can not just return get_last_insn, because there may have
+     We cannot just return get_last_insn, because there may have
      been multiple instructions emitted.  Also note that gen_move_insn may
-     emit more than one insn itself, so we can not assume that there is one
+     emit more than one insn itself, so we cannot assume that there is one
      insn emitted per emit_insn_before call.  */
 
   return last ? NEXT_INSN (last) : get_insns ();
