@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.134 2020/09/05 06:20:51 rillig Exp $
+# $NetBSD: Makefile,v 1.135 2020/09/05 06:36:40 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -179,7 +179,6 @@ TESTS+=		opt-debug-dir
 TESTS+=		opt-debug-errors
 TESTS+=		opt-debug-file
 TESTS+=		opt-debug-for
-TESTS+=		opt-debug-g1
 TESTS+=		opt-debug-graph1
 TESTS+=		opt-debug-graph2
 TESTS+=		opt-debug-graph3
@@ -358,7 +357,6 @@ FLAGS.doterror=		# none
 FLAGS.envfirst=		-e
 FLAGS.export=		# none
 FLAGS.lint=		-dL -k
-FLAGS.opt-debug-g1=	-dg1
 FLAGS.opt-ignore=	-i
 FLAGS.opt-keep-going=	-k
 FLAGS.opt-no-action=	-n
@@ -375,8 +373,10 @@ FLAGS.varname-dot-shell= -dpv
 FLAGS.varname-empty=	-dv '$${:U}=cmdline-u' '=cmline-plain'
 
 # Some tests need extra post-processing.
-SED_CMDS.opt-debug-g1=	-e 's,${.CURDIR},CURDIR,'
-SED_CMDS.opt-debug-g1+=	-e '/Global Variables:/,/Suffixes:/d'
+SED_CMDS.opt-debug-graph1= \
+			-e 's,${.CURDIR},CURDIR,'
+SED_CMDS.opt-debug-graph1+= \
+			-e '/Global Variables:/,/Suffixes:/d'
 SED_CMDS.sh-dots=	-e 's,^.*\.\.\.:.*,<normalized: ...: not found>,'
 SED_CMDS.varmod-subst-regex+= \
 			-e 's,\(Regex compilation error:\).*,\1 (details omitted),'
