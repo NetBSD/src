@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.280 2020/09/05 15:12:03 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.281 2020/09/05 18:18:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.280 2020/09/05 15:12:03 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.281 2020/09/05 18:18:05 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.280 2020/09/05 15:12:03 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.281 2020/09/05 18:18:05 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -150,6 +150,7 @@ __RCSID("$NetBSD: parse.c,v 1.280 2020/09/05 15:12:03 rillig Exp $");
  */
 typedef struct IFile {
     char      	    *fname;         /* name of file */
+    Boolean         fromForLoop;    /* simulated .include by the .for loop */
     int             lineno;         /* current line number in file */
     int             first_lineno;   /* line number of start of text */
     int             cond_depth;     /* 'if' nesting when file opened */
@@ -269,7 +270,7 @@ static IFile *curFile;
 
 /* The current file from the command line (at the bottom of the stack) and
  * further up all the files that are currently being read due to nested
- * .include directives. */
+ * .include or .for directives. */
 static Stack /* of *IFile */ includes;
 
 /* include paths (lists of directories) */
@@ -336,10 +337,6 @@ static const struct {
 { ".USEBEFORE",   Attribute,   	OP_USEBEFORE },
 { ".WAIT",	  Wait, 	0 },
 };
-
-/* local functions */
-
-static void ParseSetIncludedFile(void);
 
 /* file loader */
 
@@ -2254,7 +2251,6 @@ Parse_include_file(char *file, Boolean isSystem, Boolean depinc, int silent)
     /* load it */
     lf = loadfile(fullname, fd);
 
-    ParseSetIncludedFile();
     /* Start reading from this file next */
     Parse_SetInput(fullname, 0, -1, loadedfile_nextbuf, lf);
     curFile->lf = lf;
@@ -2313,74 +2309,70 @@ ParseDoInclude(char *line)
     free(file);
 }
 
-
-/*-
- *---------------------------------------------------------------------
- * ParseSetIncludedFile  --
- *	Set the .INCLUDEDFROMFILE variable to the contents of .PARSEFILE
- *	and the .INCLUDEDFROMDIR variable to the contents of .PARSEDIR
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	The .INCLUDEDFROMFILE variable is overwritten by the contents
- *	of .PARSEFILE and the .INCLUDEDFROMDIR variable is overwriten
- *	by the contents of .PARSEDIR
- *---------------------------------------------------------------------
- */
+/* Split filename into dirname + basename, then assign these to the
+ * given variables. */
 static void
-ParseSetIncludedFile(void)
+SetFilenameVars(const char *filename, const char *dirvar, const char *filevar)
 {
-    const char *pf, *pd;
-    char *pf_freeIt, *pd_freeIt;
-
-    pf = Var_Value(".PARSEFILE", VAR_GLOBAL, &pf_freeIt);
-    Var_Set(".INCLUDEDFROMFILE", pf, VAR_GLOBAL);
-    pd = Var_Value(".PARSEDIR", VAR_GLOBAL, &pd_freeIt);
-    Var_Set(".INCLUDEDFROMDIR", pd, VAR_GLOBAL);
-
-    if (DEBUG(PARSE))
-	fprintf(debug_file, "%s: ${.INCLUDEDFROMDIR} = `%s' "
-	    "${.INCLUDEDFROMFILE} = `%s'\n", __func__, pd, pf);
-
-    bmake_free(pf_freeIt);
-    bmake_free(pd_freeIt);
-}
-/*-
- *---------------------------------------------------------------------
- * ParseSetParseFile  --
- *	Set the .PARSEDIR and .PARSEFILE variables to the dirname and
- *	basename of the given filename
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	The .PARSEDIR and .PARSEFILE variables are overwritten by the
- *	dirname and basename of the given filename.
- *---------------------------------------------------------------------
- */
-static void
-ParseSetParseFile(const char *filename)
-{
-    char *slash, *dirname;
-    const char *pd, *pf;
+    const char *slash, *dirname, *basename;
+    void *freeIt;
 
     slash = strrchr(filename, '/');
     if (slash == NULL) {
-	Var_Set(".PARSEDIR", pd = curdir, VAR_GLOBAL);
-	Var_Set(".PARSEFILE", pf = filename, VAR_GLOBAL);
-	dirname = NULL;
+	dirname = curdir;
+	basename = filename;
+	freeIt = NULL;
     } else {
-	dirname = bmake_strsedup(filename, slash);
-	Var_Set(".PARSEDIR", pd = dirname, VAR_GLOBAL);
-	Var_Set(".PARSEFILE", pf = slash + 1, VAR_GLOBAL);
+	dirname = freeIt = bmake_strsedup(filename, slash);
+	basename = slash + 1;
     }
+
+    Var_Set(dirvar, dirname, VAR_GLOBAL);
+    Var_Set(filevar, basename, VAR_GLOBAL);
+
     if (DEBUG(PARSE))
-	fprintf(debug_file, "%s: ${.PARSEDIR} = `%s' ${.PARSEFILE} = `%s'\n",
-	    __func__, pd, pf);
-    free(dirname);
+	fprintf(debug_file, "%s: ${%s} = `%s' ${%s} = `%s'\n",
+		__func__, dirvar, dirname, filevar, basename);
+    free(freeIt);
+}
+
+/* Return the immediately including file.
+ *
+ * This is made complicated since the .for loop is implemented as a special
+ * kind of .include; see For_Run. */
+static const char *
+GetActuallyIncludingFile(void)
+{
+    const char *filename = NULL;
+    size_t i;
+
+    /* XXX: Stack was supposed to be an opaque data structure. */
+    for (i = 0; i < includes.len; i++) {
+	IFile *parent = includes.items[i];
+	IFile *child = (i + 1 < includes.len) ? includes.items[i + 1] : curFile;
+	if (!child->fromForLoop)
+	    filename = parent->fname;
+    }
+    return filename;
+}
+
+/* Set .PARSEDIR/.PARSEFILE to the given filename, as well as
+ * .INCLUDEDFROMDIR/.INCLUDEDFROMFILE. */
+static void
+ParseSetParseFile(const char *filename)
+{
+    const char *including;
+
+    SetFilenameVars(filename, ".PARSEDIR", ".PARSEFILE");
+
+    including = GetActuallyIncludingFile();
+    if (including != NULL) {
+	SetFilenameVars(including,
+			".INCLUDEDFROMDIR", ".INCLUDEDFROMFILE");
+    } else {
+	Var_Delete(".INCLUDEDFROMDIR", VAR_GLOBAL);
+	Var_Delete(".INCLUDEDFROMFILE", VAR_GLOBAL);
+    }
 }
 
 /*
@@ -2424,8 +2416,9 @@ Parse_SetInput(const char *name, int line, int fd,
 {
     char *buf;
     size_t len;
+    Boolean fromForLoop = name == NULL;
 
-    if (name == NULL)
+    if (fromForLoop)
 	name = curFile->fname;
     else
 	ParseTrackInput(name);
@@ -2439,7 +2432,7 @@ Parse_SetInput(const char *name, int line, int fd,
 	return;
 
     if (curFile != NULL)
-	/* Save exiting file info */
+	/* Save existing file info */
 	Stack_Push(&includes, curFile);
 
     /* Allocate and fill in new structure */
@@ -2452,6 +2445,7 @@ Parse_SetInput(const char *name, int line, int fd,
      * place.
      */
     curFile->fname = bmake_strdup(name);
+    curFile->fromForLoop = fromForLoop;
     curFile->lineno = line;
     curFile->first_lineno = line;
     curFile->nextbuf = nextbuf;
