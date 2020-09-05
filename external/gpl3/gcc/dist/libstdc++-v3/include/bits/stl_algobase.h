@@ -1,6 +1,6 @@
 // Core algorithmic facilities -*- C++ -*-
 
-// Copyright (C) 2001-2018 Free Software Foundation, Inc.
+// Copyright (C) 2001-2019 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -69,6 +69,9 @@
 #include <debug/debug.h>
 #include <bits/move.h> // For std::swap
 #include <bits/predefined_ops.h>
+#if __cplusplus >= 201103L
+# include <type_traits>
+#endif
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {
@@ -275,7 +278,22 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   template<typename _Iterator>
     inline _Iterator
     __niter_base(_Iterator __it)
+    _GLIBCXX_NOEXCEPT_IF(std::is_nothrow_copy_constructible<_Iterator>::value)
     { return __it; }
+
+  // Reverse the __niter_base transformation to get a
+  // __normal_iterator back again (this assumes that __normal_iterator
+  // is only used to wrap random access iterators, like pointers).
+  template<typename _From, typename _To>
+    inline _From
+    __niter_wrap(_From __from, _To __res)
+    { return __from + (__res - std::__niter_base(__from)); }
+
+  // No need to wrap, iterator already has the right type.
+  template<typename _Iterator>
+    inline _Iterator
+    __niter_wrap(const _Iterator&, _Iterator __res)
+    { return __res; }
 
   // All of these auxiliary structs serve two purposes.  (1) Replace
   // calls to copy with memmove whenever possible.  (Memmove, not memcpy,
@@ -283,7 +301,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   // (2) If we're using random access iterators, then write the loop as
   // a for loop with an explicit count.
 
-  template<bool, bool, typename>
+  template<bool _IsMove, bool _IsSimple, typename _Category>
     struct __copy_move
     {
       template<typename _II, typename _OI>
@@ -377,7 +395,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       typedef typename iterator_traits<_II>::value_type _ValueTypeI;
       typedef typename iterator_traits<_OI>::value_type _ValueTypeO;
       typedef typename iterator_traits<_II>::iterator_category _Category;
-      const bool __simple = (__is_trivial(_ValueTypeI)
+      const bool __simple = (__is_trivially_copyable(_ValueTypeI)
 			     && __is_pointer<_II>::__value
 			     && __is_pointer<_OI>::__value
 			     && __are_same<_ValueTypeI, _ValueTypeO>::__value);
@@ -419,9 +437,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     inline _OI
     __copy_move_a2(_II __first, _II __last, _OI __result)
     {
-      return _OI(std::__copy_move_a<_IsMove>(std::__niter_base(__first),
-					     std::__niter_base(__last),
-					     std::__niter_base(__result)));
+      return std::__niter_wrap(__result,
+		std::__copy_move_a<_IsMove>(std::__niter_base(__first),
+					    std::__niter_base(__last),
+					    std::__niter_base(__result)));
     }
 
   /**
@@ -449,11 +468,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       __glibcxx_function_requires(_InputIteratorConcept<_II>)
       __glibcxx_function_requires(_OutputIteratorConcept<_OI,
 	    typename iterator_traits<_II>::value_type>)
-      __glibcxx_requires_valid_range(__first, __last);
+      __glibcxx_requires_can_increment_range(__first, __last, __result);
 
-      return (std::__copy_move_a2<__is_move_iterator<_II>::__value>
-	      (std::__miter_base(__first), std::__miter_base(__last),
-	       __result));
+      return std::__copy_move_a2<__is_move_iterator<_II>::__value>
+	     (std::__miter_base(__first), std::__miter_base(__last), __result);
     }
 
 #if __cplusplus >= 201103L
@@ -482,7 +500,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       __glibcxx_function_requires(_InputIteratorConcept<_II>)
       __glibcxx_function_requires(_OutputIteratorConcept<_OI,
 	    typename iterator_traits<_II>::value_type>)
-      __glibcxx_requires_valid_range(__first, __last);
+      __glibcxx_requires_can_increment_range(__first, __last, __result);
 
       return std::__copy_move_a2<true>(std::__miter_base(__first),
 				       std::__miter_base(__last), __result);
@@ -579,7 +597,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       typedef typename iterator_traits<_BI1>::value_type _ValueType1;
       typedef typename iterator_traits<_BI2>::value_type _ValueType2;
       typedef typename iterator_traits<_BI1>::iterator_category _Category;
-      const bool __simple = (__is_trivial(_ValueType1)
+      const bool __simple = (__is_trivially_copyable(_ValueType1)
 			     && __is_pointer<_BI1>::__value
 			     && __is_pointer<_BI2>::__value
 			     && __are_same<_ValueType1, _ValueType2>::__value);
@@ -594,7 +612,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     inline _BI2
     __copy_move_backward_a2(_BI1 __first, _BI1 __last, _BI2 __result)
     {
-      return _BI2(std::__copy_move_backward_a<_IsMove>
+      return std::__niter_wrap(__result,
+		std::__copy_move_backward_a<_IsMove>
 		  (std::__niter_base(__first), std::__niter_base(__last),
 		   std::__niter_base(__result)));
     }
@@ -627,11 +646,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       __glibcxx_function_requires(_ConvertibleConcept<
 	    typename iterator_traits<_BI1>::value_type,
 	    typename iterator_traits<_BI2>::value_type>)
-      __glibcxx_requires_valid_range(__first, __last);
+      __glibcxx_requires_can_decrement_range(__first, __last, __result);
 
-      return (std::__copy_move_backward_a2<__is_move_iterator<_BI1>::__value>
-	      (std::__miter_base(__first), std::__miter_base(__last),
-	       __result));
+      return std::__copy_move_backward_a2<__is_move_iterator<_BI1>::__value>
+	     (std::__miter_base(__first), std::__miter_base(__last), __result);
     }
 
 #if __cplusplus >= 201103L
@@ -663,7 +681,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       __glibcxx_function_requires(_ConvertibleConcept<
 	    typename iterator_traits<_BI1>::value_type,
 	    typename iterator_traits<_BI2>::value_type>)
-      __glibcxx_requires_valid_range(__first, __last);
+      __glibcxx_requires_can_decrement_range(__first, __last, __result);
 
       return std::__copy_move_backward_a2<true>(std::__miter_base(__first),
 						std::__miter_base(__last),
@@ -785,8 +803,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     {
       // concept requirements
       __glibcxx_function_requires(_OutputIteratorConcept<_OI, _Tp>)
+      __glibcxx_requires_can_increment(__first, __n);
 
-      return _OI(std::__fill_n_a(std::__niter_base(__first), __n, __value));
+      return std::__niter_wrap(__first,
+		std::__fill_n_a(std::__niter_base(__first), __n, __value));
     }
 
   template<bool _BoolType>
@@ -1044,7 +1064,7 @@ _GLIBCXX_BEGIN_NAMESPACE_ALGO
       __glibcxx_function_requires(_EqualOpConcept<
 	    typename iterator_traits<_II1>::value_type,
 	    typename iterator_traits<_II2>::value_type>)
-      __glibcxx_requires_valid_range(__first1, __last1);
+      __glibcxx_requires_can_increment_range(__first1, __last1, __first2);
 
       return std::__equal_aux(std::__niter_base(__first1),
 			      std::__niter_base(__last1),

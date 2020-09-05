@@ -1,6 +1,6 @@
 /* Declarations for insn-output.c and other code to write to asm_out_file.
    These functions are defined in final.c, and varasm.c.
-   Copyright (C) 1987-2018 Free Software Foundation, Inc.
+   Copyright (C) 1987-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -96,11 +96,7 @@ extern int insn_current_reference_address (rtx_insn *);
 
 /* Find the alignment associated with a CODE_LABEL.
    Defined in final.c.  */
-extern int label_to_alignment (rtx);
-
-/* Find the alignment maximum skip associated with a CODE_LABEL.
-   Defined in final.c.  */
-extern int label_to_max_skip (rtx);
+extern align_flags label_to_alignment (rtx);
 
 /* Output a LABEL_REF, or a bare CODE_LABEL, as an assembler symbol.  */
 extern void output_asm_label (rtx);
@@ -149,7 +145,7 @@ extern int only_leaf_regs_used (void);
 extern void leaf_renumber_regs_insn (rtx);
 
 /* Locate the proper template for the given insn-code.  */
-extern const char *get_insn_template (int, rtx);
+extern const char *get_insn_template (int, rtx_insn *);
 
 /* Functions in varasm.c.  */
 
@@ -223,7 +219,7 @@ extern void assemble_external (tree);
 extern void assemble_zeros (unsigned HOST_WIDE_INT);
 
 /* Assemble an alignment pseudo op for an ALIGN-bit boundary.  */
-extern void assemble_align (int);
+extern void assemble_align (unsigned int);
 
 /* Assemble a string constant with the specified C string as contents.  */
 extern void assemble_string (const char *, int);

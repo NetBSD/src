@@ -1,5 +1,5 @@
 /* Common configuration file for NetBSD ELF targets.
-   Copyright (C) 2002-2018 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
    Contributed by Wasabi Systems, Inc.
 
 This file is part of GCC.
@@ -55,10 +55,10 @@ along with GCC; see the file COPYING3.  If not see
    C++ file-scope static objects deconstructed after exiting "main".  */
 
 #define NETBSD_ENDFILE_SPEC	\
-  "%{pie:crtendS%O%s}		\
-   %{!pie:			\
-     %{shared:crtendS%O%s}	\
-     %{!shared:crtend%O%s}}	\
+  "%{!shared:                   \
+    %{!pie:crtend%O%s}          \
+    %{pie:crtendS%O%s}}         \
+   %{shared:crtendS%O%s}        \
    %:if-exists(crtn%O%s)"
 
 #undef ENDFILE_SPEC

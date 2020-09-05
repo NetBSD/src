@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for the HP Spectrum.
-   Copyright (C) 1992-2018 Free Software Foundation, Inc.
+   Copyright (C) 1992-2019 Free Software Foundation, Inc.
    Contributed by Michael Tiemann (tiemann@cygnus.com) of Cygnus Support
    and Tim Moore (moore@defmacro.cs.utah.edu) of the Center for
    Software Science at the University of Utah.
@@ -1189,7 +1189,7 @@ do {									     \
    location counter to a multiple of 2**LOG bytes.  */
 
 #define ASM_OUTPUT_ALIGN(FILE,LOG)	\
-    fprintf (FILE, "\t.align %d\n", (1<<(LOG)))
+    fprintf (FILE, "\t.align %d\n", (1 << (LOG)))
 
 #define ASM_OUTPUT_SKIP(FILE,SIZE)  \
   fprintf (FILE, "\t.blockz " HOST_WIDE_INT_PRINT_UNSIGNED"\n",		\
@@ -1301,6 +1301,9 @@ do {									     \
 #define MAX_PCREL17F_OFFSET (TARGET_HPUX ? 198164 : 217856)
 
 #define NEED_INDICATE_EXEC_STACK 0
+
+/* Target CPU versions for D.  */
+#define TARGET_D_CPU_VERSIONS pa_d_target_versions
 
 /* Output default function prologue for hpux.  */
 #define TARGET_ASM_FUNCTION_PROLOGUE pa_output_function_prologue

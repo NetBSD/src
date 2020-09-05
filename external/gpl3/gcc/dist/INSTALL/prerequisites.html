@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- Copyright (C) 1988-2018 Free Software Foundation, Inc.
+<!-- Copyright (C) 1988-2019 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -111,10 +111,10 @@ discouraged.
 for all target variants for which target libraries will be built (and not
 only the variant of the host C++ compiler).
 </p>
-<p>This affects the popular &lsquo;<samp>x86_64-unknown-linux-gnu</samp>&rsquo; platform (among
+<p>This affects the popular &lsquo;<samp>x86_64-pc-linux-gnu</samp>&rsquo; platform (among
 other multilib targets), for which 64-bit (&lsquo;<samp>x86_64</samp>&rsquo;) and 32-bit
 (&lsquo;<samp>i386</samp>&rsquo;) libc headers are usually packaged separately. If you do a
-build of a native compiler on &lsquo;<samp>x86_64-unknown-linux-gnu</samp>&rsquo;, make sure you
+build of a native compiler on &lsquo;<samp>x86_64-pc-linux-gnu</samp>&rsquo;, make sure you
 either have the 32-bit libc developer package properly installed (the exact
 name of the package depends on your distro) or you must build GCC as a
 64-bit only compiler by configuring with the option
@@ -227,7 +227,7 @@ download_prerequisites installs.
 <dt>MPFR Library version 2.4.2 (or later)</dt>
 <dd>
 <p>Necessary to build GCC.  It can be downloaded from
-<a href="http://www.mpfr.org/">http://www.mpfr.org/</a>.  If an MPFR source distribution is found
+<a href="https://www.mpfr.org">https://www.mpfr.org</a>.  If an MPFR source distribution is found
 in a subdirectory of your GCC sources named <samp>mpfr</samp>, it will be
 built together with GCC.  Alternatively, if MPFR is already installed
 but it is not in your default library search path, the
@@ -240,7 +240,7 @@ download_prerequisites installs.
 <dt>MPC Library version 0.8.1 (or later)</dt>
 <dd>
 <p>Necessary to build GCC.  It can be downloaded from
-<a href="http://www.multiprecision.org/">http://www.multiprecision.org/</a>.  If an MPC source distribution
+<a href="http://www.multiprecision.org/mpc/">http://www.multiprecision.org/mpc/</a>.  If an MPC source distribution
 is found in a subdirectory of your GCC sources named <samp>mpc</samp>, it
 will be built together with GCC.  Alternatively, if MPC is already
 installed but it is not in your default library search path, the
@@ -266,14 +266,14 @@ search path.
 <a name="Tools_002fpackages-necessary-for-modifying-GCC"></a>
 <h3 class="heading">Tools/packages necessary for modifying GCC</h3>
 <dl compact="compact">
-<dt>autoconf version 2.64</dt>
+<dt>autoconf version 2.69</dt>
 <dt>GNU m4 version 1.4.6 (or later)</dt>
 <dd>
 <p>Necessary when modifying <samp>configure.ac</samp>, <samp>aclocal.m4</samp>, etc.
 to regenerate <samp>configure</samp> and <samp>config.in</samp> files.
 </p>
 </dd>
-<dt>automake version 1.11.6</dt>
+<dt>automake version 1.15.1</dt>
 <dd>
 <p>Necessary when modifying a <samp>Makefile.am</samp> file to regenerate its
 associated <samp>Makefile.in</samp>.
@@ -284,12 +284,9 @@ file.  Specifically this applies to the <samp>gcc</samp>, <samp>intl</samp>,
 as any of their subdirectories.
 </p>
 <p>For directories that use automake, GCC requires the latest release in
-the 1.11 series, which is currently 1.11.6.  When regenerating a directory
-to a newer version, please update all the directories using an older 1.11
+the 1.15 series, which is currently 1.15.1.  When regenerating a directory
+to a newer version, please update all the directories using an older 1.15
 to the latest released version.
-</p>
-<p>Note that <code>automake</code> 1.11.6 is incompatible with
-<code>perl</code> version 5.6.26.
 </p>
 </dd>
 <dt>gettext version 0.14.5 (or later)</dt>

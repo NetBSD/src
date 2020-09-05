@@ -66,6 +66,7 @@ case "${host}" in
     GLIBCXX_CHECK_LINKER_FEATURES
     GLIBCXX_CHECK_MATH_SUPPORT
     GLIBCXX_CHECK_STDLIB_SUPPORT
+    AC_DEFINE(_GLIBCXX_USE_DEV_RANDOM)
     AC_DEFINE(_GLIBCXX_USE_RANDOM_TR1)
     # We don't yet support AIX's TLS ABI.
     #GCC_CHECK_TLS
@@ -134,6 +135,8 @@ case "${host}" in
     fi
     AC_CHECK_FUNCS(__cxa_thread_atexit)
     AC_CHECK_FUNCS(aligned_alloc posix_memalign memalign _aligned_malloc)
+    AC_CHECK_FUNCS(timespec_get)
+    AC_CHECK_FUNCS(sockatmark)
     ;;
 
   *-fuchsia*)
@@ -188,10 +191,13 @@ case "${host}" in
     GLIBCXX_CHECK_LINKER_FEATURES
     GLIBCXX_CHECK_MATH_SUPPORT
     GLIBCXX_CHECK_STDLIB_SUPPORT
+    AC_DEFINE(_GLIBCXX_USE_DEV_RANDOM)
     AC_DEFINE(_GLIBCXX_USE_RANDOM_TR1)
     GCC_CHECK_TLS
     AC_CHECK_FUNCS(__cxa_thread_atexit_impl)
     AC_CHECK_FUNCS(aligned_alloc posix_memalign memalign _aligned_malloc)
+    AC_CHECK_FUNCS(timespec_get)
+    AC_CHECK_FUNCS(sockatmark)
     AM_ICONV
     ;;
   *-mingw32*)
@@ -199,8 +205,9 @@ case "${host}" in
     GLIBCXX_CHECK_MATH_SUPPORT
     GLIBCXX_CHECK_STDLIB_SUPPORT
     AC_CHECK_FUNCS(aligned_alloc posix_memalign memalign _aligned_malloc)
+    AC_CHECK_FUNCS(_wfopen)
     ;;
-  *-netbsd*)
+  *-netbsd* | *-openbsd*)
     SECTION_FLAGS='-ffunction-sections -fdata-sections'
     AC_SUBST(SECTION_FLAGS) 
     GLIBCXX_CHECK_LINKER_FEATURES
@@ -255,6 +262,8 @@ case "${host}" in
       AC_DEFINE(HAVE_ISNANL)
     fi
     AC_CHECK_FUNCS(aligned_alloc posix_memalign memalign _aligned_malloc)
+    AC_CHECK_FUNCS(timespec_get)
+    AC_CHECK_FUNCS(sockatmark)
     ;;
   *-qnx6.1* | *-qnx6.2*)
     SECTION_FLAGS='-ffunction-sections -fdata-sections'

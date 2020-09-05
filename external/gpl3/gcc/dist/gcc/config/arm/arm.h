@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for ARM.
-   Copyright (C) 1991-2018 Free Software Foundation, Inc.
+   Copyright (C) 1991-2019 Free Software Foundation, Inc.
    Contributed by Pieter `Tiggr' Schoenmakers (rcpieter@win.tue.nl)
    and Martin Simmons (@harleqn.co.uk).
    More major hacks by Richard Earnshaw (rearnsha@arm.com)
@@ -46,6 +46,9 @@ extern char arm_arch_name[];
 
 /* Target CPU builtins.  */
 #define TARGET_CPU_CPP_BUILTINS() arm_cpu_cpp_builtins (pfile)
+
+/* Target CPU versions for D.  */
+#define TARGET_D_CPU_VERSIONS arm_d_target_versions
 
 #include "config/arm/arm-opts.h"
 
@@ -119,11 +122,18 @@ extern tree arm_fp16_type_node;
 #define TARGET_32BIT_P(flags)  (TARGET_ARM_P (flags) || TARGET_THUMB2_P (flags))
 
 /* Run-time Target Specification.  */
-/* Use hardware floating point instructions. */
-#define TARGET_HARD_FLOAT	(arm_float_abi != ARM_FLOAT_ABI_SOFT	\
+/* Use hardware floating point instructions. -mgeneral-regs-only prevents
+the use of floating point instructions and registers but does not prevent
+emission of floating point pcs attributes.  */
+#define TARGET_HARD_FLOAT_SUB	(arm_float_abi != ARM_FLOAT_ABI_SOFT	\
 				 && bitmap_bit_p (arm_active_target.isa, \
-						  isa_bit_vfpv2))
-#define TARGET_SOFT_FLOAT	(!TARGET_HARD_FLOAT)
+						  isa_bit_vfpv2) \
+				 && TARGET_32BIT)
+
+#define TARGET_HARD_FLOAT	(TARGET_HARD_FLOAT_SUB		\
+				 && !TARGET_GENERAL_REGS_ONLY)
+
+#define TARGET_SOFT_FLOAT	(!TARGET_HARD_FLOAT_SUB)
 /* User has permitted use of FP instructions, if they exist for this
    target.  */
 #define TARGET_MAYBE_HARD_FLOAT (arm_float_abi != ARM_FLOAT_ABI_SOFT)
@@ -131,8 +141,10 @@ extern tree arm_fp16_type_node;
 #define TARGET_HARD_FLOAT_ABI		(arm_float_abi == ARM_FLOAT_ABI_HARD)
 #define TARGET_IWMMXT			(arm_arch_iwmmxt)
 #define TARGET_IWMMXT2			(arm_arch_iwmmxt2)
-#define TARGET_REALLY_IWMMXT		(TARGET_IWMMXT && TARGET_32BIT)
-#define TARGET_REALLY_IWMMXT2		(TARGET_IWMMXT2 && TARGET_32BIT)
+#define TARGET_REALLY_IWMMXT		(TARGET_IWMMXT && TARGET_32BIT \
+					 && !TARGET_GENERAL_REGS_ONLY)
+#define TARGET_REALLY_IWMMXT2		(TARGET_IWMMXT2 && TARGET_32BIT \
+					 && !TARGET_GENERAL_REGS_ONLY)
 #define TARGET_IWMMXT_ABI (TARGET_32BIT && arm_abi == ARM_ABI_IWMMXT)
 #define TARGET_ARM                      (! TARGET_THUMB)
 #define TARGET_EITHER			1 /* (TARGET_ARM | TARGET_THUMB) */
@@ -155,7 +167,7 @@ extern tree arm_fp16_type_node;
 /* Thumb-1 only.  */
 #define TARGET_THUMB1_ONLY		(TARGET_THUMB1 && !arm_arch_notm)
 
-#define TARGET_LDRD			(arm_arch5e && ARM_DOUBLEWORD_ALIGN \
+#define TARGET_LDRD			(arm_arch5te && ARM_DOUBLEWORD_ALIGN \
                                          && !TARGET_THUMB1)
 
 #define TARGET_CRC32			(arm_arch_crc)
@@ -211,10 +223,13 @@ extern tree arm_fp16_type_node;
 #define TARGET_NEON_RDMA (TARGET_NEON && arm_arch8_1)
 
 /* Supports the Dot Product AdvSIMD extensions.  */
-#define TARGET_DOTPROD (TARGET_NEON					\
+#define TARGET_DOTPROD (TARGET_NEON && TARGET_VFP5			\
 			&& bitmap_bit_p (arm_active_target.isa,		\
 					isa_bit_dotprod)		\
 			&& arm_arch8_2)
+
+/* Supports the Armv8.3-a Complex number AdvSIMD extensions.  */
+#define TARGET_COMPLEX (TARGET_NEON && arm_arch8_3)
 
 /* FPU supports the floating point FP16 instructions for ARMv8.2-A
    and later.  */
@@ -233,13 +248,13 @@ extern tree arm_fp16_type_node;
 
 /* Q-bit is present.  */
 #define TARGET_ARM_QBIT \
-  (TARGET_32BIT && arm_arch5e && (arm_arch_notm || arm_arch7))
+  (TARGET_32BIT && arm_arch5te && (arm_arch_notm || arm_arch7))
 /* Saturation operation, e.g. SSAT.  */
 #define TARGET_ARM_SAT \
   (TARGET_32BIT && arm_arch6 && (arm_arch_notm || arm_arch7))
 /* "DSP" multiply instructions, eg. SMULxy.  */
 #define TARGET_DSP_MULTIPLY \
-  (TARGET_32BIT && arm_arch5e && (arm_arch_notm || arm_arch7em))
+  (TARGET_32BIT && arm_arch5te && (arm_arch_notm || arm_arch7em))
 /* Integer SIMD instructions, and extend-accumulate instructions.  */
 #define TARGET_INT_SIMD \
   (TARGET_32BIT && arm_arch6 && (arm_arch_notm || arm_arch7em))
@@ -375,8 +390,6 @@ enum base_architecture
   BASE_ARCH_3M = 3,
   BASE_ARCH_4 = 4,
   BASE_ARCH_4T = 4,
-  BASE_ARCH_5 = 5,
-  BASE_ARCH_5E = 5,
   BASE_ARCH_5T = 5,
   BASE_ARCH_5TE = 5,
   BASE_ARCH_5TEJ = 5,
@@ -401,20 +414,17 @@ enum base_architecture
 /* The major revision number of the ARM Architecture implemented by the target.  */
 extern enum base_architecture arm_base_arch;
 
-/* Nonzero if this chip supports the ARM Architecture 3M extensions.  */
-extern int arm_arch3m;
-
 /* Nonzero if this chip supports the ARM Architecture 4 extensions.  */
 extern int arm_arch4;
 
 /* Nonzero if this chip supports the ARM Architecture 4T extensions.  */
 extern int arm_arch4t;
 
-/* Nonzero if this chip supports the ARM Architecture 5 extensions.  */
-extern int arm_arch5;
+/* Nonzero if this chip supports the ARM Architecture 5T extensions.  */
+extern int arm_arch5t;
 
-/* Nonzero if this chip supports the ARM Architecture 5E extensions.  */
-extern int arm_arch5e;
+/* Nonzero if this chip supports the ARM Architecture 5TE extensions.  */
+extern int arm_arch5te;
 
 /* Nonzero if this chip supports the ARM Architecture 6 extensions.  */
 extern int arm_arch6;
@@ -442,6 +452,12 @@ extern int arm_arch8_1;
 
 /* Nonzero if this chip supports the ARM Architecture 8.2 extensions.  */
 extern int arm_arch8_2;
+
+/* Nonzero if this chip supports the ARM Architecture 8.3 extensions.  */
+extern int arm_arch8_3;
+
+/* Nonzero if this chip supports the ARM Architecture 8.4 extensions.  */
+extern int arm_arch8_4;
 
 /* Nonzero if this chip supports the FP16 instructions extension of ARM
    Architecture 8.2.  */
@@ -1182,7 +1198,7 @@ enum reg_class
    : GET_MODE_SIZE (MODE) >= 4 ? BASE_REGS			\
    : LO_REGS)
 
-/* For Thumb we can not support SP+reg addressing, so we return LO_REGS
+/* For Thumb we cannot support SP+reg addressing, so we return LO_REGS
    instead of BASE_REGS.  */
 #define MODE_BASE_REG_REG_CLASS(MODE) BASE_REG_CLASS
 
@@ -1661,7 +1677,7 @@ enum arm_auto_incmodes
    : ARM_REGNO_OK_FOR_BASE_P (REGNO))
 
 /* Nonzero if X can be the base register in a reg+reg addressing mode.
-   For Thumb, we can not use SP + reg, so reject SP.  */
+   For Thumb, we cannot use SP + reg, so reject SP.  */
 #define REGNO_MODE_OK_FOR_REG_BASE_P(X, MODE)	\
   REGNO_MODE_OK_FOR_BASE_P (X, QImode)
 
@@ -1837,7 +1853,7 @@ enum arm_auto_incmodes
    : ARM_REG_OK_FOR_INDEX_P (X))
 
 /* Nonzero if X can be the base register in a reg+reg addressing mode.
-   For Thumb, we can not use SP + reg, so reject SP.  */
+   For Thumb, we cannot use SP + reg, so reject SP.  */
 #define REG_MODE_OK_FOR_REG_BASE_P(X, MODE)	\
   REG_OK_FOR_INDEX_P (X)
 
@@ -1851,9 +1867,11 @@ enum arm_auto_incmodes
    for the index in the tablejump instruction.  */
 #define CASE_VECTOR_MODE Pmode
 
-#define CASE_VECTOR_PC_RELATIVE (TARGET_THUMB2				\
-				 || (TARGET_THUMB1			\
-				     && (optimize_size || flag_pic)))
+#define CASE_VECTOR_PC_RELATIVE ((TARGET_THUMB2				\
+				  || (TARGET_THUMB1			\
+				      && (optimize_size || flag_pic)))	\
+				 && (!target_pure_code))
+
 
 #define CASE_VECTOR_SHORTEN_MODE(min, max, body)			\
   (TARGET_THUMB1							\

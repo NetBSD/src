@@ -1,5 +1,5 @@
 ;; Machine description for SPARC.
-;; Copyright (C) 1987-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1987-2019 Free Software Foundation, Inc.
 ;; Contributed by Michael Tiemann (tiemann@cygnus.com)
 ;; 64-bit SPARC-V9 support by Michael Tiemann, Jim Wilson, and Doug Evans,
 ;; at Cygnus Support.
@@ -104,6 +104,9 @@
 
 (define_c_enum "unspecv" [
   UNSPECV_BLOCKAGE
+
+  UNSPECV_SPECULATION_BARRIER
+
   UNSPECV_PROBE_STACK_RANGE
 
   UNSPECV_FLUSHW
@@ -221,7 +224,7 @@
 ;; 'f' for all DF/TFmode values, including those that are specific to the v8.
 
 ;; Attribute for cpu type.
-;; These must match the values of the enum processor_type in sparc-opts.h.
+;; These must match the values of enum sparc_processor_type in sparc-opts.h.
 (define_attr "cpu"
   "v7,
    cypress,
@@ -1675,8 +1678,8 @@
 })
 
 (define_insn "*movsi_insn"
-  [(set (match_operand:SI 0 "nonimmediate_operand" "=r,r,r, m, r,*f,*f,*f, m,d,d")
-	(match_operand:SI 1 "input_operand"        "rI,K,m,rJ,*f, r, f, m,*f,J,P"))]
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=r,r,r, m, r,*f,?*f,?*f,  m,d,d")
+	(match_operand:SI 1 "input_operand"        "rI,K,m,rJ,*f, r,  f,  m,?*f,J,P"))]
   "register_operand (operands[0], SImode)
    || register_or_zero_or_all_ones_operand (operands[1], SImode)"
   "@
@@ -1833,9 +1836,9 @@
 
 (define_insn "*movdi_insn_sp32"
   [(set (match_operand:DI 0 "nonimmediate_operand"
-			    "=T,o,U,T,r,o,r,r,?*f,?T,?*f,?o,?*e,?*e,  r,?*f,?*e,?T,*b,*b")
+			    "=T,o,U,T,r,o,r,r,?*f,  T,?*f,  o,?*e,?*e,  r,?*f,?*e,  T,*b,*b")
         (match_operand:DI 1 "input_operand"
-			    " J,J,T,U,o,r,i,r,  T,*f,  o,*f, *e, *e,?*f,  r,  T,*e, J, P"))]
+			    " J,J,T,U,o,r,i,r,  T,?*f,  o,?*f, *e, *e,?*f,  r,  T,?*e, J, P"))]
   "TARGET_ARCH32
    && (register_operand (operands[0], DImode)
        || register_or_zero_operand (operands[1], DImode))"
@@ -1869,8 +1872,8 @@ visl")
    (set_attr "lra" "*,*,disabled,disabled,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*")])
 
 (define_insn "*movdi_insn_sp64"
-  [(set (match_operand:DI 0 "nonimmediate_operand" "=r,r,r, m, r,*e,?*e,?*e,?W,b,b")
-        (match_operand:DI 1 "input_operand"        "rI,N,m,rJ,*e, r, *e,  W,*e,J,P"))]
+  [(set (match_operand:DI 0 "nonimmediate_operand" "=r,r,r, m, r,*e,?*e,?*e,  W,b,b")
+        (match_operand:DI 1 "input_operand"        "rI,N,m,rJ,*e, r, *e,  W,?*e,J,P"))]
   "TARGET_ARCH64
    && (register_operand (operands[0], DImode)
        || register_or_zero_or_all_ones_operand (operands[1], DImode))"
@@ -7238,6 +7241,14 @@ visl")
   ""
   [(set_attr "length" "0")])
 
+;; We use membar #Sync for the speculation barrier on V9.
+
+(define_insn "speculation_barrier"
+  [(unspec_volatile [(const_int 0)] UNSPECV_SPECULATION_BARRIER)]
+  "TARGET_V9"
+  "membar\t64"
+  [(set_attr "type" "multi")])
+
 (define_expand "probe_stack"
   [(set (match_operand 0 "memory_operand" "") (const_int 0))]
   ""
@@ -7367,7 +7378,7 @@ visl")
   ""
 {
   rtx i7 = gen_rtx_REG (Pmode, RETURN_ADDR_REGNUM);
-  rtx r_label = copy_to_reg (operands[1]);
+  rtx r_label = operands[1];
   rtx r_sp = adjust_address (operands[2], Pmode, 0);
   rtx r_fp = operands[3];
   rtx r_i7 = adjust_address (operands[2], Pmode, GET_MODE_SIZE (Pmode));
@@ -7380,9 +7391,18 @@ visl")
   emit_clobber (gen_rtx_MEM (BLKmode, gen_rtx_SCRATCH (VOIDmode)));
   emit_clobber (gen_rtx_MEM (BLKmode, hard_frame_pointer_rtx));
 
-  /* Restore frame pointer for containing function.  */
-  emit_move_insn (hard_frame_pointer_rtx, r_fp);
+  r_label = copy_to_reg (r_label);
+
+  /* Restore the frame pointer and stack pointer.  We must use a
+     temporary since the setjmp buffer may be a local.  */
+  r_fp = copy_to_reg (r_fp);
   emit_stack_restore (SAVE_NONLOCAL, r_sp);
+  r_i7 = copy_to_reg (r_i7);
+
+  /* Ensure the frame pointer move is not optimized.  */
+  emit_insn (gen_blockage ());
+  emit_clobber (hard_frame_pointer_rtx);
+  emit_move_insn (hard_frame_pointer_rtx, r_fp);
   emit_move_insn (i7, r_i7);
 
   /* USE of hard_frame_pointer_rtx added for consistency;
@@ -7391,8 +7411,7 @@ visl")
   emit_use (stack_pointer_rtx);
   emit_use (i7);
 
-  emit_jump_insn (gen_indirect_jump (r_label));
-  emit_barrier ();
+  emit_indirect_jump (r_label);
   DONE;
 })
 

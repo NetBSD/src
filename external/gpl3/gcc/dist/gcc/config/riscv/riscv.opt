@@ -1,6 +1,6 @@
 ; Options for the RISC-V port of the compiler
 ;
-; Copyright (C) 2011-2018 Free Software Foundation, Inc.
+; Copyright (C) 2011-2019 Free Software Foundation, Inc.
 ;
 ; This file is part of GCC.
 ;
@@ -43,6 +43,9 @@ Supported ABIs (for use with the -mabi= option):
 
 EnumValue
 Enum(abi_type) String(ilp32) Value(ABI_ILP32)
+
+EnumValue
+Enum(abi_type) String(ilp32e) Value(ABI_ILP32E)
 
 EnumValue
 Enum(abi_type) String(ilp32f) Value(ABI_ILP32F)
@@ -122,3 +125,9 @@ Mask(HARD_FLOAT)
 Mask(DOUBLE_FLOAT)
 
 Mask(RVC)
+
+Mask(RVE)
+
+mriscv-attribute
+Target Report Var(riscv_emit_attribute_p) Init(-1)
+Emit RISC-V ELF attribute.
