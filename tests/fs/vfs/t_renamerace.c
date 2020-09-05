@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.37 2020/09/05 02:45:22 riastradh Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.38 2020/09/05 02:47:03 riastradh Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -269,14 +269,6 @@ renamerace_cycle(const atf_tc_t *tc, const char *mp)
 
 	sleep(10);
 	quittingtime = 1;
-
-	if (FSTYPE_EXT2FS(tc) ||
-	    FSTYPE_FFS(tc) ||
-	    FSTYPE_FFSLOG(tc) ||
-	    FSTYPE_LFS(tc) ||
-	    FSTYPE_TMPFS(tc) ||
-	    FSTYPE_UDF(tc))
-		atf_tc_expect_signal(SIGALRM, "genfs_rename is busted");
 
 	alarm(1);
 	pthread_join(pt_rmdir, NULL);
