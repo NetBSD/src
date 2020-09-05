@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_snapshot.c,v 1.3 2015/11/14 22:03:54 pgoyette Exp $	*/
+/*	$NetBSD: ulfs_snapshot.c,v 1.4 2020/09/05 16:30:13 riastradh Exp $	*/
 /*  from ffs_snapshot.c,v 1.122 2013/05/07 09:40:54 hannken Exp  */
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_snapshot.c,v 1.3 2015/11/14 22:03:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_snapshot.c,v 1.4 2020/09/05 16:30:13 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -72,8 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_snapshot.c,v 1.3 2015/11/14 22:03:54 pgoyette E
 
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
-
-#include <uvm/uvm.h>
 
 /*
  * Decrement extra reference on snapshot when last name is removed.

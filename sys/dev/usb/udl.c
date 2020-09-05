@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.c,v 1.24 2019/12/27 09:41:51 msaitoh Exp $	*/
+/*	$NetBSD: udl.c,v 1.25 2020/09/05 16:30:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.24 2019/12/27 09:41:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.25 2020/09/05 16:30:11 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -67,10 +67,11 @@ __KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.24 2019/12/27 09:41:51 msaitoh Exp $");
 #include <sys/kmem.h>
 #include <sys/kthread.h>
 #include <sys/condvar.h>
-#include <uvm/uvm.h>
 
 #include <sys/bus.h>
 #include <sys/endian.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>

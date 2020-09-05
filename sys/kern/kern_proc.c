@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.259 2020/08/28 22:27:51 riastradh Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.260 2020/09/05 16:30:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.259 2020/08/28 22:27:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.260 2020/09/05 16:30:12 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -110,7 +110,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.259 2020/08/28 22:27:51 riastradh Ex
 #include <sys/pserialize.h>
 
 #include <uvm/uvm_extern.h>
-#include <uvm/uvm.h>
 
 /*
  * Process lists.

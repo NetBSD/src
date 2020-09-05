@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.198 2020/05/23 23:42:44 ad Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.199 2020/09/05 16:30:12 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.198 2020/05/23 23:42:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.199 2020/09/05 16:30:12 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -55,8 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.198 2020/05/23 23:42:44 ad Exp $");
 #include <sys/dirent.h>
 #include <sys/kauth.h>
 
-#include <uvm/uvm_extern.h>
 #include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.240 2020/05/25 21:15:10 ad Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.241 2020/09/05 16:30:12 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.240 2020/05/25 21:15:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.241 2020/09/05 16:30:12 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -100,7 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.240 2020/05/25 21:15:10 ad Exp $");
 #include <sys/atomic.h>
 #include <sys/cprng.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_page.h>
 #include <uvm/uvm_page_array.h>
 
 #include <nfs/rpcv2.h>

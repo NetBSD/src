@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extattr.c,v 1.6 2020/05/20 13:16:30 christos Exp $	*/
+/*	$NetBSD: ffs_extattr.c,v 1.7 2020/09/05 16:30:13 riastradh Exp $	*/
 
 /*-
  * SPDX-License-Identifier: (BSD-2-Clause-FreeBSD AND BSD-3-Clause)
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_extattr.c,v 1.6 2020/05/20 13:16:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_extattr.c,v 1.7 2020/09/05 16:30:13 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -104,8 +104,6 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_extattr.c,v 1.6 2020/05/20 13:16:30 christos Exp
 
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
-
-#include <uvm/uvm.h>
 
 #define ALIGNED_TO(ptr, s)  \
     (((uintptr_t)(ptr) & (_Alignof(s) - 1)) == 0)

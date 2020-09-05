@@ -1,4 +1,4 @@
-/*	$NetBSD: sljitUtils.c,v 1.10 2019/01/20 23:14:16 alnsn Exp $	*/
+/*	$NetBSD: sljitUtils.c,v 1.11 2020/09/05 16:30:11 riastradh Exp $	*/
 
 /*
  *    Stack-less Just-In-Time compiler
@@ -192,7 +192,7 @@ SLJIT_API_FUNC_ATTRIBUTE void SLJIT_CALL sljit_release_lock(void)
 
 #ifdef _KERNEL
 #include <sys/param.h>
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 #elif defined(_WIN32)
 #include "windows.h"
 #else

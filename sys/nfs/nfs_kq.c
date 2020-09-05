@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_kq.c,v 1.26 2017/10/25 08:12:40 maya Exp $	*/
+/*	$NetBSD: nfs_kq.c,v 1.27 2020/09/05 16:30:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.26 2017/10/25 08:12:40 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.27 2020/09/05 16:30:12 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,9 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.26 2017/10/25 08:12:40 maya Exp $");
 #include <sys/unistd.h>
 #include <sys/file.h>
 #include <sys/kthread.h>
-
-#include <uvm/uvm_extern.h>
-#include <uvm/uvm.h>
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mapper.c,v 1.2 2020/01/30 07:58:33 kamil Exp $	*/
+/*	$NetBSD: mapper.c,v 1.3 2020/09/05 16:30:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mapper.c,v 1.2 2020/01/30 07:58:33 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mapper.c,v 1.3 2020/09/05 16:30:12 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -36,8 +36,6 @@ __KERNEL_RCSID(0, "$NetBSD: mapper.c,v 1.2 2020/01/30 07:58:33 kamil Exp $");
 #include <sys/kmem.h>
 #include <sys/module.h>
 #include <sys/systm.h>
-
-#include <uvm/uvm.h>
 
 /*
  * Creating a device /dev/mapper for demonstration.
