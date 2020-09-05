@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.49 2020/09/05 09:50:15 mrg Exp $
+#	$NetBSD: Makefile,v 1.50 2020/09/05 12:19:25 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -62,8 +62,11 @@ SUBDIR=		include
 
 SRCS=		${LIBSUPCXXSRCS} ${LIBSTDCXXSRCS}
 
+GCC_MACHINE_SUBDIR=${MACHINE_CPU:C/powerpc.*/rs6000/:C/x86_64/i386/}
+
 CXXFLAGS+=	-fno-implicit-templates
 CPPFLAGS+=	-I${DIST}/libstdc++-v3/include
+CPPFLAGS+=	-I${DIST}/gcc/config/${GCC_MACHINE_SUBDIR}
 CPPFLAGS+=	-I${.CURDIR}/arch/${LIBSTDCXX_MACHINE_ARCH}
 CPPFLAGS+=	-D_GLIBCXX_SHARED -DGTHREAD_USE_WEAK -DSUPPORTS_WEAK
 .if ${G_CLOCALE_CC:M*dragonfly*} != ""
