@@ -72,6 +72,10 @@ struct __sanitizer::linux_dirent {
 #include <unistd.h>
 #endif
 
+#if SANITIZER_NETBSD
+#include <machine/mcontext.h>
+#endif
+
 namespace __sanitizer {
 
 SANITIZER_WEAK_ATTRIBUTE int
