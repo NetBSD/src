@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.114 2020/04/06 11:57:51 martin Exp $
+# $NetBSD: INSTALL,v 1.115 2020/09/05 01:28:18 thorpej Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -209,6 +209,7 @@ optiide* at	pci? dev ? function ?		# Opti IDE controllers
 pdcide* at	pci? dev ? function ?		# Promise IDE controllers
 pdcsata* at	pci? dev ? function ?		# Promise SATA150 controllers
 satalink* at	pci? dev ? function ?		# SiI SATALink controllers
+siisata* at	pci? dev ? function ?		# SiI SteelVine controllers
 siside* at	pci? dev ? function ?		# SiS IDE controllers
 slide*  at	pci? dev ? function ?		# Symphony Labs IDE controllers
 viaide* at	pci? dev ? function ?		# VIA/AMD/Nvidia IDE controllers
