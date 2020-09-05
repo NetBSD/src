@@ -1,5 +1,5 @@
 /* Instruction scheduling pass.  Selective scheduler and pipeliner.
-   Copyright (C) 2006-2018 Free Software Foundation, Inc.
+   Copyright (C) 2006-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -473,8 +473,7 @@ static int first_emitted_uid;
 
 /* Set of basic blocks that are forced to start new ebbs.  This is a subset
    of all the ebb heads.  */
-static bitmap_head _forced_ebb_heads;
-bitmap_head *forced_ebb_heads = &_forced_ebb_heads;
+bitmap forced_ebb_heads;
 
 /* Blocks that need to be rescheduled after pipelining.  */
 bitmap blocks_to_reschedule = NULL;
@@ -1103,7 +1102,7 @@ init_regs_for_mode (machine_mode mode)
       if (i >= 0)
         continue;
 
-      if (targetm.hard_regno_call_part_clobbered (cur_reg, mode))
+      if (targetm.hard_regno_call_part_clobbered (NULL, cur_reg, mode))
         SET_HARD_REG_BIT (sel_hrd.regs_for_call_clobbered[mode],
                           cur_reg);
 
@@ -1252,7 +1251,7 @@ mark_unavailable_hard_regs (def_t def, struct reg_rename *reg_rename_p,
 
   /* Exclude registers that are partially call clobbered.  */
   if (def->crosses_call
-      && !targetm.hard_regno_call_part_clobbered (regno, mode))
+      && !targetm.hard_regno_call_part_clobbered (NULL, regno, mode))
     AND_COMPL_HARD_REG_SET (reg_rename_p->available_for_renaming,
                             sel_hrd.regs_for_call_clobbered[mode]);
 
@@ -2821,10 +2820,12 @@ compute_av_set_at_bb_end (insn_t insn, ilist_t p, int ws)
     FOR_EACH_VEC_ELT (sinfo->succs_ok, is, succ)
       {
         basic_block succ_bb = BLOCK_FOR_INSN (succ);
+	av_set_t av_succ = (is_ineligible_successor (succ, p)
+			    ? NULL
+			    : BB_AV_SET (succ_bb));
 
         gcc_assert (BB_LV_SET_VALID_P (succ_bb));
-        mark_unavailable_targets (av1, BB_AV_SET (succ_bb),
-                                  BB_LV_SET (succ_bb));
+	mark_unavailable_targets (av1, av_succ, BB_LV_SET (succ_bb));
       }
 
   /* Finally, check liveness restrictions on paths leaving the region.  */
@@ -3228,7 +3229,7 @@ get_spec_check_type_for_insn (insn_t insn, expr_t expr)
    ORIGINAL_INSNS list.
 
    REG_RENAME_P denotes the set of hardware registers that
-   can not be used with renaming due to the register class restrictions,
+   cannot be used with renaming due to the register class restrictions,
    mode restrictions and other (the register we'll choose should be
    compatible class with the original uses, shouldn't be in call_used_regs,
    should be HARD_REGNO_RENAME_OK etc).
@@ -3332,8 +3333,6 @@ sel_target_adjust_priority (expr_t expr)
 
   /* If the priority has changed, adjust EXPR_PRIORITY_ADJ accordingly.  */
   EXPR_PRIORITY_ADJ (expr) = new_priority - EXPR_PRIORITY (expr);
-
-  gcc_assert (EXPR_PRIORITY_ADJ (expr) >= 0);
 
   if (sched_verbose >= 4)
     sel_print ("sel_target_adjust_priority: insn %d,  %d+%d = %d.\n",
@@ -5850,7 +5849,7 @@ maybe_emit_renaming_copy (rtx_insn *insn,
   bool insn_emitted  = false;
   rtx cur_reg;
 
-  /* Bail out early when expression can not be renamed at all.  */
+  /* Bail out early when expression cannot be renamed at all.  */
   if (!EXPR_SEPARABLE_P (params->c_expr))
     return false;
 
@@ -6438,7 +6437,7 @@ code_motion_path_driver (insn_t insn, av_set_t orig_ops, ilist_t path,
 {
   expr_t expr = NULL;
   basic_block bb = BLOCK_FOR_INSN (insn);
-  insn_t first_insn, bb_tail, before_first;
+  insn_t first_insn, original_insn, bb_tail, before_first;
   bool removed_last_insn = false;
 
   if (sched_verbose >= 6)
@@ -6522,7 +6521,7 @@ code_motion_path_driver (insn_t insn, av_set_t orig_ops, ilist_t path,
   /* It is enough to place only heads and tails of visited basic blocks into
      the PATH.  */
   ilist_add (&path, insn);
-  first_insn = insn;
+  first_insn = original_insn = insn;
   bb_tail = sel_bb_end (bb);
 
   /* Descend the basic block in search of the original expr; this part
@@ -6629,6 +6628,8 @@ code_motion_path_driver (insn_t insn, av_set_t orig_ops, ilist_t path,
         {
           insn = sel_bb_end (bb);
           first_insn = sel_bb_head (bb);
+	  if (first_insn != original_insn)
+	    first_insn = original_insn;
         }
 
       /* Remove bb tail from path.  */
@@ -6947,8 +6948,7 @@ sel_region_init (int rgn)
   memset (reg_rename_tick, 0, sizeof reg_rename_tick);
   reg_rename_this_tick = 0;
 
-  bitmap_initialize (forced_ebb_heads, 0);
-  bitmap_clear (forced_ebb_heads);
+  forced_ebb_heads = BITMAP_ALLOC (NULL);
 
   setup_nop_vinsn ();
   current_copies = BITMAP_ALLOC (NULL);
@@ -7290,7 +7290,7 @@ sel_region_finish (bool reset_sched_cycles_p)
 
   sel_finish_global_and_expr ();
 
-  bitmap_clear (forced_ebb_heads);
+  BITMAP_FREE (forced_ebb_heads);
 
   free_nop_vinsn ();
 
@@ -7650,11 +7650,11 @@ sel_sched_region (int rgn)
       /* Schedule always selecting the next insn to make the correct data
 	 for bundling or other later passes.  */
       pipelining_p = false;
+      reset_sched_cycles_p = false;
       force_next_insn = 1;
       sel_sched_region_1 ();
       force_next_insn = 0;
     }
-  reset_sched_cycles_p = pipelining_p;
   sel_region_finish (reset_sched_cycles_p);
 }
 

@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler.  Vxworks PowerPC version.
-   Copyright (C) 1996-2018 Free Software Foundation, Inc.
+   Copyright (C) 1996-2019 Free Software Foundation, Inc.
    Contributed by CodeSourcery, LLC.
 
 This file is part of GCC.
@@ -88,8 +88,15 @@ VXWORKS_ADDITIONAL_CPP_SPEC
 
 #undef  LIB_SPEC
 #define LIB_SPEC VXWORKS_LIB_SPEC
+
+/* For RTPs, leverage linker relaxation.  This helps programs referring
+   to, typically, kernel services too far away for short calls.  This is more
+   precise than -mlongcall and can be overriden with -Wl,--no-relax.  */
+#define VXWORKS_RELAX_LINK_SPEC "%{mrtp:--relax}"
+
 #undef  LINK_SPEC
-#define LINK_SPEC VXWORKS_LINK_SPEC
+#define LINK_SPEC VXWORKS_LINK_SPEC " " VXWORKS_RELAX_LINK_SPEC
+
 #undef  STARTFILE_SPEC
 #define STARTFILE_SPEC VXWORKS_STARTFILE_SPEC
 #undef  ENDFILE_SPEC

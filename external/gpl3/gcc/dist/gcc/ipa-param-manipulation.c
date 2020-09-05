@@ -1,6 +1,6 @@
 /* Manipulation of formal and actual parameters of functions and function
    calls.
-   Copyright (C) 2017-2018 Free Software Foundation, Inc.
+   Copyright (C) 2017-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -218,7 +218,7 @@ ipa_modify_formal_parameters (tree fndecl, ipa_parm_adjustment_vec adjustments)
     }
 
   /* When signature changes, we need to clear builtin info.  */
-  if (DECL_BUILT_IN (fndecl))
+  if (fndecl_built_in_p (fndecl))
     {
       DECL_BUILT_IN_CLASS (fndecl) = NOT_BUILT_IN;
       DECL_FUNCTION_CODE (fndecl) = (enum built_in_function) 0;

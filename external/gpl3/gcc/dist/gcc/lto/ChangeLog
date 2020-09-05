@@ -1,6 +1,6 @@
-2020-03-04  Release Manager
+2020-03-12  Release Manager
 
-	* GCC 8.4.0 released.
+	* GCC 9.3.0 released.
 
 2020-01-20  Martin Liska  <mliska@suse.cz>
 
@@ -11,31 +11,262 @@
 	best_noreorder_pos and then restore to it
 	when we revert.
 
-2019-02-22  Release Manager
+2019-11-08  Jakub Jelinek  <jakub@redhat.com>
 
-	* GCC 8.3.0 released.
+	Backported from mainline
+	2019-10-31  Jakub Jelinek  <jakub@redhat.com>
 
-2018-11-20  Martin Liska  <mliska@suse.cz>
+	PR middle-end/92231
+	* lto-lang.c (handle_const_attribute): Don't call fndecl_built_in_p
+	on *node that is not FUNCTION_DECL.
+
+2019-10-26  Jan Hubicka  <hubicka@ucw.cz>
 
 	Backport from mainline
-	2018-11-19  Martin Liska  <mliska@suse.cz>
+
+	2019-10-12  Jan Hubicka  <hubicka@ucw.cz>
+	* lto.c (lto_wpa_write_files): Do not update bodies of clones.
+
+	2019-10-11  Jan Hubicka  <hubicka@ucw.cz>
+	* lto.c (lto_wpa_write_files): Prepare all bodies for streaming.
+
+2019-10-25  Jan Hubicka  <hubicka@ucw.cz>
+
+	Backport from mainline
+	* lto-partition.c (add_symbol_to_partition_1): Update.
+	(undo_parittion): Update.
+
+2019-08-12  Release Manager
+
+	* GCC 9.2.0 released.
+
+2019-05-03  Release Manager
+
+	* GCC 9.1.0 released.
+
+2019-04-12  Jan Hubicka  <hubicka@ucw.cz>
+
+	* lto.c (do_stream_out): rename to ...
+	(stream_out): ... this one; move original code to ...
+	(stream_out_partitions_1, stream_out_partitions): ... these new
+	functions.
+	(lto_wpa_write_files): Honnor lto_parallelism
+
+2019-03-26  Martin Liska  <mliska@suse.cz>
+
+	* lto-symtab.c (lto_symtab_merge_decls_2): Fix option name
+	wrapping.
+
+2019-03-11  Martin Liska  <mliska@suse.cz>
+
+	* lto-lang.c (lto_post_options): Wrap an option name
+	in a string format message and fix GNU coding style.
+	* lto-symtab.c (lto_symtab_merge_decls_2): Likewise.
+
+2019-03-09  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/79645
+	* lang.opt: Terminate description text with a dot.
+
+2019-02-28  Jason Merrill  <jason@redhat.com>
+
+	PR c++/88049 - ICE with undefined destructor and anon namespace.
+	* lto-symtab.c (lto_symtab_prevailing_virtual_decl): Return early
+	for a type in an anonymous namespace.
+
+2019-01-09  Sandra Loosemore  <sandra@codesourcery.com>
+
+	PR other/16615
+
+	* lto-partition.c: Mechanically replace "can not" with "cannot".
+	* lto-symtab.c: Likewise.
+	* lto.c: Likewise.
+
+2019-01-01  Jakub Jelinek  <jakub@redhat.com>
+
+	Update copyright years.
+
+2018-12-24  Jan Hubicka  <hubicka@ucw.cz>
+
+	* lto-symtab.c (lto_symtab_merge_decls_2): Do not report ODR violations
+	for method whose basetype was already reported.
+
+2018-11-30  Michael Ploujnikov  <michael.ploujnikov@oracle.com>
+
+	Minimize clone counter memory usage in LTO.
+	* lto-partition.c (privatize_symbol_name_1): Keep track of
+	non-unique symbol counters in the lto_clone_numbers hash
+	map.
+	(lto_promote_cross_file_statics): Allocate and free the
+	lto_clone_numbers hash map.
+	(lto_promote_statics_nonwpa): Free the lto_clone_numbers hash
+	map.
+
+2018-11-28  Jan Hubicka  <jh@suse.cz>
+
+	* lto.c (lto_read_decls): Fix handling of INTEGER_CST.
+
+2018-11-22  Jan Hubicka  <jh@suse.cz>
+
+	* lto.c (cmp_type_location): Remove.
+	(lto_read_decls): Do not allocate odr_types.
+
+2018-11-19  Martin Liska  <mliska@suse.cz>
 
 	PR lto/88077
 	* lto-symtab.c (lto_symtab_merge): Transform the
 	condition before r256989.
 
-2018-07-26  Release Manager
+2018-11-16  Martin Liska  <mliska@suse.cz>
 
-	* GCC 8.2.0 released.
+	PR lto/88004
+	* lto-symtab.c (lto_symtab_merge_symbols_1): Do not call
+	lto_symtab_symbol_p as it does checking of transparent alias.
+	These needs to be also merged in the function.
 
-2018-05-02  Jan Hubicka  <jh@suse.cz>
+2018-10-30  Michael Ploujnikov  <michael.ploujnikov@oracle.com>
 
-	Backport from mainline
+	* lto-partition.c (privatize_symbol_name_1): Use
+	  clone_function_name_numbered.
 
-	2018-04-20  Jan Hubicka  <jh@suse.cz>
+2018-10-26  Jan Hubicka  <jh@suse.cz>
+
+	* lto/lto-symtab.c (lto_symtab_merge_decls_2): Fix extra space.
+
+2018-10-17  David Malcolm  <dmalcolm@redhat.com>
+
+	* Make-lang.in (selftest-lto): New.
+
+2018-08-29  Martin Liska  <mliska@suse.cz>
+
+	PR bootstrap/87130
+	* lto.c (read_cgraph_and_symbols): Fix thinko, revert
+	to behavior before r263887.
+
+2018-08-27  Martin Liska  <mliska@suse.cz>
+
+	* lto-lang.c (handle_const_attribute): Use new function
+	fndecl_built_in_p and remove check for FUNCTION_DECL if
+	possible.
+	* lto-symtab.c (lto_symtab_merge_p): Likewise.
+	(lto_symtab_merge_decls_1): Likewise.
+	(lto_symtab_merge_symbols): Likewise.
+	* lto.c (lto_maybe_register_decl): Likewise.
+	(read_cgraph_and_symbols): Likewise.
+
+2018-08-21  Tom de Vries  <tdevries@suse.de>
+
+	* lto.c (lto_main):  Call debuginfo_early_start and
+	debuginfo_early_stop.
+
+2018-07-20  Martin Sebor  <msebor@redhat.com>
+
+	PR middle-end/82063
+	* lto-lang.c (lto_handle_option): Change function argument
+	to HOST_WIDE_INT.
+
+2018-07-20  Richard Biener  <rguenther@suse.de>
+
+	PR debug/86585
+	* lto.c (unify_scc): Before we throw away an SCC see if we
+	can amend prevailing single-entry SCC with debug refs.
+
+2018-07-13  Jan Hubicka  <hubicka@ucw.cz>
+
+	* lto.c (do_stream_out): Add PART parameter; open dump file.
+	(stream_out): Add PART parameter; pass it to do_stream_out.
+	(lto_wpa_write_files): Update call of stream_out.
+
+2018-07-04  Martin Liska  <mliska@suse.cz>
+
+	PR middle-end/66240
+	PR target/45996
+	PR c/84100
+	* lto.c (compare_tree_sccs_1): Use cl_optimization_option_eq
+	instead of memcmp.
+
+2018-06-20  Martin Liska  <mliska@suse.cz>
+
+	* lto-symtab.c (lto_symtab_merge_p): Remove not valid
+	FIXME comment.
+
+2018-06-19  Martin Liska  <mliska@suse.cz>
+
+	* lto-partition.c (add_symbol_to_partition_1): Use symbol_summary::get instead
+	of get_create.
+	(undo_partition): Likewise.
+	(lto_balanced_map): Likewise.
+
+2018-06-19  Martin Liska  <mliska@suse.cz>
+
+	* config-lang.in: Remove stagestuff.
+
+2018-06-08  Jan Hubicka  <hubicka@ucw.cz>
+
+	* lto-lang.c (lto_link_dump_id, decl_merge_dump_id, partition_dump_id):
+	New global vars.
+	(lto_register_dumps): New hook.
+	(LANG_HOOKS_REGISTER_DUMPS): New.
+	* lto-partition.c: Dump into dump_file instead of symtab->dump_file.
+	* lto-symtab.c: Include lto.h; dump into dump_file instead of
+	symtab->dump_file.
+	(lto_symtab_merge_decls): Initialize dump file.
+	* lto.c (read_cgraph_and_symbols): Initialize dump file.
+	(do_whole_program_analysis): Likewise.
+
+2018-06-08  Martin Liska  <mliska@suse.cz>
+
+	* lto-partition.c (lto_balanced_map): Use cgraph_node::uid
+	instead of summary_uid.
+
+2018-06-08  Martin Liska  <mliska@suse.cz>
+
+	* lto-partition.c (add_symbol_to_partition_1): Use get_create instead
+	of get.
+	(undo_partition): Likewise.
+	(lto_balanced_map): Likewise.
+
+2018-06-08  Martin Liska  <mliska@suse.cz>
+
+	* lto-partition.c (add_references_to_partition): Remove support
+	for MPX (macros, related functions, fields in cgraph_node, ...).
+	(add_symbol_to_partition_1): Likewise.
+	(privatize_symbol_name): Likewise.
+	* lto-symtab.c (lto_cgraph_replace_node): Likewise.
+
+2018-06-05  Richard Biener  <rguenther@suse.de>
+
+	* lto.c (cmp_type_location): Expand locations only once.
+
+2018-05-30  Jan Hubicka  <hubicka@ucw.cz>
+
+	* lang.opt (lto_linker_output): Add nolto-rel.
+	* lto-lang.c (lto_post_options): Handle LTO_LINKER_OUTPUT_REL
+	and LTO_LINKER_OUTPUT_NOLTOREL.
+	(lto_init): Generate lto when doing incremental link.
+	* lto.c (lto_precess_name): Add lto1-inclink.
+
+2018-05-18  Jan Hubicka  <jh@suse.cz>
+
+	PR lto/85583
+	* lto-partition.c (account_reference_p): Do not account
+	references from aliases; do not account refernces from
+	external initializers.
+
+2018-04-30  Jan Hubicka  <jh@suse.cz>
+
+	* lto.c (cmp_partitions_size): Remove.
+	(lto_wpa_write_files): Also output priorities; do not sort partitions.
+	(cmp_partition_order): Move to ...
+	* lto-partition.c (cmp_partition_order): ...
+	(lto_1_to_1_map): Sort partitions.
+
+2018-04-20  Jan Hubicka  <jh@suse.cz>
+
 	* lto-partition.c (lto_balanced_map): Fix sanity check.
 
-	2018-04-19  Jan Hubicka  <jh@suse.cz>
+2018-04-19  Jan Hubicka  <jh@suse.cz>
+
 	* lto-partition.c: Include sreal.h
 	(add_symbol_to_partition_1): Use size instead of self_size
 	for size estimate.
@@ -44,21 +275,6 @@
 	fix accounting errors in boundary size; add debug output; combine cost
 	as cost/size instead of cost/internal; reduce the partitioning error to
 	+- 1/8 of the parttion size.
-
-2018-05-02  Jan Hubicka  <jh@suse.cz>
-
-	Backport from mainline
-	2018-04-30  Jan Hubicka  <jh@suse.cz>
-
-	* lto.c (cmp_partitions_size): Remove.
-	(lto_wpa_write_files): Also output priorities; do not sort partitions.
-	(cmp_partition_order): Move to ...
-	* lto-partition.c (cmp_partition_order): ...
-	(lto_1_to_1_map): Sort partitions.
-
-2018-05-02  Release Manager
-
-	* GCC 8.1.0 released.
 
 2018-04-19  Martin Liska  <mliska@suse.cz>
 
@@ -217,11 +433,11 @@
 
 2017-08-21  Richard Biener  <rguenther@suse.de>
 
-        * lto.c (unify_scc): Truncate DIE reference queue for dropped SCCs.
-        (lto_read_decls): Process TRANSLATION_UNIT_DECLs.  Remove
-        TYPE_DECL debug processing, register DIE references from
-        prevailing SCCs with the debug machinery.
-        (lto_section_with_id): Handle LTO debug sections.
+	* lto.c (unify_scc): Truncate DIE reference queue for dropped SCCs.
+	(lto_read_decls): Process TRANSLATION_UNIT_DECLs.  Remove
+	TYPE_DECL debug processing, register DIE references from
+	prevailing SCCs with the debug machinery.
+	(lto_section_with_id): Handle LTO debug sections.
 
 2017-08-16  Nathan Sidwell  <nathan@acm.org>
 
@@ -294,7 +510,7 @@
 
 2017-05-01  Xi Ruoyao  <ryxi@stu.xidian.edu.cn>
 
-        PR c++/80038
+	PR c++/80038
 	* lto-lang.c (lto_init): Set in_lto_p earlier.
 
 2017-04-12  Richard Biener  <rguenther@suse.de>
@@ -453,7 +669,7 @@
 	decls have no assemblernames.
 
 2016-01-19  Martin Liska  <mliska@suse.cz>
-            Martin Jambor  <mjambor@suse.cz>
+	    Martin Jambor  <mjambor@suse.cz>
 
 	* lto-partition.c: Include "hsa.h"
 	(add_symbol_to_partition_1): Put hsa implementations into the
@@ -2082,7 +2298,7 @@
 
 2012-06-18  Lawrence Crowl  <crowl@google.com>
 
-        * lto.c (do_whole_program_analysis):  Rename use of TV_PHASE_CGRAPH to
+	* lto.c (do_whole_program_analysis):  Rename use of TV_PHASE_CGRAPH to
 	TV_PHASE_OPT_GEN.  Use new timevar TV_PHASE_STREAM_OUT around the call
 	to lto_wpa_write_files.
 	(lto_main):  Rename use of TV_PHASE_CGRAPH to TV_PHASE_OPT_GEN.  Move
@@ -2138,7 +2354,7 @@
 2012-04-16  Jan Hubicka  <jh@suse.cz>
 
 	* lto.c (read_cgraph_and_symbols): Use FOR_EACH
-        walkers to walk cgraph and varpool.
+	walkers to walk cgraph and varpool.
 	(materialize_cgraph): Likewise.
 	* lto-partition.c (lto_1_to_1_map): Likewise.
 	(lto_balanced_map): Likewise.
@@ -2698,7 +2914,7 @@
 2010-10-03  Andi Kleen  <ak@linux.intel.com>
 
     	* lto.c (lto_file_finalize): Replace gcc_assert for missing section
-          with fatal_error.
+	  with fatal_error.
 
 2010-09-28  Jan Hubicka  <jh@suse.cz>
 
@@ -2801,7 +3017,7 @@
 2010-07-10  Andi Kleen  <ak@linux.intel.com>
 
 	PR lto/44992
-        * lto.c: Include splay-tree.h
+	* lto.c: Include splay-tree.h
 	(lto_resolution_read): Change to walk file_ids tree and parse
 	extra file_id in resolution file.
 	(lto_section_with_id): Add.
@@ -2854,7 +3070,7 @@
 
 2010-07-04  Jan Hubicka  <jh@suse.cz>
 
-        * lto.c (read_cgraph_and_symbols): Dump cgraph before merging.
+	* lto.c (read_cgraph_and_symbols): Dump cgraph before merging.
 
 2010-06-13  Richard Guenther  <rguenther@suse.de>
 
@@ -3273,7 +3489,7 @@
 	* lto.c (lto_resolution_read): Add more checks. Discard rest of line.
 
 2009-11-04  Richard Guenther  <rguenther@suse.de>
-            Rafael Avila de Espindola  <espindola@google.com>
+	    Rafael Avila de Espindola  <espindola@google.com>
 
 	* lto-elf.c (lto_elf_build_section_table): Add the base offset.
 	(lto_elf_file_open): Handle offsets in arguments name@offest.
@@ -5899,7 +6115,7 @@
 	* lto-tree.h: Likewise.
 	* lto-lang.c: Likewise.
 
-Copyright (C) 2006-2018 Free Software Foundation, Inc.
+Copyright (C) 2006-2019 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

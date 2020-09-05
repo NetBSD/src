@@ -1,5 +1,5 @@
 /* Common hooks of Andes NDS32 cpu for GNU compiler
-   Copyright (C) 2012-2018 Free Software Foundation, Inc.
+   Copyright (C) 2012-2019 Free Software Foundation, Inc.
    Contributed by Andes Technology Corporation.
 
    This file is part of GCC.
@@ -46,18 +46,27 @@ nds32_handle_option (struct gcc_options *opts ATTRIBUTE_UNUSED,
       /* Check the valid vector size: 4 or 16.  */
       if (value != 4 && value != 16)
 	{
-	  error_at (loc, "for the option -misr-vector-size=X, the valid X "
-			 "must be: 4 or 16");
+	  error_at (loc, "%<-misr-vector-size=%d%> argument must be 4 or 16", value);
 	  return false;
 	}
 
+      return true;
+
+    case OPT_misr_secure_:
+      /* Check the valid security level: 0 1 2 3.  */
+      if (value < 0 || value > 3)
+	{
+	  error_at (loc, "%<-misr-secure=%d%> argument not in between 0 and 3",
+		    value);
+	  return false;
+	}
       return true;
 
     case OPT_mcache_block_size_:
       /* Check valid value: 4 8 16 32 64 128 256 512.  */
       if (exact_log2 (value) < 2 || exact_log2 (value) > 9)
 	{
-	  error_at (loc, "for the option -mcache-block-size=X, the valid X "
+	  error_at (loc, "for the option %<-mcache-block-size=X%>, the valid X "
 			 "must be: 4, 8, 16, 32, 64, 128, 256, or 512");
 	  return false;
 	}
@@ -74,12 +83,19 @@ nds32_handle_option (struct gcc_options *opts ATTRIBUTE_UNUSED,
 /* Implement TARGET_OPTION_OPTIMIZATION_TABLE.  */
 static const struct default_options nds32_option_optimization_table[] =
 {
+#if TARGET_LINUX_ABI == 0
+  /* Disable -fdelete-null-pointer-checks by default in ELF toolchain.  */
+  { OPT_LEVELS_ALL,               OPT_fdelete_null_pointer_checks,
+							   NULL, 0 },
+#endif
   /* Enable -fsched-pressure by default at -O1 and above.  */
   { OPT_LEVELS_1_PLUS,            OPT_fsched_pressure,     NULL, 1 },
   /* Enable -fomit-frame-pointer by default at all optimization levels.  */
   { OPT_LEVELS_ALL,               OPT_fomit_frame_pointer, NULL, 1 },
   /* Enable -mrelax-hint by default at all optimization levels.  */
   { OPT_LEVELS_ALL,               OPT_mrelax_hint,         NULL, 1 },
+  /* Enalbe -malways-align by default at -O1 and above, but not -Os or -Og.  */
+  { OPT_LEVELS_1_PLUS_SPEED_ONLY, OPT_malways_align,       NULL, 1 },
   /* Enable -mv3push by default at -Os, but it is useless under V2 ISA.  */
   { OPT_LEVELS_SIZE,              OPT_mv3push,             NULL, 1 },
 
@@ -87,6 +103,19 @@ static const struct default_options nds32_option_optimization_table[] =
 };
 
 /* ------------------------------------------------------------------------ */
+
+/* Implement TARGET_EXCEPT_UNWIND_INFO.  */
+static enum unwind_info_type
+nds32_except_unwind_info (struct gcc_options *opts ATTRIBUTE_UNUSED)
+{
+  if (TARGET_LINUX_ABI)
+    return UI_DWARF2;
+
+  return UI_SJLJ;
+}
+
+/* ------------------------------------------------------------------------ */
+
 
 /* Run-time Target Specification.  */
 
@@ -103,6 +132,7 @@ static const struct default_options nds32_option_optimization_table[] =
      TARGET_EXT_PERF   : Generate performance extention instrcution.
      TARGET_EXT_PERF2  : Generate performance extention version 2 instrcution.
      TARGET_EXT_STRING : Generate string extention instrcution.
+     TARGET_HW_ABS     : Generate hardware abs instruction.
      TARGET_CMOV       : Generate conditional move instruction.  */
 #undef TARGET_DEFAULT_TARGET_FLAGS
 #define TARGET_DEFAULT_TARGET_FLAGS		\
@@ -113,6 +143,7 @@ static const struct default_options nds32_option_optimization_table[] =
    | MASK_EXT_PERF				\
    | MASK_EXT_PERF2				\
    | MASK_EXT_STRING				\
+   | MASK_HW_ABS				\
    | MASK_CMOV)
 
 #undef TARGET_HANDLE_OPTION
@@ -125,7 +156,7 @@ static const struct default_options nds32_option_optimization_table[] =
 /* Defining the Output Assembler Language.  */
 
 #undef TARGET_EXCEPT_UNWIND_INFO
-#define TARGET_EXCEPT_UNWIND_INFO sjlj_except_unwind_info
+#define TARGET_EXCEPT_UNWIND_INFO nds32_except_unwind_info
 
 /* ------------------------------------------------------------------------ */
 

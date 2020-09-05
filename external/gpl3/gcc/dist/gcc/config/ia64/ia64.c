@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler.
-   Copyright (C) 1999-2018 Free Software Foundation, Inc.
+   Copyright (C) 1999-2019 Free Software Foundation, Inc.
    Contributed by James E. Wilson <wilson@cygnus.com> and
 		  David Mosberger <davidm@hpl.hp.com>.
 
@@ -6024,7 +6024,7 @@ fix_range (const char *const_str)
       dash = strchr (str, '-');
       if (!dash)
 	{
-	  warning (0, "value of -mfixed-range must have form REG1-REG2");
+	  warning (0, "value of %<-mfixed-range%> must have form REG1-REG2");
 	  return;
 	}
       *dash = '\0';
@@ -6107,10 +6107,10 @@ ia64_option_override (void)
 
   init_machine_status = ia64_init_machine_status;
 
-  if (align_functions <= 0)
-    align_functions = 64;
-  if (align_loops <= 0)
-    align_loops = 32;
+  if (flag_align_functions && !str_align_functions)
+    str_align_functions = "64";
+  if (flag_align_loops && !str_align_loops)
+    str_align_loops = "32";
   if (TARGET_ABI_OPEN_VMS)
     flag_no_common = 1;
 

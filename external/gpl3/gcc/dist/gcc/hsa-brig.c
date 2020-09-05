@@ -1,5 +1,5 @@
 /* Producing binary form of HSA BRIG from our internal representation.
-   Copyright (C) 2013-2018 Free Software Foundation, Inc.
+   Copyright (C) 2013-2019 Free Software Foundation, Inc.
    Contributed by Martin Jambor <mjambor@suse.cz> and
    Martin Liska <mliska@suse.cz>.
 
@@ -35,8 +35,8 @@ along with GCC; see the file COPYING3.  If not see
 #include "stor-layout.h"
 #include "output.h"
 #include "basic-block.h"
-#include "cfg.h"
 #include "function.h"
+#include "cfg.h"
 #include "fold-const.h"
 #include "stringpool.h"
 #include "gimple-pretty-print.h"

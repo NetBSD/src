@@ -1,5 +1,5 @@
 /* Builtin functions for rs6000/powerpc.
-   Copyright (C) 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2009-2019 Free Software Foundation, Inc.
    Contributed by Michael Meissner (meissner@linux.vnet.ibm.com)
 
    This file is part of GCC.
@@ -32,7 +32,6 @@
    RS6000_BUILTIN_D -- DST builtins
    RS6000_BUILTIN_H -- HTM builtins
    RS6000_BUILTIN_P -- Altivec, VSX, ISA 2.07 vector predicate builtins
-   RS6000_BUILTIN_Q -- Paired floating point VSX predicate builtins
    RS6000_BUILTIN_X -- special builtins
 
    Each of the above macros takes 4 arguments:
@@ -72,10 +71,6 @@
 
 #ifndef RS6000_BUILTIN_P
   #error "RS6000_BUILTIN_P is not defined."
-#endif
-
-#ifndef RS6000_BUILTIN_Q
-  #error "RS6000_BUILTIN_Q is not defined."
 #endif
 
 #ifndef RS6000_BUILTIN_X
@@ -548,47 +543,6 @@
 		     | RS6000_BTC_UNARY					\
 		     | RS6000_BTC_VOID),				\
 		    CODE_FOR_ ## ICODE)			/* ICODE */
-
-/* Paired floating point convenience macros.  */
-#define BU_PAIRED_1(ENUM, NAME, ATTR, ICODE)				\
-  RS6000_BUILTIN_1 (PAIRED_BUILTIN_ ## ENUM,		/* ENUM */	\
-		    "__builtin_paired_" NAME,		/* NAME */	\
-		    RS6000_BTM_PAIRED,			/* MASK */	\
-		    (RS6000_BTC_ ## ATTR		/* ATTR */	\
-		     | RS6000_BTC_UNARY),				\
-		    CODE_FOR_ ## ICODE)			/* ICODE */
-
-#define BU_PAIRED_2(ENUM, NAME, ATTR, ICODE)				\
-  RS6000_BUILTIN_2 (PAIRED_BUILTIN_ ## ENUM,		/* ENUM */	\
-		    "__builtin_paired_" NAME,		/* NAME */	\
-		    RS6000_BTM_PAIRED,			/* MASK */	\
-		    (RS6000_BTC_ ## ATTR		/* ATTR */	\
-		     | RS6000_BTC_BINARY),				\
-		    CODE_FOR_ ## ICODE)			/* ICODE */
-
-#define BU_PAIRED_3(ENUM, NAME, ATTR, ICODE)				\
-  RS6000_BUILTIN_3 (PAIRED_BUILTIN_ ## ENUM,		/* ENUM */	\
-		    "__builtin_paired_" NAME,		/* NAME */	\
-		    RS6000_BTM_PAIRED,			/* MASK */	\
-		    (RS6000_BTC_ ## ATTR		/* ATTR */	\
-		     | RS6000_BTC_TERNARY),				\
-		    CODE_FOR_ ## ICODE)			/* ICODE */
-
-#define BU_PAIRED_P(ENUM, NAME, ATTR, ICODE)				\
-  RS6000_BUILTIN_Q (PAIRED_BUILTIN_ ## ENUM,		/* ENUM */	\
-		    "__builtin_paired_" NAME,		/* NAME */	\
-		    RS6000_BTM_PAIRED,			/* MASK */	\
-		    (RS6000_BTC_ ## ATTR		/* ATTR */	\
-		     | RS6000_BTC_PREDICATE),				\
-		    CODE_FOR_ ## ICODE)			/* ICODE */
-
-#define BU_PAIRED_X(ENUM, NAME, ATTR)					\
-  RS6000_BUILTIN_X (PAIRED_BUILTIN_ ## ENUM,		/* ENUM */	\
-		    "__builtin_paired_" NAME,		/* NAME */	\
-		    RS6000_BTM_PAIRED,			/* MASK */	\
-		    (RS6000_BTC_ ## ATTR		/* ATTR */	\
-		     | RS6000_BTC_SPECIAL),				\
-		    CODE_FOR_nothing)			/* ICODE */
 
 #define BU_SPECIAL_X(ENUM, NAME, MASK, ATTR)				\
   RS6000_BUILTIN_X (ENUM,				/* ENUM */	\
@@ -1868,6 +1822,15 @@ BU_VSX_OVERLOAD_1 (VUNSIGNEDE,  "vunsignede")
 BU_VSX_OVERLOAD_1 (VUNSIGNEDO,  "vunsignedo")
 
 /* VSX builtins that are handled as special cases.  */
+
+
+/* NON-TRADITIONAL BEHAVIOR HERE: Besides introducing the
+   __builtin_vec_ld and __builtin_vec_st built-in functions,
+   the VSX_BUILTIN_VEC_LD and VSX_BUILTIN_VEC_ST symbolic constants
+   introduced below are also affiliated with the __builtin_vec_vsx_ld
+   and __builtin_vec_vsx_st functions respectively.  This unnatural
+   binding is formed with explicit calls to the def_builtin function
+   found in rs6000.c.  */
 BU_VSX_OVERLOAD_X (LD,	     "ld")
 BU_VSX_OVERLOAD_X (ST,	     "st")
 BU_VSX_OVERLOAD_X (XL,	     "xl")
@@ -2154,6 +2117,11 @@ BU_P9V_VSX_2 (VSCEDPLT,	"scalar_cmp_exp_dp_lt",	CONST,	xscmpexpdp_lt)
 BU_P9V_VSX_2 (VSCEDPEQ,	"scalar_cmp_exp_dp_eq",	CONST,	xscmpexpdp_eq)
 BU_P9V_VSX_2 (VSCEDPUO,	"scalar_cmp_exp_dp_unordered",	CONST,	xscmpexpdp_unordered)
 
+BU_P9V_VSX_2 (VSCEQPGT,	"scalar_cmp_exp_qp_gt",	CONST,	xscmpexpqp_gt_kf)
+BU_P9V_VSX_2 (VSCEQPLT,	"scalar_cmp_exp_qp_lt",	CONST,	xscmpexpqp_lt_kf)
+BU_P9V_VSX_2 (VSCEQPEQ,	"scalar_cmp_exp_qp_eq",	CONST,	xscmpexpqp_eq_kf)
+BU_P9V_VSX_2 (VSCEQPUO,	"scalar_cmp_exp_qp_unordered",	CONST,	xscmpexpqp_unordered_kf)
+
 BU_FLOAT128_HW_VSX_2 (VSTDCQP, "scalar_test_data_class_qp",	CONST,	xststdcqp_kf)
 BU_P9V_VSX_2 (VSTDCDP,	"scalar_test_data_class_dp",	CONST,	xststdcdp)
 BU_P9V_VSX_2 (VSTDCSP,	"scalar_test_data_class_sp",	CONST,	xststdcsp)
@@ -2183,10 +2151,18 @@ BU_P9V_OVERLOAD_2 (VSTDCQP,	"scalar_test_data_class_qp")
 BU_P9V_OVERLOAD_2 (VSTDCDP,	"scalar_test_data_class_dp")
 BU_P9V_OVERLOAD_2 (VSTDCSP,	"scalar_test_data_class_sp")
 
-BU_P9V_OVERLOAD_2 (VSCEDPGT,	"scalar_cmp_exp_gt")
-BU_P9V_OVERLOAD_2 (VSCEDPLT,	"scalar_cmp_exp_lt")
-BU_P9V_OVERLOAD_2 (VSCEDPEQ,	"scalar_cmp_exp_eq")
-BU_P9V_OVERLOAD_2 (VSCEDPUO,	"scalar_cmp_exp_unordered")
+BU_P9V_OVERLOAD_2 (VSCEGT,	"scalar_cmp_exp_gt")
+BU_P9V_OVERLOAD_2 (VSCEDPGT,	"scalar_cmp_exp_dp_gt")
+BU_P9V_OVERLOAD_2 (VSCEQPGT,	"scalar_cmp_exp_qp_gt")
+BU_P9V_OVERLOAD_2 (VSCELT,	"scalar_cmp_exp_lt")
+BU_P9V_OVERLOAD_2 (VSCEDPLT,	"scalar_cmp_exp_dp_lt")
+BU_P9V_OVERLOAD_2 (VSCEQPLT,	"scalar_cmp_exp_qp_lt")
+BU_P9V_OVERLOAD_2 (VSCEEQ,	"scalar_cmp_exp_eq")
+BU_P9V_OVERLOAD_2 (VSCEDPEQ,	"scalar_cmp_exp_dp_eq")
+BU_P9V_OVERLOAD_2 (VSCEQPEQ,	"scalar_cmp_exp_qp_eq")
+BU_P9V_OVERLOAD_2 (VSCEUO,	"scalar_cmp_exp_unordered")
+BU_P9V_OVERLOAD_2 (VSCEDPUO,	"scalar_cmp_exp_dp_unordered")
+BU_P9V_OVERLOAD_2 (VSCEQPUO,	"scalar_cmp_exp_qp_unordered")
 
 /* 1 argument vsx vector functions added in ISA 3.0 (power9).  */
 BU_P9V_VSX_1 (VEEDP, "extract_exp_dp", CONST, xvxexpdp)
@@ -2506,44 +2482,6 @@ BU_HTM_0  (GET_TEXASRU,	"get_texasru",	SPR,	nothing)
 BU_HTM_V1 (SET_TEXASRU,	"set_texasru",	SPR,	nothing)
 
 
-/* 3 argument paired floating point builtins.  */
-BU_PAIRED_3 (MSUB,            "msub",           FP, 	fmsv2sf4)
-BU_PAIRED_3 (MADD,            "madd",           FP, 	fmav2sf4)
-BU_PAIRED_3 (MADDS0,          "madds0",         FP, 	paired_madds0)
-BU_PAIRED_3 (MADDS1,          "madds1",         FP, 	paired_madds1)
-BU_PAIRED_3 (NMSUB,           "nmsub",          FP, 	nfmsv2sf4)
-BU_PAIRED_3 (NMADD,           "nmadd",          FP, 	nfmav2sf4)
-BU_PAIRED_3 (SUM0,            "sum0",           FP, 	paired_sum0)
-BU_PAIRED_3 (SUM1,            "sum1",           FP, 	paired_sum1)
-BU_PAIRED_3 (SELV2SF4,        "selv2sf4",       CONST, 	selv2sf4)
-
-/* 2 argument paired floating point builtins.  */
-BU_PAIRED_2 (DIVV2SF3,	      "divv2sf3",	FP,	divv2sf3)
-BU_PAIRED_2 (ADDV2SF3,	      "addv2sf3",	FP,	addv2sf3)
-BU_PAIRED_2 (SUBV2SF3,	      "subv2sf3",	FP,	subv2sf3)
-BU_PAIRED_2 (MULV2SF3,	      "mulv2sf3",	FP,	mulv2sf3)
-BU_PAIRED_2 (MULS0,	      "muls0",		FP,	paired_muls0)
-BU_PAIRED_2 (MULS1,	      "muls1",		FP,	paired_muls1)
-BU_PAIRED_2 (MERGE00,	      "merge00",	CONST,	paired_merge00)
-BU_PAIRED_2 (MERGE01,	      "merge01",	CONST,	paired_merge01)
-BU_PAIRED_2 (MERGE10,	      "merge10",	CONST,	paired_merge10)
-BU_PAIRED_2 (MERGE11,	      "merge11",	CONST,	paired_merge11)
-
-/* 1 argument paired floating point builtin functions.  */
-BU_PAIRED_1 (ABSV2SF2,	      "absv2sf2",	CONST,	absv2sf2)
-BU_PAIRED_1 (NABSV2SF2,	      "nabsv2sf2",	CONST,	nabsv2sf2)
-BU_PAIRED_1 (NEGV2SF2,	      "negv2sf2",	CONST,	negv2sf2)
-BU_PAIRED_1 (SQRTV2SF2,	      "sqrtv2sf2",	FP,	sqrtv2sf2)
-BU_PAIRED_1 (RESV2SF,	      "resv2sf2",	FP,	resv2sf2)
-
-/* PAIRED builtins that are handled as special cases.  */
-BU_PAIRED_X (STX,	      "stx",		MISC)
-BU_PAIRED_X (LX,	      "lx",		MISC)
-
-/* Paired predicates.  */
-BU_PAIRED_P (CMPU0,	"cmpu0",	CONST,	paired_cmpu0)
-BU_PAIRED_P (CMPU1,	"cmpu1",	CONST,	paired_cmpu1)
-
 /* Power7 builtins, that aren't VSX instructions.  */
 BU_SPECIAL_X (POWER7_BUILTIN_BPERMD, "__builtin_bpermd", RS6000_BTM_POPCNTD,
 	      RS6000_BTC_CONST)
@@ -2570,10 +2508,34 @@ BU_SPECIAL_X (RS6000_BUILTIN_MFTB, "__builtin_ppc_mftb",
 BU_SPECIAL_X (RS6000_BUILTIN_MFFS, "__builtin_mffs",
 	      RS6000_BTM_ALWAYS, RS6000_BTC_MISC)
 
+BU_SPECIAL_X (RS6000_BUILTIN_MFFSL, "__builtin_mffsl",
+	      RS6000_BTM_ALWAYS, RS6000_BTC_MISC)
+
 RS6000_BUILTIN_X (RS6000_BUILTIN_MTFSF, "__builtin_mtfsf",
 	          RS6000_BTM_ALWAYS,
 	          RS6000_BTC_MISC | RS6000_BTC_UNARY | RS6000_BTC_VOID,
 		  CODE_FOR_rs6000_mtfsf)
+
+RS6000_BUILTIN_X (RS6000_BUILTIN_MTFSB0, "__builtin_mtfsb0",
+		  RS6000_BTM_ALWAYS,
+		  RS6000_BTC_MISC | RS6000_BTC_UNARY | RS6000_BTC_VOID,
+		  CODE_FOR_rs6000_mtfsb0)
+
+RS6000_BUILTIN_X (RS6000_BUILTIN_MTFSB1, "__builtin_mtfsb1",
+		  RS6000_BTM_ALWAYS,
+		  RS6000_BTC_MISC | RS6000_BTC_UNARY | RS6000_BTC_VOID,
+		  CODE_FOR_rs6000_mtfsb1)
+
+RS6000_BUILTIN_X (RS6000_BUILTIN_SET_FPSCR_RN, "__builtin_set_fpscr_rn",
+		  RS6000_BTM_ALWAYS,
+		  RS6000_BTC_MISC | RS6000_BTC_UNARY| RS6000_BTC_VOID,
+		  CODE_FOR_rs6000_set_fpscr_rn)
+
+RS6000_BUILTIN_X (RS6000_BUILTIN_SET_FPSCR_DRN, "__builtin_set_fpscr_drn",
+		  RS6000_BTM_DFP,
+		  RS6000_BTC_MISC | RS6000_BTM_64BIT | RS6000_BTC_UNARY
+		  | RS6000_BTC_VOID,
+		  CODE_FOR_rs6000_set_fpscr_drn)
 
 BU_SPECIAL_X (RS6000_BUILTIN_CPU_INIT, "__builtin_cpu_init",
 	      RS6000_BTM_ALWAYS, RS6000_BTC_MISC)

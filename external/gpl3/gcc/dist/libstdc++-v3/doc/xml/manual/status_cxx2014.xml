@@ -20,7 +20,7 @@ presence of the required flag.
 </para>
 
 <para>
-This page describes the C++14 and library TS support in the GCC 8 series.
+This page describes the C++14 and library TS support in the GCC 9 series.
 </para>
 
 <table frame="all" xml:id="table.cxx14_status">
@@ -344,7 +344,7 @@ This page describes the C++14 and library TS support in the GCC 8 series.
 	</link>
       </entry>
       <entry>Polymorphic memory resources</entry>
-      <entry>Partial</entry>
+      <entry>Partial (missing pool resource and buffer resource classes)</entry>
       <entry>Library Fundamentals TS</entry>
     </row>
 

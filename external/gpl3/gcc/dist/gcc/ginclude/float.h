@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2018 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -210,7 +210,8 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 
 #endif /* C99 */
 
-#if defined (__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+#if (defined (__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) \
+     || (defined (__cplusplus) && __cplusplus >= 201703L)
 /* Versions of DECIMAL_DIG for each floating-point type.  */
 #undef FLT_DECIMAL_DIG
 #undef DBL_DECIMAL_DIG

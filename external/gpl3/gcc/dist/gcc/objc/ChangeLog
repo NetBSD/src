@@ -1,16 +1,12 @@
-2020-03-04  Release Manager
+2020-03-12  Release Manager
 
-	* GCC 8.4.0 released.
+	* GCC 9.3.0 released.
 
-2019-08-29  Jakub Jelinek  <jakub@redhat.com>
+2019-08-12  Release Manager
 
-	Backported from mainline
-	2019-05-10  Jakub Jelinek  <jakub@redhat.com>
+	* GCC 9.2.0 released.
 
-	PR pch/90326
-	* config-lang.in (gtfiles): Add c-family/c-format.c.
-
-2019-08-28  Iain Sandoe  <iain@sandoe.co.uk>
+2019-08-03  Iain Sandoe  <iain@sandoe.co.uk>
 
 	Backport from mainline.
 	2019-05-18  Iain Sandoe  <iain@sandoe.co.uk>
@@ -21,17 +17,47 @@
 	* objc/objc-act.c (synth_module_prologue): Build decls for
 	objc_instancetype_type and objc_instancetype_name.
 
-2019-02-22  Release Manager
+2019-05-17  Jakub Jelinek  <jakub@redhat.com>
 
-	* GCC 8.3.0 released.
+	Backported from mainline
+	2019-05-10  Jakub Jelinek  <jakub@redhat.com>
 
-2018-07-26  Release Manager
+	PR pch/90326
+	* config-lang.in (gtfiles): Add c-family/c-format.c.
 
-	* GCC 8.2.0 released.
+2019-05-03  Release Manager
 
-2018-05-02  Release Manager
+	* GCC 9.1.0 released.
 
-	* GCC 8.1.0 released.
+2019-04-05  Martin Liska  <mliska@suse.cz>
+
+	PR translation/89936
+	* objc-act.c (objc_add_property_declaration): Use %< and %>, or %qs in
+	order to wrap keywords or arguments.
+	(objc_add_synthesize_declaration_for_property): Likewise.
+
+2019-01-09  Sandra Loosemore  <sandra@codesourcery.com>
+
+	PR other/16615
+
+	* objc-act.c: Mechanically replace "can not" with "cannot".
+
+2019-01-01  Jakub Jelinek  <jakub@redhat.com>
+
+	Update copyright years.
+
+2018-12-19  David Malcolm  <dmalcolm@redhat.com>
+
+	PR c++/43064
+	PR c++/43486
+	* objc-act.c (objc_maybe_build_component_ref): Strip any location
+	wrapper before checking for UOBJC_SUPER_decl and self_decl.
+	(objc_finish_message_expr): Strip any location wrapper.
+	(gen_declaration): Strip location wrappers from "w".
+
+2018-10-17  David Malcolm  <dmalcolm@redhat.com>
+
+	* Make-lang.in (selftest-objc): New.
 
 2018-04-20  Martin Liska  <mliska@suse.cz>
 
@@ -2084,7 +2110,7 @@
 	Merge from 'apple/trunk' branch on FSF servers.
 
 	2005-08-23  Stuart Hastings  <stuart@apple.com>
-	            Ziemowit Laski  <zlaski@apple.com>
+		    Ziemowit Laski  <zlaski@apple.com>
 
 	Radar 4209854
 	* objc-act.c (objc_decay_parm_type): New function.
@@ -3830,7 +3856,7 @@
 	Move to c-objc-common.h.
 
 
-Copyright (C) 2004-2018 Free Software Foundation, Inc.
+Copyright (C) 2004-2019 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

@@ -1,5 +1,5 @@
 /* Basic IPA optimizations and utilities.
-   Copyright (C) 2003-2018 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -101,12 +101,32 @@ enqueue_node (symtab_node *node, symtab_node **first,
   *first = node;
 }
 
+/* Return true if NODE may get inlined later.
+   This is used to keep DECL_EXTERNAL function bodies around long enough
+   so inliner can proces them.  */
+
+static bool
+possible_inline_candidate_p (symtab_node *node)
+{
+  if (symtab->state >= IPA_SSA_AFTER_INLINING)
+    return false;
+  cgraph_node *cnode = dyn_cast <cgraph_node *> (node);
+  if (!cnode)
+    return false;
+  if (DECL_UNINLINABLE (cnode->decl))
+    return false;
+  if (opt_for_fn (cnode->decl, optimize))
+    return true;
+  if (symtab->state >= IPA_SSA)
+    return false;
+  return lookup_attribute ("always_inline", DECL_ATTRIBUTES (node->decl));
+}
+
 /* Process references.  */
 
 static void
 process_references (symtab_node *snode,
 		    symtab_node **first,
-		    bool before_inlining_p,
 		    hash_set<symtab_node *> *reachable)
 {
   int i;
@@ -118,27 +138,22 @@ process_references (symtab_node *snode,
 
       if (node->definition && !node->in_other_partition
 	  && ((!DECL_EXTERNAL (node->decl) || node->alias)
-	      || (((before_inlining_p
-		    && (TREE_CODE (node->decl) != FUNCTION_DECL
-			|| (TREE_CODE (node->decl) == FUNCTION_DECL
-			    && opt_for_fn (body->decl, optimize))
-		        || (symtab->state < IPA_SSA
-		            && lookup_attribute
-				 ("always_inline",
-			          DECL_ATTRIBUTES (body->decl))))))
+	      || (possible_inline_candidate_p (node)
 		  /* We use variable constructors during late compilation for
 		     constant folding.  Keep references alive so partitioning
 		     knows about potential references.  */
 		  || (VAR_P (node->decl)
-		      && flag_wpa
-		      && ctor_for_folding (node->decl)
-		         != error_mark_node))))
+		      && (flag_wpa
+			  || flag_incremental_link
+			 	 == INCREMENTAL_LINK_LTO)
+		      && dyn_cast <varpool_node *> (node)
+		      	   ->ctor_useable_for_folding_p ()))))
 	{
 	  /* Be sure that we will not optimize out alias target
 	     body.  */
 	  if (DECL_EXTERNAL (node->decl)
 	      && node->alias
-	      && before_inlining_p)
+	      && symtab->state < IPA_SSA_AFTER_INLINING)
 	    reachable->add (body);
 	  reachable->add (node);
 	}
@@ -158,8 +173,7 @@ static void
 walk_polymorphic_call_targets (hash_set<void *> *reachable_call_targets,
 			       struct cgraph_edge *edge,
 			       symtab_node **first,
-			       hash_set<symtab_node *> *reachable,
-			       bool before_inlining_p)
+			       hash_set<symtab_node *> *reachable)
 {
   unsigned int i;
   void *cache_token;
@@ -188,15 +202,14 @@ walk_polymorphic_call_targets (hash_set<void *> *reachable_call_targets,
 	  /* Prior inlining, keep alive bodies of possible targets for
 	     devirtualization.  */
 	  if (n->definition
-	      && (before_inlining_p
-		  && opt_for_fn (body->decl, optimize)
+	      && (possible_inline_candidate_p (body)
 		  && opt_for_fn (body->decl, flag_devirtualize)))
 	     {
 		/* Be sure that we will not optimize out alias target
 		   body.  */
 		if (DECL_EXTERNAL (n->decl)
 		    && n->alias
-		    && before_inlining_p)
+		    && symtab->state < IPA_SSA_AFTER_INLINING)
 		  reachable->add (body);
 	       reachable->add (n);
 	     }
@@ -223,13 +236,8 @@ walk_polymorphic_call_targets (hash_set<void *> *reachable_call_targets,
 		       (builtin_decl_implicit (BUILT_IN_UNREACHABLE));
 
 	  if (dump_enabled_p ())
-            {
-	      location_t locus;
-	      if (edge->call_stmt)
-		locus = gimple_location (edge->call_stmt);
-	      else
-		locus = UNKNOWN_LOCATION;
-	      dump_printf_loc (MSG_OPTIMIZED_LOCATIONS, locus,
+	    {
+	      dump_printf_loc (MSG_OPTIMIZED_LOCATIONS, edge->call_stmt,
 			       "devirtualizing call in %s to %s\n",
 			       edge->caller->dump_name (),
 			       target->dump_name ());
@@ -238,13 +246,7 @@ walk_polymorphic_call_targets (hash_set<void *> *reachable_call_targets,
 	  if (ipa_fn_summaries)
 	    ipa_update_overall_fn_summary (node);
 	  else if (edge->call_stmt)
-	    {
-	      edge->redirect_call_stmt_to_callee ();
-
-	      /* Call to __builtin_unreachable shouldn't be instrumented.  */
-	      if (!targets.length ())
-		gimple_call_set_with_bounds (edge->call_stmt, false);
-	    }
+	    edge->redirect_call_stmt_to_callee ();
 	}
     }
 }
@@ -312,8 +314,6 @@ symbol_table::remove_unreachable_nodes (FILE *file)
   hash_set<symtab_node *> reachable;
   hash_set<tree> body_needed_for_clonning;
   hash_set<void *> reachable_call_targets;
-  bool before_inlining_p = symtab->state < (!optimize && !in_lto_p ? IPA_SSA
-					    : IPA_SSA_AFTER_INLINING);
 
   timevar_push (TV_IPA_UNREACHABLE);
   build_type_inheritance_graph ();
@@ -405,7 +405,7 @@ symbol_table::remove_unreachable_nodes (FILE *file)
 		  enqueue_node (next, &first, &reachable);
 	    }
 	  /* Mark references as reachable.  */
-	  process_references (node, &first, before_inlining_p, &reachable);
+	  process_references (node, &first, &reachable);
 	}
 
       if (cgraph_node *cnode = dyn_cast <cgraph_node *> (node))
@@ -425,8 +425,7 @@ symbol_table::remove_unreachable_nodes (FILE *file)
 		      next = e->next_callee;
 		      if (e->indirect_info->polymorphic)
 			walk_polymorphic_call_targets (&reachable_call_targets,
-						       e, &first, &reachable,
-						       before_inlining_p);
+						       e, &first, &reachable);
 		    }
 		}
 	      for (e = cnode->callees; e; e = e->next_callee)
@@ -437,18 +436,13 @@ symbol_table::remove_unreachable_nodes (FILE *file)
 		      && (!e->inline_failed
 			  || !DECL_EXTERNAL (e->callee->decl)
 			  || e->callee->alias
-			  || (before_inlining_p
-			      && (opt_for_fn (body->decl, optimize)
-		                  || (symtab->state < IPA_SSA
-		                      && lookup_attribute
-				          ("always_inline",
-				           DECL_ATTRIBUTES (body->decl)))))))
+			  || possible_inline_candidate_p (e->callee)))
 		    {
 		      /* Be sure that we will not optimize out alias target
 			 body.  */
 		      if (DECL_EXTERNAL (e->callee->decl)
 			  && e->callee->alias
-			  && before_inlining_p)
+			  && symtab->state < IPA_SSA_AFTER_INLINING)
 			reachable.add (body);
 		      reachable.add (e->callee);
 		    }
@@ -459,20 +453,6 @@ symbol_table::remove_unreachable_nodes (FILE *file)
 		 offline copy of the function we don't kill it.  */
 	      if (cnode->global.inlined_to)
 	        body_needed_for_clonning.add (cnode->decl);
-
-	      /* For instrumentation clones we always need original
-		 function node for proper LTO privatization.  */
-	      if (cnode->instrumentation_clone
-		  && cnode->definition)
-		{
-		  gcc_assert (cnode->instrumented_version || in_lto_p);
-		  if (cnode->instrumented_version)
-		    {
-		      enqueue_node (cnode->instrumented_version, &first,
-				    &reachable);
-		      reachable.add (cnode->instrumented_version);
-		    }
-		}
 
 	      /* For non-inline clones, force their origins to the boundary and ensure
 		 that body is not removed.  */
@@ -568,12 +548,6 @@ symbol_table::remove_unreachable_nodes (FILE *file)
 	      node->remove_callees ();
 	      node->remove_all_references ();
 	      changed = true;
-	      if (node->thunk.thunk_p
-		  && node->thunk.add_pointer_bounds_args)
-		{
-		  node->thunk.thunk_p = false;
-		  node->thunk.add_pointer_bounds_args = false;
-		}
 	    }
 	}
       else
@@ -622,7 +596,7 @@ symbol_table::remove_unreachable_nodes (FILE *file)
 	    fprintf (file, " %s", vnode->dump_name ());
           vnext = next_variable (vnode);
 	  /* Signal removal to the debug machinery.  */
-	  if (! flag_wpa)
+	  if (! flag_wpa || flag_incremental_link == INCREMENTAL_LINK_LTO)
 	    {
 	      vnode->definition = false;
 	      (*debug_hooks->late_global_decl) (vnode->decl);
@@ -640,8 +614,8 @@ symbol_table::remove_unreachable_nodes (FILE *file)
 	      changed = true;
 	    }
 	  /* Keep body if it may be useful for constant folding.  */
-	  if ((init = ctor_for_folding (vnode->decl)) == error_mark_node
-	      && !POINTER_BOUNDS_P (vnode->decl))
+	  if ((flag_wpa || flag_incremental_link == INCREMENTAL_LINK_LTO)
+	      || ((init = ctor_for_folding (vnode->decl)) == error_mark_node))
 	    vnode->remove_initializer ();
 	  else
 	    DECL_INITIAL (vnode->decl) = init;
@@ -666,10 +640,7 @@ symbol_table::remove_unreachable_nodes (FILE *file)
 	&& !node->used_from_other_partition)
       {
 	if (!node->call_for_symbol_and_aliases
-	    (has_addr_references_p, NULL, true)
-	    && (!node->instrumentation_clone
-		|| !node->instrumented_version
-		|| !node->instrumented_version->address_taken))
+	    (has_addr_references_p, NULL, true))
 	  {
 	    if (file)
 	      fprintf (file, " %s", node->name ());
@@ -680,7 +651,7 @@ symbol_table::remove_unreachable_nodes (FILE *file)
 		   of possible later devirtualization.  Do not mark them as
 		   local too early so we won't optimize them out before
 		   we are done with polymorphic call analysis.  */
-		&& (!before_inlining_p
+		&& (symtab->state >= IPA_SSA_AFTER_INLINING
 		    || !node->call_for_symbol_and_aliases
 		       (is_indirect_call_target_p, NULL, true)))
 	      {
@@ -737,8 +708,6 @@ process_references (varpool_node *vnode,
 	process_references (dyn_cast<varpool_node *> (ref->referring), written,
 			    address_taken, read, explicit_refs);
 	break;
-      case IPA_REF_CHKP:
-	gcc_unreachable ();
       }
 }
 
@@ -780,20 +749,23 @@ clear_addressable_bit (varpool_node *vnode, void *data ATTRIBUTE_UNUSED)
   return false;
 }
 
-/* Discover variables that have no longer address taken or that are read only
-   and update their flags.
+/* Discover variables that have no longer address taken, are read-only or
+   write-only and update their flags.
 
-   Return true when unreachable symbol removan should be done.
+   Return true when unreachable symbol removal should be done.
 
-   FIXME: This can not be done in between gimplify and omp_expand since
+   FIXME: This cannot be done in between gimplify and omp_expand since
    readonly flag plays role on what is shared and what is not.  Currently we do
    this transformation as part of whole program visibility and re-do at
    ipa-reference pass (to take into account clonning), but it would
    make sense to do it before early optimizations.  */
 
 bool
-ipa_discover_readonly_nonaddressable_vars (void)
+ipa_discover_variable_flags (void)
 {
+  if (!flag_ipa_reference_addressable)
+    return false;
+
   bool remove_p = false;
   varpool_node *vnode;
   if (dump_file)
@@ -844,9 +816,8 @@ ipa_discover_readonly_nonaddressable_vars (void)
 }
 
 /* Generate and emit a static constructor or destructor.  WHICH must
-   be one of 'I' (for a constructor), 'D' (for a destructor), 'P'
-   (for chp static vars constructor) or 'B' (for chkp static bounds
-   constructor).  BODY is a STATEMENT_LIST containing GENERIC
+   be one of 'I' (for a constructor), 'D' (for a destructor).
+   BODY is a STATEMENT_LIST containing GENERIC
    statements.  PRIORITY is the initialization priority for this
    constructor or destructor.
 
@@ -913,20 +884,6 @@ cgraph_build_static_cdtor_1 (char which, tree body, int priority, bool final,
       DECL_STATIC_CONSTRUCTOR (decl) = 1;
       decl_init_priority_insert (decl, priority);
       break;
-    case 'P':
-      DECL_STATIC_CONSTRUCTOR (decl) = 1;
-      DECL_ATTRIBUTES (decl) = tree_cons (get_identifier ("chkp ctor"),
-					  NULL,
-					  NULL_TREE);
-      decl_init_priority_insert (decl, priority);
-      break;
-    case 'B':
-      DECL_STATIC_CONSTRUCTOR (decl) = 1;
-      DECL_ATTRIBUTES (decl) = tree_cons (get_identifier ("bnd_legacy"),
-					  NULL,
-					  NULL_TREE);
-      decl_init_priority_insert (decl, priority);
-      break;
     case 'D':
       DECL_STATIC_DESTRUCTOR (decl) = 1;
       decl_fini_priority_insert (decl, priority);
@@ -944,9 +901,8 @@ cgraph_build_static_cdtor_1 (char which, tree body, int priority, bool final,
 }
 
 /* Generate and emit a static constructor or destructor.  WHICH must
-   be one of 'I' (for a constructor), 'D' (for a destructor), 'P'
-   (for chkp static vars constructor) or 'B' (for chkp static bounds
-   constructor).  BODY is a STATEMENT_LIST containing GENERIC
+   be one of 'I' (for a constructor) or 'D' (for a destructor).
+   BODY is a STATEMENT_LIST containing GENERIC
    statements.  PRIORITY is the initialization priority for this
    constructor or destructor.  */
 

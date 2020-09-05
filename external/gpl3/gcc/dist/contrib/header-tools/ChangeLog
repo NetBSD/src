@@ -1,18 +1,14 @@
-2020-03-04  Release Manager
+2020-03-12  Release Manager
 
-	* GCC 8.4.0 released.
+	* GCC 9.3.0 released.
 
-2019-02-22  Release Manager
+2019-08-12  Release Manager
 
-	* GCC 8.3.0 released.
+	* GCC 9.2.0 released.
 
-2018-07-26  Release Manager
+2019-05-03  Release Manager
 
-	* GCC 8.2.0 released.
-
-2018-05-02  Release Manager
-
-	* GCC 8.1.0 released.
+	* GCC 9.1.0 released.
 
 2017-07-02  Richard Sandiford  <richard.sandiford@linaro.org>
 	    Alan Hayward  <alan.hayward@arm.com>

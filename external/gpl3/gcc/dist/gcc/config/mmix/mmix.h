@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for MMIX.
-   Copyright (C) 2000-2018 Free Software Foundation, Inc.
+   Copyright (C) 2000-2019 Free Software Foundation, Inc.
    Contributed by Hans-Peter Nilsson (hp@bitrange.com)
 
 This file is part of GCC.
@@ -788,8 +788,6 @@ typedef struct { int regs; int lib; } CUMULATIVE_ARGS;
 #define Pmode DImode
 
 #define FUNCTION_MODE QImode
-
-#define NO_IMPLICIT_EXTERN_C
 
 /* mmix-knuth-mmixware target has no support of C99 runtime */
 #undef TARGET_LIBC_HAS_FUNCTION

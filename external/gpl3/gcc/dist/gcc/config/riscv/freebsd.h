@@ -1,5 +1,5 @@
 /* Definitions for RISC-V FreeBSD systems with ELF format.
-   Copyright (C) 2018 Free Software Foundation, Inc.
+   Copyright (C) 2018-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -41,7 +41,7 @@ along with GCC; see the file COPYING3.  If not see
 #undef LINK_SPEC
 #define LINK_SPEC "						\
   -melf" XLEN_SPEC "lriscv					\
-  %{p:%nconsider using `-pg' instead of `-p' with gprof (1) }	\
+  %{p:%nconsider using `-pg' instead of `-p' with gprof (1)}	\
   %{v:-V}							\
   %{assert*} %{R*} %{rpath*} %{defsym*}				\
   %{shared:-Bshareable %{h*} %{soname*}}			\

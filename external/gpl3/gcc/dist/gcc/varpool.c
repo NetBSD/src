@@ -1,5 +1,5 @@
 /* Callgraph handling code.
-   Copyright (C) 2003-2018 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
    Contributed by Jan Hubicka
 
 This file is part of GCC.
@@ -226,8 +226,6 @@ varpool_node::dump (FILE *f)
     fprintf (f, " output");
   if (used_by_single_function)
     fprintf (f, " used-by-single-function");
-  if (need_bounds_init)
-    fprintf (f, " need-bounds-init");
   if (TREE_READONLY (decl))
     fprintf (f, " read-only");
   if (ctor_useable_for_folding_p ())
@@ -307,6 +305,8 @@ varpool_node::get_constructor (void)
 		 file_data->file_name,
 		 name);
 
+  if (!quiet_flag)
+    fprintf (stderr, " in:%s", IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl)));
   lto_input_variable_constructor (file_data, this, data);
   gcc_assert (DECL_INITIAL (decl) != error_mark_node);
   lto_stats.num_function_bodies++;
@@ -398,12 +398,6 @@ ctor_for_folding (tree decl)
   tree real_decl;
 
   if (!VAR_P (decl) && TREE_CODE (decl) != CONST_DECL)
-    return error_mark_node;
-
-  /* Static constant bounds are created to be
-     used instead of constants and therefore
-     do not let folding it.  */
-  if (POINTER_BOUNDS_P (decl))
     return error_mark_node;
 
   if (TREE_CODE (decl) == CONST_DECL

@@ -1,4 +1,4 @@
-/* Copyright (C) 2014-2018 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2019 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -52,31 +52,6 @@ _mm512_clmulepi64_epi128 (__m512i __A, __m512i __B, const int __C)
 #undef __DISABLE_VPCLMULQDQF__
 #pragma GCC pop_options
 #endif /* __DISABLE_VPCLMULQDQF__ */
-
-#if !defined(__VPCLMULQDQ__) || !defined(__AVX512VL__)
-#pragma GCC push_options
-#pragma GCC target("vpclmulqdq,avx512vl")
-#define __DISABLE_VPCLMULQDQVL__
-#endif /* __VPCLMULQDQVL__ */
-
-#ifdef __OPTIMIZE__
-extern __inline __m128i
-__attribute__((__gnu_inline__, __always_inline__, __artificial__))
-_mm_clmulepi64_epi128 (__m128i __A, __m128i __B, const int __C)
-{
-  return (__m128i) __builtin_ia32_vpclmulqdq_v2di ((__v2di)__A,
-						   (__v2di) __B, __C);
-}
-#else
-#define _mm_clmulepi64_epi128(A, B, C)			   \
-  ((__m128i) __builtin_ia32_vpclmulqdq_v2di ((__v2di)(__m128i)(A), \
-				(__v2di)(__m128i)(B), (int)(C)))
-#endif
-
-#ifdef __DISABLE_VPCLMULQDQVL__
-#undef __DISABLE_VPCLMULQDQVL__
-#pragma GCC pop_options
-#endif /* __DISABLE_VPCLMULQDQVL__ */
 
 #if !defined(__VPCLMULQDQ__) || !defined(__AVX__)
 #pragma GCC push_options

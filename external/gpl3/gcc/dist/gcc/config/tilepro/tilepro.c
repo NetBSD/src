@@ -1,5 +1,5 @@
 /* Subroutines used for code generation on the Tilera TILEPro.
-   Copyright (C) 2011-2018 Free Software Foundation, Inc.
+   Copyright (C) 2011-2019 Free Software Foundation, Inc.
    Contributed by Walter Lee (walt@tilera.com)
 
    This file is part of GCC.
@@ -4771,8 +4771,7 @@ tilepro_print_operand (FILE *file, rtx x, int code)
 	i = exact_log2 (n);
 	if (i < 0)
 	  {
-	    output_operand_lossage ("invalid %%t operand '"
-				    HOST_WIDE_INT_PRINT_DEC "'", n);
+	    output_operand_lossage ("invalid %%t operand");
 	    return;
 	  }
 

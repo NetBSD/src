@@ -1,5 +1,5 @@
 ;; Pipeline descriptions of Andes NDS32 cpu for GNU compiler
-;; Copyright (C) 2012-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2012-2019 Free Software Foundation, Inc.
 ;; Contributed by Andes Technology Corporation.
 ;;
 ;; This file is part of GCC.
@@ -41,6 +41,24 @@
 ;; ------------------------------------------------------------------------
 (include "nds32-n9-3r2w.md")
 (include "nds32-n9-2r1w.md")
+
+
+;; ------------------------------------------------------------------------
+;; Include N10 pipeline settings.
+;; ------------------------------------------------------------------------
+(include "nds32-n10.md")
+
+
+;; ------------------------------------------------------------------------
+;; Include Graywolf pipeline settings.
+;; ------------------------------------------------------------------------
+(include "nds32-graywolf.md")
+
+
+;; ------------------------------------------------------------------------
+;; Include N12/N13 pipeline settings.
+;; ------------------------------------------------------------------------
+(include "nds32-n13.md")
 
 
 ;; ------------------------------------------------------------------------

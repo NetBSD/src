@@ -1,5 +1,5 @@
 /* Description of builtins used by the ARM backend.
-   Copyright (C) 2014-2018 Free Software Foundation, Inc.
+   Copyright (C) 2014-2019 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -82,7 +82,10 @@ enum arm_type_qualifiers
   /* A void pointer.  */
   qualifier_void_pointer = 0x800,
   /* A const void pointer.  */
-  qualifier_const_void_pointer = 0x802
+  qualifier_const_void_pointer = 0x802,
+  /* Lane indices selected in pairs - must be within range of previous
+     argument = a vector.  */
+  qualifier_lane_pair_index = 0x1000
 };
 
 /*  The qualifier_internal allows generation of a unary builtin from
@@ -143,6 +146,13 @@ arm_mac_lane_qualifiers[SIMD_MAX_BUILTIN_ARGS]
   = { qualifier_none, qualifier_none, qualifier_none,
       qualifier_none, qualifier_lane_index };
 #define MAC_LANE_QUALIFIERS (arm_mac_lane_qualifiers)
+
+/* T (T, T, T, lane pair index).  */
+static enum arm_type_qualifiers
+arm_mac_lane_pair_qualifiers[SIMD_MAX_BUILTIN_ARGS]
+  = { qualifier_none, qualifier_none, qualifier_none,
+      qualifier_none, qualifier_lane_pair_index };
+#define MAC_LANE_PAIR_QUALIFIERS (arm_mac_lane_pair_qualifiers)
 
 /* unsigned T (unsigned T, unsigned T, unsigend T, lane index).  */
 static enum arm_type_qualifiers
@@ -926,6 +936,11 @@ arm_init_simd_builtin_types (void)
     = build_distinct_type_copy (unsigned_intTI_type_node);
   (*lang_hooks.types.register_builtin_type) (arm_simd_polyTI_type_node,
 					     "__builtin_neon_poly128");
+
+  /* Prevent front-ends from transforming poly vectors into string
+     literals.  */
+  TYPE_STRING_FLAG (arm_simd_polyQI_type_node) = false;
+  TYPE_STRING_FLAG (arm_simd_polyHI_type_node) = false;
 
   /* Init all the element types built by the front-end.  */
   arm_simd_types[Int8x8_t].eltype = intQI_type_node;
@@ -2124,6 +2139,7 @@ typedef enum {
   ARG_BUILTIN_CONSTANT,
   ARG_BUILTIN_LANE_INDEX,
   ARG_BUILTIN_STRUCT_LOAD_STORE_LANE_INDEX,
+  ARG_BUILTIN_LANE_PAIR_INDEX,
   ARG_BUILTIN_NEON_MEMORY,
   ARG_BUILTIN_MEMORY,
   ARG_BUILTIN_STOP
@@ -2260,6 +2276,19 @@ arm_expand_builtin_args (rtx target, machine_mode map_mode, int fcode,
 		{
 		  machine_mode vmode = mode[argc - 1];
 		  neon_lane_bounds (op[argc], 0, GET_MODE_NUNITS (vmode), exp);
+		}
+	      /* If the lane index isn't a constant then error out.  */
+	      goto constant_arg;
+
+	    case ARG_BUILTIN_LANE_PAIR_INDEX:
+	      /* Previous argument must be a vector, which this indexes. The
+		 indexing will always select i and i+1 out of the vector, which
+		 puts a limit on i.  */
+	      gcc_assert (argc > 0);
+	      if (CONST_INT_P (op[argc]))
+		{
+		  machine_mode vmode = mode[argc - 1];
+		  neon_lane_bounds (op[argc], 0, GET_MODE_NUNITS (vmode) / 2, exp);
 		}
 	      /* If the lane index isn't a constant then the next
 		 case will error.  */
@@ -2422,6 +2451,8 @@ arm_expand_builtin_1 (int fcode, tree exp, rtx target,
 
       if (d->qualifiers[qualifiers_k] & qualifier_lane_index)
 	args[k] = ARG_BUILTIN_LANE_INDEX;
+      else if (d->qualifiers[qualifiers_k] & qualifier_lane_pair_index)
+	args[k] = ARG_BUILTIN_LANE_PAIR_INDEX;
       else if (d->qualifiers[qualifiers_k] & qualifier_struct_load_store_lane_index)
 	args[k] = ARG_BUILTIN_STRUCT_LOAD_STORE_LANE_INDEX;
       else if (d->qualifiers[qualifiers_k] & qualifier_immediate)
@@ -2483,7 +2514,7 @@ arm_expand_neon_builtin (int fcode, tree exp, rtx target)
     {
       fatal_error (input_location,
 		   "You must enable NEON instructions"
-		   " (e.g. -mfloat-abi=softfp -mfpu=neon)"
+		   " (e.g. %<-mfloat-abi=softfp%> %<-mfpu=neon%>)"
 		   " to use these intrinsics.");
       return const0_rtx;
     }
@@ -2581,7 +2612,8 @@ arm_expand_builtin (tree exp,
     {
       fatal_error (input_location,
 		   "You must enable crypto instructions"
-		   " (e.g. include -mfloat-abi=softfp -mfpu=crypto-neon...)"
+		   " (e.g. include %<-mfloat-abi=softfp%> "
+		   "%<-mfpu=crypto-neon%>)"
 		   " to use these intrinsics.");
       return const0_rtx;
     }

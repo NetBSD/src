@@ -1,5 +1,5 @@
 /* Profile counter container type.
-   Copyright (C) 2017-2018 Free Software Foundation, Inc.
+   Copyright (C) 2017-2019 Free Software Foundation, Inc.
    Contributed by Jan Hubicka
 
 This file is part of GCC.
@@ -25,13 +25,41 @@ along with GCC; see the file COPYING3.  If not see
 #include "options.h"
 #include "tree.h"
 #include "basic-block.h"
-#include "cfg.h"
 #include "function.h"
+#include "cfg.h"
 #include "gimple.h"
 #include "data-streamer.h"
 #include "cgraph.h"
 #include "wide-int.h"
 #include "sreal.h"
+
+/* Get a string describing QUALITY.  */
+
+const char *
+profile_quality_as_string (enum profile_quality quality)
+{
+  switch (quality)
+    {
+    default:
+      gcc_unreachable ();
+    case profile_uninitialized:
+      return "uninitialized";
+    case profile_guessed_local:
+      return "guessed_local";
+    case profile_guessed_global0:
+      return "guessed_global0";
+    case profile_guessed_global0adjusted:
+      return "guessed_global0adjusted";
+    case profile_guessed:
+      return "guessed";
+    case profile_afdo:
+      return "afdo";
+    case profile_adjusted:
+      return "adjusted";
+    case profile_precise:
+      return "precise";
+    }
+}
 
 /* Dump THIS to F.  */
 
@@ -55,6 +83,8 @@ profile_count::dump (FILE *f) const
 	fprintf (f, " (auto FDO)");
       else if (m_quality == profile_guessed)
 	fprintf (f, " (guessed)");
+      else if (m_quality == profile_precise)
+	fprintf (f, " (precise)");
     }
 }
 
@@ -210,7 +240,7 @@ bool
 slow_safe_scale_64bit (uint64_t a, uint64_t b, uint64_t c, uint64_t *res)
 {
   FIXED_WIDE_INT (128) tmp = a;
-  bool overflow;
+  wi::overflow_type overflow;
   tmp = wi::udiv_floor (wi::umul (tmp, b, &overflow) + (c / 2), c);
   gcc_checking_assert (!overflow);
   if (wi::fits_uhwi_p (tmp))

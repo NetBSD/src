@@ -1,5 +1,5 @@
 /* SSA Dominator optimizations for trees
-   Copyright (C) 2001-2018 Free Software Foundation, Inc.
+   Copyright (C) 2001-2019 Free Software Foundation, Inc.
    Contributed by Diego Novillo <dnovillo@redhat.com>
 
 This file is part of GCC.
@@ -454,7 +454,8 @@ record_edge_info (basic_block bb)
 	      for (i = 0; i < n_labels; i++)
 		{
 		  tree label = gimple_switch_label (switch_stmt, i);
-		  basic_block target_bb = label_to_block (CASE_LABEL (label));
+		  basic_block target_bb
+		    = label_to_block (cfun, CASE_LABEL (label));
 		  if (CASE_HIGH (label)
 		      || !CASE_LOW (label)
 		      || info[target_bb->index])
@@ -595,6 +596,7 @@ public:
     : dom_walker (direction, REACHABLE_BLOCKS),
       m_const_and_copies (const_and_copies),
       m_avail_exprs_stack (avail_exprs_stack),
+      evrp_range_analyzer (true),
       m_dummy_cond (dummy_cond) { }
 
   virtual edge before_dom_children (basic_block);
@@ -900,25 +902,27 @@ simplify_stmt_for_jump_threading (gimple *stmt,
 	return NULL_TREE;
 
       value_range *vr = x_vr_values->get_value_range (op);
-      if ((vr->type != VR_RANGE && vr->type != VR_ANTI_RANGE)
-	  || symbolic_range_p (vr))
+      if (vr->undefined_p ()
+	  || vr->varying_p ()
+	  || vr->symbolic_p ())
 	return NULL_TREE;
 
-      if (vr->type == VR_RANGE)
+      if (vr->kind () == VR_RANGE)
 	{
 	  size_t i, j;
 
-	  find_case_label_range (switch_stmt, vr->min, vr->max, &i, &j);
+	  find_case_label_range (switch_stmt, vr->min (), vr->max (), &i, &j);
 
 	  if (i == j)
 	    {
 	      tree label = gimple_switch_label (switch_stmt, i);
+	      tree singleton;
 
 	      if (CASE_HIGH (label) != NULL_TREE
-		  ? (tree_int_cst_compare (CASE_LOW (label), vr->min) <= 0
-		     && tree_int_cst_compare (CASE_HIGH (label), vr->max) >= 0)
-		  : (tree_int_cst_equal (CASE_LOW (label), vr->min)
-		     && tree_int_cst_equal (vr->min, vr->max)))
+		  ? (tree_int_cst_compare (CASE_LOW (label), vr->min ()) <= 0
+		     && tree_int_cst_compare (CASE_HIGH (label), vr->max ()) >= 0)
+		  : (vr->singleton_p (&singleton)
+		     && tree_int_cst_equal (CASE_LOW (label), singleton)))
 		return label;
 
 	      if (i > j)
@@ -926,7 +930,7 @@ simplify_stmt_for_jump_threading (gimple *stmt,
 	    }
 	}
 
-      if (vr->type == VR_ANTI_RANGE)
+      if (vr->kind () == VR_ANTI_RANGE)
           {
             unsigned n = gimple_switch_num_labels (switch_stmt);
             tree min_label = gimple_switch_label (switch_stmt, 1);
@@ -935,10 +939,10 @@ simplify_stmt_for_jump_threading (gimple *stmt,
             /* The default label will be taken only if the anti-range of the
                operand is entirely outside the bounds of all the (non-default)
                case labels.  */
-            if (tree_int_cst_compare (vr->min, CASE_LOW (min_label)) <= 0
+            if (tree_int_cst_compare (vr->min (), CASE_LOW (min_label)) <= 0
                 && (CASE_HIGH (max_label) != NULL_TREE
-                    ? tree_int_cst_compare (vr->max, CASE_HIGH (max_label)) >= 0
-                    : tree_int_cst_compare (vr->max, CASE_LOW (max_label)) >= 0))
+                    ? tree_int_cst_compare (vr->max (), CASE_HIGH (max_label)) >= 0
+                    : tree_int_cst_compare (vr->max (), CASE_LOW (max_label)) >= 0))
             return gimple_switch_label (switch_stmt, 0);
           }
 	return NULL_TREE;
@@ -954,11 +958,12 @@ simplify_stmt_for_jump_threading (gimple *stmt,
 	{
 	  edge dummy_e;
 	  tree dummy_tree;
-	  value_range new_vr = VR_INITIALIZER;
+	  value_range new_vr;
 	  x_vr_values->extract_range_from_stmt (stmt, &dummy_e,
 					      &dummy_tree, &new_vr);
-	  if (range_int_cst_singleton_p (&new_vr))
-	    return new_vr.min;
+	  tree singleton;
+	  if (new_vr.singleton_p (&singleton))
+	    return singleton;
 	}
     }
   return NULL;
@@ -1120,9 +1125,12 @@ record_equivalences_from_phis (basic_block bb)
 {
   gphi_iterator gsi;
 
-  for (gsi = gsi_start_phis (bb); !gsi_end_p (gsi); gsi_next (&gsi))
+  for (gsi = gsi_start_phis (bb); !gsi_end_p (gsi); )
     {
       gphi *phi = gsi.phi ();
+
+      /* We might eliminate the PHI, so advance GSI now.  */
+      gsi_next (&gsi);
 
       tree lhs = gimple_phi_result (phi);
       tree rhs = NULL;
@@ -1146,7 +1154,7 @@ record_equivalences_from_phis (basic_block bb)
 	  t = dom_valueize (t);
 
 	  /* If T is an SSA_NAME and its associated edge is a backedge,
-	     then quit as we can not utilize this equivalence.  */
+	     then quit as we cannot utilize this equivalence.  */
 	  if (TREE_CODE (t) == SSA_NAME
 	      && (gimple_phi_arg_edge (phi, i)->flags & EDGE_DFS_BACK))
 	    break;
@@ -1173,9 +1181,26 @@ record_equivalences_from_phis (basic_block bb)
 	 this, since this is a true assignment and not an equivalence
 	 inferred from a comparison.  All uses of this ssa name are dominated
 	 by this assignment, so unwinding just costs time and space.  */
-      if (i == gimple_phi_num_args (phi)
-	  && may_propagate_copy (lhs, rhs))
-	set_ssa_name_value (lhs, rhs);
+      if (i == gimple_phi_num_args (phi))
+	{
+	  if (may_propagate_copy (lhs, rhs))
+	    set_ssa_name_value (lhs, rhs);
+	  else if (virtual_operand_p (lhs))
+	    {
+	      gimple *use_stmt;
+	      imm_use_iterator iter;
+	      use_operand_p use_p;
+	      /* For virtual operands we have to propagate into all uses as
+	         otherwise we will create overlapping life-ranges.  */
+	      FOR_EACH_IMM_USE_STMT (use_stmt, iter, lhs)
+	        FOR_EACH_IMM_USE_ON_STMT (use_p, iter)
+	          SET_USE (use_p, rhs);
+	      if (SSA_NAME_OCCURS_IN_ABNORMAL_PHI (lhs))
+	        SSA_NAME_OCCURS_IN_ABNORMAL_PHI (rhs) = 1;
+	      gimple_stmt_iterator tmp_gsi = gsi_for_stmt (phi);
+	      remove_phi_node (&tmp_gsi, true);
+	    }
+	}
     }
 }
 
@@ -1369,7 +1394,7 @@ cprop_into_successor_phis (basic_block bb,
 	continue;
 
       /* We may have an equivalence associated with this edge.  While
-	 we can not propagate it into non-dominated blocks, we can
+	 we cannot propagate it into non-dominated blocks, we can
 	 propagate them into PHIs in non-dominated blocks.  */
 
       /* Push the unwind marker so we can reset the const and copies
@@ -1552,7 +1577,7 @@ eliminate_redundant_computations (gimple_stmt_iterator* gsi,
   else
     def = gimple_get_lhs (stmt);
 
-  /* Certain expressions on the RHS can be optimized away, but can not
+  /* Certain expressions on the RHS can be optimized away, but cannot
      themselves be entered into the hash tables.  */
   if (! def
       || TREE_CODE (def) != SSA_NAME
@@ -1757,7 +1782,7 @@ record_equivalences_from_stmt (gimple *stmt, int may_optimize_p,
    CONST_AND_COPIES.  */
 
 static void
-cprop_operand (gimple *stmt, use_operand_p op_p)
+cprop_operand (gimple *stmt, use_operand_p op_p, vr_values *vr_values)
 {
   tree val;
   tree op = USE_FROM_PTR (op_p);
@@ -1766,6 +1791,9 @@ cprop_operand (gimple *stmt, use_operand_p op_p)
      copy of some other variable, use the value or copy stored in
      CONST_AND_COPIES.  */
   val = SSA_NAME_VALUE (op);
+  if (!val)
+    val = vr_values->op_with_constant_singleton_value_range (op);
+
   if (val && val != op)
     {
       /* Do not replace hard register operands in asm statements.  */
@@ -1822,7 +1850,7 @@ cprop_operand (gimple *stmt, use_operand_p op_p)
    vdef_ops of STMT.  */
 
 static void
-cprop_into_stmt (gimple *stmt)
+cprop_into_stmt (gimple *stmt, vr_values *vr_values)
 {
   use_operand_p op_p;
   ssa_op_iter iter;
@@ -1839,7 +1867,7 @@ cprop_into_stmt (gimple *stmt)
 	 operands.  */
       if (old_op != last_copy_propagated_op)
 	{
-	  cprop_operand (stmt, op_p);
+	  cprop_operand (stmt, op_p, vr_values);
 
 	  tree new_op = USE_FROM_PTR (op_p);
 	  if (new_op != old_op && TREE_CODE (new_op) == SSA_NAME)
@@ -1957,7 +1985,7 @@ test_for_singularity (gimple *stmt, gcond *dummy_cond,
 
    3- Very simple redundant store elimination is performed.
 
-   4- We can simpify a condition to a constant or from a relational
+   4- We can simplify a condition to a constant or from a relational
       condition to an equality condition.  */
 
 edge
@@ -1983,7 +2011,7 @@ dom_opt_dom_walker::optimize_stmt (basic_block bb, gimple_stmt_iterator *si,
   opt_stats.num_stmts++;
 
   /* Const/copy propagate into USES, VUSES and the RHS of VDEFs.  */
-  cprop_into_stmt (stmt);
+  cprop_into_stmt (stmt, evrp_range_analyzer.get_vr_values ());
 
   /* If the statement has been modified with constant replacements,
      fold its RHS before checking for redundant computations.  */
@@ -2041,8 +2069,7 @@ dom_opt_dom_walker::optimize_stmt (basic_block bb, gimple_stmt_iterator *si,
 	     certain that the value simply isn't constant.  */
 	  tree callee = gimple_call_fndecl (stmt);
 	  if (callee
-	      && DECL_BUILT_IN_CLASS (callee) == BUILT_IN_NORMAL
-	      && DECL_FUNCTION_CODE (callee) == BUILT_IN_CONSTANT_P)
+	      && fndecl_built_in_p (callee, BUILT_IN_CONSTANT_P))
 	    {
 	      propagate_tree_value_into_stmt (si, integer_zero_node);
 	      stmt = gsi_stmt (*si);

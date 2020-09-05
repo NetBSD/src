@@ -1,6 +1,6 @@
 // Map implementation -*- C++ -*-
 
-// Copyright (C) 2001-2018 Free Software Foundation, Inc.
+// Copyright (C) 2001-2019 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -227,12 +227,12 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	  const _Compare& __comp = _Compare(),
 	  const allocator_type& __a = allocator_type())
       : _M_t(__comp, _Pair_alloc_type(__a))
-      { _M_t._M_insert_unique(__l.begin(), __l.end()); }
+      { _M_t._M_insert_range_unique(__l.begin(), __l.end()); }
 
       /// Allocator-extended default constructor.
       explicit
       map(const allocator_type& __a)
-      : _M_t(_Compare(), _Pair_alloc_type(__a)) { }
+      : _M_t(_Pair_alloc_type(__a)) { }
 
       /// Allocator-extended copy constructor.
       map(const map& __m, const allocator_type& __a)
@@ -246,15 +246,15 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 
       /// Allocator-extended initialier-list constructor.
       map(initializer_list<value_type> __l, const allocator_type& __a)
-      : _M_t(_Compare(), _Pair_alloc_type(__a))
-      { _M_t._M_insert_unique(__l.begin(), __l.end()); }
+      : _M_t(_Pair_alloc_type(__a))
+      { _M_t._M_insert_range_unique(__l.begin(), __l.end()); }
 
       /// Allocator-extended range constructor.
       template<typename _InputIterator>
 	map(_InputIterator __first, _InputIterator __last,
 	    const allocator_type& __a)
-	: _M_t(_Compare(), _Pair_alloc_type(__a))
-	{ _M_t._M_insert_unique(__first, __last); }
+	: _M_t(_Pair_alloc_type(__a))
+	{ _M_t._M_insert_range_unique(__first, __last); }
 #endif
 
       /**
@@ -270,7 +270,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       template<typename _InputIterator>
 	map(_InputIterator __first, _InputIterator __last)
 	: _M_t()
-	{ _M_t._M_insert_unique(__first, __last); }
+	{ _M_t._M_insert_range_unique(__first, __last); }
 
       /**
        *  @brief  Builds a %map from a range.
@@ -289,7 +289,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	    const _Compare& __comp,
 	    const allocator_type& __a = allocator_type())
 	: _M_t(__comp, _Pair_alloc_type(__a))
-	{ _M_t._M_insert_unique(__first, __last); }
+	{ _M_t._M_insert_range_unique(__first, __last); }
 
 #if __cplusplus >= 201103L
       /**
@@ -459,7 +459,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       /** Returns true if the %map is empty.  (Thus begin() would equal
        *  end().)
       */
-      bool
+      _GLIBCXX_NODISCARD bool
       empty() const _GLIBCXX_NOEXCEPT
       { return _M_t.empty(); }
 
@@ -889,7 +889,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       template<typename _InputIterator>
 	void
 	insert(_InputIterator __first, _InputIterator __last)
-	{ _M_t._M_insert_unique(__first, __last); }
+	{ _M_t._M_insert_range_unique(__first, __last); }
 
 #if __cplusplus > 201402L
 #define __cpp_lib_map_insertion 201411
@@ -1222,6 +1222,25 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 #endif
       //@}
 
+#if __cplusplus > 201703L
+      //@{
+      /**
+       *  @brief  Finds whether an element with the given key exists.
+       *  @param  __x  Key of (key, value) pairs to be located.
+       *  @return  True if there is an element with the specified key.
+       */
+      bool
+      contains(const key_type& __x) const
+      { return _M_t.find(__x) != _M_t.end(); }
+
+      template<typename _Kt>
+	auto
+	contains(const _Kt& __x) const
+	-> decltype(_M_t._M_find_tr(__x), void(), true)
+	{ return _M_t._M_find_tr(__x) != _M_t.end(); }
+      //@}
+#endif
+
       //@{
       /**
        *  @brief Finds the beginning of a subsequence matching given key.
@@ -1392,6 +1411,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	   typename _Compare = less<__iter_key_t<_InputIterator>>,
 	   typename _Allocator = allocator<__iter_to_alloc_t<_InputIterator>>,
 	   typename = _RequireInputIter<_InputIterator>,
+	   typename = _RequireNotAllocator<_Compare>,
 	   typename = _RequireAllocator<_Allocator>>
     map(_InputIterator, _InputIterator,
 	_Compare = _Compare(), _Allocator = _Allocator())
@@ -1400,6 +1420,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 
   template<typename _Key, typename _Tp, typename _Compare = less<_Key>,
 	   typename _Allocator = allocator<pair<const _Key, _Tp>>,
+	   typename = _RequireNotAllocator<_Compare>,
 	   typename = _RequireAllocator<_Allocator>>
     map(initializer_list<pair<_Key, _Tp>>,
 	_Compare = _Compare(), _Allocator = _Allocator())

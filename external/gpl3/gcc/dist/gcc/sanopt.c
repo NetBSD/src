@@ -1,5 +1,5 @@
 /* Optimize and expand sanitizer functions.
-   Copyright (C) 2014-2018 Free Software Foundation, Inc.
+   Copyright (C) 2014-2019 Free Software Foundation, Inc.
    Contributed by Marek Polacek <polacek@redhat.com>
 
 This file is part of GCC.
@@ -1165,12 +1165,17 @@ sanitize_rewrite_addressable_params (function *fun)
 
 	  gimple_add_tmp_var (var);
 
-	  if (dump_file)
-	    fprintf (dump_file,
-		     "Rewriting parameter whose address is taken: %s\n",
-		     IDENTIFIER_POINTER (DECL_NAME (arg)));
+	  /* We skip parameters that have a DECL_VALUE_EXPR.  */
+	  if (DECL_HAS_VALUE_EXPR_P (arg))
+	    continue;
 
-	  gcc_assert (!DECL_HAS_VALUE_EXPR_P (arg));
+	  if (dump_file)
+	    {
+	      fprintf (dump_file,
+		       "Rewriting parameter whose address is taken: ");
+	      print_generic_expr (dump_file, arg, dump_flags);
+	      fputc ('\n', dump_file);
+	    }
 
 	  SET_DECL_PT_UID (var, DECL_PT_UID (arg));
 

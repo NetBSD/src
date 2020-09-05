@@ -1,5 +1,5 @@
 /* Xstormy16 cpu description.
-   Copyright (C) 1997-2018 Free Software Foundation, Inc.
+   Copyright (C) 1997-2019 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of GCC.
@@ -476,5 +476,3 @@ enum reg_class
 #define Pmode HImode
 
 #define FUNCTION_MODE HImode
-
-#define NO_IMPLICIT_EXTERN_C

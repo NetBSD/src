@@ -1,5 +1,5 @@
 /* Definitions for GCC.  Part of the machine description for CRIS.
-   Copyright (C) 1998-2018 Free Software Foundation, Inc.
+   Copyright (C) 1998-2019 Free Software Foundation, Inc.
    Contributed by Axis Communications.  Written by Hans-Peter Nilsson.
 
 This file is part of GCC.
@@ -1029,8 +1029,6 @@ enum cris_symbol_type
 #define Pmode SImode
 
 #define FUNCTION_MODE QImode
-
-#define NO_IMPLICIT_EXTERN_C
 
 /*
  * Local variables:

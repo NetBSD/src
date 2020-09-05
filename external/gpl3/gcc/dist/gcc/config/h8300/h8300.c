@@ -1,5 +1,5 @@
 /* Subroutines for insn-output.c for Renesas H8/300.
-   Copyright (C) 1992-2018 Free Software Foundation, Inc.
+   Copyright (C) 1992-2019 Free Software Foundation, Inc.
    Contributed by Steve Chamberlain (sac@cygnus.com),
    Jim Wilson (wilson@cygnus.com), and Doug Evans (dje@cygnus.com).
 
@@ -326,7 +326,7 @@ h8300_option_override (void)
 #ifndef OBJECT_FORMAT_ELF
   if (TARGET_H8300SX)
     {
-      error ("-msx is not supported in coff");
+      error ("%<-msx%> is not supported in coff");
       target_flags |= MASK_H8300S;
     }
 #endif
@@ -348,44 +348,44 @@ h8300_option_override (void)
 
   if (!TARGET_H8300S && TARGET_MAC)
     {
-      error ("-ms2600 is used without -ms");
+      error ("%<-ms2600%> is used without %<-ms%>");
       target_flags |= MASK_H8300S_1;
     }
 
   if (TARGET_H8300 && TARGET_NORMAL_MODE)
     {
-      error ("-mn is used without -mh or -ms or -msx");
+      error ("%<-mn%> is used without %<-mh%> or %<-ms%> or %<-msx%>");
       target_flags ^= MASK_NORMAL_MODE;
     }
 
   if (! TARGET_H8300S &&  TARGET_EXR)
     {
-      error ("-mexr is used without -ms");
+      error ("%<-mexr%> is used without %<-ms%>");
       target_flags |= MASK_H8300S_1;
     }
 
   if (TARGET_H8300 && TARGET_INT32)
    {
-      error ("-mint32 is not supported for H8300 and H8300L targets");
+      error ("%<-mint32%> is not supported for H8300 and H8300L targets");
       target_flags ^= MASK_INT32;
    }
 
  if ((!TARGET_H8300S  &&  TARGET_EXR) && (!TARGET_H8300SX && TARGET_EXR))
    {
-      error ("-mexr is used without -ms or -msx");
+      error ("%<-mexr%> is used without %<-ms%> or %<-msx%>");
       target_flags |= MASK_H8300S_1;
    }
 
  if ((!TARGET_H8300S  &&  TARGET_NEXR) && (!TARGET_H8300SX && TARGET_NEXR))
    {
-      warning (OPT_mno_exr, "-mno-exr valid only with -ms or -msx    \
-               - Option ignored!");
+      warning (OPT_mno_exr, "%<-mno-exr%> valid only with %<-ms%> or "
+	       "%<-msx%> - Option ignored!");
    }
 
 #ifdef H8300_LINUX 
  if ((TARGET_NORMAL_MODE))
    {
-      error ("-mn is not supported for linux targets");
+      error ("%<-mn%> is not supported for linux targets");
       target_flags ^= MASK_NORMAL_MODE;
    }
 #endif
@@ -865,15 +865,15 @@ h8300_expand_prologue (void)
 	  if (TARGET_H8300S)
 	    {
 	      /* See how many registers we can push at the same time.  */
-	      if ((!TARGET_H8300SX || (regno & 3) == 0)
+	      if ((TARGET_H8300SX || (regno & 3) == 0)
 		  && ((saved_regs >> regno) & 0x0f) == 0x0f)
 		n_regs = 4;
 
-	      else if ((!TARGET_H8300SX || (regno & 3) == 0)
+	      else if ((TARGET_H8300SX || (regno & 3) == 0)
 		       && ((saved_regs >> regno) & 0x07) == 0x07)
 		n_regs = 3;
 
-	      else if ((!TARGET_H8300SX || (regno & 1) == 0)
+	      else if ((TARGET_H8300SX || (regno & 1) == 0)
 		       && ((saved_regs >> regno) & 0x03) == 0x03)
 		n_regs = 2;
 	    }
@@ -2551,14 +2551,14 @@ h8300_insn_length_from_table (rtx_insn *insn, rtx * operands)
     case LENGTH_TABLE_NONE:
       gcc_unreachable ();
 
-    case LENGTH_TABLE_ADDB:
-      return h8300_binary_length (insn, &addb_length_table);
-
-    case LENGTH_TABLE_ADDW:
-      return h8300_binary_length (insn, &addw_length_table);
-
-    case LENGTH_TABLE_ADDL:
-      return h8300_binary_length (insn, &addl_length_table);
+    case LENGTH_TABLE_ADD:
+      if (GET_MODE (operands[0]) == QImode)
+        return h8300_binary_length (insn, &addb_length_table);
+      else if (GET_MODE (operands[0]) == HImode)
+        return h8300_binary_length (insn, &addw_length_table);
+      else if (GET_MODE (operands[0]) == SImode)
+        return h8300_binary_length (insn, &addl_length_table);
+      gcc_unreachable ();
 
     case LENGTH_TABLE_LOGICB:
       return h8300_binary_length (insn, &logicb_length_table);
@@ -6147,5 +6147,8 @@ h8300_push_rounding (poly_int64 bytes)
 
 #undef TARGET_MODE_DEPENDENT_ADDRESS_P
 #define TARGET_MODE_DEPENDENT_ADDRESS_P h8300_mode_dependent_address_p
+
+#undef TARGET_HAVE_SPECULATION_SAFE_VALUE
+#define TARGET_HAVE_SPECULATION_SAFE_VALUE speculation_safe_value_not_needed
 
 struct gcc_target targetm = TARGET_INITIALIZER;

@@ -1,5 +1,5 @@
 /* Gcc offline profile processing tool support. */
-/* Copyright (C) 2014-2018 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2019 Free Software Foundation, Inc.
    Contributed by Rong Xu <xur@google.com>.
 
 This file is part of GCC.
@@ -423,7 +423,6 @@ print_overlap_usage_message (int error_p)
   fnotice (file, "    -o, --object                        Print object level info\n");
   fnotice (file, "    -t <float>, --hot_threshold <float> Set the threshold for hotness\n");
   fnotice (file, "    -v, --verbose                       Verbose mode\n");
-
 }
 
 static const struct option overlap_options[] =
@@ -439,7 +438,7 @@ static const struct option overlap_options[] =
 
 /* Print overlap usage and exit.  */
 
-static void
+static void ATTRIBUTE_NORETURN
 overlap_usage (void)
 {
   fnotice (stderr, "Overlap subcomand usage:");
@@ -526,7 +525,7 @@ static void
 print_version (void)
 {
   fnotice (stdout, "%s %s%s\n", progname, pkgversion_string, version_string);
-  fnotice (stdout, "Copyright %s 2018 Free Software Foundation, Inc.\n",
+  fnotice (stdout, "Copyright %s 2019 Free Software Foundation, Inc.\n",
            _("(C)"));
   fnotice (stdout,
            _("This is free software; see the source for copying conditions.\n"

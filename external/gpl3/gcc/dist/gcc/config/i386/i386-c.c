@@ -1,5 +1,5 @@
 /* Subroutines used for macro/preprocessor support on the ia-32.
-   Copyright (C) 2008-2018 Free Software Foundation, Inc.
+   Copyright (C) 2008-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -124,6 +124,10 @@ ix86_target_macros_internal (HOST_WIDE_INT isa_flag,
       def_or_undef (parse_in, "__znver1");
       def_or_undef (parse_in, "__znver1__");
       break;
+    case PROCESSOR_ZNVER2:
+      def_or_undef (parse_in, "__znver2");
+      def_or_undef (parse_in, "__znver2__");
+      break;
     case PROCESSOR_BTVER1:
       def_or_undef (parse_in, "__btver1");
       def_or_undef (parse_in, "__btver1__");
@@ -174,6 +178,18 @@ ix86_target_macros_internal (HOST_WIDE_INT isa_flag,
       def_or_undef (parse_in, "__silvermont");
       def_or_undef (parse_in, "__silvermont__");
       break;
+    case PROCESSOR_GOLDMONT:
+      def_or_undef (parse_in, "__goldmont");
+      def_or_undef (parse_in, "__goldmont__");
+      break;
+    case PROCESSOR_GOLDMONT_PLUS:
+      def_or_undef (parse_in, "__goldmont_plus");
+      def_or_undef (parse_in, "__goldmont_plus__");
+      break;
+    case PROCESSOR_TREMONT:
+      def_or_undef (parse_in, "__tremont");
+      def_or_undef (parse_in, "__tremont__");
+      break;
     case PROCESSOR_KNL:
       def_or_undef (parse_in, "__knl");
       def_or_undef (parse_in, "__knl__");
@@ -201,6 +217,10 @@ ix86_target_macros_internal (HOST_WIDE_INT isa_flag,
     case PROCESSOR_ICELAKE_SERVER:
       def_or_undef (parse_in, "__icelake_server");
       def_or_undef (parse_in, "__icelake_server__");
+      break;
+    case PROCESSOR_CASCADELAKE:
+      def_or_undef (parse_in, "__cascadelake");
+      def_or_undef (parse_in, "__cascadelake__");
       break;
     /* use PROCESSOR_max to not set/unset the arch macro.  */
     case PROCESSOR_max:
@@ -276,6 +296,9 @@ ix86_target_macros_internal (HOST_WIDE_INT isa_flag,
     case PROCESSOR_ZNVER1:
       def_or_undef (parse_in, "__tune_znver1__");
       break;
+    case PROCESSOR_ZNVER2:
+      def_or_undef (parse_in, "__tune_znver2__");
+      break;
     case PROCESSOR_BTVER1:
       def_or_undef (parse_in, "__tune_btver1__");
       break;
@@ -311,6 +334,15 @@ ix86_target_macros_internal (HOST_WIDE_INT isa_flag,
       def_or_undef (parse_in, "__tune_slm__");
       def_or_undef (parse_in, "__tune_silvermont__");
       break;
+    case PROCESSOR_GOLDMONT:
+      def_or_undef (parse_in, "__tune_goldmont__");
+      break;
+    case PROCESSOR_GOLDMONT_PLUS:
+      def_or_undef (parse_in, "__tune_goldmont_plus__");
+      break;
+    case PROCESSOR_TREMONT:
+      def_or_undef (parse_in, "__tune_tremont__");
+      break;
     case PROCESSOR_KNL:
       def_or_undef (parse_in, "__tune_knl__");
       break;
@@ -334,6 +366,9 @@ ix86_target_macros_internal (HOST_WIDE_INT isa_flag,
       break;
     case PROCESSOR_LAKEMONT:
       def_or_undef (parse_in, "__tune_lakemont__");
+      break;
+    case PROCESSOR_CASCADELAKE:
+      def_or_undef (parse_in, "__tune_cascadelake__");
       break;
     case PROCESSOR_INTEL:
     case PROCESSOR_GENERIC:
@@ -487,8 +522,6 @@ ix86_target_macros_internal (HOST_WIDE_INT isa_flag,
     def_or_undef (parse_in, "__XSAVEC__");
   if (isa_flag & OPTION_MASK_ISA_XSAVES)
     def_or_undef (parse_in, "__XSAVES__");
-  if (isa_flag2 & OPTION_MASK_ISA_MPX)
-    def_or_undef (parse_in, "__MPX__");
   if (isa_flag & OPTION_MASK_ISA_CLWB)
     def_or_undef (parse_in, "__CLWB__");
   if (isa_flag2 & OPTION_MASK_ISA_MWAITX)
@@ -509,6 +542,12 @@ ix86_target_macros_internal (HOST_WIDE_INT isa_flag,
     def_or_undef (parse_in, "__MOVDIRI__");
   if (isa_flag2 & OPTION_MASK_ISA_MOVDIR64B)
     def_or_undef (parse_in, "__MOVDIR64B__");
+  if (isa_flag2 & OPTION_MASK_ISA_WAITPKG)
+    def_or_undef (parse_in, "__WAITPKG__");
+  if (isa_flag2 & OPTION_MASK_ISA_CLDEMOTE)
+    def_or_undef (parse_in, "__CLDEMOTE__");
+  if (isa_flag2 & OPTION_MASK_ISA_PTWRITE)
+    def_or_undef (parse_in, "__PTWRITE__");
   if (TARGET_IAMCU)
     {
       def_or_undef (parse_in, "__iamcu");

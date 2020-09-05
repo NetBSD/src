@@ -1,5 +1,5 @@
 /* Default macros to initialize the lang_hooks data structure.
-   Copyright (C) 2001-2018 Free Software Foundation, Inc.
+   Copyright (C) 2001-2019 Free Software Foundation, Inc.
    Contributed by Alexandre Oliva  <aoliva@redhat.com>
 
 This file is part of GCC.
@@ -70,8 +70,8 @@ extern void lhd_initialize_diagnostics (diagnostic_context *);
 extern void lhd_init_options (unsigned int,
 			      struct cl_decoded_option *);
 extern bool lhd_complain_wrong_lang_p (const struct cl_option *);
-extern bool lhd_handle_option (size_t, const char *, int, int, location_t,
-			       const struct cl_option_handlers *);
+extern bool lhd_handle_option (size_t, const char *, HOST_WIDE_INT, int,
+			       location_t, const struct cl_option_handlers *);
 
 
 /* Declarations for tree gimplification hooks.  */

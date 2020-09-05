@@ -1,6 +1,6 @@
 // class template regex -*- C++ -*-
 
-// Copyright (C) 2013-2018 Free Software Foundation, Inc.
+// Copyright (C) 2013-2019 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -500,7 +500,7 @@ namespace __detail
 	   typename _Rx_traits>
     bool
     regex_iterator<_Bi_iter, _Ch_type, _Rx_traits>::
-    operator==(const regex_iterator& __rhs) const
+    operator==(const regex_iterator& __rhs) const noexcept
     {
       if (_M_pregex == nullptr && __rhs._M_pregex == nullptr)
 	return true;

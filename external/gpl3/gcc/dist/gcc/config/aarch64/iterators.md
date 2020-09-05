@@ -1,5 +1,5 @@
 ;; Machine description for AArch64 architecture.
-;; Copyright (C) 2009-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2019 Free Software Foundation, Inc.
 ;; Contributed by ARM Ltd.
 ;;
 ;; This file is part of GCC.
@@ -35,6 +35,9 @@
 ;; Iterator for all integer modes (up to 64-bit)
 (define_mode_iterator ALLI [QI HI SI DI])
 
+;; Iterator for all integer modes (up to 128-bit)
+(define_mode_iterator ALLI_TI [QI HI SI DI TI])
+
 ;; Iterator for all integer modes that can be extended (up to 64-bit)
 (define_mode_iterator ALLX [QI HI SI])
 
@@ -69,6 +72,12 @@
 ;; Double vector modes.
 (define_mode_iterator VD [V8QI V4HI V4HF V2SI V2SF])
 
+;; All modes stored in registers d0-d31.
+(define_mode_iterator DREG [V8QI V4HI V4HF V2SI V2SF DF])
+
+;; Copy of the above.
+(define_mode_iterator DREG2 [V8QI V4HI V4HF V2SI V2SF DF])
+
 ;; Advanced SIMD, 64-bit container, all integer modes.
 (define_mode_iterator VD_BHSI [V8QI V4HI V2SI])
 
@@ -77,6 +86,12 @@
 
 ;; Quad vector modes.
 (define_mode_iterator VQ [V16QI V8HI V4SI V2DI V8HF V4SF V2DF])
+
+;; Copy of the above.
+(define_mode_iterator VQ2 [V16QI V8HI V4SI V2DI V8HF V4SF V2DF])
+
+;; Quad integer vector modes.
+(define_mode_iterator VQ_I [V16QI V8HI V4SI V2DI])
 
 ;; VQ without 2 element modes.
 (define_mode_iterator VQ_NO2E [V16QI V8HI V4SI V8HF V4SF])
@@ -235,6 +250,19 @@
 
 ;; Double scalar modes
 (define_mode_iterator DX [DI DF])
+
+;; Duplicate of the above
+(define_mode_iterator DX2 [DI DF])
+
+;; Single scalar modes
+(define_mode_iterator SX [SI SF])
+
+;; Duplicate of the above
+(define_mode_iterator SX2 [SI SF])
+
+;; Single and double integer and float modes
+(define_mode_iterator DSX [DF DI SF SI])
+
 
 ;; Modes available for Advanced SIMD <f>mul lane operations.
 (define_mode_iterator VMUL [V4HI V8HI V2SI V4SI
@@ -442,25 +470,27 @@
     UNSPEC_UMUL_HIGHPART ; Used in aarch64-sve.md.
     UNSPEC_COND_ADD	; Used in aarch64-sve.md.
     UNSPEC_COND_SUB	; Used in aarch64-sve.md.
-    UNSPEC_COND_SMAX	; Used in aarch64-sve.md.
-    UNSPEC_COND_UMAX	; Used in aarch64-sve.md.
-    UNSPEC_COND_SMIN	; Used in aarch64-sve.md.
-    UNSPEC_COND_UMIN	; Used in aarch64-sve.md.
-    UNSPEC_COND_AND	; Used in aarch64-sve.md.
-    UNSPEC_COND_ORR	; Used in aarch64-sve.md.
-    UNSPEC_COND_EOR	; Used in aarch64-sve.md.
+    UNSPEC_COND_MUL	; Used in aarch64-sve.md.
+    UNSPEC_COND_DIV	; Used in aarch64-sve.md.
+    UNSPEC_COND_MAX	; Used in aarch64-sve.md.
+    UNSPEC_COND_MIN	; Used in aarch64-sve.md.
+    UNSPEC_COND_FMLA	; Used in aarch64-sve.md.
+    UNSPEC_COND_FMLS	; Used in aarch64-sve.md.
+    UNSPEC_COND_FNMLA	; Used in aarch64-sve.md.
+    UNSPEC_COND_FNMLS	; Used in aarch64-sve.md.
     UNSPEC_COND_LT	; Used in aarch64-sve.md.
     UNSPEC_COND_LE	; Used in aarch64-sve.md.
     UNSPEC_COND_EQ	; Used in aarch64-sve.md.
     UNSPEC_COND_NE	; Used in aarch64-sve.md.
     UNSPEC_COND_GE	; Used in aarch64-sve.md.
     UNSPEC_COND_GT	; Used in aarch64-sve.md.
-    UNSPEC_COND_LO	; Used in aarch64-sve.md.
-    UNSPEC_COND_LS	; Used in aarch64-sve.md.
-    UNSPEC_COND_HS	; Used in aarch64-sve.md.
-    UNSPEC_COND_HI	; Used in aarch64-sve.md.
-    UNSPEC_COND_UO	; Used in aarch64-sve.md.
     UNSPEC_LASTB	; Used in aarch64-sve.md.
+    UNSPEC_FCADD90	; Used in aarch64-simd.md.
+    UNSPEC_FCADD270	; Used in aarch64-simd.md.
+    UNSPEC_FCMLA	; Used in aarch64-simd.md.
+    UNSPEC_FCMLA90	; Used in aarch64-simd.md.
+    UNSPEC_FCMLA180	; Used in aarch64-simd.md.
+    UNSPEC_FCMLA270	; Used in aarch64-simd.md.
 ])
 
 ;; ------------------------------------------------------------------
@@ -479,7 +509,6 @@
     UNSPECV_ATOMIC_CAS		; Represent an atomic CAS.
     UNSPECV_ATOMIC_SWP		; Represent an atomic SWP.
     UNSPECV_ATOMIC_OP		; Represent an atomic operation.
-    UNSPECV_ATOMIC_LDOP		; Represent an atomic load-operation
     UNSPECV_ATOMIC_LDOP_OR	; Represent an atomic load-or
     UNSPECV_ATOMIC_LDOP_BIC	; Represent an atomic load-bic
     UNSPECV_ATOMIC_LDOP_XOR	; Represent an atomic load-xor
@@ -861,7 +890,8 @@
 			       (V4HF "V4HI") (V8HF  "V8HI")
 			       (V2SF "V2SI") (V4SF  "V4SI")
 			       (DF   "DI")   (V2DF  "V2DI")
-			       (SF   "SI")   (HF    "HI")
+			       (SF   "SI")   (SI    "SI")
+			       (HF    "HI")
 			       (VNx16QI "VNx16QI")
 			       (VNx8HI  "VNx8HI") (VNx8HF "VNx8HI")
 			       (VNx4SI  "VNx4SI") (VNx4SF "VNx4SI")
@@ -1022,6 +1052,9 @@
 
 (define_code_attr f16mac [(plus "a") (minus "s")])
 
+;; Map smax to smin and umax to umin.
+(define_code_attr max_opp [(smax "smin") (umax "umin")])
+
 ;; The number of subvectors in an SVE_STRUCT.
 (define_mode_attr vector_count [(VNx32QI "2") (VNx16HI "2")
 				(VNx8SI  "2") (VNx4DI  "2")
@@ -1110,6 +1143,13 @@
 			 (VNx16SI "vnx4bi") (VNx16SF "vnx4bi")
 			 (VNx8DI "vnx2bi") (VNx8DF "vnx2bi")])
 
+;; On AArch64 the By element instruction doesn't have a 2S variant.
+;; However because the instruction always selects a pair of values
+;; The normal 3SAME instruction can be used here instead.
+(define_mode_attr FCMLA_maybe_lane [(V2SF "<Vtype>") (V4SF "<Vetype>[%4]")
+				    (V4HF "<Vetype>[%4]") (V8HF "<Vetype>[%4]")
+				    ])
+
 ;; -------------------------------------------------------------------
 ;; Code Iterators
 ;; -------------------------------------------------------------------
@@ -1163,6 +1203,9 @@
 
 (define_code_iterator FMAXMIN [smax smin])
 
+;; Signed and unsigned max operations.
+(define_code_iterator USMAX [smax umax])
+
 ;; Code iterator for variants of vector max and min.
 (define_code_iterator ADDSUB [plus minus])
 
@@ -1185,10 +1228,26 @@
 (define_code_iterator FAC_COMPARISONS [lt le ge gt])
 
 ;; SVE integer unary operations.
-(define_code_iterator SVE_INT_UNARY [neg not popcount])
+(define_code_iterator SVE_INT_UNARY [abs neg not popcount])
 
 ;; SVE floating-point unary operations.
-(define_code_iterator SVE_FP_UNARY [neg abs sqrt])
+(define_code_iterator SVE_FP_UNARY [abs neg sqrt])
+
+;; SVE integer binary operations.
+(define_code_iterator SVE_INT_BINARY [plus minus mult smax umax smin umin
+				      and ior xor])
+
+;; SVE integer binary division operations.
+(define_code_iterator SVE_INT_BINARY_SD [div udiv])
+
+;; SVE floating-point operations with an unpredicated all-register form.
+(define_code_iterator SVE_UNPRED_FP_BINARY [plus minus mult])
+
+;; SVE integer comparisons.
+(define_code_iterator SVE_INT_CMP [lt le eq ne ge gt ltu leu geu gtu])
+
+;; SVE floating-point comparisons.
+(define_code_iterator SVE_FP_CMP [lt le eq ne ge gt])
 
 ;; -------------------------------------------------------------------
 ;; Code Attributes
@@ -1214,6 +1273,9 @@
 			 (neg "neg")
 			 (plus "add")
 			 (minus "sub")
+			 (mult "mul")
+			 (div "div")
+			 (udiv "udiv")
 			 (ss_plus "qadd")
 			 (us_plus "qadd")
 			 (ss_minus "qsub")
@@ -1252,6 +1314,18 @@
 (define_code_attr CMP [(lt "LT") (le "LE") (eq "EQ") (ge "GE") (gt "GT")
 			(ltu "LTU") (leu "LEU") (ne "NE") (geu "GEU")
 			(gtu "GTU")])
+
+;; The AArch64 condition associated with an rtl comparison code.
+(define_code_attr cmp_op [(lt "lt")
+			  (le "le")
+			  (eq "eq")
+			  (ne "ne")
+			  (ge "ge")
+			  (gt "gt")
+			  (ltu "lo")
+			  (leu "ls")
+			  (geu "hs")
+			  (gtu "hi")])
 
 (define_code_attr fix_trunc_optab [(fix "fix_trunc")
 				   (unsigned_fix "fixuns_trunc")])
@@ -1342,6 +1416,11 @@
 
 ;; The integer SVE instruction that implements an rtx code.
 (define_code_attr sve_int_op [(plus "add")
+			      (minus "sub")
+			      (mult "mul")
+			      (div "sdiv")
+			      (udiv "udiv")
+			      (abs "abs")
 			      (neg "neg")
 			      (smin "smin")
 			      (smax "smax")
@@ -1353,15 +1432,52 @@
 			      (not "not")
 			      (popcount "cnt")])
 
+(define_code_attr sve_int_op_rev [(plus "add")
+			          (minus "subr")
+			          (mult "mul")
+			          (div "sdivr")
+			          (udiv "udivr")
+			          (smin "smin")
+			          (smax "smax")
+			          (umin "umin")
+			          (umax "umax")
+			          (and "and")
+			          (ior "orr")
+			          (xor "eor")])
+
 ;; The floating-point SVE instruction that implements an rtx code.
 (define_code_attr sve_fp_op [(plus "fadd")
+			     (minus "fsub")
+			     (mult "fmul")
 			     (neg "fneg")
 			     (abs "fabs")
 			     (sqrt "fsqrt")])
 
+;; The SVE immediate constraint to use for an rtl code.
+(define_code_attr sve_imm_con [(eq "vsc")
+			       (ne "vsc")
+			       (lt "vsc")
+			       (ge "vsc")
+			       (le "vsc")
+			       (gt "vsc")
+			       (ltu "vsd")
+			       (leu "vsd")
+			       (geu "vsd")
+			       (gtu "vsd")])
+
 ;; -------------------------------------------------------------------
 ;; Int Iterators.
 ;; -------------------------------------------------------------------
+
+;; The unspec codes for the SABAL, UABAL AdvancedSIMD instructions.
+(define_int_iterator ABAL [UNSPEC_SABAL UNSPEC_UABAL])
+
+;; The unspec codes for the SABDL2, UABDL2 AdvancedSIMD instructions.
+(define_int_iterator ABDL2 [UNSPEC_SABDL2 UNSPEC_UABDL2])
+
+;; The unspec codes for the SADALP, UADALP AdvancedSIMD instructions.
+(define_int_iterator ADALP [UNSPEC_SADALP UNSPEC_UADALP])
+
 (define_int_iterator MAXMINV [UNSPEC_UMAXV UNSPEC_UMINV
 			      UNSPEC_SMAXV UNSPEC_SMINV])
 
@@ -1376,6 +1492,10 @@
 			      UNSPEC_SRHADD UNSPEC_URHADD
 			      UNSPEC_SHSUB UNSPEC_UHSUB
 			      UNSPEC_SRHSUB UNSPEC_URHSUB])
+
+(define_int_iterator HADD [UNSPEC_SHADD UNSPEC_UHADD])
+
+(define_int_iterator RHADD [UNSPEC_SRHADD UNSPEC_URHADD])
 
 (define_int_iterator DOTPROD [UNSPEC_SDOT UNSPEC_UDOT])
 
@@ -1442,8 +1562,6 @@
 (define_int_iterator FCVT_F2FIXED [UNSPEC_FCVTZS UNSPEC_FCVTZU])
 (define_int_iterator FCVT_FIXED2F [UNSPEC_SCVTF UNSPEC_UCVTF])
 
-(define_int_iterator FRECP [UNSPEC_FRECPE UNSPEC_FRECPX])
-
 (define_int_iterator CRC [UNSPEC_CRC32B UNSPEC_CRC32H UNSPEC_CRC32W
                           UNSPEC_CRC32X UNSPEC_CRC32CB UNSPEC_CRC32CH
                           UNSPEC_CRC32CW UNSPEC_CRC32CX])
@@ -1475,24 +1593,26 @@
 
 (define_int_iterator MUL_HIGHPART [UNSPEC_SMUL_HIGHPART UNSPEC_UMUL_HIGHPART])
 
-(define_int_iterator SVE_COND_INT_OP [UNSPEC_COND_ADD UNSPEC_COND_SUB
-				      UNSPEC_COND_SMAX UNSPEC_COND_UMAX
-				      UNSPEC_COND_SMIN UNSPEC_COND_UMIN
-				      UNSPEC_COND_AND
-				      UNSPEC_COND_ORR
-				      UNSPEC_COND_EOR])
+(define_int_iterator SVE_COND_FP_BINARY [UNSPEC_COND_ADD UNSPEC_COND_SUB
+					 UNSPEC_COND_MUL UNSPEC_COND_DIV
+					 UNSPEC_COND_MAX UNSPEC_COND_MIN])
 
-(define_int_iterator SVE_COND_FP_OP [UNSPEC_COND_ADD UNSPEC_COND_SUB])
-
-(define_int_iterator SVE_COND_INT_CMP [UNSPEC_COND_LT UNSPEC_COND_LE
-				       UNSPEC_COND_EQ UNSPEC_COND_NE
-				       UNSPEC_COND_GE UNSPEC_COND_GT
-				       UNSPEC_COND_LO UNSPEC_COND_LS
-				       UNSPEC_COND_HS UNSPEC_COND_HI])
+(define_int_iterator SVE_COND_FP_TERNARY [UNSPEC_COND_FMLA
+					  UNSPEC_COND_FMLS
+					  UNSPEC_COND_FNMLA
+					  UNSPEC_COND_FNMLS])
 
 (define_int_iterator SVE_COND_FP_CMP [UNSPEC_COND_LT UNSPEC_COND_LE
 				      UNSPEC_COND_EQ UNSPEC_COND_NE
 				      UNSPEC_COND_GE UNSPEC_COND_GT])
+
+(define_int_iterator FCADD [UNSPEC_FCADD90
+			    UNSPEC_FCADD270])
+
+(define_int_iterator FCMLA [UNSPEC_FCMLA
+			    UNSPEC_FCMLA90
+			    UNSPEC_FCMLA180
+			    UNSPEC_FCMLA270])
 
 ;; Iterators for atomic operations.
 
@@ -1503,6 +1623,10 @@
 (define_int_attr atomic_ldop
  [(UNSPECV_ATOMIC_LDOP_OR "set") (UNSPECV_ATOMIC_LDOP_BIC "clr")
   (UNSPECV_ATOMIC_LDOP_XOR "eor") (UNSPECV_ATOMIC_LDOP_PLUS "add")])
+
+(define_int_attr atomic_ldoptab
+ [(UNSPECV_ATOMIC_LDOP_OR "ior") (UNSPECV_ATOMIC_LDOP_BIC "bic")
+  (UNSPECV_ATOMIC_LDOP_XOR "xor") (UNSPECV_ATOMIC_LDOP_PLUS "add")])
 
 ;; -------------------------------------------------------------------
 ;; Int Iterators Attributes.
@@ -1519,13 +1643,14 @@
 			(UNSPEC_XORV "xor")
 			(UNSPEC_COND_ADD "add")
 			(UNSPEC_COND_SUB "sub")
-			(UNSPEC_COND_SMAX "smax")
-			(UNSPEC_COND_UMAX "umax")
-			(UNSPEC_COND_SMIN "smin")
-			(UNSPEC_COND_UMIN "umin")
-			(UNSPEC_COND_AND "and")
-			(UNSPEC_COND_ORR "ior")
-			(UNSPEC_COND_EOR "xor")])
+			(UNSPEC_COND_MUL "mul")
+			(UNSPEC_COND_DIV "div")
+			(UNSPEC_COND_MAX "smax")
+			(UNSPEC_COND_MIN "smin")
+			(UNSPEC_COND_FMLA "fma")
+			(UNSPEC_COND_FMLS "fnma")
+			(UNSPEC_COND_FNMLA "fnms")
+			(UNSPEC_COND_FNMLS "fms")])
 
 (define_int_attr  maxmin_uns [(UNSPEC_UMAXV "umax")
 			      (UNSPEC_UMINV "umin")
@@ -1575,6 +1700,9 @@
 		      (UNSPEC_SHSUB "s") (UNSPEC_UHSUB "u")
 		      (UNSPEC_SRHSUB "sr") (UNSPEC_URHSUB "ur")
 		      (UNSPEC_ADDHN "") (UNSPEC_RADDHN "r")
+		      (UNSPEC_SABAL "s") (UNSPEC_UABAL "u")
+		      (UNSPEC_SABDL2 "s") (UNSPEC_UABDL2 "u")
+		      (UNSPEC_SADALP "s") (UNSPEC_UADALP "u")
 		      (UNSPEC_SUBHN "") (UNSPEC_RSUBHN "r")
 		      (UNSPEC_ADDHN2 "") (UNSPEC_RADDHN2 "r")
 		      (UNSPEC_SUBHN2 "") (UNSPEC_RSUBHN2 "r")
@@ -1610,8 +1738,10 @@
 
 (define_int_attr u [(UNSPEC_SQSHLU "u") (UNSPEC_SQSHL "") (UNSPEC_UQSHL "")
 		    (UNSPEC_SQSHRUN "u") (UNSPEC_SQRSHRUN "u")
-                    (UNSPEC_SQSHRN "")  (UNSPEC_UQSHRN "")
-                    (UNSPEC_SQRSHRN "") (UNSPEC_UQRSHRN "")])
+		    (UNSPEC_SQSHRN "")  (UNSPEC_UQSHRN "")
+		    (UNSPEC_SQRSHRN "") (UNSPEC_UQRSHRN "")
+		    (UNSPEC_SHADD "") (UNSPEC_UHADD "u")
+		    (UNSPEC_SRHADD "") (UNSPEC_URHADD "u")])
 
 (define_int_attr addsub [(UNSPEC_SHADD "add")
 			 (UNSPEC_UHADD "add")
@@ -1693,8 +1823,6 @@
 				 (UNSPEC_UNPACKSLO "BYTES_BIG_ENDIAN")
 				 (UNSPEC_UNPACKULO "BYTES_BIG_ENDIAN")])
 
-(define_int_attr frecp_suffix  [(UNSPEC_FRECPE "e") (UNSPEC_FRECPX "x")])
-
 (define_int_attr crc_variant [(UNSPEC_CRC32B "crc32b") (UNSPEC_CRC32H "crc32h")
                         (UNSPEC_CRC32W "crc32w") (UNSPEC_CRC32X "crc32x")
                         (UNSPEC_CRC32CB "crc32cb") (UNSPEC_CRC32CH "crc32ch")
@@ -1731,33 +1859,42 @@
 			 (UNSPEC_COND_EQ "eq")
 			 (UNSPEC_COND_NE "ne")
 			 (UNSPEC_COND_GE "ge")
-			 (UNSPEC_COND_GT "gt")
-			 (UNSPEC_COND_LO "lo")
-			 (UNSPEC_COND_LS "ls")
-			 (UNSPEC_COND_HS "hs")
-			 (UNSPEC_COND_HI "hi")])
-
-;; The constraint to use for an UNSPEC_COND_<xx>.
-(define_int_attr imm_con [(UNSPEC_COND_EQ "vsc")
-			  (UNSPEC_COND_NE "vsc")
-			  (UNSPEC_COND_LT "vsc")
-			  (UNSPEC_COND_GE "vsc")
-			  (UNSPEC_COND_LE "vsc")
-			  (UNSPEC_COND_GT "vsc")
-			  (UNSPEC_COND_LO "vsd")
-			  (UNSPEC_COND_LS "vsd")
-			  (UNSPEC_COND_HS "vsd")
-			  (UNSPEC_COND_HI "vsd")])
-
-(define_int_attr sve_int_op [(UNSPEC_COND_ADD "add")
-			     (UNSPEC_COND_SUB "sub")
-			     (UNSPEC_COND_SMAX "smax")
-			     (UNSPEC_COND_UMAX "umax")
-			     (UNSPEC_COND_SMIN "smin")
-			     (UNSPEC_COND_UMIN "umin")
-			     (UNSPEC_COND_AND "and")
-			     (UNSPEC_COND_ORR "orr")
-			     (UNSPEC_COND_EOR "eor")])
+			 (UNSPEC_COND_GT "gt")])
 
 (define_int_attr sve_fp_op [(UNSPEC_COND_ADD "fadd")
-			    (UNSPEC_COND_SUB "fsub")])
+			    (UNSPEC_COND_SUB "fsub")
+			    (UNSPEC_COND_MUL "fmul")
+			    (UNSPEC_COND_DIV "fdiv")
+			    (UNSPEC_COND_MAX "fmaxnm")
+			    (UNSPEC_COND_MIN "fminnm")])
+
+(define_int_attr sve_fp_op_rev [(UNSPEC_COND_ADD "fadd")
+			        (UNSPEC_COND_SUB "fsubr")
+			        (UNSPEC_COND_MUL "fmul")
+			        (UNSPEC_COND_DIV "fdivr")
+			        (UNSPEC_COND_MAX "fmaxnm")
+			        (UNSPEC_COND_MIN "fminnm")])
+
+(define_int_attr rot [(UNSPEC_FCADD90 "90")
+		      (UNSPEC_FCADD270 "270")
+		      (UNSPEC_FCMLA "0")
+		      (UNSPEC_FCMLA90 "90")
+		      (UNSPEC_FCMLA180 "180")
+		      (UNSPEC_FCMLA270 "270")])
+
+(define_int_attr sve_fmla_op [(UNSPEC_COND_FMLA "fmla")
+			      (UNSPEC_COND_FMLS "fmls")
+			      (UNSPEC_COND_FNMLA "fnmla")
+			      (UNSPEC_COND_FNMLS "fnmls")])
+
+(define_int_attr sve_fmad_op [(UNSPEC_COND_FMLA "fmad")
+			      (UNSPEC_COND_FMLS "fmsb")
+			      (UNSPEC_COND_FNMLA "fnmad")
+			      (UNSPEC_COND_FNMLS "fnmsb")])
+
+(define_int_attr commutative [(UNSPEC_COND_ADD "true")
+			      (UNSPEC_COND_SUB "false")
+			      (UNSPEC_COND_MUL "true")
+			      (UNSPEC_COND_DIV "false")
+			      (UNSPEC_COND_MIN "true")
+			      (UNSPEC_COND_MAX "true")])

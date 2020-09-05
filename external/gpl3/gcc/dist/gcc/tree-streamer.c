@@ -1,7 +1,7 @@
 /* Miscellaneous utilities for tree streaming.  Things that are used
    in both input and output are here.
 
-   Copyright (C) 2011-2018 Free Software Foundation, Inc.
+   Copyright (C) 2011-2019 Free Software Foundation, Inc.
    Contributed by Diego Novillo <dnovillo@google.com>
 
 This file is part of GCC.
@@ -312,7 +312,6 @@ record_common_node (struct streamer_tree_cache_d *cache, tree node)
     case IDENTIFIER_NODE:
     case INTEGER_CST:
     case INTEGER_TYPE:
-    case POINTER_BOUNDS_TYPE:
     case REAL_TYPE:
     case TREE_LIST:
     case VOID_CST:

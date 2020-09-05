@@ -1,5 +1,5 @@
 /* Predicate functions of Andes NDS32 cpu for GNU compiler
-   Copyright (C) 2012-2018 Free Software Foundation, Inc.
+   Copyright (C) 2012-2019 Free Software Foundation, Inc.
    Contributed by Andes Technology Corporation.
 
    This file is part of GCC.
@@ -356,8 +356,8 @@ nds32_valid_stack_push_pop_p (rtx op, bool push_p)
 }
 
 /* Function to check if 'bclr' instruction can be used with IVAL.  */
-int
-nds32_can_use_bclr_p (int ival)
+bool
+nds32_can_use_bclr_p (HOST_WIDE_INT ival)
 {
   int one_bit_count;
   unsigned HOST_WIDE_INT mask = GET_MODE_MASK (SImode);
@@ -373,8 +373,8 @@ nds32_can_use_bclr_p (int ival)
 }
 
 /* Function to check if 'bset' instruction can be used with IVAL.  */
-int
-nds32_can_use_bset_p (int ival)
+bool
+nds32_can_use_bset_p (HOST_WIDE_INT ival)
 {
   int one_bit_count;
   unsigned HOST_WIDE_INT mask = GET_MODE_MASK (SImode);
@@ -389,8 +389,8 @@ nds32_can_use_bset_p (int ival)
 }
 
 /* Function to check if 'btgl' instruction can be used with IVAL.  */
-int
-nds32_can_use_btgl_p (int ival)
+bool
+nds32_can_use_btgl_p (HOST_WIDE_INT ival)
 {
   int one_bit_count;
   unsigned HOST_WIDE_INT mask = GET_MODE_MASK (SImode);
@@ -405,8 +405,8 @@ nds32_can_use_btgl_p (int ival)
 }
 
 /* Function to check if 'bitci' instruction can be used with IVAL.  */
-int
-nds32_can_use_bitci_p (int ival)
+bool
+nds32_can_use_bitci_p (HOST_WIDE_INT ival)
 {
   /* If we are using V3 ISA, we have 'bitci' instruction.
      Try to see if we can present 'andi' semantic with
@@ -518,4 +518,117 @@ nds32_const_double_range_ok_p (rtx op, machine_mode mode,
 
   return val >= lower && val < upper;
 }
+
+bool
+nds32_const_unspec_p (rtx x)
+{
+  if (GET_CODE (x) == CONST)
+    {
+      x = XEXP (x, 0);
+
+      if (GET_CODE (x) == PLUS)
+	x = XEXP (x, 0);
+
+      if (GET_CODE (x) == UNSPEC)
+	{
+	  switch (XINT (x, 1))
+	    {
+	    case UNSPEC_GOTINIT:
+	    case UNSPEC_GOT:
+	    case UNSPEC_GOTOFF:
+	    case UNSPEC_PLT:
+	    case UNSPEC_TLSGD:
+	    case UNSPEC_TLSLD:
+	    case UNSPEC_TLSIE:
+	    case UNSPEC_TLSLE:
+	      return false;
+	    default:
+	      return true;
+	    }
+	}
+    }
+
+  if (GET_CODE (x) == SYMBOL_REF
+      && SYMBOL_REF_TLS_MODEL (x))
+    return false;
+
+  return true;
+}
+
+HOST_WIDE_INT
+const_vector_to_hwint (rtx op)
+{
+  HOST_WIDE_INT hwint = 0;
+  HOST_WIDE_INT mask;
+  int i;
+  int shift_adv;
+  int shift = 0;
+  int nelem;
+
+  switch (GET_MODE (op))
+    {
+      case E_V2HImode:
+	mask = 0xffff;
+	shift_adv = 16;
+	nelem = 2;
+	break;
+      case E_V4QImode:
+	mask = 0xff;
+	shift_adv = 8;
+	nelem = 4;
+	break;
+      default:
+	gcc_unreachable ();
+    }
+
+  if (TARGET_BIG_ENDIAN)
+    {
+      for (i = 0; i < nelem; ++i)
+	{
+	  HOST_WIDE_INT val = XINT (XVECEXP (op, 0, nelem - i - 1), 0);
+	  hwint |= (val & mask) << shift;
+	  shift = shift + shift_adv;
+	}
+    }
+  else
+    {
+      for (i = 0; i < nelem; ++i)
+	{
+	  HOST_WIDE_INT val = XINT (XVECEXP (op, 0, i), 0);
+	  hwint |= (val & mask) << shift;
+	  shift = shift + shift_adv;
+	}
+    }
+
+  return hwint;
+}
+
+bool
+nds32_valid_CVp5_p (rtx op)
+{
+  HOST_WIDE_INT ival = const_vector_to_hwint (op);
+  return (ival < ((1 << 5) + 16)) && (ival >= (0 + 16));
+}
+
+bool
+nds32_valid_CVs5_p (rtx op)
+{
+  HOST_WIDE_INT ival = const_vector_to_hwint (op);
+  return (ival < (1 << 4)) && (ival >= -(1 << 4));
+}
+
+bool
+nds32_valid_CVs2_p (rtx op)
+{
+  HOST_WIDE_INT ival = const_vector_to_hwint (op);
+  return (ival < (1 << 19)) && (ival >= -(1 << 19));
+}
+
+bool
+nds32_valid_CVhi_p (rtx op)
+{
+  HOST_WIDE_INT ival = const_vector_to_hwint (op);
+  return (ival != 0) && ((ival & 0xfff) == 0);
+}
+
 /* ------------------------------------------------------------------------ */

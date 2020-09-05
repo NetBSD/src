@@ -1,5 +1,5 @@
 /* Subroutines used for code generation on Vitesse IQ2000 processors
-   Copyright (C) 2003-2018 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -273,6 +273,9 @@ static HOST_WIDE_INT iq2000_starting_frame_offset (void);
 
 #undef  TARGET_STARTING_FRAME_OFFSET
 #define TARGET_STARTING_FRAME_OFFSET	iq2000_starting_frame_offset
+
+#undef  TARGET_HAVE_SPECULATION_SAFE_VALUE
+#define TARGET_HAVE_SPECULATION_SAFE_VALUE speculation_safe_value_not_needed
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 
@@ -3096,7 +3099,7 @@ iq2000_print_operand (FILE *file, rtx op, int letter)
 	  break;
 
 	default:
-	  error ("PRINT_OPERAND: Unknown punctuation '%c'", letter);
+	  error ("PRINT_OPERAND: Unknown punctuation %<%c%>", letter);
 	  break;
 	}
 

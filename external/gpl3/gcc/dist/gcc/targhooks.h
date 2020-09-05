@@ -1,5 +1,5 @@
 /* Default target hook functions.
-   Copyright (C) 2003-2018 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -72,6 +72,7 @@ extern void default_print_operand_address (FILE *, machine_mode, rtx);
 extern bool default_print_operand_punct_valid_p (unsigned char);
 extern tree default_mangle_assembler_name (const char *);
 
+extern machine_mode default_translate_mode_attribute (machine_mode);
 extern bool default_scalar_mode_supported_p (scalar_mode);
 extern bool default_libgcc_floating_mode_supported_p (scalar_float_mode);
 extern opt_scalar_float_mode default_floatn_mode (int, bool);
@@ -101,7 +102,7 @@ extern HOST_WIDE_INT constant_alignment_word_strings (const_tree,
 						      HOST_WIDE_INT);
 extern HOST_WIDE_INT default_vector_alignment (const_tree);
 
-extern HOST_WIDE_INT default_preferred_vector_alignment (const_tree);
+extern poly_uint64 default_preferred_vector_alignment (const_tree);
 extern bool default_builtin_vector_alignment_reachable (const_tree, bool);
 extern bool
 default_builtin_support_vector_misalignment (machine_mode mode,
@@ -120,7 +121,7 @@ extern void default_finish_cost (void *, unsigned *, unsigned *, unsigned *);
 extern void default_destroy_cost_data (void *);
 
 /* OpenACC hooks.  */
-extern bool default_goacc_validate_dims (tree, int [], int);
+extern bool default_goacc_validate_dims (tree, int [], int, unsigned);
 extern int default_goacc_dim_limit (int);
 extern bool default_goacc_fork_join (gcall *, const int [], bool);
 extern void default_goacc_reduction (gcall *);
@@ -175,6 +176,7 @@ extern machine_mode default_secondary_memory_needed_mode (machine_mode);
 extern void default_target_option_override (void);
 extern void hook_void_bitmap (bitmap);
 extern int default_reloc_rw_mask (void);
+extern bool default_generate_pic_addr_diff_vec (void);
 extern tree default_mangle_decl_assembler_name (tree, tree);
 extern tree default_emutls_var_fields (tree, tree *);
 extern tree default_emutls_var_init (tree, tree, tree);
@@ -234,10 +236,6 @@ extern enum unwind_info_type default_debug_unwind_info (void);
 
 extern void default_canonicalize_comparison (int *, rtx *, rtx *, bool);
 
-extern int default_label_align_after_barrier_max_skip (rtx_insn *);
-extern int default_loop_align_max_skip (rtx_insn *);
-extern int default_label_align_max_skip (rtx_insn *);
-extern int default_jump_align_max_skip (rtx_insn *);
 extern section * default_function_section(tree decl, enum node_frequency freq,
 					  bool startup, bool exit);
 extern unsigned int default_dwarf_poly_indeterminate_value (unsigned int,
@@ -265,13 +263,6 @@ extern rtx default_load_bounds_for_arg (rtx, rtx, rtx);
 extern void default_store_bounds_for_arg (rtx, rtx, rtx, rtx);
 extern rtx default_load_returned_bounds (rtx);
 extern void default_store_returned_bounds (rtx,rtx);
-extern tree default_chkp_bound_type (void);
-extern machine_mode default_chkp_bound_mode (void);
-extern tree default_builtin_chkp_function (unsigned int);
-extern rtx default_chkp_function_value_bounds (const_tree, const_tree, bool);
-extern tree default_chkp_make_bounds_constant (HOST_WIDE_INT lb, HOST_WIDE_INT ub);
-extern int default_chkp_initialize_bounds (tree var, tree lb, tree ub,
-					   tree *stmts);
 extern void default_setup_incoming_vararg_bounds (cumulative_args_t ca ATTRIBUTE_UNUSED,
 						  machine_mode mode ATTRIBUTE_UNUSED,
 						  tree type ATTRIBUTE_UNUSED,
@@ -286,7 +277,14 @@ extern unsigned int default_min_arithmetic_precision (void);
 
 extern enum flt_eval_method
 default_excess_precision (enum excess_precision_type ATTRIBUTE_UNUSED);
-extern bool default_stack_clash_protection_final_dynamic_probe (rtx);
+extern HOST_WIDE_INT default_stack_clash_protection_alloca_probe_range (void);
 extern void default_select_early_remat_modes (sbitmap);
+extern tree default_preferred_else_value (unsigned, tree, unsigned, tree *);
+
+extern bool default_have_speculation_safe_value (bool);
+extern bool speculation_safe_value_not_needed (bool);
+extern rtx default_speculation_safe_value (machine_mode, rtx, rtx, rtx);
+extern void default_remove_extra_call_preserved_regs (rtx_insn *,
+						      HARD_REG_SET *);
 
 #endif /* GCC_TARGHOOKS_H */

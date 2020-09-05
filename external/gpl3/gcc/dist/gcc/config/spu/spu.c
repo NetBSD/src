@@ -1,4 +1,4 @@
-/* Copyright (C) 2006-2018 Free Software Foundation, Inc.
+/* Copyright (C) 2006-2019 Free Software Foundation, Inc.
 
    This file is free software; you can redistribute it and/or modify it under
    the terms of the GNU General Public License as published by the Free
@@ -58,6 +58,8 @@
 #include "dumpfile.h"
 #include "builtins.h"
 #include "rtl-iter.h"
+#include "flags.h"
+#include "toplev.h"
 
 /* This file should be included last.  */
 #include "target-def.h"
@@ -238,8 +240,9 @@ spu_option_override (void)
   flag_omit_frame_pointer = 1;
 
   /* Functions must be 8 byte aligned so we correctly handle dual issue */
-  if (align_functions < 8)
-    align_functions = 8;
+  parse_alignment_opts ();
+  if (align_functions.levels[0].get_value () < 8)
+    str_align_functions = "8";
 
   spu_hint_dist = 8*4 - spu_max_nops*4;
   if (spu_hint_dist < 0) 
@@ -256,7 +259,7 @@ spu_option_override (void)
       else if (strcmp (&spu_arch_string[0], "celledp") == 0)
         spu_arch = PROCESSOR_CELLEDP;
       else
-        error ("bad value (%s) for -march= switch", spu_arch_string);
+	error ("bad value (%s) for %<-march=%> switch", spu_arch_string);
     }
 
   /* Determine processor to tune for.  */
@@ -267,7 +270,7 @@ spu_option_override (void)
       else if (strcmp (&spu_tune_string[0], "celledp") == 0)
         spu_tune = PROCESSOR_CELLEDP;
       else
-        error ("bad value (%s) for -mtune= switch", spu_tune_string);
+	error ("bad value (%s) for %<-mtune=%> switch", spu_tune_string);
     }
 
   /* Change defaults according to the processor architecture.  */
@@ -2769,7 +2772,9 @@ static void
 spu_sched_init (FILE *file ATTRIBUTE_UNUSED, int verbose ATTRIBUTE_UNUSED,
 		int max_ready ATTRIBUTE_UNUSED)
 {
-  if (align_labels > 4 || align_loops > 4 || align_jumps > 4)
+  if (align_labels.levels[0].get_value () > 4
+      || align_loops.levels[0].get_value () > 4
+      || align_jumps.levels[0].get_value () > 4)
     {
       /* When any block might be at least 8-byte aligned, assume they
          will all be at least 8-byte aligned to make sure dual issue
@@ -4912,7 +4917,7 @@ fix_range (const char *const_str)
       dash = strchr (str, '-');
       if (!dash)
 	{
-	  warning (0, "value of -mfixed-range must have form REG1-REG2");
+	  warning (0, "value of %<-mfixed-range%> must have form REG1-REG2");
 	  return;
 	}
       *dash = '\0';
@@ -7457,6 +7462,9 @@ static const struct attribute_spec spu_attribute_table[] =
 #define TARGET_STATIC_RTX_ALIGNMENT spu_static_rtx_alignment
 #undef TARGET_CONSTANT_ALIGNMENT
 #define TARGET_CONSTANT_ALIGNMENT spu_constant_alignment
+
+#undef  TARGET_HAVE_SPECULATION_SAFE_VALUE
+#define TARGET_HAVE_SPECULATION_SAFE_VALUE speculation_safe_value_not_needed
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 

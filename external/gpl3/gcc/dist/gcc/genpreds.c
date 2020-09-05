@@ -2,7 +2,7 @@
    - prototype declarations for operand predicates (tm-preds.h)
    - function definitions of operand predicates, if defined new-style
      (insn-preds.c)
-   Copyright (C) 2001-2018 Free Software Foundation, Inc.
+   Copyright (C) 2001-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -152,7 +152,7 @@ write_predicate_subfunction (struct pred_data *p)
   p->exp = and_exp;
 
   printf ("static inline int\n"
-	  "%s_1 (rtx op, machine_mode mode ATTRIBUTE_UNUSED)\n",
+	  "%s_1 (rtx op ATTRIBUTE_UNUSED, machine_mode mode ATTRIBUTE_UNUSED)\n",
 	  p->name);
   rtx_reader_ptr->print_md_ptr_loc (p->c_block);
   if (p->c_block[0] == '{')

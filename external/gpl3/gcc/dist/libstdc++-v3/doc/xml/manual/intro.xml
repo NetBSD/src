@@ -43,6 +43,10 @@
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="xml" href="status_cxx2017.xml">
     </xi:include>
 
+    <!-- Section 01.4 : Status C++ 2020 -->
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="xml" href="status_cxx2020.xml">
+    </xi:include>
+
     <!-- Section 01.5 : Status C++ TR1 -->
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="xml" href="status_cxxtr1.xml">
     </xi:include>
@@ -438,6 +442,17 @@ requirements of the license of GCC.
 	<emphasis>Should basic_istream::sentry's constructor ever set eofbit?</emphasis>
     </term>
     <listitem><para>Yes, it can, specifically if EOF is reached while skipping whitespace.
+    </para></listitem></varlistentry>
+
+    <varlistentry xml:id="manual.bugs.dr206"><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="&DR;#206">206</link>:
+	<emphasis><code>operator new(size_t, nothrow)</code> may become
+          unlinked to ordinary <code>operator new</code> if ordinary
+          version replaced
+        </emphasis>
+    </term>
+    <listitem><para>The <code>nothrow</code> forms of new and delete were
+      changed to call the throwing forms, handling any exception by
+      catching it and returning a null pointer.
     </para></listitem></varlistentry>
 
     <varlistentry xml:id="manual.bugs.dr211"><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="&DR;#211">211</link>:
@@ -1113,11 +1128,18 @@ requirements of the license of GCC.
     <listitem><para>Call <code>make_heap</code>.
     </para></listitem></varlistentry>
 
+    <varlistentry xml:id="manual.bugs.dr2566"><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="&DR;#2566">2566</link>:
+       <emphasis>Requirements on the first template parameter of container adaptors
+       </emphasis>
+    </term>
+    <listitem><para>Add static assertions to enforce the requirement.
+    </para></listitem></varlistentry>
+
     <varlistentry xml:id="manual.bugs.dr2583"><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="&DR;#2583">2583</link>:
        <emphasis>There is no way to supply an allocator for <code>basic_string(str, pos)</code>
        </emphasis>
     </term>
-    <listitem><para>Add new constructor
+    <listitem><para>Add new constructor.
     </para></listitem></varlistentry>
 
     <varlistentry xml:id="manual.bugs.dr2586"><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="&DR;#2586">2586</link>:
@@ -1133,6 +1155,17 @@ requirements of the license of GCC.
        </emphasis>
     </term>
     <listitem><para>Define the <code>value_compare</code> typedef.
+    </para></listitem></varlistentry>
+
+    <varlistentry xml:id="manual.bugs.dr2735"><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="&DR;#2735">2735</link>:
+       <emphasis><code>std::abs(short)</code>,
+	 <code>std::abs(signed char)</code> and others should return
+	 <code>int</code> instead of <code>double</code> in order to be
+	 compatible with C++98 and C
+       </emphasis>
+    </term>
+    <listitem><para>Resolved by the changes for
+      <link linkend="manual.bugs.dr2192">2192</link>.
     </para></listitem></varlistentry>
 
     <varlistentry xml:id="manual.bugs.dr2770"><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="&DR;#2770">2770</link>:
@@ -1174,6 +1207,22 @@ requirements of the license of GCC.
        </emphasis>
     </term>
     <listitem><para>Add noexcept.
+    </para></listitem></varlistentry>
+
+    <varlistentry xml:id="manual.bugs.dr2993"><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="&DR;#2993">2993</link>:
+       <emphasis><code>reference_wrapper&lt;T&gt;</code> conversion from <code>T&amp;&amp;</code>
+       </emphasis>
+    </term>
+    <listitem><para>Replaced the constructors with a constrained template,
+      to prevent participation in overload resolution when not valid.
+    </para></listitem></varlistentry>
+
+    <varlistentry xml:id="manual.bugs.dr3074"><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="&DR;#3074">3074</link>:
+       <emphasis>Non-member functions for <code>valarray</code> should only deduce from the <code>valarray</code>
+       </emphasis>
+    </term>
+    <listitem><para>Change scalar operands to be non-deduced context, so that
+      they will allow conversions from other types to the value_type.
     </para></listitem></varlistentry>
 
     <varlistentry xml:id="manual.bugs.dr3076"><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="&DR;#3076">3076</link>:

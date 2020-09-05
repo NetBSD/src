@@ -1,5 +1,5 @@
 /* params.def - Run-time parameters.
-   Copyright (C) 2001-2018 Free Software Foundation, Inc.
+   Copyright (C) 2001-2019 Free Software Foundation, Inc.
    Written by Mark Mitchell <mark@codesourcery.com>.
 
 This file is part of GCC.
@@ -58,7 +58,6 @@ DEFPARAM (PARAM_INLINE_MIN_SPEEDUP,
    of a function counted in internal gcc instructions (not in
    real machine instructions) that is eligible for inlining
    by the tree inliner.
-   The default value is 400.
    Only functions marked inline (or methods defined in the class
    definition for C++) are affected by this.
    There are more restrictions to inlining: If inlined functions
@@ -69,7 +68,7 @@ DEFPARAM (PARAM_INLINE_MIN_SPEEDUP,
 DEFPARAM (PARAM_MAX_INLINE_INSNS_SINGLE,
 	  "max-inline-insns-single",
 	  "The maximum number of instructions in a single function eligible for inlining.",
-	  400, 0, 0)
+	  200, 0, 0)
 
 /* The single function inlining limit for functions that are
    inlined by virtue of -finline-functions (-O3).
@@ -82,6 +81,38 @@ DEFPARAM (PARAM_MAX_INLINE_INSNS_AUTO,
 	  "max-inline-insns-auto",
 	  "The maximum number of instructions when automatically inlining.",
 	  30, 0, 0)
+
+DEFPARAM (PARAM_MAX_INLINE_INSNS_SMALL,
+	  "max-inline-insns-small",
+	  "The maximum number of instructions when automatically inlining small functions.",
+	  0, 0, 0)
+
+DEFPARAM (PARAM_MAX_INLINE_INSNS_SIZE,
+	  "max-inline-insns-size",
+	  "The maximum number of instructions when inlining for size.",
+	  0, 0, 0)
+
+DEFPARAM (PARAM_UNINLINED_FUNCTION_INSNS,
+	  "uninlined-function-insns",
+	  "Instruction accounted for function prologue, epilogue and other"
+	  " overhead.",
+	  2, 0, 1000000)
+
+DEFPARAM (PARAM_UNINLINED_FUNCTION_TIME,
+	  "uninlined-function-time",
+	  "Time accounted for function prologue, epilogue and other"
+	  " overhead.",
+	  0, 0, 1000000)
+
+DEFPARAM (PARAM_UNINLINED_FUNCTION_THUNK_INSNS,
+	  "uninlined-thunk-insns",
+	  "Instruction accounted for function thunk overhead.",
+	  2, 0, 1000000)
+
+DEFPARAM (PARAM_UNINLINED_FUNCTION_THUNK_TIME,
+	  "uninlined-thunk-time",
+	  "Time accounted for function thunk overhead.",
+	  2, 0, 1000000)
 
 DEFPARAM (PARAM_MAX_INLINE_INSNS_RECURSIVE,
 	  "max-inline-insns-recursive",
@@ -195,7 +226,7 @@ DEFPARAM(PARAM_LARGE_UNIT_INSNS,
 DEFPARAM(PARAM_INLINE_UNIT_GROWTH,
 	 "inline-unit-growth",
 	 "How much can given compilation unit grow because of the inlining (in percent).",
-	 20, 0, 0)
+	 40, 0, 0)
 DEFPARAM(PARAM_IPCP_UNIT_GROWTH,
 	 "ipcp-unit-growth",
 	 "How much can given compilation unit grow because of the interprocedural constant propagation (in percent).",
@@ -213,14 +244,15 @@ DEFPARAM(PARAM_STACK_FRAME_GROWTH,
 	 "Maximal stack frame growth due to inlining (in percent).",
 	 1000, 0, 0)
 
+/* Keep these up to date with those in configure.ac.  */
 DEFPARAM(PARAM_STACK_CLASH_PROTECTION_GUARD_SIZE,
 	 "stack-clash-protection-guard-size",
-	 "Size of the stack guard expressed as a power of two.",
+	 "Size of the stack guard expressed as a power of two in bytes.",
 	 12, 12, 30)
 
 DEFPARAM(PARAM_STACK_CLASH_PROTECTION_PROBE_INTERVAL,
 	 "stack-clash-protection-probe-interval",
-	 "Interval in which to probe the stack expressed as a power of two.",
+	 "Interval in which to probe the stack expressed as a power of two in bytes.",
 	 12, 10, 16)
 
 /* The GCSE optimization will be disabled if it would require
@@ -393,11 +425,16 @@ DEFPARAM(PARAM_SMS_LOOP_AVERAGE_COUNT_THRESHOLD,
 	 "A threshold on the average loop count considered by the swing modulo scheduler.",
 	 0, 0, 0)
 
+DEFPARAM(HOT_BB_COUNT_FRACTION,
+	 "hot-bb-count-fraction",
+	 "Select fraction of the maximal count of repetitions of basic block in program given basic "
+	 "block needs to have to be considered hot (used in non-LTO mode).",
+	 10000, 0, 0)
 DEFPARAM(HOT_BB_COUNT_WS_PERMILLE,
 	 "hot-bb-count-ws-permille",
          "A basic block profile count is considered hot if it contributes to "
-         "the given permillage of the entire profiled execution.",
-	 999, 0, 1000)
+         "the given permillage of the entire profiled execution (used in LTO mode).",
+	 990, 0, 1000)
 DEFPARAM(HOT_BB_FREQUENCY_FRACTION,
 	 "hot-bb-frequency-fraction",
 	 "Select fraction of the maximal frequency of executions of basic block in function given basic block needs to have to be considered hot.",
@@ -415,8 +452,8 @@ DEFPARAM (PARAM_ALIGN_THRESHOLD,
 
 DEFPARAM (PARAM_ALIGN_LOOP_ITERATIONS,
 	  "align-loop-iterations",
-	  "Loops iterating at least selected number of iterations will get loop alignment..",
-	  4, 0, 0)
+	  "Loops iterating at least selected number of iterations will get "
+	  "loop alignment.", 4, 0, 0)
 
 /* For guessed profiles, the loops having unknown number of iterations
    are predicted to iterate relatively few (10) times at average.
@@ -446,6 +483,10 @@ DEFPARAM(BUILTIN_EXPECT_PROBABILITY,
 	 "builtin-expect-probability",
 	 "Set the estimated probability in percentage for builtin expect. The default value is 90% probability.",
 	 90, 0, 100)
+DEFPARAM(BUILTIN_STRING_CMP_INLINE_LENGTH,
+	 "builtin-string-cmp-inline-length",
+	 "The maximum length of a constant string for a builtin string cmp call eligible for inlining. The default value is 3.",
+	 3, 0, 100)
 DEFPARAM(TRACER_DYNAMIC_COVERAGE_FEEDBACK,
 	 "tracer-dynamic-coverage-feedback",
 	 "The percentage of function, weighted by execution frequency, that must be covered by trace formation. Used when profile feedback is available.",
@@ -545,6 +586,11 @@ DEFPARAM(PARAM_AVG_LOOP_NITER,
 DEFPARAM(PARAM_DSE_MAX_OBJECT_SIZE,
 	 "dse-max-object-size",
 	 "Maximum size (in bytes) of objects tracked bytewise by dead store elimination.",
+	 256, 0, 0)
+
+DEFPARAM(PARAM_DSE_MAX_ALIAS_QUERIES_PER_STORE,
+	 "dse-max-alias-queries-per-store",
+	 "Maximum number of queries into the alias oracle per store.",
 	 256, 0, 0)
 
 DEFPARAM(PARAM_SCEV_MAX_EXPR_SIZE,
@@ -790,6 +836,24 @@ DEFPARAM (PARAM_L2_CACHE_SIZE,
 	  "The size of L2 cache.",
 	  512, 0, 0)
 
+/* Whether software prefetch hints should be issued for non-constant
+   strides.  */
+
+DEFPARAM (PARAM_PREFETCH_DYNAMIC_STRIDES,
+	  "prefetch-dynamic-strides",
+	  "Whether software prefetch hints should be issued for non-constant "
+	  "strides.",
+	  1, 0, 1)
+
+/* The minimum constant stride beyond which we should use prefetch hints
+   for.  */
+
+DEFPARAM (PARAM_PREFETCH_MINIMUM_STRIDE,
+	  "prefetch-minimum-stride",
+	  "The minimum constant stride beyond which we should use prefetch "
+	  "hints for.",
+	  -1, 0, 0)
+
 /* Maximum number of statements in loop nest for loop interchange.  */
 
 DEFPARAM (PARAM_LOOP_INTERCHANGE_MAX_NUM_STMTS,
@@ -801,7 +865,7 @@ DEFPARAM (PARAM_LOOP_INTERCHANGE_MAX_NUM_STMTS,
 
 DEFPARAM (PARAM_LOOP_INTERCHANGE_STRIDE_RATIO,
 	  "loop-interchange-stride-ratio",
-	  "The minimum stride ratio for loop interchange to be profitable",
+	  "The minimum stride ratio for loop interchange to be profitable.",
 	  2, 0, 0)
 
 /* Whether we should use canonical types rather than deep "structural"
@@ -820,15 +884,15 @@ DEFPARAM (PARAM_MAX_PARTIAL_ANTIC_LENGTH,
 	  "Maximum length of partial antic set when performing tree pre optimization.",
 	  100, 0, 0)
 
-/* The following is used as a stop-gap limit for cases where really huge
-   SCCs blow up memory and compile-time use too much.  If we hit this limit,
-   SCCVN and such FRE and PRE will be not done at all for the current
-   function.  */
+/* The following is used as a stop-gap limit for cases where really deep
+   loop nests cause compile-time to blow up.  If we hit this limit,
+   FRE and PRE will value-number outer loops (but the outermost) in a
+   loop nest non-optimistically.  */
 
-DEFPARAM (PARAM_SCCVN_MAX_SCC_SIZE,
-	  "sccvn-max-scc-size",
-	  "Maximum size of a SCC before SCCVN stops processing a function.",
-	  10000, 10, 0)
+DEFPARAM (PARAM_RPO_VN_MAX_LOOP_DEPTH,
+	  "rpo-vn-max-loop-depth",
+	  "Maximum depth of a loop nest to fully value-number optimistically.",
+	  7, 2, 0)
 
 /* The following is used as a stop-gap limit for cases where really huge
    functions blow up compile-time use too much.  It limits the number of
@@ -879,32 +943,32 @@ DEFPARAM (PARAM_SWITCH_CONVERSION_BRANCH_RATIO,
 
 DEFPARAM (PARAM_LOOP_BLOCK_TILE_SIZE,
 	  "loop-block-tile-size",
-	  "size of tiles for loop blocking.",
+	  "Size of tiles for loop blocking.",
 	  51, 0, 0)
 
 /* Maximal number of parameters that we allow in a SCoP.  */
 
 DEFPARAM (PARAM_GRAPHITE_MAX_NB_SCOP_PARAMS,
 	  "graphite-max-nb-scop-params",
-	  "maximum number of parameters in a SCoP.",
+	  "Maximum number of parameters in a SCoP.",
 	  10, 0, 0)
 
 /* Maximal number of array references in a scop.  */
 
 DEFPARAM (PARAM_GRAPHITE_MAX_ARRAYS_PER_SCOP,
 	  "graphite-max-arrays-per-scop",
-	  "maximum number of arrays per scop.",
+	  "Maximum number of arrays per SCoP.",
 	  100, 0, 0)
 
 DEFPARAM (PARAM_MAX_ISL_OPERATIONS,
 	  "max-isl-operations",
-	  "maximum number of isl operations, 0 means unlimited",
+	  "Maximum number of isl operations, 0 means unlimited.",
 	  350000, 0, 0)
 
 /* For testsuite purposes allow to check for codegen error handling.  */
 DEFPARAM (PARAM_GRAPHITE_ALLOW_CODEGEN_ERRORS,
 	  "graphite-allow-codegen-errors",
-	  "whether codegen errors should be ICEs when -fchecking.",
+	  "Whether codegen errors should be ICEs when -fchecking.",
 	  0, 0, 1)
 
 /* Avoid data dependence analysis on very large loops.  */
@@ -924,23 +988,23 @@ DEFPARAM (PARAM_LOOP_INVARIANT_MAX_BBS_IN_LOOP,
    to look up for profile data. Otherwise, use a more stable
    external id based on assembler name and source location. */
 DEFPARAM (PARAM_PROFILE_FUNC_INTERNAL_ID,
-         "profile-func-internal-id",
-         "use internal function id in profile lookup.",
-          0, 0, 1)
+	  "profile-func-internal-id",
+	  "Use internal function id in profile lookup.",
+	  0, 0, 1)
 
 /* When the parameter is 1, track the most frequent N target
    addresses in indirect-call profile. This disables
-   indirect_call_profiler_v2 which tracks single target.  */
+   indirect_call_profiler_v3 which tracks single target.  */
 DEFPARAM (PARAM_INDIR_CALL_TOPN_PROFILE,
-         "indir-call-topn-profile",
-         "track topn target addresses in indirect-call profile.",
-          0, 0, 1)
+	  "indir-call-topn-profile",
+	  "Track top N target addresses in indirect-call profile.",
+	  0, 0, 1)
 
 /* Avoid SLP vectorization of large basic blocks.  */
 DEFPARAM (PARAM_SLP_MAX_INSNS_IN_BB,
-          "slp-max-insns-in-bb",
-          "Maximum number of instructions in basic block to be considered for SLP vectorization.",
-          1000, 0, 0)
+	  "slp-max-insns-in-bb",
+	  "Maximum number of instructions in basic block to be considered for "
+	  "SLP vectorization.", 1000, 0, 0)
 
 DEFPARAM (PARAM_MIN_INSN_TO_PREFETCH_RATIO,
 	  "min-insn-to-prefetch-ratio",
@@ -1026,19 +1090,19 @@ DEFPARAM (PARAM_IPA_CP_VALUE_LIST_SIZE,
 DEFPARAM (PARAM_IPA_CP_EVAL_THRESHOLD,
 	  "ipa-cp-eval-threshold",
 	  "Threshold ipa-cp opportunity evaluation that is still considered "
-	  "beneficial to clone..",
+	  "beneficial to clone.",
 	  500, 0, 0)
 
 DEFPARAM (PARAM_IPA_CP_RECURSION_PENALTY,
 	  "ipa-cp-recursion-penalty",
 	  "Percentage penalty the recursive functions will receive when they "
-	  "are evaluated for cloning..",
+	  "are evaluated for cloning.",
 	  40, 0, 100)
 
 DEFPARAM (PARAM_IPA_CP_SINGLE_CALL_PENALTY,
 	  "ipa-cp-single-call-penalty",
 	  "Percentage penalty functions containing a single call to another "
-	  "function will receive when they are evaluated for cloning..",
+	  "function will receive when they are evaluated for cloning.",
 	  15, 0, 100)
 
 DEFPARAM (PARAM_IPA_MAX_AGG_ITEMS,
@@ -1050,13 +1114,13 @@ DEFPARAM (PARAM_IPA_MAX_AGG_ITEMS,
 DEFPARAM (PARAM_IPA_CP_LOOP_HINT_BONUS,
 	  "ipa-cp-loop-hint-bonus",
 	  "Compile-time bonus IPA-CP assigns to candidates which make loop "
-	  "bounds or strides known..",
+	  "bounds or strides known.",
 	  64, 0, 0)
 
 DEFPARAM (PARAM_IPA_CP_ARRAY_INDEX_HINT_BONUS,
 	  "ipa-cp-array-index-hint-bonus",
 	  "Compile-time bonus IPA-CP assigns to candidates which make an array "
-	  "index known..",
+	  "index known.",
 	  48, 0, 0)
 
 DEFPARAM (PARAM_IPA_MAX_AA_STEPS,
@@ -1070,7 +1134,7 @@ DEFPARAM (PARAM_IPA_MAX_AA_STEPS,
 DEFPARAM (PARAM_LTO_PARTITIONS,
 	  "lto-partitions",
 	  "Number of partitions the program should be split to.",
-	  32, 1, 0)
+	  128, 1, 0)
 
 DEFPARAM (MIN_PARTITION_SIZE,
 	  "lto-min-partition",
@@ -1081,6 +1145,11 @@ DEFPARAM (MAX_PARTITION_SIZE,
 	  "lto-max-partition",
 	  "Maximal size of a partition for LTO (in estimated instructions).",
 	  1000000, 0, INT_MAX)
+
+DEFPARAM (PARAM_MAX_LTO_STREAMING_PARALLELISM,
+	  "lto-max-streaming-parallelism",
+	  "maximal number of LTO partitions streamed in parallel.",
+	  32, 1, 0)
 
 /* Diagnostic parameters.  */
 
@@ -1116,7 +1185,7 @@ DEFPARAM (PARAM_ALLOW_STORE_DATA_RACES,
 DEFPARAM (PARAM_TREE_REASSOC_WIDTH,
 	  "tree-reassoc-width",
 	  "Set the maximum number of instructions executed in parallel in "
-	  "reassociated tree. If 0, use the target dependent heuristic..",
+	  "reassociated tree.  If 0, use the target dependent heuristic.",
 	  0, 0, 0)
 
 DEFPARAM (PARAM_MAX_TAIL_MERGE_COMPARISONS,
@@ -1161,6 +1230,8 @@ DEFPARAM (PARAM_MAX_SLSR_CANDIDATE_SCAN,
 	  "Maximum length of candidate scans for straight-line "
 	  "strength reduction.",
 	  50, 1, 999999)
+
+/* ASan stands for AddressSanitizer: https://github.com/google/sanitizers.  */
 
 DEFPARAM (PARAM_ASAN_STACK,
          "asan-stack",
@@ -1214,12 +1285,6 @@ DEFPARAM (PARAM_UNINIT_CONTROL_DEP_ATTEMPTS,
 	  "Maximum number of nested calls to search for control dependencies "
 	  "during uninitialized variable analysis.",
 	  1000, 1, 0)
-
-DEFPARAM (PARAM_CHKP_MAX_CTOR_SIZE,
-	  "chkp-max-ctor-size",
-	  "Maximum number of statements to be included into a single static "
-	  "constructor generated by Pointer Bounds Checker.",
-	  5000, 100, 0)
 
 DEFPARAM (PARAM_FSM_SCALE_PATH_STMTS,
 	  "fsm-scale-path-stmts",
@@ -1297,18 +1362,18 @@ DEFPARAM (PARAM_MAX_RTL_IF_CONVERSION_UNPREDICTABLE_COST,
 
 DEFPARAM (PARAM_HSA_GEN_DEBUG_STORES,
 	  "hsa-gen-debug-stores",
-	  "Level of hsa debug stores verbosity",
+	  "Level of hsa debug stores verbosity.",
 	  0, 0, 1)
 
 DEFPARAM (PARAM_MAX_SPECULATIVE_DEVIRT_MAYDEFS,
 	  "max-speculative-devirt-maydefs",
 	  "Maximum number of may-defs visited when devirtualizing "
-	  "speculatively", 50, 0, 0)
+	  "speculatively.", 50, 0, 0)
 
 DEFPARAM (PARAM_MAX_VRP_SWITCH_ASSERTIONS,
 	  "max-vrp-switch-assertions",
 	  "Maximum number of assertions to add along the default "
-	  "edge of a switch statement during VRP",
+	  "edge of a switch statement during VRP.",
 	  10, 0, 0)
 
 DEFPARAM (PARAM_VECT_EPILOGUES_NOMASK,
@@ -1335,6 +1400,25 @@ DEFPARAM(PARAM_LOGICAL_OP_NON_SHORT_CIRCUIT,
 	 "logical-op-non-short-circuit",
 	 "True if a non-short-circuit operation is optimal.",
 	 -1, -1, 1)
+
+DEFPARAM(PARAM_LOOP_VERSIONING_MAX_INNER_INSNS,
+	 "loop-versioning-max-inner-insns",
+	 "The maximum number of instructions in an inner loop that is being"
+	 " considered for versioning.",
+	 200, 0, 0)
+
+DEFPARAM(PARAM_LOOP_VERSIONING_MAX_OUTER_INSNS,
+	 "loop-versioning-max-outer-insns",
+	 "The maximum number of instructions in an outer loop that is being"
+	 " considered for versioning, on top of the instructions in inner"
+	 " loops.",
+	 100, 0, 0)
+
+DEFPARAM(PARAM_SSA_NAME_DEF_CHAIN_LIMIT,
+	 "ssa-name-def-chain-limit",
+	 "The maximum number of SSA_NAME assignments to follow in determining "
+	 "a value.",
+	 512, 0, 0)
 
 /*
 

@@ -1,5 +1,5 @@
 /* A pass for lowering gimple to HSAIL
-   Copyright (C) 2013-2018 Free Software Foundation, Inc.
+   Copyright (C) 2013-2019 Free Software Foundation, Inc.
    Contributed by Martin Jambor <mjambor@suse.cz> and
    Martin Liska <mliska@suse.cz>.
 
@@ -69,6 +69,7 @@ along with GCC; see the file COPYING3.  If not see
   do \
   { \
     hsa_fail_cfun (); \
+    auto_diagnostic_group d; \
     if (warning_at (EXPR_LOCATION (hsa_cfun->m_decl), OPT_Whsa, \
 		    HSA_SORRY_MSG)) \
       inform (location, message, __VA_ARGS__); \
@@ -81,6 +82,7 @@ along with GCC; see the file COPYING3.  If not see
   do \
   { \
     hsa_fail_cfun (); \
+    auto_diagnostic_group d; \
     if (warning_at (EXPR_LOCATION (hsa_cfun->m_decl), OPT_Whsa, \
 		    HSA_SORRY_MSG)) \
       inform (location, message); \
@@ -961,9 +963,7 @@ get_symbol_for_decl (tree decl)
 tree
 hsa_get_host_function (tree decl)
 {
-  hsa_function_summary *s
-    = hsa_summaries->get (cgraph_node::get_create (decl));
-  gcc_assert (s->m_kind != HSA_NONE);
+  hsa_function_summary *s = hsa_summaries->get (cgraph_node::get_create (decl));
   gcc_assert (s->m_gpu_implementation_p);
 
   return s->m_bound_function ? s->m_bound_function->decl : NULL;
@@ -977,7 +977,7 @@ get_brig_function_name (tree decl)
   tree d = decl;
 
   hsa_function_summary *s = hsa_summaries->get (cgraph_node::get_create (d));
-  if (s->m_kind != HSA_NONE
+  if (s != NULL
       && s->m_gpu_implementation_p
       && s->m_bound_function)
     d = s->m_bound_function->decl;
@@ -3178,23 +3178,6 @@ gen_hsa_insns_for_operation_assignment (gimple *assign, hsa_bb *hbb)
     case NEGATE_EXPR:
       opcode = BRIG_OPCODE_NEG;
       break;
-    case FMA_EXPR:
-      /* There is a native HSA instruction for scalar FMAs but not for vector
-	 ones.  */
-      if (TREE_CODE (TREE_TYPE (lhs)) == VECTOR_TYPE)
-	{
-	  hsa_op_reg *dest
-	    = hsa_cfun->reg_for_gimple_ssa (gimple_assign_lhs (assign));
-	  hsa_op_with_type *op1 = hsa_reg_or_immed_for_gimple_op (rhs1, hbb);
-	  hsa_op_with_type *op2 = hsa_reg_or_immed_for_gimple_op (rhs2, hbb);
-	  hsa_op_with_type *op3 = hsa_reg_or_immed_for_gimple_op (rhs3, hbb);
-	  hsa_op_reg *tmp = new hsa_op_reg (dest->m_type);
-	  gen_hsa_binary_operation (BRIG_OPCODE_MUL, tmp, op1, op2, hbb);
-	  gen_hsa_binary_operation (BRIG_OPCODE_ADD, dest, tmp, op3, hbb);
-	  return;
-	}
-      opcode = BRIG_OPCODE_MAD;
-      break;
     case MIN_EXPR:
       opcode = BRIG_OPCODE_MIN;
       break;
@@ -3492,7 +3475,6 @@ gen_hsa_insns_for_switch_stmt (gswitch *s, hsa_bb *hbb)
   e->flags &= ~EDGE_FALLTHRU;
   e->flags |= EDGE_TRUE_VALUE;
 
-  function *func = DECL_STRUCT_FUNCTION (current_function_decl);
   tree index_tree = gimple_switch_index (s);
   tree lowest = get_switch_low (s);
   tree highest = get_switch_high (s);
@@ -3516,9 +3498,7 @@ gen_hsa_insns_for_switch_stmt (gswitch *s, hsa_bb *hbb)
 
   hbb->append_insn (new hsa_insn_cbr (cmp_reg));
 
-  tree default_label = gimple_switch_default_label (s);
-  basic_block default_label_bb = label_to_block_fn (func,
-						    CASE_LABEL (default_label));
+  basic_block default_label_bb = gimple_switch_default_bb (cfun, s);
 
   if (!gimple_seq_empty_p (phi_nodes (default_label_bb)))
     {
@@ -3553,7 +3533,7 @@ gen_hsa_insns_for_switch_stmt (gswitch *s, hsa_bb *hbb)
   for (unsigned i = 1; i < labels; i++)
     {
       tree label = gimple_switch_label (s, i);
-      basic_block bb = label_to_block_fn (func, CASE_LABEL (label));
+      basic_block bb = label_to_block (cfun, CASE_LABEL (label));
 
       unsigned HOST_WIDE_INT sub_low
 	= tree_to_uhwi (int_const_binop (MINUS_EXPR, CASE_LOW (label), lowest));
@@ -4490,6 +4470,57 @@ gen_hsa_divmod (gcall *call, hsa_bb *hbb)
   insn->set_output_in_type (dest, 0, hbb);
 }
 
+/* Emit instructions that implement FMA, FMS, FNMA or FNMS call STMT.
+   Instructions are appended to basic block HBB.  NEGATE1 is true for
+   FNMA and FNMS.  NEGATE3 is true for FMS and FNMS.  */
+
+static void
+gen_hsa_fma (gcall *call, hsa_bb *hbb, bool negate1, bool negate3)
+{
+  tree lhs = gimple_call_lhs (call);
+  if (lhs == NULL_TREE)
+    return;
+
+  tree rhs1 = gimple_call_arg (call, 0);
+  tree rhs2 = gimple_call_arg (call, 1);
+  tree rhs3 = gimple_call_arg (call, 2);
+
+  hsa_op_reg *dest = hsa_cfun->reg_for_gimple_ssa (lhs);
+  hsa_op_with_type *op1 = hsa_reg_or_immed_for_gimple_op (rhs1, hbb);
+  hsa_op_with_type *op2 = hsa_reg_or_immed_for_gimple_op (rhs2, hbb);
+  hsa_op_with_type *op3 = hsa_reg_or_immed_for_gimple_op (rhs3, hbb);
+
+  if (negate1)
+    {
+      hsa_op_reg *tmp = new hsa_op_reg (dest->m_type);
+      gen_hsa_unary_operation (BRIG_OPCODE_NEG, tmp, op1, hbb);
+      op1 = tmp;
+    }
+
+  /* There is a native HSA instruction for scalar FMAs but not for vector
+     ones.  */
+  if (TREE_CODE (TREE_TYPE (lhs)) == VECTOR_TYPE)
+    {
+      hsa_op_reg *tmp = new hsa_op_reg (dest->m_type);
+      gen_hsa_binary_operation (BRIG_OPCODE_MUL, tmp, op1, op2, hbb);
+      gen_hsa_binary_operation (negate3 ? BRIG_OPCODE_SUB : BRIG_OPCODE_ADD,
+				dest, tmp, op3, hbb);
+    }
+  else
+    {
+      if (negate3)
+	{
+	  hsa_op_reg *tmp = new hsa_op_reg (dest->m_type);
+	  gen_hsa_unary_operation (BRIG_OPCODE_NEG, tmp, op3, hbb);
+	  op3 = tmp;
+	}
+      hsa_insn_basic *insn = new hsa_insn_basic (4, BRIG_OPCODE_MAD,
+						 dest->m_type, dest,
+						 op1, op2, op3);
+      hbb->append_insn (insn);
+    }
+}
+
 /* Set VALUE to a shadow kernel debug argument and append a new instruction
    to HBB basic block.  */
 
@@ -5224,6 +5255,22 @@ gen_hsa_insn_for_internal_fn_call (gcall *stmt, hsa_bb *hbb)
       gen_hsa_insns_for_call_of_internal_fn (stmt, hbb);
       break;
 
+    case IFN_FMA:
+      gen_hsa_fma (stmt, hbb, false, false);
+      break;
+
+    case IFN_FMS:
+      gen_hsa_fma (stmt, hbb, false, true);
+      break;
+
+    case IFN_FNMA:
+      gen_hsa_fma (stmt, hbb, true, false);
+      break;
+
+    case IFN_FNMS:
+      gen_hsa_fma (stmt, hbb, true, true);
+      break;
+
     default:
       HSA_SORRY_ATV (gimple_location (stmt),
 		     "support for HSA does not implement internal function: %s",
@@ -5253,8 +5300,7 @@ gen_hsa_insns_for_call (gimple *stmt, hsa_bb *hbb)
       tree function_decl = gimple_call_fndecl (stmt);
       /* Prefetch pass can create type-mismatching prefetch builtin calls which
 	 fail the gimple_call_builtin_p test above.  Handle them here.  */
-      if (DECL_BUILT_IN_CLASS (function_decl)
-	  && DECL_FUNCTION_CODE (function_decl) == BUILT_IN_PREFETCH)
+      if (fndecl_built_in_p (function_decl, BUILT_IN_PREFETCH))
 	return;
 
       if (function_decl == NULL_TREE)
@@ -6240,12 +6286,11 @@ LD:    hard_work_3 ();
 static bool
 convert_switch_statements (void)
 {
-  function *func = DECL_STRUCT_FUNCTION (current_function_decl);
   basic_block bb;
 
   bool modified_cfg = false;
 
-  FOR_EACH_BB_FN (bb, func)
+  FOR_EACH_BB_FN (bb, cfun)
   {
     gimple_stmt_iterator gsi = gsi_last_bb (bb);
     if (gsi_end_p (gsi))
@@ -6268,7 +6313,7 @@ convert_switch_statements (void)
 	tree index_type = TREE_TYPE (index);
 	tree default_label = gimple_switch_default_label (s);
 	basic_block default_label_bb
-	  = label_to_block_fn (func, CASE_LABEL (default_label));
+	  = label_to_block (cfun, CASE_LABEL (default_label));
 	basic_block cur_bb = bb;
 
 	auto_vec <edge> new_edges;
@@ -6280,8 +6325,7 @@ convert_switch_statements (void)
 	   should be fixed after we add new collection of edges.  */
 	for (unsigned i = 0; i < labels; i++)
 	  {
-	    tree label = gimple_switch_label (s, i);
-	    basic_block label_bb = label_to_block_fn (func, CASE_LABEL (label));
+	    basic_block label_bb = gimple_switch_label_bb (cfun, s, i);
 	    edge e = find_edge (bb, label_bb);
 	    edge_counts.safe_push (e->count ());
 	    edge_probabilities.safe_push (e->probability);
@@ -6363,8 +6407,7 @@ convert_switch_statements (void)
 
 	    gsi_insert_before (&cond_gsi, c, GSI_SAME_STMT);
 
-	    basic_block label_bb
-	      = label_to_block_fn (func, CASE_LABEL (label));
+	    basic_block label_bb = label_to_block (cfun, CASE_LABEL (label));
 	    edge new_edge = make_edge (cur_bb, label_bb, EDGE_TRUE_VALUE);
 	    profile_probability prob_sum = sum_slice <profile_probability>
 		 (edge_probabilities, i, labels, profile_probability::never ())
@@ -6431,10 +6474,9 @@ convert_switch_statements (void)
 static void
 expand_builtins ()
 {
-  function *func = DECL_STRUCT_FUNCTION (current_function_decl);
   basic_block bb;
 
-  FOR_EACH_BB_FN (bb, func)
+  FOR_EACH_BB_FN (bb, cfun)
   {
     for (gimple_stmt_iterator gsi = gsi_start_bb (bb); !gsi_end_p (gsi);
 	 gsi_next (&gsi))
@@ -6559,7 +6601,7 @@ generate_hsa (bool kernel)
   if (hsa_cfun->m_kern_p)
     {
       hsa_function_summary *s
-	= hsa_summaries->get (cgraph_node::get (hsa_cfun->m_decl));
+	= hsa_summaries->get_create (cgraph_node::get (hsa_cfun->m_decl));
       hsa_add_kern_decl_mapping (current_function_decl, hsa_cfun->m_name,
 				 hsa_cfun->m_maximum_omp_data_size,
 				 s->m_gridified_kernel_p);
@@ -6629,8 +6671,8 @@ pass_gen_hsail::gate (function *f)
 unsigned int
 pass_gen_hsail::execute (function *)
 {
-  hsa_function_summary *s
-    = hsa_summaries->get (cgraph_node::get_create (current_function_decl));
+  cgraph_node *node = cgraph_node::get_create (current_function_decl);
+  hsa_function_summary *s = hsa_summaries->get_create (node);
 
   expand_builtins ();
   generate_hsa (s->m_kind == HSA_KERNEL);

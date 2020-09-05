@@ -1,5 +1,5 @@
 /* Data flow functions for trees.
-   Copyright (C) 2001-2018 Free Software Foundation, Inc.
+   Copyright (C) 2001-2019 Free Software Foundation, Inc.
    Contributed by Diego Novillo <dnovillo@redhat.com>
 
 This file is part of GCC.
@@ -61,23 +61,23 @@ static void collect_dfa_stats (struct dfa_stats_d *);
 /* Renumber all of the gimple stmt uids.  */
 
 void
-renumber_gimple_stmt_uids (void)
+renumber_gimple_stmt_uids (struct function *fun)
 {
   basic_block bb;
 
-  set_gimple_stmt_max_uid (cfun, 0);
-  FOR_ALL_BB_FN (bb, cfun)
+  set_gimple_stmt_max_uid (fun, 0);
+  FOR_ALL_BB_FN (bb, fun)
     {
       gimple_stmt_iterator bsi;
       for (bsi = gsi_start_phis (bb); !gsi_end_p (bsi); gsi_next (&bsi))
 	{
 	  gimple *stmt = gsi_stmt (bsi);
-	  gimple_set_uid (stmt, inc_gimple_stmt_max_uid (cfun));
+	  gimple_set_uid (stmt, inc_gimple_stmt_max_uid (fun));
 	}
       for (bsi = gsi_start_bb (bb); !gsi_end_p (bsi); gsi_next (&bsi))
 	{
 	  gimple *stmt = gsi_stmt (bsi);
-	  gimple_set_uid (stmt, inc_gimple_stmt_max_uid (cfun));
+	  gimple_set_uid (stmt, inc_gimple_stmt_max_uid (fun));
 	}
     }
 }
@@ -184,8 +184,8 @@ dump_dfa_stats (FILE *file)
 
   unsigned long size, total = 0;
   const char * const fmt_str   = "%-30s%-13s%12s\n";
-  const char * const fmt_str_1 = "%-30s%13lu%11lu%c\n";
-  const char * const fmt_str_3 = "%-43s%11lu%c\n";
+  const char * const fmt_str_1 = "%-30s%13lu" PRsa (11) "\n";
+  const char * const fmt_str_3 = "%-43s" PRsa (11) "\n";
   const char *funcname
     = lang_hooks.decl_printable_name (current_function_decl, 2);
 
@@ -201,36 +201,36 @@ dump_dfa_stats (FILE *file)
   size = dfa_stats.num_uses * sizeof (tree *);
   total += size;
   fprintf (file, fmt_str_1, "USE operands", dfa_stats.num_uses,
-	   SCALE (size), LABEL (size));
+	   SIZE_AMOUNT (size));
 
   size = dfa_stats.num_defs * sizeof (tree *);
   total += size;
   fprintf (file, fmt_str_1, "DEF operands", dfa_stats.num_defs,
-	   SCALE (size), LABEL (size));
+	   SIZE_AMOUNT (size));
 
   size = dfa_stats.num_vuses * sizeof (tree *);
   total += size;
   fprintf (file, fmt_str_1, "VUSE operands", dfa_stats.num_vuses,
-	   SCALE (size), LABEL (size));
+	   SIZE_AMOUNT (size));
 
   size = dfa_stats.num_vdefs * sizeof (tree *);
   total += size;
   fprintf (file, fmt_str_1, "VDEF operands", dfa_stats.num_vdefs,
-	   SCALE (size), LABEL (size));
+	   SIZE_AMOUNT (size));
 
   size = dfa_stats.num_phis * sizeof (struct gphi);
   total += size;
   fprintf (file, fmt_str_1, "PHI nodes", dfa_stats.num_phis,
-	   SCALE (size), LABEL (size));
+	   SIZE_AMOUNT (size));
 
   size = dfa_stats.num_phi_args * sizeof (struct phi_arg_d);
   total += size;
   fprintf (file, fmt_str_1, "PHI arguments", dfa_stats.num_phi_args,
- 	   SCALE (size), LABEL (size));
+	   SIZE_AMOUNT (size));
 
   fprintf (file, "---------------------------------------------------------\n");
-  fprintf (file, fmt_str_3, "Total memory used by DFA/SSA data", SCALE (total),
-	   LABEL (total));
+  fprintf (file, fmt_str_3, "Total memory used by DFA/SSA data",
+	   SIZE_AMOUNT (total));
   fprintf (file, "---------------------------------------------------------\n");
   fprintf (file, "\n");
 
@@ -529,6 +529,49 @@ get_ref_base_and_extent (tree exp, poly_int64_pod *poffset,
 		/* Remember that we have seen an array ref with a variable
 		   index.  */
 		seen_variable_array_ref = true;
+
+		wide_int min, max;
+		if (TREE_CODE (index) == SSA_NAME
+		    && (low_bound = array_ref_low_bound (exp),
+			poly_int_tree_p (low_bound))
+		    && (unit_size = array_ref_element_size (exp),
+			TREE_CODE (unit_size) == INTEGER_CST)
+		    && get_range_info (index, &min, &max) == VR_RANGE)
+		  {
+		    poly_offset_int lbound = wi::to_poly_offset (low_bound);
+		    /* Try to constrain maxsize with range information.  */
+		    offset_int omax
+		      = offset_int::from (max, TYPE_SIGN (TREE_TYPE (index)));
+		    if (known_lt (lbound, omax))
+		      {
+			poly_offset_int rmaxsize;
+			rmaxsize = (omax - lbound + 1)
+			    * wi::to_offset (unit_size) << LOG2_BITS_PER_UNIT;
+			if (!known_size_p (maxsize)
+			    || known_lt (rmaxsize, maxsize))
+			  {
+			    /* If we know an upper bound below the declared
+			       one this is no longer variable.  */
+			    if (known_size_p (maxsize))
+			      seen_variable_array_ref = false;
+			    maxsize = rmaxsize;
+			  }
+		      }
+		    /* Try to adjust bit_offset with range information.  */
+		    offset_int omin
+		      = offset_int::from (min, TYPE_SIGN (TREE_TYPE (index)));
+		    if (known_le (lbound, omin))
+		      {
+			poly_offset_int woffset
+			  = wi::sext (omin - lbound,
+				      TYPE_PRECISION (TREE_TYPE (index)));
+			woffset *= wi::to_offset (unit_size);
+			woffset <<= LOG2_BITS_PER_UNIT;
+			bit_offset += woffset;
+			if (known_size_p (maxsize))
+			  maxsize -= woffset;
+		      }
+		  }
 	      }
 	  }
 	  break;
@@ -949,6 +992,9 @@ dump_enumerated_decls_push (tree *tp, int *walk_subtrees, void *data)
 void
 dump_enumerated_decls (FILE *file, dump_flags_t flags)
 {
+  if (!cfun->cfg)
+    return;
+
   basic_block bb;
   struct walk_stmt_info wi;
   auto_vec<numbered_tree, 40> decl_list;

@@ -1,5 +1,5 @@
 /* Support routines for Value Range Propagation (VRP).
-   Copyright (C) 2005-2018 Free Software Foundation, Inc.
+   Copyright (C) 2005-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -47,6 +47,8 @@ class evrp_folder : public substitute_and_fold_engine
  public:
   tree get_value (tree) FINAL OVERRIDE;
   evrp_folder (class vr_values *vr_values_) : vr_values (vr_values_) { }
+  bool simplify_stmt_using_ranges (gimple_stmt_iterator *gsi)
+    { return vr_values->simplify_stmt_using_ranges (gsi); }
   class vr_values *vr_values;
 
  private:
@@ -68,6 +70,7 @@ class evrp_dom_walker : public dom_walker
 public:
   evrp_dom_walker ()
     : dom_walker (CDI_DOMINATORS),
+      evrp_range_analyzer (true),
       evrp_folder (evrp_range_analyzer.get_vr_values ())
     {
       need_eh_cleanup = BITMAP_ALLOC (NULL);
@@ -159,10 +162,9 @@ evrp_dom_walker::before_dom_children (basic_block bb)
 	      value_range *vr = evrp_range_analyzer.get_value_range (output);
 
 	      /* Mark stmts whose output we fully propagate for removal.  */
-	      if ((vr->type == VR_RANGE || vr->type == VR_ANTI_RANGE)
-		  && (val = value_range_constant_singleton (vr))
+	      if ((val = value_range_constant_singleton (vr))
 		  && may_propagate_copy (output, val)
-		  && !stmt_could_throw_p (stmt)
+		  && !stmt_could_throw_p (cfun, stmt)
 		  && !gimple_has_side_effects (stmt))
 		{
 		  stmts_to_remove.safe_push (stmt);
@@ -175,6 +177,12 @@ evrp_dom_walker::before_dom_children (basic_block bb)
       bool did_replace = evrp_folder.replace_uses_in (stmt);
       if (fold_stmt (&gsi, follow_single_use_edges)
 	  || did_replace)
+	{
+	  stmt = gsi_stmt (gsi);
+	  update_stmt (stmt);
+	  did_replace = true;
+	}
+      if (evrp_folder.simplify_stmt_using_ranges (&gsi))
 	{
 	  stmt = gsi_stmt (gsi);
 	  update_stmt (stmt);
@@ -279,6 +287,8 @@ evrp_dom_walker::cleanup (void)
       gimple *stmt = stmts_to_fixup.pop ();
       fixup_noreturn_call (stmt);
     }
+
+  evrp_folder.vr_values->cleanup_edges_and_switches ();
 }
 
 /* Main entry point for the early vrp pass which is a simplified non-iterative

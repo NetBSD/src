@@ -1,5 +1,5 @@
 /* A splay-tree datatype.  
-   Copyright (C) 1998-2018 Free Software Foundation, Inc.
+   Copyright (C) 1998-2019 Free Software Foundation, Inc.
    Contributed by Mark Mitchell (mark@markmitchell.com).
 
    This file is part of GCC.
@@ -58,11 +58,18 @@ typedef struct splay_tree_node_s *splay_tree_node;
 typedef int (*splay_tree_compare_fn) (splay_tree_key, splay_tree_key);
 
 /* The type of a function used to deallocate any resources associated
-   with the key.  */
+   with the key.  If you provide this function, the splay tree
+   will take the ownership of the memory of the splay_tree_key arg
+   of splay_tree_insert.  This function is called to release the keys
+   present in the tree when calling splay_tree_delete or splay_tree_remove.
+   If splay_tree_insert is called with a key equal to a key already
+   present in the tree, the old key and old value will be released.  */
 typedef void (*splay_tree_delete_key_fn) (splay_tree_key);
 
 /* The type of a function used to deallocate any resources associated
-   with the value.  */
+   with the value.  If you provide this function, the memory of the
+   splay_tree_value arg of splay_tree_insert is managed similarly to
+   the splay_tree_key memory: see splay_tree_delete_key_fn.  */
 typedef void (*splay_tree_delete_value_fn) (splay_tree_value);
 
 /* The type of a function used to iterate over the tree.  */
@@ -147,7 +154,9 @@ extern splay_tree_node splay_tree_max (splay_tree);
 extern splay_tree_node splay_tree_min (splay_tree);
 extern int splay_tree_foreach (splay_tree, splay_tree_foreach_fn, void*);
 extern int splay_tree_compare_ints (splay_tree_key, splay_tree_key);
-extern int splay_tree_compare_pointers (splay_tree_key,	splay_tree_key);
+extern int splay_tree_compare_pointers (splay_tree_key, splay_tree_key);
+extern int splay_tree_compare_strings (splay_tree_key, splay_tree_key);
+extern void splay_tree_delete_pointers (splay_tree_value);
 
 #ifdef __cplusplus
 }

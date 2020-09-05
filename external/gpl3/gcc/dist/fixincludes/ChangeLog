@@ -1,6 +1,13 @@
-2020-03-04  Release Manager
+2020-03-12  Release Manager
 
-	* GCC 8.4.0 released.
+	* GCC 9.3.0 released.
+
+2020-02-26  Segher Boessenkool  <segher@kernel.crashing.org>
+
+	Backport from trunk
+	2020-02-13  Matheus Castanho  <msc@linux.ibm.com>
+
+	* fixinc.in: Skip machine_name fix on powerpc*-*-linux*.
 
 2020-01-01  John David Anglin  <danglin@gcc.gnu.org>
 
@@ -13,10 +20,10 @@
 	* fixincl.x: Regenerate.
 	* tests/base/inttypes.h: Update for above fix.
 
-2019-08-25  Iain Sandoe  <iain@sandoe.co.uk>
+2019-08-21  Iain Sandoe  <iain@sandoe.co.uk>
 
 	Backport from mainline.
-	2019-08-18  C.G. Dogan  <gcc+cgdogan.00@gmail.com>
+	2019-08-18  C.G. Dogan <gcc+cgdogan.00@gmail.com>
 		    Iain Sandoe  <iain@sandoe.co.uk>
 
 	PR target/83531
@@ -25,7 +32,11 @@
 	* fixincl.x: Regenerate.
 	* tests/base/os/availability.h: New file.
 
-2019-08-24  Iain Sandoe  <iain@sandoe.co.uk>
+2019-08-12  Release Manager
+
+	* GCC 9.2.0 released.
+
+2019-08-03  Iain Sandoe  <iain@sandoe.co.uk>
 
 	Backport from mainline.
 	2019-06-21  Iain Sandoe  <iain@sandoe.co.uk>
@@ -38,7 +49,7 @@
 	* tests/base/architecture/ppc/math.h: Update test to include the
 	__DARWIN_NO_LONG_LONG case.
 
-2019-08-24  Iain Sandoe  <iain@sandoe.co.uk>
+2019-08-03  Iain Sandoe  <iain@sandoe.co.uk>
 
 	Backport from mainline.
 	2019-06-21  Iain Sandoe  <iain@sandoe.co.uk>
@@ -50,37 +61,72 @@
 	* tests/base/dispatch/object.h: New file.
 	* tests/base/os/base.h: New file.
 
-2019-06-01  Iain Sandoe  <iain@sandoe.co.uk>
+2019-05-13  Iain Sandoe  <iain@sandoe.co.uk>
 
 	Backport from mainline.
 	2019-05-11  Iain Sandoe  <iain@sandoe.co.uk>
 
+	PR target/90379
 	PR bootstrap/89864
 	* inclhack.def (darwin_ucred__Atomic): Do not supply test_text
 	for wrap fixes.
 	* fixincl.x: Regenerated.
 
-	Backport from mainline.
-	2019-04-18  Erik Schnetter  <schnetter@gmail.com>
-		    Jakub Jelinek  <jakub@redhat.com>
-		    Iain Sandoe  <iain@sandoe.co.uk>
+2019-05-03  Release Manager
+
+	* GCC 9.1.0 released.
+
+2019-04-18  Erik Schnetter  <schnetter@gmail.com>
+	  Jakub Jelinek  <jakub@redhat.com>
+	  Iain Sandoe  <iain@sandoe.co.uk>
 
 	PR bootstrap/89864
 	* inclhack.def (darwin_ucred__Atomic): New, work around _Atomic keyword
 	use in headers included by C++.
 	* fixincl.x: Regenerated.
 
-2019-02-22  Release Manager
+2018-10-31  Joseph Myers  <joseph@codesourcery.com>
 
-	* GCC 8.3.0 released.
+	PR bootstrap/82856
+	* configure.ac: Remove AC_PREREQ.
+	* aclocal.m4, configure: Regenerate.
 
-2018-07-26  Release Manager
+2018-10-16  Rasmus Villemoes  <rv@rasmusvillemoes.dk>
 
-	* GCC 8.2.0 released.
+	* inclhack.def (AAB_vxworks_regs_vxtypes): Add unconditional
+	include of vxCpu.h, guard include of vxTypesOld.h by
+	!_ASMLANGUAGE.
+	* fixincl.x: Regenerate.
 
-2018-05-02  Release Manager
+2018-09-03  Rasmus Villemoes  <rv@rasmusvillemoes.dk>
 
-	* GCC 8.1.0 released.
+	* inclhack.def (vxworks_ioctl_macro): Remove parentheses from
+	expansion of ioctl macro.
+	* fixincl.x: Regenerate.
+
+2018-07-23  David Edelsohn  <dje.gcc@gmail.com>
+
+	* inclhack.def (aix_unistd): New.
+	* fixincl.x: Regenerate.
+	* tests/base/unistd.h [AIX_UNISTD_CHECK]: New test.
+
+2018-06-27  Rasmus Villemoes  <rv@rasmusvillemoes.dk>
+
+	* tests/base/ioLib.h [VXWORKS_IOLIB_INCLUDE_UNISTD_CHECK]: Add
+	missing hunk.
+
+2018-06-12    Rasmus Villemoes <rasmus.villemoes@prevas.dk>
+
+	* genfixes: exit 1 when autogen not found.
+	* genfixes: Remove some redundant code.
+	* genfixes: Update URL to autogen source code.
+
+	* inclhack.def: Fix fixup for assert.h on vxworks.
+	* fixincl.x: Regenerate.
+
+2018-05-25  Rasmus Villemoes  <rasmus.villemoes@prevas.dk>
+
+	* inclhack.def (vxworks_iolib_include_unistd): New fix.
 
 2018-04-18  David Malcolm  <dmalcolm@redhat.com>
 
@@ -1316,7 +1362,7 @@
 	* tests/base/math.h: Update.
 
 2007-01-05  Bruce Korb <bkorb@gnu.org>, 
-            Daniel Franke <franke.daniel@gmail.com>
+	    Daniel Franke <franke.daniel@gmail.com>
 
 	PR target/30008
 	* fixincl.tpl (List): separate file name patterns with a NUL byte instead
@@ -1532,7 +1578,7 @@
 	* fixincl.c: Don't include <sys/wait.h> if SEPARATE_FIX_PROC.
 
 2005-05-19  Eric Botcazou  <ebotcazou@libertysurf.fr>
-            Joseph S. Myers  <joseph@codesourcery.com>
+	    Joseph S. Myers  <joseph@codesourcery.com>
 
 	PR target/19933
 	PR target/21315

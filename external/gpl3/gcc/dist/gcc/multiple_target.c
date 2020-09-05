@@ -2,7 +2,7 @@
 
    Contributed by Evgeny Stupachenko <evstupac@gmail.com>
 
-   Copyright (C) 2015-2018 Free Software Foundation, Inc.
+   Copyright (C) 2015-2019 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -73,7 +73,7 @@ create_dispatcher_calls (struct cgraph_node *node)
   if (!targetm.has_ifunc_p ())
     {
       error_at (DECL_SOURCE_LOCATION (node->decl),
-		"the call requires ifunc, which is not"
+		"the call requires %<ifunc%>, which is not"
 		" supported by this target");
       return;
     }
@@ -167,8 +167,8 @@ create_dispatcher_calls (struct cgraph_node *node)
     }
 
   symtab->change_decl_assembler_name (node->decl,
-				      clone_function_name (node->decl,
-							   "default"));
+				      clone_function_name_numbered (
+					  node->decl, "default"));
 
   /* FIXME: copy of cgraph_node::make_local that should be cleaned up
 	    in next stage1.  */
@@ -236,8 +236,10 @@ get_attr_str (tree arglist, char *attr_str)
 }
 
 /* Return number of attributes separated by comma and put them into ARGS.
-   If there is no DEFAULT attribute return -1.  If there is an empty
-   string in attribute return -2.  */
+   If there is no DEFAULT attribute return -1.
+   If there is an empty string in attribute return -2.
+   If there are multiple DEFAULT attributes return -3.
+   */
 
 static int
 separate_attrs (char *attr_str, char **attrs, int attrnum)
@@ -257,6 +259,8 @@ separate_attrs (char *attr_str, char **attrs, int attrnum)
     }
   if (default_count == 0)
     return -1;
+  else if (default_count > 1)
+    return -3;
   else if (i + default_count < attrnum)
     return -2;
 
@@ -321,8 +325,8 @@ create_target_clone (cgraph_node *node, bool definition, char *name,
       DECL_ATTRIBUTES (new_decl) = attributes;
       /* Generate a new name for the new version.  */
       symtab->change_decl_assembler_name (new_node->decl,
-					  clone_function_name (node->decl,
-							       name));
+					  clone_function_name_numbered (
+					      node->decl, name));
     }
   return new_node;
 }
@@ -348,14 +352,14 @@ expand_target_clones (struct cgraph_node *node, bool definition)
   if (attr_len == -1)
     {
       warning_at (DECL_SOURCE_LOCATION (node->decl),
-		  0,
-		  "single %<target_clones%> attribute is ignored");
+		  0, "single %<target_clones%> attribute is ignored");
       return false;
     }
 
   if (node->definition
       && !tree_versionable_function_p (node->decl))
     {
+      auto_diagnostic_group d;
       error_at (DECL_SOURCE_LOCATION (node->decl),
 		"clones for %<target_clones%> attribute cannot be created");
       const char *reason = NULL;
@@ -374,18 +378,26 @@ expand_target_clones (struct cgraph_node *node, bool definition)
   char **attrs = XNEWVEC (char *, attrnum);
 
   attrnum = separate_attrs (attr_str, attrs, attrnum);
-  if (attrnum == -1)
+  switch (attrnum)
     {
+    case -1:
       error_at (DECL_SOURCE_LOCATION (node->decl),
-		"default target was not set");
-      XDELETEVEC (attrs);
-      XDELETEVEC (attr_str);
-      return false;
-    }
-  else if (attrnum == -2)
-    {
+		"%<default%> target was not set");
+      break;
+    case -2:
       error_at (DECL_SOURCE_LOCATION (node->decl),
 		"an empty string cannot be in %<target_clones%> attribute");
+      break;
+    case -3:
+      error_at (DECL_SOURCE_LOCATION (node->decl),
+		"multiple %<default%> targets were set");
+      break;
+    default:
+      break;
+    }
+
+  if (attrnum < 0)
+    {
       XDELETEVEC (attrs);
       XDELETEVEC (attr_str);
       return false;
@@ -447,6 +459,54 @@ expand_target_clones (struct cgraph_node *node, bool definition)
   return true;
 }
 
+/* When NODE is a target clone, consider all callees and redirect
+   to a clone with equal target attributes.  That prevents multiple
+   multi-versioning dispatches and a call-chain can be optimized.  */
+
+static void
+redirect_to_specific_clone (cgraph_node *node)
+{
+  cgraph_function_version_info *fv = node->function_version ();
+  if (fv == NULL)
+    return;
+
+  tree attr_target = lookup_attribute ("target", DECL_ATTRIBUTES (node->decl));
+  if (attr_target == NULL_TREE)
+    return;
+
+  /* We need to remember NEXT_CALLER as it could be modified in the loop.  */
+  for (cgraph_edge *e = node->callees; e ; e = e->next_callee)
+    {
+      cgraph_function_version_info *fv2 = e->callee->function_version ();
+      if (!fv2)
+	continue;
+
+      tree attr_target2 = lookup_attribute ("target",
+					    DECL_ATTRIBUTES (e->callee->decl));
+
+      /* Function is not calling proper target clone.  */
+      if (!attribute_list_equal (attr_target, attr_target2))
+	{
+	  while (fv2->prev != NULL)
+	    fv2 = fv2->prev;
+
+	  /* Try to find a clone with equal target attribute.  */
+	  for (; fv2 != NULL; fv2 = fv2->next)
+	    {
+	      cgraph_node *callee = fv2->this_node;
+	      attr_target2 = lookup_attribute ("target",
+					       DECL_ATTRIBUTES (callee->decl));
+	      if (attribute_list_equal (attr_target, attr_target2))
+		{
+		  e->redirect_callee (callee);
+		  e->redirect_call_stmt_to_callee ();
+		  break;
+		}
+	    }
+	}
+    }
+}
+
 static unsigned int
 ipa_target_clone (void)
 {
@@ -459,6 +519,9 @@ ipa_target_clone (void)
 
   for (unsigned i = 0; i < to_dispatch.length (); i++)
     create_dispatcher_calls (to_dispatch[i]);
+
+  FOR_EACH_FUNCTION (node)
+    redirect_to_specific_clone (node);
 
   return 0;
 }

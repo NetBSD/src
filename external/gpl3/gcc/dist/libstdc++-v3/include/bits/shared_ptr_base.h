@@ -1,6 +1,6 @@
 // shared_ptr and weak_ptr implementation details -*- C++ -*-
 
-// Copyright (C) 2007-2018 Free Software Foundation, Inc.
+// Copyright (C) 2007-2019 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -510,6 +510,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       alignas(type_info) static constexpr char __tag[sizeof(type_info)] = { };
       return reinterpret_cast<const type_info&>(__tag);
     }
+
+    static bool _S_eq(const type_info&) noexcept;
   };
 
   template<typename _Alloc>
@@ -536,6 +538,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     public:
       using __allocator_type = __alloc_rebind<_Alloc, _Sp_counted_ptr_inplace>;
 
+      // Alloc parameter is not a reference so doesn't alias anything in __args
       template<typename... _Args>
 	_Sp_counted_ptr_inplace(_Alloc __a, _Args&&... __args)
 	: _M_impl(__a)
@@ -571,21 +574,20 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       virtual void*
       _M_get_deleter(const std::type_info& __ti) noexcept override
       {
+	auto __ptr = const_cast<typename remove_cv<_Tp>::type*>(_M_ptr());
 	// Check for the fake type_info first, so we don't try to access it
-	// as a real type_info object.
-	if (&__ti == &_Sp_make_shared_tag::_S_ti())
-	  return const_cast<typename remove_cv<_Tp>::type*>(_M_ptr());
+	// as a real type_info object. Otherwise, check if it's the real
+	// type_info for this class. With RTTI enabled we can check directly,
+	// or call a library function to do it.
+	if (&__ti == &_Sp_make_shared_tag::_S_ti()
+	    ||
 #if __cpp_rtti
-	// Callers compiled with old libstdc++ headers and RTTI enabled
-	// might pass this instead:
-	else if (__ti == typeid(_Sp_make_shared_tag))
-	  return const_cast<typename remove_cv<_Tp>::type*>(_M_ptr());
+	    __ti == typeid(_Sp_make_shared_tag)
 #else
-	// Cannot detect a real type_info object. If the linker keeps a
-	// definition of this function compiled with -fno-rtti then callers
-	// that have RTTI enabled and pass a real type_info object will get
-	// a null pointer returned.
+	    _Sp_make_shared_tag::_S_eq(__ti)
 #endif
+	   )
+	  return __ptr;
 	return nullptr;
       }
 
@@ -910,7 +912,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  _M_pi = nullptr;
     }
 
-#define __cpp_lib_shared_ptr_arrays 201603
+#define __cpp_lib_shared_ptr_arrays 201611L
 
   // Helper traits for shared_ptr of array:
 
@@ -1512,22 +1514,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     operator>=(nullptr_t, const __shared_ptr<_Tp, _Lp>& __a) noexcept
     { return !(nullptr < __a); }
 
-  template<typename _Sp>
-    struct _Sp_less : public binary_function<_Sp, _Sp, bool>
-    {
-      bool
-      operator()(const _Sp& __lhs, const _Sp& __rhs) const noexcept
-      {
-	typedef typename _Sp::element_type element_type;
-	return std::less<element_type*>()(__lhs.get(), __rhs.get());
-      }
-    };
-
-  template<typename _Tp, _Lock_policy _Lp>
-    struct less<__shared_ptr<_Tp, _Lp>>
-    : public _Sp_less<__shared_ptr<_Tp, _Lp>>
-    { };
-
   // 20.7.2.2.8 shared_ptr specialized algorithms.
   template<typename _Tp, _Lock_policy _Lp>
     inline void
@@ -1831,7 +1817,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       mutable __weak_ptr<_Tp, _Lp>  _M_weak_this;
     };
 
-  template<typename _Tp, _Lock_policy _Lp, typename _Alloc, typename... _Args>
+  template<typename _Tp, _Lock_policy _Lp = __default_lock_policy,
+	   typename _Alloc, typename... _Args>
     inline __shared_ptr<_Tp, _Lp>
     __allocate_shared(const _Alloc& __a, _Args&&... __args)
     {
@@ -1839,7 +1826,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 				    std::forward<_Args>(__args)...);
     }
 
-  template<typename _Tp, _Lock_policy _Lp, typename... _Args>
+  template<typename _Tp, _Lock_policy _Lp = __default_lock_policy,
+	   typename... _Args>
     inline __shared_ptr<_Tp, _Lp>
     __make_shared(_Args&&... __args)
     {

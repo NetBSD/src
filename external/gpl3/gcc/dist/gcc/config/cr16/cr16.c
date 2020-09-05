@@ -1,5 +1,5 @@
 /* Output routines for CR16 processor.
-   Copyright (C) 2012-2018 Free Software Foundation, Inc.
+   Copyright (C) 2012-2019 Free Software Foundation, Inc.
    Contributed by KPIT Cummins Infosystems Limited.
   
    This file is part of GCC.
@@ -306,7 +306,8 @@ cr16_override_options (void)
 	    error ("data-model=far not valid for cr16c architecture");
 	}
       else
-	error ("invalid data model option -mdata-model=%s", cr16_data_model);
+	error ("invalid data model option %<-mdata-model=%s%>",
+	       cr16_data_model);
     }
   else
     data_model = DM_DEFAULT;
