@@ -1,4 +1,4 @@
-/*	$NetBSD: disasm.c,v 1.9 2020/08/03 19:16:56 ryo Exp $	*/
+/*	$NetBSD: disasm.c,v 1.10 2020/09/05 15:59:09 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disasm.c,v 1.9 2020/08/03 19:16:56 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disasm.c,v 1.10 2020/09/05 15:59:09 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -4044,7 +4044,7 @@ disasm(const disasm_interface_t *di, uintptr_t loc)
 {
 	uint32_t insn;
 
-	insn = di->di_readword(loc);
+	insn = le32toh(di->di_readword(loc));
 	disasm_insn(di, loc, insn);
 
 	/* return next address */
