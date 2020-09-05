@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.153 2020/05/16 18:31:54 christos Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.154 2020/09/05 02:47:48 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.153 2020/05/16 18:31:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.154 2020/09/05 02:47:48 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -667,6 +667,7 @@ found:
 		dp->i_size = newisize;
 		DIP_ASSIGN(dp, size, dp->i_size);
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
+		uvm_vnp_setsize(vdp, dp->i_size);
 		UFS_WAPBL_UPDATE(vdp, NULL, NULL, UPDATE_DIROP);
 	}
 	brelse(bp, 0);
@@ -956,6 +957,7 @@ ufs_dircompact(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 		dp->i_size = ulr->ulr_offset + ulr->ulr_count;
 		DIP_ASSIGN(dp, size, dp->i_size);
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
+		uvm_vnp_setsize(dvp, dp->i_size);
 		UFS_WAPBL_UPDATE(dvp, NULL, NULL, UPDATE_DIROP);
 	}
 	/*
