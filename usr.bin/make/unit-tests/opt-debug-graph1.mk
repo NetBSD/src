@@ -1,4 +1,4 @@
-# $NetBSD: opt-debug-graph1.mk,v 1.2 2020/09/05 06:36:40 rillig Exp $
+# $NetBSD: opt-debug-graph1.mk,v 1.3 2020/09/05 06:46:12 rillig Exp $
 #
 # Tests for the -dg1 command line option, which prints the input
 # graph before making anything.
@@ -13,7 +13,9 @@ made-source:
 
 made-target-no-sources:
 
-unmade-target: unmade-sources
+unmade-target: unmade-sources unmade-silent-source
+
+.SILENT: unmade-silent-source
 
 unmade-target-no-sources:
 
