@@ -1,4 +1,4 @@
-# $NetBSD: include-main.mk,v 1.2 2020/07/27 20:55:59 rillig Exp $
+# $NetBSD: include-main.mk,v 1.3 2020/09/05 16:59:19 rillig Exp $
 #
 # Demonstrates that the .INCLUDEDFROMFILE magic variable does not behave
 # as described in the manual page.
@@ -9,22 +9,17 @@
 #
 
 .if !defined(.INCLUDEDFROMFILE)
-LOG+=		main-before-ok
+.  info main-before-ok
 .else
-.  for f in ${.INCLUDEDFROMFILE}
-LOG+=		main-before-fail\(${f:Q}\)
-.  endfor
+.  warning main-before-fail(${.INCLUDEDFROMFILE})
 .endif
 
 .include "include-sub.mk"
 
 .if !defined(.INCLUDEDFROMFILE)
-LOG+=		main-after-ok
+.  info main-after-ok
 .else
-.  for f in ${.INCLUDEDFROMFILE}
-LOG+=		main-after-fail\(${f:Q}\)
-.  endfor
+.  warning main-after-fail(${.INCLUDEDFROMFILE})
 .endif
 
-all:
-	@printf '%s\n' ${LOG}
+all:	# nothing
