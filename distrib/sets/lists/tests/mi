@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.919 2020/09/05 06:20:50 rillig Exp $
+# $NetBSD: mi,v 1.920 2020/09/05 06:36:40 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4828,8 +4828,8 @@
 ./usr/tests/usr.bin/make/unit-tests/opt-debug-file.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/opt-debug-for.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/opt-debug-for.mk				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/opt-debug-g1.exp				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/opt-debug-g1.mk				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/opt-debug-g1.exp				tests-obsolete		obsolete
+./usr/tests/usr.bin/make/unit-tests/opt-debug-g1.mk				tests-obsolete		obsolete
 ./usr/tests/usr.bin/make/unit-tests/opt-debug-graph1.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/opt-debug-graph1.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/opt-debug-graph2.exp			tests-usr.bin-tests	compattestfile,atf
