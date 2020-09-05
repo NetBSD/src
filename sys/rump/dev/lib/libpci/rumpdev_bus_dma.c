@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdev_bus_dma.c,v 1.8 2019/01/27 02:08:48 pgoyette Exp $	*/
+/*	$NetBSD: rumpdev_bus_dma.c,v 1.9 2020/09/05 16:30:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 Antti Kantee
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpdev_bus_dma.c,v 1.8 2019/01/27 02:08:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpdev_bus_dma.c,v 1.9 2020/09/05 16:30:12 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,8 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: rumpdev_bus_dma.c,v 1.8 2019/01/27 02:08:48 pgoyette
 #include <sys/mbuf.h>
 #include <sys/bus.h>
 #include <sys/intr.h>
-
-#include <uvm/uvm.h>
 
 #include "pci_user.h"
 

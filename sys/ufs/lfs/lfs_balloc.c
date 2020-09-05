@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.95 2020/02/23 08:39:48 riastradh Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.96 2020/09/05 16:30:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.95 2020/02/23 08:39:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.96 2020/09/05 16:30:13 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -89,7 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.95 2020/02/23 08:39:48 riastradh Ex
 #include <ufs/lfs/lfs_extern.h>
 #include <ufs/lfs/lfs_kernel.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 static int lfs_fragextend(struct vnode *, int, int, daddr_t, struct buf **,
 			  kauth_cred_t);

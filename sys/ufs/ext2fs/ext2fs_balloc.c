@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.42 2018/09/03 16:29:37 riastradh Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.43 2020/09/05 16:30:13 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.42 2018/09/03 16:29:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.43 2020/09/05 16:30:13 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_uvmhist.h"
@@ -75,7 +75,10 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.42 2018/09/03 16:29:37 riastradh
 #include <sys/mount.h>
 #include <sys/kauth.h>
 
+#ifdef UVMHIST
 #include <uvm/uvm.h>
+#endif
+#include <uvm/uvm_stat.h>
 
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufs_extern.h>

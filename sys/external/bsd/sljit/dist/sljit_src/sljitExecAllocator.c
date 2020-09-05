@@ -1,4 +1,4 @@
-/*	$NetBSD: sljitExecAllocator.c,v 1.6 2019/01/20 23:14:16 alnsn Exp $	*/
+/*	$NetBSD: sljitExecAllocator.c,v 1.7 2020/09/05 16:30:11 riastradh Exp $	*/
 
 /*
  *    Stack-less Just-In-Time compiler
@@ -99,7 +99,7 @@ static SLJIT_INLINE void free_chunk(void *chunk, sljit_uw size)
 #ifdef _KERNEL
 #include <sys/param.h>
 #include <sys/module.h> /* for module_map */
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 #else
 #include <sys/mman.h>
 #endif
