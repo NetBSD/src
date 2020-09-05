@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.4 2020/03/14 04:55:14 maxv Exp $	*/
+/*	$NetBSD: pte.h,v 1.5 2020/09/05 07:26:37 maxv Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #define PGEX_W		0x0002	/* exception during a write cycle */
 #define PGEX_U		0x0004	/* exception while in user mode */
 #define PGEX_RSVD	0x0008	/* a reserved bit was set in the page tables */
-#define PGEX_X		0x0010	/* exception during instruction fetch */
+#define PGEX_I		0x0010	/* exception during instruction fetch */
 #define PGEX_PK		0x0020	/* access disallowed by protection key */
 #define PGEX_SGX	0x8000	/* violation of sgx-specific access rights */
 
