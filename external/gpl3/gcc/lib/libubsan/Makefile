@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2019/10/28 16:25:05 christos Exp $
+#	$NetBSD: Makefile,v 1.17 2020/09/05 09:50:15 mrg Exp $
 
 UNSUPPORTED_COMPILER.clang=	# defined
 LIBISCXX = yes
@@ -16,6 +16,7 @@ UBSAN_SRCS= \
 	ubsan_flags.cc \
 	ubsan_handlers.cc \
 	ubsan_init.cc \
+	ubsan_monitor.cc \
 	ubsan_type_hash.cc \
 	ubsan_type_hash_itanium.cc \
 	ubsan_type_hash_win.cc \

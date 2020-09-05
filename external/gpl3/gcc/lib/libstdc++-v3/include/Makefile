@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.9 2014/06/01 19:51:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2020/09/05 09:50:15 mrg Exp $
 
-SUBDIR=		backward ext bits debug decimal parallel pb profile
+SUBDIR=		backward ext bits debug decimal parallel pb profile pstl
 SUBDIR+=	tr1 tr2
 
 .include <bsd.init.mk>
