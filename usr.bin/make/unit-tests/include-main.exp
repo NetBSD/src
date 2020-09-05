@@ -1,6 +1,10 @@
 make: "include-main.mk" line 12: main-before-ok
+make: "include-main.mk" line 19: main-before-for-ok
 make: "include-sub.mk" line 4: sub-before-ok
+make: "include-sub.mk" line 14: sub-before-for-ok
 make: "include-subsub.mk" line 4: subsub-ok
-make: "include-sub.mk" line 14: warning: sub-after-fail(include-sub.mk)
-make: "include-main.mk" line 22: warning: main-after-fail(include-sub.mk)
+make: "include-sub.mk" line 25: warning: sub-after-fail(include-sub.mk)
+make: "include-sub.mk" line 32: warning: sub-after-for-fail(include-sub.mk)
+make: "include-main.mk" line 30: warning: main-after-fail(include-sub.mk)
+make: "include-main.mk" line 35: main-after-for-ok
 exit status 0
