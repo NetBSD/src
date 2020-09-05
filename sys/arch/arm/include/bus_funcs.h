@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_funcs.h,v 1.9 2020/04/13 07:09:51 maxv Exp $	*/
+/*	$NetBSD: bus_funcs.h,v 1.10 2020/09/05 16:04:31 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -493,14 +493,20 @@ void	__bs_c(f,_bs_sm_1)(void *t, bus_space_handle_t bsh,		\
 
 #define	bs_sm_2_proto(f)						\
 void	__bs_c(f,_bs_sm_2)(void *t, bus_space_handle_t bsh,		\
+	    bus_size_t offset, uint16_t value, bus_size_t count);	\
+void	__bs_c(f,_bs_sm_2_swap)(void *t, bus_space_handle_t bsh,		\
 	    bus_size_t offset, uint16_t value, bus_size_t count);
 
 #define	bs_sm_4_proto(f)						\
 void	__bs_c(f,_bs_sm_4)(void *t, bus_space_handle_t bsh,		\
+	    bus_size_t offset, uint32_t value, bus_size_t count);	\
+void	__bs_c(f,_bs_sm_4_swap)(void *t, bus_space_handle_t bsh,	\
 	    bus_size_t offset, uint32_t value, bus_size_t count);
 
 #define	bs_sm_8_proto(f)						\
 void	__bs_c(f,_bs_sm_8)(void *t, bus_space_handle_t bsh,		\
+	    bus_size_t offset, uint64_t value, bus_size_t count);	\
+void	__bs_c(f,_bs_sm_8_swap)(void *t, bus_space_handle_t bsh,	\
 	    bus_size_t offset, uint64_t value, bus_size_t count);
 
 #define	bs_sr_1_proto(f)						\
