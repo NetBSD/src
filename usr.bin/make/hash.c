@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.30 2020/09/05 13:36:25 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.31 2020/09/05 13:55:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: hash.c,v 1.30 2020/09/05 13:36:25 rillig Exp $";
+static char rcsid[] = "$NetBSD: hash.c,v 1.31 2020/09/05 13:55:08 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)hash.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: hash.c,v 1.30 2020/09/05 13:36:25 rillig Exp $");
+__RCSID("$NetBSD: hash.c,v 1.31 2020/09/05 13:55:08 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -120,33 +120,20 @@ static void RebuildTable(Hash_Table *);
  *
  * Input:
  *	t		Structure to to hold the table.
- *	numBuckets	How many buckets to create for starters. This
- *			number is rounded up to a power of two.   If
- *			<= 0, a reasonable default is chosen. The
- *			table will grow in size later as needed.
  */
 void
-Hash_InitTable(Hash_Table *t, int numBuckets)
+Hash_InitTable(Hash_Table *t)
 {
-	int i;
+	size_t n = 16, i;
 	struct Hash_Entry **hp;
 
-	/*
-	 * Round up the size to a power of two.
-	 */
-	if (numBuckets <= 0)
-		i = 16;
-	else {
-		for (i = 2; i < numBuckets; i <<= 1)
-			 continue;
-	}
 	t->numEntries = 0;
 	t->maxchain = 0;
-	t->bucketsSize = i;
-	t->bucketsMask = i - 1;
-	t->buckets = hp = bmake_malloc(sizeof(*hp) * i);
-	while (--i >= 0)
-		*hp++ = NULL;
+	t->bucketsSize = n;
+	t->bucketsMask = n - 1;
+	t->buckets = hp = bmake_malloc(sizeof(*hp) * n);
+	for (i = 0; i < n; i++)
+		hp[i] = NULL;
 }
 
 /* Removes everything from the hash table and frees up the memory space it
