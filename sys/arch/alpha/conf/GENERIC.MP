@@ -1,9 +1,7 @@
-# $NetBSD: GENERIC.MP,v 1.3 2001/11/20 12:56:19 lukem Exp $
+# $NetBSD: GENERIC.MP,v 1.4 2020/09/05 01:02:02 thorpej Exp $
 #
 # Generic Alpha kernel with multiprocessor support.
 
 include	"arch/alpha/conf/GENERIC"
 
 options 	MULTIPROCESSOR		# include multiprocessor support
-
-makeoptions	DEBUG="-g"		# ...and full symbols
