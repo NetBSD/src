@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.56 2020/02/05 08:34:48 skrll Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.57 2020/09/05 16:30:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.56 2020/02/05 08:34:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.57 2020/09/05 16:30:11 riastradh Exp $");
 
 #include "opt_inet.h"
 
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.56 2020/02/05 08:34:48 skrll Exp $");
 #include <sys/mutex.h>
 #include <sys/socket.h>
 
-#include <uvm/uvm.h>
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_ether.h>

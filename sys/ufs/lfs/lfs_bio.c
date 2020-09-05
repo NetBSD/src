@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.148 2020/06/11 19:20:47 ad Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.149 2020/09/05 16:30:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.148 2020/06/11 19:20:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.149 2020/09/05 16:30:13 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.148 2020/06/11 19:20:47 ad Exp $");
 #include <ufs/lfs/lfs_extern.h>
 #include <ufs/lfs/lfs_kernel.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 /*
  * LFS block write function.

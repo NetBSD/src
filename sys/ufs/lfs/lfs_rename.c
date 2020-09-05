@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rename.c,v 1.23 2020/02/23 08:41:07 riastradh Exp $	*/
+/*	$NetBSD: lfs_rename.c,v 1.24 2020/09/05 16:30:13 riastradh Exp $	*/
 /*  from NetBSD: ufs_rename.c,v 1.12 2015/03/27 17:27:56 riastradh Exp  */
 
 /*-
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.23 2020/02/23 08:41:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.24 2020/09/05 16:30:13 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,11 +108,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.23 2020/02/23 08:41:07 riastradh Ex
 #include <sys/signalvar.h>
 #include <sys/kauth.h>
 #include <sys/syslog.h>
-
-#include <uvm/uvm.h>
-#include <uvm/uvm_pmap.h>
-#include <uvm/uvm_stat.h>
-#include <uvm/uvm_pager.h>
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>

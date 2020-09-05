@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.287 2020/08/13 17:26:43 riastradh Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.288 2020/09/05 16:30:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.287 2020/08/13 17:26:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.288 2020/09/05 16:30:13 riastradh Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -104,8 +104,8 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.287 2020/08/13 17:26:43 riastradh 
 #include <ufs/lfs/lfs_kernel.h>
 #include <ufs/lfs/lfs_extern.h>
 
-#include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_page.h>
 
 MALLOC_JUSTDEFINE(M_SEGMENT, "LFS segment", "Segment for LFS");
 

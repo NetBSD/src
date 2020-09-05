@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.h,v 1.4 2020/08/28 13:36:52 skrll Exp $	*/
+/*	$NetBSD: asan.h,v 1.5 2020/09/05 16:30:10 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #include <sys/atomic.h>
 #include <sys/ksyms.h>
+
+#include <uvm/uvm.h>
 
 #include <arm/vmparam.h>
 #include <arm/arm32/machdep.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_inode.c,v 1.25 2020/02/23 15:46:42 ad Exp $	*/
+/*	$NetBSD: ulfs_inode.c,v 1.26 2020/09/05 16:30:13 riastradh Exp $	*/
 /*  from NetBSD: ufs_inode.c,v 1.95 2015/06/13 14:56:45 hannken Exp  */
 
 /*
@@ -38,11 +38,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.25 2020/02/23 15:46:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.26 2020/09/05 16:30:13 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
 #include "opt_quota.h"
+#include "opt_uvmhist.h"
 #endif
 
 #include <sys/param.h>
@@ -69,7 +70,11 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.25 2020/02/23 15:46:42 ad Exp $");
 #include <ufs/lfs/ulfs_extattr.h>
 #endif
 
+#ifdef UVMHIST
 #include <uvm/uvm.h>
+#endif
+#include <uvm/uvm_page.h>
+#include <uvm/uvm_stat.h>
 
 /*
  * Last reference to an inode.  If necessary, write or delete it.

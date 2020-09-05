@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.27 2015/06/11 08:14:38 matt Exp $	*/
+/*	$NetBSD: kloader.c,v 1.28 2020/09/05 16:30:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.27 2015/06/11 08:14:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.28 2020/09/05 16:30:11 riastradh Exp $");
 
 #include "debug_kloader.h"
 
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.27 2015/06/11 08:14:38 matt Exp $");
 #define	ELFSIZE	32
 #include <sys/exec_elf.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/kloader.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.143 2020/06/27 17:29:18 christos Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.144 2020/09/05 16:30:12 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.143 2020/06/27 17:29:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.144 2020/09/05 16:30:12 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.143 2020/06/27 17:29:18 christos E
 #include <sys/kauth.h>
 #include <sys/atomic.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_object.h>
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>

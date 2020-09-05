@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.35 2020/01/17 20:08:10 ad Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.36 2020/09/05 16:30:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.35 2020/01/17 20:08:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.36 2020/09/05 16:30:13 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.35 2020/01/17 20:08:10 ad Exp $");
 #include <sys/pool.h>
 #include <sys/socket.h>
 #include <sys/syslog.h>
-#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
@@ -66,10 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.35 2020/01/17 20:08:10 ad Exp $");
 #include <ufs/lfs/ulfsmount.h>
 #include <ufs/lfs/ulfs_extern.h>
 
-#include <uvm/uvm.h>
-#include <uvm/uvm_stat.h>
-#include <uvm/uvm_pager.h>
-#include <uvm/uvm_pdaemon.h>
+#include <uvm/uvm_extern.h>
 
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_accessors.h>
