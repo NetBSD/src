@@ -1,4 +1,4 @@
-# $NetBSD: ad.sh3,v 1.43 2019/10/03 00:59:50 mrg Exp $
+# $NetBSD: ad.sh3,v 1.44 2020/09/05 11:00:18 rillig Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-obsolete		obsolete
 ./usr/include/gcc-4.8/tgmath.h			comp-obsolete		obsolete
 ./usr/include/gcc-5/tgmath.h			comp-obsolete		obsolete
@@ -56,7 +56,7 @@
 ./usr/include/sh3/stdarg.h			comp-obsolete		obsolete
 ./usr/include/sh3/sysarch.h			comp-c-include
 ./usr/include/sh3/types.h			comp-c-include
-./usr/include/sh3/va-sh.h			comp-obsolete	obsolete
+./usr/include/sh3/va-sh.h			comp-obsolete		obsolete
 ./usr/include/sh3/varargs.h			comp-obsolete		obsolete
 ./usr/include/sh3/vmparam.h			comp-c-include
 ./usr/include/sh3/wchar_limits.h		comp-c-include
