@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.133 2020/09/04 19:03:38 rillig Exp $
+# $NetBSD: Makefile,v 1.134 2020/09/05 06:20:51 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -171,7 +171,31 @@ TESTS+=		opt
 TESTS+=		opt-backwards
 TESTS+=		opt-chdir
 TESTS+=		opt-debug
+TESTS+=		opt-debug-all
+TESTS+=		opt-debug-archive
+TESTS+=		opt-debug-curdir
+TESTS+=		opt-debug-cond
+TESTS+=		opt-debug-dir
+TESTS+=		opt-debug-errors
+TESTS+=		opt-debug-file
+TESTS+=		opt-debug-for
 TESTS+=		opt-debug-g1
+TESTS+=		opt-debug-graph1
+TESTS+=		opt-debug-graph2
+TESTS+=		opt-debug-graph3
+TESTS+=		opt-debug-hash
+TESTS+=		opt-debug-jobs
+TESTS+=		opt-debug-lint
+TESTS+=		opt-debug-loud
+TESTS+=		opt-debug-meta
+TESTS+=		opt-debug-making
+TESTS+=		opt-debug-no-rm
+TESTS+=		opt-debug-parse
+TESTS+=		opt-debug-suff
+TESTS+=		opt-debug-targets
+TESTS+=		opt-debug-varraw
+TESTS+=		opt-debug-var
+TESTS+=		opt-debug-x-trace
 TESTS+=		opt-define
 TESTS+=		opt-env
 TESTS+=		opt-file

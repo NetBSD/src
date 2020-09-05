@@ -1,21 +1,25 @@
-# $NetBSD: archive.mk,v 1.6 2020/09/04 19:03:38 rillig Exp $
+# $NetBSD: archive.mk,v 1.7 2020/09/05 06:20:51 rillig Exp $
 #
 # Very basic demonstration of handling archives, based on the description
 # in PSD.doc/tutorial.ms.
+#
+# This test aims at covering the code, not at being an introduction to
+# archive handling. That's why it is more complicated and detailed than
+# strictly necessary.
 
-ARCHIVE=	libprog.${EXT.a}
-FILES=		archive.${EXT.mk} modmisc.${EXT.mk} varmisc.mk
-
-EXT.a=		a
-EXT.mk=		mk
+ARCHIVE=	libprog.a
+FILES=		archive.mk modmisc.mk varmisc.mk
 
 MAKE_CMD=	${.MAKE} -f ${MAKEFILE}
 RUN?=		@set -eu;
 
 all:
 .if ${.PARSEDIR:tA} != ${.CURDIR:tA}
-	@cd ${MAKEFILE:H} && cp [at]*.mk ${.CURDIR}
+	@cd ${MAKEFILE:H} && cp ${FILES} t*.mk ${.CURDIR}
 .endif
+# The following targets are run in sub-makes to ensure that they get the
+# current state of the filesystem right, since they creating and removing
+# files.
 	${RUN} ${MAKE_CMD} remove-archive
 	${RUN} ${MAKE_CMD} create-archive
 	${RUN} ${MAKE_CMD} list-archive
@@ -25,7 +29,12 @@ all:
 	${RUN} ${MAKE_CMD} remove-archive
 
 create-archive: ${ARCHIVE}
-${ARCHIVE}: ${ARCHIVE}(${FILES})
+
+# The indirect references with the $$ cover the code in Arch_ParseArchive
+# that calls Var_Parse.  It's an esoteric scenario since at the point where
+# Arch_ParseArchive is called, the dependency line is already fully expanded.
+#
+${ARCHIVE}: $${:Ulibprog.a}(archive.mk modmisc.mk $${:Uvarmisc.mk})
 	ar cru ${.TARGET} ${.OODATE}
 	ranlib ${.TARGET}
 
