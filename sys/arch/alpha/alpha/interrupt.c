@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.82 2020/08/29 15:29:30 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.83 2020/09/05 16:29:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.82 2020/08/29 15:29:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.83 2020/09/05 16:29:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -463,7 +463,7 @@ spl0(void)
 {
 
 	if (ssir) {
-		(void) alpha_pal_swpipl(ALPHA_PSL_IPL_SOFT);
+		(void) alpha_pal_swpipl(ALPHA_PSL_IPL_SOFT_LO);
 		softintr_dispatch();
 	}
 
@@ -524,19 +524,4 @@ rlprintf(struct timeval *t, const char *fmt, ...)
 	va_start(ap, fmt);
 	vprintf(fmt, ap);
 	va_end(ap);
-}
-
-const static uint8_t ipl2psl_table[] = {
-	[IPL_NONE] = ALPHA_PSL_IPL_0,
-	[IPL_SOFTCLOCK] = ALPHA_PSL_IPL_SOFT,
-	[IPL_VM] = ALPHA_PSL_IPL_IO,
-	[IPL_SCHED] = ALPHA_PSL_IPL_CLOCK,	/* also IPIs */
-	[IPL_HIGH] = ALPHA_PSL_IPL_HIGH,
-};
-
-ipl_cookie_t
-makeiplcookie(ipl_t ipl)
-{
-
-	return (ipl_cookie_t){._psl = ipl2psl_table[ipl]};
 }

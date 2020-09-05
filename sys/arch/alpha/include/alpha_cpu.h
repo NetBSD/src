@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_cpu.h,v 1.50 2012/02/06 02:14:13 matt Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.51 2020/09/05 16:29:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -94,16 +94,34 @@ struct alpha_pcb {
  * Processor Status Register [OSF/1 PALcode Specific]
  *
  * Includes user/kernel mode bit, interrupt priority levels, etc.
+ *
+ * Processor Status Summary
+ * ---------------------------------------------------------------------------
+ * PS<mode>	PS<IPL>		Mode		Use
+ * ---------------------------------------------------------------------------
+ * 1		0		User		User software
+ * 0		0		Kernel		System software
+ * 0		1		Kernel		System software
+ * 0		2		Kernel		System software
+ * 0		3		Kernel		Low priority device interrupts
+ * 0		4		Kernel		High priority device interrupts
+ * 0		5		Kernel		Clock, inter-proc interrupts
+ * 0		6		Kernel		Real-time device interrupts
+ * 0		6		Kernel		Correctable error reporting
+ * 0		7		Kernel		Machine checks
  */
 
 #define	ALPHA_PSL_USERMODE	0x0008		/* set -> user mode */
 #define	ALPHA_PSL_IPL_MASK	0x0007		/* interrupt level mask */
 
 #define	ALPHA_PSL_IPL_0		0x0000		/* all interrupts enabled */
-#define	ALPHA_PSL_IPL_SOFT	0x0001		/* software ints disabled */
-#define	ALPHA_PSL_IPL_IO	0x0004		/* I/O dev ints disabled */
+#define	ALPHA_PSL_IPL_SOFT_LO	0x0001		/* low pri soft ints disabled */
+#define	ALPHA_PSL_IPL_SOFT_HI	0x0002		/* hi pri soft ints disabled */
+#define	ALPHA_PSL_IPL_IO_LO	0x0003		/* low pri dev ints disabled */
+#define	ALPHA_PSL_IPL_IO_HI	0x0004		/* hi pri dev ints disabled */
 #define	ALPHA_PSL_IPL_CLOCK	0x0005		/* clock ints disabled */
 #define	ALPHA_PSL_IPL_HIGH	0x0006		/* all but mchecks disabled */
+#define	ALPHA_PSL_IPL_MCHECK	0x0007		/* machine checks disabled */
 
 #define	ALPHA_PSL_MUST_BE_ZERO	0xfffffffffffffff0
 
