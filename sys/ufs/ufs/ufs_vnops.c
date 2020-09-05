@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.257 2020/09/05 02:47:48 riastradh Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.258 2020/09/05 02:55:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.257 2020/09/05 02:47:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.258 2020/09/05 02:55:39 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1251,13 +1251,6 @@ ufs_mkdir(void *v)
 	if (error) {
 		vrele(*ap->a_vpp);
 		*ap->a_vpp = NULL;
-		goto out;
-	}
-	if (VTOI(*ap->a_vpp)->i_size == 0) {
-		/* directory has been rmdir'd */
-		vput(*ap->a_vpp);
-		*ap->a_vpp = NULL;
-		error = ENOENT;
 		goto out;
 	}
 	error = UFS_WAPBL_BEGIN(ap->a_dvp->v_mount);
