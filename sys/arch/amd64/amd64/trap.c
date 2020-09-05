@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.127 2020/03/09 21:49:26 pgoyette Exp $	*/
+/*	$NetBSD: trap.c,v 1.128 2020/09/05 07:26:37 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2017 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.127 2020/03/09 21:49:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.128 2020/09/05 07:26:37 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -450,7 +450,7 @@ trap(struct trapframe *frame)
 
 		cr2 = rcr2();
 
-		if (frame->tf_err & PGEX_X) {
+		if (frame->tf_err & PGEX_I) {
 			/* SMEP might have brought us here */
 			if (cr2 < VM_MAXUSER_ADDRESS) {
 				printf("prevented execution of %p (SMEP)\n",
@@ -503,7 +503,7 @@ pagefltcommon:
 			map = &vm->vm_map;
 		if (frame->tf_err & PGEX_W)
 			ftype = VM_PROT_WRITE;
-		else if (frame->tf_err & PGEX_X)
+		else if (frame->tf_err & PGEX_I)
 			ftype = VM_PROT_EXECUTE;
 		else
 			ftype = VM_PROT_READ;
