@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1258 2020/08/27 15:31:59 riastradh Exp $
+# $NetBSD: mi,v 1.1259 2020/09/05 19:17:42 rillig Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -258,11 +258,11 @@
 ./libdata/firmware/if_urtwn/rtl8192cfwU.bin	base-firmware-root	firmware
 ./libdata/firmware/if_urtwn/rtl8192eefw.bin	base-firmware-root	firmware
 ./libdata/firmware/if_wpi			base-firmware-root
-./libdata/firmware/if_wpi/LICENSE.ipw3945-ucode	base-obsolete	obsolete	firmware
+./libdata/firmware/if_wpi/LICENSE.ipw3945-ucode	base-obsolete	obsolete,firmware
 ./libdata/firmware/if_wpi/LICENSE.iwlwifi-3945-ucode	base-firmware-root	firmware
-./libdata/firmware/if_wpi/README.ipw3945-ucode	base-obsolete	obsolete	firmware
+./libdata/firmware/if_wpi/README.ipw3945-ucode	base-obsolete	obsolete,firmware
 ./libdata/firmware/if_wpi/README.iwlwifi-3945-ucode	base-firmware-root	firmware
-./libdata/firmware/if_wpi/ipw3945.ucode		base-obsolete	obsolete	firmware
+./libdata/firmware/if_wpi/ipw3945.ucode		base-obsolete	obsolete,firmware
 ./libdata/firmware/if_wpi/iwlwifi-3945.ucode		base-firmware-root	firmware
 ./libdata/firmware/nouveau			base-firmware-usr
 ./libdata/firmware/nouveau/nvidia			base-firmware-usr
@@ -457,8 +457,8 @@
 ./libdata/firmware/rum				base-firmware-root
 ./libdata/firmware/rum/rum-license		base-firmware-root	firmware
 ./libdata/firmware/rum/rum-rt2573		base-firmware-root	firmware
-./libdata/firmware/rum/run-rt2870		base-obsolete	obsolete	firmware
-./libdata/firmware/rum/run-rt3071		base-obsolete	obsolete	firmware
+./libdata/firmware/rum/run-rt2870		base-obsolete	obsolete,firmware
+./libdata/firmware/rum/run-rt3071		base-obsolete	obsolete,firmware
 ./libdata/firmware/run				base-firmware-root
 ./libdata/firmware/run/run-license		base-firmware-root	firmware
 ./libdata/firmware/run/run-rt2870		base-firmware-root	firmware
