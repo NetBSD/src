@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.279 2020/09/05 15:05:08 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.280 2020/09/05 15:12:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.279 2020/09/05 15:05:08 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.280 2020/09/05 15:12:03 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.279 2020/09/05 15:05:08 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.280 2020/09/05 15:12:03 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -351,9 +351,6 @@ struct loadedfile {
 	Boolean used;			/* XXX: have we used the data yet */
 };
 
-/*
- * Constructor/destructor for loadedfile
- */
 static struct loadedfile *
 loadedfile_create(const char *path)
 {
@@ -558,7 +555,7 @@ done:
 static Boolean
 ParseIsEscaped(const char *line, const char *c)
 {
-    int active = 0;
+    Boolean active = FALSE;
     for (;;) {
 	if (line == c)
 	    return active;
