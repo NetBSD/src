@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.113 2020/06/01 08:33:40 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.114 2020/09/05 07:45:44 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.113 2020/06/01 08:33:40 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.114 2020/09/05 07:45:44 maxv Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1627,7 +1627,7 @@ cpu_probe_base_features(struct cpu_info *ci, const char *cpuname)
 	 * If the processor serial number misfeature is present and supported,
 	 * extract it here.
 	 */
-	if ((ci->ci_feat_val[0] & CPUID_PN) != 0) {
+	if ((ci->ci_feat_val[0] & CPUID_PSN) != 0) {
 		ci->ci_cpu_serial[0] = ci->ci_signature;
 		x86_cpuid(3, descs);
 		ci->ci_cpu_serial[2] = descs[2];
@@ -2183,7 +2183,7 @@ identifycpu(int fd, const char *cpuname)
 
 	x86_print_cache_and_tlb_info(ci);
 
-	if (ci->ci_max_cpuid >= 3 && (ci->ci_feat_val[0] & CPUID_PN)) {
+	if (ci->ci_max_cpuid >= 3 && (ci->ci_feat_val[0] & CPUID_PSN)) {
 		aprint_verbose("%s: serial number %04X-%04X-%04X-%04X-%04X-%04X\n",
 		    cpuname,
 		    ci->ci_cpu_serial[0] / 65536, ci->ci_cpu_serial[0] % 65536,
