@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.13 2014/11/29 13:23:48 pooka Exp $	*/
+/*	$NetBSD: string.h,v 1.14 2020/09/05 13:37:59 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 __BEGIN_DECLS
 void *__memcpy_chk(void *, const void *, size_t, size_t);
-void *__memmove_chk(void *, void *, size_t, size_t);
+void *__memmove_chk(void *, const void *, size_t, size_t);
 void *__memset_chk(void *, int, size_t, size_t);
 char *__stpcpy_chk(char *, const char *, size_t);
 char *__strcat_chk(char *, const char *, size_t);
