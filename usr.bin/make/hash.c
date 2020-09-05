@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.29 2020/09/01 21:11:31 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.30 2020/09/05 13:36:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: hash.c,v 1.29 2020/09/01 21:11:31 rillig Exp $";
+static char rcsid[] = "$NetBSD: hash.c,v 1.30 2020/09/05 13:36:25 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)hash.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: hash.c,v 1.29 2020/09/01 21:11:31 rillig Exp $");
+__RCSID("$NetBSD: hash.c,v 1.30 2020/09/05 13:36:25 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -111,7 +111,7 @@ static void RebuildTable(Hash_Table *);
 /* The default: this one matches Gosling's emacs */
 #define HASH(h, key, p) do { \
 	for (h = 0, p = key; *p;) \
-		h = (h << 5) - h + *p++; \
+		h = (h << 5) - h + (unsigned char)*p++; \
 	} while (0)
 
 #endif
