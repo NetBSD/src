@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.142 2020/08/31 16:44:25 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.143 2020/09/05 06:46:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.142 2020/08/31 16:44:25 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.143 2020/09/05 06:46:12 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.142 2020/08/31 16:44:25 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.143 2020/09/05 06:46:12 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2234,7 +2234,7 @@ SuffPrintTrans(void *tp, void *dummy MAKE_ATTR_UNUSED)
 {
     GNode   *t = (GNode *)tp;
 
-    fprintf(debug_file, "%-16s: ", t->name);
+    fprintf(debug_file, "%-16s:", t->name);
     Targ_PrintType(t->type);
     fputc('\n', debug_file);
     Lst_ForEach(t->commands, Targ_PrintCmd, NULL);
