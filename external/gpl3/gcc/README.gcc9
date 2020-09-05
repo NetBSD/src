@@ -1,4 +1,4 @@
-$NetBSD: README.gcc9,v 1.1 2020/09/05 22:16:57 mrg Exp $
+$NetBSD: README.gcc9,v 1.2 2020/09/05 23:18:49 mrg Exp $
 
 new stuff:
 	cc1objcplus
@@ -29,41 +29,41 @@ switched:	has port switched?  y (yes), n (no/ready), ? (not ready)
 
 architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf	switched
 ------------	-----	-------	------	----------	------------	----	---	--------
-aarch64		y	n	y	n		n		n	n	n
-alpha		y	n	y	n		n		n	n	n
-earmv4		n	n	n	n		n		n	n	n
-earmv4eb	n	n	n	n		n		n	n	n
+aarch64		y	n	n	y		n		n	n	n
+alpha		y	n	n	y		n		n	n	n
+earmv4		y	n	n	y		n		n	n	n
+earmv4eb	y	n	n	y		n		n	n	n
 earm		n	n	n	n		n		n	n	n
 earmeb		n	n	n	n		n		n	n	n
 earmhf		n	n	n	n		n		n	n	n
 earmhfeb	n	n	n	n		n		n	n	n
-earmv6		n	n	n	n		n		n	n	n
-earmv6eb	n	n	n	n		n		n	n	n
-earmv6hf	n	n	n	n		n		n	n	n
-earmv6hfeb	n	n	n	n		n		n	n	n
-earmv7		n	n	n	n		n		n	n	n
-earmv7eb	n	n	n	n		n		n	n	n
-earmv7hf	n	n	n	n		n		n	n	n
-earmv7hfeb	n	n	n	n		n		n	n	n
-hppa		y	n	y	y		n		n	n	n
-i386		n	n	y	y		n		n	n	n
-ia64		y	n	y	y		n		n	n	n
-m68000		y	n	y	y		n		n	?	?
-m68k		y	n	y	y		n		n	?	?
-mipseb		y	n	y	y		n		n	n	n
-mipsel		n	n	n	n		n		n	n	n
-mips64eb	n	n	n	n		n		n	n	n
-mips64el	n	n	n	n		n		n	n	n
-powerpc		y	n	y	y		n		n	n	n
-powerpc64	n	n	n	y		n		?	n	n
-sh3eb		y	n	y	y		n		n	n	n
-sh3el		y	n	y	y		n		n	n	n
-sparc		y	n	y	y		n		n	n	n
-sparc64		y	n	y	y		n		n	n	n
-vax		y	n	y	y		n		n	n	n
+earmv6		y	n	n	y		n		n	n	n
+earmv6eb	y	n	n	y		n		n	n	n
+earmv6hf	y	n	n	y		n		n	n	n
+earmv6hfeb	y	n	n	y		n		n	n	n
+earmv7		y	n	n	y		n		n	n	n
+earmv7eb	y	n	n	y		n		n	n	n
+earmv7hf	y	n	n	y		n		n	n	n
+earmv7hfeb	y	n	n	y		n		n	n	n
+hppa		y	n	n	y		n		n	n	n
+i386		y	n	n	y		n		n	n	n
+ia64		y	n	n	y		n		n	n	n
+m68000		y	n	n	y		n		n	?	?
+m68k		y	n	n	y		n		n	?	?
+mipseb		y	n	n	y		n		n	n	n
+mipsel		y	n	n	y		n		n	n	n
+mips64eb	y	n	n	y		n		n	n	n
+mips64el	y	n	n	y		n		n	n	n
+powerpc		y	n	n	y		n		n	n	n
+powerpc64	y	n	n	y		n		?	n	n
+sh3eb		y	n	n	y		n		n	n	n
+sh3el		y	n	n	y		n		n	n	n
+sparc		y	n	n	y		n		n	n	n
+sparc64		y	n	n	y		n		n	n	n
+vax		y	n	n	y		n		n	n	n
 x86_64		y	n	y	y		n		n	y	n
-riscv32		y	?	y	y		n		?	?	n	
-riscv64		y	?	y	y		n		?	?	n
+riscv32		y	?	n	y		n		?	?	n	
+riscv64		y	?	n	y		n		?	?	n
 --
 coldfire	?	N/A	?	?		?		N/A	N/A
 ------------	-----	-------	------	----------	------------	----	---
