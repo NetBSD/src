@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.82 2020/09/05 06:46:12 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.83 2020/09/05 13:55:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.82 2020/09/05 06:46:12 rillig Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.83 2020/09/05 13:55:08 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.82 2020/09/05 06:46:12 rillig Exp $");
+__RCSID("$NetBSD: targ.c,v 1.83 2020/09/05 13:55:08 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -150,7 +150,7 @@ void
 Targ_Init(void)
 {
     allTargets = Lst_Init();
-    Hash_InitTable(&targets, 191);
+    Hash_InitTable(&targets);
 }
 
 void
@@ -209,7 +209,7 @@ Targ_NewGN(const char *name)
     gn->children =  	Lst_Init();
     gn->order_pred =  	Lst_Init();
     gn->order_succ =  	Lst_Init();
-    Hash_InitTable(&gn->context, 0);
+    Hash_InitTable(&gn->context);
     gn->commands =  	Lst_Init();
     gn->suffix =	NULL;
     gn->fname = 	NULL;

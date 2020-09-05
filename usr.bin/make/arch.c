@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.107 2020/08/30 11:15:05 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.108 2020/09/05 13:55:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.107 2020/08/30 11:15:05 rillig Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.108 2020/09/05 13:55:08 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.107 2020/08/30 11:15:05 rillig Exp $");
+__RCSID("$NetBSD: arch.c,v 1.108 2020/09/05 13:55:08 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -572,7 +572,7 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
     ar->name = bmake_strdup(archive);
     ar->fnametab = NULL;
     ar->fnamesize = 0;
-    Hash_InitTable(&ar->members, -1);
+    Hash_InitTable(&ar->members);
     memName[AR_MAX_NAME_LEN] = '\0';
 
     while (fread((char *)&arh, sizeof(struct ar_hdr), 1, arch) == 1) {
