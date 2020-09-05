@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.48 2019/07/30 20:19:18 christos Exp $
+#	$NetBSD: Makefile,v 1.49 2020/09/05 09:50:15 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -163,12 +163,21 @@ SRCS+=	c98-codecvt.cc c11-codecvt.cc
 CXX11_ALWAYS=	localename.cc \
 		locale_init.cc
 
+FCHAR8_SRCS+=	localename.cc \
+		locale_init.cc \
+		c11-codecvt.cc \
+		limits.cc
+
 .for _s in ${G_cxx11_sources} ${CXX11_ALWAYS}
 COPTS.${_s}+= -std=gnu++11
 .endfor
 
 .for _s in ${G_cxx98_sources}
 COPTS.${_s}+= -std=gnu++98
+.endfor
+
+.for _s in ${FCHAR8_SRCS}
+COPTS.${_s}+= -fchar8_t
 .endfor
 
 COPTS.cp-demangle.c += -Wno-unused-function
@@ -190,6 +199,7 @@ COPTS.${f}.cc+= -fimplicit-templates ${G_GLIBCXX_ABI_FLAGS}
 .PATH:	${DIST}/libstdc++-v3/src \
 	${DIST}/libstdc++-v3/src/c++98 \
 	${DIST}/libstdc++-v3/src/c++11 \
+	${DIST}/libstdc++-v3/src/c++17 \
 	${DIST}/libstdc++-v3/src/filesystem \
 	${DIST}/libstdc++-v3/libsupc++ \
 	${DIST}/libstdc++-v3/config/os/bsd/netbsd \
