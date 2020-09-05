@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufeature.h,v 1.4 2018/08/27 13:44:15 riastradh Exp $	*/
+/*	$NetBSD: cpufeature.h,v 1.5 2020/09/05 07:45:44 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #if defined(__i386__) || defined(__x86_64__)
 
-#define	cpu_has_clflush	((cpu_info_primary.ci_feat_val[0] & CPUID_CFLUSH) != 0)
+#define	cpu_has_clflush	((cpu_info_primary.ci_feat_val[0] & CPUID_CLFSH) != 0)
 #define	cpu_has_pat	((cpu_info_primary.ci_feat_val[0] & CPUID_PAT) != 0)
 
 static inline size_t

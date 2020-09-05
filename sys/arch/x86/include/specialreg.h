@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.172 2020/09/04 17:05:09 maxv Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.173 2020/09/05 07:45:44 maxv Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -185,7 +185,6 @@
 #define CPUID_MCE	0x00000080	/* has machine check exception */
 #define CPUID_CX8	0x00000100	/* has CMPXCHG8B instruction */
 #define CPUID_APIC	0x00000200	/* has enabled APIC */
-#define CPUID_B10	0x00000400	/* reserved, MTRR */
 #define CPUID_SEP	0x00000800	/* has SYSENTER/SYSEXIT extension */
 #define CPUID_MTRR	0x00001000	/* has memory type range register */
 #define CPUID_PGE	0x00002000	/* has page global extension */
@@ -193,9 +192,8 @@
 #define CPUID_CMOV	0x00008000	/* has CMOVcc instruction */
 #define CPUID_PAT	0x00010000	/* Page Attribute Table */
 #define CPUID_PSE36	0x00020000	/* 36-bit PSE */
-#define CPUID_PN	0x00040000	/* processor serial number */
-#define CPUID_CFLUSH	0x00080000	/* CLFLUSH insn supported */
-#define CPUID_B20	0x00100000	/* reserved */
+#define CPUID_PSN	0x00040000	/* processor serial number */
+#define CPUID_CLFSH	0x00080000	/* CLFLUSH insn supported */
 #define CPUID_DS	0x00200000	/* Debug Store */
 #define CPUID_ACPI	0x00400000	/* ACPI performance modulation regs */
 #define CPUID_MMX	0x00800000	/* MMX supported */
@@ -205,8 +203,7 @@
 #define CPUID_SS	0x08000000	/* self-snoop */
 #define CPUID_HTT	0x10000000	/* Hyper-Threading Technology */
 #define CPUID_TM	0x20000000	/* thermal monitor (TCC) */
-#define CPUID_IA64	0x40000000	/* IA-64 architecture */
-#define CPUID_SBF	0x80000000	/* signal break on FERR */
+#define CPUID_PBE	0x80000000	/* Pending Break Enable */
 
 #define CPUID_FLAGS1	"\20" \
 	"\1" "FPU"	"\2" "VME"	"\3" "DE"	"\4" "PSE" \
@@ -230,7 +227,7 @@
  */
 
 #define CPUID2_SSE3	0x00000001	/* Streaming SIMD Extensions 3 */
-#define CPUID2_PCLMUL	0x00000002	/* PCLMULQDQ instructions */
+#define CPUID2_PCLMULQDQ 0x00000002	/* PCLMULQDQ instructions */
 #define CPUID2_DTES64	0x00000004	/* 64-bit Debug Trace */
 #define CPUID2_MONITOR	0x00000008	/* MONITOR/MWAIT instructions */
 #define CPUID2_DS_CPL	0x00000010	/* CPL Qualified Debug Store */
@@ -239,11 +236,11 @@
 #define CPUID2_EST	0x00000080	/* Enhanced SpeedStep Technology */
 #define CPUID2_TM2	0x00000100	/* Thermal Monitor 2 */
 #define CPUID2_SSSE3	0x00000200	/* Supplemental SSE3 */
-#define CPUID2_CID	0x00000400	/* Context ID */
+#define CPUID2_CNXTID	0x00000400	/* Context ID */
 #define CPUID2_SDBG	0x00000800	/* Silicon Debug */
 #define CPUID2_FMA	0x00001000	/* has Fused Multiply Add */
 #define CPUID2_CX16	0x00002000	/* has CMPXCHG16B instruction */
-#define CPUID2_xTPR	0x00004000	/* Task Priority Messages disabled? */
+#define CPUID2_XTPR	0x00004000	/* Task Priority Messages disabled? */
 #define CPUID2_PDCM	0x00008000	/* Perf/Debug Capability MSR */
 /* bit 16 unused	0x00010000 */
 #define CPUID2_PCID	0x00020000	/* Process Context ID */
@@ -254,7 +251,7 @@
 #define CPUID2_MOVBE	0x00400000	/* MOVBE (move after byteswap) */
 #define CPUID2_POPCNT	0x00800000	/* popcount instruction available */
 #define CPUID2_DEADLINE	0x01000000	/* APIC Timer supports TSC Deadline */
-#define CPUID2_AES	0x02000000	/* AES instructions */
+#define CPUID2_AESNI	0x02000000	/* AES instructions */
 #define CPUID2_XSAVE	0x04000000	/* XSAVE instructions */
 #define CPUID2_OSXSAVE	0x08000000	/* XGETBV/XSETBV instructions */
 #define CPUID2_AVX	0x10000000	/* AVX instructions */
@@ -625,7 +622,7 @@
 /* Intel Fn80000001 extended features - %edx */
 #define CPUID_SYSCALL	0x00000800	/* SYSCALL/SYSRET */
 #define CPUID_XD	0x00100000	/* Execute Disable (like CPUID_NOX) */
-#define CPUID_P1GB	0x04000000	/* 1GB Large Page Support */
+#define CPUID_PAGE1GB	0x04000000	/* 1GB Large Page Support */
 #define CPUID_RDTSCP	0x08000000	/* Read TSC Pair Instruction */
 #define CPUID_EM64T	0x20000000	/* Intel EM64T */
 
@@ -635,7 +632,7 @@
 
 /* Intel Fn80000001 extended features - %ecx */
 #define CPUID_LAHF	0x00000001	/* LAHF/SAHF in IA-32e mode, 64bit sub*/
-		/*	0x00000020 */	/* LZCNT. Same as AMD's CPUID_LZCNT */
+		/*	0x00000020 */	/* LZCNT. Same as AMD's CPUID_ABM */
 #define CPUID_PREFETCHW	0x00000100	/* PREFETCHW */
 
 #define CPUID_INTEL_FLAGS4	"\20"				\
@@ -652,7 +649,7 @@
 /*	CPUID_MMX			   MMX supported */
 /*	CPUID_FXSR			   fast FP/MMX save/restore */
 #define CPUID_FFXSR	0x02000000	/* FXSAVE/FXSTOR Extensions */
-/*	CPUID_P1GB			   1GB Large Page Support */
+/*	CPUID_PAGE1GB			   1GB Large Page Support */
 /*	CPUID_RDTSCP			   Read TSC Pair Instruction */
 /*	CPUID_EM64T			   Long mode */
 #define CPUID_3DNOW2	0x40000000	/* 3DNow! Instruction Extension */
@@ -671,7 +668,7 @@
 #define CPUID_SVM	0x00000004	/* Secure Virtual Machine */
 #define CPUID_EAPIC	0x00000008	/* Extended APIC space */
 #define CPUID_ALTMOVCR0	0x00000010	/* Lock Mov Cr0 */
-#define CPUID_LZCNT	0x00000020	/* LZCNT instruction */
+#define CPUID_ABM	0x00000020	/* LZCNT instruction */
 #define CPUID_SSE4A	0x00000040	/* SSE4A instruction set */
 #define CPUID_MISALIGNSSE 0x00000080	/* Misaligned SSE */
 #define CPUID_3DNOWPF	0x00000100	/* 3DNow Prefetch */
