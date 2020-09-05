@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.276 2020/09/04 17:59:36 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.277 2020/09/05 14:58:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.276 2020/09/04 17:59:36 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.277 2020/09/05 14:58:07 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.276 2020/09/04 17:59:36 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.277 2020/09/05 14:58:07 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -339,30 +339,7 @@ static const struct {
 
 /* local functions */
 
-static int ParseIsEscaped(const char *, const char *);
-static void ParseErrorInternal(const char *, size_t, int, const char *, ...)
-    MAKE_ATTR_PRINTFLIKE(4,5);
-static void ParseVErrorInternal(FILE *, const char *, size_t, int, const char *, va_list)
-    MAKE_ATTR_PRINTFLIKE(5, 0);
-static int ParseFindKeyword(const char *);
-static int ParseLinkSrc(void *, void *);
-static int ParseDoOp(void *, void *);
-static void ParseDoSrc(int, const char *);
-static int ParseFindMain(void *, void *);
-static int ParseAddDir(void *, void *);
-static int ParseClearPath(void *, void *);
-static void ParseDoDependency(char *);
-static int ParseAddCmd(void *, void *);
-static void ParseHasCommands(void *);
-static void ParseDoInclude(char *);
-static void ParseSetParseFile(const char *);
 static void ParseSetIncludedFile(void);
-#ifdef GMAKEEXPORT
-static void ParseGmakeExport(char *);
-#endif
-static int ParseEOF(void);
-static char *ParseReadLine(void);
-static void ParseFinishLine(void);
 static void ParseMark(GNode *);
 
 /* file loader */
