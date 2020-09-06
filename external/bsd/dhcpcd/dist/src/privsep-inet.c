@@ -34,7 +34,6 @@
 
 #include <assert.h>
 #include <errno.h>
-#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -291,18 +290,6 @@ ps_inet_recvmsg(void *arg)
 		logerr(__func__);
 }
 
-static void
-ps_inet_signalcb(int sig, void *arg)
-{
-	struct dhcpcd_ctx *ctx = arg;
-
-	if (sig != SIGTERM)
-		return;
-
-	shutdown(ctx->ps_inet_fd, SHUT_RDWR);
-	eloop_exit(ctx->eloop, EXIT_SUCCESS);
-}
-
 ssize_t
 ps_inet_dispatch(void *arg, struct ps_msghdr *psm, struct msghdr *msg)
 {
@@ -347,7 +334,7 @@ ps_inet_start(struct dhcpcd_ctx *ctx)
 
 	pid = ps_dostart(ctx, &ctx->ps_inet_pid, &ctx->ps_inet_fd,
 	    ps_inet_recvmsg, ps_inet_dodispatch, ctx,
-	    ps_inet_startcb, ps_inet_signalcb,
+	    ps_inet_startcb, NULL,
 	    PSF_DROPPRIVS);
 
 #ifdef HAVE_CAPSICUM
@@ -576,7 +563,7 @@ ps_inet_cmd(struct dhcpcd_ctx *ctx, struct ps_msghdr *psm, struct msghdr *msg)
 	start = ps_dostart(ctx,
 	    &psp->psp_pid, &psp->psp_fd,
 	    ps_inet_recvmsgpsp, NULL, psp,
-	    start_func, ps_inet_signalcb,
+	    start_func, NULL,
 	    PSF_DROPPRIVS);
 	switch (start) {
 	case -1:

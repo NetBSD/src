@@ -168,6 +168,14 @@ rt_compare_proto(void *context, const void *node1, const void *node2)
 	if (c != 0)
 		return -c;
 
+#ifdef INET
+	/* IPv4LL routes always come last */
+	if (rt1->rt_dflags & RTDF_IPV4LL && !(rt2->rt_dflags & RTDF_IPV4LL))
+		return -1;
+	else if (!(rt1->rt_dflags & RTDF_IPV4LL) && rt2->rt_dflags & RTDF_IPV4LL)
+		return 1;
+#endif
+
 	/* Lower metric interfaces come first. */
 	c = (int)(ifp1->metric - ifp2->metric);
 	if (c != 0)

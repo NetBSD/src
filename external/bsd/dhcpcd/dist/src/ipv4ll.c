@@ -111,6 +111,7 @@ ipv4ll_subnetroute(rb_tree_t *routes, struct interface *ifp)
 	in.s_addr = INADDR_ANY;
 	sa_in_init(&rt->rt_gateway, &in);
 	sa_in_init(&rt->rt_ifa, &state->addr->addr);
+	rt->rt_dflags |= RTDF_IPV4LL;
 	return rt_proto_add(routes, rt) ? 1 : 0;
 }
 
@@ -134,6 +135,10 @@ ipv4ll_defaultroute(rb_tree_t *routes, struct interface *ifp)
 	sa_in_init(&rt->rt_netmask, &in);
 	sa_in_init(&rt->rt_gateway, &in);
 	sa_in_init(&rt->rt_ifa, &state->addr->addr);
+	rt->rt_dflags |= RTDF_IPV4LL;
+#ifdef HAVE_ROUTE_METRIC
+	rt->rt_metric += 10000;
+#endif
 	return rt_proto_add(routes, rt) ? 1 : 0;
 }
 

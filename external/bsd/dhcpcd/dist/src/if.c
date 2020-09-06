@@ -995,3 +995,50 @@ out:
 	return -1;
 #endif
 }
+
+int
+xsocketpair(int domain, int type, int protocol, int fd[2])
+{
+	int s;
+#if !defined(HAVE_SOCK_CLOEXEC) || !defined(HAVE_SOCK_NONBLOCK)
+	int xflags, xtype = type;
+#endif
+
+#ifndef HAVE_SOCK_CLOEXEC
+	if (xtype & SOCK_CLOEXEC)
+		type &= ~SOCK_CLOEXEC;
+#endif
+#ifndef HAVE_SOCK_NONBLOCK
+	if (xtype & SOCK_NONBLOCK)
+		type &= ~SOCK_NONBLOCK;
+#endif
+
+	if ((s = socketpair(domain, type, protocol, fd)) == -1)
+		return -1;
+
+#ifndef HAVE_SOCK_CLOEXEC
+	if ((xtype & SOCK_CLOEXEC) && ((xflags = fcntl(fd[0], F_GETFD)) == -1 ||
+	    fcntl(fd[0], F_SETFD, xflags | FD_CLOEXEC) == -1))
+		goto out;
+	if ((xtype & SOCK_CLOEXEC) && ((xflags = fcntl(fd[1], F_GETFD)) == -1 ||
+	    fcntl(fd[1], F_SETFD, xflags | FD_CLOEXEC) == -1))
+		goto out;
+#endif
+#ifndef HAVE_SOCK_NONBLOCK
+	if ((xtype & SOCK_NONBLOCK) && ((xflags = fcntl(fd[0], F_GETFL)) == -1 ||
+	    fcntl(fd[0], F_SETFL, xflags | O_NONBLOCK) == -1))
+		goto out;
+	if ((xtype & SOCK_NONBLOCK) && ((xflags = fcntl(fd[1], F_GETFL)) == -1 ||
+	    fcntl(fd[1], F_SETFL, xflags | O_NONBLOCK) == -1))
+		goto out;
+#endif
+
+	return s;
+
+#if !defined(HAVE_SOCK_CLOEXEC) || !defined(HAVE_SOCK_NONBLOCK)
+out:
+	close(fd[0]);
+	close(fd[1]);
+	return -1;
+#endif
+}

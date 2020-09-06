@@ -224,6 +224,8 @@ int if_setmac(struct interface *ifp, void *, uint8_t);
 #ifndef SOCK_CXNB
 #define	SOCK_CXNB	SOCK_CLOEXEC | SOCK_NONBLOCK
 #endif
+int xsocket(int, int, int);
+int xsocketpair(int, int, int, int[2]);
 
 int if_route(unsigned char, const struct rt *rt);
 int if_initrt(struct dhcpcd_ctx *, rb_tree_t *, int);
@@ -259,7 +261,6 @@ int if_getlifetime6(struct ipv6_addr *);
 int if_machinearch(char *, size_t);
 struct interface *if_findifpfromcmsg(struct dhcpcd_ctx *,
     struct msghdr *, int *);
-int xsocket(int, int, int);
 
 #ifdef __linux__
 int if_linksocket(struct sockaddr_nl *, int, int);

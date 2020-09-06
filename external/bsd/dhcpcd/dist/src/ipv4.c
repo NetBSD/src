@@ -661,8 +661,13 @@ ipv4_addaddr(struct interface *ifp, const struct in_addr *addr,
 	ia->mask = *mask;
 	ia->brd = *bcast;
 #ifdef IP_LIFETIME
-	ia->vltime = vltime;
-	ia->pltime = pltime;
+	if (ifp->options->options & DHCPCD_LASTLEASE_EXTEND) {
+		/* We don't want the kernel to expire the address. */
+		ia->vltime = ia->pltime = DHCP_INFINITE_LIFETIME;
+	} else {
+		ia->vltime = vltime;
+		ia->pltime = pltime;
+	}
 #else
 	UNUSED(vltime);
 	UNUSED(pltime);

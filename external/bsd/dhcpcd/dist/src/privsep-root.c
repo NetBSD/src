@@ -638,27 +638,46 @@ ps_root_startcb(void *arg)
 	/* Open network sockets for sending.
 	 * This is a small bit wasteful for non sandboxed OS's
 	 * but makes life very easy for unicasting DHCPv6 in non master
-	 * mode as we no longer care about address selection. */
+	 * mode as we no longer care about address selection.
+	 * We can't call shutdown SHUT_RD on the socket because it's
+	 * not connectd. All we can do is try and set a zero sized
+	 * receive buffer and just let it overflow.
+	 * Reading from it just to drain it is a waste of CPU time. */
 #ifdef INET
 	if (ctx->options & DHCPCD_IPV4) {
+		int buflen = 1;
+
 		ctx->udp_wfd = xsocket(PF_INET,
 		    SOCK_RAW | SOCK_CXNB, IPPROTO_UDP);
 		if (ctx->udp_wfd == -1)
 			logerr("%s: dhcp_openraw", __func__);
+		else if (setsockopt(ctx->udp_wfd, SOL_SOCKET, SO_RCVBUF,
+		    &buflen, sizeof(buflen)) == -1)
+			logerr("%s: setsockopt SO_RCVBUF DHCP", __func__);
 	}
 #endif
 #ifdef INET6
 	if (ctx->options & DHCPCD_IPV6) {
+		int buflen = 1;
+
 		ctx->nd_fd = ipv6nd_open(false);
 		if (ctx->nd_fd == -1)
 			logerr("%s: ipv6nd_open", __func__);
+		else if (setsockopt(ctx->nd_fd, SOL_SOCKET, SO_RCVBUF,
+		    &buflen, sizeof(buflen)) == -1)
+			logerr("%s: setsockopt SO_RCVBUF ND", __func__);
 	}
 #endif
 #ifdef DHCP6
 	if (ctx->options & DHCPCD_IPV6) {
+		int buflen = 1;
+
 		ctx->dhcp6_wfd = dhcp6_openraw();
 		if (ctx->dhcp6_wfd == -1)
 			logerr("%s: dhcp6_openraw", __func__);
+		else if (setsockopt(ctx->dhcp6_wfd, SOL_SOCKET, SO_RCVBUF,
+		    &buflen, sizeof(buflen)) == -1)
+			logerr("%s: setsockopt SO_RCVBUF DHCP6", __func__);
 	}
 #endif
 
@@ -674,22 +693,14 @@ ps_root_startcb(void *arg)
 }
 
 static void
-ps_root_signalcb(int sig, void *arg)
+ps_root_signalcb(int sig, __unused void *arg)
 {
-	struct dhcpcd_ctx *ctx = arg;
 
 	if (sig == SIGCHLD) {
 		while (waitpid(-1, NULL, WNOHANG) > 0)
 			;
 		return;
 	}
-
-	if (sig != SIGTERM)
-		return;
-
-	shutdown(ctx->ps_root_fd, SHUT_RDWR);
-	shutdown(ctx->ps_data_fd, SHUT_RDWR);
-	eloop_exit(ctx->eloop, EXIT_SUCCESS);
 }
 
 int (*handle_interface)(void *, int, const char *);
