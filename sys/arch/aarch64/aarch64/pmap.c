@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.87 2020/08/14 08:19:26 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.88 2020/09/06 17:38:10 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,10 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.87 2020/08/14 08:19:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.88 2020/09/06 17:38:10 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
+#include "opt_modular.h"
 #include "opt_multiprocessor.h"
 #include "opt_pmap.h"
 #include "opt_uvmhist.h"
@@ -281,6 +282,12 @@ phys_to_pp(paddr_t pa)
 
 #define IN_KSEG_ADDR(va)	\
 	IN_RANGE((va), AARCH64_KSEG_START, AARCH64_KSEG_END)
+
+#ifdef MODULAR
+#define IN_MODULE_VA(va)	IN_RANGE((va), module_start, module_end)
+#else
+#define IN_MODULE_VA(va)	false
+#endif
 
 #ifdef DIAGNOSTIC
 #define KASSERT_PM_ADDR(pm,va)						\
@@ -1671,7 +1678,7 @@ _pmap_get_pdp(struct pmap *pm, vaddr_t va, bool kenter, int flags,
 	idx = l0pde_index(va);
 	pde = l0[idx];
 	if (!l0pde_valid(pde)) {
-		KASSERT(!kenter);
+		KASSERT(!kenter || IN_MODULE_VA(va));
 		/* no need to increment L0 occupancy. L0 page never freed */
 		pdppa = pmap_alloc_pdp(pm, &pdppg, flags, false);  /* L1 pdp */
 		if (pdppa == POOL_PADDR_INVALID) {
@@ -1689,7 +1696,7 @@ _pmap_get_pdp(struct pmap *pm, vaddr_t va, bool kenter, int flags,
 	idx = l1pde_index(va);
 	pde = l1[idx];
 	if (!l1pde_valid(pde)) {
-		KASSERT(!kenter);
+		KASSERT(!kenter || IN_MODULE_VA(va));
 		pdppa0 = pdppa;
 		pdppg0 = pdppg;
 		pdppa = pmap_alloc_pdp(pm, &pdppg, flags, false);  /* L2 pdp */
@@ -1709,7 +1716,7 @@ _pmap_get_pdp(struct pmap *pm, vaddr_t va, bool kenter, int flags,
 	idx = l2pde_index(va);
 	pde = l2[idx];
 	if (!l2pde_valid(pde)) {
-		KASSERT(!kenter);
+		KASSERT(!kenter || IN_MODULE_VA(va));
 		pdppa0 = pdppa;
 		pdppg0 = pdppg;
 		pdppa = pmap_alloc_pdp(pm, &pdppg, flags, false);  /* L3 pdp */
