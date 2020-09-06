@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.99 2020/09/05 10:58:08 mrg Exp $
+#	$NetBSD: Makefile,v 1.100 2020/09/06 02:24:38 mrg Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -95,7 +95,6 @@ MKNATIVE_CONFIG_TARGET_LIBS=
 
 MKNATIVE_CONFIG_TARGET_LIBS+=	configure-target-libgcc
 MKNATIVE_CONFIG_TARGET_LIBS+=	configure-target-libgomp
-MKNATIVE_TARGET=	gcc
 
 MKNATIVE_CONFIG_TARGET_LIBS+= \
 	configure-target-libstdc++-v3 \
@@ -142,25 +141,27 @@ CCADDFLAGS=	--sysroot=${DESTDIR} -L${DESTDIR}/lib -L${DESTDIR}/usr/lib -B${DESTD
 # in case the version being used is not.
 NEWCONFIGDIR?=	${.CURDIR}/../..
 
+GCC_MACHINE_ARCH=	${MACHINE_ARCH:S/earmv5/earm/}
+
 bootstrap-libgcc: .configure_done
 	@echo 'Creating files needed for libgcc by a native bootstrap build.'
 	(cd ${.OBJDIR}/build && ${BUILD_COMMAND} configure-target-libgcc)
-	@MAKE=${BUILD_MAKE:Q} ${HOST_SH} ${MKNATIVE} lib${MKNATIVE_TARGET}-bootstrap \
+	@MAKE=${BUILD_MAKE:Q} ${HOST_SH} ${MKNATIVE} libgcc-bootstrap \
 		${.OBJDIR}/build ${NEWCONFIGDIR} ${NETBSDSRCDIR} \
-		${MACHINE_GNU_PLATFORM} ${DESTDIR} ${TOOLDIR}
+		${MACHINE_GNU_PLATFORM} ${GCC_MACHINE_ARCH} ${DESTDIR} ${TOOLDIR}
 
 bootstrap-libstdc++: .configure_done
 	@echo 'Creating files needed for libstdc++ by a native bootstrap build.'
 	(cd ${.OBJDIR}/build && ${BUILD_COMMAND} configure-target-libstdc++-v3)
 	@MAKE=${BUILD_MAKE:Q} ${HOST_SH} ${MKNATIVE} libstdc++-bootstrap \
 		${.OBJDIR}/build ${NEWCONFIGDIR} ${NETBSDSRCDIR} \
-		${MACHINE_GNU_PLATFORM} ${DESTDIR} ${TOOLDIR}
+		${MACHINE_GNU_PLATFORM} ${GCC_MACHINE_ARCH} ${DESTDIR} ${TOOLDIR}
 
 native-gcc: .native/.configure_done
 	@echo 'Extracting GNU GCC configury for a native toolchain.'
-	@MAKE=${BUILD_MAKE:Q} ${HOST_SH} ${MKNATIVE} ${MKNATIVE_TARGET} \
+	@MAKE=${BUILD_MAKE:Q} ${HOST_SH} ${MKNATIVE} gcc \
 		${.OBJDIR}/.native ${NEWCONFIGDIR} ${NETBSDSRCDIR} \
-		${MACHINE_GNU_PLATFORM} ${DESTDIR} ${TOOLDIR}
+		${MACHINE_GNU_PLATFORM} ${GCC_MACHINE_ARCH} ${DESTDIR} ${TOOLDIR}
 
 NATIVE_CONFIGURE_ARGS=	${COMMON_CONFIGURE_ARGS}
 MPC=		${NETBSDSRCDIR}/external/lgpl3/mpc
