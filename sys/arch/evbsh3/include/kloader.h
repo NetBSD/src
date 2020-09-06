@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.h,v 1.2 2015/06/11 15:11:13 matt Exp $	*/
+/*	$NetBSD: kloader.h,v 1.3 2020/09/06 17:19:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -28,6 +28,12 @@
 
 #ifndef	_EVBSH3_KLOADER_H_
 #define	_EVBSH3_KLOADER_H_
+
+#include <sys/types.h>
+
+#include <uvm/uvm_page.h>
+
+#include <machine/cpu.h>
 
 #define PG_VADDR(pg)	SH3_PHYS_TO_P1SEG(VM_PAGE_TO_PHYS(pg))
 

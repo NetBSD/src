@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.h,v 1.5 2015/06/11 08:14:38 matt Exp $	*/
+/*	$NetBSD: kloader.h,v 1.6 2020/09/06 17:19:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -26,8 +26,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef	_HPCSH_KLOADER_H_
+#define	_HPCSH_KLOADER_H_
+
+#include <sys/types.h>
+
+#include <uvm/uvm_page.h>
+
+#include <machine/cpu.h>
+
 #include <dev/kloader.h>
 
 #define PG_VADDR(pg)	SH3_PHYS_TO_P1SEG(VM_PAGE_TO_PHYS(pg))
 
 extern paddr_t avail_start, avail_end;
+
+#endif	/* _HPCSH_KLOADER_H_ */
