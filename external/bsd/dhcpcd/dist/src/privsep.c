@@ -34,6 +34,7 @@
  * Spawn an unpriv process to send/receive common network data.
  * Then drop all privs and start running.
  * Every process aside from the privileged actioneer is chrooted.
+ * All privsep processes ignore signals - only the master process accepts them.
  *
  * dhcpcd will maintain the config file in the chroot, no need to handle
  * this in a script or something.
@@ -74,6 +75,8 @@
 
 #ifdef HAVE_CAPSICUM
 #include <sys/capsicum.h>
+#include <capsicum_helpers.h>
+#define ps_rights_limit_stdio caph_limit_stdio
 #endif
 #ifdef HAVE_UTIL_H
 #include <util.h>
@@ -109,7 +112,7 @@ ps_init(struct dhcpcd_ctx *ctx)
 	return 0;
 }
 
-int
+static int
 ps_dropprivs(struct dhcpcd_ctx *ctx)
 {
 	struct passwd *pw = ctx->ps_user;
@@ -121,9 +124,10 @@ ps_dropprivs(struct dhcpcd_ctx *ctx)
 	if (chdir("/") == -1)
 		logerr("%s: chdir `/'", __func__);
 
-	if (setgroups(1, &pw->pw_gid) == -1 ||
+	if ((setgroups(1, &pw->pw_gid) == -1 ||
 	     setgid(pw->pw_gid) == -1 ||
-	     setuid(pw->pw_uid) == -1)
+	     setuid(pw->pw_uid) == -1) &&
+	     (errno != EPERM || ctx->options & DHCPCD_FORKED))
 	{
 		logerr("failed to drop privileges");
 		return -1;
@@ -162,7 +166,7 @@ ps_dropprivs(struct dhcpcd_ctx *ctx)
 	/* Prohibit writing to files.
 	 * Obviously this won't work if we are using a logfile
 	 * or redirecting stderr to a file. */
-	if (ctx->logfile == NULL && isatty(loggeterrfd())) {
+	if (ctx->logfile == NULL) {
 		if (setrlimit(RLIMIT_FSIZE, &rzero) == -1)
 			logerr("setrlimit RLIMIT_FSIZE");
 	}
@@ -283,12 +287,10 @@ ps_dostart(struct dhcpcd_ctx *ctx,
     void *recv_ctx, int (*callback)(void *), void (*signal_cb)(int, void *),
     unsigned int flags)
 {
-	int stype;
 	int fd[2];
 	pid_t pid;
 
-	stype = SOCK_CLOEXEC | SOCK_NONBLOCK;
-	if (socketpair(AF_UNIX, SOCK_DGRAM | stype, 0, fd) == -1) {
+	if (xsocketpair(AF_UNIX, SOCK_DGRAM | SOCK_CXNB, 0, fd) == -1) {
 		logerr("%s: socketpair", __func__);
 		return -1;
 	}
@@ -341,6 +343,14 @@ ps_dostart(struct dhcpcd_ctx *ctx,
 			close(ctx->ps_root_fd);
 			ctx->ps_root_fd = -1;
 		}
+
+#ifdef PRIVSEP_RIGHTS
+		/* We cannot limit the root process in any way. */
+		if (ps_rights_limit_stdio() == -1) {
+			logerr("ps_rights_limit_stdio");
+			goto errexit;
+		}
+#endif
 	}
 
 	if (priv_fd != &ctx->ps_inet_fd && ctx->ps_inet_fd != -1) {
@@ -471,9 +481,10 @@ ps_mastersandbox(struct dhcpcd_ctx *ctx)
 	}
 
 #ifdef PRIVSEP_RIGHTS
-	if ((ps_rights_limit_ioctl(ctx->pf_inet_fd) == -1 ||
-	     ps_rights_limit_fd(ctx->link_fd) == -1) &&
-	    errno != ENOSYS)
+	if ((ctx->pf_inet_fd != -1 &&
+	    ps_rights_limit_ioctl(ctx->pf_inet_fd) == -1) ||
+	    (ctx->link_fd != -1 && ps_rights_limit_fd(ctx->link_fd) == -1) ||
+	     ps_rights_limit_stdio() == -1)
 	{
 		logerr("%s: cap_rights_limit", __func__);
 		return -1;
@@ -645,12 +656,12 @@ ps_sendpsmmsg(struct dhcpcd_ctx *ctx, int fd,
 		iovlen = 1;
 
 	len = writev(fd, iov, iovlen);
-#ifdef PRIVSEP_DEBUG
-	logdebugx("%s: %zd", __func__, len);
-#endif
-	if ((len == -1 || len == 0) && ctx->options & DHCPCD_FORKED &&
-	    !(ctx->options & DHCPCD_PRIVSEPROOT))
-		eloop_exit(ctx->eloop, len == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
+	if (len == -1) {
+		logerr(__func__);
+		if (ctx->options & DHCPCD_FORKED &&
+		    !(ctx->options & DHCPCD_PRIVSEPROOT))
+			eloop_exit(ctx->eloop, EXIT_FAILURE);
+	}
 	return len;
 }
 
@@ -789,10 +800,9 @@ ps_recvmsg(struct dhcpcd_ctx *ctx, int rfd, uint16_t cmd, int wfd)
 	};
 
 	ssize_t len = recvmsg(rfd, &msg, 0);
-#ifdef PRIVSEP_DEBUG
-	logdebugx("%s: recv fd %d, %zd bytes", __func__, rfd, len);
-#endif
 
+	if (len == -1)
+		logerr("%s: recvmsg", __func__);
 	if (len == -1 || len == 0) {
 		if (ctx->options & DHCPCD_FORKED &&
 		    !(ctx->options & DHCPCD_PRIVSEPROOT))
@@ -803,12 +813,12 @@ ps_recvmsg(struct dhcpcd_ctx *ctx, int rfd, uint16_t cmd, int wfd)
 
 	iov[0].iov_len = (size_t)len;
 	len = ps_sendcmdmsg(wfd, cmd, &msg);
-#ifdef PRIVSEP_DEBUG
-	logdebugx("%s: send fd %d, %zu bytes", __func__, wfd, len);
-#endif
-	if ((len == -1 || len == 0) && ctx->options & DHCPCD_FORKED &&
-	    !(ctx->options & DHCPCD_PRIVSEPROOT))
-		eloop_exit(ctx->eloop, len == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
+	if (len == -1) {
+		logerr("ps_sendcmdmsg");
+		if (ctx->options & DHCPCD_FORKED &&
+		    !(ctx->options & DHCPCD_PRIVSEPROOT))
+			eloop_exit(ctx->eloop, EXIT_FAILURE);
+	}
 	return len;
 }
 

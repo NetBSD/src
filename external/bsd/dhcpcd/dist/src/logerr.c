@@ -52,7 +52,6 @@
 struct logctx {
 	char		 log_buf[BUFSIZ];
 	unsigned int	 log_opts;
-	FILE		*log_err;
 #ifndef SMALL
 	FILE		*log_file;
 #ifdef LOGERR_TAG
@@ -120,14 +119,13 @@ vlogprintf_r(struct logctx *ctx, FILE *stream, const char *fmt, va_list args)
 	int len = 0, e;
 	va_list a;
 #ifndef SMALL
-	FILE *err = ctx->log_err == NULL ? stderr : ctx->log_err;
 	bool log_pid;
 #ifdef LOGERR_TAG
 	bool log_tag;
 #endif
 
-	if ((stream == err && ctx->log_opts & LOGERR_ERR_DATE) ||
-	    (stream != err && ctx->log_opts & LOGERR_LOG_DATE))
+	if ((stream == stderr && ctx->log_opts & LOGERR_ERR_DATE) ||
+	    (stream != stderr && ctx->log_opts & LOGERR_LOG_DATE))
 	{
 		if ((e = logprintdate(stream)) == -1)
 			return -1;
@@ -135,8 +133,8 @@ vlogprintf_r(struct logctx *ctx, FILE *stream, const char *fmt, va_list args)
 	}
 
 #ifdef LOGERR_TAG
-	log_tag = ((stream == err && ctx->log_opts & LOGERR_ERR_TAG) ||
-	    (stream != err && ctx->log_opts & LOGERR_LOG_TAG));
+	log_tag = ((stream == stderr && ctx->log_opts & LOGERR_ERR_TAG) ||
+	    (stream != stderr && ctx->log_opts & LOGERR_LOG_TAG));
 	if (log_tag) {
 		if (ctx->log_tag == NULL)
 			ctx->log_tag = getprogname();
@@ -146,8 +144,8 @@ vlogprintf_r(struct logctx *ctx, FILE *stream, const char *fmt, va_list args)
 	}
 #endif
 
-	log_pid = ((stream == err && ctx->log_opts & LOGERR_ERR_PID) ||
-	    (stream != err && ctx->log_opts & LOGERR_LOG_PID));
+	log_pid = ((stream == stderr && ctx->log_opts & LOGERR_ERR_PID) ||
+	    (stream != stderr && ctx->log_opts & LOGERR_LOG_PID));
 	if (log_pid) {
 		if ((e = fprintf(stream, "[%d]", getpid())) == -1)
 			return -1;
@@ -204,12 +202,7 @@ vlogmessage(int pri, const char *fmt, va_list args)
 	    (pri <= LOG_ERR ||
 	    (!(ctx->log_opts & LOGERR_QUIET) && pri <= LOG_INFO) ||
 	    (ctx->log_opts & LOGERR_DEBUG && pri <= LOG_DEBUG)))
-	{
-		FILE *err;
-
-		err = ctx->log_err == NULL ? stderr : ctx->log_err;
-		len = vlogprintf_r(ctx, err, fmt, args);
-	}
+		len = vlogprintf_r(ctx, stderr, fmt, args);
 
 	if (!(ctx->log_opts & LOGERR_LOG))
 		return len;
@@ -368,30 +361,6 @@ logsettag(const char *tag)
 #endif
 }
 #endif
-
-int
-loggeterrfd(void)
-{
-	struct logctx *ctx = &_logctx;
-	FILE *err = ctx->log_err == NULL ? stderr : ctx->log_err;
-
-	return fileno(err);
-}
-
-int
-logseterrfd(int fd)
-{
-	struct logctx *ctx = &_logctx;
-
-	if (ctx->log_err != NULL)
-		fclose(ctx->log_err);
-	if (fd == -1) {
-		ctx->log_err = NULL;
-		return 0;
-	}
-	ctx->log_err = fdopen(fd, "a");
-	return ctx->log_err == NULL ? -1 : 0;
-}
 
 int
 logopen(const char *path)
