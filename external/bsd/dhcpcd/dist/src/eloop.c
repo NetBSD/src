@@ -703,9 +703,10 @@ eloop_start(struct eloop *eloop, sigset_t *signals)
 		if (eloop->exitnow)
 			break;
 
-		if (_eloop_nsig != 0 && eloop->signal_cb != NULL) {
+		if (_eloop_nsig != 0) {
 			n = _eloop_sig[--_eloop_nsig];
-			eloop->signal_cb(n, eloop->signal_cb_ctx);
+			if (eloop->signal_cb != NULL)
+				eloop->signal_cb(n, eloop->signal_cb_ctx);
 			continue;
 		}
 
