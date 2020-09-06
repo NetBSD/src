@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2019/10/13 07:28:19 mrg Exp $
+#	$NetBSD: Makefile,v 1.17 2020/09/06 07:20:32 mrg Exp $
 #	from: Id: Makefile,v 1.5 1993/06/24 05:11:16 deering Exp
 
 .include <bsd.own.mk>
@@ -15,6 +15,7 @@ DPADD+=	${LIBUTIL}
 CPPFLAGS+= -I${.CURDIR}
 
 CWARNFLAGS.clang+=	-Wno-format-extra-args
+CWARNFLAGS.gcc+=        ${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 COPTS.cfparse.c+=	${GCC_NO_STRINGOP_TRUNCATION}
 COPTS.vif.c+=		${GCC_NO_STRINGOP_TRUNCATION}

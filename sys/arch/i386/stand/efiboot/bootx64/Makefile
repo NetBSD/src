@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2020/03/21 18:43:47 riastradh Exp $
+#	$NetBSD: Makefile,v 1.4 2020/09/06 07:20:29 mrg Exp $
 
 PROG=		bootx64.efi
 OBJFMT=		pei-x86-64
@@ -13,5 +13,6 @@ CPPFLAGS+=	-DEFI_FUNCTION_WRAPPER
 # accessors -- they don't actually dereference the resulting pointer,
 # just use it for type-checking.
 CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member
+CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 .include "${.CURDIR}/../Makefile.efiboot"

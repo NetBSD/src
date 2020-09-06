@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2009/06/05 21:52:31 haad Exp $
+#	$NetBSD: Makefile,v 1.6 2020/09/06 07:20:28 mrg Exp $
 
 WARNS?=	3	# XXX: sign-compare issues
 
@@ -18,5 +18,7 @@ LDADD+=-lprop
 DPADD+=${LIBPROP}
 
 .PATH: ${FSCK}
+
+CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 .include <bsd.prog.mk>

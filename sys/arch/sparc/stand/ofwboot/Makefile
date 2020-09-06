@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2020/04/20 02:04:44 riastradh Exp $
+#	$NetBSD: Makefile,v 1.40 2020/09/06 07:20:29 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -42,6 +42,7 @@ CPPFLAGS+=	-DSUPPORT_DHCP
 # accessors -- they don't actually dereference the resulting pointer,
 # just use it for type-checking.
 CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member
+CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 LINKS+=		${BINDIR}/ofwboot ${BINDIR}/ofwboot.net
 

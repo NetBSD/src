@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.10 2017/01/11 12:19:44 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2020/09/06 07:20:32 mrg Exp $
 
 WARNS?=	1	# XXX -Wshadow -Wcast-qual -Wsign-compare
 CWARNFLAGS.clang+=	-Wno-tautological-compare
 CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member
+CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 CPPFLAGS+= -D_OPENBSD_SOURCE
 

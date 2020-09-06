@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2019/02/17 04:05:59 rin Exp $
+#	$NetBSD: Makefile,v 1.5 2020/09/06 07:20:30 mrg Exp $
 
 .include "../Makefile.inc"
 
@@ -12,5 +12,7 @@ SRCS=	udf_allocation.c udf_osta.c udf_readwrite.c udf_strat_bootstrap.c \
 WARNS=	3
 
 CWARNFLAGS.clang=	-Wno-self-assign
+
+CWARNFLAGS.udf_allocation.c+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 .include <bsd.kmodule.mk>

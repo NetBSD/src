@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.efiboot,v 1.17 2020/06/28 11:39:50 jmcneill Exp $
+# $NetBSD: Makefile.efiboot,v 1.18 2020/09/06 07:20:31 mrg Exp $
 
 S=		${.CURDIR}/../../..
 
@@ -94,6 +94,7 @@ CPPFLAGS+= -DLIBSA_ENABLE_LS_OP
 # accessors -- they don't actually dereference the resulting pointer,
 # just use it for type-checking.
 CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member
+CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 SAMISCCPPFLAGS+= -DLIBSA_PRINTF_LONGLONG_SUPPORT
 SAMISCCPPFLAGS+= -DLIBSA_PRINTF_WIDTH_SUPPORT

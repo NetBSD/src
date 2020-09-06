@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2012/09/05 22:58:53 riz Exp $
+#	$NetBSD: Makefile,v 1.3 2020/09/06 07:20:27 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -16,5 +16,7 @@ CPPFLAGS+= -I${FSCK} -I${V7FS} -DV7FS_EI
 
 LDADD+=-lutil
 DPADD+=${LIBUTIL}
+
+CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 .include <bsd.prog.mk>

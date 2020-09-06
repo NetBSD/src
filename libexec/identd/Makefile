@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.18 2019/08/24 13:20:52 rmind Exp $
+# $NetBSD: Makefile,v 1.19 2020/09/06 07:20:26 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -28,5 +28,6 @@ DPADD+=${LIBNPF}
 
 # XXX
 COPTS+=	-fno-strict-aliasing
+CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2020/04/23 00:11:29 joerg Exp $
+#	$NetBSD: Makefile,v 1.19 2020/09/06 07:20:29 mrg Exp $
 
 PROG=		bootxx
 PROGSOURCE=	bootxx.c
@@ -14,6 +14,7 @@ CLEANFILES+=	${PROG}.sym
 # accessors -- they don't actually dereference the resulting pointer,
 # just use it for type-checking.
 CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member
+CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=

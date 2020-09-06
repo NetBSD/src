@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2020/01/01 08:56:41 tkusumi Exp $
+#	$NetBSD: Makefile,v 1.10 2020/09/06 07:20:31 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -30,5 +30,6 @@ LDADD+=	-lnvpair -lzfs
 .endif
 
 CWARNFLAGS.clang+=	-Wno-unknown-pragmas
+CWARNFLAGS.gcc+=        ${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 .include <bsd.prog.mk>
