@@ -956,7 +956,7 @@ int
 dtrace_uaddr2str(dtrace_hdl_t *dtp, pid_t pid,
     uint64_t addr, char *str, int nbytes)
 {
-	char name[PATH_MAX], objname[PATH_MAX], c[PATH_MAX * 2];
+	char name[PATH_MAX / 2], objname[PATH_MAX], c[PATH_MAX * 2];
 	struct ps_prochandle *P = NULL;
 	GElf_Sym sym;
 	char *obj;
@@ -977,8 +977,8 @@ dtrace_uaddr2str(dtrace_hdl_t *dtp, pid_t pid,
 		obj = dt_basename(objname);
 
 		if (addr > sym.st_value) {
-			(void) snprintf(c, sizeof (c), "%s`%s+0x%llx", obj,
-			    name, (u_longlong_t)(addr - sym.st_value));
+			(void) snprintf(c, sizeof (c), "%s`%s+0x%jx", obj,
+			    name, (uintmax_t)(addr - sym.st_value));
 		} else {
 			(void) snprintf(c, sizeof (c), "%s`%s", obj, name);
 		}
