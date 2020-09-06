@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.71 2020/09/06 19:24:12 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.72 2020/09/06 19:28:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.71 2020/09/06 19:24:12 rillig Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.72 2020/09/06 19:28:49 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.71 2020/09/06 19:24:12 rillig Exp $");
+__RCSID("$NetBSD: for.c,v 1.72 2020/09/06 19:28:49 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -123,14 +123,11 @@ int
 For_Eval(char *line)
 {
     For *new_for;
-    char *ptr = line, *sub;
-    size_t len;
-    int escapes;
-    unsigned char ch;
+    const char *ptr;
     Words words;
 
     /* Skip the '.' and any following whitespace */
-    for (ptr++; *ptr && isspace((unsigned char)*ptr); ptr++)
+    for (ptr = line + 1; isspace((unsigned char)*ptr); ptr++)
 	continue;
 
     /*
@@ -160,14 +157,17 @@ For_Eval(char *line)
     new_for->sub_next = 0;
 
     /* Grab the variables. Terminate on "in". */
-    for (;; ptr += len) {
-	while (*ptr && isspace((unsigned char)*ptr))
+    while (TRUE) {
+	size_t len;
+
+	while (isspace((unsigned char)*ptr))
 	    ptr++;
 	if (*ptr == '\0') {
 	    Parse_Error(PARSE_FATAL, "missing `in' in for");
 	    For_Free(new_for);
 	    return -1;
 	}
+
 	for (len = 1; ptr[len] && !isspace((unsigned char)ptr[len]); len++)
 	    continue;
 	if (len == 2 && ptr[0] == 'i' && ptr[1] == 'n') {
@@ -178,6 +178,7 @@ For_Eval(char *line)
 	    new_for->short_var = TRUE;
 
 	strlist_add_str(&new_for->vars, bmake_strldup(ptr, len), len);
+	ptr += len;
     }
 
     if (strlist_num(&new_for->vars) == 0) {
@@ -186,7 +187,7 @@ For_Eval(char *line)
 	return -1;
     }
 
-    while (*ptr && isspace((unsigned char)*ptr))
+    while (isspace((unsigned char)*ptr))
 	ptr++;
 
     /*
@@ -197,21 +198,21 @@ For_Eval(char *line)
      * We can't do the escapes here - because we don't know whether
      * we will be substituting into ${...} or $(...).
      */
-    sub = Var_Subst(ptr, VAR_GLOBAL, VARE_WANTRES);
-
-    /*
-     * Split into words allowing for quoted strings.
-     */
-    words = Str_Words(sub, FALSE);
-
-    free(sub);
+    {
+	char *items = Var_Subst(ptr, VAR_GLOBAL, VARE_WANTRES);
+	words = Str_Words(items, FALSE);
+	free(items);
+    }
 
     {
-        size_t n;
+	size_t n;
 
 	for (n = 0; n < words.len; n++) {
+	    int escapes;
+	    char ch;
+
 	    ptr = words.words[n];
-	    if (!*ptr)
+	    if (ptr[0] == '\0')
 		continue;
 	    escapes = 0;
 	    while ((ch = *ptr++)) {
@@ -224,7 +225,7 @@ For_Eval(char *line)
 		case ')':
 		    escapes |= FOR_SUB_ESCAPE_PAREN;
 		    break;
-		case /*{*/ '}':
+		case '}':
 		    escapes |= FOR_SUB_ESCAPE_BRACE;
 		    break;
 		}
@@ -236,8 +237,12 @@ For_Eval(char *line)
 	    strlist_add_str(&new_for->items, bmake_strdup(words.words[n]),
 			    escapes);
 	}
+    }
 
-	Words_Free(words);
+    Words_Free(words);
+
+    {
+        size_t len, n;
 
 	if ((len = strlist_num(&new_for->items)) > 0 &&
 	    len % (n = strlist_num(&new_for->vars))) {
