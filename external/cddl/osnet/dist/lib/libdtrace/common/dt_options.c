@@ -904,8 +904,9 @@ dt_options_load(dtrace_hdl_t *dtp)
 	if (hdr.dofh_loadsz < sizeof (dof_hdr_t))
 		return (dt_set_errno(dtp, EINVAL));
 
-	dof = alloca(hdr.dofh_loadsz);
-	bzero(dof, sizeof (dof_hdr_t));
+	dof = calloc(hdr.dofh_loadsz, 1);
+	if (dof == NULL)
+		return (dt_set_errno(dtp, errno));
 	dof->dofh_loadsz = hdr.dofh_loadsz;
 
 	for (i = 0; i < DTRACEOPT_MAX; i++)
@@ -916,7 +917,10 @@ dt_options_load(dtrace_hdl_t *dtp)
 #else
 	if (dt_ioctl(dtp, DTRACEIOC_DOFGET, &dof) == -1)
 #endif
+	{
+		free(dof);
 		return (dt_set_errno(dtp, errno));
+	}
 
 	for (i = 0; i < dof->dofh_secnum; i++) {
 		sec = (dof_sec_t *)(uintptr_t)((uintptr_t)dof +
@@ -940,7 +944,7 @@ dt_options_load(dtrace_hdl_t *dtp)
 
 		dtp->dt_options[opt->dofo_option] = opt->dofo_value;
 	}
-
+	free(dof);
 	return (0);
 }
 
