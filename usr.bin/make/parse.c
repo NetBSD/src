@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.285 2020/09/05 19:11:16 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.286 2020/09/06 19:34:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.285 2020/09/05 19:11:16 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.286 2020/09/06 19:34:36 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.285 2020/09/05 19:11:16 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.286 2020/09/06 19:34:36 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1751,7 +1751,7 @@ out:
  *---------------------------------------------------------------------
  */
 Boolean
-Parse_IsVar(char *line)
+Parse_IsVar(const char *line)
 {
     Boolean wasSpace = FALSE;	/* set TRUE if found a space */
     char ch;
