@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.70 2020/09/06 19:19:49 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.71 2020/09/06 19:24:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.70 2020/09/06 19:19:49 rillig Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.71 2020/09/06 19:24:12 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.70 2020/09/06 19:19:49 rillig Exp $");
+__RCSID("$NetBSD: for.c,v 1.71 2020/09/06 19:24:12 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -152,7 +152,12 @@ For_Eval(char *line)
      */
 
     new_for = bmake_malloc(sizeof *new_for);
-    memset(new_for, 0, sizeof *new_for);
+    Buf_Init(&new_for->buf, 0);
+    strlist_init(&new_for->vars);
+    strlist_init(&new_for->items);
+    new_for->parse_buf = NULL;
+    new_for->short_var = FALSE;
+    new_for->sub_next = 0;
 
     /* Grab the variables. Terminate on "in". */
     for (;; ptr += len) {
@@ -248,7 +253,6 @@ For_Eval(char *line)
 	}
     }
 
-    Buf_Init(&new_for->buf, 0);
     accumFor = new_for;
     forLevel = 1;
     return 1;
