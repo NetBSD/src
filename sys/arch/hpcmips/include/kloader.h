@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.h,v 1.6 2015/06/11 08:22:09 matt Exp $	*/
+/*	$NetBSD: kloader.h,v 1.7 2020/09/06 17:19:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -26,9 +26,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef	_HPCMIPS_KLOADER_H_
+#define	_HPCMIPS_KLOADER_H_
+
 #include <dev/kloader.h>
 
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_page.h>
 
 #include <mips/cpuregs.h>
 
@@ -37,3 +41,5 @@
 /* XXX: kludge: MI kloader.c assumes avail_start and avail_end are common */
 #define avail_start	pmap_limits.avail_start
 #define avail_end	pmap_limits.avail_end
+
+#endif	/* _HPCMIPS_KLOADER_H_ */
