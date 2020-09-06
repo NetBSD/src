@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: fgen.l,v 1.37 2016/03/08 20:13:44 christos Exp $	*/
+/*	$NetBSD: fgen.l,v 1.38 2020/09/06 08:18:21 mrg Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
  * Copyright (c) 1998 Eduardo Horvath.
@@ -42,7 +42,7 @@
 #endif
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: fgen.l,v 1.37 2016/03/08 20:13:44 christos Exp $");
+__RCSID("$NetBSD: fgen.l,v 1.38 2020/09/06 08:18:21 mrg Exp $");
 #endif
 
 %}
@@ -86,7 +86,6 @@ static char *outbuf = NULL;
 static char *outfile, *infile;
 #define BUFCLICK	(1024*1024)
 static size_t outbufsiz = 0;
-static char *myname = NULL;
 static int offsetsize = 8;
 static int defining = 0;
 static int tokenizer = 0;
@@ -2043,7 +2042,7 @@ tokenize(YY_BUFFER_STATE yinput)
 #else
 				token_err(yylineno, infile, yytext,
 					"%s: undefined token `%s'\n",
-					myname, token->text);
+					__func__, token->text);
 #endif
 			}
 			break;
