@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2020/02/03 09:10:47 roy Exp $
+# $NetBSD: Makefile,v 1.14 2020/09/06 07:20:26 mrg Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -214,5 +214,7 @@ CPPFLAGS+= -DCONFIG_CRYPTO_INTERNAL
 SRCS+=  tls_none.c sha1-internal.c md5-internal.c aes-xinternal.c rc4.c
 SRCS+= sha1-pbkdf2.c sha1.c md5.c
 .endif
+
+CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 .include <bsd.prog.mk>

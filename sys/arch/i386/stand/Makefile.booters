@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.93 2018/07/25 23:45:32 kamil Exp $
+#	$NetBSD: Makefile.booters,v 1.94 2020/09/06 07:20:28 mrg Exp $
 
 NOLIBCSANITIZER=
 NOSANITIZER=
@@ -113,6 +113,8 @@ ${BASE}.bin: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
 	${CC} -o ${BASE}.sym ${LDFLAGS} -Wl,-Ttext,${RELOC} \
 	    ${STARTFILE} ${OBJS} ${LIBLIST} > ${BASE}.list
 	${OBJCOPY} -O binary ${BASE}.sym ${BASE}.bin
+
+CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 .include <bsd.prog.mk>
 KLINK_MACHINE=	i386

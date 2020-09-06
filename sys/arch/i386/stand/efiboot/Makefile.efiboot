@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.efiboot,v 1.17 2020/04/04 15:30:46 christos Exp $
+# $NetBSD: Makefile.efiboot,v 1.18 2020/09/06 07:20:29 mrg Exp $
 
 S=		${.CURDIR}/../../../../..
 
@@ -142,6 +142,8 @@ ${PROG}.so: ${OBJS} ${LIBLIST} ${LDSCRIPT} ${.CURDIR}/../Makefile.efiboot
 	fi
 	rm -f ${.TARGET}
 	mv ${.TARGET}.tmp ${.TARGET}
+
+CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 KLINK_MACHINE?=	${MACHINE}
 .include <bsd.klinks.mk>

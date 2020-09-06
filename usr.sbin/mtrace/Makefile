@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2013/11/09 21:39:28 christos Exp $
+#	$NetBSD: Makefile,v 1.12 2020/09/06 07:20:32 mrg Exp $
 #	from: Id: Makefile,v 1.5 1993/06/24 05:11:16 deering Exp
 
 .include <bsd.own.mk>
@@ -18,5 +18,7 @@ COPTS.mtrace.c=-O0
 
 BINMODE=4555
 BINOWN= root
+
+CWARNFLAGS.gcc+=        ${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 .include <bsd.prog.mk>

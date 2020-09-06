@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.74 2020/04/04 19:50:54 christos Exp $
+# $NetBSD: Makefile.boot,v 1.75 2020/09/06 07:20:28 mrg Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -153,6 +153,8 @@ ${PROG}: ${OBJS} ${LIBLIST} ${LDSCRIPT} ${.CURDIR}/../Makefile.boot
 	${CC} -o ${PROG}.sym ${LDFLAGS} -Wl,-Ttext,0 -T ${LDSCRIPT} \
 		-Wl,-Map,${PROG}.map -Wl,-cref ${OBJS} $$bb ${LIBLIST}
 	${OBJCOPY} -O binary ${PROG}.sym ${PROG}
+
+CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 .include <bsd.prog.mk>
 KLINK_MACHINE=	i386
