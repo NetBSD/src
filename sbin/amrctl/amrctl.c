@@ -1,4 +1,4 @@
-/*	$NetBSD: amrctl.c,v 1.11 2018/08/27 00:36:03 sevan Exp $	*/
+/*	$NetBSD: amrctl.c,v 1.12 2020/09/06 02:34:02 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002, Pierre David <Pierre.David@crc.u-strasbg.fr>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: amrctl.c,v 1.11 2018/08/27 00:36:03 sevan Exp $");
+__RCSID("$NetBSD: amrctl.c,v 1.12 2020/09/06 02:34:02 mrg Exp $");
 #endif
 
 #include <stdio.h>
@@ -453,7 +453,8 @@ describe_one_volume(int ldrv, int verbosity,
 
 	printf("Logical volume %d\t", ldrv);
 	statestr = describe_state(verbosity, state);
-	printf("%s ", statestr);
+	if (statestr)
+		printf("%s ", statestr);
 	printf("(%.2f GB, RAID%d", szgb, raid_level);
 	if (verbosity >= 1) {
 		describe_property(prop, propstr);
