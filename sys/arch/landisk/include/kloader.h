@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.h,v 1.3 2015/06/11 15:11:14 matt Exp $	*/
+/*	$NetBSD: kloader.h,v 1.4 2020/09/06 17:19:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -28,6 +28,12 @@
 
 #ifndef	_LANDISK_KLOADER_H_
 #define	_LANDISK_KLOADER_H_
+
+#include <sys/types.h>
+
+#include <uvm/uvm_page.h>
+
+#include <machine/cpu.h>
 
 #define PG_VADDR(pg)	SH3_PHYS_TO_P1SEG(VM_PAGE_TO_PHYS(pg))
 extern paddr_t avail_start, avail_end;

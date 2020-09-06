@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.h,v 1.3 2019/12/15 16:48:25 tsutsui Exp $	*/
+/*	$NetBSD: kloader.h,v 1.4 2020/09/06 17:19:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -29,9 +29,12 @@
 #ifndef	_HPCARM_KLOADER_H_
 #define	_HPCARM_KLOADER_H_
 
+#include <sys/types.h>
+
 #include <sys/lock.h>
 
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_page.h>
 
 #define PG_VADDR(pg)	kloader_phystov(VM_PAGE_TO_PHYS(pg))
 vaddr_t kloader_phystov(paddr_t pa);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.h,v 1.6 2015/06/11 15:11:14 matt Exp $	*/
+/*	$NetBSD: kloader.h,v 1.7 2020/09/06 17:19:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -26,6 +26,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef	_PLAYSTATION2_KLOADER_H_
+#define	_PLAYSTATION2_KLOADER_H_
+
+#include <uvm/uvm_extern.h>
+#include <uvm/uvm_page.h>
+
+#include <mips/cpuregs.h>
+
 /* Playstaion 2 port kloader don't need bootinfo */
 #define	KLOADER_NO_BOOTINFO
 #define PG_VADDR(pg)	MIPS_PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(pg))
@@ -34,3 +42,5 @@
 /* XXX: kludge: MI kloader.c assumes avail_start and avail_end are common */
 #define avail_start	pmap_limits.avail_start
 #define avail_end	pmap_limits.avail_end
+
+#endif	/* _PLAYSTATION2_KLOADER_H_ */
