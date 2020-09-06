@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.104 2020/09/03 18:19:15 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.105 2020/09/06 19:30:53 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -98,8 +98,8 @@ void Cond_restore_depth(unsigned int);
 unsigned int Cond_save_depth(void);
 
 /* for.c */
-int For_Eval(char *);
-int For_Accum(char *);
+int For_Eval(const char *);
+int For_Accum(const char *);
 void For_Run(int);
 
 /* job.c */
