@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.93 2020/03/14 14:05:43 ad Exp $ */
+/*	$NetBSD: pmap.h,v 1.94 2020/09/06 10:48:21 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,6 +49,11 @@
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
 #endif
+
+struct vm_page;
+
+#include <uvm/uvm_prot.h>
+#include <uvm/uvm_pmap.h>
 
 #include <sparc/pte.h>
 
