@@ -1,4 +1,4 @@
-$NetBSD: README.gcc9,v 1.2 2020/09/05 23:18:49 mrg Exp $
+$NetBSD: README.gcc9,v 1.3 2020/09/06 13:06:03 mrg Exp $
 
 new stuff:
 	cc1objcplus
@@ -29,14 +29,14 @@ switched:	has port switched?  y (yes), n (no/ready), ? (not ready)
 
 architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf	switched
 ------------	-----	-------	------	----------	------------	----	---	--------
-aarch64		y	n	n	y		n		n	n	n
+aarch64		y	y	y	y		y		y	n	n
 alpha		y	n	n	y		n		n	n	n
 earmv4		y	n	n	y		n		n	n	n
 earmv4eb	y	n	n	y		n		n	n	n
-earm		n	n	n	n		n		n	n	n
-earmeb		n	n	n	n		n		n	n	n
-earmhf		n	n	n	n		n		n	n	n
-earmhfeb	n	n	n	n		n		n	n	n
+earm		y	n	n	y		n		n	n	n
+earmeb		y	n	n	y		n		n	n	n
+earmhf		y	n	n	y		n		n	n	n
+earmhfeb	y	n	n	y		n		n	n	n
 earmv6		y	n	n	y		n		n	n	n
 earmv6eb	y	n	n	y		n		n	n	n
 earmv6hf	y	n	n	y		n		n	n	n
@@ -56,18 +56,23 @@ mips64eb	y	n	n	y		n		n	n	n
 mips64el	y	n	n	y		n		n	n	n
 powerpc		y	n	n	y		n		n	n	n
 powerpc64	y	n	n	y		n		?	n	n
-sh3eb		y	n	n	y		n		n	n	n
-sh3el		y	n	n	y		n		n	n	n
-sparc		y	n	n	y		n		n	n	n
-sparc64		y	n	n	y		n		n	n	n
-vax		y	n	n	y		n		n	n	n
-x86_64		y	n	y	y		n		n	y	n
+sh3eb		y	n	y	y		n[1]		n	n	n
+sh3el		y	n	y	y		n		n	n	n
+sparc		y	y	y	y		y		y	y	n
+sparc64		y	y	y	y		y		n	n	n
+vax		y	n	n	y		n		y	y	n
+x86_64		y	y	y	y		y		y	y	n
 riscv32		y	?	n	y		n		?	?	n	
 riscv64		y	?	n	y		n		?	?	n
 --
 coldfire	?	N/A	?	?		?		N/A	N/A
 ------------	-----	-------	------	----------	------------	----	---
 architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
+
+[1]: /usr/xsrc/external/mit/pixman/dist/pixman/pixman-fast-path.c: In function 'fast_composite_scaled_nearest_8888_565_normal_OVER':
+     /usr/xsrc/external/mit/pixman/dist/pixman/pixman-fast-path.c:1204:1: internal compiler error: Segmentation fault
+      1204 | FAST_NEAREST (8888_565_normal, 8888, 0565, uint32_t, uint16_t, OVER, NORMAL)
+
 
 
 CPU vs platform test table (for CPUs with multiple ports).  this is "make release" or just kernels.
