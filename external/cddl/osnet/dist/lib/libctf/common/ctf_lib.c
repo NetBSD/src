@@ -234,7 +234,7 @@ ctf_fdopen(int fd, int *errp)
 	bzero(&ctfsect, sizeof (ctf_sect_t));
 	bzero(&symsect, sizeof (ctf_sect_t));
 	bzero(&strsect, sizeof (ctf_sect_t));
-	bzero(&hdr.ctf, sizeof (hdr));
+	bzero(&hdr, sizeof (hdr));
 
 	if (fstat64(fd, &st) == -1)
 		return (ctf_set_open_errno(errp, errno));
