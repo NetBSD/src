@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_internal.h,v 1.18 2020/09/05 07:22:25 maxv Exp $	*/
+/*	$NetBSD: nvmm_internal.h,v 1.19 2020/09/06 02:18:53 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -30,6 +30,18 @@
 
 #ifndef _NVMM_INTERNAL_H_
 #define _NVMM_INTERNAL_H_
+
+#include <sys/types.h>
+
+#include <sys/lwp.h>
+#include <sys/mutex.h>
+#include <sys/rwlock.h>
+#include <sys/sched.h>
+
+#include <dev/nvmm/nvmm.h>
+
+struct uvm_object;
+struct vmspace;
 
 #define NVMM_MAX_MACHINES	128
 #define NVMM_MAX_VCPUS		256
