@@ -83,6 +83,7 @@
 #include <stdio.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
+#include <sys/dkbad.h>
 #include <sys/mount.h>
 #define RAY_DO_SIGLEV
 #include <dev/biovar.h>
@@ -103,7 +104,10 @@
 #include <dev/sun/fbio.h>
 #include <dev/sun/kbio.h>
 #include <dev/sun/vuid_event.h>
+/* XXX relies upon NBPG which is not always constant, or provided. */
+#ifdef NBPG
 #include <dev/tc/sticio.h>
+#endif
 #include <dev/usb/ukyopon.h>
 #include <dev/usb/usb.h>
 #include <dev/usb/utoppy.h>
@@ -620,7 +624,9 @@ unsigned struct_sppplcpcfg_sz = sizeof(sppplcpcfg);
 unsigned struct_spppstatus_sz = sizeof(spppstatus);
 unsigned struct_spppstatusncp_sz = sizeof(spppstatusncp);
 unsigned struct_srt_rt_sz = sizeof(srt_rt);
+#ifdef NBPG
 unsigned struct_stic_xinfo_sz = sizeof(stic_xinfo);
+#endif
 unsigned struct_sun_dkctlr_sz = sizeof(sun_dkctlr);
 unsigned struct_sun_dkgeom_sz = sizeof(sun_dkgeom);
 unsigned struct_sun_dkpart_sz = sizeof(sun_dkpart);
@@ -1183,10 +1189,12 @@ unsigned IOCTL_KIOCGLED = KIOCGLED;
 unsigned IOCTL_KIOCLAYOUT = KIOCLAYOUT;
 unsigned IOCTL_VUIDSFORMAT = VUIDSFORMAT;
 unsigned IOCTL_VUIDGFORMAT = VUIDGFORMAT;
+#ifdef NBPG
 unsigned IOCTL_STICIO_GXINFO = STICIO_GXINFO;
 unsigned IOCTL_STICIO_RESET = STICIO_RESET;
 unsigned IOCTL_STICIO_STARTQ = STICIO_STARTQ;
 unsigned IOCTL_STICIO_STOPQ = STICIO_STOPQ;
+#endif
 unsigned IOCTL_UKYOPON_IDENTIFY = UKYOPON_IDENTIFY;
 unsigned IOCTL_USB_REQUEST = USB_REQUEST;
 unsigned IOCTL_USB_SETDEBUG = USB_SETDEBUG;
