@@ -96,7 +96,6 @@ TAILQ_HEAD(if_head, interface);
 
 #include "privsep.h"
 
-#ifdef INET6
 /* dhcpcd requires CMSG_SPACE to evaluate to a compile time constant. */
 #if defined(__QNX) || \
 	(defined(__NetBSD_Version__) && __NetBSD_Version__ < 600000000)
@@ -113,16 +112,13 @@ TAILQ_HEAD(if_head, interface);
 #define	CMSG_SPACE(len)	(ALIGN(sizeof(struct cmsghdr)) + ALIGN(len))
 #endif
 
-#define IP6BUFLEN	(CMSG_SPACE(sizeof(struct in6_pktinfo)) + \
-			CMSG_SPACE(sizeof(int)))
-#endif
-
 struct passwd;
 
 struct dhcpcd_ctx {
 	char pidfile[sizeof(PIDFILE) + IF_NAMESIZE + 1];
 	char vendor[256];
 	int fork_fd;	/* FD for the fork init signal pipe */
+	int stderr_fd;	/* FD for logging to stderr */
 	const char *cffile;
 	unsigned long long options;
 	char *logfile;
