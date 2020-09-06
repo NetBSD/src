@@ -336,7 +336,7 @@ dhcpcd_daemonise(struct dhcpcd_ctx *ctx)
 #ifdef THERE_IS_NO_FORK
 	eloop_timeout_delete(ctx->eloop, handle_exit_timeout, ctx);
 	errno = ENOSYS;
-	return 0;
+	return;
 #else
 	int i;
 	unsigned int logopts = loggetopts();
@@ -361,8 +361,8 @@ dhcpcd_daemonise(struct dhcpcd_ctx *ctx)
 
 	/* Don't use loginfo because this makes no sense in a log. */
 	if (!(logopts & LOGERR_QUIET))
-		(void)fprintf(stderr, "forked to background, child pid %d\n",
-		    getpid());
+		(void)fprintf(stderr,
+		    "forked to background, child pid %d\n", getpid());
 	i = EXIT_SUCCESS;
 	if (write(ctx->fork_fd, &i, sizeof(i)) == -1)
 		logerr("write");
@@ -371,11 +371,18 @@ dhcpcd_daemonise(struct dhcpcd_ctx *ctx)
 	close(ctx->fork_fd);
 	ctx->fork_fd = -1;
 
-	if (isatty(loggeterrfd())) {
-		logopts &= ~LOGERR_ERR;
-		logsetopts(logopts);
-		logseterrfd(-1);
-	}
+	/*
+	 * Stop writing to stderr.
+	 * On the happy path, only the master process writes to stderr,
+	 * so this just stops wasting fprintf calls to nowhere.
+	 * All other calls - ie errors in privsep processes or script output,
+	 * will error when printing.
+	 * If we *really* want to fix that, then we need to suck
+	 * stderr/stdout in the master process and either disacrd it or pass
+	 * it to the launcher process and then to stderr.
+	 */
+	logopts &= ~LOGERR_ERR;
+	logsetopts(logopts);
 #endif
 }
 
@@ -1153,6 +1160,15 @@ dhcpcd_setlinkrcvbuf(struct dhcpcd_ctx *ctx)
 }
 #endif
 
+static void
+dhcpcd_runprestartinterface(void *arg)
+{
+	struct interface *ifp = arg;
+
+	run_preinit(ifp);
+	dhcpcd_prestartinterface(ifp);
+}
+
 void
 dhcpcd_linkoverflow(struct dhcpcd_ctx *ctx)
 {
@@ -1215,9 +1231,11 @@ dhcpcd_linkoverflow(struct dhcpcd_ctx *ctx)
 			continue;
 		}
 		TAILQ_INSERT_TAIL(ctx->ifaces, ifp, next);
-		if (ifp->active)
+		if (ifp->active) {
+			dhcpcd_initstate(ifp, 0);
 			eloop_timeout_add_sec(ctx->eloop, 0,
-			    dhcpcd_prestartinterface, ifp);
+			    dhcpcd_runprestartinterface, ifp);
+		}
 	}
 	free(ifaces);
 
@@ -1765,6 +1783,24 @@ dhcpcd_fork_cb(void *arg)
 	eloop_exit(ctx->eloop, exit_code);
 }
 
+static void
+dhcpcd_stderr_cb(void *arg)
+{
+	struct dhcpcd_ctx *ctx = arg;
+	char log[BUFSIZ];
+	ssize_t len;
+
+	len = read(ctx->stderr_fd, log, sizeof(log));
+	if (len == -1) {
+		if (errno != ECONNRESET)
+			logerr(__func__);
+		return;
+	}
+
+	log[len] = '\0';
+	fprintf(stderr, "%s", log);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -1778,7 +1814,7 @@ main(int argc, char **argv)
 	ssize_t len;
 #if defined(USE_SIGNALS) || !defined(THERE_IS_NO_FORK)
 	pid_t pid;
-	int sigpipe[2];
+	int fork_fd[2], stderr_fd[2];
 #endif
 #ifdef USE_SIGNALS
 	int sig = 0;
@@ -2100,11 +2136,20 @@ printpidfile:
 	}
 #endif
 
+#ifdef PRIVSEP
+	ps_init(&ctx);
+#endif
+
 #ifndef SMALL
 	if (ctx.options & DHCPCD_DUMPLEASE &&
 	    ioctl(fileno(stdin), FIONREAD, &i, sizeof(i)) == 0 &&
 	    i > 0)
 	{
+		ctx.options |= DHCPCD_FORKED; /* pretend child process */
+#ifdef PRIVSEP
+		if (IN_PRIVSEP(&ctx) && ps_mastersandbox(&ctx) == -1)
+			goto exit_failure;
+#endif
 		ifp = calloc(1, sizeof(*ifp));
 		if (ifp == NULL) {
 			logerr(__func__);
@@ -2153,6 +2198,14 @@ printpidfile:
 			ctx.control_fd = control_open(NULL, AF_UNSPEC,
 			    ctx.options & DHCPCD_DUMPLEASE);
 		if (ctx.control_fd != -1) {
+#ifdef PRIVSEP
+			ctx.options &= ~DHCPCD_FORKED;
+			if (IN_PRIVSEP(&ctx) && ps_mastersandbox(&ctx) == -1) {
+				ctx.options |= DHCPCD_FORKED;
+				goto exit_failure;
+			}
+			ctx.options |= DHCPCD_FORKED;
+#endif
 			if (!(ctx.options & DHCPCD_DUMPLEASE))
 				loginfox("sending commands to dhcpcd process");
 			len = control_send(&ctx, argc, argv);
@@ -2206,29 +2259,40 @@ printpidfile:
 	if (freopen(_PATH_DEVNULL, "r", stdin) == NULL)
 		logerr("%s: freopen stdin", __func__);
 
-
-#ifdef PRIVSEP
-	ps_init(&ctx);
-#endif
-
-#ifdef USE_SIGNALS
-	if (pipe(sigpipe) == -1) {
-		logerr("pipe");
+#if defined(USE_SIGNALS) && !defined(THERE_IS_NO_FORK)
+	if (xsocketpair(AF_UNIX, SOCK_DGRAM | SOCK_CXNB, 0, fork_fd) == -1 ||
+	    xsocketpair(AF_UNIX, SOCK_DGRAM | SOCK_CXNB, 0, stderr_fd) == -1)
+	{
+		logerr("socketpair");
 		goto exit_failure;
 	}
-#ifdef HAVE_CAPSICUM
-	if (ps_rights_limit_fdpair(sigpipe) == -1) {
-		logerr("ps_rights_limit_fdpair");
-		goto exit_failure;
-	}
-#endif
 	switch (pid = fork()) {
 	case -1:
 		logerr("fork");
 		goto exit_failure;
 	case 0:
-		ctx.fork_fd = sigpipe[1];
-		close(sigpipe[0]);
+		ctx.fork_fd = fork_fd[1];
+		close(fork_fd[0]);
+#ifdef PRIVSEP_RIGHTS
+		if (ps_rights_limit_fd(fork_fd[1]) == -1) {
+			logerr("ps_rights_limit_fdpair");
+			goto exit_failure;
+		}
+#endif
+		/*
+		 * Redirect stderr to the stderr socketpair.
+		 * Redirect stdout as well.
+		 * dhcpcd doesn't output via stdout, but something in
+		 * a called script might.
+		 *
+		 * Do NOT rights limit this fd as it will affect scripts.
+		 * For example, cmp reports insufficient caps on FreeBSD.
+		 */
+		if (dup2(stderr_fd[1], STDERR_FILENO) == -1 ||
+		    dup2(stderr_fd[1], STDOUT_FILENO) == -1)
+			logerr("dup2");
+		close(stderr_fd[0]);
+		close(stderr_fd[1]);
 		if (setsid() == -1) {
 			logerr("%s: setsid", __func__);
 			goto exit_failure;
@@ -2248,10 +2312,22 @@ printpidfile:
 		break;
 	default:
 		ctx.options |= DHCPCD_FORKED; /* A lie */
-		ctx.fork_fd = sigpipe[0];
-		close(sigpipe[1]);
+		ctx.fork_fd = fork_fd[0];
+		close(fork_fd[1]);
+		ctx.stderr_fd = stderr_fd[0];
+		close(stderr_fd[1]);
+#ifdef PRIVSEP_RIGHTS
+		if (ps_rights_limit_fd(fork_fd[0]) == -1 ||
+		    ps_rights_limit_fd(stderr_fd[0]) == 1)
+		{
+			logerr("ps_rights_limit_fdpair");
+			goto exit_failure;
+		}
+#endif
 		setproctitle("[launcher]");
 		eloop_event_add(ctx.eloop, ctx.fork_fd, dhcpcd_fork_cb, &ctx);
+		eloop_event_add(ctx.eloop, ctx.stderr_fd, dhcpcd_stderr_cb,
+		    &ctx);
 		goto run_loop;
 	}
 
@@ -2269,22 +2345,6 @@ printpidfile:
 	if (ctx.options & DHCPCD_IPV6 && ctx.options & DHCPCD_IPV6RS)
 		if_disable_rtadv();
 #endif
-
-	if (isatty(STDOUT_FILENO) &&
-	    freopen(_PATH_DEVNULL, "r", stdout) == NULL)
-		logerr("%s: freopen stdout", __func__);
-	if (isatty(STDERR_FILENO)) {
-		int fd = dup(STDERR_FILENO);
-
-		if (fd == -1)
-			logerr("%s: dup", __func__);
-		else if (logseterrfd(fd) == -1)
-			logerr("%s: logseterrfd", __func__);
-		else if (freopen(_PATH_DEVNULL, "r", stderr) == NULL) {
-			logseterrfd(-1);
-			logerr("%s: freopen stderr", __func__);
-		}
-	}
 
 #ifdef PRIVSEP
 	if (IN_PRIVSEP(&ctx) && ps_start(&ctx) == -1) {

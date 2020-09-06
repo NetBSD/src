@@ -777,7 +777,7 @@ make_message(struct bootp **bootpm, const struct interface *ifp, uint8_t type)
 	    (type == DHCP_REQUEST &&
 	    state->addr->mask.s_addr == lease->mask.s_addr &&
 	    (state->new == NULL || IS_DHCP(state->new)) &&
-	    !(state->added & STATE_FAKE))))
+	    !(state->added & (STATE_FAKE | STATE_EXPIRED)))))
 		bootp->ciaddr = state->addr->addr.s_addr;
 
 	bootp->op = BOOTREQUEST;
@@ -836,7 +836,7 @@ make_message(struct bootp **bootpm, const struct interface *ifp, uint8_t type)
 		if (type == DHCP_DECLINE ||
 		    (type == DHCP_REQUEST &&
 		    (state->addr == NULL ||
-		    state->added & STATE_FAKE ||
+		    state->added & (STATE_FAKE | STATE_EXPIRED) ||
 		    lease->addr.s_addr != state->addr->addr.s_addr)))
 		{
 			putip = true;
@@ -1745,7 +1745,7 @@ send_message(struct interface *ifp, uint8_t type,
 		goto fail;
 	len = (size_t)r;
 
-	if (!(state->added & STATE_FAKE) &&
+	if (!(state->added & (STATE_FAKE | STATE_EXPIRED)) &&
 	    state->addr != NULL &&
 	    ipv4_iffindaddr(ifp, &state->lease.addr, NULL) != NULL)
 		from.s_addr = state->lease.addr.s_addr;
@@ -1869,14 +1869,16 @@ dhcp_discover(void *arg)
 	state->state = DHS_DISCOVER;
 	dhcp_new_xid(ifp);
 	eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
-	if (ifo->fallback)
-		eloop_timeout_add_sec(ifp->ctx->eloop,
-		    ifo->reboot, dhcp_fallback, ifp);
+	if (!(state->added & STATE_EXPIRED)) {
+		if (ifo->fallback)
+			eloop_timeout_add_sec(ifp->ctx->eloop,
+			    ifo->reboot, dhcp_fallback, ifp);
 #ifdef IPV4LL
-	else if (ifo->options & DHCPCD_IPV4LL)
-		eloop_timeout_add_sec(ifp->ctx->eloop,
-		    ifo->reboot, ipv4ll_start, ifp);
+		else if (ifo->options & DHCPCD_IPV4LL)
+			eloop_timeout_add_sec(ifp->ctx->eloop,
+			    ifo->reboot, ipv4ll_start, ifp);
 #endif
+	}
 	if (ifo->options & DHCPCD_REQUEST)
 		loginfox("%s: soliciting a DHCP lease (requesting %s)",
 		    ifp->name, inet_ntoa(ifo->req_addr));
@@ -1897,30 +1899,21 @@ dhcp_request(void *arg)
 }
 
 static void
-dhcp_expire1(struct interface *ifp)
-{
-	struct dhcp_state *state = D_STATE(ifp);
-
-	eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
-	dhcp_drop(ifp, "EXPIRE");
-	dhcp_unlink(ifp->ctx, state->leasefile);
-	state->interval = 0;
-	if (!(ifp->options->options & DHCPCD_LINK) || ifp->carrier > LINK_DOWN)
-		dhcp_discover(ifp);
-}
-
-static void
 dhcp_expire(void *arg)
 {
 	struct interface *ifp = arg;
+	struct dhcp_state *state = D_STATE(ifp);
 
 	if (ifp->options->options & DHCPCD_LASTLEASE_EXTEND) {
 		logwarnx("%s: DHCP lease expired, extending lease", ifp->name);
-		return;
+		state->added |= STATE_EXPIRED;
+	} else {
+		logerrx("%s: DHCP lease expired", ifp->name);
+		dhcp_drop(ifp, "EXPIRE");
+		dhcp_unlink(ifp->ctx, state->leasefile);
 	}
-
-	logerrx("%s: DHCP lease expired", ifp->name);
-	dhcp_expire1(ifp);
+	state->interval = 0;
+	dhcp_discover(ifp);
 }
 
 #if defined(ARP) || defined(IN_IFF_DUPLICATED)
@@ -2291,7 +2284,9 @@ dhcp_bind(struct interface *ifp)
 		return;
 	}
 	if (state->reason == NULL) {
-		if (state->old && !(state->added & STATE_FAKE)) {
+		if (state->old &&
+		    !(state->added & (STATE_FAKE | STATE_EXPIRED)))
+		{
 			if (state->old->yiaddr == state->new->yiaddr &&
 			    lease->server.s_addr &&
 			    state->state != DHS_REBIND)
@@ -2362,19 +2357,6 @@ dhcp_bind(struct interface *ifp)
 		return;
 	}
 	eloop_event_add(ctx->eloop, state->udp_rfd, dhcp_handleifudp, ifp);
-}
-
-static void
-dhcp_lastlease(void *arg)
-{
-	struct interface *ifp = arg;
-	struct dhcp_state *state = D_STATE(ifp);
-
-	loginfox("%s: timed out contacting a DHCP server, using last lease",
-	    ifp->name);
-	dhcp_bind(ifp);
-	state->interval = 0;
-	dhcp_discover(ifp);
 }
 
 static size_t
@@ -2474,6 +2456,26 @@ dhcp_arp_bind(struct interface *ifp)
 		dhcp_bind(ifp);
 }
 #endif
+
+static void
+dhcp_lastlease(void *arg)
+{
+	struct interface *ifp = arg;
+	struct dhcp_state *state = D_STATE(ifp);
+
+	loginfox("%s: timed out contacting a DHCP server, using last lease",
+	    ifp->name);
+#if defined(ARP) || defined(KERNEL_RFC5227)
+	dhcp_arp_bind(ifp);
+#else
+	dhcp_bind(ifp);
+#endif
+	/* Set expired here because dhcp_bind() -> ipv4_addaddr() will reset
+	 * state */
+	state->added |= STATE_EXPIRED;
+	state->interval = 0;
+	dhcp_discover(ifp);
+}
 
 static void
 dhcp_static(struct interface *ifp)
