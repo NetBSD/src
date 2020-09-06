@@ -1879,10 +1879,10 @@ get_if_hwaddr(u_char *addr, char *name)
 
 #define IFREQ_SAFE (sizeof(struct ifreq) + sizeof(struct sockaddr_dl))
     /* XXX sockaddr_dl is larger than the sockaddr in struct ifreq! */
-    union {			/* XXX */
-    	struct ifreq _ifreq;	/* XXX */
-	char _X[IFREQ_SAFE]; 	/* XXX */
-    } _ifreq_dontsmashstack;	/* XXX */
+    union {				/* XXX */
+    	struct ifreq _ifreq;		/* XXX */
+	char _X[IFREQ_SAFE]; 		/* XXX */
+    } _ifreq_dontsmashstack = {0};	/* XXX */
 #define ifreq_xxx _ifreq_dontsmashstack._ifreq			/* XXX */
 
     struct sockaddr_dl *sdl = (struct sockaddr_dl *) &ifreq_xxx.ifr_addr;
@@ -1890,7 +1890,6 @@ get_if_hwaddr(u_char *addr, char *name)
 
     if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
 	return 0;
-    (void)memset(sdl, 0, sizeof(*sdl));
     sdl->sdl_family = AF_LINK;
     (void)strlcpy(ifreq_xxx.ifr_name, name, sizeof(ifreq_xxx.ifr_name));
     if (ioctl(fd, SIOCGIFADDR, &ifreq_xxx) == -1) {
