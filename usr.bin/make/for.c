@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.68 2020/09/04 17:35:00 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.69 2020/09/06 19:18:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.68 2020/09/04 17:35:00 rillig Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.69 2020/09/06 19:18:16 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.68 2020/09/04 17:35:00 rillig Exp $");
+__RCSID("$NetBSD: for.c,v 1.69 2020/09/06 19:18:16 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -87,7 +87,10 @@ typedef struct {
     strlist_t vars;		/* Iteration variables */
     strlist_t items;		/* Substitution items */
     char *parse_buf;
-    int short_var;
+    /* Is any of the names 1 character long? If so, when the variable values
+     * are substituted, the parser must handle $V expressions as well, not
+     * only ${V} and $(V). */
+    Boolean short_var;
     int sub_next;
 } For;
 
@@ -176,7 +179,8 @@ For_Eval(char *line)
 	    break;
 	}
 	if (len == 1)
-	    new_for->short_var = 1;
+	    new_for->short_var = TRUE;
+
 	strlist_add_str(&new_for->vars, bmake_strldup(ptr, len), len);
     }
 
