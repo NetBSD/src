@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_configure.c,v 1.33 2018/01/18 00:32:49 mrg Exp $ */
+/*	$NetBSD: rf_configure.c,v 1.34 2020/09/06 05:31:46 mrg Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -49,7 +49,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rf_configure.c,v 1.33 2018/01/18 00:32:49 mrg Exp $");
+__RCSID("$NetBSD: rf_configure.c,v 1.34 2020/09/06 05:31:46 mrg Exp $");
 #endif
 
 
@@ -286,7 +286,7 @@ rf_MakeConfig(char *configname, RF_Config_t *cfgPtr)
 		b = getfsspecname(b1, sizeof(b1), buf);
 		if (b == NULL) {
 			warnx("Config file error: warning: unable to get "
-			    "device file for spare disk %d: %s", c, b);
+			    "device file for spare disk %d: %s", c, buf);
 			b = buf;
 		}
 
