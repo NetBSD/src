@@ -40,7 +40,6 @@
 #include <assert.h>
 #include <pwd.h>
 #include <errno.h>
-#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -170,17 +169,6 @@ ps_bpf_start_bpf(void *arg)
 	return -1;
 }
 
-static void
-ps_bpf_signal_bpfcb(int sig, void *arg)
-{
-	struct dhcpcd_ctx *ctx = arg;
-
-	if (sig != SIGTERM)
-		return;
-
-	eloop_exit(ctx->eloop, EXIT_SUCCESS);
-}
-
 ssize_t
 ps_bpf_cmd(struct dhcpcd_ctx *ctx, struct ps_msghdr *psm, struct msghdr *msg)
 {
@@ -249,7 +237,7 @@ ps_bpf_cmd(struct dhcpcd_ctx *ctx, struct ps_msghdr *psm, struct msghdr *msg)
 	start = ps_dostart(ctx,
 	    &psp->psp_pid, &psp->psp_fd,
 	    ps_bpf_recvmsg, NULL, psp,
-	    ps_bpf_start_bpf, ps_bpf_signal_bpfcb,
+	    ps_bpf_start_bpf, NULL,
 	    PSF_DROPPRIVS);
 	switch (start) {
 	case -1:

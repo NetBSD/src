@@ -102,8 +102,9 @@ struct rt {
 #define RTPREF_RESERVED	(-2)
 #define RTPREF_INVALID	(-3)	/* internal */
 	unsigned int		rt_dflags;
-#define	RTDF_IFA_ROUTE		0x02		/* Address generated route */
-#define	RTDF_FAKE		0x04		/* Maybe us on lease reboot  */
+#define	RTDF_IFA_ROUTE		0x01		/* Address generated route */
+#define	RTDF_FAKE		0x02		/* Maybe us on lease reboot */
+#define	RTDF_IPV4LL		0x04		/* IPv4LL route */
 #define	RTDF_RA			0x08		/* Router Advertisement */
 #define	RTDF_DHCP		0x10		/* DHCP route */
 #define	RTDF_STATIC		0x20		/* Configured in dhcpcd */
