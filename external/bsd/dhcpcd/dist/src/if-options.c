@@ -59,6 +59,8 @@
 #define	SET_CONFIG_BLOCK(ifo)	((ifo)->options |= DHCPCD_FORKED)
 #define	CLEAR_CONFIG_BLOCK(ifo)	((ifo)->options &= ~DHCPCD_FORKED)
 
+static unsigned long long default_options;
+
 const struct option cf_options[] = {
 	{"background",      no_argument,       NULL, 'b'},
 	{"script",          required_argument, NULL, 'c'},
@@ -759,6 +761,10 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		break;
 	case 'l':
 		ARG_REQUIRED;
+		if (strcmp(arg, "-1") == 0) {
+			ifo->leasetime = DHCP_INFINITE_LIFETIME;
+			break;
+		}
 		ifo->leasetime = (uint32_t)strtou(arg, NULL,
 		    0, 0, UINT32_MAX, &e);
 		if (e) {
@@ -1021,6 +1027,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		}
 		ifo->options |= DHCPCD_CLIENTID;
 		ifo->clientid[0] = (uint8_t)s;
+		ifo->options &= ~DHCPCD_DUID;
 		break;
 	case 'J':
 		ifo->options |= DHCPCD_BROADCAST;
@@ -1204,13 +1211,23 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		ifo->options |= DHCPCD_ONESHOT;
 		break;
 	case '4':
+#ifdef INET
 		ifo->options &= ~DHCPCD_IPV6;
 		ifo->options |= DHCPCD_IPV4;
 		break;
+#else
+		logerrx("INET has been compiled out");
+		return -1;
+#endif
 	case '6':
+#ifdef INET6
 		ifo->options &= ~DHCPCD_IPV4;
 		ifo->options |= DHCPCD_IPV6;
 		break;
+#else
+		logerrx("INET6 has been compiled out");
+		return -1;
+#endif
 	case O_IPV4:
 		ifo->options |= DHCPCD_IPV4;
 		break;
@@ -2090,6 +2107,12 @@ invalid_token:
 		break;
 	case O_CONTROLGRP:
 		ARG_REQUIRED;
+#ifdef PRIVSEP
+		/* Control group is already set by this point.
+		 * We don't need to pledge getpw either with this. */
+		if (IN_PRIVSEP(ctx))
+			break;
+#endif
 #ifdef _REENTRANT
 		l = sysconf(_SC_GETGR_R_SIZE_MAX);
 		if (l == -1)
@@ -2326,18 +2349,30 @@ read_config(struct dhcpcd_ctx *ctx,
 	/* Seed our default options */
 	if ((ifo = default_config(ctx)) == NULL)
 		return NULL;
-	ifo->options |= DHCPCD_DAEMONISE | DHCPCD_GATEWAY;
-#ifdef PLUGIN_DEV
-	ifo->options |= DHCPCD_DEV;
-#endif
+	if (default_options == 0) {
+		default_options |= DHCPCD_DAEMONISE | DHCPCD_GATEWAY;
 #ifdef INET
-	ifo->options |= DHCPCD_IPV4 | DHCPCD_ARP | DHCPCD_DHCP | DHCPCD_IPV4LL;
+		skip = socket(PF_INET, SOCK_DGRAM, 0);
+		if (skip != -1) {
+			close(skip);
+			default_options |= DHCPCD_IPV4 | DHCPCD_ARP |
+			    DHCPCD_DHCP | DHCPCD_IPV4LL;
+		}
 #endif
 #ifdef INET6
-	ifo->options |= DHCPCD_IPV6 | DHCPCD_IPV6RS;
-	ifo->options |= DHCPCD_IPV6RA_AUTOCONF | DHCPCD_IPV6RA_REQRDNSS;
-	ifo->options |= DHCPCD_DHCP6;
+		skip = socket(PF_INET6, SOCK_DGRAM, 0);
+		if (skip != -1) {
+			close(skip);
+			default_options |= DHCPCD_IPV6 | DHCPCD_IPV6RS |
+			    DHCPCD_IPV6RA_AUTOCONF | DHCPCD_IPV6RA_REQRDNSS |
+			    DHCPCD_DHCP6;
+		}
 #endif
+#ifdef PLUGIN_DEV
+		default_options |= DHCPCD_DEV;
+#endif
+	}
+	ifo->options |= default_options;
 
 	CLEAR_CONFIG_BLOCK(ifo);
 
