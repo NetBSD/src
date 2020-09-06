@@ -544,11 +544,11 @@ ipv6nd_advertise(struct ipv6_addr *ia)
 	na->nd_na_flags_reserved = ND_NA_FLAG_OVERRIDE;
 #if defined(PRIVSEP) && (defined(__linux__) || defined(HAVE_PLEDGE))
 	if (IN_PRIVSEP(ctx)) {
-		if (ps_root_ip6forwarding(ctx, ifp->name) == 1)
+		if (ps_root_ip6forwarding(ctx, ifp->name) != 0)
 			na->nd_na_flags_reserved |= ND_NA_FLAG_ROUTER;
 	} else
 #endif
-	if (ip6_forwarding(ifp->name) == 1)
+	if (ip6_forwarding(ifp->name) != 0)
 		na->nd_na_flags_reserved |= ND_NA_FLAG_ROUTER;
 	na->nd_na_target = ia->addr;
 

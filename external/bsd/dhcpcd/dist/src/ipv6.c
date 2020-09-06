@@ -679,6 +679,14 @@ ipv6_addaddr1(struct ipv6_addr *ia, const struct timespec *now)
 	/* Adjust plftime and vltime based on acquired time */
 	pltime = ia->prefix_pltime;
 	vltime = ia->prefix_vltime;
+
+	if (ifp->options->options & DHCPCD_LASTLEASE_EXTEND) {
+		/* We don't want the kernel to expire the address.
+		 * The saved times will be re-applied to the ia
+		 * before exiting this function. */
+		ia->prefix_vltime = ia->prefix_pltime = ND6_INFINITE_LIFETIME;
+	}
+
 	if (timespecisset(&ia->acquired) &&
 	    (ia->prefix_pltime != ND6_INFINITE_LIFETIME ||
 	    ia->prefix_vltime != ND6_INFINITE_LIFETIME))
@@ -1092,33 +1100,22 @@ ipv6_anyglobal(struct interface *sifp)
 	struct interface *ifp;
 	struct ipv6_state *state;
 	struct ipv6_addr *ia;
-#ifdef BSD
 	bool forwarding;
 
-#if defined(PRIVSEP) && defined(HAVE_PLEDGE)
+	/* BSD forwarding is either on or off.
+	 * Linux forwarding is technically the same as it's
+	 * configured by the "all" interface.
+	 * Per interface only affects IsRouter of NA messages. */
+#if defined(PRIVSEP) && (defined(HAVE_PLEDGE) || defined(__linux__))
 	if (IN_PRIVSEP(sifp->ctx))
-		forwarding = ps_root_ip6forwarding(sifp->ctx, NULL) == 1;
+		forwarding = ps_root_ip6forwarding(sifp->ctx, NULL) != 0;
 	else
 #endif
-		forwarding = ip6_forwarding(NULL) == 1;
-#endif
-
+		forwarding = ip6_forwarding(NULL) != 0;
 
 	TAILQ_FOREACH(ifp, sifp->ctx->ifaces, next) {
-#ifdef BSD
 		if (ifp != sifp && !forwarding)
 			continue;
-#else
-#if defined(PRIVSEP) && defined(__linux__)
-	if (IN_PRIVSEP(sifp->ctx)) {
-		if (ifp != sifp &&
-		    ps_root_ip6forwarding(sifp->ctx, ifp->name) != 1)
-			continue;
-	} else
-#endif
-		if (ifp != sifp && ip6_forwarding(ifp->name) != 1)
-			continue;
-#endif
 
 		state = IPV6_STATE(ifp);
 		if (state == NULL)
