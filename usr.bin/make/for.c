@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.72 2020/09/06 19:28:49 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.73 2020/09/06 19:30:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.72 2020/09/06 19:28:49 rillig Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.73 2020/09/06 19:30:53 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.72 2020/09/06 19:28:49 rillig Exp $");
+__RCSID("$NetBSD: for.c,v 1.73 2020/09/06 19:30:53 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -120,7 +120,7 @@ For_Free(For *arg)
  *     -1: A .for statement with a bad syntax error, discard.
  */
 int
-For_Eval(char *line)
+For_Eval(const char *line)
 {
     For *new_for;
     const char *ptr;
@@ -269,9 +269,9 @@ For_Eval(char *line)
  */
 
 int
-For_Accum(char *line)
+For_Accum(const char *line)
 {
-    char *ptr = line;
+    const char *ptr = line;
 
     if (*ptr == '.') {
 
