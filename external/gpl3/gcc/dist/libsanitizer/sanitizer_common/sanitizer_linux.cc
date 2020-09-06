@@ -1908,8 +1908,10 @@ SignalContext::WriteFlag SignalContext::GetWriteFlag() const {
   uptr pc = ucontext->uc_mcontext.gregs[REG_PC];
 # else
   // Historical BSDism here.
-  struct sigcontext *scontext = (struct sigcontext *)context;
-#  if defined(__arch64__)
+  struct sigcontext *scontext = (struct sigcontext *)ucontext;
+#  if SANITIZER_NETBSD
+  uptr pc = scontext->sc_pc;
+#  elif defined(__arch64__)
   uptr pc = scontext->sigc_regs.tpc;
 #  else
   uptr pc = scontext->si_regs.pc;
