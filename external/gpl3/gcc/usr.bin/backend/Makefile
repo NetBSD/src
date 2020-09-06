@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.61 2020/09/05 14:24:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.62 2020/09/06 10:50:53 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -298,14 +298,14 @@ build-ggc-none.c: ggc-none.c \
 build-ggc-none.lo: ${HH}
 CLEANFILES+=	build-ggc-none.c
 
-build-hash-table.c: hash-table.c hash-table.h ${G_GGC_H}
+build-hash-table.c: hash-table.c hash-table.h ${G_HASH_TABLE_H} ${HH}
 	${_MKTARGET_CREATE}
 	rm -f build-hash-table.c
 	cat ${GNUHOSTDIST}/gcc/hash-table.c >${.TARGET}
 build-hash-table.lo: ${HH_NORTL}
 CLEANFILES+=	build-hash-table.c
 
-build-vec.c: vec.c vec.h ${G_GGC_H}
+build-vec.c: vec.c vec.h ${G_HASH_TABLE_H} ${HH}
 	${_MKTARGET_CREATE}
 	rm -f build-vec.c
 	cat ${GNUHOSTDIST}/gcc/vec.c >${.TARGET}
