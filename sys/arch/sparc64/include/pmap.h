@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.63 2019/12/15 21:11:34 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.64 2020/09/06 10:48:21 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,6 +37,9 @@
 #ifndef _LOCORE
 #include <machine/pte.h>
 #include <sys/queue.h>
+struct vm_page;
+#include <uvm/uvm_prot.h>
+#include <uvm/uvm_pmap.h>
 #include <uvm/uvm_object.h>
 #ifdef _KERNEL
 #include <machine/cpuset.h>
