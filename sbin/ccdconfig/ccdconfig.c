@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.56 2014/12/07 10:44:34 mlelstv Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.57 2020/09/06 02:34:30 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1996, 1997\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.56 2014/12/07 10:44:34 mlelstv Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.57 2020/09/06 02:34:30 mrg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -245,7 +245,7 @@ do_single(int argc, char **argv, int action)
 
 		cp = strdup(buf);
 		if (cp == NULL) {
-			warn("%s", cp);
+			warn("strdup failed");
 			goto error;
 		}
 
