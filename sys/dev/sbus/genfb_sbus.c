@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_sbus.c,v 1.12 2020/09/05 16:30:11 riastradh Exp $ */
+/*	$NetBSD: genfb_sbus.c,v 1.13 2020/09/06 17:22:44 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -29,23 +29,25 @@
 /* an SBus frontend for the generic fb console driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_sbus.c,v 1.12 2020/09/05 16:30:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_sbus.c,v 1.13 2020/09/06 17:22:44 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/types.h>
+
 #include <sys/buf.h>
+#include <sys/bus.h>
+#include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
-#include <sys/conf.h>
+#include <sys/systm.h>
 
-#include <sys/bus.h>
+#include <uvm/uvm_extern.h>
+
 #include <machine/autoconf.h>
-#include <machine/pmap.h>
 
 #include <dev/sbus/sbusvar.h>
 #include <dev/sun/fbio.h>
 #include <dev/sun/fbvar.h>
-
 #include <dev/wsfb/genfbvar.h>
 
 struct genfb_sbus_softc {
