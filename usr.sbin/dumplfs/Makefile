@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2018/06/15 15:16:05 christos Exp $
+#	$NetBSD: Makefile,v 1.19 2020/09/06 07:20:31 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 WARNS?=	3	# XXX -Wsign-compare
@@ -11,5 +11,7 @@ SRCS=	dumplfs.c lfs_cksum.c misc.c
 MAN=	dumplfs.8
 LDADD+=	-lutil
 DPADD+= ${LIBUTIL}
+
+CWARNFLAGS.gcc+=        	${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 .include <bsd.prog.mk>

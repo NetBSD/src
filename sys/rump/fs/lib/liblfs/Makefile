@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2020/03/21 18:58:43 riastradh Exp $
+#	$NetBSD: Makefile,v 1.16 2020/09/06 07:20:30 mrg Exp $
 #
 
 .PATH:  ${.CURDIR}/../../../../ufs/lfs
@@ -25,6 +25,7 @@ COPTS.lfs_inode.c+=-O0
 # accessors -- they don't actually dereference the resulting pointer,
 # just use it for type-checking.
 CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member
+CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

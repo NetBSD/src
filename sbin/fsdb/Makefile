@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2019/10/28 22:52:43 christos Exp $
+#	$NetBSD: Makefile,v 1.40 2020/09/06 07:20:27 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 .include <bsd.own.mk>
@@ -43,5 +43,7 @@ COPTS.pass1.c+=	-fno-tree-fre -fno-tree-lrs
 COPTS.pass1.c+=	-O0
 COPTS.inode.c+=	-O0
 .endif
+
+CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 .include <bsd.prog.mk>

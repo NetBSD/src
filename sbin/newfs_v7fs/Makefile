@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2012/09/05 23:01:42 riz Exp $
+# $NetBSD: Makefile,v 1.5 2020/09/06 07:20:28 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -17,5 +17,7 @@ CPPFLAGS+=-DV7FS_EI -I${V7FS} -I${FSCK}
 .PATH: ${V7FS} ${FSCK}
 
 COPTS.newfs_v7fs.c+=	-Wno-pointer-sign
+
+CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2017/05/21 15:28:39 riastradh Exp $	
+#	$NetBSD: Makefile,v 1.20 2020/09/06 07:20:26 mrg Exp $	
 
 WARNS?=	1	# XXX: need to cleanup later
 
@@ -206,5 +206,6 @@ tcpdump.8: tcpdump.1.in
 	cp ${.ALLSRC} ${.TARGET}
 
 CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member
+CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 .include <bsd.prog.mk>

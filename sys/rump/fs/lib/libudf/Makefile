@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2017/01/11 12:19:44 joerg Exp $
+#	$NetBSD: Makefile,v 1.11 2020/09/06 07:20:30 mrg Exp $
 #
 
 .PATH:  ${.CURDIR}/../../../../fs/udf
@@ -12,6 +12,7 @@ SRCS=	udf_osta.c udf_vfsops.c udf_vnops.c udf_subr.c \
 	udf_rename.c
 
 CWARNFLAGS.clang+=	-Wno-self-assign -Wno-error=address-of-packed-member
+CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>
