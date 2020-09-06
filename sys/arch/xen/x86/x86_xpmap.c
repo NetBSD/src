@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.89 2020/05/26 10:10:32 bouyer Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.90 2020/09/06 02:18:53 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.89 2020/05/26 10:10:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.90 2020/09/06 02:18:53 riastradh Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -109,8 +109,8 @@ __KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.89 2020/05/26 10:10:32 bouyer Exp $"
 
 #include <uvm/uvm.h>
 
-#include <x86/pmap.h>
 #include <machine/gdt.h>
+
 #include <xen/xenfunc.h>
 
 #include <dev/isa/isareg.h>
