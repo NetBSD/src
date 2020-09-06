@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.16 2020/08/06 06:49:55 ryo Exp $	*/
+/*	$NetBSD: machdep.h,v 1.17 2020/09/06 17:38:10 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -59,6 +59,8 @@ aarch64_kern_phystov(paddr_t pa)
 
 extern paddr_t physical_start;
 extern paddr_t physical_end;
+extern vaddr_t module_start;
+extern vaddr_t module_end;
 
 extern void (*cpu_reset_address0)(void);
 extern void (*cpu_reset_address)(void);
