@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.105 2020/09/06 19:30:53 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.106 2020/09/06 19:34:36 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -124,7 +124,7 @@ char *cached_realpath(const char *, char *);
 
 /* parse.c */
 void Parse_Error(int, const char *, ...) MAKE_ATTR_PRINTFLIKE(2, 3);
-Boolean Parse_IsVar(char *);
+Boolean Parse_IsVar(const char *);
 void Parse_DoVar(char *, GNode *);
 void Parse_AddIncludeDir(char *);
 void Parse_File(const char *, int);
