@@ -1,4 +1,4 @@
-# $NetBSD: ad.riscv,v 1.15 2019/10/03 00:59:50 mrg Exp $
+# $NetBSD: ad.riscv,v 1.16 2020/09/06 10:54:26 mrg Exp $
 ./usr/include/g++/bits/riscv32			comp-c-include		arch64,compat
 ./usr/include/g++/bits/riscv32/c++config.h	comp-c-include		arch64,gcc,compat
 ./usr/include/g++/bits/riscv64			comp-c-include		arch64,compat
@@ -6,8 +6,9 @@
 ./usr/include/gcc-4.8/tgmath.h			comp-obsolete		obsolete
 ./usr/include/gcc-5/tgmath.h			comp-obsolete		obsolete
 ./usr/include/gcc-6/tgmath.h			comp-c-include		obsolete
-./usr/include/gcc-7/tgmath.h			comp-c-include		gcc=7
+./usr/include/gcc-7/tgmath.h			comp-c-include		obsolete
 ./usr/include/gcc-8/tgmath.h			comp-c-include		gcc=8
+./usr/include/gcc-9/tgmath.h			comp-c-include		gcc=9
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/riscv				comp-c-include
 ./usr/include/riscv/ansi.h			comp-c-include

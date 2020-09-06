@@ -1,4 +1,4 @@
-# $NetBSD: ad.m68k,v 1.63 2020/02/01 19:41:48 tsutsui Exp $
+# $NetBSD: ad.m68k,v 1.64 2020/09/06 10:54:26 mrg Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/include/gcc-4.5/math-68881.h		comp-c-include		obsolete
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		obsolete
@@ -8,10 +8,12 @@
 ./usr/include/gcc-5/tgmath.h			comp-obsolete		obsolete
 ./usr/include/gcc-6/math-68881.h		comp-c-include		obsolete
 ./usr/include/gcc-6/tgmath.h			comp-c-include		obsolete
-./usr/include/gcc-7/math-68881.h		comp-c-include		gcc=7
-./usr/include/gcc-7/tgmath.h			comp-c-include		gcc=7
+./usr/include/gcc-7/math-68881.h		comp-c-include		obsolete
+./usr/include/gcc-7/tgmath.h			comp-c-include		obsolete
 ./usr/include/gcc-8/math-68881.h		comp-c-include		gcc=8
 ./usr/include/gcc-8/tgmath.h			comp-c-include		gcc=8
+./usr/include/gcc-9/math-68881.h		comp-c-include		gcc=9
+./usr/include/gcc-9/tgmath.h			comp-c-include		gcc=9
 ./usr/include/m68k				comp-c-include
 ./usr/include/m68k/ansi.h			comp-c-include
 ./usr/include/m68k/aout_machdep.h		comp-c-include
