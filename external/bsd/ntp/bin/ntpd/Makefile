@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2020/05/29 10:53:02 kamil Exp $
+#	$NetBSD: Makefile,v 1.27 2020/09/06 07:20:26 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -87,17 +87,14 @@ CPPFLAGS+=-I${IDIST}/include -I${IDIST}/sntp/libopts -I${IDIST}/ntpd -I.
 .PATH: ${DIST}
 YHEADER=1
 
-# XXXGCC5
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 5 && ${ACTIVE_CC} == "gcc"
-COPTS.ntp_control.c+=  -Wno-error=maybe-uninitialized
-.endif
-
-COPTS.ntp_loopfilter.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} == 8:? -Wno-error=restrict :}
+COPTS.ntp_control.c+=		${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-error=maybe-uninitialized :}
+COPTS.ntp_loopfilter.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 8:? -Wno-error=restrict :}
 COPTS.ntp_loopfilter.c+=	${GCC_NO_FORMAT_TRUNCATION}
 COPTS.ntp_crypto.c+=		${GCC_NO_FORMAT_TRUNCATION}
-COPTS.refclock_jjy.c+=		${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.refclock_jjy.c+=		${GCC_NO_STRINGOP_TRUNCATION} ${GCC_NO_FORMAT_TRUNCATION}
 COPTS.refclock_parse.c+=	${GCC_NO_FORMAT_TRUNCATION}
 COPTS.refclock_leitch.c+=	${GCC_NO_FORMAT_TRUNCATION}
 COPTS.refclock_neoclock4x.c+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.ntp_io.c+=        	${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 .include <bsd.prog.mk>

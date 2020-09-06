@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2020/04/21 21:39:07 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2020/09/06 07:20:29 mrg Exp $
 
 BINDIR=		/usr/mdec
 
@@ -11,5 +11,6 @@ LINKFLAGS_UNWIND=	--no-ld-generated-unwind-info
 # accessors -- they don't actually dereference the resulting pointer,
 # just use it for type-checking.
 CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member
+CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 COPTS+=	-fcommon
