@@ -362,29 +362,29 @@ malloc_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 	}								\
 } while (0)
 #define GET_ARG_NUMERIC(val, len) do {					\
-	switch (len) {							\
+	switch ((unsigned int)len) {					\
 	case '?':							\
 		val = va_arg(ap, int);					\
 		break;							\
-	case '?' | 0x80:						\
+	case '?' | 0x80U:						\
 		val = va_arg(ap, unsigned int);				\
 		break;							\
 	case 'l':							\
 		val = va_arg(ap, long);					\
 		break;							\
-	case 'l' | 0x80:						\
+	case 'l' | 0x80U:						\
 		val = va_arg(ap, unsigned long);			\
 		break;							\
 	case 'q':							\
 		val = va_arg(ap, long long);				\
 		break;							\
-	case 'q' | 0x80:						\
+	case 'q' | 0x80U:						\
 		val = va_arg(ap, unsigned long long);			\
 		break;							\
 	case 'j':							\
 		val = va_arg(ap, intmax_t);				\
 		break;							\
-	case 'j' | 0x80:						\
+	case 'j' | 0x80U:						\
 		val = va_arg(ap, uintmax_t);				\
 		break;							\
 	case 't':							\
@@ -393,7 +393,7 @@ malloc_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 	case 'z':							\
 		val = va_arg(ap, ssize_t);				\
 		break;							\
-	case 'z' | 0x80:						\
+	case 'z' | 0x80U:						\
 		val = va_arg(ap, size_t);				\
 		break;							\
 	case 'p': /* Synthetic; used for %p. */				\
