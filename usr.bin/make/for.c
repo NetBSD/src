@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.69 2020/09/06 19:18:16 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.70 2020/09/06 19:19:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.69 2020/09/06 19:18:16 rillig Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.70 2020/09/06 19:19:49 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.69 2020/09/06 19:18:16 rillig Exp $");
+__RCSID("$NetBSD: for.c,v 1.70 2020/09/06 19:19:49 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -108,12 +108,8 @@ For_Free(For *arg)
     free(arg);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * For_Eval --
- *	Evaluate the for loop in the passed line. The line
- *	looks like this:
- *	    .for <variable> in <varlist>
+/* Evaluate the for loop in the passed line. The line looks like this:
+ *	.for <varname...> in <value...>
  *
  * Input:
  *	line		Line to parse
@@ -122,11 +118,6 @@ For_Free(For *arg)
  *      0: Not a .for statement, parse the line
  *	1: We found a for loop
  *     -1: A .for statement with a bad syntax error, discard.
- *
- * Side Effects:
- *	None.
- *
- *-----------------------------------------------------------------------
  */
 int
 For_Eval(char *line)
@@ -194,12 +185,12 @@ For_Eval(char *line)
 	ptr++;
 
     /*
-     * Make a list with the remaining words
-     * The values are substituted as ${:U<value>...} so we must \ escape
-     * characters that break that syntax.
+     * Make a list with the remaining words.
+     * The values are later substituted as ${:U<value>...} so we must
+     * backslash-escape characters that break that syntax.
      * Variables are fully expanded - so it is safe for escape $.
      * We can't do the escapes here - because we don't know whether
-     * we are substuting into ${...} or $(...).
+     * we will be substituting into ${...} or $(...).
      */
     sub = Var_Subst(ptr, VAR_GLOBAL, VARE_WANTRES);
 
