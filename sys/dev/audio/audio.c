@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.78 2020/08/23 04:20:01 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.79 2020/09/07 03:36:11 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.78 2020/08/23 04:20:01 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.79 2020/09/07 03:36:11 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2961,7 +2961,7 @@ audio_ioctl(dev_t dev, struct audio_softc *sc, u_long cmd, void *addr, int flag,
 		mutex_enter(sc->sc_lock);
 		error = sc->hw_if->query_format(sc->hw_hdl, query);
 		mutex_exit(sc->sc_lock);
-		/* Hide internal infomations */
+		/* Hide internal information */
 		query->fmt.driver_data = NULL;
 		break;
 
@@ -4775,7 +4775,7 @@ audio_track_record(audio_track_t *track)
 }
 
 /*
- * Calcurate blktime [msec] from mixer(.hwbuf.fmt).
+ * Calculate blktime [msec] from mixer(.hwbuf.fmt).
  * Must be called with sc_exlock held.
  */
 static u_int
@@ -4910,7 +4910,7 @@ audio_mixer_init(struct audio_softc *sc, int mode,
 			return EINVAL;
 		}
 		if (rounded != bufsize) {
-			/* Recalcuration */
+			/* Recalculation */
 			bufsize = rounded;
 			hwblks = bufsize / blksize;
 			capacity = mixer->frames_per_block * hwblks;
