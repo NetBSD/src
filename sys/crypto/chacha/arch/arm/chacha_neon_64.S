@@ -1,4 +1,4 @@
-/*	$NetBSD: chacha_neon_64.S,v 1.6 2020/08/08 14:47:01 riastradh Exp $	*/
+/*	$NetBSD: chacha_neon_64.S,v 1.7 2020/09/07 18:05:17 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <aarch64/asm.h>
 
-RCSID("$NetBSD: chacha_neon_64.S,v 1.6 2020/08/08 14:47:01 riastradh Exp $")
+RCSID("$NetBSD: chacha_neon_64.S,v 1.7 2020/09/07 18:05:17 jakllsch Exp $")
 
 #define	ROUND(a0,b0,c0,d0,a1,b1,c1,d1,a2,b2,c2,d2,a3,b3,c3,d3,t0,t1,t2,t3, r) \
 STEP(STEP0,a0,b0,c0,d0,a1,b1,c1,d1,a2,b2,c2,d2,a3,b3,c3,d3,t0,t1,t2,t3, r);   \
@@ -130,12 +130,12 @@ STEP(STEP19,a0,b0,c0,d0,a1,b1,c1,d1,a2,b2,c2,d2,a3,b3,c3,d3,t0,t1,t2,t3, r);  \
 #define	STEP19(a,b,c,d, t, r)	/* nothing */
 #endif
 
-#if _BYTE_ORDER == _LITTLE_ENDIAN
-#define	HTOLE32(x)
-#define	LE32TOH(x)
-#elif _BYTE_ORDER == _BIG_ENDIAN
+#if defined(__AARCH64EB__)
 #define	HTOLE32(x)	rev32	x, x
 #define	LE32TOH(x)	rev32	x, x
+#else
+#define	LE32TOH(x)
+#define	HTOLE32(x)
 #endif
 
 /*
