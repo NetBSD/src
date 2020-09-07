@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.356 2020/07/14 00:45:52 yamaguchi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.357 2020/09/07 00:47:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.356 2020/07/14 00:45:52 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.357 2020/09/07 00:47:27 mrg Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -1518,9 +1518,12 @@ init_x86_64_ksyms(void)
 		tesym = (vaddr_t)symtab->esym + KERNBASE;
 #endif
 		ksyms_addsyms_elf(symtab->nsym, (void *)tssym, (void *)tesym);
-	} else
-		ksyms_addsyms_elf(*(long *)(void *)&end,
-		    ((long *)(void *)&end) + 1, esym);
+	} else {
+		uintptr_t endp = (uintptr_t)(void *)&end;
+
+		ksyms_addsyms_elf(*(long *)endp,
+		    ((long *)endp) + 1, esym);
+	}
 #endif
 }
 #endif /* XENPV */
