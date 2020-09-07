@@ -1412,7 +1412,7 @@ vdev_raidz_reconstruct(raidz_map_t *rm, int *t, int nt)
 	int i, c;
 	int code;
 	int nbadparity, nbaddata;
-	int parity_valid[VDEV_RAIDZ_MAXPARITY];
+	int parity_valid[VDEV_RAIDZ_MAXPARITY] = {0};
 
 	/*
 	 * The tgts list must already be sorted.
