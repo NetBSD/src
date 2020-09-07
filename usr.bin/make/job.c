@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.227 2020/08/30 19:56:02 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.228 2020/09/07 05:32:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.227 2020/08/30 19:56:02 rillig Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.228 2020/09/07 05:32:12 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.227 2020/08/30 19:56:02 rillig Exp $");
+__RCSID("$NetBSD: job.c,v 1.228 2020/09/07 05:32:12 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1255,7 +1255,7 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
 	    bmake_free(p1);
 	} else if (Dir_MTime(gn, 0) == 0 && (gn->type & OP_SPECIAL) == 0) {
 	    /*
-	     * The node wasn't the target of an operator we have no .DEFAULT
+	     * The node wasn't the target of an operator.  We have no .DEFAULT
 	     * rule to go on and the target doesn't already exist. There's
 	     * nothing more we can do for this branch. If the -k flag wasn't
 	     * given, we stop in our tracks, otherwise we just don't update
@@ -1289,22 +1289,10 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
     return TRUE;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * JobExec --
- *	Execute the shell for the given job. Called from JobStart
+/* Execute the shell for the given job. Called from JobStart
  *
- * Input:
- *	job		Job to execute
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *	A shell is executed, outputs is altered and the Job structure added
- *	to the job table.
- *
- *-----------------------------------------------------------------------
+ * A shell is executed, its output is altered and the Job structure added
+ * to the job table.
  */
 static void
 JobExec(Job *job, char **argv)
@@ -1476,18 +1464,7 @@ JobExec(Job *job, char **argv)
     JobSigUnlock(&mask);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * JobMakeArgv --
- *	Create the argv needed to execute the shell for a given job.
- *
- *
- * Results:
- *
- * Side Effects:
- *
- *-----------------------------------------------------------------------
- */
+/* Create the argv needed to execute the shell for a given job. */
 static void
 JobMakeArgv(Job *job, char **argv)
 {
