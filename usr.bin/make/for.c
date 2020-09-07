@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.73 2020/09/06 19:30:53 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.74 2020/09/07 05:58:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.73 2020/09/06 19:30:53 rillig Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.74 2020/09/07 05:58:08 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.73 2020/09/06 19:30:53 rillig Exp $");
+__RCSID("$NetBSD: for.c,v 1.74 2020/09/07 05:58:08 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -333,19 +333,20 @@ for_var_len(const char *var)
 static void
 for_substitute(Buffer *cmds, strlist_t *items, unsigned int item_no, char ech)
 {
-    char ch;
-
     const char *item = strlist_str(items, item_no);
+    unsigned int escapes = strlist_info(items, item_no);
+    char ch;
 
     /* If there were no escapes, or the only escape is the other variable
      * terminator, then just substitute the full string */
-    if (!(strlist_info(items, item_no) &
+    if (!(escapes &
 	  (ech == ')' ? ~FOR_SUB_ESCAPE_BRACE : ~FOR_SUB_ESCAPE_PAREN))) {
 	Buf_AddStr(cmds, item);
 	return;
     }
 
-    /* Escape ':', '$', '\\' and 'ech' - removed by :U processing */
+    /* Escape ':', '$', '\\' and 'ech' - these will be removed later by
+     * :U processing, see ApplyModifier_Defined. */
     while ((ch = *item++) != 0) {
 	if (ch == '$') {
 	    size_t len = for_var_len(item);
@@ -390,7 +391,7 @@ ForIterate(void *v_arg, size_t *ret_len)
      * syntax, and that the later parsing will still see a variable.
      * We assume that the null variable will never be defined.
      *
-     * The detection of substitions of the loop control variable is naive.
+     * The detection of substitutions of the loop control variable is naive.
      * Many of the modifiers use \ to escape $ (not $) so it is possible
      * to contrive a makefile where an unwanted substitution happens.
      */
