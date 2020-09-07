@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.26 2020/04/26 07:01:52 rin Exp $
+#	$NetBSD: Makefile.buildboot,v 1.27 2020/09/07 07:08:35 mrg Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -40,7 +40,7 @@ LINKFLAGS+=-N -Ttext ${RELOC}
 CPPFLAGS+=	-D_STANDALONE 
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-I${.CURDIR}/../lib
-CPPFLAGS+=	${ARM_APCS_FLAGS} -march=armv3m
+CPPFLAGS+=	${ARM_APCS_FLAGS} ${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} < 9:? -march=armv3m :}
 CPUFLAGS=
 CFLAGS=		-O2
 CFLAGS+=	-ffreestanding -fno-unwind-tables
