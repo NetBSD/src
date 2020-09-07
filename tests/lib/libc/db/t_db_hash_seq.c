@@ -1,4 +1,4 @@
-/*	$NetBSD: t_db_hash_seq.c,v 1.3 2019/07/09 16:24:01 maya Exp $	*/
+/*	$NetBSD: t_db_hash_seq.c,v 1.4 2020/09/07 00:28:44 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_db_hash_seq.c,v 1.3 2019/07/09 16:24:01 maya Exp $");
+__RCSID("$NetBSD: t_db_hash_seq.c,v 1.4 2020/09/07 00:28:44 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -107,7 +107,8 @@ state_open(const char *dbname, int flags, mode_t perm)
 	if (db == NULL) {
 		if (errno == ENOENT && (flags & O_CREAT) == 0)
 			return NULL;
-		DO_ERR("%s: can't open `%s'", __func__, dbname);
+		DO_ERR("%s: can't open `%s'", __func__,
+		    dbname ? dbname : "<memory>");
 	}
 	return db;
 }
