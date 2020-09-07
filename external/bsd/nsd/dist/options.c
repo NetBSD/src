@@ -1432,17 +1432,18 @@ acl_addr_matches_ipv6host(struct acl_options* acl, struct sockaddr_storage* addr
 int
 acl_addr_matches_ipv4host(struct acl_options* acl, struct sockaddr_in* addr, unsigned int port)
 {
+	uint32_t saddr = addr->sin_addr.s_addr;
 	if(acl->port != 0 && acl->port != port)
 		return 0;
 	switch(acl->rangetype) {
 	case acl_range_mask:
 	case acl_range_subnet:
-		if(!acl_addr_match_mask((uint32_t*)&acl->addr.addr, (uint32_t*)&addr->sin_addr,
+		if(!acl_addr_match_mask((uint32_t*)&acl->addr.addr, &saddr,
 			(uint32_t*)&acl->range_mask.addr, sizeof(struct in_addr)))
 			return 0;
 		break;
 	case acl_range_minmax:
-		if(!acl_addr_match_range((uint32_t*)&acl->addr.addr, (uint32_t*)&addr->sin_addr,
+		if(!acl_addr_match_range((uint32_t*)&acl->addr.addr, &saddr,
 			(uint32_t*)&acl->range_mask.addr, sizeof(struct in_addr)))
 			return 0;
 		break;
