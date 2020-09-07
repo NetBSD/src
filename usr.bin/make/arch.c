@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.108 2020/09/05 13:55:08 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.109 2020/09/07 06:44:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.108 2020/09/05 13:55:08 rillig Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.109 2020/09/07 06:44:53 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.108 2020/09/05 13:55:08 rillig Exp $");
+__RCSID("$NetBSD: arch.c,v 1.109 2020/09/07 06:44:53 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -227,15 +227,15 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 
     subLibName = FALSE;
 
-    for (cp = libName; *cp != '(' && *cp != '\0'; cp++) {
+    for (cp = libName; *cp != '(' && *cp != '\0';) {
 	if (*cp == '$') {
 	    /*
 	     * Variable spec, so call the Var module to parse the puppy
 	     * so we can safely advance beyond it...
 	     */
-	    int 	length;
-	    void	*result_freeIt;
-	    const char	*result;
+	    int length;
+	    void *result_freeIt;
+	    const char *result;
 	    Boolean isError;
 
 	    result = Var_Parse(cp, ctxt, VARE_UNDEFERR|VARE_WANTRES,
@@ -246,8 +246,9 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 		return FALSE;
 
 	    subLibName = TRUE;
-	    cp += length - 1;
-	}
+	    cp += length;
+	} else
+	    cp++;
     }
 
     *cp++ = '\0';
