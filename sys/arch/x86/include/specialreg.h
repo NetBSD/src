@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.173 2020/09/05 07:45:44 maxv Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.174 2020/09/07 03:03:09 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -456,6 +456,7 @@
 #define CPUID_SEF_AVX512_VNNI	__BIT(11) /* Vector neural Network Instruction */
 #define CPUID_SEF_AVX512_BITALG	__BIT(12)
 #define CPUID_SEF_AVX512_VPOPCNTDQ __BIT(14)
+#define CPUID_SEF_LA57		__BIT(16) /* 57bit linear addr & 5LVL paging */
 #define CPUID_SEF_MAWAU		__BITS(21, 17) /* MAWAU for BND{LD,ST}X */
 #define CPUID_SEF_RDPID		__BIT(22) /* RDPID and IA32_TSC_AUX */
 #define CPUID_SEF_CLDEMOTE	__BIT(25) /* Cache line demote */
@@ -469,6 +470,7 @@
 	"b\4OSPKE\0"	"b\5WAITPKG\0"	"b\6AVX512_VBMI2\0" "b\7CET_SS\0" \
 	"b\10GFNI\0"	"b\11VAES\0"	"b\12VPCLMULQDQ\0" "b\13AVX512_VNNI\0"\
 	"b\14AVX512_BITALG\0"		"b\16AVX512_VPOPCNTDQ\0"	\
+	"b\20\LA57\0"							\
 	"f\21\5MAWAU\0"							\
 					"b\26RDPID\0"			\
 			"b\31CLDEMOTE\0"		"b\33MOVDIRI\0"	\
