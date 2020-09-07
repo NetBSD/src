@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.257 2020/09/07 05:50:58 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.258 2020/09/07 09:14:53 knakahara Exp $ */
 
 /******************************************************************************
 
@@ -4805,6 +4805,13 @@ ixgbe_handle_admin(struct work *wk, void *context)
 	 */
 	IFNET_LOCK(ifp);
 	IXGBE_CORE_LOCK(adapter);
+	/*
+	 * Clear the admin_pending flag before reading task_requests to avoid
+	 * missfiring workqueue though setting task_request.
+	 * Hmm, ixgbe_schedule_admin_tasklet() can extra-fire though
+	 * task_requests are done by prior workqueue, but it is harmless.
+	 */
+	atomic_store_relaxed(&adapter->admin_pending, 0);
 	while ((req =
 		(adapter->task_requests & ~IXGBE_REQUEST_TASK_NEED_ACKINTR))
 	    != 0) {
@@ -4841,7 +4848,6 @@ ixgbe_handle_admin(struct work *wk, void *context)
 		}
 #endif
 	}
-	atomic_store_relaxed(&adapter->admin_pending, 0);
 	if ((adapter->task_requests & IXGBE_REQUEST_TASK_NEED_ACKINTR) != 0) {
 		atomic_and_32(&adapter->task_requests,
 		    ~IXGBE_REQUEST_TASK_NEED_ACKINTR);
