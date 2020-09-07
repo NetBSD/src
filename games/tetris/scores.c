@@ -1,4 +1,4 @@
-/*	$NetBSD: scores.c,v 1.24 2018/06/24 12:55:36 mrg Exp $	*/
+/*	$NetBSD: scores.c,v 1.25 2020/09/07 00:31:11 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -599,7 +599,7 @@ putscores(int sd)
 {
 #ifdef ALLOW_SCORE_UPDATES
 	struct highscore_header header;
-	struct highscore_ondisk buf[MAXHISCORES];
+	struct highscore_ondisk buf[MAXHISCORES] = {0};
 	int i;
 
 	if (sd == -1) {
@@ -611,7 +611,7 @@ putscores(int sd)
 	header.hsh_version = HSH_VERSION;
 
 	for (i=0; i<nscores; i++) {
-		strncpy(buf[i].hso_name, scores[i].hs_name,
+		memcpy(buf[i].hso_name, scores[i].hs_name,
 			sizeof(buf[i].hso_name));
 		buf[i].hso_score = scores[i].hs_score;
 		buf[i].hso_level = scores[i].hs_level;
