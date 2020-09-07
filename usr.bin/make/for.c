@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.75 2020/09/07 06:01:11 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.76 2020/09/07 06:26:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.75 2020/09/07 06:01:11 rillig Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.76 2020/09/07 06:26:18 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.75 2020/09/07 06:01:11 rillig Exp $");
+__RCSID("$NetBSD: for.c,v 1.76 2020/09/07 06:26:18 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -375,6 +375,7 @@ ForIterate(void *v_arg, size_t *ret_len)
     char *body_end;
     char ch;
     Buffer cmds;
+    char *cmds_str;
     size_t cmd_len;
 
     if (arg->sub_next + strlist_num(&arg->vars) > strlist_num(&arg->items)) {
@@ -444,15 +445,15 @@ ForIterate(void *v_arg, size_t *ret_len)
     }
     Buf_AddBytesBetween(&cmds, cmd_cp, body_end);
 
-    cp = Buf_Destroy(&cmds, FALSE);
+    cmds_str = Buf_Destroy(&cmds, FALSE);
     if (DEBUG(FOR))
-	(void)fprintf(debug_file, "For: loop body:\n%s", cp);
+	(void)fprintf(debug_file, "For: loop body:\n%s", cmds_str);
 
     arg->sub_next += strlist_num(&arg->vars);
 
-    arg->parse_buf = cp;
-    *ret_len = strlen(cp);
-    return cp;
+    arg->parse_buf = cmds_str;
+    *ret_len = strlen(cmds_str);
+    return cmds_str;
 }
 
 /* Run the for loop, imitating the actions of an include file. */
