@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2020/01/30 00:42:58 christos Exp $
+# $NetBSD: Makefile,v 1.7 2020/09/07 00:29:14 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -28,12 +28,14 @@ CWARNFLAGS.clang+=	-Wno-nullability-completeness
 .endif
 COPTS.t_ubsan.c += -Wno-stack-protector
 COPTS.t_ubsanxx.cpp += -Wno-stack-protector
-COPTS.ubsan.c+=    ${${ACTIVE_CC} == "clang" && ${MACHINE_ARCH} == "powerpc":?  -O0 :}
-
+COPTS.ubsan.c+=    ${${ACTIVE_CC} == "clang" && ${MACHINE_ARCH} == "powerpc":? -O0 :}
 
 .if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
-COPTS.t_ubsan.c+=	-Wno-int-in-bool-context
-COPTS.t_ubsanxx.cpp+=	-Wno-int-in-bool-context
+COPTS.t_ubsan.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-int-in-bool-context :}
+COPTS.t_ubsanxx.cpp+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-int-in-bool-context :}
 .endif
+
+# XXX
+COPTS.ubsan.c+=    	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 9:? -Wno-error=builtin-declaration-mismatch :}
 
 .include <bsd.test.mk>
