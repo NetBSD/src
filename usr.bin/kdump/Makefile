@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2020/04/02 03:32:46 kamil Exp $
+#	$NetBSD: Makefile,v 1.34 2020/09/07 00:26:23 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>		# for MKDYNAMICROOT & NETBSDSRCDIR
@@ -23,5 +23,7 @@ CPPFLAGS+=-I${NETBSDSRCDIR}/usr.bin/ktrace -I${NETBSDSRCDIR}/sys -D_KERNTYPES
 
 LDADD+=-lutil
 DPADD+=${LIBUTIL}
+
+CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 .include <bsd.prog.mk>
