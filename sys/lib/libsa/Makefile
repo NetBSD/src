@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.92 2020/09/07 00:32:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.93 2020/09/07 01:54:26 mrg Exp $
 
 LIB=	sa
 LIBISPRIVATE?= yes
@@ -100,5 +100,3 @@ CPPFLAGS+=	-Wno-pointer-sign
 .if defined(HAVE_GCC) && ${MACHINE_ARCH} == "vax"
 COPTS.bootp.c+=	-O0
 .endif
-
-CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
