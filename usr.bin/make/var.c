@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.488 2020/09/07 06:20:07 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.489 2020/09/07 07:04:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.488 2020/09/07 06:20:07 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.489 2020/09/07 07:04:30 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.488 2020/09/07 06:20:07 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.489 2020/09/07 07:04:30 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3016,9 +3016,10 @@ ApplyModifiers(
 	    /*
 	     * We may have some complex modifiers in a variable.
 	     */
-	    int rlen;
+	    const char *nested_p = p;
 	    void *freeIt;
-	    const char *rval = Var_Parse(p, st.ctxt, st.eflags, &rlen, &freeIt);
+	    const char *rval = Var_ParsePP(&nested_p, st.ctxt, st.eflags,
+					   &freeIt);
 
 	    /*
 	     * If we have not parsed up to st.endc or ':',
@@ -3026,15 +3027,15 @@ ApplyModifiers(
 	     */
 	    int c;
 	    if (rval[0] != '\0' &&
-		(c = p[rlen]) != '\0' && c != ':' && c != st.endc) {
+		(c = *nested_p) != '\0' && c != ':' && c != st.endc) {
 		free(freeIt);
 		goto apply_mods;
 	    }
 
 	    VAR_DEBUG("Indirect modifier \"%s\" from \"%.*s\"\n",
-		      rval, rlen, p);
+		      rval, (int)(size_t)(nested_p - p), p);
 
-	    p += rlen;
+	    p = nested_p;
 
 	    if (rval[0] != '\0') {
 		const char *rval_pp = rval;
