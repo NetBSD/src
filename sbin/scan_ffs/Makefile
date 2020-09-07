@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2020/09/06 07:20:28 mrg Exp $
+# $NetBSD: Makefile,v 1.10 2020/09/07 03:09:53 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -15,7 +15,5 @@ SCAN_FFS=${NETBSDSRCDIR}/sbin/scan_ffs
 .PATH:  ${NETBSDSRCDIR}/sys/ufs/lfs ${SCAN_FFS}
 
 MAN=	scan_ffs.8
-
-CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 .include <bsd.prog.mk>
