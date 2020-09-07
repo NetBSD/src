@@ -363,6 +363,7 @@ BFD32_BACKENDS = \
 	i386bsd.lo \
 	i386lynx.lo \
 	i386msdos.lo \
+	i386netbsd.lo \
 	mach-o.lo \
 	mach-o-i386.lo \
 	mach-o-arm.lo \
@@ -499,6 +500,7 @@ BFD32_BACKENDS_CFILES = \
 	i386bsd.c \
 	i386lynx.c \
 	i386msdos.c \
+	i386netbsd.c \
 	mach-o.c \
 	mach-o-i386.c \
 	mach-o-arm.c \
