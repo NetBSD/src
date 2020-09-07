@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.785 2020/08/18 02:53:01 simonb Exp $
+$NetBSD: usbdevs,v 1.786 2020/09/07 06:32:13 ryoon Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1179,6 +1179,7 @@ product CHICONY RTL8188CUS_4	0xaffa	RTL8188CUS
 product CHICONY RTL8188CUS_5	0xaffb	RTL8188CUS
 product CHICONY RTL8188CUS_6	0xaffc	RTL8188CUS
 product CHICONY2 TWINKLECAM	0x600d	TwinkleCam USB camera
+product CHICONY2 BWC35HL01	0x602c	Buffalo WBC-35H/L01
 
 /* CH Products */
 product CHPRODUCTS PROTHROTTLE	0x00f1	Pro Throttle
