@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.286 2020/09/06 19:34:36 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.287 2020/09/07 06:58:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.286 2020/09/06 19:34:36 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.287 2020/09/07 06:58:02 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.286 2020/09/06 19:34:36 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.287 2020/09/07 06:58:02 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1190,8 +1190,7 @@ ParseDoDependency(char *line)
 	/* Find the end of the next word. */
 	for (cp = line; *cp && (ParseIsEscaped(lstart, cp) ||
 		     !(isspace((unsigned char)*cp) ||
-			 *cp == '!' || *cp == ':' || *cp == LPAREN));
-		 cp++) {
+			 *cp == '!' || *cp == ':' || *cp == LPAREN));) {
 	    if (*cp == '$') {
 		/*
 		 * Must be a dynamic source (would have been expanded
@@ -1200,14 +1199,15 @@ ParseDoDependency(char *line)
 		 * no errors in this, as they would have been discovered
 		 * in the initial Var_Subst and we wouldn't be here.
 		 */
-		int 	length;
+		const char *nested_p = cp;
 		void    *freeIt;
 
-		(void)Var_Parse(cp, VAR_CMD, VARE_UNDEFERR|VARE_WANTRES,
-				&length, &freeIt);
+		(void)Var_ParsePP(&nested_p, VAR_CMD,
+				  VARE_UNDEFERR|VARE_WANTRES, &freeIt);
 		free(freeIt);
-		cp += length - 1;
-	    }
+		cp += nested_p - cp;
+	    } else
+	        cp++;
 	}
 
 	/*
