@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2018/12/31 12:13:50 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2020/09/07 00:24:37 mrg Exp $
 
 DRIVER=		xf86-video-vmware
 DRIVER_NAME=	vmware_drv
@@ -25,3 +25,5 @@ COPTS.vmware.c+=	-Wno-error	# XXX deprecated
 COPTS.vmwaremodes.c+=	-Wno-error
 
 .include "../Makefile.xf86-driver"
+
+CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
