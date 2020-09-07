@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2015/10/10 22:54:03 dholland Exp $
+#	$NetBSD: Makefile,v 1.27 2020/09/07 00:26:24 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
@@ -21,7 +21,8 @@ LDADD+= -lutil
 
 COPTS.xinstall.c += -Wno-format-nonliteral
 
-
 PROGNAME=install
+
+CWARNFLAGS.gcc+=	${GCC_NO_FORMAT_TRUNCATION}
 
 .include <bsd.prog.mk>
