@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.72 2020/07/21 05:33:51 simonb Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.73 2020/09/07 03:12:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -645,7 +645,7 @@ struct netbsd32_lsdisable {
 	netbsd32_size_t		ld_size;	/* buffer space allocated */
 	struct netbsd32_timespec ld_time;	/* time spent enabled */
 	uint64_t		ld_freq[64];	/* counter HZ by CPU number */
-} __packed;
+};
 
 #define	IOC_LOCKSTAT_ENABLE32	_IOW('L', 1, struct netbsd32_lsenable)
 #define	IOC_LOCKSTAT_DISABLE32	_IOR('L', 2, struct netbsd32_lsdisable)
