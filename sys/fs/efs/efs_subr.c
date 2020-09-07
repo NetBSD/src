@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_subr.c,v 1.12 2015/09/26 12:16:28 maxv Exp $	*/
+/*	$NetBSD: efs_subr.c,v 1.13 2020/09/07 00:11:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_subr.c,v 1.12 2015/09/26 12:16:28 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_subr.c,v 1.13 2020/09/07 00:11:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kauth.h>
@@ -63,12 +63,14 @@ efs_sb_checksum(struct efs_sb *esb, int new)
 {
 	int i;
 	int32_t cksum;
-	uint16_t *sbarray = (uint16_t *)esb;
+	uint8_t *sbarray = (uint8_t *)esb;
 
 	KASSERT((EFS_SB_CHECKSUM_SIZE % 2) == 0);
 
-	for (i = cksum = 0; i < (EFS_SB_CHECKSUM_SIZE / 2); i++) {
-		cksum ^= be16toh(sbarray[i]);
+	for (i = cksum = 0; i < EFS_SB_CHECKSUM_SIZE; i += 2) {
+		uint16_t v;
+		memcpy(&v, &sbarray[i], sizeof(v));
+		cksum ^= be16toh(v);
 		cksum  = (cksum << 1) | (new && cksum < 0);
 	}
 
