@@ -1,4 +1,4 @@
-$NetBSD: README.gcc9,v 1.3 2020/09/06 13:06:03 mrg Exp $
+$NetBSD: README.gcc9,v 1.4 2020/09/07 00:38:14 mrg Exp $
 
 new stuff:
 	cc1objcplus
@@ -49,7 +49,7 @@ hppa		y	n	n	y		n		n	n	n
 i386		y	n	n	y		n		n	n	n
 ia64		y	n	n	y		n		n	n	n
 m68000		y	n	n	y		n		n	?	?
-m68k		y	n	n	y		n		n	?	?
+m68k		y	n	y	y		n		n	?	?
 mipseb		y	n	n	y		n		n	n	n
 mipsel		y	n	n	y		n		n	n	n
 mips64eb	y	n	n	y		n		n	n	n
@@ -60,10 +60,10 @@ sh3eb		y	n	y	y		n[1]		n	n	n
 sh3el		y	n	y	y		n		n	n	n
 sparc		y	y	y	y		y		y	y	n
 sparc64		y	y	y	y		y		n	n	n
-vax		y	n	n	y		n		y	y	n
+vax		y	n	y	y		n[2]		y	y	n
 x86_64		y	y	y	y		y		y	y	n
-riscv32		y	?	n	y		n		?	?	n	
-riscv64		y	?	n	y		n		?	?	n
+riscv32		y	?	y	y		y		?	?	n	
+riscv64		y	?	y	y		n		?	?	n
 --
 coldfire	?	N/A	?	?		?		N/A	N/A
 ------------	-----	-------	------	----------	------------	----	---
@@ -72,6 +72,11 @@ architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 [1]: /usr/xsrc/external/mit/pixman/dist/pixman/pixman-fast-path.c: In function 'fast_composite_scaled_nearest_8888_565_normal_OVER':
      /usr/xsrc/external/mit/pixman/dist/pixman/pixman-fast-path.c:1204:1: internal compiler error: Segmentation fault
       1204 | FAST_NEAREST (8888_565_normal, 8888, 0565, uint32_t, uint16_t, OVER, NORMAL)
+[2]: /usr/src/external/gpl3/gcc/dist/libsanitizer/sanitizer_common/sanitizer_mutex.h: In member function 'void __sanitizer::StaticSpinMutex::LockSlow()':
+     /usr/src/external/gpl3/gcc/dist/libsanitizer/sanitizer_common/sanitizer_mutex.h:58:3: error: unable to generate reloads for:
+     58 |   }
+        |   ^
+
 
 
 
@@ -90,7 +95,7 @@ earmv7:		-		-	-	-		-		-		-		-		-		-
 earmv7hf:	-		-	-	-		-		-		-		-		-		-
 
 		amiga		atari	cesfic	hp300		luna68k		mac68k		mvme68k		news68k		next68k		sun3	x68k
-m68k:		-		-	-	-		-		-		-		-		-		- 	-
+m68k:		y		-	-	-		-		-		-		-		-		- 	-
 
 		evbmips		emips		ews4800mips	mipsco		newsmips	sgimips
 mipseb:		-		-		-		-		-		-
