@@ -1,8 +1,9 @@
-# $NetBSD: dir.mk,v 1.4 2020/07/31 20:16:21 rillig Exp $
+# $NetBSD: dir.mk,v 1.5 2020/09/07 19:48:08 rillig Exp $
 #
 # Tests for dir.c.
 
 # Dependency lines may use braces for expansion.
+# See DirExpandCurly for the implementation.
 all: {one,two,three}
 
 one:
@@ -22,7 +23,8 @@ five:
 six:
 	@echo 6
 
-# But nested braces don't work.
+# Nested braces work as expected since 2020-07-31 19:06 UTC.
+# They had been broken at least since 2003-01-01, probably even longer.
 all: {{thi,fou}r,fif}teen
 
 thirteen:
