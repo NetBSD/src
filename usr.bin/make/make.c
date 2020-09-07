@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.133 2020/08/30 14:11:42 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.134 2020/09/07 06:20:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.133 2020/08/30 14:11:42 rillig Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.134 2020/09/07 06:20:07 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.133 2020/08/30 14:11:42 rillig Exp $");
+__RCSID("$NetBSD: make.c,v 1.134 2020/09/07 06:20:07 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -116,7 +116,6 @@ __RCSID("$NetBSD: make.c,v 1.133 2020/08/30 14:11:42 rillig Exp $");
  */
 
 #include    "make.h"
-#include    "enum.h"
 #include    "dir.h"
 #include    "job.h"
 
