@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2020/05/03 07:10:27 rin Exp $
+#	$NetBSD: Makefile,v 1.24 2020/09/07 00:24:17 mrg Exp $
 
 NOCTF=
 HOSTPROG_CXX=   1
@@ -74,3 +74,6 @@ CLEANDIRFILES+= \
 	m2-exp.c \
 	p-exp.c \
 	rust-exp.c
+
+# corelow.c
+CWARNFLAGS.gcc+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 9:? -Wno-error=alloca-larger-than= :}
