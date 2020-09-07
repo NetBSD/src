@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.85 2020/04/18 11:00:37 skrll Exp $
+#	$NetBSD: INSTALL,v 1.86 2020/09/07 07:08:34 mrg Exp $
 #
 #	INSTALL -- NetBSD/acorn32 install configuration
 #
@@ -22,7 +22,7 @@ include 	"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"INSTALL-$Revision: 1.85 $"
+#ident		"INSTALL-$Revision: 1.86 $"
 
 # estimated number of users
 maxusers	32
@@ -40,7 +40,7 @@ options 	CPU_ARM7	# Support the ARM7 core
 #options 	ARM6_LATE_ABORT	# ARM6XX late abort support
 
 # For StrongARM only kernels
-#makeoptions	COPTS="-O2 -march=armv3m -mtune=strongarm"
+#makeoptions	COPTS="-O2 -mtune=strongarm"
 
 # File systems
 
