@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.136 2020/09/05 12:59:07 rillig Exp $
+# $NetBSD: Makefile,v 1.137 2020/09/07 18:43:59 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -372,7 +372,7 @@ FLAGS.varmod-match-escape= -dv
 FLAGS.varname-dot-shell= -dpv
 FLAGS.varname-empty=	-dv '$${:U}=cmdline-u' '=cmline-plain'
 
-# Some tests need extra post-processing.
+# Some tests need extra postprocessing.
 SED_CMDS.opt-debug-graph1= \
 			-e 's,${.CURDIR},CURDIR,'
 SED_CMDS.opt-debug-graph1+= \
@@ -446,7 +446,7 @@ LANG=		C
 	echo $$status > ${.TARGET:R}.status
 	@mv ${.TARGET}.tmp ${.TARGET}
 
-# Post-process the test output so that the results can be compared.
+# Postprocess the test output so that the results can be compared.
 #
 # always pretend .MAKE was called 'make'
 _SED_CMDS+=	-e 's,^${TEST_MAKE:T:S,.,\\.,g}[][0-9]*:,make:,'
