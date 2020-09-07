@@ -689,6 +689,7 @@ dnode_sync(dnode_t *dn, dmu_tx_t *tx)
 			bzero(dnp->dn_blkptr + dnp->dn_nblkptr,
 			    sizeof (blkptr_t) *
 			    (dn->dn_next_nblkptr[txgoff] - dnp->dn_nblkptr));
+#ifdef notyet /* XXX: gcc-9 */
 #ifdef ZFS_DEBUG
 		} else {
 			int i;
@@ -697,6 +698,7 @@ dnode_sync(dnode_t *dn, dmu_tx_t *tx)
 			for (i = dn->dn_next_nblkptr[txgoff];
 			    i < dnp->dn_nblkptr; i++)
 				ASSERT(BP_IS_HOLE(&dnp->dn_blkptr[i]));
+#endif
 #endif
 		}
 		mutex_enter(&dn->dn_mtx);
