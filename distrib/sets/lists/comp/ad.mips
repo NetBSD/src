@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.85 2020/09/06 10:54:26 mrg Exp $
+# $NetBSD: ad.mips,v 1.86 2020/09/07 00:19:04 mrg Exp $
 -./usr/lib/64/libgomp.a
 -./usr/lib/64/libgomp.so
 -./usr/lib/64/libgomp.so.1
@@ -34,6 +34,7 @@
 ./usr/include/gcc-8/msa.h			comp-c-include		gcc=8
 ./usr/include/gcc-8/tgmath.h			comp-c-include		gcc=8
 ./usr/include/gcc-9/loongson.h			comp-c-include		gcc=9
+./usr/include/gcc-9/loongson-mmiintrin.h	comp-c-include		gcc=9
 ./usr/include/gcc-9/msa.h			comp-c-include		gcc=9
 ./usr/include/gcc-9/tgmath.h			comp-c-include		gcc=9
 ./usr/include/mips				comp-c-include
