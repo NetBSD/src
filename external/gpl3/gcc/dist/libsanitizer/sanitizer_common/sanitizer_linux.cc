@@ -33,12 +33,14 @@
 // format. Struct kernel_stat is defined as 'struct stat' in asm/stat.h. To
 // access stat from asm/stat.h, without conflicting with definition in
 // sys/stat.h, we use this trick.
+#if SANITIZER_LINUX
 #if defined(__mips64)
 #include <asm/unistd.h>
 #include <sys/types.h>
 #define stat kernel_stat
 #include <asm/stat.h>
 #undef stat
+#endif
 #endif
 
 #if SANITIZER_NETBSD
@@ -1848,7 +1850,12 @@ SignalContext::WriteFlag SignalContext::GetWriteFlag() const {
   uint32_t faulty_instruction;
   uint32_t op_code;
 
+#if SANITIZER_NETBSD
+  ucontext_t *nucontext = (ucontext_t *)ucontext;
+  exception_source = (uint32_t *)_UC_MACHINE_PC(nucontext);
+#else
   exception_source = (uint32_t *)ucontext->uc_mcontext.pc;
+#endif
   faulty_instruction = (uint32_t)(*exception_source);
 
   op_code = (faulty_instruction >> 26) & 0x3f;
