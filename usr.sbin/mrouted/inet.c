@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.12 2003/05/17 09:39:04 dsl Exp $	*/
+/*	$NetBSD: inet.c,v 1.13 2020/09/07 18:37:21 christos Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -9,7 +9,7 @@
  * Leland Stanford Junior University.
  */
 
-
+#include <assert.h>
 #include "defs.h"
 
 
@@ -196,15 +196,17 @@ inet_parse(char *s, int *mask_p)
  *
  */
 int
-inet_cksum(u_int16_t *addr, u_int len)
+inet_cksum(const void *addr, u_int len)
 {
 	int nleft = (int)len;
-	u_int16_t *w = addr;
+	const u_int16_t *w = addr;
 	int32_t sum = 0;
 	union {
 		u_int16_t w;
 		u_int8_t b[2];
 	} answer;
+
+	assert(((uintptr_t)w & 1) == 0);
 
 	/*
 	 *  Our algorithm is simple, using a 32 bit accumulator (sum),
@@ -220,7 +222,7 @@ inet_cksum(u_int16_t *addr, u_int len)
 	/* mop up an odd byte, if necessary */
 	if (nleft == 1) {
 		answer.w = 0;
-		answer.b[0] = *(u_char *)w ;
+		answer.b[0] = *(const u_char *)w;
 		sum += answer.w;
 	}
 
