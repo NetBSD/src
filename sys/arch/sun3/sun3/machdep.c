@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.212 2020/06/11 19:20:45 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.213 2020/09/07 23:41:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.212 2020/06/11 19:20:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.213 2020/09/07 23:41:38 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -136,6 +136,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.212 2020/06/11 19:20:45 ad Exp $");
 #endif
 
 #include <sun3/sun3/machdep.h>
+
+CTASSERT(sizeof(struct frame) == 76 /* F_t */ + 84 /* F_u */);
 
 #include "ksyms.h"
 
