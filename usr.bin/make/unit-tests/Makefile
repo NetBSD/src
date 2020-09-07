@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.137 2020/09/07 18:43:59 rillig Exp $
+# $NetBSD: Makefile,v 1.138 2020/09/07 18:49:15 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -431,7 +431,9 @@ LC_ALL=		C
 LANG=		C
 .export LANG LC_ALL
 
-# the tests are actually done with sub-makes.
+# Each test is run in a sub-make, to keep the tests for interfering with
+# each other, and because they use different environment variables and
+# command line options.
 .SUFFIXES: .mk .rawout .out
 .mk.rawout:
 	@${_MKMSG_TEST:Uecho '#      test '} ${.PREFIX}
