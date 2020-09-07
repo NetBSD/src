@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.143 2020/09/05 06:46:12 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.144 2020/09/07 07:15:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.143 2020/09/05 06:46:12 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.144 2020/09/07 07:15:26 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.143 2020/09/05 06:46:12 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.144 2020/09/07 07:15:26 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1324,14 +1324,14 @@ SuffExpandChildren(LstNode cln, GNode *pgn)
 		     * Start of a variable spec -- contact variable module
 		     * to find the end so we can skip over it.
 		     */
+		    const char *nested_p = cp;
 		    const char	*junk;
-		    int 	len;
 		    void	*freeIt;
 
-		    junk = Var_Parse(cp, pgn, VARE_UNDEFERR|VARE_WANTRES,
-				     &len, &freeIt);
+		    junk = Var_ParsePP(&nested_p, pgn,
+				       VARE_UNDEFERR|VARE_WANTRES, &freeIt);
 		    if (junk != var_Error) {
-			cp += len - 1;
+			cp += nested_p - cp;
 		    }
 
 		    free(freeIt);
