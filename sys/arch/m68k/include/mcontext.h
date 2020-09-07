@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.10 2018/02/15 15:53:56 kamil Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.11 2020/09/07 00:32:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -126,7 +126,8 @@ static __inline struct tls_tcb *
 __lwp_gettcb_fast(void)
 {
 	unsigned int __tcb = (unsigned int)_lwp_getprivate();
-	return (void *)(__tcb - TLS_TP_OFFSET - sizeof(struct tls_tcb));
+	return (struct tls_tcb *)(uintptr_t)
+	    (__tcb - TLS_TP_OFFSET - sizeof(struct tls_tcb));
 }
 
 static inline void
