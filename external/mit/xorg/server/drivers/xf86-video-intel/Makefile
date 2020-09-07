@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2019/05/10 06:25:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.33 2020/09/07 00:24:37 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -227,5 +227,6 @@ COPTS.sna_trapezoids_mono.c+=	-Wno-stack-protector
 COPTS.sna_trapezoids_precise.c+=	-Wno-stack-protector
 COPTS.i965_video.c+=	-Wno-stack-protector
 
+COPTS.sna_damage.c+=		${GCC_NO_ADDR_OF_PACKED_MEMBER}
 COPTS.sna_display.c+=		-Wno-error	# XXX deprecated
 COPTS.intel_driver.c+=		-Wno-error	# XXX deprecated
