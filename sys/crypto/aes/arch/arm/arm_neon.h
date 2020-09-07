@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_neon.h,v 1.10 2020/08/09 02:49:38 riastradh Exp $	*/
+/*	$NetBSD: arm_neon.h,v 1.11 2020/09/07 18:06:13 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -232,7 +232,7 @@ static __inline uint32_t
 vgetq_lane_u32(uint32x4_t __v, uint8_t __i)
 {
 #ifdef __aarch64__
-	return __v[__i];
+	return __v[__neon_laneq_index(__v,__i)];
 #else
 	return (uint32_t)__builtin_neon_vget_laneuv4si((int32x4_t)__v, __i);
 #endif
