@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.174 2020/09/07 03:03:09 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.175 2020/09/07 13:19:20 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -470,7 +470,7 @@
 	"b\4OSPKE\0"	"b\5WAITPKG\0"	"b\6AVX512_VBMI2\0" "b\7CET_SS\0" \
 	"b\10GFNI\0"	"b\11VAES\0"	"b\12VPCLMULQDQ\0" "b\13AVX512_VNNI\0"\
 	"b\14AVX512_BITALG\0"		"b\16AVX512_VPOPCNTDQ\0"	\
-	"b\20\LA57\0"							\
+	"b\20LA57\0"							\
 	"f\21\5MAWAU\0"							\
 					"b\26RDPID\0"			\
 			"b\31CLDEMOTE\0"		"b\33MOVDIRI\0"	\
