@@ -417,7 +417,7 @@ uptr ThreadSelf() {
 
 #if SANITIZER_NETBSD
 static struct tls_tcb * ThreadSelfTlsTcb() {
-  struct tls_tcb * tcb;
+  struct tls_tcb * tcb = NULL;
 # ifdef __HAVE___LWP_GETTCB_FAST
   tcb = (struct tls_tcb *)__lwp_gettcb_fast();
 # elif defined(__HAVE___LWP_GETPRIVATE_FAST)
