@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuframe.h,v 1.6 2017/07/02 14:10:23 christos Exp $	*/
+/*	$NetBSD: cpuframe.h,v 1.7 2020/09/07 23:41:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,10 +47,10 @@ struct frame {
 		short	tf_pad;
 		short	tf_stackadj;
 		u_short	tf_sr;
-		u_int	tf_pc;
+		u_int	tf_pc __packed;
 		u_short /* BITFIELDTYPE */ tf_format:4,
 			/* BITFIELDTYPE */ tf_vector:12;
-	} __attribute__((packed)) F_t;
+	} F_t;
 	union F_u {
 		struct fmt2 {
 			u_int	f_iaddr;
