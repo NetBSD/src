@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.287 2020/09/07 06:58:02 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.288 2020/09/07 18:37:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.287 2020/09/07 06:58:02 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.288 2020/09/07 18:37:09 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.287 2020/09/07 06:58:02 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.288 2020/09/07 18:37:09 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2375,8 +2375,9 @@ Parse_SetInput(const char *name, int line, int fd,
 	ParseTrackInput(name);
 
     if (DEBUG(PARSE))
-	fprintf(debug_file, "%s: file %s, line %d, fd %d, nextbuf %p, arg %p\n",
-	    __func__, name, line, fd, nextbuf, arg);
+	fprintf(debug_file, "%s: file %s, line %d, fd %d, nextbuf %s, arg %p\n",
+		__func__, name, line, fd,
+		nextbuf == loadedfile_nextbuf ? "loadedfile" : "other", arg);
 
     if (fd == -1 && nextbuf == NULL)
 	/* sanity */
