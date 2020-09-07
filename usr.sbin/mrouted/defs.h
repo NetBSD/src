@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.15 2011/02/23 01:23:03 dyoung Exp $	*/
+/*	$NetBSD: defs.h,v 1.16 2020/09/07 18:37:21 christos Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -223,7 +223,7 @@ extern int		inet_valid_subnet(u_int32_t nsubnet, u_int32_t nmask);
 extern char *		inet_fmt(u_int32_t addr);
 extern char *		inet_fmts(u_int32_t addr, u_int32_t mask);
 extern u_int32_t	inet_parse(char *s, int *);
-extern int		inet_cksum(u_short *addr, u_int len);
+extern int		inet_cksum(const void *addr, u_int len);
 
 /* prune.c */
 extern unsigned		kroutes;
