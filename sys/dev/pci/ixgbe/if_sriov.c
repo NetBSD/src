@@ -643,6 +643,8 @@ ixgbe_handle_mbx(void *context, int pending)
 	struct ixgbe_vf *vf;
 	int i;
 
+	KASSERT(mutex_owned(&adapter->core_mtx));
+
 	hw = &adapter->hw;
 
 	for (i = 0; i < adapter->num_vfs; i++) {

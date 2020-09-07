@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.153 2020/08/31 14:12:50 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.154 2020/09/07 05:50:58 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -96,7 +96,7 @@ static void	ixv_media_status(struct ifnet *, struct ifmediareq *);
 static int	ixv_media_change(struct ifnet *);
 static int	ixv_allocate_pci_resources(struct adapter *,
 		    const struct pci_attach_args *);
-static void	ixv_free_workqueue(struct adapter *);
+static void	ixv_free_deferred_handlers(struct adapter *);
 static int	ixv_allocate_msix(struct adapter *,
 		    const struct pci_attach_args *);
 static int	ixv_configure_interrupts(struct adapter *);
@@ -608,7 +608,7 @@ ixv_detach(device_t dev, int flags)
 
 	ether_ifdetach(adapter->ifp);
 	callout_halt(&adapter->timer, NULL);
-	ixv_free_workqueue(adapter);
+	ixv_free_deferred_handlers(adapter);
 
 	if (adapter->feat_en & IXGBE_FEATURE_NETMAP)
 		netmap_detach(adapter->ifp);
@@ -1530,7 +1530,7 @@ map_err:
 } /* ixv_allocate_pci_resources */
 
 static void
-ixv_free_workqueue(struct adapter *adapter)
+ixv_free_deferred_handlers(struct adapter *adapter)
 {
 	struct ix_queue *que = adapter->queues;
 	struct tx_ring *txr = adapter->tx_rings;
@@ -1560,7 +1560,7 @@ ixv_free_workqueue(struct adapter *adapter)
 		workqueue_destroy(adapter->timer_wq);
 		adapter->timer_wq = NULL;
 	}
-} /* ixv_free_workqueue */
+} /* ixv_free_deferred_handlers */
 
 /************************************************************************
  * ixv_free_pci_resources
@@ -3413,7 +3413,7 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	return (0);
 err_out:
 	kcpuset_destroy(affinity);
-	ixv_free_workqueue(adapter);
+	ixv_free_deferred_handlers(adapter);
 	ixv_free_pci_resources(adapter);
 	return (error);
 } /* ixv_allocate_msix */
