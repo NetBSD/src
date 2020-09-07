@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_load.c,v 1.2 2014/07/06 01:19:45 joerg Exp $	*/
+/*	$NetBSD: atomic_load.c,v 1.3 2020/09/07 00:52:19 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: atomic_load.c,v 1.2 2014/07/06 01:19:45 joerg Exp $");
+__RCSID("$NetBSD: atomic_load.c,v 1.3 2020/09/07 00:52:19 mrg Exp $");
 
 #include "atomic_op_namespace.h"
 
@@ -35,13 +35,13 @@ __RCSID("$NetBSD: atomic_load.c,v 1.2 2014/07/06 01:19:45 joerg Exp $");
 #include <sys/atomic.h>
 
 #define atomic_load_n(n,b) \
-uint ## b ## _t __atomic_load_ ## n(volatile uint ## b ## _t *, int); \
+uint ## b ## _t __atomic_load_ ## n(const volatile void *, int); \
 uint ## b ## _t \
-__atomic_load_ ## n(volatile uint ## b ## _t *ptr, int memmodel) \
+__atomic_load_ ## n(const volatile void *ptr, int memmodel) \
 { \
 	uint## b ##_t val; \
 	membar_enter(); \
-	val = *ptr; \
+	val = *(const volatile uint ## b ## _t *)ptr; \
 	membar_exit(); \
 	return val; \
 }

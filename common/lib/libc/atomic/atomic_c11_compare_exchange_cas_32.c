@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_c11_compare_exchange_cas_32.c,v 1.2 2014/11/04 19:56:44 joerg Exp $	*/
+/*	$NetBSD: atomic_c11_compare_exchange_cas_32.c,v 1.3 2020/09/07 00:52:19 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,15 +36,15 @@
 #endif
 #include <sys/atomic.h>
 
-bool __atomic_compare_exchange_4(volatile uint32_t *, uint32_t *, uint32_t,
+bool __atomic_compare_exchange_4(volatile void *, void *, uint32_t,
     bool, int, int);
 
 bool
-__atomic_compare_exchange_4(volatile uint32_t *mem,
-    uint32_t *expected, uint32_t desired,
+__atomic_compare_exchange_4(volatile void *mem,
+    void *expected, uint32_t desired,
     bool weak, int success, int failure)
 {
-	uint32_t old = *expected;
+	uint32_t old = *(uint32_t *)expected;
 
 	/*
 	 * Ignore the details (weak, memory model on success and failure)
