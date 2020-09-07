@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.52 2020/09/07 00:32:20 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.53 2020/09/07 00:33:08 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.52 2020/09/07 00:32:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.53 2020/09/07 00:33:08 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -213,15 +213,39 @@ static bool wg_force_underload = false;
 
 #ifdef WG_DEBUG_DUMP
 
+static char *
+gethexdump(const char *p, size_t n)
+{
+	char *buf;
+	size_t i;
+
+	if (n > SIZE_MAX/3 - 1)
+		return NULL;
+	buf = kmem_alloc(3*n + 1, KM_NOSLEEP);
+	if (buf == NULL)
+		return NULL;
+	for (i = 0; i < n; i++)
+		snprintf(buf + 3*i, 3 + 1, " %02hhx", p[i]);
+	return buf;
+}
+
+static void
+puthexdump(char *buf, const void *p, size_t n)
+{
+
+	if (buf == NULL)
+		return;
+	kmem_free(buf, 3*n + 1);
+}
+
 #ifdef WG_RUMPKERNEL
 static void
 wg_dump_buf(const char *func, const char *buf, const size_t size)
 {
+	char *hex = gethexdump(buf, size);
 
-	log(LOG_DEBUG, "%s: ", func);
-	for (int i = 0; i < size; i++)
-		log(LOG_DEBUG, "%02x ", (int)(0xff & buf[i]));
-	log(LOG_DEBUG, "\n");
+	log(LOG_DEBUG, "%s: %s\n", func, hex ? hex : "(enomem)");
+	puthexdump(hex, buf, size);
 }
 #endif
 
@@ -229,11 +253,10 @@ static void
 wg_dump_hash(const uint8_t *func, const uint8_t *name, const uint8_t *hash,
     const size_t size)
 {
+	char *hex = gethexdump(hash, size);
 
-	log(LOG_DEBUG, "%s: %s: ", func, name);
-	for (int i = 0; i < size; i++)
-		log(LOG_DEBUG, "%02x ", (int)(0xff & hash[i]));
-	log(LOG_DEBUG, "\n");
+	log(LOG_DEBUG, "%s: %s: %s\n", func, name, hex ? hex : "(enomem)");
+	puthexdump(hex, hash, size);
 }
 
 #define WG_DUMP_HASH(name, hash) \
@@ -3996,10 +4019,12 @@ wg_handle_prop_peer(struct wg_softc *wg, prop_dictionary_t peer,
 		goto out;
 	}
 #ifdef WG_DEBUG_DUMP
-	log(LOG_DEBUG, "pubkey=%p, pubkey_len=%lu\n", pubkey, pubkey_len);
-	for (int _i = 0; _i < pubkey_len; _i++)
-		log(LOG_DEBUG, "%c", ((const char *)pubkey)[_i]);
-	log(LOG_DEBUG, "\n");
+    {
+	char *hex = gethexdump(pubkey, pubkey_len);
+	log(LOG_DEBUG, "pubkey=%p, pubkey_len=%lu\n%s\n",
+	    pubkey, pubkey_len, hex);
+	puthexdump(hex, pubkey, pubkey_len);
+    }
 #endif
 
 	struct wg_peer *wgp = wg_alloc_peer(wg);
@@ -4157,9 +4182,9 @@ wg_alloc_prop_buf(char **_buf, struct ifdrv *ifd)
 		return error;
 	buf[ifd->ifd_len] = '\0';
 #ifdef WG_DEBUG_DUMP
-	for (int i = 0; i < ifd->ifd_len; i++)
-		log(LOG_DEBUG, "%c", buf[i]);
-	log(LOG_DEBUG, "\n");
+	log(LOG_DEBUG, "%.*s\n",
+	    (int)MIN(INT_MAX, ifd->ifd_len),
+	    (const char *)buf);
 #endif
 	*_buf = buf;
 	return 0;
@@ -4185,10 +4210,12 @@ wg_ioctl_set_private_key(struct wg_softc *wg, struct ifdrv *ifd)
 		&privkey, &privkey_len))
 		goto out;
 #ifdef WG_DEBUG_DUMP
-	log(LOG_DEBUG, "privkey=%p, privkey_len=%lu\n", privkey, privkey_len);
-	for (int i = 0; i < privkey_len; i++)
-		log(LOG_DEBUG, "%c", ((const char *)privkey)[i]);
-	log(LOG_DEBUG, "\n");
+    {
+	char *hex = gethexdump(privkey, privkey_len);
+	log(LOG_DEBUG, "privkey=%p, privkey_len=%lu\n%s\n",
+	    privkey, privkey_len, hex);
+	puthexdump(hex, privkey, privkey_len);
+    }
 #endif
 	if (privkey_len != WG_STATIC_KEY_LEN)
 		goto out;
