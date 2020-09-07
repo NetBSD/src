@@ -1,4 +1,4 @@
-/*	$NetBSD: arn5008.c,v 1.17 2020/01/29 14:09:58 thorpej Exp $	*/
+/*	$NetBSD: arn5008.c,v 1.18 2020/09/07 10:45:23 mrg Exp $	*/
 /*	$OpenBSD: ar5008.c,v 1.21 2012/08/25 12:14:31 kettenis Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arn5008.c,v 1.17 2020/01/29 14:09:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arn5008.c,v 1.18 2020/09/07 10:45:23 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -2287,7 +2287,7 @@ ar5008_set_viterbi_mask(struct athn_softc *sc, int bin)
 	/* Compute viterbi mask. */
 	for (cur = 6100; cur >= 0; cur -= 100)
 		p[+cur / 100] = abs(cur - bin) < 75;
-	for (cur = -100; cur >= -6100; cur -= 100)
+	for (cur = 0; cur >= -6100; cur -= 100)
 		m[-cur / 100] = abs(cur - bin) < 75;
 
 	/* Write viterbi mask (XXX needs to be reworked). */
