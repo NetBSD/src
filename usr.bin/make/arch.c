@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.109 2020/09/07 06:44:53 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.110 2020/09/07 06:51:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.109 2020/09/07 06:44:53 rillig Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.110 2020/09/07 06:51:05 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.109 2020/09/07 06:44:53 rillig Exp $");
+__RCSID("$NetBSD: arch.c,v 1.110 2020/09/07 06:51:05 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -233,20 +233,20 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 	     * Variable spec, so call the Var module to parse the puppy
 	     * so we can safely advance beyond it...
 	     */
-	    int length;
+	    const char *nested_p = cp;
 	    void *result_freeIt;
 	    const char *result;
 	    Boolean isError;
 
-	    result = Var_Parse(cp, ctxt, VARE_UNDEFERR|VARE_WANTRES,
-			       &length, &result_freeIt);
+	    result = Var_ParsePP(&nested_p, ctxt,
+			       VARE_UNDEFERR|VARE_WANTRES, &result_freeIt);
 	    isError = result == var_Error;
 	    free(result_freeIt);
 	    if (isError)
 		return FALSE;
 
 	    subLibName = TRUE;
-	    cp += length;
+	    cp += nested_p - cp;
 	} else
 	    cp++;
     }
@@ -275,13 +275,13 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 		 * Variable spec, so call the Var module to parse the puppy
 		 * so we can safely advance beyond it...
 		 */
-		int 	length;
 		void	*freeIt;
 		const char *result;
 		Boolean isError;
+		const char *nested_p = cp;
 
-		result = Var_Parse(cp, ctxt, VARE_UNDEFERR|VARE_WANTRES,
-				   &length, &freeIt);
+		result = Var_ParsePP(&nested_p, ctxt,
+				     VARE_UNDEFERR|VARE_WANTRES, &freeIt);
 		isError = result == var_Error;
 		free(freeIt);
 
@@ -289,7 +289,7 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 		    return FALSE;
 
 		doSubst = TRUE;
-		cp += length;
+		cp += nested_p - cp;
 	    } else {
 		cp++;
 	    }
