@@ -1,4 +1,4 @@
-# $NetBSD: archive.mk,v 1.7 2020/09/05 06:20:51 rillig Exp $
+# $NetBSD: archive.mk,v 1.8 2020/09/07 05:16:32 rillig Exp $
 #
 # Very basic demonstration of handling archives, based on the description
 # in PSD.doc/tutorial.ms.
@@ -15,7 +15,7 @@ RUN?=		@set -eu;
 
 all:
 .if ${.PARSEDIR:tA} != ${.CURDIR:tA}
-	@cd ${MAKEFILE:H} && cp ${FILES} t*.mk ${.CURDIR}
+	@cd ${MAKEFILE:H} && cp ${FILES} [at]*.mk ${.CURDIR}
 .endif
 # The following targets are run in sub-makes to ensure that they get the
 # current state of the filesystem right, since they creating and removing
