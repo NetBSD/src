@@ -1,4 +1,4 @@
-$NetBSD: README.gcc9,v 1.6 2020/09/07 10:42:58 mrg Exp $
+$NetBSD: README.gcc9,v 1.7 2020/09/07 23:47:02 mrg Exp $
 
 new stuff:
 	cc1objcplus
@@ -31,40 +31,40 @@ architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf	switched
 ------------	-----	-------	------	----------	------------	----	---	--------
 aarch64		y	y	y	y		y		y	y	n
 aarch64be	y	y	y	y		?		?	?	n
-alpha		y	y	y	y		y		?	?	n
-earmv4		y	y	y	y		y		?	?	n
-earmv4eb	y	n	n	y		n		?	?	n
-earm		y	n	n	y		n		?	?	n
-earmeb		y	n	n	y		n		?	?	n
-earmhf		y	n	n	y		n		?	?	n
-earmhfeb	y	n	n	y		n		?	?	n
-earmv6		y	n	n	y		n		?	?	n
-earmv6eb	y	n	n	y		n		?	?	n
-earmv6hf	y	n	n	y		n		?	?	n
-earmv6hfeb	y	n	n	y		n		?	?	n
-earmv7		y	n	n	y		n		?	?	n
-earmv7eb	y	n	n	y		n		?	?	n
+alpha		y	y	y	y		y		?	?	?
+earmv4		y	y	y	y		y		?	?	?
+earmv4eb	y	n	n	y		n		?	?	?
+earm		y	n	n	y		n		?	?	?
+earmeb		y	n	n	y		n		?	?	?
+earmhf		y	n	n	y		n		?	?	?
+earmhfeb	y	n	n	y		n		?	?	?
+earmv6		y	n	n	y		n		?	?	?
+earmv6eb	y	n	n	y		n		?	?	?
+earmv6hf	y	n	n	y		n		?	?	?
+earmv6hfeb	y	n	n	y		n		?	?	?
+earmv7		y	n	n	y		n		?	?	?
+earmv7eb	y	n	n	y		n		?	?	?
 earmv7hf	y	y	y	y		y		y	y	n
-earmv7hfeb	y	n	n	y		n		?	?	n
-hppa		y	y	y	y		y		?	?	n
+earmv7hfeb	y	n	n	y		n		?	?	?
+hppa		y	y	y	y		y		?	?	?
 i386		y	y	y	y		y		y	y	n
-ia64		y	y	y	y		y		n	?	n
+ia64		y	y	y	y		y		y	N/A	n
 m68000		y	n	n	y		n[7]		n	?	?
-m68k		y	y	y	y		y		n	?	?
-mipseb		y	y	y	y		y[3]		n	n	n
-mipsel		y	y	y	y		y[3]		y	n	n
-mips64eb	y	y	y	y		y[3]		y	y[5]	n
-mips64el	y	y	y	y		y[3]		n	n	n
-powerpc		y	y	y	y		y[3]		n	n	n
-powerpc64	y	n	n	y		n		?	n	n
-sh3eb		y	n	y	y		n[1]		n	n	n
-sh3el		y	n	y	y		n		n	n	n
+m68k		y	y	y	y		y		y	?	?
+mipseb		y	y	y	y		y[3]		n	n	?
+mipsel		y	y	y	y		y[3]		y	n	?
+mips64eb	y	y	y	y		y[3]		y	y	n
+mips64el	y	y	y	y		y[3]		n	n	?
+powerpc		y	y	y	y		y[3]		y	n	n
+powerpc64	y	?	y	y		n[6]		?	n	?
+sh3eb		y	n	y	y		n[1]		n	n	?
+sh3el		y	n	y	y		n		n	n	?
 sparc		y	y	y	y		y		y	y	n
-sparc64		y	y	y	y		y		n	n	n
-vax		y	n	y	y		n[2]		y	y	n
+sparc64		y	y	y	y		y		n	n	?
+vax		y	n	y	y		n[2]		y	y	?
 x86_64		y	y	y	y		y		y	y	n
-riscv32		y	?	y	y		y		?	?	n	
-riscv64		y	?	y	y		n[4]		?	?	n
+riscv32		y	N/A	y	y		y		N/A	N/A	n	
+riscv64		y	N/A	y	y		n[4]		N/A	N/A	?
 --
 coldfire	?	N/A	?	?		?		N/A	N/A
 ------------	-----	-------	------	----------	------------	----	---
@@ -79,8 +79,10 @@ architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
         |   ^
 [3]: consult cpu/platform table for full data
 [4]: triggers weird xorg-server issue; perhaps related to _XSERVER64 not being present
-[5]: at least, as well as GCC 8 ran atf.
+[6]: /usr/src/sys/compat/common/compat_util.c:116:1: internal compiler error: in rs6000_pltseq_template, at config/rs6000/rs6000.c:21977
 [7]: libstdc++ does not build
+[8]: prep floppies overflow; need to find if they are size limited
+[9]: evbarmv7-eb has dtb sets issues
 
 
 CPU vs platform test table (for CPUs with multiple ports).  this is "make release" or just kernels.
@@ -90,31 +92,31 @@ CPU		platform list
 ---		-------- ----
 		acorn32		cats	epoc32	evbarm-eb	evbarm-el	hpcarm		iyonix		netwinder	shark 		zaurus
 earmv4:		y		y	y	y		y		y		 		y		y		 
-earm:		 		 	 	-		-		 		r		 		 		y
-earmhf:		 		 	 	-		-		 		 		 		 		 
-earmv6:		 		 	 	-		-		 		 		 		 		 
-earmv6hf:	 		 	 	y		r		 		 		 		 		 
-earmv7:		 		 	 	-		-		 		 		 		 		 
-earmv7hf:	 		 	 	r		r		 		 		 		 		 
+earm:		 		 	 	y		y		 		y		 		 		y
+earmhf:		 		 	 	y		y		 		 		 		 		 
+earmv6:		 		 	 	y		y
+earmv6hf:	 		 	 	y		y
+earmv7:		 		 	 	y[9]		y
+earmv7hf:	 		 	 	y		y
 
 		amiga		atari	cesfic	hp300		luna68k		mac68k		mvme68k		news68k		next68k		sun3	x68k
 m68k:		y		y	y	y		y		y		y		y		y		y 	y
 
 		evbmips		emips		ews4800mips	mipsco		newsmips	sgimips
-mipseb:		r		r		y		r		r		y
+mipseb:		y		y		y		y		y		y
 
 		evbmips		algor		arc		cobalt		hpcmips		pmax
-mipsel:		y		r		r		r		-		k
+mipsel:		y		y		y		y		y		y
 
 		algor		evbmips		pmax
 mips64eb:	 		y		 
 mips64el:	y		y		y
 
 		amigappc	bebox	evbppc	ibmnws		macppc		mvmeppc		ofppc		prep		rs6000		sandpoint
-powerpc:	-		-	k	-		y		-		-		-		-		-
+powerpc:	y		y	y	y		y		y		y		n[8]		y		y
 
 		evbppc		macppc		ofppc
-powerpc64:	-		-		-
+powerpc64:	n		?		?
 
 		dreamcast	evbsh3		hpcsh		landisk		mmeye
 sh3eb:		-		-		-		-		-
