@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.49 2020/03/21 06:11:05 riastradh Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.50 2020/09/07 02:28:12 riastradh Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
@@ -215,6 +215,31 @@
 #else
 #define LFS_LITTLE_ENDIAN_ONDISK(fs) ((fs)->lfs_dobyteswap)
 #endif
+
+
+/*
+ * Suppress spurious warnings -- we use
+ *
+ *	type *foo = &obj->member;
+ *
+ * in macros to verify that obj->member has the right type.  When the
+ * object is a packed structure with misaligned members, this causes
+ * some compiles to squeal that taking the address might lead to
+ * undefined behaviour later on -- which is helpful in general, not
+ * relevant in this case, because we don't do anything with foo
+ * afterward; we only declare it to get a type check and then we
+ * discard it.
+ */
+#ifdef __GNUC__
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Waddress-of-packed-member"
+#elif __GNUC_PREREQ__(9,0)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+#endif
+#endif
+
 
 
 /*
@@ -1507,6 +1532,17 @@ lfs_blocks_sub(STRUCT_LFS *fs, union lfs_blocks *bp1, union lfs_blocks *bp2)
  */
 #define LFS_NRESERVE(F) (lfs_btofsb((F), (2 * ULFS_NIADDR + 3) << lfs_sb_getbshift(F)))
 
+
+/*
+ * Suppress spurious clang warnings
+ */
+#ifdef __GNUC__
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#elif __GNUC_PREREQ__(9,0)
+#pragma GCC diagnostic pop
+#endif
+#endif
 
 
 #endif /* _UFS_LFS_LFS_ACCESSORS_H_ */
