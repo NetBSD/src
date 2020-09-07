@@ -55,6 +55,8 @@ ixgbe_reinit_fdir(void *context)
 	struct adapter *adapter = context;
 	struct ifnet   *ifp = adapter->ifp;
 
+	KASSERT(mutex_owned(&adapter->core_mtx));
+
 	if (!(adapter->feat_en & IXGBE_FEATURE_FDIR))
 		return;
 	if (adapter->fdir_reinit != 1) /* Shouldn't happen */

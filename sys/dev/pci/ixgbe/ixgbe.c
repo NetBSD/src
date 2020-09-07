@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.256 2020/09/07 04:15:12 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.257 2020/09/07 05:50:58 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -181,7 +181,7 @@ static void	ixgbe_media_status(struct ifnet *, struct ifmediareq *);
 static int	ixgbe_media_change(struct ifnet *);
 static int	ixgbe_allocate_pci_resources(struct adapter *,
 		    const struct pci_attach_args *);
-static void	ixgbe_free_workqueue(struct adapter *);
+static void	ixgbe_free_deferred_handlers(struct adapter *);
 static void	ixgbe_get_slot_info(struct adapter *);
 static int	ixgbe_allocate_msix(struct adapter *,
 		    const struct pci_attach_args *);
@@ -1279,7 +1279,7 @@ err_out:
 	ctrl_ext = IXGBE_READ_REG(&adapter->hw, IXGBE_CTRL_EXT);
 	ctrl_ext &= ~IXGBE_CTRL_EXT_DRV_LOAD;
 	IXGBE_WRITE_REG(&adapter->hw, IXGBE_CTRL_EXT, ctrl_ext);
-	ixgbe_free_workqueue(adapter);
+	ixgbe_free_deferred_handlers(adapter);
 	ixgbe_free_pci_resources(adapter);
 	if (adapter->mta != NULL)
 		free(adapter->mta, M_DEVBUF);
@@ -3518,7 +3518,7 @@ map_err:
 } /* ixgbe_allocate_pci_resources */
 
 static void
-ixgbe_free_workqueue(struct adapter *adapter)
+ixgbe_free_deferred_handlers(struct adapter *adapter)
 {
 	struct ix_queue *que = adapter->queues;
 	struct tx_ring *txr = adapter->tx_rings;
@@ -3558,7 +3558,7 @@ ixgbe_free_workqueue(struct adapter *adapter)
 		workqueue_destroy(adapter->recovery_mode_timer_wq);
 		adapter->recovery_mode_timer_wq = NULL;
 	}
-} /* ixgbe_free_workqueue */
+} /* ixgbe_free_deferred_handlers */
 
 /************************************************************************
  * ixgbe_detach - Device removal routine
@@ -3610,10 +3610,8 @@ ixgbe_detach(device_t dev, int flags)
 	ixgbe_setup_low_power_mode(adapter);
 
 	callout_halt(&adapter->timer, NULL);
-	if (adapter->feat_en & IXGBE_FEATURE_RECOVERY_MODE) {
-		callout_stop(&adapter->recovery_mode_timer);
+	if (adapter->feat_en & IXGBE_FEATURE_RECOVERY_MODE)
 		callout_halt(&adapter->recovery_mode_timer, NULL);
-	}
 
 	workqueue_wait(adapter->admin_wq, &adapter->admin_wc);
 	atomic_store_relaxed(&adapter->admin_pending, 0);
@@ -3624,7 +3622,7 @@ ixgbe_detach(device_t dev, int flags)
 
 	ether_ifdetach(adapter->ifp);
 
-	ixgbe_free_workqueue(adapter);
+	ixgbe_free_deferred_handlers(adapter);
 
 	/* let hardware know driver is unloading */
 	ctrl_ext = IXGBE_READ_REG(&adapter->hw, IXGBE_CTRL_EXT);
@@ -4673,6 +4671,8 @@ ixgbe_handle_mod(void *context)
 	u32		err;
 	bool		last_unsupported_sfp_recovery;
 
+	KASSERT(mutex_owned(&adapter->core_mtx));
+
 	last_sfp_type = hw->phy.sfp_type;
 	last_unsupported_sfp_recovery = hw->need_unsupported_sfp_recovery;
 	++adapter->mod_workev.ev_count;
@@ -4754,6 +4754,8 @@ ixgbe_handle_msf(void *context)
 	u32		autoneg;
 	bool		negotiate;
 
+	KASSERT(mutex_owned(&adapter->core_mtx));
+
 	++adapter->msf_workev.ev_count;
 
 	autoneg = hw->phy.autoneg_advertised;
@@ -4772,6 +4774,8 @@ ixgbe_handle_phy(void *context)
 	struct adapter	*adapter = context;
 	struct ixgbe_hw *hw = &adapter->hw;
 	int error;
+
+	KASSERT(mutex_owned(&adapter->core_mtx));
 
 	++adapter->phy_workev.ev_count;
 	error = hw->phy.ops.handle_lasi(hw);
@@ -6884,7 +6888,7 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 
 err_out:
 	kcpuset_destroy(affinity);
-	ixgbe_free_workqueue(adapter);
+	ixgbe_free_deferred_handlers(adapter);
 	ixgbe_free_pciintr_resources(adapter);
 	return (error);
 } /* ixgbe_allocate_msix */
@@ -7007,6 +7011,8 @@ ixgbe_handle_link(void *context)
 {
 	struct adapter	*adapter = context;
 	struct ixgbe_hw *hw = &adapter->hw;
+
+	KASSERT(mutex_owned(&adapter->core_mtx));
 
 	++adapter->link_workev.ev_count;
 	ixgbe_check_link(hw, &adapter->link_speed, &adapter->link_up, 0);
