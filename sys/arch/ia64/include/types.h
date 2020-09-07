@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.11 2018/07/12 10:46:44 maxv Exp $	*/
+/*	$NetBSD: types.h,v 1.12 2020/09/07 07:48:23 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -69,6 +69,7 @@ typedef long int	__register_t;
 #define	__HAVE_CPU_DATA_FIRST
 #define	__HAVE_CPU_COUNTER
 #define	__HAVE_SYSCALL_INTERN
+#define	__HAVE___LWP_GETPRIVATE_FAST
 #define	__HAVE_MINIMAL_EMUL
 #define	__HAVE_OLD_DISKLABEL
 #define	__HAVE_ATOMIC64_OPS
