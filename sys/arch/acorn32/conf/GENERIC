@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.132 2020/08/01 08:20:47 maxv Exp $
+# 	$NetBSD: GENERIC,v 1.133 2020/09/07 07:08:34 mrg Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include 	"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.132 $"
+#ident		"GENERIC-$Revision: 1.133 $"
 
 # estimated number of users
 maxusers	32
@@ -40,7 +40,7 @@ options 	CPU_ARM7	# Support the ARM7 core
 #options 	ARM6_LATE_ABORT	# ARM6XX late abort support
 
 # For StrongARM only kernels
-#makeoptions	COPTS="-O2 -march=armv3m -mtune=strongarm"
+#makeoptions	COPTS="-O2 -mtune=strongarm"
 
 # File systems
 
