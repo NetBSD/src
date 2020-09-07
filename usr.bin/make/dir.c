@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.136 2020/09/05 13:55:08 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.137 2020/09/07 19:48:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.136 2020/09/05 13:55:08 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.137 2020/09/07 19:48:08 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.136 2020/09/05 13:55:08 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.137 2020/09/07 19:48:08 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -256,7 +256,6 @@ static Hash_Table mtimes;
 
 static Hash_Table lmtimes;	/* same as mtimes but for lstat */
 
-static void DirExpandCurly(const char *, const char *, Lst, Lst);
 static void DirExpandInt(const char *, Lst, Lst);
 static int DirPrintWord(void *, void *);
 static int DirPrintDir(void *, void *);
