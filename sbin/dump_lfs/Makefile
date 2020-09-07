@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2020/09/06 07:20:27 mrg Exp $
+#	$NetBSD: Makefile,v 1.19 2020/09/07 03:09:53 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 #	lfs_inode.c		LFS filestore-specific routines
@@ -30,6 +30,6 @@ COPTS.lfs_inode.c+=	-fno-tree-ter
 .PATH:  ${NETBSDSRCDIR}/sbin/dump ${NETBSDSRCDIR}/sys/ufs/lfs \
     ${NETBSDSRCDIR}/sys/ufs/ffs
 
-CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER} ${GCC_NO_FORMAT_TRUNCATION}
+CWARNFLAGS.gcc+=	${GCC_NO_FORMAT_TRUNCATION}
 
 .include <bsd.prog.mk>
