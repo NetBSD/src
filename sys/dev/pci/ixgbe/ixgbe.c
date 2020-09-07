@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.255 2020/09/07 03:57:27 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.256 2020/09/07 04:15:12 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -1538,7 +1538,7 @@ static void
 ixgbe_schedule_admin_tasklet(struct adapter *adapter)
 {
 
-	if (__predict_false(adapter->osdep.detaching == false)) {
+	if (__predict_true(adapter->osdep.detaching == false)) {
 		if (atomic_cas_uint(&adapter->admin_pending, 0, 1) == 0)
 			workqueue_enqueue(adapter->admin_wq,
 			    &adapter->admin_wc, NULL);
@@ -4627,7 +4627,7 @@ ixgbe_recovery_mode_timer(void *arg)
 {
 	struct adapter *adapter = arg;
 
-	if (__predict_false(adapter->osdep.detaching == false)) {
+	if (__predict_true(adapter->osdep.detaching == false)) {
 		if (atomic_cas_uint(&adapter->recovery_mode_timer_pending,
 			0, 1) == 0) {
 			workqueue_enqueue(adapter->recovery_mode_timer_wq,
