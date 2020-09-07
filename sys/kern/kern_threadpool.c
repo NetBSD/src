@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_threadpool.c,v 1.18 2020/04/25 17:43:23 thorpej Exp $	*/
+/*	$NetBSD: kern_threadpool.c,v 1.19 2020/09/07 01:08:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2018 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.18 2020/04/25 17:43:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.19 2020/09/07 01:08:27 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -762,7 +762,7 @@ threadpool_job_destroy(struct threadpool_job *job)
 	KASSERTMSG((job->job_thread == NULL), "job %p still running", job);
 
 	mutex_enter(job->job_lock);
-	while (0 < job->job_refcnt)
+	while (0 < atomic_load_relaxed(&job->job_refcnt))
 		cv_wait(&job->job_cv, job->job_lock);
 	mutex_exit(job->job_lock);
 
@@ -778,13 +778,10 @@ threadpool_job_destroy(struct threadpool_job *job)
 static void
 threadpool_job_hold(struct threadpool_job *job)
 {
-	unsigned int refcnt;
+	unsigned int refcnt __diagused;
 
-	do {
-		refcnt = job->job_refcnt;
-		KASSERT(refcnt != UINT_MAX);
-	} while (atomic_cas_uint(&job->job_refcnt, refcnt, (refcnt + 1))
-	    != refcnt);
+	refcnt = atomic_inc_uint_nv(&job->job_refcnt);
+	KASSERT(refcnt != 0);
 }
 
 static void
@@ -794,18 +791,10 @@ threadpool_job_rele(struct threadpool_job *job)
 
 	KASSERT(mutex_owned(job->job_lock));
 
-	do {
-		refcnt = job->job_refcnt;
-		KASSERT(0 < refcnt);
-		if (refcnt == 1) {
-			refcnt = atomic_dec_uint_nv(&job->job_refcnt);
-			KASSERT(refcnt != UINT_MAX);
-			if (refcnt == 0)
-				cv_broadcast(&job->job_cv);
-			return;
-		}
-	} while (atomic_cas_uint(&job->job_refcnt, refcnt, (refcnt - 1))
-	    != refcnt);
+	refcnt = atomic_dec_uint_nv(&job->job_refcnt);
+	KASSERT(refcnt != UINT_MAX);
+	if (refcnt == 0)
+		cv_broadcast(&job->job_cv);
 }
 
 void
@@ -832,7 +821,7 @@ threadpool_job_done(struct threadpool_job *job)
 	 * threadpool_schedule_job()), and we always do the cv_broadcast()
 	 * anyway.
 	 */
-	KASSERT(0 < job->job_refcnt);
+	KASSERT(0 < atomic_load_relaxed(&job->job_refcnt));
 	unsigned int refcnt __diagused = atomic_dec_uint_nv(&job->job_refcnt);
 	KASSERT(refcnt != UINT_MAX);
 	cv_broadcast(&job->job_cv);
