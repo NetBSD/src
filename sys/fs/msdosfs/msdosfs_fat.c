@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.34 2018/09/03 16:29:34 riastradh Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.35 2020/09/07 01:35:25 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -52,7 +52,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.34 2018/09/03 16:29:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.35 2020/09/07 01:35:25 mrg Exp $");
 
 /*
  * kernel include files.
@@ -895,6 +895,7 @@ freeclusterchain(struct msdosfsmount *pmp, u_long cluster)
 	u_long bn, bo, bsize, byteoffset;
 	u_long readcn, lbn = -1;
 
+	bn = 0; /* XXXgcc */
 	while (cluster >= CLUST_FIRST && cluster <= pmp->pm_maxcluster) {
 		byteoffset = FATOFS(pmp, cluster);
 		fatblock(pmp, byteoffset, &bn, &bsize, &bo);
