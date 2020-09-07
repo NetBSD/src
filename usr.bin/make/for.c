@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.74 2020/09/07 05:58:08 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.75 2020/09/07 06:01:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.74 2020/09/07 05:58:08 rillig Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.75 2020/09/07 06:01:11 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.74 2020/09/07 05:58:08 rillig Exp $");
+__RCSID("$NetBSD: for.c,v 1.75 2020/09/07 06:01:11 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -55,9 +55,11 @@ __RCSID("$NetBSD: for.c,v 1.74 2020/09/07 05:58:08 rillig Exp $");
 #include    "make.h"
 #include    "strlist.h"
 
-#define FOR_SUB_ESCAPE_CHAR  1
-#define FOR_SUB_ESCAPE_BRACE 2
-#define FOR_SUB_ESCAPE_PAREN 4
+typedef enum {
+    FOR_SUB_ESCAPE_CHAR = 0x0001,
+    FOR_SUB_ESCAPE_BRACE = 0x0002,
+    FOR_SUB_ESCAPE_PAREN = 0x0004
+} ForEscapes;
 
 /*
  * For statements are of the form:
@@ -208,7 +210,7 @@ For_Eval(const char *line)
 	size_t n;
 
 	for (n = 0; n < words.len; n++) {
-	    int escapes;
+	    ForEscapes escapes;
 	    char ch;
 
 	    ptr = words.words[n];
@@ -334,7 +336,7 @@ static void
 for_substitute(Buffer *cmds, strlist_t *items, unsigned int item_no, char ech)
 {
     const char *item = strlist_str(items, item_no);
-    unsigned int escapes = strlist_info(items, item_no);
+    ForEscapes escapes = strlist_info(items, item_no);
     char ch;
 
     /* If there were no escapes, or the only escape is the other variable
