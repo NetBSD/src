@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.529 2020/08/27 14:01:36 riastradh Exp $	*/
+/*	$NetBSD: init_main.c,v 1.530 2020/09/07 03:50:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -97,8 +97,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.529 2020/08/27 14:01:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.530 2020/09/07 03:50:41 thorpej Exp $");
 
+#include "opt_cnmagic.h"
 #include "opt_ddb.h"
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -295,6 +296,9 @@ main(void)
 	 * in case of early panic or other messages.
 	 */
 	consinit();
+#ifdef CNMAGIC
+	cn_set_magic(CNMAGIC);
+#endif
 
 	kernel_lock_init();
 	once_init();

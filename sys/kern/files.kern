@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.51 2020/08/14 00:53:16 riastradh Exp $
+#	$NetBSD: files.kern,v 1.52 2020/09/07 03:50:41 thorpej Exp $
 
 #
 # kernel sources
@@ -7,6 +7,8 @@ define	kern:	cprng_fast, machdep, uvm
 defflag	opt_kern.h			KERN
 defflag	opt_script.h			SETUIDSCRIPTS FDSCRIPTS
 defflag					KASLR
+defparam opt_cnmagic.h			CNMAGIC
+
 file	conf/debugsyms.c		kern
 file	conf/param.c			kern
 file	kern/bufq_disksort.c		bufq_disksort
