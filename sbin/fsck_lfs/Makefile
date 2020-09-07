@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2020/09/06 07:20:27 mrg Exp $
+#	$NetBSD: Makefile,v 1.22 2020/09/07 03:19:04 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 WARNS?=	3	# XXX: sign-compare issues
@@ -18,7 +18,5 @@ CPPFLAGS+=-I${.CURDIR} -I${FSCK} -DIN_FSCK_LFS
 
 LDADD+=-lutil
 DPADD+=${LIBUTIL}
-
-CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 .include <bsd.prog.mk>
