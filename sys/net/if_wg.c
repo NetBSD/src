@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.51 2020/08/31 20:34:43 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.52 2020/09/07 00:32:20 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.51 2020/08/31 20:34:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.52 2020/09/07 00:32:20 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1201,7 +1201,7 @@ wg_get_session_index(struct wg_softc *wg, struct wg_session *wgs)
 static void
 wg_put_session_index(struct wg_softc *wg, struct wg_session *wgs)
 {
-	struct wg_peer *wgp = wgs->wgs_peer;
+	struct wg_peer *wgp __diagused = wgs->wgs_peer;
 
 	KASSERT(mutex_owned(wgp->wgp_lock));
 	KASSERT(wgs == wgp->wgp_session_unstable);
