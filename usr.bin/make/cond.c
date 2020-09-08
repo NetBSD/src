@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.116 2020/09/08 18:10:34 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.117 2020/09/08 18:51:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,25 +70,34 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.116 2020/09/08 18:10:34 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.117 2020/09/08 18:51:23 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.116 2020/09/08 18:10:34 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.117 2020/09/08 18:51:23 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
 
-/*-
- * cond.c --
- *	Functions to handle conditionals in a makefile.
+/* Handling of conditionals in a makefile.
  *
  * Interface:
  *	Cond_Eval 	Evaluate the conditional in the passed line.
  *
+ *	Cond_EvalExpression
+ *			Evaluate the conditional in the passed line, which
+ *			is either the argument of one of the .if directives
+ *			or the condition in a :?true:false variable modifier.
+ *
+ *	Cond_save_depth
+ *	Cond_restore_depth
+ *			Save and restore the nesting of the conditions, at
+ *			the start and end of including another makefile, to
+ *			ensure that in each makefile the conditional
+ *			directives are well-balanced.
  */
 
 #include <errno.h>
@@ -119,7 +128,7 @@ __RCSID("$NetBSD: cond.c,v 1.116 2020/09/08 18:10:34 rillig Exp $");
  *
  * 'symbol' is some other symbol to which the default function is applied.
  *
- * Tokens are scanned from the 'condExpr' string. The scanner (CondToken)
+ * Tokens are scanned from the lexer. The scanner (CondToken)
  * will return TOK_AND for '&' and '&&', TOK_OR for '|' and '||',
  * TOK_NOT for '!', TOK_LPAREN for '(', TOK_RPAREN for ')' and will evaluate
  * the other terminal symbols, using either the default function or the
@@ -150,6 +159,9 @@ static unsigned int cond_min_depth = 0;	/* depth at makefile open */
 
 /*
  * Indicate when we should be strict about lhs of comparisons.
+ * In strict mode, the lhs must be a variable expression or a string literal
+ * in quotes. In non-strict mode it may also be an unquoted string literal.
+ *
  * TRUE when Cond_EvalExpression is called from Cond_Eval (.if etc)
  * FALSE when Cond_EvalExpression is called from var.c:ApplyModifiers
  * since lhs is already expanded and we cannot tell if
@@ -190,9 +202,6 @@ CondLexer_SkipWhitespace(CondLexer *lex)
  *
  *	func says whether the argument belongs to an actual function, or
  *	whether the parsed argument is passed to the default function.
- *
- *	XXX: This is ambiguous for the empty() function since its argument is
- *	parsed differently.
  *
  * Return the length of the argument. */
 static int
@@ -241,7 +250,7 @@ ParseFuncArg(Boolean doEval, const char **linePtr, char **out_arg,
 	    /*
 	     * Parse the variable spec and install it as part of the argument
 	     * if it's valid. We tell Var_Parse to complain on an undefined
-	     * variable, so we don't do it too. Nor do we return an error,
+	     * variable, so we don't need to do it. Nor do we return an error,
 	     * though perhaps we should...
 	     */
 	    void *freeIt;
@@ -380,18 +389,15 @@ CondCvtArg(const char *str, double *value)
 }
 
 /*-
- * Get a string from a variable reference or an optionally quoted
+ * Parse a string from a variable reference or an optionally quoted
  * string.  This is called for the lhs and rhs of string compares.
  *
  * Results:
  *	Returns the string, absent any quotes, or NULL on error.
  *	Sets quoted if the string was quoted.
  *	Sets freeIt if needed.
- *
- * Side Effects:
- *	Moves condExpr past the end of this token.
  */
-/* coverity:[+alloc : arg-*2] */
+/* coverity:[+alloc : arg-*3] */
 static const char *
 CondGetString(CondLexer *lex, Boolean doEval, Boolean *quoted, void **freeIt,
 	      Boolean strictLHS)
@@ -498,7 +504,7 @@ cleanup:
     return str;
 }
 
-/* The different forms of #if's. */
+/* The different forms of .if directives. */
 static const struct If {
     const char *form;		/* Form of if */
     size_t formlen;		/* Length of form */
@@ -513,12 +519,6 @@ static const struct If {
     { NULL,    0, FALSE, NULL }
 };
 
-/*-
- * Return the next token from the input.
- *
- * Side Effects:
- *	condPushback will be set back to TOK_NONE if it is used.
- */
 static Token
 compare_expression(CondLexer *lex, Boolean doEval)
 {
@@ -788,7 +788,7 @@ compare_function(CondLexer *lex, Boolean doEval)
 
     /*
      * Evaluate the argument using the default function.
-     * This path always treats .if as .ifdef. To get here the character
+     * This path always treats .if as .ifdef. To get here, the character
      * after .if must have been taken literally, so the argument cannot
      * be empty - even if it contained a variable expansion.
      */
@@ -797,6 +797,7 @@ compare_function(CondLexer *lex, Boolean doEval)
     return t;
 }
 
+/* Return the next token or comparison result from the lexer. */
 static Token
 CondToken(CondLexer *lex, Boolean doEval)
 {
@@ -854,22 +855,14 @@ CondToken(CondLexer *lex, Boolean doEval)
     }
 }
 
-/*-
- *-----------------------------------------------------------------------
- * CondT --
- *	Parse a single term in the expression. This consists of a terminal
- *	symbol or TOK_NOT and a terminal symbol (not including the binary
- *	operators):
- *	    T -> defined(variable) | make(target) | exists(file) | symbol
- *	    T -> ! T | ( E )
+/* Parse a single term in the expression. This consists of a terminal symbol
+ * or TOK_NOT and a term (not including the binary operators):
+ *
+ *	T -> defined(variable) | make(target) | exists(file) | symbol
+ *	T -> ! T | ( E )
  *
  * Results:
  *	TOK_TRUE, TOK_FALSE or TOK_ERROR.
- *
- * Side Effects:
- *	Tokens are consumed.
- *
- *-----------------------------------------------------------------------
  */
 static Token
 CondT(CondLexer *lex, Boolean doEval)
@@ -905,19 +898,12 @@ CondT(CondLexer *lex, Boolean doEval)
     return t;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * CondF --
- *	Parse a conjunctive factor (nice name, wot?)
- *	    F -> T && F | T
+/* Parse a conjunctive factor (nice name, wot?)
+ *
+ *	F -> T && F | T
  *
  * Results:
  *	TOK_TRUE, TOK_FALSE or TOK_ERROR
- *
- * Side Effects:
- *	Tokens are consumed.
- *
- *-----------------------------------------------------------------------
  */
 static Token
 CondF(CondLexer *lex, Boolean doEval)
@@ -932,9 +918,10 @@ CondF(CondLexer *lex, Boolean doEval)
 	    /*
 	     * F -> T && F
 	     *
-	     * If T is TOK_FALSE, the whole thing will be TOK_FALSE, but we have to
-	     * parse the r.h.s. anyway (to throw it away).
-	     * If T is TOK_TRUE, the result is the r.h.s., be it an TOK_ERROR or no.
+	     * If T is TOK_FALSE, the whole thing will be TOK_FALSE, but we
+	     * have to parse the r.h.s. anyway (to throw it away).
+	     * If T is TOK_TRUE, the result is the r.h.s., be it a TOK_ERROR
+	     * or not.
 	     */
 	    if (l == TOK_TRUE) {
 		l = CondF(lex, doEval);
@@ -951,19 +938,12 @@ CondF(CondLexer *lex, Boolean doEval)
     return l;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * CondE --
- *	Main expression production.
- *	    E -> F || E | F
+/* Main expression production.
+ *
+ *	E -> F || E | F
  *
  * Results:
  *	TOK_TRUE, TOK_FALSE or TOK_ERROR.
- *
- * Side Effects:
- *	Tokens are, of course, consumed.
- *
- *-----------------------------------------------------------------------
  */
 static Token
 CondE(CondLexer *lex, Boolean doEval)
