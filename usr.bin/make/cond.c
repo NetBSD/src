@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.114 2020/09/08 17:55:23 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.115 2020/09/08 18:06:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.114 2020/09/08 17:55:23 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.115 2020/09/08 18:06:27 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.114 2020/09/08 17:55:23 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.115 2020/09/08 18:06:27 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -139,8 +139,7 @@ typedef enum {
 typedef struct {
     const struct If *if_info;	/* Info for current statement */
     const char *condExpr;	/* The expression to parse */
-    Token condPushBack;		/* Single push-back token used in
-				 * parsing */
+    Token curr;			/* Single push-back token used in parsing */
 } CondLexer;
 
 static Token CondE(CondLexer *lex, Boolean);
@@ -164,12 +163,14 @@ istoken(const char *str, const char *tok, size_t len)
     return strncmp(str, tok, len) == 0 && !isalpha((unsigned char)str[len]);
 }
 
-/* Push back the most recent token read. We only need one level of
- * this, so the thing is just stored in 'condPushback'. */
+/* Push back the most recent token read. We only need one level of this. */
 static void
-CondPushBack(CondLexer *lex, Token t)
+CondLexer_PushBack(CondLexer *lex, Token t)
 {
-    lex->condPushBack = t;
+    assert(lex->curr == TOK_NONE);
+    assert(t != TOK_NONE);
+
+    lex->curr = t;
 }
 
 /* Parse the argument of a built-in function.
@@ -799,9 +800,9 @@ CondToken(CondLexer *lex, Boolean doEval)
 {
     Token t;
 
-    t = lex->condPushBack;
+    t = lex->curr;
     if (t != TOK_NONE) {
-	lex->condPushBack = TOK_NONE;
+	lex->curr = TOK_NONE;
 	return t;
     }
 
@@ -942,7 +943,7 @@ CondF(CondLexer *lex, Boolean doEval)
 	    /*
 	     * F -> T
 	     */
-	    CondPushBack(lex, o);
+	    CondLexer_PushBack(lex, o);
 	}
     }
     return l;
@@ -989,7 +990,7 @@ CondE(CondLexer *lex, Boolean doEval)
 	    /*
 	     * E -> F
 	     */
-	    CondPushBack(lex, o);
+	    CondLexer_PushBack(lex, o);
 	}
     }
     return l;
@@ -1054,7 +1055,7 @@ Cond_EvalExpression(const struct If *info, const char *line, Boolean *value,
 
     lex.if_info = info;
     lex.condExpr = line;
-    lex.condPushBack = TOK_NONE;
+    lex.curr = TOK_NONE;
 
     rval = do_Cond_EvalExpression(&lex, value);
 
