@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.79 2020/09/06 02:18:53 riastradh Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.80 2020/09/08 16:58:38 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.79 2020/09/06 02:18:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.80 2020/09/08 16:58:38 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -787,7 +787,7 @@ svm_inject_gp(struct nvmm_cpu *vcpu)
 	KASSERT(ret == 0);
 }
 
-static inline int 
+static inline int
 svm_vcpu_event_commit(struct nvmm_cpu *vcpu)
 {
 	if (__predict_true(!vcpu->comm->event_commit)) {
