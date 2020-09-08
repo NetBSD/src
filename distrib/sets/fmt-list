@@ -1,5 +1,5 @@
 #! /usr/bin/lua
--- $NetBSD: fmt-list,v 1.1 2020/09/05 11:13:07 rillig Exp $
+-- $NetBSD: fmt-list,v 1.2 2020/09/08 19:11:30 rillig Exp $
 
 --[[
 
@@ -8,7 +8,7 @@ have the other fields at the same indentation.
 
 Sort the lines and remove duplicate lines.
 
-usage: ./fmt-list */*/{mi,ad.*,md.*}
+usage: ./fmt-list [-n] */*/{mi,ad.*,md.*}
 
 ]]
 
@@ -405,7 +405,7 @@ end
 
 
 -- Load a file list, normalize it and write it back to disk.
-local function format_list(fname)
+local function format_list(fname, write_back)
   local head, entries, errors = read_list(fname)
   if #errors > 0 then
     for _, err in ipairs(errors) do
@@ -415,10 +415,22 @@ local function format_list(fname)
   end
 
   normalize(entries)
-  write_list(fname, head, entries)
+
+  if write_back then
+    write_list(fname, head, entries)
+  end
 end
 
 
-for _, fname in ipairs(arg) do
-  format_list(fname)
+local function main(arg)
+  local write_back = true
+  for _, fname in ipairs(arg) do
+    if fname == "-n" then
+      write_back = false
+    else
+      format_list(fname, write_back)
+    end
+  end
 end
+
+main(arg)
