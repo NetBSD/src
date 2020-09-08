@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.79 2020/09/08 17:00:07 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.80 2020/09/08 17:02:03 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.79 2020/09/08 17:00:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.80 2020/09/08 17:02:03 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1969,9 +1969,6 @@ vmx_exit_xsetbv(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	}
 
 	cpudata->gxcr0 = val;
-	if (vmx_xcr0_mask != 0) {
-		wrxcr(0, cpudata->gxcr0);
-	}
 
 	vmx_inkernel_advance();
 	return;
@@ -2228,7 +2225,6 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 
 	vmx_vcpu_guest_dbregs_enter(vcpu);
 	vmx_vcpu_guest_misc_enter(vcpu);
-	vmx_vcpu_guest_fpu_enter(vcpu);
 
 	while (1) {
 		if (cpudata->gtlb_want_flush) {
@@ -2243,6 +2239,7 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 			cpudata->gtsc_want_update = false;
 		}
 
+		vmx_vcpu_guest_fpu_enter(vcpu);
 		vmx_cli();
 		machgen = vmx_htlb_flush(machdata, cpudata);
 		lcr2(cpudata->gcr2);
@@ -2254,6 +2251,7 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		cpudata->gcr2 = rcr2();
 		vmx_htlb_flush_ack(cpudata, machgen);
 		vmx_sti();
+		vmx_vcpu_guest_fpu_leave(vcpu);
 
 		if (__predict_false(ret != 0)) {
 			vmx_exit_invalid(exit, -1);
@@ -2349,7 +2347,6 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 
 	cpudata->gtsc = vmx_vmread(VMCS_TSC_OFFSET) + rdtsc();
 
-	vmx_vcpu_guest_fpu_leave(vcpu);
 	vmx_vcpu_guest_misc_leave(vcpu);
 	vmx_vcpu_guest_dbregs_leave(vcpu);
 
