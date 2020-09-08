@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.225 2020/08/28 06:32:24 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.226 2020/09/08 14:12:57 christos Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.225 2020/08/28 06:32:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.226 2020/09/08 14:12:57 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1377,6 +1377,7 @@ ip6_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 		case IPV6_RECVPATHMTU:
 		case IPV6_RECVTCLASS:
 		case IPV6_V6ONLY:
+		case IPV6_BINDANY:
 			error = sockopt_getint(sopt, &optval);
 			if (error)
 				break;
@@ -1529,6 +1530,7 @@ else 					\
 				OPTSET(IN6P_IPV6_V6ONLY);
 #endif
 				break;
+
 			case IPV6_RECVTCLASS:
 #ifdef RFC2292
 				/* cannot mix with RFC2292 XXX */
@@ -1540,6 +1542,15 @@ else 					\
 				OPTSET(IN6P_TCLASS);
 				break;
 
+			case IPV6_BINDANY:
+				error = kauth_authorize_network(
+				    kauth_cred_get(), KAUTH_NETWORK_BIND,
+				    KAUTH_REQ_NETWORK_BIND_ANYADDR, so, NULL,
+				    NULL);
+				if (error)
+					break;
+				OPTSET(IN6P_BINDANY);
+				break;
 			}
 			break;
 
@@ -1756,6 +1767,7 @@ else 					\
 		case IPV6_V6ONLY:
 		case IPV6_PORTRANGE:
 		case IPV6_RECVTCLASS:
+		case IPV6_BINDANY:
 			switch (optname) {
 
 			case IPV6_RECVHOPOPTS:
@@ -1814,7 +1826,11 @@ else 					\
 				optval = OPTBIT(IN6P_TCLASS);
 				break;
 
+			case IPV6_BINDANY:
+				optval = OPTBIT(IN6P_BINDANY);
+				break;
 			}
+
 			if (error)
 				break;
 			error = sockopt_setint(sopt, optval);

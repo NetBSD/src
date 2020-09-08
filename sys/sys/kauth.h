@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.85 2020/05/16 18:31:53 christos Exp $ */
+/* $NetBSD: kauth.h,v 1.86 2020/09/08 14:12:57 christos Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -311,6 +311,7 @@ enum kauth_network_req {
 	KAUTH_REQ_NETWORK_SMB_VC_ACCESS,
 	KAUTH_REQ_NETWORK_SMB_VC_CREATE,
 	KAUTH_REQ_NETWORK_INTERFACE_FIRMWARE,
+	KAUTH_REQ_NETWORK_BIND_ANYADDR
 };
 
 /*

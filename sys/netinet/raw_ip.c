@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.179 2019/02/24 07:20:33 maxv Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.180 2020/09/08 14:12:57 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.179 2019/02/24 07:20:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.180 2020/09/08 14:12:57 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -594,6 +594,7 @@ rip_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 	}
 	ss = pserialize_read_enter();
 	if ((ifa = ifa_ifwithaddr(sintosa(addr))) == NULL &&
+	    (inp->inp_flags & INP_BINDANY) == 0 &&
 	    !in_nullhost(addr->sin_addr))
 	{
 		pserialize_read_exit(ss);

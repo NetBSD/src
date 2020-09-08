@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.319 2020/08/28 17:01:48 christos Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.320 2020/09/08 14:12:57 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.319 2020/08/28 17:01:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.320 2020/09/08 14:12:57 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1120,6 +1120,7 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 		case IP_RECVIF:
 		case IP_RECVPKTINFO:
 		case IP_RECVTTL:
+		case IP_BINDANY:
 			error = sockopt_getint(sopt, &optval);
 			if (error)
 				break;
@@ -1167,6 +1168,16 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 
 			case IP_RECVTTL:
 				OPTSET(INP_RECVTTL);
+				break;
+
+			case IP_BINDANY:
+				error = kauth_authorize_network(
+				    kauth_cred_get(), KAUTH_NETWORK_BIND,
+				    KAUTH_REQ_NETWORK_BIND_ANYADDR, so,
+				    NULL, NULL);
+				if (error == 0) {
+					OPTSET(INP_BINDANY);
+				}
 				break;
 			}
 			break;
@@ -1294,6 +1305,7 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 		case IP_RECVPKTINFO:
 		case IP_RECVTTL:
 		case IP_ERRORMTU:
+		case IP_BINDANY:
 			switch (sopt->sopt_name) {
 			case IP_TOS:
 				optval = ip->ip_tos;
@@ -1335,6 +1347,10 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 
 			case IP_RECVTTL:
 				optval = OPTBIT(INP_RECVTTL);
+				break;
+
+			case IP_BINDANY:
+				optval = OPTBIT(INP_BINDANY);
 				break;
 			}
 			error = sockopt_setint(sopt, optval);
@@ -1416,8 +1432,8 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 }
 
 static int
-ip_pktinfo_prepare(const struct in_pktinfo *pktinfo, struct ip_pktopts *pktopts,
-    int *flags, kauth_cred_t cred)
+ip_pktinfo_prepare(const struct inpcb *inp, const struct in_pktinfo *pktinfo,
+    struct ip_pktopts *pktopts, int *flags, kauth_cred_t cred)
 {
 	struct ip_moptions *imo;
 	int error = 0;
@@ -1426,7 +1442,7 @@ ip_pktinfo_prepare(const struct in_pktinfo *pktinfo, struct ip_pktopts *pktopts,
 	if (!in_nullhost(pktinfo->ipi_addr)) {
 		pktopts->ippo_laddr.sin_addr = pktinfo->ipi_addr;
 		/* EADDRNOTAVAIL? */
-		error = in_pcbbindableaddr(&pktopts->ippo_laddr, cred);
+		error = in_pcbbindableaddr(inp, &pktopts->ippo_laddr, cred);
 		if (error != 0)
 			return error;
 		addrset = true;
@@ -1519,8 +1535,8 @@ ip_setpktopts(struct mbuf *control, struct ip_pktopts *pktopts, int *flags,
 			if (cm->cmsg_len != CMSG_LEN(sizeof(pktinfo)))
 				return EINVAL;
 			memcpy(&pktinfo, CMSG_DATA(cm), sizeof(pktinfo));
-			error = ip_pktinfo_prepare(&pktinfo, pktopts, flags,
-			    cred);
+			error = ip_pktinfo_prepare(inp, &pktinfo, pktopts,
+			    flags, cred);
 			if (error)
 				return error;
 			break;
@@ -1530,8 +1546,8 @@ ip_setpktopts(struct mbuf *control, struct ip_pktopts *pktopts, int *flags,
 			pktinfo.ipi_ifindex = 0;
 			pktinfo.ipi_addr =
 			    ((struct in_pktinfo *)CMSG_DATA(cm))->ipi_addr;
-			error = ip_pktinfo_prepare(&pktinfo, pktopts, flags,
-			    cred);
+			error = ip_pktinfo_prepare(inp, &pktinfo, pktopts,
+			    flags, cred);
 			if (error)
 				return error;
 			break;
