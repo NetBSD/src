@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.113 2020/09/08 14:51:43 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.114 2020/09/08 17:55:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.113 2020/09/08 14:51:43 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.114 2020/09/08 17:55:23 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.113 2020/09/08 14:51:43 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.114 2020/09/08 17:55:23 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -136,13 +136,15 @@ typedef enum {
     TOK_LPAREN, TOK_RPAREN, TOK_EOF, TOK_NONE, TOK_ERROR
 } Token;
 
-static Token CondE(Boolean);
-static CondEvalResult do_Cond_EvalExpression(Boolean *);
+typedef struct {
+    const struct If *if_info;	/* Info for current statement */
+    const char *condExpr;	/* The expression to parse */
+    Token condPushBack;		/* Single push-back token used in
+				 * parsing */
+} CondLexer;
 
-static const struct If *if_info;	/* Info for current statement */
-static const char *condExpr;		/* The expression to parse */
-static Token condPushBack = TOK_NONE;	/* Single push-back token used in
-					 * parsing */
+static Token CondE(CondLexer *lex, Boolean);
+static CondEvalResult do_Cond_EvalExpression(CondLexer *lex, Boolean *);
 
 static unsigned int cond_depth = 0;	/* current .if nesting level */
 static unsigned int cond_min_depth = 0;	/* depth at makefile open */
@@ -165,9 +167,9 @@ istoken(const char *str, const char *tok, size_t len)
 /* Push back the most recent token read. We only need one level of
  * this, so the thing is just stored in 'condPushback'. */
 static void
-CondPushBack(Token t)
+CondPushBack(CondLexer *lex, Token t)
 {
-    condPushBack = t;
+    lex->condPushBack = t;
 }
 
 /* Parse the argument of a built-in function.
@@ -383,7 +385,8 @@ CondCvtArg(const char *str, double *value)
  */
 /* coverity:[+alloc : arg-*2] */
 static const char *
-CondGetString(Boolean doEval, Boolean *quoted, void **freeIt, Boolean strictLHS)
+CondGetString(CondLexer *lex, Boolean doEval, Boolean *quoted, void **freeIt,
+	      Boolean strictLHS)
 {
     Buffer buf;
     const char *str;
@@ -395,23 +398,24 @@ CondGetString(Boolean doEval, Boolean *quoted, void **freeIt, Boolean strictLHS)
     Buf_Init(&buf, 0);
     str = NULL;
     *freeIt = NULL;
-    *quoted = qt = *condExpr == '"' ? 1 : 0;
+    *quoted = qt = *lex->condExpr == '"' ? 1 : 0;
     if (qt)
-	condExpr++;
-    for (start = condExpr; *condExpr && str == NULL; condExpr++) {
-	switch (*condExpr) {
+	lex->condExpr++;
+    for (start = lex->condExpr;
+	 *lex->condExpr && str == NULL; lex->condExpr++) {
+	switch (*lex->condExpr) {
 	case '\\':
-	    if (condExpr[1] != '\0') {
-		condExpr++;
-		Buf_AddByte(&buf, *condExpr);
+	    if (lex->condExpr[1] != '\0') {
+		lex->condExpr++;
+		Buf_AddByte(&buf, *lex->condExpr);
 	    }
 	    break;
 	case '"':
 	    if (qt) {
-		condExpr++;		/* we don't want the quotes */
+		lex->condExpr++;	/* we don't want the quotes */
 		goto got_str;
 	    } else
-		Buf_AddByte(&buf, *condExpr); /* likely? */
+		Buf_AddByte(&buf, *lex->condExpr); /* likely? */
 	    break;
 	case ')':
 	case '!':
@@ -423,13 +427,13 @@ CondGetString(Boolean doEval, Boolean *quoted, void **freeIt, Boolean strictLHS)
 	    if (!qt)
 		goto got_str;
 	    else
-		Buf_AddByte(&buf, *condExpr);
+		Buf_AddByte(&buf, *lex->condExpr);
 	    break;
 	case '$':
 	    /* if we are in quotes, then an undefined variable is ok */
 	    eflags = ((!qt && doEval) ? VARE_UNDEFERR : 0) |
 		     (doEval ? VARE_WANTRES : 0);
-	    str = Var_Parse(condExpr, VAR_CMD, eflags, &len, freeIt);
+	    str = Var_Parse(lex->condExpr, VAR_CMD, eflags, &len, freeIt);
 	    if (str == var_Error) {
 		if (*freeIt) {
 		    free(*freeIt);
@@ -442,16 +446,16 @@ CondGetString(Boolean doEval, Boolean *quoted, void **freeIt, Boolean strictLHS)
 		str = NULL;
 		goto cleanup;
 	    }
-	    condExpr += len;
+	    lex->condExpr += len;
 	    /*
 	     * If the '$' was first char (no quotes), and we are
 	     * followed by space, the operator or end of expression,
 	     * we are done.
 	     */
-	    if ((condExpr == start + len) &&
-		(*condExpr == '\0' ||
-		 isspace((unsigned char)*condExpr) ||
-		 strchr("!=><)", *condExpr))) {
+	    if ((lex->condExpr == start + len) &&
+		(*lex->condExpr == '\0' ||
+		 isspace((unsigned char)*lex->condExpr) ||
+		 strchr("!=><)", *lex->condExpr))) {
 		goto cleanup;
 	    }
 
@@ -461,7 +465,7 @@ CondGetString(Boolean doEval, Boolean *quoted, void **freeIt, Boolean strictLHS)
 		*freeIt = NULL;
 	    }
 	    str = NULL;		/* not finished yet */
-	    condExpr--;		/* don't skip over next char */
+	    lex->condExpr--;	/* don't skip over next char */
 	    break;
 	default:
 	    if (strictLHS && !qt && *start != '$' &&
@@ -474,7 +478,7 @@ CondGetString(Boolean doEval, Boolean *quoted, void **freeIt, Boolean strictLHS)
 		str = NULL;
 		goto cleanup;
 	    }
-	    Buf_AddByte(&buf, *condExpr);
+	    Buf_AddByte(&buf, *lex->condExpr);
 	    break;
 	}
     }
@@ -508,7 +512,7 @@ static const struct If {
  *	condPushback will be set back to TOK_NONE if it is used.
  */
 static Token
-compare_expression(Boolean doEval)
+compare_expression(CondLexer *lex, Boolean doEval)
 {
     Token t;
     const char *lhs;
@@ -529,31 +533,31 @@ compare_expression(Boolean doEval)
      * Parse the variable spec and skip over it, saving its
      * value in lhs.
      */
-    lhs = CondGetString(doEval, &lhsQuoted, &lhsFree, lhsStrict);
+    lhs = CondGetString(lex, doEval, &lhsQuoted, &lhsFree, lhsStrict);
     if (!lhs)
 	goto done;
 
     /*
      * Skip whitespace to get to the operator
      */
-    while (isspace((unsigned char)*condExpr))
-	condExpr++;
+    while (isspace((unsigned char)*lex->condExpr))
+	lex->condExpr++;
 
     /*
      * Make sure the operator is a valid one. If it isn't a
      * known relational operator, pretend we got a
      * != 0 comparison.
      */
-    op = condExpr;
-    switch (*condExpr) {
+    op = lex->condExpr;
+    switch (*lex->condExpr) {
     case '!':
     case '=':
     case '<':
     case '>':
-	if (condExpr[1] == '=') {
-	    condExpr += 2;
+	if (lex->condExpr[1] == '=') {
+	    lex->condExpr += 2;
 	} else {
-	    condExpr += 1;
+	    lex->condExpr += 1;
 	}
 	break;
     default:
@@ -572,25 +576,25 @@ compare_expression(Boolean doEval)
 	    goto done;
 	}
 	/* For .if ${...} check for non-empty string (defProc is ifdef). */
-	if (if_info->form[0] == 0) {
+	if (lex->if_info->form[0] == 0) {
 	    t = lhs[0] != 0;
 	    goto done;
 	}
 	/* Otherwise action default test ... */
-	t = if_info->defProc(strlen(lhs), lhs) != if_info->doNot;
+	t = lex->if_info->defProc(strlen(lhs), lhs) != lex->if_info->doNot;
 	goto done;
     }
 
-    while (isspace((unsigned char)*condExpr))
-	condExpr++;
+    while (isspace((unsigned char)*lex->condExpr))
+	lex->condExpr++;
 
-    if (*condExpr == '\0') {
+    if (*lex->condExpr == '\0') {
 	Parse_Error(PARSE_WARNING,
 		    "Missing right-hand-side of operator");
 	goto done;
     }
 
-    rhs = CondGetString(doEval, &rhsQuoted, &rhsFree, FALSE);
+    rhs = CondGetString(lex, doEval, &rhsQuoted, &rhsFree, FALSE);
     if (!rhs)
 	goto done;
 
@@ -714,7 +718,7 @@ CondDoEmpty(int arglen, const char *arg MAKE_ATTR_UNUSED)
 }
 
 static Token
-compare_function(Boolean doEval)
+compare_function(CondLexer *lex, Boolean doEval)
 {
     static const struct fn_def {
 	const char *fn_name;
@@ -734,7 +738,7 @@ compare_function(Boolean doEval)
     Token t;
     char *arg = NULL;
     int arglen;
-    const char *cp = condExpr;
+    const char *cp = lex->condExpr;
     const char *cp1;
 
     for (fn_def = fn_defs; fn_def->fn_name != NULL; fn_def++) {
@@ -749,20 +753,20 @@ compare_function(Boolean doEval)
 
 	arglen = fn_def->fn_getarg(doEval, &cp, &arg, fn_def->fn_name);
 	if (arglen <= 0) {
-	    condExpr = cp;
+	    lex->condExpr = cp;
 	    return arglen < 0 ? TOK_ERROR : TOK_FALSE;
 	}
 	/* Evaluate the argument using the required function. */
 	t = !doEval || fn_def->fn_proc(arglen, arg);
 	free(arg);
-	condExpr = cp;
+	lex->condExpr = cp;
 	return t;
     }
 
     /* Push anything numeric through the compare expression */
-    cp = condExpr;
+    cp = lex->condExpr;
     if (isdigit((unsigned char)cp[0]) || strchr("+-", cp[0]))
-	return compare_expression(doEval);
+	return compare_expression(lex, doEval);
 
     /*
      * Most likely we have a naked token to apply the default function to.
@@ -776,8 +780,8 @@ compare_function(Boolean doEval)
     for (cp1 = cp; isspace((unsigned char)*cp1); cp1++)
 	continue;
     if (*cp1 == '=' || *cp1 == '!')
-	return compare_expression(doEval);
-    condExpr = cp;
+	return compare_expression(lex, doEval);
+    lex->condExpr = cp;
 
     /*
      * Evaluate the argument using the default function.
@@ -785,52 +789,52 @@ compare_function(Boolean doEval)
      * after .if must have been taken literally, so the argument cannot
      * be empty - even if it contained a variable expansion.
      */
-    t = !doEval || if_info->defProc(arglen, arg) != if_info->doNot;
+    t = !doEval || lex->if_info->defProc(arglen, arg) != lex->if_info->doNot;
     free(arg);
     return t;
 }
 
 static Token
-CondToken(Boolean doEval)
+CondToken(CondLexer *lex, Boolean doEval)
 {
     Token t;
 
-    t = condPushBack;
+    t = lex->condPushBack;
     if (t != TOK_NONE) {
-	condPushBack = TOK_NONE;
+	lex->condPushBack = TOK_NONE;
 	return t;
     }
 
-    while (*condExpr == ' ' || *condExpr == '\t') {
-	condExpr++;
+    while (*lex->condExpr == ' ' || *lex->condExpr == '\t') {
+	lex->condExpr++;
     }
 
-    switch (*condExpr) {
+    switch (*lex->condExpr) {
 
     case '(':
-	condExpr++;
+	lex->condExpr++;
 	return TOK_LPAREN;
 
     case ')':
-	condExpr++;
+	lex->condExpr++;
 	return TOK_RPAREN;
 
     case '|':
-	if (condExpr[1] == '|') {
-	    condExpr++;
+	if (lex->condExpr[1] == '|') {
+	    lex->condExpr++;
 	}
-	condExpr++;
+	lex->condExpr++;
 	return TOK_OR;
 
     case '&':
-	if (condExpr[1] == '&') {
-	    condExpr++;
+	if (lex->condExpr[1] == '&') {
+	    lex->condExpr++;
 	}
-	condExpr++;
+	lex->condExpr++;
 	return TOK_AND;
 
     case '!':
-	condExpr++;
+	lex->condExpr++;
 	return TOK_NOT;
 
     case '#':
@@ -840,10 +844,10 @@ CondToken(Boolean doEval)
 
     case '"':
     case '$':
-	return compare_expression(doEval);
+	return compare_expression(lex, doEval);
 
     default:
-	return compare_function(doEval);
+	return compare_function(lex, doEval);
     }
 }
 
@@ -865,11 +869,11 @@ CondToken(Boolean doEval)
  *-----------------------------------------------------------------------
  */
 static Token
-CondT(Boolean doEval)
+CondT(CondLexer *lex, Boolean doEval)
 {
     Token t;
 
-    t = CondToken(doEval);
+    t = CondToken(lex, doEval);
 
     if (t == TOK_EOF) {
 	/*
@@ -881,14 +885,14 @@ CondT(Boolean doEval)
 	/*
 	 * T -> ( E )
 	 */
-	t = CondE(doEval);
+	t = CondE(lex, doEval);
 	if (t != TOK_ERROR) {
-	    if (CondToken(doEval) != TOK_RPAREN) {
+	    if (CondToken(lex, doEval) != TOK_RPAREN) {
 		t = TOK_ERROR;
 	    }
 	}
     } else if (t == TOK_NOT) {
-	t = CondT(doEval);
+	t = CondT(lex, doEval);
 	if (t == TOK_TRUE) {
 	    t = TOK_FALSE;
 	} else if (t == TOK_FALSE) {
@@ -913,13 +917,13 @@ CondT(Boolean doEval)
  *-----------------------------------------------------------------------
  */
 static Token
-CondF(Boolean doEval)
+CondF(CondLexer *lex, Boolean doEval)
 {
     Token l, o;
 
-    l = CondT(doEval);
+    l = CondT(lex, doEval);
     if (l != TOK_ERROR) {
-	o = CondToken(doEval);
+	o = CondToken(lex, doEval);
 
 	if (o == TOK_AND) {
 	    /*
@@ -930,15 +934,15 @@ CondF(Boolean doEval)
 	     * If T is TOK_TRUE, the result is the r.h.s., be it an TOK_ERROR or no.
 	     */
 	    if (l == TOK_TRUE) {
-		l = CondF(doEval);
+		l = CondF(lex, doEval);
 	    } else {
-		(void)CondF(FALSE);
+		(void)CondF(lex, FALSE);
 	    }
 	} else {
 	    /*
 	     * F -> T
 	     */
-	    CondPushBack(o);
+	    CondPushBack(lex, o);
 	}
     }
     return l;
@@ -959,13 +963,13 @@ CondF(Boolean doEval)
  *-----------------------------------------------------------------------
  */
 static Token
-CondE(Boolean doEval)
+CondE(CondLexer *lex, Boolean doEval)
 {
     Token l, o;
 
-    l = CondF(doEval);
+    l = CondF(lex, doEval);
     if (l != TOK_ERROR) {
-	o = CondToken(doEval);
+	o = CondToken(lex, doEval);
 
 	if (o == TOK_OR) {
 	    /*
@@ -977,33 +981,33 @@ CondE(Boolean doEval)
 	     * again if l is TOK_TRUE, we parse the r.h.s. to throw it away.
 	     */
 	    if (l == TOK_FALSE) {
-		l = CondE(doEval);
+		l = CondE(lex, doEval);
 	    } else {
-		(void)CondE(FALSE);
+		(void)CondE(lex, FALSE);
 	    }
 	} else {
 	    /*
 	     * E -> F
 	     */
-	    CondPushBack(o);
+	    CondPushBack(lex, o);
 	}
     }
     return l;
 }
 
 static CondEvalResult
-do_Cond_EvalExpression(Boolean *value)
+do_Cond_EvalExpression(CondLexer *lex, Boolean *value)
 {
 
-    switch (CondE(TRUE)) {
+    switch (CondE(lex, TRUE)) {
     case TOK_TRUE:
-	if (CondToken(TRUE) == TOK_EOF) {
+	if (CondToken(lex, TRUE) == TOK_EOF) {
 	    *value = TRUE;
 	    return COND_PARSE;
 	}
 	break;
     case TOK_FALSE:
-	if (CondToken(TRUE) == TOK_EOF) {
+	if (CondToken(lex, TRUE) == TOK_EOF) {
 	    *value = FALSE;
 	    return COND_PARSE;
 	}
@@ -1031,9 +1035,7 @@ Cond_EvalExpression(const struct If *info, const char *line, Boolean *value,
 		    int eprint, Boolean strictLHS)
 {
     static const struct If *dflt_info;
-    const struct If *sv_if_info = if_info;
-    const char *sv_condExpr = condExpr;
-    Token sv_condPushBack = condPushBack;
+    CondLexer lex;
     int rval;
 
     lhsStrict = strictLHS;
@@ -1050,18 +1052,14 @@ Cond_EvalExpression(const struct If *info, const char *line, Boolean *value,
     }
     assert(info != NULL);
 
-    if_info = info;
-    condExpr = line;
-    condPushBack = TOK_NONE;
+    lex.if_info = info;
+    lex.condExpr = line;
+    lex.condPushBack = TOK_NONE;
 
-    rval = do_Cond_EvalExpression(value);
+    rval = do_Cond_EvalExpression(&lex, value);
 
     if (rval == COND_INVALID && eprint)
 	Parse_Error(PARSE_FATAL, "Malformed conditional (%s)", line);
-
-    if_info = sv_if_info;
-    condExpr = sv_condExpr;
-    condPushBack = sv_condPushBack;
 
     return rval;
 }
