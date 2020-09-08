@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.122 2020/06/20 07:10:36 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.123 2020/09/08 10:30:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.122 2020/06/20 07:10:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.123 2020/09/08 10:30:17 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -1811,6 +1811,8 @@ int
 _bus_dmatag_subregion(bus_dma_tag_t tag, bus_addr_t min_addr,
     bus_addr_t max_addr, bus_dma_tag_t *newtag, int flags)
 {
+	if (min_addr >= max_addr)
+		return EOPNOTSUPP;
 
 #ifdef _ARM32_NEED_BUS_DMA_BOUNCE
 	struct arm32_dma_range *dr;
@@ -1818,9 +1820,15 @@ _bus_dmatag_subregion(bus_dma_tag_t tag, bus_addr_t min_addr,
 	size_t nranges = 0;
 	size_t i;
 	for (i = 0, dr = tag->_ranges; i < tag->_nranges; i++, dr++) {
-		if (dr->dr_sysbase <= min_addr
-		    && max_addr <= dr->dr_sysbase + dr->dr_len - 1) {
+		/*
+		 * Are all the ranges in the parent tag a subset of the new
+		 * range? If yes, we can continue to use the parent tag.
+		 */
+		if (dr->dr_sysbase >= min_addr
+		    && dr->dr_sysbase + dr->dr_len - 1 <= max_addr) {
 			subset = true;
+		} else {
+			subset = false;
 		}
 		if (min_addr <= dr->dr_sysbase + dr->dr_len
 		    && max_addr >= dr->dr_sysbase) {
@@ -1854,22 +1862,35 @@ _bus_dmatag_subregion(bus_dma_tag_t tag, bus_addr_t min_addr,
 		dr->dr_busbase = min_addr;
 		dr->dr_len = max_addr + 1 - min_addr;
 	} else {
-		for (i = 0; i < nranges; i++) {
-			if (min_addr > dr->dr_sysbase + dr->dr_len
-			    || max_addr < dr->dr_sysbase)
+		struct arm32_dma_range *pdr;
+
+		for (i = 0, pdr = tag->_ranges; i < tag->_nranges; i++, pdr++) {
+			KASSERT(nranges != 0);
+
+			if (min_addr > pdr->dr_sysbase + pdr->dr_len
+			    || max_addr < pdr->dr_sysbase) {
+				/*
+				 * this range doesn't overlap with new limits,
+				 * so skip.
+				 */
 				continue;
-			dr[0] = tag->_ranges[i];
+			}
+			/*
+			 * Copy the range and adjust to fit within the new
+			 * limits
+			 */
+			dr[0] = pdr[0];
 			if (dr->dr_sysbase < min_addr) {
 				psize_t diff = min_addr - dr->dr_sysbase;
 				dr->dr_busbase += diff;
 				dr->dr_len -= diff;
 				dr->dr_sysbase += diff;
 			}
-			if (max_addr != 0xffffffff
-			    && max_addr + 1 < dr->dr_sysbase + dr->dr_len) {
+			if (max_addr <= dr->dr_sysbase + dr->dr_len - 1) {
 				dr->dr_len = max_addr + 1 - dr->dr_sysbase;
 			}
 			dr++;
+			nranges--;
 		}
 	}
 
