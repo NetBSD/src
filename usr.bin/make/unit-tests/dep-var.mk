@@ -1,4 +1,4 @@
-# $NetBSD: dep-var.mk,v 1.3 2020/09/03 19:50:14 rillig Exp $
+# $NetBSD: dep-var.mk,v 1.4 2020/09/08 05:26:22 rillig Exp $
 #
 # Tests for variable references in dependency declarations.
 #
@@ -61,5 +61,20 @@ INDIRECT_3=	indirect
 UNDEF1=	undef1
 DEF2=	def2
 
-undef1 def2 a-def2-b 1-2-$$INDIRECT_2-2-1:
+# Cover the code in SuffExpandChildren that deals with malformed variable
+# expressions.
+#
+# This seems to be an edge case that never happens in practice, and it would
+# probably be appropriate to just error out in such a case.
+#
+# To trigger this piece of code, the variable name must contain "$)" or "$:"
+# or "$)" or "$$".  Using "$:" does not work since the dependency line is
+# fully expanded before parsing, therefore any ':' in a target or source name
+# would be interpreted as a dependency operator instead.
+all: $$$$)
+
+undef1 def2 a-def2-b 1-2-$$INDIRECT_2-2-1 ${:U\$)}:
 	@echo ${.TARGET:Q}
+
+# XXX: Why is the exit status still 0, even though Parse_Error is called
+# with PARSE_FATAL in SuffExpandChildren?
