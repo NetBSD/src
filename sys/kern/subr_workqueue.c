@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.38 2020/08/01 02:14:43 riastradh Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.39 2020/09/08 17:02:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005, 2006, 2007 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.38 2020/08/01 02:14:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.39 2020/09/08 17:02:18 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -52,7 +52,6 @@ struct workqueue_queue {
 	struct workqhead q_queue_pending;
 	struct workqhead q_queue_running;
 	lwp_t *q_worker;
-	work_impl_t *q_waiter;
 };
 
 struct workqueue {
@@ -138,10 +137,8 @@ workqueue_worker(void *cookie)
 		mutex_enter(&q->q_mutex);
 		KASSERT(!SIMPLEQ_EMPTY(&q->q_queue_running));
 		SIMPLEQ_INIT(&q->q_queue_running);
-		if (__predict_false(q->q_waiter != NULL)) {
-			/* Wake up workqueue_wait */
-			cv_signal(&q->q_cv);
-		}
+		/* Wake up workqueue_wait */
+		cv_broadcast(&q->q_cv);
 		mutex_exit(&q->q_mutex);
 	}
 	if (wq->wq_flags & WQ_FPU)
@@ -211,7 +208,7 @@ workqueue_exit(struct work *wk, void *arg)
 	KASSERT(SIMPLEQ_EMPTY(&q->q_queue_pending));
 	mutex_enter(&q->q_mutex);
 	q->q_worker = NULL;
-	cv_signal(&q->q_cv);
+	cv_broadcast(&q->q_cv);
 	mutex_exit(&q->q_mutex);
 	kthread_exit(0);
 }
@@ -228,7 +225,7 @@ workqueue_finiqueue(struct workqueue *wq, struct workqueue_queue *q)
 	KASSERT(q->q_worker != NULL);
 	mutex_enter(&q->q_mutex);
 	SIMPLEQ_INSERT_TAIL(&q->q_queue_pending, &wqe.wqe_wk, wk_entry);
-	cv_signal(&q->q_cv);
+	cv_broadcast(&q->q_cv);
 	while (q->q_worker != NULL) {
 		cv_wait(&q->q_cv, &q->q_mutex);
 	}
@@ -306,13 +303,9 @@ workqueue_q_wait(struct workqueue_queue *q, work_impl_t *wk_target)
     found:
 	if (wk != NULL) {
 		found = true;
-		KASSERT(q->q_waiter == NULL);
-		q->q_waiter = wk;
 		cv_wait(&q->q_cv, &q->q_mutex);
 		goto again;
 	}
-	if (q->q_waiter != NULL)
-		q->q_waiter = NULL;
     out:
 	mutex_exit(&q->q_mutex);
 
@@ -386,11 +379,10 @@ workqueue_enqueue(struct workqueue *wq, struct work *wk0, struct cpu_info *ci)
 	q = workqueue_queue_lookup(wq, ci);
 
 	mutex_enter(&q->q_mutex);
-	KASSERT(q->q_waiter == NULL);
 #ifdef DEBUG
 	workqueue_check_duplication(q, wk);
 #endif
 	SIMPLEQ_INSERT_TAIL(&q->q_queue_pending, wk, wk_entry);
-	cv_signal(&q->q_cv);
+	cv_broadcast(&q->q_cv);
 	mutex_exit(&q->q_mutex);
 }
