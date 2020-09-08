@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_armv8_64.S,v 1.14 2020/09/08 23:57:43 riastradh Exp $	*/
+/*	$NetBSD: aes_armv8_64.S,v 1.15 2020/09/08 23:58:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <aarch64/asm.h>
 
-RCSID("$NetBSD: aes_armv8_64.S,v 1.14 2020/09/08 23:57:43 riastradh Exp $")
+RCSID("$NetBSD: aes_armv8_64.S,v 1.15 2020/09/08 23:58:09 riastradh Exp $")
 
 	.arch_extension	aes
 
@@ -917,13 +917,12 @@ END(aesarmv8_cbcmac_update1)
 ENTRY(aesarmv8_ccm_enc1)
 	stp	fp, lr, [sp, #-16]!	/* push stack frame */
 	mov	fp, sp
-	ld1	{v0.16b, v1.16b}, [x4]	/* q0 := auth, q2 := ctr (be) */
-	mov	v2.16b, v1.16b
+	ld1	{v0.16b-v1.16b}, [x4]	/* q0 := auth, q1 := ctr (be) */
 	adrl	x11, ctr32_inc		/* x11 := &ctr32_inc */
 	ld1	{v5.4s}, [x11]		/* q5 := (0,0,0,1) (host-endian) */
 	mov	x9, x0			/* x9 := enckey */
 	mov	x10, x3			/* x10 := nbytes */
-	rev32	v2.16b, v2.16b		/* q2 := ctr (host-endian) */
+	rev32	v2.16b, v1.16b		/* q2 := ctr (host-endian) */
 	_ALIGN_TEXT
 1:	ld1	{v3.16b}, [x1], #0x10	/* q3 := plaintext block */
 	add	v2.4s, v2.4s, v5.4s	/* increment ctr (32-bit) */
@@ -937,9 +936,8 @@ ENTRY(aesarmv8_ccm_enc1)
 	subs	x10, x10, #0x10		/* count down bytes */
 	st1	{v3.16b}, [x2], #0x10	/* store ciphertext block */
 	b.ne	1b			/* repeat if more blocks */
-	rev32	v2.16b, v2.16b		/* q2 := ctr (big-endian) */
-	mov	v1.16b, v2.16b		/* store updated auth/ctr */
-	st1	{v0.16b-v1.16b}, [x4]
+	rev32	v1.16b, v2.16b		/* q1 := ctr (big-endian) */
+	st1	{v0.16b-v1.16b}, [x4]	/* store updated auth/ctr */
 	ldp	fp, lr, [sp], #16	/* pop stack frame */
 	ret
 END(aesarmv8_ccm_enc1)
