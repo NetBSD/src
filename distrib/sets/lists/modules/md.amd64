@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.88 2020/08/27 15:32:00 riastradh Exp $
+# $NetBSD: md.amd64,v 1.89 2020/09/08 10:05:47 yamaguchi Exp $
 #
 ./@MODULEDIR@/acpiacad				modules-base-kernel	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		modules-base-kernel	kmod
@@ -158,6 +158,8 @@
 ./@MODULEDIR@/i915drmkms/i915drmkms.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/ichsmb				modules-base-kernel	kmod
 ./@MODULEDIR@/ichsmb/ichsmb.kmod		modules-base-kernel	kmod
+./@MODULEDIR@/if_iavf				modules-base-kernel	kmod
+./@MODULEDIR@/if_iavf/if_iavf.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/if_ixl				modules-base-kernel	kmod
 ./@MODULEDIR@/if_ixl/if_ixl.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/imc				modules-base-kernel	kmod

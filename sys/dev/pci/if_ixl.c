@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.74 2020/08/19 09:22:05 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.75 2020/09/08 10:05:47 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.74 2020/08/19 09:22:05 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.75 2020/09/08 10:05:47 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -148,29 +148,7 @@ struct ixl_softc; /* defined */
 #define I40E_INTR_NOTX_RX_MASK		I40E_PFINT_ICR0_QUEUE_0_MASK
 #define I40E_INTR_NOTX_TX_MASK		I40E_PFINT_ICR0_QUEUE_1_MASK
 
-#define BIT_ULL(a)	(1ULL << (a))
-#define IXL_RSS_HENA_DEFAULT_BASE			\
-	(BIT_ULL(I40E_FILTER_PCTYPE_NONF_IPV4_UDP) |	\
-	 BIT_ULL(I40E_FILTER_PCTYPE_NONF_IPV4_TCP) |	\
-	 BIT_ULL(I40E_FILTER_PCTYPE_NONF_IPV4_SCTP) |	\
-	 BIT_ULL(I40E_FILTER_PCTYPE_NONF_IPV4_OTHER) |	\
-	 BIT_ULL(I40E_FILTER_PCTYPE_FRAG_IPV4) |	\
-	 BIT_ULL(I40E_FILTER_PCTYPE_NONF_IPV6_UDP) |	\
-	 BIT_ULL(I40E_FILTER_PCTYPE_NONF_IPV6_TCP) |	\
-	 BIT_ULL(I40E_FILTER_PCTYPE_NONF_IPV6_SCTP) |	\
-	 BIT_ULL(I40E_FILTER_PCTYPE_NONF_IPV6_OTHER) |	\
-	 BIT_ULL(I40E_FILTER_PCTYPE_FRAG_IPV6) |	\
-	 BIT_ULL(I40E_FILTER_PCTYPE_L2_PAYLOAD))
-#define IXL_RSS_HENA_DEFAULT_XL710	IXL_RSS_HENA_DEFAULT_BASE
-#define IXL_RSS_HENA_DEFAULT_X722	(IXL_RSS_HENA_DEFAULT_XL710 |	\
-	BIT_ULL(I40E_FILTER_PCTYPE_NONF_UNICAST_IPV4_UDP) |		\
-	BIT_ULL(I40E_FILTER_PCTYPE_NONF_MULTICAST_IPV4_UDP) |		\
-	BIT_ULL(I40E_FILTER_PCTYPE_NONF_UNICAST_IPV6_UDP) |		\
-	BIT_ULL(I40E_FILTER_PCTYPE_NONF_MULTICAST_IPV6_UDP) |		\
-	BIT_ULL(I40E_FILTER_PCTYPE_NONF_IPV4_TCP_SYN_NO_ACK) |	\
-	BIT_ULL(I40E_FILTER_PCTYPE_NONF_IPV6_TCP_SYN_NO_ACK))
 #define I40E_HASH_LUT_SIZE_128		0
-#define IXL_RSS_KEY_SIZE_REG		13
 
 #define IXL_ICR0_CRIT_ERR_MASK			\
 	(I40E_PFINT_ICR0_PCI_EXCEPTION_MASK |	\
@@ -250,30 +228,6 @@ struct ixl_speed_type {
 	uint8_t		dev_speed;
 	uint64_t	net_speed;
 };
-
-struct ixl_aq_buf {
-	SIMPLEQ_ENTRY(ixl_aq_buf)
-				 aqb_entry;
-	void			*aqb_data;
-	bus_dmamap_t		 aqb_map;
-	bus_dma_segment_t	 aqb_seg;
-	size_t			 aqb_size;
-	int			 aqb_nsegs;
-};
-SIMPLEQ_HEAD(ixl_aq_bufs, ixl_aq_buf);
-
-struct ixl_dmamem {
-	bus_dmamap_t		 ixm_map;
-	bus_dma_segment_t	 ixm_seg;
-	int			 ixm_nsegs;
-	size_t			 ixm_size;
-	void			*ixm_kva;
-};
-
-#define IXL_DMA_MAP(_ixm)	((_ixm)->ixm_map)
-#define IXL_DMA_DVA(_ixm)	((_ixm)->ixm_map->dm_segs[0].ds_addr)
-#define IXL_DMA_KVA(_ixm)	((void *)(_ixm)->ixm_kva)
-#define IXL_DMA_LEN(_ixm)	((_ixm)->ixm_size)
 
 struct ixl_hmc_entry {
 	uint64_t		 hmc_base;
@@ -983,62 +937,6 @@ static const struct ixl_aq_regs ixl_pf_aq_regs = {
     bus_space_barrier((_s)->sc_memt, (_s)->sc_memh, (_r), (_l), (_o))
 #define ixl_flush(_s)	(void)ixl_rd((_s), I40E_GLGEN_STAT)
 #define ixl_nqueues(_sc)	(1 << ((_sc)->sc_nqueue_pairs - 1))
-
-static inline uint32_t
-ixl_dmamem_hi(struct ixl_dmamem *ixm)
-{
-	uint32_t retval;
-	uint64_t val;
-
-	if (sizeof(IXL_DMA_DVA(ixm)) > 4) {
-		val = (intptr_t)IXL_DMA_DVA(ixm);
-		retval = (uint32_t)(val >> 32);
-	} else {
-		retval = 0;
-	}
-
-	return retval;
-}
-
-static inline uint32_t
-ixl_dmamem_lo(struct ixl_dmamem *ixm)
-{
-
-	return (uint32_t)IXL_DMA_DVA(ixm);
-}
-
-static inline void
-ixl_aq_dva(struct ixl_aq_desc *iaq, bus_addr_t addr)
-{
-	uint64_t val;
-
-	if (sizeof(addr) > 4) {
-		val = (intptr_t)addr;
-		iaq->iaq_param[2] = htole32(val >> 32);
-	} else {
-		iaq->iaq_param[2] = htole32(0);
-	}
-
-	iaq->iaq_param[3] = htole32(addr);
-}
-
-static inline unsigned int
-ixl_rxr_unrefreshed(unsigned int prod, unsigned int cons, unsigned int ndescs)
-{
-	unsigned int num;
-
-	if (prod  < cons)
-		num = cons - prod;
-	else
-		num  = (ndescs - prod) + cons;
-
-	if (__predict_true(num > 0)) {
-		/* device cannot receive packets if all descripter is filled */
-		num -= 1;
-	}
-
-	return num;
-}
 
 CFATTACH_DECL3_NEW(ixl, sizeof(struct ixl_softc),
     ixl_match, ixl_attach, ixl_detach, NULL, NULL, NULL,
@@ -5151,7 +5049,7 @@ ixl_hmc(struct ixl_softc *sc)
 
 		e->hmc_count = regs[i].count;
 		reg = ixl_rd(sc, regs[i].objsiz);
-		e->hmc_size = BIT_ULL(0x3F & reg);
+		e->hmc_size = IXL_BIT_ULL(0x3F & reg);
 		e->hmc_base = size;
 
 		if ((e->hmc_size * 8) < regs[i].minsize) {
