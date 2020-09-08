@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_sse2_subr.c,v 1.3 2020/07/25 22:29:56 riastradh Exp $	*/
+/*	$NetBSD: aes_sse2_subr.c,v 1.4 2020/09/08 22:48:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_sse2_subr.c,v 1.3 2020/07/25 22:29:56 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_sse2_subr.c,v 1.4 2020/09/08 22:48:24 riastradh Exp $");
 
 #ifdef _KERNEL
 #include <sys/systm.h>
@@ -200,11 +200,13 @@ aes_sse2_cbc_dec(const struct aesdec *dec, const uint8_t in[static 16],
 		case 48:
 			w = _mm_loadu_epi8(in + nbytes - 32);
 			q[1] = aes_sse2_interleave_in(w);
-			/*FALLTHROUGH*/
-		case 32:
 			w = _mm_loadu_epi8(in + nbytes - 48);
 			q[0] = aes_sse2_interleave_in(w);
-			/*FALLTHROUGH*/
+			break;
+		case 32:
+			w = _mm_loadu_epi8(in + nbytes - 32);
+			q[0] = aes_sse2_interleave_in(w);
+			break;
 		case 16:
 			break;
 		}
