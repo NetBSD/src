@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.c,v 1.40 2020/09/05 16:30:11 riastradh Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.41 2020/09/08 16:58:38 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.40 2020/09/05 16:30:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.41 2020/09/08 16:58:38 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1085,7 +1085,7 @@ nvmm_close(file_t *fp)
 	}
 	fp->f_data = NULL;
 
-   	return 0;
+	return 0;
 }
 
 static int
