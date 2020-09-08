@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.32 2020/09/03 18:58:48 jakllsch Exp $
+# $NetBSD: ad.aarch64,v 1.33 2020/09/08 16:39:36 jmcneill Exp $
 ./lib/eabi					base-compat-lib		compat,llvm
 ./lib/eabi/npf					base-compat-lib		compat,llvm
 ./lib/eabihf					base-compat-lib		compat,llvm
@@ -37,7 +37,7 @@
 ./usr/libexec/ld.elf_so-eabi			base-compat-shlib	compat,pic,llvm
 ./usr/libexec/ld.elf_so-eabihf			base-compat-shlib	compat,pic,llvm
 ./usr/libexec/ld.elf_so-oabi			base-sysutil-bin	compat,pic,llvm
-./usr/mdec/bootaa64.efi				base-sysutil-bin	endian=1234
+./usr/mdec/bootaa64.efi				base-sysutil-bin
 ./usr/sbin/acpidump				base-sysutil-bin	endian=1234
 ./usr/sbin/amldb				base-sysutil-bin	endian=1234
 ./usr/sbin/ofctl				base-sysutil-bin
