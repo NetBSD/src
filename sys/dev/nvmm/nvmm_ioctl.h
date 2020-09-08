@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_ioctl.h,v 1.11 2020/09/05 07:22:25 maxv Exp $	*/
+/*	$NetBSD: nvmm_ioctl.h,v 1.12 2020/09/08 16:58:38 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -31,6 +31,7 @@
 #ifndef _NVMM_IOCTL_H_
 #define _NVMM_IOCTL_H_
 
+#include <sys/ioccom.h>
 #include <dev/nvmm/nvmm.h>
 
 struct nvmm_ioc_capability {
