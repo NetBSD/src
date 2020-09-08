@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.530 2020/09/07 03:50:41 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.531 2020/09/08 16:00:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.530 2020/09/07 03:50:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.531 2020/09/08 16:00:35 riastradh Exp $");
 
 #include "opt_cnmagic.h"
 #include "opt_ddb.h"
@@ -362,6 +362,9 @@ main(void)
 	 */
 	bpf_setops();
 
+	/* Initialize what we can in ipi(9) before CPUs are detected. */
+	ipi_sysinit();
+
 	/* Start module system. */
 	module_init();
 	module_hook_init();
@@ -546,7 +549,8 @@ main(void)
 
 	configure2();
 
-	ipi_sysinit();
+	/* Initialize the rest of ipi(9) after CPUs have been detected. */
+	ipi_percpu_init();
 
 	futex_sys_init();
 
