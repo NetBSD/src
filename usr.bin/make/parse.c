@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.288 2020/09/07 18:37:09 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.289 2020/09/08 05:26:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.288 2020/09/07 18:37:09 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.289 2020/09/08 05:26:21 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.288 2020/09/07 18:37:09 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.289 2020/09/08 05:26:21 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -708,17 +708,10 @@ ParseErrorInternal(const char *cfname, size_t clineno, int type,
 	}
 }
 
-/*-
- * Parse_Error  --
- *	External interface to ParseErrorInternal; uses the default filename
- *	Line number.
+/* External interface to ParseErrorInternal; uses the default filename and
+ * line number.
  *
- * Results:
- *	None
- *
- * Side Effects:
- *	None
- */
+ * Fmt is given without a trailing newline. */
 /* VARARGS */
 void
 Parse_Error(int type, const char *fmt, ...)

@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.144 2020/09/07 07:15:26 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.145 2020/09/08 05:26:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.144 2020/09/07 07:15:26 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.145 2020/09/08 05:26:21 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.144 2020/09/07 07:15:26 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.145 2020/09/08 05:26:21 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1302,7 +1302,8 @@ SuffExpandChildren(LstNode cln, GNode *pgn)
 
 	    for (start = cp; *start == ' ' || *start == '\t'; start++)
 		continue;
-	    for (cp = start; *cp != '\0'; cp++) {
+	    cp = start;
+	    while (*cp != '\0') {
 		if (*cp == ' ' || *cp == '\t') {
 		    /*
 		     * White-space -- terminate element, find the node,
@@ -1314,11 +1315,7 @@ SuffExpandChildren(LstNode cln, GNode *pgn)
 		    while (*cp == ' ' || *cp == '\t') {
 			cp++;
 		    }
-		    /*
-		     * Adjust cp for increment at start of loop, but
-		     * set start to first non-space.
-		     */
-		    start = cp--;
+		    start = cp;		/* Continue at the next non-space. */
 		} else if (*cp == '$') {
 		    /*
 		     * Start of a variable spec -- contact variable module
@@ -1328,9 +1325,15 @@ SuffExpandChildren(LstNode cln, GNode *pgn)
 		    const char	*junk;
 		    void	*freeIt;
 
+		    /* XXX: Why VARE_WANTRES when the result is not used? */
 		    junk = Var_ParsePP(&nested_p, pgn,
 				       VARE_UNDEFERR|VARE_WANTRES, &freeIt);
-		    if (junk != var_Error) {
+		    if (junk == var_Error) {
+			Parse_Error(PARSE_FATAL,
+				    "Malformed variable expression at \"%s\"",
+				    cp);
+		        cp++;
+		    } else {
 			cp += nested_p - cp;
 		    }
 
@@ -1339,6 +1342,11 @@ SuffExpandChildren(LstNode cln, GNode *pgn)
 		    /*
 		     * Escaped something -- skip over it
 		     */
+		    /* XXX: In other places, escaping at this syntactical
+		     * position is done by a '$', not a '\'.  The '\' is only
+		     * used in variable modifiers. */
+		    cp += 2;
+		} else {
 		    cp++;
 		}
 	    }
