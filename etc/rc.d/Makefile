@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.107 2020/07/22 16:50:41 martin Exp $
+# $NetBSD: Makefile,v 1.108 2020/09/08 12:52:18 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -29,7 +29,7 @@ CONFIGFILES=\
 		kdc \
 		ldconfig ldpd llvmlockdir local lpd lvm \
 		makemandb mdnsd mixerctl modules mopd motd mountall \
-		mountcritlocal MOUNTCRITLOCAL \
+		mountcritlocal CRITLOCALMOUNTED \
 		mountcritremote mountd moused mrouted \
 		named ndbootd network newsyslog nfsd nfslocking npf npf_boot \
 		npfd ntpd ntpdate \

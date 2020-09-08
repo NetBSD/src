@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: random_seed,v 1.14 2020/07/22 16:50:41 martin Exp $
+# $NetBSD: random_seed,v 1.15 2020/09/08 12:52:18 martin Exp $
 #
 
 # PROVIDE: random_seed
-# REQUIRE: MOUNTCRITLOCAL
+# REQUIRE: CRITLOCALMOUNTED
 # BEFORE: securelevel
 # BEFORE: bootconf
 # KEYWORD: shutdown
