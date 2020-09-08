@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iavf.c,v 1.1 2020/09/08 10:05:47 yamaguchi Exp $	*/
+/*	$NetBSD: if_iavf.c,v 1.2 2020/09/08 13:28:51 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.1 2020/09/08 10:05:47 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.2 2020/09/08 13:28:51 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -4734,7 +4734,7 @@ iavf_config_hena(struct iavf_softc *sc)
 	iaq.iaq_flags = htole16(IXL_AQ_BUF | IXL_AQ_RD);
 	iaq.iaq_opcode = htole16(IAVF_AQ_OP_SEND_TO_PF);
 	iavf_aq_vc_set_opcode(&iaq, IAVF_VC_OP_SET_RSS_HENA);
-	iaq.iaq_datalen = htole32(sizeof(*caps));
+	iaq.iaq_datalen = htole16(sizeof(*caps));
 
 	error = iavf_adminq_exec(sc, &iaq, aqb);
 	if (error != IAVF_VC_RC_SUCCESS) {
@@ -4781,7 +4781,7 @@ iavf_config_rss_key(struct iavf_softc *sc)
 	iaq.iaq_flags = htole16(IXL_AQ_BUF | IXL_AQ_RD);
 	iaq.iaq_opcode = htole16(IAVF_AQ_OP_SEND_TO_PF);
 	iavf_aq_vc_set_opcode(&iaq, IAVF_VC_OP_CONFIG_RSS_KEY);
-	iaq.iaq_datalen = htole32(sizeof(*rss_key) - sizeof(rss_key->pad)
+	iaq.iaq_datalen = htole16(sizeof(*rss_key) - sizeof(rss_key->pad)
 	    + (sizeof(rss_key->key[0]) * key_len));
 
 	rv = iavf_adminq_exec(sc, &iaq, aqb);
@@ -4823,7 +4823,7 @@ iavf_config_rss_lut(struct iavf_softc *sc)
 	iaq.iaq_flags = htole16(IXL_AQ_BUF | IXL_AQ_RD);
 	iaq.iaq_opcode = htole16(IAVF_AQ_OP_SEND_TO_PF);
 	iavf_aq_vc_set_opcode(&iaq, IAVF_VC_OP_CONFIG_RSS_LUT);
-	iaq.iaq_datalen = htole32(sizeof(*rss_lut) - sizeof(rss_lut->pad)
+	iaq.iaq_datalen = htole16(sizeof(*rss_lut) - sizeof(rss_lut->pad)
 	    + (sizeof(rss_lut->lut[0]) * IXL_RSS_VSI_LUT_SIZE));
 
 	rv = iavf_adminq_exec(sc, &iaq, aqb);
