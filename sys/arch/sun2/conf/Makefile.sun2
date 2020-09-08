@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun2,v 1.25 2020/08/10 06:28:42 rin Exp $
+# $NetBSD: Makefile.sun2,v 1.26 2020/09/08 00:51:29 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -36,9 +36,8 @@ CFLAGS+=	-msoft-float -fno-defer-pop
 AFLAGS+=	-x assembler-with-cpp
 
 # XXX
-.if ${HAVE_GCC:U0} >= 8
-COPTS+=		-fno-omit-frame-pointer
-.endif
+COPTS+=		${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 8:? -fno-omit-frame-pointer :}
+COPTS.promlib.c+=${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 9:? -Wno-error=array-bounds :}
 
 ##
 ## (3) libkern and compat
