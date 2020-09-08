@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.139 2020/08/27 15:32:00 riastradh Exp $
+# $NetBSD: mi,v 1.140 2020/09/08 14:53:10 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -205,6 +205,8 @@
 ./@MODULEDIR@/if_gif/if_gif.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/if_gre				modules-base-kernel	kmod
 ./@MODULEDIR@/if_gre/if_gre.kmod		modules-base-kernel	kmod
+./@MODULEDIR@/if_iavf				modules-base-kernel	kmod
+./@MODULEDIR@/if_iavf/if_iavf.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/if_kue				modules-base-kernel	kmod
 ./@MODULEDIR@/if_kue/if_kue.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/if_l2tp				modules-base-kernel	kmod
