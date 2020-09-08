@@ -1,4 +1,4 @@
-# $NetBSD: module.md.i386,v 1.1 2020/05/01 22:21:11 christos Exp $
+# $NetBSD: module.md.i386,v 1.2 2020/09/08 14:57:32 martin Exp $
 ./usr/libdata/debug/@MODULEDIR@/acpiacad				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/acpiacad/acpiacad.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/acpibat				modules-base-kernel	kmod,debug
@@ -103,6 +103,8 @@
 ./usr/libdata/debug/@MODULEDIR@/i915drmkms/i915drmkms.kmod.debug	modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/ichsmb				modules-base-kernel     kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/ichsmb/ichsmb.kmod.debug		modules-base-kernel     kmod,debug
+./usr/libdata/debug/@MODULEDIR@/if_iavf				modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/if_iavf/if_iavf.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/if_ixl				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/if_ixl/if_ixl.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/imc				modules-base-kernel     kmod,debug
