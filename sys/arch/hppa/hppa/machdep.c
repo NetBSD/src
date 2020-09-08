@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 2020/06/11 19:20:43 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15 2020/09/08 06:13:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14 2020/06/11 19:20:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2020/09/08 06:13:53 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -497,7 +497,7 @@ hppa_init(paddr_t start, void *bi)
 	p[5] = -(p[0] + p[1] + p[2] + p[3] + p[4] + p[6] + p[7]);
 	p = &os_hpmc_cont;
 	q = (&os_hpmc_cont_end - 1);
-	for(*q = 0; p < q; *q -= *(p++));
+	for (*q = 0; p < q; *q -= *(p++));
 
 	/* Calculate the OS_TOC handler checksum. */
 	p = (u_int *) &os_toc;
