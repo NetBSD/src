@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.78 2020/09/06 02:18:53 riastradh Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.79 2020/09/08 17:00:07 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.78 2020/09/06 02:18:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.79 2020/09/08 17:00:07 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -728,8 +728,8 @@ static uint64_t vmx_xcr0_mask __read_mostly;
 #define MSRBM_NPAGES	1
 #define MSRBM_SIZE	(MSRBM_NPAGES * PAGE_SIZE)
 
-#define CR0_STATIC \
-	(CR0_NW|CR0_CD|CR0_ET)
+#define CR0_STATIC_MASK \
+	(CR0_ET | CR0_NW | CR0_CD)
 
 #define CR4_VALID \
 	(CR4_VME |			\
@@ -1572,7 +1572,7 @@ vmx_inkernel_handle_cr0(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
     uint64_t qual)
 {
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
-	uint64_t type, gpr, oldcr0, cr0;
+	uint64_t type, gpr, oldcr0, realcr0, fakecr0;
 	uint64_t efer, ctls1;
 
 	type = __SHIFTOUT(qual, VMX_QUAL_CR_TYPE);
@@ -1584,15 +1584,24 @@ vmx_inkernel_handle_cr0(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	KASSERT(gpr < 16);
 
 	if (gpr == NVMM_X64_GPR_RSP) {
-		gpr = vmx_vmread(VMCS_GUEST_RSP);
+		fakecr0 = vmx_vmread(VMCS_GUEST_RSP);
 	} else {
-		gpr = cpudata->gprs[gpr];
+		fakecr0 = cpudata->gprs[gpr];
 	}
 
-	cr0 = gpr | CR0_NE | CR0_ET;
-	cr0 &= ~(CR0_NW|CR0_CD);
+	/*
+	 * fakecr0 is the value the guest believes is in %cr0. realcr0 is the
+	 * actual value in %cr0.
+	 *
+	 * In fakecr0 we must force CR0_ET to 1.
+	 *
+	 * In realcr0 we must force CR0_NW and CR0_CD to 0, and CR0_ET and
+	 * CR0_NE to 1.
+	 */
+	fakecr0 |= CR0_ET;
+	realcr0 = (fakecr0 & ~CR0_STATIC_MASK) | CR0_ET | CR0_NE;
 
-	if (vmx_check_cr(cr0, vmx_cr0_fixed0, vmx_cr0_fixed1) == -1) {
+	if (vmx_check_cr(realcr0, vmx_cr0_fixed0, vmx_cr0_fixed1) == -1) {
 		return -1;
 	}
 
@@ -1601,7 +1610,7 @@ vmx_inkernel_handle_cr0(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	 * from CR3.
 	 */
 
-	if (cr0 & CR0_PG) {
+	if (realcr0 & CR0_PG) {
 		ctls1 = vmx_vmread(VMCS_ENTRY_CTLS);
 		efer = vmx_vmread(VMCS_GUEST_IA32_EFER);
 		if (efer & EFER_LME) {
@@ -1615,14 +1624,14 @@ vmx_inkernel_handle_cr0(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		vmx_vmwrite(VMCS_ENTRY_CTLS, ctls1);
 	}
 
-	oldcr0 = (vmx_vmread(VMCS_CR0_SHADOW) & CR0_STATIC) |
-	    (vmx_vmread(VMCS_GUEST_CR0) & ~CR0_STATIC);
-	if ((oldcr0 ^ gpr) & CR0_TLB_FLUSH) {
+	oldcr0 = (vmx_vmread(VMCS_CR0_SHADOW) & CR0_STATIC_MASK) |
+	    (vmx_vmread(VMCS_GUEST_CR0) & ~CR0_STATIC_MASK);
+	if ((oldcr0 ^ fakecr0) & CR0_TLB_FLUSH) {
 		cpudata->gtlb_want_flush = true;
 	}
 
-	vmx_vmwrite(VMCS_CR0_SHADOW, gpr);
-	vmx_vmwrite(VMCS_GUEST_CR0, cr0);
+	vmx_vmwrite(VMCS_CR0_SHADOW, fakecr0);
+	vmx_vmwrite(VMCS_GUEST_CR0, realcr0);
 	vmx_inkernel_advance();
 	return 0;
 }
@@ -2574,15 +2583,26 @@ vmx_vcpu_setstate(struct nvmm_cpu *vcpu)
 
 	if (flags & NVMM_X64_STATE_CRS) {
 		/*
-		 * CR0_NE and CR4_VMXE are mandatory.
+		 * CR0_ET must be 1 both in the shadow and the real register.
+		 * CR0_NE must be 1 in the real register.
+		 * CR0_NW and CR0_CD must be 0 in the real register.
 		 */
-		vmx_vmwrite(VMCS_CR0_SHADOW, state->crs[NVMM_X64_CR_CR0]);
+		vmx_vmwrite(VMCS_CR0_SHADOW,
+		    (state->crs[NVMM_X64_CR_CR0] & CR0_STATIC_MASK) |
+		    CR0_ET);
 		vmx_vmwrite(VMCS_GUEST_CR0,
-		    state->crs[NVMM_X64_CR_CR0] | CR0_NE);
+		    (state->crs[NVMM_X64_CR_CR0] & ~CR0_STATIC_MASK) |
+		    CR0_ET | CR0_NE);
+
 		cpudata->gcr2 = state->crs[NVMM_X64_CR_CR2];
-		vmx_vmwrite(VMCS_GUEST_CR3, state->crs[NVMM_X64_CR_CR3]); // XXX PDPTE?
+
+		/* XXX We are not handling PDPTE here. */
+		vmx_vmwrite(VMCS_GUEST_CR3, state->crs[NVMM_X64_CR_CR3]);
+
+		/* CR4_VMXE is mandatory. */
 		vmx_vmwrite(VMCS_GUEST_CR4,
 		    (state->crs[NVMM_X64_CR_CR4] & CR4_VALID) | CR4_VMXE);
+
 		cpudata->gcr8 = state->crs[NVMM_X64_CR_CR8];
 
 		if (vmx_xcr0_mask != 0) {
@@ -2715,8 +2735,8 @@ vmx_vcpu_getstate(struct nvmm_cpu *vcpu)
 
 	if (flags & NVMM_X64_STATE_CRS) {
 		state->crs[NVMM_X64_CR_CR0] =
-		    (vmx_vmread(VMCS_CR0_SHADOW) & CR0_STATIC) |
-		    (vmx_vmread(VMCS_GUEST_CR0) & ~CR0_STATIC);
+		    (vmx_vmread(VMCS_CR0_SHADOW) & CR0_STATIC_MASK) |
+		    (vmx_vmread(VMCS_GUEST_CR0) & ~CR0_STATIC_MASK);
 		state->crs[NVMM_X64_CR_CR2] = cpudata->gcr2;
 		state->crs[NVMM_X64_CR_CR3] = vmx_vmread(VMCS_GUEST_CR3);
 		state->crs[NVMM_X64_CR_CR4] = vmx_vmread(VMCS_GUEST_CR4);
@@ -2906,7 +2926,7 @@ vmx_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	vmx_vmwrite(VMCS_EXIT_MSR_STORE_COUNT, VMX_MSRLIST_EXIT_NMSR);
 
 	/* Set the CR0 mask. Any change of these bits causes a VMEXIT. */
-	vmx_vmwrite(VMCS_CR0_MASK, CR0_STATIC);
+	vmx_vmwrite(VMCS_CR0_MASK, CR0_STATIC_MASK);
 
 	/* Force unsupported CR4 fields to zero. */
 	vmx_vmwrite(VMCS_CR4_MASK, CR4_INVALID);
