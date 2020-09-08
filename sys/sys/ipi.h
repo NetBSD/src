@@ -1,4 +1,4 @@
-/*	$NetBSD: ipi.h,v 1.4 2019/04/06 02:59:05 thorpej Exp $	*/
+/*	$NetBSD: ipi.h,v 1.5 2020/09/08 16:00:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -60,6 +60,7 @@ typedef struct {
 #define	IPI_BITWORDS	(IPI_MAXREG >> IPI_BITW_SHIFT)
 
 void	ipi_sysinit(void);
+void	ipi_percpu_init(void);
 void	ipi_cpu_handler(void);
 void	cpu_ipi(struct cpu_info *);
 
