@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_armv8_64.S,v 1.13 2020/09/08 23:57:13 riastradh Exp $	*/
+/*	$NetBSD: aes_armv8_64.S,v 1.14 2020/09/08 23:57:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <aarch64/asm.h>
 
-RCSID("$NetBSD: aes_armv8_64.S,v 1.13 2020/09/08 23:57:13 riastradh Exp $")
+RCSID("$NetBSD: aes_armv8_64.S,v 1.14 2020/09/08 23:57:43 riastradh Exp $")
 
 	.arch_extension	aes
 
@@ -693,10 +693,8 @@ ENTRY(aesarmv8_xts_enc8)
 	mov	v30.16b, v31.16b	/* q30 := tweak[6] */
 	bl	aesarmv8_xts_mulx	/* q31 *= x; trash x0/q0/q1 */
 					/* q31 := tweak[7] */
-	ld1	{v0.16b,v1.16b}, [x1], #0x20	/* q[i] := ptxt[i] */
-	ld1	{v2.16b,v3.16b}, [x1], #0x20
-	ld1	{v4.16b,v5.16b}, [x1], #0x20
-	ld1	{v6.16b,v7.16b}, [x1], #0x20
+	ld1	{v0.16b-v3.16b}, [x1], #0x40	/* q[i] := ptxt[i] */
+	ld1	{v4.16b-v7.16b}, [x1], #0x40
 	eor	v0.16b, v0.16b, v24.16b	/* q[i] := ptxt[i] ^ tweak[i] */
 	eor	v1.16b, v1.16b, v25.16b
 	eor	v2.16b, v2.16b, v26.16b
@@ -716,10 +714,8 @@ ENTRY(aesarmv8_xts_enc8)
 	eor	v5.16b, v5.16b, v29.16b
 	eor	v6.16b, v6.16b, v30.16b
 	eor	v7.16b, v7.16b, v31.16b
-	st1	{v0.16b,v1.16b}, [x2], #0x20	/* store ciphertext blocks */
-	st1	{v2.16b,v3.16b}, [x2], #0x20
-	st1	{v4.16b,v5.16b}, [x2], #0x20
-	st1	{v6.16b,v7.16b}, [x2], #0x20
+	st1	{v0.16b-v3.16b}, [x2], #0x40	/* store ciphertext blocks */
+	st1	{v4.16b-v7.16b}, [x2], #0x40
 	bl	aesarmv8_xts_mulx	/* q31 *= x; trash x0/q0/q1 */
 	subs	x10, x10, #0x80		/* count down nbytes */
 	b.ne	1b			/* repeat if more block groups */
