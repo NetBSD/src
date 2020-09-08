@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: clearcritlocal,v 1.1 2020/07/22 16:50:41 martin Exp $
+# $NetBSD: clearcritlocal,v 1.2 2020/09/08 12:45:03 martin Exp $
 #
 
 # REQUIRE: mountcritlocal
@@ -18,7 +18,9 @@ clearcritlocal_start()
 	#	this could include the cleanup of lock files and /var/run, etc.
 	#
 	rm -f /etc/nologin /var/spool/lock/LCK.*
-	test -d /var/run && (cd /var/run && rm -rf -- *)
+	if [ -d /var/run ]; then
+		cd /var/run && rm -rf -- *
+	fi
 	return 0
 }
 
