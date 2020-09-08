@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.578 2020/08/30 11:16:17 dholland Exp $
+# $NetBSD: GENERIC,v 1.579 2020/09/08 10:05:47 yamaguchi Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.578 $"
+#ident		"GENERIC-$Revision: 1.579 $"
 
 maxusers	64		# estimated number of users
 
@@ -811,6 +811,7 @@ fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 gem*	at pci? dev ? function ?	# Apple GMAC and Sun ERI gigabit enet
 gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
+iavf*	at pci? dev ? function ?	# Intel Adaptive Virtual Function
 ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 iwm*	at pci? dev ? function ?	# Intel Centrino 7260

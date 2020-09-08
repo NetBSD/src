@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixlvar.h,v 1.6 2020/02/12 06:37:21 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixlvar.h,v 1.7 2020/09/08 10:05:47 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2019 Internet Initiative Japan, Inc.
@@ -59,6 +59,32 @@ enum i40e_filter_pctype {
 	/* Note: Values 51-62 are reserved for future use */
 	I40E_FILTER_PCTYPE_L2_PAYLOAD                   = 63,
 };
+
+#define IXL_BIT_ULL(a)	(1ULL << (a))
+#define IXL_RSS_HENA_DEFAULT_BASE			\
+	(IXL_BIT_ULL(I40E_FILTER_PCTYPE_NONF_IPV4_UDP) |	\
+	 IXL_BIT_ULL(I40E_FILTER_PCTYPE_NONF_IPV4_TCP) |	\
+	 IXL_BIT_ULL(I40E_FILTER_PCTYPE_NONF_IPV4_SCTP) |	\
+	 IXL_BIT_ULL(I40E_FILTER_PCTYPE_NONF_IPV4_OTHER) |	\
+	 IXL_BIT_ULL(I40E_FILTER_PCTYPE_FRAG_IPV4) |	\
+	 IXL_BIT_ULL(I40E_FILTER_PCTYPE_NONF_IPV6_UDP) |	\
+	 IXL_BIT_ULL(I40E_FILTER_PCTYPE_NONF_IPV6_TCP) |	\
+	 IXL_BIT_ULL(I40E_FILTER_PCTYPE_NONF_IPV6_SCTP) |	\
+	 IXL_BIT_ULL(I40E_FILTER_PCTYPE_NONF_IPV6_OTHER) |	\
+	 IXL_BIT_ULL(I40E_FILTER_PCTYPE_FRAG_IPV6) |	\
+	 IXL_BIT_ULL(I40E_FILTER_PCTYPE_L2_PAYLOAD))
+#define IXL_RSS_HENA_DEFAULT_XL710	IXL_RSS_HENA_DEFAULT_BASE
+#define IXL_RSS_HENA_DEFAULT_X722	(IXL_RSS_HENA_DEFAULT_XL710 |	\
+	IXL_BIT_ULL(I40E_FILTER_PCTYPE_NONF_UNICAST_IPV4_UDP) |		\
+	IXL_BIT_ULL(I40E_FILTER_PCTYPE_NONF_MULTICAST_IPV4_UDP) |	\
+	IXL_BIT_ULL(I40E_FILTER_PCTYPE_NONF_UNICAST_IPV6_UDP) |		\
+	IXL_BIT_ULL(I40E_FILTER_PCTYPE_NONF_MULTICAST_IPV6_UDP) |	\
+	IXL_BIT_ULL(I40E_FILTER_PCTYPE_NONF_IPV4_TCP_SYN_NO_ACK) |	\
+	IXL_BIT_ULL(I40E_FILTER_PCTYPE_NONF_IPV6_TCP_SYN_NO_ACK))
+
+#define IXL_RSS_VSI_LUT_SIZE	64
+#define IXL_RSS_KEY_SIZE_REG	13
+#define IXL_RSS_KEY_SIZE	(IXL_RSS_KEY_SIZE_REG * sizeof(uint32_t))
 
 enum i40e_reset_type {
 	I40E_RESET_POR          = 0,
@@ -143,6 +169,37 @@ struct ixl_aq_desc {
 #define IXL_AQ_OP_RSS_SET_LUT		0x0b03
 #define IXL_AQ_OP_RSS_GET_KEY		0x0b04
 #define IXL_AQ_OP_RSS_GET_LUT		0x0b05
+
+static inline void
+ixl_aq_dva(struct ixl_aq_desc *iaq, bus_addr_t addr)
+{
+	uint64_t val;
+
+	if (sizeof(addr) > 4) {
+		val = (intptr_t)addr;
+		iaq->iaq_param[2] = htole32(val >> 32);
+	} else {
+		iaq->iaq_param[2] = htole32(0);
+	}
+
+	iaq->iaq_param[3] = htole32(addr);
+}
+
+static inline bool
+ixl_aq_has_dva(struct ixl_aq_desc *iaq)
+{
+	uint64_t val;
+
+	if (sizeof(bus_addr_t) > 4) {
+		val = le32toh(iaq->iaq_param[2]);
+		val = val << 32;
+	} else {
+		val = 0;
+	}
+	val |= htole32(iaq->iaq_param[3]);
+
+	return !(val == 0);
+}
 
 struct ixl_aq_mac_addresses {
 	uint8_t		pf_lan[ETHER_ADDR_LEN];
@@ -926,4 +983,90 @@ enum i40e_mac_type {
 #define IXL_NVM_OEMBUILD_MASK		(0xffffUL << IXL_NVM_OEMBUILD_SHIFT)
 #define IXL_NVM_OEMPATCH_SHIFT		0
 #define IXL_NVM_OEMPATCH_MASK		(0xff << IXL_NVM_OEMPATCH_SHIFT)
+
+struct ixl_aq_buf {
+	SIMPLEQ_ENTRY(ixl_aq_buf)
+				 aqb_entry;
+	void			*aqb_data;
+	bus_dmamap_t		 aqb_map;
+	bus_dma_segment_t	 aqb_seg;
+	size_t			 aqb_size;
+	int			 aqb_nsegs;
+};
+SIMPLEQ_HEAD(ixl_aq_bufs, ixl_aq_buf);
+
+#define IXL_AQB_MAP(_aqb)	((_aqb)->aqb_map)
+#define IXL_AQB_DVA(_aqb)	((_aqb)->aqb_map->dm_segs[0].ds_addr)
+#define IXL_AQB_KVA(_aqb)	((void *)(_aqb)->aqb_data)
+#define IXL_AQB_LEN(_aqb)	((_aqb)->aqb_size)
+
+static inline unsigned int
+ixl_rxr_unrefreshed(unsigned int prod, unsigned int cons, unsigned int ndescs)
+{
+	unsigned int num;
+
+	if (prod  < cons)
+		num = cons - prod;
+	else
+		num  = (ndescs - prod) + cons;
+
+	if (__predict_true(num > 0)) {
+		/* device cannot receive packets if all descripter is filled */
+		num -= 1;
+	}
+
+	return num;
+}
+
+struct ixl_dmamem {
+	bus_dmamap_t		 ixm_map;
+	bus_dma_segment_t	 ixm_seg;
+	int			 ixm_nsegs;
+	size_t			 ixm_size;
+	void			*ixm_kva;
+};
+
+#define IXL_DMA_MAP(_ixm)	((_ixm)->ixm_map)
+#define IXL_DMA_DVA(_ixm)	((_ixm)->ixm_map->dm_segs[0].ds_addr)
+#define IXL_DMA_KVA(_ixm)	((void *)(_ixm)->ixm_kva)
+#define IXL_DMA_LEN(_ixm)	((_ixm)->ixm_size)
+
+static inline uint32_t
+ixl_dmamem_hi(struct ixl_dmamem *ixm)
+{
+	uint32_t retval;
+	uint64_t val;
+
+	if (sizeof(IXL_DMA_DVA(ixm)) > 4) {
+		val = (intptr_t)IXL_DMA_DVA(ixm);
+		retval = val >> 32;
+	} else {
+		retval = 0;
+	}
+
+	return retval;
+}
+
+static inline uint32_t
+ixl_dmamem_lo(struct ixl_dmamem *ixm)
+{
+
+	return (uint32_t)IXL_DMA_DVA(ixm);
+}
+
+struct i40e_eth_stats {
+	uint64_t	 rx_bytes;
+	uint64_t	 rx_unicast;
+	uint64_t	 rx_multicast;
+	uint64_t	 rx_broadcast;
+	uint64_t	 rx_discards;
+	uint64_t	 rx_unknown_protocol;
+
+	uint64_t	 tx_bytes;
+	uint64_t	 tx_unicast;
+	uint64_t	 tx_multicast;
+	uint64_t	 tx_broadcast;
+	uint64_t	 tx_discards;
+	uint64_t	 tx_errors;
+} __packed;
 #endif
