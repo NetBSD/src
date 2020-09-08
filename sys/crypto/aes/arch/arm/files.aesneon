@@ -1,8 +1,10 @@
-#	$NetBSD: files.aesneon,v 1.4 2020/08/16 18:02:03 riastradh Exp $
+#	$NetBSD: files.aesneon,v 1.5 2020/09/08 17:35:27 jakllsch Exp $
 
 ifdef aarch64
 makeoptions	aes	"COPTS.aes_neon.c"+="-march=armv8-a"
 makeoptions	aes	"COPTS.aes_neon_subr.c"+="-march=armv8-a"
+makeoptions	aes	"CWARNFLAGS.aes_neon.c"+="${${ACTIVE_CC} == clang :? -Wno-nonportable-vector-initialization :}"
+makeoptions	aes	"CWARNFLAGS.aes_neon_subr.c"+="${${ACTIVE_CC} == clang :? -Wno-nonportable-vector-initialization :}"
 else
 makeoptions	aes	"COPTS.aes_neon.c"+="-mfloat-abi=softfp -mfpu=neon"
 makeoptions	aes	"COPTS.aes_neon_subr.c"+="-mfloat-abi=softfp -mfpu=neon"
