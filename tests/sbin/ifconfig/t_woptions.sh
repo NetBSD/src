@@ -1,4 +1,4 @@
-# $NetBSD: t_woptions.sh,v 1.1 2020/06/27 05:07:08 jruoho Exp $
+# $NetBSD: t_woptions.sh,v 1.2 2020/09/08 06:11:32 mrg Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -27,6 +27,14 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+# These tests play around with the wifi configuration on a system
+# which may not be safe, destroy configuration or hang.
+check_ifconfig_tests_enabled() {
+	if [ "${ATF_SBIN_IFCONFIG_WIFI_ENABLE}" != "yes" ]; then
+		atf_skip "Test triggers real device activity and may destroy configuration or hang."
+	fi
+}
+
 atf_test_case chan
 chan_head() {
 	atf_set "require.user" "root"
@@ -35,6 +43,7 @@ chan_head() {
 }
 
 chan_body() {
+	check_ifconfig_tests_enabled
 
 	# This sequence covers both valid and invalid channels.
 	# Different 802.11 modes are not taken into account, and
@@ -97,6 +106,7 @@ mediaopt_head() {
 }
 
 mediaopt_body() {
+	check_ifconfig_tests_enabled
 
 	# Again, also non-802.11 interfaces are tested.
 	#
@@ -158,6 +168,7 @@ modes_head() {
 }
 
 modes_body() {
+	check_ifconfig_tests_enabled
 
 	# Although 11n is not yet supported, the system
 	# should not panic from invalid input parameters.
