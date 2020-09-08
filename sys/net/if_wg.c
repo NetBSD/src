@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.55 2020/09/07 01:15:25 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.56 2020/09/08 16:39:57 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.55 2020/09/07 01:15:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.56 2020/09/08 16:39:57 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2965,10 +2965,12 @@ wg_task_endpoint_changed(struct wg_softc *wg, struct wg_peer *wgp)
 
 	if (atomic_load_relaxed(&wgp->wgp_endpoint_changing)) {
 		pserialize_perform(wgp->wgp_psz);
+		mutex_exit(wgp->wgp_lock);
 		psref_target_destroy(&wgp->wgp_endpoint0->wgsa_psref,
 		    wg_psref_class);
 		psref_target_init(&wgp->wgp_endpoint0->wgsa_psref,
 		    wg_psref_class);
+		mutex_enter(wgp->wgp_lock);
 		atomic_store_release(&wgp->wgp_endpoint_changing, 0);
 	}
 }
