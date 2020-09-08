@@ -1,4 +1,4 @@
-.\"	$NetBSD: workqueue.9,v 1.14 2020/08/01 09:51:06 wiz Exp $
+.\"	$NetBSD: workqueue.9,v 1.15 2020/09/08 17:02:18 riastradh Exp $
 .\"
 .\" Copyright (c)2005 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -133,11 +133,11 @@ waits for a specified work
 on the workqueue
 .Fa wq
 to finish.
-The caller must ensure that no new work will be enqueued to the workqueue
-beforehand.
-Note that if the workqueue is
-.Dv WQ_PERCPU ,
-the caller can enqueue a new work to another queue other than the waiting queue.
+The caller must ensure that
+.Fa wk
+will not be enqueued to the workqueue again until after
+.Fn workqueue_wait
+returns.
 .Pp
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .Fn workqueue_destroy
