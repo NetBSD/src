@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.490 2020/09/07 07:10:56 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.491 2020/09/08 05:26:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.490 2020/09/07 07:10:56 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.491 2020/09/08 05:26:21 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.490 2020/09/07 07:10:56 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.491 2020/09/08 05:26:21 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3029,6 +3029,7 @@ ApplyModifiers(
 	    if (rval[0] != '\0' &&
 		(c = *nested_p) != '\0' && c != ':' && c != st.endc) {
 		free(freeIt);
+		/* XXX: apply_mods doesn't sound like "not interested". */
 		goto apply_mods;
 	    }
 
@@ -3325,6 +3326,16 @@ VarIsDynamic(GNode *ctxt, const char *varname, size_t namelen)
  *	varNoError if there was a parse error and VARE_UNDEFERR was not set.
  *
  *	Parsing should continue at str + *lengthPtr.
+ *	TODO: Document the value of *lengthPtr on parse errors.  It might be
+ *	0, or +1, or the index of the parse error, or the guessed end of the
+ *	variable expression.
+ *
+ *	If var_Error is returned, a diagnostic may or may not have been
+ *	printed. XXX: This is inconsistent.
+ *
+ *	If varNoError is returned, a diagnostic may or may not have been
+ *	printed. XXX: This is inconsistent, and as of 2020-09-08, returning
+ *	varNoError is even used to return a regular, non-error empty string.
  *
  *	After using the returned value, *freePtr must be freed, preferably
  *	using bmake_free since it is NULL in most cases.
