@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2020/08/17 16:26:02 riastradh Exp $
+#	$NetBSD: Makefile,v 1.6 2020/09/08 17:35:27 jakllsch Exp $
 
 .include <bsd.own.mk>
 
@@ -29,9 +29,13 @@ SRCS.t_aes+=	aes_armv8.c
 SRCS.t_aes+=	aes_armv8_64.S
 .endif
 
+CLANG_NO_NONPORTABLE_VECTOR_INITIALIZATION= ${${ACTIVE_CC} == "clang":? -Wno-nonportable-vector-initialization :}
+
 SRCS.t_aes+=	aes_neon.c
+COPTS.aes_neon.c+=${CLANG_NO_NONPORTABLE_VECTOR_INITIALIZATION}
 SRCS.t_aes+=	aes_neon_impl.c
 SRCS.t_aes+=	aes_neon_subr.c
+COPTS.aes_neon_subr.c+=${CLANG_NO_NONPORTABLE_VECTOR_INITIALIZATION}
 .if !empty(MACHINE_ARCH:Mearmv7*)
 SRCS.t_aes+=	aes_neon_32.S
 .endif

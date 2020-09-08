@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2020/08/17 16:26:02 riastradh Exp $
+#	$NetBSD: Makefile,v 1.6 2020/09/08 17:35:27 jakllsch Exp $
 
 .include <bsd.own.mk>
 
@@ -21,7 +21,10 @@ SRCS.t_chacha+=	chacha_selftest.c
 .PATH:	${NETBSDSRCDIR}/sys/crypto/chacha/arch/arm
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/crypto/chacha/arch/arm
 
+CLANG_NO_NONPORTABLE_VECTOR_INITIALIZATION= ${${ACTIVE_CC} == "clang":? -Wno-nonportable-vector-initialization :}
+
 SRCS.t_chacha+=	chacha_neon.c
+COPTS.chacha_neon.c+=	${CLANG_NO_NONPORTABLE_VECTOR_INITIALIZATION}
 .if !empty(MACHINE_ARCH:Mearmv7*)
 SRCS.t_chacha+=	chacha_neon_32.S
 .elif !empty(MACHINE_ARCH:Maarch64*)
