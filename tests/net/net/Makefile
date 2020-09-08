@@ -1,11 +1,12 @@
-# $NetBSD: Makefile,v 1.24 2020/07/06 18:45:25 christos Exp $
+# $NetBSD: Makefile,v 1.25 2020/09/08 14:13:50 christos Exp $
 #
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/net/net
 
-TESTS_C=	t_unix
+TESTS_C=	t_bind
+TESTS_C+=	t_unix
 TESTS_C+=	t_mapped
 TESTS_C+=	t_tcp
 TESTS_C+=	t_udp
