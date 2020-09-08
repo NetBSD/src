@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_ipi.c,v 1.7 2019/10/16 18:29:49 christos Exp $	*/
+/*	$NetBSD: subr_ipi.c,v 1.8 2020/09/08 16:00:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_ipi.c,v 1.7 2019/10/16 18:29:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ipi.c,v 1.8 2020/09/08 16:00:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -93,19 +93,9 @@ static void		ipi_msg_cpu_handler(void *);
 void
 ipi_sysinit(void)
 {
-	const size_t len = ncpu * sizeof(ipi_mbox_t);
 
-	/* Initialise the per-CPU bit fields. */
-	for (u_int i = 0; i < ncpu; i++) {
-		struct cpu_info *ci = cpu_lookup(i);
-		memset(&ci->ci_ipipend, 0, sizeof(ci->ci_ipipend));
-	}
 	mutex_init(&ipi_mngmt_lock, MUTEX_DEFAULT, IPL_NONE);
 	memset(ipi_intrs, 0, sizeof(ipi_intrs));
-
-	/* Allocate per-CPU IPI mailboxes. */
-	ipi_mboxes = kmem_zalloc(len, KM_SLEEP);
-	KASSERT(ipi_mboxes != NULL);
 
 	/*
 	 * Register the handler for synchronous IPIs.  This mechanism
@@ -117,6 +107,22 @@ ipi_sysinit(void)
 
 	evcnt_attach_dynamic(&ipi_mboxfull_ev, EVCNT_TYPE_MISC, NULL,
 	   "ipi", "full");
+}
+
+void
+ipi_percpu_init(void)
+{
+	const size_t len = ncpu * sizeof(ipi_mbox_t);
+
+	/* Initialise the per-CPU bit fields. */
+	for (u_int i = 0; i < ncpu; i++) {
+		struct cpu_info *ci = cpu_lookup(i);
+		memset(&ci->ci_ipipend, 0, sizeof(ci->ci_ipipend));
+	}
+
+	/* Allocate per-CPU IPI mailboxes. */
+	ipi_mboxes = kmem_zalloc(len, KM_SLEEP);
+	KASSERT(ipi_mboxes != NULL);
 }
 
 /*
