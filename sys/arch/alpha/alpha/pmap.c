@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.271 2020/09/03 02:09:09 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.272 2020/09/08 21:41:37 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.271 2020/09/03 02:09:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.272 2020/09/08 21:41:37 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -979,7 +979,7 @@ pmap_tlb_shootnow(const struct pmap_tlb_context * const tlbctx)
 		int backoff = SPINLOCK_BACKOFF_MIN;
 		u_int spins = 0;
 
-		while (atomic_load_relaxed(&tlb_context) != NULL) {
+		while (atomic_load_acquire(&tlb_context) != NULL) {
 			SPINLOCK_BACKOFF(backoff);
 			if (spins++ > 0x0fffffff) {
 				printf("TLB LOCAL MASK  = 0x%016lx\n",
@@ -994,7 +994,6 @@ pmap_tlb_shootnow(const struct pmap_tlb_context * const tlbctx)
 				panic("pmap_tlb_shootnow");
 			}
 		}
-		membar_consumer();
 	}
 	KASSERT(tlb_context == NULL);
 #endif /* MULTIPROCESSOR */
@@ -1025,8 +1024,7 @@ pmap_tlb_shootdown_ipi(struct cpu_info * const ci,
 	KASSERT(tlb_context != NULL);
 	pmap_tlb_invalidate(tlb_context, ci);
 	if (atomic_and_ulong_nv(&tlb_pending, ~(1UL << ci->ci_cpuid)) == 0) {
-		membar_producer();
-		atomic_store_relaxed(&tlb_context, NULL);
+		atomic_store_release(&tlb_context, NULL);
 	}
 }
 #endif /* MULTIPROCESSOR */
@@ -2275,7 +2273,6 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	/* Set the new PTE. */
 	const pt_entry_t opte = atomic_load_relaxed(pte);
 	atomic_store_relaxed(pte, npte);
-	PMAP_MP(membar_enter());
 
 	PMAP_STAT_INCR(pmap->pm_stats.resident_count, 1);
 	PMAP_STAT_INCR(pmap->pm_stats.wired_count, 1);
