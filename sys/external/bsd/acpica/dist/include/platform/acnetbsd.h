@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acnetbsd.h - OS specific defines, etc.
- *       $Revision: 1.20 $
+ *       $Revision: 1.21 $
  *
  *****************************************************************************/
 
@@ -65,9 +65,14 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/endian.h>
 #include <dev/acpi/acpica/acpi_func.h>
 
 #define asm         __asm
+
+#if BYTE_ORDER == BIG_ENDIAN
+#define ACPI_BIG_ENDIAN
+#endif
 
 #define ACPI_USE_NATIVE_DIVIDE
 #define ACPI_USE_NATIVE_MATH64
