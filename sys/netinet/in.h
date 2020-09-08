@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.110 2020/08/20 21:21:32 riastradh Exp $	*/
+/*	$NetBSD: in.h,v 1.111 2020/09/08 14:12:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -293,7 +293,7 @@ struct ip_opts {
 #define	IP_MINTTL		24   /* minimum TTL for packet or drop */
 #define	IP_PKTINFO		25   /* struct; set default src if/addr */
 #define	IP_RECVPKTINFO		26   /* int; receive dst if/addr w/dgram */
-
+#define	IP_BINDANY		27   /* bool: allow bind to any address */
 #define IP_SENDSRCADDR IP_RECVDSTADDR /* FreeBSD compatibility */
 
 /*

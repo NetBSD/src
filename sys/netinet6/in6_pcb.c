@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.166 2019/05/15 02:59:18 ozaki-r Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.167 2020/09/08 14:12:57 christos Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.166 2019/05/15 02:59:18 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.167 2020/09/08 14:12:57 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -235,7 +235,8 @@ in6_pcbbind_addr(struct in6pcb *in6p, struct sockaddr_in6 *sin6, struct lwp *l)
 			if (!IN_MULTICAST(sin.sin_addr.s_addr)) {
 				struct ifaddr *ifa;
 				ifa = ifa_ifwithaddr((struct sockaddr *)&sin);
-				if (ifa == NULL) {
+				if (ifa == NULL &&
+				    (in6p->in6p_flags & IN6P_BINDANY) == 0) {
 					error = EADDRNOTAVAIL;
 					goto out;
 				}
@@ -248,7 +249,8 @@ in6_pcbbind_addr(struct in6pcb *in6p, struct sockaddr_in6 *sin6, struct lwp *l)
 
 		if ((in6p->in6p_flags & IN6P_FAITH) == 0) {
 			ifa = ifa_ifwithaddr(sin6tosa(sin6));
-			if (ifa == NULL) {
+			if (ifa == NULL &&
+			    (in6p->in6p_flags & IN6P_BINDANY) == 0) {
 				error = EADDRNOTAVAIL;
 				goto out;
 			}
