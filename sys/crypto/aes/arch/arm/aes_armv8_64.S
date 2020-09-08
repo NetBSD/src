@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_armv8_64.S,v 1.12 2020/08/08 14:47:01 riastradh Exp $	*/
+/*	$NetBSD: aes_armv8_64.S,v 1.13 2020/09/08 23:57:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <aarch64/asm.h>
 
-RCSID("$NetBSD: aes_armv8_64.S,v 1.12 2020/08/08 14:47:01 riastradh Exp $")
+RCSID("$NetBSD: aes_armv8_64.S,v 1.13 2020/09/08 23:57:13 riastradh Exp $")
 
 	.arch_extension	aes
 
@@ -114,11 +114,11 @@ END(unshiftrows_rotword_3)
  *	Standard ABI calling convention.
  */
 ENTRY(aesarmv8_setenckey128)
-	ldr	q1, [x1]	/* q1 := master key */
+	ld1	{v1.16b}, [x1]	/* q1 := master key */
 
 	adrl	x4, unshiftrows_rotword_3
 	eor	v0.16b, v0.16b, v0.16b	/* q0 := 0 */
-	ldr	q16, [x4]	/* q16 := unshiftrows_rotword_3 table */
+	ld1	{v16.16b}, [x4]	/* q16 := unshiftrows_rotword_3 table */
 
 	str	q1, [x0], #0x10	/* store master key as first round key */
 	mov	x2, #10		/* round count */
@@ -171,14 +171,14 @@ END(aesarmv8_setenckey128)
  *	Standard ABI calling convention.
  */
 ENTRY(aesarmv8_setenckey192)
-	ldr	q1, [x1], #0x10	/* q1 := master key[0:128) */
-	ldr	d2, [x1]	/* d2 := master key[128:192) */
+	ld1	{v1.16b}, [x1], #0x10	/* q1 := master key[0:128) */
+	ld1	{v2.8b}, [x1]	/* d2 := master key[128:192) */
 
 	adrl	x4, unshiftrows_rotword_1
 	adrl	x5, unshiftrows_rotword_3
 	eor	v0.16b, v0.16b, v0.16b	/* q0 := 0 */
-	ldr	q16, [x4]	/* q16 := unshiftrows_rotword_1 */
-	ldr	q17, [x5]	/* q17 := unshiftrows_rotword_3 */
+	ld1	{v16.16b}, [x4]	/* q16 := unshiftrows_rotword_1 */
+	ld1	{v17.16b}, [x5]	/* q17 := unshiftrows_rotword_3 */
 
 	str	q1, [x0], #0x10	/* store master key[0:128) as round key */
 	mov	x2, #12		/* round count */
@@ -351,13 +351,13 @@ END(aesarmv8_setenckey192)
  */
 ENTRY(aesarmv8_setenckey256)
 	/* q1 := key[0:128), q2 := key[128:256) */
-	ldp	q1, q2, [x1], #0x20
+	ld1	{v1.16b-v2.16b}, [x1], #0x20
 
 	adrl	x4, unshiftrows_rotword_3
 	adrl	x5, unshiftrows_3
 	eor	v0.16b, v0.16b, v0.16b	/* q0 := 0 */
-	ldr	q16, [x4]	/* q16 := unshiftrows_rotword_3 */
-	ldr	q17, [x5]	/* q17 := unshiftrows_3 */
+	ld1	{v16.16b}, [x4]	/* q16 := unshiftrows_rotword_3 */
+	ld1	{v17.16b}, [x5]	/* q17 := unshiftrows_3 */
 
 	/* store master key as first two round keys */
 	stp	q1, q2, [x0], #0x20
@@ -461,9 +461,9 @@ END(aesarmv8_enctodec)
 ENTRY(aesarmv8_enc)
 	stp	fp, lr, [sp, #-16]!	/* push stack frame */
 	mov	fp, sp
-	ldr	q0, [x1]	/* q0 := ptxt */
+	ld1	{v0.16b}, [x1]	/* q0 := ptxt */
 	bl	aesarmv8_enc1	/* q0 := ctxt; trash x0/x3/q16 */
-	str	q0, [x2]	/* store ctxt */
+	st1	{v0.16b}, [x2]	/* store ctxt */
 	ldp	fp, lr, [sp], #16	/* pop stack frame */
 	ret
 END(aesarmv8_enc)
@@ -479,9 +479,9 @@ END(aesarmv8_enc)
 ENTRY(aesarmv8_dec)
 	stp	fp, lr, [sp, #-16]!	/* push stack frame */
 	mov	fp, sp
-	ldr	q0, [x1]	/* q0 := ctxt */
+	ld1	{v0.16b}, [x1]	/* q0 := ctxt */
 	bl	aesarmv8_dec1	/* q0 := ptxt; trash x0/x3/q16 */
-	str	q0, [x2]	/* store ptxt */
+	st1	{v0.16b}, [x2]	/* store ptxt */
 	ldp	fp, lr, [sp], #16	/* pop stack frame */
 	ret
 END(aesarmv8_dec)
@@ -503,17 +503,17 @@ ENTRY(aesarmv8_cbc_enc)
 	mov	fp, sp
 	mov	x9, x0			/* x9 := enckey */
 	mov	x10, x3			/* x10 := nbytes */
-	ldr	q0, [x4]		/* q0 := chaining value */
+	ld1	{v0.16b}, [x4]		/* q0 := chaining value */
 	_ALIGN_TEXT
-1:	ldr	q1, [x1], #0x10		/* q1 := plaintext block */
+1:	ld1	{v1.16b}, [x1], #0x10	/* q1 := plaintext block */
 	eor	v0.16b, v0.16b, v1.16b	/* q0 := cv ^ ptxt */
 	mov	x0, x9			/* x0 := enckey */
 	mov	x3, x5			/* x3 := nrounds */
 	bl	aesarmv8_enc1		/* q0 := ctxt; trash x0/x3/q16 */
 	subs	x10, x10, #0x10		/* count down nbytes */
-	str	q0, [x2], #0x10		/* store ciphertext block */
+	st1	{v0.16b}, [x2], #0x10	/* store ciphertext block */
 	b.ne	1b			/* repeat if x10 is nonzero */
-	str	q0, [x4]		/* store chaining value */
+	st1	{v0.16b}, [x4]		/* store chaining value */
 	ldp	fp, lr, [sp], #16	/* pop stack frame */
 2:	ret
 END(aesarmv8_cbc_enc)
@@ -533,18 +533,21 @@ END(aesarmv8_cbc_enc)
 ENTRY(aesarmv8_cbc_dec1)
 	stp	fp, lr, [sp, #-16]!	/* push stack frame */
 	mov	fp, sp
-	ldr	q24, [x4]		/* q24 := iv */
+	ld1	{v24.16b}, [x4]		/* q24 := iv */
 	mov	x9, x0			/* x9 := enckey */
 	mov	x10, x3			/* x10 := nbytes */
 	add	x1, x1, x3		/* x1 := pointer past end of in */
 	add	x2, x2, x3		/* x2 := pointer past end of out */
-	ldr	q0, [x1, #-0x10]!	/* q0 := last ciphertext block */
-	str	q0, [x4]		/* update iv */
+	sub	x1, x1, #0x10
+	ld1	{v0.16b}, [x1]		/* q0 := last ciphertext block */
+	st1	{v0.16b}, [x4]		/* update iv */
 	b	2f
 	_ALIGN_TEXT
-1:	ldr	q31, [x1, #-0x10]!	/* q31 := chaining value */
+1:	sub	x1, x1, #0x10
+	ld1	{v31.16b}, [x1]		/* q31 := chaining value */
+	sub	x2, x2, #0x10
 	eor	v0.16b, v0.16b, v31.16b	/* q0 := plaintext block */
-	str	q0, [x2, #-0x10]!	/* store plaintext block */
+	st1	{v0.16b}, [x2]		/* store plaintext block */
 	mov	v0.16b, v31.16b		/* move cv = ciphertext block */
 2:	mov	x0, x9			/* x0 := enckey */
 	mov	x3, x5			/* x3 := nrounds */
@@ -552,7 +555,8 @@ ENTRY(aesarmv8_cbc_dec1)
 	subs	x10, x10, #0x10		/* count down nbytes */
 	b.ne	1b			/* repeat if more blocks */
 	eor	v0.16b, v0.16b, v24.16b	/* q0 := first plaintext block */
-	str	q0, [x2, #-0x10]!	/* store first plaintext block */
+	sub	x2, x2, #0x10		/* store first plaintext block */
+	st1	{v0.16b}, [x2]
 	ldp	fp, lr, [sp], #16	/* pop stack frame */
 	ret
 END(aesarmv8_cbc_dec1)
@@ -571,21 +575,26 @@ END(aesarmv8_cbc_dec1)
 ENTRY(aesarmv8_cbc_dec8)
 	stp	fp, lr, [sp, #-16]!	/* push stack frame */
 	mov	fp, sp
-	ldr	q24, [x4]		/* q24 := iv */
+	ld1	{v24.16b}, [x4]		/* q24 := iv */
 	mov	x9, x0			/* x9 := enckey */
 	mov	x10, x3			/* x10 := nbytes */
 	add	x1, x1, x3		/* x1 := pointer past end of in */
 	add	x2, x2, x3		/* x2 := pointer past end of out */
-	ldp	q6, q7, [x1, #-0x20]!	/* q6, q7 := last ciphertext blocks */
-	str	q7, [x4]		/* update iv */
+	sub	x1, x1, #0x20
+	ld1	{v6.16b, v7.16b}, [x1]	/* q6, q7 := last ciphertext blocks */
+	st1	{v7.16b}, [x4]		/* update iv */
 	b	2f
 	_ALIGN_TEXT
-1:	ldp	q6, q7, [x1, #-0x20]!
+1:	sub	x1, x1, #0x20
+	ld1	{v6.16b, v7.16b}, [x1]
 	eor	v0.16b, v0.16b, v7.16b	/* q0 := pt0 */
-	stp	q0, q1, [x2, #-0x20]!
-2:	ldp	q4, q5, [x1, #-0x20]!
-	ldp	q2, q3, [x1, #-0x20]!
-	ldp	q0, q1, [x1, #-0x20]!
+	sub	x2, x2, #0x20
+	st1	{v0.16b, v1.16b}, [x2]
+2:	sub	x1, x1, #0x20
+	ld1	{v4.16b-v5.16b}, [x1]
+	sub	x1, x1, #0x40
+	ld1	{v0.16b-v3.16b}, [x1]
+
 	mov	v31.16b, v6.16b		/* q[24+i] := cv[i], 0<i<8 */
 	mov	v30.16b, v5.16b
 	mov	v29.16b, v4.16b
@@ -605,12 +614,14 @@ ENTRY(aesarmv8_cbc_dec8)
 	eor	v2.16b, v2.16b, v26.16b
 	eor	v1.16b, v1.16b, v25.16b
 	subs	x10, x10, #0x80		/* count down nbytes */
-	stp	q6, q7, [x2, #-0x20]!	/* store plaintext blocks */
-	stp	q4, q5, [x2, #-0x20]!
-	stp	q2, q3, [x2, #-0x20]!
+	sub	x2, x2, #0x20		/* store plaintext blocks */
+	st1	{v6.16b-v7.16b}, [x2]
+	sub	x2, x2, #0x40
+	st1	{v2.16b-v5.16b}, [x2]
 	b.ne	1b			/* repeat if there's more */
 	eor	v0.16b, v0.16b, v24.16b	/* q0 := pt0 */
-	stp	q0, q1, [x2, #-0x20]!	/* store first two plaintext blocks */
+	sub	x2, x2, #0x20
+	st1	{v0.16b, v1.16b}, [x2]	/* store first two plaintext blocks */
 	ldp	fp, lr, [sp], #16	/* pop stack frame */
 	ret
 END(aesarmv8_cbc_dec8)
@@ -632,19 +643,19 @@ ENTRY(aesarmv8_xts_enc1)
 	mov	fp, sp
 	mov	x9, x0			/* x9 := enckey */
 	mov	x10, x3			/* x10 := nbytes */
-	ldr	q31, [x4]		/* q31 := tweak */
+	ld1	{v31.16b}, [x4]		/* q31 := tweak */
 	_ALIGN_TEXT
-1:	ldr	q0, [x1], #0x10		/* q0 := ptxt */
+1:	ld1	{v0.16b}, [x1], #0x10	/* q0 := ptxt */
 	mov	x0, x9			/* x0 := enckey */
 	mov	x3, x5			/* x3 := nrounds */
 	eor	v0.16b, v0.16b, v31.16b	/* q0 := ptxt ^ tweak */
 	bl	aesarmv8_enc1		/* q0 := AES(...); trash x0/x3/q16 */
 	eor	v0.16b, v0.16b, v31.16b	/* q0 := AES(ptxt ^ tweak) ^ tweak */
-	str	q0, [x2], #0x10		/* store ciphertext block */
+	st1	{v0.16b}, [x2], #0x10	/* store ciphertext block */
 	bl	aesarmv8_xts_mulx	/* q31 *= x; trash x0/q0/q1 */
 	subs	x10, x10, #0x10		/* count down nbytes */
 	b.ne	1b			/* repeat if more blocks */
-	str	q31, [x4]		/* update tweak */
+	st1	{v31.16b}, [x4]		/* update tweak */
 	ldp	fp, lr, [sp], #16	/* pop stack frame */
 	ret
 END(aesarmv8_xts_enc1)
@@ -665,7 +676,7 @@ ENTRY(aesarmv8_xts_enc8)
 	mov	fp, sp
 	mov	x9, x0			/* x9 := enckey */
 	mov	x10, x3			/* x10 := nbytes */
-	ldr	q31, [x4]		/* q31 := tweak */
+	ld1	{v31.16b}, [x4]		/* q31 := tweak */
 	_ALIGN_TEXT
 1:	mov	v24.16b, v31.16b	/* q24 := tweak[0] */
 	bl	aesarmv8_xts_mulx	/* q31 *= x; trash x0/q0/q1 */
@@ -682,10 +693,10 @@ ENTRY(aesarmv8_xts_enc8)
 	mov	v30.16b, v31.16b	/* q30 := tweak[6] */
 	bl	aesarmv8_xts_mulx	/* q31 *= x; trash x0/q0/q1 */
 					/* q31 := tweak[7] */
-	ldp	q0, q1, [x1], #0x20	/* q[i] := ptxt[i] */
-	ldp	q2, q3, [x1], #0x20
-	ldp	q4, q5, [x1], #0x20
-	ldp	q6, q7, [x1], #0x20
+	ld1	{v0.16b,v1.16b}, [x1], #0x20	/* q[i] := ptxt[i] */
+	ld1	{v2.16b,v3.16b}, [x1], #0x20
+	ld1	{v4.16b,v5.16b}, [x1], #0x20
+	ld1	{v6.16b,v7.16b}, [x1], #0x20
 	eor	v0.16b, v0.16b, v24.16b	/* q[i] := ptxt[i] ^ tweak[i] */
 	eor	v1.16b, v1.16b, v25.16b
 	eor	v2.16b, v2.16b, v26.16b
@@ -705,14 +716,14 @@ ENTRY(aesarmv8_xts_enc8)
 	eor	v5.16b, v5.16b, v29.16b
 	eor	v6.16b, v6.16b, v30.16b
 	eor	v7.16b, v7.16b, v31.16b
-	stp	q0, q1, [x2], #0x20	/* store ciphertext blocks */
-	stp	q2, q3, [x2], #0x20
-	stp	q4, q5, [x2], #0x20
-	stp	q6, q7, [x2], #0x20
+	st1	{v0.16b,v1.16b}, [x2], #0x20	/* store ciphertext blocks */
+	st1	{v2.16b,v3.16b}, [x2], #0x20
+	st1	{v4.16b,v5.16b}, [x2], #0x20
+	st1	{v6.16b,v7.16b}, [x2], #0x20
 	bl	aesarmv8_xts_mulx	/* q31 *= x; trash x0/q0/q1 */
 	subs	x10, x10, #0x80		/* count down nbytes */
 	b.ne	1b			/* repeat if more block groups */
-	str	q31, [x4]		/* update tweak */
+	st1	{v31.16b}, [x4]		/* update tweak */
 	ldp	fp, lr, [sp], #16	/* pop stack frame */
 	ret
 END(aesarmv8_xts_enc8)
@@ -734,19 +745,19 @@ ENTRY(aesarmv8_xts_dec1)
 	mov	fp, sp
 	mov	x9, x0			/* x9 := deckey */
 	mov	x10, x3			/* x10 := nbytes */
-	ldr	q31, [x4]		/* q31 := tweak */
+	ld1	{v31.16b}, [x4]		/* q31 := tweak */
 	_ALIGN_TEXT
-1:	ldr	q0, [x1], #0x10		/* q0 := ctxt */
+1:	ld1	{v0.16b}, [x1], #0x10	/* q0 := ctxt */
 	mov	x0, x9			/* x0 := deckey */
 	mov	x3, x5			/* x3 := nrounds */
 	eor	v0.16b, v0.16b, v31.16b	/* q0 := ctxt ^ tweak */
 	bl	aesarmv8_dec1		/* q0 := AES(...); trash x0/x3/q16 */
 	eor	v0.16b, v0.16b, v31.16b	/* q0 := AES(ctxt ^ tweak) ^ tweak */
-	str	q0, [x2], #0x10		/* store plaintext block */
+	st1	{v0.16b}, [x2], #0x10	/* store plaintext block */
 	bl	aesarmv8_xts_mulx	/* q31 *= x; trash x0/q0/q1 */
 	subs	x10, x10, #0x10		/* count down nbytes */
 	b.ne	1b			/* repeat if more blocks */
-	str	q31, [x4]		/* update tweak */
+	st1	{v31.16b}, [x4]		/* update tweak */
 	ldp	fp, lr, [sp], #16	/* pop stack frame */
 	ret
 END(aesarmv8_xts_dec1)
@@ -767,7 +778,7 @@ ENTRY(aesarmv8_xts_dec8)
 	mov	fp, sp
 	mov	x9, x0			/* x9 := deckey */
 	mov	x10, x3			/* x10 := nbytes */
-	ldr	q31, [x4]		/* q31 := tweak */
+	ld1	{v31.16b}, [x4]		/* q31 := tweak */
 	_ALIGN_TEXT
 1:	mov	v24.16b, v31.16b	/* q24 := tweak[0] */
 	bl	aesarmv8_xts_mulx	/* q31 *= x; trash x0/q0/q1 */
@@ -784,10 +795,8 @@ ENTRY(aesarmv8_xts_dec8)
 	mov	v30.16b, v31.16b	/* q30 := tweak[6] */
 	bl	aesarmv8_xts_mulx	/* q31 *= x; trash x0/q0/q1 */
 					/* q31 := tweak[7] */
-	ldp	q0, q1, [x1], #0x20	/* q[i] := ctxt[i] */
-	ldp	q2, q3, [x1], #0x20
-	ldp	q4, q5, [x1], #0x20
-	ldp	q6, q7, [x1], #0x20
+	ld1	{v0.16b-v3.16b}, [x1], #0x40	/* q[i] := ctxt[i] */
+	ld1	{v4.16b-v7.16b}, [x1], #0x40
 	eor	v0.16b, v0.16b, v24.16b	/* q[i] := ctxt[i] ^ tweak[i] */
 	eor	v1.16b, v1.16b, v25.16b
 	eor	v2.16b, v2.16b, v26.16b
@@ -807,14 +816,12 @@ ENTRY(aesarmv8_xts_dec8)
 	eor	v5.16b, v5.16b, v29.16b
 	eor	v6.16b, v6.16b, v30.16b
 	eor	v7.16b, v7.16b, v31.16b
-	stp	q0, q1, [x2], #0x20	/* store plaintext blocks */
-	stp	q2, q3, [x2], #0x20
-	stp	q4, q5, [x2], #0x20
-	stp	q6, q7, [x2], #0x20
+	st1	{v0.16b-v3.16b}, [x2], #0x40	/* store plaintext blocks */
+	st1	{v4.16b-v7.16b}, [x2], #0x40
 	bl	aesarmv8_xts_mulx	/* q31 *= x; trash x0/q0/q1 */
 	subs	x10, x10, #0x80		/* count down nbytes */
 	b.ne	1b			/* repeat if more block groups */
-	str	q31, [x4]		/* update tweak */
+	st1	{v31.16b}, [x4]		/* update tweak */
 	ldp	fp, lr, [sp], #16	/* pop stack frame */
 	ret
 END(aesarmv8_xts_dec8)
@@ -838,7 +845,7 @@ aesarmv8_xts_mulx:
 	 */
 	adrl	x0, xtscarry
 	cmlt	v1.2d, v31.2d, #0 /* v1.2d[i] := -1 if v31.2d[i] < 0, else 0 */
-	ldr	q0, [x0]		/* q0 := xtscarry */
+	ld1	{v0.16b}, [x0]		/* q0 := xtscarry */
 	ext	v1.16b, v1.16b, v1.16b, #8 /* swap halves of q1 */
 	shl	v31.2d, v31.2d, #1	/* shift */
 	and	v0.16b, v0.16b, v1.16b	/* copy xtscarry according to mask */
@@ -863,9 +870,9 @@ END(xtscarry)
 ENTRY(aesarmv8_xts_update)
 	stp	fp, lr, [sp, #-16]!	/* push stack frame */
 	mov	fp, sp
-	ldr	q31, [x0]		/* load tweak */
+	ld1	{v31.16b}, [x0]		/* load tweak */
 	bl	aesarmv8_xts_mulx	/* q31 *= x; trash x0/q0/q1 */
-	str	q31, [x1]		/* store tweak */
+	st1	{v31.16b}, [x1]		/* store tweak */
 	ldp	fp, lr, [sp], #16	/* pop stack frame */
 	ret
 END(aesarmv8_xts_update)
@@ -884,18 +891,18 @@ END(aesarmv8_xts_update)
 ENTRY(aesarmv8_cbcmac_update1)
 	stp	fp, lr, [sp, #-16]!	/* push stack frame */
 	mov	fp, sp
-	ldr	q0, [x3]		/* q0 := initial authenticator */
+	ld1	{v0.16b}, [x3]		/* q0 := initial authenticator */
 	mov	x9, x0			/* x9 := enckey */
 	mov	x5, x3			/* x5 := &auth (enc1 trashes x3) */
 	_ALIGN_TEXT
-1:	ldr	q1, [x1], #0x10		/* q1 := plaintext block */
+1:	ld1	{v1.16b}, [x1], #0x10	/* q1 := plaintext block */
 	mov	x0, x9			/* x0 := enckey */
 	mov	x3, x4			/* x3 := nrounds */
 	eor	v0.16b, v0.16b, v1.16b	/* q0 := auth ^ ptxt */
 	bl	aesarmv8_enc1		/* q0 := auth'; trash x0/x3/q16 */
 	subs	x2, x2, #0x10		/* count down nbytes */
 	b.ne	1b			/* repeat if x10 is nonzero */
-	str	q0, [x5]		/* store updated authenticator */
+	st1	{v0.16b}, [x5]		/* store updated authenticator */
 	ldp	fp, lr, [sp], #16	/* pop stack frame */
 	ret
 END(aesarmv8_cbcmac_update1)
@@ -914,14 +921,15 @@ END(aesarmv8_cbcmac_update1)
 ENTRY(aesarmv8_ccm_enc1)
 	stp	fp, lr, [sp, #-16]!	/* push stack frame */
 	mov	fp, sp
-	ldp	q0, q2, [x4]		/* q0 := auth, q2 := ctr (be) */
+	ld1	{v0.16b, v1.16b}, [x4]	/* q0 := auth, q2 := ctr (be) */
+	mov	v2.16b, v1.16b
 	adrl	x11, ctr32_inc		/* x11 := &ctr32_inc */
 	ld1	{v5.4s}, [x11]		/* q5 := (0,0,0,1) (host-endian) */
 	mov	x9, x0			/* x9 := enckey */
 	mov	x10, x3			/* x10 := nbytes */
 	rev32	v2.16b, v2.16b		/* q2 := ctr (host-endian) */
 	_ALIGN_TEXT
-1:	ldr	q3, [x1], #0x10		/* q3 := plaintext block */
+1:	ld1	{v3.16b}, [x1], #0x10	/* q3 := plaintext block */
 	add	v2.4s, v2.4s, v5.4s	/* increment ctr (32-bit) */
 	mov	x0, x9			/* x0 := enckey */
 	mov	x3, x5			/* x3 := nrounds */
@@ -931,10 +939,11 @@ ENTRY(aesarmv8_ccm_enc1)
 					 * trash x0/x3/q16 */
 	eor	v3.16b, v1.16b, v3.16b	/* q3 := ciphertext block */
 	subs	x10, x10, #0x10		/* count down bytes */
-	str	q3, [x2], #0x10		/* store ciphertext block */
+	st1	{v3.16b}, [x2], #0x10	/* store ciphertext block */
 	b.ne	1b			/* repeat if more blocks */
 	rev32	v2.16b, v2.16b		/* q2 := ctr (big-endian) */
-	stp	q0, q2, [x4]		/* store updated auth/ctr */
+	mov	v1.16b, v2.16b		/* store updated auth/ctr */
+	st1	{v0.16b-v1.16b}, [x4]
 	ldp	fp, lr, [sp], #16	/* pop stack frame */
 	ret
 END(aesarmv8_ccm_enc1)
@@ -953,7 +962,7 @@ END(aesarmv8_ccm_enc1)
 ENTRY(aesarmv8_ccm_dec1)
 	stp	fp, lr, [sp, #-16]!	/* push stack frame */
 	mov	fp, sp
-	ldp	q1, q2, [x4]		/* q1 := auth, q2 := ctr (be) */
+	ld1	{v1.16b, v2.16b}, [x4]	/* q1 := auth, q2 := ctr (be) */
 	adrl	x11, ctr32_inc		/* x11 := &ctr32_inc */
 	ld1	{v5.4s}, [x11]		/* q5 := (0,0,0,1) (host-endian) */
 	mov	x9, x0			/* x9 := enckey */
@@ -964,7 +973,7 @@ ENTRY(aesarmv8_ccm_dec1)
 	add	v2.4s, v2.4s, v5.4s	/* increment ctr (32-bit) */
 	mov	x3, x5			/* x3 := nrounds */
 	rev32	v0.16b, v2.16b		/* q0 := ctr (big-endian) */
-	ldr	q3, [x1], #0x10		/* q3 := ctxt */
+	ld1	{v3.16b}, [x1], #0x10	/* q3 := ctxt */
 	bl	aesarmv8_enc1		/* q0 := pad; trash x0/x3/q16 */
 	b	2f
 
@@ -980,12 +989,12 @@ ENTRY(aesarmv8_ccm_dec1)
 	mov	x0, x9			/* x0 := enckey */
 	mov	x3, x5			/* x3 := nrounds */
 	rev32	v0.16b, v2.16b		/* q0 := ctr (big-endian) */
-	ldr	q3, [x1], #0x10		/* q3 := ctxt */
+	ld1	{v3.16b}, [x1], #0x10	/* q3 := ctxt */
 	bl	aesarmv8_enc2		/* q0 := pad, q1 := auth';
 					 * trash x0/x3/q16 */
 2:	eor	v3.16b, v0.16b, v3.16b	/* q3 := plaintext block */
 	subs	x10, x10, #0x10
-	str	q3, [x2], #0x10		/* store plaintext */
+	st1	{v3.16b}, [x2], #0x10		/* store plaintext */
 	eor	v1.16b, v1.16b, v3.16b	/* q1 := auth ^ ptxt */
 	b.ne	1b
 
@@ -997,7 +1006,8 @@ ENTRY(aesarmv8_ccm_dec1)
 	mov	v0.16b, v1.16b		/* q0 := auth ^ ptxt */
 	bl	aesarmv8_enc1		/* q0 := auth'; trash x0/x3/q16 */
 
-	stp	q0, q2, [x4]		/* store updated auth/ctr */
+	mov	v1.16b, v2.16b		/* store updated auth/ctr */
+	st1	{v0.16b-v1.16b}, [x4]
 	ldp	fp, lr, [sp], #16	/* pop stack frame */
 	ret
 END(aesarmv8_ccm_dec1)
