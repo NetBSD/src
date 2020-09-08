@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.112 2020/09/04 21:08:44 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.113 2020/09/08 14:51:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.112 2020/09/04 21:08:44 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.113 2020/09/08 14:51:43 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.112 2020/09/04 21:08:44 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.113 2020/09/08 14:51:43 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -386,7 +386,6 @@ static const char *
 CondGetString(Boolean doEval, Boolean *quoted, void **freeIt, Boolean strictLHS)
 {
     Buffer buf;
-    const char *cp;
     const char *str;
     int len;
     Boolean qt;
@@ -455,12 +454,8 @@ CondGetString(Boolean doEval, Boolean *quoted, void **freeIt, Boolean strictLHS)
 		 strchr("!=><)", *condExpr))) {
 		goto cleanup;
 	    }
-	    /*
-	     * Nope, we better copy str to buf
-	     */
-	    for (cp = str; *cp; cp++) {
-		Buf_AddByte(&buf, *cp);
-	    }
+
+	    Buf_AddStr(&buf, str);
 	    if (*freeIt) {
 		free(*freeIt);
 		*freeIt = NULL;
