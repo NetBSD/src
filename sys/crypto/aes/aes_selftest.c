@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_selftest.c,v 1.5 2020/07/25 22:36:42 riastradh Exp $	*/
+/*	$NetBSD: aes_selftest.c,v 1.6 2020/09/08 22:48:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_selftest.c,v 1.5 2020/07/25 22:36:42 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_selftest.c,v 1.6 2020/09/08 22:48:24 riastradh Exp $");
 
 #ifdef _KERNEL
 
@@ -210,7 +210,7 @@ aes_selftest_encdec_cbc(const struct aes_impl *impl)
 	uint8_t in[144];
 	uint8_t outbuf[146] = { [0] = 0x1a, [145] = 0x1a }, *out = outbuf + 1;
 	uint8_t iv0[16], iv[16];
-	unsigned i;
+	unsigned i, j;
 
 	for (i = 0; i < 32; i++)
 		key[i] = i;
@@ -237,21 +237,26 @@ aes_selftest_encdec_cbc(const struct aes_impl *impl)
 			    "AES-%u-CBC dec", aes_keybits[i]);
 
 		/* Try incrementally, with IV update.  */
-		memcpy(iv, iv0, 16);
-		impl->ai_cbc_enc(&enc, in, out, 16, iv, aes_nrounds[i]);
-		impl->ai_cbc_enc(&enc, in + 16, out + 16, 128, iv,
-		    aes_nrounds[i]);
-		if (memcmp(out, expected[i], 144))
-			return aes_selftest_fail(impl, out, expected[i], 144,
-			    "AES-%u-CBC enc incremental", aes_keybits[i]);
+		for (j = 0; j < 144; j += 16) {
+			memcpy(iv, iv0, 16);
+			impl->ai_cbc_enc(&enc, in, out, j, iv, aes_nrounds[i]);
+			impl->ai_cbc_enc(&enc, in + j, out + j, 144 - j, iv,
+			    aes_nrounds[i]);
+			if (memcmp(out, expected[i], 144))
+				return aes_selftest_fail(impl, out,
+				    expected[i], 144, "AES-%u-CBC enc inc %u",
+				    aes_keybits[i], j);
 
-		memcpy(iv, iv0, 16);
-		impl->ai_cbc_dec(&dec, out, out, 128, iv, aes_nrounds[i]);
-		impl->ai_cbc_dec(&dec, out + 128, out + 128, 16, iv,
-		    aes_nrounds[i]);
-		if (memcmp(out, in, 144))
-			return aes_selftest_fail(impl, out, in, 144,
-			    "AES-%u-CBC dec incremental", aes_keybits[i]);
+			memcpy(iv, iv0, 16);
+			impl->ai_cbc_dec(&dec, out, out, j, iv,
+			    aes_nrounds[i]);
+			impl->ai_cbc_dec(&dec, out + j, out + j, 144 - j, iv,
+			    aes_nrounds[i]);
+			if (memcmp(out, in, 144))
+				return aes_selftest_fail(impl, out,
+				    in, 144, "AES-%u-CBC dec inc %u",
+				    aes_keybits[i], j);
+		}
 	}
 
 	if (outbuf[0] != 0x1a)
