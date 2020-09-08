@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.68 2020/08/28 07:01:57 riastradh Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.69 2020/09/08 14:12:57 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -131,6 +131,7 @@ struct inpcb {
 					 */
 #define	INP_RECVTTL		0x0800	/* receive incoming IP TTL */
 #define	INP_RECVPKTINFO		0x1000	/* receive IP dst if/addr */
+#define	INP_BINDANY		0x2000	/* allow bind to any address */
 #define	INP_CONTROLOPTS		(INP_RECVOPTS|INP_RECVRETOPTS|INP_RECVDSTADDR|\
 				INP_RECVIF|INP_RECVTTL|INP_RECVPKTINFO)
 
@@ -153,7 +154,8 @@ struct vestigial_inpcb;
 
 void	in_losing(struct inpcb *);
 int	in_pcballoc(struct socket *, void *);
-int	in_pcbbindableaddr(struct sockaddr_in *, kauth_cred_t);
+int	in_pcbbindableaddr(const struct inpcb *, struct sockaddr_in *,
+    kauth_cred_t);
 int	in_pcbbind(void *, struct sockaddr_in *, struct lwp *);
 int	in_pcbconnect(void *, struct sockaddr_in *, struct lwp *);
 void	in_pcbdetach(void *);
