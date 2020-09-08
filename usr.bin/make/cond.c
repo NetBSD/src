@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.115 2020/09/08 18:06:27 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.116 2020/09/08 18:10:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.115 2020/09/08 18:06:27 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.116 2020/09/08 18:10:34 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.115 2020/09/08 18:06:27 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.116 2020/09/08 18:10:34 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -171,6 +171,13 @@ CondLexer_PushBack(CondLexer *lex, Token t)
     assert(t != TOK_NONE);
 
     lex->curr = t;
+}
+
+static void
+CondLexer_SkipWhitespace(CondLexer *lex)
+{
+    while (isspace((unsigned char)lex->condExpr[0]))
+	lex->condExpr++;
 }
 
 /* Parse the argument of a built-in function.
@@ -538,11 +545,7 @@ compare_expression(CondLexer *lex, Boolean doEval)
     if (!lhs)
 	goto done;
 
-    /*
-     * Skip whitespace to get to the operator
-     */
-    while (isspace((unsigned char)*lex->condExpr))
-	lex->condExpr++;
+    CondLexer_SkipWhitespace(lex);
 
     /*
      * Make sure the operator is a valid one. If it isn't a
@@ -586,8 +589,7 @@ compare_expression(CondLexer *lex, Boolean doEval)
 	goto done;
     }
 
-    while (isspace((unsigned char)*lex->condExpr))
-	lex->condExpr++;
+    CondLexer_SkipWhitespace(lex);
 
     if (*lex->condExpr == '\0') {
 	Parse_Error(PARSE_WARNING,
