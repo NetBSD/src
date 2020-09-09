@@ -40,18 +40,18 @@
 #define HAVE_CALLOC 1
 
 /* Define to 1 if you have the `canonicalize_file_name' function. */
-#define HAVE_CANONICALIZE_FILE_NAME 1
+/* #undef HAVE_CANONICALIZE_FILE_NAME */
 
 /* Define to 1 if you have the `clock' function. */
 #define HAVE_CLOCK 1
 
 /* Define to 1 if you have the declaration of `asprintf', and to 0 if you
    don't. */
-#define HAVE_DECL_ASPRINTF 0
+#define HAVE_DECL_ASPRINTF 1
 
 /* Define to 1 if you have the declaration of `basename(char *)', and to 0 if
    you don't. */
-#define HAVE_DECL_BASENAME 1
+#define HAVE_DECL_BASENAME 0
 
 /* Define to 1 if you have the declaration of `calloc', and to 0 if you don't.
    */
@@ -62,11 +62,11 @@
 
 /* Define to 1 if you have the declaration of `getenv', and to 0 if you don't.
    */
-#define HAVE_DECL_GETENV 0
+#define HAVE_DECL_GETENV 1
 
 /* Define to 1 if you have the declaration of `getopt', and to 0 if you don't.
    */
-#define HAVE_DECL_GETOPT 0
+#define HAVE_DECL_GETOPT 1
 
 /* Define to 1 if you have the declaration of `malloc', and to 0 if you don't.
    */
@@ -74,35 +74,35 @@
 
 /* Define to 1 if you have the declaration of `realloc', and to 0 if you
    don't. */
-#define HAVE_DECL_REALLOC 0
+#define HAVE_DECL_REALLOC 1
 
 /* Define to 1 if you have the declaration of `sbrk', and to 0 if you don't.
    */
-#define HAVE_DECL_SBRK 0
+#define HAVE_DECL_SBRK 1
 
 /* Define to 1 if you have the declaration of `snprintf', and to 0 if you
    don't. */
-#define HAVE_DECL_SNPRINTF 0
+#define HAVE_DECL_SNPRINTF 1
 
 /* Define to 1 if you have the declaration of `strnlen', and to 0 if you
    don't. */
-#define HAVE_DECL_STRNLEN 0
+#define HAVE_DECL_STRNLEN 1
 
 /* Define to 1 if you have the declaration of `strtol', and to 0 if you don't.
    */
-#define HAVE_DECL_STRTOL 0
+#define HAVE_DECL_STRTOL 1
 
 /* Define to 1 if you have the declaration of `strtoll', and to 0 if you
    don't. */
-#define HAVE_DECL_STRTOLL 0
+#define HAVE_DECL_STRTOLL 1
 
 /* Define to 1 if you have the declaration of `strtoul', and to 0 if you
    don't. */
-#define HAVE_DECL_STRTOUL 0
+#define HAVE_DECL_STRTOUL 1
 
 /* Define to 1 if you have the declaration of `strtoull', and to 0 if you
    don't. */
-#define HAVE_DECL_STRTOULL 0
+#define HAVE_DECL_STRTOULL 1
 
 /* Define to 1 if you have the declaration of `strverscmp', and to 0 if you
    don't. */
@@ -114,7 +114,7 @@
 
 /* Define to 1 if you have the declaration of `vsnprintf', and to 0 if you
    don't. */
-#define HAVE_DECL_VSNPRINTF 0
+#define HAVE_DECL_VSNPRINTF 1
 
 /* Define to 1 if you have the `dup3' function. */
 #define HAVE_DUP3 1
@@ -126,7 +126,7 @@
 #define HAVE_FFS 1
 
 /* Define to 1 if you have the `fork' function. */
-/* #undef HAVE_FORK */
+#define HAVE_FORK 1
 
 /* Define to 1 if you have the `getcwd' function. */
 #define HAVE_GETCWD 1
@@ -135,7 +135,7 @@
 #define HAVE_GETPAGESIZE 1
 
 /* Define to 1 if you have the `getrlimit' function. */
-/* #undef HAVE_GETRLIMIT */
+#define HAVE_GETRLIMIT 1
 
 /* Define to 1 if you have the `getrusage' function. */
 #define HAVE_GETRUSAGE 1
@@ -201,13 +201,13 @@
 /* #undef HAVE_ON_EXIT */
 
 /* Define to 1 if you have the `pipe2' function. */
-/* #undef HAVE_PIPE2 */
+#define HAVE_PIPE2 1
 
 /* Define to 1 if you have the <process.h> header file. */
 /* #undef HAVE_PROCESS_H */
 
 /* Define to 1 if you have the `psignal' function. */
-/* #undef HAVE_PSIGNAL */
+#define HAVE_PSIGNAL 1
 
 /* Define to 1 if you have the `pstat_getdynamic' function. */
 /* #undef HAVE_PSTAT_GETDYNAMIC */
@@ -222,7 +222,7 @@
 #define HAVE_RANDOM 1
 
 /* Define to 1 if you have the `realpath' function. */
-/* #undef HAVE_REALPATH */
+#define HAVE_REALPATH 1
 
 /* Define to 1 if you have the `rename' function. */
 #define HAVE_RENAME 1
@@ -240,7 +240,7 @@
 #define HAVE_SETPROCTITLE 1
 
 /* Define to 1 if you have the `setrlimit' function. */
-/* #undef HAVE_SETRLIMIT */
+#define HAVE_SETRLIMIT 1
 
 /* Define to 1 if you have the `sigsetmask' function. */
 #define HAVE_SIGSETMASK 1
@@ -279,7 +279,7 @@
 #define HAVE_STRDUP 1
 
 /* Define to 1 if you have the `strerror' function. */
-/* #undef HAVE_STRERROR */
+#define HAVE_STRERROR 1
 
 /* Define to 1 if you have the <strings.h> header file. */
 #define HAVE_STRINGS_H 1
@@ -300,10 +300,10 @@
 #define HAVE_STRRCHR 1
 
 /* Define to 1 if you have the `strsignal' function. */
-/* #undef HAVE_STRSIGNAL */
+#define HAVE_STRSIGNAL 1
 
 /* Define to 1 if you have the `strstr' function. */
-/* #undef HAVE_STRSTR */
+#define HAVE_STRSTR 1
 
 /* Define to 1 if you have the `strtod' function. */
 #define HAVE_STRTOD 1
@@ -312,22 +312,22 @@
 #define HAVE_STRTOL 1
 
 /* Define to 1 if you have the `strtoll' function. */
-/* #undef HAVE_STRTOLL */
+#define HAVE_STRTOLL 1
 
 /* Define to 1 if you have the `strtoul' function. */
-/* #undef HAVE_STRTOUL */
+#define HAVE_STRTOUL 1
 
 /* Define to 1 if you have the `strtoull' function. */
-/* #undef HAVE_STRTOULL */
+#define HAVE_STRTOULL 1
 
 /* Define to 1 if you have the `strverscmp' function. */
 /* #undef HAVE_STRVERSCMP */
 
 /* Define to 1 if you have the `sysconf' function. */
-/* #undef HAVE_SYSCONF */
+#define HAVE_SYSCONF 1
 
 /* Define to 1 if you have the `sysctl' function. */
-/* #undef HAVE_SYSCTL */
+#define HAVE_SYSCTL 1
 
 /* Define to 1 if you have the `sysmp' function. */
 /* #undef HAVE_SYSMP */
@@ -342,7 +342,7 @@
 #define HAVE_SYS_MMAN_H 1
 
 /* Define if you have the sys_nerr variable. */
-/* #undef HAVE_SYS_NERR */
+#define HAVE_SYS_NERR 1
 
 /* Define to 1 if you have the <sys/param.h> header file. */
 #define HAVE_SYS_PARAM_H 1
@@ -357,7 +357,7 @@
 #define HAVE_SYS_RESOURCE_H 1
 
 /* Define if you have the sys_siglist variable. */
-/* #undef HAVE_SYS_SIGLIST */
+#define HAVE_SYS_SIGLIST 1
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
@@ -396,7 +396,7 @@
 #define HAVE_TIME_H 1
 
 /* Define to 1 if you have the `tmpnam' function. */
-/* #undef HAVE_TMPNAM */
+#define HAVE_TMPNAM 1
 
 /* Define if you have the \`uintptr_t' type. */
 #define HAVE_UINTPTR_T 1
@@ -414,10 +414,10 @@
 /* #undef HAVE_VFORK_H */
 
 /* Define to 1 if you have the `vfprintf' function. */
-/* #undef HAVE_VFPRINTF */
+#define HAVE_VFPRINTF 1
 
 /* Define to 1 if you have the `vprintf' function. */
-/* #undef HAVE_VPRINTF */
+#define HAVE_VPRINTF 1
 
 /* Define to 1 if you have the `vsprintf' function. */
 #define HAVE_VSPRINTF 1
@@ -432,7 +432,7 @@
 #define HAVE_WAITPID 1
 
 /* Define to 1 if `fork' works. */
-/* #undef HAVE_WORKING_FORK */
+#define HAVE_WORKING_FORK 1
 
 /* Define to 1 if `vfork' works. */
 #define HAVE_WORKING_VFORK 1
@@ -444,7 +444,7 @@
 /* #undef HAVE__SYSTEM_CONFIGURATION */
 
 /* Define to 1 if you have the `__fsetlocking' function. */
-#define HAVE___FSETLOCKING 1
+/* #undef HAVE___FSETLOCKING */
 
 /* Define if canonicalize_file_name is not declared in system header files. */
 #define NEED_DECLARATION_CANONICALIZE_FILE_NAME 1
