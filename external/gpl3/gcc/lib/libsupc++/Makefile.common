@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.15 2019/10/04 08:51:33 mrg Exp $
+#	$NetBSD: Makefile.common,v 1.16 2020/09/09 09:49:16 mrg Exp $
 
 DIST=		${GCCDIST}
 GNUHOSTDIST=	${DIST}
@@ -15,7 +15,7 @@ LIBSTDCXX_MACHINE_ARCH=${GCC_MACHINE_ARCH}
 # Make sure we get G_*_SOURCES, etc.*, for the .for loops
 .include "${.CURDIR}/../libstdc++-v3/arch/${LIBSTDCXX_MACHINE_ARCH}/defs.mk"
 
-LIBSTDCXXSRCS=	${G_SRC_SOURCES} ${G_CPP98_SOURCES} ${G_CPP11_SOURCES}
+LIBSTDCXXSRCS=	${G_SRC_SOURCES} ${G_CPP98_SOURCES} ${G_CPP11_SOURCES} ${G_CPP17_SOURCES}
 # XXX XXX dir.o doesn't have <deque> stuff properly, leave it out for now
 #LIBSTDCXXSRCS+=	${G_FILESYSTEM_SOURCES}
 
@@ -73,3 +73,15 @@ STD_GNU1Z=	\
 .for _f in ${STD_GNU1Z}
 COPTS.${_f}+=	-std=gnu++1z
 .endfor
+
+.for _f in ${G_CPP17_SOURCES}
+COPTS.${_f}+=	-std=gnu++17 -fimplicit-templates
+.endfor
+
+dir.cc ops.cc fs_dir.cc fs_ops.cc: largefile-config.h
+
+bits/largefile-config.h:
+	mkdir -p bits
+	touch bits/largefile-config.h
+
+CLEANFILES+=	bits/largefile-config.h
