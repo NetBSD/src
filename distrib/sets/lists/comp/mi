@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2348 2020/09/09 07:23:45 mrg Exp $
+#	$NetBSD: mi,v 1.2349 2020/09/09 14:38:41 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -4475,6 +4475,7 @@
 ./usr/share/man/cat2/getpid.0			comp-c-catman		.cat
 ./usr/share/man/cat2/getppid.0			comp-c-catman		.cat
 ./usr/share/man/cat2/getpriority.0		comp-c-catman		.cat
+./usr/share/man/cat2/getrandom.0		comp-c-catman		.cat
 ./usr/share/man/cat2/getrlimit.0		comp-c-catman		.cat
 ./usr/share/man/cat2/getrusage.0		comp-c-catman		.cat
 ./usr/share/man/cat2/getsid.0			comp-c-catman		.cat
