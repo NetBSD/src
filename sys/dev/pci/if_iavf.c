@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iavf.c,v 1.3 2020/09/09 00:35:36 jakllsch Exp $	*/
+/*	$NetBSD: if_iavf.c,v 1.4 2020/09/09 00:56:17 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.3 2020/09/09 00:35:36 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.4 2020/09/09 00:56:17 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -319,6 +319,12 @@ struct iavf_stat_counters {
  * + Other fields in iavf_softc is protected by sc_cfg_lock
  *   (an adaptive mutex).
  *   - The lock must be held before acquiring another lock.
+ *
+ * Locking order:
+ *   - IFNET_LOCK => sc_cfg_lock => sc_adminq_lock
+ *   - sc_cfg_lock => ETHER_LOCK => sc_adminq_lock
+ *   - sc_cfg_lock => txr_lock
+ *   - sc_cfg_lock => rxr_lock
  */
 
 struct iavf_softc {
