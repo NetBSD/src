@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2014/06/01 20:24:45 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2020/09/09 07:23:47 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -13,8 +13,3 @@ INCS=		${G_tr2_headers}
 INCSDIR=	/usr/include/g++/tr2
 
 .include "${.CURDIR}/../Makefile.includes"
-
-.PATH: ${DIST}/libstdc++-v3/include
-
-# Get default targets including <bsd.inc.mk>.
-.include <bsd.prog.mk>
