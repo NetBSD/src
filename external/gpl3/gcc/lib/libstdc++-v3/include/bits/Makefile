@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2019/02/09 03:57:04 mrg Exp $
+#	$NetBSD: Makefile,v 1.24 2020/09/09 07:23:45 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -84,9 +84,6 @@ COPYHEADERS= \
 ${_h}: ${_s}
 	cp -pf ${.ALLSRC} ${.TARGET}
 .endfor
-
-# Get default targets including <bsd.inc.mk>.
-.include <bsd.prog.mk>
 
 .PATH: ${.CURDIR}/../../arch/${GCC_MACHINE_ARCH} \
 	${DIST}/libstdc++-v3/include \
