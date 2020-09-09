@@ -1,4 +1,4 @@
-/* $NetBSD: strlen.S,v 1.4 2020/09/05 20:24:43 jakllsch Exp $ */
+/* $NetBSD: strlen.S,v 1.5 2020/09/09 14:49:27 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strlen.S,v 1.4 2020/09/05 20:24:43 jakllsch Exp $")
+RCSID("$NetBSD: strlen.S,v 1.5 2020/09/09 14:49:27 jakllsch Exp $")
 
 #ifdef STRNLEN
 #define FUNCNAME	strnlen
@@ -66,12 +66,11 @@ ENTRY(FUNCNAME)
 	 */
 	add	x4, x4, x0		/* make dword aligned */
 	ldr	x7, [x4], #8		/* load dword */
-	lsl	x3, x3, #3		/* convert bytes to bits */
 #ifdef __AARCH64EB__
-	lsr	x5, x11, x3		/* make mask for BE */
-#else
-	lsl	x5, x11, x3		/* make mask for LE */
+	rev	x7, x7			/* convert to LE */
 #endif
+	lsl	x3, x3, #3		/* convert bytes to bits */
+	lsl	x5, x11, x3		/* make mask for LE */
 	eor	x5, x5, x11		/* invert mask */
 	orr	x7, x7, x5		/* prevent NULs */
 	b	.Lstrlen_dword_loop_noload
@@ -82,6 +81,9 @@ ENTRY(FUNCNAME)
 	b.hs	.Lstrlen_done
 #endif
 	ldr	x7, [x4], #8		/* load dword */
+#ifdef __AARCH64EB__
+	rev	x7, x7			/* convert to LE */
+#endif
 .Lstrlen_dword_loop_noload:
 	/*
 	 * Use the formula (X - 1) & ~(X | 0x7f) to find NUL bytes.
@@ -96,14 +98,6 @@ ENTRY(FUNCNAME)
 	/*
 	 * We know there is a NUL in this dword.  Use clz to find it.
 	 */
-#ifdef __AARCH64EB__
-	/* avoid BE problem due to carry propagation if last non-NUL is \x01 */
-	ldr	x7, [x4, #-8]		/* reload dword */
-	rev	x7, x7			/* byte swap */
-	sub	x6, x7, x11		/* a = X - 1 */
-	orr	x7, x7, #MASK8_0x7f	/* b = X | 0x7f */
-	bic	x6, x6, x7		/* a & ~b */
-#endif
 	rev	x6, x6			/* convert to BE */
 	clz	x6, x6			/* find null byte */
 	add	x0, x0, x6, lsr #3	/* add offset to the length */
