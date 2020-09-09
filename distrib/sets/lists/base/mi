@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1260 2020/09/06 10:54:26 mrg Exp $
+# $NetBSD: mi,v 1.1261 2020/09/09 06:50:33 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1223,6 +1223,7 @@
 ./usr/include/g++/parallel			base-cxx-usr
 ./usr/include/g++/profile			base-cxx-usr
 ./usr/include/g++/profile/impl			base-cxx-usr
+./usr/include/g++/pstl				base-cxx-usr
 ./usr/include/g++/std				base-obsolete		obsolete
 ./usr/include/g++/tr1				base-cxx-usr
 ./usr/include/g++/tr1_impl			base-cxx-usr

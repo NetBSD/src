@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.223 2020/09/06 10:59:51 mrg Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.224 2020/09/09 06:50:33 mrg Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -196,6 +196,7 @@
 ./usr/include/g++/parallel
 ./usr/include/g++/profile
 ./usr/include/g++/profile/impl
+./usr/include/g++/pstl
 ./usr/include/g++/tr1
 ./usr/include/g++/tr1_impl
 ./usr/include/g++/tr2
