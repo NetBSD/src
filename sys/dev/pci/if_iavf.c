@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iavf.c,v 1.2 2020/09/08 13:28:51 jakllsch Exp $	*/
+/*	$NetBSD: if_iavf.c,v 1.3 2020/09/09 00:35:36 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.2 2020/09/08 13:28:51 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.3 2020/09/09 00:35:36 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -5235,7 +5235,7 @@ iavf_parse_modprop(prop_dictionary_t dict)
 	if (obj != NULL && prop_object_type(obj) == PROP_TYPE_NUMBER) {
 		val = prop_number_signed_value((prop_number_t)obj);
 
-		if (val < 1 || I40E_MAX_VF_QUEUES) {
+		if (val < 1 || val > I40E_MAX_VF_QUEUES) {
 			printf("iavf: invalid queue size(1 <= n <= %d)",
 			    I40E_MAX_VF_QUEUES);
 		} else {
