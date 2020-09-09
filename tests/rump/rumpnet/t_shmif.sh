@@ -1,4 +1,4 @@
-#	$NetBSD: t_shmif.sh,v 1.4 2019/05/13 17:55:09 bad Exp $
+#	$NetBSD: t_shmif.sh,v 1.5 2020/09/09 09:17:14 gson Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -61,7 +61,7 @@ crossping_body()
 		do
 			[ ${y} -eq ${x} ] && continue
 			atf_check -s exit:0 -o ignore -e ignore \
-			    rump.ping -c 1 1.1.1.${y}
+			    rump.ping -n -c 1 1.1.1.${y}
 		done
 	done
 }
