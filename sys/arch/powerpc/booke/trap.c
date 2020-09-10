@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.34 2020/07/15 09:10:14 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.35 2020/09/10 02:45:28 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.34 2020/07/15 09:10:14 rin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.35 2020/09/10 02:45:28 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -294,12 +294,18 @@ isi_exception(struct trapframe *tf, ksiginfo_t *ksi)
 		KASSERT(pg);
 		struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
 
-		UVMHIST_LOG(pmapexechist,
-		    "srr0=%#x pg=%p (pa %#"PRIxPADDR"): %s", 
-		    tf->tf_srr0, pg, pa, 
-		    (VM_PAGEMD_EXECPAGE_P(mdpg)
-			? "no syncicache (already execpage)"
-			: "performed syncicache (now execpage)"));
+#ifdef UVMHIST
+		if (VM_PAGEMD_EXECPAGE_P(mdpg))
+			UVMHIST_LOG(pmapexechist,
+			    "srr0=%#x pg=%p (pa %#"PRIxPADDR"): "
+			    "no syncicache (already execpage)", 
+			    tf->tf_srr0, (uintptr_t)pg, pa, 0);
+		else
+			UVMHIST_LOG(pmapexechist,
+			    "srr0=%#x pg=%p (pa %#"PRIxPADDR"): "
+			    "performed syncicache (now execpage)",
+			    tf->tf_srr0, (uintptr_t)pg, pa, 0);
+#endif
 
 		if (!VM_PAGEMD_EXECPAGE_P(mdpg)) {
 			ci->ci_softc->cpu_ev_exec_trap_sync.ev_count++;
