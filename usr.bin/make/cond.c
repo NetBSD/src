@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.117 2020/09/08 18:51:23 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.118 2020/09/10 22:47:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.117 2020/09/08 18:51:23 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.118 2020/09/10 22:47:22 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.117 2020/09/08 18:51:23 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.118 2020/09/10 22:47:22 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -809,11 +809,11 @@ CondToken(CondLexer *lex, Boolean doEval)
 	return t;
     }
 
-    while (*lex->condExpr == ' ' || *lex->condExpr == '\t') {
+    while (lex->condExpr[0] == ' ' || lex->condExpr[0] == '\t') {
 	lex->condExpr++;
     }
 
-    switch (*lex->condExpr) {
+    switch (lex->condExpr[0]) {
 
     case '(':
 	lex->condExpr++;
@@ -824,17 +824,17 @@ CondToken(CondLexer *lex, Boolean doEval)
 	return TOK_RPAREN;
 
     case '|':
-	if (lex->condExpr[1] == '|') {
+	lex->condExpr++;
+	if (lex->condExpr[0] == '|') {
 	    lex->condExpr++;
 	}
-	lex->condExpr++;
 	return TOK_OR;
 
     case '&':
-	if (lex->condExpr[1] == '&') {
+	lex->condExpr++;
+	if (lex->condExpr[0] == '&') {
 	    lex->condExpr++;
 	}
-	lex->condExpr++;
 	return TOK_AND;
 
     case '!':
