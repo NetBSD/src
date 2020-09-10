@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.94 2020/09/10 04:31:55 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.95 2020/09/10 04:36:24 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.94 2020/09/10 04:31:55 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.95 2020/09/10 04:36:24 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1160,9 +1160,9 @@ pmap_deactivate(struct lwp *l)
 void
 pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 {
+	struct pmap *pm = p->p_vmspace->vm_map.pmap;
 
 	if (__predict_true(p == curproc)) {
-		struct pmap *pm = p->p_vmspace->vm_map.pmap;
 		int msr, ctx, opid;
 
 		/*
@@ -1203,7 +1203,6 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 			: "=&r" (msr), "=&r" (opid)
 			: "r" (ctx), "r" (va), "r" (len), "r" (CACHELINESIZE));
 	} else {
-		struct pmap *pm = p->p_vmspace->vm_map.pmap;
 		paddr_t pa;
 		vaddr_t tva, eva;
 		int tlen;
