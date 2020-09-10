@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.23 2020/08/22 15:34:51 skrll Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.24 2020/09/10 02:12:57 rin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.23 2020/08/22 15:34:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.24 2020/09/10 02:12:57 rin Exp $");
 
 /*
  *	Manages physical address maps.
@@ -246,7 +246,7 @@ pmap_segtab_free(pmap_segtab_t *stp)
 {
 	UVMHIST_FUNC(__func__);
 
-	UVMHIST_CALLARGS(pmapsegtabhist, "stp=%#jx", stp, 0, 0, 0);
+	UVMHIST_CALLARGS(pmapsegtabhist, "stp=%#jx", (uintptr_t)stp, 0, 0, 0);
 
 	mutex_spin_enter(&pmap_segtab_lock);
 	stp->seg_seg[0] = pmap_segtab_info.free_segtab;
@@ -346,7 +346,8 @@ pmap_segtab_alloc(void)
 		stp->seg_seg[0] = NULL;
 		SEGTAB_ADD(nget, 1);
 		found_on_freelist = true;
-		UVMHIST_CALLARGS(pmapsegtabhist, "freelist stp=%#jx", stp, 0, 0, 0);
+		UVMHIST_CALLARGS(pmapsegtabhist, "freelist stp=%#jx",
+		    (uintptr_t)stp, 0, 0, 0);
 	}
 	mutex_spin_exit(&pmap_segtab_lock);
 
@@ -364,7 +365,8 @@ pmap_segtab_alloc(void)
 		const paddr_t stp_pa = VM_PAGE_TO_PHYS(stp_pg);
 
 		stp = (pmap_segtab_t *)PMAP_MAP_POOLPAGE(stp_pa);
-		UVMHIST_CALLARGS(pmapsegtabhist, "new stp=%#jx", stp, 0, 0, 0);
+		UVMHIST_CALLARGS(pmapsegtabhist, "new stp=%#jx",
+		    (uintptr_t)stp, 0, 0, 0);
 		const size_t n = NBPG / sizeof(*stp);
 		if (n > 1) {
 			/*
@@ -574,7 +576,7 @@ pmap_pte_reserve(pmap_t pmap, vaddr_t va, int flags)
 		KASSERT(pte == stp->seg_tab[(va >> SEGSHIFT) & (PMAP_SEGTABSIZE - 1)]);
 		UVMHIST_CALLARGS(pmapsegtabhist, "pm=%#jx va=%#jx -> tab[%jd]=%jx",
 		    (uintptr_t)pmap, (uintptr_t)va,
-		    (va >> SEGSHIFT) & (PMAP_SEGTABSIZE - 1), pte);
+		    (va >> SEGSHIFT) & (PMAP_SEGTABSIZE - 1), (uintptr_t)pte);
 
 		pmap_check_ptes(pte, __func__);
 		pte += (va >> PGSHIFT) & (NPTEPG - 1);
