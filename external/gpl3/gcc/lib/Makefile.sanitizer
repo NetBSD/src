@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sanitizer,v 1.12 2020/09/05 13:36:49 mrg Exp $
+#	$NetBSD: Makefile.sanitizer,v 1.13 2020/09/10 12:53:05 kamil Exp $
 
 SANITIZER=${GCCDIST}/libsanitizer
 .PATH: ${SANITIZER}/interception ${SANITIZER}/sanitizer_common
@@ -75,8 +75,6 @@ CSHLIBFLAGS+= -DPIC
 SRCS+=	${INTERCEPTION_SRCS} ${SANITIZER_SRCS}
 CPPFLAGS+=-I${SANITIZER}/include -I${SANITIZER}
 CPPFLAGS.sanitizer_netbsd.cc+=-I${GCCDIST}/gcc/ginclude
-# XXX __lwp_getprivate_fast() is hidden normally.
-CPPFLAGS.sanitizer_linux_libcdep.cc+= -D__LIBPTHREAD_SOURCE__
 # XXX wants old lwp info and power ioctl, npf wants nv.h
 CPPFLAGS.sanitizer_platform_limits_netbsd.cc+= -D__LEGACY_PT_LWPINFO -D_KMEMUSER \
 	-I${NETBSDSRCDIR}/sys/external/bsd/libnv/dist
