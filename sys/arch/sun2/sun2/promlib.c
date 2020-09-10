@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.18 2014/03/24 18:50:31 christos Exp $	*/
+/*	$NetBSD: promlib.c,v 1.19 2020/09/10 02:03:44 rin Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.18 2014/03/24 18:50:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.19 2020/09/10 02:03:44 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -349,7 +349,7 @@ struct funcall_frame {
 	int fr_arg[1];
 };
 /*VARARGS0*/
-static void 
+static void __noinline
 tracedump(int x1)
 {
 	struct funcall_frame *fp = (struct funcall_frame *)(&x1 - 2);
