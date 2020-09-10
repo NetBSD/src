@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2349 2020/09/09 14:38:41 kamil Exp $
+#	$NetBSD: mi,v 1.2350 2020/09/10 01:53:22 rin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -619,8 +619,8 @@
 ./usr/include/dev/isapnp/if_levar.h		comp-obsolete		obsolete
 ./usr/include/dev/isapnp/isapnpreg.h		comp-obsolete		obsolete
 ./usr/include/dev/isapnp/isapnpvar.h		comp-obsolete		obsolete
-./usr/include/dev/iscsi/iscsi.h			comp-c-include		iscsi
-./usr/include/dev/iscsi/iscsi_ioctl.h		comp-c-include		iscsi
+./usr/include/dev/iscsi/iscsi.h			comp-c-include
+./usr/include/dev/iscsi/iscsi_ioctl.h		comp-c-include
 ./usr/include/dev/iscsi/iscsi_perf.h		comp-obsolete		obsolete
 ./usr/include/dev/iscsi/iscsi_test.h		comp-obsolete		obsolete
 ./usr/include/dev/keylock.h			comp-c-include
