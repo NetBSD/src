@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.92 2020/09/10 03:23:55 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.93 2020/09/10 03:32:46 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,10 +67,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.92 2020/09/10 03:23:55 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.93 2020/09/10 03:32:46 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
+#include "opt_pmap.h"
 #endif
 
 #include <sys/param.h>
@@ -192,6 +193,8 @@ static inline int pte_enter(struct pmap *, vaddr_t, u_int);
 
 static inline int pmap_enter_pv(struct pmap *, vaddr_t, paddr_t, int);
 static void pmap_remove_pv(struct pmap *, vaddr_t, paddr_t);
+
+static inline void tlb_invalidate_entry(int);
 
 static int ppc4xx_tlb_size_mask(size_t, int *, int *);
 
@@ -1195,6 +1198,43 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 		  "K" (PSL_IR | PSL_DR));
 }
 
+static inline void
+tlb_invalidate_entry(int i)
+{
+#ifdef PMAP_TLBDEBUG
+	/*
+	 * Clear only TLBHI[V] bit so that we can track invalidated entry.
+	 */
+	register_t msr, pid, hi;
+
+	KASSERT(mfspr(SPR_PID) == KERNEL_PID);
+
+	__asm volatile(
+		"mfmsr	%0;"
+		"li	%1,0;"
+		"mtmsr	%1;"
+		"mfpid	%1;"
+		"tlbre	%2,%3,0;"
+		"andc	%2,%2,%4;"
+		"tlbwe	%2,%3,0;"
+		"mtpid	%1;"
+		"mtmsr	%0;"
+		"isync;"
+		: "=&r" (msr), "=&r" (pid), "=&r" (hi)
+		: "r" (i), "r" (TLB_VALID));
+#else
+	/*
+	 * Just clear entire TLBHI register.
+	 */
+	__asm volatile(
+		"tlbwe %0,%1,0;"
+		"isync;"
+		: : "r" (0), "r" (i));
+#endif
+
+	tlb_info[i].ti_ctx = 0;
+	tlb_info[i].ti_flags = 0;
+}
 
 /* This has to be done in real mode !!! */
 void
@@ -1228,13 +1268,7 @@ ppc4xx_tlb_flush(vaddr_t va, int pid)
 		: "r" (va), "r" (pid));
 	if (found && !TLB_LOCKED(i)) {
 		/* Now flush translation */
-		__asm volatile(
-			"tlbwe %0,%1,0;"
-			"isync;"
-			: : "r" (0), "r" (i));
-
-		tlb_info[i].ti_ctx = 0;
-		tlb_info[i].ti_flags = 0;
+		tlb_invalidate_entry(i);
 		tlbnext = i;
 		/* Successful flushes */
 		tlbflush_ev.ev_count++;
@@ -1247,12 +1281,8 @@ ppc4xx_tlb_flush_all(void)
 	u_long i;
 
 	for (i = 0; i < NTLB; i++)
-		if (!TLB_LOCKED(i)) {
-			__asm volatile(
-				"tlbwe %0,%1,0;" : : "r" (0), "r" (i));
-			tlb_info[i].ti_ctx = 0;
-			tlb_info[i].ti_flags = 0;
-		}
+		if (!TLB_LOCKED(i))
+			tlb_invalidate_entry(i);
 
 	__asm volatile("isync");
 }
@@ -1526,10 +1556,11 @@ ctx_flush(int cnum)
 			if (i < tlb_nreserved)
 				panic("TLB entry %d not locked", i);
 #endif
-			/* Invalidate particular TLB entry regardless of locked status */
-			__asm volatile("tlbwe %0,%1,0" : :"r"(0),"r"(i));
-			tlb_info[i].ti_ctx = 0;
-			tlb_info[i].ti_flags = 0;
+			/*
+			 * Invalidate particular TLB entry regardless of
+			 * locked status
+			 */
+			tlb_invalidate_entry(i);
 		}
 	}
 	return (0);
