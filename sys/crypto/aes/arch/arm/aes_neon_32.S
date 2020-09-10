@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_neon_32.S,v 1.9 2020/09/10 11:30:08 riastradh Exp $	*/
+/*	$NetBSD: aes_neon_32.S,v 1.10 2020/09/10 11:30:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <arm/asm.h>
 
-RCSID("$NetBSD: aes_neon_32.S,v 1.9 2020/09/10 11:30:08 riastradh Exp $")
+RCSID("$NetBSD: aes_neon_32.S,v 1.10 2020/09/10 11:30:28 riastradh Exp $")
 
 	.fpu	neon
 
@@ -431,6 +431,9 @@ ENTRY(aes_neon_dec1)
 
 	/*
 	 * r3: 3 & ~(nrounds - 1)
+	 * r4: dsbd
+	 * r5: dsbe
+	 * r6,r8,r10,ip: temporaries
 	 * q0={d0-d1}: x/ak
 	 * q1={d2-d3}: 0x0f0f...
 	 * q2={d4-d5}: lo/k/j/io
@@ -488,6 +491,10 @@ ENTRY(aes_neon_dec1)
 	add	r4, ip, #(dsb9 - .Lconstants)
 	vld1.8	{q4-q5}, [r4 :256]	/* q4 := dsb9[0], q5 := dsb9[1] */
 
+	/* r4 := dsbd, r5 := dsbe */
+	add	r4, ip, #(dsbd - .Lconstants)
+	add	r5, ip, #(dsbe - .Lconstants)
+
 	/* q0 := rk[0] + diptlo(lo) + dipthi(hi) */
 	veor	q0, q14, q2
 	veor	q0, q0, q3
@@ -496,7 +503,6 @@ ENTRY(aes_neon_dec1)
 
 	_ALIGN_TEXT
 1:	/* load dsbd */
-	add	r4, ip, #(dsbd - .Lconstants)
 	vld1.8	{q8-q9}, [r4 :256]	/* q8 := dsbd[0], q9 := dsbd[1] */
 
 	vld1.8	{q14}, [r0 :128]!	/* q14 = *rk++ */
@@ -522,8 +528,7 @@ ENTRY(aes_neon_dec1)
 	veor	q0, q0, q13
 
 	/* load dsbe */
-	add	r4, ip, #(dsbe - .Lconstants)
-	vld1.8	{q8-q9}, [r4 :256]!	/* q8 := dsbe[0], q9 := dsbe[1] */
+	vld1.8	{q8-q9}, [r5 :256]	/* q8 := dsbe[0], q9 := dsbe[1] */
 
 	/* q0 := x(mc) + dsbb_0(io) + dsbb_1(jo) */
 	vtbl.8	d28, {q0}, d30
