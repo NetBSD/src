@@ -544,7 +544,15 @@ _atf_list_tcs()
 #
 _atf_normalize()
 {
-    echo ${1} | tr .- __
+    while :
+    do
+	case "${1}" in
+	(*.*)	set -- "${1%.*}_${1##*.}";;
+	(*-*)	set -- "${1%-*}_${1##*-}";;
+	(*)	break;;
+	esac
+    done
+    printf "%s\n" "$1"
 }
 
 #
