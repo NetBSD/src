@@ -1,4 +1,4 @@
-# $NetBSD: t_make.sh,v 1.10 2020/09/10 17:33:16 kre Exp $
+# $NetBSD: t_make.sh,v 1.11 2020/09/10 17:40:34 kre Exp $
 #
 # Copyright (c) 2008, 2010, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -90,7 +90,7 @@ atf_init_test_cases()
 		esac
 	    done
 	    descr='' # XXX
-            test_case "${atfname}" "${basename}" "${descr}"
+	    test_case "${atfname}" "${basename}" "${descr}"
 	    atf_add_test_case "${atfname}"
 	done
 }
