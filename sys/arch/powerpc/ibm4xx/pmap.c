@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.90 2020/07/06 10:40:21 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.91 2020/09/10 03:02:36 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.90 2020/07/06 10:40:21 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.91 2020/09/10 03:02:36 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -156,7 +156,8 @@ static char *pmap_attrib;
 #define PV_WIRE(pv)	((pv)->pv_va |= PV_WIRED)
 #define PV_UNWIRE(pv)	((pv)->pv_va &= ~PV_WIRED)
 #define PV_ISWIRED(pv)	((pv)->pv_va & PV_WIRED)
-#define PV_CMPVA(va,pv)	(!(((pv)->pv_va ^ (va)) & (~PV_WIRED)))
+#define PV_VA(pv)	((pv)->pv_va & ~PV_WIRED)
+#define PV_CMPVA(va,pv)	(!(PV_VA(pv) ^ (va)))
 
 struct pv_entry {
 	struct pv_entry *pv_next;	/* Linked list of mappings */
@@ -1115,14 +1116,14 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		npv = pv->pv_next;
 
 		pm = pv->pv_pm;
-		va = pv->pv_va;
+		va = PV_VA(pv);
 		pmap_protect(pm, va, va + PAGE_SIZE, prot);
 	}
 	/* Now check the head pv */
 	if (pvh->pv_pm) {
 		pv = pvh;
 		pm = pv->pv_pm;
-		va = pv->pv_va;
+		va = PV_VA(pv);
 		pmap_protect(pm, va, va + PAGE_SIZE, prot);
 	}
 }
