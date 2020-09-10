@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.119 2020/09/10 23:27:27 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.120 2020/09/10 23:37:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.119 2020/09/10 23:27:27 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.120 2020/09/10 23:37:54 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.119 2020/09/10 23:27:27 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.120 2020/09/10 23:37:54 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -418,18 +418,18 @@ CondGetString(CondLexer *lex, Boolean doEval, Boolean *quoted, void **freeIt,
     for (start = lex->condExpr; *lex->condExpr && str == NULL;) {
 	switch (*lex->condExpr) {
 	case '\\':
-	    if (lex->condExpr[1] != '\0') {
-		lex->condExpr++;
-		Buf_AddByte(&buf, *lex->condExpr);
-	    }
 	    lex->condExpr++;
+	    if (lex->condExpr[0] != '\0') {
+		Buf_AddByte(&buf, *lex->condExpr);
+		lex->condExpr++;
+	    }
 	    continue;
 	case '"':
 	    if (qt) {
 		lex->condExpr++;	/* we don't want the quotes */
 		goto got_str;
-	    } else
-		Buf_AddByte(&buf, *lex->condExpr); /* likely? */
+	    }
+	    Buf_AddByte(&buf, *lex->condExpr); /* likely? */
 	    lex->condExpr++;
 	    continue;
 	case ')':
@@ -441,8 +441,7 @@ CondGetString(CondLexer *lex, Boolean doEval, Boolean *quoted, void **freeIt,
 	case '\t':
 	    if (!qt)
 		goto got_str;
-	    else
-		Buf_AddByte(&buf, *lex->condExpr);
+	    Buf_AddByte(&buf, *lex->condExpr);
 	    lex->condExpr++;
 	    continue;
 	case '$':
