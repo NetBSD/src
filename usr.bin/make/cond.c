@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.118 2020/09/10 22:47:22 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.119 2020/09/10 23:27:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.118 2020/09/10 22:47:22 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.119 2020/09/10 23:27:27 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.118 2020/09/10 22:47:22 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.119 2020/09/10 23:27:27 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -415,22 +415,23 @@ CondGetString(CondLexer *lex, Boolean doEval, Boolean *quoted, void **freeIt,
     *quoted = qt = *lex->condExpr == '"' ? 1 : 0;
     if (qt)
 	lex->condExpr++;
-    for (start = lex->condExpr;
-	 *lex->condExpr && str == NULL; lex->condExpr++) {
+    for (start = lex->condExpr; *lex->condExpr && str == NULL;) {
 	switch (*lex->condExpr) {
 	case '\\':
 	    if (lex->condExpr[1] != '\0') {
 		lex->condExpr++;
 		Buf_AddByte(&buf, *lex->condExpr);
 	    }
-	    break;
+	    lex->condExpr++;
+	    continue;
 	case '"':
 	    if (qt) {
 		lex->condExpr++;	/* we don't want the quotes */
 		goto got_str;
 	    } else
 		Buf_AddByte(&buf, *lex->condExpr); /* likely? */
-	    break;
+	    lex->condExpr++;
+	    continue;
 	case ')':
 	case '!':
 	case '=':
@@ -442,7 +443,8 @@ CondGetString(CondLexer *lex, Boolean doEval, Boolean *quoted, void **freeIt,
 		goto got_str;
 	    else
 		Buf_AddByte(&buf, *lex->condExpr);
-	    break;
+	    lex->condExpr++;
+	    continue;
 	case '$':
 	    /* if we are in quotes, then an undefined variable is ok */
 	    eflags = ((!qt && doEval) ? VARE_UNDEFERR : 0) |
@@ -479,8 +481,7 @@ CondGetString(CondLexer *lex, Boolean doEval, Boolean *quoted, void **freeIt,
 		*freeIt = NULL;
 	    }
 	    str = NULL;		/* not finished yet */
-	    lex->condExpr--;	/* don't skip over next char */
-	    break;
+	    continue;
 	default:
 	    if (strictLHS && !qt && *start != '$' &&
 		!isdigit((unsigned char)*start)) {
@@ -493,7 +494,8 @@ CondGetString(CondLexer *lex, Boolean doEval, Boolean *quoted, void **freeIt,
 		goto cleanup;
 	    }
 	    Buf_AddByte(&buf, *lex->condExpr);
-	    break;
+	    lex->condExpr++;
+	    continue;
 	}
     }
 got_str:
