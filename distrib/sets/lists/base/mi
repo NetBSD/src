@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1261 2020/09/09 06:50:33 mrg Exp $
+# $NetBSD: mi,v 1.1262 2020/09/10 01:53:22 rin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1149,7 +1149,7 @@
 ./usr/include/dev/ir				base-c-usr
 ./usr/include/dev/isa				base-c-usr
 ./usr/include/dev/isapnp			base-obsolete		obsolete
-./usr/include/dev/iscsi				base-c-usr		iscsi
+./usr/include/dev/iscsi				base-c-usr
 ./usr/include/dev/microcode			base-obsolete		obsolete
 ./usr/include/dev/microcode/aic7xxx		base-obsolete		obsolete
 ./usr/include/dev/microcode/isp			base-obsolete		obsolete
