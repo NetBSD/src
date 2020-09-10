@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iavf.c,v 1.4 2020/09/09 00:56:17 yamaguchi Exp $	*/
+/*	$NetBSD: if_iavf.c,v 1.5 2020/09/10 03:20:08 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.4 2020/09/09 00:56:17 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.5 2020/09/10 03:20:08 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -3523,6 +3523,7 @@ iavf_reset_finish(struct iavf_softc *sc)
 	struct ether_multistep step;
 	struct ifnet *ifp = &ec->ec_if;
 	struct vlanid_list *vlanidp;
+	uint8_t enaddr_prev[ETHER_ADDR_LEN], enaddr_next[ETHER_ADDR_LEN];
 
 	KASSERT(mutex_owned(&sc->sc_cfg_lock));
 
@@ -3550,14 +3551,19 @@ iavf_reset_finish(struct iavf_softc *sc)
 	ETHER_UNLOCK(ec);
 
 	if (memcmp(sc->sc_enaddr, sc->sc_enaddr_reset, ETHER_ADDR_LEN) != 0) {
+		memcpy(enaddr_prev, sc->sc_enaddr_reset, sizeof(enaddr_prev));
+		memcpy(enaddr_next, sc->sc_enaddr, sizeof(enaddr_next));
 		log(LOG_INFO, "%s: Ethernet address changed to %s\n",
-		    ifp->if_xname, ether_sprintf(sc->sc_enaddr));
+		    ifp->if_xname, ether_sprintf(enaddr_next));
+
+		mutex_exit(&sc->sc_cfg_lock);
 		IFNET_LOCK(ifp);
 		kpreempt_disable();
 		/*XXX we need an API to change ethernet address. */
-		iavf_replace_lla(ifp, sc->sc_enaddr_reset, sc->sc_enaddr);
+		iavf_replace_lla(ifp, enaddr_prev, enaddr_next);
 		kpreempt_enable();
 		IFNET_UNLOCK(ifp);
+		mutex_enter(&sc->sc_cfg_lock);
 	}
 
 	sc->sc_resetting = false;
