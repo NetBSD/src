@@ -1,4 +1,4 @@
-# $NetBSD: t_make.sh,v 1.9 2020/08/15 01:50:54 rillig Exp $
+# $NetBSD: t_make.sh,v 1.10 2020/09/10 17:33:16 kre Exp $
 #
 # Copyright (c) 2008, 2010, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -81,7 +81,14 @@ atf_init_test_cases()
 	    include-sub*) continue;;
 	    esac
 
-	    atfname="$(echo "${basename}" | tr "x-" "x_")"
+	    atfname=${basename}
+	    while :
+	    do
+		case "${atfname}" in
+		(*-*)	atfname=${atfname%-*}_${atfname##*-};;
+		(*)	break;;
+		esac
+	    done
 	    descr='' # XXX
             test_case "${atfname}" "${basename}" "${descr}"
 	    atf_add_test_case "${atfname}"
