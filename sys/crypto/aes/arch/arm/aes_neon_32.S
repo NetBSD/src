@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_neon_32.S,v 1.7 2020/09/10 11:29:02 riastradh Exp $	*/
+/*	$NetBSD: aes_neon_32.S,v 1.8 2020/09/10 11:29:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <arm/asm.h>
 
-RCSID("$NetBSD: aes_neon_32.S,v 1.7 2020/09/10 11:29:02 riastradh Exp $")
+RCSID("$NetBSD: aes_neon_32.S,v 1.8 2020/09/10 11:29:43 riastradh Exp $")
 
 	.fpu	neon
 
@@ -264,10 +264,10 @@ ENTRY(aes_neon_enc1)
 	vand	q3, q3, q1		/* q3 := (x >> 4) & 0x0f0f... */
 
 	/* (q2, q3) := (iptlo(lo), ipthi(hi)) */
-	vtbl.8	d4, {d8-d9}, d4
-	vtbl.8	d5, {d8-d9}, d5
-	vtbl.8	d6, {d10-d11}, d6
-	vtbl.8	d7, {d10-d11}, d7
+	vtbl.8	d4, {q4}, d4
+	vtbl.8	d5, {q4}, d5
+	vtbl.8	d6, {q5}, d6
+	vtbl.8	d7, {q5}, d7
 
 	/* q0 := rk[0] + iptlo(lo) + ipthi(hi) */
 	veor	q0, q14, q2
@@ -279,18 +279,18 @@ ENTRY(aes_neon_enc1)
 1:	vld1.8	{q14}, [r0 :128]!	/* q14 = *rk++ */
 
 	/* q0 := A = rk[i] + sb1_0(io) + sb1_1(jo) */
-	vtbl.8	d24, {d12-d13}, d4
-	vtbl.8	d25, {d12-d13}, d5
-	vtbl.8	d26, {d14-d15}, d6
-	vtbl.8	d27, {d14-d15}, d7
+	vtbl.8	d24, {q6}, d4
+	vtbl.8	d25, {q6}, d5
+	vtbl.8	d26, {q7}, d6
+	vtbl.8	d27, {q7}, d7
 	veor	q0, q14, q12
 	veor	q0, q0, q13
 
 	/* q14 := A2 = sb2_0[io] + sb2_1[jo] */
-	vtbl.8	d24, {d16-d17}, d4
-	vtbl.8	d25, {d16-d17}, d5
-	vtbl.8	d26, {d18-d19}, d6
-	vtbl.8	d27, {d18-d19}, d7
+	vtbl.8	d24, {q8}, d4
+	vtbl.8	d25, {q8}, d5
+	vtbl.8	d26, {q9}, d6
+	vtbl.8	d27, {q9}, d7
 	veor	q14, q12, q13
 
 	/* (q12, q13) := (mc_forward[rmod4], mc_backward[rmod4]) */
@@ -300,18 +300,18 @@ ENTRY(aes_neon_enc1)
 	vld1.8	{q13}, [r7 :128]
 
 	/* q15 := A2_B = A2 + A(mcf) */
-	vtbl.8	d30, {d0-d1}, d24
-	vtbl.8	d31, {d0-d1}, d25
+	vtbl.8	d30, {q0}, d24
+	vtbl.8	d31, {q0}, d25
 	veor	q15, q15, q14
 
 	/* q14 := A2_B_D = A2_B + A(mcb) */
-	vtbl.8	d28, {d0-d1}, d26
-	vtbl.8	d29, {d0-d1}, d27
+	vtbl.8	d28, {q0}, d26
+	vtbl.8	d29, {q0}, d27
 	veor	q14, q14, q15
 
 	/* q0 := x = A2_B_D + A2_B(mcf) */
-	vtbl.8	d0, {d30-d31}, d24
-	vtbl.8	d1, {d30-d31}, d25
+	vtbl.8	d0, {q15}, d24
+	vtbl.8	d1, {q15}, d25
 	veor	q0, q0, q14
 
 2:	/*
@@ -324,19 +324,19 @@ ENTRY(aes_neon_enc1)
 	vand	q3, q3, q1		/* q3 := (x >> 4) & 0x0f0f... */
 
 	/* q0 := a/k */
-	vtbl.8	d0, {d22-d23}, d4
-	vtbl.8	d1, {d22-d23}, d5
+	vtbl.8	d0, {q11}, d4
+	vtbl.8	d1, {q11}, d5
 
 	/* q2 := j = i + k */
 	veor	q2, q3, q2
 
 	/* q12 := ir = 1/i */
-	vtbl.8	d24, {d20-d21}, d6
-	vtbl.8	d25, {d20-d21}, d7
+	vtbl.8	d24, {q10}, d6
+	vtbl.8	d25, {q10}, d7
 
 	/* q13 := jr = 1/j */
-	vtbl.8	d26, {d20-d21}, d4
-	vtbl.8	d27, {d20-d21}, d5
+	vtbl.8	d26, {q10}, d4
+	vtbl.8	d27, {q10}, d5
 
 	/* q12 := iak = 1/i + a/k */
 	veor	q12, q12, q0
@@ -345,12 +345,12 @@ ENTRY(aes_neon_enc1)
 	veor	q13, q13, q0
 
 	/* q12 := iakr = 1/(1/i + a/k) */
-	vtbl.8	d24, {d20-d21}, d24
-	vtbl.8	d25, {d20-d21}, d25
+	vtbl.8	d24, {q10}, d24
+	vtbl.8	d25, {q10}, d25
 
 	/* q13 := jakr = 1/(1/j + a/k) */
-	vtbl.8	d26, {d20-d21}, d26
-	vtbl.8	d27, {d20-d21}, d27
+	vtbl.8	d26, {q10}, d26
+	vtbl.8	d27, {q10}, d27
 
 	/* q2 := io = j + 1/(1/i + a/k) */
 	veor	q2, q2, q12
@@ -374,18 +374,18 @@ ENTRY(aes_neon_enc1)
 	vld1.8	{q14}, [r0 :128]!	/* q14 = *rk++ */
 
 	/* (q2, q3) := (sbo_0(io), sbo_1(jo)) */
-	vtbl.8	d4, {d12-d13}, d4
-	vtbl.8	d5, {d12-d13}, d5
-	vtbl.8	d6, {d14-d15}, d6
-	vtbl.8	d7, {d14-d15}, d7
+	vtbl.8	d4, {q6}, d4
+	vtbl.8	d5, {q6}, d5
+	vtbl.8	d6, {q7}, d6
+	vtbl.8	d7, {q7}, d7
 
 	/* q2 := x = rk[nr] + sbo_0(io) + sbo_1(jo) */
 	veor	q2, q2, q14
 	veor	q2, q2, q3
 
 	/* q0 := x(sr[rmod4]) */
-	vtbl.8	d0, {d4-d5}, d30
-	vtbl.8	d1, {d4-d5}, d31
+	vtbl.8	d0, {q2}, d30
+	vtbl.8	d1, {q2}, d31
 
 	vpop	{d8-d15}
 	pop	{r4, r5, r6, r7, r8, r10, r11, lr}
@@ -479,10 +479,10 @@ ENTRY(aes_neon_dec1)
 	vand	q3, q3, q1		/* q3 := (x >> 4) & 0x0f0f... */
 
 	/* (q2, q3) := (diptlo(lo), dipthi(hi)) */
-	vtbl.8	d4, {d8-d9}, d4
-	vtbl.8	d5, {d8-d9}, d5
-	vtbl.8	d6, {d10-d11}, d6
-	vtbl.8	d7, {d10-d11}, d7
+	vtbl.8	d4, {q4}, d4
+	vtbl.8	d5, {q4}, d5
+	vtbl.8	d6, {q5}, d6
+	vtbl.8	d7, {q5}, d7
 
 	/* load dsb9 */
 	add	r4, r12, #(dsb9 - .Lconstants)
@@ -502,22 +502,22 @@ ENTRY(aes_neon_dec1)
 	vld1.8	{q14}, [r0 :128]!	/* q14 = *rk++ */
 
 	/* q0 := rk[i] + dsb9_0(io) + dsb9_1(jo) */
-	vtbl.8	d24, {d8-d9}, d4
-	vtbl.8	d25, {d8-d9}, d5
-	vtbl.8	d26, {d10-d11}, d6
-	vtbl.8	d27, {d10-d11}, d7
+	vtbl.8	d24, {q4}, d4
+	vtbl.8	d25, {q4}, d5
+	vtbl.8	d26, {q5}, d6
+	vtbl.8	d27, {q5}, d7
 	veor	q0, q14, q12
 	veor	q0, q0, q13
 
 	/* q14 := x(mc) */
-	vtbl.8	d28, {d0-d1}, d30
-	vtbl.8	d29, {d0-d1}, d31
+	vtbl.8	d28, {q0}, d30
+	vtbl.8	d29, {q0}, d31
 
 	/* q0 := x(mc) + dsbd_0(io) + dsbd_1(jo) */
-	vtbl.8	d24, {d16-d17}, d4
-	vtbl.8	d25, {d16-d17}, d5
-	vtbl.8	d26, {d18-d19}, d6
-	vtbl.8	d27, {d18-d19}, d7
+	vtbl.8	d24, {q8}, d4
+	vtbl.8	d25, {q8}, d5
+	vtbl.8	d26, {q9}, d6
+	vtbl.8	d27, {q9}, d7
 	veor	q0, q14, q12
 	veor	q0, q0, q13
 
@@ -526,22 +526,22 @@ ENTRY(aes_neon_dec1)
 	vld1.8	{q8-q9}, [r4 :256]!	/* q8 := dsbe[0], q9 := dsbe[1] */
 
 	/* q0 := x(mc) + dsbb_0(io) + dsbb_1(jo) */
-	vtbl.8	d28, {d0-d1}, d30
-	vtbl.8	d29, {d0-d1}, d31
-	vtbl.8	d24, {d12-d13}, d4
-	vtbl.8	d25, {d12-d13}, d5
-	vtbl.8	d26, {d14-d15}, d6
-	vtbl.8	d27, {d14-d15}, d7
+	vtbl.8	d28, {q0}, d30
+	vtbl.8	d29, {q0}, d31
+	vtbl.8	d24, {q6}, d4
+	vtbl.8	d25, {q6}, d5
+	vtbl.8	d26, {q7}, d6
+	vtbl.8	d27, {q7}, d7
 	veor	q0, q14, q12
 	veor	q0, q0, q13
 
 	/* q0 := x(mc) + dsbe_0(io) + dsbe_1(jo) */
-	vtbl.8	d28, {d0-d1}, d30
-	vtbl.8	d29, {d0-d1}, d31
-	vtbl.8	d24, {d16-d17}, d4
-	vtbl.8	d25, {d16-d17}, d5
-	vtbl.8	d26, {d18-d19}, d6
-	vtbl.8	d27, {d18-d19}, d7
+	vtbl.8	d28, {q0}, d30
+	vtbl.8	d29, {q0}, d31
+	vtbl.8	d24, {q8}, d4
+	vtbl.8	d25, {q8}, d5
+	vtbl.8	d26, {q9}, d6
+	vtbl.8	d27, {q9}, d7
 	veor	q0, q14, q12
 	veor	q0, q0, q13
 
@@ -558,19 +558,19 @@ ENTRY(aes_neon_dec1)
 	vand	q3, q3, q1		/* q3 := (x >> 4) & 0x0f0f... */
 
 	/* q0 := a/k */
-	vtbl.8	d0, {d22-d23}, d4
-	vtbl.8	d1, {d22-d23}, d5
+	vtbl.8	d0, {q11}, d4
+	vtbl.8	d1, {q11}, d5
 
 	/* q2 := j = i + k */
 	veor	q2, q3, q2
 
 	/* q12 := ir = 1/i */
-	vtbl.8	d24, {d20-d21}, d6
-	vtbl.8	d25, {d20-d21}, d7
+	vtbl.8	d24, {q10}, d6
+	vtbl.8	d25, {q10}, d7
 
 	/* q13 := jr = 1/j */
-	vtbl.8	d26, {d20-d21}, d4
-	vtbl.8	d27, {d20-d21}, d5
+	vtbl.8	d26, {q10}, d4
+	vtbl.8	d27, {q10}, d5
 
 	/* q12 := iak = 1/i + a/k */
 	veor	q12, q12, q0
@@ -579,12 +579,12 @@ ENTRY(aes_neon_dec1)
 	veor	q13, q13, q0
 
 	/* q12 := iakr = 1/(1/i + a/k) */
-	vtbl.8	d24, {d20-d21}, d24
-	vtbl.8	d25, {d20-d21}, d25
+	vtbl.8	d24, {q10}, d24
+	vtbl.8	d25, {q10}, d25
 
 	/* q13 := jakr = 1/(1/j + a/k) */
-	vtbl.8	d26, {d20-d21}, d26
-	vtbl.8	d27, {d20-d21}, d27
+	vtbl.8	d26, {q10}, d26
+	vtbl.8	d27, {q10}, d27
 
 	/* q2 := io = j + 1/(1/i + a/k) */
 	veor	q2, q2, q12
@@ -606,18 +606,18 @@ ENTRY(aes_neon_dec1)
 	vld1.8	{q14}, [r0 :128]!	/* q14 = *rk++ */
 
 	/* (q2, q3) := (dsbo_0(io), dsbo_1(jo)) */
-	vtbl.8	d4, {d12-d13}, d4
-	vtbl.8	d5, {d12-d13}, d5
-	vtbl.8	d6, {d14-d15}, d6
-	vtbl.8	d7, {d14-d15}, d7
+	vtbl.8	d4, {q6}, d4
+	vtbl.8	d5, {q6}, d5
+	vtbl.8	d6, {q7}, d6
+	vtbl.8	d7, {q7}, d7
 
 	/* q2 := x = rk[nr] + dsbo_0(io) + dsbo_1(jo) */
 	veor	q2, q2, q14
 	veor	q2, q2, q3
 
 	/* q0 := x(sr[i]) */
-	vtbl.8	d0, {d4-d5}, d30
-	vtbl.8	d1, {d4-d5}, d31
+	vtbl.8	d0, {q2}, d30
+	vtbl.8	d1, {q2}, d31
 
 	vpop	{d8-d15}
 	pop	{r4, r5, r6, r7, r8, r10, r11, lr}
