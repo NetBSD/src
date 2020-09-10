@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.93 2020/09/10 03:32:46 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.94 2020/09/10 04:31:55 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.93 2020/09/10 03:32:46 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.94 2020/09/10 04:31:55 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1160,42 +1160,72 @@ pmap_deactivate(struct lwp *l)
 void
 pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 {
-	struct pmap *pm = p->p_vmspace->vm_map.pmap;
-	int msr, ctx, opid, step;
 
-	step = CACHELINESIZE;
+	if (__predict_true(p == curproc)) {
+		struct pmap *pm = p->p_vmspace->vm_map.pmap;
+		int msr, ctx, opid;
 
-	/*
-	 * Need to turn off IMMU and switch to user context.
-	 * (icbi uses DMMU).
-	 */
-	if (!(ctx = pm->pm_ctx)) {
-		/* No context -- assign it one */
-		ctx_alloc(pm);
-		ctx = pm->pm_ctx;
-	}
-	__asm volatile(
-		"mfmsr %0;"
-		"li %1, %7;"
-		"andc %1,%0,%1;"
-		"mtmsr %1;"
-		"isync;"
-		"mfpid %1;"
-		"mtpid %2;"
-		"isync;"
+		/*
+		 * Take it easy! TLB miss handler takes care of us.
+		 */
+
+		/*
+	 	 * Need to turn off IMMU and switch to user context.
+		 * (icbi uses DMMU).
+		 */
+
+		if (!(ctx = pm->pm_ctx)) {
+			/* No context -- assign it one */
+			ctx_alloc(pm);
+			ctx = pm->pm_ctx;
+		}
+
+		__asm volatile(
+			"mfmsr %0;"
+			"li %1,0x20;"		/* Turn off IMMU */
+			"andc %1,%0,%1;"
+			"ori %1,%1,0x10;"	/* Turn on DMMU for sure */
+			"mtmsr %1;"
+			"isync;"
+			"mfpid %1;"
+			"mtpid %2;"
+			"isync;"
 		"1:"
-		"dcbst 0,%3;"
-		"icbi 0,%3;"
-		"add %3,%3,%5;"
-		"addc. %4,%4,%6;"
-		"bge 1b;"
-		"sync;"
-		"mtpid %1;"
-		"mtmsr %0;"
-		"isync;"
-		: "=&r" (msr), "=&r" (opid)
-		: "r" (ctx), "r" (va), "r" (len), "r" (step), "r" (-step),
-		  "K" (PSL_IR | PSL_DR));
+			"dcbst 0,%3;"
+			"icbi 0,%3;"
+			"add %3,%3,%5;"
+			"sub. %4,%4,%5;"
+			"bge 1b;"
+			"sync;"
+			"mtpid %1;"
+			"mtmsr %0;"
+			"isync;"
+			: "=&r" (msr), "=&r" (opid)
+			: "r" (ctx), "r" (va), "r" (len), "r" (CACHELINESIZE));
+	} else {
+		struct pmap *pm = p->p_vmspace->vm_map.pmap;
+		paddr_t pa;
+		vaddr_t tva, eva;
+		int tlen;
+
+		/*
+		 * For p != curproc, we cannot rely upon TLB miss handler in
+		 * user context. Therefore, extract pa and operate againt it.
+		 *
+		 * Note that va below VM_MIN_KERNEL_ADDRESS is reserved for
+		 * direct mapping.
+		 */
+
+		for (tva = va; len > 0; tva = eva, len -= tlen) {
+			eva = uimin(tva + len, trunc_page(tva + PAGE_SIZE));
+			tlen = eva - tva;
+			if (!pmap_extract(pm, tva, &pa)) {
+				/* XXX should be already unmapped */
+				continue;
+			}
+			__syncicache((void *)pa, tlen);
+		}
+	}
 }
 
 static inline void
