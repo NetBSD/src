@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.91 2020/09/10 03:02:36 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.92 2020/09/10 03:23:55 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.91 2020/09/10 03:02:36 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.92 2020/09/10 03:23:55 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -929,10 +929,6 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	int s;
 	u_int tte;
 	struct pmap *pm = pmap_kernel();
-
-	/*
-	 * Have to remove any existing mapping first.
-	 */
 
 	/*
 	 * Generate TTE.
