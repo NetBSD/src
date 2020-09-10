@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.29 2020/08/18 11:21:25 simonb Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.30 2020/09/10 17:26:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.29 2020/08/18 11:21:25 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.30 2020/09/10 17:26:38 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -398,7 +398,7 @@ pmap_bootstrap(void)
 	/* XXX: else runs out of space on 256MB sbmips!! */
 	sysmap_size += 20000;
 #endif
-	/* Rounup to a even number of pte page tables */
+	/* Roundup to a even number of pte page tables */
 	sysmap_size = (sysmap_size + NPTEPG - 1) & -NPTEPG;
 
 	/*
