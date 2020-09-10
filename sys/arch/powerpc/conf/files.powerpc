@@ -1,11 +1,11 @@
-#	$NetBSD: files.powerpc,v 1.94 2020/06/30 16:20:01 maxv Exp $
+#	$NetBSD: files.powerpc,v 1.95 2020/09/10 03:32:46 rin Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC PPC_HAVE_SPE
 defflag	opt_openpic.h	OPENPIC_DISTRIBUTE
 defparam opt_ppcparam.h	L2CR_CONFIG L3CR_CONFIG INTSTK CLOCKBASE VERBOSE_INITPPC
 defflag	opt_ppcarch.h	PPC_OEA PPC_OEA601 PPC_OEA64 PPC_OEA64_BRIDGE PPC_MPC8XX PPC_IBM4XX PPC_IBM403 PPC_IBM440 PPC_BOOKE
 defflag opt_ppccache.h	CACHE_PROTO_MEI
-defflag opt_pmap.h	PMAPDEBUG PMAPCHECK PMAPCOUNTERS PMAP_MINIMALTLB
+defflag opt_pmap.h	PMAPDEBUG PMAPCHECK PMAPCOUNTERS PMAP_MINIMALTLB PMAP_TLBDEBUG
 defparam opt_pmap.h	PTEGCOUNT PMAP_MEMLIMIT
 
 file	arch/powerpc/powerpc/core_machdep.c		coredump
