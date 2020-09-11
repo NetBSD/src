@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.c,v 1.32 2020/09/11 15:01:26 roy Exp $	*/
+/*	$NetBSD: if_llatbl.c,v 1.33 2020/09/11 15:16:00 roy Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -717,6 +717,11 @@ lla_rt_output(const u_char rtm_type, const int rtm_flags, const time_t rtm_expir
 			lle->la_flags |= LLE_PUB;
 		lle->la_flags |= LLE_VALID;
 		switch (dst->sa_family) {
+#ifdef INET
+		case AF_INET:
+			lle->ln_state = ND_LLINFO_REACHABLE;
+			break;
+#endif
 #ifdef INET6
 		case AF_INET6:
 			lle->ln_state = ND_LLINFO_REACHABLE;

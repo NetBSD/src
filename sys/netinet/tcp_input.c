@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.421 2020/09/11 15:08:25 roy Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.422 2020/09/11 15:16:00 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.421 2020/09/11 15:08:25 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.422 2020/09/11 15:16:00 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -186,6 +186,9 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.421 2020/09/11 15:08:25 roy Exp $");
 #include <netinet/ip_var.h>
 #include <netinet/in_offload.h>
 
+#ifdef INET
+#include <netinet/if_inarp.h>
+#endif
 #ifdef INET6
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
@@ -263,6 +266,12 @@ nd_hint(struct tcpcb *tp)
 		return;
 
 	switch (tp->t_family) {
+#ifdef INET
+	case AF_INET:
+		if (tp->t_inpcb != NULL)
+			ro = &tp->t_inpcb->inp_route;
+		break;
+#endif
 #ifdef INET6
 	case AF_INET6:
 		if (tp->t_in6pcb != NULL)
