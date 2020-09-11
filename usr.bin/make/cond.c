@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.132 2020/09/11 16:23:47 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.133 2020/09/11 16:37:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.132 2020/09/11 16:23:47 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.133 2020/09/11 16:37:48 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.132 2020/09/11 16:23:47 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.133 2020/09/11 16:37:48 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -546,59 +546,62 @@ EvalNotEmpty(CondParser *par, const char *lhs, Boolean lhsQuoted)
     return par->if_info->defProc(strlen(lhs), lhs) != par->if_info->doNot;
 }
 
-/* Evaluate a comparison, such as "${VAR} == 12345". */
+/* Evaluate a numerical comparison, such as in ".if ${VAR} >= 9". */
 static Token
-EvalComparison(const char *lhs, Boolean lhsQuoted, const char *op,
-	       const char *rhs, Boolean rhsQuoted)
+EvalCompareNum(double lhs, const char *op, double rhs)
 {
-    double left, right;
+    if (DEBUG(COND))
+	fprintf(debug_file, "lhs = %f, right = %f, op = %.2s\n", lhs, rhs, op);
 
-    if (rhsQuoted || lhsQuoted) {
-	do_string_compare:
-	if ((*op != '!' && *op != '=') || op[1] != '=') {
-	    Parse_Error(PARSE_WARNING,
-			"String comparison operator should be either == or !=");
-	    return TOK_ERROR;
-	}
-
-	if (DEBUG(COND)) {
-	    fprintf(debug_file, "lhs = \"%s\", rhs = \"%s\", op = %.2s\n",
-		    lhs, rhs, op);
-	}
-	return (*op == '=') == (strcmp(lhs, rhs) == 0);
-    }
-
-    /*
-     * rhs is either a float or an integer. Convert both the
-     * lhs and the rhs to a double and compare the two.
-     */
-
-    if (!TryParseNumber(lhs, &left) || !TryParseNumber(rhs, &right))
-	goto do_string_compare;
-
-    if (DEBUG(COND)) {
-	fprintf(debug_file, "left = %f, right = %f, op = %.2s\n", left,
-		right, op);
-    }
     switch (op[0]) {
     case '!':
 	if (op[1] != '=') {
 	    Parse_Error(PARSE_WARNING, "Unknown operator");
 	    return TOK_ERROR;
 	}
-	return left != right;
+	return lhs != rhs;
     case '=':
 	if (op[1] != '=') {
 	    Parse_Error(PARSE_WARNING, "Unknown operator");
 	    return TOK_ERROR;
 	}
-	return left == right;
+	return lhs == rhs;
     case '<':
-	return op[1] == '=' ? left <= right : left < right;
+	return op[1] == '=' ? lhs <= rhs : lhs < rhs;
     case '>':
-	return op[1] == '=' ? left >= right : left > right;
+	return op[1] == '=' ? lhs >= rhs : lhs > rhs;
     }
     return TOK_ERROR;
+}
+
+static Token
+EvalCompareStr(const char *lhs, const char *op, const char *rhs)
+{
+    if ((*op != '!' && *op != '=') || op[1] != '=') {
+	Parse_Error(PARSE_WARNING,
+		    "String comparison operator should be either == or !=");
+	return TOK_ERROR;
+    }
+
+    if (DEBUG(COND)) {
+	fprintf(debug_file, "lhs = \"%s\", rhs = \"%s\", op = %.2s\n",
+		lhs, rhs, op);
+    }
+    return (*op == '=') == (strcmp(lhs, rhs) == 0);
+}
+
+/* Evaluate a comparison, such as "${VAR} == 12345". */
+static Token
+EvalCompare(const char *lhs, Boolean lhsQuoted, const char *op,
+	    const char *rhs, Boolean rhsQuoted)
+{
+    double left, right;
+
+    if (!rhsQuoted && !lhsQuoted)
+	if (TryParseNumber(lhs, &left) && TryParseNumber(rhs, &right))
+	    return EvalCompareNum(left, op, right);
+
+    return EvalCompareStr(lhs, op, rhs);
 }
 
 /* Parse a comparison condition such as:
@@ -668,7 +671,7 @@ CondParser_Comparison(CondParser *par, Boolean doEval)
 	goto done;
     }
 
-    t = EvalComparison(lhs, lhsQuoted, op, rhs, rhsQuoted);
+    t = EvalCompare(lhs, lhsQuoted, op, rhs, rhsQuoted);
 
 done:
     free(lhsFree);
