@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.137 2020/09/07 19:48:08 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.138 2020/09/11 04:32:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.137 2020/09/07 19:48:08 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.138 2020/09/11 04:32:39 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.137 2020/09/07 19:48:08 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.138 2020/09/11 04:32:39 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -579,7 +579,7 @@ DirMatchFiles(const char *pattern, Path *p, Lst expansions)
     Hash_Entry *entry;		/* Current entry in the table */
     Boolean isDot;		/* TRUE if the directory being searched is . */
 
-    isDot = (*p->name == '.' && p->name[1] == '\0');
+    isDot = (p->name[0] == '.' && p->name[1] == '\0');
 
     for (entry = Hash_EnumFirst(&p->files, &search);
 	 entry != NULL;
