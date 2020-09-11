@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.131 2020/09/11 16:22:15 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.132 2020/09/11 16:23:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.131 2020/09/11 16:22:15 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.132 2020/09/11 16:23:47 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.131 2020/09/11 16:22:15 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.132 2020/09/11 16:23:47 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -555,7 +555,7 @@ EvalComparison(const char *lhs, Boolean lhsQuoted, const char *op,
 
     if (rhsQuoted || lhsQuoted) {
 	do_string_compare:
-	if (((*op != '!') && (*op != '=')) || (op[1] != '=')) {
+	if ((*op != '!' && *op != '=') || op[1] != '=') {
 	    Parse_Error(PARSE_WARNING,
 			"String comparison operator should be either == or !=");
 	    return TOK_ERROR;
@@ -583,30 +583,20 @@ EvalComparison(const char *lhs, Boolean lhsQuoted, const char *op,
     switch (op[0]) {
     case '!':
 	if (op[1] != '=') {
-	    Parse_Error(PARSE_WARNING,
-			"Unknown operator");
+	    Parse_Error(PARSE_WARNING, "Unknown operator");
 	    return TOK_ERROR;
 	}
 	return left != right;
     case '=':
 	if (op[1] != '=') {
-	    Parse_Error(PARSE_WARNING,
-			"Unknown operator");
+	    Parse_Error(PARSE_WARNING, "Unknown operator");
 	    return TOK_ERROR;
 	}
 	return left == right;
     case '<':
-	if (op[1] == '=') {
-	    return left <= right;
-	} else {
-	    return left < right;
-	}
+	return op[1] == '=' ? left <= right : left < right;
     case '>':
-	if (op[1] == '=') {
-	    return left >= right;
-	} else {
-	    return left > right;
-	}
+	return op[1] == '=' ? left >= right : left > right;
     }
     return TOK_ERROR;
 }
@@ -621,16 +611,11 @@ EvalComparison(const char *lhs, Boolean lhsQuoted, const char *op,
 static Token
 CondParser_Comparison(CondParser *par, Boolean doEval)
 {
-    Token t;
-    const char *lhs;
-    const char *rhs;
-    const char *op;
-    void *lhsFree;
-    void *rhsFree;
-    Boolean lhsQuoted;
-    Boolean rhsQuoted;
+    Token t = TOK_ERROR;
+    const char *lhs, *op, *rhs;
+    void *lhsFree, *rhsFree;
+    Boolean lhsQuoted, rhsQuoted;
 
-    t = TOK_ERROR;
     rhs = NULL;
     lhsFree = rhsFree = NULL;
     lhsQuoted = rhsQuoted = FALSE;
@@ -670,13 +655,12 @@ CondParser_Comparison(CondParser *par, Boolean doEval)
     CondParser_SkipWhitespace(par);
 
     if (par->p[0] == '\0') {
-	Parse_Error(PARSE_WARNING,
-		    "Missing right-hand-side of operator");
+	Parse_Error(PARSE_WARNING, "Missing right-hand-side of operator");
 	goto done;
     }
 
     rhs = CondParser_String(par, doEval, FALSE, &rhsQuoted, &rhsFree);
-    if (!rhs)
+    if (rhs == NULL)
 	goto done;
 
     if (!doEval) {
