@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.83 2020/09/10 15:17:23 jakllsch Exp $
+# $NetBSD: ad.arm,v 1.84 2020/09/11 15:21:48 jakllsch Exp $
 ./libexec/ld.elf_so-oabi			base-sysutil-bin	compat,pic
 ./sbin/ldconfig					base-sysutil-root	pic,endian=1234
 ./usr/bin/fdformat				base-util-bin
@@ -17,7 +17,7 @@
 ./usr/mdec/boot26,ffa				base-obsolete		obsolete
 ./usr/mdec/boot32				base-sysutil-bin	endian=1234
 ./usr/mdec/boot32,ffa				base-sysutil-bin	endian=1234
-./usr/mdec/bootarm.efi				base-sysutil-bin	!machine_arch=earmv4,!machine_arch=earmv4eb,!machine_arch=earmv5,!machine_arch=earmv5eb,!machine_arch=earmv5hf,!machine_arch=earmv5hfeb,!machine_arch=earmv6,!machine_arch=earmv6eb,!machine_arch=earmv6hf,!machine_arch=earmv6hfeb,!machine_arch=earmv7,!machine_arch=earmv7eb
+./usr/mdec/bootarm.efi				base-sysutil-bin	machine=evbarm,!machine_arch=arm,!machine_arch=earm,!machine_arch=earmeb,!machine_arch=earmv4,!machine_arch=earmv4eb,!machine_arch=earmv5,!machine_arch=earmv5eb,!machine_arch=earmv5hf,!machine_arch=earmv5hfeb,!machine_arch=earmv6,!machine_arch=earmv6eb,!machine_arch=earmv6hf,!machine_arch=earmv6hfeb,!machine_arch=earmv7,!machine_arch=earmv7eb
 ./usr/mdec/bootimx23				base-sysutil-bin	endian=1234
 ./usr/mdec/bootmini2440				base-sysutil-bin
 ./usr/mdec/gzboot_ADI_BRH_0x00140000.bin	base-sysutil-bin
