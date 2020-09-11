@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.123 2020/09/11 04:22:22 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.124 2020/09/11 04:40:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.123 2020/09/11 04:22:22 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.124 2020/09/11 04:40:26 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.123 2020/09/11 04:22:22 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.124 2020/09/11 04:40:26 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -393,7 +393,7 @@ CondCvtArg(const char *str, double *value)
 
 /*-
  * Parse a string from a variable reference or an optionally quoted
- * string.  This is called for the lhs and rhs of string compares.
+ * string.  This is called for the lhs and rhs of string comparisons.
  *
  * Results:
  *	Returns the string, absent any quotes, or NULL on error.
@@ -402,8 +402,8 @@ CondCvtArg(const char *str, double *value)
  */
 /* coverity:[+alloc : arg-*3] */
 static const char *
-CondGetString(CondParser *par, Boolean doEval, Boolean *quoted, void **freeIt,
-	      Boolean strictLHS)
+CondParser_String(CondParser *par, Boolean doEval, Boolean strictLHS,
+		  Boolean *quoted, void **freeIt)
 {
     Buffer buf;
     const char *str;
@@ -545,7 +545,7 @@ compare_expression(CondParser *par, Boolean doEval)
      * Parse the variable spec and skip over it, saving its
      * value in lhs.
      */
-    lhs = CondGetString(par, doEval, &lhsQuoted, &lhsFree, lhsStrict);
+    lhs = CondParser_String(par, doEval, lhsStrict, &lhsQuoted, &lhsFree);
     if (!lhs)
 	goto done;
 
@@ -601,7 +601,7 @@ compare_expression(CondParser *par, Boolean doEval)
 	goto done;
     }
 
-    rhs = CondGetString(par, doEval, &rhsQuoted, &rhsFree, FALSE);
+    rhs = CondParser_String(par, doEval, FALSE, &rhsQuoted, &rhsFree);
     if (!rhs)
 	goto done;
 

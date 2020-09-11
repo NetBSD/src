@@ -1,4 +1,4 @@
-# $NetBSD: cond-op.mk,v 1.4 2020/08/28 14:07:51 rillig Exp $
+# $NetBSD: cond-op.mk,v 1.5 2020/09/11 04:40:26 rillig Exp $
 #
 # Tests for operators like &&, ||, ! in .if conditions.
 #
@@ -48,7 +48,7 @@
 
 # Surprisingly, the ampersand and pipe are allowed in bare strings.
 # That's another opportunity for writing confusing code.
-# See CondGetString, which only has '!' in the list of stop characters.
+# See CondParser_String, which only has '!' in the list of stop characters.
 .if "a&&b||c" != a&&b||c
 .error
 .endif
