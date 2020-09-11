@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.126 2020/09/11 05:03:20 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.127 2020/09/11 06:08:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.126 2020/09/11 05:03:20 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.127 2020/09/11 06:08:10 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.126 2020/09/11 05:03:20 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.127 2020/09/11 06:08:10 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -198,8 +198,8 @@ CondParser_SkipWhitespace(CondParser *par)
 /* Parse the argument of a built-in function.
  *
  * Arguments:
- *	*linePtr initially points to the '(', upon successful return points
- *	beyond the ')'.
+ *	*linePtr initially points at the '(', upon successful return points
+ *	right after the ')'.
  *
  *	*out_arg receives the argument as string.
  *
@@ -208,8 +208,8 @@ CondParser_SkipWhitespace(CondParser *par)
  *
  * Return the length of the argument. */
 static int
-ParseFuncArg(Boolean doEval, const char **linePtr, char **out_arg,
-	     const char *func) {
+ParseFuncArg(const char **linePtr, Boolean doEval, const char *func,
+	     char **out_arg) {
     const char *cp;
     Buffer buf;
     int paren_depth;
@@ -685,8 +685,8 @@ done:
 }
 
 static int
-ParseEmptyArg(Boolean doEval, const char **linePtr, char **argPtr,
-	      const char *func MAKE_ATTR_UNUSED)
+ParseEmptyArg(const char **linePtr, Boolean doEval,
+	      const char *func MAKE_ATTR_UNUSED, char **argPtr)
 {
     void *val_freeIt;
     const char *val;
@@ -730,8 +730,8 @@ CondParser_Func(CondParser *par, Boolean doEval)
     static const struct fn_def {
 	const char *fn_name;
 	size_t fn_name_len;
-	int (*fn_getarg)(Boolean, const char **, char **, const char *);
-	Boolean (*fn_proc)(int, const char *);
+	int (*fn_parse)(const char **, Boolean, const char *, char **);
+	Boolean (*fn_eval)(int, const char *);
     } fn_defs[] = {
 	{ "defined",  7, ParseFuncArg,  FuncDefined },
 	{ "make",     4, ParseFuncArg,  FuncMake },
@@ -758,13 +758,13 @@ CondParser_Func(CondParser *par, Boolean doEval)
 	if (*cp != '(')
 	    break;
 
-	arglen = fn_def->fn_getarg(doEval, &cp, &arg, fn_def->fn_name);
+	arglen = fn_def->fn_parse(&cp, doEval, fn_def->fn_name, &arg);
 	if (arglen <= 0) {
 	    par->p = cp;
 	    return arglen < 0 ? TOK_ERROR : TOK_FALSE;
 	}
 	/* Evaluate the argument using the required function. */
-	t = !doEval || fn_def->fn_proc(arglen, arg);
+	t = !doEval || fn_def->fn_eval(arglen, arg);
 	free(arg);
 	par->p = cp;
 	return t;
@@ -783,7 +783,7 @@ CondParser_Func(CondParser *par, Boolean doEval)
      * would be invalid if we did "defined(a)" - so instead treat as an
      * expression.
      */
-    arglen = ParseFuncArg(doEval, &cp, &arg, NULL);
+    arglen = ParseFuncArg(&cp, doEval, NULL, &arg);
     for (cp1 = cp; isspace((unsigned char)*cp1); cp1++)
 	continue;
     if (*cp1 == '=' || *cp1 == '!')
