@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.272 2020/09/08 21:41:37 riastradh Exp $ */
+/* $NetBSD: pmap.c,v 1.273 2020/09/11 03:54:14 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.272 2020/09/08 21:41:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.273 2020/09/11 03:54:14 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -439,7 +439,7 @@ pmap_activation_lock(pmap_t const pmap)
  * changes.  In order amortize the cost of these operations, we will
  * queue up to 8 addresses to invalidate in a batch.  Any more than
  * that, and we will hit the entire TLB.
- 8
+ *
  * Some things that add complexity:
  *
  * ==> ASNs. A CPU may have valid TLB entries for other than the current
