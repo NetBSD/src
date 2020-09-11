@@ -1,4 +1,4 @@
-$NetBSD: README.gcc9,v 1.7 2020/09/07 23:47:02 mrg Exp $
+$NetBSD: README.gcc9,v 1.8 2020/09/11 05:24:14 rin Exp $
 
 new stuff:
 	cc1objcplus
@@ -31,7 +31,7 @@ architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf	switched
 ------------	-----	-------	------	----------	------------	----	---	--------
 aarch64		y	y	y	y		y		y	y	n
 aarch64be	y	y	y	y		?		?	?	n
-alpha		y	y	y	y		y		?	?	?
+alpha		y	y	y	y		y		y	y[10]	n
 earmv4		y	y	y	y		y		?	?	?
 earmv4eb	y	n	n	y		n		?	?	?
 earm		y	n	n	y		n		?	?	?
@@ -49,13 +49,13 @@ earmv7hfeb	y	n	n	y		n		?	?	?
 hppa		y	y	y	y		y		?	?	?
 i386		y	y	y	y		y		y	y	n
 ia64		y	y	y	y		y		y	N/A	n
-m68000		y	n	n	y		n[7]		n	?	?
-m68k		y	y	y	y		y		y	?	?
+m68000		y	y	y	y		y		y	?	n
+m68k		y	y	y	y		y		y	y[11]	n
 mipseb		y	y	y	y		y[3]		n	n	?
 mipsel		y	y	y	y		y[3]		y	n	?
 mips64eb	y	y	y	y		y[3]		y	y	n
 mips64el	y	y	y	y		y[3]		n	n	?
-powerpc		y	y	y	y		y[3]		y	n	n
+powerpc		y	y	y	y		y[3]		y	y	n
 powerpc64	y	?	y	y		n[6]		?	n	?
 sh3eb		y	n	y	y		n[1]		n	n	?
 sh3el		y	n	y	y		n		n	n	?
@@ -80,9 +80,10 @@ architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 [3]: consult cpu/platform table for full data
 [4]: triggers weird xorg-server issue; perhaps related to _XSERVER64 not being present
 [6]: /usr/src/sys/compat/common/compat_util.c:116:1: internal compiler error: in rs6000_pltseq_template, at config/rs6000/rs6000.c:21977
-[7]: libstdc++ does not build
 [8]: prep floppies overflow; need to find if they are size limited
 [9]: evbarmv7-eb has dtb sets issues
+[10]: tests in lib/libc/sys are skipped; see port-alpha/55652
+[11]: at least there's no regression in kernel and lib/libc/{gen,sys}
 
 
 CPU vs platform test table (for CPUs with multiple ports).  this is "make release" or just kernels.
@@ -100,7 +101,7 @@ earmv7:		 		 	 	y[9]		y
 earmv7hf:	 		 	 	y		y
 
 		amiga		atari	cesfic	hp300		luna68k		mac68k		mvme68k		news68k		next68k		sun3	x68k
-m68k:		y		y	y	y		y		y		y		y		y		y 	y
+m68k:		r		y	y	y		y		r		y		y		y		r 	y
 
 		evbmips		emips		ews4800mips	mipsco		newsmips	sgimips
 mipseb:		y		y		y		y		y		y
@@ -113,7 +114,7 @@ mips64eb:	 		y
 mips64el:	y		y		y
 
 		amigappc	bebox	evbppc	ibmnws		macppc		mvmeppc		ofppc		prep		rs6000		sandpoint
-powerpc:	y		y	y	y		y		y		y		n[8]		y		y
+powerpc:	y		y	r	y		r		y		y		n[8]		y		y
 
 		evbppc		macppc		ofppc
 powerpc64:	n		?		?
