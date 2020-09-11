@@ -1,4 +1,4 @@
-# $NetBSD: cond-op-or.mk,v 1.4 2020/09/10 22:44:08 rillig Exp $
+# $NetBSD: cond-op-or.mk,v 1.5 2020/09/11 06:51:38 rillig Exp $
 #
 # Tests for the || operator in .if conditions.
 
@@ -23,7 +23,7 @@
 .if 1 || ${UNDEF}
 .endif
 
-# The && operator may be abbreviated as &.  This is not widely known though
+# The || operator may be abbreviated as |.  This is not widely known though
 # and is also not documented in the manual page.
 
 .if 0 | 0
