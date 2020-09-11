@@ -1139,6 +1139,14 @@ uptr GetPageSize() {
 // Android post-M sysconf(_SC_PAGESIZE) crashes if called from .preinit_array.
 #if SANITIZER_ANDROID
   return 4096;
+#elif SANITIZER_FREEBSD || SANITIZER_NETBSD
+// Use sysctl as sysconf can trigger interceptors internally.
+  int pz = 0;
+  uptr pzl = sizeof(pz);
+  int mib[2] = {CTL_HW, HW_PAGESIZE};
+  int rv = internal_sysctl(mib, 2, &pz, &pzl, nullptr, 0);
+  CHECK_EQ(rv, 0);
+  return (uptr)pz;
 #elif SANITIZER_LINUX && (defined(__x86_64__) || defined(__i386__))
   return EXEC_PAGESIZE;
 #elif SANITIZER_USE_GETAUXVAL
