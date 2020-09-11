@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.38 2019/07/04 02:44:25 ozaki-r Exp $	*/
+/*	$NetBSD: sockio.h,v 1.39 2020/09/11 15:22:12 roy Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -152,5 +152,7 @@
 
 #define	SIOCSETPFSYNC	_IOW('i', 247, struct ifreq)	
 #define	SIOCGETPFSYNC	_IOWR('i', 248, struct ifreq)
+
+#define	SIOCGNBRINFO	_IOWR('i', 249, struct in_nbrinfo) /* get IA ND info */
 
 #endif /* !_SYS_SOCKIO_H_ */
