@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.78 2020/09/07 06:28:22 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.79 2020/09/11 17:32:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.78 2020/09/07 06:28:22 rillig Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.79 2020/09/11 17:32:36 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.78 2020/09/07 06:28:22 rillig Exp $");
+__RCSID("$NetBSD: for.c,v 1.79 2020/09/11 17:32:36 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -129,7 +129,7 @@ For_Eval(const char *line)
     Words words;
 
     /* Skip the '.' and any following whitespace */
-    for (ptr = line + 1; isspace((unsigned char)*ptr); ptr++)
+    for (ptr = line + 1; ch_isspace(*ptr); ptr++)
 	continue;
 
     /*
@@ -137,7 +137,7 @@ For_Eval(const char *line)
      * a for.
      */
     if (ptr[0] != 'f' || ptr[1] != 'o' || ptr[2] != 'r' ||
-	!isspace((unsigned char)ptr[3])) {
+	!ch_isspace(ptr[3])) {
 	if (ptr[0] == 'e' && strncmp(ptr + 1, "ndfor", 5) == 0) {
 	    Parse_Error(PARSE_FATAL, "for-less endfor");
 	    return -1;
@@ -162,7 +162,7 @@ For_Eval(const char *line)
     while (TRUE) {
 	size_t len;
 
-	while (isspace((unsigned char)*ptr))
+	while (ch_isspace(*ptr))
 	    ptr++;
 	if (*ptr == '\0') {
 	    Parse_Error(PARSE_FATAL, "missing `in' in for");
@@ -170,7 +170,7 @@ For_Eval(const char *line)
 	    return -1;
 	}
 
-	for (len = 1; ptr[len] && !isspace((unsigned char)ptr[len]); len++)
+	for (len = 1; ptr[len] && !ch_isspace(ptr[len]); len++)
 	    continue;
 	if (len == 2 && ptr[0] == 'i' && ptr[1] == 'n') {
 	    ptr += 2;
@@ -189,7 +189,7 @@ For_Eval(const char *line)
 	return -1;
     }
 
-    while (isspace((unsigned char)*ptr))
+    while (ch_isspace(*ptr))
 	ptr++;
 
     /*
@@ -277,17 +277,15 @@ For_Accum(const char *line)
 
     if (*ptr == '.') {
 
-	for (ptr++; *ptr && isspace((unsigned char)*ptr); ptr++)
+	for (ptr++; *ptr && ch_isspace(*ptr); ptr++)
 	    continue;
 
-	if (strncmp(ptr, "endfor", 6) == 0 &&
-	    (isspace((unsigned char)ptr[6]) || !ptr[6])) {
+	if (strncmp(ptr, "endfor", 6) == 0 && (ch_isspace(ptr[6]) || !ptr[6])) {
 	    if (DEBUG(FOR))
 		(void)fprintf(debug_file, "For: end for %d\n", forLevel);
 	    if (--forLevel <= 0)
 		return 0;
-	} else if (strncmp(ptr, "for", 3) == 0 &&
-		   isspace((unsigned char)ptr[3])) {
+	} else if (strncmp(ptr, "for", 3) == 0 && ch_isspace(ptr[3])) {
 	    forLevel++;
 	    if (DEBUG(FOR))
 		(void)fprintf(debug_file, "For: new loop %d\n", forLevel);

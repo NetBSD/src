@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.133 2020/09/11 16:37:48 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.134 2020/09/11 17:32:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.133 2020/09/11 16:37:48 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.134 2020/09/11 17:32:36 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.133 2020/09/11 16:37:48 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.134 2020/09/11 17:32:36 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -175,7 +175,7 @@ static Boolean lhsStrict;
 static int
 is_token(const char *str, const char *tok, size_t len)
 {
-    return strncmp(str, tok, len) == 0 && !isalpha((unsigned char)str[len]);
+    return strncmp(str, tok, len) == 0 && !ch_isalpha(str[len]);
 }
 
 /* Push back the most recent token read. We only need one level of this. */
@@ -191,7 +191,7 @@ CondParser_PushBack(CondParser *par, Token t)
 static void
 CondParser_SkipWhitespace(CondParser *par)
 {
-    while (isspace((unsigned char)par->p[0]))
+    while (ch_isspace(par->p[0]))
 	par->p++;
 }
 
@@ -472,7 +472,7 @@ CondParser_String(CondParser *par, Boolean doEval, Boolean strictLHS,
 	     */
 	    if ((par->p == start + len) &&
 		(par->p[0] == '\0' ||
-		 isspace((unsigned char)par->p[0]) ||
+		 ch_isspace(par->p[0]) ||
 		 strchr("!=><)", par->p[0]))) {
 		goto cleanup;
 	    }
@@ -485,8 +485,7 @@ CondParser_String(CondParser *par, Boolean doEval, Boolean strictLHS,
 	    str = NULL;		/* not finished yet */
 	    continue;
 	default:
-	    if (strictLHS && !qt && *start != '$' &&
-		!isdigit((unsigned char)*start)) {
+	    if (strictLHS && !qt && *start != '$' && !ch_isdigit(*start)) {
 		/* lhs must be quoted, a variable reference or number */
 		if (*freeIt) {
 		    free(*freeIt);
@@ -700,7 +699,7 @@ ParseEmptyArg(const char **linePtr, Boolean doEval,
     }
 
     /* A variable is empty when it just contains spaces... 4/15/92, christos */
-    while (isspace((unsigned char)val[0]))
+    while (ch_isspace(val[0]))
 	val++;
 
     /*
@@ -748,7 +747,7 @@ CondParser_Func(CondParser *par, Boolean doEval)
 	    continue;
 	cp += fn_def->fn_name_len;
 	/* There can only be whitespace before the '(' */
-	while (isspace((unsigned char)*cp))
+	while (ch_isspace(*cp))
 	    cp++;
 	if (*cp != '(')
 	    break;
@@ -767,7 +766,7 @@ CondParser_Func(CondParser *par, Boolean doEval)
 
     /* Push anything numeric through the compare expression */
     cp = par->p;
-    if (isdigit((unsigned char)cp[0]) || strchr("+-", cp[0]))
+    if (ch_isdigit(cp[0]) || strchr("+-", cp[0]))
 	return CondParser_Comparison(par, doEval);
 
     /*
@@ -779,7 +778,7 @@ CondParser_Func(CondParser *par, Boolean doEval)
      * expression.
      */
     arglen = ParseFuncArg(&cp, doEval, NULL, &arg);
-    for (cp1 = cp; isspace((unsigned char)*cp1); cp1++)
+    for (cp1 = cp; ch_isspace(*cp1); cp1++)
 	continue;
     if (*cp1 == '=' || *cp1 == '!')
 	return CondParser_Comparison(par, doEval);

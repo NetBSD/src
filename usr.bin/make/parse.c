@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.289 2020/09/08 05:26:21 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.290 2020/09/11 17:32:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.289 2020/09/08 05:26:21 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.290 2020/09/11 17:32:36 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.289 2020/09/08 05:26:21 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.290 2020/09/11 17:32:36 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -769,11 +769,11 @@ ParseMessage(char *line)
 	return FALSE;
     }
 
-    while (isalpha((unsigned char)*line))
+    while (ch_isalpha(*line))
 	line++;
-    if (!isspace((unsigned char)*line))
+    if (!ch_isspace(*line))
 	return FALSE;			/* not for us */
-    while (isspace((unsigned char)*line))
+    while (ch_isspace(*line))
 	line++;
 
     line = Var_Subst(line, VAR_CMD, VARE_WANTRES);
@@ -937,7 +937,7 @@ ParseDoSrc(int tOp, const char *src)
     static int wait_number = 0;
     char wait_src[16];
 
-    if (*src == '.' && isupper ((unsigned char)src[1])) {
+    if (*src == '.' && ch_isupper(src[1])) {
 	int keywd = ParseFindKeyword(src);
 	if (keywd != -1) {
 	    int op = parseKeywords[keywd].op;
@@ -1182,7 +1182,7 @@ ParseDoDependency(char *line)
 
 	/* Find the end of the next word. */
 	for (cp = line; *cp && (ParseIsEscaped(lstart, cp) ||
-		     !(isspace((unsigned char)*cp) ||
+		     !(ch_isspace(*cp) ||
 			 *cp == '!' || *cp == ':' || *cp == LPAREN));) {
 	    if (*cp == '$') {
 		/*
@@ -1246,10 +1246,10 @@ ParseDoDependency(char *line)
 	    else if (lstart[0] == '.') {
 		const char *dirstart = lstart + 1;
 		const char *dirend;
-		while (isspace((unsigned char)*dirstart))
+		while (ch_isspace(*dirstart))
 		    dirstart++;
 		dirend = dirstart;
-		while (isalnum((unsigned char)*dirend) || *dirend == '-')
+		while (ch_isalnum(*dirend) || *dirend == '-')
 		    dirend++;
 		Parse_Error(PARSE_FATAL, "Unknown directive \"%.*s\"",
 			    (int)(dirend - dirstart), dirstart);
@@ -1266,7 +1266,7 @@ ParseDoDependency(char *line)
 	 * Got the word. See if it's a special target and if so set
 	 * specType to match it.
 	 */
-	if (*line == '.' && isupper ((unsigned char)line[1])) {
+	if (*line == '.' && ch_isupper(line[1])) {
 	    /*
 	     * See if the target is a special target that must have it
 	     * or its sources handled specially.
@@ -1447,7 +1447,7 @@ ParseDoDependency(char *line)
 		Parse_Error(PARSE_WARNING, "Extra target ignored");
 	    }
 	} else {
-	    while (*cp && isspace ((unsigned char)*cp)) {
+	    while (*cp && ch_isspace(*cp)) {
 		cp++;
 	    }
 	}
@@ -1520,7 +1520,7 @@ ParseDoDependency(char *line)
      * LINE will now point to the first source word, if any, or the
      * end of the string if not.
      */
-    while (*cp && isspace ((unsigned char)*cp)) {
+    while (*cp && ch_isspace(*cp)) {
 	cp++;
     }
     line = cp;
@@ -1615,7 +1615,7 @@ ParseDoDependency(char *line)
 	     * If it was .OBJDIR, the source is a new definition for .OBJDIR,
 	     * and will cause make to do a new chdir to that path.
 	     */
-	    while (*cp && !isspace ((unsigned char)*cp)) {
+	    while (*cp && !ch_isspace(*cp)) {
 		cp++;
 	    }
 	    savec = *cp;
@@ -1647,7 +1647,7 @@ ParseDoDependency(char *line)
 	    if (savec != '\0') {
 		cp++;
 	    }
-	    while (*cp && isspace ((unsigned char)*cp)) {
+	    while (*cp && ch_isspace(*cp)) {
 		cp++;
 	    }
 	    line = cp;
@@ -1666,7 +1666,7 @@ ParseDoDependency(char *line)
 	     * specifications (i.e. things with left parentheses in them)
 	     * and handle them accordingly.
 	     */
-	    for (; *cp && !isspace ((unsigned char)*cp); cp++) {
+	    for (; *cp && !ch_isspace(*cp); cp++) {
 		if (*cp == LPAREN && cp > line && cp[-1] != '$') {
 		    /*
 		     * Only stop for a left parenthesis if it isn't at the
@@ -1700,7 +1700,7 @@ ParseDoDependency(char *line)
 
 		ParseDoSrc(tOp, line);
 	    }
-	    while (*cp && isspace ((unsigned char)*cp)) {
+	    while (*cp && ch_isspace(*cp)) {
 		cp++;
 	    }
 	    line = cp;
@@ -1850,7 +1850,7 @@ Parse_DoVar(char *line, GNode *ctxt)
 	    depth--;
 	    continue;
 	}
-	if (depth == 0 && isspace ((unsigned char)*cp)) {
+	if (depth == 0 && ch_isspace(*cp)) {
 	    *cp = '\0';
 	}
     }
@@ -1903,7 +1903,7 @@ Parse_DoVar(char *line, GNode *ctxt)
 	    break;
     }
 
-    while (isspace((unsigned char)*cp))
+    while (ch_isspace(*cp))
 	cp++;
 
     if (DEBUG(LINT)) {
@@ -2019,8 +2019,8 @@ ParseMaybeSubMake(const char *cmd)
 	char *ptr;
 	if ((ptr = strstr(cmd, vals[i].name)) == NULL)
 	    continue;
-	if ((ptr == cmd || !isalnum((unsigned char)ptr[-1]))
-	    && !isalnum((unsigned char)ptr[vals[i].len]))
+	if ((ptr == cmd || !ch_isalnum(ptr[-1]))
+	    && !ch_isalnum(ptr[vals[i].len]))
 	    return TRUE;
     }
     return FALSE;
@@ -2431,7 +2431,7 @@ IsInclude(const char *line, Boolean sysv)
 		return FALSE;
 
 	/* Space is not mandatory for BSD .include */
-	return !sysv || isspace((unsigned char)line[inclen + o]);
+	return !sysv || ch_isspace(line[inclen + o]);
 }
 
 
@@ -2451,7 +2451,7 @@ IsSysVInclude(const char *line)
 			/* end of line -> dependency */
 			return FALSE;
 		}
-		if (*p == ':' || isspace((unsigned char)*p)) {
+		if (*p == ':' || ch_isspace(*p)) {
 			/* :: operator or ': ' -> dependency */
 			return FALSE;
 		}
@@ -2475,7 +2475,7 @@ ParseTraditionalInclude(char *line)
     /*
      * Skip over whitespace
      */
-    while (isspace((unsigned char)*file))
+    while (ch_isspace(*file))
 	file++;
 
     /*
@@ -2492,7 +2492,7 @@ ParseTraditionalInclude(char *line)
 
     for (file = all_files; !done; file = cp + 1) {
 	/* Skip to end of line or next whitespace */
-	for (cp = file; *cp && !isspace((unsigned char) *cp); cp++)
+	for (cp = file; *cp && !ch_isspace(*cp); cp++)
 	    continue;
 
 	if (*cp)
@@ -2521,7 +2521,7 @@ ParseGmakeExport(char *line)
     /*
      * Skip over whitespace
      */
-    while (isspace((unsigned char)*variable))
+    while (ch_isspace(*variable))
 	variable++;
 
     for (value = variable; *value && *value != '='; value++)
@@ -2676,7 +2676,7 @@ ParseGetLine(int flags, int *length)
 	    ptr++;
 	    if (ch == '\n')
 		break;
-	    if (!isspace((unsigned char)ch))
+	    if (!ch_isspace(ch))
 		/* We are not interested in trailing whitespace */
 		line_end = ptr;
 	}
@@ -2760,7 +2760,7 @@ ParseGetLine(int flags, int *length)
     }
 
     /* Delete any trailing spaces - eg from empty continuations */
-    while (tp > escaped && isspace((unsigned char)tp[-1]))
+    while (tp > escaped && ch_isspace(tp[-1]))
 	tp--;
 
     *tp = 0;
@@ -2913,7 +2913,7 @@ Parse_File(const char *name, int fd)
 		 * On the other hand they can be suffix rules (.c.o: ...)
 		 * or just dependencies for filenames that start '.'.
 		 */
-		for (cp = line + 1; isspace((unsigned char)*cp); cp++) {
+		for (cp = line + 1; ch_isspace(*cp); cp++) {
 		    continue;
 		}
 		if (IsInclude(cp, FALSE)) {
@@ -2922,16 +2922,15 @@ Parse_File(const char *name, int fd)
 		}
 		if (strncmp(cp, "undef", 5) == 0) {
 		    char *cp2;
-		    for (cp += 5; isspace((unsigned char) *cp); cp++)
+		    for (cp += 5; ch_isspace(*cp); cp++)
 			continue;
-		    for (cp2 = cp; !isspace((unsigned char) *cp2) &&
-				   *cp2 != '\0'; cp2++)
+		    for (cp2 = cp; !ch_isspace(*cp2) && *cp2 != '\0'; cp2++)
 			continue;
 		    *cp2 = '\0';
 		    Var_Delete(cp, VAR_GLOBAL);
 		    continue;
 		} else if (strncmp(cp, "export", 6) == 0) {
-		    for (cp += 6; isspace((unsigned char) *cp); cp++)
+		    for (cp += 6; ch_isspace(*cp); cp++)
 			continue;
 		    Var_Export(cp, TRUE);
 		    continue;
@@ -2953,7 +2952,7 @@ Parse_File(const char *name, int fd)
 		 */
 		cp = line + 1;
 	      shellCommand:
-		for (; isspace ((unsigned char)*cp); cp++) {
+		for (; ch_isspace(*cp); cp++) {
 		    continue;
 		}
 		if (*cp) {
@@ -2987,8 +2986,7 @@ Parse_File(const char *name, int fd)
 	    }
 #endif
 #ifdef GMAKEEXPORT
-	    if (strncmp(line, "export", 6) == 0 &&
-		isspace((unsigned char) line[6]) &&
+	    if (strncmp(line, "export", 6) == 0 && ch_isspace(line[6]) &&
 		strchr(line, ':') == NULL) {
 		/*
 		 * It's a Gmake "export".
@@ -3012,8 +3010,8 @@ Parse_File(const char *name, int fd)
 	     * and add it to the current list of targets.
 	     */
 	    cp = line;
-	    if (isspace((unsigned char) line[0])) {
-		while (isspace((unsigned char) *cp))
+	    if (ch_isspace(line[0])) {
+		while (ch_isspace(*cp))
 		    cp++;
 		while (*cp && (ParseIsEscaped(line, cp) ||
 			*cp != ':' && *cp != '!')) {
