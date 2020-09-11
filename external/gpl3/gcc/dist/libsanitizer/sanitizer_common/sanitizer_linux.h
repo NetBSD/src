@@ -74,12 +74,8 @@ uptr internal_prctl(int option, uptr arg2, uptr arg3, uptr arg4, uptr arg5);
 #endif  // SANITIZER_LINUX
 
 #ifdef SANITIZER_NETBSD
-int internal_sigaction_norestorer(int signum, const void *act, void *oldact);
-#define internal_sigdelset(set, signum) \
-    __sigdelset(set, signum)
-#define internal_clone(fn, child_stack, flags, arg, \
-    parent_tidptr, newtls, child_tidptr) \
-    __clone(fn, child_stack, flags, arg)
+void internal_sigdelset(__sanitizer_sigset_t *set, int signum);
+uptr internal_clone(int (*fn)(void *), void *child_stack, int flags, void *arg);
 #endif
 
 // This class reads thread IDs from /proc/<pid>/task using only syscalls.
