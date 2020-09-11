@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: motd,v 1.9 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: motd,v 1.10 2020/09/11 09:59:35 kim Exp $
 #
 
 # PROVIDE: motd
@@ -16,7 +16,7 @@ stop_cmd=":"
 
 motd_start()
 {
-	#	Update kernel info in /etc/motd
+	#	Update kernel and release info in /etc/motd
 	#	Must be done *before* interactive logins are possible
 	#	to prevent possible race conditions.
 	#
@@ -27,7 +27,16 @@ motd_start()
 	( umask 022
 	T=/etc/_motd
 	sysctl -n kern.version | while read i; do echo $i; break; done > $T
-	sed '1{/^NetBSD.*/{d;};};' < /etc/motd >> $T
+	if checkyesno update_motd_release; then
+		local t="${motd_release_tag}"
+		sed -En '1{/^NetBSD/{s/^/'"$t"'/;h;d;};q;}
+		    /^ *Build ID */{s//(/;s/$/)/;H;g;y/\n/ /;p;q;}
+		    ${g;p;}' < /etc/release >> $T
+		sed -E '1,2{/^'"${t+(${t})?}"'NetBSD/{d;};};' \
+		    < /etc/motd >> $T
+	else
+		sed '1{/^NetBSD.*/{d;};};' < /etc/motd >> $T
+	fi
 	cmp -s $T /etc/motd || cp $T /etc/motd
 	rm -f $T
 	)
