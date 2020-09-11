@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sanitizer,v 1.13 2020/09/10 12:53:05 kamil Exp $
+#	$NetBSD: Makefile.sanitizer,v 1.14 2020/09/11 01:05:28 kamil Exp $
 
 SANITIZER=${GCCDIST}/libsanitizer
 .PATH: ${SANITIZER}/interception ${SANITIZER}/sanitizer_common
@@ -53,6 +53,7 @@ SANITIZER_SRCS+= \
 	sanitizer_stacktrace_printer.cc \
 	sanitizer_stacktrace_sparc.cc \
 	sanitizer_stoptheworld_linux_libcdep.cc \
+	sanitizer_stoptheworld_netbsd_libcdep.cc \
 	sanitizer_suppressions.cc \
 	sanitizer_symbolizer.cc \
 	sanitizer_symbolizer_libbacktrace.cc \
