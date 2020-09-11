@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.128 2020/09/11 06:47:42 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.129 2020/09/11 07:09:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.128 2020/09/11 06:47:42 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.129 2020/09/11 07:09:40 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.128 2020/09/11 06:47:42 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.129 2020/09/11 07:09:40 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -523,6 +523,13 @@ static const struct If {
     { NULL,    0, FALSE, NULL }
 };
 
+/* Parse a comparison condition such as:
+ *
+ *	0
+ *	${VAR:Mpattern}
+ *	${VAR} == value
+ *	${VAR:U0} < 12345
+ */
 static Token
 CondParser_Comparison(CondParser *par, Boolean doEval)
 {
