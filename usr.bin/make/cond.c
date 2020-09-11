@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.121 2020/09/11 04:07:44 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.122 2020/09/11 04:18:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.121 2020/09/11 04:07:44 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.122 2020/09/11 04:18:44 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.121 2020/09/11 04:07:44 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.122 2020/09/11 04:18:44 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -150,7 +150,7 @@ typedef enum {
 
 typedef struct {
     const struct If *if_info;	/* Info for current statement */
-    const char *condExpr;	/* The expression to parse */
+    const char *p;		/* The remaining condition to parse */
     Token curr;			/* Single push-back token used in parsing */
 } CondParser;
 
@@ -191,8 +191,8 @@ CondParser_PushBack(CondParser *par, Token t)
 static void
 CondParser_SkipWhitespace(CondParser *par)
 {
-    while (isspace((unsigned char)par->condExpr[0]))
-	par->condExpr++;
+    while (isspace((unsigned char)par->p[0]))
+	par->p++;
 }
 
 /* Parse the argument of a built-in function.
@@ -415,25 +415,25 @@ CondGetString(CondParser *par, Boolean doEval, Boolean *quoted, void **freeIt,
     Buf_Init(&buf, 0);
     str = NULL;
     *freeIt = NULL;
-    *quoted = qt = *par->condExpr == '"' ? 1 : 0;
+    *quoted = qt = *par->p == '"' ? 1 : 0;
     if (qt)
-	par->condExpr++;
-    for (start = par->condExpr; *par->condExpr && str == NULL;) {
-	switch (*par->condExpr) {
+	par->p++;
+    for (start = par->p; *par->p && str == NULL;) {
+	switch (*par->p) {
 	case '\\':
-	    par->condExpr++;
-	    if (par->condExpr[0] != '\0') {
-		Buf_AddByte(&buf, *par->condExpr);
-		par->condExpr++;
+	    par->p++;
+	    if (par->p[0] != '\0') {
+		Buf_AddByte(&buf, *par->p);
+		par->p++;
 	    }
 	    continue;
 	case '"':
 	    if (qt) {
-		par->condExpr++;	/* we don't want the quotes */
+		par->p++;	/* we don't want the quotes */
 		goto got_str;
 	    }
-	    Buf_AddByte(&buf, *par->condExpr); /* likely? */
-	    par->condExpr++;
+	    Buf_AddByte(&buf, *par->p); /* likely? */
+	    par->p++;
 	    continue;
 	case ')':
 	case '!':
@@ -444,14 +444,14 @@ CondGetString(CondParser *par, Boolean doEval, Boolean *quoted, void **freeIt,
 	case '\t':
 	    if (!qt)
 		goto got_str;
-	    Buf_AddByte(&buf, *par->condExpr);
-	    par->condExpr++;
+	    Buf_AddByte(&buf, *par->p);
+	    par->p++;
 	    continue;
 	case '$':
 	    /* if we are in quotes, then an undefined variable is ok */
 	    eflags = ((!qt && doEval) ? VARE_UNDEFERR : 0) |
 		     (doEval ? VARE_WANTRES : 0);
-	    str = Var_Parse(par->condExpr, VAR_CMD, eflags, &len, freeIt);
+	    str = Var_Parse(par->p, VAR_CMD, eflags, &len, freeIt);
 	    if (str == var_Error) {
 		if (*freeIt) {
 		    free(*freeIt);
@@ -464,16 +464,16 @@ CondGetString(CondParser *par, Boolean doEval, Boolean *quoted, void **freeIt,
 		str = NULL;
 		goto cleanup;
 	    }
-	    par->condExpr += len;
+	    par->p += len;
 	    /*
 	     * If the '$' was first char (no quotes), and we are
 	     * followed by space, the operator or end of expression,
 	     * we are done.
 	     */
-	    if ((par->condExpr == start + len) &&
-		(*par->condExpr == '\0' ||
-		 isspace((unsigned char)*par->condExpr) ||
-		 strchr("!=><)", *par->condExpr))) {
+	    if ((par->p == start + len) &&
+		(*par->p == '\0' ||
+		 isspace((unsigned char)*par->p) ||
+		 strchr("!=><)", *par->p))) {
 		goto cleanup;
 	    }
 
@@ -495,8 +495,8 @@ CondGetString(CondParser *par, Boolean doEval, Boolean *quoted, void **freeIt,
 		str = NULL;
 		goto cleanup;
 	    }
-	    Buf_AddByte(&buf, *par->condExpr);
-	    par->condExpr++;
+	    Buf_AddByte(&buf, *par->p);
+	    par->p++;
 	    continue;
 	}
     }
@@ -556,16 +556,16 @@ compare_expression(CondParser *par, Boolean doEval)
      * known relational operator, pretend we got a
      * != 0 comparison.
      */
-    op = par->condExpr;
-    switch (*par->condExpr) {
+    op = par->p;
+    switch (*par->p) {
     case '!':
     case '=':
     case '<':
     case '>':
-	if (par->condExpr[1] == '=') {
-	    par->condExpr += 2;
+	if (par->p[1] == '=') {
+	    par->p += 2;
 	} else {
-	    par->condExpr += 1;
+	    par->p += 1;
 	}
 	break;
     default:
@@ -575,7 +575,7 @@ compare_expression(CondParser *par, Boolean doEval)
 	}
 	/* For .ifxxx "..." check for non-empty string. */
 	if (lhsQuoted) {
-	    t = lhs[0] != 0;
+	    t = lhs[0] != '\0';
 	    goto done;
 	}
 	/* For .ifxxx <number> compare against zero */
@@ -584,7 +584,7 @@ compare_expression(CondParser *par, Boolean doEval)
 	    goto done;
 	}
 	/* For .if ${...} check for non-empty string (defProc is ifdef). */
-	if (par->if_info->form[0] == 0) {
+	if (par->if_info->form[0] == '\0') {
 	    t = lhs[0] != 0;
 	    goto done;
 	}
@@ -595,7 +595,7 @@ compare_expression(CondParser *par, Boolean doEval)
 
     CondParser_SkipWhitespace(par);
 
-    if (*par->condExpr == '\0') {
+    if (*par->p == '\0') {
 	Parse_Error(PARSE_WARNING,
 		    "Missing right-hand-side of operator");
 	goto done;
@@ -745,7 +745,7 @@ compare_function(CondParser *par, Boolean doEval)
     Token t;
     char *arg = NULL;
     int arglen;
-    const char *cp = par->condExpr;
+    const char *cp = par->p;
     const char *cp1;
 
     for (fn_def = fn_defs; fn_def->fn_name != NULL; fn_def++) {
@@ -760,18 +760,18 @@ compare_function(CondParser *par, Boolean doEval)
 
 	arglen = fn_def->fn_getarg(doEval, &cp, &arg, fn_def->fn_name);
 	if (arglen <= 0) {
-	    par->condExpr = cp;
+	    par->p = cp;
 	    return arglen < 0 ? TOK_ERROR : TOK_FALSE;
 	}
 	/* Evaluate the argument using the required function. */
 	t = !doEval || fn_def->fn_proc(arglen, arg);
 	free(arg);
-	par->condExpr = cp;
+	par->p = cp;
 	return t;
     }
 
     /* Push anything numeric through the compare expression */
-    cp = par->condExpr;
+    cp = par->p;
     if (isdigit((unsigned char)cp[0]) || strchr("+-", cp[0]))
 	return compare_expression(par, doEval);
 
@@ -788,7 +788,7 @@ compare_function(CondParser *par, Boolean doEval)
 	continue;
     if (*cp1 == '=' || *cp1 == '!')
 	return compare_expression(par, doEval);
-    par->condExpr = cp;
+    par->p = cp;
 
     /*
      * Evaluate the argument using the default function.
@@ -813,36 +813,36 @@ CondToken(CondParser *par, Boolean doEval)
 	return t;
     }
 
-    while (par->condExpr[0] == ' ' || par->condExpr[0] == '\t') {
-	par->condExpr++;
+    while (par->p[0] == ' ' || par->p[0] == '\t') {
+	par->p++;
     }
 
-    switch (par->condExpr[0]) {
+    switch (par->p[0]) {
 
     case '(':
-	par->condExpr++;
+	par->p++;
 	return TOK_LPAREN;
 
     case ')':
-	par->condExpr++;
+	par->p++;
 	return TOK_RPAREN;
 
     case '|':
-	par->condExpr++;
-	if (par->condExpr[0] == '|') {
-	    par->condExpr++;
+	par->p++;
+	if (par->p[0] == '|') {
+	    par->p++;
 	}
 	return TOK_OR;
 
     case '&':
-	par->condExpr++;
-	if (par->condExpr[0] == '&') {
-	    par->condExpr++;
+	par->p++;
+	if (par->p[0] == '&') {
+	    par->p++;
 	}
 	return TOK_AND;
 
     case '!':
-	par->condExpr++;
+	par->p++;
 	return TOK_NOT;
 
     case '#':
@@ -1040,7 +1040,7 @@ Cond_EvalExpression(const struct If *info, const char *line, Boolean *value,
     assert(info != NULL);
 
     par.if_info = info;
-    par.condExpr = line;
+    par.p = line;
     par.curr = TOK_NONE;
 
     rval = do_Cond_EvalExpression(&par, value);
