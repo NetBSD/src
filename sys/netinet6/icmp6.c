@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.246 2020/07/27 14:52:55 roy Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.247 2020/09/11 15:03:33 roy Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.246 2020/07/27 14:52:55 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.247 2020/09/11 15:03:33 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.246 2020/07/27 14:52:55 roy Exp $");
 #include <net/route.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
+#include <net/nd.h>
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -98,9 +99,9 @@ __KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.246 2020/07/27 14:52:55 roy Exp $");
 #include <netinet6/icmp6_private.h>
 #include <netinet6/mld6_var.h>
 #include <netinet6/in6_pcb.h>
-#include <netinet6/nd6.h>
 #include <netinet6/in6_ifattach.h>
 #include <netinet6/ip6protosw.h>
+#include <netinet6/nd6.h>
 #include <netinet6/scope6_var.h>
 
 #ifdef IPSEC
@@ -2953,7 +2954,6 @@ out:
 static void
 sysctl_net_inet6_icmp6_setup(struct sysctllog **clog)
 {
-	extern int nd6_maxqueuelen; /* defined in nd6.c */
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
@@ -3008,23 +3008,37 @@ sysctl_net_inet6_icmp6_setup(struct sysctllog **clog)
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "nd6_delay",
 		       SYSCTL_DESCR("First probe delay time"),
-		       NULL, 0, &nd6_delay, 0,
+		       NULL, 0, &nd6_nd_domain.nd_delay, 0,
 		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
 		       ICMPV6CTL_ND6_DELAY, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "nd6_mmaxtries",
+		       SYSCTL_DESCR("Number of multicast discovery attempts"),
+		       NULL, 0, &nd6_nd_domain.nd_mmaxtries, 0,
+		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
+		       ICMPV6CTL_ND6_MMAXTRIES, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "nd6_umaxtries",
 		       SYSCTL_DESCR("Number of unicast discovery attempts"),
-		       NULL, 0, &nd6_umaxtries, 0,
+		       NULL, 0, &nd6_nd_domain.nd_umaxtries, 0,
 		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
 		       ICMPV6CTL_ND6_UMAXTRIES, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "nd6_mmaxtries",
-		       SYSCTL_DESCR("Number of multicast discovery attempts"),
-		       NULL, 0, &nd6_mmaxtries, 0,
+		       CTLTYPE_INT, "nd6_maxnudhint",
+		       SYSCTL_DESCR("Maximum neighbor unreachable hint count"),
+		       NULL, 0, &nd6_nd_domain.nd_maxnudhint, 0,
 		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
-		       ICMPV6CTL_ND6_MMAXTRIES, CTL_EOL);
+		       ICMPV6CTL_ND6_MAXNUDHINT, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "maxqueuelen",
+		       SYSCTL_DESCR("max packet queue len for a unresolved ND"),
+		       NULL, 1, &nd6_nd_domain.nd_maxqueuelen, 0,
+		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
+		       ICMPV6CTL_ND6_MAXQLEN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "nd6_useloopback",
@@ -3054,13 +3068,6 @@ sysctl_net_inet6_icmp6_setup(struct sysctllog **clog)
 		       NULL, 0, &icmp6errppslim, 0,
 		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
 		       ICMPV6CTL_ERRPPSLIMIT, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "nd6_maxnudhint",
-		       SYSCTL_DESCR("Maximum neighbor unreachable hint count"),
-		       NULL, 0, &nd6_maxnudhint, 0,
-		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
-		       ICMPV6CTL_ND6_MAXNUDHINT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "mtudisc_hiwat",
@@ -3098,13 +3105,6 @@ sysctl_net_inet6_icmp6_setup(struct sysctllog **clog)
 		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
 		       OICMPV6CTL_ND6_PRLIST, CTL_EOL);
 #endif
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "maxqueuelen",
-		       SYSCTL_DESCR("max packet queue len for a unresolved ND"),
-		       NULL, 1, &nd6_maxqueuelen, 0,
-		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
-		       ICMPV6CTL_ND6_MAXQLEN, CTL_EOL);
 }
 
 void
