@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.238 2020/08/29 17:41:14 christos Exp $	*/
+/*	$NetBSD: in.c,v 1.239 2020/09/11 15:19:31 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.238 2020/08/29 17:41:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.239 2020/09/11 15:19:31 roy Exp $");
 
 #include "arp.h"
 
@@ -1959,11 +1959,6 @@ in_lltable_new(struct in_addr addr4, u_int flags)
 	if (lle == NULL)		/* NB: caller generates msg */
 		return NULL;
 
-	/*
-	 * For IPv4 this will trigger "arpresolve" to generate
-	 * an ARP request.
-	 */
-	lle->la_expire = time_uptime; /* mark expired */
 	lle->r_l3addr.addr4 = addr4;
 	lle->lle_refcnt = 1;
 	lle->lle_free = in_lltable_destroy_lle;
