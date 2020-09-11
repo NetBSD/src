@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.420 2020/09/11 09:08:47 kardel Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.421 2020/09/11 15:08:25 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.420 2020/09/11 09:08:47 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.421 2020/09/11 15:08:25 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -253,24 +253,46 @@ static void syn_cache_timer(void *);
 /*
  * Neighbor Discovery, Neighbor Unreachability Detection Upper layer hint.
  */
-#ifdef INET6
-static inline void
-nd6_hint(struct tcpcb *tp)
+static void
+nd_hint(struct tcpcb *tp)
 {
-	struct rtentry *rt = NULL;
+	struct route *ro = NULL;
+	struct rtentry *rt;
 
-	if (tp != NULL && tp->t_in6pcb != NULL && tp->t_family == AF_INET6 &&
-	    (rt = rtcache_validate(&tp->t_in6pcb->in6p_route)) != NULL) {
-		nd6_nud_hint(rt);
-		rtcache_unref(rt, &tp->t_in6pcb->in6p_route);
-	}
-}
-#else
-static inline void
-nd6_hint(struct tcpcb *tp)
-{
-}
+	if (tp == NULL)
+		return;
+
+	switch (tp->t_family) {
+#ifdef INET6
+	case AF_INET6:
+		if (tp->t_in6pcb != NULL)
+			ro = &tp->t_in6pcb->in6p_route;
+		break;
 #endif
+	}
+
+	if (ro == NULL)
+		return;
+
+	rt = rtcache_validate(ro);
+	if (rt == NULL)
+		return;
+
+	switch (tp->t_family) {
+#ifdef INET
+	case AF_INET:
+		arp_nud_hint(rt);
+		break;
+#endif
+#ifdef INET6
+	case AF_INET6:
+		nd6_nud_hint(rt);
+		break;
+#endif
+	}
+
+	rtcache_unref(rt, ro);
+}
 
 /*
  * Compute ACK transmission behavior.  Delay the ACK unless
@@ -769,7 +791,7 @@ present:
 
 	tp->rcv_nxt += q->ipqe_len;
 	pkt_flags = q->ipqe_flags & TH_FIN;
-	nd6_hint(tp);
+	nd_hint(tp);
 
 	TAILQ_REMOVE(&tp->segq, q, ipqe_q);
 	TAILQ_REMOVE(&tp->timeq, q, ipqe_timeq);
@@ -1884,7 +1906,7 @@ after_listen:
 				tcps[TCP_STAT_RCVACKPACK]++;
 				tcps[TCP_STAT_RCVACKBYTE] += acked;
 				TCP_STAT_PUTREF();
-				nd6_hint(tp);
+				nd_hint(tp);
 
 				if (acked > (tp->t_lastoff - tp->t_inoff))
 					tp->t_lastm = NULL;
@@ -1967,7 +1989,7 @@ after_listen:
 			tcps[TCP_STAT_RCVPACK]++;
 			tcps[TCP_STAT_RCVBYTE] += tlen;
 			TCP_STAT_PUTREF();
-			nd6_hint(tp);
+			nd_hint(tp);
 		/*
 		 * Automatic sizing enables the performance of large buffers
 		 * and most of the efficiency of small ones by only allocating
@@ -2595,7 +2617,7 @@ after_listen:
 		 */
 		tp->t_congctl->newack(tp, th);
 
-		nd6_hint(tp);
+		nd_hint(tp);
 		if (acked > so->so_snd.sb_cc) {
 			tp->snd_wnd -= so->so_snd.sb_cc;
 			sbdrop(&so->so_snd, (int)so->so_snd.sb_cc);
@@ -2801,7 +2823,7 @@ dodata:
 			tcps[TCP_STAT_RCVPACK]++;
 			tcps[TCP_STAT_RCVBYTE] += tlen;
 			TCP_STAT_PUTREF();
-			nd6_hint(tp);
+			nd_hint(tp);
 			if (so->so_state & SS_CANTRCVMORE) {
 				m_freem(m);
 			} else {
