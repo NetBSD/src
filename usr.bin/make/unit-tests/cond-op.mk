@@ -1,4 +1,4 @@
-# $NetBSD: cond-op.mk,v 1.5 2020/09/11 04:40:26 rillig Exp $
+# $NetBSD: cond-op.mk,v 1.6 2020/09/11 05:12:08 rillig Exp $
 #
 # Tests for operators like &&, ||, ! in .if conditions.
 #
@@ -41,7 +41,7 @@
 # This condition is malformed because the '!' on the right-hand side must not
 # appear unquoted.  If any, it must be enclosed in quotes.
 # In any case, it is not interpreted as a negation of an unquoted string.
-# See CondGetString.
+# See CondParser_String.
 .if "!word" == !word
 .error
 .endif
@@ -51,6 +51,16 @@
 # See CondParser_String, which only has '!' in the list of stop characters.
 .if "a&&b||c" != a&&b||c
 .error
+.endif
+
+# As soon as the parser sees the '$', it knows that the condition will
+# be malformed.  Therefore there is no point in evaluating it.
+# As of 2020-09-11, that part of the condition is evaluated nevertheless.
+.if 0 ${ERR::=evaluated}
+.  error
+.endif
+.if ${ERR:Uundefined} == evaluated
+.  warning After detecting a parse error, the rest is evaluated.
 .endif
 
 # Just in case that parsing should ever stop on the first error.
