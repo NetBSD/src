@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.25 2019/10/15 16:14:49 christos Exp $
+# $NetBSD: Makefile,v 1.26 2020/09/11 14:06:00 jmcneill Exp $
 
-.if (${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "aarch64")
+.if (${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || !empty(MACHINE_ARCH:Maarch64*))
 PROG=	iasl
 .endif
 BINDIR=	/usr/bin
