@@ -348,6 +348,44 @@ INTERCEPTOR(char *, strerror, int errnum) {
 #define LSAN_MAYBE_INTERCEPT_STRERROR
 #endif
 
+#if SANITIZER_INTERCEPT___CXA_ATEXIT
+INTERCEPTOR(int, __cxa_atexit, void (*func)(void *), void *arg,
+            void *dso_handle) {
+  __lsan::ScopedInterceptorDisabler disabler;
+  return REAL(__cxa_atexit)(func, arg, dso_handle);
+}
+#define LSAN_MAYBE_INTERCEPT___CXA_ATEXIT INTERCEPT_FUNCTION(__cxa_atexit)
+#else
+#define LSAN_MAYBE_INTERCEPT___CXA_ATEXIT
+#endif
+
+#if SANITIZER_INTERCEPT_ATEXIT
+INTERCEPTOR(int, atexit, void (*f)()) {
+  __lsan::ScopedInterceptorDisabler disabler;
+  return REAL(__cxa_atexit)((void (*)(void *a))f, 0, 0);
+}
+#define LSAN_MAYBE_INTERCEPT_ATEXIT INTERCEPT_FUNCTION(atexit)
+#else
+#define LSAN_MAYBE_INTERCEPT_ATEXIT
+#endif
+
+#if SANITIZER_INTERCEPT_PTHREAD_ATFORK
+extern "C" {
+extern int _pthread_atfork(void (*prepare)(), void (*parent)(),
+                           void (*child)());
+};
+
+INTERCEPTOR(int, pthread_atfork, void (*prepare)(), void (*parent)(),
+            void (*child)()) {
+  __lsan::ScopedInterceptorDisabler disabler;
+  // REAL(pthread_atfork) cannot be called due to symbol indirections at least on NetBSD
+  return _pthread_atfork(prepare, parent, child);
+}
+#define LSAN_MAYBE_INTERCEPT_PTHREAD_ATFORK INTERCEPT_FUNCTION(pthread_atfork)
+#else
+#define LSAN_MAYBE_INTERCEPT_PTHREAD_ATFORK
+#endif
+
 struct ThreadParam {
   void *(*callback)(void *arg);
   void *param;
@@ -458,6 +496,10 @@ void InitializeInterceptors() {
   LSAN_MAYBE_INTERCEPT_THR_EXIT;
 
   LSAN_MAYBE_INTERCEPT_STRERROR;
+
+  LSAN_MAYBE_INTERCEPT___CXA_ATEXIT;
+  LSAN_MAYBE_INTERCEPT_ATEXIT;
+  LSAN_MAYBE_INTERCEPT_PTHREAD_ATFORK;
 
 #if !SANITIZER_NETBSD && !SANITIZER_FREEBSD
   if (pthread_key_create(&g_thread_finalize_key, &thread_finalize)) {

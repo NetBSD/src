@@ -103,10 +103,22 @@ void InitializePlatformInterceptors();
 # define ASAN_INTERCEPT___CXA_ATEXIT 0
 #endif
 
+#if SANITIZER_NETBSD
+# define ASAN_INTERCEPT_ATEXIT 1
+#else
+# define ASAN_INTERCEPT_ATEXIT 0
+#endif
+
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
 # define ASAN_INTERCEPT___STRDUP 1
 #else
 # define ASAN_INTERCEPT___STRDUP 0
+#endif
+
+#if SANITIZER_NETBSD
+# define ASAN_INTERCEPT_PTHREAD_ATFORK 1
+#else
+# define ASAN_INTERCEPT_PTHREAD_ATFORK 0
 #endif
 
 DECLARE_REAL(int, memcmp, const void *a1, const void *a2, uptr size)
