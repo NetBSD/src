@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.239 2020/09/11 15:19:31 roy Exp $	*/
+/*	$NetBSD: in.c,v 1.240 2020/09/11 15:22:12 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.239 2020/09/11 15:19:31 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.240 2020/09/11 15:22:12 roy Exp $");
 
 #include "arp.h"
 
@@ -424,6 +424,24 @@ in_control0(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		if (ifp == NULL)
 			return EINVAL;
 		return ifaddrpref_ioctl(so, cmd, data, ifp);
+#if NARP > 0
+	case SIOCGNBRINFO:
+	{
+		struct in_nbrinfo *nbi = (struct in_nbrinfo *)data;
+		struct llentry *ln;
+		struct in_addr nb_addr = nbi->addr; /* make local for safety */
+
+		ln = arplookup(ifp, &nb_addr, NULL, 0);
+		if (ln == NULL)
+			return EINVAL;
+		nbi->state = ln->ln_state;
+		nbi->asked = ln->ln_asked;
+		nbi->expire = ln->ln_expire ?
+		    time_mono_to_wall(ln->ln_expire) : 0;
+		LLE_RUNLOCK(ln);
+		return 0;
+	}
+#endif
 	}
 
 	bound = curlwp_bind();
