@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.148 2020/07/13 15:05:05 jruoho Exp $
+.\"	$NetBSD: sysctl.7,v 1.149 2020/09/11 15:16:48 roy Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd July 13, 2020
+.Dd August 20, 2020
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -1419,8 +1419,13 @@ The fourth level name is the variable name.
 The currently defined protocols and names are:
 .Bl -column "Protocol" "anonportalgo.available" "integer" "Changeable" -offset indent
 .It Sy Protocol	Variable Ta Sy Type Ta Sy Changeable
-.It arp	down	integer	yes
-.It arp	keep	integer	yes
+.It arp	nd_delay	integer	yes
+.It arp	nd_bmaxtries	integer	yes
+.It arp	nd_umaxtries	integer	yes
+.It arp	nd_basereachable	integer	yes
+.It arp	nd_retrans	integer	yes
+.It arp	nd_nud		integer	yes
+.It arp	nd_maxnudhint	integer	yes
 .It arp	log_movements	integer	yes
 .It arp	log_permanent_modify	integer	yes
 .It arp	log_unknown_network	integer	yes
@@ -1502,10 +1507,31 @@ The currently defined protocols and names are:
 .Pp
 The variables are as follows:
 .Bl -tag -width "123456"
-.It Li arp.down
-Failed ARP entry lifetime.
-.It Li arp.keep
-Valid ARP entry lifetime.
+.It Li arp.nd_delay
+The delay in seconds before sending the first probe,
+after it has been decided that the entry is stale.
+.It Li arp.nd_bmaxtries
+The maximum number of broadcasts send to discover the hardware address
+claiming an IP address.
+.It Li arp.nd_umaxtries
+The maximum number of unicasts send to the hardware address to ensure
+it still claims an IP address.
+.It Li arp.nd_basereachable
+The number of milliseconds the ARP entry is considered reachable before
+probing reachability.
+.It Li arp.nd_retrans
+The number of milliseconds between ARP probes.
+.It Li arp.nd_nud
+If set to non-zero, perform Neighor Unreachability Detection.
+.It Li arp.nd_maxnudhint
+Neighbor discovery permits upper layer protocols to supply reachability
+hints, to avoid unnecessary neighbor discovery exchanges.
+The variable defines the number of consecutive hints the neighbor discovery
+layer will take.
+For example, by setting the variable to 3, neighbor discovery layer
+will take 3 consecutive hints in maximum.
+After receiving 3 hints, neighbor discovery layer will perform
+normal neighbor discovery process.
 .It Li carp.allow
 If set to 0, incoming
 .Xr carp 4
@@ -2024,7 +2050,7 @@ timing constant in IPv6 neighbor discovery specification
 .Pq RFC 2461 ,
 in seconds.
 .It Li icmp6.nd6_maxnudhint
-IPv6 neighbor discovery permits upper layer protocols to supply reachability
+Neighbor discovery permits upper layer protocols to supply reachability
 hints, to avoid unnecessary neighbor discovery exchanges.
 The variable defines the number of consecutive hints the neighbor discovery
 layer will take.
