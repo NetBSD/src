@@ -1,4 +1,4 @@
-# $NetBSD: cond-cmp-string.mk,v 1.4 2020/09/11 15:19:04 rillig Exp $
+# $NetBSD: cond-cmp-string.mk,v 1.5 2020/09/11 15:33:28 rillig Exp $
 #
 # Tests for string comparisons in .if conditions.
 
@@ -38,8 +38,7 @@
 .error
 .endif
 
-# There is no = operator for strings.  Well, not quite, there is one, but
-# it generates a warning.  Therefore it is not used in practice.
+# There is no = operator for strings.
 .if !("value" = "value")
 .  error
 .else
