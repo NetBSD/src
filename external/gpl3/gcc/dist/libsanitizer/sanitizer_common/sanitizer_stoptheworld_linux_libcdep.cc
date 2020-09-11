@@ -12,7 +12,7 @@
 
 #include "sanitizer_platform.h"
 
-#if (SANITIZER_LINUX || SANITIZER_NETBSD) && \
+#if SANITIZER_LINUX && \
 		       (defined(__x86_64__) || defined(__mips__) || \
                         defined(__aarch64__) || defined(__powerpc64__) || \
                         defined(__s390__) || defined(__i386__) || \
