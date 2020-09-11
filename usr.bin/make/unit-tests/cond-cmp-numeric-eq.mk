@@ -1,4 +1,4 @@
-# $NetBSD: cond-cmp-numeric-eq.mk,v 1.1 2020/08/23 13:50:17 rillig Exp $
+# $NetBSD: cond-cmp-numeric-eq.mk,v 1.2 2020/09/11 15:19:04 rillig Exp $
 #
 # Tests for numeric comparisons with the == operator in .if conditions.
 
@@ -47,6 +47,22 @@
 .if 1.000000000000000001 == 1.000000000000000002
 .else
 .error
+.endif
+
+
+# There is no = operator for numbers.  Well, not quite, there is one, but
+# it generates a warning.  Therefore it is not used in practice.
+.if !(12345 = 12345)
+.  error
+.else
+.  error
+.endif
+
+# There is no === operator for numbers either.
+.if !(12345 === 12345)
+.  error
+.else
+.  error
 .endif
 
 all:
