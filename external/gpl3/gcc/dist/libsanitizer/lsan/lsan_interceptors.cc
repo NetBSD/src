@@ -338,6 +338,16 @@ INTERCEPTOR(void, thr_exit, tid_t *state) {
 #define LSAN_MAYBE_INTERCEPT_THR_EXIT
 #endif
 
+#if SANITIZER_INTERCEPT_STRERROR
+INTERCEPTOR(char *, strerror, int errnum) {
+  __lsan::ScopedInterceptorDisabler disabler;
+  return REAL(strerror)(errnum);
+}
+#define LSAN_MAYBE_INTERCEPT_STRERROR INTERCEPT_FUNCTION(strerror)
+#else
+#define LSAN_MAYBE_INTERCEPT_STRERROR
+#endif
+
 struct ThreadParam {
   void *(*callback)(void *arg);
   void *param;
@@ -446,6 +456,8 @@ void InitializeInterceptors() {
 
   LSAN_MAYBE_INTERCEPT__LWP_EXIT;
   LSAN_MAYBE_INTERCEPT_THR_EXIT;
+
+  LSAN_MAYBE_INTERCEPT_STRERROR;
 
 #if !SANITIZER_NETBSD && !SANITIZER_FREEBSD
   if (pthread_key_create(&g_thread_finalize_key, &thread_finalize)) {
