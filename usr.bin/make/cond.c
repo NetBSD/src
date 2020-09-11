@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.122 2020/09/11 04:18:44 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.123 2020/09/11 04:22:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.122 2020/09/11 04:18:44 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.123 2020/09/11 04:22:22 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.122 2020/09/11 04:18:44 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.123 2020/09/11 04:22:22 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -415,15 +415,15 @@ CondGetString(CondParser *par, Boolean doEval, Boolean *quoted, void **freeIt,
     Buf_Init(&buf, 0);
     str = NULL;
     *freeIt = NULL;
-    *quoted = qt = *par->p == '"' ? 1 : 0;
+    *quoted = qt = par->p[0] == '"' ? 1 : 0;
     if (qt)
 	par->p++;
-    for (start = par->p; *par->p && str == NULL;) {
-	switch (*par->p) {
+    for (start = par->p; par->p[0] && str == NULL;) {
+	switch (par->p[0]) {
 	case '\\':
 	    par->p++;
 	    if (par->p[0] != '\0') {
-		Buf_AddByte(&buf, *par->p);
+		Buf_AddByte(&buf, par->p[0]);
 		par->p++;
 	    }
 	    continue;
@@ -432,7 +432,7 @@ CondGetString(CondParser *par, Boolean doEval, Boolean *quoted, void **freeIt,
 		par->p++;	/* we don't want the quotes */
 		goto got_str;
 	    }
-	    Buf_AddByte(&buf, *par->p); /* likely? */
+	    Buf_AddByte(&buf, par->p[0]); /* likely? */
 	    par->p++;
 	    continue;
 	case ')':
@@ -444,7 +444,7 @@ CondGetString(CondParser *par, Boolean doEval, Boolean *quoted, void **freeIt,
 	case '\t':
 	    if (!qt)
 		goto got_str;
-	    Buf_AddByte(&buf, *par->p);
+	    Buf_AddByte(&buf, par->p[0]);
 	    par->p++;
 	    continue;
 	case '$':
@@ -471,9 +471,9 @@ CondGetString(CondParser *par, Boolean doEval, Boolean *quoted, void **freeIt,
 	     * we are done.
 	     */
 	    if ((par->p == start + len) &&
-		(*par->p == '\0' ||
-		 isspace((unsigned char)*par->p) ||
-		 strchr("!=><)", *par->p))) {
+		(par->p[0] == '\0' ||
+		 isspace((unsigned char)par->p[0]) ||
+		 strchr("!=><)", par->p[0]))) {
 		goto cleanup;
 	    }
 
@@ -495,7 +495,7 @@ CondGetString(CondParser *par, Boolean doEval, Boolean *quoted, void **freeIt,
 		str = NULL;
 		goto cleanup;
 	    }
-	    Buf_AddByte(&buf, *par->p);
+	    Buf_AddByte(&buf, par->p[0]);
 	    par->p++;
 	    continue;
 	}
@@ -557,7 +557,7 @@ compare_expression(CondParser *par, Boolean doEval)
      * != 0 comparison.
      */
     op = par->p;
-    switch (*par->p) {
+    switch (par->p[0]) {
     case '!':
     case '=':
     case '<':
@@ -595,7 +595,7 @@ compare_expression(CondParser *par, Boolean doEval)
 
     CondParser_SkipWhitespace(par);
 
-    if (*par->p == '\0') {
+    if (par->p[0] == '\0') {
 	Parse_Error(PARSE_WARNING,
 		    "Missing right-hand-side of operator");
 	goto done;
