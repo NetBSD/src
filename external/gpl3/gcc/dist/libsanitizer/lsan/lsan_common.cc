@@ -135,7 +135,7 @@ static inline bool CanBeAHeapPointer(uptr p) {
 #if defined(__x86_64__)
   // Accept only canonical form user-space addresses.
   return ((p >> 47) == 0);
-#elif defined(__mips64)
+#elif defined(__mips64) && defined(_LP64)
   return ((p >> 40) == 0);
 #elif defined(__aarch64__)
   unsigned runtimeVMA =
