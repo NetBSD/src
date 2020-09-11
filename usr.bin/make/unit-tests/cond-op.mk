@@ -1,4 +1,4 @@
-# $NetBSD: cond-op.mk,v 1.6 2020/09/11 05:12:08 rillig Exp $
+# $NetBSD: cond-op.mk,v 1.7 2020/09/11 05:29:46 rillig Exp $
 #
 # Tests for operators like &&, ||, ! in .if conditions.
 #
@@ -55,7 +55,18 @@
 
 # As soon as the parser sees the '$', it knows that the condition will
 # be malformed.  Therefore there is no point in evaluating it.
-# As of 2020-09-11, that part of the condition is evaluated nevertheless.
+#
+# As of 2020-09-11, that part of the condition is evaluated nevertheless,
+# since CondParser_Expr just requests the next token, without restricting
+# the token to the expected tokens.  If the parser were to restrict the
+# valid follow tokens for the token "0" to those that can actually produce
+# a correct condition (which in this case would be comparison operators,
+# TOK_AND, TOK_OR or TOK_RPAREN), the variable expression would not have
+# to be evaluated.
+#
+# This would add a good deal of complexity to the code though, for almost
+# no benefit, especially since most expressions and conditions are side
+# effect free.
 .if 0 ${ERR::=evaluated}
 .  error
 .endif
