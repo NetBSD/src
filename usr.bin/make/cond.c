@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.124 2020/09/11 04:40:26 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.125 2020/09/11 04:57:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.124 2020/09/11 04:40:26 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.125 2020/09/11 04:57:15 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.124 2020/09/11 04:40:26 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.125 2020/09/11 04:57:15 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -140,8 +140,8 @@ __RCSID("$NetBSD: cond.c,v 1.124 2020/09/11 04:40:26 rillig Exp $");
  *
  * TOK_FALSE is 0 and TOK_TRUE 1 so we can directly assign C comparisons.
  *
- * All non-terminal functions (CondE, CondF and CondT) return either
- * TOK_FALSE, TOK_TRUE, or TOK_ERROR on error.
+ * All non-terminal functions (CondParser_Expr, CondParser_Factor and
+ * CondParser_Term) return either TOK_FALSE, TOK_TRUE, or TOK_ERROR on error.
  */
 typedef enum {
     TOK_FALSE = 0, TOK_TRUE = 1, TOK_AND, TOK_OR, TOK_NOT,
@@ -154,8 +154,8 @@ typedef struct {
     Token curr;			/* Single push-back token used in parsing */
 } CondParser;
 
-static Token CondE(CondParser *par, Boolean);
-static CondEvalResult do_Cond_EvalExpression(CondParser *par, Boolean *);
+static Token CondParser_Expr(CondParser *par, Boolean);
+static CondEvalResult CondParser_Eval(CondParser *par, Boolean *value);
 
 static unsigned int cond_depth = 0;	/* current .if nesting level */
 static unsigned int cond_min_depth = 0;	/* depth at makefile open */
@@ -173,7 +173,7 @@ static unsigned int cond_min_depth = 0;	/* depth at makefile open */
 static Boolean lhsStrict;
 
 static int
-istoken(const char *str, const char *tok, size_t len)
+is_token(const char *str, const char *tok, size_t len)
 {
     return strncmp(str, tok, len) == 0 && !isalpha((unsigned char)str[len]);
 }
@@ -290,7 +290,7 @@ ParseFuncArg(Boolean doEval, const char **linePtr, char **out_arg,
 
 /* Test whether the given variable is defined. */
 static Boolean
-CondDoDefined(int argLen MAKE_ATTR_UNUSED, const char *arg)
+FuncDefined(int argLen MAKE_ATTR_UNUSED, const char *arg)
 {
     char *freeIt;
     Boolean result = Var_Value(arg, VAR_CMD, &freeIt) != NULL;
@@ -307,14 +307,14 @@ CondFindStrMatch(const void *string, const void *pattern)
 
 /* See if the given target is being made. */
 static Boolean
-CondDoMake(int argLen MAKE_ATTR_UNUSED, const char *arg)
+FuncMake(int argLen MAKE_ATTR_UNUSED, const char *arg)
 {
     return Lst_Find(create, CondFindStrMatch, arg) != NULL;
 }
 
 /* See if the given file exists. */
 static Boolean
-CondDoExists(int argLen MAKE_ATTR_UNUSED, const char *arg)
+FuncExists(int argLen MAKE_ATTR_UNUSED, const char *arg)
 {
     Boolean result;
     char *path;
@@ -335,7 +335,7 @@ CondDoExists(int argLen MAKE_ATTR_UNUSED, const char *arg)
 
 /* See if the given node exists and is an actual target. */
 static Boolean
-CondDoTarget(int argLen MAKE_ATTR_UNUSED, const char *arg)
+FuncTarget(int argLen MAKE_ATTR_UNUSED, const char *arg)
 {
     GNode *gn;
 
@@ -346,7 +346,7 @@ CondDoTarget(int argLen MAKE_ATTR_UNUSED, const char *arg)
 /* See if the given node exists and is an actual target with commands
  * associated with it. */
 static Boolean
-CondDoCommands(int argLen MAKE_ATTR_UNUSED, const char *arg)
+FuncCommands(int argLen MAKE_ATTR_UNUSED, const char *arg)
 {
     GNode *gn;
 
@@ -364,7 +364,7 @@ CondDoCommands(int argLen MAKE_ATTR_UNUSED, const char *arg)
  *	Returns TRUE if the conversion succeeded.
  */
 static Boolean
-CondCvtArg(const char *str, double *value)
+TryParseNumber(const char *str, double *value)
 {
     char *eptr, ech;
     unsigned long l_val;
@@ -515,16 +515,16 @@ static const struct If {
     Boolean doNot;		/* TRUE if default function should be negated */
     Boolean (*defProc)(int, const char *); /* Default function to apply */
 } ifs[] = {
-    { "def",   3, FALSE, CondDoDefined },
-    { "ndef",  4, TRUE,  CondDoDefined },
-    { "make",  4, FALSE, CondDoMake },
-    { "nmake", 5, TRUE,  CondDoMake },
-    { "",      0, FALSE, CondDoDefined },
+    { "def",   3, FALSE, FuncDefined },
+    { "ndef",  4, TRUE,  FuncDefined },
+    { "make",  4, FALSE, FuncMake },
+    { "nmake", 5, TRUE,  FuncMake },
+    { "",      0, FALSE, FuncDefined },
     { NULL,    0, FALSE, NULL }
 };
 
 static Token
-compare_expression(CondParser *par, Boolean doEval)
+CondParser_Comparison(CondParser *par, Boolean doEval)
 {
     Token t;
     const char *lhs;
@@ -579,7 +579,7 @@ compare_expression(CondParser *par, Boolean doEval)
 	    goto done;
 	}
 	/* For .ifxxx <number> compare against zero */
-	if (CondCvtArg(lhs, &left)) {
+	if (TryParseNumber(lhs, &left)) {
 	    t = left != 0.0;
 	    goto done;
 	}
@@ -637,7 +637,7 @@ compare_expression(CondParser *par, Boolean doEval)
 	 * lhs and the rhs to a double and compare the two.
 	 */
 
-	if (!CondCvtArg(lhs, &left) || !CondCvtArg(rhs, &right))
+	if (!TryParseNumber(lhs, &left) || !TryParseNumber(rhs, &right))
 	    goto do_string_compare;
 
 	if (DEBUG(COND)) {
@@ -718,14 +718,14 @@ ParseEmptyArg(Boolean doEval, const char **linePtr, char **argPtr,
 }
 
 static Boolean
-CondDoEmpty(int arglen, const char *arg MAKE_ATTR_UNUSED)
+FuncEmpty(int arglen, const char *arg MAKE_ATTR_UNUSED)
 {
     /* Magic values ahead, see ParseEmptyArg. */
     return arglen == 1;
 }
 
 static Token
-compare_function(CondParser *par, Boolean doEval)
+CondParser_Func(CondParser *par, Boolean doEval)
 {
     static const struct fn_def {
 	const char *fn_name;
@@ -733,12 +733,12 @@ compare_function(CondParser *par, Boolean doEval)
 	int (*fn_getarg)(Boolean, const char **, char **, const char *);
 	Boolean (*fn_proc)(int, const char *);
     } fn_defs[] = {
-	{ "defined",  7, ParseFuncArg,  CondDoDefined },
-	{ "make",     4, ParseFuncArg,  CondDoMake },
-	{ "exists",   6, ParseFuncArg,  CondDoExists },
-	{ "empty",    5, ParseEmptyArg, CondDoEmpty },
-	{ "target",   6, ParseFuncArg,  CondDoTarget },
-	{ "commands", 8, ParseFuncArg,  CondDoCommands },
+	{ "defined",  7, ParseFuncArg,  FuncDefined },
+	{ "make",     4, ParseFuncArg,  FuncMake },
+	{ "exists",   6, ParseFuncArg,  FuncExists },
+	{ "empty",    5, ParseEmptyArg, FuncEmpty },
+	{ "target",   6, ParseFuncArg,  FuncTarget },
+	{ "commands", 8, ParseFuncArg,  FuncCommands },
 	{ NULL,       0, NULL, NULL },
     };
     const struct fn_def *fn_def;
@@ -749,7 +749,7 @@ compare_function(CondParser *par, Boolean doEval)
     const char *cp1;
 
     for (fn_def = fn_defs; fn_def->fn_name != NULL; fn_def++) {
-	if (!istoken(cp, fn_def->fn_name, fn_def->fn_name_len))
+	if (!is_token(cp, fn_def->fn_name, fn_def->fn_name_len))
 	    continue;
 	cp += fn_def->fn_name_len;
 	/* There can only be whitespace before the '(' */
@@ -773,7 +773,7 @@ compare_function(CondParser *par, Boolean doEval)
     /* Push anything numeric through the compare expression */
     cp = par->p;
     if (isdigit((unsigned char)cp[0]) || strchr("+-", cp[0]))
-	return compare_expression(par, doEval);
+	return CondParser_Comparison(par, doEval);
 
     /*
      * Most likely we have a naked token to apply the default function to.
@@ -787,7 +787,7 @@ compare_function(CondParser *par, Boolean doEval)
     for (cp1 = cp; isspace((unsigned char)*cp1); cp1++)
 	continue;
     if (*cp1 == '=' || *cp1 == '!')
-	return compare_expression(par, doEval);
+	return CondParser_Comparison(par, doEval);
     par->p = cp;
 
     /*
@@ -803,7 +803,7 @@ compare_function(CondParser *par, Boolean doEval)
 
 /* Return the next token or comparison result from the parser. */
 static Token
-CondToken(CondParser *par, Boolean doEval)
+CondParser_Token(CondParser *par, Boolean doEval)
 {
     Token t;
 
@@ -852,10 +852,10 @@ CondToken(CondParser *par, Boolean doEval)
 
     case '"':
     case '$':
-	return compare_expression(par, doEval);
+	return CondParser_Comparison(par, doEval);
 
     default:
-	return compare_function(par, doEval);
+	return CondParser_Func(par, doEval);
     }
 }
 
@@ -869,11 +869,11 @@ CondToken(CondParser *par, Boolean doEval)
  *	TOK_TRUE, TOK_FALSE or TOK_ERROR.
  */
 static Token
-CondT(CondParser *par, Boolean doEval)
+CondParser_Term(CondParser *par, Boolean doEval)
 {
     Token t;
 
-    t = CondToken(par, doEval);
+    t = CondParser_Token(par, doEval);
 
     if (t == TOK_EOF) {
 	/*
@@ -885,14 +885,14 @@ CondT(CondParser *par, Boolean doEval)
 	/*
 	 * T -> ( E )
 	 */
-	t = CondE(par, doEval);
+	t = CondParser_Expr(par, doEval);
 	if (t != TOK_ERROR) {
-	    if (CondToken(par, doEval) != TOK_RPAREN) {
+	    if (CondParser_Token(par, doEval) != TOK_RPAREN) {
 		t = TOK_ERROR;
 	    }
 	}
     } else if (t == TOK_NOT) {
-	t = CondT(par, doEval);
+	t = CondParser_Term(par, doEval);
 	if (t == TOK_TRUE) {
 	    t = TOK_FALSE;
 	} else if (t == TOK_FALSE) {
@@ -910,13 +910,13 @@ CondT(CondParser *par, Boolean doEval)
  *	TOK_TRUE, TOK_FALSE or TOK_ERROR
  */
 static Token
-CondF(CondParser *par, Boolean doEval)
+CondParser_Factor(CondParser *par, Boolean doEval)
 {
     Token l, o;
 
-    l = CondT(par, doEval);
+    l = CondParser_Term(par, doEval);
     if (l != TOK_ERROR) {
-	o = CondToken(par, doEval);
+	o = CondParser_Token(par, doEval);
 
 	if (o == TOK_AND) {
 	    /*
@@ -928,9 +928,9 @@ CondF(CondParser *par, Boolean doEval)
 	     * or not.
 	     */
 	    if (l == TOK_TRUE) {
-		l = CondF(par, doEval);
+		l = CondParser_Factor(par, doEval);
 	    } else {
-		(void)CondF(par, FALSE);
+		(void)CondParser_Factor(par, FALSE);
 	    }
 	} else {
 	    /*
@@ -950,13 +950,13 @@ CondF(CondParser *par, Boolean doEval)
  *	TOK_TRUE, TOK_FALSE or TOK_ERROR.
  */
 static Token
-CondE(CondParser *par, Boolean doEval)
+CondParser_Expr(CondParser *par, Boolean doEval)
 {
     Token l, o;
 
-    l = CondF(par, doEval);
+    l = CondParser_Factor(par, doEval);
     if (l != TOK_ERROR) {
-	o = CondToken(par, doEval);
+	o = CondParser_Token(par, doEval);
 
 	if (o == TOK_OR) {
 	    /*
@@ -968,9 +968,9 @@ CondE(CondParser *par, Boolean doEval)
 	     * again if l is TOK_TRUE, we parse the r.h.s. to throw it away.
 	     */
 	    if (l == TOK_FALSE) {
-		l = CondE(par, doEval);
+		l = CondParser_Expr(par, doEval);
 	    } else {
-		(void)CondE(par, FALSE);
+		(void)CondParser_Expr(par, FALSE);
 	    }
 	} else {
 	    /*
@@ -983,18 +983,18 @@ CondE(CondParser *par, Boolean doEval)
 }
 
 static CondEvalResult
-do_Cond_EvalExpression(CondParser *par, Boolean *value)
+CondParser_Eval(CondParser *par, Boolean *value)
 {
 
-    switch (CondE(par, TRUE)) {
+    switch (CondParser_Expr(par, TRUE)) {
     case TOK_TRUE:
-	if (CondToken(par, TRUE) == TOK_EOF) {
+	if (CondParser_Token(par, TRUE) == TOK_EOF) {
 	    *value = TRUE;
 	    return COND_PARSE;
 	}
 	break;
     case TOK_FALSE:
-	if (CondToken(par, TRUE) == TOK_EOF) {
+	if (CondParser_Token(par, TRUE) == TOK_EOF) {
 	    *value = FALSE;
 	    return COND_PARSE;
 	}
@@ -1043,7 +1043,7 @@ Cond_EvalExpression(const struct If *info, const char *line, Boolean *value,
     par.p = line;
     par.curr = TOK_NONE;
 
-    rval = do_Cond_EvalExpression(&par, value);
+    rval = CondParser_Eval(&par, value);
 
     if (rval == COND_INVALID && eprint)
 	Parse_Error(PARSE_FATAL, "Malformed conditional (%s)", line);
@@ -1106,7 +1106,7 @@ Cond_Eval(const char *line)
     /* Find what type of if we're dealing with.  */
     if (line[0] == 'e') {
 	if (line[1] != 'l') {
-	    if (!istoken(line + 1, "ndif", 4))
+	    if (!is_token(line + 1, "ndif", 4))
 		return COND_INVALID;
 	    /* End of conditional section */
 	    if (cond_depth == cond_min_depth) {
@@ -1121,7 +1121,7 @@ Cond_Eval(const char *line)
 
 	/* Quite likely this is 'else' or 'elif' */
 	line += 2;
-	if (istoken(line, "se", 2)) {
+	if (is_token(line, "se", 2)) {
 	    /* It is else... */
 	    if (cond_depth == cond_min_depth) {
 		Parse_Error(level, "if-less else");
@@ -1163,7 +1163,7 @@ Cond_Eval(const char *line)
     for (ifp = ifs;; ifp++) {
 	if (ifp->form == NULL)
 	    return COND_INVALID;
-	if (istoken(ifp->form, line, ifp->formlen)) {
+	if (is_token(ifp->form, line, ifp->formlen)) {
 	    line += ifp->formlen;
 	    break;
 	}
