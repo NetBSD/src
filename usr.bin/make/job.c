@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.229 2020/09/11 04:32:39 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.230 2020/09/11 17:32:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.229 2020/09/11 04:32:39 rillig Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.230 2020/09/11 17:32:36 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.229 2020/09/11 04:32:39 rillig Exp $");
+__RCSID("$NetBSD: job.c,v 1.230 2020/09/11 17:32:36 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -751,7 +751,7 @@ JobPrintCommand(void *cmdp, void *jobp)
 	cmd++;
     }
 
-    while (isspace((unsigned char) *cmd))
+    while (ch_isspace(*cmd))
 	cmd++;
 
     /*
@@ -2400,9 +2400,8 @@ Job_ParseShell(char *line)
     Boolean	fullSpec = FALSE;
     Shell	*sh;
 
-    while (isspace((unsigned char)*line)) {
+    while (ch_isspace(*line))
 	line++;
-    }
 
     free(shellArgv);
 

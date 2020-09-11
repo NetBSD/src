@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.110 2020/09/07 06:51:05 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.111 2020/09/11 17:32:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.110 2020/09/07 06:51:05 rillig Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.111 2020/09/11 17:32:36 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.110 2020/09/07 06:51:05 rillig Exp $");
+__RCSID("$NetBSD: arch.c,v 1.111 2020/09/11 17:32:36 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -265,11 +265,11 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 	 */
 	Boolean	doSubst = FALSE; /* TRUE if need to substitute in memName */
 
-	while (*cp != '\0' && *cp != ')' && isspace ((unsigned char)*cp)) {
+	while (*cp != '\0' && *cp != ')' && ch_isspace(*cp)) {
 	    cp++;
 	}
 	memName = cp;
-	while (*cp != '\0' && *cp != ')' && !isspace ((unsigned char)*cp)) {
+	while (*cp != '\0' && *cp != ')' && !ch_isspace(*cp)) {
 	    if (*cp == '$') {
 		/*
 		 * Variable spec, so call the Var module to parse the puppy
@@ -448,7 +448,7 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
      */
     do {
 	cp++;
-    } while (*cp != '\0' && isspace ((unsigned char)*cp));
+    } while (*cp != '\0' && ch_isspace(*cp));
 
     *linePtr = cp;
     return TRUE;
@@ -631,7 +631,7 @@ ArchStatMember(const char *archive, const char *member, Boolean hash)
 	     * first <namelen> bytes of the file
 	     */
 	    if (strncmp(memName, AR_EFMT1, sizeof(AR_EFMT1) - 1) == 0 &&
-		isdigit((unsigned char)memName[sizeof(AR_EFMT1) - 1])) {
+		ch_isdigit(memName[sizeof(AR_EFMT1) - 1])) {
 
 		int elen = atoi(&memName[sizeof(AR_EFMT1)-1]);
 
@@ -879,7 +879,7 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *arhPtr,
 		 */
 	    if (strncmp(arhPtr->ar_name, AR_EFMT1,
 					sizeof(AR_EFMT1) - 1) == 0 &&
-		isdigit((unsigned char)arhPtr->ar_name[sizeof(AR_EFMT1) - 1])) {
+		ch_isdigit(arhPtr->ar_name[sizeof(AR_EFMT1) - 1])) {
 
 		int elen = atoi(&arhPtr->ar_name[sizeof(AR_EFMT1)-1]);
 		char ename[MAXPATHLEN + 1];
