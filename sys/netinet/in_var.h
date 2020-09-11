@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.97 2018/11/29 09:51:20 ozaki-r Exp $	*/
+/*	$NetBSD: in_var.h,v 1.98 2020/09/11 15:22:12 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -113,6 +113,14 @@ struct in_ifaddr {
 	struct pslist_entry	ia_hash_pslist_entry;
 	struct pslist_entry	ia_pslist_entry;
 #endif
+};
+
+struct in_nbrinfo {
+	char ifname[IFNAMSIZ];	/* if name, e.g. "en0" */
+	struct in_addr addr;	/* IPv4 address of the neighbor */
+	long	asked;		/* number of queries already sent for this addr */
+	int	state;		/* reachability state */
+	int	expire;		/* lifetime for NDP state transition */
 };
 
 #ifdef _KERNEL
