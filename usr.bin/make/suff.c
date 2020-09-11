@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.146 2020/09/11 04:32:39 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.147 2020/09/11 04:36:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.146 2020/09/11 04:32:39 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.147 2020/09/11 04:36:12 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.146 2020/09/11 04:32:39 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.147 2020/09/11 04:36:12 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -211,7 +211,7 @@ typedef struct {
 } LstSrc;
 
 typedef struct {
-    GNode	  **gn;
+    GNode	  **gnp;
     Suff	   *s;
     Boolean	    r;
 } GNodeSuff;
@@ -761,8 +761,8 @@ SuffScanTargets(void *targetp, void *gsp)
     Suff	*s, *t;
     char 	*ptr;
 
-    if (*gs->gn == NULL && gs->r && (target->type & OP_NOTARGET) == 0) {
-	*gs->gn = target;
+    if (*gs->gnp == NULL && gs->r && (target->type & OP_NOTARGET) == 0) {
+	*gs->gnp = target;
 	Targ_SetMain(target);
 	return 1;
     }
@@ -775,9 +775,9 @@ SuffScanTargets(void *targetp, void *gsp)
 	return 0;
 
     if (SuffParseTransform(target->name, &s, &t)) {
-	if (*gs->gn == target) {
+	if (*gs->gnp == target) {
 	    gs->r = TRUE;
-	    *gs->gn = NULL;
+	    *gs->gnp = NULL;
 	    Targ_SetMain(NULL);
 	}
 	Lst_Free(target->children);
@@ -806,7 +806,7 @@ SuffScanTargets(void *targetp, void *gsp)
  *	name		the name of the suffix to add
  */
 void
-Suff_AddSuffix(const char *name, GNode **gn)
+Suff_AddSuffix(const char *name, GNode **gnp)
 {
     Suff          *s;	    /* new suffix descriptor */
     LstNode 	  ln;
@@ -823,7 +823,7 @@ Suff_AddSuffix(const char *name, GNode **gn)
 	 * a suffix rule. This is ugly, but other makes treat all targets
 	 * that start with a . as suffix rules.
 	 */
-	gs.gn = gn;
+	gs.gnp = gnp;
 	gs.s  = s;
 	gs.r  = FALSE;
 	Lst_ForEach(Targ_List(), SuffScanTargets, &gs);
