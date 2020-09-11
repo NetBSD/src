@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.65 2019/02/28 01:20:25 nonaka Exp $ */
+/*	$NetBSD: arp.c,v 1.66 2020/09/11 15:28:29 roy Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.65 2019/02/28 01:20:25 nonaka Exp $");
+__RCSID("$NetBSD: arp.c,v 1.66 2020/09/11 15:28:29 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,8 +60,10 @@ __RCSID("$NetBSD: arp.c,v 1.65 2019/02/28 01:20:25 nonaka Exp $");
 #include <net/if_dl.h>
 #include <net/if_ether.h>
 #include <net/if_types.h>
+#include <net/nd.h>
 #include <net/route.h>
 #include <netinet/in.h>
+#include <netinet/in_var.h>
 #include <netinet/if_inarp.h>
 #include <arpa/inet.h>
 
@@ -92,6 +94,8 @@ static int getsocket(void);
 static int getetheraddr(struct in_addr, struct sockaddr_dl *);
 static struct rt_msghdr * rtmsg(const int, const int,  struct rt_msghdr *,
 	const struct sockaddr_inarp *, const struct sockaddr_dl *);
+static struct in_nbrinfo * getnbrinfo(const char *, struct in_addr *);
+static const char * sec2str(time_t);
 static int set(int, char **);
 static void usage(void) __dead;
 
@@ -439,6 +443,8 @@ dump(uint32_t addr)
 	struct sockaddr_inarp *sina;
 	struct sockaddr_dl *sdl;
 	struct hostent *hp;
+	struct timeval tim;
+	struct in_nbrinfo *nbi;
 
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
@@ -497,6 +503,49 @@ dump(uint32_t addr)
 			if (sina->sin_len != 8)
 				(void)printf("(weird)");
 		}
+
+		if (sdl->sdl_index == 0)
+			goto done;
+		(void)gettimeofday(&tim, 0);
+		nbi = getnbrinfo(ifname, &sina->sin_addr);
+		if (nbi != NULL) {
+			if (nbi->expire > tim.tv_sec) {
+				(void)printf(" %s",
+				    sec2str(nbi->expire - tim.tv_sec));
+			} else if (nbi->expire == 0)
+				(void)printf(" %s", "permanent");
+			else
+				(void)printf(" %s", "expired");
+
+			switch (nbi->state) {
+			case ND_LLINFO_NOSTATE:
+				(void)printf(" N");
+				break;
+			case ND_LLINFO_WAITDELETE:
+				(void)printf(" W");
+				break;
+			case ND_LLINFO_INCOMPLETE:
+				(void)printf(" I");
+				break;
+			case ND_LLINFO_REACHABLE:
+				(void)printf(" R");
+				break;
+			case ND_LLINFO_STALE:
+				(void)printf(" S");
+				break;
+			case ND_LLINFO_DELAY:
+				(void)printf(" D");
+				break;
+			case ND_LLINFO_PROBE:
+				(void)printf(" P");
+				break;
+			default:
+				(void)printf(" ?");
+				break;
+			}
+		}
+
+done:
 		(void)printf("\n");
 	}
 	free(buf);
@@ -799,4 +848,67 @@ getetheraddr(struct in_addr ipaddr, struct sockaddr_dl *sdl)
 	warnx("No link address for interface %s", ifname);
 	freeifaddrs(ifaddrs);
 	return -1;
+}
+
+static struct in_nbrinfo *
+getnbrinfo(const char *ifname, struct in_addr *addr)
+{
+	static struct in_nbrinfo nbi, *nbip;
+	int s;
+
+	if ((s = prog_socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+		err(1, "socket");
+
+	(void)memset(&nbi, 0, sizeof(nbi));
+	(void)strlcpy(nbi.ifname, ifname, sizeof(nbi.ifname));
+	nbi.addr = *addr;
+	if (prog_ioctl(s, SIOCGNBRINFO, &nbi) == -1) {
+		warn("ioctl(SIOCGNBRINFO)");
+		nbip = NULL;
+	} else
+		nbip = &nbi;
+	(void)prog_close(s);
+
+	return nbip;
+}
+
+static const char *
+sec2str(time_t total)
+{
+	static char result[256];
+	int days, hours, mins, secs;
+	int first = 1;
+	char *p = result;
+	char *ep = &result[sizeof(result)];
+	int n;
+
+	days = total / 3600 / 24;
+	hours = (total / 3600) % 24;
+	mins = (total / 60) % 60;
+	secs = total % 60;
+
+	if (days) {
+		first = 0;
+		n = snprintf(p, (size_t)(ep - p), "%dd", days);
+		if (n < 0 || n >= ep - p)
+			return "?";
+		p += n;
+	}
+	if (!first || hours) {
+		first = 0;
+		n = snprintf(p, (size_t)(ep - p), "%dh", hours);
+		if (n < 0 || n >= ep - p)
+			return "?";
+		p += n;
+	}
+	if (!first || mins) {
+		first = 0;
+		n = snprintf(p, (size_t)(ep - p), "%dm", mins);
+		if (n < 0 || n >= ep - p)
+			return "?";
+		p += n;
+	}
+	(void)snprintf(p, (size_t)(ep - p), "%ds", secs);
+
+	return(result);
 }
