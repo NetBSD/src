@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.331 2020/08/30 19:56:02 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.332 2020/09/11 17:32:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.331 2020/08/30 19:56:02 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.332 2020/09/11 17:32:36 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.331 2020/08/30 19:56:02 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.332 2020/09/11 17:32:36 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -216,7 +216,7 @@ explode(const char *flags)
 	return NULL;
 
     for (f = flags; *f; f++)
-	if (!isalpha((unsigned char)*f))
+	if (!ch_isalpha(*f))
 	    break;
 
     if (*f)

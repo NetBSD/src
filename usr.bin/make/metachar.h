@@ -1,4 +1,4 @@
-/*	$NetBSD: metachar.h,v 1.7 2020/08/25 17:37:09 rillig Exp $	*/
+/*	$NetBSD: metachar.h,v 1.8 2020/09/11 17:32:36 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@ static inline int MAKE_ATTR_UNUSED
 needshell(const char *cmd, int white)
 {
 	while (!ismeta(*cmd) && *cmd != ':' && *cmd != '=') {
-		if (white && isspace((unsigned char)*cmd))
+		if (white && ch_isspace(*cmd))
 			break;
 		cmd++;
 	}
