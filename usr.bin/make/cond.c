@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.129 2020/09/11 07:09:40 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.130 2020/09/11 13:58:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.129 2020/09/11 07:09:40 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.130 2020/09/11 13:58:45 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.129 2020/09/11 07:09:40 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.130 2020/09/11 13:58:45 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -523,6 +523,70 @@ static const struct If {
     { NULL,    0, FALSE, NULL }
 };
 
+static Token
+EvalComparison(const char *lhs, Boolean lhsQuoted, const char *op,
+	       const char *rhs, Boolean rhsQuoted)
+{
+    double left, right;
+
+    if (rhsQuoted || lhsQuoted) {
+	do_string_compare:
+	if (((*op != '!') && (*op != '=')) || (op[1] != '=')) {
+	    Parse_Error(PARSE_WARNING,
+			"String comparison operator should be either == or !=");
+	    return TOK_ERROR;
+	}
+
+	if (DEBUG(COND)) {
+	    fprintf(debug_file, "lhs = \"%s\", rhs = \"%s\", op = %.2s\n",
+		    lhs, rhs, op);
+	}
+	return (*op == '=') == (strcmp(lhs, rhs) == 0);
+    }
+
+    /*
+     * rhs is either a float or an integer. Convert both the
+     * lhs and the rhs to a double and compare the two.
+     */
+
+    if (!TryParseNumber(lhs, &left) || !TryParseNumber(rhs, &right))
+	goto do_string_compare;
+
+    if (DEBUG(COND)) {
+	fprintf(debug_file, "left = %f, right = %f, op = %.2s\n", left,
+		right, op);
+    }
+    switch (op[0]) {
+    case '!':
+	if (op[1] != '=') {
+	    Parse_Error(PARSE_WARNING,
+			"Unknown operator");
+	    return TOK_ERROR;
+	}
+	return left != right;
+    case '=':
+	if (op[1] != '=') {
+	    Parse_Error(PARSE_WARNING,
+			"Unknown operator");
+	    return TOK_ERROR;
+	}
+	return left == right;
+    case '<':
+	if (op[1] == '=') {
+	    return left <= right;
+	} else {
+	    return left < right;
+	}
+    case '>':
+	if (op[1] == '=') {
+	    return left >= right;
+	} else {
+	    return left > right;
+	}
+    }
+    return TOK_ERROR;
+}
+
 /* Parse a comparison condition such as:
  *
  *	0
@@ -541,7 +605,6 @@ CondParser_Comparison(CondParser *par, Boolean doEval)
     void *rhsFree;
     Boolean lhsQuoted;
     Boolean rhsQuoted;
-    double left, right;
 
     t = TOK_ERROR;
     rhs = NULL;
@@ -586,9 +649,12 @@ CondParser_Comparison(CondParser *par, Boolean doEval)
 	    goto done;
 	}
 	/* For .ifxxx <number> compare against zero */
-	if (TryParseNumber(lhs, &left)) {
-	    t = left != 0.0;
-	    goto done;
+	{
+	    double left;
+	    if (TryParseNumber(lhs, &left)) {
+		t = left != 0.0;
+		goto done;
+	    }
 	}
 	/* For .if ${...} check for non-empty string (defProc is ifdef). */
 	if (par->if_info->form[0] == '\0') {
@@ -617,73 +683,7 @@ CondParser_Comparison(CondParser *par, Boolean doEval)
 	goto done;
     }
 
-    if (rhsQuoted || lhsQuoted) {
-    do_string_compare:
-	if (((*op != '!') && (*op != '=')) || (op[1] != '=')) {
-	    Parse_Error(PARSE_WARNING,
-			"String comparison operator should be either == or !=");
-	    goto done;
-	}
-
-	if (DEBUG(COND)) {
-	    fprintf(debug_file, "lhs = \"%s\", rhs = \"%s\", op = %.2s\n",
-		    lhs, rhs, op);
-	}
-	/*
-	 * Null-terminate rhs and perform the comparison.
-	 * t is set to the result.
-	 */
-	if (*op == '=') {
-	    t = strcmp(lhs, rhs) == 0;
-	} else {
-	    t = strcmp(lhs, rhs) != 0;
-	}
-    } else {
-	/*
-	 * rhs is either a float or an integer. Convert both the
-	 * lhs and the rhs to a double and compare the two.
-	 */
-
-	if (!TryParseNumber(lhs, &left) || !TryParseNumber(rhs, &right))
-	    goto do_string_compare;
-
-	if (DEBUG(COND)) {
-	    fprintf(debug_file, "left = %f, right = %f, op = %.2s\n", left,
-		    right, op);
-	}
-	switch (op[0]) {
-	case '!':
-	    if (op[1] != '=') {
-		Parse_Error(PARSE_WARNING,
-			    "Unknown operator");
-		goto done;
-	    }
-	    t = (left != right);
-	    break;
-	case '=':
-	    if (op[1] != '=') {
-		Parse_Error(PARSE_WARNING,
-			    "Unknown operator");
-		goto done;
-	    }
-	    t = (left == right);
-	    break;
-	case '<':
-	    if (op[1] == '=') {
-		t = (left <= right);
-	    } else {
-		t = (left < right);
-	    }
-	    break;
-	case '>':
-	    if (op[1] == '=') {
-		t = (left >= right);
-	    } else {
-		t = (left > right);
-	    }
-	    break;
-	}
-    }
+    t = EvalComparison(lhs, lhsQuoted, op, rhs, rhsQuoted);
 
 done:
     free(lhsFree);
