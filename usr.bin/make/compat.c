@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.139 2020/08/30 20:08:47 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.140 2020/09/11 17:32:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.139 2020/08/30 20:08:47 rillig Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.140 2020/09/11 17:32:36 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.139 2020/08/30 20:08:47 rillig Exp $");
+__RCSID("$NetBSD: compat.c,v 1.140 2020/09/11 17:32:36 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -264,7 +264,7 @@ CompatRunCommand(void *cmdp, void *gnp)
 	cmd++;
     }
 
-    while (isspace((unsigned char)*cmd))
+    while (ch_isspace(*cmd))
 	cmd++;
 
     /*
@@ -416,9 +416,9 @@ CompatRunCommand(void *cmdp, void *gnp)
 			fprintf(debug_file, "\n*** Failed target:  %s\n*** Failed command: ",
 			    gn->name);
 			for (cp = cmd; *cp; ) {
-			    if (isspace((unsigned char)*cp)) {
+			    if (ch_isspace(*cp)) {
 				fprintf(debug_file, " ");
-				while (isspace((unsigned char)*cp))
+				while (ch_isspace(*cp))
 				    cp++;
 			    } else {
 				fprintf(debug_file, "%c", *cp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.492 2020/09/11 04:32:39 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.493 2020/09/11 17:32:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.492 2020/09/11 04:32:39 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.493 2020/09/11 17:32:36 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.492 2020/09/11 04:32:39 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.493 2020/09/11 17:32:36 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -306,7 +306,7 @@ VarFind(const char *name, GNode *ctxt, VarFindFlags flags)
      * and substitute the short version in for 'name' if it matches one of
      * them.
      */
-    if (*name == '.' && isupper((unsigned char)name[1])) {
+    if (*name == '.' && ch_isupper(name[1])) {
 	switch (name[1]) {
 	case 'A':
 	    if (strcmp(name, ".ALLSRC") == 0)
@@ -698,7 +698,7 @@ Var_UnExport(const char *str)
 	if (cp && *cp)
 	    setenv(MAKE_LEVEL_ENV, cp, 1);
     } else {
-	for (; isspace((unsigned char)*str); str++)
+	for (; ch_isspace(*str); str++)
 	    continue;
 	if (str[0] != '\0')
 	    varnames = str;
@@ -1369,7 +1369,7 @@ tryagain:
 		continue;
 	    }
 
-	    if (*rp != '\\' || !isdigit((unsigned char)rp[1])) {
+	    if (*rp != '\\' || !ch_isdigit(rp[1])) {
 		SepBuf_AddBytes(buf, rp, 1);
 		continue;
 	    }
@@ -1757,7 +1757,7 @@ VarQuote(const char *str, Boolean quoteDollar)
 	    Buf_AddStr(&buf, newline);
 	    continue;
 	}
-	if (isspace((unsigned char)*str) || ismeta((unsigned char)*str))
+	if (ch_isspace(*str) || ismeta((unsigned char)*str))
 	    Buf_AddByte(&buf, '\\');
 	Buf_AddByte(&buf, *str);
 	if (quoteDollar && *str == '$')
@@ -2480,7 +2480,7 @@ ApplyModifier_ToSep(const char **pp, ApplyModifiersState *st)
 	if (sep[1] == 'x') {
 	    base = 16;
 	    numStart++;
-	} else if (!isdigit((unsigned char)sep[1]))
+	} else if (!ch_isdigit(sep[1]))
 	    return AMR_BAD;	/* ":ts<backslash><unrecognised>". */
 
 	st->sep = (char)strtoul(numStart, &end, base);
@@ -2525,7 +2525,7 @@ ApplyModifier_To(const char **pp, ApplyModifiersState *st)
 	size_t len = strlen(st->val);
 	st->newVal = bmake_malloc(len + 1);
 	for (i = 0; i < len + 1; i++)
-	    st->newVal[i] = (char)toupper((unsigned char)st->val[i]);
+	    st->newVal[i] = ch_toupper(st->val[i]);
 	*pp = mod + 2;
 	return AMR_OK;
     }
@@ -2535,7 +2535,7 @@ ApplyModifier_To(const char **pp, ApplyModifiersState *st)
 	size_t len = strlen(st->val);
 	st->newVal = bmake_malloc(len + 1);
 	for (i = 0; i < len + 1; i++)
-	    st->newVal[i] = (char)tolower((unsigned char)st->val[i]);
+	    st->newVal[i] = ch_tolower(st->val[i]);
 	*pp = mod + 2;
 	return AMR_OK;
     }
@@ -3291,8 +3291,7 @@ VarIsDynamic(GNode *ctxt, const char *varname, size_t namelen)
     }
 
     if ((namelen == 7 || namelen == 8) && varname[0] == '.' &&
-	isupper((unsigned char)varname[1]) &&
-	(ctxt == VAR_CMD || ctxt == VAR_GLOBAL))
+	ch_isupper(varname[1]) && (ctxt == VAR_CMD || ctxt == VAR_GLOBAL))
     {
 	return strcmp(varname, ".TARGET") == 0 ||
 	       strcmp(varname, ".ARCHIVE") == 0 ||
