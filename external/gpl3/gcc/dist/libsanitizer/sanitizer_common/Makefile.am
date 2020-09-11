@@ -66,6 +66,7 @@ sanitizer_common_files = \
 	sanitizer_symbolizer_report.cc \
 	sanitizer_stacktrace_printer.cc \
 	sanitizer_stoptheworld_linux_libcdep.cc \
+	sanitizer_stoptheworld_netbsd_libcdep.cc \
 	sanitizer_stoptheworld_mac.cc \
 	sanitizer_suppressions.cc \
 	sanitizer_symbolizer.cc \
@@ -127,4 +128,3 @@ AM_MAKEFLAGS = \
 MAKEOVERRIDES=
 
 ## ################################################################
-
