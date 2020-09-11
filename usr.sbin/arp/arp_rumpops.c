@@ -1,4 +1,4 @@
-/*	$NetBSD: arp_rumpops.c,v 1.2 2019/02/27 23:29:50 dholland Exp $	*/
+/*	$NetBSD: arp_rumpops.c,v 1.3 2020/09/11 15:28:29 roy Exp $	*/
 
 /*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: arp_rumpops.c,v 1.2 2019/02/27 23:29:50 dholland Exp $");
+__RCSID("$NetBSD: arp_rumpops.c,v 1.3 2020/09/11 15:28:29 roy Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -49,6 +49,7 @@ const struct prog_ops prog_ops = {
 	.op_open =	rump_sys_open,
 	.op_getpid =	rump_sys_getpid,
 
+	.op_ioctl =	rump_sys_ioctl,
 	.op_read =	rump_sys_read,
 	.op_write =	rump_sys_write,
 	.op_close =	rump_sys_close,
