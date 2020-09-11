@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.145 2020/09/08 05:26:21 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.146 2020/09/11 04:32:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.145 2020/09/08 05:26:21 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.146 2020/09/11 04:32:39 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.145 2020/09/08 05:26:21 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.146 2020/09/11 04:32:39 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -969,7 +969,7 @@ SuffAddSrc(void *sp, void *lsp)
 
     targ = ls->s;
 
-    if ((s->flags & SUFF_NULL) && (*s->name != '\0')) {
+    if ((s->flags & SUFF_NULL) && s->name[0] != '\0') {
 	/*
 	 * If the suffix has been marked as the NULL suffix, also create a Src
 	 * structure for a file with no suffix attached. Two birds, and all
