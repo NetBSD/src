@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.180 2020/08/20 11:01:02 roy Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.181 2020/09/11 15:03:33 roy Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.180 2020/08/20 11:01:02 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.181 2020/09/11 15:03:33 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -57,6 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.180 2020/08/20 11:01:02 roy Exp $");
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/if_dl.h>
+#include <net/if_llatbl.h>
+#include <net/nd.h>
 #include <net/route.h>
 
 #include <netinet/in.h>
@@ -735,7 +737,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		goto freeit;
 
 	rt_cmd = 0;
-	if (ln->ln_state <= ND6_LLINFO_INCOMPLETE) {
+	if (ln->ln_state <= ND_LLINFO_INCOMPLETE) {
 		/*
 		 * If the link-layer has address, and no lladdr option came,
 		 * discard the packet.
@@ -750,15 +752,13 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		ln->la_flags |= LLE_VALID;
 		rt_cmd = RTM_ADD;
 		if (is_solicited) {
-			ln->ln_state = ND6_LLINFO_REACHABLE;
+			ln->ln_state = ND_LLINFO_REACHABLE;
 			ln->ln_byhint = 0;
-			if (!ND6_LLINFO_PERMANENT(ln)) {
-				nd6_llinfo_settimer(ln,
-				    ND_IFINFO(ln->lle_tbl->llt_ifp)->reachable * hz);
-			}
+			if (!ND_IS_LLINFO_PERMANENT(ln))
+				nd_set_timer(ln, ND_TIMER_REACHABLE);
 		} else {
-			ln->ln_state = ND6_LLINFO_STALE;
-			nd6_llinfo_settimer(ln, nd6_gctimer * hz);
+			ln->ln_state = ND_LLINFO_STALE;
+			nd_set_timer(ln, ND_TIMER_GC);
 		}
 	} else {
 		bool llchange;
@@ -804,9 +804,9 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			 * If state is REACHABLE, make it STALE.
 			 * no other updates should be done.
 			 */
-			if (ln->ln_state == ND6_LLINFO_REACHABLE) {
-				ln->ln_state = ND6_LLINFO_STALE;
-				nd6_llinfo_settimer(ln, nd6_gctimer * hz);
+			if (ln->ln_state == ND_LLINFO_REACHABLE) {
+				ln->ln_state = ND_LLINFO_STALE;
+				nd_set_timer(ln, ND_TIMER_GC);
 			}
 			goto freeit;
 		} else if (is_override				   /* (2a) */
@@ -826,17 +826,14 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			 * changed, make it STALE.
 			 */
 			if (is_solicited) {
-				ln->ln_state = ND6_LLINFO_REACHABLE;
+				ln->ln_state = ND_LLINFO_REACHABLE;
 				ln->ln_byhint = 0;
-				if (!ND6_LLINFO_PERMANENT(ln)) {
-					nd6_llinfo_settimer(ln,
-					    ND_IFINFO(ifp)->reachable * hz);
-				}
+				if (!ND_IS_LLINFO_PERMANENT(ln))
+					nd_set_timer(ln, ND_TIMER_REACHABLE);
 			} else {
 				if (lladdr && llchange) {
-					ln->ln_state = ND6_LLINFO_STALE;
-					nd6_llinfo_settimer(ln,
-					    nd6_gctimer * hz);
+					ln->ln_state = ND_LLINFO_STALE;
+					nd_set_timer(ln, ND_TIMER_GC);
 				}
 			}
 		}
