@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.228 2020/09/07 05:32:12 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.229 2020/09/11 04:32:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.228 2020/09/07 05:32:12 rillig Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.229 2020/09/11 04:32:39 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.228 2020/09/07 05:32:12 rillig Exp $");
+__RCSID("$NetBSD: job.c,v 1.229 2020/09/11 04:32:39 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -804,7 +804,7 @@ JobPrintCommand(void *cmdp, void *jobp)
 			DBPRINTF("%s\n", commandShell->ignErr);
 		}
 	    } else if (commandShell->ignErr &&
-		      (*commandShell->ignErr != '\0'))
+		       commandShell->ignErr[0] != '\0')
 	    {
 		/*
 		 * The shell has no error control, so we need to be
@@ -849,7 +849,7 @@ JobPrintCommand(void *cmdp, void *jobp)
 	 */
 
 	if (!commandShell->hasErrCtl && commandShell->errOut &&
-	    (*commandShell->errOut != '\0')) {
+	    commandShell->errOut[0] != '\0') {
 		if (!(job->flags & JOB_SILENT) && !shutUp) {
 			if (commandShell->hasEchoCtl) {
 				DBPRINTF("%s\n", commandShell->echoOff);
@@ -1474,8 +1474,8 @@ JobMakeArgv(Job *job, char **argv)
     argv[0] = UNCONST(shellName);
     argc = 1;
 
-    if ((commandShell->exit && (*commandShell->exit != '-')) ||
-	(commandShell->echo && (*commandShell->echo != '-')))
+    if ((commandShell->exit && commandShell->exit[0] != '-') ||
+	(commandShell->echo && commandShell->echo[0] != '-'))
     {
 	/*
 	 * At least one of the flags doesn't have a minus before it, so
@@ -2179,7 +2179,7 @@ Shell_Init(void)
     if (commandShell->echo == NULL) {
 	commandShell->echo = "";
     }
-    if (commandShell->hasErrCtl && *commandShell->exit) {
+    if (commandShell->hasErrCtl && commandShell->exit[0] != '\0') {
 	if (shellErrFlag &&
 	    strcmp(commandShell->exit, &shellErrFlag[1]) != 0) {
 	    free(shellErrFlag);
