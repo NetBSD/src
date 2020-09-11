@@ -1,4 +1,4 @@
-/*	$NetBSD: strlist.c,v 1.6 2020/08/25 17:37:09 rillig Exp $	*/
+/*	$NetBSD: strlist.c,v 1.7 2020/09/11 04:32:39 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2008 - 2009 The NetBSD Foundation, Inc.
@@ -33,11 +33,11 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: strlist.c,v 1.6 2020/08/25 17:37:09 rillig Exp $";
+static char rcsid[] = "$NetBSD: strlist.c,v 1.7 2020/09/11 04:32:39 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: strlist.c,v 1.6 2020/08/25 17:37:09 rillig Exp $");
+__RCSID("$NetBSD: strlist.c,v 1.7 2020/09/11 04:32:39 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -80,7 +80,7 @@ strlist_add_str(strlist_t *sl, char *str, unsigned int info)
 	sl->sl_num = n;
 	items = sl->sl_items;
 	if (n >= sl->sl_max) {
-		items = bmake_realloc(items, (n + 7) * sizeof *sl->sl_items);
+		items = bmake_realloc(items, (n + 7) * sizeof *items);
 		sl->sl_items = items;
 		sl->sl_max = n + 6;
 	}

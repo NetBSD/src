@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.491 2020/09/08 05:26:21 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.492 2020/09/11 04:32:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.491 2020/09/08 05:26:21 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.492 2020/09/11 04:32:39 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.491 2020/09/08 05:26:21 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.492 2020/09/11 04:32:39 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2969,7 +2969,7 @@ ApplyModifier_SysV(const char **pp, ApplyModifiersState *st)
      * string. Note the pattern is anchored at the end.
      */
     (*pp)--;
-    if (lhs[0] == '\0' && *st->val == '\0') {
+    if (lhs[0] == '\0' && st->val[0] == '\0') {
 	st->newVal = st->val;	/* special case */
     } else {
 	ModifyWord_SYSVSubstArgs args = {st->ctxt, lhs, rhs};
