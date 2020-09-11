@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.90 2020/08/20 11:01:02 roy Exp $	*/
+/*	$NetBSD: nd6.h,v 1.91 2020/09/11 15:03:33 roy Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -36,17 +36,18 @@
 #include <sys/queue.h>
 #include <sys/callout.h>
 
-#define ND6_LLINFO_PURGE	-3
-#define ND6_LLINFO_NOSTATE	-2
-#define ND6_LLINFO_WAITDELETE	-1
-#define ND6_LLINFO_INCOMPLETE	0
-#define ND6_LLINFO_REACHABLE	1
-#define ND6_LLINFO_STALE	2
-#define ND6_LLINFO_DELAY	3
-#define ND6_LLINFO_PROBE	4
-
-#define ND6_IS_LLINFO_PROBREACH(n) ((n)->ln_state > ND6_LLINFO_INCOMPLETE)
-#define ND6_LLINFO_PERMANENT(n)	(((n)->ln_expire == 0) && ((n)->ln_state > ND6_LLINFO_INCOMPLETE))
+#ifndef _KERNEL
+/* Backwards compat */
+#include <net/nd.h>
+#define ND6_LLINFO_PURGE	ND_LLINFO_PURGE
+#define ND6_LLINFO_NOSTATE	ND_LLINFO_NOSTATE
+#define ND6_LLINFO_WAITDELETE	ND_LLINFO_WAITDELETE
+#define ND6_LLINFO_INCOMPLETE	ND_LLINFO_INCOMPLETE
+#define ND6_LLINFO_REACHABLE	ND_LLINFO_REACHABLE
+#define ND6_LLINFO_STALE	ND_LLINFO_STALE
+#define ND6_LLINFO_DELAY	ND_LLINFO_DELAY
+#define ND6_LLINFO_PROBE	ND_LLINFO_PROBE
+#endif
 
 struct nd_ifinfo {
 	uint8_t chlim;			/* CurHopLimit */
@@ -98,28 +99,15 @@ struct	in6_ndireq {
 #define ND6_INFINITE_LIFETIME		((u_int32_t)~0)
 
 #ifdef _KERNEL
-/* node constants */
-#define MAX_REACHABLE_TIME		3600000	/* msec */
-#define REACHABLE_TIME			30000	/* msec */
-#define RETRANS_TIMER			1000	/* msec */
-#define MIN_RANDOM_FACTOR		512	/* 1024 * 0.5 */
-#define MAX_RANDOM_FACTOR		1536	/* 1024 * 1.5 */
-#define ND_COMPUTE_RTIME(x) \
-		(((MIN_RANDOM_FACTOR * (x >> 10)) + (cprng_fast32() & \
-		((MAX_RANDOM_FACTOR - MIN_RANDOM_FACTOR) * (x >> 10)))) /1000)
-
 #include <sys/mallocvar.h>
 MALLOC_DECLARE(M_IP6NDP);
 
 /* nd6.c */
 extern int nd6_prune;
-extern int nd6_delay;
-extern int nd6_umaxtries;
-extern int nd6_mmaxtries;
 extern int nd6_useloopback;
-extern int nd6_maxnudhint;
-extern int nd6_gctimer;
 extern int nd6_debug;
+
+extern struct nd_domain nd6_nd_domain;
 
 #define nd6log(level, fmt, args...) \
 	do { if (nd6_debug) log(level, "%s: " fmt, __func__, ##args);} while (0)
@@ -181,7 +169,6 @@ void nd6_option_init(void *, int, union nd_opts *);
 int nd6_options(union nd_opts *);
 struct llentry *nd6_lookup(const struct in6_addr *, const struct ifnet *, bool);
 struct llentry *nd6_create(const struct in6_addr *, const struct ifnet *);
-void nd6_llinfo_settimer(struct llentry *, time_t);
 void nd6_purge(struct ifnet *, struct in6_ifextra *);
 void nd6_nud_hint(struct rtentry *);
 int nd6_resolve(struct ifnet *, const struct rtentry *, struct mbuf *,

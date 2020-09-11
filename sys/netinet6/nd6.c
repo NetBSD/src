@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.271 2020/06/12 11:04:45 roy Exp $	*/
+/*	$NetBSD: nd6.c,v 1.272 2020/09/11 15:03:33 roy Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.271 2020/06/12 11:04:45 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.272 2020/09/11 15:03:33 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.271 2020/06/12 11:04:45 roy Exp $");
 #include <net/if_dl.h>
 #include <net/if_llatbl.h>
 #include <net/if_types.h>
+#include <net/nd.h>
 #include <net/route.h>
 #include <net/if_ether.h>
 #include <net/if_arc.h>
@@ -86,18 +87,10 @@ __KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.271 2020/06/12 11:04:45 roy Exp $");
 
 /* timer values */
 int	nd6_prune	= 1;	/* walk list every 1 seconds */
-int	nd6_delay	= 5;	/* delay first probe time 5 second */
-int	nd6_umaxtries	= 3;	/* maximum unicast query */
-int	nd6_mmaxtries	= 3;	/* maximum multicast query */
 int	nd6_useloopback = 1;	/* use loopback interface for local traffic */
-int	nd6_gctimer	= (60 * 60 * 24); /* 1 day: garbage collection timer */
 
 /* preventing too many loops in ND option parsing */
 int nd6_maxndopt = 10;	/* max # of ND options allowed */
-
-int nd6_maxnudhint = 0;	/* max # of subsequent upper layer hints */
-
-int nd6_maxqueuelen = 1; /* max # of packets cached in unresolved ND entries */
 
 #ifdef ND6_DEBUG
 int nd6_debug = 1;
@@ -111,16 +104,38 @@ int nd6_recalc_reachtm_interval = ND6_RECALC_REACHTM_INTERVAL;
 
 static void nd6_slowtimo(void *);
 static void nd6_free(struct llentry *, int);
-static void nd6_llinfo_timer(void *);
+static bool nd6_nud_enabled(struct ifnet *);
+static unsigned int nd6_llinfo_reachable(struct ifnet *);
+static unsigned int nd6_llinfo_retrans(struct ifnet *);
+static union nd_addr *nd6_llinfo_holdsrc(struct llentry *, union nd_addr *);
+static void nd6_llinfo_output(struct ifnet *, const union nd_addr *,
+    const union nd_addr *, const uint8_t *, const union nd_addr *);
+static void nd6_llinfo_missed(struct ifnet *, const union nd_addr *,
+    struct mbuf *);
 static void nd6_timer(void *);
 static void nd6_timer_work(struct work *, void *);
-static void clear_llinfo_pqueue(struct llentry *);
 static struct nd_opt_hdr *nd6_option(union nd_opts *);
 
 static callout_t nd6_slowtimo_ch;
 static callout_t nd6_timer_ch;
 static struct workqueue	*nd6_timer_wq;
 static struct work	nd6_timer_wk;
+
+struct nd_domain nd6_nd_domain = {
+	.nd_family = AF_INET6,
+	.nd_delay = 5,		/* delay first probe time 5 second */
+	.nd_mmaxtries = 3,	/* maximum unicast query */
+	.nd_umaxtries = 3,	/* maximum multicast query */
+	.nd_maxnudhint = 0,	/* max # of subsequent upper layer hints */
+	.nd_maxqueuelen = 1,	/* max # of packets in unresolved ND entries */
+	.nd_nud_enabled = nd6_nud_enabled,
+	.nd_reachable = nd6_llinfo_reachable,
+	.nd_retrans = nd6_llinfo_retrans,
+	.nd_holdsrc = nd6_llinfo_holdsrc,
+	.nd_output = nd6_llinfo_output,
+	.nd_missed = nd6_llinfo_missed,
+	.nd_free = nd6_free,
+};
 
 MALLOC_DEFINE(M_IP6NDP, "NDP", "IPv6 Neighbour Discovery");
 
@@ -129,6 +144,7 @@ nd6_init(void)
 {
 	int error;
 
+	nd_attach_domain(&nd6_nd_domain);
 	nd6_nbr_init();
 
 	rw_init(&nd6_lock);
@@ -326,44 +342,6 @@ skip1:
 }
 
 /*
- * ND6 timer routine to handle ND6 entries
- */
-void
-nd6_llinfo_settimer(struct llentry *ln, time_t xtick)
-{
-
-	CTASSERT(sizeof(time_t) > sizeof(int));
-	LLE_WLOCK_ASSERT(ln);
-
-	KASSERT(xtick >= 0);
-
-	/*
-	 * We have to take care of a reference leak which occurs if
-	 * callout_reset overwrites a pending callout schedule.  Unfortunately
-	 * we don't have a mean to know the overwrite, so we need to know it
-	 * using callout_stop.  We need to call callout_pending first to exclude
-	 * the case that the callout has never been scheduled.
-	 */
-	if (callout_pending(&ln->la_timer)) {
-		bool expired = callout_stop(&ln->la_timer);
-		if (!expired)
-			LLE_REMREF(ln);
-	}
-
-	ln->ln_expire = time_uptime + xtick / hz;
-	LLE_ADDREF(ln);
-	if (xtick > INT_MAX) {
-		ln->ln_ntick = xtick - INT_MAX;
-		callout_reset(&ln->ln_timer_ch, INT_MAX,
-		    nd6_llinfo_timer, ln);
-	} else {
-		ln->ln_ntick = 0;
-		callout_reset(&ln->ln_timer_ch, xtick,
-		    nd6_llinfo_timer, ln);
-	}
-}
-
-/*
  * Gets source address of the first packet in hold queue
  * and stores it in @src.
  * Returns pointer to @src (if hold queue is not empty) or NULL.
@@ -389,148 +367,67 @@ nd6_llinfo_get_holdsrc(struct llentry *ln, struct in6_addr *src)
 	return src;
 }
 
-static void
-nd6_llinfo_timer(void *arg)
+static union nd_addr *
+nd6_llinfo_holdsrc(struct llentry *ln, union nd_addr *src)
 {
-	struct llentry *ln = arg;
-	struct ifnet *ifp;
-	struct nd_kifinfo *ndi;
-	bool send_ns = false;
-	const struct in6_addr *daddr6 = NULL;
-	const struct in6_addr *taddr6 = &ln->r_l3addr.addr6;
+
+	if (nd6_llinfo_get_holdsrc(ln, &src->nd_addr6) == NULL)
+		return NULL;
+	return src;
+}
+
+static void
+nd6_llinfo_output(struct ifnet *ifp, const union nd_addr *daddr,
+    const union nd_addr *taddr, __unused const uint8_t *tlladdr,
+    const union nd_addr *hsrc)
+{
+
+	nd6_ns_output(ifp, &daddr->nd_addr6, &taddr->nd_addr6,
+	    &hsrc->nd_addr6, NULL);
+}
+
+static bool
+nd6_nud_enabled(struct ifnet *ifp)
+{
+	struct nd_kifinfo *ndi = ND_IFINFO(ifp);
+
+	return ndi->flags & ND6_IFF_PERFORMNUD;
+}
+
+static unsigned int
+nd6_llinfo_reachable(struct ifnet *ifp)
+{
+	struct nd_kifinfo *ndi = ND_IFINFO(ifp);
+
+	return ndi->reachable;
+}
+
+static unsigned int
+nd6_llinfo_retrans(struct ifnet *ifp)
+{
+	struct nd_kifinfo *ndi = ND_IFINFO(ifp);
+
+	return ndi->retrans;
+}
+
+static void
+nd6_llinfo_missed(struct ifnet *ifp, const union nd_addr *taddr, struct mbuf *m)
+{
+	struct in6_addr mdaddr6 = zeroin6_addr;
 	struct sockaddr_in6 dsin6, tsin6;
-	struct mbuf *m = NULL;
-	bool missed = false;
+	struct sockaddr *sa;
 
-	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
+	if (m != NULL)
+		icmp6_error2(m, ICMP6_DST_UNREACH,
+		    ICMP6_DST_UNREACH_ADDR, 0, ifp, &mdaddr6);
+	if (!IN6_IS_ADDR_UNSPECIFIED(&mdaddr6)) {
+		sockaddr_in6_init(&dsin6, &mdaddr6, 0, 0, 0);
+		sa = sin6tosa(&dsin6);
+	} else
+		sa = NULL;
 
-	LLE_WLOCK(ln);
-	if ((ln->la_flags & LLE_LINKED) == 0)
-		goto out;
-	if (ln->ln_ntick > 0) {
-		nd6_llinfo_settimer(ln, ln->ln_ntick);
-		goto out;
-	}
-
-	ifp = ln->lle_tbl->llt_ifp;
-	KASSERT(ifp != NULL);
-
-	ndi = ND_IFINFO(ifp);
-
-	switch (ln->ln_state) {
-	case ND6_LLINFO_WAITDELETE:
-		LLE_REMREF(ln);
-		nd6_free(ln, 0);
-		ln = NULL;
-		break;
-
-	case ND6_LLINFO_INCOMPLETE:
-		if (ln->ln_asked++ < nd6_mmaxtries) {
-			send_ns = true;
-			break;
-		}
-
-		missed = true;
-		sockaddr_in6_init(&tsin6, taddr6, 0, 0, 0);
-
-		if (ln->ln_hold) {
-			struct mbuf *m0;
-
-			m = ln->ln_hold;
-
-			/*
-			 * assuming every packet in ln_hold has
-			 * the same IP header
-			 */
-			m0 = m->m_nextpkt;
-			m->m_nextpkt = NULL;
-			ln->ln_hold = m0;
-			clear_llinfo_pqueue(ln);
-		}
-
-		/*
-		 * Move to the ND6_LLINFO_WAITDELETE state for another
-		 * interval at which point the llentry will be freed
-		 * unless it's attempted to be used again and we'll
-		 * resend NS again, rinse and repeat.
-		 */
-		ln->ln_state = ND6_LLINFO_WAITDELETE;
-		if (ln->ln_asked == nd6_mmaxtries)
-			nd6_llinfo_settimer(ln, ndi->retrans * hz / 1000);
-		else
-			send_ns = true;
-		break;
-
-	case ND6_LLINFO_REACHABLE:
-		if (!ND6_LLINFO_PERMANENT(ln)) {
-			ln->ln_state = ND6_LLINFO_STALE;
-			nd6_llinfo_settimer(ln, nd6_gctimer * hz);
-		}
-		break;
-
-	case ND6_LLINFO_PURGE:
-	case ND6_LLINFO_STALE:
-		/* Garbage Collection(RFC 2461 5.3) */
-		if (!ND6_LLINFO_PERMANENT(ln)) {
-			LLE_REMREF(ln);
-			nd6_free(ln, 1);
-			ln = NULL;
-		}
-		break;
-
-	case ND6_LLINFO_DELAY:
-		if (ndi->flags & ND6_IFF_PERFORMNUD) {
-			/* We need NUD */
-			ln->ln_asked = 1;
-			ln->ln_state = ND6_LLINFO_PROBE;
-			daddr6 = &ln->r_l3addr.addr6;
-			send_ns = true;
-		} else {
-			ln->ln_state = ND6_LLINFO_STALE; /* XXX */
-			nd6_llinfo_settimer(ln, nd6_gctimer * hz);
-		}
-		break;
-	case ND6_LLINFO_PROBE:
-		if (ln->ln_asked < nd6_umaxtries) {
-			ln->ln_asked++;
-			daddr6 = &ln->r_l3addr.addr6;
-			send_ns = true;
-		} else {
-			LLE_REMREF(ln);
-			nd6_free(ln, 0);
-			ln = NULL;
-		}
-		break;
-	}
-
-	if (send_ns) {
-		struct in6_addr src, *psrc;
-
-		nd6_llinfo_settimer(ln, ndi->retrans * hz / 1000);
-		psrc = nd6_llinfo_get_holdsrc(ln, &src);
-		LLE_FREE_LOCKED(ln);
-		ln = NULL;
-		nd6_ns_output(ifp, daddr6, taddr6, psrc, NULL);
-	}
-
-out:
-	if (ln != NULL)
-		LLE_FREE_LOCKED(ln);
-	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
-	if (missed) {
-		struct in6_addr mdaddr6 = zeroin6_addr;
-		struct sockaddr *sa;
-
-		if (m != NULL)
-			icmp6_error2(m, ICMP6_DST_UNREACH,
-			    ICMP6_DST_UNREACH_ADDR, 0, ifp, &mdaddr6);
-		if (!IN6_IS_ADDR_UNSPECIFIED(&mdaddr6)) {
-			sockaddr_in6_init(&dsin6, &mdaddr6, 0, 0, 0);
-			sa = sin6tosa(&dsin6);
-		} else
-			sa = NULL;
-		rt_clonedmsg(RTM_MISS, sa, sin6tosa(&tsin6), NULL, ifp);
-	}
+	sockaddr_in6_init(&tsin6, &taddr->nd_addr6, 0, 0, 0);
+	rt_clonedmsg(RTM_MISS, sa, sin6tosa(&tsin6), NULL, ifp);
 }
 
 /*
@@ -675,7 +572,7 @@ nd6_create(const struct in6_addr *addr6, const struct ifnet *ifp)
 	if (rt != NULL)
 		rt_unref(rt);
 	if (ln != NULL)
-		ln->ln_state = ND6_LLINFO_NOSTATE;
+		ln->ln_state = ND_LLINFO_NOSTATE;
 
 	return ln;
 }
@@ -822,13 +719,9 @@ nd6_free(struct llentry *ln, int gc)
 	 *      but we intentionally keep it just in case.
 	 */
 	if (!ip6_forwarding && ln->ln_router &&
-	    ln->ln_state == ND6_LLINFO_STALE && gc)
+	    ln->ln_state == ND_LLINFO_STALE && gc)
 	{
-		if (ln->ln_expire > time_uptime)
-			nd6_llinfo_settimer(ln,
-			    (ln->ln_expire - time_uptime) * hz);
-		else
-			nd6_llinfo_settimer(ln, nd6_gctimer * hz);
+		nd_set_timer(ln, ND_TIMER_EXPIRE);
 		LLE_WUNLOCK(ln);
 		return;
 	}
@@ -874,28 +767,7 @@ nd6_nud_hint(struct rtentry *rt)
 
 	ifp = rt->rt_ifp;
 	ln = nd6_lookup(&(satocsin6(rt_getkey(rt)))->sin6_addr, ifp, true);
-	if (ln == NULL)
-		return;
-
-	if (ln->ln_state < ND6_LLINFO_REACHABLE)
-		goto done;
-
-	/*
-	 * if we get upper-layer reachability confirmation many times,
-	 * it is possible we have false information.
-	 */
-	ln->ln_byhint++;
-	if (ln->ln_byhint > nd6_maxnudhint)
-		goto done;
-
-	ln->ln_state = ND6_LLINFO_REACHABLE;
-	if (!ND6_LLINFO_PERMANENT(ln))
-		nd6_llinfo_settimer(ln, ND_IFINFO(rt->rt_ifp)->reachable * hz);
-
-done:
-	LLE_WUNLOCK(ln);
-
-	return;
+	nd_nud_hint(ln);
 }
 
 struct gc_args {
@@ -913,18 +785,18 @@ nd6_purge_entry(struct lltable *llt, struct llentry *ln, void *farg)
 	if (*n <= 0)
 		return 0;
 
-	if (ND6_LLINFO_PERMANENT(ln))
+	if (ND_IS_LLINFO_PERMANENT(ln))
 		return 0;
 
 	if (IN6_ARE_ADDR_EQUAL(&ln->r_l3addr.addr6, skip_in6))
 		return 0;
 
 	LLE_WLOCK(ln);
-	if (ln->ln_state > ND6_LLINFO_INCOMPLETE)
-		ln->ln_state = ND6_LLINFO_STALE;
+	if (ln->ln_state > ND_LLINFO_INCOMPLETE)
+		ln->ln_state = ND_LLINFO_STALE;
 	else
-		ln->ln_state = ND6_LLINFO_PURGE;
-	nd6_llinfo_settimer(ln, 0);
+		ln->ln_state = ND_LLINFO_PURGE;
+	nd_set_timer(ln, ND_TIMER_IMMEDIATE);
 	LLE_WUNLOCK(ln);
 
 	(*n)--;
@@ -1524,15 +1396,15 @@ nd6_cache_lladdr(
 		if ((!olladdr && lladdr) ||		/* (3) */
 		    (olladdr && lladdr && llchange)) {	/* (5) */
 			do_update = 1;
-			newstate = ND6_LLINFO_STALE;
+			newstate = ND_LLINFO_STALE;
 		} else					/* (1-2,4) */
 			do_update = 0;
 	} else {
 		do_update = 1;
 		if (lladdr == NULL)			/* (6) */
-			newstate = ND6_LLINFO_NOSTATE;
+			newstate = ND_LLINFO_NOSTATE;
 		else					/* (7) */
-			newstate = ND6_LLINFO_STALE;
+			newstate = ND_LLINFO_STALE;
 	}
 
 	if (do_update) {
@@ -1541,19 +1413,19 @@ nd6_cache_lladdr(
 		 */
 		ln->ln_state = newstate;
 
-		if (ln->ln_state == ND6_LLINFO_STALE) {
+		if (ln->ln_state == ND_LLINFO_STALE) {
 			/*
 			 * XXX: since nd6_output() below will cause
 			 * state tansition to DELAY and reset the timer,
 			 * we must set the timer now, although it is actually
 			 * meaningless.
 			 */
-			nd6_llinfo_settimer(ln, nd6_gctimer * hz);
+			nd_set_timer(ln, ND_TIMER_GC);
 
 			nd6_llinfo_release_pkts(ln, ifp);
-		} else if (ln->ln_state == ND6_LLINFO_INCOMPLETE) {
+		} else if (ln->ln_state == ND_LLINFO_INCOMPLETE) {
 			/* probe right away */
-			nd6_llinfo_settimer((void *)ln, 0);
+			nd_set_timer(ln, ND_TIMER_IMMEDIATE);
 		}
 	}
 
@@ -1704,7 +1576,7 @@ nd6_resolve(struct ifnet *ifp, const struct rtentry *rt, struct mbuf *m,
 	ln = nd6_lookup(&dst->sin6_addr, ifp, false);
 
 	if (ln != NULL && (ln->la_flags & LLE_VALID) != 0 &&
-	    ln->ln_state == ND6_LLINFO_REACHABLE) {
+	    ln->ln_state == ND_LLINFO_REACHABLE) {
 		/* Fast path */
 		memcpy(lldst, &ln->ll_addr, MIN(dstsize, ifp->if_addrlen));
 		LLE_RUNLOCK(ln);
@@ -1739,92 +1611,7 @@ nd6_resolve(struct ifnet *ifp, const struct rtentry *rt, struct mbuf *m,
 		return ENETDOWN; /* better error? */
 	}
 
-	LLE_WLOCK_ASSERT(ln);
-
-	/* We don't have to do link-layer address resolution on a p2p link. */
-	if ((ifp->if_flags & IFF_POINTOPOINT) != 0 &&
-	    ln->ln_state < ND6_LLINFO_REACHABLE) {
-		ln->ln_state = ND6_LLINFO_STALE;
-		nd6_llinfo_settimer(ln, nd6_gctimer * hz);
-	}
-
-	/*
-	 * The first time we send a packet to a neighbor whose entry is
-	 * STALE, we have to change the state to DELAY and a sets a timer to
-	 * expire in DELAY_FIRST_PROBE_TIME seconds to ensure do
-	 * neighbor unreachability detection on expiration.
-	 * (RFC 2461 7.3.3)
-	 */
-	if (ln->ln_state == ND6_LLINFO_STALE) {
-		ln->ln_asked = 0;
-		ln->ln_state = ND6_LLINFO_DELAY;
-		nd6_llinfo_settimer(ln, nd6_delay * hz);
-	}
-
-	/*
-	 * If the neighbor cache entry has a state other than INCOMPLETE
-	 * (i.e. its link-layer address is already resolved), just
-	 * send the packet.
-	 */
-	if (ln->ln_state > ND6_LLINFO_INCOMPLETE) {
-		KASSERT((ln->la_flags & LLE_VALID) != 0);
-		memcpy(lldst, &ln->ll_addr, MIN(dstsize, ifp->if_addrlen));
-		LLE_WUNLOCK(ln);
-		return 0;
-	}
-
-	/*
-	 * There is a neighbor cache entry, but no ethernet address
-	 * response yet.  Append this latest packet to the end of the
-	 * packet queue in the mbuf, unless the number of the packet
-	 * does not exceed nd6_maxqueuelen.  When it exceeds nd6_maxqueuelen,
-	 * the oldest packet in the queue will be removed.
-	 */
-	if (ln->ln_state == ND6_LLINFO_NOSTATE ||
-	    ln->ln_state == ND6_LLINFO_WAITDELETE)
-		ln->ln_state = ND6_LLINFO_INCOMPLETE;
-	if (ln->ln_hold) {
-		struct mbuf *m_hold;
-		int i;
-
-		i = 0;
-		for (m_hold = ln->ln_hold; m_hold; m_hold = m_hold->m_nextpkt) {
-			i++;
-			if (m_hold->m_nextpkt == NULL) {
-				m_hold->m_nextpkt = m;
-				break;
-			}
-		}
-		while (i >= nd6_maxqueuelen) {
-			m_hold = ln->ln_hold;
-			ln->ln_hold = ln->ln_hold->m_nextpkt;
-			m_freem(m_hold);
-			i--;
-		}
-	} else {
-		ln->ln_hold = m;
-	}
-
-	if (ln->ln_asked >= nd6_mmaxtries)
-		error = (rt != NULL && rt->rt_flags & RTF_GATEWAY) ?
-		    EHOSTUNREACH : EHOSTDOWN;
-	else
-		error = EWOULDBLOCK;
-
-	/*
-	 * If there has been no NS for the neighbor after entering the
-	 * INCOMPLETE state, send the first solicitation.
-	 */
-	if (!ND6_LLINFO_PERMANENT(ln) && ln->ln_asked == 0) {
-		struct in6_addr src, *psrc;
-
-		ln->ln_asked++;
-		nd6_llinfo_settimer(ln, ndi->retrans * hz / 1000);
-		psrc = nd6_llinfo_get_holdsrc(ln, &src);
-		LLE_WUNLOCK(ln);
-		nd6_ns_output(ifp, NULL, &dst->sin6_addr, psrc, NULL);
-	} else
-		LLE_WUNLOCK(ln);
+	error = nd_resolve(ln, rt, m, lldst, dstsize);
 
 	if (created)
 		nd6_gc_neighbors(LLTABLE6(ifp), &dst->sin6_addr);
@@ -1854,21 +1641,6 @@ nd6_need_cache(struct ifnet *ifp)
 	default:
 		return 0;
 	}
-}
-
-static void 
-clear_llinfo_pqueue(struct llentry *ln)
-{
-	struct mbuf *m_hold, *m_hold_next;
-
-	for (m_hold = ln->ln_hold; m_hold; m_hold = m_hold_next) {
-		m_hold_next = m_hold->m_nextpkt;
-		m_hold->m_nextpkt = NULL;
-		m_freem(m_hold);
-	}
-
-	ln->ln_hold = NULL;
-	return;
 }
 
 int
