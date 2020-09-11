@@ -1,1 +1,18 @@
+CondParser_Eval: ${:Uvalue} != value
+lhs = "value", rhs = "value", op = !=
+CondParser_Eval: ${:U} != "
+lhs = "", rhs = "", op = !=
+CondParser_Eval: ${:U#hash} != "#hash"
+lhs = "#hash", rhs = "#hash", op = !=
+CondParser_Eval: ${:U\\} != "\\
+lhs = "\", rhs = "\", op = !=
+CondParser_Eval: ${:U#hash} != #hash
+lhs = "#hash", rhs = "#hash", op = !=
+CondParser_Eval: 0 # This is treated as a comment, but why?
+CondParser_Eval: ${0 # comment :?yes:no} != no
+CondParser_Eval: 0 # comment 
+lhs = "no", rhs = "no", op = !=
+CondParser_Eval: ${1 # comment :?yes:no} != yes
+CondParser_Eval: 1 # comment 
+lhs = "yes", rhs = "yes", op = !=
 exit status 0

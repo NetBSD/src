@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.127 2020/09/11 06:08:10 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.128 2020/09/11 06:47:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.127 2020/09/11 06:08:10 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.128 2020/09/11 06:47:42 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.127 2020/09/11 06:08:10 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.128 2020/09/11 06:47:42 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -985,7 +985,12 @@ CondParser_Expr(CondParser *par, Boolean doEval)
 static CondEvalResult
 CondParser_Eval(CondParser *par, Boolean *value)
 {
-    Token res = CondParser_Expr(par, TRUE);
+    Token res;
+
+    if (DEBUG(COND))
+	fprintf(debug_file, "CondParser_Eval: %s\n", par->p);
+
+    res = CondParser_Expr(par, TRUE);
     if (res != TOK_FALSE && res != TOK_TRUE)
         return COND_INVALID;
 
@@ -996,9 +1001,9 @@ CondParser_Eval(CondParser *par, Boolean *value)
     return COND_PARSE;
 }
 
-/* Evaluate the condition in the passed line, including any side effects from
- * the variable expressions in the condition. The condition consists of &&,
- * ||, !, function(arg), comparisons and parenthetical groupings thereof.
+/* Evaluate the condition, including any side effects from the variable
+ * expressions in the condition. The condition consists of &&, ||, !,
+ * function(arg), comparisons and parenthetical groupings thereof.
  *
  * Results:
  *	COND_PARSE	if the condition was valid grammatically
@@ -1007,7 +1012,7 @@ CondParser_Eval(CondParser *par, Boolean *value)
  *	(*value) is set to the boolean value of the condition
  */
 CondEvalResult
-Cond_EvalExpression(const struct If *info, const char *line, Boolean *value,
+Cond_EvalExpression(const struct If *info, const char *cond, Boolean *value,
 		    int eprint, Boolean strictLHS)
 {
     static const struct If *dflt_info;
@@ -1016,8 +1021,8 @@ Cond_EvalExpression(const struct If *info, const char *line, Boolean *value,
 
     lhsStrict = strictLHS;
 
-    while (*line == ' ' || *line == '\t')
-	line++;
+    while (*cond == ' ' || *cond == '\t')
+	cond++;
 
     if (info == NULL && (info = dflt_info) == NULL) {
 	/* Scan for the entry for .if - it can't be first */
@@ -1029,13 +1034,13 @@ Cond_EvalExpression(const struct If *info, const char *line, Boolean *value,
     assert(info != NULL);
 
     par.if_info = info;
-    par.p = line;
+    par.p = cond;
     par.curr = TOK_NONE;
 
     rval = CondParser_Eval(&par, value);
 
     if (rval == COND_INVALID && eprint)
-	Parse_Error(PARSE_FATAL, "Malformed conditional (%s)", line);
+	Parse_Error(PARSE_FATAL, "Malformed conditional (%s)", cond);
 
     return rval;
 }
