@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.185 2020/07/15 17:55:34 leot Exp $
+.\"	$NetBSD: rc.conf.5,v 1.186 2020/09/11 12:01:59 kim Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -55,7 +55,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd July 15, 2020
+.Dd September 11, 2020
 .Dt RC.CONF 5
 .Os
 .Sh NAME
@@ -607,6 +607,18 @@ version string in the
 file to reflect the version of the running kernel.
 See
 .Xr motd 5 .
+.It Sy update_motd_release
+Boolean value.
+If enabled in addition to
+.Sy update_motd ,
+updates a second
+.Nx
+version string in the
+.Pa /etc/motd
+file to reflect the version, architecture, and Build ID of
+the installed userland. An optional prefix can be provided
+for this version string in
+.Sy motd_release_tag .
 .It Sy virecover
 Boolean value.
 Send notification mail to users if any recoverable files exist in
