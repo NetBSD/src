@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.125 2020/09/11 04:57:15 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.126 2020/09/11 05:03:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.125 2020/09/11 04:57:15 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.126 2020/09/11 05:03:20 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.125 2020/09/11 04:57:15 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.126 2020/09/11 05:03:20 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -985,26 +985,15 @@ CondParser_Expr(CondParser *par, Boolean doEval)
 static CondEvalResult
 CondParser_Eval(CondParser *par, Boolean *value)
 {
+    Token res = CondParser_Expr(par, TRUE);
+    if (res != TOK_FALSE && res != TOK_TRUE)
+        return COND_INVALID;
 
-    switch (CondParser_Expr(par, TRUE)) {
-    case TOK_TRUE:
-	if (CondParser_Token(par, TRUE) == TOK_EOF) {
-	    *value = TRUE;
-	    return COND_PARSE;
-	}
-	break;
-    case TOK_FALSE:
-	if (CondParser_Token(par, TRUE) == TOK_EOF) {
-	    *value = FALSE;
-	    return COND_PARSE;
-	}
-	break;
-    default:
-    case TOK_ERROR:
-	break;
-    }
+    if (CondParser_Token(par, TRUE /* XXX: Why TRUE? */) != TOK_EOF)
+        return COND_INVALID;
 
-    return COND_INVALID;
+    *value = res == TOK_TRUE;
+    return COND_PARSE;
 }
 
 /* Evaluate the condition in the passed line, including any side effects from
