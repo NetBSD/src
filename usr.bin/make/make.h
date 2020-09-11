@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.137 2020/09/02 23:42:58 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.138 2020/09/11 05:37:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -144,7 +144,7 @@ typedef unsigned char Boolean;
 #define TRUE ((unsigned char)0xFF)
 #define FALSE ((unsigned char)0x00)
 #elif defined(USE_ENUM_BOOLEAN)
-typedef enum { FALSE, TRUE} Boolean;
+typedef enum { FALSE, TRUE } Boolean;
 #else
 typedef int Boolean;
 #endif
