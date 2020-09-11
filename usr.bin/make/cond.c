@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.130 2020/09/11 13:58:45 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.131 2020/09/11 16:22:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.130 2020/09/11 13:58:45 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.131 2020/09/11 16:22:15 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.130 2020/09/11 13:58:45 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.131 2020/09/11 16:22:15 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -523,6 +523,30 @@ static const struct If {
     { NULL,    0, FALSE, NULL }
 };
 
+/* Evaluate a "comparison without operator", such as in ".if ${VAR}" or
+ * ".if 0". */
+static Token
+EvalNotEmpty(CondParser *par, const char *lhs, Boolean lhsQuoted)
+{
+    double left;
+
+    /* For .ifxxx "..." check for non-empty string. */
+    if (lhsQuoted)
+	return lhs[0] != '\0';
+
+    /* For .ifxxx <number> compare against zero */
+    if (TryParseNumber(lhs, &left))
+	return left != 0.0;
+
+    /* For .if ${...} check for non-empty string (defProc is ifdef). */
+    if (par->if_info->form[0] == '\0')
+	return lhs[0] != 0;
+
+    /* Otherwise action default test ... */
+    return par->if_info->defProc(strlen(lhs), lhs) != par->if_info->doNot;
+}
+
+/* Evaluate a comparison, such as "${VAR} == 12345". */
 static Token
 EvalComparison(const char *lhs, Boolean lhsQuoted, const char *op,
 	       const char *rhs, Boolean rhsQuoted)
@@ -639,30 +663,7 @@ CondParser_Comparison(CondParser *par, Boolean doEval)
 	}
 	break;
     default:
-	if (!doEval) {
-	    t = TOK_FALSE;
-	    goto done;
-	}
-	/* For .ifxxx "..." check for non-empty string. */
-	if (lhsQuoted) {
-	    t = lhs[0] != '\0';
-	    goto done;
-	}
-	/* For .ifxxx <number> compare against zero */
-	{
-	    double left;
-	    if (TryParseNumber(lhs, &left)) {
-		t = left != 0.0;
-		goto done;
-	    }
-	}
-	/* For .if ${...} check for non-empty string (defProc is ifdef). */
-	if (par->if_info->form[0] == '\0') {
-	    t = lhs[0] != 0;
-	    goto done;
-	}
-	/* Otherwise action default test ... */
-	t = par->if_info->defProc(strlen(lhs), lhs) != par->if_info->doNot;
+        t = doEval ? EvalNotEmpty(par, lhs, lhsQuoted) : TOK_FALSE;
 	goto done;
     }
 
