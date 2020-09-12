@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.503 2020/09/12 19:41:20 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.504 2020/09/12 20:03:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.503 2020/09/12 19:41:20 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.504 2020/09/12 20:03:37 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.503 2020/09/12 19:41:20 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.504 2020/09/12 20:03:37 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3329,13 +3329,18 @@ ShortVarValue(char varname, const GNode *ctxt, VarEvalFlags eflags)
     return eflags & VARE_UNDEFERR ? var_Error : varNoError;
 }
 
-/* Skip to the end character or a colon, whichever comes first. */
-static void
+/* Parse a variable name, until the end character or a colon, whichever
+ * comes first. */
+static char *
 ParseVarname(const char **pp, char startc, char endc,
-	     GNode *ctxt, VarEvalFlags eflags, Buffer *namebuf)
+	     GNode *ctxt, VarEvalFlags eflags,
+	     size_t *out_varname_len)
 {
+    Buffer buf;
     const char *p = *pp;
     int depth = 1;
+
+    Buf_Init(&buf, 0);
 
     while (*p != '\0') {
 	/* Track depth so we can spot parse errors. */
@@ -3347,18 +3352,21 @@ ParseVarname(const char **pp, char startc, char endc,
 	}
 	if (*p == ':' && depth == 1)
 	    break;
+
 	/* A variable inside a variable, expand. */
 	if (*p == '$') {
 	    void *freeIt;
 	    const char *rval = Var_Parse(&p, ctxt, eflags, &freeIt);
-	    Buf_AddStr(namebuf, rval);
+	    Buf_AddStr(&buf, rval);
 	    free(freeIt);
 	} else {
-	    Buf_AddByte(namebuf, *p);
+	    Buf_AddByte(&buf, *p);
 	    p++;
 	}
     }
     *pp = p;
+    *out_varname_len = Buf_Size(&buf);
+    return Buf_Destroy(&buf, FALSE);
 }
 
 /*-
@@ -3464,30 +3472,25 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, void **freePtr)
 	    p = start + 1;
 	}
     } else {
-	Buffer namebuf;		/* Holds the variable name */
 	size_t namelen;
 	char *varname;
 
 	endc = startc == PROPEN ? PRCLOSE : BRCLOSE;
 
-	Buf_Init(&namebuf, 0);
-
 	p = start + 2;
-	ParseVarname(&p, startc, endc, ctxt, eflags, &namebuf);
+	varname = ParseVarname(&p, startc, endc, ctxt, eflags, &namelen);
 
 	if (*p == ':') {
 	    haveModifier = TRUE;
 	} else if (*p == endc) {
 	    haveModifier = FALSE;
 	} else {
-	    Parse_Error(PARSE_FATAL, "Unclosed variable \"%s\"",
-			Buf_GetAll(&namebuf, NULL));
+	    Parse_Error(PARSE_FATAL, "Unclosed variable \"%s\"", varname);
 	    *pp = p;
-	    Buf_Destroy(&namebuf, TRUE);
+	    free(varname);
 	    return var_Error;
 	}
 
-	varname = Buf_GetAll(&namebuf, &namelen);
 	v = VarFind(varname, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
 
 	/* At this point, p points just after the variable name,
@@ -3525,10 +3528,10 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, void **freePtr)
 		if (dynamic) {
 		    char *pstr = bmake_strsedup(start, p);
 		    *freePtr = pstr;
-		    Buf_Destroy(&namebuf, TRUE);
+		    free(varname);
 		    return pstr;
 		} else {
-		    Buf_Destroy(&namebuf, TRUE);
+		    free(varname);
 		    return (eflags & VARE_UNDEFERR) ? var_Error : varNoError;
 		}
 	    }
@@ -3548,9 +3551,8 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, void **freePtr)
 	    v->name = varname;
 	    Buf_Init(&v->val, 1);
 	    v->flags = VAR_JUNK;
-	    Buf_Destroy(&namebuf, FALSE);
 	} else
-	    Buf_Destroy(&namebuf, TRUE);
+	    free(varname);
     }
 
     if (v->flags & VAR_IN_USE) {
