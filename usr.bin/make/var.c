@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.501 2020/09/12 19:24:59 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.502 2020/09/12 19:33:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.501 2020/09/12 19:24:59 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.502 2020/09/12 19:33:02 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.501 2020/09/12 19:24:59 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.502 2020/09/12 19:33:02 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3302,6 +3302,33 @@ VarIsDynamic(GNode *ctxt, const char *varname, size_t namelen)
     return FALSE;
 }
 
+static const char *
+ShortVarValue(char varname, const GNode *ctxt, VarEvalFlags eflags)
+{
+    if (ctxt == VAR_CMD || ctxt == VAR_GLOBAL) {
+	/*
+	 * If substituting a local variable in a non-local context,
+	 * assume it's for dynamic source stuff. We have to handle
+	 * this specially and return the longhand for the variable
+	 * with the dollar sign escaped so it makes it back to the
+	 * caller. Only four of the local variables are treated
+	 * specially as they are the only four that will be set
+	 * when dynamic sources are expanded.
+	 */
+	switch (varname) {
+	case '@':
+	    return "$(.TARGET)";
+	case '%':
+	    return "$(.MEMBER)";
+	case '*':
+	    return "$(.PREFIX)";
+	case '!':
+	    return "$(.ARCHIVE)";
+	}
+    }
+    return eflags & VARE_UNDEFERR ? var_Error : varNoError;
+}
+
 /* Skip to the end character or a colon, whichever comes first. */
 static void
 ParseVarname(const char **pp, char startc, char endc,
@@ -3431,28 +3458,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, void **freePtr)
 	if (v == NULL) {
 	    *pp += 2;
 
-	    if (ctxt == VAR_CMD || ctxt == VAR_GLOBAL) {
-		/*
-		 * If substituting a local variable in a non-local context,
-		 * assume it's for dynamic source stuff. We have to handle
-		 * this specially and return the longhand for the variable
-		 * with the dollar sign escaped so it makes it back to the
-		 * caller. Only four of the local variables are treated
-		 * specially as they are the only four that will be set
-		 * when dynamic sources are expanded.
-		 */
-		switch (start[1]) {
-		case '@':
-		    return "$(.TARGET)";
-		case '%':
-		    return "$(.MEMBER)";
-		case '*':
-		    return "$(.PREFIX)";
-		case '!':
-		    return "$(.ARCHIVE)";
-		}
-	    }
-	    return (eflags & VARE_UNDEFERR) ? var_Error : varNoError;
+	    return ShortVarValue(start[1], ctxt, eflags);
 	} else {
 	    haveModifier = FALSE;
 	    p = start + 1;
