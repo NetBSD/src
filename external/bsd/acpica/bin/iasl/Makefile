@@ -1,6 +1,8 @@
-# $NetBSD: Makefile,v 1.26 2020/09/11 14:06:00 jmcneill Exp $
+# $NetBSD: Makefile,v 1.27 2020/09/12 15:25:42 jmcneill Exp $
 
-.if (${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || !empty(MACHINE_ARCH:Maarch64*))
+.include <bsd.init.mk>
+
+.if ${HAVE_ACPI:Uno} == "yes"
 PROG=	iasl
 .endif
 BINDIR=	/usr/bin
