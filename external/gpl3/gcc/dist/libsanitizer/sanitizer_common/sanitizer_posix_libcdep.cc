@@ -304,7 +304,7 @@ void PlatformPrepareForSandboxing(__sanitizer_sandbox_arguments *args) {
   MemoryMappingLayout::CacheMemoryMappings();
 }
 
-#if SANITIZER_ANDROID || SANITIZER_GO
+#if SANITIZER_ANDROID || SANITIZER_GO || SANITIZER_NETBSD
 int GetNamedMappingFd(const char *name, uptr size) {
   return -1;
 }
