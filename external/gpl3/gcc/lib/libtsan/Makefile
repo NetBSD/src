@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2019/10/02 02:54:35 mrg Exp $
+# $NetBSD: Makefile,v 1.11 2020/09/12 22:24:22 kamil Exp $
 
 .include <bsd.own.mk>
 
@@ -54,5 +54,6 @@ TSAN_SRCS+= tsan_rtl_unimpl.cc
 LIB=	tsan
 SRCS+=	${TSAN_SRCS}
 CPPFLAGS+=-DCAN_SANITIZE_UB=0
+COPTS.tsan_interceptors.cc += -Wno-unused-function
 
 .include <bsd.lib.mk>
