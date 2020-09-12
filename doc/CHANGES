@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2736 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2737 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -276,7 +276,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	kernel: Disable COMPAT_LINUX by default [jdolecek 20200816]
 	mips: Port crash(8) to mips.  [mrg 20200816]
 	wg(4): Add implementation of WireGuard protocol. [ozaki-r 20200820]
-	gcc(1): Import GCC 8.4. [mrg 20200904]
+	gcc(1): Import GCC 9.3. [mrg 20200904]
 	dhcpcd: Update to version 9.2.0. [roy 20200906]
 	iavf(4): Add driver for Intel Ethernet Adaptive Virtual Function
 		[yamaguchi 20200908]
