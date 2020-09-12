@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1262 2020/09/10 01:53:22 rin Exp $
+# $NetBSD: mi,v 1.1263 2020/09/12 15:25:41 jmcneill Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -796,6 +796,7 @@
 ./usr/bin/host					base-netutil-bin
 ./usr/bin/hoststat				base-mailwrapper-bin
 ./usr/bin/hxtool				base-krb5-bin		kerberos
+./usr/bin/iasl					base-util-bin		acpi
 ./usr/bin/iconv					base-util-bin
 ./usr/bin/id					base-util-bin
 ./usr/bin/ident					base-util-bin
@@ -1707,9 +1708,11 @@
 ./usr/sbin					base-sys-usr
 ./usr/sbin/ac					base-sysutil-bin
 ./usr/sbin/accton				base-sysutil-bin
+./usr/sbin/acpidump				base-sysutil-bin	acpi
 ./usr/sbin/altqd				base-router-bin
 ./usr/sbin/altqstat				base-router-bin
 ./usr/sbin/amd					base-amd-bin
+./usr/sbin/amldb				base-sysutil-bin	acpi
 ./usr/sbin/amq					base-amd-bin
 ./usr/sbin/arp					base-netutil-bin
 ./usr/sbin/audit-packages			base-pkgutil-bin

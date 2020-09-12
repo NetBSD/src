@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.154 2019/08/26 04:49:45 kamil Exp $
+# $NetBSD: md.i386,v 1.155 2020/09/12 15:25:41 jmcneill Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./dev/pms0					base-obsolete		obsolete
@@ -16,7 +16,6 @@
 ./sbin/ldconfig					base-sysutil-root	pic
 ./usr/bin/fdformat				base-util-bin
 ./usr/bin/fontedit				base-obsolete		obsolete
-./usr/bin/iasl					base-util-bin
 ./usr/bin/pmc					base-obsolete		obsolete
 ./usr/bin/vttest				base-obsolete		obsolete
 ./usr/lib/libi386.so				base-sys-shlib		pic
@@ -96,8 +95,6 @@
 ./usr/mdec/pxeboot_ia32_com0.bin		base-obsolete		obsolete
 ./usr/mdec/sdboot				base-obsolete		obsolete
 ./usr/mdec/wdboot				base-obsolete		obsolete
-./usr/sbin/acpidump				base-sysutil-bin
-./usr/sbin/amldb				base-sysutil-bin
 ./usr/sbin/apm					base-sysutil-bin
 ./usr/sbin/apmd					base-sysutil-bin
 ./usr/sbin/bad144				base-sysutil-bin

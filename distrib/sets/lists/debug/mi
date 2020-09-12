@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.332 2020/09/08 14:17:03 christos Exp $
+# $NetBSD: mi,v 1.333 2020/09/12 15:25:42 jmcneill Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -593,6 +593,7 @@
 ./usr/libdata/debug/usr/bin/host.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/hpftodit.debug	comp-groff-debug	groff,debug
 ./usr/libdata/debug/usr/bin/hxtool.debug	comp-krb5-debug		kerberos,debug
+./usr/libdata/debug/usr/bin/iasl.debug		comp-util-debug		acpi,debug
 ./usr/libdata/debug/usr/bin/iconv.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/id.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/ident.debug		comp-util-debug		debug
@@ -1034,9 +1035,11 @@
 ./usr/libdata/debug/usr/libexec/vfontedpr.debug	comp-groff-debug	debug
 ./usr/libdata/debug/usr/sbin/ac.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/accton.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/acpidump.debug	comp-sysutil-debug	acpi,debug
 ./usr/libdata/debug/usr/sbin/altqd.debug	comp-router-debug	debug
 ./usr/libdata/debug/usr/sbin/altqstat.debug	comp-router-debug	debug
 ./usr/libdata/debug/usr/sbin/amd.debug		comp-amd-debug		debug
+./usr/libdata/debug/usr/sbin/amldb.debug	comp-sysutil-debug	acpi,debug
 ./usr/libdata/debug/usr/sbin/amq.debug		comp-amd-debug		debug
 ./usr/libdata/debug/usr/sbin/arp.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/audit-packages.debug	comp-obsolete		obsolete
