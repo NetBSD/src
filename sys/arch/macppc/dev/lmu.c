@@ -1,4 +1,4 @@
-/* $NetBSD: lmu.c,v 1.4 2020/04/23 12:56:40 macallan Exp $ */
+/* $NetBSD: lmu.c,v 1.5 2020/09/12 18:12:53 macallan Exp $ */
 
 /*-
  * Copyright (c) 2020 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lmu.c,v 1.4 2020/04/23 12:56:40 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lmu.c,v 1.5 2020/09/12 18:12:53 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,6 +123,26 @@ lmu_video_off(device_t dev)
 	sc->sc_video_state = false;
 }
 
+static void
+lmu_kbd_brightness_up(device_t dev)
+{
+	struct lmu_softc * const sc = device_private(dev);
+
+	sc->sc_level = __MIN(16, sc->sc_level + 2);
+	sc->sc_target = sc->sc_level;
+	callout_schedule(&sc->sc_adjust, LMU_FADE);
+}
+
+static void
+lmu_kbd_brightness_down(device_t dev)
+{
+	struct lmu_softc * const sc = device_private(dev);
+
+	sc->sc_level = __MAX(0, sc->sc_level - 2);
+	sc->sc_target = sc->sc_level;
+	callout_schedule(&sc->sc_adjust, LMU_FADE);
+}
+
 static int
 lmu_match(device_t parent, cfdata_t match, void *aux)
 {
@@ -162,6 +182,10 @@ lmu_attach(device_t parent, device_t self, void *aux)
 	    lmu_video_on, true);
 	pmf_event_register(sc->sc_dev, PMFE_DISPLAY_OFF,
 	    lmu_video_off, true);
+	pmf_event_register(sc->sc_dev, PMFE_KEYBOARD_BRIGHTNESS_UP,
+	    lmu_kbd_brightness_up, true);
+	pmf_event_register(sc->sc_dev, PMFE_KEYBOARD_BRIGHTNESS_DOWN,
+	    lmu_kbd_brightness_down, true);
 
 	sc->sc_sme = sysmon_envsys_create();
 	sc->sc_sme->sme_name = device_xname(self);
