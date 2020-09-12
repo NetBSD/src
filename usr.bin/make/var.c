@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.496 2020/09/12 18:19:50 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.497 2020/09/12 18:39:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.496 2020/09/12 18:19:50 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.497 2020/09/12 18:39:37 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.496 2020/09/12 18:19:50 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.497 2020/09/12 18:39:37 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3347,8 +3347,8 @@ VarIsDynamic(GNode *ctxt, const char *varname, size_t namelen)
 const char *
 Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, void **freePtr)
 {
-    const char * const str = *pp;
-    const char	*tstr;		/* Pointer into str */
+    const char * const start = *pp;
+    const char	*p;
     Boolean 	 haveModifier;	/* TRUE if have modifiers for the variable */
     char	 startc;	/* Starting character if variable in parens
 				 * or braces */
@@ -3363,7 +3363,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, void **freePtr)
     char *nstr;
     char eflags_str[VarEvalFlags_ToStringSize];
 
-    VAR_DEBUG("%s: %s with %s\n", __func__, str,
+    VAR_DEBUG("%s: %s with %s\n", __func__, start,
 	      Enum_FlagsToString(eflags_str, sizeof eflags_str, eflags,
 				 VarEvalFlags_ToStringSpecs));
 
@@ -3377,7 +3377,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, void **freePtr)
     endc = '\0';
 #endif
 
-    startc = str[1];
+    startc = start[1];
     if (startc != PROPEN && startc != BROPEN) {
 	char name[2];
 
@@ -3409,7 +3409,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, void **freePtr)
 		 * specially as they are the only four that will be set
 		 * when dynamic sources are expanded.
 		 */
-		switch (str[1]) {
+		switch (start[1]) {
 		case '@':
 		    return "$(.TARGET)";
 		case '%':
@@ -3423,7 +3423,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, void **freePtr)
 	    return (eflags & VARE_UNDEFERR) ? var_Error : varNoError;
 	} else {
 	    haveModifier = FALSE;
-	    tstr = str + 1;
+	    p = start + 1;
 	}
     } else {
 	Buffer namebuf;		/* Holds the variable name */
@@ -3439,35 +3439,35 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, void **freePtr)
 	 * Skip to the end character or a colon, whichever comes first.
 	 */
 	depth = 1;
-	for (tstr = str + 2; *tstr != '\0';) {
+	for (p = start + 2; *p != '\0';) {
 	    /* Track depth so we can spot parse errors. */
-	    if (*tstr == startc)
+	    if (*p == startc)
 		depth++;
-	    if (*tstr == endc) {
+	    if (*p == endc) {
 		if (--depth == 0)
 		    break;
 	    }
-	    if (*tstr == ':' && depth == 1)
+	    if (*p == ':' && depth == 1)
 		break;
 	    /* A variable inside a variable, expand. */
-	    if (*tstr == '$') {
+	    if (*p == '$') {
 		void *freeIt;
-		const char *rval = Var_Parse(&tstr, ctxt, eflags, &freeIt);
+		const char *rval = Var_Parse(&p, ctxt, eflags, &freeIt);
 		Buf_AddStr(&namebuf, rval);
 		free(freeIt);
 	    } else {
-		Buf_AddByte(&namebuf, *tstr);
-		tstr++;
+		Buf_AddByte(&namebuf, *p);
+		p++;
 	    }
 	}
-	if (*tstr == ':') {
+	if (*p == ':') {
 	    haveModifier = TRUE;
-	} else if (*tstr == endc) {
+	} else if (*p == endc) {
 	    haveModifier = FALSE;
 	} else {
 	    Parse_Error(PARSE_FATAL, "Unclosed variable \"%s\"",
 			Buf_GetAll(&namebuf, NULL));
-	    *pp = tstr;
+	    *pp = p;
 	    Buf_Destroy(&namebuf, TRUE);
 	    return var_Error;
 	}
@@ -3513,10 +3513,10 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, void **freePtr)
 	    dynamic = VarIsDynamic(ctxt, varname, namelen);
 
 	    if (!haveModifier) {
-	        size_t len = (size_t)(tstr + 1 - str);
+	        size_t len = (size_t)(p + 1 - start);
 		*pp += len;
 		if (dynamic) {
-		    char *pstr = bmake_strldup(str, len);
+		    char *pstr = bmake_strldup(start, len);
 		    *freePtr = pstr;
 		    Buf_Destroy(&namebuf, TRUE);
 		    return pstr;
@@ -3582,9 +3582,9 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, void **freePtr)
 
 	if (haveModifier) {
 	    /* Skip initial colon. */
-	    tstr++;
+	    p++;
 
-	    nstr = ApplyModifiers(&tstr, nstr, startc, endc,
+	    nstr = ApplyModifiers(&p, nstr, startc, endc,
 				  v, ctxt, eflags, freePtr);
 	    free(extraFree);
 	} else {
@@ -3593,7 +3593,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, void **freePtr)
     }
 
     /* Skip past endc if possible. */
-    *pp = tstr + (*tstr ? 1 : 0);
+    *pp = p + (*p ? 1 : 0);
 
     if (v->flags & VAR_FROM_ENV) {
 	Boolean destroy = nstr != Buf_GetAll(&v->val, NULL);
@@ -3617,7 +3617,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, void **freePtr)
 		*freePtr = NULL;
 	    }
 	    if (dynamic) {
-		nstr = bmake_strldup(str, (size_t)(*pp - str));
+		nstr = bmake_strldup(start, (size_t)(*pp - start));
 		*freePtr = nstr;
 	    } else {
 		nstr = (eflags & VARE_UNDEFERR) ? var_Error : varNoError;
