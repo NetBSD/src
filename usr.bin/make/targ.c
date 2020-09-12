@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.85 2020/09/12 16:22:32 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.86 2020/09/12 16:24:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.85 2020/09/12 16:22:32 rillig Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.86 2020/09/12 16:24:20 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.85 2020/09/12 16:22:32 rillig Exp $");
+__RCSID("$NetBSD: targ.c,v 1.86 2020/09/12 16:24:20 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -368,7 +368,7 @@ Targ_SetMain(GNode *gn)
     mainTarg = gn;
 }
 
-static void __attribute__((noinline))
+static void
 PrintNodeNames(Lst gnodes)
 {
     LstNode node;
