@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.500 2020/09/12 19:15:20 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.501 2020/09/12 19:24:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.500 2020/09/12 19:15:20 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.501 2020/09/12 19:24:59 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.500 2020/09/12 19:15:20 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.501 2020/09/12 19:24:59 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3302,6 +3302,38 @@ VarIsDynamic(GNode *ctxt, const char *varname, size_t namelen)
     return FALSE;
 }
 
+/* Skip to the end character or a colon, whichever comes first. */
+static void
+ParseVarname(const char **pp, char startc, char endc,
+	     GNode *ctxt, VarEvalFlags eflags, Buffer *namebuf)
+{
+    const char *p = *pp;
+    int depth = 1;
+
+    while (*p != '\0') {
+	/* Track depth so we can spot parse errors. */
+	if (*p == startc)
+	    depth++;
+	if (*p == endc) {
+	    if (--depth == 0)
+		break;
+	}
+	if (*p == ':' && depth == 1)
+	    break;
+	/* A variable inside a variable, expand. */
+	if (*p == '$') {
+	    void *freeIt;
+	    const char *rval = Var_Parse(&p, ctxt, eflags, &freeIt);
+	    Buf_AddStr(namebuf, rval);
+	    free(freeIt);
+	} else {
+	    Buf_AddByte(namebuf, *p);
+	    p++;
+	}
+    }
+    *pp = p;
+}
+
 /*-
  *-----------------------------------------------------------------------
  * Var_Parse --
@@ -3427,7 +3459,6 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, void **freePtr)
 	}
     } else {
 	Buffer namebuf;		/* Holds the variable name */
-	int depth;
 	size_t namelen;
 	char *varname;
 
@@ -3435,31 +3466,9 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, void **freePtr)
 
 	Buf_Init(&namebuf, 0);
 
-	/*
-	 * Skip to the end character or a colon, whichever comes first.
-	 */
-	depth = 1;
-	for (p = start + 2; *p != '\0';) {
-	    /* Track depth so we can spot parse errors. */
-	    if (*p == startc)
-		depth++;
-	    if (*p == endc) {
-		if (--depth == 0)
-		    break;
-	    }
-	    if (*p == ':' && depth == 1)
-		break;
-	    /* A variable inside a variable, expand. */
-	    if (*p == '$') {
-		void *freeIt;
-		const char *rval = Var_Parse(&p, ctxt, eflags, &freeIt);
-		Buf_AddStr(&namebuf, rval);
-		free(freeIt);
-	    } else {
-		Buf_AddByte(&namebuf, *p);
-		p++;
-	    }
-	}
+	p = start + 2;
+	ParseVarname(&p, startc, endc, ctxt, eflags, &namebuf);
+
 	if (*p == ':') {
 	    haveModifier = TRUE;
 	} else if (*p == endc) {
