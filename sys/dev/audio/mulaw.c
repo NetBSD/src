@@ -1,4 +1,4 @@
-/*	$NetBSD: mulaw.c,v 1.3 2020/01/11 04:06:13 isaki Exp $	*/
+/*	$NetBSD: mulaw.c,v 1.4 2020/09/12 06:09:16 isaki Exp $	*/
 
 /*
  * Copyright (C) 2017 Tetsuya Isaki. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mulaw.c,v 1.3 2020/01/11 04:06:13 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mulaw.c,v 1.4 2020/09/12 06:09:16 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: mulaw.c,v 1.3 2020/01/11 04:06:13 isaki Exp $");
  *
  * 2. Calculation (default)
  *  It calculates mu-law with full spec and its precision is 14bit.
- *  It's about 10 times slower but the size is less than a half (on m68k,
+ *  It's about 3 times slower but the size is less than a half (on m68k,
  *  for example).
  *
  * mu-law is no longer a popular format.  I think size-optimized is better.
@@ -247,33 +247,40 @@ audio_internal_to_mulaw32(audio_filter_arg_t *arg)
 		m = slinear8_to_mulaw[val];
 #else
 		/* 14bit (fullspec, slow but small) encoder */
-		int16_t val;
+		uint16_t val;
 		int c;
 
-		val = (int16_t)(*s++ >> (AUDIO_INTERNAL_BITS - 16));
-		if (val < 0) {
+		val = *s++ >> (AUDIO_INTERNAL_BITS - 16);
+		if ((int16_t)val < 0) {
 			m = 0;
 		} else {
 			val = ~val;
 			m = 0x80;
 		}
 		/* limit */
-		if (val < -8158 * 4)
+		if ((int16_t)val < -8158 * 4)
 			val = -8158 * 4;
 		val -= 33 * 4;	/* bias */
 
-		val <<= 1;
-		for (c = 0; c < 7; c++) {
-			if (val >= 0) {
-				break;
-			}
+		// Before(1)         Before(2)         Before(3)
+		// S0MMMMxx_xxxxxxxx 0MMMMxxx_xxxxxxx0 c=0,v=0MMMMxxx_xxxxxxx0
+		// S10MMMMx_xxxxxxxx 10MMMMxx_xxxxxxx0 c=1,v=0MMMMxxx_xxxxxx00
+		// S110MMMM_xxxxxxxx 110MMMMx_xxxxxxx0 c=2,v=0MMMMxxx_xxxxx000
+		// :                 :                 :
+		// S1111110_MMMMxxxx 1111110M_MMMxxxx0 c=6,v=0MMMMxxx_x0000000
 
-			m += (1 << 4);	/* exponent */
-			val <<= 1;
-		}
+		// (1) Push out sign bit
 		val <<= 1;
 
-		m += (val >> 12) & 0x0f; /* mantissa */
+		// (2) Find first zero (and align val to left)
+		c = 0;
+		if (val >= 0xf000) c += 4, val <<= 4;
+		if (val >= 0xc000) c += 2, val <<= 2;
+		if (val >= 0x8000) c += 1, val <<= 1;
+
+		// (3)
+		m += (c << 4);
+		m += (val >> 11) & 0x0f;
 #endif
 
 #if defined(MULAW32)
