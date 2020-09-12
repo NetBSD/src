@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.498 2020/09/12 18:45:24 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.499 2020/09/12 19:13:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.498 2020/09/12 18:45:24 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.499 2020/09/12 19:13:43 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.498 2020/09/12 18:45:24 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.499 2020/09/12 19:13:43 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3588,15 +3588,13 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, void **freePtr)
     *pp = p + (*p ? 1 : 0);
 
     if (v->flags & VAR_FROM_ENV) {
-	Boolean destroy = nstr != Buf_GetAll(&v->val, NULL);
-	if (!destroy) {
-	    /*
-	     * Returning the value unmodified, so tell the caller to free
-	     * the thing.
-	     */
+        /* Free the environment variable now since we own it,
+         * but don't free the variable value if it will be returned. */
+	Boolean keepValue = nstr == Buf_GetAll(&v->val, NULL);
+	if (keepValue)
 	    *freePtr = nstr;
-	}
-	(void)VarFreeEnv(v, destroy);
+	(void)VarFreeEnv(v, !keepValue);
+
     } else if (v->flags & VAR_JUNK) {
 	/*
 	 * Perform any freeing needed and set *freePtr to NULL so the caller
