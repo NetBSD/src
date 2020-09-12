@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.109 2020/09/12 15:10:55 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.110 2020/09/12 15:15:51 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -113,7 +113,6 @@ void Error(const char *, ...) MAKE_ATTR_PRINTFLIKE(1, 2);
 void Fatal(const char *, ...) MAKE_ATTR_PRINTFLIKE(1, 2) MAKE_ATTR_DEAD;
 void Punt(const char *, ...) MAKE_ATTR_PRINTFLIKE(1, 2) MAKE_ATTR_DEAD;
 void DieHorribly(void) MAKE_ATTR_DEAD;
-int PrintAddr(void *, void *);
 void Finish(int) MAKE_ATTR_DEAD;
 int eunlink(const char *);
 void execError(const char *, const char *);

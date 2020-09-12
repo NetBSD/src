@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.148 2020/09/12 14:41:00 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.149 2020/09/12 15:15:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.148 2020/09/12 14:41:00 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.149 2020/09/12 15:15:51 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.148 2020/09/12 14:41:00 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.149 2020/09/12 15:15:51 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -947,6 +947,15 @@ Suff_AddLib(const char *sname)
 }
 
 	  /********** Implicit Source Search Functions *********/
+
+#ifdef DEBUG_SRC
+static int
+PrintAddr(void *a, void *b MAKE_ATTR_UNUSED)
+{
+    printf("%lx ", (unsigned long) a);
+    return 0;
+}
+#endif
 
 /* Add a suffix as a Src structure to the given list with its parent
  * being the given Src structure. If the suffix is the null suffix,
