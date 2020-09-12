@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.497 2020/09/12 18:39:37 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.498 2020/09/12 18:45:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.497 2020/09/12 18:39:37 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.498 2020/09/12 18:45:24 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.497 2020/09/12 18:39:37 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.498 2020/09/12 18:45:24 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3347,8 +3347,8 @@ VarIsDynamic(GNode *ctxt, const char *varname, size_t namelen)
 const char *
 Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, void **freePtr)
 {
-    const char * const start = *pp;
-    const char	*p;
+    const char *const start = *pp;
+    const char *p;
     Boolean 	 haveModifier;	/* TRUE if have modifiers for the variable */
     char	 startc;	/* Starting character if variable in parens
 				 * or braces */
@@ -3473,19 +3473,11 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, void **freePtr)
 	}
 
 	varname = Buf_GetAll(&namebuf, &namelen);
-
-	/*
-	 * At this point, varname points into newly allocated memory from
-	 * namebuf, containing only the name of the variable.
-	 *
-	 * start and tstr point into the string that was pointed
-	 * to by the original value of the str parameter.  start points
-	 * to the '$' at the beginning of the string, while tstr points
-	 * to the char just after the end of the variable name -- this
-	 * is '\0', ':', PRCLOSE, or BRCLOSE.
-	 */
-
 	v = VarFind(varname, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
+
+	/* At this point, p points just after the variable name,
+	 * either at ':' or at endc. */
+
 	/*
 	 * Check also for bogus D and F forms of local variables since we're
 	 * in a local context and the name is the right length.
@@ -3513,10 +3505,10 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, void **freePtr)
 	    dynamic = VarIsDynamic(ctxt, varname, namelen);
 
 	    if (!haveModifier) {
-	        size_t len = (size_t)(p + 1 - start);
-		*pp += len;
+	        p++;		/* skip endc */
+		*pp = p;
 		if (dynamic) {
-		    char *pstr = bmake_strldup(start, len);
+		    char *pstr = bmake_strsedup(start, p);
 		    *freePtr = pstr;
 		    Buf_Destroy(&namebuf, TRUE);
 		    return pstr;
