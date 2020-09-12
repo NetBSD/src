@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.294 2020/09/12 18:19:50 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.295 2020/09/12 19:41:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.294 2020/09/12 18:19:50 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.295 2020/09/12 19:41:20 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.294 2020/09/12 18:19:50 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.295 2020/09/12 19:41:20 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1927,7 +1927,7 @@ Parse_DoVar(char *line, GNode *ctxt)
     } else if (type == VAR_SUBST) {
 	/*
 	 * Allow variables in the old value to be undefined, but leave their
-	 * invocation alone -- this is done by forcing oldVars to be false.
+	 * expressions alone -- this is done by forcing oldVars to be false.
 	 * XXX: This can cause recursive variables, but that's not hard to do,
 	 * and this allows someone to do something like
 	 *

@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.152 2020/09/12 18:19:50 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.153 2020/09/12 19:41:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.152 2020/09/12 18:19:50 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.153 2020/09/12 19:41:20 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.152 2020/09/12 18:19:50 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.153 2020/09/12 19:41:20 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1241,7 +1241,7 @@ SuffFindCmds(Src *targ, Lst slst)
 }
 
 /* Expand the names of any children of a given node that contain variable
- * invocations or file wildcards into actual targets.
+ * expressions or file wildcards into actual targets.
  *
  * The expanded node is removed from the parent's list of children, and the
  * parent's unmade counter is decremented, but other nodes may be added.
