@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2020/01/29 06:13:02 thorpej Exp $
+#	$NetBSD: Makefile,v 1.34 2020/09/12 10:44:32 roy Exp $
 #
 
 
@@ -13,7 +13,7 @@ SRCS=	if.c if_loop.c if_stats.c route.c rtsock.c raw_usrreq.c		\
 	raw_cb.c if_media.c link_proto.c net_stats.c if_ethersubr.c	\
 	if_spppsubr.c
 SRCS+=	if_43.c
-SRCS+=	if_llatbl.c
+SRCS+=	if_llatbl.c nd.c
 SRCS+=	net_component.c
 SRCS+=	ether_sw_offload.c
 
