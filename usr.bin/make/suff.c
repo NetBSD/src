@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.149 2020/09/12 15:15:51 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.150 2020/09/12 15:21:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.149 2020/09/12 15:15:51 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.150 2020/09/12 15:21:25 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.149 2020/09/12 15:15:51 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.150 2020/09/12 15:21:25 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -616,16 +616,11 @@ Suff_AddTransform(char *line)
  * of the affected suffixes are altered.
  *
  * Input:
- *	gnp		Node for transformation
- *
- * Results:
- *	0, so that Lst_ForEach continues
+ *	gn		Node for transformation
  */
-int
-Suff_EndTransform(void *gnp, void *dummy MAKE_ATTR_UNUSED)
+void
+Suff_EndTransform(GNode *gn)
 {
-    GNode *gn = (GNode *)gnp;
-
     if ((gn->type & OP_DOUBLEDEP) && !Lst_IsEmpty(gn->cohorts))
 	gn = LstNode_Datum(Lst_Last(gn->cohorts));
     if ((gn->type & OP_TRANSFORM) && Lst_IsEmpty(gn->commands) &&
@@ -666,8 +661,6 @@ Suff_EndTransform(void *gnp, void *dummy MAKE_ATTR_UNUSED)
     } else if (gn->type & OP_TRANSFORM) {
 	SUFF_DEBUG1("transformation %s complete\n", gn->name);
     }
-
-    return 0;
 }
 
 /* Called from Suff_AddSuffix via Lst_ForEach to search through the list of
