@@ -1,20 +1,22 @@
-# $NetBSD: varmod-undefined.mk,v 1.4 2020/09/03 18:52:36 rillig Exp $
+# $NetBSD: varmod-undefined.mk,v 1.5 2020/09/12 07:04:51 rillig Exp $
 #
 # Tests for the :U variable modifier, which returns the given string
 # if the variable is undefined.
 #
-# The pattern ${:Uword} is heavily used when expanding .for loops.
+# See also:
+#	varmod-defined.mk
 
+# The pattern ${:Uword} is heavily used when expanding .for loops.
+#
 # This is how an expanded .for loop looks like.
 # .for word in one
 # .  if ${word} != one
-# .    error ${word}
-# .  endif
-# .endfor
-
 .if ${:Uone} != one
+# .    error ${word}
 .  error ${:Uone}
+# .  endif
 .endif
+# .endfor
 
 # The variable expressions in the text of the :U modifier may be arbitrarily
 # nested.
