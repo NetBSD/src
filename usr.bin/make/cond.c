@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.135 2020/09/12 10:38:52 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.136 2020/09/12 10:41:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.135 2020/09/12 10:38:52 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.136 2020/09/12 10:41:43 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.135 2020/09/12 10:38:52 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.136 2020/09/12 10:41:43 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1084,10 +1084,8 @@ Cond_Eval(const char *line)
     const struct If *ifp;
     Boolean isElif;
     Boolean value;
-    int level;			/* Level at which to report errors. */
     enum if_states state;
 
-    level = PARSE_FATAL;
     if (!cond_state) {
 	cond_state = bmake_malloc(max_if_depth * sizeof(*cond_state));
 	cond_state[0] = IF_ACTIVE;
@@ -1103,7 +1101,7 @@ Cond_Eval(const char *line)
 		return COND_INVALID;
 	    /* End of conditional section */
 	    if (cond_depth == cond_min_depth) {
-		Parse_Error(level, "if-less endif");
+		Parse_Error(PARSE_FATAL, "if-less endif");
 		return COND_PARSE;
 	    }
 	    /* Return state for previous conditional */
@@ -1117,7 +1115,7 @@ Cond_Eval(const char *line)
 	if (is_token(line, "se", 2)) {
 	    /* It is else... */
 	    if (cond_depth == cond_min_depth) {
-		Parse_Error(level, "if-less else");
+		Parse_Error(PARSE_FATAL, "if-less else");
 		return COND_PARSE;
 	    }
 
@@ -1166,7 +1164,7 @@ Cond_Eval(const char *line)
 
     if (isElif) {
 	if (cond_depth == cond_min_depth) {
-	    Parse_Error(level, "if-less elif");
+	    Parse_Error(PARSE_FATAL, "if-less elif");
 	    return COND_PARSE;
 	}
 	state = cond_state[cond_depth];
