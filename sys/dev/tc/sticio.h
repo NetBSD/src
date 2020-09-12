@@ -1,4 +1,4 @@
-/* 	$NetBSD: sticio.h,v 1.5 2015/09/06 06:01:01 dholland Exp $	*/
+/* 	$NetBSD: sticio.h,v 1.6 2020/09/12 16:44:41 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,6 +72,7 @@ struct stic_xcomm {
 	u_int	sxc_done[16];		/* packet completion semaphores */
 };
 
+#ifdef _KERNEL
 /*
  * stic_xmap: a description of the area returned by mapping the board.
  * sxm_xcomm and sxm_buf are physically contigious and of variable size as a
@@ -82,6 +83,7 @@ struct stic_xmap {
 	u_int8_t	sxm_poll[0xc0000];		/* poll registers */
 	u_int8_t	sxm_xcomm[256 * 1024];		/* X comms area */
 };
+#endif
 
 /*
  * ioctl interface.
