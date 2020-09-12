@@ -40,17 +40,16 @@ using namespace __tsan;  // NOLINT
 
 #if SANITIZER_NETBSD
 #define dirfd(dirp) (*(int *)(dirp))
-#define fileno_unlocked fileno
+#define fileno_unlocked(fp)              \
+  (((__sanitizer_FILE *)fp)->_file == -1 \
+       ? -1                              \
+       : (int)(unsigned short)(((__sanitizer_FILE *)fp)->_file))
 
-#if _LP64
-#define __sF_size 152
-#else
-#define __sF_size 88
-#endif
+#define stdout ((__sanitizer_FILE*)&__sF[1])
+#define stderr ((__sanitizer_FILE*)&__sF[2])
 
-#define stdout ((char*)&__sF + (__sF_size * 1))
-#define stderr ((char*)&__sF + (__sF_size * 2))
-
+#define nanosleep __nanosleep50
+#define vfork __vfork14
 #endif
 
 #if SANITIZER_ANDROID
@@ -92,8 +91,8 @@ DECLARE_REAL_AND_INTERCEPTOR(void *, malloc, uptr size)
 DECLARE_REAL_AND_INTERCEPTOR(void, free, void *ptr)
 extern "C" void *pthread_self();
 extern "C" void _exit(int status);
-extern "C" int fileno_unlocked(void *stream);
 #if !SANITIZER_NETBSD
+extern "C" int fileno_unlocked(void *stream);
 extern "C" int dirfd(void *dirp);
 #endif
 #if !SANITIZER_FREEBSD && !SANITIZER_ANDROID && !SANITIZER_NETBSD
@@ -1417,61 +1416,6 @@ TSAN_INTERCEPTOR(int, pthread_once, void *o, void (*f)()) {
   return 0;
 }
 
-TSAN_INTERCEPTOR(int, sem_init, void *s, int pshared, unsigned value) {
-  SCOPED_TSAN_INTERCEPTOR(sem_init, s, pshared, value);
-  int res = REAL(sem_init)(s, pshared, value);
-  return res;
-}
-
-TSAN_INTERCEPTOR(int, sem_destroy, void *s) {
-  SCOPED_TSAN_INTERCEPTOR(sem_destroy, s);
-  int res = REAL(sem_destroy)(s);
-  return res;
-}
-
-TSAN_INTERCEPTOR(int, sem_wait, void *s) {
-  SCOPED_TSAN_INTERCEPTOR(sem_wait, s);
-  int res = BLOCK_REAL(sem_wait)(s);
-  if (res == 0) {
-    Acquire(thr, pc, (uptr)s);
-  }
-  return res;
-}
-
-TSAN_INTERCEPTOR(int, sem_trywait, void *s) {
-  SCOPED_TSAN_INTERCEPTOR(sem_trywait, s);
-  int res = BLOCK_REAL(sem_trywait)(s);
-  if (res == 0) {
-    Acquire(thr, pc, (uptr)s);
-  }
-  return res;
-}
-
-TSAN_INTERCEPTOR(int, sem_timedwait, void *s, void *abstime) {
-  SCOPED_TSAN_INTERCEPTOR(sem_timedwait, s, abstime);
-  int res = BLOCK_REAL(sem_timedwait)(s, abstime);
-  if (res == 0) {
-    Acquire(thr, pc, (uptr)s);
-  }
-  return res;
-}
-
-TSAN_INTERCEPTOR(int, sem_post, void *s) {
-  SCOPED_TSAN_INTERCEPTOR(sem_post, s);
-  Release(thr, pc, (uptr)s);
-  int res = REAL(sem_post)(s);
-  return res;
-}
-
-TSAN_INTERCEPTOR(int, sem_getvalue, void *s, int *sval) {
-  SCOPED_TSAN_INTERCEPTOR(sem_getvalue, s, sval);
-  int res = REAL(sem_getvalue)(s, sval);
-  if (res == 0) {
-    Acquire(thr, pc, (uptr)s);
-  }
-  return res;
-}
-
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
 TSAN_INTERCEPTOR(int, __fxstat, int version, int fd, void *buf) {
   SCOPED_TSAN_INTERCEPTOR(__fxstat, version, fd, buf);
@@ -2236,6 +2180,7 @@ static void HandleRecvmsg(ThreadState *thr, uptr pc,
 #define NEED_TLS_GET_ADDR
 #endif
 #undef SANITIZER_INTERCEPT_TLS_GET_ADDR
+#undef SANITIZER_INTERCEPT_PTHREAD_SIGMASK
 
 #define COMMON_INTERCEPT_FUNCTION(name) INTERCEPT_FUNCTION(name)
 #define COMMON_INTERCEPT_FUNCTION_VER(name, ver)                          \
@@ -2476,7 +2421,6 @@ static void syscall_fd_close(uptr pc, int fd) {
   TSAN_SYSCALL();
   FdClose(thr, pc, fd);
 }
-#endif
 
 static USED void syscall_fd_acquire(uptr pc, int fd) {
   TSAN_SYSCALL();
@@ -2490,7 +2434,6 @@ static USED void syscall_fd_release(uptr pc, int fd) {
   FdRelease(thr, pc, fd);
 }
 
-#if !SANITIZER_NETBSD
 static void syscall_pre_fork(uptr pc) {
   TSAN_SYSCALL();
   ForkBefore(thr, pc);
