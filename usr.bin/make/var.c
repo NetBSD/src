@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.494 2020/09/12 14:41:00 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.495 2020/09/12 18:04:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.494 2020/09/12 14:41:00 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.495 2020/09/12 18:04:45 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.494 2020/09/12 14:41:00 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.495 2020/09/12 18:04:45 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3344,7 +3344,7 @@ VarIsDynamic(GNode *ctxt, const char *varname, size_t namelen)
  *-----------------------------------------------------------------------
  */
 /* coverity[+alloc : arg-*4] */
-const char *
+static const char *
 Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
 	  int *lengthPtr, void **freePtr)
 {
