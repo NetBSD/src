@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.332 2020/09/11 17:32:36 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.333 2020/09/12 15:15:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.332 2020/09/11 17:32:36 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.333 2020/09/12 15:15:51 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.332 2020/09/11 17:32:36 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.333 2020/09/12 15:15:51 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1966,13 +1966,6 @@ cached_realpath(const char *pathname, char *resolved)
 
     bmake_free(cp);
     return rp ? resolved : NULL;
-}
-
-int
-PrintAddr(void *a, void *b)
-{
-    printf("%lx ", (unsigned long) a);
-    return b ? 0 : 0;
 }
 
 
