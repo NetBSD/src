@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.58 2020/08/01 14:47:49 rillig Exp $	*/
+/*	$NetBSD: util.c,v 1.59 2020/09/12 16:46:24 rillig Exp $	*/
 
 /*
  * Missing stuff from OS's
@@ -8,11 +8,11 @@
 #endif
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: util.c,v 1.58 2020/08/01 14:47:49 rillig Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.59 2020/09/12 16:46:24 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.58 2020/08/01 14:47:49 rillig Exp $");
+__RCSID("$NetBSD: util.c,v 1.59 2020/09/12 16:46:24 rillig Exp $");
 #endif
 #endif
 
@@ -339,8 +339,8 @@ getwd(char *pathname)
 #endif /* __hpux */
 
 /* force posix signals */
-void (*
-bmake_signal(int s, void (*a)(int)))(int)
+SignalProc
+bmake_signal(int s, SignalProc a)
 {
     struct sigaction sa, osa;
 

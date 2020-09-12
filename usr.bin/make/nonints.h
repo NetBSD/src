@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.113 2020/09/12 16:38:19 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.114 2020/09/12 16:46:24 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -225,4 +225,5 @@ void Var_Export(const char *, Boolean);
 void Var_UnExport(const char *);
 
 /* util.c */
-void (*bmake_signal(int, void (*)(int)))(int);
+typedef void (*SignalProc)(int);
+SignalProc bmake_signal(int, SignalProc);
