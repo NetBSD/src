@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.499 2020/09/12 19:13:43 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.500 2020/09/12 19:15:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.499 2020/09/12 19:13:43 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.500 2020/09/12 19:15:20 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.499 2020/09/12 19:13:43 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.500 2020/09/12 19:15:20 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3643,7 +3643,7 @@ char *
 Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags)
 {
     Buffer buf;			/* Buffer for forming things */
-    Boolean trailingBslash;
+    Boolean trailingBackslash;
 
     /* Set true if an error has already been reported,
      * to prevent a plethora of messages when recursing */
@@ -3651,10 +3651,10 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags)
 
     Buf_Init(&buf, 0);
     errorReported = FALSE;
-    trailingBslash = FALSE;	/* variable ends in \ */
+    trailingBackslash = FALSE;	/* variable ends in \ */
 
     while (*str) {
-	if (*str == '\n' && trailingBslash)
+	if (*str == '\n' && trailingBackslash)
 	    Buf_AddByte(&buf, ' ');
 
 	if (*str == '$' && str[1] == '$') {
@@ -3714,7 +3714,7 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags)
 
 		val_len = strlen(val);
 		Buf_AddBytes(&buf, val, val_len);
-		trailingBslash = val_len > 0 && val[val_len - 1] == '\\';
+		trailingBackslash = val_len > 0 && val[val_len - 1] == '\\';
 	    }
 	    free(freeIt);
 	    freeIt = NULL;
