@@ -1,8 +1,31 @@
-# $NetBSD: varname-dot-parsedir.mk,v 1.2 2020/08/16 14:25:16 rillig Exp $
+# $NetBSD: varname-dot-parsedir.mk,v 1.3 2020/09/12 11:45:47 rillig Exp $
 #
-# Tests for the special .PARSEDIR variable.
+# Tests for the special .PARSEDIR variable, which contains the directory part
+# of the file that is currently parsed.
 
-# TODO: Implementation
+# The .PARSEDIR may be absolute or relative, therefore there is not much that
+# can be tested here.
+.if !${.PARSEDIR:tA:M*/unit-tests}
+.  error
+.endif
+
+# During parsing, it is possible to undefine .PARSEDIR.
+# Not that anyone would ever want to do this, but there's code in parse.c,
+# function PrintLocation, that explicitly handles this situation.
+.undef .PARSEDIR
+
+# The .rawout file contains the full path to the current directory.
+# In the .out file, it is filtered out.
+.info At this point, .PARSEDIR is undefined.
+
+# There is absolutely no point in faking the location of the file that is
+# being parsed.  Technically, it's possible though.
+.PARSEDIR = /fake-absolute-path
+.info The location can be faked.
+
+# After including another file, .PARSEDIR is reset.
+.include "/dev/null"
+.info The location is no longer fake.
 
 all:
 	@:;
