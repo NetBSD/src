@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.79 2020/09/11 17:32:36 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.80 2020/09/12 10:12:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,26 +30,43 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.79 2020/09/11 17:32:36 rillig Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.80 2020/09/12 10:12:09 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.79 2020/09/11 17:32:36 rillig Exp $");
+__RCSID("$NetBSD: for.c,v 1.80 2020/09/12 10:12:09 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
 
 /*-
- * for.c --
- *	Functions to handle loops in a makefile.
+ * Handling of .for/.endfor loops in a makefile.
+ *
+ * For loops are of the form:
+ *
+ * .for <varname...> in <value...>
+ * ...
+ * .endfor
+ *
+ * When a .for line is parsed, all following lines are accumulated into a
+ * buffer, up to but excluding the corresponding .endfor line.  To find the
+ * corresponding .endfor, the number of nested .for and .endfor directives
+ * are counted.
+ *
+ * During parsing, any nested .for loops are just passed through; they get
+ * handled recursively in For_Eval when the enclosing .for loop is evaluated
+ * in For_Run.
+ *
+ * When the .for loop has been parsed completely, the variable expressions
+ * for the iteration variables are replaced with expressions of the form
+ * ${:Uvalue}, and then this modified body is "included" as a special file.
  *
  * Interface:
  *	For_Eval 	Evaluate the loop in the passed line.
  *	For_Run		Run accumulated loop
- *
  */
 
 #include    "make.h"
@@ -60,24 +77,6 @@ typedef enum {
     FOR_SUB_ESCAPE_BRACE = 0x0002,
     FOR_SUB_ESCAPE_PAREN = 0x0004
 } ForEscapes;
-
-/*
- * For statements are of the form:
- *
- * .for <variable> in <varlist>
- * ...
- * .endfor
- *
- * The trick is to look for the matching end inside for for loop
- * To do that, we count the current nesting level of the for loops.
- * and the .endfor statements, accumulating all the statements between
- * the initial .for loop and the matching .endfor;
- * then we evaluate the for loop for each variable in the varlist.
- *
- * Note that any nested fors are just passed through; they get handled
- * recursively in For_Eval when we're expanding the enclosing for in
- * For_Run.
- */
 
 static int forLevel = 0;	/* Nesting level */
 
@@ -269,7 +268,6 @@ For_Eval(const char *line)
  * Add another line to a .for loop.
  * Returns 0 when the matching .endfor is reached.
  */
-
 int
 For_Accum(const char *line)
 {
