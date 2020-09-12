@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2735 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2736 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -40,6 +40,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		packets from userland. [maxv 20190914]
 	mos(4): Ported driver for MosChip MCS7730/7830/7832 USB ethernet.
 		[mrg 20190920]
+	gcc(1): Import GCC 8.3. [mrg 20191001]
 	libpcap: Import 1.9.1. [christos 20191001]
 	tcpdump(8): Import 4.9.3. [christos 20191001]
 	rescue(8): Moved into a separate, rescue-only set. [maya 20191001]
@@ -153,6 +154,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	libcbor: Import for libfido2 support [christos 20200302]
 	libfido2: Import for pam-u2f support [christos 20200302]
 	pam-u2f: Import token authenticator [christos 20200302]
+	gcc(1): Import GCC 8.4. [mrg 20200311]
 	terminfo: Support numeric parameters as int [roy 20200313]
 	postfix(1): Import version 3.5.0. [christos 20200318]
 	OpenSSL: Imported 1.1.1e. [christos 20200321]
@@ -274,6 +276,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	kernel: Disable COMPAT_LINUX by default [jdolecek 20200816]
 	mips: Port crash(8) to mips.  [mrg 20200816]
 	wg(4): Add implementation of WireGuard protocol. [ozaki-r 20200820]
+	gcc(1): Import GCC 8.4. [mrg 20200904]
 	dhcpcd: Update to version 9.2.0. [roy 20200906]
 	iavf(4): Add driver for Intel Ethernet Adaptive Virtual Function
 		[yamaguchi 20200908]
