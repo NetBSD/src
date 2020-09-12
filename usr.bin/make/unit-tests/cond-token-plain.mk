@@ -1,4 +1,4 @@
-# $NetBSD: cond-token-plain.mk,v 1.3 2020/09/11 06:47:42 rillig Exp $
+# $NetBSD: cond-token-plain.mk,v 1.4 2020/09/12 17:47:24 rillig Exp $
 #
 # Tests for plain tokens (that is, string literals without quotes)
 # in .if conditions.
@@ -60,6 +60,33 @@
 .  error
 .endif
 .if ${1 \# comment :?yes:no} != yes
+.  error
+.endif
+
+# Usually there is whitespace around the comparison operator, but this is
+# not required.
+.if ${UNDEF:Uundefined}!=undefined
+.  error
+.endif
+.if ${UNDEF:U12345}>12345
+.  error
+.endif
+.if ${UNDEF:U12345}<12345
+.  error
+.endif
+.if (${UNDEF:U0})||0
+.  error
+.endif
+
+# Only the comparison operator terminates the comparison operand, and it's
+# a coincidence that the '!' is both used in the '!=' comparison operator
+# as well as for negating a comparison result.
+#
+# The boolean operators '&' and '|' don't terminate a comparison operand.
+.if ${:Uvar}&&name != "var&&name"
+.  error
+.endif
+.if ${:Uvar}||name != "var||name"
 .  error
 .endif
 
