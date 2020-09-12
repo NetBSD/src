@@ -57,21 +57,6 @@ using namespace __tsan;  // NOLINT
 #define mallopt(a, b)
 #endif
 
-#if 0 // XXXMRG
-#if SANITIZER_LINUX || SANITIZER_FREEBSD || SANITIZER_NETBSD
-#define PTHREAD_CREATE_DETACHED 1
-#elif SANITIZER_MAC
-#define PTHREAD_CREATE_DETACHED 2
-#endif
-#if SANITIZER_NETBSD
-#define	__errno_location __errno
-#define	pthread_yield sched_yield
-#define	fileno_unlocked fileno
-#define	stdout __sF[1]
-#define	stderr __sF[2]
-#endif
-#endif
-
 #ifdef __mips__
 const int kSigCount = 129;
 #else
