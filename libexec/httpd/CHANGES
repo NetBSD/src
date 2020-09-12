@@ -1,4 +1,7 @@
-$NetBSD: CHANGES,v 1.41 2020/08/20 07:55:10 mrg Exp $
+$NetBSD: CHANGES,v 1.42 2020/09/12 12:39:28 rhialto Exp $
+
+changes in bozohttpd 20200912:
+	o  add .m4a and .m4v file extensions.
 
 changes in bozohttpd 20200820:
 	o  make this work on sun2 by reducing mmap window there.
