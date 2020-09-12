@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.140 2020/09/12 18:04:45 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.141 2020/09/12 18:19:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.140 2020/09/12 18:04:45 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.141 2020/09/12 18:19:50 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.140 2020/09/12 18:04:45 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.141 2020/09/12 18:19:50 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -258,7 +258,7 @@ ParseFuncArg(const char **linePtr, Boolean doEval, const char *func,
 	     */
 	    void *freeIt;
 	    VarEvalFlags eflags = VARE_UNDEFERR | (doEval ? VARE_WANTRES : 0);
-	    const char *cp2 = Var_ParsePP(&cp, VAR_CMD, eflags, &freeIt);
+	    const char *cp2 = Var_Parse(&cp, VAR_CMD, eflags, &freeIt);
 	    Buf_AddStr(&buf, cp2);
 	    free(freeIt);
 	    continue;
@@ -462,7 +462,7 @@ CondParser_String(CondParser *par, Boolean doEval, Boolean strictLHS,
 		     (doEval ? VARE_WANTRES : 0);
 	    nested_p = par->p;
 	    atStart = nested_p == start;
-	    str = Var_ParsePP(&nested_p, VAR_CMD, eflags, freeIt);
+	    str = Var_Parse(&nested_p, VAR_CMD, eflags, freeIt);
 	    if (str == var_Error) {
 		if (*freeIt) {
 		    free(*freeIt);
@@ -703,7 +703,7 @@ ParseEmptyArg(const char **linePtr, Boolean doEval,
     *argPtr = NULL;
 
     (*linePtr)--;		/* Make (*linePtr)[1] point to the '('. */
-    val = Var_ParsePP(linePtr, VAR_CMD, doEval ? VARE_WANTRES : 0, &val_freeIt);
+    val = Var_Parse(linePtr, VAR_CMD, doEval ? VARE_WANTRES : 0, &val_freeIt);
     /* If successful, *linePtr points beyond the closing ')' now. */
 
     if (val == var_Error) {
