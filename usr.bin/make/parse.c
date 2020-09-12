@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.291 2020/09/12 11:21:15 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.292 2020/09/12 14:41:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.291 2020/09/12 11:21:15 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.292 2020/09/12 14:41:00 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.291 2020/09/12 11:21:15 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.292 2020/09/12 14:41:00 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1206,7 +1206,7 @@ ParseDoDependency(char *line)
 		free(freeIt);
 		cp += nested_p - cp;
 	    } else
-	        cp++;
+		cp++;
 	}
 
 	/*
@@ -2859,7 +2859,7 @@ static void
 ParseFinishLine(void)
 {
     if (inLine) {
-        if (targets != NULL) {
+	if (targets != NULL) {
 	    Lst_ForEach(targets, Suff_EndTransform, NULL);
 	    Lst_Destroy(targets, ParseHasCommands);
 	}

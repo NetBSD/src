@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.61 2020/09/04 17:59:36 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.62 2020/09/12 14:41:00 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,11 +37,11 @@
 #include "make.h"
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.61 2020/09/04 17:59:36 rillig Exp $";
+static char rcsid[] = "$NetBSD: lst.c,v 1.62 2020/09/12 14:41:00 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.61 2020/09/04 17:59:36 rillig Exp $");
+__RCSID("$NetBSD: lst.c,v 1.62 2020/09/12 14:41:00 rillig Exp $");
 #endif /* not lint */
 #endif
 
@@ -648,7 +648,7 @@ Boolean Stack_IsEmpty(Stack *stack)
 void Stack_Push(Stack *stack, void *datum)
 {
     if (stack->len >= stack->cap) {
-        stack->cap *= 2;
+	stack->cap *= 2;
 	stack->items = bmake_realloc(stack->items,
 				     stack->cap * sizeof stack->items[0]);
     }
