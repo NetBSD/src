@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.502 2020/09/12 19:33:02 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.503 2020/09/12 19:41:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.502 2020/09/12 19:33:02 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.503 2020/09/12 19:41:20 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.502 2020/09/12 19:33:02 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.503 2020/09/12 19:41:20 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3364,7 +3364,7 @@ ParseVarname(const char **pp, char startc, char endc,
 /*-
  *-----------------------------------------------------------------------
  * Var_Parse --
- *	Given the start of a variable invocation (such as $v, $(VAR),
+ *	Given the start of a variable expression (such as $v, $(VAR),
  *	${VAR:Mpattern}), extract the variable name, possibly some
  *	modifiers and find its value by applying the modifiers to the
  *	original value.
@@ -3416,7 +3416,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, void **freePtr)
     Boolean	 dynamic;	/* TRUE if the variable is local and we're
 				 * expanding it in a non-local context. This
 				 * is done to support dynamic sources. The
-				 * result is just the invocation, unaltered */
+				 * result is just the expression, unaltered */
     const char *extramodifiers;
     Var *v;
     char *nstr;
@@ -3685,7 +3685,7 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags)
 	} else if (*str != '$') {
 	    /*
 	     * Skip as many characters as possible -- either to the end of
-	     * the string or to the next dollar sign (variable invocation).
+	     * the string or to the next dollar sign (variable expression).
 	     */
 	    const char *cp;
 
