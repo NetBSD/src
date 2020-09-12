@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.45 2020/08/29 03:24:31 isaki Exp $ */
+/* $NetBSD: bba.c,v 1.46 2020/09/12 05:19:16 isaki Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 /* maxine/alpha baseboard audio (bba) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.45 2020/08/29 03:24:31 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.46 2020/09/12 05:19:16 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,20 +107,12 @@ CFATTACH_DECL_NEW(bba, sizeof(struct bba_softc),
  * Define our interface into the am7930 MI driver.
  */
 
-static uint8_t	bba_codec_iread(struct am7930_softc *, int);
-static uint16_t	bba_codec_iread16(struct am7930_softc *, int);
-static void	bba_codec_iwrite(struct am7930_softc *, int, uint8_t);
-static void	bba_codec_iwrite16(struct am7930_softc *, int, uint16_t);
-static void	bba_onopen(struct am7930_softc *);
-static void	bba_onclose(struct am7930_softc *);
+static uint8_t	bba_codec_dread(struct am7930_softc *, int);
+static void	bba_codec_dwrite(struct am7930_softc *, int, uint8_t);
 
 struct am7930_glue bba_glue = {
-	bba_codec_iread,
-	bba_codec_iwrite,
-	bba_codec_iread16,
-	bba_codec_iwrite16,
-	bba_onopen,
-	bba_onclose,
+	bba_codec_dread,
+	bba_codec_dwrite,
 };
 
 /*
@@ -144,12 +136,8 @@ static int	bba_trigger_output(void *, void *, void *, int,
 static int	bba_trigger_input(void *, void *, void *, int,
 				  void (*)(void *), void *,
 				  const audio_params_t *);
-static void	bba_get_locks(void *opaque, kmutex_t **intr,
-			      kmutex_t **thread);
 
 static const struct audio_hw_if sa_hw_if = {
-	.open			= am7930_open,
-	.close			= am7930_close,
 	.query_format		= bba_query_format,
 	.set_format		= bba_set_format,
 	.round_blocksize	= bba_round_blocksize,	/* md */
@@ -166,7 +154,7 @@ static const struct audio_hw_if sa_hw_if = {
 	.get_props		= am7930_get_props,
 	.trigger_output		= bba_trigger_output,	/* md */
 	.trigger_input		= bba_trigger_input,	/* md */
-	.get_locks		= bba_get_locks,
+	.get_locks		= am7930_get_locks,
 };
 
 static struct audio_device bba_device = {
@@ -188,8 +176,6 @@ static const struct audio_format bba_format = {
 
 static int	bba_intr(void *);
 static void	bba_reset(struct bba_softc *, int);
-static void	bba_codec_dwrite(struct am7930_softc *, int, uint8_t);
-static uint8_t	bba_codec_dread(struct am7930_softc *, int);
 
 static int
 bba_match(device_t parent, cfdata_t cf, void *aux)
@@ -210,13 +196,13 @@ bba_attach(device_t parent, device_t self, void *aux)
 {
 	struct ioasicdev_attach_args *ia;
 	struct bba_softc *sc;
-	struct am7930_softc *asc;
+	struct am7930_softc *amsc;
 	struct ioasic_softc *iosc = device_private(parent);
 
 	ia = aux;
 	sc = device_private(self);
-	asc = &sc->sc_am7930;
-	asc->sc_dev = self;
+	amsc = &sc->sc_am7930;
+	amsc->sc_dev = self;
 	sc->sc_bst = iosc->sc_bst;
 	sc->sc_bsh = iosc->sc_bsh;
 	sc->sc_dmat = iosc->sc_dmat;
@@ -235,29 +221,17 @@ bba_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Set up glue for MI code early; we use some of it here.
 	 */
-	asc->sc_glue = &bba_glue;
+	amsc->sc_glue = &bba_glue;
 
 	/*
 	 *  MI initialisation.  We will be doing DMA.
 	 */
-	am7930_init(asc, AUDIOAMD_DMA_MODE);
+	am7930_init(amsc, AUDIOAMD_DMA_MODE);
 
 	ioasic_intr_establish(parent, ia->iada_cookie, TC_IPL_NONE,
 	    bba_intr, sc);
 
-	audio_attach_mi(&sa_hw_if, asc, self);
-}
-
-
-static void
-bba_onopen(struct am7930_softc *sc)
-{
-}
-
-
-static void
-bba_onclose(struct am7930_softc *sc)
-{
+	audio_attach_mi(&sa_hw_if, sc, self);
 }
 
 
@@ -291,7 +265,7 @@ bba_reset(struct bba_softc *sc, int reset)
 static void *
 bba_allocm(void *addr, int direction, size_t size)
 {
-	struct am7930_softc *asc;
+	struct am7930_softc *amsc;
 	struct bba_softc *sc;
 	bus_dma_segment_t seg;
 	int rseg;
@@ -300,20 +274,20 @@ bba_allocm(void *addr, int direction, size_t size)
 	int state;
 
 	DPRINTF(("bba_allocm: size = %zu\n", size));
-	asc = addr;
 	sc = addr;
+	amsc = addr;
 	state = 0;
 
 	if (bus_dmamem_alloc(sc->sc_dmat, size, BBA_DMABUF_ALIGN,
 	    BBA_DMABUF_BOUNDARY, &seg, 1, &rseg, BUS_DMA_WAITOK)) {
-		aprint_error_dev(asc->sc_dev, "can't allocate DMA buffer\n");
+		aprint_error_dev(amsc->sc_dev, "can't allocate DMA buffer\n");
 		goto bad;
 	}
 	state |= 1;
 
 	if (bus_dmamem_map(sc->sc_dmat, &seg, rseg, size,
 	    &kva, BUS_DMA_WAITOK | BUS_DMA_COHERENT)) {
-		aprint_error_dev(asc->sc_dev, "can't map DMA buffer\n");
+		aprint_error_dev(amsc->sc_dev, "can't map DMA buffer\n");
 		goto bad;
 	}
 	state |= 2;
@@ -569,16 +543,6 @@ bad:
 	return 1;
 }
 
-static void
-bba_get_locks(void *opaque, kmutex_t **intr, kmutex_t **thread)
-{
-	struct bba_softc *bsc = opaque;
-	struct am7930_softc *sc = &bsc->sc_am7930;
- 
-	*intr = &sc->sc_intr_lock;
-	*thread = &sc->sc_lock;
-}
-
 static int
 bba_intr(void *addr)
 {
@@ -647,64 +611,13 @@ bba_round_blocksize(void *addr, int blk, int mode, const audio_params_t *param)
 }
 
 
-/* indirect write */
-static void
-bba_codec_iwrite(struct am7930_softc *sc, int reg, uint8_t val)
-{
-
-	DPRINTF(("bba_codec_iwrite(): sc=%p, reg=%d, val=%d\n", sc, reg, val));
-	bba_codec_dwrite(sc, AM7930_DREG_CR, reg);
-	bba_codec_dwrite(sc, AM7930_DREG_DR, val);
-}
-
-
-static void
-bba_codec_iwrite16(struct am7930_softc *sc, int reg, uint16_t val)
-{
-
-	DPRINTF(("bba_codec_iwrite16(): sc=%p, reg=%d, val=%d\n", sc, reg, val));
-	bba_codec_dwrite(sc, AM7930_DREG_CR, reg);
-	bba_codec_dwrite(sc, AM7930_DREG_DR, val);
-	bba_codec_dwrite(sc, AM7930_DREG_DR, val>>8);
-}
-
-
-static uint16_t
-bba_codec_iread16(struct am7930_softc *sc, int reg)
-{
-	uint16_t val;
-
-	DPRINTF(("bba_codec_iread16(): sc=%p, reg=%d\n", sc, reg));
-	bba_codec_dwrite(sc, AM7930_DREG_CR, reg);
-	val = bba_codec_dread(sc, AM7930_DREG_DR) << 8;
-	val |= bba_codec_dread(sc, AM7930_DREG_DR);
-
-	return val;
-}
-
-
-/* indirect read */
-static uint8_t
-bba_codec_iread(struct am7930_softc *sc, int reg)
-{
-	uint8_t val;
-
-	DPRINTF(("bba_codec_iread(): sc=%p, reg=%d\n", sc, reg));
-	bba_codec_dwrite(sc, AM7930_DREG_CR, reg);
-	val = bba_codec_dread(sc, AM7930_DREG_DR);
-
-	DPRINTF(("read 0x%x (%d)\n", val, val));
-
-	return val;
-}
-
 /* direct write */
 static void
-bba_codec_dwrite(struct am7930_softc *asc, int reg, uint8_t val)
+bba_codec_dwrite(struct am7930_softc *amsc, int reg, uint8_t val)
 {
 	struct bba_softc *sc;
 
-	sc = (struct bba_softc *)asc;
+	sc = (struct bba_softc *)amsc;
 	DPRINTF(("bba_codec_dwrite(): sc=%p, reg=%d, val=%d\n", sc, reg, val));
 
 #if defined(__alpha__)
@@ -718,11 +631,11 @@ bba_codec_dwrite(struct am7930_softc *asc, int reg, uint8_t val)
 
 /* direct read */
 static uint8_t
-bba_codec_dread(struct am7930_softc *asc, int reg)
+bba_codec_dread(struct am7930_softc *amsc, int reg)
 {
 	struct bba_softc *sc;
 
-	sc = (struct bba_softc *)asc;
+	sc = (struct bba_softc *)amsc;
 	DPRINTF(("bba_codec_dread(): sc=%p, reg=%d\n", sc, reg));
 
 #if defined(__alpha__)
