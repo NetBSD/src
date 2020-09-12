@@ -1,1 +1,4 @@
+make: "varname-dot-parsedir.mk" line 19: At this point, .PARSEDIR is undefined.
+make: "/fake-absolute-path/varname-dot-parsedir.mk" line 24: The location can be faked.
+make: "varname-dot-parsedir.mk" line 28: The location is no longer fake.
 exit status 0
