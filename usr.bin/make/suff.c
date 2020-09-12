@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.151 2020/09/12 16:13:48 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.152 2020/09/12 18:19:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.151 2020/09/12 16:13:48 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.152 2020/09/12 18:19:50 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.151 2020/09/12 16:13:48 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.152 2020/09/12 18:19:50 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1328,8 +1328,8 @@ SuffExpandChildren(LstNode cln, GNode *pgn)
 		    void	*freeIt;
 
 		    /* XXX: Why VARE_WANTRES when the result is not used? */
-		    junk = Var_ParsePP(&nested_p, pgn,
-				       VARE_UNDEFERR|VARE_WANTRES, &freeIt);
+		    junk = Var_Parse(&nested_p, pgn,
+				     VARE_UNDEFERR|VARE_WANTRES, &freeIt);
 		    if (junk == var_Error) {
 			Parse_Error(PARSE_FATAL,
 				    "Malformed variable expression at \"%s\"",
