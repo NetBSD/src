@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.191 2020/05/18 21:19:34 jmcneill Exp $
+#	$NetBSD: sets.subr,v 1.192 2020/09/12 15:25:41 jmcneill Exp $
 #
 
 #
@@ -16,11 +16,13 @@
 #	MACHINE	
 #	MACHINE_ARCH
 #	MACHINE_CPU
+#	HAVE_ACPI
 #	HAVE_BINUTILS
 #	HAVE_GCC
 #	HAVE_GDB
 #	HAVE_SSP
 #	HAVE_OPENSSL
+#	HAVE_UEFI
 #	TOOLCHAIN_MISSING
 #	OBJECT_FMT
 # as well as:
@@ -189,7 +191,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.191 2020/05/18 21:19:34 jmcneill Exp $
+# 	# $NetBSD: sets.subr,v 1.192 2020/09/12 15:25:41 jmcneill Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -219,13 +221,15 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #    1. The HAVE_<name>:
 #	ssp			${HAVE_SSP} != no
 #	libgcc_eh		${HAVE_LIBGCC_EH} != no
+#	acpi			${HAVE_ACPI} != no
 #	binutils=<n>		<n> = value of ${HAVE_BINUTILS}
 #	gcc=<n>			<n> = value of ${HAVE_GCC}
 #	gdb=<n>			<n> = value of ${HAVE_GDB}
+#	mesa_ver=<n>		<n> = value of ${HAVE_MESA_VER}
 #	openssl=<n>		<n> = value of ${HAVE_OPENSSL}
+#	uefi			${HAVE_UEFI} != no
 #	xorg_server_ver=<n>	<n> = value of ${HAVE_XORG_SERVER_VER}
 #	xorg_glamor		${HAVE_XORG_GLAMOR} != no
-#	mesa_ver=<n>		<n> = value of ${HAVE_MESA_VER}
 #
 #    2. The USE_<name>:
 #	use_inet6		${USE_INET6} != no
@@ -330,14 +334,20 @@ list_set_files()
 				if ("gdb" in wanted)
 					wanted["gdb=" "'"${HAVE_GDB}"'"] = 1
 			}
+			if ("acpi" in wanted) {
+				wanted["acpi=" "'"${HAVE_ACPI}"'"] = 1
+			}
+			if ("mesa_ver" in wanted) {
+				wanted["mesa_ver=" "'"${HAVE_MESA_VER}"'"] = 1
+			}
 			if ("openssl" in wanted) {
 				wanted["openssl=" "'"${HAVE_OPENSSL}"'"] = 1
 			}
 			if ("xorg_server_ver" in wanted) {
 				wanted["xorg_server_ver=" "'"${HAVE_XORG_SERVER_VER}"'"] = 1
 			}
-			if ("mesa_ver" in wanted) {
-				wanted["mesa_ver=" "'"${HAVE_MESA_VER}"'"] = 1
+			if ("uefi" in wanted) {
+				wanted["uefi=" "'"${HAVE_UEFI}"'"] = 1
 			}
 			if (("man" in wanted) && ("catpages" in wanted))
 				wanted[".cat"] = 1
