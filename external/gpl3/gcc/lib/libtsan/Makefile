@@ -1,4 +1,7 @@
-# $NetBSD: Makefile,v 1.11 2020/09/12 22:24:22 kamil Exp $
+# $NetBSD: Makefile,v 1.12 2020/09/12 23:04:44 kamil Exp $
+
+UNSUPPORTED_COMPILER.clang=     # defined
+NOSANITIZER=    # defined
 
 .include <bsd.own.mk>
 
@@ -53,6 +56,8 @@ TSAN_SRCS+= tsan_rtl_unimpl.cc
 
 LIB=	tsan
 SRCS+=	${TSAN_SRCS}
+LIBDPLIBS+= rt ${NETBSDSRCDIR}/lib/librt
+LIBDPLIBS+= m  ${NETBSDSRCDIR}/lib/libm
 CPPFLAGS+=-DCAN_SANITIZE_UB=0
 COPTS.tsan_interceptors.cc += -Wno-unused-function
 
