@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.140 2020/09/12 12:24:21 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.141 2020/09/12 23:12:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.140 2020/09/12 12:24:21 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.141 2020/09/12 23:12:44 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.140 2020/09/12 12:24:21 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.141 2020/09/12 23:12:44 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1656,10 +1656,11 @@ Dir_Destroy(void *pp)
     p->refCount -= 1;
 
     if (p->refCount == 0) {
-	LstNode ln;
+	LstNode node;
 
-	ln = Lst_FindDatum(openDirectories, p);
-	Lst_Remove(openDirectories, ln);
+	node = Lst_FindDatum(openDirectories, p);
+	if (node != NULL)
+	    Lst_Remove(openDirectories, node);
 
 	Hash_DeleteTable(&p->files);
 	free(p->name);
