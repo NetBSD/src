@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.113 2020/09/02 04:08:54 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.114 2020/09/12 14:41:00 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -961,7 +961,7 @@ path_match(const void *p, const void *q)
     size_t n = strlen(prefix);
 
     if (strncmp(path, prefix, n) != 0)
-        return FALSE;
+	return FALSE;
     return path[n] == '\0' || path[n] == '/';
 }
 

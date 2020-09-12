@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.493 2020/09/11 17:32:36 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.494 2020/09/12 14:41:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.493 2020/09/11 17:32:36 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.494 2020/09/12 14:41:00 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.493 2020/09/11 17:32:36 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.494 2020/09/12 14:41:00 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -596,7 +596,7 @@ Var_ExportVars(void)
 
     val = Var_Subst("${" MAKE_EXPORTED ":O:u}", VAR_GLOBAL, VARE_WANTRES);
     if (*val) {
-        Words words = Str_Words(val, FALSE);
+	Words words = Str_Words(val, FALSE);
 	size_t i;
 
 	for (i = 0; i < words.len; i++)
@@ -637,7 +637,7 @@ Var_Export(const char *str, Boolean isExport)
 
     val = Var_Subst(str, VAR_GLOBAL, VARE_WANTRES);
     if (val[0] != '\0') {
-        Words words = Str_Words(val, FALSE);
+	Words words = Str_Words(val, FALSE);
 
 	size_t i;
 	for (i = 0; i < words.len; i++) {
@@ -2016,7 +2016,7 @@ ApplyModifier_Defined(const char **pp, ApplyModifiersState *st)
     p = *pp + 1;
     while (*p != st->endc && *p != ':' && *p != '\0') {
 
-        /* Escaped delimiter or other special character */
+	/* Escaped delimiter or other special character */
 	if (*p == '\\') {
 	    char c = p[1];
 	    if (c == st->endc || c == ':' || c == '$' || c == '\\') {
@@ -2192,9 +2192,9 @@ ApplyModifier_Range(const char **pp, ApplyModifiersState *st)
     }
 
     if (n == 0) {
-        Words words = Str_Words(st->val, FALSE);
-        n = words.len;
-        Words_Free(words);
+	Words words = Str_Words(st->val, FALSE);
+	n = words.len;
+	Words_Free(words);
     }
 
     Buf_Init(&buf, 0);
@@ -2585,7 +2585,7 @@ ApplyModifier_Words(const char **pp, ApplyModifiersState *st)
 	    Words words = Str_Words(st->val, FALSE);
 	    size_t ac = words.len;
 	    Words_Free(words);
-	    	
+
 	    Buf_Init(&buf, 4);	/* 3 digits + '\0' is usually enough */
 	    Buf_AddInt(&buf, (int)ac);
 	    st->newVal = Buf_Destroy(&buf, FALSE);

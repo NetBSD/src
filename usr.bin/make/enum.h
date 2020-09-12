@@ -1,4 +1,4 @@
-/*	$NetBSD: enum.h,v 1.9 2020/09/01 20:34:51 rillig Exp $	*/
+/*	$NetBSD: enum.h,v 1.10 2020/09/12 14:41:00 rillig Exp $	*/
 
 /*
  Copyright (c) 2020 Roland Illig <rillig@NetBSD.org>
@@ -112,11 +112,11 @@ const char *Enum_ValueToString(int, const EnumToStringSpec *);
 #define ENUM_FLAGS_RTTI_3(typnam, v1, v2, v3) \
 	ENUM__FLAGS_RTTI(typnam, \
 	    ENUM__SPECS_2( \
-	    	ENUM__SPEC_2(v1, v2), \
-	    	ENUM__SPEC_1(v3)), \
+		ENUM__SPEC_2(v1, v2), \
+		ENUM__SPEC_1(v3)), \
 	    ENUM__JOIN_2( \
-	    	ENUM__JOIN_STR_2(v1, v2), \
-	    	ENUM__JOIN_STR_1(v3)))
+		ENUM__JOIN_STR_2(v1, v2), \
+		ENUM__JOIN_STR_1(v3)))
 
 /* Declare the necessary data structures for calling Enum_FlagsToString
  * for an enum with 8 flags. */
@@ -156,8 +156,8 @@ const char *Enum_ValueToString(int, const EnumToStringSpec *);
 		     v17, v18, v19, v20, v21, v22, v23, v24, \
 		     v25, v26, v27, v28, v29, v30, v31) \
     ENUM__FLAGS_RTTI(typnam, \
-        ENUM__SPECS_5( \
-            ENUM__SPEC_16(v01, v02, v03, v04, v05, v06, v07, v08, \
+	ENUM__SPECS_5( \
+	    ENUM__SPEC_16(v01, v02, v03, v04, v05, v06, v07, v08, \
 			  v09, v10, v11, v12, v13, v14, v15, v16), \
 	    ENUM__SPEC_8(v17, v18, v19, v20, v21, v22, v23, v24), \
 	    ENUM__SPEC_4(v25, v26, v27, v28), \
@@ -179,8 +179,8 @@ const char *Enum_ValueToString(int, const EnumToStringSpec *);
 		     v17, v18, v19, v20, v21, v22, v23, v24, \
 		     v25, v26, v27, v28, v29, v30, v31, v32) \
     ENUM__FLAGS_RTTI(typnam, \
-        ENUM__SPECS_2( \
-            ENUM__SPEC_16(v01, v02, v03, v04, v05, v06, v07, v08, \
+	ENUM__SPECS_2( \
+	    ENUM__SPEC_16(v01, v02, v03, v04, v05, v06, v07, v08, \
 			  v09, v10, v11, v12, v13, v14, v15, v16), \
 	    ENUM__SPEC_16(v17, v18, v19, v20, v21, v22, v23, v24, \
 			  v25, v26, v27, v28, v29, v30, v31, v32)), \
@@ -188,6 +188,6 @@ const char *Enum_ValueToString(int, const EnumToStringSpec *);
 	    ENUM__JOIN_STR_16(v01, v02, v03, v04, v05, v06, v07, v08, \
 			      v09, v10, v11, v12, v13, v14, v15, v16), \
 	    ENUM__JOIN_STR_16(v17, v18, v19, v20, v21, v22, v23, v24, \
-	    		      v25, v26, v27, v28, v29, v30, v31, v32)))
+			      v25, v26, v27, v28, v29, v30, v31, v32)))
 
 #endif

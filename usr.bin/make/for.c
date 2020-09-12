@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.81 2020/09/12 10:14:16 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.82 2020/09/12 14:41:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.81 2020/09/12 10:14:16 rillig Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.82 2020/09/12 14:41:00 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.81 2020/09/12 10:14:16 rillig Exp $");
+__RCSID("$NetBSD: for.c,v 1.82 2020/09/12 14:41:00 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -243,7 +243,7 @@ For_Eval(const char *line)
     Words_Free(words);
 
     {
-        size_t len, n;
+	size_t len, n;
 
 	if ((len = strlist_num(&new_for->items)) > 0 &&
 	    len % (n = strlist_num(&new_for->vars))) {
