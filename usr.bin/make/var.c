@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.495 2020/09/12 18:04:45 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.496 2020/09/12 18:19:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.495 2020/09/12 18:04:45 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.496 2020/09/12 18:19:50 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.495 2020/09/12 18:04:45 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.496 2020/09/12 18:19:50 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1683,8 +1683,8 @@ ParseModifierPart(
 	    void *nested_val_freeIt;
 	    VarEvalFlags nested_eflags = eflags & ~(unsigned)VARE_ASSIGN;
 
-	    nested_val = Var_ParsePP(&nested_p, ctxt, nested_eflags,
-				     &nested_val_freeIt);
+	    nested_val = Var_Parse(&nested_p, ctxt, nested_eflags,
+				   &nested_val_freeIt);
 	    Buf_AddStr(&buf, nested_val);
 	    free(nested_val_freeIt);
 	    p += nested_p - p;
@@ -2031,7 +2031,7 @@ ApplyModifier_Defined(const char **pp, ApplyModifiersState *st)
 	    const char *nested_val;
 	    void *nested_val_freeIt;
 
-	    nested_val = Var_ParsePP(&p, st->ctxt, eflags, &nested_val_freeIt);
+	    nested_val = Var_Parse(&p, st->ctxt, eflags, &nested_val_freeIt);
 	    Buf_AddStr(&buf, nested_val);
 	    free(nested_val_freeIt);
 	    continue;
@@ -3018,8 +3018,8 @@ ApplyModifiers(
 	     */
 	    const char *nested_p = p;
 	    void *freeIt;
-	    const char *rval = Var_ParsePP(&nested_p, st.ctxt, st.eflags,
-					   &freeIt);
+	    const char *rval = Var_Parse(&nested_p, st.ctxt, st.eflags,
+					 &freeIt);
 
 	    /*
 	     * If we have not parsed up to st.endc or ':',
@@ -3343,11 +3343,11 @@ VarIsDynamic(GNode *ctxt, const char *varname, size_t namelen)
  *	Any effects from the modifiers, such as :!cmd! or ::=value.
  *-----------------------------------------------------------------------
  */
-/* coverity[+alloc : arg-*4] */
-static const char *
-Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
-	  int *lengthPtr, void **freePtr)
+/* coverity[+alloc : arg-*3] */
+const char *
+Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, void **freePtr)
 {
+    const char * const str = *pp;
     const char	*tstr;		/* Pointer into str */
     Boolean 	 haveModifier;	/* TRUE if have modifiers for the variable */
     char	 startc;	/* Starting character if variable in parens
@@ -3389,7 +3389,7 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
 
 	/* Error out some really stupid names */
 	if (startc == '\0' || strchr(")}:$", startc)) {
-	    *lengthPtr = 1;
+	    (*pp)++;
 	    return var_Error;
 	}
 
@@ -3397,7 +3397,7 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
 	name[1] = '\0';
 	v = VarFind(name, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
 	if (v == NULL) {
-	    *lengthPtr = 2;
+	    *pp += 2;
 
 	    if (ctxt == VAR_CMD || ctxt == VAR_GLOBAL) {
 		/*
@@ -3452,7 +3452,7 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
 	    /* A variable inside a variable, expand. */
 	    if (*tstr == '$') {
 		void *freeIt;
-		const char *rval = Var_ParsePP(&tstr, ctxt, eflags, &freeIt);
+		const char *rval = Var_Parse(&tstr, ctxt, eflags, &freeIt);
 		Buf_AddStr(&namebuf, rval);
 		free(freeIt);
 	    } else {
@@ -3467,12 +3467,7 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
 	} else {
 	    Parse_Error(PARSE_FATAL, "Unclosed variable \"%s\"",
 			Buf_GetAll(&namebuf, NULL));
-	    /*
-	     * If we never did find the end character, return NULL
-	     * right now, setting the length to be the distance to
-	     * the end of the string, since that's what make does.
-	     */
-	    *lengthPtr = (int)(size_t)(tstr - str);
+	    *pp = tstr;
 	    Buf_Destroy(&namebuf, TRUE);
 	    return var_Error;
 	}
@@ -3483,11 +3478,11 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
 	 * At this point, varname points into newly allocated memory from
 	 * namebuf, containing only the name of the variable.
 	 *
-	 * start and tstr point into the const string that was pointed
+	 * start and tstr point into the string that was pointed
 	 * to by the original value of the str parameter.  start points
 	 * to the '$' at the beginning of the string, while tstr points
 	 * to the char just after the end of the variable name -- this
-	 * will be '\0', ':', PRCLOSE, or BRCLOSE.
+	 * is '\0', ':', PRCLOSE, or BRCLOSE.
 	 */
 
 	v = VarFind(varname, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
@@ -3518,13 +3513,10 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
 	    dynamic = VarIsDynamic(ctxt, varname, namelen);
 
 	    if (!haveModifier) {
-		/*
-		 * No modifiers -- have specification length so we can return
-		 * now.
-		 */
-		*lengthPtr = (int)(size_t)(tstr - str) + 1;
+	        size_t len = (size_t)(tstr + 1 - str);
+		*pp += len;
 		if (dynamic) {
-		    char *pstr = bmake_strldup(str, (size_t)*lengthPtr);
+		    char *pstr = bmake_strldup(str, len);
 		    *freePtr = pstr;
 		    Buf_Destroy(&namebuf, TRUE);
 		    return pstr;
@@ -3601,7 +3593,7 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
     }
 
     /* Skip past endc if possible. */
-    *lengthPtr = (int)(size_t)(tstr + (*tstr ? 1 : 0) - str);
+    *pp = tstr + (*tstr ? 1 : 0);
 
     if (v->flags & VAR_FROM_ENV) {
 	Boolean destroy = nstr != Buf_GetAll(&v->val, NULL);
@@ -3625,7 +3617,7 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
 		*freePtr = NULL;
 	    }
 	    if (dynamic) {
-		nstr = bmake_strldup(str, (size_t)*lengthPtr);
+		nstr = bmake_strldup(str, (size_t)(*pp - str));
 		*freePtr = nstr;
 	    } else {
 		nstr = (eflags & VARE_UNDEFERR) ? var_Error : varNoError;
@@ -3637,15 +3629,6 @@ Var_Parse(const char * const str, GNode *ctxt, VarEvalFlags eflags,
 	free(v);
     }
     return nstr;
-}
-
-const char *
-Var_ParsePP(const char **pp, GNode *ctxt, VarEvalFlags eflags, void **freePtr)
-{
-    int len;
-    const char *val = Var_Parse(*pp, ctxt, eflags, &len, freePtr);
-    *pp += len;
-    return val;
 }
 
 /* Substitute for all variables in the given string in the given context.
@@ -3707,7 +3690,7 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags)
 	} else {
 	    const char *nested_str = str;
 	    void *freeIt;
-	    const char *val = Var_ParsePP(&nested_str, ctxt, eflags, &freeIt);
+	    const char *val = Var_Parse(&nested_str, ctxt, eflags, &freeIt);
 
 	    if (val == var_Error || val == varNoError) {
 		/*
