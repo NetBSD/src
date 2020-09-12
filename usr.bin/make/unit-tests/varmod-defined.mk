@@ -1,4 +1,4 @@
-# $NetBSD: varmod-defined.mk,v 1.4 2020/09/03 18:52:36 rillig Exp $
+# $NetBSD: varmod-defined.mk,v 1.5 2020/09/12 07:04:51 rillig Exp $
 #
 # Tests for the :D variable modifier, which returns the given string
 # if the variable is defined.  It is closely related to the :U modifier.
@@ -57,6 +57,21 @@ DEF=	defined
 # for an inferior variant.
 #
 .if ${DEF:D!&((((} != "!&(((("
+.  error
+.endif
+
+# The :D modifier is often used in combination with the :U modifier.
+# It does not matter in which order the :D and :U modifiers appear.
+.if ${UNDEF:Dyes:Uno} != no
+.  error
+.endif
+.if ${UNDEF:Uno:Dyes} != no
+.  error
+.endif
+.if ${DEF:Dyes:Uno} != yes
+.  error
+.endif
+.if ${DEF:Uno:Dyes} != yes
 .  error
 .endif
 
