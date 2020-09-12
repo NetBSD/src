@@ -1,4 +1,4 @@
-/*	$NetBSD: content-bozo.c,v 1.16 2018/11/23 08:11:20 mrg Exp $	*/
+/*	$NetBSD: content-bozo.c,v 1.17 2020/09/12 12:39:28 rhialto Exp $	*/
 
 /*	$eterna: content-bozo.c,v 1.17 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -135,6 +135,7 @@ static bozo_content_map_t static_content_map[] = {
 	{ ".snd",	"audio/basic",			"",		"", NULL },
 	{ ".mpga",	"audio/mpeg",			"",		"", NULL },
 	{ ".mp2",	"audio/mpeg",			"",		"", NULL },
+	{ ".m4a",	"audio/mpeg",			"",		"", NULL },
 	{ ".aif",	"audio/x-aiff",			"",		"", NULL },
 	{ ".aiff",	"audio/x-aiff",			"",		"", NULL },
 	{ ".aifc",	"audio/x-aiff",			"",		"", NULL },
@@ -167,6 +168,7 @@ static bozo_content_map_t static_content_map[] = {
 	{ ".ts",	"video/mpeg",			"",		"", NULL },
 	{ ".vob",	"video/mpeg",			"",		"", NULL },
 	{ ".mp4",	"video/mp4",			"",		"", NULL },
+	{ ".m4v",	"video/mp4",			"",		"", NULL },
 	{ ".qt",	"video/quicktime",		"",		"", NULL },
 	{ ".mov",	"video/quicktime",		"",		"", NULL },
 	{ ".avi",	"video/x-msvideo",		"",		"", NULL },
