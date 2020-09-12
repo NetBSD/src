@@ -1,4 +1,4 @@
-/* $NetBSD: pmf.h,v 1.24 2018/04/19 21:19:07 christos Exp $ */
+/* $NetBSD: pmf.h,v 1.25 2020/09/12 18:08:38 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -53,7 +53,10 @@ typedef enum {
 	PMFE_POWER_CHANGED,
 	PMFE_SPEED_CHANGED,
 	PMFE_THROTTLE_ENABLE,
-	PMFE_THROTTLE_DISABLE
+	PMFE_THROTTLE_DISABLE,
+	PMFE_KEYBOARD_BRIGHTNESS_UP,
+	PMFE_KEYBOARD_BRIGHTNESS_DOWN,
+	PMFE_KEYBOARD_BRIGHTNESS_TOGGLE
 } pmf_generic_event_t;
 
 struct pmf_qual {
