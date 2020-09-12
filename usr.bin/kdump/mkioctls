@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mkioctls,v 1.56 2020/04/02 21:36:03 christos Exp $
+#	$NetBSD: mkioctls,v 1.57 2020/09/12 01:36:26 roy Exp $
 #
 # Copyright (c) 1994
 #	The Regents of the University of California.  All rights reserved.
@@ -67,6 +67,7 @@ echo "#include <net/if_ether.h>"
 echo "#include <net/route.h>"
 echo "#include <net/ppp_defs.h>"
 echo "#include <netinet/in.h>"
+echo "#include <netinet/in_var.h>"
 echo "#include <netinet/in_systm.h>"
 echo "#include <netinet/ip.h>"
 echo "#include <netinet/ip_mroute.h>"
