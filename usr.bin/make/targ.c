@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.86 2020/09/12 16:24:20 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.87 2020/09/12 16:38:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.86 2020/09/12 16:24:20 rillig Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.87 2020/09/12 16:38:19 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.86 2020/09/12 16:24:20 rillig Exp $");
+__RCSID("$NetBSD: targ.c,v 1.87 2020/09/12 16:38:19 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -467,12 +467,11 @@ made_name(GNodeMade made)
     }
 }
 
-/* Print the contents of a node. */
-int
-Targ_PrintNode(void *gnp, void *passp)
+static int
+PrintNode(void *gnp, void *passp)
 {
-    GNode         *gn = (GNode *)gnp;
-    int	    	  pass = passp ? *(int *)passp : 0;
+    GNode *gn = gnp;
+    int pass = *(const int *)passp;
 
     fprintf(debug_file, "# %s%s", gn->name, gn->cohort_num);
     GNode_FprintDetails(debug_file, ", ", gn, "\n");
@@ -526,10 +525,23 @@ Targ_PrintNode(void *gnp, void *passp)
 	Targ_PrintCmds(gn);
 	fprintf(debug_file, "\n\n");
 	if (gn->type & OP_DOUBLEDEP) {
-	    Lst_ForEach(gn->cohorts, Targ_PrintNode, &pass);
+	    Lst_ForEach(gn->cohorts, PrintNode, passp);
 	}
     }
     return 0;
+}
+
+/* Print the contents of a node. */
+void
+Targ_PrintNode(GNode *gn, int pass)
+{
+    PrintNode(gn, &pass);
+}
+
+void
+Targ_PrintNodes(Lst gnodes, int pass)
+{
+    Lst_ForEach(gnodes, PrintNode, &pass);
 }
 
 /* Print only those targets that are just a source.
@@ -558,7 +570,7 @@ void
 Targ_PrintGraph(int pass)
 {
     fprintf(debug_file, "#*** Input graph:\n");
-    Lst_ForEach(allTargets, Targ_PrintNode, &pass);
+    Lst_ForEach(allTargets, PrintNode, &pass);
     fprintf(debug_file, "\n\n");
     fprintf(debug_file, "#\n#   Files that are only sources:\n");
     Lst_ForEach(allTargets, TargPrintOnlySrc, NULL);
