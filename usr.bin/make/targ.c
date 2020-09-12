@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.83 2020/09/05 13:55:08 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.84 2020/09/12 16:13:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.83 2020/09/05 13:55:08 rillig Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.84 2020/09/12 16:13:48 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.83 2020/09/05 13:55:08 rillig Exp $");
+__RCSID("$NetBSD: targ.c,v 1.84 2020/09/12 16:13:48 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -379,12 +379,17 @@ TargPrintName(void *gnp, void *pflags MAKE_ATTR_UNUSED)
     return 0;
 }
 
-
-int
-Targ_PrintCmd(void *cmd, void *dummy MAKE_ATTR_UNUSED)
+static int
+TargPrintCmd(void *cmd, void *dummy MAKE_ATTR_UNUSED)
 {
     fprintf(debug_file, "\t%s\n", (char *)cmd);
     return 0;
+}
+
+void
+Targ_PrintCmds(GNode *gn)
+{
+    Lst_ForEach(gn->commands, TargPrintCmd, NULL);
 }
 
 /* Format a modification time in some reasonable way and return it.
@@ -524,7 +529,7 @@ Targ_PrintNode(void *gnp, void *passp)
 	Targ_PrintType(gn->type);
 	Lst_ForEach(gn->children, TargPrintName, NULL);
 	fprintf(debug_file, "\n");
-	Lst_ForEach(gn->commands, Targ_PrintCmd, NULL);
+	Targ_PrintCmds(gn);
 	fprintf(debug_file, "\n\n");
 	if (gn->type & OP_DOUBLEDEP) {
 	    Lst_ForEach(gn->cohorts, Targ_PrintNode, &pass);
