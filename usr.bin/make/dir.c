@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.139 2020/09/12 12:15:22 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.140 2020/09/12 12:24:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.139 2020/09/12 12:15:22 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.140 2020/09/12 12:24:21 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.139 2020/09/12 12:15:22 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.140 2020/09/12 12:24:21 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -596,8 +596,8 @@ DirMatchFiles(const char *pattern, Path *p, Lst expansions)
 	     (pattern[0] == '.')))
 	{
 	    Lst_Append(expansions,
-			(isDot ? bmake_strdup(entry->name) :
-			 str_concat3(p->name, "/", entry->name)));
+		       (isDot ? bmake_strdup(entry->name) :
+			str_concat3(p->name, "/", entry->name)));
 	}
     }
 }
@@ -1082,10 +1082,10 @@ Dir_FindFile(const char *name, Lst path)
     base = strrchr(name, '/');
     if (base) {
 	hasSlash = TRUE;
-	    base += 1;
+	base += 1;
     } else {
 	hasSlash = FALSE;
-	    base = name;
+	base = name;
     }
 
     DIR_DEBUG1("Searching for %s ...", name);
