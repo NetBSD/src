@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.141 2020/09/12 14:41:00 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.142 2020/09/12 15:03:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.141 2020/09/12 14:41:00 rillig Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.142 2020/09/12 15:03:39 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.141 2020/09/12 14:41:00 rillig Exp $");
+__RCSID("$NetBSD: compat.c,v 1.142 2020/09/12 15:03:39 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -197,7 +197,7 @@ CompatInterrupt(int signo)
  *-----------------------------------------------------------------------
  */
 int
-CompatRunCommand(void *cmdp, void *gnp)
+Compat_RunCommand(char *cmdp, struct GNode *gn)
 {
     char    	  *cmdStart;	/* Start of expanded command */
     char 	  *cp, *bp;
@@ -214,7 +214,6 @@ CompatRunCommand(void *cmdp, void *gnp)
     Boolean 	  useShell;    	/* TRUE if command should be executed
 				 * using a shell */
     char	  * volatile cmd = (char *)cmdp;
-    GNode	  *gn = (GNode *)gnp;
 
     silent = (gn->type & OP_SILENT) != 0;
     errCheck = !(gn->type & OP_IGNORE);
@@ -478,6 +477,12 @@ CompatRunCommand(void *cmdp, void *gnp)
     }
 
     return status;
+}
+
+static int
+CompatRunCommand(void *cmd, void *gn)
+{
+    return Compat_RunCommand(cmd, gn);
 }
 
 /*-
