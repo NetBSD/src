@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.147 2020/09/11 04:36:12 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.148 2020/09/12 14:41:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.147 2020/09/11 04:36:12 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.148 2020/09/12 14:41:00 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.147 2020/09/11 04:36:12 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.148 2020/09/12 14:41:00 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -664,7 +664,7 @@ Suff_EndTransform(void *gnp, void *dummy MAKE_ATTR_UNUSED)
 	    SuffRemove(p, t);
 	}
     } else if (gn->type & OP_TRANSFORM) {
-        SUFF_DEBUG1("transformation %s complete\n", gn->name);
+	SUFF_DEBUG1("transformation %s complete\n", gn->name);
     }
 
     return 0;
@@ -814,7 +814,7 @@ Suff_AddSuffix(const char *name, GNode **gnp)
 
     ln = Lst_Find(sufflist, SuffSuffHasName, name);
     if (ln == NULL) {
-        s = SuffNew(name);
+	s = SuffNew(name);
 
 	Lst_Append(sufflist, s);
 	/*
@@ -1332,7 +1332,7 @@ SuffExpandChildren(LstNode cln, GNode *pgn)
 			Parse_Error(PARSE_FATAL,
 				    "Malformed variable expression at \"%s\"",
 				    cp);
-		        cp++;
+			cp++;
 		    } else {
 			cp += nested_p - cp;
 		    }
@@ -1777,7 +1777,7 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
 	    ln = Lst_FindFrom(sufflist, ln, SuffSuffIsSuffix, &sd);
 
 	    if (ln != NULL) {
-	        const char *eopref;
+		const char *eopref;
 
 		/*
 		 * Allocate a Src structure to which things can be transformed
