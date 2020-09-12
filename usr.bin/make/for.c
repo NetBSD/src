@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.80 2020/09/12 10:12:09 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.81 2020/09/12 10:14:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.80 2020/09/12 10:12:09 rillig Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.81 2020/09/12 10:14:16 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.80 2020/09/12 10:12:09 rillig Exp $");
+__RCSID("$NetBSD: for.c,v 1.81 2020/09/12 10:14:16 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -266,9 +266,9 @@ For_Eval(const char *line)
 
 /*
  * Add another line to a .for loop.
- * Returns 0 when the matching .endfor is reached.
+ * Returns FALSE when the matching .endfor is reached.
  */
-int
+Boolean
 For_Accum(const char *line)
 {
     const char *ptr = line;
@@ -282,7 +282,7 @@ For_Accum(const char *line)
 	    if (DEBUG(FOR))
 		(void)fprintf(debug_file, "For: end for %d\n", forLevel);
 	    if (--forLevel <= 0)
-		return 0;
+		return FALSE;
 	} else if (strncmp(ptr, "for", 3) == 0 && ch_isspace(ptr[3])) {
 	    forLevel++;
 	    if (DEBUG(FOR))
@@ -292,7 +292,7 @@ For_Accum(const char *line)
 
     Buf_AddStr(&accumFor->buf, line);
     Buf_AddByte(&accumFor->buf, '\n');
-    return 1;
+    return TRUE;
 }
 
 
