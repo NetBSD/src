@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.504 2020/09/12 20:03:37 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.505 2020/09/12 22:12:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.504 2020/09/12 20:03:37 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.505 2020/09/12 22:12:17 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.504 2020/09/12 20:03:37 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.505 2020/09/12 22:12:17 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2077,7 +2077,7 @@ ApplyModifier_Gmtime(const char **pp, ApplyModifiersState *st)
 }
 
 /* :localtime */
-static Boolean
+static ApplyModifierResult
 ApplyModifier_Localtime(const char **pp, ApplyModifiersState *st)
 {
     time_t utc;
