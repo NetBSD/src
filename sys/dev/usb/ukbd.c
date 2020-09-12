@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.146 2020/03/29 10:46:10 tih Exp $        */
+/*      $NetBSD: ukbd.c,v 1.147 2020/09/12 18:10:37 macallan Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.146 2020/03/29 10:46:10 tih Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.147 2020/09/12 18:10:37 macallan Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -128,9 +128,9 @@ Static const struct ukbd_keycodetrans trtab_apple_fn[] = {
 	{ 0x3e, IS_PMF | PMFE_AUDIO_VOLUME_UP },
 	{ 0x3f, 0xd6 },	/* num lock */
 	{ 0x40, 0xd7 },
-	{ 0x41, 0xd8 },
-	{ 0x42, 0xd9 },	/* kbd light down */
-	{ 0x43, 0xda },	/* kbd light up */
+	{ 0x41, IS_PMF | PMFE_KEYBOARD_BRIGHTNESS_TOGGLE },
+	{ 0x42, IS_PMF | PMFE_KEYBOARD_BRIGHTNESS_DOWN },
+	{ 0x43, IS_PMF | PMFE_KEYBOARD_BRIGHTNESS_UP },
 	{ 0x44, 0xdb },
 	{ 0x45, 0xdc },
 	{ 0x4f, 0x4d },	/* Right -> End */
