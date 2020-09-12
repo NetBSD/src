@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.138 2020/09/11 04:32:39 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.139 2020/09/12 12:15:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.138 2020/09/11 04:32:39 rillig Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.139 2020/09/12 12:15:22 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.138 2020/09/11 04:32:39 rillig Exp $");
+__RCSID("$NetBSD: dir.c,v 1.139 2020/09/12 12:15:22 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1069,7 +1069,7 @@ Dir_FindFile(const char *name, Lst path)
     LstNode ln;			/* a list element */
     char *file;			/* the current filename to check */
     Path *p;			/* current path member */
-    const char *cp;		/* Terminal name of file */
+    const char *base;		/* Terminal name of file */
     Boolean hasLastDot = FALSE;	/* true we should search dot last */
     Boolean hasSlash;		/* true if 'name' contains a / */
     struct make_stat mst;	/* Buffer for stat, if necessary */
@@ -1079,13 +1079,13 @@ Dir_FindFile(const char *name, Lst path)
      * Find the final component of the name and note whether it has a
      * slash in it (the name, I mean)
      */
-    cp = strrchr(name, '/');
-    if (cp) {
+    base = strrchr(name, '/');
+    if (base) {
 	hasSlash = TRUE;
-	cp += 1;
+	    base += 1;
     } else {
 	hasSlash = FALSE;
-	cp = name;
+	    base = name;
     }
 
     DIR_DEBUG1("Searching for %s ...", name);
@@ -1111,7 +1111,7 @@ Dir_FindFile(const char *name, Lst path)
      * directory component is exactly `./', consult the cached contents
      * of each of the directories on the search path.
      */
-    if (!hasSlash || (cp - name == 2 && *name == '.')) {
+    if (!hasSlash || (base - name == 2 && *name == '.')) {
 	/*
 	 * We look through all the directories on the path seeking one which
 	 * contains the final component of the given name.  If such a beast
@@ -1126,7 +1126,7 @@ Dir_FindFile(const char *name, Lst path)
 	 * This is so there are no conflicts between what the user
 	 * specifies (fish.c) and what pmake finds (./fish.c).
 	 */
-	if (!hasLastDot && (file = DirFindDot(hasSlash, name, cp)) != NULL) {
+	if (!hasLastDot && (file = DirFindDot(hasSlash, name, base)) != NULL) {
 	    Lst_Close(path);
 	    return file;
 	}
@@ -1135,13 +1135,13 @@ Dir_FindFile(const char *name, Lst path)
 	    p = LstNode_Datum(ln);
 	    if (p == dotLast)
 		continue;
-	    if ((file = DirLookup(p, name, cp, hasSlash)) != NULL) {
+	    if ((file = DirLookup(p, name, base, hasSlash)) != NULL) {
 		Lst_Close(path);
 		return file;
 	    }
 	}
 
-	if (hasLastDot && (file = DirFindDot(hasSlash, name, cp)) != NULL) {
+	if (hasLastDot && (file = DirFindDot(hasSlash, name, base)) != NULL) {
 	    Lst_Close(path);
 	    return file;
 	}
@@ -1168,9 +1168,9 @@ Dir_FindFile(const char *name, Lst path)
 	return NULL;
     }
 
-    if (*cp == '\0') {
+    if (*base == '\0') {
 	/* we were given a trailing "/" */
-	cp = trailing_dot;
+	base = trailing_dot;
     }
 
     if (name[0] != '/') {
@@ -1238,7 +1238,7 @@ Dir_FindFile(const char *name, Lst path)
 	DIR_DEBUG0("   Trying exact path matches...\n");
 
 	if (!hasLastDot && cur &&
-	    ((file = DirLookupAbs(cur, name, cp)) != NULL)) {
+	    ((file = DirLookupAbs(cur, name, base)) != NULL)) {
 	    if (file[0] == '\0') {
 		free(file);
 		return NULL;
@@ -1251,7 +1251,7 @@ Dir_FindFile(const char *name, Lst path)
 	    p = LstNode_Datum(ln);
 	    if (p == dotLast)
 		continue;
-	    if ((file = DirLookupAbs(p, name, cp)) != NULL) {
+	    if ((file = DirLookupAbs(p, name, base)) != NULL) {
 		Lst_Close(path);
 		if (file[0] == '\0') {
 		    free(file);
@@ -1263,7 +1263,7 @@ Dir_FindFile(const char *name, Lst path)
 	Lst_Close(path);
 
 	if (hasLastDot && cur &&
-	    ((file = DirLookupAbs(cur, name, cp)) != NULL)) {
+	    ((file = DirLookupAbs(cur, name, base)) != NULL)) {
 	    if (file[0] == '\0') {
 		free(file);
 		return NULL;
@@ -1290,13 +1290,13 @@ Dir_FindFile(const char *name, Lst path)
      * b/c we added it here. This is not good...
      */
 #ifdef notdef
-    if (cp == traling_dot) {
-	cp = strrchr(name, '/');
-	cp += 1;
+    if (base == trailing_dot) {
+	base = strrchr(name, '/');
+	base += 1;
     }
-    cp[-1] = '\0';
+    base[-1] = '\0';
     (void)Dir_AddDir(path, name);
-    cp[-1] = '/';
+    base[-1] = '/';
 
     bigmisses += 1;
     ln = Lst_Last(path);
@@ -1306,7 +1306,7 @@ Dir_FindFile(const char *name, Lst path)
 	p = LstNode_Datum(ln);
     }
 
-    if (Hash_FindEntry(&p->files, cp) != NULL) {
+    if (Hash_FindEntry(&p->files, base) != NULL) {
 	return bmake_strdup(name);
     } else {
 	return NULL;
