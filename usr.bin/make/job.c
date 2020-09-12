@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.230 2020/09/11 17:32:36 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.231 2020/09/12 15:03:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.230 2020/09/11 17:32:36 rillig Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.231 2020/09/12 15:03:40 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.230 2020/09/11 17:32:36 rillig Exp $");
+__RCSID("$NetBSD: job.c,v 1.231 2020/09/12 15:03:40 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -742,7 +742,7 @@ JobPrintCommand(void *cmdp, void *jobp)
 		 * We're not actually executing anything...
 		 * but this one needs to be - use compat mode just for it.
 		 */
-		CompatRunCommand(cmdp, job->node);
+		Compat_RunCommand(cmdp, job->node);
 		free(cmdStart);
 		return 0;
 	    }
