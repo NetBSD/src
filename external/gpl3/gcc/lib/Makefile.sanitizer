@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sanitizer,v 1.14 2020/09/11 01:05:28 kamil Exp $
+#	$NetBSD: Makefile.sanitizer,v 1.15 2020/09/12 15:01:38 kamil Exp $
 
 SANITIZER=${GCCDIST}/libsanitizer
 .PATH: ${SANITIZER}/interception ${SANITIZER}/sanitizer_common
@@ -76,9 +76,6 @@ CSHLIBFLAGS+= -DPIC
 SRCS+=	${INTERCEPTION_SRCS} ${SANITIZER_SRCS}
 CPPFLAGS+=-I${SANITIZER}/include -I${SANITIZER}
 CPPFLAGS.sanitizer_netbsd.cc+=-I${GCCDIST}/gcc/ginclude
-# XXX wants old lwp info and power ioctl, npf wants nv.h
-CPPFLAGS.sanitizer_platform_limits_netbsd.cc+= -D__LEGACY_PT_LWPINFO -D_KMEMUSER \
-	-I${NETBSDSRCDIR}/sys/external/bsd/libnv/dist
 CPPFLAGS+=-D_DEBUG -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS
 CPPFLAGS+=-D__STDC_LIMIT_MACROS -DSANITIZER_HAS_EXCEPTIONS=1
 CPPFLAGS+=-DSANITIZER_NEEDS_SEGV=1

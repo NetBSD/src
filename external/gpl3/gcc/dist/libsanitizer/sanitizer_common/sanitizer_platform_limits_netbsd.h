@@ -1,7 +1,8 @@
 //===-- sanitizer_platform_limits_netbsd.h --------------------------------===//
 //
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
 //
@@ -18,18 +19,11 @@
 #include "sanitizer_internal_defs.h"
 #include "sanitizer_platform.h"
 
-#define _GET_LINK_MAP_BY_DLOPEN_HANDLE(handle, shift) \
-  ((link_map *)((handle) == nullptr ? nullptr : ((char *)(handle) + (shift))))
-
-#if defined(__x86_64__)
-#define GET_LINK_MAP_BY_DLOPEN_HANDLE(handle) \
-  _GET_LINK_MAP_BY_DLOPEN_HANDLE(handle, 312)
-#elif defined(__i386__)
-#define GET_LINK_MAP_BY_DLOPEN_HANDLE(handle) \
-  _GET_LINK_MAP_BY_DLOPEN_HANDLE(handle, 164)
-#endif
-
 namespace __sanitizer {
+void *__sanitizer_get_link_map_by_dlopen_handle(void *handle);
+#define GET_LINK_MAP_BY_DLOPEN_HANDLE(handle) \
+  (link_map *)__sanitizer_get_link_map_by_dlopen_handle(handle)
+
 extern unsigned struct_utsname_sz;
 extern unsigned struct_stat_sz;
 extern unsigned struct_rusage_sz;
@@ -47,6 +41,7 @@ extern unsigned struct_timezone_sz;
 extern unsigned struct_tms_sz;
 extern unsigned struct_itimerspec_sz;
 extern unsigned struct_sigevent_sz;
+extern unsigned struct_stack_t_sz;
 extern unsigned struct_sched_param_sz;
 extern unsigned struct_statfs_sz;
 extern unsigned struct_sockaddr_sz;
@@ -58,6 +53,29 @@ extern unsigned struct_timespec_sz;
 extern unsigned struct_sembuf_sz;
 
 extern unsigned struct_kevent_sz;
+extern unsigned struct_FTS_sz;
+extern unsigned struct_FTSENT_sz;
+
+extern unsigned struct_regex_sz;
+extern unsigned struct_regmatch_sz;
+
+extern unsigned struct_fstab_sz;
+
+struct __sanitizer_regmatch {
+  OFF_T rm_so;
+  OFF_T rm_eo;
+};
+
+typedef struct __sanitizer_modctl_load {
+  const char *ml_filename;
+  int ml_flags;
+  const char *ml_props;
+  uptr ml_propslen;
+} __sanitizer_modctl_load_t;
+extern const int modctl_load;
+extern const int modctl_unload;
+extern const int modctl_stat;
+extern const int modctl_exists;
 
 union __sanitizer_sigval {
   int sival_int;
@@ -331,12 +349,12 @@ struct __sanitizer_addrinfo {
   int ai_socktype;
   int ai_protocol;
 #if defined(__sparc__) && defined(_LP64)
-  int __ai_pad0;      /* ABI compatibility */
-#endif  
+  int __ai_pad0;
+#endif
   unsigned ai_addrlen;
 #if defined(__alpha__) || (defined(__i386__) && defined(_LP64))
-  int __ai_pad0;      /* ABI compatibility */
-#endif  
+  int __ai_pad0;
+#endif
   char *ai_canonname;
   void *ai_addr;
   struct __sanitizer_addrinfo *ai_next;
@@ -388,6 +406,8 @@ extern int ptrace_pt_get_event_mask;
 extern int ptrace_pt_get_process_state;
 extern int ptrace_pt_set_siginfo;
 extern int ptrace_pt_get_siginfo;
+extern int ptrace_pt_lwpstatus;
+extern int ptrace_pt_lwpnext;
 extern int ptrace_piod_read_d;
 extern int ptrace_piod_write_d;
 extern int ptrace_piod_read_i;
@@ -412,8 +432,17 @@ struct __sanitizer_ptrace_lwpinfo {
   int pl_event;
 };
 
+struct __sanitizer_ptrace_lwpstatus {
+  __sanitizer_lwpid_t pl_lwpid;
+  __sanitizer_sigset_t pl_sigpend;
+  __sanitizer_sigset_t pl_sigmask;
+  char pl_name[20];
+  void *pl_private;
+};
+
 extern unsigned struct_ptrace_ptrace_io_desc_struct_sz;
 extern unsigned struct_ptrace_ptrace_lwpinfo_struct_sz;
+extern unsigned struct_ptrace_ptrace_lwpstatus_struct_sz;
 extern unsigned struct_ptrace_ptrace_event_struct_sz;
 extern unsigned struct_ptrace_ptrace_siginfo_struct_sz;
 
@@ -429,8 +458,36 @@ struct __sanitizer_wordexp_t {
   uptr we_nbytes;
 };
 
-typedef char __sanitizer_FILE;
-#define SANITIZER_HAS_STRUCT_FILE 0
+struct __sanitizer_FILE {
+  unsigned char *_p;
+  int _r;
+  int _w;
+  unsigned short _flags;
+  short _file;
+  struct {
+    unsigned char *_base;
+    int _size;
+  } _bf;
+  int _lbfsize;
+  void *_cookie;
+  int (*_close)(void *ptr);
+  u64 (*_read)(void *, void *, uptr);
+  u64 (*_seek)(void *, u64, int);
+  uptr (*_write)(void *, const void *, uptr);
+  struct {
+    unsigned char *_base;
+    int _size;
+  } _ext;
+  unsigned char *_up;
+  int _ur;
+  unsigned char _ubuf[3];
+  unsigned char _nbuf[1];
+  int (*_flush)(void *ptr);
+  char _lb_unused[sizeof(uptr)];
+  int _blksize;
+  u64 _offset;
+};
+#define SANITIZER_HAS_STRUCT_FILE 1
 
 extern int shmctl_ipc_stat;
 
@@ -463,6 +520,8 @@ struct __sanitizer_ttyent {
   char *ty_comment;
   char *ty_class;
 };
+
+extern const unsigned long __sanitizer_bufsiz;
 
 #define IOC_NRBITS 8
 #define IOC_TYPEBITS 8
@@ -500,7 +559,6 @@ extern unsigned struct_atabusiodetach_args_sz;
 extern unsigned struct_atabusioscan_args_sz;
 extern unsigned struct_ath_diag_sz;
 extern unsigned struct_atm_flowmap_sz;
-extern unsigned struct_atm_pseudoioctl_sz;
 extern unsigned struct_audio_buf_info_sz;
 extern unsigned struct_audio_device_sz;
 extern unsigned struct_audio_encoding_sz;
@@ -755,7 +813,6 @@ extern unsigned struct_rf_recon_req_sz;
 extern unsigned struct_rio_conf_sz;
 extern unsigned struct_rio_interface_sz;
 extern unsigned struct_rio_stats_sz;
-extern unsigned struct_satlink_id_sz;
 extern unsigned struct_scan_io_sz;
 extern unsigned struct_scbusaccel_args_sz;
 extern unsigned struct_scbusiodetach_args_sz;
@@ -803,6 +860,29 @@ extern unsigned struct_usb_config_desc_sz;
 extern unsigned struct_usb_ctl_report_desc_sz;
 extern unsigned struct_usb_ctl_report_sz;
 extern unsigned struct_usb_ctl_request_sz;
+#if defined(__x86_64__)
+extern unsigned struct_nvmm_ioc_capability_sz;
+extern unsigned struct_nvmm_ioc_machine_create_sz;
+extern unsigned struct_nvmm_ioc_machine_destroy_sz;
+extern unsigned struct_nvmm_ioc_machine_configure_sz;
+extern unsigned struct_nvmm_ioc_vcpu_create_sz;
+extern unsigned struct_nvmm_ioc_vcpu_destroy_sz;
+extern unsigned struct_nvmm_ioc_vcpu_configure_sz;
+extern unsigned struct_nvmm_ioc_vcpu_setstate_sz;
+extern unsigned struct_nvmm_ioc_vcpu_getstate_sz;
+extern unsigned struct_nvmm_ioc_vcpu_inject_sz;
+extern unsigned struct_nvmm_ioc_vcpu_run_sz;
+extern unsigned struct_nvmm_ioc_gpa_map_sz;
+extern unsigned struct_nvmm_ioc_gpa_unmap_sz;
+extern unsigned struct_nvmm_ioc_hva_map_sz;
+extern unsigned struct_nvmm_ioc_hva_unmap_sz;
+extern unsigned struct_nvmm_ioc_ctl_sz;
+#endif
+extern unsigned struct_spi_ioctl_configure_sz;
+extern unsigned struct_spi_ioctl_transfer_sz;
+extern unsigned struct_autofs_daemon_request_sz;
+extern unsigned struct_autofs_daemon_done_sz;
+extern unsigned struct_sctp_connectx_addrs_sz;
 extern unsigned struct_usb_device_info_old_sz;
 extern unsigned struct_usb_device_info_sz;
 extern unsigned struct_usb_device_stats_sz;
@@ -842,6 +922,9 @@ extern unsigned struct_vnd_user_sz;
 extern unsigned struct_vt_stat_sz;
 extern unsigned struct_wdog_conf_sz;
 extern unsigned struct_wdog_mode_sz;
+extern unsigned struct_ipmi_recv_sz;
+extern unsigned struct_ipmi_req_sz;
+extern unsigned struct_ipmi_cmdspec_sz;
 extern unsigned struct_wfq_conf_sz;
 extern unsigned struct_wfq_getqid_sz;
 extern unsigned struct_wfq_getstats_sz;
@@ -920,6 +1003,7 @@ extern unsigned struct_iscsi_wait_event_parameters_sz;
 extern unsigned struct_isp_stats_sz;
 extern unsigned struct_lsenable_sz;
 extern unsigned struct_lsdisable_sz;
+extern unsigned struct_audio_format_query_sz;
 extern unsigned struct_mixer_ctrl_sz;
 extern unsigned struct_mixer_devinfo_sz;
 extern unsigned struct_mpu_command_rec_sz;
@@ -937,12 +1021,12 @@ extern unsigned struct_RF_SparetWait_sz;
 extern unsigned struct_RF_ComponentLabel_sz;
 extern unsigned struct_RF_SingleComponent_sz;
 extern unsigned struct_RF_ProgressInfo_sz;
-
+extern unsigned struct_nvlist_ref_sz;
+extern unsigned struct_StringList_sz;
 
 // A special value to mark ioctls that are not present on the target platform,
 // when it can not be determined without including any system headers.
 extern const unsigned IOCTL_NOT_PRESENT;
-
 
 extern unsigned IOCTL_AFM_ADDFMAP;
 extern unsigned IOCTL_AFM_DELFMAP;
@@ -1205,6 +1289,7 @@ extern unsigned IOCTL_MLX_REBUILDSTAT;
 extern unsigned IOCTL_MLX_GET_SYSDRIVE;
 extern unsigned IOCTL_MLX_GET_CINFO;
 extern unsigned IOCTL_NVME_PASSTHROUGH_CMD;
+extern unsigned IOCTL_FWCFGIO_SET_INDEX;
 extern unsigned IOCTL_IRDA_RESET_PARAMS;
 extern unsigned IOCTL_IRDA_SET_PARAMS;
 extern unsigned IOCTL_IRDA_GET_SPEEDMASK;
@@ -1212,9 +1297,6 @@ extern unsigned IOCTL_IRDA_GET_TURNAROUNDMASK;
 extern unsigned IOCTL_IRFRAMETTY_GET_DEVICE;
 extern unsigned IOCTL_IRFRAMETTY_GET_DONGLE;
 extern unsigned IOCTL_IRFRAMETTY_SET_DONGLE;
-extern unsigned IOCTL_SATIORESET;
-extern unsigned IOCTL_SATIOGID;
-extern unsigned IOCTL_SATIOSBUFSIZE;
 extern unsigned IOCTL_ISV_CMD;
 extern unsigned IOCTL_WTQICMD;
 extern unsigned IOCTL_ISCSI_GET_VERSION;
@@ -1526,6 +1608,26 @@ extern unsigned IOCTL_SPKRTONE;
 extern unsigned IOCTL_SPKRTUNE;
 extern unsigned IOCTL_SPKRGETVOL;
 extern unsigned IOCTL_SPKRSETVOL;
+#if defined(__x86_64__)
+extern unsigned IOCTL_NVMM_IOC_CAPABILITY;
+extern unsigned IOCTL_NVMM_IOC_MACHINE_CREATE;
+extern unsigned IOCTL_NVMM_IOC_MACHINE_DESTROY;
+extern unsigned IOCTL_NVMM_IOC_MACHINE_CONFIGURE;
+extern unsigned IOCTL_NVMM_IOC_VCPU_CREATE;
+extern unsigned IOCTL_NVMM_IOC_VCPU_DESTROY;
+extern unsigned IOCTL_NVMM_IOC_VCPU_CONFIGURE;
+extern unsigned IOCTL_NVMM_IOC_VCPU_SETSTATE;
+extern unsigned IOCTL_NVMM_IOC_VCPU_GETSTATE;
+extern unsigned IOCTL_NVMM_IOC_VCPU_INJECT;
+extern unsigned IOCTL_NVMM_IOC_VCPU_RUN;
+extern unsigned IOCTL_NVMM_IOC_GPA_MAP;
+extern unsigned IOCTL_NVMM_IOC_GPA_UNMAP;
+extern unsigned IOCTL_NVMM_IOC_HVA_MAP;
+extern unsigned IOCTL_NVMM_IOC_HVA_UNMAP;
+extern unsigned IOCTL_NVMM_IOC_CTL;
+#endif
+extern unsigned IOCTL_AUTOFSREQUEST;
+extern unsigned IOCTL_AUTOFSDONE;
 extern unsigned IOCTL_BIOCGBLEN;
 extern unsigned IOCTL_BIOCSBLEN;
 extern unsigned IOCTL_BIOCSETF;
@@ -1544,19 +1646,12 @@ extern unsigned IOCTL_BIOCGHDRCMPLT;
 extern unsigned IOCTL_BIOCSHDRCMPLT;
 extern unsigned IOCTL_BIOCSDLT;
 extern unsigned IOCTL_BIOCGDLTLIST;
-extern unsigned IOCTL_BIOCGSEESENT;
-extern unsigned IOCTL_BIOCSSEESENT;
+extern unsigned IOCTL_BIOCGDIRECTION;
+extern unsigned IOCTL_BIOCSDIRECTION;
 extern unsigned IOCTL_BIOCSRTIMEOUT;
 extern unsigned IOCTL_BIOCGRTIMEOUT;
 extern unsigned IOCTL_BIOCGFEEDBACK;
 extern unsigned IOCTL_BIOCSFEEDBACK;
-extern unsigned IOCTL_SIOCRAWATM;
-extern unsigned IOCTL_SIOCATMENA;
-extern unsigned IOCTL_SIOCATMDIS;
-extern unsigned IOCTL_SIOCSPVCTX;
-extern unsigned IOCTL_SIOCGPVCTX;
-extern unsigned IOCTL_SIOCSPVCSIF;
-extern unsigned IOCTL_SIOCGPVCSIF;
 extern unsigned IOCTL_GRESADDRS;
 extern unsigned IOCTL_GRESADDRD;
 extern unsigned IOCTL_GREGADDRS;
@@ -1595,6 +1690,7 @@ extern unsigned IOCTL_IOC_NPF_STATS;
 extern unsigned IOCTL_IOC_NPF_SAVE;
 extern unsigned IOCTL_IOC_NPF_RULE;
 extern unsigned IOCTL_IOC_NPF_CONN_LOOKUP;
+extern unsigned IOCTL_IOC_NPF_TABLE_REPLACE;
 extern unsigned IOCTL_PPPOESETPARMS;
 extern unsigned IOCTL_PPPOEGETPARMS;
 extern unsigned IOCTL_PPPOEGETSESSION;
@@ -1711,6 +1807,8 @@ extern unsigned IOCTL_SIOCRMNAT;
 extern unsigned IOCTL_SIOCGNATS;
 extern unsigned IOCTL_SIOCGNATL;
 extern unsigned IOCTL_SIOCPURGENAT;
+extern unsigned IOCTL_SIOCCONNECTX;
+extern unsigned IOCTL_SIOCCONNECTXDEL;
 extern unsigned IOCTL_SIOCSIFINFO_FLAGS;
 extern unsigned IOCTL_SIOCAADDRCTL_POLICY;
 extern unsigned IOCTL_SIOCDADDRCTL_POLICY;
@@ -1746,6 +1844,9 @@ extern unsigned IOCTL_AUDIO_GETPROPS;
 extern unsigned IOCTL_AUDIO_GETBUFINFO;
 extern unsigned IOCTL_AUDIO_SETCHAN;
 extern unsigned IOCTL_AUDIO_GETCHAN;
+extern unsigned IOCTL_AUDIO_QUERYFORMAT;
+extern unsigned IOCTL_AUDIO_GETFORMAT;
+extern unsigned IOCTL_AUDIO_SETFORMAT;
 extern unsigned IOCTL_AUDIO_MIXER_READ;
 extern unsigned IOCTL_AUDIO_MIXER_WRITE;
 extern unsigned IOCTL_AUDIO_MIXER_DEVINFO;
@@ -1831,6 +1932,7 @@ extern unsigned IOCTL_DIOCTUR;
 extern unsigned IOCTL_DIOCMWEDGES;
 extern unsigned IOCTL_DIOCGSECTORSIZE;
 extern unsigned IOCTL_DIOCGMEDIASIZE;
+extern unsigned IOCTL_DIOCRMWEDGES;
 extern unsigned IOCTL_DRVDETACHDEV;
 extern unsigned IOCTL_DRVRESCANBUS;
 extern unsigned IOCTL_DRVCTLCOMMAND;
@@ -1855,6 +1957,8 @@ extern unsigned IOCTL_FDIOCGETFORMAT;
 extern unsigned IOCTL_FDIOCFORMAT_TRACK;
 extern unsigned IOCTL_FIOCLEX;
 extern unsigned IOCTL_FIONCLEX;
+extern unsigned IOCTL_FIOSEEKDATA;
+extern unsigned IOCTL_FIOSEEKHOLE;
 extern unsigned IOCTL_FIONREAD;
 extern unsigned IOCTL_FIONBIO;
 extern unsigned IOCTL_FIOASYNC;
@@ -1930,6 +2034,8 @@ extern unsigned IOCTL_SEQUENCER_TMR_TEMPO;
 extern unsigned IOCTL_SEQUENCER_TMR_SOURCE;
 extern unsigned IOCTL_SEQUENCER_TMR_METRONOME;
 extern unsigned IOCTL_SEQUENCER_TMR_SELECT;
+extern unsigned IOCTL_SPI_IOCTL_CONFIGURE;
+extern unsigned IOCTL_SPI_IOCTL_TRANSFER;
 extern unsigned IOCTL_MTIOCTOP;
 extern unsigned IOCTL_MTIOCGET;
 extern unsigned IOCTL_MTIOCIEOT;
@@ -1940,7 +2046,6 @@ extern unsigned IOCTL_MTIOCSLOCATE;
 extern unsigned IOCTL_MTIOCHLOCATE;
 extern unsigned IOCTL_POWER_EVENT_RECVDICT;
 extern unsigned IOCTL_POWER_IOC_GET_TYPE;
-extern unsigned IOCTL_POWER_IOC_GET_TYPE_WITH_LOSSAGE;
 extern unsigned IOCTL_RIOCGINFO;
 extern unsigned IOCTL_RIOCSINFO;
 extern unsigned IOCTL_RIOCSSRCH;
@@ -1975,6 +2080,7 @@ extern unsigned IOCTL_SIOCGLOWAT;
 extern unsigned IOCTL_SIOCATMARK;
 extern unsigned IOCTL_SIOCSPGRP;
 extern unsigned IOCTL_SIOCGPGRP;
+extern unsigned IOCTL_SIOCPEELOFF;
 extern unsigned IOCTL_SIOCADDRT;
 extern unsigned IOCTL_SIOCDELRT;
 extern unsigned IOCTL_SIOCSIFADDR;
@@ -2032,6 +2138,12 @@ extern unsigned IOCTL_SIOCGLINKSTR;
 extern unsigned IOCTL_SIOCSLINKSTR;
 extern unsigned IOCTL_SIOCGETHERCAP;
 extern unsigned IOCTL_SIOCGIFINDEX;
+extern unsigned IOCTL_SIOCSETHERCAP;
+extern unsigned IOCTL_SIOCSIFDESCR;
+extern unsigned IOCTL_SIOCGIFDESCR;
+extern unsigned IOCTL_SIOCGUMBINFO;
+extern unsigned IOCTL_SIOCSUMBPARAM;
+extern unsigned IOCTL_SIOCGUMBPARAM;
 extern unsigned IOCTL_SIOCSETPFSYNC;
 extern unsigned IOCTL_SIOCGETPFSYNC;
 extern unsigned IOCTL_PPS_IOC_CREATE;
@@ -2153,6 +2265,19 @@ extern unsigned IOCTL_WDOGIOC_WHICH;
 extern unsigned IOCTL_WDOGIOC_TICKLE;
 extern unsigned IOCTL_WDOGIOC_GTICKLER;
 extern unsigned IOCTL_WDOGIOC_GWDOGS;
+extern unsigned IOCTL_KCOV_IOC_SETBUFSIZE;
+extern unsigned IOCTL_KCOV_IOC_ENABLE;
+extern unsigned IOCTL_KCOV_IOC_DISABLE;
+extern unsigned IOCTL_IPMICTL_RECEIVE_MSG_TRUNC;
+extern unsigned IOCTL_IPMICTL_RECEIVE_MSG;
+extern unsigned IOCTL_IPMICTL_SEND_COMMAND;
+extern unsigned IOCTL_IPMICTL_REGISTER_FOR_CMD;
+extern unsigned IOCTL_IPMICTL_UNREGISTER_FOR_CMD;
+extern unsigned IOCTL_IPMICTL_SET_GETS_EVENTS_CMD;
+extern unsigned IOCTL_IPMICTL_SET_MY_ADDRESS_CMD;
+extern unsigned IOCTL_IPMICTL_GET_MY_ADDRESS_CMD;
+extern unsigned IOCTL_IPMICTL_SET_MY_LUN_CMD;
+extern unsigned IOCTL_IPMICTL_GET_MY_LUN_CMD;
 extern unsigned IOCTL_SNDCTL_DSP_RESET;
 extern unsigned IOCTL_SNDCTL_DSP_SYNC;
 extern unsigned IOCTL_SNDCTL_DSP_SPEED;
@@ -2198,6 +2323,74 @@ extern unsigned IOCTL_SNDCTL_DSP_SILENCE;
 
 extern const int si_SEGV_MAPERR;
 extern const int si_SEGV_ACCERR;
+
+extern const unsigned SHA1_CTX_sz;
+extern const unsigned SHA1_return_length;
+
+extern const unsigned MD4_CTX_sz;
+extern const unsigned MD4_return_length;
+
+extern const unsigned RMD160_CTX_sz;
+extern const unsigned RMD160_return_length;
+
+extern const unsigned MD5_CTX_sz;
+extern const unsigned MD5_return_length;
+
+extern const unsigned fpos_t_sz;
+
+extern const unsigned MD2_CTX_sz;
+extern const unsigned MD2_return_length;
+
+#define SHA2_EXTERN(LEN)                          \
+  extern const unsigned SHA##LEN##_CTX_sz;        \
+  extern const unsigned SHA##LEN##_return_length; \
+  extern const unsigned SHA##LEN##_block_length;  \
+  extern const unsigned SHA##LEN##_digest_length
+
+SHA2_EXTERN(224);
+SHA2_EXTERN(256);
+SHA2_EXTERN(384);
+SHA2_EXTERN(512);
+
+#undef SHA2_EXTERN
+
+extern const int unvis_valid;
+extern const int unvis_validpush;
+
+struct __sanitizer_cdbr {
+  void (*unmap)(void *, void *, uptr);
+  void *cookie;
+  u8 *mmap_base;
+  uptr mmap_size;
+
+  u8 *hash_base;
+  u8 *offset_base;
+  u8 *data_base;
+
+  u32 data_size;
+  u32 entries;
+  u32 entries_index;
+  u32 seed;
+
+  u8 offset_size;
+  u8 index_size;
+
+  u32 entries_m;
+  u32 entries_index_m;
+  u8 entries_s1, entries_s2;
+  u8 entries_index_s1, entries_index_s2;
+};
+
+struct __sanitizer_cdbw {
+  uptr data_counter;
+  uptr data_allocated;
+  uptr data_size;
+  uptr *data_len;
+  void **data_ptr;
+  uptr hash_size;
+  void *hash;
+  uptr key_counter;
+};
 }  // namespace __sanitizer
 
 #define CHECK_TYPE_SIZE(TYPE) \
@@ -2218,6 +2411,9 @@ extern const int si_SEGV_ACCERR;
                  offsetof(struct CLASS, MEMBER))
 
 #define SIGACTION_SYMNAME __sigaction14
+
+// Compat with 9.0
+extern unsigned struct_statvfs90_sz;
 
 #endif  // SANITIZER_NETBSD
 

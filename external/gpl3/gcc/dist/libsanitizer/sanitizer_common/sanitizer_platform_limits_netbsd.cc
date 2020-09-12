@@ -1,7 +1,8 @@
-//===-- sanitizer_platform_limits_netbsd.cc -------------------------------===//
+//===-- sanitizer_platform_limits_netbsd.cpp ------------------------------===//
 //
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
 //
@@ -13,129 +14,22 @@
 #include "sanitizer_platform.h"
 
 #if SANITIZER_NETBSD
+
+#define _KMEMUSER
+#define RAY_DO_SIGLEV
+#define __LEGACY_PT_LWPINFO
+
+// clang-format off
 #include <sys/param.h>
 #include <sys/types.h>
-
-#include <altq/altq.h>
-#include <altq/altq_afmap.h>
-#include <altq/altq_blue.h>
-#include <altq/altq_cbq.h>
-#include <altq/altq_cdnr.h>
-#include <altq/altq_fifoq.h>
-#include <altq/altq_hfsc.h>
-#include <altq/altq_jobs.h>
-#include <altq/altq_priq.h>
-#include <altq/altq_red.h>
-#include <altq/altq_rio.h>
-#include <altq/altq_wfq.h>
-#include <arpa/inet.h>
-#include <crypto/cryptodev.h>
-#include <dev/apm/apmio.h>
-#include <dev/dm/netbsd-dm.h>
-#include <dev/dmover/dmover_io.h>
-#include <dev/dtv/dtvio_demux.h>
-#include <dev/dtv/dtvio_frontend.h>
-#include <dev/hdaudio/hdaudioio.h>
-#include <dev/hdmicec/hdmicecio.h>
-#include <dev/hpc/hpcfbio.h>
-#include <dev/i2o/iopio.h>
-#include <dev/ic/athioctl.h>
-#include <dev/ic/bt8xx.h>
-#include <dev/ic/icp_ioctl.h>
-#include <dev/ic/isp_ioctl.h>
-#include <dev/ic/mlxio.h>
-#include <dev/ic/nvmeio.h>
-#include <dev/ir/irdaio.h>
-#include <dev/isa/isvio.h>
-#include <dev/isa/wtreg.h>
-#include <dev/iscsi/iscsi_ioctl.h>
-#include <dev/ofw/openfirmio.h>
-#include <dev/pci/amrio.h>
-
-#include <dev/pci/mlyreg.h>
-#include <dev/pci/mlyio.h>
-
-#include <dev/pci/pciio.h>
-#include <dev/pci/tweio.h>
-#include <dev/pcmcia/if_cnwioctl.h>
-#include <dirent.h>
-#include <glob.h>
-#include <grp.h>
-#include <ifaddrs.h>
-#include <limits.h>
-#include <link_elf.h>
-#include <net/if.h>
-#include <net/if_ether.h>
-#include <net/ppp_defs.h>
-#include <net/route.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <netinet/ip_compat.h>
-#undef INLINE
-#include <netinet/ip_fil.h>
-#include <netinet/ip_mroute.h>
-#include <poll.h>
-#include <pthread.h>
-#include <pwd.h>
-#include <semaphore.h>
-#include <signal.h>
-#include <stddef.h>
-#include <stdio.h>
+#include <sys/sysctl.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
-#include <sys/dkbad.h>
 #include <sys/mount.h>
-#define RAY_DO_SIGLEV
-#include <dev/biovar.h>
-#include <dev/bluetooth/btdev.h>
-#include <dev/bluetooth/btsco.h>
-#include <dev/ccdvar.h>
-#include <dev/cgdvar.h>
-#include <dev/fssvar.h>
-#include <dev/kttcpio.h>
-#include <dev/lockstat.h>
-#include <dev/md.h>
-#include <dev/pcmcia/if_rayreg.h>
-#include <dev/raidframe/raidframeio.h>
-#include <dev/sbus/mbppio.h>
-#include <dev/scsipi/ses.h>
-#include <dev/spkrio.h>
-#include <dev/sun/disklabel.h>
-#include <dev/sun/fbio.h>
-#include <dev/sun/kbio.h>
-#include <dev/sun/vuid_event.h>
-/* XXX relies upon NBPG which is not always constant, or provided. */
-#ifdef NBPG
-#include <dev/tc/sticio.h>
-#endif
-#include <dev/usb/ukyopon.h>
-#include <dev/usb/usb.h>
-#include <dev/usb/utoppy.h>
-#include <dev/vme/xio.h>
-#include <dev/vndvar.h>
-#include <dev/wscons/wsconsio.h>
-#include <dev/wscons/wsdisplay_usl_io.h>
-#include <net/bpf.h>
-#include <net/if_gre.h>
-#include <net/if_ppp.h>
-#include <net/if_pppoe.h>
-#include <net/if_sppp.h>
-#include <net/if_srt.h>
-#include <net/if_tap.h>
-#include <net/if_tun.h>
-#include <nv.h>
-#include <net/npf.h>
-#include <net/pfvar.h>
-#include <net/slip.h>
-#include <netbt/hci.h>
-#include <netinet/ip_nat.h>
-#include <netinet/ip_proxy.h>
-#include <netinet6/in6_var.h>
-#include <netinet6/nd6.h>
-#include <soundcard.h>
 #include <sys/agpio.h>
 #include <sys/ataio.h>
 #include <sys/audioio.h>
+#include <sys/cdbr.h>
 #include <sys/cdio.h>
 #include <sys/chio.h>
 #include <sys/clockctl.h>
@@ -166,18 +60,32 @@
 #include <sys/verified_exec.h>
 #include <sys/videoio.h>
 #include <sys/wdog.h>
-//#include <xen/xenio.h>
 #include <sys/event.h>
 #include <sys/filio.h>
 #include <sys/ipc.h>
+#include <sys/ipmi.h>
+#include <sys/kcov.h>
 #include <sys/mman.h>
+#include <sys/module.h>
 #include <sys/mount.h>
 #include <sys/mqueue.h>
 #include <sys/msg.h>
 #include <sys/mtio.h>
 #include <sys/ptrace.h>
+
+// Compat for NetBSD < 9.99.30.
+#ifndef PT_LWPSTATUS
+#define PT_LWPSTATUS 24
+#endif
+#ifndef PT_LWPNEXT
+#define PT_LWPNEXT 25
+#endif
+
 #include <sys/resource.h>
 #include <sys/sem.h>
+#include <sys/scsiio.h>
+#include <sys/sha1.h>
+#include <sys/sha2.h>
 #include <sys/shm.h>
 #include <sys/signal.h>
 #include <sys/socket.h>
@@ -193,6 +101,402 @@
 #include <sys/types.h>
 #include <sys/ucontext.h>
 #include <sys/utsname.h>
+#include <altq/altq.h>
+#include <altq/altq_afmap.h>
+#include <altq/altq_blue.h>
+#include <altq/altq_cbq.h>
+#include <altq/altq_cdnr.h>
+#include <altq/altq_fifoq.h>
+#include <altq/altq_hfsc.h>
+#include <altq/altq_jobs.h>
+#include <altq/altq_priq.h>
+#include <altq/altq_red.h>
+#include <altq/altq_rio.h>
+#include <altq/altq_wfq.h>
+#include <arpa/inet.h>
+#include <crypto/cryptodev.h>
+#include <dev/apm/apmio.h>
+#include <dev/dm/netbsd-dm.h>
+#include <dev/dmover/dmover_io.h>
+#include <dev/dtv/dtvio_demux.h>
+#include <dev/dtv/dtvio_frontend.h>
+#if !__NetBSD_Prereq__(9, 99, 26)
+#include <dev/filemon/filemon.h>
+#else
+#define FILEMON_SET_FD          _IOWR('S', 1, int)
+#define FILEMON_SET_PID         _IOWR('S', 2, pid_t)
+#endif
+#include <dev/hdaudio/hdaudioio.h>
+#include <dev/hdmicec/hdmicecio.h>
+#include <dev/hpc/hpcfbio.h>
+#include <dev/i2o/iopio.h>
+#include <dev/ic/athioctl.h>
+#include <dev/ic/bt8xx.h>
+#include <dev/ic/icp_ioctl.h>
+#include <dev/ic/isp_ioctl.h>
+#include <dev/ic/mlxio.h>
+#include <dev/ic/qemufwcfgio.h>
+#include <dev/ic/nvmeio.h>
+#include <dev/ir/irdaio.h>
+#include <dev/isa/isvio.h>
+#include <dev/isa/wtreg.h>
+#if __has_include(<dev/iscsi/iscsi_ioctl.h>)
+#include <dev/iscsi/iscsi_ioctl.h>
+#else
+/* Fallback for MKISCSI=no */
+
+typedef struct {
+  uint32_t status;
+  uint32_t session_id;
+  uint32_t connection_id;
+} iscsi_conn_status_parameters_t;
+
+typedef struct {
+  uint32_t status;
+  uint16_t interface_version;
+  uint16_t major;
+  uint16_t minor;
+  uint8_t version_string[224];
+} iscsi_get_version_parameters_t;
+
+typedef struct {
+  uint32_t status;
+  uint32_t session_id;
+  uint32_t connection_id;
+  struct {
+    unsigned int immediate : 1;
+  } options;
+  uint64_t lun;
+  scsireq_t req; /* from <sys/scsiio.h> */
+} iscsi_iocommand_parameters_t;
+
+typedef enum {
+  ISCSI_AUTH_None = 0,
+  ISCSI_AUTH_CHAP = 1,
+  ISCSI_AUTH_KRB5 = 2,
+  ISCSI_AUTH_SRP = 3
+} iscsi_auth_types_t;
+
+typedef enum {
+  ISCSI_LOGINTYPE_DISCOVERY = 0,
+  ISCSI_LOGINTYPE_NOMAP = 1,
+  ISCSI_LOGINTYPE_MAP = 2
+} iscsi_login_session_type_t;
+
+typedef enum { ISCSI_DIGEST_None = 0, ISCSI_DIGEST_CRC32C = 1 } iscsi_digest_t;
+
+typedef enum {
+  ISCSI_SESSION_TERMINATED = 1,
+  ISCSI_CONNECTION_TERMINATED,
+  ISCSI_RECOVER_CONNECTION,
+  ISCSI_DRIVER_TERMINATING
+} iscsi_event_t;
+
+typedef struct {
+  unsigned int mutual_auth : 1;
+  unsigned int is_secure : 1;
+  unsigned int auth_number : 4;
+  iscsi_auth_types_t auth_type[4];
+} iscsi_auth_info_t;
+
+typedef struct {
+  uint32_t status;
+  int socket;
+  struct {
+    unsigned int HeaderDigest : 1;
+    unsigned int DataDigest : 1;
+    unsigned int MaxConnections : 1;
+    unsigned int DefaultTime2Wait : 1;
+    unsigned int DefaultTime2Retain : 1;
+    unsigned int MaxRecvDataSegmentLength : 1;
+    unsigned int auth_info : 1;
+    unsigned int user_name : 1;
+    unsigned int password : 1;
+    unsigned int target_password : 1;
+    unsigned int TargetName : 1;
+    unsigned int TargetAlias : 1;
+    unsigned int ErrorRecoveryLevel : 1;
+  } is_present;
+  iscsi_auth_info_t auth_info;
+  iscsi_login_session_type_t login_type;
+  iscsi_digest_t HeaderDigest;
+  iscsi_digest_t DataDigest;
+  uint32_t session_id;
+  uint32_t connection_id;
+  uint32_t MaxRecvDataSegmentLength;
+  uint16_t MaxConnections;
+  uint16_t DefaultTime2Wait;
+  uint16_t DefaultTime2Retain;
+  uint16_t ErrorRecoveryLevel;
+  void *user_name;
+  void *password;
+  void *target_password;
+  void *TargetName;
+  void *TargetAlias;
+} iscsi_login_parameters_t;
+
+typedef struct {
+  uint32_t status;
+  uint32_t session_id;
+} iscsi_logout_parameters_t;
+
+typedef struct {
+  uint32_t status;
+  uint32_t event_id;
+} iscsi_register_event_parameters_t;
+
+typedef struct {
+  uint32_t status;
+  uint32_t session_id;
+  uint32_t connection_id;
+} iscsi_remove_parameters_t;
+
+typedef struct {
+  uint32_t status;
+  uint32_t session_id;
+  void *response_buffer;
+  uint32_t response_size;
+  uint32_t response_used;
+  uint32_t response_total;
+  uint8_t key[224];
+} iscsi_send_targets_parameters_t;
+
+typedef struct {
+  uint32_t status;
+  uint8_t InitiatorName[224];
+  uint8_t InitiatorAlias[224];
+  uint8_t ISID[6];
+} iscsi_set_node_name_parameters_t;
+
+typedef struct {
+  uint32_t status;
+  uint32_t event_id;
+  iscsi_event_t event_kind;
+  uint32_t session_id;
+  uint32_t connection_id;
+  uint32_t reason;
+} iscsi_wait_event_parameters_t;
+
+#define ISCSI_GET_VERSION _IOWR(0, 1, iscsi_get_version_parameters_t)
+#define ISCSI_LOGIN _IOWR(0, 2, iscsi_login_parameters_t)
+#define ISCSI_LOGOUT _IOWR(0, 3, iscsi_logout_parameters_t)
+#define ISCSI_ADD_CONNECTION _IOWR(0, 4, iscsi_login_parameters_t)
+#define ISCSI_RESTORE_CONNECTION _IOWR(0, 5, iscsi_login_parameters_t)
+#define ISCSI_REMOVE_CONNECTION _IOWR(0, 6, iscsi_remove_parameters_t)
+#define ISCSI_CONNECTION_STATUS _IOWR(0, 7, iscsi_conn_status_parameters_t)
+#define ISCSI_SEND_TARGETS _IOWR(0, 8, iscsi_send_targets_parameters_t)
+#define ISCSI_SET_NODE_NAME _IOWR(0, 9, iscsi_set_node_name_parameters_t)
+#define ISCSI_IO_COMMAND _IOWR(0, 10, iscsi_iocommand_parameters_t)
+#define ISCSI_REGISTER_EVENT _IOWR(0, 11, iscsi_register_event_parameters_t)
+#define ISCSI_DEREGISTER_EVENT _IOWR(0, 12, iscsi_register_event_parameters_t)
+#define ISCSI_WAIT_EVENT _IOWR(0, 13, iscsi_wait_event_parameters_t)
+#define ISCSI_POLL_EVENT _IOWR(0, 14, iscsi_wait_event_parameters_t)
+#endif
+#include <dev/ofw/openfirmio.h>
+#include <dev/pci/amrio.h>
+#include <dev/pci/mlyreg.h>
+#include <dev/pci/mlyio.h>
+#include <dev/pci/pciio.h>
+#include <dev/pci/tweio.h>
+#include <dev/pcmcia/if_cnwioctl.h>
+#include <net/bpf.h>
+#include <net/if_gre.h>
+#include <net/ppp_defs.h>
+#include <net/if_ppp.h>
+#include <net/if_pppoe.h>
+#include <net/if_sppp.h>
+#include <net/if_srt.h>
+#include <net/if_tap.h>
+#include <net/if_tun.h>
+#include <net/npf.h>
+#include <net/pfvar.h>
+#include <net/slip.h>
+#include <netbt/hci.h>
+#include <netinet/ip_compat.h>
+#if __has_include(<netinet/ip_fil.h>)
+#include <netinet/ip_fil.h>
+#include <netinet/ip_nat.h>
+#include <netinet/ip_proxy.h>
+#else
+/* Fallback for MKIPFILTER=no */
+
+typedef struct ap_control {
+  char apc_label[16];
+  char apc_config[16];
+  unsigned char apc_p;
+  unsigned long apc_cmd;
+  unsigned long apc_arg;
+  void *apc_data;
+  size_t apc_dsize;
+} ap_ctl_t;
+
+typedef struct ipftq {
+  ipfmutex_t ifq_lock;
+  unsigned int ifq_ttl;
+  void *ifq_head;
+  void **ifq_tail;
+  void *ifq_next;
+  void **ifq_pnext;
+  int ifq_ref;
+  unsigned int ifq_flags;
+} ipftq_t;
+
+typedef struct ipfobj {
+  uint32_t ipfo_rev;
+  uint32_t ipfo_size;
+  void *ipfo_ptr;
+  int ipfo_type;
+  int ipfo_offset;
+  int ipfo_retval;
+  unsigned char ipfo_xxxpad[28];
+} ipfobj_t;
+
+#define SIOCADNAT _IOW('r', 60, struct ipfobj)
+#define SIOCRMNAT _IOW('r', 61, struct ipfobj)
+#define SIOCGNATS _IOWR('r', 62, struct ipfobj)
+#define SIOCGNATL _IOWR('r', 63, struct ipfobj)
+#define SIOCPURGENAT _IOWR('r', 100, struct ipfobj)
+#endif
+#include <netinet6/in6_var.h>
+#include <netinet6/nd6.h>
+#if !__NetBSD_Prereq__(9, 99, 51)
+#include <netsmb/smb_dev.h>
+#else
+struct smbioc_flags {
+  int ioc_level;
+  int ioc_mask;
+  int ioc_flags;
+};
+struct smbioc_oshare {
+  int ioc_opt;
+  int ioc_stype;
+  char ioc_share[129];
+  char ioc_password[129];
+  uid_t ioc_owner;
+  gid_t ioc_group;
+  mode_t ioc_mode;
+  mode_t ioc_rights;
+};
+struct smbioc_ossn {
+  int ioc_opt;
+  uint32_t ioc_svlen;
+  struct sockaddr *ioc_server;
+  uint32_t ioc_lolen;
+  struct sockaddr *ioc_local;
+  char ioc_srvname[16];
+  int ioc_timeout;
+  int ioc_retrycount;
+  char ioc_localcs[16];
+  char ioc_servercs[16];
+  char ioc_user[129];
+  char ioc_workgroup[129];
+  char ioc_password[129];
+  uid_t ioc_owner;
+  gid_t ioc_group;
+  mode_t ioc_mode;
+  mode_t ioc_rights;
+};
+struct smbioc_lookup {
+  int ioc_level;
+  int ioc_flags;
+  struct smbioc_ossn ioc_ssn;
+  struct smbioc_oshare ioc_sh;
+};
+struct smbioc_rq {
+  u_char ioc_cmd;
+  u_char ioc_twc;
+  void *ioc_twords;
+  u_short ioc_tbc;
+  void *ioc_tbytes;
+  int ioc_rpbufsz;
+  char *ioc_rpbuf;
+  u_char ioc_rwc;
+  u_short ioc_rbc;
+};
+struct smbioc_rw {
+  u_int16_t ioc_fh;
+  char *ioc_base;
+  off_t ioc_offset;
+  int ioc_cnt;
+};
+#define SMBIOC_OPENSESSION _IOW('n', 100, struct smbioc_ossn)
+#define SMBIOC_OPENSHARE _IOW('n', 101, struct smbioc_oshare)
+#define SMBIOC_REQUEST _IOWR('n', 102, struct smbioc_rq)
+#define SMBIOC_T2RQ _IOWR('n', 103, struct smbioc_t2rq)
+#define SMBIOC_SETFLAGS _IOW('n', 104, struct smbioc_flags)
+#define SMBIOC_LOOKUP _IOW('n', 106, struct smbioc_lookup)
+#define SMBIOC_READ _IOWR('n', 107, struct smbioc_rw)
+#define SMBIOC_WRITE _IOWR('n', 108, struct smbioc_rw)
+#endif
+#include <dev/biovar.h>
+#include <dev/bluetooth/btdev.h>
+#include <dev/bluetooth/btsco.h>
+#include <dev/ccdvar.h>
+#include <dev/cgdvar.h>
+#include <dev/fssvar.h>
+#include <dev/kttcpio.h>
+#include <dev/lockstat.h>
+#include <dev/md.h>
+#include <net/if_ether.h>
+#include <dev/pcmcia/if_rayreg.h>
+#include <stdio.h>
+#include <dev/raidframe/raidframeio.h>
+#include <dev/sbus/mbppio.h>
+#include <dev/scsipi/ses.h>
+#include <dev/spi/spi_io.h>
+#include <dev/spkrio.h>
+#include <dev/sun/disklabel.h>
+#include <dev/sun/fbio.h>
+#include <dev/sun/kbio.h>
+#include <dev/sun/vuid_event.h>
+#include <dev/tc/sticio.h>
+#include <dev/usb/ukyopon.h>
+#if !__NetBSD_Prereq__(9, 99, 44)
+#include <dev/usb/urio.h>
+#else
+struct urio_command {
+  unsigned short length;
+  int request;
+  int requesttype;
+  int value;
+  int index;
+  void *buffer;
+  int timeout;
+};
+#define URIO_SEND_COMMAND      _IOWR('U', 200, struct urio_command)
+#define URIO_RECV_COMMAND      _IOWR('U', 201, struct urio_command)
+#endif
+#include <dev/usb/usb.h>
+#include <dev/usb/utoppy.h>
+#include <dev/vme/xio.h>
+#include <dev/vndvar.h>
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wsdisplay_usl_io.h>
+#include <fs/autofs/autofs_ioctl.h>
+#include <dirent.h>
+#include <dlfcn.h>
+#include <glob.h>
+#include <grp.h>
+#include <ifaddrs.h>
+#include <limits.h>
+#include <link_elf.h>
+#include <net/if.h>
+#include <net/route.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <netinet/ip_mroute.h>
+#include <netinet/sctp_uio.h>
+#include <poll.h>
+#include <pthread.h>
+#include <pwd.h>
+#include <semaphore.h>
+#include <signal.h>
+#include <stddef.h>
+#include <md2.h>
+#include <md4.h>
+#include <md5.h>
+#include <rmd160.h>
+#include <soundcard.h>
 #include <term.h>
 #include <termios.h>
 #include <time.h>
@@ -200,14 +504,31 @@
 #include <utime.h>
 #include <utmp.h>
 #include <utmpx.h>
+#include <vis.h>
 #include <wchar.h>
 #include <wordexp.h>
+#include <ttyent.h>
+#include <fts.h>
+#include <regex.h>
+#include <fstab.h>
+#include <stringlist.h>
+
+#if defined(__x86_64__)
+#include <nvmm.h>
+#endif
+// clang-format on
 
 // Include these after system headers to avoid name clashes and ambiguities.
 #include "sanitizer_internal_defs.h"
+#include "sanitizer_libc.h"
 #include "sanitizer_platform_limits_netbsd.h"
 
 namespace __sanitizer {
+void *__sanitizer_get_link_map_by_dlopen_handle(void *handle) {
+  void *p = nullptr;
+  return internal_dlinfo(handle, RTLD_DI_LINKMAP, &p) == 0 ? p : nullptr;
+}
+
 unsigned struct_utsname_sz = sizeof(struct utsname);
 unsigned struct_stat_sz = sizeof(struct stat);
 unsigned struct_rusage_sz = sizeof(struct rusage);
@@ -216,6 +537,7 @@ unsigned struct_passwd_sz = sizeof(struct passwd);
 unsigned struct_group_sz = sizeof(struct group);
 unsigned siginfo_t_sz = sizeof(siginfo_t);
 unsigned struct_sigaction_sz = sizeof(struct sigaction);
+unsigned struct_stack_t_sz = sizeof(stack_t);
 unsigned struct_itimerval_sz = sizeof(struct itimerval);
 unsigned pthread_t_sz = sizeof(pthread_t);
 unsigned pthread_mutex_t_sz = sizeof(pthread_mutex_t);
@@ -236,6 +558,11 @@ unsigned struct_rlimit_sz = sizeof(struct rlimit);
 unsigned struct_timespec_sz = sizeof(struct timespec);
 unsigned struct_sembuf_sz = sizeof(struct sembuf);
 unsigned struct_kevent_sz = sizeof(struct kevent);
+unsigned struct_FTS_sz = sizeof(FTS);
+unsigned struct_FTSENT_sz = sizeof(FTSENT);
+unsigned struct_regex_sz = sizeof(regex_t);
+unsigned struct_regmatch_sz = sizeof(regmatch_t);
+unsigned struct_fstab_sz = sizeof(struct fstab);
 unsigned struct_utimbuf_sz = sizeof(struct utimbuf);
 unsigned struct_itimerspec_sz = sizeof(struct itimerspec);
 unsigned struct_timex_sz = sizeof(struct timex);
@@ -249,6 +576,8 @@ const uptr sig_dfl = (uptr)SIG_DFL;
 const uptr sig_err = (uptr)SIG_ERR;
 const uptr sa_siginfo = (uptr)SA_SIGINFO;
 
+const unsigned long __sanitizer_bufsiz = BUFSIZ;
+
 int ptrace_pt_io = PT_IO;
 int ptrace_pt_lwpinfo = PT_LWPINFO;
 int ptrace_pt_set_event_mask = PT_SET_EVENT_MASK;
@@ -256,6 +585,8 @@ int ptrace_pt_get_event_mask = PT_GET_EVENT_MASK;
 int ptrace_pt_get_process_state = PT_GET_PROCESS_STATE;
 int ptrace_pt_set_siginfo = PT_SET_SIGINFO;
 int ptrace_pt_get_siginfo = PT_GET_SIGINFO;
+int ptrace_pt_lwpstatus = PT_LWPSTATUS;
+int ptrace_pt_lwpnext = PT_LWPNEXT;
 int ptrace_piod_read_d = PIOD_READ_D;
 int ptrace_piod_write_d = PIOD_WRITE_D;
 int ptrace_piod_read_i = PIOD_READ_I;
@@ -288,6 +619,8 @@ int ptrace_pt_getdbregs = -1;
 
 unsigned struct_ptrace_ptrace_io_desc_struct_sz = sizeof(struct ptrace_io_desc);
 unsigned struct_ptrace_ptrace_lwpinfo_struct_sz = sizeof(struct ptrace_lwpinfo);
+unsigned struct_ptrace_ptrace_lwpstatus_struct_sz =
+    sizeof(struct __sanitizer_ptrace_lwpstatus);
 unsigned struct_ptrace_ptrace_event_struct_sz = sizeof(ptrace_event_t);
 unsigned struct_ptrace_ptrace_siginfo_struct_sz = sizeof(ptrace_siginfo_t);
 
@@ -337,6 +670,14 @@ unsigned path_max = PATH_MAX;
 
 int struct_ttyent_sz = sizeof(struct ttyent);
 
+struct __sanitizer_nvlist_ref_t {
+  void *buf;
+  uptr len;
+  int flags;
+};
+
+typedef __sanitizer_nvlist_ref_t nvlist_ref_t;
+
 // ioctl arguments
 unsigned struct_altqreq_sz = sizeof(altqreq);
 unsigned struct_amr_user_ioctl_sz = sizeof(amr_user_ioctl);
@@ -347,6 +688,7 @@ unsigned struct_apm_power_info_sz = sizeof(apm_power_info);
 unsigned struct_atabusiodetach_args_sz = sizeof(atabusiodetach_args);
 unsigned struct_atabusioscan_args_sz = sizeof(atabusioscan_args);
 unsigned struct_ath_diag_sz = sizeof(ath_diag);
+unsigned struct_atm_flowmap_sz = sizeof(atm_flowmap);
 unsigned struct_audio_buf_info_sz = sizeof(audio_buf_info);
 unsigned struct_audio_device_sz = sizeof(audio_device);
 unsigned struct_audio_encoding_sz = sizeof(audio_encoding);
@@ -613,6 +955,12 @@ unsigned struct_session_op_sz = sizeof(session_op);
 unsigned struct_sgttyb_sz = sizeof(sgttyb);
 unsigned struct_sioc_sg_req_sz = sizeof(sioc_sg_req);
 unsigned struct_sioc_vif_req_sz = sizeof(sioc_vif_req);
+unsigned struct_smbioc_flags_sz = sizeof(smbioc_flags);
+unsigned struct_smbioc_lookup_sz = sizeof(smbioc_lookup);
+unsigned struct_smbioc_oshare_sz = sizeof(smbioc_oshare);
+unsigned struct_smbioc_ossn_sz = sizeof(smbioc_ossn);
+unsigned struct_smbioc_rq_sz = sizeof(smbioc_rq);
+unsigned struct_smbioc_rw_sz = sizeof(smbioc_rw);
 unsigned struct_spppauthcfg_sz = sizeof(spppauthcfg);
 unsigned struct_spppauthfailuresettings_sz = sizeof(spppauthfailuresettings);
 unsigned struct_spppauthfailurestats_sz = sizeof(spppauthfailurestats);
@@ -624,9 +972,7 @@ unsigned struct_sppplcpcfg_sz = sizeof(sppplcpcfg);
 unsigned struct_spppstatus_sz = sizeof(spppstatus);
 unsigned struct_spppstatusncp_sz = sizeof(spppstatusncp);
 unsigned struct_srt_rt_sz = sizeof(srt_rt);
-#ifdef NBPG
 unsigned struct_stic_xinfo_sz = sizeof(stic_xinfo);
-#endif
 unsigned struct_sun_dkctlr_sz = sizeof(sun_dkctlr);
 unsigned struct_sun_dkgeom_sz = sizeof(sun_dkgeom);
 unsigned struct_sun_dkpart_sz = sizeof(sun_dkpart);
@@ -639,12 +985,37 @@ unsigned struct_twe_drivecommand_sz = sizeof(twe_drivecommand);
 unsigned struct_twe_paramcommand_sz = sizeof(twe_paramcommand);
 unsigned struct_twe_usercommand_sz = sizeof(twe_usercommand);
 unsigned struct_ukyopon_identify_sz = sizeof(ukyopon_identify);
+unsigned struct_urio_command_sz = sizeof(urio_command);
 unsigned struct_usb_alt_interface_sz = sizeof(usb_alt_interface);
 unsigned struct_usb_bulk_ra_wb_opt_sz = sizeof(usb_bulk_ra_wb_opt);
 unsigned struct_usb_config_desc_sz = sizeof(usb_config_desc);
 unsigned struct_usb_ctl_report_desc_sz = sizeof(usb_ctl_report_desc);
 unsigned struct_usb_ctl_report_sz = sizeof(usb_ctl_report);
 unsigned struct_usb_ctl_request_sz = sizeof(usb_ctl_request);
+#if defined(__x86_64__)
+unsigned struct_nvmm_ioc_capability_sz = sizeof(nvmm_ioc_capability);
+unsigned struct_nvmm_ioc_machine_create_sz = sizeof(nvmm_ioc_machine_create);
+unsigned struct_nvmm_ioc_machine_destroy_sz = sizeof(nvmm_ioc_machine_destroy);
+unsigned struct_nvmm_ioc_machine_configure_sz =
+    sizeof(nvmm_ioc_machine_configure);
+unsigned struct_nvmm_ioc_vcpu_create_sz = sizeof(nvmm_ioc_vcpu_create);
+unsigned struct_nvmm_ioc_vcpu_destroy_sz = sizeof(nvmm_ioc_vcpu_destroy);
+unsigned struct_nvmm_ioc_vcpu_configure_sz = sizeof(nvmm_ioc_vcpu_configure);
+unsigned struct_nvmm_ioc_vcpu_setstate_sz = sizeof(nvmm_ioc_vcpu_destroy);
+unsigned struct_nvmm_ioc_vcpu_getstate_sz = sizeof(nvmm_ioc_vcpu_getstate);
+unsigned struct_nvmm_ioc_vcpu_inject_sz = sizeof(nvmm_ioc_vcpu_inject);
+unsigned struct_nvmm_ioc_vcpu_run_sz = sizeof(nvmm_ioc_vcpu_run);
+unsigned struct_nvmm_ioc_gpa_map_sz = sizeof(nvmm_ioc_gpa_map);
+unsigned struct_nvmm_ioc_gpa_unmap_sz = sizeof(nvmm_ioc_gpa_unmap);
+unsigned struct_nvmm_ioc_hva_map_sz = sizeof(nvmm_ioc_hva_map);
+unsigned struct_nvmm_ioc_hva_unmap_sz = sizeof(nvmm_ioc_hva_unmap);
+unsigned struct_nvmm_ioc_ctl_sz = sizeof(nvmm_ioc_ctl);
+#endif
+unsigned struct_spi_ioctl_configure_sz = sizeof(spi_ioctl_configure);
+unsigned struct_spi_ioctl_transfer_sz = sizeof(spi_ioctl_transfer);
+unsigned struct_autofs_daemon_request_sz = sizeof(autofs_daemon_request);
+unsigned struct_autofs_daemon_done_sz = sizeof(autofs_daemon_done);
+unsigned struct_sctp_connectx_addrs_sz = sizeof(sctp_connectx_addrs);
 unsigned struct_usb_device_info_old_sz = sizeof(usb_device_info_old);
 unsigned struct_usb_device_info_sz = sizeof(usb_device_info);
 unsigned struct_usb_device_stats_sz = sizeof(usb_device_stats);
@@ -684,6 +1055,9 @@ unsigned struct_vnd_user_sz = sizeof(vnd_user);
 unsigned struct_vt_stat_sz = sizeof(vt_stat);
 unsigned struct_wdog_conf_sz = sizeof(wdog_conf);
 unsigned struct_wdog_mode_sz = sizeof(wdog_mode);
+unsigned struct_ipmi_recv_sz = sizeof(ipmi_recv);
+unsigned struct_ipmi_req_sz = sizeof(ipmi_req);
+unsigned struct_ipmi_cmdspec_sz = sizeof(ipmi_cmdspec);
 unsigned struct_wfq_conf_sz = sizeof(wfq_conf);
 unsigned struct_wfq_getqid_sz = sizeof(wfq_getqid);
 unsigned struct_wfq_getstats_sz = sizeof(wfq_getstats);
@@ -769,6 +1143,7 @@ unsigned struct_iscsi_wait_event_parameters_sz =
 unsigned struct_isp_stats_sz = sizeof(isp_stats_t);
 unsigned struct_lsenable_sz = sizeof(struct lsenable);
 unsigned struct_lsdisable_sz = sizeof(struct lsdisable);
+unsigned struct_audio_format_query_sz = sizeof(audio_format_query);
 unsigned struct_mixer_ctrl_sz = sizeof(struct mixer_ctrl);
 unsigned struct_mixer_devinfo_sz = sizeof(struct mixer_devinfo);
 unsigned struct_mpu_command_rec_sz = sizeof(mpu_command_rec);
@@ -786,6 +1161,8 @@ unsigned struct_RF_SparetWait_sz = sizeof(RF_SparetWait_t);
 unsigned struct_RF_ComponentLabel_sz = sizeof(RF_ComponentLabel_t);
 unsigned struct_RF_SingleComponent_sz = sizeof(RF_SingleComponent_t);
 unsigned struct_RF_ProgressInfo_sz = sizeof(RF_ProgressInfo_t);
+unsigned struct_nvlist_ref_sz = sizeof(struct __sanitizer_nvlist_ref_t);
+unsigned struct_StringList_sz = sizeof(StringList);
 
 const unsigned IOCTL_NOT_PRESENT = 0;
 
@@ -940,6 +1317,8 @@ unsigned IOCTL_FE_SET_VOLTAGE = FE_SET_VOLTAGE;
 unsigned IOCTL_FE_ENABLE_HIGH_LNB_VOLTAGE = FE_ENABLE_HIGH_LNB_VOLTAGE;
 unsigned IOCTL_FE_SET_FRONTEND_TUNE_MODE = FE_SET_FRONTEND_TUNE_MODE;
 unsigned IOCTL_FE_DISHNETWORK_SEND_LEGACY_CMD = FE_DISHNETWORK_SEND_LEGACY_CMD;
+unsigned IOCTL_FILEMON_SET_FD = FILEMON_SET_FD;
+unsigned IOCTL_FILEMON_SET_PID = FILEMON_SET_PID;
 unsigned IOCTL_HDAUDIO_FGRP_INFO = HDAUDIO_FGRP_INFO;
 unsigned IOCTL_HDAUDIO_FGRP_GETCONFIG = HDAUDIO_FGRP_GETCONFIG;
 unsigned IOCTL_HDAUDIO_FGRP_SETCONFIG = HDAUDIO_FGRP_SETCONFIG;
@@ -1048,6 +1427,7 @@ unsigned IOCTL_MLX_REBUILDSTAT = MLX_REBUILDSTAT;
 unsigned IOCTL_MLX_GET_SYSDRIVE = MLX_GET_SYSDRIVE;
 unsigned IOCTL_MLX_GET_CINFO = MLX_GET_CINFO;
 unsigned IOCTL_NVME_PASSTHROUGH_CMD = NVME_PASSTHROUGH_CMD;
+unsigned IOCTL_FWCFGIO_SET_INDEX = FWCFGIO_SET_INDEX;
 unsigned IOCTL_IRDA_RESET_PARAMS = IRDA_RESET_PARAMS;
 unsigned IOCTL_IRDA_SET_PARAMS = IRDA_SET_PARAMS;
 unsigned IOCTL_IRDA_GET_SPEEDMASK = IRDA_GET_SPEEDMASK;
@@ -1189,13 +1569,13 @@ unsigned IOCTL_KIOCGLED = KIOCGLED;
 unsigned IOCTL_KIOCLAYOUT = KIOCLAYOUT;
 unsigned IOCTL_VUIDSFORMAT = VUIDSFORMAT;
 unsigned IOCTL_VUIDGFORMAT = VUIDGFORMAT;
-#ifdef NBPG
 unsigned IOCTL_STICIO_GXINFO = STICIO_GXINFO;
 unsigned IOCTL_STICIO_RESET = STICIO_RESET;
 unsigned IOCTL_STICIO_STARTQ = STICIO_STARTQ;
 unsigned IOCTL_STICIO_STOPQ = STICIO_STOPQ;
-#endif
 unsigned IOCTL_UKYOPON_IDENTIFY = UKYOPON_IDENTIFY;
+unsigned IOCTL_URIO_SEND_COMMAND = URIO_SEND_COMMAND;
+unsigned IOCTL_URIO_RECV_COMMAND = URIO_RECV_COMMAND;
 unsigned IOCTL_USB_REQUEST = USB_REQUEST;
 unsigned IOCTL_USB_SETDEBUG = USB_SETDEBUG;
 unsigned IOCTL_USB_DISCOVER = USB_DISCOVER;
@@ -1374,6 +1754,28 @@ unsigned IOCTL_SPKRTONE = SPKRTONE;
 unsigned IOCTL_SPKRTUNE = SPKRTUNE;
 unsigned IOCTL_SPKRGETVOL = SPKRGETVOL;
 unsigned IOCTL_SPKRSETVOL = SPKRSETVOL;
+#if defined(__x86_64__)
+unsigned IOCTL_NVMM_IOC_CAPABILITY = NVMM_IOC_CAPABILITY;
+unsigned IOCTL_NVMM_IOC_MACHINE_CREATE = NVMM_IOC_MACHINE_CREATE;
+unsigned IOCTL_NVMM_IOC_MACHINE_DESTROY = NVMM_IOC_MACHINE_DESTROY;
+unsigned IOCTL_NVMM_IOC_MACHINE_CONFIGURE = NVMM_IOC_MACHINE_CONFIGURE;
+unsigned IOCTL_NVMM_IOC_VCPU_CREATE = NVMM_IOC_VCPU_CREATE;
+unsigned IOCTL_NVMM_IOC_VCPU_DESTROY = NVMM_IOC_VCPU_DESTROY;
+unsigned IOCTL_NVMM_IOC_VCPU_CONFIGURE = NVMM_IOC_VCPU_CONFIGURE;
+unsigned IOCTL_NVMM_IOC_VCPU_SETSTATE = NVMM_IOC_VCPU_SETSTATE;
+unsigned IOCTL_NVMM_IOC_VCPU_GETSTATE = NVMM_IOC_VCPU_GETSTATE;
+unsigned IOCTL_NVMM_IOC_VCPU_INJECT = NVMM_IOC_VCPU_INJECT;
+unsigned IOCTL_NVMM_IOC_VCPU_RUN = NVMM_IOC_VCPU_RUN;
+unsigned IOCTL_NVMM_IOC_GPA_MAP = NVMM_IOC_GPA_MAP;
+unsigned IOCTL_NVMM_IOC_GPA_UNMAP = NVMM_IOC_GPA_UNMAP;
+unsigned IOCTL_NVMM_IOC_HVA_MAP = NVMM_IOC_HVA_MAP;
+unsigned IOCTL_NVMM_IOC_HVA_UNMAP = NVMM_IOC_HVA_UNMAP;
+unsigned IOCTL_NVMM_IOC_CTL = NVMM_IOC_CTL;
+#endif
+unsigned IOCTL_SPI_IOCTL_CONFIGURE = SPI_IOCTL_CONFIGURE;
+unsigned IOCTL_SPI_IOCTL_TRANSFER = SPI_IOCTL_TRANSFER;
+unsigned IOCTL_AUTOFSREQUEST = AUTOFSREQUEST;
+unsigned IOCTL_AUTOFSDONE = AUTOFSDONE;
 unsigned IOCTL_BIOCGBLEN = BIOCGBLEN;
 unsigned IOCTL_BIOCSBLEN = BIOCSBLEN;
 unsigned IOCTL_BIOCSETF = BIOCSETF;
@@ -1392,8 +1794,8 @@ unsigned IOCTL_BIOCGHDRCMPLT = BIOCGHDRCMPLT;
 unsigned IOCTL_BIOCSHDRCMPLT = BIOCSHDRCMPLT;
 unsigned IOCTL_BIOCSDLT = BIOCSDLT;
 unsigned IOCTL_BIOCGDLTLIST = BIOCGDLTLIST;
-unsigned IOCTL_BIOCGSEESENT = BIOCGSEESENT;
-unsigned IOCTL_BIOCSSEESENT = BIOCSSEESENT;
+unsigned IOCTL_BIOCGDIRECTION = BIOCGDIRECTION;
+unsigned IOCTL_BIOCSDIRECTION = BIOCSDIRECTION;
 unsigned IOCTL_BIOCSRTIMEOUT = BIOCSRTIMEOUT;
 unsigned IOCTL_BIOCGRTIMEOUT = BIOCGRTIMEOUT;
 unsigned IOCTL_BIOCGFEEDBACK = BIOCGFEEDBACK;
@@ -1436,6 +1838,7 @@ unsigned IOCTL_IOC_NPF_STATS = IOC_NPF_STATS;
 unsigned IOCTL_IOC_NPF_SAVE = IOC_NPF_SAVE;
 unsigned IOCTL_IOC_NPF_RULE = IOC_NPF_RULE;
 unsigned IOCTL_IOC_NPF_CONN_LOOKUP = IOC_NPF_CONN_LOOKUP;
+unsigned IOCTL_IOC_NPF_TABLE_REPLACE = IOC_NPF_TABLE_REPLACE;
 unsigned IOCTL_PPPOESETPARMS = PPPOESETPARMS;
 unsigned IOCTL_PPPOEGETPARMS = PPPOEGETPARMS;
 unsigned IOCTL_PPPOEGETSESSION = PPPOEGETSESSION;
@@ -1552,9 +1955,18 @@ unsigned IOCTL_SIOCRMNAT = SIOCRMNAT;
 unsigned IOCTL_SIOCGNATS = SIOCGNATS;
 unsigned IOCTL_SIOCGNATL = SIOCGNATL;
 unsigned IOCTL_SIOCPURGENAT = SIOCPURGENAT;
+unsigned IOCTL_SIOCCONNECTX = SIOCCONNECTX;
+unsigned IOCTL_SIOCCONNECTXDEL = SIOCCONNECTXDEL;
 unsigned IOCTL_SIOCSIFINFO_FLAGS = SIOCSIFINFO_FLAGS;
 unsigned IOCTL_SIOCAADDRCTL_POLICY = SIOCAADDRCTL_POLICY;
 unsigned IOCTL_SIOCDADDRCTL_POLICY = SIOCDADDRCTL_POLICY;
+unsigned IOCTL_SMBIOC_OPENSESSION = SMBIOC_OPENSESSION;
+unsigned IOCTL_SMBIOC_OPENSHARE = SMBIOC_OPENSHARE;
+unsigned IOCTL_SMBIOC_REQUEST = SMBIOC_REQUEST;
+unsigned IOCTL_SMBIOC_SETFLAGS = SMBIOC_SETFLAGS;
+unsigned IOCTL_SMBIOC_LOOKUP = SMBIOC_LOOKUP;
+unsigned IOCTL_SMBIOC_READ = SMBIOC_READ;
+unsigned IOCTL_SMBIOC_WRITE = SMBIOC_WRITE;
 unsigned IOCTL_AGPIOC_INFO = AGPIOC_INFO;
 unsigned IOCTL_AGPIOC_ACQUIRE = AGPIOC_ACQUIRE;
 unsigned IOCTL_AGPIOC_RELEASE = AGPIOC_RELEASE;
@@ -1580,6 +1992,9 @@ unsigned IOCTL_AUDIO_GETPROPS = AUDIO_GETPROPS;
 unsigned IOCTL_AUDIO_GETBUFINFO = AUDIO_GETBUFINFO;
 unsigned IOCTL_AUDIO_SETCHAN = AUDIO_SETCHAN;
 unsigned IOCTL_AUDIO_GETCHAN = AUDIO_GETCHAN;
+unsigned IOCTL_AUDIO_QUERYFORMAT = AUDIO_QUERYFORMAT;
+unsigned IOCTL_AUDIO_GETFORMAT = AUDIO_GETFORMAT;
+unsigned IOCTL_AUDIO_SETFORMAT = AUDIO_SETFORMAT;
 unsigned IOCTL_AUDIO_MIXER_READ = AUDIO_MIXER_READ;
 unsigned IOCTL_AUDIO_MIXER_WRITE = AUDIO_MIXER_WRITE;
 unsigned IOCTL_AUDIO_MIXER_DEVINFO = AUDIO_MIXER_DEVINFO;
@@ -1665,6 +2080,7 @@ unsigned IOCTL_DIOCTUR = DIOCTUR;
 unsigned IOCTL_DIOCMWEDGES = DIOCMWEDGES;
 unsigned IOCTL_DIOCGSECTORSIZE = DIOCGSECTORSIZE;
 unsigned IOCTL_DIOCGMEDIASIZE = DIOCGMEDIASIZE;
+unsigned IOCTL_DIOCRMWEDGES = DIOCRMWEDGES;
 unsigned IOCTL_DRVDETACHDEV = DRVDETACHDEV;
 unsigned IOCTL_DRVRESCANBUS = DRVRESCANBUS;
 unsigned IOCTL_DRVCTLCOMMAND = DRVCTLCOMMAND;
@@ -1689,6 +2105,8 @@ unsigned IOCTL_FDIOCGETFORMAT = FDIOCGETFORMAT;
 unsigned IOCTL_FDIOCFORMAT_TRACK = FDIOCFORMAT_TRACK;
 unsigned IOCTL_FIOCLEX = FIOCLEX;
 unsigned IOCTL_FIONCLEX = FIONCLEX;
+unsigned IOCTL_FIOSEEKDATA = FIOSEEKDATA;
+unsigned IOCTL_FIOSEEKHOLE = FIOSEEKHOLE;
 unsigned IOCTL_FIONREAD = FIONREAD;
 unsigned IOCTL_FIONBIO = FIONBIO;
 unsigned IOCTL_FIOASYNC = FIOASYNC;
@@ -1774,10 +2192,6 @@ unsigned IOCTL_MTIOCSLOCATE = MTIOCSLOCATE;
 unsigned IOCTL_MTIOCHLOCATE = MTIOCHLOCATE;
 unsigned IOCTL_POWER_EVENT_RECVDICT = POWER_EVENT_RECVDICT;
 unsigned IOCTL_POWER_IOC_GET_TYPE = POWER_IOC_GET_TYPE;
-#if 0
-unsigned IOCTL_POWER_IOC_GET_TYPE_WITH_LOSSAGE =
-    POWER_IOC_GET_TYPE_WITH_LOSSAGE;
-#endif
 unsigned IOCTL_RIOCGINFO = RIOCGINFO;
 unsigned IOCTL_RIOCSINFO = RIOCSINFO;
 unsigned IOCTL_RIOCSSRCH = RIOCSSRCH;
@@ -1812,6 +2226,7 @@ unsigned IOCTL_SIOCGLOWAT = SIOCGLOWAT;
 unsigned IOCTL_SIOCATMARK = SIOCATMARK;
 unsigned IOCTL_SIOCSPGRP = SIOCSPGRP;
 unsigned IOCTL_SIOCGPGRP = SIOCGPGRP;
+unsigned IOCTL_SIOCPEELOFF = SIOCPEELOFF;
 unsigned IOCTL_SIOCADDRT = SIOCADDRT;
 unsigned IOCTL_SIOCDELRT = SIOCDELRT;
 unsigned IOCTL_SIOCSIFADDR = SIOCSIFADDR;
@@ -1869,6 +2284,12 @@ unsigned IOCTL_SIOCGLINKSTR = SIOCGLINKSTR;
 unsigned IOCTL_SIOCSLINKSTR = SIOCSLINKSTR;
 unsigned IOCTL_SIOCGETHERCAP = SIOCGETHERCAP;
 unsigned IOCTL_SIOCGIFINDEX = SIOCGIFINDEX;
+unsigned IOCTL_SIOCSETHERCAP = SIOCSETHERCAP;
+unsigned IOCTL_SIOCSIFDESCR = SIOCSIFDESCR;
+unsigned IOCTL_SIOCGIFDESCR = SIOCGIFDESCR;
+unsigned IOCTL_SIOCGUMBINFO = SIOCGUMBINFO;
+unsigned IOCTL_SIOCSUMBPARAM = SIOCSUMBPARAM;
+unsigned IOCTL_SIOCGUMBPARAM = SIOCGUMBPARAM;
 unsigned IOCTL_SIOCSETPFSYNC = SIOCSETPFSYNC;
 unsigned IOCTL_SIOCGETPFSYNC = SIOCGETPFSYNC;
 unsigned IOCTL_PPS_IOC_CREATE = PPS_IOC_CREATE;
@@ -1990,6 +2411,19 @@ unsigned IOCTL_WDOGIOC_WHICH = WDOGIOC_WHICH;
 unsigned IOCTL_WDOGIOC_TICKLE = WDOGIOC_TICKLE;
 unsigned IOCTL_WDOGIOC_GTICKLER = WDOGIOC_GTICKLER;
 unsigned IOCTL_WDOGIOC_GWDOGS = WDOGIOC_GWDOGS;
+unsigned IOCTL_KCOV_IOC_SETBUFSIZE = KCOV_IOC_SETBUFSIZE;
+unsigned IOCTL_KCOV_IOC_ENABLE = KCOV_IOC_ENABLE;
+unsigned IOCTL_KCOV_IOC_DISABLE = KCOV_IOC_DISABLE;
+unsigned IOCTL_IPMICTL_RECEIVE_MSG_TRUNC = IPMICTL_RECEIVE_MSG_TRUNC;
+unsigned IOCTL_IPMICTL_RECEIVE_MSG = IPMICTL_RECEIVE_MSG;
+unsigned IOCTL_IPMICTL_SEND_COMMAND = IPMICTL_SEND_COMMAND;
+unsigned IOCTL_IPMICTL_REGISTER_FOR_CMD = IPMICTL_REGISTER_FOR_CMD;
+unsigned IOCTL_IPMICTL_UNREGISTER_FOR_CMD = IPMICTL_UNREGISTER_FOR_CMD;
+unsigned IOCTL_IPMICTL_SET_GETS_EVENTS_CMD = IPMICTL_SET_GETS_EVENTS_CMD;
+unsigned IOCTL_IPMICTL_SET_MY_ADDRESS_CMD = IPMICTL_SET_MY_ADDRESS_CMD;
+unsigned IOCTL_IPMICTL_GET_MY_ADDRESS_CMD = IPMICTL_GET_MY_ADDRESS_CMD;
+unsigned IOCTL_IPMICTL_SET_MY_LUN_CMD = IPMICTL_SET_MY_LUN_CMD;
+unsigned IOCTL_IPMICTL_GET_MY_LUN_CMD = IPMICTL_GET_MY_LUN_CMD;
 unsigned IOCTL_SNDCTL_DSP_RESET = SNDCTL_DSP_RESET;
 unsigned IOCTL_SNDCTL_DSP_SYNC = SNDCTL_DSP_SYNC;
 unsigned IOCTL_SNDCTL_DSP_SPEED = SNDCTL_DSP_SPEED;
@@ -2035,6 +2469,44 @@ unsigned IOCTL_SNDCTL_DSP_SILENCE = SNDCTL_DSP_SILENCE;
 
 const int si_SEGV_MAPERR = SEGV_MAPERR;
 const int si_SEGV_ACCERR = SEGV_ACCERR;
+
+const int modctl_load = MODCTL_LOAD;
+const int modctl_unload = MODCTL_UNLOAD;
+const int modctl_stat = MODCTL_STAT;
+const int modctl_exists = MODCTL_EXISTS;
+
+const unsigned SHA1_CTX_sz = sizeof(SHA1_CTX);
+const unsigned SHA1_return_length = SHA1_DIGEST_STRING_LENGTH;
+
+const unsigned MD4_CTX_sz = sizeof(MD4_CTX);
+const unsigned MD4_return_length = MD4_DIGEST_STRING_LENGTH;
+
+const unsigned RMD160_CTX_sz = sizeof(RMD160_CTX);
+const unsigned RMD160_return_length = RMD160_DIGEST_STRING_LENGTH;
+
+const unsigned MD5_CTX_sz = sizeof(MD5_CTX);
+const unsigned MD5_return_length = MD5_DIGEST_STRING_LENGTH;
+
+const unsigned fpos_t_sz = sizeof(fpos_t);
+
+const unsigned MD2_CTX_sz = sizeof(MD2_CTX);
+const unsigned MD2_return_length = MD2_DIGEST_STRING_LENGTH;
+
+#define SHA2_CONST(LEN)                                                      \
+  const unsigned SHA##LEN##_CTX_sz = sizeof(SHA##LEN##_CTX);                 \
+  const unsigned SHA##LEN##_return_length = SHA##LEN##_DIGEST_STRING_LENGTH; \
+  const unsigned SHA##LEN##_block_length = SHA##LEN##_BLOCK_LENGTH;          \
+  const unsigned SHA##LEN##_digest_length = SHA##LEN##_DIGEST_LENGTH
+
+SHA2_CONST(224);
+SHA2_CONST(256);
+SHA2_CONST(384);
+SHA2_CONST(512);
+
+#undef SHA2_CONST
+
+const int unvis_valid = UNVIS_VALID;
+const int unvis_validpush = UNVIS_VALIDPUSH;
 }  // namespace __sanitizer
 
 using namespace __sanitizer;
@@ -2125,6 +2597,29 @@ CHECK_SIZE_AND_OFFSET(wordexp_t, we_wordc);
 CHECK_SIZE_AND_OFFSET(wordexp_t, we_wordv);
 CHECK_SIZE_AND_OFFSET(wordexp_t, we_offs);
 
+COMPILER_CHECK(sizeof(__sanitizer_FILE) <= sizeof(FILE));
+CHECK_SIZE_AND_OFFSET(FILE, _p);
+CHECK_SIZE_AND_OFFSET(FILE, _r);
+CHECK_SIZE_AND_OFFSET(FILE, _w);
+CHECK_SIZE_AND_OFFSET(FILE, _flags);
+CHECK_SIZE_AND_OFFSET(FILE, _file);
+CHECK_SIZE_AND_OFFSET(FILE, _bf);
+CHECK_SIZE_AND_OFFSET(FILE, _lbfsize);
+CHECK_SIZE_AND_OFFSET(FILE, _cookie);
+CHECK_SIZE_AND_OFFSET(FILE, _close);
+CHECK_SIZE_AND_OFFSET(FILE, _read);
+CHECK_SIZE_AND_OFFSET(FILE, _seek);
+CHECK_SIZE_AND_OFFSET(FILE, _write);
+CHECK_SIZE_AND_OFFSET(FILE, _ext);
+CHECK_SIZE_AND_OFFSET(FILE, _up);
+CHECK_SIZE_AND_OFFSET(FILE, _ur);
+CHECK_SIZE_AND_OFFSET(FILE, _ubuf);
+CHECK_SIZE_AND_OFFSET(FILE, _nbuf);
+CHECK_SIZE_AND_OFFSET(FILE, _flush);
+CHECK_SIZE_AND_OFFSET(FILE, _lb_unused);
+CHECK_SIZE_AND_OFFSET(FILE, _blksize);
+CHECK_SIZE_AND_OFFSET(FILE, _offset);
+
 CHECK_TYPE_SIZE(tm);
 CHECK_SIZE_AND_OFFSET(tm, tm_sec);
 CHECK_SIZE_AND_OFFSET(tm, tm_min);
@@ -2195,5 +2690,49 @@ CHECK_SIZE_AND_OFFSET(group, gr_name);
 CHECK_SIZE_AND_OFFSET(group, gr_passwd);
 CHECK_SIZE_AND_OFFSET(group, gr_gid);
 CHECK_SIZE_AND_OFFSET(group, gr_mem);
+
+CHECK_TYPE_SIZE(modctl_load_t);
+CHECK_SIZE_AND_OFFSET(modctl_load_t, ml_filename);
+CHECK_SIZE_AND_OFFSET(modctl_load_t, ml_flags);
+CHECK_SIZE_AND_OFFSET(modctl_load_t, ml_props);
+CHECK_SIZE_AND_OFFSET(modctl_load_t, ml_propslen);
+
+// Compat with 9.0
+struct statvfs90 {
+  unsigned long f_flag;
+  unsigned long f_bsize;
+  unsigned long f_frsize;
+  unsigned long f_iosize;
+
+  u64 f_blocks;
+  u64 f_bfree;
+  u64 f_bavail;
+  u64 f_bresvd;
+
+  u64 f_files;
+  u64 f_ffree;
+  u64 f_favail;
+  u64 f_fresvd;
+
+  u64 f_syncreads;
+  u64 f_syncwrites;
+
+  u64 f_asyncreads;
+  u64 f_asyncwrites;
+
+  struct {
+    s32 __fsid_val[2];
+  } f_fsidx;
+  unsigned long f_fsid;
+  unsigned long f_namemax;
+  u32 f_owner;
+
+  u32 f_spare[4];
+
+  char f_fstypename[32];
+  char f_mntonname[32];
+  char f_mntfromname[32];
+};
+unsigned struct_statvfs90_sz = sizeof(struct statvfs90);
 
 #endif  // SANITIZER_NETBSD
