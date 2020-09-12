@@ -1,4 +1,4 @@
-/*	$NetBSD: vsaudio.c,v 1.6 2020/08/26 12:59:28 isaki Exp $	*/
+/*	$NetBSD: vsaudio.c,v 1.7 2020/09/12 05:19:16 isaki Exp $	*/
 /*	$OpenBSD: vsaudio.c,v 1.4 2013/05/15 21:21:11 ratchov Exp $	*/
 
 /*
@@ -82,61 +82,21 @@
 #include <dev/ic/am7930reg.h>
 #include <dev/ic/am7930var.h>
 
-#ifdef AUDIO_DEBUG
-#define DPRINTF(x)	if (am7930debug) printf x
-#define DPRINTFN(n,x)	if (am7930debug>(n)) printf x
-#else
-#define DPRINTF(x)
-#define DPRINTFN(n,x)
-#endif  /* AUDIO_DEBUG */
-
 /* physical addresses of the AM79C30 chip */
 #define VSAUDIO_CSR			0x200d0000
 #define VSAUDIO_CSR_KA49		0x26800000
 
-/* pdma state */
-struct auio {
-	bus_space_tag_t		au_bt;	/* bus tag */
-	bus_space_handle_t	au_bh;	/* handle to chip registers */
-
-	uint8_t		*au_rdata;	/* record data */
-	uint8_t		*au_rend;	/* end of record data */
-	uint8_t		*au_pdata;	/* play data */
-	uint8_t		*au_pend;	/* end of play data */
-	struct evcnt	au_intrcnt;	/* statistics */
-};
-
-struct am7930_intrhand {
-	int	(*ih_fun)(void *);
-	void	*ih_arg;
-};
-
-
 struct vsaudio_softc {
 	struct am7930_softc sc_am7930;	/* glue to MI code */
+
 	bus_space_tag_t sc_bt;		/* bus cookie */
 	bus_space_handle_t sc_bh;	/* device registers */
-
-	struct am7930_intrhand	sc_ih;	/* interrupt vector (hw or sw)  */
-	void	(*sc_rintr)(void*);	/* input completion intr handler */
-	void	*sc_rarg;		/* arg for sc_rintr() */
-	void	(*sc_pintr)(void*);	/* output completion intr handler */
-	void	*sc_parg;		/* arg for sc_pintr() */
-
-	uint8_t	*sc_rdata;		/* record data */
-	uint8_t	*sc_rend;		/* end of record data */
-	uint8_t	*sc_pdata;		/* play data */
-	uint8_t	*sc_pend;		/* end of play data */
-
-	struct	auio sc_au;		/* recv and xmit buffers, etc */
-#define sc_intrcnt sc_au.au_intrcnt	/* statistics */
-	void	*sc_sicookie;		/* softintr(9) cookie */
-	int	sc_cvec;
-	kmutex_t sc_lock;
 };
 
 static int vsaudio_match(struct device *parent, struct cfdata *match, void *);
 static void vsaudio_attach(device_t parent, device_t self, void *);
+
+static void vsaudio_hwintr(void *);
 
 CFATTACH_DECL_NEW(vsaudio, sizeof(struct vsaudio_softc), vsaudio_match,
 		vsaudio_attach, NULL, NULL);
@@ -144,49 +104,25 @@ CFATTACH_DECL_NEW(vsaudio, sizeof(struct vsaudio_softc), vsaudio_match,
 /*
  * Hardware access routines for the MI code
  */
-uint8_t	vsaudio_codec_iread(struct am7930_softc *, int);
-uint16_t	vsaudio_codec_iread16(struct am7930_softc *, int);
-uint8_t	vsaudio_codec_dread(struct vsaudio_softc *, int);
-void	vsaudio_codec_iwrite(struct am7930_softc *, int, uint8_t);
-void	vsaudio_codec_iwrite16(struct am7930_softc *, int, uint16_t);
-void	vsaudio_codec_dwrite(struct vsaudio_softc *, int, uint8_t);
-void	vsaudio_onopen(struct am7930_softc *);
-void	vsaudio_onclose(struct am7930_softc *);
-
-/*
-static stream_filter_factory_t vsaudio_output_conv;
-static stream_filter_factory_t vsaudio_input_conv;
-static int vsaudio_output_conv_fetch_to(struct audio_softc *,
-		stream_fetcher_t *, audio_stream_t *, int);
-static int vsaudio_input_conv_fetch_to(struct audio_softc *,
-		stream_fetcher_t *, audio_stream_t *, int);
-		*/
+uint8_t	vsaudio_codec_dread(struct am7930_softc *, int);
+void	vsaudio_codec_dwrite(struct am7930_softc *, int, uint8_t);
 
 struct am7930_glue vsaudio_glue = {
-	vsaudio_codec_iread,
-	vsaudio_codec_iwrite,
-	vsaudio_codec_iread16,
-	vsaudio_codec_iwrite16,
-	vsaudio_onopen,
-	vsaudio_onclose,
+	vsaudio_codec_dread,
+	vsaudio_codec_dwrite,
 };
 
 /*
  * Interface to the MI audio layer.
  */
-int	vsaudio_start_output(void *, void *, int, void (*)(void *), void *);
-int	vsaudio_start_input(void *, void *, int, void (*)(void *), void *);
 int	vsaudio_getdev(void *, struct audio_device *);
-void	vsaudio_get_locks(void *opaque, kmutex_t **intr, kmutex_t **thread);
 
 struct audio_hw_if vsaudio_hw_if = {
-	.open			= am7930_open,
-	.close			= am7930_close,
 	.query_format		= am7930_query_format,
 	.set_format		= am7930_set_format,
 	.commit_settings	= am7930_commit_settings,
-	.start_output		= vsaudio_start_output,
-	.start_input		= vsaudio_start_input,
+	.trigger_output		= am7930_trigger_output,
+	.trigger_input		= am7930_trigger_input,
 	.halt_output		= am7930_halt_output,
 	.halt_input		= am7930_halt_input,
 	.getdev			= vsaudio_getdev,
@@ -194,7 +130,7 @@ struct audio_hw_if vsaudio_hw_if = {
 	.get_port		= am7930_get_port,
 	.query_devinfo		= am7930_query_devinfo,
 	.get_props		= am7930_get_props,
-	.get_locks		= vsaudio_get_locks,
+	.get_locks		= am7930_get_locks,
 };
 
 
@@ -204,15 +140,10 @@ struct audio_device vsaudio_device = {
 	"vsaudio"
 };
 
-void	vsaudio_hwintr(void *);
-void	vsaudio_swintr(void *);
-struct auio *auiop;
-
 
 static int
 vsaudio_match(struct device *parent, struct cfdata *match, void *aux)
 {
-	struct vsbus_softc *sc  __attribute__((__unused__)) = device_private(parent);
 	struct vsbus_attach_args *va = aux;
 	volatile uint32_t *regs;
 	int i;
@@ -264,6 +195,7 @@ vsaudio_attach(device_t parent, device_t self, void *aux)
 {
 	struct vsbus_attach_args *va = aux;
 	struct vsaudio_softc *sc = device_private(self);
+	struct am7930_softc *amsc = &sc->sc_am7930;
 
 	if (bus_space_map(va->va_memt, va->va_paddr, AM7930_DREG_SIZE << 2, 0,
 	    &sc->sc_bh) != 0) {
@@ -271,249 +203,49 @@ vsaudio_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	sc->sc_bt = va->va_memt;
-	sc->sc_am7930.sc_dev = self;
-	sc->sc_am7930.sc_glue = &vsaudio_glue;
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
-	am7930_init(&sc->sc_am7930, AUDIOAMD_POLL_MODE);
-	auiop = &sc->sc_au;
-		/* Copy bus tag & handle for use by am7930_trap */
-	sc->sc_au.au_bt = sc->sc_bt;
-	sc->sc_au.au_bh = sc->sc_bh;
-	scb_vecalloc(va->va_cvec, vsaudio_hwintr, sc, SCB_ISTACK,
-	    &sc->sc_intrcnt);
-	sc->sc_cvec = va->va_cvec;
-	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	amsc->sc_dev = self;
+	amsc->sc_glue = &vsaudio_glue;
+	am7930_init(amsc, AUDIOAMD_POLL_MODE);
+	scb_vecalloc(va->va_cvec, vsaudio_hwintr, amsc, SCB_ISTACK,
+	    &amsc->sc_intrcnt);
+	evcnt_attach_dynamic(&amsc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
 	    device_xname(self), "intr");
-
-	sc->sc_sicookie = softint_establish(SOFTINT_SERIAL,
-	    &vsaudio_swintr, sc);
-	if (sc->sc_sicookie == NULL) {
-		aprint_normal("\n%s: cannot establish software interrupt\n",
-		    device_xname(self));
-		return;
-	}
 
 	aprint_normal("\n");
 	audio_attach_mi(&vsaudio_hw_if, sc, self);
-
 }
 
-void
-vsaudio_onopen(struct am7930_softc *sc)
+static void
+vsaudio_hwintr(void *arg)
 {
-	struct vsaudio_softc *vssc = (struct vsaudio_softc *)sc;
 
-	mutex_spin_enter(&vssc->sc_lock);
-	/* reset pdma state */
-	vssc->sc_rintr = NULL;
-	vssc->sc_rarg = 0;
-	vssc->sc_pintr = NULL;
-	vssc->sc_parg = 0;
-
-	vssc->sc_rdata = NULL;
-	vssc->sc_pdata = NULL;
-	mutex_spin_exit(&vssc->sc_lock);
-}
-
-void
-vsaudio_onclose(struct am7930_softc *sc)
-{
-	am7930_halt_input(sc);
-	am7930_halt_output(sc);
-}
-
-/*
- * this is called by interrupt code-path, don't lock
- */
-int
-vsaudio_start_output(void *addr, void *p, int cc,
-    void (*intr)(void *), void *arg)
-{
-	struct vsaudio_softc *sc = addr;
-
-	DPRINTFN(1, ("sa_start_output: cc=%d %p (%p)\n", cc, intr, arg));
-
-	mutex_spin_enter(&sc->sc_lock);
-	vsaudio_codec_iwrite(&sc->sc_am7930,
-	    AM7930_IREG_INIT, AM7930_INIT_PMS_ACTIVE);
-	DPRINTF(("sa_start_output: started intrs.\n"));
-	sc->sc_pintr = intr;
-	sc->sc_parg = arg;
-	sc->sc_au.au_pdata = p;
-	sc->sc_au.au_pend = (char *)p + cc - 1;
-	mutex_spin_exit(&sc->sc_lock);
-	return 0;
-}
-
-/*
- * this is called by interrupt code-path, don't lock
- */
-int
-vsaudio_start_input(void *addr, void *p, int cc,
-    void (*intr)(void *), void *arg)
-{
-	struct vsaudio_softc *sc = addr;
-
-	DPRINTFN(1, ("sa_start_input: cc=%d %p (%p)\n", cc, intr, arg));
-
-	mutex_spin_enter(&sc->sc_lock);
-	vsaudio_codec_iwrite(&sc->sc_am7930,
-	    AM7930_IREG_INIT, AM7930_INIT_PMS_ACTIVE);
-
-	sc->sc_rintr = intr;
-	sc->sc_rarg = arg;
-	sc->sc_au.au_rdata = p;
-	sc->sc_au.au_rend = (char *)p + cc -1;
-	mutex_spin_exit(&sc->sc_lock);
-	DPRINTF(("sa_start_input: started intrs.\n"));
-	return 0;
-}
-
-
-void
-vsaudio_hwintr(void *v)
-{
-	struct vsaudio_softc *sc;
-	struct auio *au;
-	uint8_t *d, *e;
-	int __attribute__((__unused__)) k;
-
-	sc = v;
-	au = &sc->sc_au;
-	mutex_spin_enter(&sc->sc_lock);
-	/* clear interrupt */
-	k = vsaudio_codec_dread(sc, AM7930_DREG_IR);
-#if 0   /* interrupt is not shared, this shouldn't happen */
-	if ((k & (AM7930_IR_DTTHRSH | AM7930_IR_DRTHRSH | AM7930_IR_DSRI |
-	    AM7930_IR_DERI | AM7930_IR_BBUFF)) == 0) {
-		mtx_leave(&audio_lock);
-		return 0;
-	}
-#endif
-	/* receive incoming data */
-	d = au->au_rdata;
-	e = au->au_rend;
-	if (d != NULL && d <= e) {
-		*d = vsaudio_codec_dread(sc, AM7930_DREG_BBRB);
-		au->au_rdata++;
-		if (d == e) {
-			DPRINTFN(1, ("vsaudio_hwintr: swintr(r) requested"));
-			softint_schedule(sc->sc_sicookie);
-		}
-	}
-
-	/* send outgoing data */
-	d = au->au_pdata;
-	e = au->au_pend;
-	if (d != NULL && d <= e) {
-		vsaudio_codec_dwrite(sc, AM7930_DREG_BBTB, *d);
-		au->au_pdata++;
-		if (d == e) {
-			DPRINTFN(1, ("vsaudio_hwintr: swintr(p) requested"));
-			softint_schedule(sc->sc_sicookie);
-		}
-	}
-	mutex_spin_exit(&sc->sc_lock);
-}
-
-void
-vsaudio_swintr(void *v)
-{
-	struct vsaudio_softc *sc;
-	struct auio *au;
-	int dor, dow;
-
-	sc = v;
-	au = &sc->sc_au;
-
-	DPRINTFN(1, ("audiointr: sc=%p\n", sc));
-
-	dor = dow = 0;
-	mutex_spin_enter(&sc->sc_am7930.sc_intr_lock);
-	if (au->au_rdata > au->au_rend && sc->sc_rintr != NULL)
-		dor = 1;
-	if (au->au_pdata > au->au_pend && sc->sc_pintr != NULL)
-		dow = 1;
-
-	if (dor != 0)
-		(*sc->sc_rintr)(sc->sc_rarg);
-	if (dow != 0)
-		(*sc->sc_pintr)(sc->sc_parg);
-	mutex_spin_exit(&sc->sc_am7930.sc_intr_lock);
-}
-
-
-/* indirect write */
-void
-vsaudio_codec_iwrite(struct am7930_softc *sc, int reg, uint8_t val)
-{
-	struct vsaudio_softc *vssc = (struct vsaudio_softc *)sc;
-
-	vsaudio_codec_dwrite(vssc, AM7930_DREG_CR, reg);
-	vsaudio_codec_dwrite(vssc, AM7930_DREG_DR, val);
-}
-
-void
-vsaudio_codec_iwrite16(struct am7930_softc *sc, int reg, uint16_t val)
-{
-	struct vsaudio_softc *vssc = (struct vsaudio_softc *)sc;
-
-	vsaudio_codec_dwrite(vssc, AM7930_DREG_CR, reg);
-	vsaudio_codec_dwrite(vssc, AM7930_DREG_DR, val);
-	vsaudio_codec_dwrite(vssc, AM7930_DREG_DR, val >> 8);
-}
-
-/* indirect read */
-uint8_t
-vsaudio_codec_iread(struct am7930_softc *sc, int reg)
-{
-	struct vsaudio_softc *vssc = (struct vsaudio_softc *)sc;
-
-	vsaudio_codec_dwrite(vssc, AM7930_DREG_CR, reg);
-	return vsaudio_codec_dread(vssc, AM7930_DREG_DR);
-}
-
-uint16_t
-vsaudio_codec_iread16(struct am7930_softc *sc, int reg)
-{
-	struct vsaudio_softc *vssc = (struct vsaudio_softc *)sc;
-	uint lo, hi;
-
-	vsaudio_codec_dwrite(vssc, AM7930_DREG_CR, reg);
-	lo = vsaudio_codec_dread(vssc, AM7930_DREG_DR);
-	hi = vsaudio_codec_dread(vssc, AM7930_DREG_DR);
-	return (hi << 8) | lo;
+	am7930_hwintr(arg);
 }
 
 /* direct read */
 uint8_t
-vsaudio_codec_dread(struct vsaudio_softc *sc, int reg)
+vsaudio_codec_dread(struct am7930_softc *amsc, int reg)
 {
+	struct vsaudio_softc *sc = (struct vsaudio_softc *)amsc;
+
 	return bus_space_read_1(sc->sc_bt, sc->sc_bh, reg << 2);
 }
 
 /* direct write */
 void
-vsaudio_codec_dwrite(struct vsaudio_softc *sc, int reg, uint8_t val)
+vsaudio_codec_dwrite(struct am7930_softc *amsc, int reg, uint8_t val)
 {
+	struct vsaudio_softc *sc = (struct vsaudio_softc *)amsc;
+
 	bus_space_write_1(sc->sc_bt, sc->sc_bh, reg << 2, val);
 }
 
 int
 vsaudio_getdev(void *addr, struct audio_device *retp)
 {
+
 	*retp = vsaudio_device;
 	return 0;
-}
-
-void
-vsaudio_get_locks(void *opaque, kmutex_t **intr, kmutex_t **thread)
-{
-	struct vsaudio_softc *asc = opaque;
-	struct am7930_softc *sc = &asc->sc_am7930;
-
-	*intr = &sc->sc_intr_lock;
-	*thread = &sc->sc_lock;
 }
 
 #endif /* NAUDIO > 0 */
