@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.134 2020/09/11 17:32:36 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.135 2020/09/12 10:38:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.134 2020/09/11 17:32:36 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.135 2020/09/12 10:38:52 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.134 2020/09/11 17:32:36 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.135 2020/09/12 10:38:52 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -281,6 +281,7 @@ ParseFuncArg(const char **linePtr, Boolean doEval, const char *func,
     if (func != NULL && *cp++ != ')') {
 	Parse_Error(PARSE_WARNING, "Missing closing parenthesis for %s()",
 		    func);
+	/* The PARSE_FATAL is done as a follow-up by Cond_EvalExpression. */
 	return 0;
     }
 
@@ -550,18 +551,20 @@ static Token
 EvalCompareNum(double lhs, const char *op, double rhs)
 {
     if (DEBUG(COND))
-	fprintf(debug_file, "lhs = %f, right = %f, op = %.2s\n", lhs, rhs, op);
+	fprintf(debug_file, "lhs = %f, rhs = %f, op = %.2s\n", lhs, rhs, op);
 
     switch (op[0]) {
     case '!':
 	if (op[1] != '=') {
 	    Parse_Error(PARSE_WARNING, "Unknown operator");
+	    /* The PARSE_FATAL is done as a follow-up by Cond_EvalExpression. */
 	    return TOK_ERROR;
 	}
 	return lhs != rhs;
     case '=':
 	if (op[1] != '=') {
 	    Parse_Error(PARSE_WARNING, "Unknown operator");
+	    /* The PARSE_FATAL is done as a follow-up by Cond_EvalExpression. */
 	    return TOK_ERROR;
 	}
 	return lhs == rhs;
@@ -576,9 +579,10 @@ EvalCompareNum(double lhs, const char *op, double rhs)
 static Token
 EvalCompareStr(const char *lhs, const char *op, const char *rhs)
 {
-    if ((*op != '!' && *op != '=') || op[1] != '=') {
+    if (!((op[0] == '!' || op[0] == '=') && op[1] == '=')) {
 	Parse_Error(PARSE_WARNING,
-		    "String comparison operator should be either == or !=");
+		    "String comparison operator must be either == or !=");
+	/* The PARSE_FATAL is done as a follow-up by Cond_EvalExpression. */
 	return TOK_ERROR;
     }
 
@@ -658,6 +662,7 @@ CondParser_Comparison(CondParser *par, Boolean doEval)
 
     if (par->p[0] == '\0') {
 	Parse_Error(PARSE_WARNING, "Missing right-hand-side of operator");
+	/* The PARSE_FATAL is done as a follow-up by Cond_EvalExpression. */
 	goto done;
     }
 
