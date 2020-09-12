@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1209 2020/09/12 08:31:39 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1210 2020/09/12 15:25:42 jmcneill Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -103,6 +103,32 @@ EXTERNAL_OPENSSL_SUBDIR=openssl.old
 .else
 EXTERNAL_OPENSSL_SUBDIR=/does/not/exist
 .endif
+
+#
+# Does the platform support ACPI?
+#
+.if ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "x86_64" || \
+    ${MACHINE_ARCH} == "ia64" || \
+    !empty(MACHINE_ARCH:Maarch64*)
+HAVE_ACPI=	yes
+.else
+HAVE_ACPI=	no
+.endif
+
+#
+# Does the platform support UEFI?
+#
+.if ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "x86_64" || \
+    ${MACHINE_ARCH} == "ia64" || \
+    !empty(MACHINE_ARCH:Mearmv7*) || \
+    !empty(MACHINE_ARCH:Maarch64*)
+HAVE_UEFI=	yes
+.else
+HAVE_UEFI=	no
+.endif
+
 
 .if !empty(MACHINE_ARCH:Mearm*)
 _LIBC_COMPILER_RT.${MACHINE_ARCH}=	yes
