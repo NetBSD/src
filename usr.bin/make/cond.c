@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.138 2020/09/12 17:14:40 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.139 2020/09/12 18:02:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.138 2020/09/12 17:14:40 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.139 2020/09/12 18:02:43 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.138 2020/09/12 17:14:40 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.139 2020/09/12 18:02:43 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -378,10 +378,10 @@ TryParseNumber(const char *str, double *value)
     }
     l_val = strtoul(str, &eptr, str[1] == 'x' ? 16 : 10);
     ech = *eptr;
-    if (ech == 0 && errno != ERANGE) {
+    if (ech == '\0' && errno != ERANGE) {
 	d_val = str[0] == '-' ? -(double)-l_val : (double)l_val;
     } else {
-	if (ech != 0 && ech != '.' && ech != 'e' && ech != 'E')
+	if (ech != '\0' && ech != '.' && ech != 'e' && ech != 'E')
 	    return FALSE;
 	d_val = strtod(str, &eptr);
 	if (*eptr)
