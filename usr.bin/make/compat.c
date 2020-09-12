@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.142 2020/09/12 15:03:39 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.143 2020/09/12 15:10:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.142 2020/09/12 15:03:39 rillig Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.143 2020/09/12 15:10:55 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.142 2020/09/12 15:03:39 rillig Exp $");
+__RCSID("$NetBSD: compat.c,v 1.143 2020/09/12 15:10:55 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -485,6 +485,12 @@ CompatRunCommand(void *cmd, void *gn)
     return Compat_RunCommand(cmd, gn);
 }
 
+static int
+CompatMake(void *gn, void *pgn)
+{
+    return Compat_Make(gn, pgn);
+}
+
 /*-
  *-----------------------------------------------------------------------
  * Compat_Make --
@@ -503,11 +509,8 @@ CompatRunCommand(void *cmd, void *gn)
  *-----------------------------------------------------------------------
  */
 int
-Compat_Make(void *gnp, void *pgnp)
+Compat_Make(GNode *gn, GNode *pgn)
 {
-    GNode *gn = (GNode *)gnp;
-    GNode *pgn = (GNode *)pgnp;
-
     if (!shellName)		/* we came here from jobs */
 	Shell_Init();
     if (gn->made == UNMADE && (gn == pgn || (pgn->type & OP_MADE) == 0)) {
@@ -523,7 +526,7 @@ Compat_Make(void *gnp, void *pgnp)
 	gn->made = BEINGMADE;
 	if ((gn->type & OP_MADE) == 0)
 	    Suff_FindDeps(gn);
-	Lst_ForEach(gn->children, Compat_Make, gn);
+	Lst_ForEach(gn->children, CompatMake, gn);
 	if ((gn->flags & REMAKE) == 0) {
 	    gn->made = ABORTED;
 	    pgn->flags &= ~(unsigned)REMAKE;
@@ -663,7 +666,7 @@ Compat_Make(void *gnp, void *pgnp)
     }
 
 cohorts:
-    Lst_ForEach(gn->cohorts, Compat_Make, pgnp);
+    Lst_ForEach(gn->cohorts, CompatMake, pgn);
     return 0;
 }
 
