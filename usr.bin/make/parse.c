@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.290 2020/09/11 17:32:36 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.291 2020/09/12 11:21:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.290 2020/09/11 17:32:36 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.291 2020/09/12 11:21:15 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.290 2020/09/11 17:32:36 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.291 2020/09/12 11:21:15 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -610,6 +610,43 @@ ParseFindKeyword(const char *str)
     return -1;
 }
 
+static void
+PrintLocation(FILE *f, const char *cfname, size_t clineno)
+{
+	char dirbuf[MAXPATHLEN+1];
+
+	(void)fprintf(f, "\"");
+	if (*cfname != '/' && strcmp(cfname, "(stdin)") != 0) {
+		char *cp, *cp2;
+		const char *dir, *fname;
+
+		/*
+		 * Nothing is more annoying than not knowing
+		 * which Makefile is the culprit; we try ${.PARSEDIR}
+		 * and apply realpath(3) if not absolute.
+		 */
+		dir = Var_Value(".PARSEDIR", VAR_GLOBAL, &cp);
+		if (dir == NULL)
+			dir = ".";
+		if (*dir != '/') {
+			dir = realpath(dir, dirbuf);
+		}
+		fname = Var_Value(".PARSEFILE", VAR_GLOBAL, &cp2);
+		if (fname == NULL) {
+			if ((fname = strrchr(cfname, '/')))
+				fname++;
+			else
+				fname = cfname;
+		}
+		(void)fprintf(f, "%s/%s", dir, fname);
+		bmake_free(cp2);
+		bmake_free(cp);
+	} else
+		(void)fprintf(f, "%s", cfname);
+
+	(void)fprintf(f, "\" line %d: ", (int)clineno);
+}
+
 /*-
  * ParseVErrorInternal  --
  *	Error message abort function for parsing. Prints out the context
@@ -628,42 +665,11 @@ ParseVErrorInternal(FILE *f, const char *cfname, size_t clineno, int type,
     const char *fmt, va_list ap)
 {
 	static Boolean fatal_warning_error_printed = FALSE;
-	char dirbuf[MAXPATHLEN+1];
 
 	(void)fprintf(f, "%s: ", progname);
 
-	if (cfname != NULL) {
-		(void)fprintf(f, "\"");
-		if (*cfname != '/' && strcmp(cfname, "(stdin)") != 0) {
-			char *cp, *cp2;
-			const char *dir, *fname;
-
-			/*
-			 * Nothing is more annoying than not knowing
-			 * which Makefile is the culprit; we try ${.PARSEDIR}
-			 * and apply realpath(3) if not absolute.
-			 */
-			dir = Var_Value(".PARSEDIR", VAR_GLOBAL, &cp);
-			if (dir == NULL)
-				dir = ".";
-			if (*dir != '/') {
-				dir = realpath(dir, dirbuf);
-			}
-			fname = Var_Value(".PARSEFILE", VAR_GLOBAL, &cp2);
-			if (fname == NULL) {
-				if ((fname = strrchr(cfname, '/')))
-					fname++;
-				else
-					fname = cfname;
-			}
-			(void)fprintf(f, "%s/%s", dir, fname);
-			bmake_free(cp2);
-			bmake_free(cp);
-		} else
-			(void)fprintf(f, "%s", cfname);
-
-		(void)fprintf(f, "\" line %d: ", (int)clineno);
-	}
+	if (cfname != NULL)
+		PrintLocation(f, cfname, clineno);
 	if (type == PARSE_WARNING)
 		(void)fprintf(f, "warning: ");
 	(void)vfprintf(f, fmt, ap);
