@@ -1,4 +1,4 @@
-# $NetBSD: varname-dot-parsedir.mk,v 1.3 2020/09/12 11:45:47 rillig Exp $
+# $NetBSD: varname-dot-parsedir.mk,v 1.4 2020/09/12 11:55:28 rillig Exp $
 #
 # Tests for the special .PARSEDIR variable, which contains the directory part
 # of the file that is currently parsed.
@@ -12,8 +12,17 @@
 # During parsing, it is possible to undefine .PARSEDIR.
 # Not that anyone would ever want to do this, but there's code in parse.c,
 # function PrintLocation, that explicitly handles this situation.
+.if !defined(.PARSEDIR)
+.  error
+.endif
 .undef .PARSEDIR
+.if defined(.PARSEDIR)
+.  error
+.endif
 
+# The variable .PARSEDIR is indirectly used by the .info directive,
+# via PrintLocation.
+#
 # The .rawout file contains the full path to the current directory.
 # In the .out file, it is filtered out.
 .info At this point, .PARSEDIR is undefined.
@@ -28,4 +37,4 @@
 .info The location is no longer fake.
 
 all:
-	@:;
+	@echo At run time, .PARSEDIR is ${.PARSEDIR:Uundefined}.
