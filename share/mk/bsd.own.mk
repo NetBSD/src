@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1212 2020/09/13 20:59:18 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1213 2020/09/13 23:32:04 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -64,7 +64,8 @@ TOOLCHAIN_MISSING?=	no
 # What GCC is used?
 #
 .if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_CPU} == "aarch64" || ${MACHINE_CPU} == "arm"
+    ${MACHINE_CPU} == "aarch64" || ${MACHINE_CPU} == "arm" ||
+    ${MACHINE_CPU} == "riscv" || ${MACHINE} == "ia64"
 HAVE_GCC?=	9
 .else
 HAVE_GCC?=	8
@@ -94,8 +95,7 @@ MKGCCCMDS?=	no
 #
 # What binutils is used?
 #
-.if ${MACHINE_CPU} == "sh3" || ${MACHINE_CPU} == "riscv" || \
-    ${MACHINE_CPU} == "m68k"
+.if ${MACHINE_CPU} == "sh3" ${MACHINE_CPU} == "m68k"
 HAVE_BINUTILS?=	231
 .endif
 HAVE_BINUTILS?=	234
