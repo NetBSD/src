@@ -1,4 +1,4 @@
-/*	$NetBSD: sockstat.c,v 1.20.2.1 2019/08/19 16:01:52 martin Exp $ */
+/*	$NetBSD: sockstat.c,v 1.20.2.2 2020/09/13 12:00:45 martin Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sockstat.c,v 1.20.2.1 2019/08/19 16:01:52 martin Exp $");
+__RCSID("$NetBSD: sockstat.c,v 1.20.2.2 2020/09/13 12:00:45 martin Exp $");
 #endif
 
 #define _KMEMUSER
@@ -179,6 +179,11 @@ main(int argc, char *argv[])
 	if (prog_init && prog_init() == -1)
 		err(1, "init");
 
+	/* Not used, but we set the PK_KMEM flag like this */
+	int fd = open("/dev/mem", O_RDONLY);
+	if (fd == -1)
+		err(EXIT_FAILURE, "Can't open `/dev/mem'");
+	close(fd);
 	if ((portmap != NULL) && (pf_list == 0)) {
 		pf_list = PF_LIST_INET;
 #ifdef INET6
