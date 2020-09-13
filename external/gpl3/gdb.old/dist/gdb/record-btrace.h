@@ -1,6 +1,6 @@
 /* Branch trace support for GDB, the GNU debugger.
 
-   Copyright (C) 2016-2017 Free Software Foundation, Inc.
+   Copyright (C) 2016-2019 Free Software Foundation, Inc.
 
    Contributed by Intel Corp. <tim.wiederhake@intel.com>
 
@@ -24,5 +24,9 @@
 
 /* Push the record_btrace target.  */
 extern void record_btrace_push_target (void);
+
+/* Return the cpu configured by the user via "set btrace cpu".  Returns
+   NULL if the cpu was configured as auto.  */
+extern const struct btrace_cpu *record_btrace_get_cpu (void);
 
 #endif /* RECORD_BTRACE_H */

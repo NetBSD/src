@@ -1,6 +1,6 @@
 /* Native-dependent code for FreeBSD/sparc64.
 
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -46,31 +46,26 @@ sparc64fbsd_kvm_supply_pcb (struct regcache *regcache, struct pcb *pcb)
   if (pcb->pcb_sp == 0)
     return 0;
 
-  regcache_raw_supply (regcache, SPARC_SP_REGNUM, &pcb->pcb_sp);
-  regcache_raw_supply (regcache, SPARC64_PC_REGNUM, &pcb->pcb_pc);
+  regcache->raw_supply (SPARC_SP_REGNUM, &pcb->pcb_sp);
+  regcache->raw_supply (SPARC64_PC_REGNUM, &pcb->pcb_pc);
 
   /* Synthesize %npc.  */
   pcb->pcb_pc += 4;
-  regcache_raw_supply (regcache, SPARC64_NPC_REGNUM, &pcb->pcb_pc);
+  regcache->raw_supply (SPARC64_NPC_REGNUM, &pcb->pcb_pc);
 
   /* Read `local' and `in' registers from the stack.  */
   sparc_supply_rwindow (regcache, pcb->pcb_sp, -1);
 
   return 1;
 }
-
 
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-void _initialize_sparc64fbsd_nat (void);
+/* Add some extra features to the generic SPARC target.  */
+static sparc_target<fbsd_nat_target> the_sparc64_fbsd_nat_target;
 
 void
 _initialize_sparc64fbsd_nat (void)
 {
-  struct target_ops *t;
-
-  /* Add some extra features to the generic SPARC target.  */
-  t = sparc_target ();
-  fbsd_nat_add_target (t);
+  add_inf_child_target (&the_sparc64_fbsd_nat_target);
 
   sparc_gregmap = &sparc64fbsd_gregmap;
 

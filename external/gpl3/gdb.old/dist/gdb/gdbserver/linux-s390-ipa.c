@@ -1,7 +1,7 @@
 /* GNU/Linux S/390 specific low level interface, for the in-process
    agent library for GDB.
 
-   Copyright (C) 2016-2017 Free Software Foundation, Inc.
+   Copyright (C) 2016-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -119,7 +119,7 @@ static const int s390_linux64_ft_collect_regmap[] = {
   FT_VR (28), FT_VR (29), FT_VR (30), FT_VR (31),
 };
 
-/* Used for s390-te-linux64, s390-tevx-linux64.  */
+/* Used for s390-te-linux64, s390-tevx-linux64, and s390-gs-linux64.  */
 
 static const int s390_te_linux64_ft_collect_regmap[] = {
   /* 32-bit PSWA and PSWM.  */
@@ -207,7 +207,8 @@ static const int s390x_ft_collect_regmap[] = {
   FT_VR (28), FT_VR (29), FT_VR (30), FT_VR (31),
 };
 
-/* Used for s390x-te-linux64, s390x-tevx-linux64.  */
+/* Used for s390x-te-linux64, s390x-tevx-linux64, and
+   s390x-gs-linux64.  */
 
 static const int s390x_te_ft_collect_regmap[] = {
   /* 64-bit PSWA and PSWM.  */
@@ -335,6 +336,9 @@ get_ipa_tdesc (int idx)
     case S390_TDESC_TEVX:
       SET_REGMAP(s390x_te_ft_collect_regmap, 0);
       return tdesc_s390x_tevx_linux64;
+    case S390_TDESC_GS:
+      SET_REGMAP(s390x_te_ft_collect_regmap, 0);
+      return tdesc_s390x_gs_linux64;
 #else
     case S390_TDESC_32:
       SET_REGMAP(s390_linux32_ft_collect_regmap, 0);
@@ -363,6 +367,9 @@ get_ipa_tdesc (int idx)
     case S390_TDESC_TEVX:
       SET_REGMAP(s390_te_linux64_ft_collect_regmap, 0);
       return tdesc_s390_tevx_linux64;
+    case S390_TDESC_GS:
+      SET_REGMAP(s390_te_ft_collect_regmap, 0);
+      return tdesc_s390_gs_linux64;
 #endif
     default:
       internal_error (__FILE__, __LINE__,
@@ -440,6 +447,7 @@ initialize_low_tracepoint (void)
   init_registers_s390x_te_linux64 ();
   init_registers_s390x_vx_linux64 ();
   init_registers_s390x_tevx_linux64 ();
+  init_registers_s390x_gs_linux64 ();
 #else
   init_registers_s390_linux32 ();
   init_registers_s390_linux32v1 ();
@@ -450,5 +458,6 @@ initialize_low_tracepoint (void)
   init_registers_s390_te_linux64 ();
   init_registers_s390_vx_linux64 ();
   init_registers_s390_tevx_linux64 ();
+  init_registers_s390_gs_linux64 ();
 #endif
 }
