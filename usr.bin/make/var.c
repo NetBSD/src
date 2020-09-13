@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.515 2020/09/13 19:16:22 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.516 2020/09/13 19:28:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.515 2020/09/13 19:16:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.516 2020/09/13 19:28:46 rillig Exp $");
 
 #define VAR_DEBUG_IF(cond, fmt, ...)	\
     if (!(DEBUG(VAR) && (cond)))	\
@@ -3489,8 +3489,10 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	if (v == NULL) {
 	    *pp += 2;
 
-	    *out_val = ShortVarValue(start[1], ctxt, eflags);
-	    return eflags & VARE_UNDEFERR ? VPE_UNDEF_SILENT : VPE_OK;
+	    *out_val = ShortVarValue(startc, ctxt, eflags);
+	    if (DEBUG(LINT) && *out_val == var_Error)
+	        Parse_Error(PARSE_FATAL, "Variable \"%s\" is undefined", name);
+	    return eflags & VARE_UNDEFERR ? VPE_UNDEF_MSG : VPE_OK;
 	} else {
 	    haveModifier = FALSE;
 	    p = start + 1;
