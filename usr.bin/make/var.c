@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.506 2020/09/13 05:55:39 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.507 2020/09/13 07:42:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.506 2020/09/13 05:55:39 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.507 2020/09/13 07:42:20 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.506 2020/09/13 05:55:39 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.507 2020/09/13 07:42:20 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3369,6 +3369,27 @@ ParseVarname(const char **pp, char startc, char endc,
     return Buf_Destroy(&buf, FALSE);
 }
 
+static Boolean
+ValidShortVarname(char varname, const char *start)
+{
+    if (varname != '\0' && strchr(")}:$", varname) == NULL)
+	return TRUE;
+
+    if (!DEBUG(LINT))
+	return FALSE;
+
+    if (varname == '$')
+	Parse_Error(PARSE_FATAL,
+		    "To escape a dollar, use \\$, not $$, at \"%s\"", start);
+    else if (varname == '\0')
+	Parse_Error(PARSE_FATAL, "Dollar followed by nothing");
+    else
+	Parse_Error(PARSE_FATAL,
+		    "Invalid variable name '%c', at \"%s\"", varname, start);
+
+    return FALSE;
+}
+
 /*-
  *-----------------------------------------------------------------------
  * Var_Parse --
@@ -3454,8 +3475,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, void **freePtr)
 	 * value if it exists.
 	 */
 
-	/* Error out some really stupid names */
-	if (startc == '\0' || strchr(")}:$", startc)) {
+	if (!ValidShortVarname(startc, start)) {
 	    (*pp)++;
 	    return var_Error;
 	}
@@ -3572,7 +3592,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, void **freePtr)
      * return.
      */
     nstr = Buf_GetAll(&v->val, NULL);
-    if (strchr(nstr, '$') != NULL && (eflags & VARE_WANTRES) != 0) {
+    if (strchr(nstr, '$') != NULL && (eflags & VARE_WANTRES)) {
 	nstr = Var_Subst(nstr, ctxt, eflags);
 	*freePtr = nstr;
     }
