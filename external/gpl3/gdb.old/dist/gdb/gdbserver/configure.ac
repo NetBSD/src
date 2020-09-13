@@ -1,5 +1,5 @@
 dnl Autoconf configure script for GDB server.
-dnl Copyright (C) 2000-2017 Free Software Foundation, Inc.
+dnl Copyright (C) 2000-2019 Free Software Foundation, Inc.
 dnl
 dnl This file is part of GDB.
 dnl
@@ -17,8 +17,6 @@ dnl You should have received a copy of the GNU General Public License
 dnl along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 dnl Process this file with autoconf to produce a configure script.
-
-AC_PREREQ(2.59)dnl
 
 AC_INIT(server.c)
 AC_CONFIG_HEADER(config.h:config.in)
@@ -56,11 +54,27 @@ else
 fi
 GDB_AC_LIBMCHECK(${libmcheck_default})
 
+GDB_AC_SELFTEST([
+  srv_selftest_objs="common/selftest.o"
+])
+
 ACX_NONCANONICAL_TARGET
 ACX_NONCANONICAL_HOST
 
 # Dependency checking.
 ZW_CREATE_DEPDIR
+
+# Create sub-directories for objects and dependencies.
+CONFIG_SRC_SUBDIR="arch common"
+AC_SUBST(CONFIG_SRC_SUBDIR)
+
+AC_CONFIG_COMMANDS([gdbdepdir],[
+  for subdir in ${CONFIG_SRC_SUBDIR}
+  do
+      $SHELL $ac_aux_dir/mkinstalldirs $subdir/$DEPDIR
+  done],
+  [ac_aux_dir=$ac_aux_dir DEPDIR=$DEPDIR CONFIG_SRC_SUBDIR="$CONFIG_SRC_SUBDIR"])
+
 ZW_PROG_COMPILER_DEPENDENCIES([CC])
 
 gnulib_extra_configure_args=
@@ -79,7 +93,7 @@ ACX_CONFIGURE_DIR(["../gnulib"], ["build-gnulib-gdbserver"],
 
 ACX_CONFIGURE_DIR(["../../libiberty"], ["build-libiberty-gdbserver"])
 
-AC_CHECK_HEADERS(sgtty.h termio.h termios.h sys/reg.h string.h dnl
+AC_CHECK_HEADERS(termios.h sys/reg.h string.h dnl
 		 proc_service.h sys/procfs.h linux/elf.h dnl
 		 fcntl.h signal.h sys/file.h dnl
 		 sys/ioctl.h netinet/in.h sys/socket.h netdb.h dnl
@@ -141,12 +155,6 @@ AC_SUBST(ustlibs)
 AC_SUBST(ustinc)
 
 AM_GDB_WARNINGS
-dnl The codebase isn't clean yet with this flag.
-case " $WARN_CFLAGS " in
-*" -Wmissing-prototypes "*)
-  WARN_CFLAGS="$WARN_CFLAGS -Wno-missing-prototypes"
-  ;;
-esac
 
 dnl dladdr is glibc-specific.  It is used by thread-db.c but only for
 dnl debugging messages.  It lives in -ldl which is handled below so we don't
@@ -167,7 +175,8 @@ AC_CHECK_MEMBERS([struct stat.st_blocks, struct stat.st_blksize])
 # Older amd64 Linux's don't have the fs_base and gs_base members of
 # `struct user_regs_struct'.
 AC_CHECK_MEMBERS([struct user_regs_struct.fs_base, struct user_regs_struct.gs_base],
-		 [], [], [#include <sys/user.h>])
+     [], [], [#include <sys/types.h>
+#include <sys/user.h>])
 
 
 AC_CHECK_TYPES(socklen_t, [], [],
@@ -393,7 +402,7 @@ if test "$srv_xmlfiles" != ""; then
   done
 fi
 
-GDBSERVER_DEPFILES="$srv_regobj $srv_tgtobj $srv_hostio_err_objs $srv_thread_depfiles $srv_host_obs"
+GDBSERVER_DEPFILES="$srv_regobj $srv_tgtobj $srv_hostio_err_objs $srv_thread_depfiles $srv_host_obs $srv_selftest_objs"
 GDBSERVER_LIBS="$srv_libs"
 
 dnl Check whether the target supports __sync_*_compare_and_swap.
@@ -410,7 +419,7 @@ fi
 dnl Check for -fvisibility=hidden support in the compiler.
 saved_cflags="$CFLAGS"
 CFLAGS="$CFLAGS -fvisibility=hidden"
-AC_COMPILE_IFELSE(AC_LANG_PROGRAM([]),
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
 		        [gdbsrv_cv_have_visibility_hidden=yes],
 	        	[gdbsrv_cv_have_visibility_hidden=no])
 CFLAGS="$saved_cflags"

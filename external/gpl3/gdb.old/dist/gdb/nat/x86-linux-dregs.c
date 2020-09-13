@@ -1,6 +1,6 @@
 /* Low-level debug register code for GNU/Linux x86 (i386 and x86-64).
 
-   Copyright (C) 1999-2017 Free Software Foundation, Inc.
+   Copyright (C) 1999-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "common-defs.h"
+#include "common/common-defs.h"
 #include "nat/gdb_ptrace.h"
 #include <sys/user.h>
 #include "target/waitstatus.h"
@@ -43,8 +43,8 @@ x86_linux_dr_get (ptid_t ptid, int regnum)
   int tid;
   unsigned long value;
 
-  gdb_assert (ptid_lwp_p (ptid));
-  tid = ptid_get_lwp (ptid);
+  gdb_assert (ptid.lwp_p ());
+  tid = ptid.lwp ();
 
   errno = 0;
   value = ptrace (PTRACE_PEEKUSER, tid, u_debugreg_offset (regnum), 0);
@@ -61,8 +61,8 @@ x86_linux_dr_set (ptid_t ptid, int regnum, unsigned long value)
 {
   int tid;
 
-  gdb_assert (ptid_lwp_p (ptid));
-  tid = ptid_get_lwp (ptid);
+  gdb_assert (ptid.lwp_p ());
+  tid = ptid.lwp ();
 
   errno = 0;
   ptrace (PTRACE_POKEUSER, tid, u_debugreg_offset (regnum), value);
@@ -102,7 +102,7 @@ x86_linux_dr_get_addr (int regnum)
 void
 x86_linux_dr_set_addr (int regnum, CORE_ADDR addr)
 {
-  ptid_t pid_ptid = pid_to_ptid (ptid_get_pid (current_lwp_ptid ()));
+  ptid_t pid_ptid = ptid_t (current_lwp_ptid ().pid ());
 
   gdb_assert (DR_FIRSTADDR <= regnum && regnum <= DR_LASTADDR);
 
@@ -122,7 +122,7 @@ x86_linux_dr_get_control (void)
 void
 x86_linux_dr_set_control (unsigned long control)
 {
-  ptid_t pid_ptid = pid_to_ptid (ptid_get_pid (current_lwp_ptid ()));
+  ptid_t pid_ptid = ptid_t (current_lwp_ptid ().pid ());
 
   iterate_over_lwps (pid_ptid, update_debug_registers_callback, NULL);
 }
@@ -148,7 +148,7 @@ x86_linux_update_debug_registers (struct lwp_info *lwp)
   if (lwp_debug_registers_changed (lwp))
     {
       struct x86_debug_reg_state *state
-	= x86_debug_reg_state (ptid_get_pid (ptid));
+	= x86_debug_reg_state (ptid.pid ());
       int i;
 
       /* Prior to Linux kernel 2.6.33 commit

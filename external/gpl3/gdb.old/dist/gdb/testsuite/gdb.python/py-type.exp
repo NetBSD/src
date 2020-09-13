@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2017 Free Software Foundation, Inc.
+# Copyright (C) 2009-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -277,6 +277,10 @@ if { [build_inferior "${binfile}" "c"] == 0 } {
 
   gdb_test "python print(gdb.lookup_type('int').optimized_out())" \
       "<optimized out>"
+
+  set sint [get_sizeof int 0]
+  gdb_test "python print(gdb.parse_and_eval('aligncheck').type.alignof)" \
+      $sint
 
   with_test_prefix "lang_c" {
       runto_bp "break to inspect struct and array."

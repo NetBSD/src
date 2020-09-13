@@ -1,4 +1,4 @@
-# Copyright 2013-2017 Free Software Foundation, Inc.
+# Copyright 2013-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -80,8 +80,9 @@ gdb_test_no_output "set print repeats 10000"
 gdb_test_no_output "set print elements 10000"
 
 if { $has_argv0 } {
-    # gdbserver does not have this issue.
-    if ![is_remote target] {
+    # gdbserver in extended-remote mode does not have this issue.
+    # Plain remote does, however.
+    if {[target_info gdb_protocol] != "extended-remote" || ![target_is_gdbserver]} {
 	setup_kfail "*-*-*" gdb/15934
     }
     gdb_test {print argv[0]} "/$dirlink/$filelink\"" $test

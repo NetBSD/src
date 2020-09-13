@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2014-2017 Free Software Foundation, Inc.
+# Copyright 2014-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ standard_testfile
 # program and spawn several threads before trying to kill the program.
 
 proc test {threaded} {
-    global testfile srcfile
+    global testfile srcfile decimal
 
     with_test_prefix [expr ($threaded)?"threaded":"non-threaded"] {
 
@@ -68,7 +68,11 @@ proc test {threaded} {
 	#
 	# the above would mean that the remote end crashed.
 
-	gdb_test "kill" "^y" "kill program" "Kill the program being debugged\\? \\(y or n\\) $" "y"
+	gdb_test_multiple "kill" "kill" {
+	    -re "Kill the program being debugged\\? \\(y or n\\) $" {
+		gdb_test "y" "\\\[Inferior $decimal \\(.*\\) killed\\\]" "kill"
+	    }
+	}
     }
 }
 

@@ -1,6 +1,6 @@
 /* GDB hooks for TUI.
 
-   Copyright (C) 2001-2017 Free Software Foundation, Inc.
+   Copyright (C) 2001-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,7 +32,8 @@
 #include "breakpoint.h"
 #include "ui-out.h"
 #include "top.h"
-#include "observer.h"
+#include "observable.h"
+#include "source.h"
 #include <unistd.h>
 #include <fcntl.h>
 
@@ -118,14 +119,13 @@ tui_refresh_frame_and_register_information (int registers_too_p)
 {
   struct frame_info *fi;
   CORE_ADDR pc;
-  struct cleanup *old_chain;
   int frame_info_changed_p;
 
   if (!has_stack_frames ())
     return;
 
-  old_chain = make_cleanup_restore_target_terminal ();
-  target_terminal_ours_for_output ();
+  target_terminal::scoped_restore_terminal_state term_state;
+  target_terminal::ours_for_output ();
 
   fi = get_selected_frame (NULL);
   /* Ensure that symbols for this frame are read in.  Also, determine
@@ -156,8 +156,6 @@ tui_refresh_frame_and_register_information (int registers_too_p)
       tui_check_data_values (fi);
       tui_refreshing_registers = 0;
     }
-
-  do_cleanups (old_chain);
 }
 
 /* Dummy callback for deprecated_print_frame_info_listing_hook which is called
@@ -206,14 +204,56 @@ tui_normal_stop (struct bpstats *bs, int print_frame)
   tui_refresh_frame_and_register_information (/*registers_too_p=*/1);
 }
 
-/* Observers created when installing TUI hooks.  */
-static struct observer *tui_bp_created_observer;
-static struct observer *tui_bp_deleted_observer;
-static struct observer *tui_bp_modified_observer;
-static struct observer *tui_inferior_exit_observer;
-static struct observer *tui_before_prompt_observer;
-static struct observer *tui_normal_stop_observer;
-static struct observer *tui_register_changed_observer;
+/* Observer for source_cache_cleared.  */
+
+static void
+tui_redisplay_source ()
+{
+  if (tui_is_window_visible (SRC_WIN))
+    {
+      /* Force redisplay.  */
+      tui_refill_source_window (tui_win_list[SRC_WIN]);
+    }
+}
+
+/* Token associated with observers registered while TUI hooks are
+   installed.  */
+static const gdb::observers::token tui_observers_token {};
+
+/* Attach or detach a single observer, according to ATTACH.  */
+
+template<typename T>
+static void
+attach_or_detach (T &observable, typename T::func_type func, bool attach)
+{
+  if (attach)
+    observable.attach (func, tui_observers_token);
+  else
+    observable.detach (tui_observers_token);
+}
+
+/* Attach or detach TUI observers, according to ATTACH.  */
+
+static void
+tui_attach_detach_observers (bool attach)
+{
+  attach_or_detach (gdb::observers::breakpoint_created,
+		    tui_event_create_breakpoint, attach);
+  attach_or_detach (gdb::observers::breakpoint_deleted,
+		    tui_event_delete_breakpoint, attach);
+  attach_or_detach (gdb::observers::breakpoint_modified,
+		    tui_event_modify_breakpoint, attach);
+  attach_or_detach (gdb::observers::inferior_exit,
+		    tui_inferior_exit, attach);
+  attach_or_detach (gdb::observers::before_prompt,
+		    tui_before_prompt, attach);
+  attach_or_detach (gdb::observers::normal_stop,
+		    tui_normal_stop, attach);
+  attach_or_detach (gdb::observers::register_changed,
+		    tui_register_changed, attach);
+  attach_or_detach (gdb::observers::source_styling_changed,
+		    tui_redisplay_source, attach);
+}
 
 /* Install the TUI specific hooks.  */
 void
@@ -227,20 +267,7 @@ tui_install_hooks (void)
     = tui_dummy_print_frame_info_listing_hook;
 
   /* Install the event hooks.  */
-  tui_bp_created_observer
-    = observer_attach_breakpoint_created (tui_event_create_breakpoint);
-  tui_bp_deleted_observer
-    = observer_attach_breakpoint_deleted (tui_event_delete_breakpoint);
-  tui_bp_modified_observer
-    = observer_attach_breakpoint_modified (tui_event_modify_breakpoint);
-  tui_inferior_exit_observer
-    = observer_attach_inferior_exit (tui_inferior_exit);
-  tui_before_prompt_observer
-    = observer_attach_before_prompt (tui_before_prompt);
-  tui_normal_stop_observer
-    = observer_attach_normal_stop (tui_normal_stop);
-  tui_register_changed_observer
-    = observer_attach_register_changed (tui_register_changed);
+  tui_attach_detach_observers (true);
 }
 
 /* Remove the TUI specific hooks.  */
@@ -249,28 +276,14 @@ tui_remove_hooks (void)
 {
   deprecated_print_frame_info_listing_hook = 0;
   deprecated_query_hook = 0;
-  /* Remove our observers.  */
-  observer_detach_breakpoint_created (tui_bp_created_observer);
-  tui_bp_created_observer = NULL;
-  observer_detach_breakpoint_deleted (tui_bp_deleted_observer);
-  tui_bp_deleted_observer = NULL;
-  observer_detach_breakpoint_modified (tui_bp_modified_observer);
-  tui_bp_modified_observer = NULL;
-  observer_detach_inferior_exit (tui_inferior_exit_observer);
-  tui_inferior_exit_observer = NULL;
-  observer_detach_before_prompt (tui_before_prompt_observer);
-  tui_before_prompt_observer = NULL;
-  observer_detach_normal_stop (tui_normal_stop_observer);
-  tui_normal_stop_observer = NULL;
-  observer_detach_register_changed (tui_register_changed_observer);
-  tui_register_changed_observer = NULL;
-}
 
-void _initialize_tui_hooks (void);
+  /* Remove our observers.  */
+  tui_attach_detach_observers (false);
+}
 
 void
 _initialize_tui_hooks (void)
 {
   /* Install the permanent hooks.  */
-  observer_attach_new_objfile (tui_new_objfile_hook);
+  gdb::observers::new_objfile.attach (tui_new_objfile_hook);
 }

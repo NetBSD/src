@@ -1,4 +1,4 @@
-# Copyright (C) 2007-2017 Free Software Foundation, Inc.
+# Copyright (C) 2007-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -274,10 +274,15 @@ gdb_test "ptype d64 + ds.dec32" " = volatile _Decimal64"
 gdb_test "ptype d128 + ds.dec32" " = volatile _Decimal128"
 gdb_test "ptype d128 + ds.dec64" " = volatile _Decimal128"
 
+gdb_test "whatis d64 + ds.dec32" " = volatile _Decimal64"
+gdb_test "whatis d128 + ds.dec32" " = volatile _Decimal128"
+gdb_test "whatis d128 + ds.dec64" " = volatile _Decimal128"
+
 # Mixture of Decimal and integral operands
 gdb_test "p d32 + 1" " = 1.1"
 gdb_test "p 2 + d64" " = 2.1"
 gdb_test "p ds.int4 + d128" " = 1.1"
+gdb_test "p d32 + ds.long8" " = 2.1"
 gdb_test "ptype d32 + 1" " = volatile _Decimal32"
 gdb_test "ptype ds.int4 + d128" " = volatile _Decimal128"
 
@@ -304,11 +309,6 @@ gdb_test "p ds.dec32 < ds.int4" " = 0"
 gdb_test "p ds.int4 > ds.dec64" " = 0"
 gdb_test "p ds.dec128 > ds.int4" " = 1"
 
-# Reject operation with integral larger than 32-bits
-if { ${sizeof_long} > 4 } {
-  gdb_test "p d32 + ds.long8" "Conversion of large integer to a decimal floating type is not supported."
-}
-
 # Reject operation with DFP and Binary FP
 gdb_test "p d64 + ds.float4" "Mixing decimal floating types with other floating types is not allowed."
 gdb_test "p ds.double8 + d128" "Mixing decimal floating types with other floating types is not allowed."
@@ -331,3 +331,58 @@ gdb_test "print ds.dec128 = -ds.double8" " = 0.(0999.*|1000.*)"
 gdb_test "print ds.dec128 = ds.dec32" " = -0.1"
 gdb_test "print ds.dec32 = ds.int4" " = 1"
 gdb_test "print ds.int4 = 7.3dl" " = 7"
+
+# Test "whatis"/"ptype" of expressions involving casts to/from dfp
+# typedefs.
+
+# This list is composed by sub-lists, and their elements are (in
+# order):
+#
+# - Type to cast to.  This is also what "whatis" should print.
+# - What "ptype" should print.
+
+# Columns in the sublists represent:
+     # to/whatis   # ptype
+foreach elem {
+    {"_Decimal32"  "_Decimal32"}
+    {"_Decimal64"  "_Decimal64"}
+    {"_Decimal128" "_Decimal128"}
+    {"d32_t"       "_Decimal32"}
+    {"d64_t"       "_Decimal64"}
+    {"d128_t"      "_Decimal128"}
+    {"d32_t2"      "_Decimal32"}
+    {"d64_t2"      "_Decimal64"}
+    {"d128_t2"     "_Decimal128"}
+} {
+    set type [lindex $elem 0]
+    set ptype [lindex $elem 1]
+    gdb_test "whatis ($type) 0" " = $type"
+    gdb_test "ptype ($type) 0" " = $ptype"
+}
+
+# Test:
+# - whatis/ptype of variables of typedef type.
+# - whatis/ptype of typedef type names.
+# - whatis/ptype of typedef-of-typedef type names.
+
+# Columns in the sublists represent:
+    # Type name    # whatis      # ptype
+foreach elem {
+    {"v_d32_t"     "d32_t"       "_Decimal32"}
+    {"v_d64_t"     "d64_t"       "_Decimal64"}
+    {"v_d128_t"    "d128_t"      "_Decimal128"}
+
+    {"d32_t"       "_Decimal32"  "_Decimal32"}
+    {"d64_t"       "_Decimal64"  "_Decimal64"}
+    {"d128_t"      "_Decimal128" "_Decimal128"}
+
+    {"d32_t2"      "d32_t"       "_Decimal32"}
+    {"d64_t2"      "d64_t"       "_Decimal64"}
+    {"d128_t2"     "d128_t"      "_Decimal128"}
+} {
+    set type [lindex $elem 0]
+    set whatis [lindex $elem 1]
+    set ptype [lindex $elem 2]
+    gdb_test "whatis $type" " = $whatis"
+    gdb_test "ptype $type" " = $ptype"
+}

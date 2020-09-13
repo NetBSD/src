@@ -1,6 +1,6 @@
 /* Target-dependent code for QNX Neutrino x86.
 
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
    Contributed by QNX Software Systems Ltd.
 
@@ -76,7 +76,7 @@ nto_reg_offset (int regnum)
 static void
 i386nto_supply_gregset (struct regcache *regcache, char *gpregs)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
   gdb_assert (tdep->gregset_reg_offset == i386nto_gregset_reg_offset);
@@ -250,7 +250,7 @@ i386nto_regset_fill (const struct regcache *regcache, int regset, char *data)
 	{
 	  int offset = nto_reg_offset (regno);
 	  if (offset != -1)
-	    regcache_raw_collect (regcache, regno, data + offset);
+	    regcache->raw_collect (regno, data + offset);
 	}
     }
   else if (regset == NTO_REG_FLOAT)
@@ -366,9 +366,6 @@ i386nto_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_wchar_bit (gdbarch, 32);
   set_gdbarch_wchar_signed (gdbarch, 0);
 }
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-extern initialize_file_ftype _initialize_i386nto_tdep;
 
 void
 _initialize_i386nto_tdep (void)

@@ -1,5 +1,5 @@
 /* Common target dependent code for GDB on ARM systems.
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,6 +28,9 @@ struct arm_get_next_pcs;
 struct gdb_get_next_pcs;
 
 #include "arch/arm.h"
+#include "infrun.h"
+
+#include <vector>
 
 /* Say how long FP registers are.  Used for documentation purposes and
    code readability in this header.  IEEE extended doubles are 80
@@ -151,7 +154,7 @@ struct gdbarch_tdep
    sequence) and any scratch words, etc.  */
 #define DISPLACED_MODIFIED_INSNS	8
 
-struct displaced_step_closure
+struct arm_displaced_step_closure : public displaced_step_closure
 {
   ULONGEST tmp[DISPLACED_TEMPS];
   int rd;
@@ -198,7 +201,7 @@ struct displaced_step_closure
       /* If non-NULL, override generic SVC handling (e.g. for a particular
          OS).  */
       int (*copy_svc_os) (struct gdbarch *gdbarch, struct regcache *regs,
-			  struct displaced_step_closure *dsc);
+			  arm_displaced_step_closure *dsc);
     } svc;
   } u;
 
@@ -217,7 +220,7 @@ struct displaced_step_closure
   CORE_ADDR insn_addr;
   CORE_ADDR scratch_base;
   void (*cleanup) (struct gdbarch *, struct regcache *,
-		   struct displaced_step_closure *);
+		   arm_displaced_step_closure *);
 };
 
 /* Values for the WRITE_PC argument to displaced_write_reg.  If the register
@@ -236,16 +239,16 @@ enum pc_write_style
 extern void
   arm_process_displaced_insn (struct gdbarch *gdbarch, CORE_ADDR from,
 			      CORE_ADDR to, struct regcache *regs,
-			      struct displaced_step_closure *dsc);
+			      arm_displaced_step_closure *dsc);
 extern void
   arm_displaced_init_closure (struct gdbarch *gdbarch, CORE_ADDR from,
-			      CORE_ADDR to, struct displaced_step_closure *dsc);
+			      CORE_ADDR to, arm_displaced_step_closure *dsc);
 extern ULONGEST
-  displaced_read_reg (struct regcache *regs, struct displaced_step_closure *dsc,
+  displaced_read_reg (struct regcache *regs, arm_displaced_step_closure *dsc,
 		      int regno);
 extern void
   displaced_write_reg (struct regcache *regs,
-		       struct displaced_step_closure *dsc, int regno,
+		       arm_displaced_step_closure *dsc, int regno,
 		       ULONGEST val, enum pc_write_style write_pc);
 
 CORE_ADDR arm_skip_stub (struct frame_info *, CORE_ADDR);
@@ -259,7 +262,7 @@ CORE_ADDR arm_get_next_pcs_addr_bits_remove (struct arm_get_next_pcs *self,
 
 int arm_get_next_pcs_is_thumb (struct arm_get_next_pcs *self);
 
-VEC (CORE_ADDR) *arm_software_single_step (struct regcache *);
+std::vector<CORE_ADDR> arm_software_single_step (struct regcache *);
 int arm_is_thumb (struct regcache *regcache);
 int arm_frame_is_thumb (struct frame_info *frame);
 

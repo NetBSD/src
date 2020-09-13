@@ -1,5 +1,5 @@
 /* MI Command Set for GDB, the GNU debugger.
-   Copyright (C) 2000-2017 Free Software Foundation, Inc.
+   Copyright (C) 2000-2019 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions (a Red Hat company).
 
@@ -22,8 +22,6 @@
 #include "top.h"
 #include "mi-cmds.h"
 #include "mi-main.h"
-
-extern void _initialize_mi_cmds (void);
 
 struct mi_cmd;
 static struct mi_cmd **lookup_table (const char *command);
@@ -70,6 +68,8 @@ static struct mi_cmd mi_cmds[] =
   DEF_MI_CMD_MI_1 ("catch-assert", mi_cmd_catch_assert,
                    &mi_suppress_notification.breakpoint),
   DEF_MI_CMD_MI_1 ("catch-exception", mi_cmd_catch_exception,
+                   &mi_suppress_notification.breakpoint),
+  DEF_MI_CMD_MI_1 ("catch-handlers", mi_cmd_catch_handlers,
                    &mi_suppress_notification.breakpoint),
   DEF_MI_CMD_MI_1 ("catch-load", mi_cmd_catch_load,
                    &mi_suppress_notification.breakpoint),

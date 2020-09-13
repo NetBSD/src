@@ -1,6 +1,6 @@
 /* UI_FILE - a generic STDIO like output stream.
 
-   Copyright (C) 1999-2017 Free Software Foundation, Inc.
+   Copyright (C) 1999-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,7 +23,7 @@
 #include "ui-file.h"
 #include "gdb_obstack.h"
 #include "gdb_select.h"
-#include "filestuff.h"
+#include "common/filestuff.h"
 
 null_file null_stream;
 
@@ -52,7 +52,7 @@ ui_file::putstr (const char *str, int quoter)
 void
 ui_file::putstrn (const char *str, int n, int quoter)
 {
-  fputstrn_unfiltered (str, n, quoter, this);
+  fputstrn_unfiltered (str, n, quoter, fputc_unfiltered, this);
 }
 
 int
@@ -177,12 +177,12 @@ stdio_file::open (const char *name, const char *mode)
       m_close_p = false;
     }
 
-  FILE *f = gdb_fopen_cloexec (name, mode);
+  gdb_file_up f = gdb_fopen_cloexec (name, mode);
 
   if (f == NULL)
     return false;
 
-  set_stream (f);
+  set_stream (f.release ());
   m_close_p = true;
 
   return true;
@@ -236,6 +236,12 @@ stdio_file::write_async_safe (const char *buf, long length_buf)
 void
 stdio_file::puts (const char *linebuffer)
 {
+  /* This host-dependent function (with implementations in
+     posix-hdep.c and mingw-hdep.c) is given the opportunity to
+     process the output first in host-dependent way.  If it does, it
+     should return non-zero, to avoid calling fputs below.  */
+  if (gdb_console_fputs (linebuffer, m_file))
+    return;
   /* Calling error crashes when we are called from the exception framework.  */
   if (fputs (linebuffer, m_file))
     {

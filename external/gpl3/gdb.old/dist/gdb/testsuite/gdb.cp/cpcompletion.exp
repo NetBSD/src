@@ -1,4 +1,4 @@
-# Copyright 2009-2017 Free Software Foundation, Inc.
+# Copyright 2009-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,6 +15,8 @@
 
 # This file is part of the gdb testsuite.
 
+load_lib completion-support.exp
+
 # A helper procedure to test location completions restricted by
 # class.
 proc test_class_complete {class expr name matches} {
@@ -26,7 +28,7 @@ proc test_class_complete {class expr name matches} {
     gdb_test_multiple $cmd $name {
 	"break ${class}::main" { fail "$name (saw global symbol)" }
 	$cmd { exp_continue }
-	-re "break ${class}::\[A-Za-z0-9_~\]+" {
+	-re "break ${class}::\[^\r\n\]*\r\n" {
 	    set str $expect_out(0,string)
 	    scan $str "break ${class}::%\[^(\]" method
 	    lappend seen $method
@@ -54,6 +56,14 @@ if { [skip_cplus_tests] } { continue }
 standard_testfile pr9594.cc
 
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}]} {
+    return -1
+}
+
+# Tests below are about tab-completion, which doesn't work if readline
+# library isn't used.  Check it first.
+
+if { ![readline_is_used] } {
+    untested "no tab completion support without readline"
     return -1
 }
 
@@ -85,3 +95,43 @@ gdb_test "complete p foo1.Fo" "p foo1\\.Foofoo"
 
 # Test completion with an anonymous struct.
 gdb_test "complete p a.g" "p a\\.get"
+
+with_test_prefix "expression with namespace" {
+    # Before the scope operator, GDB shows all the symbols whose
+    # fully-qualified name matches the completion word.
+    test_gdb_complete_multiple "p " "Test_NS" "" {
+	"Test_NS"
+	"Test_NS::Nested"
+	"Test_NS::Nested::qux"
+	"Test_NS::bar"
+	"Test_NS::foo"
+    }
+
+    # Unlike in linespecs, tab- and complete-command completion work a
+    # bit differently when completing around the scope operator.  The
+    # matches in the tab-completion case only show the part of the
+    # symbol after the scope, since ':' is a word break character.
+
+    set tab_completion_list {
+	"Nested"
+	"Nested::qux"
+	"bar"
+	"foo"
+    }
+    test_gdb_complete_tab_multiple "p Test_NS:" ":" $tab_completion_list
+    test_gdb_complete_tab_multiple "p Test_NS::" "" $tab_completion_list
+
+    # OTOH, the complete command must show the whole command, with
+    # qualified symbol displayed as entered by the user.
+    set cmd_completion_list {
+	"Test_NS::Nested"
+	"Test_NS::Nested::qux"
+	"Test_NS::bar"
+	"Test_NS::foo"
+    }
+    test_gdb_complete_cmd_multiple "p " "Test_NS:" $cmd_completion_list
+    test_gdb_complete_cmd_multiple "p " "Test_NS::" $cmd_completion_list
+
+    # Add a disambiguating character and we get a unique completion.
+    test_gdb_complete_unique "p Test_NS::f" "p Test_NS::foo"
+}

@@ -1,5 +1,5 @@
 # Xmethod commands.
-# Copyright 2013-2017 Free Software Foundation, Inc.
+# Copyright 2013-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -177,21 +177,20 @@ def set_xm_status(arg, status):
 class InfoXMethod(gdb.Command):
     """GDB command to list registered xmethod matchers.
 
-    Usage: info xmethod [locus-regexp [name-regexp]]
+Usage: info xmethod [LOCUS-REGEXP [NAME-REGEXP]]
 
-    LOCUS-REGEXP is a regular expression matching the location of the
-    xmethod matchers.  If it is omitted, all registered xmethod matchers
-    from all loci are listed.  A locus could be 'global', a regular expression
-    matching the current program space's filename, or a regular expression
-    matching filenames of objfiles.  Locus could be 'progspace' to specify that
-    only xmethods from the current progspace should be listed.
+LOCUS-REGEXP is a regular expression matching the location of the
+xmethod matchers.  If it is omitted, all registered xmethod matchers
+from all loci are listed.  A locus could be 'global', a regular expression
+matching the current program space's filename, or a regular expression
+matching filenames of objfiles.  Locus could be 'progspace' to specify that
+only xmethods from the current progspace should be listed.
 
-    NAME-REGEXP is a regular expression matching the names of xmethod
-    matchers.  If this omitted for a specified locus, then all registered
-    xmethods in the locus are listed.  To list only a certain xmethods
-    managed by a single matcher, the name regexp can be specified as
-    matcher-name-regexp;xmethod-name-regexp.
-    """
+NAME-REGEXP is a regular expression matching the names of xmethod
+matchers.  If this omitted for a specified locus, then all registered
+xmethods in the locus are listed.  To list only a certain xmethods
+managed by a single matcher, the name regexp can be specified as
+matcher-name-regexp;xmethod-name-regexp."""
 
     def __init__(self):
         super(InfoXMethod, self).__init__("info xmethod",
@@ -213,21 +212,20 @@ class InfoXMethod(gdb.Command):
 class EnableXMethod(gdb.Command):
     """GDB command to enable a specified (group of) xmethod(s).
 
-    Usage: enable xmethod [locus-regexp [name-regexp]]
+Usage: enable xmethod [LOCUS-REGEXP [NAME-REGEXP]]
 
-    LOCUS-REGEXP is a regular expression matching the location of the
-    xmethod matchers.  If it is omitted, all registered xmethods matchers
-    from all loci are enabled.  A locus could be 'global', a regular expression
-    matching the current program space's filename, or a regular expression
-    matching filenames of objfiles.  Locus could be 'progspace' to specify that
-    only xmethods from the current progspace should be enabled.
+LOCUS-REGEXP is a regular expression matching the location of the
+xmethod matchers.  If it is omitted, all registered xmethods matchers
+from all loci are enabled.  A locus could be 'global', a regular expression
+matching the current program space's filename, or a regular expression
+matching filenames of objfiles.  Locus could be 'progspace' to specify that
+only xmethods from the current progspace should be enabled.
 
-    NAME-REGEXP is a regular expression matching the names of xmethods
-    within a given locus.  If this omitted for a specified locus, then all
-    registered xmethod matchers in the locus are enabled.  To enable only
-    a certain xmethods managed by a single matcher, the name regexp can be
-    specified as matcher-name-regexp;xmethod-name-regexp.
-    """
+NAME-REGEXP is a regular expression matching the names of xmethods
+within a given locus.  If this omitted for a specified locus, then all
+registered xmethod matchers in the locus are enabled.  To enable only
+a certain xmethods managed by a single matcher, the name regexp can be
+specified as matcher-name-regexp;xmethod-name-regexp."""
 
     def __init__(self):
         super(EnableXMethod, self).__init__("enable xmethod",
@@ -240,21 +238,20 @@ class EnableXMethod(gdb.Command):
 class DisableXMethod(gdb.Command):
     """GDB command to disable a specified (group of) xmethod(s).
 
-    Usage: disable xmethod [locus-regexp [name-regexp]]
+Usage: disable xmethod [LOCUS-REGEXP [NAME-REGEXP]]
 
-    LOCUS-REGEXP is a regular expression matching the location of the
-    xmethod matchers.  If it is omitted, all registered xmethod matchers
-    from all loci are disabled.  A locus could be 'global', a regular
-    expression matching the current program space's filename, or a regular
-    expression filenames of objfiles. Locus could be 'progspace' to specify
-    that only xmethods from the current progspace should be disabled.
+LOCUS-REGEXP is a regular expression matching the location of the
+xmethod matchers.  If it is omitted, all registered xmethod matchers
+from all loci are disabled.  A locus could be 'global', a regular
+expression matching the current program space's filename, or a regular
+expression filenames of objfiles. Locus could be 'progspace' to specify
+that only xmethods from the current progspace should be disabled.
 
-    NAME-REGEXP is a regular expression matching the names of xmethods
-    within a given locus.  If this omitted for a specified locus, then all
-    registered xmethod matchers in the locus are disabled.  To disable
-    only a certain xmethods managed by a single matcher, the name regexp
-    can be specified as matcher-name-regexp;xmethod-name-regexp.
-    """
+NAME-REGEXP is a regular expression matching the names of xmethods
+within a given locus.  If this omitted for a specified locus, then all
+registered xmethod matchers in the locus are disabled.  To disable
+only a certain xmethods managed by a single matcher, the name regexp
+can be specified as matcher-name-regexp;xmethod-name-regexp."""
 
     def __init__(self):
         super(DisableXMethod, self).__init__("disable xmethod",
