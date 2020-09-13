@@ -1,7 +1,8 @@
 //===-- netbsd_syscall_hooks.h --------------------------------------------===//
 //
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
 //
@@ -19,8 +20,8 @@
 // DO NOT EDIT! THIS FILE HAS BEEN GENERATED!
 //
 // Generated with: generate_netbsd_syscalls.awk
-// Generated date: 2018-03-03
-// Generated from: syscalls.master,v 1.291 2018/01/06 16:41:23 kamil Exp
+// Generated date: 2020-09-10
+// Generated from: syscalls.master,v 1.306 2020/08/14 00:53:16 riastradh Exp
 //
 //===----------------------------------------------------------------------===//
 #ifndef SANITIZER_NETBSD_SYSCALL_HOOKS_H
@@ -473,7 +474,12 @@
   __sanitizer_syscall_pre_impl_dup2((long long)(from), (long long)(to))
 #define __sanitizer_syscall_post_dup2(res, from, to)                           \
   __sanitizer_syscall_post_impl_dup2(res, (long long)(from), (long long)(to))
-/* syscall 91 has been skipped */
+#define __sanitizer_syscall_pre_getrandom(buf, buflen, flags)                  \
+  __sanitizer_syscall_pre_impl_getrandom(                                      \
+      (long long)(buf), (long long)(buflen), (long long)(flags))
+#define __sanitizer_syscall_post_getrandom(res, buf, buflen, flags)            \
+  __sanitizer_syscall_post_impl_getrandom(                                     \
+      res, (long long)(buf), (long long)(buflen), (long long)(flags))
 #define __sanitizer_syscall_pre_fcntl(fd, cmd, arg)                            \
   __sanitizer_syscall_pre_impl_fcntl((long long)(fd), (long long)(cmd),        \
                                      (long long)(arg))
@@ -848,9 +854,31 @@
 #define __sanitizer_syscall_post_sysarch(res, op, parms)                       \
   __sanitizer_syscall_post_impl_sysarch(res, (long long)(op),                  \
                                         (long long)(parms))
-/* syscall 166 has been skipped */
-/* syscall 167 has been skipped */
-/* syscall 168 has been skipped */
+#define __sanitizer_syscall_pre___futex(uaddr, op, val, timeout, uaddr2, val2, \
+                                        val3)                                  \
+  __sanitizer_syscall_pre_impl___futex((long long)(uaddr), (long long)(op),    \
+                                       (long long)(val), (long long)(timeout), \
+                                       (long long)(uaddr2), (long long)(val2), \
+                                       (long long)(val3))
+#define __sanitizer_syscall_post___futex(res, uaddr, op, val, timeout, uaddr2, \
+                                         val2, val3)                           \
+  __sanitizer_syscall_post_impl___futex(                                       \
+      res, (long long)(uaddr), (long long)(op), (long long)(val),              \
+      (long long)(timeout), (long long)(uaddr2), (long long)(val2),            \
+      (long long)(val3))
+#define __sanitizer_syscall_pre___futex_set_robust_list(head, len)             \
+  __sanitizer_syscall_pre_impl___futex_set_robust_list((long long)(head),      \
+                                                       (long long)(len))
+#define __sanitizer_syscall_post___futex_set_robust_list(res, head, len)       \
+  __sanitizer_syscall_post_impl___futex_set_robust_list(                       \
+      res, (long long)(head), (long long)(len))
+#define __sanitizer_syscall_pre___futex_get_robust_list(lwpid, headp, lenp)    \
+  __sanitizer_syscall_pre_impl___futex_get_robust_list(                        \
+      (long long)(lwpid), (long long)(headp), (long long)(lenp))
+#define __sanitizer_syscall_post___futex_get_robust_list(res, lwpid, headp,    \
+                                                         lenp)                 \
+  __sanitizer_syscall_post_impl___futex_get_robust_list(                       \
+      res, (long long)(lwpid), (long long)(headp), (long long)(lenp))
 #if !defined(_LP64)
 #define __sanitizer_syscall_pre_compat_10_osemsys(which, a2, a3, a4, a5)       \
   __sanitizer_syscall_pre_impl_compat_10_osemsys(                              \
@@ -984,7 +1012,15 @@
 #define __sanitizer_syscall_post_fpathconf(res, fd, name)                      \
   __sanitizer_syscall_post_impl_fpathconf(res, (long long)(fd),                \
                                           (long long)(name))
-/* syscall 193 has been skipped */
+#define __sanitizer_syscall_pre_getsockopt2(s, level, name, val, avalsize)     \
+  __sanitizer_syscall_pre_impl_getsockopt2(                                    \
+      (long long)(s), (long long)(level), (long long)(name), (long long)(val), \
+      (long long)(avalsize))
+#define __sanitizer_syscall_post_getsockopt2(res, s, level, name, val,         \
+                                             avalsize)                         \
+  __sanitizer_syscall_post_impl_getsockopt2(                                   \
+      res, (long long)(s), (long long)(level), (long long)(name),              \
+      (long long)(val), (long long)(avalsize))
 #define __sanitizer_syscall_pre_getrlimit(which, rlp)                          \
   __sanitizer_syscall_pre_impl_getrlimit((long long)(which), (long long)(rlp))
 #define __sanitizer_syscall_post_getrlimit(res, which, rlp)                    \
@@ -1750,18 +1786,8 @@
   __sanitizer_syscall_post_impl___sigaction_sigtramp(                          \
       res, (long long)(signum), (long long)(nsa), (long long)(osa),            \
       (long long)(tramp), (long long)(vers))
-#define __sanitizer_syscall_pre_pmc_get_info(ctr, op, args)                    \
-  __sanitizer_syscall_pre_impl_pmc_get_info((long long)(ctr), (long long)(op), \
-                                            (long long)(args))
-#define __sanitizer_syscall_post_pmc_get_info(res, ctr, op, args)              \
-  __sanitizer_syscall_post_impl_pmc_get_info(                                  \
-      res, (long long)(ctr), (long long)(op), (long long)(args))
-#define __sanitizer_syscall_pre_pmc_control(ctr, op, args)                     \
-  __sanitizer_syscall_pre_impl_pmc_control((long long)(ctr), (long long)(op),  \
-                                           (long long)(args))
-#define __sanitizer_syscall_post_pmc_control(res, ctr, op, args)               \
-  __sanitizer_syscall_post_impl_pmc_control(                                   \
-      res, (long long)(ctr), (long long)(op), (long long)(args))
+/* syscall 341 has been skipped */
+/* syscall 342 has been skipped */
 #define __sanitizer_syscall_pre_rasctl(addr, len, op)                          \
   __sanitizer_syscall_pre_impl_rasctl((long long)(addr), (long long)(len),     \
                                       (long long)(op))
@@ -1840,23 +1866,24 @@
 #define __sanitizer_syscall_post_uuidgen(res, store, count)                    \
   __sanitizer_syscall_post_impl_uuidgen(res, (long long)(store),               \
                                         (long long)(count))
-#define __sanitizer_syscall_pre_getvfsstat(buf, bufsize, flags)                \
-  __sanitizer_syscall_pre_impl_getvfsstat(                                     \
+#define __sanitizer_syscall_pre_compat_90_getvfsstat(buf, bufsize, flags)      \
+  __sanitizer_syscall_pre_impl_compat_90_getvfsstat(                           \
       (long long)(buf), (long long)(bufsize), (long long)(flags))
-#define __sanitizer_syscall_post_getvfsstat(res, buf, bufsize, flags)          \
-  __sanitizer_syscall_post_impl_getvfsstat(                                    \
+#define __sanitizer_syscall_post_compat_90_getvfsstat(res, buf, bufsize,       \
+                                                      flags)                   \
+  __sanitizer_syscall_post_impl_compat_90_getvfsstat(                          \
       res, (long long)(buf), (long long)(bufsize), (long long)(flags))
-#define __sanitizer_syscall_pre_statvfs1(path, buf, flags)                     \
-  __sanitizer_syscall_pre_impl_statvfs1((long long)(path), (long long)(buf),   \
-                                        (long long)(flags))
-#define __sanitizer_syscall_post_statvfs1(res, path, buf, flags)               \
-  __sanitizer_syscall_post_impl_statvfs1(res, (long long)(path),               \
-                                         (long long)(buf), (long long)(flags))
-#define __sanitizer_syscall_pre_fstatvfs1(fd, buf, flags)                      \
-  __sanitizer_syscall_pre_impl_fstatvfs1((long long)(fd), (long long)(buf),    \
-                                         (long long)(flags))
-#define __sanitizer_syscall_post_fstatvfs1(res, fd, buf, flags)                \
-  __sanitizer_syscall_post_impl_fstatvfs1(                                     \
+#define __sanitizer_syscall_pre_compat_90_statvfs1(path, buf, flags)           \
+  __sanitizer_syscall_pre_impl_compat_90_statvfs1(                             \
+      (long long)(path), (long long)(buf), (long long)(flags))
+#define __sanitizer_syscall_post_compat_90_statvfs1(res, path, buf, flags)     \
+  __sanitizer_syscall_post_impl_compat_90_statvfs1(                            \
+      res, (long long)(path), (long long)(buf), (long long)(flags))
+#define __sanitizer_syscall_pre_compat_90_fstatvfs1(fd, buf, flags)            \
+  __sanitizer_syscall_pre_impl_compat_90_fstatvfs1(                            \
+      (long long)(fd), (long long)(buf), (long long)(flags))
+#define __sanitizer_syscall_post_compat_90_fstatvfs1(res, fd, buf, flags)      \
+  __sanitizer_syscall_post_impl_compat_90_fstatvfs1(                           \
       res, (long long)(fd), (long long)(buf), (long long)(flags))
 #define __sanitizer_syscall_pre_compat_30_fhstatvfs1(fhp, buf, flags)          \
   __sanitizer_syscall_pre_impl_compat_30_fhstatvfs1(                           \
@@ -2144,12 +2171,13 @@
 #define __sanitizer_syscall_post___fhopen40(res, fhp, fh_size, flags)          \
   __sanitizer_syscall_post_impl___fhopen40(                                    \
       res, (long long)(fhp), (long long)(fh_size), (long long)(flags))
-#define __sanitizer_syscall_pre___fhstatvfs140(fhp, fh_size, buf, flags)       \
-  __sanitizer_syscall_pre_impl___fhstatvfs140(                                 \
+#define __sanitizer_syscall_pre_compat_90_fhstatvfs1(fhp, fh_size, buf, flags) \
+  __sanitizer_syscall_pre_impl_compat_90_fhstatvfs1(                           \
       (long long)(fhp), (long long)(fh_size), (long long)(buf),                \
       (long long)(flags))
-#define __sanitizer_syscall_post___fhstatvfs140(res, fhp, fh_size, buf, flags) \
-  __sanitizer_syscall_post_impl___fhstatvfs140(                                \
+#define __sanitizer_syscall_post_compat_90_fhstatvfs1(res, fhp, fh_size, buf,  \
+                                                      flags)                   \
+  __sanitizer_syscall_post_impl_compat_90_fhstatvfs1(                          \
       res, (long long)(fhp), (long long)(fh_size), (long long)(buf),           \
       (long long)(flags))
 #define __sanitizer_syscall_pre_compat_50___fhstat40(fhp, fh_size, sb)         \
@@ -2704,6 +2732,130 @@
                                                       clock_id)                \
   __sanitizer_syscall_post_impl_clock_getcpuclockid2(                          \
       res, (long long)(idtype), (long long)(id), (long long)(clock_id))
+#define __sanitizer_syscall_pre___getvfsstat90(buf, bufsize, flags)            \
+  __sanitizer_syscall_pre_impl___getvfsstat90(                                 \
+      (long long)(buf), (long long)(bufsize), (long long)(flags))
+#define __sanitizer_syscall_post___getvfsstat90(res, buf, bufsize, flags)      \
+  __sanitizer_syscall_post_impl___getvfsstat90(                                \
+      res, (long long)(buf), (long long)(bufsize), (long long)(flags))
+#define __sanitizer_syscall_pre___statvfs190(path, buf, flags)                 \
+  __sanitizer_syscall_pre_impl___statvfs190(                                   \
+      (long long)(path), (long long)(buf), (long long)(flags))
+#define __sanitizer_syscall_post___statvfs190(res, path, buf, flags)           \
+  __sanitizer_syscall_post_impl___statvfs190(                                  \
+      res, (long long)(path), (long long)(buf), (long long)(flags))
+#define __sanitizer_syscall_pre___fstatvfs190(fd, buf, flags)                  \
+  __sanitizer_syscall_pre_impl___fstatvfs190(                                  \
+      (long long)(fd), (long long)(buf), (long long)(flags))
+#define __sanitizer_syscall_post___fstatvfs190(res, fd, buf, flags)            \
+  __sanitizer_syscall_post_impl___fstatvfs190(                                 \
+      res, (long long)(fd), (long long)(buf), (long long)(flags))
+#define __sanitizer_syscall_pre___fhstatvfs190(fhp, fh_size, buf, flags)       \
+  __sanitizer_syscall_pre_impl___fhstatvfs190(                                 \
+      (long long)(fhp), (long long)(fh_size), (long long)(buf),                \
+      (long long)(flags))
+#define __sanitizer_syscall_post___fhstatvfs190(res, fhp, fh_size, buf, flags) \
+  __sanitizer_syscall_post_impl___fhstatvfs190(                                \
+      res, (long long)(fhp), (long long)(fh_size), (long long)(buf),           \
+      (long long)(flags))
+#define __sanitizer_syscall_pre___acl_get_link(path, type, aclp)               \
+  __sanitizer_syscall_pre_impl___acl_get_link(                                 \
+      (long long)(path), (long long)(type), (long long)(aclp))
+#define __sanitizer_syscall_post___acl_get_link(res, path, type, aclp)         \
+  __sanitizer_syscall_post_impl___acl_get_link(                                \
+      res, (long long)(path), (long long)(type), (long long)(aclp))
+#define __sanitizer_syscall_pre___acl_set_link(path, type, aclp)               \
+  __sanitizer_syscall_pre_impl___acl_set_link(                                 \
+      (long long)(path), (long long)(type), (long long)(aclp))
+#define __sanitizer_syscall_post___acl_set_link(res, path, type, aclp)         \
+  __sanitizer_syscall_post_impl___acl_set_link(                                \
+      res, (long long)(path), (long long)(type), (long long)(aclp))
+#define __sanitizer_syscall_pre___acl_delete_link(path, type)                  \
+  __sanitizer_syscall_pre_impl___acl_delete_link((long long)(path),            \
+                                                 (long long)(type))
+#define __sanitizer_syscall_post___acl_delete_link(res, path, type)            \
+  __sanitizer_syscall_post_impl___acl_delete_link(res, (long long)(path),      \
+                                                  (long long)(type))
+#define __sanitizer_syscall_pre___acl_aclcheck_link(path, type, aclp)          \
+  __sanitizer_syscall_pre_impl___acl_aclcheck_link(                            \
+      (long long)(path), (long long)(type), (long long)(aclp))
+#define __sanitizer_syscall_post___acl_aclcheck_link(res, path, type, aclp)    \
+  __sanitizer_syscall_post_impl___acl_aclcheck_link(                           \
+      res, (long long)(path), (long long)(type), (long long)(aclp))
+#define __sanitizer_syscall_pre___acl_get_file(path, type, aclp)               \
+  __sanitizer_syscall_pre_impl___acl_get_file(                                 \
+      (long long)(path), (long long)(type), (long long)(aclp))
+#define __sanitizer_syscall_post___acl_get_file(res, path, type, aclp)         \
+  __sanitizer_syscall_post_impl___acl_get_file(                                \
+      res, (long long)(path), (long long)(type), (long long)(aclp))
+#define __sanitizer_syscall_pre___acl_set_file(path, type, aclp)               \
+  __sanitizer_syscall_pre_impl___acl_set_file(                                 \
+      (long long)(path), (long long)(type), (long long)(aclp))
+#define __sanitizer_syscall_post___acl_set_file(res, path, type, aclp)         \
+  __sanitizer_syscall_post_impl___acl_set_file(                                \
+      res, (long long)(path), (long long)(type), (long long)(aclp))
+#define __sanitizer_syscall_pre___acl_get_fd(filedes, type, aclp)              \
+  __sanitizer_syscall_pre_impl___acl_get_fd(                                   \
+      (long long)(filedes), (long long)(type), (long long)(aclp))
+#define __sanitizer_syscall_post___acl_get_fd(res, filedes, type, aclp)        \
+  __sanitizer_syscall_post_impl___acl_get_fd(                                  \
+      res, (long long)(filedes), (long long)(type), (long long)(aclp))
+#define __sanitizer_syscall_pre___acl_set_fd(filedes, type, aclp)              \
+  __sanitizer_syscall_pre_impl___acl_set_fd(                                   \
+      (long long)(filedes), (long long)(type), (long long)(aclp))
+#define __sanitizer_syscall_post___acl_set_fd(res, filedes, type, aclp)        \
+  __sanitizer_syscall_post_impl___acl_set_fd(                                  \
+      res, (long long)(filedes), (long long)(type), (long long)(aclp))
+#define __sanitizer_syscall_pre___acl_delete_file(path, type)                  \
+  __sanitizer_syscall_pre_impl___acl_delete_file((long long)(path),            \
+                                                 (long long)(type))
+#define __sanitizer_syscall_post___acl_delete_file(res, path, type)            \
+  __sanitizer_syscall_post_impl___acl_delete_file(res, (long long)(path),      \
+                                                  (long long)(type))
+#define __sanitizer_syscall_pre___acl_delete_fd(filedes, type)                 \
+  __sanitizer_syscall_pre_impl___acl_delete_fd((long long)(filedes),           \
+                                               (long long)(type))
+#define __sanitizer_syscall_post___acl_delete_fd(res, filedes, type)           \
+  __sanitizer_syscall_post_impl___acl_delete_fd(res, (long long)(filedes),     \
+                                                (long long)(type))
+#define __sanitizer_syscall_pre___acl_aclcheck_file(path, type, aclp)          \
+  __sanitizer_syscall_pre_impl___acl_aclcheck_file(                            \
+      (long long)(path), (long long)(type), (long long)(aclp))
+#define __sanitizer_syscall_post___acl_aclcheck_file(res, path, type, aclp)    \
+  __sanitizer_syscall_post_impl___acl_aclcheck_file(                           \
+      res, (long long)(path), (long long)(type), (long long)(aclp))
+#define __sanitizer_syscall_pre___acl_aclcheck_fd(filedes, type, aclp)         \
+  __sanitizer_syscall_pre_impl___acl_aclcheck_fd(                              \
+      (long long)(filedes), (long long)(type), (long long)(aclp))
+#define __sanitizer_syscall_post___acl_aclcheck_fd(res, filedes, type, aclp)   \
+  __sanitizer_syscall_post_impl___acl_aclcheck_fd(                             \
+      res, (long long)(filedes), (long long)(type), (long long)(aclp))
+#define __sanitizer_syscall_pre_lpathconf(path, name)                          \
+  __sanitizer_syscall_pre_impl_lpathconf((long long)(path), (long long)(name))
+#define __sanitizer_syscall_post_lpathconf(res, path, name)                    \
+  __sanitizer_syscall_post_impl_lpathconf(res, (long long)(path),              \
+                                          (long long)(name))
+
+/* Compat with older releases */
+#define __sanitizer_syscall_pre_getvfsstat                                     \
+  __sanitizer_syscall_pre_compat_90_getvfsstat
+#define __sanitizer_syscall_post_getvfsstat                                    \
+  __sanitizer_syscall_post_compat_90_getvfsstat
+
+#define __sanitizer_syscall_pre_statvfs1                                       \
+  __sanitizer_syscall_pre_compat_90_statvfs1
+#define __sanitizer_syscall_post_statvfs1                                      \
+  __sanitizer_syscall_post_compat_90_statvfs1
+
+#define __sanitizer_syscall_pre_fstatvfs1                                      \
+  __sanitizer_syscall_pre_compat_90_fstatvfs1
+#define __sanitizer_syscall_post_fstatvfs1                                     \
+  __sanitizer_syscall_post_compat_90_fstatvfs1
+
+#define __sanitizer_syscall_pre___fhstatvfs140                                 \
+  __sanitizer_syscall_pre_compat_90_fhstatvfs1
+#define __sanitizer_syscall_post___fhstatvfs140                                \
+  __sanitizer_syscall_post_compat_90_fhstatvfs1
 
 #ifdef __cplusplus
 extern "C" {
@@ -3040,7 +3192,10 @@ void __sanitizer_syscall_post_impl_compat_43_ogetdtablesize(long long res);
 void __sanitizer_syscall_pre_impl_dup2(long long from, long long to);
 void __sanitizer_syscall_post_impl_dup2(long long res, long long from,
                                         long long to);
-/* syscall 91 has been skipped */
+void __sanitizer_syscall_pre_impl_getrandom(long long buf, long long buflen,
+                                            long long flags);
+void __sanitizer_syscall_post_impl_getrandom(long long res, long long buf,
+                                             long long buflen, long long flags);
 void __sanitizer_syscall_pre_impl_fcntl(long long fd, long long cmd,
                                         long long arg);
 void __sanitizer_syscall_post_impl_fcntl(long long res, long long fd,
@@ -3332,9 +3487,26 @@ void __sanitizer_syscall_post_impl_compat_09_ouname(long long res,
 void __sanitizer_syscall_pre_impl_sysarch(long long op, long long parms);
 void __sanitizer_syscall_post_impl_sysarch(long long res, long long op,
                                            long long parms);
-/* syscall 166 has been skipped */
-/* syscall 167 has been skipped */
-/* syscall 168 has been skipped */
+void __sanitizer_syscall_pre_impl___futex(long long uaddr, long long op,
+                                          long long val, long long timeout,
+                                          long long uaddr2, long long val2,
+                                          long long val3);
+void __sanitizer_syscall_post_impl___futex(long long res, long long uaddr,
+                                           long long op, long long val,
+                                           long long timeout, long long uaddr2,
+                                           long long val2, long long val3);
+void __sanitizer_syscall_pre_impl___futex_set_robust_list(long long head,
+                                                          long long len);
+void __sanitizer_syscall_post_impl___futex_set_robust_list(long long res,
+                                                           long long head,
+                                                           long long len);
+void __sanitizer_syscall_pre_impl___futex_get_robust_list(long long lwpid,
+                                                          long long headp,
+                                                          long long lenp);
+void __sanitizer_syscall_post_impl___futex_get_robust_list(long long res,
+                                                           long long lwpid,
+                                                           long long headp,
+                                                           long long lenp);
 #if !defined(_LP64)
 void __sanitizer_syscall_pre_impl_compat_10_osemsys(long long which,
                                                     long long a2, long long a3,
@@ -3442,7 +3614,13 @@ void __sanitizer_syscall_post_impl_pathconf(long long res, long long path,
 void __sanitizer_syscall_pre_impl_fpathconf(long long fd, long long name);
 void __sanitizer_syscall_post_impl_fpathconf(long long res, long long fd,
                                              long long name);
-/* syscall 193 has been skipped */
+void __sanitizer_syscall_pre_impl_getsockopt2(long long s, long long level,
+                                              long long name, long long val,
+                                              long long avalsize);
+void __sanitizer_syscall_post_impl_getsockopt2(long long res, long long s,
+                                               long long level, long long name,
+                                               long long val,
+                                               long long avalsize);
 void __sanitizer_syscall_pre_impl_getrlimit(long long which, long long rlp);
 void __sanitizer_syscall_post_impl_getrlimit(long long res, long long which,
                                              long long rlp);
@@ -3999,14 +4177,8 @@ void __sanitizer_syscall_pre_impl___sigaction_sigtramp(long long signum,
 void __sanitizer_syscall_post_impl___sigaction_sigtramp(
     long long res, long long signum, long long nsa, long long osa,
     long long tramp, long long vers);
-void __sanitizer_syscall_pre_impl_pmc_get_info(long long ctr, long long op,
-                                               long long args);
-void __sanitizer_syscall_post_impl_pmc_get_info(long long res, long long ctr,
-                                                long long op, long long args);
-void __sanitizer_syscall_pre_impl_pmc_control(long long ctr, long long op,
-                                              long long args);
-void __sanitizer_syscall_post_impl_pmc_control(long long res, long long ctr,
-                                               long long op, long long args);
+/* syscall 341 has been skipped */
+/* syscall 342 has been skipped */
 void __sanitizer_syscall_pre_impl_rasctl(long long addr, long long len,
                                          long long op);
 void __sanitizer_syscall_post_impl_rasctl(long long res, long long addr,
@@ -4067,19 +4239,27 @@ void __sanitizer_syscall_post_impl_fsync_range(long long res, long long fd,
 void __sanitizer_syscall_pre_impl_uuidgen(long long store, long long count);
 void __sanitizer_syscall_post_impl_uuidgen(long long res, long long store,
                                            long long count);
-void __sanitizer_syscall_pre_impl_getvfsstat(long long buf, long long bufsize,
-                                             long long flags);
-void __sanitizer_syscall_post_impl_getvfsstat(long long res, long long buf,
-                                              long long bufsize,
-                                              long long flags);
-void __sanitizer_syscall_pre_impl_statvfs1(long long path, long long buf,
-                                           long long flags);
-void __sanitizer_syscall_post_impl_statvfs1(long long res, long long path,
-                                            long long buf, long long flags);
-void __sanitizer_syscall_pre_impl_fstatvfs1(long long fd, long long buf,
-                                            long long flags);
-void __sanitizer_syscall_post_impl_fstatvfs1(long long res, long long fd,
-                                             long long buf, long long flags);
+void __sanitizer_syscall_pre_impl_compat_90_getvfsstat(long long buf,
+                                                       long long bufsize,
+                                                       long long flags);
+void __sanitizer_syscall_post_impl_compat_90_getvfsstat(long long res,
+                                                        long long buf,
+                                                        long long bufsize,
+                                                        long long flags);
+void __sanitizer_syscall_pre_impl_compat_90_statvfs1(long long path,
+                                                     long long buf,
+                                                     long long flags);
+void __sanitizer_syscall_post_impl_compat_90_statvfs1(long long res,
+                                                      long long path,
+                                                      long long buf,
+                                                      long long flags);
+void __sanitizer_syscall_pre_impl_compat_90_fstatvfs1(long long fd,
+                                                      long long buf,
+                                                      long long flags);
+void __sanitizer_syscall_post_impl_compat_90_fstatvfs1(long long res,
+                                                       long long fd,
+                                                       long long buf,
+                                                       long long flags);
 void __sanitizer_syscall_pre_impl_compat_30_fhstatvfs1(long long fhp,
                                                        long long buf,
                                                        long long flags);
@@ -4305,14 +4485,15 @@ void __sanitizer_syscall_pre_impl___fhopen40(long long fhp, long long fh_size,
 void __sanitizer_syscall_post_impl___fhopen40(long long res, long long fhp,
                                               long long fh_size,
                                               long long flags);
-void __sanitizer_syscall_pre_impl___fhstatvfs140(long long fhp,
-                                                 long long fh_size,
-                                                 long long buf,
-                                                 long long flags);
-void __sanitizer_syscall_post_impl___fhstatvfs140(long long res, long long fhp,
-                                                  long long fh_size,
-                                                  long long buf,
-                                                  long long flags);
+void __sanitizer_syscall_pre_impl_compat_90_fhstatvfs1(long long fhp,
+                                                       long long fh_size,
+                                                       long long buf,
+                                                       long long flags);
+void __sanitizer_syscall_post_impl_compat_90_fhstatvfs1(long long res,
+                                                        long long fhp,
+                                                        long long fh_size,
+                                                        long long buf,
+                                                        long long flags);
 void __sanitizer_syscall_pre_impl_compat_50___fhstat40(long long fhp,
                                                        long long fh_size,
                                                        long long sb);
@@ -4722,6 +4903,98 @@ void __sanitizer_syscall_post_impl_clock_getcpuclockid2(long long res,
                                                         long long idtype,
                                                         long long id,
                                                         long long clock_id);
+void __sanitizer_syscall_pre_impl___getvfsstat90(long long buf,
+                                                 long long bufsize,
+                                                 long long flags);
+void __sanitizer_syscall_post_impl___getvfsstat90(long long res, long long buf,
+                                                  long long bufsize,
+                                                  long long flags);
+void __sanitizer_syscall_pre_impl___statvfs190(long long path, long long buf,
+                                               long long flags);
+void __sanitizer_syscall_post_impl___statvfs190(long long res, long long path,
+                                                long long buf, long long flags);
+void __sanitizer_syscall_pre_impl___fstatvfs190(long long fd, long long buf,
+                                                long long flags);
+void __sanitizer_syscall_post_impl___fstatvfs190(long long res, long long fd,
+                                                 long long buf,
+                                                 long long flags);
+void __sanitizer_syscall_pre_impl___fhstatvfs190(long long fhp,
+                                                 long long fh_size,
+                                                 long long buf,
+                                                 long long flags);
+void __sanitizer_syscall_post_impl___fhstatvfs190(long long res, long long fhp,
+                                                  long long fh_size,
+                                                  long long buf,
+                                                  long long flags);
+void __sanitizer_syscall_pre_impl___acl_get_link(long long path, long long type,
+                                                 long long aclp);
+void __sanitizer_syscall_post_impl___acl_get_link(long long res, long long path,
+                                                  long long type,
+                                                  long long aclp);
+void __sanitizer_syscall_pre_impl___acl_set_link(long long path, long long type,
+                                                 long long aclp);
+void __sanitizer_syscall_post_impl___acl_set_link(long long res, long long path,
+                                                  long long type,
+                                                  long long aclp);
+void __sanitizer_syscall_pre_impl___acl_delete_link(long long path,
+                                                    long long type);
+void __sanitizer_syscall_post_impl___acl_delete_link(long long res,
+                                                     long long path,
+                                                     long long type);
+void __sanitizer_syscall_pre_impl___acl_aclcheck_link(long long path,
+                                                      long long type,
+                                                      long long aclp);
+void __sanitizer_syscall_post_impl___acl_aclcheck_link(long long res,
+                                                       long long path,
+                                                       long long type,
+                                                       long long aclp);
+void __sanitizer_syscall_pre_impl___acl_get_file(long long path, long long type,
+                                                 long long aclp);
+void __sanitizer_syscall_post_impl___acl_get_file(long long res, long long path,
+                                                  long long type,
+                                                  long long aclp);
+void __sanitizer_syscall_pre_impl___acl_set_file(long long path, long long type,
+                                                 long long aclp);
+void __sanitizer_syscall_post_impl___acl_set_file(long long res, long long path,
+                                                  long long type,
+                                                  long long aclp);
+void __sanitizer_syscall_pre_impl___acl_get_fd(long long filedes,
+                                               long long type, long long aclp);
+void __sanitizer_syscall_post_impl___acl_get_fd(long long res,
+                                                long long filedes,
+                                                long long type, long long aclp);
+void __sanitizer_syscall_pre_impl___acl_set_fd(long long filedes,
+                                               long long type, long long aclp);
+void __sanitizer_syscall_post_impl___acl_set_fd(long long res,
+                                                long long filedes,
+                                                long long type, long long aclp);
+void __sanitizer_syscall_pre_impl___acl_delete_file(long long path,
+                                                    long long type);
+void __sanitizer_syscall_post_impl___acl_delete_file(long long res,
+                                                     long long path,
+                                                     long long type);
+void __sanitizer_syscall_pre_impl___acl_delete_fd(long long filedes,
+                                                  long long type);
+void __sanitizer_syscall_post_impl___acl_delete_fd(long long res,
+                                                   long long filedes,
+                                                   long long type);
+void __sanitizer_syscall_pre_impl___acl_aclcheck_file(long long path,
+                                                      long long type,
+                                                      long long aclp);
+void __sanitizer_syscall_post_impl___acl_aclcheck_file(long long res,
+                                                       long long path,
+                                                       long long type,
+                                                       long long aclp);
+void __sanitizer_syscall_pre_impl___acl_aclcheck_fd(long long filedes,
+                                                    long long type,
+                                                    long long aclp);
+void __sanitizer_syscall_post_impl___acl_aclcheck_fd(long long res,
+                                                     long long filedes,
+                                                     long long type,
+                                                     long long aclp);
+void __sanitizer_syscall_pre_impl_lpathconf(long long path, long long name);
+void __sanitizer_syscall_post_impl_lpathconf(long long res, long long path,
+                                             long long name);
 
 #ifdef __cplusplus
 } // extern "C"
