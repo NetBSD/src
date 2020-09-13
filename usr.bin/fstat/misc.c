@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.23 2020/05/02 18:42:30 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.24 2020/09/13 04:14:48 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: misc.c,v 1.23 2020/05/02 18:42:30 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.24 2020/09/13 04:14:48 isaki Exp $");
 
 #include <stdbool.h>
 #include <sys/param.h>
@@ -59,6 +59,9 @@ __RCSID("$NetBSD: misc.c,v 1.23 2020/05/02 18:42:30 christos Exp $");
 #include <sys/mount.h>
 
 #include <net/bpfdesc.h>
+
+#include <dev/audio/audiodef.h>
+#include <dev/audio/audio_if.h>
 
 #include <err.h>
 #include <util.h>
@@ -220,6 +223,46 @@ p_kqueue(struct file *f)
 	return 0;
 }
 
+static int
+p_audio(struct file *f)
+{
+	struct audio_file af;
+	const char *devname;
+	const char *modename;
+
+	if (!KVM_READ(f->f_data, &af, sizeof(af))) {
+		dprintf("can't read audio_file at %p for pid %d",
+		    f->f_data, Pid);
+		return 0;
+	}
+
+	if (ISDEVAUDIO(af.dev)) {
+		devname = "audio";
+	} else if (ISDEVSOUND(af.dev)) {
+		devname = "sound";
+	} else if (ISDEVAUDIOCTL(af.dev)) {
+		devname = "audioctl";
+	} else if (ISDEVMIXER(af.dev)) {
+		devname = "mixer";
+	} else {
+		devname = "???";
+	}
+
+	if (af.ptrack && af.rtrack) {
+		modename = "playback, record";
+	} else if (af.ptrack) {
+		modename = "playback";
+	} else if (af.rtrack) {
+		modename = "record";
+	} else {
+		modename = "-";
+	}
+
+	(void)printf("* audio@%s%d %s", devname, AUDIOUNIT(af.dev), modename);
+	oprint(f, "\n");
+	return 0;
+}
+
 int
 pmisc(struct file *f, const char *name)
 {
@@ -263,8 +306,7 @@ pmisc(struct file *f, const char *name)
 		printf("* crypto %p", f->f_data);
 		break;
 	case NL_AUDIO:
-		printf("* audio %p", f->f_data);
-		break;
+		return p_audio(f);
 	case NL_PAD:
 		printf("* pad %p", f->f_data);
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: audiodef.h,v 1.14 2020/04/29 03:58:27 isaki Exp $	*/
+/*	$NetBSD: audiodef.h,v 1.15 2020/09/13 04:14:48 isaki Exp $	*/
 
 /*
  * Copyright (C) 2017 Tetsuya Isaki. All rights reserved.
@@ -78,6 +78,8 @@
 #define AUDIO_SCALEDOWN(value, bits)	((value) / (1 << (bits)))
 #endif
 
+#if defined(_KERNEL)
+
 /* conversion stage */
 typedef struct {
 	audio_ring_t srcbuf;
@@ -92,7 +94,7 @@ typedef enum {
 	AUDIO_STATE_DRAINING,	/* now draining */
 } audio_state_t;
 
-typedef struct audio_track {
+struct audio_track {
 	/*
 	 * AUMODE_PLAY for playback track, or
 	 * AUMODE_RECORD for recoding track.
@@ -167,7 +169,10 @@ typedef struct audio_track {
 	volatile uint	lock;
 
 	int		id;		/* track id for debug */
-} audio_track_t;
+};
+#endif /* _KERNEL */
+
+typedef struct audio_track audio_track_t;
 
 struct audio_file {
 	struct audio_softc *sc;
@@ -196,6 +201,8 @@ struct audio_file {
 
 	SLIST_ENTRY(audio_file) entry;
 };
+
+#if defined(_KERNEL)
 
 struct audio_trackmixer {
 	struct audio_softc *sc;
@@ -438,5 +445,7 @@ auring_get_contig_free(const audio_ring_t *ring)
 		return ring->capacity - ring->used;
 	}
 }
+
+#endif /* _KERNEL */
 
 #endif /* !_SYS_DEV_AUDIO_AUDIODEF_H_ */
