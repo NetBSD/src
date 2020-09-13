@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.41 2020/03/11 08:52:13 roy Exp $
+#	$NetBSD: t_arp.sh,v 1.42 2020/09/13 14:36:32 roy Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,8 +39,7 @@ IP4DST_FAIL2=10.0.99.99
 DEBUG=${DEBUG:-false}
 TIMEOUT=1
 
-atf_test_case arp_cache_expiration_5s cleanup
-atf_test_case arp_cache_expiration_10s cleanup
+atf_test_case arp_cache_expiration cleanup
 atf_test_case arp_command cleanup
 atf_test_case arp_garp cleanup
 atf_test_case arp_garp_without_dad cleanup
@@ -50,15 +49,9 @@ atf_test_case arp_proxy_arp_pubproxy cleanup
 atf_test_case arp_link_activation cleanup
 atf_test_case arp_static cleanup
 
-arp_cache_expiration_5s_head()
+arp_cache_expiration_head()
 {
-	atf_set "descr" "Tests for ARP cache expiration (5s)"
-	atf_set "require.progs" "rump_server"
-}
-
-arp_cache_expiration_10s_head()
-{
-	atf_set "descr" "Tests for ARP cache expiration (10s)"
+	atf_set "descr" "Tests for ARP cache expiration"
 	atf_set "require.progs" "rump_server"
 }
 
@@ -132,10 +125,12 @@ setup_src_server()
 
 	export RUMP_SERVER=$SOCKSRC
 
-	# Adjust ARP parameters
+	# Shorten the expire time of cache entries
 	if [ $keep != 0 ]; then
+		# Convert to ms
+		keep=$(($keep * 1000))
 		atf_check -s exit:0 -o ignore \
-		    rump.sysctl -w net.inet.arp.keep=$keep
+		    rump.sysctl -w net.inet.arp.nd_reachable=$keep
 	fi
 
 	# Setup an interface
@@ -152,10 +147,17 @@ setup_src_server()
 	atf_check -s not-exit:0 -e match:'no entry' rump.arp -n $IP4DST
 }
 
-test_cache_expiration()
+get_timeout()
 {
-	local arp_keep=$1
-	local bonus=2
+	local addr="$1"
+	local timeout=$(env RUMP_SERVER=$SOCKSRC rump.arp -n $addr |grep $addr|awk '{print $7;}')
+	timeout=${timeout%s}
+	echo $timeout
+}
+
+arp_cache_expiration_body()
+{
+	local arp_keep=7
 
 	rump_server_start $SOCKSRC
 	rump_server_start $SOCKDST
@@ -163,38 +165,33 @@ test_cache_expiration()
 	setup_dst_server
 	setup_src_server $arp_keep
 
+	# Make a permanent cache entry to avoid sending an NS packet disturbing
+	# the test
+	macaddr=$(get_macaddr $SOCKSRC shmif0)
+	export RUMP_SERVER=$SOCKDST
+	atf_check -s exit:0 -o ignore rump.arp -s $IP4SRC $macaddr
+
+	export RUMP_SERVER=$SOCKSRC
+
 	#
 	# Check if a cache is expired expectedly
 	#
-	export RUMP_SERVER=$SOCKSRC
 	atf_check -s exit:0 -o ignore rump.ping -n -w $TIMEOUT -c 1 $IP4DST
 
 	$DEBUG && rump.arp -n -a
-	atf_check -s not-exit:0 -e match:'no entry' rump.arp -n $IP4SRC
+	atf_check -s not-exit:0 -o ignore -e match:'no entry' rump.arp -n $IP4SRC
 	# Should be cached
-	atf_check -s exit:0 -o ignore rump.arp -n $IP4DST
-	$DEBUG && rump.netstat -nr -f inet
-	atf_check -s exit:0 -o match:"$IP4DST" rump.netstat -nr -f inet
+	atf_check -s exit:0 -o not-match:'permanent' rump.arp -n $IP4DST
 
-	atf_check -s exit:0 sleep $(($arp_keep + $bonus))
+	timeout=$(get_timeout $IP4DST)
+
+	atf_check -s exit:0 sleep $(($timeout + 1))
 
 	$DEBUG && rump.arp -n -a
-	atf_check -s not-exit:0 -e match:'no entry' rump.arp -n $IP4SRC
-	# Should be expired
-	atf_check -s not-exit:0 -e match:'no entry' rump.arp -n $IP4DST
-}
+	atf_check -s not-exit:0 -o ignore -e match:'no entry' rump.arp -n $IP4SRC
+	# Expired but remains until GC sweaps it (1 day)
+	atf_check -s exit:0 -o match:"$ONEDAYISH" rump.arp -n $IP4DST
 
-arp_cache_expiration_5s_body()
-{
-
-	test_cache_expiration 5
-	rump_server_destroy_ifaces
-}
-
-arp_cache_expiration_10s_body()
-{
-
-	test_cache_expiration 10
 	rump_server_destroy_ifaces
 }
 
@@ -290,9 +287,9 @@ arp_command_body()
 	check_arp_static_entry 10.0.1.10 'b2:a0:20:00:00:10' temp
 
 	# Hm? the cache doesn't expire...
-	atf_check -s exit:0 sleep $(($arp_keep + $bonus))
-	$DEBUG && rump.arp -n -a
-	$DEBUG && rump.netstat -nr -f inet
+	#atf_check -s exit:0 sleep $(($arp_keep + $bonus))
+	#$DEBUG && rump.arp -n -a
+	#$DEBUG && rump.netstat -nr -f inet
 	#atf_check -s not-exit:0 -e ignore rump.arp -n 10.0.1.10
 
 	rump_server_destroy_ifaces
@@ -403,7 +400,6 @@ arp_garp_without_dad_body()
 
 arp_cache_overwriting_body()
 {
-	local bonus=2
 
 	rump_server_start $SOCKSRC
 	rump_server_start $SOCKDST
@@ -563,7 +559,6 @@ arp_proxy_arp_pubproxy_body()
 
 arp_link_activation_body()
 {
-	local bonus=2
 
 	rump_server_start $SOCKSRC
 	rump_server_start $SOCKDST
@@ -624,13 +619,7 @@ arp_static_body()
 	rump_server_destroy_ifaces
 }
 
-arp_cache_expiration_5s_cleanup()
-{
-	$DEBUG && dump
-	cleanup
-}
-
-arp_cache_expiration_10s_cleanup()
+arp_cache_expiration_cleanup()
 {
 	$DEBUG && dump
 	cleanup
@@ -978,8 +967,7 @@ arp_stray_entries_cleanup()
 
 atf_init_test_cases()
 {
-	atf_add_test_case arp_cache_expiration_5s
-	atf_add_test_case arp_cache_expiration_10s
+	atf_add_test_case arp_cache_expiration
 	atf_add_test_case arp_command
 	atf_add_test_case arp_garp
 	atf_add_test_case arp_garp_without_dad
