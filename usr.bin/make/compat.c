@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.143 2020/09/12 15:10:55 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.144 2020/09/13 06:36:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.143 2020/09/12 15:10:55 rillig Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.144 2020/09/13 06:36:54 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.143 2020/09/12 15:10:55 rillig Exp $");
+__RCSID("$NetBSD: compat.c,v 1.144 2020/09/13 06:36:54 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -390,85 +390,80 @@ Compat_RunCommand(char *cmdp, struct GNode *gn)
     /*
      * The child is off and running. Now all we can do is wait...
      */
-    while (1) {
-
-	while ((retstat = wait(&reason)) != cpid) {
-	    if (retstat > 0)
-		JobReapChild(retstat, reason, FALSE); /* not ours? */
-	    if (retstat == -1 && errno != EINTR) {
-		break;
-	    }
-	}
-
-	if (retstat > -1) {
-	    if (WIFSTOPPED(reason)) {
-		status = WSTOPSIG(reason);		/* stopped */
-	    } else if (WIFEXITED(reason)) {
-		status = WEXITSTATUS(reason);		/* exited */
-#if defined(USE_META) && defined(USE_FILEMON_ONCE)
-		if (useMeta) {
-		    meta_cmd_finish(NULL);
-		}
-#endif
-		if (status != 0) {
-		    if (DEBUG(ERROR)) {
-			fprintf(debug_file, "\n*** Failed target:  %s\n*** Failed command: ",
-			    gn->name);
-			for (cp = cmd; *cp; ) {
-			    if (ch_isspace(*cp)) {
-				fprintf(debug_file, " ");
-				while (ch_isspace(*cp))
-				    cp++;
-			    } else {
-				fprintf(debug_file, "%c", *cp);
-				cp++;
-			    }
-			}
-			fprintf(debug_file, "\n");
-		    }
-		    printf("*** Error code %d", status);
-		}
-	    } else {
-		status = WTERMSIG(reason);		/* signaled */
-		printf("*** Signal %d", status);
-	    }
-
-
-	    if (!WIFEXITED(reason) || (status != 0)) {
-		if (errCheck) {
-#ifdef USE_META
-		    if (useMeta) {
-			meta_job_error(NULL, gn, 0, status);
-		    }
-#endif
-		    gn->made = ERROR;
-		    if (keepgoing) {
-			/*
-			 * Abort the current target, but let others
-			 * continue.
-			 */
-			printf(" (continuing)\n");
-		    } else {
-			printf("\n");
-		    }
-		    if (deleteOnError) {
-			    CompatDeleteTarget(gn);
-		    }
-		} else {
-		    /*
-		     * Continue executing commands for this target.
-		     * If we return 0, this will happen...
-		     */
-		    printf(" (ignored)\n");
-		    status = 0;
-		}
-	    }
+    while ((retstat = wait(&reason)) != cpid) {
+	if (retstat > 0)
+	    JobReapChild(retstat, reason, FALSE); /* not ours? */
+	if (retstat == -1 && errno != EINTR) {
 	    break;
-	} else {
-	    Fatal("error in wait: %d: %s", retstat, strerror(errno));
-	    /*NOTREACHED*/
 	}
     }
+
+    if (retstat < 0)
+	Fatal("error in wait: %d: %s", retstat, strerror(errno));
+
+    if (WIFSTOPPED(reason)) {
+	status = WSTOPSIG(reason);		/* stopped */
+    } else if (WIFEXITED(reason)) {
+	status = WEXITSTATUS(reason);		/* exited */
+#if defined(USE_META) && defined(USE_FILEMON_ONCE)
+	if (useMeta) {
+	    meta_cmd_finish(NULL);
+	}
+#endif
+	if (status != 0) {
+	    if (DEBUG(ERROR)) {
+		fprintf(debug_file, "\n*** Failed target:  %s\n*** Failed command: ",
+		    gn->name);
+		for (cp = cmd; *cp; ) {
+		    if (ch_isspace(*cp)) {
+			fprintf(debug_file, " ");
+			while (ch_isspace(*cp))
+			    cp++;
+		    } else {
+			fprintf(debug_file, "%c", *cp);
+			cp++;
+		    }
+		}
+		fprintf(debug_file, "\n");
+	    }
+	    printf("*** Error code %d", status);
+	}
+    } else {
+	status = WTERMSIG(reason);		/* signaled */
+	printf("*** Signal %d", status);
+    }
+
+
+    if (!WIFEXITED(reason) || (status != 0)) {
+	if (errCheck) {
+#ifdef USE_META
+	    if (useMeta) {
+		meta_job_error(NULL, gn, 0, status);
+	    }
+#endif
+	    gn->made = ERROR;
+	    if (keepgoing) {
+		/*
+		 * Abort the current target, but let others
+		 * continue.
+		 */
+		printf(" (continuing)\n");
+	    } else {
+		printf("\n");
+	    }
+	    if (deleteOnError) {
+		    CompatDeleteTarget(gn);
+	    }
+	} else {
+	    /*
+	     * Continue executing commands for this target.
+	     * If we return 0, this will happen...
+	     */
+	    printf(" (ignored)\n");
+	    status = 0;
+	}
+    }
+
     free(cmdStart);
     compatChild = 0;
     if (compatSigno) {
