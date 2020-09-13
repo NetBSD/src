@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.297 2020/09/13 09:25:52 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.298 2020/09/13 09:43:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.297 2020/09/13 09:25:52 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.298 2020/09/13 09:43:01 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.297 2020/09/13 09:25:52 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.298 2020/09/13 09:43:01 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2422,19 +2422,16 @@ Parse_SetInput(const char *name, int line, int fd,
 
 /* Check if the line is an include directive. */
 static Boolean
-IsInclude(const char *line, Boolean sysv)
+IsInclude(const char *dir, Boolean sysv)
 {
-	static const char inc[] = "include";
-	static const size_t inclen = sizeof(inc) - 1;
+	if (dir[0] == 's' || dir[0] == '-' || (dir[0] == 'd' && !sysv))
+		dir++;
 
-	/* 'd' is not valid for sysv */
-	int o = strchr(sysv ? "s-" : "ds-", *line) != NULL;
-
-	if (strncmp(line + o, inc, inclen) != 0)
+	if (strncmp(dir, "include", 7) != 0)
 		return FALSE;
 
 	/* Space is not mandatory for BSD .include */
-	return !sysv || ch_isspace(line[inclen + o]);
+	return !sysv || ch_isspace(dir[7]);
 }
 
 
