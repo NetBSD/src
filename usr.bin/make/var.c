@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.508 2020/09/13 08:11:40 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.509 2020/09/13 08:17:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.508 2020/09/13 08:11:40 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.509 2020/09/13 08:17:14 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.508 2020/09/13 08:11:40 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.509 2020/09/13 08:17:14 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2139,7 +2139,7 @@ ApplyModifier_Path(const char **pp, ApplyModifiersState *st)
 
 /* :!cmd! */
 static ApplyModifierResult
-ApplyModifier_Exclam(const char **pp, ApplyModifiersState *st)
+ApplyModifier_ShellCommand(const char **pp, ApplyModifiersState *st)
 {
     char delim;
     char *cmd;
@@ -3106,7 +3106,7 @@ ApplyModifiers(
 	    res = ApplyModifier_Path(&p, &st);
 	    break;
 	case '!':
-	    res = ApplyModifier_Exclam(&p, &st);
+	    res = ApplyModifier_ShellCommand(&p, &st);
 	    break;
 	case '[':
 	    res = ApplyModifier_Words(&p, &st);
