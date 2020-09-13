@@ -1,1 +1,5 @@
-exit status 0
+make: "opt-debug-lint.mk" line 18: Variable "X" is undefined
+make: "opt-debug-lint.mk" line 18: Malformed conditional ($X)
+make: Fatal errors encountered -- cannot continue
+make: stopped in unit-tests
+exit status 1
