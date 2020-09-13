@@ -1,4 +1,4 @@
-# $NetBSD: dep-var.mk,v 1.4 2020/09/08 05:26:22 rillig Exp $
+# $NetBSD: dep-var.mk,v 1.5 2020/09/13 20:04:26 rillig Exp $
 #
 # Tests for variable references in dependency declarations.
 #
@@ -73,6 +73,14 @@ DEF2=	def2
 # would be interpreted as a dependency operator instead.
 all: $$$$)
 
+# The $$INDIRECT in the following line is treated like the dependency of the
+# "all" target, that is, the "$$I" is first expanded to "$I", and in a second
+# round of expansion, the "$I" expands to nothing since the variable "I" is
+# undefined.
+#
+# Since 2020-09-13, this generates a parse error in lint mode (-dL), but not
+# in normal mode since ParseDoDependency does not handle any errors after
+# calling Var_Parse.
 undef1 def2 a-def2-b 1-2-$$INDIRECT_2-2-1 ${:U\$)}:
 	@echo ${.TARGET:Q}
 
