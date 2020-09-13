@@ -1,7 +1,8 @@
-# $NetBSD: Makefile,v 1.12 2020/09/12 23:04:44 kamil Exp $
+# $NetBSD: Makefile,v 1.13 2020/09/13 02:37:32 kamil Exp $
 
 UNSUPPORTED_COMPILER.clang=     # defined
 NOSANITIZER=    # defined
+NOCOMPAT=	# defined
 
 .include <bsd.own.mk>
 
