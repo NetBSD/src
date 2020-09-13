@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.139 2020/09/11 17:32:36 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.140 2020/09/13 06:15:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -150,10 +150,10 @@ typedef int Boolean;
 #endif
 #ifndef TRUE
 #define TRUE	1
-#endif /* TRUE */
+#endif
 #ifndef FALSE
 #define FALSE	0
-#endif /* FALSE */
+#endif
 
 #include "lst.h"
 #include "enum.h"
