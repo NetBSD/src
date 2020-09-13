@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.58 2020/09/13 17:18:13 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.59 2020/09/13 17:18:54 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.58 2020/09/13 17:18:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.59 2020/09/13 17:18:54 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -144,8 +144,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.58 2020/09/13 17:18:13 riastradh Exp $")
  *   - Data messages are always sent via a stable session
  *
  * Locking notes:
- * - wg interfaces (struct wg_softc, wg) is listed in wg_softcs.list and
- *   protected by wg_softcs.lock
  * - Each wg has a mutex(9) wg_lock, and a rwlock(9) wg_rwlock
  *   - Changes to the peer list are serialized by wg_lock
  *   - The peer list may be read with pserialize(9) and psref(9)
@@ -780,11 +778,7 @@ wg_rnh(struct wg_softc *wg, const int family)
 /*
  * Global variables
  */
-LIST_HEAD(wg_sclist, wg_softc);
-static struct {
-	struct wg_sclist list;
-	kmutex_t lock;
-} wg_softcs __cacheline_aligned;
+static volatile unsigned wg_count __cacheline_aligned;
 
 struct psref_class *wg_psref_class __read_mostly;
 
@@ -810,9 +804,6 @@ wginit(void)
 {
 
 	wg_psref_class = psref_class_create("wg", IPL_SOFTNET);
-
-	mutex_init(&wg_softcs.lock, MUTEX_DEFAULT, IPL_NONE);
-	LIST_INIT(&wg_softcs.list);
 
 	if_clone_attach(&wg_cloner);
 }
@@ -848,23 +839,49 @@ wg_guarantee_initialized(void)
 }
 
 static int
+wg_count_inc(void)
+{
+	unsigned o, n;
+
+	do {
+		o = atomic_load_relaxed(&wg_count);
+		if (o == UINT_MAX)
+			return ENFILE;
+		n = o + 1;
+	} while (atomic_cas_uint(&wg_count, o, n) != o);
+
+	return 0;
+}
+
+static void
+wg_count_dec(void)
+{
+	unsigned c __diagused;
+
+	c = atomic_dec_uint_nv(&wg_count);
+	KASSERT(c != UINT_MAX);
+}
+
+static int
 wgdetach(void)
 {
-	int error = 0;
 
-	mutex_enter(&wg_softcs.lock);
-	if (!LIST_EMPTY(&wg_softcs.list)) {
-		mutex_exit(&wg_softcs.lock);
-		error = EBUSY;
+	/* Prevent new interface creation.  */
+	if_clone_detach(&wg_cloner);
+
+	/* Check whether there are any existing interfaces.  */
+	if (atomic_load_relaxed(&wg_count)) {
+		/* Back out -- reattach the cloner.  */
+		if_clone_attach(&wg_cloner);
+		return EBUSY;
 	}
 
-	if (error == 0) {
-		psref_class_destroy(wg_psref_class);
+	/* No interfaces left.  Nuke it.  */
+	workqueue_destroy(wg_wq);
+	pktq_destroy(wg_pktq);
+	psref_class_destroy(wg_psref_class);
 
-		if_clone_detach(&wg_cloner);
-	}
-
-	return error;
+	return 0;
 }
 
 static void
@@ -3555,6 +3572,10 @@ wg_clone_create(struct if_clone *ifc, int unit)
 
 	wg_guarantee_initialized();
 
+	error = wg_count_inc();
+	if (error)
+		return error;
+
 	wg = kmem_zalloc(sizeof(*wg), KM_SLEEP);
 
 	if_initname(&wg->wg_if, ifc->ifc_name, unit);
@@ -3593,16 +3614,9 @@ wg_clone_create(struct if_clone *ifc, int unit)
 	if (error)
 		goto fail3;
 
-	mutex_enter(&wg_softcs.lock);
-	LIST_INSERT_HEAD(&wg_softcs.list, wg, wg_list);
-	mutex_exit(&wg_softcs.lock);
-
 	return 0;
 
 fail4: __unused
-	mutex_enter(&wg_softcs.lock);
-	LIST_REMOVE(wg, wg_list);
-	mutex_exit(&wg_softcs.lock);
 	wg_if_detach(wg);
 fail3:	wg_destroy_all_peers(wg);
 #ifdef INET6
@@ -3640,6 +3654,7 @@ fail0:	threadpool_job_destroy(&wg->wg_job);
 	thmap_destroy(wg->wg_peers_bypubkey);
 	PSLIST_DESTROY(&wg->wg_peers);
 	kmem_free(wg, sizeof(*wg));
+	wg_count_dec();
 	return error;
 }
 
@@ -3655,9 +3670,6 @@ wg_clone_destroy(struct ifnet *ifp)
 	}
 #endif
 
-	mutex_enter(&wg_softcs.lock);
-	LIST_REMOVE(wg, wg_list);
-	mutex_exit(&wg_softcs.lock);
 	wg_if_detach(wg);
 	wg_destroy_all_peers(wg);
 #ifdef INET6
@@ -3693,6 +3705,7 @@ wg_clone_destroy(struct ifnet *ifp)
 	thmap_destroy(wg->wg_peers_bypubkey);
 	PSLIST_DESTROY(&wg->wg_peers);
 	kmem_free(wg, sizeof(*wg));
+	wg_count_dec();
 
 	return 0;
 }
