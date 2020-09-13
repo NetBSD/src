@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.71 2019/09/26 10:47:30 mlelstv Exp $   */
+/*      $NetBSD: raidctl.c,v 1.72 2020/09/13 06:04:53 mlelstv Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.71 2019/09/26 10:47:30 mlelstv Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.72 2020/09/13 06:04:53 mlelstv Exp $");
 #endif
 
 
@@ -92,6 +92,13 @@ int verbose;
 
 static const char *rootpart[] = { "No", "Force", "Soft", "*invalid*" };
 
+static void
+get_comp(char *buf, char *arg, size_t bufsz)
+{
+	if (getfsspecname(buf, bufsz, arg) == NULL)
+		errx(1,"%s",buf);
+}
+
 int
 main(int argc,char *argv[])
 {
@@ -131,7 +138,7 @@ main(int argc,char *argv[])
 		switch(ch) {
 		case 'a':
 			action = RAIDFRAME_ADD_HOT_SPARE;
-			strlcpy(component, optarg, sizeof(component));
+			get_comp(component, optarg, sizeof(component));
 			num_options++;
 			break;
 		case 'A':
@@ -159,19 +166,19 @@ main(int argc,char *argv[])
 			break;
 		case 'f':
 			action = RAIDFRAME_FAIL_DISK;
-			strlcpy(component, optarg, sizeof(component));
+			get_comp(component, optarg, sizeof(component));
 			do_recon = 0;
 			num_options++;
 			break;
 		case 'F':
 			action = RAIDFRAME_FAIL_DISK;
-			strlcpy(component, optarg, sizeof(component));
+			get_comp(component, optarg, sizeof(component));
 			do_recon = 1;
 			num_options++;
 			break;
 		case 'g':
 			action = RAIDFRAME_GET_COMPONENT_LABEL;
-			strlcpy(component, optarg, sizeof(component));
+			get_comp(component, optarg, sizeof(component));
 			openmode = O_RDONLY;
 			num_options++;
 			break;
@@ -209,16 +216,16 @@ main(int argc,char *argv[])
 			break;
 		case 'l': 
 			action = RAIDFRAME_SET_COMPONENT_LABEL;
-			strlcpy(component, optarg, sizeof(component));
+			get_comp(component, optarg, sizeof(component));
 			num_options++;
 			break;
 		case 'r':
 			action = RAIDFRAME_REMOVE_HOT_SPARE;
-			strlcpy(component, optarg, sizeof(component));
+			get_comp(component, optarg, sizeof(component));
 			num_options++;
 			break;
 		case 'R':
-			strlcpy(component, optarg, sizeof(component));
+			get_comp(component, optarg, sizeof(component));
 			action = RAIDFRAME_REBUILD_IN_PLACE;
 			num_options++;
 			break;
