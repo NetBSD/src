@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.299 2020/09/13 13:17:44 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.300 2020/09/13 13:22:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.299 2020/09/13 13:17:44 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.300 2020/09/13 13:22:29 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.299 2020/09/13 13:17:44 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.300 2020/09/13 13:22:29 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -642,17 +642,11 @@ PrintLocation(FILE *f, const char *cfname, size_t clineno)
 	bmake_free(dir_freeIt);
 }
 
-/*-
- * ParseVErrorInternal  --
- *	Error message abort function for parsing. Prints out the context
- *	of the error (line number and file) as well as the message with
- *	two optional arguments.
+/* Print a parse error message, including location information.
  *
- * Results:
- *	None
- *
- * Side Effects:
- *	"fatals" is incremented if the level is PARSE_FATAL.
+ * Increment "fatals" if the level is PARSE_FATAL, and continue parsing
+ * until the end of the current top-level makefile, then exit (see
+ * Parse_File).
  */
 static void
 ParseVErrorInternal(FILE *f, const char *cfname, size_t clineno, int type,
@@ -669,10 +663,11 @@ ParseVErrorInternal(FILE *f, const char *cfname, size_t clineno, int type,
 	(void)vfprintf(f, fmt, ap);
 	(void)fprintf(f, "\n");
 	(void)fflush(f);
+
 	if (type == PARSE_INFO)
 		return;
 	if (type == PARSE_FATAL || parseWarnFatal)
-		fatals += 1;
+		fatals++;
 	if (parseWarnFatal && !fatal_warning_error_printed) {
 		Error("parsing warnings being treated as errors");
 		fatal_warning_error_printed = TRUE;
