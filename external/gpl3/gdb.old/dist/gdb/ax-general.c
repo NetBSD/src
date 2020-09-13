@@ -1,5 +1,5 @@
 /* Functions for manipulating expressions designed to be executed on the agent
-   Copyright (C) 1998-2017 Free Software Foundation, Inc.
+   Copyright (C) 1998-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -353,7 +353,7 @@ struct aop_map aop_map[] =
   {0, 0, 0, 0, 0}
 #define DEFOP(NAME, SIZE, DATA_SIZE, CONSUMED, PRODUCED, VALUE) \
   , { # NAME, SIZE, DATA_SIZE, CONSUMED, PRODUCED }
-#include "ax.def"
+#include "common/ax.def"
 #undef DEFOP
 };
 

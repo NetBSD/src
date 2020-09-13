@@ -10,9 +10,9 @@ static void
 initialize_tdesc_nds32 (void)
 {
   struct target_desc *result = allocate_target_description ();
-  struct tdesc_feature *feature;
-
   set_tdesc_architecture (result, bfd_scan_arch ("n1h"));
+
+  struct tdesc_feature *feature;
 
   feature = tdesc_create_feature (result, "org.gnu.gdb.nds32.core");
   tdesc_create_reg (feature, "r0", 0, 1, NULL, 32, "int");

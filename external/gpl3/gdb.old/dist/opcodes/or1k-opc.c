@@ -1,8 +1,9 @@
+/* DO NOT EDIT!  -*- buffer-read-only: t -*- vi:set ro:  */
 /* Instruction opcode table for or1k.
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright (C) 1996-2017 Free Software Foundation, Inc.
+Copyright (C) 1996-2019 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -49,6 +50,10 @@ static const CGEN_IFMT ifmt_empty ATTRIBUTE_UNUSED = {
 
 static const CGEN_IFMT ifmt_l_j ATTRIBUTE_UNUSED = {
   32, 32, 0xfc000000, { { F (F_OPCODE) }, { F (F_DISP26) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_l_adrp ATTRIBUTE_UNUSED = {
+  32, 32, 0xfc000000, { { F (F_OPCODE) }, { F (F_R1) }, { F (F_DISP21) }, { 0 } }
 };
 
 static const CGEN_IFMT ifmt_l_jr ATTRIBUTE_UNUSED = {
@@ -109,6 +114,10 @@ static const CGEN_IFMT ifmt_l_slli ATTRIBUTE_UNUSED = {
 
 static const CGEN_IFMT ifmt_l_and ATTRIBUTE_UNUSED = {
   32, 32, 0xfc0007ff, { { F (F_OPCODE) }, { F (F_R1) }, { F (F_R2) }, { F (F_R3) }, { F (F_RESV_10_7) }, { F (F_OP_3_4) }, { 0 } }
+};
+
+static const CGEN_IFMT ifmt_l_muld ATTRIBUTE_UNUSED = {
+  32, 32, 0xffe007ff, { { F (F_OPCODE) }, { F (F_RESV_25_5) }, { F (F_R2) }, { F (F_R3) }, { F (F_RESV_10_7) }, { F (F_OP_3_4) }, { 0 } }
 };
 
 static const CGEN_IFMT ifmt_l_exths ATTRIBUTE_UNUSED = {
@@ -187,6 +196,12 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (DISP26), 0 } },
     & ifmt_l_j, { 0x0 }
+  },
+/* l.adrp $rD,${disp21} */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (RD), ',', OP (DISP21), 0 } },
+    & ifmt_l_adrp, { 0x8000000 }
   },
 /* l.jal ${disp26} */
   {
@@ -446,11 +461,23 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', OP (RD), ',', OP (RA), ',', OP (RB), 0 } },
     & ifmt_l_and, { 0xe0000306 }
   },
+/* l.muld $rA,$rB */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (RA), ',', OP (RB), 0 } },
+    & ifmt_l_muld, { 0xe0000307 }
+  },
 /* l.mulu $rD,$rA,$rB */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (RD), ',', OP (RA), ',', OP (RB), 0 } },
     & ifmt_l_and, { 0xe000030b }
+  },
+/* l.muldu $rA,$rB */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (RA), ',', OP (RB), 0 } },
+    & ifmt_l_muld, { 0xe000030d }
   },
 /* l.div $rD,$rA,$rB */
   {
@@ -680,17 +707,29 @@ static const CGEN_OPCODE or1k_cgen_insn_opcode_table[MAX_INSNS] =
     { { MNEM, ' ', OP (RA), ',', OP (RB), 0 } },
     & ifmt_l_mac, { 0xc4000001 }
   },
+/* l.maci $rA,${simm16} */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (RA), ',', OP (SIMM16), 0 } },
+    & ifmt_l_maci, { 0x4c000000 }
+  },
+/* l.macu $rA,$rB */
+  {
+    { 0, 0, 0, 0 },
+    { { MNEM, ' ', OP (RA), ',', OP (RB), 0 } },
+    & ifmt_l_mac, { 0xc4000003 }
+  },
 /* l.msb $rA,$rB */
   {
     { 0, 0, 0, 0 },
     { { MNEM, ' ', OP (RA), ',', OP (RB), 0 } },
     & ifmt_l_mac, { 0xc4000002 }
   },
-/* l.maci $rA,${simm16} */
+/* l.msbu $rA,$rB */
   {
     { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (RA), ',', OP (SIMM16), 0 } },
-    & ifmt_l_maci, { 0x4c000000 }
+    { { MNEM, ' ', OP (RA), ',', OP (RB), 0 } },
+    & ifmt_l_mac, { 0xc4000004 }
   },
 /* l.cust1 */
   {

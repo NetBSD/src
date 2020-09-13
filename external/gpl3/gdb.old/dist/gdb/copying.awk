@@ -10,14 +10,12 @@ BEGIN	{
 	  print "#include \"command.h\""
 	  print "#include \"gdbcmd.h\""
 	  print ""
-	  print "static void show_copying_command (char *, int);"
+	  print "static void show_copying_command (const char *, int);"
 	  print ""
-	  print "static void show_warranty_command (char *, int);"
-	  print ""
-	  print "void _initialize_copying (void);"
+	  print "static void show_warranty_command (const char *, int);"
 	  print ""
 	  print "static void";
-	  print "show_copying_command (char *ignore, int from_tty)";
+	  print "show_copying_command (const char *ignore, int from_tty)";
 	  print "{";
 	}
 NR == 1,/^[ 	]*15\. Disclaimer of Warranty\.[ 	]*$/	{
@@ -37,7 +35,7 @@ NR == 1,/^[ 	]*15\. Disclaimer of Warranty\.[ 	]*$/	{
 	  print "}";
 	  print "";
 	  print "static void";
-	  print "show_warranty_command (char *ignore, int from_tty)";
+	  print "show_warranty_command (const char *ignore, int from_tty)";
 	  print "{";
 	}
 /^[ 	]*15\. Disclaimer of Warranty\.[ 	]*$/, /^[ 	]*END OF TERMS AND CONDITIONS[ 	]*$/{  

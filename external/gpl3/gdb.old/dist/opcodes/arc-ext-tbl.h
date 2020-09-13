@@ -1,5 +1,5 @@
 /* ARC instruction defintions.
-   Copyright (C) 2016-2017 Free Software Foundation, Inc.
+   Copyright (C) 2016-2019 Free Software Foundation, Inc.
 
    Contributed by Claudiu Zissulescu (claziss@synopsys.com)
 
@@ -116,12 +116,12 @@
       ARG_32BIT_ZALIMMLIMM, FLAGS_CCF },
 
 /* Extension instruction declarations.  */
-EXTINSN2OP ("dsp_fp_flt2i",  ARC_OPCODE_ARCv2EM, FLOAT, QUARKSE, 7, 43)
-EXTINSN2OP ("dsp_fp_i2flt",  ARC_OPCODE_ARCv2EM, FLOAT, QUARKSE, 7, 44)
-EXTINSN2OP ("dsp_fp_sqrt",   ARC_OPCODE_ARCv2EM, FLOAT, QUARKSE, 7, 45)
+EXTINSN2OP ("dsp_fp_flt2i",  ARC_OPCODE_ARCv2EM, FLOAT, QUARKSE1, 7, 43)
+EXTINSN2OP ("dsp_fp_i2flt",  ARC_OPCODE_ARCv2EM, FLOAT, QUARKSE1, 7, 44)
+EXTINSN2OP ("dsp_fp_sqrt",   ARC_OPCODE_ARCv2EM, FLOAT, QUARKSE2, 7, 45)
 
-EXTINSN3OP ("dsp_fp_div", ARC_OPCODE_ARCv2EM, FLOAT, QUARKSE, 7, 42)
-EXTINSN3OP ("dsp_fp_cmp", ARC_OPCODE_ARCv2EM, FLOAT, QUARKSE, 7, 43)
+EXTINSN3OP ("dsp_fp_div", ARC_OPCODE_ARCv2EM, FLOAT, QUARKSE2, 7, 42)
+EXTINSN3OP ("dsp_fp_cmp", ARC_OPCODE_ARCv2EM, FLOAT, QUARKSE1, 7, 43)
 
 /* Bitstream extensions.  */
 EXTINSN2OP ("bspeek", ARC_OPCODE_ARCv2EM, BITSTREAM, NONE, 0x05, 0x2E)

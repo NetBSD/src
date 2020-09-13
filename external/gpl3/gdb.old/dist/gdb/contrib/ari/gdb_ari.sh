@@ -2,7 +2,7 @@
 
 # GDB script to list of problems using awk.
 #
-# Copyright (C) 2002-2017 Free Software Foundation, Inc.
+# Copyright (C) 2002-2019 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -60,7 +60,7 @@ Options:
   -Werror        Treat all problems as errors.
   -Wall          Report all problems.
   -Wari          Report problems that should be fixed in new code.
-  -W<category>   Report problems in the specifed category.  Vaid categories
+  -W<category>   Report problems in the specifed category.  Valid categories
                  are: ${all}
 EOF
     exit 1

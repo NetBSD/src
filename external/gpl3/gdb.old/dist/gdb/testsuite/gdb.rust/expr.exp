@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2017 Free Software Foundation, Inc.
+# Copyright (C) 2016-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -133,7 +133,9 @@ gdb_test "print \[23usize; 4\]" " = \\\[23, 23, 23, 23\\\]"
 gdb_test "ptype \[23usize; 4\]" " = \\\[usize; 4\\\]"
 gdb_test "print \[mut 23usize; 4\]" " = \\\[23, 23, 23, 23\\\]"
 
-# Test a lexer corner case.
+# Test lexer corner cases.
+gdb_test "print 0x0 as *mut ()" " = \\\(\\*mut \\\(\\\)\\\) 0x0"
+gdb_test "print 0x0 as fn(i64) -> ()" " = \\\(\\*mut fn \\\(i64\\\) -> \\\(\\\)\\\) 0x0"
 gdb_test "print r#" "syntax error in expression, near `#'\\."
 
 gdb_test "printf \"%d %d\\n\", 23+1, 23-1" "24 22"

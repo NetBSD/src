@@ -1,6 +1,6 @@
 /* GDB/Scheme support for math operations on values.
 
-   Copyright (C) 2008-2017 Free Software Foundation, Inc.
+   Copyright (C) 2008-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,9 +24,7 @@
 #include "arch-utils.h"
 #include "charset.h"
 #include "cp-abi.h"
-#include "doublest.h" /* Needed by dfp.h.  */
-#include "expression.h" /* Needed by dfp.h.  */
-#include "dfp.h"
+#include "target-float.h"
 #include "symtab.h" /* Needed by language.h.  */
 #include "language.h"
 #include "valprint.h"
@@ -69,79 +67,184 @@ enum valscm_binary_opcode
 #define STRIP_REFERENCE(TYPE) \
   ((TYPE_CODE (TYPE) == TYPE_CODE_REF) ? (TYPE_TARGET_TYPE (TYPE)) : (TYPE))
 
-/* Returns a value object which is the result of applying the operation
-   specified by OPCODE to the given argument.
-   If there's an error a Scheme exception is thrown.  */
+/* Helper for vlscm_unop.  Contains all the code that may throw a GDB
+   exception.  */
+
+static SCM
+vlscm_unop_gdbthrow (enum valscm_unary_opcode opcode, SCM x,
+		     const char *func_name)
+{
+  struct gdbarch *gdbarch = get_current_arch ();
+  const struct language_defn *language = current_language;
+
+  scoped_value_mark free_values;
+
+  SCM except_scm;
+  value *arg1 = vlscm_convert_value_from_scheme (func_name, SCM_ARG1, x,
+						 &except_scm, gdbarch,
+						 language);
+  if (arg1 == NULL)
+    return except_scm;
+
+  struct value *res_val = NULL;
+
+  switch (opcode)
+    {
+    case VALSCM_NOT:
+      /* Alas gdb and guile use the opposite meaning for "logical
+	 not".  */
+      {
+	struct type *type = language_bool_type (language, gdbarch);
+	res_val
+	  = value_from_longest (type,
+				(LONGEST) value_logical_not (arg1));
+      }
+      break;
+    case VALSCM_NEG:
+      res_val = value_neg (arg1);
+      break;
+    case VALSCM_NOP:
+      /* Seemingly a no-op, but if X was a Scheme value it is now a
+	 <gdb:value> object.  */
+      res_val = arg1;
+      break;
+    case VALSCM_ABS:
+      if (value_less (arg1, value_zero (value_type (arg1), not_lval)))
+	res_val = value_neg (arg1);
+      else
+	res_val = arg1;
+      break;
+    case VALSCM_LOGNOT:
+      res_val = value_complement (arg1);
+      break;
+    default:
+      gdb_assert_not_reached ("unsupported operation");
+    }
+
+  gdb_assert (res_val != NULL);
+  return vlscm_scm_from_value (res_val);
+}
 
 static SCM
 vlscm_unop (enum valscm_unary_opcode opcode, SCM x, const char *func_name)
 {
+  return gdbscm_wrap (vlscm_unop_gdbthrow, opcode, x, func_name);
+}
+
+/* Helper for vlscm_binop.  Contains all the code that may throw a GDB
+   exception.  */
+
+static SCM
+vlscm_binop_gdbthrow (enum valscm_binary_opcode opcode, SCM x, SCM y,
+		      const char *func_name)
+{
   struct gdbarch *gdbarch = get_current_arch ();
   const struct language_defn *language = current_language;
-  struct value *arg1;
-  SCM result = SCM_BOOL_F;
+  struct value *arg1, *arg2;
   struct value *res_val = NULL;
   SCM except_scm;
-  struct cleanup *cleanups;
 
-  cleanups = make_cleanup_value_free_to_mark (value_mark ());
+  scoped_value_mark free_values;
 
   arg1 = vlscm_convert_value_from_scheme (func_name, SCM_ARG1, x,
 					  &except_scm, gdbarch, language);
   if (arg1 == NULL)
-    {
-      do_cleanups (cleanups);
-      gdbscm_throw (except_scm);
-    }
+    return except_scm;
 
-  TRY
+  arg2 = vlscm_convert_value_from_scheme (func_name, SCM_ARG2, y,
+					  &except_scm, gdbarch, language);
+  if (arg2 == NULL)
+    return except_scm;
+
+  switch (opcode)
     {
-      switch (opcode)
-	{
-	case VALSCM_NOT:
-	  /* Alas gdb and guile use the opposite meaning for "logical not".  */
+    case VALSCM_ADD:
+      {
+	struct type *ltype = value_type (arg1);
+	struct type *rtype = value_type (arg2);
+
+	ltype = check_typedef (ltype);
+	ltype = STRIP_REFERENCE (ltype);
+	rtype = check_typedef (rtype);
+	rtype = STRIP_REFERENCE (rtype);
+
+	if (TYPE_CODE (ltype) == TYPE_CODE_PTR
+	    && is_integral_type (rtype))
+	  res_val = value_ptradd (arg1, value_as_long (arg2));
+	else if (TYPE_CODE (rtype) == TYPE_CODE_PTR
+		 && is_integral_type (ltype))
+	  res_val = value_ptradd (arg2, value_as_long (arg1));
+	else
+	  res_val = value_binop (arg1, arg2, BINOP_ADD);
+      }
+      break;
+    case VALSCM_SUB:
+      {
+	struct type *ltype = value_type (arg1);
+	struct type *rtype = value_type (arg2);
+
+	ltype = check_typedef (ltype);
+	ltype = STRIP_REFERENCE (ltype);
+	rtype = check_typedef (rtype);
+	rtype = STRIP_REFERENCE (rtype);
+
+	if (TYPE_CODE (ltype) == TYPE_CODE_PTR
+	    && TYPE_CODE (rtype) == TYPE_CODE_PTR)
 	  {
-	    struct type *type = language_bool_type (language, gdbarch);
+	    /* A ptrdiff_t for the target would be preferable here.  */
 	    res_val
-	      = value_from_longest (type, (LONGEST) value_logical_not (arg1));
+	      = value_from_longest (builtin_type (gdbarch)->builtin_long,
+				    value_ptrdiff (arg1, arg2));
 	  }
-	  break;
-	case VALSCM_NEG:
-	  res_val = value_neg (arg1);
-	  break;
-	case VALSCM_NOP:
-	  /* Seemingly a no-op, but if X was a Scheme value it is now
-	     a <gdb:value> object.  */
-	  res_val = arg1;
-	  break;
-	case VALSCM_ABS:
-	  if (value_less (arg1, value_zero (value_type (arg1), not_lval)))
-	    res_val = value_neg (arg1);
-	  else
-	    res_val = arg1;
-	  break;
-	case VALSCM_LOGNOT:
-	  res_val = value_complement (arg1);
-	  break;
-	default:
-	  gdb_assert_not_reached ("unsupported operation");
-	}
+	else if (TYPE_CODE (ltype) == TYPE_CODE_PTR
+		 && is_integral_type (rtype))
+	  res_val = value_ptradd (arg1, - value_as_long (arg2));
+	else
+	  res_val = value_binop (arg1, arg2, BINOP_SUB);
+      }
+      break;
+    case VALSCM_MUL:
+      res_val = value_binop (arg1, arg2, BINOP_MUL);
+      break;
+    case VALSCM_DIV:
+      res_val = value_binop (arg1, arg2, BINOP_DIV);
+      break;
+    case VALSCM_REM:
+      res_val = value_binop (arg1, arg2, BINOP_REM);
+      break;
+    case VALSCM_MOD:
+      res_val = value_binop (arg1, arg2, BINOP_MOD);
+      break;
+    case VALSCM_POW:
+      res_val = value_binop (arg1, arg2, BINOP_EXP);
+      break;
+    case VALSCM_LSH:
+      res_val = value_binop (arg1, arg2, BINOP_LSH);
+      break;
+    case VALSCM_RSH:
+      res_val = value_binop (arg1, arg2, BINOP_RSH);
+      break;
+    case VALSCM_MIN:
+      res_val = value_binop (arg1, arg2, BINOP_MIN);
+      break;
+    case VALSCM_MAX:
+      res_val = value_binop (arg1, arg2, BINOP_MAX);
+      break;
+    case VALSCM_BITAND:
+      res_val = value_binop (arg1, arg2, BINOP_BITWISE_AND);
+      break;
+    case VALSCM_BITOR:
+      res_val = value_binop (arg1, arg2, BINOP_BITWISE_IOR);
+      break;
+    case VALSCM_BITXOR:
+      res_val = value_binop (arg1, arg2, BINOP_BITWISE_XOR);
+      break;
+    default:
+      gdb_assert_not_reached ("unsupported operation");
     }
-  CATCH (except, RETURN_MASK_ALL)
-    {
-      GDBSCM_HANDLE_GDB_EXCEPTION_WITH_CLEANUPS (except, cleanups);
-    }
-  END_CATCH
 
   gdb_assert (res_val != NULL);
-  result = vlscm_scm_from_value (res_val);
-
-  do_cleanups (cleanups);
-
-  if (gdbscm_is_exception (result))
-    gdbscm_throw (result);
-
-  return result;
+  return vlscm_scm_from_value (res_val);
 }
 
 /* Returns a value object which is the result of applying the operation
@@ -152,135 +255,7 @@ static SCM
 vlscm_binop (enum valscm_binary_opcode opcode, SCM x, SCM y,
 	     const char *func_name)
 {
-  struct gdbarch *gdbarch = get_current_arch ();
-  const struct language_defn *language = current_language;
-  struct value *arg1, *arg2;
-  SCM result = SCM_BOOL_F;
-  struct value *res_val = NULL;
-  SCM except_scm;
-  struct cleanup *cleanups;
-
-  cleanups = make_cleanup_value_free_to_mark (value_mark ());
-
-  arg1 = vlscm_convert_value_from_scheme (func_name, SCM_ARG1, x,
-					  &except_scm, gdbarch, language);
-  if (arg1 == NULL)
-    {
-      do_cleanups (cleanups);
-      gdbscm_throw (except_scm);
-    }
-  arg2 = vlscm_convert_value_from_scheme (func_name, SCM_ARG2, y,
-					  &except_scm, gdbarch, language);
-  if (arg2 == NULL)
-    {
-      do_cleanups (cleanups);
-      gdbscm_throw (except_scm);
-    }
-
-  TRY
-    {
-      switch (opcode)
-	{
-	case VALSCM_ADD:
-	  {
-	    struct type *ltype = value_type (arg1);
-	    struct type *rtype = value_type (arg2);
-
-	    ltype = check_typedef (ltype);
-	    ltype = STRIP_REFERENCE (ltype);
-	    rtype = check_typedef (rtype);
-	    rtype = STRIP_REFERENCE (rtype);
-
-	    if (TYPE_CODE (ltype) == TYPE_CODE_PTR
-		&& is_integral_type (rtype))
-	      res_val = value_ptradd (arg1, value_as_long (arg2));
-	    else if (TYPE_CODE (rtype) == TYPE_CODE_PTR
-		     && is_integral_type (ltype))
-	      res_val = value_ptradd (arg2, value_as_long (arg1));
-	    else
-	      res_val = value_binop (arg1, arg2, BINOP_ADD);
-	  }
-	  break;
-	case VALSCM_SUB:
-	  {
-	    struct type *ltype = value_type (arg1);
-	    struct type *rtype = value_type (arg2);
-
-	    ltype = check_typedef (ltype);
-	    ltype = STRIP_REFERENCE (ltype);
-	    rtype = check_typedef (rtype);
-	    rtype = STRIP_REFERENCE (rtype);
-
-	    if (TYPE_CODE (ltype) == TYPE_CODE_PTR
-		&& TYPE_CODE (rtype) == TYPE_CODE_PTR)
-	      {
-		/* A ptrdiff_t for the target would be preferable here.  */
-		res_val
-		  = value_from_longest (builtin_type (gdbarch)->builtin_long,
-					value_ptrdiff (arg1, arg2));
-	      }
-	    else if (TYPE_CODE (ltype) == TYPE_CODE_PTR
-		     && is_integral_type (rtype))
-	      res_val = value_ptradd (arg1, - value_as_long (arg2));
-	    else
-	      res_val = value_binop (arg1, arg2, BINOP_SUB);
-	  }
-	  break;
-	case VALSCM_MUL:
-	  res_val = value_binop (arg1, arg2, BINOP_MUL);
-	  break;
-	case VALSCM_DIV:
-	  res_val = value_binop (arg1, arg2, BINOP_DIV);
-	  break;
-	case VALSCM_REM:
-	  res_val = value_binop (arg1, arg2, BINOP_REM);
-	  break;
-	case VALSCM_MOD:
-	  res_val = value_binop (arg1, arg2, BINOP_MOD);
-	  break;
-	case VALSCM_POW:
-	  res_val = value_binop (arg1, arg2, BINOP_EXP);
-	  break;
-	case VALSCM_LSH:
-	  res_val = value_binop (arg1, arg2, BINOP_LSH);
-	  break;
-	case VALSCM_RSH:
-	  res_val = value_binop (arg1, arg2, BINOP_RSH);
-	  break;
-	case VALSCM_MIN:
-	  res_val = value_binop (arg1, arg2, BINOP_MIN);
-	  break;
-	case VALSCM_MAX:
-	  res_val = value_binop (arg1, arg2, BINOP_MAX);
-	  break;
-	case VALSCM_BITAND:
-	  res_val = value_binop (arg1, arg2, BINOP_BITWISE_AND);
-	  break;
-	case VALSCM_BITOR:
-	  res_val = value_binop (arg1, arg2, BINOP_BITWISE_IOR);
-	  break;
-	case VALSCM_BITXOR:
-	  res_val = value_binop (arg1, arg2, BINOP_BITWISE_XOR);
-	  break;
-	default:
-	  gdb_assert_not_reached ("unsupported operation");
-	}
-    }
-  CATCH (except, RETURN_MASK_ALL)
-    {
-      GDBSCM_HANDLE_GDB_EXCEPTION_WITH_CLEANUPS (except, cleanups);
-    }
-  END_CATCH
-
-  gdb_assert (res_val != NULL);
-  result = vlscm_scm_from_value (res_val);
-
-  do_cleanups (cleanups);
-
-  if (gdbscm_is_exception (result))
-    gdbscm_throw (result);
-
-  return result;
+  return gdbscm_wrap (vlscm_binop_gdbthrow, opcode, x, y, func_name);
 }
 
 /* (value-add x y) -> <gdb:value> */
@@ -441,33 +416,27 @@ gdbscm_value_logxor (SCM x, SCM y)
 static SCM
 vlscm_rich_compare (int op, SCM x, SCM y, const char *func_name)
 {
-  struct gdbarch *gdbarch = get_current_arch ();
-  const struct language_defn *language = current_language;
-  struct value *v1, *v2;
-  int result = 0;
-  SCM except_scm;
-  struct cleanup *cleanups;
-  struct gdb_exception except = exception_none;
-
-  cleanups = make_cleanup_value_free_to_mark (value_mark ());
-
-  v1 = vlscm_convert_value_from_scheme (func_name, SCM_ARG1, x,
-					&except_scm, gdbarch, language);
-  if (v1 == NULL)
+  return gdbscm_wrap ([=]
     {
-      do_cleanups (cleanups);
-      gdbscm_throw (except_scm);
-    }
-  v2 = vlscm_convert_value_from_scheme (func_name, SCM_ARG2, y,
-					&except_scm, gdbarch, language);
-  if (v2 == NULL)
-    {
-      do_cleanups (cleanups);
-      gdbscm_throw (except_scm);
-    }
+      struct gdbarch *gdbarch = get_current_arch ();
+      const struct language_defn *language = current_language;
+      SCM except_scm;
 
-  TRY
-    {
+      scoped_value_mark free_values;
+
+      value *v1
+	= vlscm_convert_value_from_scheme (func_name, SCM_ARG1, x,
+					   &except_scm, gdbarch, language);
+      if (v1 == NULL)
+	return except_scm;
+
+      value *v2
+	= vlscm_convert_value_from_scheme (func_name, SCM_ARG2, y,
+					   &except_scm, gdbarch, language);
+      if (v2 == NULL)
+	return except_scm;
+
+      int result;
       switch (op)
 	{
         case BINOP_LESS:
@@ -491,18 +460,9 @@ vlscm_rich_compare (int op, SCM x, SCM y, const char *func_name)
 	  break;
 	default:
 	  gdb_assert_not_reached ("invalid <gdb:value> comparison");
-      }
-    }
-  CATCH (ex, RETURN_MASK_ALL)
-    {
-      except = ex;
-    }
-  END_CATCH
-
-  do_cleanups (cleanups);
-  GDBSCM_HANDLE_GDB_EXCEPTION (except);
-
-  return scm_from_bool (result);
+	}
+      return scm_from_bool (result);
+    });
 }
 
 /* (value=? x y) -> boolean
@@ -599,7 +559,13 @@ vlscm_convert_typed_number (const char *func_name, int obj_arg_pos, SCM obj,
 	}
     }
   else if (TYPE_CODE (type) == TYPE_CODE_FLT)
-    return value_from_double (type, scm_to_double (obj));
+    {
+      struct value *value = allocate_value (type);
+      target_float_from_host_double (value_contents_raw (value),
+				     value_type (value),
+				     scm_to_double (obj));
+      return value;
+    }
   else
     {
       *except_scmp = gdbscm_make_type_error (func_name, obj_arg_pos, obj,
@@ -679,7 +645,13 @@ vlscm_convert_number (const char *func_name, int obj_arg_pos, SCM obj,
 				   gdbscm_scm_to_ulongest (obj));
     }
   else if (scm_is_real (obj))
-    return value_from_double (bt->builtin_double, scm_to_double (obj));
+    {
+      struct value *value = allocate_value (bt->builtin_double);
+      target_float_from_host_double (value_contents_raw (value),
+				     value_type (value),
+				     scm_to_double (obj));
+      return value;
+    }
 
   *except_scmp = gdbscm_make_out_of_range_error (func_name, obj_arg_pos, obj,
 			_("value not a number representable on the target"));
@@ -816,9 +788,7 @@ vlscm_convert_typed_value_from_scheme (const char *func_name,
 	}
       else if (scm_is_string (obj))
 	{
-	  char *s;
 	  size_t len;
-	  struct cleanup *cleanup;
 
 	  if (type != NULL)
 	    {
@@ -830,19 +800,15 @@ vlscm_convert_typed_value_from_scheme (const char *func_name,
 	  else
 	    {
 	      /* TODO: Provide option to specify conversion strategy.  */
-	      s = gdbscm_scm_to_string (obj, &len,
+	      gdb::unique_xmalloc_ptr<char> s
+		= gdbscm_scm_to_string (obj, &len,
 					target_charset (gdbarch),
 					0 /*non-strict*/,
 					&except_scm);
 	      if (s != NULL)
-		{
-		  cleanup = make_cleanup (xfree, s);
-		  value
-		    = value_cstring (s, len,
-				     language_string_char_type (language,
-								gdbarch));
-		  do_cleanups (cleanup);
-		}
+		value = value_cstring (s.get (), len,
+				       language_string_char_type (language,
+								  gdbarch));
 	      else
 		value = NULL;
 	    }

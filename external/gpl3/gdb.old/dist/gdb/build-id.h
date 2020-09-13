@@ -1,6 +1,6 @@
 /* build-id-related functions.
 
-   Copyright (C) 1991-2017 Free Software Foundation, Inc.
+   Copyright (C) 1991-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,6 +21,7 @@
 #define BUILD_ID_H
 
 #include "gdb_bfd.h"
+#include "common/rsp-low.h"
 
 /* Locate NT_GNU_BUILD_ID from ABFD and return its content.  */
 
@@ -41,10 +42,20 @@ extern gdb_bfd_ref_ptr build_id_to_debug_bfd (size_t build_id_len,
 					      const bfd_byte *build_id);
 
 /* Find the separate debug file for OBJFILE, by using the build-id
-   associated with OBJFILE's BFD.  If successful, returns a malloc'd
-   file name for the separate debug file.  The caller must free this.
-   Otherwise, returns NULL.  */
+   associated with OBJFILE's BFD.  If successful, returns the file name for the
+   separate debug file, otherwise, return an empty string.  */
 
-extern char *find_separate_debug_file_by_buildid (struct objfile *objfile);
+extern std::string find_separate_debug_file_by_buildid
+  (struct objfile *objfile);
+
+/* Return an hex-string representation of BUILD_ID.  */
+
+static inline std::string
+build_id_to_string (const bfd_build_id *build_id)
+{
+  gdb_assert (build_id != NULL);
+
+  return bin2hex (build_id->data, build_id->size);
+}
 
 #endif /* BUILD_ID_H */

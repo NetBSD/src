@@ -1,5 +1,5 @@
 /* Memory breakpoint interfaces for the remote server for GDB.
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
    Contributed by MontaVista Software.
 
@@ -18,10 +18,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef MEM_BREAK_H
-#define MEM_BREAK_H
+#ifndef GDBSERVER_MEM_BREAK_H
+#define GDBSERVER_MEM_BREAK_H
 
-#include "break-common.h"
+#include "common/break-common.h"
 
 /* Breakpoints are opaque.  */
 struct breakpoint;
@@ -114,17 +114,19 @@ void clear_breakpoint_conditions_and_commands (struct gdb_breakpoint *bp);
    Returns false on failure.  On success, advances CONDITION pointer
    past the condition and returns true.  */
 
-int add_breakpoint_condition (struct gdb_breakpoint *bp, char **condition);
+int add_breakpoint_condition (struct gdb_breakpoint *bp,
+			      const char **condition);
 
 /* Set target-side commands COMMANDS to the breakpoint at ADDR.
    Returns false on failure.  On success, advances COMMANDS past the
    commands and returns true.  If PERSIST, the commands should run
    even while GDB is disconnected.  */
 
-int add_breakpoint_commands (struct gdb_breakpoint *bp, char **commands,
+int add_breakpoint_commands (struct gdb_breakpoint *bp, const char **commands,
 			     int persist);
 
-int any_persistent_commands (void);
+/* Return true if PROC has any persistent command.  */
+bool any_persistent_commands (process_info *proc);
 
 /* Evaluation condition (if any) at breakpoint BP.  Return 1 if
    true and 0 otherwise.  */
@@ -274,4 +276,4 @@ int remove_memory_breakpoint (struct raw_breakpoint *bp);
 void clone_all_breakpoints (struct thread_info *child_thread,
 			    const struct thread_info *parent_thread);
 
-#endif /* MEM_BREAK_H */
+#endif /* GDBSERVER_MEM_BREAK_H */

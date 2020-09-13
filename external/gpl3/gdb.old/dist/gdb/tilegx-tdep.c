@@ -1,6 +1,6 @@
 /* Target-dependent code for the Tilera TILE-Gx processor.
 
-   Copyright (C) 2012-2017 Free Software Foundation, Inc.
+   Copyright (C) 2012-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,10 +31,8 @@
 #include "dis-asm.h"
 #include "inferior.h"
 #include "arch-utils.h"
-#include "floatformat.h"
 #include "regcache.h"
 #include "regset.h"
-#include "doublest.h"
 #include "osabi.h"
 #include "linux-tdep.h"
 #include "objfiles.h"
@@ -42,6 +40,7 @@
 #include "tilegx-tdep.h"
 #include "opcode/tilegx.h"
 #include <algorithm>
+#include "common/byte-vector.h"
 
 struct tilegx_frame_cache
 {
@@ -220,7 +219,7 @@ tilegx_extract_return_value (struct type *type, struct regcache *regcache,
   int i, regnum = TILEGX_R0_REGNUM;
 
   for (i = 0; i < len; i += tilegx_reg_size)
-    regcache_raw_read (regcache, regnum++, valbuf + i);
+    regcache->raw_read (regnum++, valbuf + i);
 }
 
 /* Copy the function return value from VALBUF into the proper
@@ -237,7 +236,7 @@ tilegx_store_return_value (struct type *type, struct regcache *regcache,
       gdb_byte buf[tilegx_reg_size] = { 0 };
 
       memcpy (buf, valbuf, TYPE_LENGTH (type));
-      regcache_raw_write (regcache, TILEGX_R0_REGNUM, buf);
+      regcache->raw_write (TILEGX_R0_REGNUM, buf);
     }
   else
     {
@@ -245,7 +244,7 @@ tilegx_store_return_value (struct type *type, struct regcache *regcache,
       int i, regnum = TILEGX_R0_REGNUM;
 
       for (i = 0; i < len; i += tilegx_reg_size)
-	regcache_raw_write (regcache, regnum++, (gdb_byte *) valbuf + i);
+	regcache->raw_write (regnum++, (gdb_byte *) valbuf + i);
     }
 }
 
@@ -282,7 +281,7 @@ tilegx_push_dummy_call (struct gdbarch *gdbarch,
 			struct regcache *regcache,
 			CORE_ADDR bp_addr, int nargs,
 			struct value **args,
-			CORE_ADDR sp, int struct_return,
+			CORE_ADDR sp, function_call_return_method return_method,
 			CORE_ADDR struct_addr)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -294,7 +293,7 @@ tilegx_push_dummy_call (struct gdbarch *gdbarch,
 
   /* If struct_return is 1, then the struct return address will
      consume one argument-passing register.  */
-  if (struct_return)
+  if (return_method == return_method_struct)
     regcache_cooked_write_unsigned (regcache, argreg++, struct_addr);
 
   /* Arguments are passed in R0 - R9, and as soon as an argument
@@ -328,21 +327,17 @@ tilegx_push_dummy_call (struct gdbarch *gdbarch,
      the stack, word aligned.  */
   for (j = nargs - 1; j >= i; j--)
     {
-      gdb_byte *val;
-      struct cleanup *back_to;
       const gdb_byte *contents = value_contents (args[j]);
 
       typelen = TYPE_LENGTH (value_enclosing_type (args[j]));
       slacklen = align_up (typelen, 8) - typelen;
-      val = (gdb_byte *) xmalloc (typelen + slacklen);
-      back_to = make_cleanup (xfree, val);
-      memcpy (val, contents, typelen);
-      memset (val + typelen, 0, slacklen);
+      gdb::byte_vector val (typelen + slacklen);
+      memcpy (val.data (), contents, typelen);
+      memset (val.data () + typelen, 0, slacklen);
 
       /* Now write data to the stack.  The stack grows downwards.  */
       stack_dest -= typelen + slacklen;
-      write_memory (stack_dest, val, typelen + slacklen);
-      do_cleanups (back_to);
+      write_memory (stack_dest, val.data (), typelen + slacklen);
     }
 
   /* Add 16 bytes for linkage space to the stack.  */
@@ -1055,8 +1050,6 @@ tilegx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 				       tilegx_breakpoint::bp_from_kind);
   set_gdbarch_return_value (gdbarch, tilegx_return_value);
 
-  set_gdbarch_print_insn (gdbarch, print_insn_tilegx);
-
   gdbarch_init_osabi (info, gdbarch);
 
   dwarf2_append_unwinders (gdbarch);
@@ -1064,9 +1057,6 @@ tilegx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   return gdbarch;
 }
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-extern initialize_file_ftype _initialize_tilegx_tdep;
 
 void
 _initialize_tilegx_tdep (void)

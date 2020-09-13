@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 1993-2017 Free Software Foundation, Inc.
+   Copyright 1993-2019 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -545,6 +545,82 @@ small::method ()
   return x + 5;
 }
 
+class class_with_typedefs
+{
+public:
+  typedef int public_int;
+protected:
+  typedef int protected_int;
+private:
+  typedef int private_int;
+
+public:
+  class_with_typedefs ()
+    : public_int_ (1), protected_int_ (2), private_int_ (3) {}
+  public_int add_public (public_int a) { return a + public_int_; }
+  public_int add_all (int a)
+  { return add_public (a) + add_protected (a) + add_private (a); }
+
+protected:
+  protected_int add_protected (protected_int a) { return a + protected_int_; }
+
+private:
+  private_int add_private (private_int a) { return a + private_int_; }
+
+protected:
+  public_int public_int_;
+  protected_int protected_int_;
+  private_int private_int_;
+};
+
+class class_with_public_typedef
+{
+  int a;
+public:
+  typedef int INT;
+  INT b;
+};
+
+class class_with_protected_typedef
+{
+  int a;
+protected:
+  typedef int INT;
+  INT b;
+};
+
+class class_with_private_typedef
+{
+  int a;
+private:
+  typedef int INT;
+  INT b;
+};
+
+struct struct_with_public_typedef
+{
+  int a;
+public:
+  typedef int INT;
+  INT b;
+};
+
+struct struct_with_protected_typedef
+{
+  int a;
+protected:
+  typedef int INT;
+  INT b;
+};
+
+struct struct_with_private_typedef
+{
+  int a;
+private:
+  typedef int INT;
+  INT b;
+};
+
 void marker_reg1 () {}
 
 int
@@ -589,6 +665,19 @@ void use_methods ()
   base1 b (3);
 }
 
+struct Inner
+{
+  static Inner instance;
+};
+
+struct Outer
+{
+  Inner inner;
+  static Outer instance;
+};
+
+Inner Inner::instance;
+Outer Outer::instance;
 
 int
 main()
@@ -624,3 +713,10 @@ protected_class protected_c;
 default_private_class default_private_c;
 explicit_private_class explicit_private_c;
 mixed_protection_class mixed_protection_c;
+class_with_typedefs class_with_typedefs_c;
+class_with_public_typedef class_with_public_typedef_c;
+class_with_protected_typedef class_with_protected_typedef_c;
+class_with_private_typedef class_with_private_typedef_c;
+struct_with_public_typedef struct_with_public_typedef_s;
+struct_with_protected_typedef struct_with_protected_typedef_s;
+struct_with_private_typedef struct_with_private_typedef_s;

@@ -1,7 +1,7 @@
 /* Target-dependent code for the IQ2000 architecture, for GDB, the GNU
    Debugger.
 
-   Copyright (C) 2000-2017 Free Software Foundation, Inc.
+   Copyright (C) 2000-2019 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -510,7 +510,7 @@ iq2000_store_return_value (struct type *type, struct regcache *regcache,
 
       memset (buf, 0, 4);
       memcpy (buf + 4 - size, valbuf, size);
-      regcache_raw_write (regcache, regno++, buf);
+      regcache->raw_write (regno++, buf);
       len -= size;
       valbuf = ((char *) valbuf) + size;
     }
@@ -539,7 +539,7 @@ static void
 iq2000_extract_return_value (struct type *type, struct regcache *regcache,
 			     gdb_byte *valbuf)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
 
   /* If the function's return value is 8 bytes or less, it is
@@ -645,7 +645,8 @@ static CORE_ADDR
 iq2000_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		        struct regcache *regcache, CORE_ADDR bp_addr,
 		        int nargs, struct value **args, CORE_ADDR sp,
-		        int struct_return, CORE_ADDR struct_addr)
+			function_call_return_method return_method,
+			CORE_ADDR struct_addr)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   const bfd_byte *val;
@@ -657,7 +658,9 @@ iq2000_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   CORE_ADDR struct_ptr;
 
   /* First determine how much stack space we will need.  */
-  for (i = 0, argreg = E_1ST_ARGREG + (struct_return != 0); i < nargs; i++)
+  for (i = 0, argreg = E_1ST_ARGREG + (return_method == return_method_struct);
+       i < nargs;
+       i++)
     {
       type = value_type (args[i]);
       typelen = TYPE_LENGTH (type);
@@ -716,7 +719,7 @@ iq2000_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   stackspace = 0;
 
   argreg = E_1ST_ARGREG;
-  if (struct_return)
+  if (return_method == return_method_struct)
     {
       /* A function that returns a struct will consume one argreg to do so.
        */
@@ -737,7 +740,7 @@ iq2000_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
           if (argreg <= E_LAST_ARGREG)
             {
               /* Passed in a register.  */
-	      regcache_raw_write (regcache, argreg++, buf);
+	      regcache->raw_write (argreg++, buf);
             }
           else
             {
@@ -756,8 +759,8 @@ iq2000_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
                  (must start with an even-numbered reg).  */
               if (((argreg - E_1ST_ARGREG) % 2) != 0)
                 argreg++;
-	      regcache_raw_write (regcache, argreg++, val);
-	      regcache_raw_write (regcache, argreg++, val + 4);
+	      regcache->raw_write (argreg++, val);
+	      regcache->raw_write (argreg++, val + 4);
             }
           else
             {
@@ -838,7 +841,6 @@ iq2000_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_frame_args_skip      (gdbarch, 0);
   set_gdbarch_skip_prologue        (gdbarch, iq2000_skip_prologue);
   set_gdbarch_inner_than           (gdbarch, core_addr_lessthan);
-  set_gdbarch_print_insn           (gdbarch, print_insn_iq2000);
   set_gdbarch_register_type (gdbarch, iq2000_register_type);
   set_gdbarch_frame_align (gdbarch, iq2000_frame_align);
   set_gdbarch_unwind_sp (gdbarch, iq2000_unwind_sp);
@@ -858,9 +860,6 @@ iq2000_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 /* Function: _initialize_iq2000_tdep
    Initializer function for the iq2000 module.
    Called by gdb at start-up.  */
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-extern initialize_file_ftype _initialize_iq2000_tdep;
 
 void
 _initialize_iq2000_tdep (void)
