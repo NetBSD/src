@@ -1,6 +1,6 @@
 /* Manages interpreters for GDB, the GNU debugger.
 
-   Copyright (C) 2000-2017 Free Software Foundation, Inc.
+   Copyright (C) 2000-2019 Free Software Foundation, Inc.
 
    Written by Jim Ingham <jingham@apple.com> of Apple Computer, Inc.
 
@@ -35,8 +35,6 @@ typedef struct interp *(*interp_factory_func) (const char *name);
 extern void interp_factory_register (const char *name,
 				     interp_factory_func func);
 
-extern int interp_resume (struct interp *interp);
-extern int interp_suspend (struct interp *interp);
 extern struct gdb_exception interp_exec (struct interp *interp,
 					 const char *command);
 
@@ -76,11 +74,18 @@ public:
   virtual bool supports_command_editing ()
   { return false; }
 
+  const char *name () const
+  {
+    return m_name;
+  }
+
   /* This is the name in "-i=" and "set interpreter".  */
-  const char *name;
+private:
+  char *m_name;
 
   /* Interpreters are stored in a linked list, this is the next
      one...  */
+public:
   struct interp *next;
 
   /* Has the init method been run?  */
@@ -100,9 +105,31 @@ extern struct interp *interp_lookup (struct ui *ui, const char *name);
    interpreter fails to initialize.  */
 extern void set_top_level_interpreter (const char *name);
 
-extern struct ui_out *interp_ui_out (struct interp *interp);
-extern const char *interp_name (struct interp *interp);
-extern struct interp *interp_set_temp (const char *name);
+/* Temporarily set the current interpreter, and reset it on
+   destruction.  */
+class scoped_restore_interp
+{
+public:
+
+  scoped_restore_interp (const char *name)
+    : m_interp (set_interp (name))
+  {
+  }
+
+  ~scoped_restore_interp ()
+  {
+    set_interp (m_interp->name ());
+  }
+
+  scoped_restore_interp (const scoped_restore_interp &) = delete;
+  scoped_restore_interp &operator= (const scoped_restore_interp &) = delete;
+
+private:
+
+  struct interp *set_interp (const char *name);
+
+  struct interp *m_interp;
+};
 
 extern int current_interp_named_p (const char *name);
 
@@ -138,9 +165,10 @@ extern void interp_pre_command_loop (struct interp *interp);
 
 /* List the possible interpreters which could complete the given
    text.  */
-extern VEC (char_ptr) *interpreter_completer (struct cmd_list_element *ignore,
-					      const char *text,
-					      const char *word);
+extern void interpreter_completer (struct cmd_list_element *ignore,
+				   completion_tracker &tracker,
+				   const char *text,
+				   const char *word);
 
 /* well-known interpreters */
 #define INTERP_CONSOLE		"console"

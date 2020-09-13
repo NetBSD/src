@@ -1,6 +1,6 @@
 /* BSD Kernel Data Access Library (libkvm) interface.
 
-   Copyright (C) 2004-2017 Free Software Foundation, Inc.
+   Copyright (C) 2004-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,9 +24,13 @@
 #include "frame.h"
 #include "regcache.h"
 #include "target.h"
+#include "process-stratum-target.h"
 #include "value.h"
-#include "gdbcore.h"		/* for get_exec_file */
+#include "gdbcore.h"
+#include "inferior.h"          /* for get_exec_file */
+#include "symfile.h"
 #include "gdbthread.h"
+#include "arch-utils.h"
 
 #include <fcntl.h>
 #include <kvm.h>
@@ -37,7 +41,7 @@
 #include "readline/readline.h"
 #include <sys/param.h>
 #include <sys/proc.h>
-#if defined(__FreeBSD__)
+#ifdef HAVE_SYS_USER_H
 #include <sys/user.h>
 #endif
 
@@ -56,16 +60,52 @@ static struct pcb *bsd_kvm_paddr;
    register state from PCB and supplies it to REGCACHE.  */
 static int (*bsd_kvm_supply_pcb)(struct regcache *regcache, struct pcb *pcb);
 
-/* Target ops for libkvm interface.  */
-static struct target_ops bsd_kvm_ops;
-
 /* This is the ptid we use while we're connected to kvm.  The kvm
    target currently doesn't export any view of the running processes,
    so this represents the kernel task.  */
 static ptid_t bsd_kvm_ptid;
 
+/* The libkvm target.  */
+
+static const target_info bsd_kvm_target_info = {
+  "kvm",
+  N_("Kernel memory interface"),
+  N_("Use a kernel virtual memory image as a target.\n\
+Optionally specify the filename of a core dump.")
+};
+
+class bsd_kvm_target final : public process_stratum_target
+{
+public:
+  bsd_kvm_target () = default;
+
+  const target_info &info () const override
+  { return bsd_kvm_target_info; }
+
+  void close () override;
+
+  void fetch_registers (struct regcache *, int) override;
+  enum target_xfer_status xfer_partial (enum target_object object,
+					const char *annex,
+					gdb_byte *readbuf,
+					const gdb_byte *writebuf,
+					ULONGEST offset, ULONGEST len,
+					ULONGEST *xfered_len) override;
+
+  void files_info () override;
+  bool thread_alive (ptid_t ptid) override;
+  const char *pid_to_str (ptid_t) override;
+
+  bool has_memory () override { return true; }
+  bool has_stack () override { return true; }
+  bool has_registers () override { return true; }
+};
+
+/* Target ops for libkvm interface.  */
+static bsd_kvm_target bsd_kvm_ops;
+
 static void
-bsd_kvm_open (const char *arg, int from_tty)
+bsd_kvm_target_open (const char *arg, int from_tty)
 {
   char errbuf[_POSIX2_LINE_MAX];
   char *execfile = NULL;
@@ -99,12 +139,17 @@ bsd_kvm_open (const char *arg, int from_tty)
   core_kd = temp_kd;
   push_target (&bsd_kvm_ops);
 
-  inf = add_inferior_silent (ptid_get_pid(bsd_kvm_ptid));
+  inf = add_inferior_silent (bsd_kvm_ptid.pid ());
   inf->aspace = maybe_new_address_space ();
-  inf->pspace = add_program_space (inf->aspace);
+  inf->pspace = new program_space (inf->aspace);
 
-  add_thread_silent (bsd_kvm_ptid);
+  inf->gdbarch = get_current_arch ();
+
+  thread_info *tp = add_thread_silent (bsd_kvm_ptid);
+  switch_to_thread(tp);
   inferior_ptid = bsd_kvm_ptid;
+
+  symbol_file_add_main(execfile, 0);
 
   target_fetch_registers (get_current_regcache (), -1);
 
@@ -112,8 +157,8 @@ bsd_kvm_open (const char *arg, int from_tty)
   print_stack_frame (get_selected_frame (NULL), 0, SRC_AND_LOC, 1);
 }
 
-static void
-bsd_kvm_close (struct target_ops *self)
+void
+bsd_kvm_target::close ()
 {
   if (core_kd)
     {
@@ -123,7 +168,7 @@ bsd_kvm_close (struct target_ops *self)
     }
 
   inferior_ptid = null_ptid;
-  delete_thread_silent (bsd_kvm_ptid);
+  discard_all_inferiors ();
 }
 
 static LONGEST
@@ -139,11 +184,11 @@ bsd_kvm_xfer_memory (CORE_ADDR addr, ULONGEST len,
   return nbytes;
 }
 
-static enum target_xfer_status
-bsd_kvm_xfer_partial (struct target_ops *ops, enum target_object object,
-		      const char *annex, gdb_byte *readbuf,
-		      const gdb_byte *writebuf,
-		      ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
+enum target_xfer_status
+bsd_kvm_target::xfer_partial (enum target_object object,
+			      const char *annex, gdb_byte *readbuf,
+			      const gdb_byte *writebuf,
+			      ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
   switch (object)
     {
@@ -167,8 +212,8 @@ bsd_kvm_xfer_partial (struct target_ops *ops, enum target_object object,
     }
 }
 
-static void
-bsd_kvm_files_info (struct target_ops *ops)
+void
+bsd_kvm_target::files_info ()
 {
   if (bsd_kvm_corefile && strcmp (bsd_kvm_corefile, _PATH_MEM) != 0)
     printf_filtered (_("\tUsing the kernel crash dump %s.\n"),
@@ -191,9 +236,8 @@ bsd_kvm_fetch_pcb (struct regcache *regcache, struct pcb *paddr)
   return bsd_kvm_supply_pcb (regcache, &pcb);
 }
 
-static void
-bsd_kvm_fetch_registers (struct target_ops *ops,
-			 struct regcache *regcache, int regnum)
+void
+bsd_kvm_target::fetch_registers (struct regcache *regcache, int regnum)
 {
   struct nlist nl[2];
 
@@ -297,7 +341,7 @@ bsd_kvm_fetch_registers (struct target_ops *ops,
 struct cmd_list_element *bsd_kvm_cmdlist;
 
 static void
-bsd_kvm_cmd (char *arg, int fromtty)
+bsd_kvm_cmd (const char *arg, int fromtty)
 {
   /* ??? Should this become an alias for "target kvm"?  */
 }
@@ -305,7 +349,7 @@ bsd_kvm_cmd (char *arg, int fromtty)
 #ifndef HAVE_STRUCT_THREAD_TD_PCB
 
 static void
-bsd_kvm_proc_cmd (char *arg, int fromtty)
+bsd_kvm_proc_cmd (const char *arg, int fromtty)
 {
   CORE_ADDR addr;
 
@@ -334,7 +378,7 @@ bsd_kvm_proc_cmd (char *arg, int fromtty)
 #endif
 
 static void
-bsd_kvm_pcb_cmd (char *arg, int fromtty)
+bsd_kvm_pcb_cmd (const char *arg, int fromtty)
 {
   if (arg == NULL)
     /* i18n: PCB == "Process Control Block".  */
@@ -351,25 +395,18 @@ bsd_kvm_pcb_cmd (char *arg, int fromtty)
   print_stack_frame (get_selected_frame (NULL), 0, SRC_AND_LOC, 1);
 }
 
-static int
-bsd_kvm_thread_alive (struct target_ops *ops,
-		      ptid_t ptid)
+bool
+bsd_kvm_target::thread_alive (ptid_t ptid)
 {
-  return 1;
+  return true;
 }
 
-static const char *
-bsd_kvm_pid_to_str (struct target_ops *ops, ptid_t ptid)
+const char *
+bsd_kvm_target::pid_to_str (ptid_t ptid)
 {
   static char buf[64];
   xsnprintf (buf, sizeof buf, "<kvm>");
   return buf;
-}
-
-static int
-bsd_kvm_return_one (struct target_ops *ops)
-{
-  return 1;
 }
 
 /* Add the libkvm interface to the list of all possible targets and
@@ -382,24 +419,7 @@ bsd_kvm_add_target (int (*supply_pcb)(struct regcache *, struct pcb *))
   gdb_assert (bsd_kvm_supply_pcb == NULL);
   bsd_kvm_supply_pcb = supply_pcb;
 
-  bsd_kvm_ops.to_shortname = "kvm";
-  bsd_kvm_ops.to_longname = _("Kernel memory interface");
-  bsd_kvm_ops.to_doc = _("Use a kernel virtual memory image as a target.\n\
-Optionally specify the filename of a core dump.");
-  bsd_kvm_ops.to_open = bsd_kvm_open;
-  bsd_kvm_ops.to_close = bsd_kvm_close;
-  bsd_kvm_ops.to_fetch_registers = bsd_kvm_fetch_registers;
-  bsd_kvm_ops.to_xfer_partial = bsd_kvm_xfer_partial;
-  bsd_kvm_ops.to_files_info = bsd_kvm_files_info;
-  bsd_kvm_ops.to_thread_alive = bsd_kvm_thread_alive;
-  bsd_kvm_ops.to_pid_to_str = bsd_kvm_pid_to_str;
-  bsd_kvm_ops.to_stratum = process_stratum;
-  bsd_kvm_ops.to_has_memory = bsd_kvm_return_one;
-  bsd_kvm_ops.to_has_stack = bsd_kvm_return_one;
-  bsd_kvm_ops.to_has_registers = bsd_kvm_return_one;
-  bsd_kvm_ops.to_magic = OPS_MAGIC;
-
-  add_target (&bsd_kvm_ops);
+  add_target (bsd_kvm_target_info, bsd_kvm_target_open);
   
   add_prefix_cmd ("kvm", class_obscure, bsd_kvm_cmd, _("\
 Generic command for manipulating the kernel memory interface."),
@@ -427,5 +447,5 @@ Generic command for manipulating the kernel memory interface."),
      ptid (1, 1, 2) -> kvm inferior 1, process 2
      ptid (1, 1, n) -> kvm inferior 1, process n  */
 
-  bsd_kvm_ptid = ptid_build (1, 1, 0);
+  bsd_kvm_ptid = ptid_t (1, 1, 0);
 }

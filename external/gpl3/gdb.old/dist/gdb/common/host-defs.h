@@ -1,5 +1,5 @@
 /* Basic host-specific definitions for GDB.
-   Copyright (C) 1986-2017 Free Software Foundation, Inc.
+   Copyright (C) 1986-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef HOST_DEFS_H
-#define HOST_DEFS_H
+#ifndef COMMON_HOST_DEFS_H
+#define COMMON_HOST_DEFS_H
 
 #include <limits.h>
 
@@ -58,4 +58,4 @@
 #define SLASH_STRING "/"
 #endif
 
-#endif /* HOST_DEFS_H */
+#endif /* COMMON_HOST_DEFS_H */

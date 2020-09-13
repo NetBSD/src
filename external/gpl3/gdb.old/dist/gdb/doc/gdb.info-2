@@ -1,6 +1,6 @@
-This is gdb.info, produced by makeinfo version 6.3 from gdb.texinfo.
+This is gdb.info, produced by makeinfo version 6.5 from gdb.texinfo.
 
-Copyright (C) 1988-2017 Free Software Foundation, Inc.
+Copyright (C) 1988-2019 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -21,9 +21,9 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 8.0.1.
+Source-Level Debugger' for GDB (GDB) Version 8.3.
 
-   Copyright (C) 1988-2017 Free Software Foundation, Inc.
+   Copyright (C) 1988-2019 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -35,6 +35,468 @@ with the Back-Cover Texts as in (a) below.
    (a) The FSF's Back-Cover Text is: "You are free to copy and modify
 this GNU Manual.  Buying copies from GNU Press supports the FSF in
 developing GNU and promoting software freedom."
+
+
+File: gdb.info,  Node: Specify Location,  Next: Edit,  Prev: List,  Up: Source
+
+9.2 Specifying a Location
+=========================
+
+* Menu:
+
+* Linespec Locations::                Linespec locations
+* Explicit Locations::                Explicit locations
+* Address Locations::                 Address locations
+
+Several GDB commands accept arguments that specify a location of your
+program's code.  Since GDB is a source-level debugger, a location
+usually specifies some line in the source code.  Locations may be
+specified using three different formats: linespec locations, explicit
+locations, or address locations.
+
+
+File: gdb.info,  Node: Linespec Locations,  Next: Explicit Locations,  Up: Specify Location
+
+9.2.1 Linespec Locations
+------------------------
+
+A "linespec" is a colon-separated list of source location parameters
+such as file name, function name, etc.  Here are all the different ways
+of specifying a linespec:
+
+'LINENUM'
+     Specifies the line number LINENUM of the current source file.
+
+'-OFFSET'
+'+OFFSET'
+     Specifies the line OFFSET lines before or after the "current line".
+     For the 'list' command, the current line is the last one printed;
+     for the breakpoint commands, this is the line at which execution
+     stopped in the currently selected "stack frame" (*note Frames:
+     Frames, for a description of stack frames.)  When used as the
+     second of the two linespecs in a 'list' command, this specifies the
+     line OFFSET lines up or down from the first linespec.
+
+'FILENAME:LINENUM'
+     Specifies the line LINENUM in the source file FILENAME.  If
+     FILENAME is a relative file name, then it will match any source
+     file name with the same trailing components.  For example, if
+     FILENAME is 'gcc/expr.c', then it will match source file name of
+     '/build/trunk/gcc/expr.c', but not '/build/trunk/libcpp/expr.c' or
+     '/build/trunk/gcc/x-expr.c'.
+
+'FUNCTION'
+     Specifies the line that begins the body of the function FUNCTION.
+     For example, in C, this is the line with the open brace.
+
+     By default, in C++ and Ada, FUNCTION is interpreted as specifying
+     all functions named FUNCTION in all scopes.  For C++, this means in
+     all namespaces and classes.  For Ada, this means in all packages.
+
+     For example, assuming a program with C++ symbols named 'A::B::func'
+     and 'B::func', both commands 'break func' and 'break B::func' set a
+     breakpoint on both symbols.
+
+     Commands that accept a linespec let you override this with the
+     '-qualified' option.  For example, 'break -qualified func' sets a
+     breakpoint on a free-function named 'func' ignoring any C++ class
+     methods and namespace functions called 'func'.
+
+     *Note Explicit Locations::.
+
+'FUNCTION:LABEL'
+     Specifies the line where LABEL appears in FUNCTION.
+
+'FILENAME:FUNCTION'
+     Specifies the line that begins the body of the function FUNCTION in
+     the file FILENAME.  You only need the file name with a function
+     name to avoid ambiguity when there are identically named functions
+     in different source files.
+
+'LABEL'
+     Specifies the line at which the label named LABEL appears in the
+     function corresponding to the currently selected stack frame.  If
+     there is no current selected stack frame (for instance, if the
+     inferior is not running), then GDB will not search for a label.
+
+'-pstap|-probe-stap [OBJFILE:[PROVIDER:]]NAME'
+     The GNU/Linux tool 'SystemTap' provides a way for applications to
+     embed static probes.  *Note Static Probe Points::, for more
+     information on finding and using static probes.  This form of
+     linespec specifies the location of such a static probe.
+
+     If OBJFILE is given, only probes coming from that shared library or
+     executable matching OBJFILE as a regular expression are considered.
+     If PROVIDER is given, then only probes from that provider are
+     considered.  If several probes match the spec, GDB will insert a
+     breakpoint at each one of those probes.
+
+
+File: gdb.info,  Node: Explicit Locations,  Next: Address Locations,  Prev: Linespec Locations,  Up: Specify Location
+
+9.2.2 Explicit Locations
+------------------------
+
+"Explicit locations" allow the user to directly specify the source
+location's parameters using option-value pairs.
+
+   Explicit locations are useful when several functions, labels, or file
+names have the same name (base name for files) in the program's sources.
+In these cases, explicit locations point to the source line you meant
+more accurately and unambiguously.  Also, using explicit locations might
+be faster in large programs.
+
+   For example, the linespec 'foo:bar' may refer to a function 'bar'
+defined in the file named 'foo' or the label 'bar' in a function named
+'foo'.  GDB must search either the file system or the symbol table to
+know.
+
+   The list of valid explicit location options is summarized in the
+following table:
+
+'-source FILENAME'
+     The value specifies the source file name.  To differentiate between
+     files with the same base name, prepend as many directories as is
+     necessary to uniquely identify the desired file, e.g.,
+     'foo/bar/baz.c'.  Otherwise GDB will use the first file it finds
+     with the given base name.  This option requires the use of either
+     '-function' or '-line'.
+
+'-function FUNCTION'
+     The value specifies the name of a function.  Operations on function
+     locations unmodified by other options (such as '-label' or '-line')
+     refer to the line that begins the body of the function.  In C, for
+     example, this is the line with the open brace.
+
+     By default, in C++ and Ada, FUNCTION is interpreted as specifying
+     all functions named FUNCTION in all scopes.  For C++, this means in
+     all namespaces and classes.  For Ada, this means in all packages.
+
+     For example, assuming a program with C++ symbols named 'A::B::func'
+     and 'B::func', both commands 'break -function func' and
+     'break -function B::func' set a breakpoint on both symbols.
+
+     You can use the '-qualified' flag to override this (see below).
+
+'-qualified'
+
+     This flag makes GDB interpret a function name specified with
+     '-function' as a complete fully-qualified name.
+
+     For example, assuming a C++ program with symbols named 'A::B::func'
+     and 'B::func', the 'break -qualified -function B::func' command
+     sets a breakpoint on 'B::func', only.
+
+     (Note: the '-qualified' option can precede a linespec as well
+     (*note Linespec Locations::), so the particular example above could
+     be simplified as 'break -qualified B::func'.)
+
+'-label LABEL'
+     The value specifies the name of a label.  When the function name is
+     not specified, the label is searched in the function of the
+     currently selected stack frame.
+
+'-line NUMBER'
+     The value specifies a line offset for the location.  The offset may
+     either be absolute ('-line 3') or relative ('-line +3'), depending
+     on the command.  When specified without any other options, the line
+     offset is relative to the current line.
+
+   Explicit location options may be abbreviated by omitting any
+non-unique trailing characters from the option name, e.g.,
+'break -s main.c -li 3'.
+
+
+File: gdb.info,  Node: Address Locations,  Prev: Explicit Locations,  Up: Specify Location
+
+9.2.3 Address Locations
+-----------------------
+
+"Address locations" indicate a specific program address.  They have the
+generalized form *ADDRESS.
+
+   For line-oriented commands, such as 'list' and 'edit', this specifies
+a source line that contains ADDRESS.  For 'break' and other
+breakpoint-oriented commands, this can be used to set breakpoints in
+parts of your program which do not have debugging information or source
+files.
+
+   Here ADDRESS may be any expression valid in the current working
+language (*note working language: Languages.) that specifies a code
+address.  In addition, as a convenience, GDB extends the semantics of
+expressions used in locations to cover several situations that
+frequently occur during debugging.  Here are the various forms of
+ADDRESS:
+
+'EXPRESSION'
+     Any expression valid in the current working language.
+
+'FUNCADDR'
+     An address of a function or procedure derived from its name.  In C,
+     C++, Objective-C, Fortran, minimal, and assembly, this is simply
+     the function's name FUNCTION (and actually a special case of a
+     valid expression).  In Pascal and Modula-2, this is '&FUNCTION'.
+     In Ada, this is 'FUNCTION'Address' (although the Pascal form also
+     works).
+
+     This form specifies the address of the function's first
+     instruction, before the stack frame and arguments have been set up.
+
+''FILENAME':FUNCADDR'
+     Like FUNCADDR above, but also specifies the name of the source file
+     explicitly.  This is useful if the name of the function does not
+     specify the function unambiguously, e.g., if there are several
+     functions with identical names in different source files.
+
+
+File: gdb.info,  Node: Edit,  Next: Search,  Prev: Specify Location,  Up: Source
+
+9.3 Editing Source Files
+========================
+
+To edit the lines in a source file, use the 'edit' command.  The editing
+program of your choice is invoked with the current line set to the
+active line in the program.  Alternatively, there are several ways to
+specify what part of the file you want to print if you want to see other
+parts of the program:
+
+'edit LOCATION'
+     Edit the source file specified by 'location'.  Editing starts at
+     that LOCATION, e.g., at the specified source line of the specified
+     file.  *Note Specify Location::, for all the possible forms of the
+     LOCATION argument; here are the forms of the 'edit' command most
+     commonly used:
+
+     'edit NUMBER'
+          Edit the current source file with NUMBER as the active line
+          number.
+
+     'edit FUNCTION'
+          Edit the file containing FUNCTION at the beginning of its
+          definition.
+
+9.3.1 Choosing your Editor
+--------------------------
+
+You can customize GDB to use any editor you want (1).  By default, it is
+'/bin/ex', but you can change this by setting the environment variable
+'EDITOR' before using GDB.  For example, to configure GDB to use the
+'vi' editor, you could use these commands with the 'sh' shell:
+     EDITOR=/usr/bin/vi
+     export EDITOR
+     gdb ...
+   or in the 'csh' shell,
+     setenv EDITOR /usr/bin/vi
+     gdb ...
+
+   ---------- Footnotes ----------
+
+   (1) The only restriction is that your editor (say 'ex'), recognizes
+the following command-line syntax:
+     ex +NUMBER file
+   The optional numeric value +NUMBER specifies the number of the line
+in the file where to start editing.
+
+
+File: gdb.info,  Node: Search,  Next: Source Path,  Prev: Edit,  Up: Source
+
+9.4 Searching Source Files
+==========================
+
+There are two commands for searching through the current source file for
+a regular expression.
+
+'forward-search REGEXP'
+'search REGEXP'
+     The command 'forward-search REGEXP' checks each line, starting with
+     the one following the last line listed, for a match for REGEXP.  It
+     lists the line that is found.  You can use the synonym 'search
+     REGEXP' or abbreviate the command name as 'fo'.
+
+'reverse-search REGEXP'
+     The command 'reverse-search REGEXP' checks each line, starting with
+     the one before the last line listed and going backward, for a match
+     for REGEXP.  It lists the line that is found.  You can abbreviate
+     this command as 'rev'.
+
+
+File: gdb.info,  Node: Source Path,  Next: Machine Code,  Prev: Search,  Up: Source
+
+9.5 Specifying Source Directories
+=================================
+
+Executable programs sometimes do not record the directories of the
+source files from which they were compiled, just the names.  Even when
+they do, the directories could be moved between the compilation and your
+debugging session.  GDB has a list of directories to search for source
+files; this is called the "source path".  Each time GDB wants a source
+file, it tries all the directories in the list, in the order they are
+present in the list, until it finds a file with the desired name.
+
+   For example, suppose an executable references the file
+'/usr/src/foo-1.0/lib/foo.c', and our source path is '/mnt/cross'.  The
+file is first looked up literally; if this fails,
+'/mnt/cross/usr/src/foo-1.0/lib/foo.c' is tried; if this fails,
+'/mnt/cross/foo.c' is opened; if this fails, an error message is
+printed.  GDB does not look up the parts of the source file name, such
+as '/mnt/cross/src/foo-1.0/lib/foo.c'.  Likewise, the subdirectories of
+the source path are not searched: if the source path is '/mnt/cross',
+and the binary refers to 'foo.c', GDB would not find it under
+'/mnt/cross/usr/src/foo-1.0/lib'.
+
+   Plain file names, relative file names with leading directories, file
+names containing dots, etc. are all treated as described above; for
+instance, if the source path is '/mnt/cross', and the source file is
+recorded as '../lib/foo.c', GDB would first try '../lib/foo.c', then
+'/mnt/cross/../lib/foo.c', and after that--'/mnt/cross/foo.c'.
+
+   Note that the executable search path is _not_ used to locate the
+source files.
+
+   Whenever you reset or rearrange the source path, GDB clears out any
+information it has cached about where source files are found and where
+each line is in the file.
+
+   When you start GDB, its source path includes only 'cdir' and 'cwd',
+in that order.  To add other directories, use the 'directory' command.
+
+   The search path is used to find both program source files and GDB
+script files (read using the '-command' option and 'source' command).
+
+   In addition to the source path, GDB provides a set of commands that
+manage a list of source path substitution rules.  A "substitution rule"
+specifies how to rewrite source directories stored in the program's
+debug information in case the sources were moved to a different
+directory between compilation and debugging.  A rule is made of two
+strings, the first specifying what needs to be rewritten in the path,
+and the second specifying how it should be rewritten.  In *note set
+substitute-path::, we name these two parts FROM and TO respectively.
+GDB does a simple string replacement of FROM with TO at the start of the
+directory part of the source file name, and uses that result instead of
+the original file name to look up the sources.
+
+   Using the previous example, suppose the 'foo-1.0' tree has been moved
+from '/usr/src' to '/mnt/cross', then you can tell GDB to replace
+'/usr/src' in all source path names with '/mnt/cross'.  The first lookup
+will then be '/mnt/cross/foo-1.0/lib/foo.c' in place of the original
+location of '/usr/src/foo-1.0/lib/foo.c'.  To define a source path
+substitution rule, use the 'set substitute-path' command (*note set
+substitute-path::).
+
+   To avoid unexpected substitution results, a rule is applied only if
+the FROM part of the directory name ends at a directory separator.  For
+instance, a rule substituting '/usr/source' into '/mnt/cross' will be
+applied to '/usr/source/foo-1.0' but not to '/usr/sourceware/foo-2.0'.
+And because the substitution is applied only at the beginning of the
+directory name, this rule will not be applied to
+'/root/usr/source/baz.c' either.
+
+   In many cases, you can achieve the same result using the 'directory'
+command.  However, 'set substitute-path' can be more efficient in the
+case where the sources are organized in a complex tree with multiple
+subdirectories.  With the 'directory' command, you need to add each
+subdirectory of your project.  If you moved the entire tree while
+preserving its internal organization, then 'set substitute-path' allows
+you to direct the debugger to all the sources with one single command.
+
+   'set substitute-path' is also more than just a shortcut command.  The
+source path is only used if the file at the original location no longer
+exists.  On the other hand, 'set substitute-path' modifies the debugger
+behavior to look at the rewritten location instead.  So, if for any
+reason a source file that is not relevant to your executable is located
+at the original location, a substitution rule is the only method
+available to point GDB at the new location.
+
+   You can configure a default source path substitution rule by
+configuring GDB with the '--with-relocated-sources=DIR' option.  The DIR
+should be the name of a directory under GDB's configured prefix (set
+with '--prefix' or '--exec-prefix'), and directory names in debug
+information under DIR will be adjusted automatically if the installed
+GDB is moved to a new location.  This is useful if GDB, libraries or
+executables with debug information and corresponding source code are
+being moved together.
+
+'directory DIRNAME ...'
+'dir DIRNAME ...'
+     Add directory DIRNAME to the front of the source path.  Several
+     directory names may be given to this command, separated by ':' (';'
+     on MS-DOS and MS-Windows, where ':' usually appears as part of
+     absolute file names) or whitespace.  You may specify a directory
+     that is already in the source path; this moves it forward, so GDB
+     searches it sooner.
+
+     You can use the string '$cdir' to refer to the compilation
+     directory (if one is recorded), and '$cwd' to refer to the current
+     working directory.  '$cwd' is not the same as '.'--the former
+     tracks the current working directory as it changes during your GDB
+     session, while the latter is immediately expanded to the current
+     directory at the time you add an entry to the source path.
+
+'directory'
+     Reset the source path to its default value ('$cdir:$cwd' on Unix
+     systems).  This requires confirmation.
+
+'set directories PATH-LIST'
+     Set the source path to PATH-LIST.  '$cdir:$cwd' are added if
+     missing.
+
+'show directories'
+     Print the source path: show which directories it contains.
+
+'set substitute-path FROM TO'
+     Define a source path substitution rule, and add it at the end of
+     the current list of existing substitution rules.  If a rule with
+     the same FROM was already defined, then the old rule is also
+     deleted.
+
+     For example, if the file '/foo/bar/baz.c' was moved to
+     '/mnt/cross/baz.c', then the command
+
+          (gdb) set substitute-path /foo/bar /mnt/cross
+
+     will tell GDB to replace '/foo/bar' with '/mnt/cross', which will
+     allow GDB to find the file 'baz.c' even though it was moved.
+
+     In the case when more than one substitution rule have been defined,
+     the rules are evaluated one by one in the order where they have
+     been defined.  The first one matching, if any, is selected to
+     perform the substitution.
+
+     For instance, if we had entered the following commands:
+
+          (gdb) set substitute-path /usr/src/include /mnt/include
+          (gdb) set substitute-path /usr/src /mnt/src
+
+     GDB would then rewrite '/usr/src/include/defs.h' into
+     '/mnt/include/defs.h' by using the first rule.  However, it would
+     use the second rule to rewrite '/usr/src/lib/foo.c' into
+     '/mnt/src/lib/foo.c'.
+
+'unset substitute-path [path]'
+     If a path is specified, search the current list of substitution
+     rules for a rule that would rewrite that path.  Delete that rule if
+     found.  A warning is emitted by the debugger if no rule could be
+     found.
+
+     If no path is specified, then all substitution rules are deleted.
+
+'show substitute-path [path]'
+     If a path is specified, then print the source path substitution
+     rule which would rewrite that path, if any.
+
+     If no path is specified, then print all existing source path
+     substitution rules.
+
+   If your source path is cluttered with directories that are no longer
+of interest, GDB may sometimes cause confusion by finding the wrong
+versions of source.  You can correct the situation as follows:
+
+  1. Use 'directory' with no argument to reset the source path to its
+     default value.
+
+  2. Use 'directory' with suitable arguments to reinstall the
+     directories you want in the source path.  You can add all the
+     directories in one command.
 
 
 File: gdb.info,  Node: Machine Code,  Prev: Source Path,  Up: Source
@@ -50,27 +512,34 @@ line when execution stops.  When run under GNU Emacs mode, the 'info
 line' command causes the arrow to point to the line specified.  Also,
 'info line' prints addresses in symbolic form as well as hex.
 
+'info line'
 'info line LOCATION'
      Print the starting and ending addresses of the compiled code for
      source line LOCATION.  You can specify source lines in any of the
-     ways documented in *note Specify Location::.
+     ways documented in *note Specify Location::.  With no LOCATION
+     information about the current source line is printed.
 
    For example, we can use 'info line' to discover the location of the
 object code for the first line of function 'm4_changequote':
 
      (gdb) info line m4_changequote
-     Line 895 of "builtin.c" starts at pc 0x634c and ends at 0x6350.
+     Line 895 of "builtin.c" starts at pc 0x634c <m4_changequote> and \
+             ends at 0x6350 <m4_changequote+4>.
 
 We can also inquire (using '*ADDR' as the form for LOCATION) what source
 line covers a particular address:
      (gdb) info line *0x63ff
-     Line 926 of "builtin.c" starts at pc 0x63e4 and ends at 0x6404.
+     Line 926 of "builtin.c" starts at pc 0x63e4 <m4_changequote+152> and \
+             ends at 0x6404 <m4_changequote+184>.
 
    After 'info line', the default address for the 'x' command is changed
 to the starting address of the line, so that 'x/i' is sufficient to
 begin examining the machine code (*note Examining Memory: Memory.).
 Also, this address is saved as the value of the convenience variable
 '$_' (*note Convenience Variables: Convenience Vars.).
+
+   After 'info line', using 'info line' again without specifying a
+location will display information about the next source line.
 
 'disassemble'
 'disassemble /m'
@@ -256,12 +725,12 @@ able to resolve these to actual function names.
      the disassembler.  For a list of valid options, please refer to the
      '-M'/'--disassembler-options' section of the 'objdump' manual
      and/or the output of 'objdump --help' (*note objdump:
-     (binutils.info)objdump.).  The default value is the empty string.
+     (binutils)objdump.).  The default value is the empty string.
 
      If it is necessary to specify more than one disassembler option,
      then multiple options can be placed together into a comma separated
      list.  Currently this command is only supported on targets ARM,
-     PowerPC and S/390.
+     MIPS, PowerPC and S/390.
 
 'show disassembler-options'
      Show the current setting of the disassembler options.
@@ -739,6 +1208,18 @@ formats that are best suited to C++ programs.
 e.g., because its data type is not completely specified by the debug
 information, GDB will say '<incomplete type>'.  *Note incomplete type:
 Symbols, for more about this.
+
+   If you try to examine or use the value of a (global) variable for
+which GDB has no type information, e.g., because the program includes no
+debug information, GDB displays an error message.  *Note unknown type:
+Symbols, for more about unknown types.  If you cast the variable to its
+declared type, GDB gets the variable's value using the cast-to type as
+the variable's type.  For example, in a C program:
+
+       (gdb) p var
+       'var' has unknown type; cast it to its declared type
+       (gdb) p (float) var
+       $1 = 3.14
 
    If you append '@entry' string to a function parameter name you get
 its value at the time the function got called.  If the value is not
@@ -1616,30 +2097,9 @@ These settings are of interest when debugging C++ programs:
 
 'set demangle-style STYLE'
      Choose among several encoding schemes used by different compilers
-     to represent C++ names.  The choices for STYLE are currently:
-
-     'auto'
-          Allow GDB to choose a decoding style by inspecting your
-          program.  This is the default.
-
-     'gnu'
-          Decode based on the GNU C++ compiler ('g++') encoding
-          algorithm.
-
-     'hp'
-          Decode based on the HP ANSI C++ ('aCC') encoding algorithm.
-
-     'lucid'
-          Decode based on the Lucid C++ compiler ('lcc') encoding
-          algorithm.
-
-     'arm'
-          Decode using the algorithm in the 'C++ Annotated Reference
-          Manual'.  *Warning:* this setting alone is not sufficient to
-          allow debugging 'cfront'-generated executables.  GDB would
-          require further enhancement to permit that.
-
-     If you omit STYLE, you will see a list of possible formats.
+     to represent C++ names.  If you omit STYLE, you will see a list of
+     possible formats.  The default value is AUTO, which lets GDB choose
+     a decoding style by inspecting your program.
 
 'show demangle-style'
      Display the encoding style currently in use for decoding C++
@@ -1841,7 +2301,7 @@ library2.so named 'bar' that prints two types of objects, 'bar1' and
        bar
          bar1
          bar2
-     (gdb) disable pretty-printer library2 bar:bar1
+     (gdb) disable pretty-printer library2 bar;bar1
      1 printer disabled
      1 of 3 printers enabled
      (gdb) info pretty-printer library2
@@ -2266,6 +2726,11 @@ machine.
 'info all-registers'
      Print the names and values of all registers, including
      floating-point and vector registers (in the selected stack frame).
+
+'info registers REGGROUP ...'
+     Print the name and value of the registers in each of the specified
+     REGGROUPs.  The REGGOUP can be any of those returned by 'maint
+     print reggroups' (*note Maintenance Commands::).
 
 'info registers REGNAME ...'
      Print the "relativized" value of each specified register REGNAME.
@@ -2760,7 +3225,9 @@ special command for that.
 
      On GNU/Linux, this command can take into account the value of the
      file '/proc/PID/coredump_filter' when generating the core dump
-     (*note set use-coredump-filter::).
+     (*note set use-coredump-filter::), and by default honors the
+     'VM_DONTDUMP' flag for mappings where it is present in the file
+     '/proc/PID/smaps' (*note set dump-excluded-mappings::).
 
 'set use-coredump-filter on'
 'set use-coredump-filter off'
@@ -2788,6 +3255,14 @@ special command for that.
      mappings), '1' (anonymous shared mappings), '4' (ELF headers) and
      '5' (private huge pages) are active.  This will cause these memory
      mappings to be dumped automatically.
+
+'set dump-excluded-mappings on'
+'set dump-excluded-mappings off'
+     If 'on' is specified, GDB will dump memory mappings marked with the
+     'VM_DONTDUMP' flag.  This flag is represented in the file
+     '/proc/PID/smaps' with the acronym 'dd'.
+
+     The default value is 'off'.
 
 
 File: gdb.info,  Node: Character Sets,  Next: Caching Target Data,  Prev: Core File Generation,  Up: Data
@@ -3081,7 +3556,9 @@ S, search query size
 
      All values are interpreted in the current language.  This means,
      for example, that if the current source language is C/C++ then
-     searching for the string "hello" includes the trailing '\0'.
+     searching for the string "hello" includes the trailing '\0'.  The
+     null terminator can be removed from searching by using casts, e.g.:
+     '{char[5]}"hello"'.
 
      If the value size is not specified, it is taken from the value's
      type in the current language.  This is useful when one wants to
@@ -3124,7 +3601,11 @@ you get during debugging:
      (gdb) find &hello[0], +sizeof(hello), 'h', 'e', 'l', 'l', 'o'
      0x8049567 <hello.1620>
      0x804956d <hello.1620+6>
-     2 patterns found
+     2 patterns found.
+     (gdb) find &hello[0], +sizeof(hello), {char[5]}"hello"
+     0x8049567 <hello.1620>
+     0x804956d <hello.1620+6>
+     2 patterns found.
      (gdb) find /b1 &hello[0], +sizeof(hello), 'h', 0x65, 'l'
      0x8049567 <hello.1620>
      1 pattern found
@@ -5875,6 +6356,40 @@ designed specifically for use with C++.  Here is a summary:
      available choices, or to finish the type list for you.  *Note
      Command Completion: Completion, for details on how to do this.
 
+'Breakpoints in functions with ABI tags'
+
+     The GNU C++ compiler introduced the notion of ABI "tags", which
+     correspond to changes in the ABI of a type, function, or variable
+     that would not otherwise be reflected in a mangled name.  See
+     <https://developers.redhat.com/blog/2015/02/05/gcc5-and-the-c11-abi/>
+     for more detail.
+
+     The ABI tags are visible in C++ demangled names.  For example, a
+     function that returns a std::string:
+
+          std::string function(int);
+
+     when compiled for the C++11 ABI is marked with the 'cxx11' ABI tag,
+     and GDB displays the symbol like this:
+
+          function[abi:cxx11](int)
+
+     You can set a breakpoint on such functions simply as if they had no
+     tag.  For example:
+
+          (gdb) b function(int)
+          Breakpoint 2 at 0x40060d: file main.cc, line 10.
+          (gdb) info breakpoints
+          Num     Type           Disp Enb Address    What
+          1       breakpoint     keep y   0x0040060d in function[abi:cxx11](int)
+                                                     at main.cc:10
+
+     On the rare occasion you need to disambiguate between different ABI
+     tags, you can do so by simply including the ABI tag in the function
+     name, like:
+
+          (gdb) b ambiguous[abi:other_tag](int)
+
 
 File: gdb.info,  Node: Decimal Floating Point,  Prev: Debugging C Plus Plus,  Up: C
 
@@ -6227,8 +6742,6 @@ of.
      certain features from being implemented by GDB:
 
         * Method calls cannot be made via traits.
-
-        * Trait objects cannot be created or inspected.
 
         * Operator overloading is not implemented.
 
@@ -6793,6 +7306,7 @@ difficult.
 * Ada Tasks and Core Files::    Tasking Support when Debugging Core Files
 * Ravenscar Profile::           Tasking Support when using the Ravenscar
                                    Profile
+* Ada Settings::                New settable GDB parameters for Ada.
 * Ada Glitches::                Known peculiarities of Ada mode.
 
 
@@ -7026,878 +7540,4 @@ additions specific to Ada:
      object's specific type (as indicated by its run-time tag).
      Likewise, component selection on such a value will operate on the
      specific type of the object.
-
-
-File: gdb.info,  Node: Overloading support for Ada,  Next: Stopping Before Main Program,  Prev: Additions to Ada,  Up: Ada
-
-15.4.10.4 Overloading support for Ada
-.....................................
-
-The debugger supports limited overloading.  Given a subprogram call in
-which the function symbol has multiple definitions, it will use the
-number of actual parameters and some information about their types to
-attempt to narrow the set of definitions.  It also makes very limited
-use of context, preferring procedures to functions in the context of the
-'call' command, and functions to procedures elsewhere.
-
-   If, after narrowing, the set of matching definitions still contains
-more than one definition, GDB will display a menu to query which one it
-should use, for instance:
-
-     (gdb) print f(1)
-     Multiple matches for f
-     [0] cancel
-     [1] foo.f (integer) return boolean at foo.adb:23
-     [2] foo.f (foo.new_integer) return boolean at foo.adb:28
-     >
-
-   In this case, just select one menu entry either to cancel expression
-evaluation (type '0' and press <RET>) or to continue evaluation with a
-specific instance (type the corresponding number and press <RET>).
-
-   Here are a couple of commands to customize GDB's behavior in this
-case:
-
-'set ada print-signatures'
-     Control whether parameter types and return types are displayed in
-     overloads selection menus.  It is 'on' by default.  *Note
-     Overloading support for Ada::.
-
-'show ada print-signatures'
-     Show the current setting for displaying parameter types and return
-     types in overloads selection menu.  *Note Overloading support for
-     Ada::.
-
-
-File: gdb.info,  Node: Stopping Before Main Program,  Next: Ada Exceptions,  Prev: Overloading support for Ada,  Up: Ada
-
-15.4.10.5 Stopping at the Very Beginning
-........................................
-
-It is sometimes necessary to debug the program during elaboration, and
-before reaching the main procedure.  As defined in the Ada Reference
-Manual, the elaboration code is invoked from a procedure called
-'adainit'.  To run your program up to the beginning of elaboration,
-simply use the following two commands: 'tbreak adainit' and 'run'.
-
-
-File: gdb.info,  Node: Ada Exceptions,  Next: Ada Tasks,  Prev: Stopping Before Main Program,  Up: Ada
-
-15.4.10.6 Ada Exceptions
-........................
-
-A command is provided to list all Ada exceptions:
-
-'info exceptions'
-'info exceptions REGEXP'
-     The 'info exceptions' command allows you to list all Ada exceptions
-     defined within the program being debugged, as well as their
-     addresses.  With a regular expression, REGEXP, as argument, only
-     those exceptions whose names match REGEXP are listed.
-
-   Below is a small example, showing how the command can be used, first
-without argument, and next with a regular expression passed as an
-argument.
-
-     (gdb) info exceptions
-     All defined Ada exceptions:
-     constraint_error: 0x613da0
-     program_error: 0x613d20
-     storage_error: 0x613ce0
-     tasking_error: 0x613ca0
-     const.aint_global_e: 0x613b00
-     (gdb) info exceptions const.aint
-     All Ada exceptions matching regular expression "const.aint":
-     constraint_error: 0x613da0
-     const.aint_global_e: 0x613b00
-
-   It is also possible to ask GDB to stop your program's execution when
-an exception is raised.  For more details, see *note Set Catchpoints::.
-
-
-File: gdb.info,  Node: Ada Tasks,  Next: Ada Tasks and Core Files,  Prev: Ada Exceptions,  Up: Ada
-
-15.4.10.7 Extensions for Ada Tasks
-..................................
-
-Support for Ada tasks is analogous to that for threads (*note
-Threads::).  GDB provides the following task-related commands:
-
-'info tasks'
-     This command shows a list of current Ada tasks, as in the following
-     example:
-
-          (gdb) info tasks
-            ID       TID P-ID Pri State                 Name
-             1   8088000   0   15 Child Activation Wait main_task
-             2   80a4000   1   15 Accept Statement      b
-             3   809a800   1   15 Child Activation Wait a
-          *  4   80ae800   3   15 Runnable              c
-
-
-     In this listing, the asterisk before the last task indicates it to
-     be the task currently being inspected.
-
-     ID
-          Represents GDB's internal task number.
-
-     TID
-          The Ada task ID.
-
-     P-ID
-          The parent's task ID (GDB's internal task number).
-
-     Pri
-          The base priority of the task.
-
-     State
-          Current state of the task.
-
-          'Unactivated'
-               The task has been created but has not been activated.  It
-               cannot be executing.
-
-          'Runnable'
-               The task is not blocked for any reason known to Ada.  (It
-               may be waiting for a mutex, though.)  It is conceptually
-               "executing" in normal mode.
-
-          'Terminated'
-               The task is terminated, in the sense of ARM 9.3 (5).  Any
-               dependents that were waiting on terminate alternatives
-               have been awakened and have terminated themselves.
-
-          'Child Activation Wait'
-               The task is waiting for created tasks to complete
-               activation.
-
-          'Accept Statement'
-               The task is waiting on an accept or selective wait
-               statement.
-
-          'Waiting on entry call'
-               The task is waiting on an entry call.
-
-          'Async Select Wait'
-               The task is waiting to start the abortable part of an
-               asynchronous select statement.
-
-          'Delay Sleep'
-               The task is waiting on a select statement with only a
-               delay alternative open.
-
-          'Child Termination Wait'
-               The task is sleeping having completed a master within
-               itself, and is waiting for the tasks dependent on that
-               master to become terminated or waiting on a terminate
-               Phase.
-
-          'Wait Child in Term Alt'
-               The task is sleeping waiting for tasks on terminate
-               alternatives to finish terminating.
-
-          'Accepting RV with TASKNO'
-               The task is accepting a rendez-vous with the task TASKNO.
-
-     Name
-          Name of the task in the program.
-
-'info task TASKNO'
-     This command shows detailled informations on the specified task, as
-     in the following example:
-          (gdb) info tasks
-            ID       TID P-ID Pri State                  Name
-             1   8077880    0  15 Child Activation Wait  main_task
-          *  2   807c468    1  15 Runnable               task_1
-          (gdb) info task 2
-          Ada Task: 0x807c468
-          Name: task_1
-          Thread: 0x807f378
-          Parent: 1 (main_task)
-          Base Priority: 15
-          State: Runnable
-
-'task'
-     This command prints the ID of the current task.
-
-          (gdb) info tasks
-            ID       TID P-ID Pri State                  Name
-             1   8077870    0  15 Child Activation Wait  main_task
-          *  2   807c458    1  15 Runnable               t
-          (gdb) task
-          [Current task is 2]
-
-'task TASKNO'
-     This command is like the 'thread THREAD-ID' command (*note
-     Threads::).  It switches the context of debugging from the current
-     task to the given task.
-
-          (gdb) info tasks
-            ID       TID P-ID Pri State                  Name
-             1   8077870    0  15 Child Activation Wait  main_task
-          *  2   807c458    1  15 Runnable               t
-          (gdb) task 1
-          [Switching to task 1]
-          #0  0x8067726 in pthread_cond_wait ()
-          (gdb) bt
-          #0  0x8067726 in pthread_cond_wait ()
-          #1  0x8056714 in system.os_interface.pthread_cond_wait ()
-          #2  0x805cb63 in system.task_primitives.operations.sleep ()
-          #3  0x806153e in system.tasking.stages.activate_tasks ()
-          #4  0x804aacc in un () at un.adb:5
-
-'break LOCATION task TASKNO'
-'break LOCATION task TASKNO if ...'
-     These commands are like the 'break ... thread ...' command (*note
-     Thread Stops::).  The LOCATION argument specifies source lines, as
-     described in *note Specify Location::.
-
-     Use the qualifier 'task TASKNO' with a breakpoint command to
-     specify that you only want GDB to stop the program when a
-     particular Ada task reaches this breakpoint.  The TASKNO is one of
-     the numeric task identifiers assigned by GDB, shown in the first
-     column of the 'info tasks' display.
-
-     If you do not specify 'task TASKNO' when you set a breakpoint, the
-     breakpoint applies to _all_ tasks of your program.
-
-     You can use the 'task' qualifier on conditional breakpoints as
-     well; in this case, place 'task TASKNO' before the breakpoint
-     condition (before the 'if').
-
-     For example,
-
-          (gdb) info tasks
-            ID       TID P-ID Pri State                 Name
-             1 140022020   0   15 Child Activation Wait main_task
-             2 140045060   1   15 Accept/Select Wait    t2
-             3 140044840   1   15 Runnable              t1
-          *  4 140056040   1   15 Runnable              t3
-          (gdb) b 15 task 2
-          Breakpoint 5 at 0x120044cb0: file test_task_debug.adb, line 15.
-          (gdb) cont
-          Continuing.
-          task # 1 running
-          task # 2 running
-
-          Breakpoint 5, test_task_debug () at test_task_debug.adb:15
-          15               flush;
-          (gdb) info tasks
-            ID       TID P-ID Pri State                 Name
-             1 140022020   0   15 Child Activation Wait main_task
-          *  2 140045060   1   15 Runnable              t2
-             3 140044840   1   15 Runnable              t1
-             4 140056040   1   15 Delay Sleep           t3
-
-
-File: gdb.info,  Node: Ada Tasks and Core Files,  Next: Ravenscar Profile,  Prev: Ada Tasks,  Up: Ada
-
-15.4.10.8 Tasking Support when Debugging Core Files
-...................................................
-
-When inspecting a core file, as opposed to debugging a live program,
-tasking support may be limited or even unavailable, depending on the
-platform being used.  For instance, on x86-linux, the list of tasks is
-available, but task switching is not supported.
-
-   On certain platforms, the debugger needs to perform some memory
-writes in order to provide Ada tasking support.  When inspecting a core
-file, this means that the core file must be opened with read-write
-privileges, using the command '"set write on"' (*note Patching::).
-Under these circumstances, you should make a backup copy of the core
-file before inspecting it with GDB.
-
-
-File: gdb.info,  Node: Ravenscar Profile,  Next: Ada Glitches,  Prev: Ada Tasks and Core Files,  Up: Ada
-
-15.4.10.9 Tasking Support when using the Ravenscar Profile
-..........................................................
-
-The "Ravenscar Profile" is a subset of the Ada tasking features,
-specifically designed for systems with safety-critical real-time
-requirements.
-
-'set ravenscar task-switching on'
-     Allows task switching when debugging a program that uses the
-     Ravenscar Profile.  This is the default.
-
-'set ravenscar task-switching off'
-     Turn off task switching when debugging a program that uses the
-     Ravenscar Profile.  This is mostly intended to disable the code
-     that adds support for the Ravenscar Profile, in case a bug in
-     either GDB or in the Ravenscar runtime is preventing GDB from
-     working properly.  To be effective, this command should be run
-     before the program is started.
-
-'show ravenscar task-switching'
-     Show whether it is possible to switch from task to task in a
-     program using the Ravenscar Profile.
-
-
-File: gdb.info,  Node: Ada Glitches,  Prev: Ravenscar Profile,  Up: Ada
-
-15.4.10.10 Known Peculiarities of Ada Mode
-..........................................
-
-Besides the omissions listed previously (*note Omissions from Ada::), we
-know of several problems with and limitations of Ada mode in GDB, some
-of which will be fixed with planned future releases of the debugger and
-the GNU Ada compiler.
-
-   * Static constants that the compiler chooses not to materialize as
-     objects in storage are invisible to the debugger.
-
-   * Named parameter associations in function argument lists are ignored
-     (the argument lists are treated as positional).
-
-   * Many useful library packages are currently invisible to the
-     debugger.
-
-   * Fixed-point arithmetic, conversions, input, and output is carried
-     out using floating-point arithmetic, and may give results that only
-     approximate those on the host machine.
-
-   * The GNAT compiler never generates the prefix 'Standard' for any of
-     the standard symbols defined by the Ada language.  GDB knows about
-     this: it will strip the prefix from names when you use it, and will
-     never look for a name you have so qualified among local symbols,
-     nor match against symbols in other packages or subprograms.  If you
-     have defined entities anywhere in your program other than
-     parameters and local variables whose simple names match names in
-     'Standard', GNAT's lack of qualification here can cause confusion.
-     When this happens, you can usually resolve the confusion by
-     qualifying the problematic names with package 'Standard'
-     explicitly.
-
-   Older versions of the compiler sometimes generate erroneous debugging
-information, resulting in the debugger incorrectly printing the value of
-affected entities.  In some cases, the debugger is able to work around
-an issue automatically.  In other cases, the debugger is able to work
-around the issue, but the work-around has to be specifically enabled.
-
-'set ada trust-PAD-over-XVS on'
-     Configure GDB to strictly follow the GNAT encoding when computing
-     the value of Ada entities, particularly when 'PAD' and 'PAD___XVS'
-     types are involved (see 'ada/exp_dbug.ads' in the GCC sources for a
-     complete description of the encoding used by the GNAT compiler).
-     This is the default.
-
-'set ada trust-PAD-over-XVS off'
-     This is related to the encoding using by the GNAT compiler.  If GDB
-     sometimes prints the wrong value for certain entities, changing
-     'ada trust-PAD-over-XVS' to 'off' activates a work-around which may
-     fix the issue.  It is always safe to set 'ada trust-PAD-over-XVS'
-     to 'off', but this incurs a slight performance penalty, so it is
-     recommended to leave this setting to 'on' unless necessary.
-
-   Internally, the debugger also relies on the compiler following a
-number of conventions known as the 'GNAT Encoding', all documented in
-'gcc/ada/exp_dbug.ads' in the GCC sources.  This encoding describes how
-the debugging information should be generated for certain types.  In
-particular, this convention makes use of "descriptive types", which are
-artificial types generated purely to help the debugger.
-
-   These encodings were defined at a time when the debugging information
-format used was not powerful enough to describe some of the more complex
-types available in Ada.  Since DWARF allows us to express nearly all Ada
-features, the long-term goal is to slowly replace these descriptive
-types by their pure DWARF equivalent.  To facilitate that transition, a
-new maintenance option is available to force the debugger to ignore
-those descriptive types.  It allows the user to quickly evaluate how
-well GDB works without them.
-
-'maintenance ada set ignore-descriptive-types [on|off]'
-     Control whether the debugger should ignore descriptive types.  The
-     default is not to ignore descriptives types ('off').
-
-'maintenance ada show ignore-descriptive-types'
-     Show if descriptive types are ignored by GDB.
-
-
-File: gdb.info,  Node: Unsupported Languages,  Prev: Supported Languages,  Up: Languages
-
-15.5 Unsupported Languages
-==========================
-
-In addition to the other fully-supported programming languages, GDB also
-provides a pseudo-language, called 'minimal'.  It does not represent a
-real programming language, but provides a set of capabilities close to
-what the C or assembly languages provide.  This should allow most simple
-operations to be performed while debugging an application that uses a
-language currently not supported by GDB.
-
-   If the language is set to 'auto', GDB will automatically select this
-language if the current frame corresponds to an unsupported language.
-
-
-File: gdb.info,  Node: Symbols,  Next: Altering,  Prev: Languages,  Up: Top
-
-16 Examining the Symbol Table
-*****************************
-
-The commands described in this chapter allow you to inquire about the
-symbols (names of variables, functions and types) defined in your
-program.  This information is inherent in the text of your program and
-does not change as your program executes.  GDB finds it in your
-program's symbol table, in the file indicated when you started GDB
-(*note Choosing Files: File Options.), or by one of the file-management
-commands (*note Commands to Specify Files: Files.).
-
-   Occasionally, you may need to refer to symbols that contain unusual
-characters, which GDB ordinarily treats as word delimiters.  The most
-frequent case is in referring to static variables in other source files
-(*note Program Variables: Variables.).  File names are recorded in
-object files as debugging symbols, but GDB would ordinarily parse a
-typical file name, like 'foo.c', as the three words 'foo' '.'  'c'.  To
-allow GDB to recognize 'foo.c' as a single symbol, enclose it in single
-quotes; for example,
-
-     p 'foo.c'::x
-
-looks up the value of 'x' in the scope of the file 'foo.c'.
-
-'set case-sensitive on'
-'set case-sensitive off'
-'set case-sensitive auto'
-     Normally, when GDB looks up symbols, it matches their names with
-     case sensitivity determined by the current source language.
-     Occasionally, you may wish to control that.  The command 'set
-     case-sensitive' lets you do that by specifying 'on' for
-     case-sensitive matches or 'off' for case-insensitive ones.  If you
-     specify 'auto', case sensitivity is reset to the default suitable
-     for the source language.  The default is case-sensitive matches for
-     all languages except for Fortran, for which the default is
-     case-insensitive matches.
-
-'show case-sensitive'
-     This command shows the current setting of case sensitivity for
-     symbols lookups.
-
-'set print type methods'
-'set print type methods on'
-'set print type methods off'
-     Normally, when GDB prints a class, it displays any methods declared
-     in that class.  You can control this behavior either by passing the
-     appropriate flag to 'ptype', or using 'set print type methods'.
-     Specifying 'on' will cause GDB to display the methods; this is the
-     default.  Specifying 'off' will cause GDB to omit the methods.
-
-'show print type methods'
-     This command shows the current setting of method display when
-     printing classes.
-
-'set print type typedefs'
-'set print type typedefs on'
-'set print type typedefs off'
-
-     Normally, when GDB prints a class, it displays any typedefs defined
-     in that class.  You can control this behavior either by passing the
-     appropriate flag to 'ptype', or using 'set print type typedefs'.
-     Specifying 'on' will cause GDB to display the typedef definitions;
-     this is the default.  Specifying 'off' will cause GDB to omit the
-     typedef definitions.  Note that this controls whether the typedef
-     definition itself is printed, not whether typedef names are
-     substituted when printing other types.
-
-'show print type typedefs'
-     This command shows the current setting of typedef display when
-     printing classes.
-
-'info address SYMBOL'
-     Describe where the data for SYMBOL is stored.  For a register
-     variable, this says which register it is kept in.  For a
-     non-register local variable, this prints the stack-frame offset at
-     which the variable is always stored.
-
-     Note the contrast with 'print &SYMBOL', which does not work at all
-     for a register variable, and for a stack local variable prints the
-     exact address of the current instantiation of the variable.
-
-'info symbol ADDR'
-     Print the name of a symbol which is stored at the address ADDR.  If
-     no symbol is stored exactly at ADDR, GDB prints the nearest symbol
-     and an offset from it:
-
-          (gdb) info symbol 0x54320
-          _initialize_vx + 396 in section .text
-
-     This is the opposite of the 'info address' command.  You can use it
-     to find out the name of a variable or a function given its address.
-
-     For dynamically linked executables, the name of executable or
-     shared library containing the symbol is also printed:
-
-          (gdb) info symbol 0x400225
-          _start + 5 in section .text of /tmp/a.out
-          (gdb) info symbol 0x2aaaac2811cf
-          __read_nocancel + 6 in section .text of /usr/lib64/libc.so.6
-
-'demangle [-l LANGUAGE] [--] NAME'
-     Demangle NAME.  If LANGUAGE is provided it is the name of the
-     language to demangle NAME in.  Otherwise NAME is demangled in the
-     current language.
-
-     The '--' option specifies the end of options, and is useful when
-     NAME begins with a dash.
-
-     The parameter 'demangle-style' specifies how to interpret the kind
-     of mangling used.  *Note Print Settings::.
-
-'whatis[/FLAGS] [ARG]'
-     Print the data type of ARG, which can be either an expression or a
-     name of a data type.  With no argument, print the data type of '$',
-     the last value in the value history.
-
-     If ARG is an expression (*note Expressions: Expressions.), it is
-     not actually evaluated, and any side-effecting operations (such as
-     assignments or function calls) inside it do not take place.
-
-     If ARG is a variable or an expression, 'whatis' prints its literal
-     type as it is used in the source code.  If the type was defined
-     using a 'typedef', 'whatis' will _not_ print the data type
-     underlying the 'typedef'.  If the type of the variable or the
-     expression is a compound data type, such as 'struct' or 'class',
-     'whatis' never prints their fields or methods.  It just prints the
-     'struct'/'class' name (a.k.a. its "tag").  If you want to see the
-     members of such a compound data type, use 'ptype'.
-
-     If ARG is a type name that was defined using 'typedef', 'whatis'
-     "unrolls" only one level of that 'typedef'.  Unrolling means that
-     'whatis' will show the underlying type used in the 'typedef'
-     declaration of ARG.  However, if that underlying type is also a
-     'typedef', 'whatis' will not unroll it.
-
-     For C code, the type names may also have the form 'class
-     CLASS-NAME', 'struct STRUCT-TAG', 'union UNION-TAG' or 'enum
-     ENUM-TAG'.
-
-     FLAGS can be used to modify how the type is displayed.  Available
-     flags are:
-
-     'r'
-          Display in "raw" form.  Normally, GDB substitutes template
-          parameters and typedefs defined in a class when printing the
-          class' members.  The '/r' flag disables this.
-
-     'm'
-          Do not print methods defined in the class.
-
-     'M'
-          Print methods defined in the class.  This is the default, but
-          the flag exists in case you change the default with 'set print
-          type methods'.
-
-     't'
-          Do not print typedefs defined in the class.  Note that this
-          controls whether the typedef definition itself is printed, not
-          whether typedef names are substituted when printing other
-          types.
-
-     'T'
-          Print typedefs defined in the class.  This is the default, but
-          the flag exists in case you change the default with 'set print
-          type typedefs'.
-
-'ptype[/FLAGS] [ARG]'
-     'ptype' accepts the same arguments as 'whatis', but prints a
-     detailed description of the type, instead of just the name of the
-     type.  *Note Expressions: Expressions.
-
-     Contrary to 'whatis', 'ptype' always unrolls any 'typedef's in its
-     argument declaration, whether the argument is a variable,
-     expression, or a data type.  This means that 'ptype' of a variable
-     or an expression will not print literally its type as present in
-     the source code--use 'whatis' for that.  'typedef's at the pointer
-     or reference targets are also unrolled.  Only 'typedef's of fields,
-     methods and inner 'class typedef's of 'struct's, 'class'es and
-     'union's are not unrolled even with 'ptype'.
-
-     For example, for this variable declaration:
-
-          typedef double real_t;
-          struct complex { real_t real; double imag; };
-          typedef struct complex complex_t;
-          complex_t var;
-          real_t *real_pointer_var;
-
-     the two commands give this output:
-
-          (gdb) whatis var
-          type = complex_t
-          (gdb) ptype var
-          type = struct complex {
-              real_t real;
-              double imag;
-          }
-          (gdb) whatis complex_t
-          type = struct complex
-          (gdb) whatis struct complex
-          type = struct complex
-          (gdb) ptype struct complex
-          type = struct complex {
-              real_t real;
-              double imag;
-          }
-          (gdb) whatis real_pointer_var
-          type = real_t *
-          (gdb) ptype real_pointer_var
-          type = double *
-
-     As with 'whatis', using 'ptype' without an argument refers to the
-     type of '$', the last value in the value history.
-
-     Sometimes, programs use opaque data types or incomplete
-     specifications of complex data structure.  If the debug information
-     included in the program does not allow GDB to display a full
-     declaration of the data type, it will say '<incomplete type>'.  For
-     example, given these declarations:
-
-              struct foo;
-              struct foo *fooptr;
-
-     but no definition for 'struct foo' itself, GDB will say:
-
-            (gdb) ptype foo
-            $1 = <incomplete type>
-
-     "Incomplete type" is C terminology for data types that are not
-     completely specified.
-
-'info types REGEXP'
-'info types'
-     Print a brief description of all types whose names match the
-     regular expression REGEXP (or all types in your program, if you
-     supply no argument).  Each complete typename is matched as though
-     it were a complete line; thus, 'i type value' gives information on
-     all types in your program whose names include the string 'value',
-     but 'i type ^value$' gives information only on types whose complete
-     name is 'value'.
-
-     This command differs from 'ptype' in two ways: first, like
-     'whatis', it does not print a detailed description; second, it
-     lists all source files where a type is defined.
-
-'info type-printers'
-     Versions of GDB that ship with Python scripting enabled may have
-     "type printers" available.  When using 'ptype' or 'whatis', these
-     printers are consulted when the name of a type is needed.  *Note
-     Type Printing API::, for more information on writing type printers.
-
-     'info type-printers' displays all the available type printers.
-
-'enable type-printer NAME...'
-'disable type-printer NAME...'
-     These commands can be used to enable or disable type printers.
-
-'info scope LOCATION'
-     List all the variables local to a particular scope.  This command
-     accepts a LOCATION argument--a function name, a source line, or an
-     address preceded by a '*', and prints all the variables local to
-     the scope defined by that location.  (*Note Specify Location::, for
-     details about supported forms of LOCATION.)  For example:
-
-          (gdb) info scope command_line_handler
-          Scope for command_line_handler:
-          Symbol rl is an argument at stack/frame offset 8, length 4.
-          Symbol linebuffer is in static storage at address 0x150a18, length 4.
-          Symbol linelength is in static storage at address 0x150a1c, length 4.
-          Symbol p is a local variable in register $esi, length 4.
-          Symbol p1 is a local variable in register $ebx, length 4.
-          Symbol nline is a local variable in register $edx, length 4.
-          Symbol repeat is a local variable at frame offset -8, length 4.
-
-     This command is especially useful for determining what data to
-     collect during a "trace experiment", see *note collect: Tracepoint
-     Actions.
-
-'info source'
-     Show information about the current source file--that is, the source
-     file for the function containing the current point of execution:
-        * the name of the source file, and the directory containing it,
-        * the directory it was compiled in,
-        * its length, in lines,
-        * which programming language it is written in,
-        * if the debug information provides it, the program that
-          compiled the file (which may include, e.g., the compiler
-          version and command line arguments),
-        * whether the executable includes debugging information for that
-          file, and if so, what format the information is in (e.g.,
-          STABS, Dwarf 2, etc.), and
-        * whether the debugging information includes information about
-          preprocessor macros.
-
-'info sources'
-     Print the names of all source files in your program for which there
-     is debugging information, organized into two lists: files whose
-     symbols have already been read, and files whose symbols will be
-     read when needed.
-
-'info functions'
-     Print the names and data types of all defined functions.
-
-'info functions REGEXP'
-     Print the names and data types of all defined functions whose names
-     contain a match for regular expression REGEXP.  Thus, 'info fun
-     step' finds all functions whose names include 'step'; 'info fun
-     ^step' finds those whose names start with 'step'.  If a function
-     name contains characters that conflict with the regular expression
-     language (e.g. 'operator*()'), they may be quoted with a backslash.
-
-'info variables'
-     Print the names and data types of all variables that are defined
-     outside of functions (i.e. excluding local variables).
-
-'info variables REGEXP'
-     Print the names and data types of all variables (except for local
-     variables) whose names contain a match for regular expression
-     REGEXP.
-
-'info classes'
-'info classes REGEXP'
-     Display all Objective-C classes in your program, or (with the
-     REGEXP argument) all those matching a particular regular
-     expression.
-
-'info selectors'
-'info selectors REGEXP'
-     Display all Objective-C selectors in your program, or (with the
-     REGEXP argument) all those matching a particular regular
-     expression.
-
-'set opaque-type-resolution on'
-     Tell GDB to resolve opaque types.  An opaque type is a type
-     declared as a pointer to a 'struct', 'class', or 'union'--for
-     example, 'struct MyType *'--that is used in one source file
-     although the full declaration of 'struct MyType' is in another
-     source file.  The default is on.
-
-     A change in the setting of this subcommand will not take effect
-     until the next time symbols for a file are loaded.
-
-'set opaque-type-resolution off'
-     Tell GDB not to resolve opaque types.  In this case, the type is
-     printed as follows:
-          {<no data fields>}
-
-'show opaque-type-resolution'
-     Show whether opaque types are resolved or not.
-
-'set print symbol-loading'
-'set print symbol-loading full'
-'set print symbol-loading brief'
-'set print symbol-loading off'
-     The 'set print symbol-loading' command allows you to control the
-     printing of messages when GDB loads symbol information.  By default
-     a message is printed for the executable and one for each shared
-     library, and normally this is what you want.  However, when
-     debugging apps with large numbers of shared libraries these
-     messages can be annoying.  When set to 'brief' a message is printed
-     for each executable, and when GDB loads a collection of shared
-     libraries at once it will only print one message regardless of the
-     number of shared libraries.  When set to 'off' no messages are
-     printed.
-
-'show print symbol-loading'
-     Show whether messages will be printed when a GDB command entered
-     from the keyboard causes symbol information to be loaded.
-
-'maint print symbols [-pc ADDRESS] [FILENAME]'
-'maint print symbols [-objfile OBJFILE] [-source SOURCE] [--] [FILENAME]'
-'maint print psymbols [-objfile OBJFILE] [-pc ADDRESS] [--] [FILENAME]'
-'maint print psymbols [-objfile OBJFILE] [-source SOURCE] [--] [FILENAME]'
-'maint print msymbols [-objfile OBJFILE] [--] [FILENAME]'
-     Write a dump of debugging symbol data into the file FILENAME or the
-     terminal if FILENAME is unspecified.  If '-objfile OBJFILE' is
-     specified, only dump symbols for that objfile.  If '-pc ADDRESS' is
-     specified, only dump symbols for the file with code at that
-     address.  Note that ADDRESS may be a symbol like 'main'.  If
-     '-source SOURCE' is specified, only dump symbols for that source
-     file.
-
-     These commands are used to debug the GDB symbol-reading code.
-     These commands do not modify internal GDB state, therefore 'maint
-     print symbols' will only print symbols for already expanded symbol
-     tables.  You can use the command 'info sources' to find out which
-     files these are.  If you use 'maint print psymbols' instead, the
-     dump shows information about symbols that GDB only knows
-     partially--that is, symbols defined in files that GDB has skimmed,
-     but not yet read completely.  Finally, 'maint print msymbols' just
-     dumps "minimal symbols", e.g., "ELF symbols".
-
-     *Note Commands to Specify Files: Files, for a discussion of how GDB
-     reads symbols (in the description of 'symbol-file').
-
-'maint info symtabs [ REGEXP ]'
-'maint info psymtabs [ REGEXP ]'
-
-     List the 'struct symtab' or 'struct partial_symtab' structures
-     whose names match REGEXP.  If REGEXP is not given, list them all.
-     The output includes expressions which you can copy into a GDB
-     debugging this one to examine a particular structure in more
-     detail.  For example:
-
-          (gdb) maint info psymtabs dwarf2read
-          { objfile /home/gnu/build/gdb/gdb
-            ((struct objfile *) 0x82e69d0)
-            { psymtab /home/gnu/src/gdb/dwarf2read.c
-              ((struct partial_symtab *) 0x8474b10)
-              readin no
-              fullname (null)
-              text addresses 0x814d3c8 -- 0x8158074
-              globals (* (struct partial_symbol **) 0x8507a08 @ 9)
-              statics (* (struct partial_symbol **) 0x40e95b78 @ 2882)
-              dependencies (none)
-            }
-          }
-          (gdb) maint info symtabs
-          (gdb)
-     We see that there is one partial symbol table whose filename
-     contains the string 'dwarf2read', belonging to the 'gdb'
-     executable; and we see that GDB has not read in any symtabs yet at
-     all.  If we set a breakpoint on a function, that will cause GDB to
-     read the symtab for the compilation unit containing that function:
-
-          (gdb) break dwarf2_psymtab_to_symtab
-          Breakpoint 1 at 0x814e5da: file /home/gnu/src/gdb/dwarf2read.c,
-          line 1574.
-          (gdb) maint info symtabs
-          { objfile /home/gnu/build/gdb/gdb
-            ((struct objfile *) 0x82e69d0)
-            { symtab /home/gnu/src/gdb/dwarf2read.c
-              ((struct symtab *) 0x86c1f38)
-              dirname (null)
-              fullname (null)
-              blockvector ((struct blockvector *) 0x86c1bd0) (primary)
-              linetable ((struct linetable *) 0x8370fa0)
-              debugformat DWARF 2
-            }
-          }
-          (gdb)
-
-'maint info line-table [ REGEXP ]'
-
-     List the 'struct linetable' from all 'struct symtab' instances
-     whose name matches REGEXP.  If REGEXP is not given, list the
-     'struct linetable' from all 'struct symtab'.
-
-'maint set symbol-cache-size SIZE'
-     Set the size of the symbol cache to SIZE.  The default size is
-     intended to be good enough for debugging most applications.  This
-     option exists to allow for experimenting with different sizes.
-
-'maint show symbol-cache-size'
-     Show the size of the symbol cache.
-
-'maint print symbol-cache'
-     Print the contents of the symbol cache.  This is useful when
-     debugging symbol cache issues.
-
-'maint print symbol-cache-statistics'
-     Print symbol cache usage statistics.  This helps determine how well
-     the cache is being utilized.
-
-'maint flush-symbol-cache'
-     Flush the contents of the symbol cache, all entries are removed.
-     This command is useful when debugging the symbol cache.  It is also
-     useful when collecting performance data.
 

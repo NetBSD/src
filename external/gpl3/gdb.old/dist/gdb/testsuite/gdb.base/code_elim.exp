@@ -1,4 +1,4 @@
-# Copyright 2002-2017 Free Software Foundation, Inc.
+# Copyright 2002-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,6 +27,11 @@ lappend opts "additional_flags=-ffunction-sections"
 lappend opts "additional_flags=-fdata-sections"
 lappend opts "additional_flags=-Wl,-gc-sections"
 lappend opts "additional_flags=-Wl,-e,main"
+
+# Place variables in .data instead of .sdata.
+if {[istarget "riscv*-*-*"]} {
+   lappend opts "additional_flags=-msmall-data-limit=0"
+}
 
 remote_exec build "rm -f ${binfile1}"
 remote_exec build "rm -f ${binfile2}"
@@ -75,7 +80,7 @@ gdb_exit
 gdb_start
 
 gdb_test "symbol-file ${binfile1}" \
-	"Reading symbols from .*${testfile1}\\.\\.\\.done\\.(|\r\nUsing host libthread_db library .*libthread_db.so.*\\.)" \
+	"Reading symbols from .*${testfile1}\\.\\.\\.(|\r\nUsing host libthread_db library .*libthread_db.so.*\\.)" \
 	"symbol-file ${testfile1}"
 
 with_test_prefix "single psymtabs" {
@@ -109,13 +114,13 @@ gdb_start
 
 with_test_prefix "order1" {
     gdb_test "add-symbol-file ${binfile1} 0x100000 -s .bss 0x120000" \
-	    "Reading symbols from .*${testfile1}\\.\\.\\.done\\." \
+	    "Reading symbols from .*${testfile1}\\.\\.\\." \
 	    "add-symbol-file ${testfile1} 0x100000" \
 	    "add symbol table from file \".*${testfile1}\" at.*\\(y or n\\) " \
 	    "y"
 
     gdb_test "add-symbol-file ${binfile2} 0x200000 -s .data 0x210000 -s .bss 0x220000" \
-	    "Reading symbols from .*${testfile2}\\.\\.\\.done\\." \
+	    "Reading symbols from .*${testfile2}\\.\\.\\." \
 	    "add-symbol-file ${testfile2} 0x200000" \
 	    "add symbol table from file \".*${testfile2}\" at.*\\(y or n\\) " \
 	    "y"
@@ -133,13 +138,13 @@ gdb_start
 
 with_test_prefix "order2" {
     gdb_test "add-symbol-file ${binfile2} 0x200000 -s .data 0x210000 -s .bss 0x220000" \
-	    "Reading symbols from .*${testfile2}\\.\\.\\.done\\." \
+	    "Reading symbols from .*${testfile2}\\.\\.\\." \
 	    "add-symbol-file ${testfile2} 0x200000" \
 	    "add symbol table from file \".*${testfile2}\" at.*\\(y or n\\) " \
 	    "y"
 
     gdb_test "add-symbol-file ${binfile1} 0x100000 -s .bss 0x120000" \
-	    "Reading symbols from .*${testfile1}\\.\\.\\.done\\." \
+	    "Reading symbols from .*${testfile1}\\.\\.\\." \
 	    "add-symbol-file ${testfile1} 0x100000" \
 	    "add symbol table from file \".*${testfile1}\" at.*\\(y or n\\) " \
 	    "y"

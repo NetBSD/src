@@ -1,5 +1,5 @@
 /* Opcode printing code for the WebAssembly target
-   Copyright (C) 2017 Free Software Foundation, Inc.
+   Copyright (C) 2017-2019 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -19,7 +19,7 @@
    MA 02110-1301, USA.  */
 
 #include "sysdep.h"
-#include "dis-asm.h"
+#include "disassemble.h"
 #include "opintl.h"
 #include "safe-ctype.h"
 #include "floatformat.h"
@@ -27,7 +27,7 @@
 #include "elf-bfd.h"
 #include "elf/internal.h"
 #include "elf/wasm32.h"
-#include <stdint.h>
+#include "bfd_stdint.h"
 
 /* Type names for blocks and signatures.  */
 #define BLOCK_TYPE_NONE              0x40
@@ -269,7 +269,7 @@ print_insn_wasm32 (bfd_vma pc, struct disassemble_info *info)
   long flags = 0;
   long offset = 0;
   long depth = 0;
-  long index = 0;
+  long function_index = 0;
   long target_count = 0;
   long block_type = 0;
   int len = 1;
@@ -416,14 +416,14 @@ print_insn_wasm32 (bfd_vma pc, struct disassemble_info *info)
           break;
 
         case wasm_call:
-          index = wasm_read_leb128
+          function_index = wasm_read_leb128
             (pc + len, info, &error, &bytes_read, FALSE);
           if (error)
             return -1;
           len += bytes_read;
           prin (stream, " ");
           private_data->section_prefix = ".space.function_index";
-          (*info->print_address_func) ((bfd_vma) index, info);
+          (*info->print_address_func) ((bfd_vma) function_index, info);
           private_data->section_prefix = NULL;
           break;
 

@@ -1,7 +1,7 @@
 /* GNU/Linux/AArch64 specific low level interface, for the in-process
    agent library for GDB.
 
-   Copyright (C) 2015-2017 Free Software Foundation, Inc.
+   Copyright (C) 2015-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,10 +25,7 @@
 #ifdef HAVE_GETAUXVAL
 #include <sys/auxv.h>
 #endif
-
-/* Defined in auto-generated file aarch64.c.  */
-void init_registers_aarch64 (void);
-extern const struct target_desc *tdesc_aarch64;
+#include "linux-aarch64-tdesc.h"
 
 /* Each register saved by the jump pad is in a 16 byte cell.  */
 #define FT_CR_SIZE 16
@@ -150,12 +147,12 @@ get_raw_reg (const unsigned char *raw_regs, int regnum)
 
 /* Return target_desc to use for IPA, given the tdesc index passed by
    gdbserver.  Index is ignored, since we have only one tdesc
-   at the moment.  */
+   at the moment.  SVE not yet supported.  */
 
 const struct target_desc *
 get_ipa_tdesc (int idx)
 {
-  return tdesc_aarch64;
+  return aarch64_linux_read_description (0);
 }
 
 /* Allocate buffer for the jump pads.  The branch instruction has a reach
@@ -207,5 +204,6 @@ alloc_jump_pad_buffer (size_t size)
 void
 initialize_low_tracepoint (void)
 {
-  init_registers_aarch64 ();
+  /* SVE not yet supported.  */
+  aarch64_linux_read_description (0);
 }

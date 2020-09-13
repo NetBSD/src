@@ -1,4 +1,4 @@
-#   Copyright 1998-2017 Free Software Foundation, Inc.
+#   Copyright 1998-2019 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,6 +20,11 @@ load_lib "trace-support.exp"
 standard_testfile actions.c
 set executable $testfile
 set expfile $testfile.exp
+
+if ![gdb_trace_common_supports_arch] {
+    unsupported "no trace-common.h support for arch"
+    return -1
+}
 
 if [prepare_for_testing "failed to prepare" $executable $srcfile \
 	[list debug nowarnings]] {
@@ -145,7 +150,7 @@ gdb_trace_setactions "8.6: setup TP to collect stack mem cast expr" \
 
 gdb_test_no_output "tstart" ""
 
-gdb_test "break end" ".*" ""
+gdb_breakpoint "end" qualified
 gdb_test "continue" \
     "Continuing.*Breakpoint $decimal, end.*" \
     "run trace experiment"

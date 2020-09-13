@@ -1,6 +1,6 @@
 /* Builtin frame register, for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -88,8 +88,6 @@ value_of_builtin_frame_ps_reg (struct frame_info *frame, const void *baton)
     return value_of_register (gdbarch_ps_regnum (gdbarch), frame);
   error (_("Standard register ``$ps'' is not available for this target"));
 }
-
-extern initialize_file_ftype _initialize_frame_reg; /* -Wmissing-prototypes */
 
 void
 _initialize_frame_reg (void)

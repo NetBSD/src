@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/sh.
 
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -8,7 +8,7 @@
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
+   the Free Software Foundation; either version 3 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -17,9 +17,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor,
-   Boston, MA 02110-1301, USA.  */
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
 #include "gdbcore.h"
@@ -32,7 +30,7 @@
 #include "trad-frame.h"
 #include "tramp-frame.h"
 
-#include "gdb_assert.h"
+#include "common/gdb_assert.h"
 
 #include "solib-svr4.h"
 
@@ -143,25 +141,25 @@ static const struct tramp_frame shnbsd_sigtramp_si2 =
   SIGTRAMP_FRAME,
   2,
   {
-    { 0x64f3, -1 },			/* mov     r15,r4 */
-    { 0xd002, -1 },			/* mov.l   .LSYS_setcontext */
-    { 0xc380, -1 },			/* trapa   #-128 */
-    { 0xa003, -1 },			/* bra     .Lskip1 */
-    { 0x0009, -1 },			/* nop */
-    { 0x0009, -1 },			/* nop */
+    { 0x64f3, ULONGEST_MAX },			/* mov     r15,r4 */
+    { 0xd002, ULONGEST_MAX },			/* mov.l   .LSYS_setcontext */
+    { 0xc380, ULONGEST_MAX },			/* trapa   #-128 */
+    { 0xa003, ULONGEST_MAX },			/* bra     .Lskip1 */
+    { 0x0009, ULONGEST_MAX },			/* nop */
+    { 0x0009, ULONGEST_MAX },			/* nop */
  /* .LSYS_setcontext */
-    { 0x0134, -1 }, { 0x0000, -1 },     /* 0x134 */
+    { 0x0134, ULONGEST_MAX }, { 0x0000, ULONGEST_MAX },     /* 0x134 */
  /* .Lskip1 */
-    { 0x6403, -1 },			/* mov     r0,r4 */
-    { 0xd002, -1 },			/* mov.l   .LSYS_exit  */
-    { 0xc380, -1 },			/* trapa   #-128 */
-    { 0xa003, -1 },			/* bra     .Lskip2 */
-    { 0x0009, -1 },			/* nop */
-    { 0x0009, -1 },			/* nop */
+    { 0x6403, ULONGEST_MAX },			/* mov     r0,r4 */
+    { 0xd002, ULONGEST_MAX },			/* mov.l   .LSYS_exit  */
+    { 0xc380, ULONGEST_MAX },			/* trapa   #-128 */
+    { 0xa003, ULONGEST_MAX },			/* bra     .Lskip2 */
+    { 0x0009, ULONGEST_MAX },			/* nop */
+    { 0x0009, ULONGEST_MAX },			/* nop */
  /* .LSYS_exit */
-    { 0x0001, -1 }, { 0x0000, -1 },     /* 0x1 */
+    { 0x0001, ULONGEST_MAX }, { 0x0000, ULONGEST_MAX },     /* 0x1 */
 /* .Lskip2 */
-    { TRAMP_SENTINEL_INSN, -1 }
+    { TRAMP_SENTINEL_INSN, ULONGEST_MAX }
   },
   shnbsd_sigtramp_cache_init
 };
@@ -213,29 +211,10 @@ shnbsd_init_abi (struct gdbarch_info info,
 
   tramp_frame_prepend_unwinder (gdbarch, &shnbsd_sigtramp_si2);
 }
-
-
-#define GDB_OSABI_NETBSD_CORE GDB_OSABI_NETBSD
-
-static enum gdb_osabi
-shnbsd_core_osabi_sniffer (bfd *abfd)
-{
-  if (strcmp (bfd_get_target (abfd), "netbsd-core") == 0)
-    return GDB_OSABI_NETBSD_CORE;
-
-  return GDB_OSABI_UNKNOWN;
-}
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-extern initialize_file_ftype _initialize_shnbsd_tdep;
 
 void
 _initialize_shnbsd_tdep (void)
 {
-  /* BFD doesn't set a flavour for NetBSD style a.out core files.  */
-  gdbarch_register_osabi_sniffer (bfd_arch_sh, bfd_target_unknown_flavour,
-                                  shnbsd_core_osabi_sniffer);
-
   gdbarch_register_osabi (bfd_arch_sh, 0, GDB_OSABI_NETBSD,
 			  shnbsd_init_abi);
 }

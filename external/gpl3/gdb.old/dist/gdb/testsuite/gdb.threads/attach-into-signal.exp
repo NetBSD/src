@@ -1,4 +1,4 @@
-# Copyright 2008-2017 Free Software Foundation, Inc.
+# Copyright 2008-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 # This file was created by Jan Kratochvil <jan.kratochvil@redhat.com>.
 
 # This test only works on Linux
-if { ![isnative] || [is_remote host] || [target_info exists use_gdb_stub]
+if { ![isnative] || [is_remote host] || [use_gdb_stub]
      || ![istarget *-linux*] } {
     continue
 }
@@ -56,79 +56,50 @@ proc corefunc { threadtype executable } {
 	set attempt 1
 	set passes 1
 	while { $passes < 3 && $attempt <= $attempts } {
-	    with_test_prefix "attempt $attempt" {
-		set stoppedtry 0
-		while { $stoppedtry < 10 } {
-		    with_test_prefix "stoppedtry $stoppedtry" {
-			if [catch {open /proc/${testpid}/status r} fileid] {
-			    set stoppedtry 10
-			    break
-			}
-			gets $fileid line1
-			gets $fileid line2
-			close $fileid
+	    set test "attach (pass $passes), pending signal catch"
+	    if {[gdb_test_multiple "attach $testpid" $test {
+		-re "Attaching to program.*`?$escapedbinfile'?, process $testpid.* received signal SIGALRM.*$gdb_prompt $" {
+		    # nonthreaded:
+		    pass $test
+		    verbose -log "$test succeeded on the attempt # $attempt of $attempts"
+		    set passes [expr $passes + 1]
+		}
+		-re "Attaching to program.*`?$escapedbinfile'?, process $testpid.*$gdb_prompt $" {
+		    set ok 0
 
-			if {![string match "*(stopped)*" $line2]} {
-			    # No PASS message as we may be looping in multiple
-			    # attempts.
-			    break
+		    if { $threadtype == "threaded" } {
+			# In the threaded case, the signal is left
+			# pending on the second thread.  Check for
+			# that by peeking at the thread's siginfo.
+			# SIGALRM is 14, SIGSTOP is 19.
+
+			set test2 "thread apply 2 print \$_siginfo.si_signo"
+			gdb_test_multiple $test2 $test2 {
+			    -re " = 14\r\n$gdb_prompt $" {
+				set ok 1
+			    }
+			    -re " = 19\r\n$gdb_prompt $" {
+			    }
 			}
-			sleep 1
-			set stoppedtry [expr $stoppedtry + 1]
+		    } else {
+			# In the nonthreaded case, GDB should tell the
+			# user about having seen a signal.
 		    }
-		}
-		if { $stoppedtry >= 10 } {
-		    verbose -log $line2
-		    set test "process is still running on the attempt # $attempt of $attempts"
-		    break
-		}
 
-		# Main test:
-		set test "attach (pass $passes), pending signal catch"
-		if {[gdb_test_multiple "attach $testpid" $test {
-		    -re "Attaching to program.*`?$escapedbinfile'?, process $testpid.* received signal SIGALRM.*$gdb_prompt $" {
-			# nonthreaded:
+		    if { $ok == 0} {
+			# We just lack the luck, we should try it again.
+			set attempt [expr $attempt + 1]
+		    } else {
 			pass $test
 			verbose -log "$test succeeded on the attempt # $attempt of $attempts"
 			set passes [expr $passes + 1]
 		    }
-		    -re "Attaching to program.*`?$escapedbinfile'?, process $testpid.*$gdb_prompt $" {
-			set ok 0
-
-			if { $threadtype == "threaded" } {
-			    # In the threaded case, the signal is left
-			    # pending on the second thread.  Check for
-			    # that by peeking at the thread's siginfo.
-			    # SIGALRM is 14, SIGSTOP is 19.
-
-			    set test2 "thread apply 2 print \$_siginfo.si_signo"
-			    gdb_test_multiple $test2 $test2 {
-				-re " = 14\r\n$gdb_prompt $" {
-				    set ok 1
-				}
-				-re " = 19\r\n$gdb_prompt $" {
-				}
-			    }
-			} else {
-			    # In the nonthreaded case, GDB should tell the
-			    # user about having seen a signal.
-			}
-
-			if { $ok == 0} {
-			    # We just lack the luck, we should try it again.
-			    set attempt [expr $attempt + 1]
-			} else {
-			    pass $test
-			    verbose -log "$test succeeded on the attempt # $attempt of $attempts"
-			    set passes [expr $passes + 1]
-			}
-		    }
-		}] != 0 } {
-		    break
 		}
-
-		gdb_test "detach" "Detaching from.*" ""
+	    }] != 0 } {
+		break
 	    }
+
+	    gdb_test "detach" "Detaching from.*" ""
 	}
 
 	if {$passes < 3} {

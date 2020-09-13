@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2017 Free Software Foundation, Inc.
+# Copyright (C) 2009-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,15 +30,9 @@ clean_restart ${testfile}
 # Skip all tests if Python scripting is not enabled.
 if { [skip_python_tests] } { continue }
 
-gdb_test_multiple "show endian" "getting target endian" {
-    -re ".*little endian.*$gdb_prompt $" {
-        set python_pack_char "<"
-	# pass silently
-    }
-    -re ".*big endian.*$gdb_prompt $" {
-        set python_pack_char ">"
-	# pass silently
-    }
+switch [get_endianness] {
+    little { set python_pack_char "<" }
+    big { set python_pack_char ">" }
 }
 
 # The following tests require execution.
@@ -51,7 +45,8 @@ if ![runto_main] then {
 # Test basic gdb.Inferior attributes and methods.
 
 gdb_py_test_silent_cmd "python inferiors = gdb.inferiors ()" "get inferiors list" 1
-gdb_test "python print (inferiors)" "\\(<gdb.Inferior object at 0x\[\[:xdigit:\]\]+>,\\)" "verify inferiors list"
+gdb_test "python print (inferiors)" \
+    "\\(<gdb.Inferior num=1, pid=$decimal>,\\)" "verify inferiors list"
 gdb_py_test_silent_cmd "python i0 = inferiors\[0\]" "get first inferior" 0
 
 gdb_test "python print ('result = %s' % (i0 == inferiors\[0\]))" " = True" "test equality comparison (true)"
@@ -59,6 +54,9 @@ gdb_test "python print ('result = %s' % i0.num)" " = \[0-9\]+" "test Inferior.nu
 gdb_test "python print ('result = %s' % i0.pid)" " = \[0-9\]+" "test Inferior.pid"
 gdb_test "python print ('result = %s' % i0.was_attached)" " = False" "test Inferior.was_attached"
 gdb_test "python print (i0.threads ())" "\\(<gdb.InferiorThread object at 0x\[\[:xdigit:\]\]+>,\\)" "test Inferior.threads"
+
+gdb_test "python print (i0.progspace)" "<gdb.Progspace object at $hex>"
+gdb_test "python print (i0.progspace == gdb.progspaces()\[0\])" "True"
 
 # Test the number of inferior threads.
 
@@ -220,11 +218,32 @@ with_test_prefix "is_valid" {
     gdb_test "python print (inf_list\[0\].is_valid())" "True" \
 	"check inferior validity 1"
 
+    gdb_py_test_multiple "install new inferior event handler" \
+	"python" "" \
+	"my_inferior_count = 1" "" \
+	"def new_inf_handler(evt):" "" \
+	"  global my_inferior_count" "" \
+	"  if evt.inferior is not None:" "" \
+	"    my_inferior_count = my_inferior_count + 1" "" \
+	"gdb.events.new_inferior.connect(new_inf_handler)" "" \
+	"end" ""
+    gdb_py_test_multiple "install inferior deleted event handler" \
+	"python" "" \
+	"def del_inf_handler(evt):" "" \
+	"  global my_inferior_count" "" \
+	"  if evt.inferior is not None:" "" \
+	"    my_inferior_count = my_inferior_count - 1" "" \
+	"gdb.events.inferior_deleted.connect(del_inf_handler)" "" \
+	"end" ""
+
     gdb_test "add-inferior" "Added inferior 2.*" "add empty inferior 2"
     gdb_py_test_silent_cmd "python inf_list = gdb.inferiors()" "get new list" 1
     gdb_test "python print (len(inf_list))" "2" "get inferior list length 2"
     gdb_test "python print (inf_list\[0\].is_valid())" "True" \
 	"check inferior validity 2"
+
+    gdb_test "python print (my_inferior_count)" "2" \
+	"test new-inferior event handler"
 
     gdb_test "python print (inf_list\[1\].is_valid())" "True" \
 	"check inferior validity 3"
@@ -235,6 +254,24 @@ with_test_prefix "is_valid" {
 
     gdb_test "python print (inf_list\[1\].is_valid())" "False" \
 	"check inferior validity 5"
+
+    gdb_test "python print (my_inferior_count)" "1" \
+	"test inferior-deleted event handler"
+
+    # Test that other properties and methods handle the removed inferior
+    # correctly.
+    gdb_test "python print (inf_list\[1\].num)" \
+	"RuntimeError: Inferior no longer exists.*"
+    gdb_test "python print (inf_list\[1\].pid)" \
+	"RuntimeError: Inferior no longer exists.*"
+    gdb_test "python print (inf_list\[1\].was_attached)" \
+	"RuntimeError: Inferior no longer exists.*"
+    gdb_test "python print (inf_list\[1\].progspace)" \
+	"RuntimeError: Inferior no longer exists.*"
+    gdb_test "python print (inf_list\[1\].threads ())" \
+	"RuntimeError: Inferior no longer exists.*"
+    gdb_test "python print (inf_list\[1\].thread_from_thread_handle (1))" \
+	"RuntimeError: Inferior no longer exists.*"
 }
 
 # Test gdb.selected_inferior()
@@ -247,4 +284,26 @@ with_test_prefix "selected_inferior" {
     gdb_test "py print (gdb.selected_inferior().num)" "3" "third inferior selected"
     gdb_test "inferior 1" ".*" "switch back to first inferior"
     gdb_test_no_output "remove-inferiors 3" "remove second inferior"
+}
+
+# Test repr()/str()
+with_test_prefix "__repr__" {
+    gdb_test "add-inferior" "Added inferior 4" "add inferior 4"
+    gdb_py_test_silent_cmd "python infs = gdb.inferiors()" "get inferior list" 1
+    gdb_test "python print (infs\[0\])" "<gdb.Inferior num=1, pid=$decimal>"
+    gdb_test "python print (infs)" \
+	"\\\(<gdb.Inferior num=1, pid=$decimal>, <gdb.Inferior num=4, pid=$decimal>\\\)" \
+	"print all inferiors 1"
+    gdb_test_no_output "remove-inferiors 4"
+    gdb_test "python print (infs)" \
+	"\\\(<gdb.Inferior num=1, pid=$decimal>, <gdb.Inferior \\\(invalid\\\)>\\\)" \
+	"print all inferiors 2"
+}
+
+# Test architecture.
+with_test_prefix "architecture" {
+    gdb_test "inferior 1" ".*" "switch to first inferior"
+    gdb_test "python print(gdb.selected_frame().architecture() is gdb.selected_inferior().architecture())" \
+	"True" \
+	"inferior architecture matches frame architecture"
 }

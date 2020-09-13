@@ -1,3 +1,7 @@
+2017-09-06  John Baldwin  <jhb@FreeBSD.org>
+
+	* configure: Regenerate.
+
 2016-07-19  Pitchumani Sivanupandi  <pitchumani.s@atmel.com>
 
 	PR target/19401

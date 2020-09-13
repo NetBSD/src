@@ -1,6 +1,6 @@
 /* Program and address space management, for GDB, the GNU debugger.
 
-   Copyright (C) 2009-2017 Free Software Foundation, Inc.
+   Copyright (C) 2009-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,9 +22,12 @@
 #define PROGSPACE_H
 
 #include "target.h"
-#include "vec.h"
-#include "gdb_vecs.h"
+#include "common/vec.h"
+#include "gdb_bfd.h"
+#include "common/gdb_vecs.h"
 #include "registry.h"
+#include "common/next-iterator.h"
+#include "common/safe-iterator.h"
 
 struct target_ops;
 struct bfd;
@@ -34,9 +37,6 @@ struct exec;
 struct address_space;
 struct program_space_data;
 struct address_space_data;
-
-typedef struct so_list *so_list_ptr;
-DEF_VEC_P (so_list_ptr);
 
 /* A program space represents a symbolic view of an address space.
    Roughly speaking, it holds all the data associated with a
@@ -135,80 +135,124 @@ DEF_VEC_P (so_list_ptr);
 /* The program space structure.  */
 
 struct program_space
+{
+  program_space (address_space *aspace_);
+  ~program_space ();
+
+  typedef next_adapter<struct objfile> objfiles_range;
+
+  /* Return an iterarable object that can be used to iterate over all
+     objfiles.  The basic use is in a foreach, like:
+
+     for (objfile *objf : pspace->objfiles ()) { ... }  */
+  objfiles_range objfiles ()
   {
-    /* Pointer to next in linked list.  */
-    struct program_space *next;
+    return objfiles_range (objfiles_head);
+  }
 
-    /* Unique ID number.  */
-    int num;
+  typedef next_adapter<struct objfile,
+		       basic_safe_iterator<next_iterator<objfile>>>
+    objfiles_safe_range;
 
-    /* The main executable loaded into this program space.  This is
-       managed by the exec target.  */
+  /* An iterable object that can be used to iterate over all objfiles.
+     The basic use is in a foreach, like:
 
-    /* The BFD handle for the main executable.  */
-    bfd *ebfd;
-    /* The last-modified time, from when the exec was brought in.  */
-    long ebfd_mtime;
-    /* Similar to bfd_get_filename (exec_bfd) but in original form given
-       by user, without symbolic links and pathname resolved.
-       It needs to be freed by xfree.  It is not NULL iff EBFD is not NULL.  */
-    char *pspace_exec_filename;
+     for (objfile *objf : pspace->objfiles_safe ()) { ... }
 
-    /* The address space attached to this program space.  More than one
-       program space may be bound to the same address space.  In the
-       traditional unix-like debugging scenario, this will usually
-       match the address space bound to the inferior, and is mostly
-       used by the breakpoints module for address matches.  If the
-       target shares a program space for all inferiors and breakpoints
-       are global, then this field is ignored (we don't currently
-       support inferiors sharing a program space if the target doesn't
-       make breakpoints global).  */
-    struct address_space *aspace;
+     This variant uses a basic_safe_iterator so that objfiles can be
+     deleted during iteration.  */
+  objfiles_safe_range objfiles_safe ()
+  {
+    return objfiles_safe_range (objfiles_head);
+  }
 
-    /* True if this program space's section offsets don't yet represent
-       the final offsets of the "live" address space (that is, the
-       section addresses still require the relocation offsets to be
-       applied, and hence we can't trust the section addresses for
-       anything that pokes at live memory).  E.g., for qOffsets
-       targets, or for PIE executables, until we connect and ask the
-       target for the final relocation offsets, the symbols we've used
-       to set breakpoints point at the wrong addresses.  */
-    int executing_startup;
+  /* Pointer to next in linked list.  */
+  struct program_space *next = NULL;
 
-    /* True if no breakpoints should be inserted in this program
-       space.  */
-    int breakpoints_not_allowed;
+  /* Unique ID number.  */
+  int num = 0;
 
-    /* The object file that the main symbol table was loaded from
-       (e.g. the argument to the "symbol-file" or "file" command).  */
-    struct objfile *symfile_object_file;
+  /* The main executable loaded into this program space.  This is
+     managed by the exec target.  */
 
-    /* All known objfiles are kept in a linked list.  This points to
-       the head of this list.  */
-    struct objfile *objfiles;
+  /* The BFD handle for the main executable.  */
+  bfd *ebfd = NULL;
+  /* The last-modified time, from when the exec was brought in.  */
+  long ebfd_mtime = 0;
+  /* Similar to bfd_get_filename (exec_bfd) but in original form given
+     by user, without symbolic links and pathname resolved.
+     It needs to be freed by xfree.  It is not NULL iff EBFD is not NULL.  */
+  char *pspace_exec_filename = NULL;
 
-    /* The set of target sections matching the sections mapped into
-       this program space.  Managed by both exec_ops and solib.c.  */
-    struct target_section_table target_sections;
+  /* Binary file diddling handle for the core file.  */
+  gdb_bfd_ref_ptr cbfd;
 
-    /* List of shared objects mapped into this space.  Managed by
-       solib.c.  */
-    struct so_list *so_list;
+  /* The address space attached to this program space.  More than one
+     program space may be bound to the same address space.  In the
+     traditional unix-like debugging scenario, this will usually
+     match the address space bound to the inferior, and is mostly
+     used by the breakpoints module for address matches.  If the
+     target shares a program space for all inferiors and breakpoints
+     are global, then this field is ignored (we don't currently
+     support inferiors sharing a program space if the target doesn't
+     make breakpoints global).  */
+  struct address_space *aspace = NULL;
 
-    /* Number of calls to solib_add.  */
-    unsigned solib_add_generation;
+  /* True if this program space's section offsets don't yet represent
+     the final offsets of the "live" address space (that is, the
+     section addresses still require the relocation offsets to be
+     applied, and hence we can't trust the section addresses for
+     anything that pokes at live memory).  E.g., for qOffsets
+     targets, or for PIE executables, until we connect and ask the
+     target for the final relocation offsets, the symbols we've used
+     to set breakpoints point at the wrong addresses.  */
+  int executing_startup = 0;
 
-    /* When an solib is added, it is also added to this vector.  This
-       is so we can properly report solib changes to the user.  */
-    VEC (so_list_ptr) *added_solibs;
+  /* True if no breakpoints should be inserted in this program
+     space.  */
+  int breakpoints_not_allowed = 0;
 
-    /* When an solib is removed, its name is added to this vector.
-       This is so we can properly report solib changes to the user.  */
-    VEC (char_ptr) *deleted_solibs;
+  /* The object file that the main symbol table was loaded from
+     (e.g. the argument to the "symbol-file" or "file" command).  */
+  struct objfile *symfile_object_file = NULL;
 
-    /* Per pspace data-pointers required by other GDB modules.  */
-    REGISTRY_FIELDS;
-  };
+  /* All known objfiles are kept in a linked list.  This points to
+     the head of this list.  */
+  struct objfile *objfiles_head = NULL;
+
+  /* The set of target sections matching the sections mapped into
+     this program space.  Managed by both exec_ops and solib.c.  */
+  struct target_section_table target_sections {};
+
+  /* List of shared objects mapped into this space.  Managed by
+     solib.c.  */
+  struct so_list *so_list = NULL;
+
+  /* Number of calls to solib_add.  */
+  unsigned int solib_add_generation = 0;
+
+  /* When an solib is added, it is also added to this vector.  This
+     is so we can properly report solib changes to the user.  */
+  std::vector<struct so_list *> added_solibs;
+
+  /* When an solib is removed, its name is added to this vector.
+     This is so we can properly report solib changes to the user.  */
+  std::vector<std::string> deleted_solibs;
+
+  /* Per pspace data-pointers required by other GDB modules.  */
+  REGISTRY_FIELDS {};
+};
+
+/* An address space.  It is used for comparing if
+   pspaces/inferior/threads see the same address space and for
+   associating caches to each address space.  */
+struct address_space
+{
+  int num;
+
+  /* Per aspace data-pointers required by other GDB modules.  */
+  REGISTRY_FIELDS;
+};
 
 /* The object file that the main symbol table was loaded from (e.g. the
    argument to the "symbol-file" or "file" command).  */
@@ -217,7 +261,7 @@ struct program_space
 
 /* All known objfiles are kept in a linked list.  This points to the
    root of this list.  */
-#define object_files current_program_space->objfiles
+#define object_files current_program_space->objfiles_head
 
 /* The set of target sections matching the sections mapped into the
    current program space.  */
@@ -231,10 +275,6 @@ extern struct program_space *current_program_space;
 
 #define ALL_PSPACES(pspace) \
   for ((pspace) = program_spaces; (pspace) != NULL; (pspace) = (pspace)->next)
-
-/* Add a new empty program space, and assign ASPACE to it.  Returns the
-   pointer to the new object.  */
-extern struct program_space *add_program_space (struct address_space *aspace);
 
 /* Remove a program space from the program spaces list and release it.  It is
    an error to call this function while PSPACE is the current program space. */
@@ -251,11 +291,6 @@ extern int program_space_empty_p (struct program_space *pspace);
 extern struct program_space *clone_program_space (struct program_space *dest,
 						struct program_space *src);
 
-/* Save the current program space so that it may be restored by a later
-   call to do_cleanups.  Returns the struct cleanup pointer needed for
-   later doing the cleanup.  */
-extern struct cleanup *save_current_program_space (void);
-
 /* Sets PSPACE as the current program space.  This is usually used
    instead of set_current_space_and_thread when the current
    thread/inferior is not important for the operations that follow.
@@ -266,14 +301,23 @@ extern struct cleanup *save_current_program_space (void);
    space.  */
 extern void set_current_program_space (struct program_space *pspace);
 
-/* Saves the current thread (may be null), frame and program space in
-   the current cleanup chain.  */
-extern struct cleanup *save_current_space_and_thread (void);
+/* Save/restore the current program space.  */
 
-/* Switches full context to program space PSPACE.  Switches to the
-   first thread found bound to PSPACE, giving preference to the
-   current thread, if there's one and it isn't executing.  */
-extern void switch_to_program_space_and_thread (struct program_space *pspace);
+class scoped_restore_current_program_space
+{
+public:
+  scoped_restore_current_program_space ()
+    : m_saved_pspace (current_program_space)
+  {}
+
+  ~scoped_restore_current_program_space ()
+  { set_current_program_space (m_saved_pspace); }
+
+  DISABLE_COPY_AND_ASSIGN (scoped_restore_current_program_space);
+
+private:
+  program_space *m_saved_pspace;
+};
 
 /* Create a new address space object, and add it to the list.  */
 extern struct address_space *new_address_space (void);

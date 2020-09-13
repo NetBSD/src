@@ -1,4 +1,4 @@
-##Copyright (C) 1991-2017 Free Software Foundation, Inc.
+##Copyright (C) 1991-2019 Free Software Foundation, Inc.
 
 # Makefile for GDB documentation.
 # This file is part of GDB.
@@ -174,13 +174,10 @@ POD2MAN5 = pod2man --center="GNU Development Tools" \
 		   --release="gdb-`sed q version.subst`" --section=5
 
 # List of man pages generated from gdb.texi
-MAN1S = gdb.1 gdbserver.1 gcore.1
+MAN1S = gdb.1 gdbserver.1 gcore.1 gdb-add-index.1
 MAN5S = gdbinit.5
 MANS = $(MAN1S) $(MAN5S)
 
-# Host-dependent makefile fragment comes in here.
-@host_makefile_frag@
-# End of host-dependent makefile fragment
 HAVE_NATIVE_GCORE_TARGET = @HAVE_NATIVE_GCORE_TARGET@
 
 ###
@@ -635,6 +632,13 @@ gcore.1: $(GDB_DOC_FILES)
 	-($(POD2MAN1) gcore.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
 		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
 	rm -f gcore.pod
+
+gdb-add-index.1: $(GDB_DOC_FILES)
+	touch $@
+	-$(TEXI2POD) $(MANCONF) -Dgdb-add-index < $(srcdir)/gdb.texinfo > gdb-add-index.pod
+	-($(POD2MAN1) gdb-add-index.pod | sed -e '/^.if n .na/d' > $@.T$$$$ && \
+		mv -f $@.T$$$$ $@) || (rm -f $@.T$$$$ && exit 1)
+	rm -f gdb-add-index.pod
 
 gdbinit.5: $(GDB_DOC_FILES)
 	touch $@

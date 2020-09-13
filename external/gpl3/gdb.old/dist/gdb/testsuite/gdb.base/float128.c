@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2016-2017 Free Software Foundation, Inc.
+   Copyright 2016-2019 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,6 +20,10 @@
 
 long double ld;
 __float128 f128;
+
+// Test largest IEEE-128 value.  This has to be supported since the
+// __float128 data type by definition is encoded as IEEE-128.
+__float128 large128 = 1.18973149535723176508575932662800702e+4932q;
 
 int main()
 {
