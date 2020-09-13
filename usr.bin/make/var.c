@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.518 2020/09/13 20:21:24 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.519 2020/09/13 21:03:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.518 2020/09/13 20:21:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.519 2020/09/13 21:03:14 rillig Exp $");
 
 #define VAR_DEBUG_IF(cond, fmt, ...)	\
     if (!(DEBUG(VAR) && (cond)))	\
@@ -3646,8 +3646,10 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	}
     }
 
-    /* Skip past endc if possible. */
-    *pp = p + (*p ? 1 : 0);
+    if (*p != '\0')		/* Skip past endc if possible. */
+	p++;
+
+    *pp = p;
 
     if (v->flags & VAR_FROM_ENV) {
         /* Free the environment variable now since we own it,
@@ -3669,7 +3671,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 		*freePtr = NULL;
 	    }
 	    if (dynamic) {
-		nstr = bmake_strldup(start, (size_t)(*pp - start));
+		nstr = bmake_strsedup(start, p);
 		*freePtr = nstr;
 	    } else {
 		nstr = (eflags & VARE_UNDEFERR) ? var_Error : varNoError;
