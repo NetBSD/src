@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.56 2020/09/08 16:39:57 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.57 2020/09/13 17:17:31 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.56 2020/09/08 16:39:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.57 2020/09/13 17:17:31 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1954,13 +1954,14 @@ wg_handle_msg_resp(struct wg_softc *wg, const struct wg_msg_resp *wgmr,
 	 * immediately or else the responder will never answer.
 	 */
 	if ((m = atomic_swap_ptr(&wgp->wgp_pending, NULL)) != NULL) {
+		kpreempt_disable();
 		const uint32_t h = curcpu()->ci_index; // pktq_rps_hash(m)
-
 		M_SETCTX(m, wgp);
 		if (__predict_false(!pktq_enqueue(wg_pktq, m, h))) {
 			WGLOG(LOG_ERR, "pktq full, dropping\n");
 			m_freem(m);
 		}
+		kpreempt_enable();
 	} else {
 		wg_send_keepalive_msg(wgp, wgs);
 	}
@@ -2929,13 +2930,14 @@ wg_task_establish_session(struct wg_softc *wg, struct wg_peer *wgp)
 
 	/* If we had a data packet queued up, send it.  */
 	if ((m = atomic_swap_ptr(&wgp->wgp_pending, NULL)) != NULL) {
+		kpreempt_disable();
 		const uint32_t h = curcpu()->ci_index; // pktq_rps_hash(m)
-
 		M_SETCTX(m, wgp);
 		if (__predict_false(!pktq_enqueue(wg_pktq, m, h))) {
 			WGLOG(LOG_ERR, "pktq full, dropping\n");
 			m_freem(m);
 		}
+		kpreempt_enable();
 	}
 
 	if (wgs_prev->wgs_state == WGS_STATE_ESTABLISHED) {
@@ -3969,6 +3971,7 @@ wg_input(struct ifnet *ifp, struct mbuf *m, const int af)
 		panic("invalid af=%d", af);
 	}
 
+	kpreempt_disable();
 	const u_int h = curcpu()->ci_index;
 	if (__predict_true(pktq_enqueue(pktq, m, h))) {
 		if_statadd(ifp, if_ibytes, pktlen);
@@ -3976,6 +3979,7 @@ wg_input(struct ifnet *ifp, struct mbuf *m, const int af)
 	} else {
 		m_freem(m);
 	}
+	kpreempt_enable();
 }
 
 static void
