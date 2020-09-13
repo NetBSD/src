@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.142 2020/09/13 13:50:27 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.143 2020/09/13 13:53:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.142 2020/09/13 13:50:27 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.143 2020/09/13 13:53:55 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.142 2020/09/13 13:50:27 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.143 2020/09/13 13:53:55 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1020,7 +1020,7 @@ CondParser_Eval(CondParser *par, Boolean *value)
  */
 static CondEvalResult
 CondEvalExpression(const struct If *info, const char *cond, Boolean *value,
-		    int eprint, Boolean strictLHS)
+		    Boolean eprint, Boolean strictLHS)
 {
     static const struct If *dflt_info;
     CondParser par;
@@ -1055,7 +1055,7 @@ CondEvalExpression(const struct If *info, const char *cond, Boolean *value,
 CondEvalResult
 Cond_EvalCondition(const char *cond, Boolean *out_value)
 {
-	return CondEvalExpression(NULL, cond, out_value, 0, FALSE);
+	return CondEvalExpression(NULL, cond, out_value, FALSE, FALSE);
 }
 
 /* Evaluate the conditional in the passed line. The line looks like this:
@@ -1213,7 +1213,7 @@ Cond_EvalLine(const char *line)
     }
 
     /* And evaluate the conditional expression */
-    if (CondEvalExpression(ifp, line, &value, 1, TRUE) == COND_INVALID) {
+    if (CondEvalExpression(ifp, line, &value, TRUE, TRUE) == COND_INVALID) {
 	/* Syntax error in conditional, error message already output. */
 	/* Skip everything to matching .endif */
 	cond_state[cond_depth] = SKIP_TO_ELSE;
