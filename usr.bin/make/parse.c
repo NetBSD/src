@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.303 2020/09/13 15:15:51 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.304 2020/09/13 18:27:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.303 2020/09/13 15:15:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.304 2020/09/13 18:27:39 rillig Exp $");
 
 /* types and constants */
 
@@ -1164,10 +1164,12 @@ ParseDoDependency(char *line)
 		 * in the initial Var_Subst and we wouldn't be here.
 		 */
 		const char *nested_p = cp;
+		const char *nested_val;
 		void    *freeIt;
 
-		(void)Var_Parse(&nested_p, VAR_CMD,
-				VARE_UNDEFERR|VARE_WANTRES, &freeIt);
+		(void)Var_Parse(&nested_p, VAR_CMD, VARE_UNDEFERR|VARE_WANTRES,
+				&nested_val, &freeIt);
+		/* TODO: handle errors */
 		free(freeIt);
 		cp += nested_p - cp;
 	    } else
