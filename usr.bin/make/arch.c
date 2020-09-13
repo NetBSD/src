@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.114 2020/09/13 15:15:51 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.115 2020/09/13 18:27:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -133,7 +133,7 @@
 #include    "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.114 2020/09/13 15:15:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.115 2020/09/13 18:27:39 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE
@@ -228,8 +228,9 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 	    const char *result;
 	    Boolean isError;
 
-	    result = Var_Parse(&nested_p, ctxt,
-			       VARE_UNDEFERR|VARE_WANTRES, &result_freeIt);
+	    (void)Var_Parse(&nested_p, ctxt, VARE_UNDEFERR|VARE_WANTRES,
+			    &result, &result_freeIt);
+	    /* TODO: handle errors */
 	    isError = result == var_Error;
 	    free(result_freeIt);
 	    if (isError)
@@ -270,8 +271,9 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 		Boolean isError;
 		const char *nested_p = cp;
 
-		result = Var_Parse(&nested_p, ctxt,
-				   VARE_UNDEFERR|VARE_WANTRES, &freeIt);
+		(void)Var_Parse(&nested_p, ctxt, VARE_UNDEFERR|VARE_WANTRES,
+				&result, &freeIt);
+		/* TODO: handle errors */
 		isError = result == var_Error;
 		free(freeIt);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.144 2020/09/13 15:15:51 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.145 2020/09/13 18:27:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.144 2020/09/13 15:15:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.145 2020/09/13 18:27:39 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -248,7 +248,9 @@ ParseFuncArg(const char **linePtr, Boolean doEval, const char *func,
 	     */
 	    void *freeIt;
 	    VarEvalFlags eflags = VARE_UNDEFERR | (doEval ? VARE_WANTRES : 0);
-	    const char *cp2 = Var_Parse(&cp, VAR_CMD, eflags, &freeIt);
+	    const char *cp2;
+	    (void)Var_Parse(&cp, VAR_CMD, eflags, &cp2, &freeIt);
+	    /* TODO: handle errors */
 	    Buf_AddStr(&buf, cp2);
 	    free(freeIt);
 	    continue;
@@ -452,7 +454,8 @@ CondParser_String(CondParser *par, Boolean doEval, Boolean strictLHS,
 		     (doEval ? VARE_WANTRES : 0);
 	    nested_p = par->p;
 	    atStart = nested_p == start;
-	    str = Var_Parse(&nested_p, VAR_CMD, eflags, freeIt);
+	    (void)Var_Parse(&nested_p, VAR_CMD, eflags, &str, freeIt);
+	    /* TODO: handle errors */
 	    if (str == var_Error) {
 		if (*freeIt) {
 		    free(*freeIt);
@@ -693,7 +696,9 @@ ParseEmptyArg(const char **linePtr, Boolean doEval,
     *argPtr = NULL;
 
     (*linePtr)--;		/* Make (*linePtr)[1] point to the '('. */
-    val = Var_Parse(linePtr, VAR_CMD, doEval ? VARE_WANTRES : 0, &val_freeIt);
+    (void)Var_Parse(linePtr, VAR_CMD, doEval ? VARE_WANTRES : 0,
+		    &val, &val_freeIt);
+    /* TODO: handle errors */
     /* If successful, *linePtr points beyond the closing ')' now. */
 
     if (val == var_Error) {

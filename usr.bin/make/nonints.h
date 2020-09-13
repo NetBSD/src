@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.118 2020/09/13 15:27:25 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.119 2020/09/13 18:27:39 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -204,6 +204,59 @@ typedef enum {
     VAR_SET_READONLY	= 0x02
 } VarSet_Flags;
 
+/* The state of error handling returned by Var_Parse.
+ *
+ * As of 2020-09-13, this bitset looks quite bloated,
+ * with all the constants doubled.
+ *
+ * Its purpose is to first document the existing behavior,
+ * and then migrate away from the SILENT constants, step by step,
+ * as these are not suited for reliable, consistent error handling
+ * and reporting. */
+typedef enum {
+
+    /* Both parsing and evaluation succeeded. */
+    VPE_OK		= 0x0000,
+
+    /* Parsing failed.
+     * An error message has already been printed. */
+    VPE_PARSE_MSG	= 0x0001,
+
+    /* Parsing failed.
+     * No error message has been printed yet.
+     *
+     * This should never happen since it is impossible to say where
+     * the parsing error occurred. */
+    VPE_PARSE_SILENT	= 0x0002,
+
+    /* Parsing succeeded.
+     * During evaluation, VARE_UNDEFERR was set and there was an undefined
+     * variable.
+     * An error message has already been printed. */
+    VPE_UNDEF_MSG	= 0x0010,
+
+    /* Parsing succeeded.
+     * During evaluation, VARE_UNDEFERR was set and there was an undefined
+     * variable.
+     * No error message has been printed yet.
+     *
+     * This should never happen since it is impossible to say which of
+     * the variables was undefined. */
+    VPE_UNDEF_SILENT	= 0x0020,
+
+    /* Parsing succeeded.
+     * Evaluation failed.
+     * An error message has already been printed. */
+    VPE_EVAL_MSG	= 0x0100,
+
+    /* Parsing succeeded.
+     * Evaluation failed.
+     * No error message has been printed yet.
+     *
+     * This should never happens since it is impossible to say where
+     * exactly the evaluation error occurred. */
+    VPE_EVAL_SILENT	= 0x0200
+} VarParseErrors;
 
 void Var_Delete(const char *, GNode *);
 void Var_Set(const char *, const char *, GNode *);
@@ -211,7 +264,8 @@ void Var_Set_with_flags(const char *, const char *, GNode *, VarSet_Flags);
 void Var_Append(const char *, const char *, GNode *);
 Boolean Var_Exists(const char *, GNode *);
 const char *Var_Value(const char *, GNode *, char **);
-const char *Var_Parse(const char **, GNode *, VarEvalFlags, void **);
+VarParseErrors Var_Parse(const char **, GNode *, VarEvalFlags,
+			 const char **, void **);
 char *Var_Subst(const char *, GNode *, VarEvalFlags);
 void Var_Init(void);
 void Var_End(void);

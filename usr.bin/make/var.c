@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.513 2020/09/13 16:47:24 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.514 2020/09/13 18:27:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.513 2020/09/13 16:47:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.514 2020/09/13 18:27:39 rillig Exp $");
 
 #define VAR_DEBUG_IF(cond, fmt, ...)	\
     if (!(DEBUG(VAR) && (cond)))	\
@@ -1673,8 +1673,9 @@ ParseModifierPart(
 	    void *nested_val_freeIt;
 	    VarEvalFlags nested_eflags = eflags & ~(unsigned)VARE_ASSIGN;
 
-	    nested_val = Var_Parse(&nested_p, ctxt, nested_eflags,
-				   &nested_val_freeIt);
+	    (void)Var_Parse(&nested_p, ctxt, nested_eflags,
+			    &nested_val, &nested_val_freeIt);
+	    /* TODO: handle errors */
 	    Buf_AddStr(&buf, nested_val);
 	    free(nested_val_freeIt);
 	    p += nested_p - p;
@@ -2021,7 +2022,9 @@ ApplyModifier_Defined(const char **pp, ApplyModifiersState *st)
 	    const char *nested_val;
 	    void *nested_val_freeIt;
 
-	    nested_val = Var_Parse(&p, st->ctxt, eflags, &nested_val_freeIt);
+	    (void)Var_Parse(&p, st->ctxt, eflags,
+			    &nested_val, &nested_val_freeIt);
+	    /* TODO: handle errors */
 	    Buf_AddStr(&buf, nested_val);
 	    free(nested_val_freeIt);
 	    continue;
@@ -3008,14 +3011,16 @@ ApplyModifiers(
 	     */
 	    const char *nested_p = p;
 	    void *freeIt;
-	    const char *rval = Var_Parse(&nested_p, st.ctxt, st.eflags,
-					 &freeIt);
+	    const char *rval;
+	    int c;
+
+	    (void)Var_Parse(&nested_p, st.ctxt, st.eflags, &rval, &freeIt);
+	    /* TODO: handle errors */
 
 	    /*
 	     * If we have not parsed up to st.endc or ':',
 	     * we are not interested.
 	     */
-	    int c;
 	    if (rval[0] != '\0' &&
 		(c = *nested_p) != '\0' && c != ':' && c != st.endc) {
 		free(freeIt);
@@ -3344,7 +3349,9 @@ ParseVarname(const char **pp, char startc, char endc,
 	/* A variable inside a variable, expand. */
 	if (*p == '$') {
 	    void *freeIt;
-	    const char *rval = Var_Parse(&p, ctxt, eflags, &freeIt);
+	    const char *rval;
+	    (void)Var_Parse(&p, ctxt, eflags, &rval, &freeIt);
+	    /* TODO: handle errors */
 	    Buf_AddStr(&buf, rval);
 	    free(freeIt);
 	} else {
@@ -3427,9 +3434,10 @@ ValidShortVarname(char varname, const char *start)
  *	Any effects from the modifiers, such as :!cmd! or ::=value.
  *-----------------------------------------------------------------------
  */
-/* coverity[+alloc : arg-*3] */
-const char *
-Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, void **freePtr)
+/* coverity[+alloc : arg-*4] */
+VarParseErrors
+Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
+	  const char **out_val, void **freePtr)
 {
     const char *const start = *pp;
     const char *p;
@@ -3471,7 +3479,10 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, void **freePtr)
 
 	if (!ValidShortVarname(startc, start)) {
 	    (*pp)++;
-	    return var_Error;
+	    *out_val = var_Error;
+	    /* XXX: It's a mixture between VPE_PARSE_MSG and VPE_PARSE_SILENT;
+	     * In lint mode, an error message is printed. */
+	    return VPE_PARSE_SILENT;
 	}
 
 	name[0] = startc;
@@ -3480,7 +3491,8 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, void **freePtr)
 	if (v == NULL) {
 	    *pp += 2;
 
-	    return ShortVarValue(start[1], ctxt, eflags);
+	    *out_val = ShortVarValue(start[1], ctxt, eflags);
+	    return eflags & VARE_UNDEFERR ? VPE_UNDEF_SILENT : VPE_OK;
 	} else {
 	    haveModifier = FALSE;
 	    p = start + 1;
@@ -3502,7 +3514,8 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, void **freePtr)
 	    Parse_Error(PARSE_FATAL, "Unclosed variable \"%s\"", varname);
 	    *pp = p;
 	    free(varname);
-	    return var_Error;
+	    *out_val = var_Error;
+	    return VPE_PARSE_MSG;
 	}
 
 	v = VarFind(varname, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
@@ -3543,10 +3556,12 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, void **freePtr)
 		    char *pstr = bmake_strsedup(start, p);
 		    *freePtr = pstr;
 		    free(varname);
-		    return pstr;
+		    *out_val = pstr;
+		    return VPE_OK;
 		} else {
 		    free(varname);
-		    return (eflags & VARE_UNDEFERR) ? var_Error : varNoError;
+		    *out_val = eflags & VARE_UNDEFERR ? var_Error : varNoError;
+		    return eflags & VARE_UNDEFERR ? VPE_UNDEF_SILENT : VPE_OK;
 		}
 	    }
 
@@ -3649,7 +3664,8 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, void **freePtr)
 	free(v->name);
 	free(v);
     }
-    return nstr;
+    *out_val = nstr;
+    return VPE_OK;		/* TODO: may also be errors */
 }
 
 /* Substitute for all variables in the given string in the given context.
@@ -3711,7 +3727,9 @@ Var_Subst(const char *str, GNode *ctxt, VarEvalFlags eflags)
 	} else {
 	    const char *nested_str = str;
 	    void *freeIt;
-	    const char *val = Var_Parse(&nested_str, ctxt, eflags, &freeIt);
+	    const char *val;
+	    (void)Var_Parse(&nested_str, ctxt, eflags, &val, &freeIt);
+	    /* TODO: handle errors */
 
 	    if (val == var_Error || val == varNoError) {
 		/*
