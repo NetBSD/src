@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.301 2020/09/13 13:25:07 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.302 2020/09/13 13:50:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.301 2020/09/13 13:25:07 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.302 2020/09/13 13:50:27 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.301 2020/09/13 13:25:07 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.302 2020/09/13 13:50:27 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2774,12 +2774,12 @@ ParseReadLine(void)
 	 * The line might be a conditional. Ask the conditional module
 	 * about it and act accordingly
 	 */
-	switch (Cond_Eval(line)) {
+	switch (Cond_EvalLine(line)) {
 	case COND_SKIP:
 	    /* Skip to next conditional that evaluates to COND_PARSE.  */
 	    do {
 		line = ParseGetLine(PARSE_SKIP, &lineLength);
-	    } while (line && Cond_Eval(line) != COND_PARSE);
+	    } while (line && Cond_EvalLine(line) != COND_PARSE);
 	    if (line == NULL)
 		break;
 	    continue;
