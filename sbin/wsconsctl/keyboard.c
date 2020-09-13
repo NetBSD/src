@@ -1,4 +1,4 @@
-/*	$NetBSD: keyboard.c,v 1.10 2018/11/23 06:31:57 mlelstv Exp $ */
+/*	$NetBSD: keyboard.c,v 1.11 2020/09/13 07:35:15 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -58,9 +58,11 @@ static struct wskbd_scroll_data scroll;
 static int ledstate;
 static kbd_t kbdencoding;
 static int havescroll = 1;
+static int kbmode;
 
 struct field keyboard_field_tab[] = {
     { "type",			&kbtype,	FMT_KBDTYPE,	FLG_RDONLY },
+    { "mode",			&kbmode,	FMT_UINT,	FLG_MODIFY },
     { "bell.pitch",		&bell.pitch,	FMT_UINT,	FLG_MODIFY },
     { "bell.period",		&bell.period,	FMT_UINT,	FLG_MODIFY },
     { "bell.volume",		&bell.volume,	FMT_UINT,	FLG_MODIFY },
@@ -113,6 +115,11 @@ keyboard_get_values(int fd)
 	if (field_by_value(&kbtype)->flags & FLG_GET)
 		if (ioctl(fd, WSKBDIO_GTYPE, &kbtype) < 0)
 			err(EXIT_FAILURE, "WSKBDIO_GTYPE");
+
+	if (field_by_value(&kbmode)->flags & FLG_GET) {
+		ioctl(fd, WSKBDIO_GETMODE, &kbmode);
+		/* Optional; don't complain. */
+	}
 
 	bell.which = 0;
 	if (field_by_value(&bell.pitch)->flags & FLG_GET)
@@ -191,6 +198,12 @@ keyboard_get_values(int fd)
 void
 keyboard_put_values(int fd)
 {
+
+	if (field_by_value(&kbmode)->flags & FLG_SET) {
+		if (ioctl(fd, WSKBDIO_SETMODE, &kbmode) == 0)
+			err(EXIT_FAILURE, "WSKBDIO_SETMODE");
+		pr_field(field_by_value(&kbmode), " -> ");
+	}
 
 	bell.which = 0;
 	if (field_by_value(&bell.pitch)->flags & FLG_SET)

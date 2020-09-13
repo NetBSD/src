@@ -1,4 +1,4 @@
-.\" $NetBSD: wskbd.4,v 1.22 2020/07/13 14:11:16 uwe Exp $
+.\" $NetBSD: wskbd.4,v 1.23 2020/09/13 07:35:15 mlelstv Exp $
 .\"
 .\" Copyright (c) 1999
 .\" 	Matthias Drochner.  All rights reserved.
@@ -229,6 +229,10 @@ Their definitions are found in
 .Bl -tag -width Dv
 .It Dv WSKBDIO_GTYPE
 Get the keyboard type.
+.It Dv WSKBDIO_GETMODE
+Get the keyboard mode, 0 means translated through keyboard map, 1 means raw.
+.It Dv WSKBDIO_SETMODE
+Set the keyboard mode.
 .It Dv WSKBDIO_COMPLEXBELL , WSKBDIO_SETBELL , WSKBDIO_GETBELL , WSKBDIO_SETDEFAULTBELL , WSKBDIO_GETDEFAULTBELL Pq Vt "struct wsmouse_repeat"
 Get and set keyboard bell settings.
 .It Dv WSKBDIO_SETKEYREPEAT , WSKBDIO_GETKEYREPEAT , WSKBDIO_SETDEFAULTKEYREPEAT , WSKBDIO_GETDEFAULTKEYREPEAT Pq Vt "struct wskbd_keyrepeat_data"
