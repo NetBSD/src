@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.109 2020/09/04 18:54:33 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.110 2020/09/13 12:26:36 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -4927,4 +4927,51 @@ sys/dev/nvmm/x86/nvmm_x86_vmx.c			1.72
 
 	nvmm(4): improve the detection of virtualization features.
 	[maxv, ticket #1076]
+
+sys/dev/nvmm/x86/nvmm_x86.c			1.16
+sys/dev/nvmm/x86/nvmm_x86_svm.c			1.74
+sys/dev/nvmm/x86/nvmm_x86_vmx.c			1.68
+
+	Improve emulation of MSR_IA32_ARCH_CAPABILITIES.
+	Improve the handling of MSR_EFER.
+	Improve the CPUID emulation.
+	[maxv, ticket #1077]
+
+sys/dev/nvmm/x86/nvmm_x86_svm.c			1.73
+sys/dev/nvmm/x86/nvmm_x86_vmx.c			1.73,1.74
+
+	nvmm(4): improve the handling of CR4 and RFLAGS.RF.
+	[maxv, ticket #1078]
+
+usr.bin/sockstat/Makefile			1.51.6
+usr.bin/sockstat/sockstat.c			1.22
+
+	RR/54971: sockstat command output incorrect for normal users.
+	[kim, ticket #1079]
+
+etc/defaults/rc.conf				1.159
+etc/rc.d/motd					1.10,1.11
+share/man/man5/rc.conf.5			1.186,1.187
+
+	Add optional release info in /etc/motd.
+	[kim, ticket #1080]
+
+sys/netinet/tcp_input.c				1.420
+
+	PR/kern 55567: fix the data-only fast path.
+	[kardel, ticket #1081]
+
+lib/libc/atomic/membar_ops.3			1.6
+share/man/man9/atomic_loadstore.9		1.6
+share/man/man9/ipi.9				1.5
+
+	Update membar_ops(3) man page with examples and relation to C11.
+	[riastradh, ticket #1082]
+
+sys/miscfs/genfs/genfs_rename.c			1.5
+tests/fs/vfs/t_renamerace.c			1.37,1.38
+
+	Fix deadlock in some cross-directory renames.
+	[riastradh, ticket #1083]
+
 
