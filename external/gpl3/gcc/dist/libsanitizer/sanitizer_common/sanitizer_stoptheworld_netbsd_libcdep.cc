@@ -18,6 +18,7 @@
 
 #if SANITIZER_NETBSD
 
+#define _KERNTYPES	/* we want register_t for some ptrace functions */
 #include "sanitizer_stoptheworld.h"
 
 #include "sanitizer_atomic.h"
