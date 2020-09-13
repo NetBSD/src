@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.139 2020/09/13 09:17:47 rillig Exp $
+# $NetBSD: Makefile,v 1.140 2020/09/13 09:20:23 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -121,6 +121,7 @@ TESTS+=		deptgt-suffixes
 TESTS+=		dir
 TESTS+=		dir-expand-path
 TESTS+=		directive
+TESTS+=		directive-dinclude
 TESTS+=		directive-elif
 TESTS+=		directive-elifdef
 TESTS+=		directive-elifmake
@@ -134,12 +135,16 @@ TESTS+=		directive-export-env
 TESTS+=		directive-export-literal
 TESTS+=		directive-for
 TESTS+=		directive-for-generating-endif
+TESTS+=		directive-hyphen-include
 TESTS+=		directive-if
 TESTS+=		directive-ifdef
 TESTS+=		directive-ifmake
 TESTS+=		directive-ifndef
 TESTS+=		directive-ifnmake
+TESTS+=		directive-include
+TESTS+=		directive-include-fatal
 TESTS+=		directive-info
+TESTS+=		directive-sinclude
 TESTS+=		directive-undef
 TESTS+=		directive-unexport
 TESTS+=		directive-unexport-env
