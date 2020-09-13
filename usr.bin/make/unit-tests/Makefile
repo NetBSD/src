@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.138 2020/09/07 18:49:15 rillig Exp $
+# $NetBSD: Makefile,v 1.139 2020/09/13 09:17:47 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -487,30 +487,17 @@ accept:
 	       cp $${test}.out ${UNIT_TESTS}/$${test}.exp ; } \
 	done
 
-SYNC_MI_AWK= \
-	BEGIN {								\
-	  testsdir = "usr.bin/make/unit-tests";				\
-	  linestart = "./usr/tests/" testsdir;				\
-	  fmt = linestart "/%s\ttests-usr.bin-tests\tcompattestfile,atf\\n"; \
-	  cmd = "cd " testsdir " && ls *.exp *.mk | xargs printf '" fmt "'" \
-	}								\
-	function startswith(s, prefix) {				\
-	  return substr(s, 1, length(prefix)) == prefix;		\
-	}								\
-	startswith($$1, linestart) && $$1 ~ /\.(exp|mk)$$/ { next }	\
-	{ print $$0 }							\
-	$$1 == linestart "/Makefile" { system(cmd) }
-
+# Note: only works for adding tests.
+# To remove a test, the $$mi file must be edited manually.
 sync-mi:
-	# Obsolete entries in the mi file must be marked as obsolete,
-	# the lines must be preserved instead of just being deleted.
-	@echo "$@: Doesn't work right now." 1>&2; exit 1
 	@set -eu;							\
 	cd "${MAKEFILE:tA:H}/../../..";					\
 	mi="distrib/sets/lists/tests/mi";				\
 	cvs update "$$mi";						\
-	awk ${SYNC_MI_AWK:Q} < "$$mi" > "$$mi.$@";			\
-	mv -f "$$mi.$@" "$$mi";						\
+	testsdir="usr.bin/make/unit-tests";				\
+	fmt="./usr/tests/$$testsdir/%s\ttests-usr.bin-tests\tcompattestfile,atf\\n"; \
+	(cd "$$testsdir" && ls *.exp *.mk) | xargs printf "$$fmt" >> "$$mi"; \
+	distrib/sets/fmt-list "$$mi";					\
 	cvs diff "$$mi" || true
 
 .if exists(${TEST_MAKE})
