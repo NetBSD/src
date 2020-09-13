@@ -1,6 +1,6 @@
 # Common object files to include for each host.
 #
-# Copyright (C) 2015-2017 Free Software Foundation, Inc.
+# Copyright (C) 2015-2019 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -27,10 +27,10 @@
 
 case "${host}" in
 
-*-mingw*)	common_host_obs=mingw-strerror.o
+*-mingw*)	common_host_obs=common/mingw-strerror.o
 		;;
 *)
-		common_host_obs=posix-strerror.o
+		common_host_obs=common/posix-strerror.o
 		;;
 
 esac

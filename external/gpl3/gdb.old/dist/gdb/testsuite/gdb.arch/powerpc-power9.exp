@@ -1,4 +1,4 @@
-# Copyright 2014-2017 Free Software Foundation, Inc.
+# Copyright 2014-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -364,8 +364,8 @@ func_check "xscvhpdp vs40,vs50"
 func_check "xscvdphp vs41,vs51"
 func_check "xvcvhpsp vs42,vs52"
 func_check "xvcvsphp vs43,vs53"
-func_check "addpcis r3,0"
-func_check "addpcis r3,0"
+func_check "lnia    r3"
+func_check "lnia    r3"
 func_check "addpcis r4,1"
 func_check "addpcis r4,1"
 func_check "addpcis r5,-2"

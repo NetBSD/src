@@ -118,11 +118,11 @@ static const struct tramp_frame aarch64_nbsd_sigframe =
   SIGTRAMP_FRAME,
   4,
   {
-    {0x910003e0, (ULONGEST)-1},		/* mov  x0, sp  */
-    {0x91014000, (ULONGEST)-1},		/* add  x0, x0, #SF_UC  */
-    {0xd2803428, (ULONGEST)-1},		/* mov  x8, #SYS_sigreturn  */
-    {0xd4000001, (ULONGEST)-1},		/* svc  0x0  */
-    {(ULONGEST)TRAMP_SENTINEL_INSN, (ULONGEST)-1}
+    {0x910003e0, ULONGEST_MAX},		/* mov  x0, sp  */
+    {0x91014000, ULONGEST_MAX},		/* add  x0, x0, #SF_UC  */
+    {0xd2803428, ULONGEST_MAX},		/* mov  x8, #SYS_sigreturn  */
+    {0xd4000001, ULONGEST_MAX},		/* svc  0x0  */
+    {(ULONGEST)TRAMP_SENTINEL_INSN, ULONGEST_MAX}
   },
   aarch64_nbsd_sigframe_init
 };
@@ -169,10 +169,10 @@ aarch64_nbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
 					   void *cb_data,
 					   const struct regcache *regcache)
 {
-  cb (".reg", AARCH64_NBSD_SIZEOF_GREGSET, &aarch64_nbsd_gregset,
-      NULL, cb_data);
-  cb (".reg2", AARCH64_NBSD_SIZEOF_FPREGSET, &aarch64_nbsd_fpregset,
-      NULL, cb_data);
+  cb (".reg", AARCH64_NBSD_SIZEOF_GREGSET, AARCH64_NBSD_SIZEOF_GREGSET,
+      &aarch64_nbsd_gregset, NULL, cb_data);
+  cb (".reg2", AARCH64_NBSD_SIZEOF_FPREGSET, AARCH64_NBSD_SIZEOF_FPREGSET,
+      &aarch64_nbsd_fpregset, NULL, cb_data);
 }
 
 /* Implement the 'init_osabi' method of struct gdb_osabi_handler.  */

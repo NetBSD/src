@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD/sparc.
 
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -34,39 +34,6 @@
 
 #include "bsd-kvm.h"
 
-#ifndef HAVE_GREGSET_T
-typedef struct reg gregset_t;
-#endif
-
-#ifndef HAVE_FPREGSET_T
-typedef struct fpreg fpregset_t;
-#endif
-#include "gregset.h"
- 
-void
-supply_gregset (struct regcache *regcache, const gregset_t *gregs)
-{
-  sparc_supply_gregset (sparc_gregmap, regcache, -1, gregs);
-}
-
-void
-supply_fpregset (struct regcache *regcache, const fpregset_t *fpregs)
-{
-  sparc_supply_fpregset (sparc_fpregmap, regcache, -1, fpregs);
-}
-
-void
-fill_gregset (const struct regcache *regcache, gregset_t *gregs, int regnum)
-{
-  sparc_collect_gregset (sparc_gregmap, regcache, regnum, gregs);
-}
-
-void
-fill_fpregset (const struct regcache *regcache, fpregset_t *fpregs, int regnum)
-{
-  sparc_collect_fpregset (sparc_fpregmap, regcache, regnum, fpregs);
-}
-
 static int
 sparc32nbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
 {
@@ -80,31 +47,26 @@ sparc32nbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
   if (pcb->pcb_sp == 0)
     return 0;
 
-  regcache_raw_supply (regcache, SPARC_SP_REGNUM, &pcb->pcb_sp);
-  regcache_raw_supply (regcache, SPARC_O7_REGNUM, &pcb->pcb_pc);
-  regcache_raw_supply (regcache, SPARC32_PSR_REGNUM, &pcb->pcb_psr);
-  regcache_raw_supply (regcache, SPARC32_WIM_REGNUM, &pcb->pcb_wim);
-  regcache_raw_supply (regcache, SPARC32_PC_REGNUM, &pcb->pcb_pc);
+  regcache->raw_supply (SPARC_SP_REGNUM, &pcb->pcb_sp);
+  regcache->raw_supply (SPARC_O7_REGNUM, &pcb->pcb_pc);
+  regcache->raw_supply (SPARC32_PSR_REGNUM, &pcb->pcb_psr);
+  regcache->raw_supply (SPARC32_WIM_REGNUM, &pcb->pcb_wim);
+  regcache->raw_supply (SPARC32_PC_REGNUM, &pcb->pcb_pc);
 
   sparc_supply_rwindow (regcache, pcb->pcb_sp, -1);
 
   return 1;
 }
-
 
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-void _initialize_sparcnbsd_nat (void);
+static sparc_target<nbsd_nat_target> the_sparc_nbsd_nat_target;
 
 void
 _initialize_sparcnbsd_nat (void)
 {
-  struct target_ops *t;
   sparc_gregmap = &sparc32nbsd_gregmap;
   sparc_fpregmap = &sparc32_bsd_fpregmap;
 
-  /* Add some extra features to the generic SPARC target.  */
-  t = sparc_target ();
-  nbsd_nat_add_target (t);
+  add_inf_child_target (&the_sparc_nbsd_nat_target);
 
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (sparc32nbsd_supply_pcb);

@@ -1,5 +1,5 @@
 /* riscv.h.  RISC-V opcode list for GDB, the GNU debugger.
-   Copyright (C) 2011-2017 Free Software Foundation, Inc.
+   Copyright (C) 2011-2019 Free Software Foundation, Inc.
    Contributed by Andrew Waterman
 
    This file is part of GDB, GAS, and the GNU binutils.
@@ -77,6 +77,8 @@ static const char * const riscv_pred_succ[16] =
   (EXTRACT_RVC_IMM (x) << RISCV_IMM_BITS)
 #define EXTRACT_RVC_SIMM3(x) \
   (RV_X(x, 10, 2) | (-RV_X(x, 12, 1) << 2))
+#define EXTRACT_RVC_UIMM8(x) \
+  (RV_X(x, 5, 8))
 #define EXTRACT_RVC_ADDI4SPN_IMM(x) \
   ((RV_X(x, 6, 1) << 2) | (RV_X(x, 5, 1) << 3) | (RV_X(x, 11, 2) << 4) | (RV_X(x, 7, 4) << 6))
 #define EXTRACT_RVC_ADDI16SP_IMM(x) \
@@ -114,6 +116,8 @@ static const char * const riscv_pred_succ[16] =
   ENCODE_RVC_IMM ((x) >> RISCV_IMM_BITS)
 #define ENCODE_RVC_SIMM3(x) \
   (RV_X(x, 0, 3) << 10)
+#define ENCODE_RVC_UIMM8(x) \
+  (RV_X(x, 0, 8) << 5)
 #define ENCODE_RVC_ADDI4SPN_IMM(x) \
   ((RV_X(x, 2, 1) << 6) | (RV_X(x, 3, 1) << 5) | (RV_X(x, 4, 2) << 11) | (RV_X(x, 6, 4) << 7))
 #define ENCODE_RVC_ADDI16SP_IMM(x) \
@@ -141,8 +145,9 @@ static const char * const riscv_pred_succ[16] =
 #define VALID_UTYPE_IMM(x) (EXTRACT_UTYPE_IMM(ENCODE_UTYPE_IMM(x)) == (x))
 #define VALID_UJTYPE_IMM(x) (EXTRACT_UJTYPE_IMM(ENCODE_UJTYPE_IMM(x)) == (x))
 #define VALID_RVC_IMM(x) (EXTRACT_RVC_IMM(ENCODE_RVC_IMM(x)) == (x))
-#define VALID_RVC_LUI_IMM(x) (EXTRACT_RVC_LUI_IMM(ENCODE_RVC_LUI_IMM(x)) == (x))
+#define VALID_RVC_LUI_IMM(x) (ENCODE_RVC_LUI_IMM(x) != 0 && EXTRACT_RVC_LUI_IMM(ENCODE_RVC_LUI_IMM(x)) == (x))
 #define VALID_RVC_SIMM3(x) (EXTRACT_RVC_SIMM3(ENCODE_RVC_SIMM3(x)) == (x))
+#define VALID_RVC_UIMM8(x) (EXTRACT_RVC_UIMM8(ENCODE_RVC_UIMM8(x)) == (x))
 #define VALID_RVC_ADDI4SPN_IMM(x) (EXTRACT_RVC_ADDI4SPN_IMM(ENCODE_RVC_ADDI4SPN_IMM(x)) == (x))
 #define VALID_RVC_ADDI16SP_IMM(x) (EXTRACT_RVC_ADDI16SP_IMM(ENCODE_RVC_ADDI16SP_IMM(x)) == (x))
 #define VALID_RVC_LW_IMM(x) (EXTRACT_RVC_LW_IMM(ENCODE_RVC_LW_IMM(x)) == (x))
@@ -223,7 +228,17 @@ static const char * const riscv_pred_succ[16] =
 #define OP_MASK_CSR		0xfff
 #define OP_SH_CSR		20
 
+#define OP_MASK_FUNCT3         0x7
+#define OP_SH_FUNCT3           12
+#define OP_MASK_FUNCT7         0x7f
+#define OP_SH_FUNCT7           25
+#define OP_MASK_FUNCT2         0x3
+#define OP_SH_FUNCT2           25
+
 /* RVC fields.  */
+
+#define OP_MASK_OP2            0x3
+#define OP_SH_OP2              0
 
 #define OP_MASK_CRS2 0x1f
 #define OP_SH_CRS2 2
@@ -231,6 +246,15 @@ static const char * const riscv_pred_succ[16] =
 #define OP_SH_CRS1S 7
 #define OP_MASK_CRS2S 0x7
 #define OP_SH_CRS2S 2
+
+#define OP_MASK_CFUNCT6                0x3f
+#define OP_SH_CFUNCT6          10
+#define OP_MASK_CFUNCT4                0xf
+#define OP_SH_CFUNCT4          12
+#define OP_MASK_CFUNCT3                0x7
+#define OP_SH_CFUNCT3          13
+#define OP_MASK_CFUNCT2                0x3
+#define OP_SH_CFUNCT2          5
 
 /* ABI names for selected x-registers.  */
 
@@ -245,6 +269,12 @@ static const char * const riscv_pred_succ[16] =
 
 #define NGPR 32
 #define NFPR 32
+
+/* These fake label defines are use by both the assembler, and
+   libopcodes.  The assembler uses this when it needs to generate a fake
+   label, and libopcodes uses it to hide the fake labels in its output.  */
+#define RISCV_FAKE_LABEL_NAME ".L0 "
+#define RISCV_FAKE_LABEL_CHAR ' '
 
 /* Replace bits MASK << SHIFT of STRUCT with the equivalent bits in
    VALUE << SHIFT.  VALUE is evaluated exactly once.  */
@@ -261,14 +291,20 @@ static const char * const riscv_pred_succ[16] =
 #define EXTRACT_OPERAND(FIELD, INSN) \
   EXTRACT_BITS ((INSN), OP_MASK_##FIELD, OP_SH_##FIELD)
 
+/* The maximal number of subset can be required. */
+#define MAX_SUBSET_NUM 4
+
 /* This structure holds information for a particular instruction.  */
 
 struct riscv_opcode
 {
   /* The name of the instruction.  */
   const char *name;
-  /* The ISA subset name (I, M, A, F, D, Xextension).  */
-  const char *subset;
+  /* The requirement of xlen for the instruction, 0 if no requirement.  */
+  unsigned xlen_requirement;
+  /* An array of ISA subset name (I, M, A, F, D, Xextension), must ended
+     with a NULL pointer sential.  */
+  const char *subset[MAX_SUBSET_NUM];
   /* A string describing the arguments for this instruction.  */
   const char *args;
   /* The basic opcode for the instruction.  When assembling, this
@@ -292,6 +328,32 @@ struct riscv_opcode
 
 /* Instruction is a simple alias (e.g. "mv" for "addi").  */
 #define	INSN_ALIAS		0x00000001
+
+/* These are for setting insn_info fields.
+
+   Nonbranch is the default.  Noninsn is used only if there is no match.
+   There are no condjsr or dref2 instructions.  So that leaves condbranch,
+   branch, jsr, and dref that we need to handle here, encoded in 3 bits.  */
+#define INSN_TYPE		0x0000000e
+
+/* Instruction is an unconditional branch.  */
+#define INSN_BRANCH		0x00000002
+/* Instruction is a conditional branch.  */
+#define INSN_CONDBRANCH		0x00000004
+/* Instruction is a jump to subroutine.  */
+#define INSN_JSR		0x00000006
+/* Instruction is a data reference.  */
+#define INSN_DREF		0x00000008
+
+/* We have 5 data reference sizes, which we can encode in 3 bits.  */
+#define INSN_DATA_SIZE		0x00000070
+#define INSN_DATA_SIZE_SHIFT	4
+#define INSN_1_BYTE		0x00000010
+#define INSN_2_BYTE		0x00000020
+#define INSN_4_BYTE		0x00000030
+#define INSN_8_BYTE		0x00000040
+#define INSN_16_BYTE		0x00000050
+
 /* Instruction is actually a macro.  It should be ignored by the
    disassembler, and requires special treatment by the assembler.  */
 #define INSN_MACRO		0xffffffff
@@ -340,5 +402,6 @@ extern const char * const riscv_fpr_names_numeric[NFPR];
 extern const char * const riscv_fpr_names_abi[NFPR];
 
 extern const struct riscv_opcode riscv_opcodes[];
+extern const struct riscv_opcode riscv_insn_types[];
 
 #endif /* _RISCV_H_ */

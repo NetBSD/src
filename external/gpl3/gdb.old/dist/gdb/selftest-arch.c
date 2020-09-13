@@ -1,5 +1,5 @@
 /* GDB self-test for each gdbarch.
-   Copyright (C) 2017 Free Software Foundation, Inc.
+   Copyright (C) 2017-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,84 +19,89 @@
 #include "defs.h"
 
 #if GDB_SELF_TEST
-#include "selftest.h"
+#include "common/selftest.h"
 #include "selftest-arch.h"
 #include "arch-utils.h"
 
-static std::vector<self_test_foreach_arch_function *> gdbarch_tests;
-
-void
-register_self_test_foreach_arch (self_test_foreach_arch_function *function)
-{
-  gdbarch_tests.push_back (function);
-}
-
 namespace selftests {
 
-static void
-tests_with_arch ()
+/* A kind of selftest that calls the test function once for each gdbarch known
+   to GDB.  */
+
+struct gdbarch_selftest : public selftest
 {
-  int failed = 0;
+  gdbarch_selftest (self_test_foreach_arch_function *function_)
+  : function (function_)
+  {}
 
-  for (const auto &f : gdbarch_tests)
-    {
-      const char **arches = gdbarch_printable_names ();
+  void operator() () const override
+  {
+    const char **arches = gdbarch_printable_names ();
+    bool pass = true;
 
-      for (int i = 0; arches[i] != NULL; i++)
-	{
-	  if (strcmp ("fr300", arches[i]) == 0)
-	    {
-	      /* PR 20946 */
-	      continue;
-	    }
-	  else if (strcmp ("powerpc:EC603e", arches[i]) == 0
-		   || strcmp ("powerpc:e500mc", arches[i]) == 0
-		   || strcmp ("powerpc:e500mc64", arches[i]) == 0
-		   || strcmp ("powerpc:titan", arches[i]) == 0
-		   || strcmp ("powerpc:vle", arches[i]) == 0
-		   || strcmp ("powerpc:e5500", arches[i]) == 0
-		   || strcmp ("powerpc:e6500", arches[i]) == 0)
-	    {
-	      /* PR 19797 */
-	      continue;
-	    }
+    for (int i = 0; arches[i] != NULL; i++)
+      {
+	if (strcmp ("fr300", arches[i]) == 0)
+	  {
+	    /* PR 20946 */
+	    continue;
+	  }
+	else if (strcmp ("powerpc:EC603e", arches[i]) == 0
+		 || strcmp ("powerpc:e500mc", arches[i]) == 0
+		 || strcmp ("powerpc:e500mc64", arches[i]) == 0
+		 || strcmp ("powerpc:titan", arches[i]) == 0
+		 || strcmp ("powerpc:vle", arches[i]) == 0
+		 || strcmp ("powerpc:e5500", arches[i]) == 0
+		 || strcmp ("powerpc:e6500", arches[i]) == 0)
+	  {
+	    /* PR 19797 */
+	    continue;
+	  }
 
-	  QUIT;
+	QUIT;
 
-	  TRY
-	    {
-	      struct gdbarch_info info;
+	TRY
+	  {
+	    struct gdbarch_info info;
 
-	      gdbarch_info_init (&info);
-	      info.bfd_arch_info = bfd_scan_arch (arches[i]);
+	    gdbarch_info_init (&info);
+	    info.bfd_arch_info = bfd_scan_arch (arches[i]);
 
-	      struct gdbarch *gdbarch = gdbarch_find_by_info (info);
-	      SELF_CHECK (gdbarch != NULL);
-	      f (gdbarch);
-	    }
-	  CATCH (ex, RETURN_MASK_ERROR)
-	    {
-	      ++failed;
-	      exception_fprintf (gdb_stderr, ex,
-				 _("Self test failed: arch %s: "), arches[i]);
-	    }
-	  END_CATCH
-	}
-    }
+	    struct gdbarch *gdbarch = gdbarch_find_by_info (info);
+	    SELF_CHECK (gdbarch != NULL);
 
-  SELF_CHECK (failed == 0);
-}
+	    function (gdbarch);
+	  }
+	CATCH (ex, RETURN_MASK_ERROR)
+	  {
+	    pass = false;
+	    exception_fprintf (gdb_stderr, ex,
+			       _("Self test failed: arch %s: "), arches[i]);
+	  }
+	END_CATCH
 
-} // namespace selftests
-#endif /* GDB_SELF_TEST */
+	reset ();
+      }
 
-/* Suppress warning from -Wmissing-prototypes.  */
-extern initialize_file_ftype _initialize_selftests_foreach_arch;
+    SELF_CHECK (pass);
+  }
+
+  self_test_foreach_arch_function *function;
+};
 
 void
-_initialize_selftests_foreach_arch ()
+register_test_foreach_arch (const std::string &name,
+			    self_test_foreach_arch_function *function)
 {
-#if GDB_SELF_TEST
-  register_self_test (selftests::tests_with_arch);
-#endif
+  register_test (name, new gdbarch_selftest (function));
 }
+
+void
+reset ()
+{
+  /* Clear GDB internal state.  */
+  registers_changed ();
+  reinit_frame_cache ();
+}
+} // namespace selftests
+#endif /* GDB_SELF_TEST */

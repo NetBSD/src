@@ -1,6 +1,6 @@
 /* environ.c -- library for manipulating environments for GNU.
 
-   Copyright (C) 1986-2017 Free Software Foundation, Inc.
+   Copyright (C) 1986-2019 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -18,165 +18,166 @@
 #include "common-defs.h"
 #include "environ.h"
 #include <algorithm>
-
+#include <utility>
 
-/* Return a new environment object.  */
+/* See common/environ.h.  */
 
-struct gdb_environ *
-make_environ (void)
+gdb_environ &
+gdb_environ::operator= (gdb_environ &&e)
 {
-  struct gdb_environ *e;
+  /* Are we self-moving?  */
+  if (&e == this)
+    return *this;
 
-  e = XNEW (struct gdb_environ);
+  m_environ_vector = std::move (e.m_environ_vector);
+  m_user_set_env = std::move (e.m_user_set_env);
+  m_user_unset_env = std::move (e.m_user_unset_env);
+  e.m_environ_vector.clear ();
+  e.m_environ_vector.push_back (NULL);
+  e.m_user_set_env.clear ();
+  e.m_user_unset_env.clear ();
+  return *this;
+}
 
-  e->allocated = 10;
-  e->vector = (char **) xmalloc ((e->allocated + 1) * sizeof (char *));
-  e->vector[0] = 0;
+/* See common/environ.h.  */
+
+gdb_environ gdb_environ::from_host_environ ()
+{
+  extern char **environ;
+  gdb_environ e;
+
+  if (environ == NULL)
+    return e;
+
+  for (int i = 0; environ[i] != NULL; ++i)
+    {
+      /* Make sure we add the element before the last (NULL).  */
+      e.m_environ_vector.insert (e.m_environ_vector.end () - 1,
+				 xstrdup (environ[i]));
+    }
+
   return e;
 }
 
-/* Free an environment and all the strings in it.  */
+/* See common/environ.h.  */
 
 void
-free_environ (struct gdb_environ *e)
+gdb_environ::clear ()
 {
-  char **vector = e->vector;
-
-  while (*vector)
-    xfree (*vector++);
-
-  xfree (e->vector);
-  xfree (e);
+  for (char *v : m_environ_vector)
+    xfree (v);
+  m_environ_vector.clear ();
+  /* Always add the NULL element.  */
+  m_environ_vector.push_back (NULL);
+  m_user_set_env.clear ();
+  m_user_unset_env.clear ();
 }
 
-/* Copy the environment given to this process into E.
-   Also copies all the strings in it, so we can be sure
-   that all strings in these environments are safe to free.  */
+/* Helper function to check if STRING contains an environment variable
+   assignment of VAR, i.e., if STRING starts with 'VAR='.  Return true
+   if it contains, false otherwise.  */
+
+static bool
+match_var_in_string (const char *string, const char *var, size_t var_len)
+{
+  if (strncmp (string, var, var_len) == 0 && string[var_len] == '=')
+    return true;
+
+  return false;
+}
+
+/* See common/environ.h.  */
+
+const char *
+gdb_environ::get (const char *var) const
+{
+  size_t len = strlen (var);
+
+  for (char *el : m_environ_vector)
+    if (el != NULL && match_var_in_string (el, var, len))
+      return &el[len + 1];
+
+  return NULL;
+}
+
+/* See common/environ.h.  */
 
 void
-init_environ (struct gdb_environ *e)
+gdb_environ::set (const char *var, const char *value)
 {
-  extern char **environ;
-  int i;
+  char *fullvar = concat (var, "=", value, NULL);
 
-  if (environ == NULL)
-    return;
+  /* We have to unset the variable in the vector if it exists.  */
+  unset (var, false);
 
-  for (i = 0; environ[i]; i++) /*EMPTY */ ;
+  /* Insert the element before the last one, which is always NULL.  */
+  m_environ_vector.insert (m_environ_vector.end () - 1, fullvar);
 
-  if (e->allocated < i)
-    {
-      e->allocated = std::max (i, e->allocated + 10);
-      e->vector = (char **) xrealloc ((char *) e->vector,
-				      (e->allocated + 1) * sizeof (char *));
-    }
+  /* Mark this environment variable as having been set by the user.
+     This will be useful when we deal with setting environment
+     variables on the remote target.  */
+  m_user_set_env.insert (std::string (fullvar));
 
-  memcpy (e->vector, environ, (i + 1) * sizeof (char *));
-
-  while (--i >= 0)
-    {
-      int len = strlen (e->vector[i]);
-      char *newobj = (char *) xmalloc (len + 1);
-
-      memcpy (newobj, e->vector[i], len + 1);
-      e->vector[i] = newobj;
-    }
+  /* If this environment variable is marked as unset by the user, then
+     remove it from the list, because now the user wants to set
+     it.  */
+  m_user_unset_env.erase (std::string (var));
 }
 
-/* Return the vector of environment E.
-   This is used to get something to pass to execve.  */
-
-char **
-environ_vector (struct gdb_environ *e)
-{
-  return e->vector;
-}
-
-/* Return the value in environment E of variable VAR.  */
-
-char *
-get_in_environ (const struct gdb_environ *e, const char *var)
-{
-  int len = strlen (var);
-  char **vector = e->vector;
-  char *s;
-
-  for (; (s = *vector) != NULL; vector++)
-    if (strncmp (s, var, len) == 0 && s[len] == '=')
-      return &s[len + 1];
-
-  return 0;
-}
-
-/* Store the value in E of VAR as VALUE.  */
+/* See common/environ.h.  */
 
 void
-set_in_environ (struct gdb_environ *e, const char *var, const char *value)
+gdb_environ::unset (const char *var, bool update_unset_list)
 {
-  int i;
-  int len = strlen (var);
-  char **vector = e->vector;
-  char *s;
+  size_t len = strlen (var);
+  std::vector<char *>::iterator it_env;
 
-  for (i = 0; (s = vector[i]) != NULL; i++)
-    if (strncmp (s, var, len) == 0 && s[len] == '=')
+  /* We iterate until '.end () - 1' because the last element is
+     always NULL.  */
+  for (it_env = m_environ_vector.begin ();
+       it_env != m_environ_vector.end () - 1;
+       ++it_env)
+    if (match_var_in_string (*it_env, var, len))
       break;
 
-  if (s == 0)
+  if (it_env != m_environ_vector.end () - 1)
     {
-      if (i == e->allocated)
-	{
-	  e->allocated += 10;
-	  vector = (char **) xrealloc ((char *) vector,
-				       (e->allocated + 1) * sizeof (char *));
-	  e->vector = vector;
-	}
-      vector[i + 1] = 0;
+      m_user_set_env.erase (std::string (*it_env));
+      xfree (*it_env);
+
+      m_environ_vector.erase (it_env);
     }
-  else
-    xfree (s);
 
-  s = (char *) xmalloc (len + strlen (value) + 2);
-  strcpy (s, var);
-  strcat (s, "=");
-  strcat (s, value);
-  vector[i] = s;
-
-  /* This used to handle setting the PATH and GNUTARGET variables
-     specially.  The latter has been replaced by "set gnutarget"
-     (which has worked since GDB 4.11).  The former affects searching
-     the PATH to find SHELL, and searching the PATH to find the
-     argument of "symbol-file" or "exec-file".  Maybe we should have
-     some kind of "set exec-path" for that.  But in any event, having
-     "set env" affect anything besides the inferior is a bad idea.
-     What if we want to change the environment we pass to the program
-     without afecting GDB's behavior?  */
-
-  return;
+  if (update_unset_list)
+    m_user_unset_env.insert (std::string (var));
 }
 
-/* Remove the setting for variable VAR from environment E.  */
+/* See common/environ.h.  */
 
 void
-unset_in_environ (struct gdb_environ *e, const char *var)
+gdb_environ::unset (const char *var)
 {
-  int len = strlen (var);
-  char **vector = e->vector;
-  char *s;
+  unset (var, true);
+}
 
-  for (; (s = *vector) != NULL; vector++)
-    {
-      if (strncmp (s, var, len) == 0 && s[len] == '=')
-	{
-	  xfree (s);
-	  /* Walk through the vector, shuffling args down by one, including
-	     the NULL terminator.  Can't use memcpy() here since the regions
-	     overlap, and memmove() might not be available.  */
-	  while ((vector[0] = vector[1]) != NULL)
-	    {
-	      vector++;
-	    }
-	  break;
-	}
-    }
+/* See common/environ.h.  */
+
+char **
+gdb_environ::envp () const
+{
+  return const_cast<char **> (&m_environ_vector[0]);
+}
+
+/* See common/environ.h.  */
+
+const std::set<std::string> &
+gdb_environ::user_set_env () const
+{
+  return m_user_set_env;
+}
+
+const std::set<std::string> &
+gdb_environ::user_unset_env () const
+{
+  return m_user_unset_env;
 }

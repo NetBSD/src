@@ -1,4 +1,4 @@
-# Copyright 2009-2017 Free Software Foundation, Inc.
+# Copyright 2009-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -78,6 +78,7 @@ proc hook_stop_before_frame {} {
 proc hook_stop_kill {} {
     with_test_prefix "hook-stop kills inferior" {
 	global gdb_prompt
+	global decimal
 
 	setup "kill"
 
@@ -85,7 +86,7 @@ proc hook_stop_kill {} {
 
 	set test "run hook-stop"
 	gdb_test_multiple "continue" "$test" {
-	    -re "Continuing.\r\n${gdb_prompt} $" {
+	    -re "Continuing.\r\n\\\[Inferior $decimal \\(.*\\) killed\\\]\r\n${gdb_prompt} $" {
 		pass $test
 	    }
 	}

@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/amd64.
 
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,6 +25,7 @@
 #include "symtab.h"
 
 #include "amd64-tdep.h"
+#include "common/x86-xstate.h"
 #include "nbsd-tdep.h"
 #include "solib-svr4.h"
 #include "trad-frame.h"
@@ -241,16 +242,15 @@ amd64nbsd_trapframe_sniffer (const struct frame_unwind *self,
 {
   ULONGEST cs = 0;
   const char *name;
-  volatile struct gdb_exception ex;
 
   TRY
     {
       cs = get_frame_register_unsigned (this_frame, AMD64_CS_REGNUM);
     }
-  CATCH (ex, RETURN_MASK_ERROR)
+  CATCH (except, RETURN_MASK_ERROR)
     {
-      if (ex.reason < 0 && ex.error != NOT_AVAILABLE_ERROR)
-	throw_exception (ex);
+      if (except.reason < 0 && except.error != NOT_AVAILABLE_ERROR)
+	throw_exception (except);
     }
   END_CATCH
   if ((cs & I386_SEL_RPL) == I386_SEL_UPL)
@@ -296,7 +296,8 @@ amd64nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tdep->gregset_num_regs = ARRAY_SIZE (amd64nbsd_r_reg_offset);
   tdep->sizeof_gregset = 26 * 8;
 
-  amd64_init_abi (info, gdbarch);
+  amd64_init_abi (info, gdbarch,
+		  amd64_target_description (X86_XSTATE_SSE_MASK, true));
 
   tdep->jb_pc_offset = 7 * 8;
 
@@ -312,10 +313,6 @@ amd64nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* Unwind kernel trap frames correctly.  */
   frame_unwind_prepend_unwinder (gdbarch, &amd64nbsd_trapframe_unwind);
 }
-
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-void _initialize_amd64nbsd_tdep (void);
 
 void
 _initialize_amd64nbsd_tdep (void)

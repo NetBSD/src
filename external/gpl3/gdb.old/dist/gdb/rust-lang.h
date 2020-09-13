@@ -1,6 +1,6 @@
 /* Rust language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 2016-2017 Free Software Foundation, Inc.
+   Copyright (C) 2016-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,9 +26,6 @@ struct type;
 /* The la_parser implementation for Rust.  */
 extern int rust_parse (struct parser_state *);
 
-/* The la_error implementation for Rust.  */
-extern void rustyyerror (const char *);
-
 /* Return true if TYPE is a tuple type; otherwise false.  */
 extern bool rust_tuple_type_p (struct type *type);
 
@@ -39,11 +36,16 @@ extern bool rust_tuple_struct_type_p (struct type *type);
    stringif no crate name can be found.  */
 extern std::string rust_crate_for_block (const struct block *block);
 
+/* Returns the last segment of a Rust path like foo::bar::baz.  Will
+   not handle cases where the last segment contains generics.  */
+
+extern const char *rust_last_path_segment (const char *path);
+
 /* Create a new slice type.  NAME is the name of the type.  ELT_TYPE
    is the type of the elements of the slice.  USIZE_TYPE is the Rust
    "usize" type to use.  The new type is allocated whereever ELT_TYPE
    is allocated.  */
-struct type *rust_slice_type (const char *name, struct type *elt_type,
-			      struct type *usize_type);
+extern struct type *rust_slice_type (const char *name, struct type *elt_type,
+				     struct type *usize_type);
 
 #endif /* RUST_LANG_H */

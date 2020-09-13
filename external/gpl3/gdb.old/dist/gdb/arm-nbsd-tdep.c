@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/arm.
 
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,8 @@
 
 #include "defs.h"
 #include "osabi.h"
+#include "gdbcore.h"
+#include "regset.h"
 
 #include "arch/arm.h"
 #include "arm-tdep.h"
@@ -36,6 +38,64 @@ static const gdb_byte arm_nbsd_arm_be_breakpoint[] = {0xe6, 0x00, 0x00, 0x11};
 static const gdb_byte arm_nbsd_thumb_le_breakpoint[] = {0xfe, 0xde};
 static const gdb_byte arm_nbsd_thumb_be_breakpoint[] = {0xde, 0xfe};
 
+/* Register maps.  */
+
+static const struct regcache_map_entry arm_nbsd_gregmap[] =
+  {
+    { 13, ARM_A1_REGNUM, 4 }, /* r0 ... r12 */
+    { 1, ARM_SP_REGNUM, 4 },
+    { 1, ARM_LR_REGNUM, 4 },
+    { 1, ARM_PC_REGNUM, 4 },
+    { 1, ARM_PS_REGNUM, 4 },
+    { 0 }
+  };
+
+static const struct regcache_map_entry arm_nbsd_vfpregmap[] =
+  {
+    { 1, ARM_FPS_REGNUM, 4 },		/* fpexc */
+    { 1, ARM_FPSCR_REGNUM, 4 },		/* fpscr */
+    { 1, REGCACHE_MAP_SKIP, 4 },	/* fpinst */
+    { 1, REGCACHE_MAP_SKIP, 4 },	/* fpinst2 */
+    { 32, ARM_D0_REGNUM, 8 }, /* d0 ... d31 */	/* really 33, not 32 */
+    { 1, REGCACHE_MAP_SKIP, 8 },	/* fstmx format */
+    { 0 }
+  };
+
+/* Register set definitions.  */
+
+const struct regset arm_nbsd_gregset =
+  {
+    arm_nbsd_gregmap,
+    regcache_supply_regset, regcache_collect_regset
+  };
+
+const struct regset arm_nbsd_vfpregset =
+  {
+    arm_nbsd_vfpregmap,
+    regcache_supply_regset, regcache_collect_regset
+  };
+
+/* Implement the "regset_from_core_section" gdbarch method.  */
+
+#define ARM_NBSD_SIZEOF_GREGSET (17 * 4)
+#define ARM_NBSD_SIZEOF_VFPREGSET (4 * 4 + 33 * 8)
+
+static void
+arm_nbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
+				       iterate_over_regset_sections_cb *cb,
+				       void *cb_data,
+				       const struct regcache *regcache)
+{
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+
+  cb (".reg", ARM_NBSD_SIZEOF_GREGSET, ARM_NBSD_SIZEOF_GREGSET,
+      &arm_nbsd_gregset, NULL, cb_data);
+
+  // XXX: Don't see it in core.
+  if (tdep->vfp_register_count > 0)
+    cb (".reg2", ARM_NBSD_SIZEOF_VFPREGSET, ARM_NBSD_SIZEOF_VFPREGSET,
+	&arm_nbsd_vfpregset, "VFP floating-point", cb_data);
+}
 static void
 arm_netbsd_init_abi_common (struct gdbarch_info info,
 			    struct gdbarch *gdbarch)
@@ -71,7 +131,7 @@ arm_netbsd_init_abi_common (struct gdbarch_info info,
   set_gdbarch_software_single_step (gdbarch, arm_software_single_step);
   /* Core support */
   set_gdbarch_iterate_over_regset_sections
-    (gdbarch, armbsd_iterate_over_regset_sections);
+    (gdbarch, arm_nbsd_iterate_over_regset_sections);
 
 }
 
@@ -103,9 +163,6 @@ arm_netbsd_elf_init_abi (struct gdbarch_info info,
   /* for single stepping; see PR/50773 */
   set_gdbarch_skip_solib_resolver (gdbarch, nbsd_skip_solib_resolver);
 }
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-extern initialize_file_ftype _initialize_arm_netbsd_tdep;
 
 void
 _initialize_arm_netbsd_tdep (void)
