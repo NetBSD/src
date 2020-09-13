@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.145 2020/09/13 18:27:39 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.146 2020/09/13 19:46:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.145 2020/09/13 18:27:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.146 2020/09/13 19:46:23 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -142,6 +142,12 @@ typedef struct {
     const struct If *if_info;	/* Info for current statement */
     const char *p;		/* The remaining condition to parse */
     Token curr;			/* Single push-back token used in parsing */
+
+    /* Whether an error message has already been printed for this condition.
+     * The first available error message is usually the most specific one,
+     * therefore it makes sense to suppress the standard "Malformed
+     * conditional" message. */
+    Boolean printedError;
 } CondParser;
 
 static Token CondParser_Expr(CondParser *par, Boolean);
@@ -411,6 +417,7 @@ CondParser_String(CondParser *par, Boolean doEval, Boolean strictLHS,
     Boolean qt;
     const char *start;
     VarEvalFlags eflags;
+    VarParseErrors errors;
 
     Buf_Init(&buf, 0);
     str = NULL;
@@ -454,9 +461,11 @@ CondParser_String(CondParser *par, Boolean doEval, Boolean strictLHS,
 		     (doEval ? VARE_WANTRES : 0);
 	    nested_p = par->p;
 	    atStart = nested_p == start;
-	    (void)Var_Parse(&nested_p, VAR_CMD, eflags, &str, freeIt);
+	    errors = Var_Parse(&nested_p, VAR_CMD, eflags, &str, freeIt);
 	    /* TODO: handle errors */
 	    if (str == var_Error) {
+	        if (errors & VPE_ANY_MSG)
+	            par->printedError = TRUE;
 		if (*freeIt) {
 		    free(*freeIt);
 		    *freeIt = NULL;
@@ -1038,10 +1047,11 @@ CondEvalExpression(const struct If *info, const char *cond, Boolean *value,
     par.if_info = info;
     par.p = cond;
     par.curr = TOK_NONE;
+    par.printedError = FALSE;
 
     rval = CondParser_Eval(&par, value);
 
-    if (rval == COND_INVALID && eprint)
+    if (rval == COND_INVALID && eprint && !par.printedError)
 	Parse_Error(PARSE_FATAL, "Malformed conditional (%s)", cond);
 
     return rval;
