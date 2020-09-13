@@ -1,4 +1,4 @@
-# $NetBSD: varmod-loop.mk,v 1.2 2020/08/16 12:30:45 rillig Exp $
+# $NetBSD: varmod-loop.mk,v 1.3 2020/09/13 07:32:32 rillig Exp $
 #
 # Tests for the :@var@...${var}...@ variable modifier.
 
@@ -26,6 +26,11 @@ mod-loop-varname:
 	# In extreme cases, even the backslash can be used as variable name.
 	# It needs to be doubled though.
 	@echo :${:U1 2 3:@\\@x${${:Ux:S,x,\\,}}y@}:
+
+	# The variable name can technically be empty, and in this situation
+	# the variable value cannot be accessed since the empty variable is
+	# protected to always return an empty string.
+	@echo empty: :${:U1 2 3:@@x${}y@}:
 
 # The :@ modifier resolves the variables a little more often than expected.
 # In particular, it resolves _all_ variables from the context, and not only
