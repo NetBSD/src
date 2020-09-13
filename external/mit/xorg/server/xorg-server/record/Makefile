@@ -1,8 +1,12 @@
-#	$NetBSD: Makefile,v 1.2 2008/08/10 06:42:39 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2020/09/13 23:01:02 mrg Exp $
 
 LIBISPRIVATE=	yes
 
 .include "../Makefile.serverlib"
+
+CPPFLAGS+=      -I${DESTDIR}${X11INCDIR}/xorg
+
+CPPFLAGS+=      ${X11FLAGS.DIX} ${X11INCS.DIX}
 
 LIB=	record
 SRCS=	${SRCS.record}

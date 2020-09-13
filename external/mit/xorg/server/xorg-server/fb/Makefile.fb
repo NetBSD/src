@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.fb,v 1.12 2020/08/09 15:02:52 tsutsui Exp $
+#	$NetBSD: Makefile.fb,v 1.13 2020/09/13 23:01:02 mrg Exp $
 
 .PATH:		${X11SRCDIR.xorg-server}/fb
 SRCS.fb=	fballpriv.c     \
@@ -30,12 +30,10 @@ SRCS.fb=	fballpriv.c     \
 		fbutil.c        \
 		fbwindow.c
 
-CPPFLAGS+=	${X11FLAGS.DIX} ${X11INCS.DIX} -DHAVE_DIX_CONFIG_H
+CPPFLAGS+=	${X11FLAGS.DIX} ${X11INCS.DIX}
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${DESTDIR}${X11INCDIR}/xorg
-
-CPPFLAGS+=	-DHAVE_DIX_CONFIG_H
 
 # XXX
 COPTS.fbpict.c=		-Wno-error

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2019/04/16 21:20:52 mrg Exp $
+#	$NetBSD: Makefile,v 1.18 2020/09/13 23:01:02 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -21,8 +21,7 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/libdrm \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${DESTDIR}${X11INCDIR}/xorg \
-		-I${X11SRCDIR.xorg-server}/render \
-		-DHAVE_DIX_CONFIG_H
+		-I${X11SRCDIR.xorg-server}/render
 
 CPPFLAGS+=	${X11FLAGS.OS_DEFINES} ${X11FLAGS.DIX} \
 		${X11FLAGS.EXTENSION}
