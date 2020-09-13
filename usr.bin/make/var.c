@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.505 2020/09/12 22:12:17 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.506 2020/09/13 05:55:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.505 2020/09/12 22:12:17 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.506 2020/09/13 05:55:39 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.505 2020/09/12 22:12:17 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.506 2020/09/13 05:55:39 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3537,16 +3537,16 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags, void **freePtr)
 	    }
 
 	    /* The variable expression is based on an undefined variable.
-	     * Most modifiers leave this expression in the "undefined" state
-	     * (VAR_JUNK), only some modifiers like :D, :U, :L, :P turn this
-	     * undefined expression into a defined expression.
+	     * Nevertheless it needs a Var, for modifiers that access the
+	     * variable name, such as :L or :?, and for modifiers that access
+	     * the variable flags (VAR_JUNK, VAR_KEEP).
 	     *
-	     * At the end, after applying all modifiers, if the expression is
-	     * still undefined after applying all the modifiers, var_Error is
-	     * returned.  Until then, the expression needs a variable struct,
-	     * for all the modifiers that need access to the variable name,
-	     * such as :L or :?.
-	     */
+	     * Most modifiers leave this expression in the "undefined" state
+	     * (VAR_JUNK), only a few modifiers like :D, :U, :L, :P turn this
+	     * undefined expression into a defined expression (VAR_KEEP).
+	     *
+	     * At the end, after applying all modifiers, if the expression
+	     * is still !VAR_KEEP, Var_Parse will return var_Error. */
 	    v = bmake_malloc(sizeof(Var));
 	    v->name = varname;
 	    Buf_Init(&v->val, 1);
