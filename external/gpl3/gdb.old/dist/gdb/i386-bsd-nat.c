@@ -1,6 +1,6 @@
 /* Native-dependent code for modern i386 BSD's.
 
-   Copyright (C) 2000-2017 Free Software Foundation, Inc.
+   Copyright (C) 2000-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -97,7 +97,7 @@ i386bsd_supply_gregset (struct regcache *regcache, const void *gregs)
       int offset = i386bsd_r_reg_offset[regnum];
 
       if (offset != -1)
-	regcache_raw_supply (regcache, regnum, regs + offset);
+	regcache->raw_supply (regnum, regs + offset);
     }
 }
 
@@ -119,7 +119,7 @@ i386bsd_collect_gregset (const struct regcache *regcache,
 	  int offset = i386bsd_r_reg_offset[i];
 
 	  if (offset != -1)
-	    regcache_raw_collect (regcache, i, regs + offset);
+	    regcache->raw_collect (i, regs + offset);
 	}
     }
 }
@@ -127,17 +127,17 @@ i386bsd_collect_gregset (const struct regcache *regcache,
 /* Fetch register REGNUM from the inferior.  If REGNUM is -1, do this
    for all registers (including the floating point registers).  */
 
-static void
-i386bsd_fetch_inferior_registers (struct target_ops *ops,
-				  struct regcache *regcache, int regnum)
+void
+i386bsd_fetch_inferior_registers (struct regcache *regcache, int regnum)
 {
-  pid_t pid = get_ptrace_pid (regcache_get_ptid (regcache));
+  pid_t pid = get_ptrace_pid (regcache->ptid ());
+  int lwp = regcache->ptid ().lwp ();
 
   if (regnum == -1 || GETREGS_SUPPLIES (regnum))
     {
       struct reg regs;
 
-      if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs,  ptid_get_lwp (inferior_ptid)) == -1)
+      if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
       i386bsd_supply_gregset (regcache, &regs);
@@ -159,7 +159,7 @@ i386bsd_fetch_inferior_registers (struct target_ops *ops,
 
 	  xstateregs = alloca (x86bsd_xsave_len);
 	  if (ptrace (PT_GETXSTATE, pid,
-		      (PTRACE_TYPE_ARG3) xstateregs,  ptid_get_lwp (inferior_ptid)) == -1)
+		      (PTRACE_TYPE_ARG3) xstateregs, lwp) == -1)
 	    perror_with_name (_("Couldn't get extended state status"));
 
 	  i387_supply_xsave (regcache, -1, xstateregs);
@@ -169,7 +169,7 @@ i386bsd_fetch_inferior_registers (struct target_ops *ops,
       
 #ifdef HAVE_PT_GETXMMREGS
       if (have_ptrace_xmmregs != 0
-	  && ptrace(PT_GETXMMREGS, pid, (PTRACE_TYPE_ARG3) xmmregs,  ptid_get_lwp (inferior_ptid)) == 0)
+	  && ptrace(PT_GETXMMREGS, pid, (PTRACE_TYPE_ARG3) xmmregs, lwp) == 0)
 	{
 	  have_ptrace_xmmregs = 1;
 	  i387_supply_fxsave (regcache, -1, xmmregs);
@@ -178,7 +178,7 @@ i386bsd_fetch_inferior_registers (struct target_ops *ops,
 	{
 	  have_ptrace_xmmregs = 0;
 #endif
-          if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs,  ptid_get_lwp (inferior_ptid)) == -1)
+          if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, lwp) == -1)
 	    perror_with_name (_("Couldn't get floating point status"));
 
 	  i387_supply_fsave (regcache, -1, &fpregs);
@@ -191,22 +191,22 @@ i386bsd_fetch_inferior_registers (struct target_ops *ops,
 /* Store register REGNUM back into the inferior.  If REGNUM is -1, do
    this for all registers (including the floating point registers).  */
 
-static void
-i386bsd_store_inferior_registers (struct target_ops *ops,
-				  struct regcache *regcache, int regnum)
+void
+i386bsd_store_inferior_registers (struct regcache *regcache, int regnum)
 {
-  pid_t pid = get_ptrace_pid (regcache_get_ptid (regcache));
+  pid_t pid = get_ptrace_pid (regcache->ptid ());
+  int lwp = regcache->ptid ().lwp ();
 
   if (regnum == -1 || GETREGS_SUPPLIES (regnum))
     {
       struct reg regs;
 
-      if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs,  ptid_get_lwp (inferior_ptid)) == -1)
+      if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp) == -1)
         perror_with_name (_("Couldn't get registers"));
 
       i386bsd_collect_gregset (regcache, &regs, regnum);
 
-      if (ptrace (PT_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs,  ptid_get_lwp (inferior_ptid)) == -1)
+      if (ptrace (PT_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp) == -1)
         perror_with_name (_("Couldn't write registers"));
 
       if (regnum != -1)
@@ -227,10 +227,10 @@ i386bsd_store_inferior_registers (struct target_ops *ops,
 
 	  xstateregs = alloca (x86bsd_xsave_len);
 	  if (ptrace (PT_GETXSTATE, pid,
-		      (PTRACE_TYPE_ARG3) xstateregs,  ptid_get_lwp (inferior_ptid)) == -1)
+		      (PTRACE_TYPE_ARG3) xstateregs,  lwp) == -1)
 	    perror_with_name (_("Couldn't get extended state status"));
 
-	  i387_collect_xsave (regcache, -1, xstateregs,  ptid_get_lwp (inferior_ptid));
+	  i387_collect_xsave (regcache, -1, xstateregs, lwp);
 
 	  if (ptrace (PT_SETXSTATE, pid,
 		      (PTRACE_TYPE_ARG3) xstateregs, x86bsd_xsave_len) == -1)
@@ -241,49 +241,31 @@ i386bsd_store_inferior_registers (struct target_ops *ops,
 
 #ifdef HAVE_PT_GETXMMREGS
       if (have_ptrace_xmmregs != 0
-	  && ptrace(PT_GETXMMREGS, pid, (PTRACE_TYPE_ARG3) xmmregs,  ptid_get_lwp (inferior_ptid)) == 0)
+	  && ptrace(PT_GETXMMREGS, pid, (PTRACE_TYPE_ARG3) xmmregs, lwp) == 0)
 	{
 	  have_ptrace_xmmregs = 1;
 
 	  i387_collect_fxsave (regcache, regnum, xmmregs);
 
-	  if (ptrace (PT_SETXMMREGS, pid, (PTRACE_TYPE_ARG3) xmmregs,  ptid_get_lwp (inferior_ptid)) == -1)
+	  if (ptrace (PT_SETXMMREGS, pid, (PTRACE_TYPE_ARG3) xmmregs, lwp) == -1)
             perror_with_name (_("Couldn't write XMM registers"));
 	}
       else
 	{
 	  have_ptrace_xmmregs = 0;
 #endif
-          if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs,  ptid_get_lwp (inferior_ptid)) == -1)
+          if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, lwp) == -1)
 	    perror_with_name (_("Couldn't get floating point status"));
 
           i387_collect_fsave (regcache, regnum, &fpregs);
 
-          if (ptrace (PT_SETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs,  ptid_get_lwp (inferior_ptid)) == -1)
+          if (ptrace (PT_SETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, lwp) == -1)
 	    perror_with_name (_("Couldn't write floating point status"));
 #ifdef HAVE_PT_GETXMMREGS
         }
 #endif
     }
 }
-
-/* Create a prototype *BSD/i386 target.  The client can override it
-   with local methods.  */
-
-struct target_ops *
-i386bsd_target (void)
-{
-  struct target_ops *t;
-
-  t = x86bsd_target ();
-  t->to_fetch_registers = i386bsd_fetch_inferior_registers;
-  t->to_store_registers = i386bsd_store_inferior_registers;
-  return t;
-}
-
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-void _initialize_i386bsd_nat (void);
 
 void
 _initialize_i386bsd_nat (void)

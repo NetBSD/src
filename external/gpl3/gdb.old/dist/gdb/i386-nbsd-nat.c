@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD/i386.
 
-   Copyright (C) 2004-2017 Free Software Foundation, Inc.
+   Copyright (C) 2004-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -36,16 +36,6 @@
 #include "nbsd-nat.h"
 #include "bsd-kvm.h"
 
-#ifndef HAVE_GREGSET_T
-typedef struct reg gregset_t;
-#endif
-
-#ifndef HAVE_FPREGSET_T
-typedef struct fpreg fpregset_t;
-#endif
-
-#include "gregset.h" 
-
 static int
 i386nbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
 {
@@ -75,74 +65,25 @@ i386nbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
   if (pcb->pcb_esp == 0)
     return 0;
 
-  read_memory (pcb->pcb_esp, (gdb_byte *) &sf, sizeof sf);
-
-  if ( (unsigned long)sf.sf_eip >= (unsigned long)0xc0100000 )
-    {
-      /* Yes, we have a switchframe that matches cpu_switchto() or
-         the new dumpsys().  */
-
-      pcb->pcb_esp += sizeof (struct switchframe);
-      regcache_raw_supply (regcache, I386_EDI_REGNUM, &sf.sf_edi);
-      regcache_raw_supply (regcache, I386_ESI_REGNUM, &sf.sf_esi);
-      regcache_raw_supply (regcache, I386_EBP_REGNUM, &pcb->pcb_ebp);
-      regcache_raw_supply (regcache, I386_ESP_REGNUM, &pcb->pcb_esp);
-      regcache_raw_supply (regcache, I386_EBX_REGNUM, &sf.sf_ebx);
-      regcache_raw_supply (regcache, I386_EIP_REGNUM, &sf.sf_eip);
-    }
-  else
-    {
-      CORE_ADDR pc, fp;
-
-      /* No, the pcb must have been last updated by savectx() in old
-         dumpsys(). Use the frame pointer to recover enough state.  */
-
-      read_memory (pcb->pcb_ebp, (gdb_byte *) &fp, sizeof(fp));
-      read_memory (pcb->pcb_ebp + 4, (gdb_byte *) &pc, sizeof(pc));
-
-      regcache_raw_supply (regcache, I386_ESP_REGNUM, &pcb->pcb_ebp);
-      regcache_raw_supply (regcache, I386_EBP_REGNUM, &fp);
-      regcache_raw_supply (regcache, I386_EIP_REGNUM, &pc);
-    }
+  read_memory (pcb->pcb_esp, (gdb_byte *)&sf, sizeof sf);
+  pcb->pcb_esp += sizeof (struct switchframe);
+  regcache->raw_supply (I386_EDI_REGNUM, &sf.sf_edi);
+  regcache->raw_supply (I386_ESI_REGNUM, &sf.sf_esi);
+  regcache->raw_supply (I386_EBP_REGNUM, &pcb->pcb_ebp);
+  regcache->raw_supply (I386_ESP_REGNUM, &pcb->pcb_esp);
+  regcache->raw_supply (I386_EBX_REGNUM, &sf.sf_ebx);
+  regcache->raw_supply (I386_EIP_REGNUM, &sf.sf_eip);
 
   return 1;
 }
 
-/* Transfering floating-point registers between GDB, inferiors and cores.  */
-   
-/* Fill GDB's register cache with the floating-point and SSE register
-   values in *FPREGSETP.  */
-
-void
-supply_fpregset (struct regcache *regcache, const fpregset_t *fpregsetp)
-{  
-  i387_supply_fsave (regcache, -1, fpregsetp);
-}
-   
-/* Fill register REGNUM (if it is a floating-point or SSE register) in
-   *FPREGSETP with the value in GDB's register cache.  If REGNUM is
-   -1, do this for all registers.  */
-
-void
-fill_fpregset (const struct regcache *regcache,
-               fpregset_t *fpregsetp, int regnum)
-{
-  i387_collect_fsave (regcache, regnum, fpregsetp);
-}
-
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-void _initialize_i386nbsd_nat (void);
+static i386_bsd_nat_target<nbsd_nat_target> the_i386_nbsd_nat_target;
 
 void
 _initialize_i386nbsd_nat (void)
 {
-  struct target_ops *t;
+  add_inf_child_target (&the_i386_nbsd_nat_target);
 
-  /* Add some extra features to the common *BSD/i386 target.  */
-  t = i386bsd_target ();
-  nbsd_nat_add_target (t);
- 
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (i386nbsd_supply_pcb);
 }

@@ -1,3 +1,12 @@
+2017-04-22  Jim Wilson  <jim.wilson@linaro.org>
+
+	* fcvtz.s, fstur.s, ldn_single.s, ldnr.s, mla.s, mls.s, uzp.s: Align
+	data.
+	* sumulh.s: Delete unnecessary data alignment.
+	* stn_single.s: Align data.  Fix unaligned ldr insns.  Adjust cmp
+	arguments to match change.
+	* ldn_multiple.s, stn_multiple.s: New.
+
 2017-04-08  Jim Wilson  <jim.wilson@linaro.org>
 
 	* fcvtl.s: New.

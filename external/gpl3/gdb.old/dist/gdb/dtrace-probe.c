@@ -1,6 +1,6 @@
 /* DTrace probe support for GDB.
 
-   Copyright (C) 2014-2017 Free Software Foundation, Inc.
+   Copyright (C) 2014-2019 Free Software Foundation, Inc.
 
    Contributed by Oracle, Inc.
 
@@ -21,7 +21,7 @@
 
 #include "defs.h"
 #include "probe.h"
-#include "vec.h"
+#include "common/vec.h"
 #include "elf-bfd.h"
 #include "gdbtypes.h"
 #include "obstack.h"
@@ -41,27 +41,26 @@
 # define SHT_SUNW_dof	0x6ffffff4
 #endif
 
-/* Forward declaration.  */
-
-extern const struct probe_ops dtrace_probe_ops;
-
 /* The following structure represents a single argument for the
    probe.  */
 
 struct dtrace_probe_arg
 {
+  dtrace_probe_arg (struct type *type_, std::string &&type_str_,
+		    expression_up &&expr_)
+    : type (type_), type_str (std::move (type_str_)),
+      expr (std::move (expr_))
+  {}
+
   /* The type of the probe argument.  */
   struct type *type;
 
   /* A string describing the type.  */
-  char *type_str;
+  std::string type_str;
 
   /* The argument converted to an internal GDB expression.  */
-  struct expression *expr;
+  expression_up expr;
 };
-
-typedef struct dtrace_probe_arg dtrace_probe_arg_s;
-DEF_VEC_O (dtrace_probe_arg_s);
 
 /* The following structure represents an enabler for a probe.  */
 
@@ -73,38 +72,105 @@ struct dtrace_probe_enabler
   CORE_ADDR address;
 };
 
-typedef struct dtrace_probe_enabler dtrace_probe_enabler_s;
-DEF_VEC_O (dtrace_probe_enabler_s);
+/* Class that implements the static probe methods for "stap" probes.  */
+
+class dtrace_static_probe_ops : public static_probe_ops
+{
+public:
+  /* See probe.h.  */
+  bool is_linespec (const char **linespecp) const override;
+
+  /* See probe.h.  */
+  void get_probes (std::vector<probe *> *probesp,
+		   struct objfile *objfile) const override;
+
+  /* See probe.h.  */
+  const char *type_name () const override;
+
+  /* See probe.h.  */
+  bool can_enable () const override
+  {
+    return true;
+  }
+
+  /* See probe.h.  */
+  std::vector<struct info_probe_column> gen_info_probes_table_header
+    () const override;
+};
+
+/* DTrace static_probe_ops.  */
+
+const dtrace_static_probe_ops dtrace_static_probe_ops {};
 
 /* The following structure represents a dtrace probe.  */
 
-struct dtrace_probe
+class dtrace_probe : public probe
 {
-  /* Generic information about the probe.  This must be the first
-     element of this struct, in order to maintain binary compatibility
-     with the `struct probe' and be able to fully abstract it.  */
-  struct probe p;
+public:
+  /* Constructor for dtrace_probe.  */
+  dtrace_probe (std::string &&name_, std::string &&provider_, CORE_ADDR address_,
+		struct gdbarch *arch_,
+		std::vector<struct dtrace_probe_arg> &&args_,
+		std::vector<struct dtrace_probe_enabler> &&enablers_)
+    : probe (std::move (name_), std::move (provider_), address_, arch_),
+      m_args (std::move (args_)),
+      m_enablers (std::move (enablers_)),
+      m_args_expr_built (false)
+  {}
 
+  /* See probe.h.  */
+  CORE_ADDR get_relocated_address (struct objfile *objfile) override;
+
+  /* See probe.h.  */
+  unsigned get_argument_count (struct frame_info *frame) override;
+
+  /* See probe.h.  */
+  bool can_evaluate_arguments () const override;
+
+  /* See probe.h.  */
+  struct value *evaluate_argument (unsigned n,
+				   struct frame_info *frame) override;
+
+  /* See probe.h.  */
+  void compile_to_ax (struct agent_expr *aexpr,
+		      struct axs_value *axs_value,
+		      unsigned n) override;
+
+  /* See probe.h.  */
+  const static_probe_ops *get_static_ops () const override;
+
+  /* See probe.h.  */
+  std::vector<const char *> gen_info_probes_table_values () const override;
+
+  /* See probe.h.  */
+  void enable () override;
+
+  /* See probe.h.  */
+  void disable () override;
+
+  /* Return the Nth argument of the probe.  */
+  struct dtrace_probe_arg *get_arg_by_number (unsigned n,
+					      struct gdbarch *gdbarch);
+
+  /* Build the GDB internal expressiosn that, once evaluated, will
+     calculate the values of the arguments of the probe.  */
+  void build_arg_exprs (struct gdbarch *gdbarch);
+
+  /* Determine whether the probe is "enabled" or "disabled".  A
+     disabled probe is a probe in which one or more enablers are
+     disabled.  */
+  bool is_enabled () const;
+
+private:
   /* A probe can have zero or more arguments.  */
-  int probe_argc;
-  VEC (dtrace_probe_arg_s) *args;
+  std::vector<struct dtrace_probe_arg> m_args;
 
   /* A probe can have zero or more "enablers" associated with it.  */
-  VEC (dtrace_probe_enabler_s) *enablers;
+  std::vector<struct dtrace_probe_enabler> m_enablers;
 
   /* Whether the expressions for the arguments have been built.  */
-  unsigned int args_expr_built : 1;
+  bool m_args_expr_built;
 };
-
-/* Implementation of the probe_is_linespec method.  */
-
-static int
-dtrace_probe_is_linespec (const char **linespecp)
-{
-  static const char *const keywords[] = { "-pdtrace", "-probe-dtrace", NULL };
-
-  return probe_is_linespec_by_keyword (linespecp, keywords);
-}
 
 /* DOF programs can contain an arbitrary number of sections of 26
    different types.  In order to support DTrace USDT probes we only
@@ -313,7 +379,8 @@ struct dtrace_dof_probe
 
 static void
 dtrace_process_dof_probe (struct objfile *objfile,
-			  struct gdbarch *gdbarch, VEC (probe_p) **probesp,
+			  struct gdbarch *gdbarch,
+			  std::vector<probe *> *probesp,
 			  struct dtrace_dof_hdr *dof,
 			  struct dtrace_dof_probe *probe,
 			  struct dtrace_dof_provider *provider,
@@ -321,8 +388,6 @@ dtrace_process_dof_probe (struct objfile *objfile,
 			  char *argtab, uint64_t strtab_size)
 {
   int i, j, num_probes, num_enablers;
-  struct cleanup *cleanup;
-  VEC (dtrace_probe_enabler_s) *enablers;
   char *p;
 
   /* Each probe section can define zero or more probes of two
@@ -367,9 +432,7 @@ dtrace_process_dof_probe (struct objfile *objfile,
 
   /* Build the list of enablers for the probes defined in this Probe
      DOF section.  */
-  enablers = NULL;
-  cleanup
-    = make_cleanup (VEC_cleanup (dtrace_probe_enabler_s), &enablers);
+  std::vector<struct dtrace_probe_enabler> enablers;
   num_enablers = DOF_UINT (dof, probe->dofpr_nenoffs);
   for (i = 0; i < num_enablers; i++)
     {
@@ -379,79 +442,74 @@ dtrace_process_dof_probe (struct objfile *objfile,
 
       enabler.address = DOF_UINT (dof, probe->dofpr_addr)
 	+ DOF_UINT (dof, enabler_offset);
-      VEC_safe_push (dtrace_probe_enabler_s, enablers, &enabler);
+      enablers.push_back (enabler);
     }
 
   for (i = 0; i < num_probes; i++)
     {
       uint32_t probe_offset
 	= ((uint32_t *) offtab)[DOF_UINT (dof, probe->dofpr_offidx) + i];
-      struct dtrace_probe *ret =
-	XOBNEW (&objfile->per_bfd->storage_obstack, struct dtrace_probe);
-
-      ret->p.pops = &dtrace_probe_ops;
-      ret->p.arch = gdbarch;
-      ret->args_expr_built = 0;
 
       /* Set the provider and the name of the probe.  */
-      ret->p.provider
-	= xstrdup (strtab + DOF_UINT (dof, provider->dofpv_name));
-      ret->p.name = xstrdup (strtab + DOF_UINT (dof, probe->dofpr_name));
+      const char *probe_provider
+	= strtab + DOF_UINT (dof, provider->dofpv_name);
+      const char *name = strtab + DOF_UINT (dof, probe->dofpr_name);
 
       /* The probe address.  */
-      ret->p.address
+      CORE_ADDR address
 	= DOF_UINT (dof, probe->dofpr_addr) + DOF_UINT (dof, probe_offset);
 
       /* Number of arguments in the probe.  */
-      ret->probe_argc = DOF_UINT (dof, probe->dofpr_nargc);
+      int probe_argc = DOF_UINT (dof, probe->dofpr_nargc);
 
       /* Store argument type descriptions.  A description of the type
          of the argument is in the (J+1)th null-terminated string
          starting at 'strtab' + 'probe->dofpr_nargv'.  */
-      ret->args = NULL;
+      std::vector<struct dtrace_probe_arg> args;
       p = strtab + DOF_UINT (dof, probe->dofpr_nargv);
-      for (j = 0; j < ret->probe_argc; j++)
+      for (j = 0; j < probe_argc; j++)
 	{
-	  struct dtrace_probe_arg arg;
 	  expression_up expr;
 
 	  /* Set arg.expr to ensure all fields in expr are initialized and
 	     the compiler will not warn when arg is used.  */
-	  arg.expr = NULL;
-	  arg.type_str = xstrdup (p);
+	  std::string type_str (p);
 
 	  /* Use strtab_size as a sentinel.  */
-	  while (*p != '\0' && p - strtab < strtab_size)
-	    ++p;
+	  while (*p++ != '\0' && p - strtab < strtab_size)
+	    ;
 
 	  /* Try to parse a type expression from the type string.  If
 	     this does not work then we set the type to `long
 	     int'.  */
-          arg.type = builtin_type (gdbarch)->builtin_long;
+          struct type *type = builtin_type (gdbarch)->builtin_long;
 
 	  TRY
 	    {
-	      expr = parse_expression_with_language (arg.type_str, language_c);
+	      expr = parse_expression_with_language (type_str.c_str (),
+						     language_c);
 	    }
 	  CATCH (ex, RETURN_MASK_ERROR)
 	    {
 	    }
 	  END_CATCH
 
-	  if (expr != NULL && expr->elts[0].opcode == OP_TYPE)
-	    arg.type = expr->elts[1].type;
+	  if (expr != NULL && expr.get ()->elts[0].opcode == OP_TYPE)
+	    type = expr.get ()->elts[1].type;
 
-	  VEC_safe_push (dtrace_probe_arg_s, ret->args, &arg);
+	  args.emplace_back (type, std::move (type_str), std::move (expr));
 	}
 
-      /* Add the vector of enablers to this probe, if any.  */
-      ret->enablers = VEC_copy (dtrace_probe_enabler_s, enablers);
+      std::vector<struct dtrace_probe_enabler> enablers_copy = enablers;
+      dtrace_probe *ret = new dtrace_probe (std::string (name),
+					    std::string (probe_provider),
+					    address, gdbarch,
+					    std::move (args),
+					    std::move (enablers_copy));
 
       /* Successfully created probe.  */
-      VEC_safe_push (probe_p, *probesp, (struct probe *) ret);
+      probesp->push_back (ret);
     }
-
-  do_cleanups (cleanup);
 }
 
 /* Helper function to collect the probes described in the DOF program
@@ -461,7 +519,7 @@ dtrace_process_dof_probe (struct objfile *objfile,
 
 static void
 dtrace_process_dof (asection *sect, struct objfile *objfile,
-		    VEC (probe_p) **probesp, struct dtrace_dof_hdr *dof)
+		    std::vector<probe *> *probesp, struct dtrace_dof_hdr *dof)
 {
   struct gdbarch *gdbarch = get_objfile_arch (objfile);
   struct dtrace_dof_sect *section;
@@ -549,78 +607,236 @@ dtrace_process_dof (asection *sect, struct objfile *objfile,
   return;
 	  
  invalid_dof_data:
-  complaint (&symfile_complaints,
-	     _("skipping section '%s' which does not contain valid DOF data."),
+  complaint (_("skipping section '%s' which does not contain valid DOF data."),
 	     sect->name);
 }
 
-/* Helper function to build the GDB internal expressiosn that, once
-   evaluated, will calculate the values of the arguments of a given
-   PROBE.  */
+/* Implementation of 'build_arg_exprs' method.  */
 
-static void
-dtrace_build_arg_exprs (struct dtrace_probe *probe,
-			struct gdbarch *gdbarch)
+void
+dtrace_probe::build_arg_exprs (struct gdbarch *gdbarch)
 {
-  struct parser_state pstate;
-  struct dtrace_probe_arg *arg;
-  int i;
-
-  probe->args_expr_built = 1;
+  size_t argc = 0;
+  m_args_expr_built = true;
 
   /* Iterate over the arguments in the probe and build the
      corresponding GDB internal expression that will generate the
      value of the argument when executed at the PC of the probe.  */
-  for (i = 0; i < probe->probe_argc; i++)
+  for (dtrace_probe_arg &arg : m_args)
     {
-      struct cleanup *back_to;
-
-      arg = VEC_index (dtrace_probe_arg_s, probe->args, i);
-
       /* Initialize the expression buffer in the parser state.  The
 	 language does not matter, since we are using our own
 	 parser.  */
-      initialize_expout (&pstate, 10, current_language, gdbarch);
-      back_to = make_cleanup (free_current_contents, &pstate.expout);
+      parser_state pstate (10, current_language, gdbarch);
 
       /* The argument value, which is ABI dependent and casted to
 	 `long int'.  */
-      gdbarch_dtrace_parse_probe_argument (gdbarch, &pstate, i);
-
-      discard_cleanups (back_to);
+      gdbarch_dtrace_parse_probe_argument (gdbarch, &pstate, argc);
 
       /* Casting to the expected type, but only if the type was
 	 recognized at probe load time.  Otherwise the argument will
 	 be evaluated as the long integer passed to the probe.  */
-      if (arg->type != NULL)
+      if (arg.type != NULL)
 	{
 	  write_exp_elt_opcode (&pstate, UNOP_CAST);
-	  write_exp_elt_type (&pstate, arg->type);
+	  write_exp_elt_type (&pstate, arg.type);
 	  write_exp_elt_opcode (&pstate, UNOP_CAST);
 	}
 
-      reallocate_expout (&pstate);
-      arg->expr = pstate.expout;
-      prefixify_expression (arg->expr);
+      arg.expr = pstate.release ();
+      prefixify_expression (arg.expr.get ());
+      ++argc;
     }
 }
 
-/* Helper function to return the Nth argument of a given PROBE.  */
+/* Implementation of 'get_arg_by_number' method.  */
 
-static struct dtrace_probe_arg *
-dtrace_get_arg (struct dtrace_probe *probe, unsigned n,
-		struct gdbarch *gdbarch)
+struct dtrace_probe_arg *
+dtrace_probe::get_arg_by_number (unsigned n, struct gdbarch *gdbarch)
 {
-  if (!probe->args_expr_built)
-    dtrace_build_arg_exprs (probe, gdbarch);
+  if (!m_args_expr_built)
+    this->build_arg_exprs (gdbarch);
 
-  return VEC_index (dtrace_probe_arg_s, probe->args, n);
+  if (n > m_args.size ())
+    internal_error (__FILE__, __LINE__,
+		    _("Probe '%s' has %d arguments, but GDB is requesting\n"
+		      "argument %u.  This should not happen.  Please\n"
+		      "report this bug."),
+		    this->get_name ().c_str (),
+		    (int) m_args.size (), n);
+
+  return &m_args[n];
+}
+
+/* Implementation of the probe is_enabled method.  */
+
+bool
+dtrace_probe::is_enabled () const
+{
+  struct gdbarch *gdbarch = this->get_gdbarch ();
+
+  for (const dtrace_probe_enabler &enabler : m_enablers)
+    if (!gdbarch_dtrace_probe_is_enabled (gdbarch, enabler.address))
+      return false;
+
+  return true;
+}
+
+/* Implementation of the get_probe_address method.  */
+
+CORE_ADDR
+dtrace_probe::get_relocated_address (struct objfile *objfile)
+{
+  return this->get_address () + ANOFFSET (objfile->section_offsets,
+					  SECT_OFF_DATA (objfile));
+}
+
+/* Implementation of the get_argument_count method.  */
+
+unsigned
+dtrace_probe::get_argument_count (struct frame_info *frame)
+{
+  return m_args.size ();
+}
+
+/* Implementation of the can_evaluate_arguments method.  */
+
+bool
+dtrace_probe::can_evaluate_arguments () const
+{
+  struct gdbarch *gdbarch = this->get_gdbarch ();
+
+  return gdbarch_dtrace_parse_probe_argument_p (gdbarch);
+}
+
+/* Implementation of the evaluate_argument method.  */
+
+struct value *
+dtrace_probe::evaluate_argument (unsigned n,
+				 struct frame_info *frame)
+{
+  struct gdbarch *gdbarch = this->get_gdbarch ();
+  struct dtrace_probe_arg *arg;
+  int pos = 0;
+
+  arg = this->get_arg_by_number (n, gdbarch);
+  return evaluate_subexp_standard (arg->type, arg->expr.get (), &pos,
+				   EVAL_NORMAL);
+}
+
+/* Implementation of the compile_to_ax method.  */
+
+void
+dtrace_probe::compile_to_ax (struct agent_expr *expr, struct axs_value *value,
+			     unsigned n)
+{
+  struct dtrace_probe_arg *arg;
+  union exp_element *pc;
+
+  arg = this->get_arg_by_number (n, expr->gdbarch);
+
+  pc = arg->expr->elts;
+  gen_expr (arg->expr.get (), &pc, expr, value);
+
+  require_rvalue (expr, value);
+  value->type = arg->type;
+}
+
+/* Implementation of the 'get_static_ops' method.  */
+
+const static_probe_ops *
+dtrace_probe::get_static_ops () const
+{
+  return &dtrace_static_probe_ops;
+}
+
+/* Implementation of the gen_info_probes_table_values method.  */
+
+std::vector<const char *>
+dtrace_probe::gen_info_probes_table_values () const
+{
+  const char *val = NULL;
+
+  if (m_enablers.empty ())
+    val = "always";
+  else if (!gdbarch_dtrace_probe_is_enabled_p (this->get_gdbarch ()))
+    val = "unknown";
+  else if (this->is_enabled ())
+    val = "yes";
+  else
+    val = "no";
+
+  return std::vector<const char *> { val };
+}
+
+/* Implementation of the enable method.  */
+
+void
+dtrace_probe::enable ()
+{
+  struct gdbarch *gdbarch = this->get_gdbarch ();
+
+  /* Enabling a dtrace probe implies patching the text section of the
+     running process, so make sure the inferior is indeed running.  */
+  if (inferior_ptid == null_ptid)
+    error (_("No inferior running"));
+
+  /* Fast path.  */
+  if (this->is_enabled ())
+    return;
+
+  /* Iterate over all defined enabler in the given probe and enable
+     them all using the corresponding gdbarch hook.  */
+  for (const dtrace_probe_enabler &enabler : m_enablers)
+    if (gdbarch_dtrace_enable_probe_p (gdbarch))
+      gdbarch_dtrace_enable_probe (gdbarch, enabler.address);
+}
+
+
+/* Implementation of the disable_probe method.  */
+
+void
+dtrace_probe::disable ()
+{
+  struct gdbarch *gdbarch = this->get_gdbarch ();
+
+  /* Disabling a dtrace probe implies patching the text section of the
+     running process, so make sure the inferior is indeed running.  */
+  if (inferior_ptid == null_ptid)
+    error (_("No inferior running"));
+
+  /* Fast path.  */
+  if (!this->is_enabled ())
+    return;
+
+  /* Are we trying to disable a probe that does not have any enabler
+     associated?  */
+  if (m_enablers.empty ())
+    error (_("Probe %s:%s cannot be disabled: no enablers."),
+	   this->get_provider ().c_str (), this->get_name ().c_str ());
+
+  /* Iterate over all defined enabler in the given probe and disable
+     them all using the corresponding gdbarch hook.  */
+  for (dtrace_probe_enabler &enabler : m_enablers)
+    if (gdbarch_dtrace_disable_probe_p (gdbarch))
+      gdbarch_dtrace_disable_probe (gdbarch, enabler.address);
+}
+
+/* Implementation of the is_linespec method.  */
+
+bool
+dtrace_static_probe_ops::is_linespec (const char **linespecp) const
+{
+  static const char *const keywords[] = { "-pdtrace", "-probe-dtrace", NULL };
+
+  return probe_is_linespec_by_keyword (linespecp, keywords);
 }
 
 /* Implementation of the get_probes method.  */
 
-static void
-dtrace_get_probes (VEC (probe_p) **probesp, struct objfile *objfile)
+void
+dtrace_static_probe_ops::get_probes (std::vector<probe *> *probesp,
+				     struct objfile *objfile) const
 {
   bfd *abfd = objfile->obfd;
   asection *sect = NULL;
@@ -641,8 +857,7 @@ dtrace_get_probes (VEC (probe_p) **probesp, struct objfile *objfile)
 	  /* Read the contents of the DOF section and then process it to
 	     extract the information of any probe defined into it.  */
 	  if (!bfd_malloc_and_get_section (abfd, sect, &dof))
-	    complaint (&symfile_complaints,
-		       _("could not obtain the contents of"
+	    complaint (_("could not obtain the contents of"
 			 "section '%s' in objfile `%s'."),
 		       sect->name, abfd->filename);
       
@@ -653,267 +868,39 @@ dtrace_get_probes (VEC (probe_p) **probesp, struct objfile *objfile)
     }
 }
 
-/* Helper function to determine whether a given probe is "enabled" or
-   "disabled".  A disabled probe is a probe in which one or more
-   enablers are disabled.  */
-
-static int
-dtrace_probe_is_enabled (struct dtrace_probe *probe)
-{
-  int i;
-  struct gdbarch *gdbarch = probe->p.arch;
-  struct dtrace_probe_enabler *enabler;
-
-  for (i = 0;
-       VEC_iterate (dtrace_probe_enabler_s, probe->enablers, i, enabler);
-       i++)
-    if (!gdbarch_dtrace_probe_is_enabled (gdbarch, enabler->address))
-      return 0;
-
-  return 1;
-}
-
-/* Implementation of the get_probe_address method.  */
-
-static CORE_ADDR
-dtrace_get_probe_address (struct probe *probe, struct objfile *objfile)
-{
-  gdb_assert (probe->pops == &dtrace_probe_ops);
-  return probe->address + ANOFFSET (objfile->section_offsets,
-				    SECT_OFF_DATA (objfile));
-}
-
-/* Implementation of the get_probe_argument_count method.  */
-
-static unsigned
-dtrace_get_probe_argument_count (struct probe *probe_generic,
-				 struct frame_info *frame)
-{
-  struct dtrace_probe *dtrace_probe = (struct dtrace_probe *) probe_generic;
-
-  gdb_assert (probe_generic->pops == &dtrace_probe_ops);
-
-  return dtrace_probe->probe_argc;
-}
-
-/* Implementation of the can_evaluate_probe_arguments method.  */
-
-static int
-dtrace_can_evaluate_probe_arguments (struct probe *probe_generic)
-{
-  struct gdbarch *gdbarch = probe_generic->arch;
-
-  gdb_assert (probe_generic->pops == &dtrace_probe_ops);
-  return gdbarch_dtrace_parse_probe_argument_p (gdbarch);
-}
-
-/* Implementation of the evaluate_probe_argument method.  */
-
-static struct value *
-dtrace_evaluate_probe_argument (struct probe *probe_generic, unsigned n,
-				struct frame_info *frame)
-{
-  struct gdbarch *gdbarch = probe_generic->arch;
-  struct dtrace_probe *dtrace_probe = (struct dtrace_probe *) probe_generic;
-  struct dtrace_probe_arg *arg;
-  int pos = 0;
-
-  gdb_assert (probe_generic->pops == &dtrace_probe_ops);
-
-  arg = dtrace_get_arg (dtrace_probe, n, gdbarch);
-  return evaluate_subexp_standard (arg->type, arg->expr, &pos, EVAL_NORMAL);
-}
-
-/* Implementation of the compile_to_ax method.  */
-
-static void
-dtrace_compile_to_ax (struct probe *probe_generic, struct agent_expr *expr,
-		      struct axs_value *value, unsigned n)
-{
-  struct dtrace_probe *dtrace_probe = (struct dtrace_probe *) probe_generic;
-  struct dtrace_probe_arg *arg;
-  union exp_element *pc;
-
-  gdb_assert (probe_generic->pops == &dtrace_probe_ops);
-
-  arg = dtrace_get_arg (dtrace_probe, n, expr->gdbarch);
-
-  pc = arg->expr->elts;
-  gen_expr (arg->expr, &pc, expr, value);
-
-  require_rvalue (expr, value);
-  value->type = arg->type;
-}
-
-/* Implementation of the probe_destroy method.  */
-
-static void
-dtrace_probe_destroy (struct probe *probe_generic)
-{
-  struct dtrace_probe *probe = (struct dtrace_probe *) probe_generic;
-  struct dtrace_probe_arg *arg;
-  int i;
-
-  gdb_assert (probe_generic->pops == &dtrace_probe_ops);
-
-  for (i = 0; VEC_iterate (dtrace_probe_arg_s, probe->args, i, arg); i++)
-    {
-      xfree (arg->type_str);
-      xfree (arg->expr);
-    }
-
-  VEC_free (dtrace_probe_enabler_s, probe->enablers);
-  VEC_free (dtrace_probe_arg_s, probe->args);
-}
-
 /* Implementation of the type_name method.  */
 
-static const char *
-dtrace_type_name (struct probe *probe_generic)
+const char *
+dtrace_static_probe_ops::type_name () const
 {
-  gdb_assert (probe_generic->pops == &dtrace_probe_ops);
   return "dtrace";
 }
 
 /* Implementation of the gen_info_probes_table_header method.  */
 
-static void
-dtrace_gen_info_probes_table_header (VEC (info_probe_column_s) **heads)
+std::vector<struct info_probe_column>
+dtrace_static_probe_ops::gen_info_probes_table_header () const
 {
-  info_probe_column_s dtrace_probe_column;
+  struct info_probe_column dtrace_probe_column;
 
   dtrace_probe_column.field_name = "enabled";
   dtrace_probe_column.print_name = _("Enabled");
 
-  VEC_safe_push (info_probe_column_s, *heads, &dtrace_probe_column);
+  return std::vector<struct info_probe_column> { dtrace_probe_column };
 }
-
-/* Implementation of the gen_info_probes_table_values method.  */
-
-static void
-dtrace_gen_info_probes_table_values (struct probe *probe_generic,
-				     VEC (const_char_ptr) **ret)
-{
-  struct dtrace_probe *probe = (struct dtrace_probe *) probe_generic;
-  const char *val = NULL;
-
-  gdb_assert (probe_generic->pops == &dtrace_probe_ops);
-
-  if (VEC_empty (dtrace_probe_enabler_s, probe->enablers))
-    val = "always";
-  else if (!gdbarch_dtrace_probe_is_enabled_p (probe_generic->arch))
-    val = "unknown";
-  else if (dtrace_probe_is_enabled (probe))
-    val = "yes";
-  else
-    val = "no";
-
-  VEC_safe_push (const_char_ptr, *ret, val);
-}
-
-/* Implementation of the enable_probe method.  */
-
-static void
-dtrace_enable_probe (struct probe *probe)
-{
-  struct gdbarch *gdbarch = probe->arch;
-  struct dtrace_probe *dtrace_probe = (struct dtrace_probe *) probe;
-  struct dtrace_probe_enabler *enabler;
-  int i;
-
-  gdb_assert (probe->pops == &dtrace_probe_ops);
-
-  /* Enabling a dtrace probe implies patching the text section of the
-     running process, so make sure the inferior is indeed running.  */
-  if (ptid_equal (inferior_ptid, null_ptid))
-    error (_("No inferior running"));
-
-  /* Fast path.  */
-  if (dtrace_probe_is_enabled (dtrace_probe))
-    return;
-
-  /* Iterate over all defined enabler in the given probe and enable
-     them all using the corresponding gdbarch hook.  */
-
-  for (i = 0;
-       VEC_iterate (dtrace_probe_enabler_s, dtrace_probe->enablers, i, enabler);
-       i++)
-    if (gdbarch_dtrace_enable_probe_p (gdbarch))
-      gdbarch_dtrace_enable_probe (gdbarch, enabler->address);
-}
-
-
-/* Implementation of the disable_probe method.  */
-
-static void
-dtrace_disable_probe (struct probe *probe)
-{
-  struct gdbarch *gdbarch = probe->arch;
-  struct dtrace_probe *dtrace_probe = (struct dtrace_probe *) probe;
-  struct dtrace_probe_enabler *enabler;
-  int i;
-
-  gdb_assert (probe->pops == &dtrace_probe_ops);
-
-  /* Disabling a dtrace probe implies patching the text section of the
-     running process, so make sure the inferior is indeed running.  */
-  if (ptid_equal (inferior_ptid, null_ptid))
-    error (_("No inferior running"));
-
-  /* Fast path.  */
-  if (!dtrace_probe_is_enabled (dtrace_probe))
-    return;
-
-  /* Are we trying to disable a probe that does not have any enabler
-     associated?  */
-  if (VEC_empty (dtrace_probe_enabler_s, dtrace_probe->enablers))
-    error (_("Probe %s:%s cannot be disabled: no enablers."), probe->provider, probe->name);
-
-  /* Iterate over all defined enabler in the given probe and disable
-     them all using the corresponding gdbarch hook.  */
-
-  for (i = 0;
-       VEC_iterate (dtrace_probe_enabler_s, dtrace_probe->enablers, i, enabler);
-       i++)
-    if (gdbarch_dtrace_disable_probe_p (gdbarch))
-      gdbarch_dtrace_disable_probe (gdbarch, enabler->address);
-}
-
-/* DTrace probe_ops.  */
-
-const struct probe_ops dtrace_probe_ops =
-{
-  dtrace_probe_is_linespec,
-  dtrace_get_probes,
-  dtrace_get_probe_address,
-  dtrace_get_probe_argument_count,
-  dtrace_can_evaluate_probe_arguments,
-  dtrace_evaluate_probe_argument,
-  dtrace_compile_to_ax,
-  NULL, /* set_semaphore  */
-  NULL, /* clear_semaphore  */
-  dtrace_probe_destroy,
-  dtrace_type_name,
-  dtrace_gen_info_probes_table_header,
-  dtrace_gen_info_probes_table_values,
-  dtrace_enable_probe,
-  dtrace_disable_probe
-};
 
 /* Implementation of the `info probes dtrace' command.  */
 
 static void
-info_probes_dtrace_command (char *arg, int from_tty)
+info_probes_dtrace_command (const char *arg, int from_tty)
 {
-  info_probes_for_ops (arg, from_tty, &dtrace_probe_ops);
+  info_probes_for_spops (arg, from_tty, &dtrace_static_probe_ops);
 }
-
-void _initialize_dtrace_probe (void);
 
 void
 _initialize_dtrace_probe (void)
 {
-  VEC_safe_push (probe_ops_cp, all_probe_ops, &dtrace_probe_ops);
+  all_static_probe_ops.push_back (&dtrace_static_probe_ops);
 
   add_cmd ("dtrace", class_info, info_probes_dtrace_command,
 	   _("\

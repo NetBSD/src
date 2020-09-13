@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD/powerpc.
 
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -32,7 +32,7 @@
 #include "inferior.h"
 #include "regcache.h"
 
-#include "gdb_assert.h"
+#include "common/gdb_assert.h"
 
 #include "nbsd-nat.h"
 #include "ppc-tdep.h"
@@ -40,15 +40,13 @@
 #include "bsd-kvm.h"
 #include "inf-ptrace.h"
 
-#ifndef HAVE_GREGSET_T
-typedef struct reg gregset_t;
-#endif
+struct ppc_nbsd_nat_target final : public nbsd_nat_target
+{
+  void fetch_registers (struct regcache *, int) override;
+  void store_registers (struct regcache *, int) override;
+};
 
-#ifndef HAVE_FPREGSET_T
-typedef struct fpreg fpregset_t;
-#endif
-#include "gregset.h"
- 
+static ppc_nbsd_nat_target the_ppc_nbsd_nat_target;
 
 /* Returns true if PT_GETREGS fetches this register.  */
 
@@ -90,18 +88,19 @@ getfpregs_supplies (struct gdbarch *gdbarch, int regnum)
 	  || regnum == tdep->ppc_fpscr_regnum);
 }
 
-static void
-ppcnbsd_fetch_inferior_registers (struct target_ops *ops,
-				  struct regcache *regcache, int regnum)
+void
+ppc_nbsd_nat_target::fetch_registers (struct regcache *regcache, int regnum)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
+  ptid_t ptid = regcache->ptid ();
+  pid_t pid = ptid.pid ();
+  int lwp = ptid.lwp ();
 
   if (regnum == -1 || getregs_supplies (gdbarch, regnum))
     {
       struct reg regs;
 
-      if (ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &regs, ptid_get_lwp (inferior_ptid)) == -1)
+      if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp) == -1)
         perror_with_name (_("Couldn't get registers"));
 
       ppc_supply_gregset (&ppcnbsd_gregset, regcache,
@@ -112,8 +111,7 @@ ppcnbsd_fetch_inferior_registers (struct target_ops *ops,
     {
       struct fpreg fpregs;
 
-      if (ptrace (PT_GETFPREGS, ptid_get_pid (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, ptid_get_lwp (inferior_ptid)) == -1)
+      if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, lwp) == -1)
 	perror_with_name (_("Couldn't get FP registers"));
 
       ppc_supply_fpregset (&ppcnbsd_fpregset, regcache,
@@ -121,25 +119,25 @@ ppcnbsd_fetch_inferior_registers (struct target_ops *ops,
     }
 }
 
-static void
-ppcnbsd_store_inferior_registers (struct target_ops *ops,
-				  struct regcache *regcache, int regnum)
+void
+ppc_nbsd_nat_target::store_registers (struct regcache *regcache, int regnum)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
+  ptid_t ptid = regcache->ptid ();
+  pid_t pid = ptid.pid ();
+  int lwp = ptid.lwp ();
 
   if (regnum == -1 || getregs_supplies (gdbarch, regnum))
     {
       struct reg regs;
 
-      if (ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &regs, ptid_get_lwp (inferior_ptid)) == -1)
+      if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
       ppc_collect_gregset (&ppcnbsd_gregset, regcache,
 			   regnum, &regs, sizeof regs);
 
-      if (ptrace (PT_SETREGS, ptid_get_pid (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &regs, ptid_get_lwp (inferior_ptid)) == -1)
+      if (ptrace (PT_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp) == -1)
 	perror_with_name (_("Couldn't write registers"));
     }
 
@@ -147,49 +145,15 @@ ppcnbsd_store_inferior_registers (struct target_ops *ops,
     {
       struct fpreg fpregs;
 
-      if (ptrace (PT_GETFPREGS, ptid_get_pid (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, ptid_get_lwp (inferior_ptid)) == -1)
+      if (ptrace (PT_GETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, lwp) == -1)
 	perror_with_name (_("Couldn't get FP registers"));
 
       ppc_collect_fpregset (&ppcnbsd_fpregset, regcache,
 			    regnum, &fpregs, sizeof fpregs);
 
-      if (ptrace (PT_SETFPREGS, ptid_get_pid (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, ptid_get_lwp (inferior_ptid)) == -1)
+      if (ptrace (PT_SETFPREGS, pid, (PTRACE_TYPE_ARG3) &fpregs, lwp) == -1)
 	perror_with_name (_("Couldn't set FP registers"));
     }
-}
-
-void
-supply_gregset (struct regcache *regcache, const gregset_t *gregs)
-{
-  if (ptrace (PT_SETREGS, ptid_get_pid (inferior_ptid),
-	      (PTRACE_TYPE_ARG3) gregs, ptid_get_lwp (inferior_ptid)) == -1)
-    perror_with_name (_("Couldn't write registers"));
-}
-
-void
-supply_fpregset (struct regcache *regcache, const fpregset_t *fpregs)
-{
-  if (ptrace (PT_SETFPREGS, ptid_get_pid (inferior_ptid),
-	      (PTRACE_TYPE_ARG3) fpregs, ptid_get_lwp (inferior_ptid)) == -1)
-    perror_with_name (_("Couldn't set FP registers"));
-}
-
-void
-fill_gregset (const struct regcache *regcache, gregset_t *gregs, int regnum)
-{
-      if (ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) gregs, ptid_get_lwp (inferior_ptid)) == -1)
-        perror_with_name (_("Couldn't get registers"));
-}
-
-void
-fill_fpregset (const struct regcache *regcache, fpregset_t *fpregs, int regnum)
-{
-      if (ptrace (PT_GETFPREGS, ptid_get_pid (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) fpregs, ptid_get_lwp (inferior_ptid)) == -1)
-	perror_with_name (_("Couldn't get FP registers"));
 }
 
 static int
@@ -197,7 +161,7 @@ ppcnbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
 {
   struct switchframe sf;
   struct callframe cf;
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   int i;
 
@@ -205,39 +169,29 @@ ppcnbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
   if (pcb->pcb_sp == 0)
     return 0;
 
-  read_memory (pcb->pcb_sp, (gdb_byte *)&sf, sizeof sf);
-  regcache_raw_supply (regcache, tdep->ppc_cr_regnum, &sf.sf_cr);
-  regcache_raw_supply (regcache, tdep->ppc_gp0_regnum + 2, &sf.sf_fixreg2);
+  read_memory (pcb->pcb_sp, (gdb_byte *)&sf, sizeof(sf));
+  regcache->raw_supply (tdep->ppc_cr_regnum, &sf.sf_cr);
+  regcache->raw_supply (tdep->ppc_gp0_regnum + 2, &sf.sf_fixreg2);
   for (i = 0 ; i < 19 ; i++)
-    regcache_raw_supply (regcache, tdep->ppc_gp0_regnum + 13 + i,
-			 &sf.sf_fixreg[i]);
+    regcache->raw_supply (tdep->ppc_gp0_regnum + 13 + i, &sf.sf_fixreg[i]);
 
   read_memory(sf.sf_sp, (gdb_byte *)&cf, sizeof(cf));
-  regcache_raw_supply (regcache, tdep->ppc_gp0_regnum + 30, &cf.cf_r30);
-  regcache_raw_supply (regcache, tdep->ppc_gp0_regnum + 31, &cf.cf_r31);
-  regcache_raw_supply (regcache, tdep->ppc_gp0_regnum + 1, &cf.cf_sp);
+  regcache->raw_supply (tdep->ppc_gp0_regnum + 30, &cf.cf_r30);
+  regcache->raw_supply (tdep->ppc_gp0_regnum + 31, &cf.cf_r31);
+  regcache->raw_supply (tdep->ppc_gp0_regnum + 1, &cf.cf_sp);
 
   read_memory(cf.cf_sp, (gdb_byte *)&cf, sizeof(cf));
-  regcache_raw_supply (regcache, tdep->ppc_lr_regnum, &cf.cf_lr);
-  regcache_raw_supply (regcache, gdbarch_pc_regnum (gdbarch), &cf.cf_lr);
+  regcache->raw_supply (tdep->ppc_lr_regnum, &cf.cf_lr);
+  regcache->raw_supply (gdbarch_pc_regnum (gdbarch), &cf.cf_lr);
 
   return 1;
 }
 
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-void _initialize_ppcnbsd_nat (void);
-
 void
 _initialize_ppcnbsd_nat (void)
 {
-  struct target_ops *t;
-
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (ppcnbsd_supply_pcb);
 
-  /* Add in local overrides.  */
-  t = inf_ptrace_target ();
-  t->to_fetch_registers = ppcnbsd_fetch_inferior_registers;
-  t->to_store_registers = ppcnbsd_store_inferior_registers;
-  nbsd_nat_add_target (t);
+  add_inf_child_target (&the_ppc_nbsd_nat_target);
 }

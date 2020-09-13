@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/i386.
 
-   Copyright (C) 1988-2017 Free Software Foundation, Inc.
+   Copyright (C) 1988-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -190,7 +190,7 @@ static void
 i386obsd_supply_uthread (struct regcache *regcache,
 			 int regnum, CORE_ADDR addr)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   CORE_ADDR sp_addr = addr + I386OBSD_UTHREAD_ESP_OFFSET;
   CORE_ADDR sp = 0;
@@ -210,7 +210,7 @@ i386obsd_supply_uthread (struct regcache *regcache,
          returned from _thread_machdep_switch.  */
       offset = i386obsd_uthread_reg_offset[I386_EIP_REGNUM] + 4;
       store_unsigned_integer (buf, 4, byte_order, sp + offset);
-      regcache_raw_supply (regcache, I386_ESP_REGNUM, buf);
+      regcache->raw_supply (I386_ESP_REGNUM, buf);
     }
 
   for (i = 0; i < ARRAY_SIZE (i386obsd_uthread_reg_offset); i++)
@@ -225,7 +225,7 @@ i386obsd_supply_uthread (struct regcache *regcache,
 
 	  /* Read the saved register from the stack frame.  */
 	  read_memory (sp + i386obsd_uthread_reg_offset[i], buf, 4);
-	  regcache_raw_supply (regcache, i, buf);
+	  regcache->raw_supply (i, buf);
 	}
     }
 }
@@ -234,7 +234,7 @@ static void
 i386obsd_collect_uthread (const struct regcache *regcache,
 			  int regnum, CORE_ADDR addr)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   CORE_ADDR sp_addr = addr + I386OBSD_UTHREAD_ESP_OFFSET;
   CORE_ADDR sp = 0;
@@ -250,7 +250,7 @@ i386obsd_collect_uthread (const struct regcache *regcache,
       /* Calculate the stack pointer (frame pointer) that will be
          stored into the thread structure.  */
       offset = i386obsd_uthread_reg_offset[I386_EIP_REGNUM] + 4;
-      regcache_raw_collect (regcache, I386_ESP_REGNUM, buf);
+      regcache->raw_collect (I386_ESP_REGNUM, buf);
       sp = extract_unsigned_integer (buf, 4, byte_order) - offset;
 
       /* Store the stack pointer.  */
@@ -272,7 +272,7 @@ i386obsd_collect_uthread (const struct regcache *regcache,
 	    sp = read_memory_unsigned_integer (sp_addr, 4, byte_order);
 
 	  /* Write the register into the stack frame.  */
-	  regcache_raw_collect (regcache, i, buf);
+	  regcache->raw_collect (i, buf);
 	  write_memory (sp + i386obsd_uthread_reg_offset[i], buf, 4);
 	}
     }
@@ -442,10 +442,6 @@ i386obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_solib_svr4_fetch_link_map_offsets
     (gdbarch, svr4_ilp32_fetch_link_map_offsets);
 }
-
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-void _initialize_i386obsd_tdep (void);
 
 void
 _initialize_i386obsd_tdep (void)

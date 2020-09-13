@@ -1,4 +1,4 @@
-# Copyright 2015-2017 Free Software Foundation, Inc.
+# Copyright 2015-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,12 +22,20 @@ if {[skip_tui_tests] || [target_info exists gdb,nointerrupts]} {
 
 gdb_test_no_output "set max-completions unlimited"
 
-with_test_prefix "completion of layout names" {
+# TAB-complete INPUT_LINE, and expect EXPECTED_RE as completion match
+# output.
+proc test_tab_completion {input_line expected_re} {
+    global gdb_prompt
+
     set test "tab completion"
-    send_gdb "layout\t\t\t"
+    send_gdb "$input_line\t\t\t"
     gdb_test_multiple "" "$test" {
-	-re "asm *next *prev *regs *split *src *\r\n$gdb_prompt layout $" {
-	    pass "$test"
+	-re "$expected_re\r\n$gdb_prompt " {
+	    gdb_test_multiple "" "$test" {
+		-re "^$input_line $" {
+		    pass "$test"
+		}
+	    }
 	}
     }
     send_gdb "\003"
@@ -39,20 +47,10 @@ with_test_prefix "completion of layout names" {
     }
 }
 
-with_test_prefix "completion of focus command" {
-    set test "tab completion"
-    send_gdb "focus \t\t"
-    gdb_test_multiple "" "$test" {
-	-re "cmd *next *prev *src *\r\n$gdb_prompt focus $" {
-	    pass "$test"
-	}
-    }
+with_test_prefix "completion of layout names" {
+    test_tab_completion "layout" "asm *next *prev *regs *split *src *"
+}
 
-    send_gdb "\003"
-    set test "quit command input"
-    gdb_test_multiple "" "$test" {
-	-re "$gdb_prompt $" {
-	    pass "$test"
-	}
-    }
+with_test_prefix "completion of focus command" {
+    test_tab_completion "focus" "cmd *next *prev *src *"
 }
