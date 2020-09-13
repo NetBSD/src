@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.140 2020/09/13 06:15:29 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.141 2020/09/13 13:50:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -378,7 +378,7 @@ typedef struct GNode {
 #define PARSE_FATAL	1
 
 /*
- * Values returned by Cond_Eval.
+ * Values returned by Cond_EvalLine and Cond_EvalCondition.
  */
 typedef enum {
     COND_PARSE,			/* Parse the next lines */

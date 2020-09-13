@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.141 2020/09/12 18:19:50 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.142 2020/09/13 13:50:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.141 2020/09/12 18:19:50 rillig Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.142 2020/09/13 13:50:27 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.141 2020/09/12 18:19:50 rillig Exp $");
+__RCSID("$NetBSD: cond.c,v 1.142 2020/09/13 13:50:27 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -85,9 +85,9 @@ __RCSID("$NetBSD: cond.c,v 1.141 2020/09/12 18:19:50 rillig Exp $");
 /* Handling of conditionals in a makefile.
  *
  * Interface:
- *	Cond_Eval 	Evaluate the conditional in the passed line.
+ *	Cond_EvalLine 	Evaluate the conditional in the passed line.
  *
- *	Cond_EvalExpression
+ *	Cond_EvalCondition
  *			Evaluate the conditional in the passed line, which
  *			is either the argument of one of the .if directives
  *			or the condition in a :?true:false variable modifier.
@@ -165,8 +165,8 @@ static unsigned int cond_min_depth = 0;	/* depth at makefile open */
  * In strict mode, the lhs must be a variable expression or a string literal
  * in quotes. In non-strict mode it may also be an unquoted string literal.
  *
- * TRUE when Cond_EvalExpression is called from Cond_Eval (.if etc)
- * FALSE when Cond_EvalExpression is called from var.c:ApplyModifiers
+ * TRUE when CondEvalExpression is called from Cond_EvalLine (.if etc)
+ * FALSE when CondEvalExpression is called from ApplyModifier_IfElse
  * since lhs is already expanded and we cannot tell if
  * it was a variable reference or not.
  */
@@ -281,7 +281,7 @@ ParseFuncArg(const char **linePtr, Boolean doEval, const char *func,
     if (func != NULL && *cp++ != ')') {
 	Parse_Error(PARSE_WARNING, "Missing closing parenthesis for %s()",
 		    func);
-	/* The PARSE_FATAL is done as a follow-up by Cond_EvalExpression. */
+	/* The PARSE_FATAL is done as a follow-up by CondEvalExpression. */
 	return 0;
     }
 
@@ -565,14 +565,14 @@ EvalCompareNum(double lhs, const char *op, double rhs)
     case '!':
 	if (op[1] != '=') {
 	    Parse_Error(PARSE_WARNING, "Unknown operator");
-	    /* The PARSE_FATAL is done as a follow-up by Cond_EvalExpression. */
+	    /* The PARSE_FATAL is done as a follow-up by CondEvalExpression. */
 	    return TOK_ERROR;
 	}
 	return lhs != rhs;
     case '=':
 	if (op[1] != '=') {
 	    Parse_Error(PARSE_WARNING, "Unknown operator");
-	    /* The PARSE_FATAL is done as a follow-up by Cond_EvalExpression. */
+	    /* The PARSE_FATAL is done as a follow-up by CondEvalExpression. */
 	    return TOK_ERROR;
 	}
 	return lhs == rhs;
@@ -590,7 +590,7 @@ EvalCompareStr(const char *lhs, const char *op, const char *rhs)
     if (!((op[0] == '!' || op[0] == '=') && op[1] == '=')) {
 	Parse_Error(PARSE_WARNING,
 		    "String comparison operator must be either == or !=");
-	/* The PARSE_FATAL is done as a follow-up by Cond_EvalExpression. */
+	/* The PARSE_FATAL is done as a follow-up by CondEvalExpression. */
 	return TOK_ERROR;
     }
 
@@ -670,7 +670,7 @@ CondParser_Comparison(CondParser *par, Boolean doEval)
 
     if (par->p[0] == '\0') {
 	Parse_Error(PARSE_WARNING, "Missing right-hand-side of operator");
-	/* The PARSE_FATAL is done as a follow-up by Cond_EvalExpression. */
+	/* The PARSE_FATAL is done as a follow-up by CondEvalExpression. */
 	goto done;
     }
 
@@ -1018,8 +1018,8 @@ CondParser_Eval(CondParser *par, Boolean *value)
  *
  *	(*value) is set to the boolean value of the condition
  */
-CondEvalResult
-Cond_EvalExpression(const struct If *info, const char *cond, Boolean *value,
+static CondEvalResult
+CondEvalExpression(const struct If *info, const char *cond, Boolean *value,
 		    int eprint, Boolean strictLHS)
 {
     static const struct If *dflt_info;
@@ -1052,6 +1052,11 @@ Cond_EvalExpression(const struct If *info, const char *cond, Boolean *value,
     return rval;
 }
 
+CondEvalResult
+Cond_EvalCondition(const char *cond, Boolean *out_value)
+{
+	return CondEvalExpression(NULL, cond, out_value, 0, FALSE);
+}
 
 /* Evaluate the conditional in the passed line. The line looks like this:
  *	.<cond-type> <expr>
@@ -1075,7 +1080,7 @@ Cond_EvalExpression(const struct If *info, const char *cond, Boolean *value,
  *			or because the condition could not be evaluated
  */
 CondEvalResult
-Cond_Eval(const char *line)
+Cond_EvalLine(const char *line)
 {
     enum { MAXIF = 128 };	/* maximum depth of .if'ing */
     enum { MAXIF_BUMP = 32 };	/* how much to grow by */
@@ -1208,7 +1213,7 @@ Cond_Eval(const char *line)
     }
 
     /* And evaluate the conditional expression */
-    if (Cond_EvalExpression(ifp, line, &value, 1, TRUE) == COND_INVALID) {
+    if (CondEvalExpression(ifp, line, &value, 1, TRUE) == COND_INVALID) {
 	/* Syntax error in conditional, error message already output. */
 	/* Skip everything to matching .endif */
 	cond_state[cond_depth] = SKIP_TO_ELSE;
