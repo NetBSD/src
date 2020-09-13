@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.155 2020/09/13 15:15:51 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.156 2020/09/13 18:27:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #include	  "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.155 2020/09/13 15:15:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.156 2020/09/13 18:27:39 rillig Exp $");
 
 #define SUFF_DEBUG0(fmt) \
     if (!DEBUG(SUFF)) (void) 0; else fprintf(debug_file, fmt)
@@ -1318,8 +1318,10 @@ SuffExpandChildren(LstNode cln, GNode *pgn)
 		    void	*freeIt;
 
 		    /* XXX: Why VARE_WANTRES when the result is not used? */
-		    junk = Var_Parse(&nested_p, pgn,
-				     VARE_UNDEFERR|VARE_WANTRES, &freeIt);
+		    (void)Var_Parse(&nested_p, pgn,
+				    VARE_UNDEFERR|VARE_WANTRES,
+				    &junk, &freeIt);
+		    /* TODO: handle errors */
 		    if (junk == var_Error) {
 			Parse_Error(PARSE_FATAL,
 				    "Malformed variable expression at \"%s\"",
