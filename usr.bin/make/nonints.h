@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.117 2020/09/13 13:50:27 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.118 2020/09/13 15:27:25 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -138,7 +138,7 @@ typedef struct {
 } Words;
 
 Words Str_Words(const char *, Boolean);
-static inline void MAKE_ATTR_UNUSED
+static inline MAKE_ATTR_UNUSED void
 Words_Free(Words w) {
     free(w.words);
     free(w.freeIt);
