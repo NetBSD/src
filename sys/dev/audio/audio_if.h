@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.2 2019/05/08 13:40:17 isaki Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.3 2020/09/13 04:14:48 isaki Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -56,6 +56,8 @@
  */
 
 struct audio_softc;
+
+#if defined(_KERNEL)
 
 /**
  * audio stream format
@@ -153,6 +155,8 @@ extern int audio_query_format(const struct audio_format *, int,
 extern int audio_indexof_format(const struct audio_format *, int, int,
 	const audio_params_t *);
 extern const char *audio_encoding_name(int);
+
+#endif /* _KERNEL */
 
 /* Device identity flags */
 #define SOUND_DEVICE		0
