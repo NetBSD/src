@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.335 2020/09/13 06:05:56 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.336 2020/09/13 06:15:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.335 2020/09/13 06:05:56 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.336 2020/09/13 06:15:29 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.335 2020/09/13 06:05:56 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.336 2020/09/13 06:15:29 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -145,7 +145,7 @@ __RCSID("$NetBSD: main.c,v 1.335 2020/09/13 06:05:56 rillig Exp $");
 
 #ifndef	DEFMAXLOCAL
 #define	DEFMAXLOCAL DEFMAXJOBS
-#endif	/* DEFMAXLOCAL */
+#endif
 
 Lst			create;		/* Targets to be made */
 time_t			now;		/* Time at start of make */
