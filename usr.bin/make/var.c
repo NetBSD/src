@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.512 2020/09/13 15:15:51 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.513 2020/09/13 16:47:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.512 2020/09/13 15:15:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.513 2020/09/13 16:47:24 rillig Exp $");
 
 #define VAR_DEBUG_IF(cond, fmt, ...)	\
     if (!(DEBUG(VAR) && (cond)))	\
@@ -3062,8 +3062,7 @@ ApplyModifiers(
 
 	    /* At this point, only the first character of the modifier can
 	     * be used since the end of the modifier is not yet known. */
-	    VAR_DEBUG("Applying ${%s:%c%s} to \"%s\" "
-		      "(eflags = %s, vflags = %s)\n",
+	    VAR_DEBUG("Applying ${%s:%c%s} to \"%s\" (%s, %s)\n",
 		      st.v->name, mod[0], is_single_char ? "" : "...", st.val,
 		      Enum_FlagsToString(eflags_str, sizeof eflags_str,
 					 st.eflags, VarEvalFlags_ToStringSpecs),
@@ -3207,8 +3206,7 @@ ApplyModifiers(
 	    const char *quot = st.newVal == var_Error ? "" : "\"";
 	    const char *newVal = st.newVal == var_Error ? "error" : st.newVal;
 
-	    VAR_DEBUG("Result of ${%s:%.*s} is %s%s%s "
-		      "(eflags = %s, vflags = %s)\n",
+	    VAR_DEBUG("Result of ${%s:%.*s} is %s%s%s (%s, %s)\n",
 		      st.v->name, (int)(p - mod), mod, quot, newVal, quot,
 		      Enum_FlagsToString(eflags_str, sizeof eflags_str,
 					 st.eflags, VarEvalFlags_ToStringSpecs),
