@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.334 2020/09/13 05:56:32 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.335 2020/09/13 06:05:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.334 2020/09/13 05:56:32 rillig Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.335 2020/09/13 06:05:56 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.334 2020/09/13 05:56:32 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.335 2020/09/13 06:05:56 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1703,7 +1703,6 @@ bad:
  * Side Effects:
  *	The message is printed.
  */
-/* VARARGS */
 void
 Error(const char *fmt, ...)
 {
@@ -1730,7 +1729,6 @@ Error(const char *fmt, ...)
 /* Produce a Fatal error message, then exit immediately.
  *
  * If jobs are running, waits for them to finish. */
-/* VARARGS */
 void
 Fatal(const char *fmt, ...)
 {
@@ -1765,7 +1763,6 @@ Fatal(const char *fmt, ...)
  * Side Effects:
  *	All children are killed indiscriminately and the program Lib_Exits
  */
-/* VARARGS */
 void
 Punt(const char *fmt, ...)
 {

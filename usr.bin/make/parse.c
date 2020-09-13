@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.295 2020/09/12 19:41:20 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.296 2020/09/13 06:05:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.295 2020/09/12 19:41:20 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.296 2020/09/13 06:05:56 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.295 2020/09/12 19:41:20 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.296 2020/09/13 06:05:56 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -659,7 +659,6 @@ PrintLocation(FILE *f, const char *cfname, size_t clineno)
  * Side Effects:
  *	"fatals" is incremented if the level is PARSE_FATAL.
  */
-/* VARARGS */
 static void
 ParseVErrorInternal(FILE *f, const char *cfname, size_t clineno, int type,
     const char *fmt, va_list ap)
@@ -695,7 +694,6 @@ ParseVErrorInternal(FILE *f, const char *cfname, size_t clineno, int type,
  * Side Effects:
  *	None
  */
-/* VARARGS */
 static void
 ParseErrorInternal(const char *cfname, size_t clineno, int type,
     const char *fmt, ...)
@@ -718,7 +716,6 @@ ParseErrorInternal(const char *cfname, size_t clineno, int type,
  * line number.
  *
  * Fmt is given without a trailing newline. */
-/* VARARGS */
 void
 Parse_Error(int type, const char *fmt, ...)
 {
