@@ -1,6 +1,6 @@
 /* std::unique_ptr specializations for GDB.
 
-   Copyright (C) 2016-2017 Free Software Foundation, Inc.
+   Copyright (C) 2016-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef GDB_UNIQUE_PTR_H
-#define GDB_UNIQUE_PTR_H 1
+#ifndef COMMON_GDB_UNIQUE_PTR_H
+#define COMMON_GDB_UNIQUE_PTR_H
 
 #include <memory>
 
@@ -34,6 +34,13 @@ struct xfree_deleter
   void operator() (T *ptr) const { xfree (ptr); }
 };
 
+/* Same, for arrays.  */
+template <typename T>
+struct xfree_deleter<T[]>
+{
+  void operator() (T *ptr) const { xfree (ptr); }
+};
+
 /* Import the standard unique_ptr to our namespace with a custom
    deleter.  */
 
@@ -42,4 +49,4 @@ template<typename T> using unique_xmalloc_ptr
 
 } /* namespace gdb */
 
-#endif /* GDB_UNIQUE_PTR_H */
+#endif /* COMMON_GDB_UNIQUE_PTR_H */

@@ -1,6 +1,6 @@
 /* Python interface to btrace instruction history.
 
-   Copyright 2016-2017 Free Software Foundation, Inc.
+   Copyright 2016-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

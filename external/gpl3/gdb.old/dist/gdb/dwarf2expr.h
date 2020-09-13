@@ -1,6 +1,6 @@
 /* DWARF 2 Expression Evaluator.
 
-   Copyright (C) 2001-2017 Free Software Foundation, Inc.
+   Copyright (C) 2001-2019 Free Software Foundation, Inc.
 
    Contributed by Daniel Berlin <dan@dberlin.org>.
 
@@ -49,18 +49,68 @@ enum dwarf_value_location
   DWARF_VALUE_IMPLICIT_POINTER
 };
 
+/* A piece of an object, as recorded by DW_OP_piece or DW_OP_bit_piece.  */
+struct dwarf_expr_piece
+{
+  enum dwarf_value_location location;
+
+  union
+  {
+    struct
+    {
+      /* This piece's address, for DWARF_VALUE_MEMORY pieces.  */
+      CORE_ADDR addr;
+      /* Non-zero if the piece is known to be in memory and on
+	 the program's stack.  */
+      bool in_stack_memory;
+    } mem;
+
+    /* The piece's register number, for DWARF_VALUE_REGISTER pieces.  */
+    int regno;
+
+    /* The piece's literal value, for DWARF_VALUE_STACK pieces.  */
+    struct value *value;
+
+    struct
+    {
+      /* A pointer to the data making up this piece,
+	 for DWARF_VALUE_LITERAL pieces.  */
+      const gdb_byte *data;
+      /* The length of the available data.  */
+      ULONGEST length;
+    } literal;
+
+    /* Used for DWARF_VALUE_IMPLICIT_POINTER.  */
+    struct
+    {
+      /* The referent DIE from DW_OP_implicit_pointer.  */
+      sect_offset die_sect_off;
+      /* The byte offset into the resulting data.  */
+      LONGEST offset;
+    } ptr;
+  } v;
+
+  /* The length of the piece, in bits.  */
+  ULONGEST size;
+  /* The piece offset, in bits.  */
+  ULONGEST offset;
+};
+
 /* The dwarf expression stack.  */
 
 struct dwarf_stack_value
 {
+  dwarf_stack_value (struct value *value_, int in_stack_memory_)
+  : value (value_), in_stack_memory (in_stack_memory_)
+  {}
+
   struct value *value;
 
-  /* Non-zero if the piece is in memory and is known to be
-     on the program's stack.  It is always ok to set this to zero.
-     This is used, for example, to optimize memory access from the target.
-     It can vastly speed up backtraces on long latency connections when
-     "set stack-cache on".  */
-  int in_stack_memory;
+  /* True if the piece is in memory and is known to be on the program's stack.
+     It is always ok to set this to zero.  This is used, for example, to
+     optimize memory access from the target.  It can vastly speed up backtraces
+     on long latency connections when "set stack-cache on".  */
+  bool in_stack_memory;
 };
 
 /* The expression evaluator works with a dwarf_expr_context, describing
@@ -68,20 +118,16 @@ struct dwarf_stack_value
 struct dwarf_expr_context
 {
   dwarf_expr_context ();
-  virtual ~dwarf_expr_context ();
+  virtual ~dwarf_expr_context () = default;
 
-  void push_address (CORE_ADDR value, int in_stack_memory);
+  void push_address (CORE_ADDR value, bool in_stack_memory);
   void eval (const gdb_byte *addr, size_t len);
   struct value *fetch (int n);
   CORE_ADDR fetch_address (int n);
-  int fetch_in_stack_memory (int n);
+  bool fetch_in_stack_memory (int n);
 
-  /* The stack of values, allocated with xmalloc.  */
-  struct dwarf_stack_value *stack;
-
-  /* The number of values currently pushed on the stack, and the
-     number of elements allocated to the stack.  */
-  int stack_len, stack_allocated;
+  /* The stack of values.  */
+  std::vector<dwarf_stack_value> stack;
 
   /* Target architecture to use for address operations.  */
   struct gdbarch *gdbarch;
@@ -114,8 +160,7 @@ struct dwarf_expr_context
      initialized; zero otherwise.  */
   int initialized;
 
-  /* An array of pieces.  PIECES points to its first element;
-     NUM_PIECES is its length.
+  /* A vector of pieces.
 
      Each time DW_OP_piece is executed, we add a new element to the
      end of this array, recording the current top of the stack, the
@@ -137,8 +182,7 @@ struct dwarf_expr_context
      no DW_OP_piece operations have no value to place in a piece's
      'size' field; the size comes from the surrounding data.  So the
      two cases need to be handled separately.)  */
-  int num_pieces;
-  struct dwarf_expr_piece *pieces;
+  std::vector<dwarf_expr_piece> pieces;
 
   /* Return the value of register number REGNUM (a DWARF register number),
      read as an address.  */
@@ -177,6 +221,9 @@ struct dwarf_expr_context
      subroutine.  */
   virtual void dwarf_call (cu_offset die_cu_off) = 0;
 
+  /* Execute "variable value" operation on the DIE at SECT_OFF.  */
+  virtual struct value *dwarf_variable_value (sect_offset sect_off) = 0;
+
   /* Return the base type given by the indicated DIE at DIE_CU_OFF.
      This can throw an exception if the DIE is invalid or does not
      represent a base type.  SIZE is non-zero if this function should
@@ -205,60 +252,11 @@ struct dwarf_expr_context
 private:
 
   struct type *address_type () const;
-  void grow_stack (size_t need);
-  void push (struct value *value, int in_stack_memory);
-  int stack_empty_p () const;
+  void push (struct value *value, bool in_stack_memory);
+  bool stack_empty_p () const;
   void add_piece (ULONGEST size, ULONGEST offset);
   void execute_stack_op (const gdb_byte *op_ptr, const gdb_byte *op_end);
   void pop ();
-};
-
-
-/* A piece of an object, as recorded by DW_OP_piece or DW_OP_bit_piece.  */
-struct dwarf_expr_piece
-{
-  enum dwarf_value_location location;
-
-  union
-  {
-    struct
-    {
-      /* This piece's address, for DWARF_VALUE_MEMORY pieces.  */
-      CORE_ADDR addr;
-      /* Non-zero if the piece is known to be in memory and on
-	 the program's stack.  */
-      int in_stack_memory;
-    } mem;
-
-    /* The piece's register number, for DWARF_VALUE_REGISTER pieces.  */
-    int regno;
-
-    /* The piece's literal value, for DWARF_VALUE_STACK pieces.  */
-    struct value *value;
-
-    struct
-    {
-      /* A pointer to the data making up this piece,
-	 for DWARF_VALUE_LITERAL pieces.  */
-      const gdb_byte *data;
-      /* The length of the available data.  */
-      ULONGEST length;
-    } literal;
-
-    /* Used for DWARF_VALUE_IMPLICIT_POINTER.  */
-    struct
-    {
-      /* The referent DIE from DW_OP_implicit_pointer.  */
-      sect_offset die_sect_off;
-      /* The byte offset into the resulting data.  */
-      LONGEST offset;
-    } ptr;
-  } v;
-
-  /* The length of the piece, in bits.  */
-  ULONGEST size;
-  /* The piece offset, in bits.  */
-  ULONGEST offset;
 };
 
 void dwarf_expr_require_composition (const gdb_byte *, const gdb_byte *,

@@ -1,4 +1,4 @@
---  Copyright 2015-2017 Free Software Foundation, Inc.
+--  Copyright 2015-2019 Free Software Foundation, Inc.
 --
 --  This program is free software; you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -15,8 +15,9 @@
 
 package Pack is
 
-   function Next (I : Integer) return Integer;
-   function Renamed_Next (I : Integer) return Integer renames Next;
+   function Fun_Rename_Test_Next (I : Integer) return Integer;
+   function Renamed_Fun_Rename_Test_Next (I : Integer) return Integer
+     renames Fun_Rename_Test_Next;
    procedure Discard (I : Integer);
 
 end Pack;

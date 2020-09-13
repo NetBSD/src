@@ -1,5 +1,5 @@
 @c This summary of BFD is shared by the BFD and LD docs.
-@c Copyright (C) 2012-2017 Free Software Foundation, Inc.
+@c Copyright (C) 2012-2019 Free Software Foundation, Inc.
 
 When an object file is opened, BFD subroutines automatically determine
 the format of the input object file.  They then build a descriptor in
@@ -115,12 +115,12 @@ output file (no matter its format) will retain symbols pointing to
 functions and to global, static, and common variables.  Some symbol
 information is not worth retaining; in @code{a.out}, type information is
 stored in the symbol table as long symbol names.  This information would
-be useless to most COFF debuggers; the linker has command line switches
+be useless to most COFF debuggers; the linker has command-line switches
 to allow users to throw it away.
 
 There is one word of type information within the symbol, so if the
 format supports symbol type information within symbols (for example, COFF,
-IEEE, Oasys) and the type is simple enough to fit within one word
+Oasys) and the type is simple enough to fit within one word
 (nearly everything but aggregates), the information will be preserved.
 
 @item relocation level
@@ -146,5 +146,5 @@ pointer to the symbol, which allows finding out the address of the
 function whose line number is being described. The rest of the list is
 made up of pairs: offsets into the section and line numbers. Any format
 which can simply derive this information can pass it successfully
-between formats (COFF, IEEE and Oasys).
+between formats.
 @end table

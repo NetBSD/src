@@ -1,6 +1,7 @@
 # THIS FILE IS GENERATED.  -*- buffer-read-only: t -*- vi :set ro:
 # Generated from: i386/i386-avx-mpx-linux.xml
 name:i386_avx_mpx_linux
+feature:1
 xmltarget:i386-avx-mpx-linux.xml
 expedite:ebp,esp,eip
 32:eax

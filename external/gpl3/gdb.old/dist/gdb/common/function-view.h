@@ -1,4 +1,4 @@
-/* Copyright (C) 2017 Free Software Foundation, Inc.
+/* Copyright (C) 2017-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -153,34 +153,6 @@
 
 namespace gdb {
 
-namespace traits {
-  /* A few trait helpers.  */
-  template<typename Predicate>
-  struct Not : public std::integral_constant<bool, !Predicate::value>
-  {};
-
-  template<typename...>
-  struct Or;
-
-  template<>
-  struct Or<> : public std::false_type
-  {};
-
-  template<typename B1>
-  struct Or<B1> : public B1
-  {};
-
-  template<typename B1, typename B2>
-  struct Or<B1, B2>
-    : public std::conditional<B1::value, B1, B2>::type
-  {};
-
-  template<typename B1,typename B2,typename B3, typename... Bn>
-  struct Or<B1, B2, B3, Bn...>
-    : public std::conditional<B1::value, B1, Or<B2, B3, Bn...>>::type
-  {};
-} /* namespace traits */
-
 namespace fv_detail {
 /* Bits shared by all function_view instantiations that do not depend
    on the template parameters.  */
@@ -209,9 +181,9 @@ class function_view<Res (Args...)>
 {
   template<typename From, typename To>
   using CompatibleReturnType
-    = traits::Or<std::is_void<To>,
-		 std::is_same<From, To>,
-		 std::is_convertible<From, To>>;
+    = Or<std::is_void<To>,
+	 std::is_same<From, To>,
+	 std::is_convertible<From, To>>;
 
   /* True if Func can be called with Args, and either the result is
      Res, convertible to Res or Res is void.  */
@@ -226,10 +198,6 @@ class function_view<Res (Args...)>
   struct IsFunctionView
     : std::is_same<function_view, typename std::decay<Callable>::type>
   {};
-
-  /* Helper to make SFINAE logic easier to read.  */
-  template<typename Condition>
-  using Requires = typename std::enable_if<Condition::value, void>::type;
 
  public:
 
@@ -248,7 +216,7 @@ class function_view<Res (Args...)>
      compatible.  */
   template
     <typename Callable,
-     typename = Requires<traits::Not<IsFunctionView<Callable>>>,
+     typename = Requires<Not<IsFunctionView<Callable>>>,
      typename = Requires<IsCompatibleCallable<Callable>>>
   function_view (Callable &&callable) noexcept
   {

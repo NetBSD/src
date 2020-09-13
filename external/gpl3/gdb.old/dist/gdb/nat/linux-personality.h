@@ -1,6 +1,6 @@
 /* Disable address space randomization based on inferior personality.
 
-   Copyright (C) 2008-2017 Free Software Foundation, Inc.
+   Copyright (C) 2008-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,12 +20,27 @@
 #ifndef NAT_LINUX_PERSONALITY_H
 #define NAT_LINUX_PERSONALITY_H
 
-/* Disable the inferior's address space randomization if
-   DISABLE_RANDOMIZATION is not zero and if we have
-   <sys/personality.h>.  Return a cleanup which, when called, will
-   re-enable the inferior's address space randomization.  */
+class maybe_disable_address_space_randomization
+{
+public:
 
-extern struct cleanup *maybe_disable_address_space_randomization
-  (int disable_randomization);
+  /* Disable the inferior's address space randomization if
+     DISABLE_RANDOMIZATION is not zero and if we have
+     <sys/personality.h>. */
+  maybe_disable_address_space_randomization (int disable_randomization);
+
+  /* On destruction, re-enable address space randomization.  */
+  ~maybe_disable_address_space_randomization ();
+
+  DISABLE_COPY_AND_ASSIGN (maybe_disable_address_space_randomization);
+
+private:
+
+  /* True if the personality was set in the constructor.  */
+  bool m_personality_set;
+
+  /* If m_personality_set is true, the original personality value.  */
+  int m_personality_orig;
+};
 
 #endif /* ! NAT_LINUX_PERSONALITY_H */

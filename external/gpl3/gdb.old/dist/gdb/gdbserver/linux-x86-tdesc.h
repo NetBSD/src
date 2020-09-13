@@ -1,7 +1,7 @@
 /* Low level support for x86 (i386 and x86-64), shared between gdbserver
    and IPA.
 
-   Copyright (C) 2016-2017 Free Software Foundation, Inc.
+   Copyright (C) 2016-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,6 +18,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#ifndef GDBSERVER_LINUX_X86_TDESC_H
+#define GDBSERVER_LINUX_X86_TDESC_H
+
 /* Note: since IPA obviously knows what ABI it's running on (i386 vs x86_64
    vs x32), it's sufficient to pass only the register set here.  This,
    together with the ABI known at IPA compile time, maps to a tdesc.  */
@@ -30,78 +33,26 @@ enum x86_linux_tdesc {
   X86_TDESC_AVX_MPX = 4,
   X86_TDESC_AVX_AVX512 = 5,
   X86_TDESC_AVX_MPX_AVX512_PKU = 6,
+  X86_TDESC_LAST = 7,
 };
 
-#ifdef __x86_64__
-
-#if defined __LP64__  || !defined IN_PROCESS_AGENT
-/* Defined in auto-generated file amd64-linux.c.  */
-void init_registers_amd64_linux (void);
-extern const struct target_desc *tdesc_amd64_linux;
-
-/* Defined in auto-generated file amd64-avx-linux.c.  */
-void init_registers_amd64_avx_linux (void);
-extern const struct target_desc *tdesc_amd64_avx_linux;
-
-/* Defined in auto-generated file amd64-avx-avx512-linux.c.  */
-void init_registers_amd64_avx_avx512_linux (void);
-extern const struct target_desc *tdesc_amd64_avx_avx512_linux;
-
-/* Defined in auto-generated file amd64-avx-mpx-avx512-pku-linux.c.  */
-void init_registers_amd64_avx_mpx_avx512_pku_linux (void);
-extern const struct target_desc *tdesc_amd64_avx_mpx_avx512_pku_linux;
-
-/* Defined in auto-generated file amd64-avx-mpx-linux.c.  */
-void init_registers_amd64_avx_mpx_linux (void);
-extern const struct target_desc *tdesc_amd64_avx_mpx_linux;
-
-/* Defined in auto-generated file amd64-mpx-linux.c.  */
-void init_registers_amd64_mpx_linux (void);
-extern const struct target_desc *tdesc_amd64_mpx_linux;
-#endif
-
-#if defined __ILP32__ || !defined IN_PROCESS_AGENT
-/* Defined in auto-generated file x32-linux.c.  */
-void init_registers_x32_linux (void);
-extern const struct target_desc *tdesc_x32_linux;
-
-/* Defined in auto-generated file x32-avx-linux.c.  */
-void init_registers_x32_avx_linux (void);
-extern const struct target_desc *tdesc_x32_avx_linux;
-
-/* Defined in auto-generated file x32-avx-avx512-linux.c.  */
-void init_registers_x32_avx_avx512_linux (void);
-extern const struct target_desc *tdesc_x32_avx_avx512_linux;
-#endif
-
-#endif
-
 #if defined __i386__ || !defined IN_PROCESS_AGENT
-/* Defined in auto-generated file i386-linux.c.  */
-void init_registers_i386_linux (void);
-extern const struct target_desc *tdesc_i386_linux;
-
-/* Defined in auto-generated file i386-mmx-linux.c.  */
-void init_registers_i386_mmx_linux (void);
-extern const struct target_desc *tdesc_i386_mmx_linux;
-
-/* Defined in auto-generated file i386-avx-linux.c.  */
-void init_registers_i386_avx_linux (void);
-extern const struct target_desc *tdesc_i386_avx_linux;
-
-/* Defined in auto-generated file i386-avx-mpx-linux.c.  */
-void init_registers_i386_avx_mpx_linux (void);
-extern const struct target_desc *tdesc_i386_avx_mpx_linux;
-
-/* Defined in auto-generated file i386-avx-avx512-linux.c.  */
-void init_registers_i386_avx_avx512_linux (void);
-extern const struct target_desc *tdesc_i386_avx_avx512_linux;
-
-/* Defined in auto-generated file i386-avx-mpx-avx512-linux.c.  */
-void init_registers_i386_avx_mpx_avx512_pku_linux (void);
-extern const struct target_desc *tdesc_i386_avx_mpx_avx512_pku_linux;
-
-/* Defined in auto-generated file i386-mpx-linux.c.  */
-void init_registers_i386_mpx_linux (void);
-extern const struct target_desc *tdesc_i386_mpx_linux;
+int i386_get_ipa_tdesc_idx (const struct target_desc *tdesc);
 #endif
+
+#if defined __x86_64__ && !defined IN_PROCESS_AGENT
+int amd64_get_ipa_tdesc_idx (const struct target_desc *tdesc);
+#endif
+
+const struct target_desc *i386_get_ipa_tdesc (int idx);
+
+#ifdef __x86_64__
+const struct target_desc *amd64_linux_read_description (uint64_t xcr0,
+							bool is_x32);
+#endif
+
+const struct target_desc *i386_linux_read_description (uint64_t xcr0);
+
+void initialize_low_tdesc ();
+
+#endif /* GDBSERVER_LINUX_X86_TDESC_H */

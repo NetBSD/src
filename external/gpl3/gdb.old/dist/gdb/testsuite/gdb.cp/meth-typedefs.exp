@@ -1,4 +1,4 @@
-# Copyright 2011-2017 Free Software Foundation, Inc.
+# Copyright 2011-2019 Free Software Foundation, Inc.
 #
 # Contributed by Red Hat, originally written by Keith Seitz.
 #
@@ -145,14 +145,41 @@ foreach test $methods {
     set func [lindex $test 0]
     set result [lindex $test 1]
 
-    gdb_test "list $func" $result
-    gdb_test "list '$func'" $result
-    if {[gdb_breakpoint $func]} {
-      pass "break $func"
+    gdb_test "list -qualified $func" $result
+    gdb_test "list -qualified '$func'" $result
+    if {[gdb_breakpoint "-qualified $func"]} {
+      pass "break -qualified $func"
     }
-    if {[gdb_breakpoint '$func']} {
-      pass "break '$func'"
+    if {[gdb_breakpoint "-qualified '$func'"]} {
+      pass "break -qualified '$func'"
     }
+}
+
+# The tests above use -qualified to explicitly pick the one "test"
+# symbol each test cares about.  Now check that both "break test(..)"
+# and "list test(..)" without -qualified find "test(..)" in all the 3
+# scopes that have the this particular overload.
+set func "test(aenum, astruct const&, aunion const***)"
+set func_re "test\\(anon_enum, anon_struct const&, anon_union const\\*\\*\\*\\)"
+set line1 [gdb_get_line_number " A::FOO::$func"]
+set line2 [gdb_get_line_number " B::$func"]
+set line3 [gdb_get_line_number " $func"]
+
+foreach f [list "$func" "'$func'"] {
+    set any "\[^\r\n\]*"
+    gdb_test \
+	"list $f" \
+	[multi_line \
+	     "file: \".*$srcfile\", line number: $line1, symbol: \"A::foo::$func_re\"" \
+	     "$line1${any}A::FOO::test${any}" \
+	     "file: \".*$srcfile\", line number: $line2, symbol: \"B::$func_re\"" \
+	     "$line2${any}B::test${any}" \
+	     "file: \".*$srcfile\", line number: $line3, symbol: \"$func_re\"" \
+	     "$line3${any}// test${any}"] \
+	"list $f"
+
+    delete_breakpoints
+    gdb_test "break $f" "\\(3 locations\\)"
 }
 
 gdb_exit

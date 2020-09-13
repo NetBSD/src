@@ -1,6 +1,6 @@
 /* Test program for AVX 512 registers.
 
-   Copyright 2014-2017 Free Software Foundation, Inc.
+   Copyright 2014-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -127,44 +127,44 @@ move_k_data_to_memory (void)
 void
 move_zmm_data_to_reg (void)
 {
-  asm ("vmovaps 0(%0), %%zmm0\n\t"
-       "vmovaps 64(%0), %%zmm1\n\t"
-       "vmovaps 128(%0), %%zmm2\n\t"
-       "vmovaps 192(%0), %%zmm3\n\t"
-       "vmovaps 256(%0), %%zmm4\n\t"
-       "vmovaps 320(%0), %%zmm5\n\t"
-       "vmovaps 384(%0), %%zmm6\n\t"
-       "vmovaps 448(%0), %%zmm7\n\t"
+  asm ("vmovups 0(%0), %%zmm0 \n\t"
+       "vmovups 64(%0), %%zmm1 \n\t"
+       "vmovups 128(%0), %%zmm2 \n\t"
+       "vmovups 192(%0), %%zmm3 \n\t"
+       "vmovups 256(%0), %%zmm4 \n\t"
+       "vmovups 320(%0), %%zmm5 \n\t"
+       "vmovups 384(%0), %%zmm6 \n\t"
+       "vmovups 448(%0), %%zmm7 \n\t"
        : /* no output operands  */
        : "r" (zmm_data));
 #ifdef __x86_64__
-  asm ("vmovaps 512(%0), %%zmm8\n\t"
-       "vmovaps 576(%0), %%zmm9\n\t"
-       "vmovaps 640(%0), %%zmm10\n\t"
-       "vmovaps 704(%0), %%zmm11\n\t"
-       "vmovaps 768(%0), %%zmm12\n\t"
-       "vmovaps 832(%0), %%zmm13\n\t"
-       "vmovaps 896(%0), %%zmm14\n\t"
-       "vmovaps 960(%0), %%zmm15\n\t"
+  asm ("vmovups 512(%0), %%zmm8 \n\t"
+       "vmovups 576(%0), %%zmm9 \n\t"
+       "vmovups 640(%0), %%zmm10 \n\t"
+       "vmovups 704(%0), %%zmm11 \n\t"
+       "vmovups 768(%0), %%zmm12 \n\t"
+       "vmovups 832(%0), %%zmm13 \n\t"
+       "vmovups 896(%0), %%zmm14 \n\t"
+       "vmovups 960(%0), %%zmm15 \n\t"
        : /* no output operands  */
        : "r" (zmm_data));
 
-  asm ("vmovaps 1024(%0), %%zmm16\n\t"
-       "vmovaps 1088(%0), %%zmm17\n\t"
-       "vmovaps 1152(%0), %%zmm18\n\t"
-       "vmovaps 1216(%0), %%zmm19\n\t"
-       "vmovaps 1280(%0), %%zmm20\n\t"
-       "vmovaps 1344(%0), %%zmm21\n\t"
-       "vmovaps 1408(%0), %%zmm22\n\t"
-       "vmovaps 1472(%0), %%zmm23\n\t"
-       "vmovaps 1536(%0), %%zmm24\n\t"
-       "vmovaps 1600(%0), %%zmm25\n\t"
-       "vmovaps 1664(%0), %%zmm26\n\t"
-       "vmovaps 1728(%0), %%zmm27\n\t"
-       "vmovaps 1792(%0), %%zmm28\n\t"
-       "vmovaps 1856(%0), %%zmm29\n\t"
-       "vmovaps 1920(%0), %%zmm30\n\t"
-       "vmovaps 1984(%0), %%zmm31\n\t"
+  asm ("vmovups 1024(%0), %%zmm16 \n\t"
+       "vmovups 1088(%0), %%zmm17 \n\t"
+       "vmovups 1152(%0), %%zmm18 \n\t"
+       "vmovups 1216(%0), %%zmm19 \n\t"
+       "vmovups 1280(%0), %%zmm20 \n\t"
+       "vmovups 1344(%0), %%zmm21 \n\t"
+       "vmovups 1408(%0), %%zmm22 \n\t"
+       "vmovups 1472(%0), %%zmm23 \n\t"
+       "vmovups 1536(%0), %%zmm24 \n\t"
+       "vmovups 1600(%0), %%zmm25 \n\t"
+       "vmovups 1664(%0), %%zmm26 \n\t"
+       "vmovups 1728(%0), %%zmm27 \n\t"
+       "vmovups 1792(%0), %%zmm28 \n\t"
+       "vmovups 1856(%0), %%zmm29 \n\t"
+       "vmovups 1920(%0), %%zmm30 \n\t"
+       "vmovups 1984(%0), %%zmm31 \n\t"
        : /* no output operands  */
        : "r" (zmm_data));
 #endif
@@ -173,44 +173,44 @@ move_zmm_data_to_reg (void)
 void
 move_zmm_data_to_memory (void)
 {
-  asm ("vmovaps %%zmm0, 0(%0)\n\t"
-       "vmovaps %%zmm1, 64(%0)\n\t"
-       "vmovaps %%zmm2, 128(%0)\n\t"
-       "vmovaps %%zmm3, 192(%0)\n\t"
-       "vmovaps %%zmm4, 256(%0)\n\t"
-       "vmovaps %%zmm5, 320(%0)\n\t"
-       "vmovaps %%zmm6, 384(%0)\n\t"
-       "vmovaps %%zmm7, 448(%0)\n\t"
+  asm ("vmovups %%zmm0, 0(%0)\n\t"
+       "vmovups %%zmm1, 64(%0)\n\t"
+       "vmovups %%zmm2, 128(%0)\n\t"
+       "vmovups %%zmm3, 192(%0)\n\t"
+       "vmovups %%zmm4, 256(%0)\n\t"
+       "vmovups %%zmm5, 320(%0)\n\t"
+       "vmovups %%zmm6, 384(%0)\n\t"
+       "vmovups %%zmm7, 448(%0)\n\t"
        : /* no output operands  */
        : "r" (zmm_data));
 #ifdef __x86_64__
-  asm ("vmovaps %%zmm8, 512(%0)\n\t"
-       "vmovaps %%zmm9, 576(%0)\n\t"
-       "vmovaps %%zmm10, 640(%0)\n\t"
-       "vmovaps %%zmm11, 704(%0)\n\t"
-       "vmovaps %%zmm12, 768(%0)\n\t"
-       "vmovaps %%zmm13, 832(%0)\n\t"
-       "vmovaps %%zmm14, 896(%0)\n\t"
-       "vmovaps %%zmm15, 960(%0)\n\t"
+  asm ("vmovups %%zmm8, 512(%0)\n\t"
+       "vmovups %%zmm9, 576(%0)\n\t"
+       "vmovups %%zmm10, 640(%0)\n\t"
+       "vmovups %%zmm11, 704(%0)\n\t"
+       "vmovups %%zmm12, 768(%0)\n\t"
+       "vmovups %%zmm13, 832(%0)\n\t"
+       "vmovups %%zmm14, 896(%0)\n\t"
+       "vmovups %%zmm15, 960(%0)\n\t"
        : /* no output operands  */
        : "r" (zmm_data));
 
-  asm ("vmovaps %%zmm16, 1024(%0)\n\t"
-       "vmovaps %%zmm17, 1088(%0)\n\t"
-       "vmovaps %%zmm18, 1152(%0)\n\t"
-       "vmovaps %%zmm19, 1216(%0)\n\t"
-       "vmovaps %%zmm20, 1280(%0)\n\t"
-       "vmovaps %%zmm21, 1344(%0)\n\t"
-       "vmovaps %%zmm22, 1408(%0)\n\t"
-       "vmovaps %%zmm23, 1472(%0)\n\t"
-       "vmovaps %%zmm24, 1536(%0)\n\t"
-       "vmovaps %%zmm25, 1600(%0)\n\t"
-       "vmovaps %%zmm26, 1664(%0)\n\t"
-       "vmovaps %%zmm27, 1728(%0)\n\t"
-       "vmovaps %%zmm28, 1792(%0)\n\t"
-       "vmovaps %%zmm29, 1856(%0)\n\t"
-       "vmovaps %%zmm30, 1920(%0)\n\t"
-       "vmovaps %%zmm31, 1984(%0)\n\t"
+  asm ("vmovups %%zmm16, 1024(%0)\n\t"
+       "vmovups %%zmm17, 1088(%0)\n\t"
+       "vmovups %%zmm18, 1152(%0)\n\t"
+       "vmovups %%zmm19, 1216(%0)\n\t"
+       "vmovups %%zmm20, 1280(%0)\n\t"
+       "vmovups %%zmm21, 1344(%0)\n\t"
+       "vmovups %%zmm22, 1408(%0)\n\t"
+       "vmovups %%zmm23, 1472(%0)\n\t"
+       "vmovups %%zmm24, 1536(%0)\n\t"
+       "vmovups %%zmm25, 1600(%0)\n\t"
+       "vmovups %%zmm26, 1664(%0)\n\t"
+       "vmovups %%zmm27, 1728(%0)\n\t"
+       "vmovups %%zmm28, 1792(%0)\n\t"
+       "vmovups %%zmm29, 1856(%0)\n\t"
+       "vmovups %%zmm30, 1920(%0)\n\t"
+       "vmovups %%zmm31, 1984(%0)\n\t"
        : /* no output operands  */
        : "r" (zmm_data));
 #endif
@@ -249,6 +249,13 @@ main (int argc, char **argv)
 	 move back to array and check values.  */
       move_zmm_data_to_memory ();
       asm ("nop"); /* sixth breakpoint here  */
+
+      asm ("vpternlogd $0xff, %zmm0, %zmm0, %zmm0");
+#ifdef __x86_64__
+      asm ("vpternlogd $0xff, %zmm0, %zmm0, %zmm16");
+#endif
+      asm ("vzeroupper");
+      asm ("nop"); /* seventh breakpoint here  */
     }
 
   return 0;

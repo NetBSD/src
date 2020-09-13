@@ -1,4 +1,4 @@
-# Copyright 1998-2017 Free Software Foundation, Inc.
+# Copyright 1998-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -722,13 +722,13 @@ gdb_test "complete file ./gdb.base/compl" \
     "file ./gdb.base/completion\\.exp.*" \
     "complete-command 'file ./gdb.base/compl'"
 
-set test "complete 'file ./gdb.base/complet'"
-send_gdb "file ./gdb.base/complet\t"
+set test "complete 'file ./gdb.base/completi'"
+send_gdb "file ./gdb.base/completi\t"
 gdb_test_multiple "" "$test" {
     -re "^file ./gdb.base/completion\\.exp $" {
 	send_gdb "\n"
 	# Ignore the exact error message.
-	gdb_test_multiple "" "complete 'file ./gdb.base/complet'" {
+	gdb_test_multiple "" "complete 'file ./gdb.base/completi'" {
 	    -re "\r\nA program is being debugged already\\.\[\r\n\]+Are you sure you want to change the file\\? \\(y or n\\) $" {
 		send_gdb "n\n"
 		exp_continue
@@ -749,7 +749,7 @@ gdb_test_multiple "" "$test" {
 	    -re "marker1.*$gdb_prompt " {
 		send_gdb "\n"
 		gdb_test_multiple "" "$test" {
-		    -re "All functions matching regular expression \"marker\":.*File.*break1.c:\r\nint marker1\\((void|)\\);\r\nint marker2\\(int\\).*marker3\\(char.*char.*\\).*marker4\\(long( int)?\\);.*$gdb_prompt $" {
+		    -re "All functions matching regular expression \"marker\":.*File.*break1.c:.*\tint marker1\\((void|)\\);\r\n.*:\tint marker2\\(int\\).*marker3\\(char.*char.*\\).*marker4\\(long( int)?\\);.*$gdb_prompt $" {
 			pass "$test"
 		    }
 		}
@@ -790,7 +790,7 @@ gdb_test_multiple "" $test {
     -re "break\.c.*break1\.c.*$gdb_prompt " {
 	send_gdb "1\t\n"
 	gdb_test_multiple "" $test {
-	    -re ".*Function \"$srcfile2\" not defined\..*$gdb_prompt " {
+	    -re "malformed linespec error: unexpected end of input\r\n$gdb_prompt " {
 		pass $test
 	    }
 	    -re "$gdb_prompt p$" {
@@ -863,35 +863,44 @@ gdb_test "complete break $srcfile:ma" "break\.c:main"
 
 gdb_test_no_output "set max-completions 5"
 
-set test "command-name completion limiting using tab character"
-send_gdb "p\t"
-gdb_test_multiple "" "$test" {
-    -re "^p\\\x07$" {
-	send_gdb "\t"
-	gdb_test_multiple "" "$test" {
-	    -re "List may be truncated, max-completions reached.*\r\n$gdb_prompt p$" {
-		# Complete the command and ignore the output to resync
-		# gdb for the next test.
-		send_gdb "\n"
-		gdb_test_multiple "" "$test" {
-		    -re "$gdb_prompt $" {
-			pass "$test"
-		    }
+proc ignore_and_resync {cmd result test} {
+    global gdb_prompt
+
+    gdb_test_multiple "" "$test" {
+	-re "^${cmd}$" {
+	    # Complete the command and ignore the output
+	    # to resync gdb for the next test.
+	    send_gdb "\n"
+	    gdb_test_multiple "" "$test" {
+		-re "$gdb_prompt $" {
+		    $result $test
 		}
 	    }
-	    -re "$gdb_prompt p$" {
-		# Complete the command and ignore the output to resync
-		# gdb for the next test.
-		send_gdb "\n"
-		gdb_test_multiple "" "$test" {
-		    -re "$gdb_prompt $" {
-			fail "$test"
-		    }
-		}
-	    }
-        }
+	}
     }
 }
+
+proc test_tab_complete {cmd test} {
+    global gdb_prompt
+
+    send_gdb "${cmd}\t"
+    gdb_test_multiple "" "$test" {
+	-re "^${cmd}\\\x07$" {
+	    send_gdb "\t"
+	    gdb_test_multiple "" "$test" {
+		-re "List may be truncated, max-completions reached.*\r\n$gdb_prompt " {
+		    ignore_and_resync $cmd pass $test
+		}
+		-re "$gdb_prompt " {
+		    ignore_and_resync $cmd fail $test
+		}
+	    }
+	}
+    }
+}
+
+test_tab_complete "p" \
+    "command-name completion limiting using tab character"
 
 set test "command-name completion limiting using complete command"
 send_gdb "complete p\n"
@@ -903,35 +912,8 @@ gdb_test_multiple "" "$test" {
 
 gdb_test_no_output "set max-completions 3"
 
-set test "symbol-name completion limiting using tab character"
-send_gdb "p marker\t"
-gdb_test_multiple "" "$test" {
-    -re "^p marker\\\x07$" {
-	send_gdb "\t"
-	gdb_test_multiple "" "$test" {
-	    -re "List may be truncated, max-completions reached.*\r\n$gdb_prompt p marker$" {
-		# Complete the command and ignore the output to resync
-		# gdb for the next test.
-		send_gdb "\n"
-		gdb_test_multiple "" "$test" {
-		    -re "$gdb_prompt $" {
-			pass "$test"
-		    }
-		}
-	    }
-	    -re "$gdb_prompt p marker$" {
-		# Complete the command and ignore the output to resync
-		# gdb for the next test.
-		send_gdb "\n"
-		gdb_test_multiple "" "$test" {
-		    -re "$gdb_prompt $" {
-			fail "$test"
-		    }
-		}
-	    }
-        }
-    }
-}
+test_tab_complete "p marker" \
+    "symbol-name completion limiting using tab character"
 
 set test "symbol-name completion limiting using complete command"
 send_gdb "complete p mark\n"

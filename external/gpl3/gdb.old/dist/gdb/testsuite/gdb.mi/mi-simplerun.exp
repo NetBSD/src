@@ -1,4 +1,4 @@
-# Copyright 1999-2017 Free Software Foundation, Inc.
+# Copyright 1999-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -78,13 +78,13 @@ proc test_breakpoints_creation_and_listing {} {
     lappend bps [mi_create_breakpoint "basics.c:$line_callee3_head" \
 		     "insert breakpoint at basics.c:\$line_callee3_head" \
 		     -number 3 -func callee3 -file ".*basics.c" \
-		     -line $line_callee3_head]
+		     -line $line_callee3_body]
 
     lappend bps [mi_create_breakpoint \
 		     "\"\\\"${srcfile}\\\":$line_callee4_head\"" \
 		     "insert breakpoint at \"<fullfilename>\":\$line_callee4_head" \
 		     -number 4 -func callee4 -file ".*basics.c" \
-		     -line $line_callee4_head]
+		     -line $line_callee4_body]
 
     mi_gdb_test "204-break-list" \
 	"204\\^done,[mi_make_breakpoint_table $bps]" \

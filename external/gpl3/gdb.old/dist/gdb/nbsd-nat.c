@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD
 
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2006-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,7 +24,7 @@
 #include "regset.h"
 #include "gdbcmd.h"
 #include "gdbthread.h"
-#include "gdb_wait.h"
+#include "common/gdb_wait.h"
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <sys/sysctl.h>
@@ -38,8 +38,8 @@
 /* Return the name of a file that can be opened to get the symbols for
    the child process identified by PID.  */
 
-static char *
-nbsd_pid_to_exec_file (struct target_ops *self, int pid)
+char *
+nbsd_nat_target::pid_to_exec_file (int pid)
 {
   ssize_t len;
   static char buf[PATH_MAX];
@@ -71,11 +71,11 @@ nbsd_pid_to_exec_file (struct target_ops *self, int pid)
    calling FUNC for each memory region.  OBFD is passed as the last
    argument to FUNC.  */
 
-static int
-nbsd_find_memory_regions (struct target_ops *self,
-			  find_memory_region_ftype func, void *obfd)
+int
+nbsd_nat_target::find_memory_regions (find_memory_region_ftype func,
+					   void *obfd)
 {
-  pid_t pid = ptid_get_pid (inferior_ptid);
+  pid_t pid = inferior_ptid.pid ();
   struct kinfo_vmentry *vmentl, *kve;
   uint64_t size;
   struct cleanup *cleanup;
@@ -131,15 +131,6 @@ nbsd_find_memory_regions (struct target_ops *self,
 
 static int debug_nbsd_lwp;
 
-static void (*super_resume) (struct target_ops *,
-			     ptid_t,
-			     int,
-			     enum gdb_signal);
-static ptid_t (*super_wait) (struct target_ops *,
-			     ptid_t,
-			     struct target_waitstatus *,
-			     int);
-
 static void
 show_nbsd_lwp_debug (struct ui_file *file, int from_tty,
 		     struct cmd_list_element *c, const char *value)
@@ -149,15 +140,15 @@ show_nbsd_lwp_debug (struct ui_file *file, int from_tty,
 
 /* Return true if PTID is still active in the inferior.  */
 
-static int
-nbsd_thread_alive (struct target_ops *ops, ptid_t ptid)
+bool
+nbsd_nat_target::thread_alive (ptid_t ptid)
 {
-  if (ptid_lwp_p (ptid))
+  if (ptid.lwp_p ())
     {
-      struct ptrace_lwpinfo pl;
+      struct ptrace_lwpstatus pl;
 
-      pl.pl_lwpid = ptid_get_lwp (ptid);
-      if (ptrace (PT_LWPINFO, ptid_get_pid (ptid), (caddr_t) &pl, sizeof pl)
+      pl.pl_lwpid = ptid.lwp ();
+      if (ptrace (PT_LWPSTATUS, ptid.pid (), (caddr_t) &pl, sizeof pl)
 	  == -1)
 	return 0;
     }
@@ -168,16 +159,16 @@ nbsd_thread_alive (struct target_ops *ops, ptid_t ptid)
 /* Convert PTID to a string.  Returns the string in a static
    buffer.  */
 
-static const char *
-nbsd_pid_to_str (struct target_ops *ops, ptid_t ptid)
+const char *
+nbsd_nat_target::pid_to_str (ptid_t ptid)
 {
   lwpid_t lwp;
 
-  lwp = ptid_get_lwp (ptid);
+  lwp = ptid.lwp ();
   if (lwp != 0)
     {
       static char buf[64];
-      int pid = ptid_get_pid (ptid);
+      int pid = ptid.pid ();
 
       xsnprintf (buf, sizeof buf, "LWP %d of process %d", lwp, pid);
       return buf;
@@ -189,12 +180,12 @@ nbsd_pid_to_str (struct target_ops *ops, ptid_t ptid)
 /* Return the name assigned to a thread by an application.  Returns
    the string in a static buffer.  */
 
-static const char *
-nbsd_thread_name (struct target_ops *self, struct thread_info *thr)
+const char *
+nbsd_nat_target::thread_name (struct thread_info *thr)
 {
   struct kinfo_lwp *kl;
-  pid_t pid = ptid_get_pid (thr->ptid);
-  lwpid_t lwp = ptid_get_lwp (thr->ptid);
+  pid_t pid = thr->ptid.pid ();
+  lwpid_t lwp = thr->ptid.lwp ();
   static char buf[KI_LNAMELEN];
   int mib[5];
   size_t i, nlwps;
@@ -242,12 +233,13 @@ nbsd_enable_proc_events (pid_t pid)
 	      sizeof (events)) == -1)
     perror_with_name (("ptrace"));
   events |= PTRACE_FORK;
-#ifdef notyet
   events |= PTRACE_VFORK;
   events |= PTRACE_VFORK_DONE;
-#endif
   events |= PTRACE_LWP_CREATE;
   events |= PTRACE_LWP_EXIT;
+#if notyet
+  events |= PTRACE_POSIX_SPAWN;
+#endif
   if (ptrace (PT_SET_EVENT_MASK, pid, (PTRACE_TYPE_ARG3)&events,
 	      sizeof (events)) == -1)
     perror_with_name (("ptrace"));
@@ -263,26 +255,31 @@ static void
 nbsd_add_threads (pid_t pid)
 {
   int val;
-  struct ptrace_lwpinfo pl;
+  struct ptrace_lwpstatus pl;
 
   pl.pl_lwpid = 0;
-  while ((val = ptrace (PT_LWPINFO, pid, (void *)&pl, sizeof(pl))) != -1
+  while ((val = ptrace (PT_LWPNEXT, pid, (void *)&pl, sizeof(pl))) != -1
     && pl.pl_lwpid != 0)
     {
-      ptid_t ptid = ptid_build (pid, pl.pl_lwpid, 0);
+      ptid_t ptid = ptid_t (pid, pl.pl_lwpid, 0);
       if (!in_thread_list (ptid))
-	add_thread (ptid);
+	{
+	  if (inferior_ptid.lwp () == 0)
+	    thread_change_ptid (inferior_ptid, ptid);
+	  else
+	    add_thread (ptid);
+	}
     }
 }
 
 /* Implement the "to_update_thread_list" target_ops method.  */
 
-static void
-nbsd_update_thread_list (struct target_ops *ops)
+void
+nbsd_nat_target::update_thread_list ()
 {
   prune_threads ();
 
-  nbsd_add_threads (ptid_get_pid (inferior_ptid));
+  nbsd_add_threads (inferior_ptid.pid ());
 }
 
 
@@ -292,71 +289,25 @@ struct nbsd_fork_info
   ptid_t ptid;
 };
 
-static struct nbsd_fork_info *nbsd_pending_children;
-
-/* Record a new child process event that is reported before the
-   corresponding fork event in the parent.  */
-
-static void
-nbsd_remember_child (ptid_t pid)
-{
-  struct nbsd_fork_info *info = XCNEW (struct nbsd_fork_info);
-
-  info->ptid = pid;
-  info->next = nbsd_pending_children;
-  nbsd_pending_children = info;
-}
-
-/* Check for a previously-recorded new child process event for PID.
-   If one is found, remove it from the list and return the PTID.  */
-
-static ptid_t
-nbsd_is_child_pending (pid_t pid)
-{
-  struct nbsd_fork_info *info, *prev;
-  ptid_t ptid;
-
-  prev = NULL;
-  for (info = nbsd_pending_children; info; prev = info, info = info->next)
-    {
-      if (ptid_get_pid (info->ptid) == pid)
-	{
-	  if (prev == NULL)
-	    nbsd_pending_children = info->next;
-	  else
-	    prev->next = info->next;
-	  ptid = info->ptid;
-	  xfree (info);
-	  return ptid;
-	}
-    }
-  return null_ptid;
-}
-
-/* Implement the "to_resume" target_ops method.  */
-
-static void
-nbsd_resume (struct target_ops *ops,
-	     ptid_t ptid, int step, enum gdb_signal signo)
+void
+nbsd_nat_target::resume (ptid_t ptid, int step, enum gdb_signal signo)
 {
   if (debug_nbsd_lwp)
     fprintf_unfiltered (gdb_stdlog,
 			"NLWP: nbsd_resume for ptid (%d, %ld, %ld)\n",
-			ptid_get_pid (ptid), ptid_get_lwp (ptid),
-			ptid_get_tid (ptid));
-  if (ptid_get_pid(ptid) == -1)
+			ptid.pid (), ptid.lwp (), ptid.tid ());
+  if (ptid.pid () == -1)
     ptid = inferior_ptid;
-  super_resume (ops, ptid, step, signo);
+  inf_ptrace_target::resume (ptid, step, signo);
 }
 
 /* Wait for the child specified by PTID to do something.  Return the
    process ID of the child, or MINUS_ONE_PTID in case of error; store
    the status in *OURSTATUS.  */
 
-static ptid_t
-nbsd_wait (struct target_ops *ops,
-	   ptid_t ptid, struct target_waitstatus *ourstatus,
-	   int target_options)
+ptid_t
+nbsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
+		       int target_options)
 {
   ptid_t wptid;
 
@@ -372,27 +323,25 @@ nbsd_wait (struct target_ops *ops,
 
   if (debug_nbsd_lwp)
     fprintf_unfiltered (gdb_stdlog, "NLWP: calling super_wait (%d, %ld, %ld) target_options=%#x\n",
-                        ptid_get_pid (ptid), ptid_get_lwp (ptid),
-                        ptid_get_tid (ptid), target_options);
+                        ptid.pid (), ptid.lwp (), ptid.tid (), target_options);
 
-  wptid = super_wait (ops, ptid, ourstatus, target_options);
+  wptid = inf_ptrace_target::wait (ptid, ourstatus, target_options);
 
   if (debug_nbsd_lwp)
     fprintf_unfiltered (gdb_stdlog, "NLWP: returned from super_wait (%d, %ld, %ld) target_options=%#x with ourstatus->kind=%d\n",
-                        ptid_get_pid (ptid), ptid_get_lwp (ptid),
-                        ptid_get_tid (ptid), target_options, ourstatus->kind);
+                        ptid.pid (), ptid.lwp (), ptid.tid (),
+			target_options, ourstatus->kind);
 
   if (ourstatus->kind == TARGET_WAITKIND_STOPPED)
     {
-      ptrace_state_t pst, child_pst;
+      ptrace_state_t pst;
       ptrace_siginfo_t psi, child_psi;
       int status;
       pid_t pid, child, wchild;
       ptid_t child_ptid;
       lwpid_t lwp;
-      struct ptrace_lwpinfo pl;
 
-      pid = ptid_get_pid (wptid);
+      pid = wptid.pid ();
       // Find the lwp that caused the wait status change
       if (ptrace(PT_GET_SIGINFO, pid, &psi, sizeof(psi)) == -1)
         perror_with_name (("ptrace"));
@@ -400,20 +349,20 @@ nbsd_wait (struct target_ops *ops,
       /* For whole-process signals pick random thread */
       if (psi.psi_lwpid == 0) {
         // XXX: Is this always valid?
-        lwp = ptid_get_lwp (inferior_ptid);
+        lwp = inferior_ptid.lwp ();
       } else {
         lwp = psi.psi_lwpid;
       }
 
-      wptid = ptid_build (pid, lwp, 0);
+      wptid = ptid_t (pid, lwp, 0);
 
       /* Set LWP in the process */
-      if (in_thread_list (pid_to_ptid (pid))) {
+      if (in_thread_list (ptid_t (pid))) {
           if (debug_nbsd_lwp)
             fprintf_unfiltered (gdb_stdlog,
                                 "NLWP: using LWP %d for first thread\n",
                                 lwp);
-          thread_change_ptid (pid_to_ptid (pid), wptid);                                                                                                 
+          thread_change_ptid (ptid_t (pid), wptid);                                                                                                 
       }
 
       if (debug_nbsd_lwp)
@@ -438,15 +387,15 @@ nbsd_wait (struct target_ops *ops,
           break;
         case TRAP_SCE:
           ourstatus->kind = TARGET_WAITKIND_SYSCALL_ENTRY;
-//          ourstatus->value.syscall_number = 0;
+          ourstatus->value.syscall_number = psi.psi_siginfo.si_sysnum;
           break;
         case TRAP_SCX:
           ourstatus->kind = TARGET_WAITKIND_SYSCALL_RETURN;
-//          ourstatus->value.syscall_number = 0;
+          ourstatus->value.syscall_number = psi.psi_siginfo.si_sysnum;
           break;
         case TRAP_EXEC:
           ourstatus->kind = TARGET_WAITKIND_EXECD;
-          ourstatus->value.execd_pathname = xstrdup(nbsd_pid_to_exec_file (NULL, pid));
+          ourstatus->value.execd_pathname = xstrdup(pid_to_exec_file (pid));
           break;
         case TRAP_LWP:
         case TRAP_CHLD:
@@ -494,8 +443,8 @@ nbsd_wait (struct target_ops *ops,
               return wptid;
             }
 
-            child_ptid = ptid_build(child, child_psi.psi_lwpid, 0);
-            nbsd_enable_proc_events (ptid_get_pid (child_ptid));
+            child_ptid = ptid_t (child, child_psi.psi_lwpid, 0);
+            nbsd_enable_proc_events (child_ptid.pid ());
             ourstatus->value.related_pid = child_ptid;
             break;
           case PTRACE_VFORK_DONE:
@@ -504,25 +453,28 @@ nbsd_wait (struct target_ops *ops,
               fprintf_unfiltered (gdb_stdlog, "NLWP: reported VFORK_DONE parent=%d child=%d\n", pid, pst.pe_other_pid);
             break;
           case PTRACE_LWP_CREATE:
-            wptid = ptid_build (pid, pst.pe_lwp, 0);
+            wptid = ptid_t (pid, pst.pe_lwp, 0);
             if (in_thread_list (wptid)) {
               /* Newborn reported after attach? */
               ourstatus->kind = TARGET_WAITKIND_SPURIOUS;
               return wptid;
             }
-            add_thread (wptid);
+	    if (inferior_ptid.lwp () == 0)
+	      thread_change_ptid (inferior_ptid, wptid);
+	    else
+	      add_thread (wptid);
             ourstatus->kind = TARGET_WAITKIND_THREAD_CREATED;
             if (debug_nbsd_lwp)
               fprintf_unfiltered (gdb_stdlog, "NLWP: created LWP %d\n", pst.pe_lwp);
             break;
           case PTRACE_LWP_EXIT:
-            wptid = ptid_build (pid, pst.pe_lwp, 0);
+            wptid = ptid_t (pid, pst.pe_lwp, 0);
             if (!in_thread_list (wptid)) {
               /* Dead child reported after attach? */
               ourstatus->kind = TARGET_WAITKIND_SPURIOUS;
               return wptid;
             }
-            delete_thread (wptid);
+            delete_thread (find_thread_ptid (wptid));
             ourstatus->kind = TARGET_WAITKIND_THREAD_EXITED;
             if (debug_nbsd_lwp)
               fprintf_unfiltered (gdb_stdlog, "NLWP: exited LWP %d\n", pst.pe_lwp);
@@ -538,8 +490,8 @@ nbsd_wait (struct target_ops *ops,
       if (debug_nbsd_lwp)
 	fprintf_unfiltered (gdb_stdlog,
 		"NLWP: nbsd_wait returned (%d, %ld, %ld)\n",
-		ptid_get_pid (wptid), ptid_get_lwp (wptid),
-		ptid_get_tid (wptid));
+		wptid.pid (), wptid.lwp (),
+		wptid.tid ());
       inferior_ptid = wptid;
 
     }
@@ -549,14 +501,13 @@ nbsd_wait (struct target_ops *ops,
 /* Target hook for follow_fork.  On entry and at return inferior_ptid is
    the ptid of the followed inferior.  */
 
-static int
-nbsd_follow_fork (struct target_ops *ops, int follow_child,
-			int detach_fork)
+int
+nbsd_nat_target::follow_fork (int follow_child, int detach_fork)
 {
   if (!follow_child && detach_fork)
     {
       struct thread_info *tp = inferior_thread ();
-      pid_t child_pid = ptid_get_pid (tp->pending_follow.value.related_pid);
+      pid_t child_pid = tp->pending_follow.value.related_pid.pid ();
 
       /* Breakpoints have already been detached from the child by
 	 infrun.c.  */
@@ -568,95 +519,17 @@ nbsd_follow_fork (struct target_ops *ops, int follow_child,
   return 0;
 }
 
-static int
-nbsd_insert_fork_catchpoint (struct target_ops *self, int pid)
+void
+nbsd_nat_target::post_startup_inferior (ptid_t pid)
 {
-  return 0;
-}
-
-static int
-nbsd_remove_fork_catchpoint (struct target_ops *self, int pid)
-{
-  return 0;
-}
-
-static int
-nbsd_insert_vfork_catchpoint (struct target_ops *self, int pid)
-{
-  return 0;
-}
-
-static int
-nbsd_remove_vfork_catchpoint (struct target_ops *self, int pid)
-{
-  return 0;
-}
-
-/* Implement the "to_post_startup_inferior" target_ops method.  */
-
-static void
-nbsd_post_startup_inferior (struct target_ops *self, ptid_t pid)
-{
-  nbsd_enable_proc_events (ptid_get_pid (pid));
-}
-
-/* Implement the "to_post_attach" target_ops method.  */
-
-static void
-nbsd_post_attach (struct target_ops *self, int pid)
-{
-  nbsd_enable_proc_events (pid);
-  nbsd_add_threads (pid);
-}
-
-static int
-nbsd_insert_exec_catchpoint (struct target_ops *self, int pid)
-{
-  return 0;
-}
-
-static int
-nbsd_remove_exec_catchpoint (struct target_ops *self, int pid)
-{
-  return 0;
-}
-
-static int
-nbsd_set_syscall_catchpoint (struct target_ops *self, int pid, int needed,
-			     int any_count, int table_size, int *table)
-{
-
-  /* Ignore the arguments.  inf-ptrace.c will use PT_SYSCALL which
-     will catch all system call entries and exits.  The system calls
-     are filtered by GDB rather than the kernel.  */
-  return 0;
+  nbsd_enable_proc_events (pid.pid ());
 }
 
 void
-nbsd_nat_add_target (struct target_ops *t)
+nbsd_nat_target::post_attach (int pid)
 {
-  t->to_pid_to_exec_file = nbsd_pid_to_exec_file;
-  t->to_find_memory_regions = nbsd_find_memory_regions;
-  t->to_thread_alive = nbsd_thread_alive;
-  t->to_pid_to_str = nbsd_pid_to_str;
-  t->to_thread_name = nbsd_thread_name;
-  t->to_update_thread_list = nbsd_update_thread_list;
-  t->to_has_thread_control = tc_schedlock;
-  super_resume = t->to_resume;
-  t->to_resume = nbsd_resume;
-  super_wait = t->to_wait;
-  t->to_wait = nbsd_wait;
-  t->to_post_startup_inferior = nbsd_post_startup_inferior;
-  t->to_post_attach = nbsd_post_attach;
-  t->to_follow_fork = nbsd_follow_fork;
-  t->to_insert_fork_catchpoint = nbsd_insert_fork_catchpoint;
-  t->to_remove_fork_catchpoint = nbsd_remove_fork_catchpoint;
-  t->to_insert_vfork_catchpoint = nbsd_insert_vfork_catchpoint;
-  t->to_remove_vfork_catchpoint = nbsd_remove_vfork_catchpoint;
-  t->to_insert_exec_catchpoint = nbsd_insert_exec_catchpoint;
-  t->to_remove_exec_catchpoint = nbsd_remove_exec_catchpoint;
-  t->to_set_syscall_catchpoint = nbsd_set_syscall_catchpoint;
-  add_target (t);
+  nbsd_enable_proc_events (pid);
+  nbsd_add_threads (pid);
 }
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */

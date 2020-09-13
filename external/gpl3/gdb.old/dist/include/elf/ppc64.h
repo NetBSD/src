@@ -1,5 +1,5 @@
 /* PPC64 ELF support for BFD.
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -154,14 +154,24 @@ START_RELOC_NUMBERS (elf_ppc64_reloc_type)
   RELOC_NUMBER (R_PPC64_ADDR64_LOCAL,	   117)
   RELOC_NUMBER (R_PPC64_ENTRY,		   118)
 
+/* Marker reloc for inline plt call insns.  */
+  RELOC_NUMBER (R_PPC64_PLTSEQ,		   119)
+  RELOC_NUMBER (R_PPC64_PLTCALL,	   120)
+
 #ifndef RELOC_MACROS_GEN_FUNC
-/* Relocation only used internally by ld.  If you need to use these
-   reloc numbers, you can change them to some other unused value
+/* Relocation only used internally by gas or ld.  If you need to use
+   these reloc numbers, you can change them to some other unused value
    without affecting the ABI.  They will never appear in object files.  */
-  RELOC_NUMBER (R_PPC64_LO_DS_OPT,	   128)
-/* Reloc only used internally by gas.  As above, value is unimportant.  */
-  RELOC_NUMBER (R_PPC64_16DX_HA,	   129)
+  RELOC_NUMBER (R_PPC64_LO_DS_OPT,	   200)
+  RELOC_NUMBER (R_PPC64_16DX_HA,	   201)
 #endif
+
+  RELOC_NUMBER (R_PPC64_REL16_HIGH,	   240)
+  RELOC_NUMBER (R_PPC64_REL16_HIGHA,	   241)
+  RELOC_NUMBER (R_PPC64_REL16_HIGHER,	   242)
+  RELOC_NUMBER (R_PPC64_REL16_HIGHERA,	   243)
+  RELOC_NUMBER (R_PPC64_REL16_HIGHEST,	   244)
+  RELOC_NUMBER (R_PPC64_REL16_HIGHESTA,	   245)
 
 /* Power9 split rel16 for addpcis.  */
   RELOC_NUMBER (R_PPC64_REL16DX_HA,	   246)
@@ -194,13 +204,15 @@ END_RELOC_NUMBERS (R_PPC64_max)
 #define EF_PPC64_ABI	3
 
 /* The ELFv2 ABI uses three bits in the symbol st_other field of a
-   function definition to specify the number of instructions between a
+   function definition to specify the number of bytes between a
    function's global entry point and local entry point.
+   Values of two to six specify powers of two from four to sixty four
+   bytes.  For such functions:
    The global entry point is used when it is necessary to set up the
    toc pointer (r2) for the function.  Callers must enter the global
    entry point with r12 set to the global entry point address.  On
-   return from the function, r2 may have a different value to that
-   which it had on entry.
+   return from the function r2 will contain the toc pointer for the
+   function.
    The local entry point is used when r2 is known to already be valid
    for the function.  There is no requirement on r12 when using the
    local entry point, and on return r2 will contain the same value as
@@ -208,7 +220,9 @@ END_RELOC_NUMBERS (R_PPC64_max)
    A value of zero in these bits means that the function has a single
    entry point with no requirement on r12 or r2, and that on return r2
    will contain the same value as at entry.
-   Values of one and seven are reserved.  */
+   A value of one means that the function has a single entry point
+   with no requirement on r12 or r2, and that r2 is *not* preserved.
+   A value of seven is reserved.  */
 #define STO_PPC64_LOCAL_BIT		5
 #define STO_PPC64_LOCAL_MASK		(7 << STO_PPC64_LOCAL_BIT)
 
@@ -251,5 +265,6 @@ ppc64_encode_local_entry(unsigned int val)
 #define DT_PPC64_OPT		(DT_LOPROC + 3)
 #define PPC64_OPT_TLS		1
 #define PPC64_OPT_MULTI_TOC	2
+#define PPC64_OPT_LOCALENTRY	4
 
 #endif /* _ELF_PPC64_H */

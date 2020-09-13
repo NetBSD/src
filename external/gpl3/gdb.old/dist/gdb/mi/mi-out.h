@@ -1,5 +1,5 @@
 /* MI Command Set - MI output generating routines for GDB.
-   Copyright (C) 2000-2017 Free Software Foundation, Inc.
+   Copyright (C) 2000-2019 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions (a Red Hat company).
 
    This file is part of GDB.
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef MI_OUT_H
-#define MI_OUT_H 1
+#ifndef MI_MI_OUT_H
+#define MI_MI_OUT_H
 
 #include <vector>
 
@@ -57,7 +57,8 @@ protected:
   virtual void do_field_skip (int fldno, int width, ui_align align,
 			   const char *fldname) override;
   virtual void do_field_string (int fldno, int width, ui_align align,
-			     const char *fldname, const char *string) override;
+				const char *fldname, const char *string,
+				ui_out_style_kind style) override;
   virtual void do_field_fmt (int fldno, int width, ui_align align,
 			  const char *fldname, const char *format, va_list args)
     override ATTRIBUTE_PRINTF (6,0);
@@ -69,7 +70,7 @@ protected:
   virtual void do_flush () override;
   virtual void do_redirect (struct ui_file *outstream) override;
 
-  virtual bool do_is_mi_like_p () override
+  virtual bool do_is_mi_like_p () const override
   { return true; }
 
 private:
@@ -94,4 +95,4 @@ int mi_version (ui_out *uiout);
 void mi_out_put (ui_out *uiout, struct ui_file *stream);
 void mi_out_rewind (ui_out *uiout);
 
-#endif /* MI_OUT_H */
+#endif /* MI_MI_OUT_H */

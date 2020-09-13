@@ -1,5 +1,5 @@
 /* GDB self-test for each gdbarch.
-   Copyright (C) 2017 Free Software Foundation, Inc.
+   Copyright (C) 2017-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,11 @@
 
 typedef void self_test_foreach_arch_function (struct gdbarch *);
 
+namespace selftests
+{
 extern void
-  register_self_test_foreach_arch (self_test_foreach_arch_function *function);
+  register_test_foreach_arch (const std::string &name,
+			      self_test_foreach_arch_function *function);
+}
 
 #endif /* SELFTEST_ARCH_H */

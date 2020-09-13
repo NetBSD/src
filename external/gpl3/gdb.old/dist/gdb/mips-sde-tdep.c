@@ -1,6 +1,6 @@
 /* Target-dependent code for SDE on MIPS processors.
 
-   Copyright (C) 2014-2017 Free Software Foundation, Inc.
+   Copyright (C) 2014-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -255,9 +255,6 @@ mips_sde_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   frame_unwind_append_unwinder (gdbarch, &mips_sde_frame_unwind);
   frame_base_append_sniffer (gdbarch, mips_sde_frame_base_sniffer);
 }
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-extern initialize_file_ftype _initialize_mips_sde_tdep;
 
 void
 _initialize_mips_sde_tdep (void)

@@ -1,4 +1,4 @@
-# Copyright 2014-2017 Free Software Foundation, Inc.
+# Copyright 2014-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -93,9 +93,9 @@ gdb_test "break [gdb_get_line_number "third breakpoint here"]" \
 gdb_continue_to_breakpoint "continue to third breakpoint in main"
 
 if [is_amd64_regs_target] {
-    set nr_regs 8
-} else {
     set nr_regs 32
+} else {
+    set nr_regs 8
 }
 
 for { set r 0 } { $r < $nr_regs } { incr r } {
@@ -173,4 +173,14 @@ for { set r 0 } { $r < $nr_regs } { incr r } {
     gdb_test "print zmm_data\[$r\]" \
         ".. = \\{f = \\{[expr $r + 30], [expr $r.125 + 30], [expr $r.25 + 20], [expr $r.375 + 20], [expr $r.5 + 10], [expr $r.625 + 10], [expr $r.75 + 10], [expr $r.875 + 10]\\}\\}.*" \
         "check contents of zmm_data\[$r\] after writing XMM regs"
+}
+
+gdb_test "break [gdb_get_line_number "seventh breakpoint here"]" \
+    "Breakpoint .* at .*i386-avx512.c.*" \
+    "set seventh breakpoint in main"
+gdb_continue_to_breakpoint "continue to seventh breakpoint in main"
+gdb_test "print \$zmm0.v16_int32" "= {-1, -1, -1, -1, 0 <repeats 12 times>}"
+
+if { $nr_regs >= 16 } {
+    gdb_test "print \$zmm16.v16_int32" "= {-1 <repeats 16 times>}"
 }

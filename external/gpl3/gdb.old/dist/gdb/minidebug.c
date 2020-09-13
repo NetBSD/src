@@ -1,6 +1,6 @@
 /* Read MiniDebugInfo data from an objfile.
 
-   Copyright (C) 2012-2017 Free Software Foundation, Inc.
+   Copyright (C) 2012-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -83,7 +83,6 @@ lzma_open (struct bfd *nbfd, void *open_closure)
   gdb_byte footer[LZMA_STREAM_HEADER_SIZE];
   gdb_byte *indexdata;
   lzma_index *index;
-  int ret;
   uint64_t memlimit = UINT64_MAX;
   struct gdb_lzma_stream *lstream;
   size_t pos;
@@ -270,7 +269,10 @@ find_separate_debug_file_in_section (struct objfile *objfile)
     return NULL;
 
 #ifdef HAVE_LIBLZMA
-  abfd = gdb_bfd_openr_iovec (objfile_name (objfile), gnutarget, lzma_open,
+  std::string filename = string_printf (_(".gnu_debugdata for %s"),
+					objfile_name (objfile));
+
+  abfd = gdb_bfd_openr_iovec (filename.c_str (), gnutarget, lzma_open,
 			      section, lzma_pread, lzma_close, lzma_stat);
   if (abfd == NULL)
     return NULL;
