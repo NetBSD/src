@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.298 2020/09/13 09:43:01 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.299 2020/09/13 13:17:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.298 2020/09/13 09:43:01 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.299 2020/09/13 13:17:44 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.298 2020/09/13 09:43:01 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.299 2020/09/13 13:17:44 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -614,37 +614,32 @@ static void
 PrintLocation(FILE *f, const char *cfname, size_t clineno)
 {
 	char dirbuf[MAXPATHLEN+1];
+	const char *dir, *fname;
+	char *dir_freeIt, *fname_freeIt;
 
-	(void)fprintf(f, "\"");
-	if (*cfname != '/' && strcmp(cfname, "(stdin)") != 0) {
-		char *cp, *cp2;
-		const char *dir, *fname;
+	if (*cfname == '/' || strcmp(cfname, "(stdin)") == 0) {
+		(void)fprintf(f, "\"%s\" line %zu: ", cfname, clineno);
+		return;
+	}
 
-		/*
-		 * Nothing is more annoying than not knowing
-		 * which Makefile is the culprit; we try ${.PARSEDIR}
-		 * and apply realpath(3) if not absolute.
-		 */
-		dir = Var_Value(".PARSEDIR", VAR_GLOBAL, &cp);
-		if (dir == NULL)
-			dir = ".";
-		if (*dir != '/') {
-			dir = realpath(dir, dirbuf);
-		}
-		fname = Var_Value(".PARSEFILE", VAR_GLOBAL, &cp2);
-		if (fname == NULL) {
-			if ((fname = strrchr(cfname, '/')))
-				fname++;
-			else
-				fname = cfname;
-		}
-		(void)fprintf(f, "%s/%s", dir, fname);
-		bmake_free(cp2);
-		bmake_free(cp);
-	} else
-		(void)fprintf(f, "%s", cfname);
+	/* Find out which makefile is the culprit.
+	 * We try ${.PARSEDIR} and apply realpath(3) if not absolute. */
 
-	(void)fprintf(f, "\" line %d: ", (int)clineno);
+	dir = Var_Value(".PARSEDIR", VAR_GLOBAL, &dir_freeIt);
+	if (dir == NULL)
+		dir = ".";
+	if (*dir != '/')
+		dir = realpath(dir, dirbuf);
+
+	fname = Var_Value(".PARSEFILE", VAR_GLOBAL, &fname_freeIt);
+	if (fname == NULL) {
+		const char *slash = strrchr(cfname, '/');
+		fname = slash != NULL ? slash + 1 : cfname;
+	}
+
+	(void)fprintf(f, "\"%s/%s\" line %zu: ", dir, fname, clineno);
+	bmake_free(fname_freeIt);
+	bmake_free(dir_freeIt);
 }
 
 /*-
