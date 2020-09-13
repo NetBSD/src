@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.302 2020/09/13 13:50:27 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.303 2020/09/13 15:15:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -68,19 +68,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.302 2020/09/13 13:50:27 rillig Exp $";
-#else
-#include <sys/cdefs.h>
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
-#else
-__RCSID("$NetBSD: parse.c,v 1.302 2020/09/13 13:50:27 rillig Exp $");
-#endif
-#endif /* not lint */
-#endif
-
 /*-
  * parse.c --
  *	Functions to parse a makefile.
@@ -142,6 +129,9 @@ __RCSID("$NetBSD: parse.c,v 1.302 2020/09/13 13:50:27 rillig Exp $");
 #include "dir.h"
 #include "job.h"
 #include "pathnames.h"
+
+/*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
+MAKE_RCSID("$NetBSD: parse.c,v 1.303 2020/09/13 15:15:51 rillig Exp $");
 
 /* types and constants */
 

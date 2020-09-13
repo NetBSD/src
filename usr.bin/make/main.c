@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.336 2020/09/13 06:15:29 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.337 2020/09/13 15:15:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -68,24 +68,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.336 2020/09/13 06:15:29 rillig Exp $";
-#else
-#include <sys/cdefs.h>
-#ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
- The Regents of the University of California.  All rights reserved.");
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
-#else
-__RCSID("$NetBSD: main.c,v 1.336 2020/09/13 06:15:29 rillig Exp $");
-#endif
-#endif /* not lint */
-#endif
-
 /*-
  * main.c --
  *	The main file for this entire program. Exit routines etc
@@ -141,6 +123,13 @@ __RCSID("$NetBSD: main.c,v 1.336 2020/09/13 06:15:29 rillig Exp $");
 
 #ifdef USE_IOVEC
 #include <sys/uio.h>
+#endif
+
+/*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
+MAKE_RCSID("$NetBSD: main.c,v 1.337 2020/09/13 15:15:51 rillig Exp $");
+#if defined(MAKE_NATIVE) && !defined(lint)
+__COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif
 
 #ifndef	DEFMAXLOCAL

@@ -1,19 +1,10 @@
-/*	$NetBSD: util.c,v 1.59 2020/09/12 16:46:24 rillig Exp $	*/
+/*	$NetBSD: util.c,v 1.60 2020/09/13 15:15:51 rillig Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 #if defined(__MINT__) || defined(__linux__)
 #include <signal.h>
-#endif
-
-#ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: util.c,v 1.59 2020/09/12 16:46:24 rillig Exp $";
-#else
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: util.c,v 1.59 2020/09/12 16:46:24 rillig Exp $");
-#endif
 #endif
 
 #include <sys/param.h>
@@ -24,6 +15,8 @@ __RCSID("$NetBSD: util.c,v 1.59 2020/09/12 16:46:24 rillig Exp $");
 #include <signal.h>
 
 #include "make.h"
+
+MAKE_RCSID("$NetBSD: util.c,v 1.60 2020/09/13 15:15:51 rillig Exp $");
 
 #if !defined(MAKE_NATIVE) && !defined(HAVE_STRERROR)
 extern int errno, sys_nerr;
@@ -463,6 +456,7 @@ strftime(char *buf, size_t len, const char *fmt, const struct tm *tm)
 		buf += s;
 		len -= s;
 	}
+	return buf - b;
 }
 #endif
 #endif
