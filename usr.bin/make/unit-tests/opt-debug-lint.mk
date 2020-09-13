@@ -1,4 +1,4 @@
-# $NetBSD: opt-debug-lint.mk,v 1.2 2020/09/13 19:28:46 rillig Exp $
+# $NetBSD: opt-debug-lint.mk,v 1.3 2020/09/13 20:21:24 rillig Exp $
 #
 # Tests for the -dL command line option, which runs additional checks
 # to catch common mistakes, such as unclosed variable expressions.
@@ -29,6 +29,15 @@
 # error.  In all practical cases, this is no problem.  This particular test
 # case is made up and unrealistic.
 .if $@ != "\$(.TARGET)"
+.  error
+.endif
+
+# Since 2020-09-13, Var_Parse properly reports errors for undefined variables,
+# but only in lint mode.  Before, it had only silently returned var_Error,
+# hoping for the caller to print an error message.  This resulted in the
+# well-known "Malformed conditional" error message, even though the
+# conditional was well-formed and the only error was an undefined variable.
+.if ${UNDEF}
 .  error
 .endif
 

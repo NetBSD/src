@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.517 2020/09/13 19:46:23 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.518 2020/09/13 20:21:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.517 2020/09/13 19:46:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.518 2020/09/13 20:21:24 rillig Exp $");
 
 #define VAR_DEBUG_IF(cond, fmt, ...)	\
     if (!(DEBUG(VAR) && (cond)))	\
@@ -3560,11 +3560,25 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 		    free(varname);
 		    *out_val = pstr;
 		    return VPE_OK;
-		} else {
-		    free(varname);
-		    *out_val = eflags & VARE_UNDEFERR ? var_Error : varNoError;
-		    return eflags & VARE_UNDEFERR ? VPE_UNDEF_SILENT : VPE_OK;
 		}
+
+		if ((eflags & VARE_UNDEFERR) && DEBUG(LINT)) {
+		    Parse_Error(PARSE_FATAL, "Variable \"%s\" is undefined",
+				varname);
+		    free(varname);
+		    *out_val = var_Error;
+		    return VPE_UNDEF_MSG;
+		}
+
+		if (eflags & VARE_UNDEFERR) {
+		    free(varname);
+		    *out_val = var_Error;
+		    return VPE_UNDEF_SILENT;
+		}
+
+		free(varname);
+		*out_val = varNoError;
+		return VPE_OK;
 	    }
 
 	    /* The variable expression is based on an undefined variable.
