@@ -1,4 +1,4 @@
-<!-- Copyright (C) 2009-2017 Free Software Foundation, Inc.
+<!-- Copyright (C) 2009-2019 Free Software Foundation, Inc.
 
      Copying and distribution of this file, with or without modification,
      are permitted in any medium without royalty provided the copyright
@@ -12,4 +12,5 @@
 <!ATTLIST syscall
 	name			CDATA	#REQUIRED
 	number			CDATA	#REQUIRED
+	alias			CDATA	#IMPLIED
 	groups			CDATA	#IMPLIED>

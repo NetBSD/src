@@ -1,6 +1,6 @@
 /* Python interface to inferior events.
 
-   Copyright (C) 2009-2017 Free Software Foundation, Inc.
+   Copyright (C) 2009-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -62,46 +62,11 @@ gdbpy_initialize_py_events (void)
   if (!gdb_py_events.module)
     return -1;
 
-  if (add_new_registry (&gdb_py_events.stop, "stop") < 0)
+#define GDB_PY_DEFINE_EVENT(name)				\
+  if (add_new_registry (&gdb_py_events.name, #name) < 0)	\
     return -1;
-
-  if (add_new_registry (&gdb_py_events.cont, "cont") < 0)
-    return -1;
-
-  if (add_new_registry (&gdb_py_events.exited, "exited") < 0)
-    return -1;
-
-  if (add_new_registry (&gdb_py_events.inferior_call,
-			"inferior_call") < 0)
-    return -1;
-
-  if (add_new_registry (&gdb_py_events.memory_changed,
-			"memory_changed") < 0)
-    return -1;
-
-  if (add_new_registry (&gdb_py_events.register_changed,
-			"register_changed") < 0)
-    return -1;
-
-  if (add_new_registry (&gdb_py_events.new_objfile, "new_objfile") < 0)
-    return -1;
-
-  if (add_new_registry (&gdb_py_events.clear_objfiles, "clear_objfiles") < 0)
-    return -1;
-
-  if (add_new_registry (&gdb_py_events.breakpoint_created,
-			"breakpoint_created") < 0)
-    return -1;
-
-  if (add_new_registry (&gdb_py_events.breakpoint_deleted,
-			"breakpoint_deleted") < 0)
-    return -1;
-  if (add_new_registry (&gdb_py_events.breakpoint_modified,
-			"breakpoint_modified") < 0)
-    return -1;
-
-  if (add_new_registry (&gdb_py_events.before_prompt, "before_prompt") < 0)
-    return -1;
+#include "py-all-events.def"
+#undef GDB_PY_DEFINE_EVENT
 
   if (gdb_pymodule_addobject (gdb_module,
 			      "events",

@@ -1,6 +1,6 @@
 /* Support for printing Fortran values for GDB, the GNU debugger.
 
-   Copyright (C) 1993-2017 Free Software Foundation, Inc.
+   Copyright (C) 1993-2019 Free Software Foundation, Inc.
 
    Contributed by Motorola.  Adapted from the C definitions by Farooq Butt
    (fmbutt@engage.sps.mot.com), additionally worked over by Stan Shebs.
@@ -34,8 +34,6 @@
 #include "block.h"
 #include "dictionary.h"
 
-extern void _initialize_f_valprint (void);
-static void info_common_command (char *, int);
 static void f77_get_dynamic_length_of_aggregate (struct type *);
 
 int f77_array_offset_tbl[MAX_FORTRAN_DIMS + 1][2];
@@ -216,7 +214,6 @@ f_val_print (struct type *type, int embedded_offset,
 	     const struct value_print_options *options)
 {
   struct gdbarch *gdbarch = get_type_arch (type);
-  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   int printed_field = 0; /* Number of fields printed.  */
   struct type *elttype;
   CORE_ADDR addr;
@@ -310,21 +307,8 @@ f_val_print (struct type *type, int embedded_offset,
 				      original_value, &opts, 0, stream);
 	}
       else
-	{
-	  val_print_type_code_int (type, valaddr + embedded_offset, stream);
-	  /* C and C++ has no single byte int type, char is used instead.
-	     Since we don't know whether the value is really intended to
-	     be used as an integer or a character, print the character
-	     equivalent as well.  */
-	  if (TYPE_LENGTH (type) == 1)
-	    {
-	      LONGEST c;
-
-	      fputs_filtered (" ", stream);
-	      c = unpack_long (type, valaddr + embedded_offset);
-	      LA_PRINT_CHAR ((unsigned char) c, type, stream);
-	    }
-	}
+	val_print_scalar_formatted (type, embedded_offset,
+				    original_value, options, 0, stream);
       break;
 
     case TYPE_CODE_STRUCT:
@@ -391,7 +375,6 @@ info_common_command_for_block (const struct block *block, const char *comname,
 {
   struct block_iterator iter;
   struct symbol *sym;
-  const char *name;
   struct value_print_options opts;
 
   get_user_print_options (&opts);
@@ -447,7 +430,7 @@ info_common_command_for_block (const struct block *block, const char *comname,
    given name.  */
 
 static void
-info_common_command (char *comname, int from_tty)
+info_common_command (const char *comname, int from_tty)
 {
   struct frame_info *fi;
   const struct block *block;

@@ -1,4 +1,4 @@
-@c Copyright (C) 2008-2017 Free Software Foundation, Inc.
+@c Copyright (C) 2008-2019 Free Software Foundation, Inc.
 @c Permission is granted to copy, distribute and/or modify this document
 @c under the terms of the GNU Free Documentation License, Version 1.3 or
 @c any later version published by the Free Software Foundation; with the
@@ -18,6 +18,8 @@
 You can extend @value{GDBN} using the @uref{http://www.python.org/,
 Python programming language}.  This feature is available only if
 @value{GDBN} was configured using @option{--with-python}.
+@value{GDBN} can be built against either Python 2 or Python 3; which
+one you have depends on this configure-time option.
 
 @cindex python directory
 Python scripts used by @value{GDBN} should be installed in
@@ -113,10 +115,6 @@ interpreter:
 The script name must end with @samp{.py} and @value{GDBN} must be configured
 to recognize the script language based on filename extension using
 the @code{script-extension} setting.  @xref{Extending GDB, ,Extending GDB}.
-
-@item python execfile ("script-name")
-This method is based on the @code{execfile} Python built-in function,
-and thus is always available.
 @end table
 
 @node Python API
@@ -209,6 +207,10 @@ methods and classes added by @value{GDBN} are placed in this module.
 @value{GDBN} automatically @code{import}s the @code{gdb} module for
 use in all scripts evaluated by the @code{python} command.
 
+Some types of the @code{gdb} module come with a textual representation
+(accessible through the @code{repr} or @code{str} functions).  These are
+offered for debugging purposes only, expect them to change over time.
+
 @findex gdb.PYTHONDIR
 @defvar gdb.PYTHONDIR
 A string containing the python directory (@pxref{Python}).
@@ -243,6 +245,23 @@ were no breakpoints.  This peculiarity was subsequently fixed, and now
 @code{gdb.breakpoints} returns an empty sequence in this case.
 @end defun
 
+@defun gdb.rbreak (regex @r{[}, minsyms @r{[}, throttle, @r{[}, symtabs @r{]]]})
+Return a Python list holding a collection of newly set
+@code{gdb.Breakpoint} objects matching function names defined by the
+@var{regex} pattern.  If the @var{minsyms} keyword is @code{True}, all
+system functions (those not explicitly defined in the inferior) will
+also be included in the match.  The @var{throttle} keyword takes an
+integer that defines the maximum number of pattern matches for
+functions matched by the @var{regex} pattern.  If the number of
+matches exceeds the integer value of @var{throttle}, a
+@code{RuntimeError} will be raised and no breakpoints will be created.
+If @var{throttle} is not defined then there is no imposed limit on the
+maximum number of matches and breakpoints to be created.  The
+@var{symtabs} keyword takes a Python iterable that yields a collection
+of @code{gdb.Symtab} objects and will restrict the search to those
+functions only contained within the @code{gdb.Symtab} objects.
+@end defun
+
 @findex gdb.parameter
 @defun gdb.parameter (parameter)
 Return the value of a @value{GDBN} @var{parameter} given by its name,
@@ -271,6 +290,26 @@ If no exception is raised, the return value is always an instance of
 @code{gdb.Value} (@pxref{Values From Inferior}).
 @end defun
 
+@findex gdb.convenience_variable
+@defun gdb.convenience_variable (name)
+Return the value of the convenience variable (@pxref{Convenience
+Vars}) named @var{name}.  @var{name} must be a string.  The name
+should not include the @samp{$} that is used to mark a convenience
+variable in an expression.  If the convenience variable does not
+exist, then @code{None} is returned.
+@end defun
+
+@findex gdb.set_convenience_variable
+@defun gdb.set_convenience_variable (name, value)
+Set the value of the convenience variable (@pxref{Convenience Vars})
+named @var{name}.  @var{name} must be a string.  The name should not
+include the @samp{$} that is used to mark a convenience variable in an
+expression.  If @var{value} is @code{None}, then the convenience
+variable is removed.  Otherwise, if @var{value} is not a
+@code{gdb.Value} (@pxref{Values From Inferior}), it is is converted
+using the @code{gdb.Value} constructor.
+@end defun
+
 @findex gdb.parse_and_eval
 @defun gdb.parse_and_eval (expression)
 Parse @var{expression}, which must be a string, as an expression in
@@ -280,8 +319,7 @@ the current language, evaluate it, and return the result as a
 This function can be useful when implementing a new command
 (@pxref{Commands In Python}), as it provides a way to parse the
 command's argument as an expression.  It is also useful simply to
-compute values, for example, it is the only way to get the value of a
-convenience variable (@pxref{Convenience Vars}) as a @code{gdb.Value}.
+compute values.
 @end defun
 
 @findex gdb.find_pc_line
@@ -290,7 +328,9 @@ Return the @code{gdb.Symtab_and_line} object corresponding to the
 @var{pc} value.  @xref{Symbol Tables In Python}.  If an invalid
 value of @var{pc} is passed as an argument, then the @code{symtab} and
 @code{line} attributes of the returned @code{gdb.Symtab_and_line} object
-will be @code{None} and 0 respectively.
+will be @code{None} and 0 respectively.  This is identical to
+@code{gdb.current_progspace().find_pc_line(pc)} and is included for
+historical compatibility.
 @end defun
 
 @findex gdb.post_event
@@ -410,11 +450,13 @@ never returned.
 @findex gdb.solib_name
 @defun gdb.solib_name (address)
 Return the name of the shared library holding the given @var{address}
-as a string, or @code{None}.
+as a string, or @code{None}.  This is identical to
+@code{gdb.current_progspace().solib_name(address)} and is included for
+historical compatibility.
 @end defun
 
 @findex gdb.decode_line 
-@defun gdb.decode_line @r{[}expression@r{]}
+@defun gdb.decode_line (@r{[}expression@r{]})
 Return locations of the line specified by @var{expression}, or of the
 current line if no argument was given.  This function returns a Python
 tuple containing two elements.  The first element contains a string
@@ -492,12 +534,20 @@ message as its value and the Python call stack backtrace at the Python
 statement closest to where the @value{GDBN} error occured as the
 traceback.
 
-@findex gdb.GdbError
-When implementing @value{GDBN} commands in Python via @code{gdb.Command},
-it is useful to be able to throw an exception that doesn't cause a
-traceback to be printed.  For example, the user may have invoked the
-command incorrectly.  Use the @code{gdb.GdbError} exception
-to handle this case.  Example:
+
+When implementing @value{GDBN} commands in Python via
+@code{gdb.Command}, or functions via @code{gdb.Function}, it is useful
+to be able to throw an exception that doesn't cause a traceback to be
+printed.  For example, the user may have invoked the command
+incorrectly.  @value{GDBN} provides a special exception class that can
+be used for this purpose.
+
+@ftable @code
+@item gdb.GdbError
+When thrown from a command or function, this exception will cause the
+command or function to fail, but the Python stack will not be
+displayed.  @value{GDBN} does not throw this exception itself, but
+rather recognizes it when thrown from user Python code.  Example:
 
 @smallexample
 (gdb) python
@@ -515,6 +565,7 @@ to handle this case.  Example:
 (gdb) hello-world 42
 hello-world takes no arguments
 @end smallexample
+@end ftable
 
 @node Values From Inferior
 @subsubsection Values From Inferior
@@ -615,14 +666,14 @@ The type of this @code{gdb.Value}.  The value of this attribute is a
 @end defvar
 
 @defvar Value.dynamic_type
-The dynamic type of this @code{gdb.Value}.  This uses C@t{++} run-time
-type information (@acronym{RTTI}) to determine the dynamic type of the
-value.  If this value is of class type, it will return the class in
-which the value is embedded, if any.  If this value is of pointer or
-reference to a class type, it will compute the dynamic type of the
-referenced object, and return a pointer or reference to that type,
-respectively.  In all other cases, it will return the value's static
-type.
+The dynamic type of this @code{gdb.Value}.  This uses the object's
+virtual table and the C@t{++} run-time type information
+(@acronym{RTTI}) to determine the dynamic type of the value.  If this
+value is of class type, it will return the class in which the value is
+embedded, if any.  If this value is of pointer or reference to a class
+type, it will compute the dynamic type of the referenced object, and
+return a pointer or reference to that type, respectively.  In all
+other cases, it will return the value's static type.
 
 Note that this feature will only work when debugging a C@t{++} program
 that includes @acronym{RTTI} for the object in question.  Otherwise,
@@ -682,6 +733,14 @@ If @code{val} is a @code{gdb.LazyString} (@pxref{Lazy Strings In
 Python}), then the lazy string's @code{value} method is called, and
 its result is used.
 @end table
+@end defun
+
+@defun Value.__init__ (@var{val}, @r{[}, type @r{]})
+This second form of the @code{gdb.Value} constructor returns a
+@code{gdb.Value} of type @var{type} where the value contents are taken
+from the Python buffer object specified by @var{val}.  The number of
+bytes in the Python buffer object must be greater than or equal to the
+size of @var{type}.
 @end defun
 
 @defun Value.cast (type)
@@ -912,6 +971,13 @@ description of the @code{Type.fields} method for a description of the
 @code{gdb.Field} class.
 
 An instance of @code{Type} has the following attributes:
+
+@defvar Type.alignof
+The alignment of this type, in bytes.  Type alignment comes from the
+debugging information; if it was not specified, then @value{GDBN} will
+use the relevant ABI to try to determine the alignment.  In some
+cases, even this is not possible, and zero will be returned.
+@end defvar
 
 @defvar Type.code
 The type code for this type.  The type code will be one of the
@@ -1203,10 +1269,9 @@ Python module (@pxref{gdb.types}).
 @subsubsection Pretty Printing API
 @cindex python pretty printing api
 
-An example output is provided (@pxref{Pretty Printing}).
-
 A pretty-printer is just an object that holds a value and implements a
-specific interface, defined here.
+specific interface, defined here.  An example output is provided
+(@pxref{Pretty Printing}).
 
 @defun pretty_printer.children (self)
 @value{GDBN} will call this method on a pretty-printer to compute the
@@ -1573,7 +1638,7 @@ order to avoid holding information that could become stale as the
 inferior changed.
 
 @node Frame Filter API
-@subsubsection Filtering Frames.
+@subsubsection Filtering Frames
 @cindex frame filters api
 
 Frame filters are Python objects that manipulate the visibility of a
@@ -1725,11 +1790,11 @@ frame filters.  Although @code{priority} can be negative, it is
 recommended practice to assume zero is the lowest priority that a
 frame filter can be assigned.  Frame filters that have the same
 priority are executed in unsorted order in that priority slot.  This
-attribute is mandatory.
+attribute is mandatory.  100 is a good default priority.
 @end defvar
 
 @node Frame Decorator API
-@subsubsection Decorating Frames.
+@subsubsection Decorating Frames
 @cindex frame decorator api
 
 Frame decorators are sister objects to frame filters (@pxref{Frame
@@ -1752,6 +1817,13 @@ Frame decorators have a mandatory interface, defined below.
 boilerplate code to decorate the content of a @code{gdb.Frame}.  It is
 recommended that other frame decorators inherit and extend this
 object, and only to override the methods needed.
+
+@tindex gdb.FrameDecorator
+@code{FrameDecorator} is defined in the Python module
+@code{gdb.FrameDecorator}, so your code can import it like:
+@smallexample
+from gdb.FrameDecorator import FrameDecorator
+@end smallexample
 
 @defun FrameDecorator.elided (self)
 
@@ -2231,17 +2303,40 @@ return @code{None}.  The code in @value{GDBN} that enables writing
 unwinders in Python uses this object to return frame's ID and previous
 frame registers when @value{GDBN} core asks for them.
 
+An unwinder should do as little work as possible.  Some otherwise
+innocuous operations can cause problems (even crashes, as this code is
+not not well-hardened yet).  For example, making an inferior call from
+an unwinder is unadvisable, as an inferior call will reset
+@value{GDBN}'s stack unwinding process, potentially causing re-entrant
+unwinding.
+
 @subheading Unwinder Input
 
 An object passed to an unwinder (a @code{gdb.PendingFrame} instance)
 provides a method to read frame's registers:
 
 @defun PendingFrame.read_register (reg)
-This method returns the contents of the register @var{regn} in the
+This method returns the contents of the register @var{reg} in the
 frame as a @code{gdb.Value} object.  @var{reg} can be either a
 register number or a register name; the values are platform-specific.
 They are usually found in the corresponding
-@file{@var{platform}-tdep.h} file in the @value{GDBN} source tree.
+@file{@var{platform}-tdep.h} file in the @value{GDBN} source tree.  If
+@var{reg} does not name a register for the current architecture, this
+method will throw an exception.
+
+Note that this method will always return a @code{gdb.Value} for a
+valid register name.  This does not mean that the value will be valid.
+For example, you may request a register that an earlier unwinder could
+not unwind---the value will be unavailable.  Instead, the
+@code{gdb.Value} returned from this method will be lazy; that is, its
+underlying bits will not be fetched until it is first used.  So,
+attempting to use such a value will cause an exception at the point of
+use.
+
+The type of the returned @code{gdb.Value} depends on the register and
+the architecture.  It is common for registers to have a scalar type,
+like @code{long long}; but many other types are possible, such as
+pointer, pointer-to-function, floating point or vector types.
 @end defun
 
 It also provides a factory method to create a @code{gdb.UnwindInfo}
@@ -2254,18 +2349,32 @@ using one of functions provided by @value{GDBN}.  @var{frame_id}'s attributes
 determine which function will be used, as follows:
 
 @table @code
-@item sp, pc, special
-@code{frame_id_build_special (@var{frame_id}.sp, @var{frame_id}.pc, @var{frame_id}.special)}
-
 @item sp, pc
-@code{frame_id_build (@var{frame_id}.sp, @var{frame_id}.pc)}
+The frame is identified by the given stack address and PC.  The stack
+address must be chosen so that it is constant throughout the lifetime
+of the frame, so a typical choice is the value of the stack pointer at
+the start of the function---in the DWARF standard, this would be the
+``Call Frame Address''.
 
-This is the most common case.
+This is the most common case by far.  The other cases are documented
+for completeness but are only useful in specialized situations.
+
+@item sp, pc, special
+The frame is identified by the stack address, the PC, and a
+``special'' address.  The special address is used on architectures
+that can have frames that do not change the stack, but which are still
+distinct, for example the IA-64, which has a second stack for
+registers.  Both @var{sp} and @var{special} must be constant
+throughout the lifetime of the frame.
 
 @item sp
-@code{frame_id_build_wild (@var{frame_id}.sp)}
+The frame is identified by the stack address only.  Any other stack
+frame with a matching @var{sp} will be considered to match this frame.
+Inside gdb, this is called a ``wild frame''.  You will never need
+this.
 @end table
-The attribute values should be @code{gdb.Value}
+
+Each attribute value should be an instance of @code{gdb.Value}.
 
 @end defun
 
@@ -2739,6 +2848,10 @@ Boolean signaling whether the inferior was created using `attach', or
 started by @value{GDBN} itself.
 @end defvar
 
+@defvar Inferior.progspace
+The inferior's program space.  @xref{Progspaces In Python}.
+@end defvar
+
 A @code{gdb.Inferior} object has the following methods:
 
 @defun Inferior.is_valid ()
@@ -2753,6 +2866,14 @@ at the time the method is called.
 This method returns a tuple holding all the threads which are valid
 when it is called.  If there are no valid threads, the method will
 return an empty tuple.
+@end defun
+
+@defun Inferior.architecture ()
+Return the @code{gdb.Architecture} (@pxref{Architectures In Python})
+for this inferior.  This represents the architecture of the inferior
+as a whole.  Some platforms can have multiple architectures in a
+single address space, so this may not match the architecture of a
+particular frame (@pxref{Frames In Python}).
 @end defun
 
 @findex Inferior.read_memory
@@ -2783,6 +2904,13 @@ which supports the buffer protocol, i.e., a string, an array or the
 object returned from @code{gdb.read_memory}.  Returns a Python @code{Long}
 containing the address where the pattern was found, or @code{None} if
 the pattern could not be found.
+@end defun
+
+@findex Inferior.thread_from_thread_handle
+@defun Inferior.thread_from_thread_handle (thread_handle)
+Return the thread object corresponding to @var{thread_handle}, a thread
+library specific data structure such as @code{pthread_t} for pthreads
+library implementations.
 @end defun
 
 @node Events In Python
@@ -2921,9 +3049,16 @@ A reference to the program space (@code{gdb.Progspace}) whose objfile list has
 been cleared.  @xref{Progspaces In Python}.
 @end defvar
 
-@item events.inferior_call_pre
-Emits @code{gdb.InferiorCallPreEvent} which indicates that a function in
-the inferior is about to be called.
+@item events.inferior_call
+Emits events just before and after a function in the inferior is
+called by @value{GDBN}.  Before an inferior call, this emits an event
+of type @code{gdb.InferiorCallPreEvent}, and after an inferior call,
+this emits an event of type @code{gdb.InferiorCallPostEvent}.
+
+@table @code
+@tindex gdb.InferiorCallPreEvent
+@item @code{gdb.InferiorCallPreEvent}
+Indicates that a function in the inferior is about to be called.
 
 @defvar InferiorCallPreEvent.ptid
 The thread in which the call will be run.
@@ -2933,9 +3068,9 @@ The thread in which the call will be run.
 The location of the function to be called.
 @end defvar
 
-@item events.inferior_call_post
-Emits @code{gdb.InferiorCallPostEvent} which indicates that a function in
-the inferior has returned.
+@tindex gdb.InferiorCallPostEvent
+@item @code{gdb.InferiorCallPostEvent}
+Indicates that a function in the inferior has just been called.
 
 @defvar InferiorCallPostEvent.ptid
 The thread in which the call was run.
@@ -2944,6 +3079,7 @@ The thread in which the call was run.
 @defvar InferiorCallPostEvent.address
 The location of the function that was called.
 @end defvar
+@end table
 
 @item events.memory_changed
 Emits @code{gdb.MemoryChangedEvent} which indicates that the memory of the
@@ -2988,6 +3124,39 @@ invalid state; that is, the @code{is_valid} method will return
 @item events.before_prompt
 This event carries no payload.  It is emitted each time @value{GDBN}
 presents a prompt to the user.
+
+@item events.new_inferior
+This is emitted when a new inferior is created.  Note that the
+inferior is not necessarily running; in fact, it may not even have an
+associated executable.
+
+The event is of type @code{gdb.NewInferiorEvent}.  This has a single
+attribute:
+
+@defvar NewInferiorEvent.inferior
+The new inferior, a @code{gdb.Inferior} object.
+@end defvar
+
+@item events.inferior_deleted
+This is emitted when an inferior has been deleted.  Note that this is
+not the same as process exit; it is notified when the inferior itself
+is removed, say via @code{remove-inferiors}.
+
+The event is of type @code{gdb.InferiorDeletedEvent}.  This has a single
+attribute:
+
+@defvar NewInferiorEvent.inferior
+The inferior that is being removed, a @code{gdb.Inferior} object.
+@end defvar
+
+@item events.new_thread
+This is emitted when @value{GDBN} notices a new thread.  The event is of
+type @code{gdb.NewThreadEvent}, which extends @code{gdb.ThreadEvent}.
+This has a single attribute:
+
+@defvar NewThreadEvent.inferior_thread
+The new thread.
+@end defvar
 
 @end table
 
@@ -3665,14 +3834,40 @@ parameter.  It can be read and assigned to just as any other
 attribute.  @value{GDBN} does validation when assignments are made.
 @end defvar
 
-There are two methods that should be implemented in any
-@code{Parameter} class.  These are:
+There are two methods that may be implemented in any @code{Parameter}
+class.  These are:
 
 @defun Parameter.get_set_string (self)
-@value{GDBN} will call this method when a @var{parameter}'s value has
-been changed via the @code{set} API (for example, @kbd{set foo off}).
-The @code{value} attribute has already been populated with the new
-value and may be used in output.  This method must return a string.
+If this method exists, @value{GDBN} will call it when a
+@var{parameter}'s value has been changed via the @code{set} API (for
+example, @kbd{set foo off}).  The @code{value} attribute has already
+been populated with the new value and may be used in output.  This
+method must return a string.  If the returned string is not empty,
+@value{GDBN} will present it to the user.
+
+If this method raises the @code{gdb.GdbError} exception
+(@pxref{Exception Handling}), then @value{GDBN} will print the
+exception's string and the @code{set} command will fail.  Note,
+however, that the @code{value} attribute will not be reset in this
+case.  So, if your parameter must validate values, it should store the
+old value internally and reset the exposed value, like so:
+
+@smallexample
+class ExampleParam (gdb.Parameter):
+   def __init__ (self, name):
+      super (ExampleParam, self).__init__ (name,
+                   gdb.COMMAND_DATA,
+                   gdb.PARAM_BOOLEAN)
+      self.value = True
+      self.saved_value = True
+   def validate(self):
+      return False
+   def get_set_string (self):
+      if not self.validate():
+        self.value = self.saved_value
+        raise gdb.GdbError('Failed to validate')
+      self.saved_value = self.value
+@end smallexample
 @end defun
 
 @defun Parameter.get_show_string (self, svalue)
@@ -3742,6 +3937,19 @@ The value is a filename.  This is just like
 @item gdb.PARAM_ZINTEGER
 The value is an integer.  This is like @code{PARAM_INTEGER}, except 0
 is interpreted as itself.
+
+@findex PARAM_ZUINTEGER
+@findex gdb.PARAM_ZUINTEGER
+@item gdb.PARAM_ZUINTEGER
+The value is an unsigned integer.  This is like @code{PARAM_INTEGER},
+except 0 is interpreted as itself, and the value cannot be negative.
+
+@findex PARAM_ZUINTEGER_UNLIMITED
+@findex gdb.PARAM_ZUINTEGER_UNLIMITED
+@item gdb.PARAM_ZUINTEGER_UNLIMITED
+The value is a signed integer.  This is like @code{PARAM_ZUINTEGER},
+except the special value -1 should be interpreted to mean
+``unlimited''.  Other negative values are not allowed.
 
 @findex PARAM_ENUM
 @findex gdb.PARAM_ENUM
@@ -3835,7 +4043,9 @@ The following progspace-related functions are available in the
 @findex gdb.current_progspace
 @defun gdb.current_progspace ()
 This function returns the program space of the currently selected inferior.
-@xref{Inferiors and Programs}.
+@xref{Inferiors and Programs}.  This is identical to
+@code{gdb.selected_inferior().progspace} (@pxref{Inferiors In Python}) and is
+included for historical compatibility.
 @end defun
 
 @findex gdb.progspaces
@@ -3868,6 +4078,45 @@ The @code{type_printers} attribute is a list of type printer objects.
 The @code{frame_filters} attribute is a dictionary of frame filter
 objects.  @xref{Frame Filter API}, for more information.
 @end defvar
+
+A program space has the following methods:
+
+@findex Progspace.block_for_pc
+@defun Progspace.block_for_pc (pc)
+Return the innermost @code{gdb.Block} containing the given @var{pc}
+value.  If the block cannot be found for the @var{pc} value specified,
+the function will return @code{None}.
+@end defun
+
+@findex Progspace.find_pc_line
+@defun Progspace.find_pc_line (pc)
+Return the @code{gdb.Symtab_and_line} object corresponding to the
+@var{pc} value.  @xref{Symbol Tables In Python}.  If an invalid value
+of @var{pc} is passed as an argument, then the @code{symtab} and
+@code{line} attributes of the returned @code{gdb.Symtab_and_line}
+object will be @code{None} and 0 respectively.
+@end defun
+
+@findex Progspace.is_valid
+@defun Progspace.is_valid ()
+Returns @code{True} if the @code{gdb.Progspace} object is valid,
+@code{False} if not.  A @code{gdb.Progspace} object can become invalid
+if the program space file it refers to is not referenced by any
+inferior.  All other @code{gdb.Progspace} methods will throw an
+exception if it is invalid at the time the method is called.
+@end defun
+
+@findex Progspace.objfiles
+@defun Progspace.objfiles ()
+Return a sequence of all the objfiles referenced by this program
+space.  @xref{Objfiles In Python}.
+@end defun
+
+@findex Progspace.solib_name
+@defun Progspace.solib_name (address)
+Return the name of the shared library holding the given @var{address}
+as a string, or @code{None}.
+@end defun
 
 One may add arbitrary attributes to @code{gdb.Progspace} objects
 in the usual Python way.
@@ -3938,8 +4187,10 @@ this function returns @code{None}.
 
 @findex gdb.objfiles
 @defun gdb.objfiles ()
-Return a sequence of all the objfiles current known to @value{GDBN}.
-@xref{Objfiles In Python}.
+Return a sequence of objfiles referenced by the current program space.
+@xref{Objfiles In Python}, and @ref{Progspaces In Python}.  This is identical
+to @code{gdb.selected_inferior().progspace.objfiles()} and is included for
+historical compatibility.
 @end defun
 
 @findex gdb.lookup_objfile
@@ -3959,7 +4210,7 @@ is the build ID of the objfile.  Otherwise, @var{name} is a file name.
 This is supported only on some operating systems, notably those which use
 the ELF format for binary files and the @sc{gnu} Binutils.  For more details
 about this feature, see the description of the @option{--build-id}
-command-line option in @ref{Options, , Command Line Options, ld.info,
+command-line option in @ref{Options, , Command Line Options, ld,
 The GNU Linker}.
 @end defun
 
@@ -3995,7 +4246,7 @@ If the objfile does not have a build ID then the value is @code{None}.
 This is supported only on some operating systems, notably those which use
 the ELF format for binary files and the @sc{gnu} Binutils.  For more details
 about this feature, see the description of the @option{--build-id}
-command-line option in @ref{Options, , Command Line Options, ld.info,
+command-line option in @ref{Options, , Command Line Options, ld,
 The GNU Linker}.
 @end defvar
 
@@ -4067,7 +4318,7 @@ from a different place.
 @end defun
 
 @node Frames In Python
-@subsubsection Accessing inferior stack frames from Python.
+@subsubsection Accessing inferior stack frames from Python
 
 @cindex frames in python
 When the debugged program stops, @value{GDBN} is able to analyze its call
@@ -4223,7 +4474,10 @@ Returns the frame's resume address.
 @end defun
 
 @defun Frame.block ()
-Return the frame's code block.  @xref{Blocks In Python}.
+Return the frame's code block.  @xref{Blocks In Python}.  If the frame
+does not have a block -- for example, if there is no debugging
+information for the code in question -- then this will throw an
+exception.
 @end defun
 
 @defun Frame.function ()
@@ -4266,7 +4520,7 @@ Stack}.
 @end defun
 
 @node Blocks In Python
-@subsubsection Accessing blocks from Python.
+@subsubsection Accessing blocks from Python
 
 @cindex blocks in python
 @tindex gdb.Block
@@ -4336,7 +4590,9 @@ module:
 @defun gdb.block_for_pc (pc)
 Return the innermost @code{gdb.Block} containing the given @var{pc}
 value.  If the block cannot be found for the @var{pc} value specified,
-the function will return @code{None}.
+the function will return @code{None}.  This is identical to
+@code{gdb.current_progspace().block_for_pc(pc)} and is included for
+historical compatibility.
 @end defun
 
 A @code{gdb.Block} object has the following methods:
@@ -4357,7 +4613,8 @@ The start address of the block.  This attribute is not writable.
 @end defvar
 
 @defvar Block.end
-The end address of the block.  This attribute is not writable.
+One past the last address that appears in the block.  This attribute
+is not writable.
 @end defvar
 
 @defvar Block.function
@@ -4398,7 +4655,7 @@ writable.
 @end defvar
 
 @node Symbols In Python
-@subsubsection Python representation of Symbols.
+@subsubsection Python representation of Symbols
 
 @cindex symbols in python
 @tindex gdb.Symbol
@@ -4553,18 +4810,13 @@ This domain holds struct, union and enum type names.
 @item gdb.SYMBOL_LABEL_DOMAIN
 This domain contains names of labels (for gotos).
 
-@vindex SYMBOL_VARIABLES_DOMAIN
-@item gdb.SYMBOL_VARIABLES_DOMAIN
-This domain holds a subset of the @code{SYMBOLS_VAR_DOMAIN}; it
-contains everything minus functions and types.
+@vindex SYMBOL_MODULE_DOMAIN
+@item gdb.SYMBOL_MODULE_DOMAIN
+This domain contains names of Fortran module types.
 
-@vindex SYMBOL_FUNCTIONS_DOMAIN
-@item gdb.SYMBOL_FUNCTION_DOMAIN
-This domain contains all functions.
-
-@vindex SYMBOL_TYPES_DOMAIN
-@item gdb.SYMBOL_TYPES_DOMAIN
-This domain contains all types.
+@vindex SYMBOL_COMMON_BLOCK_DOMAIN
+@item gdb.SYMBOL_COMMON_BLOCK_DOMAIN
+This domain contains names of Fortran common blocks.
 @end vtable
 
 The available address class categories in @code{gdb.Symbol} are represented
@@ -4635,10 +4887,15 @@ The value does not actually exist in the program.
 @vindex SYMBOL_LOC_COMPUTED
 @item gdb.SYMBOL_LOC_COMPUTED
 The value's address is a computed location.
+
+@vindex SYMBOL_LOC_COMPUTED
+@item gdb.SYMBOL_LOC_COMPUTED
+The value's address is a symbol.  This is only used for Fortran common
+blocks.
 @end vtable
 
 @node Symbol Tables In Python
-@subsubsection Symbol table representation in Python.
+@subsubsection Symbol table representation in Python
 
 @cindex symbol tables in python
 @tindex gdb.Symtab
@@ -4821,27 +5078,55 @@ represented as Python @code{Long} values.
 Python code can manipulate breakpoints via the @code{gdb.Breakpoint}
 class.
 
-@defun Breakpoint.__init__ (spec @r{[}, type @r{[}, wp_class @r{[},internal @r{[},temporary@r{]]]]})
-Create a new breakpoint according to @var{spec}, which is a string
-naming the location of the breakpoint, or an expression that defines a
-watchpoint.  The contents can be any location recognized by the
-@code{break} command, or in the case of a watchpoint, by the
-@code{watch} command.  The optional @var{type} denotes the breakpoint
-to create from the types defined later in this chapter.  This argument
-can be either @code{gdb.BP_BREAKPOINT} or @code{gdb.BP_WATCHPOINT}; it
-defaults to @code{gdb.BP_BREAKPOINT}.  The optional @var{internal}
-argument allows the breakpoint to become invisible to the user.  The
-breakpoint will neither be reported when created, nor will it be
-listed in the output from @code{info breakpoints} (but will be listed
-with the @code{maint info breakpoints} command).  The optional
-@var{temporary} argument makes the breakpoint a temporary breakpoint.
-Temporary breakpoints are deleted after they have been hit.  Any
-further access to the Python breakpoint after it has been hit will
-result in a runtime error (as that breakpoint has now been
-automatically deleted).  The optional @var{wp_class} argument defines
-the class of watchpoint to create, if @var{type} is
-@code{gdb.BP_WATCHPOINT}.  If a watchpoint class is not provided, it
-is assumed to be a @code{gdb.WP_WRITE} class.
+A breakpoint can be created using one of the two forms of the
+@code{gdb.Breakpoint} constructor.  The first one accepts a string
+like one would pass to the @code{break}
+(@pxref{Set Breaks,,Setting Breakpoints}) and @code{watch}
+(@pxref{Set Watchpoints, , Setting Watchpoints}) commands, and can be used to
+create both breakpoints and watchpoints.  The second accepts separate Python
+arguments similar to @ref{Explicit Locations}, and can only be used to create
+breakpoints.
+
+@defun Breakpoint.__init__ (spec @r{[}, type @r{][}, wp_class @r{][}, internal @r{][}, temporary @r{][}, qualified @r{]})
+Create a new breakpoint according to @var{spec}, which is a string naming the
+location of a breakpoint, or an expression that defines a watchpoint.  The
+string should describe a location in a format recognized by the @code{break}
+command (@pxref{Set Breaks,,Setting Breakpoints}) or, in the case of a
+watchpoint, by the @code{watch} command
+(@pxref{Set Watchpoints, , Setting Watchpoints}).
+
+The optional @var{type} argument specifies the type of the breakpoint to create,
+as defined below.
+
+The optional @var{wp_class} argument defines the class of watchpoint to create,
+if @var{type} is @code{gdb.BP_WATCHPOINT}.  If @var{wp_class} is omitted, it
+defaults to @code{gdb.WP_WRITE}.
+
+The optional @var{internal} argument allows the breakpoint to become invisible
+to the user.  The breakpoint will neither be reported when created, nor will it
+be listed in the output from @code{info breakpoints} (but will be listed with
+the @code{maint info breakpoints} command).
+
+The optional @var{temporary} argument makes the breakpoint a temporary
+breakpoint.  Temporary breakpoints are deleted after they have been hit.  Any
+further access to the Python breakpoint after it has been hit will result in a
+runtime error (as that breakpoint has now been automatically deleted).
+
+The optional @var{qualified} argument is a boolean that allows interpreting
+the function passed in @code{spec} as a fully-qualified name.  It is equivalent
+to @code{break}'s @code{-qualified} flag (@pxref{Linespec Locations} and
+@ref{Explicit Locations}).
+
+@end defun
+
+@defun Breakpoint.__init__ (@r{[} source @r{][}, function @r{][}, label @r{][}, line @r{]}, @r{][} internal @r{][}, temporary @r{][}, qualified @r{]})
+This second form of creating a new breakpoint specifies the explicit
+location (@pxref{Explicit Locations}) using keywords.  The new breakpoint will
+be created in the specified source file @var{source}, at the specified
+@var{function}, @var{label} and @var{line}.
+
+@var{internal}, @var{temporary} and @var{qualified} have the same usage as
+explained previously.
 @end defun
 
 The available types are represented by constants defined in the @code{gdb}
@@ -5031,7 +5316,7 @@ value is @code{None}.  This attribute is writable.
 This attribute holds the commands attached to the breakpoint.  If
 there are commands, this attribute's value is a string holding all the
 commands, separated by newlines.  If there are no commands, this
-attribute is @code{None}.  This attribute is not writable.
+attribute is @code{None}.  This attribute is writable.
 @end defvar
 
 @node Finish Breakpoints in Python
@@ -5086,7 +5371,7 @@ is not writable.
 @end defvar
 
 @node Lazy Strings In Python
-@subsubsection Python representation of lazy strings.
+@subsubsection Python representation of lazy strings
 
 @cindex lazy strings in python
 @tindex gdb.LazyString

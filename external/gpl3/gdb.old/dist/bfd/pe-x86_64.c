@@ -1,5 +1,5 @@
 /* BFD back-end for Intel/AMD x86_64 PECOFF files.
-   Copyright (C) 2006-2017 Free Software Foundation, Inc.
+   Copyright (C) 2006-2019 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -23,16 +23,16 @@
 #include "sysdep.h"
 #include "bfd.h"
 
-#define TARGET_SYM 		x86_64_pe_vec
-#define TARGET_NAME 		"pe-x86-64"
+#define TARGET_SYM		x86_64_pe_vec
+#define TARGET_NAME		"pe-x86-64"
 #define COFF_WITH_PE
 #define COFF_WITH_pex64
 #define COFF_WITH_PE_BIGOBJ
-#define PCRELOFFSET 		TRUE
+#define PCRELOFFSET		TRUE
 #if defined (USE_MINGW64_LEADING_UNDERSCORES)
-#define TARGET_UNDERSCORE 	'_'
+#define TARGET_UNDERSCORE	'_'
 #else
-#define TARGET_UNDERSCORE 	0
+#define TARGET_UNDERSCORE	0
 #endif
 #define COFF_LONG_SECTION_NAMES
 #define COFF_SUPPORT_GNU_LINKONCE
@@ -76,9 +76,9 @@ x86_64_pe_be_vec =
   BFD_ENDIAN_LITTLE,		/* Data byte order is little.  */
   BFD_ENDIAN_LITTLE,		/* Header byte order is little.  */
 
-  (HAS_RELOC | EXEC_P |		/* Object flags.  */
-   HAS_LINENO | HAS_DEBUG |
-   HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED | BFD_COMPRESS | BFD_DECOMPRESS),
+  (HAS_RELOC | EXEC_P		/* Object flags.  */
+   | HAS_LINENO | HAS_DEBUG
+   | HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED | BFD_COMPRESS | BFD_DECOMPRESS),
 
   (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC /* Section flags.  */
    | SEC_LINK_ONCE | SEC_LINK_DUPLICATES | SEC_READONLY | SEC_DEBUGGING
@@ -97,12 +97,24 @@ x86_64_pe_be_vec =
      bfd_getl16, bfd_getl_signed_16, bfd_putl16, /* Hdrs.  */
 
   /* Note that we allow an object file to be treated as a core file as well.  */
-  { _bfd_dummy_target, amd64coff_object_p, /* BFD_check_format.  */
-    bfd_generic_archive_p, amd64coff_object_p },
-  { bfd_false, coff_mkobject, _bfd_generic_mkarchive, /* bfd_set_format.  */
-    bfd_false },
-  { bfd_false, coff_write_object_contents, /* bfd_write_contents.  */
-   _bfd_write_archive_contents, bfd_false },
+  {				/* bfd_check_format.  */
+    _bfd_dummy_target,
+    amd64coff_object_p,
+    bfd_generic_archive_p,
+    amd64coff_object_p 
+  },
+  {				/* bfd_set_format.  */
+    _bfd_bool_bfd_false_error,
+    coff_mkobject,
+    _bfd_generic_mkarchive,
+    _bfd_bool_bfd_false_error 
+  },
+  {				/* bfd_write_contents.  */
+    _bfd_bool_bfd_false_error,
+    coff_write_object_contents,
+    _bfd_write_archive_contents,
+    _bfd_bool_bfd_false_error 
+  },
 
   BFD_JUMP_TABLE_GENERIC (coff),
   BFD_JUMP_TABLE_COPY (coff),

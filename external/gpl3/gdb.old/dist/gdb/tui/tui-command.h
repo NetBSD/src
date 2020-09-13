@@ -1,6 +1,6 @@
 /* Specific command window processing.
 
-   Copyright (C) 1998-2017 Free Software Foundation, Inc.
+   Copyright (C) 1998-2019 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -19,12 +19,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TUI_COMMAND_H
-#define TUI_COMMAND_H
+#ifndef TUI_TUI_COMMAND_H
+#define TUI_TUI_COMMAND_H
 
 extern unsigned int tui_dispatch_ctrl_char (unsigned int);
 
 /* Refresh the command window.  */
 extern void tui_refresh_cmd_win (void);
 
-#endif
+#endif /* TUI_TUI_COMMAND_H */

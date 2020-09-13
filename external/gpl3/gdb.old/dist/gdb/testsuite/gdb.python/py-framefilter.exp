@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2017 Free Software Foundation, Inc.
+# Copyright (C) 2013-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -149,7 +149,7 @@ gdb_test "bt -2" \
     ".*#26.*func5.*#27.*in main \\(\\).*" \
     "bt -2 with frame-filter Reverse disabled"
 gdb_test "bt 3" \
-    ".*#0.*end_func.*#1.*in funca \\(\\).*#2.*in funcb \\(j=10\\).*" \
+    ".*#0.*end_func.*#1.*in funca \\(\\).*#2.*in funcb \\(j=10\\)\[^#\]*More stack frames follow.*" \
     "bt 3 with frame-filter Reverse disabled"
 gdb_test "bt no-filter full" \
     ".*#0.*end_func.*str = $hex \"The End\".*st2 = $hex \"Is Near\".*b = 12.*c = 5.*#1.*in funca \\(\\).*#2.*in funcb \\(j=10\\).*bar = \{a = 42, b = 84\}.*" \
@@ -157,6 +157,9 @@ gdb_test "bt no-filter full" \
 gdb_test "bt full" \
     ".*#0.*end_func.*str = $hex \"The End\".*st2 = $hex \"Is Near\".*b = 12.*c = 5.*#1.*in funca \\(\\).*#2.*in funcb \\(j=10\\).*bar = \{a = 42, b = 84\}.*#22.*in func1 \\(\\).*#23.*in func2 \\(f=3\\).*elided = $hex \"Elided frame\".*fb = \{nothing = $hex \"Elided Foo Bar\", f = 84, s = 38\}.*bf = $hex.*" \
     "bt full with Reverse disabled"
+gdb_test "bt full hide" \
+    ".*#0.*end_func.*str = $hex \"The End\".*st2 = $hex \"Is Near\".*b = 12.*c = 5.*#1.*in funca \\(\\).*#2.*in funcb \\(j=10\\).*bar = \{a = 42, b = 84\}.*#22.*in func1 \\(\\)\[^#\]*#24.*in func3 \\(i=3\\).*" \
+    "bt full hide with Reverse disabled"
 
 # Test set print frame-arguments
 # none
@@ -209,6 +212,12 @@ gdb_test_multiple "bt 1" $test {
 	pass $test
     }
 }
+
+# Now verify that we can see a quit.
+gdb_test_no_output "python name_error = KeyboardInterrupt" \
+    "Change ErrorFilter to throw KeyboardInterrupt"
+gdb_test "bt 1" "Quit" "bt 1 with KeyboardInterrupt"
+
 
 # Test with no debuginfo
 

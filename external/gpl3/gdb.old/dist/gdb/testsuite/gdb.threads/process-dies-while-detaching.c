@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2016-2017 Free Software Foundation, Inc.
+   Copyright 2016-2019 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -22,6 +22,8 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <assert.h>
+#include <errno.h>
+#include <string.h>
 
 /* This barrier ensures we only reach the initial breakpoint after all
    threads have started.  */
@@ -78,14 +80,26 @@ parent_function (pid_t child)
   alarm (300);
 
   ret = waitpid (child, &status, 0);
+
   if (ret == -1)
-    exit (1);
-  else if (!WIFEXITED (status))
-    exit (2);
-  else
+    {
+      printf ("waitpid, errno=%d (%s)\n", errno, strerror (errno));
+      exit (1);
+    }
+  else if (WIFEXITED (status))
     {
       printf ("exited, status=%d\n", WEXITSTATUS (status));
       exit (0);
+    }
+  else if (WIFSIGNALED (status))
+    {
+      printf ("signaled, sig=%d\n", WTERMSIG (status));
+      exit (2);
+    }
+  else
+    {
+      printf ("unexpected, status=%x\n", status);
+      exit (3);
     }
 }
 

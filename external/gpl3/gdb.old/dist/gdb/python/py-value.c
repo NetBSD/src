@@ -1,6 +1,6 @@
 /* Python interface to values.
 
-   Copyright (C) 2008-2017 Free Software Foundation, Inc.
+   Copyright (C) 2008-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,7 @@
 #include "charset.h"
 #include "value.h"
 #include "language.h"
-#include "dfp.h"
+#include "target-float.h"
 #include "valprint.h"
 #include "infcall.h"
 #include "expression.h"
@@ -29,7 +29,6 @@
 #include "python.h"
 
 #include "python-internal.h"
-#include "py-ref.h"
 
 /* Even though Python scalar types directly map to host types, we use
    target types here to remain consistent with the values system in
@@ -88,19 +87,10 @@ valpy_dealloc (PyObject *obj)
   if (self->next)
     self->next->prev = self->prev;
 
-  value_free (self->value);
+  value_decref (self->value);
 
-  if (self->address)
-    /* Use braces to appease gcc warning.  *sigh*  */
-    {
-      Py_DECREF (self->address);
-    }
-
-  if (self->type)
-    {
-      Py_DECREF (self->type);
-    }
-
+  Py_XDECREF (self->address);
+  Py_XDECREF (self->type);
   Py_XDECREF (self->dynamic_type);
 
   Py_TYPE (self)->tp_free (self);
@@ -117,22 +107,68 @@ note_value (value_object *value_obj)
   values_in_python = value_obj;
 }
 
+/* Convert a python object OBJ with type TYPE to a gdb value.  The
+   python object in question must conform to the python buffer
+   protocol.  On success, return the converted value, otherwise
+   nullptr.  */
+
+static struct value *
+convert_buffer_and_type_to_value (PyObject *obj, struct type *type)
+{
+  Py_buffer_up buffer_up;
+  Py_buffer py_buf;
+
+  if (PyObject_CheckBuffer (obj) 
+      && PyObject_GetBuffer (obj, &py_buf, PyBUF_SIMPLE) == 0)
+    {
+      /* Got a buffer, py_buf, out of obj.  Cause it to be released
+         when it goes out of scope.  */
+      buffer_up.reset (&py_buf);
+    }
+  else
+    {
+      PyErr_SetString (PyExc_TypeError,
+		       _("Object must support the python buffer protocol."));
+      return nullptr;
+    }
+
+  if (TYPE_LENGTH (type) > py_buf.len)
+    {
+      PyErr_SetString (PyExc_ValueError,
+		       _("Size of type is larger than that of buffer object."));
+      return nullptr;
+    }
+
+  return value_from_contents (type, (const gdb_byte *) py_buf.buf);
+}
+
 /* Called when a new gdb.Value object needs to be allocated.  Returns NULL on
    error, with a python exception set.  */
 static PyObject *
-valpy_new (PyTypeObject *subtype, PyObject *args, PyObject *keywords)
+valpy_new (PyTypeObject *subtype, PyObject *args, PyObject *kwargs)
 {
-  struct value *value = NULL;   /* Initialize to appease gcc warning.  */
-  value_object *value_obj;
+  static const char *keywords[] = { "val", "type", NULL };
+  PyObject *val_obj = nullptr;
+  PyObject *type_obj = nullptr;
 
-  if (PyTuple_Size (args) != 1)
+  if (!gdb_PyArg_ParseTupleAndKeywords (args, kwargs, "O|O", keywords,
+					&val_obj, &type_obj))
+    return nullptr;
+
+  struct type *type = nullptr;
+
+  if (type_obj != nullptr)
     {
-      PyErr_SetString (PyExc_TypeError, _("Value object creation takes only "
-					  "1 argument"));
-      return NULL;
+      type = type_object_to_type (type_obj);
+      if (type == nullptr)
+        {
+	  PyErr_SetString (PyExc_TypeError,
+			   _("type argument must be a gdb.Type."));
+	  return nullptr;
+	}
     }
 
-  value_obj = (value_object *) subtype->tp_alloc (subtype, 1);
+  value_object *value_obj = (value_object *) subtype->tp_alloc (subtype, 1);
   if (value_obj == NULL)
     {
       PyErr_SetString (PyExc_MemoryError, _("Could not allocate memory to "
@@ -140,15 +176,20 @@ valpy_new (PyTypeObject *subtype, PyObject *args, PyObject *keywords)
       return NULL;
     }
 
-  value = convert_value_from_python (PyTuple_GetItem (args, 0));
-  if (value == NULL)
+  struct value *value;
+
+  if (type == nullptr)
+    value = convert_value_from_python (val_obj);
+  else
+    value = convert_buffer_and_type_to_value (val_obj, type);
+
+  if (value == nullptr)
     {
       subtype->tp_free (value_obj);
       return NULL;
     }
 
-  value_obj->value = value;
-  release_value_or_incref (value);
+  value_obj->value = release_value (value).release ();
   value_obj->address = NULL;
   value_obj->type = NULL;
   value_obj->dynamic_type = NULL;
@@ -518,9 +559,8 @@ static PyObject *
 valpy_string (PyObject *self, PyObject *args, PyObject *kw)
 {
   int length = -1;
-  gdb_byte *buffer;
+  gdb::unique_xmalloc_ptr<gdb_byte> buffer;
   struct value *value = ((value_object *) self)->value;
-  PyObject *unicode;
   const char *encoding = NULL;
   const char *errors = NULL;
   const char *user_encoding = NULL;
@@ -543,12 +583,9 @@ valpy_string (PyObject *self, PyObject *args, PyObject *kw)
   END_CATCH
 
   encoding = (user_encoding && *user_encoding) ? user_encoding : la_encoding;
-  unicode = PyUnicode_Decode ((const char *) buffer,
-			      length * TYPE_LENGTH (char_type),
-			      encoding, errors);
-  xfree (buffer);
-
-  return unicode;
+  return PyUnicode_Decode ((const char *) buffer.get (),
+			   length * TYPE_LENGTH (char_type),
+			   encoding, errors);
 }
 
 /* A helper function that implements the various cast operators.  */
@@ -874,7 +911,6 @@ valpy_call (PyObject *self, PyObject *args, PyObject *keywords)
   struct value *function = ((value_object *) self)->value;
   struct value **vargs = NULL;
   struct type *ftype = NULL;
-  struct value *mark = value_mark ();
   PyObject *result = NULL;
 
   TRY
@@ -923,9 +959,10 @@ valpy_call (PyObject *self, PyObject *args, PyObject *keywords)
   TRY
     {
       scoped_value_mark free_values;
-      struct value *return_value;
 
-      return_value = call_function_by_hand (function, args_count, vargs);
+      value *return_value
+	= call_function_by_hand (function, NULL,
+				 gdb::make_array_view (vargs, args_count));
       result = value_to_value_object (return_value);
     }
   CATCH (except, RETURN_MASK_ALL)
@@ -1316,12 +1353,9 @@ valpy_nonzero (PyObject *self)
 
       if (is_integral_type (type) || TYPE_CODE (type) == TYPE_CODE_PTR)
 	nonzero = !!value_as_long (self_value->value);
-      else if (TYPE_CODE (type) == TYPE_CODE_FLT)
-	nonzero = value_as_double (self_value->value) != 0;
-      else if (TYPE_CODE (type) == TYPE_CODE_DECFLOAT)
-	nonzero = !decimal_is_zero (value_contents (self_value->value),
-				 TYPE_LENGTH (type),
-				 gdbarch_byte_order (get_type_arch (type)));
+      else if (is_floating_value (self_value->value))
+	nonzero = !target_float_is_zero (value_contents (self_value->value),
+					 type);
       else
 	/* All other values are True.  */
 	nonzero = 1;
@@ -1505,7 +1539,14 @@ valpy_int (PyObject *self)
 
   TRY
     {
-      if (!is_integral_type (type))
+      if (is_floating_value (value))
+	{
+	  type = builtin_type_pylong;
+	  value = value_cast (type, value);
+	}
+
+      if (!is_integral_type (type)
+	  && TYPE_CODE (type) != TYPE_CODE_PTR)
 	error (_("Cannot convert value to int."));
 
       l = value_as_long (value);
@@ -1516,7 +1557,10 @@ valpy_int (PyObject *self)
     }
   END_CATCH
 
-  return gdb_py_object_from_longest (l);
+  if (TYPE_UNSIGNED (type))
+    return gdb_py_object_from_ulongest (l).release ();
+  else
+    return gdb_py_object_from_longest (l).release ();
 }
 #endif
 
@@ -1530,6 +1574,12 @@ valpy_long (PyObject *self)
 
   TRY
     {
+      if (is_floating_value (value))
+	{
+	  type = builtin_type_pylong;
+	  value = value_cast (type, value);
+	}
+
       type = check_typedef (type);
 
       if (!is_integral_type (type)
@@ -1562,10 +1612,17 @@ valpy_float (PyObject *self)
     {
       type = check_typedef (type);
 
-      if (TYPE_CODE (type) != TYPE_CODE_FLT)
+      if (TYPE_CODE (type) == TYPE_CODE_FLT && is_floating_value (value))
+	d = target_float_to_host_double (value_contents (value), type);
+      else if (TYPE_CODE (type) == TYPE_CODE_INT)
+	{
+	  /* Note that valpy_long accepts TYPE_CODE_PTR and some
+	     others here here -- but casting a pointer or bool to a
+	     float seems wrong.  */
+	  d = value_as_long (value);
+	}
+      else
 	error (_("Cannot convert value to float."));
-
-      d = value_as_double (value);
     }
   CATCH (except, RETURN_MASK_ALL)
     {
@@ -1586,8 +1643,7 @@ value_to_value_object (struct value *val)
   val_obj = PyObject_New (value_object, &value_object_type);
   if (val_obj != NULL)
     {
-      val_obj->value = val;
-      release_value_or_incref (val);
+      val_obj->value = release_value (val).release ();
       val_obj->address = NULL;
       val_obj->type = NULL;
       val_obj->dynamic_type = NULL;
@@ -1647,9 +1703,7 @@ convert_value_from_python (PyObject *obj)
 	         ULONGEST instead.  */
 	      if (PyErr_ExceptionMatches (PyExc_OverflowError))
 		{
-		  PyObject *etype, *evalue, *etraceback;
-
-		  PyErr_Fetch (&etype, &evalue, &etraceback);
+		  gdbpy_err_fetch fetched_error;
 		  gdbpy_ref<> zero (PyInt_FromLong (0));
 
 		  /* Check whether obj is positive.  */
@@ -1662,8 +1716,10 @@ convert_value_from_python (PyObject *obj)
 			value = value_from_ulongest (builtin_type_upylong, ul);
 		    }
 		  else
-		    /* There's nothing we can do.  */
-		    PyErr_Restore (etype, evalue, etraceback);
+		    {
+		      /* There's nothing we can do.  */
+		      fetched_error.restore ();
+		    }
 		}
 	    }
 	  else
@@ -1683,7 +1739,11 @@ convert_value_from_python (PyObject *obj)
 	  double d = PyFloat_AsDouble (obj);
 
 	  if (! PyErr_Occurred ())
-	    value = value_from_double (builtin_type_pyfloat, d);
+	    {
+	      value = allocate_value (builtin_type_pyfloat);
+	      target_float_from_host_double (value_contents_raw (value),
+					     value_type (value), d);
+	    }
 	}
       else if (gdbpy_is_string (obj))
 	{
@@ -1714,9 +1774,7 @@ convert_value_from_python (PyObject *obj)
     }
   CATCH (except, RETURN_MASK_ALL)
     {
-      PyErr_Format (except.reason == RETURN_QUIT
-		    ? PyExc_KeyboardInterrupt : PyExc_RuntimeError,
-		    "%s", except.message);
+      gdbpy_convert_exception (except);
       return NULL;
     }
   END_CATCH
@@ -1745,6 +1803,83 @@ gdbpy_history (PyObject *self, PyObject *args)
   END_CATCH
 
   return value_to_value_object (res_val);
+}
+
+/* Return the value of a convenience variable.  */
+PyObject *
+gdbpy_convenience_variable (PyObject *self, PyObject *args)
+{
+  const char *varname;
+  struct value *res_val = NULL;
+
+  if (!PyArg_ParseTuple (args, "s", &varname))
+    return NULL;
+
+  TRY
+    {
+      struct internalvar *var = lookup_only_internalvar (varname);
+
+      if (var != NULL)
+	{
+	  res_val = value_of_internalvar (python_gdbarch, var);
+	  if (TYPE_CODE (value_type (res_val)) == TYPE_CODE_VOID)
+	    res_val = NULL;
+	}
+    }
+  CATCH (except, RETURN_MASK_ALL)
+    {
+      GDB_PY_HANDLE_EXCEPTION (except);
+    }
+  END_CATCH
+
+  if (res_val == NULL)
+    Py_RETURN_NONE;
+
+  return value_to_value_object (res_val);
+}
+
+/* Set the value of a convenience variable.  */
+PyObject *
+gdbpy_set_convenience_variable (PyObject *self, PyObject *args)
+{
+  const char *varname;
+  PyObject *value_obj;
+  struct value *value = NULL;
+
+  if (!PyArg_ParseTuple (args, "sO", &varname, &value_obj))
+    return NULL;
+
+  /* None means to clear the variable.  */
+  if (value_obj != Py_None)
+    {
+      value = convert_value_from_python (value_obj);
+      if (value == NULL)
+	return NULL;
+    }
+
+  TRY
+    {
+      if (value == NULL)
+	{
+	  struct internalvar *var = lookup_only_internalvar (varname);
+
+	  if (var != NULL)
+	    clear_internalvar (var);
+	}
+      else
+	{
+	  struct internalvar *var = lookup_internalvar (varname);
+
+	  set_internalvar (var, value);
+	}
+    }
+  CATCH (except, RETURN_MASK_ALL)
+    {
+      GDB_PY_HANDLE_EXCEPTION (except);
+    }
+  END_CATCH
+
+  Py_RETURN_NONE;
 }
 
 /* Returns 1 in OBJ is a gdb.Value object, 0 otherwise.  */

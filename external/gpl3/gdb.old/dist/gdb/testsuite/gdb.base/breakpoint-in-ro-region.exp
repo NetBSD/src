@@ -1,4 +1,4 @@
-# Copyright 2014-2017 Free Software Foundation, Inc.
+# Copyright 2014-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@ proc probe_target_hardware_step {} {
     gdb_test_no_output "set debug target 1"
     set test "probe target hardware step"
     gdb_test_multiple "si" $test {
-	-re "to_resume \\(\[^\r\n\]+, step, .*$gdb_prompt $" {
+	-re "resume \\(\[^\r\n\]+, step, .*$gdb_prompt $" {
 	    set hw_step 1
 	    pass $test
 	}
@@ -48,7 +48,7 @@ proc probe_target_hardware_step {} {
 	    pass $test
 	}
     }
-    gdb_test "set debug target 0" "->to_log_command.*\\).*"
+    gdb_test "set debug target 0" "->log_command.*\\).*"
     return $hw_step
 }
 

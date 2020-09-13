@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2017 Free Software Foundation, Inc.
+# Copyright (C) 2010-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -151,7 +151,7 @@ gdb_py_test_multiple "Simple gdb booleanparameter" \
    "end"
 
 gdb_test "show print test-nodoc-param" "This command is not documented.*" "show parameter on"
-gdb_test "set print test-nodoc-param off" "This command is not documented.*" "turn off parameter"
+gdb_test_no_output "set print test-nodoc-param off" "turn off parameter"
 gdb_test "show print test-nodoc-param" "This command is not documented.*.*" "show parameter off"
 gdb_test "python print (test_nodoc_param.value)" "False" "test parameter value"
 gdb_test "help show print test-nodoc-param" "This command is not documented.*" "test show help"
@@ -173,9 +173,48 @@ gdb_py_test_multiple "Simple gdb booleanparameter" \
 
 gdb_test "python print (test_param.value)" "True" "test parameter value"
 gdb_test "show print test-param" "State of the Test Parameter on.*" "show parameter on"
-gdb_test "set print test-param off" "Set the state of the Test Parameter.*" "turn off parameter"
+gdb_test_no_output "set print test-param off" "turn off parameter"
 gdb_test "show print test-param" "State of the Test Parameter off.*" "show parameter off"
 gdb_test "python print (test_param.value)" "False" "test parameter value"
 gdb_test "help show print test-param" "State of the Test Parameter.*" "test show help"
 gdb_test "help set print test-param" "Set the state of the Test Parameter.*" "test set help"
 gdb_test "help set print" "set print test-param -- Set the state of the Test Parameter.*" "test general help"
+
+foreach kind {PARAM_ZUINTEGER PARAM_ZUINTEGER_UNLIMITED} {
+    gdb_py_test_multiple "Simple gdb $kind" \
+	"python" "" \
+	"class TestNodocParam (gdb.Parameter):" "" \
+	"   def __init__ (self, name):" "" \
+	"      super (TestNodocParam, self).__init__ (name, gdb.COMMAND_DATA, gdb.$kind)" "" \
+	"      self.value = 0" "" \
+	"test_param_$kind = TestNodocParam ('test-$kind')" "" \
+	"end"
+
+    gdb_test "python print(gdb.parameter('test-$kind'))" "0"
+
+    gdb_test "python test_param_$kind.value = -5" "RuntimeError: Range exceeded.*"
+
+    if {$kind == "PARAM_ZUINTEGER"} {
+	gdb_test "python test_param_$kind.value = -1" "RuntimeError: Range exceeded.*"
+    } else {
+	gdb_test_no_output "python test_param_$kind.value = -1" \
+	    "check that PARAM_ZUINTEGER value can be set to -1"
+	gdb_test "python print(gdb.parameter('test-$kind'))" "-1" \
+	    "check that PARAM_ZUINTEGER value is -1 after setting"
+    }
+}
+
+gdb_py_test_multiple "Throwing gdb parameter" \
+    "python" "" \
+    "class TestThrowParam (gdb.Parameter):" "" \
+    "   def __init__ (self, name):" "" \
+    "      super (TestThrowParam, self).__init__ (name, gdb.COMMAND_DATA, gdb.PARAM_STRING)" "" \
+    "      self.value = True" "" \
+    "   def get_set_string (self):" "" \
+    "      raise gdb.GdbError('Ordinary gdb error')" "" \
+    "test_throw_param = TestThrowParam ('print test-throw-param')" ""\
+    "end"
+
+gdb_test "set print test-throw-param whoops" \
+    "Ordinary gdb error" \
+    "gdb.GdbError does not show Python stack"

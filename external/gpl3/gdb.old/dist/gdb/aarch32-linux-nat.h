@@ -1,4 +1,4 @@
-/* Copyright (C) 1999-2017 Free Software Foundation, Inc.
+/* Copyright (C) 1999-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -14,6 +14,9 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+#ifndef AARCH32_LINUX_NAT_H
+#define AARCH32_LINUX_NAT_H
 
 /* Fetch and store VFP Registers.  The kernel object has space for 32
    64-bit registers, and the FPSCR.  This is even when on a VFPv2 or
@@ -32,3 +35,5 @@ void aarch32_vfp_regcache_supply (struct regcache *regcache, gdb_byte *regs,
 void aarch32_vfp_regcache_collect (const struct regcache *regcache,
 				   gdb_byte *regs,
 				   const int vfp_register_count);
+
+#endif /* AARCH32_LINUX_NAT_H */

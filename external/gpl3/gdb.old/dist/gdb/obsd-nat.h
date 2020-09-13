@@ -1,6 +1,6 @@
 /* Native-dependent code for OpenBSD.
 
-   Copyright (C) 2014-2017 Free Software Foundation, Inc.
+   Copyright (C) 2014-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,6 +20,14 @@
 #ifndef OBSD_NAT_H
 #define OBSD_NAT_H
 
-extern void obsd_add_target (struct target_ops *);
+#include "inf-ptrace.h"
+
+class obsd_nat_target : public inf_ptrace_target
+{
+  /* Override some methods to support threads.  */
+  const char *pid_to_str (ptid_t) override;
+  void update_thread_list () override;
+  ptid_t wait (ptid_t, struct target_waitstatus *, int) override;
+};
 
 #endif /* obsd-nat.h */

@@ -1,5 +1,5 @@
 /* Definitions for expressions designed to be executed on the agent
-   Copyright (C) 1998-2017 Free Software Foundation, Inc.
+   Copyright (C) 1998-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,11 +16,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef AGENTEXPR_H
-#define AGENTEXPR_H
+#ifndef AX_H
+#define AX_H
 
-#include "doublest.h"		/* For DOUBLEST.  */
-#include "vec.h"
+#include "common/vec.h"
 
 /* It's sometimes useful to be able to debug programs that you can't
    really stop for more than a fraction of a second.  To this end, the
@@ -79,17 +78,6 @@ enum agent_flaws
   };
 
 /* Agent expression data structures.  */
-
-/* The type of an element of the agent expression stack.
-   The bytecode operation indicates which element we should access;
-   the value itself has no typing information.  GDB generates all
-   bytecode streams, so we don't have to worry about type errors.  */
-
-union agent_val
-  {
-    LONGEST l;
-    DOUBLEST d;
-  };
 
 /* A buffer containing a agent expression.  */
 struct agent_expr
@@ -176,7 +164,7 @@ enum agent_op
   {
 #define DEFOP(NAME, SIZE, DATA_SIZE, CONSUMED, PRODUCED, VALUE)  \
     aop_ ## NAME = VALUE,
-#include "ax.def"
+#include "common/ax.def"
 #undef DEFOP
     aop_last
   };
@@ -279,4 +267,4 @@ extern struct aop_map aop_map[];
 
 extern void ax_reqs (struct agent_expr *ax);
 
-#endif /* AGENTEXPR_H */
+#endif /* AX_H */

@@ -1,4 +1,4 @@
-# Copyright 2012-2017 Free Software Foundation, Inc.
+# Copyright 2012-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -56,7 +56,7 @@ proc test_load_core { print_symbol_loading } {
 	gdb_reinitialize_dir $srcdir/$subdir
 	gdb_test_no_output "set print symbol-loading $print_symbol_loading"
 	if { ${print_symbol_loading} != "off" } {
-	    gdb_test "file $binfile" "Reading symbols from.*done\\." "file"
+	    gdb_test "file $binfile" "Reading symbols from.*" "file"
 	} else {
 	    gdb_test_no_output "file $binfile" "file"
 	}

@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2005-2017 Free Software Foundation, Inc.
+# Copyright 2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,6 +17,4 @@
 
 # Test GDB's "source" command - reads in a GDB script.
 
-echo working line\n
-x 0
-echo should not reach this line\n
+source source-error-1.gdb

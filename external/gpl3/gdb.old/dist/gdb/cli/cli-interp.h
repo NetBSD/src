@@ -1,6 +1,6 @@
 /* CLI Definitions for GDB, the GNU debugger.
 
-   Copyright (C) 2016-2017 Free Software Foundation, Inc.
+   Copyright (C) 2016-2019 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef CLI_INTERP_H
-#define CLI_INTERP_H 1
+#ifndef CLI_CLI_INTERP_H
+#define CLI_CLI_INTERP_H
 
 #include "interps.h"
 
@@ -60,4 +60,4 @@ extern void cli_interpreter_pre_command_loop (struct interp *self);
 extern int should_print_stop_to_console (struct interp *interp,
 					 struct thread_info *tp);
 
-#endif
+#endif /* CLI_CLI_INTERP_H */

@@ -1,6 +1,6 @@
 /* Low-level siginfo manipulation for amd64.
 
-   Copyright (C) 2016-2017 Free Software Foundation, Inc.
+   Copyright (C) 2016-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef AMD64_LINUX_SIGINFO_H
-#define AMD64_LINUX_SIGINFO_H 1
+#ifndef NAT_AMD64_LINUX_SIGINFO_H
+#define NAT_AMD64_LINUX_SIGINFO_H
 
 #include <signal.h>  /* For siginfo_t.  */
 
@@ -55,4 +55,4 @@ int amd64_linux_siginfo_fixup_common (siginfo_t *native, gdb_byte *inf,
 				      int direction,
 				      enum amd64_siginfo_fixup_mode mode);
 
-#endif
+#endif /* NAT_AMD64_LINUX_SIGINFO_H */

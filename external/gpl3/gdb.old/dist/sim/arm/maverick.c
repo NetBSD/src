@@ -1,5 +1,5 @@
 /*  maverick.c -- Cirrus/DSP co-processor interface.
-    Copyright (C) 2003-2017 Free Software Foundation, Inc.
+    Copyright (C) 2003-2019 Free Software Foundation, Inc.
     Contributed by Aldy Hernandez (aldyh@redhat.com).
 
     This program is free software; you can redistribute it and/or modify
@@ -880,7 +880,7 @@ DSPCDP4 (ARMul_State * state,
 	  mv_setRegDouble (DEST_REG,
 			   -mv_getRegDouble (SRC1_REG));
 	  printfdbg ("cfnegd mvd%d = -mvd%d = %g\n",
-		     DEST_REG,
+		     DEST_REG, DEST_REG,
 		     mv_getRegDouble (DEST_REG));
 	  break;
 

@@ -1,5 +1,5 @@
 /* BFD back-end for WebAssembly modules.
-   Copyright (C) 2017 Free Software Foundation, Inc.
+   Copyright (C) 2017-2019 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -24,9 +24,9 @@
 /* WebAssembly module file header.  Note that WASM_VERSION is a 32-bit
    little-endian integer, not an LEB128-encoded integer.  */
 #define SIZEOF_WASM_MAGIC    4
-#define WASM_MAGIC           { 0x00, 'a', 's', 'm' }
+#define WASM_MAGIC	     { 0x00, 'a', 's', 'm' }
 #define SIZEOF_WASM_VERSION  4
-#define WASM_VERSION         { 0x01, 0x00, 0x00, 0x00 }
+#define WASM_VERSION	     { 0x01, 0x00, 0x00, 0x00 }
 
 /* Prefix to use to form section names.  */
 #define WASM_SECTION_PREFIX ".wasm."
@@ -36,10 +36,10 @@
 
 /* Section names.  WASM_NAME_SECTION is the name of the named section
    named "name".  */
-#define WASM_NAME_SECTION          WASM_SECTION (0, "name")
+#define WASM_NAME_SECTION	   WASM_SECTION (0, "name")
 #define WASM_RELOC_SECTION_PREFIX  WASM_SECTION (0, "reloc.")
-#define WASM_LINKING_SECTION       WASM_SECTION (0, "linking")
-#define WASM_DYLINK_SECTION        WASM_SECTION (0, "dylink")
+#define WASM_LINKING_SECTION	   WASM_SECTION (0, "linking")
+#define WASM_DYLINK_SECTION	   WASM_SECTION (0, "dylink")
 
 /* Subsection indices.  Right now, that's subsections of the "name"
    section only.  */

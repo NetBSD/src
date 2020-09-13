@@ -1,5 +1,5 @@
 /* Print National Semiconductor 32000 instructions.
-   Copyright (C) 1986-2017 Free Software Foundation, Inc.
+   Copyright (C) 1986-2019 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -20,7 +20,7 @@
 
 #include "sysdep.h"
 #include "bfd.h"
-#include "dis-asm.h"
+#include "disassemble.h"
 #if !defined(const) && !defined(__STDC__)
 #define const
 #endif

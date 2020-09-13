@@ -1,5 +1,5 @@
 /* Interface to functions for deciding which macros are currently in scope.
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of GDB.
@@ -39,13 +39,13 @@ struct macro_scope {
 /* Return a `struct macro_scope' object corresponding to the symtab
    and line given in SAL.  If we have no macro information for that
    location, or if SAL's pc is zero, return zero.  */
-struct macro_scope *sal_macro_scope (struct symtab_and_line sal);
+gdb::unique_xmalloc_ptr<struct macro_scope> sal_macro_scope
+    (struct symtab_and_line sal);
 
 
 /* Return a `struct macro_scope' object representing just the
-   user-defined macros.  The result is allocated using xmalloc; the
-   caller is responsible for freeing it.  */
-struct macro_scope *user_macro_scope (void);
+   user-defined macros.  */
+gdb::unique_xmalloc_ptr<struct macro_scope> user_macro_scope (void);
 
 /* Return a `struct macro_scope' object describing the scope the `macro
    expand' and `macro expand-once' commands should use for looking up
@@ -53,11 +53,8 @@ struct macro_scope *user_macro_scope (void);
    its PC; otherwise, this is the last listing position.
 
    If we have no macro information for the current location, return
-   the user macro scope.
-
-   The object returned is allocated using xmalloc; the caller is
-   responsible for freeing it.  */
-struct macro_scope *default_macro_scope (void);
+   the user macro scope.  */
+gdb::unique_xmalloc_ptr<struct macro_scope> default_macro_scope (void);
 
 
 /* Look up the definition of the macro named NAME in scope at the source

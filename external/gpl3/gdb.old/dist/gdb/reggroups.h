@@ -1,6 +1,6 @@
 /* Register groupings for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -41,6 +41,10 @@ extern struct reggroup *const restore_reggroup;
 /* Create a new local register group.  */
 extern struct reggroup *reggroup_new (const char *name,
 				      enum reggroup_type type);
+/* Create a new register group allocated onto the gdbarch obstack.  */
+extern struct reggroup *reggroup_gdbarch_new (struct gdbarch *gdbarch,
+					      const char *name,
+					      enum reggroup_type type);
 
 /* Add a register group (with attribute values) to the pre-defined list.  */
 extern void reggroup_add (struct gdbarch *gdbarch, struct reggroup *group);
@@ -57,6 +61,8 @@ extern struct reggroup *reggroup_next (struct gdbarch *gdbarch,
 				       struct reggroup *last);
 extern struct reggroup *reggroup_prev (struct gdbarch *gdbarch,
 				       struct reggroup *curr);
+/* Find a reggroup by name.  */
+extern reggroup *reggroup_find (struct gdbarch *gdbarch, const char *name);
 
 /* Is REGNUM a member of REGGROUP?  */
 extern int default_register_reggroup_p (struct gdbarch *gdbarch, int regnum,

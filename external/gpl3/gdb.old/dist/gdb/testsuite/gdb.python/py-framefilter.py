@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2017 Free Software Foundation, Inc.
+# Copyright (C) 2013-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -134,13 +134,17 @@ class FrameElider ():
     def filter (self, frame_iter):
         return ElidingIterator (frame_iter)
 
+# This is here so the test can change the kind of error that is
+# thrown.
+name_error = RuntimeError
+
 # A simple decorator that gives an error when computing the function.
 class ErrorInName(FrameDecorator):
     def __init__(self, frame):
         FrameDecorator.__init__(self, frame)
 
     def function(self):
-        raise RuntimeError('whoops')
+        raise name_error('whoops')
 
 # A filter that supplies buggy frames.  Disabled by default.
 class ErrorFilter():

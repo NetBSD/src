@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2017 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2019 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -16,9 +16,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "common-defs.h"
-#include "break-common.h"
-#include "common-regcache.h"
+#include "common/common-defs.h"
+#include "common/break-common.h"
+#include "common/common-regcache.h"
 #include "nat/linux-nat.h"
 #include "aarch64-linux-hw-point.h"
 
@@ -34,29 +34,52 @@
 int aarch64_num_bp_regs;
 int aarch64_num_wp_regs;
 
+/* True if this kernel does not have the bug described by PR
+   external/20207 (Linux >= 4.10).  A fixed kernel supports any
+   contiguous range of bits in 8-bit byte DR_CONTROL_MASK.  A buggy
+   kernel supports only 0x01, 0x03, 0x0f and 0xff.  We start by
+   assuming the bug is fixed, and then detect the bug at
+   PTRACE_SETREGSET time.  */
+static bool kernel_supports_any_contiguous_range = true;
+
+/* Return starting byte 0..7 incl. of a watchpoint encoded by CTRL.  */
+
+unsigned int
+aarch64_watchpoint_offset (unsigned int ctrl)
+{
+  uint8_t mask = DR_CONTROL_MASK (ctrl);
+  unsigned retval;
+
+  /* Shift out bottom zeros.  */
+  for (retval = 0; mask && (mask & 1) == 0; ++retval)
+    mask >>= 1;
+
+  return retval;
+}
+
 /* Utility function that returns the length in bytes of a watchpoint
    according to the content of a hardware debug control register CTRL.
-   Note that the kernel currently only supports the following Byte
-   Address Select (BAS) values: 0x1, 0x3, 0xf and 0xff, which means
-   that for a hardware watchpoint, its valid length can only be 1
-   byte, 2 bytes, 4 bytes or 8 bytes.  */
+   Any contiguous range of bytes in CTRL is supported.  The returned
+   value can be between 0..8 (inclusive).  */
 
 unsigned int
 aarch64_watchpoint_length (unsigned int ctrl)
 {
-  switch (DR_CONTROL_LENGTH (ctrl))
-    {
-    case 0x01:
-      return 1;
-    case 0x03:
-      return 2;
-    case 0x0f:
-      return 4;
-    case 0xff:
-      return 8;
-    default:
-      return 0;
-    }
+  uint8_t mask = DR_CONTROL_MASK (ctrl);
+  unsigned retval;
+
+  /* Shift out bottom zeros.  */
+  mask >>= aarch64_watchpoint_offset (ctrl);
+
+  /* Count bottom ones.  */
+  for (retval = 0; (mask & 1) != 0; ++retval)
+    mask >>= 1;
+
+  if (mask != 0)
+    error (_("Unexpected hardware watchpoint length register value 0x%x"),
+	   DR_CONTROL_MASK (ctrl));
+
+  return retval;
 }
 
 /* Given the hardware breakpoint or watchpoint type TYPE and its
@@ -64,9 +87,12 @@ aarch64_watchpoint_length (unsigned int ctrl)
    breakpoint/watchpoint control register.  */
 
 static unsigned int
-aarch64_point_encode_ctrl_reg (enum target_hw_bp_type type, int len)
+aarch64_point_encode_ctrl_reg (enum target_hw_bp_type type, int offset, int len)
 {
   unsigned int ctrl, ttype;
+
+  gdb_assert (offset == 0 || kernel_supports_any_contiguous_range);
+  gdb_assert (offset + len <= AARCH64_HWP_MAX_LEN_PER_REG);
 
   /* type */
   switch (type)
@@ -89,8 +115,8 @@ aarch64_point_encode_ctrl_reg (enum target_hw_bp_type type, int len)
 
   ctrl = ttype << 3;
 
-  /* length bitmask */
-  ctrl |= ((1 << len) - 1) << 5;
+  /* offset and length bitmask */
+  ctrl |= ((1 << len) - 1) << (5 + offset);
   /* enabled at el0 */
   ctrl |= (2 << 1) | 1;
 
@@ -134,58 +160,65 @@ aarch64_point_is_aligned (int is_watchpoint, CORE_ADDR addr, int len)
   if (addr & (alignment - 1))
     return 0;
 
-  if (len != 8 && len != 4 && len != 2 && len != 1)
+  if ((!kernel_supports_any_contiguous_range
+       && len != 8 && len != 4 && len != 2 && len != 1)
+      || (kernel_supports_any_contiguous_range
+	  && (len < 1 || len > 8)))
     return 0;
 
   return 1;
 }
 
 /* Given the (potentially unaligned) watchpoint address in ADDR and
-   length in LEN, return the aligned address and aligned length in
-   *ALIGNED_ADDR_P and *ALIGNED_LEN_P, respectively.  The returned
-   aligned address and length will be valid values to write to the
-   hardware watchpoint value and control registers.
+   length in LEN, return the aligned address, offset from that base
+   address, and aligned length in *ALIGNED_ADDR_P, *ALIGNED_OFFSET_P
+   and *ALIGNED_LEN_P, respectively.  The returned values will be
+   valid values to write to the hardware watchpoint value and control
+   registers.
 
    The given watchpoint may get truncated if more than one hardware
    register is needed to cover the watched region.  *NEXT_ADDR_P
    and *NEXT_LEN_P, if non-NULL, will return the address and length
    of the remaining part of the watchpoint (which can be processed
-   by calling this routine again to generate another aligned address
-   and length pair.
+   by calling this routine again to generate another aligned address,
+   offset and length tuple.
 
    Essentially, unaligned watchpoint is achieved by minimally
    enlarging the watched area to meet the alignment requirement, and
    if necessary, splitting the watchpoint over several hardware
-   watchpoint registers.  The trade-off is that there will be
-   false-positive hits for the read-type or the access-type hardware
-   watchpoints; for the write type, which is more commonly used, there
-   will be no such issues, as the higher-level breakpoint management
-   in gdb always examines the exact watched region for any content
-   change, and transparently resumes a thread from a watchpoint trap
-   if there is no change to the watched region.
+   watchpoint registers.
+
+   On kernels that predate the support for Byte Address Select (BAS)
+   in the hardware watchpoint control register, the offset from the
+   base address is always zero, and so in that case the trade-off is
+   that there will be false-positive hits for the read-type or the
+   access-type hardware watchpoints; for the write type, which is more
+   commonly used, there will be no such issues, as the higher-level
+   breakpoint management in gdb always examines the exact watched
+   region for any content change, and transparently resumes a thread
+   from a watchpoint trap if there is no change to the watched region.
 
    Another limitation is that because the watched region is enlarged,
-   the watchpoint fault address returned by
+   the watchpoint fault address discovered by
    aarch64_stopped_data_address may be outside of the original watched
    region, especially when the triggering instruction is accessing a
    larger region.  When the fault address is not within any known
    range, watchpoints_triggered in gdb will get confused, as the
    higher-level watchpoint management is only aware of original
    watched regions, and will think that some unknown watchpoint has
-   been triggered.  In such a case, gdb may stop without displaying
-   any detailed information.
-
-   Once the kernel provides the full support for Byte Address Select
-   (BAS) in the hardware watchpoint control register, these
-   limitations can be largely relaxed with some further work.  */
+   been triggered.  To prevent such a case,
+   aarch64_stopped_data_address implementations in gdb and gdbserver
+   try to match the trapped address with a watched region, and return
+   an address within the latter. */
 
 static void
 aarch64_align_watchpoint (CORE_ADDR addr, int len, CORE_ADDR *aligned_addr_p,
-			  int *aligned_len_p, CORE_ADDR *next_addr_p,
-			  int *next_len_p)
+			  int *aligned_offset_p, int *aligned_len_p,
+			  CORE_ADDR *next_addr_p, int *next_len_p,
+			  CORE_ADDR *next_addr_orig_p)
 {
   int aligned_len;
-  unsigned int offset;
+  unsigned int offset, aligned_offset;
   CORE_ADDR aligned_addr;
   const unsigned int alignment = AARCH64_HWP_ALIGNMENT;
   const unsigned int max_wp_len = AARCH64_HWP_MAX_LEN_PER_REG;
@@ -196,10 +229,12 @@ aarch64_align_watchpoint (CORE_ADDR addr, int len, CORE_ADDR *aligned_addr_p,
   if (len <= 0)
     return;
 
-  /* Address to be put into the hardware watchpoint value register
-     must be aligned.  */
+  /* The address put into the hardware watchpoint value register must
+     be aligned.  */
   offset = addr & (alignment - 1);
   aligned_addr = addr - offset;
+  aligned_offset
+    = kernel_supports_any_contiguous_range ? addr & (alignment - 1) : 0;
 
   gdb_assert (offset >= 0 && offset < alignment);
   gdb_assert (aligned_addr >= 0 && aligned_addr <= addr);
@@ -207,9 +242,10 @@ aarch64_align_watchpoint (CORE_ADDR addr, int len, CORE_ADDR *aligned_addr_p,
 
   if (offset + len >= max_wp_len)
     {
-      /* Need more than one watchpoint registers; truncate it at the
+      /* Need more than one watchpoint register; truncate at the
 	 alignment boundary.  */
-      aligned_len = max_wp_len;
+      aligned_len
+	= max_wp_len - (kernel_supports_any_contiguous_range ? offset : 0);
       len -= (max_wp_len - offset);
       addr += (max_wp_len - offset);
       gdb_assert ((addr & (alignment - 1)) == 0);
@@ -222,19 +258,24 @@ aarch64_align_watchpoint (CORE_ADDR addr, int len, CORE_ADDR *aligned_addr_p,
 	aligned_len_array[AARCH64_HWP_MAX_LEN_PER_REG] =
 	{ 1, 2, 4, 4, 8, 8, 8, 8 };
 
-      aligned_len = aligned_len_array[offset + len - 1];
+      aligned_len = (kernel_supports_any_contiguous_range
+		     ? len : aligned_len_array[offset + len - 1]);
       addr += len;
       len = 0;
     }
 
   if (aligned_addr_p)
     *aligned_addr_p = aligned_addr;
+  if (aligned_offset_p)
+    *aligned_offset_p = aligned_offset;
   if (aligned_len_p)
     *aligned_len_p = aligned_len;
   if (next_addr_p)
     *next_addr_p = addr;
   if (next_len_p)
     *next_len_p = len;
+  if (next_addr_orig_p)
+    *next_addr_orig_p = align_down (*next_addr_orig_p + alignment, alignment);
 }
 
 struct aarch64_dr_update_callback_param
@@ -255,7 +296,7 @@ debug_reg_change_callback (struct lwp_info *lwp, void *ptr)
 {
   struct aarch64_dr_update_callback_param *param_p
     = (struct aarch64_dr_update_callback_param *) ptr;
-  int tid = ptid_get_lwp (ptid_of_lwp (lwp));
+  int tid = ptid_of_lwp (lwp).lwp ();
   int idx = param_p->idx;
   int is_watchpoint = param_p->is_watchpoint;
   struct arch_lwp_info *info = lwp_arch_private_info (lwp);
@@ -316,12 +357,67 @@ aarch64_notify_debug_reg_change (const struct aarch64_debug_reg_state *state,
 				 int is_watchpoint, unsigned int idx)
 {
   struct aarch64_dr_update_callback_param param;
-  ptid_t pid_ptid = pid_to_ptid (ptid_get_pid (current_lwp_ptid ()));
+  ptid_t pid_ptid = ptid_t (current_lwp_ptid ().pid ());
 
   param.is_watchpoint = is_watchpoint;
   param.idx = idx;
 
   iterate_over_lwps (pid_ptid, debug_reg_change_callback, (void *) &param);
+}
+
+/* Reconfigure STATE to be compatible with Linux kernels with the PR
+   external/20207 bug.  This is called when
+   KERNEL_SUPPORTS_ANY_CONTIGUOUS_RANGE transitions to false.  Note we
+   don't try to support combining watchpoints with matching (and thus
+   shared) masks, as it's too late when we get here.  On buggy
+   kernels, GDB will try to first setup the perfect matching ranges,
+   which will run out of registers before this function can merge
+   them.  It doesn't look like worth the effort to improve that, given
+   eventually buggy kernels will be phased out.  */
+
+static void
+aarch64_downgrade_regs (struct aarch64_debug_reg_state *state)
+{
+  for (int i = 0; i < aarch64_num_wp_regs; ++i)
+    if ((state->dr_ctrl_wp[i] & 1) != 0)
+      {
+	gdb_assert (state->dr_ref_count_wp[i] != 0);
+	uint8_t mask_orig = (state->dr_ctrl_wp[i] >> 5) & 0xff;
+	gdb_assert (mask_orig != 0);
+	static const uint8_t old_valid[] = { 0x01, 0x03, 0x0f, 0xff };
+	uint8_t mask = 0;
+	for (const uint8_t old_mask : old_valid)
+	  if (mask_orig <= old_mask)
+	    {
+	      mask = old_mask;
+	      break;
+	    }
+	gdb_assert (mask != 0);
+
+	/* No update needed for this watchpoint?  */
+	if (mask == mask_orig)
+	  continue;
+	state->dr_ctrl_wp[i] |= mask << 5;
+	state->dr_addr_wp[i]
+	  = align_down (state->dr_addr_wp[i], AARCH64_HWP_ALIGNMENT);
+
+	/* Try to match duplicate entries.  */
+	for (int j = 0; j < i; ++j)
+	  if ((state->dr_ctrl_wp[j] & 1) != 0
+	      && state->dr_addr_wp[j] == state->dr_addr_wp[i]
+	      && state->dr_addr_orig_wp[j] == state->dr_addr_orig_wp[i]
+	      && state->dr_ctrl_wp[j] == state->dr_ctrl_wp[i])
+	    {
+	      state->dr_ref_count_wp[j] += state->dr_ref_count_wp[i];
+	      state->dr_ref_count_wp[i] = 0;
+	      state->dr_addr_wp[i] = 0;
+	      state->dr_addr_orig_wp[i] = 0;
+	      state->dr_ctrl_wp[i] &= ~1;
+	      break;
+	    }
+
+	aarch64_notify_debug_reg_change (state, 1 /* is_watchpoint */, i);
+      }
 }
 
 /* Record the insertion of one breakpoint/watchpoint, as represented
@@ -330,11 +426,12 @@ aarch64_notify_debug_reg_change (const struct aarch64_debug_reg_state *state,
 static int
 aarch64_dr_state_insert_one_point (struct aarch64_debug_reg_state *state,
 				   enum target_hw_bp_type type,
-				   CORE_ADDR addr, int len)
+				   CORE_ADDR addr, int offset, int len,
+				   CORE_ADDR addr_orig)
 {
   int i, idx, num_regs, is_watchpoint;
   unsigned int ctrl, *dr_ctrl_p, *dr_ref_count;
-  CORE_ADDR *dr_addr_p;
+  CORE_ADDR *dr_addr_p, *dr_addr_orig_p;
 
   /* Set up state pointers.  */
   is_watchpoint = (type != hw_execute);
@@ -343,6 +440,7 @@ aarch64_dr_state_insert_one_point (struct aarch64_debug_reg_state *state,
     {
       num_regs = aarch64_num_wp_regs;
       dr_addr_p = state->dr_addr_wp;
+      dr_addr_orig_p = state->dr_addr_orig_wp;
       dr_ctrl_p = state->dr_ctrl_wp;
       dr_ref_count = state->dr_ref_count_wp;
     }
@@ -350,11 +448,12 @@ aarch64_dr_state_insert_one_point (struct aarch64_debug_reg_state *state,
     {
       num_regs = aarch64_num_bp_regs;
       dr_addr_p = state->dr_addr_bp;
+      dr_addr_orig_p = nullptr;
       dr_ctrl_p = state->dr_ctrl_bp;
       dr_ref_count = state->dr_ref_count_bp;
     }
 
-  ctrl = aarch64_point_encode_ctrl_reg (type, len);
+  ctrl = aarch64_point_encode_ctrl_reg (type, offset, len);
 
   /* Find an existing or free register in our cache.  */
   idx = -1;
@@ -366,7 +465,9 @@ aarch64_dr_state_insert_one_point (struct aarch64_debug_reg_state *state,
 	  idx = i;
 	  /* no break; continue hunting for an exising one.  */
 	}
-      else if (dr_addr_p[i] == addr && dr_ctrl_p[i] == ctrl)
+      else if (dr_addr_p[i] == addr
+	       && (dr_addr_orig_p == nullptr || dr_addr_orig_p[i] == addr_orig)
+	       && dr_ctrl_p[i] == ctrl)
 	{
 	  gdb_assert (dr_ref_count[i] != 0);
 	  idx = i;
@@ -383,6 +484,8 @@ aarch64_dr_state_insert_one_point (struct aarch64_debug_reg_state *state,
     {
       /* new entry */
       dr_addr_p[idx] = addr;
+      if (dr_addr_orig_p != nullptr)
+	dr_addr_orig_p[idx] = addr_orig;
       dr_ctrl_p[idx] = ctrl;
       dr_ref_count[idx] = 1;
       /* Notify the change.  */
@@ -403,11 +506,12 @@ aarch64_dr_state_insert_one_point (struct aarch64_debug_reg_state *state,
 static int
 aarch64_dr_state_remove_one_point (struct aarch64_debug_reg_state *state,
 				   enum target_hw_bp_type type,
-				   CORE_ADDR addr, int len)
+				   CORE_ADDR addr, int offset, int len,
+				   CORE_ADDR addr_orig)
 {
   int i, num_regs, is_watchpoint;
   unsigned int ctrl, *dr_ctrl_p, *dr_ref_count;
-  CORE_ADDR *dr_addr_p;
+  CORE_ADDR *dr_addr_p, *dr_addr_orig_p;
 
   /* Set up state pointers.  */
   is_watchpoint = (type != hw_execute);
@@ -415,6 +519,7 @@ aarch64_dr_state_remove_one_point (struct aarch64_debug_reg_state *state,
     {
       num_regs = aarch64_num_wp_regs;
       dr_addr_p = state->dr_addr_wp;
+      dr_addr_orig_p = state->dr_addr_orig_wp;
       dr_ctrl_p = state->dr_ctrl_wp;
       dr_ref_count = state->dr_ref_count_wp;
     }
@@ -422,15 +527,18 @@ aarch64_dr_state_remove_one_point (struct aarch64_debug_reg_state *state,
     {
       num_regs = aarch64_num_bp_regs;
       dr_addr_p = state->dr_addr_bp;
+      dr_addr_orig_p = nullptr;
       dr_ctrl_p = state->dr_ctrl_bp;
       dr_ref_count = state->dr_ref_count_bp;
     }
 
-  ctrl = aarch64_point_encode_ctrl_reg (type, len);
+  ctrl = aarch64_point_encode_ctrl_reg (type, offset, len);
 
   /* Find the entry that matches the ADDR and CTRL.  */
   for (i = 0; i < num_regs; ++i)
-    if (dr_addr_p[i] == addr && dr_ctrl_p[i] == ctrl)
+    if (dr_addr_p[i] == addr
+	&& (dr_addr_orig_p == nullptr || dr_addr_orig_p[i] == addr_orig)
+	&& dr_ctrl_p[i] == ctrl)
       {
 	gdb_assert (dr_ref_count[i] != 0);
 	break;
@@ -446,6 +554,8 @@ aarch64_dr_state_remove_one_point (struct aarch64_debug_reg_state *state,
       /* Clear the enable bit.  */
       ctrl &= ~1;
       dr_addr_p[i] = 0;
+      if (dr_addr_orig_p != nullptr)
+	dr_addr_orig_p[i] = 0;
       dr_ctrl_p[i] = ctrl;
       /* Notify the change.  */
       aarch64_notify_debug_reg_change (state, is_watchpoint, i);
@@ -472,10 +582,10 @@ aarch64_handle_breakpoint (enum target_hw_bp_type type, CORE_ADDR addr,
       if (!aarch64_point_is_aligned (0 /* is_watchpoint */ , addr, len))
 	return -1;
 
-      return aarch64_dr_state_insert_one_point (state, type, addr, len);
+      return aarch64_dr_state_insert_one_point (state, type, addr, 0, len, -1);
     }
   else
-    return aarch64_dr_state_remove_one_point (state, type, addr, len);
+    return aarch64_dr_state_remove_one_point (state, type, addr, 0, len, -1);
 }
 
 /* This is essentially the same as aarch64_handle_breakpoint, apart
@@ -487,9 +597,9 @@ aarch64_handle_aligned_watchpoint (enum target_hw_bp_type type,
 				   struct aarch64_debug_reg_state *state)
 {
   if (is_insert)
-    return aarch64_dr_state_insert_one_point (state, type, addr, len);
+    return aarch64_dr_state_insert_one_point (state, type, addr, 0, len, addr);
   else
-    return aarch64_dr_state_remove_one_point (state, type, addr, len);
+    return aarch64_dr_state_remove_one_point (state, type, addr, 0, len, addr);
 }
 
 /* Insert/remove unaligned watchpoint by calling
@@ -504,29 +614,42 @@ aarch64_handle_unaligned_watchpoint (enum target_hw_bp_type type,
 				     CORE_ADDR addr, int len, int is_insert,
 				     struct aarch64_debug_reg_state *state)
 {
+  CORE_ADDR addr_orig = addr;
+
   while (len > 0)
     {
       CORE_ADDR aligned_addr;
-      int aligned_len, ret;
+      int aligned_offset, aligned_len, ret;
+      CORE_ADDR addr_orig_next = addr_orig;
 
-      aarch64_align_watchpoint (addr, len, &aligned_addr, &aligned_len,
-				&addr, &len);
+      aarch64_align_watchpoint (addr, len, &aligned_addr, &aligned_offset,
+				&aligned_len, &addr, &len, &addr_orig_next);
 
       if (is_insert)
 	ret = aarch64_dr_state_insert_one_point (state, type, aligned_addr,
-						 aligned_len);
+						 aligned_offset,
+						 aligned_len, addr_orig);
       else
 	ret = aarch64_dr_state_remove_one_point (state, type, aligned_addr,
-						 aligned_len);
+						 aligned_offset,
+						 aligned_len, addr_orig);
 
       if (show_debug_regs)
 	debug_printf ("handle_unaligned_watchpoint: is_insert: %d\n"
 		      "                             "
 		      "aligned_addr: %s, aligned_len: %d\n"
 		      "                                "
-		      "next_addr: %s,    next_len: %d\n",
+		      "addr_orig: %s\n"
+		      "                                "
+		      "next_addr: %s,    next_len: %d\n"
+		      "                           "
+		      "addr_orig_next: %s\n",
 		      is_insert, core_addr_to_string_nz (aligned_addr),
-		      aligned_len, core_addr_to_string_nz (addr), len);
+		      aligned_len, core_addr_to_string_nz (addr_orig),
+		      core_addr_to_string_nz (addr), len,
+		      core_addr_to_string_nz (addr_orig_next));
+
+      addr_orig = addr_orig_next;
 
       if (ret != 0)
 	return ret;
@@ -552,7 +675,7 @@ aarch64_handle_watchpoint (enum target_hw_bp_type type, CORE_ADDR addr,
    registers with data from *STATE.  */
 
 void
-aarch64_linux_set_debug_regs (const struct aarch64_debug_reg_state *state,
+aarch64_linux_set_debug_regs (struct aarch64_debug_reg_state *state,
 			      int tid, int watchpoint)
 {
   int i, count;
@@ -580,7 +703,38 @@ aarch64_linux_set_debug_regs (const struct aarch64_debug_reg_state *state,
   if (ptrace (PTRACE_SETREGSET, tid,
 	      watchpoint ? NT_ARM_HW_WATCH : NT_ARM_HW_BREAK,
 	      (void *) &iov))
-    error (_("Unexpected error setting hardware debug registers"));
+    {
+      /* Handle Linux kernels with the PR external/20207 bug.  */
+      if (watchpoint && errno == EINVAL
+	  && kernel_supports_any_contiguous_range)
+	{
+	  kernel_supports_any_contiguous_range = false;
+	  aarch64_downgrade_regs (state);
+	  aarch64_linux_set_debug_regs (state, tid, watchpoint);
+	  return;
+	}
+      error (_("Unexpected error setting hardware debug registers"));
+    }
+}
+
+/* See nat/aarch64-linux-hw-point.h.  */
+
+bool
+aarch64_linux_any_set_debug_regs_state (aarch64_debug_reg_state *state,
+					bool watchpoint)
+{
+  int count = watchpoint ? aarch64_num_wp_regs : aarch64_num_bp_regs;
+  if (count == 0)
+    return false;
+
+  const CORE_ADDR *addr = watchpoint ? state->dr_addr_wp : state->dr_addr_bp;
+  const unsigned int *ctrl = watchpoint ? state->dr_ctrl_wp : state->dr_ctrl_bp;
+
+  for (int i = 0; i < count; i++)
+    if (addr[i] != 0 || ctrl[i] != 0)
+      return true;
+
+  return false;
 }
 
 /* Print the values of the cached breakpoint/watchpoint registers.  */
@@ -611,8 +765,9 @@ aarch64_show_debug_reg_state (struct aarch64_debug_reg_state *state,
 
   debug_printf ("\tWATCHPOINTs:\n");
   for (i = 0; i < aarch64_num_wp_regs; i++)
-    debug_printf ("\tWP%d: addr=%s, ctrl=0x%08x, ref.count=%d\n",
+    debug_printf ("\tWP%d: addr=%s (orig=%s), ctrl=0x%08x, ref.count=%d\n",
 		  i, core_addr_to_string_nz (state->dr_addr_wp[i]),
+		  core_addr_to_string_nz (state->dr_addr_orig_wp[i]),
 		  state->dr_ctrl_wp[i], state->dr_ref_count_wp[i]);
 }
 

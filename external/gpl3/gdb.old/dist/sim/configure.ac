@@ -1,6 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
 m4_include([../config/override.m4])
-AC_PREREQ(2.59)dnl
 AC_INIT(Makefile.in)
 
 AC_PROG_CC
@@ -18,10 +17,12 @@ AC_SUBST(AR)
 AC_PROG_RANLIB
 
 # Put a plausible default for CC_FOR_BUILD in Makefile.
-if test "x$cross_compiling" = "xno"; then
-  CC_FOR_BUILD='$(CC)'
-else
-  CC_FOR_BUILD=gcc
+if test -z "$CC_FOR_BUILD"; then
+  if test "x$cross_compiling" = "xno"; then
+    CC_FOR_BUILD='$(CC)'
+  else
+    CC_FOR_BUILD=gcc
+  fi
 fi
 AC_SUBST(CC_FOR_BUILD)
 CFLAGS_FOR_BUILD=${CFLAGS_FOR_BUILD-${CFLAGS}}

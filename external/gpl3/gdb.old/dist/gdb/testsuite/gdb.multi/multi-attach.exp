@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2007-2017 Free Software Foundation, Inc.
+# Copyright 2007-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ if {![can_spawn_for_attach]} {
     return 0
 }
 
-if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug additional_flags=-lpthread}]} {
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug pthreads}]} {
     return -1
 }
 
@@ -51,9 +51,9 @@ gdb_test "attach $testpid2" \
     "attach to program 2"
 gdb_test "backtrace" ".*main.*" "backtrace 2"
 
-gdb_test "kill" "" "kill inferior 2" "Kill the program being debugged.*" "y"
+gdb_test "kill" "" "kill inferior 2" "Kill the program being debugged. .y or n. " "y"
 gdb_test "inferior 1" ".*Switching to inferior 1.*"
-gdb_test "kill" "" "kill inferior 1" "Kill the program being debugged.*" "y"
+gdb_test "kill" "" "kill inferior 1" "Kill the program being debugged. .y or n. " "y"
 
 kill_wait_spawned_process $test_spawn_id1
 kill_wait_spawned_process $test_spawn_id2

@@ -1,6 +1,6 @@
 /* Native-dependent code for OpenBSD/mips64.
 
-   Copyright (C) 2004-2017 Free Software Foundation, Inc.
+   Copyright (C) 2004-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -35,6 +35,14 @@
 #define MIPS_FP0_REGNUM	MIPS_EMBED_FP0_REGNUM
 #define MIPS_FSR_REGNUM MIPS_EMBED_FP0_REGNUM + 32
 
+struct mips64_obsd_nat_target final : public obsd_nat_target
+{
+  void fetch_registers (struct regcache *, int) override;
+  void store_registers (struct regcache *, int) override;
+};
+
+static mips64_obsd_nat_target the_mips64_obsd_nat_target;
+
 /* Supply the general-purpose registers stored in GREGS to REGCACHE.  */
 
 static void
@@ -44,10 +52,10 @@ mips64obsd_supply_gregset (struct regcache *regcache, const void *gregs)
   int regnum;
 
   for (regnum = MIPS_ZERO_REGNUM; regnum <= MIPS_PC_REGNUM; regnum++)
-    regcache_raw_supply (regcache, regnum, regs + regnum * 8);
+    regcache->raw_supply (regnum, regs + regnum * 8);
 
   for (regnum = MIPS_FP0_REGNUM; regnum <= MIPS_FSR_REGNUM; regnum++)
-    regcache_raw_supply (regcache, regnum, regs + (regnum + 2) * 8);
+    regcache->raw_supply (regnum, regs + (regnum + 2) * 8);
 }
 
 /* Collect the general-purpose registers from REGCACHE and store them
@@ -63,13 +71,13 @@ mips64obsd_collect_gregset (const struct regcache *regcache,
   for (i = MIPS_ZERO_REGNUM; i <= MIPS_PC_REGNUM; i++)
     {
       if (regnum == -1 || regnum == i)
-	regcache_raw_collect (regcache, i, regs + i * 8);
+	regcache->raw_collect (i, regs + i * 8);
     }
 
   for (i = MIPS_FP0_REGNUM; i <= MIPS_FSR_REGNUM; i++)
     {
       if (regnum == -1 || regnum == i)
-	regcache_raw_collect (regcache, i, regs + (i + 2) * 8);
+	regcache->raw_collect (i, regs + (i + 2) * 8);
     }
 }
 
@@ -77,12 +85,11 @@ mips64obsd_collect_gregset (const struct regcache *regcache,
 /* Fetch register REGNUM from the inferior.  If REGNUM is -1, do this
    for all registers.  */
 
-static void
-mips64obsd_fetch_inferior_registers (struct target_ops *ops,
-				     struct regcache *regcache, int regnum)
+void
+mips64_obsd_nat_target::fetch_registers (struct regcache *regcache, int regnum)
 {
   struct reg regs;
-  pid_t pid = ptid_get_pid (regcache_get_ptid (regcache));
+  pid_t pid = regcache->ptid ().pid ();
 
   if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
     perror_with_name (_("Couldn't get registers"));
@@ -94,11 +101,10 @@ mips64obsd_fetch_inferior_registers (struct target_ops *ops,
    this for all registers.  */
 
 static void
-mips64obsd_store_inferior_registers (struct target_ops *ops,
-				     struct regcache *regcache, int regnum)
+mips64_obsd_nat_target::store_registers (struct regcache *regcache, int regnum)
 {
   struct reg regs;
-  pid_t pid = ptid_get_pid (regcache_get_ptid (regcache));
+  pid_t pid = regcache->ptid ().pid ();
 
   if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
     perror_with_name (_("Couldn't get registers"));
@@ -108,18 +114,9 @@ mips64obsd_store_inferior_registers (struct target_ops *ops,
   if (ptrace (PT_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
     perror_with_name (_("Couldn't write registers"));
 }
-
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-void _initialize_mips64obsd_nat (void);
 
 void
 _initialize_mips64obsd_nat (void)
 {
-  struct target_ops *t;
-
-  t = inf_ptrace_target ();
-  t->to_fetch_registers = mips64obsd_fetch_inferior_registers;
-  t->to_store_registers = mips64obsd_store_inferior_registers;
-  obsd_add_target (t);
+  add_inf_child_target (&the_mips64_obsd_nat_target);
 }

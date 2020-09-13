@@ -1,3 +1,168 @@
+2018-06-24  Nick Clifton  <nickc@redhat.com>
+
+	2.32 branch created.
+
+2019-01-14  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	Merge from GCC:
+	PR target/88535
+	* config.guess: Import upstream version 2019-01-03.
+	* config.sub: Import upstream version 2019-01-01.
+
+2019-01-10  Nick Clifton  <nickc@redhat.com>
+
+	* libiberty: Sync with gcc.  Bring in:
+	2019-01-09  Sandra Loosemore  <sandra@codesourcery.com>
+
+	PR other/16615
+
+	* cp-demangle.c: Mechanically replace "can not" with "cannot".
+	* floatformat.c: Likewise.
+	* strerror.c: Likewise.
+
+	2018-12-22  Jason Merrill  <jason@redhat.com>
+
+	Remove support for demangling GCC 2.x era mangling schemes.
+	* cplus-dem.c: Remove cplus_mangle_opname, cplus_demangle_opname,
+	internal_cplus_demangle, and all subroutines.
+	(libiberty_demanglers): Remove entries for ancient GNU (pre-3.0),
+	Lucid, ARM, HP, and EDG demangling styles.
+	(cplus_demangle): Remove 'work' variable.  Don't call
+	internal_cplus_demangle.
+
+2019-01-03  Дилян Палаузов  <dilyan.palauzov@aegee.org>
+
+	* configure.ac: Don't configure readline if --with-system-readline is
+	used.
+	* configure: Re-generate.
+
+2018-10-31  Joseph Myers  <joseph@codesourcery.com>
+
+	Merge from GCC:
+	PR bootstrap/82856
+	* multilib.am: New file.  From automake.
+
+2018-09-12  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* src-release.sh (GDB_SUPPORT_DIRS): Add "contrib".
+
+2018-07-16  Nick Clifton  <nickc@redhat.com>
+
+	* src-release.sh (DEVO_SUPPORT): Add test-driver and ar-lib.
+
+2018-07-06  Sebastian Huber  <sebastian.huber@embedded-brains.de>
+
+	* config.sub: Sync with upstream version 2018-07-03.
+
+2018-07-05  Sebastian Huber  <sebastian.huber@embedded-brains.de>
+
+	* config.guess: Sync with upstream version 2018-06-26.
+	* config.sub: Sync with upstream version 2018-07-02.
+
+2018-06-29  Alexandre Oliva <oliva@adacore.com>
+
+	* configure.ac: Introduce support for @unless/@endunless.
+	* Makefile.tpl (dep-kind): Rewrite with cond; return
+	postbootstrap in some cases.
+	(make-postboot-dep, postboot-targets): New.
+	(dependencies): Do not output postbootstrap dependencies at
+	first.  Output non-target ones changed for configure to depend
+	on stage_last @if gcc-bootstrap, and the original deps @unless
+	gcc-bootstrap.
+	* configure.in, Makefile.in: Rebuilt.
+
+2018-06-24  Nick Clifton  <nickc@redhat.com>
+
+	* configure: Regenerate.
+
+2018-06-19  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* libtool.m4: Use AC_LANG_SOURCE.
+	* configure.ac: Remove AC_PREREQ, use AC_LANG_SOURCE.
+	* README-maintainer-mode: Update version requirements.
+	* ar-lib: New file.
+	* test-driver: New file.
+	* configure: Re-generate.
+
+2018-06-18  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* Makefile.def (fortran): Add check-target-libgomp-fortran.
+	* Makefile.tpl (check-target-libgomp-fortran): New phony target.
+	* Makefile.in: Regenerate.
+
+	* configure: Regenerate.
+
+2018-06-18  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* configure.ac: Sync with GCC, remove MPX-related things.
+
+2018-05-01  Nick Clifton  <nickc@redhat.com>
+
+	* config.guess: Synchronize with config project master sources.
+	* config.sub: Likewise.
+
+2018-05-01  Francois H. Theron  <francois.theron@netronome.com>
+
+	* configure.ac: Added "nfp" target.
+	* configure: Regenerate.
+
+2018-02-13  Maciej W. Rozycki  <macro@mips.com>
+
+	* configure.ac <wasm32-*-*> (noconfigdirs): Add `ld'.
+	* configure: Regenerate.
+
+2018-01-30  Nick Clifton  <nickc@redhat.com>
+
+	* src-release.sh (do_proto_toplev): Add patterns for more junk files
+	to delete before creating the tarball.
+
+2018-01-29  Nick Clifton  <nickc@redhat.com>
+
+	* src-release.sh (do_proto_toplev): Strip patch remnant files from
+	the sources before creating the tarball.
+
+2018-01-13  Nick Clifton  <nickc@redhat.com>
+
+	* src-release.sh: Update copyright notice.  Change reference to devo
+	to be a reference to root.
+
+2018-01-10  Nick Clifton  <nickc@redhat.com>
+
+	* config-ml.in: Sync with gcc sources.
+	* config.guess: Likewise.
+	* config.sub: Likewise.
+	* configure.ac: Likewise.
+	* configure: Regenerate.
+
+2017-12-14  Nick Clifton  <nickc@redhat.com>
+
+	* COPYING.LIBGLOSS: Update address of FSF in copyright notice.
+
+2017-12-12  Stafford Horne  <shorne@gmail.com>
+
+	* configure.ac: Remove logic adding gdb to noconfigsdirs for or1k.
+	* configure: Regenerate.
+
+2017-09-15  Nick Clifton  <nickc@redhat.com>
+
+	* src-release.sh (LZIPPROG): New define.  Provides the name of the
+	lzip program.
+	(do_lz): New function.  Compresses a tarball using the lzip
+	program.
+	(do_compress): Add support for lzip compression.
+	(usage): Mention -l option.
+	(build_release): Support -l option to invoke lzip compression.
+
+2017-09-15  Alan Modra  <amodra@gmail.com>
+
+	* src-release.sh (do_proto_toplev): Revert last patch.  Enable or
+	disable binutils, gas, gdb, gold, gprof, ld, libdecnumber, readline,
+	and sim depending on $tool and $support_files.  Echo configure line.
+
+2017-09-14  Matt Rice <ratmice@gmail.com>
+
+	* src-release.sh (do_proto_toplev): Enable gold during release process.
+
 2017-04-13  Andrew Jenner  <andrew@codesourcery.com>
 
 	* config.sub: Sync with master version in config project.

@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2015-2017 Free Software Foundation, Inc.
+   Copyright 2015-2019 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -508,7 +508,8 @@ can_relocate_bl (void)
 {
   asm ("set_point11:\n"
        "  bl foo\n"
-       "  bl pass\n"); /* Test that LR is updated correctly.  */
+       "  bl pass\n"
+       : : : "x30"); /* Test that LR is updated correctly.  */
 }
 
 #endif

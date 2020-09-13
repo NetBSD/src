@@ -1,4 +1,4 @@
-# Copyright 2012-2017 Free Software Foundation, Inc.
+# Copyright 2012-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -67,30 +67,30 @@ proc info_registers_current_frame {sp} {
 
     gdb_test "info registers" \
 	[multi_line \
-	     "rax            $hex	$decimal" \
-	     "rbx            $hex	$decimal" \
-	     "rcx            $hex	$decimal" \
-	     "rdx            $hex	$decimal" \
-	     "rsi            $hex	$decimal" \
-	     "rdi            $hex	$decimal" \
-	     "rbp            $hex	$hex" \
-	     "rsp            $sp	$sp" \
-	     "r8             $hex	$decimal" \
-	     "r9             $hex	$decimal" \
-	     "r10            $hex	$decimal" \
-	     "r11            $hex	$decimal" \
-	     "r12            $hex	$decimal" \
-	     "r13            $hex	$decimal" \
-	     "r14            $hex	$decimal" \
-	     "r15            $hex	$decimal" \
-	     "rip            $hex	$hex$any" \
-	     "eflags         $hex	\\\[$any\\\]" \
-	     "cs             $hex	$decimal" \
-	     "ss             $hex	$decimal" \
-	     "ds             $hex	$decimal" \
-	     "es             $hex	$decimal" \
-	     "fs             $hex	$decimal" \
-	     "gs             $hex	$decimal" \
+	     "rax            $hex +$decimal" \
+	     "rbx            $hex +$decimal" \
+	     "rcx            $hex +$decimal" \
+	     "rdx            $hex +$decimal" \
+	     "rsi            $hex +$decimal" \
+	     "rdi            $hex +$decimal" \
+	     "rbp            $hex +$hex" \
+	     "rsp            $sp +$sp" \
+	     "r8             $hex +$decimal" \
+	     "r9             $hex +$decimal" \
+	     "r10            $hex +$decimal" \
+	     "r11            $hex +$decimal" \
+	     "r12            $hex +$decimal" \
+	     "r13            $hex +$decimal" \
+	     "r14            $hex +$decimal" \
+	     "r15            $hex +$decimal" \
+	     "rip            $hex +$hex$any" \
+	     "eflags         $hex +\\\[$any\\\]" \
+	     "cs             $hex +$decimal" \
+	     "ss             $hex +$decimal" \
+	     "ds             $hex +$decimal" \
+	     "es             $hex +$decimal" \
+	     "fs             $hex +$decimal" \
+	     "gs             $hex +$decimal" \
 	    ]
 }
 
@@ -177,8 +177,8 @@ proc jit_reader_test {} {
 			 "rdx            <not saved>" \
 			 "rsi            <not saved>" \
 			 "rdi            <not saved>" \
-			 "rbp            $hex	$hex" \
-			 "rsp            $caller_sp	$caller_sp" \
+			 "rbp            $hex +$hex" \
+			 "rsp            $caller_sp +$caller_sp" \
 			 "r8             <not saved>" \
 			 "r9             <not saved>" \
 			 "r10            <not saved>" \
@@ -187,7 +187,7 @@ proc jit_reader_test {} {
 			 "r13            <not saved>" \
 			 "r14            <not saved>" \
 			 "r15            <not saved>" \
-			 "rip            $hex	$hex $any" \
+			 "rip            $hex +$hex $any" \
 			 "eflags         <not saved>" \
 			 "cs             <not saved>" \
 			 "ss             <not saved>" \

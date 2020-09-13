@@ -1,6 +1,6 @@
 /* Target-dependent code for the Sanyo Xstormy16a (LC590000) processor.
 
-   Copyright (C) 2001-2017 Free Software Foundation, Inc.
+   Copyright (C) 2001-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,11 +30,10 @@
 #include "dis-asm.h"
 #include "inferior.h"
 #include "arch-utils.h"
-#include "floatformat.h"
 #include "regcache.h"
-#include "doublest.h"
 #include "osabi.h"
 #include "objfiles.h"
+#include "common/byte-vector.h"
 
 enum gdb_regnum
 {
@@ -164,7 +163,7 @@ xstormy16_extract_return_value (struct type *type, struct regcache *regcache,
   int i, regnum = E_1ST_ARG_REGNUM;
 
   for (i = 0; i < len; i += xstormy16_reg_size)
-    regcache_raw_read (regcache, regnum++, valbuf + i);
+    regcache->raw_read (regnum++, valbuf + i);
 }
 
 /* Function: xstormy16_store_return_value
@@ -182,7 +181,7 @@ xstormy16_store_return_value (struct type *type, struct regcache *regcache,
       gdb_byte buf[xstormy16_reg_size];
       memset (buf, 0, xstormy16_reg_size);
       memcpy (buf, valbuf, 1);
-      regcache_raw_write (regcache, E_1ST_ARG_REGNUM, buf);
+      regcache->raw_write (E_1ST_ARG_REGNUM, buf);
     }
   else
     {
@@ -190,7 +189,7 @@ xstormy16_store_return_value (struct type *type, struct regcache *regcache,
       int i, regnum = E_1ST_ARG_REGNUM;
 
       for (i = 0; i < len; i += xstormy16_reg_size)
-        regcache_raw_write (regcache, regnum++, valbuf + i);
+        regcache->raw_write (regnum++, valbuf + i);
     }
 }
 
@@ -227,7 +226,8 @@ xstormy16_push_dummy_call (struct gdbarch *gdbarch,
 			   struct regcache *regcache,
 			   CORE_ADDR bp_addr, int nargs,
 			   struct value **args,
-			   CORE_ADDR sp, int struct_return,
+			   CORE_ADDR sp,
+			   function_call_return_method return_method,
 			   CORE_ADDR struct_addr)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -235,12 +235,11 @@ xstormy16_push_dummy_call (struct gdbarch *gdbarch,
   int argreg = E_1ST_ARG_REGNUM;
   int i, j;
   int typelen, slacklen;
-  const gdb_byte *val;
   gdb_byte buf[xstormy16_pc_size];
 
-  /* If struct_return is true, then the struct return address will
-     consume one argument-passing register.  */
-  if (struct_return)
+  /* If returning a struct using target ABI method, then the struct return
+     address will consume one argument-passing register.  */
+  if (return_method == return_method_struct)
     {
       regcache_cooked_write_unsigned (regcache, E_PTR_RET_REGNUM, struct_addr);
       argreg++;
@@ -258,7 +257,7 @@ xstormy16_push_dummy_call (struct gdbarch *gdbarch,
 	break;
 
       /* Put argument into registers wordwise.  */
-      val = value_contents (args[i]);
+      const gdb_byte *val = value_contents (args[i]);
       for (j = 0; j < typelen; j += xstormy16_reg_size)
 	{
 	  ULONGEST regval;
@@ -276,21 +275,17 @@ xstormy16_push_dummy_call (struct gdbarch *gdbarch,
      wordaligned.  */
   for (j = nargs - 1; j >= i; j--)
     {
-      gdb_byte *val;
-      struct cleanup *back_to;
       const gdb_byte *bytes = value_contents (args[j]);
 
       typelen = TYPE_LENGTH (value_enclosing_type (args[j]));
       slacklen = typelen & 1;
-      val = (gdb_byte *) xmalloc (typelen + slacklen);
-      back_to = make_cleanup (xfree, val);
-      memcpy (val, bytes, typelen);
-      memset (val + typelen, 0, slacklen);
+      gdb::byte_vector val (typelen + slacklen);
+      memcpy (val.data (), bytes, typelen);
+      memset (val.data () + typelen, 0, slacklen);
 
       /* Now write this data to the stack.  The stack grows upwards.  */
-      write_memory (stack_dest, val, typelen + slacklen);
+      write_memory (stack_dest, val.data (), typelen + slacklen);
       stack_dest += typelen + slacklen;
-      do_cleanups (back_to);
     }
 
   store_unsigned_integer (buf, xstormy16_pc_size, byte_order, bp_addr);
@@ -849,8 +844,6 @@ xstormy16_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   set_gdbarch_skip_trampoline_code (gdbarch, xstormy16_skip_trampoline_code);
 
-  set_gdbarch_print_insn (gdbarch, print_insn_xstormy16);
-
   gdbarch_init_osabi (info, gdbarch);
 
   dwarf2_append_unwinders (gdbarch);
@@ -862,9 +855,6 @@ xstormy16_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 /* Function: _initialize_xstormy16_tdep
    Initializer function for the Sanyo Xstormy16a module.
    Called by gdb at start-up.  */
-
-/* -Wmissing-prototypes */
-extern initialize_file_ftype _initialize_xstormy16_tdep;
 
 void
 _initialize_xstormy16_tdep (void)

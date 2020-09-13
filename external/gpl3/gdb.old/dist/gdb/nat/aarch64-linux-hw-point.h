@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2017 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2019 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -16,10 +16,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef AARCH64_LINUX_HW_POINT_H
-#define AARCH64_LINUX_HW_POINT_H 1
+#ifndef NAT_AARCH64_LINUX_HW_POINT_H
+#define NAT_AARCH64_LINUX_HW_POINT_H
 
-#include "break-common.h" /* For enum target_hw_bp_type.  */
+#include "common/break-common.h" /* For enum target_hw_bp_type.  */
 
 /* Macro definitions, data structures, and code for the hardware
    breakpoint and hardware watchpoint support follow.  We use the
@@ -77,13 +77,13 @@
 
    31                             13          5      3      1     0
    +--------------------------------+----------+------+------+----+
-   |         RESERVED (SBZ)         |  LENGTH  | TYPE | PRIV | EN |
+   |         RESERVED (SBZ)         |   MASK   | TYPE | PRIV | EN |
    +--------------------------------+----------+------+------+----+
 
    The TYPE field is ignored for breakpoints.  */
 
 #define DR_CONTROL_ENABLED(ctrl)	(((ctrl) & 0x1) == 1)
-#define DR_CONTROL_LENGTH(ctrl)		(((ctrl) >> 5) & 0xff)
+#define DR_CONTROL_MASK(ctrl)		(((ctrl) >> 5) & 0xff)
 
 /* Each bit of a variable of this type is used to indicate whether a
    hardware breakpoint or watchpoint setting has been changed since
@@ -147,7 +147,10 @@ struct aarch64_debug_reg_state
   unsigned int dr_ref_count_bp[AARCH64_HBP_MAX_NUM];
 
   /* hardware watchpoint */
+  /* Address aligned down to AARCH64_HWP_ALIGNMENT.  */
   CORE_ADDR dr_addr_wp[AARCH64_HWP_MAX_NUM];
+  /* Address as entered by user without any forced alignment.  */
+  CORE_ADDR dr_addr_orig_wp[AARCH64_HWP_MAX_NUM];
   unsigned int dr_ctrl_wp[AARCH64_HWP_MAX_NUM];
   unsigned int dr_ref_count_wp[AARCH64_HWP_MAX_NUM];
 };
@@ -166,6 +169,7 @@ struct arch_lwp_info
 extern int aarch64_num_bp_regs;
 extern int aarch64_num_wp_regs;
 
+unsigned int aarch64_watchpoint_offset (unsigned int ctrl);
 unsigned int aarch64_watchpoint_length (unsigned int ctrl);
 
 int aarch64_handle_breakpoint (enum target_hw_bp_type type, CORE_ADDR addr,
@@ -175,8 +179,13 @@ int aarch64_handle_watchpoint (enum target_hw_bp_type type, CORE_ADDR addr,
 			       int len, int is_insert,
 			       struct aarch64_debug_reg_state *state);
 
-void aarch64_linux_set_debug_regs (const struct aarch64_debug_reg_state *state,
+void aarch64_linux_set_debug_regs (struct aarch64_debug_reg_state *state,
 				   int tid, int watchpoint);
+
+/* Return TRUE if there are any hardware breakpoints.  If WATCHPOINT is TRUE,
+   check hardware watchpoints instead.  */
+bool aarch64_linux_any_set_debug_regs_state (aarch64_debug_reg_state *state,
+					     bool watchpoint);
 
 void aarch64_show_debug_reg_state (struct aarch64_debug_reg_state *state,
 				   const char *func, CORE_ADDR addr,
@@ -188,4 +197,4 @@ struct aarch64_debug_reg_state *aarch64_get_debug_reg_state (pid_t pid);
 
 int aarch64_linux_region_ok_for_watchpoint (CORE_ADDR addr, int len);
 
-#endif /* AARCH64_LINUX_HW_POINT_H */
+#endif /* NAT_AARCH64_LINUX_HW_POINT_H */

@@ -1,6 +1,6 @@
 /* Read a symbol table in ECOFF format (Third-Eye).
 
-   Copyright (C) 2004-2017 Free Software Foundation, Inc.
+   Copyright (C) 2004-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -36,5 +36,14 @@ struct mdebug_extra_func_info
    hang mdebug_extra_func_info's off of this.  */
 
 #define MDEBUG_EFI_SYMBOL_NAME "__GDB_EFI_INFO__"
+
+extern void mdebug_build_psymtabs (minimal_symbol_reader &,
+				   struct objfile *,
+				   const struct ecoff_debug_swap *,
+				   struct ecoff_debug_info *);
+
+extern void elfmdebug_build_psymtabs (struct objfile *,
+				      const struct ecoff_debug_swap *,
+				      asection *);
 
 #endif /* MDEBUGREAD_H */

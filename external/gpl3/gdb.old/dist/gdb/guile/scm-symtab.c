@@ -1,6 +1,6 @@
 /* Scheme interface to symbol tables.
 
-   Copyright (C) 2008-2017 Free Software Foundation, Inc.
+   Copyright (C) 2008-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -395,7 +395,6 @@ static int
 stscm_print_sal_smob (SCM self, SCM port, scm_print_state *pstate)
 {
   sal_smob *s_smob = (sal_smob *) SCM_SMOB_DATA (self);
-  symtab_smob *st_smob = (symtab_smob *) SCM_SMOB_DATA (s_smob->symtab_scm);
 
   gdbscm_printf (port, "#<%s ", symtab_smob_name);
   scm_write (s_smob->symtab_scm, port);
@@ -419,7 +418,7 @@ stscm_make_sal_smob (void)
   SCM s_scm;
 
   s_smob->symtab_scm = SCM_BOOL_F;
-  memset (&s_smob->sal, 0, sizeof (s_smob->sal));
+  new (&s_smob->sal) symtab_and_line ();
   s_scm = scm_new_smob (sal_smob_tag, (scm_t_bits) s_smob);
   gdbscm_init_gsmob (&s_smob->base);
 
@@ -578,7 +577,6 @@ static SCM
 gdbscm_sal_symtab (SCM self)
 {
   sal_smob *s_smob = stscm_get_valid_sal_smob_arg (self, SCM_ARG1, FUNC_NAME);
-  const struct symtab_and_line *sal = &s_smob->sal;
 
   return s_smob->symtab_scm;
 }
@@ -589,9 +587,7 @@ static SCM
 gdbscm_find_pc_line (SCM pc_scm)
 {
   ULONGEST pc_ull;
-  struct symtab_and_line sal;
-
-  init_sal (&sal); /* -Wall */
+  symtab_and_line sal;
 
   gdbscm_parse_function_args (FUNC_NAME, SCM_ARG1, NULL, "U", pc_scm, &pc_ull);
 

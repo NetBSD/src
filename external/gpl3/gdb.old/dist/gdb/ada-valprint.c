@@ -1,6 +1,6 @@
 /* Support for printing Ada values for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2017 Free Software Foundation, Inc.
+   Copyright (C) 1986-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,6 +31,7 @@
 #include "c-lang.h"
 #include "infcall.h"
 #include "objfiles.h"
+#include "target-float.h"
 
 static int print_field_values (struct type *, const gdb_byte *,
 			       int,
@@ -87,9 +88,11 @@ print_optional_low_bound (struct ui_file *stream, struct type *type,
       index_type = TYPE_TARGET_TYPE (index_type);
     }
 
+  /* Don't print the lower bound if it's the default one.  */
   switch (TYPE_CODE (index_type))
     {
     case TYPE_CODE_BOOL:
+    case TYPE_CODE_CHAR:
       if (low_bound == 0)
 	return 0;
       break;
@@ -138,11 +141,45 @@ val_print_packed_array_elements (struct type *type, const gdb_byte *valaddr,
 
   {
     LONGEST high;
+    struct type *base_index_type;
 
     if (get_discrete_bounds (index_type, &low, &high) < 0)
       len = 1;
     else
       len = high - low + 1;
+
+    if (TYPE_CODE (index_type) == TYPE_CODE_RANGE)
+        base_index_type = TYPE_TARGET_TYPE (index_type);
+      else
+        base_index_type = index_type;
+
+    if (TYPE_CODE (base_index_type) == TYPE_CODE_ENUM)
+      {
+        LONGEST low_pos, high_pos;
+
+        /* Non-contiguous enumerations types can by used as index types
+           so the array length is computed from the positions of the
+           first and last literal in the enumeration type, and not from
+           the values of these literals.  */
+
+        if (!discrete_position (base_index_type, low, &low_pos)
+          || !discrete_position (base_index_type, high, &high_pos))
+          {
+            warning (_("unable to get positions in array, use bounds instead"));
+            low_pos = low;
+            high_pos = high;
+          }
+
+        /* The array length should normally be HIGH_POS - LOW_POS + 1.
+           But in Ada we allow LOW_POS to be greater than HIGH_POS for
+           empty arrays.  In that situation, the array length is just zero,
+           not negative!  */
+
+        if (low_pos > high_pos)
+          len = 0;
+        else
+          len = high_pos - low_pos + 1;
+      }
   }
 
   i = 0;
@@ -796,10 +833,15 @@ ada_val_print_num (struct type *type, const gdb_byte *valaddr,
 {
   if (ada_is_fixed_point_type (type))
     {
-      LONGEST v = unpack_long (type, valaddr + offset_aligned);
+      struct value *scale = ada_scaling_factor (type);
+      struct value *v = value_from_contents (type, valaddr + offset_aligned);
+      v = value_cast (value_type (scale), v);
+      v = value_binop (v, scale, BINOP_MUL);
 
-      fprintf_filtered (stream, TYPE_LENGTH (type) < 4 ? "%.11g" : "%.17g",
-			(double) ada_fixed_to_float (type, v));
+      const char *fmt = TYPE_LENGTH (type) < 4 ? "%.11g" : "%.17g";
+      std::string str
+	= target_float_to_string (value_contents (v), value_type (v), fmt);
+      fputs_filtered (str.c_str (), stream);
       return;
     }
   else if (TYPE_CODE (type) == TYPE_CODE_RANGE)
@@ -859,7 +901,8 @@ ada_val_print_num (struct type *type, const gdb_byte *valaddr,
 	}
       else
 	{
-	  val_print_type_code_int (type, valaddr + offset_aligned, stream);
+	  val_print_scalar_formatted (type, offset_aligned,
+				      original_value, options, 0, stream);
 	  if (ada_is_character_type (type))
 	    {
 	      LONGEST c;
@@ -1161,16 +1204,16 @@ ada_val_print (struct type *type,
 	       struct value *val,
 	       const struct value_print_options *options)
 {
-
-  /* XXX: this catches QUIT/ctrl-c as well.  Isn't that busted?  */
   TRY
     {
       ada_val_print_1 (type, embedded_offset, address,
 		       stream, recurse, val, options,
 		       current_language);
     }
-  CATCH (except, RETURN_MASK_ALL)
+  CATCH (except, RETURN_MASK_ERROR)
     {
+      fprintf_filtered (stream, _("<error reading variable: %s>"),
+			except.message);
     }
   END_CATCH
 }
@@ -1181,7 +1224,7 @@ ada_value_print (struct value *val0, struct ui_file *stream,
 {
   struct value *val = ada_to_fixed_value (val0);
   CORE_ADDR address = value_address (val);
-  struct type *type = ada_check_typedef (value_enclosing_type (val));
+  struct type *type = ada_check_typedef (value_type (val));
   struct value_print_options opts;
 
   /* If it is a pointer, indicate what it points to.  */

@@ -1,6 +1,6 @@
 /* Definitions for BFD wrappers used by GDB.
 
-   Copyright (C) 2011-2017 Free Software Foundation, Inc.
+   Copyright (C) 2011-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,8 +22,8 @@
 #include "ui-out.h"
 #include "gdbcmd.h"
 #include "hashtab.h"
-#include "filestuff.h"
-#include "vec.h"
+#include "common/filestuff.h"
+#include "common/vec.h"
 #ifdef HAVE_MMAP
 #include <sys/mman.h>
 #ifndef MAP_FAILED
@@ -33,9 +33,6 @@
 #include "target.h"
 #include "gdb/fileio.h"
 #include "inferior.h"
-
-typedef bfd *bfdp;
-DEF_VEC_P (bfdp);
 
 /* An object of this type is stored in the section's user data when
    mapping a section.  */
@@ -63,8 +60,34 @@ static htab_t all_bfds;
 
 struct gdb_bfd_data
 {
+  gdb_bfd_data (bfd *abfd)
+    : mtime (bfd_get_mtime (abfd)),
+      size (bfd_get_size (abfd)),
+      relocation_computed (0),
+      needs_relocations (0),
+      crc_computed (0)
+  {
+    struct stat buf;
+
+    if (bfd_stat (abfd, &buf) == 0)
+      {
+	inode = buf.st_ino;
+	device_id = buf.st_dev;
+      }
+    else
+      {
+	/* The stat failed.  */
+	inode = 0;
+	device_id = 0;
+      }
+  }
+
+  ~gdb_bfd_data ()
+  {
+  }
+
   /* The reference count.  */
-  int refc;
+  int refc = 1;
 
   /* The mtime of the BFD at the point the cache entry was made.  */
   time_t mtime;
@@ -89,17 +112,17 @@ struct gdb_bfd_data
   unsigned int crc_computed : 1;
 
   /* The file's CRC.  */
-  unsigned long crc;
+  unsigned long crc = 0;
 
   /* If the BFD comes from an archive, this points to the archive's
      BFD.  Otherwise, this is NULL.  */
-  bfd *archive_bfd;
+  bfd *archive_bfd = nullptr;
 
   /* Table of all the bfds this bfd has included.  */
-  VEC (bfdp) *included_bfds;
+  std::vector<gdb_bfd_ref_ptr> included_bfds;
 
   /* The registry.  */
-  REGISTRY_FIELDS;
+  REGISTRY_FIELDS = {};
 };
 
 #define GDB_BFD_DATA_ACCESSOR(ABFD) \
@@ -427,8 +450,7 @@ gdb_bfd_open (const char *name, const char *target, int fd)
 			    host_address_to_string (abfd),
 			    bfd_get_filename (abfd));
       close (fd);
-      gdb_bfd_ref (abfd);
-      return gdb_bfd_ref_ptr (abfd);
+      return gdb_bfd_ref_ptr::new_reference (abfd);
     }
 
   abfd = bfd_fopen (name, target, FOPEN_RB, fd);
@@ -448,8 +470,7 @@ gdb_bfd_open (const char *name, const char *target, int fd)
       *slot = abfd;
     }
 
-  gdb_bfd_ref (abfd);
-  return gdb_bfd_ref_ptr (abfd);
+  return gdb_bfd_ref_ptr::new_reference (abfd);
 }
 
 /* A helper function that releases any section data attached to the
@@ -501,7 +522,6 @@ gdb_bfd_close_or_warn (struct bfd *abfd)
 void
 gdb_bfd_ref (struct bfd *abfd)
 {
-  struct stat buf;
   struct gdb_bfd_data *gdata;
   void **slot;
 
@@ -525,25 +545,8 @@ gdb_bfd_ref (struct bfd *abfd)
   /* Ask BFD to decompress sections in bfd_get_full_section_contents.  */
   abfd->flags |= BFD_DECOMPRESS;
 
-  gdata
-    = (struct gdb_bfd_data *) bfd_zalloc (abfd, sizeof (struct gdb_bfd_data));
-  gdata->refc = 1;
-  gdata->mtime = bfd_get_mtime (abfd);
-  gdata->size = bfd_get_size (abfd);
-  gdata->archive_bfd = NULL;
-  if (bfd_stat (abfd, &buf) == 0)
-    {
-      gdata->inode = buf.st_ino;
-      gdata->device_id = buf.st_dev;
-    }
-  else
-    {
-      /* The stat failed.  */
-      gdata->inode = 0;
-      gdata->device_id = 0;
-    }
+  gdata = new gdb_bfd_data (abfd);
   bfd_usrdata (abfd) = gdata;
-
   bfd_alloc_data (abfd);
 
   /* This is the first we've seen it, so add it to the hash table.  */
@@ -557,10 +560,9 @@ gdb_bfd_ref (struct bfd *abfd)
 void
 gdb_bfd_unref (struct bfd *abfd)
 {
-  int ix;
   struct gdb_bfd_data *gdata;
   struct gdb_bfd_cache_search search;
-  bfd *archive_bfd, *included_bfd;
+  bfd *archive_bfd;
 
   if (abfd == NULL)
     return;
@@ -604,13 +606,8 @@ gdb_bfd_unref (struct bfd *abfd)
 	htab_clear_slot (gdb_bfd_cache, slot);
     }
 
-  for (ix = 0;
-       VEC_iterate (bfdp, gdata->included_bfds, ix, included_bfd);
-       ++ix)
-    gdb_bfd_unref (included_bfd);
-  VEC_free (bfdp, gdata->included_bfds);
-
   bfd_free_data (abfd);
+  delete gdata;
   bfd_usrdata (abfd) = NULL;  /* Paranoia.  */
 
   htab_remove_elt (all_bfds, abfd);
@@ -705,9 +702,15 @@ gdb_bfd_map_section (asection *sectp, bfd_size_type *size)
 
   data = NULL;
   if (!bfd_get_full_section_contents (abfd, sectp, &data))
-    error (_("Can't read data for section '%s' in file '%s'"),
-	   bfd_get_section_name (abfd, sectp),
-	   bfd_get_filename (abfd));
+    {
+      warning (_("Can't read data for section '%s' in file '%s'"),
+	       bfd_get_section_name (abfd, sectp),
+	       bfd_get_filename (abfd));
+      /* Set size to 0 to prevent further attempts to read the invalid
+	 section.  */
+      *size = 0;
+      return (const gdb_byte *) NULL;
+    }
   descriptor->data = data;
 
  done:
@@ -778,10 +781,7 @@ gdb_bfd_fopen (const char *filename, const char *target, const char *mode,
 {
   bfd *result = bfd_fopen (filename, target, mode, fd);
 
-  if (result)
-    gdb_bfd_ref (result);
-
-  return gdb_bfd_ref_ptr (result);
+  return gdb_bfd_ref_ptr::new_reference (result);
 }
 
 /* See gdb_bfd.h.  */
@@ -791,10 +791,7 @@ gdb_bfd_openr (const char *filename, const char *target)
 {
   bfd *result = bfd_openr (filename, target);
 
-  if (result)
-    gdb_bfd_ref (result);
-
-  return gdb_bfd_ref_ptr (result);
+  return gdb_bfd_ref_ptr::new_reference (result);
 }
 
 /* See gdb_bfd.h.  */
@@ -804,10 +801,7 @@ gdb_bfd_openw (const char *filename, const char *target)
 {
   bfd *result = bfd_openw (filename, target);
 
-  if (result)
-    gdb_bfd_ref (result);
-
-  return gdb_bfd_ref_ptr (result);
+  return gdb_bfd_ref_ptr::new_reference (result);
 }
 
 /* See gdb_bfd.h.  */
@@ -832,10 +826,7 @@ gdb_bfd_openr_iovec (const char *filename, const char *target,
 				 open_func, open_closure,
 				 pread_func, close_func, stat_func);
 
-  if (result)
-    gdb_bfd_ref (result);
-
-  return gdb_bfd_ref_ptr (result);
+  return gdb_bfd_ref_ptr::new_reference (result);
 }
 
 /* See gdb_bfd.h.  */
@@ -879,9 +870,8 @@ gdb_bfd_record_inclusion (bfd *includer, bfd *includee)
 {
   struct gdb_bfd_data *gdata;
 
-  gdb_bfd_ref (includee);
   gdata = (struct gdb_bfd_data *) bfd_usrdata (includer);
-  VEC_safe_push (bfdp, gdata->included_bfds, includee);
+  gdata->included_bfds.push_back (gdb_bfd_ref_ptr::new_reference (includee));
 }
 
 /* See gdb_bfd.h.  */
@@ -891,10 +881,7 @@ gdb_bfd_fdopenr (const char *filename, const char *target, int fd)
 {
   bfd *result = bfd_fdopenr (filename, target, fd);
 
-  if (result)
-    gdb_bfd_ref (result);
-
-  return gdb_bfd_ref_ptr (result);
+  return gdb_bfd_ref_ptr::new_reference (result);
 }
 
 
@@ -961,14 +948,12 @@ print_one_bfd (void **slot, void *data)
   bfd *abfd = (struct bfd *) *slot;
   struct gdb_bfd_data *gdata = (struct gdb_bfd_data *) bfd_usrdata (abfd);
   struct ui_out *uiout = (struct ui_out *) data;
-  struct cleanup *inner;
 
-  inner = make_cleanup_ui_out_tuple_begin_end (uiout, NULL);
+  ui_out_emit_tuple tuple_emitter (uiout, NULL);
   uiout->field_int ("refcount", gdata->refc);
   uiout->field_string ("addr", host_address_to_string (abfd));
   uiout->field_string ("filename", bfd_get_filename (abfd));
   uiout->text ("\n");
-  do_cleanups (inner);
 
   return 1;
 }
@@ -976,24 +961,18 @@ print_one_bfd (void **slot, void *data)
 /* Implement the 'maint info bfd' command.  */
 
 static void
-maintenance_info_bfds (char *arg, int from_tty)
+maintenance_info_bfds (const char *arg, int from_tty)
 {
-  struct cleanup *cleanup;
   struct ui_out *uiout = current_uiout;
 
-  cleanup = make_cleanup_ui_out_table_begin_end (uiout, 3, -1, "bfds");
+  ui_out_emit_table table_emitter (uiout, 3, -1, "bfds");
   uiout->table_header (10, ui_left, "refcount", "Refcount");
   uiout->table_header (18, ui_left, "addr", "Address");
   uiout->table_header (40, ui_left, "filename", "Filename");
 
   uiout->table_body ();
   htab_traverse (all_bfds, print_one_bfd, uiout);
-
-  do_cleanups (cleanup);
 }
-
-/* -Wmissing-prototypes */
-extern initialize_file_ftype _initialize_gdb_bfd;
 
 void
 _initialize_gdb_bfd (void)

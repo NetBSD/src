@@ -1,5 +1,5 @@
 /* opncls.c -- open and close a BFD.
-   Copyright (C) 1990-2017 Free Software Foundation, Inc.
+   Copyright (C) 1990-2019 Free Software Foundation, Inc.
 
    Written by Cygnus Support.
 
@@ -167,7 +167,7 @@ FUNCTION
 
 SYNOPSIS
 	bfd *bfd_fopen (const char *filename, const char *target,
-                        const char *mode, int fd);
+			const char *mode, int fd);
 
 DESCRIPTION
 	Open the file @var{filename} with the target @var{target}.
@@ -367,7 +367,7 @@ FUNCTION
 
 SYNOPSIS
 	bfd *bfd_openstreamr (const char * filename, const char * target,
-	                      void * stream);
+			      void * stream);
 
 DESCRIPTION
 	Open a BFD for read access on an existing stdio stream.  When
@@ -415,25 +415,25 @@ FUNCTION
 	bfd_openr_iovec
 
 SYNOPSIS
-        bfd *bfd_openr_iovec (const char *filename, const char *target,
-                              void *(*open_func) (struct bfd *nbfd,
-                                                  void *open_closure),
-                              void *open_closure,
-                              file_ptr (*pread_func) (struct bfd *nbfd,
-                                                      void *stream,
-                                                      void *buf,
-                                                      file_ptr nbytes,
-                                                      file_ptr offset),
-                              int (*close_func) (struct bfd *nbfd,
-                                                 void *stream),
+	bfd *bfd_openr_iovec (const char *filename, const char *target,
+			      void *(*open_func) (struct bfd *nbfd,
+						  void *open_closure),
+			      void *open_closure,
+			      file_ptr (*pread_func) (struct bfd *nbfd,
+						      void *stream,
+						      void *buf,
+						      file_ptr nbytes,
+						      file_ptr offset),
+			      int (*close_func) (struct bfd *nbfd,
+						 void *stream),
 			      int (*stat_func) (struct bfd *abfd,
-					        void *stream,
-					        struct stat *sb));
+						void *stream,
+						struct stat *sb));
 
 DESCRIPTION
-        Create and return a BFD backed by a read-only @var{stream}.
-        The @var{stream} is created using @var{open_func}, accessed using
-        @var{pread_func} and destroyed using @var{close_func}.
+	Create and return a BFD backed by a read-only @var{stream}.
+	The @var{stream} is created using @var{open_func}, accessed using
+	@var{pread_func} and destroyed using @var{close_func}.
 
 	Calls <<bfd_find_target>>, so @var{target} is interpreted as by
 	that function.
@@ -555,8 +555,8 @@ opncls_bmmap (struct bfd *abfd ATTRIBUTE_UNUSED,
 	      int prot ATTRIBUTE_UNUSED,
 	      int flags ATTRIBUTE_UNUSED,
 	      file_ptr offset ATTRIBUTE_UNUSED,
-              void **map_addr ATTRIBUTE_UNUSED,
-              bfd_size_type *map_len ATTRIBUTE_UNUSED)
+	      void **map_addr ATTRIBUTE_UNUSED,
+	      bfd_size_type *map_len ATTRIBUTE_UNUSED)
 {
   return (void *) -1;
 }
@@ -726,25 +726,13 @@ RETURNS
 bfd_boolean
 bfd_close (bfd *abfd)
 {
-  bfd_boolean ret;
-
   if (bfd_write_p (abfd))
     {
       if (! BFD_SEND_FMT (abfd, _bfd_write_contents, (abfd)))
 	return FALSE;
     }
 
-  if (! BFD_SEND (abfd, _close_and_cleanup, (abfd)))
-    return FALSE;
-
-  ret = abfd->iovec->bclose (abfd) == 0;
-
-  if (ret)
-    _maybe_make_executable (abfd);
-
-  _bfd_delete_bfd (abfd);
-
-  return ret;
+  return bfd_close_all_done (abfd);
 }
 
 /*
@@ -774,7 +762,10 @@ bfd_close_all_done (bfd *abfd)
 {
   bfd_boolean ret;
 
-  ret = bfd_cache_close (abfd);
+  if (! BFD_SEND (abfd, _close_and_cleanup, (abfd)))
+    return FALSE;
+
+  ret = abfd->iovec->bclose (abfd) == 0;
 
   if (ret)
     _maybe_make_executable (abfd);
@@ -1188,6 +1179,7 @@ bfd_get_debug_link_info_1 (bfd *abfd, void *crc32_out)
   bfd_byte *contents;
   unsigned int crc_offset;
   char *name;
+  bfd_size_type size;
 
   BFD_ASSERT (abfd);
   BFD_ASSERT (crc32_out);
@@ -1195,6 +1187,12 @@ bfd_get_debug_link_info_1 (bfd *abfd, void *crc32_out)
   sect = bfd_get_section_by_name (abfd, GNU_DEBUGLINK);
 
   if (sect == NULL)
+    return NULL;
+
+  size = bfd_get_section_size (sect);
+
+  /* PR 22794: Make sure that the section has a reasonable size.  */
+  if (size < 8 || size >= bfd_get_size (abfd))
     return NULL;
 
   if (!bfd_malloc_and_get_section (abfd, sect, &contents))
@@ -1206,10 +1204,10 @@ bfd_get_debug_link_info_1 (bfd *abfd, void *crc32_out)
 
   /* CRC value is stored after the filename, aligned up to 4 bytes.  */
   name = (char *) contents;
-  /* PR 17597: avoid reading off the end of the buffer.  */
-  crc_offset = strnlen (name, bfd_get_section_size (sect)) + 1;
+  /* PR 17597: Avoid reading off the end of the buffer.  */
+  crc_offset = strnlen (name, size) + 1;
   crc_offset = (crc_offset + 3) & ~3;
-  if (crc_offset >= bfd_get_section_size (sect))
+  if (crc_offset + 4 > size)
     return NULL;
 
   *crc32 = bfd_get_32 (abfd, contents + crc_offset);
@@ -1251,7 +1249,7 @@ FUNCTION
 SYNOPSIS
 	char *bfd_get_alt_debug_link_info (bfd * abfd,
 					   bfd_size_type *buildid_len,
-			                   bfd_byte **buildid_out);
+					   bfd_byte **buildid_out);
 
 DESCRIPTION
 	Fetch the filename and BuildID value for any alternate debuginfo
@@ -1270,6 +1268,7 @@ bfd_get_alt_debug_link_info (bfd * abfd, bfd_size_type *buildid_len,
   bfd_byte *contents;
   unsigned int buildid_offset;
   char *name;
+  bfd_size_type size;
 
   BFD_ASSERT (abfd);
   BFD_ASSERT (buildid_len);
@@ -1278,6 +1277,10 @@ bfd_get_alt_debug_link_info (bfd * abfd, bfd_size_type *buildid_len,
   sect = bfd_get_section_by_name (abfd, GNU_DEBUGALTLINK);
 
   if (sect == NULL)
+    return NULL;
+
+  size = bfd_get_section_size (sect);
+  if (size < 8 || size >= bfd_get_size (abfd))
     return NULL;
 
   if (!bfd_malloc_and_get_section (abfd, sect, & contents))
@@ -1289,11 +1292,11 @@ bfd_get_alt_debug_link_info (bfd * abfd, bfd_size_type *buildid_len,
 
   /* BuildID value is stored after the filename.  */
   name = (char *) contents;
-  buildid_offset = strnlen (name, bfd_get_section_size (sect)) + 1;
+  buildid_offset = strnlen (name, size) + 1;
   if (buildid_offset >= bfd_get_section_size (sect))
     return NULL;
 
-  *buildid_len = bfd_get_section_size (sect) - buildid_offset;
+  *buildid_len = size - buildid_offset;
   *buildid_out = bfd_malloc (*buildid_len);
   memcpy (*buildid_out, contents + buildid_offset, *buildid_len);
 
@@ -1404,12 +1407,12 @@ typedef char *      (* get_func_type) (bfd *, void *);
 typedef bfd_boolean (* check_func_type) (const char *, void *);
 
 static char *
-find_separate_debug_file (bfd *           abfd,
-			  const char *    debug_file_directory,
-			  bfd_boolean     include_dirs,
-			  get_func_type   get_func,
+find_separate_debug_file (bfd *		  abfd,
+			  const char *	  debug_file_directory,
+			  bfd_boolean	  include_dirs,
+			  get_func_type	  get_func,
 			  check_func_type check_func,
-			  void *          func_data)
+			  void *	  func_data)
 {
   char *base;
   char *dir;
@@ -1480,16 +1483,16 @@ find_separate_debug_file (bfd *           abfd,
 
   debugfile = (char *)
       bfd_malloc (strlen (debug_file_directory) + 1
-                  + (canon_dirlen > dirlen ? canon_dirlen : dirlen)
-                  + strlen (".debug/")
+		  + (canon_dirlen > dirlen ? canon_dirlen : dirlen)
+		  + strlen (".debug/")
 #ifdef EXTRA_DEBUG_ROOT1
 		  + strlen (EXTRA_DEBUG_ROOT1)
 #endif
 #ifdef EXTRA_DEBUG_ROOT2
 		  + strlen (EXTRA_DEBUG_ROOT2)
 #endif
-                  + strlen (base)
-                  + 1);
+		  + strlen (base)
+		  + 1);
   if (debugfile == NULL)
     goto found; /* Actually this returns NULL.  */
 
@@ -1825,6 +1828,7 @@ get_build_id (bfd *abfd)
   Elf_External_Note *enote;
   bfd_byte *contents;
   asection *sect;
+  bfd_size_type size;
 
   BFD_ASSERT (abfd);
 
@@ -1839,8 +1843,9 @@ get_build_id (bfd *abfd)
       return NULL;
     }
 
+  size = bfd_get_section_size (sect);
   /* FIXME: Should we support smaller build-id notes ?  */
-  if (bfd_get_section_size (sect) < 0x24)
+  if (size < 0x24)
     {
       bfd_set_error (bfd_error_invalid_operation);
       return NULL;
@@ -1853,6 +1858,17 @@ get_build_id (bfd *abfd)
       return NULL;
     }
 
+  /* FIXME: Paranoia - allow for compressed build-id sections.
+     Maybe we should complain if this size is different from
+     the one obtained above...  */
+  size = bfd_get_section_size (sect);
+  if (size < sizeof (Elf_External_Note))
+    {
+      bfd_set_error (bfd_error_invalid_operation);
+      free (contents);
+      return NULL;
+    }
+
   enote = (Elf_External_Note *) contents;
   inote.type = H_GET_32 (abfd, enote->type);
   inote.namesz = H_GET_32 (abfd, enote->namesz);
@@ -1861,10 +1877,12 @@ get_build_id (bfd *abfd)
   inote.descdata = inote.namedata + BFD_ALIGN (inote.namesz, 4);
   /* FIXME: Should we check for extra notes in this section ?  */
 
-  if (inote.descsz == 0
+  if (inote.descsz <= 0
       || inote.type != NT_GNU_BUILD_ID
       || inote.namesz != 4 /* sizeof "GNU"  */
-      || strcmp (inote.namedata, "GNU") != 0)
+      || strncmp (inote.namedata, "GNU", 4) != 0
+      || inote.descsz > 0x7ffffffe
+      || size < (12 + BFD_ALIGN (inote.namesz, 4) + inote.descsz))
     {
       free (contents);
       bfd_set_error (bfd_error_invalid_operation);

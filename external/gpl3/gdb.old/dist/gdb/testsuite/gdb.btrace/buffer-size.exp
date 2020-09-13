@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2013-2017 Free Software Foundation, Inc.
+# Copyright 2013-2019 Free Software Foundation, Inc.
 #
 # Contributed by Intel Corp. <markus.t.metzger@intel.com>
 #
@@ -33,17 +33,14 @@ if ![runto_main] {
 }
 
 gdb_test_no_output "set record btrace bts buffer-size 1"
-gdb_test "show record btrace bts buffer-size" "The record/replay bts buffer size is 1\.\r" "bts buffer size before recording"
+gdb_test_no_output "set record btrace pt buffer-size 1"
+gdb_test "show record btrace bts buffer-size" "The record/replay bts buffer size is 1\.\r"
+gdb_test "show record btrace pt buffer-size" "The record/replay pt buffer size is 1\.\r"
 
-gdb_test_no_output "record btrace bts"
-gdb_test "show record btrace bts buffer-size" "The record/replay bts buffer size is 1\.\r" "bts buffer size while recording"
+gdb_test_no_output "record btrace"
 gdb_test "info record" [multi_line \
   "Active record target: record-btrace" \
-  "Recording format: Branch Trace Store\." \
+  "Recording format: \[^\\\r\\\n\]*" \
   "Buffer size: 4kB\." \
   "Recorded 0 instructions in 0 functions \\\(0 gaps\\\) for \[^\\\r\\\n\]*" \
-  ] "info record with small bts buffer"
-gdb_test "record stop" ".*" "stop recording with small bts buffer"
-
-gdb_test_no_output "set record btrace bts buffer-size 0"
-gdb_test "show record btrace bts buffer-size" "The record/replay bts buffer size is unlimited\.\r" "unlimited bts buffer size"
+  ] "info record"
