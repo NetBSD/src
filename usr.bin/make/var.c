@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.510 2020/09/13 09:35:09 martin Exp $	*/
+/*	$NetBSD: var.c,v 1.511 2020/09/13 13:50:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.510 2020/09/13 09:35:09 martin Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.511 2020/09/13 13:50:27 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.510 2020/09/13 09:35:09 martin Exp $");
+__RCSID("$NetBSD: var.c,v 1.511 2020/09/13 13:50:27 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2723,7 +2723,7 @@ ApplyModifier_IfElse(const char **pp, ApplyModifiersState *st)
 
     int cond_rc = COND_PARSE;	/* anything other than COND_INVALID */
     if (st->eflags & VARE_WANTRES) {
-	cond_rc = Cond_EvalExpression(NULL, st->v->name, &value, 0, FALSE);
+	cond_rc = Cond_EvalCondition(st->v->name, &value);
 	if (cond_rc != COND_INVALID && value)
 	    then_eflags |= VARE_WANTRES;
 	if (cond_rc != COND_INVALID && !value)
