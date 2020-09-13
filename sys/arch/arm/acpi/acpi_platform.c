@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_platform.c,v 1.18 2019/09/22 18:31:59 jmcneill Exp $ */
+/* $NetBSD: acpi_platform.c,v 1.19 2020/09/13 21:41:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.18 2019/09/22 18:31:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.19 2020/09/13 21:41:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -163,7 +163,7 @@ acpi_platform_startup(void)
 		}
 
 		if (spcr->SerialPort.SpaceId == ACPI_ADR_SPACE_SYSTEM_MEMORY &&
-		    spcr->SerialPort.Address != 0) {
+		    le64toh(spcr->SerialPort.Address) != 0) {
 			switch (spcr->InterfaceType) {
 #if NPLCOM > 0
 			case ACPI_DBG2_ARM_PL011:
@@ -171,7 +171,7 @@ acpi_platform_startup(void)
 			case ACPI_DBG2_ARM_SBSA_GENERIC:
 				plcom_console.pi_type = PLCOM_TYPE_PL011;
 				plcom_console.pi_iot = &arm_generic_bs_tag;
-				plcom_console.pi_iobase = spcr->SerialPort.Address;
+				plcom_console.pi_iobase = le64toh(spcr->SerialPort.Address);
 				plcom_console.pi_size = PL011COM_UART_SIZE;
 				plcom_console.pi_flags = PLC_FLAG_32BIT_ACCESS;
 
@@ -182,15 +182,15 @@ acpi_platform_startup(void)
 			case ACPI_DBG2_16550_COMPATIBLE:
 			case ACPI_DBG2_16550_SUBSET:
 				if (ACPI_ACCESS_BIT_WIDTH(spcr->SerialPort.AccessWidth) == 8) {
-					comcnattach(&arm_generic_bs_tag, spcr->SerialPort.Address, baud_rate, -1,
+					comcnattach(&arm_generic_bs_tag, le64toh(spcr->SerialPort.Address), baud_rate, -1,
 					    COM_TYPE_NORMAL, TTYDEF_CFLAG);
 				} else {
-					comcnattach(&arm_generic_a4x_bs_tag, spcr->SerialPort.Address, baud_rate, -1,
+					comcnattach(&arm_generic_a4x_bs_tag, le64toh(spcr->SerialPort.Address), baud_rate, -1,
 					    COM_TYPE_NORMAL, TTYDEF_CFLAG);
 				}
 				break;
 			case ACPI_DBG2_BCM2835:
-				comcnattach(&arm_generic_a4x_bs_tag, spcr->SerialPort.Address + 0x40, baud_rate, -1,
+				comcnattach(&arm_generic_a4x_bs_tag, le64toh(spcr->SerialPort.Address) + 0x40, baud_rate, -1,
 				    COM_TYPE_BCMAUXUART, TTYDEF_CFLAG);
 				cn_set_magic("+++++");
 				break;
@@ -207,8 +207,8 @@ acpi_platform_startup(void)
 	 * Initialize PSCI 0.2+ if implemented
 	 */
 	if (ACPI_SUCCESS(acpi_table_find(ACPI_SIG_FADT, (void **)&fadt))) {
-		if (fadt->ArmBootFlags & ACPI_FADT_PSCI_COMPLIANT) {
-			if (fadt->ArmBootFlags & ACPI_FADT_PSCI_USE_HVC) {
+		if (le16toh(fadt->ArmBootFlags) & ACPI_FADT_PSCI_COMPLIANT) {
+			if (le16toh(fadt->ArmBootFlags) & ACPI_FADT_PSCI_USE_HVC) {
 				psci_init(psci_call_hvc);
 			} else {
 				psci_init(psci_call_smc);
@@ -222,7 +222,7 @@ acpi_platform_startup(void)
 	 * Count CPUs
 	 */
 	if (ACPI_SUCCESS(acpi_table_find(ACPI_SIG_MADT, (void **)&madt))) {
-		char *end = (char *)madt + madt->Header.Length;
+		char *end = (char *)madt + le32toh(madt->Header.Length);
 		char *where = (char *)madt + sizeof(ACPI_TABLE_MADT);
 		while (where < end) {
 			ACPI_SUBTABLE_HEADER *subtable = (ACPI_SUBTABLE_HEADER *)where;
@@ -269,7 +269,7 @@ acpi_platform_device_register(device_t self, void *aux)
 
 		if (spcr->SerialPort.SpaceId != ACPI_ADR_SPACE_SYSTEM_MEMORY)
 			goto spcr_unmap;
-		if (spcr->SerialPort.Address == 0)
+		if (le64toh(spcr->SerialPort.Address) == 0)
 			goto spcr_unmap;
 		if (spcr->InterfaceType != ACPI_DBG2_16550_COMPATIBLE &&
 		    spcr->InterfaceType != ACPI_DBG2_16550_SUBSET)
@@ -300,7 +300,7 @@ acpi_platform_device_register(device_t self, void *aux)
 			if (mem == NULL)
 				goto crs_cleanup;
 
-			if (mem->ar_base == spcr->SerialPort.Address)
+			if (mem->ar_base == le64toh(spcr->SerialPort.Address))
 				prop_dictionary_set_bool(prop, "force_console", true);
 
 crs_cleanup:

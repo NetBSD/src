@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci_n1sdp.c,v 1.4 2020/06/17 06:45:09 thorpej Exp $ */
+/* $NetBSD: acpi_pci_n1sdp.c,v 1.5 2020/09/13 21:41:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_n1sdp.c,v 1.4 2020/06/17 06:45:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_n1sdp.c,v 1.5 2020/09/13 21:41:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -173,7 +173,7 @@ acpi_pci_n1sdp_init(struct acpi_pci_context *ap)
 		aprint_debug_dev(ap->ap_dev, "N1SDP: RC @ 0x%08x, %d devices\n",
 		    n1sdp_data[ap->ap_seg]->rc_base_addr, n1sdp_data[ap->ap_seg]->nr_bdfs);
 		for (n = 0; n < n1sdp_data[ap->ap_seg]->nr_bdfs; n++) {
-			const uint32_t bdf = n1sdp_data[ap->ap_seg]->valid_bdfs[n];
+			const uint32_t bdf = le32toh(n1sdp_data[ap->ap_seg]->valid_bdfs[n]);
 			const int b = (bdf >> N1SDP_BUS_SHIFT) & 0xff;
 			const int d = (bdf >> N1SDP_DEV_SHIFT) & 0x1f;
 			const int f = (bdf >> N1SDP_FUNC_SHIFT) & 0x7;

@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_iort.c,v 1.3 2020/02/13 00:02:21 jmcneill Exp $ */
+/* $NetBSD: acpi_iort.c,v 1.4 2020/09/13 21:41:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_iort.c,v 1.3 2020/02/13 00:02:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_iort.c,v 1.4 2020/09/13 21:41:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,15 +47,15 @@ acpi_iort_id_map(ACPI_IORT_NODE *node, uint32_t *id)
 	ACPI_IORT_ID_MAPPING *map;
 	uint32_t offset, n;
 
-	offset = node->MappingOffset;
-	for (n = 0; n < node->MappingCount; n++) {
+	offset = le32toh(node->MappingOffset);
+	for (n = 0; n < le32toh(node->MappingCount); n++) {
 		map = ACPI_ADD_PTR(ACPI_IORT_ID_MAPPING, node, offset);
-		if (map->Flags & ACPI_IORT_ID_SINGLE_MAPPING) {
-			*id = map->OutputBase;
+		if (le32toh(map->Flags) & ACPI_IORT_ID_SINGLE_MAPPING) {
+			*id = le32toh(map->OutputBase);
 			return map;
 		}
-		if (*id >= map->InputBase && *id <= map->InputBase + map->IdCount) {
-			*id = *id - map->InputBase + map->OutputBase;
+		if (*id >= le32toh(map->InputBase) && *id <= le32toh(map->InputBase) + le32toh(map->IdCount)) {
+			*id = *id - le32toh(map->InputBase) + le32toh(map->OutputBase);
 			return map;
 		}
 		offset += sizeof(ACPI_IORT_ID_MAPPING);
@@ -73,7 +73,7 @@ acpi_iort_find_ref(ACPI_TABLE_IORT *iort, ACPI_IORT_NODE *node, uint32_t *id)
 	if (map == NULL)
 		return NULL;
 
-	return ACPI_ADD_PTR(ACPI_IORT_NODE, iort, map->OutputReference);
+	return ACPI_ADD_PTR(ACPI_IORT_NODE, iort, le32toh(map->OutputReference));
 }
 
 uint32_t
@@ -89,12 +89,12 @@ acpi_iort_pci_root_map(u_int seg, uint32_t devid)
 	if (ACPI_FAILURE(rv))
 		return devid;
 
-	offset = iort->NodeOffset;
-	for (n = 0; n < iort->NodeCount; n++) {
+	offset = le32toh(iort->NodeOffset);
+	for (n = 0; n < le32toh(iort->NodeCount); n++) {
 		node = ACPI_ADD_PTR(ACPI_IORT_NODE, iort, offset);
 		if (node->Type == ACPI_IORT_NODE_PCI_ROOT_COMPLEX) {
 			root = (ACPI_IORT_ROOT_COMPLEX *)node->NodeData;
-			if (root->PciSegmentNumber == seg) {
+			if (le32toh(root->PciSegmentNumber) == seg) {
 				const uint32_t odevid = devid;
 				do {
 					node = acpi_iort_find_ref(iort, node, &devid);
@@ -103,7 +103,7 @@ acpi_iort_pci_root_map(u_int seg, uint32_t devid)
 				return devid;
 			}
 		}
-		offset += node->Length;
+		offset += le16toh(node->Length);
 	}
 
 	return devid;
@@ -123,28 +123,28 @@ acpi_iort_its_id_map(u_int seg, uint32_t devid)
 	if (ACPI_FAILURE(rv))
 		return 0;
 
-	offset = iort->NodeOffset;
-	for (n = 0; n < iort->NodeCount; n++) {
+	offset = le32toh(iort->NodeOffset);
+	for (n = 0; n < le32toh(iort->NodeCount); n++) {
 		node = ACPI_ADD_PTR(ACPI_IORT_NODE, iort, offset);
 		if (node->Type == ACPI_IORT_NODE_PCI_ROOT_COMPLEX) {
 			root = (ACPI_IORT_ROOT_COMPLEX *)node->NodeData;
-			if (root->PciSegmentNumber == seg) {
+			if (le32toh(root->PciSegmentNumber) == seg) {
 				const uint32_t odevid = devid;
 				do {
 					node = acpi_iort_find_ref(iort, node, &devid);
 					if (node != NULL && node->Type == ACPI_IORT_NODE_ITS_GROUP) {
 						its_group = (ACPI_IORT_ITS_GROUP *)node->NodeData;
-						if (its_group->ItsCount == 0)
+						if (le32toh(its_group->ItsCount) == 0)
 							return 0;
 						aprint_debug("ACPI: IORT mapped devid %#x -> ITS %#x\n",
-						    odevid, its_group->Identifiers[0]);
-						return its_group->Identifiers[0];
+						    odevid, le32toh(its_group->Identifiers[0]));
+						return le32toh(its_group->Identifiers[0]);
 					}
 				} while (node != NULL);
 				return 0;
 			}
 		}
-		offset += node->Length;
+		offset += le16toh(node->Length);
 	}
 
 	return 0;
