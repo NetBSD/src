@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_table.c,v 1.1 2018/10/12 22:15:04 jmcneill Exp $ */
+/* $NetBSD: acpi_table.c,v 1.2 2020/09/13 21:41:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_table.c,v 1.1 2018/10/12 22:15:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_table.c,v 1.2 2020/09/13 21:41:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -61,7 +61,8 @@ acpi_table_map(ACPI_PHYSICAL_ADDRESS pa, void **hdrp)
 	rv = acpi_md_OsMapMemory(pa, sizeof(*header), (void **)&header);
 	if (ACPI_FAILURE(rv))
 		return rv;
-	length = header->Length;
+	length = le32toh(header->Length);
+
 	acpi_md_OsUnmapMemory(header, sizeof(*header));
 
 	return acpi_md_OsMapMemory(pa, length, hdrp);
@@ -70,7 +71,7 @@ acpi_table_map(ACPI_PHYSICAL_ADDRESS pa, void **hdrp)
 void
 acpi_table_unmap(ACPI_TABLE_HEADER *hdrp)
 {
-	acpi_md_OsUnmapMemory(hdrp, hdrp->Length);
+	acpi_md_OsUnmapMemory(hdrp, le32toh(hdrp->Length));
 }
 
 ACPI_STATUS
@@ -88,7 +89,7 @@ acpi_table_find(const char *sig, void **hdrp)
 	if (ACPI_FAILURE(rv))
 		return rv;
 	if (memcmp(rsdp->Signature, ACPI_SIG_RSDP, sizeof(rsdp->Signature)) == 0)
-		pa = rsdp->XsdtPhysicalAddress;
+		pa = le64toh(rsdp->XsdtPhysicalAddress);
 	acpi_md_OsUnmapMemory(rsdp, sizeof(*rsdp));
 	if (pa == 0)
 		return AE_NOT_FOUND;
@@ -97,13 +98,14 @@ acpi_table_find(const char *sig, void **hdrp)
 	rv = acpi_table_map(pa, (void **)&xsdt);
 	if (ACPI_FAILURE(rv))
 		return rv;
-	const u_int entries = (xsdt->Header.Length - sizeof(ACPI_TABLE_HEADER)) / ACPI_XSDT_ENTRY_SIZE;
+	const u_int entries = (le32toh(xsdt->Header.Length) - sizeof(ACPI_TABLE_HEADER)) / ACPI_XSDT_ENTRY_SIZE;
 	for (u_int n = 0; n < entries; n++) {
-		rv = acpi_table_map(xsdt->TableOffsetEntry[n], (void **)&header);
+		rv = acpi_table_map(le64toh(xsdt->TableOffsetEntry[n]), (void **)&header);
 		if (ACPI_FAILURE(rv))
 			continue;
 		if (memcmp(header->Signature, sig, sizeof(header->Signature)) == 0) {
 			acpi_table_unmap((ACPI_TABLE_HEADER *)xsdt);
+
 			*hdrp = header;
 			return AE_OK;
 		}
