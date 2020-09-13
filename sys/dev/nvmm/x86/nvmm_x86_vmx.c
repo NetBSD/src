@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.36.2.13 2020/09/04 18:53:43 martin Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.36.2.14 2020/09/13 11:54:10 martin Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.36.2.13 2020/09/04 18:53:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.36.2.14 2020/09/13 11:54:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1753,6 +1753,24 @@ vmx_inkernel_handle_msr(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 			cpudata->gprs[NVMM_X64_GPR_RDX] = (val >> 32);
 			goto handled;
 		}
+		if (exit->u.rdmsr.msr == MSR_IA32_ARCH_CAPABILITIES) {
+			u_int descs[4];
+			if (cpuid_level < 7) {
+				goto error;
+			}
+			x86_cpuid(7, descs);
+			if (!(descs[3] & CPUID_SEF_ARCH_CAP)) {
+				goto error;
+			}
+			val = rdmsr(MSR_IA32_ARCH_CAPABILITIES);
+			val &= (IA32_ARCH_RDCL_NO |
+			    IA32_ARCH_SSB_NO |
+			    IA32_ARCH_MDS_NO |
+			    IA32_ARCH_TAA_NO);
+			cpudata->gprs[NVMM_X64_GPR_RAX] = (val & 0xFFFFFFFF);
+			cpudata->gprs[NVMM_X64_GPR_RDX] = (val >> 32);
+			goto handled;
+		}
 		for (i = 0; i < __arraycount(msr_ignore_list); i++) {
 			if (msr_ignore_list[i] != exit->u.rdmsr.msr)
 				continue;
@@ -2786,8 +2804,6 @@ vmx_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	vmx_vcpu_msr_allow(cpudata->msrbm, MSR_FSBASE, true, true);
 	vmx_vcpu_msr_allow(cpudata->msrbm, MSR_GSBASE, true, true);
 	vmx_vcpu_msr_allow(cpudata->msrbm, MSR_TSC, true, false);
-	vmx_vcpu_msr_allow(cpudata->msrbm, MSR_IA32_ARCH_CAPABILITIES,
-	    true, false);
 	vmx_vmwrite(VMCS_MSR_BITMAP, (uint64_t)cpudata->msrbm_pa);
 
 	/*
