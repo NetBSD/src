@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.121 2020/09/13 19:46:23 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.122 2020/09/13 20:38:47 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -219,8 +219,7 @@ typedef enum {
     VPE_OK		= 0x0000,
 
     /* Parsing failed.
-     * An error message has already been printed.
-     * (It suffices if the error message is printed in lint mode.) */
+     * An error message has already been printed. */
     VPE_PARSE_MSG	= 0x0001,
 
     /* Parsing failed.
@@ -233,8 +232,7 @@ typedef enum {
     /* Parsing succeeded.
      * During evaluation, VARE_UNDEFERR was set and there was an undefined
      * variable.
-     * An error message has already been printed.
-     * (It suffices if the error message is printed in lint mode.) */
+     * An error message has already been printed. */
     VPE_UNDEF_MSG	= 0x0010,
 
     /* Parsing succeeded.
@@ -248,8 +246,7 @@ typedef enum {
 
     /* Parsing succeeded.
      * Evaluation failed.
-     * An error message has already been printed.
-     * (It suffices if the error message is printed in lint mode.) */
+     * An error message has already been printed. */
     VPE_EVAL_MSG	= 0x0100,
 
     /* Parsing succeeded.
