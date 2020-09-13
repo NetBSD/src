@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_rename.c,v 1.3 2017/03/30 09:11:12 hannken Exp $	*/
+/*	$NetBSD: genfs_rename.c,v 1.3.18.1 2020/09/13 12:25:29 martin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_rename.c,v 1.3 2017/03/30 09:11:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_rename.c,v 1.3.18.1 2020/09/13 12:25:29 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kauth.h>
@@ -713,12 +713,26 @@ out:	if (intermediate_node != NULL)
 }
 
 /*
- * genfs_rename_lock: Lock directories a and b, which must be distinct,
- * and look up and lock nodes a and b.  Do a first and then b.
- * Directory b may not be an ancestor of directory a, although
- * directory a may be an ancestor of directory b.  Fail with
- * overlap_error if node a is directory b.  Neither componentname may
- * be `.' or `..'.
+ * genfs_rename_lock: Lookup and lock it all.  The lock order is:
+ *
+ *	a_dvp -> a_vp -> b_dvp -> b_vp,
+ *
+ * except if a_vp is a nondirectory in which case the lock order is:
+ *
+ *	a_dvp -> b_dvp -> b_vp -> a_vp,
+ *
+ * which can't violate ancestor->descendant because a_vp has no
+ * descendants in this case.  This edge case is necessary because some
+ * file systems can only lookup/lock/unlock, and we can't hold a_vp
+ * locked when we lookup/lock/unlock b_vp if they turn out to be the
+ * same, and we can't find out that they're the same until after the
+ * lookup.
+ *
+ * b_dvp must not be an ancestor of a_dvp, although a_dvp may be an
+ * ancestor of b_dvp.
+ *
+ * Fail with overlap_error if node a is directory b.  Neither
+ * componentname may be `.' or `..'.
  *
  * a_dvp and b_dvp must be referenced.
  *
@@ -766,6 +780,9 @@ genfs_rename_lock(const struct genfs_rename_ops *ops,
 	KASSERT(b_dvp->v_mount == mp);
 	KASSERT(a_missing_ok != b_missing_ok);
 
+	/*
+	 * 1. Lock a_dvp.
+	 */
 	error = ops->gro_lock_directory(mp, a_dvp);
 	if (error)
 		goto fail0;
@@ -776,6 +793,9 @@ genfs_rename_lock(const struct genfs_rename_ops *ops,
 		goto fail1;
 	}
 
+	/*
+	 * 2. Lookup a_vp.  May lock/unlock a_vp.
+	 */
 	error = ops->gro_lookup(mp, a_dvp, a_cnp, a_de_ret, &a_vp);
 	if (error) {
 		if (a_missing_ok && (error == ENOENT))
@@ -791,6 +811,7 @@ genfs_rename_lock(const struct genfs_rename_ops *ops,
 			goto fail2;
 		}
 
+		/* Reject rename("x", "x/y") or rename("x/y", "x").  */
 		if (a_vp == b_dvp) {
 			error = overlap_error;
 			goto fail2;
@@ -800,32 +821,67 @@ genfs_rename_lock(const struct genfs_rename_ops *ops,
 	KASSERT(a_vp != a_dvp);
 	KASSERT(a_vp != b_dvp);
 
+	/*
+	 * 3. Lock a_vp, if it is a directory.
+	 *
+	 * We already ruled out a_vp == a_dvp (i.e., a_cnp is `.'), so
+	 * this is not locking against self, and we already ruled out
+	 * a_vp == b_dvp, so this won't cause subsequent locking of
+	 * b_dvp to lock against self.
+	 *
+	 * If a_vp is a nondirectory, we can't hold it when we lookup
+	 * b_vp in case (a) the file system can only lookup/lock/unlock
+	 * and (b) b_vp turns out to be the same file as a_vp due to
+	 * hard links -- and we can't even detect that case until after
+	 * we've looked up b_vp.  Fortunately, if a_vp is a
+	 * nondirectory, then it is a leaf, so we can safely lock it
+	 * last.
+	 */
+	if (a_vp != NULL && a_vp->v_type == VDIR) {
+		vn_lock(a_vp, LK_EXCLUSIVE | LK_RETRY);
+		KASSERT(a_vp->v_mount == mp);
+		/* Refuse to rename (over) a mount point.  */
+		if (a_vp->v_mountedhere != NULL) {
+			error = EBUSY;
+			goto fail3;
+		}
+	}
+
+	/*
+	 * 4. Lock b_dvp.
+	 */
 	error = ops->gro_lock_directory(mp, b_dvp);
 	if (error)
-		goto fail2;
+		goto fail3;
 
 	/* Did we lose a race with mount?  */
 	if (b_dvp->v_mountedhere != NULL) {
 		error = EBUSY;
-		goto fail3;
+		goto fail4;
 	}
 
+	/*
+	 * 5. Lookup b_vp.  May lock/unlock b_vp.
+	 */
 	error = ops->gro_lookup(mp, b_dvp, b_cnp, b_de_ret, &b_vp);
 	if (error) {
 		if (b_missing_ok && (error == ENOENT))
 			b_vp = NULL;
 		else
-			goto fail3;
+			goto fail4;
 	} else {
 		KASSERT(b_vp != NULL);
 
 		/* Refuse to rename (over) `.'.  */
 		if (b_vp == b_dvp) {
 			error = b_dot_error;
-			goto fail4;
+			goto fail5;
 		}
 
-		/* b is not an ancestor of a.  */
+		/*
+		 * b_dvp must not be an ancestor of a_dvp, so if we
+		 * find b_dvp/b_vp=a_dvp/a_vp something is wrong.
+		 */
 		if (b_vp == a_dvp) {
 			/*
 			 * We have a directory hard link before us.
@@ -833,26 +889,31 @@ genfs_rename_lock(const struct genfs_rename_ops *ops,
 			 * Panic?
 			 */
 			error = EIO;
-			goto fail4;
+			goto fail5;
 		}
 	}
 	KASSERT(b_vp != b_dvp);
 	KASSERT(b_vp != a_dvp);
 
 	/*
-	 * We've looked up both nodes.  Now lock them and check them.
+	 * 6. Lock a_vp, if it is a nondirectory.
+	 *
+	 * In this case a_vp is a leaf, so it is either equal to or
+	 * incommensurate with b_vp, and so we can safely lock it at
+	 * any point now.
 	 */
-
-	if (a_vp != NULL) {
+	if (a_vp != NULL && a_vp->v_type != VDIR) {
 		vn_lock(a_vp, LK_EXCLUSIVE | LK_RETRY);
 		KASSERT(a_vp->v_mount == mp);
-		/* Refuse to rename (over) a mount point.  */
-		if ((a_vp->v_type == VDIR) && (a_vp->v_mountedhere != NULL)) {
-			error = EBUSY;
-			goto fail5;
-		}
+		/* (not a directory so can't have anything mounted here) */
 	}
 
+	/*
+	 * 7. Lock b_vp, if it is not a_vp.
+	 *
+	 * b_vp and a_vp may the same inode if they are hard links to
+	 * one another.
+	 */
 	if ((b_vp != NULL) && (b_vp != a_vp)) {
 		vn_lock(b_vp, LK_EXCLUSIVE | LK_RETRY);
 		KASSERT(b_vp->v_mount == mp);
@@ -876,11 +937,13 @@ genfs_rename_lock(const struct genfs_rename_ops *ops,
 
 fail6:	if ((b_vp != NULL) && (b_vp != a_vp))
 		VOP_UNLOCK(b_vp);
-fail5:	if (a_vp != NULL)
+	if (a_vp != NULL && a_vp->v_type != VDIR)
 		VOP_UNLOCK(a_vp);
-fail4:	if (b_vp != NULL)
+fail5:	if (b_vp != NULL)
 		vrele(b_vp);
-fail3:	VOP_UNLOCK(b_dvp);
+fail4:	VOP_UNLOCK(b_dvp);
+fail3:	if (a_vp != NULL && a_vp->v_type == VDIR)
+		VOP_UNLOCK(a_vp);
 fail2:	if (a_vp != NULL)
 		vrele(a_vp);
 fail1:	VOP_UNLOCK(a_dvp);
