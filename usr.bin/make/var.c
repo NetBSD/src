@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.514 2020/09/13 18:27:39 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.515 2020/09/13 19:16:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.514 2020/09/13 18:27:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.515 2020/09/13 19:16:22 rillig Exp $");
 
 #define VAR_DEBUG_IF(cond, fmt, ...)	\
     if (!(DEBUG(VAR) && (cond)))	\
@@ -3480,9 +3480,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	if (!ValidShortVarname(startc, start)) {
 	    (*pp)++;
 	    *out_val = var_Error;
-	    /* XXX: It's a mixture between VPE_PARSE_MSG and VPE_PARSE_SILENT;
-	     * In lint mode, an error message is printed. */
-	    return VPE_PARSE_SILENT;
+	    return VPE_PARSE_MSG;
 	}
 
 	name[0] = startc;
