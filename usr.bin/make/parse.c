@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.296 2020/09/13 06:05:56 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.297 2020/09/13 09:25:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.296 2020/09/13 06:05:56 rillig Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.297 2020/09/13 09:25:52 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.296 2020/09/13 06:05:56 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.297 2020/09/13 09:25:52 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2873,25 +2873,12 @@ ParseFinishLine(void)
 }
 
 
-/*-
- *---------------------------------------------------------------------
- * Parse_File --
- *	Parse a file into its component parts, incorporating it into the
- *	current dependency graph. This is the main function and controls
- *	almost every other function in this module
+/* Parse a top-level makefile into its component parts, incorporating them
+ * into the global dependency graph.
  *
  * Input:
- *	name		the name of the file being read
- *	fd		Open file to makefile to parse
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	closes fd.
- *	Loads. Nodes are added to the list of all targets, nodes and links
- *	are added to the dependency graph. etc. etc. etc.
- *---------------------------------------------------------------------
+ *	name		The name of the file being read
+ *	fd		The open file to parse; will be closed at the end
  */
 void
 Parse_File(const char *name, int fd)
