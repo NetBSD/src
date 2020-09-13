@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.22 2020/09/05 13:55:08 rillig Exp $	*/
+/*	$NetBSD: hash.h,v 1.23 2020/09/13 15:27:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -106,13 +106,13 @@ typedef struct Hash_Search {
     Hash_Entry 	*entry;		/* Next entry to check in current bucket. */
 } Hash_Search;
 
-static inline void * MAKE_ATTR_UNUSED
+static inline MAKE_ATTR_UNUSED void *
 Hash_GetValue(Hash_Entry *h)
 {
     return h->value;
 }
 
-static inline void MAKE_ATTR_UNUSED
+static inline MAKE_ATTR_UNUSED void
 Hash_SetValue(Hash_Entry *h, void *datum)
 {
     h->value = datum;
