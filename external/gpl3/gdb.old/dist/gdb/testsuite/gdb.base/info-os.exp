@@ -1,4 +1,4 @@
-# Copyright 2011-2017 Free Software Foundation, Inc.
+# Copyright 2011-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ if [gdb_skip_xml_test] then {
 }
 
 # Compile test program.
-if { [prepare_for_testing "failed to prepare" $testfile $srcfile {debug additional_flags=-lpthread}] } {
+if { [prepare_for_testing "failed to prepare" $testfile $srcfile {debug pthreads}] } {
     fail "cannot compile test program"
     return -1
 }
@@ -39,13 +39,17 @@ if ![runto_main] then {
 }
 
 # Get PID of test program.
-set inferior_pid -1
+set inferior_pid ""
 set test "get inferior process ID"
-gdb_test_multiple "call getpid()" $test {
+gdb_test_multiple "call (int) getpid()" $test {
     -re ".* = ($decimal).*$gdb_prompt $" {
 	set inferior_pid $expect_out(1,string)
 	pass $test
     }
+}
+if {$inferior_pid == ""} {
+    untested "failed to get pid"
+    return
 }
 
 gdb_breakpoint ${srcfile}:[gdb_get_line_number "Set breakpoint here"]
@@ -171,6 +175,9 @@ expect_multiline "info os semaphores" "$semkey +$semid +666 +1 .*" "get semaphor
 #                               key   msqid   perm  num used bytes  num messages  last msgsnd() command  last msgrcv() command  user  group  creator user  creator group  last msgsnd() time  last msgrcv() time  last msgctl() time
 expect_multiline "info os msg" "$msgkey +$msqid +666 .*" "get message queues"
 
+gdb_test "info os unknown_entry" [multi_line \
+	"warning: Empty data returned by target.  Wrong osdata type\\\?" \
+	"Can not fetch data now."]
 
 # The SysV IPC primitives linger on after the creating process is killed
 # unless they are destroyed explicitly, so allow the test program to tidy

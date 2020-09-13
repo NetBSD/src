@@ -1,6 +1,6 @@
 /* Common target dependent code for GDB on ARM systems.
 
-   Copyright (C) 1988-2017 Free Software Foundation, Inc.
+   Copyright (C) 1988-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "common-defs.h"
-#include "common-regcache.h"
+#include "common/common-defs.h"
+#include "common/common-regcache.h"
 #include "arm.h"
 
 /* See arm.h.  */
@@ -153,7 +153,8 @@ arm_instruction_changes_pc (uint32_t this_instr)
 	       modify PC.  */
 	    return 0;
 	  }
-	/* Data processing instruction.  Fall through.  */
+	/* Data processing instruction.  */
+	/* Fall through.  */
 
       case 0x1:
 	if (bits (this_instr, 12, 15) == 15)

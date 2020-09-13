@@ -1,6 +1,6 @@
 /* XML target description support for GDB.
 
-   Copyright (C) 2006-2017 Free Software Foundation, Inc.
+   Copyright (C) 2006-2019 Free Software Foundation, Inc.
 
    Contributed by CodeSourcery.
 
@@ -26,6 +26,8 @@
 #include "xml-tdesc.h"
 #include "osabi.h"
 #include "filenames.h"
+#include <unordered_map>
+#include <string>
 
 /* Maximum sizes.
    This is just to catch obviously wrong values.  */
@@ -64,15 +66,7 @@ tdesc_parse_xml (const char *document, xml_fetch_another fetcher,
    then we will create unnecessary duplicate gdbarches.  See
    gdbarch_list_lookup_by_info.  */
 
-struct tdesc_xml_cache
-{
-  const char *xml_document;
-  struct target_desc *tdesc;
-};
-typedef struct tdesc_xml_cache tdesc_xml_cache_s;
-DEF_VEC_O(tdesc_xml_cache_s);
-
-static VEC(tdesc_xml_cache_s) *xml_cache;
+static std::unordered_map<std::string, target_desc_up> xml_cache;
 
 /* Callback data for target description parsing.  */
 
@@ -89,7 +83,7 @@ struct tdesc_parsing_data
   int next_regnum;
 
   /* The struct or union we are currently parsing, or last parsed.  */
-  struct tdesc_type *current_type;
+  tdesc_type_with_fields *current_type;
 
   /* The byte size of the current struct/flags type, if specified.  Zero
      if not specified.  Flags values must specify a size.  */
@@ -150,9 +144,10 @@ tdesc_end_compatible (struct gdb_xml_parser *parser,
 static void
 tdesc_start_target (struct gdb_xml_parser *parser,
 		    const struct gdb_xml_element *element,
-		    void *user_data, VEC(gdb_xml_value_s) *attributes)
+		    void *user_data, std::vector<gdb_xml_value> &attributes)
 {
-  char *version = (char *) xml_find_attribute (attributes, "version")->value;
+  char *version
+    = (char *) xml_find_attribute (attributes, "version")->value.get ();
 
   if (strcmp (version, "1.0") != 0)
     gdb_xml_error (parser,
@@ -165,10 +160,10 @@ tdesc_start_target (struct gdb_xml_parser *parser,
 static void
 tdesc_start_feature (struct gdb_xml_parser *parser,
 		     const struct gdb_xml_element *element,
-		     void *user_data, VEC(gdb_xml_value_s) *attributes)
+		     void *user_data, std::vector<gdb_xml_value> &attributes)
 {
   struct tdesc_parsing_data *data = (struct tdesc_parsing_data *) user_data;
-  char *name = (char *) xml_find_attribute (attributes, "name")->value;
+  char *name = (char *) xml_find_attribute (attributes, "name")->value.get ();
 
   data->current_feature = tdesc_create_feature (data->tdesc, name);
 }
@@ -179,37 +174,36 @@ tdesc_start_feature (struct gdb_xml_parser *parser,
 static void
 tdesc_start_reg (struct gdb_xml_parser *parser,
 		 const struct gdb_xml_element *element,
-		 void *user_data, VEC(gdb_xml_value_s) *attributes)
+		 void *user_data, std::vector<gdb_xml_value> &attributes)
 {
   struct tdesc_parsing_data *data = (struct tdesc_parsing_data *) user_data;
-  struct gdb_xml_value *attrs = VEC_address (gdb_xml_value_s, attributes);
-  int ix = 0, length;
+  int ix = 0;
   char *name, *group;
   const char *type;
   int bitsize, regnum, save_restore;
 
-  length = VEC_length (gdb_xml_value_s, attributes);
+  int length = attributes.size ();
 
-  name = (char *) attrs[ix++].value;
-  bitsize = * (ULONGEST *) attrs[ix++].value;
+  name = (char *) attributes[ix++].value.get ();
+  bitsize = * (ULONGEST *) attributes[ix++].value.get ();
 
-  if (ix < length && strcmp (attrs[ix].name, "regnum") == 0)
-    regnum = * (ULONGEST *) attrs[ix++].value;
+  if (ix < length && strcmp (attributes[ix].name, "regnum") == 0)
+    regnum = * (ULONGEST *) attributes[ix++].value.get ();
   else
     regnum = data->next_regnum;
 
-  if (ix < length && strcmp (attrs[ix].name, "type") == 0)
-    type = (char *) attrs[ix++].value;
+  if (ix < length && strcmp (attributes[ix].name, "type") == 0)
+    type = (char *) attributes[ix++].value.get ();
   else
     type = "int";
 
-  if (ix < length && strcmp (attrs[ix].name, "group") == 0)
-    group = (char *) attrs[ix++].value;
+  if (ix < length && strcmp (attributes[ix].name, "group") == 0)
+    group = (char *) attributes[ix++].value.get ();
   else
     group = NULL;
 
-  if (ix < length && strcmp (attrs[ix].name, "save-restore") == 0)
-    save_restore = * (ULONGEST *) attrs[ix++].value;
+  if (ix < length && strcmp (attributes[ix].name, "save-restore") == 0)
+    save_restore = * (ULONGEST *) attributes[ix++].value.get ();
   else
     save_restore = 1;
 
@@ -231,10 +225,10 @@ tdesc_start_reg (struct gdb_xml_parser *parser,
 static void
 tdesc_start_union (struct gdb_xml_parser *parser,
 		   const struct gdb_xml_element *element,
-		   void *user_data, VEC(gdb_xml_value_s) *attributes)
+		   void *user_data, std::vector<gdb_xml_value> &attributes)
 {
   struct tdesc_parsing_data *data = (struct tdesc_parsing_data *) user_data;
-  char *id = (char *) xml_find_attribute (attributes, "id")->value;
+  char *id = (char *) xml_find_attribute (attributes, "id")->value.get ();
 
   data->current_type = tdesc_create_union (data->current_feature, id);
   data->current_type_size = 0;
@@ -246,21 +240,21 @@ tdesc_start_union (struct gdb_xml_parser *parser,
 static void
 tdesc_start_struct (struct gdb_xml_parser *parser,
 		   const struct gdb_xml_element *element,
-		   void *user_data, VEC(gdb_xml_value_s) *attributes)
+		   void *user_data, std::vector<gdb_xml_value> &attributes)
 {
   struct tdesc_parsing_data *data = (struct tdesc_parsing_data *) user_data;
-  char *id = (char *) xml_find_attribute (attributes, "id")->value;
-  struct tdesc_type *type;
+  char *id = (char *) xml_find_attribute (attributes, "id")->value.get ();
   struct gdb_xml_value *attr;
 
-  type = tdesc_create_struct (data->current_feature, id);
-  data->current_type = type;
+  tdesc_type_with_fields *type_with_fields
+    = tdesc_create_struct (data->current_feature, id);
+  data->current_type = type_with_fields;
   data->current_type_size = 0;
 
   attr = xml_find_attribute (attributes, "size");
   if (attr != NULL)
     {
-      ULONGEST size = * (ULONGEST *) attr->value;
+      ULONGEST size = * (ULONGEST *) attr->value.get ();
 
       if (size > MAX_FIELD_SIZE)
 	{
@@ -268,7 +262,7 @@ tdesc_start_struct (struct gdb_xml_parser *parser,
 			 _("Struct size %s is larger than maximum (%d)"),
 			 pulongest (size), MAX_FIELD_SIZE);
 	}
-      tdesc_set_struct_size (type, size);
+      tdesc_set_struct_size (type_with_fields, size);
       data->current_type_size = size;
     }
 }
@@ -276,13 +270,12 @@ tdesc_start_struct (struct gdb_xml_parser *parser,
 static void
 tdesc_start_flags (struct gdb_xml_parser *parser,
 		   const struct gdb_xml_element *element,
-		   void *user_data, VEC(gdb_xml_value_s) *attributes)
+		   void *user_data, std::vector<gdb_xml_value> &attributes)
 {
   struct tdesc_parsing_data *data = (struct tdesc_parsing_data *) user_data;
-  char *id = (char *) xml_find_attribute (attributes, "id")->value;
+  char *id = (char *) xml_find_attribute (attributes, "id")->value.get ();
   ULONGEST size = * (ULONGEST *)
-    xml_find_attribute (attributes, "size")->value;
-  struct tdesc_type *type;
+    xml_find_attribute (attributes, "size")->value.get ();
 
   if (size > MAX_FIELD_SIZE)
     {
@@ -290,22 +283,20 @@ tdesc_start_flags (struct gdb_xml_parser *parser,
 		     _("Flags size %s is larger than maximum (%d)"),
 		     pulongest (size), MAX_FIELD_SIZE);
     }
-  type = tdesc_create_flags (data->current_feature, id, size);
 
-  data->current_type = type;
+  data->current_type = tdesc_create_flags (data->current_feature, id, size);
   data->current_type_size = size;
 }
 
 static void
 tdesc_start_enum (struct gdb_xml_parser *parser,
 		  const struct gdb_xml_element *element,
-		  void *user_data, VEC(gdb_xml_value_s) *attributes)
+		  void *user_data, std::vector<gdb_xml_value> &attributes)
 {
   struct tdesc_parsing_data *data = (struct tdesc_parsing_data *) user_data;
-  char *id = (char *) xml_find_attribute (attributes, "id")->value;
+  char *id = (char *) xml_find_attribute (attributes, "id")->value.get ();
   int size = * (ULONGEST *)
-    xml_find_attribute (attributes, "size")->value;
-  struct tdesc_type *type;
+    xml_find_attribute (attributes, "size")->value.get ();
 
   if (size > MAX_FIELD_SIZE)
     {
@@ -313,9 +304,8 @@ tdesc_start_enum (struct gdb_xml_parser *parser,
 		     _("Enum size %s is larger than maximum (%d)"),
 		     pulongest (size), MAX_FIELD_SIZE);
     }
-  type = tdesc_create_enum (data->current_feature, id, size);
 
-  data->current_type = type;
+  data->current_type = tdesc_create_enum (data->current_feature, id, size);
   data->current_type_size = 0;
 }
 
@@ -325,7 +315,7 @@ tdesc_start_enum (struct gdb_xml_parser *parser,
 static void
 tdesc_start_field (struct gdb_xml_parser *parser,
 		   const struct gdb_xml_element *element,
-		   void *user_data, VEC(gdb_xml_value_s) *attributes)
+		   void *user_data, std::vector<gdb_xml_value> &attributes)
 {
   struct tdesc_parsing_data *data = (struct tdesc_parsing_data *) user_data;
   struct gdb_xml_value *attr;
@@ -333,12 +323,12 @@ tdesc_start_field (struct gdb_xml_parser *parser,
   char *field_name, *field_type_id;
   int start, end;
 
-  field_name = (char *) xml_find_attribute (attributes, "name")->value;
+  field_name = (char *) xml_find_attribute (attributes, "name")->value.get ();
 
   attr = xml_find_attribute (attributes, "type");
   if (attr != NULL)
     {
-      field_type_id = (char *) attr->value;
+      field_type_id = (char *) attr->value.get ();
       field_type = tdesc_named_type (data->current_feature, field_type_id);
     }
   else
@@ -350,7 +340,7 @@ tdesc_start_field (struct gdb_xml_parser *parser,
   attr = xml_find_attribute (attributes, "start");
   if (attr != NULL)
     {
-      ULONGEST ul_start = * (ULONGEST *) attr->value;
+      ULONGEST ul_start = * (ULONGEST *) attr->value.get ();
 
       if (ul_start > MAX_FIELD_BITSIZE)
 	{
@@ -366,7 +356,7 @@ tdesc_start_field (struct gdb_xml_parser *parser,
   attr = xml_find_attribute (attributes, "end");
   if (attr != NULL)
     {
-      ULONGEST ul_end = * (ULONGEST *) attr->value;
+      ULONGEST ul_end = * (ULONGEST *) attr->value.get ();
 
       if (ul_end > MAX_FIELD_BITSIZE)
 	{
@@ -381,7 +371,7 @@ tdesc_start_field (struct gdb_xml_parser *parser,
 
   if (start != -1)
     {
-      struct tdesc_type *t = data->current_type;
+      tdesc_type_with_fields *t = data->current_type;
 
       /* Older versions of gdb can't handle elided end values.
          Stick with that for now, to help ensure backward compatibility.
@@ -454,7 +444,7 @@ tdesc_start_field (struct gdb_xml_parser *parser,
 static void
 tdesc_start_enum_value (struct gdb_xml_parser *parser,
 			const struct gdb_xml_element *element,
-			void *user_data, VEC(gdb_xml_value_s) *attributes)
+			void *user_data, std::vector<gdb_xml_value> &attributes)
 {
   struct tdesc_parsing_data *data = (struct tdesc_parsing_data *) user_data;
   struct gdb_xml_value *attr;
@@ -462,10 +452,10 @@ tdesc_start_enum_value (struct gdb_xml_parser *parser,
   ULONGEST ul_value;
   int value;
 
-  field_name = (char *) xml_find_attribute (attributes, "name")->value;
+  field_name = (char *) xml_find_attribute (attributes, "name")->value.get ();
 
   attr = xml_find_attribute (attributes, "value");
-  ul_value = * (ULONGEST *) attr->value;
+  ul_value = * (ULONGEST *) attr->value.get ();
   if (ul_value > INT_MAX)
     {
       gdb_xml_error (parser,
@@ -483,17 +473,16 @@ tdesc_start_enum_value (struct gdb_xml_parser *parser,
 static void
 tdesc_start_vector (struct gdb_xml_parser *parser,
 		    const struct gdb_xml_element *element,
-		    void *user_data, VEC(gdb_xml_value_s) *attributes)
+		    void *user_data, std::vector<gdb_xml_value> &attributes)
 {
   struct tdesc_parsing_data *data = (struct tdesc_parsing_data *) user_data;
-  struct gdb_xml_value *attrs = VEC_address (gdb_xml_value_s, attributes);
   struct tdesc_type *field_type;
   char *id, *field_type_id;
   ULONGEST count;
 
-  id = (char *) attrs[0].value;
-  field_type_id = (char *) attrs[1].value;
-  count = * (ULONGEST *) attrs[2].value;
+  id = (char *) attributes[0].value.get ();
+  field_type_id = (char *) attributes[1].value.get ();
+  count = * (ULONGEST *) attributes[2].value.get ();
 
   if (count > MAX_VECTOR_SIZE)
     {
@@ -631,55 +620,39 @@ static struct target_desc *
 tdesc_parse_xml (const char *document, xml_fetch_another fetcher,
 		 void *fetcher_baton)
 {
-  struct cleanup *back_to, *result_cleanup;
   struct tdesc_parsing_data data;
-  struct tdesc_xml_cache *cache;
-  char *expanded_text;
-  int ix;
 
   /* Expand all XInclude directives.  */
-  expanded_text = xml_process_xincludes (_("target description"),
-					 document, fetcher, fetcher_baton, 0);
-  if (expanded_text == NULL)
+  std::string expanded_text;
+
+  if (!xml_process_xincludes (expanded_text,
+			      _("target description"),
+			      document, fetcher, fetcher_baton, 0))
     {
       warning (_("Could not load XML target description; ignoring"));
       return NULL;
     }
 
   /* Check for an exact match in the list of descriptions we have
-     previously parsed.  strcmp is a slightly inefficient way to
-     do this; an SHA-1 checksum would work as well.  */
-  for (ix = 0; VEC_iterate (tdesc_xml_cache_s, xml_cache, ix, cache); ix++)
-    if (strcmp (cache->xml_document, expanded_text) == 0)
-      {
-       xfree (expanded_text);
-       return cache->tdesc;
-      }
-
-  back_to = make_cleanup (null_cleanup, NULL);
+     previously parsed.  */
+  const auto it = xml_cache.find (expanded_text);
+  if (it != xml_cache.end ())
+    return it->second.get ();
 
   memset (&data, 0, sizeof (struct tdesc_parsing_data));
-  data.tdesc = allocate_target_description ();
-  result_cleanup = make_cleanup_free_target_description (data.tdesc);
-  make_cleanup (xfree, expanded_text);
+  target_desc_up description (allocate_target_description ());
+  data.tdesc = description.get ();
 
   if (gdb_xml_parse_quick (_("target description"), "gdb-target.dtd",
-			   tdesc_elements, expanded_text, &data) == 0)
+			   tdesc_elements, expanded_text.c_str (), &data) == 0)
     {
       /* Parsed successfully.  */
-      struct tdesc_xml_cache new_cache;
-
-      new_cache.xml_document = expanded_text;
-      new_cache.tdesc = data.tdesc;
-      VEC_safe_push (tdesc_xml_cache_s, xml_cache, &new_cache);
-      discard_cleanups (result_cleanup);
-      do_cleanups (back_to);
+      xml_cache.emplace (std::move (expanded_text), std::move (description));
       return data.tdesc;
     }
   else
     {
       warning (_("Could not load XML target description; ignoring"));
-      do_cleanups (back_to);
       return NULL;
     }
 }
@@ -692,24 +665,16 @@ tdesc_parse_xml (const char *document, xml_fetch_another fetcher,
 const struct target_desc *
 file_read_description_xml (const char *filename)
 {
-  struct target_desc *tdesc;
-  char *tdesc_str;
-  struct cleanup *back_to;
-
-  tdesc_str = xml_fetch_content_from_file (filename, NULL);
-  if (tdesc_str == NULL)
+  gdb::optional<gdb::char_vector> tdesc_str
+    = xml_fetch_content_from_file (filename, NULL);
+  if (!tdesc_str)
     {
       warning (_("Could not open \"%s\""), filename);
       return NULL;
     }
 
-  back_to = make_cleanup (xfree, tdesc_str);
-
-  tdesc = tdesc_parse_xml (tdesc_str, xml_fetch_content_from_file,
-			   (void *) ldirname (filename).c_str ());
-  do_cleanups (back_to);
-
-  return tdesc;
+  return tdesc_parse_xml (tdesc_str->data (), xml_fetch_content_from_file,
+			  (void *) ldirname (filename).c_str ());
 }
 
 /* Read a string representation of available features from the target,
@@ -719,7 +684,7 @@ file_read_description_xml (const char *filename)
    is "target.xml".  Other calls may be performed for the DTD or
    for <xi:include>.  */
 
-static char *
+static gdb::optional<gdb::char_vector>
 fetch_available_features_from_target (const char *name, void *baton_)
 {
   struct target_ops *ops = (struct target_ops *) baton_;
@@ -738,28 +703,21 @@ fetch_available_features_from_target (const char *name, void *baton_)
 const struct target_desc *
 target_read_description_xml (struct target_ops *ops)
 {
-  struct target_desc *tdesc;
-  char *tdesc_str;
-  struct cleanup *back_to;
-
-  tdesc_str = fetch_available_features_from_target ("target.xml", ops);
-  if (tdesc_str == NULL)
+  gdb::optional<gdb::char_vector> tdesc_str
+    = fetch_available_features_from_target ("target.xml", ops);
+  if (!tdesc_str)
     return NULL;
 
-  back_to = make_cleanup (xfree, tdesc_str);
-  tdesc = tdesc_parse_xml (tdesc_str,
-			   fetch_available_features_from_target,
-			   ops);
-  do_cleanups (back_to);
-
-  return tdesc;
+  return tdesc_parse_xml (tdesc_str->data (),
+			  fetch_available_features_from_target,
+			  ops);
 }
 
 /* Fetches an XML target description using OPS,  processing
    includes, but not parsing it.  Used to dump whole tdesc
    as a single XML file.  */
 
-char *
+gdb::optional<std::string>
 target_fetch_description_xml (struct target_ops *ops)
 {
 #if !defined(HAVE_LIBEXPAT)
@@ -772,28 +730,34 @@ target_fetch_description_xml (struct target_ops *ops)
 		 "disabled at compile time"));
     }
 
-  return NULL;
+  return {};
 #else
-  struct target_desc *tdesc;
-  char *tdesc_str;
-  char *expanded_text;
-  struct cleanup *back_to;
+  gdb::optional<gdb::char_vector>
+    tdesc_str = fetch_available_features_from_target ("target.xml", ops);
+  if (!tdesc_str)
+    return {};
 
-  tdesc_str = fetch_available_features_from_target ("target.xml", ops);
-  if (tdesc_str == NULL)
-    return NULL;
-
-  back_to = make_cleanup (xfree, tdesc_str);
-  expanded_text = xml_process_xincludes (_("target description"),
-					 tdesc_str,
-					 fetch_available_features_from_target, ops, 0);
-  do_cleanups (back_to);
-  if (expanded_text == NULL)
+  std::string output;
+  if (!xml_process_xincludes (output,
+			      _("target description"),
+			      tdesc_str->data (),
+			      fetch_available_features_from_target, ops, 0))
     {
       warning (_("Could not load XML target description; ignoring"));
-      return NULL;
+      return {};
     }
-
-  return expanded_text;
+  return output;
 #endif
+}
+
+/* See xml-tdesc.h.  */
+
+const struct target_desc *
+string_read_description_xml (const char *xml)
+{
+  return tdesc_parse_xml (xml, [] (const char *href, void *baton)
+    {
+      error (_("xincludes are unsupported with this method"));
+      return gdb::optional<gdb::char_vector> ();
+    }, nullptr);
 }

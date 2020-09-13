@@ -1,4 +1,4 @@
-# Copyright 2002-2017 Free Software Foundation, Inc.
+# Copyright 2002-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ proc check_mi_thread_command_set {} {
     "check_mi_thread_command_set: -thread-select"
 
   mi_gdb_test "-thread-select 123456789" \
-    {&.*\^error,msg="Thread ID 123456789 not known\."} \
+    {\^error,msg="Thread ID 123456789 not known\."} \
     "check_mi_thread_command_set: -thread-select 123456789"
 
   foreach thread $thread_list {

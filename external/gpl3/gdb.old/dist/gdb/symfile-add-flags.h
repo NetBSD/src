@@ -1,6 +1,6 @@
 /* Definition of symfile add flags.
 
-   Copyright (C) 1990-2017 Free Software Foundation, Inc.
+   Copyright (C) 1990-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,7 +26,7 @@
    symbol_file_add, etc.  Defined in a separate file to break circular
    header dependencies.  */
 
-enum symfile_add_flag
+enum symfile_add_flag : unsigned
   {
     /* Be chatty about what you are doing.  */
     SYMFILE_VERBOSE = 1 << 1,
@@ -40,8 +40,11 @@ enum symfile_add_flag
 
     /* Do not immediately read symbols for this file.  By default,
        symbols are read when the objfile is created.  */
-    SYMFILE_NO_READ = 1 << 4
-  };
+    SYMFILE_NO_READ = 1 << 4,
+
+    /* The new objfile should be marked OBJF_NOT_FILENAME.  */
+    SYMFILE_NOT_FILENAME = 1 << 5,
+ };
 
 DEF_ENUM_FLAGS_TYPE (enum symfile_add_flag, symfile_add_flags);
 

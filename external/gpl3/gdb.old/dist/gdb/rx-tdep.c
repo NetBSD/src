@@ -1,6 +1,6 @@
 /* Target-dependent code for the Renesas RX for GDB, the GNU debugger.
 
-   Copyright (C) 2008-2017 Free Software Foundation, Inc.
+   Copyright (C) 2008-2019 Free Software Foundation, Inc.
 
    Contributed by Red Hat, Inc.
 
@@ -159,7 +159,7 @@ rx_psw_type (struct gdbarch *gdbarch)
 
   if (tdep->rx_psw_type == NULL)
     {
-      tdep->rx_psw_type = arch_flags_type (gdbarch, "rx_psw_type", 4);
+      tdep->rx_psw_type = arch_flags_type (gdbarch, "rx_psw_type", 32);
       append_flags_type_flag (tdep->rx_psw_type, 0, "C");
       append_flags_type_flag (tdep->rx_psw_type, 1, "Z");
       append_flags_type_flag (tdep->rx_psw_type, 2, "S");
@@ -184,7 +184,7 @@ rx_fpsw_type (struct gdbarch *gdbarch)
 
   if (tdep->rx_fpsw_type == NULL)
     {
-      tdep->rx_fpsw_type = arch_flags_type (gdbarch, "rx_fpsw_type", 4);
+      tdep->rx_fpsw_type = arch_flags_type (gdbarch, "rx_fpsw_type", 32);
       append_flags_type_flag (tdep->rx_fpsw_type, 0, "RM0");
       append_flags_type_flag (tdep->rx_fpsw_type, 1, "RM1");
       append_flags_type_flag (tdep->rx_fpsw_type, 2, "CV");
@@ -214,8 +214,6 @@ rx_fpsw_type (struct gdbarch *gdbarch)
 static struct type *
 rx_register_type (struct gdbarch *gdbarch, int reg_nr)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-
   if (reg_nr == RX_PC_REGNUM)
     return builtin_type (gdbarch)->builtin_func_ptr;
   else if (reg_nr == RX_PSW_REGNUM || reg_nr == RX_BPSW_REGNUM)
@@ -230,7 +228,7 @@ rx_register_type (struct gdbarch *gdbarch, int reg_nr)
 
 
 /* Function for finding saved registers in a 'struct pv_area'; this
-   function is passed to pv_area_scan.
+   function is passed to pv_area::scan.
 
    If VALUE is a saved register, ADDR says it was saved at a constant
    offset from the frame base, and SIZE indicates that the whole
@@ -287,8 +285,6 @@ rx_analyze_prologue (CORE_ADDR start_pc, CORE_ADDR limit_pc,
   CORE_ADDR pc, next_pc;
   int rn;
   pv_t reg[RX_NUM_REGS];
-  struct pv_area *stack;
-  struct cleanup *back_to;
   CORE_ADDR after_last_frame_setup_insn = start_pc;
 
   memset (result, 0, sizeof (*result));
@@ -301,8 +297,7 @@ rx_analyze_prologue (CORE_ADDR start_pc, CORE_ADDR limit_pc,
       result->reg_offset[rn] = 1;
     }
 
-  stack = make_pv_area (RX_SP_REGNUM, gdbarch_addr_bit (target_gdbarch ()));
-  back_to = make_cleanup_free_pv_area (stack);
+  pv_area stack (RX_SP_REGNUM, gdbarch_addr_bit (target_gdbarch ()));
 
   if (frame_type == RX_FRAME_TYPE_FAST_INTERRUPT)
     {
@@ -318,13 +313,13 @@ rx_analyze_prologue (CORE_ADDR start_pc, CORE_ADDR limit_pc,
       if (frame_type == RX_FRAME_TYPE_EXCEPTION)
 	{
 	  reg[RX_SP_REGNUM] = pv_add_constant (reg[RX_SP_REGNUM], -4);
-	  pv_area_store (stack, reg[RX_SP_REGNUM], 4, reg[RX_PSW_REGNUM]);
+	  stack.store (reg[RX_SP_REGNUM], 4, reg[RX_PSW_REGNUM]);
 	}
 
       /* The call instruction (or an exception/interrupt) has saved the return
           address on the stack.  */
       reg[RX_SP_REGNUM] = pv_add_constant (reg[RX_SP_REGNUM], -4);
-      pv_area_store (stack, reg[RX_SP_REGNUM], 4, reg[RX_PC_REGNUM]);
+      stack.store (reg[RX_SP_REGNUM], 4, reg[RX_PC_REGNUM]);
 
     }
 
@@ -353,7 +348,7 @@ rx_analyze_prologue (CORE_ADDR start_pc, CORE_ADDR limit_pc,
 	  for (r = r2; r >= r1; r--)
 	    {
 	      reg[RX_SP_REGNUM] = pv_add_constant (reg[RX_SP_REGNUM], -4);
-	      pv_area_store (stack, reg[RX_SP_REGNUM], 4, reg[r]);
+	      stack.store (reg[RX_SP_REGNUM], 4, reg[r]);
 	    }
 	  after_last_frame_setup_insn = next_pc;
 	}
@@ -380,7 +375,7 @@ rx_analyze_prologue (CORE_ADDR start_pc, CORE_ADDR limit_pc,
 
 	  rsrc = opc.op[1].reg;
 	  reg[RX_SP_REGNUM] = pv_add_constant (reg[RX_SP_REGNUM], -4);
-	  pv_area_store (stack, reg[RX_SP_REGNUM], 4, reg[rsrc]);
+	  stack.store (reg[RX_SP_REGNUM], 4, reg[rsrc]);
 	  after_last_frame_setup_insn = next_pc;
 	}
       else if (opc.id == RXO_add	/* add #const, rsrc, rdst */
@@ -456,11 +451,9 @@ rx_analyze_prologue (CORE_ADDR start_pc, CORE_ADDR limit_pc,
     }
 
   /* Record where all the registers were saved.  */
-  pv_area_scan (stack, check_for_saved, (void *) result);
+  stack.scan (check_for_saved, (void *) result);
 
   result->prologue_end = after_last_frame_setup_insn;
-
-  do_cleanups (back_to);
 }
 
 
@@ -791,7 +784,8 @@ rx_dummy_id (struct gdbarch *gdbarch, struct frame_info *this_frame)
 static CORE_ADDR
 rx_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		    struct regcache *regcache, CORE_ADDR bp_addr, int nargs,
-		    struct value **args, CORE_ADDR sp, int struct_return,
+		    struct value **args, CORE_ADDR sp,
+		    function_call_return_method return_method,
 		    CORE_ADDR struct_addr)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -837,7 +831,7 @@ rx_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	sp = align_down (sp - sp_off, 4);
       sp_off = 0;
 
-      if (struct_return)
+      if (return_method == return_method_struct)
 	{
 	  struct type *return_type = TYPE_TARGET_TYPE (func_type);
 
@@ -861,7 +855,8 @@ rx_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	  struct type *arg_type = check_typedef (value_type (arg));
 	  ULONGEST arg_size = TYPE_LENGTH (arg_type);
 
-	  if (i == 0 && struct_addr != 0 && !struct_return
+	  if (i == 0 && struct_addr != 0
+	      && return_method != return_method_struct
 	      && TYPE_CODE (arg_type) == TYPE_CODE_PTR
 	      && extract_unsigned_integer (arg_bits, 4,
 					   byte_order) == struct_addr)
@@ -1117,8 +1112,6 @@ rx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_sw_breakpoint_from_kind (gdbarch, rx_breakpoint::bp_from_kind);
   set_gdbarch_skip_prologue (gdbarch, rx_skip_prologue);
 
-  set_gdbarch_print_insn (gdbarch, print_insn_rx);
-
   set_gdbarch_unwind_pc (gdbarch, rx_unwind_pc);
   set_gdbarch_unwind_sp (gdbarch, rx_unwind_sp);
 
@@ -1166,9 +1159,6 @@ rx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   return gdbarch;
 }
-
-/* -Wmissing-prototypes */
-extern initialize_file_ftype _initialize_rx_tdep;
 
 /* Register the above initialization routine.  */
 

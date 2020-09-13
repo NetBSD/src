@@ -1,4 +1,4 @@
-#   Copyright 2002-2017 Free Software Foundation, Inc.
+#   Copyright 2002-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -69,7 +69,7 @@ if ![runto_main] then {
 
 gdb_test "break stop" "Breakpoint .*$srcfile.*" 
 
-set stop_msg ".*Breakpoint .* stop \\(\\) at.*$srcfile:.*static void stop \\(\\) {}.*"
+set stop_msg ".*Breakpoint .* stop \\(\\) at.*$srcfile:.*static void stop \\(void\\) {}.*"
 
 gdb_test continue \
 "Continuing\\..*open 1:.*OK$stop_msg" \

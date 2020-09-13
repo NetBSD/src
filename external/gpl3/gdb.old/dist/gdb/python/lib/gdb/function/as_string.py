@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2017 Free Software Foundation, Inc.
+# Copyright (C) 2016-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,16 +19,14 @@ import gdb
 class _AsString(gdb.Function):
     """Return the string representation of a value.
 
-Usage:
-  $_as_string(value)
+Usage: $_as_string (VALUE)
 
 Arguments:
 
-  value: A gdb.Value.
+  VALUE: any value
 
 Returns:
-  The string representation of the value.
-"""
+  The string representation of the value."""
 
     def __init__(self):
         super(_AsString, self).__init__("_as_string")

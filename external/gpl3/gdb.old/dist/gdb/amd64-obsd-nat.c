@@ -1,6 +1,6 @@
 /* Native-dependent code for OpenBSD/amd64.
 
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,6 +23,7 @@
 #include "target.h"
 
 #include "amd64-tdep.h"
+#include "amd64-bsd-nat.h"
 #include "amd64-nat.h"
 #include "obsd-nat.h"
 
@@ -105,29 +106,27 @@ amd64obsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
     {
       /* Yes, we have a frame that matches cpu_switch().  */
       pcb->pcb_rsp += sizeof (struct switchframe);
-      regcache_raw_supply (regcache, 12, &sf.sf_r12);
-      regcache_raw_supply (regcache, 13, &sf.sf_r13);
-      regcache_raw_supply (regcache, 14, &sf.sf_r14);
-      regcache_raw_supply (regcache, 15, &sf.sf_r15);
-      regcache_raw_supply (regcache, AMD64_RBX_REGNUM, &sf.sf_rbx);
-      regcache_raw_supply (regcache, AMD64_RIP_REGNUM, &sf.sf_rip);
+      regcache->raw_supply (12, &sf.sf_r12);
+      regcache->raw_supply (13, &sf.sf_r13);
+      regcache->raw_supply (14, &sf.sf_r14);
+      regcache->raw_supply (15, &sf.sf_r15);
+      regcache->raw_supply (AMD64_RBX_REGNUM, &sf.sf_rbx);
+      regcache->raw_supply (AMD64_RIP_REGNUM, &sf.sf_rip);
     }
   else
     {
       /* No, the pcb must have been last updated by savectx().  */
       pcb->pcb_rsp += 8;
-      regcache_raw_supply (regcache, AMD64_RIP_REGNUM, &sf);
+      regcache->raw_supply (AMD64_RIP_REGNUM, &sf);
     }
 
-  regcache_raw_supply (regcache, AMD64_RSP_REGNUM, &pcb->pcb_rsp);
-  regcache_raw_supply (regcache, AMD64_RBP_REGNUM, &pcb->pcb_rbp);
+  regcache->raw_supply (AMD64_RSP_REGNUM, &pcb->pcb_rsp);
+  regcache->raw_supply (AMD64_RBP_REGNUM, &pcb->pcb_rbp);
 
   return 1;
 }
-
 
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-void _initialize_amd64obsd_nat (void);
+static amd64_bsd_nat_target<obsd_nat_target> the_amd64_obsd_nat_target;
 
 void
 _initialize_amd64obsd_nat (void)
@@ -136,8 +135,7 @@ _initialize_amd64obsd_nat (void)
   amd64_native_gregset32_num_regs = ARRAY_SIZE (amd64obsd32_r_reg_offset);
   amd64_native_gregset64_reg_offset = amd64obsd_r_reg_offset;
 
-  /* Add some extra features to the common *BSD/amd64 target.  */
-  obsd_add_target (amd64bsd_target ());
+  add_inf_child_target (&the_amd64_obsd_nat_target);
 
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (amd64obsd_supply_pcb);
