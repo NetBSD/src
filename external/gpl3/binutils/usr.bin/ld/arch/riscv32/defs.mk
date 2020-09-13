@@ -4,9 +4,9 @@
 #
 G_DEFS=-DHAVE_CONFIG_H
 G_EMUL=elf32lriscv
-G_EMULATION_OFILES=eelf32lriscv.o eelf64lriscv.o
+G_EMULATION_OFILES=eelf32lriscv.o eelf32lriscv_ilp32f.o eelf32lriscv_ilp32.o eelf64lriscv.o eelf64lriscv_lp64f.o eelf64lriscv_lp64.o
 G_INCLUDES=
-G_OFILES=ldgram.o ldlex-wrapper.o lexsup.o ldlang.o  mri.o ldctor.o ldmain.o plugin.o  ldwrite.o ldexp.o  ldemul.o ldver.o ldmisc.o  ldfile.o ldcref.o eelf32lriscv.o eelf64lriscv.o ldelf.o ldelfgen.o  ldbuildid.o
+G_OFILES=ldgram.o ldlex-wrapper.o lexsup.o ldlang.o  mri.o ldctor.o ldmain.o plugin.o  ldwrite.o ldexp.o  ldemul.o ldver.o ldmisc.o  ldfile.o ldcref.o eelf32lriscv.o eelf32lriscv_ilp32f.o eelf32lriscv_ilp32.o eelf64lriscv.o eelf64lriscv_lp64f.o eelf64lriscv_lp64.o ldelf.o ldelfgen.o  ldbuildid.o
 G_STRINGIFY=astring.sed
 G_TEXINFOS=ld.texi
 G_target_alias=riscv32--netbsd
