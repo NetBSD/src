@@ -10,11 +10,9 @@ static void
 initialize_tdesc_arc_v2 (void)
 {
   struct target_desc *result = allocate_target_description ();
-  struct tdesc_feature *feature;
-  struct tdesc_type *field_type;
-  struct tdesc_type *type;
-
   set_tdesc_architecture (result, bfd_scan_arch ("ARCv2"));
+
+  struct tdesc_feature *feature;
 
   feature = tdesc_create_feature (result, "org.gnu.gdb.arc.core.v2");
   tdesc_create_reg (feature, "r0", 0, 1, NULL, 32, "int");
@@ -47,30 +45,31 @@ initialize_tdesc_arc_v2 (void)
   tdesc_create_reg (feature, "fp", 27, 1, NULL, 32, "data_ptr");
   tdesc_create_reg (feature, "sp", 28, 1, NULL, 32, "data_ptr");
   tdesc_create_reg (feature, "ilink", 29, 1, NULL, 32, "code_ptr");
-  tdesc_create_reg (feature, "r30", 30, 1, "", 32, "int");
+  tdesc_create_reg (feature, "r30", 30, 1, NULL, 32, "int");
   tdesc_create_reg (feature, "blink", 31, 1, NULL, 32, "code_ptr");
   tdesc_create_reg (feature, "lp_count", 32, 1, NULL, 32, "uint32");
-  tdesc_create_reg (feature, "pcl", 33, 1, "", 32, "code_ptr");
+  tdesc_create_reg (feature, "pcl", 33, 1, NULL, 32, "code_ptr");
 
   feature = tdesc_create_feature (result, "org.gnu.gdb.arc.aux-minimal");
-  type = tdesc_create_flags (feature, "status32_type", 4);
-  tdesc_add_flag (type, 0, "H");
-  tdesc_add_bitfield (type, "E", 1, 4);
-  tdesc_add_flag (type, 5, "AE");
-  tdesc_add_flag (type, 6, "DE");
-  tdesc_add_flag (type, 7, "U");
-  tdesc_add_flag (type, 8, "V");
-  tdesc_add_flag (type, 9, "C");
-  tdesc_add_flag (type, 10, "N");
-  tdesc_add_flag (type, 11, "Z");
-  tdesc_add_flag (type, 12, "L");
-  tdesc_add_flag (type, 13, "DZ");
-  tdesc_add_flag (type, 14, "SC");
-  tdesc_add_flag (type, 15, "ES");
-  tdesc_add_bitfield (type, "RB", 16, 18);
-  tdesc_add_flag (type, 19, "AD");
-  tdesc_add_flag (type, 20, "US");
-  tdesc_add_flag (type, 31, "IE");
+  tdesc_type_with_fields *type_with_fields;
+  type_with_fields = tdesc_create_flags (feature, "status32_type", 4);
+  tdesc_add_flag (type_with_fields, 0, "H");
+  tdesc_add_bitfield (type_with_fields, "E", 1, 4);
+  tdesc_add_flag (type_with_fields, 5, "AE");
+  tdesc_add_flag (type_with_fields, 6, "DE");
+  tdesc_add_flag (type_with_fields, 7, "U");
+  tdesc_add_flag (type_with_fields, 8, "V");
+  tdesc_add_flag (type_with_fields, 9, "C");
+  tdesc_add_flag (type_with_fields, 10, "N");
+  tdesc_add_flag (type_with_fields, 11, "Z");
+  tdesc_add_flag (type_with_fields, 12, "L");
+  tdesc_add_flag (type_with_fields, 13, "DZ");
+  tdesc_add_flag (type_with_fields, 14, "SC");
+  tdesc_add_flag (type_with_fields, 15, "ES");
+  tdesc_add_bitfield (type_with_fields, "RB", 16, 18);
+  tdesc_add_flag (type_with_fields, 19, "AD");
+  tdesc_add_flag (type_with_fields, 20, "US");
+  tdesc_add_flag (type_with_fields, 31, "IE");
 
   tdesc_create_reg (feature, "pc", 34, 1, NULL, 32, "code_ptr");
   tdesc_create_reg (feature, "status32", 35, 1, NULL, 32, "status32_type");

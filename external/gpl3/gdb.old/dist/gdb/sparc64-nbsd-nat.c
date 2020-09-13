@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD/sparc64.
 
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,6 +20,8 @@
 #include "defs.h"
 #include "gdbcore.h"
 #include "regcache.h"
+#include "inferior.h"
+#include "inf-ptrace.h"
 #include "target.h"
 
 #include "nbsd-nat.h"
@@ -27,17 +29,6 @@
 #include "sparc-nbsd-tdep.h"
 #include "sparc-nat.h"
 
-#include <machine/reg.h>
-
-#ifndef HAVE_GREGSET_T
-typedef struct reg gregset_t;
-#endif
-
-#ifndef HAVE_FPREGSET_T
-typedef struct fpreg fpregset_t;
-#endif
-#include "gregset.h"
- 
 /* NetBSD is different from the other OSes that support both SPARC and
    UltraSPARC in that the result of ptrace(2) depends on whether the
    traced process is 32-bit or 64-bit.  */
@@ -47,7 +38,7 @@ sparc64nbsd_supply_gregset (const struct sparc_gregmap *gregmap,
 			    struct regcache *regcache,
 			    int regnum, const void *gregs)
 {
-  int sparc32 = (gdbarch_ptr_bit (get_regcache_arch (regcache)) == 32);
+  int sparc32 = (gdbarch_ptr_bit (regcache->arch ()) == 32);
 
   if (sparc32)
     sparc32_supply_gregset (&sparc32nbsd_gregmap, regcache, regnum, gregs);
@@ -60,7 +51,7 @@ sparc64nbsd_collect_gregset (const struct sparc_gregmap *gregmap,
 			     const struct regcache *regcache,
 			     int regnum, void *gregs)
 {
-  int sparc32 = (gdbarch_ptr_bit (get_regcache_arch (regcache)) == 32);
+  int sparc32 = (gdbarch_ptr_bit (regcache->arch ()) == 32);
 
   if (sparc32)
     sparc32_collect_gregset (&sparc32nbsd_gregmap, regcache, regnum, gregs);
@@ -73,7 +64,7 @@ sparc64nbsd_supply_fpregset (const struct sparc_fpregmap *fpregmap,
 			     struct regcache *regcache,
 			     int regnum, const void *fpregs)
 {
-  int sparc32 = (gdbarch_ptr_bit (get_regcache_arch (regcache)) == 32);
+  int sparc32 = (gdbarch_ptr_bit (regcache->arch ()) == 32);
 
   if (sparc32)
     sparc32_supply_fpregset (&sparc32_bsd_fpregmap, regcache, regnum, fpregs);
@@ -86,7 +77,7 @@ sparc64nbsd_collect_fpregset (const struct sparc_fpregmap *fpregmap,
 			      const struct regcache *regcache,
 			      int regnum, void *fpregs)
 {
-  int sparc32 = (gdbarch_ptr_bit (get_regcache_arch (regcache)) == 32);
+  int sparc32 = (gdbarch_ptr_bit (regcache->arch ()) == 32);
 
   if (sparc32)
     sparc32_collect_fpregset (&sparc32_bsd_fpregmap, regcache, regnum, fpregs);
@@ -119,8 +110,6 @@ sparc64nbsd_gregset_supplies_p (struct gdbarch *gdbarch, int regnum)
   return 0;
 }
 
-/* Determine whether `fpregset_t' contains register REGNUM.  */
-
 static int
 sparc64nbsd_fpregset_supplies_p (struct gdbarch *gdbarch, int regnum)
 {
@@ -139,29 +128,7 @@ sparc64nbsd_fpregset_supplies_p (struct gdbarch *gdbarch, int regnum)
   return 0;
 }
 
-void
-supply_gregset (struct regcache *regcache, const gregset_t *gregs)
-{
-  sparc64nbsd_supply_gregset (sparc_gregmap, regcache, -1, gregs);
-}
 
-void
-supply_fpregset (struct regcache *regcache, const fpregset_t *fpregs)
-{
-  sparc64nbsd_supply_fpregset (sparc_fpregmap, regcache, -1, fpregs);
-}
-
-void
-fill_gregset (const struct regcache *regcache, gregset_t *gregs, int regnum)
-{
-  sparc64nbsd_collect_gregset (sparc_gregmap, regcache, regnum, gregs);
-}
-
-void
-fill_fpregset (const struct regcache *regcache, fpregset_t *fpregs, int regnum)
-{
-  sparc64nbsd_collect_fpregset (sparc_fpregmap, regcache, regnum, fpregs);
-}
 /* Support for debugging kernel virtual memory images.  */
 
 #include <sys/types.h>
@@ -191,26 +158,23 @@ sparc64nbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
       read_memory(pcb->pcb_sp + BIAS - 176 + (11 * 8), 
 		  (gdb_byte *)&pcb->pcb_pc, sizeof pcb->pcb_pc);
 
-  regcache_raw_supply (regcache, SPARC_SP_REGNUM, &pcb->pcb_sp);
-  regcache_raw_supply (regcache, SPARC64_PC_REGNUM, &pcb->pcb_pc);
+  regcache->raw_supply (SPARC_SP_REGNUM, &pcb->pcb_sp);
+  regcache->raw_supply (SPARC64_PC_REGNUM, &pcb->pcb_pc);
 
   state = pcb->pcb_pstate << 8 | pcb->pcb_cwp;
-  regcache_raw_supply (regcache, SPARC64_STATE_REGNUM, &state);
+  regcache->raw_supply (SPARC64_STATE_REGNUM, &state);
 
   sparc_supply_rwindow (regcache, pcb->pcb_sp, -1);
 
   return 1;
 }
 
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-void _initialize_sparc64nbsd_nat (void);
+/* We've got nothing to add to the generic SPARC target.  */
+static sparc_target<nbsd_nat_target> the_sparc64_nbsd_nat_target;
 
 void
 _initialize_sparc64nbsd_nat (void)
 {
-  struct target_ops *t;
-
   sparc_supply_gregset = sparc64nbsd_supply_gregset;
   sparc_collect_gregset = sparc64nbsd_collect_gregset;
   sparc_supply_fpregset = sparc64nbsd_supply_fpregset;
@@ -218,9 +182,7 @@ _initialize_sparc64nbsd_nat (void)
   sparc_gregset_supplies_p = sparc64nbsd_gregset_supplies_p;
   sparc_fpregset_supplies_p = sparc64nbsd_fpregset_supplies_p;
 
-  /* Add some extra features to the generic SPARC target.  */
-  t = sparc_target ();
-  nbsd_nat_add_target (t);
+  add_inf_child_target (&the_sparc64_nbsd_nat_target);
 
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (sparc64nbsd_supply_pcb);

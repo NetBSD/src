@@ -1,5 +1,5 @@
 dnl Autoconf configure script for GDB, the GNU debugger.
-dnl Copyright (C) 1995-2017 Free Software Foundation, Inc.
+dnl Copyright (C) 1995-2019 Free Software Foundation, Inc.
 dnl
 dnl This file is part of GDB.
 dnl
@@ -37,16 +37,32 @@ fi
 
 # The options we'll try to enable.
 build_warnings="-Wall -Wpointer-arith \
--Wno-unused -Wunused-value -Wunused-function \
+-Wno-unused -Wunused-value -Wunused-variable -Wunused-function \
 -Wno-switch -Wno-char-subscripts \
 -Wempty-body -Wunused-but-set-parameter -Wunused-but-set-variable \
--Wno-sign-compare -Wno-narrowing"
+-Wno-sign-compare -Wno-error=maybe-uninitialized \
+-Wno-mismatched-tags \
+-Wno-error=deprecated-register \
+-Wsuggest-override \
+-Wimplicit-fallthrough=3 \
+-Wduplicated-cond \
+-Wshadow=local"
 
-# Enable -Wno-format by default when using gcc on mingw since many
-# GCC versions complain about %I64.
 case "${host}" in
-  *-*-mingw32*) build_warnings="$build_warnings -Wno-format" ;;
-  *) build_warnings="$build_warnings -Wformat-nonliteral" ;;
+  *-*-mingw32*)
+    # Enable -Wno-format by default when using gcc on mingw since many
+    # GCC versions complain about %I64.
+    build_warnings="$build_warnings -Wno-format" ;;
+  *-*-solaris*)
+    # Solaris 11.4 <python2.7/ceval.h> uses #pragma no_inline that GCC
+    # doesn't understand.
+    build_warnings="$build_warnings -Wno-unknown-pragmas"
+    # Solaris 11 <unistd.h> marks vfork deprecated.
+    build_warnings="$build_warnings -Wno-deprecated-declarations" ;;
+  *)
+    # Note that gcc requires -Wformat for -Wformat-nonliteral to work,
+    # but there's a special case for this below.
+    build_warnings="$build_warnings -Wformat-nonliteral" ;;
 esac
 
 AC_ARG_ENABLE(build-warnings,
@@ -94,6 +110,12 @@ then
 	case $w in
 	-Wno-*)
 		wtest=`echo $w | sed 's/-Wno-/-W/g'` ;;
+        -Wformat-nonliteral)
+		# gcc requires -Wformat before -Wformat-nonliteral
+		# will work, so stick them together.
+		w="-Wformat $w"
+		wtest="$w"
+		;;
 	*)
 		wtest=$w ;;
 	esac
@@ -103,10 +125,23 @@ then
 	*)
 	    # Check whether GCC accepts it.
 	    saved_CFLAGS="$CFLAGS"
-	    CFLAGS="$CFLAGS $wtest"
+	    CFLAGS="$CFLAGS -Werror $wtest"
 	    saved_CXXFLAGS="$CXXFLAGS"
-	    CXXFLAGS="$CXXFLAGS $wtest"
-	    AC_TRY_COMPILE([],[],WARN_CFLAGS="${WARN_CFLAGS} $w",)
+	    CXXFLAGS="$CXXFLAGS -Werror $wtest"
+	    if test "x$w" = "x-Wunused-variable"; then
+	      # Check for https://gcc.gnu.org/bugzilla/show_bug.cgi?id=38958,
+	      # fixed in GCC 4.9.  This test is derived from the gdb
+	      # source code that triggered this bug in GCC.
+	      AC_TRY_COMPILE(
+	        [struct scoped_restore_base {};
+                 struct scoped_restore_tmpl : public scoped_restore_base {
+		   ~scoped_restore_tmpl() {}
+		 };],
+		[const scoped_restore_base &b = scoped_restore_tmpl();],
+		WARN_CFLAGS="${WARN_CFLAGS} $w",)
+	    else
+	      AC_TRY_COMPILE([],[],WARN_CFLAGS="${WARN_CFLAGS} $w",)
+	    fi
 	    CFLAGS="$saved_CFLAGS"
 	    CXXFLAGS="$saved_CXXFLAGS"
 	esac

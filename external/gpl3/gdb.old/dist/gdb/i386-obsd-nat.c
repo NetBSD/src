@@ -1,6 +1,6 @@
 /* Native-dependent code for OpenBSD/i386.
 
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -34,7 +34,7 @@
 static int
 i386obsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   struct switchframe sf;
 
@@ -67,10 +67,10 @@ i386obsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
       /* Yes, we have a frame that matches cpu_switch().  */
       read_memory (pcb->pcb_esp, (gdb_byte *) &sf, sizeof sf);
       pcb->pcb_esp += sizeof (struct switchframe);
-      regcache_raw_supply (regcache, I386_EDI_REGNUM, &sf.sf_edi);
-      regcache_raw_supply (regcache, I386_ESI_REGNUM, &sf.sf_esi);
-      regcache_raw_supply (regcache, I386_EBX_REGNUM, &sf.sf_ebx);
-      regcache_raw_supply (regcache, I386_EIP_REGNUM, &sf.sf_eip);
+      regcache->raw_supply (I386_EDI_REGNUM, &sf.sf_edi);
+      regcache->raw_supply (I386_ESI_REGNUM, &sf.sf_esi);
+      regcache->raw_supply (I386_EBX_REGNUM, &sf.sf_ebx);
+      regcache->raw_supply (I386_EIP_REGNUM, &sf.sf_eip);
     }
   else
 #endif
@@ -79,24 +79,21 @@ i386obsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
       pcb->pcb_esp = pcb->pcb_ebp;
       pcb->pcb_ebp = read_memory_integer(pcb->pcb_esp, 4, byte_order);
       sf.sf_eip = read_memory_integer(pcb->pcb_esp + 4, 4, byte_order);
-      regcache_raw_supply (regcache, I386_EIP_REGNUM, &sf.sf_eip);
+      regcache->raw_supply (I386_EIP_REGNUM, &sf.sf_eip);
     }
 
-  regcache_raw_supply (regcache, I386_EBP_REGNUM, &pcb->pcb_ebp);
-  regcache_raw_supply (regcache, I386_ESP_REGNUM, &pcb->pcb_esp);
+  regcache->raw_supply (I386_EBP_REGNUM, &pcb->pcb_ebp);
+  regcache->raw_supply (I386_ESP_REGNUM, &pcb->pcb_esp);
 
   return 1;
 }
-
 
-/* Prevent warning from -Wmissing-prototypes.  */
-void _initialize_i386obsd_nat (void);
+static i386_bsd_nat_target<obsd_nat_target> the_i386_obsd_nat_target;
 
 void
 _initialize_i386obsd_nat (void)
 {
-  /* Add some extra features to the common *BSD/i386 target.  */
-  obsd_add_target (i386bsd_target ());
+  add_inf_child_target (&i386_obsd_nat_target);
 
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (i386obsd_supply_pcb);

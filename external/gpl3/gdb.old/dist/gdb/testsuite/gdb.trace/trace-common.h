@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2011-2017 Free Software Foundation, Inc.
+   Copyright 2011-2019 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -24,6 +24,9 @@
 /* FAST_TRACEPOINT_LABEL expands to an assembly instruction large enough to fit
    a fast tracepoint jump.  The parameter is the label where we'll set
    tracepoints and breakpoints.  */
+
+/* Please keep gdb_trace_common_supports_arch in lib/trace-support.exp
+   in sync when adding new targets to this file.  */
 
 #if (defined __x86_64__ || defined __i386__)
 
