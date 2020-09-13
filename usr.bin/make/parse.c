@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.304 2020/09/13 18:27:39 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.305 2020/09/13 21:12:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.304 2020/09/13 18:27:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.305 2020/09/13 21:12:08 rillig Exp $");
 
 /* types and constants */
 
@@ -601,14 +601,14 @@ ParseFindKeyword(const char *str)
 }
 
 static void
-PrintLocation(FILE *f, const char *cfname, size_t clineno)
+PrintLocation(FILE *f, const char *filename, size_t lineno)
 {
 	char dirbuf[MAXPATHLEN+1];
-	const char *dir, *fname;
-	char *dir_freeIt, *fname_freeIt;
+	const char *dir, *base;
+	char *dir_freeIt, *base_freeIt;
 
-	if (*cfname == '/' || strcmp(cfname, "(stdin)") == 0) {
-		(void)fprintf(f, "\"%s\" line %zu: ", cfname, clineno);
+	if (*filename == '/' || strcmp(filename, "(stdin)") == 0) {
+		(void)fprintf(f, "\"%s\" line %zu: ", filename, lineno);
 		return;
 	}
 
@@ -621,14 +621,14 @@ PrintLocation(FILE *f, const char *cfname, size_t clineno)
 	if (*dir != '/')
 		dir = realpath(dir, dirbuf);
 
-	fname = Var_Value(".PARSEFILE", VAR_GLOBAL, &fname_freeIt);
-	if (fname == NULL) {
-		const char *slash = strrchr(cfname, '/');
-		fname = slash != NULL ? slash + 1 : cfname;
+	base = Var_Value(".PARSEFILE", VAR_GLOBAL, &base_freeIt);
+	if (base == NULL) {
+		const char *slash = strrchr(filename, '/');
+		base = slash != NULL ? slash + 1 : filename;
 	}
 
-	(void)fprintf(f, "\"%s/%s\" line %zu: ", dir, fname, clineno);
-	bmake_free(fname_freeIt);
+	(void)fprintf(f, "\"%s/%s\" line %zu: ", dir, base, lineno);
+	bmake_free(base_freeIt);
 	bmake_free(dir_freeIt);
 }
 
