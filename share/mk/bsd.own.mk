@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1211 2020/09/13 02:37:32 kamil Exp $
+#	$NetBSD: bsd.own.mk,v 1.1212 2020/09/13 20:59:18 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -92,6 +92,36 @@ MKGCCCMDS?=	no
 .endif
 
 #
+# What binutils is used?
+#
+.if ${MACHINE_CPU} == "sh3" || ${MACHINE_CPU} == "riscv" || \
+    ${MACHINE_CPU} == "m68k"
+HAVE_BINUTILS?=	231
+.endif
+HAVE_BINUTILS?=	234
+
+.if ${HAVE_BINUTILS} == 234
+EXTERNAL_BINUTILS_SUBDIR=	binutils
+.elif ${HAVE_BINUTILS} == 231
+EXTERNAL_BINUTILS_SUBDIR=	binutils.old
+.else
+EXTERNAL_BINUTILS_SUBDIR=	/does/not/exist
+.endif
+
+#
+# What GDB is used?
+#
+HAVE_GDB?=	830
+
+.if ${HAVE_GDB} == 830
+EXTERNAL_GDB_SUBDIR=		gdb
+.elif ${HAVE_GDB} == 801
+EXTERNAL_GDB_SUBDIR=		gdb.old
+.else
+EXTERNAL_GDB_SUBDIR=		/does/not/exist
+.endif
+
+#
 # What OpenSSL is used?
 # 
 HAVE_OPENSSL?=  11
@@ -169,41 +199,6 @@ HAVE_SSP?=	yes
 .if !defined(NOFORT) && ${USE_FORT:Uno} != "no"
 USE_SSP?=	yes
 .endif
-.endif
-
-#
-# What GDB is used?
-#
-HAVE_GDB?=	830
-
-.if ${HAVE_GDB} == 830
-EXTERNAL_GDB_SUBDIR=		gdb
-.elif ${HAVE_GDB} == 801
-EXTERNAL_GDB_SUBDIR=		gdb.old
-.else
-EXTERNAL_GDB_SUBDIR=		/does/not/exist
-.endif
-
-#
-# What binutils is used?
-#
-.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "powerpc64" || ${MACHINE_ARCH} == "powerpc" || \
-    ${MACHINE_CPU} == "aarch64" || ${MACHINE_CPU} == "arm" || \
-    ${MACHINE_ARCH} == "hppa" || ${MACHINE_ARCH} == "sparc64" || \
-    ${MACHINE} == "sun2" || ${MACHINE} == "alpha" || \
-    ${MACHINE_CPU} == "mips" || ${MACHINE} == "sparc"
-HAVE_BINUTILS?=	234
-.else
-HAVE_BINUTILS?=	231
-.endif
-
-.if ${HAVE_BINUTILS} == 234
-EXTERNAL_BINUTILS_SUBDIR=	binutils
-.elif ${HAVE_BINUTILS} == 231
-EXTERNAL_BINUTILS_SUBDIR=	binutils.old
-.else
-EXTERNAL_BINUTILS_SUBDIR=	/does/not/exist
 .endif
 
 #
