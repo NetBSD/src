@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.57 2020/09/13 17:17:31 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.58 2020/09/13 17:18:13 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.57 2020/09/13 17:17:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.58 2020/09/13 17:18:13 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.57 2020/09/13 17:17:31 riastradh Exp $")
 #include <sys/mbuf.h>
 #include <sys/module.h>
 #include <sys/mutex.h>
+#include <sys/once.h>
 #include <sys/percpu.h>
 #include <sys/pserialize.h>
 #include <sys/psref.h>
@@ -807,12 +808,24 @@ wgattach(int count)
 static void
 wginit(void)
 {
-	int error __diagused;
 
 	wg_psref_class = psref_class_create("wg", IPL_SOFTNET);
 
 	mutex_init(&wg_softcs.lock, MUTEX_DEFAULT, IPL_NONE);
 	LIST_INIT(&wg_softcs.list);
+
+	if_clone_attach(&wg_cloner);
+}
+
+/*
+ * XXX Kludge: This should just happen in wginit, but workqueue_create
+ * cannot be run until after CPUs have been detected, and wginit runs
+ * before configure.
+ */
+static int
+wginitqueues(void)
+{
+	int error __diagused;
 
 	wg_pktq = pktq_create(IFQ_MAXLEN, wgintr, NULL);
 	KASSERT(wg_pktq != NULL);
@@ -821,7 +834,17 @@ wginit(void)
 	    PRI_NONE, IPL_SOFTNET, WQ_MPSAFE|WQ_PERCPU);
 	KASSERT(error == 0);
 
-	if_clone_attach(&wg_cloner);
+	return 0;
+}
+
+static void
+wg_guarantee_initialized(void)
+{
+	static ONCE_DECL(init);
+	int error __diagused;
+
+	error = RUN_ONCE(&init, wginitqueues);
+	KASSERT(error == 0);
 }
 
 static int
@@ -3529,6 +3552,8 @@ wg_clone_create(struct if_clone *ifc, int unit)
 {
 	struct wg_softc *wg;
 	int error;
+
+	wg_guarantee_initialized();
 
 	wg = kmem_zalloc(sizeof(*wg), KM_SLEEP);
 
