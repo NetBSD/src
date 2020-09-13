@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.36.2.14 2020/09/13 11:54:10 martin Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.36.2.15 2020/09/13 11:56:44 martin Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.36.2.14 2020/09/13 11:54:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.36.2.15 2020/09/13 11:56:44 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -717,6 +717,33 @@ static uint64_t vmx_xcr0_mask __read_mostly;
 #define MSRBM_NPAGES	1
 #define MSRBM_SIZE	(MSRBM_NPAGES * PAGE_SIZE)
 
+#define CR4_VALID \
+	(CR4_VME |			\
+	 CR4_PVI |			\
+	 CR4_TSD |			\
+	 CR4_DE |			\
+	 CR4_PSE |			\
+	 CR4_PAE |			\
+	 CR4_MCE |			\
+	 CR4_PGE |			\
+	 CR4_PCE |			\
+	 CR4_OSFXSR |			\
+	 CR4_OSXMMEXCPT |		\
+	 CR4_UMIP |			\
+	 /* CR4_LA57 excluded */	\
+	 /* CR4_VMXE excluded */	\
+	 /* CR4_SMXE excluded */	\
+	 CR4_FSGSBASE |			\
+	 CR4_PCIDE |			\
+	 CR4_OSXSAVE |			\
+	 CR4_SMEP |			\
+	 CR4_SMAP			\
+	 /* CR4_PKE excluded */		\
+	 /* CR4_CET excluded */		\
+	 /* CR4_PKS excluded */)
+#define CR4_INVALID \
+	(0xFFFFFFFFFFFFFFFFULL & ~CR4_VALID)
+
 #define EFER_TLB_FLUSH \
 	(EFER_NXE|EFER_LMA|EFER_LME)
 #define CR0_TLB_FLUSH \
@@ -1001,8 +1028,22 @@ vmx_event_waitexit_disable(struct nvmm_cpu *vcpu, bool nmi)
 	vmx_vmwrite(VMCS_PROCBASED_CTLS, ctls1);
 }
 
+static inline bool
+vmx_excp_has_rf(uint8_t vector)
+{
+	switch (vector) {
+	case 1:		/* #DB */
+	case 4:		/* #OF */
+	case 8:		/* #DF */
+	case 18:	/* #MC */
+		return false;
+	default:
+		return true;
+	}
+}
+
 static inline int
-vmx_event_has_error(uint8_t vector)
+vmx_excp_has_error(uint8_t vector)
 {
 	switch (vector) {
 	case 8:		/* #DF */
@@ -1025,9 +1066,9 @@ vmx_vcpu_inject(struct nvmm_cpu *vcpu)
 	struct nvmm_comm_page *comm = vcpu->comm;
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
 	int type = 0, err = 0, ret = EINVAL;
+	uint64_t rflags, info, error;
 	u_int evtype;
 	uint8_t vector;
-	uint64_t info, error;
 
 	evtype = comm->event.type;
 	vector = comm->event.vector;
@@ -1042,8 +1083,12 @@ vmx_vcpu_inject(struct nvmm_cpu *vcpu)
 			goto out;
 		if (vector == 3 || vector == 0)
 			goto out;
+		if (vmx_excp_has_rf(vector)) {
+			rflags = vmx_vmread(VMCS_GUEST_RFLAGS);
+			vmx_vmwrite(VMCS_GUEST_RFLAGS, rflags | PSL_RF);
+		}
 		type = INTR_TYPE_HW_EXC;
-		err = vmx_event_has_error(vector);
+		err = vmx_excp_has_error(vector);
 		break;
 	case NVMM_VCPU_EVENT_INTR:
 		type = INTR_TYPE_EXT_INT;
@@ -1114,16 +1159,21 @@ vmx_vcpu_event_commit(struct nvmm_cpu *vcpu)
 static inline void
 vmx_inkernel_advance(void)
 {
-	uint64_t rip, inslen, intstate;
+	uint64_t rip, inslen, intstate, rflags;
 
 	/*
 	 * Maybe we should also apply single-stepping and debug exceptions.
 	 * Matters for guest-ring3, because it can execute 'cpuid' under a
 	 * debugger.
 	 */
+
 	inslen = vmx_vmread(VMCS_EXIT_INSTRUCTION_LENGTH);
 	rip = vmx_vmread(VMCS_GUEST_RIP);
 	vmx_vmwrite(VMCS_GUEST_RIP, rip + inslen);
+
+	rflags = vmx_vmread(VMCS_GUEST_RFLAGS);
+	vmx_vmwrite(VMCS_GUEST_RFLAGS, rflags & ~PSL_RF);
+
 	intstate = vmx_vmread(VMCS_GUEST_INTERRUPTIBILITY);
 	vmx_vmwrite(VMCS_GUEST_INTERRUPTIBILITY,
 	    intstate & ~(INT_STATE_STI|INT_STATE_MOVSS));
@@ -1579,10 +1629,16 @@ vmx_inkernel_handle_cr4(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		gpr = cpudata->gprs[gpr];
 	}
 
+	if (gpr & CR4_INVALID) {
+		return -1;
+	}
 	cr4 = gpr | CR4_VMXE;
-
 	if (vmx_check_cr(cr4, vmx_cr4_fixed0, vmx_cr4_fixed1) == -1) {
 		return -1;
+	}
+
+	if ((vmx_vmread(VMCS_GUEST_CR4) ^ cr4) & CR4_TLB_FLUSH) {
+		cpudata->gtlb_want_flush = true;
 	}
 
 	vmx_vmwrite(VMCS_GUEST_CR4, cr4);
@@ -2119,12 +2175,13 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 
 	vmx_vmcs_enter(vcpu);
 
+	vmx_vcpu_state_commit(vcpu);
+	comm->state_cached = 0;
+
 	if (__predict_false(vmx_vcpu_event_commit(vcpu) != 0)) {
 		vmx_vmcs_leave(vcpu);
 		return EINVAL;
 	}
-	vmx_vcpu_state_commit(vcpu);
-	comm->state_cached = 0;
 
 	ci = curcpu();
 	hcpu = cpu_number();
@@ -2506,7 +2563,7 @@ vmx_vcpu_setstate(struct nvmm_cpu *vcpu)
 		cpudata->gcr2 = state->crs[NVMM_X64_CR_CR2];
 		vmx_vmwrite(VMCS_GUEST_CR3, state->crs[NVMM_X64_CR_CR3]); // XXX PDPTE?
 		vmx_vmwrite(VMCS_GUEST_CR4,
-		    state->crs[NVMM_X64_CR_CR4] | CR4_VMXE);
+		    (state->crs[NVMM_X64_CR_CR4] & CR4_VALID) | CR4_VMXE);
 		cpudata->gcr8 = state->crs[NVMM_X64_CR_CR8];
 
 		if (vmx_xcr0_mask != 0) {
@@ -2831,8 +2888,9 @@ vmx_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	vmx_vmwrite(VMCS_CR0_MASK, CR0_NW|CR0_CD|CR0_ET);
 	vmx_vmwrite(VMCS_CR0_SHADOW, CR0_ET);
 
-	/* Force CR4_VMXE to zero. */
-	vmx_vmwrite(VMCS_CR4_MASK, CR4_VMXE);
+	/* Force unsupported CR4 fields to zero. */
+	vmx_vmwrite(VMCS_CR4_MASK, CR4_INVALID);
+	vmx_vmwrite(VMCS_CR4_SHADOW, 0);
 
 	/* Set the Host state for resuming. */
 	vmx_vmwrite(VMCS_HOST_RIP, (uint64_t)&vmx_resume_rip);
