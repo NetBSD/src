@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.82 2020/09/12 14:41:00 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.83 2020/09/13 15:15:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -29,19 +29,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.82 2020/09/12 14:41:00 rillig Exp $";
-#else
-#include <sys/cdefs.h>
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
-#else
-__RCSID("$NetBSD: for.c,v 1.82 2020/09/12 14:41:00 rillig Exp $");
-#endif
-#endif /* not lint */
-#endif
-
 /*-
  * Handling of .for/.endfor loops in a makefile.
  *
@@ -71,6 +58,9 @@ __RCSID("$NetBSD: for.c,v 1.82 2020/09/12 14:41:00 rillig Exp $");
 
 #include    "make.h"
 #include    "strlist.h"
+
+/*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
+MAKE_RCSID("$NetBSD: for.c,v 1.83 2020/09/13 15:15:51 rillig Exp $");
 
 typedef enum {
     FOR_SUB_ESCAPE_CHAR = 0x0001,

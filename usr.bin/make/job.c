@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.231 2020/09/12 15:03:40 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.232 2020/09/13 15:15:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -69,19 +69,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.231 2020/09/12 15:03:40 rillig Exp $";
-#else
-#include <sys/cdefs.h>
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
-#else
-__RCSID("$NetBSD: job.c,v 1.231 2020/09/12 15:03:40 rillig Exp $");
-#endif
-#endif /* not lint */
-#endif
-
 /*-
  * job.c --
  *	handle the creation etc. of our child processes.
@@ -151,6 +138,10 @@ __RCSID("$NetBSD: job.c,v 1.231 2020/09/12 15:03:40 rillig Exp $");
 #include "job.h"
 #include "pathnames.h"
 #include "trace.h"
+
+/*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
+MAKE_RCSID("$NetBSD: job.c,v 1.232 2020/09/13 15:15:51 rillig Exp $");
+
 # define STATIC static
 
 /*

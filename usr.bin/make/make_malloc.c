@@ -1,4 +1,4 @@
-/*	$NetBSD: make_malloc.c,v 1.18 2020/09/02 06:10:44 rillig Exp $	*/
+/*	$NetBSD: make_malloc.c,v 1.19 2020/09/13 15:15:51 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -26,17 +26,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef MAKE_NATIVE
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: make_malloc.c,v 1.18 2020/09/02 06:10:44 rillig Exp $");
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 
 #include "make.h"
+
+MAKE_RCSID("$NetBSD: make_malloc.c,v 1.19 2020/09/13 15:15:51 rillig Exp $");
 
 #ifndef USE_EMALLOC
 static MAKE_ATTR_DEAD void enomem(void);

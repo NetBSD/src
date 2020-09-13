@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.144 2020/09/13 06:36:54 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.145 2020/09/13 15:15:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -69,19 +69,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.144 2020/09/13 06:36:54 rillig Exp $";
-#else
-#include <sys/cdefs.h>
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
-#else
-__RCSID("$NetBSD: compat.c,v 1.144 2020/09/13 06:36:54 rillig Exp $");
-#endif
-#endif /* not lint */
-#endif
-
 /*-
  * compat.c --
  *	The routines in this file implement the full-compatibility
@@ -111,6 +98,8 @@ __RCSID("$NetBSD: compat.c,v 1.144 2020/09/13 06:36:54 rillig Exp $");
 #include    "metachar.h"
 #include    "pathnames.h"
 
+/*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
+MAKE_RCSID("$NetBSD: compat.c,v 1.145 2020/09/13 15:15:51 rillig Exp $");
 
 static GNode	    *curTarg = NULL;
 static GNode	    *ENDNode;
