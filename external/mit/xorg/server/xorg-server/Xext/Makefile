@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2016/08/20 01:03:34 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2020/09/13 23:01:02 mrg Exp $
 
 LIBISPRIVATE=	yes
 LIB=		Xext
@@ -28,7 +28,6 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/xfixes
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/miext/sync
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/composite
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/damageext
-#CPPFLAGS+=	-DHAVE_DIX_CONFIG_H
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/../include ${X11FLAGS.DIX}
 
 .PATH:		${X11SRCDIR.xorg-server}/Xext
