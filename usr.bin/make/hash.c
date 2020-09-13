@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.31 2020/09/05 13:55:08 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.32 2020/09/13 15:15:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -69,19 +69,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: hash.c,v 1.31 2020/09/05 13:55:08 rillig Exp $";
-#else
-#include <sys/cdefs.h>
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)hash.c	8.1 (Berkeley) 6/6/93";
-#else
-__RCSID("$NetBSD: hash.c,v 1.31 2020/09/05 13:55:08 rillig Exp $");
-#endif
-#endif /* not lint */
-#endif
-
 /* hash.c --
  *
  * 	This module contains routines to manipulate a hash table.
@@ -90,6 +77,9 @@ __RCSID("$NetBSD: hash.c,v 1.31 2020/09/05 13:55:08 rillig Exp $");
  * 	information increases.
  */
 #include "make.h"
+
+/*	"@(#)hash.c	8.1 (Berkeley) 6/6/93"	*/
+MAKE_RCSID("$NetBSD: hash.c,v 1.32 2020/09/13 15:15:51 rillig Exp $");
 
 /*
  * Forward references to local procedures that are used before they're

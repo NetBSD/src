@@ -1,4 +1,4 @@
-/*	$NetBSD: metachar.c,v 1.6 2020/08/03 20:43:41 rillig Exp $	*/
+/*	$NetBSD: metachar.c,v 1.7 2020/09/13 15:15:51 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -37,11 +37,10 @@
 #include <sys/cdefs.h>
 #endif
 
-#if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: metachar.c,v 1.6 2020/08/03 20:43:41 rillig Exp $");
-#endif
-
 #include "metachar.h"
+
+MAKE_RCSID("$NetBSD: metachar.c,v 1.7 2020/09/13 15:15:51 rillig Exp $");
+
 /*
  * The following array is used to make a fast determination of which
  * characters are interpreted specially by the shell.  If a command

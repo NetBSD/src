@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.37 2020/08/23 08:21:50 rillig Exp $	*/
+/*	$NetBSD: buf.c,v 1.38 2020/09/13 15:15:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -69,23 +69,13 @@
  * SUCH DAMAGE.
  */
 
-#ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: buf.c,v 1.37 2020/08/23 08:21:50 rillig Exp $";
-#else
-#include <sys/cdefs.h>
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)buf.c	8.1 (Berkeley) 6/6/93";
-#else
-__RCSID("$NetBSD: buf.c,v 1.37 2020/08/23 08:21:50 rillig Exp $");
-#endif
-#endif /* not lint */
-#endif
-
 /* Functions for automatically-expanded null-terminated buffers. */
 
 #include <limits.h>
 #include "make.h"
+
+/*	"@(#)buf.c	8.1 (Berkeley) 6/6/93"	*/
+MAKE_RCSID("$NetBSD: buf.c,v 1.38 2020/09/13 15:15:51 rillig Exp $");
 
 /* Extend the buffer for adding a single byte. */
 void

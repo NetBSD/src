@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.62 2020/09/12 14:41:00 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.63 2020/09/13 15:15:51 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -36,14 +36,7 @@
 
 #include "make.h"
 
-#ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lst.c,v 1.62 2020/09/12 14:41:00 rillig Exp $";
-#else
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: lst.c,v 1.62 2020/09/12 14:41:00 rillig Exp $");
-#endif /* not lint */
-#endif
+MAKE_RCSID("$NetBSD: lst.c,v 1.63 2020/09/13 15:15:51 rillig Exp $");
 
 struct ListNode {
     struct ListNode *prev;	/* previous element in list */

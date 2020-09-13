@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.87 2020/09/12 16:38:19 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.88 2020/09/13 15:15:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -68,19 +68,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.87 2020/09/12 16:38:19 rillig Exp $";
-#else
-#include <sys/cdefs.h>
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
-#else
-__RCSID("$NetBSD: targ.c,v 1.87 2020/09/12 16:38:19 rillig Exp $");
-#endif
-#endif /* not lint */
-#endif
-
 /*-
  * targ.c --
  *	Functions for maintaining the Lst allTargets. Target nodes are
@@ -133,6 +120,9 @@ __RCSID("$NetBSD: targ.c,v 1.87 2020/09/12 16:38:19 rillig Exp $");
 
 #include	  "make.h"
 #include	  "dir.h"
+
+/*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
+MAKE_RCSID("$NetBSD: targ.c,v 1.88 2020/09/13 15:15:51 rillig Exp $");
 
 static Lst        allTargets;	/* the list of all targets found so far */
 #ifdef CLEANUP

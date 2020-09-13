@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.511 2020/09/13 13:50:27 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.512 2020/09/13 15:15:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -68,19 +68,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.511 2020/09/13 13:50:27 rillig Exp $";
-#else
-#include <sys/cdefs.h>
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
-#else
-__RCSID("$NetBSD: var.c,v 1.511 2020/09/13 13:50:27 rillig Exp $");
-#endif
-#endif /* not lint */
-#endif
-
 /*-
  * var.c --
  *	Variable-handling functions
@@ -132,6 +119,9 @@ __RCSID("$NetBSD: var.c,v 1.511 2020/09/13 13:50:27 rillig Exp $");
 #include    "dir.h"
 #include    "job.h"
 #include    "metachar.h"
+
+/*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
+MAKE_RCSID("$NetBSD: var.c,v 1.512 2020/09/13 15:15:51 rillig Exp $");
 
 #define VAR_DEBUG_IF(cond, fmt, ...)	\
     if (!(DEBUG(VAR) && (cond)))	\
