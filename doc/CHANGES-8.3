@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.34 2020/09/03 13:41:42 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.35 2020/09/13 12:17:25 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1038,4 +1038,16 @@ sys/netinet/tcp_input.c				1.419
 	PR 55567: a unidirectional sender could be slowed down to
 	1 byte every 5 or even 60 seconds.
 	[kardel, ticket #1602]
+
+etc/defaults/rc.conf				1.159
+etc/rc.d/motd					1.10,1.11
+share/man/man5/rc.conf.5			1.186,1.187
+
+	Add optional release info in /etc/motd.
+	[kim, ticket #1603]
+
+sys/netinet/tcp_input.c				1.420
+
+	PR/kern 55567: fix the data-only fast path.
+	[kardel, ticket #1604]
 
