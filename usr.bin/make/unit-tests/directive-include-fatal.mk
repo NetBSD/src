@@ -1,4 +1,4 @@
-# $NetBSD: directive-include-fatal.mk,v 1.1 2020/09/13 09:20:23 rillig Exp $
+# $NetBSD: directive-include-fatal.mk,v 1.2 2020/09/13 10:20:11 rillig Exp $
 #
 # Test for the .include directive combined with fatal errors.
 #
@@ -16,6 +16,12 @@
 # Including another file does not reset the global variable "fatals".
 # The exit status will be 1.
 .include "/dev/null"
+
+# Adding another file to be included has no effect either.
+# When the command line is parsed, the additional file is only enqueued
+# in the global "makefiles" variable, but not immediately run through
+# Parse_File.
+.MAKEFLAGS: -f "/dev/null"
 
 all:
 	@:;
