@@ -788,7 +788,8 @@ powerpc-*-lynxos*)	targ_emul=ppclynx
 			;;
 pru*-*-*)		targ_emul=pruelf
 			;;
-riscv32*-*-linux*)	targ_emul=elf32lriscv
+riscv32*-*-linux* | riscv-*-netbsd* | riscv32*-*-netbsd*)
+			targ_emul=elf32lriscv
 			targ_extra_emuls="elf32lriscv_ilp32f elf32lriscv_ilp32 elf64lriscv elf64lriscv_lp64f elf64lriscv_lp64"
 			targ_extra_libpath=$targ_extra_emuls
 			;;
@@ -797,7 +798,8 @@ riscv-*-* | riscv32*-*-*)
 			targ_extra_emuls="elf64lriscv"
 			targ_extra_libpath=$targ_extra_emuls
 			;;
-riscv64*-*-linux*)	targ_emul=elf64lriscv
+riscv64*-*-linux* | riscv64*-*-netbsd*)
+			targ_emul=elf64lriscv
 			targ_extra_emuls="elf64lriscv_lp64f elf64lriscv_lp64 elf32lriscv elf32lriscv_ilp32f elf32lriscv_ilp32"
 			targ_extra_libpath=$targ_extra_emuls
 			;;
