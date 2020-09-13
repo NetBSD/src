@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2351 2020/09/12 12:11:19 roy Exp $
+#	$NetBSD: mi,v 1.2352 2020/09/13 02:37:31 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2174,6 +2174,8 @@
 ./usr/include/gcc-9/sanitizer/asan_interface.h		comp-gcc-include	gcc=9
 ./usr/include/gcc-9/sanitizer/common_interface_defs.h	comp-gcc-include	gcc=9
 ./usr/include/gcc-9/sanitizer/lsan_interface.h		comp-gcc-include	gcc=9
+./usr/include/gcc-9/sanitizer/netbsd_syscall_hooks.h	comp-gcc-include	gcc=9
+./usr/include/gcc-9/sanitizer/tsan_interface.h		comp-gcc-include	gcc=9
 ./usr/include/gcc-9/sanitizer/tsan_interface_atomic.h	comp-gcc-include	gcc=9
 ./usr/include/gcc-9/stdatomic.h				comp-gcc-include	gcc=9
 ./usr/include/gelf.h				comp-c-include
@@ -3945,6 +3947,8 @@
 ./usr/lib/libtpm_unseal_p.a			comp-c-proflib		compatfile,tpm,profile
 ./usr/lib/libtre.a				comp-c-lib		compatfile
 ./usr/lib/libtre_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libtsan.a				comp-c-lib		arch64,cxx,gcc
+./usr/lib/libtsan_p.a				comp-c-proflib		arch64,profile,cxx,gcc
 ./usr/lib/libtspi.a				comp-c-lib		compatfile,tpm
 ./usr/lib/libtspi_p.a				comp-c-proflib		compatfile,tpm,profile
 ./usr/lib/libubsan.a				comp-c-lib		compatfile,cxx,gcc
