@@ -1,4 +1,4 @@
-$NetBSD: README.gcc9,v 1.10 2020/09/13 23:23:00 mrg Exp $
+$NetBSD: README.gcc9,v 1.11 2020/09/13 23:32:04 mrg Exp $
 
 new stuff:
 	cc1objcplus
@@ -48,7 +48,7 @@ earmv7hf	y	y	y	y		y		y	y	y
 earmv7hfeb	y	n	n	y		n		?	?	y
 hppa		y	y	y	y		y		?	?	?
 i386		y	y	y	y		y		y	y	y
-ia64		y	y	y	y		y		y	N/A	n
+ia64		y	y	y	y		y		y	N/A	y
 m68000		y	y	y	y		y		y	?	n
 m68k		y	y	y	y		y		y	y[11]	n
 mipseb		y	y	y	y		y[3]		n	n	n
@@ -63,8 +63,8 @@ sparc		y	y	y	y		y		y	y	n
 sparc64		y	y	y	y		y		n	n	?
 vax		y	n	y	y		n[2]		y	y	?
 x86_64		y	y	y	y		y		y	y	y
-riscv32		y	N/A	y	y		y		N/A	N/A	n	
-riscv64		y	N/A	y	y		y		N/A	N/A	n
+riscv32		y	N/A	y	y		y		N/A	N/A	y	
+riscv64		y	N/A	y	y		y		N/A	N/A	y
 --
 coldfire	?	N/A	?	?		?		N/A	N/A
 ------------	-----	-------	------	----------	------------	----	---
