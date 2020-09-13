@@ -1,4 +1,4 @@
-$NetBSD: README.gcc9,v 1.9 2020/09/13 21:21:04 mrg Exp $
+$NetBSD: README.gcc9,v 1.10 2020/09/13 23:23:00 mrg Exp $
 
 new stuff:
 	cc1objcplus
@@ -64,7 +64,7 @@ sparc64		y	y	y	y		y		n	n	?
 vax		y	n	y	y		n[2]		y	y	?
 x86_64		y	y	y	y		y		y	y	y
 riscv32		y	N/A	y	y		y		N/A	N/A	n	
-riscv64		y	N/A	y	y		n[4]		N/A	N/A	?
+riscv64		y	N/A	y	y		y		N/A	N/A	n
 --
 coldfire	?	N/A	?	?		?		N/A	N/A
 ------------	-----	-------	------	----------	------------	----	---
@@ -78,7 +78,6 @@ architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
      58 |   }
         |   ^
 [3]: consult cpu/platform table for full data
-[4]: triggers weird xorg-server issue; perhaps related to _XSERVER64 not being present
 [6]: /usr/src/sys/compat/common/compat_util.c:116:1: internal compiler error: in rs6000_pltseq_template, at config/rs6000/rs6000.c:21977
 [8]: prep floppies overflow; need to find if they are size limited
 [9]: evbarmv7-eb has dtb sets issues
