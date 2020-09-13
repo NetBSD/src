@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.153 2020/09/12 19:41:20 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.154 2020/09/13 06:15:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.153 2020/09/12 19:41:20 rillig Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.154 2020/09/13 06:15:29 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.153 2020/09/12 19:41:20 rillig Exp $");
+__RCSID("$NetBSD: suff.c,v 1.154 2020/09/13 06:15:29 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -874,12 +874,12 @@ Suff_DoPaths(void)
 	    if (s->flags & SUFF_INCLUDE) {
 		Dir_Concat(inIncludes, s->searchPath);
 	    }
-#endif /* INCLUDES */
+#endif
 #ifdef LIBRARIES
 	    if (s->flags & SUFF_LIBRARY) {
 		Dir_Concat(inLibs, s->searchPath);
 	    }
-#endif /* LIBRARIES */
+#endif
 	    Dir_Concat(s->searchPath, dirSearchPath);
 	} else {
 	    Lst_Destroy(s->searchPath, Dir_Destroy);
