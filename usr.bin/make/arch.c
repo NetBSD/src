@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.112 2020/09/12 18:19:50 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.113 2020/09/13 06:15:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.112 2020/09/12 18:19:50 rillig Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.113 2020/09/13 06:15:29 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.112 2020/09/12 18:19:50 rillig Exp $");
+__RCSID("$NetBSD: arch.c,v 1.113 2020/09/13 06:15:29 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1112,7 +1112,7 @@ Arch_FindLib(GNode *gn, Lst path)
     Var_Set(TARGET, gn->name, gn);
 #else
     Var_Set(TARGET, gn->path == NULL ? gn->name : gn->path, gn);
-#endif /* LIBRARIES */
+#endif
 }
 
 /* Decide if a node with the OP_LIB attribute is out-of-date. Called from
