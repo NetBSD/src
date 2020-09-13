@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.414.2.3 2020/09/03 13:38:29 martin Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.414.2.4 2020/09/13 12:18:16 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.414.2.3 2020/09/03 13:38:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.414.2.4 2020/09/13 12:18:16 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1948,13 +1948,25 @@ after_listen:
 			 * we have enough buffer space to take it.
 			 */
 			tp->rcv_nxt += tlen;
+
+			/*
+			 * Pull rcv_up up to prevent seq wrap relative to
+			 * rcv_nxt.
+			 */
+			tp->rcv_up = tp->rcv_nxt;
+
+			/*
+			 * Pull snd_wl1 up to prevent seq wrap relative to
+			 * th_seq.
+			 */
+			tp->snd_wl1 = th->th_seq;
+
 			tcps = TCP_STAT_GETREF();
 			tcps[TCP_STAT_PREDDAT]++;
 			tcps[TCP_STAT_RCVPACK]++;
 			tcps[TCP_STAT_RCVBYTE] += tlen;
 			TCP_STAT_PUTREF();
 			nd6_hint(tp);
-
 		/*
 		 * Automatic sizing enables the performance of large buffers
 		 * and most of the efficiency of small ones by only allocating
