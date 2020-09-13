@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2017 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,46 +18,31 @@
 #include "defs.h"
 #include "py-event.h"
 #include "infrun.h"
+#include "gdbthread.h"
 
-/* thread events can either be thread specific or process wide.  If gdb is
-   running in non-stop mode then the event is thread specific, otherwise
-   it is process wide.
-   This function returns the currently stopped thread in non-stop mode and
-   Py_None otherwise.  In each case it returns a borrowed reference.  */
+/* See py-event.h.  */
 
-static PyObject *get_event_thread (void)
-  CPYCHECKER_RETURNS_BORROWED_REF;
-
-static PyObject *
-get_event_thread (void)
+gdbpy_ref<>
+py_get_event_thread (ptid_t ptid)
 {
-  PyObject *thread = NULL;
-
   if (non_stop)
-    thread = (PyObject *) find_thread_object (inferior_ptid);
-  else
-    thread = Py_None;
-
-  if (!thread)
     {
+      thread_info *thread = find_thread_ptid (ptid);
+      if (thread != nullptr)
+	return thread_to_thread_object (thread);
       PyErr_SetString (PyExc_RuntimeError, "Could not find event thread");
       return NULL;
     }
-
-  return thread;
+  return gdbpy_ref<>::new_reference (Py_None);
 }
 
-PyObject *
-create_thread_event_object (PyTypeObject *py_type)
+gdbpy_ref<>
+create_thread_event_object (PyTypeObject *py_type, PyObject *thread)
 {
-  PyObject *thread = NULL;
+  gdb_assert (thread != NULL);
 
-  gdbpy_ref<> thread_event_obj (create_event_object (py_type));
+  gdbpy_ref<> thread_event_obj = create_event_object (py_type);
   if (thread_event_obj == NULL)
-    return NULL;
-
-  thread = get_event_thread ();
-  if (!thread)
     return NULL;
 
   if (evpy_add_attribute (thread_event_obj.get (),
@@ -65,11 +50,5 @@ create_thread_event_object (PyTypeObject *py_type)
                           thread) < 0)
     return NULL;
 
-  return thread_event_obj.release ();
+  return thread_event_obj;
 }
-
-GDBPY_NEW_EVENT_TYPE (thread,
-                      "gdb.ThreadEvent",
-                      "ThreadEvent",
-                      "GDB thread event object",
-                      event_object_type);

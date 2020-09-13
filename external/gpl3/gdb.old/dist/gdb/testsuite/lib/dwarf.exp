@@ -1,4 +1,4 @@
-# Copyright 2010-2017 Free Software Foundation, Inc.
+# Copyright 2010-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -960,6 +960,20 @@ namespace eval Dwarf {
 			_op .${_cu_offset_size}byte $label
 		    }
 		    _op .sleb128 [lindex $line 2]
+		}
+
+		DW_OP_GNU_variable_value {
+		    if {[llength $line] != 2} {
+			error "usage: $opcode LABEL"
+		    }
+
+		    # Here label is a section offset.
+		    set label [lindex $line 1]
+		    if { $_cu_version == 2 } {
+			_op .${_cu_addr_size}byte $label
+		    } else {
+			_op .${_cu_offset_size}byte $label
+		    }
 		}
 
 		DW_OP_deref_size {

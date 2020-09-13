@@ -20,6 +20,7 @@ case $host in
  vax-*-netbsdelf*)
     ;;
  *-*-irix* | \
+ *-*-solaris2.[01] | *-*-solaris2.[2-9]* | \
  alpha*-*-osf* | \
  alpha*-*-freebsd* | \
  alpha*-*-kfreebsd*-gnu | \
@@ -62,8 +63,7 @@ alpha*)			gdb_host_cpu=alpha ;;
 arm*)			gdb_host_cpu=arm ;;
 hppa*)			gdb_host_cpu=pa ;;
 i[34567]86*)		gdb_host_cpu=i386 ;;
-m68*|m5407*)		gdb_host_cpu=m68k ;;
-m88*)			gdb_host_cpu=m88k ;;
+m68*)			gdb_host_cpu=m68k ;;
 mips*)			gdb_host_cpu=mips ;;
 powerpc* | rs6000)	gdb_host_cpu=powerpc ;;
 sparcv9 | sparc64)	gdb_host_cpu=sparc ;;
@@ -85,12 +85,14 @@ case "${host}" in
 
 aarch64*-*-linux*)	gdb_host=linux ;;
 aarch64*-*-netbsd*)	gdb_host=nbsd ;;
+aarch64*-*-freebsd*)	gdb_host=fbsd ;;
 
 alpha*-*-linux*)	gdb_host=alpha-linux ;;
 alpha*-*-netbsd* | alpha*-*-knetbsd*-gnu)
 			gdb_host=nbsd ;;
 alpha*-*-openbsd*)	gdb_host=nbsd ;;
 
+arm*-*-freebsd*)	gdb_host=fbsd ;;
 arm*-*-linux*)		gdb_host=linux ;;
 arm*-*-netbsdelf* | arm*-*-knetbsd*-gnu)
 			gdb_host=nbsdelf ;;
@@ -113,9 +115,8 @@ i[34567]86-*-linux*)	gdb_host=linux ;;
 i[34567]86-*-gnu*)	gdb_host=i386gnu ;;
 i[3456]86-*-nto*) 	gdb_host=nto ;;
 i[34567]86-*-openbsd*)	gdb_host=obsd ;;
-i[34567]86-*-solaris2.1[0-9]* | x86_64-*-solaris2.1[0-9]*)
-			gdb_host=sol2-64 ;;
-i[34567]86-*-solaris*)	gdb_host=i386sol2 ;;
+i[34567]86-*-solaris2* | x86_64-*-solaris2*)
+			gdb_host=sol2 ;;
 i[34567]86-*-cygwin*)	gdb_host=cygwin ;;
 
 ia64-*-linux*)		gdb_host=linux ;;
@@ -150,6 +151,9 @@ powerpc64*-*-linux*)	gdb_host=ppc64-linux
                         fi
 			;;
 powerpc*-*-linux*)	gdb_host=linux ;;
+
+riscv*-*-freebsd*)	gdb_host=fbsd ;;
+riscv*-*-linux*)	gdb_host=linux ;;
 
 s390*-*-linux*)		gdb_host=linux ;;
 

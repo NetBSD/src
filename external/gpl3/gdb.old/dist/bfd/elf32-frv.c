@@ -1,5 +1,5 @@
 /* FRV-specific support for 32-bit ELF.
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -25,6 +25,7 @@
 #include "elf/frv.h"
 #include "dwarf2.h"
 #include "hashtab.h"
+#include "libiberty.h"
 
 /* Forward declarations.  */
 
@@ -1046,7 +1047,7 @@ struct frvfdpic_relocs_info
      for symbol+addend.  Should be implied by something like:
      (plt || fdgotoff12 || fdgotofflos || fdgotofflohi
       || ((fd || fdgot12 || fdgotlos || fdgothilo)
-          && (symndx != -1 || FRVFDPIC_FUNCDESC_LOCAL (info, d.h))))  */
+	  && (symndx != -1 || FRVFDPIC_FUNCDESC_LOCAL (info, d.h))))  */
   unsigned privfd:1;
   /* Whether a lazy PLT entry is needed for this symbol+addend.
      Should be implied by something like:
@@ -2299,8 +2300,8 @@ elf32_frv_relocate_gprelhi (struct bfd_link_info *info,
   h = bfd_link_hash_lookup (info->hash, "_gp", FALSE, FALSE, TRUE);
 
   gp = (h->u.def.value
-        + h->u.def.section->output_section->vma
-        + h->u.def.section->output_offset);
+	+ h->u.def.section->output_section->vma
+	+ h->u.def.section->output_offset);
 
   value -= input_section->output_section->vma;
   value -= (gp - input_section->output_section->vma);
@@ -2332,8 +2333,8 @@ elf32_frv_relocate_gprello (struct bfd_link_info *info,
   h = bfd_link_hash_lookup (info->hash, "_gp", FALSE, FALSE, TRUE);
 
   gp = (h->u.def.value
-        + h->u.def.section->output_section->vma
-        + h->u.def.section->output_offset);
+	+ h->u.def.section->output_section->vma
+	+ h->u.def.section->output_offset);
 
   value -= input_section->output_section->vma;
   value -= (gp - input_section->output_section->vma);
@@ -2532,7 +2533,7 @@ frv_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED, const char *r_name)
 
 /* Set the howto pointer for an FRV ELF reloc.  */
 
-static void
+static bfd_boolean
 frv_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED,
 			arelent *cache_ptr,
 			Elf_Internal_Rela *dst)
@@ -2551,19 +2552,23 @@ frv_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED,
       break;
 
     default:
-      if (r_type >= (unsigned int) R_FRV_max)
+      if (r_type >= ARRAY_SIZE (elf32_frv_howto_table))
 	{
 	  /* xgettext:c-format */
-	  _bfd_error_handler (_("%B: invalid FRV reloc number: %d"), abfd, r_type);
-	  r_type = 0;
+	  _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			      abfd, r_type);
+	  bfd_set_error (bfd_error_bad_value);
+	  return FALSE;
 	}
       cache_ptr->howto = & elf32_frv_howto_table [r_type];
       break;
     }
+  return TRUE;
 }
 
 /* Set the howto pointer for an FRV ELF REL reloc.  */
-static void
+
+static bfd_boolean
 frvfdpic_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
 			    arelent *cache_ptr, Elf_Internal_Rela *dst)
 {
@@ -2594,8 +2599,9 @@ frvfdpic_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
 
     default:
       cache_ptr->howto = NULL;
-      break;
+      return FALSE;
     }
+  return TRUE;
 }
 
 /* Perform a single relocation.  By default we use the standard BFD
@@ -3179,8 +3185,8 @@ elf32_frv_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 		bfd_put_32 (input_bfd, insn, contents + rel->r_offset);
 
 		/* #tlsoff(symbol+offset) is just a relaxation
-                    annotation, so there's nothing left to
-                    relocate.  */
+		    annotation, so there's nothing left to
+		    relocate.  */
 		continue;
 	      }
 
@@ -3529,9 +3535,10 @@ elf32_frv_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 		    if (addend)
 		      {
 			info->callbacks->einfo
-			  (_("%H: R_FRV_FUNCDESC references dynamic symbol"
+			  (_("%H: %s references dynamic symbol"
 			     " with nonzero addend\n"),
-			   input_bfd, input_section, rel->r_offset);
+			   input_bfd, input_section, rel->r_offset,
+			   "R_FRV_FUNCDESC");
 			return FALSE;
 		      }
 		    dynindx = h->dynindx;
@@ -3650,9 +3657,10 @@ elf32_frv_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 		if (addend && r_type == R_FRV_FUNCDESC_VALUE)
 		  {
 		    info->callbacks->einfo
-		      (_("%H: R_FRV_FUNCDESC_VALUE"
-			 " references dynamic symbol with nonzero addend\n"),
-		       input_bfd, input_section, rel->r_offset);
+		      (_("%H: %s references dynamic symbol"
+			 " with nonzero addend\n"),
+		       input_bfd, input_section, rel->r_offset,
+		       "R_FRV_FUNCDESC_VALUE");
 		    return FALSE;
 		  }
 		dynindx = h->dynindx;
@@ -5824,7 +5832,7 @@ elf32_frvfdpic_adjust_dynamic_symbol
 
   /* Make sure we know what is going on here.  */
   BFD_ASSERT (dynobj != NULL
-	      && (h->u.weakdef != NULL
+	      && (h->is_weakalias
 		  || (h->def_dynamic
 		      && h->ref_regular
 		      && !h->def_regular)));
@@ -5832,12 +5840,13 @@ elf32_frvfdpic_adjust_dynamic_symbol
   /* If this is a weak symbol, and there is a real definition, the
      processor independent code will have arranged for us to see the
      real definition first, and we can just use the same value.  */
-  if (h->u.weakdef != NULL)
+  if (h->is_weakalias)
     {
-      BFD_ASSERT (h->u.weakdef->root.type == bfd_link_hash_defined
-		  || h->u.weakdef->root.type == bfd_link_hash_defweak);
-      h->root.u.def.section = h->u.weakdef->root.u.def.section;
-      h->root.u.def.value = h->u.weakdef->root.u.def.value;
+      struct elf_link_hash_entry *def = weakdef (h);
+      BFD_ASSERT (def->root.type == bfd_link_hash_defined);
+      h->root.u.def.section = def->root.u.def.section;
+      h->root.u.def.value = def->root.u.def.value;
+      return TRUE;
     }
 
   return TRUE;
@@ -6031,17 +6040,13 @@ elf32_frv_check_relocs (bfd *abfd,
 
       r_symndx = ELF32_R_SYM (rel->r_info);
       if (r_symndx < symtab_hdr->sh_info)
-        h = NULL;
+	h = NULL;
       else
 	{
 	  h = sym_hashes[r_symndx - symtab_hdr->sh_info];
 	  while (h->root.type == bfd_link_hash_indirect
 		 || h->root.type == bfd_link_hash_warning)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
-
-	  /* PR15323, ref flags aren't set for references in the same
-	     object.  */
-	  h->root.non_ir_ref = 1;
 	}
 
       switch (ELF32_R_TYPE (rel->r_info))
@@ -6124,7 +6129,7 @@ elf32_frv_check_relocs (bfd *abfd,
 	}
 
       switch (ELF32_R_TYPE (rel->r_info))
-        {
+	{
 	case R_FRV_LABEL24:
 	  if (IS_FDPIC (abfd))
 	    picrel->call = 1;
@@ -6222,21 +6227,21 @@ elf32_frv_check_relocs (bfd *abfd,
 	  info->flags |= DF_STATIC_TLS;
 	  goto bad_reloc;
 
-        /* This relocation describes the C++ object vtable hierarchy.
-           Reconstruct it for later use during GC.  */
-        case R_FRV_GNU_VTINHERIT:
-          if (!bfd_elf_gc_record_vtinherit (abfd, sec, h, rel->r_offset))
-            return FALSE;
-          break;
+	/* This relocation describes the C++ object vtable hierarchy.
+	   Reconstruct it for later use during GC.  */
+	case R_FRV_GNU_VTINHERIT:
+	  if (!bfd_elf_gc_record_vtinherit (abfd, sec, h, rel->r_offset))
+	    return FALSE;
+	  break;
 
-        /* This relocation describes which C++ vtable entries are actually
-           used.  Record for later use during GC.  */
-        case R_FRV_GNU_VTENTRY:
-          BFD_ASSERT (h != NULL);
-          if (h != NULL
-              && !bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
-            return FALSE;
-          break;
+	/* This relocation describes which C++ vtable entries are actually
+	   used.  Record for later use during GC.  */
+	case R_FRV_GNU_VTENTRY:
+	  BFD_ASSERT (h != NULL);
+	  if (h != NULL
+	      && !bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
+	    return FALSE;
+	  break;
 
 	case R_FRV_LABEL16:
 	case R_FRV_LO16:
@@ -6253,12 +6258,11 @@ elf32_frv_check_relocs (bfd *abfd,
 
 	default:
 	bad_reloc:
-	  info->callbacks->einfo
-	    /* xgettext:c-format */
-	    (_("%B: unsupported relocation type %i\n"),
-	     abfd, ELF32_R_TYPE (rel->r_info));
+	  /* xgettext:c-format */
+	  _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			      abfd, (unsigned int) ELF32_R_TYPE (rel->r_info));
 	  return FALSE;
-        }
+	}
     }
 
   return TRUE;
@@ -6355,7 +6359,7 @@ frv_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 
 #ifdef DEBUG
   _bfd_error_handler
-    ("old_flags = 0x%.8lx, new_flags = 0x%.8lx, init = %s, filename = %s",
+    ("old_flags = 0x%.8x, new_flags = 0x%.8x, init = %s, filename = %s",
      old_flags, new_flags, elf_flags_init (obfd) ? "yes" : "no",
      bfd_get_filename (ibfd));
 #endif
@@ -6372,7 +6376,7 @@ frv_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
   else						/* Possibly incompatible flags.  */
     {
       /* Warn if different # of gprs are used.  Note, 0 means nothing is
-         said about the size of gprs.  */
+	 said about the size of gprs.  */
       new_partial = (new_flags & EF_FRV_GPR_MASK);
       old_partial = (old_flags & EF_FRV_GPR_MASK);
       if (new_partial == old_partial)
@@ -6402,7 +6406,7 @@ frv_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 	}
 
       /* Warn if different # of fprs are used.  Note, 0 means nothing is
-         said about the size of fprs.  */
+	 said about the size of fprs.  */
       new_partial = (new_flags & EF_FRV_FPR_MASK);
       old_partial = (old_flags & EF_FRV_FPR_MASK);
       if (new_partial == old_partial)
@@ -6434,7 +6438,7 @@ frv_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 	}
 
       /* Warn if different dword support was used.  Note, 0 means nothing is
-         said about the dword support.  */
+	 said about the dword support.  */
       new_partial = (new_flags & EF_FRV_DWORD_MASK);
       old_partial = (old_flags & EF_FRV_DWORD_MASK);
       if (new_partial == old_partial)
@@ -6479,14 +6483,14 @@ frv_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 		   | (old_flags & new_flags & EF_FRV_NOPACK));
 
       /* We don't have to do anything if the pic flags are the same, or the new
-         module(s) were compiled with -mlibrary-pic.  */
+	 module(s) were compiled with -mlibrary-pic.  */
       new_partial = (new_flags & EF_FRV_PIC_FLAGS);
       old_partial = (old_flags & EF_FRV_PIC_FLAGS);
       if ((new_partial == old_partial) || ((new_partial & EF_FRV_LIBPIC) != 0))
 	;
 
       /* If the old module(s) were compiled with -mlibrary-pic, copy in the pic
-         flags if any from the new module.  */
+	 flags if any from the new module.  */
       else if ((old_partial & EF_FRV_LIBPIC) != 0)
 	old_flags = (old_flags & ~ EF_FRV_PIC_FLAGS) | new_partial;
 
@@ -6495,7 +6499,7 @@ frv_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 	old_flags |= new_partial;
 
       /* One module was compiled for pic and the other was not, see if we have
-         had any relocations that are not pic-safe.  */
+	 had any relocations that are not pic-safe.  */
       else
 	{
 	  if ((old_flags & EF_FRV_NON_PIC_RELOCS) == 0)
@@ -6507,7 +6511,7 @@ frv_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 	      error = TRUE;
 	      _bfd_error_handler
 		/* xgettext:c-format */
-		(_("%B: compiled with %s and linked with modules"
+		(_("%pB: compiled with %s and linked with modules"
 		   " that use non-pic relocations"),
 		 ibfd, (new_flags & EF_FRV_BIGPIC) ? "-fPIC" : "-fpic");
 #endif
@@ -6561,7 +6565,7 @@ frv_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 	  error = TRUE;
 	  _bfd_error_handler
 	    /* xgettext:c-format */
-	    (_("%B: compiled with %s and linked with modules compiled with %s"),
+	    (_("%pB: compiled with %s and linked with modules compiled with %s"),
 	     ibfd, new_opt, old_opt);
 	}
 
@@ -6574,9 +6578,9 @@ frv_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 	  error = TRUE;
 	  _bfd_error_handler
 	    /* xgettext:c-format */
-	    (_("%B: uses different unknown e_flags (0x%lx) fields"
-	       " than previous modules (0x%lx)"),
-	     ibfd, (long) new_partial, (long) old_partial);
+	    (_("%pB: uses different unknown e_flags (%#x) fields"
+	       " than previous modules (%#x)"),
+	     ibfd, new_partial, old_partial);
 	}
     }
 
@@ -6596,11 +6600,11 @@ frv_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
       error = TRUE;
       if (IS_FDPIC (obfd))
 	_bfd_error_handler
-	  (_("%B: cannot link non-fdpic object file into fdpic executable"),
+	  (_("%pB: cannot link non-fdpic object file into fdpic executable"),
 	   ibfd);
       else
 	_bfd_error_handler
-	  (_("%B: cannot link fdpic object file into non-fdpic executable"),
+	  (_("%pB: cannot link fdpic object file into non-fdpic executable"),
 	   ibfd);
     }
 
@@ -6706,7 +6710,7 @@ elf32_frv_grok_prstatus (bfd *abfd, Elf_Internal_Note *note)
 	return FALSE;
 
       /* The Linux/FRV elf_prstatus struct is 268 bytes long.  The other
-         hardcoded offsets and sizes listed below (and contained within
+	 hardcoded offsets and sizes listed below (and contained within
 	 this lexical block) refer to fields in the target's elf_prstatus
 	 struct.  */
       case 268:
@@ -6773,19 +6777,18 @@ elf32_frv_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
   return TRUE;
 }
 #define ELF_ARCH		bfd_arch_frv
-#define ELF_TARGET_ID		FRV_ELF_DATA
 #define ELF_MACHINE_CODE	EM_CYGNUS_FRV
 #define ELF_MAXPAGESIZE		0x1000
 
-#define TARGET_BIG_SYM          frv_elf32_vec
+#define TARGET_BIG_SYM		frv_elf32_vec
 #define TARGET_BIG_NAME		"elf32-frv"
 
 #define elf_info_to_howto			frv_info_to_howto_rela
 #define elf_backend_relocate_section		elf32_frv_relocate_section
 #define elf_backend_gc_mark_hook		elf32_frv_gc_mark_hook
-#define elf_backend_check_relocs                elf32_frv_check_relocs
+#define elf_backend_check_relocs		elf32_frv_check_relocs
 #define elf_backend_object_p			elf32_frv_object_p
-#define elf_backend_add_symbol_hook             elf32_frv_add_symbol_hook
+#define elf_backend_add_symbol_hook		elf32_frv_add_symbol_hook
 
 #define elf_backend_stack_align			8
 #define elf_backend_can_gc_sections		1
@@ -6810,13 +6813,17 @@ elf32_frv_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
 #define elf_backend_grok_prstatus	elf32_frv_grok_prstatus
 #define elf_backend_grok_psinfo		elf32_frv_grok_psinfo
 
+#define elf_backend_linux_prpsinfo32_ugid16	TRUE
+
 #include "elf32-target.h"
 
+#undef ELF_TARGET_ID
+#define ELF_TARGET_ID		FRV_ELF_DATA
 #undef ELF_MAXPAGESIZE
 #define ELF_MAXPAGESIZE		0x4000
 
 #undef TARGET_BIG_SYM
-#define TARGET_BIG_SYM          frv_elf32_fdpic_vec
+#define TARGET_BIG_SYM		frv_elf32_fdpic_vec
 #undef TARGET_BIG_NAME
 #define TARGET_BIG_NAME		"elf32-frvfdpic"
 #undef	elf32_bed
@@ -6865,12 +6872,12 @@ elf32_frv_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
 		frvfdpic_elf_encode_eh_address
 
 #undef elf_backend_may_use_rel_p
-#define elf_backend_may_use_rel_p       1
+#define elf_backend_may_use_rel_p	1
 #undef elf_backend_may_use_rela_p
-#define elf_backend_may_use_rela_p      1
+#define elf_backend_may_use_rela_p	1
 /* We use REL for dynamic relocations only.  */
 #undef elf_backend_default_use_rela_p
-#define elf_backend_default_use_rela_p  1
+#define elf_backend_default_use_rela_p	1
 
 #undef elf_backend_omit_section_dynsym
 #define elf_backend_omit_section_dynsym _frvfdpic_link_omit_section_dynsym

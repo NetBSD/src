@@ -1,4 +1,4 @@
-# Copyright 1998-2017 Free Software Foundation, Inc.
+# Copyright 1998-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -297,6 +297,14 @@ gdb_test_multiple "set prompt \\(gdb\\) " "reset gdb_prompt" {
 	pass "reset gdb_prompt"
     }
 }
+
+gdb_test_multiple "define do-define" "" {
+    -re "Type commands for definition of \"do-define\".\r\nEnd with a line saying just \"end\".\r\n>$" {
+	gdb_test "define do-printit\necho here\\n\nend\nend" "" "define do-define"
+    }
+}
+gdb_test_no_output "do-define" "invoke do-define"
+gdb_test "do-printit" "here" "invoke do-printit"
 
 gdb_exit
 return 0

@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Free Software Foundation, Inc.
+// Copyright (C) 2016-2019 Free Software Foundation, Inc.
 
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -20,6 +20,10 @@
 fn f2() {
     println!("::f2");
 }
+
+// See https://github.com/rust-lang/rust/pull/46457
+#[no_mangle]
+pub static TWENTY_THREE : u16 = 23;
 
 pub struct Generic<T>(T);
 
@@ -55,6 +59,8 @@ pub mod mod1 {
                 let f1tg = wrap(f1t);
 
                 let f2 = || println!("lambda f2");
+
+                let copy = ::TWENTY_THREE;
 
                 f2();           // set breakpoint here
                 f3();

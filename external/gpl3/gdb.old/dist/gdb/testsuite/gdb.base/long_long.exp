@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 1997-2017 Free Software Foundation, Inc.
+# Copyright 1997-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -279,6 +279,11 @@ gdb_test "x/2gt g" "000000010010001101000101011001111000100110101011110011011110
 gdb_test_ptr "x/2ga g" "" "" "0x89abcdef.*0x77053977" "0x123456789abcdef.*0xa72ee53977053977"
 gdb_test "x/2gc g" "-17 '.\[0-9\]*'.*119 'w'"
 gdb_test "x/2gf g" "3.5127005640885037e-303.*-5.9822653797615723e-120"
+
+# Repeat behavior.
+gdb_test "x/2bx b" "0x01.*0xa7" "set up for repeat"
+send_gdb "\n"
+gdb_test "" "0x00.*0x00" "repeat x command"
 
 gdb_exit
 return 0

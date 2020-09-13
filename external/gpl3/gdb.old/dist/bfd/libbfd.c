@@ -1,5 +1,5 @@
 /* Assorted BFD support routines, only used internally.
-   Copyright (C) 1990-2017 Free Software Foundation, Inc.
+   Copyright (C) 1990-2019 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -40,21 +40,87 @@ DESCRIPTION
 	completeness.
 */
 
+bfd_boolean
+_bfd_bool_bfd_false (bfd *abfd ATTRIBUTE_UNUSED)
+{
+  return FALSE;
+}
+
+bfd_boolean
+_bfd_bool_bfd_asymbol_false (bfd *abfd ATTRIBUTE_UNUSED,
+			     asymbol *sym ATTRIBUTE_UNUSED)
+{
+  return FALSE;
+}
+
 /* A routine which is used in target vectors for unsupported
    operations.  */
 
 bfd_boolean
-bfd_false (bfd *ignore ATTRIBUTE_UNUSED)
+_bfd_bool_bfd_false_error (bfd *ignore ATTRIBUTE_UNUSED)
 {
   bfd_set_error (bfd_error_invalid_operation);
   return FALSE;
+}
+
+bfd_boolean
+_bfd_bool_bfd_link_false_error (bfd *abfd,
+				struct bfd_link_info *info ATTRIBUTE_UNUSED)
+{
+  return _bfd_bool_bfd_false_error (abfd);
 }
 
 /* A routine which is used in target vectors for supported operations
    which do not actually do anything.  */
 
 bfd_boolean
-bfd_true (bfd *ignore ATTRIBUTE_UNUSED)
+_bfd_bool_bfd_true (bfd *ignore ATTRIBUTE_UNUSED)
+{
+  return TRUE;
+}
+
+bfd_boolean
+_bfd_bool_bfd_link_true (bfd *abfd ATTRIBUTE_UNUSED,
+			 struct bfd_link_info *info ATTRIBUTE_UNUSED)
+{
+  return TRUE;
+}
+
+bfd_boolean
+_bfd_bool_bfd_bfd_true (bfd *ibfd ATTRIBUTE_UNUSED,
+			bfd *obfd ATTRIBUTE_UNUSED)
+{
+  return TRUE;
+}
+
+bfd_boolean
+_bfd_bool_bfd_uint_true (bfd *abfd ATTRIBUTE_UNUSED,
+			 unsigned int flags ATTRIBUTE_UNUSED)
+{
+  return TRUE;
+}
+
+bfd_boolean
+_bfd_bool_bfd_asection_bfd_asection_true (bfd *ibfd ATTRIBUTE_UNUSED,
+					  asection *isec ATTRIBUTE_UNUSED,
+					  bfd *obfd ATTRIBUTE_UNUSED,
+					  asection *osec ATTRIBUTE_UNUSED)
+{
+  return TRUE;
+}
+
+bfd_boolean
+_bfd_bool_bfd_asymbol_bfd_asymbol_true (bfd *ibfd ATTRIBUTE_UNUSED,
+					asymbol *isym ATTRIBUTE_UNUSED,
+					bfd *obfd ATTRIBUTE_UNUSED,
+					asymbol *osym ATTRIBUTE_UNUSED)
+{
+  return TRUE;
+}
+
+bfd_boolean
+_bfd_bool_bfd_ptr_true (bfd *abfd ATTRIBUTE_UNUSED,
+			void *ptr ATTRIBUTE_UNUSED)
 {
   return TRUE;
 }
@@ -63,26 +129,26 @@ bfd_true (bfd *ignore ATTRIBUTE_UNUSED)
    operations which return a pointer value.  */
 
 void *
-bfd_nullvoidptr (bfd *ignore ATTRIBUTE_UNUSED)
+_bfd_ptr_bfd_null_error (bfd *ignore ATTRIBUTE_UNUSED)
 {
   bfd_set_error (bfd_error_invalid_operation);
   return NULL;
 }
 
 int
-bfd_0 (bfd *ignore ATTRIBUTE_UNUSED)
+_bfd_int_bfd_0 (bfd *ignore ATTRIBUTE_UNUSED)
 {
   return 0;
 }
 
 unsigned int
-bfd_0u (bfd *ignore ATTRIBUTE_UNUSED)
+_bfd_uint_bfd_0 (bfd *ignore ATTRIBUTE_UNUSED)
 {
    return 0;
 }
 
 long
-bfd_0l (bfd *ignore ATTRIBUTE_UNUSED)
+_bfd_long_bfd_0 (bfd *ignore ATTRIBUTE_UNUSED)
 {
   return 0;
 }
@@ -91,14 +157,26 @@ bfd_0l (bfd *ignore ATTRIBUTE_UNUSED)
    operations which return -1 on error.  */
 
 long
-_bfd_n1 (bfd *ignore_abfd ATTRIBUTE_UNUSED)
+_bfd_long_bfd_n1_error (bfd *ignore_abfd ATTRIBUTE_UNUSED)
 {
   bfd_set_error (bfd_error_invalid_operation);
   return -1;
 }
 
 void
-bfd_void (bfd *ignore ATTRIBUTE_UNUSED)
+_bfd_void_bfd (bfd *ignore ATTRIBUTE_UNUSED)
+{
+}
+
+void
+_bfd_void_bfd_link (bfd *abfd ATTRIBUTE_UNUSED,
+		    struct bfd_link_info *info ATTRIBUTE_UNUSED)
+{
+}
+
+void
+_bfd_void_bfd_asection (bfd *abfd ATTRIBUTE_UNUSED,
+			asection *sec ATTRIBUTE_UNUSED)
 {
 }
 
@@ -117,6 +195,15 @@ _bfd_norelocs_canonicalize_reloc (bfd *abfd ATTRIBUTE_UNUSED,
 {
   *relptr = NULL;
   return 0;
+}
+
+void
+_bfd_norelocs_set_reloc (bfd *abfd ATTRIBUTE_UNUSED,
+			 asection *sec ATTRIBUTE_UNUSED,
+			 arelent **relptr ATTRIBUTE_UNUSED,
+			 unsigned int count ATTRIBUTE_UNUSED)
+{
+  /* Do nothing.  */
 }
 
 bfd_boolean
@@ -167,6 +254,10 @@ _bfd_dummy_target (bfd *ignore_abfd ATTRIBUTE_UNUSED)
 
 /* Allocate memory using malloc.  */
 
+#ifndef SSIZE_MAX
+#define SSIZE_MAX ((size_t) -1 >> 1)
+#endif
+
 void *
 bfd_malloc (bfd_size_type size)
 {
@@ -175,7 +266,7 @@ bfd_malloc (bfd_size_type size)
 
   if (size != sz
       /* This is to pacify memory checkers like valgrind.  */
-      || ((signed long) sz) < 0)
+      || sz > SSIZE_MAX)
     {
       bfd_set_error (bfd_error_no_memory);
       return NULL;
@@ -217,7 +308,7 @@ bfd_realloc (void *ptr, bfd_size_type size)
 
   if (size != sz
       /* This is to pacify memory checkers like valgrind.  */
-      || ((signed long) sz) < 0)
+      || sz > SSIZE_MAX)
     {
       bfd_set_error (bfd_error_no_memory);
       return NULL;
@@ -323,8 +414,8 @@ bfd_write_bigendian_4byte_int (bfd *abfd, unsigned int i)
 
 /* FIXME: Should these take a count argument?
    Answer (gnu@cygnus.com):  No, but perhaps they should be inline
-                             functions in swap.h #ifdef __GNUC__.
-                             Gprof them later and find out.  */
+			     functions in swap.h #ifdef __GNUC__.
+			     Gprof them later and find out.  */
 
 /*
 FUNCTION
@@ -371,6 +462,20 @@ DESCRIPTION
 .#define bfd_get_signed_16(abfd, ptr) \
 .  BFD_SEND (abfd, bfd_getx_signed_16, (ptr))
 .
+.#define bfd_put_24(abfd, val, ptr) \
+.  do					\
+.    if (bfd_big_endian (abfd))		\
+.      bfd_putb24 ((val), (ptr));	\
+.    else				\
+.      bfd_putl24 ((val), (ptr));	\
+.  while (0)
+.
+.bfd_vma bfd_getb24 (const void *p);
+.bfd_vma bfd_getl24 (const void *p);
+.
+.#define bfd_get_24(abfd, ptr) \
+.  (bfd_big_endian (abfd) ? bfd_getb24 (ptr) : bfd_getl24 (ptr))
+.
 .#define bfd_put_32(abfd, val, ptr) \
 .  BFD_SEND (abfd, bfd_putx32, ((val),(ptr)))
 .#define bfd_put_signed_32 \
@@ -398,9 +503,9 @@ DESCRIPTION
 .
 .#define bfd_put(bits, abfd, val, ptr)			\
 .  ((bits) == 8 ? bfd_put_8  (abfd, val, ptr)		\
-.   : (bits) == 16 ? bfd_put_16 (abfd, val, ptr)		\
-.   : (bits) == 32 ? bfd_put_32 (abfd, val, ptr)		\
-.   : (bits) == 64 ? bfd_put_64 (abfd, val, ptr)		\
+.   : (bits) == 16 ? bfd_put_16 (abfd, val, ptr)	\
+.   : (bits) == 32 ? bfd_put_32 (abfd, val, ptr)	\
+.   : (bits) == 64 ? bfd_put_64 (abfd, val, ptr)	\
 .   : (abort (), (void) 0))
 .
 */
@@ -524,6 +629,48 @@ bfd_putl16 (bfd_vma data, void *p)
   bfd_byte *addr = (bfd_byte *) p;
   addr[0] = data & 0xff;
   addr[1] = (data >> 8) & 0xff;
+}
+
+void
+bfd_putb24 (bfd_vma data, void *p)
+{
+  bfd_byte *addr = (bfd_byte *) p;
+  addr[0] = (data >> 16) & 0xff;
+  addr[1] = (data >> 8) & 0xff;
+  addr[2] = data & 0xff;
+}
+
+void
+bfd_putl24 (bfd_vma data, void *p)
+{
+  bfd_byte *addr = (bfd_byte *) p;
+  addr[0] = data & 0xff;
+  addr[1] = (data >> 8) & 0xff;
+  addr[2] = (data >> 16) & 0xff;
+}
+
+bfd_vma
+bfd_getb24 (const void *p)
+{
+  const bfd_byte *addr = (const bfd_byte *) p;
+  unsigned long v;
+
+  v =  (unsigned long) addr[0] << 16;
+  v |= (unsigned long) addr[1] << 8;
+  v |= (unsigned long) addr[2];
+  return v;
+}
+
+bfd_vma
+bfd_getl24 (const void *p)
+{
+  const bfd_byte *addr = (const bfd_byte *) p;
+  unsigned long v;
+
+  v = (unsigned long) addr[0];
+  v |= (unsigned long) addr[1] << 8;
+  v |= (unsigned long) addr[2] << 16;
+  return v;
 }
 
 bfd_vma
@@ -787,7 +934,7 @@ _bfd_generic_get_section_contents (bfd *abfd,
     {
       _bfd_error_handler
 	/* xgettext:c-format */
-	(_("%B: unable to get decompressed section %A"),
+	(_("%pB: unable to get decompressed section %pA"),
 	 abfd, section);
       bfd_set_error (bfd_error_invalid_operation);
       return FALSE;
@@ -803,7 +950,11 @@ _bfd_generic_get_section_contents (bfd *abfd,
   else
     sz = section->size;
   if (offset + count < count
-      || offset + count > sz)
+      || offset + count > sz
+      || (abfd->my_archive != NULL
+	  && !bfd_is_thin_archive (abfd->my_archive)
+	  && ((ufile_ptr) section->filepos + offset + count
+	      > arelt_size (abfd))))
     {
       bfd_set_error (bfd_error_invalid_operation);
       return FALSE;
@@ -858,7 +1009,12 @@ _bfd_generic_get_section_contents_in_window
     sz = section->rawsize;
   else
     sz = section->size;
-  if (offset + count > sz
+  if (offset + count < count
+      || offset + count > sz
+      || (abfd->my_archive != NULL
+	  && !bfd_is_thin_archive (abfd->my_archive)
+	  && ((ufile_ptr) section->filepos + offset + count
+	      > arelt_size (abfd)))
       || ! bfd_get_file_window (abfd, section->filepos + offset, count, w,
 				TRUE))
     return FALSE;

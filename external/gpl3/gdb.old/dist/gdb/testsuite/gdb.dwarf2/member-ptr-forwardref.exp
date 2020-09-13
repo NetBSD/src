@@ -1,4 +1,4 @@
-# Copyright 2010-2017 Free Software Foundation, Inc.
+# Copyright 2010-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -38,4 +38,5 @@ gdb_test "show cp-abi" {The currently selected C\+\+ ABI is "gnu-v3".*}
 
 gdb_load ${binfile}
 
+gdb_test_no_output "set language c++"
 gdb_test "ptype c" "type = struct C {\[\r\n \t\]*private:\[\r\n \t\]*int \\(C::\\*fp\\)\\(C \\*( const)?\\);\[\r\n \t\]*}"

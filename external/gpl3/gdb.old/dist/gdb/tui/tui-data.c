@@ -1,6 +1,6 @@
 /* TUI data manipulation routines.
 
-   Copyright (C) 1998-2017 Free Software Foundation, Inc.
+   Copyright (C) 1998-2019 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -29,7 +29,7 @@
 /****************************
 ** GLOBAL DECLARATIONS
 ****************************/
-struct tui_win_info *(tui_win_list[MAX_MAJOR_WINDOWS]);
+struct tui_win_info *tui_win_list[MAX_MAJOR_WINDOWS];
 
 /***************************
 ** Private data
@@ -40,7 +40,6 @@ static struct tui_gen_win_info _locator;
 static struct tui_gen_win_info exec_info[2];
 static struct tui_win_info *src_win_list[2];
 static struct tui_list source_windows = {src_win_list, 0};
-static int default_tab_len = DEFAULT_TAB_LEN;
 static struct tui_win_info *win_with_focus = NULL;
 static struct tui_layout_def layout_def = {
   SRC_WIN,			/* DISPLAY_MODE */
@@ -133,22 +132,6 @@ void
 tui_set_win_with_focus (struct tui_win_info *win_info)
 {
   win_with_focus = win_info;
-}
-
-
-/* Answer the length in chars, of tabs.  */
-int
-tui_default_tab_len (void)
-{
-  return default_tab_len;
-}
-
-
-/* Set the length in chars, of tabs.  */
-void
-tui_set_default_tab_len (int len)
-{
-  default_tab_len = len;
 }
 
 
@@ -375,7 +358,7 @@ tui_partial_win_by_name (const char *name)
 {
   struct tui_win_info *win_info = NULL;
 
-  if (name != (char *) NULL)
+  if (name != NULL)
     {
       int i = 0;
 
@@ -472,7 +455,6 @@ static void
 init_content_element (struct tui_win_element *element, 
 		      enum tui_win_type type)
 {
-  element->highlight = FALSE;
   switch (type)
     {
     case SRC_WIN:
@@ -545,9 +527,6 @@ init_win_info (struct tui_win_info *win_info)
       win_info->detail.data_display_info.current_group = 0;
       break;
     case CMD_WIN:
-      break;
-    default:
-      win_info->detail.opaque = NULL;
       break;
     }
 }
@@ -773,7 +752,7 @@ tui_free_win_content (struct tui_gen_win_info *win_info)
 {
   if (win_info->content != NULL)
     {
-      free_content ((tui_win_content) win_info->content,
+      free_content (win_info->content,
 		   win_info->content_size,
 		   win_info->type);
       win_info->content = NULL;
@@ -862,7 +841,7 @@ free_content_elements (tui_win_content content,
     {
       int i;
 
-      if (type == SRC_WIN || type == DISASSEM_WIN)
+      if (type == DISASSEM_WIN)
 	{
 	  /* Free whole source block.  */
 	  xfree (content[0]->which_element.source.line);
@@ -878,6 +857,9 @@ free_content_elements (tui_win_content content,
 		{
 		  switch (type)
 		    {
+		    case SRC_WIN:
+		      xfree (element->which_element.source.line);
+		      break;
 		    case DATA_WIN:
 		      xfree (element);
 		      break;

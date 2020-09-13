@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2011-2017 Free Software Foundation, Inc.
+   Copyright 2011-2019 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,11 +15,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-int pck__foo__bar__minsym = 123;
+static int test_minsym = 123;
 
 int
-get_pck__foo__bar__minsym (void)
+get_test_minsym (void)
 {
-  pck__foo__bar__minsym++;
-  return pck__foo__bar__minsym;
+  test_minsym++;
+  return test_minsym;
 }

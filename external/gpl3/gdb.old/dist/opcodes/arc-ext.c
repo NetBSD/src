@@ -1,5 +1,5 @@
 /* ARC target-dependent stuff.  Extension structure access functions
-   Copyright (C) 1995-2017 Free Software Foundation, Inc.
+   Copyright (C) 1995-2019 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 

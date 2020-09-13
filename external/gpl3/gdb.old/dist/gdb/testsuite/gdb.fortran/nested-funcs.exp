@@ -1,4 +1,4 @@
-# Copyright 2016-2017 Free Software Foundation, Inc.
+# Copyright 2016-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@ if ![runto MAIN__] then {
 gdb_breakpoint [gdb_get_line_number "! BP_outer"]
 gdb_continue_to_breakpoint "! BP_outer" ".*! BP_outer"
 gdb_test "print index" "= 13" "print index at BP_outer"
-gdb_test "set index = 42"
+gdb_test_no_output "set variable index = 42"
 gdb_test "print index" "= 42" "print index at BP_outer, manipulated"
 gdb_test "print local_int" "= 19" "print local_int in outer function"
 

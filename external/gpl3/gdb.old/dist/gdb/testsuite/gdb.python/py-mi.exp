@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2017 Free Software Foundation, Inc.
+# Copyright (C) 2008-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -101,7 +101,7 @@ mi_varobj_update_dynamic container "varobj update 1" {
     type_changed false new_num_children 1 dynamic 1 has_more 0
 } {
 } {
-    { name {container.\[0\]} exp {\[0\]} numchild 0 type int thread-id 1 }
+    { name {container.\[0\]} exp {\[0\]} numchild 0 type int }
 }
 
 mi_next "next over update 2"
@@ -110,7 +110,7 @@ mi_varobj_update_dynamic container "varobj update 2" {
     type_changed false new_num_children 2 dynamic 1 has_more 0
 } {
 } {
-    { name {container.\[1\]} exp {\[1\]} numchild 0 type int thread-id 1 }
+    { name {container.\[1\]} exp {\[1\]} numchild 0 type int }
 }
 
 mi_gdb_test "-var-set-visualizer container None" \
@@ -129,8 +129,8 @@ mi_varobj_update_dynamic container "varobj update after choosing default" {
     type_changed false new_num_children 2 dynamic 1 has_more 0
 } {
 } {
-    { name {container.\[0\]} exp {\[0\]} numchild 0 type int thread-id 1 }
-    { name {container.\[1\]} exp {\[1\]} numchild 0 type int thread-id 1 }
+    { name {container.\[0\]} exp {\[0\]} numchild 0 type int }
+    { name {container.\[1\]} exp {\[1\]} numchild 0 type int }
 }
 
 mi_gdb_test "-var-set-visualizer container ContainerPrinter" \
@@ -142,8 +142,8 @@ mi_varobj_update_dynamic container \
       type_changed false new_num_children 2 dynamic 1 has_more 0
   } {
   } {
-      { name {container.\[0\]} exp {\[0\]} numchild 0 type int thread-id 1 }
-      { name {container.\[1\]} exp {\[1\]} numchild 0 type int thread-id 1 }
+      { name {container.\[0\]} exp {\[0\]} numchild 0 type int }
+      { name {container.\[1\]} exp {\[1\]} numchild 0 type int }
   }
 
 mi_list_varobj_children_range container 1 2 2 {
@@ -294,6 +294,16 @@ mi_gdb_test "-var-evaluate-expression me" \
 # Regression test for python/14836.
 mi_create_dynamic_varobj children_as_list children_as_list 1 \
     "printer whose children are returned as a list"
+
+# Test that when a pretty-printer returns a gdb.Value in its to_string, we call
+# the pretty-printer of that value too.
+mi_create_varobj_checked tsrvw tsrvw  \
+    "struct to_string_returns_value_wrapper" \
+    "create tsrvw varobj"
+mi_check_varobj_value tsrvw "Inner to_string 1989" "check tsrvw varobj value"
+mi_gdb_test "-data-evaluate-expression tsrvw" \
+    "\\^done,value=\"Inner to_string 1989\"" \
+    "check tsrvw expression value"
 
 # Regression test for bug 14741.
 mi_continue_to_line \

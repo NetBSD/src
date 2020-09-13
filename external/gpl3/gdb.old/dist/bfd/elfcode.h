@@ -1,5 +1,5 @@
 /* ELF executable support for BFD.
-   Copyright (C) 1991-2017 Free Software Foundation, Inc.
+   Copyright (C) 1991-2019 Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support, from information published
    in "UNIX System V Release 4, Programmers Guide: ANSI C and
@@ -314,6 +314,14 @@ elf_swap_shdr_in (bfd *abfd,
     dst->sh_addr = H_GET_WORD (abfd, src->sh_addr);
   dst->sh_offset = H_GET_WORD (abfd, src->sh_offset);
   dst->sh_size = H_GET_WORD (abfd, src->sh_size);
+  /* PR 23657.  Check for invalid section size, in sections with contents.
+     Note - we do not set an error value here because the contents
+     of this particular section might not be needed by the consumer.  */
+  if (dst->sh_type != SHT_NOBITS
+      && dst->sh_size > bfd_get_file_size (abfd))
+    _bfd_error_handler
+      (_("warning: %pB has a corrupt section with a size (%" BFD_VMA_FMT "x) larger than the file size"),
+       abfd, dst->sh_size);
   dst->sh_link = H_GET_32 (abfd, src->sh_link);
   dst->sh_info = H_GET_32 (abfd, src->sh_info);
   dst->sh_addralign = H_GET_WORD (abfd, src->sh_addralign);
@@ -680,7 +688,7 @@ elf_object_p (bfd *abfd)
       if (i_ehdrp->e_shnum > ((bfd_size_type) -1) / sizeof (*i_shdrp))
 	goto got_wrong_format_error;
 #endif
-      amt = sizeof (*i_shdrp) * i_ehdrp->e_shnum;
+      amt = sizeof (*i_shdrp) * (bfd_size_type) i_ehdrp->e_shnum;
       i_shdrp = (Elf_Internal_Shdr *) bfd_alloc (abfd, amt);
       if (!i_shdrp)
 	goto got_no_match;
@@ -757,7 +765,7 @@ elf_object_p (bfd *abfd)
 	     so that at least some processing can be done.  */
 	  i_ehdrp->e_shstrndx = SHN_UNDEF;
 	  _bfd_error_handler
-	    (_("warning: %B has a corrupt string table index - ignoring"),
+	    (_("warning: %pB has a corrupt string table index - ignoring"),
 	     abfd);
 	}
     }
@@ -776,7 +784,12 @@ elf_object_p (bfd *abfd)
       if (i_ehdrp->e_phnum > ((bfd_size_type) -1) / sizeof (*i_phdr))
 	goto got_wrong_format_error;
 #endif
-      amt = i_ehdrp->e_phnum * sizeof (*i_phdr);
+      /* Check for a corrupt input file with an impossibly large number
+	 of program headers.  */
+      if (bfd_get_file_size (abfd) > 0
+	  && i_ehdrp->e_phnum > bfd_get_file_size (abfd))
+	goto got_no_match;
+      amt = (bfd_size_type) i_ehdrp->e_phnum * sizeof (*i_phdr);
       elf_tdata (abfd)->phdr = (Elf_Internal_Phdr *) bfd_alloc (abfd, amt);
       if (elf_tdata (abfd)->phdr == NULL)
 	goto got_no_match;
@@ -953,6 +966,12 @@ elf_write_relocs (bfd *abfd, asection *sec, void *data)
       if ((*ptr->sym_ptr_ptr)->the_bfd != NULL
 	  && (*ptr->sym_ptr_ptr)->the_bfd->xvec != abfd->xvec
 	  && ! _bfd_elf_validate_reloc (abfd, ptr))
+	{
+	  *failedp = TRUE;
+	  return;
+	}
+
+      if (ptr->howto == NULL)
 	{
 	  *failedp = TRUE;
 	  return;
@@ -1190,9 +1209,10 @@ elf_slurp_symbol_table (bfd *abfd, asymbol **symptrs, bfd_boolean dynamic)
 	{
 	  _bfd_error_handler
 	    /* xgettext:c-format */
-	    (_("%B: version count (%ld) does not match symbol count (%ld)"),
+	    (_("%pB: version count (%" PRId64 ")"
+	       " does not match symbol count (%ld)"),
 	     abfd,
-	     (long) (verhdr->sh_size / sizeof (Elf_External_Versym)),
+	     (int64_t) (verhdr->sh_size / sizeof (Elf_External_Versym)),
 	     symcount);
 
 	  /* Slurp in the symbols without the version information,
@@ -1423,6 +1443,7 @@ elf_slurp_reloc_table_from_section (bfd *abfd,
        i < reloc_count;
        i++, relent++, native_relocs += entsize)
     {
+      bfd_boolean res;
       Elf_Internal_Rela rela;
 
       if (entsize == sizeof (Elf_External_Rela))
@@ -1440,13 +1461,16 @@ elf_slurp_reloc_table_from_section (bfd *abfd,
 	relent->address = rela.r_offset - asect->vma;
 
       if (ELF_R_SYM (rela.r_info) == STN_UNDEF)
+	/* FIXME: This and the error case below mean that we have a
+	   symbol on relocs that is not elf_symbol_type.  */
 	relent->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
       else if (ELF_R_SYM (rela.r_info) > symcount)
 	{
 	  _bfd_error_handler
 	    /* xgettext:c-format */
-	    (_("%B(%A): relocation %d has invalid symbol index %ld"),
-	     abfd, asect, i, ELF_R_SYM (rela.r_info));
+	    (_("%pB(%pA): relocation %d has invalid symbol index %ld"),
+	     abfd, asect, i, (long) ELF_R_SYM (rela.r_info));
+	  bfd_set_error (bfd_error_bad_value);
 	  relent->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
 	}
       else
@@ -1463,14 +1487,16 @@ elf_slurp_reloc_table_from_section (bfd *abfd,
       if ((entsize == sizeof (Elf_External_Rela)
 	   && ebd->elf_info_to_howto != NULL)
 	  || ebd->elf_info_to_howto_rel == NULL)
-	(*ebd->elf_info_to_howto) (abfd, relent, &rela);
+	res = ebd->elf_info_to_howto (abfd, relent, &rela);
       else
-	(*ebd->elf_info_to_howto_rel) (abfd, relent, &rela);
+	res = ebd->elf_info_to_howto_rel (abfd, relent, &rela);
+
+      if (! res || relent->howto == NULL)
+	goto error_return;
     }
 
   if (allocated != NULL)
     free (allocated);
-
   return TRUE;
 
  error_return:

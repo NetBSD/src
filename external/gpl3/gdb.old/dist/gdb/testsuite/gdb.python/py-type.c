@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2009-2017 Free Software Foundation, Inc.
+   Copyright 2009-2019 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -29,6 +29,8 @@ struct SS
 
 typedef struct s TS;
 TS ts;
+
+int aligncheck;
 
 #ifdef __cplusplus
 struct C

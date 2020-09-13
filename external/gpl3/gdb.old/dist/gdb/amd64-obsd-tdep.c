@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/amd64.
 
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,6 +32,7 @@
 #include "obsd-tdep.h"
 #include "amd64-tdep.h"
 #include "i387-tdep.h"
+#include "common/x86-xstate.h"
 #include "solib-svr4.h"
 #include "bsd-uthread.h"
 
@@ -220,7 +221,7 @@ static void
 amd64obsd_supply_uthread (struct regcache *regcache,
 			  int regnum, CORE_ADDR addr)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   CORE_ADDR sp_addr = addr + AMD64OBSD_UTHREAD_RSP_OFFSET;
   CORE_ADDR sp = 0;
@@ -240,7 +241,7 @@ amd64obsd_supply_uthread (struct regcache *regcache,
          returned from _thread_machdep_switch.  */
       offset = amd64obsd_uthread_reg_offset[AMD64_RIP_REGNUM] + 8;
       store_unsigned_integer (buf, 8, byte_order, sp + offset);
-      regcache_raw_supply (regcache, AMD64_RSP_REGNUM, buf);
+      regcache->raw_supply (AMD64_RSP_REGNUM, buf);
     }
 
   for (i = 0; i < ARRAY_SIZE (amd64obsd_uthread_reg_offset); i++)
@@ -255,7 +256,7 @@ amd64obsd_supply_uthread (struct regcache *regcache,
 
 	  /* Read the saved register from the stack frame.  */
 	  read_memory (sp + amd64obsd_uthread_reg_offset[i], buf, 8);
-	  regcache_raw_supply (regcache, i, buf);
+	  regcache->raw_supply (i, buf);
 	}
     }
 }
@@ -264,7 +265,7 @@ static void
 amd64obsd_collect_uthread (const struct regcache *regcache,
 			   int regnum, CORE_ADDR addr)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   CORE_ADDR sp_addr = addr + AMD64OBSD_UTHREAD_RSP_OFFSET;
   CORE_ADDR sp = 0;
@@ -280,7 +281,7 @@ amd64obsd_collect_uthread (const struct regcache *regcache,
       /* Calculate the stack pointer (frame pointer) that will be
          stored into the thread structure.  */
       offset = amd64obsd_uthread_reg_offset[AMD64_RIP_REGNUM] + 8;
-      regcache_raw_collect (regcache, AMD64_RSP_REGNUM, buf);
+      regcache->raw_collect (AMD64_RSP_REGNUM, buf);
       sp = extract_unsigned_integer (buf, 8, byte_order) - offset;
 
       /* Store the stack pointer.  */
@@ -302,7 +303,7 @@ amd64obsd_collect_uthread (const struct regcache *regcache,
 	    sp = read_memory_unsigned_integer (sp_addr, 8, byte_order);
 
 	  /* Write the register into the stack frame.  */
-	  regcache_raw_collect (regcache, i, buf);
+	  regcache->raw_collect (i, buf);
 	  write_memory (sp + amd64obsd_uthread_reg_offset[i], buf, 8);
 	}
     }
@@ -419,7 +420,8 @@ amd64obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
-  amd64_init_abi (info, gdbarch);
+  amd64_init_abi (info, gdbarch,
+		  amd64_target_description (X86_XSTATE_SSE_MASK, true));
   obsd_init_abi (info, gdbarch);
 
   /* Initialize general-purpose register set details.  */
@@ -445,10 +447,6 @@ amd64obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* Unwind kernel trap frames correctly.  */
   frame_unwind_prepend_unwinder (gdbarch, &amd64obsd_trapframe_unwind);
 }
-
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-void _initialize_amd64obsd_tdep (void);
 
 void
 _initialize_amd64obsd_tdep (void)

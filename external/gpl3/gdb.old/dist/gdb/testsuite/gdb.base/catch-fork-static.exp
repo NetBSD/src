@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2017 Free Software Foundation, Inc.
+# Copyright (C) 2015-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,10 +20,6 @@
 # stop *after* arch_setup.  In a dynamic executable there is often a swbreak in
 # ld.so probes before reaching main, and ptrace flags were set then.  But a
 # static executable would just keep running and never catch the fork.
-
-if { [is_remote target] || ![isnative] } then {
-    continue
-}
 
 # Until "catch fork" is implemented on other targets...
 #

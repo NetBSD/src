@@ -1,4 +1,4 @@
-#   Copyright 1988-2017 Free Software Foundation, Inc.
+#   Copyright 1988-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -847,10 +847,35 @@ gdb_test_multiple "" $test {
 #
 set line [gdb_get_line_number "set breakpoint 1 here"]
 gdb_test_no_output "set \$l = $line"
-gdb_breakpoint ${srcfile}:\$l
+
+set line_actual "-1"
+set test "break ${srcfile}:\$l"
+gdb_test_multiple "$test" $test {
+    -re "Breakpoint $decimal at $hex: file .*break\\.c, line ($decimal)\\.\r\n$gdb_prompt $" {
+        # Save the actual line number on which the breakpoint was
+        # actually set. On some systems (Eg: Ubuntu 16.04 with GCC
+        # version 5.4.0), that line gets completely inlined, including
+        # the call to printf, and so we end up inserting the breakpoint
+        # on one of the following lines instead.
+        set line_actual $expect_out(1,string)
+        pass $test
+    }
+}
 
 gdb_test_no_output "set \$foo=81.5" \
     "set convenience variable \$foo to 81.5"
 gdb_test "break $srcfile:\$foo" \
     "Convenience variables used in line specs must have integer values.*" \
     "set breakpoint via non-integer convenience variable disallowed"
+
+
+#
+# Test that commands can be cleared without error.
+#
+
+gdb_test "commands\nprint 232323\nend" ">end" "set some breakpoint commands"
+gdb_test "commands\nend" ">end" "clear breakpoint commands"
+# We verify that the commands were cleared by ensuring that the last
+# breakpoint's location ends the output -- if there were commands,
+# they would have been printed after the location.
+gdb_test "info break" "$srcfile:$line_actual" "verify that they were cleared"

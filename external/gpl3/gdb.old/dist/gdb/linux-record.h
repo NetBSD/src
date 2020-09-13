@@ -1,6 +1,6 @@
 /* Process record and replay target code for GNU/Linux.
 
-   Copyright (C) 2008-2017 Free Software Foundation, Inc.
+   Copyright (C) 2008-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef _LINUX_RECORD_H_
-#define _LINUX_RECORD_H_
+#ifndef LINUX_RECORD_H
+#define LINUX_RECORD_H
 
 struct linux_record_tdep
 {
@@ -546,4 +546,5 @@ enum gdb_syscall {
 extern int record_linux_system_call (enum gdb_syscall num, 
 				     struct regcache *regcache,
 				     struct linux_record_tdep *tdep);
-#endif /* _LINUX_RECORD_H_ */
+
+#endif /* LINUX_RECORD_H */

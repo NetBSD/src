@@ -1,4 +1,4 @@
-@c Copyright (C) 2008-2017 Free Software Foundation, Inc.
+@c Copyright (C) 2008-2019 Free Software Foundation, Inc.
 @c Permission is granted to copy, distribute and/or modify this document
 @c under the terms of the GNU Free Documentation License, Version 1.3 or
 @c any later version published by the Free Software Foundation; with the
@@ -2769,7 +2769,7 @@ This domain contains names of labels (for gotos).
 This domain holds a subset of the @code{SYMBOLS_VAR_DOMAIN}; it
 contains everything minus functions and types.
 
-@item SYMBOL_FUNCTION_DOMAIN
+@item SYMBOL_FUNCTIONS_DOMAIN
 This domain contains all functions.
 
 @item SYMBOL_TYPES_DOMAIN

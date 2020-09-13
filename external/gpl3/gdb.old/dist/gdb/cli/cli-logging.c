@@ -1,6 +1,6 @@
 /* Command-line output logging for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -44,7 +44,8 @@ maybe_warn_already_logging ()
 }
 
 static void
-set_logging_overwrite (char *args, int from_tty, struct cmd_list_element *c)
+set_logging_overwrite (const char *args,
+		       int from_tty, struct cmd_list_element *c)
 {
   maybe_warn_already_logging ();
 }
@@ -63,7 +64,8 @@ show_logging_overwrite (struct ui_file *file, int from_tty,
 static int logging_redirect;
 
 static void
-set_logging_redirect (char *args, int from_tty, struct cmd_list_element *c)
+set_logging_redirect (const char *args,
+		      int from_tty, struct cmd_list_element *c)
 {
   maybe_warn_already_logging ();
 }
@@ -146,9 +148,9 @@ handle_redirections (int from_tty)
 }
 
 static void
-set_logging_on (char *args, int from_tty)
+set_logging_on (const char *args, int from_tty)
 {
-  char *rest = args;
+  const char *rest = args;
 
   if (rest && *rest)
     {
@@ -159,7 +161,7 @@ set_logging_on (char *args, int from_tty)
 }
 
 static void 
-set_logging_off (char *args, int from_tty)
+set_logging_off (const char *args, int from_tty)
 {
   if (saved_filename == NULL)
     return;
@@ -172,7 +174,7 @@ set_logging_off (char *args, int from_tty)
 }
 
 static void
-set_logging_command (char *args, int from_tty)
+set_logging_command (const char *args, int from_tty)
 {
   printf_unfiltered (_("\"set logging\" lets you log output to a file.\n"
 		       "Usage: set logging on [FILENAME]\n"
@@ -183,7 +185,7 @@ set_logging_command (char *args, int from_tty)
 }
 
 static void
-show_logging_command (char *args, int from_tty)
+show_logging_command (const char *args, int from_tty)
 {
   if (saved_filename)
     printf_unfiltered (_("Currently logging to \"%s\".\n"), saved_filename);
@@ -202,9 +204,6 @@ show_logging_command (char *args, int from_tty)
   else
     printf_unfiltered (_("Output will be logged and displayed.\n"));
 }
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-extern initialize_file_ftype _initialize_cli_logging;
 
 void
 _initialize_cli_logging (void)

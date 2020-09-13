@@ -1,4 +1,4 @@
-# Copyright 2005-2017 Free Software Foundation, Inc.
+# Copyright 2005-2019 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -82,6 +82,16 @@ test_gdb_no_completion "exported"
 # check the "<...>" notation.
 test_gdb_complete "<Exported" \
                   "p <Exported_Capitalized>"
+
+# While at it, make sure we can print the symbol too, using the '<'
+# notation.
+gdb_test "p <Exported_Capitalized>" " = 2"
+
+# Confirm that we can't print the symbol without the '<' notation.
+gdb_test "p Exported_Capitalized" \
+    "No definition of \"exported_capitalized\" in current context."
+gdb_test "p exported_capitalized" \
+    "No definition of \"exported_capitalized\" in current context."
 
 # A global symbol, created by the binder, that starts with __gnat...
 test_gdb_complete "__gnat_ada_main_progra" \
@@ -194,3 +204,24 @@ test_gdb_complete "ambiguous_f" \
                   "p ambiguous_func"
 test_gdb_complete "ambiguous_func" \
                   "p ambiguous_func"
+
+# Perform a test intented to verify the behavior where the number
+# of possible completions is very large.  The goal is not to verify
+# precisely the list returned by the complete command (this depends
+# on too many parameters -- targets, compiler version, runtime, etc).
+# However, we want to sanity-check each one of them, knowing that
+# each result should start with "break ada" and that the proposed
+# completion should look like a valid symbol name (in particular,
+# no uppercase letters...).  See gdb/22670.
+
+gdb_test_no_output "set max-completions unlimited"
+
+set test "complete break ada"
+gdb_test_multiple "$test" $test {
+    -re "^$test$eol\(break ada(\[a-z0-9._@\])*$eol\)+$gdb_prompt $" {
+        pass $test
+    }
+    -re "\[A-Z\].*$gdb_prompt $" {
+	fail "$test (gdb/22670)"
+    }
+}

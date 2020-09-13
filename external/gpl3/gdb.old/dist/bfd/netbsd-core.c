@@ -1,5 +1,5 @@
 /* BFD back end for NetBSD style core files
-   Copyright (C) 1988-2017 Free Software Foundation, Inc.
+   Copyright (C) 1988-2019 Free Software Foundation, Inc.
    Written by Paul Kranenburg, EUR
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -22,7 +22,7 @@
 #include "sysdep.h"
 #include "bfd.h"
 #include "libbfd.h"
-#include "libaout.h"           /* BFD a.out internal data structures.  */
+#include "libaout.h"	       /* BFD a.out internal data structures.  */
 
 #include <sys/param.h>
 #include <sys/dir.h>
@@ -198,10 +198,6 @@ netbsd_core_file_p (bfd *abfd)
       bfd_default_set_arch_mach (abfd, bfd_arch_m68k, 0);
       break;
 
-    case M_88K_OPENBSD:
-      bfd_default_set_arch_mach (abfd, bfd_arch_m88k, 0);
-      break;
-
     case M_HPPA_OPENBSD:
       bfd_default_set_arch_mach (abfd, bfd_arch_hppa, bfd_mach_hppa11);
       break;
@@ -294,12 +290,16 @@ const bfd_target core_netbsd_vec =
       netbsd_core_file_p		/* A core file.  */
     },
     {					/* bfd_set_format.  */
-      bfd_false, bfd_false,
-      bfd_false, bfd_false
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error
     },
     {					/* bfd_write_contents.  */
-      bfd_false, bfd_false,
-      bfd_false, bfd_false
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error
     },
 
     BFD_JUMP_TABLE_GENERIC (_bfd_generic),
@@ -314,5 +314,5 @@ const bfd_target core_netbsd_vec =
 
     NULL,
 
-    NULL			        /* Backend_data.  */
+    NULL				/* Backend_data.  */
   };

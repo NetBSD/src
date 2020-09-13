@@ -1,5 +1,5 @@
 # Test Framework Driver for GDB driving an external simulator
-#   Copyright 1999-2017 Free Software Foundation, Inc.
+#   Copyright 1999-2019 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,8 +13,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-load_lib gdb.exp
 
 proc sid_start {} {
     global verbose
@@ -146,7 +144,6 @@ proc gdb_target_sid { } {
     gdb_expect {
 	-re ".*\[Ee\]rror.*$gdb_prompt $" {
 	    perror "Couldn't set target for remote simulator."
-	    cleanup
 	    gdb_exit
 	}
 	-re "Remote debugging using.*$gdb_prompt"	{
@@ -154,7 +151,6 @@ proc gdb_target_sid { } {
 	}
 	timeout { 
 	    perror "Couldn't set target for remote simulator."
-	    cleanup
 	    gdb_exit
 	}
     }

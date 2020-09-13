@@ -1,6 +1,6 @@
 /* Native-dependent code for OpenBSD/powerpc.
 
-   Copyright (C) 2004-2017 Free Software Foundation, Inc.
+   Copyright (C) 2004-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -34,6 +34,14 @@
 #include "inf-ptrace.h"
 #include "obsd-nat.h"
 #include "bsd-kvm.h"
+
+struct ppc_obsd_nat_target final : public obsd_nat_target
+{
+  void fetch_registers (struct regcache *, int) override;
+  void store_registers (struct regcache *, int) override;
+};
+
+static ppc_obsd_nat_target the_ppc_obsd_nat_target;
 
 /* OpenBSD/powerpc didn't have PT_GETFPREGS/PT_SETFPREGS until release
    4.0.  On older releases the floating-point registers are handled by
@@ -70,12 +78,11 @@ getfpregs_supplies (struct gdbarch *gdbarch, int regnum)
 /* Fetch register REGNUM from the inferior.  If REGNUM is -1, do this
    for all registers.  */
 
-static void
-ppcobsd_fetch_registers (struct target_ops *ops,
-			 struct regcache *regcache, int regnum)
+void
+ppc_obsd_nat_target::fetch_registers (struct regcache *regcache, int regnum)
 {
   struct reg regs;
-  pid_t pid = ptid_get_pid (regcache_get_ptid (regcache));
+  pid_t pid = regcache->ptid ().pid ();
 
   if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
     perror_with_name (_("Couldn't get registers"));
@@ -89,7 +96,7 @@ ppcobsd_fetch_registers (struct target_ops *ops,
 
 #ifdef PT_GETFPREGS
   if (regnum == -1
-      || getfpregs_supplies (get_regcache_arch (regcache), regnum))
+      || getfpregs_supplies (regcache->arch (), regnum))
     {
       struct fpreg fpregs;
 
@@ -105,12 +112,11 @@ ppcobsd_fetch_registers (struct target_ops *ops,
 /* Store register REGNUM back into the inferior.  If REGNUM is -1, do
    this for all registers.  */
 
-static void
-ppcobsd_store_registers (struct target_ops *ops,
-			 struct regcache *regcache, int regnum)
+void
+ppc_obsd_nat_target::store_registers (struct regcache *regcache, int regnum)
 {
   struct reg regs;
-  pid_t pid = ptid_get_pid (regcache_get_ptid (regcache));
+  pid_t pid = regcache->ptid ().pid ();
 
   if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, 0) == -1)
     perror_with_name (_("Couldn't get registers"));
@@ -127,7 +133,7 @@ ppcobsd_store_registers (struct target_ops *ops,
 
 #ifdef PT_GETFPREGS
   if (regnum == -1
-      || getfpregs_supplies (get_regcache_arch (regcache), regnum))
+      || getfpregs_supplies (regcache->arch (), regnum))
     {
       struct fpreg fpregs;
 
@@ -147,7 +153,7 @@ ppcobsd_store_registers (struct target_ops *ops,
 static int
 ppcobsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   struct switchframe sf;
   struct callframe cf;
@@ -167,34 +173,24 @@ ppcobsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
     return 0;
 
   read_memory (pcb->pcb_sp, (gdb_byte *)&sf, sizeof sf);
-  regcache_raw_supply (regcache, gdbarch_sp_regnum (gdbarch), &sf.sp);
-  regcache_raw_supply (regcache, tdep->ppc_cr_regnum, &sf.cr);
-  regcache_raw_supply (regcache, tdep->ppc_gp0_regnum + 2, &sf.fixreg2);
+  regcache->raw_supply (gdbarch_sp_regnum (gdbarch), &sf.sp);
+  regcache->raw_supply (tdep->ppc_cr_regnum, &sf.cr);
+  regcache->raw_supply (tdep->ppc_gp0_regnum + 2, &sf.fixreg2);
   for (i = 0, regnum = tdep->ppc_gp0_regnum + 13; i < 19; i++, regnum++)
-    regcache_raw_supply (regcache, regnum, &sf.fixreg[i]);
+    regcache->raw_supply (regnum, &sf.fixreg[i]);
 
   read_memory (sf.sp, (gdb_byte *)&cf, sizeof cf);
-  regcache_raw_supply (regcache, gdbarch_pc_regnum (gdbarch), &cf.lr);
-  regcache_raw_supply (regcache, tdep->ppc_gp0_regnum + 30, &cf.r30);
-  regcache_raw_supply (regcache, tdep->ppc_gp0_regnum + 31, &cf.r31);
+  regcache->raw_supply (gdbarch_pc_regnum (gdbarch), &cf.lr);
+  regcache->raw_supply (tdep->ppc_gp0_regnum + 30, &cf.r30);
+  regcache->raw_supply (tdep->ppc_gp0_regnum + 31, &cf.r31);
 
   return 1;
 }
-
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-void _initialize_ppcobsd_nat (void);
 
 void
 _initialize_ppcobsd_nat (void)
 {
-  struct target_ops *t;
-
-  /* Add in local overrides.  */
-  t = inf_ptrace_target ();
-  t->to_fetch_registers = ppcobsd_fetch_registers;
-  t->to_store_registers = ppcobsd_store_registers;
-  obsd_add_target (t);
+  add_inf_child_target (&the_ppc_obsd_nat_target);
 
   /* General-purpose registers.  */
   ppcobsd_reg_offsets.r0_offset = offsetof (struct reg, gpr);
@@ -216,11 +212,6 @@ _initialize_ppcobsd_nat (void)
   ppcobsd_fpreg_offsets.fpscr_offset = offsetof (struct fpreg, fpscr);
   ppcobsd_fpreg_offsets.fpscr_size = 4;
 #endif
-
-  /* AltiVec registers.  */
-  ppcobsd_reg_offsets.vr0_offset = offsetof (struct vreg, vreg);
-  ppcobsd_reg_offsets.vscr_offset = offsetof (struct vreg, vscr);
-  ppcobsd_reg_offsets.vrsave_offset = offsetof (struct vreg, vrsave);
 
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (ppcobsd_supply_pcb);

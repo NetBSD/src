@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2017 Free Software Foundation, Inc.
+# Copyright (C) 2013-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ if {![dwarf2_support]} {
 
 standard_testfile .c
 
-set asm_file "${testfile}-dbg.s"
+set asm_file [standard_output_file "${testfile}-dbg.s"]
 set opts {}
 
 if  { [gdb_compile ${srcdir}/${subdir}/${srcfile} ${binfile}1.o \
@@ -303,7 +303,7 @@ if ![gdb_target_supports_trace] {
     return -1
 }
 
-gdb_breakpoint "end"
+gdb_breakpoint "end" qualified
 
 with_test_prefix "tracing foo" {
     gdb_test "trace *foo_start_lbl" ".*"
@@ -325,13 +325,7 @@ with_test_prefix "tracing bar" {
     gdb_test "continue" "Continuing\\.\[ \r\n\]+Breakpoint.*"
     gdb_test_no_output "tstop"
 
-    set endian ""
-    gdb_test_multiple "show endian" "show endian" {
-	-re ".* (big|little) endian.*$gdb_prompt $" {
-	    set endian $expect_out(1,string)
-	    pass "endianness: $endian"
-	}
-    }
+    set endian [get_endianness]
 
     gdb_test "tfind 0" "Found trace frame 0, tracepoint .*"
     if { $endian == "little" } {

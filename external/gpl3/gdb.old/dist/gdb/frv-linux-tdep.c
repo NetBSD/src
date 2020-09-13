@@ -1,7 +1,7 @@
 /* Target-dependent code for GNU/Linux running on the Fujitsu FR-V,
    for GDB.
 
-   Copyright (C) 2004-2017 Free Software Foundation, Inc.
+   Copyright (C) 2004-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -413,17 +413,14 @@ frv_linux_supply_gregset (const struct regset *regset,
 			  int regnum, const void *gregs, size_t len)
 {
   int regi;
-  char zerobuf[MAX_REGISTER_SIZE];
-
-  memset (zerobuf, 0, MAX_REGISTER_SIZE);
 
   /* gr0 always contains 0.  Also, the kernel passes the TBR value in
      this slot.  */
-  regcache_raw_supply (regcache, first_gpr_regnum, zerobuf);
+  regcache->raw_supply_zeroed (first_gpr_regnum);
 
   /* Fill gr32, ..., gr63 with zeros. */
   for (regi = first_gpr_regnum + 32; regi <= last_gpr_regnum; regi++)
-    regcache_raw_supply (regcache, regi, zerobuf);
+    regcache->raw_supply_zeroed (regi);
 
   regcache_supply_regset (regset, regcache, regnum, gregs, len);
 }
@@ -448,10 +445,10 @@ frv_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
 					void *cb_data,
 					const struct regcache *regcache)
 {
-  cb (".reg", sizeof (frv_elf_gregset_t), &frv_linux_gregset,
-      NULL, cb_data);
-  cb (".reg2", sizeof (frv_elf_fpregset_t), &frv_linux_fpregset,
-      NULL, cb_data);
+  cb (".reg", sizeof (frv_elf_gregset_t), sizeof (frv_elf_gregset_t),
+      &frv_linux_gregset, NULL, cb_data);
+  cb (".reg2", sizeof (frv_elf_fpregset_t), sizeof (frv_elf_fpregset_t),
+      &frv_linux_fpregset, NULL, cb_data);
 }
 
 
@@ -482,9 +479,6 @@ frv_linux_elf_osabi_sniffer (bfd *abfd)
   else
     return GDB_OSABI_UNKNOWN;
 }
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-void _initialize_frv_linux_tdep (void);
 
 void
 _initialize_frv_linux_tdep (void)

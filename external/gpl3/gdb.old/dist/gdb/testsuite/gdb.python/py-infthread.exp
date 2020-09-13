@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2017 Free Software Foundation, Inc.
+# Copyright (C) 2009-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,6 +30,16 @@ clean_restart ${testfile}
 # Skip all tests if Python scripting is not enabled.
 if { [skip_python_tests] } { continue }
 
+gdb_py_test_multiple "install new_thread event handler" \
+    "python" "" \
+    "seen_a_thread = False" "" \
+    "def thread_handler(evt):" "" \
+    "  if evt.inferior_thread is not None:" "" \
+    "    global seen_a_thread" "" \
+    "    seen_a_thread = True" "" \
+    "gdb.events.new_thread.connect(thread_handler)" "" \
+    "end" ""
+
 # The following tests require execution.
 
 if ![runto_main] then {
@@ -37,7 +47,18 @@ if ![runto_main] then {
     return 0
 }
 
+gdb_test "python print(seen_a_thread)" "True"
+
 # Test basic gdb.Inferior attributes and methods.
+
+# Make sure that InferiorThread.inferior returns a new reference (see PR 21213).
+
+gdb_py_test_silent_cmd "python gdb.selected_thread ().inferior" "test InferiorThread.inferior 1" 1
+gdb_py_test_silent_cmd "python gdb.selected_thread ().inferior" "test InferiorThread.inferior 2" 1
+gdb_test_no_output "python import gc; gc.collect()" "call Python garbage collection"
+gdb_py_test_silent_cmd "python gdb.selected_thread ().inferior" "test InferiorThread.inferior 3" 1
+gdb_py_test_silent_cmd "python gdb.selected_thread ().inferior" "test InferiorThread.inferior 4" 1
+
 
 gdb_py_test_silent_cmd "python t0 = gdb.selected_thread ()" "test gdb.selected_thread" 1
 gdb_test "python print (t0)" "\\<gdb.InferiorThread object at 0x\[\[:xdigit:\]\]+>" "verify InferiorThread object"

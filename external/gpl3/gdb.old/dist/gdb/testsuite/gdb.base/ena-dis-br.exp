@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 1997-2017 Free Software Foundation, Inc.
+# Copyright 1997-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -324,6 +324,9 @@ set b4 [break_at main ""]
 #
 # WHAT - the command to test (disable/enable).
 #
+# Note: tests involving location ranges (and more) are found in
+# gdb.cp/ena-dis-br-range.exp.
+#
 proc test_ena_dis_br { what } {
     global b1
     global b2
@@ -369,7 +372,7 @@ proc test_ena_dis_br { what } {
 
     # Now enable(disable) $b1 fooo.1, it should give error on fooo.
     gdb_test "$what $b1 fooo.1" \
-       "Bad breakpoint number 'fooo'" \
+       "Bad breakpoint number 'fooo\\.1'" \
        "$what \$b1 fooo.1"
 
     # $b1 should be enabled(disabled).
@@ -392,10 +395,10 @@ proc test_ena_dis_br { what } {
        }
     }
 
-    # Now enable(disable) $b4.1 fooobaar and
-    # it should give warning on fooobaar.
+    # Now enable(disable) '$b4.1 fooobaar'.  This should error on
+    # fooobaar.
     gdb_test "$what $b4.1 fooobaar" \
-       "warning: bad breakpoint number at or near 'fooobaar'" \
+       "Bad breakpoint number 'fooobaar'" \
        "$what \$b4.1 fooobar"
     set test1 "${what}d \$b4.1"
 

@@ -10,11 +10,11 @@ static void
 initialize_tdesc_mips_linux (void)
 {
   struct target_desc *result = allocate_target_description ();
-  struct tdesc_feature *feature;
-
   set_tdesc_architecture (result, bfd_scan_arch ("mips"));
 
   set_tdesc_osabi (result, osabi_from_tdesc_string ("GNU/Linux"));
+
+  struct tdesc_feature *feature;
 
   feature = tdesc_create_feature (result, "org.gnu.gdb.mips.cpu");
   tdesc_create_reg (feature, "r0", 0, 1, NULL, 32, "int");

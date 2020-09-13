@@ -1,6 +1,6 @@
 /* Target-dependent code for PowerPC systems running FreeBSD.
 
-   Copyright (C) 2013-2017 Free Software Foundation, Inc.
+   Copyright (C) 2013-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -56,13 +56,7 @@ static const struct ppc_reg_offsets ppc32_fbsd_reg_offsets =
 	/* Floating-point registers.  */
 	/* .f0_offset = */     0,
 	/* .fpscr_offset = */  256,
-	/* .fpscr_size = */    8,
-#ifdef NOTYET
-	/* AltiVec registers.  */
-	/* .vr0_offset = */    0,
-	/* .vscr_offset = */   512 + 12,
-	/* .vrsave_offset = */ 512
-#endif
+	/* .fpscr_size = */    8
   };
 
 /* 64-bit regset descriptions.  */
@@ -84,13 +78,7 @@ static const struct ppc_reg_offsets ppc64_fbsd_reg_offsets =
 	/* Floating-point registers.  */
 	/* .f0_offset = */     0,
 	/* .fpscr_offset = */  256,
-	/* .fpscr_size = */    8,
-#ifdef NOYET
-	/* AltiVec registers.  */
-	/* .vr0_offset = */    0,
-	/* .vscr_offset = */   512 + 12,
-	/* .vrsave_offset = */ 528
-#endif
+	/* .fpscr_size = */    8
   };
 
 /* 32-bit general-purpose register set.  */
@@ -140,10 +128,10 @@ ppcfbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
   if (tdep->wordsize == 4)
-    cb (".reg", 148, &ppc32_fbsd_gregset, NULL, cb_data);
+    cb (".reg", 148, 148, &ppc32_fbsd_gregset, NULL, cb_data);
   else
-    cb (".reg", 296, &ppc64_fbsd_gregset, NULL, cb_data);
-  cb (".reg2", 264, &ppc32_fbsd_fpregset, NULL, cb_data);
+    cb (".reg", 296, 296, &ppc64_fbsd_gregset, NULL, cb_data);
+  cb (".reg2", 264, 264, &ppc32_fbsd_fpregset, NULL, cb_data);
 }
 
 /* Default page size.  */
@@ -335,10 +323,6 @@ ppcfbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
 					     svr4_fetch_objfile_link_map);
 }
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-
-void _initialize_ppcfbsd_tdep (void);
 
 void
 _initialize_ppcfbsd_tdep (void)

@@ -1,6 +1,6 @@
 /* Python interface to finish breakpoints
 
-   Copyright (C) 2011-2017 Free Software Foundation, Inc.
+   Copyright (C) 2011-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,11 +26,10 @@
 #include "gdbthread.h"
 #include "arch-utils.h"
 #include "language.h"
-#include "observer.h"
+#include "observable.h"
 #include "inferior.h"
 #include "block.h"
 #include "location.h"
-#include "py-ref.h"
 
 /* Function that is called when a Python finish bp is found out of scope.  */
 static const char outofscope_func[] = "out_of_scope";
@@ -221,13 +220,14 @@ bpfinishpy_init (PyObject *self, PyObject *args, PyObject *kwargs)
   if (PyErr_Occurred ())
     return -1;
 
-  thread = ptid_to_global_thread_id (inferior_ptid);
-  if (thread == 0)
+  if (inferior_ptid == null_ptid)
     {
       PyErr_SetString (PyExc_ValueError,
                        _("No thread currently selected."));
       return -1;
     }
+
+  thread = inferior_thread ()->global_num;
 
   if (internal)
     {
@@ -252,7 +252,7 @@ bpfinishpy_init (PyObject *self, PyObject *args, PyObject *kwargs)
           if (function != NULL)
             {
               struct type *ret_type =
-                  TYPE_TARGET_TYPE (SYMBOL_TYPE (function));
+		check_typedef (TYPE_TARGET_TYPE (SYMBOL_TYPE (function)));
 
               /* Remember only non-void return types.  */
               if (TYPE_CODE (ret_type) != TYPE_CODE_VOID)
@@ -416,8 +416,8 @@ gdbpy_initialize_finishbreakpoints (void)
 			      (PyObject *) &finish_breakpoint_object_type) < 0)
     return -1;
 
-  observer_attach_normal_stop (bpfinishpy_handle_stop);
-  observer_attach_inferior_exit (bpfinishpy_handle_exit);
+  gdb::observers::normal_stop.attach (bpfinishpy_handle_stop);
+  gdb::observers::inferior_exit.attach (bpfinishpy_handle_exit);
 
   return 0;
 }

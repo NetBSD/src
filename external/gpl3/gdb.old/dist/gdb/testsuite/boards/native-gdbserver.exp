@@ -1,4 +1,4 @@
-# Copyright 2011-2017 Free Software Foundation, Inc.
+# Copyright 2011-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@
 
 load_generic_config "gdbserver"
 load_board_description "gdbserver-base"
+load_board_description "local-board"
 
 # This gdbserver can only run a process once per session.
 set_board_info gdb,do_reload_on_run 1
@@ -29,33 +30,8 @@ set_board_info gdb,do_reload_on_run 1
 # There's no support for argument-passing (yet).
 set_board_info noargs 1
 
-set_board_info sockethost "localhost:"
 set_board_info use_gdb_stub 1
 set_board_info exit_is_reliable 1
 
 # We will be using the standard GDB remote protocol.
 set_board_info gdb_protocol "remote"
-
-proc ${board}_spawn { board cmd } {
-    global board_info
-
-    set baseboard [lindex [split $board "/"] 0]
-
-    set board_info($baseboard,isremote) 0
-    set result [remote_spawn $board $cmd]
-    set board_info($baseboard,isremote) 1
-
-    return $result
-}
-
-proc ${board}_exec { hostname program args } {
-    global board_info
-
-    set baseboard [lindex [split $hostname "/"] 0]
-
-    set board_info($baseboard,isremote) 0
-    set result [remote_exec $hostname $program $args]
-    set board_info($baseboard,isremote) 1
-
-    return $result
-}

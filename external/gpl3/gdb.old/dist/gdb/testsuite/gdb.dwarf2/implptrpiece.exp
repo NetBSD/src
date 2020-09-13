@@ -1,4 +1,4 @@
-# Copyright 2013-2017 Free Software Foundation, Inc.
+# Copyright 2013-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -119,14 +119,8 @@ if ![runto_main] {
     return -1
 }
 
-# Determine endianness.
-set endian "little"
-gdb_test_multiple "show endian" "determine endianness" {
-    -re ".* (big|little) endian.*$gdb_prompt $" {
-	set endian $expect_out(1,string)
-	pass "endianness: $endian"
-    }
-}
+# Determine byte order.
+set endian [get_endianness]
 
 # Access the second byte of s through an implicit pointer to the third
 # byte of s, using a negative offset.  Compare that to the second byte of

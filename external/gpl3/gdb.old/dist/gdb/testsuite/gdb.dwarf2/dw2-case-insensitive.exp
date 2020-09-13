@@ -1,4 +1,4 @@
-# Copyright 2011-2017 Free Software Foundation, Inc.
+# Copyright 2011-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -42,8 +42,10 @@ gdb_test "info functions fUnC_lang" \
 gdb_test "set case-sensitive off" {warning: the current case sensitivity setting does not match the language\.}
 
 # The dot-leading symbol is for ppc64 function descriptors.
+# Note that info functions gives the FUNC_lang result using the fortran syntax
+# as specified in dw-case-insensitive-debug.S DW_AT_language.
 gdb_test "info functions fUnC_lang" \
-	 "All functions matching regular expression \"fUnC_lang\":\[\r\n\]+File file1.txt:\r\nfoo FUNC_lang\\(void\\);(\r\n\r\nNon-debugging symbols:\r\n0x\[0-9a-f\]+ +\\.FUNC_lang)?" \
+	 "All functions matching regular expression \"fUnC_lang\":\[\r\n\]+File file1.txt:\r\n\tfoo FUNC_lang\\(\\);(\r\n\r\nNon-debugging symbols:\r\n0x\[0-9a-f\]+ +\\.FUNC_lang)?" \
 	 "regexp case-sensitive off"
 
 gdb_test "p fuNC_lang" { = {foo \(void\)} 0x[0-9a-f]+ <FUNC_lang>}

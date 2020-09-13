@@ -1,6 +1,6 @@
 /* simulator.h -- Prototypes for AArch64 simulator functions.
 
-   Copyright (C) 2015-2017 Free Software Foundation, Inc.
+   Copyright (C) 2015-2019 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 

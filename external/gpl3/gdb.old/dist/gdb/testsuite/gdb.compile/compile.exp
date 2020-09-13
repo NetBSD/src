@@ -1,4 +1,4 @@
-# Copyright 2014-2017 Free Software Foundation, Inc.
+# Copyright 2014-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -139,8 +139,11 @@ gdb_test "compile code func_doesnotexist ();" "warning: Could not find symbol \"
 gdb_test "compile code *(volatile int *) 0 = 0;" \
     "The program being debugged was signaled while in a function called from GDB\\.\r\nGDB remains in the frame where the signal was received\\.\r\n.*" \
     "compile code segfault first"
-gdb_test "bt" \
-    "\r\n#0  \[^\r\n\]* in _gdb_expr \[^\r\n\]*\r\n#1  <function called from gdb>\r\n.*"
+gdb_test "bt" [multi_line \
+		   "#0  ($hex in )?_gdb_expr .*" \
+		   "#1  <function called from gdb>" \
+		   "#2  .*" \
+		  ]
 
 set test "p/x \$pc"
 set infcall_pc 0
@@ -253,7 +256,7 @@ gdb_test "print union_object.intfield" " = 7"
 # LOC_UNRESOLVED tests.
 
 gdb_test "print unresolved" " = 20"
-gdb_test "compile code globalvar = unresolved;"
+gdb_test_no_output "compile code globalvar = unresolved;"
 gdb_test "print globalvar" " = 20" "print unresolved value"
 
 # Test shadowing with global and static variables.
@@ -296,12 +299,14 @@ gdb_test "p globalvar" " = 77" "expect 77"
 
 # Test reference to minimal_symbol, not (full) symbol.
 
-gdb_test_no_output "compile code globalvar = func_nodebug (75);" \
+gdb_test "compile code globalvar = func_nodebug (75);" \
+    "warning: function has unknown return type; assuming int" \
     "call func_nodebug"
 gdb_test "p globalvar" " = -75" "expect -75"
-gdb_test_no_output \
-  "compile code int (*funcp) (int) = func_nodebug; globalvar = funcp (76);" \
-  "call func_nodebug indirectly"
+gdb_test \
+    "compile code int (*funcp) (int) = func_nodebug; globalvar = funcp (76);" \
+    "warning: function has unknown return type; assuming int" \
+    "call func_nodebug indirectly"
 gdb_test "p globalvar" " = -76" "expect -76"
 
 
@@ -348,7 +353,7 @@ if { $srcfile3 != "" } {
     gdb_test "p constvar" " = 3"
     gdb_test "info addr constvar" {Symbol "constvar" is constant\.}
 
-    gdb_test "compile code globalvar = constvar;"
+    gdb_test_no_output "compile code globalvar = constvar;"
     gdb_test "print globalvar" " = 3" "print constvar value"
 } else {
     untested "print constvar value"
