@@ -1,4 +1,4 @@
-#   Copyright 2011-2017 Free Software Foundation, Inc.
+#   Copyright 2011-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,6 +15,10 @@
 
 # This file was written by Justin Lebar. (justin.lebar@gmail.com)
 # And further hacked on by Doug Evans. (dje@google.com)
+
+load_lib completion-support.exp
+
+standard_testfile
 
 if { [prepare_for_testing "failed to prepare" "skip" \
                           {skip.c skip1.c } \
@@ -69,9 +73,9 @@ gdb_test "skip function baz" "Function baz will be skipped when stepping\."
 gdb_test "skip enable 999" "No skiplist entries found with number 999."
 gdb_test "skip disable 999" "No skiplist entries found with number 999."
 gdb_test "skip delete 999" "No skiplist entries found with number 999."
-gdb_test "skip enable a" "Args must be numbers or '\\$' variables."
-gdb_test "skip disable a" "Args must be numbers or '\\$' variables."
-gdb_test "skip delete a" "Args must be numbers or '\\$' variables."
+gdb_test "skip enable a" "Arguments must be numbers or '\\$' variables."
+gdb_test "skip disable a" "Arguments must be numbers or '\\$' variables."
+gdb_test "skip delete a" "Arguments must be numbers or '\\$' variables."
 
 # Ask for info on a skiplist entry which doesn't exist.
 
@@ -297,3 +301,35 @@ with_test_prefix "step using -fi + -fu" {
     gdb_test "step" ".*" "step 4"; # Skip over test_skip()
     gdb_test "step" "test_skip_file_and_function \\(\\) at.*" "step 5"; # Return from skip1_test_skip_file_and_function()
 }
+
+with_test_prefix "skip delete completion" {
+    global binfile
+    clean_restart "${binfile}"
+    if ![runto_main] {
+	fail "can't run to main"
+	return
+    }
+
+    # Create a bunch of skips, don't care what they are.
+    for {set i 0} {$i < 12} {incr i} {
+	gdb_test "skip" ".*" "add skip $i"
+    }
+
+    set all_numbers { "1" "10" "11" "12" "2" "3" "4" "5" "6" "7" "8" "9" }
+
+    # Test completing single numbers.
+    test_gdb_complete_multiple "skip delete " "" "" $all_numbers
+    test_gdb_complete_multiple "skip delete " "1" "" { "1" "10" "11" "12" }
+    test_gdb_complete_multiple "skip delete 2 " "" "" $all_numbers
+    test_gdb_complete_unique "skip delete 11" "skip delete 11"
+
+    # Test completing ranges.
+    test_gdb_complete_multiple "skip delete 2-" "" "" $all_numbers
+    test_gdb_complete_unique "skip delete 2-5" "skip delete 2-5"
+
+    # Test cases with no completion.
+    test_gdb_complete_none "skip delete 123"
+    test_gdb_complete_none "skip delete a1"
+    test_gdb_complete_none "skip delete 2-33"
+}
+

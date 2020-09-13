@@ -1,6 +1,6 @@
 /* MI Command Set - MI parser.
 
-   Copyright (C) 2000-2017 Free Software Foundation, Inc.
+   Copyright (C) 2000-2019 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions (a Red Hat company).
 
@@ -119,7 +119,7 @@ mi_parse_argv (const char *args, struct mi_parse *parse)
       char *arg;
 
       /* Skip leading white space.  */
-      chp = skip_spaces_const (chp);
+      chp = skip_spaces (chp);
       /* Three possibilities: EOF, quoted string, or other text. */
       switch (*chp)
 	{
@@ -237,12 +237,11 @@ std::unique_ptr<struct mi_parse>
 mi_parse (const char *cmd, char **token)
 {
   const char *chp;
-  struct cleanup *cleanup;
 
   std::unique_ptr<struct mi_parse> parse (new struct mi_parse);
 
   /* Before starting, skip leading white space.  */
-  cmd = skip_spaces_const (cmd);
+  cmd = skip_spaces (cmd);
 
   /* Find/skip any token and then extract it.  */
   for (chp = cmd; *chp >= '0' && *chp <= '9'; chp++)
@@ -254,7 +253,7 @@ mi_parse (const char *cmd, char **token)
   /* This wasn't a real MI command.  Return it as a CLI_COMMAND.  */
   if (*chp != '-')
     {
-      chp = skip_spaces_const (chp);
+      chp = skip_spaces (chp);
       parse->command = xstrdup (chp);
       parse->op = CLI_COMMAND;
 
@@ -279,7 +278,7 @@ mi_parse (const char *cmd, char **token)
 		 _("Undefined MI command: %s"), parse->command);
 
   /* Skip white space following the command.  */
-  chp = skip_spaces_const (chp);
+  chp = skip_spaces (chp);
 
   /* Parse the --thread and --frame options, if present.  At present,
      some important commands, like '-break-*' are implemented by
@@ -347,27 +346,21 @@ mi_parse (const char *cmd, char **token)
 	}
       else if (strncmp (chp, "--language ", ls) == 0)
 	{
-	  char *lang_name;
-	  struct cleanup *old_chain;
-
 	  option = "--language";
 	  chp += ls;
-	  lang_name = extract_arg_const (&chp);
-	  old_chain = make_cleanup (xfree, lang_name);
+	  std::string lang_name = extract_arg (&chp);
 
-	  parse->language = language_enum (lang_name);
+	  parse->language = language_enum (lang_name.c_str ());
 	  if (parse->language == language_unknown
 	      || parse->language == language_auto)
-	    error (_("Invalid --language argument: %s"), lang_name);
-
-	  do_cleanups (old_chain);
+	    error (_("Invalid --language argument: %s"), lang_name.c_str ());
 	}
       else
 	break;
 
       if (*chp != '\0' && !isspace (*chp))
 	error (_("Invalid value for the '%s' option"), option);
-      chp = skip_spaces_const (chp);
+      chp = skip_spaces (chp);
     }
 
   /* For new argv commands, attempt to return the parsed argument

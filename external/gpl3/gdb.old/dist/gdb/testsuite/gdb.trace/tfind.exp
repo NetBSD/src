@@ -1,4 +1,4 @@
-#   Copyright 1998-2017 Free Software Foundation, Inc.
+#   Copyright 1998-2019 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,6 +23,11 @@ gdb_start
 
 standard_testfile actions.c
 
+if ![gdb_trace_common_supports_arch] {
+    unsupported "no trace-common.h support for arch"
+    return -1
+}
+
 if { [gdb_compile "$srcdir/$subdir/$srcfile" "$binfile" \
 	  executable {debug nowarnings}] != "" } {
     untested "failed to compile"
@@ -34,11 +39,11 @@ gdb_test "tfind none"  ".*" ""
 
 # 6.2 test help tstart
 gdb_test "help tstart" \
-    "Start trace data collection\.\[\r\n\]+Usage: tstart \\\[ <notes> \.\.\. \\\]\[\r\n\]+Any arguments supplied are recorded with the trace as a note and\[\r\n\]+reported by tstatus \\(if the target supports trace notes\\)\." \
+    "Start trace data collection\.\[\r\n\]+Usage: tstart \\\[NOTES\\\]\.\.\.\[\r\n\]+Any arguments supplied are recorded with the trace as a note and\[\r\n\]+reported by tstatus \\(if the target supports trace notes\\)\." \
     "6.2: help tstart"
 # 7.2 test help tstop
 gdb_test "help tstop" \
-    "Stop trace data collection\.\[\r\n\]+Usage: tstop \\\[ <notes> \.\.\. \\\]\[\r\n\]+Any arguments supplied are recorded with the trace as a stop reason and\[\r\n\]+reported by tstatus \\(if the target supports trace notes\\)\." \
+    "Stop trace data collection\.\[\r\n\]+Usage: tstop \\\[NOTES\\\]\.\.\.\[\r\n\]+Any arguments supplied are recorded with the trace as a stop reason and\[\r\n\]+reported by tstatus \\(if the target supports trace notes\\)\." \
     "7.2: help tstop"
 
 # 8.38 test help tfind
@@ -127,7 +132,7 @@ if { $return_me == 1 } then {
 # test tstatus (when trace on)
 gdb_test "tstatus" "\[Tt\]race is running.*" "test tstatus on"
 
-gdb_test "break end" ".*" ""
+gdb_breakpoint "end" qualified
 gdb_test "continue" \
     "Continuing.*Breakpoint $decimal, end.*" \
     "run trace experiment"

@@ -1,6 +1,6 @@
 /* Exception (throw catch) mechanism, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2017 Free Software Foundation, Inc.
+   Copyright (C) 1986-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,17 +17,15 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_EXCEPTIONS_H
-#define COMMON_EXCEPTIONS_H
+#ifndef COMMON_COMMON_EXCEPTIONS_H
+#define COMMON_COMMON_EXCEPTIONS_H
 
 #include <setjmp.h>
 #include <new>
 
 /* Reasons for calling throw_exceptions().  NOTE: all reason values
-   must be less than zero.  enum value 0 is reserved for internal use
-   as the return value from an initial setjmp().  The function
-   catch_exceptions() reserves values >= 0 as legal results from its
-   wrapped function.  */
+   must be different from zero.  enum value 0 is reserved for internal
+   use as the return value from an initial setjmp().  */
 
 enum return_reason
   {
@@ -148,7 +146,7 @@ extern int exceptions_state_mc_catch (struct gdb_exception *, int);
 #if GDB_XCPT != GDB_XCPT_SJMP
 extern void *exception_try_scope_entry (void);
 extern void exception_try_scope_exit (void *saved_state);
-extern void exception_rethrow (void);
+extern void exception_rethrow (void) ATTRIBUTE_NORETURN;
 #endif
 
 /* Macro to wrap up standard try/catch behavior.
@@ -231,25 +229,38 @@ struct exception_try_scope
 #if GDB_XCPT == GDB_XCPT_TRY
 
 /* We still need to wrap TRY/CATCH in C++ so that cleanups and C++
-   exceptions can coexist.  The TRY blocked is wrapped in a
-   do/while(0) so that break/continue within the block works the same
-   as in C.  */
+   exceptions can coexist.
+
+   The TRY blocked is wrapped in a do/while(0) so that break/continue
+   within the block works the same as in C.
+
+   END_CATCH makes sure that even if the CATCH block doesn't want to
+   catch the exception, we stop at every frame in the unwind chain to
+   run its cleanups, which may e.g., have pointers to stack variables
+   that are going to be destroyed.
+
+   There's an outer scope around the whole TRY/END_CATCH in order to
+   cause a compilation error if you forget to add the END_CATCH at the
+   end a TRY/CATCH construct.  */
+
 #define TRY								\
-  try									\
-    {									\
-      exception_try_scope exception_try_scope_instance;			\
-      do								\
-	{
+  {									\
+    try									\
+      {									\
+	exception_try_scope exception_try_scope_instance;		\
+	do								\
+	  {
 
 #define CATCH(EXCEPTION, MASK)						\
-	} while (0);							\
-    }								        \
-  catch (struct gdb_exception ## _ ## MASK &EXCEPTION)
+	  } while (0);							\
+	}								\
+    catch (struct gdb_exception ## _ ## MASK &EXCEPTION)
 
 #define END_CATCH				\
-  catch (...)					\
-  {						\
-    exception_rethrow ();			\
+    catch (...)					\
+      {						\
+	exception_rethrow ();			\
+      }						\
   }
 
 #else
@@ -327,4 +338,4 @@ extern void throw_quit (const char *fmt, ...)
 /* A pre-defined non-exception.  */
 extern const struct gdb_exception exception_none;
 
-#endif /* COMMON_EXCEPTIONS_H */
+#endif /* COMMON_COMMON_EXCEPTIONS_H */

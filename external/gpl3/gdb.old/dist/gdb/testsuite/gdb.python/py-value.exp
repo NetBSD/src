@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2017 Free Software Foundation, Inc.
+# Copyright (C) 2008-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -79,6 +79,7 @@ proc test_value_creation {} {
 
 proc test_value_numeric_ops {} {
   global gdb_prompt
+  global gdb_py_is_py3k
 
   gdb_py_test_silent_cmd "python i = gdb.Value (5)" "create first integer value" 0
   gdb_py_test_silent_cmd "python j = gdb.Value (2)" "create second integer value" 0
@@ -129,6 +130,11 @@ proc test_value_numeric_ops {} {
   gdb_test "print (void *) 5" ".*" ""
   gdb_test_no_output "python b = gdb.history (0)" ""
 
+  gdb_test "python print(int(b))" "5" "convert pointer to int"
+  if {!$gdb_py_is_py3k} {
+    gdb_test "python print(long(b))" "5" "convert pointer to long"
+  }
+
   gdb_test "python print ('result = ' + str(a+5))" " = 0x7( <.*>)?" "add pointer value with python integer"
   gdb_test "python print ('result = ' + str(b-2))" " = 0x3( <.*>)?" "subtract python integer from pointer value"
   gdb_test "python print ('result = ' + str(b-a))" " = 3" "subtract two pointer values"
@@ -137,8 +143,17 @@ proc test_value_numeric_ops {} {
     "result = r" "use value as string index"
   gdb_test "python print ('result = ' + str((1,2,3)\[gdb.Value(0)\]))" \
     "result = 1" "use value as tuple index"
-  gdb_test "python print ('result = ' + str(\[1,2,3\]\[gdb.Value(0)\]))" \
-    "result = 1" "use value as array index"
+  if {!$gdb_py_is_py3k} {
+    gdb_test "python print ('result = ' + str(\[1,2,3\]\[gdb.Value(0)\]))" \
+      "result = 1" "use value as array index"
+  }
+
+  gdb_test "python print('%x' % int(gdb.parse_and_eval('-1ull')))" \
+      "f+" "int conversion respect type sign"
+  if {!$gdb_py_is_py3k} {
+    gdb_test "python print('%x' % long(gdb.parse_and_eval('-1ull')))" \
+      "f+" "long conversion respect type sign"
+  }
 
   # Test some invalid operations.
 
@@ -483,6 +498,62 @@ proc test_value_hash {} {
     gdb_test "python print (one.__hash__() == hash(one))" "True" "test inbuilt hash"
 }
 
+proc test_float_conversion {} {
+    global gdb_py_is_py3k
+    gdb_test "python print(int(gdb.Value(0)))" "0"
+    gdb_test "python print(int(gdb.Value(2.5)))" "2"
+    if {!$gdb_py_is_py3k} {
+	gdb_test "python print(long(gdb.Value(0)))" "0"
+	gdb_test "python print(long(gdb.Value(2.5)))" "2"
+    }
+    gdb_test "python print(float(gdb.Value(2.5)))" "2\\.5"
+    gdb_test "python print(float(gdb.Value(0)))" "0\\.0"
+}
+
+proc test_value_from_buffer {} {
+  global gdb_prompt
+  global gdb_py_is_py3k
+
+  gdb_py_test_silent_cmd "python tp=gdb.lookup_type('int')" "look up int type" 0
+  gdb_py_test_silent_cmd "python size_a=gdb.parse_and_eval('sizeof(a)')" \
+                         "find size of a" 0
+  gdb_py_test_silent_cmd "python size_a0=gdb.parse_and_eval('sizeof(a\[0\])')" \
+                         "find size of element of a" 0
+  gdb_py_test_silent_cmd "python addr=gdb.parse_and_eval('&a')" \
+                         "find address of a" 0
+  gdb_py_test_silent_cmd "python b=gdb.selected_inferior().read_memory(addr,size_a)" \
+                         "read buffer from memory" 1
+  gdb_test "python v=gdb.Value(b,tp); print(v)" "1" \
+            "construct value from buffer"
+  gdb_test "python v=gdb.Value(b\[size_a0:\],tp); print(v)" "2" \
+            "convert 2nd elem of buffer to value"
+  gdb_test "python v=gdb.Value(b\[2*size_a0:\],tp); print(v)" "3" \
+           "convert 3rd elem of buffer to value"
+  gdb_test "python v=gdb.Value(b\[2*size_a0+1:\],tp); print(v)" \
+           "ValueError: Size of type is larger than that of buffer object\..*" \
+	   "attempt to convert smaller buffer than size of type"
+  gdb_py_test_silent_cmd "python atp=tp.array(2) ; print(atp)" \
+                         "make array type" 0
+  gdb_py_test_silent_cmd "python va=gdb.Value(b,atp)" \
+                         "construct array value from buffer" 0
+  gdb_test "python print(va)" "\\{1, 2, 3\\}" "print array value"
+  gdb_test "python print(va\[0\])" "1" "print first array element"
+  gdb_test "python print(va\[1\])" "2" "print second array element"
+  gdb_test "python print(va\[2\])" "3" "print third array element"
+  gdb_test "python print(va\[3\])" "gdb\.error: no such vector element.*" \
+           "print out of bounds array element"
+  gdb_py_test_silent_cmd "python atpbig=tp.array(3)" "make bigger array type" 0
+  gdb_test "python vabig=gdb.Value(b,atpbig)" \
+           "ValueError: Size of type is larger than that of buffer object\..*" \
+	   "attempt to construct large value with small buffer" 
+  gdb_test "python v=gdb.Value(2048,tp)" \
+           "TypeError: Object must support the python buffer protocol\..*" \
+           "attempt to construct value from buffer with non-buffer object"
+  gdb_test "python v=gdb.Value(b,'int'); print(v)" \
+           "TypeError: type argument must be a gdb\.Type\..*" \
+	   "attempt to construct value with string as type"
+}
+
 # Build C version of executable.  C++ is built later.
 if { [build_inferior "${binfile}" "c"] < 0 } {
     return -1
@@ -501,6 +572,7 @@ test_value_compare
 test_objfiles
 test_parse_and_eval
 test_value_hash
+test_float_conversion
 
 # The following tests require execution.
 
@@ -510,6 +582,7 @@ if ![runto_main] then {
 }
 
 test_value_in_inferior
+test_value_from_buffer
 test_inferior_function_call
 test_value_after_death
 

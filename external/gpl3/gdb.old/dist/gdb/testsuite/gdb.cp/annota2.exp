@@ -1,4 +1,4 @@
-#   Copyright 1999-2017 Free Software Foundation, Inc.
+#   Copyright 1999-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,12 +29,10 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile \
     return -1
 }
 
-# are we on a target board? If so, don't run these tests.
-# note: this is necessary because we cannot use runto_main (which would
-# work for remote targets too) because of the different prompt we get
-# when using annotation level 2.
+# This testcase cannot use runto_main because of the different prompt
+# we get when using annotation level 2.
 #
-if [is_remote target] then {
+if ![target_can_use_run_cmd] {
     return 0
 }
 

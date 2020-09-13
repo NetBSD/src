@@ -1,4 +1,4 @@
-dnl Copyright (C) 1996-2017 Free Software Foundation, Inc.
+dnl Copyright (C) 1996-2019 Free Software Foundation, Inc.
 dnl
 dnl This program is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -14,7 +14,6 @@ dnl You should have received a copy of the GNU General Public License
 dnl along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 dnl Process this file with autoconf to produce a configure script.
-AC_PREREQ(2.64)dnl
 AC_INIT(Makefile.in)
 sinclude(../common/acinclude.m4)
 
@@ -27,12 +26,11 @@ AC_CACHE_CHECK([for cygwin], sim_cv_os_cygwin,
 lose
 #endif],[sim_cv_os_cygwin=yes],[sim_cv_os_cygwin=no])])
 
+# Keep in sync with gdb's configure.ac list.
+AC_SEARCH_LIBS(tgetent, [termcap tinfo curses ncurses],
+  [TERMCAP=$ac_cv_search_tgetent], [TERMCAP=""])
 if test x$sim_cv_os_cygwin = xyes; then
-  TERMCAP='`if test -r ../../libtermcap/libtermcap.a; then echo ../../libtermcap/libtermcap.a; else echo -ltermcap; fi` -luser32'
-else
-  # Keep in sync with gdb's configure.ac list.
-  AC_SEARCH_LIBS(tgetent, [termcap tinfo curses ncurses],
-    [TERMCAP=$ac_cv_search_tgetent], [TERMCAP=""])
+  TERMCAP="${TERMCAP} -luser32"
 fi
 AC_SUBST(TERMCAP)
 

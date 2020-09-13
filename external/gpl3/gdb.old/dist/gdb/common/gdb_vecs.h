@@ -1,6 +1,6 @@
 /* Some commonly-used VEC types.
 
-   Copyright (C) 2012-2017 Free Software Foundation, Inc.
+   Copyright (C) 2012-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,33 +17,73 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef GDB_VECS_H
-#define GDB_VECS_H
+#ifndef COMMON_GDB_VECS_H
+#define COMMON_GDB_VECS_H
 
 #include "vec.h"
 
-typedef char *char_ptr;
-typedef const char *const_char_ptr;
+/* Split STR, a list of DELIMITER-separated fields, into a char pointer vector.
 
-DEF_VEC_P (char_ptr);
+   You may modify the returned strings.  */
 
-DEF_VEC_P (const_char_ptr);
+extern std::vector<gdb::unique_xmalloc_ptr<char>>
+  delim_string_to_char_ptr_vec (const char *str, char delimiter);
 
-DEF_VEC_I (int);
+/* Like dirnames_to_char_ptr_vec, but append the directories to *VECP.  */
 
-DEF_VEC_I (CORE_ADDR);
+extern void dirnames_to_char_ptr_vec_append
+  (std::vector<gdb::unique_xmalloc_ptr<char>> *vecp, const char *dirnames);
 
-extern void free_char_ptr_vec (VEC (char_ptr) *char_ptr_vec);
+/* Split DIRNAMES by DIRNAME_SEPARATOR delimiter and return a list of all the
+   elements in their original order.  For empty string ("") DIRNAMES return
+   list of one empty string ("") element.
 
-extern struct cleanup *
-  make_cleanup_free_char_ptr_vec (VEC (char_ptr) *char_ptr_vec);
+   You may modify the returned strings.  */
 
-extern VEC (char_ptr) *delim_string_to_char_ptr_vec (const char *str,
-						     char delimiter);
+extern std::vector<gdb::unique_xmalloc_ptr<char>>
+  dirnames_to_char_ptr_vec (const char *dirnames);
 
-extern void dirnames_to_char_ptr_vec_append (VEC (char_ptr) **vecp,
-					     const char *dirnames);
+/* Remove the element pointed by iterator IT from VEC, not preserving the order
+   of the remaining elements.  Return the removed element.  */
 
-extern VEC (char_ptr) *dirnames_to_char_ptr_vec (const char *dirnames);
+template <typename T>
+T
+unordered_remove (std::vector<T> &vec, typename std::vector<T>::iterator it)
+{
+  gdb_assert (it >= vec.begin () && it < vec.end ());
 
-#endif /* GDB_VECS_H */
+  T removed = std::move (*it);
+  *it = std::move (vec.back ());
+  vec.pop_back ();
+
+  return removed;
+}
+
+/* Remove the element at position IX from VEC, not preserving the order of the
+   remaining elements.  Return the removed element.  */
+
+template <typename T>
+T
+unordered_remove (std::vector<T> &vec, typename std::vector<T>::size_type ix)
+{
+  gdb_assert (ix < vec.size ());
+
+  return unordered_remove (vec, vec.begin () + ix);
+}
+
+/* Remove the element at position IX from VEC, preserving the order the
+   remaining elements.  Return the removed element.  */
+
+template <typename T>
+T
+ordered_remove (std::vector<T> &vec, typename std::vector<T>::size_type ix)
+{
+  gdb_assert (ix < vec.size ());
+
+  T removed = std::move (vec[ix]);
+  vec.erase (vec.begin () + ix);
+
+  return removed;
+}
+
+#endif /* COMMON_GDB_VECS_H */
