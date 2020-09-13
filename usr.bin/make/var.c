@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.507 2020/09/13 07:42:20 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.508 2020/09/13 08:11:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.507 2020/09/13 07:42:20 rillig Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.508 2020/09/13 08:11:40 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.507 2020/09/13 07:42:20 rillig Exp $");
+__RCSID("$NetBSD: var.c,v 1.508 2020/09/13 08:11:40 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3372,8 +3372,16 @@ ParseVarname(const char **pp, char startc, char endc,
 static Boolean
 ValidShortVarname(char varname, const char *start)
 {
-    if (varname != '\0' && strchr(")}:$", varname) == NULL)
-	return TRUE;
+    switch (varname) {
+    case '\0':
+    case ')':
+    case '}':
+    case ':':
+    case '$':
+	break;
+    default:
+        return TRUE;
+    }
 
     if (!DEBUG(LINT))
 	return FALSE;
