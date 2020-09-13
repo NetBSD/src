@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.135 2020/09/12 16:38:19 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.136 2020/09/13 15:15:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -68,19 +68,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.135 2020/09/12 16:38:19 rillig Exp $";
-#else
-#include <sys/cdefs.h>
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
-#else
-__RCSID("$NetBSD: make.c,v 1.135 2020/09/12 16:38:19 rillig Exp $");
-#endif
-#endif /* not lint */
-#endif
-
 /*-
  * make.c --
  *	The functions which perform the examination of targets and
@@ -118,6 +105,9 @@ __RCSID("$NetBSD: make.c,v 1.135 2020/09/12 16:38:19 rillig Exp $");
 #include    "make.h"
 #include    "dir.h"
 #include    "job.h"
+
+/*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
+MAKE_RCSID("$NetBSD: make.c,v 1.136 2020/09/13 15:15:51 rillig Exp $");
 
 static unsigned int checked = 1;/* Sequence # to detect recursion */
 static Lst     	toBeMade;	/* The current fringe of the graph. These

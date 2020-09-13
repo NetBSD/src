@@ -1,4 +1,4 @@
-/*	$NetBSD: enum.c,v 1.7 2020/09/12 14:41:00 rillig Exp $	*/
+/*	$NetBSD: enum.c,v 1.8 2020/09/13 15:15:51 rillig Exp $	*/
 
 /*
  Copyright (c) 2020 Roland Illig <rillig@NetBSD.org>
@@ -27,20 +27,13 @@
  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: enum.c,v 1.7 2020/09/12 14:41:00 rillig Exp $";
-#else
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: enum.c,v 1.7 2020/09/12 14:41:00 rillig Exp $");
-#endif
-#endif
-
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "enum.h"
+#include "make.h"
+
+MAKE_RCSID("$NetBSD: enum.c,v 1.8 2020/09/13 15:15:51 rillig Exp $");
 
 /* Convert a bitset into a string representation, showing the names of the
  * individual bits.

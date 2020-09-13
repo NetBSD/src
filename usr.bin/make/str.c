@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.64 2020/08/30 19:56:02 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.65 2020/09/13 15:15:51 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -68,20 +68,10 @@
  * SUCH DAMAGE.
  */
 
-#ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: str.c,v 1.64 2020/08/30 19:56:02 rillig Exp $";
-#else
-#include <sys/cdefs.h>
-#ifndef lint
-#if 0
-static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
-#else
-__RCSID("$NetBSD: str.c,v 1.64 2020/08/30 19:56:02 rillig Exp $");
-#endif
-#endif				/* not lint */
-#endif
-
 #include "make.h"
+
+/*	"@(#)str.c	5.8 (Berkeley) 6/1/90"	*/
+MAKE_RCSID("$NetBSD: str.c,v 1.65 2020/09/13 15:15:51 rillig Exp $");
 
 /* Return the concatenation of s1 and s2, freshly allocated. */
 char *

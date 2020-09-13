@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.143 2020/09/13 13:53:55 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.144 2020/09/13 15:15:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -69,19 +69,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.143 2020/09/13 13:53:55 rillig Exp $";
-#else
-#include <sys/cdefs.h>
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
-#else
-__RCSID("$NetBSD: cond.c,v 1.143 2020/09/13 13:53:55 rillig Exp $");
-#endif
-#endif /* not lint */
-#endif
-
 /* Handling of conditionals in a makefile.
  *
  * Interface:
@@ -104,6 +91,9 @@ __RCSID("$NetBSD: cond.c,v 1.143 2020/09/13 13:53:55 rillig Exp $");
 
 #include "make.h"
 #include "dir.h"
+
+/*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
+MAKE_RCSID("$NetBSD: cond.c,v 1.144 2020/09/13 15:15:51 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:

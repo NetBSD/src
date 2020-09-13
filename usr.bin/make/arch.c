@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.113 2020/09/13 06:15:29 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.114 2020/09/13 15:15:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -68,19 +68,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.113 2020/09/13 06:15:29 rillig Exp $";
-#else
-#include <sys/cdefs.h>
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
-#else
-__RCSID("$NetBSD: arch.c,v 1.113 2020/09/13 06:15:29 rillig Exp $");
-#endif
-#endif /* not lint */
-#endif
-
 /*-
  * arch.c --
  *	Functions to manipulate libraries, archives and their members.
@@ -144,6 +131,9 @@ __RCSID("$NetBSD: arch.c,v 1.113 2020/09/13 06:15:29 rillig Exp $");
 #include    "hash.h"
 #include    "dir.h"
 #include    "config.h"
+
+/*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
+MAKE_RCSID("$NetBSD: arch.c,v 1.114 2020/09/13 15:15:51 rillig Exp $");
 
 #ifdef TARGET_MACHINE
 #undef MAKE_MACHINE

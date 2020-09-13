@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.141 2020/09/12 23:12:44 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.142 2020/09/13 15:15:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -69,19 +69,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.141 2020/09/12 23:12:44 rillig Exp $";
-#else
-#include <sys/cdefs.h>
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
-#else
-__RCSID("$NetBSD: dir.c,v 1.141 2020/09/12 23:12:44 rillig Exp $");
-#endif
-#endif /* not lint */
-#endif
-
 /*-
  * dir.c --
  *	Directory searching using wildcards and/or normal names...
@@ -146,6 +133,8 @@ __RCSID("$NetBSD: dir.c,v 1.141 2020/09/12 23:12:44 rillig Exp $");
 #include "dir.h"
 #include "job.h"
 
+/*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
+MAKE_RCSID("$NetBSD: dir.c,v 1.142 2020/09/13 15:15:51 rillig Exp $");
 
 #define DIR_DEBUG0(fmt) \
     if (!DEBUG(DIR)) (void) 0; else fprintf(debug_file, fmt)
