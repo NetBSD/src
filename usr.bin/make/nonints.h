@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.120 2020/09/13 19:16:22 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.121 2020/09/13 19:46:23 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -258,7 +258,10 @@ typedef enum {
      *
      * This should never happen since it is impossible to say where
      * exactly the evaluation error occurred. */
-    VPE_EVAL_SILENT	= 0x0200
+    VPE_EVAL_SILENT	= 0x0200,
+
+    /* See if a message has already been printed for this error. */
+    VPE_ANY_MSG		= VPE_PARSE_MSG | VPE_UNDEF_MSG | VPE_EVAL_MSG
 } VarParseErrors;
 
 void Var_Delete(const char *, GNode *);
