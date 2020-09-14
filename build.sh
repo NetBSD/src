@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.343 2020/07/26 09:17:24 rillig Exp $
+#	$NetBSD: build.sh,v 1.344 2020/09/14 09:02:11 kim Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1028,7 +1028,7 @@ usage()
 	cat <<_usage_
 
 Usage: ${progname} [-EhnoPRrUuxy] [-a arch] [-B buildid] [-C cdextras]
-                [-c compiler>] [-D dest] [-j njob] [-M obj] [-m mach]
+                [-c compiler] [-D dest] [-j njob] [-M obj] [-m mach]
                 [-N noisy] [-O obj] [-R release] [-S seed] [-T tools]
                 [-V var=[value]] [-w wrapper] [-X x11src] [-Y extsrcsrc]
                 [-Z var]
@@ -1961,7 +1961,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.343 2020/07/26 09:17:24 rillig Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.344 2020/09/14 09:02:11 kim Exp $
 # with these arguments: ${_args}
 #
 
