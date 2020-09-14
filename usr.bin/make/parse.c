@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.317 2020/09/14 17:47:05 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.318 2020/09/14 18:21:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.317 2020/09/14 17:47:05 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.318 2020/09/14 18:21:26 rillig Exp $");
 
 /* types and constants */
 
@@ -214,7 +214,9 @@ static GNode *mainNode;
 
 /* eval state */
 
-/* targets we're working on */
+/* During parsing, the targets from the previous dependency line.
+ *
+ * See unit-tests/deptgt.mk, keyword "parse.c:targets". */
 static Lst targets;
 
 #ifdef CLEANUP
@@ -3034,7 +3036,7 @@ Parse_File(const char *name, int fd)
 	    line = Var_Subst(line, VAR_CMD, VARE_UNDEFERR|VARE_WANTRES);
 
 	    /*
-	     * Need a non-circular list for the target nodes
+	     * Need a list for the target nodes
 	     */
 	    if (targets != NULL)
 		Lst_Free(targets);
