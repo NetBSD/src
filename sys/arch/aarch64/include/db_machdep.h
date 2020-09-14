@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.10 2020/07/08 03:45:13 ryo Exp $ */
+/* $NetBSD: db_machdep.h,v 1.11 2020/09/14 10:53:02 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -76,7 +76,11 @@ typedef uintptr_t db_addr_t;
 
 #define BKPT_ADDR(addr)		(addr)
 #define BKPT_SIZE		4
+#ifdef __AARCH64EB__
+#define BKPT_INSN		0x000020d4	/* brk #0 */
+#else
 #define BKPT_INSN		0xd4200000	/* brk #0 */
+#endif
 #define BKPT_SET(insn, addr)	(BKPT_INSN)
 
 typedef struct trapframe db_regs_t;
@@ -99,18 +103,21 @@ int kdb_trap(int, struct trapframe *);
 static inline bool
 inst_return(db_expr_t insn)
 {
+	LE32TOH(insn);
 	return ((insn & 0xfffffc1f) == 0xd65f0000);	/* ret xN */
 }
 
 static inline bool
 inst_trap_return(db_expr_t insn)
 {
+	LE32TOH(insn);
 	return insn == 0xd69f03e0;			/* eret */
 }
 
 static inline bool
 inst_call(db_expr_t insn)
 {
+	LE32TOH(insn);
 	return ((insn & 0xfc000000) == 0x94000000)	/* bl */
 	    || ((insn & 0xfffffc1f) == 0xd63f0000);	/* blr */
 }
@@ -118,6 +125,7 @@ inst_call(db_expr_t insn)
 static inline bool
 inst_load(db_expr_t insn)
 {
+	LE32TOH(insn);
 	return
 	    ((insn & 0xffe00c00) == 0xb8800000) ||	/* ldursw */
 	    /* ldrsw imm{pre,post}idx */
@@ -155,6 +163,7 @@ inst_load(db_expr_t insn)
 static inline bool
 inst_store(db_expr_t insn)
 {
+	LE32TOH(insn);
 	return
 	    ((insn & 0xbfe00000) == 0x88200000) ||	/* stlxp,stxp */
 	    /* stp {pre,post}idx,stp signed,stnp */
@@ -178,6 +187,7 @@ inst_store(db_expr_t insn)
 static inline bool
 inst_branch(db_expr_t insn)
 {
+	LE32TOH(insn);
 	return
 	    ((insn & 0xff000010) == 0x54000000) ||	/* b.cond */
 	    ((insn & 0xfc000000) == 0x14000000) ||	/* b imm */
