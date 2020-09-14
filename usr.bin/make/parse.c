@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.315 2020/09/14 16:59:41 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.316 2020/09/14 17:44:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.315 2020/09/14 16:59:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.316 2020/09/14 17:44:57 rillig Exp $");
 
 /* types and constants */
 
@@ -745,48 +745,40 @@ ParseMessage(char *line)
 
 struct ParseLinkSrcArgs {
     GNode *cgn;
+
+    /* The special target of the current dependency line. */
+    /* Example: for ".SUFFIXES: .c.o", it is 'Suffixes'. */
     ParseSpecial specType;
 };
 
-/*-
- *---------------------------------------------------------------------
- * ParseLinkSrc  --
- *	Link the parent node to its new child. Used in a Lst_ForEach by
- *	ParseDoDependency. If the specType isn't 'Not', the parent
- *	isn't linked as a parent of the child.
+/* Add the child to the parent's children.
  *
- * Input:
- *	pgnp		The parent node
- *	cgpn		The child node
- *
- * Results:
- *	Always = 0
- *
- * Side Effects:
- *	New elements are added to the parents list of cgn and the
- *	children list of cgn. the unmade field of pgn is updated
- *	to reflect the additional child.
- *---------------------------------------------------------------------
- */
+ * Add the parent to the child's parents, but only if the target is not
+ * special.  An example for such a special target is .END, which does not
+ * need to be informed once the child target has been made. */
 static int
 ParseLinkSrc(void *pgnp, void *data)
 {
     const struct ParseLinkSrcArgs *args = data;
-    GNode          *pgn = (GNode *)pgnp;
-    GNode          *cgn = args->cgn;
+    GNode *pgn = pgnp;
+    GNode *cgn = args->cgn;
 
     if ((pgn->type & OP_DOUBLEDEP) && !Lst_IsEmpty(pgn->cohorts))
 	pgn = LstNode_Datum(Lst_Last(pgn->cohorts));
+
     Lst_Append(pgn->children, cgn);
+    pgn->unmade += 1;
+
     if (args->specType == Not)
 	Lst_Append(cgn->parents, pgn);
-    pgn->unmade += 1;
+
     if (DEBUG(PARSE)) {
-	fprintf(debug_file, "# %s: added child %s - %s\n", __func__,
-	    pgn->name, cgn->name);
+	fprintf(debug_file, "# %s: added child %s - %s\n",
+		__func__, pgn->name, cgn->name);
 	Targ_PrintNode(pgn, 0);
 	Targ_PrintNode(cgn, 0);
     }
+
     return 0;
 }
 
