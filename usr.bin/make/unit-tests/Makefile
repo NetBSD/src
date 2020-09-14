@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.141 2020/09/14 06:22:59 rillig Exp $
+# $NetBSD: Makefile,v 1.142 2020/09/14 06:44:50 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -67,6 +67,7 @@ TESTS+=		cond-token-number
 TESTS+=		cond-token-plain
 TESTS+=		cond-token-string
 TESTS+=		cond-token-var
+TESTS+=		cond-undef-lint
 TESTS+=		cond1
 TESTS+=		cond2
 TESTS+=		counter

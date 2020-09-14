@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.923 2020/09/14 06:22:59 rillig Exp $
+# $NetBSD: mi,v 1.924 2020/09/14 06:44:50 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4603,6 +4603,8 @@
 ./usr/tests/usr.bin/make/unit-tests/cond-token-string.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/cond-token-var.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/cond-token-var.mk				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/cond-undef-lint.exp				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/cond-undef-lint.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/cond1.exp					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/cond1.mk					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/cond2.exp					tests-usr.bin-tests	compattestfile,atf
