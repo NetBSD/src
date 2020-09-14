@@ -1,4 +1,4 @@
-/* $NetBSD: lst.c,v 1.63 2020/09/13 15:15:51 rillig Exp $ */
+/* $NetBSD: lst.c,v 1.64 2020/09/14 19:14:19 rillig Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -36,7 +36,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: lst.c,v 1.63 2020/09/13 15:15:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: lst.c,v 1.64 2020/09/14 19:14:19 rillig Exp $");
 
 struct ListNode {
     struct ListNode *prev;	/* previous element in list */
@@ -651,9 +651,15 @@ void Stack_Push(Stack *stack, void *datum)
 
 void *Stack_Pop(Stack *stack)
 {
+    void *datum;
+
     assert(stack->len > 0);
     stack->len--;
-    return stack->items[stack->len];
+    datum = stack->items[stack->len];
+#ifdef CLEANUP
+    stack->items[stack->len] = NULL;
+#endif
+    return datum;
 }
 
 void Stack_Done(Stack *stack)
