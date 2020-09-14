@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.15 2019/12/24 14:50:59 kamil Exp $ */
+/*	$NetBSD: ptrace.h,v 1.16 2020/09/14 09:47:43 kamil Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,14 +55,14 @@
 	"PT_SETFPREGS",
 
 #include <machine/reg.h>
-#define PTRACE_REG_PC(r)	((register_t)(r)->r_pc)
+#define PTRACE_REG_PC(r)	((unsigned long int)(r)->r_pc)
 #define PTRACE_REG_FP(r)	0 /* not stored in struct reg */
 #define PTRACE_REG_SET_PC(r, v)	do {	\
 	(r)->r_pc = (v);		\
 	(r)->r_npc = (v) + 4;		\
     } while (/*CONSTCOND*/0)
-#define PTRACE_REG_SP(r)	((register_t)(r)->r_out[6])
-#define PTRACE_REG_INTRV(r)	((register_t)(r)->r_out[0])
+#define PTRACE_REG_SP(r)	((unsigned long int)(r)->r_out[6])
+#define PTRACE_REG_INTRV(r)	((unsigned long int)(r)->r_out[0])
 
 #define PTRACE_ILLEGAL_ASM	__asm __volatile (".word 0" : : : "memory")
 
