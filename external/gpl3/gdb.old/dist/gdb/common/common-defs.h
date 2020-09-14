@@ -1,6 +1,6 @@
 /* Common definitions.
 
-   Copyright (C) 1986-2017 Free Software Foundation, Inc.
+   Copyright (C) 1986-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,15 +17,26 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_DEFS_H
-#define COMMON_DEFS_H
+#ifndef COMMON_COMMON_DEFS_H
+#define COMMON_COMMON_DEFS_H
 
 #include "config.h"
+
+#undef PACKAGE_NAME
+#undef PACKAGE_VERSION
+#undef PACKAGE_STRING
+#undef PACKAGE_TARNAME
+
 #ifdef GDBSERVER
 #include "build-gnulib-gdbserver/config.h"
 #else
 #include "build-gnulib/config.h"
 #endif
+
+#undef PACKAGE_NAME
+#undef PACKAGE_VERSION
+#undef PACKAGE_STRING
+#undef PACKAGE_TARNAME
 
 /* From:
     https://www.gnu.org/software/gnulib/manual/html_node/stdint_002eh.html
@@ -47,6 +58,19 @@
 #define __STDC_CONSTANT_MACROS 1
 #define __STDC_LIMIT_MACROS 1
 #define __STDC_FORMAT_MACROS 1
+
+/* Some distros enable _FORTIFY_SOURCE by default, which on occasion
+   has caused build failures with -Wunused-result when a patch is
+   developed on a distro that does not enable _FORTIFY_SOURCE.  We
+   enable it here in order to try to catch these problems earlier;
+   plus this seems like a reasonable safety measure.  The check for
+   optimization is required because _FORTIFY_SOURCE only works when
+   optimization is enabled.  If _FORTIFY_SOURCE is already defined,
+   then we don't do anything.  */
+
+#if !defined _FORTIFY_SOURCE && defined __OPTIMIZE__ && __OPTIMIZE__ > 0
+#define _FORTIFY_SOURCE 2
+#endif
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -83,6 +107,7 @@
 #include "common-debug.h"
 #include "cleanups.h"
 #include "common-exceptions.h"
+#include "common/poison.h"
 
 #define EXTERN_C extern "C"
 #define EXTERN_C_PUSH extern "C" {
@@ -91,4 +116,16 @@
 /* Pull in gdb::unique_xmalloc_ptr.  */
 #include "common/gdb_unique_ptr.h"
 
-#endif /* COMMON_DEFS_H */
+/* String containing the current directory (what getwd would return).  */
+extern char *current_directory;
+
+/* sbrk on macOS is not useful for our purposes, since sbrk(0) always
+   returns the same value.  brk/sbrk on macOS is just an emulation
+   that always returns a pointer to a 4MB section reserved for
+   that.  */
+
+#if defined (HAVE_SBRK) && !__APPLE__
+#define HAVE_USEFUL_SBRK 1
+#endif
+
+#endif /* COMMON_COMMON_DEFS_H */

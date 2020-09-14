@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2017 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,9 +25,11 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
-#include "gdb_wait.h"
+#include "common/gdb_wait.h"
 #include <signal.h>
-#include "filestuff.h"
+#include "common/filestuff.h"
+#include "common/common-inferior.h"
+#include "nat/fork-inferior.h"
 
 int using_threads = 1;
 
@@ -62,14 +64,14 @@ lynx_debug (char *string, ...)
 /* Build a ptid_t given a PID and a LynxOS TID.  */
 
 static ptid_t
-lynx_ptid_build (int pid, long tid)
+lynx_ptid_t (int pid, long tid)
 {
   /* brobecker/2010-06-21: It looks like the LWP field in ptids
      should be distinct for each thread (see write_ptid where it
      writes the thread ID from the LWP).  So instead of storing
      the LynxOS tid in the tid field of the ptid, we store it in
      the lwp field.  */
-  return ptid_build (pid, tid, 0);
+  return ptid_t (pid, tid, 0);
 }
 
 /* Return the process ID of the given PTID.
@@ -81,7 +83,7 @@ lynx_ptid_build (int pid, long tid)
 static int
 lynx_ptid_get_pid (ptid_t ptid)
 {
-  return ptid_get_pid (ptid);
+  return ptid.pid ();
 }
 
 /* Return the LynxOS tid of the given PTID.  */
@@ -89,9 +91,9 @@ lynx_ptid_get_pid (ptid_t ptid)
 static long
 lynx_ptid_get_tid (ptid_t ptid)
 {
-  /* See lynx_ptid_build: The LynxOS tid is stored inside the lwp field
+  /* See lynx_ptid_t: The LynxOS tid is stored inside the lwp field
      of the ptid.  */
-  return ptid_get_lwp (ptid);
+  return ptid.lwp ();
 }
 
 /* For a given PTID, return the associated PID as known by the LynxOS
@@ -224,36 +226,43 @@ lynx_add_process (int pid, int attached)
   return proc;
 }
 
+/* Callback used by fork_inferior to start tracing the inferior.  */
+
+static void
+lynx_ptrace_fun ()
+{
+  int pgrp;
+
+  /* Switch child to its own process group so that signals won't
+     directly affect GDBserver. */
+  pgrp = getpid();
+  if (pgrp < 0)
+    trace_start_error_with_name ("pgrp");
+  if (setpgid (0, pgrp) < 0)
+    trace_start_error_with_name ("setpgid");
+  if (ioctl (0, TIOCSPGRP, &pgrp) < 0)
+    trace_start_error_with_name ("ioctl");
+  if (lynx_ptrace (PTRACE_TRACEME, null_ptid, 0, 0, 0) < 0)
+    trace_start_error_with_name ("lynx_ptrace");
+}
+
 /* Implement the create_inferior method of the target_ops vector.  */
 
 static int
-lynx_create_inferior (char *program, char **allargs)
+lynx_create_inferior (const char *program,
+		      const std::vector<char *> &program_args)
 {
   int pid;
+  std::string str_program_args = stringify_argv (program_args);
 
   lynx_debug ("lynx_create_inferior ()");
 
-  pid = fork ();
-  if (pid < 0)
-    perror_with_name ("fork");
+  pid = fork_inferior (program,
+		       str_program_args.c_str (),
+		       get_environ ()->envp (), lynx_ptrace_fun,
+		       NULL, NULL, NULL, NULL);
 
-  if (pid == 0)
-    {
-      int pgrp;
-
-      close_most_fds ();
-
-      /* Switch child to its own process group so that signals won't
-         directly affect gdbserver. */
-      pgrp = getpid();
-      setpgid (0, pgrp);
-      ioctl (0, TIOCSPGRP, &pgrp);
-      lynx_ptrace (PTRACE_TRACEME, null_ptid, 0, 0, 0);
-      execv (program, allargs);
-      fprintf (stderr, "Cannot exec %s: %s.\n", program, strerror (errno));
-      fflush (stderr);
-      _exit (0177);
-    }
+  post_fork_inferior (pid, program);
 
   lynx_add_process (pid, 0);
   /* Do not add the process thread just yet, as we do not know its tid.
@@ -285,7 +294,7 @@ lynx_add_threads_after_attach (int pid)
     if ((sscanf (buf, "%d %d", &thread_pid, &thread_tid) == 2
 	 && thread_pid == pid))
     {
-      ptid_t thread_ptid = lynx_ptid_build (pid, thread_tid);
+      ptid_t thread_ptid = lynx_ptid_t (pid, thread_tid);
 
       if (!find_thread_ptid (thread_ptid))
 	{
@@ -303,7 +312,7 @@ lynx_add_threads_after_attach (int pid)
 static int
 lynx_attach (unsigned long pid)
 {
-  ptid_t ptid = lynx_ptid_build (pid, 0);
+  ptid_t ptid = lynx_ptid_t (pid, 0);
 
   if (lynx_ptrace (PTRACE_ATTACH, ptid, 0, 0, 0) != 0)
     error ("Cannot attach to process %lu: %s (%d)\n", pid,
@@ -333,17 +342,17 @@ lynx_resume (struct thread_resume *resume_info, size_t n)
      LynxOS 178 is a little more sensitive, and triggers some
      unexpected signals (Eg SIG61) when we resume the inferior
      using a different thread.  */
-  if (ptid_equal (ptid, minus_one_ptid))
+  if (ptid == minus_one_ptid)
     ptid = current_process()->priv->last_wait_event_ptid;
 
   /* The ptid might still be minus_one_ptid; this can happen between
      the moment we create the inferior or attach to a process, and
      the moment we resume its execution for the first time.  It is
      fine to use the current_thread's ptid in those cases.  */
-  if (ptid_equal (ptid, minus_one_ptid))
-    ptid = thread_to_gdb_id (current_thread);
+  if (ptid == minus_one_ptid)
+    ptid = ptid_of (current_thread);
 
-  regcache_invalidate_pid (ptid_get_pid (ptid));
+  regcache_invalidate_pid (ptid.pid ());
 
   errno = 0;
   lynx_ptrace (request, ptid, 1, signal, 0);
@@ -413,15 +422,15 @@ lynx_wait_1 (ptid_t ptid, struct target_waitstatus *status, int options)
   int wstat;
   ptid_t new_ptid;
 
-  if (ptid_equal (ptid, minus_one_ptid))
-    pid = lynx_ptid_get_pid (thread_to_gdb_id (current_thread));
+  if (ptid == minus_one_ptid)
+    pid = lynx_ptid_get_pid (ptid_of (current_thread));
   else
     pid = BUILDPID (lynx_ptid_get_pid (ptid), lynx_ptid_get_tid (ptid));
 
 retry:
 
   ret = lynx_waitpid (pid, &wstat);
-  new_ptid = lynx_ptid_build (ret, ((union wait *) &wstat)->w_tid);
+  new_ptid = lynx_ptid_t (ret, ((union wait *) &wstat)->w_tid);
   find_process_pid (ret)->priv->last_wait_event_ptid = new_ptid;
 
   /* If this is a new thread, then add it now.  The reason why we do
@@ -513,15 +522,10 @@ lynx_wait (ptid_t ptid, struct target_waitstatus *status, int options)
 /* Implement the kill target_ops method.  */
 
 static int
-lynx_kill (int pid)
+lynx_kill (process_info *process)
 {
-  ptid_t ptid = lynx_ptid_build (pid, 0);
+  ptid_t ptid = lynx_ptid_t (process->pid, 0);
   struct target_waitstatus status;
-  struct process_info *process;
-
-  process = find_process_pid (pid);
-  if (process == NULL)
-    return -1;
 
   lynx_ptrace (PTRACE_KILL, ptid, 0, 0, 0);
   lynx_wait (ptid, &status, 0);
@@ -532,35 +536,12 @@ lynx_kill (int pid)
 /* Implement the detach target_ops method.  */
 
 static int
-lynx_detach (int pid)
+lynx_detach (process_info *process)
 {
-  ptid_t ptid = lynx_ptid_build (pid, 0);
-  struct process_info *process;
-
-  process = find_process_pid (pid);
-  if (process == NULL)
-    return -1;
+  ptid_t ptid = lynx_ptid_t (process->pid, 0);
 
   lynx_ptrace (PTRACE_DETACH, ptid, 0, 0, 0);
   the_target->mourn (process);
-  return 0;
-}
-
-/* A callback for find_inferior which removes from the thread list
-   all threads belonging to process PROC.  */
-
-static int
-lynx_delete_thread_callback (struct inferior_list_entry *entry, void *proc)
-{
-  struct process_info *process = (struct process_info *) proc;
-
-  if (ptid_get_pid (entry->id) == pid_of (process))
-    {
-      struct thread_info *thr = find_thread_ptid (entry->id);
-
-      remove_thread (thr);
-    }
-
   return 0;
 }
 
@@ -569,7 +550,7 @@ lynx_delete_thread_callback (struct inferior_list_entry *entry, void *proc)
 static void
 lynx_mourn (struct process_info *proc)
 {
-  find_inferior (&all_threads, lynx_delete_thread_callback, proc);
+  for_each_thread (proc->pid, remove_thread);
 
   /* Free our private data.  */
   free (proc->priv);
@@ -603,7 +584,7 @@ static void
 lynx_fetch_registers (struct regcache *regcache, int regno)
 {
   struct lynx_regset_info *regset = lynx_target_regsets;
-  ptid_t inferior_ptid = thread_to_gdb_id (current_thread);
+  ptid_t inferior_ptid = ptid_of (current_thread);
 
   lynx_debug ("lynx_fetch_registers (regno = %d)", regno);
 
@@ -628,7 +609,7 @@ static void
 lynx_store_registers (struct regcache *regcache, int regno)
 {
   struct lynx_regset_info *regset = lynx_target_regsets;
-  ptid_t inferior_ptid = thread_to_gdb_id (current_thread);
+  ptid_t inferior_ptid = ptid_of (current_thread);
 
   lynx_debug ("lynx_store_registers (regno = %d)", regno);
 
@@ -664,7 +645,7 @@ lynx_read_memory (CORE_ADDR memaddr, unsigned char *myaddr, int len)
   int buf;
   const int xfer_size = sizeof (buf);
   CORE_ADDR addr = memaddr & -(CORE_ADDR) xfer_size;
-  ptid_t inferior_ptid = thread_to_gdb_id (current_thread);
+  ptid_t inferior_ptid = ptid_of (current_thread);
 
   while (addr < memaddr + len)
     {
@@ -697,7 +678,7 @@ lynx_write_memory (CORE_ADDR memaddr, const unsigned char *myaddr, int len)
   int buf;
   const int xfer_size = sizeof (buf);
   CORE_ADDR addr = memaddr & -(CORE_ADDR) xfer_size;
-  ptid_t inferior_ptid = thread_to_gdb_id (current_thread);
+  ptid_t inferior_ptid = ptid_of (current_thread);
 
   while (addr < memaddr + len)
     {
@@ -733,7 +714,7 @@ lynx_write_memory (CORE_ADDR memaddr, const unsigned char *myaddr, int len)
 static void
 lynx_request_interrupt (void)
 {
-  ptid_t inferior_ptid = thread_to_gdb_id (get_first_thread ());
+  ptid_t inferior_ptid = ptid_of (get_first_thread ());
 
   kill (lynx_ptid_get_pid (inferior_ptid), SIGINT);
 }

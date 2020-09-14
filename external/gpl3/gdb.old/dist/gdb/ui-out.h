@@ -1,6 +1,6 @@
 /* Output generating routines for GDB.
 
-   Copyright (C) 1999-2017 Free Software Foundation, Inc.
+   Copyright (C) 1999-2019 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions.
    Written by Fernando Nasser for Cygnus.
@@ -66,17 +66,21 @@ enum ui_out_type
     ui_out_type_list
   };
 
-extern struct cleanup *make_cleanup_ui_out_table_begin_end (struct ui_out *ui_out,
-                                                            int nr_cols,
-							    int nr_rows,
-							    const char *tblid);
-/* Compatibility wrappers.  */
+/* Possible kinds of styling.  */
 
-extern struct cleanup *make_cleanup_ui_out_list_begin_end (struct ui_out *uiout,
-							   const char *id);
-
-extern struct cleanup *make_cleanup_ui_out_tuple_begin_end (struct ui_out *uiout,
-							    const char *id);
+enum class ui_out_style_kind
+{
+  /* The default (plain) style.  */
+  DEFAULT,
+  /* File name.  */
+  FILE,
+  /* Function name.  */
+  FUNCTION,
+  /* Variable name.  */
+  VARIABLE,
+  /* Address.  */
+  ADDRESS
+};
 
 class ui_out
 {
@@ -107,8 +111,11 @@ class ui_out
 		      int value);
   void field_core_addr (const char *fldname, struct gdbarch *gdbarch,
 			CORE_ADDR address);
-  void field_string (const char *fldname, const char *string);
-  void field_stream (const char *fldname, string_file &stream);
+  void field_string (const char *fldname, const char *string,
+		     ui_out_style_kind style = ui_out_style_kind::DEFAULT);
+  void field_string (const char *fldname, const std::string &string);
+  void field_stream (const char *fldname, string_file &stream,
+		     ui_out_style_kind style = ui_out_style_kind::DEFAULT);
   void field_skip (const char *fldname);
   void field_fmt (const char *fldname, const char *format, ...)
     ATTRIBUTE_PRINTF (3, 4);
@@ -130,7 +137,7 @@ class ui_out
      a hack to encapsulate that test.  Once GDB manages to separate the
      CLI/MI from the core of GDB the problem should just go away ....  */
 
-  bool is_mi_like_p ();
+  bool is_mi_like_p () const;
 
   bool query_table_field (int colno, int *width, int *alignment,
 			  const char **col_name);
@@ -152,7 +159,8 @@ class ui_out
   virtual void do_field_skip (int fldno, int width, ui_align align,
 			      const char *fldname) = 0;
   virtual void do_field_string (int fldno, int width, ui_align align,
-				const char *fldname, const char *string) = 0;
+				const char *fldname, const char *string,
+				ui_out_style_kind style) = 0;
   virtual void do_field_fmt (int fldno, int width, ui_align align,
 			     const char *fldname, const char *format,
 			     va_list args)
@@ -168,7 +176,7 @@ class ui_out
   /* Set as not MI-like by default.  It is overridden in subclasses if
      necessary.  */
 
-  virtual bool do_is_mi_like_p ()
+  virtual bool do_is_mi_like_p () const
   { return false; }
 
  private:
@@ -187,11 +195,9 @@ class ui_out
   ui_out_level *current_level () const;
 };
 
-/* This is similar to make_cleanup_ui_out_tuple_begin_end and
-   make_cleanup_ui_out_list_begin_end, but written as an RAII template
-   class.  It takes the ui_out_type as a template parameter.  Normally
-   this is used via the typedefs ui_out_emit_tuple and
-   ui_out_emit_list.  */
+/* Start a new tuple or list on construction, and end it on
+   destruction.  Normally this is used via the typedefs
+   ui_out_emit_tuple and ui_out_emit_list.  */
 template<ui_out_type Type>
 class ui_out_emit_type
 {
@@ -208,9 +214,7 @@ public:
     m_uiout->end (Type);
   }
 
-  ui_out_emit_type (const ui_out_emit_type<Type> &) = delete;
-  ui_out_emit_type<Type> &operator= (const ui_out_emit_type<Type> &)
-      = delete;
+  DISABLE_COPY_AND_ASSIGN (ui_out_emit_type<Type>);
 
 private:
 
@@ -219,5 +223,54 @@ private:
 
 typedef ui_out_emit_type<ui_out_type_tuple> ui_out_emit_tuple;
 typedef ui_out_emit_type<ui_out_type_list> ui_out_emit_list;
+
+/* Start a new table on construction, and end the table on
+   destruction.  */
+class ui_out_emit_table
+{
+public:
+
+  ui_out_emit_table (struct ui_out *uiout, int nr_cols, int nr_rows,
+		     const char *tblid)
+    : m_uiout (uiout)
+  {
+    m_uiout->table_begin (nr_cols, nr_rows, tblid);
+  }
+
+  ~ui_out_emit_table ()
+  {
+    m_uiout->table_end ();
+  }
+
+  ui_out_emit_table (const ui_out_emit_table &) = delete;
+  ui_out_emit_table &operator= (const ui_out_emit_table &) = delete;
+
+private:
+
+  struct ui_out *m_uiout;
+};
+
+/* On destruction, pop the last redirection by calling the uiout's
+   redirect method with a NULL parameter.  */
+class ui_out_redirect_pop
+{
+public:
+
+  ui_out_redirect_pop (ui_out *uiout)
+    : m_uiout (uiout)
+  {
+  }
+
+  ~ui_out_redirect_pop ()
+  {
+    m_uiout->redirect (NULL);
+  }
+
+  ui_out_redirect_pop (const ui_out_redirect_pop &) = delete;
+  ui_out_redirect_pop &operator= (const ui_out_redirect_pop &) = delete;
+
+private:
+  struct ui_out *m_uiout;
+};
 
 #endif /* UI_OUT_H */
