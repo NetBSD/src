@@ -1,5 +1,5 @@
 /* Instruction printing code for the ARM
-   Copyright (C) 1994-2017 Free Software Foundation, Inc.
+   Copyright (C) 1994-2019 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
    Modification by James G. Smith (jsmith@cygnus.co.uk)
 
@@ -22,7 +22,7 @@
 
 #include "sysdep.h"
 
-#include "dis-asm.h"
+#include "disassemble.h"
 #include "opcode/arm.h"
 #include "opintl.h"
 #include "safe-ctype.h"
@@ -32,6 +32,7 @@
 /* FIXME: This shouldn't be done here.  */
 #include "coff/internal.h"
 #include "libcoff.h"
+#include "bfd.h"
 #include "elf-bfd.h"
 #include "elf/internal.h"
 #include "elf/arm.h"
@@ -141,6 +142,8 @@ enum opcode_sentinel_enum
 } opcode_sentinels;
 
 #define UNDEFINED_INSTRUCTION      "\t\t; <UNDEFINED> instruction: %0-31x"
+#define UNKNOWN_INSTRUCTION_32BIT  "\t\t; <UNDEFINED> instruction: %08x"
+#define UNKNOWN_INSTRUCTION_16BIT  "\t\t; <UNDEFINED> instruction: %04x"
 #define UNPREDICTABLE_INSTRUCTION  "\t; <UNPREDICTABLE>"
 
 /* Common coprocessor opcodes shared between Arm and Thumb-2.  */
@@ -503,6 +506,8 @@ static const struct opcode32 coprocessor_opcodes[] =
     0x0ee60a10, 0x0fff0fff, "vmsr%c\tmvfr1, %12-15r"},
   {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0ee70a10, 0x0fff0fff, "vmsr%c\tmvfr0, %12-15r"},
+  {ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
+    0x0ee50a10, 0x0fff0fff, "vmsr%c\tmvfr2, %12-15r"},
   {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0ee80a10, 0x0fff0fff, "vmsr%c\tfpexc, %12-15r"},
   {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
@@ -515,6 +520,8 @@ static const struct opcode32 coprocessor_opcodes[] =
     0x0ef1fa10, 0x0fffffff, "vmrs%c\tAPSR_nzcv, fpscr"},
   {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0ef10a10, 0x0fff0fff, "vmrs%c\t%12-15r, fpscr"},
+  {ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
+    0x0ef50a10, 0x0fff0fff, "vmrs%c\t%12-15r, mvfr2"},
   {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0ef60a10, 0x0fff0fff, "vmrs%c\t%12-15r, mvfr1"},
   {ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
@@ -901,6 +908,30 @@ static const struct opcode32 coprocessor_opcodes[] =
     0xfe800800, 0xffa00f10, "vcmla%c.f32\t%12-15,22V, %16-19,7V, %0-3,5D[0], #%20'90"},
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
     0xfea00800, 0xffa00f10, "vcmla%c.f32\t%12-15,22V, %16-19,7V, %0-3,5D[0], #%20?21%20?780"},
+
+  /* Dot Product instructions in the space of coprocessor 13.  */
+  {ARM_FEATURE_COPROC (FPU_NEON_EXT_DOTPROD),
+    0xfc200d00, 0xffb00f00, "v%4?usdot.%4?us8\t%12-15,22V, %16-19,7V, %0-3,5V"},
+  {ARM_FEATURE_COPROC (FPU_NEON_EXT_DOTPROD),
+    0xfe000d00, 0xff000f00, "v%4?usdot.%4?us8\t%12-15,22V, %16-19,7V, %0-3D[%5?10]"},
+
+  /* ARMv8.2 FMAC Long instructions in the space of coprocessor 8.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_V8_2A),
+    0xfc200810, 0xffb00f50, "vfmal.f16\t%12-15,22D, s%7,16-19d, s%5,0-3d"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_V8_2A),
+    0xfca00810, 0xffb00f50, "vfmsl.f16\t%12-15,22D, s%7,16-19d, s%5,0-3d"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_V8_2A),
+    0xfc200850, 0xffb00f50, "vfmal.f16\t%12-15,22Q, d%16-19,7d, d%0-3,5d"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_V8_2A),
+    0xfca00850, 0xffb00f50, "vfmsl.f16\t%12-15,22Q, d%16-19,7d, d%0-3,5d"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_V8_2A),
+    0xfe000810, 0xffb00f50, "vfmal.f16\t%12-15,22D, s%7,16-19d, s%5,0-2d[%3d]"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_V8_2A),
+    0xfe100810, 0xffb00f50, "vfmsl.f16\t%12-15,22D, s%7,16-19d, s%5,0-2d[%3d]"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_V8_2A),
+    0xfe000850, 0xffb00f50, "vfmal.f16\t%12-15,22Q, d%16-19,7d, d%0-2d[%3,5d]"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_V8_2A),
+    0xfe100850, 0xffb00f50, "vfmsl.f16\t%12-15,22Q, d%16-19,7d, d%0-2d[%3,5d]"},
 
   /* V5 coprocessor instructions.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V5),
@@ -1757,7 +1788,8 @@ static const struct opcode32 arm_opcodes[] =
   /* V8 instructions.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V8),
     0x0320f005, 0x0fffffff, "sevl"},
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V8),
+  /* Defined in V8 but is in NOP space so available to all arch.  */
+  {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
     0xe1000070, 0xfff000f0, "hlt\t0x%16-19X%12-15X%8-11X%0-3X"},
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_ATOMICS),
     0x01800e90, 0x0ff00ff0, "stlex%c\t%12-15r, %0-3r, [%16-19R]"},
@@ -1818,6 +1850,11 @@ static const struct opcode32 arm_opcodes[] =
   /* MP Extension instructions.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_MP), 0xf410f000, 0xfc70f000, "pldw\t%a"},
 
+  /* Speculation Barriers.  */
+  {ARM_FEATURE_CORE_LOW (ARM_EXT_V3), 0xe320f014, 0xffffffff, "csdb"},
+  {ARM_FEATURE_CORE_LOW (ARM_EXT_V3), 0xf57ff040, 0xffffffff, "ssbb"},
+  {ARM_FEATURE_CORE_LOW (ARM_EXT_V3), 0xf57ff044, 0xffffffff, "pssbb"},
+
   /* V7 instructions.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V7), 0xf450f000, 0xfd70f000, "pli\t%P"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V7), 0x0320f0f0, 0x0ffffff0, "dbg%c\t#%0-3d"},
@@ -1872,6 +1909,9 @@ static const struct opcode32 arm_opcodes[] =
     0x01a00f90, 0x0ff00ff0, "strexd%c\t%12-15R, %0-3r, [%16-19R]"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6K),
     0x01e00f90, 0x0ff00ff0, "strexh%c\t%12-15R, %0-3R, [%16-19R]"},
+
+  /* ARMv8.5-A instructions.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_SB), 0xf57ff070, 0xffffffff, "sb"},
 
   /* ARM V6K NOP hints.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6K),
@@ -2310,8 +2350,6 @@ static const struct opcode32 arm_opcodes[] =
     0x01300000, 0x0ff00010, "teq%p%c\t%16-19r, %o"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
     0x01300010, 0x0ff00010, "teq%p%c\t%16-19R, %o"},
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V5),
-    0x0130f000, 0x0ff0f010, "bx%c\t%0-3r"},
 
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
     0x03400000, 0x0fe00000, "cmp%p%c\t%16-19r, %o"},
@@ -2501,7 +2539,7 @@ static const struct opcode16 thumb_opcodes[] =
 
   /* ARMv8-M Security Extensions instructions.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8M), 0x4784, 0xff87, "blxns\t%3-6r"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8M), 0x4704, 0xff07, "bxns\t%3-6r"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8M), 0x4704, 0xff87, "bxns\t%3-6r"},
 
   /* ARM V8 instructions.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V8),  0xbf50, 0xffff, "sevl%c"},
@@ -2691,7 +2729,6 @@ static const struct opcode16 thumb_opcodes[] =
        %<bitfield>W	print bitfield*4 in decimal
        %<bitfield>r	print bitfield as an ARM register
        %<bitfield>R	as %<>r but r15 is UNPREDICTABLE
-       %<bitfield>S	as %<>R but r13 is UNPREDICTABLE
        %<bitfield>c	print bitfield as a condition code
 
        %<bitfield>'c	print specified char iff bitfield is all ones
@@ -2759,17 +2796,22 @@ static const struct opcode32 thumb32_opcodes[] =
 
   /* CRC32 instructions.  */
   {ARM_FEATURE_COPROC (CRC_EXT_ARMV8),
-    0xfac0f080, 0xfff0f0f0, "crc32b\t%8-11S, %16-19S, %0-3S"},
+    0xfac0f080, 0xfff0f0f0, "crc32b\t%8-11R, %16-19R, %0-3R"},
   {ARM_FEATURE_COPROC (CRC_EXT_ARMV8),
-    0xfac0f090, 0xfff0f0f0, "crc32h\t%9-11S, %16-19S, %0-3S"},
+    0xfac0f090, 0xfff0f0f0, "crc32h\t%9-11R, %16-19R, %0-3R"},
   {ARM_FEATURE_COPROC (CRC_EXT_ARMV8),
-    0xfac0f0a0, 0xfff0f0f0, "crc32w\t%8-11S, %16-19S, %0-3S"},
+    0xfac0f0a0, 0xfff0f0f0, "crc32w\t%8-11R, %16-19R, %0-3R"},
   {ARM_FEATURE_COPROC (CRC_EXT_ARMV8),
-    0xfad0f080, 0xfff0f0f0, "crc32cb\t%8-11S, %16-19S, %0-3S"},
+    0xfad0f080, 0xfff0f0f0, "crc32cb\t%8-11R, %16-19R, %0-3R"},
   {ARM_FEATURE_COPROC (CRC_EXT_ARMV8),
-    0xfad0f090, 0xfff0f0f0, "crc32ch\t%8-11S, %16-19S, %0-3S"},
+    0xfad0f090, 0xfff0f0f0, "crc32ch\t%8-11R, %16-19R, %0-3R"},
   {ARM_FEATURE_COPROC (CRC_EXT_ARMV8),
-    0xfad0f0a0, 0xfff0f0f0, "crc32cw\t%8-11S, %16-19S, %0-3S"},
+    0xfad0f0a0, 0xfff0f0f0, "crc32cw\t%8-11R, %16-19R, %0-3R"},
+
+  /* Speculation Barriers.  */
+  {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2), 0xf3af8014, 0xffffffff, "csdb"},
+  {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2), 0xf3bf8f40, 0xffffffff, "ssbb"},
+  {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2), 0xf3bf8f44, 0xffffffff, "pssbb"},
 
   /* V7 instructions.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V7), 0xf910f000, 0xff70f000, "pli%c\t%a"},
@@ -2793,6 +2835,9 @@ static const struct opcode32 thumb32_opcodes[] =
 
   /* Security extension instructions.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_SEC),  0xf7f08000, 0xfff0f000, "smc%c\t%K"},
+
+  /* ARMv8.5-A instructions.  */
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_SB), 0xf3bf8f70, 0xffffffff, "sb"},
 
   /* Instructions defined in the basic V6T2 set.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2), 0xf3af8000, 0xffffffff, "nop%c.w"},
@@ -3362,7 +3407,7 @@ print_insn_coprocessor (bfd_vma pc,
   struct arm_private_data *private_data = info->private_data;
   arm_feature_set allowed_arches = ARM_ARCH_NONE;
 
-  ARM_FEATURE_COPY (allowed_arches, private_data->features);
+  allowed_arches = private_data->features;
 
   for (insn = coprocessor_opcodes; insn->assembler; insn++)
     {
@@ -3388,7 +3433,7 @@ print_insn_coprocessor (bfd_vma pc,
 	    continue;
 
 	  case SENTINEL_GENERIC_START:
-	    ARM_FEATURE_COPY (allowed_arches, private_data->features);
+	    allowed_arches = private_data->features;
 	    continue;
 
 	  default:
@@ -5153,7 +5198,8 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 	  return;
 	}
     }
-  abort ();
+  func (stream, UNKNOWN_INSTRUCTION_32BIT, (unsigned)given);
+  return;
 }
 
 /* Print one 16-bit Thumb instruction from PC on INFO->STREAM.  */
@@ -5424,7 +5470,8 @@ print_insn_thumb16 (bfd_vma pc, struct disassemble_info *info, long given)
       }
 
   /* No match.  */
-  abort ();
+  func (stream, UNKNOWN_INSTRUCTION_16BIT, (unsigned)given);
+  return;
 }
 
 /* Return the name of an V7M special register.  */
@@ -5733,7 +5780,7 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		      if (off || !U)
 			{
 			  func (stream, ", #%c%u", U ? '+' : '-', off * 4);
-			  value_in_comment = (off && U) ? 1 : -1;
+			  value_in_comment = off * 4 * (U ? 1 : -1);
 			}
 		      func (stream, "]");
 		      if (W)
@@ -5745,7 +5792,7 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		      if (W)
 			{
 			  func (stream, "#%c%u", U ? '+' : '-', off * 4);
-			  value_in_comment = (off && U) ? 1 : -1;
+			  value_in_comment = off * 4 * (U ? 1 : -1);
 			}
 		      else
 			{
@@ -5979,10 +6026,6 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		      value_in_comment = val * 4;
 		      break;
 
-		    case 'S':
-		      if (val == 13)
-			is_unpredictable = TRUE;
-		      /* Fall through.  */
 		    case 'R':
 		      if (val == 15)
 			is_unpredictable = TRUE;
@@ -6052,7 +6095,8 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
       }
 
   /* No match.  */
-  abort ();
+  func (stream, UNKNOWN_INSTRUCTION_32BIT, (unsigned)given);
+  return;
 }
 
 /* Print data bytes on INFO->STREAM.  */
@@ -6118,14 +6162,17 @@ parse_arm_disassembler_options (const char *options)
 	      }
 
 	  if (i >= NUM_ARM_OPTIONS)
-	    fprintf (stderr, _("Unrecognised register name set: %s\n"), opt);
+	    /* xgettext: c-format */
+	    opcodes_error_handler (_("unrecognised register name set: %s"),
+				   opt);
 	}
       else if (CONST_STRNEQ (opt, "force-thumb"))
 	force_thumb = 1;
       else if (CONST_STRNEQ (opt, "no-force-thumb"))
 	force_thumb = 0;
       else
-	fprintf (stderr, _("Unrecognised disassembler option: %s\n"), opt);
+	/* xgettext: c-format */
+	opcodes_error_handler (_("unrecognised disassembler option: %s"), opt);
     }
 
   return;
@@ -6357,7 +6404,7 @@ mapping_symbol_for_insn (bfd_vma pc, struct disassemble_info *info,
 
 /* Given a bfd_mach_arm_XXX value, this function fills in the fields
    of the supplied arm_feature_set structure with bitmasks indicating
-   the support base architectures and coprocessor extensions.
+   the supported base architectures and coprocessor extensions.
 
    FIXME: This could more efficiently implemented as a constant array,
    although it would also be less robust.  */
@@ -6366,40 +6413,69 @@ static void
 select_arm_features (unsigned long mach,
 		     arm_feature_set * features)
 {
+  arm_feature_set arch_fset;
+  const arm_feature_set fpu_any = FPU_ANY;
+
 #undef ARM_SET_FEATURES
 #define ARM_SET_FEATURES(FSET) \
   {							\
     const arm_feature_set fset = FSET;			\
-    arm_feature_set tmp = ARM_FEATURE (0, 0, FPU_FPA) ;	\
-    ARM_MERGE_FEATURE_SETS (*features, tmp, fset);	\
+    arch_fset = fset;					\
   }
 
+  /* When several architecture versions share the same bfd_mach_arm_XXX value
+     the most featureful is chosen.  */
   switch (mach)
     {
-    case bfd_mach_arm_2:       ARM_SET_FEATURES (ARM_ARCH_V2); break;
-    case bfd_mach_arm_2a:      ARM_SET_FEATURES (ARM_ARCH_V2S); break;
-    case bfd_mach_arm_3:       ARM_SET_FEATURES (ARM_ARCH_V3); break;
-    case bfd_mach_arm_3M:      ARM_SET_FEATURES (ARM_ARCH_V3M); break;
-    case bfd_mach_arm_4:       ARM_SET_FEATURES (ARM_ARCH_V4); break;
-    case bfd_mach_arm_4T:      ARM_SET_FEATURES (ARM_ARCH_V4T); break;
-    case bfd_mach_arm_5:       ARM_SET_FEATURES (ARM_ARCH_V5); break;
-    case bfd_mach_arm_5T:      ARM_SET_FEATURES (ARM_ARCH_V5T); break;
-    case bfd_mach_arm_5TE:     ARM_SET_FEATURES (ARM_ARCH_V5TE); break;
-    case bfd_mach_arm_XScale:  ARM_SET_FEATURES (ARM_ARCH_XSCALE); break;
+    case bfd_mach_arm_2:	 ARM_SET_FEATURES (ARM_ARCH_V2); break;
+    case bfd_mach_arm_2a:	 ARM_SET_FEATURES (ARM_ARCH_V2S); break;
+    case bfd_mach_arm_3:	 ARM_SET_FEATURES (ARM_ARCH_V3); break;
+    case bfd_mach_arm_3M:	 ARM_SET_FEATURES (ARM_ARCH_V3M); break;
+    case bfd_mach_arm_4:	 ARM_SET_FEATURES (ARM_ARCH_V4); break;
+    case bfd_mach_arm_4T:	 ARM_SET_FEATURES (ARM_ARCH_V4T); break;
+    case bfd_mach_arm_5:	 ARM_SET_FEATURES (ARM_ARCH_V5); break;
+    case bfd_mach_arm_5T:	 ARM_SET_FEATURES (ARM_ARCH_V5T); break;
+    case bfd_mach_arm_5TE:	 ARM_SET_FEATURES (ARM_ARCH_V5TE); break;
+    case bfd_mach_arm_XScale:	 ARM_SET_FEATURES (ARM_ARCH_XSCALE); break;
     case bfd_mach_arm_ep9312:
-      ARM_SET_FEATURES (ARM_FEATURE_LOW (ARM_AEXT_V4T,
-					 ARM_CEXT_MAVERICK | FPU_MAVERICK));
+	ARM_SET_FEATURES (ARM_FEATURE_LOW (ARM_AEXT_V4T,
+					   ARM_CEXT_MAVERICK | FPU_MAVERICK));
        break;
-    case bfd_mach_arm_iWMMXt:  ARM_SET_FEATURES (ARM_ARCH_IWMMXT); break;
-    case bfd_mach_arm_iWMMXt2: ARM_SET_FEATURES (ARM_ARCH_IWMMXT2); break;
-      /* If the machine type is unknown allow all
-	 architecture types and all extensions.  */
-    case bfd_mach_arm_unknown: ARM_SET_FEATURES (ARM_FEATURE_ALL); break;
+    case bfd_mach_arm_iWMMXt:	 ARM_SET_FEATURES (ARM_ARCH_IWMMXT); break;
+    case bfd_mach_arm_iWMMXt2:	 ARM_SET_FEATURES (ARM_ARCH_IWMMXT2); break;
+    case bfd_mach_arm_5TEJ:	 ARM_SET_FEATURES (ARM_ARCH_V5TEJ); break;
+    case bfd_mach_arm_6:	 ARM_SET_FEATURES (ARM_ARCH_V6); break;
+    case bfd_mach_arm_6KZ:	 ARM_SET_FEATURES (ARM_ARCH_V6KZ); break;
+    case bfd_mach_arm_6T2:	 ARM_SET_FEATURES (ARM_ARCH_V6KZT2); break;
+    case bfd_mach_arm_6K:	 ARM_SET_FEATURES (ARM_ARCH_V6K); break;
+    case bfd_mach_arm_7:	 ARM_SET_FEATURES (ARM_ARCH_V7VE); break;
+    case bfd_mach_arm_6M:	 ARM_SET_FEATURES (ARM_ARCH_V6M); break;
+    case bfd_mach_arm_6SM:	 ARM_SET_FEATURES (ARM_ARCH_V6SM); break;
+    case bfd_mach_arm_7EM:	 ARM_SET_FEATURES (ARM_ARCH_V7EM); break;
+    case bfd_mach_arm_8:
+	{
+	  /* Add bits for extensions that Armv8.5-A recognizes.  */
+	  arm_feature_set armv8_5_ext_fset
+	    = ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST);
+	  ARM_SET_FEATURES (ARM_ARCH_V8_5A);
+	  ARM_MERGE_FEATURE_SETS (arch_fset, arch_fset, armv8_5_ext_fset);
+	  break;
+	}
+    case bfd_mach_arm_8R:	 ARM_SET_FEATURES (ARM_ARCH_V8R); break;
+    case bfd_mach_arm_8M_BASE:	 ARM_SET_FEATURES (ARM_ARCH_V8M_BASE); break;
+    case bfd_mach_arm_8M_MAIN:	 ARM_SET_FEATURES (ARM_ARCH_V8M_MAIN); break;
+      /* If the machine type is unknown allow all architecture types and all
+	 extensions.  */
+    case bfd_mach_arm_unknown:	 ARM_SET_FEATURES (ARM_FEATURE_ALL); break;
     default:
       abort ();
     }
-
 #undef ARM_SET_FEATURES
+
+  /* None of the feature bits related to -mfpu have an impact on Tag_CPU_arch
+     and thus on bfd_mach_arm_XXX value.  Therefore for a given
+     bfd_mach_arm_XXX value all coprocessor feature bits should be allowed.  */
+  ARM_MERGE_FEATURE_SETS (*features, arch_fset, fpu_any);
 }
 
 
@@ -6791,17 +6867,23 @@ print_insn_little_arm (bfd_vma pc, struct disassemble_info *info)
   return print_insn (pc, info, TRUE);
 }
 
-const disasm_options_t *
+const disasm_options_and_args_t *
 disassembler_options_arm (void)
 {
-  static disasm_options_t *opts = NULL;
+  static disasm_options_and_args_t *opts_and_args;
 
-  if (opts == NULL)
+  if (opts_and_args == NULL)
     {
+      disasm_options_t *opts;
       unsigned int i;
-      opts = XNEW (disasm_options_t);
+
+      opts_and_args = XNEW (disasm_options_and_args_t);
+      opts_and_args->args = NULL;
+
+      opts = &opts_and_args->options;
       opts->name = XNEWVEC (const char *, NUM_ARM_OPTIONS + 1);
       opts->description = XNEWVEC (const char *, NUM_ARM_OPTIONS + 1);
+      opts->arg = NULL;
       for (i = 0; i < NUM_ARM_OPTIONS; i++)
 	{
 	  opts->name[i] = regnames[i].name;
@@ -6815,7 +6897,7 @@ disassembler_options_arm (void)
       opts->description[i] = NULL;
     }
 
-  return opts;
+  return opts_and_args;
 }
 
 void

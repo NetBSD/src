@@ -53,5 +53,6 @@
     <reg name="bitfields" bitsize="64" type="struct2"/>
     <reg name="flags" bitsize="32" type="flags"/>
     <reg name="mixed_flags" bitsize="32" type="mixed_flags"/>
+    <reg name="groupreg" bitsize="32" type="uint32" group="foo"/>
   </feature>
 </target>

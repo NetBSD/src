@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2000-2017 Free Software Foundation, Inc.
+# Copyright 2000-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -81,12 +81,12 @@ check_sizeof "long double" ${sizeof_long_double}
 
 proc check_valueof { exp val } {
     gdb_test "next" "" ""
-    gdb_test "p value" " = ${val}" "check valueof \"$exp\""
+    gdb_test "p /d value" " = ${val}" "check valueof \"$exp\""
 }
 
 # Check that GDB and the target agree over the sign of a character.
 
-set signof_byte [get_integer_valueof "'\\377'" -1]
+set signof_byte [get_integer_valueof "(int) '\\377'" -1]
 set signof_char [get_integer_valueof "(int) (char) -1" -1]
 set signof_signed_char [get_integer_valueof "(int) (signed char) -1" -1]
 set signof_unsigned_char [get_integer_valueof "(int) (unsigned char) -1" -1]
