@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.hppa,v 1.7 2020/09/07 02:22:27 mrg Exp $
+# $NetBSD: Makefile.hppa,v 1.8 2020/09/14 16:13:18 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -32,7 +32,6 @@ GENASSYM_CONF=	${HPPA}/hppa/genassym.cf
 ##
 CPPFLAGS+=	-Dhppa
 CFLAGS+=	-mpa-risc-1-1 -msoft-float -mdisable-fpregs
-CWARNFLAGS.gcc+=${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 9:? -Wno-error=array-bounds :}
 
 .include "${HPPA}/spmath/Makefile.inc"
 
