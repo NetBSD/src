@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.305 2020/09/13 21:12:08 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.306 2020/09/14 14:58:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.305 2020/09/13 21:12:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.306 2020/09/14 14:58:27 rillig Exp $");
 
 /* types and constants */
 
@@ -1079,42 +1079,30 @@ ParseClearPath(void *path, void *dummy MAKE_ATTR_UNUSED)
     return 0;
 }
 
-/*-
- *---------------------------------------------------------------------
- * ParseDoDependency  --
- *	Parse the dependency line in line.
+/* Parse a dependency line consisting of targets, followed by a dependency
+ * operator, optionally followed by sources.
  *
- * Input:
- *	line		the line to parse
+ * The nodes of the sources are linked as children to the nodes of the
+ * targets. Nodes are created as necessary.
  *
- * Results:
- *	None
- *
- * Side Effects:
- *	The nodes of the sources are linked as children to the nodes of the
- *	targets. Some nodes may be created.
- *
- *	We parse a dependency line by first extracting words from the line and
- * finding nodes in the list of all targets with that name. This is done
- * until a character is encountered which is an operator character. Currently
- * these are only ! and :. At this point the operator is parsed and the
- * pointer into the line advanced until the first source is encountered.
- * 	The parsed operator is applied to each node in the 'targets' list,
+ * The operator is applied to each node in the global 'targets' list,
  * which is where the nodes found for the targets are kept, by means of
  * the ParseDoOp function.
- *	The sources are read in much the same way as the targets were except
- * that now they are expanded using the wildcarding scheme of the C-Shell
+ *
+ * The sources are parsed in much the same way as the targets, except
+ * that they are expanded using the wildcarding scheme of the C-Shell,
  * and all instances of the resulting words in the list of all targets
  * are found. Each of the resulting nodes is then linked to each of the
  * targets as one of its children.
- *	Certain targets are handled specially. These are the ones detailed
- * by the specType variable.
- *	The storing of transformation rules is also taken care of here.
- * A target is recognized as a transformation rule by calling
+ *
+ * Certain targets and sources such as .PHONY or .PRECIOUS are handled
+ * specially. These are the ones detailed by the specType variable.
+ *
+ * The storing of transformation rules such as '.c.o' is also taken care of
+ * here. A target is recognized as a transformation rule by calling
  * Suff_IsTransform. If it is a transformation rule, its node is gotten
  * from the suffix module via Suff_AddTransform rather than the standard
  * Targ_FindNode in the target module.
- *---------------------------------------------------------------------
  */
 static void
 ParseDoDependency(char *line)
