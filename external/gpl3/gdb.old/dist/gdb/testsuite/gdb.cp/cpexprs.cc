@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2008-2017 Free Software Foundation, Inc.
+   Copyright 2008-2019 Free Software Foundation, Inc.
 
    Contributed by Red Hat, originally written by Keith Seitz.
 
@@ -270,6 +270,7 @@ public:
   operator int () const { return 21; } // base::operator int
   operator fluff* () const { return new fluff (); } // base::operator fluff*
   operator fluff** () const { return &g_fluff; } // base::operator fluff**
+  operator fluff const* const* () const { return &g_fluff; } // base::operator fluff const* const*
 };
 
 class base1 : public virtual base
@@ -448,6 +449,7 @@ test_function (int argc, char* argv[]) // test_function
   char* str = a;
   fluff* flp = a;
   fluff** flpp = a;
+  fluff const* const* flcpcp = a;
 
   CV_f(CV::i);
 

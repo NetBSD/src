@@ -1,6 +1,6 @@
 /* TUI support I/O functions.
 
-   Copyright (C) 1998-2017 Free Software Foundation, Inc.
+   Copyright (C) 1998-2019 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -37,31 +37,29 @@
 #include "cli-out.h"
 #include <fcntl.h>
 #include <signal.h>
-#include "filestuff.h"
+#ifdef __MINGW32__
+#include <windows.h>
+#endif
+#include "common/filestuff.h"
 #include "completer.h"
 #include "gdb_curses.h"
+#include <map>
 
 /* This redefines CTRL if it is not already defined, so it must come
    after terminal state releated include files like <term.h> and
    "gdb_curses.h".  */
 #include "readline/readline.h"
 
-int
+#ifdef __MINGW32__
+static SHORT ncurses_norm_attr;
+#endif
+
+static int tui_getc (FILE *fp);
+
+static int
 key_is_start_sequence (int ch)
 {
   return (ch == 27);
-}
-
-int
-key_is_end_sequence (int ch)
-{
-  return (ch == 126);
-}
-
-int
-key_is_backspace (int ch)
-{
-  return (ch == 8);
 }
 
 /* Use definition from readline 4.3.  */
@@ -198,6 +196,254 @@ tui_putc (char c)
   update_cmdwin_start_line ();
 }
 
+/* This maps colors to their corresponding color index.  */
+
+static std::map<ui_file_style::color, int> color_map;
+
+/* This holds a pair of colors and is used to track the mapping
+   between a color pair index and the actual colors.  */
+
+struct color_pair
+{
+  int fg;
+  int bg;
+
+  bool operator< (const color_pair &o) const
+  {
+    return fg < o.fg || (fg == o.fg && bg < o.bg);
+  }
+};
+
+/* This maps pairs of colors to their corresponding color pair
+   index.  */
+
+static std::map<color_pair, int> color_pair_map;
+
+/* This is indexed by ANSI color offset from the base color, and holds
+   the corresponding curses color constant.  */
+
+static const int curses_colors[] = {
+  COLOR_BLACK,
+  COLOR_RED,
+  COLOR_GREEN,
+  COLOR_YELLOW,
+  COLOR_BLUE,
+  COLOR_MAGENTA,
+  COLOR_CYAN,
+  COLOR_WHITE
+};
+
+/* Given a color, find its index.  */
+
+static bool
+get_color (const ui_file_style::color &color, int *result)
+{
+  if (color.is_none ())
+    *result = -1;
+  else if (color.is_basic ())
+    *result = curses_colors[color.get_value ()];
+  else
+    {
+      auto it = color_map.find (color);
+      if (it == color_map.end ())
+	{
+	  /* The first 8 colors are standard.  */
+	  int next = color_map.size () + 8;
+	  if (next >= COLORS)
+	    return false;
+	  uint8_t rgb[3];
+	  color.get_rgb (rgb);
+	  /* We store RGB as 0..255, but curses wants 0..1000.  */
+	  if (init_color (next, rgb[0] * 1000 / 255, rgb[1] * 1000 / 255,
+			  rgb[2] * 1000 / 255) == ERR)
+	    return false;
+	  color_map[color] = next;
+	  *result = next;
+	}
+      else
+	*result = it->second;
+    }
+  return true;
+}
+
+/* The most recently emitted color pair.  */
+
+static int last_color_pair = -1;
+
+/* The most recently applied style.  */
+
+static ui_file_style last_style;
+
+/* If true, we're highlighting the current source line in reverse
+   video mode.  */
+static bool reverse_mode_p = false;
+
+/* The background/foreground colors before we entered reverse
+   mode.  */
+static ui_file_style::color reverse_save_bg (ui_file_style::NONE);
+static ui_file_style::color reverse_save_fg (ui_file_style::NONE);
+
+/* Given two colors, return their color pair index; making a new one
+   if necessary.  */
+
+static int
+get_color_pair (int fg, int bg)
+{
+  color_pair c = { fg, bg };
+  auto it = color_pair_map.find (c);
+  if (it == color_pair_map.end ())
+    {
+      /* Color pair 0 is our default color, so new colors start at
+	 1.  */
+      int next = color_pair_map.size () + 1;
+      /* Curses has a limited number of available color pairs.  Fall
+	 back to the default if we've used too many.  */
+      if (next >= COLOR_PAIRS)
+	return 0;
+      init_pair (next, fg, bg);
+      color_pair_map[c] = next;
+      return next;
+    }
+  return it->second;
+}
+
+/* Apply STYLE to W.  */
+
+static void
+apply_style (WINDOW *w, ui_file_style style)
+{
+  /* Reset.  */
+  wattron (w, A_NORMAL);
+  wattroff (w, A_BOLD);
+  wattroff (w, A_DIM);
+  wattroff (w, A_REVERSE);
+  if (last_color_pair != -1)
+    wattroff (w, COLOR_PAIR (last_color_pair));
+  wattron (w, COLOR_PAIR (0));
+
+  const ui_file_style::color &fg = style.get_foreground ();
+  const ui_file_style::color &bg = style.get_background ();
+  if (!fg.is_none () || !bg.is_none ())
+    {
+      int fgi, bgi;
+      if (get_color (fg, &fgi) && get_color (bg, &bgi))
+	{
+#ifdef __MINGW32__
+	  /* MS-Windows port of ncurses doesn't support implicit
+	     default foreground and background colors, so we must
+	     specify them explicitly when needed, using the colors we
+	     saw at startup.  */
+	  if (fgi == -1)
+	    fgi = ncurses_norm_attr & 15;
+	  if (bgi == -1)
+	    bgi = (ncurses_norm_attr >> 4) & 15;
+#endif
+	  int pair = get_color_pair (fgi, bgi);
+	  if (last_color_pair != -1)
+	    wattroff (w, COLOR_PAIR (last_color_pair));
+	  wattron (w, COLOR_PAIR (pair));
+	  last_color_pair = pair;
+	}
+    }
+
+  switch (style.get_intensity ())
+    {
+    case ui_file_style::NORMAL:
+      break;
+
+    case ui_file_style::BOLD:
+      wattron (w, A_BOLD);
+      break;
+
+    case ui_file_style::DIM:
+      wattron (w, A_DIM);
+      break;
+
+    default:
+      gdb_assert_not_reached ("invalid intensity");
+    }
+
+  if (style.is_reverse ())
+    wattron (w, A_REVERSE);
+
+  last_style = style;
+}
+
+/* Apply an ANSI escape sequence from BUF to W.  BUF must start with
+   the ESC character.  If BUF does not start with an ANSI escape,
+   return 0.  Otherwise, apply the sequence if it is recognized, or
+   simply ignore it if not.  In this case, the number of bytes read
+   from BUF is returned.  */
+
+static size_t
+apply_ansi_escape (WINDOW *w, const char *buf)
+{
+  ui_file_style style = last_style;
+  size_t n_read;
+
+  if (!style.parse (buf, &n_read))
+    return n_read;
+
+  if (reverse_mode_p)
+    {
+      /* We want to reverse _only_ the default foreground/background
+	 colors.  If the foreground color is not the default (because
+	 the text was styled), we want to leave it as is.  If e.g.,
+	 the terminal is fg=BLACK, and bg=WHITE, and the style wants
+	 to print text in RED, we want to reverse the background color
+	 (print in BLACK), but still print the text in RED.  To do
+	 that, we enable the A_REVERSE attribute, and re-reverse the
+	 parsed-style's fb/bg colors.
+
+	 Notes on the approach:
+
+	  - there's no portable way to know which colors the default
+	    fb/bg colors map to.
+
+	  - this approach does the right thing even if you change the
+	    terminal colors while GDB is running -- the reversed
+	    colors automatically adapt.
+      */
+      if (!style.is_default ())
+	{
+	  ui_file_style::color bg = style.get_background ();
+	  ui_file_style::color fg = style.get_foreground ();
+	  style.set_fg (bg);
+	  style.set_bg (fg);
+	}
+
+      /* Enable A_REVERSE.  */
+      style.set_reverse (true);
+    }
+
+  apply_style (w, style);
+  return n_read;
+}
+
+/* See tui.io.h.  */
+
+void
+tui_set_reverse_mode (WINDOW *w, bool reverse)
+{
+  ui_file_style style = last_style;
+
+  reverse_mode_p = reverse;
+  style.set_reverse (reverse);
+
+  if (reverse)
+    {
+      reverse_save_bg = style.get_background ();
+      reverse_save_fg = style.get_foreground ();
+    }
+  else
+    {
+      style.set_bg (reverse_save_bg);
+      style.set_fg (reverse_save_fg);
+    }
+
+  apply_style (w, style);
+}
+
 /* Print LENGTH characters from the buffer pointed to by BUF to the
    curses command window.  The output is buffered.  It is up to the
    caller to refresh the screen if necessary.  */
@@ -205,10 +451,46 @@ tui_putc (char c)
 void
 tui_write (const char *buf, size_t length)
 {
-  WINDOW *w = TUI_CMD_WIN->generic.handle;
+  /* We need this to be \0-terminated for the regexp matching.  */
+  std::string copy (buf, length);
+  tui_puts (copy.c_str ());
+}
 
-  for (size_t i = 0; i < length; i++)
-    do_tui_putc (w, buf[i]);
+static void
+tui_puts_internal (WINDOW *w, const char *string, int *height)
+{
+  char c;
+  int prev_col = 0;
+
+  while ((c = *string++) != 0)
+    {
+      if (c == '\1' || c == '\2')
+	{
+	  /* Ignore these, they are readline escape-marking
+	     sequences.  */
+	}
+      else
+	{
+	  if (c == '\033')
+	    {
+	      size_t bytes_read = apply_ansi_escape (w, string - 1);
+	      if (bytes_read > 0)
+		{
+		  string = string + bytes_read - 1;
+		  continue;
+		}
+	    }
+	  do_tui_putc (w, c);
+
+	  if (height != nullptr)
+	    {
+	      int col = getcurx (w);
+	      if (col <= prev_col)
+		++*height;
+	      prev_col = col;
+	    }
+	}
+    }
   update_cmdwin_start_line ();
 }
 
@@ -217,14 +499,11 @@ tui_write (const char *buf, size_t length)
    necessary.  */
 
 void
-tui_puts (const char *string)
+tui_puts (const char *string, WINDOW *w)
 {
-  WINDOW *w = TUI_CMD_WIN->generic.handle;
-  char c;
-
-  while ((c = *string++) != 0)
-    do_tui_putc (w, c);
-  update_cmdwin_start_line ();
+  if (w == nullptr)
+    w = TUI_CMD_WIN->generic.handle;
+  tui_puts_internal (w, string, nullptr);
 }
 
 /* Readline callback.
@@ -264,14 +543,10 @@ tui_redisplay_readline (void)
   wmove (w, start_line, 0);
   prev_col = 0;
   height = 1;
-  for (in = 0; prompt && prompt[in]; in++)
-    {
-      waddch (w, prompt[in]);
-      col = getcurx (w);
-      if (col <= prev_col)
-        height++;
-      prev_col = col;
-    }
+  if (prompt != nullptr)
+    tui_puts_internal (TUI_CMD_WIN->generic.handle, prompt, &height);
+
+  prev_col = getcurx (w);
   for (in = 0; in <= rl_end; in++)
     {
       unsigned char c;
@@ -412,6 +687,21 @@ tui_mld_beep (const struct match_list_displayer *displayer)
   beep ();
 }
 
+/* A wrapper for wgetch that enters nonl mode.  We We normally want
+  curses' "nl" mode, but when reading from the user, we'd like to
+  differentiate between C-j and C-m, because some users bind these
+  keys differently in their .inputrc.  So, put curses into nonl mode
+  just when reading from the user.  See PR tui/20819.  */
+
+static int
+gdb_wgetch (WINDOW *win)
+{
+  nonl ();
+  int r = wgetch (win);
+  nl ();
+  return r;
+}
+
 /* Helper function for tui_mld_read_key.
    This temporarily replaces tui_getc for use during tab-completion
    match list display.  */
@@ -420,7 +710,7 @@ static int
 tui_mld_getc (FILE *fp)
 {
   WINDOW *w = TUI_CMD_WIN->generic.handle;
-  int c = wgetch (w);
+  int c = gdb_wgetch (w);
 
   return c;
 }
@@ -532,6 +822,12 @@ tui_setup_io (int mode)
 
       /* Save tty for SIGCONT.  */
       savetty ();
+
+      /* Clean up color information.  */
+      last_color_pair = -1;
+      last_style = ui_file_style ();
+      color_map.clear ();
+      color_pair_map.clear ();
     }
 }
 
@@ -595,11 +891,24 @@ tui_initialize_io (void)
 #else
   tui_rl_outstream = stdout;
 #endif
+
+#ifdef __MINGW32__
+  /* MS-Windows port of ncurses doesn't support default foreground and
+     background colors, so we must record the default colors at startup.  */
+  HANDLE hstdout = (HANDLE)_get_osfhandle (fileno (stdout));
+  DWORD cmode;
+  CONSOLE_SCREEN_BUFFER_INFO csbi;
+
+  if (hstdout != INVALID_HANDLE_VALUE
+      && GetConsoleMode (hstdout, &cmode) != 0
+      && GetConsoleScreenBufferInfo (hstdout, &csbi))
+    ncurses_norm_attr = csbi.wAttributes;
+#endif
 }
 
 /* Get a character from the command window.  This is called from the
    readline package.  */
-int
+static int
 tui_getc (FILE *fp)
 {
   int ch;
@@ -612,11 +921,11 @@ tui_getc (FILE *fp)
   tui_readline_output (0, 0);
 #endif
 
-  ch = wgetch (w);
+  ch = gdb_wgetch (w);
 
   /* The \n must be echoed because it will not be printed by
      readline.  */
-  if (ch == '\n')
+  if (ch == '\n' || ch == '\r')
     {
       /* When hitting return with an empty input, gdb executes the last
          command.  If we emit a newline, this fills up the command window
@@ -659,7 +968,7 @@ tui_getc (FILE *fp)
       int ch_pending;
 
       nodelay (w, TRUE);
-      ch_pending = wgetch (w);
+      ch_pending = gdb_wgetch (w);
       nodelay (w, FALSE);
 
       /* If we have pending input following a start sequence, call the stdin

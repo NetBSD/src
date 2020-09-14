@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2017 Free Software Foundation, Inc.
+# Copyright (C) 2008-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -54,6 +54,10 @@ proc test_template_arg {exefile type} {
     # Replace '*' with '\*' in regex.
     regsub -all {\*} $type {\*} t
     gdb_test "python print (foo.type.template_argument(0))" $t $type
+
+    gdb_test "python print(foo.type.template_argument(-1))" \
+	"Template argument number must be non-negative\r\nError while executing Python code." \
+	"negative template argument number"
 }
 
 test_template_arg "${binfile}-ci" "const int"

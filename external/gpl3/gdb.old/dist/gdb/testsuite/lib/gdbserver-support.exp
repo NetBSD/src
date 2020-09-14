@@ -1,4 +1,4 @@
-# Copyright 2000-2017 Free Software Foundation, Inc.
+# Copyright 2000-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -211,7 +211,7 @@ proc gdbserver_default_get_remote_address { host port } {
 # Default routine to compute the "comm" argument for gdbserver.
 
 proc gdbserver_default_get_comm_port { port } {
-    return ":$port"
+    return "$port"
 }
 
 # Start a gdbserver process with initial OPTIONS and trailing ARGUMENTS.
@@ -221,6 +221,7 @@ proc gdbserver_default_get_comm_port { port } {
 
 proc gdbserver_start { options arguments } {
     global portnum
+    global GDB_TEST_SOCKETHOST
 
     # Port id -- either specified in baseboard file, or managed here.
     if [target_info exists gdb,socketport] {
@@ -231,10 +232,22 @@ proc gdbserver_start { options arguments } {
     }
 
     # Extract the local and remote host ids from the target board struct.
-    if [target_info exists sockethost] {
+    if { [info exists GDB_TEST_SOCKETHOST] } {
+	# The user is not supposed to provide a port number, just a
+	# hostname/address, therefore we add the trailing ":" here.
+	set debughost "${GDB_TEST_SOCKETHOST}:"
+	# Escape open and close square brackets.
+	set debughost_tmp [string map { [ \\[ ] \\] } $debughost]
+	# We need a "gdbserver" version of the debughost, which will
+	# have the possible connection prefix stripped.  This is
+	# because gdbserver currently doesn't recognize the prefixes.
+	regsub -all "^\(tcp:|udp:|tcp4:|udp4:|tcp6:|udp6:\)" $debughost_tmp "" debughost_gdbserver
+    } elseif [target_info exists sockethost] {
 	set debughost [target_info sockethost]
+	set debughost_gdbserver $debughost
     } else {
 	set debughost "localhost:"
+	set debughost_gdbserver $debughost
     }
 
     # Some boards use a different value for the port that is passed to
@@ -277,8 +290,14 @@ proc gdbserver_start { options arguments } {
 	if { $options != "" } {
 	    append gdbserver_command " $options"
 	}
+	if { $debughost_gdbserver != "" } {
+	    append gdbserver_command " $debughost_gdbserver"
+	}
 	if { $portnum != "" } {
-	    append gdbserver_command " [$get_comm_port $portnum]"
+	    if { $debughost_gdbserver == "" } {
+		append gdbserver_command " "
+	    }
+	    append gdbserver_command "[$get_comm_port $portnum]"
 	}
 	if { $arguments != "" } {
 	    append gdbserver_command " $arguments"
@@ -306,6 +325,9 @@ proc gdbserver_start { options arguments } {
 		    incr portnum
 		    continue
 		}
+	    }
+	    -re ".*: cannot resolve name: .*\r\n" {
+		error "gdbserver cannot resolve name."
 	    }
 	    timeout {
 		error "Timeout waiting for gdbserver response."

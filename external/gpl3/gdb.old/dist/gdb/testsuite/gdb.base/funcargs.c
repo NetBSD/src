@@ -424,6 +424,12 @@ void hitbottom ()
 {
 }
 
+void use_a (SVAL a)
+{
+  /* Trick the compiler into thinking A is important.  */
+  volatile SVAL dummy = a;
+}
+
 void recurse (SVAL a, int depth)
 {
   a.s = a.i = a.l = --depth;
@@ -431,6 +437,9 @@ void recurse (SVAL a, int depth)
     hitbottom ();
   else
     recurse (a, depth);
+
+  /* Ensure A is not discarded after the above calls.  */
+  use_a (a);
 }
 
 void test_struct_args ()

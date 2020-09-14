@@ -1,4 +1,4 @@
-# Copyright 2009-2017 Free Software Foundation, Inc.
+# Copyright 2009-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,11 +17,6 @@
 # through to the new incarnation of the main thread.  This differs
 # from non-ldr-exc-1.exp in that we have more than two threads in the
 # program when the exec happens.
-
-# No exec event support in the remote protocol.
-if { [is_remote target] } then {
-    continue
-}
 
 standard_testfile
 set executable ${testfile}
