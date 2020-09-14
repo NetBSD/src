@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.520 2020/09/14 07:04:56 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.521 2020/09/14 20:43:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.520 2020/09/14 07:04:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.521 2020/09/14 20:43:44 rillig Exp $");
 
 #define VAR_DEBUG_IF(cond, fmt, ...)	\
     if (!(DEBUG(VAR) && (cond)))	\
@@ -261,11 +261,6 @@ typedef enum {
     VARP_ANCHOR_START	= 0x04,	/* Match at start of word */
     VARP_ANCHOR_END	= 0x08	/* Match at end of word */
 } VarPatternFlags;
-
-#define BROPEN	'{'
-#define BRCLOSE	'}'
-#define PROPEN	'('
-#define PRCLOSE	')'
 
 /*-
  *-----------------------------------------------------------------------
@@ -1692,14 +1687,14 @@ ParseModifierPart(
 	 * No code should ever depend on these details, but who knows. */
 
 	varstart = p;		/* Nested variable, only parsed */
-	if (p[1] == PROPEN || p[1] == BROPEN) {
+	if (p[1] == '(' || p[1] == '{') {
 	    /*
 	     * Find the end of this variable reference
 	     * and suck it in without further ado.
 	     * It will be interpreted later.
 	     */
 	    int have = p[1];
-	    int want = have == PROPEN ? PRCLOSE : BRCLOSE;
+	    int want = have == '(' ? ')' : '}';
 	    int depth = 1;
 
 	    for (p += 2; *p != '\0' && depth > 0; p++) {
@@ -2828,7 +2823,7 @@ ApplyModifier_Assign(const char **pp, ApplyModifiersState *st)
 	break;
     }
 
-    delim = st->startc == PROPEN ? PRCLOSE : BRCLOSE;
+    delim = st->startc == '(' ? ')' : '}';
     val = ParseModifierPart(pp, delim, st->eflags, st->ctxt, NULL, NULL, NULL);
     if (st->v->flags & VAR_JUNK) {
 	/* restore original name */
@@ -3468,7 +3463,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
     endc = '\0';
 
     startc = start[1];
-    if (startc != PROPEN && startc != BROPEN) {
+    if (startc != '(' && startc != '{') {
 	char name[2];
 
 	/*
@@ -3503,7 +3498,7 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 	size_t namelen;
 	char *varname;
 
-	endc = startc == PROPEN ? PRCLOSE : BRCLOSE;
+	endc = startc == '(' ? ')' : '}';
 
 	p = start + 2;
 	varname = ParseVarname(&p, startc, endc, ctxt, eflags, &namelen);
