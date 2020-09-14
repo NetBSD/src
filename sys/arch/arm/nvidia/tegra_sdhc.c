@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_sdhc.c,v 1.26 2020/03/01 16:38:59 skrll Exp $ */
+/* $NetBSD: tegra_sdhc.c,v 1.27 2020/09/14 07:27:19 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.26 2020/03/01 16:38:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.27 2020/09/14 07:27:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -158,7 +158,7 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_pin_power)
 		fdtbus_gpio_write(sc->sc_pin_power, 1);
 
-	sc->sc_pin_cd = fdtbus_gpio_acquire(faa->faa_phandle, 
+	sc->sc_pin_cd = fdtbus_gpio_acquire(faa->faa_phandle,
 	    "cd-gpios", GPIO_PIN_INPUT);
 	sc->sc_pin_wp = fdtbus_gpio_acquire(faa->faa_phandle,
 	    "wp-gpios", GPIO_PIN_INPUT);
