@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.72 2019/04/16 07:08:46 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.73 2020/09/14 16:11:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -841,8 +841,11 @@ L$check_do_rfi:
 	nop
 	nop
 	nop
+
+ALTENTRY(os_hpmc_checksum)
 	nop
 ALTENTRY(os_hpmc_cont_end)
+ALTENTRY(os_toc_checksum)
 	nop
 ALTENTRY(os_toc_end)
 EXIT(TLABEL(hpmc))
