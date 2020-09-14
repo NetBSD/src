@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2017 Free Software Foundation, Inc.
+# Copyright (C) 2011-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,4 +37,8 @@ if ![runto_main] {
 
 gdb_test "continue" "Program received signal SIGUSR1, .*"
 gdb_test "stepi" "\r\nhandler .*"
-gdb_test "kill" "^y" "kill" "Kill the program being debugged\\? \\(y or n\\) $" "y"
+gdb_test_multiple "kill" "kill" {
+    -re "Kill the program being debugged\\? \\(y or n\\) $" {
+       gdb_test "y" "\\\[Inferior $decimal \\(.*\\) killed\\\]" "kill"
+    }
+}

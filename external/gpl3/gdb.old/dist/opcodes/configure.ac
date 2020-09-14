@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 dnl
-dnl   Copyright (C) 2012-2017 Free Software Foundation, Inc.
+dnl   Copyright (C) 2012-2019 Free Software Foundation, Inc.
 dnl
 dnl This file is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -17,7 +17,6 @@ dnl along with this program; see the file COPYING3.  If not see
 dnl <http://www.gnu.org/licenses/>.
 dnl
 
-AC_PREREQ(2.59)
 m4_include([../bfd/version.m4])
 AC_INIT([opcodes], BFD_VERSION)
 AC_CONFIG_SRCDIR([z8k-dis.c])
@@ -52,8 +51,6 @@ AC_ARG_ENABLE(targets,
 esac])dnl
 
 AM_BINUTILS_WARNINGS
-ACX_PROG_CC_WARNING_OPTS([-Wno-missing-field-initializers],
-			 [NO_WMISSING_FIELD_INITIALIZERS])
 
 AC_CONFIG_HEADERS(config.h:config.in)
 
@@ -76,7 +73,7 @@ AC_EXEEXT
 
 # host-specific stuff:
 
-ALL_LINGUAS="fr sv tr es da de id pt_BR ro nl fi vi ga zh_CN it uk sr"
+ALL_LINGUAS="da de es fi fr ga id it nl pt_BR ro sr sv tr uk vi zh_CN"
 ZW_GNU_GETTEXT_SISTER_DIR
 AM_PO_SUBDIRS
 
@@ -112,11 +109,17 @@ AC_ARG_ENABLE(cgen-maint,
   yes)	cgen_maint=yes ;;
   no)	cgen_maint=no ;;
   *)
-	# argument is cgen install directory (not implemented yet).
-	# Having a `share' directory might be more appropriate for the .scm,
-	# .cpu, etc. files.
+	# Argument is a directory where cgen can be found.  In some
+	# future world cgen could be installable, but right now this
+	# is not the case.  Instead we assume the directory is a path
+	# to the cgen source tree.
 	cgen_maint=yes
-	cgendir=${cgen_maint}/lib/cgen
+        if test -r ${enableval}/iformat.scm; then
+          # This looks like a cgen source tree.
+	  cgendir=${enableval}
+        else
+	  AC_MSG_ERROR(${enableval} doesn't look like a cgen source tree)
+        fi
 	;;
 esac])dnl
 AM_CONDITIONAL(CGEN_MAINT, test x${cgen_maint} = xyes)
@@ -261,6 +264,7 @@ if test x${all_targets} = xfalse ; then
 	bfd_cr16_arch)		ta="$ta cr16-dis.lo cr16-opc.lo" ;;
 	bfd_cris_arch)		ta="$ta cris-dis.lo cris-opc.lo cgen-bitset.lo" ;;
 	bfd_crx_arch)		ta="$ta crx-dis.lo crx-opc.lo" ;;
+	bfd_csky_arch)		ta="$ta csky-dis.lo" ;;
 	bfd_d10v_arch)		ta="$ta d10v-dis.lo d10v-opc.lo" ;;
 	bfd_d30v_arch)		ta="$ta d30v-dis.lo d30v-opc.lo" ;;
 	bfd_dlx_arch)		ta="$ta dlx-dis.lo" ;;
@@ -269,13 +273,9 @@ if test x${all_targets} = xfalse ; then
 	bfd_ft32_arch)		ta="$ta ft32-opc.lo ft32-dis.lo" ;;
 	bfd_moxie_arch)		ta="$ta moxie-dis.lo moxie-opc.lo" ;;
 	bfd_h8300_arch)		ta="$ta h8300-dis.lo" ;;
-	bfd_h8500_arch)		ta="$ta h8500-dis.lo" ;;
 	bfd_hppa_arch)		ta="$ta hppa-dis.lo" ;;
-	bfd_i370_arch)		ta="$ta i370-dis.lo i370-opc.lo" ;;
 	bfd_i386_arch|bfd_iamcu_arch|bfd_l1om_arch|bfd_k1om_arch)
 				ta="$ta i386-dis.lo i386-opc.lo" ;;
-	bfd_i860_arch)		ta="$ta i860-dis.lo" ;;
-	bfd_i960_arch)		ta="$ta i960-dis.lo" ;;
 	bfd_ia64_arch)		ta="$ta ia64-dis.lo ia64-opc.lo" ;;
 	bfd_ip2k_arch)		ta="$ta ip2k-asm.lo ip2k-desc.lo ip2k-dis.lo ip2k-ibld.lo ip2k-opc.lo" using_cgen=yes ;;
 	bfd_epiphany_arch)	ta="$ta epiphany-asm.lo epiphany-desc.lo epiphany-dis.lo epiphany-ibld.lo epiphany-opc.lo" using_cgen=yes ;;
@@ -287,8 +287,8 @@ if test x${all_targets} = xfalse ; then
 	bfd_m68hc12_arch)	ta="$ta m68hc11-dis.lo m68hc11-opc.lo" ;;
 	bfd_m9s12x_arch)	ta="$ta m68hc11-dis.lo m68hc11-opc.lo" ;;
 	bfd_m9s12xg_arch)	ta="$ta m68hc11-dis.lo m68hc11-opc.lo" ;;
+	bfd_s12z_arch)		ta="$ta s12z-dis.lo s12z-opc.lo" ;;
 	bfd_m68k_arch)		ta="$ta m68k-dis.lo m68k-opc.lo" ;;
-	bfd_m88k_arch)		ta="$ta m88k-dis.lo" ;;
 	bfd_mcore_arch)		ta="$ta mcore-dis.lo" ;;
 	bfd_mep_arch)		ta="$ta mep-asm.lo mep-desc.lo mep-dis.lo mep-ibld.lo mep-opc.lo" using_cgen=yes ;;
 	bfd_metag_arch)		ta="$ta metag-dis.lo" ;;
@@ -300,6 +300,7 @@ if test x${all_targets} = xfalse ; then
 	bfd_mt_arch)		ta="$ta mt-asm.lo mt-desc.lo mt-dis.lo mt-ibld.lo mt-opc.lo" using_cgen=yes ;;
 	bfd_msp430_arch)	ta="$ta msp430-dis.lo msp430-decode.lo" ;;
 	bfd_nds32_arch)		ta="$ta nds32-asm.lo nds32-dis.lo" ;;
+	bfd_nfp_arch)		ta="$ta nfp-dis.lo" ;;
 	bfd_nios2_arch)		ta="$ta nios2-dis.lo nios2-opc.lo" ;;
 	bfd_ns32k_arch)		ta="$ta ns32k-dis.lo" ;;
 	bfd_or1k_arch)		ta="$ta or1k-asm.lo or1k-desc.lo or1k-dis.lo or1k-ibld.lo or1k-opc.lo" using_cgen=yes ;;
@@ -316,24 +317,9 @@ if test x${all_targets} = xfalse ; then
 	bfd_rx_arch)		ta="$ta rx-dis.lo rx-decode.lo";;
 	bfd_s390_arch)		ta="$ta s390-dis.lo s390-opc.lo" ;;
 	bfd_score_arch)		ta="$ta score-dis.lo score7-dis.lo" ;;
-	bfd_sh_arch)
-	  # We can't decide what we want just from the CPU family.
-	  # We want SH5 support unless a specific version of sh is
-	  # specified, as in sh3-elf, sh3b-linux-gnu, etc.
-	  # Include it just for ELF targets, since the SH5 bfd:s are ELF only.
-	  for t in $target $canon_targets; do
-	    case $t in
-	      all |  sh5*-* | sh64*-* | sh-*-*elf* | shl*-*-*elf* | \
-	      sh-*-linux* | shl-*-linux*)
-				ta="$ta sh64-dis.lo sh64-opc.lo"
-				archdefs="$archdefs -DINCLUDE_SHMEDIA"
-				break;;
-	    esac;
-	  done
-				ta="$ta sh-dis.lo cgen-bitset.lo" ;;
+	bfd_sh_arch)		ta="$ta sh-dis.lo cgen-bitset.lo" ;;
 	bfd_sparc_arch)		ta="$ta sparc-dis.lo sparc-opc.lo" ;;
 	bfd_spu_arch)		ta="$ta spu-dis.lo spu-opc.lo" ;;
-	bfd_tahoe_arch)		;;
 	bfd_tic30_arch)		ta="$ta tic30-dis.lo" ;;
 	bfd_tic4x_arch)		ta="$ta tic4x-dis.lo" ;;
 	bfd_tic54x_arch)	ta="$ta tic54x-dis.lo tic54x-opc.lo" ;;
@@ -347,9 +333,7 @@ if test x${all_targets} = xfalse ; then
 	bfd_v850_rh850_arch)	ta="$ta v850-opc.lo v850-dis.lo" ;;
 	bfd_vax_arch)		ta="$ta vax-dis.lo" ;;
 	bfd_visium_arch)	ta="$ta visium-dis.lo visium-opc.lo" ;;
-	bfd_w65_arch)		ta="$ta w65-dis.lo" ;;
         bfd_wasm32_arch)        ta="$ta wasm32-dis.lo" ;;
-	bfd_we32k_arch)		;;
 	bfd_xc16x_arch)		ta="$ta xc16x-asm.lo xc16x-desc.lo xc16x-dis.lo xc16x-ibld.lo xc16x-opc.lo" using_cgen=yes ;;
 	bfd_xgate_arch)		ta="$ta xgate-dis.lo xgate-opc.lo" ;;
 	bfd_xstormy16_arch)	ta="$ta xstormy16-asm.lo xstormy16-desc.lo xstormy16-dis.lo xstormy16-ibld.lo xstormy16-opc.lo" using_cgen=yes ;;

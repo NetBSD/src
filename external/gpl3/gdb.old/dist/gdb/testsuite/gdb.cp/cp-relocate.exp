@@ -1,4 +1,4 @@
-# Copyright 2007-2017 Free Software Foundation, Inc.
+# Copyright 2007-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -56,11 +56,11 @@ gdb_file_cmd ${binfile}
 set func1_name ""
 set func2_name ""
 gdb_test_multiple "info functions func<.>" "info functions" {
-    -re "\r\nint (\[^\r\]*func<1>\[^\r]*);" {
+    -re "\tint (\[^\r\]*func<1>\[^\r]*);" {
 	set func1_name $expect_out(1,string)
 	exp_continue
     }
-    -re "\r\nint (\[^\r\]*func<2>\[^\r]*);" {
+    -re "\tint (\[^\r\]*func<2>\[^\r]*);" {
 	set func2_name $expect_out(1,string)
 	exp_continue
     }
@@ -123,7 +123,7 @@ gdb_start
 gdb_reinitialize_dir $srcdir/$subdir
 
 gdb_test "add-symbol-file ${binfile} 0 -s ${func1_sec} 0x10000 -s ${func2_sec} 0x20000" \
-	"Reading symbols from .*${testfile}\\.o\\.\\.\\.done\\.(|\r\nUsing host libthread_db library .*libthread_db.so.*\\.)" \
+	"Reading symbols from .*${testfile}\\.o\\.\\.\\.(|\r\nUsing host libthread_db library .*libthread_db.so.*\\.)" \
 	"add-symbol-file ${testfile}.o" \
 	"add symbol table from file \".*${testfile}\\.o\" at.*\\(y or n\\) " \
 	"y"
