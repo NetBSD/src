@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.45 2020/09/10 01:53:22 rin Exp $
+#	$NetBSD: Makefile,v 1.46 2020/09/14 00:40:03 rin Exp $
 
 SUBDIR=	apm ata bluetooth dec dm dmover dtv hdaudio hdmicec hid hpc \
-	i2c i2o ic ieee1394 ir isa iscsi \
+	i2c i2o ic ieee1394 ir isa \
 	microcode ofw pci pckbport pcmcia pud putter raidframe sbus scsipi \
 	spi sun tc usb vme wscons
 
@@ -10,6 +10,10 @@ SUBDIR+= nvmm
 .endif
 
 .include <bsd.own.mk>
+
+.if ${MKISCSI} != "no"
+SUBDIR+= iscsi
+.endif
 
 INCSDIR= /usr/include/dev
 
