@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.26 2020/08/12 13:19:35 skrll Exp $ */
+/* $NetBSD: cpu.h,v 1.27 2020/09/14 10:06:35 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -147,6 +147,7 @@ static __inline struct cpu_info *lwp_getcpu(struct lwp *);
 #undef curlwp
 #define	curlwp			(aarch64_curlwp())
 
+int	cpu_maxproc(void);
 void	cpu_signotify(struct lwp *l);
 void	cpu_need_proftick(struct lwp *l);
 
