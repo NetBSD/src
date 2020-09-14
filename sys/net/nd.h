@@ -1,4 +1,4 @@
-/*	$NetBSD: nd.h,v 1.1 2020/09/11 14:59:22 roy Exp $	*/
+/*	$NetBSD: nd.h,v 1.2 2020/09/14 15:09:57 roy Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -65,12 +65,6 @@
 		((MIN_RANDOM_FACTOR * (x >> 10)) + (cprng_fast32() & \
 		((MAX_RANDOM_FACTOR - MIN_RANDOM_FACTOR) * (x >> 10))))
 
-#include <netinet/in.h>
-union nd_addr {
-	struct in_addr	nd_addr4;
-	struct in6_addr	nd_addr6;
-};
-
 struct nd_domain {
 	int nd_family;
 	int nd_delay;		/* delay first probe time in seconds */
@@ -81,10 +75,10 @@ struct nd_domain {
 	bool (*nd_nud_enabled)(struct ifnet *);
 	unsigned int (*nd_reachable)(struct ifnet *);	/* msec */
 	unsigned int (*nd_retrans)(struct ifnet *);	/* msec */
-	union nd_addr *(*nd_holdsrc)(struct llentry *, union nd_addr *);
-	void (*nd_output)(struct ifnet *, const union nd_addr *,
-	    const union nd_addr *, const uint8_t *, const union nd_addr *);
-	void (*nd_missed)(struct ifnet *, const union nd_addr *, struct mbuf *);
+	union l3addr *(*nd_holdsrc)(struct llentry *, union l3addr *);
+	void (*nd_output)(struct ifnet *, const union l3addr *,
+	    const union l3addr *, const uint8_t *, const union l3addr *);
+	void (*nd_missed)(struct ifnet *, const union l3addr *, struct mbuf *);
 	void (*nd_free)(struct llentry *, int);
 };
 

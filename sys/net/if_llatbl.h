@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.h,v 1.17 2019/07/18 06:47:10 ozaki-r Exp $	*/
+/*	$NetBSD: if_llatbl.h,v 1.18 2020/09/14 15:09:57 roy Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -63,7 +63,7 @@ extern krwlock_t lltable_rwlock;
  */
 struct llentry {
 	LIST_ENTRY(llentry)	 lle_next;
-	union {
+	union l3addr {
 		struct in_addr	addr4;
 		struct in6_addr	addr6;
 	} r_l3addr;
@@ -86,7 +86,7 @@ struct llentry {
 	uint16_t		 la_asked;
 	uint16_t		 la_preempt;
 	uint16_t		 ln_byhint;
-	int16_t			 ln_state;	/* IPv6 has ND6_LLINFO_NOSTATE == -2 */
+	int16_t			 ln_state;	/* ND_LLINFO_NOSTATE == -2 */
 	uint16_t		 ln_router;
 	time_t			 ln_ntick;
 	int			 lle_refcnt;

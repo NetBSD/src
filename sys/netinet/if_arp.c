@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.295 2020/09/11 15:16:00 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.296 2020/09/14 15:09:57 roy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.295 2020/09/11 15:16:00 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.296 2020/09/14 15:09:57 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -141,10 +141,10 @@ static int arp_perform_nud = 1;
 static bool arp_nud_enabled(struct ifnet *);
 static unsigned int arp_llinfo_reachable(struct ifnet *);
 static unsigned int arp_llinfo_retrans(struct ifnet *);
-static union nd_addr *arp_llinfo_holdsrc(struct llentry *, union nd_addr *);
-static void arp_llinfo_output(struct ifnet *, const union nd_addr *,
-    const union nd_addr *, const uint8_t *, const union nd_addr *);
-static void arp_llinfo_missed(struct ifnet *, const union nd_addr *,
+static union l3addr *arp_llinfo_holdsrc(struct llentry *, union l3addr *);
+static void arp_llinfo_output(struct ifnet *, const union l3addr *,
+    const union l3addr *, const uint8_t *, const union l3addr *);
+static void arp_llinfo_missed(struct ifnet *, const union l3addr *,
     struct mbuf *);
 static void arp_free(struct llentry *, int);
 
@@ -1305,8 +1305,8 @@ arp_llinfo_retrans(__unused struct ifnet *ifp)
  * and stores it in @src.
  * Returns pointer to @src (if hold queue is not empty) or NULL.
  */
-static union nd_addr *
-arp_llinfo_holdsrc(struct llentry *ln, union nd_addr *src)
+static union l3addr *
+arp_llinfo_holdsrc(struct llentry *ln, union l3addr *src)
 {
 	struct ip *ip;
 
@@ -1319,7 +1319,7 @@ arp_llinfo_holdsrc(struct llentry *ln, union nd_addr *src)
 	ip = mtod(ln->ln_hold, struct ip *);
 	/* XXX pullup? */
 	if (sizeof(*ip) < ln->ln_hold->m_len)
-		src->nd_addr4 = ip->ip_src;
+		src->addr4 = ip->ip_src;
 	else
 		src = NULL;
 
@@ -1327,20 +1327,20 @@ arp_llinfo_holdsrc(struct llentry *ln, union nd_addr *src)
 }
 
 static void
-arp_llinfo_output(struct ifnet *ifp, __unused const union nd_addr *daddr,
-    const union nd_addr *taddr, const uint8_t *tlladdr,
-    const union nd_addr *hsrc)
+arp_llinfo_output(struct ifnet *ifp, __unused const union l3addr *daddr,
+    const union l3addr *taddr, const uint8_t *tlladdr,
+    const union l3addr *hsrc)
 {
-	struct in_addr tip = taddr->nd_addr4, sip = zeroin_addr;
+	struct in_addr tip = taddr->addr4, sip = zeroin_addr;
 	const uint8_t *slladdr = CLLADDR(ifp->if_sadl);
 
 	if (hsrc != NULL) {
 		struct in_ifaddr *ia;
 		struct psref psref;
 
-		ia = in_get_ia_on_iface_psref(hsrc->nd_addr4, ifp, &psref);
+		ia = in_get_ia_on_iface_psref(hsrc->addr4, ifp, &psref);
 		if (ia != NULL) {
-			sip = hsrc->nd_addr4;
+			sip = hsrc->addr4;
 			ia4_release(ia, &psref);
 		}
 	}
@@ -1373,7 +1373,8 @@ arp_llinfo_output(struct ifnet *ifp, __unused const union nd_addr *daddr,
 
 
 static void
-arp_llinfo_missed(struct ifnet *ifp, const union nd_addr *taddr, struct mbuf *m)
+arp_llinfo_missed(struct ifnet *ifp, const union l3addr *taddr,
+    struct mbuf *m)
 {
 	struct in_addr mdaddr = zeroin_addr;
 	struct sockaddr_in dsin, tsin;
@@ -1395,7 +1396,7 @@ arp_llinfo_missed(struct ifnet *ifp, const union nd_addr *taddr, struct mbuf *m)
 	} else
 		sa = NULL;
 
-	sockaddr_in_init(&tsin, &taddr->nd_addr4, 0);
+	sockaddr_in_init(&tsin, &taddr->addr4, 0);
 	rt_clonedmsg(RTM_MISS, sa, sintosa(&tsin), NULL, ifp);
 }
 
