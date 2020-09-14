@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.88 2020/09/06 17:38:10 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.89 2020/09/14 10:06:35 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.88 2020/09/06 17:38:10 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.89 2020/09/14 10:06:35 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -1413,6 +1413,13 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	pm_unlock(pm);
 }
 
+/* XXX: due to the current implementation of pmap depends on 16bit ASID */
+int
+cpu_maxproc(void)
+{
+	return 65535;
+}
+
 void
 pmap_activate(struct lwp *l)
 {
@@ -1436,8 +1443,7 @@ pmap_activate(struct lwp *l)
 	reg_tcr_el1_write(tcr | TCR_EPD0);
 	__asm __volatile("isb" ::: "memory");
 
-	/* XXX */
-	CTASSERT(PID_MAX <= 65535);	/* 16bit ASID */
+	/* XXX: allocate asid, and regenerate if needed */
 	if (pm->pm_asid == -1)
 		pm->pm_asid = l->l_proc->p_pid;
 

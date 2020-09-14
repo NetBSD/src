@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.15 2020/08/03 06:30:00 ryo Exp $ */
+/* $NetBSD: types.h,v 1.16 2020/09/14 10:06:35 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -96,6 +96,7 @@ typedef __uint64_t __register_t;
 #define __HAVE_COMMON___TLS_GET_ADDR
 #define __HAVE_CPU_COUNTER
 #define __HAVE_CPU_DATA_FIRST
+#define __HAVE_CPU_MAXPROC
 #define __HAVE_FAST_SOFTINTS
 #define __HAVE_MINIMAL_EMUL
 #define __HAVE_MM_MD_DIRECT_MAPPED_PHYS
