@@ -1,4 +1,4 @@
-# $NetBSD: opt-debug-lint.mk,v 1.4 2020/09/14 07:13:29 rillig Exp $
+# $NetBSD: opt-debug-lint.mk,v 1.5 2020/09/14 21:23:58 rillig Exp $
 #
 # Tests for the -dL command line option, which runs additional checks
 # to catch common mistakes, such as unclosed variable expressions.
@@ -41,6 +41,11 @@
 .if ${UNDEF}
 .  error
 .endif
+
+# Since 2020-09-14, dependency lines may contain undefined variables.
+# Before, undefined variables were forbidden, but this distinction was not
+# observable from the outside of the function Var_Parse.
+${UNDEF}: ${UNDEF}
 
 all:
 	@:;
