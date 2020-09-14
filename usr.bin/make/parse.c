@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.309 2020/09/14 16:12:41 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.310 2020/09/14 16:16:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.309 2020/09/14 16:12:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.310 2020/09/14 16:16:52 rillig Exp $");
 
 /* types and constants */
 
@@ -203,13 +203,6 @@ typedef enum {
     Wait,	    /* .WAIT */
     Attribute	    /* Generic attribute */
 } ParseSpecial;
-
-/*
- * Other tokens
- */
-#define LPAREN	'('
-#define RPAREN	')'
-
 
 /* result data */
 
@@ -1141,12 +1134,11 @@ ParseDoDependency(char *line)
 
 	/* Find the end of the next word. */
 	for (cp = line; *cp != '\0';) {
-	    char ch = *cp;
-	    if ((ch_isspace(ch) || ch == '!' || ch == ':' || ch == LPAREN) &&
+	    if ((ch_isspace(*cp) || *cp == '!' || *cp == ':' || *cp == '(') &&
 		!ParseIsEscaped(lstart, cp))
 		break;
 
-	    if (ch == '$') {
+	    if (*cp == '$') {
 		/*
 		 * Must be a dynamic source (would have been expanded
 		 * otherwise), so call the Var module to parse the puppy
@@ -1171,7 +1163,7 @@ ParseDoDependency(char *line)
 	 * If the word is followed by a left parenthesis, it's the
 	 * name of an object file inside an archive (ar file).
 	 */
-	if (!ParseIsEscaped(lstart, cp) && *cp == LPAREN) {
+	if (!ParseIsEscaped(lstart, cp) && *cp == '(') {
 	    /*
 	     * Archives must be handled specially to make sure the OP_ARCHV
 	     * flag is set in their 'type' field, for one thing, and because
@@ -1634,7 +1626,7 @@ ParseDoDependency(char *line)
 	     * and handle them accordingly.
 	     */
 	    for (; *cp && !ch_isspace(*cp); cp++) {
-		if (*cp == LPAREN && cp > line && cp[-1] != '$') {
+		if (*cp == '(' && cp > line && cp[-1] != '$') {
 		    /*
 		     * Only stop for a left parenthesis if it isn't at the
 		     * start of a word (that'll be for variable changes
@@ -1645,7 +1637,7 @@ ParseDoDependency(char *line)
 		}
 	    }
 
-	    if (*cp == LPAREN) {
+	    if (*cp == '(') {
 		sources = Lst_Init();
 		if (!Arch_ParseArchive(&line, sources, VAR_CMD)) {
 		    Parse_Error(PARSE_FATAL,
