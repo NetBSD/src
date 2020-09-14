@@ -1,4 +1,4 @@
-# $NetBSD: opt-debug-lint.mk,v 1.5 2020/09/14 21:23:58 rillig Exp $
+# $NetBSD: opt-debug-lint.mk,v 1.6 2020/09/14 21:52:49 rillig Exp $
 #
 # Tests for the -dL command line option, which runs additional checks
 # to catch common mistakes, such as unclosed variable expressions.
@@ -46,6 +46,18 @@
 # Before, undefined variables were forbidden, but this distinction was not
 # observable from the outside of the function Var_Parse.
 ${UNDEF}: ${UNDEF}
+
+# In a condition that has a defined(UNDEF) guard, all guarded conditions
+# may assume that the variable is defined since they will only be evaluated
+# if the variable is indeed defined.  Otherwise they are only parsed, and
+# for parsing it doesn't make a difference whether the variable is defined
+# or not.
+#
+# FIXME: As of 2020-09-14, the following line prints an error message saying
+# that UNDEF is undefined.
+.if defined(UNDEF) && exists(${UNDEF})
+.  error
+.endif
 
 all:
 	@:;
