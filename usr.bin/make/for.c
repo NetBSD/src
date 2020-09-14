@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.83 2020/09/13 15:15:51 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.84 2020/09/14 20:43:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -60,7 +60,7 @@
 #include    "strlist.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.83 2020/09/13 15:15:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.84 2020/09/14 20:43:44 rillig Exp $");
 
 typedef enum {
     FOR_SUB_ESCAPE_CHAR = 0x0001,
@@ -424,7 +424,7 @@ ForIterate(void *v_arg, size_t *ret_len)
 	    Buf_AddBytesBetween(&cmds, cmd_cp, cp);
 	    Buf_AddStr(&cmds, "{:U");
 	    cmd_cp = ++cp;
-	    for_substitute(&cmds, &arg->items, arg->sub_next + i, /*{*/ '}');
+	    for_substitute(&cmds, &arg->items, arg->sub_next + i, '}');
 	    Buf_AddByte(&cmds, '}');
 	    break;
 	}
