@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.314 2020/09/14 16:40:06 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.315 2020/09/14 16:59:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.314 2020/09/14 16:40:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.315 2020/09/14 16:59:41 rillig Exp $");
 
 /* types and constants */
 
@@ -221,14 +221,6 @@ static Lst targets;
 /* command lines for targets */
 static Lst targCmds;
 #endif
-
-/*
- * specType contains the SPECial TYPE of the current target. It is
- * Not if the target is unspecial. If it *is* special, however, the children
- * are linked as children of the parent but not vice versa. This variable is
- * set in ParseDoDependency
- */
-static ParseSpecial specType;
 
 /*
  * Predecessor node for handling .ORDER. Initialized to NULL when .ORDER
@@ -751,6 +743,11 @@ ParseMessage(char *line)
     return TRUE;
 }
 
+struct ParseLinkSrcArgs {
+    GNode *cgn;
+    ParseSpecial specType;
+};
+
 /*-
  *---------------------------------------------------------------------
  * ParseLinkSrc  --
@@ -772,15 +769,16 @@ ParseMessage(char *line)
  *---------------------------------------------------------------------
  */
 static int
-ParseLinkSrc(void *pgnp, void *cgnp)
+ParseLinkSrc(void *pgnp, void *data)
 {
+    const struct ParseLinkSrcArgs *args = data;
     GNode          *pgn = (GNode *)pgnp;
-    GNode          *cgn = (GNode *)cgnp;
+    GNode          *cgn = args->cgn;
 
     if ((pgn->type & OP_DOUBLEDEP) && !Lst_IsEmpty(pgn->cohorts))
 	pgn = LstNode_Datum(Lst_Last(pgn->cohorts));
     Lst_Append(pgn->children, cgn);
-    if (specType == Not)
+    if (args->specType == Not)
 	Lst_Append(cgn->parents, pgn);
     pgn->unmade += 1;
     if (DEBUG(PARSE)) {
@@ -895,7 +893,7 @@ ParseDoOp(void *gnp, void *opp)
  *---------------------------------------------------------------------
  */
 static void
-ParseDoSrc(int tOp, const char *src)
+ParseDoSrc(int tOp, const char *src, ParseSpecial specType)
 {
     GNode	*gn = NULL;
     static int wait_number = 0;
@@ -925,8 +923,10 @@ ParseDoSrc(int tOp, const char *src)
 		if (doing_depend)
 		    ParseMark(gn);
 		gn->type = OP_WAIT | OP_PHONY | OP_DEPENDS | OP_NOTMAIN;
-		if (targets != NULL)
-		    Lst_ForEach(targets, ParseLinkSrc, gn);
+		if (targets != NULL) {
+		    struct ParseLinkSrcArgs args = { gn, specType };
+		    Lst_ForEach(targets, ParseLinkSrc, &args);
+		}
 		return;
 	    }
 	}
@@ -994,8 +994,10 @@ ParseDoSrc(int tOp, const char *src)
 	if (tOp) {
 	    gn->type |= tOp;
 	} else {
-	    if (targets != NULL)
-		Lst_ForEach(targets, ParseLinkSrc, gn);
+	    if (targets != NULL) {
+	        struct ParseLinkSrcArgs args = { gn, specType };
+		Lst_ForEach(targets, ParseLinkSrc, &args);
+	    }
 	}
 	break;
     }
@@ -1175,11 +1177,17 @@ ParseDoDependency(char *line)
 				 * to the targets list */
     char	   *lstart = line;
 
+    /*
+     * specType contains the SPECial TYPE of the current target. It is Not
+     * if the target is unspecial. If it *is* special, however, the children
+     * are linked as children of the parent but not vice versa.
+     */
+    ParseSpecial specType = Not;
+
     if (DEBUG(PARSE))
 	fprintf(debug_file, "ParseDoDependency(%s)\n", line);
     tOp = 0;
 
-    specType = Not;
     paths = NULL;
 
     curTargs = Lst_Init();
@@ -1661,7 +1669,7 @@ ParseDoDependency(char *line)
 
 		while (!Lst_IsEmpty(sources)) {
 		    GNode *gn = Lst_Dequeue(sources);
-		    ParseDoSrc(tOp, gn->name);
+		    ParseDoSrc(tOp, gn->name, specType);
 		}
 		Lst_Free(sources);
 		cp = line;
@@ -1671,7 +1679,7 @@ ParseDoDependency(char *line)
 		    cp += 1;
 		}
 
-		ParseDoSrc(tOp, line);
+		ParseDoSrc(tOp, line, specType);
 	    }
 	    while (*cp && ch_isspace(*cp)) {
 		cp++;
