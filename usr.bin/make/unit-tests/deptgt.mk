@@ -1,4 +1,4 @@
-# $NetBSD: deptgt.mk,v 1.4 2020/09/14 18:21:26 rillig Exp $
+# $NetBSD: deptgt.mk,v 1.5 2020/09/14 18:27:15 rillig Exp $
 #
 # Tests for special targets like .BEGIN or .SUFFIXES in dependency
 # declarations.
@@ -9,9 +9,7 @@
 # dependency line: That doesn't work, and make immediately rejects it.
 .SUFFIXES .PHONY: .c.o
 
-# Keyword "parse.c:targets"
-#
-# The following lines demonstrate how 'target' is set and reset during
+# The following lines demonstrate how 'targets' is set and reset during
 # parsing of dependencies.  To see it in action, set breakpoints in:
 #
 #	ParseDoDependency	at the beginning
@@ -20,11 +18,14 @@
 #	Parse_File		at "targets = Lst_Init()"
 #	Parse_File		at "!inLine"
 #
-target1 target2: sources
-	: command1
-	: command2
-VAR=value
-	: command3
+# Keywords:
+#	parse.c:targets
+
+target1 target2: sources	# targets := [target1, target2]
+	: command1		# targets == [target1, target2]
+	: command2		# targets == [target1, target2]
+VAR=value			# targets := NULL
+	: command3		# parse error, since targets == NULL
 
 all:
 	@:;
