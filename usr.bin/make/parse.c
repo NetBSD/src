@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.316 2020/09/14 17:44:57 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.317 2020/09/14 17:47:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.316 2020/09/14 17:44:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.317 2020/09/14 17:47:05 rillig Exp $");
 
 /* types and constants */
 
@@ -747,7 +747,7 @@ struct ParseLinkSrcArgs {
     GNode *cgn;
 
     /* The special target of the current dependency line. */
-    /* Example: for ".SUFFIXES: .c.o", it is 'Suffixes'. */
+    /* Example: for ".END: action", it is 'End'. */
     ParseSpecial specType;
 };
 
