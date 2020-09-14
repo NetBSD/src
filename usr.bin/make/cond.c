@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.146 2020/09/13 19:46:23 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.147 2020/09/14 23:09:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.146 2020/09/13 19:46:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.147 2020/09/14 23:09:34 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -405,7 +405,7 @@ is_separator(char ch)
  *	Sets quoted if the string was quoted.
  *	Sets freeIt if needed.
  */
-/* coverity:[+alloc : arg-*3] */
+/* coverity:[+alloc : arg-*4] */
 static const char *
 CondParser_String(CondParser *par, Boolean doEval, Boolean strictLHS,
 		  Boolean *quoted, void **freeIt)
