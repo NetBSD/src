@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1214 2020/09/13 23:33:21 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1215 2020/09/14 00:11:45 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -95,9 +95,6 @@ MKGCCCMDS?=	no
 #
 # What binutils is used?
 #
-.if ${MACHINE_CPU} == "sh3" || ${MACHINE_CPU} == "m68k"
-HAVE_BINUTILS?=	231
-.endif
 HAVE_BINUTILS?=	234
 
 .if ${HAVE_BINUTILS} == 234
