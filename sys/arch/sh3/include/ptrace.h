@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.17 2019/12/24 14:50:59 kamil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.18 2020/09/14 05:04:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -66,11 +66,11 @@
 	"PT_CLEARSTEP"
 
 #include <machine/reg.h>
-#define PTRACE_REG_PC(r)	r->r_spc
-#define PTRACE_REG_FP(r)	r->r_r14
-#define PTRACE_REG_SET_PC(r, v)	r->r_spc = (v)
-#define PTRACE_REG_SP(r)	r->r_r15
-#define PTRACE_REG_INTV(r)	r->r_r0
+#define PTRACE_REG_PC(r)	(r)->r_spc
+#define PTRACE_REG_FP(r)	(r)->r_r14
+#define PTRACE_REG_SET_PC(r, v)	(r)->r_spc = (v)
+#define PTRACE_REG_SP(r)	(r)->r_r15
+#define PTRACE_REG_INTV(r)	(r)->r_r0
 
 #define PTRACE_ILLEGAL_ASM	__asm __volatile ("0: bra 0b; bra 0b" : : : "memory")
 
