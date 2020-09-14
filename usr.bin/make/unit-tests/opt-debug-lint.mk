@@ -1,4 +1,4 @@
-# $NetBSD: opt-debug-lint.mk,v 1.6 2020/09/14 21:52:49 rillig Exp $
+# $NetBSD: opt-debug-lint.mk,v 1.7 2020/09/14 21:55:53 rillig Exp $
 #
 # Tests for the -dL command line option, which runs additional checks
 # to catch common mistakes, such as unclosed variable expressions.
@@ -52,9 +52,6 @@ ${UNDEF}: ${UNDEF}
 # if the variable is indeed defined.  Otherwise they are only parsed, and
 # for parsing it doesn't make a difference whether the variable is defined
 # or not.
-#
-# FIXME: As of 2020-09-14, the following line prints an error message saying
-# that UNDEF is undefined.
 .if defined(UNDEF) && exists(${UNDEF})
 .  error
 .endif
