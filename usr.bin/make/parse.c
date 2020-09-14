@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.307 2020/09/14 15:11:13 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.308 2020/09/14 16:05:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.307 2020/09/14 15:11:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.308 2020/09/14 16:05:09 rillig Exp $");
 
 /* types and constants */
 
@@ -1140,9 +1140,11 @@ ParseDoDependency(char *line)
 	 */
 
 	/* Find the end of the next word. */
-	for (cp = line; *cp && (ParseIsEscaped(lstart, cp) ||
-		     !(ch_isspace(*cp) ||
-			 *cp == '!' || *cp == ':' || *cp == LPAREN));) {
+	for (cp = line; *cp != '\0';) {
+	    if (!ParseIsEscaped(lstart, cp) &&
+		(ch_isspace(*cp) || *cp == '!' || *cp == ':' || *cp == LPAREN))
+		break;
+
 	    if (*cp == '$') {
 		/*
 		 * Must be a dynamic source (would have been expanded
