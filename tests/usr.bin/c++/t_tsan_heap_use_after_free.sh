@@ -29,12 +29,16 @@
 test_target()
 {
 	SUPPORT='n'
-	if uname -m | grep -q "amd64" && command -v c++ >/dev/null 2>&1 && \
-		   ! echo __clang__ | c++ -E - | grep -q __clang__; then
-		# only clang with major version newer than 7 is supported
-		CLANG_MAJOR=`echo __clang_major__ | c++ -E - | grep -o '^[[:digit:]]'`
-		if [ "$CLANG_MAJOR" -ge "7" ]; then
-			SUPPORT='y'
+	# Detect address space larger than 32 bits
+	maxaddress=`sysctl vm.maxaddress|awk '{print $3}'`
+	if [ $maxaddress -gt 4294967295 ]; then
+		if command -v cc >/dev/null 2>&1; then
+			if ! echo __clang__ | cc -E - | grep -q __clang__; then
+				SUPPORT='y'
+			elif ! cc -v 2>&1 | awk '/gcc version/{print $3}' | \
+				awk -F '.' '($0+0) > 9 {exit 1}'; then
+				SUPPORT='y'
+			fi
 		fi
 	fi
 }
