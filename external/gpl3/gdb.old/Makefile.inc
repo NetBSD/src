@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.10 2019/05/26 20:13:49 christos Exp $
+# $NetBSD: Makefile.inc,v 1.11 2020/09/14 00:39:47 christos Exp $
 
 USE_LIBEDIT=no
 USE_TUI=yes

@@ -1,5 +1,5 @@
 /* UI_FILE - a generic STDIO like output stream.
-   Copyright (C) 1999-2017 Free Software Foundation, Inc.
+   Copyright (C) 1999-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,6 +20,7 @@
 #define UI_FILE_H
 
 #include <string>
+#include "ui-style.h"
 
 /* The abstract ui_file base class.  */
 
@@ -99,6 +100,8 @@ extern void ui_file_write_async_safe (struct ui_file *file, const char *buf,
 				      long length_buf);
 
 extern long ui_file_read (struct ui_file *file, char *buf, long length_buf);
+
+extern int gdb_console_fputs (const char *, FILE *);
 
 /* A std::string-based ui_file.  Can be used as a scratch buffer for
    collecting output.  */

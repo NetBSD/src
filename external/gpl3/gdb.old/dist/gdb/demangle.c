@@ -1,6 +1,6 @@
 /* Basic C++ demangling support for GDB.
 
-   Copyright (C) 1991-2017 Free Software Foundation, Inc.
+   Copyright (C) 1991-2019 Free Software Foundation, Inc.
 
    Written by Fred Fish at Cygnus Support.
 
@@ -42,8 +42,6 @@
 #ifndef DEFAULT_DEMANGLING_STYLE
 #define DEFAULT_DEMANGLING_STYLE AUTO_DEMANGLING_STYLE_STRING
 #endif
-
-static void demangle_command (char *, int);
 
 /* See documentation in gdb-demangle.h.  */
 int demangle = 1;
@@ -106,7 +104,8 @@ show_demangling_style_names(struct ui_file *file, int from_tty,
    a malloc'd string, even if it is a null-string.  */
 
 static void
-set_demangling_command (char *ignore, int from_tty, struct cmd_list_element *c)
+set_demangling_command (const char *ignore,
+			int from_tty, struct cmd_list_element *c)
 {
   const struct demangler_engine *dem;
   int i;
@@ -159,41 +158,29 @@ is_cplus_marker (int c)
 /* Demangle the given string in the current language.  */
 
 static void
-demangle_command (char *args, int from_tty)
+demangle_command (const char *args, int from_tty)
 {
-  char *demangled, *name, *lang_name = NULL;
-  char *arg_buf, *arg_start;
+  char *demangled;
+  const char *name;
+  const char *arg_start;
   int processing_args = 1;
   const struct language_defn *lang;
-  struct cleanup *cleanups;
 
-  arg_buf = xstrdup (args != NULL ? args : "");
-  cleanups = make_cleanup (xfree, arg_buf);
-  arg_start = arg_buf;
+  std::string arg_buf = args != NULL ? args : "";
+  arg_start = arg_buf.c_str ();
 
+  std::string lang_name;
   while (processing_args
 	 && *arg_start == '-')
     {
-      char *p = skip_to_space (arg_start);
+      const char *p = skip_to_space (arg_start);
 
       if (strncmp (arg_start, "-l", p - arg_start) == 0)
-	{
-	  char *lang_name_end;
-
-	  lang_name = skip_spaces (p);
-	  lang_name_end = skip_to_space (lang_name);
-	  lang_name = savestring (lang_name, lang_name_end - lang_name);
-	  make_cleanup (xfree, lang_name);
-	  p = lang_name_end;
-	}
+	lang_name = extract_arg (&p);
       else if (strncmp (arg_start, "--", p - arg_start) == 0)
 	processing_args = 0;
       else
-	{
-	  *p = '\0';
-	  error (_("Unrecognized option '%s' to demangle command.  "
-		   "Try \"help demangle\"."), arg_start);
-	}
+	report_unrecognized_option_error ("demangle", arg_start);
 
       arg_start = skip_spaces (p);
     }
@@ -201,15 +188,15 @@ demangle_command (char *args, int from_tty)
   name = arg_start;
 
   if (*name == '\0')
-    error (_("Usage: demangle [-l language] [--] name"));
+    error (_("Usage: demangle [-l LANGUAGE] [--] NAME"));
 
-  if (lang_name != NULL)
+  if (!lang_name.empty ())
     {
       enum language lang_enum;
 
-      lang_enum = language_enum (lang_name);
+      lang_enum = language_enum (lang_name.c_str ());
       if (lang_enum == language_unknown)
-	error (_("Unknown language \"%s\""), lang_name);
+	error (_("Unknown language \"%s\""), lang_name.c_str ());
       lang = language_def (lang_enum);
     }
   else
@@ -223,11 +210,7 @@ demangle_command (char *args, int from_tty)
     }
   else
     error (_("Can't demangle \"%s\""), name);
-
-  do_cleanups (cleanups);
 }
-
-extern initialize_file_ftype _initialize_demangler; /* -Wmissing-prototypes */
 
 void
 _initialize_demangler (void)
@@ -279,7 +262,7 @@ Use `set demangle-style' without arguments for a list of demangling styles."),
 
   add_cmd ("demangle", class_support, demangle_command, _("\
 Demangle a mangled name.\n\
-Usage: demangle [-l language] [--] name\n\
+Usage: demangle [-l LANGUAGE] [--] NAME\n\
 If LANGUAGE is not specified, NAME is demangled in the current language."),
 	   &cmdlist);
 }

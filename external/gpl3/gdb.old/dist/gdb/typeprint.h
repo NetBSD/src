@@ -1,5 +1,5 @@
 /* Language independent support for printing types for GDB, the GNU debugger.
-   Copyright (C) 1986-2017 Free Software Foundation, Inc.
+   Copyright (C) 1986-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,10 +19,59 @@
 #ifndef TYPEPRINT_H
 #define TYPEPRINT_H
 
+#include "gdb_obstack.h"
+
 enum language;
 struct ui_file;
 struct typedef_hash_table;
 struct ext_lang_type_printers;
+
+struct print_offset_data
+{
+  /* The offset to be applied to bitpos when PRINT_OFFSETS is true.
+     This is needed for when we are printing nested structs and want
+     to make sure that the printed offset for each field carries over
+     the offset of the outter struct.  */
+  unsigned int offset_bitpos = 0;
+
+  /* END_BITPOS is the one-past-the-end bit position of the previous
+     field (where we expect the current field to be if there is no
+     hole).  */
+  unsigned int end_bitpos = 0;
+
+  /* Print information about field at index FIELD_IDX of the struct type
+     TYPE and update this object.
+
+     If the field is static, it simply prints the correct number of
+     spaces.
+
+     The output is strongly based on pahole(1).  */
+  void update (struct type *type, unsigned int field_idx,
+	       struct ui_file *stream);
+
+  /* Call when all fields have been printed.  This will print
+     information about any padding that may exist.  LEVEL is the
+     desired indentation level.  */
+  void finish (struct type *type, int level, struct ui_file *stream);
+
+  /* When printing the offsets of a struct and its fields (i.e.,
+     'ptype /o'; type_print_options::print_offsets), we use this many
+     characters when printing the offset information at the beginning
+     of the line.  This is needed in order to generate the correct
+     amount of whitespaces when no offset info should be printed for a
+     certain field.  */
+  static const int indentation;
+
+private:
+
+  /* Helper function for ptype/o implementation that prints
+     information about a hole, if necessary.  STREAM is where to
+     print.  BITPOS is the bitpos of the current field.  FOR_WHAT is a
+     string describing the purpose of the hole.  */
+
+  void maybe_print_hole (struct ui_file *stream, unsigned int bitpos,
+			 const char *for_what);
+};
 
 struct type_print_options
 {
@@ -35,13 +84,19 @@ struct type_print_options
   /* True means print typedefs in a class.  */
   unsigned int print_typedefs : 1;
 
+  /* True means to print offsets, a la 'pahole'.  */
+  unsigned int print_offsets : 1;
+
+  /* The number of nested type definitions to print.  -1 == all.  */
+  int print_nested_type_limit;
+
   /* If not NULL, a local typedef hash table used when printing a
      type.  */
-  struct typedef_hash_table *local_typedefs;
+  typedef_hash_table *local_typedefs;
 
   /* If not NULL, a global typedef hash table used when printing a
      type.  */
-  struct typedef_hash_table *global_typedefs;
+  typedef_hash_table *global_typedefs;
 
   /* The list of type printers associated with the global typedef
      table.  This is intentionally opaque.  */
@@ -50,29 +105,65 @@ struct type_print_options
 
 extern const struct type_print_options type_print_raw_options;
 
-void recursively_update_typedef_hash (struct typedef_hash_table *,
-				      struct type *);
+/* A hash table holding typedef_field objects.  This is more
+   complicated than an ordinary hash because it must also track the
+   lifetime of some -- but not all -- of the contained objects.  */
 
-void add_template_parameters (struct typedef_hash_table *, struct type *);
+class typedef_hash_table
+{
+public:
 
-struct typedef_hash_table *create_typedef_hash (void);
+  /* Create a new typedef-lookup hash table.  */
+  typedef_hash_table ();
 
-void free_typedef_hash (struct typedef_hash_table *);
+  ~typedef_hash_table ();
 
-struct cleanup *make_cleanup_free_typedef_hash (struct typedef_hash_table *);
+  /* Copy a typedef hash.  */
+  typedef_hash_table (const typedef_hash_table &);
 
-struct typedef_hash_table *copy_typedef_hash (struct typedef_hash_table *);
+  typedef_hash_table &operator= (const typedef_hash_table &) = delete;
 
-const char *find_typedef_in_hash (const struct type_print_options *,
-				  struct type *);
+  /* Add typedefs from T to the hash table TABLE.  */
+  void recursively_update (struct type *);
+
+  /* Add template parameters from T to the typedef hash TABLE.  */
+  void add_template_parameters (struct type *t);
+
+  /* Look up the type T in the typedef hash tables contained in FLAGS.
+     The local table is searched first, then the global table (either
+     table can be NULL, in which case it is skipped).  If T is in a
+     table, return its short (class-relative) typedef name.  Otherwise
+     return NULL.  */
+  static const char *find_typedef (const struct type_print_options *flags,
+				   struct type *t);
+
+private:
+
+  static const char *find_global_typedef (const struct type_print_options *flags,
+					  struct type *t);
+
+
+  /* The actual hash table.  */
+  htab_t m_table;
+
+  /* Storage for typedef_field objects that must be synthesized.  */
+  auto_obstack m_storage;
+};
+
 
 void print_type_scalar (struct type * type, LONGEST, struct ui_file *);
 
-void c_type_print_varspec_suffix (struct type *, struct ui_file *, int,
-				  int, int, const struct type_print_options *);
-
 void c_type_print_args (struct type *, struct ui_file *, int, enum language,
 			const struct type_print_options *);
+
+/* Print <unknown return type> to stream STREAM.  */
+
+void type_print_unknown_return_type (struct ui_file *stream);
+
+/* Throw an error indicating that the user tried to use a symbol that
+   has unknown type.  SYM_PRINT_NAME is the name of the symbol, to be
+   included in the error message.  */
+extern void error_unknown_type (const char *sym_print_name);
 
 extern void val_print_not_allocated (struct ui_file *stream);
 

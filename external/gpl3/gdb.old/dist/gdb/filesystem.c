@@ -1,6 +1,6 @@
 /* Handle different target file systems for GDB, the GNU Debugger.
 
-   Copyright (C) 2010-2017 Free Software Foundation, Inc.
+   Copyright (C) 2010-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -75,9 +75,6 @@ The assumed file system kind for target reported file names \
 is \"%s\".\n"),
 		      value);
 }
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-extern initialize_file_ftype _initialize_filesystem;
 
 void
 _initialize_filesystem (void)

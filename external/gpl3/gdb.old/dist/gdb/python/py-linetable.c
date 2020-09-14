@@ -1,6 +1,6 @@
 /* Python interface to line tables.
 
-   Copyright (C) 2013-2017 Free Software Foundation, Inc.
+   Copyright (C) 2013-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,6 @@
 
 #include "defs.h"
 #include "python-internal.h"
-#include "py-ref.h"
 
 typedef struct {
   PyObject_HEAD
@@ -244,7 +243,7 @@ ltpy_get_all_source_lines (PyObject *self, PyObject *args)
 	 include in the source set. */
       if (item->line > 0)
 	{
-	  gdbpy_ref<> line (gdb_py_object_from_longest (item->line));
+	  gdbpy_ref<> line = gdb_py_object_from_longest (item->line);
 
 	  if (line == NULL)
 	    return NULL;
@@ -327,7 +326,7 @@ ltpy_entry_get_line (PyObject *self, void *closure)
 {
   linetable_entry_object *obj = (linetable_entry_object *) self;
 
-  return gdb_py_object_from_longest (obj->line);
+  return gdb_py_object_from_longest (obj->line).release ();
 }
 
 /* Implementation of gdb.LineTableEntry.pc (self) -> Long.  Returns a
@@ -338,7 +337,7 @@ ltpy_entry_get_pc (PyObject *self, void *closure)
 {
   linetable_entry_object *obj = (linetable_entry_object *) self;
 
-  return  gdb_py_object_from_longest (obj->pc);
+  return  gdb_py_object_from_longest (obj->pc).release ();
 }
 
 /* LineTable iterator functions.  */

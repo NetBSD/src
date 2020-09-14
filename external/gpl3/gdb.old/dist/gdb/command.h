@@ -1,6 +1,6 @@
 /* Header file for command creation.
 
-   Copyright (C) 1986-2017 Free Software Foundation, Inc.
+   Copyright (C) 1986-2019 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -18,7 +18,10 @@
 #if !defined (COMMAND_H)
 #define COMMAND_H 1
 
-#include "gdb_vecs.h"
+#include "common/gdb_vecs.h"
+#include "common/scoped_restore.h"
+
+struct completion_tracker;
 
 /* This file defines the public interface for any code wanting to
    create commands.  */
@@ -113,7 +116,7 @@ var_types;
 /* This structure records one command'd definition.  */
 struct cmd_list_element;
 
-typedef void cmd_cfunc_ftype (char *args, int from_tty);
+typedef void cmd_const_cfunc_ftype (const char *args, int from_tty);
 
 /* This structure specifies notifications to be suppressed by a cli
    command interpreter.  */
@@ -132,10 +135,24 @@ extern struct cli_suppress_notification cli_suppress_notification;
 
 extern int valid_user_defined_cmd_name_p (const char *name);
 
+/* Const-correct variant of the above.  */
+
 extern struct cmd_list_element *add_cmd (const char *, enum command_class,
-					 cmd_cfunc_ftype *fun,
+					 cmd_const_cfunc_ftype *fun,
 					 const char *,
 					 struct cmd_list_element **);
+
+/* Like add_cmd, but no command function is specified.  */
+
+extern struct cmd_list_element *add_cmd (const char *, enum command_class,
+					 const char *,
+					 struct cmd_list_element **);
+
+extern struct cmd_list_element *add_cmd_suppress_notification
+			(const char *name, enum command_class theclass,
+			 cmd_const_cfunc_ftype *fun, const char *doc,
+			 struct cmd_list_element **list,
+			 int *suppress_notification);
 
 extern struct cmd_list_element *add_alias_cmd (const char *, const char *,
 					       enum command_class, int,
@@ -148,48 +165,63 @@ extern struct cmd_list_element *add_alias_cmd (const char *,
 
 
 extern struct cmd_list_element *add_prefix_cmd (const char *, enum command_class,
-						cmd_cfunc_ftype *fun,
+						cmd_const_cfunc_ftype *fun,
 						const char *,
 						struct cmd_list_element **,
 						const char *, int,
 						struct cmd_list_element **);
 
+extern struct cmd_list_element *add_prefix_cmd_suppress_notification
+			(const char *name, enum command_class theclass,
+			 cmd_const_cfunc_ftype *fun,
+			 const char *doc, struct cmd_list_element **prefixlist,
+			 const char *prefixname, int allow_unknown,
+			 struct cmd_list_element **list,
+			 int *suppress_notification);
+
 extern struct cmd_list_element *add_abbrev_prefix_cmd (const char *,
 						       enum command_class,
-						       cmd_cfunc_ftype *fun,
+						       cmd_const_cfunc_ftype *fun,
 						       const char *,
 						       struct cmd_list_element
 						       **, const char *, int,
 						       struct cmd_list_element
 						       **);
 
-/* Set the commands corresponding callback.  */
-
-extern void set_cmd_cfunc (struct cmd_list_element *cmd,
-			   cmd_cfunc_ftype *cfunc);
-
-typedef void cmd_sfunc_ftype (char *args, int from_tty,
-			      struct cmd_list_element *c);
+typedef void cmd_const_sfunc_ftype (const char *args, int from_tty,
+				    struct cmd_list_element *c);
 extern void set_cmd_sfunc (struct cmd_list_element *cmd,
-			   cmd_sfunc_ftype *sfunc);
+			   cmd_const_sfunc_ftype *sfunc);
 
-typedef VEC (char_ptr) *completer_ftype (struct cmd_list_element *,
-					 const char *, const char *);
+/* A completion routine.  Add possible completions to tracker.
 
-typedef void completer_ftype_void (struct cmd_list_element *,
-				   const char *, const char *);
+   TEXT is the text beyond what was matched for the command itself
+   (leading whitespace is skipped).  It stops where we are supposed to
+   stop completing (rl_point) and is '\0' terminated.  WORD points in
+   the same buffer as TEXT, and completions should be returned
+   relative to this position.  For example, suppose TEXT is "foo" and
+   we want to complete to "foobar".  If WORD is "oo", return "oobar";
+   if WORD is "baz/foo", return "baz/foobar".  */
+typedef void completer_ftype (struct cmd_list_element *,
+			      completion_tracker &tracker,
+			      const char *text, const char *word);
+
+/* Same, but for set_cmd_completer_handle_brkchars.  */
+typedef void completer_handle_brkchars_ftype (struct cmd_list_element *,
+					      completion_tracker &tracker,
+					      const char *text, const char *word);
 
 extern void set_cmd_completer (struct cmd_list_element *, completer_ftype *);
 
 /* Set the completer_handle_brkchars callback.  */
 
 extern void set_cmd_completer_handle_brkchars (struct cmd_list_element *,
-					       completer_ftype_void *);
+					       completer_handle_brkchars_ftype *);
 
 /* HACK: cagney/2002-02-23: Code, mostly in tracepoints.c, grubs
    around in cmd objects to test the value of the commands sfunc().  */
 extern int cmd_cfunc_eq (struct cmd_list_element *cmd,
-			 cmd_cfunc_ftype *cfun);
+			 cmd_const_cfunc_ftype *cfun);
 
 /* Each command object has a local context attached to it.  */
 extern void set_cmd_context (struct cmd_list_element *cmd,
@@ -230,7 +262,7 @@ extern int lookup_cmd_composition (const char *text,
 				   struct cmd_list_element **cmd);
 
 extern struct cmd_list_element *add_com (const char *, enum command_class,
-					 cmd_cfunc_ftype *fun,
+					 cmd_const_cfunc_ftype *fun,
 					 const char *);
 
 extern struct cmd_list_element *add_com_alias (const char *, const char *,
@@ -238,21 +270,23 @@ extern struct cmd_list_element *add_com_alias (const char *, const char *,
 
 extern struct cmd_list_element *add_com_suppress_notification
 		       (const char *name, enum command_class theclass,
-			cmd_cfunc_ftype *fun, const char *doc,
+			cmd_const_cfunc_ftype *fun, const char *doc,
 			int *supress_notification);
 
 extern struct cmd_list_element *add_info (const char *,
-					  cmd_cfunc_ftype *fun,
+					  cmd_const_cfunc_ftype *fun,
 					  const char *);
 
 extern struct cmd_list_element *add_info_alias (const char *, const char *,
 						int);
 
-extern VEC (char_ptr) *complete_on_cmdlist (struct cmd_list_element *,
-					    const char *, const char *, int);
+extern void complete_on_cmdlist (struct cmd_list_element *,
+				 completion_tracker &tracker,
+				 const char *, const char *, int);
 
-extern VEC (char_ptr) *complete_on_enum (const char *const *enumlist,
-					 const char *, const char *);
+extern void complete_on_enum (completion_tracker &tracker,
+			      const char *const *enumlist,
+			      const char *, const char *);
 
 /* Functions that implement commands about CLI commands.  */
 
@@ -277,10 +311,11 @@ extern void add_setshow_enum_cmd (const char *name,
 				  const char *set_doc,
 				  const char *show_doc,
 				  const char *help_doc,
-				  cmd_sfunc_ftype *set_func,
+				  cmd_const_sfunc_ftype *set_func,
 				  show_value_ftype *show_func,
 				  struct cmd_list_element **set_list,
-				  struct cmd_list_element **show_list);
+				  struct cmd_list_element **show_list,
+				  void *context = nullptr);
 
 extern void add_setshow_auto_boolean_cmd (const char *name,
 					  enum command_class theclass,
@@ -288,7 +323,7 @@ extern void add_setshow_auto_boolean_cmd (const char *name,
 					  const char *set_doc,
 					  const char *show_doc,
 					  const char *help_doc,
-					  cmd_sfunc_ftype *set_func,
+					  cmd_const_sfunc_ftype *set_func,
 					  show_value_ftype *show_func,
 					  struct cmd_list_element **set_list,
 					  struct cmd_list_element **show_list);
@@ -298,7 +333,7 @@ extern void add_setshow_boolean_cmd (const char *name,
 				     int *var,
 				     const char *set_doc, const char *show_doc,
 				     const char *help_doc,
-				     cmd_sfunc_ftype *set_func,
+				     cmd_const_sfunc_ftype *set_func,
 				     show_value_ftype *show_func,
 				     struct cmd_list_element **set_list,
 				     struct cmd_list_element **show_list);
@@ -309,7 +344,7 @@ extern void add_setshow_filename_cmd (const char *name,
 				      const char *set_doc,
 				      const char *show_doc,
 				      const char *help_doc,
-				      cmd_sfunc_ftype *set_func,
+				      cmd_const_sfunc_ftype *set_func,
 				      show_value_ftype *show_func,
 				      struct cmd_list_element **set_list,
 				      struct cmd_list_element **show_list);
@@ -320,7 +355,7 @@ extern void add_setshow_string_cmd (const char *name,
 				    const char *set_doc,
 				    const char *show_doc,
 				    const char *help_doc,
-				    cmd_sfunc_ftype *set_func,
+				    cmd_const_sfunc_ftype *set_func,
 				    show_value_ftype *show_func,
 				    struct cmd_list_element **set_list,
 				    struct cmd_list_element **show_list);
@@ -332,7 +367,7 @@ extern struct cmd_list_element *add_setshow_string_noescape_cmd
 		       const char *set_doc,
 		       const char *show_doc,
 		       const char *help_doc,
-		       cmd_sfunc_ftype *set_func,
+		       cmd_const_sfunc_ftype *set_func,
 		       show_value_ftype *show_func,
 		       struct cmd_list_element **set_list,
 		       struct cmd_list_element **show_list);
@@ -343,7 +378,7 @@ extern void add_setshow_optional_filename_cmd (const char *name,
 					       const char *set_doc,
 					       const char *show_doc,
 					       const char *help_doc,
-					       cmd_sfunc_ftype *set_func,
+					       cmd_const_sfunc_ftype *set_func,
 					       show_value_ftype *show_func,
 					       struct cmd_list_element **set_list,
 					       struct cmd_list_element **show_list);
@@ -354,7 +389,7 @@ extern void add_setshow_integer_cmd (const char *name,
 				     const char *set_doc,
 				     const char *show_doc,
 				     const char *help_doc,
-				     cmd_sfunc_ftype *set_func,
+				     cmd_const_sfunc_ftype *set_func,
 				     show_value_ftype *show_func,
 				     struct cmd_list_element **set_list,
 				     struct cmd_list_element **show_list);
@@ -365,7 +400,7 @@ extern void add_setshow_uinteger_cmd (const char *name,
 				      const char *set_doc,
 				      const char *show_doc,
 				      const char *help_doc,
-				      cmd_sfunc_ftype *set_func,
+				      cmd_const_sfunc_ftype *set_func,
 				      show_value_ftype *show_func,
 				      struct cmd_list_element **set_list,
 				      struct cmd_list_element **show_list);
@@ -376,7 +411,7 @@ extern void add_setshow_zinteger_cmd (const char *name,
 				      const char *set_doc,
 				      const char *show_doc,
 				      const char *help_doc,
-				      cmd_sfunc_ftype *set_func,
+				      cmd_const_sfunc_ftype *set_func,
 				      show_value_ftype *show_func,
 				      struct cmd_list_element **set_list,
 				      struct cmd_list_element **show_list);
@@ -387,7 +422,7 @@ extern void add_setshow_zuinteger_cmd (const char *name,
 				       const char *set_doc,
 				       const char *show_doc,
 				       const char *help_doc,
-				       cmd_sfunc_ftype *set_func,
+				       cmd_const_sfunc_ftype *set_func,
 				       show_value_ftype *show_func,
 				       struct cmd_list_element **set_list,
 				       struct cmd_list_element **show_list);
@@ -399,7 +434,7 @@ extern void
 				       const char *set_doc,
 				       const char *show_doc,
 				       const char *help_doc,
-				       cmd_sfunc_ftype *set_func,
+				       cmd_const_sfunc_ftype *set_func,
 				       show_value_ftype *show_func,
 				       struct cmd_list_element **set_list,
 				       struct cmd_list_element **show_list);
@@ -417,17 +452,22 @@ extern void dont_repeat (void);
 
 extern scoped_restore_tmpl<int> prevent_dont_repeat (void);
 
+/* Set the arguments that will be passed if the current command is
+   repeated.  Note that the passed-in string must be a constant.  */
+
+extern void set_repeat_arguments (const char *args);
+
 /* Used to mark commands that don't do anything.  If we just leave the
    function field NULL, the command is interpreted as a help topic, or
    as a class of commands.  */
 
-extern void not_just_help_class_command (char *, int);
+extern void not_just_help_class_command (const char *, int);
 
 /* Check function pointer.  */
 extern int cmd_func_p (struct cmd_list_element *cmd);
 
 /* Call the command function.  */
 extern void cmd_func (struct cmd_list_element *cmd,
-		      char *args, int from_tty);
+		      const char *args, int from_tty);
 
 #endif /* !defined (COMMAND_H) */

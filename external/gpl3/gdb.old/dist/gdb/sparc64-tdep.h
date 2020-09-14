@@ -1,6 +1,6 @@
 /* Target-dependent code for UltraSPARC.
 
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -137,5 +137,7 @@ extern struct trad_frame_saved_reg *
 				     struct frame_info *next_frame);
 
 extern const struct sparc_fpregmap sparc64_bsd_fpregmap;
+
+extern void sparc64_forget_process (pid_t pid);
 
 #endif /* sparc64-tdep.h */

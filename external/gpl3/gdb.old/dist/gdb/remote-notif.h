@@ -1,6 +1,6 @@
 /* Remote notification in GDB protocol
 
-   Copyright (C) 1988-2017 Free Software Foundation, Inc.
+   Copyright (C) 1988-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,7 @@
 #ifndef REMOTE_NOTIF_H
 #define REMOTE_NOTIF_H
 
-#include "queue.h"
+#include "common/queue.h"
 
 /* An event of a type of async remote notification.  */
 
@@ -39,6 +39,8 @@ enum REMOTE_NOTIF_ID
   REMOTE_NOTIF_LAST,
 };
 
+struct remote_target;
+
 /* A client to a sort of async remote notification.  */
 
 typedef struct notif_client
@@ -52,17 +54,20 @@ typedef struct notif_client
   /* Parse BUF to get the expected event and update EVENT.  This
      function may throw exception if contents in BUF is not the
      expected event.  */
-  void (*parse) (struct notif_client *self, char *buf,
+  void (*parse) (remote_target *remote,
+		 struct notif_client *self, const char *buf,
 		 struct notif_event *event);
 
   /* Send field <ack_command> to remote, and do some checking.  If
      something wrong, throw an exception.  */
-  void (*ack) (struct notif_client *self, char *buf,
+  void (*ack) (remote_target *remote,
+	       struct notif_client *self, const char *buf,
 	       struct notif_event *event);
 
   /* Check this notification client can get pending events in
      'remote_notif_process'.  */
-  int (*can_get_pending_events) (struct notif_client *self);
+  int (*can_get_pending_events) (remote_target *remote,
+				 struct notif_client *self);
 
   /* Allocate an event.  */
   struct notif_event *(*alloc_event) (void);
@@ -77,6 +82,9 @@ DECLARE_QUEUE_P (notif_client_p);
 
 struct remote_notif_state
 {
+  /* The remote target.  */
+  remote_target *remote;
+
   /* Notification queue.  */
 
   QUEUE(notif_client_p) *notif_queue;
@@ -98,18 +106,20 @@ struct remote_notif_state
   struct notif_event *pending_event[REMOTE_NOTIF_LAST];
 };
 
-void remote_notif_ack (struct notif_client *nc, char *buf);
-struct notif_event *remote_notif_parse (struct notif_client *nc,
-					char *buf);
+void remote_notif_ack (remote_target *remote, notif_client *nc,
+		       const char *buf);
+struct notif_event *remote_notif_parse (remote_target *remote,
+					notif_client *nc,
+					const char *buf);
 
 void notif_event_xfree (struct notif_event *event);
 
 void handle_notification (struct remote_notif_state *notif_state,
-			  char *buf);
+			  const char *buf);
 
 void remote_notif_process (struct remote_notif_state *state,
 			   struct notif_client *except);
-struct remote_notif_state *remote_notif_state_allocate (void);
+remote_notif_state *remote_notif_state_allocate (remote_target *remote);
 void remote_notif_state_xfree (struct remote_notif_state *state);
 
 extern struct notif_client notif_client_stop;

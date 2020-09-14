@@ -1,6 +1,6 @@
 /* Target-dependent code for Solaris SPARC.
 
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -292,10 +292,6 @@ sparc32_sol2_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* How to print LWP PTIDs from core files.  */
   set_gdbarch_core_pid_to_str (gdbarch, sol2_core_pid_to_str);
 }
-
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-void _initialize_sparc_sol2_tdep (void);
 
 void
 _initialize_sparc_sol2_tdep (void)

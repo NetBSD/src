@@ -1,6 +1,6 @@
 /* Low-level RSP routines for GDB, the GNU debugger.
 
-   Copyright (C) 1988-2017 Free Software Foundation, Inc.
+   Copyright (C) 1988-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,8 @@
 
 #ifndef COMMON_RSP_LOW_H
 #define COMMON_RSP_LOW_H
+
+#include "common/byte-vector.h"
 
 /* Convert hex digit A to a number, or throw an exception.  */
 
@@ -41,7 +43,7 @@ extern char *pack_hex_byte (char *pkt, int byte);
    in RESULT.  Reads until a non-hex digit is seen.  Returns a pointer
    to the terminating character.  */
 
-extern char *unpack_varlen_hex (char *buff, ULONGEST *result);
+extern const char *unpack_varlen_hex (const char *buff, ULONGEST *result);
 
 /* HEX is a string of characters representing hexadecimal digits.
    Convert pairs of hex digits to bytes and store sequentially into
@@ -52,12 +54,28 @@ extern char *unpack_varlen_hex (char *buff, ULONGEST *result);
 
 extern int hex2bin (const char *hex, gdb_byte *bin, int count);
 
+/* Like the above, but return a gdb::byte_vector.  */
+
+gdb::byte_vector hex2bin (const char *hex);
+
+/* Like hex2bin, but return a std::string.  */
+
+extern std::string hex2str (const char *hex);
+
+/* Like hex2bin, but return a std::string.  */
+
+extern std::string hex2str (const char *hex, int count);
+
 /* Convert some bytes to a hexadecimal representation.  BIN holds the
    bytes to convert.  COUNT says how many bytes to convert.  The
    resulting characters are stored in HEX, followed by a NUL
    character.  Returns the number of bytes actually converted.  */
 
 extern int bin2hex (const gdb_byte *bin, char *hex, int count);
+
+/* Overloaded version of bin2hex that returns a std::string.  */
+
+extern std::string bin2hex (const gdb_byte *bin, int count);
 
 /* Convert BUFFER, binary data at least LEN_UNITS addressable memory units
    long, into escaped binary data in OUT_BUF.  Only copy memory units that fit
