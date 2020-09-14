@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.319 2020/09/14 19:59:47 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.320 2020/09/14 21:23:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.319 2020/09/14 19:59:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.320 2020/09/14 21:23:58 rillig Exp $");
 
 /* types and constants */
 
@@ -3067,10 +3067,40 @@ Parse_File(const char *name, int fd)
 
 	    /*
 	     * We now know it's a dependency line so it needs to have all
-	     * variables expanded before being parsed. Tell the variable
-	     * module to complain if some variable is undefined...
+	     * variables expanded before being parsed.
+	     *
+	     * XXX: Ideally the dependency line would first be split into
+	     * its left-hand side, dependency operator and right-hand side,
+	     * and then each side would be expanded on its own.  This would
+	     * allow for the left-hand side to allow only defined variables
+	     * and to allow variables on the right-hand side to be undefined
+	     * as well.
+	     *
+	     * Parsing the line first would also prevent that targets
+	     * generated from variable expressions are interpreted as the
+	     * dependency operator, such as in "target${:U:} middle: source",
+	     * in which the middle is interpreted as a source, not a target.
 	     */
-	    line = Var_Subst(line, VAR_CMD, VARE_UNDEFERR|VARE_WANTRES);
+	    {
+	        /* In lint mode, allow undefined variables to appear in
+	         * dependency lines.
+	         *
+	         * Ideally, only the right-hand side would allow undefined
+	         * variables since it is common to have no dependencies.
+	         * Having undefined variables on the left-hand side is more
+	         * unusual though.  Since both sides are expanded in a single
+	         * pass, there is not much choice what to do here.
+	         *
+	         * In normal mode, it does not matter whether undefined
+	         * variables are allowed or not since as of 2020-09-14,
+	         * Var_Parse does not print any parse errors in such a case.
+	         * It simply returns the special empty string var_Error,
+	         * which cannot be detected in the result of Var_Subst. */
+		VarEvalFlags eflags = DEBUG(LINT)
+				      ? VARE_WANTRES
+				      : VARE_UNDEFERR|VARE_WANTRES;
+		line = Var_Subst(line, VAR_CMD, eflags);
+	    }
 
 	    /*
 	     * Need a list for the target nodes
