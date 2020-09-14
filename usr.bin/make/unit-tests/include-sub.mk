@@ -1,4 +1,4 @@
-# $NetBSD: include-sub.mk,v 1.3 2020/09/05 18:13:47 rillig Exp $
+# $NetBSD: include-sub.mk,v 1.4 2020/09/14 19:59:47 rillig Exp $
 
 .if ${.INCLUDEDFROMFILE} == "include-main.mk"
 .  info sub-before-ok
@@ -17,7 +17,22 @@
 .  endif
 .endfor
 
+# To see the variable 'includes' in action:
+#
+# Breakpoints:
+#	Parse_File		at "Stack_Push(&includes, curFile)"
+#	ParseMessage		at entry
+# Watches:
+#	((const IFile *[10])(*includes.items))
+#	*curFile
+
+.for i in deeply
+.  for i in nested
+.    for i in include
 .include "include-subsub.mk"
+.    endfor
+.  endfor
+.endfor
 
 .if ${.INCLUDEDFROMFILE} == "include-main.mk"
 .  info sub-after-ok
