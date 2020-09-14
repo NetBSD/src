@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.521 2020/09/14 20:43:44 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.522 2020/09/14 21:55:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.521 2020/09/14 20:43:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.522 2020/09/14 21:55:53 rillig Exp $");
 
 #define VAR_DEBUG_IF(cond, fmt, ...)	\
     if (!(DEBUG(VAR) && (cond)))	\
@@ -3557,7 +3557,9 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
 		    return VPE_OK;
 		}
 
-		if ((eflags & VARE_UNDEFERR) && DEBUG(LINT)) {
+		if ((eflags & VARE_UNDEFERR) && (eflags & VARE_WANTRES) &&
+		    DEBUG(LINT))
+		{
 		    Parse_Error(PARSE_FATAL, "Variable \"%s\" is undefined",
 				varname);
 		    free(varname);

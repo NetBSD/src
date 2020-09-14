@@ -1,6 +1,5 @@
 make: "opt-debug-lint.mk" line 19: Variable "X" is undefined
 make: "opt-debug-lint.mk" line 41: Variable "UNDEF" is undefined
-make: "opt-debug-lint.mk" line 58: Variable "UNDEF" is undefined
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests
 exit status 1
