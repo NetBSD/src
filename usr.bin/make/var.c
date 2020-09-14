@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.519 2020/09/13 21:03:14 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.520 2020/09/14 07:04:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,7 +121,7 @@
 #include    "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.519 2020/09/13 21:03:14 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.520 2020/09/14 07:04:56 rillig Exp $");
 
 #define VAR_DEBUG_IF(cond, fmt, ...)	\
     if (!(DEBUG(VAR) && (cond)))	\
@@ -3618,7 +3618,10 @@ Var_Parse(const char **pp, GNode *ctxt, VarEvalFlags eflags,
      */
     nstr = Buf_GetAll(&v->val, NULL);
     if (strchr(nstr, '$') != NULL && (eflags & VARE_WANTRES)) {
-	nstr = Var_Subst(nstr, ctxt, eflags);
+        VarEvalFlags nested_eflags = eflags;
+        if (DEBUG(LINT))
+            nested_eflags &= ~(unsigned)VARE_UNDEFERR;
+	nstr = Var_Subst(nstr, ctxt, nested_eflags);
 	*freePtr = nstr;
     }
 
