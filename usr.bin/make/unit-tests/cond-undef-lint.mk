@@ -1,10 +1,13 @@
-# $NetBSD: cond-undef-lint.mk,v 1.1 2020/09/14 06:44:50 rillig Exp $
+# $NetBSD: cond-undef-lint.mk,v 1.2 2020/09/14 07:13:29 rillig Exp $
 #
 # Tests for defined and undefined variables in .if conditions, in lint mode.
 #
 # As of 2020-09-14, lint mode contains experimental code for printing
 # accurate error messages in case of undefined variables, instead of the
 # wrong "Malformed condition".
+#
+# See also:
+#	opt-debug-lint.mk
 
 .MAKEFLAGS: -dL
 
@@ -60,9 +63,7 @@ INDIRECT=	${NESTED_UNDEF} ${NESTED_DEF}
 NESTED_DEF=	nested-defined
 
 # Since NESTED_UNDEF is not controllable at this point, it must not generate
-# an error message.  This condition should generate no error message at all.
-#
-# TODO: Suppress the error message.
+# an error message, and it doesn't do so, since 2020-09-14.
 .if !${INDIRECT}
 .  error
 .endif

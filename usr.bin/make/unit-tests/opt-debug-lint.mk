@@ -1,4 +1,4 @@
-# $NetBSD: opt-debug-lint.mk,v 1.3 2020/09/13 20:21:24 rillig Exp $
+# $NetBSD: opt-debug-lint.mk,v 1.4 2020/09/14 07:13:29 rillig Exp $
 #
 # Tests for the -dL command line option, which runs additional checks
 # to catch common mistakes, such as unclosed variable expressions.
@@ -11,10 +11,11 @@
 # misleading.  The form of the condition is totally fine, it's the evaluation
 # that fails.
 #
-# TODO: Get rid of the "Malformed conditional" error message.
-# As long as the first error message is only printed in lint mode, it can
-# get tricky to keep track of the actually printed error messages and those
-# that still need to be printed.  That's probably a solvable problem though.
+# Since 2020-09-13, the "Malformed conditional" error message is not printed
+# anymore.
+#
+# See also:
+#	cond-undef-lint.mk
 .if $X
 .  error
 .endif
