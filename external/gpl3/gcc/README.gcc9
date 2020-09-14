@@ -1,4 +1,4 @@
-$NetBSD: README.gcc9,v 1.12 2020/09/14 01:19:50 mrg Exp $
+$NetBSD: README.gcc9,v 1.13 2020/09/14 19:51:54 skrll Exp $
 
 new stuff:
 	cc1objcplus
@@ -46,7 +46,7 @@ earmv7		y	n	n	y		n		?	?	y
 earmv7eb	y	n	n	y		n		?	?	y
 earmv7hf	y	y	y	y		y		y	y	y
 earmv7hfeb	y	n	n	y		n		?	?	y
-hppa		y	y	y	y		y		?	?	?
+hppa		y	y	y	y		y		y	y	y
 i386		y	y	y	y		y		y	y	y
 ia64		y	y	y	y		y		y	N/A	y
 m68000		y	y	y	y		y		y	?	n
