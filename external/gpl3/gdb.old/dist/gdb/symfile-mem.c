@@ -1,6 +1,6 @@
 /* Reading symbol files from memory.
 
-   Copyright (C) 1986-2017 Free Software Foundation, Inc.
+   Copyright (C) 1986-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -49,7 +49,7 @@
 #include "target.h"
 #include "value.h"
 #include "symfile.h"
-#include "observer.h"
+#include "observable.h"
 #include "auxv.h"
 #include "elf/common.h"
 #include "gdb_bfd.h"
@@ -88,9 +88,6 @@ symbol_file_add_from_memory (struct bfd *templ, CORE_ADDR addr,
   struct bfd *nbfd;
   struct bfd_section *sec;
   bfd_vma loadbase;
-  struct section_addr_info *sai;
-  unsigned int i;
-  struct cleanup *cleanup;
   symfile_add_flags add_flags = 0;
 
   if (bfd_get_flavour (templ) != bfd_target_elf_flavour)
@@ -101,9 +98,8 @@ symbol_file_add_from_memory (struct bfd *templ, CORE_ADDR addr,
   if (nbfd == NULL)
     error (_("Failed to read a valid object file image from memory."));
 
-  gdb_bfd_ref (nbfd);
   /* Manage the new reference for the duration of this function.  */
-  gdb_bfd_ref_ptr nbfd_holder (nbfd);
+  gdb_bfd_ref_ptr nbfd_holder = gdb_bfd_ref_ptr::new_reference (nbfd);
 
   xfree (bfd_get_filename (nbfd));
   if (name == NULL)
@@ -115,37 +111,30 @@ symbol_file_add_from_memory (struct bfd *templ, CORE_ADDR addr,
     error (_("Got object file from memory but can't read symbols: %s."),
 	   bfd_errmsg (bfd_get_error ()));
 
-  sai = alloc_section_addr_info (bfd_count_sections (nbfd));
-  cleanup = make_cleanup (xfree, sai);
-  i = 0;
+  section_addr_info sai;
   for (sec = nbfd->sections; sec != NULL; sec = sec->next)
     if ((bfd_get_section_flags (nbfd, sec) & (SEC_ALLOC|SEC_LOAD)) != 0)
-      {
-	sai->other[i].addr = bfd_get_section_vma (nbfd, sec) + loadbase;
-	sai->other[i].name = (char *) bfd_get_section_name (nbfd, sec);
-	sai->other[i].sectindex = sec->index;
-	++i;
-      }
-  sai->num_sections = i;
+      sai.emplace_back (bfd_get_section_vma (nbfd, sec) + loadbase,
+			bfd_get_section_name (nbfd, sec),
+			sec->index);
 
   if (from_tty)
     add_flags |= SYMFILE_VERBOSE;
 
   objf = symbol_file_add_from_bfd (nbfd, bfd_get_filename (nbfd),
-				   add_flags, sai, OBJF_SHARED, NULL);
+				   add_flags, &sai, OBJF_SHARED, NULL);
 
   add_target_sections_of_objfile (objf);
 
   /* This might change our ideas about frames already looked at.  */
   reinit_frame_cache ();
 
-  do_cleanups (cleanup);
   return objf;
 }
 
 
 static void
-add_symbol_file_from_memory_command (char *args, int from_tty)
+add_symbol_file_from_memory_command (const char *args, int from_tty)
 {
   CORE_ADDR addr;
   struct bfd *templ;
@@ -167,31 +156,6 @@ add_symbol_file_from_memory_command (char *args, int from_tty)
   symbol_file_add_from_memory (templ, addr, 0, NULL, from_tty);
 }
 
-/* Arguments for symbol_file_add_from_memory_wrapper.  */
-
-struct symbol_file_add_from_memory_args
-{
-  struct bfd *bfd;
-  CORE_ADDR sysinfo_ehdr;
-  size_t size;
-  char *name;
-  int from_tty;
-};
-
-/* Wrapper function for symbol_file_add_from_memory, for
-   catch_exceptions.  */
-
-static int
-symbol_file_add_from_memory_wrapper (struct ui_out *uiout, void *data)
-{
-  struct symbol_file_add_from_memory_args *args
-    = (struct symbol_file_add_from_memory_args *) data;
-
-  symbol_file_add_from_memory (args->bfd, args->sysinfo_ehdr, args->size,
-			       args->name, args->from_tty);
-  return 0;
-}
-
 /* Try to add the symbols for the vsyscall page, if there is one.
    This function is called via the inferior_created observer.  */
 
@@ -203,7 +167,6 @@ add_vsyscall_page (struct target_ops *target, int from_tty)
   if (gdbarch_vsyscall_range (target_gdbarch (), &vsyscall_range))
     {
       struct bfd *bfd;
-      struct symbol_file_add_from_memory_args args;
 
       if (core_bfd != NULL)
 	bfd = core_bfd;
@@ -221,25 +184,27 @@ add_vsyscall_page (struct target_ops *target, int from_tty)
 		     "because no executable was specified"));
 	  return;
 	}
-      args.bfd = bfd;
-      args.sysinfo_ehdr = vsyscall_range.start;
-      args.size = vsyscall_range.length;
 
-      args.name = xstrprintf ("system-supplied DSO at %s",
-			      paddress (target_gdbarch (), vsyscall_range.start));
-      /* Pass zero for FROM_TTY, because the action of loading the
-	 vsyscall DSO was not triggered by the user, even if the user
-	 typed "run" at the TTY.  */
-      args.from_tty = 0;
-      catch_exceptions (current_uiout, symbol_file_add_from_memory_wrapper,
-			&args, RETURN_MASK_ALL);
+      char *name = xstrprintf ("system-supplied DSO at %s",
+			       paddress (target_gdbarch (), vsyscall_range.start));
+      TRY
+	{
+	  /* Pass zero for FROM_TTY, because the action of loading the
+	     vsyscall DSO was not triggered by the user, even if the
+	     user typed "run" at the TTY.  */
+	  symbol_file_add_from_memory (bfd,
+				       vsyscall_range.start,
+				       vsyscall_range.length,
+				       name,
+				       0 /* from_tty */);
+	}
+      CATCH (ex, RETURN_MASK_ALL)
+	{
+	  exception_print (gdb_stderr, ex);
+	}
+      END_CATCH
     }
 }
-
-
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-extern initialize_file_ftype _initialize_symfile_mem;
 
 void
 _initialize_symfile_mem (void)
@@ -254,5 +219,5 @@ _initialize_symfile_mem (void)
 
   /* Want to know of each new inferior so that its vsyscall info can
      be extracted.  */
-  observer_attach_inferior_created (add_vsyscall_page);
+  gdb::observers::inferior_created.attach (add_vsyscall_page);
 }

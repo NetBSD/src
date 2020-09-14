@@ -1,7 +1,7 @@
 /* Target-dependent code for Windows CE running on ARM processors,
    for GDB.
 
-   Copyright (C) 2007-2017 Free Software Foundation, Inc.
+   Copyright (C) 2007-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -153,9 +153,6 @@ arm_wince_osabi_sniffer (bfd *abfd)
 
   return GDB_OSABI_UNKNOWN;
 }
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-void _initialize_arm_wince_tdep (void);
 
 void
 _initialize_arm_wince_tdep (void)

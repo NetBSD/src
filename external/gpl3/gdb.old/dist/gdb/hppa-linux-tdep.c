@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux running on PA-RISC, for GDB.
 
-   Copyright (C) 2004-2017 Free Software Foundation, Inc.
+   Copyright (C) 2004-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -479,14 +479,10 @@ hppa_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
-  cb (".reg", 80 * tdep->bytes_per_address, &hppa_linux_regset,
-      NULL, cb_data);
-  cb (".reg2", 64 * 4, &hppa_linux_fpregset, NULL, cb_data);
+  cb (".reg", 80 * tdep->bytes_per_address, 80 * tdep->bytes_per_address,
+      &hppa_linux_regset, NULL, cb_data);
+  cb (".reg2", 64 * 4, 64 * 4, &hppa_linux_fpregset, NULL, cb_data);
 }
-
-
-/* Forward declarations.  */
-extern initialize_file_ftype _initialize_hppa_linux_tdep;
 
 static void
 hppa_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)

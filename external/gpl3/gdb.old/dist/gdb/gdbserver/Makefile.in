@@ -1,4 +1,4 @@
-# Copyright (C) 1989-2017 Free Software Foundation, Inc.
+# Copyright (C) 1989-2019 Free Software Foundation, Inc.
 
 # This file is part of GDB.
 
@@ -43,6 +43,7 @@ man9dir = $(mandir)/man9
 infodir = @infodir@
 htmldir = $(prefix)/html
 includedir = @includedir@
+CONFIG_SRC_SUBDIR = @CONFIG_SRC_SUBDIR@
 
 SHELL = @SHELL@
 EXEEXT = @EXEEXT@
@@ -61,14 +62,7 @@ AR_FLAGS = rc
 # Dependency tracking information.
 DEPMODE = @CCDEPMODE@
 DEPDIR = @DEPDIR@
-depcomp = $(SHELL) $(srcdir)/../depcomp
-
-# Note that these are overridden by GNU make-specific code below if
-# GNU make is used.  The overrides implement dependency tracking.
-COMPILE.pre = $(CXX) $(CXX_DIALECT)
-COMPILE.post = -c -o $@
-COMPILE = $(COMPILE.pre) $(INTERNAL_CFLAGS) $(COMPILE.post)
-POSTCOMPILE = @true
+depcomp = $(SHELL) $(srcdir)/../../depcomp
 
 # Directory containing source files.  Don't clean up the spacing,
 # this exact string is matched for by the "configure" script.
@@ -76,6 +70,15 @@ srcdir = @srcdir@
 abs_top_srcdir = @abs_top_srcdir@
 abs_srcdir = @abs_srcdir@
 VPATH = @srcdir@
+
+include $(srcdir)/../silent-rules.mk
+
+# Note that these are overridden by GNU make-specific code below if
+# GNU make is used.  The overrides implement dependency tracking.
+COMPILE.pre = $(CXX) -x c++ $(CXX_DIALECT)
+COMPILE.post = -c -o $@
+COMPILE = $(ECHO_CXX) $(COMPILE.pre) $(INTERNAL_CFLAGS) $(COMPILE.post)
+POSTCOMPILE = @true
 
 # It is also possible that you will need to add -I/usr/include/sys to the
 # CFLAGS section if your system doesn't have fcntl.h in /usr/include (which
@@ -115,7 +118,7 @@ GNULIB_H = $(GNULIB_BUILDDIR)/import/string.h @GNULIB_STDINT_H@
 # in those directories should be included with the subdirectory.
 # e.g.: "target/wait.h".
 #
-INCLUDE_CFLAGS = -I. -I${srcdir} -I$(srcdir)/../common \
+INCLUDE_CFLAGS = -I. -I${srcdir} \
 	-I$(srcdir)/../regformats -I$(srcdir)/.. -I$(INCLUDE_DIR) \
 	$(INCGNU)
 
@@ -193,6 +196,7 @@ SFILES = \
 	$(srcdir)/arch/arm.c \
 	$(srcdir)/arch/arm-get-next-pcs.c \
 	$(srcdir)/arch/arm-linux.c \
+	$(srcdir)/arch/ppc-linux-common.c \
 	$(srcdir)/common/btrace-common.c \
 	$(srcdir)/common/buffer.c \
 	$(srcdir)/common/cleanups.c \
@@ -204,19 +208,26 @@ SFILES = \
 	$(srcdir)/common/environ.c \
 	$(srcdir)/common/fileio.c \
 	$(srcdir)/common/filestuff.c \
+	$(srcdir)/common/job-control.c \
+	$(srcdir)/common/gdb_tilde_expand.c \
 	$(srcdir)/common/gdb_vecs.c \
+	$(srcdir)/common/netstuff.c \
 	$(srcdir)/common/new-op.c \
+	$(srcdir)/common/pathstuff.c \
 	$(srcdir)/common/print-utils.c \
 	$(srcdir)/common/ptid.c \
 	$(srcdir)/common/rsp-low.c \
+	$(srcdir)/common/tdesc.c \
 	$(srcdir)/common/vec.c \
 	$(srcdir)/common/xml-utils.c \
+	$(srcdir)/nat/aarch64-sve-linux-ptrace.c \
 	$(srcdir)/nat/linux-btrace.c \
 	$(srcdir)/nat/linux-namespaces.c \
 	$(srcdir)/nat/linux-osdata.c \
 	$(srcdir)/nat/linux-personality.c \
 	$(srcdir)/nat/mips-linux-watch.c \
 	$(srcdir)/nat/ppc-linux.c \
+	$(srcdir)/nat/fork-inferior.c \
 	$(srcdir)/target/waitstatus.c
 
 DEPFILES = @GDBSERVER_DEPFILES@
@@ -227,51 +238,66 @@ SOURCES = $(SFILES)
 TAGFILES = $(SOURCES) ${HFILES} ${ALLPARAM} ${POSSLIBS}
 
 OBS = \
-	agent.o \
 	ax.o \
-	btrace-common.o \
-	buffer.o \
-	cleanups.o \
-	common-debug.o \
-	common-exceptions.o \
-	common-regcache.o \
-	common-utils.o \
+	common/agent.o \
+	common/btrace-common.o \
+	common/buffer.o \
+	common/cleanups.o \
+	common/common-debug.o \
+	common/common-exceptions.o \
+	common/job-control.o \
+	common/common-regcache.o \
+	common/common-utils.o \
+	common/errors.o \
+	common/environ.o \
+	common/fileio.o \
+	common/filestuff.o \
+	common/format.o \
+	common/gdb_tilde_expand.o \
+	common/gdb_vecs.o \
+	common/netstuff.o \
+	common/new-op.o \
+	common/pathstuff.o \
+	common/print-utils.o \
+	common/ptid.o \
+	common/rsp-low.o \
+	common/signals.o \
+	common/signals-state-save-restore.o \
+	common/tdesc.o \
+	common/vec.o \
+	common/xml-utils.o \
 	debug.o \
 	dll.o \
-	errors.o \
-	environ.o \
 	event-loop.o \
-	fileio.o \
-	filestuff.o \
-	format.o \
-	gdb_vecs.o \
 	hostio.o \
 	inferiors.o \
 	mem-break.o \
-	new-op.o \
 	notif.o \
-	print-utils.o \
-	ptid.o \
 	regcache.o \
 	remote-utils.o \
-	rsp-low.o \
 	server.o \
-	signals.o \
-	signals-state-save-restore.o \
 	symbol.o \
 	target.o \
 	tdesc.o \
 	tracepoint.o \
 	utils.o \
-	vec.o \
 	version.o \
 	waitstatus.o \
-	xml-utils.o \
 	$(DEPFILES) \
 	$(LIBOBJS) \
 	$(XML_BUILTIN)
 
-GDBREPLAY_OBS = gdbreplay.o version.o
+GDBREPLAY_OBS = \
+	common/cleanups.o \
+	common/common-exceptions.o \
+	common/common-utils.o \
+	common/errors.o \
+	common/netstuff.o \
+	common/print-utils.o \
+	gdbreplay.o \
+	utils.o \
+	version.o
+
 GDBSERVER_LIBS = @GDBSERVER_LIBS@
 XM_CLIBS = @LIBS@
 CDEPS = $(srcdir)/proc-service.list
@@ -369,32 +395,46 @@ install-html:
 clean-info: force
 	@$(MAKE) $(FLAGS_TO_PASS) DO=$@ "DODIRS=$(SUBDIRS)" subdir_do
 
-gdbserver$(EXEEXT): $(OBS) ${ADD_DEPS} ${CDEPS} $(LIBGNU) $(LIBIBERTY)
-	rm -f gdbserver$(EXEEXT)
-	$(CC_LD) $(INTERNAL_CFLAGS) $(INTERNAL_LDFLAGS) -o gdbserver$(EXEEXT) $(OBS) \
-	$(LIBGNU) $(LIBIBERTY) $(GDBSERVER_LIBS) $(XM_CLIBS)
+gdbserver$(EXEEXT): $(sort $(OBS)) ${CDEPS} $(LIBGNU) $(LIBIBERTY)
+	$(SILENCE) rm -f gdbserver$(EXEEXT)
+	$(ECHO_CXXLD) $(CC_LD) $(INTERNAL_CFLAGS) $(INTERNAL_LDFLAGS) \
+		-o gdbserver$(EXEEXT) $(OBS) $(LIBGNU) $(LIBIBERTY) \
+		$(GDBSERVER_LIBS) $(XM_CLIBS)
 
 $(LIBGNU) $(LIBIBERTY) $(GNULIB_H): all-lib
 all-lib: $(GNULIB_BUILDDIR)/Makefile $(LIBIBERTY_BUILDDIR)/Makefile
 	@$(MAKE) $(FLAGS_TO_PASS) DO=all DODIRS="$(SUBDIRS)" subdir_do
 .PHONY: all-lib
 
-gdbreplay$(EXEEXT): $(GDBREPLAY_OBS) $(LIBGNU) $(LIBIBERTY)
-	rm -f gdbreplay$(EXEEXT)
-	$(CC_LD) $(INTERNAL_CFLAGS) $(INTERNAL_LDFLAGS) -o gdbreplay$(EXEEXT) $(GDBREPLAY_OBS) \
-	  $(XM_CLIBS) $(LIBGNU) $(LIBIBERTY)
+gdbreplay$(EXEEXT): $(sort $(GDBREPLAY_OBS)) $(LIBGNU) $(LIBIBERTY)
+	$(SILENCE) rm -f gdbreplay$(EXEEXT)
+	$(ECHO_CXXLD) $(CC_LD) $(INTERNAL_CFLAGS) $(INTERNAL_LDFLAGS) \
+		-o gdbreplay$(EXEEXT) $(GDBREPLAY_OBS) $(XM_CLIBS) $(LIBGNU) \
+		$(LIBIBERTY)
 
-IPA_OBJS = ax-ipa.o tracepoint-ipa.o format-ipa.o utils-ipa.o \
-	regcache-ipa.o remote-utils-ipa.o common-utils-ipa.o \
-	tdesc-ipa.o print-utils-ipa.o rsp-low-ipa.o errors-ipa.o \
+IPA_OBJS = \
+	ax-ipa.o \
+	common/common-utils-ipa.o \
+	common/errors-ipa.o \
+	common/format-ipa.o \
+	common/print-utils-ipa.o \
+	common/rsp-low-ipa.o \
+	common/tdesc-ipa.o \
+	common/vec-ipa.o \
+	regcache-ipa.o \
+	remote-utils-ipa.o \
+	tdesc-ipa.o \
+	tracepoint-ipa.o \
+	utils-ipa.o \
 	${IPA_DEPFILES}
 
 IPA_LIB = libinproctrace.so
 
-$(IPA_LIB): $(IPA_OBJS) ${ADD_DEPS} ${CDEPS}
-	rm -f $(IPA_LIB)
-	$(CC_LD) -shared -fPIC -Wl,--soname=$(IPA_LIB) -Wl,--no-undefined $(INTERNAL_CFLAGS) \
-	$(INTERNAL_LDFLAGS) -o $(IPA_LIB) ${IPA_OBJS} -ldl -pthread
+$(IPA_LIB): $(sort $(IPA_OBJS)) ${CDEPS}
+	$(SILENCE) rm -f $(IPA_LIB)
+	$(ECHO_CXXLD) $(CC_LD) -shared -fPIC -Wl,--soname=$(IPA_LIB) \
+		-Wl,--no-undefined $(INTERNAL_CFLAGS) $(INTERNAL_LDFLAGS) \
+		-o $(IPA_LIB) ${IPA_OBJS} -ldl -pthread
 
 # Put the proper machine-specific files first, so M-. on a machine
 # specific routine gets the one for the correct machine.
@@ -418,6 +458,10 @@ clean:
 	rm -f *-generated.c
 	rm -f stamp-xml
 	rm -f $(DEPDIR)/*.Po
+	for i in $(CONFIG_SRC_SUBDIR); do \
+		rm -f $$i/*.o;	\
+		rm -f $$i/$(DEPDIR)/*; \
+	done
 	@$(MAKE) $(FLAGS_TO_PASS) DO=$@ "DODIRS=$(SUBDIRS)" subdir_do
 
 maintainer-clean realclean distclean: clean
@@ -425,6 +469,9 @@ maintainer-clean realclean distclean: clean
 	rm -rf $(GNULIB_BUILDDIR)
 	rm -f Makefile config.status config.h stamp-h config.log
 	rm -f Makefile
+	for i in $(CONFIG_SRC_SUBDIR); do \
+		rmdir $$i/$(DEPDIR); \
+	done
 
 subdir_do: force
 	@for i in $(DODIRS); do \
@@ -469,15 +516,16 @@ am--refresh:
 force:
 
 version-generated.c: Makefile $(srcdir)/../version.in $(srcdir)/../../bfd/version.h $(srcdir)/../common/create-version.sh
-	$(SHELL) $(srcdir)/../common/create-version.sh $(srcdir)/.. \
-	    $(host_alias) $(target_alias) $@
+	$(ECHO_GEN) $(SHELL) $(srcdir)/../common/create-version.sh $(srcdir)/.. \
+		$(host_alias) $(target_alias) $@
 
 xml-builtin-generated.c: stamp-xml; @true
 stamp-xml: $(XML_DIR)/feature_to_c.sh Makefile $(XML_FILES)
-	rm -f xml-builtin.tmp
-	$(SHELL) $(XML_DIR)/feature_to_c.sh xml-builtin.tmp $(XML_FILES)
-	$(SHELL) $(srcdir)/../../move-if-change xml-builtin.tmp xml-builtin-generated.c
-	echo stamp > stamp-xml
+	$(SILENCE) rm -f xml-builtin.tmp
+	$(ECHO_GEN_XML_BUILTIN_GENERATED) $(SHELL) $(XML_DIR)/feature_to_c.sh \
+		xml-builtin.tmp $(XML_FILES)
+	$(SILENCE) $(SHELL) $(srcdir)/../../move-if-change xml-builtin.tmp xml-builtin-generated.c
+	$(SILENCE) echo stamp > stamp-xml
 
 .PRECIOUS: xml-builtin.c
 
@@ -496,13 +544,19 @@ regdat_sh = $(srcdir)/../regformats/regdat.sh
 
 UST_CFLAGS = $(ustinc) -DCONFIG_UST_GDB_INTEGRATION
 
+# Undo gnulib replacements for the IPA shared library build.
+# The gnulib headers are still needed, but gnulib is not linked
+# into the IPA lib so replacement apis don't work.
+UNDO_GNULIB_CFLAGS = -Drpl_strerror=strerror
+
 # Note, we only build the IPA if -fvisibility=hidden is supported in
 # the first place.
 IPAGENT_CFLAGS = $(INTERNAL_CFLAGS) $(UST_CFLAGS) \
+	$(UNDO_GNULIB_CFLAGS) \
 	-fPIC -DIN_PROCESS_AGENT \
 	-fvisibility=hidden
 
-IPAGENT_COMPILE = $(COMPILE.pre) $(IPAGENT_CFLAGS) $(COMPILE.post)
+IPAGENT_COMPILE = $(ECHO_CXX) $(COMPILE.pre) $(IPAGENT_CFLAGS) $(COMPILE.post)
 
 # Rules for special cases.
 
@@ -515,6 +569,14 @@ ax.o: ax.c
 	$(POSTCOMPILE)
 
 # Rules for objects that go in the in-process agent.
+
+arch/%-ipa.o: ../arch/%.c
+	$(IPAGENT_COMPILE) $<
+	$(POSTCOMPILE)
+
+common/%-ipa.o: ../common/%.c
+	$(IPAGENT_COMPILE) $<
+	$(POSTCOMPILE)
 
 %-ipa.o: %-generated.c
 	$(IPAGENT_COMPILE) $<
@@ -535,25 +597,21 @@ ax.o: ax.c
 	$(IPAGENT_COMPILE) $<
 	$(POSTCOMPILE)
 
-%-ipa.o: ../common/%.c
-	$(IPAGENT_COMPILE) $<
+# Rules for objects that go in the gdbserver binary.
+
+arch/%.o: ../arch/%.c
+	$(COMPILE) $<
 	$(POSTCOMPILE)
 
-# Rules for objects that go in the gdbserver binary.
+common/%.o: ../common/%.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
 
 %.o: %-generated.c
 	$(COMPILE) $<
 	$(POSTCOMPILE)
 
 %.o: %.c
-	$(COMPILE) $<
-	$(POSTCOMPILE)
-
-%.o: ../arch/%.c
-	$(COMPILE) $<
-	$(POSTCOMPILE)
-
-%.o: ../common/%.c
 	$(COMPILE) $<
 	$(POSTCOMPILE)
 
@@ -569,16 +627,16 @@ ax.o: ax.c
 # -generated to identify and clean them easily.
 
 %-generated.c: ../regformats/%.dat | $(regdat_sh)
-	$(SHELL) $(regdat_sh) $< $@
+	$(ECHO_REGDAT) $(SHELL) $(regdat_sh) $< $@
 
 %-generated.c: ../regformats/arm/%.dat | $(regdat_sh)
-	$(SHELL) $(regdat_sh) $< $@
+	$(ECHO_REGDAT) $(SHELL) $(regdat_sh) $< $@
 
 %-generated.c: ../regformats/i386/%.dat | $(regdat_sh)
-	$(SHELL) $(regdat_sh) $< $@
+	$(ECHO_REGDAT) $(SHELL) $(regdat_sh) $< $@
 
 %-generated.c: ../regformats/rs6000/%.dat | $(regdat_sh)
-	$(SHELL) $(regdat_sh) $< $@
+	$(ECHO_REGDAT) $(SHELL) $(regdat_sh) $< $@
 
 #
 # Dependency tracking.
@@ -589,12 +647,13 @@ ifeq ($(DEPMODE),depmode=gcc3)
 # into place if the compile succeeds.  We need this because gcc does
 # not atomically write the dependency output file.
 override COMPILE.post = -c -o $@ -MT $@ -MMD -MP \
-	-MF $(DEPDIR)/$(basename $(@F)).Tpo
-override POSTCOMPILE = @mv $(DEPDIR)/$(basename $(@F)).Tpo \
-	$(DEPDIR)/$(basename $(@F)).Po
+	-MF $(@D)/$(DEPDIR)/$(basename $(@F)).Tpo
+override POSTCOMPILE = @mv $(@D)/$(DEPDIR)/$(basename $(@F)).Tpo \
+	$(@D)/$(DEPDIR)/$(basename $(@F)).Po
 else
 override COMPILE.pre = source='$<' object='$@' libtool=no \
-	DEPDIR=$(DEPDIR) $(DEPMODE) $(depcomp) $(CC)
+	DEPDIR=$(DEPDIR) $(DEPMODE) $(depcomp) \
+	$(CXX) -x c++ $(CXX_DIALECT)
 # depcomp handles atomicity for us, so we don't need a postcompile
 # step.
 override POSTCOMPILE =
@@ -613,10 +672,17 @@ else
 $(all_object_files) : $(generated_files)
 endif
 
+# All the .deps files to include.
+all_deps_files = $(foreach dep,$(patsubst %.o,%.Po,$(all_object_files)),\
+		   $(dir $(dep))/$(DEPDIR)/$(notdir $(dep)))
+
 # Dependencies.
--include $(patsubst %.o, $(DEPDIR)/%.Po, $(all_object_files))
+-include $(all_deps_files)
 
 # Disable implicit make rules.
 include $(srcdir)/../disable-implicit-rules.mk
+
+# Do not delete intermediate files (e.g. *-generated.c).
+.SECONDARY:
 
 # This is the end of "Makefile.in".

@@ -1,6 +1,6 @@
 /* Generic code for supporting multiple C++ ABI's
 
-   Copyright (C) 2001-2017 Free Software Foundation, Inc.
+   Copyright (C) 2001-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -314,12 +314,10 @@ static void
 list_cp_abis (int from_tty)
 {
   struct ui_out *uiout = current_uiout;
-  struct cleanup *cleanup_chain;
   int i;
 
   uiout->text ("The available C++ ABIs are:\n");
-  cleanup_chain = make_cleanup_ui_out_tuple_begin_end (uiout,
-						       "cp-abi-list");
+  ui_out_emit_tuple tuple_emitter (uiout, "cp-abi-list");
   for (i = 0; i < num_cp_abis; i++)
     {
       char pad[14];
@@ -337,14 +335,13 @@ list_cp_abis (int from_tty)
       uiout->field_string ("doc", cp_abis[i]->doc);
       uiout->text ("\n");
     }
-  do_cleanups (cleanup_chain);
 }
 
 /* Set the current C++ ABI, or display the list of options if no
    argument is given.  */
 
 static void
-set_cp_abi_cmd (char *args, int from_tty)
+set_cp_abi_cmd (const char *args, int from_tty)
 {
   if (args == NULL)
     {
@@ -358,8 +355,9 @@ set_cp_abi_cmd (char *args, int from_tty)
 
 /* A completion function for "set cp-abi".  */
 
-static VEC (char_ptr) *
+static void
 cp_abi_completer (struct cmd_list_element *ignore,
+		  completion_tracker &tracker,
 		  const char *text, const char *word)
 {
   static const char **cp_abi_names;
@@ -374,13 +372,13 @@ cp_abi_completer (struct cmd_list_element *ignore,
       cp_abi_names[i] = NULL;
     }
 
-  return complete_on_enum (cp_abi_names, text, word);
+  complete_on_enum (tracker, cp_abi_names, text, word);
 }
 
 /* Show the currently selected C++ ABI.  */
 
 static void
-show_cp_abi_cmd (char *args, int from_tty)
+show_cp_abi_cmd (const char *args, int from_tty)
 {
   struct ui_out *uiout = current_uiout;
 
@@ -391,8 +389,6 @@ show_cp_abi_cmd (char *args, int from_tty)
   uiout->field_string ("longname", current_cp_abi.longname);
   uiout->text (").\n");
 }
-
-extern initialize_file_ftype _initialize_cp_abi; /* -Wmissing-prototypes */
 
 void
 _initialize_cp_abi (void)

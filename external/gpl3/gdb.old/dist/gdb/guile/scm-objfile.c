@@ -1,6 +1,6 @@
 /* Scheme interface to objfiles.
 
-   Copyright (C) 2008-2017 Free Software Foundation, Inc.
+   Copyright (C) 2008-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -336,16 +336,12 @@ gdbscm_execute_objfile_script (const struct extension_language_defn *extlang,
 			       struct objfile *objfile, const char *name,
 			       const char *script)
 {
-  char *msg;
-
   ofscm_current_objfile = objfile;
 
-  msg = gdbscm_safe_eval_string (script, 0 /* display_result */);
+  gdb::unique_xmalloc_ptr<char> msg
+    = gdbscm_safe_eval_string (script, 0 /* display_result */);
   if (msg != NULL)
-    {
-      fprintf_filtered (gdb_stderr, "%s", msg);
-      xfree (msg);
-    }
+    fprintf_filtered (gdb_stderr, "%s", msg.get ());
 
   ofscm_current_objfile = NULL;
 }
@@ -370,17 +366,16 @@ gdbscm_get_current_objfile (void)
 static SCM
 gdbscm_objfiles (void)
 {
-  struct objfile *objf;
   SCM result;
 
   result = SCM_EOL;
 
-  ALL_OBJFILES (objf)
-  {
-    SCM item = ofscm_scm_from_objfile (objf);
+  for (objfile *objf : current_program_space->objfiles ())
+    {
+      SCM item = ofscm_scm_from_objfile (objf);
 
-    result = scm_cons (item, result);
-  }
+      result = scm_cons (item, result);
+    }
 
   return scm_reverse_x (result, SCM_EOL);
 }

@@ -1,5 +1,5 @@
 /* Internal interfaces for the Win32 specific target code for gdbserver.
-   Copyright (C) 2007-2017 Free Software Foundation, Inc.
+   Copyright (C) 2007-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,6 +15,9 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+#ifndef GDBSERVER_WIN32_LOW_H
+#define GDBSERVER_WIN32_LOW_H
 
 #include <windows.h>
 
@@ -115,3 +118,5 @@ extern char * strwinerror (DWORD error);
 /* in wincecompat.c */
 
 extern void to_back_slashes (char *);
+
+#endif /* GDBSERVER_WIN32_LOW_H */

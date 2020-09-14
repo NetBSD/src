@@ -1,5 +1,5 @@
 /* C preprocessor macro tables for GDB.
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of GDB.
@@ -466,8 +466,6 @@ macro_include (struct macro_source_file *source,
      the new one?  */
   if (*link && line == (*link)->included_at_line)
     {
-      char *link_fullname, *source_fullname;
-
       /* This means the compiler is emitting bogus debug info.  (GCC
          circa March 2002 did this.)  It also means that the splay
          tree ordering function, macro_tree_compare, will abort,
@@ -476,13 +474,11 @@ macro_include (struct macro_source_file *source,
 
          First, squawk.  */
 
-      link_fullname = macro_source_fullname (*link);
-      source_fullname = macro_source_fullname (source);
-      complaint (&symfile_complaints,
-		 _("both `%s' and `%s' allegedly #included at %s:%d"),
-		 included, link_fullname, source_fullname, line);
-      xfree (source_fullname);
-      xfree (link_fullname);
+      std::string link_fullname = macro_source_fullname (*link);
+      std::string source_fullname = macro_source_fullname (source);
+      complaint (_("both `%s' and `%s' allegedly #included at %s:%d"),
+		 included, link_fullname.c_str (), source_fullname.c_str (),
+		 line);
 
       /* Now, choose a new, unoccupied line number for this
          #inclusion, after the alleged #inclusion line.  */
@@ -726,17 +722,14 @@ check_for_redefinition (struct macro_source_file *source, int line,
 
       if (! same)
         {
-	  char *source_fullname, *found_key_fullname;
-	  
-	  source_fullname = macro_source_fullname (source);
-	  found_key_fullname = macro_source_fullname (found_key->start_file);
-	  complaint (&symfile_complaints,
-		     _("macro `%s' redefined at %s:%d; "
+	  std::string source_fullname = macro_source_fullname (source);
+	  std::string found_key_fullname
+	    = macro_source_fullname (found_key->start_file);
+	  complaint (_("macro `%s' redefined at %s:%d; "
 		       "original definition at %s:%d"),
-		     name, source_fullname, line, found_key_fullname,
+		     name, source_fullname.c_str (), line,
+		     found_key_fullname.c_str (),
 		     found_key->start_line);
-	  xfree (found_key_fullname);
-	  xfree (source_fullname);
         }
 
       return found_key;
@@ -745,21 +738,26 @@ check_for_redefinition (struct macro_source_file *source, int line,
     return 0;
 }
 
-/* A helper function to define a new object-like macro.  */
+/* A helper function to define a new object-like or function-like macro
+   according to KIND.  When KIND is macro_object_like,
+   the macro_special_kind must be provided as ARGC, and ARGV must be NULL.
+   When KIND is macro_function_like, ARGC and ARGV are giving the function
+   arguments.  */
 
 static void
-macro_define_object_internal (struct macro_source_file *source, int line,
-			      const char *name, const char *replacement,
-			      enum macro_special_kind kind)
+macro_define_internal (struct macro_source_file *source, int line,
+                       const char *name, enum macro_kind kind,
+		       int argc, const char **argv,
+                       const char *replacement)
 {
   struct macro_table *t = source->table;
   struct macro_key *k = NULL;
   struct macro_definition *d;
 
   if (! t->redef_ok)
-    k = check_for_redefinition (source, line, 
-				name, macro_object_like,
-				0, 0,
+    k = check_for_redefinition (source, line,
+				name, kind,
+				argc, argv,
 				replacement);
 
   /* If we're redefining a symbol, and the existing key would be
@@ -776,8 +774,21 @@ macro_define_object_internal (struct macro_source_file *source, int line,
     return;
 
   k = new_macro_key (t, name, source, line);
-  d = new_macro_definition (t, macro_object_like, kind, 0, replacement);
+  d = new_macro_definition (t, kind, argc, argv, replacement);
   splay_tree_insert (t->definitions, (splay_tree_key) k, (splay_tree_value) d);
+}
+
+/* A helper function to define a new object-like macro.  */
+
+static void
+macro_define_object_internal (struct macro_source_file *source, int line,
+			      const char *name, const char *replacement,
+			      enum macro_special_kind special_kind)
+{
+  macro_define_internal (source, line,
+			 name, macro_object_like,
+			 special_kind, NULL,
+			 replacement);
 }
 
 void
@@ -804,28 +815,11 @@ macro_define_function (struct macro_source_file *source, int line,
                        const char *name, int argc, const char **argv,
                        const char *replacement)
 {
-  struct macro_table *t = source->table;
-  struct macro_key *k = NULL;
-  struct macro_definition *d;
-
-  if (! t->redef_ok)
-    k = check_for_redefinition (source, line,
-				name, macro_function_like,
-				argc, argv,
-				replacement);
-
-  /* See comments about duplicate keys in macro_define_object.  */
-  if (k && ! key_compare (k, name, source, line))
-    return;
-
-  /* We should also check here that all the argument names in ARGV are
-     distinct.  */
-
-  k = new_macro_key (t, name, source, line);
-  d = new_macro_definition (t, macro_function_like, argc, argv, replacement);
-  splay_tree_insert (t->definitions, (splay_tree_key) k, (splay_tree_value) d);
+  macro_define_internal (source, line,
+			 name, macro_function_like,
+			 argc, argv,
+			 replacement);
 }
-
 
 void
 macro_undef (struct macro_source_file *source, int line,
@@ -855,17 +849,13 @@ macro_undef (struct macro_source_file *source, int line,
              #definition.  */
           if (key->end_file)
             {
-	      char *source_fullname, *key_fullname;
-
-	      source_fullname = macro_source_fullname (source);
-	      key_fullname = macro_source_fullname (key->end_file);
-              complaint (&symfile_complaints,
-                         _("macro '%s' is #undefined twice,"
+	      std::string source_fullname = macro_source_fullname (source);
+	      std::string key_fullname = macro_source_fullname (key->end_file);
+              complaint (_("macro '%s' is #undefined twice,"
                            " at %s:%d and %s:%d"),
-			 name, source_fullname, line, key_fullname,
+			 name, source_fullname.c_str (), line,
+			 key_fullname.c_str (),
 			 key->end_line);
-	      xfree (key_fullname);
-	      xfree (source_fullname);
             }
 
           /* Whether or not we've seen a prior #undefinition, wipe out
@@ -880,8 +870,7 @@ macro_undef (struct macro_source_file *source, int line,
          has no macro definition in scope is ignored.  So we should
          ignore it too.  */
 #if 0
-      complaint (&symfile_complaints,
-		 _("no definition for macro `%s' in scope to #undef at %s:%d"),
+      complaint (_("no definition for macro `%s' in scope to #undef at %s:%d"),
 		 name, source->filename, line);
 #endif
     }
@@ -926,14 +915,9 @@ macro_lookup_definition (struct macro_source_file *source,
 
   if (n)
     {
-      struct macro_definition *retval;
-      char *source_fullname;
-
-      source_fullname = macro_source_fullname (source);
-      retval = fixup_definition (source_fullname, line,
-				 (struct macro_definition *) n->value);
-      xfree (source_fullname);
-      return retval;
+      std::string source_fullname = macro_source_fullname (source);
+      return fixup_definition (source_fullname.c_str (), line,
+			       (struct macro_definition *) n->value);
     }
   else
     return 0;
@@ -977,12 +961,10 @@ foreach_macro (splay_tree_node node, void *arg)
   struct macro_for_each_data *datum = (struct macro_for_each_data *) arg;
   struct macro_key *key = (struct macro_key *) node->key;
   struct macro_definition *def;
-  char *key_fullname;
 
-  key_fullname = macro_source_fullname (key->start_file);
-  def = fixup_definition (key_fullname, key->start_line,
+  std::string key_fullname = macro_source_fullname (key->start_file);
+  def = fixup_definition (key_fullname.c_str (), key->start_line,
 			  (struct macro_definition *) node->value);
-  xfree (key_fullname);
 
   datum->fn (key->name, def, key->start_file, key->start_line);
   return 0;
@@ -1007,12 +989,10 @@ foreach_macro_in_scope (splay_tree_node node, void *info)
   struct macro_for_each_data *datum = (struct macro_for_each_data *) info;
   struct macro_key *key = (struct macro_key *) node->key;
   struct macro_definition *def;
-  char *datum_fullname;
 
-  datum_fullname = macro_source_fullname (datum->file);
-  def = fixup_definition (datum_fullname, datum->line,
+  std::string datum_fullname = macro_source_fullname (datum->file);
+  def = fixup_definition (datum_fullname.c_str (), datum->line,
 			  (struct macro_definition *) node->value);
-  xfree (datum_fullname);
 
   /* See if this macro is defined before the passed-in line, and
      extends past that line.  */
@@ -1086,7 +1066,7 @@ free_macro_table (struct macro_table *table)
 
 /* See macrotab.h for the comment.  */
 
-char *
+std::string
 macro_source_fullname (struct macro_source_file *file)
 {
   const char *comp_dir = NULL;
@@ -1095,7 +1075,7 @@ macro_source_fullname (struct macro_source_file *file)
     comp_dir = COMPUNIT_DIRNAME (file->table->compunit_symtab);
 
   if (comp_dir == NULL || IS_ABSOLUTE_PATH (file->filename))
-    return xstrdup (file->filename);
+    return file->filename;
 
-  return concat (comp_dir, SLASH_STRING, file->filename, (char *) NULL);
+  return std::string (comp_dir) + SLASH_STRING + file->filename;
 }

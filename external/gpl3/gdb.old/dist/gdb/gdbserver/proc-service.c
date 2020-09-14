@@ -1,5 +1,5 @@
 /* libthread_db helper functions for the remote server for GDB.
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2019 Free Software Foundation, Inc.
 
    Contributed by MontaVista Software.
 
@@ -80,7 +80,8 @@ ps_err_e
 ps_pdread (gdb_ps_prochandle_t ph, psaddr_t addr,
 	   gdb_ps_read_buf_t buf, gdb_ps_size_t size)
 {
-  read_inferior_memory ((uintptr_t) addr, (gdb_byte *) buf, size);
+  if (read_inferior_memory ((uintptr_t) addr, (gdb_byte *) buf, size) != 0)
+    return PS_ERR;
   return PS_OK;
 }
 
@@ -107,7 +108,7 @@ ps_lgetregs (gdb_ps_prochandle_t ph, lwpid_t lwpid, prgregset_t gregset)
   struct thread_info *reg_thread, *saved_thread;
   struct regcache *regcache;
 
-  lwp = find_lwp_pid (pid_to_ptid (lwpid));
+  lwp = find_lwp_pid (ptid_t (lwpid));
   if (lwp == NULL)
     return PS_ERR;
 

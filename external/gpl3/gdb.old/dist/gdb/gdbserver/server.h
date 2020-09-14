@@ -1,5 +1,5 @@
 /* Common definitions for remote server for GDB.
-   Copyright (C) 1993-2017 Free Software Foundation, Inc.
+   Copyright (C) 1993-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,10 +16,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef SERVER_H
-#define SERVER_H
+#ifndef GDBSERVER_SERVER_H
+#define GDBSERVER_SERVER_H
 
-#include "common-defs.h"
+#include "common/common-defs.h"
 
 gdb_static_assert (sizeof (CORE_ADDR) >= sizeof (void *));
 
@@ -27,7 +27,7 @@ gdb_static_assert (sizeof (CORE_ADDR) >= sizeof (void *));
 #include "wincecompat.h"
 #endif
 
-#include "version.h"
+#include "common/version.h"
 
 #if !HAVE_DECL_STRERROR
 #ifndef strerror
@@ -54,14 +54,13 @@ int vsnprintf(char *str, size_t size, const char *format, va_list ap);
 #  define PROG "gdbserver"
 #endif
 
-#include "buffer.h"
-#include "xml-utils.h"
+#include "common/buffer.h"
+#include "common/xml-utils.h"
 #include "regcache.h"
-#include "gdb_signals.h"
+#include "common/gdb_signals.h"
 #include "target.h"
 #include "mem-break.h"
-#include "gdbthread.h"
-#include "inferiors.h"
+#include "common/environ.h"
 
 /* Target-specific functions */
 
@@ -69,41 +68,15 @@ void initialize_low ();
 
 /* Public variables in server.c */
 
-extern ptid_t cont_thread;
-extern ptid_t general_thread;
-
 extern int server_waiting;
-extern int pass_signals[];
-extern int program_signals[];
-extern int program_signals_p;
 
 extern int disable_packet_vCont;
 extern int disable_packet_Tthread;
 extern int disable_packet_qC;
 extern int disable_packet_qfThreadInfo;
 
-extern char *own_buf;
-
 extern int run_once;
-extern int multi_process;
-extern int report_fork_events;
-extern int report_vfork_events;
-extern int report_exec_events;
-extern int report_thread_events;
 extern int non_stop;
-
-/* True if the "swbreak+" feature is active.  In that case, GDB wants
-   us to report whether a trap is explained by a software breakpoint
-   and for the server to handle PC adjustment if necessary on this
-   target.  Only enabled if the target supports it.  */
-extern int swbreak_feature;
-
-/* True if the "hwbreak+" feature is active.  In that case, GDB wants
-   us to report whether a trap is explained by a hardware breakpoint.
-   Only enabled if the target supports it.  */
-extern int hwbreak_feature;
-
-extern int disable_randomization;
 
 #if USE_WIN32API
 #include <winsock2.h>
@@ -131,7 +104,7 @@ extern int in_queued_stop_replies (ptid_t ptid);
 
 #include "utils.h"
 #include "debug.h"
-#include "gdb_vecs.h"
+#include "common/gdb_vecs.h"
 
 /* Maximum number of bytes to read/write at once.  The value here
    is chosen to fill up a packet (the headers account for the 32).  */
@@ -140,7 +113,7 @@ extern int in_queued_stop_replies (ptid_t ptid);
 /* Buffer sizes for transferring memory, registers, etc.   Set to a constant
    value to accomodate multiple register formats.  This value must be at least
    as large as the largest register set supported by gdbserver.  */
-#define PBUFSIZ 16384
+#define PBUFSIZ 18432
 
 /* Definition for an unknown syscall, used basically in error-cases.  */
 #define UNKNOWN_SYSCALL (-1)
@@ -148,4 +121,88 @@ extern int in_queued_stop_replies (ptid_t ptid);
 /* Definition for any syscall, used for unfiltered syscall reporting.  */
 #define ANY_SYSCALL (-2)
 
-#endif /* SERVER_H */
+/* After fork_inferior has been called, we need to adjust a few
+   signals and call startup_inferior to start the inferior and consume
+   its first events.  This is done here.  PID is the pid of the new
+   inferior and PROGRAM is its name.  */
+extern void post_fork_inferior (int pid, const char *program);
+
+/* Get the gdb_environ being used in the current session.  */
+extern gdb_environ *get_environ ();
+
+extern unsigned long signal_pid;
+
+
+/* Description of the client remote protocol state for the currently
+   connected client.  */
+
+struct client_state
+{
+  client_state ():
+    own_buf ((char *) xmalloc (PBUFSIZ + 1)) 
+  {}
+
+  /* The thread set with an `Hc' packet.  `Hc' is deprecated in favor of
+     `vCont'.  Note the multi-process extensions made `vCont' a
+     requirement, so `Hc pPID.TID' is pretty much undefined.  So
+     CONT_THREAD can be null_ptid for no `Hc' thread, minus_one_ptid for
+     resuming all threads of the process (again, `Hc' isn't used for
+     multi-process), or a specific thread ptid_t.  */
+  ptid_t cont_thread;
+
+  /* The thread set with an `Hg' packet.  */
+  ptid_t general_thread;
+
+  int multi_process = 0;
+  int report_fork_events = 0;
+  int report_vfork_events = 0;
+  int report_exec_events = 0;
+  int report_thread_events = 0;
+
+  /* True if the "swbreak+" feature is active.  In that case, GDB wants
+     us to report whether a trap is explained by a software breakpoint
+     and for the server to handle PC adjustment if necessary on this
+     target.  Only enabled if the target supports it.  */
+  int swbreak_feature = 0;
+  /* True if the "hwbreak+" feature is active.  In that case, GDB wants
+     us to report whether a trap is explained by a hardware breakpoint.
+     Only enabled if the target supports it.  */
+  int hwbreak_feature = 0;
+
+  /* True if the "vContSupported" feature is active.  In that case, GDB
+     wants us to report whether single step is supported in the reply to
+     "vCont?" packet.  */
+  int vCont_supported = 0;
+
+  /* Whether we should attempt to disable the operating system's address
+     space randomization feature before starting an inferior.  */
+  int disable_randomization = 1;
+
+  int pass_signals[GDB_SIGNAL_LAST];
+  int program_signals[GDB_SIGNAL_LAST];
+  int program_signals_p = 0;
+
+  /* Last status reported to GDB.  */
+  struct target_waitstatus last_status;
+  ptid_t last_ptid;
+
+  char *own_buf;
+
+  /* If true, then GDB has requested noack mode.  */
+  int noack_mode = 0;
+  /* If true, then we tell GDB to use noack mode by default.  */
+  int transport_is_reliable = 0;
+
+  /* The traceframe to be used as the source of data to send back to
+     GDB.  A value of -1 means to get data from the live program.  */
+
+  int current_traceframe = -1;
+
+};
+
+client_state &get_client_state ();
+
+#include "gdbthread.h"
+#include "inferiors.h"
+
+#endif /* GDBSERVER_SERVER_H */

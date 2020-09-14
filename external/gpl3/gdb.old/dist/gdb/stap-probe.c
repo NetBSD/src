@@ -1,6 +1,6 @@
 /* SystemTap probe support for GDB.
 
-   Copyright (C) 2012-2017 Free Software Foundation, Inc.
+   Copyright (C) 2012-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,7 @@
 #include "defs.h"
 #include "stap-probe.h"
 #include "probe.h"
-#include "vec.h"
+#include "common/vec.h"
 #include "ui-out.h"
 #include "objfiles.h"
 #include "arch-utils.h"
@@ -44,10 +44,6 @@
    the probes.  */
 
 #define STAP_BASE_SECTION_NAME ".stapsdt.base"
-
-/* Forward declaration. */
-
-extern const struct probe_ops stap_probe_ops;
 
 /* Should we display debug information for the probe's argument expression
    parsing?  */
@@ -85,6 +81,12 @@ enum stap_arg_bitness
 
 struct stap_probe_arg
 {
+  /* Constructor for stap_probe_arg.  */
+  stap_probe_arg (enum stap_arg_bitness bitness_, struct type *atype_,
+		  expression_up &&aexpr_)
+  : bitness (bitness_), atype (atype_), aexpr (std::move (aexpr_))
+  {}
+
   /* The bitness of this argument.  */
   enum stap_arg_bitness bitness;
 
@@ -92,35 +94,134 @@ struct stap_probe_arg
   struct type *atype;
 
   /* The argument converted to an internal GDB expression.  */
-  struct expression *aexpr;
+  expression_up aexpr;
 };
 
-typedef struct stap_probe_arg stap_probe_arg_s;
-DEF_VEC_O (stap_probe_arg_s);
+/* Class that implements the static probe methods for "stap" probes.  */
 
-struct stap_probe
+class stap_static_probe_ops : public static_probe_ops
 {
-  /* Generic information about the probe.  This shall be the first element
-     of this struct, in order to maintain binary compatibility with the
-     `struct probe' and be able to fully abstract it.  */
-  struct probe p;
+public:
+  /* See probe.h.  */
+  bool is_linespec (const char **linespecp) const override;
 
+  /* See probe.h.  */
+  void get_probes (std::vector<probe *> *probesp,
+		   struct objfile *objfile) const override;
+
+  /* See probe.h.  */
+  const char *type_name () const override;
+
+  /* See probe.h.  */
+  std::vector<struct info_probe_column> gen_info_probes_table_header
+    () const override;
+};
+
+/* SystemTap static_probe_ops.  */
+
+const stap_static_probe_ops stap_static_probe_ops {};
+
+class stap_probe : public probe
+{
+public:
+  /* Constructor for stap_probe.  */
+  stap_probe (std::string &&name_, std::string &&provider_, CORE_ADDR address_,
+	      struct gdbarch *arch_, CORE_ADDR sem_addr, const char *args_text)
+    : probe (std::move (name_), std::move (provider_), address_, arch_),
+      m_sem_addr (sem_addr),
+      m_have_parsed_args (false), m_unparsed_args_text (args_text)
+  {}
+
+  /* See probe.h.  */
+  CORE_ADDR get_relocated_address (struct objfile *objfile) override;
+
+  /* See probe.h.  */
+  unsigned get_argument_count (struct frame_info *frame) override;
+
+  /* See probe.h.  */
+  bool can_evaluate_arguments () const override;
+
+  /* See probe.h.  */
+  struct value *evaluate_argument (unsigned n,
+				   struct frame_info *frame) override;
+
+  /* See probe.h.  */
+  void compile_to_ax (struct agent_expr *aexpr,
+		      struct axs_value *axs_value,
+		      unsigned n) override;
+
+  /* See probe.h.  */
+  void set_semaphore (struct objfile *objfile,
+		      struct gdbarch *gdbarch) override;
+
+  /* See probe.h.  */
+  void clear_semaphore (struct objfile *objfile,
+			struct gdbarch *gdbarch) override;
+
+  /* See probe.h.  */
+  const static_probe_ops *get_static_ops () const override;
+
+  /* See probe.h.  */
+  std::vector<const char *> gen_info_probes_table_values () const override;
+
+  /* Return argument N of probe.
+
+     If the probe's arguments have not been parsed yet, parse them.  If
+     there are no arguments, throw an exception (error).  Otherwise,
+     return the requested argument.  */
+  struct stap_probe_arg *get_arg_by_number (unsigned n,
+					    struct gdbarch *gdbarch)
+  {
+    if (!m_have_parsed_args)
+      this->parse_arguments (gdbarch);
+
+    gdb_assert (m_have_parsed_args);
+    if (m_parsed_args.empty ())
+      internal_error (__FILE__, __LINE__,
+		      _("Probe '%s' apparently does not have arguments, but \n"
+			"GDB is requesting its argument number %u anyway.  "
+			"This should not happen.  Please report this bug."),
+		      this->get_name ().c_str (), n);
+
+    if (n > m_parsed_args.size ())
+      internal_error (__FILE__, __LINE__,
+		      _("Probe '%s' has %d arguments, but GDB is requesting\n"
+			"argument %u.  This should not happen.  Please\n"
+			"report this bug."),
+		      this->get_name ().c_str (),
+		      (int) m_parsed_args.size (), n);
+
+    return &m_parsed_args[n];
+  }
+
+  /* Function which parses an argument string from the probe,
+     correctly splitting the arguments and storing their information
+     in properly ways.
+
+     Consider the following argument string (x86 syntax):
+
+     `4@%eax 4@$10'
+
+     We have two arguments, `%eax' and `$10', both with 32-bit
+     unsigned bitness.  This function basically handles them, properly
+     filling some structures with this information.  */
+  void parse_arguments (struct gdbarch *gdbarch);
+
+private:
   /* If the probe has a semaphore associated, then this is the value of
      it, relative to SECT_OFF_DATA.  */
-  CORE_ADDR sem_addr;
+  CORE_ADDR m_sem_addr;
 
-  /* One if the arguments have been parsed.  */
-  unsigned int args_parsed : 1;
+  /* True if the arguments have been parsed.  */
+  bool m_have_parsed_args;
 
-  union
-    {
-      const char *text;
+  /* The text version of the probe's arguments, unparsed.  */
+  const char *m_unparsed_args_text;
 
-      /* Information about each argument.  This is an array of `stap_probe_arg',
-	 with each entry representing one argument.  */
-      VEC (stap_probe_arg_s) *vec;
-    }
-  args_u;
+  /* Information about each argument.  This is an array of `stap_probe_arg',
+     with each entry representing one argument.  This is only valid if
+     M_ARGS_PARSED is true.  */
+  std::vector<struct stap_probe_arg> m_parsed_args;
 };
 
 /* When parsing the arguments, we have to establish different precedences
@@ -326,7 +427,7 @@ stap_get_opcode (const char **s)
 static struct type *
 stap_get_expected_argument_type (struct gdbarch *gdbarch,
 				 enum stap_arg_bitness b,
-				 const struct stap_probe *probe)
+				 const char *probe_name)
 {
   switch (b)
     {
@@ -361,8 +462,7 @@ stap_get_expected_argument_type (struct gdbarch *gdbarch,
       return builtin_type (gdbarch)->builtin_uint64;
 
     default:
-      error (_("Undefined bitness for probe '%s'."),
-	     probe->p.name);
+      error (_("Undefined bitness for probe '%s'."), probe_name);
       break;
     }
 }
@@ -769,7 +869,7 @@ stap_parse_single_operand (struct stap_parse_info *p)
 	 We handle the register displacement here, and the other cases
 	 recursively.  */
       if (p->inside_paren_p)
-	tmp = skip_spaces_const (tmp);
+	tmp = skip_spaces (tmp);
 
       while (isdigit (*tmp))
 	{
@@ -818,7 +918,7 @@ stap_parse_single_operand (struct stap_parse_info *p)
       tmp = endp;
 
       if (p->inside_paren_p)
-	tmp = skip_spaces_const (tmp);
+	tmp = skip_spaces (tmp);
 
       /* If "stap_is_integer_prefix" returns true, it means we can
 	 accept integers without a prefix here.  But we also need to
@@ -901,7 +1001,7 @@ stap_parse_argument_conditionally (struct stap_parse_info *p)
 	 have to parse it as it was a separate expression, without
 	 left-side or precedence.  */
       ++p->arg;
-      p->arg = skip_spaces_const (p->arg);
+      p->arg = skip_spaces (p->arg);
       ++p->inside_paren_p;
 
       stap_parse_argument_1 (p, 0, STAP_OPERAND_PREC_NONE);
@@ -913,7 +1013,7 @@ stap_parse_argument_conditionally (struct stap_parse_info *p)
 
       ++p->arg;
       if (p->inside_paren_p)
-	p->arg = skip_spaces_const (p->arg);
+	p->arg = skip_spaces (p->arg);
     }
   else
     error (_("Cannot parse expression `%s'."), p->saved_arg);
@@ -935,7 +1035,7 @@ stap_parse_argument_1 (struct stap_parse_info *p, int has_lhs,
   gdb_assert (p->arg != NULL);
 
   if (p->inside_paren_p)
-    p->arg = skip_spaces_const (p->arg);
+    p->arg = skip_spaces (p->arg);
 
   if (!has_lhs)
     {
@@ -981,7 +1081,7 @@ stap_parse_argument_1 (struct stap_parse_info *p, int has_lhs,
 
       p->arg = tmp_exp_buf;
       if (p->inside_paren_p)
-	p->arg = skip_spaces_const (p->arg);
+	p->arg = skip_spaces (p->arg);
 
       /* Parse the right-side of the expression.  */
       stap_parse_argument_conditionally (p);
@@ -1039,31 +1139,20 @@ stap_parse_argument_1 (struct stap_parse_info *p, int has_lhs,
    - If we find an operator, we skip it.
 
    This function can also call a special function that will try to match
-   unknown tokens.  It will return 1 if the argument has been parsed
-   successfully, or zero otherwise.  */
+   unknown tokens.  It will return the expression_up generated from
+   parsing the argument.  */
 
-static struct expression *
+static expression_up
 stap_parse_argument (const char **arg, struct type *atype,
 		     struct gdbarch *gdbarch)
 {
-  struct stap_parse_info p;
-  struct cleanup *back_to;
-
   /* We need to initialize the expression buffer, in order to begin
      our parsing efforts.  We use language_c here because we may need
      to do pointer arithmetics.  */
-  initialize_expout (&p.pstate, 10, language_def (language_c), gdbarch);
-  back_to = make_cleanup (free_current_contents, &p.pstate.expout);
-
-  p.saved_arg = *arg;
-  p.arg = *arg;
-  p.arg_type = atype;
-  p.gdbarch = gdbarch;
-  p.inside_paren_p = 0;
+  struct stap_parse_info p (*arg, atype, 10, language_def (language_c),
+			    gdbarch);
 
   stap_parse_argument_1 (&p, 0, STAP_OPERAND_PREC_NONE);
-
-  discard_cleanups (back_to);
 
   gdb_assert (p.inside_paren_p == 0);
 
@@ -1072,47 +1161,30 @@ stap_parse_argument (const char **arg, struct type *atype,
   write_exp_elt_type (&p.pstate, atype);
   write_exp_elt_opcode (&p.pstate, UNOP_CAST);
 
-  reallocate_expout (&p.pstate);
-
-  p.arg = skip_spaces_const (p.arg);
+  p.arg = skip_spaces (p.arg);
   *arg = p.arg;
 
-  /* We can safely return EXPOUT here.  */
-  return p.pstate.expout;
+  return p.pstate.release ();
 }
 
-/* Function which parses an argument string from PROBE, correctly splitting
-   the arguments and storing their information in properly ways.
+/* Implementation of 'parse_arguments' method.  */
 
-   Consider the following argument string (x86 syntax):
-
-   `4@%eax 4@$10'
-
-   We have two arguments, `%eax' and `$10', both with 32-bit unsigned bitness.
-   This function basically handles them, properly filling some structures with
-   this information.  */
-
-static void
-stap_parse_probe_arguments (struct stap_probe *probe, struct gdbarch *gdbarch)
+void
+stap_probe::parse_arguments (struct gdbarch *gdbarch)
 {
   const char *cur;
 
-  gdb_assert (!probe->args_parsed);
-  cur = probe->args_u.text;
-  probe->args_parsed = 1;
-  probe->args_u.vec = NULL;
+  gdb_assert (!m_have_parsed_args);
+  cur = m_unparsed_args_text;
+  m_have_parsed_args = true;
 
   if (cur == NULL || *cur == '\0' || *cur == ':')
     return;
 
   while (*cur != '\0')
     {
-      struct stap_probe_arg arg;
-      enum stap_arg_bitness b;
-      int got_minus = 0;
-      struct expression *expr;
-
-      memset (&arg, 0, sizeof (arg));
+      enum stap_arg_bitness bitness;
+      bool got_minus = false;
 
       /* We expect to find something like:
 
@@ -1128,30 +1200,30 @@ stap_parse_probe_arguments (struct stap_probe *probe, struct gdbarch *gdbarch)
 	    {
 	      /* Discard the `-'.  */
 	      ++cur;
-	      got_minus = 1;
+	      got_minus = true;
 	    }
 
 	  /* Defining the bitness.  */
 	  switch (*cur)
 	    {
 	    case '1':
-	      b = (got_minus ? STAP_ARG_BITNESS_8BIT_SIGNED
-		   : STAP_ARG_BITNESS_8BIT_UNSIGNED);
+	      bitness = (got_minus ? STAP_ARG_BITNESS_8BIT_SIGNED
+			 : STAP_ARG_BITNESS_8BIT_UNSIGNED);
 	      break;
 
 	    case '2':
-	      b = (got_minus ? STAP_ARG_BITNESS_16BIT_SIGNED
-		   : STAP_ARG_BITNESS_16BIT_UNSIGNED);
+	      bitness = (got_minus ? STAP_ARG_BITNESS_16BIT_SIGNED
+			 : STAP_ARG_BITNESS_16BIT_UNSIGNED);
 	      break;
 
 	    case '4':
-	      b = (got_minus ? STAP_ARG_BITNESS_32BIT_SIGNED
-		   : STAP_ARG_BITNESS_32BIT_UNSIGNED);
+	      bitness = (got_minus ? STAP_ARG_BITNESS_32BIT_SIGNED
+			 : STAP_ARG_BITNESS_32BIT_UNSIGNED);
 	      break;
 
 	    case '8':
-	      b = (got_minus ? STAP_ARG_BITNESS_64BIT_SIGNED
-		   : STAP_ARG_BITNESS_64BIT_UNSIGNED);
+	      bitness = (got_minus ? STAP_ARG_BITNESS_64BIT_SIGNED
+			 : STAP_ARG_BITNESS_64BIT_UNSIGNED);
 	      break;
 
 	    default:
@@ -1159,67 +1231,68 @@ stap_parse_probe_arguments (struct stap_probe *probe, struct gdbarch *gdbarch)
 		/* We have an error, because we don't expect anything
 		   except 1, 2, 4 and 8.  */
 		warning (_("unrecognized bitness %s%c' for probe `%s'"),
-			 got_minus ? "`-" : "`", *cur, probe->p.name);
+			 got_minus ? "`-" : "`", *cur,
+			 this->get_name ().c_str ());
 		return;
 	      }
 	    }
-
-	  arg.bitness = b;
-
 	  /* Discard the number and the `@' sign.  */
 	  cur += 2;
 	}
       else
-	arg.bitness = STAP_ARG_BITNESS_UNDEFINED;
+	bitness = STAP_ARG_BITNESS_UNDEFINED;
 
-      arg.atype = stap_get_expected_argument_type (gdbarch, arg.bitness,
-						   probe);
+      struct type *atype
+	= stap_get_expected_argument_type (gdbarch, bitness,
+					   this->get_name ().c_str ());
 
-      expr = stap_parse_argument (&cur, arg.atype, gdbarch);
+      expression_up expr = stap_parse_argument (&cur, atype, gdbarch);
 
       if (stap_expression_debug)
-	dump_raw_expression (expr, gdb_stdlog,
+	dump_raw_expression (expr.get (), gdb_stdlog,
 			     "before conversion to prefix form");
 
-      prefixify_expression (expr);
+      prefixify_expression (expr.get ());
 
       if (stap_expression_debug)
-	dump_prefix_expression (expr, gdb_stdlog);
+	dump_prefix_expression (expr.get (), gdb_stdlog);
 
-      arg.aexpr = expr;
+      m_parsed_args.emplace_back (bitness, atype, std::move (expr));
 
       /* Start it over again.  */
-      cur = skip_spaces_const (cur);
-
-      VEC_safe_push (stap_probe_arg_s, probe->args_u.vec, &arg);
+      cur = skip_spaces (cur);
     }
 }
 
-/* Implementation of the get_probe_address method.  */
+/* Helper function to relocate an address.  */
 
 static CORE_ADDR
-stap_get_probe_address (struct probe *probe, struct objfile *objfile)
+relocate_address (CORE_ADDR address, struct objfile *objfile)
 {
-  return probe->address + ANOFFSET (objfile->section_offsets,
-				    SECT_OFF_DATA (objfile));
+  return address + ANOFFSET (objfile->section_offsets,
+			     SECT_OFF_DATA (objfile));
+}
+
+/* Implementation of the get_relocated_address method.  */
+
+CORE_ADDR
+stap_probe::get_relocated_address (struct objfile *objfile)
+{
+  return relocate_address (this->get_address (), objfile);
 }
 
 /* Given PROBE, returns the number of arguments present in that probe's
    argument string.  */
 
-static unsigned
-stap_get_probe_argument_count (struct probe *probe_generic,
-			       struct frame_info *frame)
+unsigned
+stap_probe::get_argument_count (struct frame_info *frame)
 {
-  struct stap_probe *probe = (struct stap_probe *) probe_generic;
   struct gdbarch *gdbarch = get_frame_arch (frame);
 
-  gdb_assert (probe_generic->pops == &stap_probe_ops);
-
-  if (!probe->args_parsed)
+  if (!m_have_parsed_args)
     {
-      if (can_evaluate_probe_arguments (probe_generic))
-	stap_parse_probe_arguments (probe, gdbarch);
+      if (this->can_evaluate_arguments ())
+	this->parse_arguments (gdbarch);
       else
 	{
 	  static int have_warned_stap_incomplete = 0;
@@ -1234,13 +1307,12 @@ stap_get_probe_argument_count (struct probe *probe_generic,
 	    }
 
 	  /* Marking the arguments as "already parsed".  */
-	  probe->args_u.vec = NULL;
-	  probe->args_parsed = 1;
+	  m_have_parsed_args = true;
 	}
     }
 
-  gdb_assert (probe->args_parsed);
-  return VEC_length (stap_probe_arg_s, probe->args_u.vec);
+  gdb_assert (m_have_parsed_args);
+  return m_parsed_args.size ();
 }
 
 /* Return 1 if OP is a valid operator inside a probe argument, or zero
@@ -1279,36 +1351,12 @@ stap_is_operator (const char *op)
   return ret;
 }
 
-/* Return argument N of probe PROBE.
+/* Implement the `can_evaluate_arguments' method.  */
 
-   If the probe's arguments have not been parsed yet, parse them.  If
-   there are no arguments, throw an exception (error).  Otherwise,
-   return the requested argument.  */
-
-static struct stap_probe_arg *
-stap_get_arg (struct stap_probe *probe, unsigned n, struct gdbarch *gdbarch)
+bool
+stap_probe::can_evaluate_arguments () const
 {
-  if (!probe->args_parsed)
-    stap_parse_probe_arguments (probe, gdbarch);
-
-  gdb_assert (probe->args_parsed);
-  if (probe->args_u.vec == NULL)
-    internal_error (__FILE__, __LINE__,
-		    _("Probe '%s' apparently does not have arguments, but \n"
-		      "GDB is requesting its argument number %u anyway.  "
-		      "This should not happen.  Please report this bug."),
-		    probe->p.name, n);
-
-  return VEC_index (stap_probe_arg_s, probe->args_u.vec, n);
-}
-
-/* Implement the `can_evaluate_probe_arguments' method of probe_ops.  */
-
-static int
-stap_can_evaluate_probe_arguments (struct probe *probe_generic)
-{
-  struct stap_probe *stap_probe = (struct stap_probe *) probe_generic;
-  struct gdbarch *gdbarch = stap_probe->p.arch;
+  struct gdbarch *gdbarch = this->get_gdbarch ();
 
   /* For SystemTap probes, we have to guarantee that the method
      stap_is_single_operand is defined on gdbarch.  If it is not, then it
@@ -1319,71 +1367,42 @@ stap_can_evaluate_probe_arguments (struct probe *probe_generic)
 /* Evaluate the probe's argument N (indexed from 0), returning a value
    corresponding to it.  Assertion is thrown if N does not exist.  */
 
-static struct value *
-stap_evaluate_probe_argument (struct probe *probe_generic, unsigned n,
-			      struct frame_info *frame)
+struct value *
+stap_probe::evaluate_argument (unsigned n, struct frame_info *frame)
 {
-  struct stap_probe *stap_probe = (struct stap_probe *) probe_generic;
-  struct gdbarch *gdbarch = get_frame_arch (frame);
   struct stap_probe_arg *arg;
   int pos = 0;
+  struct gdbarch *gdbarch = get_frame_arch (frame);
 
-  gdb_assert (probe_generic->pops == &stap_probe_ops);
-
-  arg = stap_get_arg (stap_probe, n, gdbarch);
-  return evaluate_subexp_standard (arg->atype, arg->aexpr, &pos, EVAL_NORMAL);
+  arg = this->get_arg_by_number (n, gdbarch);
+  return evaluate_subexp_standard (arg->atype, arg->aexpr.get (), &pos,
+				   EVAL_NORMAL);
 }
 
 /* Compile the probe's argument N (indexed from 0) to agent expression.
    Assertion is thrown if N does not exist.  */
 
-static void
-stap_compile_to_ax (struct probe *probe_generic, struct agent_expr *expr,
-		    struct axs_value *value, unsigned n)
+void
+stap_probe::compile_to_ax (struct agent_expr *expr, struct axs_value *value,
+			   unsigned n)
 {
-  struct stap_probe *stap_probe = (struct stap_probe *) probe_generic;
   struct stap_probe_arg *arg;
   union exp_element *pc;
 
-  gdb_assert (probe_generic->pops == &stap_probe_ops);
-
-  arg = stap_get_arg (stap_probe, n, expr->gdbarch);
+  arg = this->get_arg_by_number (n, expr->gdbarch);
 
   pc = arg->aexpr->elts;
-  gen_expr (arg->aexpr, &pc, expr, value);
+  gen_expr (arg->aexpr.get (), &pc, expr, value);
 
   require_rvalue (expr, value);
   value->type = arg->atype;
 }
-
-/* Destroy (free) the data related to PROBE.  PROBE memory itself is not feed
-   as it is allocated on an obstack.  */
-
-static void
-stap_probe_destroy (struct probe *probe_generic)
-{
-  struct stap_probe *probe = (struct stap_probe *) probe_generic;
-
-  gdb_assert (probe_generic->pops == &stap_probe_ops);
-
-  if (probe->args_parsed)
-    {
-      struct stap_probe_arg *arg;
-      int ix;
-
-      for (ix = 0; VEC_iterate (stap_probe_arg_s, probe->args_u.vec, ix, arg);
-	   ++ix)
-	xfree (arg->aexpr);
-      VEC_free (stap_probe_arg_s, probe->args_u.vec);
-    }
-}
-
 
 
 /* Set or clear a SystemTap semaphore.  ADDRESS is the semaphore's
-   address.  SET is zero if the semaphore should be cleared, or one
-   if it should be set.  This is a helper function for `stap_semaphore_down'
-   and `stap_semaphore_up'.  */
+   address.  SET is zero if the semaphore should be cleared, or one if
+   it should be set.  This is a helper function for
+   'stap_probe::set_semaphore' and 'stap_probe::clear_semaphore'.  */
 
 static void
 stap_modify_semaphore (CORE_ADDR address, int set, struct gdbarch *gdbarch)
@@ -1419,41 +1438,47 @@ stap_modify_semaphore (CORE_ADDR address, int set, struct gdbarch *gdbarch)
     warning (_("Could not write the value of a SystemTap semaphore."));
 }
 
-/* Set a SystemTap semaphore.  SEM is the semaphore's address.  Semaphores
-   act as reference counters, so calls to this function must be paired with
-   calls to `stap_semaphore_down'.
+/* Implementation of the 'set_semaphore' method.
 
-   This function and `stap_semaphore_down' race with another tool changing
-   the probes, but that is too rare to care.  */
+   SystemTap semaphores act as reference counters, so calls to this
+   function must be paired with calls to 'clear_semaphore'.
 
-static void
-stap_set_semaphore (struct probe *probe_generic, struct objfile *objfile,
-		    struct gdbarch *gdbarch)
+   This function and 'clear_semaphore' race with another tool
+   changing the probes, but that is too rare to care.  */
+
+void
+stap_probe::set_semaphore (struct objfile *objfile, struct gdbarch *gdbarch)
 {
-  struct stap_probe *probe = (struct stap_probe *) probe_generic;
-  CORE_ADDR addr;
-
-  gdb_assert (probe_generic->pops == &stap_probe_ops);
-
-  addr = (probe->sem_addr
-	  + ANOFFSET (objfile->section_offsets, SECT_OFF_DATA (objfile)));
-  stap_modify_semaphore (addr, 1, gdbarch);
+  stap_modify_semaphore (relocate_address (m_sem_addr, objfile), 1, gdbarch);
 }
 
-/* Clear a SystemTap semaphore.  SEM is the semaphore's address.  */
+/* Implementation of the 'clear_semaphore' method.  */
 
-static void
-stap_clear_semaphore (struct probe *probe_generic, struct objfile *objfile,
-		      struct gdbarch *gdbarch)
+void
+stap_probe::clear_semaphore (struct objfile *objfile, struct gdbarch *gdbarch)
 {
-  struct stap_probe *probe = (struct stap_probe *) probe_generic;
-  CORE_ADDR addr;
+  stap_modify_semaphore (relocate_address (m_sem_addr, objfile), 0, gdbarch);
+}
 
-  gdb_assert (probe_generic->pops == &stap_probe_ops);
+/* Implementation of the 'get_static_ops' method.  */
 
-  addr = (probe->sem_addr
-	  + ANOFFSET (objfile->section_offsets, SECT_OFF_DATA (objfile)));
-  stap_modify_semaphore (addr, 0, gdbarch);
+const static_probe_ops *
+stap_probe::get_static_ops () const
+{
+  return &stap_static_probe_ops;
+}
+
+/* Implementation of the 'gen_info_probes_table_values' method.  */
+
+std::vector<const char *>
+stap_probe::gen_info_probes_table_values () const
+{
+  const char *val = NULL;
+
+  if (m_sem_addr != 0)
+    val = print_core_address (this->get_gdbarch (), m_sem_addr);
+
+  return std::vector<const char *> { val };
 }
 
 /* Helper function that parses the information contained in a
@@ -1472,29 +1497,22 @@ stap_clear_semaphore (struct probe *probe_generic, struct objfile *objfile,
 
 static void
 handle_stap_probe (struct objfile *objfile, struct sdt_note *el,
-		   VEC (probe_p) **probesp, CORE_ADDR base)
+		   std::vector<probe *> *probesp, CORE_ADDR base)
 {
   bfd *abfd = objfile->obfd;
   int size = bfd_get_arch_size (abfd) / 8;
   struct gdbarch *gdbarch = get_objfile_arch (objfile);
   struct type *ptr_type = builtin_type (gdbarch)->builtin_data_ptr;
-  CORE_ADDR base_ref;
-  const char *probe_args = NULL;
-  struct stap_probe *ret;
-
-  ret = XOBNEW (&objfile->per_bfd->storage_obstack, struct stap_probe);
-  ret->p.pops = &stap_probe_ops;
-  ret->p.arch = gdbarch;
 
   /* Provider and the name of the probe.  */
-  ret->p.provider = (char *) &el->data[3 * size];
-  ret->p.name = ((const char *)
-		 memchr (ret->p.provider, '\0',
-			 (char *) el->data + el->size - ret->p.provider));
+  const char *provider = (const char *) &el->data[3 * size];
+  const char *name = ((const char *)
+		      memchr (provider, '\0',
+			      (char *) el->data + el->size - provider));
   /* Making sure there is a name.  */
-  if (ret->p.name == NULL)
+  if (name == NULL)
     {
-      complaint (&symfile_complaints, _("corrupt probe name when "
+      complaint (_("corrupt probe name when "
 					"reading `%s'"),
 		 objfile_name (objfile));
 
@@ -1503,35 +1521,35 @@ handle_stap_probe (struct objfile *objfile, struct sdt_note *el,
       return;
     }
   else
-    ++ret->p.name;
+    ++name;
 
   /* Retrieving the probe's address.  */
-  ret->p.address = extract_typed_address (&el->data[0], ptr_type);
+  CORE_ADDR address = extract_typed_address (&el->data[0], ptr_type);
 
   /* Link-time sh_addr of `.stapsdt.base' section.  */
-  base_ref = extract_typed_address (&el->data[size], ptr_type);
+  CORE_ADDR base_ref = extract_typed_address (&el->data[size], ptr_type);
 
   /* Semaphore address.  */
-  ret->sem_addr = extract_typed_address (&el->data[2 * size], ptr_type);
+  CORE_ADDR sem_addr = extract_typed_address (&el->data[2 * size], ptr_type);
 
-  ret->p.address += base - base_ref;
-  if (ret->sem_addr != 0)
-    ret->sem_addr += base - base_ref;
+  address += base - base_ref;
+  if (sem_addr != 0)
+    sem_addr += base - base_ref;
 
   /* Arguments.  We can only extract the argument format if there is a valid
      name for this probe.  */
-  probe_args = ((const char*)
-		memchr (ret->p.name, '\0',
-			(char *) el->data + el->size - ret->p.name));
+  const char *probe_args = ((const char*)
+			    memchr (name, '\0',
+				    (char *) el->data + el->size - name));
 
   if (probe_args != NULL)
     ++probe_args;
 
   if (probe_args == NULL
-      || (memchr (probe_args, '\0', (char *) el->data + el->size - ret->p.name)
+      || (memchr (probe_args, '\0', (char *) el->data + el->size - name)
 	  != el->data + el->size - 1))
     {
-      complaint (&symfile_complaints, _("corrupt probe argument when "
+      complaint (_("corrupt probe argument when "
 					"reading `%s'"),
 		 objfile_name (objfile));
       /* If the argument string is NULL, it means some problem happened with
@@ -1539,11 +1557,11 @@ handle_stap_probe (struct objfile *objfile, struct sdt_note *el,
       return;
     }
 
-  ret->args_parsed = 0;
-  ret->args_u.text = probe_args;
+  stap_probe *ret = new stap_probe (std::string (name), std::string (provider),
+				    address, gdbarch, sem_addr, probe_args);
 
   /* Successfully created probe.  */
-  VEC_safe_push (probe_p, *probesp, (struct probe *) ret);
+  probesp->push_back (ret);
 }
 
 /* Helper function which tries to find the base address of the SystemTap
@@ -1572,7 +1590,7 @@ get_stap_base_address (bfd *obfd, bfd_vma *base)
 
   if (ret == NULL)
     {
-      complaint (&symfile_complaints, _("could not obtain base address for "
+      complaint (_("could not obtain base address for "
 					"SystemTap section on objfile `%s'."),
 		 obfd->filename);
       return 0;
@@ -1584,11 +1602,21 @@ get_stap_base_address (bfd *obfd, bfd_vma *base)
   return 1;
 }
 
-/* Helper function for `elf_get_probes', which gathers information about all
-   SystemTap probes from OBJFILE.  */
+/* Implementation of the 'is_linespec' method.  */
 
-static void
-stap_get_probes (VEC (probe_p) **probesp, struct objfile *objfile)
+bool
+stap_static_probe_ops::is_linespec (const char **linespecp) const
+{
+  static const char *const keywords[] = { "-pstap", "-probe-stap", NULL };
+
+  return probe_is_linespec_by_keyword (linespecp, keywords);
+}
+
+/* Implementation of the 'get_probes' method.  */
+
+void
+stap_static_probe_ops::get_probes (std::vector<probe *> *probesp,
+				   struct objfile *objfile) const
 {
   /* If we are here, then this is the first time we are parsing the
      SystemTap probe's information.  We basically have to count how many
@@ -1597,7 +1625,7 @@ stap_get_probes (VEC (probe_p) **probesp, struct objfile *objfile)
   bfd *obfd = objfile->obfd;
   bfd_vma base;
   struct sdt_note *iter;
-  unsigned save_probesp_len = VEC_length (probe_p, *probesp);
+  unsigned save_probesp_len = probesp->size ();
 
   if (objfile->separate_debug_objfile_backlink != NULL)
     {
@@ -1628,11 +1656,11 @@ stap_get_probes (VEC (probe_p) **probesp, struct objfile *objfile)
       handle_stap_probe (objfile, iter, probesp, base);
     }
 
-  if (save_probesp_len == VEC_length (probe_p, *probesp))
+  if (save_probesp_len == probesp->size ())
     {
       /* If we are here, it means we have failed to parse every known
 	 probe.  */
-      complaint (&symfile_complaints, _("could not parse SystemTap probe(s) "
+      complaint (_("could not parse SystemTap probe(s) "
 					"from inferior"));
       return;
     }
@@ -1640,85 +1668,37 @@ stap_get_probes (VEC (probe_p) **probesp, struct objfile *objfile)
 
 /* Implementation of the type_name method.  */
 
-static const char *
-stap_type_name (struct probe *probe)
+const char *
+stap_static_probe_ops::type_name () const
 {
-  gdb_assert (probe->pops == &stap_probe_ops);
   return "stap";
 }
 
-static int
-stap_probe_is_linespec (const char **linespecp)
-{
-  static const char *const keywords[] = { "-pstap", "-probe-stap", NULL };
+/* Implementation of the 'gen_info_probes_table_header' method.  */
 
-  return probe_is_linespec_by_keyword (linespecp, keywords);
-}
-
-static void
-stap_gen_info_probes_table_header (VEC (info_probe_column_s) **heads)
+std::vector<struct info_probe_column>
+stap_static_probe_ops::gen_info_probes_table_header () const
 {
-  info_probe_column_s stap_probe_column;
+  struct info_probe_column stap_probe_column;
 
   stap_probe_column.field_name = "semaphore";
   stap_probe_column.print_name = _("Semaphore");
 
-  VEC_safe_push (info_probe_column_s, *heads, &stap_probe_column);
+  return std::vector<struct info_probe_column> { stap_probe_column };
 }
-
-static void
-stap_gen_info_probes_table_values (struct probe *probe_generic,
-				   VEC (const_char_ptr) **ret)
-{
-  struct stap_probe *probe = (struct stap_probe *) probe_generic;
-  struct gdbarch *gdbarch;
-  const char *val = NULL;
-
-  gdb_assert (probe_generic->pops == &stap_probe_ops);
-
-  gdbarch = probe->p.arch;
-
-  if (probe->sem_addr != 0)
-    val = print_core_address (gdbarch, probe->sem_addr);
-
-  VEC_safe_push (const_char_ptr, *ret, val);
-}
-
-/* SystemTap probe_ops.  */
-
-const struct probe_ops stap_probe_ops =
-{
-  stap_probe_is_linespec,
-  stap_get_probes,
-  stap_get_probe_address,
-  stap_get_probe_argument_count,
-  stap_can_evaluate_probe_arguments,
-  stap_evaluate_probe_argument,
-  stap_compile_to_ax,
-  stap_set_semaphore,
-  stap_clear_semaphore,
-  stap_probe_destroy,
-  stap_type_name,
-  stap_gen_info_probes_table_header,
-  stap_gen_info_probes_table_values,
-  NULL,  /* enable_probe  */
-  NULL   /* disable_probe  */
-};
 
 /* Implementation of the `info probes stap' command.  */
 
 static void
-info_probes_stap_command (char *arg, int from_tty)
+info_probes_stap_command (const char *arg, int from_tty)
 {
-  info_probes_for_ops (arg, from_tty, &stap_probe_ops);
+  info_probes_for_spops (arg, from_tty, &stap_static_probe_ops);
 }
-
-void _initialize_stap_probe (void);
 
 void
 _initialize_stap_probe (void)
 {
-  VEC_safe_push (probe_ops_cp, all_probe_ops, &stap_probe_ops);
+  all_static_probe_ops.push_back (&stap_static_probe_ops);
 
   add_setshow_zuinteger_cmd ("stap-expression", class_maintenance,
 			     &stap_expression_debug,

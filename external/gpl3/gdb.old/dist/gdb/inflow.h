@@ -1,6 +1,6 @@
 /* Low level interface to ptrace, for GDB when running under Unix.
 
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,17 +20,37 @@
 #ifndef INFLOW_H
 #define INFLOW_H
 
-#include "gdb_termios.h"
+#include <unistd.h>
+#include <signal.h>
+#include "common/job-control.h"
 
-#ifdef HAVE_TERMIOS
-# define PROCESS_GROUP_TYPE pid_t
-#elif defined (HAVE_TERMIO) || defined (HAVE_SGTTY)
-# define PROCESS_GROUP_TYPE int
-#endif
+/* RAII class used to ignore SIGTTOU in a scope.  */
 
-#ifdef PROCESS_GROUP_TYPE
-/* Process group of the current inferior.  */
-extern PROCESS_GROUP_TYPE inferior_process_group (void);
+class scoped_ignore_sigttou
+{
+public:
+  scoped_ignore_sigttou ()
+  {
+#ifdef SIGTTOU
+    if (job_control)
+      m_osigttou = signal (SIGTTOU, SIG_IGN);
 #endif
+  }
+
+  ~scoped_ignore_sigttou ()
+  {
+#ifdef SIGTTOU
+    if (job_control)
+      signal (SIGTTOU, m_osigttou);
+#endif
+  }
+
+  DISABLE_COPY_AND_ASSIGN (scoped_ignore_sigttou);
+
+private:
+#ifdef SIGTTOU
+  sighandler_t m_osigttou = NULL;
+#endif
+};
 
 #endif /* inflow.h */

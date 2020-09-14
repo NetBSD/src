@@ -1,6 +1,6 @@
 /* Support for printing Modula 2 values for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2017 Free Software Foundation, Inc.
+   Copyright (C) 1986-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -313,7 +313,6 @@ m2_val_print (struct type *type, int embedded_offset,
 	      struct value *original_value,
 	      const struct value_print_options *options)
 {
-  struct gdbarch *gdbarch = get_type_arch (type);
   unsigned len;
   struct type *elttype;
   CORE_ADDR addr;

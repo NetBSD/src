@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# Copyright (C) 2013-2017 Free Software Foundation, Inc.
+# Copyright (C) 2013-2019 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -30,16 +30,27 @@ $ENDER = qr,^\s*};$,;
 # Match a C symbol.
 $SYMBOL = qr,[a-zA-Z_][a-zA-Z0-9_]*,;
 # Match the name part of a method in struct target_ops.
-$NAME_PART = qr,\(\*(?<name>${SYMBOL}+)\)\s,;
+$NAME_PART = qr,(?<name>${SYMBOL}+)\s,;
 # Match the arguments to a method.
 $ARGS_PART = qr,(?<args>\(.*\)),;
 # We strip the indentation so here we only need the caret.
 $INTRO_PART = qr,^,;
 
+$POINTER_PART = qr,\s*(\*)?\s*,;
+
+# Match a C++ symbol, including scope operators and template
+# parameters.  E.g., 'std::vector<something>'.
+$CP_SYMBOL = qr,[a-zA-Z_][a-zA-Z0-9_<>:]*,;
 # Match the return type when it is "ordinary".
-$SIMPLE_RETURN_PART = qr,[^\(]+,;
+$SIMPLE_RETURN_PART = qr,((struct|class|enum|union)\s+)?${CP_SYMBOL}+,;
 # Match the return type when it is a VEC.
-$VEC_RETURN_PART = qr,VEC\s*\([^\)]+\)[^\(]*,;
+$VEC_RETURN_PART = qr,VEC\s*\([^\)]+\),;
+
+# Match a return type.
+$RETURN_PART = qr,((const|volatile)\s+)?(${SIMPLE_RETURN_PART}|${VEC_RETURN_PART})${POINTER_PART},;
+
+# Match "virtual".
+$VIRTUAL_PART = qr,virtual\s,;
 
 # Match the TARGET_DEFAULT_* attribute for a method.
 $TARGET_DEFAULT_PART = qr,TARGET_DEFAULT_(?<style>[A-Z_]+)\s*\((?<default_arg>.*)\),;
@@ -49,8 +60,7 @@ $TARGET_DEFAULT_PART = qr,TARGET_DEFAULT_(?<style>[A-Z_]+)\s*\((?<default_arg>.*
 $METHOD_TRAILER = qr,\s*${TARGET_DEFAULT_PART}$,;
 
 # Match an entire method definition.
-$METHOD = ($INTRO_PART . "(?<return_type>" . $SIMPLE_RETURN_PART
-	   . "|" . $VEC_RETURN_PART . ")"
+$METHOD = ($INTRO_PART . $VIRTUAL_PART . "(?<return_type>" . $RETURN_PART . ")"
 	   . $NAME_PART . $ARGS_PART
 	   . $METHOD_TRAILER);
 
@@ -90,15 +100,29 @@ sub scan_target_h() {
 	next if /{/;
 	last if m/$ENDER/;
 
-	# Just in case somebody ever uses C99.
+	# Strip // comments.
 	$_ =~ s,//.*$,,;
-	$_ = trim ($_);
 
 	$all_the_text .= $_;
     }
 
     # Now strip out the C comments.
     $all_the_text =~ s,/\*(.*?)\*/,,g;
+
+    # Replace sequences of tabs and/or whitespace with a single
+    # whitespace character.  We need the whitespace because the method
+    # may have been split between multiple lines, like e.g.:
+    #
+    #  virtual std::vector<long_type_name>
+    #    my_long_method_name ()
+    #    TARGET_DEFAULT_IGNORE ();
+    #
+    # If we didn't preserve the whitespace, then we'd end up with:
+    #
+    #  virtual std::vector<long_type_name>my_long_method_name ()TARGET_DEFAULT_IGNORE ()
+    #
+    # ... which wouldn't later be parsed correctly.
+    $all_the_text =~ s/[\t\s]+/ /g;
 
     return split (/;/, $all_the_text);
 }
@@ -115,7 +139,7 @@ sub parse_argtypes($) {
     foreach $iter (@typelist) {
 	if ($iter =~ m/^(enum\s+${SYMBOL}\s*)(${SYMBOL})?$/) {
 	    $onetype = $1;
-	} elsif ($iter =~ m/^(.*(enum\s+)?${SYMBOL}.*(\s|\*))${SYMBOL}+$/) {
+	} elsif ($iter =~ m/^(.*(enum\s+)?${SYMBOL}.*(\s|\*|&))${SYMBOL}+$/) {
 	    $onetype = $1;
 	} elsif ($iter eq 'void') {
 	    next;
@@ -130,16 +154,24 @@ sub parse_argtypes($) {
 
 sub dname($) {
     my ($name) = @_;
-    $name =~ s/to_/delegate_/;
-    return $name;
+    return "target_ops::" . $name;
 }
 
 # Write function header given name, return type, and argtypes.
 # Returns a list of actual argument names.
-sub write_function_header($$@) {
-    my ($name, $return_type, @argtypes) = @_;
+sub write_function_header($$$@) {
+    my ($decl, $name, $return_type, @argtypes) = @_;
 
-    print "static " . $return_type . "\n";
+    print $return_type;
+
+    if ($decl) {
+	if ($return_type !~ m,\*$,) {
+	    print " ";
+	}
+    } else {
+	print "\n";
+    }
+
     print $name . ' (';
 
     my $iter;
@@ -151,17 +183,12 @@ sub write_function_header($$@) {
 
 	$val =~ s/$TARGET_DEBUG_PRINTER//;
 
-	if ($iter !~ m,\*$,) {
+	if ($iter !~ m,(\*|&)$,) {
 	    $val .= ' ';
 	}
 
 	my $vname;
-	if ($i == 0) {
-	    # Just a random nicety.
-	    $vname = 'self';
-	} else {
-	    $vname .= "arg$i";
-	}
+	$vname .= "arg$i";
 	$val .= $vname;
 
 	push @argdecls, $val;
@@ -169,25 +196,36 @@ sub write_function_header($$@) {
 	++$i;
     }
 
-    print join (', ', @argdecls) . ")\n";
-    print "{\n";
+    print join (', ', @argdecls) . ")";
+
+    if ($decl) {
+	print " override;\n";
+    } else {
+	print "\n{\n";
+    }
 
     return @actuals;
+}
+
+# Write out a declaration.
+sub write_declaration($$@) {
+    my ($name, $return_type, @argtypes) = @_;
+
+    write_function_header (1, $name, $return_type, @argtypes);
 }
 
 # Write out a delegation function.
 sub write_delegator($$@) {
     my ($name, $return_type, @argtypes) = @_;
 
-    my (@names) = write_function_header (dname ($name), $return_type,
-					 @argtypes);
+    my (@names) = write_function_header (0, dname ($name),
+					 $return_type, @argtypes);
 
-    print "  $names[0] = $names[0]->beneath;\n";
     print "  ";
     if ($return_type ne 'void') {
 	print "return ";
     }
-    print "$names[0]->" . $name . " (";
+    print "this->beneath ()->" . $name . " (";
     print join (', ', @names);
     print ");\n";
     print "}\n\n";
@@ -195,21 +233,28 @@ sub write_delegator($$@) {
 
 sub tdname ($) {
     my ($name) = @_;
-    $name =~ s/to_/tdefault_/;
-    return $name;
+    return "dummy_target::" . $name;
 }
 
 # Write out a default function.
 sub write_tdefault($$$$@) {
     my ($content, $style, $name, $return_type, @argtypes) = @_;
 
+    my (@names) = write_function_header (0, tdname ($name),
+					 $return_type, @argtypes);
+
     if ($style eq 'FUNC') {
-	return $content;
-    }
-
-    write_function_header (tdname ($name), $return_type, @argtypes);
-
-    if ($style eq 'RETURN') {
+	print "  ";
+	if ($return_type ne 'void') {
+	    print "return ";
+	}
+	print $content . " (this";
+	if (@names) {
+	    print ", ";
+	}
+	print join (', ', @names);
+	print ");\n";
+    } elsif ($style eq 'RETURN') {
 	print "  return $content;\n";
     } elsif ($style eq 'NORETURN') {
 	print "  $content;\n";
@@ -232,8 +277,19 @@ sub munge_type($) {
 	$result = $1;
     } else {
 	($result = $typename) =~ s/\s+$//;
-	$result =~ s/[ ()]/_/g;
+	$result =~ s/[ ()<>:]/_/g;
 	$result =~ s/[*]/p/g;
+	$result =~ s/&/r/g;
+
+	# Identifers with double underscores are reserved to the C++
+	# implementation.
+	$result =~ s/_+/_/g;
+
+	# Avoid ending the function name with underscore, for
+	# cosmetics.  Trailing underscores appear after munging types
+	# with template parameters, like e.g. "foo<int>".
+	$result =~ s/_$//g;
+
 	$result = 'target_debug_print_' . $result;
     }
 
@@ -241,39 +297,37 @@ sub munge_type($) {
 }
 
 # Write out a debug method.
-sub write_debugmethod($$$$@) {
-    my ($content, $style, $name, $return_type, @argtypes) = @_;
+sub write_debugmethod($$$@) {
+    my ($content, $name, $return_type, @argtypes) = @_;
 
-    my ($debugname) = $name;
-    $debugname =~ s/to_/debug_/;
+    my ($debugname) = "debug_target::" . $name;
     my ($targetname) = $name;
-    $targetname =~ s/to_/target_/;
 
-    my (@names) = write_function_header ($debugname, $return_type, @argtypes);
+    my (@names) = write_function_header (0, $debugname, $return_type, @argtypes);
 
     if ($return_type ne 'void') {
 	print "  $return_type result;\n";
     }
 
-    print "  fprintf_unfiltered (gdb_stdlog, \"-> %s->$name (...)\\n\", debug_target.to_shortname);\n";
+    print "  fprintf_unfiltered (gdb_stdlog, \"-> %s->$name (...)\\n\", this->beneath ()->shortname ());\n";
 
     # Delegate to the beneath target.
     print "  ";
     if ($return_type ne 'void') {
 	print "result = ";
     }
-    print "debug_target." . $name . " (";
-    my @names2 = @names;
-    @names2[0] = "&debug_target";
-    print join (', ', @names2);
+    print "this->beneath ()->" . $name . " (";
+    print join (', ', @names);
     print ");\n";
 
     # Now print the arguments.
-    print "  fprintf_unfiltered (gdb_stdlog, \"<- %s->$name (\", debug_target.to_shortname);\n";
+    print "  fprintf_unfiltered (gdb_stdlog, \"<- %s->$name (\", this->beneath ()->shortname ());\n";
     for my $i (0 .. $#argtypes) {
-	print "  fputs_unfiltered (\", \", gdb_stdlog);\n" if $i > 0;
+	if ($i > 0) {
+	    print "  fputs_unfiltered (\", \", gdb_stdlog);\n"
+	}
 	my $printer = munge_type ($argtypes[$i]);
-	print "  $printer ($names2[$i]);\n";
+	print "  $printer ($names[$i]);\n";
     }
     if ($return_type ne 'void') {
 	print "  fputs_unfiltered (\") = \", gdb_stdlog);\n";
@@ -297,61 +351,73 @@ print "/* THIS FILE IS GENERATED -*- buffer-read-only: t -*- */\n";
 print "/* vi:set ro: */\n\n";
 print "/* To regenerate this file, run:*/\n";
 print "/*      make-target-delegates target.h > target-delegates.c */\n";
+print "\n";
 
 @lines = scan_target_h();
 
-
-%tdefault_names = ();
-%debug_names = ();
 @delegators = ();
+@return_types = ();
+@tdefaults = ();
+@styles = ();
+@argtypes_array = ();
+
 foreach $current_line (@lines) {
+    # See comments in scan_target_h.  Here we strip away the leading
+    # and trailing whitespace.
+    $current_line = trim ($current_line);
+
     next unless $current_line =~ m/$METHOD/;
 
-    $name = $+{name};
-    $current_line = $+{args};
-    $return_type = trim ($+{return_type});
-    $current_args = $+{args};
-    $tdefault = $+{default_arg};
-    $style = $+{style};
+    my $name = $+{name};
+    my $current_line = $+{args};
+    my $return_type = trim ($+{return_type});
+    my $current_args = $+{args};
+    my $tdefault = $+{default_arg};
+    my $style = $+{style};
 
-    @argtypes = parse_argtypes ($current_args);
+    my @argtypes = parse_argtypes ($current_args);
 
-    # The first argument must be "this" to be delegatable.
-    if ($argtypes[0] =~ /\s*struct\s+target_ops\s*\*\s*/) {
-	write_delegator ($name, $return_type, @argtypes);
+    push @delegators, $name;
 
-	push @delegators, $name;
+    $return_types{$name} = $return_type;
+    $tdefaults{$name} = $tdefault;
+    $styles{$name} = $style;
+    $argtypes_array{$name} = \@argtypes;
+}
 
-	$tdefault_names{$name} = write_tdefault ($tdefault, $style,
-						 $name, $return_type,
-						 @argtypes);
+sub print_class($) {
+    my ($name) = @_;
 
-	$debug_names{$name} = write_debugmethod ($tdefault, $style,
-						 $name, $return_type,
-						 @argtypes);
+    print "struct " . $name . " : public target_ops\n";
+    print "{\n";
+    print "  const target_info &info () const override;\n";
+    print "\n";
+    print "  strata stratum () const override;\n";
+    print "\n";
+
+    for $name (@delegators) {
+	my $return_type = $return_types{$name};
+	my @argtypes = @{$argtypes_array{$name}};
+
+	print "  ";
+	write_declaration ($name, $return_type, @argtypes);
     }
+
+    print "};\n\n";
 }
 
-# Now the delegation code.
-print "static void\ninstall_delegators (struct target_ops *ops)\n{\n";
+print_class ("dummy_target");
+print_class ("debug_target");
 
-for $iter (@delegators) {
-    print "  if (ops->" . $iter . " == NULL)\n";
-    print "    ops->" . $iter . " = " . dname ($iter) . ";\n";
+for $name (@delegators) {
+    my $tdefault = $tdefaults{$name};
+    my $return_type = $return_types{$name};
+    my $style = $styles{$name};
+    my @argtypes = @{$argtypes_array{$name}};
+
+    write_delegator ($name, $return_type, @argtypes);
+
+    write_tdefault ($tdefault, $style, $name, $return_type, @argtypes);
+
+    write_debugmethod ($tdefault, $name, $return_type, @argtypes);
 }
-print "}\n\n";
-
-# Now the default method code.
-print "static void\ninstall_dummy_methods (struct target_ops *ops)\n{\n";
-
-for $iter (@delegators) {
-    print "  ops->" . $iter . " = " . $tdefault_names{$iter} . ";\n";
-}
-print "}\n\n";
-
-# The debug method code.
-print "static void\ninit_debug_target (struct target_ops *ops)\n{\n";
-for $iter (@delegators) {
-    print "  ops->" . $iter . " = " . $debug_names{$iter} . ";\n";
-}
-print "}\n";

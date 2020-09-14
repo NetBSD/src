@@ -1,6 +1,6 @@
 /* Code dealing with blocks for GDB.
 
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,6 +30,37 @@ struct block_namespace_info;
 struct using_direct;
 struct obstack;
 struct addrmap;
+
+/* Blocks can occupy non-contiguous address ranges.  When this occurs,
+   startaddr and endaddr within struct block (still) specify the lowest
+   and highest addresses of all ranges, but each individual range is
+   specified by the addresses in struct blockrange.  */
+
+struct blockrange
+{
+  blockrange (CORE_ADDR startaddr_, CORE_ADDR endaddr_)
+    : startaddr (startaddr_),
+      endaddr (endaddr_)
+  {
+  }
+
+  /* Lowest address in this range.  */
+
+  CORE_ADDR startaddr;
+
+  /* One past the highest address in the range.  */
+
+  CORE_ADDR endaddr;
+};
+
+/* Two or more non-contiguous ranges in the same order as that provided
+   via the debug info.  */
+
+struct blockranges
+{
+  int nranges;
+  struct blockrange range[1];
+};
 
 /* All of the name-scope contours of the program
    are represented by `struct block' objects.
@@ -80,12 +111,18 @@ struct block
 
   /* This is used to store the symbols in the block.  */
 
-  struct dictionary *dict;
+  struct multidictionary *multidict;
 
   /* Contains information about namespace-related info relevant to this block:
      using directives and the current namespace scope.  */
 
   struct block_namespace_info *namespace_info;
+
+  /* Address ranges for blocks with non-contiguous ranges.  If this
+     is NULL, then there is only one range which is specified by
+     startaddr and endaddr above.  */
+
+  struct blockranges *ranges;
 };
 
 /* The global block is singled out so that we can provide a back-link
@@ -106,8 +143,51 @@ struct global_block
 #define BLOCK_END(bl)		(bl)->endaddr
 #define BLOCK_FUNCTION(bl)	(bl)->function
 #define BLOCK_SUPERBLOCK(bl)	(bl)->superblock
-#define BLOCK_DICT(bl)		(bl)->dict
+#define BLOCK_MULTIDICT(bl)	(bl)->multidict
 #define BLOCK_NAMESPACE(bl)	(bl)->namespace_info
+
+/* Accessor for ranges field within block BL.  */
+
+#define BLOCK_RANGES(bl)	(bl)->ranges
+
+/* Number of ranges within a block.  */
+
+#define BLOCK_NRANGES(bl)	(bl)->ranges->nranges
+
+/* Access range array for block BL.  */
+
+#define BLOCK_RANGE(bl)		(bl)->ranges->range
+
+/* Are all addresses within a block contiguous?  */
+
+#define BLOCK_CONTIGUOUS_P(bl)	(BLOCK_RANGES (bl) == nullptr \
+				 || BLOCK_NRANGES (bl) <= 1)
+
+/* Obtain the start address of the Nth range for block BL.  */
+
+#define BLOCK_RANGE_START(bl,n) (BLOCK_RANGE (bl)[n].startaddr)
+
+/* Obtain the end address of the Nth range for block BL.  */
+
+#define BLOCK_RANGE_END(bl,n)	(BLOCK_RANGE (bl)[n].endaddr)
+
+/* Define the "entry pc" for a block BL to be the lowest (start) address
+   for the block when all addresses within the block are contiguous.  If
+   non-contiguous, then use the start address for the first range in the
+   block.
+
+   At the moment, this almost matches what DWARF specifies as the entry
+   pc.  (The missing bit is support for DW_AT_entry_pc which should be
+   preferred over range data and the low_pc.)
+
+   Once support for DW_AT_entry_pc is added, I expect that an entry_pc
+   field will be added to one of these data structures.  Once that's done,
+   the entry_pc field can be set from the dwarf reader (and other readers
+   too).  BLOCK_ENTRY_PC can then be redefined to be less DWARF-centric.  */
+
+#define BLOCK_ENTRY_PC(bl)	(BLOCK_CONTIGUOUS_P (bl) \
+				 ? BLOCK_START (bl) \
+				 : BLOCK_RANGE_START (bl,0))
 
 struct blockvector
 {
@@ -218,9 +298,9 @@ struct block_iterator
 
   enum block_enum which;
 
-  /* The underlying dictionary iterator.  */
+  /* The underlying multidictionary iterator.  */
 
-  struct dict_iterator dict_iter;
+  struct mdict_iterator mdict_iter;
 };
 
 /* Initialize ITERATOR to point at the first symbol in BLOCK, and
@@ -237,51 +317,28 @@ extern struct symbol *block_iterator_first (const struct block *block,
 extern struct symbol *block_iterator_next (struct block_iterator *iterator);
 
 /* Initialize ITERATOR to point at the first symbol in BLOCK whose
-   SYMBOL_SEARCH_NAME is NAME (as tested using strcmp_iw), and return
-   that first symbol, or NULL if there are no such symbols.  */
-
-extern struct symbol *block_iter_name_first (const struct block *block,
-					     const char *name,
-					     struct block_iterator *iterator);
-
-/* Advance ITERATOR to point at the next symbol in BLOCK whose
-   SYMBOL_SEARCH_NAME is NAME (as tested using strcmp_iw), or NULL if
-   there are no more such symbols.  Don't call this if you've
-   previously received NULL from block_iterator_first or
-   block_iterator_next on this iteration.  And don't call it unless
-   ITERATOR was created by a previous call to block_iter_name_first
-   with the same NAME.  */
-
-extern struct symbol *block_iter_name_next (const char *name,
-					    struct block_iterator *iterator);
-
-/* Initialize ITERATOR to point at the first symbol in BLOCK whose
-   SYMBOL_SEARCH_NAME is NAME, as tested using COMPARE (which must use
-   the same conventions as strcmp_iw and be compatible with any
-   block hashing function), and return that first symbol, or NULL
-   if there are no such symbols.  */
+   SYMBOL_SEARCH_NAME matches NAME, and return that first symbol, or
+   NULL if there are no such symbols.  */
 
 extern struct symbol *block_iter_match_first (const struct block *block,
-					      const char *name,
-					      symbol_compare_ftype *compare,
+					      const lookup_name_info &name,
 					      struct block_iterator *iterator);
 
 /* Advance ITERATOR to point at the next symbol in BLOCK whose
-   SYMBOL_SEARCH_NAME is NAME, as tested using COMPARE (see
-   block_iter_match_first), or NULL if there are no more such symbols.
-   Don't call this if you've previously received NULL from 
+   SYMBOL_SEARCH_NAME matches NAME, or NULL if there are no more such
+   symbols.  Don't call this if you've previously received NULL from
    block_iterator_match_first or block_iterator_match_next on this
    iteration.  And don't call it unless ITERATOR was created by a
-   previous call to block_iter_match_first with the same NAME and COMPARE.  */
+   previous call to block_iter_match_first with the same NAME.  */
 
-extern struct symbol *block_iter_match_next (const char *name,
-					     symbol_compare_ftype *compare,
-					     struct block_iterator *iterator);
+extern struct symbol *block_iter_match_next
+  (const lookup_name_info &name, struct block_iterator *iterator);
 
 /* Search BLOCK for symbol NAME in DOMAIN.  */
 
 extern struct symbol *block_lookup_symbol (const struct block *block,
 					   const char *name,
+					   symbol_name_match_type match_type,
 					   const domain_enum domain);
 
 /* Search BLOCK for symbol NAME in DOMAIN but only in primary symbol table of
@@ -335,13 +392,19 @@ extern int block_find_non_opaque_type_preferred (struct symbol *sym,
        (sym);						\
        (sym) = block_iterator_next (&(iter)))
 
-/* Macro to loop through all symbols with name NAME in BLOCK,
-   in no particular order.  ITER helps keep track of the iteration, and
-   must be a struct block_iterator.  SYM points to the current symbol.  */
+/* Macro to loop through all symbols in BLOCK with a name that matches
+   NAME, in no particular order.  ITER helps keep track of the
+   iteration, and must be a struct block_iterator.  SYM points to the
+   current symbol.  */
 
 #define ALL_BLOCK_SYMBOLS_WITH_NAME(block, name, iter, sym)		\
-  for ((sym) = block_iter_name_first ((block), (name), &(iter));	\
+  for ((sym) = block_iter_match_first ((block), (name), &(iter));	\
        (sym) != NULL;							\
-       (sym) = block_iter_name_next ((name), &(iter)))
+       (sym) = block_iter_match_next ((name), &(iter)))
+
+/* Given a vector of pairs, allocate and build an obstack allocated
+   blockranges struct for a block.  */
+struct blockranges *make_blockranges (struct objfile *objfile,
+                                      const std::vector<blockrange> &rangevec);
 
 #endif /* BLOCK_H */

@@ -1,5 +1,5 @@
 /* Event loop machinery for the remote server for GDB.
-   Copyright (C) 1999-2017 Free Software Foundation, Inc.
+   Copyright (C) 1999-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,10 +19,9 @@
 /* Based on src/gdb/event-loop.c.  */
 
 #include "server.h"
-#include "queue.h"
 
 #include <sys/types.h>
-#include "gdb_sys_time.h"
+#include "common/gdb_sys_time.h"
 
 #ifdef USE_WIN32API
 #include <windows.h>
@@ -30,8 +29,8 @@
 #endif
 
 #include <unistd.h>
+#include <queue>
 
-typedef struct gdb_event gdb_event;
 typedef int (event_handler_func) (gdb_fildes_t);
 
 /* Tell create_file_handler what events we are interested in.  */
@@ -40,8 +39,7 @@ typedef int (event_handler_func) (gdb_fildes_t);
 #define GDB_WRITABLE	(1<<2)
 #define GDB_EXCEPTION	(1<<3)
 
-/* Events are queued by calling 'QUEUE_enque (gdb_event_p, event_queue,
-   file_event_ptr)' and serviced later
+/* Events are queued by on the event_queue and serviced later
    on by do_one_event.  An event can be, for instance, a file
    descriptor becoming ready to be read.  Servicing an event simply
    means that the procedure PROC will be called.  We have 2 queues,
@@ -52,14 +50,14 @@ typedef int (event_handler_func) (gdb_fildes_t);
    descriptor whose state change generated the event, plus doing other
    cleanups and such.  */
 
-typedef struct gdb_event
+struct gdb_event
   {
     /* Procedure to call to service this event.  */
     event_handler_func *proc;
 
     /* File descriptor that is ready.  */
     gdb_fildes_t fd;
-  } *gdb_event_p;
+  };
 
 /* Information about each file descriptor we register with the event
    loop.  */
@@ -89,9 +87,9 @@ typedef struct file_handler
   }
 file_handler;
 
-DECLARE_QUEUE_P(gdb_event_p);
-static QUEUE(gdb_event_p) *event_queue = NULL;
-DEFINE_QUEUE_P(gdb_event_p);
+typedef gdb::unique_xmalloc_ptr<gdb_event> gdb_event_up;
+
+static std::queue<gdb_event_up, std::list<gdb_event_up>> event_queue;
 
 /* Gdb_notifier is just a list of file descriptors gdb is interested
    in.  These are the input file descriptor, and the target file
@@ -146,18 +144,9 @@ static struct
   }
 callback_list;
 
-/* Free EVENT.  */
-
-static void
-gdb_event_xfree (struct gdb_event *event)
-{
-  xfree (event);
-}
-
 void
 initialize_event_loop (void)
 {
-  event_queue = QUEUE_alloc (gdb_event_p, gdb_event_xfree);
 }
 
 /* Process one event.  If an event was processed, 1 is returned
@@ -173,13 +162,14 @@ process_event (void)
      proc function could end up jumping out to the caller of this
      function.  In that case, we would have on the event queue an
      event which has been processed, but not deleted.  */
-  if (!QUEUE_is_empty (gdb_event_p, event_queue))
+  if (!event_queue.empty ())
     {
-      gdb_event *event_ptr = QUEUE_deque (gdb_event_p, event_queue);
+      gdb_event_up event_ptr = std::move (event_queue.front ());
+      event_queue.pop ();
+
       event_handler_func *proc = event_ptr->proc;
       gdb_fildes_t fd = event_ptr->fd;
 
-      gdb_event_xfree (event_ptr);
       /* Now call the procedure associated with the event.  */
       if ((*proc) (fd))
 	return -1;
@@ -522,7 +512,7 @@ wait_for_event (void)
 	{
 	  gdb_event *file_event_ptr = create_file_event (file_ptr->fd);
 
-	  QUEUE_enque (gdb_event_p, event_queue, file_event_ptr);
+	  event_queue.emplace (file_event_ptr);
 	}
       file_ptr->ready_mask = mask;
     }

@@ -1,5 +1,5 @@
 /* BFD back-end for NetBSD/ns32k a.out-ish binaries.
-   Copyright (C) 1990-2017 Free Software Foundation, Inc.
+   Copyright (C) 1990-2019 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -25,7 +25,7 @@
 #define	SEGMENT_SIZE		4096
 
 #define	DEFAULT_ARCH		bfd_arch_ns32k
-#define	DEFAULT_MID 		M_532_NETBSD
+#define	DEFAULT_MID		M_532_NETBSD
 
 /* Do not "beautify" the CONCAT* macro args.  Traditional C will not
    remove whitespace added here, and thus will fail to concatenate
@@ -48,6 +48,6 @@
 #include "sysdep.h"
 #include "bfd.h"		/* To ensure following declaration is OK.  */
 
-const struct reloc_howto_struct * MY_bfd_reloc_type_lookup (bfd *, bfd_reloc_code_real_type);
+reloc_howto_type * MY_bfd_reloc_type_lookup (bfd *, bfd_reloc_code_real_type);
 
 #include "netbsd.h"

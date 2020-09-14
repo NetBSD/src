@@ -1,7 +1,7 @@
 /* Private implementation details of interface between gdb and its
    extension languages.
 
-   Copyright (C) 2014-2017 Free Software Foundation, Inc.
+   Copyright (C) 2014-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,26 +23,7 @@
 
 #include "extension.h"
 #include <signal.h>
-
-/* The return code for some API calls.  */
-
-enum ext_lang_rc
-  {
-    /* The operation completed successfully.  */
-    EXT_LANG_RC_OK,
-
-    /* The operation was not performed (e.g., no pretty-printer).  */
-    EXT_LANG_RC_NOP,
-
-    /* There was an error (e.g., Python error while printing a value).
-       When an error occurs no further extension languages are tried.
-       This is to preserve existing behaviour, and because it's convenient
-       for Python developers.
-       Note: This is different than encountering a memory error trying to read
-       a value for pretty-printing.  Here we're referring to, e.g., programming
-       errors that trigger an exception in the extension language.  */
-    EXT_LANG_RC_ERROR
-  };
+#include "cli/cli-script.h"
 
 /* High level description of an extension/scripting language.
    An entry for each is compiled into GDB regardless of whether the support
@@ -202,7 +183,8 @@ struct extension_language_ops
      or SCR_BT_COMPLETED on success.  */
   enum ext_lang_bt_status (*apply_frame_filter)
     (const struct extension_language_defn *,
-     struct frame_info *frame, int flags, enum ext_lang_frame_args args_type,
+     struct frame_info *frame, frame_filter_flags flags,
+     enum ext_lang_frame_args args_type,
      struct ui_out *out, int frame_low, int frame_high);
 
   /* Update values held by the extension language when OBJFILE is discarded.
@@ -260,63 +242,18 @@ struct extension_language_ops
   enum ext_lang_rc (*before_prompt) (const struct extension_language_defn *,
 				     const char *current_gdb_prompt);
 
-  /* xmethod support:
-     clone_xmethod_worker_data, free_xmethod_worker_data,
-     get_matching_xmethod_workers, get_xmethod_arg_types,
-     get_xmethod_return_type, invoke_xmethod.
-     These methods are optional and may be NULL, but if one of them is
-     implemented then they all must be.  */
-
-  /* Clone DATA and return a new but identical xmethod worker data
-     object for this extension language.  */
-  void * (*clone_xmethod_worker_data)
-    (const struct extension_language_defn *extlang, void *data);
-
-  /* Free the DATA object of this extension language.  */
-  void (*free_xmethod_worker_data)
-    (const struct extension_language_defn *extlang, void *data);
-
   /* Return a vector of matching xmethod workers defined in this
      extension language.  The workers service methods with name
      METHOD_NAME on objects of type OBJ_TYPE.  The vector is returned
-     in DM_VEC.  */
+     in DM_VEC.
+
+     This field may be NULL if the extension language does not support
+     xmethods.  */
   enum ext_lang_rc (*get_matching_xmethod_workers)
     (const struct extension_language_defn *extlang,
      struct type *obj_type,
      const char *method_name,
-     xmethod_worker_vec **dm_vec);
-
-  /* Given a WORKER servicing a particular method, return the types
-     of the arguments the method takes.  The number of arguments is
-     returned in NARGS, and their types are returned in the array
-     ARGTYPES.  */
-  enum ext_lang_rc (*get_xmethod_arg_types)
-    (const struct extension_language_defn *extlang,
-     struct xmethod_worker *worker,
-     int *nargs,
-     struct type ***arg_types);
-
-  /* Given a WORKER servicing a particular method, fetch the type of the
-     result of the method.  OBJECT, ARGS, NARGS are the same as for
-     invoke_xmethod.  The result type is stored in *RESULT_TYPE.
-     For backward compatibility with 7.9, which did not support getting the
-     result type, if the get_result_type operation is not provided by WORKER
-     then EXT_LANG_RC_OK is returned and NULL is returned in *RESULT_TYPE.  */
-  enum ext_lang_rc (*get_xmethod_result_type)
-    (const struct extension_language_defn *extlang,
-     struct xmethod_worker *worker,
-     struct value *object, struct value **args, int nargs,
-     struct type **result_type);
-
-  /* Invoke the xmethod serviced by WORKER.  The xmethod is invoked
-     on OBJECT with arguments in the array ARGS.  NARGS is the length of
-     this array.  Returns the value returned by the xmethod.  */
-  struct value * (*invoke_xmethod)
-    (const struct extension_language_defn *extlang,
-     struct xmethod_worker *worker,
-     struct value *object,
-     struct value **args,
-     int nargs);
+     std::vector<xmethod_worker_up> *dm_vec);
 };
 
 /* State necessary to restore a signal handler to its previous value.  */

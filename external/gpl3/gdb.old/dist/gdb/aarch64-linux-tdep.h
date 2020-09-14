@@ -1,6 +1,6 @@
 /* GNU/Linux on AArch64 target support, prototypes.
 
-   Copyright (C) 2012-2017 Free Software Foundation, Inc.
+   Copyright (C) 2012-2019 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -18,6 +18,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#ifndef AARCH64_LINUX_TDEP_H
+#define AARCH64_LINUX_TDEP_H
+
 #include "regset.h"
 
 /* The general-purpose regset consists of 31 X registers, plus SP, PC,
@@ -32,3 +35,5 @@
 
 extern const struct regset aarch64_linux_gregset;
 extern const struct regset aarch64_linux_fpregset;
+
+#endif /* AARCH64_LINUX_TDEP_H */

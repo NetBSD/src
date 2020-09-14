@@ -1,6 +1,6 @@
 /* Parse a printf-style format string.
 
-   Copyright (C) 1986-2017 Free Software Foundation, Inc.
+   Copyright (C) 1986-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,6 +16,11 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+#ifndef COMMON_FORMAT_H
+#define COMMON_FORMAT_H
+
+#include "common/gdb_string_view.h"
 
 #if defined(__MINGW32__) && !defined(PRINTF_HAS_LONG_LONG)
 # define USE_PRINTF_I64 1
@@ -35,7 +40,8 @@ enum argclass
     literal_piece,
     int_arg, long_arg, long_long_arg, ptr_arg,
     string_arg, wide_string_arg, wide_char_arg,
-    double_arg, long_double_arg, decfloat_arg
+    double_arg, long_double_arg,
+    dec32float_arg, dec64float_arg, dec128float_arg
   };
 
 /* A format piece is a section of the format string that may include a
@@ -44,20 +50,47 @@ enum argclass
 
 struct format_piece
 {
-  char *string;
+  format_piece (const char *str, enum argclass argc)
+    : string (str),
+      argclass (argc)
+  {
+  }
+
+  bool operator== (const format_piece &other) const
+  {
+    return (this->argclass == other.argclass
+	    && gdb::string_view (this->string) == other.string);
+  }
+
+  const char *string;
   enum argclass argclass;
 };
 
-/* Return an array of printf fragments found at the given string, and
-   rewrite ARG with a pointer to the end of the format string.  */
+class format_pieces
+{
+public:
 
-extern struct format_piece *parse_format_string (const char **arg);
+  format_pieces (const char **arg);
+  ~format_pieces () = default;
 
-/* Given a pointer to an array of format pieces, free any memory that
-   would have been allocated by parse_format_string.  */
+  DISABLE_COPY_AND_ASSIGN (format_pieces);
 
-extern void free_format_pieces (struct format_piece *frags);
+  typedef std::vector<format_piece>::iterator iterator;
 
-/* Freeing, cast as a cleanup.  */
+  iterator begin ()
+  {
+    return m_pieces.begin ();
+  }
 
-extern void free_format_pieces_cleanup (void *);
+  iterator end ()
+  {
+    return m_pieces.end ();
+  }
+
+private:
+
+  std::vector<format_piece> m_pieces;
+  gdb::unique_xmalloc_ptr<char> m_storage;
+};
+
+#endif /* COMMON_FORMAT_H */

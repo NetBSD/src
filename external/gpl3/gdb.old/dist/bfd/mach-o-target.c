@@ -1,5 +1,5 @@
 /* Mach-O support for BFD.
-   Copyright (C) 1999-2017 Free Software Foundation, Inc.
+   Copyright (C) 1999-2019 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -24,54 +24,57 @@
 #ifndef MACH_O_TARGET_COMMON_DEFINED
 #define MACH_O_TARGET_COMMON_DEFINED
 
-#define bfd_mach_o_bfd_free_cached_info               _bfd_generic_bfd_free_cached_info
+#define bfd_mach_o_bfd_free_cached_info		      _bfd_generic_bfd_free_cached_info
 #define bfd_mach_o_get_section_contents_in_window     _bfd_generic_get_section_contents_in_window
-#define bfd_mach_o_bfd_print_private_bfd_data	      _bfd_generic_bfd_print_private_bfd_data
-#define bfd_mach_o_bfd_is_target_special_symbol       ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
-#define bfd_mach_o_bfd_is_local_label_name            bfd_generic_is_local_label_name
-#define bfd_mach_o_get_lineno                         _bfd_nosymbols_get_lineno
-#define bfd_mach_o_find_inliner_info                  _bfd_nosymbols_find_inliner_info
+#define bfd_mach_o_bfd_print_private_bfd_data	      bfd_mach_o_bfd_print_private_bfd_data
+#define bfd_mach_o_bfd_is_target_special_symbol	      _bfd_bool_bfd_asymbol_false
+#define bfd_mach_o_bfd_is_local_label_name	      bfd_generic_is_local_label_name
+#define bfd_mach_o_get_lineno			      _bfd_nosymbols_get_lineno
+#define bfd_mach_o_find_inliner_info		      _bfd_nosymbols_find_inliner_info
 #define bfd_mach_o_get_symbol_version_string	      _bfd_nosymbols_get_symbol_version_string
-#define bfd_mach_o_bfd_make_debug_symbol              _bfd_nosymbols_bfd_make_debug_symbol
-#define bfd_mach_o_read_minisymbols                   _bfd_generic_read_minisymbols
-#define bfd_mach_o_minisymbol_to_symbol               _bfd_generic_minisymbol_to_symbol
+#define bfd_mach_o_bfd_make_debug_symbol	      _bfd_nosymbols_bfd_make_debug_symbol
+#define bfd_mach_o_read_minisymbols		      _bfd_generic_read_minisymbols
+#define bfd_mach_o_minisymbol_to_symbol		      _bfd_generic_minisymbol_to_symbol
 #define bfd_mach_o_bfd_get_relocated_section_contents bfd_generic_get_relocated_section_contents
-#define bfd_mach_o_bfd_relax_section                  bfd_generic_relax_section
-#define bfd_mach_o_bfd_link_hash_table_create         _bfd_generic_link_hash_table_create
-#define bfd_mach_o_bfd_link_add_symbols               _bfd_generic_link_add_symbols
-#define bfd_mach_o_bfd_link_just_syms                 _bfd_generic_link_just_syms
+#define bfd_mach_o_bfd_relax_section		      bfd_generic_relax_section
+#define bfd_mach_o_bfd_link_hash_table_create	      _bfd_generic_link_hash_table_create
+#define bfd_mach_o_bfd_link_add_symbols		      _bfd_generic_link_add_symbols
+#define bfd_mach_o_bfd_link_just_syms		      _bfd_generic_link_just_syms
 #define bfd_mach_o_bfd_copy_link_hash_symbol_type \
   _bfd_generic_copy_link_hash_symbol_type
-#define bfd_mach_o_bfd_final_link                     _bfd_generic_final_link
-#define bfd_mach_o_bfd_link_split_section             _bfd_generic_link_split_section
-#define bfd_mach_o_bfd_link_check_relocs              _bfd_generic_link_check_relocs
-#define bfd_mach_o_bfd_merge_private_bfd_data         _bfd_generic_bfd_merge_private_bfd_data
-#define bfd_mach_o_bfd_set_private_flags              bfd_mach_o_bfd_set_private_flags
-#define bfd_mach_o_get_section_contents               _bfd_generic_get_section_contents
-#define bfd_mach_o_bfd_gc_sections                    bfd_generic_gc_sections
-#define bfd_mach_o_bfd_lookup_section_flags           bfd_generic_lookup_section_flags
-#define bfd_mach_o_bfd_merge_sections                 bfd_generic_merge_sections
-#define bfd_mach_o_bfd_is_group_section               bfd_generic_is_group_section
-#define bfd_mach_o_bfd_discard_group                  bfd_generic_discard_group
-#define bfd_mach_o_section_already_linked             _bfd_generic_section_already_linked
-#define bfd_mach_o_bfd_define_common_symbol           bfd_generic_define_common_symbol
-#define bfd_mach_o_bfd_copy_private_bfd_data          _bfd_generic_bfd_copy_private_bfd_data
+#define bfd_mach_o_bfd_final_link		      _bfd_generic_final_link
+#define bfd_mach_o_bfd_link_split_section	      _bfd_generic_link_split_section
+#define bfd_mach_o_bfd_link_check_relocs	      _bfd_generic_link_check_relocs
+#define bfd_mach_o_bfd_merge_private_bfd_data	      _bfd_generic_bfd_merge_private_bfd_data
+#define bfd_mach_o_bfd_set_private_flags	      bfd_mach_o_bfd_set_private_flags
+#define bfd_mach_o_get_section_contents		      _bfd_generic_get_section_contents
+#define bfd_mach_o_bfd_gc_sections		      bfd_generic_gc_sections
+#define bfd_mach_o_bfd_lookup_section_flags	      bfd_generic_lookup_section_flags
+#define bfd_mach_o_bfd_merge_sections		      bfd_generic_merge_sections
+#define bfd_mach_o_bfd_is_group_section		      bfd_generic_is_group_section
+#define bfd_mach_o_bfd_discard_group		      bfd_generic_discard_group
+#define bfd_mach_o_section_already_linked	      _bfd_generic_section_already_linked
+#define bfd_mach_o_bfd_define_common_symbol	      bfd_generic_define_common_symbol
+#define bfd_mach_o_bfd_link_hide_symbol		      _bfd_generic_link_hide_symbol
+#define bfd_mach_o_bfd_define_start_stop	      bfd_generic_define_start_stop
+#define bfd_mach_o_bfd_copy_private_bfd_data	      _bfd_generic_bfd_copy_private_bfd_data
 #define bfd_mach_o_core_file_matches_executable_p     generic_core_file_matches_executable_p
-#define bfd_mach_o_core_file_pid                      _bfd_nocore_core_file_pid
+#define bfd_mach_o_core_file_pid		      _bfd_nocore_core_file_pid
+#define bfd_mach_o_set_reloc			      _bfd_generic_set_reloc
 
 #define bfd_mach_o_get_dynamic_symtab_upper_bound     bfd_mach_o_get_symtab_upper_bound
 #define bfd_mach_o_canonicalize_dynamic_symtab	      bfd_mach_o_canonicalize_symtab
 
 /* For Mach-O special archives.  */
-#define bfd_mach_o_read_ar_hdr                    _bfd_noarchive_read_ar_hdr
-#define bfd_mach_o_write_ar_hdr                   _bfd_noarchive_write_ar_hdr
-#define bfd_mach_o_slurp_armap                    _bfd_noarchive_slurp_armap
-#define bfd_mach_o_slurp_extended_name_table      _bfd_noarchive_slurp_extended_name_table
+#define bfd_mach_o_read_ar_hdr			  _bfd_noarchive_read_ar_hdr
+#define bfd_mach_o_write_ar_hdr			  _bfd_noarchive_write_ar_hdr
+#define bfd_mach_o_slurp_armap			  _bfd_noarchive_slurp_armap
+#define bfd_mach_o_slurp_extended_name_table	  _bfd_noarchive_slurp_extended_name_table
 #define bfd_mach_o_construct_extended_name_table  _bfd_noarchive_construct_extended_name_table
-#define bfd_mach_o_truncate_arname                _bfd_noarchive_truncate_arname
-#define bfd_mach_o_write_armap                    _bfd_noarchive_write_armap
-#define bfd_mach_o_get_elt_at_index               _bfd_noarchive_get_elt_at_index
-#define bfd_mach_o_update_armap_timestamp         _bfd_noarchive_update_armap_timestamp
+#define bfd_mach_o_truncate_arname		  _bfd_noarchive_truncate_arname
+#define bfd_mach_o_write_armap			  _bfd_noarchive_write_armap
+#define bfd_mach_o_get_elt_at_index		  _bfd_noarchive_get_elt_at_index
+#define bfd_mach_o_update_armap_timestamp	  _bfd_noarchive_update_armap_timestamp
 
 #define TARGET_NAME_BACKEND XCONCAT2(TARGET_NAME,_backend)
 
@@ -163,13 +166,13 @@ const bfd_target TARGET_NAME =
 #endif
   },
   {				/* bfd_set_format.  */
-    bfd_false,
+    _bfd_bool_bfd_false_error,
     bfd_mach_o_mkobject,
     _bfd_generic_mkarchive,
     bfd_mach_o_mkobject,
   },
   {				/* bfd_write_contents.  */
-    bfd_false,
+    _bfd_bool_bfd_false_error,
     bfd_mach_o_write_contents,
     _bfd_write_archive_contents,
     bfd_mach_o_write_contents,

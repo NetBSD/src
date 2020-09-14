@@ -1,6 +1,6 @@
 /* Target-dependent code for the Xtensa port of GDB, the GNU debugger.
 
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,6 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#ifndef XTENSA_TDEP_H
+#define XTENSA_TDEP_H
 
 #include "arch/xtensa.h"
 
@@ -130,7 +132,7 @@ typedef struct
 	 ct, bsz, sz, al, tnum, flg, cp, mas, fet, sto},
 #define XTREG_END \
   {0, 0, (xtensa_register_type_t) 0, (xtensa_register_group_t) 0,	\
-   0, 0, 0, 0, -1, 0, 0, 0, 0, 0},
+   0, 0, 0, 0, (unsigned) -1, 0, 0, 0, 0, 0},
 
 #define XTENSA_REGISTER_FLAGS_PRIVILEGED	0x0001
 #define XTENSA_REGISTER_FLAGS_READABLE		0x0002
@@ -228,7 +230,7 @@ struct gdbarch_tdep
 #define XTENSA_GDBARCH_TDEP_INSTANTIATE(rmap,spillsz)			\
   {									\
     0,				/* target_flags */			\
-    -1,				/* spill_location */			\
+    (unsigned) -1,		/* spill_location */	\
     (spillsz),			/* spill_size */			\
     0,				/* unused */				\
     (XSHAL_ABI == XTHAL_ABI_CALL0					\
@@ -291,3 +293,4 @@ struct gdbarch_tdep
    data structure to their corresponding register in the AR register 
    file (see xtensa-tdep.c).  */
 
+#endif /* XTENSA_TDEP_H */

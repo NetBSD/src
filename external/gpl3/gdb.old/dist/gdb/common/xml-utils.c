@@ -1,6 +1,6 @@
 /* Shared helper routines for manipulating XML.
 
-   Copyright (C) 2006-2017 Free Software Foundation, Inc.
+   Copyright (C) 2006-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,64 +20,44 @@
 #include "common-defs.h"
 #include "xml-utils.h"
 
-/* Return a malloc allocated string with special characters from TEXT
-   replaced by entity references.  */
+/* See xml-utils.h.  */
 
-char *
+std::string
 xml_escape_text (const char *text)
 {
-  char *result;
-  int i, special;
+  std::string result;
 
-  /* Compute the length of the result.  */
-  for (i = 0, special = 0; text[i] != '\0'; i++)
-    switch (text[i])
-      {
-      case '\'':
-      case '\"':
-	special += 5;
-	break;
-      case '&':
-	special += 4;
-	break;
-      case '<':
-      case '>':
-	special += 3;
-	break;
-      default:
-	break;
-      }
-
-  /* Expand the result.  */
-  result = (char *) xmalloc (i + special + 1);
-  for (i = 0, special = 0; text[i] != '\0'; i++)
-    switch (text[i])
-      {
-      case '\'':
-	strcpy (result + i + special, "&apos;");
-	special += 5;
-	break;
-      case '\"':
-	strcpy (result + i + special, "&quot;");
-	special += 5;
-	break;
-      case '&':
-	strcpy (result + i + special, "&amp;");
-	special += 4;
-	break;
-      case '<':
-	strcpy (result + i + special, "&lt;");
-	special += 3;
-	break;
-      case '>':
-	strcpy (result + i + special, "&gt;");
-	special += 3;
-	break;
-      default:
-	result[i + special] = text[i];
-	break;
-      }
-  result[i + special] = '\0';
+  xml_escape_text_append (&result, text);
 
   return result;
+}
+
+/* See xml-utils.h.  */
+
+void
+xml_escape_text_append (std::string *result, const char *text)
+{
+  /* Expand the result.  */
+  for (int i = 0; text[i] != '\0'; i++)
+    switch (text[i])
+      {
+      case '\'':
+	*result += "&apos;";
+	break;
+      case '\"':
+	*result += "&quot;";
+	break;
+      case '&':
+	*result += "&amp;";
+	break;
+      case '<':
+	*result += "&lt;";
+	break;
+      case '>':
+	*result += "&gt;";
+	break;
+      default:
+	*result += text[i];
+	break;
+      }
 }

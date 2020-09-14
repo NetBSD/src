@@ -1,3 +1,0 @@
-MH_CFLAGS=
-NATDEPFILES= x86-nat.o x86-dregs.o windows-nat.o i386-windows-nat.o
-XM_CLIBS=

@@ -1,6 +1,6 @@
-This is gdb.info, produced by makeinfo version 6.3 from gdb.texinfo.
+This is gdb.info, produced by makeinfo version 6.5 from gdb.texinfo.
 
-Copyright (C) 1988-2017 Free Software Foundation, Inc.
+Copyright (C) 1988-2019 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -21,9 +21,9 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 8.0.1.
+Source-Level Debugger' for GDB (GDB) Version 8.3.
 
-   Copyright (C) 1988-2017 Free Software Foundation, Inc.
+   Copyright (C) 1988-2019 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -35,6 +35,1536 @@ with the Back-Cover Texts as in (a) below.
    (a) The FSF's Back-Cover Text is: "You are free to copy and modify
 this GNU Manual.  Buying copies from GNU Press supports the FSF in
 developing GNU and promoting software freedom."
+
+
+File: gdb.info,  Node: Parameters In Guile,  Next: Progspaces In Guile,  Prev: Commands In Guile,  Up: Guile API
+
+23.3.3.12 Parameters In Guile
+.............................
+
+You can implement new GDB "parameters" using Guile (1).
+
+   There are many parameters that already exist and can be set in GDB.
+Two examples are: 'set follow-fork' and 'set charset'.  Setting these
+parameters influences certain behavior in GDB.  Similarly, you can
+define parameters that can be used to influence behavior in custom Guile
+scripts and commands.
+
+   A new parameter is defined with the 'make-parameter' Guile function,
+and added to GDB with the 'register-parameter!' Guile function.  This
+two-step approach is taken to separate out the side-effect of adding the
+parameter to GDB from 'make-parameter'.
+
+   Parameters are exposed to the user via the 'set' and 'show' commands.
+*Note Help::.
+
+ -- Scheme Procedure: (make-parameter name [#:command-class
+          command-class] [#:parameter-type parameter-type] [#:enum-list
+          enum-list] [#:set-func set-func] [#:show-func show-func]
+          [#:doc doc] [#:set-doc set-doc] [#:show-doc show-doc]
+          [#:initial-value initial-value])
+
+     The argument NAME is the name of the new parameter.  If NAME
+     consists of multiple words, then the initial words are looked for
+     as prefix parameters.  An example of this can be illustrated with
+     the 'set print' set of parameters.  If NAME is 'print foo', then
+     'print' will be searched as the prefix parameter.  In this case the
+     parameter can subsequently be accessed in GDB as 'set print foo'.
+     If NAME consists of multiple words, and no prefix parameter group
+     can be found, an exception is raised.
+
+     The result is the '<gdb:parameter>' object representing the
+     parameter.  The parameter is not usable until it has been
+     registered with GDB with 'register-parameter!'.
+
+     The rest of the arguments are optional.
+
+     The argument COMMAND-CLASS should be one of the 'COMMAND_'
+     constants (*note Commands In Guile::).  This argument tells GDB how
+     to categorize the new parameter in the help system.  The default is
+     'COMMAND_NONE'.
+
+     The argument PARAMETER-TYPE should be one of the 'PARAM_' constants
+     defined below.  This argument tells GDB the type of the new
+     parameter; this information is used for input validation and
+     completion.  The default is 'PARAM_BOOLEAN'.
+
+     If PARAMETER-TYPE is 'PARAM_ENUM', then ENUM-LIST must be a list of
+     strings.  These strings represent the possible values for the
+     parameter.
+
+     If PARAMETER-TYPE is not 'PARAM_ENUM', then the presence of
+     ENUM-LIST will cause an exception to be thrown.
+
+     The argument SET-FUNC is a function of one argument: SELF which is
+     the '<gdb:parameter>' object representing the parameter.  GDB will
+     call this function when a PARAMETER's value has been changed via
+     the 'set' API (for example, 'set foo off').  The value of the
+     parameter has already been set to the new value.  This function
+     must return a string to be displayed to the user.  GDB will add a
+     trailing newline if the string is non-empty.  GDB generally doesn't
+     print anything when a parameter is set, thus typically this
+     function should return '""'.  A non-empty string result should
+     typically be used for displaying warnings and errors.
+
+     The argument SHOW-FUNC is a function of two arguments: SELF which
+     is the '<gdb:parameter>' object representing the parameter, and
+     SVALUE which is the string representation of the current value.
+     GDB will call this function when a PARAMETER's 'show' API has been
+     invoked (for example, 'show foo').  This function must return a
+     string, and will be displayed to the user.  GDB will add a trailing
+     newline.
+
+     The argument DOC is the help text for the new parameter.  If there
+     is no documentation string, a default value is used.
+
+     The argument SET-DOC is the help text for this parameter's 'set'
+     command.
+
+     The argument SHOW-DOC is the help text for this parameter's 'show'
+     command.
+
+     The argument INITIAL-VALUE specifies the initial value of the
+     parameter.  If it is a function, it takes one parameter, the
+     '<gdb:parameter>' object and its result is used as the initial
+     value of the parameter.  The initial value must be valid for the
+     parameter type, otherwise an exception is thrown.
+
+ -- Scheme Procedure: register-parameter! parameter
+     Add PARAMETER, a '<gdb:parameter>' object, to GDB's list of
+     parameters.  It is an error to register a parameter more than once.
+     The result is unspecified.
+
+ -- Scheme Procedure: parameter? object
+     Return '#t' if OBJECT is a '<gdb:parameter>' object.  Otherwise
+     return '#f'.
+
+ -- Scheme Procedure: parameter-value parameter
+     Return the value of PARAMETER which may either be a
+     '<gdb:parameter>' object or a string naming the parameter.
+
+ -- Scheme Procedure: set-parameter-value! parameter new-value
+     Assign PARAMETER the value of NEW-VALUE.  The argument PARAMETER
+     must be an object of type '<gdb:parameter>'.  GDB does validation
+     when assignments are made.
+
+   When a new parameter is defined, its type must be specified.  The
+available types are represented by constants defined in the 'gdb'
+module:
+
+'PARAM_BOOLEAN'
+     The value is a plain boolean.  The Guile boolean values, '#t' and
+     '#f' are the only valid values.
+
+'PARAM_AUTO_BOOLEAN'
+     The value has three possible states: true, false, and 'auto'.  In
+     Guile, true and false are represented using boolean constants, and
+     'auto' is represented using '#:auto'.
+
+'PARAM_UINTEGER'
+     The value is an unsigned integer.  The value of 0 should be
+     interpreted to mean "unlimited".
+
+'PARAM_ZINTEGER'
+     The value is an integer.
+
+'PARAM_ZUINTEGER'
+     The value is an unsigned integer.
+
+'PARAM_ZUINTEGER_UNLIMITED'
+     The value is an integer in the range '[0, INT_MAX]'.  A value of
+     '-1' means "unlimited", and other negative numbers are not allowed.
+
+'PARAM_STRING'
+     The value is a string.  When the user modifies the string, any
+     escape sequences, such as '\t', '\f', and octal escapes, are
+     translated into corresponding characters and encoded into the
+     current host charset.
+
+'PARAM_STRING_NOESCAPE'
+     The value is a string.  When the user modifies the string, escapes
+     are passed through untranslated.
+
+'PARAM_OPTIONAL_FILENAME'
+     The value is a either a filename (a string), or '#f'.
+
+'PARAM_FILENAME'
+     The value is a filename.  This is just like
+     'PARAM_STRING_NOESCAPE', but uses file names for completion.
+
+'PARAM_ENUM'
+     The value is a string, which must be one of a collection of string
+     constants provided when the parameter is created.
+
+   ---------- Footnotes ----------
+
+   (1) Note that GDB parameters must not be confused with Guile’s
+parameter objects (*note (guile)Parameters::).
+
+
+File: gdb.info,  Node: Progspaces In Guile,  Next: Objfiles In Guile,  Prev: Parameters In Guile,  Up: Guile API
+
+23.3.3.13 Program Spaces In Guile
+.................................
+
+A program space, or "progspace", represents a symbolic view of an
+address space.  It consists of all of the objfiles of the program.
+*Note Objfiles In Guile::.  *Note program spaces: Inferiors and
+Programs, for more details about program spaces.
+
+   Each progspace is represented by an instance of the '<gdb:progspace>'
+smob.  *Note GDB Scheme Data Types::.
+
+   The following progspace-related functions are available in the
+'(gdb)' module:
+
+ -- Scheme Procedure: progspace? object
+     Return '#t' if OBJECT is a '<gdb:progspace>' object.  Otherwise
+     return '#f'.
+
+ -- Scheme Procedure: progspace-valid? progspace
+     Return '#t' if PROGSPACE is valid, '#f' if not.  A
+     '<gdb:progspace>' object can become invalid if the program it
+     refers to is not loaded in GDB any longer.
+
+ -- Scheme Procedure: current-progspace
+     This function returns the program space of the currently selected
+     inferior.  There is always a current progspace, this never returns
+     '#f'.  *Note Inferiors and Programs::.
+
+ -- Scheme Procedure: progspaces
+     Return a list of all the progspaces currently known to GDB.
+
+ -- Scheme Procedure: progspace-filename progspace
+     Return the absolute file name of PROGSPACE as a string.  This is
+     the name of the file passed as the argument to the 'file' or
+     'symbol-file' commands.  If the program space does not have an
+     associated file name, then '#f' is returned.  This occurs, for
+     example, when GDB is started without a program to debug.
+
+     A 'gdb:invalid-object-error' exception is thrown if PROGSPACE is
+     invalid.
+
+ -- Scheme Procedure: progspace-objfiles progspace
+     Return the list of objfiles of PROGSPACE.  The order of objfiles in
+     the result is arbitrary.  Each element is an object of type
+     '<gdb:objfile>'.  *Note Objfiles In Guile::.
+
+     A 'gdb:invalid-object-error' exception is thrown if PROGSPACE is
+     invalid.
+
+ -- Scheme Procedure: progspace-pretty-printers progspace
+     Return the list of pretty-printers of PROGSPACE.  Each element is
+     an object of type '<gdb:pretty-printer>'.  *Note Guile Pretty
+     Printing API::, for more information.
+
+ -- Scheme Procedure: set-progspace-pretty-printers! progspace
+          printer-list
+     Set the list of registered '<gdb:pretty-printer>' objects for
+     PROGSPACE to PRINTER-LIST.  *Note Guile Pretty Printing API::, for
+     more information.
+
+
+File: gdb.info,  Node: Objfiles In Guile,  Next: Frames In Guile,  Prev: Progspaces In Guile,  Up: Guile API
+
+23.3.3.14 Objfiles In Guile
+...........................
+
+GDB loads symbols for an inferior from various symbol-containing files
+(*note Files::).  These include the primary executable file, any shared
+libraries used by the inferior, and any separate debug info files (*note
+Separate Debug Files::).  GDB calls these symbol-containing files
+"objfiles".
+
+   Each objfile is represented as an object of type '<gdb:objfile>'.
+
+   The following objfile-related procedures are provided by the '(gdb)'
+module:
+
+ -- Scheme Procedure: objfile? object
+     Return '#t' if OBJECT is a '<gdb:objfile>' object.  Otherwise
+     return '#f'.
+
+ -- Scheme Procedure: objfile-valid? objfile
+     Return '#t' if OBJFILE is valid, '#f' if not.  A '<gdb:objfile>'
+     object can become invalid if the object file it refers to is not
+     loaded in GDB any longer.  All other '<gdb:objfile>' procedures
+     will throw an exception if it is invalid at the time the procedure
+     is called.
+
+ -- Scheme Procedure: objfile-filename objfile
+     Return the file name of OBJFILE as a string, with symbolic links
+     resolved.
+
+ -- Scheme Procedure: objfile-progspace objfile
+     Return the '<gdb:progspace>' that this object file lives in.  *Note
+     Progspaces In Guile::, for more on progspaces.
+
+ -- Scheme Procedure: objfile-pretty-printers objfile
+     Return the list of registered '<gdb:pretty-printer>' objects for
+     OBJFILE.  *Note Guile Pretty Printing API::, for more information.
+
+ -- Scheme Procedure: set-objfile-pretty-printers! objfile printer-list
+     Set the list of registered '<gdb:pretty-printer>' objects for
+     OBJFILE to PRINTER-LIST.  The PRINTER-LIST must be a list of
+     '<gdb:pretty-printer>' objects.  *Note Guile Pretty Printing API::,
+     for more information.
+
+ -- Scheme Procedure: current-objfile
+     When auto-loading a Guile script (*note Guile Auto-loading::), GDB
+     sets the "current objfile" to the corresponding objfile.  This
+     function returns the current objfile.  If there is no current
+     objfile, this function returns '#f'.
+
+ -- Scheme Procedure: objfiles
+     Return a list of all the objfiles in the current program space.
+
+
+File: gdb.info,  Node: Frames In Guile,  Next: Blocks In Guile,  Prev: Objfiles In Guile,  Up: Guile API
+
+23.3.3.15 Accessing inferior stack frames from Guile.
+.....................................................
+
+When the debugged program stops, GDB is able to analyze its call stack
+(*note Stack frames: Frames.).  The '<gdb:frame>' class represents a
+frame in the stack.  A '<gdb:frame>' object is only valid while its
+corresponding frame exists in the inferior's stack.  If you try to use
+an invalid frame object, GDB will throw a 'gdb:invalid-object' exception
+(*note Guile Exception Handling::).
+
+   Two '<gdb:frame>' objects can be compared for equality with the
+'equal?' function, like:
+
+     (gdb) guile (equal? (newest-frame) (selected-frame))
+     #t
+
+   The following frame-related procedures are provided by the '(gdb)'
+module:
+
+ -- Scheme Procedure: frame? object
+     Return '#t' if OBJECT is a '<gdb:frame>' object.  Otherwise return
+     '#f'.
+
+ -- Scheme Procedure: frame-valid? frame
+     Returns '#t' if FRAME is valid, '#f' if not.  A frame object can
+     become invalid if the frame it refers to doesn't exist anymore in
+     the inferior.  All '<gdb:frame>' procedures will throw an exception
+     if the frame is invalid at the time the procedure is called.
+
+ -- Scheme Procedure: frame-name frame
+     Return the function name of FRAME, or '#f' if it can't be obtained.
+
+ -- Scheme Procedure: frame-arch frame
+     Return the '<gdb:architecture>' object corresponding to FRAME's
+     architecture.  *Note Architectures In Guile::.
+
+ -- Scheme Procedure: frame-type frame
+     Return the type of FRAME.  The value can be one of:
+
+     'NORMAL_FRAME'
+          An ordinary stack frame.
+
+     'DUMMY_FRAME'
+          A fake stack frame that was created by GDB when performing an
+          inferior function call.
+
+     'INLINE_FRAME'
+          A frame representing an inlined function.  The function was
+          inlined into a 'NORMAL_FRAME' that is older than this one.
+
+     'TAILCALL_FRAME'
+          A frame representing a tail call.  *Note Tail Call Frames::.
+
+     'SIGTRAMP_FRAME'
+          A signal trampoline frame.  This is the frame created by the
+          OS when it calls into a signal handler.
+
+     'ARCH_FRAME'
+          A fake stack frame representing a cross-architecture call.
+
+     'SENTINEL_FRAME'
+          This is like 'NORMAL_FRAME', but it is only used for the
+          newest frame.
+
+ -- Scheme Procedure: frame-unwind-stop-reason frame
+     Return an integer representing the reason why it's not possible to
+     find more frames toward the outermost frame.  Use
+     'unwind-stop-reason-string' to convert the value returned by this
+     function to a string.  The value can be one of:
+
+     'FRAME_UNWIND_NO_REASON'
+          No particular reason (older frames should be available).
+
+     'FRAME_UNWIND_NULL_ID'
+          The previous frame's analyzer returns an invalid result.
+
+     'FRAME_UNWIND_OUTERMOST'
+          This frame is the outermost.
+
+     'FRAME_UNWIND_UNAVAILABLE'
+          Cannot unwind further, because that would require knowing the
+          values of registers or memory that have not been collected.
+
+     'FRAME_UNWIND_INNER_ID'
+          This frame ID looks like it ought to belong to a NEXT frame,
+          but we got it for a PREV frame.  Normally, this is a sign of
+          unwinder failure.  It could also indicate stack corruption.
+
+     'FRAME_UNWIND_SAME_ID'
+          This frame has the same ID as the previous one.  That means
+          that unwinding further would almost certainly give us another
+          frame with exactly the same ID, so break the chain.  Normally,
+          this is a sign of unwinder failure.  It could also indicate
+          stack corruption.
+
+     'FRAME_UNWIND_NO_SAVED_PC'
+          The frame unwinder did not find any saved PC, but we needed
+          one to unwind further.
+
+     'FRAME_UNWIND_MEMORY_ERROR'
+          The frame unwinder caused an error while trying to access
+          memory.
+
+     'FRAME_UNWIND_FIRST_ERROR'
+          Any stop reason greater or equal to this value indicates some
+          kind of error.  This special value facilitates writing code
+          that tests for errors in unwinding in a way that will work
+          correctly even if the list of the other values is modified in
+          future GDB versions.  Using it, you could write:
+
+               (define reason (frame-unwind-stop-readon (selected-frame)))
+               (define reason-str (unwind-stop-reason-string reason))
+               (if (>= reason FRAME_UNWIND_FIRST_ERROR)
+                   (format #t "An error occured: ~s\n" reason-str))
+
+ -- Scheme Procedure: frame-pc frame
+     Return the frame's resume address.
+
+ -- Scheme Procedure: frame-block frame
+     Return the frame's code block as a '<gdb:block>' object.  *Note
+     Blocks In Guile::.
+
+ -- Scheme Procedure: frame-function frame
+     Return the symbol for the function corresponding to this frame as a
+     '<gdb:symbol>' object, or '#f' if there isn't one.  *Note Symbols
+     In Guile::.
+
+ -- Scheme Procedure: frame-older frame
+     Return the frame that called FRAME.
+
+ -- Scheme Procedure: frame-newer frame
+     Return the frame called by FRAME.
+
+ -- Scheme Procedure: frame-sal frame
+     Return the frame's '<gdb:sal>' (symtab and line) object.  *Note
+     Symbol Tables In Guile::.
+
+ -- Scheme Procedure: frame-read-register frame register
+     Return the value of REGISTER in FRAME.  REGISTER should be a
+     string, like 'pc'.
+
+ -- Scheme Procedure: frame-read-var frame variable [#:block block]
+     Return the value of VARIABLE in FRAME.  If the optional argument
+     BLOCK is provided, search for the variable from that block;
+     otherwise start at the frame's current block (which is determined
+     by the frame's current program counter).  The VARIABLE must be
+     given as a string or a '<gdb:symbol>' object, and BLOCK must be a
+     '<gdb:block>' object.
+
+ -- Scheme Procedure: frame-select frame
+     Set FRAME to be the selected frame.  *Note Examining the Stack:
+     Stack.
+
+ -- Scheme Procedure: selected-frame
+     Return the selected frame object.  *Note Selecting a Frame:
+     Selection.
+
+ -- Scheme Procedure: newest-frame
+     Return the newest frame object for the selected thread.
+
+ -- Scheme Procedure: unwind-stop-reason-string reason
+     Return a string explaining the reason why GDB stopped unwinding
+     frames, as expressed by the given REASON code (an integer, see the
+     'frame-unwind-stop-reason' procedure above in this section).
+
+
+File: gdb.info,  Node: Blocks In Guile,  Next: Symbols In Guile,  Prev: Frames In Guile,  Up: Guile API
+
+23.3.3.16 Accessing blocks from Guile.
+......................................
+
+In GDB, symbols are stored in blocks.  A block corresponds roughly to a
+scope in the source code.  Blocks are organized hierarchically, and are
+represented individually in Guile as an object of type '<gdb:block>'.
+Blocks rely on debugging information being available.
+
+   A frame has a block.  Please see *note Frames In Guile::, for a more
+in-depth discussion of frames.
+
+   The outermost block is known as the "global block".  The global block
+typically holds public global variables and functions.
+
+   The block nested just inside the global block is the "static block".
+The static block typically holds file-scoped variables and functions.
+
+   GDB provides a method to get a block's superblock, but there is
+currently no way to examine the sub-blocks of a block, or to iterate
+over all the blocks in a symbol table (*note Symbol Tables In Guile::).
+
+   Here is a short example that should help explain blocks:
+
+     /* This is in the global block.  */
+     int global;
+
+     /* This is in the static block.  */
+     static int file_scope;
+
+     /* 'function' is in the global block, and 'argument' is
+        in a block nested inside of 'function'.  */
+     int function (int argument)
+     {
+       /* 'local' is in a block inside 'function'.  It may or may
+          not be in the same block as 'argument'.  */
+       int local;
+
+       {
+          /* 'inner' is in a block whose superblock is the one holding
+             'local'.  */
+          int inner;
+
+          /* If this call is expanded by the compiler, you may see
+             a nested block here whose function is 'inline_function'
+             and whose superblock is the one holding 'inner'.  */
+          inline_function ();
+       }
+     }
+
+   The following block-related procedures are provided by the '(gdb)'
+module:
+
+ -- Scheme Procedure: block? object
+     Return '#t' if OBJECT is a '<gdb:block>' object.  Otherwise return
+     '#f'.
+
+ -- Scheme Procedure: block-valid? block
+     Returns '#t' if '<gdb:block>' BLOCK is valid, '#f' if not.  A block
+     object can become invalid if the block it refers to doesn't exist
+     anymore in the inferior.  All other '<gdb:block>' methods will
+     throw an exception if it is invalid at the time the procedure is
+     called.  The block's validity is also checked during iteration over
+     symbols of the block.
+
+ -- Scheme Procedure: block-start block
+     Return the start address of '<gdb:block>' BLOCK.
+
+ -- Scheme Procedure: block-end block
+     Return the end address of '<gdb:block>' BLOCK.
+
+ -- Scheme Procedure: block-function block
+     Return the name of '<gdb:block>' BLOCK represented as a
+     '<gdb:symbol>' object.  If the block is not named, then '#f' is
+     returned.
+
+     For ordinary function blocks, the superblock is the static block.
+     However, you should note that it is possible for a function block
+     to have a superblock that is not the static block - for instance
+     this happens for an inlined function.
+
+ -- Scheme Procedure: block-superblock block
+     Return the block containing '<gdb:block>' BLOCK.  If the parent
+     block does not exist, then '#f' is returned.
+
+ -- Scheme Procedure: block-global-block block
+     Return the global block associated with '<gdb:block>' BLOCK.
+
+ -- Scheme Procedure: block-static-block block
+     Return the static block associated with '<gdb:block>' BLOCK.
+
+ -- Scheme Procedure: block-global? block
+     Return '#t' if '<gdb:block>' BLOCK is a global block.  Otherwise
+     return '#f'.
+
+ -- Scheme Procedure: block-static? block
+     Return '#t' if '<gdb:block>' BLOCK is a static block.  Otherwise
+     return '#f'.
+
+ -- Scheme Procedure: block-symbols
+     Return a list of all symbols (as <gdb:symbol> objects) in
+     '<gdb:block>' BLOCK.
+
+ -- Scheme Procedure: make-block-symbols-iterator block
+     Return an object of type '<gdb:iterator>' that will iterate over
+     all symbols of the block.  Guile programs should not assume that a
+     specific block object will always contain a given symbol, since
+     changes in GDB features and infrastructure may cause symbols move
+     across blocks in a symbol table.  *Note Iterators In Guile::.
+
+ -- Scheme Procedure: block-symbols-progress?
+     Return #t if the object is a <gdb:block-symbols-progress> object.
+     This object would be obtained from the 'progress' element of the
+     '<gdb:iterator>' object returned by 'make-block-symbols-iterator'.
+
+ -- Scheme Procedure: lookup-block pc
+     Return the innermost '<gdb:block>' containing the given PC value.
+     If the block cannot be found for the PC value specified, the
+     function will return '#f'.
+
+
+File: gdb.info,  Node: Symbols In Guile,  Next: Symbol Tables In Guile,  Prev: Blocks In Guile,  Up: Guile API
+
+23.3.3.17 Guile representation of Symbols.
+..........................................
+
+GDB represents every variable, function and type as an entry in a symbol
+table.  *Note Examining the Symbol Table: Symbols.  Guile represents
+these symbols in GDB with the '<gdb:symbol>' object.
+
+   The following symbol-related procedures are provided by the '(gdb)'
+module:
+
+ -- Scheme Procedure: symbol? object
+     Return '#t' if OBJECT is an object of type '<gdb:symbol>'.
+     Otherwise return '#f'.
+
+ -- Scheme Procedure: symbol-valid? symbol
+     Return '#t' if the '<gdb:symbol>' object is valid, '#f' if not.  A
+     '<gdb:symbol>' object can become invalid if the symbol it refers to
+     does not exist in GDB any longer.  All other '<gdb:symbol>'
+     procedures will throw an exception if it is invalid at the time the
+     procedure is called.
+
+ -- Scheme Procedure: symbol-type symbol
+     Return the type of SYMBOL or '#f' if no type is recorded.  The
+     result is an object of type '<gdb:type>'.  *Note Types In Guile::.
+
+ -- Scheme Procedure: symbol-symtab symbol
+     Return the symbol table in which SYMBOL appears.  The result is an
+     object of type '<gdb:symtab>'.  *Note Symbol Tables In Guile::.
+
+ -- Scheme Procedure: symbol-line symbol
+     Return the line number in the source code at which SYMBOL was
+     defined.  This is an integer.
+
+ -- Scheme Procedure: symbol-name symbol
+     Return the name of SYMBOL as a string.
+
+ -- Scheme Procedure: symbol-linkage-name symbol
+     Return the name of SYMBOL, as used by the linker (i.e., may be
+     mangled).
+
+ -- Scheme Procedure: symbol-print-name symbol
+     Return the name of SYMBOL in a form suitable for output.  This is
+     either 'name' or 'linkage_name', depending on whether the user
+     asked GDB to display demangled or mangled names.
+
+ -- Scheme Procedure: symbol-addr-class symbol
+     Return the address class of the symbol.  This classifies how to
+     find the value of a symbol.  Each address class is a constant
+     defined in the '(gdb)' module and described later in this chapter.
+
+ -- Scheme Procedure: symbol-needs-frame? symbol
+     Return '#t' if evaluating SYMBOL's value requires a frame (*note
+     Frames In Guile::) and '#f' otherwise.  Typically, local variables
+     will require a frame, but other symbols will not.
+
+ -- Scheme Procedure: symbol-argument? symbol
+     Return '#t' if SYMBOL is an argument of a function.  Otherwise
+     return '#f'.
+
+ -- Scheme Procedure: symbol-constant? symbol
+     Return '#t' if SYMBOL is a constant.  Otherwise return '#f'.
+
+ -- Scheme Procedure: symbol-function? symbol
+     Return '#t' if SYMBOL is a function or a method.  Otherwise return
+     '#f'.
+
+ -- Scheme Procedure: symbol-variable? symbol
+     Return '#t' if SYMBOL is a variable.  Otherwise return '#f'.
+
+ -- Scheme Procedure: symbol-value symbol [#:frame frame]
+     Compute the value of SYMBOL, as a '<gdb:value>'.  For functions,
+     this computes the address of the function, cast to the appropriate
+     type.  If the symbol requires a frame in order to compute its
+     value, then FRAME must be given.  If FRAME is not given, or if
+     FRAME is invalid, then an exception is thrown.
+
+ -- Scheme Procedure: lookup-symbol name [#:block block] [#:domain
+          domain]
+     This function searches for a symbol by name.  The search scope can
+     be restricted to the parameters defined in the optional domain and
+     block arguments.
+
+     NAME is the name of the symbol.  It must be a string.  The optional
+     BLOCK argument restricts the search to symbols visible in that
+     BLOCK.  The BLOCK argument must be a '<gdb:block>' object.  If
+     omitted, the block for the current frame is used.  The optional
+     DOMAIN argument restricts the search to the domain type.  The
+     DOMAIN argument must be a domain constant defined in the '(gdb)'
+     module and described later in this chapter.
+
+     The result is a list of two elements.  The first element is a
+     '<gdb:symbol>' object or '#f' if the symbol is not found.  If the
+     symbol is found, the second element is '#t' if the symbol is a
+     field of a method's object (e.g., 'this' in C++), otherwise it is
+     '#f'.  If the symbol is not found, the second element is '#f'.
+
+ -- Scheme Procedure: lookup-global-symbol name [#:domain domain]
+     This function searches for a global symbol by name.  The search
+     scope can be restricted by the domain argument.
+
+     NAME is the name of the symbol.  It must be a string.  The optional
+     DOMAIN argument restricts the search to the domain type.  The
+     DOMAIN argument must be a domain constant defined in the '(gdb)'
+     module and described later in this chapter.
+
+     The result is a '<gdb:symbol>' object or '#f' if the symbol is not
+     found.
+
+   The available domain categories in '<gdb:symbol>' are represented as
+constants in the '(gdb)' module:
+
+'SYMBOL_UNDEF_DOMAIN'
+     This is used when a domain has not been discovered or none of the
+     following domains apply.  This usually indicates an error either in
+     the symbol information or in GDB's handling of symbols.
+
+'SYMBOL_VAR_DOMAIN'
+     This domain contains variables, function names, typedef names and
+     enum type values.
+
+'SYMBOL_STRUCT_DOMAIN'
+     This domain holds struct, union and enum type names.
+
+'SYMBOL_LABEL_DOMAIN'
+     This domain contains names of labels (for gotos).
+
+'SYMBOL_VARIABLES_DOMAIN'
+     This domain holds a subset of the 'SYMBOLS_VAR_DOMAIN'; it contains
+     everything minus functions and types.
+
+'SYMBOL_FUNCTIONS_DOMAIN'
+     This domain contains all functions.
+
+'SYMBOL_TYPES_DOMAIN'
+     This domain contains all types.
+
+   The available address class categories in '<gdb:symbol>' are
+represented as constants in the 'gdb' module:
+
+'SYMBOL_LOC_UNDEF'
+     If this is returned by address class, it indicates an error either
+     in the symbol information or in GDB's handling of symbols.
+
+'SYMBOL_LOC_CONST'
+     Value is constant int.
+
+'SYMBOL_LOC_STATIC'
+     Value is at a fixed address.
+
+'SYMBOL_LOC_REGISTER'
+     Value is in a register.
+
+'SYMBOL_LOC_ARG'
+     Value is an argument.  This value is at the offset stored within
+     the symbol inside the frame's argument list.
+
+'SYMBOL_LOC_REF_ARG'
+     Value address is stored in the frame's argument list.  Just like
+     'LOC_ARG' except that the value's address is stored at the offset,
+     not the value itself.
+
+'SYMBOL_LOC_REGPARM_ADDR'
+     Value is a specified register.  Just like 'LOC_REGISTER' except the
+     register holds the address of the argument instead of the argument
+     itself.
+
+'SYMBOL_LOC_LOCAL'
+     Value is a local variable.
+
+'SYMBOL_LOC_TYPEDEF'
+     Value not used.  Symbols in the domain 'SYMBOL_STRUCT_DOMAIN' all
+     have this class.
+
+'SYMBOL_LOC_BLOCK'
+     Value is a block.
+
+'SYMBOL_LOC_CONST_BYTES'
+     Value is a byte-sequence.
+
+'SYMBOL_LOC_UNRESOLVED'
+     Value is at a fixed address, but the address of the variable has to
+     be determined from the minimal symbol table whenever the variable
+     is referenced.
+
+'SYMBOL_LOC_OPTIMIZED_OUT'
+     The value does not actually exist in the program.
+
+'SYMBOL_LOC_COMPUTED'
+     The value's address is a computed location.
+
+
+File: gdb.info,  Node: Symbol Tables In Guile,  Next: Breakpoints In Guile,  Prev: Symbols In Guile,  Up: Guile API
+
+23.3.3.18 Symbol table representation in Guile.
+...............................................
+
+Access to symbol table data maintained by GDB on the inferior is exposed
+to Guile via two objects: '<gdb:sal>' (symtab-and-line) and
+'<gdb:symtab>'.  Symbol table and line data for a frame is returned from
+the 'frame-find-sal' '<gdb:frame>' procedure.  *Note Frames In Guile::.
+
+   For more information on GDB's symbol table management, see *note
+Examining the Symbol Table: Symbols.
+
+   The following symtab-related procedures are provided by the '(gdb)'
+module:
+
+ -- Scheme Procedure: symtab? object
+     Return '#t' if OBJECT is an object of type '<gdb:symtab>'.
+     Otherwise return '#f'.
+
+ -- Scheme Procedure: symtab-valid? symtab
+     Return '#t' if the '<gdb:symtab>' object is valid, '#f' if not.  A
+     '<gdb:symtab>' object becomes invalid when the symbol table it
+     refers to no longer exists in GDB.  All other '<gdb:symtab>'
+     procedures will throw an exception if it is invalid at the time the
+     procedure is called.
+
+ -- Scheme Procedure: symtab-filename symtab
+     Return the symbol table's source filename.
+
+ -- Scheme Procedure: symtab-fullname symtab
+     Return the symbol table's source absolute file name.
+
+ -- Scheme Procedure: symtab-objfile symtab
+     Return the symbol table's backing object file.  *Note Objfiles In
+     Guile::.
+
+ -- Scheme Procedure: symtab-global-block symtab
+     Return the global block of the underlying symbol table.  *Note
+     Blocks In Guile::.
+
+ -- Scheme Procedure: symtab-static-block symtab
+     Return the static block of the underlying symbol table.  *Note
+     Blocks In Guile::.
+
+   The following symtab-and-line-related procedures are provided by the
+'(gdb)' module:
+
+ -- Scheme Procedure: sal? object
+     Return '#t' if OBJECT is an object of type '<gdb:sal>'.  Otherwise
+     return '#f'.
+
+ -- Scheme Procedure: sal-valid? sal
+     Return '#t' if SAL is valid, '#f' if not.  A '<gdb:sal>' object
+     becomes invalid when the Symbol table object it refers to no longer
+     exists in GDB.  All other '<gdb:sal>' procedures will throw an
+     exception if it is invalid at the time the procedure is called.
+
+ -- Scheme Procedure: sal-symtab sal
+     Return the symbol table object ('<gdb:symtab>') for SAL.
+
+ -- Scheme Procedure: sal-line sal
+     Return the line number for SAL.
+
+ -- Scheme Procedure: sal-pc sal
+     Return the start of the address range occupied by code for SAL.
+
+ -- Scheme Procedure: sal-last sal
+     Return the end of the address range occupied by code for SAL.
+
+ -- Scheme Procedure: find-pc-line pc
+     Return the '<gdb:sal>' object corresponding to the PC value.  If an
+     invalid value of PC is passed as an argument, then the 'symtab' and
+     'line' attributes of the returned '<gdb:sal>' object will be '#f'
+     and 0 respectively.
+
+
+File: gdb.info,  Node: Breakpoints In Guile,  Next: Lazy Strings In Guile,  Prev: Symbol Tables In Guile,  Up: Guile API
+
+23.3.3.19 Manipulating breakpoints using Guile
+..............................................
+
+Breakpoints in Guile are represented by objects of type
+'<gdb:breakpoint>'.  New breakpoints can be created with the
+'make-breakpoint' Guile function, and then added to GDB with the
+'register-breakpoint!' Guile function.  This two-step approach is taken
+to separate out the side-effect of adding the breakpoint to GDB from
+'make-breakpoint'.
+
+   Support is also provided to view and manipulate breakpoints created
+outside of Guile.
+
+   The following breakpoint-related procedures are provided by the
+'(gdb)' module:
+
+ -- Scheme Procedure: make-breakpoint location [#:type type] [#:wp-class
+          wp-class] [#:internal internal]
+     Create a new breakpoint at LOCATION, a string naming the location
+     of the breakpoint, or an expression that defines a watchpoint.  The
+     contents can be any location recognized by the 'break' command, or
+     in the case of a watchpoint, by the 'watch' command.
+
+     The breakpoint is initially marked as 'invalid'.  The breakpoint is
+     not usable until it has been registered with GDB with
+     'register-breakpoint!', at which point it becomes 'valid'.  The
+     result is the '<gdb:breakpoint>' object representing the
+     breakpoint.
+
+     The optional TYPE denotes the breakpoint to create.  This argument
+     can be either 'BP_BREAKPOINT' or 'BP_WATCHPOINT', and defaults to
+     'BP_BREAKPOINT'.
+
+     The optional WP-CLASS argument defines the class of watchpoint to
+     create, if TYPE is 'BP_WATCHPOINT'.  If a watchpoint class is not
+     provided, it is assumed to be a 'WP_WRITE' class.
+
+     The optional INTERNAL argument allows the breakpoint to become
+     invisible to the user.  The breakpoint will neither be reported
+     when registered, nor will it be listed in the output from 'info
+     breakpoints' (but will be listed with the 'maint info breakpoints'
+     command).  If an internal flag is not provided, the breakpoint is
+     visible (non-internal).
+
+     When a watchpoint is created, GDB will try to create a hardware
+     assisted watchpoint.  If successful, the type of the watchpoint is
+     changed from 'BP_WATCHPOINT' to 'BP_HARDWARE_WATCHPOINT' for
+     'WP_WRITE', 'BP_READ_WATCHPOINT' for 'WP_READ', and
+     'BP_ACCESS_WATCHPOINT' for 'WP_ACCESS'.  If not successful, the
+     type of the watchpoint is left as 'WP_WATCHPOINT'.
+
+     The available types are represented by constants defined in the
+     'gdb' module:
+
+     'BP_BREAKPOINT'
+          Normal code breakpoint.
+
+     'BP_WATCHPOINT'
+          Watchpoint breakpoint.
+
+     'BP_HARDWARE_WATCHPOINT'
+          Hardware assisted watchpoint.  This value cannot be specified
+          when creating the breakpoint.
+
+     'BP_READ_WATCHPOINT'
+          Hardware assisted read watchpoint.  This value cannot be
+          specified when creating the breakpoint.
+
+     'BP_ACCESS_WATCHPOINT'
+          Hardware assisted access watchpoint.  This value cannot be
+          specified when creating the breakpoint.
+
+     The available watchpoint types represented by constants are defined
+     in the '(gdb)' module:
+
+     'WP_READ'
+          Read only watchpoint.
+
+     'WP_WRITE'
+          Write only watchpoint.
+
+     'WP_ACCESS'
+          Read/Write watchpoint.
+
+ -- Scheme Procedure: register-breakpoint! breakpoint
+     Add BREAKPOINT, a '<gdb:breakpoint>' object, to GDB's list of
+     breakpoints.  The breakpoint must have been created with
+     'make-breakpoint'.  One cannot register breakpoints that have been
+     created outside of Guile.  Once a breakpoint is registered it
+     becomes 'valid'.  It is an error to register an already registered
+     breakpoint.  The result is unspecified.
+
+ -- Scheme Procedure: delete-breakpoint! breakpoint
+     Remove BREAKPOINT from GDB's list of breakpoints.  This also
+     invalidates the Guile BREAKPOINT object.  Any further attempt to
+     access the object will throw an exception.
+
+     If BREAKPOINT was created from Guile with 'make-breakpoint' it may
+     be re-registered with GDB, in which case the breakpoint becomes
+     valid again.
+
+ -- Scheme Procedure: breakpoints
+     Return a list of all breakpoints.  Each element of the list is a
+     '<gdb:breakpoint>' object.
+
+ -- Scheme Procedure: breakpoint? object
+     Return '#t' if OBJECT is a '<gdb:breakpoint>' object, and '#f'
+     otherwise.
+
+ -- Scheme Procedure: breakpoint-valid? breakpoint
+     Return '#t' if BREAKPOINT is valid, '#f' otherwise.  Breakpoints
+     created with 'make-breakpoint' are marked as invalid until they are
+     registered with GDB with 'register-breakpoint!'.  A
+     '<gdb:breakpoint>' object can become invalid if the user deletes
+     the breakpoint.  In this case, the object still exists, but the
+     underlying breakpoint does not.  In the cases of watchpoint scope,
+     the watchpoint remains valid even if execution of the inferior
+     leaves the scope of that watchpoint.
+
+ -- Scheme Procedure: breakpoint-number breakpoint
+     Return the breakpoint's number -- the identifier used by the user
+     to manipulate the breakpoint.
+
+ -- Scheme Procedure: breakpoint-type breakpoint
+     Return the breakpoint's type -- the identifier used to determine
+     the actual breakpoint type or use-case.
+
+ -- Scheme Procedure: breakpoint-visible? breakpoint
+     Return '#t' if the breakpoint is visible to the user when hit, or
+     when the 'info breakpoints' command is run.  Otherwise return '#f'.
+
+ -- Scheme Procedure: breakpoint-location breakpoint
+     Return the location of the breakpoint, as specified by the user.
+     It is a string.  If the breakpoint does not have a location (that
+     is, it is a watchpoint) return '#f'.
+
+ -- Scheme Procedure: breakpoint-expression breakpoint
+     Return the breakpoint expression, as specified by the user.  It is
+     a string.  If the breakpoint does not have an expression (the
+     breakpoint is not a watchpoint) return '#f'.
+
+ -- Scheme Procedure: breakpoint-enabled? breakpoint
+     Return '#t' if the breakpoint is enabled, and '#f' otherwise.
+
+ -- Scheme Procedure: set-breakpoint-enabled! breakpoint flag
+     Set the enabled state of BREAKPOINT to FLAG.  If flag is '#f' it is
+     disabled, otherwise it is enabled.
+
+ -- Scheme Procedure: breakpoint-silent? breakpoint
+     Return '#t' if the breakpoint is silent, and '#f' otherwise.
+
+     Note that a breakpoint can also be silent if it has commands and
+     the first command is 'silent'.  This is not reported by the
+     'silent' attribute.
+
+ -- Scheme Procedure: set-breakpoint-silent! breakpoint flag
+     Set the silent state of BREAKPOINT to FLAG.  If flag is '#f' the
+     breakpoint is made silent, otherwise it is made non-silent (or
+     noisy).
+
+ -- Scheme Procedure: breakpoint-ignore-count breakpoint
+     Return the ignore count for BREAKPOINT.
+
+ -- Scheme Procedure: set-breakpoint-ignore-count! breakpoint count
+     Set the ignore count for BREAKPOINT to COUNT.
+
+ -- Scheme Procedure: breakpoint-hit-count breakpoint
+     Return hit count of BREAKPOINT.
+
+ -- Scheme Procedure: set-breakpoint-hit-count! breakpoint count
+     Set the hit count of BREAKPOINT to COUNT.  At present, COUNT must
+     be zero.
+
+ -- Scheme Procedure: breakpoint-thread breakpoint
+     Return the global-thread-id for thread-specific breakpoint
+     BREAKPOINT.  Return #f if BREAKPOINT is not thread-specific.
+
+ -- Scheme Procedure: set-breakpoint-thread! breakpoint
+          global-thread-id|#f
+     Set the thread-id for BREAKPOINT to GLOBAL-THREAD-ID If set to
+     '#f', the breakpoint is no longer thread-specific.
+
+ -- Scheme Procedure: breakpoint-task breakpoint
+     If the breakpoint is Ada task-specific, return the Ada task id.  If
+     the breakpoint is not task-specific (or the underlying language is
+     not Ada), return '#f'.
+
+ -- Scheme Procedure: set-breakpoint-task! breakpoint task
+     Set the Ada task of BREAKPOINT to TASK.  If set to '#f', the
+     breakpoint is no longer task-specific.
+
+ -- Scheme Procedure: breakpoint-condition breakpoint
+     Return the condition of BREAKPOINT, as specified by the user.  It
+     is a string.  If there is no condition, return '#f'.
+
+ -- Scheme Procedure: set-breakpoint-condition! breakpoint condition
+     Set the condition of BREAKPOINT to CONDITION, which must be a
+     string.  If set to '#f' then the breakpoint becomes unconditional.
+
+ -- Scheme Procedure: breakpoint-stop breakpoint
+     Return the stop predicate of BREAKPOINT.  See
+     'set-breakpoint-stop!' below in this section.
+
+ -- Scheme Procedure: set-breakpoint-stop! breakpoint procedure|#f
+     Set the stop predicate of BREAKPOINT.  The predicate PROCEDURE
+     takes one argument: the <gdb:breakpoint> object.  If this predicate
+     is set to a procedure then it is invoked whenever the inferior
+     reaches this breakpoint.  If it returns '#t', or any non-'#f'
+     value, then the inferior is stopped, otherwise the inferior will
+     continue.
+
+     If there are multiple breakpoints at the same location with a
+     'stop' predicate, each one will be called regardless of the return
+     status of the previous.  This ensures that all 'stop' predicates
+     have a chance to execute at that location.  In this scenario if one
+     of the methods returns '#t' but the others return '#f', the
+     inferior will still be stopped.
+
+     You should not alter the execution state of the inferior (i.e.,
+     step, next, etc.), alter the current frame context (i.e., change
+     the current active frame), or alter, add or delete any breakpoint.
+     As a general rule, you should not alter any data within GDB or the
+     inferior at this time.
+
+     Example 'stop' implementation:
+
+          (define (my-stop? bkpt)
+            (let ((int-val (parse-and-eval "foo")))
+              (value=? int-val 3)))
+          (define bkpt (make-breakpoint "main.c:42"))
+          (register-breakpoint! bkpt)
+          (set-breakpoint-stop! bkpt my-stop?)
+
+ -- Scheme Procedure: breakpoint-commands breakpoint
+     Return the commands attached to BREAKPOINT as a string, or '#f' if
+     there are none.
+
+
+File: gdb.info,  Node: Lazy Strings In Guile,  Next: Architectures In Guile,  Prev: Breakpoints In Guile,  Up: Guile API
+
+23.3.3.20 Guile representation of lazy strings.
+...............................................
+
+A "lazy string" is a string whose contents is not retrieved or encoded
+until it is needed.
+
+   A '<gdb:lazy-string>' is represented in GDB as an 'address' that
+points to a region of memory, an 'encoding' that will be used to encode
+that region of memory, and a 'length' to delimit the region of memory
+that represents the string.  The difference between a
+'<gdb:lazy-string>' and a string wrapped within a '<gdb:value>' is that
+a '<gdb:lazy-string>' will be treated differently by GDB when printing.
+A '<gdb:lazy-string>' is retrieved and encoded during printing, while a
+'<gdb:value>' wrapping a string is immediately retrieved and encoded on
+creation.
+
+   The following lazy-string-related procedures are provided by the
+'(gdb)' module:
+
+ -- Scheme Procedure: lazy-string? object
+     Return '#t' if OBJECT is an object of type '<gdb:lazy-string>'.
+     Otherwise return '#f'.
+
+ -- Scheme Procedure: lazy-string-address lazy-sring
+     Return the address of LAZY-STRING.
+
+ -- Scheme Procedure: lazy-string-length lazy-string
+     Return the length of LAZY-STRING in characters.  If the length is
+     -1, then the string will be fetched and encoded up to the first
+     null of appropriate width.
+
+ -- Scheme Procedure: lazy-string-encoding lazy-string
+     Return the encoding that will be applied to LAZY-STRING when the
+     string is printed by GDB.  If the encoding is not set, or contains
+     an empty string, then GDB will select the most appropriate encoding
+     when the string is printed.
+
+ -- Scheme Procedure: lazy-string-type lazy-string
+     Return the type that is represented by LAZY-STRING's type.  For a
+     lazy string this is a pointer or array type.  To resolve this to
+     the lazy string's character type, use 'type-target-type'.  *Note
+     Types In Guile::.
+
+ -- Scheme Procedure: lazy-string->value lazy-string
+     Convert the '<gdb:lazy-string>' to a '<gdb:value>'.  This value
+     will point to the string in memory, but will lose all the delayed
+     retrieval, encoding and handling that GDB applies to a
+     '<gdb:lazy-string>'.
+
+
+File: gdb.info,  Node: Architectures In Guile,  Next: Disassembly In Guile,  Prev: Lazy Strings In Guile,  Up: Guile API
+
+23.3.3.21 Guile representation of architectures
+...............................................
+
+GDB uses architecture specific parameters and artifacts in a number of
+its various computations.  An architecture is represented by an instance
+of the '<gdb:arch>' class.
+
+   The following architecture-related procedures are provided by the
+'(gdb)' module:
+
+ -- Scheme Procedure: arch? object
+     Return '#t' if OBJECT is an object of type '<gdb:arch>'.  Otherwise
+     return '#f'.
+
+ -- Scheme Procedure: current-arch
+     Return the current architecture as a '<gdb:arch>' object.
+
+ -- Scheme Procedure: arch-name arch
+     Return the name (string value) of '<gdb:arch>' ARCH.
+
+ -- Scheme Procedure: arch-charset arch
+     Return name of target character set of '<gdb:arch>' ARCH.
+
+ -- Scheme Procedure: arch-wide-charset
+     Return name of target wide character set of '<gdb:arch>' ARCH.
+
+   Each architecture provides a set of predefined types, obtained by the
+following functions.
+
+ -- Scheme Procedure: arch-void-type arch
+     Return the '<gdb:type>' object for a 'void' type of architecture
+     ARCH.
+
+ -- Scheme Procedure: arch-char-type arch
+     Return the '<gdb:type>' object for a 'char' type of architecture
+     ARCH.
+
+ -- Scheme Procedure: arch-short-type arch
+     Return the '<gdb:type>' object for a 'short' type of architecture
+     ARCH.
+
+ -- Scheme Procedure: arch-int-type arch
+     Return the '<gdb:type>' object for an 'int' type of architecture
+     ARCH.
+
+ -- Scheme Procedure: arch-long-type arch
+     Return the '<gdb:type>' object for a 'long' type of architecture
+     ARCH.
+
+ -- Scheme Procedure: arch-schar-type arch
+     Return the '<gdb:type>' object for a 'signed char' type of
+     architecture ARCH.
+
+ -- Scheme Procedure: arch-uchar-type arch
+     Return the '<gdb:type>' object for an 'unsigned char' type of
+     architecture ARCH.
+
+ -- Scheme Procedure: arch-ushort-type arch
+     Return the '<gdb:type>' object for an 'unsigned short' type of
+     architecture ARCH.
+
+ -- Scheme Procedure: arch-uint-type arch
+     Return the '<gdb:type>' object for an 'unsigned int' type of
+     architecture ARCH.
+
+ -- Scheme Procedure: arch-ulong-type arch
+     Return the '<gdb:type>' object for an 'unsigned long' type of
+     architecture ARCH.
+
+ -- Scheme Procedure: arch-float-type arch
+     Return the '<gdb:type>' object for a 'float' type of architecture
+     ARCH.
+
+ -- Scheme Procedure: arch-double-type arch
+     Return the '<gdb:type>' object for a 'double' type of architecture
+     ARCH.
+
+ -- Scheme Procedure: arch-longdouble-type arch
+     Return the '<gdb:type>' object for a 'long double' type of
+     architecture ARCH.
+
+ -- Scheme Procedure: arch-bool-type arch
+     Return the '<gdb:type>' object for a 'bool' type of architecture
+     ARCH.
+
+ -- Scheme Procedure: arch-longlong-type arch
+     Return the '<gdb:type>' object for a 'long long' type of
+     architecture ARCH.
+
+ -- Scheme Procedure: arch-ulonglong-type arch
+     Return the '<gdb:type>' object for an 'unsigned long long' type of
+     architecture ARCH.
+
+ -- Scheme Procedure: arch-int8-type arch
+     Return the '<gdb:type>' object for an 'int8' type of architecture
+     ARCH.
+
+ -- Scheme Procedure: arch-uint8-type arch
+     Return the '<gdb:type>' object for a 'uint8' type of architecture
+     ARCH.
+
+ -- Scheme Procedure: arch-int16-type arch
+     Return the '<gdb:type>' object for an 'int16' type of architecture
+     ARCH.
+
+ -- Scheme Procedure: arch-uint16-type arch
+     Return the '<gdb:type>' object for a 'uint16' type of architecture
+     ARCH.
+
+ -- Scheme Procedure: arch-int32-type arch
+     Return the '<gdb:type>' object for an 'int32' type of architecture
+     ARCH.
+
+ -- Scheme Procedure: arch-uint32-type arch
+     Return the '<gdb:type>' object for a 'uint32' type of architecture
+     ARCH.
+
+ -- Scheme Procedure: arch-int64-type arch
+     Return the '<gdb:type>' object for an 'int64' type of architecture
+     ARCH.
+
+ -- Scheme Procedure: arch-uint64-type arch
+     Return the '<gdb:type>' object for a 'uint64' type of architecture
+     ARCH.
+
+   Example:
+
+     (gdb) guile (type-name (arch-uchar-type (current-arch)))
+     "unsigned char"
+
+
+File: gdb.info,  Node: Disassembly In Guile,  Next: I/O Ports in Guile,  Prev: Architectures In Guile,  Up: Guile API
+
+23.3.3.22 Disassembly In Guile
+..............................
+
+The disassembler can be invoked from Scheme code.  Furthermore, the
+disassembler can take a Guile port as input, allowing one to disassemble
+from any source, and not just target memory.
+
+ -- Scheme Procedure: arch-disassemble arch start-pc [#:port port]
+          [#:offset offset] [#:size size] [#:count count]
+     Return a list of disassembled instructions starting from the memory
+     address START-PC.
+
+     The optional argument PORT specifies the input port to read bytes
+     from.  If PORT is '#f' then bytes are read from target memory.
+
+     The optional argument OFFSET specifies the address offset of the
+     first byte in PORT.  This is useful, for example, when PORT
+     specifies a 'bytevector' and you want the bytevector to be
+     disassembled as if it came from that address.  The START-PC passed
+     to the reader for PORT is offset by the same amount.
+
+     Example:
+          (gdb) guile (use-modules (rnrs io ports))
+          (gdb) guile (define pc (value->integer (parse-and-eval "$pc")))
+          (gdb) guile (define mem (open-memory #:start pc))
+          (gdb) guile (define bv (get-bytevector-n mem 10))
+          (gdb) guile (define bv-port (open-bytevector-input-port bv))
+          (gdb) guile (define arch (current-arch))
+          (gdb) guile (arch-disassemble arch pc #:port bv-port #:offset pc)
+          (((address . 4195516) (asm . "mov    $0x4005c8,%edi") (length . 5)))
+
+     The optional arguments SIZE and COUNT determine the number of
+     instructions in the returned list.  If either SIZE or COUNT is
+     specified as zero, then no instructions are disassembled and an
+     empty list is returned.  If both the optional arguments SIZE and
+     COUNT are specified, then a list of at most COUNT disassembled
+     instructions whose start address falls in the closed memory address
+     interval from START-PC to (START-PC + SIZE - 1) are returned.  If
+     SIZE is not specified, but COUNT is specified, then COUNT number of
+     instructions starting from the address START-PC are returned.  If
+     COUNT is not specified but SIZE is specified, then all instructions
+     whose start address falls in the closed memory address interval
+     from START-PC to (START-PC + SIZE - 1) are returned.  If neither
+     SIZE nor COUNT are specified, then a single instruction at START-PC
+     is returned.
+
+     Each element of the returned list is an alist (associative list)
+     with the following keys:
+
+     'address'
+          The value corresponding to this key is a Guile integer of the
+          memory address of the instruction.
+
+     'asm'
+          The value corresponding to this key is a string value which
+          represents the instruction with assembly language mnemonics.
+          The assembly language flavor used is the same as that
+          specified by the current CLI variable 'disassembly-flavor'.
+          *Note Machine Code::.
+
+     'length'
+          The value corresponding to this key is the length of the
+          instruction in bytes.
+
+
+File: gdb.info,  Node: I/O Ports in Guile,  Next: Memory Ports in Guile,  Prev: Disassembly In Guile,  Up: Guile API
+
+23.3.3.23 I/O Ports in Guile
+............................
+
+ -- Scheme Procedure: input-port
+     Return GDB's input port as a Guile port object.
+
+ -- Scheme Procedure: output-port
+     Return GDB's output port as a Guile port object.
+
+ -- Scheme Procedure: error-port
+     Return GDB's error port as a Guile port object.
+
+ -- Scheme Procedure: stdio-port? object
+     Return '#t' if OBJECT is a GDB stdio port.  Otherwise return '#f'.
+
+
+File: gdb.info,  Node: Memory Ports in Guile,  Next: Iterators In Guile,  Prev: I/O Ports in Guile,  Up: Guile API
+
+23.3.3.24 Memory Ports in Guile
+...............................
+
+GDB provides a 'port' interface to target memory.  This allows Guile
+code to read/write target memory using Guile's port and bytevector
+functionality.  The main routine is 'open-memory' which returns a port
+object.  One can then read/write memory using that object.
+
+ -- Scheme Procedure: open-memory [#:mode mode] [#:start address]
+          [#:size size]
+     Return a port object that can be used for reading and writing
+     memory.  The port will be open according to MODE, which is the
+     standard mode argument to Guile port open routines, except that the
+     '"a"' and '"l"' modes are not supported.  *Note (guile)File
+     Ports::.  The '"b"' (binary) character may be present, but is
+     ignored: memory ports are binary only.  If '"0"' is appended then
+     the port is marked as unbuffered.  The default is '"r"', read-only
+     and buffered.
+
+     The chunk of memory that can be accessed can be bounded.  If both
+     START and SIZE are unspecified, all of memory can be accessed.  If
+     only START is specified, all of memory from that point on can be
+     accessed.  If only SIZE if specified, all memory in the range
+     [0,SIZE) can be accessed.  If both are specified, all memory in the
+     rane [START,START+SIZE) can be accessed.
+
+ -- Scheme Procedure: memory-port?
+     Return '#t' if OBJECT is an object of type '<gdb:memory-port>'.
+     Otherwise return '#f'.
+
+ -- Scheme Procedure: memory-port-range memory-port
+     Return the range of '<gdb:memory-port>' MEMORY-PORT as a list of
+     two elements: '(start end)'.  The range is START to END inclusive.
+
+ -- Scheme Procedure: memory-port-read-buffer-size memory-port
+     Return the size of the read buffer of '<gdb:memory-port>'
+     MEMORY-PORT.
+
+ -- Scheme Procedure: set-memory-port-read-buffer-size! memory-port size
+     Set the size of the read buffer of '<gdb:memory-port>' MEMORY-PORT
+     to SIZE.  The result is unspecified.
+
+ -- Scheme Procedure: memory-port-write-buffer-size memory-port
+     Return the size of the write buffer of '<gdb:memory-port>'
+     MEMORY-PORT.
+
+ -- Scheme Procedure: set-memory-port-write-buffer-size! memory-port
+          size
+     Set the size of the write buffer of '<gdb:memory-port>' MEMORY-PORT
+     to SIZE.  The result is unspecified.
+
+   A memory port is closed like any other port, with 'close-port'.
+
+   Combined with Guile's 'bytevectors', memory ports provide a lot of
+utility.  For example, to fill a buffer of 10 integers in memory, one
+can do something like the following.
+
+     ;; In the program: int buffer[10];
+     (use-modules (rnrs bytevectors))
+     (use-modules (rnrs io ports))
+     (define addr (parse-and-eval "buffer"))
+     (define n 10)
+     (define byte-size (* n 4))
+     (define mem-port (open-memory #:mode "r+" #:start
+                                   (value->integer addr) #:size byte-size))
+     (define byte-vec (make-bytevector byte-size))
+     (do ((i 0 (+ i 1)))
+         ((>= i n))
+         (bytevector-s32-native-set! byte-vec (* i 4) (* i 42)))
+     (put-bytevector mem-port byte-vec)
+     (close-port mem-port)
+
+
+File: gdb.info,  Node: Iterators In Guile,  Prev: Memory Ports in Guile,  Up: Guile API
+
+23.3.3.25 Iterators In Guile
+............................
+
+A simple iterator facility is provided to allow, for example, iterating
+over the set of program symbols without having to first construct a list
+of all of them.  A useful contribution would be to add support for SRFI
+41 and SRFI 45.
+
+ -- Scheme Procedure: make-iterator object progress next!
+     A '<gdb:iterator>' object is constructed with the 'make-iterator'
+     procedure.  It takes three arguments: the object to be iterated
+     over, an object to record the progress of the iteration, and a
+     procedure to return the next element in the iteration, or an
+     implementation chosen value to denote the end of iteration.
+
+     By convention, end of iteration is marked with
+     '(end-of-iteration)', and may be tested with the
+     'end-of-iteration?' predicate.  The result of '(end-of-iteration)'
+     is chosen so that it is not otherwise used by the '(gdb)' module.
+     If you are using '<gdb:iterator>' in your own code it is your
+     responsibility to maintain this invariant.
+
+     A trivial example for illustration's sake:
+
+          (use-modules (gdb iterator))
+          (define my-list (list 1 2 3))
+          (define iter
+            (make-iterator my-list my-list
+                           (lambda (iter)
+                             (let ((l (iterator-progress iter)))
+                               (if (eq? l '())
+                                   (end-of-iteration)
+                                   (begin
+                                     (set-iterator-progress! iter (cdr l))
+                                     (car l)))))))
+
+     Here is a slightly more realistic example, which computes a list of
+     all the functions in 'my-global-block'.
+
+          (use-modules (gdb iterator))
+          (define this-sal (find-pc-line (frame-pc (selected-frame))))
+          (define this-symtab (sal-symtab this-sal))
+          (define this-global-block (symtab-global-block this-symtab))
+          (define syms-iter (make-block-symbols-iterator this-global-block))
+          (define functions (iterator-filter symbol-function? syms-iter))
+
+ -- Scheme Procedure: iterator? object
+     Return '#t' if OBJECT is a '<gdb:iterator>' object.  Otherwise
+     return '#f'.
+
+ -- Scheme Procedure: iterator-object iterator
+     Return the first argument that was passed to 'make-iterator'.  This
+     is the object being iterated over.
+
+ -- Scheme Procedure: iterator-progress iterator
+     Return the object tracking iteration progress.
+
+ -- Scheme Procedure: set-iterator-progress! iterator new-value
+     Set the object tracking iteration progress.
+
+ -- Scheme Procedure: iterator-next! iterator
+     Invoke the procedure that was the third argument to
+     'make-iterator', passing it one argument, the '<gdb:iterator>'
+     object.  The result is either the next element in the iteration, or
+     an end marker as implemented by the 'next!' procedure.  By
+     convention the end marker is the result of '(end-of-iteration)'.
+
+ -- Scheme Procedure: end-of-iteration
+     Return the Scheme object that denotes end of iteration.
+
+ -- Scheme Procedure: end-of-iteration? object
+     Return '#t' if OBJECT is the end of iteration marker.  Otherwise
+     return '#f'.
+
+   These functions are provided by the '(gdb iterator)' module to assist
+in using iterators.
+
+ -- Scheme Procedure: make-list-iterator list
+     Return a '<gdb:iterator>' object that will iterate over LIST.
+
+ -- Scheme Procedure: iterator->list iterator
+     Return the elements pointed to by ITERATOR as a list.
+
+ -- Scheme Procedure: iterator-map proc iterator
+     Return the list of objects obtained by applying PROC to the object
+     pointed to by ITERATOR and to each subsequent object.
+
+ -- Scheme Procedure: iterator-for-each proc iterator
+     Apply PROC to each element pointed to by ITERATOR.  The result is
+     unspecified.
+
+ -- Scheme Procedure: iterator-filter pred iterator
+     Return the list of elements pointed to by ITERATOR that satisfy
+     PRED.
+
+ -- Scheme Procedure: iterator-until pred iterator
+     Run ITERATOR until the result of '(pred element)' is true and
+     return that as the result.  Otherwise return '#f'.
 
 
 File: gdb.info,  Node: Guile Auto-loading,  Next: Guile Modules,  Prev: Guile API,  Up: Guile
@@ -791,6 +2321,9 @@ mode, where the following key bindings are used:
 'n'
      next
 
+'o'
+     nexti.  The shortcut letter 'o' stands for "step Over".
+
 'q'
      exit the SingleKey mode.
 
@@ -799,6 +2332,9 @@ mode, where the following key bindings are used:
 
 's'
      step
+
+'i'
+     stepi.  The shortcut letter 'i' stands for "step Into".
 
 'u'
      up
@@ -932,11 +2468,6 @@ window management.
      command window), 'asm' (the disassembly window), or 'regs' (the
      register display window).
 
-'tabset NCHARS'
-     Set the width of tab stops to be NCHARS characters.  This setting
-     affects the display of TAB characters in the source and assembly
-     windows.
-
 
 File: gdb.info,  Node: TUI Configuration,  Prev: TUI Commands,  Up: TUI
 
@@ -984,6 +2515,11 @@ Several configuration variables control the appearance of TUI windows.
 
      'bold-standout'
           Use extra bright or bold and standout mode.
+
+'set tui tab-width NCHARS'
+     Set the width of tab stops to be NCHARS characters.  This setting
+     affects the display of TAB characters in the source and assembly
+     windows.
 
 
 File: gdb.info,  Node: Emacs,  Next: GDB/MI,  Prev: TUI,  Up: Top
@@ -1119,6 +2655,33 @@ File: gdb.info,  Node: GDB/MI,  Next: Annotations,  Prev: Emacs,  Up: Top
 
 27 The GDB/MI Interface
 ***********************
+
+* Menu:
+
+* GDB/MI General Design::
+* GDB/MI Command Syntax::
+* GDB/MI Compatibility with CLI::
+* GDB/MI Development and Front Ends::
+* GDB/MI Output Records::
+* GDB/MI Simple Examples::
+* GDB/MI Command Description Format::
+* GDB/MI Breakpoint Commands::
+* GDB/MI Catchpoint Commands::
+* GDB/MI Program Context::
+* GDB/MI Thread Commands::
+* GDB/MI Ada Tasking Commands::
+* GDB/MI Program Execution::
+* GDB/MI Stack Manipulation::
+* GDB/MI Variable Objects::
+* GDB/MI Data Manipulation::
+* GDB/MI Tracepoint Commands::
+* GDB/MI Symbol Query::
+* GDB/MI File Commands::
+* GDB/MI Target Manipulation::
+* GDB/MI File Transfer Commands::
+* GDB/MI Ada Exceptions Commands::
+* GDB/MI Support Commands::
+* GDB/MI Miscellaneous Commands::
 
 Function and Purpose
 ====================
@@ -1627,10 +3190,10 @@ File: gdb.info,  Node: GDB/MI Development and Front Ends,  Next: GDB/MI Output R
 The application which takes the MI output and presents the state of the
 program being debugged to the user is called a "front end".
 
-   Although GDB/MI is still incomplete, it is currently being used by a
-variety of front ends to GDB.  This makes it difficult to introduce new
-functionality without breaking existing usage.  This section tries to
-minimize the problems by describing how the protocol might change.
+   Since GDB/MI is used by a variety of front ends to GDB, changes to
+the MI interface may break existing usage.  This section describes how
+the protocol changes and how to request previous version of the protocol
+when it does.
 
    Some changes in MI need not break a carefully designed front end, and
 for these the MI version will remain unchanged.  The following is a list
@@ -1645,10 +3208,37 @@ MI output in a way that can handle them:
      'in_scope' (*note -var-update::) may be extended.
 
    If the changes are likely to break front ends, the MI version level
-will be increased by one.  This will allow the front end to parse the
-output according to the MI version.  Apart from mi0, new versions of GDB
-will not support old versions of MI and it will be the responsibility of
-the front end to work with the new one.
+will be increased by one.  The new versions of the MI protocol are not
+compatible with the old versions.  Old versions of MI remain available,
+allowing front ends to keep using them until they are modified to use
+the latest MI version.
+
+   Since '--interpreter=mi' always points to the latest MI version, it
+is recommended that front ends request a specific version of MI when
+launching GDB (e.g.  '--interpreter=mi2') to make sure they get an
+interpreter with the MI version they expect.
+
+   The following table gives a summary of the the released versions of
+the MI interface: the version number, the version of GDB in which it
+first appeared and the breaking changes compared to the previous
+version.
+
+MI   GDB  Breaking changes
+versionversion
+----------------------------------------------------------------------------
+1    5.1  None
+          
+2    6.0  
+             * The '-environment-pwd', '-environment-directory' and
+               '-environment-path' commands now returns values using the
+               MI output syntax, rather than CLI output syntax.
+          
+             * '-var-list-children''s 'children' result field is now a
+               list, rather than a tuple.
+          
+             * '-var-update''s 'changelist' result field is now a list,
+               rather than a tuple.
+          
 
    The best way to avoid unexpected changes in MI that might break your
 front end is to make your project known to GDB developers and follow
@@ -2120,24 +3710,35 @@ File: gdb.info,  Node: GDB/MI Thread Information,  Next: GDB/MI Ada Exception In
 --------------------------------
 
 Whenever GDB has to report an information about a thread, it uses a
-tuple with the following fields:
+tuple with the following fields.  The fields are always present unless
+stated otherwise.
 
 'id'
-     The global numeric id assigned to the thread by GDB.  This field is
-     always present.
+     The global numeric id assigned to the thread by GDB.
 
 'target-id'
-     Target-specific string identifying the thread.  This field is
-     always present.
+     The target-specific string identifying the thread.
 
 'details'
      Additional information about the thread provided by the target.  It
      is supposed to be human-readable and not interpreted by the
      frontend.  This field is optional.
 
+'name'
+     The name of the thread.  If the user specified a name using the
+     'thread name' command, then this name is given.  Otherwise, if GDB
+     can extract the thread name from the target, then that name is
+     given.  If GDB cannot find the thread name, then this field is
+     omitted.
+
 'state'
-     Either 'stopped' or 'running', depending on whether the thread is
-     presently running.  This field is always present.
+     The execution state of the thread, either 'stopped' or 'running',
+     depending on whether the thread is presently running.
+
+'frame'
+     The stack frame currently executing in the thread.  This field is
+     only present if the thread is stopped.  Its format is documented in
+     *note GDB/MI Frame Information::.
 
 'core'
      The value of this field is an integer number of the processor core
@@ -2152,7 +3753,9 @@ File: gdb.info,  Node: GDB/MI Ada Exception Information,  Prev: GDB/MI Thread In
 Whenever a '*stopped' record is emitted because the program stopped
 after hitting an exception catchpoint (*note Set Catchpoints::), GDB
 provides the name of the exception that was raised via the
-'exception-name' field.
+'exception-name' field.  Also, for exceptions that were raised with an
+exception message, GDB provides that message via the 'exception-message'
+field.
 
 
 File: gdb.info,  Node: GDB/MI Simple Examples,  Next: GDB/MI Command Description Format,  Prev: GDB/MI Output Records,  Up: GDB/MI
@@ -2193,7 +3796,8 @@ that execution stopped.
      <- *stopped,reason="breakpoint-hit",disp="keep",bkptno="1",thread-id="0",
         frame={addr="0x08048564",func="main",
         args=[{name="argc",value="1"},{name="argv",value="0xbfc4d4d4"}],
-        file="myprog.c",fullname="/home/nickrob/myprog.c",line="68"}
+        file="myprog.c",fullname="/home/nickrob/myprog.c",line="68",
+        arch="i386:x86_64"}
      <- (gdb)
      -> -exec-continue
      <- ^running
@@ -2818,7 +4422,7 @@ Setting a watchpoint on a variable in the 'main' function:
      *stopped,reason="watchpoint-trigger",wpt={number="2",exp="x"},
      value={old="-268439212",new="55"},
      frame={func="main",args=[],file="recursive2.c",
-     fullname="/home/foo/bar/recursive2.c",line="5"}
+     fullname="/home/foo/bar/recursive2.c",line="5",arch="i386:x86_64"}
      (gdb)
 
    Setting a watchpoint on a variable local to a function.  GDB will
@@ -2836,7 +4440,8 @@ then for the watchpoint going out of scope.
      wpt={number="5",exp="C"},value={old="-276895068",new="3"},
      frame={func="callee4",args=[],
      file="../../../devo/gdb/testsuite/gdb.mi/basics.c",
-     fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="13"}
+     fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="13",
+     arch="i386:x86_64"}
      (gdb)
      -exec-continue
      ^running
@@ -2845,7 +4450,8 @@ then for the watchpoint going out of scope.
      frame={func="callee3",args=[{name="strarg",
      value="0x11940 \"A string argument.\""}],
      file="../../../devo/gdb/testsuite/gdb.mi/basics.c",
-     fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="18"}
+     fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="18",
+     arch="i386:x86_64"}
      (gdb)
 
    Listing breakpoints and watchpoints, at different points in the
@@ -2879,7 +4485,8 @@ is deleted.
      value={old="-276895068",new="3"},
      frame={func="callee4",args=[],
      file="../../../devo/gdb/testsuite/gdb.mi/basics.c",
-     fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="13"}
+     fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="13",
+     arch="i386:x86_64"}
      (gdb)
      -break-list
      ^done,BreakpointTable={nr_rows="2",nr_cols="6",
@@ -2903,7 +4510,8 @@ is deleted.
      frame={func="callee3",args=[{name="strarg",
      value="0x11940 \"A string argument.\""}],
      file="../../../devo/gdb/testsuite/gdb.mi/basics.c",
-     fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="18"}
+     fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="18",
+     arch="i386:x86_64"}
      (gdb)
      -break-list
      ^done,BreakpointTable={nr_rows="1",nr_cols="6",
@@ -3079,6 +4687,46 @@ Example
      enabled="y",addr="0x0000000000404874",
      what="`Program_Error' Ada exception", thread-groups=["i1"],
      times="0",original-location="__gnat_debug_raise_exception"}
+     (gdb)
+
+The '-catch-handlers' Command
+-----------------------------
+
+Synopsis
+........
+
+      -catch-handlers [ -c CONDITION] [ -d ] [ -e EXCEPTION-NAME ]
+         [ -t ]
+
+   Add a catchpoint stopping when Ada exceptions are handled.  By
+default, the command stops the program when any Ada exception gets
+handled.  But it is also possible, by using some of the optional
+parameters described below, to create more selective catchpoints.
+
+   The possible optional parameters for this command are:
+
+'-c CONDITION'
+     Make the catchpoint conditional on CONDITION.
+'-d'
+     Create a disabled catchpoint.
+'-e EXCEPTION-NAME'
+     Only stop when EXCEPTION-NAME is handled.
+'-t'
+     Create a temporary catchpoint.
+
+GDB Command
+...........
+
+The corresponding GDB command is 'catch handlers'.
+
+Example
+.......
+
+     -catch-handlers -e Constraint_Error
+     ^done,bkptno="4",bkpt={number="4",type="breakpoint",disp="keep",
+     enabled="y",addr="0x0000000000402f68",
+     what="`Constraint_Error' Ada exception handlers",thread-groups=["i1"],
+     times="0",original-location="__gnat_begin_handler"}
      (gdb)
 
 
@@ -3269,48 +4917,17 @@ The 'info thread' command prints the same information about all threads.
 Result
 ......
 
-The result is a list of threads.  The following attributes are defined
-for a given thread:
+The result contains the following attributes:
 
-'current'
-     This field exists only for the current thread.  It has the value
-     '*'.
+'threads'
+     A list of threads.  The format of the elements of the list is
+     described in *note GDB/MI Thread Information::.
 
-'id'
-     The global identifier that GDB uses to refer to the thread.
-
-'target-id'
-     The identifier that the target uses to refer to the thread.
-
-'details'
-     Extra information about the thread, in a target-specific format.
-     This field is optional.
-
-'name'
-     The name of the thread.  If the user specified a name using the
-     'thread name' command, then this name is given.  Otherwise, if GDB
-     can extract the thread name from the target, then that name is
-     given.  If GDB cannot find the thread name, then this field is
-     omitted.
-
-'frame'
-     The stack frame currently executing in the thread.
-
-'state'
-     The thread's state.  The 'state' field may have the following
-     values:
-
-     'stopped'
-          The thread is stopped.  Frame information is available for
-          stopped threads.
-
-     'running'
-          The thread is running.  There's no frame information for
-          running threads.
-
-'core'
-     If GDB can find the CPU core on which this thread is running, then
-     this field is the core identifier.  This field is optional.
+'current-thread-id'
+     The global id of the currently selected thread.  This field is
+     omitted if there is no selected thread (for example, when the
+     selected inferior is not running, and therefore has no threads) or
+     if a THREAD-ID argument was passed to the command.
 
 Example
 .......
@@ -3323,7 +4940,7 @@ Example
      {id="1",target-id="Thread 0xb7e156b0 (LWP 21254)",
         frame={level="0",addr="0x0804891f",func="foo",
                 args=[{name="i",value="10"}],
-                file="/tmp/a.c",fullname="/tmp/a.c",line="158"},
+                file="/tmp/a.c",fullname="/tmp/a.c",line="158",arch="i386:x86_64"},
                 state="running"}],
      current-thread-id="1"
      (gdb)
@@ -3395,7 +5012,7 @@ Example
      ^done,new-thread-id="3",
      frame={level="0",func="vprintf",
      args=[{name="format",value="0x8048e9c \"%*s%c %d %c\\n\""},
-     {name="arg",value="0x2"}],file="vprintf.c",line="31"}
+     {name="arg",value="0x2"}],file="vprintf.c",line="31",arch="i386:x86_64"}
      (gdb)
 
 
@@ -3523,7 +5140,7 @@ Example
      @Hello world
      *stopped,reason="breakpoint-hit",disp="keep",bkptno="2",frame={
      func="foo",args=[],file="hello.c",fullname="/home/foo/bar/hello.c",
-     line="13"}
+     line="13",arch="i386:x86_64"}
      (gdb)
 
 The '-exec-finish' Command
@@ -3554,7 +5171,7 @@ Function returning 'void'.
      (gdb)
      @hello from foo
      *stopped,reason="function-finished",frame={func="main",args=[],
-     file="hello.c",fullname="/home/foo/bar/hello.c",line="7"}
+     file="hello.c",fullname="/home/foo/bar/hello.c",line="7",arch="i386:x86_64"}
      (gdb)
 
    Function returning other than 'void'.  The name of the internal GDB
@@ -3565,7 +5182,8 @@ variable storing the result is printed, together with the value itself.
      (gdb)
      *stopped,reason="function-finished",frame={addr="0x000107b0",func="foo",
      args=[{name="a",value="1"],{name="b",value="9"}},
-     file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14"},
+     file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14",
+     arch="i386:x86_64"},
      gdb-result-var="$1",return-value="0"
      (gdb)
 
@@ -3611,7 +5229,7 @@ Example
      (gdb)
      111*stopped,signal-name="SIGINT",signal-meaning="Interrupt",
      frame={addr="0x00010140",func="foo",args=[],file="try.c",
-     fullname="/home/foo/bar/try.c",line="13"}
+     fullname="/home/foo/bar/try.c",line="13",arch="i386:x86_64"}
      (gdb)
 
      (gdb)
@@ -3740,7 +5358,8 @@ Example
      000*stopped,reason="breakpoint-hit",disp="keep",bkptno="1",
      frame={func="callee4",args=[],
      file="../../../devo/gdb/testsuite/gdb.mi/basics.c",
-     fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="8"}
+     fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="8",
+     arch="i386:x86_64"}
      (gdb)
      205-break-delete
      205^done
@@ -3750,7 +5369,8 @@ Example
      args=[{name="strarg",
      value="0x11940 \"A string argument.\""}],
      file="../../../devo/gdb/testsuite/gdb.mi/basics.c",
-     fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="18"}
+     fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="18",
+     arch="i386:x86_64"}
      (gdb)
 
 The '-exec-run' Command
@@ -3793,7 +5413,7 @@ Examples
      (gdb)
      *stopped,reason="breakpoint-hit",disp="keep",bkptno="1",
      frame={func="main",args=[],file="recursive2.c",
-     fullname="/home/foo/bar/recursive2.c",line="4"}
+     fullname="/home/foo/bar/recursive2.c",line="4",arch="i386:x86_64"}
      (gdb)
 
 Program exited normally:
@@ -3854,7 +5474,7 @@ Stepping into a function:
      *stopped,reason="end-stepping-range",
      frame={func="foo",args=[{name="a",value="10"},
      {name="b",value="0"}],file="recursive2.c",
-     fullname="/home/foo/bar/recursive2.c",line="11"}
+     fullname="/home/foo/bar/recursive2.c",line="11",arch="i386:x86_64"}
      (gdb)
 
    Regular stepping:
@@ -3895,7 +5515,7 @@ Example
      (gdb)
      *stopped,reason="end-stepping-range",
      frame={func="foo",args=[],file="try.c",
-     fullname="/home/foo/bar/try.c",line="10"}
+     fullname="/home/foo/bar/try.c",line="10",arch="i386:x86_64"}
      (gdb)
      -exec-step-instruction
      ^running
@@ -3903,7 +5523,7 @@ Example
      (gdb)
      *stopped,reason="end-stepping-range",
      frame={addr="0x000100f4",func="foo",args=[],file="try.c",
-     fullname="/home/foo/bar/try.c",line="10"}
+     fullname="/home/foo/bar/try.c",line="10",arch="i386:x86_64"}
      (gdb)
 
 The '-exec-until' Command
@@ -3933,7 +5553,8 @@ Example
      (gdb)
      x = 55
      *stopped,reason="location-reached",frame={func="main",args=[],
-     file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="6"}
+     file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="6",
+     arch="i386:x86_64"}
      (gdb)
 
 
@@ -3980,7 +5601,8 @@ Example
      -stack-info-frame
      ^done,frame={level="1",addr="0x0001076c",func="callee3",
      file="../../../devo/gdb/testsuite/gdb.mi/basics.c",
-     fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="17"}
+     fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="17",
+     arch="i386:x86_64"}
      (gdb)
 
 The '-stack-info-depth' Command
@@ -4068,19 +5690,24 @@ Example
      stack=[
      frame={level="0",addr="0x00010734",func="callee4",
      file="../../../devo/gdb/testsuite/gdb.mi/basics.c",
-     fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="8"},
+     fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="8",
+     arch="i386:x86_64"},
      frame={level="1",addr="0x0001076c",func="callee3",
      file="../../../devo/gdb/testsuite/gdb.mi/basics.c",
-     fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="17"},
+     fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="17",
+     arch="i386:x86_64"},
      frame={level="2",addr="0x0001078c",func="callee2",
      file="../../../devo/gdb/testsuite/gdb.mi/basics.c",
-     fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="22"},
+     fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="22",
+     arch="i386:x86_64"},
      frame={level="3",addr="0x000107b4",func="callee1",
      file="../../../devo/gdb/testsuite/gdb.mi/basics.c",
-     fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="27"},
+     fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="27",
+     arch="i386:x86_64"},
      frame={level="4",addr="0x000107e0",func="main",
      file="../../../devo/gdb/testsuite/gdb.mi/basics.c",
-     fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="32"}]
+     fullname="/home/foo/bar/devo/gdb/testsuite/gdb.mi/basics.c",line="32",
+     arch="i386:x86_64"}]
      (gdb)
      -stack-list-arguments 0
      ^done,
@@ -4142,6 +5769,8 @@ the following info:
 'FROM'
      The shared library where this function is defined.  This is only
      given if the frame's function is not known.
+'ARCH'
+     Frame's architecture.
 
    If invoked without arguments, this command prints a backtrace for the
 whole stack.  If given two integer arguments, it shows the frames whose
@@ -4167,29 +5796,41 @@ Full stack backtrace:
      -stack-list-frames
      ^done,stack=
      [frame={level="0",addr="0x0001076c",func="foo",
-       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="11"},
+       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="11",
+       arch="i386:x86_64"},
      frame={level="1",addr="0x000107a4",func="foo",
-       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14"},
+       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14",
+       arch="i386:x86_64"},
      frame={level="2",addr="0x000107a4",func="foo",
-       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14"},
+       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14",
+       arch="i386:x86_64"},
      frame={level="3",addr="0x000107a4",func="foo",
-       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14"},
+       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14",
+       arch="i386:x86_64"},
      frame={level="4",addr="0x000107a4",func="foo",
-       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14"},
+       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14",
+       arch="i386:x86_64"},
      frame={level="5",addr="0x000107a4",func="foo",
-       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14"},
+       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14",
+       arch="i386:x86_64"},
      frame={level="6",addr="0x000107a4",func="foo",
-       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14"},
+       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14",
+       arch="i386:x86_64"},
      frame={level="7",addr="0x000107a4",func="foo",
-       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14"},
+       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14",
+       arch="i386:x86_64"},
      frame={level="8",addr="0x000107a4",func="foo",
-       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14"},
+       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14",
+       arch="i386:x86_64"},
      frame={level="9",addr="0x000107a4",func="foo",
-       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14"},
+       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14",
+       arch="i386:x86_64"},
      frame={level="10",addr="0x000107a4",func="foo",
-       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14"},
+       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14",
+       arch="i386:x86_64"},
      frame={level="11",addr="0x00010738",func="main",
-       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="4"}]
+       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="4",
+       arch="i386:x86_64"}]
      (gdb)
 
    Show frames between LOW_FRAME and HIGH_FRAME:
@@ -4198,11 +5839,14 @@ Full stack backtrace:
      -stack-list-frames 3 5
      ^done,stack=
      [frame={level="3",addr="0x000107a4",func="foo",
-       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14"},
+       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14",
+       arch="i386:x86_64"},
      frame={level="4",addr="0x000107a4",func="foo",
-       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14"},
+       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14",
+       arch="i386:x86_64"},
      frame={level="5",addr="0x000107a4",func="foo",
-       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14"}]
+       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14",
+       arch="i386:x86_64"}]
      (gdb)
 
    Show a single frame:
@@ -4211,7 +5855,8 @@ Full stack backtrace:
      -stack-list-frames 3 3
      ^done,stack=
      [frame={level="3",addr="0x000107a4",func="foo",
-       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14"}]
+       file="recursive2.c",fullname="/home/foo/bar/recursive2.c",line="14",
+       arch="i386:x86_64"}]
      (gdb)
 
 The '-stack-list-locals' Command
@@ -5075,6 +6720,7 @@ Synopsis
 
       -data-disassemble
          [ -s START-ADDR -e END-ADDR ]
+       | [ -a ADDR ]
        | [ -f FILENAME -l LINENUM [ -n LINES ] ]
        -- MODE
 
@@ -5084,6 +6730,11 @@ Where:
      is the beginning address (or '$pc')
 'END-ADDR'
      is the end address
+'ADDR'
+     is an address anywhere within (or the name of) the function to
+     disassemble.  If an address is specified, the whole function
+     surrounding that address will be disassembled.  If a name is
+     specified, the whole function with that name will be disassembled.
 'FILENAME'
      is the name of the file to disassemble
 'LINENUM'
@@ -5304,7 +6955,7 @@ On a PPC MBX board:
      (gdb)
      *stopped,reason="breakpoint-hit",disp="keep",bkptno="1",frame={
      func="main",args=[],file="try.c",fullname="/home/foo/bar/try.c",
-     line="5"}
+     line="5",arch="powerpc"}
      (gdb)
      -data-list-changed-registers
      ^done,changed-registers=["0","1","2","4","5","6","7","8","9",
@@ -6723,6 +8374,9 @@ given below.
 'exec-run-start-option'
      Indicates that the '-exec-run' command supports the '--start'
      option (*note GDB/MI Program Execution::).
+'data-disassemble-a-option'
+     Indicates that the '-data-disassemble' command supports the '-a'
+     option (*note GDB/MI Data Manipulation::).
 
 The '-list-target-features' Command
 -----------------------------------
@@ -6955,7 +8609,7 @@ Example
         frame={level="0",addr="0xffffe410",func="__kernel_vsyscall",args=[]},state="running"},
      {id="1",target-id="Thread 0xb7e156b0 (LWP 21254)",
         frame={level="0",addr="0x0804891f",func="foo",args=[{name="i",value="10"}],
-                file="/tmp/a.c",fullname="/tmp/a.c",line="158"},state="running"}]]
+                file="/tmp/a.c",fullname="/tmp/a.c",line="158",arch="i386:x86_64"},state="running"}]]
      -list-thread-groups --available
      ^done,groups=[{id="17",type="process",pid="yyy",num_children="2",cores=[1,2]}]
      -list-thread-groups --available --recurse 1
@@ -7179,1642 +8833,6 @@ Example
      *stopped,reason="breakpoint-hit",disp="keep",bkptno="1",thread-id="0",
      frame={addr="0x080484ed",func="main",args=[{name="argc",value="1"},
      {name="argv",value="0xbfb60364"}],file="myprog.c",
-     fullname="/home/nickrob/myprog.c",line="73"}
+     fullname="/home/nickrob/myprog.c",line="73",arch="i386:x86_64"}
      (gdb)
-
-
-File: gdb.info,  Node: Annotations,  Next: JIT Interface,  Prev: GDB/MI,  Up: Top
-
-28 GDB Annotations
-******************
-
-This chapter describes annotations in GDB.  Annotations were designed to
-interface GDB to graphical user interfaces or other similar programs
-which want to interact with GDB at a relatively high level.
-
-   The annotation mechanism has largely been superseded by GDB/MI (*note
-GDB/MI::).
-
-* Menu:
-
-* Annotations Overview::  What annotations are; the general syntax.
-* Server Prefix::       Issuing a command without affecting user state.
-* Prompting::           Annotations marking GDB's need for input.
-* Errors::              Annotations for error messages.
-* Invalidation::        Some annotations describe things now invalid.
-* Annotations for Running::
-                        Whether the program is running, how it stopped, etc.
-* Source Annotations::  Annotations describing source code.
-
-
-File: gdb.info,  Node: Annotations Overview,  Next: Server Prefix,  Up: Annotations
-
-28.1 What is an Annotation?
-===========================
-
-Annotations start with a newline character, two 'control-z' characters,
-and the name of the annotation.  If there is no additional information
-associated with this annotation, the name of the annotation is followed
-immediately by a newline.  If there is additional information, the name
-of the annotation is followed by a space, the additional information,
-and a newline.  The additional information cannot contain newline
-characters.
-
-   Any output not beginning with a newline and two 'control-z'
-characters denotes literal output from GDB.  Currently there is no need
-for GDB to output a newline followed by two 'control-z' characters, but
-if there was such a need, the annotations could be extended with an
-'escape' annotation which means those three characters as output.
-
-   The annotation LEVEL, which is specified using the '--annotate'
-command line option (*note Mode Options::), controls how much
-information GDB prints together with its prompt, values of expressions,
-source lines, and other types of output.  Level 0 is for no annotations,
-level 1 is for use when GDB is run as a subprocess of GNU Emacs, level 3
-is the maximum annotation suitable for programs that control GDB, and
-level 2 annotations have been made obsolete (*note Limitations of the
-Annotation Interface: (annotate)Limitations.).
-
-'set annotate LEVEL'
-     The GDB command 'set annotate' sets the level of annotations to the
-     specified LEVEL.
-
-'show annotate'
-     Show the current annotation level.
-
-   This chapter describes level 3 annotations.
-
-   A simple example of starting up GDB with annotations is:
-
-     $ gdb --annotate=3
-     GNU gdb 6.0
-     Copyright 2003 Free Software Foundation, Inc.
-     GDB is free software, covered by the GNU General Public License,
-     and you are welcome to change it and/or distribute copies of it
-     under certain conditions.
-     Type "show copying" to see the conditions.
-     There is absolutely no warranty for GDB.  Type "show warranty"
-     for details.
-     This GDB was configured as "i386-pc-linux-gnu"
-
-     ^Z^Zpre-prompt
-     (gdb)
-     ^Z^Zprompt
-     quit
-
-     ^Z^Zpost-prompt
-     $
-
-   Here 'quit' is input to GDB; the rest is output from GDB.  The three
-lines beginning '^Z^Z' (where '^Z' denotes a 'control-z' character) are
-annotations; the rest is output from GDB.
-
-
-File: gdb.info,  Node: Server Prefix,  Next: Prompting,  Prev: Annotations Overview,  Up: Annotations
-
-28.2 The Server Prefix
-======================
-
-If you prefix a command with 'server ' then it will not affect the
-command history, nor will it affect GDB's notion of which command to
-repeat if <RET> is pressed on a line by itself.  This means that
-commands can be run behind a user's back by a front-end in a transparent
-manner.
-
-   The 'server ' prefix does not affect the recording of values into the
-value history; to print a value without recording it into the value
-history, use the 'output' command instead of the 'print' command.
-
-   Using this prefix also disables confirmation requests (*note
-confirmation requests::).
-
-
-File: gdb.info,  Node: Prompting,  Next: Errors,  Prev: Server Prefix,  Up: Annotations
-
-28.3 Annotation for GDB Input
-=============================
-
-When GDB prompts for input, it annotates this fact so it is possible to
-know when to send output, when the output from a given command is over,
-etc.
-
-   Different kinds of input each have a different "input type".  Each
-input type has three annotations: a 'pre-' annotation, which denotes the
-beginning of any prompt which is being output, a plain annotation, which
-denotes the end of the prompt, and then a 'post-' annotation which
-denotes the end of any echo which may (or may not) be associated with
-the input.  For example, the 'prompt' input type features the following
-annotations:
-
-     ^Z^Zpre-prompt
-     ^Z^Zprompt
-     ^Z^Zpost-prompt
-
-   The input types are
-
-'prompt'
-     When GDB is prompting for a command (the main GDB prompt).
-
-'commands'
-     When GDB prompts for a set of commands, like in the 'commands'
-     command.  The annotations are repeated for each command which is
-     input.
-
-'overload-choice'
-     When GDB wants the user to select between various overloaded
-     functions.
-
-'query'
-     When GDB wants the user to confirm a potentially dangerous
-     operation.
-
-'prompt-for-continue'
-     When GDB is asking the user to press return to continue.  Note:
-     Don't expect this to work well; instead use 'set height 0' to
-     disable prompting.  This is because the counting of lines is buggy
-     in the presence of annotations.
-
-
-File: gdb.info,  Node: Errors,  Next: Invalidation,  Prev: Prompting,  Up: Annotations
-
-28.4 Errors
-===========
-
-     ^Z^Zquit
-
-   This annotation occurs right before GDB responds to an interrupt.
-
-     ^Z^Zerror
-
-   This annotation occurs right before GDB responds to an error.
-
-   Quit and error annotations indicate that any annotations which GDB
-was in the middle of may end abruptly.  For example, if a
-'value-history-begin' annotation is followed by a 'error', one cannot
-expect to receive the matching 'value-history-end'.  One cannot expect
-not to receive it either, however; an error annotation does not
-necessarily mean that GDB is immediately returning all the way to the
-top level.
-
-   A quit or error annotation may be preceded by
-
-     ^Z^Zerror-begin
-
-   Any output between that and the quit or error annotation is the error
-message.
-
-   Warning messages are not yet annotated.
-
-
-File: gdb.info,  Node: Invalidation,  Next: Annotations for Running,  Prev: Errors,  Up: Annotations
-
-28.5 Invalidation Notices
-=========================
-
-The following annotations say that certain pieces of state may have
-changed.
-
-'^Z^Zframes-invalid'
-
-     The frames (for example, output from the 'backtrace' command) may
-     have changed.
-
-'^Z^Zbreakpoints-invalid'
-
-     The breakpoints may have changed.  For example, the user just added
-     or deleted a breakpoint.
-
-
-File: gdb.info,  Node: Annotations for Running,  Next: Source Annotations,  Prev: Invalidation,  Up: Annotations
-
-28.6 Running the Program
-========================
-
-When the program starts executing due to a GDB command such as 'step' or
-'continue',
-
-     ^Z^Zstarting
-
-   is output.  When the program stops,
-
-     ^Z^Zstopped
-
-   is output.  Before the 'stopped' annotation, a variety of annotations
-describe how the program stopped.
-
-'^Z^Zexited EXIT-STATUS'
-     The program exited, and EXIT-STATUS is the exit status (zero for
-     successful exit, otherwise nonzero).
-
-'^Z^Zsignalled'
-     The program exited with a signal.  After the '^Z^Zsignalled', the
-     annotation continues:
-
-          INTRO-TEXT
-          ^Z^Zsignal-name
-          NAME
-          ^Z^Zsignal-name-end
-          MIDDLE-TEXT
-          ^Z^Zsignal-string
-          STRING
-          ^Z^Zsignal-string-end
-          END-TEXT
-
-     where NAME is the name of the signal, such as 'SIGILL' or
-     'SIGSEGV', and STRING is the explanation of the signal, such as
-     'Illegal Instruction' or 'Segmentation fault'.  The arguments
-     INTRO-TEXT, MIDDLE-TEXT, and END-TEXT are for the user's benefit
-     and have no particular format.
-
-'^Z^Zsignal'
-     The syntax of this annotation is just like 'signalled', but GDB is
-     just saying that the program received the signal, not that it was
-     terminated with it.
-
-'^Z^Zbreakpoint NUMBER'
-     The program hit breakpoint number NUMBER.
-
-'^Z^Zwatchpoint NUMBER'
-     The program hit watchpoint number NUMBER.
-
-
-File: gdb.info,  Node: Source Annotations,  Prev: Annotations for Running,  Up: Annotations
-
-28.7 Displaying Source
-======================
-
-The following annotation is used instead of displaying source code:
-
-     ^Z^Zsource FILENAME:LINE:CHARACTER:MIDDLE:ADDR
-
-   where FILENAME is an absolute file name indicating which source file,
-LINE is the line number within that file (where 1 is the first line in
-the file), CHARACTER is the character position within the file (where 0
-is the first character in the file) (for most debug formats this will
-necessarily point to the beginning of a line), MIDDLE is 'middle' if
-ADDR is in the middle of the line, or 'beg' if ADDR is at the beginning
-of the line, and ADDR is the address in the target program associated
-with the source which is being displayed.  The ADDR is in the form '0x'
-followed by one or more lowercase hex digits (note that this does not
-depend on the language).
-
-
-File: gdb.info,  Node: JIT Interface,  Next: In-Process Agent,  Prev: Annotations,  Up: Top
-
-29 JIT Compilation Interface
-****************************
-
-This chapter documents GDB's "just-in-time" (JIT) compilation interface.
-A JIT compiler is a program or library that generates native executable
-code at runtime and executes it, usually in order to achieve good
-performance while maintaining platform independence.
-
-   Programs that use JIT compilation are normally difficult to debug
-because portions of their code are generated at runtime, instead of
-being loaded from object files, which is where GDB normally finds the
-program's symbols and debug information.  In order to debug programs
-that use JIT compilation, GDB has an interface that allows the program
-to register in-memory symbol files with GDB at runtime.
-
-   If you are using GDB to debug a program that uses this interface,
-then it should work transparently so long as you have not stripped the
-binary.  If you are developing a JIT compiler, then the interface is
-documented in the rest of this chapter.  At this time, the only known
-client of this interface is the LLVM JIT.
-
-   Broadly speaking, the JIT interface mirrors the dynamic loader
-interface.  The JIT compiler communicates with GDB by writing data into
-a global variable and calling a fuction at a well-known symbol.  When
-GDB attaches, it reads a linked list of symbol files from the global
-variable to find existing code, and puts a breakpoint in the function so
-that it can find out about additional code.
-
-* Menu:
-
-* Declarations::                Relevant C struct declarations
-* Registering Code::            Steps to register code
-* Unregistering Code::          Steps to unregister code
-* Custom Debug Info::           Emit debug information in a custom format
-
-
-File: gdb.info,  Node: Declarations,  Next: Registering Code,  Up: JIT Interface
-
-29.1 JIT Declarations
-=====================
-
-These are the relevant struct declarations that a C program should
-include to implement the interface:
-
-     typedef enum
-     {
-       JIT_NOACTION = 0,
-       JIT_REGISTER_FN,
-       JIT_UNREGISTER_FN
-     } jit_actions_t;
-
-     struct jit_code_entry
-     {
-       struct jit_code_entry *next_entry;
-       struct jit_code_entry *prev_entry;
-       const char *symfile_addr;
-       uint64_t symfile_size;
-     };
-
-     struct jit_descriptor
-     {
-       uint32_t version;
-       /* This type should be jit_actions_t, but we use uint32_t
-          to be explicit about the bitwidth.  */
-       uint32_t action_flag;
-       struct jit_code_entry *relevant_entry;
-       struct jit_code_entry *first_entry;
-     };
-
-     /* GDB puts a breakpoint in this function.  */
-     void __attribute__((noinline)) __jit_debug_register_code() { };
-
-     /* Make sure to specify the version statically, because the
-        debugger may check the version before we can set it.  */
-     struct jit_descriptor __jit_debug_descriptor = { 1, 0, 0, 0 };
-
-   If the JIT is multi-threaded, then it is important that the JIT
-synchronize any modifications to this global data properly, which can
-easily be done by putting a global mutex around modifications to these
-structures.
-
-
-File: gdb.info,  Node: Registering Code,  Next: Unregistering Code,  Prev: Declarations,  Up: JIT Interface
-
-29.2 Registering Code
-=====================
-
-To register code with GDB, the JIT should follow this protocol:
-
-   * Generate an object file in memory with symbols and other desired
-     debug information.  The file must include the virtual addresses of
-     the sections.
-
-   * Create a code entry for the file, which gives the start and size of
-     the symbol file.
-
-   * Add it to the linked list in the JIT descriptor.
-
-   * Point the relevant_entry field of the descriptor at the entry.
-
-   * Set 'action_flag' to 'JIT_REGISTER' and call
-     '__jit_debug_register_code'.
-
-   When GDB is attached and the breakpoint fires, GDB uses the
-'relevant_entry' pointer so it doesn't have to walk the list looking for
-new code.  However, the linked list must still be maintained in order to
-allow GDB to attach to a running process and still find the symbol
-files.
-
-
-File: gdb.info,  Node: Unregistering Code,  Next: Custom Debug Info,  Prev: Registering Code,  Up: JIT Interface
-
-29.3 Unregistering Code
-=======================
-
-If code is freed, then the JIT should use the following protocol:
-
-   * Remove the code entry corresponding to the code from the linked
-     list.
-
-   * Point the 'relevant_entry' field of the descriptor at the code
-     entry.
-
-   * Set 'action_flag' to 'JIT_UNREGISTER' and call
-     '__jit_debug_register_code'.
-
-   If the JIT frees or recompiles code without unregistering it, then
-GDB and the JIT will leak the memory used for the associated symbol
-files.
-
-
-File: gdb.info,  Node: Custom Debug Info,  Prev: Unregistering Code,  Up: JIT Interface
-
-29.4 Custom Debug Info
-======================
-
-Generating debug information in platform-native file formats (like ELF
-or COFF) may be an overkill for JIT compilers; especially if all the
-debug info is used for is displaying a meaningful backtrace.  The issue
-can be resolved by having the JIT writers decide on a debug info format
-and also provide a reader that parses the debug info generated by the
-JIT compiler.  This section gives a brief overview on writing such a
-parser.  More specific details can be found in the source file
-'gdb/jit-reader.in', which is also installed as a header at
-'INCLUDEDIR/gdb/jit-reader.h' for easy inclusion.
-
-   The reader is implemented as a shared object (so this functionality
-is not available on platforms which don't allow loading shared objects
-at runtime).  Two GDB commands, 'jit-reader-load' and
-'jit-reader-unload' are provided, to be used to load and unload the
-readers from a preconfigured directory.  Once loaded, the shared object
-is used the parse the debug information emitted by the JIT compiler.
-
-* Menu:
-
-* Using JIT Debug Info Readers::       How to use supplied readers correctly
-* Writing JIT Debug Info Readers::     Creating a debug-info reader
-
-
-File: gdb.info,  Node: Using JIT Debug Info Readers,  Next: Writing JIT Debug Info Readers,  Up: Custom Debug Info
-
-29.4.1 Using JIT Debug Info Readers
------------------------------------
-
-Readers can be loaded and unloaded using the 'jit-reader-load' and
-'jit-reader-unload' commands.
-
-'jit-reader-load READER'
-     Load the JIT reader named READER, which is a shared object
-     specified as either an absolute or a relative file name.  In the
-     latter case, GDB will try to load the reader from a pre-configured
-     directory, usually 'LIBDIR/gdb/' on a UNIX system (here LIBDIR is
-     the system library directory, often '/usr/local/lib').
-
-     Only one reader can be active at a time; trying to load a second
-     reader when one is already loaded will result in GDB reporting an
-     error.  A new JIT reader can be loaded by first unloading the
-     current one using 'jit-reader-unload' and then invoking
-     'jit-reader-load'.
-
-'jit-reader-unload'
-     Unload the currently loaded JIT reader.
-
-
-File: gdb.info,  Node: Writing JIT Debug Info Readers,  Prev: Using JIT Debug Info Readers,  Up: Custom Debug Info
-
-29.4.2 Writing JIT Debug Info Readers
--------------------------------------
-
-As mentioned, a reader is essentially a shared object conforming to a
-certain ABI. This ABI is described in 'jit-reader.h'.
-
-   'jit-reader.h' defines the structures, macros and functions required
-to write a reader.  It is installed (along with GDB), in
-'INCLUDEDIR/gdb' where INCLUDEDIR is the system include directory.
-
-   Readers need to be released under a GPL compatible license.  A reader
-can be declared as released under such a license by placing the macro
-'GDB_DECLARE_GPL_COMPATIBLE_READER' in a source file.
-
-   The entry point for readers is the symbol 'gdb_init_reader', which is
-expected to be a function with the prototype
-
-     extern struct gdb_reader_funcs *gdb_init_reader (void);
-
-   'struct gdb_reader_funcs' contains a set of pointers to callback
-functions.  These functions are executed to read the debug info
-generated by the JIT compiler ('read'), to unwind stack frames
-('unwind') and to create canonical frame IDs ('get_Frame_id').  It also
-has a callback that is called when the reader is being unloaded
-('destroy').  The struct looks like this
-
-     struct gdb_reader_funcs
-     {
-       /* Must be set to GDB_READER_INTERFACE_VERSION.  */
-       int reader_version;
-
-       /* For use by the reader.  */
-       void *priv_data;
-
-       gdb_read_debug_info *read;
-       gdb_unwind_frame *unwind;
-       gdb_get_frame_id *get_frame_id;
-       gdb_destroy_reader *destroy;
-     };
-
-   The callbacks are provided with another set of callbacks by GDB to do
-their job.  For 'read', these callbacks are passed in a 'struct
-gdb_symbol_callbacks' and for 'unwind' and 'get_frame_id', in a 'struct
-gdb_unwind_callbacks'.  'struct gdb_symbol_callbacks' has callbacks to
-create new object files and new symbol tables inside those object files.
-'struct gdb_unwind_callbacks' has callbacks to read registers off the
-current frame and to write out the values of the registers in the
-previous frame.  Both have a callback ('target_read') to read bytes off
-the target's address space.
-
-
-File: gdb.info,  Node: In-Process Agent,  Next: GDB Bugs,  Prev: JIT Interface,  Up: Top
-
-30 In-Process Agent
-*******************
-
-The traditional debugging model is conceptually low-speed, but works
-fine, because most bugs can be reproduced in debugging-mode execution.
-However, as multi-core or many-core processors are becoming mainstream,
-and multi-threaded programs become more and more popular, there should
-be more and more bugs that only manifest themselves at normal-mode
-execution, for example, thread races, because debugger's interference
-with the program's timing may conceal the bugs.  On the other hand, in
-some applications, it is not feasible for the debugger to interrupt the
-program's execution long enough for the developer to learn anything
-helpful about its behavior.  If the program's correctness depends on its
-real-time behavior, delays introduced by a debugger might cause the
-program to fail, even when the code itself is correct.  It is useful to
-be able to observe the program's behavior without interrupting it.
-
-   Therefore, traditional debugging model is too intrusive to reproduce
-some bugs.  In order to reduce the interference with the program, we can
-reduce the number of operations performed by debugger.  The "In-Process
-Agent", a shared library, is running within the same process with
-inferior, and is able to perform some debugging operations itself.  As a
-result, debugger is only involved when necessary, and performance of
-debugging can be improved accordingly.  Note that interference with
-program can be reduced but can't be removed completely, because the
-in-process agent will still stop or slow down the program.
-
-   The in-process agent can interpret and execute Agent Expressions
-(*note Agent Expressions::) during performing debugging operations.  The
-agent expressions can be used for different purposes, such as collecting
-data in tracepoints, and condition evaluation in breakpoints.
-
-   You can control whether the in-process agent is used as an aid for
-debugging with the following commands:
-
-'set agent on'
-     Causes the in-process agent to perform some operations on behalf of
-     the debugger.  Just which operations requested by the user will be
-     done by the in-process agent depends on the its capabilities.  For
-     example, if you request to evaluate breakpoint conditions in the
-     in-process agent, and the in-process agent has such capability as
-     well, then breakpoint conditions will be evaluated in the
-     in-process agent.
-
-'set agent off'
-     Disables execution of debugging operations by the in-process agent.
-     All of the operations will be performed by GDB.
-
-'show agent'
-     Display the current setting of execution of debugging operations by
-     the in-process agent.
-
-* Menu:
-
-* In-Process Agent Protocol::
-
-
-File: gdb.info,  Node: In-Process Agent Protocol,  Up: In-Process Agent
-
-30.1 In-Process Agent Protocol
-==============================
-
-The in-process agent is able to communicate with both GDB and GDBserver
-(*note In-Process Agent::).  This section documents the protocol used
-for communications between GDB or GDBserver and the IPA. In general, GDB
-or GDBserver sends commands (*note IPA Protocol Commands::) and data to
-in-process agent, and then in-process agent replies back with the return
-result of the command, or some other information.  The data sent to
-in-process agent is composed of primitive data types, such as 4-byte or
-8-byte type, and composite types, which are called objects (*note IPA
-Protocol Objects::).
-
-* Menu:
-
-* IPA Protocol Objects::
-* IPA Protocol Commands::
-
-
-File: gdb.info,  Node: IPA Protocol Objects,  Next: IPA Protocol Commands,  Up: In-Process Agent Protocol
-
-30.1.1 IPA Protocol Objects
----------------------------
-
-The commands sent to and results received from agent may contain some
-complex data types called "objects".
-
-   The in-process agent is running on the same machine with GDB or
-GDBserver, so it doesn't have to handle as much differences between two
-ends as remote protocol (*note Remote Protocol::) tries to handle.
-However, there are still some differences of two ends in two processes:
-
-  1. word size.  On some 64-bit machines, GDB or GDBserver can be
-     compiled as a 64-bit executable, while in-process agent is a 32-bit
-     one.
-  2. ABI. Some machines may have multiple types of ABI, GDB or GDBserver
-     is compiled with one, and in-process agent is compiled with the
-     other one.
-
-   Here are the IPA Protocol Objects:
-
-  1. agent expression object.  It represents an agent expression (*note
-     Agent Expressions::).
-  2. tracepoint action object.  It represents a tracepoint action (*note
-     Tracepoint Action Lists: Tracepoint Actions.) to collect registers,
-     memory, static trace data and to evaluate expression.
-  3. tracepoint object.  It represents a tracepoint (*note
-     Tracepoints::).
-
-   The following table describes important attributes of each IPA
-protocol object:
-
-Name                   Size           Description
----------------------------------------------------------------------------
-_agent expression
-object_
-length                 4              length of bytes code
-byte code              LENGTH         contents of byte code
-_tracepoint action
-for collecting
-memory_
-'M'                    1              type of tracepoint action
-addr                   8              if BASEREG is '-1', ADDR is the
-                                      address of the lowest byte to
-                                      collect, otherwise ADDR is the
-                                      offset of BASEREG for memory
-                                      collecting.
-len                    8              length of memory for collecting
-basereg                4              the register number containing the
-                                      starting memory address for
-                                      collecting.
-_tracepoint action
-for collecting
-registers_
-'R'                    1              type of tracepoint action
-_tracepoint action
-for collecting
-static trace data_
-'L'                    1              type of tracepoint action
-_tracepoint action
-for expression
-evaluation_
-'X'                    1              type of tracepoint action
-agent expression       length of      *note agent expression object::
-_tracepoint object_
-number                 4              number of tracepoint
-address                8              address of tracepoint inserted on
-type                   4              type of tracepoint
-enabled                1              enable or disable of tracepoint
-step_count             8              step
-pass_count             8              pass
-numactions             4              number of tracepoint actions
-hit count              8              hit count
-trace frame usage      8              trace frame usage
-compiled_cond          8              compiled condition
-orig_size              8              orig size
-condition              4 if           zero if condition is NULL,
-                       condition is   otherwise is
-                       NULL           *note agent expression object::
-                       otherwise
-                       length of
-                       *note agent expression object::
-actions                variable       numactions number of
-                                      *note tracepoint action object::
-
-
-File: gdb.info,  Node: IPA Protocol Commands,  Prev: IPA Protocol Objects,  Up: In-Process Agent Protocol
-
-30.1.2 IPA Protocol Commands
-----------------------------
-
-The spaces in each command are delimiters to ease reading this commands
-specification.  They don't exist in real commands.
-
-'FastTrace:TRACEPOINT_OBJECT GDB_JUMP_PAD_HEAD'
-     Installs a new fast tracepoint described by TRACEPOINT_OBJECT
-     (*note tracepoint object::).  The GDB_JUMP_PAD_HEAD, 8-byte long,
-     is the head of "jumppad", which is used to jump to data collection
-     routine in IPA finally.
-
-     Replies:
-     'OK TARGET_ADDRESS GDB_JUMP_PAD_HEAD FJUMP_SIZE FJUMP'
-          TARGET_ADDRESS is address of tracepoint in the inferior.  The
-          GDB_JUMP_PAD_HEAD is updated head of jumppad.  Both of
-          TARGET_ADDRESS and GDB_JUMP_PAD_HEAD are 8-byte long.  The
-          FJUMP contains a sequence of instructions jump to jumppad
-          entry.  The FJUMP_SIZE, 4-byte long, is the size of FJUMP.
-     'E NN'
-          for an error
-
-'close'
-     Closes the in-process agent.  This command is sent when GDB or
-     GDBserver is about to kill inferiors.
-
-'qTfSTM'
-     *Note qTfSTM::.
-'qTsSTM'
-     *Note qTsSTM::.
-'qTSTMat'
-     *Note qTSTMat::.
-'probe_marker_at:ADDRESS'
-     Asks in-process agent to probe the marker at ADDRESS.
-
-     Replies:
-     'E NN'
-          for an error
-'unprobe_marker_at:ADDRESS'
-     Asks in-process agent to unprobe the marker at ADDRESS.
-
-
-File: gdb.info,  Node: GDB Bugs,  Next: Command Line Editing,  Prev: In-Process Agent,  Up: Top
-
-31 Reporting Bugs in GDB
-************************
-
-Your bug reports play an essential role in making GDB reliable.
-
-   Reporting a bug may help you by bringing a solution to your problem,
-or it may not.  But in any case the principal function of a bug report
-is to help the entire community by making the next version of GDB work
-better.  Bug reports are your contribution to the maintenance of GDB.
-
-   In order for a bug report to serve its purpose, you must include the
-information that enables us to fix the bug.
-
-* Menu:
-
-* Bug Criteria::                Have you found a bug?
-* Bug Reporting::               How to report bugs
-
-
-File: gdb.info,  Node: Bug Criteria,  Next: Bug Reporting,  Up: GDB Bugs
-
-31.1 Have You Found a Bug?
-==========================
-
-If you are not sure whether you have found a bug, here are some
-guidelines:
-
-   * If the debugger gets a fatal signal, for any input whatever, that
-     is a GDB bug.  Reliable debuggers never crash.
-
-   * If GDB produces an error message for valid input, that is a bug.
-     (Note that if you're cross debugging, the problem may also be
-     somewhere in the connection to the target.)
-
-   * If GDB does not produce an error message for invalid input, that is
-     a bug.  However, you should note that your idea of "invalid input"
-     might be our idea of "an extension" or "support for traditional
-     practice".
-
-   * If you are an experienced user of debugging tools, your suggestions
-     for improvement of GDB are welcome in any case.
-
-
-File: gdb.info,  Node: Bug Reporting,  Prev: Bug Criteria,  Up: GDB Bugs
-
-31.2 How to Report Bugs
-=======================
-
-A number of companies and individuals offer support for GNU products.
-If you obtained GDB from a support organization, we recommend you
-contact that organization first.
-
-   You can find contact information for many support companies and
-individuals in the file 'etc/SERVICE' in the GNU Emacs distribution.
-
-   In any event, we also recommend that you submit bug reports for GDB.
-The preferred method is to submit them directly using GDB's Bugs web
-page (http://www.gnu.org/software/gdb/bugs/).  Alternatively, the e-mail
-gateway <bug-gdb@gnu.org> can be used.
-
-   *Do not send bug reports to 'info-gdb', or to 'help-gdb', or to any
-newsgroups.*  Most users of GDB do not want to receive bug reports.
-Those that do have arranged to receive 'bug-gdb'.
-
-   The mailing list 'bug-gdb' has a newsgroup 'gnu.gdb.bug' which serves
-as a repeater.  The mailing list and the newsgroup carry exactly the
-same messages.  Often people think of posting bug reports to the
-newsgroup instead of mailing them.  This appears to work, but it has one
-problem which can be crucial: a newsgroup posting often lacks a mail
-path back to the sender.  Thus, if we need to ask for more information,
-we may be unable to reach you.  For this reason, it is better to send
-bug reports to the mailing list.
-
-   The fundamental principle of reporting bugs usefully is this: *report
-all the facts*.  If you are not sure whether to state a fact or leave it
-out, state it!
-
-   Often people omit facts because they think they know what causes the
-problem and assume that some details do not matter.  Thus, you might
-assume that the name of the variable you use in an example does not
-matter.  Well, probably it does not, but one cannot be sure.  Perhaps
-the bug is a stray memory reference which happens to fetch from the
-location where that name is stored in memory; perhaps, if the name were
-different, the contents of that location would fool the debugger into
-doing the right thing despite the bug.  Play it safe and give a
-specific, complete example.  That is the easiest thing for you to do,
-and the most helpful.
-
-   Keep in mind that the purpose of a bug report is to enable us to fix
-the bug.  It may be that the bug has been reported previously, but
-neither you nor we can know that unless your bug report is complete and
-self-contained.
-
-   Sometimes people give a few sketchy facts and ask, "Does this ring a
-bell?"  Those bug reports are useless, and we urge everyone to _refuse
-to respond to them_ except to chide the sender to report bugs properly.
-
-   To enable us to fix the bug, you should include all these things:
-
-   * The version of GDB.  GDB announces it if you start with no
-     arguments; you can also print it at any time using 'show version'.
-
-     Without this, we will not know whether there is any point in
-     looking for the bug in the current version of GDB.
-
-   * The type of machine you are using, and the operating system name
-     and version number.
-
-   * The details of the GDB build-time configuration.  GDB shows these
-     details if you invoke it with the '--configuration' command-line
-     option, or if you type 'show configuration' at GDB's prompt.
-
-   * What compiler (and its version) was used to compile GDB--e.g.
-     "gcc-2.8.1".
-
-   * What compiler (and its version) was used to compile the program you
-     are debugging--e.g. "gcc-2.8.1", or "HP92453-01 A.10.32.03 HP C
-     Compiler".  For GCC, you can say 'gcc --version' to get this
-     information; for other compilers, see the documentation for those
-     compilers.
-
-   * The command arguments you gave the compiler to compile your example
-     and observe the bug.  For example, did you use '-O'?  To guarantee
-     you will not omit something important, list them all.  A copy of
-     the Makefile (or the output from make) is sufficient.
-
-     If we were to try to guess the arguments, we would probably guess
-     wrong and then we might not encounter the bug.
-
-   * A complete input script, and all necessary source files, that will
-     reproduce the bug.
-
-   * A description of what behavior you observe that you believe is
-     incorrect.  For example, "It gets a fatal signal."
-
-     Of course, if the bug is that GDB gets a fatal signal, then we will
-     certainly notice it.  But if the bug is incorrect output, we might
-     not notice unless it is glaringly wrong.  You might as well not
-     give us a chance to make a mistake.
-
-     Even if the problem you experience is a fatal signal, you should
-     still say so explicitly.  Suppose something strange is going on,
-     such as, your copy of GDB is out of synch, or you have encountered
-     a bug in the C library on your system.  (This has happened!)  Your
-     copy might crash and ours would not.  If you told us to expect a
-     crash, then when ours fails to crash, we would know that the bug
-     was not happening for us.  If you had not told us to expect a
-     crash, then we would not be able to draw any conclusion from our
-     observations.
-
-     To collect all this information, you can use a session recording
-     program such as 'script', which is available on many Unix systems.
-     Just run your GDB session inside 'script' and then include the
-     'typescript' file with your bug report.
-
-     Another way to record a GDB session is to run GDB inside Emacs and
-     then save the entire buffer to a file.
-
-   * If you wish to suggest changes to the GDB source, send us context
-     diffs.  If you even discuss something in the GDB source, refer to
-     it by context, not by line number.
-
-     The line numbers in our development sources will not match those in
-     your sources.  Your line numbers would convey no useful information
-     to us.
-
-   Here are some things that are not necessary:
-
-   * A description of the envelope of the bug.
-
-     Often people who encounter a bug spend a lot of time investigating
-     which changes to the input file will make the bug go away and which
-     changes will not affect it.
-
-     This is often time consuming and not very useful, because the way
-     we will find the bug is by running a single example under the
-     debugger with breakpoints, not by pure deduction from a series of
-     examples.  We recommend that you save your time for something else.
-
-     Of course, if you can find a simpler example to report _instead_ of
-     the original one, that is a convenience for us.  Errors in the
-     output will be easier to spot, running under the debugger will take
-     less time, and so on.
-
-     However, simplification is not vital; if you do not want to do
-     this, report the bug anyway and send us the entire test case you
-     used.
-
-   * A patch for the bug.
-
-     A patch for the bug does help us if it is a good one.  But do not
-     omit the necessary information, such as the test case, on the
-     assumption that a patch is all we need.  We might see problems with
-     your patch and decide to fix the problem another way, or we might
-     not understand it at all.
-
-     Sometimes with a program as complicated as GDB it is very hard to
-     construct an example that will make the program follow a certain
-     path through the code.  If you do not send us the example, we will
-     not be able to construct one, so we will not be able to verify that
-     the bug is fixed.
-
-     And if we cannot understand what bug you are trying to fix, or why
-     your patch should be an improvement, we will not install it.  A
-     test case will help us to understand.
-
-   * A guess about what the bug is or what it depends on.
-
-     Such guesses are usually wrong.  Even we cannot guess right about
-     such things without first using the debugger to find the facts.
-
-
-File: gdb.info,  Node: Command Line Editing,  Next: Using History Interactively,  Prev: GDB Bugs,  Up: Top
-
-32 Command Line Editing
-***********************
-
-This chapter describes the basic features of the GNU command line
-editing interface.
-
-* Menu:
-
-* Introduction and Notation::	Notation used in this text.
-* Readline Interaction::	The minimum set of commands for editing a line.
-* Readline Init File::		Customizing Readline from a user's view.
-* Bindable Readline Commands::	A description of most of the Readline commands
-				available for binding
-* Readline vi Mode::		A short description of how to make Readline
-				behave like the vi editor.
-
-
-File: gdb.info,  Node: Introduction and Notation,  Next: Readline Interaction,  Up: Command Line Editing
-
-32.1 Introduction to Line Editing
-=================================
-
-The following paragraphs describe the notation used to represent
-keystrokes.
-
-   The text 'C-k' is read as 'Control-K' and describes the character
-produced when the <k> key is pressed while the Control key is depressed.
-
-   The text 'M-k' is read as 'Meta-K' and describes the character
-produced when the Meta key (if you have one) is depressed, and the <k>
-key is pressed.  The Meta key is labeled <ALT> on many keyboards.  On
-keyboards with two keys labeled <ALT> (usually to either side of the
-space bar), the <ALT> on the left side is generally set to work as a
-Meta key.  The <ALT> key on the right may also be configured to work as
-a Meta key or may be configured as some other modifier, such as a
-Compose key for typing accented characters.
-
-   If you do not have a Meta or <ALT> key, or another key working as a
-Meta key, the identical keystroke can be generated by typing <ESC>
-_first_, and then typing <k>.  Either process is known as "metafying"
-the <k> key.
-
-   The text 'M-C-k' is read as 'Meta-Control-k' and describes the
-character produced by "metafying" 'C-k'.
-
-   In addition, several keys have their own names.  Specifically, <DEL>,
-<ESC>, <LFD>, <SPC>, <RET>, and <TAB> all stand for themselves when seen
-in this text, or in an init file (*note Readline Init File::).  If your
-keyboard lacks a <LFD> key, typing <C-j> will produce the desired
-character.  The <RET> key may be labeled <Return> or <Enter> on some
-keyboards.
-
-
-File: gdb.info,  Node: Readline Interaction,  Next: Readline Init File,  Prev: Introduction and Notation,  Up: Command Line Editing
-
-32.2 Readline Interaction
-=========================
-
-Often during an interactive session you type in a long line of text,
-only to notice that the first word on the line is misspelled.  The
-Readline library gives you a set of commands for manipulating the text
-as you type it in, allowing you to just fix your typo, and not forcing
-you to retype the majority of the line.  Using these editing commands,
-you move the cursor to the place that needs correction, and delete or
-insert the text of the corrections.  Then, when you are satisfied with
-the line, you simply press <RET>.  You do not have to be at the end of
-the line to press <RET>; the entire line is accepted regardless of the
-location of the cursor within the line.
-
-* Menu:
-
-* Readline Bare Essentials::	The least you need to know about Readline.
-* Readline Movement Commands::	Moving about the input line.
-* Readline Killing Commands::	How to delete text, and how to get it back!
-* Readline Arguments::		Giving numeric arguments to commands.
-* Searching::			Searching through previous lines.
-
-
-File: gdb.info,  Node: Readline Bare Essentials,  Next: Readline Movement Commands,  Up: Readline Interaction
-
-32.2.1 Readline Bare Essentials
--------------------------------
-
-In order to enter characters into the line, simply type them.  The typed
-character appears where the cursor was, and then the cursor moves one
-space to the right.  If you mistype a character, you can use your erase
-character to back up and delete the mistyped character.
-
-   Sometimes you may mistype a character, and not notice the error until
-you have typed several other characters.  In that case, you can type
-'C-b' to move the cursor to the left, and then correct your mistake.
-Afterwards, you can move the cursor to the right with 'C-f'.
-
-   When you add text in the middle of a line, you will notice that
-characters to the right of the cursor are 'pushed over' to make room for
-the text that you have inserted.  Likewise, when you delete text behind
-the cursor, characters to the right of the cursor are 'pulled back' to
-fill in the blank space created by the removal of the text.  A list of
-the bare essentials for editing the text of an input line follows.
-
-'C-b'
-     Move back one character.
-'C-f'
-     Move forward one character.
-<DEL> or <Backspace>
-     Delete the character to the left of the cursor.
-'C-d'
-     Delete the character underneath the cursor.
-Printing characters
-     Insert the character into the line at the cursor.
-'C-_' or 'C-x C-u'
-     Undo the last editing command.  You can undo all the way back to an
-     empty line.
-
-(Depending on your configuration, the <Backspace> key be set to delete
-the character to the left of the cursor and the <DEL> key set to delete
-the character underneath the cursor, like 'C-d', rather than the
-character to the left of the cursor.)
-
-
-File: gdb.info,  Node: Readline Movement Commands,  Next: Readline Killing Commands,  Prev: Readline Bare Essentials,  Up: Readline Interaction
-
-32.2.2 Readline Movement Commands
----------------------------------
-
-The above table describes the most basic keystrokes that you need in
-order to do editing of the input line.  For your convenience, many other
-commands have been added in addition to 'C-b', 'C-f', 'C-d', and <DEL>.
-Here are some commands for moving more rapidly about the line.
-
-'C-a'
-     Move to the start of the line.
-'C-e'
-     Move to the end of the line.
-'M-f'
-     Move forward a word, where a word is composed of letters and
-     digits.
-'M-b'
-     Move backward a word.
-'C-l'
-     Clear the screen, reprinting the current line at the top.
-
-   Notice how 'C-f' moves forward a character, while 'M-f' moves forward
-a word.  It is a loose convention that control keystrokes operate on
-characters while meta keystrokes operate on words.
-
-
-File: gdb.info,  Node: Readline Killing Commands,  Next: Readline Arguments,  Prev: Readline Movement Commands,  Up: Readline Interaction
-
-32.2.3 Readline Killing Commands
---------------------------------
-
-"Killing" text means to delete the text from the line, but to save it
-away for later use, usually by "yanking" (re-inserting) it back into the
-line.  ('Cut' and 'paste' are more recent jargon for 'kill' and 'yank'.)
-
-   If the description for a command says that it 'kills' text, then you
-can be sure that you can get the text back in a different (or the same)
-place later.
-
-   When you use a kill command, the text is saved in a "kill-ring".  Any
-number of consecutive kills save all of the killed text together, so
-that when you yank it back, you get it all.  The kill ring is not line
-specific; the text that you killed on a previously typed line is
-available to be yanked back later, when you are typing another line.
-
-   Here is the list of commands for killing text.
-
-'C-k'
-     Kill the text from the current cursor position to the end of the
-     line.
-
-'M-d'
-     Kill from the cursor to the end of the current word, or, if between
-     words, to the end of the next word.  Word boundaries are the same
-     as those used by 'M-f'.
-
-'M-<DEL>'
-     Kill from the cursor the start of the current word, or, if between
-     words, to the start of the previous word.  Word boundaries are the
-     same as those used by 'M-b'.
-
-'C-w'
-     Kill from the cursor to the previous whitespace.  This is different
-     than 'M-<DEL>' because the word boundaries differ.
-
-   Here is how to "yank" the text back into the line.  Yanking means to
-copy the most-recently-killed text from the kill buffer.
-
-'C-y'
-     Yank the most recently killed text back into the buffer at the
-     cursor.
-
-'M-y'
-     Rotate the kill-ring, and yank the new top.  You can only do this
-     if the prior command is 'C-y' or 'M-y'.
-
-
-File: gdb.info,  Node: Readline Arguments,  Next: Searching,  Prev: Readline Killing Commands,  Up: Readline Interaction
-
-32.2.4 Readline Arguments
--------------------------
-
-You can pass numeric arguments to Readline commands.  Sometimes the
-argument acts as a repeat count, other times it is the sign of the
-argument that is significant.  If you pass a negative argument to a
-command which normally acts in a forward direction, that command will
-act in a backward direction.  For example, to kill text back to the
-start of the line, you might type 'M-- C-k'.
-
-   The general way to pass numeric arguments to a command is to type
-meta digits before the command.  If the first 'digit' typed is a minus
-sign ('-'), then the sign of the argument will be negative.  Once you
-have typed one meta digit to get the argument started, you can type the
-remainder of the digits, and then the command.  For example, to give the
-'C-d' command an argument of 10, you could type 'M-1 0 C-d', which will
-delete the next ten characters on the input line.
-
-
-File: gdb.info,  Node: Searching,  Prev: Readline Arguments,  Up: Readline Interaction
-
-32.2.5 Searching for Commands in the History
---------------------------------------------
-
-Readline provides commands for searching through the command history for
-lines containing a specified string.  There are two search modes:
-"incremental" and "non-incremental".
-
-   Incremental searches begin before the user has finished typing the
-search string.  As each character of the search string is typed,
-Readline displays the next entry from the history matching the string
-typed so far.  An incremental search requires only as many characters as
-needed to find the desired history entry.  To search backward in the
-history for a particular string, type 'C-r'.  Typing 'C-s' searches
-forward through the history.  The characters present in the value of the
-'isearch-terminators' variable are used to terminate an incremental
-search.  If that variable has not been assigned a value, the <ESC> and
-'C-J' characters will terminate an incremental search.  'C-g' will abort
-an incremental search and restore the original line.  When the search is
-terminated, the history entry containing the search string becomes the
-current line.
-
-   To find other matching entries in the history list, type 'C-r' or
-'C-s' as appropriate.  This will search backward or forward in the
-history for the next entry matching the search string typed so far.  Any
-other key sequence bound to a Readline command will terminate the search
-and execute that command.  For instance, a <RET> will terminate the
-search and accept the line, thereby executing the command from the
-history list.  A movement command will terminate the search, make the
-last line found the current line, and begin editing.
-
-   Readline remembers the last incremental search string.  If two 'C-r's
-are typed without any intervening characters defining a new search
-string, any remembered search string is used.
-
-   Non-incremental searches read the entire search string before
-starting to search for matching history lines.  The search string may be
-typed by the user or be part of the contents of the current line.
-
-
-File: gdb.info,  Node: Readline Init File,  Next: Bindable Readline Commands,  Prev: Readline Interaction,  Up: Command Line Editing
-
-32.3 Readline Init File
-=======================
-
-Although the Readline library comes with a set of Emacs-like keybindings
-installed by default, it is possible to use a different set of
-keybindings.  Any user can customize programs that use Readline by
-putting commands in an "inputrc" file, conventionally in his home
-directory.  The name of this file is taken from the value of the
-environment variable 'INPUTRC'.  If that variable is unset, the default
-is '~/.inputrc'.  If that file does not exist or cannot be read, the
-ultimate default is '/etc/inputrc'.
-
-   When a program which uses the Readline library starts up, the init
-file is read, and the key bindings are set.
-
-   In addition, the 'C-x C-r' command re-reads this init file, thus
-incorporating any changes that you might have made to it.
-
-* Menu:
-
-* Readline Init File Syntax::	Syntax for the commands in the inputrc file.
-
-* Conditional Init Constructs::	Conditional key bindings in the inputrc file.
-
-* Sample Init File::		An example inputrc file.
-
-
-File: gdb.info,  Node: Readline Init File Syntax,  Next: Conditional Init Constructs,  Up: Readline Init File
-
-32.3.1 Readline Init File Syntax
---------------------------------
-
-There are only a few basic constructs allowed in the Readline init file.
-Blank lines are ignored.  Lines beginning with a '#' are comments.
-Lines beginning with a '$' indicate conditional constructs (*note
-Conditional Init Constructs::).  Other lines denote variable settings
-and key bindings.
-
-Variable Settings
-     You can modify the run-time behavior of Readline by altering the
-     values of variables in Readline using the 'set' command within the
-     init file.  The syntax is simple:
-
-          set VARIABLE VALUE
-
-     Here, for example, is how to change from the default Emacs-like key
-     binding to use 'vi' line editing commands:
-
-          set editing-mode vi
-
-     Variable names and values, where appropriate, are recognized
-     without regard to case.  Unrecognized variable names are ignored.
-
-     Boolean variables (those that can be set to on or off) are set to
-     on if the value is null or empty, ON (case-insensitive), or 1.  Any
-     other value results in the variable being set to off.
-
-     A great deal of run-time behavior is changeable with the following
-     variables.
-
-     'bell-style'
-          Controls what happens when Readline wants to ring the terminal
-          bell.  If set to 'none', Readline never rings the bell.  If
-          set to 'visible', Readline uses a visible bell if one is
-          available.  If set to 'audible' (the default), Readline
-          attempts to ring the terminal's bell.
-
-     'bind-tty-special-chars'
-          If set to 'on', Readline attempts to bind the control
-          characters treated specially by the kernel's terminal driver
-          to their Readline equivalents.
-
-     'comment-begin'
-          The string to insert at the beginning of the line when the
-          'insert-comment' command is executed.  The default value is
-          '"#"'.
-
-     'completion-display-width'
-          The number of screen columns used to display possible matches
-          when performing completion.  The value is ignored if it is
-          less than 0 or greater than the terminal screen width.  A
-          value of 0 will cause matches to be displayed one per line.
-          The default value is -1.
-
-     'completion-ignore-case'
-          If set to 'on', Readline performs filename matching and
-          completion in a case-insensitive fashion.  The default value
-          is 'off'.
-
-     'completion-map-case'
-          If set to 'on', and COMPLETION-IGNORE-CASE is enabled,
-          Readline treats hyphens ('-') and underscores ('_') as
-          equivalent when performing case-insensitive filename matching
-          and completion.
-
-     'completion-prefix-display-length'
-          The length in characters of the common prefix of a list of
-          possible completions that is displayed without modification.
-          When set to a value greater than zero, common prefixes longer
-          than this value are replaced with an ellipsis when displaying
-          possible completions.
-
-     'completion-query-items'
-          The number of possible completions that determines when the
-          user is asked whether the list of possibilities should be
-          displayed.  If the number of possible completions is greater
-          than this value, Readline will ask the user whether or not he
-          wishes to view them; otherwise, they are simply listed.  This
-          variable must be set to an integer value greater than or equal
-          to 0.  A negative value means Readline should never ask.  The
-          default limit is '100'.
-
-     'convert-meta'
-          If set to 'on', Readline will convert characters with the
-          eighth bit set to an ASCII key sequence by stripping the
-          eighth bit and prefixing an <ESC> character, converting them
-          to a meta-prefixed key sequence.  The default value is 'on'.
-
-     'disable-completion'
-          If set to 'On', Readline will inhibit word completion.
-          Completion characters will be inserted into the line as if
-          they had been mapped to 'self-insert'.  The default is 'off'.
-
-     'editing-mode'
-          The 'editing-mode' variable controls which default set of key
-          bindings is used.  By default, Readline starts up in Emacs
-          editing mode, where the keystrokes are most similar to Emacs.
-          This variable can be set to either 'emacs' or 'vi'.
-
-     'echo-control-characters'
-          When set to 'on', on operating systems that indicate they
-          support it, readline echoes a character corresponding to a
-          signal generated from the keyboard.  The default is 'on'.
-
-     'enable-keypad'
-          When set to 'on', Readline will try to enable the application
-          keypad when it is called.  Some systems need this to enable
-          the arrow keys.  The default is 'off'.
-
-     'enable-meta-key'
-          When set to 'on', Readline will try to enable any meta
-          modifier key the terminal claims to support when it is called.
-          On many terminals, the meta key is used to send eight-bit
-          characters.  The default is 'on'.
-
-     'expand-tilde'
-          If set to 'on', tilde expansion is performed when Readline
-          attempts word completion.  The default is 'off'.
-
-     'history-preserve-point'
-          If set to 'on', the history code attempts to place the point
-          (the current cursor position) at the same location on each
-          history line retrieved with 'previous-history' or
-          'next-history'.  The default is 'off'.
-
-     'history-size'
-          Set the maximum number of history entries saved in the history
-          list.  If set to zero, the number of entries in the history
-          list is not limited.
-
-     'horizontal-scroll-mode'
-          This variable can be set to either 'on' or 'off'.  Setting it
-          to 'on' means that the text of the lines being edited will
-          scroll horizontally on a single screen line when they are
-          longer than the width of the screen, instead of wrapping onto
-          a new screen line.  By default, this variable is set to 'off'.
-
-     'input-meta'
-          If set to 'on', Readline will enable eight-bit input (it will
-          not clear the eighth bit in the characters it reads),
-          regardless of what the terminal claims it can support.  The
-          default value is 'off'.  The name 'meta-flag' is a synonym for
-          this variable.
-
-     'isearch-terminators'
-          The string of characters that should terminate an incremental
-          search without subsequently executing the character as a
-          command (*note Searching::).  If this variable has not been
-          given a value, the characters <ESC> and 'C-J' will terminate
-          an incremental search.
-
-     'keymap'
-          Sets Readline's idea of the current keymap for key binding
-          commands.  Acceptable 'keymap' names are 'emacs',
-          'emacs-standard', 'emacs-meta', 'emacs-ctlx', 'vi', 'vi-move',
-          'vi-command', and 'vi-insert'.  'vi' is equivalent to
-          'vi-command'; 'emacs' is equivalent to 'emacs-standard'.  The
-          default value is 'emacs'.  The value of the 'editing-mode'
-          variable also affects the default keymap.
-
-     'mark-directories'
-          If set to 'on', completed directory names have a slash
-          appended.  The default is 'on'.
-
-     'mark-modified-lines'
-          This variable, when set to 'on', causes Readline to display an
-          asterisk ('*') at the start of history lines which have been
-          modified.  This variable is 'off' by default.
-
-     'mark-symlinked-directories'
-          If set to 'on', completed names which are symbolic links to
-          directories have a slash appended (subject to the value of
-          'mark-directories').  The default is 'off'.
-
-     'match-hidden-files'
-          This variable, when set to 'on', causes Readline to match
-          files whose names begin with a '.' (hidden files) when
-          performing filename completion.  If set to 'off', the leading
-          '.' must be supplied by the user in the filename to be
-          completed.  This variable is 'on' by default.
-
-     'menu-complete-display-prefix'
-          If set to 'on', menu completion displays the common prefix of
-          the list of possible completions (which may be empty) before
-          cycling through the list.  The default is 'off'.
-
-     'output-meta'
-          If set to 'on', Readline will display characters with the
-          eighth bit set directly rather than as a meta-prefixed escape
-          sequence.  The default is 'off'.
-
-     'page-completions'
-          If set to 'on', Readline uses an internal 'more'-like pager to
-          display a screenful of possible completions at a time.  This
-          variable is 'on' by default.
-
-     'print-completions-horizontally'
-          If set to 'on', Readline will display completions with matches
-          sorted horizontally in alphabetical order, rather than down
-          the screen.  The default is 'off'.
-
-     'revert-all-at-newline'
-          If set to 'on', Readline will undo all changes to history
-          lines before returning when 'accept-line' is executed.  By
-          default, history lines may be modified and retain individual
-          undo lists across calls to 'readline'.  The default is 'off'.
-
-     'show-all-if-ambiguous'
-          This alters the default behavior of the completion functions.
-          If set to 'on', words which have more than one possible
-          completion cause the matches to be listed immediately instead
-          of ringing the bell.  The default value is 'off'.
-
-     'show-all-if-unmodified'
-          This alters the default behavior of the completion functions
-          in a fashion similar to SHOW-ALL-IF-AMBIGUOUS.  If set to
-          'on', words which have more than one possible completion
-          without any possible partial completion (the possible
-          completions don't share a common prefix) cause the matches to
-          be listed immediately instead of ringing the bell.  The
-          default value is 'off'.
-
-     'skip-completed-text'
-          If set to 'on', this alters the default completion behavior
-          when inserting a single match into the line.  It's only active
-          when performing completion in the middle of a word.  If
-          enabled, readline does not insert characters from the
-          completion that match characters after point in the word being
-          completed, so portions of the word following the cursor are
-          not duplicated.  For instance, if this is enabled, attempting
-          completion when the cursor is after the 'e' in 'Makefile' will
-          result in 'Makefile' rather than 'Makefilefile', assuming
-          there is a single possible completion.  The default value is
-          'off'.
-
-     'visible-stats'
-          If set to 'on', a character denoting a file's type is appended
-          to the filename when listing possible completions.  The
-          default is 'off'.
-
-Key Bindings
-     The syntax for controlling key bindings in the init file is simple.
-     First you need to find the name of the command that you want to
-     change.  The following sections contain tables of the command name,
-     the default keybinding, if any, and a short description of what the
-     command does.
-
-     Once you know the name of the command, simply place on a line in
-     the init file the name of the key you wish to bind the command to,
-     a colon, and then the name of the command.  There can be no space
-     between the key name and the colon - that will be interpreted as
-     part of the key name.  The name of the key can be expressed in
-     different ways, depending on what you find most comfortable.
-
-     In addition to command names, readline allows keys to be bound to a
-     string that is inserted when the key is pressed (a MACRO).
-
-     KEYNAME: FUNCTION-NAME or MACRO
-          KEYNAME is the name of a key spelled out in English.  For
-          example:
-               Control-u: universal-argument
-               Meta-Rubout: backward-kill-word
-               Control-o: "> output"
-
-          In the above example, 'C-u' is bound to the function
-          'universal-argument', 'M-DEL' is bound to the function
-          'backward-kill-word', and 'C-o' is bound to run the macro
-          expressed on the right hand side (that is, to insert the text
-          '> output' into the line).
-
-          A number of symbolic character names are recognized while
-          processing this key binding syntax: DEL, ESC, ESCAPE, LFD,
-          NEWLINE, RET, RETURN, RUBOUT, SPACE, SPC, and TAB.
-
-     "KEYSEQ": FUNCTION-NAME or MACRO
-          KEYSEQ differs from KEYNAME above in that strings denoting an
-          entire key sequence can be specified, by placing the key
-          sequence in double quotes.  Some GNU Emacs style key escapes
-          can be used, as in the following example, but the special
-          character names are not recognized.
-
-               "\C-u": universal-argument
-               "\C-x\C-r": re-read-init-file
-               "\e[11~": "Function Key 1"
-
-          In the above example, 'C-u' is again bound to the function
-          'universal-argument' (just as it was in the first example),
-          ''C-x' 'C-r'' is bound to the function 're-read-init-file',
-          and '<ESC> <[> <1> <1> <~>' is bound to insert the text
-          'Function Key 1'.
-
-     The following GNU Emacs style escape sequences are available when
-     specifying key sequences:
-
-     '\C-'
-          control prefix
-     '\M-'
-          meta prefix
-     '\e'
-          an escape character
-     '\\'
-          backslash
-     '\"'
-          <">, a double quotation mark
-     '\''
-          <'>, a single quote or apostrophe
-
-     In addition to the GNU Emacs style escape sequences, a second set
-     of backslash escapes is available:
-
-     '\a'
-          alert (bell)
-     '\b'
-          backspace
-     '\d'
-          delete
-     '\f'
-          form feed
-     '\n'
-          newline
-     '\r'
-          carriage return
-     '\t'
-          horizontal tab
-     '\v'
-          vertical tab
-     '\NNN'
-          the eight-bit character whose value is the octal value NNN
-          (one to three digits)
-     '\xHH'
-          the eight-bit character whose value is the hexadecimal value
-          HH (one or two hex digits)
-
-     When entering the text of a macro, single or double quotes must be
-     used to indicate a macro definition.  Unquoted text is assumed to
-     be a function name.  In the macro body, the backslash escapes
-     described above are expanded.  Backslash will quote any other
-     character in the macro text, including '"' and '''.  For example,
-     the following binding will make ''C-x' \' insert a single '\' into
-     the line:
-          "\C-x\\": "\\"
-
-
-File: gdb.info,  Node: Conditional Init Constructs,  Next: Sample Init File,  Prev: Readline Init File Syntax,  Up: Readline Init File
-
-32.3.2 Conditional Init Constructs
-----------------------------------
-
-Readline implements a facility similar in spirit to the conditional
-compilation features of the C preprocessor which allows key bindings and
-variable settings to be performed as the result of tests.  There are
-four parser directives used.
-
-'$if'
-     The '$if' construct allows bindings to be made based on the editing
-     mode, the terminal being used, or the application using Readline.
-     The text of the test extends to the end of the line; no characters
-     are required to isolate it.
-
-     'mode'
-          The 'mode=' form of the '$if' directive is used to test
-          whether Readline is in 'emacs' or 'vi' mode.  This may be used
-          in conjunction with the 'set keymap' command, for instance, to
-          set bindings in the 'emacs-standard' and 'emacs-ctlx' keymaps
-          only if Readline is starting out in 'emacs' mode.
-
-     'term'
-          The 'term=' form may be used to include terminal-specific key
-          bindings, perhaps to bind the key sequences output by the
-          terminal's function keys.  The word on the right side of the
-          '=' is tested against both the full name of the terminal and
-          the portion of the terminal name before the first '-'.  This
-          allows 'sun' to match both 'sun' and 'sun-cmd', for instance.
-
-     'application'
-          The APPLICATION construct is used to include
-          application-specific settings.  Each program using the
-          Readline library sets the APPLICATION NAME, and you can test
-          for a particular value.  This could be used to bind key
-          sequences to functions useful for a specific program.  For
-          instance, the following command adds a key sequence that
-          quotes the current or previous word in Bash:
-               $if Bash
-               # Quote the current or previous word
-               "\C-xq": "\eb\"\ef\""
-               $endif
-
-'$endif'
-     This command, as seen in the previous example, terminates an '$if'
-     command.
-
-'$else'
-     Commands in this branch of the '$if' directive are executed if the
-     test fails.
-
-'$include'
-     This directive takes a single filename as an argument and reads
-     commands and bindings from that file.  For example, the following
-     directive reads from '/etc/inputrc':
-          $include /etc/inputrc
 

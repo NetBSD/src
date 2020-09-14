@@ -1,5 +1,5 @@
 # Pretty-printer commands.
-# Copyright (C) 2010-2017 Free Software Foundation, Inc.
+# Copyright (C) 2010-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -84,16 +84,15 @@ def printer_enabled_p(printer):
 class InfoPrettyPrinter(gdb.Command):
     """GDB command to list all registered pretty-printers.
 
-    Usage: info pretty-printer [object-regexp [name-regexp]]
+Usage: info pretty-printer [OBJECT-REGEXP [NAME-REGEXP]]
 
-    OBJECT-REGEXP is a regular expression matching the objects to list.
-    Objects are "global", the program space's file, and the objfiles within
-    that program space.
+OBJECT-REGEXP is a regular expression matching the objects to list.
+Objects are "global", the program space's file, and the objfiles within
+that program space.
 
-    NAME-REGEXP matches the name of the pretty-printer.
-    Individual printers in a collection are named as
-    printer-name;subprinter-name.
-    """
+NAME-REGEXP matches the name of the pretty-printer.
+Individual printers in a collection are named as
+printer-name;subprinter-name."""
 
     def __init__ (self):
         super(InfoPrettyPrinter, self).__init__("info pretty-printer",
@@ -159,7 +158,7 @@ class InfoPrettyPrinter(gdb.Command):
                      cp.pretty_printers, "progspace",
                      object_re, name_re, subname_re)
         for objfile in gdb.objfiles():
-            self.invoke1("  objfile %s pretty-printers:" % objfile.filename,
+            self.invoke1("objfile %s pretty-printers:" % objfile.filename,
                          objfile.pretty_printers, objfile.filename,
                          object_re, name_re, subname_re)
 
@@ -316,16 +315,15 @@ def do_enable_pretty_printer (arg, flag):
 class EnablePrettyPrinter (gdb.Command):
     """GDB command to enable the specified pretty-printer.
 
-    Usage: enable pretty-printer [object-regexp [name-regexp]]
+Usage: enable pretty-printer [OBJECT-REGEXP [NAME-REGEXP]]
 
-    OBJECT-REGEXP is a regular expression matching the objects to examine.
-    Objects are "global", the program space's file, and the objfiles within
-    that program space.
+OBJECT-REGEXP is a regular expression matching the objects to examine.
+Objects are "global", the program space's file, and the objfiles within
+that program space.
 
-    NAME-REGEXP matches the name of the pretty-printer.
-    Individual printers in a collection are named as
-    printer-name;subprinter-name.
-    """
+NAME-REGEXP matches the name of the pretty-printer.
+Individual printers in a collection are named as
+printer-name;subprinter-name."""
 
     def __init__(self):
         super(EnablePrettyPrinter, self).__init__("enable pretty-printer",
@@ -339,16 +337,15 @@ class EnablePrettyPrinter (gdb.Command):
 class DisablePrettyPrinter (gdb.Command):
     """GDB command to disable the specified pretty-printer.
 
-    Usage: disable pretty-printer [object-regexp [name-regexp]]
+Usage: disable pretty-printer [OBJECT-REGEXP [NAME-REGEXP]]
 
-    OBJECT-REGEXP is a regular expression matching the objects to examine.
-    Objects are "global", the program space's file, and the objfiles within
-    that program space.
+OBJECT-REGEXP is a regular expression matching the objects to examine.
+Objects are "global", the program space's file, and the objfiles within
+that program space.
 
-    NAME-REGEXP matches the name of the pretty-printer.
-    Individual printers in a collection are named as
-    printer-name;subprinter-name.
-    """
+NAME-REGEXP matches the name of the pretty-printer.
+Individual printers in a collection are named as
+printer-name;subprinter-name."""
 
     def __init__(self):
         super(DisablePrettyPrinter, self).__init__("disable pretty-printer",

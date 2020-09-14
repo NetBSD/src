@@ -1,5 +1,5 @@
 /* Native Client support for ELF
-   Copyright (C) 2012-2017 Free Software Foundation, Inc.
+   Copyright (C) 2012-2019 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -70,8 +70,7 @@ nacl_modify_segment_map (bfd *abfd, struct bfd_link_info *info)
   const struct elf_backend_data *const bed = get_elf_backend_data (abfd);
   struct elf_segment_map **m = &elf_seg_map (abfd);
   struct elf_segment_map **first_load = NULL;
-  struct elf_segment_map **last_load = NULL;
-  bfd_boolean moved_headers = FALSE;
+  struct elf_segment_map **headers = NULL;
   int sizeof_headers;
 
   if (info != NULL && info->user_phdrs)
@@ -170,56 +169,61 @@ nacl_modify_segment_map (bfd *abfd, struct bfd_link_info *info)
 	    }
 
 	  /* First, we're just finding the earliest PT_LOAD.
-	     By the normal rules, this will be the lowest-addressed one.
-	     We only have anything interesting to do if it's executable.  */
-	  last_load = m;
+	     By the normal rules, this will be the lowest-addressed one.  */
 	  if (first_load == NULL)
-	    {
-	      if (!executable)
-		goto next;
-	      first_load = m;
-	    }
+	    first_load = m;
+
 	  /* Now that we've noted the first PT_LOAD, we're looking for
 	     the first non-executable PT_LOAD with a nonempty p_filesz.  */
-	  else if (!moved_headers
+	  else if (headers == NULL
 		   && segment_eligible_for_headers (seg, bed->minpagesize,
 						    sizeof_headers))
-	    {
-	      /* This is the one we were looking for!
-
-		 First, clear the flags on previous segments that
-		 say they include the file header and phdrs.  */
-	      struct elf_segment_map *prevseg;
-	      for (prevseg = *first_load;
-		   prevseg != seg;
-		   prevseg = prevseg->next)
-		if (prevseg->p_type == PT_LOAD)
-		  {
-		    prevseg->includes_filehdr = 0;
-		    prevseg->includes_phdrs = 0;
-		  }
-
-	      /* This segment will include those headers instead.  */
-	      seg->includes_filehdr = 1;
-	      seg->includes_phdrs = 1;
-
-	      moved_headers = TRUE;
-	    }
+	    headers = m;
 	}
-
-    next:
       m = &seg->next;
     }
 
-  if (first_load != last_load && moved_headers)
+  if (headers != NULL)
     {
-      /* Now swap the first and last PT_LOAD segments'
-	 positions in segment_map.  */
-      struct elf_segment_map *first = *first_load;
-      struct elf_segment_map *last = *last_load;
-      *first_load = first->next;
-      first->next = last->next;
-      last->next = first;
+      struct elf_segment_map **last_load = NULL;
+      struct elf_segment_map *seg;
+
+      m = first_load;
+      while ((seg = *m) != NULL)
+	{
+	  if (seg->p_type == PT_LOAD)
+	    {
+	      /* Clear the flags on any previous segment that
+		 included the file header and phdrs.  */
+	      seg->includes_filehdr = 0;
+	      seg->includes_phdrs = 0;
+	      /* Also strip out empty segments.  */
+	      if (seg->count == 0)
+		{
+		  if (headers == &seg->next)
+		    headers = m;
+		  *m = seg->next;
+		  continue;
+		}
+	      last_load = m;
+	    }
+	  m = &seg->next;
+	}
+
+      /* This segment will include those headers instead.  */
+      seg = *headers;
+      seg->includes_filehdr = 1;
+      seg->includes_phdrs = 1;
+
+      if (last_load != NULL && first_load != last_load && first_load != headers)
+	{
+	  /* Put the first PT_LOAD header last.  */
+	  struct elf_segment_map *first = *first_load;
+	  struct elf_segment_map *last = *last_load;
+	  *first_load = first->next;
+	  first->next = last->next;
+	  last->next = first;
+	}
     }
 
   return TRUE;

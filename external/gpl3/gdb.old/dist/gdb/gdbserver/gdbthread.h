@@ -1,5 +1,5 @@
 /* Multi-thread control defs for remote server for GDB.
-   Copyright (C) 1993-2017 Free Software Foundation, Inc.
+   Copyright (C) 1993-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,19 +16,21 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef GDB_THREAD_H
-#define GDB_THREAD_H
+#ifndef GDBSERVER_GDBTHREAD_H
+#define GDBSERVER_GDBTHREAD_H
 
+#include "common/common-gdbthread.h"
 #include "inferiors.h"
+
+#include <list>
 
 struct btrace_target_info;
 struct regcache;
 
 struct thread_info
 {
-  /* This must appear first.  See inferiors.h.
-     The list iterator functions assume it.  */
-  struct inferior_list_entry entry;
+  /* The id of this thread.  */
+  ptid_t id;
 
   void *target_data;
   struct regcache *regcache_data;
@@ -71,10 +73,12 @@ struct thread_info
   struct btrace_target_info *btrace;
 };
 
-extern struct inferior_list all_threads;
+extern std::list<thread_info *> all_threads;
 
 void remove_thread (struct thread_info *thread);
 struct thread_info *add_thread (ptid_t ptid, void *target_data);
+
+/* Return a pointer to the first thread, or NULL if there isn't one.  */
 
 struct thread_info *get_first_thread (void);
 
@@ -84,10 +88,140 @@ struct thread_info *find_thread_ptid (ptid_t ptid);
    found.  */
 struct thread_info *find_any_thread_of_pid (int pid);
 
+/* Find the first thread for which FUNC returns true.  Return NULL if no thread
+   satisfying FUNC is found.  */
+
+template <typename Func>
+static thread_info *
+find_thread (Func func)
+{
+  std::list<thread_info *>::iterator next, cur = all_threads.begin ();
+
+  while (cur != all_threads.end ())
+    {
+      next = cur;
+      next++;
+
+      if (func (*cur))
+	return *cur;
+
+      cur = next;
+    }
+
+  return NULL;
+}
+
+/* Like the above, but only consider threads with pid PID.  */
+
+template <typename Func>
+static thread_info *
+find_thread (int pid, Func func)
+{
+  return find_thread ([&] (thread_info *thread)
+    {
+      return thread->id.pid () == pid && func (thread);
+    });
+}
+
+/* Find the first thread that matches FILTER for which FUNC returns true.
+   Return NULL if no thread satisfying these conditions is found.  */
+
+template <typename Func>
+static thread_info *
+find_thread (ptid_t filter, Func func)
+{
+  return find_thread ([&] (thread_info *thread) {
+    return thread->id.matches (filter) && func (thread);
+  });
+}
+
+/* Invoke FUNC for each thread.  */
+
+template <typename Func>
+static void
+for_each_thread (Func func)
+{
+  std::list<thread_info *>::iterator next, cur = all_threads.begin ();
+
+  while (cur != all_threads.end ())
+    {
+      next = cur;
+      next++;
+      func (*cur);
+      cur = next;
+    }
+}
+
+/* Like the above, but only consider threads with pid PID.  */
+
+template <typename Func>
+static void
+for_each_thread (int pid, Func func)
+{
+  for_each_thread ([&] (thread_info *thread)
+    {
+      if (pid == thread->id.pid ())
+	func (thread);
+    });
+}
+
+/* Find the a random thread for which FUNC (THREAD) returns true.  If
+   no entry is found then return NULL.  */
+
+template <typename Func>
+static thread_info *
+find_thread_in_random (Func func)
+{
+  int count = 0;
+  int random_selector;
+
+  /* First count how many interesting entries we have.  */
+  for_each_thread ([&] (thread_info *thread) {
+    if (func (thread))
+      count++;
+  });
+
+  if (count == 0)
+    return NULL;
+
+  /* Now randomly pick an entry out of those.  */
+  random_selector = (int)
+    ((count * (double) rand ()) / (RAND_MAX + 1.0));
+
+  thread_info *thread = find_thread ([&] (thread_info *thr_arg) {
+    return func (thr_arg) && (random_selector-- == 0);
+  });
+
+  gdb_assert (thread != NULL);
+
+  return thread;
+}
+
 /* Get current thread ID (Linux task ID).  */
-#define current_ptid (current_thread->entry.id)
+#define current_ptid (current_thread->id)
 
-/* Create a cleanup to restore current_thread.  */
-struct cleanup *make_cleanup_restore_current_thread (void);
+/* Get the ptid of THREAD.  */
 
-#endif /* GDB_THREAD_H */
+static inline ptid_t
+ptid_of (const thread_info *thread)
+{
+  return thread->id;
+}
+
+/* Get the pid of THREAD.  */
+
+static inline int
+pid_of (const thread_info *thread)
+{
+  return thread->id.pid ();
+}
+
+/* Get the lwp of THREAD.  */
+
+static inline long
+lwpid_of (const thread_info *thread)
+{
+  return thread->id.lwp ();
+}
+
+#endif /* GDBSERVER_GDBTHREAD_H */

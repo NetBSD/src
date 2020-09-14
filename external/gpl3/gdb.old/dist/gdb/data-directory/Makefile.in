@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2017 Free Software Foundation, Inc.
+# Copyright (C) 2010-2019 Free Software Foundation, Inc.
 
 # Makefile for building a staged copy of the data-directory.
 # This file is part of GDB.

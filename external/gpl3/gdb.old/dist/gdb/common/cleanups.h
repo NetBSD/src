@@ -1,5 +1,5 @@
 /* Cleanups.
-   Copyright (C) 1986-2017 Free Software Foundation, Inc.
+   Copyright (C) 1986-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef CLEANUPS_H
-#define CLEANUPS_H
+#ifndef COMMON_CLEANUPS_H
+#define COMMON_CLEANUPS_H
 
 /* Outside of cleanups.c, this is an opaque type.  */
 struct cleanup;
@@ -66,4 +66,4 @@ extern void restore_final_cleanups (struct cleanup *);
    to pass to do_cleanups.  */
 extern void null_cleanup (void *);
 
-#endif /* CLEANUPS_H */
+#endif /* COMMON_CLEANUPS_H */

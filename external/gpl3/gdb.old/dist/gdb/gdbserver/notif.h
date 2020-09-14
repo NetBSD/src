@@ -1,5 +1,5 @@
 /* Notification to GDB.
-   Copyright (C) 1989-2017 Free Software Foundation, Inc.
+   Copyright (C) 1989-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#ifndef GDBSERVER_NOTIF_H
+#define GDBSERVER_NOTIF_H
+
 #include "target.h"
-#include "queue.h"
+#include "common/queue.h"
 
 /* Structure holding information related to a single event.  We
    keep a queue of these to push to GDB.  It can be extended if
@@ -62,3 +65,5 @@ void notif_event_enque (struct notif_server *notif,
 			struct notif_event *event);
 
 void initialize_notif (void);
+
+#endif /* GDBSERVER_NOTIF_H */

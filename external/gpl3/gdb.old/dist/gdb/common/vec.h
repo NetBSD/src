@@ -1,5 +1,5 @@
 /* Vector API for GDB.
-   Copyright (C) 2004-2017 Free Software Foundation, Inc.
+   Copyright (C) 2004-2019 Free Software Foundation, Inc.
    Contributed by Nathan Sidwell <nathan@codesourcery.com>
 
    This file is part of GDB.
@@ -17,8 +17,24 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (GDB_VEC_H)
-#define GDB_VEC_H
+#ifndef COMMON_VEC_H
+#define COMMON_VEC_H
+
+#include "diagnostics.h"
+
+/* clang has a bug that makes it warn (-Wunused-function) about unused functions
+   that are the result of the DEF_VEC_* macro expansion.  See:
+
+     https://bugs.llvm.org/show_bug.cgi?id=22712
+
+   We specifically ignore this warning for the vec functions when the compiler
+   is clang.  */
+#ifdef __clang__
+# define DIAGNOSTIC_IGNORE_UNUSED_VEC_FUNCTION \
+    DIAGNOSTIC_IGNORE_UNUSED_FUNCTION
+#else
+# define DIAGNOSTIC_IGNORE_UNUSED_VEC_FUNCTION
+#endif
 
 /* The macros here implement a set of templated vector types and
    associated interfaces.  These templates are implemented with
@@ -408,6 +424,8 @@ typedef struct VEC(T)							  \
 
 /* Vector of integer-like object.  */
 #define DEF_VEC_I(T)							  \
+DIAGNOSTIC_PUSH 							  \
+DIAGNOSTIC_IGNORE_UNUSED_VEC_FUNCTION					  \
 static inline void VEC_OP (T,must_be_integral_type) (void)		  \
 {									  \
   (void)~(T)0;								  \
@@ -416,10 +434,13 @@ static inline void VEC_OP (T,must_be_integral_type) (void)		  \
 VEC_T(T);								  \
 DEF_VEC_FUNC_P(T)							  \
 DEF_VEC_ALLOC_FUNC_I(T)							  \
+DIAGNOSTIC_POP								  \
 struct vec_swallow_trailing_semi
 
 /* Vector of pointer to object.  */
 #define DEF_VEC_P(T)							  \
+DIAGNOSTIC_PUSH 							  \
+DIAGNOSTIC_IGNORE_UNUSED_VEC_FUNCTION					  \
 static inline void VEC_OP (T,must_be_pointer_type) (void)		  \
 {									  \
   (void)((T)1 == (void *)1);						  \
@@ -428,13 +449,17 @@ static inline void VEC_OP (T,must_be_pointer_type) (void)		  \
 VEC_T(T);								  \
 DEF_VEC_FUNC_P(T)							  \
 DEF_VEC_ALLOC_FUNC_P(T)							  \
+DIAGNOSTIC_POP								  \
 struct vec_swallow_trailing_semi
 
 /* Vector of object.  */
 #define DEF_VEC_O(T)							  \
+DIAGNOSTIC_PUSH 							  \
+DIAGNOSTIC_IGNORE_UNUSED_VEC_FUNCTION					  \
 VEC_T(T);								  \
 DEF_VEC_FUNC_O(T)							  \
 DEF_VEC_ALLOC_FUNC_O(T)							  \
+DIAGNOSTIC_POP								  \
 struct vec_swallow_trailing_semi
 
 /* Avoid offsetof (or its usual C implementation) as it triggers
@@ -1122,4 +1147,4 @@ static inline T *VEC_OP (T,safe_insert)					  \
   return VEC_OP (T,quick_insert) (*vec_, ix_, obj_ VEC_ASSERT_PASS);	  \
 }
 
-#endif /* GDB_VEC_H */
+#endif /* COMMON_VEC_H */

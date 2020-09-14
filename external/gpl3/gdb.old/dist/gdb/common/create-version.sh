@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 1989-2017 Free Software Foundation, Inc.
+# Copyright (C) 1989-2019 Free Software Foundation, Inc.
 
 # This file is part of GDB.
 
@@ -30,7 +30,7 @@ output="$4"
 rm -f version.c-tmp $output version.tmp
 date=`sed -n -e 's/^.* BFD_VERSION_DATE \(.*\)$/\1/p' $srcdir/../bfd/version.h`
 sed -e "s/DATE/$date/" < $srcdir/version.in > version.tmp
-echo '#include "version.h"' >> version.c-tmp
+echo '#include "common/version.h"' >> version.c-tmp
 echo 'const char version[] = "'"`sed q version.tmp`"'";' >> version.c-tmp
 echo 'const char host_name[] = "'"$host_alias"'";' >> version.c-tmp
 echo 'const char target_name[] = "'"$target_alias"'";' >> version.c-tmp

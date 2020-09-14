@@ -1,6 +1,6 @@
 /* Parse a printf-style format string.
 
-   Copyright (C) 1986-2017 Free Software Foundation, Inc.
+   Copyright (C) 1986-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,17 +20,13 @@
 #include "common-defs.h"
 #include "format.h"
 
-struct format_piece *
-parse_format_string (const char **arg)
+format_pieces::format_pieces (const char **arg)
 {
   const char *s;
   char *f, *string;
   const char *prev_start;
   const char *percent_loc;
   char *sub_start, *current_substring;
-  struct format_piece *pieces;
-  int next_frag;
-  int max_pieces;
   enum argclass this_argclass;
 
   s = *arg;
@@ -59,6 +55,9 @@ parse_format_string (const char **arg)
 	      break;
 	    case 'b':
 	      *f++ = '\b';
+	      break;
+	    case 'e':
+	      *f++ = '\e';
 	      break;
 	    case 'f':
 	      *f++ = '\f';
@@ -100,12 +99,7 @@ parse_format_string (const char **arg)
   /* Need extra space for the '\0's.  Doubling the size is sufficient.  */
 
   current_substring = (char *) xmalloc (strlen (string) * 2 + 1000);
-
-  max_pieces = strlen (string) + 2;
-
-  pieces = XNEWVEC (struct format_piece, max_pieces);
-
-  next_frag = 0;
+  m_storage.reset (current_substring);
 
   /* Now scan the string for %-specs and see what kinds of args they want.
      argclass classifies the %-specs so we can give printf-type functions
@@ -135,9 +129,7 @@ parse_format_string (const char **arg)
 	current_substring += f - 1 - prev_start;
 	*current_substring++ = '\0';
 
-	pieces[next_frag].string = sub_start;
-	pieces[next_frag].argclass = literal_piece;
-	next_frag++;
+	m_pieces.emplace_back (sub_start, literal_piece);
 
 	percent_loc = f - 1;
 
@@ -274,8 +266,12 @@ parse_format_string (const char **arg)
 	  case 'g':
 	  case 'E':
 	  case 'G':
-	    if (seen_big_h || seen_big_d || seen_double_big_d)
-	      this_argclass = decfloat_arg;
+	    if (seen_double_big_d)
+	      this_argclass = dec128float_arg;
+	    else if (seen_big_d)
+	      this_argclass = dec64float_arg;
+	    else if (seen_big_h)
+	      this_argclass = dec32float_arg;
 	    else if (seen_big_l)
 	      this_argclass = long_double_arg;
 	    else
@@ -339,9 +335,7 @@ parse_format_string (const char **arg)
 
 	prev_start = f;
 
-	pieces[next_frag].string = sub_start;
-	pieces[next_frag].argclass = this_argclass;
-	next_frag++;
+	m_pieces.emplace_back (sub_start, this_argclass);
       }
 
   /* Record the remainder of the string.  */
@@ -352,44 +346,5 @@ parse_format_string (const char **arg)
   current_substring += f - prev_start;
   *current_substring++ = '\0';
 
-  pieces[next_frag].string = sub_start;
-  pieces[next_frag].argclass = literal_piece;
-  next_frag++;
-
-  /* Record an end-of-array marker.  */
-
-  pieces[next_frag].string = NULL;
-  pieces[next_frag].argclass = literal_piece;
-
-  return pieces;
+  m_pieces.emplace_back (sub_start, literal_piece);
 }
-
-void
-free_format_pieces (struct format_piece *pieces)
-{
-  if (!pieces)
-    return;
-
-  /* We happen to know that all the string pieces are in the block
-     pointed to by the first string piece.  */
-  if (pieces[0].string)
-    xfree (pieces[0].string);
-
-  xfree (pieces);
-}
-
-void
-free_format_pieces_cleanup (void *ptr)
-{
-  struct format_piece **location = (struct format_piece **) ptr;
-
-  if (location == NULL)
-    return;
-
-  if (*location != NULL)
-    {
-      free_format_pieces (*location);
-      *location = NULL;
-    }
-}
-
