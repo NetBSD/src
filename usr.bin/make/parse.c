@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.313 2020/09/14 16:33:07 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.314 2020/09/14 16:40:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.313 2020/09/14 16:33:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.314 2020/09/14 16:40:06 rillig Exp $");
 
 /* types and constants */
 
@@ -1101,6 +1101,40 @@ ParseErrorNoDependency(const char *lstart, const char *line)
 	Parse_Error(PARSE_FATAL, "Need an operator");
 }
 
+static void
+ParseDependencyTargetWord(/*const*/ char **pp, const char *lstart)
+{
+    /*const*/ char *cp = *pp;
+
+    while (*cp != '\0') {
+	if ((ch_isspace(*cp) || *cp == '!' || *cp == ':' || *cp == '(') &&
+	    !ParseIsEscaped(lstart, cp))
+	    break;
+
+	if (*cp == '$') {
+	    /*
+	     * Must be a dynamic source (would have been expanded
+	     * otherwise), so call the Var module to parse the puppy
+	     * so we can safely advance beyond it...There should be
+	     * no errors in this, as they would have been discovered
+	     * in the initial Var_Subst and we wouldn't be here.
+	     */
+	    const char *nested_p = cp;
+	    const char *nested_val;
+	    void    *freeIt;
+
+	    (void)Var_Parse(&nested_p, VAR_CMD, VARE_UNDEFERR|VARE_WANTRES,
+			    &nested_val, &freeIt);
+	    /* TODO: handle errors */
+	    free(freeIt);
+	    cp += nested_p - cp;
+	} else
+	    cp++;
+    }
+
+    *pp = cp;
+}
+
 /* Parse a dependency line consisting of targets, followed by a dependency
  * operator, optionally followed by sources.
  *
@@ -1161,31 +1195,8 @@ ParseDoDependency(char *line)
 	 */
 
 	/* Find the end of the next word. */
-	for (cp = line; *cp != '\0';) {
-	    if ((ch_isspace(*cp) || *cp == '!' || *cp == ':' || *cp == '(') &&
-		!ParseIsEscaped(lstart, cp))
-		break;
-
-	    if (*cp == '$') {
-		/*
-		 * Must be a dynamic source (would have been expanded
-		 * otherwise), so call the Var module to parse the puppy
-		 * so we can safely advance beyond it...There should be
-		 * no errors in this, as they would have been discovered
-		 * in the initial Var_Subst and we wouldn't be here.
-		 */
-		const char *nested_p = cp;
-		const char *nested_val;
-		void    *freeIt;
-
-		(void)Var_Parse(&nested_p, VAR_CMD, VARE_UNDEFERR|VARE_WANTRES,
-				&nested_val, &freeIt);
-		/* TODO: handle errors */
-		free(freeIt);
-		cp += nested_p - cp;
-	    } else
-		cp++;
-	}
+	cp = line;
+	ParseDependencyTargetWord(&cp, lstart);
 
 	/*
 	 * If the word is followed by a left parenthesis, it's the
