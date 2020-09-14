@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.310 2020/09/14 16:16:52 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.311 2020/09/14 16:23:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.310 2020/09/14 16:16:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.311 2020/09/14 16:23:32 rillig Exp $");
 
 /* types and constants */
 
@@ -1072,6 +1072,35 @@ ParseClearPath(void *path, void *dummy MAKE_ATTR_UNUSED)
     return 0;
 }
 
+/*
+ * We got to the end of the line while we were still looking at targets.
+ *
+ * Ending a dependency line without an operator is a Bozo no-no.  As a
+ * heuristic, this is also often triggered by undetected conflicts from
+ * cvs/rcs merges.
+ */
+static void
+ParseErrorNoDependency(const char *lstart, const char *line)
+{
+    if ((strncmp(line, "<<<<<<", 6) == 0) ||
+	(strncmp(line, "======", 6) == 0) ||
+	(strncmp(line, ">>>>>>", 6) == 0))
+	Parse_Error(PARSE_FATAL,
+		    "Makefile appears to contain unresolved cvs/rcs/??? merge conflicts");
+    else if (lstart[0] == '.') {
+	const char *dirstart = lstart + 1;
+	const char *dirend;
+	while (ch_isspace(*dirstart))
+	    dirstart++;
+	dirend = dirstart;
+	while (ch_isalnum(*dirend) || *dirend == '-')
+	    dirend++;
+	Parse_Error(PARSE_FATAL, "Unknown directive \"%.*s\"",
+		    (int)(dirend - dirstart), dirstart);
+    } else
+	Parse_Error(PARSE_FATAL, "Need an operator");
+}
+
 /* Parse a dependency line consisting of targets, followed by a dependency
  * operator, optionally followed by sources.
  *
@@ -1186,31 +1215,7 @@ ParseDoDependency(char *line)
 	}
 
 	if (!*cp) {
-	    /*
-	     * We got to the end of the line while we were still
-	     * looking at targets.
-	     *
-	     * Ending a dependency line without an operator is a Bozo
-	     * no-no.  As a heuristic, this is also often triggered by
-	     * undetected conflicts from cvs/rcs merges.
-	     */
-	    if ((strncmp(line, "<<<<<<", 6) == 0) ||
-		(strncmp(line, "======", 6) == 0) ||
-		(strncmp(line, ">>>>>>", 6) == 0))
-		Parse_Error(PARSE_FATAL,
-		    "Makefile appears to contain unresolved cvs/rcs/??? merge conflicts");
-	    else if (lstart[0] == '.') {
-		const char *dirstart = lstart + 1;
-		const char *dirend;
-		while (ch_isspace(*dirstart))
-		    dirstart++;
-		dirend = dirstart;
-		while (ch_isalnum(*dirend) || *dirend == '-')
-		    dirend++;
-		Parse_Error(PARSE_FATAL, "Unknown directive \"%.*s\"",
-			    (int)(dirend - dirstart), dirstart);
-	    } else
-		Parse_Error(PARSE_FATAL, "Need an operator");
+	    ParseErrorNoDependency(lstart, line);
 	    goto out;
 	}
 
