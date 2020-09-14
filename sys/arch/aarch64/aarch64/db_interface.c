@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.9 2020/08/11 19:46:56 skrll Exp $ */
+/* $NetBSD: db_interface.c,v 1.10 2020/09/14 10:53:02 ryo Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.9 2020/08/11 19:46:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.10 2020/09/14 10:53:02 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -234,6 +234,8 @@ SignExtend(int bitwidth, uint64_t imm, unsigned int multiply)
 db_addr_t
 db_branch_taken(db_expr_t inst, db_addr_t pc, db_regs_t *regs)
 {
+	LE32TOH(inst);
+
 #define INSN_FMT_RN(insn)		(((insn) >> 5) & 0x1f)
 #define INSN_FMT_IMM26(insn)	((insn) & 0x03ffffff)
 #define INSN_FMT_IMM19(insn)	(((insn) >> 5) & 0x7ffff)
@@ -267,6 +269,8 @@ db_branch_taken(db_expr_t inst, db_addr_t pc, db_regs_t *regs)
 bool
 db_inst_unconditional_flow_transfer(db_expr_t inst)
 {
+	LE32TOH(inst);
+
 	if (((inst & 0xfffffc1f) == 0xd65f0000) ||	/* ret xN */
 	    ((inst & 0xfc000000) == 0x94000000) ||	/* bl */
 	    ((inst & 0xfffffc1f) == 0xd63f0000) ||	/* blr */

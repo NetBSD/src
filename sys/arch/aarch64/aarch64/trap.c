@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.36 2020/08/02 06:58:16 maxv Exp $ */
+/* $NetBSD: trap.c,v 1.37 2020/09/14 10:53:02 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.36 2020/08/02 06:58:16 maxv Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.37 2020/09/14 10:53:02 ryo Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -386,6 +386,7 @@ emul_aarch64_insn(struct trapframe *tf)
 		return EMUL_ARM_FAULT;
 	}
 
+	LE32TOH(insn);
 	if ((insn & 0xffffffe0) == 0xd53b0020) {
 		/* mrs x?,ctr_el0 */
 		unsigned int Xt = insn & 31;
