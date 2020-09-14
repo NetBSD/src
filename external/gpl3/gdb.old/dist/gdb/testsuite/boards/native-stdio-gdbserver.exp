@@ -1,4 +1,4 @@
-# Copyright 2011-2017 Free Software Foundation, Inc.
+# Copyright 2011-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,70 +20,11 @@
 # bash$ cd ${build_dir}/gdb
 # bash$ make check RUNTESTFLAGS="--target_board=native-stdio-gdbserver"
 
-load_generic_config "gdbserver"
-load_board_description "gdbserver-base"
+load_board_description "stdio-gdbserver-base"
+load_board_description "local-board"
 
-# This gdbserver can only run a process once per session.
-set_board_info gdb,do_reload_on_run 1
-
-# There's no support for argument-passing (yet).
-set_board_info noargs 1
-
-# Hack the host,port to pass our peculiar remote connection string.
-set_board_info sockethost ""
-set_board_info gdb,socketport "stdio"
-set_board_info gdb,get_remote_address ${board}_get_remote_address
-set_board_info gdbserver,get_comm_port ${board}_get_comm_port
-
-set_board_info use_gdb_stub 1
-set_board_info exit_is_reliable 1
-
-# We will be using the standard GDB remote protocol.
-set_board_info gdb_protocol "remote"
-
-# Used to pass a value between ${board}_spawn and ${board}_get_remote_address.
-set stdio_gdbserver_command "--unset--"
-
-proc ${board}_get_remote_address { host port } {
-    global stdio_gdbserver_command
-    return "| $stdio_gdbserver_command"
-}
-
-proc ${board}_get_comm_port { port } {
-    return $port
-}
-
-proc ${board}_spawn { board cmd } {
-    global board_info
-
-    verbose -log "${board}_spawn: $board $cmd"
-
-    # Save the command to start gdbserver for later retrieval by
-    # ${board}_get_remote_address.
-    global stdio_gdbserver_command
-    set stdio_gdbserver_command $cmd
-
-    set baseboard [lindex [split $board "/"] 0]
-
-    # We don't spawn gdbserver here, that is done by the subsequent
-    # "target remote | ..." command.
-    set board_info($baseboard,isremote) 0
-    # Pretend as if we've started gdbserver, provide the test harness
-    # with what it's waiting for.
-    set result [remote_spawn $board "echo Listening on stdio"]
-    set board_info($baseboard,isremote) 1
-
-    return $result
-}
-
-proc ${board}_exec { hostname program args } {
-    global board_info
-
-    set baseboard [lindex [split $hostname "/"] 0]
-
-    set board_info($baseboard,isremote) 0
-    set result [remote_exec $hostname $program $args]
-    set board_info($baseboard,isremote) 1
-
-    return $result
+proc get_target_remote_pipe_cmd {} {
+    global last_loaded_file
+    set gdbserver [find_gdbserver]
+    return "$gdbserver --once stdio $last_loaded_file"
 }
