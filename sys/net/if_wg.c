@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.59 2020/09/13 17:18:54 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.60 2020/09/14 04:57:20 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,9 +41,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.59 2020/09/13 17:18:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.60 2020/09/14 04:57:20 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
+#include "opt_altq_enabled.h"
 #include "opt_inet.h"
 #endif
 
@@ -702,6 +703,9 @@ static void	wg_input(struct ifnet *, struct mbuf *, const int);
 static int	wg_ioctl(struct ifnet *, u_long, void *);
 static int	wg_bind_port(struct wg_softc *, const uint16_t);
 static int	wg_init(struct ifnet *);
+#ifdef ALTQ
+static void	wg_start(struct ifnet *);
+#endif
 static void	wg_stop(struct ifnet *, int);
 
 static void	wg_peer_work(struct work *, void *);
@@ -3537,11 +3541,16 @@ wg_if_attach(struct wg_softc *wg)
 	wg->wg_if.if_ioctl = wg_ioctl;
 	wg->wg_if.if_output = wg_output;
 	wg->wg_if.if_init = wg_init;
+#ifdef ALTQ
+	wg->wg_if.if_start = wg_start;
+#endif
 	wg->wg_if.if_stop = wg_stop;
 	wg->wg_if.if_type = IFT_OTHER;
 	wg->wg_if.if_dlt = DLT_NULL;
 	wg->wg_if.if_softc = wg;
+#ifdef ALTQ
 	IFQ_SET_READY(&wg->wg_if.if_snd);
+#endif
 
 	error = if_initialize(&wg->wg_if);
 	if (error != 0)
@@ -3780,7 +3789,12 @@ wg_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		goto out0;
 	}
 
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
+#ifdef ALTQ
+	bool altq = atomic_load_relaxed(&ifp->if_snd.altq_flags)
+	    & ALTQF_ENABLED;
+	if (altq)
+		IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
+#endif
 
 	bpf_mtap_af(ifp, dst->sa_family, m, BPF_D_OUT);
 
@@ -3819,18 +3833,36 @@ wg_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	}
 
 	/* There's an established session.  Toss it in the queue.  */
+#ifdef ALTQ
+	if (altq) {
+		mutex_enter(ifp->if_snd.ifq_lock);
+		if (ALTQ_IS_ENABLED(&ifp->if_snd)) {
+			M_SETCTX(m, wgp);
+			ALTQ_ENQUEUE(&ifp->if_snd, m, error);
+			m = NULL; /* consume */
+		}
+		mutex_exit(ifp->if_snd.ifq_lock);
+		if (m == NULL) {
+			wg_start(ifp);
+			goto out2;
+		}
+	}
+#endif
 	kpreempt_disable();
 	const uint32_t h = curcpu()->ci_index;	// pktq_rps_hash(m)
 	M_SETCTX(m, wgp);
 	if (__predict_false(!pktq_enqueue(wg_pktq, m, h))) {
 		WGLOG(LOG_ERR, "pktq full, dropping\n");
 		error = ENOBUFS;
-		goto out2;
+		goto out3;
 	}
 	m = NULL;		/* consumed */
 	error = 0;
-out2:	kpreempt_enable();
+out3:	kpreempt_enable();
 
+#ifdef ALTQ
+out2:
+#endif
 	wg_put_session(wgs, &wgs_psref);
 out1:	wg_put_peer(wgp, &wgp_psref);
 out0:	if (m)
@@ -4687,6 +4719,28 @@ wg_init(struct ifnet *ifp)
 	/* TODO flush pending packets. */
 	return 0;
 }
+
+#ifdef ALTQ
+static void
+wg_start(struct ifnet *ifp)
+{
+	struct mbuf *m;
+
+	for (;;) {
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+		if (m == NULL)
+			break;
+
+		kpreempt_disable();
+		const uint32_t h = curcpu()->ci_index;	// pktq_rps_hash(m)
+		if (__predict_false(!pktq_enqueue(wg_pktq, m, h))) {
+			WGLOG(LOG_ERR, "pktq full, dropping\n");
+			m_freem(m);
+		}
+		kpreempt_enable();
+	}
+}
+#endif
 
 static void
 wg_stop(struct ifnet *ifp, int disable)
