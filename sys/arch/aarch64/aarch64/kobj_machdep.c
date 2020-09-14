@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.4 2020/07/08 03:45:13 ryo Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.5 2020/09/14 17:14:12 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.4 2020/07/08 03:45:13 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.5 2020/09/14 17:14:12 ryo Exp $");
 
 #define ELFSIZE		ARCH_ELFSIZE
 
@@ -184,7 +184,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 	old = *where;
 #ifdef DDB
 	snprintf(disasmbuf, sizeof(disasmbuf), "%08x %s",
-	    *insn, strdisasm((vaddr_t)insn), 0);
+	    le32toh(*insn), strdisasm((vaddr_t)insn), 0);
 #endif
 #endif /* KOBJ_MACHDEP_DEBUG */
 
@@ -247,7 +247,8 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		}
 		val &= WIDTHMASK(12);
 		val >>= shift;
-		*insn = (*insn & ~__BITS(21,10)) | (val << 10);
+		*insn = htole32(
+		    (le32toh(*insn) & ~__BITS(21,10)) | (val << 10));
 		break;
 
 	case R_AARCH64_ADR_PREL_PG_HI21_NC:
@@ -268,8 +269,9 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		}
 		immlo = val & WIDTHMASK(2);
 		immhi = (val >> 2) & WIDTHMASK(19);
-		*insn = (*insn & ~(__BITS(30,29) | __BITS(23,5))) |
-		    (immlo << 29) | (immhi << 5);
+		*insn = htole32((le32toh(*insn) &
+		    ~(__BITS(30,29) | __BITS(23,5))) |
+		    (immlo << 29) | (immhi << 5));
 		break;
 
 	case R_AARCH_JUMP26:
@@ -291,7 +293,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 			break;
 		}
 		val &= WIDTHMASK(26);
-		*insn = (*insn & ~__BITS(25,0)) | val;
+		*insn = htole32((le32toh(*insn) & ~__BITS(25,0)) | val);
 		break;
 
 	case R_AARCH64_PREL64:
@@ -348,7 +350,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 #ifdef DDB
 	printf("%s:    insn %s\n", __func__, disasmbuf);
 	printf("%s:      -> %08x %s\n", __func__,
-	    *insn, strdisasm((vaddr_t)insn, 0));
+	    le32toh(*insn), strdisasm((vaddr_t)insn, 0));
 #endif
 	printf("\n");
 #endif /* KOBJ_MACHDEP_DEBUG */
