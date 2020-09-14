@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.312 2020/09/14 16:27:07 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.313 2020/09/14 16:33:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.312 2020/09/14 16:27:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.313 2020/09/14 16:33:07 rillig Exp $");
 
 /* types and constants */
 
@@ -1130,7 +1130,6 @@ static void
 ParseDoDependency(char *line)
 {
     char  	   *cp;		/* our current position */
-    GNode 	   *gn = NULL;	/* a general purpose temporary node */
     int             op;		/* the operator on the line */
     char            savec;	/* a place to save a character */
     Lst    	    paths;   	/* List of search paths to alter when parsing
@@ -1290,19 +1289,21 @@ ParseDoDependency(char *line)
 		case End:
 		case Stale:
 		case dotError:
-		case Interrupt:
-		    gn = Targ_FindNode(line, TARG_CREATE);
+		case Interrupt: {
+		    GNode *gn = Targ_FindNode(line, TARG_CREATE);
 		    if (doing_depend)
 			ParseMark(gn);
 		    gn->type |= OP_NOTMAIN|OP_SPECIAL;
 		    Lst_Append(targets, gn);
 		    break;
-		case Default:
-		    gn = Targ_NewGN(".DEFAULT");
-		    gn->type |= (OP_NOTMAIN|OP_TRANSFORM);
+		}
+		case Default: {
+		    GNode *gn = Targ_NewGN(".DEFAULT");
+		    gn->type |= OP_NOTMAIN|OP_TRANSFORM;
 		    Lst_Append(targets, gn);
 		    DEFAULT = gn;
 		    break;
+		}
 		case DeleteOnError:
 		    deleteOnError = TRUE;
 		    break;
@@ -1371,12 +1372,9 @@ ParseDoDependency(char *line)
 
 	    while(!Lst_IsEmpty(curTargs)) {
 		char *targName = Lst_Dequeue(curTargs);
-
-		if (!Suff_IsTransform (targName)) {
-		    gn = Targ_FindNode(targName, TARG_CREATE);
-		} else {
-		    gn = Suff_AddTransform(targName);
-		}
+		GNode *gn = Suff_IsTransform(targName)
+			    ? Suff_AddTransform(targName)
+			    : Targ_FindNode(targName, TARG_CREATE);
 		if (doing_depend)
 		    ParseMark(gn);
 
@@ -1651,7 +1649,7 @@ ParseDoDependency(char *line)
 		}
 
 		while (!Lst_IsEmpty(sources)) {
-		    gn = Lst_Dequeue(sources);
+		    GNode *gn = Lst_Dequeue(sources);
 		    ParseDoSrc(tOp, gn->name);
 		}
 		Lst_Free(sources);
