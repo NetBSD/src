@@ -1,6 +1,6 @@
 /* archive file definition for GNU software
 
-   Copyright (C) 2001-2017 Free Software Foundation, Inc.
+   Copyright (C) 2001-2019 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -28,7 +28,6 @@
    compatible with existing BSDish archives. */
 
 #define ARMAG  "!<arch>\012"	/* For COFF and a.out archives.  */
-#define ARMAGB "!<bout>\012"	/* For b.out archives.  */
 #define ARMAGT "!<thin>\012"	/* For thin archives.  */
 #define SARMAG 8
 #define ARFMAG "`\012"

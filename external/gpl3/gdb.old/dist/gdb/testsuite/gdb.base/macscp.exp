@@ -1,5 +1,5 @@
 # Test macro scoping.
-# Copyright 2002-2017 Free Software Foundation, Inc.
+# Copyright 2002-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ set objfile [standard_output_file ${testfile}.o]
 set options { debug additional_flags=-DFROM_COMMANDLINE=ARG}
 
 get_compiler_info
-if [test_compiler_info gcc*] {
+if { [test_compiler_info "gcc-*"] || [test_compiler_info "clang-*"] } {
     lappend options additional_flags=-g3
 }
 
@@ -620,6 +620,18 @@ gdb_test_no_output "macro define va_gnu(args...) varfunc (fixedarg, args)" \
 gdb_test_no_output "macro define va2_gnu(args...) varfunc (fixedarg, ## args)" \
   "define fourth varargs helper"
 
+gdb_test_no_output \
+    "macro define va3_cxx2a(x, ...) varfunc (x __VA_OPT__(,) __VA_ARGS__)" \
+    "define fifth varargs helper"
+
+gdb_test_no_output \
+    "macro define va4_cxx2a(x, ...) varfunc (x __VA_OPT__(, __VA_ARGS__))" \
+    "define sixth varargs helper"
+
+gdb_test_no_output \
+    "macro define va5_cxx2a(x, ...) varfunc (x __VA_OPT__(,) __VA_OPT__(__VA_ARGS__))" \
+    "define seventh varargs helper"
+
 gdb_test "macro expand va_c99(one, two, three)" \
   "expands to: *varfunc \\(fixedarg, *one, two, three\\)" \
   "c99 varargs expansion"
@@ -643,6 +655,58 @@ gdb_test "macro expand va_gnu()" \
 gdb_test "macro expand va2_gnu()" \
   "expands to: *varfunc \\(fixedarg\\)" \
   "gnu varargs expansion special splicing without an argument"
+
+gdb_test "macro expand va3_cxx2a(23)" \
+    "expands to: *varfunc \\(23 \\)" \
+    "C++2a __VA_OPT__ handling without variable argument"
+
+gdb_test "macro expand va3_cxx2a(23, 24, 25)" \
+    "expands to: *varfunc \\(23, 24, 25\\)" \
+    "C++2a __VA_OPT__ handling with variable argument"
+
+gdb_test "macro expand va4_cxx2a(23, 24, 25)" \
+    "expands to: *varfunc \\(23, 24, 25\\)" \
+    "C++2a __VA_OPT__ conditional __VA_ARGS__ handling with variable argument"
+
+gdb_test "macro expand va4_cxx2a(23)" \
+    "expands to: *varfunc \\(23\\)" \
+    "C++2a __VA_OPT__ conditional __VA_ARGS__ handling without variable argument"
+
+gdb_test "macro expand va5_cxx2a(23, 24, 25)" \
+    "expands to: *varfunc \\(23,24, 25\\)" \
+    "C++2a double __VA_OPT__ conditional __VA_ARGS__ handling with variable argument"
+
+gdb_test "macro expand va5_cxx2a(23)" \
+    "expands to: *varfunc \\(23\\)" \
+    "C++2a double __VA_OPT__ conditional __VA_ARGS__ handling without variable argument"
+
+gdb_test_no_output \
+    "macro define badopt1(x, ...) __VA_OPT__) x" \
+    "define first invalid varargs helper"
+gdb_test "macro expand badopt1(5)" \
+    "__VA_OPT__ must be followed by an open parenthesis" \
+    "__VA_OPT__ without open paren"
+
+gdb_test_no_output \
+    "macro define badopt2(x, ...) __VA_OPT__(__VA_OPT__(,)) x" \
+    "define second invalid varargs helper"
+gdb_test "macro expand badopt2(5)" \
+    "__VA_OPT__ cannot appear inside __VA_OPT__" \
+    "__VA_OPT__ inside __VA_OPT__"
+
+gdb_test_no_output \
+    "macro define badopt3(x) __VA_OPT__" \
+    "define third invalid varargs helper"
+gdb_test "macro expand badopt3(5)" \
+    "__VA_OPT__ is only valid in a variadic macro" \
+    "__VA_OPT__ not in variadic macro"
+
+gdb_test_no_output \
+    "macro define badopt4(x, ...) __VA_OPT__(x" \
+    "define fourth invalid varargs helper"
+gdb_test "macro expand badopt4(5)" \
+    "Unterminated __VA_OPT__" \
+    "__VA_OPT__ without closing paren"
 
 # Stringification tests.
 

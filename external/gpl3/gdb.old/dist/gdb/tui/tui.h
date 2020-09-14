@@ -1,6 +1,6 @@
 /* External/Public TUI Header File.
 
-   Copyright (C) 1998-2017 Free Software Foundation, Inc.
+   Copyright (C) 1998-2019 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -19,8 +19,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TUI_H
-#define TUI_H
+#ifndef TUI_TUI_H
+#define TUI_TUI_H
 
 struct ui_file;
 
@@ -96,4 +96,4 @@ extern void tui_show_source (const char *fullname, int line);
 /* tui-layout.c */
 extern enum tui_status tui_set_layout_by_name (const char *);
 
-#endif
+#endif /* TUI_TUI_H */

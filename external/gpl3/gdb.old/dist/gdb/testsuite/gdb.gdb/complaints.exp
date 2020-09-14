@@ -1,4 +1,4 @@
-# Copyright 2002-2017 Free Software Foundation, Inc.
+# Copyright 2002-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -57,71 +57,22 @@ proc test_initial_complaints { } {
     # Unsupress complaints
     gdb_test "set stop_whining = 2"
 
-    # Prime the system
-    gdb_test_stdio "call complaint (&symfile_complaints, \"Register a complaint\")" \
-	    "During symbol reading, Register a complaint."
+    gdb_test_no_output "set var \$cstr = \"Register a complaint\""
 
-    # Check that the complaint was inserted and where
-    gdb_test "print symfile_complaints->root->fmt" \
-	    ".\[0-9\]+ =.*\"Register a complaint\""
+    # Prime the system
+    gdb_test_stdio \
+	"call complaint_internal (\$cstr)" \
+	"During symbol reading: Register a complaint"
 
     # Re-issue the first message #1
-    gdb_test_stdio "call complaint (&symfile_complaints, symfile_complaints->root->fmt)" \
-	    "During symbol reading, Register a complaint."
-
-    # Check that there is only one thing in the list.  How the boolean
-    # result is output depends on whether GDB is built as a C or C++
-    # program.
-    gdb_test "print symfile_complaints->root->next == &complaint_sentinel" \
-	    ".\[0-9\]+ = \(1|true\)" "list has one entry"
+    gdb_test_stdio \
+	"call complaint_internal (\$cstr)" \
+	"During symbol reading: Register a complaint"
 
     # Add a second complaint, expect it
-    gdb_test_stdio "call complaint (&symfile_complaints, \"Testing! Testing! Testing!\")" \
-	    "During symbol reading, Testing. Testing. Testing.."
-
-    return 0
-}
-
-proc test_serial_complaints { } {
-    gdb_test_exact "call clear_complaints (&symfile_complaints, 1, 0)" "" "serial start"
-
-    # Prime the system
-    test_complaint "call complaint (&symfile_complaints, \"serial line 1\")" \
-	"During symbol reading...serial line 1..." \
-	"serial line 1"
-
-    # Add a second complaint, expect it
-    test_complaint "call complaint (&symfile_complaints, \"serial line 2\")" \
-	"serial line 2..." \
-	"serial line 2"
-
-    gdb_test_stdio "call clear_complaints (&symfile_complaints, 1, 0)" \
-	"\r\n" \
-	"" \
-	"serial end"
-
-    return 0
-}
-
-# For short complaints, all are the same
-
-proc test_short_complaints { } {
-    gdb_test_exact "call clear_complaints (&symfile_complaints, 1, 1)" "" "short start"
-
-    # Prime the system
-    test_complaint "call complaint (&symfile_complaints, \"short line 1\")" \
-	"short line 1..." \
-	"short line 1"
-
-    # Add a second complaint, expect it
-    test_complaint "call complaint (&symfile_complaints, \"short line 2\")" \
-	"short line 2..." \
-	"short line 2"
-
-    gdb_test_stdio "call clear_complaints (&symfile_complaints, 1, 0)" \
-	"\r\n" \
-	"" \
-	"short end"
+    gdb_test_stdio \
+	"call complaint_internal (\"Testing! Testing! Testing!\")" \
+	"During symbol reading: Testing. Testing. Testing."
 
     return 0
 }
@@ -152,21 +103,13 @@ proc test_empty_complaint { cmd msg } {
 
 proc test_empty_complaints { } {
 
-    test_empty_complaint "call clear_complaints(&symfile_complaints,0,0)" \
-	    "empty non-verbose non-noisy clear"
-    test_empty_complaint "call clear_complaints(&symfile_complaints,1,0)" \
-	    "empty verbose non-noisy clear"
-    test_empty_complaint "call clear_complaints(&symfile_complaints,1,1)" \
-	    "empty verbose noisy clear"
-    test_empty_complaint "call clear_complaints(&symfile_complaints,0,1)" \
-	    "empty non-verbose noisy clear"
+    test_empty_complaint "call clear_complaints()" \
+	    "clear complaints"
 
     return 0
 }
 
 do_self_tests captured_command_loop {
     test_initial_complaints
-    test_serial_complaints
-    test_short_complaints
     test_empty_complaints
 }

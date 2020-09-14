@@ -1,4 +1,4 @@
-#   Copyright 2014-2017 Free Software Foundation, Inc.
+#   Copyright 2014-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 load_lib gdbserver-support.exp
 
 # The test relies on "detach/attach".
-if { [target_info exists use_gdb_stub] } then {
+if { [use_gdb_stub] } then {
     return 0
 }
 
@@ -53,7 +53,7 @@ proc dprintf_detach_test { breakpoint_always_inserted dprintf_style disconnected
 	# Get PID of test program.
 	set inferior_pid -1
 	set test "get inferior process ID"
-	gdb_test_multiple "call getpid ()" $test {
+	gdb_test_multiple "call (int) getpid ()" $test {
 	    -re ".* = ($decimal).*$gdb_prompt $" {
 		set inferior_pid $expect_out(1,string)
 		pass $test

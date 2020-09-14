@@ -1,3 +1,63 @@
+2019-01-26  Tom Tromey  <tom@tromey.com>
+
+	* Make-common.in (version.c): Use sim's create-version.sh.
+	* create-version.sh: New file.
+
+2019-01-16  Pavel I. Kryukov  <kryukov@frtk.ru>
+
+	* sim-arange.c (DEFINE_INLINE_P, DEFINE_NON_INLINE_P): Remove.
+
+2019-01-15  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* sim-arange.h (SIM_ARANGE_INLINE): Change EXTERN to extern.
+
+2018-12-18  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* sim-syscall.c (sim_syscall_multi): Don't update sc->errcode at
+	this point, it should have already been set in cb_syscall.
+
+2018-10-05  Stafford Horne  <shorne@gmail.com>
+
+	* cgen-ops.h (ADDCFDI): New function, add carry flag DI variant.
+	(ADDOFDI): New function, add overflow flag DI variant.
+	(SUBCFDI): New function, subtract carry flag DI variant.
+	(SUBOFDI): New function, subtract overflow flag DI variant.
+
+2018-09-28  Компан, Вячеслав Олегович  <kompan.vo@phystech.edu>
+
+	* sim-core.h (sim_cpu_core): Rename cpu_core.xor to
+	cpu_core.byte_xor.
+	* sim-core.c (sim_core_set_xor): Likewise.
+	(sim_core_xor_read_buffer): Likewise.
+	(sim_core_xor_write_buffer): Likewise.
+
+2017-12-12  Peter Gavin  <pgavin@gmail.com>
+	    Stafford Horne  <shorne@gmail.com>
+
+	* cgen-ops.h (MUL2OFSI): New function, 2's complement overflow
+	flag.
+	(MUL1OFSI): New function, 1's complement overflow flag.
+
+2017-12-12  Peter Gavin  <pgavin@gmail.com>
+	    Stafford Horne <shorne@gmail.com>
+
+	* cgen-accfp.c (remsf, remdf): New function.
+	(cgen_init_accurate_fpu): Add remsf and remdf.
+	* cgen-fpu.h (cgen_fp_ops): Add remsf, remdf, remxf and remtf.
+	* sim-fpu.c (sim_fpu_rem): New function.
+	* sim-fpu.h (sim_fpu_status_invalid_irx): New enum.
+	(sim_fpu_rem): New function.
+	(sim_fpu_print_status): Add case for sim_fpu_status_invalid_irx.
+
+2017-09-06  John Baldwin  <jhb@FreeBSD.org>
+
+	* acinclude.m4 (SIM_AC_COMMON): Honor existing CC_FOR_BUILD in
+	environment.
+
+2017-05-24  Yao Qi  <yao.qi@linaro.org>
+
+	* sim-trace.c (trace_disasm): Caller update.
+
 2016-08-15  Mike Frysinger  <vapier@gentoo.org>
 
 	* sim-base.h (sim_state_base): Add prog_syms_count.

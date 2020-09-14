@@ -1,3 +1,11 @@
+2017-09-06  John Baldwin  <jhb@FreeBSD.org>
+
+	* configure: Regenerate.
+
+2017-05-30  Andrea Corallo  <andrea_corallo@yahoo.it>
+
+	* interp.c: (target_big_endian): target endianess recognition fix.
+
 2016-01-10  Mike Frysinger  <vapier@gentoo.org>
 
 	* config.in, configure: Regenerate.

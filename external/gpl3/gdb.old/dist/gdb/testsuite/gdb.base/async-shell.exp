@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2017 Free Software Foundation, Inc.
+# Copyright (C) 2011-2019 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ if { ![support_displaced_stepping] } {
 }
 
 # The testfile uses "run".  The real bug happened only for ![is_remote target].
-if [target_info exists use_gdb_stub] {
+if [use_gdb_stub] {
     return 0
 }
 

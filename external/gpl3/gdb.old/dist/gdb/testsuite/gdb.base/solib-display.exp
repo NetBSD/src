@@ -1,4 +1,4 @@
-# Copyright 2009-2017 Free Software Foundation, Inc.
+# Copyright 2009-2019 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -94,9 +94,9 @@ foreach libsepdebug {NO IN SEP} { with_test_prefix "$libsepdebug" {
       return 0
     }
 
-    gdb_test "display a_global" "1: a_global = 41"
-    gdb_test "display b_global" "2: b_global = 42"
-    gdb_test "display c_global" "3: c_global = 43"
+    gdb_test "display (int) a_global" "1: \\(int\\) a_global = 41"
+    gdb_test "display (int) b_global" "2: \\(int\\) b_global = 42"
+    gdb_test "display (int) c_global" "3: \\(int\\) c_global = 43"
 
     if { [gdb_start_cmd] < 0 } {
 	fail "can't run to main (2)"
@@ -104,9 +104,9 @@ foreach libsepdebug {NO IN SEP} { with_test_prefix "$libsepdebug" {
     }
 
     gdb_test "" [multi_line \
-		     "1: a_global = 41" \
-		     "2: b_global = 42"  \
-		     "3: c_global = 43" \
+		     "1: \\(int\\) a_global = 41" \
+		     "2: \\(int\\) b_global = 42"  \
+		     "3: \\(int\\) c_global = 43" \
 		    ] "after rerun"
 
     # Now rebuild the library without b_global
@@ -132,9 +132,9 @@ foreach libsepdebug {NO IN SEP} { with_test_prefix "$libsepdebug" {
 
 
     gdb_test "" [multi_line \
-		     "1: a_global = 41" \
+		     "1: \\(int\\) a_global = 41" \
 		     "warning: .*b_global.*"  \
-		     "3: c_global = 43" \
+		     "3: \\(int\\) c_global = 43" \
 		    ] "after rerun (2)"
 
     # Now verify that displays which are not in the shared library

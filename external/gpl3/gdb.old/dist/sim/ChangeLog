@@ -1,3 +1,111 @@
+2019-02-13  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* MAINTAINERS: Add Andrew Burgess as global maintainer.
+
+2019-01-03  Pavel I. Kryukov  <kryukov@frtk.ru>
+
+	* sim-base.h: Add 'extern C' if header is compiled with C++.
+
+2018-12-06  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* common/acinclude.m4 (enable-cgen-maint): Support passing path to
+	cgen source tree.
+	* cris/configure: Regenerate.
+	* frv/configure: Regenerate.
+	* iq2000/configure: Regenerate.
+	* lm32/configure: Regenerate.
+	* m32r/configure: Regenerate.
+	* or1k/configure: Regenerate.
+	* sh64/configure: Regenerate.
+
+2018-10-05  Stafford Horne  <shorne@gmail.com>
+
+	* or1k/cpu.h: Regenerate.
+	* or1k/decode.c: Regenerate.
+	* or1k/decode.h: Regenerate.
+	* or1k/model.c: Regenerate.
+	* or1k/sem-switch.c: Regenerate.
+	* or1k/sem.c: Regenerate:
+
+2018-07-20  Maciej W. Rozycki  <macro@mips.com>
+
+	* MAINTAINERS: Update my e-mail address, downgrade to MIPS I-IV
+	ISA maintenance.
+
+2018-07-19  DJ Delorie  <dj@redhat.com>
+
+	* MAINTAINERS (rl78, m32c, rx, v850): Remove myself as maintainer.
+
+2018-07-14  Stafford Horne  <shorne@gmail.com>
+
+	* MAINTAINERS (or1k): Add myself as or1k maintainer.
+
+2018-06-19  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* All configure.ac: Remove AC_PREREQ.
+	* All configure: Re-generate.
+
+2018-01-22  Maciej W. Rozycki  <macro@mips.com>
+
+	* MAINTAINERS: Update my company e-mail address.
+
+2017-12-12  Stafford Horne  <shorne@gmail.com>
+	    Peter Gavin  <pgavin@gmail.com>
+
+	* configure: Regenerated.
+	* or1k/aclocal.m4: Generated.
+	* or1k/config.in: Generated.
+	* or1k/configure: Generated.
+
+2017-12-12  Stafford Horne  <shorne@gmail.com>
+	    Peter Gavin  <pgavin@gmail.com>
+
+	* or1k/arch.c: Generated.
+	* or1k/arch.h: Generated.
+	* or1k/cpu.c: Generated.
+	* or1k/cpu.h: Generated.
+	* or1k/cpuall.h: Generated.
+	* or1k/decode.c: Generated.
+	* or1k/decode.h: Generated.
+	* or1k/model.c: Generated.
+	* or1k/sem-switch.c: Generated.
+	* or1k/sem.c: Generated.
+
+2017-12-12  Stafford Horne  <shorne@gmail.com>
+	    Peter Gavin  <pgavin@gmail.com>
+
+	* configure.tgt: Add or1k sim.
+	* or1k/README: New file.
+	* or1k/Makefile.in: New file.
+	* or1k/configure.ac: New file.
+	* or1k/mloop.in: New file.
+	* or1k/or1k-sim.h: New file.
+	* or1k/or1k.c: New file.
+	* or1k/sim-if.c: New file.
+	* or1k/sim-main.h: New file.
+	* or1k/traps.c: New file.
+
+2017-11-01  James Bowman  <james.bowman@ftdichip.com>
+
+	* ft32/interp.c (step_once): Add ft32 shortcode decoder.
+
+2017-10-12  James Bowman  <james.bowman@ftdichip.com>
+
+	* ft32/interp.c (step_once): Replace FT32_FLD_K8 with K15.
+
+2017-10-12  James Bowman  <james.bowman@ftdichip.com>
+
+	* MAINTAINERS (ft32): Add myself.
+
+2017-10-03  Jim Wilson  <wilson@tuliptree.org>
+
+	* MAINTAINERS (aarch64): Update my email address.
+
+2017-09-06  John Baldwin  <jhb@FreeBSD.org>
+
+	* configure.ac: Honor existing CC_FOR_BUILD in environment.
+	* configure: Regenerate.
+
 2017-02-14  Jim Wilson  <jim.wilson@linaro.org>
 
 	* MAINTAINTERS (aarch64): Add myself.

@@ -1,6 +1,6 @@
 /* Code to go along with tests in breakpoint.exp.
    
-   Copyright 2004-2017 Free Software Foundation, Inc.
+   Copyright 2004-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,7 +28,7 @@ public:
     return 1; // conditional breakpoint in method
   }
 
-  int bar ()
+  void bar ()
   {
     for (int i = 0; i < 1; ++i)
       {

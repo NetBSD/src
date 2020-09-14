@@ -1,4 +1,4 @@
-# Copyright 2013-2017 Free Software Foundation, Inc.
+# Copyright 2013-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -65,7 +65,7 @@ proc test_linux_v2 {} {
 
     set test "Linux v2"
     gdb_test_multiple "info reg system_call" "$test" {
-	-re "system_call\[ \t\]+0x\[0-9a-z\]+\t.*\r\n$gdb_prompt $" {
+	-re "system_call\[ \t\]+0x\[0-9a-z\]+\[ \t\]+.*\r\n$gdb_prompt $" {
 	    pass "$test"
 	    return 1
 	}
@@ -79,7 +79,7 @@ proc test_linux_v2 {} {
 
 proc test_register_valid {reg variant} {
     gdb_test "info reg $reg" \
-	"$reg\[ \t\]+0x\[0-9a-z\]+\t.*" \
+	"$reg\[ \t\]+0x\[0-9a-z\]+\[ \t\]+.*" \
 	"'$reg' exists ($variant)"
 }
 

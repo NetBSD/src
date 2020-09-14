@@ -1,5 +1,4 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_PREREQ(2.59)dnl
 AC_INIT(table.h)
 sinclude(../common/acinclude.m4)
 

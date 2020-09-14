@@ -1,4 +1,4 @@
-# Copyright 2014-2017 Free Software Foundation, Inc.
+# Copyright 2014-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@ standard_testfile
 gdb_exit
 
 # Inlined default_gdb_start.
-set use_gdb_stub [target_info exists use_gdb_stub]
+set use_gdb_stub [use_gdb_stub]
 set res [remote_spawn host "$GDB $INTERNAL_GDBFLAGS $GDBFLAGS [host_info gdb_opts] -statistics"]
 if { $res < 0 || $res == "" } {
     perror "Spawning $GDB failed."

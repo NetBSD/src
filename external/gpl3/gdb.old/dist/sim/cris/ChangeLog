@@ -1,3 +1,12 @@
+2018-12-06  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* Makefile.in: Replace uses of CGEN_CPU_DIR with CPU_DIR, and
+	remove the definition of CGEN_CPU_DIR.
+
+2017-09-06  John Baldwin  <jhb@FreeBSD.org>
+
+	* configure: Regenerate.
+
 2017-02-13  Mike Frysinger  <vapier@gentoo.org>
 
 	* decodev10.c (crisv10f_init_idesc_table): Use ARRAY_SIZE.
