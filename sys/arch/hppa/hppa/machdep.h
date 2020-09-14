@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.18 2019/04/15 20:45:08 skrll Exp $	*/
+/*	$NetBSD: machdep.h,v 1.19 2020/09/14 16:11:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -95,11 +95,15 @@ void hppa_ktext_stw(vaddr_t, int);
 void hppa_ktext_stb(vaddr_t, char);
 
 /* Machine check handling. */
-extern u_int os_hpmc;
+extern u_int os_hpmc[8];
 extern u_int os_hpmc_cont;
 extern u_int os_hpmc_cont_end;
+extern u_int os_hpmc_checksum[1];
+
 int os_toc(void);
 extern u_int os_toc_end;
+extern u_int os_toc_checksum[1];
+
 void hppa_machine_check(int);
 
 /* BTLB handling. */
