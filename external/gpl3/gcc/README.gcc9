@@ -1,4 +1,4 @@
-$NetBSD: README.gcc9,v 1.11 2020/09/13 23:32:04 mrg Exp $
+$NetBSD: README.gcc9,v 1.12 2020/09/14 01:19:50 mrg Exp $
 
 new stuff:
 	cc1objcplus
@@ -80,7 +80,6 @@ architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 [3]: consult cpu/platform table for full data
 [6]: /usr/src/sys/compat/common/compat_util.c:116:1: internal compiler error: in rs6000_pltseq_template, at config/rs6000/rs6000.c:21977
 [8]: prep floppies overflow; need to find if they are size limited
-[9]: evbarmv7-eb has dtb sets issues
 [10]: tests in lib/libc/sys are skipped; see port-alpha/55652
 [11]: at least there's no regression in kernel and lib/libc/{gen,sys}
 
@@ -96,7 +95,7 @@ earm:		 		 	 	y		y		 		y		 		 		y
 earmhf:		 		 	 	y		y		 		 		 		 		 
 earmv6:		 		 	 	y		y
 earmv6hf:	 		 	 	y		y
-earmv7:		 		 	 	y[9]		y
+earmv7:		 		 	 	y		y
 earmv7hf:	 		 	 	y		y
 
 		amiga		atari	cesfic	hp300		luna68k		mac68k		mvme68k		news68k		next68k		sun3	x68k
