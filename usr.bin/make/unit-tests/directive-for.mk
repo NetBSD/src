@@ -1,4 +1,4 @@
-# $NetBSD: directive-for.mk,v 1.2 2020/09/02 22:58:59 rillig Exp $
+# $NetBSD: directive-for.mk,v 1.3 2020/09/14 18:49:24 rillig Exp $
 #
 # Tests for the .for directive.
 
@@ -92,6 +92,14 @@ EXPANSION${plus}=	value
 .if ${EXPANSION+} != "value"
 .  error This must be a make from before 2009.
 .endif
+
+# When the outer .for loop is expanded, it sees the expression ${i} and
+# expands it.  The inner loop then has nothing more to expand.
+.for i in outer
+.  for i in inner
+.    info ${i}
+.  endfor
+.endfor
 
 all:
 	@:;
