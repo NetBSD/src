@@ -1,5 +1,5 @@
 /* BFD COFF object file private structure.
-   Copyright (C) 1990-2017 Free Software Foundation, Inc.
+   Copyright (C) 1990-2019 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -19,6 +19,9 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
+#ifndef _LIBCOFF_H
+#define _LIBCOFF_H 1
+
 #include "bfdlink.h"
 #include "coff-bfd.h"
 
@@ -29,7 +32,7 @@ extern "C" {
 /* Object file tdata; access macros.  */
 
 #define coff_data(bfd)		      ((bfd)->tdata.coff_obj_data)
-#define obj_pe(bfd)                   (coff_data (bfd)->pe)
+#define obj_pe(bfd)		      (coff_data (bfd)->pe)
 #define obj_symbols(bfd)	      (coff_data (bfd)->symbols)
 #define	obj_sym_filepos(bfd)	      (coff_data (bfd)->sym_filepos)
 #define obj_relocbase(bfd)	      (coff_data (bfd)->relocbase)
@@ -267,11 +270,11 @@ struct coff_link_hash_table
 
 struct coff_reloc_cookie
 {
-  struct internal_reloc *         rels;
-  struct internal_reloc *         rel;
-  struct internal_reloc *         relend;
-  struct coff_symbol_struct *     symbols;	/* Symtab for input bfd.  */
-  bfd *                           abfd;
+  struct internal_reloc *	  rels;
+  struct internal_reloc *	  rel;
+  struct internal_reloc *	  relend;
+  struct coff_symbol_struct *	  symbols;	/* Symtab for input bfd.  */
+  bfd *				  abfd;
   struct coff_link_hash_entry **  sym_hashes;
 };
 

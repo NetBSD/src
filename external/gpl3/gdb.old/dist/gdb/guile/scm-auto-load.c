@@ -1,6 +1,6 @@
 /* GDB routines for supporting auto-loaded Guile scripts.
 
-   Copyright (C) 2010-2017 Free Software Foundation, Inc.
+   Copyright (C) 2010-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -53,7 +53,7 @@ gdbscm_auto_load_enabled (const struct extension_language_defn *extlang)
 /* Wrapper for "info auto-load guile-scripts".  */
 
 static void
-info_auto_load_guile_scripts (char *pattern, int from_tty)
+info_auto_load_guile_scripts (const char *pattern, int from_tty)
 {
   auto_load_info_scripts (pattern, from_tty, &extension_language_guile);
 }

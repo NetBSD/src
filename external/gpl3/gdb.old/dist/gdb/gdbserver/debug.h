@@ -1,5 +1,5 @@
 /* Debugging routines for the remote server for GDB.
-   Copyright (C) 2014-2017 Free Software Foundation, Inc.
+   Copyright (C) 2014-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef DEBUG_H
-#define DEBUG_H
+#ifndef GDBSERVER_DEBUG_H
+#define GDBSERVER_DEBUG_H
 
 /* We declare debug format variables here, and debug_threads but no other
    debug content variables (e.g., not remote_debug) because while this file
@@ -51,4 +51,4 @@ void do_debug_exit (const char *function_name);
   do { } while (0)
 #endif
 
-#endif /* DEBUG_H */
+#endif /* GDBSERVER_DEBUG_H */

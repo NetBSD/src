@@ -1,5 +1,5 @@
 /* Definitions used by the GDB event loop.
-   Copyright (C) 1999-2017 Free Software Foundation, Inc.
+   Copyright (C) 1999-2019 Free Software Foundation, Inc.
    Written by Elena Zannoni <ezannoni@cygnus.com> of Cygnus Solutions.
 
    This file is part of GDB.
@@ -16,6 +16,9 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+#ifndef EVENT_LOOP_H
+#define EVENT_LOOP_H
 
 /* An event loop listens for events from multiple event sources.  When
    an event arrives, it is queued and processed by calling the
@@ -66,8 +69,7 @@
    infinite loop.
 
    Corollary tasks are the creation and deletion of event sources.  */
-#ifndef _EVENT_LOOP_H_
-#define _EVENT_LOOP_H_
+
 typedef void *gdb_client_data;
 struct async_signal_handler;
 struct async_event_handler;
@@ -128,4 +130,5 @@ extern void mark_async_event_handler (struct async_event_handler *handler);
 extern void clear_async_event_handler (struct async_event_handler *handler);
 
 extern void initialize_async_signal_handlers (void);
-#endif
+
+#endif /* EVENT_LOOP_H */

@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2017 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -105,7 +105,7 @@ static int stack_cache_enabled = 1;
    except cleanliness.  */
 
 static void
-set_stack_cache (char *args, int from_tty, struct cmd_list_element *c)
+set_stack_cache (const char *args, int from_tty, struct cmd_list_element *c)
 {
   if (stack_cache_enabled != stack_cache_enabled_1)
     target_dcache_invalidate ();
@@ -143,7 +143,7 @@ static int code_cache_enabled = 1;
    except cleanliness.  */
 
 static void
-set_code_cache (char *args, int from_tty, struct cmd_list_element *c)
+set_code_cache (const char *args, int from_tty, struct cmd_list_element *c)
 {
   if (code_cache_enabled != code_cache_enabled_1)
     target_dcache_invalidate ();
@@ -167,9 +167,6 @@ code_cache_enabled_p (void)
 {
   return code_cache_enabled;
 }
-
-/* -Wmissing-prototypes */
-extern initialize_file_ftype _initialize_target_dcache;
 
 void
 _initialize_target_dcache (void)

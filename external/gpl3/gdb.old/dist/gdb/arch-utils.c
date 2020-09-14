@@ -1,6 +1,6 @@
 /* Dynamic architecture support for GDB, the GNU debugger.
 
-   Copyright (C) 1998-2017 Free Software Foundation, Inc.
+   Copyright (C) 1998-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,6 @@
 #include "defs.h"
 
 #include "arch-utils.h"
-#include "buildsym.h"
 #include "gdbcmd.h"
 #include "inferior.h"		/* enum CALL_DUMMY_LOCATION et al.  */
 #include "infrun.h"
@@ -33,39 +32,11 @@
 #include "language.h"
 #include "symtab.h"
 
-#include "version.h"
+#include "common/version.h"
 
 #include "floatformat.h"
 
-
-struct displaced_step_closure *
-simple_displaced_step_copy_insn (struct gdbarch *gdbarch,
-                                 CORE_ADDR from, CORE_ADDR to,
-                                 struct regcache *regs)
-{
-  size_t len = gdbarch_max_insn_length (gdbarch);
-  gdb_byte *buf = (gdb_byte *) xmalloc (len);
-
-  read_memory (from, buf, len);
-  write_memory (to, buf, len);
-
-  if (debug_displaced)
-    {
-      fprintf_unfiltered (gdb_stdlog, "displaced: copy %s->%s: ",
-                          paddress (gdbarch, from), paddress (gdbarch, to));
-      displaced_step_dump_bytes (gdb_stdlog, buf, len);
-    }
-
-  return (struct displaced_step_closure *) buf;
-}
-
-
-void
-simple_displaced_step_free_closure (struct gdbarch *gdbarch,
-                                    struct displaced_step_closure *closure)
-{
-  xfree (closure);
-}
+#include "dis-asm.h"
 
 int
 default_displaced_step_hw_singlestep (struct gdbarch *gdbarch,
@@ -202,6 +173,15 @@ CORE_ADDR
 default_adjust_dwarf2_line (CORE_ADDR addr, int rel)
 {
   return addr;
+}
+
+/* See arch-utils.h.  */
+
+bool
+default_execute_dwarf_cfa_vendor_op (struct gdbarch *gdbarch, gdb_byte op,
+				     struct dwarf2_frame_state *fs)
+{
+  return false;
 }
 
 int
@@ -351,7 +331,7 @@ show_endian (struct ui_file *file, int from_tty, struct cmd_list_element *c,
 }
 
 static void
-set_endian (char *ignore_args, int from_tty, struct cmd_list_element *c)
+set_endian (const char *ignore_args, int from_tty, struct cmd_list_element *c)
 {
   struct gdbarch_info info;
 
@@ -509,7 +489,8 @@ show_architecture (struct ui_file *file, int from_tty,
    argument.  */
 
 static void
-set_architecture (char *ignore_args, int from_tty, struct cmd_list_element *c)
+set_architecture (const char *ignore_args,
+		  int from_tty, struct cmd_list_element *c)
 {
   struct gdbarch_info info;
 
@@ -745,7 +726,6 @@ gdbarch_info_init (struct gdbarch_info *info)
   memset (info, 0, sizeof (struct gdbarch_info));
   info->byte_order = BFD_ENDIAN_UNKNOWN;
   info->byte_order_for_code = info->byte_order;
-  info->osabi = GDB_OSABI_UNINITIALIZED;
 }
 
 /* Similar to init, but this time fill in the blanks.  Information is
@@ -787,12 +767,15 @@ gdbarch_info_fill (struct gdbarch_info *info)
   if (info->byte_order == BFD_ENDIAN_UNKNOWN)
     info->byte_order = default_byte_order;
   info->byte_order_for_code = info->byte_order;
+  /* Wire the default to the last selected byte order.  */
+  default_byte_order = info->byte_order;
 
   /* "(gdb) set osabi ...".  Handled by gdbarch_lookup_osabi.  */
   /* From the manual override, or from file.  */
-  if (info->osabi == GDB_OSABI_UNINITIALIZED)
+  if (info->osabi == GDB_OSABI_UNKNOWN)
     info->osabi = gdbarch_lookup_osabi (info->abfd);
   /* From the target.  */
+
   if (info->osabi == GDB_OSABI_UNKNOWN && info->target_desc != NULL)
     info->osabi = tdesc_osabi (info->target_desc);
   /* From the configured default.  */
@@ -800,6 +783,9 @@ gdbarch_info_fill (struct gdbarch_info *info)
   if (info->osabi == GDB_OSABI_UNKNOWN)
     info->osabi = GDB_OSABI_DEFAULT;
 #endif
+  /* If we still don't know which osabi to pick, pick none.  */
+  if (info->osabi == GDB_OSABI_UNKNOWN)
+    info->osabi = GDB_OSABI_NONE;
 
   /* Must have at least filled in the architecture.  */
   gdb_assert (info->bfd_arch_info != NULL);
@@ -831,12 +817,12 @@ default_has_shared_address_space (struct gdbarch *gdbarch)
 
 int
 default_fast_tracepoint_valid_at (struct gdbarch *gdbarch, CORE_ADDR addr,
-				  char **msg)
+				  std::string *msg)
 {
   /* We don't know if maybe the target has some way to do fast
      tracepoints that doesn't need gdbarch, so always say yes.  */
   if (msg)
-    *msg = NULL;
+    msg->clear ();
   return 1;
 }
 
@@ -893,7 +879,7 @@ int default_insn_is_jump (struct gdbarch *gdbarch, CORE_ADDR addr)
 void
 default_skip_permanent_breakpoint (struct regcache *regcache)
 {
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch *gdbarch = regcache->arch ();
   CORE_ADDR current_pc = regcache_read_pc (regcache);
   int bp_len;
 
@@ -961,7 +947,19 @@ default_guess_tracepoint_registers (struct gdbarch *gdbarch,
   regs = (gdb_byte *) alloca (register_size (gdbarch, pc_regno));
   store_unsigned_integer (regs, register_size (gdbarch, pc_regno),
 			  gdbarch_byte_order (gdbarch), addr);
-  regcache_raw_supply (regcache, pc_regno, regs);
+  regcache->raw_supply (pc_regno, regs);
+}
+
+int
+default_print_insn (bfd_vma memaddr, disassemble_info *info)
+{
+  disassembler_ftype disassemble_fn;
+
+  disassemble_fn = disassembler (info->arch, info->endian == BFD_ENDIAN_BIG,
+				 info->mach, exec_bfd);
+
+  gdb_assert (disassemble_fn != NULL);
+  return (*disassemble_fn) (memaddr, info);
 }
 
 /* See arch-utils.h.  */
@@ -982,8 +980,21 @@ gdbarch_skip_prologue_noexcept (gdbarch *gdbarch, CORE_ADDR pc) noexcept
   return new_pc;
 }
 
-/* -Wmissing-prototypes */
-extern initialize_file_ftype _initialize_gdbarch_utils;
+/* See arch-utils.h.  */
+
+bool
+default_in_indirect_branch_thunk (gdbarch *gdbarch, CORE_ADDR pc)
+{
+  return false;
+}
+
+/* See arch-utils.h.  */
+
+ULONGEST
+default_type_align (struct gdbarch *gdbarch, struct type *type)
+{
+  return type_length_units (check_typedef (type));
+}
 
 void
 _initialize_gdbarch_utils (void)

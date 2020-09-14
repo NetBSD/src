@@ -1,5 +1,5 @@
 /* GNU/Linux/ARM specific low level interface, for the remote server for GDB.
-   Copyright (C) 1995-2017 Free Software Foundation, Inc.
+   Copyright (C) 1995-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -460,36 +460,22 @@ arm_linux_hw_point_initialize (enum raw_bkpt_type raw_type, CORE_ADDR addr,
 /* Callback to mark a watch-/breakpoint to be updated in all threads of
    the current process.  */
 
-struct update_registers_data
+static void
+update_registers_callback (thread_info *thread, int watch, int i)
 {
-  int watch;
-  int i;
-};
-
-static int
-update_registers_callback (struct inferior_list_entry *entry, void *arg)
-{
-  struct thread_info *thread = (struct thread_info *) entry;
   struct lwp_info *lwp = get_thread_lwp (thread);
-  struct update_registers_data *data = (struct update_registers_data *) arg;
 
-  /* Only update the threads of the current process.  */
-  if (pid_of (thread) == pid_of (current_thread))
-    {
-      /* The actual update is done later just before resuming the lwp,
-         we just mark that the registers need updating.  */
-      if (data->watch)
-	lwp->arch_private->wpts_changed[data->i] = 1;
-      else
-	lwp->arch_private->bpts_changed[data->i] = 1;
+  /* The actual update is done later just before resuming the lwp,
+     we just mark that the registers need updating.  */
+  if (watch)
+    lwp->arch_private->wpts_changed[i] = 1;
+  else
+    lwp->arch_private->bpts_changed[i] = 1;
 
-      /* If the lwp isn't stopped, force it to momentarily pause, so
-         we can update its breakpoint registers.  */
-      if (!lwp->stopped)
-        linux_stop_lwp (lwp);
-    }
-
-  return 0;
+  /* If the lwp isn't stopped, force it to momentarily pause, so
+     we can update its breakpoint registers.  */
+  if (!lwp->stopped)
+    linux_stop_lwp (lwp);
 }
 
 static int
@@ -539,9 +525,14 @@ arm_insert_point (enum raw_bkpt_type type, CORE_ADDR addr,
   for (i = 0; i < count; i++)
     if (!arm_hwbp_control_is_enabled (pts[i].control))
       {
-	struct update_registers_data data = { watch, i };
 	pts[i] = p;
-	find_inferior (&all_threads, update_registers_callback, &data);
+
+	/* Only update the threads of the current process.  */
+	for_each_thread (current_thread->id.pid (), [&] (thread_info *thread)
+	  {
+	    update_registers_callback (thread, watch, i);
+	  });
+
 	return 0;
       }
 
@@ -579,9 +570,14 @@ arm_remove_point (enum raw_bkpt_type type, CORE_ADDR addr,
   for (i = 0; i < count; i++)
     if (arm_linux_hw_breakpoint_equal (&p, pts + i))
       {
-	struct update_registers_data data = { watch, i };
 	pts[i].control = arm_hwbp_control_disable (pts[i].control);
-	find_inferior (&all_threads, update_registers_callback, &data);
+
+	/* Only update the threads of the current process.  */
+	for_each_thread (current_thread->id.pid (), [&] (thread_info *thread)
+	  {
+	    update_registers_callback (thread, watch, i);
+	  });
+
 	return 0;
       }
 
@@ -640,6 +636,14 @@ arm_new_process (void)
   return info;
 }
 
+/* Called when a process is being deleted.  */
+
+static void
+arm_delete_process (struct arch_process_info *info)
+{
+  xfree (info);
+}
+
 /* Called when a new thread is detected.  */
 static void
 arm_new_thread (struct lwp_info *lwp)
@@ -653,6 +657,14 @@ arm_new_thread (struct lwp_info *lwp)
     info->wpts_changed[i] = 1;
 
   lwp->arch_private = info;
+}
+
+/* Function to call when a thread is being deleted.  */
+
+static void
+arm_delete_thread (struct arch_lwp_info *arch_lwp)
+{
+  xfree (arch_lwp);
 }
 
 static void
@@ -691,7 +703,7 @@ arm_new_fork (struct process_info *parent, struct process_info *child)
 
   /* Mark all the hardware breakpoints and watchpoints as changed to
      make sure that the registers will be updated.  */
-  child_lwp = find_lwp_pid (ptid_of (child));
+  child_lwp = find_lwp_pid (ptid_t (child->pid));
   child_lwp_info = child_lwp->arch_private;
   for (i = 0; i < MAX_BPTS; i++)
     child_lwp_info->bpts_changed[i] = 1;
@@ -925,11 +937,10 @@ arm_arch_setup (void)
 
 /* Fetch the next possible PCs after the current instruction executes.  */
 
-static VEC (CORE_ADDR) *
+static std::vector<CORE_ADDR>
 arm_gdbserver_get_next_pcs (struct regcache *regcache)
 {
   struct arm_get_next_pcs next_pcs_ctx;
-  VEC (CORE_ADDR) *next_pcs = NULL;
 
   arm_get_next_pcs_ctor (&next_pcs_ctx,
 			 &get_next_pcs_ops,
@@ -939,9 +950,7 @@ arm_gdbserver_get_next_pcs (struct regcache *regcache)
 			 1,
 			 regcache);
 
-  next_pcs = arm_get_next_pcs (&next_pcs_ctx);
-
-  return next_pcs;
+  return arm_get_next_pcs (&next_pcs_ctx);
 }
 
 /* Support for hardware single step.  */
@@ -1055,7 +1064,9 @@ struct linux_target_ops the_low_target = {
   NULL, /* supply_ptrace_register */
   NULL, /* siginfo_fixup */
   arm_new_process,
+  arm_delete_process,
   arm_new_thread,
+  arm_delete_thread,
   arm_new_fork,
   arm_prepare_to_resume,
   NULL, /* process_qsupported */

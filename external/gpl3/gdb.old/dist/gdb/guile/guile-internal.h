@@ -1,6 +1,6 @@
 /* Internal header for GDB/Scheme code.
 
-   Copyright (C) 2014-2017 Free Software Foundation, Inc.
+   Copyright (C) 2014-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,11 +17,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#ifndef GUILE_GUILE_INTERNAL_H
+#define GUILE_GUILE_INTERNAL_H
+
 /* See README file in this directory for implementation notes, coding
    conventions, et.al.  */
 
-#ifndef GDB_GUILE_INTERNAL_H
-#define GDB_GUILE_INTERNAL_H
 
 #include "hashtab.h"
 #include "extension-priv.h"
@@ -362,7 +363,8 @@ extern void gdbscm_print_exception_with_stack (SCM port, SCM stack,
 
 extern void gdbscm_print_gdb_exception (SCM port, SCM exception);
 
-extern char *gdbscm_exception_message_to_string (SCM exception);
+extern gdb::unique_xmalloc_ptr<char> gdbscm_exception_message_to_string
+    (SCM exception);
 
 extern excp_matcher_func gdbscm_memory_error_p;
 
@@ -401,7 +403,8 @@ extern SCM gdbscm_safe_apply_1 (SCM proc, SCM arg0, SCM args,
 
 extern SCM gdbscm_unsafe_call_1 (SCM proc, SCM arg0);
 
-extern char *gdbscm_safe_eval_string (const char *string, int display_result);
+extern gdb::unique_xmalloc_ptr<char> gdbscm_safe_eval_string
+  (const char *string, int display_result);
 
 extern char *gdbscm_safe_source_script (const char *filename);
 
@@ -517,21 +520,21 @@ extern SCM psscm_scm_from_pspace (struct program_space *);
 
 extern int gdbscm_scm_string_to_int (SCM string);
 
-extern char *gdbscm_scm_to_c_string (SCM string);
+extern gdb::unique_xmalloc_ptr<char> gdbscm_scm_to_c_string (SCM string);
 
 extern SCM gdbscm_scm_from_c_string (const char *string);
 
 extern SCM gdbscm_scm_from_printf (const char *format, ...)
     ATTRIBUTE_PRINTF (1, 2);
 
-extern char *gdbscm_scm_to_string (SCM string, size_t *lenp,
-				   const char *charset,
-				   int strict, SCM *except_scmp);
+extern gdb::unique_xmalloc_ptr<char> gdbscm_scm_to_string
+  (SCM string, size_t *lenp, const char *charset, int strict, SCM *except_scmp);
 
 extern SCM gdbscm_scm_from_string (const char *string, size_t len,
 				   const char *charset, int strict);
 
-extern char *gdbscm_scm_to_host_string (SCM string, size_t *lenp, SCM *except);
+extern gdb::unique_xmalloc_ptr<char> gdbscm_scm_to_host_string
+  (SCM string, size_t *lenp, SCM *except);
 
 extern SCM gdbscm_scm_from_host_string (const char *string, size_t len);
 
@@ -637,8 +640,18 @@ extern void gdbscm_initialize_symtabs (void);
 extern void gdbscm_initialize_types (void);
 extern void gdbscm_initialize_values (void);
 
-/* Use these after a TRY_CATCH to throw the appropriate Scheme exception
-   if a GDB error occurred.  */
+
+/* A complication with the Guile code is that we have two types of
+   exceptions to consider.  GDB/C++ exceptions, and Guile/SJLJ
+   exceptions.  Code that is facing the Guile interpreter must not
+   throw GDB exceptions, instead Scheme exceptions must be thrown.
+   Also, because Guile exceptions are SJLJ based, Guile-facing code
+   must not use local objects with dtors, unless wrapped in a scope
+   with a TRY/CATCH, because the dtors won't otherwise be run when a
+   Guile exceptions is thrown.  */
+
+/* Use this after a TRY/CATCH to throw the appropriate Scheme
+   exception if a GDB error occurred.  */
 
 #define GDBSCM_HANDLE_GDB_EXCEPTION(exception)		\
   do {							\
@@ -649,16 +662,35 @@ extern void gdbscm_initialize_values (void);
       }							\
   } while (0)
 
-/* If cleanups are establish outside the TRY_CATCH block, use this version.  */
+/* Use this to wrap a callable to throw the appropriate Scheme
+   exception if the callable throws a GDB error.  ARGS are forwarded
+   to FUNC.  Returns the result of FUNC, unless FUNC returns a Scheme
+   exception, in which case that exception is thrown.  Note that while
+   the callable is free to use objects of types with destructors,
+   because GDB errors are C++ exceptions, the caller of gdbscm_wrap
+   must not use such objects, because their destructors would not be
+   called when a Scheme exception is thrown.  */
 
-#define GDBSCM_HANDLE_GDB_EXCEPTION_WITH_CLEANUPS(exception, cleanups)	\
-  do {									\
-    if (exception.reason < 0)						\
-      {									\
-	do_cleanups (cleanups);						\
-	gdbscm_throw_gdb_exception (exception);				\
-        /*NOTREACHED */							\
-      }									\
-  } while (0)
+template<typename Function, typename... Args>
+SCM
+gdbscm_wrap (Function &&func, Args &&... args)
+{
+  SCM result = SCM_BOOL_F;
 
-#endif /* GDB_GUILE_INTERNAL_H */
+  TRY
+    {
+      result = func (std::forward<Args> (args)...);
+    }
+  CATCH (except, RETURN_MASK_ALL)
+    {
+      GDBSCM_HANDLE_GDB_EXCEPTION (except);
+    }
+  END_CATCH
+
+  if (gdbscm_is_exception (result))
+    gdbscm_throw (result);
+
+  return result;
+}
+
+#endif /* GUILE_GUILE_INTERNAL_H */

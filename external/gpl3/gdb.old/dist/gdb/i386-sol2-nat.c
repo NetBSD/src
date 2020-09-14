@@ -1,6 +1,6 @@
 /* Native-dependent code for Solaris x86.
 
-   Copyright (C) 2004-2017 Free Software Foundation, Inc.
+   Copyright (C) 1988-2019 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,6 +20,7 @@
 #include "defs.h"
 #include "regcache.h"
 
+#include <sys/reg.h>
 #include <sys/procfs.h>
 #include "gregset.h"
 #include "target.h"
@@ -41,7 +42,7 @@
    Note that a 32-bit GDB won't be able to debug a 64-bit target
    process using /proc on Solaris.  */
 
-#if defined (PR_MODEL_NATIVE) && (PR_MODEL_NATIVE == PR_MODEL_LP64)
+#if PR_MODEL_NATIVE == PR_MODEL_LP64
 
 #include "amd64-nat.h"
 #include "amd64-tdep.h"
@@ -124,28 +125,126 @@ fill_fpregset (const struct regcache *regcache,
   amd64_collect_fxsave (regcache, regnum, fpregs);
 }
 
-#else
+#else /* PR_MODEL_NATIVE != PR_MODEL_LP64 */
 
-/* For 32-bit Solaris x86, we use the Unix SVR4 code in i386v4-nat.c.  */
+#include "i386-tdep.h"
+#include "i387-tdep.h"
+
+/* The `/proc' interface divides the target machine's register set up
+   into two different sets, the general purpose register set (gregset)
+   and the floating-point register set (fpregset).
+
+   The actual structure is, of course, naturally machine dependent, and is
+   different for each set of registers.  For the i386 for example, the
+   general-purpose register set is typically defined by:
+
+   typedef int gregset_t[19];           (in <sys/regset.h>)
+
+   #define GS   0                       (in <sys/reg.h>)
+   #define FS   1
+   ...
+   #define UESP 17
+   #define SS   18
+
+   and the floating-point set by:
+
+   typedef struct fpregset   {
+           union {
+                   struct fpchip_state            // fp extension state //
+                   {
+                           int     state[27];     // 287/387 saved state //
+                           int     status;        // status word saved at //
+                                                  // exception //
+                   } fpchip_state;
+                   struct fp_emul_space           // for emulators //
+                   {
+                           char    fp_emul[246];
+                           char    fp_epad[2];
+                   } fp_emul_space;
+                   int     f_fpregs[62];          // union of the above //
+           } fp_reg_set;
+           long            f_wregs[33];           // saved weitek state //
+   } fpregset_t;
+
+   Incidentally fpchip_state contains the FPU state in the same format
+   as used by the "fsave" instruction, and that's the only thing we
+   support here.  I don't know how the emulator stores it state.  The
+   Weitek stuff definitely isn't supported.
+
+   The routines defined here, provide the packing and unpacking of
+   gregset_t and fpregset_t formatted data.  */
+
+/* Mapping between the general-purpose registers in `/proc'
+   format and GDB's register array layout.  */
+static int regmap[] =
+{
+  EAX, ECX, EDX, EBX,
+  UESP, EBP, ESI, EDI,
+  EIP, EFL, CS, SS,
+  DS, ES, FS, GS
+};
+
+/* Fill GDB's register array with the general-purpose register values
+   in *GREGSETP.  */
+
+void
+supply_gregset (struct regcache *regcache, const gregset_t *gregsetp)
+{
+  const greg_t *regp = (const greg_t *) gregsetp;
+  int regnum;
+
+  for (regnum = 0; regnum < I386_NUM_GREGS; regnum++)
+    regcache->raw_supply (regnum, regp + regmap[regnum]);
+}
+
+/* Fill register REGNUM (if it is a general-purpose register) in
+   *GREGSETPS with the value in GDB's register array.  If REGNUM is -1,
+   do this for all registers.  */
+
+void
+fill_gregset (const struct regcache *regcache,
+	      gregset_t *gregsetp, int regnum)
+{
+  greg_t *regp = (greg_t *) gregsetp;
+  int i;
+
+  for (i = 0; i < I386_NUM_GREGS; i++)
+    if (regnum == -1 || regnum == i)
+      regcache->raw_collect (i, regp + regmap[i]);
+}
+
+/* Fill GDB's register array with the floating-point register values in
+   *FPREGSETP.  */
+
+void
+supply_fpregset (struct regcache *regcache, const fpregset_t *fpregsetp)
+{
+  if (gdbarch_fp0_regnum (regcache->arch ()) == 0)
+    return;
+
+  i387_supply_fsave (regcache, -1, fpregsetp);
+}
+
+/* Fill register REGNO (if it is a floating-point register) in
+   *FPREGSETP with the value in GDB's register array.  If REGNO is -1,
+   do this for all registers.  */
+
+void
+fill_fpregset (const struct regcache *regcache,
+	       fpregset_t *fpregsetp, int regno)
+{
+  if (gdbarch_fp0_regnum (regcache->arch ()) == 0)
+    return;
+
+  i387_collect_fsave (regcache, regno, fpregsetp);
+}
 
 #endif
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-extern void _initialize_amd64_sol2_nat (void);
 
 void
 _initialize_amd64_sol2_nat (void)
 {
-  struct target_ops *t;
-
-  /* Fill in the generic procfs methods.  */
-  t = procfs_target ();
-
-#ifdef NEW_PROC_API	/* Solaris 6 and above can do HW watchpoints.  */
-  procfs_use_watchpoints (t);
-#endif
-
-#if defined (PR_MODEL_NATIVE) && (PR_MODEL_NATIVE == PR_MODEL_LP64)
+#if PR_MODEL_NATIVE == PR_MODEL_LP64
   amd64_native_gregset32_reg_offset = amd64_sol2_gregset32_reg_offset;
   amd64_native_gregset32_num_regs =
     ARRAY_SIZE (amd64_sol2_gregset32_reg_offset);
@@ -153,6 +252,4 @@ _initialize_amd64_sol2_nat (void)
   amd64_native_gregset64_num_regs =
     ARRAY_SIZE (amd64_sol2_gregset64_reg_offset);
 #endif
-
-  add_target (t);
 }

@@ -1,5 +1,5 @@
 /* Native Client support for ELF
-   Copyright (C) 2012-2017 Free Software Foundation, Inc.
+   Copyright (C) 2012-2019 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -15,8 +15,6 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
-
-#include "bfd.h"
 
 bfd_boolean nacl_modify_segment_map (bfd *, struct bfd_link_info *);
 bfd_boolean nacl_modify_program_headers (bfd *, struct bfd_link_info *);

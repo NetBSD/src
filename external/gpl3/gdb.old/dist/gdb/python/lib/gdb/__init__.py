@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2017 Free Software Foundation, Inc.
+# Copyright (C) 2010-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -85,15 +85,14 @@ def execute_unwinders(pending_frame):
     Returns:
         gdb.UnwindInfo instance or None.
     """
-    for objfile in _gdb.objfiles():
+    for objfile in objfiles():
         for unwinder in objfile.frame_unwinders:
             if unwinder.enabled:
                 unwind_info = unwinder(pending_frame)
                 if unwind_info is not None:
                     return unwind_info
 
-    current_progspace = _gdb.current_progspace()
-    for unwinder in current_progspace.frame_unwinders:
+    for unwinder in current_progspace().frame_unwinders:
         if unwinder.enabled:
             unwind_info = unwinder(pending_frame)
             if unwind_info is not None:
@@ -163,3 +162,25 @@ def GdbSetPythonDirectory(dir):
     # attributes
     reload(__import__(__name__))
     auto_load_packages()
+
+def current_progspace():
+    "Return the current Progspace."
+    return selected_inferior().progspace
+
+def objfiles():
+    "Return a sequence of the current program space's objfiles."
+    return current_progspace().objfiles()
+
+def solib_name (addr):
+    """solib_name (Long) -> String.\n\
+Return the name of the shared library holding a given address, or None."""
+    return current_progspace().solib_name(addr)
+
+def block_for_pc(pc):
+    "Return the block containing the given pc value, or None."
+    return current_progspace().block_for_pc(pc)
+
+def find_pc_line(pc):
+    """find_pc_line (pc) -> Symtab_and_line.
+Return the gdb.Symtab_and_line object corresponding to the pc value."""
+    return current_progspace().find_pc_line(pc)

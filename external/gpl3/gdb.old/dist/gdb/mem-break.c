@@ -1,6 +1,6 @@
 /* Simulate breakpoints by patching locations in the target system, for GDB.
 
-   Copyright (C) 1990-2017 Free Software Foundation, Inc.
+   Copyright (C) 1990-2019 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.  Written by John Gilmore.
 
@@ -107,8 +107,6 @@ memory_validate_breakpoint (struct gdbarch *gdbarch,
   int val;
   int bplen;
   gdb_byte cur_contents[BREAKPOINT_MAX];
-  struct cleanup *cleanup;
-  int ret;
 
   /* Determine appropriate breakpoint contents and size for this
      address.  */
@@ -118,14 +116,12 @@ memory_validate_breakpoint (struct gdbarch *gdbarch,
     return 0;
 
   /* Make sure we see the memory breakpoints.  */
-  cleanup = make_show_memory_breakpoints_cleanup (1);
+  scoped_restore restore_memory
+    = make_scoped_restore_show_memory_breakpoints (1);
   val = target_read_memory (addr, cur_contents, bplen);
 
   /* If our breakpoint is no longer at the address, this means that
      the program modified the code on us, so it is wrong to put back
      the old value.  */
-  ret = (val == 0 && memcmp (bp, cur_contents, bplen) == 0);
-
-  do_cleanups (cleanup);
-  return ret;
+  return (val == 0 && memcmp (bp, cur_contents, bplen) == 0);
 }
