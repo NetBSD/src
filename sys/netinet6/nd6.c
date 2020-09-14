@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.272 2020/09/11 15:03:33 roy Exp $	*/
+/*	$NetBSD: nd6.c,v 1.273 2020/09/14 15:09:57 roy Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.272 2020/09/11 15:03:33 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.273 2020/09/14 15:09:57 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -107,10 +107,10 @@ static void nd6_free(struct llentry *, int);
 static bool nd6_nud_enabled(struct ifnet *);
 static unsigned int nd6_llinfo_reachable(struct ifnet *);
 static unsigned int nd6_llinfo_retrans(struct ifnet *);
-static union nd_addr *nd6_llinfo_holdsrc(struct llentry *, union nd_addr *);
-static void nd6_llinfo_output(struct ifnet *, const union nd_addr *,
-    const union nd_addr *, const uint8_t *, const union nd_addr *);
-static void nd6_llinfo_missed(struct ifnet *, const union nd_addr *,
+static union l3addr *nd6_llinfo_holdsrc(struct llentry *, union l3addr *);
+static void nd6_llinfo_output(struct ifnet *, const union l3addr *,
+    const union l3addr *, const uint8_t *, const union l3addr *);
+static void nd6_llinfo_missed(struct ifnet *, const union l3addr *,
     struct mbuf *);
 static void nd6_timer(void *);
 static void nd6_timer_work(struct work *, void *);
@@ -367,23 +367,23 @@ nd6_llinfo_get_holdsrc(struct llentry *ln, struct in6_addr *src)
 	return src;
 }
 
-static union nd_addr *
-nd6_llinfo_holdsrc(struct llentry *ln, union nd_addr *src)
+static union l3addr *
+nd6_llinfo_holdsrc(struct llentry *ln, union l3addr *src)
 {
 
-	if (nd6_llinfo_get_holdsrc(ln, &src->nd_addr6) == NULL)
+	if (nd6_llinfo_get_holdsrc(ln, &src->addr6) == NULL)
 		return NULL;
 	return src;
 }
 
 static void
-nd6_llinfo_output(struct ifnet *ifp, const union nd_addr *daddr,
-    const union nd_addr *taddr, __unused const uint8_t *tlladdr,
-    const union nd_addr *hsrc)
+nd6_llinfo_output(struct ifnet *ifp, const union l3addr *daddr,
+    const union l3addr *taddr, __unused const uint8_t *tlladdr,
+    const union l3addr *hsrc)
 {
 
-	nd6_ns_output(ifp, &daddr->nd_addr6, &taddr->nd_addr6,
-	    &hsrc->nd_addr6, NULL);
+	nd6_ns_output(ifp, &daddr->addr6, &taddr->addr6,
+	    &hsrc->addr6, NULL);
 }
 
 static bool
@@ -411,7 +411,7 @@ nd6_llinfo_retrans(struct ifnet *ifp)
 }
 
 static void
-nd6_llinfo_missed(struct ifnet *ifp, const union nd_addr *taddr, struct mbuf *m)
+nd6_llinfo_missed(struct ifnet *ifp, const union l3addr *taddr, struct mbuf *m)
 {
 	struct in6_addr mdaddr6 = zeroin6_addr;
 	struct sockaddr_in6 dsin6, tsin6;
@@ -426,7 +426,7 @@ nd6_llinfo_missed(struct ifnet *ifp, const union nd_addr *taddr, struct mbuf *m)
 	} else
 		sa = NULL;
 
-	sockaddr_in6_init(&tsin6, &taddr->nd_addr6, 0, 0, 0);
+	sockaddr_in6_init(&tsin6, &taddr->addr6, 0, 0, 0);
 	rt_clonedmsg(RTM_MISS, sa, sin6tosa(&tsin6), NULL, ifp);
 }
 

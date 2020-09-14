@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd.c,v 1.1 2020/09/11 14:59:22 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd.c,v 1.2 2020/09/14 15:09:57 roy Exp $");
 
 #include <sys/callout.h>
 #include <sys/mbuf.h>
@@ -57,7 +57,7 @@ nd_timer(void *arg)
 	struct psref psref;
 	struct mbuf *m = NULL;
 	bool send_ns = false, missed = false;
-	union nd_addr taddr, *daddrp = NULL;
+	union l3addr taddr, *daddrp = NULL;
 
 	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
 	LLE_WLOCK(ln);
@@ -158,7 +158,7 @@ nd_timer(void *arg)
 
 	if (send_ns) {
 		uint8_t lladdr[255], *lladdrp;
-		union nd_addr src, *psrc;
+		union l3addr src, *psrc;
 
 		nd_set_timer(ln, ND_TIMER_RETRANS);
 		if (ln->ln_state > ND_LLINFO_INCOMPLETE &&
@@ -353,7 +353,7 @@ nd_resolve(struct llentry *ln, const struct rtentry *rt, struct mbuf *m,
 	 */
 	if (!ND_IS_LLINFO_PERMANENT(ln) && ln->ln_asked == 0) {
 		struct psref psref;
-		union nd_addr dst, src, *psrc;
+		union l3addr dst, src, *psrc;
 
 		ln->ln_asked++;
 		nd_set_timer(ln, ND_TIMER_RETRANS);
