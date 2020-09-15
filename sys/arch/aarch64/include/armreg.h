@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.52 2020/08/02 06:58:16 maxv Exp $ */
+/* $NetBSD: armreg.h,v 1.53 2020/09/15 09:28:21 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -826,7 +826,7 @@ AARCH64REG_WRITE_INLINE(sctlr_el1)
 #define	SCTLR_IESB		__BIT(21)
 #define	SCTLR_EIS		__BIT(22)
 #define	SCTLR_SPAN		__BIT(23)
-#define	SCTLR_EOE		__BIT(24)
+#define	SCTLR_E0E		__BIT(24)
 #define	SCTLR_EE		__BIT(25)
 #define	SCTLR_UCI		__BIT(26)
 #define	SCTLR_EnDA		__BIT(27)
