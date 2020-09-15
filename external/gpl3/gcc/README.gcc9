@@ -1,4 +1,4 @@
-$NetBSD: README.gcc9,v 1.13 2020/09/14 19:51:54 skrll Exp $
+$NetBSD: README.gcc9,v 1.14 2020/09/15 05:21:46 mrg Exp $
 
 new stuff:
 	cc1objcplus
@@ -56,12 +56,12 @@ mipsel		y	y	y	y		y[3]		y	n	n
 mips64eb	y	y	y	y		y[3]		y	y	n
 mips64el	y	y	y	y		y[3]		n	n	n
 powerpc		y	y	y	y		y[3]		y	y	n
-powerpc64	y	?	y	y		n[6]		?	n	?
-sh3eb		y	n	y	y		n[1]		n	n	?
-sh3el		y	n	y	y		n		n	n	?
+powerpc64	y	y	y	y		y		?	N/A	n
+sh3eb		y	n	y	y		y		?	?	?
+sh3el		y	y	y	y		y		y	y	n
 sparc		y	y	y	y		y		y	y	n
 sparc64		y	y	y	y		y		n	n	?
-vax		y	n	y	y		n[2]		y	y	?
+vax		y	y	y	y		y		y	y	n
 x86_64		y	y	y	y		y		y	y	y
 riscv32		y	N/A	y	y		y		N/A	N/A	y	
 riscv64		y	N/A	y	y		y		N/A	N/A	y
@@ -70,22 +70,14 @@ coldfire	?	N/A	?	?		?		N/A	N/A
 ------------	-----	-------	------	----------	------------	----	---
 architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 
-[1]: /usr/xsrc/external/mit/pixman/dist/pixman/pixman-fast-path.c: In function 'fast_composite_scaled_nearest_8888_565_normal_OVER':
-     /usr/xsrc/external/mit/pixman/dist/pixman/pixman-fast-path.c:1204:1: internal compiler error: Segmentation fault
-      1204 | FAST_NEAREST (8888_565_normal, 8888, 0565, uint32_t, uint16_t, OVER, NORMAL)
-[2]: /usr/src/external/gpl3/gcc/dist/libsanitizer/sanitizer_common/sanitizer_mutex.h: In member function 'void __sanitizer::StaticSpinMutex::LockSlow()':
-     /usr/src/external/gpl3/gcc/dist/libsanitizer/sanitizer_common/sanitizer_mutex.h:58:3: error: unable to generate reloads for:
-     58 |   }
-        |   ^
 [3]: consult cpu/platform table for full data
-[6]: /usr/src/sys/compat/common/compat_util.c:116:1: internal compiler error: in rs6000_pltseq_template, at config/rs6000/rs6000.c:21977
-[8]: prep floppies overflow; need to find if they are size limited
+[8]: prep and bebox floppies overflow; need to find if they are size limited
 [10]: tests in lib/libc/sys are skipped; see port-alpha/55652
 [11]: at least there's no regression in kernel and lib/libc/{gen,sys}
 
 
 CPU vs platform test table (for CPUs with multiple ports).  this is "make release" or just kernels.
-values:		y (yes), k (kernels only), n (failed), r (running), ? (not attempted)
+values:		y (yes), k (kernels only), n (failed), r (running), ? (not attempted), nx (yes, no x11)
 
 CPU		platform list
 ---		-------- ----
@@ -112,12 +104,11 @@ mips64eb:	 		y
 mips64el:	y		y		y
 
 		amigappc	bebox	evbppc	ibmnws		macppc		mvmeppc		ofppc		prep		rs6000		sandpoint
-powerpc:	y		y	r	y		r		y		y		n[8]		y		y
+powerpc:	y		n[8]	y	y		y		y		y		n[8]		y		y
 
 		evbppc		macppc		ofppc
-powerpc64:	n		?		?
+powerpc64:	y		?		?
 
 		dreamcast	evbsh3		hpcsh		landisk		mmeye
-sh3eb:		-		-		-		-		-
-sh3el:		-		-		-		-		-
-
+sh3eb:		 		-		 		 		r
+sh3el:		r		-		-		y
