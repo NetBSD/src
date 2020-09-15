@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.43 2020/07/02 09:02:04 msaitoh Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.44 2020/09/15 08:33:40 mrg Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.43 2020/07/02 09:02:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.44 2020/09/15 08:33:40 mrg Exp $");
 
 #ifndef _MODULE
 #include "opt_inet.h"
@@ -765,11 +765,12 @@ cas_detach(device_t self, int flags)
 
 		ether_ifdetach(ifp);
 		if_detach(ifp);
-		ifmedia_fini(&sc->sc_mii.mii_media);
 
 		callout_destroy(&sc->sc_tick_ch);
 
 		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+
+		ifmedia_fini(&sc->sc_mii.mii_media);
 
 		/*FALLTHROUGH*/
 	case CAS_ATT_MII:
