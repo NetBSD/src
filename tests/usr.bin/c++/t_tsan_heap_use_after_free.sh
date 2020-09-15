@@ -26,6 +26,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+tsan_available_archs()
+{
+	atf_set "require.arch" "x86_64"
+}
+
 test_target()
 {
 	SUPPORT='n'
@@ -47,22 +52,26 @@ atf_test_case heap_use_after_free
 heap_use_after_free_head() {
 	atf_set "descr" "Test thread sanitizer for use-after-free condition"
 	atf_set "require.progs" "c++ paxctl"
+	tsan_available_archs
 }
 
 atf_test_case heap_use_after_free_profile
 heap_use_after_free_profile_head() {
 	atf_set "descr" "Test thread sanitizer for use-after-free with profiling option"
 	atf_set "require.progs" "c++ paxctl"
+	tsan_available_archs
 }
 atf_test_case heap_use_after_free_pic
 heap_use_after_free_pic_head() {
 	atf_set "descr" "Test thread sanitizer for use-after-free with position independent code (PIC) flag"
 	atf_set "require.progs" "c++ paxctl"
+	tsan_available_archs
 }
 atf_test_case heap_use_after_free_pie
 heap_use_after_free_pie_head() {
 	atf_set "descr" "Test thread sanitizer for use-after-free with position independent execution (PIE) flag"
 	atf_set "require.progs" "c++ paxctl"
+	tsan_available_archs
 }
 
 heap_use_after_free_body(){
@@ -200,24 +209,8 @@ EOF
 }
 
 
-atf_test_case target_not_supported
-target_not_supported_head()
-{
-	atf_set "descr" "Test forced skip"
-}
-
-target_not_supported_body()
-{
-	atf_skip "Target is not supported"
-}
-
 atf_init_test_cases()
 {
-	test_target
-	test $SUPPORT = 'n' && {
-		atf_add_test_case target_not_supported
-		return 0
-	}
 	atf_add_test_case heap_use_after_free
 	atf_add_test_case heap_use_after_free_profile
 	atf_add_test_case heap_use_after_free_pie

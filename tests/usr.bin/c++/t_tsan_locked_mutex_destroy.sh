@@ -26,43 +26,36 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-test_target()
+
+tsan_available_archs()
 {
-	SUPPORT='n'
-	# Detect address space larger than 32 bits
-	maxaddress=`sysctl vm.maxaddress|awk '{print $3}'`
-	if [ $maxaddress -gt 4294967295 ]; then
-		if command -v cc >/dev/null 2>&1; then
-			if ! echo __clang__ | cc -E - | grep -q __clang__; then
-				SUPPORT='y'
-			elif ! cc -v 2>&1 | awk '/gcc version/{print $3}' | \
-				awk -F '.' '($0+0) > 9 {exit 1}'; then
-				SUPPORT='y'
-			fi
-		fi
-	fi
+	atf_set "require.arch" "x86_64"
 }
 
 atf_test_case locked_mutex_destroy
 locked_mutex_destroy_head() {
 	atf_set "descr" "Test thread sanitizer for destroying locked mutex condition"
 	atf_set "require.progs" "c++ paxctl"
+	tsan_available_archs
 }
 
 atf_test_case locked_mutex_destroy_profile
 locked_mutex_destroy_profile_head() {
 	atf_set "descr" "Test thread sanitizer for destroying locked mutex with profiling option"
 	atf_set "require.progs" "c++ paxctl"
+	tsan_available_archs
 }
 atf_test_case locked_mutex_destroy_pic
 locked_mutex_destroy_pic_head() {
 	atf_set "descr" "Test thread sanitizer for destroying locked mutex with position independent code (PIC) flag"
 	atf_set "require.progs" "c++ paxctl"
+	tsan_available_archs
 }
 atf_test_case locked_mutex_destroy_pie
 locked_mutex_destroy_pie_head() {
 	atf_set "descr" "Test thread sanitizer for destroying locked mutex with position independent execution (PIE) flag"
 	atf_set "require.progs" "c++ paxctl"
+	tsan_available_archs
 }
 
 locked_mutex_destroy_body(){
@@ -200,24 +193,8 @@ EOF
 }
 
 
-atf_test_case target_not_supported
-target_not_supported_head()
-{
-	atf_set "descr" "Test forced skip"
-}
-
-target_not_supported_body()
-{
-	atf_skip "Target is not supported"
-}
-
 atf_init_test_cases()
 {
-	test_target
-	test $SUPPORT = 'n' && {
-		atf_add_test_case target_not_supported
-		return 0
-	}
 	atf_add_test_case locked_mutex_destroy
 	atf_add_test_case locked_mutex_destroy_profile
 	atf_add_test_case locked_mutex_destroy_pie
