@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.5 2020/07/24 12:41:20 nia Exp $
+.\"	$NetBSD: upgrade,v 1.6 2020/09/15 07:15:21 nia Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,9 +52,9 @@ e.g. allwinner, amlogic, broadcom, freescale, nvidia, rockchip.
 .Pp
 For example, for the Allwinner-based PINE A64 LTS:
 .Bd -literal
-$ ftp https://cdn.netbsd.org/pub/NetBSD/NetBSD-\*V/evbarm-aarch64/binary/kernel/sun50i-a64-pine64-lts.dtb.gz
-$ gunzip sun50i-a64-pine64-lts.dtb.gz
-# cp sun50i-a64-pine64-lts.dtb /boot/dtb/allwinner/
+$ ftp https://cdn.netbsd.org/pub/NetBSD/NetBSD-\*V/evbarm-aarch64/binary/sets/dtb.tar.xz
+$ unxz dtb.tar.xz
+# cp ./boot/dtb/allwinner/sun50i-a64-pine64-lts.dtb /boot/dtb/allwinner/
 .Ed
 Also copy
 .Pa bootaa64.efi
