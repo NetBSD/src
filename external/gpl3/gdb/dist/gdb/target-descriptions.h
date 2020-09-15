@@ -1,6 +1,6 @@
 /* Target description support for GDB.
 
-   Copyright (C) 2006-2019 Free Software Foundation, Inc.
+   Copyright (C) 2006-2020 Free Software Foundation, Inc.
 
    Contributed by CodeSourcery.
 
@@ -21,7 +21,8 @@
 
 #ifndef TARGET_DESCRIPTIONS_H
 #define TARGET_DESCRIPTIONS_H 1
-#include "common/tdesc.h"
+#include "gdbsupport/tdesc.h"
+#include "gdbarch.h"
 
 struct tdesc_arch_data;
 struct target_ops;
@@ -79,6 +80,30 @@ void set_tdesc_pseudo_register_reggroup_p
   (struct gdbarch *gdbarch,
    gdbarch_register_reggroup_p_ftype *pseudo_reggroup_p);
 
+/* Pointer to a function that should be called for each unknown register in
+   a target description, used by TDESC_USE_REGISTERS.
+
+   GDBARCH is the architecture the target description is for, FEATURE is
+   the feature the unknown register is in, and REG_NAME is the name of the
+   register from the target description.  The POSSIBLE_REGNUM is a proposed
+   (GDB internal) number for this register.
+
+   The callback function can return, (-1) to indicate that the register
+   should not be assigned POSSIBLE_REGNUM now (though it might be later),
+   GDB will number the register automatically later on.  Return
+   POSSIBLE_REGNUM (or greater) to have this register assigned that number.
+   Returning a value less that POSSIBLE_REGNUM is also acceptable, but take
+   care not to clash with a register number that has already been
+   assigned.
+
+   The callback will always be called on the registers in the order they
+   appear in the target description.  This means all unknown registers
+   within a single feature will be called one after another.  */
+
+typedef int (*tdesc_unknown_register_ftype)
+	(struct gdbarch *gdbarch, tdesc_feature *feature,
+	 const char *reg_name, int possible_regnum);
+
 /* Update GDBARCH to use the TARGET_DESC for registers.  TARGET_DESC
    may be GDBARCH's target description or (if GDBARCH does not have
    one which describes registers) another target description
@@ -94,7 +119,8 @@ void set_tdesc_pseudo_register_reggroup_p
 
 void tdesc_use_registers (struct gdbarch *gdbarch,
 			  const struct target_desc *target_desc,
-			  struct tdesc_arch_data *early_data);
+			  struct tdesc_arch_data *early_data,
+			  tdesc_unknown_register_ftype unk_reg_cb = NULL);
 
 /* Allocate initial data for validation of a target description during
    gdbarch initialization.  */
@@ -198,18 +224,6 @@ struct type *tdesc_find_type (struct gdbarch *gdbarch, const char *id);
 
 int tdesc_register_in_reggroup_p (struct gdbarch *gdbarch, int regno,
 				  struct reggroup *reggroup);
-
-
-/* A deleter adapter for a target desc.  */
-
-struct target_desc_deleter
-{
-  void operator() (struct target_desc *desc) const;
-};
-
-/* A unique pointer specialization that holds a target_desc.  */
-
-typedef std::unique_ptr<target_desc, target_desc_deleter> target_desc_up;
 
 /* Methods for constructing a target description.  */
 

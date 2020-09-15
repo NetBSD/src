@@ -1,5 +1,5 @@
 /* Cache of styled source file text
-   Copyright (C) 2018-2019 Free Software Foundation, Inc.
+   Copyright (C) 2018-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,12 +19,20 @@
 #ifndef SOURCE_CACHE_H
 #define SOURCE_CACHE_H
 
-/* This caches highlighted source text, keyed by the source file's
-   full name.  A size-limited LRU cache is used.
+#include <unordered_map>
+#include <unordered_set>
+
+/* This caches two things related to source files.
+
+   First, it caches highlighted source text, keyed by the source
+   file's full name.  A size-limited LRU cache is used.
 
    Highlighting depends on the GNU Source Highlight library.  When not
-   available, this cache will fall back on reading plain text from the
-   appropriate file.  */
+   available or when highlighting fails for some reason, this cache
+   will instead store the un-highlighted source text.
+
+   Second, this will cache the file offsets corresponding to the start
+   of each line of a source file.  This cache is not size-limited.  */
 class source_cache
 {
 public:
@@ -33,11 +41,23 @@ public:
   {
   }
 
+  /* This returns the vector of file offsets for the symtab S,
+     computing the vector first if needed.
+
+     On failure, returns false.
+
+     On success, returns true and sets *OFFSETS.  This pointer is not
+     guaranteed to remain valid across other calls to get_source_lines
+     or get_line_charpos.  */
+  bool get_line_charpos (struct symtab *s,
+			 const std::vector<off_t> **offsets);
+
   /* Get the source text for the source file in symtab S.  FIRST_LINE
      and LAST_LINE are the first and last lines to return; line
-     numbers are 1-based.  If the file cannot be read, false is
-     returned.  Otherwise, LINES_OUT is set to the desired text.  The
-     returned text may include ANSI terminal escapes.  */
+     numbers are 1-based.  If the file cannot be read, or if the line
+     numbers are out of range, false is returned.  Otherwise,
+     LINES_OUT is set to the desired text.  The returned text may
+     include ANSI terminal escapes.  */
   bool get_source_lines (struct symtab *s, int first_line,
 			 int last_line, std::string *lines_out);
 
@@ -45,6 +65,7 @@ public:
   void clear ()
   {
     m_source_map.clear ();
+    m_offset_cache.clear ();
   }
 
 private:
@@ -58,20 +79,22 @@ private:
     std::string contents;
   };
 
-  /* A helper function for get_source_lines that is used when the
-     source lines are not highlighted.  The arguments and return value
-     are as for get_source_lines.  */
-  bool get_plain_source_lines (struct symtab *s, int first_line,
-			       int last_line, std::string *lines_out);
-  /* A helper function for get_plain_source_lines that extracts the
-     desired source lines from TEXT, putting them into LINES_OUT.  The
-     arguments are as for get_source_lines.  The return value is the
-     desired lines.  */
-  std::string extract_lines (const struct source_text &text, int first_line,
-			     int last_line);
+  /* A helper function for get_source_lines reads a source file.
+     Returns the contents of the file; or throws an exception on
+     error.  This also updates m_offset_cache.  */
+  std::string get_plain_source_lines (struct symtab *s,
+				      const std::string &fullname);
 
-  /* The contents of the cache.  */
+  /* A helper function that the data for the given symtab is entered
+     into both caches.  Returns false on error.  */
+  bool ensure (struct symtab *s);
+
+  /* The contents of the source text cache.  */
   std::vector<source_text> m_source_map;
+
+  /* The file offset cache.  The key is the full name of the source
+     file.  */
+  std::unordered_map<std::string, std::vector<off_t>> m_offset_cache;
 };
 
 /* The global source cache.  */

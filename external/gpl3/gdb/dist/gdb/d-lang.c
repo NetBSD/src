@@ -1,6 +1,6 @@
 /* D language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 2005-2019 Free Software Foundation, Inc.
+   Copyright (C) 2005-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,6 +25,7 @@
 #include "c-lang.h"
 #include "demangle.h"
 #include "cp-support.h"
+#include "gdbarch.h"
 
 /* The name of the symbol to use to get the name of the main subprogram.  */
 static const char D_MAIN[] = "D main";
@@ -53,15 +54,6 @@ char *
 d_demangle (const char *symbol, int options)
 {
   return gdb_demangle (symbol, options | DMGL_DLANG);
-}
-
-/* la_sniff_from_mangled_name implementation for D.  */
-
-static int
-d_sniff_from_mangled_name (const char *mangled, char **demangled)
-{
-  *demangled = d_demangle (mangled, 0);
-  return *demangled != NULL;
 }
 
 /* Table mapping opcodes into strings for printing operators
@@ -132,79 +124,14 @@ enum d_primitive_types {
   nr_d_primitive_types
 };
 
-/* Implements the la_language_arch_info language_defn routine
-   for language D.  */
-
-static void
-d_language_arch_info (struct gdbarch *gdbarch,
-		      struct language_arch_info *lai)
-{
-  const struct builtin_d_type *builtin = builtin_d_type (gdbarch);
-
-  lai->string_char_type = builtin->builtin_char;
-  lai->primitive_type_vector
-    = GDBARCH_OBSTACK_CALLOC (gdbarch, nr_d_primitive_types + 1,
-			      struct type *);
-
-  lai->primitive_type_vector [d_primitive_type_void]
-    = builtin->builtin_void;
-  lai->primitive_type_vector [d_primitive_type_bool]
-    = builtin->builtin_bool;
-  lai->primitive_type_vector [d_primitive_type_byte]
-    = builtin->builtin_byte;
-  lai->primitive_type_vector [d_primitive_type_ubyte]
-    = builtin->builtin_ubyte;
-  lai->primitive_type_vector [d_primitive_type_short]
-    = builtin->builtin_short;
-  lai->primitive_type_vector [d_primitive_type_ushort]
-    = builtin->builtin_ushort;
-  lai->primitive_type_vector [d_primitive_type_int]
-    = builtin->builtin_int;
-  lai->primitive_type_vector [d_primitive_type_uint]
-    = builtin->builtin_uint;
-  lai->primitive_type_vector [d_primitive_type_long]
-    = builtin->builtin_long;
-  lai->primitive_type_vector [d_primitive_type_ulong]
-    = builtin->builtin_ulong;
-  lai->primitive_type_vector [d_primitive_type_cent]
-    = builtin->builtin_cent;
-  lai->primitive_type_vector [d_primitive_type_ucent]
-    = builtin->builtin_ucent;
-  lai->primitive_type_vector [d_primitive_type_float]
-    = builtin->builtin_float;
-  lai->primitive_type_vector [d_primitive_type_double]
-    = builtin->builtin_double;
-  lai->primitive_type_vector [d_primitive_type_real]
-    = builtin->builtin_real;
-  lai->primitive_type_vector [d_primitive_type_ifloat]
-    = builtin->builtin_ifloat;
-  lai->primitive_type_vector [d_primitive_type_idouble]
-    = builtin->builtin_idouble;
-  lai->primitive_type_vector [d_primitive_type_ireal]
-    = builtin->builtin_ireal;
-  lai->primitive_type_vector [d_primitive_type_cfloat]
-    = builtin->builtin_cfloat;
-  lai->primitive_type_vector [d_primitive_type_cdouble]
-    = builtin->builtin_cdouble;
-  lai->primitive_type_vector [d_primitive_type_creal]
-    = builtin->builtin_creal;
-  lai->primitive_type_vector [d_primitive_type_char]
-    = builtin->builtin_char;
-  lai->primitive_type_vector [d_primitive_type_wchar]
-    = builtin->builtin_wchar;
-  lai->primitive_type_vector [d_primitive_type_dchar]
-    = builtin->builtin_dchar;
-
-  lai->bool_type_symbol = "bool";
-  lai->bool_type_default = builtin->builtin_bool;
-}
-
 static const char *d_extensions[] =
 {
   ".d", NULL
 };
 
-extern const struct language_defn d_language_defn =
+/* Constant data that describes the D language.  */
+
+extern const struct language_data d_language_data =
 {
   "d",
   "D",
@@ -215,44 +142,141 @@ extern const struct language_defn d_language_defn =
   macro_expansion_no,
   d_extensions,
   &exp_descriptor_c,
-  d_parse,
-  null_post_parser,
-  c_printchar,			/* Print a character constant.  */
-  c_printstr,			/* Function to print string constant.  */
-  c_emit_char,			/* Print a single char.  */
-  c_print_type,			/* Print a type using appropriate syntax.  */
-  c_print_typedef,		/* Print a typedef using appropriate
-				   syntax.  */
-  d_val_print,			/* Print a value using appropriate syntax.  */
-  c_value_print,		/* Print a top-level value.  */
-  default_read_var_value,	/* la_read_var_value */
-  NULL,				/* Language specific skip_trampoline.  */
   "this",
   false,			/* la_store_sym_names_in_linkage_form_p */
-  d_lookup_symbol_nonlocal,
-  basic_lookup_transparent_type,
-  d_demangle,			/* Language specific symbol demangler.  */
-  d_sniff_from_mangled_name,
-  NULL,				/* Language specific
-				   class_name_from_physname.  */
   d_op_print_tab,		/* Expression operators for printing.  */
   1,				/* C-style arrays.  */
   0,				/* String lower bound.  */
-  default_word_break_characters,
-  default_collect_symbol_completion_matches,
-  d_language_arch_info,
-  default_print_array_index,
-  default_pass_by_reference,
-  c_get_string,
-  c_watch_location_expression,
-  NULL,				/* la_get_symbol_name_matcher */
-  iterate_over_symbols,
-  default_search_name_hash,
   &default_varobj_ops,
-  NULL,
-  NULL,
-  LANG_MAGIC
+  "{...}"			/* la_struct_too_deep_ellipsis */
 };
+
+/* Class representing the D language.  */
+
+class d_language : public language_defn
+{
+public:
+  d_language ()
+    : language_defn (language_d, d_language_data)
+  { /* Nothing.  */ }
+
+  /* See language.h.  */
+  void language_arch_info (struct gdbarch *gdbarch,
+			   struct language_arch_info *lai) const override
+  {
+    const struct builtin_d_type *builtin = builtin_d_type (gdbarch);
+
+    lai->string_char_type = builtin->builtin_char;
+    lai->primitive_type_vector
+      = GDBARCH_OBSTACK_CALLOC (gdbarch, nr_d_primitive_types + 1,
+				struct type *);
+
+    lai->primitive_type_vector [d_primitive_type_void]
+      = builtin->builtin_void;
+    lai->primitive_type_vector [d_primitive_type_bool]
+      = builtin->builtin_bool;
+    lai->primitive_type_vector [d_primitive_type_byte]
+      = builtin->builtin_byte;
+    lai->primitive_type_vector [d_primitive_type_ubyte]
+      = builtin->builtin_ubyte;
+    lai->primitive_type_vector [d_primitive_type_short]
+      = builtin->builtin_short;
+    lai->primitive_type_vector [d_primitive_type_ushort]
+      = builtin->builtin_ushort;
+    lai->primitive_type_vector [d_primitive_type_int]
+      = builtin->builtin_int;
+    lai->primitive_type_vector [d_primitive_type_uint]
+      = builtin->builtin_uint;
+    lai->primitive_type_vector [d_primitive_type_long]
+      = builtin->builtin_long;
+    lai->primitive_type_vector [d_primitive_type_ulong]
+      = builtin->builtin_ulong;
+    lai->primitive_type_vector [d_primitive_type_cent]
+      = builtin->builtin_cent;
+    lai->primitive_type_vector [d_primitive_type_ucent]
+      = builtin->builtin_ucent;
+    lai->primitive_type_vector [d_primitive_type_float]
+      = builtin->builtin_float;
+    lai->primitive_type_vector [d_primitive_type_double]
+      = builtin->builtin_double;
+    lai->primitive_type_vector [d_primitive_type_real]
+      = builtin->builtin_real;
+    lai->primitive_type_vector [d_primitive_type_ifloat]
+      = builtin->builtin_ifloat;
+    lai->primitive_type_vector [d_primitive_type_idouble]
+      = builtin->builtin_idouble;
+    lai->primitive_type_vector [d_primitive_type_ireal]
+      = builtin->builtin_ireal;
+    lai->primitive_type_vector [d_primitive_type_cfloat]
+      = builtin->builtin_cfloat;
+    lai->primitive_type_vector [d_primitive_type_cdouble]
+      = builtin->builtin_cdouble;
+    lai->primitive_type_vector [d_primitive_type_creal]
+      = builtin->builtin_creal;
+    lai->primitive_type_vector [d_primitive_type_char]
+      = builtin->builtin_char;
+    lai->primitive_type_vector [d_primitive_type_wchar]
+      = builtin->builtin_wchar;
+    lai->primitive_type_vector [d_primitive_type_dchar]
+      = builtin->builtin_dchar;
+
+    lai->bool_type_symbol = "bool";
+    lai->bool_type_default = builtin->builtin_bool;
+  }
+
+  /* See language.h.  */
+  bool sniff_from_mangled_name (const char *mangled,
+				char **demangled) const override
+  {
+    *demangled = d_demangle (mangled, 0);
+    return *demangled != NULL;
+  }
+
+  /* See language.h.  */
+
+  char *demangle (const char *mangled, int options) const override
+  {
+    return d_demangle (mangled, options);
+  }
+
+  /* See language.h.  */
+
+  void print_type (struct type *type, const char *varstring,
+		   struct ui_file *stream, int show, int level,
+		   const struct type_print_options *flags) const override
+  {
+    c_print_type (type, varstring, stream, show, level, flags);
+  }
+
+  /* See language.h.  */
+
+  void value_print_inner
+	(struct value *val, struct ui_file *stream, int recurse,
+	 const struct value_print_options *options) const override
+  {
+    return d_value_print_inner (val, stream, recurse, options);
+  }
+
+  /* See language.h.  */
+
+  struct block_symbol lookup_symbol_nonlocal
+	(const char *name, const struct block *block,
+	 const domain_enum domain) const override
+  {
+    return d_lookup_symbol_nonlocal (this, name, block, domain);
+  }
+
+  /* See language.h.  */
+
+  int parser (struct parser_state *ps) const override
+  {
+    return d_parse (ps);
+  }
+};
+
+/* Single instance of the D language class.  */
+
+static d_language d_language_defn;
 
 /* Build all D language types for the specified architecture.  */
 
@@ -313,14 +337,11 @@ build_d_types (struct gdbarch *gdbarch)
     = arch_float_type (gdbarch, gdbarch_long_double_bit (gdbarch),
 		       "ireal", gdbarch_long_double_format (gdbarch));
   builtin_d_type->builtin_cfloat
-    = arch_complex_type (gdbarch, "cfloat",
-			 builtin_d_type->builtin_float);
+    = init_complex_type ("cfloat", builtin_d_type->builtin_float);
   builtin_d_type->builtin_cdouble
-    = arch_complex_type (gdbarch, "cdouble",
-			 builtin_d_type->builtin_double);
+    = init_complex_type ("cdouble", builtin_d_type->builtin_double);
   builtin_d_type->builtin_creal
-    = arch_complex_type (gdbarch, "creal",
-			 builtin_d_type->builtin_real);
+    = init_complex_type ("creal", builtin_d_type->builtin_real);
 
   /* Character types.  */
   builtin_d_type->builtin_char
@@ -343,8 +364,9 @@ builtin_d_type (struct gdbarch *gdbarch)
   return (const struct builtin_d_type *) gdbarch_data (gdbarch, d_type_data);
 }
 
+void _initialize_d_language ();
 void
-_initialize_d_language (void)
+_initialize_d_language ()
 {
   d_type_data = gdbarch_data_register_post_init (build_d_types);
 }

@@ -1,4 +1,4 @@
-# Copyright 2018-2019 Free Software Foundation, Inc.
+# Copyright 2018-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ if [get_compiler_info] {
 
 # Build executable with stripped startup code and text section starting at zero
 
-set opts {debug "additional_flags=-nostdlib -emain -Wl,-Ttext=0x00"}
+set opts {debug "additional_flags=-nostdlib -emain -Wl,-Ttext=0x00 -Wl,-N"}
 
 if {[build_executable $testfile.exp $testfile $srcfile $opts] == -1} {
     untested "failed to compile"

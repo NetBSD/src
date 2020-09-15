@@ -1,5 +1,5 @@
 /* SPARC ELF specific backend routines.
-   Copyright (C) 2005-2019 Free Software Foundation, Inc.
+   Copyright (C) 2005-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -55,15 +55,9 @@ struct _bfd_sparc_elf_link_hash_table
     bfd_vma offset;
   } tls_ldm_got;
 
-  /* Small local sym cache.  */
-  struct sym_cache sym_cache;
-
   /* Used by local STT_GNU_IFUNC symbols.  */
   htab_t loc_hash_table;
   void *loc_hash_memory;
-
-  /* True if the target system is VxWorks.  */
-  int is_vxworks;
 
   /* The (unloaded but important) .rela.plt.unloaded section, for VxWorks.  */
   asection *srelplt2;
@@ -90,8 +84,9 @@ struct _bfd_sparc_elf_link_hash_table
 /* Get the SPARC ELF linker hash table from a link_info structure.  */
 
 #define _bfd_sparc_elf_hash_table(p) \
-  (elf_hash_table_id ((struct elf_link_hash_table *) ((p)->hash)) \
-  == SPARC_ELF_DATA ? ((struct _bfd_sparc_elf_link_hash_table *) ((p)->hash)) : NULL)
+  ((is_elf_hash_table ((p)->hash)					\
+    && elf_hash_table_id (elf_hash_table (p)) == SPARC_ELF_DATA)	\
+   ? (struct _bfd_sparc_elf_link_hash_table *) (p)->hash : NULL)
 
 extern reloc_howto_type *_bfd_sparc_elf_reloc_type_lookup
   (bfd *, bfd_reloc_code_real_type);

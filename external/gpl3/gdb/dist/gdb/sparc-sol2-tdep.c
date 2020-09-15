@@ -1,6 +1,6 @@
 /* Target-dependent code for Solaris SPARC.
 
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -99,30 +99,6 @@ static const struct regset sparc32_sol2_fpregset =
   };
 
 
-/* The Solaris signal trampolines reside in libc.  For normal signals,
-   the function `sigacthandler' is used.  This signal trampoline will
-   call the signal handler using the System V calling convention,
-   where the third argument is a pointer to an instance of
-   `ucontext_t', which has a member `uc_mcontext' that contains the
-   saved registers.  Incidentally, the kernel passes the `ucontext_t'
-   pointer as the third argument of the signal trampoline too, and
-   `sigacthandler' simply passes it on.  However, if you link your
-   program with "-L/usr/ucblib -R/usr/ucblib -lucb", the function
-   `ucbsigvechandler' will be used, which invokes the using the BSD
-   convention, where the third argument is a pointer to an instance of
-   `struct sigcontext'.  It is the `ucbsigvechandler' function that
-   converts the `ucontext_t' to a `sigcontext', and back.  Unless the
-   signal handler modifies the `struct sigcontext' we can safely
-   ignore this.  */
-
-int
-sparc_sol2_pc_in_sigtramp (CORE_ADDR pc, const char *name)
-{
-  return (name && (strcmp (name, "sigacthandler") == 0
-		   || strcmp (name, "ucbsigvechandler") == 0
-		   || strcmp (name, "__sighndlr") == 0));
-}
-
 static struct sparc_frame_cache *
 sparc32_sol2_sigtramp_frame_cache (struct frame_info *this_frame,
 				   void **this_cache)
@@ -201,14 +177,7 @@ sparc32_sol2_sigtramp_frame_sniffer (const struct frame_unwind *self,
 				     struct frame_info *this_frame,
 				     void **this_cache)
 {
-  CORE_ADDR pc = get_frame_pc (this_frame);
-  const char *name;
-
-  find_pc_partial_function (pc, &name, NULL, NULL);
-  if (sparc_sol2_pc_in_sigtramp (pc, name))
-    return 1;
-
-  return 0;
+  return sol2_sigtramp_p (this_frame);
 }
 
 static const struct frame_unwind sparc32_sol2_sigtramp_frame_unwind =
@@ -221,39 +190,9 @@ static const struct frame_unwind sparc32_sol2_sigtramp_frame_unwind =
   sparc32_sol2_sigtramp_frame_sniffer
 };
 
-/* Unglobalize NAME.  */
-
-const char *
-sparc_sol2_static_transform_name (const char *name)
-{
-  /* The Sun compilers (Sun ONE Studio, Forte Developer, Sun WorkShop,
-     SunPRO) convert file static variables into global values, a
-     process known as globalization.  In order to do this, the
-     compiler will create a unique prefix and prepend it to each file
-     static variable.  For static variables within a function, this
-     globalization prefix is followed by the function name (nested
-     static variables within a function are supposed to generate a
-     warning message, and are left alone).  The procedure is
-     documented in the Stabs Interface Manual, which is distrubuted
-     with the compilers, although version 4.0 of the manual seems to
-     be incorrect in some places, at least for SPARC.  The
-     globalization prefix is encoded into an N_OPT stab, with the form
-     "G=<prefix>".  The globalization prefix always seems to start
-     with a dollar sign '$'; a dot '.' is used as a seperator.  So we
-     simply strip everything up until the last dot.  */
-
-  if (name[0] == '$')
-    {
-      const char *p = strrchr (name, '.');
-      if (p)
-        return p + 1;
-    }
-
-  return name;
-}
 
 
-void
+static void
 sparc32_sol2_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
@@ -264,19 +203,10 @@ sparc32_sol2_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tdep->fpregset = &sparc32_sol2_fpregset;
   tdep->sizeof_fpregset = 400;
 
-  /* The Sun compilers (Sun ONE Studio, Forte Developer, Sun WorkShop, SunPRO)
-     compiler puts out 0 instead of the address in N_SO stabs.  Starting with
-     SunPRO 3.0, the compiler does this for N_FUN stabs too.  */
-  set_gdbarch_sofun_address_maybe_missing (gdbarch, 1);
-
-  /* The Sun compilers also do "globalization"; see the comment in
-     sparc_sol2_static_transform_name for more information.  */
-  set_gdbarch_static_transform_name
-    (gdbarch, sparc_sol2_static_transform_name);
+  sol2_init_abi (info, gdbarch);
 
   /* Solaris has SVR4-style shared libraries...  */
   set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
-  set_gdbarch_skip_solib_resolver (gdbarch, sol2_skip_solib_resolver);
   set_solib_svr4_fetch_link_map_offsets
     (gdbarch, svr4_ilp32_fetch_link_map_offsets);
 
@@ -288,13 +218,11 @@ sparc32_sol2_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_software_single_step (gdbarch, NULL);
 
   frame_unwind_append_unwinder (gdbarch, &sparc32_sol2_sigtramp_frame_unwind);
-
-  /* How to print LWP PTIDs from core files.  */
-  set_gdbarch_core_pid_to_str (gdbarch, sol2_core_pid_to_str);
 }
 
+void _initialize_sparc_sol2_tdep ();
 void
-_initialize_sparc_sol2_tdep (void)
+_initialize_sparc_sol2_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_sparc, 0,
 			  GDB_OSABI_SOLARIS, sparc32_sol2_init_abi);

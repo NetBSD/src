@@ -1,4 +1,4 @@
-# Copyright 1992-2019 Free Software Foundation, Inc.
+# Copyright 1992-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ load_lib "cp-support.exp"
 
 standard_testfile misc.cc
 
-if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}]} {
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile  {debug c++}]} {
     return -1
 }
 
@@ -479,9 +479,9 @@ proc test_print_svi_members { } {
     gdb_test "print g_vC.vC::vx" "$vhn = 10"
 
     # Print members of g_vC using compact form.
-    gdb_test "print g_vC.va" "$vhn = 7" "print g_vC.va"
-    gdb_test "print g_vC.vc" "$vhn = 9" "print g_vC.vc"
-    gdb_test "print g_vC.vx" "$vhn = 10" "print g_vC.vx"
+    gdb_test "print g_vC.va" "$vhn = 7"
+    gdb_test "print g_vC.vc" "$vhn = 9"
+    gdb_test "print g_vC.vx" "$vhn = 10"
 }
 
 # Single virtual inheritance, print complete classes.
@@ -693,9 +693,16 @@ proc do_tests { } {
 	return
     }
 
-    test_print_si_members
+    with_test_prefix "single inheritance" {
+	test_print_si_members
+    }
+
     test_print_si_classes
-    test_print_mi_members
+
+    with_test_prefix "multiple inheritance" {
+	test_print_mi_members
+    }
+
     test_print_mi_member_types
     test_print_mi_classes
     test_print_anon_union

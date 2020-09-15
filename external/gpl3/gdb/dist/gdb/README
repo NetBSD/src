@@ -432,6 +432,15 @@ more obscure GDB `configure' options are not listed here.
      Use the curses library instead of the termcap library, for
      text-mode terminal operations.
 
+`--with-debuginfod'
+     Build GDB with libdebuginfod, the debuginfod client library.  Used
+     to automatically fetch source files and separate debug files from
+     debuginfod servers using the associated executable's build ID.
+     Enabled by default if libdebuginfod is installed and found at
+     configure time.  debuginfod is packaged with elfutils, starting
+     with version 0.178.  You can get the latest version from
+     'https://sourceware.org/elfutils/'.
+
 `--with-libunwind-ia64'
      Use the libunwind library for unwinding function call stack on ia64
      target platforms.
@@ -439,7 +448,8 @@ more obscure GDB `configure' options are not listed here.
 
 `--with-system-readline'
      Use the readline library installed on the host, rather than the
-     library supplied as part of GDB.
+     library supplied as part of GDB.  Readline 7 or newer is required;
+     this is enforced by the build system.
 
 `--with-system-zlib
      Use the zlib library installed on the host, rather than the
@@ -491,7 +501,7 @@ more obscure GDB `configure' options are not listed here.
      GDB scripting much more powerful than the restricted CLI
      scripting language.  If your host does not have Python installed,
      you can find it on `http://www.python.org/download/'.  The oldest
-     version of Python supported by GDB is 2.4.  The optional argument
+     version of Python supported by GDB is 2.6.  The optional argument
      PYTHON is used to find the Python headers and libraries.  It can
      be either the name of a Python executable, or the name of the
      directory in which Python is installed.
@@ -505,6 +515,16 @@ more obscure GDB `configure' options are not listed here.
      try to use that version of Guile; or the file name of a
      `pkg-config' executable, which will be queried to find the
      information needed to compile and link against Guile.
+
+`--enable-source-highlight'
+     When printing source code, use source highlighting.  This requires
+     libsource-highlight to be installed and is enabled by default
+     if the library is found.
+
+`--with-xxhash'
+     Use libxxhash for hashing.  This has no user-visible effect but
+     speeds up various GDB operations such as symbol loading.  Enabled
+     by default if libxxhash is found.
 
 `--without-included-regex'
      Don't use the regex library included with GDB (as part of the
@@ -526,6 +546,15 @@ more obscure GDB `configure' options are not listed here.
      under the configured prefix, and GDB is moved to another location
      after being built, the location of the system-wide init file will
      be adjusted accordingly. 
+
+`--with-system-gdbinit-dir=DIR'
+     Configure GDB to automatically load system-wide init files from
+     a directory. Files with extensions `.gdb', `.py' (if Python
+     support is enabled) and `.scm' (if Guile support is enabled) are
+     supported.  DIR should be an absolute directory name.  If DIR is
+     in a directory under the configured prefix, and GDB is moved to
+     another location after being built, the location of the system-
+     wide init directory will be adjusted accordingly.
 
 `--enable-build-warnings'
      When building the GDB sources, ask the compiler to warn about any
@@ -563,12 +592,11 @@ of remote stubs to be used with remote.c.  They are designed to run
 standalone on an m68k, i386, or SPARC cpu and communicate properly
 with the remote.c stub over a serial line.
 
-   The directory gdb/gdbserver/ contains `gdbserver', a program that
+   The directory gdbserver/ contains `gdbserver', a program that
 allows remote debugging for Unix applications.  GDBserver is only
-supported for some native configurations, including Sun 3, Sun 4, and
-Linux.
+supported for some native configurations.
 
-   The file gdb/gdbserver/README includes further notes on GDBserver; in
+   The file gdbserver/README includes further notes on GDBserver; in
 particular, it explains how to build GDBserver for cross-debugging
 (where GDBserver runs on the target machine, which is of a different
 architecture than the host machine running GDB).

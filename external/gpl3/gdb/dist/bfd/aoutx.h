@@ -1,5 +1,5 @@
 /* BFD semi-generic back-end for a.out binaries.
-   Copyright (C) 1990-2019 Free Software Foundation, Inc.
+   Copyright (C) 1990-2020 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -127,6 +127,18 @@ DESCRIPTION
 #include "aout/aout64.h"
 #include "aout/stab_gnu.h"
 #include "aout/ar.h"
+
+#ifdef BMAGIC
+#define N_IS_BMAGIC(x) (N_MAGIC (x) == BMAGIC)
+#else
+#define N_IS_BMAGIC(x) (0)
+#endif
+
+#ifdef QMAGIC
+#define N_SET_QMAGIC(x) N_SET_MAGIC (x, QMAGIC)
+#else
+#define N_SET_QMAGIC(x) do { /**/ } while (0)
+#endif
 
 /*
 SUBSECTION
@@ -452,14 +464,14 @@ DESCRIPTION
 	handle any last-minute setup.
 */
 
-const bfd_target *
+bfd_cleanup
 NAME (aout, some_aout_object_p) (bfd *abfd,
 				 struct internal_exec *execp,
-				 const bfd_target *(*callback_to_real_object_p) (bfd *))
+				 bfd_cleanup (*callback_to_real_object_p) (bfd *))
 {
   struct aout_data_struct *rawptr, *oldrawptr;
-  const bfd_target *result;
-  bfd_size_type amt = sizeof (* rawptr);
+  bfd_cleanup result;
+  size_t amt = sizeof (* rawptr);
 
   rawptr = (struct aout_data_struct *) bfd_zalloc (abfd, amt);
   if (rawptr == NULL)
@@ -492,7 +504,7 @@ NAME (aout, some_aout_object_p) (bfd *abfd,
       abfd->flags |= D_PAGED | WP_TEXT;
       adata (abfd).magic = z_magic;
     }
-  else if (N_MAGIC (execp) == QMAGIC)
+  else if (N_IS_QMAGIC (execp))
     {
       abfd->flags |= D_PAGED | WP_TEXT;
       adata (abfd).magic = z_magic;
@@ -503,18 +515,17 @@ NAME (aout, some_aout_object_p) (bfd *abfd,
       abfd->flags |= WP_TEXT;
       adata (abfd).magic = n_magic;
     }
-  else if (N_MAGIC (execp) == OMAGIC
-	   || N_MAGIC (execp) == BMAGIC)
+  else if (N_MAGIC (execp) == OMAGIC || N_IS_BMAGIC (execp))
     adata (abfd).magic = o_magic;
   else
     /* Should have been checked with N_BADMAG before this routine
        was called.  */
     abort ();
 
-  bfd_get_start_address (abfd) = execp->a_entry;
+  abfd->start_address = execp->a_entry;
 
   obj_aout_symbols (abfd) = NULL;
-  bfd_get_symcount (abfd) = execp->a_syms / sizeof (struct external_nlist);
+  abfd->symcount = execp->a_syms / sizeof (struct external_nlist);
 
   /* The default relocation entry size is that of traditional V7 Unix.  */
   obj_reloc_entry_size (abfd) = RELOC_STD_SIZE;
@@ -591,7 +602,7 @@ NAME (aout, some_aout_object_p) (bfd *abfd,
   adata (abfd)->segment_size = SEGMENT_SIZE;
   adata (abfd)->exec_bytes_size = EXEC_BYTES_SIZE;
 
-  return abfd->xvec;
+  return _bfd_no_cleanup
 
   /* The architecture is encoded in various ways in various a.out variants,
      or is not encoded at all in some of them.  The relocation size depends
@@ -671,7 +682,7 @@ bfd_boolean
 NAME (aout, mkobject) (bfd *abfd)
 {
   struct aout_data_struct *rawptr;
-  bfd_size_type amt = sizeof (* rawptr);
+  size_t amt = sizeof (* rawptr);
 
   bfd_set_error (bfd_error_system_call);
 
@@ -891,57 +902,56 @@ adjust_o_magic (bfd *abfd, struct internal_exec *execp)
   file_ptr pos = adata (abfd).exec_bytes_size;
   bfd_vma vma = 0;
   int pad = 0;
+  asection *text = obj_textsec (abfd);
+  asection *data = obj_datasec (abfd);
+  asection *bss = obj_bsssec (abfd);
 
   /* Text.  */
-  obj_textsec (abfd)->filepos = pos;
-  if (!obj_textsec (abfd)->user_set_vma)
-    obj_textsec (abfd)->vma = vma;
+  text->filepos = pos;
+  if (!text->user_set_vma)
+    text->vma = vma;
   else
-    vma = obj_textsec (abfd)->vma;
+    vma = text->vma;
 
-  pos += obj_textsec (abfd)->size;
-  vma += obj_textsec (abfd)->size;
+  pos += execp->a_text;
+  vma += execp->a_text;
 
   /* Data.  */
-  if (!obj_datasec (abfd)->user_set_vma)
+  if (!data->user_set_vma)
     {
-      obj_textsec (abfd)->size += pad;
       pos += pad;
       vma += pad;
-      obj_datasec (abfd)->vma = vma;
+      data->vma = vma;
     }
   else
-    vma = obj_datasec (abfd)->vma;
-  obj_datasec (abfd)->filepos = pos;
-  pos += obj_datasec (abfd)->size;
-  vma += obj_datasec (abfd)->size;
+    vma = data->vma;
+  execp->a_text += pad;
+
+  data->filepos = pos;
+  pos += data->size;
+  vma += data->size;
 
   /* BSS.  */
-  if (!obj_bsssec (abfd)->user_set_vma)
+  if (!bss->user_set_vma)
     {
-      obj_datasec (abfd)->size += pad;
       pos += pad;
       vma += pad;
-      obj_bsssec (abfd)->vma = vma;
+      bss->vma = vma;
     }
   else
     {
       /* The VMA of the .bss section is set by the VMA of the
 	 .data section plus the size of the .data section.  We may
 	 need to add padding bytes to make this true.  */
-      pad = obj_bsssec (abfd)->vma - vma;
-      if (pad > 0)
-	{
-	  obj_datasec (abfd)->size += pad;
-	  pos += pad;
-	}
+      pad = bss->vma - vma;
+      if (pad < 0)
+	pad = 0;
+      pos += pad;
     }
-  obj_bsssec (abfd)->filepos = pos;
+  execp->a_data = data->size + pad;
+  bss->filepos = pos;
+  execp->a_bss = bss->size;
 
-  /* Fix up the exec header.  */
-  execp->a_text = obj_textsec (abfd)->size;
-  execp->a_data = obj_datasec (abfd)->size;
-  execp->a_bss = obj_bsssec (abfd)->size;
   N_SET_MAGIC (execp, OMAGIC);
 }
 
@@ -953,6 +963,9 @@ adjust_z_magic (bfd *abfd, struct internal_exec *execp)
   const struct aout_backend_data *abdp;
   /* TRUE if text includes exec header.  */
   bfd_boolean ztih;
+  asection *text = obj_textsec (abfd);
+  asection *data = obj_datasec (abfd);
+  asection *bss = obj_bsssec (abfd);
 
   abdp = aout_backend_info (abfd);
 
@@ -960,18 +973,17 @@ adjust_z_magic (bfd *abfd, struct internal_exec *execp)
   ztih = (abdp != NULL
 	  && (abdp->text_includes_header
 	      || obj_aout_subformat (abfd) == q_magic_format));
-  obj_textsec (abfd)->filepos = (ztih
-				 ? adata (abfd).exec_bytes_size
-				 : adata (abfd).zmagic_disk_block_size);
-  if (! obj_textsec (abfd)->user_set_vma)
+  text->filepos = (ztih
+		   ? adata (abfd).exec_bytes_size
+		   : adata (abfd).zmagic_disk_block_size);
+  if (!text->user_set_vma)
     {
       /* ?? Do we really need to check for relocs here?  */
-      obj_textsec (abfd)->vma = ((abfd->flags & HAS_RELOC)
-				 ? 0
-				 : (ztih
-				    ? (abdp->default_text_vma
-				       + adata (abfd).exec_bytes_size)
-				    : abdp->default_text_vma));
+      text->vma = ((abfd->flags & HAS_RELOC)
+		   ? 0
+		   : (ztih
+		      ? abdp->default_text_vma + adata (abfd).exec_bytes_size
+		      : abdp->default_text_vma));
       text_pad = 0;
     }
   else
@@ -980,17 +992,17 @@ adjust_z_magic (bfd *abfd, struct internal_exec *execp)
 	 may need to pad it such that the .data section starts at a page
 	 boundary.  */
       if (ztih)
-	text_pad = ((obj_textsec (abfd)->filepos - obj_textsec (abfd)->vma)
+	text_pad = ((text->filepos - text->vma)
 		    & (adata (abfd).page_size - 1));
       else
-	text_pad = ((- obj_textsec (abfd)->vma)
+	text_pad = (-text->vma
 		    & (adata (abfd).page_size - 1));
     }
 
   /* Find start of data.  */
   if (ztih)
     {
-      text_end = obj_textsec (abfd)->filepos + obj_textsec (abfd)->size;
+      text_end = text->filepos + execp->a_text;
       text_pad += BFD_ALIGN (text_end, adata (abfd).page_size) - text_end;
     }
   else
@@ -998,55 +1010,45 @@ adjust_z_magic (bfd *abfd, struct internal_exec *execp)
       /* Note that if page_size == zmagic_disk_block_size, then
 	 filepos == page_size, and this case is the same as the ztih
 	 case.  */
-      text_end = obj_textsec (abfd)->size;
+      text_end = execp->a_text;
       text_pad += BFD_ALIGN (text_end, adata (abfd).page_size) - text_end;
-      text_end += obj_textsec (abfd)->filepos;
+      text_end += text->filepos;
     }
-  obj_textsec (abfd)->size += text_pad;
-  text_end += text_pad;
+  execp->a_text += text_pad;
 
   /* Data.  */
-  if (!obj_datasec (abfd)->user_set_vma)
+  if (!data->user_set_vma)
     {
       bfd_vma vma;
-      vma = obj_textsec (abfd)->vma + obj_textsec (abfd)->size;
-      obj_datasec (abfd)->vma = BFD_ALIGN (vma, adata (abfd).segment_size);
+      vma = text->vma + execp->a_text;
+      data->vma = BFD_ALIGN (vma, adata (abfd).segment_size);
     }
   if (abdp && abdp->zmagic_mapped_contiguous)
     {
-      asection * text = obj_textsec (abfd);
-      asection * data = obj_datasec (abfd);
-
-      text_pad = data->vma - (text->vma + text->size);
+      text_pad = data->vma - (text->vma + execp->a_text);
       /* Only pad the text section if the data
 	 section is going to be placed after it.  */
       if (text_pad > 0)
-	text->size += text_pad;
+	execp->a_text += text_pad;
     }
-  obj_datasec (abfd)->filepos = (obj_textsec (abfd)->filepos
-				 + obj_textsec (abfd)->size);
+  data->filepos = text->filepos + execp->a_text;
 
   /* Fix up exec header while we're at it.  */
-  execp->a_text = obj_textsec (abfd)->size;
   if (ztih && (!abdp || (abdp && !abdp->exec_header_not_counted)))
     execp->a_text += adata (abfd).exec_bytes_size;
   if (obj_aout_subformat (abfd) == q_magic_format)
-    N_SET_MAGIC (execp, QMAGIC);
+    N_SET_QMAGIC (execp);
   else
     N_SET_MAGIC (execp, ZMAGIC);
 
   /* Spec says data section should be rounded up to page boundary.  */
-  obj_datasec (abfd)->size
-    = align_power (obj_datasec (abfd)->size,
-		   obj_bsssec (abfd)->alignment_power);
-  execp->a_data = BFD_ALIGN (obj_datasec (abfd)->size,
-			     adata (abfd).page_size);
-  data_pad = execp->a_data - obj_datasec (abfd)->size;
+  execp->a_data = align_power (data->size, bss->alignment_power);
+  execp->a_data = BFD_ALIGN (execp->a_data, adata (abfd).page_size);
+  data_pad = execp->a_data - data->size;
 
   /* BSS.  */
-  if (!obj_bsssec (abfd)->user_set_vma)
-    obj_bsssec (abfd)->vma = (obj_datasec (abfd)->vma
-			      + obj_datasec (abfd)->size);
+  if (!bss->user_set_vma)
+    bss->vma = data->vma + execp->a_data;
   /* If the BSS immediately follows the data section and extra space
      in the page is left after the data section, fudge data
      in the header so that the bss section looks smaller by that
@@ -1054,12 +1056,10 @@ adjust_z_magic (bfd *abfd, struct internal_exec *execp)
      (Note that a linker script, as well as the above assignment,
      could have explicitly set the BSS vma to immediately follow
      the data section.)  */
-  if (align_power (obj_bsssec (abfd)->vma, obj_bsssec (abfd)->alignment_power)
-      == obj_datasec (abfd)->vma + obj_datasec (abfd)->size)
-    execp->a_bss = (data_pad > obj_bsssec (abfd)->size
-		    ? 0 : obj_bsssec (abfd)->size - data_pad);
+  if (align_power (bss->vma, bss->alignment_power) == data->vma + execp->a_data)
+    execp->a_bss = data_pad > bss->size ? 0 : bss->size - data_pad;
   else
-    execp->a_bss = obj_bsssec (abfd)->size;
+    execp->a_bss = bss->size;
 }
 
 static void
@@ -1068,38 +1068,39 @@ adjust_n_magic (bfd *abfd, struct internal_exec *execp)
   file_ptr pos = adata (abfd).exec_bytes_size;
   bfd_vma vma = 0;
   int pad;
+  asection *text = obj_textsec (abfd);
+  asection *data = obj_datasec (abfd);
+  asection *bss = obj_bsssec (abfd);
 
   /* Text.  */
-  obj_textsec (abfd)->filepos = pos;
-  if (!obj_textsec (abfd)->user_set_vma)
-    obj_textsec (abfd)->vma = vma;
+  text->filepos = pos;
+  if (!text->user_set_vma)
+    text->vma = vma;
   else
-    vma = obj_textsec (abfd)->vma;
-  pos += obj_textsec (abfd)->size;
-  vma += obj_textsec (abfd)->size;
+    vma = text->vma;
+  pos += execp->a_text;
+  vma += execp->a_text;
 
   /* Data.  */
-  obj_datasec (abfd)->filepos = pos;
-  if (!obj_datasec (abfd)->user_set_vma)
-    obj_datasec (abfd)->vma = BFD_ALIGN (vma, adata (abfd).segment_size);
-  vma = obj_datasec (abfd)->vma;
+  data->filepos = pos;
+  if (!data->user_set_vma)
+    data->vma = BFD_ALIGN (vma, adata (abfd).segment_size);
+  vma = data->vma;
 
   /* Since BSS follows data immediately, see if it needs alignment.  */
-  vma += obj_datasec (abfd)->size;
-  pad = align_power (vma, obj_bsssec (abfd)->alignment_power) - vma;
-  obj_datasec (abfd)->size += pad;
-  pos += obj_datasec (abfd)->size;
+  vma += data->size;
+  pad = align_power (vma, bss->alignment_power) - vma;
+  execp->a_data = data->size + pad;
+  pos += execp->a_data;
 
   /* BSS.  */
-  if (!obj_bsssec (abfd)->user_set_vma)
-    obj_bsssec (abfd)->vma = vma;
+  if (!bss->user_set_vma)
+    bss->vma = vma;
   else
-    vma = obj_bsssec (abfd)->vma;
+    vma = bss->vma;
 
   /* Fix up exec header.  */
-  execp->a_text = obj_textsec (abfd)->size;
-  execp->a_data = obj_datasec (abfd)->size;
-  execp->a_bss = obj_bsssec (abfd)->size;
+  execp->a_bss = bss->size;
   N_SET_MAGIC (execp, NMAGIC);
 }
 
@@ -1114,9 +1115,8 @@ NAME (aout, adjust_sizes_and_vmas) (bfd *abfd)
   if (adata (abfd).magic != undecided_magic)
     return TRUE;
 
-  obj_textsec (abfd)->size =
-    align_power (obj_textsec (abfd)->size,
-		 obj_textsec (abfd)->alignment_power);
+  execp->a_text = align_power (obj_textsec (abfd)->size,
+			       obj_textsec (abfd)->alignment_power);
 
   /* Rule (heuristic) for when to pad to a new page.  Note that there
      are (at least) two ways demand-paged (ZMAGIC) files have been
@@ -1181,11 +1181,11 @@ NAME (aout, adjust_sizes_and_vmas) (bfd *abfd)
 
 #ifdef BFD_AOUT_DEBUG
   fprintf (stderr, "       text=<%x,%x,%x> data=<%x,%x,%x> bss=<%x,%x>\n",
-	   obj_textsec (abfd)->vma, obj_textsec (abfd)->size,
+	   obj_textsec (abfd)->vma, execp->a_text,
 		obj_textsec (abfd)->filepos,
-	   obj_datasec (abfd)->vma, obj_datasec (abfd)->size,
+	   obj_datasec (abfd)->vma, execp->a_data,
 		obj_datasec (abfd)->filepos,
-	   obj_bsssec (abfd)->vma, obj_bsssec (abfd)->size);
+	   obj_bsssec (abfd)->vma, execp->a_bss);
 #endif
 
   return TRUE;
@@ -1303,16 +1303,11 @@ aout_get_external_symbols (bfd *abfd)
       /* We allocate using malloc to make the values easy to free
 	 later on.  If we put them on the objalloc it might not be
 	 possible to free them.  */
-      syms = (struct external_nlist *) bfd_malloc (amt);
+      if (bfd_seek (abfd, obj_sym_filepos (abfd), SEEK_SET) != 0)
+	return FALSE;
+      syms = (struct external_nlist *) _bfd_malloc_and_read (abfd, amt, amt);
       if (syms == NULL)
 	return FALSE;
-
-      if (bfd_seek (abfd, obj_sym_filepos (abfd), SEEK_SET) != 0
-	  || bfd_bread (syms, amt, abfd) != amt)
-	{
-	  free (syms);
-	  return FALSE;
-	}
 #endif
 
       obj_aout_external_syms (abfd) = syms;
@@ -1570,7 +1565,7 @@ translate_to_native_sym_flags (bfd *abfd,
      to another.  */
   sym_pointer->e_type[0] &= ~N_TYPE;
 
-  sec = bfd_get_section (cache_ptr);
+  sec = bfd_asymbol_section (cache_ptr);
   off = 0;
 
   if (sec == NULL)
@@ -1675,7 +1670,7 @@ translate_to_native_sym_flags (bfd *abfd,
 asymbol *
 NAME (aout, make_empty_symbol) (bfd *abfd)
 {
-  bfd_size_type amt = sizeof (aout_symbol_type);
+  size_t amt = sizeof (aout_symbol_type);
 
   aout_symbol_type *new_symbol = (aout_symbol_type *) bfd_zalloc (abfd, amt);
   if (!new_symbol)
@@ -1685,7 +1680,7 @@ NAME (aout, make_empty_symbol) (bfd *abfd)
   return &new_symbol->symbol;
 }
 
-/* Translate a set of internal symbols into external symbols.  */
+/* Translate a set of external symbols into internal symbols.  */
 
 bfd_boolean
 NAME (aout, translate_symbol_table) (bfd *abfd,
@@ -1782,7 +1777,7 @@ NAME (aout, slurp_symbol_table) (bfd *abfd)
       return FALSE;
     }
 
-  bfd_get_symcount (abfd) = obj_aout_external_sym_count (abfd);
+  abfd->symcount = obj_aout_external_sym_count (abfd);
 
   obj_aout_symbols (abfd) = cached;
 
@@ -1852,7 +1847,7 @@ static bfd_boolean
 emit_stringtab (bfd *abfd, struct bfd_strtab_hash *tab)
 {
   bfd_byte buffer[BYTES_IN_WORD];
-  bfd_size_type amt = BYTES_IN_WORD;
+  size_t amt = BYTES_IN_WORD;
 
   /* The string table starts with the size.  */
   PUT_WORD (abfd, _bfd_stringtab_size (tab) + BYTES_IN_WORD, buffer);
@@ -1878,7 +1873,7 @@ NAME (aout, write_syms) (bfd *abfd)
       asymbol *g = generic[count];
       bfd_size_type indx;
       struct external_nlist nsp;
-      bfd_size_type amt;
+      size_t amt;
 
       indx = add_to_stringtab (abfd, strtab, g->name, FALSE);
       if (indx == (bfd_size_type) -1)
@@ -1917,7 +1912,7 @@ NAME (aout, write_syms) (bfd *abfd)
 
   return TRUE;
 
-error_return:
+ error_return:
   _bfd_stringtab_free (strtab);
   return FALSE;
 }
@@ -1961,7 +1956,24 @@ NAME (aout, swap_std_reloc_out) (bfd *abfd,
   PUT_WORD (abfd, g->address, natptr->r_address);
 
   BFD_ASSERT (g->howto != NULL);
-  r_length = g->howto->size ;	/* Size as a power of two.  */
+
+  switch (bfd_get_reloc_size (g->howto))
+    {
+    default:
+      _bfd_error_handler (_("%pB: unsupported AOUT relocation size: %d"),
+			  abfd, bfd_get_reloc_size (g->howto));
+      bfd_set_error (bfd_error_bad_value);
+      return;
+    case 1:
+    case 2:
+    case 4:
+      r_length = g->howto->size;	/* Size as a power of two.  */
+      break;
+    case 8:
+      r_length = 3;
+      break;
+    }
+
   r_pcrel  = (int) g->howto->pc_relative; /* Relative to PC?  */
   /* XXX This relies on relocs coming from a.out files.  */
   r_baserel = (g->howto->type & 8) != 0;
@@ -2064,14 +2076,14 @@ NAME (aout, swap_ext_reloc_out) (bfd *abfd,
      Absolute symbols can come in in two ways, either as an offset
      from the abs section, or as a symbol which has an abs value.
      check for that here.  */
-  if (bfd_is_abs_section (bfd_get_section (sym)))
+  if (bfd_is_abs_section (bfd_asymbol_section (sym)))
     {
       r_extern = 0;
       r_index = N_ABS;
     }
   else if ((sym->flags & BSF_SECTION_SYM) == 0)
     {
-      if (bfd_is_und_section (bfd_get_section (sym))
+      if (bfd_is_und_section (bfd_asymbol_section (sym))
 	  || (sym->flags & BSF_GLOBAL) != 0)
 	r_extern = 1;
       else
@@ -2316,34 +2328,22 @@ NAME (aout, slurp_reloc_table) (bfd *abfd, sec_ptr asect, asymbol **symbols)
       return FALSE;
     }
 
-  if (reloc_size == 0)
-    return TRUE;		/* Nothing to be done.  */
-
-  if (bfd_seek (abfd, asect->rel_filepos, SEEK_SET) != 0)
-    return FALSE;
-
   each_size = obj_reloc_entry_size (abfd);
-
   count = reloc_size / each_size;
   if (count == 0)
     return TRUE;		/* Nothing to be done.  */
 
+  if (bfd_seek (abfd, asect->rel_filepos, SEEK_SET) != 0)
+    return FALSE;
+  relocs = _bfd_malloc_and_read (abfd, reloc_size, reloc_size);
+  if (relocs == NULL)
+    return FALSE;
+
   amt = count * sizeof (arelent);
   reloc_cache = (arelent *) bfd_zmalloc (amt);
   if (reloc_cache == NULL)
-    return FALSE;
-
-  relocs = bfd_malloc (reloc_size);
-  if (relocs == NULL)
-    {
-      free (reloc_cache);
-      return FALSE;
-    }
-
-  if (bfd_bread (relocs, reloc_size, abfd) != reloc_size)
     {
       free (relocs);
-      free (reloc_cache);
       return FALSE;
     }
 
@@ -2409,8 +2409,8 @@ NAME (aout, squirt_out_relocs) (bfd *abfd, asection *section)
 	      || (*generic)->sym_ptr_ptr == NULL)
 	    {
 	      bfd_set_error (bfd_error_invalid_operation);
-	      _bfd_error_handler (_("\
-%pB: attempt to write out unknown reloc type"), abfd);
+	      _bfd_error_handler (_("%pB: attempt to write out "
+				    "unknown reloc type"), abfd);
 	      return FALSE;
 	    }
 	  MY_swap_ext_reloc_out (abfd, *generic,
@@ -2427,8 +2427,8 @@ NAME (aout, squirt_out_relocs) (bfd *abfd, asection *section)
 	      || (*generic)->sym_ptr_ptr == NULL)
 	    {
 	      bfd_set_error (bfd_error_invalid_operation);
-	      _bfd_error_handler (_("\
-%pB: attempt to write out unknown reloc type"), abfd);
+	      _bfd_error_handler (_("%pB: attempt to write out "
+				    "unknown reloc type"), abfd);
 	      return FALSE;
 	    }
 	  MY_swap_std_reloc_out (abfd, *generic,
@@ -2697,7 +2697,7 @@ NAME (aout, find_nearest_line) (bfd *abfd,
   bfd_size_type filelen, funclen;
   char *buf;
 
-  *filename_ptr = abfd->filename;
+  *filename_ptr = bfd_get_filename (abfd);
   *functionname_ptr = NULL;
   *line_ptr = 0;
   if (disriminator_ptr)
@@ -2827,8 +2827,7 @@ NAME (aout, find_nearest_line) (bfd *abfd,
   else
     funclen = strlen (bfd_asymbol_name (func));
 
-  if (adata (abfd).line_buf != NULL)
-    free (adata (abfd).line_buf);
+  free (adata (abfd).line_buf);
 
   if (filelen + funclen == 0)
     adata (abfd).line_buf = buf = NULL;
@@ -2910,7 +2909,7 @@ NAME (aout, bfd_free_cached_info) (bfd *abfd)
       || abfd->tdata.aout_data == NULL)
     return TRUE;
 
-#define BFCI_FREE(x) if (x != NULL) { free (x); x = NULL; }
+#define BFCI_FREE(x) do { free (x); x = NULL; } while (0)
   BFCI_FREE (obj_aout_symbols (abfd));
 #ifdef USE_MMAP
   obj_aout_external_syms (abfd) = 0;
@@ -2980,7 +2979,7 @@ struct bfd_link_hash_table *
 NAME (aout, link_hash_table_create) (bfd *abfd)
 {
   struct aout_link_hash_table *ret;
-  bfd_size_type amt = sizeof (* ret);
+  size_t amt = sizeof (* ret);
 
   ret = (struct aout_link_hash_table *) bfd_malloc (amt);
   if (ret == NULL)
@@ -3108,18 +3107,18 @@ aout_link_add_symbols (bfd *abfd, struct bfd_link_info *info)
 	  break;
 	case N_TEXT | N_EXT:
 	  section = obj_textsec (abfd);
-	  value -= bfd_get_section_vma (abfd, section);
+	  value -= bfd_section_vma (section);
 	  break;
 	case N_DATA | N_EXT:
 	case N_SETV | N_EXT:
 	  /* Treat N_SETV symbols as N_DATA symbol; see comment in
 	     translate_from_native_sym_flags.  */
 	  section = obj_datasec (abfd);
-	  value -= bfd_get_section_vma (abfd, section);
+	  value -= bfd_section_vma (section);
 	  break;
 	case N_BSS | N_EXT:
 	  section = obj_bsssec (abfd);
-	  value -= bfd_get_section_vma (abfd, section);
+	  value -= bfd_section_vma (section);
 	  break;
 	case N_INDR | N_EXT:
 	  /* An indirect symbol.  The next symbol is the symbol
@@ -3145,17 +3144,17 @@ aout_link_add_symbols (bfd *abfd, struct bfd_link_info *info)
 	case N_SETT: case N_SETT | N_EXT:
 	  section = obj_textsec (abfd);
 	  flags |= BSF_CONSTRUCTOR;
-	  value -= bfd_get_section_vma (abfd, section);
+	  value -= bfd_section_vma (section);
 	  break;
 	case N_SETD: case N_SETD | N_EXT:
 	  section = obj_datasec (abfd);
 	  flags |= BSF_CONSTRUCTOR;
-	  value -= bfd_get_section_vma (abfd, section);
+	  value -= bfd_section_vma (section);
 	  break;
 	case N_SETB: case N_SETB | N_EXT:
 	  section = obj_bsssec (abfd);
 	  flags |= BSF_CONSTRUCTOR;
-	  value -= bfd_get_section_vma (abfd, section);
+	  value -= bfd_section_vma (section);
 	  break;
 	case N_WARNING:
 	  /* A warning symbol.  The next symbol is the one to warn
@@ -3181,17 +3180,17 @@ aout_link_add_symbols (bfd *abfd, struct bfd_link_info *info)
 	  break;
 	case N_WEAKT:
 	  section = obj_textsec (abfd);
-	  value -= bfd_get_section_vma (abfd, section);
+	  value -= bfd_section_vma (section);
 	  flags = BSF_WEAK;
 	  break;
 	case N_WEAKD:
 	  section = obj_datasec (abfd);
-	  value -= bfd_get_section_vma (abfd, section);
+	  value -= bfd_section_vma (section);
 	  flags = BSF_WEAK;
 	  break;
 	case N_WEAKB:
 	  section = obj_bsssec (abfd);
-	  value -= bfd_get_section_vma (abfd, section);
+	  value -= bfd_section_vma (section);
 	  flags = BSF_WEAK;
 	  break;
 	}
@@ -3634,7 +3633,7 @@ aout_link_write_other_symbol (struct bfd_hash_entry *bh, void *data)
   bfd_vma val;
   struct external_nlist outsym;
   bfd_size_type indx;
-  bfd_size_type amt;
+  size_t amt;
 
   if (h->root.type == bfd_link_hash_warning)
     {
@@ -3759,7 +3758,7 @@ aout_link_reloc_link_order (struct aout_final_link_info *flaginfo,
   struct reloc_std_external srel;
   struct reloc_ext_external erel;
   void * rel_ptr;
-  bfd_size_type amt;
+  size_t amt;
 
   pr = p->u.reloc.p;
 
@@ -3831,13 +3830,16 @@ aout_link_reloc_link_order (struct aout_final_link_info *flaginfo,
 	int r_baserel;
 	int r_jmptable;
 	int r_relative;
-	int r_length;
+	unsigned int r_length;
 
 	r_pcrel = (int) howto->pc_relative;
 	r_baserel = (howto->type & 8) != 0;
 	r_jmptable = (howto->type & 16) != 0;
 	r_relative = (howto->type & 32) != 0;
-	r_length = howto->size;
+	if (bfd_get_reloc_size (howto) != 8)
+	  r_length = howto->size;	/* Size as a power of two.  */
+	else
+	  r_length = 3;
 
 	PUT_WORD (flaginfo->output_bfd, p->offset, srel.r_address);
 	if (bfd_header_big_endian (flaginfo->output_bfd))
@@ -3899,8 +3901,7 @@ aout_link_reloc_link_order (struct aout_final_link_info *flaginfo,
 	      (*flaginfo->info->callbacks->reloc_overflow)
 		(flaginfo->info, NULL,
 		 (p->type == bfd_section_reloc_link_order
-		  ? bfd_section_name (flaginfo->output_bfd,
-				      pr->u.section)
+		  ? bfd_section_name (pr->u.section)
 		  : pr->u.name),
 		 howto->name, pr->addend, NULL, NULL, (bfd_vma) 0);
 	      break;
@@ -4314,7 +4315,7 @@ aout_link_input_section_std (struct aout_final_link_info *flaginfo,
 		    asection *s;
 
 		    s = aout_reloc_index_to_section (input_bfd, r_index);
-		    name = bfd_section_name (input_bfd, s);
+		    name = bfd_section_name (s);
 		  }
 		(*flaginfo->info->callbacks->reloc_overflow)
 		  (flaginfo->info, (h ? &h->root : NULL), name, howto->name,
@@ -4728,7 +4729,7 @@ aout_link_input_section_ext (struct aout_final_link_info *flaginfo,
 			asection *s;
 
 			s = aout_reloc_index_to_section (input_bfd, r_index);
-			name = bfd_section_name (input_bfd, s);
+			name = bfd_section_name (s);
 		      }
 		    (*flaginfo->info->callbacks->reloc_overflow)
 		      (flaginfo->info, (h ? &h->root : NULL), name,
@@ -4855,7 +4856,8 @@ aout_link_write_symbols (struct aout_final_link_info *flaginfo, bfd *input_bfd)
      discarding such symbols.  */
   if (strip != strip_all
       && (strip != strip_some
-	  || bfd_hash_lookup (flaginfo->info->keep_hash, input_bfd->filename,
+	  || bfd_hash_lookup (flaginfo->info->keep_hash,
+			      bfd_get_filename (input_bfd),
 			      FALSE, FALSE) != NULL)
       && discard != discard_all)
     {
@@ -4863,13 +4865,12 @@ aout_link_write_symbols (struct aout_final_link_info *flaginfo, bfd *input_bfd)
       H_PUT_8 (output_bfd, 0, outsym->e_other);
       H_PUT_16 (output_bfd, 0, outsym->e_desc);
       strtab_index = add_to_stringtab (output_bfd, flaginfo->strtab,
-				       input_bfd->filename, FALSE);
+				       bfd_get_filename (input_bfd), FALSE);
       if (strtab_index == (bfd_size_type) -1)
 	return FALSE;
       PUT_WORD (output_bfd, strtab_index, outsym->e_strx);
       PUT_WORD (output_bfd,
-		(bfd_get_section_vma (output_bfd,
-				      obj_textsec (input_bfd)->output_section)
+		(bfd_section_vma (obj_textsec (input_bfd)->output_section)
 		 + obj_textsec (input_bfd)->output_offset),
 		outsym->e_value);
       ++obj_aout_external_sym_count (output_bfd);
@@ -5077,7 +5078,7 @@ aout_link_write_symbols (struct aout_final_link_info *flaginfo, bfd *input_bfd)
 		  BFD_ASSERT (bfd_is_abs_section (output_section)
 			      || output_section->owner == output_bfd);
 		  val = (hresolve->root.u.def.value
-			 + bfd_get_section_vma (output_bfd, output_section)
+			 + bfd_section_vma (output_section)
 			 + input_section->output_offset);
 
 		  /* Get the correct type based on the section.  If
@@ -5626,26 +5627,15 @@ NAME (aout, final_link) (bfd *abfd,
 	}
     }
 
-  if (aout_info.contents != NULL)
-    {
-      free (aout_info.contents);
-      aout_info.contents = NULL;
-    }
-  if (aout_info.relocs != NULL)
-    {
-      free (aout_info.relocs);
-      aout_info.relocs = NULL;
-    }
-  if (aout_info.symbol_map != NULL)
-    {
-      free (aout_info.symbol_map);
-      aout_info.symbol_map = NULL;
-    }
-  if (aout_info.output_syms != NULL)
-    {
-      free (aout_info.output_syms);
-      aout_info.output_syms = NULL;
-    }
+  free (aout_info.contents);
+  aout_info.contents = NULL;
+  free (aout_info.relocs);
+  aout_info.relocs = NULL;
+  free (aout_info.symbol_map);
+  aout_info.symbol_map = NULL;
+  free (aout_info.output_syms);
+  aout_info.output_syms = NULL;
+
   if (includes_hash_initialized)
     {
       bfd_hash_table_free (&aout_info.includes.root);
@@ -5688,14 +5678,10 @@ NAME (aout, final_link) (bfd *abfd,
   return TRUE;
 
  error_return:
-  if (aout_info.contents != NULL)
-    free (aout_info.contents);
-  if (aout_info.relocs != NULL)
-    free (aout_info.relocs);
-  if (aout_info.symbol_map != NULL)
-    free (aout_info.symbol_map);
-  if (aout_info.output_syms != NULL)
-    free (aout_info.output_syms);
+  free (aout_info.contents);
+  free (aout_info.relocs);
+  free (aout_info.symbol_map);
+  free (aout_info.output_syms);
   if (includes_hash_initialized)
     bfd_hash_table_free (&aout_info.includes.root);
   return FALSE;

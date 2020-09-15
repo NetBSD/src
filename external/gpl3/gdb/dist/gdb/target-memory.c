@@ -1,7 +1,7 @@
 /* Parts of target interface that deal with accessing memory and memory-like
    objects.
 
-   Copyright (C) 2006-2019 Free Software Foundation, Inc.
+   Copyright (C) 2006-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,11 +19,10 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "common/vec.h"
 #include "target.h"
 #include "memory-map.h"
 
-#include "common/gdb_sys_time.h"
+#include "gdbsupport/gdb_sys_time.h"
 #include <algorithm>
 
 static bool

@@ -1,12 +1,396 @@
+2020-09-11  Felix Willgerodt  <felix.willgerodt@intel.com>
+
+	Sync with GCC
+	2020-09-08  Felix Willgerodt  <felix.willgerodt@intel.com>
+
+	* floatformat.c (floatformat_bfloat16_big): New.
+	(floatformat_bfloat16_little): New.
+
+2020-09-08  Alan Modra  <amodra@gmail.com>
+
+	* configure: Regenerate.
+
+	Sync from gcc
+	2020-09-08  Alan Modra  <amodra@gmail.com>
+	* d-demangle.c: Include limits.h.
+	(ULONG_MAX, UINT_MAX): Provide fall-back definition.
+	(dlang_number): Simplify and correct overflow test.  Only
+	write *ret on returning non-NULL.  Make "ret" an unsigned long*.
+	Only succeed for result of [0,UINT_MAX].
+	(dlang_decode_backref): Simplify and correct overflow test.
+	Only write *ret on returning non-NULL.  Only succeed for
+	result [1,MAX_LONG].
+	(dlang_backref): Remove now unnecessary range check.
+	(dlang_symbol_name_p): Likewise.
+	(string_need): Take a size_t n arg, and use size_t tem.
+	(string_append): Use size_t n.
+	(string_appendn, string_prependn): Take a size_t n arg.
+	(TEMPLATE_LENGTH_UNKNOWN): Define as -1UL.
+	(dlang_lname, dlang_parse_template): Take an unsigned long len
+	arg.
+	(dlang_symbol_backref, dlang_identifier, dlang_parse_integer),
+	(dlang_parse_integer, dlang_parse_string),
+	(dlang_parse_arrayliteral, dlang_parse_assocarray),
+	(dlang_parse_structlit, dlang_parse_tuple),
+	(dlang_template_symbol_param, dlang_template_args): Use
+	unsigned long variables.
+	* testsuite/d-demangle-expected: Add new tests.
+
+	2020-08-04  Iain Buclaw  <ibuclaw@gdcproject.org>
+	* d-demangle.c (dlang_function_args): Handle 'in' and 'in ref'
+	parameter storage classes.
+	(dlang_type): Remove identifier type.
+	* testsuite/d-demangle-expected: Update tests.
+
+	2020-08-03  Richard Biener  <rguenther@suse.de>
+	PR lto/96385
+	* simple-object-elf.c
+	(simple_object_elf_copy_lto_debug_sections): Localize global
+	UNDEFs and reuse the prevailing name.
+
+	2020-07-10  Ian Lance Taylor  <iant@golang.org>
+	PR demangler/96143
+	* cp-demangle.c (d_lambda): Don't add substitution candidate.
+	* testsuite/demangle-expected: Update a few existing test cases
+	accordingly, and add a new test case.
+
+	2020-07-04  Jason Merrill  <jason@redhat.com>
+	* cp-demangle.c (cplus_demangle_operators): Add di, dx, dX.
+	(d_expression_1): Handle di and dX.
+	(is_designated_init, d_maybe_print_designated_init): New.
+	(d_print_comp_inner): Use d_maybe_print_designated_init.
+	* testsuite/demangle-expected: Add designator tests.
+
+	2020-06-25  Nick Clifton  <nickc@redhat.com>
+	* bsearch.c (bsearch): Remove use of register keyword.
+	* bsearch_r.c (bsearch_r): Likewise.
+
+2020-06-23  Nick Alcock  <nick.alcock@oracle.com>
+
+	* bsearch_r.c: New file.
+	* Makefile.in (CFILES): Add bsearch_r.c.
+	(REQUIRED_OFILES): Add bsearch_r.o.
+	* functions.texi: Regenerate.
+
+2020-05-29  H.J. Lu  <hjl.tools@gmail.com>
+
+	PR bootstrap/95413
+	* configure: Regenerated.
+
+2020-05-15  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	* d-demangle.c (dlang_attributes): Add @live attribute.
+	* testsuite/d-demangle-expected: Add new tests.
+
+2020-05-14  Rainer Schuetze  <r.sagitario@gmx.de>
+	    Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	* d-demangle.c (enum dlang_symbol_kinds): Remove enum.
+	(struct dlang_info): New struct
+	(dlang_decode_backref): New function.
+	(dlang_backref): New function.
+	(dlang_symbol_backref): New function.
+	(dlang_type_backref): New function.
+	(dlang_symbol_name_p): New function.
+	(dlang_function_type_noreturn): New function.
+	(dlang_function_type): Add 'info' parameter.  Decode function type
+	with dlang_function_type_noreturn.
+	(dlang_function_args): Add 'info' parameter.
+	(dlang_type): Add 'info' parameter.  Handle back referenced types.
+	(dlang_identifier): Replace 'kind' parameter with 'info'.  Handle back
+	referenced symbols.  Split off decoding of plain identifiers to...
+	(dlang_lname): ...here.
+	(dlang_parse_mangle): Replace 'kind' parameter with 'info'.  Decode
+	function type and return with dlang_type.
+	(dlang_parse_qualified): Replace 'kind' parameter with 'info', add
+	'suffix_modifier' parameter.  Decode function type with
+	dlang_function_type_noreturn.
+	(dlang_parse_tuple): Add 'info' parameter.
+	(dlang_template_symbol_param): New function.
+	(dlang_template_args): Add 'info' parameter.  Decode symbol parameter
+	with dlang_template_symbol_param.  Handle back referenced values, and
+	externally mangled parameters.
+	(dlang_parse_template): Add 'info' parameter.
+	(dlang_demangle_init_info): New function.
+	(dlang_demangle): Initialize and pass 'info' parameter.
+	* testsuite/d-demangle-expected: Add new tests.
+
+2020-05-12  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR bootstrap/94998
+	* configure: Regenerated.
+
+2020-04-28  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR bootstrap/94739
+	* configure: Regenerated.
+
+2020-04-27  Jakub Jelinek  <jakub@redhat.com>
+
+	PR demangler/94797
+	* cp-demangle.c (cplus_demangle_operators): Add ss <=> operator.
+	* testsuite/demangle-expected: Add operator<=> test.
+
+2020-04-25  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR bootstrap/94739
+	* Makefile.in (COMPILE.c): Add @CET_HOST_FLAGS@.
+	(configure_deps): Add $(srcdir)/../config/cet.m4 and
+	$(srcdir)/../config/enable.m4.
+	* aclocal.m4: Include ../config/cet.m4 and ../config/enable.m4.
+	* configure.ac: Add GCC_CET_HOST_FLAGS(CET_HOST_FLAGS) and
+	AC_SUBST(CET_HOST_FLAGS).
+	* configure: Regenerated.
+
+2020-03-05  Egeyar Bagcioglu  <egeyar.bagcioglu@oracle.com>
+
+	* simple-object.c (handle_lto_debug_sections): Name
+	".GCC.command.line" among debug sections to be copied over
+	from lto objects.
+
+2020-03-02  Nick Clifton  <nickc@redhat.com>
+
+	* testsuite/demangle-expected: Update expected demangling of
+	enable_if pattern.
+
+2020-03-02  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR lto/93966
+	* simple-object.c (handle_lto_debug_sections): Also copy
+	.note.gnu.property section.
+
+2020-02-12  Sandra Loosemore  <sandra@codesourcery.com>
+
+	PR libstdc++/79193
+	PR libstdc++/88999
+
+	* configure: Regenerated.
+
+2020-02-05  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* hashtab.c (htab_remove_elt): Make a parameter const.
+	(htab_remove_elt_with_hash): Likewise.
+
+2020-01-23  Alexandre Oliva <oliva@adacore.com>
+
+	* argv.c (writeargv): Output empty args as "".
+
+2020-01-01  Jakub Jelinek  <jakub@redhat.com>
+
+	Update copyright years.
+
+2019-12-06  Tim Ruehsen  <tim.ruehsen@gmx.de>
+
+	* make-relative-prefix.c (split_directories):
+	Return early on empty 'name'
+
+2019-11-16  Tim Ruehsen  <tim.ruehsen@gmx.de>
+
+	* cp-demangle.c (d_print_init): Remove const from 4th param.
+	(cplus_demangle_fill_name): Initialize d->d_counting.
+	(cplus_demangle_fill_extended_operator): Likewise.
+	(cplus_demangle_fill_ctor): Likewise.
+	(cplus_demangle_fill_dtor): Likewise.
+	(d_make_empty): Likewise.
+	(d_count_templates_scopes): Remobe const from 3rd param,
+	Return on dc->d_counting > 1,
+	Increment dc->d_counting.
+        * cp-demint.c (cplus_demangle_fill_component): Initialize d->d_counting.
+	(cplus_demangle_fill_builtin_type): Likewise.
+	(cplus_demangle_fill_operator): Likewise.
+
+2019-11-16  Eduard-Mihai Burtescu  <eddyb@lyken.rs>
+
+	* cplus-dem.c (cplus_demangle): Use rust_demangle directly.
+	(rust_demangle): Remove.
+	* rust-demangle.c (is_prefixed_hash): Rename to is_legacy_prefixed_hash.
+	(parse_lower_hex_nibble): Rename to decode_lower_hex_nibble.
+	(parse_legacy_escape): Rename to decode_legacy_escape.
+	(rust_is_mangled): Remove.
+	(struct rust_demangler): Add.
+	(peek): Add.
+	(next): Add.
+	(struct rust_mangled_ident): Add.
+	(parse_ident): Add.
+	(rust_demangle_sym): Remove.
+	(print_str): Add.
+	(PRINT): Add.
+	(print_ident): Add.
+	(rust_demangle_callback): Add.
+	(struct str_buf): Add.
+	(str_buf_reserve): Add.
+	(str_buf_append): Add.
+	(str_buf_demangle_callback): Add.
+	(rust_demangle): Add.
+	* rust-demangle.h: Remove.
+
+2019-11-15  Miguel Saldivar  <saldivarcher@gmail.com>
+
+	* testsuite/demangle-expected: Fix test.
+
+2019-11-04  Kamlesh Kumar  <kamleshbhalui@gmail.com>
+
+	* cp-demangle.c (d_expr_primary): Handle
+	nullptr demangling.
+	* testsuite/demangle-expected: Added test.
+
+2019-10-29 Paul Pluzhnikov  <ppluzhnikov@google.com>
+
+	* cp-demangle.c (d_number): Avoid signed int overflow.
+
+2019-10-28  Miguel Saldivar  <saldivarcher@gmail.com>
+
+	* cp-demangle.c (d_print_mod): Add a space before printing `complex`
+	and `imaginary`, as opposed to after.
+	* testsuite/demangle-expected: Adjust test.
+
+2019-10-03  Eduard-Mihai Burtescu  <eddyb@lyken.rs>
+
+	* rust-demangle.c (looks_like_rust): Remove.
+	(rust_is_mangled): Don't check escapes.
+	(is_prefixed_hash): Allow 0-9a-f permutations.
+	(rust_demangle_sym): Don't bail on unknown escapes.
+	* testsuite/rust-demangle-expected: Update 'main::$99$' test.
+
+2019-09-03  Eduard-Mihai Burtescu  <eddyb@lyken.rs>
+
+	* rust-demangle.c (unescape): Remove.
+	(parse_lower_hex_nibble): New function.
+	(parse_legacy_escape): New function.
+	(is_prefixed_hash): Use parse_lower_hex_nibble.
+	(looks_like_rust): Use parse_legacy_escape.
+	(rust_demangle_sym): Use parse_legacy_escape.
+	* testsuite/rust-demangle-expected: Add 'llv$u6d$' test.
+
+2019-08-27  Martin Liska  <mliska@suse.cz>
+
+	PR lto/91478
+	* simple-object-elf.c (simple_object_elf_copy_lto_debug_sections):
+	First find a WEAK HIDDEN symbol in symbol table that will be
+	preserved.  Later, use the symbol name for all removed symbols.
+
+2019-08-12  Martin Liska  <mliska@suse.cz>
+
+	* Makefile.in: Add filedescriptor.c.
+	* filedescriptor.c: New file.
+	* lrealpath.c (is_valid_fd): Remove.
+
+2019-08-08  Martin Liska  <mliska@suse.cz>
+
+	PR bootstrap/91352
+	* lrealpath.c (is_valid_fd): New function.
+
+2019-07-24  Martin Liska  <mliska@suse.cz>
+
+	PR lto/91228
+	* simple-object-elf.c (simple_object_elf_copy_lto_debug_sections):
+	Find first '\0' starting from gnu_lto + 1.
+
+2019-07-12  Ren Kimura  <rkx1209dev@gmail.com>
+
+	* simple-object-elf.c (simple_object_elf_match): Check zero value shstrndx.
+	This fixes a Bug 90924.
+
+2019-07-22  Martin Liska  <mliska@suse.cz>
+
+	* simple-object-elf.c (simple_object_elf_copy_lto_debug_sections):
+	Do not search for gnu_lto_v1, but search for first '\0'.
+
+2019-07-18  Eduard-Mihai Burtescu  <eddyb@lyken.rs>
+
+	* cplus-dem.c: Include rust-demangle.h.
+	* rust-demangle.c: Include rust-demangle.h.
+	* rust-demangle.h: New file.
+
+2019-05-31  Michael Forney  <mforney@mforney.org>
+
+	* cp-demangle.c: Don't define CP_DYNAMIC_ARRAYS if __STDC_NO_VLA__
+	is non-zero.
+
+2019-04-30  Ben L  <bobsayshilol@live.co.uk>
+
+	* d-demangle.c (dlang_parse_assocarray): Correctly handle error result.
+	* testsuite/d-demangle-expected: Add testcase.
+
+	* d-demangle.c (dlang_parse_tuple): Correctly handle error result.
+	* testsuite/d-demangle-expected: Add testcase.
+
+	* d-demangle.c (dlang_parse_structlit): Correctly handle error result.
+	* testsuite/d-demangle-expected: Add testcase.
+
+	* d-demangle.c (dlang_parse_arrayliteral): Correctly handle error result.
+	* testsuite/d-demangle-expected: Add testcase.
+
+	* d-demangle.c (dlang_parse_integer): Fix stack underflow.
+	* testsuite/d-demangle-expected: Add testcase.
+
+	* cp-demangle (d_print_comp_inner): Guard against a NULL 'typed_name'.
+	* testsuite/demangle-expected: Add testcase.
+
+	* cp-demangle.c (d_encoding): Guard against NULL return values from
+	d_right (dc).
+	* testsuite/demangle-expected: Add testcase.
+
+2019-04-29  Ben L  <bobsayshilol@live.co.uk>
+
+	* cp-demangle.c (d_expression_1): Don't peek ahead unless the current
+	char is valid.
+	* testsuite/demangle-expected: Add testcase.
+
+2019-04-10  Nick Clifton  <nickc@redhat.com>
+
+	PR 89394
+	* cp-demangle.c (cplus_demangle_fill_name): Reject negative
+	lengths.
+	(d_count_templates_scopes): Replace num_templates and num_scopes
+	parameters with a struct d_print_info pointer parameter.  Adjust
+	body of the function accordingly.  Add recursion counter and check
+	that the recursion limit is not reached.
+	(d_print_init): Pass dpi parameter to d_count_templates_scopes.
+	Reset recursion counter afterwards, unless the recursion limit was
+	reached.
+
+2019-04-07  Alan Modra  <amodra@gmail.com>
+
+	* functions.texi: Regenerate.
+
+2019-03-14  Jason Merrill  <jason@redhat.com>
+	    Jakub Jelinek  <jakub@redhat.com>
+
+	* hashtab.c (htab_remove_elt_with_hash): Return if slot is NULL rather
+	than if *slot is HTAB_EMPTY_ENTRY.
+
 2019-02-11  Philippe Waroquiers  <philippe.waroquiers@skynet.be>
 
 	* splay-tree.c (splay_tree_insert): Also release old KEY in case
 	of insertion of a key equal to an already present key.
 	(splay_tree_new_typed_alloc): Update comment.
 
+2019-01-22  Nidal Faour  <nidal.faour@wdc.com>
+
+	PR lto/88422
+	* simple-object.c (O_BINARY): Define if not already defined.
+	(simple_object_copy_lto_debug_sections): Create file in binary
+	mode.
+
 2019-01-21  Tom Tromey  <tom@tromey.com>
 
 	* splay-tree.c (splay_tree_remove): Delete the key if necessary.
+
+2019-01-14  Tom Honermann  <tom@honermann.net>
+
+	* cp-demangle.c (cplus_demangle_builtin_types)
+	(cplus_demangle_type): Add name demangling for char8_t (Du).
+	* cp-demangle.h: Increase D_BUILTIN_TYPE_COUNT to accommodate the
+	new char8_t type.
+
+2019-01-09  Sandra Loosemore  <sandra@codesourcery.com>
+
+	PR other/16615
+
+	* cp-demangle.c: Mechanically replace "can not" with "cannot".
+	* floatformat.c: Likewise.
+	* strerror.c: Likewise.
 
 2019-01-01  Jakub Jelinek  <jakub@redhat.com>
 

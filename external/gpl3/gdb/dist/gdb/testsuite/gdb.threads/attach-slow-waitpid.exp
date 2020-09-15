@@ -1,4 +1,4 @@
-# Copyright 2018-2019 Free Software Foundation, Inc.
+# Copyright 2018-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -88,7 +88,12 @@ set test_spawn_id [spawn_wait_for_attach $binfile]
 set testpid [spawn_id_get_pid $test_spawn_id]
 
 # Start GDB with preload library in place.
-gdb_spawn_with_ld_preload $libobj
+if { [gdb_spawn_with_ld_preload $libobj] == -1 } {
+    # Make sure we get UNTESTED rather than UNRESOLVED.
+    set errcnt 0
+    untested "Couldn't start GDB with preloaded lib"
+    return -1
+}
 
 # Load binary, and attach to running program.
 gdb_load ${binfile}

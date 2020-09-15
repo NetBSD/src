@@ -1,4 +1,4 @@
-# Copyright 2018-2019 Free Software Foundation, Inc.
+# Copyright 2018-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -72,12 +72,12 @@ gdb_test "reverse-step" "apply\.3.*" "reverse-step into apply"
 gdb_test "reverse-step" "inc\.3.*" "reverse-step into inc"
 gdb_test "reverse-step" "inc\.2.*" "reverse-step inside inc"
 gdb_test "reverse-step" "apply\.2.*" \
-    "reverse-step through call thunk into apply"
+    "reverse-step through call thunk into apply, first time"
 gdb_test "reverse-step" "main\.2.*" "reverse-step into main"
 gdb_test "step" "apply\.2.*" "step into apply"
 gdb_test "step" "inc\.2.*" "step through call thunk into inc"
 gdb_test "reverse-step" "apply\.2.*" \
-    "reverse-step through call thunk into apply"
+    "reverse-step through call thunk into apply, second time"
 gdb_test "next" "apply\.3.*" "step through thunks and over inc"
 gdb_test "reverse-next" "apply\.2.*" \
     "reverse-step through thunks and over inc"

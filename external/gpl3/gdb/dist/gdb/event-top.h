@@ -1,6 +1,6 @@
 /* Definitions used by event-top.c, for GDB, the GNU debugger.
 
-   Copyright (C) 1999-2019 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
 
    Written by Elena Zannoni <ezannoni@cygnus.com> of Cygnus Solutions.
 
@@ -52,8 +52,8 @@ extern void async_enable_stdin (void);
 /* Exported variables from event-top.c.
    FIXME: these should really go into top.h.  */
 
-extern int set_editing_cmd_var;
-extern int exec_done_display_p;
+extern bool set_editing_cmd_var;
+extern bool exec_done_display_p;
 extern struct prompts the_prompts;
 extern void (*after_char_processing_hook) (void);
 extern int call_stdin_event_handler_again_p;
@@ -69,5 +69,11 @@ extern void gdb_rl_callback_handler_install (const char *prompt);
 /* Reinstall the readline callback handler (with no prompt), if not
    currently installed.  */
 extern void gdb_rl_callback_handler_reinstall (void);
+
+/* The SIGSEGV handler for this thread, or NULL if there is none.  GDB
+   always installs a global SIGSEGV handler, and then lets threads
+   indicate their interest in handling the signal by setting this
+   thread-local variable.  */
+extern thread_local void (*thread_local_segv_handler) (int);
 
 #endif

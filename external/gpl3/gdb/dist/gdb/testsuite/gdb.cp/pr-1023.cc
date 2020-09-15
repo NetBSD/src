@@ -16,5 +16,6 @@ int main ()
   myClass mc;
   mc.performBlocking (0);
   mc.performUnblocking (0);
-}
 
+  return 0;
+}

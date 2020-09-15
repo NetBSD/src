@@ -1,6 +1,6 @@
 /* Python interface to inferior threads.
 
-   Copyright (C) 2009-2019 Free Software Foundation, Inc.
+   Copyright (C) 2009-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -36,17 +36,17 @@ extern PyTypeObject thread_object_type
       }								\
   } while (0)
 
-thread_object *
+gdbpy_ref<thread_object>
 create_thread_object (struct thread_info *tp)
 {
-  thread_object *thread_obj;
+  gdbpy_ref<thread_object> thread_obj;
 
   gdbpy_ref<inferior_object> inf_obj = inferior_to_inferior_object (tp->inf);
   if (inf_obj == NULL)
     return NULL;
 
-  thread_obj = PyObject_New (thread_object, &thread_object_type);
-  if (!thread_obj)
+  thread_obj.reset (PyObject_New (thread_object, &thread_object_type));
+  if (thread_obj == NULL)
     return NULL;
 
   thread_obj->thread = tp;
@@ -181,15 +181,14 @@ thpy_switch (PyObject *self, PyObject *args)
 
   THPY_REQUIRE_VALID (thread_obj);
 
-  TRY
+  try
     {
       switch_to_thread (thread_obj->thread);
     }
-  CATCH (except, RETURN_MASK_ALL)
+  catch (const gdb_exception &except)
     {
       GDB_PY_HANDLE_EXCEPTION (except);
     }
-  END_CATCH
 
   Py_RETURN_NONE;
 }
@@ -255,6 +254,36 @@ thpy_is_valid (PyObject *self, PyObject *args)
     Py_RETURN_FALSE;
 
   Py_RETURN_TRUE;
+}
+
+/* Implementation of gdb.InferiorThread.handle (self) -> handle. */
+
+static PyObject *
+thpy_thread_handle (PyObject *self, PyObject *args)
+{
+  thread_object *thread_obj = (thread_object *) self;
+  THPY_REQUIRE_VALID (thread_obj);
+
+  gdb::byte_vector hv;
+  
+  try
+    {
+      hv = target_thread_info_to_thread_handle (thread_obj->thread);
+    }
+  catch (const gdb_exception &except)
+    {
+      GDB_PY_HANDLE_EXCEPTION (except);
+    }
+
+  if (hv.size () == 0)
+    {
+      PyErr_SetString (PyExc_RuntimeError, _("Thread handle not found."));
+      return NULL;
+    }
+
+  PyObject *object = PyBytes_FromStringAndSize ((const char *) hv.data (),
+				                hv.size());
+  return object;
 }
 
 /* Return a reference to a new Python object representing a ptid_t.
@@ -336,6 +365,9 @@ Return whether the thread is running." },
   { "is_exited", thpy_is_exited, METH_NOARGS,
     "is_exited () -> Boolean\n\
 Return whether the thread is exited." },
+  { "handle", thpy_thread_handle, METH_NOARGS,
+    "handle  () -> handle\n\
+Return thread library specific handle for thread." },
 
   { NULL }
 };

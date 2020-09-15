@@ -1,4 +1,4 @@
-/* Copyright (C) 2008-2019 Free Software Foundation, Inc.
+/* Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,7 +22,7 @@
 #include <unistd.h>
 #endif
 
-static int
+static void
 gdb_unbuffer_output (void)
 {
   /* Always force this for Windows testing.  To a native Windows

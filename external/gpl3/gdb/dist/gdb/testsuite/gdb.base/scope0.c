@@ -24,6 +24,8 @@ int main ()
   foo ();
   autovars (5, 6);
   localscopes (0);
+
+  return 0;
 }
 
 /* On some systems, such as AIX, unreferenced variables are deleted

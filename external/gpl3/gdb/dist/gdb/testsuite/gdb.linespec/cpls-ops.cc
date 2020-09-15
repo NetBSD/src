@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2017-2019 Free Software Foundation, Inc.
+   Copyright 2017-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -91,6 +91,8 @@ test_op_array::operator[] (T *t)
 
 /* Code for operator new tests.  */
 
+static int dummy;
+
 struct test_op_new
 {
   void *operator new (size_t);
@@ -99,7 +101,7 @@ struct test_op_new
 void *
 test_op_new::operator new (size_t)
 {
-  return NULL;
+  return &dummy;
 }
 
 /* Code for operator delete tests.  */
@@ -124,7 +126,7 @@ struct test_op_new_array
 void *
 test_op_new_array::operator new[] (size_t)
 {
-  return NULL;
+  return &dummy;
 }
 
 /* Code for operator delete[] tests.  */

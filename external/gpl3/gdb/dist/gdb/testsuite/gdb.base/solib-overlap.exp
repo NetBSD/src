@@ -1,4 +1,4 @@
-# Copyright 2009-2019 Free Software Foundation, Inc.
+# Copyright 2009-2020 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -74,9 +74,10 @@ foreach prelink_lib1 {0x40000000 0x50000000} { with_test_prefix "$prelink_lib1" 
 	return -1
     }
 
-    if {[catch "system \"prelink -N -r ${prelink_lib1} ${binfile_lib1}\""] != 0
-	|| [catch "system \"prelink -N -r ${prelink_lib2} ${binfile_lib2}\""] != 0} {
+    if {[catch "exec prelink -N -r ${prelink_lib1} ${binfile_lib1}" output] != 0
+	|| [catch "exec prelink -N -r ${prelink_lib2} ${binfile_lib2}" output] != 0} {
 	# Maybe we don't have prelink.
+	verbose -log "prelink failed: $output"
 	untested "could not prelink ${binfile_lib1_test_msg} or ${binfile_lib2_test_msg}."
 	return -1
     }

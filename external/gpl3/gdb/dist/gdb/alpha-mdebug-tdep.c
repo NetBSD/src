@@ -1,5 +1,5 @@
 /* Target-dependent mdebug code for the ALPHA architecture.
-   Copyright (C) 1993-2019 Free Software Foundation, Inc.
+   Copyright (C) 1993-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,6 +27,7 @@
 
 #include "alpha-tdep.h"
 #include "mdebugread.h"
+#include "gdbarch.h"
 
 /* FIXME: Some of this code should perhaps be merged with mips.  */
 

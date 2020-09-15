@@ -1,3 +1,14 @@
+2020-04-28  Tankut Baris Aktemur  <tankut.baris.aktemur@intel.com>
+
+	* ia64vms-stub.c: Fix typo in comment (thead -> thread).
+
+2019-10-26  Tom de Vries  <tdevries@suse.de>
+
+	* ia64vms-stub.c: Fix typos in comments.
+	* m32r-stub.c: Same.
+	* m68k-stub.c: Same.
+	* sh-stub.c: Same.
+
 2019-01-21  Tom Tromey  <tom@tromey.com>
 
 	* ia64vms-stub.c: Fix includes.

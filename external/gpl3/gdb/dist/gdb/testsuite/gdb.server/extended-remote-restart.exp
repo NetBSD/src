@@ -1,4 +1,4 @@
-# Copyright 2018-2019 Free Software Foundation, Inc.
+# Copyright 2018-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -88,12 +88,16 @@ proc test_reload { do_kill_p follow_child_p } {
     gdb_breakpoint "breakpt"
     gdb_continue_to_breakpoint "breakpt"
 
-    # Check we have the expected inferiors.
+    set ws "\[ \t\]+"
+    set any_re "\[^\r\n\]+"
+    set connection_re $any_re
+    set executable_re $any_re
+
     gdb_test "info inferiors" \
 	[multi_line \
-	     "  Num  Description       Executable.*" \
-	     "${parent_prefix} 1 +${live_inf_ptn} \[^\r\n\]+" \
-	     "${child_prefix} 2 +${live_inf_ptn} \[^\r\n\]+" ] \
+	     "  Num${ws}Description${ws}Connection${ws}Executable${ws}" \
+	     "${parent_prefix} 1${ws}${live_inf_ptn}${ws}${connection_re}${executable_re}" \
+	     "${child_prefix} 2${ws}${live_inf_ptn}${ws}${connection_re}${executable_re}" ] \
 	"Check inferiors at breakpoint"
 
     if { $do_kill_p } {
@@ -107,13 +111,15 @@ proc test_reload { do_kill_p follow_child_p } {
 	# Check the first inferior really did die.
 	gdb_test "info inferiors" \
 	    [multi_line \
-		 "  Num  Description       Executable.*" \
-		 "${parent_prefix} 1 +${parent_inf_after_kill_ptn} \[^\r\n\]+" \
-		 "${child_prefix} 2 +${child_inf_after_kill_ptn} \[^\r\n\]+" ] \
+		 "  Num${ws}Description${ws}Connection${ws}Executable${ws}" \
+		 "${parent_prefix} 1${ws}${parent_inf_after_kill_ptn}${ws}${connection_re}${executable_re}" \
+		 "${child_prefix} 2${ws}${child_inf_after_kill_ptn}${ws}${connection_re}${executable_re}" ] \
 	    "Check inferior was killed"
     }
 
-    # Reconnect to the target.
+    # Disconnect, and reconnect to the target.
+    gdb_test "disconnect" ".*"
+
     if { [gdb_reconnect] == 0 } {
 	pass "reconnect after fork"
     } else {

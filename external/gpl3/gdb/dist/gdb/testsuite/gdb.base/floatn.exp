@@ -1,4 +1,4 @@
-# Copyright 2016-2019 Free Software Foundation, Inc.
+# Copyright 2016-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -114,11 +114,8 @@ gdb_test "print f32x" ".* = 100\\.5.*" "the value of f32x is changed to 100.5"
 gdb_test "print f64x" ".* = 200\\.25.*" "the value of f64x is changed to 200.25"
 
 # Print the original values of c32, c64, c128, c32x, c64x.
-gdb_test "print c32" ".* = 1\\.5 \\+ 1 \\* I.*" "the original value of c32 is 1.5 + 1 * I"
-gdb_test "print c64" ".* = 2\\.25 \\+ 1 \\* I.*" "the original value of c64 is 2.25 + 1 * I"
-gdb_test "print c128" ".* = 3\\.375 \\+ 1 \\* I.*" "the original value of c128 is 3.375 + 1 * I"
-gdb_test "print c32x" ".* = 10\\.5 \\+ 1 \\* I.*" "the original value of c32x is 10.5 + 1 * I"
-gdb_test "print c64x" ".* = 20\\.25 \\+ 1 \\* I.*" "the original value of c64x is 20.25 + 1 * I"
-
-# FIXME: GDB cannot parse non-trivial complex constants yet.
-
+gdb_test "print c32" ".* = 1\\.5 \\+ 1i.*" "the original value of c32 is 1.5 + 1i"
+gdb_test "print c64" ".* = 2\\.25 \\+ 1i.*" "the original value of c64 is 2.25 + 1i"
+gdb_test "print c128" ".* = 3\\.375 \\+ 1i.*" "the original value of c128 is 3.375 + 1i"
+gdb_test "print c32x" ".* = 10\\.5 \\+ 1i.*" "the original value of c32x is 10.5 + 1i"
+gdb_test "print c64x" ".* = 20\\.25 \\+ 1i.*" "the original value of c64x is 20.25 + 1i"

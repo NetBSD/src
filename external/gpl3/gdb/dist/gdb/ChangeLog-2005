@@ -4905,7 +4905,6 @@
 
 2005-03-07  Joel Brobecker  <brobecker@adacore.com>
 
-	* doc/observer.texi (executable_changed): New observer.
 	* symtab.c: Include "observer.h".
 	(find_main_name): New function.
 	(main_name): If name_of_main is unset, then compute it

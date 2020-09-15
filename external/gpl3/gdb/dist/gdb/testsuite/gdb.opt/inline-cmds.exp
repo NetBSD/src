@@ -1,4 +1,4 @@
-# Copyright 2008-2019 Free Software Foundation, Inc.
+# Copyright 2008-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -235,7 +235,7 @@ gdb_test_multiple "next" $msg {
 	# containing block and/or function into account when
 	# deciding how far to step.  The single line table entry
 	# is actually two consecutive instances of the same line.
-	kfail gdb/NNNN $msg
+	kfail gdb/25884 $msg
     }
 }
 

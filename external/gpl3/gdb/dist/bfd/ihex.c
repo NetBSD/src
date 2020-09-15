@@ -1,5 +1,5 @@
 /* BFD back-end for Intel Hex objects.
-   Copyright (C) 1995-2019 Free Software Foundation, Inc.
+   Copyright (C) 1995-2020 Free Software Foundation, Inc.
    Written by Ian Lance Taylor of Cygnus Support <ian@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -357,7 +357,7 @@ ihex_scan (bfd *abfd)
 		{
 		  char secbuf[20];
 		  char *secname;
-		  bfd_size_type amt;
+		  size_t amt;
 		  flagword flags;
 
 		  sprintf (secbuf, ".sec%d", bfd_count_sections (abfd) + 1);
@@ -381,8 +381,7 @@ ihex_scan (bfd *abfd)
 	      /* An end record.  */
 	      if (abfd->start_address == 0)
 		abfd->start_address = addr;
-	      if (buf != NULL)
-		free (buf);
+	      free (buf);
 	      return TRUE;
 
 	    case 2:
@@ -474,20 +473,17 @@ ihex_scan (bfd *abfd)
   if (error)
     goto error_return;
 
-  if (buf != NULL)
-    free (buf);
-
+  free (buf);
   return TRUE;
 
  error_return:
-  if (buf != NULL)
-    free (buf);
+  free (buf);
   return FALSE;
 }
 
 /* Try to recognize an Intel Hex file.  */
 
-static const bfd_target *
+static bfd_cleanup
 ihex_object_p (bfd *abfd)
 {
   void * tdata_save;
@@ -538,7 +534,7 @@ ihex_object_p (bfd *abfd)
       return NULL;
     }
 
-  return abfd->xvec;
+  return _bfd_no_cleanup;
 }
 
 /* Read the contents of a section in an Intel Hex file.  */
@@ -603,8 +599,7 @@ ihex_read_section (bfd *abfd, asection *section, bfd_byte *contents)
       if ((bfd_size_type) (p - contents) >= section->size)
 	{
 	  /* We've read everything in the section.  */
-	  if (buf != NULL)
-	    free (buf);
+	  free (buf);
 	  return TRUE;
 	}
 
@@ -621,14 +616,11 @@ ihex_read_section (bfd *abfd, asection *section, bfd_byte *contents)
       goto error_return;
     }
 
-  if (buf != NULL)
-    free (buf);
-
+  free (buf);
   return TRUE;
 
  error_return:
-  if (buf != NULL)
-    free (buf);
+  free (buf);
   return FALSE;
 }
 
@@ -811,16 +803,15 @@ ihex_write_object_contents (bfd *abfd)
 	  if (count > CHUNK)
 	    now = CHUNK;
 
-	  if (where > segbase + extbase + 0xffff)
+	  if (where < extbase
+	      || where - extbase < segbase
+	      || where - extbase - segbase > 0xffff)
 	    {
 	      bfd_byte addr[2];
 
 	      /* We need a new base address.  */
-	      if (where <= 0xfffff)
+	      if (extbase == 0 && where <= 0xfffff)
 		{
-		  /* The addresses should be sorted.  */
-		  BFD_ASSERT (extbase == 0);
-
 		  segbase = where & 0xf0000;
 		  addr[0] = (bfd_byte)(segbase >> 12) & 0xff;
 		  addr[1] = (bfd_byte)(segbase >> 4) & 0xff;
@@ -962,6 +953,7 @@ ihex_sizeof_headers (bfd *abfd ATTRIBUTE_UNUSED,
 #define ihex_bfd_lookup_section_flags		  bfd_generic_lookup_section_flags
 #define ihex_bfd_merge_sections			  bfd_generic_merge_sections
 #define ihex_bfd_is_group_section		  bfd_generic_is_group_section
+#define ihex_bfd_group_name			  bfd_generic_group_name
 #define ihex_bfd_discard_group			  bfd_generic_discard_group
 #define ihex_section_already_linked		  _bfd_generic_section_already_linked
 #define ihex_bfd_define_common_symbol		  bfd_generic_define_common_symbol

@@ -1,5 +1,5 @@
 /* Native Client support for ELF
-   Copyright (C) 2012-2019 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -156,13 +156,13 @@ nacl_modify_segment_map (bfd *abfd, struct bfd_link_info *info)
 		  secdata->this_hdr.sh_addr = sec->vma;
 		  secdata->this_hdr.sh_size = sec->size;
 
-		  newseg = bfd_alloc (abfd,
-				      sizeof *newseg + ((seg->count + 1)
-							* sizeof (asection *)));
+		  newseg
+		    = bfd_alloc (abfd, (sizeof (*newseg)
+					+ seg->count * sizeof (asection *)));
 		  if (newseg == NULL)
 		    return FALSE;
-		  memcpy (newseg, seg,
-			  sizeof *newseg + (seg->count * sizeof (asection *)));
+		  memcpy (newseg, seg, (sizeof (*newseg) - sizeof (asection *)
+					+ seg->count * sizeof (asection *)));
 		  newseg->sections[newseg->count++] = sec;
 		  *m = seg = newseg;
 		}
@@ -197,6 +197,7 @@ nacl_modify_segment_map (bfd *abfd, struct bfd_link_info *info)
 		 included the file header and phdrs.  */
 	      seg->includes_filehdr = 0;
 	      seg->includes_phdrs = 0;
+	      seg->no_sort_lma = 1;
 	      /* Also strip out empty segments.  */
 	      if (seg->count == 0)
 		{
@@ -234,94 +235,97 @@ nacl_modify_segment_map (bfd *abfd, struct bfd_link_info *info)
    proper order for the ELF rule that they must appear in ascending address
    order.  So find the two segments we swapped before, and swap them back.  */
 bfd_boolean
-nacl_modify_program_headers (bfd *abfd, struct bfd_link_info *info)
+nacl_modify_headers (bfd *abfd, struct bfd_link_info *info)
 {
-  struct elf_segment_map **m = &elf_seg_map (abfd);
-  Elf_Internal_Phdr *phdr = elf_tdata (abfd)->phdr;
-  Elf_Internal_Phdr *p = phdr;
-
   if (info != NULL && info->user_phdrs)
     /* The linker script used PHDRS explicitly, so don't change what the
        user asked for.  */
-    return TRUE;
-
-  /* Find the PT_LOAD that contains the headers (should be the first).  */
-  while (*m != NULL)
+    ;
+  else
     {
-      if ((*m)->p_type == PT_LOAD && (*m)->includes_filehdr)
-	break;
+      struct elf_segment_map **m = &elf_seg_map (abfd);
+      Elf_Internal_Phdr *phdr = elf_tdata (abfd)->phdr;
+      Elf_Internal_Phdr *p = phdr;
 
-      m = &(*m)->next;
-      ++p;
-    }
-
-  if (*m != NULL)
-    {
-      struct elf_segment_map **first_load_seg = m;
-      Elf_Internal_Phdr *first_load_phdr = p;
-      struct elf_segment_map **next_load_seg = NULL;
-      Elf_Internal_Phdr *next_load_phdr = NULL;
-
-      /* Now move past that first one and find the PT_LOAD that should be
-	 before it by address order.  */
-
-      m = &(*m)->next;
-      ++p;
-
+      /* Find the PT_LOAD that contains the headers (should be the first).  */
       while (*m != NULL)
 	{
-	  if (p->p_type == PT_LOAD && p->p_vaddr < first_load_phdr->p_vaddr)
-	    {
-	      next_load_seg = m;
-	      next_load_phdr = p;
-	      break;
-	    }
+	  if ((*m)->p_type == PT_LOAD && (*m)->includes_filehdr)
+	    break;
 
 	  m = &(*m)->next;
 	  ++p;
 	}
 
-      /* Swap their positions in the segment_map back to how they used to be.
-	 The phdrs have already been set up by now, so we have to slide up
-	 the earlier ones to insert the one that should be first.  */
-      if (next_load_seg != NULL)
+      if (*m != NULL)
 	{
-	  Elf_Internal_Phdr move_phdr;
-	  struct elf_segment_map *first_seg = *first_load_seg;
-	  struct elf_segment_map *next_seg = *next_load_seg;
-	  struct elf_segment_map *first_next = first_seg->next;
-	  struct elf_segment_map *next_next = next_seg->next;
+	  struct elf_segment_map **first_load_seg = m;
+	  Elf_Internal_Phdr *first_load_phdr = p;
+	  struct elf_segment_map **next_load_seg = NULL;
+	  Elf_Internal_Phdr *next_load_phdr = NULL;
 
-	  if (next_load_seg == &first_seg->next)
+	  /* Now move past that first one and find the PT_LOAD that should be
+	     before it by address order.  */
+
+	  m = &(*m)->next;
+	  ++p;
+
+	  while (*m != NULL)
 	    {
-	      *first_load_seg = next_seg;
-	      next_seg->next = first_seg;
-	      first_seg->next = next_next;
+	      if (p->p_type == PT_LOAD && p->p_vaddr < first_load_phdr->p_vaddr)
+		{
+		  next_load_seg = m;
+		  next_load_phdr = p;
+		  break;
+		}
+
+	      m = &(*m)->next;
+	      ++p;
 	    }
-	  else
+
+	  /* Swap their positions in the segment_map back to how they
+	     used to be.  The phdrs have already been set up by now,
+	     so we have to slide up the earlier ones to insert the one
+	     that should be first.  */
+	  if (next_load_seg != NULL)
 	    {
-	      *first_load_seg = first_next;
-	      *next_load_seg = next_next;
+	      Elf_Internal_Phdr move_phdr;
+	      struct elf_segment_map *first_seg = *first_load_seg;
+	      struct elf_segment_map *next_seg = *next_load_seg;
+	      struct elf_segment_map *first_next = first_seg->next;
+	      struct elf_segment_map *next_next = next_seg->next;
 
-	      first_seg->next = *next_load_seg;
-	      *next_load_seg = first_seg;
+	      if (next_load_seg == &first_seg->next)
+		{
+		  *first_load_seg = next_seg;
+		  next_seg->next = first_seg;
+		  first_seg->next = next_next;
+		}
+	      else
+		{
+		  *first_load_seg = first_next;
+		  *next_load_seg = next_next;
 
-	      next_seg->next = *first_load_seg;
-	      *first_load_seg = next_seg;
+		  first_seg->next = *next_load_seg;
+		  *next_load_seg = first_seg;
+
+		  next_seg->next = *first_load_seg;
+		  *first_load_seg = next_seg;
+		}
+
+	      move_phdr = *next_load_phdr;
+	      memmove (first_load_phdr + 1, first_load_phdr,
+		       (next_load_phdr - first_load_phdr) * sizeof move_phdr);
+	      *first_load_phdr = move_phdr;
 	    }
-
-	  move_phdr = *next_load_phdr;
-	  memmove (first_load_phdr + 1, first_load_phdr,
-		   (next_load_phdr - first_load_phdr) * sizeof move_phdr);
-	  *first_load_phdr = move_phdr;
 	}
     }
 
-  return TRUE;
+  return _bfd_elf_modify_headers (abfd, info);
 }
 
-void
-nacl_final_write_processing (bfd *abfd, bfd_boolean linker ATTRIBUTE_UNUSED)
+bfd_boolean
+nacl_final_write_processing (bfd *abfd)
 {
   struct elf_segment_map *seg;
   for (seg = elf_seg_map (abfd); seg != NULL; seg = seg->next)
@@ -354,4 +358,5 @@ nacl_final_write_processing (bfd *abfd, bfd_boolean linker ATTRIBUTE_UNUSED)
 
 	free (fill);
       }
+  return _bfd_elf_final_write_processing (abfd);
 }

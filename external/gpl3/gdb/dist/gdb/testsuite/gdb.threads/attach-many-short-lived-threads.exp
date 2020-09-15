@@ -1,4 +1,4 @@
-# Copyright 2008-2019 Free Software Foundation, Inc.
+# Copyright 2008-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -108,12 +108,18 @@ proc test {} {
 	    sleep 1
 
 	    set test "no new threads"
-	    gdb_test_multiple "info threads" $test {
-		-re "New .*$gdb_prompt $" {
-		    fail $test
+	    set status 1
+	    gdb_test_multiple "info threads" $test -lbl {
+		-re "\r\n\[^\r\n\]*New " {
+		    set status 0
+		    exp_continue
 		}
-		-re "$gdb_prompt $" {
-		    pass $test
+		-re -wrap "" {
+		    if { $status == 1 } {
+			pass $gdb_test_name
+		    } else {
+			fail $gdb_test_name
+		    }
 		}
 	    }
 
@@ -128,7 +134,7 @@ proc test {} {
 	    # detaching from the program and reattaching, we check that
 	    # the program doesn't die due to gdb leaving a pending
 	    # breakpoint hit on a new thread unprocessed.
-	    gdb_test "break break_fn" "Breakpoint.*" "break break_fn"
+	    gdb_test "break break_fn" "Breakpoint.*"
 
 	    # Wait a bit, to give time for most threads to hit the
 	    # breakpoint, including threads we might have failed to

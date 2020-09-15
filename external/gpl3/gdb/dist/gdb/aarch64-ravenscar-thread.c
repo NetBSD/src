@@ -1,6 +1,6 @@
 /* Ravenscar Aarch64 target support.
 
-   Copyright (C) 2017-2019 Free Software Foundation, Inc.
+   Copyright (C) 2017-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,6 +24,7 @@
 #include "inferior.h"
 #include "ravenscar-thread.h"
 #include "aarch64-ravenscar-thread.h"
+#include "gdbarch.h"
 
 #define NO_OFFSET -1
 

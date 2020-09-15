@@ -1,6 +1,6 @@
 /* Test case for forgotten hw-watchpoints after fork()-off of a process.
 
-   Copyright 2012-2019 Free Software Foundation, Inc.
+   Copyright 2012-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -114,8 +114,10 @@ main (void)
   int i;
   void *thread_result;
 
+#if DEBUG
   setbuf (stdout, NULL);
   printf ("main: %d\n", (int) gettid ());
+#endif
 
   /* General hardware breakpoints and watchpoints validity.  */
   marker ();

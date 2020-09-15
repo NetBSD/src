@@ -6265,9 +6265,9 @@
 
 2013-06-21  Joel Brobecker  <brobecker@adacore.com>
 
-	* gdb/gnulib/Makefile.in: Update date in copyright header.
-	* gdb/gnulib/configure.ac: Ditto.
-	* gdb/gnulib/update-gnulib.sh: Ditto.
+	* gnulib/Makefile.in: Update date in copyright header.
+	* gnulib/configure.ac: Ditto.
+	* gnulib/update-gnulib.sh: Ditto.
 
 2013-06-21  Joel Brobecker  <brobecker@adacore.com>
 

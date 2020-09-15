@@ -1,6 +1,6 @@
 /* Declarations and definitions of codes relating to the DWARF2 and
    DWARF3 symbolic debugging information formats.
-   Copyright (C) 1992-2019 Free Software Foundation, Inc.
+   Copyright (C) 1992-2020 Free Software Foundation, Inc.
 
    Written by Gary Funck (gary@intrepid.com) The Ada Joint Program
    Office (AJPO), Florida State University and Silicon Graphics Inc.
@@ -316,7 +316,6 @@ enum dwarf_location_list_entry_type
 
 #define DW_CIE_ID	  0xffffffff
 #define DW64_CIE_ID	  0xffffffffffffffffULL
-#define DW_CIE_VERSION	  1
 
 #define DW_CFA_extended   0
 
@@ -489,19 +488,36 @@ enum dwarf_unit_type
 #define DW_EH_PE_indirect	0x80
 
 /* Codes for the debug sections in a dwarf package (.dwp) file.
-   Extensions for Fission.  See http://gcc.gnu.org/wiki/DebugFissionDWP.  */
+   (From the pre-standard formats Extensions for Fission.
+   See http://gcc.gnu.org/wiki/DebugFissionDWP).  */
 enum dwarf_sect
-  {
-    DW_SECT_INFO = 1,
-    DW_SECT_TYPES = 2,
-    DW_SECT_ABBREV = 3,
-    DW_SECT_LINE = 4,
-    DW_SECT_LOC = 5,
-    DW_SECT_STR_OFFSETS = 6,
-    DW_SECT_MACINFO = 7,
-    DW_SECT_MACRO = 8,
-    DW_SECT_MAX = 8
-  };
+{
+  DW_SECT_INFO = 1,
+  DW_SECT_TYPES = 2,
+  DW_SECT_ABBREV = 3,
+  DW_SECT_LINE = 4,
+  DW_SECT_LOC = 5,
+  DW_SECT_STR_OFFSETS = 6,
+  DW_SECT_MACINFO = 7,
+  DW_SECT_MACRO = 8,
+  DW_SECT_MAX = 8
+};
+
+/* Codes for the debug sections in a dwarf package (.dwp) file.
+   (From the official DWARF v5 spec.
+   See http://dwarfstd.org/doc/DWARF5.pdf, section 7.3.5).  */
+enum dwarf_sect_v5
+{
+  DW_SECT_INFO_V5 = 1,
+  DW_SECT_RESERVED_V5 = 2,
+  DW_SECT_ABBREV_V5 = 3,
+  DW_SECT_LINE_V5 = 4,
+  DW_SECT_LOCLISTS_V5 = 5,
+  DW_SECT_STR_OFFSETS_V5 = 6,
+  DW_SECT_MACRO_V5 = 7,
+  DW_SECT_RNGLISTS_V5 = 8,
+  DW_SECT_MAX_V5 = 8
+};
 
 #ifdef __cplusplus
 extern "C" {

@@ -1,4 +1,4 @@
-# Copyright 2005-2019 Free Software Foundation, Inc.
+# Copyright 2005-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -90,44 +90,34 @@ if $old_gcc {
     setup_xfail "*-*-*"
 }
 gdb_test "print one_two_three" \
-         "= \\(1 => 1, 2 => 2, 3 => 3\\)" \
-         "print one_two_three"
+         "= \\(1 => 1, 2 => 2, 3 => 3\\)"
 
 gdb_test "print e_one_two_three" \
-         "= \\(one => 1, two => 2, three => 3\\)" \
-         "print e_one_two_three"
+         "= \\(one => 1, two => 2, three => 3\\)"
 
 gdb_test "print r_two_three" \
-         "= \\(two => 2, three => 3\\)" \
-         "print r_two_three"
+         "= \\(two => 2, three => 3\\)"
 
 gdb_test "print u_one_two_three" \
-         "= \\(1 => 1, 2 => 2, 3 => 3\\)" \
-         "print u_one_two_three"
+         "= \\(1 => 1, 2 => 2, 3 => 3\\)"
 
 gdb_test "print p_one_two_three" \
-         "= \\(one => false, two => true, three => true\\)" \
-         "print p_one_two_three"
+         "= \\(one => false, two => true, three => true\\)"
 
 if $old_gcc {
     setup_xfail "*-*-*"
 }
 gdb_test "print few_reps" \
-         "= \\(1 => 1, 2 => 2, 3 => 3, 4 => 3, 5 => 3, 6 => 3, 7 => 3, 8 => 4, 9 => 5\\)" \
-         "print few_reps"
+         "= \\(1 => 1, 2 => 2, 3 => 3, 4 => 3, 5 => 3, 6 => 3, 7 => 3, 8 => 4, 9 => 5\\)"
 
 if $old_gcc {
     setup_xfail "*-*-*"
 }
 gdb_test "print many_reps" \
-         "= \\(1 => 1, 2 => 2, 3 => 3 <repeats 12 times>, 15 => 4, 16 => 5\\)" \
-         "print many_reps"
+         "= \\(1 => 1, 2 => 2, 3 => 3 <repeats 12 times>, 15 => 4, 16 => 5\\)"
 
 if $old_gcc {
     setup_xfail "*-*-*"
 }
 gdb_test "print empty" \
-         "= \\(\\)" \
-         "print empty"
-
-
+         "= \\(\\)"

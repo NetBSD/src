@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2014-2019 Free Software Foundation, Inc.
+   Copyright 2014-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -121,32 +121,32 @@ DIE29:	.uleb128 0x2	# (DIE (0x29) DW_TAG_subprogram)
 	.ascii "bar\0"	# DW_AT_name
 	.byte	0x1	# DW_AT_decl_file (gdb.arch/amd64-entry-value-paramref.cc)
 	.byte	0x15	# DW_AT_decl_line
-	.long	DIE45	# DW_AT_type
+	.long	DIE45 - .Ldebug_info0	# DW_AT_type
 	.byte	0x1	# DW_AT_inline
 DIE39:	.uleb128 0x3	# (DIE (0x39) DW_TAG_formal_parameter)
 	.ascii "ref\0"	# DW_AT_name
 	.byte	0x1	# DW_AT_decl_file (gdb.arch/amd64-entry-value-paramref.cc)
 	.byte	0x15	# DW_AT_decl_line
-	.long	DIE4c	# DW_AT_type
+	.long	DIE4c - .Ldebug_info0	# DW_AT_type
 	.byte	0	# end of children of DIE 0x29
 DIE45:	.uleb128 0x4	# (DIE (0x45) DW_TAG_base_type)
 	.byte	0x4	# DW_AT_byte_size
 	.byte	0x5	# DW_AT_encoding
 	.ascii "int\0"	# DW_AT_name
 DIE4c:	.uleb128 0x5	# (DIE (0x4c) DW_TAG_const_type)
-	.long	DIE51	# DW_AT_type
+	.long	DIE51 - .Ldebug_info0	# DW_AT_type
 DIE51:	.uleb128 0x6	# (DIE (0x51) DW_TAG_reference_type)
 	.byte	0x8	# DW_AT_byte_size
-	.long	DIE45	# DW_AT_type
+	.long	DIE45 - .Ldebug_info0	# DW_AT_type
 DIE57:	.uleb128 0x7	# (DIE (0x57) DW_TAG_subprogram)
-	.long	DIE29	# DW_AT_abstract_origin
+	.long	DIE29 - .Ldebug_info0	# DW_AT_abstract_origin
 	.quad	.LFB2	# DW_AT_low_pc
 	.quad	.LFE2-.LFB2	# DW_AT_high_pc
 	.uleb128 0x1	# DW_AT_frame_base
 	.byte	0x9c	# DW_OP_call_frame_cfa
 			# DW_AT_GNU_all_call_sites
 DIE72:	.uleb128 0x8	# (DIE (0x72) DW_TAG_formal_parameter)
-	.long	DIE39	# DW_AT_abstract_origin
+	.long	DIE39 - .Ldebug_info0	# DW_AT_abstract_origin
 	.uleb128 0x1	# DW_AT_location
 	.byte	0x55	# DW_OP_reg5
 	.byte	0	# end of children of DIE 0x57
@@ -155,7 +155,7 @@ DIE7a:	.uleb128 0x9	# (DIE (0x7a) DW_TAG_subprogram)
 	.long	.LASF3	# DW_AT_name: "main"
 	.byte	0x1	# DW_AT_decl_file (gdb.arch/amd64-entry-value-paramref.cc)
 	.byte	0x1d	# DW_AT_decl_line
-	.long	DIE45	# DW_AT_type
+	.long	DIE45 - .Ldebug_info0	# DW_AT_type
 	.quad	.LFB1	# DW_AT_low_pc
 	.quad	.LFE1-.LFB1	# DW_AT_high_pc
 	.uleb128 0x1	# DW_AT_frame_base
@@ -168,13 +168,13 @@ DIEac:	.uleb128 0xb	# (DIE (0xac) DW_TAG_variable)
 	.ascii "var\0"	# DW_AT_name
 	.byte	0x1	# DW_AT_decl_file (gdb.arch/amd64-entry-value-paramref.cc)
 	.byte	0x1f	# DW_AT_decl_line
-	.long	DIE45	# DW_AT_type
+	.long	DIE45 - .Ldebug_info0	# DW_AT_type
 	.uleb128 0x2	# DW_AT_location
 	.byte	0x91	# DW_OP_fbreg
 	.sleb128 -12
 DIEba:	.uleb128 0xc	# (DIE (0xba) DW_TAG_GNU_call_site)
 	.quad	.LVL1	# DW_AT_low_pc
-	.long	DIE57	# DW_AT_abstract_origin
+	.long	DIE57 - .Ldebug_info0	# DW_AT_abstract_origin
 DIEc7:	.uleb128 0xd	# (DIE (0xc7) DW_TAG_GNU_call_site_parameter)
 	.uleb128 0x1	# DW_AT_location
 	.byte	0x55	# DW_OP_reg5
@@ -200,25 +200,25 @@ DIEd2:	.uleb128 0xe	# (DIE (0xd2) DW_TAG_variable)
 	.ascii "vv\0"	# DW_AT_name
 	.byte	0x1	# DW_AT_decl_file (gdb.arch/amd64-entry-value-paramref.cc)
 	.byte	0x12	# DW_AT_decl_line
-	.long	DIEe6	# DW_AT_type
+	.long	DIEe6 - .Ldebug_info0	# DW_AT_type
 			# DW_AT_external
 	.uleb128 0x9	# DW_AT_location
 	.byte	0x3	# DW_OP_addr
 	.quad	vv
 DIEe6:	.uleb128 0xf	# (DIE (0xe6) DW_TAG_volatile_type)
-	.long	DIE45	# DW_AT_type
+	.long	DIE45 - .Ldebug_info0	# DW_AT_type
 DIEeb:	.uleb128 0xe	# (DIE (0xeb) DW_TAG_variable)
 	.ascii "p\0"	# DW_AT_name
 	.byte	0x1	# DW_AT_decl_file (gdb.arch/amd64-entry-value-paramref.cc)
 	.byte	0x12	# DW_AT_decl_line
-	.long	DIEfe	# DW_AT_type
+	.long	DIEfe - .Ldebug_info0	# DW_AT_type
 			# DW_AT_external
 	.uleb128 0x9	# DW_AT_location
 	.byte	0x3	# DW_OP_addr
 	.quad	p
 DIEfe:	.uleb128 0x10	# (DIE (0xfe) DW_TAG_pointer_type)
 	.byte	0x8	# DW_AT_byte_size
-	.long	DIEe6	# DW_AT_type
+	.long	DIEe6 - .Ldebug_info0	# DW_AT_type
 	.byte	0	# end of children of DIE 0xb
 .Linfo_end:
 	.section	.debug_abbrev,"",@progbits

@@ -1,6 +1,6 @@
 /* Thread iterators and ranges for GDB, the GNU debugger.
 
-   Copyright (C) 2018-2019 Free Software Foundation, Inc.
+   Copyright (C) 2018-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -58,16 +58,22 @@ all_threads_iterator::advance ()
 bool
 all_matching_threads_iterator::m_inf_matches ()
 {
-  return (m_filter_ptid == minus_one_ptid
-	  || m_filter_ptid.pid () == m_inf->pid);
+  return ((m_filter_target == nullptr
+	   || m_filter_target == m_inf->process_target ())
+	  && (m_filter_ptid == minus_one_ptid
+	      || m_filter_ptid.pid () == m_inf->pid));
 }
 
 /* See thread-iter.h.  */
 
 all_matching_threads_iterator::all_matching_threads_iterator
-  (ptid_t filter_ptid)
-  : m_filter_ptid (filter_ptid)
+  (process_stratum_target *filter_target, ptid_t filter_ptid)
+    : m_filter_target (filter_target),
+      m_filter_ptid (filter_ptid)
 {
+  gdb_assert ((filter_target == nullptr && filter_ptid == minus_one_ptid)
+	      || filter_target->stratum () == process_stratum);
+
   m_thr = nullptr;
   for (m_inf = inferior_list; m_inf != NULL; m_inf = m_inf->next)
     if (m_inf_matches ())

@@ -1,5 +1,5 @@
 /* DWARF 1 find nearest line (_bfd_dwarf1_find_nearest_line).
-   Copyright (C) 1998-2019 Free Software Foundation, Inc.
+   Copyright (C) 1998-2020 Free Software Foundation, Inc.
 
    Written by Gavin Romig-Koch of Cygnus Solutions (gavin@cygnus.com).
 
@@ -140,7 +140,7 @@ struct linenumber
 static struct dwarf1_unit*
 alloc_dwarf1_unit (struct dwarf1_debug* stash)
 {
-  bfd_size_type amt = sizeof (struct dwarf1_unit);
+  size_t amt = sizeof (struct dwarf1_unit);
 
   struct dwarf1_unit* x = (struct dwarf1_unit *) bfd_zalloc (stash->abfd, amt);
   if (x)
@@ -158,7 +158,7 @@ alloc_dwarf1_unit (struct dwarf1_debug* stash)
 static struct dwarf1_func *
 alloc_dwarf1_func (struct dwarf1_debug* stash, struct dwarf1_unit* aUnit)
 {
-  bfd_size_type amt = sizeof (struct dwarf1_func);
+  size_t amt = sizeof (struct dwarf1_func);
 
   struct dwarf1_func* x = (struct dwarf1_func *) bfd_zalloc (stash->abfd, amt);
   if (x)

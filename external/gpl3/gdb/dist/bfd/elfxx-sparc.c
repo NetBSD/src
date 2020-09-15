@@ -1,5 +1,5 @@
 /* SPARC-specific support for ELF
-   Copyright (C) 2005-2019 Free Software Foundation, Inc.
+   Copyright (C) 2005-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -690,9 +690,6 @@ struct _bfd_sparc_elf_link_hash_entry
 {
   struct elf_link_hash_entry elf;
 
-  /* Track dynamic relocs copied for this symbol.  */
-  struct elf_dyn_relocs *dyn_relocs;
-
 #define GOT_UNKNOWN     0
 #define GOT_NORMAL      1
 #define GOT_TLS_GD      2
@@ -1028,7 +1025,6 @@ link_hash_newfunc (struct bfd_hash_entry *entry,
       struct _bfd_sparc_elf_link_hash_entry *eh;
 
       eh = (struct _bfd_sparc_elf_link_hash_entry *) entry;
-      eh->dyn_relocs = NULL;
       eh->tls_type = GOT_UNKNOWN;
       eh->has_got_reloc = 0;
       eh->has_non_got_reloc = 0;
@@ -1136,7 +1132,7 @@ struct bfd_link_hash_table *
 _bfd_sparc_elf_link_hash_table_create (bfd *abfd)
 {
   struct _bfd_sparc_elf_link_hash_table *ret;
-  bfd_size_type amt = sizeof (struct _bfd_sparc_elf_link_hash_table);
+  size_t amt = sizeof (struct _bfd_sparc_elf_link_hash_table);
 
   ret = (struct _bfd_sparc_elf_link_hash_table *) bfd_zmalloc (amt);
   if (ret == NULL)
@@ -1220,7 +1216,7 @@ _bfd_sparc_elf_create_dynamic_sections (bfd *dynobj,
   if (!_bfd_elf_create_dynamic_sections (dynobj, info))
     return FALSE;
 
-  if (htab->is_vxworks)
+  if (htab->elf.target_os == is_vxworks)
     {
       if (!elf_vxworks_create_dynamic_sections (dynobj, info, &htab->srelplt2))
 	return FALSE;
@@ -1263,15 +1259,14 @@ create_ifunc_sections (bfd *abfd, struct bfd_link_info *info)
 
   s = bfd_make_section_with_flags (abfd, ".iplt", pltflags);
   if (s == NULL
-      || ! bfd_set_section_alignment (abfd, s, bed->plt_alignment))
+      || !bfd_set_section_alignment (s, bed->plt_alignment))
     return FALSE;
   htab->iplt = s;
 
   s = bfd_make_section_with_flags (abfd, ".rela.iplt",
 				   flags | SEC_READONLY);
   if (s == NULL
-      || ! bfd_set_section_alignment (abfd, s,
-				      bed->s->log_file_align))
+      || !bfd_set_section_alignment (s, bed->s->log_file_align))
     return FALSE;
   htab->irelplt = s;
 
@@ -1289,37 +1284,6 @@ _bfd_sparc_elf_copy_indirect_symbol (struct bfd_link_info *info,
 
   edir = (struct _bfd_sparc_elf_link_hash_entry *) dir;
   eind = (struct _bfd_sparc_elf_link_hash_entry *) ind;
-
-  if (eind->dyn_relocs != NULL)
-    {
-      if (edir->dyn_relocs != NULL)
-	{
-	  struct elf_dyn_relocs **pp;
-	  struct elf_dyn_relocs *p;
-
-	  /* Add reloc counts against the indirect sym to the direct sym
-	     list.  Merge any entries against the same section.  */
-	  for (pp = &eind->dyn_relocs; (p = *pp) != NULL; )
-	    {
-	      struct elf_dyn_relocs *q;
-
-	      for (q = edir->dyn_relocs; q != NULL; q = q->next)
-		if (q->sec == p->sec)
-		  {
-		    q->pc_count += p->pc_count;
-		    q->count += p->count;
-		    *pp = p->next;
-		    break;
-		  }
-	      if (q == NULL)
-		pp = &p->next;
-	    }
-	  *pp = edir->dyn_relocs;
-	}
-
-      edir->dyn_relocs = eind->dyn_relocs;
-      eind->dyn_relocs = NULL;
-    }
 
   if (ind->root.type == bfd_link_hash_indirect && dir->got.refcount <= 0)
     {
@@ -1427,7 +1391,8 @@ _bfd_sparc_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
       if (r_symndx < symtab_hdr->sh_info)
 	{
 	  /* A local symbol.  */
-	  isym = bfd_sym_from_r_symndx (&htab->sym_cache, abfd, r_symndx);
+	  isym = bfd_sym_from_r_symndx (&htab->elf.sym_cache, abfd,
+					r_symndx);
 	  if (isym == NULL)
 	    return FALSE;
 
@@ -1791,7 +1756,7 @@ _bfd_sparc_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	      /* If this is a global symbol, we count the number of
 		 relocations we need for this symbol.  */
 	      if (h != NULL)
-		head = &((struct _bfd_sparc_elf_link_hash_entry *) h)->dyn_relocs;
+		head = &h->dyn_relocs;
 	      else
 		{
 		  /* Track dynamic relocs needed for local syms too.
@@ -1812,7 +1777,7 @@ _bfd_sparc_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	      p = *head;
 	      if (p == NULL || p->sec != sec)
 		{
-		  bfd_size_type amt = sizeof *p;
+		  size_t amt = sizeof *p;
 		  p = ((struct elf_dyn_relocs *)
 		       bfd_alloc (htab->elf.dynobj, amt));
 		  if (p == NULL)
@@ -1837,9 +1802,7 @@ _bfd_sparc_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	  break;
 
 	case R_SPARC_GNU_VTENTRY:
-	  BFD_ASSERT (h != NULL);
-	  if (h != NULL
-	      && !bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
+	  if (!bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
 	    return FALSE;
 	  break;
 
@@ -1924,23 +1887,6 @@ _bfd_sparc_elf_fixup_symbol (struct bfd_link_info *info,
 			      h->dynstr_index);
     }
   return TRUE;
-}
-
-/* Find dynamic relocs for H that apply to read-only sections.  */
-
-static asection *
-readonly_dynrelocs (struct elf_link_hash_entry *h)
-{
-  struct elf_dyn_relocs *p;
-
-  for (p = _bfd_sparc_elf_hash_entry (h)->dyn_relocs; p != NULL; p = p->next)
-    {
-      asection *s = p->sec->output_section;
-
-      if (s != NULL && (s->flags & SEC_READONLY) != 0)
-	return p->sec;
-    }
-  return NULL;
 }
 
 /* Adjust a symbol defined by a dynamic object and referenced by a
@@ -2039,7 +1985,7 @@ _bfd_sparc_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
 
   /* If we don't find any dynamic relocs in read-only sections, then
      we'll be keeping the dynamic relocs and avoiding the copy reloc.  */
-  if (!readonly_dynrelocs (h))
+  if (!_bfd_elf_readonly_dynrelocs (h))
     {
       h->non_got_ref = 0;
       return TRUE;
@@ -2131,7 +2077,8 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void * inf)
 	      s->size = htab->plt_header_size;
 
 	      /* Allocate space for the .rela.plt.unloaded relocations.  */
-	      if (htab->is_vxworks && !bfd_link_pic (info))
+	      if (htab->elf.target_os == is_vxworks
+		  && !bfd_link_pic (info))
 		htab->srelplt2->size = sizeof (Elf32_External_Rela) * 2;
 	    }
 
@@ -2183,7 +2130,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void * inf)
 		htab->elf.irelplt->size += SPARC_ELF_RELA_BYTES (htab);
 	    }
 
-	  if (htab->is_vxworks)
+	  if (htab->elf.target_os == is_vxworks)
 	    {
 	      /* Allocate space for the .got.plt entry.  */
 	      htab->elf.sgotplt->size += 4;
@@ -2260,7 +2207,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void * inf)
   else
     h->got.offset = (bfd_vma) -1;
 
-  if (eh->dyn_relocs == NULL)
+  if (h->dyn_relocs == NULL)
     return TRUE;
 
   /* In the shared -Bsymbolic case, discard space allocated for
@@ -2275,7 +2222,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void * inf)
 	{
 	  struct elf_dyn_relocs **pp;
 
-	  for (pp = &eh->dyn_relocs; (p = *pp) != NULL; )
+	  for (pp = &h->dyn_relocs; (p = *pp) != NULL; )
 	    {
 	      p->count -= p->pc_count;
 	      p->pc_count = 0;
@@ -2286,11 +2233,11 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void * inf)
 	    }
 	}
 
-      if (htab->is_vxworks)
+      if (htab->elf.target_os == is_vxworks)
 	{
 	  struct elf_dyn_relocs **pp;
 
-	  for (pp = &eh->dyn_relocs; (p = *pp) != NULL; )
+	  for (pp = &h->dyn_relocs; (p = *pp) != NULL; )
 	    {
 	      if (strcmp (p->sec->output_section->name, ".tls_vars") == 0)
 		*pp = p->next;
@@ -2301,7 +2248,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void * inf)
 
       /* Also discard relocs on undefined weak syms with non-default
 	 visibility or in PIE.  */
-      if (eh->dyn_relocs != NULL
+      if (h->dyn_relocs != NULL
 	  && h->root.type == bfd_link_hash_undefweak)
 	{
 	  /* An undefined weak symbol is never
@@ -2316,7 +2263,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void * inf)
 		     can branch to 0 without PLT.  */
 		  struct elf_dyn_relocs **pp;
 
-		  for (pp = &eh->dyn_relocs; (p = *pp) != NULL;)
+		  for (pp = &h->dyn_relocs; (p = *pp) != NULL;)
 		    if (p->pc_count == 0)
 		      *pp = p->next;
 		    else
@@ -2326,7 +2273,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void * inf)
 			pp = &p->next;
 		      }
 
-		  if (eh->dyn_relocs != NULL)
+		  if (h->dyn_relocs != NULL)
 		    {
 		      /* Make sure undefined weak symbols are output
 			 as dynamic symbols in PIEs for dynamic non-GOT
@@ -2336,7 +2283,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void * inf)
 		    }
 		}
 	      else
-		eh->dyn_relocs = NULL;
+		h->dyn_relocs = NULL;
 	    }
 
 	  /* Make sure undefined weak symbols are output as a dynamic
@@ -2380,13 +2327,13 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void * inf)
 	    goto keep;
 	}
 
-      eh->dyn_relocs = NULL;
+      h->dyn_relocs = NULL;
 
     keep: ;
     }
 
   /* Finally, allocate space.  */
-  for (p = eh->dyn_relocs; p != NULL; p = p->next)
+  for (p = h->dyn_relocs; p != NULL; p = p->next)
     {
       asection *sreloc = elf_section_data (p->sec)->sreloc;
       sreloc->size += p->count * SPARC_ELF_RELA_BYTES (htab);
@@ -2412,33 +2359,6 @@ allocate_local_dynrelocs (void **slot, void *inf)
     abort ();
 
   return allocate_dynrelocs (h, inf);
-}
-
-/* Set DF_TEXTREL if we find any dynamic relocs that apply to
-   read-only sections.  */
-
-static bfd_boolean
-maybe_set_textrel (struct elf_link_hash_entry *h, void *info_p)
-{
-  asection *sec;
-
-  if (h->root.type == bfd_link_hash_indirect)
-    return TRUE;
-
-  sec = readonly_dynrelocs (h);
-  if (sec != NULL)
-    {
-      struct bfd_link_info *info = (struct bfd_link_info *) info_p;
-
-      info->flags |= DF_TEXTREL;
-      info->callbacks->minfo
-	(_("%pB: dynamic relocation against `%pT' in read-only section `%pA'\n"),
-	 sec->owner, h->root.root.string, sec);
-
-      /* Not an error, just cut short the traversal.  */
-      return FALSE;
-    }
-  return TRUE;
 }
 
 /* Return true if the dynamic symbol for a given section should be
@@ -2515,7 +2435,7 @@ _bfd_sparc_elf_size_dynamic_sections (bfd *output_bfd,
 		     linker script /DISCARD/, so we'll be discarding
 		     the relocs too.  */
 		}
-	      else if (htab->is_vxworks
+	      else if (htab->elf.target_os == is_vxworks
 		       && strcmp (p->sec->output_section->name,
 				  ".tls_vars") == 0)
 		{
@@ -2585,7 +2505,7 @@ _bfd_sparc_elf_size_dynamic_sections (bfd *output_bfd,
   htab_traverse (htab->loc_hash_table, allocate_local_dynrelocs, info);
 
   if (! ABI_64_P (output_bfd)
-      && !htab->is_vxworks
+      && htab->elf.target_os != is_vxworks
       && elf_hash_table (info)->dynamic_sections_created)
     {
       /* Make space for the trailing nop in .plt.  */
@@ -2671,37 +2591,9 @@ _bfd_sparc_elf_size_dynamic_sections (bfd *output_bfd,
 #define add_dynamic_entry(TAG, VAL) \
   _bfd_elf_add_dynamic_entry (info, TAG, VAL)
 
-      if (bfd_link_executable (info))
-	{
-	  if (!add_dynamic_entry (DT_DEBUG, 0))
-	    return FALSE;
-	}
-
-      if (htab->elf.srelplt->size != 0)
-	{
-	  if (!add_dynamic_entry (DT_PLTGOT, 0)
-	      || !add_dynamic_entry (DT_PLTRELSZ, 0)
-	      || !add_dynamic_entry (DT_PLTREL, DT_RELA)
-	      || !add_dynamic_entry (DT_JMPREL, 0))
-	    return FALSE;
-	}
-
-      if (!add_dynamic_entry (DT_RELA, 0)
-	  || !add_dynamic_entry (DT_RELASZ, 0)
-	  || !add_dynamic_entry (DT_RELAENT,
-				 SPARC_ELF_RELA_BYTES (htab)))
+      if (!_bfd_elf_maybe_vxworks_add_dynamic_tags (output_bfd, info,
+						    TRUE))
 	return FALSE;
-
-      /* If any dynamic relocs apply to a read-only section,
-	 then we need a DT_TEXTREL entry.  */
-      if ((info->flags & DF_TEXTREL) == 0)
-	elf_link_hash_traverse (&htab->elf, maybe_set_textrel, info);
-
-      if (info->flags & DF_TEXTREL)
-	{
-	  if (!add_dynamic_entry (DT_TEXTREL, 0))
-	    return FALSE;
-	}
 
       if (ABI_64_P (output_bfd))
 	{
@@ -2758,9 +2650,6 @@ _bfd_sparc_elf_size_dynamic_sections (bfd *output_bfd,
 		eht->dynsymcount++;
 	      }
 	}
-      if (htab->is_vxworks
-	  && !elf_vxworks_add_dynamic_entries (output_bfd, info))
-	return FALSE;
     }
 #undef add_dynamic_entry
 
@@ -2773,7 +2662,7 @@ _bfd_sparc_elf_new_section_hook (bfd *abfd, asection *sec)
   if (!sec->used_by_bfd)
     {
       struct _bfd_sparc_elf_section_data *sdata;
-      bfd_size_type amt = sizeof (*sdata);
+      size_t amt = sizeof (*sdata);
 
       sdata = bfd_zalloc (abfd, amt);
       if (sdata == NULL)
@@ -2910,7 +2799,8 @@ _bfd_sparc_elf_relocate_section (bfd *output_bfd,
   sreloc = elf_section_data (input_section)->sreloc;
   /* We have to handle relocations in vxworks .tls_vars sections
      specially, because the dynamic loader is 'weird'.  */
-  is_vxworks_tls = (htab->is_vxworks && bfd_link_pic (info)
+  is_vxworks_tls = (htab->elf.target_os == is_vxworks
+		    && bfd_link_pic (info)
 		    && !strcmp (input_section->output_section->name,
 				".tls_vars"));
 
@@ -4142,7 +4032,7 @@ _bfd_sparc_elf_relocate_section (bfd *output_bfd,
 
       if (r == bfd_reloc_continue)
 	{
-do_relocation:
+	do_relocation:
 	  r = _bfd_final_link_relocate (howto, input_bfd, input_section,
 					contents, rel->r_offset,
 					relocation, rel->r_addend);
@@ -4166,8 +4056,7 @@ do_relocation:
 		     || r_type == R_SPARC_UA32
 		     || r_type == R_SPARC_DISP32)
 		    && (((input_section->flags & SEC_DEBUGGING) != 0
-			 && strcmp (bfd_section_name (input_bfd,
-						      input_section),
+			 && strcmp (bfd_section_name (input_section),
 				    ".stab") == 0)
 			|| _bfd_elf_section_offset (output_bfd, info,
 						    input_section,
@@ -4196,7 +4085,7 @@ do_relocation:
 		    if (name == NULL)
 		      return FALSE;
 		    if (*name == '\0')
-		      name = bfd_section_name (input_bfd, sec);
+		      name = bfd_section_name (sec);
 		  }
 		(*info->callbacks->reloc_overflow)
 		  (info, (h ? &h->root : NULL), name, howto->name,
@@ -4354,7 +4243,7 @@ _bfd_sparc_elf_finish_dynamic_symbol (bfd *output_bfd,
 	abort ();
 
       /* Fill in the entry in the .rela.plt section.  */
-      if (htab->is_vxworks)
+      if (htab->elf.target_os == is_vxworks)
 	{
 	  /* Work out the index of this PLT entry.  */
 	  rela_index = ((h->plt.offset - htab->plt_header_size)
@@ -4556,7 +4445,7 @@ _bfd_sparc_elf_finish_dynamic_symbol (bfd *output_bfd,
      ".got" section.  Likewise _PROCEDURE_LINKAGE_TABLE_ and ".plt".  */
   if (sym != NULL
       && (h == htab->elf.hdynamic
-	  || (!htab->is_vxworks
+	  || (htab->elf.target_os != is_vxworks
 	      && (h == htab->elf.hgot || h == htab->elf.hplt))))
     sym->st_shndx = SHN_ABS;
 
@@ -4590,7 +4479,7 @@ sparc_finish_dyn (bfd *output_bfd, struct bfd_link_info *info,
 
       bed->s->swap_dyn_in (dynobj, dyncon, &dyn);
 
-      if (htab->is_vxworks && dyn.d_tag == DT_PLTGOT)
+      if (htab->elf.target_os == is_vxworks && dyn.d_tag == DT_PLTGOT)
 	{
 	  /* On VxWorks, DT_PLTGOT should point to the start of the GOT,
 	     not to the start of the PLT.  */
@@ -4601,7 +4490,7 @@ sparc_finish_dyn (bfd *output_bfd, struct bfd_link_info *info,
 	      bed->s->swap_dyn_out (output_bfd, &dyn, dyncon);
 	    }
 	}
-      else if (htab->is_vxworks
+      else if (htab->elf.target_os == is_vxworks
 	       && elf_vxworks_finish_dynamic_entry (output_bfd, &dyn))
 	bed->s->swap_dyn_out (output_bfd, &dyn, dyncon);
       else if (abi_64_p && dyn.d_tag == DT_SPARC_REGISTER)
@@ -4792,7 +4681,7 @@ _bfd_sparc_elf_finish_dynamic_sections (bfd *output_bfd, struct bfd_link_info *i
   htab = _bfd_sparc_elf_hash_table (info);
   BFD_ASSERT (htab != NULL);
   dynobj = htab->elf.dynobj;
-  
+
   /* We arranged in size_dynamic_sections to put the STT_REGISTER
      entries at the end of the dynlocal list, so they came at the end
      of the local symbols in the symtab.  Except that they aren't
@@ -4802,7 +4691,7 @@ _bfd_sparc_elf_finish_dynamic_sections (bfd *output_bfd, struct bfd_link_info *i
     {
       asection *dynsymsec = bfd_get_linker_section (dynobj, ".dynsym");
       struct elf_link_local_dynamic_entry *e;
-      
+
       for (e = elf_hash_table (info)->dynlocal; e ; e = e->next)
 	if (e->input_indx == -1)
 	  break;
@@ -4810,7 +4699,7 @@ _bfd_sparc_elf_finish_dynamic_sections (bfd *output_bfd, struct bfd_link_info *i
 	elf_section_data (dynsymsec->output_section)->this_hdr.sh_info
 	  = e->dynindx;
     }
-  
+
   sdyn = bfd_get_linker_section (dynobj, ".dynamic");
 
   if (elf_hash_table (info)->dynamic_sections_created)
@@ -4826,7 +4715,7 @@ _bfd_sparc_elf_finish_dynamic_sections (bfd *output_bfd, struct bfd_link_info *i
       /* Initialize the contents of the .plt section.  */
       if (splt->size > 0)
 	{
-	  if (htab->is_vxworks)
+	  if (htab->elf.target_os == is_vxworks)
 	    {
 	      if (bfd_link_pic (info))
 		sparc_vxworks_finish_shared_plt (output_bfd, info);
@@ -4844,7 +4733,8 @@ _bfd_sparc_elf_finish_dynamic_sections (bfd *output_bfd, struct bfd_link_info *i
 
       if (elf_section_data (splt->output_section) != NULL)
 	elf_section_data (splt->output_section)->this_hdr.sh_entsize
-	  = ((htab->is_vxworks || !ABI_64_P (output_bfd))
+	  = ((htab->elf.target_os == is_vxworks
+	      || !ABI_64_P (output_bfd))
 	     ? 0 : htab->plt_entry_size);
     }
 

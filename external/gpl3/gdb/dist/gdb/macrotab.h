@@ -1,5 +1,5 @@
 /* Interface to C preprocessor macro tables for GDB.
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of GDB.
@@ -20,11 +20,14 @@
 #ifndef MACROTAB_H
 #define MACROTAB_H
 
-#include "common/function-view.h"
+#include "gdbsupport/function-view.h"
 
 struct obstack;
-struct bcache;
 struct compunit_symtab;
+
+namespace gdb {
+struct bcache;
+}
 
 /* How do we represent a source location?  I mean, how should we
    represent them within GDB; the user wants to use all sorts of
@@ -170,7 +173,7 @@ struct macro_source_file
    the same source location (although 'gcc -DFOO -UFOO -DFOO=2' does
    do that in GCC 4.1.2.).  */
 struct macro_table *new_macro_table (struct obstack *obstack,
-                                     struct bcache *bcache,
+                                     gdb::bcache *bcache,
 				     struct compunit_symtab *cust);
 
 

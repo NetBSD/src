@@ -1,4 +1,4 @@
-# Copyright 2013-2019 Free Software Foundation, Inc.
+# Copyright 2013-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@ if { [skip_python_tests] } { continue }
 gdb_py_test_silent_cmd "python lt = gdb.selected_frame().find_sal().symtab.linetable()" \
     "get instruction" 0
 
-gdb_py_test_multiple "input simple command" \
+gdb_test_multiline "input simple command" \
   "python" "" \
   "def list_lines():" "" \
   "   for l in lt:" "" \

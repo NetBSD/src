@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2019 Free Software Foundation, Inc.
+# Copyright (C) 2010-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -499,6 +499,28 @@ proc test_bkpt_address {} {
 	".*Breakpoint ($decimal)+ at .*$srcfile, line ($decimal)+\."
 }
 
+proc test_bkpt_probe {} {
+    global decimal hex testfile srcfile
+
+    if { [prepare_for_testing "failed to prepare" ${testfile}-probes \
+	    ${srcfile} {additional_flags=-DUSE_PROBES}] } {
+	return -1
+    }
+
+    if ![gdb_guile_runto_main] then {
+	return
+    }
+
+    gdb_scm_test_silent_cmd \
+	"guile (define bp1 (make-breakpoint \"-probe test:result_updated\"))" \
+	"create probe breakpoint"
+
+    gdb_test \
+	"guile (register-breakpoint! bp1)" \
+	"Breakpoint $decimal at $hex" \
+	"register probe breakpoint"
+}
+
 test_bkpt_basic
 test_bkpt_deletion
 test_bkpt_cond_and_cmds
@@ -508,3 +530,4 @@ test_bkpt_internal
 test_bkpt_eval_funcs
 test_bkpt_registration
 test_bkpt_address
+test_bkpt_probe

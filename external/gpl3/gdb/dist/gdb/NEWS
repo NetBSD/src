@@ -1,6 +1,665 @@
 		What has changed in GDB?
 	     (Organized release by release)
 
+*** Changes since GDB 10
+
+* MI changes
+
+ ** '-break-insert --qualified' and '-dprintf-insert --qualified'
+
+    The MI -break-insert and -dprintf-insert commands now support a
+    new "--qualified" option that makes GDB interpret a specified
+    function name as a complete fully-qualified name.  This is the
+    equivalent of the CLI's "break -qualified" and "dprintf
+    -qualified".
+
+*** Changes in GDB 10
+
+* There are new feature names for ARC targets: "org.gnu.gdb.arc.core"
+  and "org.gnu.gdb.arc.aux".  The old names are still supported but
+  must be considered obsolete.  They will be deprecated after some
+  grace period.
+
+* Help and apropos commands will now show the documentation of a
+  command only once, even if that command has one or more aliases.
+  These commands now show the command name, then all of its aliases,
+  and finally the description of the command.
+
+* 'help aliases' now shows only the user defined aliases.  GDB predefined
+  aliases are shown together with their aliased command.
+
+* GDB now supports debuginfod, an HTTP server for distributing ELF/DWARF
+  debugging information as well as source code.
+
+  When built with debuginfod, GDB can automatically query debuginfod
+  servers for the separate debug files and source code of the executable
+  being debugged.
+
+  To build GDB with debuginfod, pass --with-debuginfod to configure (this
+  requires libdebuginfod, the debuginfod client library).
+
+  debuginfod is distributed with elfutils, starting with version 0.178.
+
+  You can get the latest version from https://sourceware.org/elfutils.
+
+* Multi-target debugging support
+
+  GDB now supports debugging multiple target connections
+  simultaneously.  For example, you can now have each inferior
+  connected to different remote servers running in different machines,
+  or have one inferior debugging a local native process, an inferior
+  debugging a core dump, etc.
+
+  This support is experimental and comes with some limitations -- you
+  can only resume multiple targets simultaneously if all targets
+  support non-stop mode, and all remote stubs or servers must support
+  the same set of remote protocol features exactly.  See also "info
+  connections" and "add-inferior -no-connection" below, and "maint set
+  target-non-stop" in the user manual.
+
+* New features in the GDB remote stub, GDBserver
+
+  ** GDBserver is now supported on RISC-V GNU/Linux.
+
+  ** GDBserver no longer supports these host triplets:
+
+    i[34567]86-*-lynxos*
+    powerpc-*-lynxos*
+    i[34567]86-*-nto*
+    bfin-*-*linux*
+    crisv32-*-linux*
+    cris-*-linux*
+    m32r*-*-linux*
+    tilegx-*-linux*
+    arm*-*-mingw32ce*
+    i[34567]86-*-mingw32ce*
+
+* Debugging MS-Windows processes now sets $_exitsignal when the
+  inferior is terminated by a signal, instead of setting $_exitcode.
+
+* Multithreaded symbol loading has now been enabled by default on systems
+  that support it (see entry for GDB 9, below), providing faster
+  performance for programs with many symbols.
+
+* The $_siginfo convenience variable now also works on Windows targets,
+  and will display the EXCEPTION_RECORD of the last handled exception.
+
+* TUI windows can now be arranged horizontally.
+
+* The command history filename can now be set to the empty string
+  either using 'set history filename' or by setting 'GDBHISTFILE=' in
+  the environment.  The effect of setting this filename to the empty
+  string is that GDB will not try to load any previous command
+  history.
+
+* On Windows targets, it is now possible to debug 32-bit programs with a
+  64-bit GDB.
+
+* New commands
+
+set exec-file-mismatch -- Set exec-file-mismatch handling (ask|warn|off).
+show exec-file-mismatch -- Show exec-file-mismatch handling (ask|warn|off).
+  Set or show the option 'exec-file-mismatch'.  When GDB attaches to a
+  running process, this new option indicates whether to detect
+  a mismatch between the current executable file loaded by GDB and the
+  executable file used to start the process.  If 'ask', the default,
+  display a warning and ask the user whether to load the process
+  executable file; if 'warn', just display a warning; if 'off', don't
+  attempt to detect a mismatch.
+
+tui new-layout NAME WINDOW WEIGHT [WINDOW WEIGHT]...
+  Define a new TUI layout, specifying its name and the windows that
+  will be displayed.
+
+maintenance print xml-tdesc [FILE]
+  Prints the current target description as an XML document.  If the
+  optional FILE is provided (which is an XML target description) then
+  the target description is read from FILE into GDB, and then
+  reprinted.
+
+maintenance print core-file-backed-mappings
+  Prints file-backed mappings loaded from a core file's note section.
+  Output is expected to be similar to that of "info proc mappings".
+
+* Changed commands
+
+alias [-a] [--] ALIAS = COMMAND [DEFAULT-ARGS...]
+  The alias command can now specify default args for an alias.
+  GDB automatically prepends the alias default args to the argument list
+  provided explicitly by the user.
+  For example, to have a backtrace with full details, you can define
+  an alias 'bt_ALL' as
+  'alias bt_ALL = backtrace -entry-values both -frame-arg all
+     -past-main -past-entry -full'.
+  Alias default arguments can also use a set of nested 'with' commands,
+  e.g. 'alias pp10 = with print pretty -- with print elem 10 -- print'
+  defines the alias pp10 that will pretty print a maximum of 10 elements
+  of the given expression (if the expression is an array).
+
+* New targets
+
+GNU/Linux/RISC-V (gdbserver)	riscv*-*-linux*
+BPF				bpf-unknown-none
+
+* Python API
+
+  ** gdb.register_window_type can be used to implement new TUI windows
+     in Python.
+
+  ** Dynamic types can now be queried.  gdb.Type has a new attribute,
+     "dynamic", and gdb.Type.sizeof can be None for a dynamic type.  A
+     field of a dynamic type may have None for its "bitpos" attribute
+     as well.
+
+  ** Commands written in Python can be in the "TUI" help class by
+     registering with the new constant gdb.COMMAND_TUI.
+
+  ** New method gdb.PendingFrame.architecture () to retrieve the
+     architecture of the pending frame.
+
+  ** New gdb.Architecture.registers method that returns a
+     gdb.RegisterDescriptorIterator object, an iterator that returns
+     gdb.RegisterDescriptor objects.  The new RegisterDescriptor is a
+     way to query the registers available for an architecture.
+
+  ** New gdb.Architecture.register_groups method that returns a
+     gdb.RegisterGroupIterator object, an iterator that returns
+     gdb.RegisterGroup objects.  The new RegisterGroup is a way to
+     discover the available register groups.
+
+* Guile API
+
+  ** GDB can now be built with GNU Guile 3.0 and 2.2 in addition to 2.0.
+
+  ** Procedures 'memory-port-read-buffer-size',
+     'set-memory-port-read-buffer-size!', 'memory-port-write-buffer-size',
+     and 'set-memory-port-write-buffer-size!' are deprecated.  When
+     using Guile 2.2 and later, users who need to control the size of
+     a memory port's internal buffer can use the 'setvbuf' procedure.
+
+*** Changes in GDB 9
+
+* 'thread-exited' event is now available in the annotations interface.
+
+* New built-in convenience variables $_gdb_major and $_gdb_minor
+  provide the GDB version.  They are handy for conditionally using
+  features available only in or since specific GDB versions, in
+  scripts that should work error-free with many different versions,
+  such as in system-wide init files.
+
+* New built-in convenience functions $_gdb_setting, $_gdb_setting_str,
+  $_gdb_maint_setting and $_gdb_maint_setting_str provide access to values
+  of the GDB settings and the GDB maintenance settings.  They are handy
+  for changing the logic of user defined commands depending on the
+  current GDB settings.
+
+* GDB now supports Thread Local Storage (TLS) variables on several
+  FreeBSD architectures (amd64, i386, powerpc, riscv).  Other
+  architectures require kernel changes.  TLS is not yet supported for
+  amd64 and i386 process core dumps.
+
+* Support for Pointer Authentication (PAC) on AArch64 Linux.  Return
+  addresses that required unmasking are shown in the backtrace with the
+  postfix [PAC].
+
+* Two new convenience functions $_cimag and $_creal that extract the
+  imaginary and real parts respectively from complex numbers.
+
+* New built-in convenience variables $_shell_exitcode and $_shell_exitsignal
+  provide the exitcode or exit status of the shell commands launched by
+  GDB commands such as "shell", "pipe" and "make".
+
+* The command define-prefix can now define user defined prefix commands.
+  User defined commands can now be defined using these user defined prefix
+  commands.
+
+* Command names can now use the . character.
+
+* The RX port now supports XML target descriptions.
+
+* GDB now shows the Ada task names at more places, e.g. in task switching
+  messages.
+
+* GDB can now be compiled with Python 3 on Windows.
+
+* New convenience variable $_ada_exception holds the address of the
+  Ada exception being thrown.  This is set by Ada-related catchpoints.
+
+* GDB can now place breakpoints on nested functions and subroutines in
+  Fortran code.  The '::' operator can be used between parent and
+  child scopes when placing breakpoints, for example:
+
+    (gdb) break outer_function::inner_function
+
+  The 'outer_function::' prefix is only needed if 'inner_function' is
+  not visible in the current scope.
+
+* In addition to the system-wide gdbinit file, if configured with
+ --with-system-gdbinit-dir, GDB will now also load files in that directory
+ as system gdbinit files, unless the -nx or -n flag is provided.  Files
+ with extensions .gdb, .py and .scm are supported as long as GDB was
+ compiled with support for that language.
+
+* GDB now supports multithreaded symbol loading for higher performance.
+  This feature is still in testing, so it is disabled by default.  You
+  can turn it on using 'maint set worker-threads unlimited'.
+
+* Python API
+
+  ** The gdb.Value type has a new method 'format_string' which returns a
+     string representing the value.  The formatting is controlled by the
+     optional keyword arguments: 'raw', 'pretty_arrays', 'pretty_structs',
+     'array_indexes', 'symbols', 'unions', 'deref_refs', 'actual_objects',
+     'static_members', 'max_elements', 'repeat_threshold', and 'format'.
+
+  ** gdb.Type has a new property 'objfile' which returns the objfile the
+     type was defined in.
+
+  ** The frame information printed by the python frame filtering code
+     is now consistent with what the 'backtrace' command prints when
+     there are no filters, or when the 'backtrace' '-no-filters' option
+     is given.
+
+  ** The new function gdb.lookup_static_symbol can be used to look up
+     symbols with static linkage.
+
+  ** The new function gdb.lookup_static_symbols can be used to look up
+     all static symbols with static linkage.
+
+  ** gdb.Objfile has new methods 'lookup_global_symbol' and
+     'lookup_static_symbol' to lookup a symbol from this objfile only.
+
+  ** gdb.Block now supports the dictionary syntax for accessing symbols in
+     this block (e.g. block['local_variable']).
+
+* New commands
+
+| [COMMAND] | SHELL_COMMAND
+| -d DELIM COMMAND DELIM SHELL_COMMAND
+pipe [COMMAND] | SHELL_COMMAND
+pipe -d DELIM COMMAND DELIM SHELL_COMMAND
+  Executes COMMAND and sends its output to SHELL_COMMAND.
+  With no COMMAND, repeat the last executed command
+  and send its output to SHELL_COMMAND.
+
+define-prefix COMMAND
+  Define or mark a command as a user-defined prefix command.
+  
+with SETTING [VALUE] [-- COMMAND]
+w SETTING [VALUE] [-- COMMAND]
+  Temporarily set SETTING, run COMMAND, and restore SETTING.
+  Usage: with SETTING -- COMMAND
+  With no COMMAND, repeats the last executed command.
+  SETTING is any GDB setting you can change with the "set"
+  subcommands.  For example, 'with language c -- print someobj'
+  temporarily switches to the C language in order to print someobj.
+  Settings can be combined: 'w lang c -- w print elements unlimited --
+  usercmd' switches to the C language and runs usercmd with no limit
+  of array elements to print.
+
+maint with SETTING [VALUE] [-- COMMAND]
+  Like "with", but works with "maintenance set" settings.
+
+set may-call-functions [on|off]
+show may-call-functions
+  This controls whether GDB will attempt to call functions in
+  the program, such as with expressions in the print command.  It
+  defaults to on.  Calling functions in the program being debugged
+  can have undesired side effects.  It is now possible to forbid
+  such function calls.  If function calls are forbidden, GDB will throw
+  an error when a command (such as print expression) calls a function
+  in the program.
+
+set print finish [on|off]
+show print finish
+  This controls whether the `finish' command will display the value
+  that is returned by the current function.  When `off', the value is
+  still entered into the value history, but it is not printed.  The
+  default is `on'.
+
+set print max-depth
+show print max-depth
+  Allows deeply nested structures to be simplified when printing by
+  replacing deeply nested parts (beyond the max-depth) with ellipses.
+  The default max-depth is 20, but this can be set to unlimited to get
+  the old behavior back.
+
+set print raw-values [on|off]
+show print raw-values
+  By default, GDB applies the enabled pretty printers when printing a
+  value.  This allows to ignore the enabled pretty printers for a series
+  of commands.  The default is 'off'.
+
+set logging debugredirect [on|off]
+  By default, GDB debug output will go to both the terminal and the logfile.
+  Set if you want debug output to go only to the log file.
+
+set style title foreground COLOR
+set style title background COLOR
+set style title intensity VALUE
+  Control the styling of titles.
+
+set style highlight foreground COLOR
+set style highlight background COLOR
+set style highlight intensity VALUE
+  Control the styling of highlightings.
+
+maint set worker-threads
+maint show worker-threads
+  Control the number of worker threads that can be used by GDB.  The
+  default is 0.  "unlimited" lets GDB choose a number that is
+  reasonable.  Currently worker threads are only used when demangling
+  the names of linker symbols.
+
+set style tui-border foreground COLOR
+set style tui-border background COLOR
+  Control the styling of TUI borders.
+
+set style tui-active-border foreground COLOR
+set style tui-active-border background COLOR
+  Control the styling of the active TUI border.
+
+maint set test-settings KIND
+maint show test-settings KIND
+  A set of commands used by the testsuite for exercising the settings
+  infrastructure.
+
+maint set tui-resize-message [on|off]
+maint show tui-resize-message
+  Control whether GDB prints a message each time the terminal is
+  resized when in TUI mode.  This is primarily useful for testing the
+  TUI.
+
+set print frame-info [short-location|location|location-and-address
+                        |source-and-location|source-line|auto]
+show print frame-info
+  This controls what frame information is printed by the commands printing
+  a frame.  This setting will e.g. influence the behaviour of 'backtrace',
+  'frame', 'stepi'.  The python frame filtering also respect this setting.
+  The 'backtrace' '-frame-info' option can override this global setting.
+
+set tui compact-source
+show tui compact-source
+
+  Enable the "compact" display mode for the TUI source window.  The
+  compact display uses only as much space as is needed for the line
+  numbers in the current file, and only a single space to separate the
+  line numbers from the source.
+
+info modules [-q] [REGEXP]
+  Return a list of Fortran modules matching REGEXP, or all modules if
+  no REGEXP is given.
+
+info module functions [-q] [-m MODULE_REGEXP] [-t TYPE_REGEXP] [REGEXP]
+  Return a list of functions within all modules, grouped by module.
+  The list of functions can be restricted with the optional regular
+  expressions.  MODULE_REGEXP matches against the module name,
+  TYPE_REGEXP matches against the function type signature, and REGEXP
+  matches against the function name.
+
+info module variables [-q] [-m MODULE_REGEXP] [-t TYPE_REGEXP] [REGEXP]
+  Return a list of variables within all modules, grouped by module.
+  The list of variables can be restricted with the optional regular
+  expressions.  MODULE_REGEXP matches against the module name,
+  TYPE_REGEXP matches against the variable type, and REGEXP matches
+  against the variable name.
+
+set debug remote-packet-max-chars
+show debug remote-packet-max-chars
+  Controls the number of characters to output in a remote packet when using
+  "set debug remote".
+  The default is 512 bytes.
+
+info connections
+  Lists the target connections currently in use.
+
+* Changed commands
+
+help
+  The "help" command uses the title style to enhance the
+  readibility of its output by styling the classes and
+  command names.
+
+apropos [-v] REGEXP
+  Similarly to "help", the "apropos" command also uses the
+  title style for the command names.  "apropos" accepts now
+  a flag "-v" (verbose) to show the full documentation
+  of matching commands and to use the highlight style to mark
+  the documentation parts matching REGEXP.
+
+printf
+eval
+  The GDB printf and eval commands can now print C-style and Ada-style
+  string convenience variables without calling functions in the program.
+  This allows to do formatted printing of strings without having
+  a running inferior, or when debugging a core dump.
+
+info sources [-dirname | -basename] [--] [REGEXP]
+  This command has now optional arguments to only print the files
+  whose names match REGEXP.  The arguments -dirname and -basename
+  allow to restrict matching respectively to the dirname and basename
+  parts of the files.
+
+show style
+  The "show style" and its subcommands are now styling
+  a style name in their output using its own style, to help
+  the user visualize the different styles.
+
+set print frame-arguments
+  The new value 'presence' indicates to only indicate the presence of
+  arguments using ..., instead of printing argument names and values.
+
+set print raw-frame-arguments
+show print raw-frame-arguments
+
+  These commands replace the similarly-named "set/show print raw
+  frame-arguments" commands (now with a dash instead of a space).  The
+  old commands are now deprecated and may be removed in a future
+  release.
+
+add-inferior [-no-connection]
+  The add-inferior command now supports a "-no-connection" flag that
+  makes the new inferior start with no target connection associated.
+  By default, the new inferior inherits the target connection of the
+  current inferior.  See also "info connections".
+
+info inferior
+  This command's output now includes a new "Connection" column
+  indicating which target connection an inferior is bound to.  See
+  "info connections" above.
+
+maint test-options require-delimiter
+maint test-options unknown-is-error
+maint test-options unknown-is-operand
+maint show test-options-completion-result
+  Commands used by the testsuite to validate the command options
+  framework.
+
+focus, winheight, +, -, >, <
+  These commands are now case-sensitive.
+
+* New command options, command completion
+
+  GDB now has a standard infrastructure to support dash-style command
+  options ('-OPT').  One benefit is that commands that use it can
+  easily support completion of command line arguments.  Try "CMD
+  -[TAB]" or "help CMD" to find options supported by a command.  Over
+  time, we intend to migrate most commands to this infrastructure.  A
+  number of commands got support for new command options in this
+  release:
+
+  ** The "print" and "compile print" commands now support a number of
+     options that allow overriding relevant global print settings as
+     set by "set print" subcommands:
+
+      -address [on|off]
+      -array [on|off]
+      -array-indexes [on|off]
+      -elements NUMBER|unlimited
+      -null-stop [on|off]
+      -object [on|off]
+      -pretty [on|off]
+      -raw-values [on|off]
+      -repeats NUMBER|unlimited
+      -static-members [on|off]
+      -symbol [on|off]
+      -union [on|off]
+      -vtbl [on|off]
+
+     Note that because the "print"/"compile print" commands accept
+     arbitrary expressions which may look like options (including
+     abbreviations), if you specify any command option, then you must
+     use a double dash ("--") to mark the end of argument processing.
+
+  ** The "backtrace" command now supports a number of options that
+     allow overriding relevant global print settings as set by "set
+     backtrace" and "set print" subcommands:
+
+      -entry-values no|only|preferred|if-needed|both|compact|default
+      -frame-arguments all|scalars|none
+      -raw-frame-arguments [on|off]
+      -frame-info auto|source-line|location|source-and-location
+           |location-and-address|short-location
+      -past-main [on|off]
+      -past-entry [on|off]
+
+     In addition, the full/no-filters/hide qualifiers are now also
+     exposed as command options too:
+
+      -full
+      -no-filters
+      -hide
+
+  ** The "frame apply", "tfaas" and "faas" commands similarly now
+     support the following options:
+
+      -past-main [on|off]
+      -past-entry [on|off]
+
+  ** The new "info sources" options -dirname and -basename options
+     are using the standard '-OPT' infrastructure.
+
+   All options above can also be abbreviated.  The argument of boolean
+   (on/off) options can be 0/1 too, and also the argument is assumed
+   "on" if omitted.  This allows writing compact command invocations,
+   like for example:
+
+    (gdb) p -ra -p -o 0 -- *myptr
+
+   The above is equivalent to:
+
+    (gdb) print -raw-values -pretty -object off -- *myptr
+
+  ** The "info types" command now supports the '-q' flag to disable
+     printing of some header information in a similar fashion to "info
+     variables" and "info functions".
+
+  ** The "info variables", "info functions", and "whereis" commands
+     now take a '-n' flag that excludes non-debug symbols (symbols
+     from the symbol table, not from the debug info such as DWARF)
+     from the results.
+
+* Completion improvements
+
+  ** GDB can now complete the options of the "thread apply all" and
+     "taas" commands, and their "-ascending" option can now be
+     abbreviated.
+
+  ** GDB can now complete the options of the "info threads", "info
+     functions", "info variables", "info locals", and "info args"
+     commands.
+
+  ** GDB can now complete the options of the "compile file" and
+     "compile code" commands.  The "compile file" command now
+     completes on filenames.
+
+  ** GDB can now complete the backtrace command's
+     "full/no-filters/hide" qualifiers.
+
+* In settings, you can now abbreviate "unlimited".
+
+  E.g., "set print elements u" is now equivalent to "set print
+  elements unlimited".
+
+* New MI commands
+
+-complete
+  This lists all the possible completions for the rest of the line, if it
+  were to be given as a command itself.  This is intended for use by MI
+  frontends in cases when separate CLI and MI channels cannot be used.
+
+-catch-throw, -catch-rethrow, and -catch-catch
+  These can be used to catch C++ exceptions in a similar fashion to
+  the CLI commands 'catch throw', 'catch rethrow', and 'catch catch'.
+
+-symbol-info-functions, -symbol-info-types, and -symbol-info-variables
+  These commands are the MI equivalent of the CLI commands 'info
+  functions', 'info types', and 'info variables' respectively.
+
+-symbol-info-modules, this is the MI equivalent of the CLI 'info
+  modules' command.
+
+-symbol-info-module-functions and -symbol-info-module-variables.
+  These commands are the MI equivalent of the CLI commands 'info
+  module functions' and 'info module variables'.
+
+* Other MI changes
+
+ ** The default version of the MI interpreter is now 3 (-i=mi3).
+
+  ** The output of information about multi-location breakpoints (which is
+     syntactically incorrect in MI 2) has changed in MI 3.  This affects
+     the following commands and events:
+
+	- -break-insert
+	- -break-info
+	- =breakpoint-created
+	- =breakpoint-modified
+
+     The -fix-multi-location-breakpoint-output command can be used to enable
+     this behavior with previous MI versions.
+
+ ** Backtraces and frames include a new optional field addr_flags which is
+    given after the addr field.  On AArch64 this contains PAC if the address
+    has been masked in the frame.  On all other targets the field is not
+    present.
+
+* Testsuite
+
+  The testsuite now creates the files gdb.cmd (containing the arguments
+  used to launch GDB) and gdb.in (containing all the commands sent to
+  GDB) in the output directory for each test script.  Multiple invocations
+  are appended with .1, .2, .3 etc.
+
+* Building GDB and GDBserver now requires GNU make >= 3.82.
+
+  Using another implementation of the make program or an earlier version of
+  GNU make to build GDB or GDBserver is not supported.
+
+* Building GDB now requires GNU readline >= 7.0.
+
+  GDB now bundles GNU readline 8.0, but if you choose to use
+  --with-system-readline, only readline >= 7.0 can be used.
+
+* The TUI SingleKey keymap is now named "SingleKey".  This can be used
+  from .inputrc to bind keys in this keymap.  This feature is only
+  available when gdb is built against GNU readline 8.0 or later.
+
+* Removed targets and native configurations
+
+  GDB no longer supports debugging the Cell Broadband Engine.  This includes
+  both debugging standalone Cell/B.E. SPU applications and integrated debugging
+  of Cell/B.E. applications that use both the PPU and SPU architectures.
+
+* New Simulators
+
+TI PRU					pru-*-elf
+
+* Removed targets and native configurations
+
+Solaris 10			i?86-*-solaris2.10, x86_64-*-solaris2.10,
+				sparc*-*-solaris2.10
+
 *** Changes in GDB 8.3
 
 * GDB and GDBserver now support access to additional registers on
@@ -58,7 +717,7 @@
 set debug compile-cplus-types
 show debug compile-cplus-types
   Control the display of debug output about type conversion in the
-  C++ compile feature.  Commands have no effect while compiliong
+  C++ compile feature.  Commands have no effect while compiling
   for other languages.
 
 set debug skip
@@ -801,7 +1460,7 @@ skip -rfunction regular-expression
   Additionally, a file spec and a function spec may now be combined.
 
 maint info line-table REGEXP
-  Display the contents of GDB's internal line table data struture.
+  Display the contents of GDB's internal line table data structure.
 
 maint selftest
   Run any GDB unit tests that were compiled in.
@@ -973,7 +1632,7 @@ show remote thread-events
 set ada print-signatures on|off
 show ada print-signatures"
   Control whether parameter types and return types are displayed in overloads
-  selection menus.  It is activaled (@code{on}) by default.
+  selection menus.  It is activated (@code{on}) by default.
 
 set max-value-size
 show max-value-size
@@ -1305,7 +1964,7 @@ Qbtrace-conf:bts:size
   Set the requested ring buffer size for branch tracing in BTS format.
 
 Qbtrace:pt
-  Enable Intel Procesor Trace-based branch tracing for the current
+  Enable Intel Processor Trace-based branch tracing for the current
   process.  The remote stub reports support for this packet to GDB's
   qSupported query.
 
@@ -1854,7 +2513,7 @@ show code-cache
 * Newly installed $prefix/bin/gcore acts as a shell interface for the
   GDB command gcore.
 
-* GDB now implements the the C++ 'typeid' operator.
+* GDB now implements the C++ 'typeid' operator.
 
 * The new convenience variable $_exception holds the exception being
   thrown or caught at an exception-related catchpoint.
@@ -3658,7 +4317,7 @@ qXfer:siginfo:write
 * Removed remote protocol undocumented extension
 
   An undocumented extension to the remote protocol's `S' stop reply
-  packet that permited the stub to pass a process id was removed.
+  packet that permitted the stub to pass a process id was removed.
   Remote servers should use the `T' stop reply packet instead.
 
 * GDB now supports multiple function calling conventions according to the
@@ -3678,7 +4337,7 @@ with the --compress-debug-sections=zlib flag.
 * Watchpoints can now be set on unreadable memory locations, e.g. addresses
 which will be allocated using malloc later in program execution.
 
-* The qXfer:libraries:read remote procotol packet now allows passing a
+* The qXfer:libraries:read remote protocol packet now allows passing a
 list of section offsets.
 
 * On GNU/Linux, GDB can now attach to stopped processes.  Several race
@@ -4052,7 +4711,7 @@ Xtensa GNU/Linux		xtensa*-*-linux*
 * New targets
 
 NetBSD/hppa			hppa*-*-netbsd*
-Xtensa GNU/Lunux		xtensa*-*-linux*
+Xtensa GNU/Linux		xtensa*-*-linux*
 
 * Change in command line behavior -- corefiles vs. process ids.
 
@@ -4638,7 +5297,7 @@ The new infrastructure making possible the implementation of key new
 features including 32x64 (e.g., 64-bit amd64 GDB debugging a 32-bit
 i386 application).
 
-GDB 6.3 will be the last release to include the the registers[]
+GDB 6.3 will be the last release to include the registers[]
 compatibility module that allowed out-of-date configurations to
 continue to work.  This change directly impacts the following
 configurations:
@@ -4708,7 +5367,7 @@ GDB to dump core).
 
 * New ``start'' command.
 
-This command runs the program until the begining of the main procedure.
+This command runs the program until the beginning of the main procedure.
 
 * New BSD Kernel Data Access Library (libkvm) interface
 
@@ -4905,7 +5564,7 @@ M32R with SDI protocol				m32r-*-elf*
 * "set prompt-escape-char" command deleted.
 
 The command "set prompt-escape-char" has been deleted.  This command,
-and its very obscure effet on GDB's prompt, was never documented,
+and its very obscure effect on GDB's prompt, was never documented,
 tested, nor mentioned in the NEWS file.
 
 * OBSOLETE configurations and files
@@ -6069,7 +6728,7 @@ Remote targets now use a data cache to speed up communication with the
 remote side.  The data cache could lead to incorrect results because
 it doesn't know about volatile variables, thus making it impossible to
 debug targets which use memory mapped I/O devices. `set remotecache
-off' turns the the data cache off.
+off' turns the data cache off.
 
 * Remote targets may have threads
 
@@ -6615,7 +7274,7 @@ Calling of methods and virtual functions has been improved as well.
 
  * Major bug fixes
 
-The crash that occured when debugging Sun Ansi-C compiled binaries is
+The crash that occurred when debugging Sun Ansi-C compiled binaries is
 fixed.  This was due to mishandling of the extra N_SO stabs output
 by the compiler.
 
@@ -6716,7 +7375,7 @@ for the list of formats.
 Recent versions of gcc have a bug in how they emit debugging information for
 C++ methods (when using dbx-style stabs).  The file 'gcc.patch' (in this
 directory) can be applied to gcc to fix the problem.  Alternatively, if you
-can't fix gcc, you can #define GCC_MANGLE_BUG when compling gdb/symtab.c. The
+can't fix gcc, you can #define GCC_MANGLE_BUG when compiling gdb/symtab.c. The
 usual symptom is difficulty with setting breakpoints on methods.  GDB complains
 about the method being non-existent.  (We believe that version 2.2.2 of GCC has
 this problem.)
@@ -6802,7 +7461,7 @@ SGI Irix-4.x				mips-sgi-irix4	or iris4
  * New malloc package
 
 GDB now uses a new memory manager called mmalloc, based on gmalloc.
-Mmalloc is capable of handling mutiple heaps of memory.  It is also
+Mmalloc is capable of handling multiple heaps of memory.  It is also
 capable of saving a heap to a file, and then mapping it back in later.
 This can be used to greatly speedup the startup of GDB by using a
 pre-parsed symbol table which lives in a mmalloc managed heap.  For

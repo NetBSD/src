@@ -1,6 +1,6 @@
 /* Remote File-I/O communications
 
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,16 +22,16 @@
 #include "defs.h"
 #include "gdbcmd.h"
 #include "remote.h"
-#include "common/gdb_wait.h"
+#include "gdbsupport/gdb_wait.h"
 #include <sys/stat.h>
 #include "remote-fileio.h"
-#include "event-loop.h"
+#include "gdbsupport/event-loop.h"
 #include "target.h"
 #include "filenames.h"
-#include "common/filestuff.h"
+#include "gdbsupport/filestuff.h"
 
 #include <fcntl.h>
-#include "common/gdb_sys_time.h"
+#include "gdbsupport/gdb_sys_time.h"
 #ifdef __CYGWIN__
 #include <sys/cygwin.h>		/* For cygwin_conv_path.  */
 #endif
@@ -541,7 +541,7 @@ remote_fileio_func_read (remote_target *remote, char *buf)
 		 limit this read to something smaller than that - by a
 		 safe margin, in case the limit depends on system
 		 resources or version.  */
-	      ret = ui_file_read (gdb_stdtargin, (char *) buffer, 16383);
+	      ret = gdb_stdtargin->read ((char *) buffer, 16383);
 	      if (ret > 0 && (size_t)ret > length)
 		{
 		  remaining_buf = (char *) xmalloc (ret - length);
@@ -639,10 +639,12 @@ remote_fileio_func_write (remote_target *remote, char *buf)
 	xfree (buffer);
 	return;
       case FIO_FD_CONSOLE_OUT:
-	ui_file_write (target_fd == 1 ? gdb_stdtarg : gdb_stdtargerr,
-		       (char *) buffer, length);
-	gdb_flush (target_fd == 1 ? gdb_stdtarg : gdb_stdtargerr);
-	ret = length;
+	{
+	  ui_file *file = target_fd == 1 ? gdb_stdtarg : gdb_stdtargerr;
+	  file->write ((char *) buffer, length);
+	  file->flush ();
+	  ret = length;
+	}
 	break;
       default:
 	ret = write (fd, buffer, length);
@@ -1076,7 +1078,7 @@ remote_fileio_func_system (remote_target *remote, char *buf)
 	}
     }
   
-  /* Check if system(3) has been explicitely allowed using the
+  /* Check if system(3) has been explicitly allowed using the
      `set remote system-call-allowed 1' command.  If length is 0,
      indicating a NULL parameter to the system call, return zero to
      indicate a shell is not available.  Otherwise fail with EPERM.  */
@@ -1185,18 +1187,17 @@ remote_fileio_request (remote_target *remote, char *buf, int ctrlc_pending_p)
     }
   else
     {
-      TRY
+      try
 	{
 	  do_remote_fileio_request (remote, buf);
 	}
-      CATCH (ex, RETURN_MASK_ALL)
+      catch (const gdb_exception &ex)
 	{
 	  if (ex.reason == RETURN_QUIT)
 	    remote_fileio_reply (remote, -1, FILEIO_EINTR);
 	  else
 	    remote_fileio_reply (remote, -1, FILEIO_EIO);
 	}
-      END_CATCH
     }
 
   quit_handler = remote_fileio_o_quit_handler;
@@ -1294,15 +1295,15 @@ show_system_call_allowed (const char *args, int from_tty)
 }
 
 void
-initialize_remote_fileio (struct cmd_list_element *remote_set_cmdlist,
-			  struct cmd_list_element *remote_show_cmdlist)
+initialize_remote_fileio (struct cmd_list_element **remote_set_cmdlist,
+			  struct cmd_list_element **remote_show_cmdlist)
 {
   add_cmd ("system-call-allowed", no_class,
 	   set_system_call_allowed,
 	   _("Set if the host system(3) call is allowed for the target."),
-	   &remote_set_cmdlist);
+	   remote_set_cmdlist);
   add_cmd ("system-call-allowed", no_class,
 	   show_system_call_allowed,
 	   _("Show if the host system(3) call is allowed for the target."),
-	   &remote_show_cmdlist);
+	   remote_show_cmdlist);
 }

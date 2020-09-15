@@ -1,6 +1,6 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
-# Copyright (C) 2011-2019 Free Software Foundation, Inc.
+# Copyright (C) 2011-2020 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -31,9 +31,11 @@ This removes the bulk of the changes which are most likely to be correct.
 """
 
 import datetime
+import locale
 import os
 import os.path
 import subprocess
+import sys
 
 
 def get_update_list():
@@ -44,7 +46,7 @@ def get_update_list():
     the files are relative to that root directory.
     """
     result = []
-    for gdb_dir in ('gdb', 'sim', 'include/gdb'):
+    for gdb_dir in ('gdb', 'gnulib', 'sim', 'include/gdb'):
         for root, dirs, files in os.walk(gdb_dir, topdown=True):
             for dirname in dirs:
                 reldirname = "%s/%s" % (root, dirname)
@@ -79,11 +81,12 @@ def update_files(update_list):
     os.environ['UPDATE_COPYRIGHT_USE_INTERVALS'] = '2'
 
     # Perform the update, and save the output in a string.
-    update_cmd = ['bash', 'gdb/gnulib/import/extra/update-copyright']
+    update_cmd = ['bash', 'gnulib/import/extra/update-copyright']
     update_cmd += update_list
 
     p = subprocess.Popen(update_cmd, stdout=subprocess.PIPE,
-                         stderr=subprocess.STDOUT)
+                         stderr=subprocess.STDOUT,
+                         encoding=locale.getpreferredencoding())
     update_out = p.communicate()[0]
 
     # Process the output.  Typically, a lot of files do not have
@@ -94,20 +97,18 @@ def update_files(update_list):
     # the line out from the output, since there is nothing more to do,
     # short of looking at each file and seeing which notice is appropriate.
     # Too much work! (~4,000 files listed as of 2012-01-03).
-    update_out = update_out.splitlines()
+    update_out = update_out.splitlines(keepends=False)
     warning_string = ': warning: copyright statement not found'
     warning_len = len(warning_string)
 
     for line in update_out:
-        if line.endswith('\n'):
-            line = line[:-1]
         if line.endswith(warning_string):
             filename = line[:-warning_len]
             if may_have_copyright_notice(filename):
-                print line
+                print(line)
         else:
             # Unrecognized file format. !?!
-            print "*** " + line
+            print("*** " + line)
 
 
 def may_have_copyright_notice(filename):
@@ -127,11 +128,15 @@ def may_have_copyright_notice(filename):
     # 50 lines...
     MAX_LINES = 50
 
-    fd = open(filename)
+    # We don't really know what encoding each file might be following,
+    # so just open the file as a byte stream. We only need to search
+    # for a pattern that should be the same regardless of encoding,
+    # so that should be good enough.
+    fd = open(filename, 'rb')
 
     lineno = 1
     for line in fd:
-        if 'Copyright' in line:
+        if b'Copyright' in line:
             return True
         lineno += 1
         if lineno > 50:
@@ -141,10 +146,13 @@ def may_have_copyright_notice(filename):
 
 def main ():
     """The main subprogram."""
-    if not os.path.isfile("gnulib/import/extra/update-copyright"):
-        print "Error: This script must be called from the gdb directory."
     root_dir = os.path.dirname(os.getcwd())
     os.chdir(root_dir)
+
+    if not (os.path.isdir('gdb') and
+            os.path.isfile("gnulib/import/extra/update-copyright")):
+        print("Error: This script must be called from the gdb directory.")
+        sys.exit(1)
 
     update_list = get_update_list()
     update_files (update_list)
@@ -152,19 +160,19 @@ def main ():
     # Remind the user that some files need to be updated by HAND...
 
     if MULTIPLE_COPYRIGHT_HEADERS:
-        print
+        print()
         print("\033[31m"
               "REMINDER: Multiple copyright headers must be updated by hand:"
               "\033[0m")
         for filename in MULTIPLE_COPYRIGHT_HEADERS:
-            print "  ", filename
+            print("  ", filename)
 
     if BY_HAND:
-        print
-        print "\033[31mREMINDER: The following files must be updated by hand." \
-              "\033[0m"
+        print()
+        print("\033[31mREMINDER: The following files must be updated by hand." \
+              "\033[0m")
         for filename in BY_HAND:
-            print "  ", filename
+            print("  ", filename)
 
 ############################################################################
 #
@@ -182,7 +190,9 @@ def main ():
 EXCLUDE_LIST = (
     'gdb/nat/glibc_thread_db.h',
     'gdb/CONTRIBUTE',
-    'gdb/gnulib/import'
+    'gnulib/import',
+    'gnulib/config.in',
+    'gnulib/Makefile.in',
 )
 
 # Files which should not be modified, either because they are

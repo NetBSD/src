@@ -1,4 +1,4 @@
-# Copyright 2009-2019 Free Software Foundation, Inc.
+# Copyright 2009-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,18 +45,14 @@ if ![runto_main] then {
 # Test call/ret.
 
 gdb_test "break test_call" \
-    "Breakpoint.*at.* file .*$srcfile, line.*" \
-    "break test_call"
+    "Breakpoint.*at.* file .*$srcfile, line.*"
 gdb_test "break test_call_end" \
-    "Breakpoint.*at.* file .*$srcfile, line.*" \
-    "break test_call_end"
+    "Breakpoint.*at.* file .*$srcfile, line.*"
 
 gdb_test "break test_ret" \
-    "Breakpoint.*at.* file .*$srcfile, line.*" \
-    "break test_ret"
+    "Breakpoint.*at.* file .*$srcfile, line.*"
 gdb_test "break test_ret_end" \
-    "Breakpoint.*at.* file .*$srcfile, line.*" \
-    "break test_ret_end"
+    "Breakpoint.*at.* file .*$srcfile, line.*"
 
 gdb_test "continue" \
     "Continuing.*Breakpoint.*, test_call ().*" \
@@ -77,18 +73,14 @@ gdb_test "continue" \
 # Test abs-jmp/rep-ret.
 
 gdb_test "break test_abs_jmp" \
-    "Breakpoint.*at.* file .*$srcfile, line.*" \
-    "break test_abs_jmp"
+    "Breakpoint.*at.* file .*$srcfile, line.*"
 gdb_test "break test_abs_jmp_end" \
-    "Breakpoint.*at.* file .*$srcfile, line.*" \
-    "break test_abs_jmp_end"
+    "Breakpoint.*at.* file .*$srcfile, line.*"
 
 gdb_test "break test_rep_ret" \
-    "Breakpoint.*at.* file .*$srcfile, line.*" \
-    "break test_rep_ret"
+    "Breakpoint.*at.* file .*$srcfile, line.*"
 gdb_test "break test_rep_ret_end" \
-    "Breakpoint.*at.* file .*$srcfile, line.*" \
-    "break test_rep_ret_end"
+    "Breakpoint.*at.* file .*$srcfile, line.*"
 
 gdb_test "continue" \
     "Continuing.*Breakpoint.*, test_abs_jmp ().*" \
@@ -109,11 +101,9 @@ gdb_test "continue" \
 # Test syscall.
 
 gdb_test "break test_syscall" \
-    "Breakpoint.*at.* file .*$srcfile, line.*" \
-    "break test_syscall"
+    "Breakpoint.*at.* file .*$srcfile, line.*"
 gdb_test "break test_syscall_end" \
-    "Breakpoint.*at.* file .*$srcfile, line.*" \
-    "break test_syscall_end"
+    "Breakpoint.*at.* file .*$srcfile, line.*"
 
 gdb_test "continue" \
     "Continuing.*Breakpoint.*, test_syscall ().*" \
@@ -128,11 +118,9 @@ gdb_test "continue" \
 # These don't occur in normal code, but gdb should still DTRT.
 
 gdb_test "break test_int3" \
-    "Breakpoint.*at.* file .*$srcfile, line.*" \
-    "break test_int3"
+    "Breakpoint.*at.* file .*$srcfile, line.*"
 gdb_test "break test_int3_end" \
-    "Breakpoint.*at.* file .*$srcfile, line.*" \
-    "break test_int3_end"
+    "Breakpoint.*at.* file .*$srcfile, line.*"
 
 gdb_test "continue" \
     "Continuing.*Breakpoint.*, test_int3 ().*" \
@@ -192,11 +180,9 @@ proc rip_test { reg } {
     set test_end_label "test_rip_${reg}_end"
 
     gdb_test "break ${test_start_label}" \
-	"Breakpoint.*at.* file .*$srcfile, line.*" \
-	"break ${test_start_label}"
+	"Breakpoint.*at.* file .*$srcfile, line.*"
     gdb_test "break ${test_end_label}" \
-	"Breakpoint.*at.* file .*$srcfile, line.*" \
-	"break ${test_end_label}"
+	"Breakpoint.*at.* file .*$srcfile, line.*"
 
     gdb_test "continue" \
 	"Continuing.*Breakpoint.*, ${test_start_label} ().*" \

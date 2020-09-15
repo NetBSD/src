@@ -1,6 +1,6 @@
 /* Python/gdb header for generic use in gdb
 
-   Copyright (C) 2008-2019 Free Software Foundation, Inc.
+   Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

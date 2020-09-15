@@ -1,5 +1,5 @@
 /* BFD back-end for National Semiconductor's CR16 ELF
-   Copyright (C) 2007-2019 Free Software Foundation, Inc.
+   Copyright (C) 2007-2020 Free Software Foundation, Inc.
    Written by M R Swami Reddy.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -25,6 +25,7 @@
 #include "libiberty.h"
 #include "elf-bfd.h"
 #include "elf/cr16.h"
+#include "elf32-cr16.h"
 
 /* The cr16 linker needs to keep track of the number of relocs that
    it decides to copy in check_relocs for each symbol.  This is so
@@ -610,7 +611,7 @@ _bfd_cr16_elf_create_got_section (bfd * abfd, struct bfd_link_info * info)
   s = bfd_make_section_anyway_with_flags (abfd, ".got", flags);
   htab->sgot= s;
   if (s == NULL
-      || ! bfd_set_section_alignment (abfd, s, ptralign))
+      || !bfd_set_section_alignment (s, ptralign))
     return FALSE;
 
   if (bed->want_got_plt)
@@ -618,7 +619,7 @@ _bfd_cr16_elf_create_got_section (bfd * abfd, struct bfd_link_info * info)
       s = bfd_make_section_anyway_with_flags (abfd, ".got.plt", flags);
       htab->sgotplt = s;
       if (s == NULL
-	  || ! bfd_set_section_alignment (abfd, s, ptralign))
+	  || !bfd_set_section_alignment (s, ptralign))
 	return FALSE;
     }
 
@@ -823,10 +824,9 @@ cr16_elf_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 	}
     }
 
-   result = TRUE;
-  fail:
-    if (isymbuf != NULL)
-      free (isymbuf);
+  result = TRUE;
+ fail:
+  free (isymbuf);
 
   return result;
 }
@@ -922,10 +922,7 @@ cr16_elf_final_link_relocate (reloc_howto_type *howto,
      as signed or unsigned.  */
   check = Rvalue >> howto->rightshift;
 
-  /* Assumes two's complement.  This expression avoids
-     overflow if howto->bitsize is the number of bits in
-     bfd_vma.  */
-  reloc_bits = (((1 << (howto->bitsize - 1)) - 1) << 1) | 1;
+  reloc_bits = ((bfd_vma) 1 << (howto->bitsize - 1) << 1) - 1;
 
   /* For GOT and GOTC relocs no boundary checks applied.  */
   if (!((r_type == R_CR16_GOT_REGREL20)
@@ -1444,7 +1441,7 @@ elf32_cr16_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	      name = (bfd_elf_string_from_elf_section
 		      (input_bfd, symtab_hdr->sh_link, sym->st_name));
 	      if (name == NULL || *name == '\0')
-		name = bfd_section_name (input_bfd, sec);
+		name = bfd_section_name (sec);
 	    }
 
 	  switch (r)
@@ -1571,10 +1568,8 @@ elf32_cr16_get_relocated_section_contents (bfd *output_bfd,
 				     isymbuf, sections))
 	goto error_return;
 
-      if (sections != NULL)
-	free (sections);
-      if (isymbuf != NULL
-	  && symtab_hdr->contents != (unsigned char *) isymbuf)
+      free (sections);
+      if (symtab_hdr->contents != (unsigned char *) isymbuf)
 	free (isymbuf);
       if (elf_section_data (input_section)->relocs != internal_relocs)
 	free (internal_relocs);
@@ -1583,13 +1578,10 @@ elf32_cr16_get_relocated_section_contents (bfd *output_bfd,
   return data;
 
  error_return:
-  if (sections != NULL)
-    free (sections);
-  if (isymbuf != NULL
-      && symtab_hdr->contents != (unsigned char *) isymbuf)
+  free (sections);
+  if (symtab_hdr->contents != (unsigned char *) isymbuf)
     free (isymbuf);
-  if (internal_relocs != NULL
-      && elf_section_data (input_section)->relocs != internal_relocs)
+  if (elf_section_data (input_section)->relocs != internal_relocs)
     free (internal_relocs);
   return NULL;
 }
@@ -1640,7 +1632,7 @@ static struct bfd_link_hash_table *
 elf32_cr16_link_hash_table_create (bfd *abfd)
 {
   struct elf_link_hash_table *ret;
-  bfd_size_type amt = sizeof (struct elf_link_hash_table);
+  size_t amt = sizeof (struct elf_link_hash_table);
 
   ret = (struct elf_link_hash_table *) bfd_zmalloc (amt);
   if (ret == (struct elf_link_hash_table *) NULL)
@@ -1673,9 +1665,8 @@ elf_cr16_mach (flagword flags)
    file.  This gets the CR16 architecture right based on the machine
    number.  */
 
-static void
-_bfd_cr16_elf_final_write_processing (bfd *abfd,
-				      bfd_boolean linker ATTRIBUTE_UNUSED)
+static bfd_boolean
+_bfd_cr16_elf_final_write_processing (bfd *abfd)
 {
   unsigned long val;
   switch (bfd_get_mach (abfd))
@@ -1685,9 +1676,8 @@ _bfd_cr16_elf_final_write_processing (bfd *abfd,
 	val = EM_CR16;
 	break;
     }
-
-
- elf_elfheader (abfd)->e_flags |= val;
+  elf_elfheader (abfd)->e_flags |= val;
+  return _bfd_elf_final_write_processing (abfd);
 }
 
 
@@ -2175,21 +2165,17 @@ elf32_cr16_relax_section (bfd *abfd, asection *sec,
 
     }
 
-  if (internal_relocs != NULL
-      && elf_section_data (sec)->relocs != internal_relocs)
+  if (elf_section_data (sec)->relocs != internal_relocs)
     free (internal_relocs);
 
   return TRUE;
 
  error_return:
-  if (isymbuf != NULL
-      && symtab_hdr->contents != (unsigned char *) isymbuf)
+  if (symtab_hdr->contents != (unsigned char *) isymbuf)
     free (isymbuf);
-  if (contents != NULL
-      && elf_section_data (sec)->this_hdr.contents != contents)
+  if (elf_section_data (sec)->this_hdr.contents != contents)
     free (contents);
-  if (internal_relocs != NULL
-      && elf_section_data (sec)->relocs != internal_relocs)
+  if (elf_section_data (sec)->relocs != internal_relocs)
     free (internal_relocs);
 
   return FALSE;
@@ -2243,7 +2229,7 @@ _bfd_cr16_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
 					  flags | SEC_READONLY);
   htab->srelplt = s;
   if (s == NULL
-      || ! bfd_set_section_alignment (abfd, s, ptralign))
+      || !bfd_set_section_alignment (s, ptralign))
     return FALSE;
 
   if (! _bfd_cr16_elf_create_got_section (abfd, info))
@@ -2280,7 +2266,7 @@ _bfd_cr16_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
 						   ? ".rela.bss" : ".rel.bss"),
 						  flags | SEC_READONLY);
 	  if (s == NULL
-	      || ! bfd_set_section_alignment (abfd, s, ptralign))
+	      || !bfd_set_section_alignment (s, ptralign))
 	    return FALSE;
 	}
     }
@@ -2418,9 +2404,7 @@ _bfd_cr16_elf_size_dynamic_sections (bfd * output_bfd,
 {
   bfd * dynobj;
   asection * s;
-  bfd_boolean plt;
   bfd_boolean relocs;
-  bfd_boolean reltext;
 
   dynobj = elf_hash_table (info)->dynobj;
   BFD_ASSERT (dynobj != NULL);
@@ -2453,9 +2437,7 @@ _bfd_cr16_elf_size_dynamic_sections (bfd * output_bfd,
   /* The check_relocs and adjust_dynamic_symbol entry points have
      determined the sizes of the various dynamic sections.  Allocate
      memory for them.  */
-  plt = FALSE;
   relocs = FALSE;
-  reltext = FALSE;
   for (s = dynobj->sections; s != NULL; s = s->next)
     {
       const char * name;
@@ -2465,40 +2447,21 @@ _bfd_cr16_elf_size_dynamic_sections (bfd * output_bfd,
 
       /* It's OK to base decisions on the section name, because none
 	 of the dynobj section names depend upon the input files.  */
-      name = bfd_get_section_name (dynobj, s);
+      name = bfd_section_name (s);
 
       if (strcmp (name, ".plt") == 0)
 	{
 	  /* Remember whether there is a PLT.  */
-	  plt = s->size != 0;
+	  ;
 	}
       else if (CONST_STRNEQ (name, ".rela"))
 	{
 	  if (s->size != 0)
 	    {
-	      asection * target;
-
 	      /* Remember whether there are any reloc sections other
 		 than .rela.plt.  */
 	      if (strcmp (name, ".rela.plt") != 0)
-		{
-		  const char * outname;
-
-		  relocs = TRUE;
-
-		  /* If this relocation section applies to a read only
-		     section, then we probably need a DT_TEXTREL
-		     entry.  The entries in the .rela.plt section
-		     really apply to the .got section, which we
-		     created ourselves and so know is not readonly.  */
-		  outname = bfd_get_section_name (output_bfd,
-						  s->output_section);
-		  target = bfd_get_section_by_name (output_bfd, outname + 5);
-		  if (target != NULL
-		      && (target->flags & SEC_READONLY) != 0
-		      && (target->flags & SEC_ALLOC) != 0)
-		    reltext = TRUE;
-		}
+		relocs = TRUE;
 
 	      /* We use the reloc_count field as a counter if we need
 		 to copy relocs into the output file.  */
@@ -2538,45 +2501,7 @@ _bfd_cr16_elf_size_dynamic_sections (bfd * output_bfd,
 	return FALSE;
     }
 
-  if (elf_hash_table (info)->dynamic_sections_created)
-    {
-      /* Add some entries to the .dynamic section.  We fill in the
-	 values later, in _bfd_cr16_elf_finish_dynamic_sections,
-	 but we must add the entries now so that we get the correct
-	 size for the .dynamic section.  The DT_DEBUG entry is filled
-	 in by the dynamic linker and used by the debugger.  */
-      if (! bfd_link_executable (info))
-	{
-	  if (!_bfd_elf_add_dynamic_entry (info, DT_DEBUG, 0))
-	    return FALSE;
-	}
-
-      if (plt)
-	{
-	  if (!_bfd_elf_add_dynamic_entry (info, DT_PLTGOT, 0)
-	      || !_bfd_elf_add_dynamic_entry (info, DT_PLTRELSZ, 0)
-	      || !_bfd_elf_add_dynamic_entry (info, DT_PLTREL, DT_RELA)
-	      || !_bfd_elf_add_dynamic_entry (info, DT_JMPREL, 0))
-	    return FALSE;
-	}
-
-      if (relocs)
-	{
-	  if (!_bfd_elf_add_dynamic_entry (info, DT_RELA, 0)
-	      || !_bfd_elf_add_dynamic_entry (info, DT_RELASZ, 0)
-	      || !_bfd_elf_add_dynamic_entry (info, DT_RELAENT,
-					      sizeof (Elf32_External_Rela)))
-	    return FALSE;
-	}
-
-      if (reltext)
-	{
-	  if (!_bfd_elf_add_dynamic_entry (info, DT_TEXTREL, 0))
-	    return FALSE;
-	}
-    }
-
-  return TRUE;
+  return _bfd_elf_add_dynamic_tags (output_bfd, info, relocs);
 }
 
 /* Finish up dynamic symbol handling.  We set the contents of various
@@ -2849,18 +2774,16 @@ bfd_cr16_elf32_create_embedded_relocs (bfd *abfd,
 	 strncpy ((char *) p + 4, targetsec->output_section->name, 4);
     }
 
-  if (isymbuf != NULL && symtab_hdr->contents != (unsigned char *) isymbuf)
+  if (symtab_hdr->contents != (unsigned char *) isymbuf)
     free (isymbuf);
-  if (internal_relocs != NULL
-      && elf_section_data (datasec)->relocs != internal_relocs)
+  if (elf_section_data (datasec)->relocs != internal_relocs)
     free (internal_relocs);
   return TRUE;
 
-error_return:
-  if (isymbuf != NULL && symtab_hdr->contents != (unsigned char *) isymbuf)
+ error_return:
+  if (symtab_hdr->contents != (unsigned char *) isymbuf)
     free (isymbuf);
-  if (internal_relocs != NULL
-      && elf_section_data (datasec)->relocs != internal_relocs)
+  if (elf_section_data (datasec)->relocs != internal_relocs)
     free (internal_relocs);
   return FALSE;
 }

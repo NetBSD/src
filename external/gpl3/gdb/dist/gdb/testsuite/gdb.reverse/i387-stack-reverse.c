@@ -14,7 +14,7 @@ void empty_fpu_stack()
        "ffree %st(7)");
 }   
 
-/* tests floating point arithmatic */
+/* tests floating point arithmetic */
 void test_arith_floats()
 {
   

@@ -1,4 +1,4 @@
-# Copyright 2003-2019 Free Software Foundation, Inc.
+# Copyright 2003-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -119,7 +119,7 @@ gdb_test continue \
 # Test resetting breakpoints when re-running program
 #
 gdb_run_cmd
-gdb_test "" "Breakpoint \[0-9\]+,.*main .*argc.*argv.* at .*$srcfile:.*" "resetting breakpoints when r
+gdb_test "" "Breakpoint \[0-9\]+,.*main .*argc.*argv.* at .*$srcfile:.*" "resetting breakpoints when rerunning"
 
 #
 # Continue until breakpoint (test re-setting breakpoint)

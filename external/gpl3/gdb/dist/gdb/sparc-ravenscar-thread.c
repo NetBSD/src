@@ -1,6 +1,6 @@
 /* Ravenscar SPARC target support.
 
-   Copyright (C) 2004-2019 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,6 +24,7 @@
 #include "inferior.h"
 #include "ravenscar-thread.h"
 #include "sparc-ravenscar-thread.h"
+#include "gdbarch.h"
 
 struct sparc_ravenscar_ops : public ravenscar_arch_ops
 {

@@ -1,4 +1,4 @@
-# Copyright (C) 1996-2019 Free Software Foundation, Inc.
+# Copyright (C) 1996-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -334,10 +334,14 @@ proc check_qcs {} {
 	    ] \
 	"run a failing command except in one frame of thread 2,3, -s to silently continue.  Do not show thread and frame info"
 
-    # Check invalid flag combinations.
+    # Check invalid flag combinations and errors.
     gdb_test "thread apply all -c -s p 1" \
 	"thread apply all: -c and -s are mutually exclusive" \
 	"check -c and -s cannot be used simultaneously"
+    gdb_test "taas" "Please specify a command to apply on all threads" \
+	"missing command for taas"
+    gdb_test "tfaas" "Please specify a command to apply on all frames of all threads" \
+	"missing command for tfaas"
 
 }
 

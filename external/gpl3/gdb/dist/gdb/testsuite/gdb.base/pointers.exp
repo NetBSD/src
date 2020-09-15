@@ -1,4 +1,4 @@
-# Copyright 1998-2019 Free Software Foundation, Inc.
+# Copyright 1998-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -212,7 +212,7 @@ gdb_test "up" "more_code.*" "up from marker1"
 
 gdb_test "print *pUC" " = 21 \'.025\'.*" "print value of *pUC"
 
-gdb_test "ptype pUC" "type = unsigned char \\*" "ptype pUC"
+gdb_test "ptype pUC" "type = unsigned char \\*"
 
 gdb_test "print *pS" " = -14" "print value of *pS"
 
@@ -230,11 +230,11 @@ gdb_test_multiple "ptype pUS" "ptype pUS" {
 
 gdb_test "print *pI" " = 102" "print value of *pI"
 
-gdb_test "ptype pI" "type = int \\*" "ptype pI"
+gdb_test "ptype pI" "type = int \\*"
 
 gdb_test "print *pUI" " = 1002" "print value of *pUI"
 
-gdb_test "ptype pUI" "type = unsigned int \\*" "ptype pUI"
+gdb_test "ptype pUI" "type = unsigned int \\*"
 
 gdb_test "print *pL" " = -234" "print value of *pL"
 
@@ -252,26 +252,26 @@ gdb_test_multiple "ptype pUL" "ptype pUL" {
 
 gdb_test "print *pF" " = 1.2\[0-9\]*e\\+0?10" "print value of *pF"
 
-gdb_test "ptype pF" "type = float \\*" "ptype pF"
+gdb_test "ptype pF" "type = float \\*"
 
 gdb_test "print *pD" " = -1.2\[0-9\]*e\\-0?37" "print value of *pD"
 
-gdb_test "ptype pD" "type = double \\*" "ptype pD"
+gdb_test "ptype pD" "type = double \\*"
 
 gdb_test "print ******ppppppC" " = 65 \'A\'" \
     "print value of ******ppppppC"
 
-gdb_test "ptype pC" "type = char \\*" "ptype pC"
+gdb_test "ptype pC" "type = char \\*"
 
-gdb_test "ptype ppC" "type = char \\*\\*" "ptype ppC"
+gdb_test "ptype ppC" "type = char \\*\\*"
 
-gdb_test "ptype pppC" "type = char \\*\\*\\*" "ptype pppC"
+gdb_test "ptype pppC" "type = char \\*\\*\\*"
 
-gdb_test "ptype ppppC" "type = char \\*\\*\\*\\*" "ptype ppppC"
+gdb_test "ptype ppppC" "type = char \\*\\*\\*\\*"
 
-gdb_test "ptype pppppC" "type = char \\*\\*\\*\\*\\*" "ptype pppppC"
+gdb_test "ptype pppppC" "type = char \\*\\*\\*\\*\\*"
 
-gdb_test "ptype ppppppC" "type = char \\*\\*\\*\\*\\*\\*" "ptype ppppppC"
+gdb_test "ptype ppppppC" "type = char \\*\\*\\*\\*\\*\\*"
 
 # Regression test for a crash.
 

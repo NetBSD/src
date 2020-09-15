@@ -1,6 +1,6 @@
 /* This test script is part of GDB, the GNU debugger.
 
-   Copyright 2006-2019 Free Software Foundation, Inc.
+   Copyright 2006-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -69,4 +69,6 @@ int main(void)
   MultiChild& MQR = MQ;
 
   mf2(MQ);			/* Set breakpoint MQ here.  */
+
+  return 0;
 }

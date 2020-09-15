@@ -1,4 +1,4 @@
-# Copyright 2012-2019 Free Software Foundation, Inc.
+# Copyright 2012-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-standard_testfile jithost.c
+standard_testfile jit-reader-host.c
 
 if { (![istarget x86_64-*-*] && ![istarget i?86-*-*]) || ![is_lp64_target] } {
     return -1;
@@ -32,6 +32,10 @@ if {[get_compiler_info]} {
     return 1
 }
 
+
+# Increase this to see more detail.
+set test_verbose 0
+
 set jit_host_src $srcfile
 set jit_host_bin $binfile
 
@@ -47,7 +51,7 @@ if  { [gdb_compile "${srcdir}/${subdir}/${jit_host_src}" "${jit_host_bin}" \
     return -1
 }
 
-set jit_reader jitreader
+set jit_reader jit-reader
 set jit_reader_src ${jit_reader}.c
 set jit_reader_bin [standard_output_file ${jit_reader}.so]
 
@@ -65,39 +69,46 @@ proc info_registers_current_frame {sp} {
 
     set any "\[^\r\n\]*"
 
-    gdb_test "info registers" \
+    set neg_decimal "-?$decimal"
+
+    set expected \
 	[multi_line \
-	     "rax            $hex +$decimal" \
-	     "rbx            $hex +$decimal" \
-	     "rcx            $hex +$decimal" \
-	     "rdx            $hex +$decimal" \
-	     "rsi            $hex +$decimal" \
-	     "rdi            $hex +$decimal" \
+	     "rax            $hex +$neg_decimal" \
+	     "rbx            $hex +$neg_decimal" \
+	     "rcx            $hex +$neg_decimal" \
+	     "rdx            $hex +$neg_decimal" \
+	     "rsi            $hex +$neg_decimal" \
+	     "rdi            $hex +$neg_decimal" \
 	     "rbp            $hex +$hex" \
 	     "rsp            $sp +$sp" \
-	     "r8             $hex +$decimal" \
-	     "r9             $hex +$decimal" \
-	     "r10            $hex +$decimal" \
-	     "r11            $hex +$decimal" \
-	     "r12            $hex +$decimal" \
-	     "r13            $hex +$decimal" \
-	     "r14            $hex +$decimal" \
-	     "r15            $hex +$decimal" \
+	     "r8             $hex +$neg_decimal" \
+	     "r9             $hex +$neg_decimal" \
+	     "r10            $hex +$neg_decimal" \
+	     "r11            $hex +$neg_decimal" \
+	     "r12            $hex +$neg_decimal" \
+	     "r13            $hex +$neg_decimal" \
+	     "r14            $hex +$neg_decimal" \
+	     "r15            $hex +$neg_decimal" \
 	     "rip            $hex +$hex$any" \
 	     "eflags         $hex +\\\[$any\\\]" \
-	     "cs             $hex +$decimal" \
-	     "ss             $hex +$decimal" \
-	     "ds             $hex +$decimal" \
-	     "es             $hex +$decimal" \
-	     "fs             $hex +$decimal" \
-	     "gs             $hex +$decimal" \
+	     "cs             $hex +$neg_decimal" \
+	     "ss             $hex +$neg_decimal" \
+	     "ds             $hex +$neg_decimal" \
+	     "es             $hex +$neg_decimal" \
+	     "fs             $hex +$neg_decimal" \
+	     "gs             $hex +$neg_decimal" \
 	    ]
+
+    # There may be more registers.
+    append expected ".*"
+
+    gdb_test "info registers" $expected
 }
 
 proc jit_reader_test {} {
     global jit_host_bin
     global jit_reader_bin
-    global verbose
+    global test_verbose
     global hex decimal
 
     set any "\[^\r\n\]*"
@@ -105,7 +116,7 @@ proc jit_reader_test {} {
     clean_restart $jit_host_bin
     gdb_load_shlib $jit_reader_bin
 
-    if {$verbose > 0} {
+    if {$test_verbose > 0} {
 	gdb_test_no_output "set debug jit 1"
     }
 
@@ -119,7 +130,7 @@ proc jit_reader_test {} {
 	with_test_prefix "before mangling" {
 	    gdb_test "bt" \
 		[multi_line \
-		     "#0 ${any} in jit_function_00 ${any}" \
+		     "#0 ${any} in jit_function_stack_mangle ${any}" \
 		     "#1 ${any} in main ${any}" \
 		    ] \
 		"bt works"
@@ -127,7 +138,7 @@ proc jit_reader_test {} {
 	    set sp_before_mangling \
 		[get_hexadecimal_valueof "\$sp" 0 "get sp"]
 
-	    gdb_test "up" "#1  $any in main $any\r\n$any  function $any" \
+	    gdb_test "up" "#1  $any in main $any\r\n$any  function_stack_mangle $any" \
 		"move up to caller"
 
 	    set caller_sp \
@@ -139,7 +150,7 @@ proc jit_reader_test {} {
 	# reader's unwinder understands the mangling and should thus
 	# be able to unwind at that location.
 	with_test_prefix "after mangling" {
-	    gdb_test "si" "in jit_function_00 .*" "step over stack mangling"
+	    gdb_test "si" "in jit_function_stack_mangle .*" "step over stack mangling"
 
 	    set sp_after_mangling \
 		[get_hexadecimal_valueof "\$sp" 0 "get sp"]
@@ -151,7 +162,7 @@ proc jit_reader_test {} {
 	    # the mangled stack pointer.
 	    gdb_test "bt" \
 		[multi_line \
-		     "#0 ${any} in jit_function_00 ${any}" \
+		     "#0 ${any} in jit_function_stack_mangle ${any}" \
 		     "#1 ${any} in main ${any}" \
 		    ] \
 		"bt works"
@@ -160,16 +171,17 @@ proc jit_reader_test {} {
 		info_registers_current_frame $sp_after_mangling
 
 		gdb_test "info frame" \
-		    "Stack level 0, frame at $sp_before_mangling.*in jit_function_00.*"
+		    "Stack level 0, frame at $sp_before_mangling.*in jit_function_stack_mangle.*"
 	    }
 
 	    with_test_prefix "caller frame" {
-		gdb_test "up" "#1  $any in main $any\r\n$any  function $any" \
+		gdb_test "up" "#1  $any in main $any\r\n$any  function_stack_mangle $any" \
 		    "up to caller"
 
 		# Since the JIT unwinder only provides RIP/RSP/RBP,
 		# all other registers should show as "<not saved>".
-		gdb_test "info registers" \
+
+		set expected \
 		    [multi_line \
 			 "rax            <not saved>" \
 			 "rbx            <not saved>" \
@@ -196,6 +208,11 @@ proc jit_reader_test {} {
 			 "fs             <not saved>" \
 			 "gs             <not saved>" \
 			]
+
+		# There may be more registers.
+		append expected ".*"
+
+		gdb_test "info registers" $expected
 
 		# Make sure that "info frame" doesn't crash.
 		gdb_test "info frame" "Stack level 1, .*in main.*"
@@ -242,7 +259,7 @@ proc jit_reader_test {} {
 	# the mangled stack pointer.
 	gdb_test "bt" \
 	    [multi_line \
-		 "#0 ${any} in jit_function_00 ${any}" \
+		 "#0 ${any} in jit_function_stack_mangle ${any}" \
 		 "#1 ${any} in main ${any}" \
 		]
     }

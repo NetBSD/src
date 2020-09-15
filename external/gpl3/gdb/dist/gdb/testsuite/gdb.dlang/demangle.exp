@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2019 Free Software Foundation, Inc.
+# Copyright (C) 2014-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -93,8 +93,6 @@ proc test_d_demangling {} {
     test_demangling "_D8demangle4testFNhG2dZv" "demangle.test(__vector(double\[2\]))"
     test_demangling "_D8demangle4testFNhG4dZv" "demangle.test(__vector(double\[4\]))"
 
-    test_demangling "_D8demangle4testFI5identZv" "demangle.test(ident)"
-    test_demangling "_D8demangle4testFI5ident4testZv" "demangle.test(ident.test)"
     test_demangling "_D8demangle4testFC5classZv" "demangle.test(class)"
     test_demangling "_D8demangle4testFC5class4testZv" "demangle.test(class.test)"
     test_demangling "_D8demangle4testFS6structZv" "demangle.test(struct)"
@@ -104,6 +102,8 @@ proc test_d_demangling {} {
     test_demangling "_D8demangle4testFT7typedefZv" "demangle.test(typedef)"
     test_demangling "_D8demangle4testFT7typedef4testZv" "demangle.test(typedef.test)"
 
+    test_demangling "_D8demangle4testFIaZv" "demangle.test(in char)"
+    test_demangling "_D8demangle4testFIKaZv" "demangle.test(in ref char)"
     test_demangling "_D8demangle4testFJaZv" "demangle.test(out char)"
     test_demangling "_D8demangle4testFKaZv" "demangle.test(ref char)"
     test_demangling "_D8demangle4testFLaZv" "demangle.test(lazy char)"
