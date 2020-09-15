@@ -1,4 +1,4 @@
-/*	$NetBSD: nd.h,v 1.2 2020/09/14 15:09:57 roy Exp $	*/
+/*	$NetBSD: nd.h,v 1.3 2020/09/15 10:05:36 roy Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #define	ND_LLINFO_STALE		2
 #define	ND_LLINFO_DELAY		3
 #define	ND_LLINFO_PROBE		4
+#define	ND_LLINFO_UNREACHABLE	5
 
 #ifdef _KERNEL
 #define	ND_IS_LLINFO_PROBREACH(ln)	\
@@ -47,18 +48,21 @@
 	(((ln)->ln_expire == 0) && ((ln)->ln_state > ND_LLINFO_INCOMPLETE))
 
 /* ND timer types */
-#define	ND_TIMER_IMMEDIATE	0
-#define	ND_TIMER_TICK		1
-#define	ND_TIMER_REACHABLE	2
-#define	ND_TIMER_RETRANS	3
-#define	ND_TIMER_EXPIRE		4
-#define	ND_TIMER_DELAY		5
-#define	ND_TIMER_GC		6
+#define	ND_TIMER_IMMEDIATE		0
+#define	ND_TIMER_TICK			1
+#define	ND_TIMER_REACHABLE		2
+#define	ND_TIMER_RETRANS		3
+#define	ND_TIMER_RETRANS_BACKOFF	4
+#define	ND_TIMER_EXPIRE			5
+#define	ND_TIMER_DELAY			6
+#define	ND_TIMER_GC			7
 
 /* node constants */
 #define	MAX_REACHABLE_TIME		3600000	/* msec */
 #define	REACHABLE_TIME			30000	/* msec */
 #define	RETRANS_TIMER			1000	/* msec */
+#define	MAX_RETRANS_TIMER		60000	/* msec */
+#define	BACKOFF_MULTIPLE		3
 #define	MIN_RANDOM_FACTOR		512	/* 1024 * 0.5 */
 #define	MAX_RANDOM_FACTOR		1536	/* 1024 * 1.5 */
 #define	ND_COMPUTE_RTIME(x) \
@@ -70,6 +74,8 @@ struct nd_domain {
 	int nd_delay;		/* delay first probe time in seconds */
 	int nd_mmaxtries;	/* maximum multicast query */
 	int nd_umaxtries;	/* maximum unicast query */
+	int nd_retransmultiple;	/* retransmission multiplier for backoff */
+	int nd_maxretrans;	/* maximum retransmission time in msec */
 	int nd_maxnudhint;	/* max # of subsequent upper layer hints */
 	int nd_maxqueuelen;	/* max # of packets in unresolved ND entries */
 	bool (*nd_nud_enabled)(struct ifnet *);
@@ -78,7 +84,8 @@ struct nd_domain {
 	union l3addr *(*nd_holdsrc)(struct llentry *, union l3addr *);
 	void (*nd_output)(struct ifnet *, const union l3addr *,
 	    const union l3addr *, const uint8_t *, const union l3addr *);
-	void (*nd_missed)(struct ifnet *, const union l3addr *, struct mbuf *);
+	void (*nd_missed)(struct ifnet *, const union l3addr *,
+	    int16_t, struct mbuf *);
 	void (*nd_free)(struct llentry *, int);
 };
 
