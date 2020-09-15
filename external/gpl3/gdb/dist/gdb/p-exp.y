@@ -1,5 +1,5 @@
 /* YACC parser for Pascal expressions, for GDB.
-   Copyright (C) 2000-2019 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -56,7 +56,7 @@
 #include "block.h"
 #include "completer.h"
 
-#define parse_type(ps) builtin_type (parse_gdbarch (ps))
+#define parse_type(ps) builtin_type (ps->gdbarch ())
 
 /* Remap normal yacc parser interface names (yyparse, yylex, yyerror,
    etc).  */
@@ -67,6 +67,9 @@
    expression.  */
 
 static struct parser_state *pstate = NULL;
+
+/* Depth of parentheses.  */
+static int paren_depth;
 
 int yyparse (void);
 
@@ -254,7 +257,7 @@ exp	:	field_exp FIELDNAME
 			  search_field = 0;
 			  if (current_type)
 			    {
-			      while (TYPE_CODE (current_type)
+			      while (current_type->code ()
 				     == TYPE_CODE_PTR)
 				current_type =
 				  TYPE_TARGET_TYPE (current_type);
@@ -272,7 +275,7 @@ exp	:	field_exp name
 			  search_field = 0;
 			  if (current_type)
 			    {
-			      while (TYPE_CODE (current_type)
+			      while (current_type->code ()
 				     == TYPE_CODE_PTR)
 				current_type =
 				  TYPE_TARGET_TYPE (current_type);
@@ -282,14 +285,14 @@ exp	:	field_exp name
 			}
 	;
 exp	:	field_exp  name COMPLETE
-			{ mark_struct_expression (pstate);
+			{ pstate->mark_struct_expression ();
 			  write_exp_elt_opcode (pstate, STRUCTOP_STRUCT);
 			  write_exp_string (pstate, $2);
 			  write_exp_elt_opcode (pstate, STRUCTOP_STRUCT); }
 	;
 exp	:	field_exp COMPLETE
 			{ struct stoken s;
-			  mark_struct_expression (pstate);
+			  pstate->mark_struct_expression ();
 			  write_exp_elt_opcode (pstate, STRUCTOP_STRUCT);
 			  s.ptr = "";
 			  s.length = 0;
@@ -313,8 +316,9 @@ exp	:	exp '['
 			      stringsval.ptr = buf;
 			      stringsval.length = strlen (arrayname);
 			      strcpy (buf, arrayname);
-			      current_type = TYPE_FIELD_TYPE (current_type,
-				arrayfieldindex - 1);
+			      current_type
+				= (current_type
+				   ->field (arrayfieldindex - 1).type ());
 			      write_exp_elt_opcode (pstate, STRUCTOP_STRUCT);
 			      write_exp_string (pstate, stringsval);
 			      write_exp_elt_opcode (pstate, STRUCTOP_STRUCT);
@@ -331,11 +335,11 @@ exp	:	exp '('
 			/* This is to save the value of arglist_len
 			   being accumulated by an outer function call.  */
 			{ push_current_type ();
-			  start_arglist (); }
+			  pstate->start_arglist (); }
 		arglist ')'	%prec ARROW
 			{ write_exp_elt_opcode (pstate, OP_FUNCALL);
 			  write_exp_elt_longcst (pstate,
-						 (LONGEST) end_arglist ());
+						 pstate->end_arglist ());
 			  write_exp_elt_opcode (pstate, OP_FUNCALL);
 			  pop_current_type ();
 			  if (current_type)
@@ -345,18 +349,18 @@ exp	:	exp '('
 
 arglist	:
          | exp
-			{ arglist_len = 1; }
+			{ pstate->arglist_len = 1; }
 	 | arglist ',' exp   %prec ABOVE_COMMA
-			{ arglist_len++; }
+			{ pstate->arglist_len++; }
 	;
 
 exp	:	type '(' exp ')' %prec UNARY
 			{ if (current_type)
 			    {
 			      /* Allow automatic dereference of classes.  */
-			      if ((TYPE_CODE (current_type) == TYPE_CODE_PTR)
-				  && (TYPE_CODE (TYPE_TARGET_TYPE (current_type)) == TYPE_CODE_STRUCT)
-				  && (TYPE_CODE ($1) == TYPE_CODE_STRUCT))
+			      if ((current_type->code () == TYPE_CODE_PTR)
+				  && (TYPE_TARGET_TYPE (current_type)->code () == TYPE_CODE_STRUCT)
+				  && (($1)->code () == TYPE_CODE_STRUCT))
 				write_exp_elt_opcode (pstate, UNOP_IND);
 			    }
 			  write_exp_elt_opcode (pstate, UNOP_CAST);
@@ -528,7 +532,7 @@ exp	:	DOLLAR_VARIABLE
  			     struct value * val, * mark;
 
 			     mark = value_mark ();
- 			     val = value_of_internalvar (parse_gdbarch (pstate),
+ 			     val = value_of_internalvar (pstate->gdbarch (),
  							 intvar);
  			     current_type = value_type (val);
 			     value_release_to_mark (mark);
@@ -591,14 +595,14 @@ exp	:	THIS
 			  write_exp_elt_opcode (pstate, OP_THIS);
 			  /* We need type of this.  */
 			  this_val
-			    = value_of_this_silent (parse_language (pstate));
+			    = value_of_this_silent (pstate->language ());
 			  if (this_val)
 			    this_type = value_type (this_val);
 			  else
 			    this_type = NULL;
 			  if (this_type)
 			    {
-			      if (TYPE_CODE (this_type) == TYPE_CODE_PTR)
+			      if (this_type->code () == TYPE_CODE_PTR)
 				{
 				  this_type = TYPE_TARGET_TYPE (this_type);
 				  write_exp_elt_opcode (pstate, UNOP_IND);
@@ -617,37 +621,41 @@ block	:	BLOCKNAME
 			      $$ = SYMBOL_BLOCK_VALUE ($1.sym.symbol);
 			  else
 			    {
+			      std::string copy = copy_name ($1.stoken);
 			      struct symtab *tem =
-				  lookup_symtab (copy_name ($1.stoken));
+				  lookup_symtab (copy.c_str ());
 			      if (tem)
 				$$ = BLOCKVECTOR_BLOCK (SYMTAB_BLOCKVECTOR (tem),
 							STATIC_BLOCK);
 			      else
 				error (_("No file or function \"%s\"."),
-				       copy_name ($1.stoken));
+				       copy.c_str ());
 			    }
 			}
 	;
 
 block	:	block COLONCOLON name
-			{ struct symbol *tem
-			    = lookup_symbol (copy_name ($3), $1,
+			{
+			  std::string copy = copy_name ($3);
+			  struct symbol *tem
+			    = lookup_symbol (copy.c_str (), $1,
 					     VAR_DOMAIN, NULL).symbol;
 
 			  if (!tem || SYMBOL_CLASS (tem) != LOC_BLOCK)
 			    error (_("No function \"%s\" in specified context."),
-				   copy_name ($3));
+				   copy.c_str ());
 			  $$ = SYMBOL_BLOCK_VALUE (tem); }
 	;
 
 variable:	block COLONCOLON name
 			{ struct block_symbol sym;
 
-			  sym = lookup_symbol (copy_name ($3), $1,
+			  std::string copy = copy_name ($3);
+			  sym = lookup_symbol (copy.c_str (), $1,
 					       VAR_DOMAIN, NULL);
 			  if (sym.symbol == 0)
 			    error (_("No symbol \"%s\" in specified context."),
-				   copy_name ($3));
+				   copy.c_str ());
 
 			  write_exp_elt_opcode (pstate, OP_VAR_VALUE);
 			  write_exp_elt_block (pstate, sym.block);
@@ -659,10 +667,10 @@ qualified_name:	typebase COLONCOLON name
 			{
 			  struct type *type = $1;
 
-			  if (TYPE_CODE (type) != TYPE_CODE_STRUCT
-			      && TYPE_CODE (type) != TYPE_CODE_UNION)
+			  if (type->code () != TYPE_CODE_STRUCT
+			      && type->code () != TYPE_CODE_UNION)
 			    error (_("`%s' is not defined as an aggregate type."),
-				   TYPE_NAME (type));
+				   type->name ());
 
 			  write_exp_elt_opcode (pstate, OP_SCOPE);
 			  write_exp_elt_type (pstate, type);
@@ -674,12 +682,13 @@ qualified_name:	typebase COLONCOLON name
 variable:	qualified_name
 	|	COLONCOLON name
 			{
-			  char *name = copy_name ($2);
+			  std::string name = copy_name ($2);
 			  struct symbol *sym;
 			  struct bound_minimal_symbol msymbol;
 
 			  sym =
-			    lookup_symbol (name, (const struct block *) NULL,
+			    lookup_symbol (name.c_str (),
+					   (const struct block *) NULL,
 					   VAR_DOMAIN, NULL).symbol;
 			  if (sym)
 			    {
@@ -690,7 +699,8 @@ variable:	qualified_name
 			      break;
 			    }
 
-			  msymbol = lookup_bound_minimal_symbol (name);
+			  msymbol
+			    = lookup_bound_minimal_symbol (name.c_str ());
 			  if (msymbol.minsym != NULL)
 			    write_exp_msymbol (pstate, msymbol);
 			  else if (!have_full_symbols ()
@@ -699,7 +709,7 @@ variable:	qualified_name
 				   "Use the \"file\" command."));
 			  else
 			    error (_("No symbol \"%s\" in current context."),
-				   name);
+				   name.c_str ());
 			}
 	;
 
@@ -709,7 +719,7 @@ variable:	name_not_typename
 			  if (sym.symbol)
 			    {
 			      if (symbol_read_needs_frame (sym.symbol))
-				innermost_block.update (sym);
+				pstate->block_tracker->update (sym);
 
 			      write_exp_elt_opcode (pstate, OP_VAR_VALUE);
 			      write_exp_elt_block (pstate, sym.block);
@@ -723,7 +733,7 @@ variable:	name_not_typename
 			      /* Object pascal: it hangs off of `this'.  Must
 			         not inadvertently convert from a method call
 				 to data ref.  */
-			      innermost_block.update (sym);
+			      pstate->block_tracker->update (sym);
 			      write_exp_elt_opcode (pstate, OP_THIS);
 			      write_exp_elt_opcode (pstate, OP_THIS);
 			      write_exp_elt_opcode (pstate, STRUCTOP_PTR);
@@ -731,7 +741,7 @@ variable:	name_not_typename
 			      write_exp_elt_opcode (pstate, STRUCTOP_PTR);
 			      /* We need type of this.  */
 			      this_val
-				= value_of_this_silent (parse_language (pstate));
+				= value_of_this_silent (pstate->language ());
 			      if (this_val)
 				this_type = value_type (this_val);
 			      else
@@ -739,17 +749,17 @@ variable:	name_not_typename
 			      if (this_type)
 				current_type = lookup_struct_elt_type (
 				  this_type,
-				  copy_name ($1.stoken), 0);
+				  copy_name ($1.stoken).c_str (), 0);
 			      else
 				current_type = NULL;
 			    }
 			  else
 			    {
 			      struct bound_minimal_symbol msymbol;
-			      char *arg = copy_name ($1.stoken);
+			      std::string arg = copy_name ($1.stoken);
 
 			      msymbol =
-				lookup_bound_minimal_symbol (arg);
+				lookup_bound_minimal_symbol (arg.c_str ());
 			      if (msymbol.minsym != NULL)
 				write_exp_msymbol (pstate, msymbol);
 			      else if (!have_full_symbols ()
@@ -758,7 +768,7 @@ variable:	name_not_typename
 				       "Use the \"file\" command."));
 			      else
 				error (_("No symbol \"%s\" in current context."),
-				       copy_name ($1.stoken));
+				       arg.c_str ());
 			    }
 			}
 	;
@@ -784,11 +794,15 @@ typebase  /* Implements (approximately): (type-qualifier)* type-specifier */
 	|	TYPENAME
 			{ $$ = $1.type; }
 	|	STRUCT name
-			{ $$ = lookup_struct (copy_name ($2),
-					      expression_context_block); }
+			{ $$
+			    = lookup_struct (copy_name ($2).c_str (),
+					     pstate->expression_context_block);
+			}
 	|	CLASS name
-			{ $$ = lookup_struct (copy_name ($2),
-					      expression_context_block); }
+			{ $$
+			    = lookup_struct (copy_name ($2).c_str (),
+					     pstate->expression_context_block);
+			}
 	/* "const" and "volatile" are curently ignored.  A type qualifier
 	   after the type is handled in the ptype rule.  I think these could
 	   be too.  */
@@ -973,10 +987,10 @@ parse_number (struct parser_state *par_state,
 
   un = (ULONGEST)n >> 2;
   if (long_p == 0
-      && (un >> (gdbarch_int_bit (parse_gdbarch (par_state)) - 2)) == 0)
+      && (un >> (gdbarch_int_bit (par_state->gdbarch ()) - 2)) == 0)
     {
       high_bit
-	= ((ULONGEST)1) << (gdbarch_int_bit (parse_gdbarch (par_state)) - 1);
+	= ((ULONGEST)1) << (gdbarch_int_bit (par_state->gdbarch ()) - 1);
 
       /* A large decimal (not hex or octal) constant (between INT_MAX
 	 and UINT_MAX) is a long or unsigned long, according to ANSI,
@@ -988,10 +1002,10 @@ parse_number (struct parser_state *par_state,
       signed_type = parse_type (par_state)->builtin_int;
     }
   else if (long_p <= 1
-	   && (un >> (gdbarch_long_bit (parse_gdbarch (par_state)) - 2)) == 0)
+	   && (un >> (gdbarch_long_bit (par_state->gdbarch ()) - 2)) == 0)
     {
       high_bit
-	= ((ULONGEST)1) << (gdbarch_long_bit (parse_gdbarch (par_state)) - 1);
+	= ((ULONGEST)1) << (gdbarch_long_bit (par_state->gdbarch ()) - 1);
       unsigned_type = parse_type (par_state)->builtin_unsigned_long;
       signed_type = parse_type (par_state)->builtin_long;
     }
@@ -999,11 +1013,11 @@ parse_number (struct parser_state *par_state,
     {
       int shift;
       if (sizeof (ULONGEST) * HOST_CHAR_BIT
-	  < gdbarch_long_long_bit (parse_gdbarch (par_state)))
+	  < gdbarch_long_long_bit (par_state->gdbarch ()))
 	/* A long long does not fit in a LONGEST.  */
 	shift = (sizeof (ULONGEST) * HOST_CHAR_BIT - 1);
       else
-	shift = (gdbarch_long_long_bit (parse_gdbarch (par_state)) - 1);
+	shift = (gdbarch_long_long_bit (par_state->gdbarch ()) - 1);
       high_bit = (ULONGEST) 1 << shift;
       unsigned_type = parse_type (par_state)->builtin_unsigned_long_long;
       signed_type = parse_type (par_state)->builtin_long_long;
@@ -1121,10 +1135,10 @@ yylex (void)
 
  retry:
 
-  prev_lexptr = lexptr;
+  pstate->prev_lexptr = pstate->lexptr;
 
-  tokstart = lexptr;
-  explen = strlen (lexptr);
+  tokstart = pstate->lexptr;
+  explen = strlen (pstate->lexptr);
 
   /* See if it is a special token of length 3.  */
   if (explen > 2)
@@ -1134,7 +1148,7 @@ yylex (void)
               || (!isalpha (tokstart[3])
 		  && !isdigit (tokstart[3]) && tokstart[3] != '_')))
         {
-          lexptr += 3;
+          pstate->lexptr += 3;
           yylval.opcode = tokentab3[i].opcode;
           return tokentab3[i].token;
         }
@@ -1147,7 +1161,7 @@ yylex (void)
               || (!isalpha (tokstart[2])
 		  && !isdigit (tokstart[2]) && tokstart[2] != '_')))
         {
-          lexptr += 2;
+          pstate->lexptr += 2;
           yylval.opcode = tokentab2[i].opcode;
           return tokentab2[i].token;
         }
@@ -1155,7 +1169,7 @@ yylex (void)
   switch (c = *tokstart)
     {
     case 0:
-      if (search_field && parse_completion)
+      if (search_field && pstate->parse_completion)
 	return COMPLETE;
       else
        return 0;
@@ -1163,31 +1177,31 @@ yylex (void)
     case ' ':
     case '\t':
     case '\n':
-      lexptr++;
+      pstate->lexptr++;
       goto retry;
 
     case '\'':
       /* We either have a character constant ('0' or '\177' for example)
 	 or we have a quoted symbol reference ('foo(int,int)' in object pascal
 	 for example).  */
-      lexptr++;
-      c = *lexptr++;
+      pstate->lexptr++;
+      c = *pstate->lexptr++;
       if (c == '\\')
-	c = parse_escape (parse_gdbarch (pstate), &lexptr);
+	c = parse_escape (pstate->gdbarch (), &pstate->lexptr);
       else if (c == '\'')
 	error (_("Empty character constant."));
 
       yylval.typed_val_int.val = c;
       yylval.typed_val_int.type = parse_type (pstate)->builtin_char;
 
-      c = *lexptr++;
+      c = *pstate->lexptr++;
       if (c != '\'')
 	{
 	  namelen = skip_quoted (tokstart) - tokstart;
 	  if (namelen > 2)
 	    {
-	      lexptr = tokstart + namelen;
-	      if (lexptr[-1] != '\'')
+	      pstate->lexptr = tokstart + namelen;
+	      if (pstate->lexptr[-1] != '\'')
 		error (_("Unmatched single quote."));
 	      namelen -= 2;
               tokstart++;
@@ -1200,25 +1214,25 @@ yylex (void)
 
     case '(':
       paren_depth++;
-      lexptr++;
+      pstate->lexptr++;
       return c;
 
     case ')':
       if (paren_depth == 0)
 	return 0;
       paren_depth--;
-      lexptr++;
+      pstate->lexptr++;
       return c;
 
     case ',':
-      if (comma_terminates && paren_depth == 0)
+      if (pstate->comma_terminates && paren_depth == 0)
 	return 0;
-      lexptr++;
+      pstate->lexptr++;
       return c;
 
     case '.':
       /* Might be a floating point number.  */
-      if (lexptr[1] < '0' || lexptr[1] > '9')
+      if (pstate->lexptr[1] < '0' || pstate->lexptr[1] > '9')
 	{
 	  goto symbol;		/* Nope, must be a symbol.  */
 	}
@@ -1286,7 +1300,7 @@ yylex (void)
 	    err_copy[p - tokstart] = 0;
 	    error (_("Invalid number \"%s\"."), err_copy);
 	  }
-	lexptr = p;
+	pstate->lexptr = p;
 	return toktype;
       }
 
@@ -1310,7 +1324,7 @@ yylex (void)
     case '{':
     case '}':
     symbol:
-      lexptr++;
+      pstate->lexptr++;
       return c;
 
     case '"':
@@ -1343,7 +1357,7 @@ yylex (void)
 	    break;
 	  case '\\':
 	    ++tokptr;
-	    c = parse_escape (parse_gdbarch (pstate), &tokptr);
+	    c = parse_escape (pstate->gdbarch (), &tokptr);
 	    if (c == -1)
 	      {
 		continue;
@@ -1362,7 +1376,7 @@ yylex (void)
       tempbuf[tempbufindex] = '\0';	/* See note above.  */
       yylval.sval.ptr = tempbuf;
       yylval.sval.length = tempbufindex;
-      lexptr = tokptr;
+      pstate->lexptr = tokptr;
       return (STRING);
     }
 
@@ -1413,7 +1427,7 @@ yylex (void)
       return 0;
     }
 
-  lexptr += namelen;
+  pstate->lexptr += namelen;
 
   tryname:
 
@@ -1463,7 +1477,7 @@ yylex (void)
              inserted in FPC stabs debug info.  */
 	  static const char this_name[] = "this";
 
-	  if (lookup_symbol (this_name, expression_context_block,
+	  if (lookup_symbol (this_name, pstate->expression_context_block,
 			     VAR_DOMAIN, NULL).symbol)
 	    {
 	      free (uptokstart);
@@ -1501,7 +1515,7 @@ yylex (void)
      currently as names of types; NAME for other symbols.
      The caller is not constrained to care about the distinction.  */
   {
-    char *tmp = copy_name (yylval.sval);
+    std::string tmp = copy_name (yylval.sval);
     struct symbol *sym;
     struct field_of_this_result is_a_field_of_this = { .type = NULL };
     int is_a_field = 0;
@@ -1509,11 +1523,12 @@ yylex (void)
 
     is_a_field_of_this.type = NULL;
     if (search_field && current_type)
-      is_a_field = (lookup_struct_elt_type (current_type, tmp, 1) != NULL);
+      is_a_field = (lookup_struct_elt_type (current_type,
+					    tmp.c_str (), 1) != NULL);
     if (is_a_field)
       sym = NULL;
     else
-      sym = lookup_symbol (tmp, expression_context_block,
+      sym = lookup_symbol (tmp.c_str (), pstate->expression_context_block,
 			   VAR_DOMAIN, &is_a_field_of_this).symbol;
     /* second chance uppercased (as Free Pascal does).  */
     if (!sym && is_a_field_of_this.type == NULL && !is_a_field)
@@ -1524,11 +1539,12 @@ yylex (void)
              tmp[i] -= ('a'-'A');
          }
        if (search_field && current_type)
-	 is_a_field = (lookup_struct_elt_type (current_type, tmp, 1) != NULL);
+	 is_a_field = (lookup_struct_elt_type (current_type,
+					       tmp.c_str (), 1) != NULL);
        if (is_a_field)
 	 sym = NULL;
        else
-	 sym = lookup_symbol (tmp, expression_context_block,
+	 sym = lookup_symbol (tmp.c_str (), pstate->expression_context_block,
 			      VAR_DOMAIN, &is_a_field_of_this).symbol;
       }
     /* Third chance Capitalized (as GPC does).  */
@@ -1546,18 +1562,19 @@ yylex (void)
              tmp[i] -= ('A'-'a');
           }
        if (search_field && current_type)
-	 is_a_field = (lookup_struct_elt_type (current_type, tmp, 1) != NULL);
+	 is_a_field = (lookup_struct_elt_type (current_type,
+					       tmp.c_str (), 1) != NULL);
        if (is_a_field)
 	 sym = NULL;
        else
-	 sym = lookup_symbol (tmp, expression_context_block,
+	 sym = lookup_symbol (tmp.c_str (), pstate->expression_context_block,
 			      VAR_DOMAIN, &is_a_field_of_this).symbol;
       }
 
     if (is_a_field || (is_a_field_of_this.type != NULL))
       {
 	tempbuf = (char *) realloc (tempbuf, namelen + 1);
-	strncpy (tempbuf, tmp, namelen);
+	strncpy (tempbuf, tmp.c_str (), namelen);
 	tempbuf [namelen] = 0;
 	yylval.sval.ptr = tempbuf;
 	yylval.sval.length = namelen;
@@ -1574,7 +1591,7 @@ yylex (void)
        no psymtabs (coff, xcoff, or some future change to blow away the
        psymtabs once once symbols are read).  */
     if ((sym && SYMBOL_CLASS (sym) == LOC_BLOCK)
-        || lookup_symtab (tmp))
+        || lookup_symtab (tmp.c_str ()))
       {
 	yylval.ssym.sym.symbol = sym;
 	yylval.ssym.sym.block = NULL;
@@ -1609,7 +1626,7 @@ yylex (void)
 	     us whether a type is nested), we just ignore the
 	     containing type.  */
 
-	  p = lexptr;
+	  p = pstate->lexptr;
 	  best_sym = sym;
 	  while (1)
 	    {
@@ -1634,25 +1651,27 @@ yylex (void)
 		      /* As big as the whole rest of the expression, which is
 			 at least big enough.  */
 		      char *ncopy
-			= (char *) alloca (strlen (tmp) + strlen (namestart)
+			= (char *) alloca (tmp.size () + strlen (namestart)
 					   + 3);
 		      char *tmp1;
 
 		      tmp1 = ncopy;
-		      memcpy (tmp1, tmp, strlen (tmp));
-		      tmp1 += strlen (tmp);
+		      memcpy (tmp1, tmp.c_str (), tmp.size ());
+		      tmp1 += tmp.size ();
 		      memcpy (tmp1, "::", 2);
 		      tmp1 += 2;
 		      memcpy (tmp1, namestart, p - namestart);
 		      tmp1[p - namestart] = '\0';
-		      cur_sym = lookup_symbol (ncopy, expression_context_block,
-					       VAR_DOMAIN, NULL).symbol;
+		      cur_sym
+			= lookup_symbol (ncopy,
+					 pstate->expression_context_block,
+					 VAR_DOMAIN, NULL).symbol;
 		      if (cur_sym)
 			{
 			  if (SYMBOL_CLASS (cur_sym) == LOC_TYPEDEF)
 			    {
 			      best_sym = cur_sym;
-			      lexptr = p;
+			      pstate->lexptr = p;
 			    }
 			  else
 			    break;
@@ -1675,8 +1694,8 @@ yylex (void)
 	  return TYPENAME;
         }
     yylval.tsym.type
-      = language_lookup_primitive_type (parse_language (pstate),
-					parse_gdbarch (pstate), tmp);
+      = language_lookup_primitive_type (pstate->language (),
+					pstate->gdbarch (), tmp.c_str ());
     if (yylval.tsym.type != NULL)
       {
 	free (uptokstart);
@@ -1717,6 +1736,7 @@ pascal_parse (struct parser_state *par_state)
   scoped_restore pstate_restore = make_scoped_restore (&pstate);
   gdb_assert (par_state != NULL);
   pstate = par_state;
+  paren_depth = 0;
 
   return yyparse ();
 }
@@ -1724,8 +1744,8 @@ pascal_parse (struct parser_state *par_state)
 static void
 yyerror (const char *msg)
 {
-  if (prev_lexptr)
-    lexptr = prev_lexptr;
+  if (pstate->prev_lexptr)
+    pstate->lexptr = pstate->prev_lexptr;
 
-  error (_("A %s in expression, near `%s'."), msg, lexptr);
+  error (_("A %s in expression, near `%s'."), msg, pstate->lexptr);
 }

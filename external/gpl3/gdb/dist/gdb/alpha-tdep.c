@@ -1,6 +1,6 @@
 /* Target-dependent code for the ALPHA architecture, for GDB, the GNU Debugger.
 
-   Copyright (C) 1993-2019 Free Software Foundation, Inc.
+   Copyright (C) 1993-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,7 @@
 #include "frame.h"
 #include "frame-unwind.h"
 #include "frame-base.h"
-#include "dwarf2-frame.h"
+#include "dwarf2/frame.h"
 #include "inferior.h"
 #include "symtab.h"
 #include "value.h"
@@ -327,7 +327,7 @@ alpha_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
       struct type *arg_type = check_typedef (value_type (arg));
 
       /* Cast argument to long if necessary as the compiler does it too.  */
-      switch (TYPE_CODE (arg_type))
+      switch (arg_type->code ())
 	{
 	case TYPE_CODE_INT:
 	case TYPE_CODE_BOOL:
@@ -478,7 +478,7 @@ alpha_extract_return_value (struct type *valtype, struct regcache *regcache,
   gdb_byte raw_buffer[ALPHA_REGISTER_SIZE];
   ULONGEST l;
 
-  switch (TYPE_CODE (valtype))
+  switch (valtype->code ())
     {
     case TYPE_CODE_FLT:
       switch (TYPE_LENGTH (valtype))
@@ -546,7 +546,7 @@ alpha_store_return_value (struct type *valtype, struct regcache *regcache,
   gdb_byte raw_buffer[ALPHA_REGISTER_SIZE];
   ULONGEST l;
 
-  switch (TYPE_CODE (valtype))
+  switch (valtype->code ())
     {
     case TYPE_CODE_FLT:
       switch (TYPE_LENGTH (valtype))
@@ -614,7 +614,7 @@ alpha_return_value (struct gdbarch *gdbarch, struct value *function,
 		    struct type *type, struct regcache *regcache,
 		    gdb_byte *readbuf, const gdb_byte *writebuf)
 {
-  enum type_code code = TYPE_CODE (type);
+  enum type_code code = type->code ();
 
   if ((code == TYPE_CODE_STRUCT
        || code == TYPE_CODE_UNION
@@ -1019,11 +1019,11 @@ alpha_sigtramp_frame_sniffer (const struct frame_unwind *self,
   const char *name;
 
   /* NOTE: cagney/2004-04-30: Do not copy/clone this code.  Instead
-     look at tramp-frame.h and other simplier per-architecture
+     look at tramp-frame.h and other simpler per-architecture
      sigtramp unwinders.  */
 
   /* We shouldn't even bother to try if the OSABI didn't register a
-     sigcontext_addr handler or pc_in_sigtramp hander.  */
+     sigcontext_addr handler or pc_in_sigtramp handler.  */
   if (gdbarch_tdep (gdbarch)->sigcontext_addr == NULL)
     return 0;
   if (gdbarch_tdep (gdbarch)->pc_in_sigtramp == NULL)
@@ -1488,29 +1488,6 @@ reinit_frame_cache_sfunc (const char *args,
 {
   reinit_frame_cache ();
 }
-
-
-/* Assuming NEXT_FRAME->prev is a dummy, return the frame ID of that
-   dummy frame.  The frame ID's base needs to match the TOS value
-   saved by save_dummy_frame_tos(), and the PC match the dummy frame's
-   breakpoint.  */
-
-static struct frame_id
-alpha_dummy_id (struct gdbarch *gdbarch, struct frame_info *this_frame)
-{
-  ULONGEST base;
-  base = get_frame_register_unsigned (this_frame, ALPHA_SP_REGNUM);
-  return frame_id_build (base, get_frame_pc (this_frame));
-}
-
-static CORE_ADDR
-alpha_unwind_pc (struct gdbarch *gdbarch, struct frame_info *next_frame)
-{
-  ULONGEST pc;
-  pc = frame_unwind_register_unsigned (next_frame, ALPHA_PC_REGNUM);
-  return pc;
-}
-
 
 /* Helper routines for alpha*-nat.c files to move register sets to and
    from core files.  The UNIQUE pointer is allowed to be NULL, as most
@@ -1835,12 +1812,6 @@ alpha_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   /* Settings for calling functions in the inferior.  */
   set_gdbarch_push_dummy_call (gdbarch, alpha_push_dummy_call);
 
-  /* Methods for saving / extracting a dummy frame's ID.  */
-  set_gdbarch_dummy_id (gdbarch, alpha_dummy_id);
-
-  /* Return the unwound PC value.  */
-  set_gdbarch_unwind_pc (gdbarch, alpha_unwind_pc);
-
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
   set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
 
@@ -1878,8 +1849,9 @@ alpha_dwarf2_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   frame_base_append_sniffer (gdbarch, dwarf2_frame_base_sniffer);
 }
 
+void _initialize_alpha_tdep ();
 void
-_initialize_alpha_tdep (void)
+_initialize_alpha_tdep ()
 {
 
   gdbarch_register (bfd_arch_alpha, alpha_gdbarch_init, NULL);

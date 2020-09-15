@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD/hppa.
 
-   Copyright (C) 2008-2019 Free Software Foundation, Inc.
+   Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -168,9 +168,8 @@ void
 hppa_nbsd_nat_target::fetch_registers (struct regcache *regcache, int regnum)
 
 {
-  ptid_t ptid = regcache->ptid ();
-  pid_t pid = ptid.pid ();
-  int lwp = ptid.lwp ();
+  pid_t pid = regcache->ptid ().pid ();
+  int lwp = regcache->ptid ().lwp ();
 
   if (regnum == -1 || hppanbsd_gregset_supplies_p (regnum))
     {
@@ -199,9 +198,8 @@ hppa_nbsd_nat_target::fetch_registers (struct regcache *regcache, int regnum)
 void
 hppa_nbsd_nat_target::store_registers (struct regcache *regcache, int regnum)
 {
-  ptid_t ptid = regcache->ptid ();
-  pid_t pid = ptid.pid ();
-  int lwp = ptid.lwp ();
+  pid_t pid = regcache->ptid ().pid ();
+  int lwp = regcache->ptid ().lwp ();
 
   if (regnum == -1 || hppanbsd_gregset_supplies_p (regnum))
     {
@@ -230,8 +228,9 @@ hppa_nbsd_nat_target::store_registers (struct regcache *regcache, int regnum)
     }
 }
 
+void _initialize_hppanbsd_nat ();
 void
-_initialize_hppanbsd_nat (void)
+_initialize_hppanbsd_nat ()
 {
   add_inf_child_target (&the_hppa_nbsd_nat_target);
 }

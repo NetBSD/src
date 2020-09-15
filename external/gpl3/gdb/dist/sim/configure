@@ -669,6 +669,7 @@ ac_subdirs_all='aarch64
 arm
 avr
 bfin
+bpf
 cr16
 cris
 d10v
@@ -686,6 +687,7 @@ mn10300
 moxie
 msp430
 or1k
+pru
 rl78
 rx
 sh64
@@ -3717,6 +3719,13 @@ subdirs="$subdirs aarch64"
 
 
        ;;
+   bpf-*-*)
+
+  sim_arch=bpf
+  subdirs="$subdirs bpf"
+
+
+       ;;
    cr16*-*-*)
 
   sim_arch=cr16
@@ -3838,6 +3847,13 @@ subdirs="$subdirs aarch64"
 
 
        ;;
+   pru*-*-*)
+
+  sim_arch=pru
+  subdirs="$subdirs pru"
+
+
+       ;;
    rl78-*-*)
 
   sim_arch=rl78
@@ -3898,11 +3914,13 @@ subdirs="$subdirs aarch64"
 esac
 
 
-   subdirs="$subdirs testsuite"
+   if test x"${sim_arch}" != x; then
+      subdirs="$subdirs testsuite"
 
-   if test "$sim_igen" = yes; then
-      subdirs="$subdirs igen"
+      if test "$sim_igen" = yes; then
+         subdirs="$subdirs igen"
 
+      fi
    fi
 fi
 
