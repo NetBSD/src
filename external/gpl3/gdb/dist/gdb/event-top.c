@@ -1,6 +1,6 @@
 /* Top level stuff for GDB, the GNU debugger.
 
-   Copyright (C) 1999-2019 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
 
    Written by Elena Zannoni <ezannoni@cygnus.com> of Cygnus Solutions.
 
@@ -25,7 +25,7 @@
 #include "infrun.h"
 #include "target.h"
 #include "terminal.h"
-#include "event-loop.h"
+#include "gdbsupport/event-loop.h"
 #include "event-top.h"
 #include "interps.h"
 #include <signal.h>
@@ -37,9 +37,11 @@
 #include "gdbcmd.h"		/* for dont_repeat() */
 #include "annotate.h"
 #include "maint.h"
-#include "common/buffer.h"
+#include "gdbsupport/buffer.h"
 #include "ser-event.h"
-#include "gdb_select.h"
+#include "gdbsupport/gdb_select.h"
+#include "gdbsupport/gdb-sigmask.h"
+#include "async-event.h"
 
 /* readline include files.  */
 #include "readline/readline.h"
@@ -86,11 +88,11 @@ static void async_sigterm_handler (gdb_client_data arg);
    ezannoni: as of 1999-04-29 I expect that this
    variable will not be used after gdb is changed to use the event
    loop as default engine, and event-top.c is merged into top.c.  */
-int set_editing_cmd_var;
+bool set_editing_cmd_var;
 
 /* This is used to display the notification of the completion of an
    asynchronous execution command.  */
-int exec_done_display_p = 0;
+bool exec_done_display_p = false;
 
 /* Used by the stdin event handler to compensate for missed stdin events.
    Setting this to a non-zero value inside an stdin callback makes the callback
@@ -164,7 +166,7 @@ void (*after_char_processing_hook) (void);
 static struct gdb_exception
 gdb_rl_callback_read_char_wrapper_noexcept () noexcept
 {
-  struct gdb_exception gdb_expt = exception_none;
+  struct gdb_exception gdb_expt;
 
   /* C++ exceptions can't normally be thrown across readline (unless
      it is built with -fexceptions, but it won't by default on many
@@ -178,7 +180,7 @@ gdb_rl_callback_read_char_wrapper_noexcept () noexcept
     }
   CATCH_SJLJ (ex, RETURN_MASK_ALL)
     {
-      gdb_expt = ex;
+      gdb_expt = std::move (ex);
     }
   END_CATCH_SJLJ
 
@@ -193,7 +195,7 @@ gdb_rl_callback_read_char_wrapper (gdb_client_data client_data)
 
   /* Rethrow using the normal EH mechanism.  */
   if (gdb_expt.reason < 0)
-    throw_exception (gdb_expt);
+    throw_exception (std::move (gdb_expt));
 }
 
 /* GDB's readline callback handler.  Calls the current INPUT_HANDLER,
@@ -205,18 +207,21 @@ gdb_rl_callback_read_char_wrapper (gdb_client_data client_data)
 static void
 gdb_rl_callback_handler (char *rl) noexcept
 {
-  struct gdb_exception gdb_rl_expt = exception_none;
+  /* This is static to avoid undefined behavior when calling longjmp
+     -- gdb_exception has a destructor with side effects.  */
+  static struct gdb_exception gdb_rl_expt;
   struct ui *ui = current_ui;
 
-  TRY
+  try
     {
+      /* Ensure the exception is reset on each call.  */
+      gdb_rl_expt = {};
       ui->input_handler (gdb::unique_xmalloc_ptr<char> (rl));
     }
-  CATCH (ex, RETURN_MASK_ALL)
+  catch (gdb_exception &ex)
     {
-      gdb_rl_expt = ex;
+      gdb_rl_expt = std::move (ex);
     }
-  END_CATCH
 
   /* If we caught a GDB exception, longjmp out of the readline
      callback.  There's no other way for the callback to signal to
@@ -412,13 +417,13 @@ display_gdb_prompt (const char *new_prompt)
       /* Don't use a _filtered function here.  It causes the assumed
          character position to be off, since the newline we read from
          the user is not accounted for.  */
-      fputs_unfiltered (actual_gdb_prompt.c_str (), gdb_stdout);
+      fprintf_unfiltered (gdb_stdout, "%s", actual_gdb_prompt.c_str ());
       gdb_flush (gdb_stdout);
     }
 }
 
 /* Return the top level prompt, as specified by "set prompt", possibly
-   overriden by the python gdb.prompt_hook hook, and then composed
+   overridden by the python gdb.prompt_hook hook, and then composed
    with the prompt prefix and suffix (annotations).  */
 
 static std::string
@@ -631,11 +636,10 @@ command_line_append_input_line (struct buffer *cmd_line_buffer, const char *rl)
    If REPEAT, handle command repetitions:
 
      - If the input command line is NOT empty, the command returned is
-       copied into the global 'saved_command_line' var so that it can
-       be repeated later.
+       saved using save_command_line () so that it can be repeated later.
 
-     - OTOH, if the input command line IS empty, return the previously
-       saved command instead of the empty input line.
+     - OTOH, if the input command line IS empty, return the saved
+       command instead of the empty input line.
 */
 
 char *
@@ -670,7 +674,7 @@ handle_line_of_input (struct buffer *cmd_line_buffer,
   server_command = startswith (cmd, SERVER_COMMAND_PREFIX);
   if (server_command)
     {
-      /* Note that we don't set `saved_command_line'.  Between this
+      /* Note that we don't call `save_command_line'.  Between this
          and the check in dont_repeat, this insures that repeating
          will still do the right thing.  */
       return cmd + strlen (SERVER_COMMAND_PREFIX);
@@ -710,7 +714,7 @@ handle_line_of_input (struct buffer *cmd_line_buffer,
   for (p1 = cmd; *p1 == ' ' || *p1 == '\t'; p1++)
     ;
   if (repeat && *p1 == '\0')
-    return saved_command_line;
+    return get_saved_command_line ();
 
   /* Add command to history if appropriate.  Note: lines consisting
      solely of comments are also added to the command history.  This
@@ -725,9 +729,8 @@ handle_line_of_input (struct buffer *cmd_line_buffer,
   /* Save into global buffer if appropriate.  */
   if (repeat)
     {
-      xfree (saved_command_line);
-      saved_command_line = xstrdup (cmd);
-      return saved_command_line;
+      save_command_line (cmd);
+      return get_saved_command_line ();
     }
   else
     return cmd;
@@ -846,6 +849,45 @@ gdb_readline_no_editing_callback (gdb_client_data client_data)
 }
 
 
+/* See event-top.h.  */
+
+thread_local void (*thread_local_segv_handler) (int);
+
+static void handle_sigsegv (int sig);
+
+/* Install the SIGSEGV handler.  */
+static void
+install_handle_sigsegv ()
+{
+#if defined (HAVE_SIGACTION)
+  struct sigaction sa;
+  sa.sa_handler = handle_sigsegv;
+  sigemptyset (&sa.sa_mask);
+#ifdef HAVE_SIGALTSTACK
+  sa.sa_flags = SA_ONSTACK;
+#else
+  sa.sa_flags = 0;
+#endif
+  sigaction (SIGSEGV, &sa, nullptr);
+#else
+  signal (SIGSEGV, handle_sigsegv);
+#endif
+}
+
+/* Handler for SIGSEGV.  */
+
+static void
+handle_sigsegv (int sig)
+{
+  install_handle_sigsegv ();
+
+  if (thread_local_segv_handler == nullptr)
+    abort ();			/* ARI: abort */
+  thread_local_segv_handler (sig);
+}
+
+
+
 /* The serial event associated with the QUIT flag.  set_quit_flag sets
    this, and check_quit_flag clears it.  Used by interruptible_select
    to be able to do interruptible I/O with no race with the SIGINT
@@ -913,6 +955,8 @@ async_init_signals (void)
   sigtstp_token =
     create_async_signal_handler (async_sigtstp_handler, NULL);
 #endif
+
+  install_handle_sigsegv ();
 }
 
 /* See defs.h.  */
@@ -1082,27 +1126,29 @@ static void
 async_disconnect (gdb_client_data arg)
 {
 
-  TRY
+  try
     {
       quit_cover ();
     }
 
-  CATCH (exception, RETURN_MASK_ALL)
+  catch (const gdb_exception &exception)
     {
       fputs_filtered ("Could not kill the program being debugged",
 		      gdb_stderr);
       exception_print (gdb_stderr, exception);
     }
-  END_CATCH
 
-  TRY
+  for (inferior *inf : all_inferiors ())
     {
-      pop_all_targets ();
+      switch_to_inferior_no_thread (inf);
+      try
+	{
+	  pop_all_targets ();
+	}
+      catch (const gdb_exception &exception)
+	{
+	}
     }
-  CATCH (exception, RETURN_MASK_ALL)
-    {
-    }
-  END_CATCH
 
   signal (SIGHUP, SIG_DFL);	/*FIXME: ???????????  */
   raise (SIGHUP);
@@ -1128,7 +1174,7 @@ async_sigtstp_handler (gdb_client_data arg)
     sigset_t zero;
 
     sigemptyset (&zero);
-    sigprocmask (SIG_SETMASK, &zero, 0);
+    gdb_sigmask (SIG_SETMASK, &zero, 0);
   }
 #elif HAVE_SIGSETMASK
   sigsetmask (0);
@@ -1153,7 +1199,7 @@ handle_sigfpe (int sig)
   signal (sig, handle_sigfpe);
 }
 
-/* Event loop will call this functin to process a SIGFPE.  */
+/* Event loop will call this function to process a SIGFPE.  */
 static void
 async_float_handler (gdb_client_data arg)
 {

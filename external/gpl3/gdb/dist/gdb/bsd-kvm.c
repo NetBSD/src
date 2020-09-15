@@ -1,6 +1,6 @@
 /* BSD Kernel Data Access Library (libkvm) interface.
 
-   Copyright (C) 2004-2019 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,6 +20,7 @@
 #define _KMEMUSER
 #include "defs.h"
 #include "cli/cli-cmds.h"
+#include "arch-utils.h"
 #include "command.h"
 #include "frame.h"
 #include "regcache.h"
@@ -30,7 +31,7 @@
 #include "inferior.h"          /* for get_exec_file */
 #include "symfile.h"
 #include "gdbthread.h"
-#include "arch-utils.h"
+#include "gdbsupport/pathstuff.h"
 
 #include <fcntl.h>
 #include <kvm.h>
@@ -94,7 +95,7 @@ public:
 
   void files_info () override;
   bool thread_alive (ptid_t ptid) override;
-  const char *pid_to_str (ptid_t) override;
+  std::string pid_to_str (ptid_t) override;
 
   bool has_memory () override { return true; }
   bool has_stack () override { return true; }
@@ -108,7 +109,7 @@ static void
 bsd_kvm_target_open (const char *arg, int from_tty)
 {
   char errbuf[_POSIX2_LINE_MAX];
-  char *execfile = NULL;
+  const char *execfile = NULL;
   kvm_t *temp_kd;
   struct inferior *inf;
   char *filename = NULL;
@@ -117,14 +118,13 @@ bsd_kvm_target_open (const char *arg, int from_tty)
 
   if (arg)
     {
-      char *temp;
-
       filename = tilde_expand (arg);
       if (filename[0] != '/')
 	{
-	  temp = concat (current_directory, "/", filename, (char *)NULL);
+	  gdb::unique_xmalloc_ptr<char> temp (gdb_abspath (filename));
+
 	  xfree (filename);
-	  filename = temp;
+	  filename = temp.release ();
 	}
     }
 
@@ -145,8 +145,8 @@ bsd_kvm_target_open (const char *arg, int from_tty)
 
   inf->gdbarch = get_current_arch ();
 
-  thread_info *tp = add_thread_silent (bsd_kvm_ptid);
-  switch_to_thread(tp);
+  thread_info *thr = add_thread_silent (&bsd_kvm_ops, bsd_kvm_ptid);
+  switch_to_thread (thr);
   inferior_ptid = bsd_kvm_ptid;
 
   symbol_file_add_main(execfile, 0);
@@ -167,8 +167,8 @@ bsd_kvm_target::close ()
       core_kd = NULL;
     }
 
-  inferior_ptid = null_ptid;
-  discard_all_inferiors ();
+  switch_to_no_thread ();
+  exit_inferior_silent (current_inferior ());
 }
 
 static LONGEST
@@ -401,12 +401,10 @@ bsd_kvm_target::thread_alive (ptid_t ptid)
   return true;
 }
 
-const char *
+std::string
 bsd_kvm_target::pid_to_str (ptid_t ptid)
 {
-  static char buf[64];
-  xsnprintf (buf, sizeof buf, "<kvm>");
-  return buf;
+  return "<kvm>";
 }
 
 /* Add the libkvm interface to the list of all possible targets and

@@ -21,7 +21,7 @@
 
 /*
  * zstream.h - C++ interface to the 'zlib' general purpose compression library
- * Id: zstream.h,v 1.1 1999/05/04 19:30:27 tromey Exp 
+ * $Id: zstream.h,v 1.2 2020/09/15 02:05:31 christos Exp $
  */
 
 #include <strstream.h>
