@@ -1,4 +1,4 @@
-$NetBSD: README.gcc9,v 1.15 2020/09/15 08:44:02 mrg Exp $
+$NetBSD: README.gcc9,v 1.16 2020/09/15 09:27:25 mrg Exp $
 
 new stuff:
 	cc1objcplus
@@ -30,7 +30,7 @@ switched:	has port switched?  y (yes), n (no/ready), ? (not ready)
 architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf	switched
 ------------	-----	-------	------	----------	------------	----	---	--------
 aarch64		y	y	y	y		y		y	y	y
-aarch64be	y	y	y	y		?		?	?	y
+aarch64be	y	y	y	y		y		y	y	y
 alpha		y	y	y	y		y		y	y[10]	n
 earmv4		y	y	y	y		y		?	?	y
 earmv4eb	y	n	n	y		n		?	?	y
@@ -51,16 +51,16 @@ i386		y	y	y	y		y		y	y	y
 ia64		y	y	y	y		y		y	N/A	y
 m68000		y	y	y	y		y		y	?	n
 m68k		y	y	y	y		y		y	y[11]	n
-mipseb		y	y	y	y		y		n	n	n
-mipsel		y	y	y	y		y		y	n	n
-mips64eb	y	y	y	y		y		y	y	n
-mips64el	y	y	y	y		y		n	n	n
+mipseb		y	y	y	y		y		n	n	y
+mipsel		y	y	y	y		y		y	n	y
+mips64eb	y	y	y	y		y		y	y	y
+mips64el	y	y	y	y		y		n	n	y
 powerpc		y	y	y	y		y		y	y	n
 powerpc64	y	y	y	y		y		N/A	N/A	n
 sh3eb		y	y	y	y		y		?	?	?
 sh3el		y	y	y	y		y		y	y	n
-sparc		y	y	y	y		y		y	y	n
-sparc64		y	y	y	y		y		y	n	?
+sparc		y	y	y	y		y		y	y	y
+sparc64		y	y	y	y		y		y	y	y
 vax		y	y	y	y		y		y	y	n
 x86_64		y	y	y	y		y		y	y	y
 riscv32		y	N/A	y	y		y		N/A	N/A	y	
