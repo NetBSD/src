@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.67 2020/09/15 10:11:15 roy Exp $ */
+/*	$NetBSD: arp.c,v 1.68 2020/09/15 11:14:16 roy Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.67 2020/09/15 10:11:15 roy Exp $");
+__RCSID("$NetBSD: arp.c,v 1.68 2020/09/15 11:14:16 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -491,8 +491,6 @@ dump(uint32_t addr)
 				(void)printf(" on %s", ifname);
 		}
 
-		if (rtm->rtm_rmx.rmx_expire == 0)
-			(void)printf(" permanent");
 		if (sina->sin_other & SIN_PROXY)
 			(void)printf(" published (proxy only)");
 		if (rtm->rtm_addrs & RTA_NETMASK) {
