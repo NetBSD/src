@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2016/03/30 16:19:06 macallan Exp $
+#	$NetBSD: Makefile,v 1.36 2020/09/15 05:14:19 mrg Exp $
 
 NOLINT=	1	# defined
 
@@ -96,6 +96,11 @@ SRCS+=		pixman-mmx.c
 CPPFLAGS+=	-DUSE_LOONGSON_MMI
 # SIMD instructions use floatpoint registers so we need to enable their use
 COPTS.pixman-mmx.c=	-march=loongson2f -mhard-float -Wa,-mhard-float
+.endif
+
+.if ${MACHINE_CPU} == "sh3"
+# XXX pixman-fast-path.c:1204:1: internal compiler error: Segmentation fault
+COPTS.pixman-fast-path.c+=	-O1
 .endif
 
 INCS=	pixman.h pixman-version.h
