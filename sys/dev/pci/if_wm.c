@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.686 2020/08/24 05:34:00 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.687 2020/09/15 08:39:04 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.686 2020/08/24 05:34:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.687 2020/09/15 08:39:04 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2886,6 +2886,14 @@ alloc_retry:
 		if (sc->sc_type != WM_T_I354)
 			sc->sc_flags |= WM_F_EEE;
 	}
+
+	/*
+	 * The I350 has a bug where it always strips the CRC whether
+	 * asked to or not. So ask for stripped CRC here and cope in rxeof
+	 */
+	if ((sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I354)
+	    || (sc->sc_type == WM_T_I210) || (sc->sc_type == WM_T_I211))
+		sc->sc_flags |= WM_F_CRC_STRIP;
 
 	/* Set device properties (macflags) */
 	prop_dictionary_set_uint32(dict, "macflags", sc->sc_flags);
@@ -6311,12 +6319,7 @@ wm_init_locked(struct ifnet *ifp)
 	if (sc->sc_type == WM_T_82574)
 		sc->sc_rctl |= RCTL_DTYP_ONEBUF;
 
-	/*
-	 * The I350 has a bug where it always strips the CRC whether
-	 * asked to or not. So ask for stripped CRC here and cope in rxeof
-	 */
-	if ((sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I354)
-	    || (sc->sc_type == WM_T_I210))
+	if ((sc->sc_flags & WM_F_CRC_STRIP) != 0)
 		sc->sc_rctl |= RCTL_SECRC;
 
 	if (((ec->ec_capabilities & ETHERCAP_JUMBO_MTU) != 0)
@@ -9057,17 +9060,16 @@ wm_rxeof(struct wm_rxqueue *rxq, u_int limit)
 
 		/*
 		 * Okay, we have the entire packet now. The chip is
-		 * configured to include the FCS except I350 and I21[01]
-		 * (not all chips can be configured to strip it),
-		 * so we need to trim it.
+		 * configured to include the FCS except I35[05], I21[01].
+		 * (not all chips can be configured to strip it), so we need
+		 * to trim it. Those chips have an eratta, the RCTL_SECRC bit
+		 * in RCTL register is always set, so we don't trim it.
+		 * PCH2 and newer chip also not include FCS when jumbo
+		 * frame is used to do workaround an errata.
 		 * May need to adjust length of previous mbuf in the
 		 * chain if the current mbuf is too short.
-		 * For an eratta, the RCTL_SECRC bit in RCTL register
-		 * is always set in I350, so we don't trim it.
 		 */
-		if ((sc->sc_type != WM_T_I350) && (sc->sc_type != WM_T_I354)
-		    && (sc->sc_type != WM_T_I210)
-		    && (sc->sc_type != WM_T_I211)) {
+		if ((sc->sc_flags & WM_F_CRC_STRIP) == 0) {
 			if (m->m_len < ETHER_CRC_LEN) {
 				rxq->rxq_tail->m_len
 				    -= (ETHER_CRC_LEN - m->m_len);
